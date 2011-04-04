@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.138 2011/03/27 12:15:46 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.139 2011/04/04 11:14:52 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -205,8 +205,7 @@ routehandler(void)
 		for (l = client->leases; l != NULL; l = l->next)
 			if (addr_eq(a, l->address))
 				break;
-		if (l != NULL || (client->alias &&
-		    addr_eq(a, client->alias->address)))
+		if (l != NULL)
 			/* new addr is the one we set */
 			break;
 
@@ -264,9 +263,7 @@ routehandler(void)
 	return;
 
 die:
-	script_init("FAIL", NULL);
-	if (client->alias)
-		script_write_params("alias_", client->alias);
+	script_init("FAIL");
 	script_go();
 	error("routehandler: %s", errmsg);
 }
@@ -388,11 +385,6 @@ main(int argc, char *argv[])
 	rewrite_client_leases();
 	close(fd);
 
-	priv_script_init("PREINIT", NULL);
-	if (client->alias)
-		priv_script_write_params("alias_", client->alias);
-	priv_script_go();
-
 	if ((routefd = socket(PF_ROUTE, SOCK_RAW, 0)) == -1)
 		error("socket(PF_ROUTE, SOCK_RAW): %m");
 
@@ -497,9 +489,6 @@ state_reboot(void)
 	client->first_sending = cur_time;
 	client->interval = 0;
 
-	/* Zap the medium list... */
-	client->medium = NULL;
-
 	/* Send out the first DHCPREQUEST packet. */
 	send_request();
 }
@@ -545,26 +534,11 @@ state_selecting(void)
 	picked = NULL;
 	for (lp = client->offered_leases; lp; lp = next) {
 		next = lp->next;
-
-		/* Check to see if we got an ARPREPLY for the address
-		   in this particular lease. */
 		if (!picked) {
-			script_init("ARPCHECK", lp->medium);
-			script_write_params("check_", lp);
-
-			/* If the ARPCHECK code detects another
-			   machine using the offered address, it exits
-			   nonzero.  We need to send a DHCPDECLINE and
-			   toss the lease. */
-			if (script_go()) {
-				make_decline(lp);
-				send_decline();
-				goto freeit;
-			}
 			picked = lp;
-			picked->next = NULL;
 		} else {
-freeit:
+			make_decline(lp);
+			send_decline();
 			free_client_lease(lp);
 		}
 	}
@@ -577,6 +551,8 @@ freeit:
 		state_init();
 		return;
 	}
+
+	picked->next = NULL;
 
 	/* If it was a BOOTREPLY, we can just take the address right now. */
 	if (!picked->options[DHO_DHCP_MESSAGE_TYPE].len) {
@@ -681,22 +657,16 @@ dhcpack(struct iaddr client_addr, struct option_data *options)
 void
 bind_lease(void)
 {
-	/* Remember the medium. */
-	client->new->medium = client->medium;
-
 	/* Write out the new lease. */
 	write_client_lease(client->new, 0);
 
 	/* Run the client script with the new parameters. */
 	script_init((client->state == S_REQUESTING ? "BOUND" :
 	    (client->state == S_RENEWING ? "RENEW" :
-	    (client->state == S_REBOOTING ? "REBOOT" : "REBIND"))),
-	    client->new->medium);
+	    (client->state == S_REBOOTING ? "REBOOT" : "REBIND"))));
 	if (client->active && client->state != S_REBOOTING)
 		script_write_params("old_", client->active);
 	script_write_params("new_", client->new);
-	if (client->alias)
-		script_write_params("alias_", client->alias);
 	script_go();
 
 	/* Replace the old active lease with the new one. */
@@ -750,7 +720,7 @@ dhcpoffer(struct iaddr client_addr, struct option_data *options)
 {
 	struct client_lease *lease, *lp;
 	int i;
-	int arp_timeout_needed, stop_selecting;
+	int stop_selecting;
 	char *name = options[DHO_DHCP_MESSAGE_TYPE].len ? "DHCPOFFER" :
 	    "BOOTREPLY";
 
@@ -790,19 +760,6 @@ dhcpoffer(struct iaddr client_addr, struct option_data *options)
 	if (!options[DHO_DHCP_MESSAGE_TYPE].len)
 		lease->is_bootp = 1;
 
-	/* Record the medium under which this lease was offered. */
-	lease->medium = client->medium;
-
-	/* Send out an ARP Request for the offered IP address. */
-	script_init("ARPSEND", lease->medium);
-	script_write_params("check_", lease);
-	/* If the script can't send an ARP request without waiting,
-	   we'll be waiting when we do the ARPCHECK, so don't wait now. */
-	if (script_go())
-		arp_timeout_needed = 0;
-	else
-		arp_timeout_needed = 2;
-
 	/* Figure out when we're supposed to stop selecting. */
 	stop_selecting = client->first_sending + config->select_interval;
 
@@ -812,14 +769,6 @@ dhcpoffer(struct iaddr client_addr, struct option_data *options)
 		lease->next = client->offered_leases;
 		client->offered_leases = lease;
 	} else {
-		/* If we already have an offer, and arping for this
-		   offer would take us past the selection timeout,
-		   then don't extend the timeout - just hope for the
-		   best. */
-		if (client->offered_leases &&
-		    (cur_time + arp_timeout_needed) > stop_selecting)
-			arp_timeout_needed = 0;
-
 		/* Put the lease at the end of the list. */
 		lease->next = NULL;
 		if (!client->offered_leases)
@@ -831,12 +780,6 @@ dhcpoffer(struct iaddr client_addr, struct option_data *options)
 			lp->next = lease;
 		}
 	}
-
-	/* If we're supposed to stop selecting before we've had time
-	   to wait for the ARPREPLY, add some delay to wait for
-	   the ARPREPLY. */
-	if (stop_selecting - cur_time < arp_timeout_needed)
-		stop_selecting = cur_time + arp_timeout_needed;
 
 	/* If the selecting interval has expired, go immediately to
 	   state_selecting().  Otherwise, time out into
@@ -967,30 +910,6 @@ send_discover(void)
 		return;
 	}
 
-	/* If we're selecting media, try the whole list before doing
-	   the exponential backoff, but if we've already received an
-	   offer, stop looping, because we obviously have it right. */
-	if (!client->offered_leases && config->media) {
-		int fail = 0;
-again:
-		if (client->medium) {
-			client->medium = client->medium->next;
-			increase = 0;
-		}
-		if (!client->medium) {
-			if (fail)
-				error("No valid media types for %s!", ifi->name);
-			client->medium = config->media;
-			increase = 1;
-		}
-
-		note("Trying medium \"%s\" %d", client->medium->string,
-		    increase);
-		script_init("MEDIUM", client->medium);
-		if (script_go())
-			goto again;
-	}
-
 	/*
 	 * If we're supposed to increase the interval, do so.  If it's
 	 * currently zero (i.e., we haven't sent any packets yet), set
@@ -1064,12 +983,8 @@ state_panic(void)
 			    piaddr(client->active->address));
 			/* Run the client script with the existing
 			   parameters. */
-			script_init("TIMEOUT",
-			    client->active->medium);
+			script_init("TIMEOUT");
 			script_write_params("new_", client->active);
-			if (client->alias)
-				script_write_params("alias_",
-				    client->alias);
 
 			/* If the old lease is still good and doesn't
 			   yet need renewal, go into BOUND state and
@@ -1125,9 +1040,7 @@ activate_next:
 	   tell the shell script that we failed to allocate an address,
 	   and try again later. */
 	note("No working leases in persistent database - sleeping.");
-	script_init("FAIL", NULL);
-	if (client->alias)
-		script_write_params("alias_", client->alias);
+	script_init("FAIL");
 	script_go();
 	client->state = S_INIT;
 	add_timeout(cur_time + config->retry_interval, state_init);
@@ -1157,26 +1070,10 @@ send_request(void)
 	if ((client->state == S_REBOOTING ||
 	    client->state == S_REQUESTING) &&
 	    interval > config->reboot_timeout) {
-cancel:
 		client->state = S_INIT;
 		cancel_timeout(send_request);
 		state_init();
 		return;
-	}
-
-	/* If we're in the reboot state, make sure the media is set up
-	   correctly. */
-	if (client->state == S_REBOOTING &&
-	    !client->medium &&
-	    client->active->medium) {
-		script_init("MEDIUM", client->active->medium);
-
-		/* If the medium we chose won't fly, go to INIT state. */
-		if (script_go())
-			goto cancel;
-
-		/* Record the medium. */
-		client->medium = client->active->medium;
 	}
 
 	/* If the lease has expired, relinquish the address and go back
@@ -1184,17 +1081,8 @@ cancel:
 	if (client->state != S_REQUESTING &&
 	    cur_time > client->active->expiry) {
 		/* Run the client script with the new parameters. */
-		script_init("EXPIRE", NULL);
+		script_init("EXPIRE");
 		script_write_params("old_", client->active);
-		if (client->alias)
-			script_write_params("alias_", client->alias);
-		script_go();
-
-		/* Now do a preinit on the interface so that we can
-		   discover a new address. */
-		script_init("PREINIT", NULL);
-		if (client->alias)
-			script_write_params("alias_", client->alias);
 		script_go();
 
 		client->state = S_INIT;
@@ -1538,8 +1426,6 @@ write_client_lease(struct client_lease *lease, int rewrite)
 	if (lease->server_name)
 		fprintf(leaseFile, "  server-name \"%s\";\n",
 		    lease->server_name);
-	if (lease->medium)
-		fprintf(leaseFile, "  medium \"%s\";\n", lease->medium->string);
 	for (i = 0; i < 256; i++)
 		if (lease->options[i].len)
 			fprintf(leaseFile, "  option %s %s;\n",
@@ -1564,26 +1450,18 @@ write_client_lease(struct client_lease *lease, int rewrite)
 }
 
 void
-script_init(char *reason, struct string_list *medium)
+script_init(char *reason)
 {
-	size_t		 len, mediumlen = 0;
+	size_t		 len;
 	struct imsg_hdr	 hdr;
 	struct buf	*buf;
 
-	if (medium != NULL && medium->string != NULL)
-		mediumlen = strlen(medium->string);
-
 	hdr.code = IMSG_SCRIPT_INIT;
-	hdr.len = sizeof(struct imsg_hdr) +
-	    sizeof(size_t) + mediumlen +
-	    sizeof(size_t) + strlen(reason);
+	hdr.len = sizeof(struct imsg_hdr) + sizeof(size_t) + strlen(reason);
 
 	buf = buf_open(hdr.len);
 
 	buf_add(buf, &hdr, sizeof(hdr));
-	buf_add(buf, &mediumlen, sizeof(mediumlen));
-	if (mediumlen > 0)
-		buf_add(buf, medium->string, mediumlen);
 	len = strlen(reason);
 	buf_add(buf, &len, sizeof(len));
 	buf_add(buf, reason, len);
@@ -1592,7 +1470,7 @@ script_init(char *reason, struct string_list *medium)
 }
 
 void
-priv_script_init(char *reason, char *medium)
+priv_script_init(char *reason)
 {
 	char *rdomain;
 
@@ -1616,9 +1494,6 @@ priv_script_init(char *reason, char *medium)
 
 	script_set_env("", "rdomain", rdomain);
 	free(rdomain);
-
-	if (medium)
-		script_set_env("", "medium", medium);
 
 	script_set_env("", "reason", reason);
 }

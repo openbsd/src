@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: dhclient-script,v 1.18 2011/03/27 12:15:46 krw Exp $
+# $OpenBSD: dhclient-script,v 1.19 2011/04/04 11:14:52 krw Exp $
 #
 # Copyright (c) 2003 Kenneth R Westerback <krw@openbsd.org>
 #
@@ -23,14 +23,14 @@
 
 delete_old_address() {
 	if [ -n "$old_ip_address" ]; then
-		ifconfig $interface inet $old_ip_address delete $medium
+		ifconfig $interface inet $old_ip_address delete
 		route $rdomain delete "$old_ip_address" 127.0.0.1 >/dev/null 2>&1
 	fi
 }
 
 ip6_delete_old_address() {
 	if [ -n "$old_ip6_address" ]; then
-		ifconfig $interface inet6 $old_ip6_address delete $medium
+		ifconfig $interface inet6 $old_ip6_address delete
 	fi
 }
 
@@ -38,8 +38,7 @@ add_new_address() {
 	ifconfig $interface \
 		inet $new_ip_address \
 		netmask $new_subnet_mask \
-		broadcast $new_broadcast_address \
-		$medium
+		broadcast $new_broadcast_address
 
 	# XXX Original TIMEOUT code did not do this unless $new_routers was set?
 	route $rdomain add $new_ip_address 127.0.0.1 >/dev/null 2>&1
@@ -48,24 +47,7 @@ add_new_address() {
 ip6_add_new_address() {
 	ifconfig $interface \
 		inet6 $new_ip6_address \
-		prefixlen $new_ip6_prefixlen \
-		$medium
-}
-
-delete_old_alias() {
-	if [ -n "$alias_ip_address" ]; then
-		ifconfig $interface \
-			inet $alias_ip_address delete > /dev/null 2>&1
-		route $rdomain delete $alias_ip_address 127.0.0.1 > /dev/null 2>&1
-	fi
-}
-
-add_new_alias() {
-	if [ -n "$alias_ip_address" ]; then
-		ifconfig $interface inet $alias_ip_address alias netmask \
-			$alias_subnet_mask
-		route $rdomain add $alias_ip_address 127.0.0.1
-	fi
+		prefixlen $new_ip6_prefixlen
 }
 
 delete_old_routes() {
@@ -195,33 +177,30 @@ ip6_add_new_resolv_conf() {
 
 case $reason in
 MEDIUM)
-	ifconfig $interface $medium
-	sleep 1
+	# Not called by OpenBSD dhclient(8).
 	;;
 
 PREINIT)
-	delete_old_alias
-	ifconfig $interface up
+	# Not called by OpenBSD dhclient(8).
 	;;
 
 PREINIT6)
-	ifconfig $interface up
-	;;
-
-ARPCHECK)
-	# Always succeed. i.e. accept lease.
+	# Not called by OpenBSD dhclient(8).
 	;;
 
 ARPSEND)
+	# Not called by OpenBSD dhclient(8).
 	# Always fail. i.e. don't wait for ARP packet here.
 	exit 1
 	;;
 
+ARPCHECK)
+	# Not called by OpenBSD dhclient(8).
+	# Always succeed. i.e. accept lease.
+	;;
+
 BOUND|RENEW|REBIND|REBOOT)
 	if [ -n "$old_ip_address" ]; then
-		if [ "$old_ip_address" != "$alias_ip_address" ]; then
-			delete_old_alias
-		fi
 		if [ "$old_ip_address" != "$new_ip_address" ]; then
 			delete_old_address
 			delete_old_routes
@@ -233,9 +212,6 @@ BOUND|RENEW|REBIND|REBOOT)
 	   [ "$old_ip_address" != "$new_ip_address" ]; then
 		add_new_address
 		add_new_routes
-	fi
-	if [ "$new_ip_address" != "$alias_ip_address" ]; then
-		add_new_alias
 	fi
 	add_new_resolv_conf
 	;;
@@ -255,13 +231,10 @@ BOUND6|RENEW6|REBIND6)
 	;;
 
 EXPIRE|FAIL)
-	delete_old_alias
 	if [ -n "$old_ip_address" ]; then
 		delete_old_address
 		delete_old_routes
 	fi
-	# XXX Why add alias we just deleted above?
-	add_new_alias
 	if [ -f /etc/resolv.conf.save ]; then
 		cat /etc/resolv.conf.save > /etc/resolv.conf
 	fi
@@ -274,15 +247,11 @@ EXPIRE6|RELEASE6|STOP6)
 	;;
 
 TIMEOUT)
-	delete_old_alias
 	add_new_address
 	sleep 1
 	if [ -n "$new_routers" ]; then
 		set "$new_routers"
 		if ping -q -c 1 -w 1 "$1"; then
-			if [ "$new_ip_address" != "$alias_ip_address" ]; then
-				add_new_alias
-			fi
 			add_new_routes
 			if add_new_resolv_conf; then
 				exit 0

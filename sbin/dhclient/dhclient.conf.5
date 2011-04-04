@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.19 2011/03/27 06:50:48 jmc Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.20 2011/04/04 11:14:52 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: March 27 2011 $
+.Dd $Mdocdate: April 4 2011 $
 .Dt DHCLIENT.CONF 5
 .Os
 .Sh NAME
@@ -352,24 +352,6 @@ or, in the case of predefined leases declared in
 .Nm dhclient.conf ,
 the value that the user wishes the client configuration script to use if the
 predefined lease is used.
-.It Ic medium Ar \&"media setup\&" ;
-The
-.Ic medium
-statement can be used on systems where network interfaces cannot
-automatically determine the type of network to which they are connected.
-The media setup string is a system-dependent parameter which is passed
-to the client configuration script when initializing the interface.
-On
-.Ux
-and UNIX-like systems, the argument is passed on the ifconfig command line
-when configuring the interface.
-.Pp
-The DHCP client automatically declares this parameter if it used a
-media type (see the
-.Ic media
-statement) when configuring the interface in order to obtain a lease.
-This statement should be used in predefined leases only if the network
-interface requires media type configuration.
 .It Ic renew Ar date ;
 .It Ic rebind Ar date ;
 .It Ic expire Ar date ;
@@ -413,27 +395,6 @@ The day of the month is likewise specified starting with 1.
 The hour is a number between 0 and 23,
 the minute a number between 0 and 59,
 and the second also a number between 0 and 59.
-.Sh ALIAS DECLARATIONS
-.Ic alias No { Ar declarations ... No }
-.Pp
-Some DHCP clients running TCP/IP roaming protocols may require that in
-addition to the lease they may acquire via DHCP, their interface also
-be configured with a predefined IP alias so that they can have a
-permanent IP address even while roaming.
-The Internet Software Consortium DHCP client doesn't support roaming with
-fixed addresses directly, but in order to facilitate such experimentation,
-the DHCP client can be set up to configure an IP alias using the
-.Ic alias
-declaration.
-.Pp
-The
-.Ic alias
-declaration resembles a lease declaration, except that options other than
-the subnet-mask option are ignored by the standard client configuration
-script, and expiry times are ignored.
-A typical alias declaration includes an interface declaration, a fixed-address
-declaration for the IP alias address, and a subnet-mask option declaration.
-A medium statement should never be included in an alias declaration.
 .Sh OTHER DECLARATIONS
 .Bl -tag -width Ds
 .It Ic reject Ar ip-address ;
@@ -450,35 +411,13 @@ the bad DHCP server and fix it.
 .Xc
 A client with more than one network interface may require different
 behaviour depending on which interface is being configured.
-All timing parameters and declarations other than lease and alias
+All timing parameters and declarations other than lease
 declarations can be enclosed in an interface declaration, and those
 parameters will then be used only for the interface that matches the
 specified name.
 Interfaces for which there is no interface declaration will use the
 parameters declared outside of any interface declaration,
 or the default settings.
-.It Xo
-.Ic media Ar \&"media setup\&"
-.Oo , Ar \&"media setup\&" , ... Oc ;
-.Xc
-The
-.Ic media
-statement defines one or more media configuration parameters which may
-be tried while attempting to acquire an IP address.
-The DHCP client will cycle through each media setup string on the list,
-configuring the interface using that setup and attempting to boot,
-and then trying the next one.
-This can be used for network interfaces which aren't capable of sensing
-the media type unaided \- whichever media type succeeds in getting a request
-to the server and hearing the reply is probably right (no guarantees).
-.Pp
-The media setup is only used for the initial phase of address
-acquisition (the DHCPDISCOVER and DHCPOFFER packets).
-Once an address has been acquired, the DHCP client will record it in its
-lease database and will record the media type used to acquire the address.
-Whenever the client tries to renew the lease, it will use that same media type.
-The lease must expire before the client will go back to cycling through media
-types.
 .It Ic script Ar \&"script-name\&" ;
 The
 .Ic script
@@ -495,8 +434,7 @@ For more information, see
 .El
 .Sh EXAMPLES
 The following configuration file is used on a laptop
-which has an IP alias of 192.5.5.213, and has one interface,
-ep0 (a 3Com 3C589C).
+which has one interface, ep0 (a 3Com 3C589C).
 Booting intervals have been shortened somewhat from the default, because
 the client is known to spend most of its time on networks with little DHCP
 activity.
@@ -519,13 +457,6 @@ interface "ep0" {
 	    domain-name, domain-name-servers, host-name;
     require subnet-mask, domain-name-servers;
     script "/etc/dhclient-script";
-    media "media 10baseT/UTP", "media 10base2/BNC";
-}
-
-alias {
-  interface "ep0";
-  fixed-address 192.5.5.213;
-  option subnet-mask 255.255.255.255;
 }
 .Ed
 .Pp

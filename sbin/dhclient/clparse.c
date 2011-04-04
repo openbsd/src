@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.36 2009/07/19 00:18:02 stevesk Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.37 2011/04/04 11:14:52 krw Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -184,7 +184,7 @@ parse_client_statement(FILE *cfile)
 			config->default_actions[code] = ACTION_PREPEND;
 		return;
 	case TOK_MEDIA:
-		parse_string_list(cfile, &config->media, 1);
+		skip_to_semi(cfile);
 		return;
 	case TOK_HARDWARE:
 		parse_hardware_param(cfile, &ifi->hw_address);
@@ -229,7 +229,7 @@ parse_client_statement(FILE *cfile)
 		parse_client_lease_statement(cfile, 1);
 		return;
 	case TOK_ALIAS:
-		parse_client_lease_statement(cfile, 2);
+		skip_to_semi(cfile);
 		return;
 	case TOK_REJECT:
 		parse_reject_statement(cfile);
@@ -426,12 +426,6 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 		return;
 	}
 
-	/* If this is an alias lease, it doesn't need to be sorted in. */
-	if (is_static == 2) {
-		client->alias = lease;
-		return;
-	}
-
 	/*
 	 * The new lease may supersede a lease that's not the active
 	 * lease but is still on the lease list, so scan the lease list
@@ -531,7 +525,7 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease)
 			return;
 		break;
 	case TOK_MEDIUM:
-		parse_string_list(cfile, &lease->medium, 0);
+		skip_to_semi(cfile);
 		return;
 	case TOK_FILENAME:
 		lease->filename = parse_string(cfile);
@@ -717,50 +711,6 @@ bad_flag:
 	memcpy(options[code].data, hunkbuf, hunkix + nul_term);
 	options[code].len = hunkix;
 	return (code);
-}
-
-void
-parse_string_list(FILE *cfile, struct string_list **lp, int multiple)
-{
-	int			 token;
-	char			*val;
-	struct string_list	*cur, *tmp;
-
-	/* Find the last medium in the media list. */
-	if (*lp)
-		for (cur = *lp; cur->next; cur = cur->next)
-			;	/* nothing */
-	else
-		cur = NULL;
-
-	do {
-		token = next_token(&val, cfile);
-		if (token != TOK_STRING) {
-			parse_warn("Expecting media options.");
-			skip_to_semi(cfile);
-			return;
-		}
-
-		tmp = malloc(sizeof(struct string_list) + strlen(val));
-		if (tmp == NULL)
-			error("no memory for string list entry.");
-		strlcpy(tmp->string, val, strlen(val) + 1);
-		tmp->next = NULL;
-
-		/* Store this medium at the end of the media list. */
-		if (cur)
-			cur->next = tmp;
-		else
-			*lp = tmp;
-		cur = tmp;
-
-		token = next_token(&val, cfile);
-	} while (multiple && token == ',');
-
-	if (token != ';') {
-		parse_warn("expecting semicolon.");
-		skip_to_semi(cfile);
-	}
 }
 
 void

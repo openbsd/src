@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.71 2010/07/02 22:03:27 deraadt Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.72 2011/04/04 11:14:52 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -110,7 +110,6 @@ struct client_lease {
 	struct iaddr		 address;
 	char			*server_name;
 	char			*filename;
-	struct string_list	*medium;
 	unsigned int		 is_static : 1;
 	unsigned int		 is_bootp : 1;
 	struct option_data	 options[256];
@@ -147,11 +146,9 @@ struct client_config {
 	time_t			 select_interval;
 	time_t			 reboot_timeout;
 	time_t			 backoff_cutoff;
-	struct string_list	*media;
 	char			*script_name;
 	enum { IGNORE, ACCEPT, PREFER }
 				 bootp_policy;
-	struct string_list	*medium;
 	struct iaddrlist	*reject_list;
 };
 
@@ -160,14 +157,12 @@ struct client_state {
 	struct client_lease	 *new;
 	struct client_lease	 *offered_leases;
 	struct client_lease	 *leases;
-	struct client_lease	 *alias;
 	enum dhcp_state		  state;
 	struct iaddr		  destination;
 	u_int32_t		  xid;
 	u_int16_t		  secs;
 	time_t			  first_sending;
 	time_t			  interval;
-	struct string_list	 *medium;
 	struct dhcp_packet	  packet;
 	int			  packet_length;
 	struct iaddr		  requested_address;
@@ -313,11 +308,11 @@ void free_client_lease(struct client_lease *);
 void rewrite_client_leases(void);
 void write_client_lease(struct client_lease *, int);
 
-void	 priv_script_init(char *, char *);
+void	 priv_script_init(char *);
 void	 priv_script_write_params(char *, struct client_lease *);
 int	 priv_script_go(void);
 
-void script_init(char *, struct string_list *);
+void script_init(char *);
 void script_write_params(char *, struct client_lease *);
 int script_go(void);
 void script_set_env(const char *, const char *, const char *);
