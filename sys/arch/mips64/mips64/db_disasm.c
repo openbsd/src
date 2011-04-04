@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.14 2010/11/11 17:34:53 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.15 2011/04/04 16:58:28 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -51,7 +51,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: db_disasm.c,v 1.14 2010/11/11 17:34:53 miod Exp $
+ *      $Id: db_disasm.c,v 1.15 2011/04/04 16:58:28 miod Exp $
  */
 
 #ifdef _KERNEL
@@ -819,6 +819,21 @@ unknown:
 		case OP_DMF:
 		case OP_MT:
 		case OP_DMT:
+			if ((i.RType.func & 0x07) != 0) {
+				insn = cop_std[i.RType.rs];
+				descr = cop0_reg0[i.RType.rd];
+				if (descr != NULL)
+					(*pr)("%s0\t%s,%d,%d # %s.%d", insn,
+					    reg_name[i.RType.rt], i.RType.rd,
+					    i.RType.func & 0x07, descr,
+					    i.RType.func & 0x07);
+				else
+					(*pr)("%s0\t%s,%d,%d", insn,
+					    reg_name[i.RType.rt], i.RType.rd,
+					    i.RType.func & 0x07);
+				break;
+			}
+			/* FALLTHROUGH */
 		case OP_CF:
 		case OP_CT:
 			insn = cop_std[i.RType.rs];
