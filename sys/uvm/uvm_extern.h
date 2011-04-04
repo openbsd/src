@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.91 2011/04/04 11:24:45 art Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.92 2011/04/04 11:56:12 art Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -561,9 +561,9 @@ struct vm_map		*uvm_km_suballoc(vm_map_t, vaddr_t *,
 struct kmem_va_mode {
 	struct vm_map **kv_map;
 	vsize_t kv_align;
-	int kv_wait;
-	int kv_singlepage;
-	int kv_executable;
+	char kv_wait;
+	char kv_singlepage;
+	char kv_executable;
 };
 
 /*
@@ -584,10 +584,10 @@ struct kmem_pa_mode {
 	struct uvm_object **kp_object;
 	paddr_t kp_align;
 	paddr_t kp_boundary;
-	int kp_nomem;
 	int kp_maxseg;
-	int kp_zero;
-	int kp_pageable;
+	char kp_nomem;
+	char kp_zero;
+	char kp_pageable;
 };
 
 /*
@@ -602,13 +602,13 @@ struct kmem_pa_mode {
  *  allocator catch up.
  */
 struct kmem_dyn_mode {
-	int kd_waitok;
-	int kd_trylock;
 	voff_t kd_prefer;
 	int *kd_slowdown;
+	char kd_waitok;
+	char kd_trylock;
 };
 
-#define KMEM_DYN_INITIALIZER { 0, 0, UVM_UNKNOWN_OFFSET, NULL }
+#define KMEM_DYN_INITIALIZER { UVM_UNKNOWN_OFFSET, NULL, 0, 0 }
 
 /*
  * Notice that for kv_ waiting has a different meaning. It's only supposed

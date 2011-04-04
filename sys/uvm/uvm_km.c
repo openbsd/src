@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.87 2011/04/04 11:24:45 art Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.88 2011/04/04 11:56:12 art Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -960,7 +960,12 @@ km_alloc(size_t sz, struct kmem_va_mode *kv, struct kmem_pa_mode *kp,
 #ifdef __HAVE_PMAP_DIRECT
 	if (kv->kv_align || kv->kv_executable)
 		goto alloc_va;
-#if 1	/* For now, because I'm lazy in free */
+#if 1
+	/*
+	 * For now, only do DIRECT mappings for single page
+	 * allocations, until we figure out a good way to deal
+	 * with contig allocations in km_free.
+	 */
 	if (!kv->kv_singlepage)
 		goto alloc_va;
 #endif
