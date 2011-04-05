@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.20 2011/04/04 22:58:48 ariane Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.21 2011/04/05 22:33:51 ariane Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -1630,8 +1630,8 @@ uvm_pmr_rootupdate(struct uvm_pmemrange *pmr, struct vm_page *init_root,
 	for (low = RB_NEXT(uvm_pmr_addr, &pmr->addr, low);
 	    low != high;
 	    low = RB_NEXT(uvm_pmr_addr, &pmr->addr, low)) {
-		KASSERT(PMR_IS_SUBRANGE_OF(atop(VM_PAGE_TO_PHYS(high_next)),
-	    	    atop(VM_PAGE_TO_PHYS(high_next)) + high_next->fpgsz,
+		KDASSERT(PMR_IS_SUBRANGE_OF(atop(VM_PAGE_TO_PHYS(low)),
+	    	    atop(VM_PAGE_TO_PHYS(low)) + low->fpgsz,
 	    	    start, end));
 		if (uvm_pmr_pg_to_memtype(low) == memtype)
 			return low;
