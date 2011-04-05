@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.7 2011/01/10 12:53:32 claudio Exp $ */
+/*	$OpenBSD: connection.c,v 1.8 2011/04/05 01:07:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -280,9 +280,9 @@ conn_fsm(struct connection *c, enum c_event event)
 	for (i = 0; fsm[i].action != NULL; i++) {
 		if (c->state & fsm[i].state && event == fsm[i].event) {
 			ns = fsm[i].action(c, event);
-			log_debug("conn_fsm: %s ev %s -> %s",
-			   conn_state(c->state), conn_event(event),
-			   conn_state(ns));
+			log_debug("conn_fsm[%s]: %s ev %s -> %s",
+			   c->session->config.SessionName, conn_state(c->state),
+			   conn_event(event), conn_state(ns));
 			if (ns == -1)
 				/* XXX better please */
 				fatalx("conn_fsm: action failed");
@@ -290,8 +290,9 @@ conn_fsm(struct connection *c, enum c_event event)
 			return;
 		}
 	}
-	log_warnx("conn_fsm: unhandled state transition [%s, %s]",
-		conn_state(c->state), conn_event(event));
+	log_warnx("conn_fsm[%s]: unhandled state transition [%s, %s]",
+		c->session->config.SessionName, conn_state(c->state),
+		conn_event(event));
 	fatalx("bork bork bork");
 }
 
