@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_conf.c,v 1.40 2010/12/21 20:14:43 thib Exp $	*/
+/*	$OpenBSD: vfs_conf.c,v 1.41 2011/04/05 18:51:25 thib Exp $	*/
 /*	$NetBSD: vfs_conf.c,v 1.21.4.1 1995/11/01 00:06:26 jtc Exp $	*/
 
 /*
@@ -91,10 +91,6 @@ extern	const struct vfsops msdosfs_vfsops;
 extern	const struct vfsops nfs_vfsops;
 #endif
 
-#ifdef PORTAL
-extern	const struct vfsops portal_vfsops;
-#endif
-
 #ifdef PROCFS
 extern	const struct vfsops procfs_vfsops;
 #endif
@@ -160,11 +156,6 @@ static struct vfsconf vfsconflist[] = {
         /* /proc Filesystem */
 #ifdef PROCFS
         { &procfs_vfsops, MOUNT_PROCFS, 12, 0, 0, NULL },
-#endif
-
-        /* Portal Filesystem */
-#ifdef PORTAL
-        { &portal_vfsops, MOUNT_PORTAL, 8, 0, 0, NULL },
 #endif
 
 	/* NTFS Filesystem */

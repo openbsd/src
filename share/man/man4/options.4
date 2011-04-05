@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.209 2011/04/05 12:50:15 guenther Exp $
+.\"	$OpenBSD: options.4,v 1.210 2011/04/05 18:51:25 thib Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -293,16 +293,6 @@ Includes support for reading NTFS file systems.
 Experimental and read only.
 See
 .Xr mount_ntfs 8
-for details.
-.It Cd option PORTAL
-Includes the (experimental) portal filesystem.
-This permits interesting tricks like opening TCP sockets by opening files in
-the file system.
-The portal file system is conventionally mounted on
-.Pa /p
-and is partially implemented by a special daemon.
-See
-.Xr mount_portal 8
 for details.
 .It Cd option PROCFS
 Includes code for a special file system (conventionally mounted on
