@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.736 2011/04/05 18:01:21 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.737 2011/04/05 20:36:59 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5336,21 +5336,24 @@ bad:
  *   off is the offset where the protocol header starts
  *   len is the total length of protocol header plus payload
  * returns 0 when the checksum is valid, otherwise returns 1.
+ * if the _OUT flag is set the checksum isn't done yet, consider these ok
  */
 int
 pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
     sa_family_t af)
 {
-	u_int16_t flag_ok, flag_bad;
+	u_int16_t flag_ok, flag_bad, flag_out;
 	u_int16_t sum;
 
 	switch (p) {
 	case IPPROTO_TCP:
 		flag_ok = M_TCP_CSUM_IN_OK;
+		flag_out = M_TCP_CSUM_OUT;
 		flag_bad = M_TCP_CSUM_IN_BAD;
 		break;
 	case IPPROTO_UDP:
 		flag_ok = M_UDP_CSUM_IN_OK;
+		flag_out = M_UDP_CSUM_OUT;
 		flag_bad = M_UDP_CSUM_IN_BAD;
 		break;
 	case IPPROTO_ICMP:
@@ -5362,7 +5365,7 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
 	default:
 		return (1);
 	}
-	if (m->m_pkthdr.csum_flags & flag_ok)
+	if (m->m_pkthdr.csum_flags & (flag_ok | flag_out))
 		return (0);
 	if (m->m_pkthdr.csum_flags & flag_bad)
 		return (1);
