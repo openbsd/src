@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.597 2010/12/31 12:15:31 bluhm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.598 2011/04/05 13:48:18 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -453,7 +453,7 @@ int	parseport(char *, struct range *r, int);
 %token	PASS BLOCK MATCH SCRUB RETURN IN OS OUT LOG QUICK ON FROM TO FLAGS
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token	ICMP6TYPE CODE KEEP MODULATE STATE PORT BINATTO NODF
-%token	MINTTL ERROR ALLOWOPTS FASTROUTE FILENAME ROUTETO DUPTO REPLYTO NO LABEL
+%token	MINTTL ERROR ALLOWOPTS FILENAME ROUTETO DUPTO REPLYTO NO LABEL
 %token	NOROUTE URPFFAILED FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS DROP TABLE
 %token	REASSEMBLE ANCHOR
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY RANDOMID
@@ -2028,7 +2028,7 @@ pfrule		: action dir logquick interface af proto fromto
 					memcpy(&r.route.key, $8.route.key,
 					    sizeof(struct pf_poolhashkey));
 			}
-			if (r.rt && r.rt != PF_FASTROUTE) {
+			if (r.rt) {
 				decide_address_family($8.route.host, &r.af);
 				if ((r.route.opts & PF_POOL_TYPEMASK) ==
 				    PF_POOL_NONE && ($8.route.host->next != NULL ||
@@ -2292,11 +2292,6 @@ filter_opt	: USER uids {
 			memcpy(&filter_opts.nat.pool_opts, &$3,
 			    sizeof(filter_opts.nat.pool_opts));
 			filter_opts.nat.pool_opts.staticport = 1;
-		}
-		| FASTROUTE {
-			filter_opts.route.host = NULL;
-			filter_opts.route.rt = PF_FASTROUTE;
-			filter_opts.route.pool_opts = 0;
 		}
 		| ROUTETO routespec pool_opts {
 			filter_opts.route.host = $2;
@@ -4032,7 +4027,7 @@ rule_consistent(struct pf_rule *r, int anchor_call)
 			problems++;
 		}
 		if (r->rt) {
-			yyerror("route-to, reply-to, dup-to and fastroute "
+			yyerror("route-to, reply-to and dup-to "
 			   "must not be used on match rules");
 			problems++;
 		}
@@ -5040,7 +5035,6 @@ lookup(char *s)
 		{ "divert-to",		DIVERTTO},
 		{ "drop",		DROP},
 		{ "dup-to",		DUPTO},
-		{ "fastroute",		FASTROUTE},
 		{ "file",		FILENAME},
 		{ "fingerprints",	FINGERPRINTS},
 		{ "flags",		FLAGS},

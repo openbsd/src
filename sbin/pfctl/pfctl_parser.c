@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.273 2011/01/23 11:19:55 bluhm Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.274 2011/04/05 13:48:18 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1056,12 +1056,8 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 			printf(" reply-to");
 		else if (r->rt == PF_DUPTO)
 			printf(" dup-to");
-		else if (r->rt == PF_FASTROUTE)
-			printf(" fastroute");
-		if (r->rt != PF_FASTROUTE) {
-			printf(" ");
-			print_pool(&r->route, 0, 0, r->af, PF_POOL_ROUTE, verbose);
-		}
+		printf(" ");
+		print_pool(&r->route, 0, 0, r->af, PF_POOL_ROUTE, verbose);
 	}
 }
 

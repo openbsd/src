@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.324 2011/03/25 10:54:22 claudio Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.325 2011/04/05 13:48:18 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -105,7 +105,7 @@ enum	{ PFTM_TCP_FIRST_PACKET, PFTM_TCP_OPENING, PFTM_TCP_ESTABLISHED,
 #define PFTM_SRC_NODE_VAL		0	/* Source tracking */
 #define PFTM_TS_DIFF_VAL		30	/* Allowed TS diff */
 
-enum	{ PF_NOPFROUTE, PF_FASTROUTE, PF_ROUTETO, PF_DUPTO, PF_REPLYTO };
+enum	{ PF_NOPFROUTE, PF_ROUTETO, PF_DUPTO, PF_REPLYTO };
 enum	{ PF_LIMIT_STATES, PF_LIMIT_SRC_NODES, PF_LIMIT_FRAGS,
 	  PF_LIMIT_TABLES, PF_LIMIT_TABLE_ENTRIES, PF_LIMIT_MAX };
 #define PF_POOL_IDMASK		0x0f

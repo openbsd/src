@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.733 2011/04/04 17:44:43 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.734 2011/04/05 13:48:18 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2640,7 +2640,7 @@ pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr)
 	struct pf_src_node *sn = NULL;
 
 	s->rt_kif = NULL;
-	if (!r->rt || r->rt == PF_FASTROUTE)
+	if (!r->rt)
 		return;
 	switch (s->key[PF_SK_WIRE]->af) {
 #ifdef INET
@@ -5087,7 +5087,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	dst->sin_addr = ip->ip_dst;
 	ro->ro_tableid = m0->m_pkthdr.rdomain;
 
-	if (r->rt == PF_FASTROUTE) {
+	if (!r->rt) {
 		rtalloc(ro);
 		if (ro->ro_rt == 0) {
 			ipstat.ips_noroute++;
@@ -5099,6 +5099,8 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst = satosin(ro->ro_rt->rt_gateway);
+
+		m0->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
 	} else {
 		if (s == NULL) {
 			if (pf_map_addr(AF_INET, r, (struct pf_addr *)&ip->ip_src,
@@ -5262,8 +5264,7 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	dst->sin6_len = sizeof(*dst);
 	dst->sin6_addr = ip6->ip6_dst;
 
-	/* Cheat. XXX why only in the v6 case??? */
-	if (r->rt == PF_FASTROUTE) {
+	if (!r->rt) {
 		m0->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
 		ip6_output(m0, NULL, NULL, 0, NULL, NULL, NULL);
 		return;
