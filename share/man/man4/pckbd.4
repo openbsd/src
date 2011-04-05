@@ -1,4 +1,4 @@
-.\" $OpenBSD: pckbd.4,v 1.38 2011/01/30 07:53:57 jmc Exp $
+.\" $OpenBSD: pckbd.4,v 1.39 2011/04/05 19:12:11 miod Exp $
 .\" $NetBSD: pckbd.4,v 1.3 1999/12/21 11:31:07 drochner Exp $
 .\"
 .\" Copyright (c) 1999
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 30 2011 $
+.Dd $Mdocdate: April 5 2011 $
 .Dt PCKBD 4
 .Os
 .Sh NAME
@@ -92,6 +92,10 @@ layout.
 .It KB_HU
 .Pq hu
 Hungarian.
+.It KB_IS
+.Pq is
+Icelandic with
+.Dq dead accents .
 .It KB_IT
 .Pq it
 Italian.
@@ -169,8 +173,8 @@ English/US keyboard with
 layout.
 .El
 .Pp
-The KB_DE, KB_DK, KB_NO, KB_SF, KB_SG, KB_SV and KB_TR mappings can be used in
-the KB_NODEAD
+The KB_DE, KB_DK, KB_IS, KB_NO, KB_SF, KB_SG, KB_SV and KB_TR
+mappings can be used in the KB_NODEAD
 .Pq .nodead
 variant.
 This switches off the

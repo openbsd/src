@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_mfii.c,v 1.41 2010/08/28 16:39:18 miod Exp $ */
+/*	$OpenBSD: wskbdmap_mfii.c,v 1.42 2011/04/05 19:12:13 miod Exp $ */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*
@@ -1028,6 +1028,37 @@ static const keysym_t pckbd_keydesc_nl_nodead[] = {
     KC(40),  KS_apostrophe,	KS_grave,
 };
 
+static const keysym_t pckbd_keydesc_is[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(3),   KS_2,		KS_quotedbl,
+    KC(7),   KS_6,		KS_ampersand,
+    KC(8),   KS_7,		KS_slash,	KS_braceleft,
+    KC(9),   KS_8,		KS_parenleft,	KS_bracketleft,
+    KC(10),  KS_9,		KS_parenright,	KS_bracketright,
+    KC(11),  KS_0,		KS_equal,	KS_braceright,
+    KC(12),  KS_odiaeresis,	KS_Odiaeresis,	KS_backslash,
+    KC(13),  KS_minus,		KS_underscore,
+    KC(16),  KS_q,		KS_Q,		KS_at,
+    KC(18),  KS_e,		KS_E,
+						/* euro currency */
+    KC(26),  KS_eth,
+    KC(27),  KS_apostrophe,	KS_question,	KS_asciitilde,
+    KC(39),  KS_ae,
+    KC(40),  KS_dead_acute,	KS_dead_diaeresis, KS_dead_circumflex,
+    KC(41),  KS_degree,		KS_diaeresis,
+    KC(43),  KS_plus,		KS_asterisk,	KS_grave,
+    KC(51),  KS_comma,		KS_semicolon,
+    KC(52),  KS_period,		KS_colon,
+    KC(53),  KS_thorn,
+    KC(86),  KS_less,		KS_greater,	KS_bar,
+    KC(184), KS_Mode_switch,	KS_Multi_key,
+};
+
+static const keysym_t pckbd_keydesc_is_nodead[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(40),  KS_acute,		KS_diaeresis,	KS_asciicircum,
+};
+
 #endif	/* WSKBD_NO_INTL_LAYOUTS */
 
 #define KBD_MAP(name, base, map) \
@@ -1085,6 +1116,8 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_LV,			KB_US,	pckbd_keydesc_lv),
 	KBD_MAP(KB_NL,			KB_US, 	pckbd_keydesc_nl),
 	KBD_MAP(KB_NL | KB_NODEAD,	KB_NL,	pckbd_keydesc_nl_nodead),
+	KBD_MAP(KB_IS,			KB_US, 	pckbd_keydesc_is),
+	KBD_MAP(KB_IS | KB_NODEAD,	KB_IS, 	pckbd_keydesc_is_nodead),
 #endif	/* WSKBD_NO_INTL_LAYOUTS */
 	{0, 0, 0, 0}
 };
