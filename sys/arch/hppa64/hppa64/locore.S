@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.12 2011/03/27 18:59:37 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.13 2011/04/05 12:56:02 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -321,6 +321,7 @@ ENTRY(pdc_call,160)
 	std	%ret0, 11*8(%r3)	/* old %sp */
 	ldi	PSL_Q, %arg0
 	break	HPPA_BREAK_KERNEL, HPPA_BREAK_SET_PSW
+	std	%ret0, 27*8(%r3)
 	copy	%ret1, %arg0
 
 	.call
@@ -346,8 +347,7 @@ ENTRY(pdc_call,160)
 	mtctl	arg6, %cr30
 	mtctl	arg7, %cr31
 
-	ldil	L%$kpsl, %r1
-	ldw	R%$kpsl(%r1), %arg0
+	ldd	27*8(%r3), %arg0
 	copy	%ret0, %arg1
 	break	HPPA_BREAK_KERNEL, HPPA_BREAK_SET_PSW
 	copy	%arg1, %ret0
