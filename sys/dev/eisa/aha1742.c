@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.42 2010/08/07 03:50:01 krw Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.43 2011/04/05 14:51:57 krw Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -266,12 +266,14 @@ struct ahb_softc {
 	int sc_irq;
 	void *sc_ih;
 
-	struct ahb_ecb *immed_ecb;	/* an outstanding immediete command */
+	struct ahb_ecb *immed_ecb;	/* an outstanding immediate command */
 	struct ahb_ecb *ecbhash[ECB_HASH_SIZE];
 	TAILQ_HEAD(, ahb_ecb) free_ecb;
 	int numecbs;
 	int ahb_scsi_dev;		/* our scsi id */
 	struct scsi_link sc_link;
+	struct mutex		sc_ecb_mtx;
+	struct scsi_iopool	sc_iopool;
 };
 
 void ahb_send_mbox(struct ahb_softc *, int, struct ahb_ecb *);
@@ -279,8 +281,8 @@ int ahb_poll(struct ahb_softc *, struct scsi_xfer *, int);
 void ahb_send_immed(struct ahb_softc *, int, u_long);
 int ahbintr(void *);
 void ahb_done(struct ahb_softc *, struct ahb_ecb *);
-void ahb_free_ecb(struct ahb_softc *, struct ahb_ecb *, int);
-struct ahb_ecb *ahb_get_ecb(struct ahb_softc *, int);
+void ahb_ecb_free(void *, void *);
+void *ahb_ecb_alloc(void *);
 struct ahb_ecb *ahb_ecb_phys_kv(struct ahb_softc *, physaddr);
 int ahb_find(bus_space_tag_t, bus_space_handle_t, struct ahb_softc *);
 void ahb_init(struct ahb_softc *);
@@ -484,6 +486,8 @@ ahbattach(parent, self, aux)
 
 	ahb_init(sc);
 	TAILQ_INIT(&sc->free_ecb);
+	mtx_init(&sc->sc_ecb_mtx, IPL_BIO);
+	scsi_iopool_init(&sc->sc_iopool, sc, ahb_ecb_alloc, ahb_ecb_free);
 
 	/*
 	 * fill in the prototype scsi_link.
@@ -492,6 +496,7 @@ ahbattach(parent, self, aux)
 	sc->sc_link.adapter_target = sc->ahb_scsi_dev;
 	sc->sc_link.adapter = &ahb_switch;
 	sc->sc_link.openings = 2;
+	sc->sc_link.pool = &sc->sc_iopool;
 
 	if (!strcmp(ea->ea_idstring, "ADP0000"))
 		model = EISA_PRODUCT_ADP0000;
@@ -586,7 +591,7 @@ ahbintr(arg)
 			ecb->flags |= ECB_IMMED_FAIL;
 		case AHB_IMMED_OK:
 			ecb = sc->immed_ecb;
-			sc->immed_ecb = 0;
+			sc->immed_ecb = NULL;
 			break;
 
 		default:
@@ -674,35 +679,24 @@ ahb_done(sc, ecb)
 			xs->resid = 0;
 	}
 done:
-	ahb_free_ecb(sc, ecb, xs->flags);
 	scsi_done(xs);
 }
 
 /*
- * A ecb (and hence a mbx-out is put onto the
- * free list.
+ * A ecb (and hence a mbx-out) is put onto the free list.
  */
 void
-ahb_free_ecb(sc, ecb, flags)
-	struct ahb_softc *sc;
-	struct ahb_ecb *ecb;
-	int flags;
+ahb_ecb_free(xsc, xecb)
+	void *xsc, *xecb;
 {
-	int s;
-
-	s = splbio();
+	struct ahb_softc *sc = xsc;
+	struct ahb_ecb *ecb = xecb;
 
 	ecb->flags = ECB_FREE;
+
+	mtx_enter(&sc->sc_ecb_mtx);
 	TAILQ_INSERT_HEAD(&sc->free_ecb, ecb, chain);
-
-	/*
-	 * If there were none, wake anybody waiting for one to come free,
-	 * starting with queued entries.
-	 */
-	if (TAILQ_NEXT(ecb, chain) == NULL)
-		wakeup(&sc->free_ecb);
-
-	splx(s);
+	mtx_leave(&sc->sc_ecb_mtx);
 }
 
 static inline void ahb_init_ecb(struct ahb_softc *, struct ahb_ecb *);
@@ -725,65 +719,24 @@ ahb_init_ecb(sc, ecb)
 	sc->ecbhash[hashnum] = ecb;
 }
 
-static inline void ahb_reset_ecb(struct ahb_softc *, struct ahb_ecb *);
-
-static inline void
-ahb_reset_ecb(sc, ecb)
-	struct ahb_softc *sc;
-	struct ahb_ecb *ecb;
-{
-
-}
-
 /*
  * Get a free ecb
- *
- * If there are none, see if we can allocate a new one. If so, put it in the
- * hash table too otherwise either return an error or sleep.
  */
-struct ahb_ecb *
-ahb_get_ecb(sc, flags)
-	struct ahb_softc *sc;
-	int flags;
+void *
+ahb_ecb_alloc(xsc)
+	void *xsc;
 {
+	struct ahb_softc *sc = xsc;
 	struct ahb_ecb *ecb;
-	int s;
 
-	s = splbio();
-
-	/*
-	 * If we can and have to, sleep waiting for one to come free
-	 * but only if we can't allocate a new one.
-	 */
-	for (;;) {
-		ecb = TAILQ_FIRST(&sc->free_ecb);
-		if (ecb) {
-			TAILQ_REMOVE(&sc->free_ecb, ecb, chain);
-			break;
-		}
-		if (sc->numecbs < AHB_ECB_MAX) {
-			ecb = (struct ahb_ecb *) malloc(sizeof(struct ahb_ecb),
-			    M_TEMP, M_NOWAIT);
-			if (ecb) {
-				ahb_init_ecb(sc, ecb);
-				sc->numecbs++;
-			} else {
-				printf("%s: can't malloc ecb\n",
-				    sc->sc_dev.dv_xname);
-				goto out;
-			}
-			break;
-		}
-		if ((flags & SCSI_NOSLEEP) != 0)
-			goto out;
-		tsleep(&sc->free_ecb, PRIBIO, "ahbecb", 0);
+	mtx_enter(&sc->sc_ecb_mtx);
+	ecb = TAILQ_FIRST(&sc->free_ecb);
+	if (ecb) {
+		TAILQ_REMOVE(&sc->free_ecb, ecb, chain);
+		ecb->flags = ECB_ACTIVE;
 	}
+	mtx_leave(&sc->sc_ecb_mtx);
 
-	ahb_reset_ecb(sc, ecb);
-	ecb->flags = ECB_ACTIVE;
-
-out:
-	splx(s);
 	return ecb;
 }
 
@@ -941,11 +894,8 @@ ahb_scsi_cmd(xs)
 	 * then we can't allow it to sleep
 	 */
 	flags = xs->flags;
-	if ((ecb = ahb_get_ecb(sc, flags)) == NULL) {
-		xs->error = XS_NO_CCB;
-		scsi_done(xs);
-		return;
-	}
+	ecb = xs->io;
+	ecb->flags = ECB_ACTIVE;
 	ecb->xs = xs;
 	timeout_set(&ecb->xs->stimeout, ahb_timeout, ecb);
 
@@ -958,7 +908,7 @@ ahb_scsi_cmd(xs)
 	if (flags & SCSI_RESET) {
 		ecb->flags |= ECB_IMMED;
 		if (sc->immed_ecb) {
-			xs->error = XS_NO_CCB;
+			xs->error = XS_BUSY;
 			scsi_done(xs);
 			return;
 		}
@@ -1062,7 +1012,6 @@ ahb_scsi_cmd(xs)
 			printf("%s: ahb_scsi_cmd, more than %d dma segs\n",
 			    sc->sc_dev.dv_xname, AHB_NSEG);
 			xs->error = XS_DRIVER_STUFFUP;
-			ahb_free_ecb(sc, ecb, flags);
 			scsi_done(xs);
 			return;
 		}
