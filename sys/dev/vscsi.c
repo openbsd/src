@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.21 2010/09/25 00:31:31 dlg Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.22 2011/04/05 15:28:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -455,6 +455,9 @@ vscsi_t2i(struct vscsi_softc *sc, struct vscsi_ioc_t2i *t2i)
 	case VSCSI_STAT_SENSE:
 		xs->error = XS_SENSE;
 		bcopy(&t2i->sense, &xs->sense, sizeof(xs->sense));
+		break;
+	case VSCSI_STAT_RESET:
+		xs->error = XS_RESET;
 		break;
 	case VSCSI_STAT_ERR:
 	default:
