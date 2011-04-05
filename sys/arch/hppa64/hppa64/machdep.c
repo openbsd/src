@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.30 2011/01/04 17:59:14 jasper Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.31 2011/04/05 14:13:25 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -189,6 +189,12 @@ hppa_init(paddr_t start)
 	delay_init();	/* calculate cpu clock ratio */
 
 	cpuid();
+
+	/* Enable wide mode for PSW defaults. */
+	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_PSW, PDC_PSW_SETDEFAULTS,
+	    0x2 /* PDC WIDE BIT */)) < 0)
+		panic("Failed to enable wide mode for PSW defaults: %d\n",
+		    error);
 
 	/* cache parameters */
 	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_CACHE, PDC_CACHE_DFLT,
