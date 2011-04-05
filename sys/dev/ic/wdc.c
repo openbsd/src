@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.109 2010/09/21 03:33:32 matthew Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.110 2011/04/05 12:06:09 deraadt Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -1960,9 +1960,7 @@ wdc_ioc_ata_cmd(struct ata_drive_datas *drvp, atareq_t *atareq)
 	bzero(&wdc_c, sizeof(wdc_c));
 
 	if (atareq->datalen > 0) {
-		/* XXX dma accessible */
-		wdc_c.data = malloc(atareq->datalen, M_TEMP,
-		    M_WAITOK | M_CANFAIL | M_ZERO);
+		wdc_c.data = dma_alloc(atareq->datalen, PR_NOWAIT | PR_ZERO);
 		if (wdc_c.data == NULL) {
 			err = ENOMEM;
 			goto err;
@@ -2034,7 +2032,7 @@ copyout:
 
 err:
 	if (wdc_c.data)
-		free(wdc_c.data, M_TEMP);
+		dma_free(wdc_c.data, atareq->datalen);
 	return (err);
 }
 
