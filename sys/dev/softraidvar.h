@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.98 2011/03/15 13:29:41 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.99 2011/04/05 19:52:02 krw Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -524,7 +524,9 @@ struct sr_discipline {
 	struct sr_wu_list	sd_wu_freeq;	/* free wu queue */
 	struct sr_wu_list	sd_wu_pendq;	/* pending wu queue */
 	struct sr_wu_list	sd_wu_defq;	/* deferred wu queue */
-	int			sd_wu_sleep;	/* wu sleepers counter */
+
+	struct mutex		sd_wu_mtx;
+	struct scsi_iopool	sd_iopool;
 
 	/* discipline stats */
 	int			sd_wu_pending;
@@ -604,8 +606,8 @@ struct sr_ccb		*sr_ccb_get(struct sr_discipline *);
 void			sr_ccb_put(struct sr_ccb *);
 int			sr_wu_alloc(struct sr_discipline *);
 void			sr_wu_free(struct sr_discipline *);
-struct sr_workunit	*sr_wu_get(struct sr_discipline *, int);
-void			sr_wu_put(struct sr_workunit *);
+void			*sr_wu_get(void *);
+void			sr_wu_put(void *, void *);
 
 /* misc functions */
 int32_t			sr_validate_stripsize(u_int32_t);

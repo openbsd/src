@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.22 2010/07/02 09:20:26 jsing Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.23 2011/04/05 19:52:02 krw Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -456,8 +456,6 @@ sr_raid0_intr(struct buf *bp)
 			printf("%s: wu: %p not on pending queue\n",
 			    DEVNAME(sc), wu);
 
-		/* do not change the order of these 2 functions */
-		sr_wu_put(wu);
 		sr_scsi_done(sd, xs);
 
 		if (sd->sd_sync && sd->sd_wu_pending == 0)
@@ -468,7 +466,6 @@ sr_raid0_intr(struct buf *bp)
 	return;
 bad:
 	xs->error = XS_DRIVER_STUFFUP;
-	sr_wu_put(wu);
 	sr_scsi_done(sd, xs);
 	splx(s);
 }

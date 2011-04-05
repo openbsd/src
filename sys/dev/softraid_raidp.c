@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.19 2010/08/07 03:50:01 krw Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.20 2011/04/05 19:52:02 krw Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -396,7 +396,7 @@ sr_raidp_rw(struct sr_workunit *wu)
 
 	if (xs->flags & SCSI_DATA_OUT)
 		/* create write workunit */
-		if ((wu_w = sr_wu_get(sd, 0)) == NULL) {
+		if ((wu_w = scsi_io_get(&sd->sd_iopool, SCSI_NOSLEEP)) == NULL){
 			printf("%s: can't get wu_w", DEVNAME(sd->sd_sc));
 			goto bad;
 		}
@@ -553,7 +553,7 @@ queued:
 bad:
 	/* wu is unwound by sr_wu_put */
 	if (wu_w)
-		sr_wu_put(wu_w);
+		scsi_io_put(&sd->sd_iopool, wu_w);
 	return (1);
 }
 
@@ -669,10 +669,10 @@ sr_raidp_intr(struct buf *bp)
 				wakeup(wu);
 			}
 		} else {
-			/* do not change the order of these 2 functions */
-			sr_wu_put(wu);
 			if (xs != NULL)
 				scsi_done(xs);
+			else
+				scsi_io_put(&sd->sd_iopool, wu);
 		}
 
 		if (sd->sd_sync && sd->sd_wu_pending == 0)
@@ -688,8 +688,6 @@ bad:
 		wu->swu_flags |= SR_WUF_REBUILDIOCOMP;
 		wakeup(wu);
 	} else {
-		/* do not change the order of these 2 functions */
-		sr_wu_put(wu);
 		scsi_done(xs);
 	}
 
@@ -831,9 +829,9 @@ sr_raidp_scrub(struct sr_discipline *sd)
 	int s, slept;
 	void *xorbuf;
 
-	if ((wu_r = sr_wu_get(sd, 1)) == NULL)
+	if ((wu_w = scsi_io_get(&sd->sd_iopool, 0)) == NULL)
 		goto done;
-	if ((wu_w = sr_wu_get(sd, 1)) == NULL)
+	if ((wu_r = scsi_io_get(&sd->sd_iopool, 0)) == NULL)
 		goto done;
 
 	no_chunk = sd->sd_meta->ssdi.ssd_chunk_no - 1;

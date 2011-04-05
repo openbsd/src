@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.63 2011/03/06 21:41:57 stsp Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.64 2011/04/05 19:52:02 krw Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -1345,8 +1345,6 @@ sr_crypto_finish_io(struct sr_workunit *wu)
 		sr_crypto_putcryptop(ccb->ccb_opaque);
 	}
 
-	/* do not change the order of these 2 functions */
-	sr_wu_put(wu);
 	sr_scsi_done(sd, xs);
 
 	if (sd->sd_sync && sd->sd_wu_pending == 0)

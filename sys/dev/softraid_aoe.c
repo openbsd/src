@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.17 2010/07/02 15:49:25 krw Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.18 2011/04/05 19:52:02 krw Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -576,9 +576,6 @@ sr_aoe_input(struct aoe_handler *ah, struct mbuf *m)
 				break;
 			}
 		}
-
-		/* do not change the order of these 2 functions */
-		sr_wu_put(wu);
 		sr_scsi_done(sd, xs);
 	}
 

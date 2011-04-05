@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.222 2011/03/15 13:29:41 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.223 2011/04/05 19:52:02 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1805,7 +1805,7 @@ sr_wu_alloc(struct sr_discipline *sd)
 	for (i = 0; i < no_wu; i++) {
 		wu = &sd->sd_wu[i];
 		wu->swu_dis = sd;
-		sr_wu_put(wu);
+		sr_wu_put(sd, wu);
 	}
 
 	return (0);
@@ -1833,9 +1833,10 @@ sr_wu_free(struct sr_discipline *sd)
 }
 
 void
-sr_wu_put(struct sr_workunit *wu)
+sr_wu_put(void *xsd, void *xwu)
 {
-	struct sr_discipline	*sd = wu->swu_dis;
+	struct sr_discipline	*sd = (struct sr_discipline *)xsd;
+	struct sr_workunit	*wu = (struct sr_workunit *)xwu;
 	struct sr_ccb		*ccb;
 
 	int			s;
@@ -1843,65 +1844,37 @@ sr_wu_put(struct sr_workunit *wu)
 	DNPRINTF(SR_D_WU, "%s: sr_wu_put: %p\n", DEVNAME(sd->sd_sc), wu);
 
 	s = splbio();
-
-	wu->swu_xs = NULL;
-	wu->swu_state = SR_WU_FREE;
-	wu->swu_ios_complete = 0;
-	wu->swu_ios_failed = 0;
-	wu->swu_ios_succeeded = 0;
-	wu->swu_io_count = 0;
-	wu->swu_blk_start = 0;
-	wu->swu_blk_end = 0;
-	wu->swu_collider = NULL;
-	wu->swu_fake = 0;
-	wu->swu_flags = 0;
-
 	if (wu->swu_cb_active == 1)
-		panic("%s: sr_wu_put", DEVNAME(sd->sd_sc));
+		panic("%s: sr_wu_put got active wu", DEVNAME(sd->sd_sc));
 	while ((ccb = TAILQ_FIRST(&wu->swu_ccb)) != NULL) {
 		TAILQ_REMOVE(&wu->swu_ccb, ccb, ccb_link);
 		sr_ccb_put(ccb);
 	}
-	TAILQ_INIT(&wu->swu_ccb);
+	splx(s);
 
+	bzero(wu, sizeof(*wu));
+	TAILQ_INIT(&wu->swu_ccb);
+	wu->swu_dis = sd;
+
+	mtx_enter(&sd->sd_wu_mtx);
 	TAILQ_INSERT_TAIL(&sd->sd_wu_freeq, wu, swu_link);
 	sd->sd_wu_pending--;
-
-	/* wake up sleepers */
-#ifdef DIAGNOSTIC
-	if (sd->sd_wu_sleep < 0)
-		panic("negative wu sleepers");
-#endif /* DIAGNOSTIC */
-	if (sd->sd_wu_sleep)
-		wakeup(&sd->sd_wu_sleep);
-
-	splx(s);
+	mtx_leave(&sd->sd_wu_mtx);
 }
 
-struct sr_workunit *
-sr_wu_get(struct sr_discipline *sd, int canwait)
+void *
+sr_wu_get(void *xsd)
 {
+	struct sr_discipline	*sd = (struct sr_discipline *)xsd;
 	struct sr_workunit	*wu;
-	int			s;
 
-	s = splbio();
-
-	for (;;) {
-		wu = TAILQ_FIRST(&sd->sd_wu_freeq);
-		if (wu) {
-			TAILQ_REMOVE(&sd->sd_wu_freeq, wu, swu_link);
-			wu->swu_state = SR_WU_INPROGRESS;
-			sd->sd_wu_pending++;
-			break;
-		} else if (wu == NULL && canwait) {
-			sd->sd_wu_sleep++;
-			tsleep(&sd->sd_wu_sleep, PRIBIO, "sr_wu_get", 0);
-			sd->sd_wu_sleep--;
-		} else
-			break;
+	mtx_enter(&sd->sd_wu_mtx);
+	wu = TAILQ_FIRST(&sd->sd_wu_freeq);
+	if (wu) {
+		TAILQ_REMOVE(&sd->sd_wu_freeq, wu, swu_link);
+		sd->sd_wu_pending++;
 	}
-
-	splx(s);
+	mtx_leave(&sd->sd_wu_mtx);
 
 	DNPRINTF(SR_D_WU, "%s: sr_wu_get: %p\n", DEVNAME(sd->sd_sc), wu);
 
@@ -1924,6 +1897,7 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 	struct sr_softc		*sc = link->adapter_softc;
 	struct sr_workunit	*wu = NULL;
 	struct sr_discipline	*sd;
+	struct sr_ccb		*ccb;
 
 	DNPRINTF(SR_D_CMD, "%s: sr_scsi_cmd: scsibus%d xs: %p "
 	    "flags: %#x\n", DEVNAME(sc), link->scsibus, xs, xs->flags);
@@ -1949,18 +1923,21 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 		goto stuffup;
 	}
 
-	/*
-	 * we'll let the midlayer deal with stalls instead of being clever
-	 * and sending sr_wu_get !(xs->flags & SCSI_NOSLEEP) in cansleep
-	 */
-	if ((wu = sr_wu_get(sd, 0)) == NULL) {
-		DNPRINTF(SR_D_CMD, "%s: sr_scsi_cmd no wu\n", DEVNAME(sc));
-		xs->error = XS_NO_CCB;
-		sr_scsi_done(sd, xs);
-		return;
+	wu = xs->io;
+	/* scsi layer *can* re-send wu without calling sr_wu_put(). */
+	s = splbio();
+	if (wu->swu_cb_active == 1)
+		panic("%s: sr_scsi_cmd got active wu", DEVNAME(sd->sd_sc));
+	while ((ccb = TAILQ_FIRST(&wu->swu_ccb)) != NULL) {
+		TAILQ_REMOVE(&wu->swu_ccb, ccb, ccb_link);
+		sr_ccb_put(ccb);
 	}
+	splx(s);
 
-	xs->error = XS_NOERROR;
+	bzero(wu, sizeof(*wu));
+	TAILQ_INIT(&wu->swu_ccb);
+	wu->swu_state = SR_WU_INPROGRESS;
+	wu->swu_dis = sd;
 	wu->swu_xs = xs;
 
 	/* the midlayer will query LUNs so report sense to stop scanning */
@@ -2049,8 +2026,6 @@ stuffup:
 		xs->error = XS_DRIVER_STUFFUP;
 	}
 complete:
-	if (wu)
-		sr_wu_put(wu);
 	sr_scsi_done(sd, xs);
 }
 int
@@ -3042,6 +3017,8 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		}
 
 		/* setup scsi midlayer */
+		mtx_init(&sd->sd_wu_mtx, IPL_BIO);
+		scsi_iopool_init(&sd->sd_iopool, sd, sr_wu_get, sr_wu_put);
 		if (sd->sd_openings)
 			sd->sd_link.openings = sd->sd_openings(sd);
 		else
@@ -3051,6 +3028,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		sd->sd_link.adapter = &sr_switch;
 		sd->sd_link.adapter_target = SR_MAX_LD;
 		sd->sd_link.adapter_buswidth = 1;
+		sd->sd_link.pool = &sd->sd_iopool;
 		bzero(&saa, sizeof(saa));
 		saa.saa_sc_link = &sd->sd_link;
 
@@ -3954,9 +3932,9 @@ sr_rebuild_thread(void *arg)
 		lba = blk * sz;
 
 		/* get some wu */
-		if ((wu_r = sr_wu_get(sd, 1)) == NULL)
+		if ((wu_r = scsi_io_get(&sd->sd_iopool, 0)) == NULL)
 			panic("%s: rebuild exhausted wu_r", DEVNAME(sc));
-		if ((wu_w = sr_wu_get(sd, 1)) == NULL)
+		if ((wu_w = scsi_io_get(&sd->sd_iopool, 0)) == NULL)
 			panic("%s: rebuild exhausted wu_w", DEVNAME(sc));
 
 		/* setup read io */
@@ -4026,8 +4004,8 @@ queued:
 		if (slept == 0)
 			tsleep(sc, PWAIT, "sr_yield", 1);
 
-		sr_wu_put(wu_r);
-		sr_wu_put(wu_w);
+		scsi_io_put(&sd->sd_iopool, wu_r);
+		scsi_io_put(&sd->sd_iopool, wu_w);
 
 		sd->sd_meta->ssd_rebuild = lba;
 
