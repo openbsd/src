@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.134 2011/04/02 18:16:50 oga Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.135 2011/04/05 21:14:00 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -368,6 +368,7 @@ x86_64_proc0_tss_ldt_init(void)
 
 	cpu_info_primary.ci_curpcb = pcb = &proc0.p_addr->u_pcb;
 	pcb->pcb_cr0 = rcr0();
+	pcb->pcb_fsbase = 0;
 	pcb->pcb_kstack = (u_int64_t)proc0.p_addr + USPACE - 16;
 	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_kstack - 1;
 
@@ -999,6 +1000,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
 		fpusave_proc(p, 0);
 	p->p_md.md_flags &= ~MDP_USEDFPU;
+	p->p_addr->u_pcb.pcb_fsbase = 0;
 
 	tf = p->p_md.md_regs;
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
