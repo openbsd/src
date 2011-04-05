@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar_common.h,v 1.28 2010/07/23 07:47:13 jsg Exp $ */
+/*	$OpenBSD: siopvar_common.h,v 1.29 2011/04/05 22:37:39 dlg Exp $ */
 /*	$NetBSD: siopvar_common.h,v 1.33 2005/11/18 23:10:32 bouyer Exp $ */
 
 /*
@@ -79,6 +79,7 @@ struct siop_common_cmd {
 	struct siop_common_target *siop_target; /* pointer to our target def */
 	struct scsi_xfer *xs; /* xfer from the upper level */
 	struct siop_common_xfer *siop_tables; /* tables for this cmd */
+	struct scsi_sense_data *sense;
 	bus_addr_t	dsa; /* DSA value to load */
 	bus_dmamap_t	dmamap_data;
 	int status;

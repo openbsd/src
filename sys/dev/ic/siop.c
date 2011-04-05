@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.63 2010/07/23 07:47:13 jsg Exp $ */
+/*	$OpenBSD: siop.c,v 1.64 2011/04/05 22:37:39 dlg Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -97,6 +97,9 @@ struct siop_lunsw *siop_get_lunsw(struct siop_softc *);
 void	siop_add_reselsw(struct siop_softc *, int);
 void	siop_update_scntl3(struct siop_softc *, struct siop_common_target *);
 
+struct siop_dmamem *siop_dmamem_alloc(struct siop_softc *, size_t);
+void	siop_dmamem_free(struct siop_softc *, struct siop_dmamem *);
+
 struct cfdriver siop_cd = {
 	NULL, "siop", DV_DULL
 };
@@ -132,8 +135,9 @@ siop_table_sync(siop_cmd, ops)
 	bus_addr_t offset;
 
 	offset = siop_cmd->cmd_c.dsa -
-	    siop_cmd->siop_cbdp->xferdma->dm_segs[0].ds_addr;
-	bus_dmamap_sync(sc->sc_dmat, siop_cmd->siop_cbdp->xferdma, offset,
+	    SIOP_DMA_DVA(siop_cmd->siop_cbdp->xfers);
+	bus_dmamap_sync(sc->sc_dmat,
+	    SIOP_DMA_MAP(siop_cmd->siop_cbdp->xfers), offset,
 	    sizeof(struct siop_xfer), ops);
 }
 
@@ -376,9 +380,9 @@ siop_intr(v)
 	siop_cmd = NULL;
 	dsa = bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_DSA);
 	TAILQ_FOREACH(cbdp, &sc->cmds, next) {
-		if (dsa >= cbdp->xferdma->dm_segs[0].ds_addr &&
-	    	    dsa < cbdp->xferdma->dm_segs[0].ds_addr + PAGE_SIZE) {
-			dsa -= cbdp->xferdma->dm_segs[0].ds_addr;
+		if (dsa >= SIOP_DMA_DVA(cbdp->xfers) &&
+	    	    dsa < SIOP_DMA_DVA(cbdp->xfers) + PAGE_SIZE) {
+			dsa -= SIOP_DMA_DVA(cbdp->xfers);
 			siop_cmd = &cbdp->cmds[dsa / sizeof(struct siop_xfer)];
 			siop_table_sync(siop_cmd,
 			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
@@ -1164,8 +1168,9 @@ siop_scsicmd_end(siop_cmd)
 		cmd->length = sizeof(struct scsi_sense_data);
 		cmd->control = 0;
 		siop_cmd->cmd_c.flags &= ~CMDFL_TAG;
-		error = bus_dmamap_load(sc->sc_c.sc_dmat, siop_cmd->cmd_c.dmamap_data,
-		    &xs->sense, sizeof(struct scsi_sense_data),
+		error = bus_dmamap_load(sc->sc_c.sc_dmat,
+		    siop_cmd->cmd_c.dmamap_data,
+		    siop_cmd->cmd_c.sense, sizeof(struct scsi_sense_data),
 		    NULL, BUS_DMA_NOWAIT);
 		if (error) {
 			printf("%s: unable to load data DMA map "
@@ -1188,6 +1193,7 @@ siop_scsicmd_end(siop_cmd)
 		    0, siop_cmd->cmd_c.dmamap_data->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(sc->sc_c.sc_dmat, siop_cmd->cmd_c.dmamap_data);
+		bcopy(siop_cmd->cmd_c.sense, &xs->sense, sizeof(xs->sense));
 	}
 out:
 	siop_lun->lun_flags &= ~SIOP_LUNF_FULL;
@@ -1809,12 +1815,11 @@ siop_morecbd(sc)
 	struct siop_softc *sc;
 {
 	int error, off, i, j, s;
-	bus_dma_segment_t seg;
-	int rseg;
 	struct siop_cbd *newcbd;
-	struct siop_xfer *xfer;
+	struct siop_xfer *xfers, *xfer;
 	bus_addr_t dsa;
 	u_int32_t *scr;
+	size_t sense_size = roundup(sizeof(struct scsi_sense_data), 16);
 
 	/* allocate a new list head */
 	newcbd = malloc(sizeof(struct siop_cbd), M_DEVBUF, M_NOWAIT | M_ZERO);
@@ -1832,38 +1837,22 @@ siop_morecbd(sc)
 		    sc->sc_c.sc_dev.dv_xname);
 		goto bad3;
 	}
-	error = bus_dmamem_alloc(sc->sc_c.sc_dmat, PAGE_SIZE, PAGE_SIZE, 0, &seg,
-	    1, &rseg, BUS_DMA_NOWAIT);
-	if (error) {
-		printf("%s: unable to allocate cbd DMA memory, error = %d\n",
-		    sc->sc_c.sc_dev.dv_xname, error);
+
+	newcbd->xfers = siop_dmamem_alloc(sc, PAGE_SIZE);
+	if (newcbd->xfers == NULL) {
+		printf("%s: unable to allocate cbd xfer DMA memory\n",
+		    sc->sc_c.sc_dev.dv_xname);
 		goto bad2;
 	}
-	error = bus_dmamem_map(sc->sc_c.sc_dmat, &seg, rseg, PAGE_SIZE,
-	    (caddr_t *)&newcbd->xfers, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-	if (error) {
-		printf("%s: unable to map cbd DMA memory, error = %d\n",
-		    sc->sc_c.sc_dev.dv_xname, error);
-		goto bad2;
-	}
-	error = bus_dmamap_create(sc->sc_c.sc_dmat, PAGE_SIZE, 1, PAGE_SIZE, 0,
-	    BUS_DMA_NOWAIT, &newcbd->xferdma);
-	if (error) {
-		printf("%s: unable to create cbd DMA map, error = %d\n",
-		    sc->sc_c.sc_dev.dv_xname, error);
+	xfers = SIOP_DMA_KVA(newcbd->xfers);
+
+	newcbd->sense = siop_dmamem_alloc(sc, sense_size * SIOP_NCMDPB);
+	if (newcbd->sense == NULL) {
+		printf("%s: unable to allocate cbd sense DMA memory\n",
+		    sc->sc_c.sc_dev.dv_xname);
 		goto bad1;
 	}
-	error = bus_dmamap_load(sc->sc_c.sc_dmat, newcbd->xferdma, newcbd->xfers,
-	    PAGE_SIZE, NULL, BUS_DMA_NOWAIT);
-	if (error) {
-		printf("%s: unable to load cbd DMA map, error = %d\n",
-		    sc->sc_c.sc_dev.dv_xname, error);
-		goto bad0;
-	}
-#ifdef SIOP_DEBUG
-	printf("%s: alloc newcdb at PHY addr 0x%lx\n", sc->sc_c.sc_dev.dv_xname,
-	    (unsigned long)newcbd->xferdma->dm_segs[0].ds_addr);
-#endif
+
 	for (i = 0; i < SIOP_NCMDPB; i++) {
 		error = bus_dmamap_create(sc->sc_c.sc_dmat, MAXPHYS, SIOP_NSG,
 		    MAXPHYS, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
@@ -1881,13 +1870,16 @@ siop_morecbd(sc)
 	for (i = 0; i < SIOP_NCMDPB; i++) {
 		newcbd->cmds[i].cmd_c.siop_sc = &sc->sc_c;
 		newcbd->cmds[i].siop_cbdp = newcbd;
-		xfer = &newcbd->xfers[i];
+		xfer = &xfers[i];
 		newcbd->cmds[i].cmd_tables = (struct siop_common_xfer *)xfer;
 		bzero(newcbd->cmds[i].cmd_tables, sizeof(struct siop_xfer));
-		dsa = newcbd->xferdma->dm_segs[0].ds_addr +
+		dsa = SIOP_DMA_DVA(newcbd->xfers) +
 		    i * sizeof(struct siop_xfer);
 		newcbd->cmds[i].cmd_c.dsa = dsa;
 		newcbd->cmds[i].cmd_c.status = CMDST_FREE;
+		newcbd->cmds[i].cmd_c.sense = (struct scsi_sense_data *)(
+		    i * sense_size +
+		    (u_int8_t *)SIOP_DMA_KVA(newcbd->sense));
 		xfer->siop_tables.t_msgout.count= siop_htoc32(&sc->sc_c, 1);
 		xfer->siop_tables.t_msgout.addr = siop_htoc32(&sc->sc_c, dsa);
 		xfer->siop_tables.t_msgin.count= siop_htoc32(&sc->sc_c, 1);
@@ -1949,10 +1941,13 @@ siop_morecbd(sc)
 	splx(s);
 	return;
 bad0:
-	bus_dmamap_unload(sc->sc_c.sc_dmat, newcbd->xferdma);
-	bus_dmamap_destroy(sc->sc_c.sc_dmat, newcbd->xferdma);
+	while (--i >= 0) {
+		bus_dmamap_destroy(sc->sc_c.sc_dmat,
+		    newcbd->cmds[i].cmd_c.dmamap_data);
+	}
+	siop_dmamem_free(sc, newcbd->sense);
 bad1:
-	bus_dmamem_free(sc->sc_c.sc_dmat, &seg, rseg);
+	siop_dmamem_free(sc, newcbd->xfers);
 bad2:
 	free(newcbd->cmds, M_DEVBUF);
 bad3:
@@ -2229,3 +2224,56 @@ siop_printstats()
 	printf("siop_stat_intr_qfull %d\n", siop_stat_intr_qfull);
 }
 #endif
+
+struct siop_dmamem *
+siop_dmamem_alloc(struct siop_softc *sc, size_t size)
+{
+	struct siop_dmamem *sdm;
+	int nsegs;
+
+	sdm = malloc(sizeof(*sdm), M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (sdm == NULL)
+		return (NULL);
+
+	sdm->sdm_size = size;
+
+	if (bus_dmamap_create(sc->sc_c.sc_dmat, size, 1, size, 0,
+	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &sdm->sdm_map) != 0)
+		goto sdmfree;
+
+	if (bus_dmamem_alloc(sc->sc_c.sc_dmat, size, PAGE_SIZE, 0,
+	    &sdm->sdm_seg, 1, &nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO) != 0)
+		goto destroy;
+
+	if (bus_dmamem_map(sc->sc_c.sc_dmat, &sdm->sdm_seg, nsegs, size,
+	    &sdm->sdm_kva, BUS_DMA_NOWAIT | BUS_DMA_COHERENT) != 0)
+		goto free;
+
+	if (bus_dmamap_load(sc->sc_c.sc_dmat, sdm->sdm_map, sdm->sdm_kva,
+	    size, NULL, BUS_DMA_NOWAIT) != 0)
+		goto unmap;
+
+	return (sdm);
+
+unmap:
+	bus_dmamem_unmap(sc->sc_c.sc_dmat, sdm->sdm_kva, size);
+free:
+	bus_dmamem_free(sc->sc_c.sc_dmat, &sdm->sdm_seg, 1);
+destroy:
+	bus_dmamap_destroy(sc->sc_c.sc_dmat, sdm->sdm_map);
+sdmfree:
+	free(sdm, M_DEVBUF);
+
+	return (NULL);
+}
+
+void
+siop_dmamem_free(struct siop_softc *sc, struct siop_dmamem *sdm)
+{
+	bus_dmamap_unload(sc->sc_c.sc_dmat, sdm->sdm_map);
+	bus_dmamem_unmap(sc->sc_c.sc_dmat, sdm->sdm_kva, sdm->sdm_size);
+	bus_dmamem_free(sc->sc_c.sc_dmat, &sdm->sdm_seg, 1);
+	bus_dmamap_destroy(sc->sc_c.sc_dmat, sdm->sdm_map);
+	free(sdm, M_DEVBUF);
+}
+
