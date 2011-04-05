@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.32 2011/04/05 01:41:03 pirofti Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.33 2011/04/05 15:44:40 pirofti Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*-
@@ -46,6 +46,7 @@
 
 #include <sys/mman.h>
 #include <sys/syscallargs.h>
+#include <sys/signalvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -173,6 +174,18 @@ linux_e_proc_exec(struct proc *p, struct exec_package *epp)
 void
 linux_e_proc_exit(struct proc *p)
 {
+	struct linux_emuldata *emul = p->p_emuldata;
+
+	if (emul->my_clear_tid) {
+		pid_t zero = 0;
+
+		if (copyout(&zero, emul->my_clear_tid, sizeof(zero)))
+			psignal(p, SIGSEGV);
+		/* 
+		 * not yet: futex(my_clear_tid, FUTEX_WAKE, 1, NULL, NULL, 0)
+		 */
+	}
+
 	/* free Linux emuldata and set the pointer to null */
 	free(p->p_emuldata, M_EMULDATA);
 	p->p_emuldata = NULL;
@@ -184,15 +197,18 @@ linux_e_proc_exit(struct proc *p)
 void
 linux_e_proc_fork(struct proc *p, struct proc *parent)
 {
-	/*
-	 * It could be desirable to copy some stuff from parent's
-	 * emuldata. We don't need anything like that for now.
-	 * So just allocate new emuldata for the new process.
-	 */
+	struct linux_emuldata *emul = p->p_emuldata;
+	struct linux_emuldata *p_emul = parent->p_emuldata;
+
+	/* Allocate new emuldata for the new process. */
 	p->p_emuldata = NULL;
 
 	/* fork, use parent's vmspace (our vmspace may not be setup yet) */
 	linux_e_proc_init(p, parent->p_vmspace);
+
+	emul->my_set_tid = p_emul->child_set_tid;
+	emul->my_clear_tid = p_emul->child_clear_tid;
+	emul->my_tls_base = p_emul->child_tls_base;
 }
 
 static void *

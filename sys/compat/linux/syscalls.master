@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.54 2011/04/04 21:50:41 pirofti Exp $
+	$OpenBSD: syscalls.master,v 1.55 2011/04/05 15:44:40 pirofti Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -212,7 +212,8 @@
 			    caddr_t ptr); }
 118	NOARGS		{ int sys_fsync(int fd); }
 119	STD		{ int linux_sys_sigreturn(struct linux_sigcontext *scp); }
-120	STD		{ int linux_sys_clone(int flags, void *stack); }
+120	STD		{ int linux_sys_clone(int flags, void *stack, \
+			    void *parent_tidptr, void *tls, void *child_tidptr); }
 121	NOARGS		{ int compat_09_sys_setdomainname(char *name, \
 			    int len); }
 122	STD		{ int linux_sys_uname(struct linux_utsname *up); }
@@ -400,7 +401,7 @@
 255	UNIMPL		linux_sys_epoll_ctl
 256	UNIMPL		linux_sys_epoll_wait
 257	UNIMPL		linux_sys_remap_file_pages
-258	UNIMPL		linux_sys_set_tid_address
+258	STD		{ int linux_sys_set_tid_address(void *tidptr); }
 259	UNIMPL		linux_sys_timer_create
 260	UNIMPL		linux_sys_timer_settime
 261	UNIMPL		linux_sys_timer_gettime
