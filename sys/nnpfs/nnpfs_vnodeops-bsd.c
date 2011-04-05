@@ -180,7 +180,6 @@ int
 nnpfs_seek(struct vop_seek_args * ap)
      /*
 struct vop_seek_args {
-        struct vnodeop_desc *a_desc;
         struct vnode *a_vp;
         off_t a_oldoff;
         off_t a_newoff;
@@ -262,7 +261,6 @@ struct vnode *vp,
 int
 nnpfs_lookup(struct vop_lookup_args * ap)
      /* struct vop_lookup_args {
-	struct vnodeop_desc *a_desc;
 	struct vnode *a_dvp;
 	struct vnode **a_vpp;
 	struct componentname *a_cnp;
@@ -323,7 +321,6 @@ nnpfs_lookup(struct vop_lookup_args * ap)
 int
 nnpfs_cachedlookup(struct vop_cachedlookup_args * ap)
      /* struct vop_cachedlookup_args {
-	struct vnodeop_desc *a_desc;
 	struct vnode *a_dvp;
 	struct vnode **a_vpp;
 	struct componentname *a_cnp;
@@ -752,7 +749,6 @@ nnpfs_inactive(struct vop_inactive_args * ap)
 int
 nnpfs_reclaim(struct vop_reclaim_args * ap)
      /*struct vop_reclaim_args {
-	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
 };*/
 {
@@ -1348,7 +1344,6 @@ int
 nnpfs_pathconf(struct vop_pathconf_args *ap)
 /*
 struct vop_pathconf_args {
-        struct vnodeop_desc *a_desc;
         struct vnode *a_vp;
         int a_name;
 };
@@ -1371,14 +1366,12 @@ vop_t **nnpfs_vnodeop_p;
 int
 nnpfs_eopnotsupp (struct vop_generic_args *ap)
 {
-    NNPFSDEB(XDEBVNOPS, ("nnpfs_eopnotsupp %s\n", ap->a_desc->vdesc_name));
     return EOPNOTSUPP;
 }
 
 int
 nnpfs_returnzero (struct vop_generic_args *ap)
 {
-    NNPFSDEB(XDEBVNOPS, ("nnpfs_returnzero %s\n", ap->a_desc->vdesc_name));
     return 0;
 }
 
