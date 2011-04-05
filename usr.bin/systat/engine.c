@@ -1,4 +1,4 @@
-/* $Id: engine.c,v 1.13 2010/07/19 04:41:28 lum Exp $	 */
+/* $Id: engine.c,v 1.14 2011/04/05 07:35:32 mpf Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -69,6 +69,7 @@ volatile sig_atomic_t gotsig_resize = 0;
 volatile sig_atomic_t gotsig_alarm = 0;
 int need_update = 0;
 int need_sort = 0;
+int separate_thousands = 0;
 
 SCREEN *screen;
 
@@ -134,7 +135,60 @@ tbprintf(char *format, ...)
 		tb_ptr += len;
 		tb_len -= len;
 	}
-	
+
+	return len;
+}
+
+int
+tbprintft(char *format, ...)
+	GCC_PRINTFLIKE(1,2)       /* defined in curses.h */
+{
+	int len;
+	va_list arg;
+	char buf[MAX_LINE_BUF];
+
+	if (tb_ptr == NULL || tb_len <= 0)
+		return 0;
+
+	va_start(arg, format);
+	len = vsnprintf(buf, tb_len, format, arg);
+	va_end(arg);
+
+	if (len > tb_len)
+		tb_end();
+	else if (len > 0) {
+		int d, s;
+		int digits, curdigit;
+
+		if (!separate_thousands) {
+			strlcpy(tb_ptr, buf, tb_len);
+			return len;
+		}
+
+		/* count until we hit a non digit. (e.g. the prefix) */
+		for (digits = 0; digits < len; digits++)
+			if (!isdigit(buf[digits]))
+				break;
+
+		curdigit = digits;
+		d = s = 0;
+		/* insert thousands separators while copying */
+		while (curdigit && d < tb_len) {
+			if (curdigit < digits && curdigit % 3 == 0)
+				tb_ptr[d++] = ',';
+			tb_ptr[d++] = buf[s++];
+			curdigit--;
+		}
+		/* copy the remaining non-digits */
+		while (len > digits && d < tb_len) {
+			tb_ptr[d++] = buf[s++];
+			digits++;
+		}
+		tb_ptr[d] = '\0';
+		tb_ptr += d;
+		tb_len -= d;
+		len = d;
+	}
 	return len;
 }
 
@@ -672,33 +726,33 @@ print_fld_sdiv(field_def *fld, u_int64_t size, int d)
 		return;
 
 	tb_start();
-	if (tbprintf("%llu", size) <= len)
+	if (tbprintft("%llu", size) <= len)
 		goto ok;
 
 	tb_start();
 	size /= d;
-	if (tbprintf("%lluK", size) <= len)
-		goto ok;
-	if (size == 0)
-		goto err;
-
-	tb_start();
-	size /= d;
-	if (tbprintf("%lluM", size) <= len)
+	if (tbprintft("%lluK", size) <= len)
 		goto ok;
 	if (size == 0)
 		goto err;
 
 	tb_start();
 	size /= d;
-	if (tbprintf("%lluG", size) <= len)
+	if (tbprintft("%lluM", size) <= len)
 		goto ok;
 	if (size == 0)
 		goto err;
 
 	tb_start();
 	size /= d;
-	if (tbprintf("%lluT", size) <= len)
+	if (tbprintft("%lluG", size) <= len)
+		goto ok;
+	if (size == 0)
+		goto err;
+
+	tb_start();
+	size /= d;
+	if (tbprintft("%lluT", size) <= len)
 		goto ok;
 	
 err:
@@ -729,33 +783,33 @@ print_fld_ssdiv(field_def *fld, int64_t size, int d)
 		return;
 
 	tb_start();
-	if (tbprintf("%lld", size) <= len)
+	if (tbprintft("%lld", size) <= len)
 		goto ok;
 
 	tb_start();
 	size /= d;
-	if (tbprintf("%lldK", size) <= len)
-		goto ok;
-	if (size == 0)
-		goto err;
-
-	tb_start();
-	size /= d;
-	if (tbprintf("%lldM", size) <= len)
+	if (tbprintft("%lldK", size) <= len)
 		goto ok;
 	if (size == 0)
 		goto err;
 
 	tb_start();
 	size /= d;
-	if (tbprintf("%lldG", size) <= len)
+	if (tbprintft("%lldM", size) <= len)
 		goto ok;
 	if (size == 0)
 		goto err;
 
 	tb_start();
 	size /= d;
-	if (tbprintf("%lldT", size) <= len)
+	if (tbprintft("%lldG", size) <= len)
+		goto ok;
+	if (size == 0)
+		goto err;
+
+	tb_start();
+	size /= d;
+	if (tbprintft("%lldT", size) <= len)
 		goto ok;
 
 err:
@@ -806,7 +860,7 @@ print_fld_uint(field_def *fld, unsigned int size)
 		return;
 
 	tb_start();
-	if (tbprintf("%u", size) > len)
+	if (tbprintft("%u", size) > len)
 		print_fld_str(fld, "*");
 	else
 		print_fld_tb(fld);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.90 2011/01/18 03:38:05 lum Exp $
+.\"	$OpenBSD: systat.1,v 1.91 2011/04/05 07:35:32 mpf Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: January 18 2011 $
+.Dd $Mdocdate: April 5 2011 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -175,6 +175,8 @@ Quit
 .Nm .
 .It Ic r
 Reverse the selected ordering if supported by the view.
+.It Ic \&,
+Print numbers with thousand separators, where applicable.
 .It Ic ^A \*(Ba Aq Ic Home
 Jump to the beginning of the current view.
 .It Ic ^B \*(Ba Aq Ic right arrow
@@ -257,6 +259,9 @@ represent whether the interface is connected or not;
 in the case of
 .Xr carp 4
 interfaces, whether the interface is in master or backup state, respectively.
+The character
+.Ic B
+changes the counter view between bytes and bits.
 .\"See below for more options.
 .It Ic iostat
 Display statistics about disk throughput.

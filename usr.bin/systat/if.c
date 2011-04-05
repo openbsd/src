@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.19 2011/03/02 06:48:17 jasper Exp $ */
+/*	$OpenBSD: if.c,v 1.20 2011/04/05 07:35:32 mpf Exp $ */
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
  *
@@ -44,6 +44,7 @@ struct ifstat {
 
 static	int nifs = 0;
 static int num_ifs = 0;
+static int show_bits = 0;
 
 void print_if(void);
 int read_if(void);
@@ -288,6 +289,9 @@ fetchifstat(void)
 static void
 showifstat(struct ifstat *ifs)
 {
+	int conv = show_bits ? 8 : 1;
+	int div = show_bits ? 1000 : 1024;
+
 	print_fld_str(FLD_IF_IFACE, ifs->ifs_name);
 
 	tb_start();
@@ -309,11 +313,11 @@ showifstat(struct ifstat *ifs)
 
 	print_fld_str(FLD_IF_DESC, ifs->ifs_description);
 
-	print_fld_size(FLD_IF_IBYTES, ifs->ifs_cur.ifc_ib);
+	print_fld_sdiv(FLD_IF_IBYTES, ifs->ifs_cur.ifc_ib * conv, div);
 	print_fld_size(FLD_IF_IPKTS, ifs->ifs_cur.ifc_ip);
 	print_fld_size(FLD_IF_IERRS, ifs->ifs_cur.ifc_ie);
 
-	print_fld_size(FLD_IF_OBYTES, ifs->ifs_cur.ifc_ob);
+	print_fld_sdiv(FLD_IF_OBYTES, ifs->ifs_cur.ifc_ob * conv, div);
 	print_fld_size(FLD_IF_OPKTS, ifs->ifs_cur.ifc_op);
 	print_fld_size(FLD_IF_OERRS, ifs->ifs_cur.ifc_oe);
 
@@ -325,13 +329,16 @@ showifstat(struct ifstat *ifs)
 static void
 showtotal(void)
 {
+	int conv = show_bits ? 8 : 1;
+	int div = show_bits ? 1000 : 1024;
+
 	print_fld_str(FLD_IF_IFACE, "Totals");
 
-	print_fld_size(FLD_IF_IBYTES, sum.ifc_ib);
+	print_fld_sdiv(FLD_IF_IBYTES, sum.ifc_ib * conv, div);
 	print_fld_size(FLD_IF_IPKTS, sum.ifc_ip);
 	print_fld_size(FLD_IF_IERRS, sum.ifc_ie);
 
-	print_fld_size(FLD_IF_OBYTES, sum.ifc_ob);
+	print_fld_sdiv(FLD_IF_OBYTES, sum.ifc_ob * conv, div);
 	print_fld_size(FLD_IF_OPKTS, sum.ifc_op);
 	print_fld_size(FLD_IF_OERRS, sum.ifc_oe);
 
@@ -358,6 +365,17 @@ if_keyboard_callback(int ch)
 		state = BOOT;
 		for (ifs = ifstats; ifs < ifstats + nifs; ifs++)
 			bzero(&ifs->ifs_old, sizeof(ifs->ifs_old));
+		gotsig_alarm = 1;
+		break;
+	case 'B':
+		show_bits = !show_bits;
+		if (show_bits) {
+			FLD_IF_IBYTES->title = "IBITS";
+			FLD_IF_OBYTES->title = "OBITS";
+		} else {
+			FLD_IF_IBYTES->title = "IBYTES";
+			FLD_IF_OBYTES->title = "OBYTES";
+		}
 		gotsig_alarm = 1;
 		break;
 	case 't':

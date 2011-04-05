@@ -1,4 +1,4 @@
-/* $Id: engine.h,v 1.6 2010/07/16 05:22:48 lum Exp $	 */
+/* $Id: engine.h,v 1.7 2011/04/05 07:35:32 mpf Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -101,6 +101,7 @@ void tb_start(void);
 void tb_end(void);
 
 int tbprintf(char *format, ...) GCC_PRINTFLIKE(1,2);
+int tbprintft(char *format, ...) GCC_PRINTFLIKE(1,2);
 
 void end_line(void);
 void end_page(void);
@@ -155,6 +156,7 @@ extern int columns, lines;
 
 extern int need_update;
 extern int need_sort;
+extern int separate_thousands;
 
 extern volatile sig_atomic_t gotsig_close;
 extern volatile sig_atomic_t gotsig_resize;
