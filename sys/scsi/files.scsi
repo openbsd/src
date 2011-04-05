@@ -1,4 +1,4 @@
-#	$OpenBSD: files.scsi,v 1.22 2010/07/03 03:59:17 krw Exp $
+#	$OpenBSD: files.scsi,v 1.23 2011/04/05 14:25:42 dlg Exp $
 #	$NetBSD: files.scsi,v 1.4 1996/05/16 04:01:08 mycroft Exp $
 #
 # Config.new file and device description for machine-independent SCSI code.
@@ -39,3 +39,16 @@ file	scsi/safte.c			safte needs-flag
 device	ses: disk
 attach	ses at scsibus
 file	scsi/ses.c			ses needs-flag
+
+
+device	sym
+attach	sym at scsibus
+file	scsi/mpath_sym.c		sym
+
+device	rdac
+attach	rdac at scsibus
+file	scsi/mpath_rdac.c		rdac
+
+device	emc
+attach	emc at scsibus
+file	scsi/mpath_emc.c		emc

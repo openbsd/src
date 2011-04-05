@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.142 2010/12/24 02:45:33 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.143 2011/04/05 14:25:42 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -625,15 +625,6 @@ void	scsi_xsh_set(struct scsi_xshandler *, struct scsi_link *,
 	    void (*)(struct scsi_xfer *));
 void	scsi_xsh_add(struct scsi_xshandler *);
 void	scsi_xsh_del(struct scsi_xshandler *);
-
-/*
- * Entrypoints for multipathing
- */
-int	mpath_path_attach(struct scsi_link *);
-int	mpath_path_detach(struct scsi_link *, int);
-
-void	mpath_path_activate(struct scsi_link *);
-void	mpath_path_deactivate(struct scsi_link *);
 
 /*
  * Utility functions for SCSI HBA emulation.

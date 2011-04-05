@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.169 2011/03/31 18:42:48 jasper Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.170 2011/04/05 14:25:42 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -61,6 +61,7 @@
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+#include <scsi/mpathvar.h>
 
 #if NBIO > 0
 #include <sys/ioctl.h>
@@ -248,12 +249,7 @@ scsi_activate_lun(struct scsibus_softc *sc, int target, int lun, int act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		atomic_clearbits_int(&link->state, SDEV_S_DYING);
-#if NMPATH > 0
-		if (dev == NULL)
-			mpath_path_activate(link);
-		else
-#endif /* NMPATH */
-			config_activate(dev);
+		config_activate(dev);
 		break;
 	case DVACT_QUIESCE:
 	case DVACT_SUSPEND:
@@ -262,12 +258,7 @@ scsi_activate_lun(struct scsibus_softc *sc, int target, int lun, int act)
 		break;
 	case DVACT_DEACTIVATE:
 		atomic_setbits_int(&link->state, SDEV_S_DYING);
-#if NMPATH > 0
-		if (dev == NULL)
-			mpath_path_deactivate(link);
-		else
-#endif /* NMPATH */
-			config_deactivate(dev);
+		config_deactivate(dev);
 		break;
 	default:
 		break;
@@ -502,12 +493,7 @@ scsi_detach_lun(struct scsibus_softc *sc, int target, int lun, int flags)
 	scsi_link_shutdown(link);
 
 	/* 2. detach the device */
-#if NMPATH > 0
-	if (link->device_softc == NULL)
-		rv = mpath_path_detach(link, flags);
-	else
-#endif /* NMPATH */
-		rv = config_detach(link->device_softc, flags);
+	rv = config_detach(link->device_softc, flags);
 
 	if (rv != 0)
 		return (rv);
@@ -969,18 +955,6 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 		rslt = EINVAL;
 		goto free_devid;
 	}
-
-#if NMPATH > 0
-	/* should multipathing steal the link? */
-	if (mpath_path_attach(sc_link) == 0) {
-		printf("%s: path to", scsi->sc_dev.dv_xname);
-		scsibus_printlink(sc_link);
-		printf("\n");
-
-		scsi_add_link(scsi, sc_link);
-		return (0);
-	}
-#endif /* NMPATH */
 
 	finger = (const struct scsi_quirk_inquiry_pattern *)scsi_inqmatch(
 	    inqbuf, scsi_quirk_patterns,
