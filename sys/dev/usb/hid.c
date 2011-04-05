@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.c,v 1.22 2009/07/24 08:37:47 jsg Exp $ */
+/*	$OpenBSD: hid.c,v 1.23 2011/04/05 15:03:02 miod Exp $ */
 /*	$NetBSD: hid.c,v 1.23 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
@@ -421,7 +421,8 @@ hid_locate(void *desc, int size, u_int32_t u, u_int8_t id, enum hid_kind k,
 		}
 	}
 	hid_end_parse(d);
-	loc->size = 0;
+	if (loc != NULL)
+		loc->size = 0;
 	return (0);
 }
 
