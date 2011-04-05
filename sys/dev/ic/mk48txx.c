@@ -1,4 +1,4 @@
-/*	$OpenBSD: mk48txx.c,v 1.6 2010/06/09 15:47:14 miod Exp $	*/
+/*	$OpenBSD: mk48txx.c,v 1.7 2011/04/05 19:54:35 jasper Exp $	*/
 /*	$NetBSD: mk48txx.c,v 1.7 2001/04/08 17:05:10 tsutsui Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ mk48txx_attach(bt, bh, model, year0)
 
 	printf(": %s", model);
 
-	i = sizeof(mk48txx_models)/sizeof(mk48txx_models[0]);
+	i = nitems(mk48txx_models);
 	while (--i >= 0) {
 		if (strcmp(model, mk48txx_models[i].name) == 0) {
 			nvramsz = mk48txx_models[i].nvramsz;

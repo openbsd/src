@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.30 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.31 2011/04/05 19:54:35 jasper Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -1439,7 +1439,7 @@ cs4231_alloc(void *vsc, int direction, size_t size, int pool, int flags)
 	p->size = size;
 
 	if (bus_dmamem_alloc(dmat, size, 64*1024, 0, p->segs,
-	    sizeof(p->segs)/sizeof(p->segs[0]), &p->nsegs,
+	    nitems(p->segs), &p->nsegs,
 	    BUS_DMA_NOWAIT) != 0)
 		goto fail1;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_mem.c,v 1.22 2010/09/29 20:06:38 kettenis Exp $ */
+/*	$OpenBSD: usb_mem.c,v 1.23 2011/04/05 19:54:35 jasper Exp $ */
 /*	$NetBSD: usb_mem.c,v 1.26 2003/02/01 06:23:40 thorpej Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	p->size = size;
 	p->align = align;
 	error = bus_dmamem_alloc(tag, p->size, align, 0,
-				 p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
+				 p->segs, nitems(p->segs),
 				 &p->nsegs, BUS_DMA_NOWAIT);
 	if (error)
 		goto free0;

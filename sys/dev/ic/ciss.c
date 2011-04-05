@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.63 2010/09/20 06:17:49 krw Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.64 2011/04/05 19:54:35 jasper Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -1031,7 +1031,7 @@ ciss_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 			break;
 		bv->bv_percent = -1;
 		bv->bv_seconds = 0;
-		if (ldstat->stat < sizeof(ciss_stat)/sizeof(ciss_stat[0]))
+		if (ldstat->stat < nitems(ciss_stat))
 			bv->bv_status = ciss_stat[ldstat->stat];
 		if (bv->bv_status == BIOC_SVREBUILD ||
 		    bv->bv_status == BIOC_SVBUILDING)

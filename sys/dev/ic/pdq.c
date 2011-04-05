@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdq.c,v 1.14 2009/12/11 01:43:19 guenther Exp $	*/
+/*	$OpenBSD: pdq.c,v 1.15 2011/04/05 19:54:35 jasper Exp $	*/
 /*	$NetBSD: pdq.c,v 1.9 1996/10/13 01:37:26 christos Exp $	*/
 
 /*-
@@ -1456,14 +1456,14 @@ pdq_initialize(
      * Initialize the command information block
      */
     pdq->pdq_command_info.ci_pa_bufstart = PDQ_OS_VA_TO_PA(pdq, pdq->pdq_command_info.ci_bufstart);
-    for (idx = 0; idx < sizeof(pdq->pdq_dbp->pdqdb_command_requests)/sizeof(pdq->pdq_dbp->pdqdb_command_requests[0]); idx++) {
+    for (idx = 0; idx < nitems(pdq->pdq_dbp->pdqdb_command_requests); idx++) {
 	pdq_txdesc_t *txd = &pdq->pdq_dbp->pdqdb_command_requests[idx];
 
 	txd->txd_pa_lo = pdq->pdq_command_info.ci_pa_bufstart;
 	txd->txd_eop = txd->txd_sop = 1;
 	txd->txd_pa_hi = 0;
     }
-    for (idx = 0; idx < sizeof(pdq->pdq_dbp->pdqdb_command_responses)/sizeof(pdq->pdq_dbp->pdqdb_command_responses[0]); idx++) {
+    for (idx = 0; idx < nitems(pdq->pdq_dbp->pdqdb_command_responses); idx++) {
 	pdq_rxdesc_t *rxd = &pdq->pdq_dbp->pdqdb_command_responses[idx];
 
 	rxd->rxd_pa_lo = pdq->pdq_command_info.ci_pa_bufstart;
@@ -1477,7 +1477,7 @@ pdq_initialize(
      */
     pdq->pdq_unsolicited_info.ui_free = PDQ_NUM_UNSOLICITED_EVENTS;
     pdq->pdq_unsolicited_info.ui_pa_bufstart = PDQ_OS_VA_TO_PA(pdq, pdq->pdq_unsolicited_info.ui_events);
-    for (idx = 0; idx < sizeof(pdq->pdq_dbp->pdqdb_unsolicited_events)/sizeof(pdq->pdq_dbp->pdqdb_unsolicited_events[0]); idx++) {
+    for (idx = 0; idx < nitems(pdq->pdq_dbp->pdqdb_unsolicited_events); idx++) {
 	pdq_rxdesc_t *rxd = &pdq->pdq_dbp->pdqdb_unsolicited_events[idx];
 	pdq_unsolicited_event_t *event = &pdq->pdq_unsolicited_info.ui_events[idx & (PDQ_NUM_UNSOLICITED_EVENTS-1)];
 

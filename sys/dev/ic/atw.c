@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.75 2010/11/11 17:47:00 miod Exp $	*/
+/*	$OpenBSD: atw.c,v 1.76 2011/04/05 19:54:35 jasper Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -655,11 +655,11 @@ atw_attach(struct atw_softc *sc)
 	sc->sc_bbptype = MASK_AND_RSHIFT(sc->sc_srom[ATW_SR_CSR20],
 	    ATW_SR_BBPTYPE_MASK);
 
-	if (sc->sc_rftype >= sizeof(type_strings)/sizeof(type_strings[0])) {
+	if (sc->sc_rftype >= nitems(type_strings)) {
 		printf("%s: unknown RF\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	if (sc->sc_bbptype >= sizeof(type_strings)/sizeof(type_strings[0])) {
+	if (sc->sc_bbptype >= nitems(type_strings)) {
 		printf("%s: unknown BBP\n", sc->sc_dev.dv_xname);
 		return;
 	}
