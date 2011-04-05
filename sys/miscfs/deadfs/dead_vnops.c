@@ -1,4 +1,4 @@
-/*	$OpenBSD: dead_vnops.c,v 1.25 2010/12/21 20:14:43 thib Exp $	*/
+/*	$OpenBSD: dead_vnops.c,v 1.26 2011/04/05 14:14:07 thib Exp $	*/
 /*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
@@ -61,7 +61,6 @@ int	dead_print(void *);
 int	chkvnlock(struct vnode *);
 
 struct vops dead_vops = {
-	.vop_default	= eopnotsupp,
 	.vop_lookup	= vop_generic_lookup,
 	.vop_create	= dead_badop,
 	.vop_mknod	= dead_badop,

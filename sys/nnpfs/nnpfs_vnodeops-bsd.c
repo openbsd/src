@@ -1394,7 +1394,6 @@ nnpfs_pushdirty(struct vnode *vp, struct ucred *cred, d_thread_t *p)
 
 
 struct vops nnpfs_vops = {
-        .vop_default    = (vop_t *)nnpfs_eopnotsupp,
 #ifdef HAVE_VOP_LOOKUP
         .vop_lookup     = (vop_t *)nnpfs_lookup,
 #endif

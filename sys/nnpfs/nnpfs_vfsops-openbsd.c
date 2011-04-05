@@ -46,7 +46,6 @@ RCSID("$arla: nnpfs_vfsops-openbsd.c,v 1.16 2003/06/02 18:26:50 lha Exp $");
 
 
 struct vops nnpfs_deadvops = {
-	.vop_default	= (vop_t *)nnpfs_eopnotsupp,
 	.vop_lookup	= (vop_t *)nnpfs_dead_lookup,
 	.vop_reclaim	= (vop_t *)nnpfs_returnzero,
 	.vop_lock	= vop_generic_lock,

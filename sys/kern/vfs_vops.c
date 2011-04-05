@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vops.c,v 1.2 2010/09/08 10:50:27 thib Exp $	*/
+/*	$OpenBSD: vfs_vops.c,v 1.3 2011/04/05 14:14:07 thib Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org> 
  *
@@ -63,7 +63,7 @@ VOP_ISLOCKED(struct vnode *vp)
 	a.a_vp = vp;
 
 	if (vp->v_op->vop_islocked == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
 
 	return ((vp->v_op->vop_islocked)(&a));
 }
@@ -78,7 +78,7 @@ VOP_LOOKUP(struct vnode *dvp, struct vnode **vpp,
 	a.a_cnp = cnp;
 
 	if (dvp->v_op->vop_lookup == NULL)
-		return ((dvp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
 
 	return ((dvp->v_op->vop_lookup)(&a));
 }
@@ -96,7 +96,8 @@ VOP_CREATE(struct vnode *dvp, struct vnode **vpp,
 	ASSERT_VP_ISLOCKED(dvp);
 
 	if (dvp->v_op->vop_create == NULL)
-		return ((dvp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((dvp->v_op->vop_create)(&a));
 }
 
@@ -113,7 +114,8 @@ VOP_MKNOD(struct vnode *dvp, struct vnode **vpp,
 	ASSERT_VP_ISLOCKED(dvp);
 
 	if (dvp->v_op->vop_mknod == NULL)
-		return ((dvp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((dvp->v_op->vop_mknod)(&a));
 }
 
@@ -127,7 +129,8 @@ VOP_OPEN(struct vnode *vp, int mode, struct ucred *cred, struct proc *p)
 	a.a_p = p;
 
 	if (vp->v_op->vop_open == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_open)(&a));
 }
 
@@ -143,7 +146,8 @@ VOP_CLOSE(struct vnode *vp, int fflag, struct ucred *cred, struct proc *p)
 	ASSERT_VP_ISLOCKED(vp);
 
 	if (vp->v_op->vop_close == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_close)(&a));
 }
 
@@ -159,7 +163,8 @@ VOP_ACCESS(struct vnode *vp, int mode, struct ucred *cred, struct proc *p)
 	ASSERT_VP_ISLOCKED(vp);
 
 	if (vp->v_op->vop_access == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_access)(&a));
 }
 
@@ -174,7 +179,8 @@ VOP_GETATTR(struct vnode *vp, struct vattr *vap, struct ucred *cred,
 	a.a_p = p;
 
 	if (vp->v_op->vop_getattr == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_getattr)(&a));
 }
 
@@ -191,7 +197,8 @@ VOP_SETATTR(struct vnode *vp, struct vattr *vap, struct ucred *cred,
 	ASSERT_VP_ISLOCKED(vp);
 
 	if (vp->v_op->vop_setattr == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_setattr)(&a));
 }
 
@@ -207,7 +214,8 @@ VOP_READ(struct vnode *vp, struct uio *uio, int ioflag, struct ucred *cred)
 	ASSERT_VP_ISLOCKED(vp);
 
 	if (vp->v_op->vop_read == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_read)(&a));
 }
 
@@ -224,7 +232,8 @@ VOP_WRITE(struct vnode *vp, struct uio *uio, int ioflag,
 	ASSERT_VP_ISLOCKED(vp);
 
 	if (vp->v_op->vop_write == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_write)(&a));
 }
 
@@ -241,8 +250,10 @@ VOP_IOCTL(struct vnode *vp, u_long command, void *data, int fflag,
 	a.a_p = p;
 
 	if (vp->v_op->vop_ioctl == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_ioctl)(&a));
+
 }
 
 int
@@ -254,7 +265,8 @@ VOP_POLL(struct vnode *vp, int events, struct proc *p)
 	a.a_p = p;
 
 	if (vp->v_op->vop_poll == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_poll)(&a));
 }
 
@@ -266,7 +278,8 @@ VOP_KQFILTER(struct vnode *vp, struct knote *kn)
 	a.a_kn = kn;
 
 	if (vp->v_op->vop_kqfilter == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_kqfilter)(&a));
 }
 
@@ -278,7 +291,8 @@ VOP_REVOKE(struct vnode *vp, int flags)
 	a.a_flags = flags;
 
 	if (vp->v_op->vop_revoke == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_revoke)(&a));
 }
 
@@ -295,7 +309,8 @@ VOP_FSYNC(struct vnode *vp, struct ucred *cred, int waitfor,
 	ASSERT_VP_ISLOCKED(vp);
 
 	if (vp->v_op->vop_fsync == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_fsync)(&a));
 }
 
@@ -311,7 +326,8 @@ VOP_REMOVE(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	ASSERT_VP_ISLOCKED(vp);
 
 	if (dvp->v_op->vop_remove == NULL)
-		return ((dvp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((dvp->v_op->vop_remove)(&a));
 }
 
@@ -326,7 +342,8 @@ VOP_LINK(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	ASSERT_VP_ISLOCKED(dvp);
 
 	if (dvp->v_op->vop_link == NULL)
-		return ((dvp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((dvp->v_op->vop_link)(&a));
 }
 
@@ -346,7 +363,8 @@ VOP_RENAME(struct vnode *fdvp, struct vnode *fvp,
 	ASSERT_VP_ISLOCKED(tdvp);
 
 	if (fdvp->v_op->vop_rename == NULL) 
-		return ((fdvp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((fdvp->v_op->vop_rename)(&a));
 }
 
@@ -363,7 +381,8 @@ VOP_MKDIR(struct vnode *dvp, struct vnode **vpp,
 	ASSERT_VP_ISLOCKED(dvp);
 
 	if (dvp->v_op->vop_mkdir == NULL)
-		return ((dvp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((dvp->v_op->vop_mkdir)(&a));
 }
 
@@ -379,7 +398,8 @@ VOP_RMDIR(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	ASSERT_VP_ISLOCKED(vp);
 
 	if (dvp->v_op->vop_rmdir == NULL)
-		return ((dvp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((dvp->v_op->vop_rmdir)(&a));
 }
 
@@ -397,7 +417,8 @@ VOP_SYMLINK(struct vnode *dvp, struct vnode **vpp,
 	ASSERT_VP_ISLOCKED(dvp);
 
 	if (dvp->v_op->vop_symlink == NULL)
-		return ((dvp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((dvp->v_op->vop_symlink)(&a));
 }
 
@@ -416,7 +437,8 @@ VOP_READDIR(struct vnode *vp, struct uio *uio, struct ucred *cred,
 	ASSERT_VP_ISLOCKED(vp);
 
 	if (vp->v_op->vop_readdir == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_readdir)(&a));
 }
 
@@ -431,7 +453,8 @@ VOP_READLINK(struct vnode *vp, struct uio *uio, struct ucred *cred)
 	ASSERT_VP_ISLOCKED(vp);
 
 	if (vp->v_op->vop_readlink == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_readlink)(&a));
 }
 
@@ -443,7 +466,8 @@ VOP_ABORTOP(struct vnode *dvp, struct componentname *cnp)
 	a.a_cnp = cnp;
 
 	if (dvp->v_op->vop_abortop == NULL)
-		return ((dvp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((dvp->v_op->vop_abortop)(&a));
 }
 
@@ -457,7 +481,8 @@ VOP_INACTIVE(struct vnode *vp, struct proc *p)
 	ASSERT_VP_ISLOCKED(vp);
 
 	if (vp->v_op->vop_inactive == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_inactive)(&a));
 }
 
@@ -469,7 +494,8 @@ VOP_RECLAIM(struct vnode *vp, struct proc *p)
 	a.a_p = p;
 
 	if (vp->v_op->vop_reclaim == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_reclaim)(&a));
 }
 
@@ -482,7 +508,8 @@ VOP_LOCK(struct vnode *vp, int flags, struct proc *p)
 	a.a_p = p;
 
 	if (vp->v_op->vop_lock == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_lock)(&a));
 }
 
@@ -495,7 +522,8 @@ VOP_UNLOCK(struct vnode *vp, int flags, struct proc *p)
 	a.a_p = p;
 
 	if (vp->v_op->vop_unlock == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_unlock)(&a));
 }
 
@@ -513,7 +541,8 @@ VOP_BMAP(struct vnode *vp, daddr64_t bn, struct vnode **vpp,
 	ASSERT_VP_ISLOCKED(vp);
 
 	if (vp->v_op->vop_bmap == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_bmap)(&a));
 }
 
@@ -524,7 +553,8 @@ VOP_PRINT(struct vnode *vp)
 	a.a_vp = vp;
 
 	if (vp->v_op->vop_print == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_print)(&a));
 }
 
@@ -539,7 +569,8 @@ VOP_PATHCONF(struct vnode *vp, int name, register_t *retval)
 	ASSERT_VP_ISLOCKED(vp);
 
 	if (vp->v_op->vop_pathconf == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_pathconf)(&a));
 }
 
@@ -554,7 +585,8 @@ VOP_ADVLOCK(struct vnode *vp, void *id, int op, struct flock *fl, int flags)
 	a.a_flags = flags;
 
 	if (vp->v_op->vop_advlock == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_advlock)(&a));
 }
 
@@ -568,7 +600,8 @@ VOP_REALLOCBLKS(struct vnode *vp, struct cluster_save *buflist)
 	ASSERT_VP_ISLOCKED(vp);
 
 	if (vp->v_op->vop_reallocblks == NULL)
-		return ((vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((vp->v_op->vop_reallocblks)(&a));
 }
 
@@ -579,7 +612,8 @@ VOP_STRATEGY(struct buf *bp)
 	a.a_bp = bp;
 
 	if (bp->b_vp->v_op->vop_strategy == NULL)
-		return ((bp->b_vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((bp->b_vp->v_op->vop_strategy)(&a));
 }
 
@@ -590,7 +624,7 @@ VOP_BWRITE(struct buf *bp)
 	a.a_bp = bp;
 
 	if (bp->b_vp->v_op->vop_bwrite == NULL)
-		return ((bp->b_vp->v_op->vop_default)(&a));
+		return (EOPNOTSUPP);
+
 	return ((bp->b_vp->v_op->vop_bwrite)(&a));
 }
-/* End of special cases. */

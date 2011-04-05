@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.58 2010/12/21 20:14:44 thib Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.59 2011/04/05 14:14:07 thib Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -1255,7 +1255,6 @@ ext2fs_reclaim(void *v)
 
 /* Global vfs data structures for ext2fs. */
 struct vops ext2fs_vops = {
-        .vop_default    = eopnotsupp,
         .vop_lookup     = ext2fs_lookup,
         .vop_create     = ext2fs_create,
         .vop_mknod      = ext2fs_mknod,
@@ -1293,7 +1292,6 @@ struct vops ext2fs_vops = {
 };
 
 struct vops ext2fs_specvops = {
-        .vop_default    = eopnotsupp,
         .vop_close      = ufsspec_close,
         .vop_access     = ext2fs_access,
         .vop_getattr    = ext2fs_getattr,
@@ -1335,7 +1333,6 @@ struct vops ext2fs_specvops = {
 
 #ifdef FIFO
 struct vops ext2fs_fifovops = {
-        .vop_default    = eopnotsupp,
         .vop_close      = ufsfifo_close,
         .vop_access     = ufsfifo_close,
         .vop_getattr    = ext2fs_getattr,

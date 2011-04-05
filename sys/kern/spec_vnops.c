@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.61 2010/12/21 20:14:43 thib Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.62 2011/04/05 14:14:07 thib Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 struct vnode *speclisth[SPECHSZ];
 
 struct vops spec_vops = {
-	.vop_default	= eopnotsupp,
 	.vop_lookup	= vop_generic_lookup,
 	.vop_create	= spec_badop,
 	.vop_mknod	= spec_badop,

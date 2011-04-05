@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.133 2010/12/21 20:14:43 thib Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.134 2011/04/05 14:14:07 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -85,7 +85,6 @@ void nfs_cache_enter(struct vnode *, struct vnode *, struct componentname *);
 
 /* Global vfs data structures for nfs. */
 struct vops nfs_vops = {
-        .vop_default    = eopnotsupp,
         .vop_lookup     = nfs_lookup,
         .vop_create     = nfs_create,
         .vop_mknod      = nfs_mknod,
@@ -125,7 +124,6 @@ struct vops nfs_vops = {
 
 /* Special device vnode ops. */
 struct vops nfs_specvops = {
-        .vop_default    = eopnotsupp,
         .vop_close      = nfsspec_close,
         .vop_access     = nfsspec_access,
         .vop_getattr    = nfs_getattr,
@@ -167,7 +165,6 @@ struct vops nfs_specvops = {
 
 #ifdef FIFO
 struct vops nfs_fifovops = {
-        .vop_default    = eopnotsupp,
         .vop_close      = nfsfifo_close,
         .vop_access     = nfsspec_access,
         .vop_getattr    = nfs_getattr,

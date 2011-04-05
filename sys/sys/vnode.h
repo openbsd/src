@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.107 2010/12/21 20:14:43 thib Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.108 2011/04/05 14:14:07 thib Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -260,7 +260,6 @@ extern void    vdrop(struct vnode *);
 
 /* vnode operations */
 struct vops {
-	int	(*vop_default)(void *);
 	int	(*vop_lock)(void *);
 	int	(*vop_unlock)(void *);
 	int	(*vop_islocked)(void *);

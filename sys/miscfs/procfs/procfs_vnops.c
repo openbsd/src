@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.51 2011/04/02 17:04:35 guenther Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.52 2011/04/05 14:14:07 thib Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -139,7 +139,6 @@ static pid_t atopid(const char *, u_int);
  * procfs vnode operations.
  */
 struct vops procfs_vops = {
-	.vop_default	= eopnotsupp,
 	.vop_lookup	= procfs_lookup,
 	.vop_create	= procfs_badop,
 	.vop_mknod	= procfs_badop,

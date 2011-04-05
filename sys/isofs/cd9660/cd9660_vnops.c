@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.52 2010/12/21 20:14:43 thib Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.53 2011/04/05 14:14:07 thib Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -933,7 +933,6 @@ cd9660_pathconf(v)
 
 /* Global vfs data structures for cd9660. */
 struct vops cd9660_vops = {
-	.vop_default	= eopnotsupp,
 	.vop_lookup	= cd9660_lookup,
 	.vop_create	= cd9660_create,
 	.vop_mknod	= cd9660_mknod,
@@ -972,7 +971,6 @@ struct vops cd9660_vops = {
 
 /* Special device vnode ops */
 struct vops cd9660_specvops = {
-	.vop_default	= eopnotsupp,
 	.vop_access	= cd9660_access,
 	.vop_getattr	= cd9660_getattr,
 	.vop_setattr	= cd9660_setattr,
@@ -1014,7 +1012,6 @@ struct vops cd9660_specvops = {
 
 #ifdef FIFO
 struct vops cd9660_fifovops = {
-	.vop_default	= eopnotsupp,
 	.vop_access	= cd9660_access,
 	.vop_getattr	= cd9660_getattr,
 	.vop_setattr	= cd9660_setattr,
