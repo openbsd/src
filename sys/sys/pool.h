@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.37 2011/04/03 22:07:37 ariane Exp $	*/
+/*	$OpenBSD: pool.h,v 1.38 2011/04/05 01:28:05 art Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -132,8 +132,7 @@ struct pool {
 	unsigned long	pr_nidle;	/* # of idle pages */
 
 	/* Physical memory configuration. */
-	struct uvm_constraint_range *pr_crange;
-	int		pr_pa_nsegs;
+	struct kmem_pa_mode *pr_crange;
 };
 
 #ifdef _KERNEL
@@ -148,8 +147,7 @@ void		pool_setlowat(struct pool *, int);
 void		pool_sethiwat(struct pool *, int);
 int		pool_sethardlimit(struct pool *, u_int, const char *, int);
 struct uvm_constraint_range; /* XXX */
-void		pool_set_constraints(struct pool *,
-		    struct uvm_constraint_range *, int);
+void		pool_set_constraints(struct pool *, struct kmem_pa_mode *mode);
 void		pool_set_ctordtor(struct pool *, int (*)(void *, void *, int),
 		    void(*)(void *, void *), void *);
 

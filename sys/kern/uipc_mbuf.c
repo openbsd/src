@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.150 2011/04/04 21:33:27 blambert Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.151 2011/04/05 01:28:05 art Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ mbinit(void)
 	int i;
 
 	pool_init(&mbpool, MSIZE, 0, 0, 0, "mbpl", NULL);
-	pool_set_constraints(&mbpool, &dma_constraint, 1);
+	pool_set_constraints(&mbpool, &kp_dma);
 	pool_setlowat(&mbpool, mblowat);
 
 	for (i = 0; i < nitems(mclsizes); i++) {
@@ -146,7 +146,7 @@ mbinit(void)
 		    mclsizes[i] >> 10);
 		pool_init(&mclpools[i], mclsizes[i], 0, 0, 0,
 		    mclnames[i], NULL);
-		pool_set_constraints(&mclpools[i], &dma_constraint, 1); 
+		pool_set_constraints(&mclpools[i], &kp_dma); 
 		pool_setlowat(&mclpools[i], mcllowat);
 	}
 
