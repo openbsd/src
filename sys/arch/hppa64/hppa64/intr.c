@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.2 2010/07/02 23:24:21 jsing Exp $	*/
+/*	$OpenBSD: intr.c,v 1.3 2011/04/05 15:30:45 jsing Exp $	*/
 
 /*
  * Copyright (c) Joel Sing <jsing@openbsd.org>
@@ -20,7 +20,7 @@
 
 #include <machine/intr.h>
 
-volatile u_long imask;
+volatile u_long imask[NIPL];
 
 void *
 softintr_establish(int pri, void (*handler)(void *), void *arg)
