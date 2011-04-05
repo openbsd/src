@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.75 2011/02/17 18:22:44 espie Exp $
+#	$OpenBSD: Makefile,v 1.76 2011/04/05 12:50:15 guenther Exp $
 #	$NetBSD: Makefile,v 1.13 1996/03/28 21:36:40 mark Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 MAN=	afterboot.8 boot_config.8 compat_aout.8 \
-	compat_freebsd.8 compat_linux.8 \
+	compat_linux.8 \
 	compat_svr4.8 crash.8 daily.8 dhcp.8 \
 	diskless.8 genassym.sh.8 intro.8 netstart.8 rc.8 \
 	rc.conf.8 rc.d.8 rc.shutdown.8 rc.subr.8 release.8 \

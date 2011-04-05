@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.200 2010/12/06 20:10:18 jasper Exp $
+#	$OpenBSD: files.i386,v 1.201 2011/04/05 12:50:15 guenther Exp $
 #
 # new style config file for i386 architecture
 #
@@ -277,10 +277,6 @@ file	arch/i386/i386/svr4_machdep.c		compat_svr4
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
 file	arch/i386/i386/linux_machdep.c		compat_linux
-
-# FreeBSD binary compatibility (COMPAT_FREEBSD)
-include "compat/freebsd/files.freebsd"
-file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"

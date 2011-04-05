@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay_compat_usl.c,v 1.21 2010/08/28 12:48:14 miod Exp $ */
+/* $OpenBSD: wsdisplay_compat_usl.c,v 1.22 2011/04/05 12:50:15 guenther Exp $ */
 /* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -404,21 +404,6 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 			return (EPERM);
 		/* FALLTHROUGH */
 	    case KDDISABIO:
-#if defined(COMPAT_FREEBSD)
-		{
-		struct trapframe *fp = (struct trapframe *)p->p_md.md_regs;
-		extern struct emul emul_freebsd_aout;
-		extern struct emul emul_freebsd_elf;
-
-		if (p->p_emul == &emul_freebsd_aout ||
-		    p->p_emul == &emul_freebsd_elf) {
-			if (cmd == KDENABIO)
-				fp->tf_eflags |= PSL_IOPL;
-			else
-				fp->tf_eflags &= ~PSL_IOPL;
-			}
-		}
-#endif
 		return (0);
 #else
 	    case KDENABIO:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_conf.c,v 1.25 2010/07/05 22:20:22 tedu Exp $	*/
+/*	$OpenBSD: exec_conf.c,v 1.26 2011/04/05 12:50:15 guenther Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
@@ -51,10 +51,6 @@
 #include <compat/linux/linux_exec.h>
 #endif
 
-#ifdef COMPAT_FREEBSD
-#include <compat/freebsd/freebsd_exec.h>
-#endif
-
 #ifdef COMPAT_VAX1K
 #include <compat/vax1k/vax1k_exec.h>
 #endif
@@ -85,10 +81,6 @@ struct execsw execsw[] = {
 #ifdef COMPAT_LINUX
 	{ LINUX_AOUT_HDR_SIZE, exec_linux_aout_makecmds, &emul_linux_aout }, /* linux a.out */
 	{ sizeof(Elf32_Ehdr), exec_linux_elf32_makecmds, &emul_linux_elf },
-#endif
-#ifdef COMPAT_FREEBSD
-	{ FREEBSD_AOUT_HDR_SIZE, exec_freebsd_aout_makecmds, &emul_freebsd_aout },	/* freebsd */
-	{ sizeof(Elf32_Ehdr), exec_freebsd_elf32_makecmds, &emul_freebsd_elf },
 #endif
 #ifdef COMPAT_VAX1K
 	{ sizeof(struct exec), exec_vax1k_makecmds, &emul_native },	/* vax1k a.out */

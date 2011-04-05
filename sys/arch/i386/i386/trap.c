@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.95 2011/04/03 14:56:28 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.96 2011/04/05 12:50:15 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -75,9 +75,6 @@
 #ifdef COMPAT_LINUX
 #include <compat/linux/linux_syscall.h>
 extern struct emul emul_linux_aout, emul_linux_elf;
-#endif
-#ifdef COMPAT_FREEBSD
-extern struct emul emul_freebsd_aout, emul_freebsd_elf;
 #endif
 #ifdef COMPAT_AOUT
 extern struct emul emul_aout;
@@ -627,10 +624,6 @@ syscall(struct trapframe *frame)
 		 * quad alignment for the rest of the arguments.
 		 */
 		if (callp != sysent
-#ifdef COMPAT_FREEBSD
-		    && p->p_emul != &emul_freebsd_aout
-		    && p->p_emul != &emul_freebsd_elf
-#endif
 #ifdef COMPAT_AOUT
 		    && p->p_emul != &emul_aout
 #endif

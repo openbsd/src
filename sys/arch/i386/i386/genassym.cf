@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.32 2010/09/24 13:21:30 matthew Exp $
+#	$OpenBSD: genassym.cf,v 1.33 2011/04/05 12:50:15 guenther Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -57,10 +57,6 @@ endif
 
 if COMPAT_LINUX > 0
 include <machine/linux_machdep.h>
-endif
-
-if COMPAT_FREEBSD > 0
-include <machine/freebsd_machdep.h>
 endif
 
 if MULTIPROCESSOR
@@ -160,13 +156,6 @@ struct	linux_sigframe		LINUX_SIGF_
 member	HANDLER			sf_handler
 member	SC			sf_sc
 struct	linux_sigcontext	LINUX_
-endif
-
-# FreeBSD frame offsets
-ifdef COMPAT_FREEBSD
-struct	freebsd_sigframe	FREEBSD_SIGF_
-member	HANDLER			sf_handler
-member	SC			sf_sc
 endif
 
 # Interrupt metering

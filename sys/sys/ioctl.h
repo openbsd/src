@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioctl.h,v 1.11 2010/07/02 19:57:15 tedu Exp $	*/
+/*	$OpenBSD: ioctl.h,v 1.12 2011/04/05 12:50:15 guenther Exp $	*/
 /*	$NetBSD: ioctl.h,v 1.20 1996/01/30 18:21:47 thorpej Exp $	*/
 
 /*-
@@ -79,7 +79,6 @@ __END_DECLS
  * Kernel level -> options COMPAT_43 or ...
  */
 #if defined(USE_OLD_TTY) || defined(COMPAT_43) || \
-    defined(COMPAT_SVR4) || defined(COMPAT_FREEBSD) || \
-    defined(COMPAT_LINUX)
+    defined(COMPAT_SVR4) || defined(COMPAT_LINUX)
 #include <sys/ioctl_compat.h>
 #endif
