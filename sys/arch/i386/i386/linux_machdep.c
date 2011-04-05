@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.36 2011/04/04 21:50:41 pirofti Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.37 2011/04/05 13:54:42 pirofti Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -639,17 +639,13 @@ int
 linux_sys_set_thread_area(struct proc *p, void *v, register_t *retval)
 {
 	struct linux_sys_set_thread_area_args *uap = v;
-
 	struct l_segment_descriptor ldesc;
-	int eno;
-
 	int error;
 
 	error = copyin(SCARG(uap, desc), &ldesc, sizeof ldesc);
 	if (error != 0)
 		return error;
 
-	eno = ldesc.entry_number;
 	if (ldesc.entry_number == -1) {
 		ldesc.entry_number = GUGS_SEL;
 		if ((error = copyout(&ldesc, SCARG(uap, desc), sizeof ldesc)))
