@@ -6003,6 +6003,7 @@
 ./usr/share/man/cat3/wcstoul.0
 ./usr/share/man/cat3/wcstoull.0
 ./usr/share/man/cat3/wcstoumax.0
+./usr/share/man/cat3/wcswidth.0
 ./usr/share/man/cat3/wctob.0
 ./usr/share/man/cat3/wctomb.0
 ./usr/share/man/cat3/wctrans.0
