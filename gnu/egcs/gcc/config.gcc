@@ -2784,6 +2784,10 @@ we32k-att-sysv*)
 	xm_file="${xm_file} xm-svr3"
 	use_collect2=yes
 	;;
+x86_64-*-openbsd*)
+	# only here to allow cross compiles.
+	xm_file="i386/xm-openbsd.h"
+	;;
 *)
 	echo "Configuration $machine not supported" 1>&2
 	exit 1
