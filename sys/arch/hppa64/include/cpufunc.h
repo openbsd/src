@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.2 2011/03/23 16:54:35 pirofti Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.3 2011/04/05 17:17:06 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -30,5 +30,8 @@
 #define _MACHINE_CPUFUNC_H_
 
 #define	mtsp(v,r)	__asm __volatile ("mtsp %0,%1":: "r" (v), "i" (r))
+
+#define	ssm(v,r)	__asm __volatile("ssm %1,%0": "=r" (r): "i" (v))
+#define	rsm(v,r)	__asm __volatile("rsm %1,%0": "=r" (r): "i" (v))
 
 #endif
