@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdvar.h,v 1.14 2010/07/23 07:47:13 jsg Exp $	*/
+/*	$OpenBSD: wdvar.h,v 1.15 2011/04/05 19:57:40 deraadt Exp $	*/
 /*	$NetBSD: wdvar.h,v 1.3 1998/11/11 19:38:27 bouyer Exp $	*/
 
 /*
@@ -59,6 +59,41 @@ struct ata_bio {
     struct wd_softc *wd;
 };
 
+struct wd_softc {
+	/* General disk infos */
+	struct device sc_dev;
+	struct disk sc_dk;
+	struct bufq sc_bufq;
+
+	/* IDE disk soft states */
+	struct ata_bio sc_wdc_bio; /* current transfer */
+	struct buf *sc_bp; /* buf being transferred */
+	struct ata_drive_datas *drvp; /* Our controller's infos */
+	int openings;
+	struct ataparams sc_params;/* drive characteristics found */
+	int sc_flags;
+#define WDF_LOCKED	  0x01
+#define WDF_WANTED	  0x02
+#define WDF_WLABEL	  0x04 /* label is writable */
+#define WDF_LABELLING	  0x08 /* writing label */
+/*
+ * XXX Nothing resets this yet, but disk change sensing will when ATA-4 is
+ * more fully implemented.
+ */
+#define WDF_LOADED	0x10 /* parameters loaded */
+#define WDF_WAIT	0x20 /* waiting for resources */
+#define WDF_LBA		0x40 /* using LBA mode */
+#define WDF_LBA48	0x80 /* using 48-bit LBA mode */
+
+	u_int64_t sc_capacity;
+	int cyl; /* actual drive parameters */
+	int heads;
+	int sectors;
+	int retries; /* number of xfer retry */
+	struct timeout sc_restart_timeout;
+	void *sc_sdhook;
+};
+
 /* drive states stored in ata_drive_datas */
 #define RECAL          0
 #define RECAL_WAIT     1
@@ -73,6 +108,8 @@ struct ata_bio {
 #define READY          10
 
 int wdc_ata_bio(struct ata_drive_datas*, struct ata_bio*);
+int wd_hibernate_io(dev_t dev, daddr_t blkno, caddr_t addr, size_t size,
+	    int wr, void *page);
 
 void wddone(void *);
 

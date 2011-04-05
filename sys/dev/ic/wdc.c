@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.110 2011/04/05 12:06:09 deraadt Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.111 2011/04/05 19:57:40 deraadt Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -62,6 +62,7 @@
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
+#include <sys/disk.h>
 #include <sys/pool.h>
 #include <uvm/uvm_extern.h>
 
@@ -1886,6 +1887,12 @@ wdc_free_xfer(struct channel_softc *chp, struct wdc_xfer *xfer)
 {
 	struct wdc_softc *wdc = chp->wdc;
 	int s;
+
+	if (xfer->c_flags & C_PRIVATEXFER) {
+		chp->ch_flags &= ~WDCF_ACTIVE;
+		TAILQ_REMOVE(&chp->ch_queue->sc_xfer, xfer, c_xferchain);
+		return;
+	}
 
 	if (wdc->cap & WDC_CAPABILITY_HWLOCK)
 		(*wdc->free_hw)(chp);

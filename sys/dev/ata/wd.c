@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.97 2010/12/31 22:58:40 kettenis Exp $ */
+/*	$OpenBSD: wd.c,v 1.98 2011/04/05 19:57:40 deraadt Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -113,40 +113,6 @@ extern int wdcdebug_wd_mask; /* init'ed in ata_wdc.c */
 #define WDCDEBUG_PRINT(args, level)
 #endif
 
-struct wd_softc {
-	/* General disk infos */
-	struct device sc_dev;
-	struct disk sc_dk;
-	struct bufq sc_bufq;
-
-	/* IDE disk soft states */
-	struct ata_bio sc_wdc_bio; /* current transfer */
-	struct buf *sc_bp; /* buf being transferred */
-	struct ata_drive_datas *drvp; /* Our controller's infos */
-	int openings;
-	struct ataparams sc_params;/* drive characteristics found */
-	int sc_flags;
-#define WDF_LOCKED	  0x01
-#define WDF_WANTED	  0x02
-#define WDF_WLABEL	  0x04 /* label is writable */
-#define WDF_LABELLING	  0x08 /* writing label */
-/*
- * XXX Nothing resets this yet, but disk change sensing will when ATA-4 is
- * more fully implemented.
- */
-#define WDF_LOADED	0x10 /* parameters loaded */
-#define WDF_WAIT	0x20 /* waiting for resources */
-#define WDF_LBA		0x40 /* using LBA mode */
-#define WDF_LBA48	0x80 /* using 48-bit LBA mode */
-
-	u_int64_t sc_capacity;
-	int cyl; /* actual drive parameters */
-	int heads;
-	int sectors;
-	int retries; /* number of xfer retry */
-	struct timeout sc_restart_timeout;
-	void *sc_sdhook;
-};
 
 #define sc_drive sc_wdc_bio.drive
 #define sc_mode sc_wdc_bio.mode
