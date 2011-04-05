@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6.h,v 1.19 2008/11/08 12:54:58 dlg Exp $	*/
+/*	$OpenBSD: ip6.h,v 1.20 2011/04/05 15:14:59 blambert Exp $	*/
 /*	$KAME: ip6.h,v 1.45 2003/06/05 04:46:38 keiichi Exp $	*/
 
 /*
@@ -271,8 +271,6 @@ struct ip6_frag {
  * "len") is located in single mbuf, on contiguous memory region.
  * The pointer to the region will be returned to pointer variable "val",
  * with type "typ".
- * IP6_EXTHDR_GET0 does the same, except that it aligns the structure at the
- * very top of mbuf.  GET0 is likely to make memory copy than GET.
  */
 #define IP6_EXTHDR_GET(val, typ, m, off, len)				\
 do {									\
@@ -286,24 +284,6 @@ do {									\
 			if (t->m_len < tmp + (len))			\
 				panic("m_pulldown malfunction");	\
 			(val) = (typ)(mtod(t, caddr_t) + tmp);		\
-		} else {						\
-			(val) = (typ)NULL;				\
-			(m) = NULL;					\
-		}							\
-	}								\
-} while (/* CONSTCOND */ 0)
-
-#define IP6_EXTHDR_GET0(val, typ, m, off, len)				\
-do {									\
-	struct mbuf *t;							\
-	if ((off) == 0 && (m)->m_len >= len)				\
-		(val) = (typ)mtod((m), caddr_t);			\
-	else {								\
-		t = m_pulldown((m), (off), (len), NULL);		\
-		if (t) {						\
-			if (t->m_len < (len))				\
-				panic("m_pulldown malfunction");	\
-			(val) = (typ)mtod(t, caddr_t);			\
 		} else {						\
 			(val) = (typ)NULL;				\
 			(m) = NULL;					\
