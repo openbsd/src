@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.18 2011/03/02 06:48:17 jasper Exp $	 */
+/* $OpenBSD: pftop.c,v 1.19 2011/04/05 15:07:46 sthen Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1353,8 +1353,6 @@ print_rule(struct pf_rule *pr)
 
 	if (pr->rt > 0 && pr->rt < numroute) {
 		tbprintf("%s ", routetypes[pr->rt]);
-		if (pr->rt != PF_FASTROUTE)
-			tbprintf("... ");
 	}
 
 	if (pr->af) {
