@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.33 2011/01/29 13:15:39 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.34 2011/04/05 11:48:28 blambert Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -223,7 +223,7 @@ m_dup1(struct mbuf *m, int off, int len, int wait)
 		MGETHDR(n, wait, m->m_type);
 		if (n == NULL)
 			return (NULL);
-		if (m_dup_pkthdr(n, m)) {
+		if (m_dup_pkthdr(n, m, wait)) {
 			m_free(n);
 			return (NULL);
 		}
@@ -324,11 +324,11 @@ m_tag_find(struct mbuf *m, int type, struct m_tag *t)
 
 /* Copy a single tag. */
 struct m_tag *
-m_tag_copy(struct m_tag *t)
+m_tag_copy(struct m_tag *t, int wait)
 {
 	struct m_tag *p;
 
-	p = m_tag_get(t->m_tag_id, t->m_tag_len, M_NOWAIT);
+	p = m_tag_get(t->m_tag_id, t->m_tag_len, wait);
 	if (p == NULL)
 		return (NULL);
 	bcopy(t + 1, p + 1, t->m_tag_len); /* Copy the data */
@@ -342,13 +342,13 @@ m_tag_copy(struct m_tag *t)
  * destination mbuf.
  */
 int
-m_tag_copy_chain(struct mbuf *to, struct mbuf *from)
+m_tag_copy_chain(struct mbuf *to, struct mbuf *from, int wait)
 {
 	struct m_tag *p, *t, *tprev = NULL;
 
 	m_tag_delete_chain(to);
 	SLIST_FOREACH(p, &from->m_pkthdr.tags, m_tag_link) {
-		t = m_tag_copy(p);
+		t = m_tag_copy(p, wait);
 		if (t == NULL) {
 			m_tag_delete_chain(to);
 			return (ENOMEM);

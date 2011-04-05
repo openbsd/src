@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.146 2011/04/04 14:35:31 blambert Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.147 2011/04/05 11:48:28 blambert Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -421,7 +421,7 @@ struct mbuf *m_devget(char *, int, int, struct ifnet *,
 void	m_zero(struct mbuf *);
 int	m_apply(struct mbuf *, int, int,
 	    int (*)(caddr_t, caddr_t, unsigned int), caddr_t);
-int	m_dup_pkthdr(struct mbuf *, struct mbuf *);
+int	m_dup_pkthdr(struct mbuf *, struct mbuf *, int);
 
 /* Packet tag routines */
 struct m_tag *m_tag_get(int, int, int);
@@ -429,8 +429,8 @@ void	m_tag_prepend(struct mbuf *, struct m_tag *);
 void	m_tag_delete(struct mbuf *, struct m_tag *);
 void	m_tag_delete_chain(struct mbuf *);
 struct m_tag *m_tag_find(struct mbuf *, int, struct m_tag *);
-struct m_tag *m_tag_copy(struct m_tag *);
-int	m_tag_copy_chain(struct mbuf *, struct mbuf *);
+struct m_tag *m_tag_copy(struct m_tag *, int);
+int	m_tag_copy_chain(struct mbuf *, struct mbuf *, int);
 void	m_tag_init(struct mbuf *);
 struct m_tag *m_tag_first(struct mbuf *);
 struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);

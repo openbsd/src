@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.165 2011/04/03 15:36:02 jasper Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.166 2011/04/05 11:48:28 blambert Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -1430,7 +1430,8 @@ hifn_crypto(struct hifn_softc *sc, struct hifn_command *cmd,
 				goto err_srcmap;
 			}
 			if (len == MHLEN) {
-				err = m_dup_pkthdr(m0, cmd->srcu.src_m);
+				err = m_dup_pkthdr(m0, cmd->srcu.src_m,
+				    M_DONTWAIT);
 				if (err) {
 					m_free(m0);
 					goto err_srcmap;
@@ -2739,7 +2740,7 @@ hifn_mkmbuf_chain(int totlen, struct mbuf *mtemplate)
 	if (m0 == NULL)
 		return (NULL);
 	if (len == MHLEN) {
-		if (m_dup_pkthdr(m0, mtemplate)) {
+		if (m_dup_pkthdr(m0, mtemplate, M_DONTWAIT)) {
 			m_free(m0);
 			return (NULL);
 		}

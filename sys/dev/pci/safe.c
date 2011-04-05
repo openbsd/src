@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.32 2011/04/03 15:36:03 jasper Exp $	*/
+/*	$OpenBSD: safe.c,v 1.33 2011/04/05 11:48:28 blambert Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -807,7 +807,8 @@ safe_process(struct cryptop *crp)
 					goto errout;
 				}
 				if (len == MHLEN) {
-					err = m_dup_pkthdr(m, re->re_src_m);
+					err = m_dup_pkthdr(m, re->re_src_m,
+					    M_DONTWAIT);
 					if (err) {
 						m_free(m);
 						goto errout;

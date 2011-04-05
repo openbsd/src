@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.118 2011/03/04 23:48:15 fgsch Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.119 2011/04/05 11:48:28 blambert Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -842,6 +842,8 @@ ieee80211_deliver_data(struct ieee80211com *ic, struct mbuf *m,
  * is 32 bytes while QoS+LLC is 34 bytes).  Some devices are smart and
  * add 2 padding bytes after the 802.11 header in the QoS case so this
  * function is there for stupid drivers/devices only.
+ *
+ * XXX -- this is horrible
  */
 struct mbuf *
 ieee80211_align_mbuf(struct mbuf *m)
@@ -861,7 +863,7 @@ ieee80211_align_mbuf(struct mbuf *m)
 				m_freem(m);
 				return NULL;
 			}
-			if (m_dup_pkthdr(n, m)) {
+			if (m_dup_pkthdr(n, m, M_DONTWAIT)) {
 				m_free(n);
 				m_freem(m);
 				return (NULL);

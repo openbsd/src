@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.119 2011/03/22 23:13:01 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.120 2011/04/05 11:48:28 blambert Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1023,7 +1023,7 @@ ip6_fragment(struct mbuf *m0, int hlen, u_char nextproto, u_long mtu)
 			return (ENOBUFS);
 		*mnext = m;
 		mnext = &m->m_nextpkt;
-		if ((error = m_dup_pkthdr(m, m0)) != 0)
+		if ((error = m_dup_pkthdr(m, m0, M_DONTWAIT)) != 0)
 			return (error);
 		m->m_data += max_linkhdr;
 		mhip6 = mtod(m, struct ip6_hdr *);

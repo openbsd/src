@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.151 2011/04/05 01:28:05 art Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.152 2011/04/05 11:48:28 blambert Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -662,7 +662,7 @@ m_copym0(struct mbuf *m0, int off, int len, int wait, int deep)
 		if (n == NULL)
 			goto nospace;
 		if (copyhdr) {
-			if (m_dup_pkthdr(n, m0))
+			if (m_dup_pkthdr(n, m0, wait))
 				goto nospace;
 			if (len != M_COPYALL)
 				n->m_pkthdr.len = len;
@@ -1149,7 +1149,7 @@ m_split_mbuf(struct mbuf *m, int off, int wait, struct mbuf *mhdr)
 		}
 	}
 
-	if (copyhdr && m_dup_pkthdr(mhdr, n)) {
+	if (copyhdr && m_dup_pkthdr(mhdr, n, wait)) {
 		m_free(n);
 		return (NULL);
 	}
@@ -1346,7 +1346,7 @@ m_trailingspace(struct mbuf *m)
  * from must have M_PKTHDR set, and to must be empty.
  */
 int
-m_dup_pkthdr(struct mbuf *to, struct mbuf *from)
+m_dup_pkthdr(struct mbuf *to, struct mbuf *from, int wait)
 {
 	int error;
 
@@ -1358,7 +1358,7 @@ m_dup_pkthdr(struct mbuf *to, struct mbuf *from)
 
 	SLIST_INIT(&to->m_pkthdr.tags);
 
-	if ((error = m_tag_copy_chain(to, from)) != 0)
+	if ((error = m_tag_copy_chain(to, from, wait)) != 0)
 		return (error);
 
 	if ((to->m_flags & M_EXT) == 0)

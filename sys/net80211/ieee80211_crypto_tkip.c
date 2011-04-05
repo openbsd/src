@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.18 2010/07/20 15:36:03 matthew Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.19 2011/04/05 11:48:28 blambert Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -198,7 +198,7 @@ ieee80211_tkip_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 	MGET(n0, M_DONTWAIT, m0->m_type);
 	if (n0 == NULL)
 		goto nospace;
-	if (m_dup_pkthdr(n0, m0))
+	if (m_dup_pkthdr(n0, m0, M_DONTWAIT))
 		goto nospace;
 	n0->m_pkthdr.len += IEEE80211_TKIP_HDRLEN;
 	n0->m_len = MHLEN;
@@ -368,7 +368,7 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	MGET(n0, M_DONTWAIT, m0->m_type);
 	if (n0 == NULL)
 		goto nospace;
-	if (m_dup_pkthdr(n0, m0))
+	if (m_dup_pkthdr(n0, m0, M_DONTWAIT))
 		goto nospace;
 	n0->m_pkthdr.len -= IEEE80211_TKIP_OVHD;
 	n0->m_len = MHLEN;
