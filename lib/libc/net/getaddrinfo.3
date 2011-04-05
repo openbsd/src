@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.47 2009/07/09 10:14:41 eric Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.48 2011/04/05 00:46:06 matthew Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 9 2009 $
+.Dd $Mdocdate: April 5 2011 $
 .Dt GETADDRINFO 3
 .Os
 .Sh NAME
@@ -126,11 +126,33 @@ If the
 bit is set, a successful call to
 .Fn getaddrinfo
 will return a NUL-terminated string containing the canonical name
-of the specified hostname in the
+of the specified host name in the
 .Fa ai_canonname
 element of the first
 .Li addrinfo
 structure returned.
+.It Dv AI_FQDN
+If the
+.Dv AI_FQDN
+bit is set, a successful call to
+.Fn getaddrinfo
+will return a NUL-terminated string containing the fully qualified domain name
+of the specified host name in the
+.Fa ai_canonname
+element of the first
+.Li addrinfo
+structure returned.
+.Pp
+This is different from the
+.Dv AI_CANONNAME
+bit flag that returns the canonical name registered in DNS,
+which may be different from the fully qualified domain name
+that the host name resolved to.
+Only one of the
+.Dv AI_FQDN
+and
+.Dv AI_CANONNAME
+bits can be set.
 .It Dv AI_NUMERICHOST
 If the
 .Dv AI_NUMERICHOST
@@ -438,6 +460,10 @@ function is defined by the
 draft specification and documented in
 .Dv "RFC 3493" ,
 .Dq Basic Socket Interface Extensions for IPv6 .
+.Pp
+The
+.Dv AI_FQDN
+flag bit first appeared in Windows 7.
 .Sh BUGS
 The implementation of
 .Fn getaddrinfo

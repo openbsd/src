@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.71 2009/11/18 07:43:22 guenther Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.72 2011/04/05 00:46:06 matthew Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -309,7 +309,9 @@ getaddrinfo(const char *hostname, const char *servname,
 		if (hints->ai_addrlen || hints->ai_canonname ||
 		    hints->ai_addr || hints->ai_next)
 			ERR(EAI_BADHINTS); /* xxx */
-		if (hints->ai_flags & ~AI_MASK)
+		if ((hints->ai_flags & ~AI_MASK) != 0 ||
+		    (hints->ai_flags & (AI_CANONNAME | AI_FQDN)) ==
+		    (AI_CANONNAME | AI_FQDN))
 			ERR(EAI_BADFLAGS);
 		switch (hints->ai_family) {
 		case PF_UNSPEC:
@@ -671,14 +673,13 @@ explore_numeric(const struct addrinfo *pai, const char *hostname,
 		    pai->ai_family == PF_UNSPEC /*?*/) {
 			GET_AI(cur->ai_next, afd, pton);
 			GET_PORT(cur->ai_next, servname);
-			if ((pai->ai_flags & AI_CANONNAME)) {
-				/*
-				 * Set the numeric address itself as
-				 * the canonical name, based on a
-				 * clarification in rfc2553bis-03.
-				 */
-				GET_CANONNAME(cur->ai_next, canonname);
-			}
+			/*
+			 * Set the numeric address itself as
+			 * the canonical name, based on a
+			 * clarification in rfc2553bis-03.
+			 */
+			GET_CANONNAME(cur->ai_next, canonname);
+
 			while (cur && cur->ai_next)
 				cur = cur->ai_next;
 		} else
@@ -764,7 +765,7 @@ explore_numeric_scope(const struct addrinfo *pai, const char *hostname,
 static int
 get_canonname(const struct addrinfo *pai, struct addrinfo *ai, const char *str)
 {
-	if ((pai->ai_flags & AI_CANONNAME) != 0) {
+	if ((pai->ai_flags & (AI_CANONNAME | AI_FQDN)) != 0) {
 		ai->ai_canonname = strdup(str);
 		if (ai->ai_canonname == NULL)
 			return EAI_MEMORY;
@@ -1129,7 +1130,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 			haveanswer++;
 	}
 	if (haveanswer) {
-		if (!canonname)
+		if (!canonname || (pai->ai_flags & AI_FQDN) != 0)
 			(void)get_canonname(pai, sentinel.ai_next, qname);
 		else
 			(void)get_canonname(pai, sentinel.ai_next, canonname);
@@ -1275,11 +1276,9 @@ found:
 		/* cover it up */
 		res->ai_flags = pai->ai_flags;
 
-		if (pai->ai_flags & AI_CANONNAME) {
-			if (get_canonname(pai, res, cname) != 0) {
-				freeaddrinfo(res0);
-				goto again;
-			}
+		if (get_canonname(pai, res, cname) != 0) {
+			freeaddrinfo(res0);
+			goto again;
 		}
 	}
 	return res0;
@@ -1369,8 +1368,7 @@ nextline:
 			/* cover it up */
 			res->ai_flags = pai->ai_flags;
 
-			if (pai->ai_flags & AI_CANONNAME)
-				(void)get_canonname(pai, res, canonname);
+			(void)get_canonname(pai, res, canonname);
 		}
 	} else
 		res0 = NULL;
