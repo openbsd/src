@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.99 2010/09/22 08:49:14 claudio Exp $	*/
+/*	$OpenBSD: xl.c,v 1.100 2011/04/05 18:01:21 henning Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1661,9 +1661,9 @@ reload:
 		if (m_head->m_pkthdr.csum_flags) {
 			if (m_head->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 				status |= XL_TXSTAT_IPCKSUM;
-			if (m_head->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
+			if (m_head->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
 				status |= XL_TXSTAT_TCPCKSUM;
-			if (m_head->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
+			if (m_head->m_pkthdr.csum_flags & M_UDP_CSUM_OUT)
 				status |= XL_TXSTAT_UDPCKSUM;
 		}
 #endif

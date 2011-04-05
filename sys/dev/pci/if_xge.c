@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.53 2011/04/03 15:36:03 jasper Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.54 2011/04/05 18:01:21 henning Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -1138,9 +1138,9 @@ xge_start(struct ifnet *ifp)
 
 		if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 			txd->txd_control2 |= TXD_CTL2_CIPv4;
-		if (m->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
+		if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
 			txd->txd_control2 |= TXD_CTL2_CTCP;
-		if (m->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
+		if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT)
 			txd->txd_control2 |= TXD_CTL2_CUDP;
 
 		txd[ntxd].txd_control1 |= TXD_CTL1_GCL;

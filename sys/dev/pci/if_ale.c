@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.16 2010/08/31 17:13:44 deraadt Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.17 2011/04/05 18:01:21 henning Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -135,7 +135,7 @@ struct cfdriver ale_cd = {
 int aledebug = 0;
 #define DPRINTF(x)	do { if (aledebug) printf x; } while (0)
 
-#define ALE_CSUM_FEATURES	(M_TCPV4_CSUM_OUT | M_UDPV4_CSUM_OUT)
+#define ALE_CSUM_FEATURES	(M_TCP_CSUM_OUT | M_UDP_CSUM_OUT)
 
 int
 ale_miibus_readreg(struct device *dev, int phy, int reg)

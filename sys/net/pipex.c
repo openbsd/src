@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.16 2011/03/14 06:53:33 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.17 2011/04/05 18:01:21 henning Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1946,7 +1946,7 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 
 		udp->uh_sum = in_cksum_phdr(ip->ip_src.s_addr,
 		    ip->ip_dst.s_addr, htons(plen  + IPPROTO_UDP));
-		m0->m_pkthdr.csum_flags |= M_UDPV4_CSUM_OUT;
+		m0->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
 
 		if (ip_output(m0, NULL, NULL, 0, NULL, NULL) != 0) {
 			PIPEX_DBG((session, LOG_DEBUG, "ip_output failed."));

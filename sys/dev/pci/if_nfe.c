@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.97 2011/01/10 16:18:03 kettenis Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.98 2011/04/05 18:01:21 henning Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -950,7 +950,7 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 #endif
 	if (m0->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 		flags |= NFE_TX_IP_CSUM;
-	if (m0->m_pkthdr.csum_flags & (M_TCPV4_CSUM_OUT | M_UDPV4_CSUM_OUT))
+	if (m0->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT | M_UDP_CSUM_OUT))
 		flags |= NFE_TX_TCP_UDP_CSUM;
 
 	for (i = 0; i < map->dm_nsegs; i++) {

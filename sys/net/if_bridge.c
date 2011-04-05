@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.189 2011/04/04 13:55:54 henning Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.190 2011/04/05 18:01:21 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1063,8 +1063,8 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 #endif /* IPSEC */
 
 		/* Catch packets that need TCP/UDP hardware checksumming */
-		if (m->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT ||
-		    m->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT) {
+		if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT ||
+		    m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT) {
 			m_freem(m);
 			splx(s);
 			return (0);

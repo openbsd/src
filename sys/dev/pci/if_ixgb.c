@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.58 2011/04/03 15:36:02 jasper Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.59 2011/04/05 18:01:21 henning Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -1296,14 +1296,14 @@ ixgb_transmit_checksum_setup(struct ixgb_softc *sc,
 
 	if (mp->m_pkthdr.csum_flags) {
 
-		if (mp->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT) {
+		if (mp->m_pkthdr.csum_flags & M_TCP_CSUM_OUT) {
 			*txd_popts = IXGB_TX_DESC_POPTS_TXSM;
 			if (sc->active_checksum_context == OFFLOAD_TCP_IP)
 				return;
 			else
 				sc->active_checksum_context = OFFLOAD_TCP_IP;
 
-		} else if (mp->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT) {
+		} else if (mp->m_pkthdr.csum_flags & M_UDP_CSUM_OUT) {
 			*txd_popts = IXGB_TX_DESC_POPTS_TXSM;
 			if (sc->active_checksum_context == OFFLOAD_UDP_IP)
 				return;

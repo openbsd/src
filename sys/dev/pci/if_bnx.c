@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.91 2011/04/03 15:36:02 jasper Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.92 2011/04/05 18:01:21 henning Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4833,7 +4833,7 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 		if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 			flags |= TX_BD_FLAGS_IP_CKSUM;
 		if (m->m_pkthdr.csum_flags &
-		    (M_TCPV4_CSUM_OUT | M_UDPV4_CSUM_OUT))
+		    (M_TCP_CSUM_OUT | M_UDP_CSUM_OUT))
 			flags |= TX_BD_FLAGS_TCP_UDP_CKSUM;
 	}
 

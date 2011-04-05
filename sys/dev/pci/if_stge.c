@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.52 2009/12/07 15:31:07 sthen Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.53 2011/04/05 18:01:21 henning Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -574,9 +574,9 @@ stge_start(struct ifnet *ifp)
 		if (m0->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 			csum_flags |= TFD_IPChecksumEnable;
 
-		if (m0->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
+		if (m0->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
 			csum_flags |= TFD_TCPChecksumEnable;
-		else if (m0->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
+		else if (m0->m_pkthdr.csum_flags & M_UDP_CSUM_OUT)
 			csum_flags |= TFD_UDPChecksumEnable;
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.108 2011/03/13 15:38:50 stsp Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.109 2011/04/05 18:01:21 henning Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1149,9 +1149,9 @@ vr_encap(struct vr_softc *sc, struct vr_chain *c, struct mbuf *m_head)
 	if (sc->vr_quirks & VR_Q_CSUM) {
 		if (m_head->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 			vr_flags |= VR_TXCTL_IPCSUM;
-		if (m_head->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
+		if (m_head->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
 			vr_flags |= VR_TXCTL_TCPCSUM;
-		if (m_head->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
+		if (m_head->m_pkthdr.csum_flags & M_UDP_CSUM_OUT)
 			vr_flags |= VR_TXCTL_UDPCSUM;
 	}
 

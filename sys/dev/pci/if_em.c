@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.251 2011/04/03 15:36:02 jasper Exp $ */
+/* $OpenBSD: if_em.c,v 1.252 2011/04/05 18:01:21 henning Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2236,14 +2236,14 @@ em_transmit_checksum_setup(struct em_softc *sc, struct mbuf *mp,
 	int curr_txd;
 
 	if (mp->m_pkthdr.csum_flags) {
-		if (mp->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT) {
+		if (mp->m_pkthdr.csum_flags & M_TCP_CSUM_OUT) {
 			*txd_upper = E1000_TXD_POPTS_TXSM << 8;
 			*txd_lower = E1000_TXD_CMD_DEXT | E1000_TXD_DTYP_D;
 			if (sc->active_checksum_context == OFFLOAD_TCP_IP)
 				return;
 			else
 				sc->active_checksum_context = OFFLOAD_TCP_IP;
-		} else if (mp->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT) {
+		} else if (mp->m_pkthdr.csum_flags & M_UDP_CSUM_OUT) {
 			*txd_upper = E1000_TXD_POPTS_TXSM << 8;
 			*txd_lower = E1000_TXD_CMD_DEXT | E1000_TXD_DTYP_D;
 			if (sc->active_checksum_context == OFFLOAD_UDP_IP)

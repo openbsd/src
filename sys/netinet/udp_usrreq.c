@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.139 2011/04/03 16:09:09 blambert Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.140 2011/04/05 18:01:21 henning Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1017,7 +1017,7 @@ udp_output(struct mbuf *m, ...)
 	 * until ip_output() or hardware (if it exists).
 	 */
 	if (udpcksum) {
-		m->m_pkthdr.csum_flags |= M_UDPV4_CSUM_OUT;
+		m->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
 		ui->ui_sum = in_cksum_phdr(ui->ui_src.s_addr,
 		    ui->ui_dst.s_addr, htons((u_int16_t)len +
 		    sizeof (struct udphdr) + IPPROTO_UDP));

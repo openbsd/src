@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.24 2010/08/27 17:08:00 jsg Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.25 2011/04/05 18:01:21 henning Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1109,9 +1109,9 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 	/* Configure checksum offload. */
 	if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 		cflags |= JME_TD_IPCSUM;
-	if (m->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
+	if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
 		cflags |= JME_TD_TCPCSUM;
-	if (m->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
+	if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT)
 		cflags |= JME_TD_UDPCSUM;
 
 #if NVLAN > 0

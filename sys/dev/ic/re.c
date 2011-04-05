@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.133 2011/03/13 15:35:20 stsp Exp $	*/
+/*	$OpenBSD: re.c,v 1.134 2011/04/05 18:01:21 henning Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1707,18 +1707,18 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 	 */
 
 	if ((m->m_pkthdr.csum_flags &
-	    (M_IPV4_CSUM_OUT|M_TCPV4_CSUM_OUT|M_UDPV4_CSUM_OUT)) != 0) {
+	    (M_IPV4_CSUM_OUT|M_TCP_CSUM_OUT|M_UDP_CSUM_OUT)) != 0) {
 		if (sc->rl_flags & RL_FLAG_DESCV2) {
 			vlanctl |= RL_TDESC_CMD_IPCSUMV2;
-			if (m->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
+			if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
 				vlanctl |= RL_TDESC_CMD_TCPCSUMV2;
-			if (m->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
+			if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT)
 				vlanctl |= RL_TDESC_CMD_UDPCSUMV2;
 		} else {
 			csum_flags |= RL_TDESC_CMD_IPCSUM;
-			if (m->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
+			if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
 				csum_flags |= RL_TDESC_CMD_TCPCSUM;
-			if (m->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
+			if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT)
 				csum_flags |= RL_TDESC_CMD_UDPCSUM;
 		}
 	}

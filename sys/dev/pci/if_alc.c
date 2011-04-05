@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.10 2011/02/18 17:20:15 mikeb Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.11 2011/04/05 18:01:21 henning Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -140,7 +140,7 @@ struct cfdriver alc_cd = {
 int alcdebug = 0;
 #define	DPRINTF(x)	do { if (alcdebug) printf x; } while (0)
 
-#define ALC_CSUM_FEATURES	(M_TCPV4_CSUM_OUT | M_UDPV4_CSUM_OUT)
+#define ALC_CSUM_FEATURES	(M_TCP_CSUM_OUT | M_UDP_CSUM_OUT)
 
 int
 alc_miibus_readreg(struct device *dev, int phy, int reg)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.12 2010/08/27 17:08:00 jsg Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.13 2011/04/05 18:01:21 henning Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -132,7 +132,7 @@ struct cfdriver age_cd = {
 int agedebug = 0;
 #define	DPRINTF(x)	do { if (agedebug) printf x; } while (0)
 
-#define AGE_CSUM_FEATURES	(M_TCPV4_CSUM_OUT | M_UDPV4_CSUM_OUT)
+#define AGE_CSUM_FEATURES	(M_TCP_CSUM_OUT | M_UDP_CSUM_OUT)
 
 int
 age_match(struct device *dev, void *match, void *aux)
@@ -1195,9 +1195,9 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 	/* Configure Tx IP/TCP/UDP checksum offload. */
 	if ((m->m_pkthdr.csum_flags & AGE_CSUM_FEATURES) != 0) {
 		cflags |= AGE_TD_CSUM;
-		if ((m->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT) != 0)
+		if ((m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT) != 0)
 			cflags |= AGE_TD_TCPCSUM;
-		if ((m->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT) != 0)
+		if ((m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT) != 0)
 			cflags |= AGE_TD_UDPCSUM;
 		/* Set checksum start offset. */
 		cflags |= (poff << AGE_TD_CSUM_PLOADOFFSET_SHIFT);

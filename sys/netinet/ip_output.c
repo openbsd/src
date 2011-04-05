@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.216 2011/04/04 17:44:43 henning Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.217 2011/04/05 18:01:21 henning Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -744,9 +744,9 @@ sendit:
 		} else
 			ip->ip_sum = in_cksum(m, hlen);
 		/* Update relevant hardware checksum stats for TCP/UDP */
-		if (m->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
+		if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
 			tcpstat.tcps_outhwcsum++;
-		else if (m->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
+		else if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT)
 			udpstat.udps_outhwcsum++;
 		error = (*ifp->if_output)(ifp, m, sintosa(dst), ro->ro_rt);
 		goto done;
@@ -2127,17 +2127,17 @@ in_delayed_cksum(struct mbuf *m)
 void
 in_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 {
-	if (m->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT) {
+	if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT) {
 		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_TCPv4) ||
 		    ifp->if_bridge != NULL) {
 			in_delayed_cksum(m);
-			m->m_pkthdr.csum_flags &= ~M_TCPV4_CSUM_OUT; /* Clear */
+			m->m_pkthdr.csum_flags &= ~M_TCP_CSUM_OUT; /* Clear */
 		}
-	} else if (m->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT) {
+	} else if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT) {
 		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_UDPv4) ||
 		    ifp->if_bridge != NULL) {
 			in_delayed_cksum(m);
-			m->m_pkthdr.csum_flags &= ~M_UDPV4_CSUM_OUT; /* Clear */
+			m->m_pkthdr.csum_flags &= ~M_UDP_CSUM_OUT; /* Clear */
 		}
 	}
 }
