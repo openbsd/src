@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.170 2011/04/05 14:25:42 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.171 2011/04/05 22:39:19 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -838,7 +838,7 @@ int
 scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 {
 	const struct scsi_quirk_inquiry_pattern *finger;
-	struct scsi_inquiry_data *inqbuf;
+	struct scsi_inquiry_data *inqbuf, *usbinqbuf;
 	struct scsi_attach_args sa;
 	struct scsi_link *sc_link, *link0;
 	struct cfdata *cf;
@@ -857,7 +857,6 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 	sc_link->lun = lun;
 	sc_link->interpret_sense = scsi_interpret_sense;
 	TAILQ_INIT(&sc_link->queue);
-	inqbuf = &sc_link->inqdata;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_link created.\n"));
 
@@ -912,13 +911,23 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 	}
 
 	/* Now go ask the device all about itself. */
+	inqbuf = dma_alloc(sizeof(*inqbuf), PR_NOWAIT | PR_ZERO);
+	if (inqbuf == NULL) {
+		rslt = ENOMEM;
+		goto bad;
+	}
+
 	rslt = scsi_inquire(sc_link, inqbuf, scsi_autoconf | SCSI_SILENT);
+	bcopy(inqbuf, &sc_link->inqdata, sizeof(sc_link->inqdata));
+	dma_free(inqbuf, sizeof(*inqbuf));
+
 	if (rslt != 0) {
 		SC_DEBUG(sc_link, SDEV_DB2, ("Bad LUN. rslt = %i\n", rslt));
 		if (lun == 0)
 			rslt = EINVAL;
 		goto bad;
 	}
+	inqbuf = &sc_link->inqdata;
 
 	switch (inqbuf->device & SID_QUAL) {
 	case SID_QUAL_RSVD:
@@ -1011,12 +1020,14 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 	 * point to prevent such helpfulness before it causes confusion.
 	 */
 	if (lun == 0 && (sc_link->flags & SDEV_UMASS) &&
-	    scsi_get_link(scsi, target, 1) == NULL && sc_link->luns > 1) {
-		struct scsi_inquiry_data tmpinq;
+	    scsi_get_link(scsi, target, 1) == NULL && sc_link->luns > 1 &&
+	    (usbinqbuf = dma_alloc(sizeof(*usbinqbuf), M_NOWAIT)) != NULL) {
 
 		sc_link->lun = 1;
-		scsi_inquire(sc_link, &tmpinq, scsi_autoconf | SCSI_SILENT);
+		scsi_inquire(sc_link, usbinqbuf, scsi_autoconf | SCSI_SILENT);
 	    	sc_link->lun = 0;
+
+		dma_free(usbinqbuf, sizeof(*usbinqbuf));
 	}
 
 	scsi_add_link(scsi, sc_link);
