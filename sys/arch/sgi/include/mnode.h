@@ -1,4 +1,4 @@
-/*	$OpenBSD: mnode.h,v 1.16 2011/03/23 16:54:36 pirofti Exp $ */
+/*	$OpenBSD: mnode.h,v 1.17 2011/04/05 14:43:10 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -64,6 +64,11 @@
 /* Get typed address to nodes uncached space */
 #define IP27_UNCAC_ADDR(type, node, offs) \
 	((type)(IP27_NODE_UNCAC_BASE(node) + ((offs) & IP27_NODE_SIZE_MASK)))
+
+/*
+ * Convert a physical (XIO) address to a node number.
+ */
+#define	IP27_PHYS_TO_NODE(addr)	((addr) >> kl_n_shift)
 
 /*
  * IP27 platforms uses something called kldir to describe each

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.30 2010/08/23 16:56:18 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.31 2011/04/05 14:43:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -302,17 +302,6 @@ xbowattach(struct device *parent, struct device *self, void *aux)
 		break;
 #ifdef TGT_ORIGIN
 	default:
-		/*
-		 * Default value for the interrupt register.
-		 */
-		if (xbow_intr_widget_register == 0)
-			xbow_intr_widget_register =
-			    (1UL << 47) /* XIO I/O space */ |
-			    (nasid <<
-			      (sys_config.system_type == SGI_IP35 ? 39 : 38)) |
-			    ((paddr_t)IP27_RHUB_ADDR(0, HUBPI_IR_CHANGE) -
-			     IP27_NODE_IO_BASE(0)) /* HUB register offset */;
-
 		klcfg.cfg = &cfg;
 		klcfg.probe_order = NULL;
 
@@ -327,8 +316,7 @@ xbowattach(struct device *parent, struct device *self, void *aux)
 			 * Interrupt widget is hardwired to #a (this is another
 			 * facet of this bridge).
 			 */
-			if (xbow_intr_widget == 0)
-				xbow_intr_widget = 0x0a;
+			xbow_node_hub_widget[nasid] = 0x0a;
 			klcfg.probe_order = xbow_probe_singlebridge;
 		} else {
 			/*
@@ -345,8 +333,7 @@ xbowattach(struct device *parent, struct device *self, void *aux)
 			 * crossbow, and is where memory and interrupt logic
 			 * resources are connected to.
 			 */
-			if (xbow_intr_widget == 0)
-				xbow_intr_widget = cfg.master;
+			xbow_node_hub_widget[nasid] = cfg.master;
 		}
 		break;
 #endif
@@ -659,8 +646,9 @@ xbow_space_vaddr(bus_space_tag_t t, bus_space_handle_t h)
  * the master nasid; other nodes do not handle interrupts.
  */
 
-int	xbow_intr_widget = 0;
-paddr_t	xbow_intr_widget_register;
+int	xbow_node_hub_widget[XBOW_MAX];
+uint64_t xbow_intr_address;
+
 int	(*xbow_intr_widget_intr_register)(int, int, int *) = NULL;
 int	(*xbow_intr_widget_intr_establish)(int (*)(void *), void *, int, int,
 	    const char *, struct intrhand *) = NULL;

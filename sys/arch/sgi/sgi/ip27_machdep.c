@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.52 2010/09/20 06:33:47 matthew Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.53 2011/04/05 14:43:10 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -286,6 +286,14 @@ ip27_setup()
 		IP27_RHUB_PI_S(masternasid, 1,
 		    HUBPI_CALIAS_SIZE, PI_CALIAS_SIZE_0);
 	}
+
+	/*
+	 * Compute interrupt register address.
+	 */
+	xbow_intr_address = (1UL << 47) /* XIO I/O space */ |
+	    (masternasid << (ip35 ? 39 : 38)) |
+	    ((uint64_t)IP27_RHUB_ADDR(0, HUBPI_IR_CHANGE) -
+	     IP27_NODE_IO_BASE(0)) /* HUB register offset */;
 
 	_device_register = dksc_device_register;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.80 2011/04/05 01:17:41 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.81 2011/04/05 14:43:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -1094,9 +1094,9 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 		 */
 		if (ISSET(xb->xb_flags, XF_PIC))
 			int_addr = ((uint64_t)intrsrc << 48) |
-			    (xbow_intr_widget_register & ((1UL << 48) - 1));
+			    (xbow_intr_address & ((1UL << 48) - 1));
 		else
-			int_addr = ((xbow_intr_widget_register >> 30) &
+			int_addr = ((xbow_intr_address >> 30) &
 			    0x0003ff00) | intrsrc;
 		xb->xb_ier |= 1 << intrbit;
 
@@ -1847,7 +1847,7 @@ const char *
 xbridge_setup(struct xbpci_softc *xb)
 {
 	paddr_t pa;
-	uint64_t status, ctrl, int_addr;
+	uint64_t status, ctrl, int_addr, dirmap;
 	int mode, speed, dev;
 
 	status = xbridge_read_reg(xb, WIDGET_STATUS);
@@ -1890,14 +1890,27 @@ xbridge_setup(struct xbpci_softc *xb)
 	}
 
 	/*
-	 * Configure the direct DMA window to access the low 2GB of memory.
-	 * XXX assumes the window is on the same node we are handling
-	 * XXX interrupt upon (because of xbow_intr_widget)
+	 * Configure the direct DMA window to access the 2GB memory
+	 * window selected as our DMA memory range.
 	 */
-	xbridge_write_reg(xb, BRIDGE_DIR_MAP,
-	    (xbow_intr_widget << BRIDGE_DIRMAP_WIDGET_SHIFT) |
-	    ((dma_constraint.ucr_low >> BRIDGE_DIRMAP_BASE_SHIFT) &
-	     BRIDGE_DIRMAP_BASE_MASK));
+	dirmap = (dma_constraint.ucr_low >> BRIDGE_DIRMAP_BASE_SHIFT) &
+	     BRIDGE_DIRMAP_BASE_MASK;
+	switch (sys_config.system_type) {
+	default:
+#ifdef TGT_ORIGIN
+		dirmap |= xbow_node_hub_widget[
+		    IP27_PHYS_TO_NODE(dma_constraint.ucr_low)] <<
+		      BRIDGE_DIRMAP_WIDGET_SHIFT;
+		break;
+#endif
+#ifdef TGT_OCTANE
+	case SGI_OCTANE:
+		dirmap |= xbow_node_hub_widget[0/*masternasid*/] <<
+		    BRIDGE_DIRMAP_WIDGET_SHIFT;
+		break;
+#endif
+	}
+	xbridge_write_reg(xb, BRIDGE_DIR_MAP, dirmap);
 
 	/*
 	 * Allocate RRB for the existing devices.
@@ -1981,8 +1994,8 @@ xbridge_setup(struct xbpci_softc *xb)
 	xbridge_write_reg(xb, BRIDGE_IER, 0);
 	xbridge_write_reg(xb, BRIDGE_INT_MODE, 0);
 	xbridge_write_reg(xb, BRIDGE_INT_DEV, 0);
-	int_addr = ((uint64_t)xbow_intr_widget << 48) |
-	    (xbow_intr_widget_register & ((1UL << 48) - 1));
+	int_addr = ((uint64_t)xbow_node_hub_widget[masternasid] << 48) |
+	    (xbow_intr_address & ((1UL << 48) - 1));
 	xbridge_write_reg(xb, WIDGET_INTDEST_ADDR_LOWER, int_addr);
 	xbridge_write_reg(xb, WIDGET_INTDEST_ADDR_UPPER, int_addr >> 32);
 

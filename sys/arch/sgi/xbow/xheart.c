@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheart.c,v 1.20 2010/09/20 06:33:47 matthew Exp $	*/
+/*	$OpenBSD: xheart.c,v 1.21 2011/04/05 14:43:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -134,43 +134,37 @@ xheart_attach(struct device *parent, struct device *self, void *aux)
 	oba.oba_flags = ONEWIRE_SCAN_NOW | ONEWIRE_NO_PERIODIC_SCAN;
 	config_found(self, &oba, onewirebus_print);
 
+	xbow_node_hub_widget[0/*xaa->xaa_nasid*/] = xaa->xaa_widget;
+	xbow_intr_address = 0x80;
+	xbow_intr_widget_intr_register = xheart_intr_register;
+	xbow_intr_widget_intr_establish = xheart_intr_establish;
+	xbow_intr_widget_intr_disestablish = xheart_intr_disestablish;
+	xbow_intr_widget_intr_clear = xheart_intr_clear;
+	xbow_intr_widget_intr_set = xheart_intr_set;
+
 	/*
-	 * If no other widget has claimed interrupts routing, do it now.
+	 * Acknowledge and disable all interrupts.
 	 */
-	if (xbow_intr_widget == 0) {
-		xbow_intr_widget = xaa->xaa_widget;
-		xbow_intr_widget_register = 0x80;
-		xbow_intr_widget_intr_register = xheart_intr_register;
-		xbow_intr_widget_intr_establish = xheart_intr_establish;
-		xbow_intr_widget_intr_disestablish = xheart_intr_disestablish;
-		xbow_intr_widget_intr_clear = xheart_intr_clear;
-		xbow_intr_widget_intr_set = xheart_intr_set;
-
-		/*
-		 * Acknowledge and disable all interrupts.
-		 */
-		heart = PHYS_TO_XKPHYS(HEART_PIU_BASE, CCA_NC);
-		*(volatile uint64_t*)(heart + HEART_ISR_CLR) =
-		    0xffffffffffffffff;
-		*(volatile uint64_t*)(heart + HEART_IMR(0)) = 0UL;
-		*(volatile uint64_t*)(heart + HEART_IMR(1)) = 0UL;
-		*(volatile uint64_t*)(heart + HEART_IMR(2)) = 0UL;
-		*(volatile uint64_t*)(heart + HEART_IMR(3)) = 0UL;
+	heart = PHYS_TO_XKPHYS(HEART_PIU_BASE, CCA_NC);
+	*(volatile uint64_t*)(heart + HEART_ISR_CLR) = 0xffffffffffffffff;
+	*(volatile uint64_t*)(heart + HEART_IMR(0)) = 0UL;
+	*(volatile uint64_t*)(heart + HEART_IMR(1)) = 0UL;
+	*(volatile uint64_t*)(heart + HEART_IMR(2)) = 0UL;
+	*(volatile uint64_t*)(heart + HEART_IMR(3)) = 0UL;
 
 #ifdef notyet
-		set_intr(INTPRI_HEART_4, CR_INT_4, xheart_intr_handler);
-		set_intr(INTPRI_HEART_3, CR_INT_3, xheart_intr_handler);
+	set_intr(INTPRI_HEART_4, CR_INT_4, xheart_intr_handler);
+	set_intr(INTPRI_HEART_3, CR_INT_3, xheart_intr_handler);
 #endif
-		set_intr(INTPRI_HEART_2, CR_INT_2, xheart_intr_handler);
+	set_intr(INTPRI_HEART_2, CR_INT_2, xheart_intr_handler);
 #ifdef notyet
-		set_intr(INTPRI_HEART_1, CR_INT_1, xheart_intr_handler);
+	set_intr(INTPRI_HEART_1, CR_INT_1, xheart_intr_handler);
 #endif
-		set_intr(INTPRI_HEART_0, CR_INT_0, xheart_intr_handler);
+	set_intr(INTPRI_HEART_0, CR_INT_0, xheart_intr_handler);
 
-		set_intr(INTPRI_HEART_LEDS, CR_INT_5, ip30_lights_frob);
+	set_intr(INTPRI_HEART_LEDS, CR_INT_5, ip30_lights_frob);
 
-		register_splx_handler(xheart_splx);
-	}
+	register_splx_handler(xheart_splx);
 }
 
 /*
