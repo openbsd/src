@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.45 2010/12/31 19:20:42 kettenis Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.46 2011/04/05 12:09:20 dlg Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for QLogic adapters.
  *
@@ -61,6 +61,7 @@
 #define	_XT(xs)	((((xs)->timeout/1000) * hz) + (3 * hz))
 
 static void ispminphys(struct buf *, struct scsi_link *);
+static int isp_scsi_probe(struct scsi_link *);
 static void ispcmd_slow(XS_T *);
 static void ispcmd(XS_T *);
 
@@ -94,6 +95,7 @@ isp_attach(struct ispsoftc *isp)
 	struct scsibus_attach_args saa;
 	struct scsi_link *lptr = &isp->isp_osinfo._link[0];
 	isp->isp_osinfo._adapter.scsi_minphys = ispminphys;
+	isp->isp_osinfo._adapter.dev_probe = isp_scsi_probe;
 
 	isp->isp_state = ISP_RUNSTATE;
 
@@ -283,6 +285,17 @@ isp_add2_blocked_queue(struct ispsoftc *isp, XS_T *xs)
 	xs->free_list.le_next = NULL;
 }
 
+int
+isp_scsi_probe(struct scsi_link *link)
+{
+	struct ispsoftc *isp = (struct ispsoftc *)link->adapter_softc;
+
+	if (link->lun >= isp->isp_maxluns)
+		return (ENXIO);
+
+	return (0);
+}
+
 void
 ispcmd(XS_T *xs)
 {
@@ -297,13 +310,6 @@ ispcmd(XS_T *xs)
 	timeout_set(&xs->stimeout, isp_wdog, xs);
 
 	ISP_LOCK(isp);
-
-	if (XS_LUN(xs) >= isp->isp_maxluns) {
-		xs->error = XS_SELTIMEOUT;
-		scsi_done(xs);
-		ISP_UNLOCK(isp);
-		return;
-	}
 
 	if (isp->isp_state < ISP_RUNSTATE) {
 		ISP_DISABLE_INTS(isp);
