@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbdmap.c,v 1.37 2010/08/28 16:40:32 miod Exp $	*/
+/*	$OpenBSD: ukbdmap.c,v 1.38 2011/04/05 19:12:34 miod Exp $	*/
 
 /*
  * THIS FILE IS AUTOMAGICALLY GENERATED.  DO NOT EDIT.
@@ -7,7 +7,7 @@
  *	OpenBSD: makemap.awk,v 1.11 2010/07/31 16:12:37 miod Exp 
  * generated from:
  */
-/*	OpenBSD: wskbdmap_mfii.c,v 1.41 2010/08/28 16:39:18 miod Exp  */
+/*	OpenBSD: wskbdmap_mfii.c,v 1.42 2011/04/05 19:12:13 miod Exp  */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*
@@ -1088,6 +1088,38 @@ static const keysym_t ukbd_keydesc_nl_nodead[] = {
     KC(52),	KS_apostrophe,	KS_grave,
 };
 
+static const keysym_t ukbd_keydesc_is[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+						/* euro currency */
+    KC(8),	KS_e,		KS_E,
+    KC(20),	KS_q,		KS_Q,		KS_at,
+    KC(31),	KS_2,		KS_quotedbl,
+    KC(35),	KS_6,		KS_ampersand,
+    KC(36),	KS_7,		KS_slash,	KS_braceleft,
+    KC(37),	KS_8,		KS_parenleft,	KS_bracketleft,
+    KC(38),	KS_9,		KS_parenright,	KS_bracketright,
+    KC(39),	KS_0,		KS_equal,	KS_braceright,
+    KC(45),	KS_odiaeresis,	KS_Odiaeresis,	KS_backslash,
+    KC(46),	KS_minus,	KS_underscore,
+    KC(47),	KS_eth,
+    KC(48),	KS_apostrophe,	KS_question,	KS_asciitilde,
+    KC(49),	KS_plus,	KS_asterisk,	KS_grave,
+    KC(50),	KS_plus,	KS_asterisk,	KS_grave,
+    KC(51),	KS_ae,
+    KC(52),	KS_dead_acute,	KS_dead_diaeresis,KS_dead_circumflex,
+    KC(53),	KS_degree,	KS_diaeresis,
+    KC(54),	KS_comma,	KS_semicolon,
+    KC(55),	KS_period,	KS_colon,
+    KC(56),	KS_thorn,
+    KC(100),	KS_less,	KS_greater,	KS_bar,
+    KC(230),	KS_Mode_switch,	KS_Multi_key,
+};
+
+static const keysym_t ukbd_keydesc_is_nodead[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(52),	KS_acute,	KS_diaeresis,	KS_asciicircum,
+};
+
 #endif	/* WSKBD_NO_INTL_LAYOUTS */
 
 #define KBD_MAP(name, base, map) \
@@ -1148,6 +1180,8 @@ const struct wscons_keydesc ukbd_keydesctab[] = {
 	KBD_MAP(KB_LV,			KB_US,	ukbd_keydesc_lv),
 	KBD_MAP(KB_NL,			KB_US, 	ukbd_keydesc_nl),
 	KBD_MAP(KB_NL | KB_NODEAD,	KB_NL,	ukbd_keydesc_nl_nodead),
+	KBD_MAP(KB_IS,			KB_US, 	ukbd_keydesc_is),
+	KBD_MAP(KB_IS | KB_NODEAD,	KB_IS, 	ukbd_keydesc_is_nodead),
 #endif	/* WSKBD_NO_INTL_LAYOUTS */
 	{0, 0, 0, 0}
 };
