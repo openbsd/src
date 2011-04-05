@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.31 2011/04/05 14:13:25 jsing Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.32 2011/04/05 15:46:53 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -181,8 +181,6 @@ hppa_init(paddr_t start)
 	extern int kernel_text;
 	int error;
 	paddr_t	avail_end;
-
-	mtctl((long)&cpu0_info, 24);
 
 	pdc_init();	/* init PDC iface, so we can call em easy */
 

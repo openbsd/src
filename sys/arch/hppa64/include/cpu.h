@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.19 2010/12/21 14:56:23 claudio Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.20 2011/04/05 15:46:53 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -116,6 +116,8 @@
 #include <sys/sched.h>
 
 struct cpu_info {
+	volatile int	ci_psw;
+
 	struct proc	*ci_curproc;
 	struct pcb	*ci_cpcb;
 	struct cpu_info	*ci_next;

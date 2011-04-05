@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.14 2011/04/05 15:30:45 jsing Exp $	*/
+/*	$OpenBSD: locore.S,v 1.15 2011/04/05 15:46:53 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -45,8 +45,6 @@
 	.data
 
 	.align	16
-$kpsl
-	.word	PSL_W | PSL_Q | PSL_P | PSL_C | PSL_D | PSL_S | PSL_O
 	.export cpl, data
 cpl
 	.word	IPL_HIGH
@@ -93,6 +91,13 @@ $start
 	mtctl	%r0, %eiem
 	mtctl	%r1, %eirr
 	mtctl	%r0, %cr10	/* ccr */
+
+	ldil	L%cpu0_info, %r1
+	ldo	R%cpu0_info(%r1), %r1
+	mtctl	%r1, %cr24
+	ldil	L%(PSL_W|PSL_Q|PSL_P|PSL_C|PSL_D|PSL_S|PSL_O), %r8
+	ldo	R%(PSL_W|PSL_Q|PSL_P|PSL_C|PSL_D|PSL_S|PSL_O)(%r8), %r8
+	stw	%r8, CI_PSW(%r1)
 
 	ldil	L%pdc, %r1
 	std	%arg0, R%pdc(%r1)
@@ -212,8 +217,8 @@ $start_zero_tf
 	std	%r1, TF_FLAGS(%arg2)
 	std	%arg3, TF_CR30(%arg2)
 
-	ldil	L%$kpsl, %r1
-	ldw	R%$kpsl(%r1), arg7
+	mfctl	%cr24, %r1
+	ldw	CI_PSW(%r1), arg7
 	ldil	L%$start_virt, %r31
 	ldo	R%$start_virt(%r31), %r31
 	ldil	L%$ivaaddr, %r1
@@ -651,8 +656,9 @@ ENTRY(TLABEL(all),0)
 	mtctl	%r9, %pcoq
 	mtctl	%r25, %cr29
 
-	ldil	L%$kpsl, %r9
-	ldw	R%$kpsl(%r9), %r9
+	mfctl	%cr24, %r9
+	ldw	CI_PSW(%r9), %r9
+	depi	0, PSL_I_POS, 1, %r9	/* Leave interrupts disabled. */
 	mtctl	%r9, %ipsw
 
 	mfctl	%cr30, %r9
