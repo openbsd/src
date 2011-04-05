@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.20 2011/04/05 15:46:53 jsing Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.21 2011/04/05 16:05:51 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -115,7 +115,14 @@
 #include <sys/time.h>
 #include <sys/sched.h>
 
+/*
+ * Note that the alignment of ci_trap_save is important since we want to keep
+ * it within a single cache line. As a result, it must be kept as the first
+ * entry within the cpu_info struct.
+ */
 struct cpu_info {
+	volatile u_long	ci_trap_save[16];
+
 	volatile int	ci_psw;
 
 	struct proc	*ci_curproc;
