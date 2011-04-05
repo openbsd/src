@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.148 2011/04/05 18:01:21 henning Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.149 2011/04/05 20:31:41 henning Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -184,6 +184,9 @@ struct mbuf {
 #define	M_TCP_CSUM_IN_BAD	0x0040	/* TCP/IPv4 checksum bad */
 #define	M_UDP_CSUM_IN_OK	0x0080	/* UDP/IPv4 checksum verified */
 #define	M_UDP_CSUM_IN_BAD	0x0100	/* UDP/IPv4 checksum bad */
+#define	M_ICMP_CSUM_OUT		0x0200	/* ICMP checksum needed */
+#define	M_ICMP_CSUM_IN_OK	0x0400	/* ICMP checksum verified */
+#define	M_ICMP_CSUM_IN_BAD	0x0800	/* ICMP checksum bad */
 
 /* mbuf types */
 #define	MT_FREE		0	/* should be on free list */
