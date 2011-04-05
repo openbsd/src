@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socketcall.h,v 1.4 2002/11/27 07:30:36 ish Exp $	*/
+/*	$OpenBSD: linux_socketcall.h,v 1.5 2011/04/05 22:54:31 pirofti Exp $	*/
 /*	$NetBSD: linux_socketcall.h,v 1.1 1995/02/28 23:26:05 fvdl Exp $	*/
 
 /*
@@ -32,8 +32,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_SOCKETCALL_H
-#define _LINUX_SOCKETCALL_H
+#ifndef _LINUX_SOCKETCALL_H_
+#define _LINUX_SOCKETCALL_H_
 
 /*
  * Values passed to the Linux socketcall() syscall, determining the actual
@@ -174,4 +174,4 @@ struct linux_recvmsg_args {
 	int flags;
 };
 
-#endif /* _LINUX_SOCKETCALL_H */
+#endif /* _LINUX_SOCKETCALL_H_ */

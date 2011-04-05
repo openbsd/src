@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_shm.h,v 1.2 1996/04/17 05:23:58 mickey Exp $	*/
+/*	$OpenBSD: linux_shm.h,v 1.3 2011/04/05 22:54:31 pirofti Exp $	*/
 /*	$NetBSD: linux_shm.h,v 1.1 1995/02/28 23:25:57 fvdl Exp $	*/
 
 /*
@@ -32,8 +32,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_SHM_H
-#define _LINUX_SHM_H
+#ifndef _LINUX_SHM_H_
+#define _LINUX_SHM_H_
 
 /*
  * shm segment control structure
@@ -61,4 +61,4 @@ struct linux_shmid_ds {
 #define LINUX_SHM_STAT		13
 #define LINUX_SHM_INFO		14
 
-#endif /* _LINUX_SHM_H */
+#endif /* _LINUX_SHM_H_ */

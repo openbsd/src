@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_signal.h,v 1.8 2002/03/14 01:26:50 millert Exp $	*/
+/*	$OpenBSD: linux_signal.h,v 1.9 2011/04/05 22:54:31 pirofti Exp $	*/
 /* 	$NetBSD: linux_signal.h,v 1.4 1995/08/27 20:51:51 fvdl Exp $	*/
 
 /*
@@ -32,8 +32,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_SIGNAL_H
-#define _LINUX_SIGNAL_H
+#ifndef _LINUX_SIGNAL_H_
+#define _LINUX_SIGNAL_H_
 
 #define LINUX_SIGHUP	 1
 #define LINUX_SIGINT	 2
@@ -145,4 +145,4 @@ void bsd_to_linux_sigaction(struct sigaction *,
 int  linux_to_bsd_signal (int, int *);
 int  bsd_to_linux_signal (int, int *);
 
-#endif /* !_LINUX_SIGNAL_H */
+#endif /* !_LINUX_SIGNAL_H_ */

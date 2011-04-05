@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_fdio.h,v 1.1 2001/04/09 06:53:44 tholo Exp $	*/
+/*	$OpenBSD: linux_fdio.h,v 1.2 2011/04/05 22:54:30 pirofti Exp $	*/
 /*	$NetBSD: linux_fdio.h,v 1.1 2000/12/10 14:12:16 fvdl Exp $	*/
 
 /*
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_FDIO_H
-#define _LINUX_FDIO_H
+#ifndef _LINUX_FDIO_H_
+#define _LINUX_FDIO_H_
 
 /*
  * Linux floppy ioctl call structures and defines.
@@ -198,4 +198,4 @@ typedef char linux_floppy_drive_name[16];
 #define LINUX_FDTWADDLE		_LINUX_IO(2, 0x59)
 #define LINUX_FDEJECT		_LINUX_IO(2, 0x5a)
 
-#endif /* _LINUX_FDIO_H */
+#endif /* _LINUX_FDIO_H_ */

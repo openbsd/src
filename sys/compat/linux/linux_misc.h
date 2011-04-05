@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.h,v 1.4 2008/06/26 05:42:14 ray Exp $	*/
+/*	$OpenBSD: linux_misc.h,v 1.5 2011/04/05 22:54:30 pirofti Exp $	*/
 /*	$NetBSD: linux_misc.h,v 1.3 1999/05/13 00:31:57 thorpej Exp $	*/
 
 /*-
@@ -30,8 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_MISC_H
-#define _LINUX_MISC_H
+#ifndef _LINUX_MISC_H_
+#define _LINUX_MISC_H_
 
 /* This looks very unportable to me, but this is how Linux defines it. */
 struct linux_sysinfo {
@@ -66,4 +66,4 @@ int linux_select1(struct proc *, register_t *, int, fd_set *, fd_set *,
 __END_DECLS
 #endif /* !_KERNEL */
 
-#endif /* !_LINUX_MISC_H */
+#endif /* !_LINUX_MISC_H_ */

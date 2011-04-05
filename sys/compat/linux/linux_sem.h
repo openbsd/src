@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_sem.h,v 1.2 1996/04/17 05:23:57 mickey Exp $	*/
+/*	$OpenBSD: linux_sem.h,v 1.3 2011/04/05 22:54:31 pirofti Exp $	*/
 /*	$NetBSD: linux_sem.h,v 1.1 1995/08/15 21:14:35 fvdl Exp $	*/
 
 /*
@@ -32,8 +32,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_SEM_H
-#define _LINUX_SEM_H
+#ifndef _LINUX_SEM_H_
+#define _LINUX_SEM_H_
 
 /*
  * Operations for semctl(2), in addition to IPC_STAT and IPC_SET
@@ -70,4 +70,4 @@ union linux_semun {
 	void			*l___pad;
 };
 
-#endif /* _LINUX_SEM_H */
+#endif /* _LINUX_SEM_H_ */

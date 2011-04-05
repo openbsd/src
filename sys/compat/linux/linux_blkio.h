@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_blkio.h,v 1.1 2001/04/09 06:53:44 tholo Exp $	*/
+/*	$OpenBSD: linux_blkio.h,v 1.2 2011/04/05 22:54:30 pirofti Exp $	*/
 /*	$NetBSD: linux_blkio.h,v 1.2 2001/01/18 17:48:04 tv Exp $	*/
 
 /*
@@ -41,8 +41,8 @@
  * in <linux/fs.h>
  */
 
-#ifndef _LINUX_BLKIO_H
-#define _LINUX_BLKIO_H
+#ifndef _LINUX_BLKIO_H_
+#define _LINUX_BLKIO_H_
 
 #define LINUX_BLKROSET		_LINUX_IO(0x12, 93)
 #define LINUX_BLKROGET		_LINUX_IO(0x12, 94)
@@ -58,4 +58,4 @@
 #define LINUX_BLKSSZGET		_LINUX_IO(0x12, 104)
 #define LINUX_BLKPG		_LINUX_IO(0x12, 105)
 
-#endif /* _LINUX_BLKIO_H */
+#endif /* _LINUX_BLKIO_H_ */

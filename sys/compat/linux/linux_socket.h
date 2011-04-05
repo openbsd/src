@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.h,v 1.7 2002/11/27 07:30:36 ish Exp $	*/
+/*	$OpenBSD: linux_socket.h,v 1.8 2011/04/05 22:54:31 pirofti Exp $	*/
 /*	$NetBSD: linux_socket.h,v 1.3 1995/05/28 10:16:34 mycroft Exp $	*/
 
 /*
@@ -32,8 +32,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_SOCKET_H
-#define _LINUX_SOCKET_H
+#ifndef _LINUX_SOCKET_H_
+#define _LINUX_SOCKET_H_
 
 /*
  * Various Linux socket defines. Everything that is not re-defined here
@@ -147,4 +147,4 @@ struct linux_ifreq {
 #define ifr_name	ifr_ifrn.ifrn_name		/* interface name */
 #define ifr_hwaddr	ifr_ifru.ifru_hwaddr		/* MAC address */
 
-#endif /* _LINUX_SOCKET_H */
+#endif /* _LINUX_SOCKET_H_ */

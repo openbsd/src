@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_types.h,v 1.9 2011/02/10 11:58:43 pirofti Exp $	*/
+/*	$OpenBSD: linux_types.h,v 1.10 2011/04/05 22:54:31 pirofti Exp $	*/
 /*	$NetBSD: linux_types.h,v 1.5 1996/05/20 01:59:28 fvdl Exp $	*/
 
 /*
@@ -32,8 +32,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_TYPES_H
-#define _LINUX_TYPES_H
+#ifndef _LINUX_TYPES_H_
+#define _LINUX_TYPES_H_
 
 typedef struct {
 	long	val[2];
@@ -202,4 +202,4 @@ struct l_timespec {
 	long		tv_nsec;
 };
 
-#endif /* !_LINUX_TYPES_H */
+#endif /* !_LINUX_TYPES_H_ */

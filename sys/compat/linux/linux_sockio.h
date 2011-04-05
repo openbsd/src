@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_sockio.h,v 1.8 2002/02/06 01:55:04 jasoni Exp $ */
+/*	$OpenBSD: linux_sockio.h,v 1.9 2011/04/05 22:54:31 pirofti Exp $ */
 /*	$NetBSD: linux_sockio.h,v 1.5 1996/03/08 04:56:07 mycroft Exp $	*/
 
 /*
@@ -32,8 +32,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_SOCKIO_H
-#define _LINUX_SOCKIO_H
+#ifndef _LINUX_SOCKIO_H_
+#define _LINUX_SOCKIO_H_
 
 #define	LINUX_FIOSETOWN		_LINUX_IO(0x89, 1)
 #define	LINUX_SIOCSPGRP		_LINUX_IO(0x89, 2)
@@ -57,4 +57,4 @@
 #define LINUX_SIOCGIFBR		_LINUX_IO(0x89, 64)
 #define LINUX_SIOCDEVPRIVATE	_LINUX_IO(0x89, 0xf0)
 
-#endif /* _LINUX_SOCKIO_H */
+#endif /* _LINUX_SOCKIO_H_ */

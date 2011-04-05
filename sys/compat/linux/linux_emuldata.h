@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_emuldata.h,v 1.5 2011/04/05 15:44:40 pirofti Exp $	*/
+/*	$OpenBSD: linux_emuldata.h,v 1.6 2011/04/05 22:54:30 pirofti Exp $	*/
 /*	$NetBSD: linux_emuldata.h,v 1.4 2002/02/15 16:48:02 christos Exp $	*/
 /*-
  * Copyright (c) 1998,2002 The NetBSD Foundation, Inc.
@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _LINUX_EMULDATA_H
-#define _LINUX_EMULDATA_H
+#ifndef _LINUX_EMULDATA_H_
+#define _LINUX_EMULDATA_H_
 
 /*
  * This is auxiliary data the linux compat code
@@ -49,4 +49,4 @@ struct linux_emuldata {
 	void *my_clear_tid;
 	unsigned my_tls_base;
 };
-#endif /* !_LINUX_EMULDATA_H */
+#endif /* !_LINUX_EMULDATA_H_ */

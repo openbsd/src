@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_ipccall.h,v 1.2 1996/04/17 05:23:54 mickey Exp $	*/
+/*	$OpenBSD: linux_ipccall.h,v 1.3 2011/04/05 22:54:30 pirofti Exp $	*/
 /*	$NetBSD: linux_ipccall.h,v 1.2 1995/08/15 21:14:33 fvdl Exp $	*/
 
 /*
@@ -32,8 +32,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_IPC_CALL_H
-#define _LINUX_IPC_CALL_H
+#ifndef _LINUX_IPC_CALL_H_
+#define _LINUX_IPC_CALL_H_
 
 /*
  * Defines for the numbers passes as the first argument to the
@@ -52,4 +52,4 @@
 #define LINUX_SYS_shmget	23
 #define LINUX_SYS_shmctl	24
 
-#endif /* _LINUX_IPC_CALL_H */
+#endif /* _LINUX_IPC_CALL_H_ */

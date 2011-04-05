@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_errno.h,v 1.2 1996/04/17 05:23:44 mickey Exp $	*/
+/*	$OpenBSD: linux_errno.h,v 1.3 2011/04/05 22:54:30 pirofti Exp $	*/
 /* 	$NetBSD: linux_errno.h,v 1.1 1995/02/28 23:25:34 fvdl Exp $	*/
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -31,8 +31,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_ERRNO_H
-#define _LINUX_ERRNO_H
+#ifndef _LINUX_ERRNO_H_
+#define _LINUX_ERRNO_H_
 
 #define LINUX_EPERM		 1
 #define LINUX_ENOENT		 2
@@ -156,4 +156,4 @@
 #define LINUX_EREMOTEIO		121
 #define LINUX_EDQUOT		122
 
-#endif /* !_LINUX_ERRNO_H */
+#endif /* !_LINUX_ERRNO_H_ */

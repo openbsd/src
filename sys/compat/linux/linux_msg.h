@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_msg.h,v 1.2 1996/04/17 05:23:56 mickey Exp $	*/
+/*	$OpenBSD: linux_msg.h,v 1.3 2011/04/05 22:54:31 pirofti Exp $	*/
 /*	$NetBSD: linux_msg.h,v 1.2 1995/08/15 21:14:34 fvdl Exp $	*/
 
 /*
@@ -32,8 +32,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_MSG_H
-#define _LINUX_MSG_H
+#ifndef _LINUX_MSG_H_
+#define _LINUX_MSG_H_
 
 /*
  * msq_id_ds structure. Mostly the same fields, except for some internal
@@ -91,4 +91,4 @@ struct linux_msginfo {
 #define LINUX_MSG_STAT	11
 #define LINUX_MSG_INFO	12
 
-#endif /* _LINUX_MSG_H */
+#endif /* _LINUX_MSG_H_ */

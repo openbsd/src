@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_hdio.h,v 1.1 2001/04/09 06:53:45 tholo Exp $	*/
+/*	$OpenBSD: linux_hdio.h,v 1.2 2011/04/05 22:54:30 pirofti Exp $	*/
 /*	$NetBSD: linux_hdio.h,v 1.1 2000/12/10 14:12:17 fvdl Exp $	*/
 
 /*
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_HDIO_H
-#define _LINUX_HDIO_H
+#ifndef _LINUX_HDIO_H_
+#define _LINUX_HDIO_H_
 
 /*
  * Linux 'hd' (mostly really IDE disk) ioctl calls.
@@ -86,4 +86,4 @@ struct linux_hd_big_geometry {
 	u_long start;
 };
 
-#endif /* _LINUX_HDIO_H */
+#endif /* _LINUX_HDIO_H_ */
