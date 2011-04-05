@@ -1895,8 +1895,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/fifofs
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/fifofs/fifo.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/portal
-./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/portal/portal.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/procfs
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/procfs/procfs.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/specfs
@@ -2246,6 +2244,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/cd.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/iscsi.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/scsi/mpathvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/safte.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/scsi_all.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/scsi_changer.ph

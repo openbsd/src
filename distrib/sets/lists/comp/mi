@@ -1067,8 +1067,6 @@
 ./usr/include/miscfs
 ./usr/include/miscfs/fifofs
 ./usr/include/miscfs/fifofs/fifo.h
-./usr/include/miscfs/portal
-./usr/include/miscfs/portal/portal.h
 ./usr/include/miscfs/procfs
 ./usr/include/miscfs/procfs/procfs.h
 ./usr/include/miscfs/specfs
@@ -1433,6 +1431,7 @@
 ./usr/include/scsi
 ./usr/include/scsi/cd.h
 ./usr/include/scsi/iscsi.h
+./usr/include/scsi/mpathvar.h
 ./usr/include/scsi/safte.h
 ./usr/include/scsi/scsi_all.h
 ./usr/include/scsi/scsi_changer.h
@@ -1934,8 +1933,10 @@
 ./usr/share/man/cat2/alpha/writeb.0
 ./usr/share/man/cat2/alpha/writel.0
 ./usr/share/man/cat2/alpha/writew.0
+./usr/share/man/cat2/amd64/amd64_get_fsbase.0
 ./usr/share/man/cat2/amd64/amd64_get_ioperm.0
 ./usr/share/man/cat2/amd64/amd64_iopl.0
+./usr/share/man/cat2/amd64/amd64_set_fsbase.0
 ./usr/share/man/cat2/amd64/amd64_set_ioperm.0
 ./usr/share/man/cat2/armish/arm_drain_writebuf.0
 ./usr/share/man/cat2/armish/arm_sync_icache.0
@@ -6357,6 +6358,8 @@
 ./usr/share/man/cat9/disk_init.0
 ./usr/share/man/cat9/disk_unbusy.0
 ./usr/share/man/cat9/disklabel.0
+./usr/share/man/cat9/dma_alloc.0
+./usr/share/man/cat9/dma_free.0
 ./usr/share/man/cat9/dohooks.0
 ./usr/share/man/cat9/domountroothooks.0
 ./usr/share/man/cat9/dopowerhooks.0

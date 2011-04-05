@@ -2552,7 +2552,6 @@
 ./usr/share/man/cat5/pf.os.0
 ./usr/share/man/cat5/pkg.conf.0
 ./usr/share/man/cat5/port-modules.0
-./usr/share/man/cat5/portal.conf.0
 ./usr/share/man/cat5/printcap.0
 ./usr/share/man/cat5/protocols.0
 ./usr/share/man/cat5/ranlib.0
@@ -2689,7 +2688,6 @@
 ./usr/share/man/cat8/chroot.0
 ./usr/share/man/cat8/clri.0
 ./usr/share/man/cat8/compat_aout.0
-./usr/share/man/cat8/compat_freebsd.0
 ./usr/share/man/cat8/compat_linux.0
 ./usr/share/man/cat8/compat_svr4.0
 ./usr/share/man/cat8/comsat.0
@@ -2882,7 +2880,6 @@
 ./usr/share/man/cat8/mount_nfs.0
 ./usr/share/man/cat8/mount_nnpfs.0
 ./usr/share/man/cat8/mount_ntfs.0
-./usr/share/man/cat8/mount_portal.0
 ./usr/share/man/cat8/mount_procfs.0
 ./usr/share/man/cat8/mount_udf.0
 ./usr/share/man/cat8/mount_vnd.0

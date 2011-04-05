@@ -1877,8 +1877,6 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/miscfs
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/miscfs/fifofs
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/miscfs/fifofs/fifo.ph
-./usr/libdata/perl5/site_perl/hppa64-openbsd/miscfs/portal
-./usr/libdata/perl5/site_perl/hppa64-openbsd/miscfs/portal/portal.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/miscfs/procfs
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/miscfs/procfs/procfs.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/miscfs/specfs
@@ -2228,6 +2226,7 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/scsi
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/scsi/cd.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/scsi/iscsi.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/scsi/mpathvar.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/scsi/safte.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/scsi/scsi_all.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/scsi/scsi_changer.ph

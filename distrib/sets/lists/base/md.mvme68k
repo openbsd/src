@@ -1786,8 +1786,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs
 ./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/fifofs
 ./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/fifofs/fifo.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/portal
-./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/portal/portal.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/procfs
 ./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/procfs/procfs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/specfs
@@ -2179,6 +2177,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/cd.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/iscsi.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/mpathvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/safte.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/scsi_all.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/scsi_changer.ph

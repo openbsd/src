@@ -1947,8 +1947,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/fifofs
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/fifofs/fifo.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/portal
-./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/portal/portal.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/procfs
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/procfs/procfs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/specfs
@@ -2340,6 +2338,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/cd.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/iscsi.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/mpathvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/safte.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/scsi_all.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/scsi_changer.ph
