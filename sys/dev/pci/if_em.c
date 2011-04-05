@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.252 2011/04/05 18:01:21 henning Exp $ */
+/* $OpenBSD: if_em.c,v 1.253 2011/04/05 20:24:32 jsg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1557,7 +1557,13 @@ em_allocate_pci_resources(struct em_softc *sc)
 		return (ENXIO);
 	}
 
-	if (sc->hw.mac_type > em_82543) {
+	switch (sc->hw.mac_type) {
+	case em_82544:
+	case em_82540:
+	case em_82545:
+	case em_82546:
+	case em_82541:
+	case em_82541_rev_2:
 		/* Figure out where our I/O BAR is ? */
 		for (rid = PCI_MAPREG_START; rid < PCI_MAPREG_END;) {
 			val = pci_conf_read(pa->pa_pc, pa->pa_tag, rid);
@@ -1579,6 +1585,9 @@ em_allocate_pci_resources(struct em_softc *sc)
 		}
 
 		sc->hw.io_base = 0;
+		break;
+	default:
+		break;
 	}
 
 	/* for ICH8 and family we need to find the flash memory */
