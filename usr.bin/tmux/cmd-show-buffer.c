@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-buffer.c,v 1.10 2011/01/04 00:42:47 nicm Exp $ */
+/* $OpenBSD: cmd-show-buffer.c,v 1.11 2011/04/05 19:37:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -49,7 +49,7 @@ cmd_show_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 	size_t			 size, len;
 	u_int			 width;
 
-	if ((s = cmd_find_session(ctx, NULL)) == NULL)
+	if ((s = cmd_find_session(ctx, NULL, 0)) == NULL)
 		return (-1);
 
 	if (!args_has(args, 'b')) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.36 2011/02/03 20:50:03 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.37 2011/04/05 19:37:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -75,7 +75,7 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 	target = args_get(args, 't');
 	if (target != NULL) {
-		groupwith = cmd_find_session(ctx, target);
+		groupwith = cmd_find_session(ctx, target, 0);
 		if (groupwith == NULL)
 			return (-1);
 	} else

@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.216 2011/04/01 16:59:11 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.217 2011/04/05 19:37:01 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 1 2011 $
+.Dd $Mdocdate: April 5 2011 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -562,6 +562,17 @@ If no server is started,
 .Ic attach-session
 will attempt to start it; this will fail unless sessions are created in the
 configuration file.
+.Pp
+The
+.Ar target-session
+rules for
+.Ic attach-session
+are slightly adjusted: if
+.Nm
+needs to select the most recently used session, it will prefer the most
+recently used
+.Em unattached
+session.
 .It Xo Ic detach-client
 .Op Fl P
 .Op Fl t Ar target-client

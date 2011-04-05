@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-has-session.c,v 1.5 2011/01/04 00:42:46 nicm Exp $ */
+/* $OpenBSD: cmd-has-session.c,v 1.6 2011/04/05 19:37:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -41,7 +41,7 @@ cmd_has_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct args	*args = self->args;
 
-	if (cmd_find_session(ctx, args_get(args, 't')) == NULL)
+	if (cmd_find_session(ctx, args_get(args, 't'), 0) == NULL)
 		return (-1);
 
 	return (0);

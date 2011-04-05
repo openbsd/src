@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-options.c,v 1.13 2011/01/04 02:03:41 nicm Exp $ */
+/* $OpenBSD: cmd-show-options.c,v 1.14 2011/04/05 19:37:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -79,7 +79,7 @@ cmd_show_options_exec(struct cmd *self, struct cmd_ctx *ctx)
 		if (args_has(self->args, 'g'))
 			oo = &global_s_options;
 		else {
-			s = cmd_find_session(ctx, args_get(args, 't'));
+			s = cmd_find_session(ctx, args_get(args, 't'), 0);
 			if (s == NULL)
 				return (-1);
 			oo = &s->options;
