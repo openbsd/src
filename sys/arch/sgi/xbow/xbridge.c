@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.79 2011/03/13 20:45:51 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.80 2011/04/05 01:17:41 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -45,7 +45,7 @@
 #include <machine/intr.h>
 #include <machine/mnode.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -75,7 +75,6 @@ int	xbpci_match(struct device *, void *, void *);
 void	xbpci_attach(struct device *, struct device *, void *);
 int	xbpci_print(void *, const char *);
 
-struct xbridge_ate;
 struct xbridge_intr;
 
 struct xbpci_attach_args {
@@ -143,15 +142,6 @@ struct xbpci_softc {
 		uint32_t	devio;
 	} xb_devices[MAX_SLOTS];
 	uint		xb_devio_usemask;
-
-	/*
-	 * ATE management.
-	 */
-	struct mutex	xb_atemtx;
-	uint		xb_atecnt;
-	struct xbridge_ate	*xb_ate;
-	LIST_HEAD(, xbridge_ate) xb_free_ate;
-	LIST_HEAD(, xbridge_ate) xb_used_ate;
 
 	/*
 	 * Large resource view sizes
@@ -271,16 +261,6 @@ int	xbridge_rbus_space_map(bus_space_tag_t, bus_addr_t, bus_size_t,
 void	xbridge_rbus_space_unmap(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, bus_addr_t *);
 
-int	xbridge_address_map(struct xbpci_softc *, paddr_t, bus_addr_t *,
-	    bus_addr_t *);
-void	xbridge_address_unmap(struct xbpci_softc *, bus_addr_t, bus_size_t);
-uint	xbridge_ate_add(struct xbpci_softc *, paddr_t);
-void	xbridge_ate_dump(struct xbpci_softc *);
-uint	xbridge_ate_find(struct xbpci_softc *, paddr_t);
-uint64_t xbridge_ate_read(struct xbpci_softc *, uint);
-void	xbridge_ate_unref(struct xbpci_softc *, uint, uint);
-void	xbridge_ate_write(struct xbpci_softc *, uint, uint64_t);
-
 void	xbridge_err_clear(struct xbpci_softc *, uint64_t);
 void	xbridge_err_handle(struct xbpci_softc *, uint64_t);
 
@@ -292,7 +272,6 @@ int	xbridge_resource_explore(struct xbpci_softc *, pcitag_t,
 void	xbridge_resource_manage(struct xbpci_softc *, pcitag_t,
 	    struct extent *, struct extent *);
 
-void	xbridge_ate_setup(struct xbpci_softc *);
 void	xbridge_device_setup(struct xbpci_softc *, int, int, uint32_t);
 int	xbridge_extent_chomp(struct xbpci_softc *, struct extent *);
 void	xbridge_extent_setup(struct xbpci_softc *);
@@ -1673,371 +1652,6 @@ xbridge_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offs,
  */
 
 /*
- * ATE primer:
- *
- * ATE are iommu translation entries. PCI addresses in the translated
- * window transparently map to the address their ATE point to.
- *
- * Bridge chip have 128 so-called `internal' entries, and can use their
- * optional SSRAM to provide more (up to 65536 entries with 512KB SSRAM).
- * However, due to chip bugs, those `external' entries can not be updated
- * while there is DMA in progress using external entries, even if the
- * updated entries are disjoint from those used by the DMA transfer.
- *
- * XBridge chip extend the internal entries to 1024, and do not provide
- * support for external entries.
- *
- * We limit ourselves to internal entries only. Due to the way we force
- * bus_dmamem_alloc() to use the direct window, there won't hopefully be
- * many concurrent consumers of ATE at once.
- *
- * All ATE share the same page size, which is configurable as 4KB or 16KB.
- *
- * ATE management:
- *
- * An array of internal ATE management structures is allocated, and
- * provides reference counters (since various dma maps could overlap
- * the same 16KB ATE pages).
- *
- * When using ATE in the various bus_dmamap_load*() functions, we try
- * to coalesce individual contiguous pages sharing the same I/O page
- * (and thus the same ATE). However, no attempt is made to optimize
- * entries using contiguous ATEs.
- *
- * ATE are organized in lists of in-use and free entries.
- */
-
-struct xbridge_ate {
-	LIST_ENTRY(xbridge_ate)	 xa_nxt;
-	uint			 xa_refcnt;
-	paddr_t			 xa_pa;
-};
-
-#ifdef ATE_DEBUG
-void
-xbridge_ate_dump(struct xbpci_softc *xb)
-{
-	struct xbridge_ate *ate;
-	uint a;
-
-	printf("%s ATE list (in array order)\n", DEVNAME(xb));
-	for (a = 0, ate = xb->xb_ate; a < xb->xb_atecnt; a++, ate++) {
-		printf("%03x %p %02u", a, ate->xa_pa, ate->xa_refcnt);
-		if ((a % 3) == 2)
-			printf("\n");
-		else
-			printf("  ");
-	}
-	if ((a % 3) != 0)
-		printf("\n");
-
-	printf("%s USED ATE list (in link order)\n", DEVNAME(xb));
-	a = 0;
-	LIST_FOREACH(ate, &xb->xb_used_ate, xa_nxt) {
-		printf("%03x %p %02u",
-		    ate - xb->xb_ate, ate->xa_pa, ate->xa_refcnt);
-		if ((a % 3) == 2)
-			printf("\n");
-		else
-			printf("  ");
-		a++;
-	}
-	if ((a % 3) != 0)
-		printf("\n");
-
-	printf("%s FREE ATE list (in link order)\n", DEVNAME(xb));
-	a = 0;
-	LIST_FOREACH(ate, &xb->xb_free_ate, xa_nxt) {
-		printf("%03x %p %02u",
-		    ate - xb->xb_ate, ate->xa_pa, ate->xa_refcnt);
-		if ((a % 3) == 2)
-			printf("\n");
-		else
-			printf("  ");
-		a++;
-	}
-	if ((a % 3) != 0)
-		printf("\n");
-}
-#endif
-
-void
-xbridge_ate_setup(struct xbpci_softc *xb)
-{
-	uint64_t ctrl;
-	uint a;
-	struct xbridge_ate *ate;
-
-	mtx_init(&xb->xb_atemtx, IPL_HIGH);
-
-	if (ISSET(xb->xb_flags, XF_XBRIDGE))
-		xb->xb_atecnt = XBRIDGE_INTERNAL_ATE;
-	else
-		xb->xb_atecnt = BRIDGE_INTERNAL_ATE;
-
-	xb->xb_ate = (struct xbridge_ate *)malloc(xb->xb_atecnt *
-	    sizeof(struct xbridge_ate), M_DEVBUF, M_ZERO | M_NOWAIT);
-	if (xb->xb_ate == NULL) {
-		/* we could run without, but this would be a PITA */
-		panic("%s: no memory for ATE management", __func__);
-	}
-
-	/*
-	 * Setup the ATE lists.
-	 */
-	LIST_INIT(&xb->xb_free_ate);
-	LIST_INIT(&xb->xb_used_ate);
-	for (ate = xb->xb_ate; ate != xb->xb_ate + xb->xb_atecnt; ate++)
-		LIST_INSERT_HEAD(&xb->xb_free_ate, ate, xa_nxt);
-
-	/*
-	 * Switch to 16KB pages.
-	 */
-	ctrl = xbridge_read_reg(xb, WIDGET_CONTROL);
-	xbridge_write_reg(xb, WIDGET_CONTROL,
-	    ctrl | BRIDGE_WIDGET_CONTROL_LARGE_PAGES);
-	(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
-
-	/*
-	 * Initialize all ATE entries to invalid.
-	 */
-	for (a = 0; a < xb->xb_atecnt; a++)
-		xbridge_ate_write(xb, a, ATE_NV);
-}
-
-#ifdef unused
-uint64_t
-xbridge_ate_read(struct xbpci_softc *xb, uint a)
-{
-	uint32_t lo, hi;
-	uint64_t ate;
-
-	/*
-	 * ATE can not be read as a whole, and need two 32 bit accesses.
-	 */
-	hi = xbridge_read_reg(xb, BRIDGE_ATE(a) + 4);
-	if (ISSET(xb->xb_flags, XF_XBRIDGE))
-		lo = xbridge_read_reg(xb, BRIDGE_ATE(a + 1024) + 4);
-	else
-		lo = xbridge_read_reg(xb, BRIDGE_ATE(a + 512) + 4);
-
-	ate = (uint64_t)hi;
-	ate <<= 32;
-	ate |= lo;
-
-	return ate;
-}
-#endif
-
-void
-xbridge_ate_write(struct xbpci_softc *xb, uint a, uint64_t ate)
-{
-	widget_write_8(xb->xb_regt, xb->xb_regh, BRIDGE_ATE(a), ate);
-}
-
-uint
-xbridge_ate_find(struct xbpci_softc *xb, paddr_t pa)
-{
-	uint a;
-	struct xbridge_ate *ate;
-
-	/* round to ATE page */
-	pa &= ~BRIDGE_ATE_LMASK;
-
-	/*
-	 * XXX Might want to build a tree to make this faster than
-	 * XXX that stupid linear search. On the other hand there
-	 * XXX aren't many ATE entries.
-	 */
-	LIST_FOREACH(ate, &xb->xb_used_ate, xa_nxt)
-		if (ate->xa_pa == pa) {
-			a = ate - xb->xb_ate;
-#ifdef ATE_DEBUG
-			printf("%s: pa %p ate %u (r %u)\n",
-			    __func__, pa, a, ate->xa_refcnt);
-#endif
-			return a;
-		}
-
-	return (uint)-1;
-}
-
-uint
-xbridge_ate_add(struct xbpci_softc *xb, paddr_t pa)
-{
-	uint a;
-	struct xbridge_ate *ate;
-
-	/* round to ATE page */
-	pa &= ~BRIDGE_ATE_LMASK;
-
-	if (LIST_EMPTY(&xb->xb_free_ate)) {
-#ifdef ATE_DEBUG
-		printf("%s: out of ATEs\n", DEVNAME(xb));
-#endif
-		return (uint)-1;
-	}
-
-	ate = LIST_FIRST(&xb->xb_free_ate);
-	LIST_REMOVE(ate, xa_nxt);
-	LIST_INSERT_HEAD(&xb->xb_used_ate, ate, xa_nxt);
-	ate->xa_refcnt = 1;
-	ate->xa_pa = pa;
-
-	a = ate - xb->xb_ate;
-#ifdef ATE_DEBUG
-	printf("%s: pa %p ate %u\n", __func__, pa, a);
-#endif
-
-	xbridge_ate_write(xb, a, ate->xa_pa |
-	    (xbow_intr_widget << ATE_WIDGET_SHIFT) | ATE_COH | ATE_V);
-
-	return a;
-}
-
-void
-xbridge_ate_unref(struct xbpci_softc *xb, uint a, uint ref)
-{
-	struct xbridge_ate *ate;
-
-	ate = xb->xb_ate + a;
-#ifdef DIAGNOSTIC
-	if (ref > ate->xa_refcnt)
-		panic("%s: ate #%u %p has only %u refs but needs to drop %u",
-		    DEVNAME(xb), a, ate, ate->xa_refcnt, ref);
-#endif
-	ate->xa_refcnt -= ref;
-	if (ate->xa_refcnt == 0) {
-#ifdef ATE_DEBUG
-		printf("%s: free ate %u\n", __func__, a);
-#endif
-		xbridge_ate_write(xb, a, ATE_NV);
-		LIST_REMOVE(ate, xa_nxt);
-		LIST_INSERT_HEAD(&xb->xb_free_ate, ate, xa_nxt);
-	} else {
-#ifdef ATE_DEBUG
-		printf("%s: unref ate %u (r %u)\n", __func__, a, ate->xa_refcnt);
-#endif
-	}
-}
-
-/*
- * Attempt to map the given address, either through the direct map, or
- * using an ATE.
- */
-int
-xbridge_address_map(struct xbpci_softc *xb, paddr_t pa, bus_addr_t *mapping,
-    bus_addr_t *limit)
-{
-#if 0
-	struct xbridge_ate *ate;
-	uint a;
-#endif
-	bus_addr_t ba;
-
-	/*
-	 * Try the direct DMA window first.
-	 */
-
-	ba = (bus_addr_t)pa;
-
-	if (ba < BRIDGE_DMA_DIRECT_LENGTH) {
-		*mapping = ba + BRIDGE_DMA_DIRECT_BASE;
-		*limit = BRIDGE_DMA_DIRECT_LENGTH + BRIDGE_DMA_DIRECT_BASE;
-		return 0;
-	}
-
-#if 0
-	/*
-	 * Did not fit, so now we need to use an ATE.
-	 * Check if an existing ATE would do the job; if not, try and
-	 * allocate a new one.
-	 */
-
-	mtx_enter(&xb->xb_atemtx);
-
-	a = xbridge_ate_find(xb, pa);
-	if (a != (uint)-1) {
-		ate = xb->xb_ate + a;
-		ate->xa_refcnt++;
-	} else
-		a = xbridge_ate_add(xb, pa);
-
-	if (a != (uint)-1) {
-		ba = ATE_ADDRESS(a, BRIDGE_ATE_LSHIFT);
-		/*
-		 * Ask for byteswap during DMA. On Bridge (i.e non-XBridge),
-		 * this setting is device-global and is enforced by
-		 * BRIDGE_DEVICE_SWAP_PMU set in the devio register.
-		 */
-		if (ISSET(xb->xb_flags, XF_XBRIDGE))
-			ba |= XBRIDGE_DMA_TRANSLATED_SWAP;
-#ifdef ATE_DEBUG
-		printf("%s: ate %u through %p\n", __func__, a, ba);
-#endif
-		*mapping = ba + (pa & BRIDGE_ATE_LMASK);
-		*limit = ba + BRIDGE_ATE_LSIZE;
-		mtx_leave(&xb->xb_atemtx);
-		return 0;
-	}
-
-	printf("%s: out of ATE\n", DEVNAME(xb));
-#ifdef ATE_DEBUG
-	xbridge_ate_dump(xb);
-#endif
-
-	mtx_leave(&xb->xb_atemtx);
-#endif
-
-	/*
-	 * We could try allocating a bounce buffer here.
-	 * Maybe once there is a MI interface for this...
-	 */
-
-	return EINVAL;
-}
-
-void
-xbridge_address_unmap(struct xbpci_softc *xb, bus_addr_t ba, bus_size_t len)
-{
-#if 0
-	uint a;
-	uint refs;
-#endif
-
-	/*
-	 * If this address matches an ATE, unref it, and make it
-	 * available again if the reference count drops to zero.
-	 */
-	if (ba < BRIDGE_DMA_TRANSLATED_BASE || ba >= BRIDGE_DMA_DIRECT_BASE)
-		return;
-
-#if 0
-	if (ba & XBRIDGE_DMA_TRANSLATED_SWAP)
-		ba &= ~XBRIDGE_DMA_TRANSLATED_SWAP;
-
-	a = ATE_INDEX(ba, BRIDGE_ATE_LSHIFT);
-#ifdef DIAGNOSTIC
-	if (a >= xb->xb_atecnt)
-		panic("%s: bus address %p references nonexisting ATE %u/%u",
-		    __func__, ba, a, xb->xb_atecnt);
-#endif
-
-	/*
-	 * Since we only coalesce contiguous pages or page fragments in
-	 * the maps, and we made sure not to cross I/O page boundaries,
-	 * we have one reference per cpu page the range [ba, ba+len-1]
-	 * hits.
-	 */
-	refs = 1 + atop(ba + len - 1) - atop(ba);
-
-	mtx_enter(&xb->xb_atemtx);
-	xbridge_ate_unref(xb, a, refs);
-	mtx_leave(&xb->xb_atemtx);
-#endif
-}
-
-/*
  * bus_dmamap_loadXXX() bowels implementation.
  */
 int
@@ -2045,7 +1659,7 @@ xbridge_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct proc *p, int flags, paddr_t *lastaddrp,
     int *segp, int first)
 {
-	struct xbpci_softc *xb = t->_cookie;
+	/* struct xbpci_softc *xb = t->_cookie; */
 	bus_size_t sgsize;
 	bus_addr_t lastaddr, baddr, bmask;
 	bus_addr_t busaddr, endaddr;
@@ -2078,14 +1692,21 @@ xbridge_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 			panic("%s: pmap_extract(%x, %x) failed",
 			    __func__, pmap, vaddr);
 
+#ifdef DIAGNOSTIC
+		if (pa > dma_constraint.ucr_high ||
+		    pa < dma_constraint.ucr_low) {
+			panic("Non DMA-reachable buffer at pa %p (raw)", pa);
+			/* rc = ENOMEM;
+			goto fail_unmap; */
+		}
+#endif
+
 		/*
 		 * Compute the DMA address and the physical range 
 		 * this mapping can cover.
 		 */
-		if (xbridge_address_map(xb, pa, &busaddr, &endaddr) != 0) {
-			rc = ENOMEM;
-			goto fail_unmap;
-		}
+		busaddr = pa - dma_constraint.ucr_low + BRIDGE_DMA_DIRECT_BASE;
+		endaddr = BRIDGE_DMA_DIRECT_LENGTH + BRIDGE_DMA_DIRECT_BASE;
 
 		/*
 		 * Compute the segment size, and adjust counts.
@@ -2124,12 +1745,8 @@ xbridge_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 			     (busaddr & bmask)))
 				map->dm_segs[seg].ds_len += sgsize;
 			else {
-				if (++seg >= map->_dm_segcnt) {
-					/* drop partial ATE reference */
-					xbridge_address_unmap(xb, busaddr,
-					    sgsize);
+				if (++seg >= map->_dm_segcnt)
 					break;
-				}
 				map->dm_segs[seg].ds_addr = busaddr;
 				map->dm_segs[seg].ds_len = sgsize;
 				map->dm_segs[seg]._ds_paddr = pa;
@@ -2158,14 +1775,8 @@ xbridge_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	return 0;
 
 fail_unmap:
-	/*
-	 * If control goes there, we need to unref all our ATE, if any.
-	 */
-	for (seg = 0; seg < map->_dm_segcnt; seg++) {
-		xbridge_address_unmap(xb, map->dm_segs[seg].ds_addr,
-		    map->dm_segs[seg].ds_len);
+	for (seg = 0; seg < map->_dm_segcnt; seg++)
 		map->dm_segs[seg].ds_addr = 0;
-	}
 
 	return rc;
 }
@@ -2176,14 +1787,11 @@ fail_unmap:
 void
 xbridge_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
-	struct xbpci_softc *xb = t->_cookie;
+	/* struct xbpci_softc *xb = t->_cookie; */
 	int seg;
 
-	for (seg = 0; seg < map->_dm_segcnt; seg++) {
-		xbridge_address_unmap(xb, map->dm_segs[seg].ds_addr,
-		    map->dm_segs[seg].ds_len);
+	for (seg = 0; seg < map->_dm_segcnt; seg++)
 		map->dm_segs[seg].ds_addr = 0;
-	}
 	map->dm_nsegs = 0;
 	map->dm_mapsize = 0;
 }
@@ -2199,13 +1807,13 @@ xbridge_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	paddr_t low, high;
 
 	/*
-	 * Limit bus_dma'able memory to the first 2GB of physical memory.
+	 * Limit bus_dma'able memory to the direct DMA window.
 	 * XXX This should be lifted if flags & BUS_DMA_64BIT for drivers
 	 * XXX which do not need to restrict themselves to 32 bit DMA
 	 * XXX addresses.
 	 */
-	low = 0;
-	high = low + BRIDGE_DMA_DIRECT_LENGTH - 1;
+	low = dma_constraint.ucr_low;
+	high = dma_constraint.ucr_high;
 
 	return _dmamem_alloc_range(t, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags, low, high);
@@ -2222,13 +1830,13 @@ xbridge_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 bus_addr_t
 xbridge_pa_to_device(paddr_t pa)
 {
-	return pa + BRIDGE_DMA_DIRECT_BASE;
+	return (pa - dma_constraint.ucr_low) + BRIDGE_DMA_DIRECT_BASE;
 }
 
 paddr_t
 xbridge_device_to_pa(bus_addr_t addr)
 {
-	return addr - BRIDGE_DMA_DIRECT_BASE;
+	return (addr - BRIDGE_DMA_DIRECT_BASE) + dma_constraint.ucr_low;
 }
 
 /*
@@ -2283,18 +1891,13 @@ xbridge_setup(struct xbpci_softc *xb)
 
 	/*
 	 * Configure the direct DMA window to access the low 2GB of memory.
-	 * XXX assumes masternasid is 0
+	 * XXX assumes the window is on the same node we are handling
+	 * XXX interrupt upon (because of xbow_intr_widget)
 	 */
-
 	xbridge_write_reg(xb, BRIDGE_DIR_MAP,
-	    xbow_intr_widget << BRIDGE_DIRMAP_WIDGET_SHIFT);
-
-	/*
-	 * Figure out how many ATE we can use for non-direct DMA, and
-	 * setup our ATE management code.
-	 */
-
-	xbridge_ate_setup(xb);
+	    (xbow_intr_widget << BRIDGE_DIRMAP_WIDGET_SHIFT) |
+	    ((dma_constraint.ucr_low >> BRIDGE_DIRMAP_BASE_SHIFT) &
+	     BRIDGE_DIRMAP_BASE_MASK));
 
 	/*
 	 * Allocate RRB for the existing devices.
