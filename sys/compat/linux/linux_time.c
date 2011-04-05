@@ -1,6 +1,6 @@
-/*	$OpenBSD: linux_time.c,v 1.1 2011/02/10 11:58:43 pirofti Exp $	*/
+/*	$OpenBSD: linux_time.c,v 1.2 2011/04/05 22:15:50 pirofti Exp $	*/
 /*
- * Copyright (c) 2010 Paul Irofti <pirofti@openbsd.org>
+ * Copyright (c) 2010, 2011 Paul Irofti <pirofti@openbsd.org>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -37,6 +37,8 @@
 #include <compat/linux/linux_dirent.h>
 #include <compat/linux/linux_emuldata.h>
 
+#include <compat/linux/linux_time.h>
+
 #define LINUX_CLOCK_REALTIME            0
 #define LINUX_CLOCK_MONOTONIC           1
 #define LINUX_CLOCK_PROCESS_CPUTIME_ID  2
@@ -44,17 +46,14 @@
 #define LINUX_CLOCK_REALTIME_HR         4
 #define LINUX_CLOCK_MONOTONIC_HR        5
 
-static void native_to_linux_timespec(struct l_timespec *, struct timespec *);
-static int linux_to_native_clockid(clockid_t *, clockid_t);
-
-static void
+void
 native_to_linux_timespec(struct l_timespec *ltp, struct timespec *ntp)
 {
 	ltp->tv_sec = ntp->tv_sec;
 	ltp->tv_nsec = ntp->tv_nsec;
 }
 
-static int
+int
 linux_to_native_clockid(clockid_t *n, clockid_t l)
 {
 	switch (l) {
