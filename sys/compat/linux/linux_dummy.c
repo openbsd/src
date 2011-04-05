@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_dummy.c,v 1.16 2004/10/27 13:23:38 niklas Exp $ */
+/*	$OpenBSD: linux_dummy.c,v 1.17 2011/04/05 15:36:09 pirofti Exp $ */
 
 /*-
  * Copyright (c) 1994-1995 Søren Schmidt
@@ -52,7 +52,7 @@ static int
 unsupported_msg(struct proc *p, const char *fname)
 {
 	printf("linux: syscall %s is obsolete or not implemented (pid=%ld)\n",
-	    fname, (long)p->p_pid);
+	    fname, (long)p->p_p->ps_pid);
 	return (ENOSYS);
 }
 

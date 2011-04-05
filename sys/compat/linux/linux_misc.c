@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.66 2011/02/11 21:40:04 pirofti Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.67 2011/04/05 15:36:09 pirofti Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -1225,7 +1225,7 @@ linux_sys_getpgid(p, v, retval)
 	} */ *uap = v;
 	struct process *targpr;
 
-	if (SCARG(uap, pid) != 0 && SCARG(uap, pid) != p->p_pid) {
+	if (SCARG(uap, pid) != 0 && SCARG(uap, pid) != p->p_p->ps_pid) {
 		if ((targpr = prfind(SCARG(uap, pid))) == 0)
 			return ESRCH;
 	}
@@ -1409,7 +1409,7 @@ linux_sys_getpid(p, v, retval)
 	register_t *retval;
 {
 
-	*retval = p->p_pid;
+	*retval = p->p_p->ps_pid;
 	return (0);
 }
 
