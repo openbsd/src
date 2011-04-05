@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.243 2011/04/04 23:04:18 blambert Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.244 2011/04/05 18:16:07 blambert Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -732,62 +732,69 @@ findpcb:
 			}
 		}
 		if (so->so_options & SO_ACCEPTCONN) {
-			if ((tiflags & (TH_RST|TH_ACK|TH_SYN)) != TH_SYN) {
-				if (tiflags & TH_RST) {
-					syn_cache_reset(&src.sa, &dst.sa, th,
-					    inp->inp_rtableid);
-				} else if ((tiflags & (TH_ACK|TH_SYN)) ==
-				    (TH_ACK|TH_SYN)) {
+			switch (tiflags & (TH_RST|TH_SYN|TH_ACK)) {
+
+			case TH_SYN|TH_ACK|TH_RST:
+			case TH_SYN|TH_RST:
+			case TH_ACK|TH_RST:
+			case TH_RST:
+				syn_cache_reset(&src.sa, &dst.sa, th,
+				    inp->inp_rtableid);
+				break;
+
+			case TH_SYN|TH_ACK:
+				/*
+				 * Received a SYN,ACK.  This should
+				 * never happen while we are in
+				 * LISTEN.  Send an RST.
+				 */
+				goto badsyn;
+
+			case TH_ACK:
+				so = syn_cache_get(&src.sa, &dst.sa,
+					th, iphlen, tlen, so, m);
+				if (so == NULL) {
 					/*
-					 * Received a SYN,ACK.  This should
-					 * never happen while we are in
-					 * LISTEN.  Send an RST.
+					 * We don't have a SYN for
+					 * this ACK; send an RST.
 					 */
 					goto badsyn;
-				} else if (tiflags & TH_ACK) {
-					so = syn_cache_get(&src.sa, &dst.sa,
-						th, iphlen, tlen, so, m);
-					if (so == NULL) {
-						/*
-						 * We don't have a SYN for
-						 * this ACK; send an RST.
-						 */
-						goto badsyn;
-					} else if (so ==
-					    (struct socket *)(-1)) {
-						/*
-						 * We were unable to create
-						 * the connection.  If the
-						 * 3-way handshake was
-						 * completed, and RST has
-						 * been sent to the peer.
-						 * Since the mbuf might be
-						 * in use for the reply,
-						 * do not free it.
-						 */
-						m = NULL;
-					} else {
-						/*
-						 * We have created a
-						 * full-blown connection.
-						 */
-						tp = NULL;
-						inp = (struct inpcb *)so->so_pcb;
-						tp = intotcpcb(inp);
-						if (tp == NULL)
-							goto badsyn;	/*XXX*/
-
-						goto after_listen;
-					}
+				} else if (so == (struct socket *)(-1)) {
+					/*
+					 * We were unable to create
+					 * the connection.  If the
+					 * 3-way handshake was
+					 * completed, and RST has
+					 * been sent to the peer.
+					 * Since the mbuf might be
+					 * in use for the reply,
+					 * do not free it.
+					 */
+					m = NULL;
 				} else {
 					/*
-					 * None of RST, SYN or ACK was set.
-					 * This is an invalid packet for a
-					 * TCB in LISTEN state.  Send a RST.
+					 * We have created a
+					 * full-blown connection.
 					 */
-					goto badsyn;
+					tp = NULL;
+					inp = (struct inpcb *)so->so_pcb;
+					tp = intotcpcb(inp);
+					if (tp == NULL)
+						goto badsyn;	/*XXX*/
+
+					goto after_listen;
 				}
-			} else {
+				break;
+
+			default:
+				/*
+				 * None of RST, SYN or ACK was set.
+				 * This is an invalid packet for a
+				 * TCB in LISTEN state.  Send a RST.
+				 */
+				goto badsyn;
+
+			case TH_SYN:
 				/*
 				 * Received a SYN.
 				 */
