@@ -1,4 +1,4 @@
-/*	$OpenBSD: initiator.c,v 1.4 2011/01/04 13:19:55 claudio Exp $ */
+/*	$OpenBSD: initiator.c,v 1.5 2011/04/05 18:26:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -36,7 +36,6 @@
 struct initiator *initiator;
 
 struct kvp	*initiator_login_kvp(struct session *);
-char		*default_initiator_name(void);
 
 struct initiator *
 initiator_init(void)
@@ -73,112 +72,6 @@ initiator_t2s(u_int target)
 			return s;
 	}
 	return NULL;
-}
-
-struct session *
-session_find(struct initiator *i, char *name)
-{
-	struct session *s;
-
-	TAILQ_FOREACH(s, &initiator->sessions, entry) {
-		if (strcmp(s->config.SessionName, name) == 0)
-			return s;
-	}
-	return NULL;
-}
-
-struct session *
-session_new(struct initiator *i, u_int8_t st)
-{
-	struct session *s;
-
-	if (!(s = calloc(1, sizeof(*s))))
-		return NULL;
-
-	/* use the same qualifier unless there is a conflict */
-	s->isid_base = i->config.isid_base;
-	s->isid_qual = i->config.isid_qual;
-	s->cmdseqnum = arc4random();
-	s->itt = arc4random();
-	s->initiator = i;
-	s->state = SESS_FREE;
-
-	if (st == SESSION_TYPE_DISCOVERY)
-		s->target = 0;
-	else
-		s->target = s->initiator->target++;
-
-	TAILQ_INSERT_HEAD(&i->sessions, s, entry);
-	TAILQ_INIT(&s->connections);
-	TAILQ_INIT(&s->tasks);
-
-	return s;
-}
-
-void
-session_close(struct session *s)
-{
-	struct connection *c;
-
-	while ((c = TAILQ_FIRST(&s->connections)) != NULL)
-		conn_free(c);
-
-	free(s->config.TargetName);
-	free(s->config.InitiatorName);
-	free(s);
-}
-
-void
-session_config(struct session *s, struct session_config *sc)
-{
-	if (s->config.TargetName)
-		free(s->config.TargetName);
-	s->config.TargetName = NULL;
-	if (s->config.InitiatorName)
-		free(s->config.InitiatorName);
-	s->config.InitiatorName = NULL;
-
-	s->config = *sc;
-
-	if (sc->TargetName) {
-		s->config.TargetName = strdup(sc->TargetName);
-		if (s->config.TargetName == NULL)
-			fatal("strdup");
-	}
-	if (sc->InitiatorName) {
-		s->config.InitiatorName = strdup(sc->InitiatorName);
-		if (s->config.InitiatorName == NULL)
-			fatal("strdup");
-	} else
-		s->config.InitiatorName = default_initiator_name();
-}
-
-void
-session_task_issue(struct session *s, struct task *t)
-{
-	TAILQ_INSERT_TAIL(&s->tasks, t, entry);
-	session_schedule(s);
-}
-
-void
-session_schedule(struct session *s)
-{
-	struct task *t = TAILQ_FIRST(&s->tasks);
-	struct connection *c;
-
-	if (!t)
-		return;
-
-	/* XXX IMMEDIATE TASK NEED SPECIAL HANDLING !!!! */
-
-	/* wake up a idle connection or a not busy one */
-	/* XXX this needs more work as it makes the daemon go wrooOOOMM */
-	TAILQ_REMOVE(&s->tasks, t, entry);
-	TAILQ_FOREACH(c, &s->connections, entry)
-		if (conn_task_issue(c, t))
-			return;
-	/* all connections are busy readd task to the head */
-	TAILQ_INSERT_HEAD(&s->tasks, t, entry);
 }
 
 struct task_login {

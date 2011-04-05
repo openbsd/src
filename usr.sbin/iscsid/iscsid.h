@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.h,v 1.4 2011/01/04 13:19:55 claudio Exp $ */
+/*	$OpenBSD: iscsid.h,v 1.5 2011/04/05 18:26:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -67,6 +67,7 @@ TAILQ_HEAD(taskq, task);
 #define SESS_LOGGED_IN		0x0002
 #define SESS_FAILED		0x0003
 
+#define CONN_DONE		0x0000	/* no real state just return value */
 #define	CONN_FREE		0x0001
 #define	CONN_XPT_WAIT		0x0002
 #define	CONN_XPT_UP		0x0004
@@ -243,6 +244,7 @@ struct session *initiator_t2s(u_int);
 void	initiator_login(struct connection *);
 void	initiator_discovery(struct session *);
 void	initiator_nop_in_imm(struct connection *, struct pdu *);
+char	*default_initiator_name(void);
 
 int	control_init(char *);
 void	control_cleanup(char *);
