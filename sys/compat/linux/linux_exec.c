@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.31 2009/03/05 19:52:24 kettenis Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.32 2011/04/05 01:41:03 pirofti Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*-
@@ -144,9 +144,7 @@ struct emul emul_linux_elf = {
  * the executed process is of same emulation as original forked one.
  */
 void
-linux_e_proc_init(p, vmspace)
-	struct proc *p;
-	struct vmspace *vmspace;
+linux_e_proc_init(struct proc *p, struct vmspace *vmspace)
 {
 	if (!p->p_emuldata) {
 		/* allocate new Linux emuldata */
@@ -163,9 +161,7 @@ linux_e_proc_init(p, vmspace)
 }
 
 void
-linux_e_proc_exec(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+linux_e_proc_exec(struct proc *p, struct exec_package *epp)
 {
 	/* exec, use our vmspace */
 	linux_e_proc_init(p, p->p_vmspace);
@@ -175,8 +171,7 @@ linux_e_proc_exec(p, epp)
  * Emulation per-process exit hook.
  */
 void
-linux_e_proc_exit(p)
-	struct proc *p;
+linux_e_proc_exit(struct proc *p)
 {
 	/* free Linux emuldata and set the pointer to null */
 	free(p->p_emuldata, M_EMULDATA);
@@ -187,8 +182,7 @@ linux_e_proc_exit(p)
  * Emulation fork hook.
  */
 void
-linux_e_proc_fork(p, parent)
-	struct proc *p, *parent;
+linux_e_proc_fork(struct proc *p, struct proc *parent)
 {
 	/*
 	 * It could be desirable to copy some stuff from parent's
@@ -202,11 +196,8 @@ linux_e_proc_fork(p, parent)
 }
 
 static void *
-linux_aout_copyargs(pack, arginfo, stack, argp)
-	struct exec_package *pack;
-	struct ps_strings *arginfo;
-	void *stack;
-	void *argp;
+linux_aout_copyargs(struct exec_package *pack, struct ps_strings *arginfo,
+    void *stack, void *argp)
 {
 	char **cpp = stack;
 	char **stk = stack;
@@ -255,9 +246,7 @@ linux_aout_copyargs(pack, arginfo, stack, argp)
 }
 
 int
-exec_linux_aout_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_linux_aout_makecmds(struct proc *p, struct exec_package *epp)
 {
 	struct exec *linux_ep = epp->ep_hdr;
 	int machtype, magic;
@@ -299,9 +288,7 @@ exec_linux_aout_makecmds(p, epp)
  */
 
 int
-exec_linux_aout_prep_zmagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_linux_aout_prep_zmagic(struct proc *p, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 
@@ -335,9 +322,7 @@ exec_linux_aout_prep_zmagic(p, epp)
  */
 
 int
-exec_linux_aout_prep_nmagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_linux_aout_prep_nmagic(struct proc *p, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 	long bsize, baddr;
@@ -374,9 +359,7 @@ exec_linux_aout_prep_nmagic(p, epp)
  */
 
 int
-exec_linux_aout_prep_omagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_linux_aout_prep_omagic(struct proc *p, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 	long dsize, bsize, baddr;
@@ -413,9 +396,7 @@ exec_linux_aout_prep_omagic(p, epp)
 }
 
 int
-exec_linux_aout_prep_qmagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_linux_aout_prep_qmagic(struct proc *p, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 
@@ -467,12 +448,8 @@ exec_linux_elf32_makecmds(struct proc *p, struct exec_package *epp)
 }
 
 int
-linux_elf_probe(p, epp, itp, pos, os)
-	struct proc *p;
-	struct exec_package *epp;
-	char *itp;
-	u_long *pos;
-	u_int8_t *os;
+linux_elf_probe(struct proc *p, struct exec_package *epp, char *itp,
+    u_long *pos, u_int8_t *os)
 {
 	Elf32_Ehdr *eh = epp->ep_hdr;
 	char *bp, *brand;
@@ -535,10 +512,7 @@ recognized:
  */
 
 int
-linux_sys_uselib(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+linux_sys_uselib(struct proc *p, void *v, register_t *retval)
 {
 	struct linux_sys_uselib_args /* {
 		syscallarg(char *) path;
@@ -622,10 +596,7 @@ linux_sys_uselib(p, v, retval)
  * to the regular execve().
  */
 int
-linux_sys_execve(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+linux_sys_execve(struct proc *p, void *v, register_t *retval)
 {
 	struct linux_sys_execve_args /* {
 		syscallarg(char *) path;
