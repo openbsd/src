@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.11 2010/07/24 09:58:39 guenther Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.12 2011/04/06 11:39:42 miod Exp $	*/
 /*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
 
 /*-
@@ -66,7 +66,7 @@
 #ifdef	__GNUG__
 #define	NULL	__null
 #else
-#define	NULL	0L
+#define	NULL	((void *)0)
 #endif
 #endif
 
