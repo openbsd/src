@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sym.4,v 1.1 2011/04/06 11:54:56 dlg Exp $
+.\"	$OpenBSD: sym.4,v 1.2 2011/04/06 12:47:24 jmc Exp $
 .\"
 .\" Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
 .\"
@@ -19,14 +19,14 @@
 .Os
 .Sh NAME
 .Nm sym
-.Nd Symmetric access SCSI devices
+.Nd symmetric access SCSI devices
 .Sh SYNOPSIS
 .Cd "sym* at scsibus?"
 .Sh DESCRIPTION
 The
 .Nm
 driver attaches to SCSI logical units that support symmetric access,
-ie, all paths to the device are as good as each other.
+i.e. all paths to the device are as good as each other.
 Each path attached to by
 .Nm
 is presented to
