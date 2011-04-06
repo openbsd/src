@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_tape.c,v 1.11 2010/09/22 01:18:57 matthew Exp $ */
+/*	$OpenBSD: mscp_tape.c,v 1.12 2011/04/06 18:12:47 miod Exp $ */
 /*	$NetBSD: mscp_tape.c,v 1.16 2001/11/13 07:38:28 lukem Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -53,6 +53,7 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -85,16 +86,12 @@ int	mtonline(struct device *, struct mscp *);
 int	mtgotstatus(struct device *, struct mscp *);
 int	mtioerror(struct device *, struct mscp *, struct buf *);
 void	mtfillin(struct buf *, struct mscp *);
-int	mtopen(dev_t, int, int, struct proc *);
-int	mtclose(dev_t, int, int, struct proc *);
-void	mtstrategy(struct buf *);
 int	mtread(dev_t, struct uio *);
 int	mtwrite(dev_t, struct uio *);
-int	mtioctl(dev_t, int, caddr_t, int, struct proc *);
-int	mtdump(dev_t, daddr64_t, caddr_t, size_t);
 int	mtcmd(struct mt_softc *, int, int, int);
 void	mtcmddone(struct device *, struct mscp *);
 int	mt_putonline(struct mt_softc *);
+bdev_decl(mt);
 
 struct	mscp_device mt_device = {
 	mtdgram,
@@ -428,7 +425,7 @@ mtioerror(usc, mp, bp)
 int
 mtioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;

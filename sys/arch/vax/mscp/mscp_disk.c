@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.32 2010/09/22 06:40:25 krw Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.33 2011/04/06 18:12:47 miod Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -59,6 +59,7 @@
 #include <sys/reboot.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/conf.h>
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
@@ -105,15 +106,10 @@ void	rrmakelabel(struct disklabel *, long);
 
 int	ramatch(struct device *, struct cfdata *, void *);
 void	raattach(struct device *, struct device *, void *);
-int	raopen(dev_t, int, int, struct proc *);
-int	raclose(dev_t, int, int, struct proc *);
-void	rastrategy(struct buf *);
 int	raread(dev_t, struct uio *);
 int	rawrite(dev_t, struct uio *);
-int	raioctl(dev_t, int, caddr_t, int, struct proc *);
-int	radump(dev_t, daddr64_t, caddr_t, size_t);
-daddr64_t	rasize(dev_t);
 int	ra_putonline(struct ra_softc *);
+bdev_decl(ra);
 
 struct	cfattach ra_ca = {
 	sizeof(struct ra_softc), (cfmatch_t)ramatch, rxattach
@@ -363,7 +359,7 @@ rawrite(dev, uio)
 int
 raioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
