@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/cc_tools/Makefile,v 1.88.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.8 2010/09/10 16:20:11 kettenis Exp $
+# $OpenBSD: Makefile,v 1.9 2011/04/06 15:23:39 drahn Exp $
 
 .include <bsd.own.mk>
 
@@ -44,6 +44,12 @@ TARGET_INC+=	alpha/elf.h
 TARGET_INC+=	alpha/openbsd1.h
 .else
 TARGET_INC+=	elfos.h
+.endif
+.if ${TARGET_ARCH} == "arm"
+TARGET_INC+=arm/openbsd1.h
+TARGET_INC+=arm/elf.h
+TARGET_INC+=arm/aout.h
+TARGET_INC+=arm/arm.h
 .endif
 .if ${TARGET_ARCH} == "sh"
 TARGET_INC+=	sh/elf.h
