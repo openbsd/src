@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.12 2009/10/27 23:59:41 deraadt Exp $	*/
+/*	$OpenBSD: expand.c,v 1.13 2011/04/06 11:36:26 miod Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -169,7 +169,7 @@ expstr(s)
 			savec = *tail;
 			*tail = '\0';
 		}
-		tp = lookup(cp, NULL, 0);
+		tp = lookup(cp, LOOKUP, 0);
 		if (savec != '\0')
 			*tail = savec;
 		if (tp != NULL) {

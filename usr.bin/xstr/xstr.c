@@ -1,4 +1,4 @@
-/*	$OpenBSD: xstr.c,v 1.16 2009/10/27 23:59:50 deraadt Exp $	*/
+/*	$OpenBSD: xstr.c,v 1.17 2011/04/06 11:36:26 miod Exp $	*/
 /*	$NetBSD: xstr.c,v 1.5 1994/12/24 16:57:59 cgd Exp $	*/
 
 /*
@@ -311,7 +311,7 @@ fgetNUL(char *obuf, int rmdr, FILE  *file)
 	while (--rmdr > 0 && (c = xgetc(file)) != 0 && c != EOF)
 		*buf++ = c;
 	*buf++ = 0;
-	return ((feof(file) || ferror(file)) ? NULL : 1);
+	return ((feof(file) || ferror(file)) ? 0 : 1);
 }
 
 int

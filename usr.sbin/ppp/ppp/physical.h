@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *  $OpenBSD: physical.h,v 1.20 2002/05/16 01:13:39 brian Exp $
+ *  $OpenBSD: physical.h,v 1.21 2011/04/06 11:36:26 miod Exp $
  *
  */
 
@@ -114,7 +114,7 @@ struct physical {
 };
 
 #define field2phys(fp, name) \
-  ((struct physical *)((char *)fp - (int)(&((struct physical *)0)->name)))
+  ((struct physical *)((char *)fp - (int)(&((struct physical *)NULL)->name)))
 
 #define link2physical(l) \
   ((l)->type == PHYSICAL_LINK ? field2phys(l, link) : NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.87 2009/08/04 03:45:47 tedu Exp $	*/
+/*	$OpenBSD: route.c,v 1.88 2011/04/06 11:36:26 miod Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ routepr(u_long rtree, u_long mtree, u_long af2idx, u_long rtbl_id_max,
 
 	printf("Routing tables\n");
 
-	if (rtree == NULL || af2idx == NULL) {
+	if (rtree == 0 || af2idx == 0) {
 		printf("rt_tables: symbol not in namelist\n");
 		return;
 	}
@@ -138,7 +138,7 @@ routepr(u_long rtree, u_long mtree, u_long af2idx, u_long rtbl_id_max,
 			}
 			continue;
 		}
-		if (af2rtafidx[i] == NULL)
+		if (af2rtafidx[i] == 0)
 			/* no table for this AF */
 			continue;
 		if ((rnh = rt_tables[af2rtafidx[i]]) == NULL)

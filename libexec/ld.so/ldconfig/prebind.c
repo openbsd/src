@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.12 2010/03/30 17:42:50 zinovik Exp $ */
+/* $OpenBSD: prebind.c,v 1.13 2011/04/06 11:36:25 miod Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -665,7 +665,7 @@ elf_load_object(void *pexe, const char *name)
 			    object->dyn.pltrelsz);
 			object->dyn.jmprel = (long)plt;
 		} else {
-			object->dyn.jmprel = NULL;
+			object->dyn.jmprel = 0;
 		}
 		if (object->dyn.rpath != NULL){
 			object->dyn.rpath = strdup(object->dyn.rpath);
@@ -748,7 +748,7 @@ load_obj_needed(struct elf_object *object)
 	int err;
 
 	needed_list = (Elf_Word *)object->dyn.needed;
-	for (i = 0; needed_list[i] != NULL; i++) {
+	for (i = 0; needed_list[i] != 0; i++) {
 		if (verbose > 1)
 			printf("lib: %s\n", needed_list[i] +
 			    object->dyn.strtab);

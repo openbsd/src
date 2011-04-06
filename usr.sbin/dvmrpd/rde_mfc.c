@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_mfc.c,v 1.8 2009/09/22 16:24:21 michele Exp $ */
+/*	$OpenBSD: rde_mfc.c,v 1.9 2011/04/06 11:36:26 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -372,8 +372,7 @@ mfc_check_members(struct rt_node *rn, struct iface *iface)
 
 	RB_FOREACH(mn, mfc_tree, &mfc) {
 		if (mn->origin.s_addr == rn->prefix.s_addr) {
-			if (rde_group_list_find(iface, mn->group)
-			    != NULL)
+			if (rde_group_list_find(iface, mn->group) != 0)
 				return (1);
 		}
 	}

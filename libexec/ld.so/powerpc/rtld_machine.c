@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.47 2010/05/03 04:03:03 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.48 2011/04/06 11:36:25 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -445,7 +445,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
 		return (0);
 
-	object->got_addr = NULL;
+	object->got_addr = 0;
 	object->got_size = 0;
 	this = NULL;
 	ooff = _dl_find_symbol("__got_start", &this,
@@ -477,15 +477,15 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (this != NULL)
 		object->plt_size = ooff + this->st_value  - plt_addr;
 
-	if (object->got_addr == NULL)
-		object->got_start = NULL;
+	if (object->got_addr == 0)
+		object->got_start = 0;
 	else {
 		object->got_start = ELF_TRUNC(object->got_addr, _dl_pagesz);
 		object->got_size += object->got_addr - object->got_start;
 		object->got_size = ELF_ROUND(object->got_size, _dl_pagesz);
 	}
-	if (plt_addr == NULL)
-		object->plt_start = NULL;
+	if (plt_addr == 0)
+		object->plt_start = 0;
 	else {
 		object->plt_start = ELF_TRUNC(plt_addr, _dl_pagesz);
 		object->plt_size += plt_addr - object->plt_start;

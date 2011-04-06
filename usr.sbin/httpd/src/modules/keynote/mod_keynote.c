@@ -148,7 +148,7 @@ add_action_attributes(int sessid, request_rec *r)
     add_action_attribute(sessid, "protocol", r->protocol, r);
     add_action_attribute(sessid, "filename", r->filename, r);
 
-    tt = time((time_t) NULL);
+    tt = time((time_t *) NULL);
     strftime (mytimeofday, 14, "%Y%m%d%H%M%S", gmtime (&tt));
     add_action_attribute(sessid, "GMTTimeOfDay", mytimeofday, r);
 
@@ -269,7 +269,7 @@ keynote_get_valid_times(request_rec *r, X509 *cert, char *before, size_t beforel
 
     if (((tm = X509_get_notBefore(cert)) == NULL) ||
 	(tm->type != V_ASN1_UTCTIME && tm->type != V_ASN1_GENERALIZEDTIME)) {
-	tt = time((time_t) NULL);
+	tt = time((time_t *) NULL);
 	strftime(before, 14, "%G%m%d%H%M%S", localtime(&tt));
 	*timecomp = "LocalTimeOfDay";
     } else {
@@ -638,7 +638,7 @@ check_keynote_assertions(request_rec *r)
 	    /* Missing or self-signed, deny them */
 	    issuer = X509_get_issuer_name(cert);
 	    subject = X509_get_subject_name(cert);
-	    if (!issuer || !subject || X509_name_cmp(issuer, subject) == NULL) {
+	    if (!issuer || !subject || X509_name_cmp(issuer, subject) == 0) {
 		rval = FORBIDDEN;
 		goto done;
 	    }

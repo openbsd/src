@@ -1,4 +1,4 @@
-/* $OpenBSD: revnetgroup.c,v 1.9 2009/10/27 23:59:58 deraadt Exp $ */
+/* $OpenBSD: revnetgroup.c,v 1.10 2011/04/06 11:36:26 miod Exp $ */
 /*
  * Copyright (c) 1995
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -142,7 +142,7 @@ main(int argc, char *argv[])
 		gcur = gtable[i];
 		while (gcur) {
 			__setnetgrent(gcur->key);
-			while (__getnetgrent(&host, &user, &domain) != NULL) {
+			while (__getnetgrent(&host, &user, &domain) != 0) {
 				if (hosts) {
 					if (!(host && !strcmp(host,"-"))) {
 						mstore(mtable,

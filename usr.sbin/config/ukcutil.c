@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukcutil.c,v 1.18 2009/10/27 23:59:51 deraadt Exp $ */
+/*	$OpenBSD: ukcutil.c,v 1.19 2011/04/06 11:36:26 miod Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -1358,7 +1358,7 @@ process_history(int len, char *buf)
 
 	c = buf;
 
-	while (*c != NULL) {
+	while (*c != '\0') {
 		switch (*c) {
 		case 'a':
 			c++;
@@ -1432,12 +1432,12 @@ process_history(int len, char *buf)
 			ukc_mod_kernel = 1;
 			break;
 		case 'q':
-			while (*c != NULL)
+			while (*c != '\0')
 				c++;
 			break;
 		default:
 			printf("unknown command %c\n", *c);
-			while (*c != NULL && *c != '\n')
+			while (*c != '\0' && *c != '\n')
 				c++;
 			break;
 		}

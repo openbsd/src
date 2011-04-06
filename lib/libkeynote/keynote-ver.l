@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: keynote-ver.l,v 1.14 2004/06/29 11:35:56 msf Exp $ */
+/* $OpenBSD: keynote-ver.l,v 1.15 2011/04/06 11:36:23 miod Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -252,7 +252,7 @@ read_environment(char *filename)
     if (0)
     {
 	yyunput(0, NULL);
-	yy_flex_realloc(0, NULL);
+	yy_flex_realloc(0, 0);
     }
 }
 

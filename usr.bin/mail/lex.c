@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.33 2009/10/27 23:59:40 deraadt Exp $	*/
+/*	$OpenBSD: lex.c,v 1.34 2011/04/06 11:36:26 miod Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -397,7 +397,7 @@ execute(char *linebuf, int contxt)
 		if (c  == 0) {
 			*msgvec = first(com->c_msgflag,
 				com->c_msgmask);
-			msgvec[1] = NULL;
+			msgvec[1] = 0;
 		}
 		if (*msgvec == 0) {
 			puts("No applicable messages");
@@ -427,7 +427,7 @@ execute(char *linebuf, int contxt)
 		if (c  == 0) {
 			*msgvec = first(com->c_msgflag,
 				com->c_msgmask);
-			msgvec[1] = NULL;
+			msgvec[1] = 0;
 		}
 		if (*msgvec == 0) {
 			puts("No applicable messages");

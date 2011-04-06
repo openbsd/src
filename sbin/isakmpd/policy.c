@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.92 2010/09/22 13:45:16 mikeb Exp $	 */
+/* $OpenBSD: policy.c,v 1.93 2011/04/06 11:36:25 miod Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -1737,12 +1737,12 @@ policy_callback(char *name)
 		return phase_1;
 
 	if (strcmp(name, "GMTTimeOfDay") == 0) {
-		tt = time((time_t)NULL);
+		tt = time((time_t *)NULL);
 		strftime(mytimeofday, 14, "%Y%m%d%H%M%S", gmtime(&tt));
 		return mytimeofday;
 	}
 	if (strcmp(name, "LocalTimeOfDay") == 0) {
-		tt = time((time_t)NULL);
+		tt = time((time_t *)NULL);
 		strftime(mytimeofday, 14, "%Y%m%d%H%M%S", localtime(&tt));
 		return mytimeofday;
 	}

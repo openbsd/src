@@ -1,4 +1,4 @@
-/*	$OpenBSD: usage.c,v 1.13 2007/09/03 14:26:54 deraadt Exp $	*/
+/*	$OpenBSD: usage.c,v 1.14 2011/04/06 11:36:25 miod Exp $	*/
 /*	$NetBSD: usage.c,v 1.1 2001/12/28 17:45:27 augustss Exp $	*/
 
 /*
@@ -252,7 +252,7 @@ hid_parse_usage_page(const char *name)
 	int k;
 
 	if (!pages)
-		return NULL;
+		return 0;
 
 	for (k = 0; k < npages; k++)
 		if (strcmp(pages[k].name, name) == 0)

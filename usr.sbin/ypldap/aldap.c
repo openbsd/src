@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.26 2010/07/21 17:32:12 martinh Exp $ */
-/*	$OpenBSD: aldap.c,v 1.26 2010/07/21 17:32:12 martinh Exp $ */
+/*	$Id: aldap.c,v 1.27 2011/04/06 11:36:26 miod Exp $ */
+/*	$OpenBSD: aldap.c,v 1.27 2011/04/06 11:36:26 miod Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -1063,7 +1063,7 @@ utoa(char *u)
 	char	*str;
 
 	/* calculate the length to allocate */
-	for (len = 0, i = 0; u[i] != NULL; ) {
+	for (len = 0, i = 0; u[i] != '\0'; ) {
 		if ((u[i] & 0xF0) == 0xF0)
 			i += 4;
 		else if ((u[i] & 0xE0) == 0xE0)
@@ -1079,7 +1079,7 @@ utoa(char *u)
 		return NULL;
 
 	/* copy the ASCII characters to the newly allocated string */
-	for (i = 0, j = 0; u[i] != NULL; j++) {
+	for (i = 0, j = 0; u[i] != '\0'; j++) {
 		if ((u[i] & 0xF0) == 0xF0) {
 			str[j] = '?';
 			i += 4;

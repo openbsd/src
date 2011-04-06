@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd3.c,v 1.24 2009/10/27 23:59:40 deraadt Exp $	*/
+/*	$OpenBSD: cmd3.c,v 1.25 2011/04/06 11:36:26 miod Exp $	*/
 /*	$NetBSD: cmd3.c,v 1.8 1997/07/09 05:29:49 mikel Exp $	*/
 
 /*
@@ -276,7 +276,7 @@ marknew(void *v)
 	int *msgvec = v;
 	int *ip;
 
-	for (ip = msgvec; *ip != NULL; ip++) {
+	for (ip = msgvec; *ip != 0; ip++) {
 		dot = &message[*ip-1];
 		dot->m_flag &= ~(MBOX|MREAD|MTOUCH);
 		dot->m_flag |= MNEW|MSTATUS;
@@ -299,7 +299,7 @@ preserve(void *v)
 		puts("Cannot \"preserve\" in edit mode");
 		return(1);
 	}
-	for (ip = msgvec; *ip != NULL; ip++) {
+	for (ip = msgvec; *ip != 0; ip++) {
 		mesg = *ip;
 		mp = &message[mesg-1];
 		mp->m_flag |= MPRESERVE;
@@ -318,7 +318,7 @@ unread(void *v)
 	int *msgvec = v;
 	int *ip;
 
-	for (ip = msgvec; *ip != NULL; ip++) {
+	for (ip = msgvec; *ip != 0; ip++) {
 		dot = &message[*ip-1];
 		dot->m_flag &= ~(MREAD|MTOUCH);
 		dot->m_flag |= MSTATUS;
@@ -336,7 +336,7 @@ messize(void *v)
 	struct message *mp;
 	int *ip, mesg;
 
-	for (ip = msgvec; *ip != NULL; ip++) {
+	for (ip = msgvec; *ip != 0; ip++) {
 		mesg = *ip;
 		mp = &message[mesg-1];
 		printf("%d: %d/%d\n", mesg, mp->m_lines, mp->m_size);

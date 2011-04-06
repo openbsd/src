@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.78 2010/07/26 10:55:17 miod Exp $ */
+/* $OpenBSD: user.c,v 1.79 2011/04/06 11:36:26 miod Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -924,7 +924,7 @@ scantime(time_t *tp, char *s)
 			*tp = mktime(&tm);
 		} else if (strptime(s, "%B %d %Y", &tm) != NULL) {
 			*tp = mktime(&tm);
-		} else if (isdigit((unsigned char) s[0]) != NULL) {
+		} else if (isdigit((unsigned char) s[0]) != 0) {
 			*tp = atoi(s);
 		} else {
 			return 0;

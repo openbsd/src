@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd1.c,v 1.28 2009/10/27 23:59:40 deraadt Exp $	*/
+/*	$OpenBSD: cmd1.c,v 1.29 2011/04/06 11:36:26 miod Exp $	*/
 /*	$NetBSD: cmd1.c,v 1.9 1997/07/09 05:29:48 mikel Exp $	*/
 
 /*-
@@ -166,7 +166,7 @@ from(void *v)
 	int *msgvec = v;
 	int *ip;
 
-	for (ip = msgvec; *ip != NULL; ip++)
+	for (ip = msgvec; *ip != 0; ip++)
 		printhead(*ip);
 	if (--ip >= msgvec)
 		dot = &message[*ip - 1];

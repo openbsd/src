@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.7 2004/12/28 09:05:18 deraadt Exp $	*/
+/*	$OpenBSD: elf.c,v 1.8 2011/04/06 11:36:26 miod Exp $	*/
 /*	$NetBSD: elf.c,v 1.8 2002/01/03 21:45:58 jdolecek Exp $	*/
 
 /*
@@ -328,7 +328,7 @@ elf_linkcmd(char *buf, size_t len, const char *kernel,
 {
 	ssize_t n;
 
-	if (data_offset == NULL)
+	if (data_offset == 0)
 		n = snprintf(buf, len, LINKCMD, kernel, entry,
 		    outfile, address, object);
 	else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.35 2011/04/05 18:51:26 thib Exp $ */
+/*	$OpenBSD: procmap.c,v 1.36 2011/04/06 11:36:26 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -88,7 +88,7 @@ struct cache_entry {
 
 LIST_HEAD(cache_head, cache_entry) lcache;
 void *uvm_vnodeops, *uvm_deviceops, *aobj_pager;
-u_long nchash_addr, kernel_map_addr;
+u_long kernel_map_addr;
 int debug, verbose;
 int print_all, print_map, print_maps, print_solaris, print_ddb, print_amap;
 int rwx = VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE;
@@ -164,8 +164,6 @@ struct nlist nl[] = {
 #define NL_AOBJ_PAGER		3
 	{ "_kernel_map" },
 #define NL_KERNEL_MAP		4
-	{ "_nchash" },
-#define NL_NCHASH		5
 	{ NULL }
 };
 
@@ -523,8 +521,6 @@ load_symbols(kvm_t *kd)
 	uvm_deviceops =	(void*)nl[NL_UVM_DEVICEOPS].n_value;
 	aobj_pager =	(void*)nl[NL_AOBJ_PAGER].n_value;
 
-	nchash_addr =	nl[NL_NCHASH].n_value;
-
 	_KDEREF(kd, nl[NL_MAXSSIZ].n_value, &maxssiz,
 	    sizeof(maxssiz));
 	_KDEREF(kd, nl[NL_KERNEL_MAP].n_value, &kernel_map_addr,
@@ -604,7 +600,7 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		KDEREF(kd, amap);
 	}
 
-	A(vfs) = NULL;
+	A(vfs) = 0;
 
 	if (P(vp) != NULL && D(vp, vnode)->v_mount != NULL) {
 		P(vfs) = D(vp, vnode)->v_mount;
