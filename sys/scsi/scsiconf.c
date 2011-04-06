@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.171 2011/04/05 22:39:19 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.172 2011/04/06 13:33:46 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -768,7 +768,6 @@ scsibus_printlink(struct scsi_link *link)
 	printf(" %d/%s %s%s", type, dtype, removable ? "removable" : "fixed",
 	    qtype);
 
-#if NMPATH > 0
 	if (link->id != NULL && link->id->d_type != DEVID_NONE) {
 		u_int8_t *id = (u_int8_t *)(link->id + 1);
 		int i;
@@ -802,7 +801,6 @@ scsibus_printlink(struct scsi_link *link)
 				printf("%02x", id[i]);
 		}
 	}
-#endif /* NMPATH > 0 */
 }
 
 /*
