@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.21 2011/04/05 22:33:51 ariane Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.22 2011/04/06 12:31:10 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -1891,6 +1891,8 @@ uvm_pmr_alloc_pig(paddr_t *addr, psize_t *sz)
 			pg = RB_MAX(uvm_pmr_size, &pmr->size[memtype]);
 			if (pg == NULL)
 				pg = TAILQ_FIRST(&pmr->single[memtype]);
+			else
+				pg--;
 
 			if (pig_pg == NULL || (pg != NULL && pig_pg != NULL &&
 			    pig_pg->fpgsz < pg->fpgsz)) {
