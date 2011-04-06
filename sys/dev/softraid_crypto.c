@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.64 2011/04/05 19:52:02 krw Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.65 2011/04/06 03:14:51 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -258,8 +258,7 @@ sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
 	uio->uio_iovcnt = 1;
 	uio->uio_iov->iov_len = xs->datalen;
 	if (xs->flags & SCSI_DATA_OUT) {
-		uio->uio_iov->iov_base = malloc(xs->datalen, M_DEVBUF,
-		    M_NOWAIT);
+		uio->uio_iov->iov_base = dma_alloc(xs->datalen, PR_NOWAIT);
 		if (uio->uio_iov->iov_base == NULL)
 			goto unwind;
 		bcopy(xs->data, uio->uio_iov->iov_base, xs->datalen);
@@ -322,7 +321,7 @@ unwind:
 	if (uio && uio->uio_iov)
 		if ((wu->swu_xs->flags & SCSI_DATA_OUT) &&
 		    uio->uio_iov->iov_base)
-			free(uio->uio_iov->iov_base, M_DEVBUF);
+			dma_free(uio->uio_iov->iov_base, uio->uio_iov->iov_len);
 
 	s = splbio();
 	if (uio && uio->uio_iov)
@@ -346,7 +345,7 @@ sr_crypto_putcryptop(struct cryptop *crp)
 	    DEVNAME(wu->swu_dis->sd_sc), crp);
 
 	if ((wu->swu_xs->flags & SCSI_DATA_OUT) && uio->uio_iov->iov_base)
-		free(uio->uio_iov->iov_base, M_DEVBUF);
+		dma_free(uio->uio_iov->iov_base, uio->uio_iov->iov_len);
 	s = splbio();
 	pool_put(&sd->mds.mdd_crypto.sr_iovpl, uio->uio_iov);
 	pool_put(&sd->mds.mdd_crypto.sr_uiopl, uio);
