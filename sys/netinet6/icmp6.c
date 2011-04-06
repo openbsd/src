@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.115 2011/04/05 11:48:28 blambert Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.116 2011/04/06 19:23:15 sthen Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1766,7 +1766,7 @@ ni6_store_addrs(struct icmp6_nodeinfo *ni6, struct icmp6_nodeinfo *nni6,
 			if ((ifa6->ia6_flags & IN6_IFF_DEPRECATED) != 0 &&
 			    allow_deprecated == 0) {
 				/*
-				 * prefererred address should be put before
+				 * preferred address should be put before
 				 * deprecated addresses.
 				 */
 
