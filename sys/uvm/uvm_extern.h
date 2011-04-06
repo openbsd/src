@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.93 2011/04/05 01:28:05 art Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.94 2011/04/06 15:52:13 art Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -533,6 +533,14 @@ vaddr_t			uvm_km_valloc_wait(vm_map_t, vsize_t);
 vaddr_t			uvm_km_valloc_align(struct vm_map *, vsize_t, vsize_t, int);
 vaddr_t			uvm_km_valloc_prefer_wait(vm_map_t, vsize_t,
 					voff_t);
+void			*uvm_km_getpage_pla(boolean_t, int *, paddr_t, paddr_t,
+			    paddr_t, paddr_t);
+/* Wrapper around old function prototype. */
+#define uvm_km_getpage(waitok, slowdown)				\
+	uvm_km_getpage_pla(((waitok) ? 0 : UVM_KMF_NOWAIT), (slowdown),	\
+	    (paddr_t)0, (paddr_t)-1, 0, 0)
+
+void			uvm_km_putpage(void *);
 
 struct vm_map		*uvm_km_suballoc(vm_map_t, vaddr_t *,
 				vaddr_t *, vsize_t, int,

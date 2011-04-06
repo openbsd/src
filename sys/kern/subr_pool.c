@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.102 2011/04/05 01:28:05 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.103 2011/04/06 15:52:13 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -401,7 +401,8 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	}
 
 	/* pglistalloc/constraint parameters */
-	pp->pr_crange = &kp_dirty;
+	pp->pr_crange = &no_constraint;
+	pp->pr_pa_nsegs = 0;
 
 	/* Insert this into the list of all pools. */
 	TAILQ_INSERT_HEAD(&pool_head, pp, pr_poollist);
@@ -1012,9 +1013,18 @@ done:
 }
 
 void
-pool_set_constraints(struct pool *pp, struct kmem_pa_mode *mode)
+pool_set_constraints(struct pool *pp, struct uvm_constraint_range *range,
+    int nsegs)
 {
-	pp->pr_crange = mode;
+	/*
+	 * Subsequent changes to the constrictions are only
+	 * allowed to make them _more_ strict.
+	 */
+	KASSERT(pp->pr_crange->ucr_high >= range->ucr_high &&
+	    pp->pr_crange->ucr_low <= range->ucr_low);
+
+	pp->pr_crange = range;
+	pp->pr_pa_nsegs = nsegs;
 }
 
 void
@@ -1485,36 +1495,32 @@ pool_allocator_free(struct pool *pp, void *v)
 void *
 pool_page_alloc(struct pool *pp, int flags, int *slowdown)
 {
-	struct kmem_dyn_mode kd = KMEM_DYN_INITIALIZER;
+	int kfl = (flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT;
 
-	kd.kd_waitok = (flags & PR_WAITOK);
-	kd.kd_slowdown = slowdown;
-
-	return (km_alloc(PAGE_SIZE, &kv_page, pp->pr_crange, &kd));
+	return (uvm_km_getpage_pla(kfl, slowdown, pp->pr_crange->ucr_low,
+	    pp->pr_crange->ucr_high, 0, 0));
 }
 
 void
 pool_page_free(struct pool *pp, void *v)
 {
-	km_free(v, PAGE_SIZE, &kv_page, pp->pr_crange);
+	uvm_km_putpage(v);
 }
 
 void *
 pool_large_alloc(struct pool *pp, int flags, int *slowdown)
 {
-	struct kmem_dyn_mode kd = KMEM_DYN_INITIALIZER;
-	void *v;
+	int kfl = (flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT;
+	vaddr_t va;
 	int s;
 
-	kd.kd_waitok = (flags & PR_WAITOK);
-	kd.kd_slowdown = slowdown;
-
 	s = splvm();
-	v = km_alloc(pp->pr_alloc->pa_pagesz, &kv_intrsafe, pp->pr_crange,
-	    &kd);
+	va = uvm_km_kmemalloc_pla(kmem_map, NULL, pp->pr_alloc->pa_pagesz, 0,
+	    kfl, pp->pr_crange->ucr_low, pp->pr_crange->ucr_high,
+	    0, 0, pp->pr_pa_nsegs);
 	splx(s);
 
-	return (v);
+	return ((void *)va);
 }
 
 void
@@ -1523,23 +1529,23 @@ pool_large_free(struct pool *pp, void *v)
 	int s;
 
 	s = splvm();
-	km_free(v, pp->pr_alloc->pa_pagesz, &kv_intrsafe, pp->pr_crange);
+	uvm_km_free(kmem_map, (vaddr_t)v, pp->pr_alloc->pa_pagesz);
 	splx(s);
 }
 
 void *
 pool_large_alloc_ni(struct pool *pp, int flags, int *slowdown)
 {
-	struct kmem_dyn_mode kd = KMEM_DYN_INITIALIZER;
+	int kfl = (flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT;
 
-	kd.kd_waitok = (flags & PR_WAITOK);
-	kd.kd_slowdown = slowdown;
-
-	return (km_alloc(pp->pr_alloc->pa_pagesz, &kv_any, pp->pr_crange, &kd));
+	return ((void *)uvm_km_kmemalloc_pla(kernel_map, uvm.kernel_object,
+	    pp->pr_alloc->pa_pagesz, 0, kfl,
+	    pp->pr_crange->ucr_low, pp->pr_crange->ucr_high,
+	    0, 0, pp->pr_pa_nsegs));
 }
 
 void
 pool_large_free_ni(struct pool *pp, void *v)
 {
-	km_free(v, pp->pr_alloc->pa_pagesz, &kv_any, pp->pr_crange);
+	uvm_km_free(kernel_map, (vaddr_t)v, pp->pr_alloc->pa_pagesz);
 }
