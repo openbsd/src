@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.172 2011/04/06 13:33:46 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.173 2011/04/06 15:16:54 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -781,6 +781,9 @@ scsibus_printlink(struct scsi_link *link)
 			break;
 		case DEVID_T10:
 			printf(" t10.");
+			break;
+		case DEVID_SERIAL:
+			printf(" serial.");
 			break;
 		}
 

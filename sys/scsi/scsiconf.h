@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.143 2011/04/05 14:25:42 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.144 2011/04/06 15:16:54 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -233,6 +233,7 @@ _4ltol(u_int8_t *bytes)
 #define DEVID_NAA	1
 #define DEVID_EUI	2
 #define DEVID_T10	3
+#define DEVID_SERIAL	4
 
 struct devid {
 	u_int8_t	d_type;

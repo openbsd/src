@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.31 2010/09/21 02:41:24 dlg Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.32 2011/04/06 15:16:54 dlg Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@ struct umass_scsi_softc {
 
 #define UMASS_ATAPI_DRIVE	0
 
+int umass_scsi_probe(struct scsi_link *);
 void umass_scsi_cmd(struct scsi_xfer *);
 void umass_scsi_minphys(struct buf *, struct scsi_link *);
 
@@ -154,6 +155,7 @@ umass_scsi_setup(struct umass_softc *sc)
 	/* Fill in the adapter. */
 	scbus->sc_adapter.scsi_cmd = umass_scsi_cmd;
 	scbus->sc_adapter.scsi_minphys = umass_scsi_minphys;
+	scbus->sc_adapter.dev_probe = umass_scsi_probe;
 
 	/* Fill in the link. */
 	scbus->sc_link.adapter_buswidth = 2;
@@ -164,6 +166,26 @@ umass_scsi_setup(struct umass_softc *sc)
 	scbus->sc_link.pool = &scbus->sc_iopool;
 
 	return (scbus);
+}
+
+int
+umass_scsi_probe(struct scsi_link *link)
+{
+	struct umass_softc *sc = link->adapter_softc;
+	struct usb_device_info udi;
+
+	/* dont fake devids when more than one scsi device can attach. */
+	if (sc->maxlun > 0)
+		return (0);
+
+	usbd_fill_deviceinfo(sc->sc_udev, &udi, 1);
+	if (strlen(udi.udi_serial) > 0) {
+		link->id = devid_alloc(DEVID_SERIAL, DEVID_F_PRINT, 
+		    min(strlen(udi.udi_serial), sizeof(udi.udi_serial)),
+		    udi.udi_serial);
+	}
+
+	return (0);
 }
 
 void
