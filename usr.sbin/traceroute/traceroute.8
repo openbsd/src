@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.44 2010/07/08 20:23:03 claudio Exp $
+.\"	$OpenBSD: traceroute.8,v 1.45 2011/04/06 12:05:00 sthen Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)traceroute.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: July 8 2010 $
+.Dd $Mdocdate: April 6 2011 $
 .Dt TRACEROUTE 8
 .Os
 .Sh NAME
@@ -177,6 +177,8 @@ in probe packets to the following value (default zero).
 The value must be a decimal integer in the range 0 to 255.
 This option can be used to
 see if different types-of-service result in different paths.
+If this option is used, changes to the type-of-service in the
+returned packets are displayed.
 (If you are not running a
 .Bx 4.3 tahoe
 or later system, this may be academic since the normal network
@@ -384,6 +386,8 @@ ever occur and the associated gateway is busted if you see one),
 (destination network or host unreachable for TOS),
 .Sy !<code>
 (other ICMP unreachable code).
+.Sy TOS=xxx!
+(TOS bit in returned packet differs from last hop).
 If almost all the probes result in some kind of unreachable,
 .Nm
 will give up and exit.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.74 2011/03/22 10:16:23 okan Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.75 2011/04/06 12:05:00 sthen Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -293,11 +293,13 @@ main(int argc, char *argv[])
 	int mib[4] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
 	int ttl_flag = 0, incflag = 1, protoset = 0, sump = 0;
 	int ch, i, lsrr = 0, on = 1, probe, seq = 0, tos = 0;
+	int last_tos, tos_returned;
 	size_t size = sizeof(max_ttl);
 	struct sockaddr_in from, to;
 	struct hostent *hp;
 	u_int32_t tmprnd;
-	struct ip *ip;
+	struct ip *ip, *inner_ip;
+	struct icmp *icp;
 	u_int8_t ttl;
 	char *ep;
 	const char *errstr;
@@ -427,7 +429,7 @@ main(int argc, char *argv[])
 			l = strtol(optarg, &ep, 10);
 			if (errno || !*optarg || *ep || l < 0 || l > 255)
 				errx(1, "tos must be 0 to 255.");
-			tos = (int)l;
+			last_tos = tos = (int)l;
 			break;
 		case 'v':
 			verbose++;
@@ -636,6 +638,17 @@ main(int argc, char *argv[])
 					++got_there;
 					break;
 				}
+
+				icp = (struct icmp *) (((u_char *)ip)+(ip->ip_hl<<2));
+				inner_ip = (struct ip *) (((u_char *)icp)+8);
+
+				tos_returned = inner_ip->ip_tos;
+
+				if (tos_returned != last_tos)
+					printf (" (TOS=%d!)", tos_returned);
+
+				last_tos = tos_returned;
+
 				/* time exceeded in transit */
 				if (i == -1)
 					break;
