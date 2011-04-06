@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.520 2011/03/28 15:25:37 claudio Exp $
+#	$OpenBSD: Makefile,v 1.521 2011/04/06 11:54:56 dlg Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpiasus.4 acpibat.4 acpibtn.4 acpicpu.4 acpidock.4 \
@@ -18,7 +18,7 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	ch.4 ciphy.4 ciss.4 clcs.4 clct.4 cmpci.4 cnw.4 \
 	com.4 crypto.4 cue.4 cy.4 cz.4 dc.4 dcphy.4 ddb.4 de.4 \
 	diskmap.4 divert.4 dpt.4 drm.4 \
-	eap.4 ec.4 eephy.4 ef.4 eg.4 ehci.4 eisa.4 el.4 em.4 gcu.4 \
+	eap.4 ec.4 eephy.4 ef.4 eg.4 ehci.4 eisa.4 el.4 em.4 emc.4 gcu.4 \
 	emu.4 enc.4 endrun.4 envy.4 ep.4 epic.4 esa.4 \
 	eso.4 ess.4 et.4 etphy.4 ex.4 exphy.4 \
 	faith.4 fd.4 fdc.4 fins.4 fintek.4 fms.4 fpa.4 fxp.4 gdt.4 \
@@ -43,7 +43,7 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	pcfiic.4 pciide.4 pckbc.4 pckbd.4 pcmcia.4 pcn.4 pcppi.4 pcscp.4 \
 	pf.4 pflog.4 pflow.4 pfsync.4 pgt.4 piixpm.4 pim.4 \
 	pms.4 ppb.4 ppp.4 pppoe.4 pty.4 puc.4 pwdog.4 qsphy.4 radio.4 raid.4 \
-	ral.4 random.4 ray.4 rd.4 re.4 rdcphy.4 rgephy.4 ricohrtc.4 \
+	ral.4 random.4 ray.4 rd.4 rdac.4 re.4 rdcphy.4 rgephy.4 ricohrtc.4 \
 	rl.4 rlphy.4 route.4 rsu.4 rt.4 rum.4 run.4 \
 	rtfps.4 rtii.4 rtw.4 safe.4 safte.4 san.4 sbt.4 sbus.4 schsio.4 \
 	scsi.4 sd.4 \
@@ -51,7 +51,7 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	sequencer.4 sf.4 sf2r.4 sfr.4 sili.4 siop.4 sis.4 sk.4 sl.4 sli.4 \
 	sm.4 softraid.4 spdmem.4 sdtemp.4 speaker.4 sppp.4 sqphy.4 \
 	st.4 ste.4 stge.4 sti.4 \
-	stp.4 sv.4 systrace.4 tcic.4 tcp.4 termios.4 tht.4 ti.4 tl.4 \
+	stp.4 sv.4 sym.4 systrace.4 tcic.4 tcp.4 termios.4 tht.4 ti.4 tl.4 \
 	tlphy.4 thmc.4 tqphy.4 trm.4 trunk.4 tsl.4 tty.4 tun.4 twe.4 txp.4 \
 	txphy.4 uaudio.4 uark.4 uath.4 uberry.4 ubsa.4 ubsec.4 ubt.4 \
 	ucom.4 uchcom.4 ucycom.4 udav.4 udcf.4 udfu.4 udl.4 udp.4 udsbr.4 \

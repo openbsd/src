@@ -1,6 +1,6 @@
-.\"	$OpenBSD: mpath.4,v 1.3 2011/04/06 11:54:56 dlg Exp $
+.\"	$OpenBSD: emc.4,v 1.1 2011/04/06 11:54:56 dlg Exp $
 .\"
-.\" Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
+.\" Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,38 +15,32 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: April 6 2011 $
-.Dt MPATH 4
+.Dt EMC 4
 .Os
 .Sh NAME
-.Nm mpath
-.Nd SCSI multipath
+.Nm emc
+.Nd EMC CLARiiON AX/CX-series SCSI devices
 .Sh SYNOPSIS
 .Cd "emc* at scsibus?"
-.Cd "rdac* at scsibus?"
-.Cd "sym* at scsibus?"
-.Pp
-.Cd "mpath0 at root"
-.Cd "scsibus* at mpath?"
 .Sh DESCRIPTION
+The
 .Nm
-provides access, I/O multiplexing, and failover support to SCSI
-logical units that can have multiple physical connections to the
-system.
-It uses connections presented by path drivers, for example
-.Xr sym 4 ,
-as backends to a single device attached to its own
+driver attaches to EMC CLARiiON AX/CX-series SCSI logical units.
+Each path to an active service processor attached to by
+.Nm
+is presented to
+.Xr mpath 4
+which uses it as a backend to the logical unit attached to its own
 .Xr scsibus 4 .
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr emc 4 ,
 .Xr intro 4 ,
-.Xr rdac 4 ,
-.Xr scsi 4 ,
-.Xr sym 4
+.Xr mpath 4 ,
+.Xr scsi 4
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
-.Ox 4.7 .
+.Ox 5.0 .
 .Sh AUTHORS
 .An David Gwynne Aq dlg@openbsd.org .

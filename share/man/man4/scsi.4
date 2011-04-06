@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.4,v 1.32 2010/07/03 09:20:05 krw Exp $
+.\"	$OpenBSD: scsi.4,v 1.33 2011/04/06 11:54:56 dlg Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 3 2010 $
+.Dd $Mdocdate: April 6 2011 $
 .Dt SCSI 4
 .Os
 .Sh NAME
@@ -41,6 +41,12 @@
 .Cd "ses* at scsibus?"
 .Cd "st* at scsibus?"
 .Cd "uk* at scsibus?"
+.Pp
+.Cd "# multipath support"
+.Cd "emc* at scsibus?"
+.Cd "rdac* at scsibus?"
+.Cd "sym* at scsibus?"
+.Cd "scsibus* at mpath?"
 .Sh DESCRIPTION
 The
 .Em SCSI
@@ -160,11 +166,15 @@ shows more detailed information including DMA scatter-gather logs.
 .Sh SEE ALSO
 .Xr cd 4 ,
 .Xr ch 4 ,
+.Xr emc 4 ,
 .Xr intro 4 ,
+.Xr mpath 4 ,
+.Xr rdac 4 ,
 .Xr safte 4 ,
 .Xr sd 4 ,
 .Xr ses 4 ,
 .Xr st 4 ,
+.Xr sym 4 ,
 .Xr uk 4 ,
 .Xr scsi 8
 .Sh HISTORY
