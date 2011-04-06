@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.30 2011/01/25 22:31:50 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.31 2011/04/06 21:51:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -162,6 +162,13 @@ session_destroy(struct session *s)
 	xfree(s->cwd);
 
 	RB_INSERT(sessions, &dead_sessions, s);
+}
+
+/* Check a session name is valid: not empty and no colons. */
+int
+session_check_name(const char *name)
+{
+	return (*name != '\0' && strchr(name, ':') == NULL);
 }
 
 /* Update session active time. */
