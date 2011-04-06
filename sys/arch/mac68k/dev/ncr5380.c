@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.40 2011/04/03 16:37:25 krw Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.41 2011/04/06 18:03:03 miod Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static void	ncr5380_minphys(struct buf *bp, struct scsi_link *sl);
 static void	mac68k_ncr5380_scsi_cmd(struct scsi_xfer *xs);
 static void	ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
 
-int	 ncr_sc_req_free(void *, void *);
+void	 ncr_sc_req_free(void *, void *);
 void	*ncr_sc_req_alloc(void *);
 
 struct scsi_adapter ncr5380_switch = {
@@ -199,11 +199,11 @@ struct cfdriver CFNAME(DRNAME) = {
 	NULL, CFSTRING(DRNAME), DV_DULL
 };
 
-int
+void
 ncr_sc_req_free(void *xsc, void *xsc_req)
 {
-	struct ncr_softc *sc = (ncr_softc *)xsc;
-	struct SC_REQ *sc_req = (SC_REQ *)xsc_req;
+	struct ncr_softc *sc = (struct ncr_softc *)xsc;
+	SC_REQ *sc_req = (SC_REQ *)xsc_req;
 
 	mtx_enter(&sc->sc_sc_req_mtx);
 	sc_req->next = free_head;
@@ -214,8 +214,8 @@ ncr_sc_req_free(void *xsc, void *xsc_req)
 void *
 ncr_sc_req_alloc(void *xsc)
 {
-	struct ncr_softc *sc = (ncr_softc *)xsc;
-	struct SC_REQ *sc_req = NULL;
+	struct ncr_softc *sc = (struct ncr_softc *)xsc;
+	SC_REQ *sc_req = NULL;
 
 	mtx_enter(&sc->sc_sc_req_mtx);
 	if (free_head) {
@@ -253,7 +253,7 @@ void		*auxp;
 	sc->sc_link.adapter_target  = 7;
 	sc->sc_link.adapter         = &ncr5380_switch;
 	sc->sc_link.openings        = NREQ - 1;
-	sc->sc_link_pool	    = &sc->sc_iopool;
+	sc->sc_link.pool	    = &sc->sc_iopool;
 
 	/*
 	 * bitmasks
