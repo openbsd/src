@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.224 2011/04/06 02:00:10 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.225 2011/04/06 02:35:51 marco Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3934,7 +3934,8 @@ sr_rebuild_thread(void *arg)
 
 	sd->sd_reb_active = 1;
 
-	buf = malloc(SR_REBUILD_IO_SIZE << DEV_BSHIFT, M_DEVBUF, M_WAITOK);
+	/* currently this is 64k therefore we can use dma_alloc */
+	buf = dma_alloc(SR_REBUILD_IO_SIZE << DEV_BSHIFT, PR_WAITOK);
 	for (blk = restart; blk <= whole_blk; blk++) {
 		if (blk == whole_blk)
 			sz = partial_blk;
@@ -4053,7 +4054,7 @@ abort:
 		printf("%s: could not save metadata to %s\n",
 		    DEVNAME(sc), sd->sd_meta->ssd_devname);
 fail:
-	free(buf, M_DEVBUF);
+	dma_free(buf, SR_REBUILD_IO_SIZE << DEV_BSHIFT);
 	sd->sd_reb_active = 0;
 	kthread_exit(0);
 }
