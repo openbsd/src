@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.104 2010/10/12 00:53:32 krw Exp $	*/
+/*	$OpenBSD: ips.c,v 1.105 2011/04/06 15:33:15 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -417,6 +417,8 @@ struct ips_softc {
 	struct ips_ccb *	sc_ccb;
 	int			sc_nccbs;
 	struct ips_ccbq		sc_ccbq_free;
+	struct mutex		sc_ccb_mtx;
+	struct scsi_iopool	sc_iopool;
 
 	struct dmamem		sc_sqm;
 	paddr_t			sc_sqtail;
@@ -480,8 +482,8 @@ u_int32_t ips_morpheus_status(struct ips_softc *);
 
 struct ips_ccb *ips_ccb_alloc(struct ips_softc *, int);
 void	ips_ccb_free(struct ips_softc *, struct ips_ccb *, int);
-struct ips_ccb *ips_ccb_get(struct ips_softc *);
-void	ips_ccb_put(struct ips_softc *, struct ips_ccb *);
+void	*ips_ccb_get(void *);
+void	ips_ccb_put(void *, void *);
 
 int	ips_dmamem_alloc(struct dmamem *, bus_dma_tag_t, bus_size_t);
 void	ips_dmamem_free(struct dmamem *);
@@ -660,6 +662,8 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	ccb0.c_cmdbpa = sc->sc_cmdbm.dm_paddr;
 	SLIST_INIT(&sc->sc_ccbq_free);
 	SLIST_INSERT_HEAD(&sc->sc_ccbq_free, &ccb0, c_link);
+	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
+	scsi_iopool_init(&sc->sc_iopool, sc, ips_ccb_get, ips_ccb_put);
 
 	/* Get adapter info */
 	if (ips_getadapterinfo(sc, SCSI_NOSLEEP)) {
@@ -731,6 +735,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_scsi_link.adapter_buswidth = sc->sc_nunits;
 	sc->sc_scsi_link.adapter = &ips_scsi_adapter;
 	sc->sc_scsi_link.adapter_softc = sc;
+	sc->sc_scsi_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_scsi_link;
@@ -774,6 +779,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 		link->adapter_buswidth = lastarget + 1;
 		link->adapter = &ips_scsi_pt_adapter;
 		link->adapter_softc = pt;
+		link->pool = &sc->sc_iopool;
 
 		saa.saa_sc_link = link;
 		config_found(self, &saa, scsiprint);
@@ -841,11 +847,11 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 	struct scsi_sense_data sd;
 	struct scsi_rw *rw;
 	struct scsi_rw_big *rwb;
-	struct ips_ccb *ccb;
+	struct ips_ccb *ccb = xs->io;
 	struct ips_cmd *cmd;
 	int target = link->target;
 	u_int32_t blkno, blkcnt;
-	int code, s;
+	int code;
 
 	DPRINTF(IPS_D_XFER, ("%s: ips_scsi_cmd: xs %p, target %d, "
 	    "opcode 0x%02x, flags 0x%x\n", sc->sc_dev.dv_xname, xs, target,
@@ -894,16 +900,7 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 		else
 			code = IPS_CMD_WRITE;
 
-		s = splbio();
-		ccb = ips_ccb_get(sc);
-		splx(s);
-		if (ccb == NULL) {
-			DPRINTF(IPS_D_ERR, ("%s: ips_scsi_cmd: no ccb\n",
-			    sc->sc_dev.dv_xname));
-			xs->error = XS_NO_CCB;
-			scsi_done(xs);
-			return;
-		}
+		ccb = xs->io;
 
 		cmd = ccb->c_cmdbva;
 		cmd->code = code;
@@ -914,12 +911,9 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 		if (ips_load_xs(sc, ccb, xs)) {
 			DPRINTF(IPS_D_ERR, ("%s: ips_scsi_cmd: ips_load_xs "
 			    "failed\n", sc->sc_dev.dv_xname));
-
-			s = splbio();
-			ips_ccb_put(sc, ccb);
-			splx(s);
 			xs->error = XS_DRIVER_STUFFUP;
-			break;
+			scsi_done(xs);
+			return;
 		}
 
 		if (cmd->sgcnt > 0)
@@ -954,17 +948,6 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 		memcpy(xs->data, &sd, MIN(xs->datalen, sizeof(sd)));
 		break;
 	case SYNCHRONIZE_CACHE:
-		s = splbio();
-		ccb = ips_ccb_get(sc);
-		splx(s);
-		if (ccb == NULL) {
-			DPRINTF(IPS_D_ERR, ("%s: ips_scsi_cmd: no ccb\n",
-			    sc->sc_dev.dv_xname));
-			xs->error = XS_NO_CCB;
-			scsi_done(xs);
-			return;
-		}
-
 		cmd = ccb->c_cmdbva;
 		cmd->code = IPS_CMD_FLUSH;
 
@@ -991,12 +974,11 @@ ips_scsi_pt_cmd(struct scsi_xfer *xs)
 	struct ips_pt *pt = link->adapter_softc;
 	struct ips_softc *sc = pt->pt_sc;
 	struct device *dev = link->device_softc;
-	struct ips_ccb *ccb;
+	struct ips_ccb *ccb = xs->io;
 	struct ips_cmdb *cmdb;
 	struct ips_cmd *cmd;
 	struct ips_dcdb *dcdb;
 	int chan = pt->pt_chan, target = link->target;
-	int s;
 
 	DPRINTF(IPS_D_XFER, ("%s: ips_scsi_pt_cmd: xs %p, chan %d, target %d, "
 	    "opcode 0x%02x, flags 0x%x\n", sc->sc_dev.dv_xname, xs, chan,
@@ -1019,17 +1001,6 @@ ips_scsi_pt_cmd(struct scsi_xfer *xs)
 	}
 
 	xs->error = XS_NOERROR;
-
-	s = splbio();
-	ccb = ips_ccb_get(sc);
-	splx(s);
-	if (ccb == NULL) {
-		DPRINTF(IPS_D_ERR, ("%s: ips_scsi_pt_cmd: no ccb\n",
-		    sc->sc_dev.dv_xname));
-		xs->error = XS_NO_CCB;
-		scsi_done(xs);
-		return;
-	}
 
 	cmdb = ccb->c_cmdbva;
 	cmd = &cmdb->cmd;
@@ -1067,10 +1038,6 @@ ips_scsi_pt_cmd(struct scsi_xfer *xs)
 	if (ips_load_xs(sc, ccb, xs)) {
 		DPRINTF(IPS_D_ERR, ("%s: ips_scsi_pt_cmd: ips_load_xs "
 		    "failed\n", sc->sc_dev.dv_xname));
-
-		s = splbio();
-		ips_ccb_put(sc, ccb);
-		splx(s);
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
 		return;
@@ -1490,7 +1457,6 @@ ips_poll(struct ips_softc *sc, struct ips_ccb *ccb)
 
 	ips_done(sc, ccb);
 	error = ccb->c_error;
-	ips_ccb_put(sc, ccb);
 
 	return (error);
 }
@@ -1576,6 +1542,7 @@ ips_done_mgmt(struct ips_softc *sc, struct ips_ccb *ccb)
 		    sc->sc_infom.dm_map->dm_mapsize,
 		    ccb->c_flags & SCSI_DATA_IN ? BUS_DMASYNC_POSTREAD :
 		    BUS_DMASYNC_POSTWRITE);
+	scsi_io_put(&sc->sc_iopool, ccb);
 }
 
 int
@@ -1726,7 +1693,6 @@ ips_intr(void *arg)
 			wakeup(ccb);
 		} else {
 			ips_done(sc, ccb);
-			ips_ccb_put(sc, ccb);
 		}
 	}
 
@@ -1755,7 +1721,6 @@ ips_timeout(void *arg)
 	 */
 	ccb->c_stat = IPS_STAT_TIMO;
 	ips_done(sc, ccb);
-	ips_ccb_put(sc, ccb);
 	splx(s);
 }
 
@@ -1764,11 +1729,8 @@ ips_getadapterinfo(struct ips_softc *sc, int flags)
 {
 	struct ips_ccb *ccb;
 	struct ips_cmd *cmd;
-	int s;
 
-	s = splbio();
-	ccb = ips_ccb_get(sc);
-	splx(s);
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
 	if (ccb == NULL)
 		return (1);
 
@@ -1788,11 +1750,8 @@ ips_getdriveinfo(struct ips_softc *sc, int flags)
 {
 	struct ips_ccb *ccb;
 	struct ips_cmd *cmd;
-	int s;
 
-	s = splbio();
-	ccb = ips_ccb_get(sc);
-	splx(s);
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
 	if (ccb == NULL)
 		return (1);
 
@@ -1812,11 +1771,8 @@ ips_getconf(struct ips_softc *sc, int flags)
 {
 	struct ips_ccb *ccb;
 	struct ips_cmd *cmd;
-	int s;
 
-	s = splbio();
-	ccb = ips_ccb_get(sc);
-	splx(s);
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
 	if (ccb == NULL)
 		return (1);
 
@@ -1836,11 +1792,8 @@ ips_getpg5(struct ips_softc *sc, int flags)
 {
 	struct ips_ccb *ccb;
 	struct ips_cmd *cmd;
-	int s;
 
-	s = splbio();
-	ccb = ips_ccb_get(sc);
-	splx(s);
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
 	if (ccb == NULL)
 		return (1);
 
@@ -1862,11 +1815,8 @@ ips_getrblstat(struct ips_softc *sc, int flags)
 {
 	struct ips_ccb *ccb;
 	struct ips_cmd *cmd;
-	int s;
 
-	s = splbio();
-	ccb = ips_ccb_get(sc);
-	splx(s);
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
 	if (ccb == NULL)
 		return (1);
 
@@ -1886,11 +1836,8 @@ ips_setstate(struct ips_softc *sc, int chan, int target, int state, int flags)
 {
 	struct ips_ccb *ccb;
 	struct ips_cmd *cmd;
-	int s;
 
-	s = splbio();
-	ccb = ips_ccb_get(sc);
-	splx(s);
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
 	if (ccb == NULL)
 		return (1);
 
@@ -1912,11 +1859,8 @@ ips_rebuild(struct ips_softc *sc, int chan, int target, int nchan,
 {
 	struct ips_ccb *ccb;
 	struct ips_cmd *cmd;
-	int s;
 
-	s = splbio();
-	ccb = ips_ccb_get(sc);
-	splx(s);
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
 	if (ccb == NULL)
 		return (1);
 
@@ -2072,30 +2016,34 @@ ips_ccb_free(struct ips_softc *sc, struct ips_ccb *ccb, int n)
 	free(ccb, M_DEVBUF);
 }
 
-struct ips_ccb *
-ips_ccb_get(struct ips_softc *sc)
+void *
+ips_ccb_get(void *xsc)
 {
+	struct ips_softc *sc = xsc;
 	struct ips_ccb *ccb;
 
-	splassert(IPL_BIO);
-
+	mtx_enter(&sc->sc_ccb_mtx);
 	if ((ccb = SLIST_FIRST(&sc->sc_ccbq_free)) != NULL) {
 		SLIST_REMOVE_HEAD(&sc->sc_ccbq_free, c_link);
 		ccb->c_flags = 0;
 		ccb->c_xfer = NULL;
 		bzero(ccb->c_cmdbva, sizeof(struct ips_cmdb));
 	}
+	mtx_leave(&sc->sc_ccb_mtx);
 
 	return (ccb);
 }
 
 void
-ips_ccb_put(struct ips_softc *sc, struct ips_ccb *ccb)
+ips_ccb_put(void *xsc, void *xccb)
 {
-	splassert(IPL_BIO);
+	struct ips_softc *sc = xsc;
+	struct ips_ccb *ccb = xccb;
 
 	ccb->c_state = IPS_CCB_FREE;
+	mtx_enter(&sc->sc_ccb_mtx);
 	SLIST_INSERT_HEAD(&sc->sc_ccbq_free, ccb, c_link);
+	mtx_leave(&sc->sc_ccb_mtx);
 }
 
 int
