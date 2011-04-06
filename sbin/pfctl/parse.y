@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.598 2011/04/05 13:48:18 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.599 2011/04/06 13:19:55 claudio Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -461,7 +461,7 @@ int	parseport(char *, struct range *r, int);
 %token	ANTISPOOF FOR INCLUDE MATCHES
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT PROBABILITY
 %token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE LINKSHARE REALTIME UPPERLIMIT
-%token	QUEUE PRIORITY QLIMIT RTABLE
+%token	QUEUE PRIORITY QLIMIT RTABLE RDOMAIN
 %token	LOAD RULESET_OPTIMIZATION
 %token	STICKYADDRESS MAXSRCSTATES MAXSRCNODES SOURCETRACK GLOBAL RULE
 %token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH SLOPPY PFLOW
@@ -2539,6 +2539,20 @@ if_item		: STRING			{
 			$$->next = NULL;
 			$$->tail = $$;
 		}
+		| RDOMAIN NUMBER		{
+			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
+				yyerror("rdomain outside range");
+				YYERROR;
+			}
+			$$ = calloc(1, sizeof(struct node_if));
+			if ($$ == NULL)
+				err(1, "if_item: calloc");
+			$$->not = 0;
+			$$->use_rdomain = 1;
+			$$->rdomain = $2;
+			$$->next = NULL;
+			$$->tail = $$;
+		}
 		;
 
 af		: /* empty */			{ $$ = 0; }
@@ -4298,6 +4312,9 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 		if (interface->not) {
 			yyerror("altq on ! <interface> is not supported");
 			errs++;
+		} else if (interface->use_rdomain) {
+			yyerror("altq on rdomain <num> is not supported");
+			errs++;
 		} else {
 			if (eval_pfaltq(pf, &pa, &bwspec, opts))
 				errs++;
@@ -4754,6 +4771,10 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 		else
 			memset(r->ifname, '\0', sizeof(r->ifname));
 
+		if (interface->use_rdomain)
+			r->onrdomain = interface->rdomain;
+		else
+			r->onrdomain = -1;
 		if (strlcpy(r->label, label, sizeof(r->label)) >=
 		    sizeof(r->label))
 			errx(1, "expand_rule: strlcpy");
@@ -4964,6 +4985,9 @@ expand_skip_interface(struct node_if *interfaces)
 		if (interface->not) {
 			yyerror("skip on ! <interface> is not supported");
 			errs++;
+		} else if (interface->use_rdomain) {
+			yyerror("skip on rdomain <num> is not supported");
+			errs++;
 		} else
 			errs += pfctl_set_interface_flags(pf,
 			    interface->ifname, PFI_IFLAG_SKIP, 1);
@@ -5093,6 +5117,7 @@ lookup(char *s)
 		{ "quick",		QUICK},
 		{ "random",		RANDOM},
 		{ "random-id",		RANDOMID},
+		{ "rdomain",		RDOMAIN},
 		{ "rdr-to",		RDRTO},
 		{ "realtime",		REALTIME},
 		{ "reassemble",		REASSEMBLE},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.94 2010/06/25 23:27:47 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.95 2011/04/06 13:19:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -103,7 +103,9 @@ struct node_if {
 	char			 ifname[IFNAMSIZ];
 	u_int8_t		 not;
 	u_int8_t		 dynamic; /* antispoof */
+	u_int8_t		 use_rdomain;
 	u_int			 ifa_flags;
+	int			 rdomain;
 	struct node_if		*next;
 	struct node_if		*tail;
 };
