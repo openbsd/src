@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.325 2011/04/05 13:48:18 mikeb Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.326 2011/04/06 13:18:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -543,13 +543,14 @@ struct pf_rule {
 	struct pf_rule_addr	 dst;
 #define PF_SKIP_IFP		0
 #define PF_SKIP_DIR		1
-#define PF_SKIP_AF		2
-#define PF_SKIP_PROTO		3
-#define PF_SKIP_SRC_ADDR	4
-#define PF_SKIP_SRC_PORT	5
-#define PF_SKIP_DST_ADDR	6
-#define PF_SKIP_DST_PORT	7
-#define PF_SKIP_COUNT		8
+#define PF_SKIP_RDOM		2
+#define PF_SKIP_AF		3
+#define PF_SKIP_PROTO		4
+#define PF_SKIP_SRC_ADDR	5
+#define PF_SKIP_SRC_PORT	6
+#define PF_SKIP_DST_ADDR	7
+#define PF_SKIP_DST_PORT	8
+#define PF_SKIP_COUNT		9
 	union pf_rule_ptr	 skip[PF_SKIP_COUNT];
 #define PF_RULE_LABEL_SIZE	 64
 	char			 label[PF_RULE_LABEL_SIZE];
@@ -581,6 +582,7 @@ struct pf_rule {
 	pf_osfp_t		 os_fingerprint;
 
 	int			 rtableid;
+	int			 onrdomain;
 	u_int32_t		 timeout[PFTM_MAX];
 	u_int32_t		 states_cur;
 	u_int32_t		 states_tot;

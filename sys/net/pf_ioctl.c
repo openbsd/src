@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.237 2011/03/25 10:54:22 claudio Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.238 2011/04/06 13:18:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2517,8 +2517,13 @@ pf_rule_copyin(struct pf_rule *from, struct pf_rule *to,
 	to->os_fingerprint = from->os_fingerprint;
 
 	to->rtableid = from->rtableid;
-	if (to->rtableid > 0 && !rtable_exists(to->rtableid))
+	if (to->rtableid >= 0 && !rtable_exists(to->rtableid))
 		return (EBUSY);
+	to->onrdomain = from->onrdomain;
+	if (to->onrdomain >= 0 && !rtable_exists(to->onrdomain))
+		return (EBUSY);
+	if (to->onrdomain >= 0)		/* make sure it is a real rdomain */
+		to->onrdomain = rtable_l2(to->onrdomain);
 
 	for (i = 0; i < PFTM_MAX; i++)
 		to->timeout[i] = from->timeout[i];

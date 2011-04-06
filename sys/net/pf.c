@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.737 2011/04/05 20:36:59 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.738 2011/04/06 13:18:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1452,6 +1452,9 @@ pf_calc_skip_steps(struct pf_rulequeue *rules)
 			PF_SET_SKIP_STEPS(PF_SKIP_IFP);
 		if (cur->direction != prev->direction)
 			PF_SET_SKIP_STEPS(PF_SKIP_DIR);
+		if (cur->onrdomain != prev->onrdomain ||
+		    cur->ifnot != prev->ifnot)
+			PF_SET_SKIP_STEPS(PF_SKIP_RDOM);
 		if (cur->af != prev->af)
 			PF_SET_SKIP_STEPS(PF_SKIP_AF);
 		if (cur->proto != prev->proto)
@@ -2801,6 +2804,9 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != direction)
 			r = r->skip[PF_SKIP_DIR].ptr;
+		else if (r->onrdomain >= 0  &&
+		    (r->onrdomain == pd->rdomain) == r->ifnot)
+			r = r->skip[PF_SKIP_RDOM].ptr;
 		else if (r->af && r->af != af)
 			r = r->skip[PF_SKIP_AF].ptr;
 		else if (r->proto && r->proto != pd->proto)
@@ -3385,6 +3391,9 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != direction)
 			r = r->skip[PF_SKIP_DIR].ptr;
+		else if (r->onrdomain >= 0  &&
+		    (r->onrdomain == pd->rdomain) == r->ifnot)
+			r = r->skip[PF_SKIP_RDOM].ptr;
 		else if (r->af && r->af != af)
 			r = r->skip[PF_SKIP_AF].ptr;
 		else if (r->proto && r->proto != pd->proto)
