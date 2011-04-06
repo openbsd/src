@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.47 2011/02/26 13:07:48 krw Exp $ */
+/* $OpenBSD: disksubr.c,v 1.48 2011/04/06 13:46:50 miod Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -98,10 +98,6 @@ int disklabel_bsd_to_om(struct disklabel *, struct sun_disklabel *);
  * secpercyl, secsize and anything required for a block i/o read
  * operation in the driver's strategy/start routines
  * must be filled in before calling us.
- *
- * Return buffer for use in signalling errors if requested.
- *
- * Returns null on success and an error string on failure.
  */
 int
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
@@ -224,7 +220,6 @@ sun_fstypes[8] = {
 
 /*
  * Given a UniOS/ISI disk label, set lp to a BSD disk label.
- * Returns NULL on success, else an error string.
  *
  * The BSD label is cleared out before this is called.
  */
@@ -319,7 +314,6 @@ disklabel_om_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
  * Given a BSD disk label, update the UniOS disklabel
  * pointed to by sl with the new info.  Note that the
  * UniOS disklabel may have other info we need to keep.
- * Returns zero or error code.
  */
 int
 disklabel_bsd_to_om(struct disklabel *lp, struct sun_disklabel *sl)

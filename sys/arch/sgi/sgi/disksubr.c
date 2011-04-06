@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.20 2011/02/26 13:07:48 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.21 2011/04/06 13:46:50 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -50,8 +50,6 @@ int	readsgilabel(struct buf *, void (*)(struct buf *),
  * secpercyl, secsize and anything required for a block i/o read
  * operation in the driver's strategy/start routines
  * must be filled in before calling us.
- *
- * Returns null on success and an error string on failure.
  */
 int
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
@@ -224,8 +222,8 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	if (readsgilabel(bp, strat, lp, &partoff, 1) != NULL &&
-	    readdoslabel(bp, strat, lp, &partoff, 1) != NULL)
+	if (readsgilabel(bp, strat, lp, &partoff, 1) != 0 &&
+	    readdoslabel(bp, strat, lp, &partoff, 1) != 0)
 		goto done;
 
 	/* Read it in, slap the new label in, and write it back out */

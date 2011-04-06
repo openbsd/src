@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.63 2010/09/08 14:37:32 jsing Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.64 2011/04/06 13:46:51 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.13 2000/12/17 22:39:18 pk Exp $ */
 
 /*
@@ -54,10 +54,6 @@ extern void cdstrategy(struct buf *);
  * secpercyl, secsize and anything required for a block i/o read
  * operation in the driver's strategy/start routines
  * must be filled in before calling us.
- *
- * Return buffer for use in signalling errors if requested.
- *
- * Returns null on success and an error string on failure.
  */
 int
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
@@ -384,7 +380,6 @@ disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
  * Given a BSD disk label, update the Sun disklabel
  * pointed to by cp with the new info.  Note that the
  * Sun disklabel may have other info we need to keep.
- * Returns zero or error code.
  */
 static int
 disklabel_bsd_to_sun(struct disklabel *lp, struct sun_disklabel *sl)

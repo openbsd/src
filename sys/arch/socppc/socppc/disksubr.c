@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.12 2011/02/26 13:07:48 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.13 2011/04/06 13:46:50 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -49,14 +49,11 @@ int	readdpmelabel(struct buf *, void (*)(struct buf *),
  * must be filled in before calling us.
  *
  * If dos partition table requested, attempt to load it and
- * find disklabel inside a DOS partition. Return buffer
- * for use in signalling errors if requested.
+ * find disklabel inside a DOS partition.
  *
  * We would like to check if each MBR has a valid DOSMBR_SIGNATURE, but
  * we cannot because it doesn't always exist. So.. we assume the
  * MBR is valid.
- *
- * Returns null on success and an error string on failure.
  */
 int
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
@@ -200,8 +197,8 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	if (readdpmelabel(bp, strat, lp, &partoff, 1) != NULL &&
-	    readdoslabel(bp, strat, lp, &partoff, 1) != NULL)
+	if (readdpmelabel(bp, strat, lp, &partoff, 1) != 0 &&
+	    readdoslabel(bp, strat, lp, &partoff, 1) != 0)
 		goto done;
 
 	/* Read it in, slap the new label in, and write it back out */

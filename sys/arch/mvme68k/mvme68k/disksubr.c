@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.69 2011/02/26 13:07:48 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.70 2011/04/06 13:46:50 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -42,9 +42,7 @@ int	cputobsdlabel(struct disklabel *, struct mvmedisklabel *);
  * The label must be partly set up before this:
  * secpercyl and anything required in the strategy routine
  * (e.g., sector size) must be filled in before calling us.
- * Returns NULL on success and an error string on failure.
  */
-
 int
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, int spoofonly)

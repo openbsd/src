@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.48 2011/02/26 13:07:48 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.49 2011/04/06 13:46:50 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.9 1997/04/01 03:12:13 scottr Exp $	*/
 
 /*
@@ -46,8 +46,7 @@
  * Attempt to read a disk label from a device using the indicated strategy
  * routine.  The label must be partly set up before this: secpercyl and
  * anything required in the strategy routine (e.g., sector size) must be
- * filled in before calling us.  Returns null on success and an error
- * string on failure.
+ * filled in before calling us.
  */
 int
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
