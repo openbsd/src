@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.3 2010/07/01 04:33:23 jsing Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.4 2011/04/06 15:52:07 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -30,10 +30,7 @@
 #include <arch/hppa/dev/cpudevs.h>
 
 struct cpu_softc {
-	struct  device sc_dev;
-
-	hppa_hpa_t sc_hpa;
-	void *sc_ih;
+	struct device sc_dev;
 };
 
 int	cpumatch(struct device *, void *, void *);
@@ -50,34 +47,85 @@ struct cfdriver cpu_cd = {
 };
 
 int
-cpumatch(parent, cfdata, aux)   
-	struct device *parent;
-	void *cfdata;
-	void *aux;
+cpumatch(struct device *parent, void *cfdata, void *aux)
 {
+	struct cfdata *cf = cfdata;
 	struct confargs *ca = aux;
-	/* struct cfdata *cf = cfdata; */
 
-	if ((ca->ca_name && !strcmp(ca->ca_name, "cpu")) ||
-	    (ca->ca_type.iodc_type == HPPA_TYPE_NPROC &&
-	     ca->ca_type.iodc_sv_model == HPPA_NPROC_HPPA))
-		return 1;
+	if (ca->ca_type.iodc_type != HPPA_TYPE_NPROC ||
+	    ca->ca_type.iodc_sv_model != HPPA_NPROC_HPPA)
+		return 0;
 
-	return 0;
+	if (cf->cf_unit >= MAXCPUS)
+		return 0;
+
+	return 1;
 }
 
 int
 cpu_hardclock(void *v)
 {
-	hardclock(v);
+	struct cpu_info *ci = curcpu();
+	u_long __itmr, delta, eta;
+	extern u_long cpu_hzticks;
+	register_t eiem;
+	int wrap;
+
+	/*
+	 * Invoke hardclock as many times as there has been cpu_hzticks
+	 * ticks since the last interrupt.
+	 */
+	for (;;) {
+		__itmr = mfctl(CR_ITMR);
+		delta = __itmr - ci->ci_itmr;
+		if (delta >= cpu_hzticks) {
+			hardclock(v);
+			ci->ci_itmr += cpu_hzticks;
+		} else
+			break;
+	}
+
+	/*
+	 * Program the next clock interrupt, making sure it will
+	 * indeed happen in the future. This is done with interrupts
+	 * disabled to avoid a possible race.
+	 */
+	eta = ci->ci_itmr + cpu_hzticks;
+	wrap = eta < ci->ci_itmr;	/* watch out for a wraparound */
+	__asm __volatile("mfctl	%%cr15, %0": "=r" (eiem));
+	__asm __volatile("mtctl	%r0, %cr15");
+	mtctl(eta, CR_ITMR);
+	__itmr = mfctl(CR_ITMR);
+
+	/*
+	 * If we were close enough to the next tick interrupt
+	 * value, by the time we have programmed itmr, it might
+	 * have passed the value, which would cause a complete
+	 * cycle until the next interrupt occurs. On slow
+	 * models, this would be a disaster (a complete cycle
+	 * taking over two minutes on a 715/33).
+	 *
+	 * We expect that it will only be necessary to postpone
+	 * the interrupt once. Thus, there are two cases:
+	 * - We are expecting a wraparound: eta < cpu_itmr.
+	 *   itmr is in tracks if either >= cpu_itmr or < eta.
+	 * - We are not wrapping: eta > cpu_itmr.
+	 *   itmr is in tracks if >= cpu_itmr and < eta (we need
+	 *   to keep the >= cpu_itmr test because itmr might wrap
+	 *   before eta does).
+	 */
+	if ((wrap && !(eta > __itmr || __itmr >= ci->ci_itmr)) ||
+	    (!wrap && !(eta > __itmr && __itmr >= ci->ci_itmr))) {
+		eta += cpu_hzticks;
+		mtctl(eta, CR_ITMR);
+	}
+	__asm __volatile("mtctl	%0, %%cr15":: "r" (eiem));
+
 	return (1);
 }
 
 void
-cpuattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+cpuattach(struct device *parent, struct device *self, void *aux)
 {
 	/* machdep.c */
 	extern struct pdc_model pdc_model;
