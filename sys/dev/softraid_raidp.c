@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.20 2011/04/05 19:52:02 krw Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.21 2011/04/06 02:45:55 marco Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -61,7 +61,7 @@ void	sr_raidp_set_vol_state(struct sr_discipline *);
 void	sr_raidp_xor(void *, void *, int);
 int	sr_raidp_addio(struct sr_workunit *wu, int, daddr64_t, daddr64_t,
 	    void *, int, int, void *);
-void 	sr_dump(void *, int);
+void	sr_dump(void *, int);
 void	sr_raidp_scrub(struct sr_discipline *);
 
 void	*sr_get_block(struct sr_discipline *, int);
@@ -412,7 +412,7 @@ sr_raidp_rw(struct sr_workunit *wu)
 		/* get size remaining in this stripe */
 		length = MIN(strip_size - strip_offs, datalen);
 
-		/* map disk offset to parity/data drive */	
+		/* map disk offset to parity/data drive */
 		chunk = strip_no % no_chunk;
 		if (sd->sd_type == SR_MD_RAID4)
 			parity = no_chunk; /* RAID4: Parity is always drive N */
@@ -423,9 +423,9 @@ sr_raidp_rw(struct sr_workunit *wu)
 			if (chunk >= parity)
 				chunk++;
 		}
-	
+
 		lba = phys_offs >> DEV_BSHIFT;
-	
+
 		/* XXX big hammer.. exclude I/O from entire stripe */
 		if (wu->swu_blk_start == 0)
 			wu->swu_blk_start = (strip_no / no_chunk) * row_size;
@@ -724,7 +724,7 @@ int
 sr_raidp_addio(struct sr_workunit *wu, int dsk, daddr64_t blk, daddr64_t len,
     void *data, int flag, int ccbflag, void *xorbuf)
 {
-	struct sr_discipline 	*sd = wu->swu_dis;
+	struct sr_discipline	*sd = wu->swu_dis;
 	struct sr_ccb		*ccb;
 
 	ccb = sr_ccb_get(sd);
@@ -796,7 +796,7 @@ sr_dump(void *blk, int len)
 	int			i, j, c;
 
 	for (i = 0; i < len; i += 16) {
-		for (j = 0; j < 16; j++) 
+		for (j = 0; j < 16; j++)
 			printf("%.2x ", b[i + j]);
 		printf("  ");
 		for (j = 0; j < 16; j++) {
@@ -850,14 +850,14 @@ sr_raidp_scrub(struct sr_discipline *sd)
 		for (i = 0; i <= no_chunk; i++) {
 			if (i != parity)
 				sr_raidp_addio(wu_r, i, 0xBADCAFE, strip_size,
-				    NULL, SCSI_DATA_IN, SR_CCBF_FREEBUF, 
+				    NULL, SCSI_DATA_IN, SR_CCBF_FREEBUF,
 				    xorbuf);
 		}
 		sr_raidp_addio(wu_w, parity, 0xBADCAFE, strip_size, xorbuf,
 		    SCSI_DATA_OUT, SR_CCBF_FREEBUF, NULL);
 
 		wu_r->swu_flags |= SR_WUF_REBUILD;
-		
+
 		/* Collide wu_w with wu_r */
 		wu_w->swu_state = SR_WU_DEFERRED;
 		wu_r->swu_collider = wu_w;
