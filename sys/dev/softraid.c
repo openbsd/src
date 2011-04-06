@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.225 2011/04/06 02:35:51 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.226 2011/04/06 15:36:13 marco Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -394,18 +394,15 @@ sr_rw(struct sr_softc *sc, dev_t dev, char *buf, size_t size, daddr64_t offset,
 {
 	struct vnode		*vp;
 	struct buf		b;
-	size_t			bufsize, bs;
+	size_t			bufsize, dma_bufsize;
 	int			rv = 1;
-	char			*dma_buf, *db;
+	char			*dma_buf;
 
 	DNPRINTF(SR_D_MISC, "%s: sr_rw(0x%x, %p, %d, %llu 0x%x)\n",
 	    DEVNAME(sc), dev, buf, size, offset, flags);
 
-	/* XXX this should be pre allocated */
-	bs = size;
-	db = dma_buf = dma_alloc(size, PR_WAITOK);
-	if (flags == B_WRITE)
-		bcopy(buf, db, bs);
+	dma_bufsize = (size > MAXPHYS) ? MAXPHYS : size;
+	dma_buf = dma_alloc(dma_bufsize, PR_WAITOK);
 
 	if (bdevvp(dev, &vp)) {
 		printf("%s: sr_rw: failed to allocate vnode\n", DEVNAME(sc));
@@ -417,9 +414,10 @@ sr_rw(struct sr_softc *sc, dev_t dev, char *buf, size_t size, daddr64_t offset,
 		    DEVNAME(sc), dma_buf, size, offset);
 
 		bufsize = (size > MAXPHYS) ? MAXPHYS : size;
+		if (flags == B_WRITE)
+			bcopy(buf, dma_buf, bufsize);
 
 		bzero(&b, sizeof(b));
-
 		b.b_flags = flags | B_PHYS;
 		b.b_proc = curproc;
 		b.b_dev = dev;
@@ -445,14 +443,13 @@ sr_rw(struct sr_softc *sc, dev_t dev, char *buf, size_t size, daddr64_t offset,
 			goto done;
 		}
 
+		if (flags == B_READ)
+			bcopy(dma_buf, buf, bufsize);
+
 		size -= bufsize;
-		dma_buf += bufsize;
+		buf += bufsize;
 		offset += howmany(bufsize, DEV_BSIZE);
-
 	}
-
-	if (flags == B_READ)
-		bcopy(db, buf, bs);
 
 	rv = 0;
 
@@ -460,7 +457,7 @@ done:
 	if (vp)
 		vput(vp);
 
-	dma_free(db, bs);
+	dma_free(dma_buf, dma_bufsize);
 
 	return (rv);
 }
