@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.69 2011/01/02 04:56:57 jordan Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.70 2011/04/06 21:16:13 martynas Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -49,9 +49,6 @@ struct acpivideo_softc {
 
 	struct acpi_softc *sc_acpi;
 	struct aml_node	*sc_devnode;
-
-	int	*sc_dod;
-	size_t	sc_dod_len;
 };
 
 struct acpi_attach_args {
@@ -61,11 +58,6 @@ struct acpi_attach_args {
 	void		*aaa_table;
 	struct aml_node *aaa_node;
 	const char	*aaa_dev;
-};
-
-struct acpivideo_attach_args {
-	struct acpi_attach_args	aaa;
-	int dod;
 };
 
 struct acpi_mem_map {

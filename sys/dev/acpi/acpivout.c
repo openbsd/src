@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivout.c,v 1.7 2010/08/08 20:45:18 kettenis Exp $	*/
+/*	$OpenBSD: acpivout.c,v 1.8 2011/04/06 21:16:13 martynas Exp $	*/
 /*
  * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
  *
@@ -58,16 +58,6 @@ struct acpivout_softc {
 
 	int	*sc_bcl;
 	size_t	sc_bcl_len;
-
-	int	sc_dod;
-	int	sc_vout_type;
-#define ACPIVOUT_OTHER		0
-#define ACPIVOUT_VGA		1
-#define ACPIVOUT_TV		2
-#define ACPIVOUT_DVI		3
-#define ACPIVOUT_LCD		4
-
-#define	ACPIVOUT_TYPE_MASK	0x0f00
 };
 
 void	acpivout_brightness_cycle(struct acpivout_softc *);
@@ -97,12 +87,12 @@ struct cfdriver acpivout_cd = {
 int
 acpivout_match(struct device *parent, void *match, void *aux)
 {
-	struct acpivideo_attach_args *av = aux;
+	struct acpi_attach_args	*aaa = aux;
 	struct cfdata		*cf = match;
 
-	if (av->aaa.aaa_name == NULL ||
-	    strcmp(av->aaa.aaa_name, cf->cf_driver->cd_name) != 0 ||
-	    av->aaa.aaa_table != NULL)
+	if (aaa->aaa_name == NULL ||
+	    strcmp(aaa->aaa_name, cf->cf_driver->cd_name) != 0 ||
+	    aaa->aaa_table != NULL)
 		return (0);
 
 	return (1);
@@ -112,24 +102,20 @@ void
 acpivout_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpivout_softc	*sc = (struct acpivout_softc *)self;
-	struct acpivideo_attach_args *av = aux;
+	struct acpi_attach_args	*aaa = aux;
 
 	sc->sc_acpi = ((struct acpivideo_softc *)parent)->sc_acpi;
-	sc->sc_devnode = av->aaa.aaa_node;
-
-	sc->sc_vout_type = (av->dod & ACPIVOUT_TYPE_MASK) >> 8;
+	sc->sc_devnode = aaa->aaa_node;
 
 	printf(": %s\n", sc->sc_devnode->name);
 
-	aml_register_notify(sc->sc_devnode, av->aaa.aaa_dev,
+	aml_register_notify(sc->sc_devnode, aaa->aaa_dev,
 	    acpivout_notify, sc, ACPIDEV_NOPOLL);
 
 	ws_get_param = acpivout_get_param;
 	ws_set_param = acpivout_set_param;
 
-	if (sc->sc_vout_type == ACPIVOUT_LCD ||
-	    sc->sc_vout_type == ACPIVOUT_VGA)
-		acpivout_get_bcl(sc);
+	acpivout_get_bcl(sc);
 }
 
 int
