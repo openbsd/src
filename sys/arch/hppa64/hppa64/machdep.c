@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.32 2011/04/05 15:46:53 jsing Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.33 2011/04/06 14:45:23 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -1033,10 +1033,9 @@ consinit(void)
 void
 splassert_check(int wantipl, const char *func)
 {
-	extern int cpl;	/* from locoore.s */
+	struct cpu_info *ci = curcpu();
 
-	if (cpl < wantipl) {
-		splassert_fail(wantipl, cpl, func);
-	}
+	if (ci->ci_cpl < wantipl)
+		splassert_fail(wantipl, ci->ci_cpl, func);
 }
 #endif

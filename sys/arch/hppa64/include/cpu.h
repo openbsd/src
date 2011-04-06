@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.21 2011/04/05 16:05:51 jsing Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.22 2011/04/06 14:45:23 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -124,6 +124,7 @@ struct cpu_info {
 	volatile u_long	ci_trap_save[16];
 
 	volatile int	ci_psw;
+	volatile int	ci_cpl;
 
 	struct proc	*ci_curproc;
 	struct pcb	*ci_cpcb;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.16 2011/04/05 16:05:51 jsing Exp $	*/
+/*	$OpenBSD: locore.S,v 1.17 2011/04/06 14:45:23 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -45,9 +45,6 @@
 	.data
 
 	.align	16
-	.export cpl, data
-cpl
-	.word	IPL_HIGH
 
 	BSS(pdc_stack, 8)	/* temp stack for PDC call */
 	BSS(emrg_stack, 8)	/* stack for HPMC/TOC/PWRF */
@@ -98,6 +95,8 @@ $start
 	ldil	L%(PSL_W|PSL_Q|PSL_P|PSL_C|PSL_D|PSL_S|PSL_O), %r8
 	ldo	R%(PSL_W|PSL_Q|PSL_P|PSL_C|PSL_D|PSL_S|PSL_O)(%r8), %r8
 	stw	%r8, CI_PSW(%r1)
+	ldi	IPL_HIGH, %r8
+	stw	%r8, CI_CPL(%r1)
 
 	ldil	L%pdc, %r1
 	std	%arg0, R%pdc(%r1)
@@ -1771,8 +1770,8 @@ switch_tramp_p
 	.dword	switch_trampoline
 
 ENTRY(switch_trampoline,0)
-	ldil	L%cpl, %r1
-	stw	%r0, R%cpl(%r1)
+	mfctl	%cr24, %r1
+	stw	%r0, CI_CPL(%r1)
 
 	/* ldd	0x18(%arg3), %r19	but we know we are in kernel! */
 	ldd	0x10(%arg3), %arg3
@@ -1839,14 +1838,14 @@ splraise_ok
 	sync
 	mfctl	%eiem, %arg2
 	mtctl	%r0, %eiem
-	ldil	L%cpl, %r1
-	ldw	R%cpl(%r1), %ret0
+	mfctl	%cr24, %r1
+	ldw	CI_CPL(%r1), %ret0
 	ldil	L%imask, %arg3
 	ldo	R%imask(%arg3), %arg3
 	sub,<=	%arg0, %ret0, %r0
 	ldd,s	%arg0(%arg3), %arg2
 	sub,<=	%arg0, %ret0, %r0
-	stw	%arg0, R%cpl(%r1)
+	stw	%arg0, CI_CPL(%r1)
 	sync
 	bv	%r0(%rp)
 	mtctl	%arg2, %eiem
@@ -1873,14 +1872,14 @@ spllower_ok
 	sync
 	mfctl	%eiem, %arg2
 	mtctl	%r0, %eiem
-	ldil	L%cpl, %r1
-	ldw	R%cpl(%r1), %ret0
+	mfctl	%cr24, %r1
+	ldw	CI_CPL(%r1), %ret0
 	ldil	L%imask, %arg3
 	ldo	R%imask(%arg3), %arg3
 	sub,>=	%arg0, %ret0, %r0
 	ldd,s	%arg0(%arg3), %arg2
 	sub,>=	%arg0, %ret0, %r0
-	stw	%arg0, R%cpl(%r1)
+	stw	%arg0, CI_CPL(%r1)
 	sync
 	bv	%r0(%rp)
 	mtctl	%arg2, %eiem

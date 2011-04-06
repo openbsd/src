@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.6 2011/04/05 16:05:51 jsing Exp $
+#	$OpenBSD: genassym.cf,v 1.7 2011/04/06 14:45:23 jsing Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -130,6 +130,7 @@ member	pcb_space
 struct	cpu_info
 member	ci_trap_save
 member	ci_psw
+member	ci_cpl
 member	ci_curproc
 
 struct	uvm
