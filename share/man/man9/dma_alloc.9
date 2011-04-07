@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dma_alloc.9,v 1.3 2011/04/07 21:37:55 matthew Exp $
+.\"	$OpenBSD: dma_alloc.9,v 1.4 2011/04/07 22:25:07 jmc Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 2011 Theo de Raadt
@@ -38,7 +38,7 @@
 .Fc
 .Sh DESCRIPTION
 This allocator provides DMA-safe memory managed using the
-.Xr pool 9 
+.Xr pool 9
 interface.
 It is safe to call in most contexts and is
 typically used for temporary buffers up to 65536 bytes.
