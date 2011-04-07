@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.16 2011/04/05 21:31:58 beck Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.17 2011/04/07 19:07:42 beck Exp $ */
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -223,15 +223,21 @@ buf_dealloc_mem(struct buf *bp)
 	return (1);
 }
 
+/*
+ * Only used by bread_cluster. 
+ */
 void
-buf_shrink_mem(struct buf *bp, vsize_t newsize)
+buf_fix_mapping(struct buf *bp, vsize_t newsize)
 {
 	vaddr_t va = (vaddr_t)bp->b_data;
 
 	if (newsize < bp->b_bufsize) {
 		pmap_kremove(va + newsize, bp->b_bufsize - newsize);
 		pmap_update(pmap_kernel());
-		bcstats.numbufpages -= atop(bp->b_bufsize - newsize);
+		/*
+		 * Note: the size we lost is actually with the other
+		 * buffers read in by bread_cluster
+		 */
 		bp->b_bufsize = newsize;
 	}
 }
