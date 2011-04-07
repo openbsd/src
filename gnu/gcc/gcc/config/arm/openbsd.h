@@ -158,6 +158,8 @@ Boston, MA 02111-1307, USA.  */
 #undef RETURN_IN_MEMORY
 #endif
 
+#undef FPUTYPE_DEFAULT
+#define FPUTYPE_DEFAULT FPUTYPE_VFP
 
 /* VERY BIG NOTE: Change of structure alignment for OpenBSD|NetBSD/arm.
    There are consequences you should be aware of...
