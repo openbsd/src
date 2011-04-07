@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.4 2011/04/06 15:52:07 jsing Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.5 2011/04/07 13:13:01 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -187,5 +187,5 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 	printf("%u %scoherent %sTLB\n",
 	    pdc_cache.dt_size, pdc_cache.dt_conf.tc_cst? "" : "in", p);
 
-/* TODO spin up others */
+	cpu_intr_establish(IPL_CLOCK, 63, cpu_hardclock, NULL, "clock");
 }

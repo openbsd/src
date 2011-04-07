@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.17 2011/04/06 14:45:23 jsing Exp $	*/
+/*	$OpenBSD: trap.c,v 1.18 2011/04/07 13:13:01 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -33,6 +33,7 @@
 #include <uvm/uvm.h>
 
 #include <machine/autoconf.h>
+#include <machine/cpufunc.h>
 #include <machine/psl.h>
 
 #ifdef DDB
@@ -177,6 +178,7 @@ trap(int type, struct trapframe *frame)
 #ifdef DIAGNOSTIC
 	long oldcpl = curcpu()->ci_cpl;
 #endif
+	u_long mask;
 
 	trapnum = type & ~T_USER;
 	opcode = frame->tf_iir;
@@ -225,7 +227,8 @@ trap(int type, struct trapframe *frame)
 #endif
 	if (trapnum != T_INTERRUPT) {
 		uvmexp.traps++;
-	/* TODO	mtctl(frame->tf_eiem, CR_EIEM); */
+		mtctl(frame->tf_eiem, CR_EIEM);
+	        ssm(PSL_I, mask);
 	}
 
 	switch (type) {
@@ -479,8 +482,7 @@ printf("here\n");
 
 	case T_INTERRUPT:
 	case T_INTERRUPT | T_USER:
-/*		cpu_intr(frame); */
-printf("eirr 0x%08x\n", mfctl(CR_EIRR));
+		cpu_intr(frame);
 		break;
 
 	case T_CONDITION:

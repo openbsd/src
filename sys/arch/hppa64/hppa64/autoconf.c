@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.13 2010/07/01 04:33:23 jsing Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.14 2011/04/07 13:13:01 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 Michael Shalayeff
@@ -107,7 +107,7 @@ cpu_configure(void)
 	if (config_rootfound("mainbus", &ca) == NULL)
 		panic("no mainbus found");
 
-	mtctl(0xffffffffffffffffULL, CR_EIEM);
+	cpu_intr_init();
 	spl0();
 
 	if (cold_hook)

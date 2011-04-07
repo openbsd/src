@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.2 2005/05/22 01:38:09 mickey Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.3 2011/04/07 13:13:01 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -50,5 +50,12 @@ struct device;
 const char *hppa_mod_info(int, int);
 void	pdc_scan(struct device *, struct confargs *);
 int	mbprint(void *, const char *);
+
+int	cpu_intr_findirq(void);
+void	*cpu_intr_map(void *v, int pri, int irq, int (*handler)(void *),
+	    void *arg, const char *name);
+void	*cpu_intr_establish(int pri, int irq, int (*handler)(void *),
+	    void *arg, const char *name);
+int	clock_intr(void *);
 
 void	dumpconf(void);

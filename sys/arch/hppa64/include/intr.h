@@ -18,6 +18,11 @@
 #define _MACHINE_INTR_H_
 
 #if !defined(_LOCORE) && defined(_KERNEL)
+#define  softintr(mask)  atomic_setbits_long(&curcpu()->ci_ipending, mask)
+
+void	cpu_intr_init(void);
+void	cpu_intr(void *);
+
 void	*softintr_establish(int, void (*)(void *), void *);
 void	softintr_disestablish(void *);
 void	softintr_schedule(void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.22 2011/04/06 14:45:23 jsing Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.23 2011/04/07 13:13:01 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -73,6 +73,8 @@
 /*
  * Interrupts stuff
  */
+#define	CPU_NINTS	64
+
 #define	IPL_NONE	0
 #define	IPL_SOFTCLOCK	1   
 #define	IPL_SOFTNET	2
@@ -125,6 +127,9 @@ struct cpu_info {
 
 	volatile int	ci_psw;
 	volatile int	ci_cpl;
+
+	volatile u_long	ci_ipending;
+	volatile int	ci_in_intr;
 
 	struct proc	*ci_curproc;
 	struct pcb	*ci_cpcb;
