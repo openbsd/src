@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.39 2010/07/27 04:28:36 marco Exp $ */
+/* $OpenBSD: acpitz.c,v 1.40 2011/04/07 19:36:21 miod Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -242,7 +242,7 @@ acpitz_setfan(struct acpitz_softc *sc, int i, char *method)
 	struct aml_node		*node;
 	struct aml_value	res1, *ref;
 	char			name[8];
-	int			rv = 1, x, y;
+	int			rv = 1, y;
 	int64_t			sta;
 	struct acpi_devlist    *dl;
 
@@ -252,13 +252,13 @@ acpitz_setfan(struct acpitz_softc *sc, int i, char *method)
 		if (aml_evalname(sc->sc_acpi, dl->dev_node, "_PR0",0 , NULL,
 		    &res1)) {
 			printf("%s: %s[%d] _PR0 failed\n", DEVNAME(sc),
-			    name, x);
+			    name, i);
 			aml_freevalue(&res1);
 			continue;
 		}
 		if (res1.type != AML_OBJTYPE_PACKAGE) {
 			printf("%s: %s[%d] _PR0 not a package\n", DEVNAME(sc),
-			    name, x);
+			    name, i);
 			aml_freevalue(&res1);
 			continue;
 		}
@@ -270,7 +270,7 @@ acpitz_setfan(struct acpitz_softc *sc, int i, char *method)
 				if (node == NULL) {
 					printf("%s: %s[%d.%d] _PRO"
 					    " not a valid device\n",
-					    DEVNAME(sc), name, x, y);
+					    DEVNAME(sc), name, i, y);
 					continue;
 				}
 				ref = node->value;
@@ -281,19 +281,19 @@ acpitz_setfan(struct acpitz_softc *sc, int i, char *method)
 			if (ref->type != AML_OBJTYPE_DEVICE &&
 			    ref->type != AML_OBJTYPE_POWERRSRC) {
 				printf("%s: %s[%d.%d] _PRO not a package\n",
-				    DEVNAME(sc), name, x, y);
+				    DEVNAME(sc), name, i, y);
 				continue;
 			}
 			if (aml_evalname(sc->sc_acpi, ref->node, method, 0,
 			    NULL, NULL))
 				printf("%s: %s[%d.%d] %s fails\n",
-				    DEVNAME(sc), name, x, y, method);
+				    DEVNAME(sc), name, i, y, method);
 
 			/* save off status of fan */
 			if (aml_evalinteger(sc->sc_acpi, ref->node, "_STA", 0,
 			    NULL, &sta))
 				printf("%s: %s[%d.%d] _STA fails\n",
-				    DEVNAME(sc), name, x, y);
+				    DEVNAME(sc), name, i, y);
 			else {
 				sc->sc_ac_stat[i] = sta;
 			}
