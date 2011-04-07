@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.109 2010/11/18 21:13:19 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.110 2011/04/07 15:30:16 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1219,7 +1219,7 @@ int
 romgetcursoraddr(rowp, colp)
 	int **rowp, **colp;
 {
-	cell_t row = NULL, col = NULL;
+	cell_t row = 0, col = 0;
 
 	OF_interpret("stdout @ is my-self addr line# addr column# ",
 	    2, &col, &row);
@@ -1229,7 +1229,7 @@ romgetcursoraddr(rowp, colp)
 	 * 64-bit values.  To convert them to pointers to interfaces, add
 	 * 4 to the address.
 	 */
-	if (row == NULL || col == NULL)
+	if (row == 0 || col == 0)
 		return (-1);
 	*rowp = (int *)(row + 4);
 	*colp = (int *)(col + 4);

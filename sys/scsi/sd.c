@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.223 2011/04/07 00:05:18 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.224 2011/04/07 15:30:16 miod Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -737,7 +737,7 @@ sdstart(struct scsi_xfer *xs)
 	/* move onto the next io */
 	if (ISSET(sc->flags, SDF_WAITING))
 		CLR(sc->flags, SDF_WAITING);
-	else if (bufq_peek(&sc->sc_bufq) != NULL)
+	else if (bufq_peek(&sc->sc_bufq))
 		scsi_xsh_add(&sc->sc_xsh);
 }
 

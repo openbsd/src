@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop_syscon.c,v 1.3 2010/04/24 18:44:27 miod Exp $	*/
+/*	$OpenBSD: oosiop_syscon.c,v 1.4 2011/04/07 15:30:15 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -95,7 +95,7 @@ oosiop_syscon_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_bst = ca->ca_iot;
 	sc->sc_bsh = ioh;
-	sc->sc_dmat = NULL;	/* no real use of tag yet */
+	sc->sc_dmat = 0;	/* no real use of tag yet */
 
 	sc->sc_freq = 33333333;	/* XXX 25MHz models? */
 	sc->sc_chip = OOSIOP_700;

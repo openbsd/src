@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.25 2010/12/23 20:05:08 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.26 2011/04/07 15:30:15 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -95,7 +95,7 @@ mainbus_map(bus_addr_t addr, bus_size_t size, int flags,
 	vaddr_t map;
 
 	map = mapiodev((paddr_t)addr, size);
-	if (map == NULL)
+	if (map == 0)
 		return ENOMEM;
 
 	*ret = (bus_space_handle_t)map;
@@ -140,11 +140,11 @@ mapiodev(paddr_t addr, int _size)
 
 	/* sanity checks */
 	if (_size <= 0)
-		return NULL;
+		return 0;
 	size = (psize_t)_size;
 	epa = addr + size;
 	if (epa < addr && epa != 0)
-		return NULL;
+		return 0;
 
 	/* check for 1:1 mapping */
 	if (addr >= bs_obio_start) {
@@ -152,7 +152,7 @@ mapiodev(paddr_t addr, int _size)
 			return ((vaddr_t)addr);
 		else if (addr <= bs_obio_end)
 			/* across obio and non-obio, not supported */
-			return NULL;
+			return 0;
 	}
 
 	pa = trunc_page(addr);
@@ -165,13 +165,13 @@ mapiodev(paddr_t addr, int _size)
 	splx(s);
 
 	if (error != 0)
-		return NULL;
+		return 0;
 
 	va = uvm_km_valloc(kernel_map, size);
 	if (va == 0) {
 		extent_free(bs_extent, atop(pa), atop(size),
 		    EX_MALLOCOK | (cold ? 0 : EX_WAITSPACE));
-		return NULL;
+		return 0;
 	}
 
 	iova = va + off;

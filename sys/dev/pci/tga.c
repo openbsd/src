@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.35 2010/12/26 15:41:00 miod Exp $ */
+/* $OpenBSD: tga.c,v 1.36 2011/04/07 15:30:16 miod Exp $ */
 /* $NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $ */
 
 /*
@@ -430,7 +430,7 @@ tgaattach(parent, self, aux)
 		tga_getdevconfig(pa->pa_memt, pa->pa_pc, pa->pa_tag,
 		    sc->sc_dc);
 	}
-	if (sc->sc_dc->dc_vaddr == NULL) {
+	if (sc->sc_dc->dc_vaddr == 0) {
 		printf(": can't map mem space\n");
 		return;
 	}
@@ -784,7 +784,7 @@ tga_cnattach(iot, memt, pc, bus, device, function)
 	    pci_make_tag(pc, bus, device, function), dcp);
 
 	/* sanity checks */
-	if (dcp->dc_vaddr == NULL)
+	if (dcp->dc_vaddr == 0)
 		panic("tga_console(%d, %d): can't map mem space",
 		    device, function);
 	if (dcp->dc_tgaconf == NULL)

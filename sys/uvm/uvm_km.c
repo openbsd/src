@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.93 2011/04/06 15:52:13 art Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.94 2011/04/07 15:30:16 miod Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -548,7 +548,7 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 				 * allocated and fail.
 				 */
 				uvm_unmap(map, kva, loopva - kva);
-				return (NULL);
+				return (0);
 			} else {
 				uvm_wait("km_alloc1w");	/* wait for memory */
 				continue;
@@ -737,12 +737,12 @@ uvm_km_page_init(void)
 	for (i = 0; i < uvm_km_pages.hiwat; i++) {
 		uvm_km_pages.page[i] = (vaddr_t)uvm_km_kmemalloc(kernel_map,
 		    NULL, PAGE_SIZE, UVM_KMF_NOWAIT|UVM_KMF_VALLOC);
-		if (uvm_km_pages.page[i] == NULL)
+		if (uvm_km_pages.page[i] == 0)
 			break;
 	}
 	uvm_km_pages.free = i;
 	for ( ; i < UVM_KM_PAGES_HIWAT_MAX; i++)
-		uvm_km_pages.page[i] = NULL;
+		uvm_km_pages.page[i] = 0;
 
 	/* tone down if really high */
 	if (uvm_km_pages.lowat > 512)

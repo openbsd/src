@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.131 2010/11/27 19:41:48 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.132 2011/04/07 15:30:16 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -831,7 +831,7 @@ mapdev(phys, virt, offset, size)
 	static vaddr_t iobase;
 	unsigned int pmtype;
 
-	if (iobase == NULL)
+	if (iobase == 0)
 		iobase = IODEV_BASE;
 
 	base = (paddr_t)phys->rr_paddr + offset;

@@ -528,7 +528,7 @@ inteldrm_detach(struct device *self, int flags)
 		dev_priv->hw_status_page = NULL;
 	}
 
-	if (IS_I9XX(dev_priv) && dev_priv->ifp.i9xx.bsh != NULL) {
+	if (IS_I9XX(dev_priv) && dev_priv->ifp.i9xx.bsh != 0) {
 		bus_space_unmap(dev_priv->ifp.i9xx.bst, dev_priv->ifp.i9xx.bsh,
 		    PAGE_SIZE);
 	} else if (dev_priv->flags & (CHIP_I830 | CHIP_I845G | CHIP_I85X |
@@ -944,7 +944,7 @@ i915_alloc_ifp(struct inteldrm_softc *dev_priv, struct pci_attach_args *bpa)
 	return;
 
 nope:
-	dev_priv->ifp.i9xx.bsh = NULL;
+	dev_priv->ifp.i9xx.bsh = 0;
 	printf(": no ifp ");
 }
 
@@ -979,7 +979,7 @@ i965_alloc_ifp(struct inteldrm_softc *dev_priv, struct pci_attach_args *bpa)
 	return;
 
 nope:
-	dev_priv->ifp.i9xx.bsh = NULL;
+	dev_priv->ifp.i9xx.bsh = 0;
 	printf(": no ifp ");
 }
 
@@ -991,7 +991,7 @@ inteldrm_chipset_flush(struct inteldrm_softc *dev_priv)
 	 * The write will return when it is done.
 	 */
 	if (IS_I9XX(dev_priv)) {
-	    if (dev_priv->ifp.i9xx.bsh != NULL)
+	    if (dev_priv->ifp.i9xx.bsh != 0)
 		bus_space_write_4(dev_priv->ifp.i9xx.bst,
 		    dev_priv->ifp.i9xx.bsh, 0, 1);
 	} else {

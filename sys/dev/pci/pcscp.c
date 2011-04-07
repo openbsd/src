@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcscp.c,v 1.17 2010/06/28 18:31:02 krw Exp $	*/
+/*	$OpenBSD: pcscp.c,v 1.18 2011/04/07 15:30:16 miod Exp $	*/
 /*	$NetBSD: pcscp.c,v 1.26 2003/10/19 10:25:42 tsutsui Exp $	*/
 
 /*-
@@ -171,7 +171,7 @@ pcscp_attach(struct device *parent, struct device *self, void *aux)
 	int error, rseg;
 
 	if (pci_mapreg_map(pa, IO_MAP_REG, PCI_MAPREG_TYPE_IO, 0,
-	     &iot, &ioh, NULL, NULL, NULL)) {
+	     &iot, &ioh, NULL, NULL, 0)) {
 		printf("%s: unable to map registers\n", sc->sc_dev.dv_xname);
 		return;
 	}

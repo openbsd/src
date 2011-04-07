@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidms.c,v 1.2 2011/03/04 23:57:52 kettenis Exp $ */
+/*	$OpenBSD: hidms.c,v 1.3 2011/04/07 15:30:16 miod Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -188,7 +188,7 @@ hidms_setup(struct device *self, struct hidms *ms, uint32_t quirks,
 	/* figure out the number of buttons */
 	for (i = 1; i <= MAX_BUTTONS; i++)
 		if (!hid_locate(desc, dlen, HID_USAGE2(HUP_BUTTON, i), id,
-		    hid_input, &ms->sc_loc_btn[i - 1], 0))
+		    hid_input, &ms->sc_loc_btn[i - 1], NULL))
 			break;
 	ms->sc_num_buttons = i - 1;
 

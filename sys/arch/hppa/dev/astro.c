@@ -1,4 +1,4 @@
-/*	$OpenBSD: astro.c,v 1.12 2010/08/07 03:50:01 krw Exp $	*/
+/*	$OpenBSD: astro.c,v 1.13 2011/04/07 15:30:15 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -640,7 +640,7 @@ iommu_iomap_insert_page(struct iommu_map_state *ims, vaddr_t va, paddr_t pa)
 
 	e->ipe_pa = pa;
 	e->ipe_va = va;
-	e->ipe_dva = NULL;
+	e->ipe_dva = 0;
 
 	e = SPLAY_INSERT(iommu_page_tree, &ipm->ipm_tree, e);
 

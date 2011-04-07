@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.173 2011/04/03 17:04:19 krw Exp $ */
+/*	$OpenBSD: ahci.c,v 1.174 2011/04/07 15:30:16 miod Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -2475,7 +2475,7 @@ ahci_issue_pending_ncq_commands(struct ahci_port *ap)
 	 * If a port multiplier is attached to the port, we can only
 	 * issue commands for one of its ports at a time.
 	 */
-	if (ap->ap_sactive != NULL &&
+	if (ap->ap_sactive != 0 &&
 	    ap->ap_pmp_ncq_port != nextccb->ccb_xa.pmp_port) {
 		return;
 	}

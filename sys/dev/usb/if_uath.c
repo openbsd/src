@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.49 2011/01/25 20:03:35 jakemsr Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.50 2011/04/07 15:30:16 miod Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1906,7 +1906,7 @@ uath_init(struct ifnet *ifp)
 		}
 	}
 
-	error = uath_cmd_read(sc, UATH_CMD_07, 0, NULL, &val,
+	error = uath_cmd_read(sc, UATH_CMD_07, NULL, 0, &val,
 	    UATH_CMD_FLAG_MAGIC);
 	if (error != 0) {
 		printf("%s: could not send read command 07h\n",

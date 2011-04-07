@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn.c,v 1.54 2010/03/31 19:46:27 miod Exp $        */
+/*    $OpenBSD: if_sn.c,v 1.55 2011/04/07 15:30:15 miod Exp $        */
 /*    $NetBSD: if_sn.c,v 1.13 1997/04/25 03:40:10 briggs Exp $        */
 
 /*
@@ -124,7 +124,7 @@ snsetup(struct sn_softc *sc, u_int8_t *lladdr)
 	 * Map the pages uncached.
 	 */
 	sc->space = uvm_km_valloc(kernel_map, SN_NPAGES * PAGE_SIZE);
-	if (sc->space == NULL) {
+	if (sc->space == 0) {
 		printf(": can't map descriptor memory\n");
 		uvm_pglistfree(&pglist);
 		return (ENOMEM);

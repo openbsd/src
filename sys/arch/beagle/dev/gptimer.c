@@ -1,4 +1,4 @@
-/* $OpenBSD: gptimer.c,v 1.4 2010/08/07 03:50:01 krw Exp $ */
+/* $OpenBSD: gptimer.c,v 1.5 2011/04/07 15:30:15 miod Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -391,7 +391,7 @@ delay(u_int usecs)
 		for (j = 100; j > 0; j--)
 			;
 
-	if (gptimer_ioh1 == NULL) {
+	if (gptimer_ioh1 == 0) {
 		/* BAH */
 		for (; usecs > 0; usecs--)
 			for (j = 100; j > 0; j--)

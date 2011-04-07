@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.10 2010/04/15 20:38:11 miod Exp $	*/
+/*	$OpenBSD: wscons_machdep.c,v 1.11 2011/04/07 15:30:15 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -221,7 +221,7 @@ wscnprobe(struct consdev *cp)
 		/* Map current PA. */
 		pa = (paddr_t)dio_scodetopa(scode);
 		va = (vaddr_t)iomap((caddr_t)pa, PAGE_SIZE);
-		if (va == NULL)
+		if (va == 0)
 			continue;
 
 		/* Check to see if hardware exists. */
@@ -237,7 +237,7 @@ wscnprobe(struct consdev *cp)
 			mapsize = DIO_SIZE(scode, va);
 			iounmap((caddr_t)va, PAGE_SIZE);
 			va = (vaddr_t)iomap((caddr_t)pa, mapsize);
-			if (va == NULL)
+			if (va == 0)
 				continue;
 			goto found;
 		} else
@@ -255,7 +255,7 @@ wscnprobe(struct consdev *cp)
 		/* Map current PA. */
 		pa = (paddr_t)sgc_slottopa(scode);
 		va = (vaddr_t)iomap((caddr_t)pa, PAGE_SIZE);
-		if (va == NULL)
+		if (va == 0)
 			continue;
 
 		/* Check to see if hardware exists. */

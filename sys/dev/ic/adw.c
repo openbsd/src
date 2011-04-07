@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.48 2010/10/03 21:23:35 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.49 2011/04/07 15:30:16 miod Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -748,7 +748,7 @@ adw_build_sglist(ccb, scsiqp, sg_block)
 			if (--sg_elem_cnt == 0) {
 				/* last entry, get out */
 				sg_block->sg_cnt = i + 1;
-				sg_block->sg_ptr = NULL; /* next link = NULL */
+				sg_block->sg_ptr = 0; /* next link = NULL */
 				return;
 			}
 			sg_list++;

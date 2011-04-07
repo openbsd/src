@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.22 2009/06/03 20:17:48 kettenis Exp $	*/
+/*	$OpenBSD: fb.c,v 1.23 2011/04/07 15:30:16 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -474,8 +474,8 @@ fb_get_console_metrics(int *fontwidth, int *fontheight, int *wtop, int *wleft)
 	    "addr window-top addr window-left",
 	    4, &windowleft, &windowtop, &romwidth, &romheight);
 
-	if (romheight == NULL || romwidth == NULL ||
-	    windowtop == NULL || windowleft == NULL)
+	if (romheight == 0 || romwidth == 0 ||
+	    windowtop == 0 || windowleft == 0)
 		return (1);
 
 	*fontwidth = (int)*(uint64_t *)romwidth;

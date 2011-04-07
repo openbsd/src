@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.71 2010/11/20 20:33:24 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.72 2011/04/07 15:30:16 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -461,9 +461,9 @@ pmap_enter_kpage(vaddr_t va, int64_t data)
 {
 	paddr_t newp;
 
-	newp = NULL;
+	newp = 0;
 	while (pseg_set(pmap_kernel(), va, data, newp) == 1) {
-		newp = NULL;
+		newp = 0;
 		if (!pmap_get_page(&newp, NULL, pmap_kernel())) {
 			prom_printf("pmap_enter_kpage: out of pages\n");
 			panic("pmap_enter_kpage");
@@ -1748,11 +1748,11 @@ pmap_release(pm)
 								       pa);
 						}
 					}
-					stxa(pdirentp, ASI_PHYS_CACHED, NULL);
+					stxa(pdirentp, ASI_PHYS_CACHED, 0);
 					pmap_free_page((paddr_t)ptbl, pm);
 				}
 			}
-			stxa(psegentp, ASI_PHYS_CACHED, NULL);
+			stxa(psegentp, ASI_PHYS_CACHED, 0);
 			pmap_free_page((paddr_t)pdir, pm);
 		}
 	}
@@ -1836,14 +1836,14 @@ pmap_collect(pm)
 					}
 					if (!n) {
 						/* Free the damn thing */
-						stxa((paddr_t)(u_long)&pdir[k], ASI_PHYS_CACHED, NULL);
+						stxa((paddr_t)(u_long)&pdir[k], ASI_PHYS_CACHED, 0);
 						pmap_free_page((paddr_t)ptbl, pm);
 					}
 				}
 			}
 			if (!m) {
 				/* Free the damn thing */
-				stxa((paddr_t)(u_long)&pm->pm_segs[i], ASI_PHYS_CACHED, NULL);
+				stxa((paddr_t)(u_long)&pm->pm_segs[i], ASI_PHYS_CACHED, 0);
 				pmap_free_page((paddr_t)pdir, pm);
 			}
 		}
@@ -1890,7 +1890,7 @@ pmap_activate(p)
 	s = splvm();
 	if (p == curproc) {
 		write_user_windows();
-		if (pmap->pm_ctx == NULL)
+		if (pmap->pm_ctx == 0)
 			ctx_alloc(pmap);
 		if (CPU_ISSUN4V)
 			stxa(CTX_SECONDARY, ASI_MMU_CONTEXTID, pmap->pm_ctx);
@@ -2153,9 +2153,9 @@ pmap_enter(pm, va, pa, prot, flags)
 	}
 	KDASSERT((tte.data & TLB_NFO) == 0);
 
-	pg = NULL;
+	pg = 0;
 	while (pseg_set(pm, va, tte.data, pg) == 1) {
-		pg = NULL;
+		pg = 0;
 		if (!pmap_get_page(&pg, NULL, pm)) {
 			if ((flags & PMAP_CANFAIL) == 0)
 				panic("pmap_enter: no memory");
@@ -3211,7 +3211,7 @@ ctx_alloc(pm)
 		 */
 		if (cnum >= numctx - 2)
 			cnum = 0;
-	} while (ctxbusy[++cnum] != NULL && cnum != next);
+	} while (ctxbusy[++cnum] != 0 && cnum != next);
 	if (cnum==0) cnum++; /* Never steal ctx 0 */
 	if (ctxbusy[cnum]) {
 		int i;
@@ -3271,7 +3271,7 @@ ctx_free(pm)
 		Debugger();
 	}
 #endif
-	ctxbusy[oldctx] = NULL;
+	ctxbusy[oldctx] = 0;
 }
 
 /*

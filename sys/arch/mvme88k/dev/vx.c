@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.42 2010/06/28 14:13:29 deraadt Exp $ */
+/*	$OpenBSD: vx.c,v 1.43 2011/04/07 15:30:15 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -1133,10 +1133,10 @@ create_free_queue(struct vxsoftc *sc)
 	for (i = 1; i <= NENVELOPES; i++) {
 		bzero(&env, sizeof(struct envelope));
 		if (i == NENVELOPES)
-			env.link = NULL;
+			env.link = 0;
 		else
 			env.link = ENVELOPE_AREA + i * sizeof(struct envelope);
-		env.packet_ptr = NULL;
+		env.packet_ptr = 0;
 		env.valid_flag = 0;
 		d16_bcopy(&env, envp, sizeof(struct envelope));
 		envp++;
@@ -1148,7 +1148,7 @@ create_free_queue(struct vxsoftc *sc)
 	for (i = 1; i <= NPACKETS; i++) {
 		bzero(&pkt, sizeof(struct packet));
 		if (i == NPACKETS)
-			pkt.link = NULL;
+			pkt.link = 0;
 		else
 			pkt.link = PACKET_AREA + i * sizeof(struct packet);
 		d16_bcopy(&pkt, pktp, sizeof(struct packet));

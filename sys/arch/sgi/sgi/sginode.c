@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.21 2011/04/03 22:34:54 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.22 2011/04/07 15:30:16 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
  *
@@ -406,7 +406,7 @@ kl_scan_node(int nasid, uint clss, int (*cb)(lboard_t *, void *), void *cbarg)
 			if ((*cb)(boardinfo, cbarg) != 0)
 				return 1;
 		}
-		if (boardinfo->brd_next == NULL)
+		if (boardinfo->brd_next == 0)
 			break;
 	}
 

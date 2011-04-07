@@ -1,4 +1,4 @@
-/*	$OpenBSD: uba_mbus.c,v 1.1 2008/08/18 23:19:25 miod Exp $	*/
+/*	$OpenBSD: uba_mbus.c,v 1.2 2011/04/07 15:30:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -115,7 +115,7 @@ uba_mbus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	modaddr = MBUS_SLOT_BASE(maa->maa_mid);
 	fbic = vax_map_physmem(modaddr + FBIC_BASE, 1);
-	if (fbic == NULL) {
+	if (fbic == 0) {
 		printf("%s: can't setup M-bus range register\n");
 		return;
 	}

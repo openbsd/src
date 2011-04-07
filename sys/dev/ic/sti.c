@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.62 2011/04/07 15:30:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -349,7 +349,7 @@ sti_rom_setup(struct sti_rom *rom, bus_space_tag_t iot, bus_space_tag_t memt,
 	 */
 
 #define	O(i) \
-	(dd->dd_pacode[(i)] == 0 ? NULL : \
+	(dd->dd_pacode[(i)] == 0 ? 0 : \
 	    (rom->rom_code + (dd->dd_pacode[(i)] - dd->dd_pacode[0]) / \
 	      (rom->rom_devtype == STI_DEVTYPE1? 4 : 1)))
 

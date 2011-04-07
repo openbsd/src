@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.46 2010/11/18 21:13:19 miod Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.47 2011/04/07 15:30:15 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -148,7 +148,7 @@ mapiodev(pa, size)
 	vaddr_t va, iova;
 
 	if (size <= 0)
-		return NULL;
+		return 0;
 
 	base = pa & PAGE_MASK;
 	pa = trunc_page(pa);
@@ -158,7 +158,7 @@ mapiodev(pa, size)
 	    EX_NOWAIT | EX_MALLOCOK, &iova);
 
 	if (error != 0)
-	        return NULL;
+	        return 0;
 
 	va = iova;
 	while (size != 0) {

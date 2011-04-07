@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.11 2011/03/23 16:54:37 pirofti Exp $	*/
+/*	$OpenBSD: bus.h,v 1.12 2011/04/07 15:30:16 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -90,8 +90,7 @@ static __inline__ int
 bus_space_map(bus_space_tag_t tag, bus_addr_t addr, bus_size_t size, int flags,
     bus_space_handle_t *handle)
 {
-	if ((*handle = (bus_space_handle_t)mapiodev(tag,
-	    addr, size)) != NULL)
+	if ((*handle = (bus_space_handle_t)mapiodev(tag, addr, size)) != 0)
 		return (0);
 
 	return (ENOMEM);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sg_dma.c,v 1.6 2010/04/20 22:05:41 tedu Exp $	*/
+/*	$OpenBSD: sg_dma.c,v 1.7 2011/04/07 15:30:15 miod Exp $	*/
 /*
  * Copyright (c) 2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -91,7 +91,7 @@ sg_dmatag_init(char *name, void *hdl, bus_addr_t start, bus_size_t size,
 		return (NULL);
 
 	cookie->sg_ex = extent_create(name, start, start + size - 1,
-	    M_DEVBUF, NULL, NULL, EX_NOWAIT | EX_NOCOALESCE);
+	    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_NOCOALESCE);
 	if (cookie->sg_ex == NULL) {
 		free(cookie, M_DEVBUF);
 		return (NULL);
@@ -604,7 +604,7 @@ sg_dmamap_append_range(bus_dma_tag_t t, bus_dmamap_t map, paddr_t pa,
 	sgend = sgstart + length - 1;
 
 #ifdef DIAGNOSTIC
-	if (sgstart == NULL || sgstart > sgend) {
+	if (sgstart == 0 || sgstart > sgend) {
 		printf("append range invalid mapping for %lx "
 		    "(0x%llx - 0x%llx)\n", pa, sgstart, sgend);
 		map->dm_nsegs = 0;
@@ -876,7 +876,7 @@ sg_iomap_insert_page(struct sg_page_map *spm, paddr_t pa)
 	e = &spm->spm_map[spm->spm_pagecnt];
 
 	e->spe_pa = pa;
-	e->spe_va = NULL;
+	e->spe_va = 0;
 
 	e = SPLAY_INSERT(sg_page_tree, &spm->spm_tree, e);
 
@@ -937,7 +937,7 @@ sg_iomap_translate(struct sg_page_map *spm, paddr_t pa)
 	e = SPLAY_FIND(sg_page_tree, &spm->spm_tree, &pe);
 
 	if (e == NULL)
-		return (NULL);
+		return (0);
 
 	return (e->spe_va | offset);
 }

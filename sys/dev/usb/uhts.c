@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhts.c,v 1.2 2011/03/03 21:48:49 kettenis Exp $ */
+/*	$OpenBSD: uhts.c,v 1.3 2011/04/07 15:30:16 miod Exp $ */
 /*
  * Copyright (c) 2009 Matthieu Herrb <matthieu@herrb.eu>
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -211,7 +211,7 @@ uhts_attach(struct device *parent, struct device *self, void *aux)
 	}
 	if (!hid_locate(desc, size, HID_USAGE2(HUP_DIGITIZERS,
 		    HUD_TIP_SWITCH), uha->reportid, hid_input,
-		&sc->sc_loc_btn, 0)){
+		&sc->sc_loc_btn, NULL)){
 		printf("\n%s: touch screen has no button\n",
 		    sc->sc_hdev.sc_dev.dv_xname);
 		return;

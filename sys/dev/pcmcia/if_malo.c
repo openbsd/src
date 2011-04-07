@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.71 2010/08/30 20:33:18 deraadt Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.72 2011/04/07 15:30:16 miod Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -205,7 +205,7 @@ malo_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	}
 	intrstr = pcmcia_intr_string(psc->sc_pf, psc->sc_ih);
 	if (intrstr != NULL) {
-		if (*intrstr != NULL)
+		if (*intrstr != '\0')
 			printf(", %s", intrstr);
 	}
 	printf("\n");

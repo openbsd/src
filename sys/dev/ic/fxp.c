@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.107 2010/09/07 16:21:42 deraadt Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.108 2011/04/07 15:30:16 miod Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1832,7 +1832,7 @@ fxp_load_ucode(struct fxp_softc *sc)
 	for (uc = ucode_table; uc->revision != 0; uc++)
 		if (sc->sc_revision == uc->revision)
 			break;
-	if (uc->revision == NULL)
+	if (uc->revision == 0)
 		return;	/* no ucode for this chip is found */
 
 	error = loadfirmware(uc->uname, (u_char **)&ucode_buf, &ucode_len);

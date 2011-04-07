@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipgphy.c,v 1.13 2010/02/03 16:22:58 sthen Exp $	*/
+/*	$OpenBSD: ipgphy.c,v 1.14 2011/04/07 15:30:16 miod Exp $	*/
 
 /*-
  * Copyright (c) 2006, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -84,7 +84,7 @@ static const struct mii_phydesc ipgphys[] = {
 	  MII_STR_ICPLUS_IP1001 },
 
 	{ 0,
-	  NULL },
+	  0 },
 };
 
 int

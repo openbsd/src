@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.27 2010/09/07 16:21:35 deraadt Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.28 2011/04/07 15:30:15 miod Exp $ */
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -193,7 +193,7 @@ pxaudc_attach(struct pxaudc_softc *sc, void *aux)
 		printf(": unable to establish connect interrupt\n");
 		pxa2x0_intr_disestablish(sc->sc_ih);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_size);
-		sc->sc_ioh = NULL;
+		sc->sc_ioh = 0;
 		sc->sc_size = 0;
 		return;
 	}

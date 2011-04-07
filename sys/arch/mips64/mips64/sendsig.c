@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.13 2010/06/26 23:24:43 guenther Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.14 2011/04/07 15:30:15 miod Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -184,7 +184,7 @@ bail:
 	 * Build the argument list for the signal handler.
 	 */
 	regs->a0 = sig;
-	regs->a1 = (psp->ps_siginfo & sigmask(sig)) ? (register_t)&fp->sf_si : NULL;
+	regs->a1 = (psp->ps_siginfo & sigmask(sig)) ? (register_t)&fp->sf_si : 0;
 	regs->a2 = (register_t)&fp->sf_sc;
 	regs->a3 = (register_t)catcher;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.62 2010/04/20 23:26:59 deraadt Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.63 2011/04/07 15:30:16 miod Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -1076,7 +1076,7 @@ iommu_dvmamap_append_range(bus_dma_tag_t t, bus_dmamap_t map, paddr_t pa,
 	sgend = sgstart + length - 1;
 
 #ifdef DIAGNOSTIC
-	if (sgstart == NULL || sgstart > sgend) {
+	if (sgstart == 0 || sgstart > sgend) {
 		printf("append range invalid mapping for %lx "
 		    "(0x%llx - 0x%llx)\n", pa, sgstart, sgend);
 		map->dm_nsegs = 0;
@@ -1699,7 +1699,7 @@ iommu_iomap_insert_page(struct iommu_map_state *ims, paddr_t pa)
 	e = &ipm->ipm_map[ipm->ipm_pagecnt];
 
 	e->ipe_pa = pa;
-	e->ipe_va = NULL;
+	e->ipe_va = 0;
 
 	e = SPLAY_INSERT(iommu_page_tree, &ipm->ipm_tree, e);
 
@@ -1787,7 +1787,7 @@ iommu_iomap_translate(struct iommu_map_state *ims, paddr_t pa)
 	e = SPLAY_FIND(iommu_page_tree, &ipm->ipm_tree, &pe);
 
 	if (e == NULL)
-		return (NULL);
+		return (0);
 
 	return (e->ipe_va | offset);
 }

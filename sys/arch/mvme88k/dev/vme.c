@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.49 2009/02/17 21:03:21 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.50 2011/04/07 15:30:15 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -366,7 +366,7 @@ vmepmap(sc, vmeaddr, bustype)
 		break;
 #endif
 	default:
-		return NULL;
+		return 0;
 	}
 	return (base);
 }
@@ -381,8 +381,8 @@ vmemap(struct vmesoftc *sc, off_t vmeaddr)
 	paddr_t pa;
 
 	pa = vmepmap((struct device *)sc, vmeaddr, BUS_VMES);
-	if (pa == NULL)
-		return (NULL);
+	if (pa == 0)
+		return (0);
 	return mapiodev(pa, PAGE_SIZE);
 }
 
@@ -422,7 +422,7 @@ vmerw(sc, uio, flags, bus)
 		if (c == 0)
 			return 0;
 		vme = vmemap((struct vmesoftc *)sc, v & ~PGOFSET);
-		if (vme == NULL)
+		if (vme == 0)
 			return EACCES;
 		error = uiomove((void *)vme + (v & PGOFSET), c, uio);
 		vmeunmap(vme);
@@ -626,15 +626,15 @@ vme2chip_map(base, dwidth)
 	case 16:
 		if (base < VME2_D16STARTPHYS ||
 		    base + PAGE_SIZE > VME2_D16ENDPHYS)
-			return NULL;
+			return 0;
 		break;
 	case 32:
 		if (base < VME2_D32STARTPHYS ||
 		    base + PAGE_SIZE > VME2_D32ENDPHYS)
-			return NULL;
+			return 0;
 		break;
 	default:
-		return NULL;
+		return 0;
 	}
 	return base;
 }

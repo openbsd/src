@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.128 2011/03/05 17:48:59 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.129 2011/04/07 15:30:16 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -353,7 +353,7 @@ setregs(p, pack, stack, retval)
 	tf->tf_global[2] = tf->tf_global[7] = tf->tf_pc;
 	stack -= sizeof(struct rwindow);
 	tf->tf_out[6] = stack - STACK_OFFSET;
-	tf->tf_out[7] = NULL;
+	tf->tf_out[7] = 0;
 #ifdef NOTDEF_DEBUG
 	printf("setregs: setting tf %p sp %p pc %p\n", (long)tf, 
 	       (long)tf->tf_out[6], (long)tf->tf_pc);
@@ -1808,7 +1808,7 @@ sparc_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 {
 	if (PHYS_ASI(t0->asi)) {
 		printf("\nsparc_bus_mmap: physical ASI");
-		return (NULL);
+		return (0);
 	}
 
 	/* Devices are un-cached... although the driver should do that */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.48 2011/04/05 18:01:21 henning Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.49 2011/04/07 15:30:16 miod Exp $	*/
 
 /******************************************************************************
 
@@ -1375,9 +1375,9 @@ ixgbe_free_pci_resources(struct ix_softc * sc)
 	if (sc->tag[0])
 		pci_intr_disestablish(pa->pa_pc, sc->tag[0]);
 	sc->tag[0] = NULL;
-	if (os->os_membase != NULL)
+	if (os->os_membase != 0)
 		bus_space_unmap(os->os_memt, os->os_memh, os->os_memsize);
-	os->os_membase = NULL;
+	os->os_membase = 0;
 
 	return;
 }

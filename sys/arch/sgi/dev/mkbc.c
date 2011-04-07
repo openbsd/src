@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkbc.c,v 1.10 2010/12/03 18:29:56 shadchin Exp $  */
+/*	$OpenBSD: mkbc.c,v 1.11 2011/04/07 15:30:16 miod Exp $  */
 
 /*
  * Copyright (c) 2006, 2007, Joel Sing
@@ -267,8 +267,8 @@ mkbc_attach(struct device *parent, struct device *self, void *aux)
 		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF,
 		    M_WAITOK | M_ZERO);
 		t->t_iot = msc->iot;
-		t->t_ioh_d = NULL;
-		t->t_ioh_c = NULL;
+		t->t_ioh_d = 0;
+		t->t_ioh_c = 0;
 		t->t_addr = maa->maa_baseaddr;
 		t->t_sc = (struct pckbc_softc *)msc;
 		sc->id = t;

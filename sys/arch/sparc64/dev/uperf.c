@@ -1,4 +1,4 @@
-/*	$OpenBSD: uperf.c,v 1.5 2003/06/02 20:02:49 jason Exp $	*/
+/*	$OpenBSD: uperf.c,v 1.6 2011/04/07 15:30:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -146,7 +146,7 @@ uperf_findbyval(usc, cnt, uval, rval)
 {
 	struct uperf_src *srcs = usc->usc_srcs;
 
-	if (srcs->us_src == NULL)
+	if (srcs->us_src == 0)
 		return (EINVAL);
 
 	while (srcs->us_src != -1) {
@@ -191,7 +191,7 @@ uperf_findbysrc(usc, cnt, src, rval)
 {
 	struct uperf_src *srcs = usc->usc_srcs;
 
-	if (srcs->us_src == NULL)
+	if (srcs->us_src == 0)
 		return (EINVAL);
 
 	while (srcs->us_src != -1) {

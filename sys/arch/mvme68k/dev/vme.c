@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.29 2010/06/27 22:04:03 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.30 2011/04/07 15:30:15 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -113,7 +113,7 @@ vme_map(bus_addr_t addr, bus_size_t size, int flags, bus_space_handle_t *ret)
 	vaddr_t map;
 
 	map = (vaddr_t)mapiodev((paddr_t)addr, size);
-	if (map == NULL)
+	if (map == 0)
 		return ENOMEM;
 
 	*ret = (bus_space_handle_t)map;
@@ -633,14 +633,14 @@ vme2chip_map(base, len, dwidth)
 	case 16:
 		if (base < VME2_D16STARTPHYS ||
 		    base + (u_long)len > VME2_D16ENDPHYS)
-			return (NULL);
+			return (0);
 		return (base);
 	case 32:
 		if (base < VME2_D32STARTVME)
-			return (NULL);
+			return (0);
 		return (base - VME2_D32STARTVME + VME2_D32STARTPHYS);
 	default:
-		return (NULL);
+		return (0);
 	}
 }
 
