@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.41 2011/04/07 20:14:38 marco Exp $ */
+/* $OpenBSD: acpitz.c,v 1.42 2011/04/07 20:16:19 jordan Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -248,18 +248,22 @@ acpitz_setfan(struct acpitz_softc *sc, int i, char *method)
 
 	dnprintf(20, "%s: acpitz_setfan(%d, %s)\n", DEVNAME(sc), i, method);
 
+	x = 0;
+	snprintf(name, sizeof(name), "_AL%d", i);
 	TAILQ_FOREACH(dl, &sc->sc_alx[i], dev_link) {
 		if (aml_evalname(sc->sc_acpi, dl->dev_node, "_PR0",0 , NULL,
 		    &res1)) {
 			printf("%s: %s[%d] _PR0 failed\n", DEVNAME(sc),
 			    name, x);
 			aml_freevalue(&res1);
+			x++;
 			continue;
 		}
 		if (res1.type != AML_OBJTYPE_PACKAGE) {
 			printf("%s: %s[%d] _PR0 not a package\n", DEVNAME(sc),
 			    name, x);
 			aml_freevalue(&res1);
+			x++;
 			continue;
 		}
 		for (y = 0; y < res1.length; y++) {
@@ -299,6 +303,7 @@ acpitz_setfan(struct acpitz_softc *sc, int i, char *method)
 			}
 		}
 		aml_freevalue(&res1);
+		x++;
 	}
 	rv = 0;
 	return (rv);
