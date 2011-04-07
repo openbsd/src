@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.12 2007/12/31 09:23:53 martin Exp $ */
+/*	$OpenBSD: param.h,v 1.13 2011/04/07 15:45:17 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -52,14 +52,14 @@
 
 /*
  * Round p (pointer or byte index) down to a correctly-aligned value
- * for all data types (int, long, ...).   The result is u_int and
+ * for all data types (int, long, ...).   The result is u_long and
  * must be cast to any desired pointer type. ALIGN() is used for
  * aligning stack, which needs to be on a double word boundary for
  * 88k.
  */
 
 #define  ALIGNBYTES		15		/* 64 bit alignment */
-#define  ALIGN(p)		(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#define  ALIGN(p)		(((u_long)(p) + ALIGNBYTES) & ~ALIGNBYTES)
 #define  ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
 #define NBPG		(1 << PGSHIFT)	/* bytes/page */

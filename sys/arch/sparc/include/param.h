@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.44 2011/03/23 16:54:37 pirofti Exp $	*/
+/*	$OpenBSD: param.h,v 1.45 2011/04/07 15:45:18 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1997/03/10 22:50:37 pk Exp $ */
 
 /*
@@ -63,7 +63,7 @@
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for
- * the machine's strictest data type.  The result is u_int and must be
+ * the machine's strictest data type.  The result is u_long and must be
  * cast to any desired pointer type.
  *
  * ALIGNED_POINTER is a boolean macro that checks whether an address
@@ -73,7 +73,7 @@
  *
  */
 #define	ALIGNBYTES		7
-#define	ALIGN(p)		(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#define	ALIGN(p)		(((u_long)(p) + ALIGNBYTES) & ~ALIGNBYTES)
 #define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
 #define SUN4_PGSHIFT	13	/* for a sun4 machine */

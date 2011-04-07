@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.30 2007/11/04 13:43:39 martin Exp $	*/
+/*	$OpenBSD: param.h,v 1.31 2011/04/07 15:45:17 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.1 1996/09/30 16:34:28 ws Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@
 #define	MID_MACHINE	MID_POWERPC
 
 #define	ALIGNBYTES	(sizeof(double) - 1)
-#define	ALIGN(p)	(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#define	ALIGN(p)	(((u_long)(p) + ALIGNBYTES) & ~ALIGNBYTES)
 #define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
 #define	PAGE_SHIFT	12
