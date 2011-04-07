@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dma_alloc.9,v 1.2 2011/04/06 10:33:44 jmc Exp $
+.\"	$OpenBSD: dma_alloc.9,v 1.3 2011/04/07 21:37:55 matthew Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 2011 Theo de Raadt
@@ -16,13 +16,13 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 6 2011 $
+.Dd $Mdocdate: April 7 2011 $
 .Dt DMA_ALLOC 9
 .Os
 .Sh NAME
 .Nm dma_alloc ,
 .Nm dma_free
-.Nd DMA save allocator
+.Nd DMA-safe memory allocator
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/pool.h>
@@ -37,7 +37,9 @@
 .Fa "size_t size"
 .Fc
 .Sh DESCRIPTION
-This allocator provides DMA-safe memory provided using pools.
+This allocator provides DMA-safe memory managed using the
+.Xr pool 9 
+interface.
 It is safe to call in most contexts and is
 typically used for temporary buffers up to 65536 bytes.
 When buffers are used many times it may be better to consider
@@ -46,7 +48,7 @@ using other DMA-safe allocators.
 Interrupt protection is set to
 .Va IPL_VM
 using
-.Fn pool_setipl .
+.Xr pool_setipl 9 .
 .Pp
 The
 .Ar flags
@@ -57,3 +59,8 @@ flag arguments.
 .Xr bus_dma 9 ,
 .Xr mbuf 9 ,
 .Xr pool 9
+.Sh HISTORY
+The
+.Nm
+interface first appeared in
+.Ox 4.8 .
