@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.56 2011/04/01 15:43:13 art Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.57 2011/04/07 13:20:25 miod Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -238,6 +238,7 @@ uvm_vslock_device(struct proc *p, void *addr, size_t len,
 		error = ENOMEM;
 		goto out_unwire;
 	}
+	sva = va;
 
 	TAILQ_INIT(&pgl);
 	error = uvm_pglistalloc(npages * PAGE_SIZE, dma_constraint.ucr_low,
@@ -245,7 +246,6 @@ uvm_vslock_device(struct proc *p, void *addr, size_t len,
 	if (error)
 		goto out_unmap;
 
-	sva = va;
 	while ((pg = TAILQ_FIRST(&pgl)) != NULL) {
 		TAILQ_REMOVE(&pgl, pg, pageq);
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
