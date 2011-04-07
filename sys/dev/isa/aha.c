@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.73 2010/08/07 03:50:01 krw Exp $	*/
+/*	$OpenBSD: aha.c,v 1.74 2011/04/07 13:27:48 krw Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -128,6 +128,9 @@ struct aha_softc {
 	int sc_numccbs, sc_mbofull;
 	int sc_scsi_dev;		/* our scsi id */
 	struct scsi_link sc_link;
+
+	struct mutex		sc_ccb_mtx;
+	struct scsi_iopool	sc_iopool;
 };
 
 #ifdef AHADEBUG
@@ -138,9 +141,9 @@ int aha_cmd(int, struct aha_softc *, int, u_char *, int, u_char *);
 void aha_finish_ccbs(struct aha_softc *);
 int ahaintr(void *);
 void aha_reset_ccb(struct aha_softc *, struct aha_ccb *);
-void aha_free_ccb(struct aha_softc *, struct aha_ccb *);
+void aha_ccb_free(void *, void *);
 int aha_init_ccb(struct aha_softc *, struct aha_ccb *, int);
-struct aha_ccb *aha_get_ccb(struct aha_softc *, int);
+void *aha_ccb_alloc(void *);
 struct aha_ccb *aha_ccb_phys_kv(struct aha_softc *, u_long);
 void aha_queue_ccb(struct aha_softc *, struct aha_ccb *);
 void aha_collect_mbo(struct aha_softc *);
@@ -384,6 +387,8 @@ ahaattach(parent, self, aux)
 	aha_init(sc);
 	TAILQ_INIT(&sc->sc_free_ccb);
 	TAILQ_INIT(&sc->sc_waiting_ccb);
+	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
+	scsi_iopool_init(&sc->sc_iopool, sc, aha_ccb_alloc, aha_ccb_free);
 
 	/*
 	 * fill in the prototype scsi_link.
@@ -392,6 +397,7 @@ ahaattach(parent, self, aux)
 	sc->sc_link.adapter_target = sc->sc_scsi_dev;
 	sc->sc_link.adapter = &aha_switch;
 	sc->sc_link.openings = 2;
+	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
@@ -556,10 +562,11 @@ aha_reset_ccb(sc, ccb)
  * A ccb is put onto the free list.
  */
 void
-aha_free_ccb(sc, ccb)
-	struct aha_softc *sc;
-	struct aha_ccb *ccb;
+aha_ccb_free(xsc, xccb)
+	void *xsc, *xccb;
 {
+	struct aha_softc *sc = xsc;
+	struct aha_ccb *ccb = xccb;
 	int s, hashnum;
 	struct aha_ccb **hashccb;
 
@@ -583,14 +590,10 @@ aha_free_ccb(sc, ccb)
 	}
 
 	aha_reset_ccb(sc, ccb);
-	TAILQ_INSERT_HEAD(&sc->sc_free_ccb, ccb, chain);
 
-	/*
-	 * If there were none, wake anybody waiting for one to come free,
-	 * starting with queued entries.
-	 */
-	if (TAILQ_NEXT(ccb, chain) == NULL)
-		wakeup(&sc->sc_free_ccb);
+	mtx_enter(&sc->sc_ccb_mtx);
+	TAILQ_INSERT_HEAD(&sc->sc_free_ccb, ccb, chain);
+	mtx_leave(&sc->sc_ccb_mtx);
 
 	splx(s);
 }
@@ -634,58 +637,35 @@ aha_init_ccb(sc, ccb, flags)
  * If there are none, see if we can allocate a new one.  If so, put it in
  * the hash table too otherwise either return an error or sleep.
  */
-struct aha_ccb *
-aha_get_ccb(sc, flags)
-	struct aha_softc *sc;
-	int flags;
+void *
+aha_ccb_alloc(xsc)
+	void *xsc;
 {
+	struct aha_softc *sc = xsc;
 	struct aha_ccb *ccb;
 	int hashnum, s;
 
 	s = splbio();
 
-	/*
-	 * If we can and have to, sleep waiting for one to come free
-	 * but only if we can't allocate a new one.
-	 */
-	for (;;) {
-		ccb = TAILQ_FIRST(&sc->sc_free_ccb);
-		if (ccb) {
-			TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
-			break;
+	mtx_enter(&sc->sc_ccb_mtx);
+	ccb = TAILQ_FIRST(&sc->sc_free_ccb);
+	if (ccb) {
+		TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
+		ccb->flags |= CCB_ALLOC;
+		if (bus_dmamap_load(sc->sc_dmat, ccb->ccb_dmam, ccb, CCB_PHYS_SIZE,
+		    NULL, BUS_DMA_NOWAIT) != 0) {
+			mtx_leave(&sc->sc_ccb_mtx);
+			aha_ccb_free(sc, ccb);
+			splx(s);
+			return (NULL);
+		} else {
+			hashnum = CCB_HASH(ccb->ccb_dmam->dm_segs[0].ds_addr);
+			ccb->nexthash = sc->sc_ccbhash[hashnum];
+			sc->sc_ccbhash[hashnum] = ccb;
 		}
-		if (sc->sc_numccbs < AHA_CCB_MAX) {
-			ccb = malloc(sizeof *ccb, M_DEVBUF,
-			    (flags & SCSI_NOSLEEP) ? M_NOWAIT : M_WAITOK);
-			if (ccb == NULL) {
-				printf("%s: can't malloc ccb\n",
-				    sc->sc_dev.dv_xname);
-				goto out;
-			}
-			if (aha_init_ccb(sc, ccb, flags) == 0) {
-				sc->sc_numccbs++;
-				break;
-			}
-			free(ccb, M_DEVBUF);
-			ccb = NULL;
-		}
-		if (flags & SCSI_NOSLEEP)
-			goto out;
-		tsleep(&sc->sc_free_ccb, PRIBIO, "ahaccb", 0);
 	}
+	mtx_leave(&sc->sc_ccb_mtx);
 
-	ccb->flags |= CCB_ALLOC;
-
-	if (bus_dmamap_load(sc->sc_dmat, ccb->ccb_dmam, ccb, CCB_PHYS_SIZE,
-	    NULL, BUS_DMA_NOWAIT) != 0) {
-		aha_free_ccb(sc, ccb);
-		ccb = NULL;
-	} else {
-		hashnum = CCB_HASH(ccb->ccb_dmam->dm_segs[0].ds_addr);
-		ccb->nexthash = sc->sc_ccbhash[hashnum];
-		sc->sc_ccbhash[hashnum] = ccb;
-	}
-out:
 	splx(s);
 	return (ccb);
 }
@@ -886,7 +866,6 @@ aha_done(sc, ccb)
 			    ccb->dmam->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, ccb->dmam);
 	}
-	aha_free_ccb(sc, ccb);
 	scsi_done(xs);
 }
 
@@ -1246,11 +1225,7 @@ aha_scsi_cmd(xs)
 	 * then we can't allow it to sleep
 	 */
 	flags = xs->flags;
-	if ((ccb = aha_get_ccb(sc, flags)) == NULL) {
-		xs->error = XS_NO_CCB;
-		scsi_done(xs);
-		return;
-	}
+	ccb = xs->io;
 	ccb->xs = xs;
 	ccb->timeout = xs->timeout;
 
@@ -1277,8 +1252,7 @@ aha_scsi_cmd(xs)
 		 */
 		if (bus_dmamap_load(sc->sc_dmat, ccb->dmam, xs->data,
 		    xs->datalen, NULL, BUS_DMA_NOWAIT) != 0) {
-			aha_free_ccb(sc, ccb);
-			xs->error = XS_NO_CCB;
+			xs->error = XS_BUSY;
 			scsi_done(xs);
 			return;
 		}
@@ -1338,7 +1312,6 @@ aha_scsi_cmd(xs)
 				    BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->sc_dmat, ccb->dmam);
 		}
-		aha_free_ccb(sc, ccb);
 		scsi_done(xs);
 		splx(s);
 		return;
