@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.52 2010/12/06 20:57:17 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.53 2011/04/07 18:11:52 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -534,7 +534,7 @@ pmap_destroy(pmap_t pmap)
 {
 	int s, count;
 
-	DPRINTF(PDB_FOLLOW|PDB_CREATE, ("pmap_destroy(%x)\n", pmap));
+	DPRINTF(PDB_FOLLOW|PDB_CREATE, ("pmap_destroy(%p)\n", pmap));
 
 	simple_lock(&pmap->pm_lock);
 	count = --pmap->pm_count;
@@ -583,7 +583,7 @@ void
 pmap_reference(pmap_t pmap)
 {
 
-	DPRINTF(PDB_FOLLOW, ("pmap_reference(%x)\n", pmap));
+	DPRINTF(PDB_FOLLOW, ("pmap_reference(%p)\n", pmap));
 
 	if (pmap) {
 		simple_lock(&pmap->pm_lock);
@@ -630,7 +630,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	pt_entry_t *pte, entry;
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
-		("pmap_remove(%x, %x, %x)\n", pmap, sva, eva));
+		("pmap_remove(%p, %p, %p)\n", pmap, sva, eva));
 
 	stat_count(remove_stats.calls);
 
@@ -1501,7 +1501,7 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, pt_entry_t *npte)
 		}
 
 		DPRINTF(PDB_PVENTRY,
-			("pmap_enter: new pv: pmap %x va %x pg %p\n",
+			("pmap_enter: new pv: pmap %p va %p pg %p\n",
 			    pmap, va, VM_PAGE_TO_PHYS(pg)));
 
 		npv = pmap_pv_alloc();
@@ -1577,7 +1577,7 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 			pmap_pv_free(npv);
 		} else {
 #ifdef DIAGNOSTIC
-			panic("pmap_remove_pv(%x, %x, %x) not found",
+			panic("pmap_remove_pv(%p, %p, %p) not found",
 			    pmap, va, pa);
 #endif
 		}
