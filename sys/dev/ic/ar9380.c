@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380.c,v 1.13 2011/01/05 21:31:34 damien Exp $	*/
+/*	$OpenBSD: ar9380.c,v 1.14 2011/04/07 14:19:53 miod Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -543,7 +543,7 @@ void
 ar9380_spur_mitigate_ofdm(struct athn_softc *sc, struct ieee80211_channel *c,
     struct ieee80211_channel *extc)
 {
-	const struct ar9380_eeprom *eep;
+	const struct ar9380_eeprom *eep = sc->eep;
 	const uint8_t *spurchans;
 	uint32_t reg;
 	int idx, spur_delta_phase, spur_off, range, i;
