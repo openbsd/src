@@ -6,7 +6,7 @@ divert(-1)
 # Note that lines beginning with "dnl" below are comments.
 
 divert(0)dnl
-VERSIONID(`@(#)openbsd-proto.mc $Revision: 1.11 $')dnl
+VERSIONID(`@(#)openbsd-proto.mc $Revision: 1.12 $')dnl
 OSTYPE(openbsd)dnl
 dnl
 dnl If you have a non-static IP address you may wish to forward outgoing mail
@@ -86,10 +86,17 @@ dnl Accept incoming connections on any IPv4 or IPv6 interface for ports
 dnl 25 (SMTP) and 587 (MSA).
 dnl
 FEATURE(`no_default_msa')dnl
+ifdef(`LOCALHOST_ONLY', `
+DAEMON_OPTIONS(`Family=inet, address=127.0.0.1, Name=MTA')dnl
+DAEMON_OPTIONS(`Family=inet6, address=::1, Name=MTA6, M=O')dnl
+DAEMON_OPTIONS(`Family=inet, address=127.0.0.1, Port=587, Name=MSA, M=E')dnl
+DAEMON_OPTIONS(`Family=inet6, address=::1, Port=587, Name=MSA6, M=O, M=E')dnl
+',`
 DAEMON_OPTIONS(`Family=inet, Address=0.0.0.0, Name=MTA')dnl
 DAEMON_OPTIONS(`Family=inet6, Address=::, Name=MTA6, M=O')dnl
 DAEMON_OPTIONS(`Family=inet, Address=0.0.0.0, Port=587, Name=MSA, M=E')dnl
 DAEMON_OPTIONS(`Family=inet6, Address=::, Port=587, Name=MSA6, M=O, M=E')dnl
+')dnl
 dnl
 dnl Use either IPv4 or IPv6 for outgoing connections.
 dnl
