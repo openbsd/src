@@ -1,4 +1,4 @@
-/*	$OpenBSD: exit.c,v 1.4 2005/05/24 20:38:20 uwe Exp $	*/
+/*	$OpenBSD: exit.c,v 1.5 2011/04/07 15:12:03 drahn Exp $	*/
 /*	$NetBSD: exit.c,v 1.11 1996/12/01 20:22:19 pk Exp $	*/
 
 /*-
@@ -36,11 +36,11 @@
 /* unixcons.c */
 extern struct termios tioc;
 extern int            tioc_valid;
+extern __dead void uexit(int);
 
 __dead void
 panic(const char *fmt, ...)
 {
-	extern __dead void uexit(int);
 	extern void closeall(void);
 	va_list ap;
 	static int paniced;
