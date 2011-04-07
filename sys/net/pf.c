@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.738 2011/04/06 13:18:39 claudio Exp $ */
+/*	$OpenBSD: pf.c,v 1.739 2011/04/07 19:35:05 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5369,7 +5369,7 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
 #ifdef INET6
 	case IPPROTO_ICMPV6:
 #endif /* INET6 */
-		flag_ok = flag_bad = 0;
+		flag_ok = flag_out = flag_bad = 0;
 		break;
 	default:
 		return (1);
