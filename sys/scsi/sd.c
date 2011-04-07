@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.222 2011/03/31 18:42:48 jasper Exp $	*/
+/*	$OpenBSD: sd.c,v 1.223 2011/04/07 00:05:18 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -231,7 +231,6 @@ sdattach(struct device *parent, struct device *self, void *aux)
 		break;
 
 	case SDGP_RESULT_OFFLINE:
-		printf("drive offline");
 		break;
 
 #ifdef DIAGNOSTIC
