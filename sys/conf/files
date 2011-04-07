@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.511 2011/04/05 18:51:25 thib Exp $
+#	$OpenBSD: files,v 1.512 2011/04/07 13:42:53 thib Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -759,7 +759,6 @@ file kern/vfs_bio.c
 file kern/vfs_biomem.c
 file kern/vfs_cache.c
 file kern/vfs_cluster.c
-file kern/vfs_conf.c
 file kern/vfs_default.c
 file kern/vfs_init.c
 file kern/vfs_lockf.c

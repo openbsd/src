@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_init.c,v 1.28 2010/12/21 20:14:43 thib Exp $	*/
+/*	$OpenBSD: vfs_init.c,v 1.29 2011/04/07 13:42:53 thib Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
@@ -39,18 +39,106 @@
 
 #include <sys/param.h>
 #include <sys/mount.h>
-#include <sys/time.h>
 #include <sys/vnode.h>
-#include <sys/stat.h>
-#include <sys/namei.h>
-#include <sys/ucred.h>
-#include <sys/buf.h>
-#include <sys/errno.h>
-#include <sys/malloc.h>
-#include <sys/pool.h>
 #include <sys/systm.h>
+#include <sys/pool.h>
 
 struct pool namei_pool;
+
+/* This defines the root filesystem. */
+struct vnode *rootvnode;
+
+/* Set up the filesystem operations for vnodes. */
+#ifdef FFS
+extern	const struct vfsops ffs_vfsops;
+#endif
+
+#ifdef MFS
+extern	const struct vfsops mfs_vfsops;
+#endif
+
+#ifdef MSDOSFS
+extern	const struct vfsops msdosfs_vfsops;
+#endif
+
+#ifdef NFSCLIENT
+extern	const struct vfsops nfs_vfsops;
+#endif
+
+#ifdef PROCFS
+extern	const struct vfsops procfs_vfsops;
+#endif
+
+#ifdef CD9660
+extern	const struct vfsops cd9660_vfsops;
+#endif
+
+#ifdef EXT2FS
+extern	const struct vfsops ext2fs_vfsops;
+#endif
+
+#ifdef NNPFS
+extern  const struct vfsops nnpfs_vfsops;
+#endif
+
+#ifdef NTFS
+extern  const struct vfsops ntfs_vfsops;
+#endif
+
+#ifdef UDF
+extern  const struct vfsops udf_vfsops;
+#endif
+
+/* Set up the filesystem operations for vnodes. */
+static struct vfsconf vfsconflist[] = {
+#ifdef FFS
+        { &ffs_vfsops, MOUNT_FFS, 1, 0, MNT_LOCAL, NULL },
+#endif
+
+#ifdef MFS
+        { &mfs_vfsops, MOUNT_MFS, 3, 0, MNT_LOCAL, NULL },
+#endif
+
+#ifdef EXT2FS
+	{ &ext2fs_vfsops, MOUNT_EXT2FS, 17, 0, MNT_LOCAL, NULL },
+#endif
+
+#ifdef CD9660
+        { &cd9660_vfsops, MOUNT_CD9660, 14, 0, MNT_LOCAL, NULL },
+#endif
+
+#ifdef MSDOSFS
+        { &msdosfs_vfsops, MOUNT_MSDOS, 4, 0, MNT_LOCAL, NULL },
+#endif
+
+#ifdef NFSCLIENT
+        { &nfs_vfsops, MOUNT_NFS, 2, 0, 0, NULL },
+#endif
+
+#ifdef NNPFS
+	{ &nnpfs_vfsops, MOUNT_NNPFS, 21, 0, 0, NULL },
+#endif
+
+#ifdef PROCFS
+        { &procfs_vfsops, MOUNT_PROCFS, 12, 0, 0, NULL },
+#endif
+
+#ifdef NTFS
+	{ &ntfs_vfsops, MOUNT_NTFS, 6, 0, MNT_LOCAL, NULL },
+#endif
+
+#ifdef UDF
+	{ &udf_vfsops, MOUNT_UDF, 13, 0, MNT_LOCAL, NULL },
+#endif
+};
+
+
+/*
+ * Initially the size of the list, vfsinit will set maxvfsconf
+ * to the highest defined type number.
+ */
+int maxvfsconf = sizeof(vfsconflist) / sizeof(struct vfsconf);
+struct vfsconf *vfsconf = vfsconflist;
 
 /* Initialize the vnode structures and initialize each file system type. */
 void
