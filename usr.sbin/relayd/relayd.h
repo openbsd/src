@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.140 2010/12/31 21:22:42 guenther Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.141 2011/04/07 13:22:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -249,6 +249,7 @@ TAILQ_HEAD(addresslist, address);
 #define F_SSLCLIENT		0x00200000
 #define F_NEEDRT		0x00400000
 #define F_MATCH			0x00800000
+#define F_DIVERT		0x01000000
 
 enum forwardmode {
 	FWD_NORMAL		= 0,
@@ -849,6 +850,8 @@ void	 relay_natlook(int, short, void *);
 void	 relay_session(struct rsession *);
 int	 relay_from_table(struct rsession *);
 int	 relay_socket_af(struct sockaddr_storage *, in_port_t);
+in_port_t
+	 relay_socket_getport(struct sockaddr_storage *);
 int	 relay_cmp_af(struct sockaddr_storage *,
 		 struct sockaddr_storage *);
 

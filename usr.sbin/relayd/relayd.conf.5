@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.116 2010/10/26 15:26:58 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.117 2011/04/07 13:22:29 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 26 2010 $
+.Dd $Mdocdate: April 7 2011 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -596,10 +596,10 @@ as the backup table if all hosts in the main table are down.
 At least one entry for the main table is mandatory.
 .It Xo
 .Ic forward to
-.Ic nat lookup
+.Ic destination
 .Ar options ...
 .Xc
-When redirecting connections with an rdr-to rule in
+When redirecting connections with an divert-to rule in
 .Xr pf.conf 5
 to a relay listening on localhost, this directive will
 look up the real destination address of the intended target host,
@@ -607,7 +607,14 @@ allowing the relay to be run as a transparent proxy.
 If an additional
 .Ic forward to
 directive to a specified address or table is present,
-it will be used as a backup if the NAT lookup failed.
+it will be used as a backup if the lookup failed.
+.It Xo
+.Ic forward to
+.Ic nat lookup
+.Ar options ...
+.Xc
+Like the previous directive, but for redirections with rdr-to in
+.Xr pf.conf 5 .
 .It Xo
 .Ic listen on Ar address
 .Op Ic port Ar port

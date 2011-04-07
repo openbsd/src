@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.130 2011/03/12 21:06:40 bluhm Exp $	*/
+/*	$OpenBSD: relay.c,v 1.131 2011/04/07 13:22:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -617,6 +617,22 @@ relay_socket_af(struct sockaddr_storage *ss, in_port_t port)
 		return (-1);
 	}
 
+	return (0);
+}
+
+in_port_t
+relay_socket_getport(struct sockaddr_storage *ss)
+{
+	switch (ss->ss_family) {
+	case AF_INET:
+		return (((struct sockaddr_in *)ss)->sin_port);
+	case AF_INET6:
+		return (((struct sockaddr_in6 *)ss)->sin6_port);
+	default:
+		return (0);
+	}
+
+	/* NOTREACHED */
 	return (0);
 }
 
@@ -2044,15 +2060,27 @@ relay_accept(int fd, short sig, void *arg)
 		return;
 	}
 
-	if (rlay->rl_conf.flags & F_NATLOOK) {
+	if (rlay->rl_conf.flags & F_DIVERT) {
+		slen = sizeof(con->se_out.ss);
+		if (getsockname(s, (struct sockaddr *)&con->se_out.ss,
+		    &slen) == -1) {
+			relay_close(con, "peer lookup failed");
+			return;
+		}
+		con->se_out.port = relay_socket_getport(&con->se_out.ss);
+
+		/* Detect loop and fall back to the alternate forward target */
+		if (bcmp(&rlay->rl_conf.ss, &con->se_out.ss,
+		    sizeof(con->se_out.ss)) == 0 &&
+		    con->se_out.port == rlay->rl_conf.port)
+			con->se_out.ss.ss_family = AF_UNSPEC;
+	} else if (rlay->rl_conf.flags & F_NATLOOK) {
 		if ((cnl = (struct ctl_natlook *)
 		    calloc(1, sizeof(struct ctl_natlook))) == NULL) {
 			relay_close(con, "failed to allocate nat lookup");
 			return;
 		}
-	}
 
-	if (rlay->rl_conf.flags & F_NATLOOK && cnl != NULL) {
 		con->se_cnl = cnl;
 		bzero(cnl, sizeof(*cnl));
 		cnl->in = -1;

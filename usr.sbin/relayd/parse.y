@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.149 2010/10/26 15:04:37 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.150 2011/04/07 13:22:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -144,7 +144,7 @@ typedef struct {
 %token	CIPHERS CODE COOKIE DEMOTE DIGEST DISABLE ERROR EXPECT
 %token	EXTERNAL FILENAME FILTER FORWARD FROM HASH HEADER HOST ICMP
 %token	INCLUDE INET INET6 INTERFACE INTERVAL IP LABEL LISTEN
-%token	LOADBALANCE LOG LOOKUP MARK MARKED MODE NAT NO
+%token	LOADBALANCE LOG LOOKUP MARK MARKED MODE NAT NO DESTINATION
 %token	NODELAY NOTHING ON PARENT PATH PORT PREFORK PROTO
 %token	QUERYSTR REAL REDIRECT RELAY REMOVE REQUEST RESPONSE RETRY
 %token	RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND SESSION SOCKET
@@ -1213,7 +1213,13 @@ relay		: RELAY STRING	{
 				    rlay->rl_conf.name);
 				YYERROR;
 			}
-			if ((rlay->rl_conf.flags & F_NATLOOK) == 0 &&
+			if ((rlay->rl_conf.flags & (F_NATLOOK|F_DIVERT)) ==
+			    (F_NATLOOK|F_DIVERT)) {
+				yyerror("relay %s with conflicting nat lookup "
+				    "and peer options", rlay->rl_conf.name);
+				YYERROR;
+			}
+			if ((rlay->rl_conf.flags & (F_NATLOOK|F_DIVERT)) == 0 &&
 			    rlay->rl_conf.dstss.ss_family == AF_UNSPEC &&
 			    rlay->rl_conf.dsttable == EMPTY_ID) {
 				yyerror("relay %s has no target, rdr, "
@@ -1372,6 +1378,11 @@ forwardspec	: STRING port retry	{
 			conf->sc_flags |= F_NEEDPF;
 			rlay->rl_conf.flags |= F_NATLOOK;
 			rlay->rl_conf.dstretry = $3;
+		}
+		| DESTINATION retry		{
+			conf->sc_flags |= F_NEEDPF;
+			rlay->rl_conf.flags |= F_DIVERT;
+			rlay->rl_conf.dstretry = $2;
 		}
 		| tablespec	{
 			if (rlay->rl_backuptable) {
@@ -1716,6 +1727,7 @@ lookup(char *s)
 		{ "code",		CODE },
 		{ "cookie",		COOKIE },
 		{ "demote",		DEMOTE },
+		{ "destination",	DESTINATION },
 		{ "digest",		DIGEST },
 		{ "disable",		DISABLE },
 		{ "error",		ERROR },
