@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.17 2011/04/06 14:45:23 jsing Exp $	*/
+/*	$OpenBSD: locore.S,v 1.18 2011/04/07 18:36:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -459,7 +459,7 @@ $syscall_return
 	std	%arg2, 12*8(%r1)
 	std	%arg3, 13*8(%r1)
 
-	ldd	TF_SP(%arg1), %arg2		/* sp */
+	ldd	TF_SP(%arg0), %arg2		/* sp */
 	std	%arg2, 14*8(%r1)
 
 	/*
@@ -550,10 +550,10 @@ $syscall_return
 	ldd	14*8(%arg0), %sp		/* sp */
 
 	/* Restore temporary registers. */
-	ldd	0*8(%arg1), %arg3
-	ldd	1*8(%arg1), %arg2
-	ldd	2*8(%arg1), %arg1
-	ldd	3*8(%arg1), %arg0
+	ldd	0*8(%arg0), %arg3
+	ldd	1*8(%arg0), %arg2
+	ldd	2*8(%arg0), %arg1
+	ldd	3*8(%arg0), %arg0
 
 	rfi
 	nop
