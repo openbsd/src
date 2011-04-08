@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.c,v 1.27 2010/11/06 20:25:42 ratchov Exp $	*/
+/*	$OpenBSD: sio.c,v 1.1 2011/04/08 11:18:07 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -28,7 +28,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "sndio_priv.h"
+#include "sio_priv.h"
 
 #define SIO_PAR_MAGIC	0x83b905a4
 
@@ -69,7 +69,7 @@ sio_open(const char *str, unsigned mode, int nbio)
 	if (str == NULL && !issetugid())
 		str = getenv("AUDIODEVICE");
 	if (str == NULL) {
-		hdl = sio_open_aucat("0", mode, nbio);
+		hdl = sio_aucat_open("0", mode, nbio);
 		if (hdl != NULL)
 			return hdl;
 		if (stat("/dev/audio", &sb) == 0 && S_ISCHR(sb.st_mode)) {
@@ -77,7 +77,7 @@ sio_open(const char *str, unsigned mode, int nbio)
 			    minor(sb.st_rdev) & 0xf);
 		} else
 			strlcpy(buf, "0", sizeof(buf));
-		hdl = sio_open_sun(buf, mode, nbio);
+		hdl = sio_sun_open(buf, mode, nbio);
 		if (hdl != NULL)
 			return hdl;
 		return NULL;
@@ -89,18 +89,18 @@ sio_open(const char *str, unsigned mode, int nbio)
 		 */
 		if (stat(str, &sb) < 0 || !S_ISCHR(sb.st_mode)) {
 			snprintf(buf, sizeof(buf), "0.%s", str);
-			return sio_open_aucat(buf, mode, nbio);
+			return sio_aucat_open(buf, mode, nbio);
 		}
 		snprintf(buf, sizeof(buf), "%u", minor(sb.st_rdev) & 0xf);
-		return sio_open_sun(buf, mode, nbio);
+		return sio_sun_open(buf, mode, nbio);
 	}
 	len = sep - str;
 	if (len == (sizeof(prefix_aucat) - 1) &&
 	    memcmp(str, prefix_aucat, len) == 0)
-		return sio_open_aucat(sep + 1, mode, nbio);
+		return sio_aucat_open(sep + 1, mode, nbio);
 	if (len == (sizeof(prefix_sun) - 1) &&
 	    memcmp(str, prefix_sun, len) == 0)
-		return sio_open_sun(sep + 1, mode, nbio);
+		return sio_sun_open(sep + 1, mode, nbio);
 	DPRINTF("sio_open: %s: unknown device type\n", str);
 	return NULL;
 }
@@ -355,10 +355,7 @@ sio_write(struct sio_hdl *hdl, const void *buf, size_t len)
 int
 sio_nfds(struct sio_hdl *hdl)
 {
-	/*
-	 * In the future we might use larger values
-	 */
-	return 1;
+	return hdl->ops->nfds(hdl);
 }
 
 int

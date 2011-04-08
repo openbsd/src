@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio_priv.h,v 1.8 2009/07/25 11:15:56 ratchov Exp $	*/
+/*	$OpenBSD: sio_priv.h,v 1.1 2011/04/08 11:18:07 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -71,14 +71,15 @@ struct sio_ops {
 	size_t (*read)(struct sio_hdl *, void *, size_t);
 	int (*start)(struct sio_hdl *);
 	int (*stop)(struct sio_hdl *);
+	int (*nfds)(struct sio_hdl *);
 	int (*pollfd)(struct sio_hdl *, struct pollfd *, int);
 	int (*revents)(struct sio_hdl *, struct pollfd *);
 	int (*setvol)(struct sio_hdl *, unsigned);
 	void (*getvol)(struct sio_hdl *);
 };
 
-struct sio_hdl *sio_open_aucat(const char *, unsigned, int);
-struct sio_hdl *sio_open_sun(const char *, unsigned, int);
+struct sio_hdl *sio_aucat_open(const char *, unsigned, int);
+struct sio_hdl *sio_sun_open(const char *, unsigned, int);
 void sio_create(struct sio_hdl *, struct sio_ops *, unsigned, int);
 void sio_destroy(struct sio_hdl *);
 void sio_onmove_cb(struct sio_hdl *, int);
