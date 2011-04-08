@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.192 2011/04/04 18:05:31 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.193 2011/04/08 19:26:07 deraadt Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -209,8 +209,10 @@ int	azalia_init_streams(azalia_t *);
 void	azalia_shutdown(void *);
 int	azalia_halt_corb(azalia_t *);
 int	azalia_init_corb(azalia_t *, int);
+int	azalia_delete_corb(azalia_t *);
 int	azalia_halt_rirb(azalia_t *);
 int	azalia_init_rirb(azalia_t *, int);
+int	azalia_delete_rirb(azalia_t *);
 int	azalia_set_command(azalia_t *, nid_t, int, uint32_t, uint32_t);
 int	azalia_get_response(azalia_t *, uint32_t *);
 void	azalia_rirb_kick_unsol_events(void *);
@@ -248,6 +250,7 @@ void	azalia_widget_print_audio(const widget_t *, const char *);
 void	azalia_widget_print_pin(const widget_t *);
 
 int	azalia_stream_init(stream_t *, azalia_t *, int, int, int);
+int	azalia_stream_delete(stream_t *, azalia_t *);
 int	azalia_stream_reset(stream_t *);
 int	azalia_stream_start(stream_t *);
 int	azalia_stream_halt(stream_t *);
@@ -567,6 +570,7 @@ int
 azalia_pci_detach(struct device *self, int flags)
 {
 	azalia_t *az;
+	uint32_t gctl;
 	int i;
 
 	DPRINTF(("%s\n", __func__));
@@ -576,13 +580,15 @@ azalia_pci_detach(struct device *self, int flags)
 		az->audiodev = NULL;
 	}
 
+	/* disable unsolicited response */
+	gctl = AZ_READ_4(az, GCTL);
+	AZ_WRITE_4(az, GCTL, gctl & ~(HDA_GCTL_UNSOL));
+
 	timeout_del(&az->unsol_to);
 
 	DPRINTF(("%s: delete streams\n", __func__));
-	if (az->rstream.bdlist.addr != NULL)
-		azalia_free_dmamem(az, &az->rstream.bdlist);
-	if (az->pstream.bdlist.addr != NULL)
-		azalia_free_dmamem(az, &az->pstream.bdlist);
+	azalia_stream_delete(&az->rstream, az);
+	azalia_stream_delete(&az->pstream, az);
 
 	DPRINTF(("%s: delete codecs\n", __func__));
 	for (i = 0; i < az->ncodecs; i++) {
@@ -595,14 +601,16 @@ azalia_pci_detach(struct device *self, int flags)
 	}
 
 	DPRINTF(("%s: delete CORB and RIRB\n", __func__));
-	if (az->corb_dma.addr != NULL)
-		azalia_free_dmamem(az, &az->corb_dma);
-	if (az->rirb_dma.addr != NULL)
-		azalia_free_dmamem(az, &az->rirb_dma);
-	if (az->unsolq != NULL) {
-		free(az->unsolq, M_DEVBUF);
-		az->unsolq = NULL;
-	}
+	azalia_delete_corb(az);
+	azalia_delete_rirb(az);
+
+	DPRINTF(("%s: disable interrupts\n", __func__));
+	AZ_WRITE_4(az, INTCTL, 0);
+
+	DPRINTF(("%s: clear interrupts\n", __func__));
+	AZ_WRITE_4(az, INTSTS, HDA_INTSTS_CIS | HDA_INTSTS_GIS);
+	AZ_WRITE_2(az, STATESTS, HDA_STATESTS_SDIWAKE);
+	AZ_WRITE_1(az, RIRBSTS, HDA_RIRBSTS_RINTFL | HDA_RIRBSTS_RIRBOIS);
 
 	DPRINTF(("%s: delete PCI resources\n", __func__));
 	if (az->ih != NULL) {
@@ -1003,6 +1011,27 @@ azalia_init_corb(azalia_t *az, int resuming)
 }
 
 int
+azalia_delete_corb(azalia_t *az)
+{
+	int i;
+	uint8_t corbctl;
+
+	if (az->corb_dma.addr == NULL)
+		return 0;
+	/* stop the CORB */
+	corbctl = AZ_READ_1(az, CORBCTL);
+	AZ_WRITE_1(az, CORBCTL, corbctl & ~HDA_CORBCTL_CORBRUN);
+	for (i = 5000; i >= 0; i--) {
+		DELAY(10);
+		corbctl = AZ_READ_1(az, CORBCTL);
+		if ((corbctl & HDA_CORBCTL_CORBRUN) == 0)
+			break;
+	}
+	azalia_free_dmamem(az, &az->corb_dma);
+	return 0;
+}
+
+int
 azalia_halt_rirb(azalia_t *az)
 {
 	int i;
@@ -1081,6 +1110,31 @@ azalia_init_rirb(azalia_t *az, int resuming)
 	    HDA_RIRBCTL_RIRBDMAEN | HDA_RIRBCTL_RINTCTL);
 
 	return (0);
+}
+
+int
+azalia_delete_rirb(azalia_t *az)
+{
+	int i;
+	uint8_t rirbctl;
+
+	if (az->unsolq != NULL) {
+		free(az->unsolq, M_DEVBUF);
+		az->unsolq = NULL;
+	}
+	if (az->rirb_dma.addr == NULL)
+		return 0;
+	/* stop the RIRB */
+	rirbctl = AZ_READ_1(az, RIRBCTL);
+	AZ_WRITE_1(az, RIRBCTL, rirbctl & ~HDA_RIRBCTL_RIRBDMAEN);
+	for (i = 5000; i >= 0; i--) {
+		DELAY(10);
+		rirbctl = AZ_READ_1(az, RIRBCTL);
+		if ((rirbctl & HDA_RIRBCTL_RIRBDMAEN) == 0)
+			break;
+	}
+	azalia_free_dmamem(az, &az->rirb_dma);
+	return 0;
 }
 
 int
@@ -3598,6 +3652,20 @@ azalia_stream_init(stream_t *this, azalia_t *az, int regindex, int strnum,
 		printf("%s: can't allocate a BDL buffer\n", XNAME(az));
 		return err;
 	}
+	return 0;
+}
+
+int
+azalia_stream_delete(stream_t *this, azalia_t *az)
+{
+	if (this->bdlist.addr == NULL)
+		return 0;
+
+	/* disable stream interrupts */
+	STR_WRITE_1(this, CTL, STR_READ_1(this, CTL) |
+	    ~(HDA_SD_CTL_DEIE | HDA_SD_CTL_FEIE | HDA_SD_CTL_IOCE));
+
+	azalia_free_dmamem(az, &this->bdlist);
 	return 0;
 }
 
