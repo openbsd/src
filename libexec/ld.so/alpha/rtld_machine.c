@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.45 2011/04/06 11:36:25 miod Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.46 2011/04/08 02:43:28 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -270,7 +270,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		object->got_size += object->got_addr - object->got_start;
 		object->got_size = ELF_ROUND(object->got_size, _dl_pagesz);
 	}
-	if (plt_addr == NULL)
+	if (plt_addr == 0)
 		object->plt_start = 0;
 	else {
 		object->plt_start = ELF_TRUNC(plt_addr, _dl_pagesz);
