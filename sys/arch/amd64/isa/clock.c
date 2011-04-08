@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.17 2010/08/11 21:22:44 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.18 2011/04/08 08:55:01 jsg Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -131,10 +131,10 @@ void	rtcput(mc_todregs *);
 int	bcdtobin(int);
 int	bintobcd(int);
 
-__inline u_int mc146818_read(void *, u_int);
-__inline void mc146818_write(void *, u_int, u_int);
+u_int mc146818_read(void *, u_int);
+void mc146818_write(void *, u_int, u_int);
 
-__inline u_int
+u_int
 mc146818_read(void *sc, u_int reg)
 {
 	outb(IO_RTC, reg);
@@ -142,7 +142,7 @@ mc146818_read(void *sc, u_int reg)
 	return (inb(IO_RTC+1));
 }
 
-__inline void
+void
 mc146818_write(void *sc, u_int reg, u_int datum)
 {
 	outb(IO_RTC, reg);
