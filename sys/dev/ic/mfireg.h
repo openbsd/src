@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.28 2009/01/28 23:45:12 marco Exp $ */
+/* $OpenBSD: mfireg.h,v 1.29 2011/04/08 19:23:46 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -380,7 +380,7 @@ union mfi_frame {
 union mfi_evt_class_locale {
 	struct {
 		uint16_t	locale;
-		uint8_t 	reserved;
+		uint8_t		reserved;
 		int8_t		class;
 	} __packed		mec_members;
 
@@ -430,7 +430,7 @@ struct mfi_evt_detail {
 			uint8_t			sense[64];
 		} __packed			cdb_sense;
 
-		struct mfi_evtarg_ld 		ld;
+		struct mfi_evtarg_ld		ld;
 
 		struct {
 			struct mfi_evtarg_ld	ld;
@@ -591,10 +591,10 @@ struct mfi_info_device {
 
 /* firmware component info */
 struct mfi_info_component {
-	char		 	mic_name[8];
-	char		 	mic_version[32];
-	char		 	mic_build_date[16];
-	char		 	mic_build_time[16];
+	char			mic_name[8];
+	char			mic_version[32];
+	char			mic_build_date[16];
+	char			mic_build_time[16];
 } __packed;
 
 /* controller info from MFI_DCMD_CTRL_GETINFO. */
@@ -651,7 +651,7 @@ struct mfi_ctrl_info {
 #define MFI_INFO_RAID_6		0x10
 
 	uint32_t		mci_adapter_ops;
-#define MFI_INFO_AOPS_RBLD_RATE		0x0001		
+#define MFI_INFO_AOPS_RBLD_RATE		0x0001
 #define MFI_INFO_AOPS_CC_RATE		0x0002
 #define MFI_INFO_AOPS_BGI_RATE		0x0004
 #define MFI_INFO_AOPS_RECON_RATE	0x0008
