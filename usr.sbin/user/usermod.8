@@ -1,4 +1,4 @@
-.\" $OpenBSD: usermod.8,v 1.24 2010/09/03 11:22:36 jmc Exp $
+.\" $OpenBSD: usermod.8,v 1.25 2011/04/08 18:13:54 jmc Exp $
 .\" $NetBSD: usermod.8,v 1.17 2003/02/14 16:11:37 grant Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: April 8 2011 $
 .Dt USERMOD 8
 .Os
 .Sh NAME
@@ -41,14 +41,12 @@
 .Nm usermod
 .Bk -words
 .Op Fl mov
-.Op Fl G Ar secondary-group[,group,...]
 .Op Fl c Ar comment
 .Op Fl d Ar home-directory
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-time
-.Oo
-.Fl g Ar gid | name | Li =uid
-.Oc
+.Op Fl G Ar secondary-group[,group,...]
+.Op Fl g Ar gid | name | Li =uid
 .Op Fl L Ar login-class
 .Op Fl l Ar new-login
 .Op Fl p Ar password

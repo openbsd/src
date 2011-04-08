@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.79 2011/04/06 11:36:26 miod Exp $ */
+/* $OpenBSD: user.c,v 1.80 2011/04/08 18:13:53 jmc Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1621,9 +1621,9 @@ usermgmt_usage(const char *prog)
 		    "               [-s shell] [-u uid] user\n", prog);
 	} else if (strcmp(prog, "usermod") == 0) {
 		(void) fprintf(stderr, "usage: %s [-mov] "
-		    "[-G secondary-group[,group,...]] [-c comment]\n"
-		    "               [-d home-directory] [-e expiry-time] "
-		    "[-f inactive-time]\n"
+		    "[-c comment] [-d home-directory] [-e expiry-time]\n"
+		    "               [-f inactive-time] "
+		    "[-G secondary-group[,group,...]]\n"
 		    "               [-g gid | name | =uid] [-L login-class] "
 		    "[-l new-login]\n"
 		    "               [-p password] [-s shell] [-u uid] user\n",
