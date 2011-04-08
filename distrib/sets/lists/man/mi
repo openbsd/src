@@ -1614,6 +1614,7 @@
 ./usr/share/man/cat4/eisa.0
 ./usr/share/man/cat4/el.0
 ./usr/share/man/cat4/em.0
+./usr/share/man/cat4/emc.0
 ./usr/share/man/cat4/emu.0
 ./usr/share/man/cat4/enc.0
 ./usr/share/man/cat4/endrun.0
@@ -2018,6 +2019,7 @@
 ./usr/share/man/cat4/random.0
 ./usr/share/man/cat4/ray.0
 ./usr/share/man/cat4/rd.0
+./usr/share/man/cat4/rdac.0
 ./usr/share/man/cat4/rdcphy.0
 ./usr/share/man/cat4/re.0
 ./usr/share/man/cat4/rgephy.0
@@ -2254,6 +2256,7 @@
 ./usr/share/man/cat4/sv.0
 ./usr/share/man/cat4/svlan.0
 ./usr/share/man/cat4/svnd.0
+./usr/share/man/cat4/sym.0
 ./usr/share/man/cat4/systrace.0
 ./usr/share/man/cat4/tcic.0
 ./usr/share/man/cat4/tcp.0
