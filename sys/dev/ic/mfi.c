@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.116 2011/04/08 19:16:47 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.117 2011/04/08 19:20:06 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -173,7 +173,7 @@ void
 mfi_put_ccb(void *cookie, void *io)
 {
 	struct mfi_softc	*sc = cookie;
-	struct mfi_ccb 		*ccb = io;
+	struct mfi_ccb		*ccb = io;
 	struct mfi_frame_header	*hdr = &ccb->ccb_frame->mfr_header;
 
 	DNPRINTF(MFI_D_CCB, "%s: mfi_put_ccb: %p\n", DEVNAME(sc), ccb);
@@ -302,7 +302,7 @@ mfi_allocmem(struct mfi_softc *sc, size_t size)
 
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &mm->am_map) != 0)
-		goto amfree; 
+		goto amfree;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &mm->am_seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO) != 0)
@@ -1714,7 +1714,7 @@ mfi_ioctl_blink(struct mfi_softc *sc, struct bioc_blink *bb)
 	for (i = 0, found = 0; i < pd->mpl_no_pd; i++)
 		if (bb->bb_channel == pd->mpl_address[i].mpa_enc_index &&
 		    bb->bb_target == pd->mpl_address[i].mpa_enc_slot) {
-		    	found = 1;
+			found = 1;
 			break;
 		}
 
@@ -1770,7 +1770,7 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 	for (i = 0, found = 0; i < pd->mpl_no_pd; i++)
 		if (bs->bs_channel == pd->mpl_address[i].mpa_enc_index &&
 		    bs->bs_target == pd->mpl_address[i].mpa_enc_slot) {
-		    	found = 1;
+			found = 1;
 			break;
 		}
 
