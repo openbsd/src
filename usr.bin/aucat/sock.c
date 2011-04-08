@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.53 2010/11/04 17:55:28 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.54 2011/04/08 13:00:57 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -595,14 +595,6 @@ sock_attach(struct sock *f, int force)
 	    f->xrun, f->opt->maxweight);
 	if (f->mode & MODE_PLAY)
 		dev_setvol(f->dev, rbuf, MIDI_TO_ADATA(f->vol));
-
-	/*
-	 * Send the initial position, if needed.
-	 */
-	for (;;) {
-		if (!sock_write(f))
-			break;
-	}
 }
 
 void
@@ -1418,24 +1410,6 @@ sock_execmsg(struct sock *f)
 		aproc_del(f->pipe.file.rproc);
 		return 0;
 	}
-	if (f->rstate == SOCK_RRET) {
-		if (f->wstate != SOCK_WIDLE ||
-		    !sock_wmsg(f, &f->rmsg, &f->rtodo))
-			return 0;
-#ifdef DEBUG
-		if (debug_level >= 3) {
-			sock_dbg(f);
-			dbg_puts(": RRET done\n");
-		}
-#endif
-		if (f->pstate == SOCK_MIDI && (f->mode & MODE_MIDIOUT)) {
-			f->rstate = SOCK_RDATA;
-			f->rtodo = 0;
-		} else {
-			f->rstate = SOCK_RMSG;
-			f->rtodo = sizeof(struct amsg);
-		}
-	}
 	return 1;
 }
 
@@ -1622,6 +1596,13 @@ sock_read(struct sock *f)
 #endif
 		return 0;
 	}
+	for (;;) {
+		/*
+		 * send pending ACKs, initial positions, initial volumes
+		 */
+		if (!sock_write(f))
+			break;
+	}
 	return 1;
 }
 
@@ -1679,9 +1660,12 @@ sock_write(struct sock *f)
 #ifdef DEBUG
 	if (debug_level >= 4) {
 		sock_dbg(f);
-		dbg_puts(": writing ");
-		dbg_putu(f->wtodo);
-		dbg_puts(" todo\n");
+		dbg_puts(": writing");
+		if (f->wstate != SOCK_WIDLE) {
+			dbg_puts(" todo = ");
+			dbg_putu(f->wtodo);
+		}
+		dbg_puts("\n");
 	}
 #endif
 	switch (f->wstate) {
