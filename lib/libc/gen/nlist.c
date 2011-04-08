@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.53 2008/06/04 21:12:50 deraadt Exp $ */
+/*	$OpenBSD: nlist.c,v 1.54 2011/04/08 15:18:18 deraadt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -73,7 +73,7 @@ __aout_fdnlist(int fd, struct nlist *list)
 	struct exec exec;
 
 	if (pread(fd, &exec, sizeof(exec), (off_t)0) != sizeof(exec) ||
-	    N_BADMAG(exec) || exec.a_syms == NULL)
+	    N_BADMAG(exec) || exec.a_syms == 0)
 		return (-1);
 
 	stroff = N_STROFF(exec);
