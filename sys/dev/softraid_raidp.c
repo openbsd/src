@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.21 2011/04/06 02:45:55 marco Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.22 2011/04/08 00:12:54 jordan Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -65,7 +65,7 @@ void	sr_dump(void *, int);
 void	sr_raidp_scrub(struct sr_discipline *);
 
 void	*sr_get_block(struct sr_discipline *, int);
-void	sr_put_block(struct sr_discipline *, void *);
+void	sr_put_block(struct sr_discipline *, void *, int);
 
 /* discipline initialisation. */
 void
@@ -371,7 +371,7 @@ die:
 int
 sr_raidp_rw(struct sr_workunit *wu)
 {
-	struct sr_workunit	*wu_w = NULL;
+	struct sr_workunit	*wu_r = NULL;
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_chunk		*scp;
@@ -396,8 +396,8 @@ sr_raidp_rw(struct sr_workunit *wu)
 
 	if (xs->flags & SCSI_DATA_OUT)
 		/* create write workunit */
-		if ((wu_w = scsi_io_get(&sd->sd_iopool, SCSI_NOSLEEP)) == NULL){
-			printf("%s: can't get wu_w", DEVNAME(sd->sd_sc));
+		if ((wu_r = scsi_io_get(&sd->sd_iopool, SCSI_NOSLEEP)) == NULL){
+			printf("%s: can't get wu_r", DEVNAME(sd->sd_sc));
 			goto bad;
 		}
 
@@ -486,22 +486,22 @@ sr_raidp_rw(struct sr_workunit *wu)
 			memcpy(xorbuf, data, length);
 
 			/* xor old data */
-			if (sr_raidp_addio(wu, chunk, lba, length, NULL,
+			if (sr_raidp_addio(wu_r, chunk, lba, length, NULL,
 			    SCSI_DATA_IN, SR_CCBF_FREEBUF, xorbuf))
 				goto bad;
 
 			/* xor old parity */
-			if (sr_raidp_addio(wu, parity, lba, length, NULL,
+			if (sr_raidp_addio(wu_r, parity, lba, length, NULL,
 			    SCSI_DATA_IN, SR_CCBF_FREEBUF, xorbuf))
 				goto bad;
 
 			/* write new data */
-			if (sr_raidp_addio(wu_w, chunk, lba, length, data,
+			if (sr_raidp_addio(wu, chunk, lba, length, data,
 			    xs->flags, 0, NULL))
 				goto bad;
 
 			/* write new parity */
-			if (sr_raidp_addio(wu_w, parity, lba, length, xorbuf,
+			if (sr_raidp_addio(wu, parity, lba, length, xorbuf,
 			    xs->flags, SR_CCBF_FREEBUF, NULL))
 				goto bad;
 		}
@@ -513,21 +513,16 @@ sr_raidp_rw(struct sr_workunit *wu)
 	}
 
 	s = splbio();
-	if (wu_w) {
+	if (wu_r) {
 		/* collide write request with reads */
-		wu_w->swu_blk_start = wu->swu_blk_start;
-		wu_w->swu_blk_end = wu->swu_blk_end;
+		wu_r->swu_blk_start = wu->swu_blk_start;
+		wu_r->swu_blk_end = wu->swu_blk_end;
 
-		/*
-		 * put xs block in write request (scsi_done not called till
-		 * write completes)
-		 */
-		wu_w->swu_xs = wu->swu_xs;
-		wu->swu_xs = NULL;
+		wu->swu_state = SR_WU_DEFERRED;
+		wu_r->swu_collider = wu;
+		TAILQ_INSERT_TAIL(&sd->sd_wu_defq, wu, swu_link);
 
-		wu_w->swu_state = SR_WU_DEFERRED;
-		wu->swu_collider = wu_w;
-		TAILQ_INSERT_TAIL(&sd->sd_wu_defq, wu_w, swu_link);
+		wu = wu_r;
 	}
 
 	/* rebuild io, let rebuild routine deal with it */
@@ -552,8 +547,8 @@ queued:
 	return (0);
 bad:
 	/* wu is unwound by sr_wu_put */
-	if (wu_w)
-		scsi_io_put(&sd->sd_iopool, wu_w);
+	if (wu_r)
+		scsi_io_put(&sd->sd_iopool, wu_r);
 	return (1);
 }
 
@@ -599,7 +594,7 @@ sr_raidp_intr(struct buf *bp)
 
 	/* free allocated data buffer */
 	if (ccb->ccb_flag & SR_CCBF_FREEBUF) {
-		sr_put_block(sd, ccb->ccb_buf.b_data);
+		sr_put_block(sd, ccb->ccb_buf.b_data, ccb->ccb_buf.b_bcount);
 		ccb->ccb_buf.b_data = NULL;
 	}
 	wu->swu_ios_complete++;
@@ -887,12 +882,12 @@ done:
 void *
 sr_get_block(struct sr_discipline *sd, int length)
 {
-	return malloc(length, M_DEVBUF, M_ZERO | M_NOWAIT | M_CANFAIL);
+	return dma_alloc(length, PR_NOWAIT | PR_ZERO);
 }
 
 void
-sr_put_block(struct sr_discipline *sd, void *ptr)
+sr_put_block(struct sr_discipline *sd, void *ptr, int length)
 {
-	free(ptr, M_DEVBUF);
+	dma_free(ptr, length);
 }
 
