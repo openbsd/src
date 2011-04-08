@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.114 2010/12/30 08:53:50 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.115 2011/04/08 19:15:35 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -17,6 +17,7 @@
 
 #include "bio.h"
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -27,6 +28,7 @@
 #include <sys/proc.h>
 #include <sys/rwlock.h>
 #include <sys/sensors.h>
+#include <sys/pool.h>
 
 #include <machine/bus.h>
 
@@ -1182,9 +1184,14 @@ mfi_do_mgmt(struct mfi_softc *sc, struct mfi_ccb *ccb, uint32_t opc,
     uint32_t dir, uint32_t len, void *buf, uint8_t *mbox)
 {
 	struct mfi_dcmd_frame	*dcmd;
-	int			s;
+	int			s, rv = EINVAL;
+	uint8_t			*dma_buf = NULL;
 
-	DNPRINTF(MFI_D_MISC, "%s: mfi_mgmt %#x\n", DEVNAME(sc), opc);
+	DNPRINTF(MFI_D_MISC, "%s: mfi_do_mgmt %#x\n", DEVNAME(sc), opc);
+
+	dma_buf = dma_alloc(len, PR_WAITOK);
+	if (dma_buf == NULL)
+		goto done;
 
 	dcmd = &ccb->ccb_frame->mfr_dcmd;
 	memset(dcmd->mdf_mbox, 0, MFI_MBOX_SIZE);
@@ -1203,32 +1210,48 @@ mfi_do_mgmt(struct mfi_softc *sc, struct mfi_ccb *ccb, uint32_t opc,
 		memcpy(dcmd->mdf_mbox, mbox, MFI_MBOX_SIZE);
 
 	if (dir != MFI_DATA_NONE) {
+		if (dir == MFI_DATA_OUT)
+			bcopy(buf, dma_buf, len);
 		dcmd->mdf_header.mfh_data_len = len;
-		ccb->ccb_data = buf;
+		ccb->ccb_data = dma_buf;
 		ccb->ccb_len = len;
 		ccb->ccb_sgl = &dcmd->mdf_sgl;
 
-		if (mfi_create_sgl(ccb, BUS_DMA_WAITOK))
-			return (EINVAL);
+		if (mfi_create_sgl(ccb, BUS_DMA_WAITOK)) {
+			rv = EINVAL;
+			goto done;
+		}
 	}
 
 	if (cold) {
-		if (mfi_poll(ccb))
-			return (EIO);
+		if (mfi_poll(ccb)) {
+			rv = EIO;
+			goto done;
+		}
 	} else {
 		s = splbio();
 		mfi_start(sc, ccb);
 
-		DNPRINTF(MFI_D_MISC, "%s: mfi_mgmt sleeping\n", DEVNAME(sc));
+		DNPRINTF(MFI_D_MISC, "%s: mfi_do_mgmt sleeping\n", DEVNAME(sc));
 		while (ccb->ccb_state != MFI_CCB_DONE)
-			tsleep(ccb, PRIBIO, "mfi_mgmt", 0);
+			tsleep(ccb, PRIBIO, "mfi_do_mgmt", 0);
 		splx(s);
 
-		if (ccb->ccb_flags & MFI_CCB_F_ERR)
-			return (EIO);
+		if (ccb->ccb_flags & MFI_CCB_F_ERR) {
+			rv = EIO;
+			goto done;
+		}
 	}
 
-	return (0);
+	if (dir == MFI_DATA_IN)
+		bcopy(dma_buf, buf, len);
+
+	rv = 0;
+done:
+	if (dma_buf)
+		dma_free(dma_buf, len);
+
+	return (rv);
 }
 
 void
