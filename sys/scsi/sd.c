@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.224 2011/04/07 15:30:16 miod Exp $	*/
+/*	$OpenBSD: sd.c,v 1.225 2011/04/08 10:37:39 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -222,10 +222,10 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	if ((sc_link->flags & SDEV_REMOVABLE) != 0)
 		scsi_prevent(sc_link, PR_ALLOW, sd_autoconf);
 
-	printf("%s: ", sc->sc_dev.dv_xname);
 	switch (result) {
 	case SDGP_RESULT_OK:
-		printf("%lldMB, %lu bytes/sec, %lld sec total",
+		printf("%s: %lldMB, %lu bytes/sec, %lld sec total\n",
+		    sc->sc_dev.dv_xname,
 		    dp->disksize / (1048576 / dp->secsize), dp->secsize,
 		    dp->disksize);
 		break;
@@ -239,7 +239,6 @@ sdattach(struct device *parent, struct device *self, void *aux)
 		break;
 #endif
 	}
-	printf("\n");
 
 	memset(&dkc, 0, sizeof(dkc));
 	if (sd_ioctl_cache(sc, DIOCGCACHE, &dkc) == 0 && dkc.wrcache == 0) {
