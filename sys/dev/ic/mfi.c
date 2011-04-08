@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.115 2011/04/08 19:15:35 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.116 2011/04/08 19:16:47 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1234,7 +1234,7 @@ mfi_do_mgmt(struct mfi_softc *sc, struct mfi_ccb *ccb, uint32_t opc,
 
 		DNPRINTF(MFI_D_MISC, "%s: mfi_do_mgmt sleeping\n", DEVNAME(sc));
 		while (ccb->ccb_state != MFI_CCB_DONE)
-			tsleep(ccb, PRIBIO, "mfi_do_mgmt", 0);
+			tsleep(ccb, PRIBIO, "mfimgmt", 0);
 		splx(s);
 
 		if (ccb->ccb_flags & MFI_CCB_F_ERR) {
