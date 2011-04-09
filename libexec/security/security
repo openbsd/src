@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.6 2011/04/09 22:11:11 schwarze Exp $
+# $OpenBSD: security,v 1.7 2011/04/09 22:54:40 schwarze Exp $
 #
 # Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -345,8 +345,7 @@ sub find_homes {
 
 # Check for special users with .rhosts/.shosts files.
 # Only root should have .rhosts/.shosts files.
-# Also, .rhosts/.shosts files should not have plus signs.
-sub check_rhosts {
+sub check_rhosts_owner {
 	my ($name, $uid, $home) = @_;
 	return if $name =~ /^[+-]/;  # skip YP lines
 	foreach my $base qw(rhosts shosts) {
@@ -356,6 +355,23 @@ sub check_rhosts {
 		    ($name eq 'ftp' || $name eq 'uucp' ||
 		    ($uid < 100 && $name ne 'root')),
 		    "$filename is not owned by root.";
+	}
+}
+
+# Also, .rhosts/.shosts files should not have plus signs.
+sub check_rhosts_content {
+	my ($name, $uid, $home) = @_;
+	foreach my $base qw(rhosts shosts) {
+		my $filename = "$home/.$base";
+		next unless -s $filename;
+		nag !open(my $fh, '<', $filename),
+		    "open: $filename: $!"
+		    and next;
+		local $_;
+		nag /^\+\s*$/,
+		    "$filename has + sign in it."
+		    while <$fh>;
+		close $fh;
 	}
 }
 
@@ -850,12 +866,14 @@ check_hostname_if;
 check_hosts_equiv;
 $check_title = "Checking for special users with .rhosts/.shosts files.";
 my $homes = find_homes;
-check_rhosts(@$_) foreach @$homes;
+check_rhosts_owner @$_ foreach @$homes;
+$check_title = "Checking .rhosts/.shosts files syntax.";
+check_rhosts_content @$_ foreach @$homes;
 $check_title = "Checking home directories.";
-check_homedir(@$_) foreach @$homes;
+check_homedir @$_ foreach @$homes;
 $check_title = "Checking dot files.";
-check_dot_readable(@$_) foreach @$homes;
-check_dot_writeable(@$_) foreach @$homes;
+check_dot_readable @$_ foreach @$homes;
+check_dot_writeable @$_ foreach @$homes;
 $check_title = "Checking mailbox ownership.";
 check_mailboxes;
 $check_title = "Checking for globally exported file systems.";
@@ -865,7 +883,7 @@ my ($setuid_files, $device_files) = find_special_files;
 $check_title = "Checking setuid/setgid files and devices:";
 check_filelist $setuid_files, 'setuid' if $setuid_files;
 $check_title = "Checking disk ownership and permissions.";
-check_disks($device_files);
+check_disks $device_files;
 check_filelist $device_files, 'device' if $device_files;
 $check_title = "Checking special files and directories.\n" .
     "Output format is:\n\tfilename:\n\t\tcriteria (shouldbe, reallyis)";
