@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.117 2011/04/08 19:20:06 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.118 2011/04/09 03:00:18 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -410,6 +410,7 @@ mfi_initialize_firmware(struct mfi_softc *sc)
 	struct mfi_ccb		*ccb;
 	struct mfi_init_frame	*init;
 	struct mfi_init_qinfo	*qinfo;
+	uint64_t		handy;
 
 	DNPRINTF(MFI_D_MISC, "%s: mfi_initialize_firmware\n", DEVNAME(sc));
 
@@ -421,21 +422,33 @@ mfi_initialize_firmware(struct mfi_softc *sc)
 
 	memset(qinfo, 0, sizeof *qinfo);
 	qinfo->miq_rq_entries = sc->sc_max_cmds + 1;
-	qinfo->miq_rq_addr_lo = htole32(MFIMEM_DVA(sc->sc_pcq) +
-	    offsetof(struct mfi_prod_cons, mpc_reply_q));
-	qinfo->miq_pi_addr_lo = htole32(MFIMEM_DVA(sc->sc_pcq) +
-	    offsetof(struct mfi_prod_cons, mpc_producer));
-	qinfo->miq_ci_addr_lo = htole32(MFIMEM_DVA(sc->sc_pcq) +
-	    offsetof(struct mfi_prod_cons, mpc_consumer));
+
+	handy = MFIMEM_DVA(sc->sc_pcq) +
+	    offsetof(struct mfi_prod_cons, mpc_reply_q);
+	qinfo->miq_rq_addr_hi = htole32(handy >> 32);
+	qinfo->miq_rq_addr_lo = htole32(handy);
+
+	handy = MFIMEM_DVA(sc->sc_pcq) +
+	    offsetof(struct mfi_prod_cons, mpc_producer);
+	qinfo->miq_pi_addr_hi = htole32(handy >> 32);
+	qinfo->miq_pi_addr_lo = htole32(handy);
+
+	handy = MFIMEM_DVA(sc->sc_pcq) +
+	    offsetof(struct mfi_prod_cons, mpc_consumer);
+	qinfo->miq_ci_addr_hi = htole32(handy >> 32);
+	qinfo->miq_ci_addr_lo = htole32(handy);
 
 	init->mif_header.mfh_cmd = MFI_CMD_INIT;
 	init->mif_header.mfh_data_len = sizeof *qinfo;
 	init->mif_qinfo_new_addr_lo = htole32(ccb->ccb_pframe + MFI_FRAME_SIZE);
 
-	DNPRINTF(MFI_D_MISC, "%s: entries: %#x rq: %#x pi: %#x ci: %#x\n",
+	DNPRINTF(MFI_D_MISC, "%s: entries: %08x%08x rq: %08x%08x pi: %#x "
+	    "ci: %08x%08x\n",
 	    DEVNAME(sc),
-	    qinfo->miq_rq_entries, qinfo->miq_rq_addr_lo,
-	    qinfo->miq_pi_addr_lo, qinfo->miq_ci_addr_lo);
+	    qinfo->miq_rq_entries,
+	    qinfo->miq_rq_addr_hi, qinfo->miq_rq_addr_lo,
+	    qinfo->miq_pi_addr_hi, qinfo->miq_pi_addr_lo,
+	    qinfo->miq_ci_addr_hi, qinfo->miq_ci_addr_lo);
 
 	if (mfi_poll(ccb)) {
 		printf("%s: mfi_initialize_firmware failed\n", DEVNAME(sc));
@@ -849,6 +862,7 @@ mfi_scsi_io(struct mfi_ccb *ccb, struct scsi_xfer *xs, uint64_t blockno,
 {
 	struct scsi_link	*link = xs->sc_link;
 	struct mfi_io_frame	*io;
+	uint64_t		handy;
 
 	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_io: %d\n",
 	    DEVNAME((struct mfi_softc *)link->adapter_softc), link->target);
@@ -871,8 +885,10 @@ mfi_scsi_io(struct mfi_ccb *ccb, struct scsi_xfer *xs, uint64_t blockno,
 	io->mif_header.mfh_data_len= blockcnt;
 	io->mif_lba_hi = (uint32_t)(blockno >> 32);
 	io->mif_lba_lo = (uint32_t)(blockno & 0xffffffffull);
-	io->mif_sense_addr_lo = htole32(ccb->ccb_psense);
-	io->mif_sense_addr_hi = 0;
+
+	handy = ccb->ccb_psense;
+	io->mif_sense_addr_hi = htole32((u_int32_t)(handy >> 32));
+	io->mif_sense_addr_lo = htole32(handy);
 
 	ccb->ccb_done = mfi_scsi_xs_done;
 	ccb->ccb_cookie = xs;
@@ -947,6 +963,7 @@ mfi_scsi_ld(struct mfi_ccb *ccb, struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
 	struct mfi_pass_frame	*pf;
+	uint64_t		handy;
 
 	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_ld: %d\n",
 	    DEVNAME((struct mfi_softc *)link->adapter_softc), link->target);
@@ -960,8 +977,9 @@ mfi_scsi_ld(struct mfi_ccb *ccb, struct scsi_xfer *xs)
 	pf->mpf_header.mfh_data_len= xs->datalen; /* XXX */
 	pf->mpf_header.mfh_sense_len = MFI_SENSE_SIZE;
 
-	pf->mpf_sense_addr_hi = 0;
-	pf->mpf_sense_addr_lo = htole32(ccb->ccb_psense);
+	handy = ccb->ccb_psense;
+	pf->mpf_sense_addr_hi = htole32((u_int32_t)(handy >> 32));
+	pf->mpf_sense_addr_lo = htole32(handy);
 
 	memset(pf->mpf_cdb, 0, 16);
 	memcpy(pf->mpf_cdb, xs->cmd, xs->cmdlen);
