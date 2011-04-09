@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.25 2010/08/08 04:49:25 deraadt Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.26 2011/04/09 04:33:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -486,7 +486,7 @@ amdpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		amdpm_intr(sc);
 	} else {
 		/* Wait for interrupt */
-		if (tsleep(sc, PRIBIO, "iicexec", AMDPM_SMBUS_TIMEOUT * hz))
+		if (tsleep(sc, PRIBIO, "amdpm", AMDPM_SMBUS_TIMEOUT * hz))
 			goto timeout;
 	}
 
