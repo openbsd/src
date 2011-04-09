@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.18 2010/12/26 15:40:59 miod Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.19 2011/04/09 21:30:27 jsg Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $	*/
 
 /*-
@@ -503,6 +503,7 @@ bus_space_read_region_1(bus_space_tag_t t, bus_space_handle_t h,
 		void *dummy2;
 		int dummy3;
 		int __x;
+		u_int32_t port = h + o;
 		__asm __volatile(" cld					;"
 		"1:	inb %w1,%%al				;"
 		"	stosb					;"
@@ -510,7 +511,7 @@ bus_space_read_region_1(bus_space_tag_t t, bus_space_handle_t h,
 		"	loop 1b"				:
 		    "=&a" (__x), "=d" (dummy1), "=D" (dummy2),
 		    "=c" (dummy3)				:
-		    "1" (h + o), "2" (ptr), "3" (cnt)	:
+		    "1" (port), "2" (ptr), "3" (cnt)	:
 		    "memory");
 	} else {
 		int dummy1;
@@ -534,6 +535,7 @@ bus_space_read_region_2(bus_space_tag_t t, bus_space_handle_t h,
 		void *dummy2;
 		int dummy3;
 		int __x;
+		u_int32_t port = h + o;
 		__asm __volatile(" cld				;"
 		"1:	inw %w1,%%ax				;"
 		"	stosw					;"
@@ -541,7 +543,7 @@ bus_space_read_region_2(bus_space_tag_t t, bus_space_handle_t h,
 		"	loop 1b"				:
 		    "=&a" (__x), "=d" (dummy1), "=D" (dummy2),
 		    "=c" (dummy3)				:
-		    "1" ((h) + (o)), "2" ((ptr)), "3" ((cnt))	:
+		    "1" ((port)), "2" ((ptr)), "3" ((cnt))	:
 		    "memory");
 	} else {
 		int dummy1;
@@ -565,6 +567,7 @@ bus_space_read_region_4(bus_space_tag_t t, bus_space_handle_t h,
 		void *dummy2;
 		int dummy3;
 		int __x;
+		u_int32_t port = h + o;
 		__asm __volatile("cld				;"
 		"1:	inl %w1,%%eax				;"
 		"	stosl					;"
@@ -572,7 +575,7 @@ bus_space_read_region_4(bus_space_tag_t t, bus_space_handle_t h,
 		"	loop 1b"				:
 		    "=&a" (__x), "=d" (dummy1), "=D" (dummy2),
 		    "=c" (dummy3)				:
-		    "1" (h + o), "2" (ptr), "3" (cnt)	:
+		    "1" (port), "2" (ptr), "3" (cnt)	:
 		    "memory");
 	} else {
 		int dummy1;
@@ -693,6 +696,7 @@ bus_space_write_region_1(bus_space_tag_t t, bus_space_handle_t h,
 		void *dummy2;
 		int dummy3;
 		int __x;
+		u_int32_t port = h + o;
 		__asm __volatile("cld				;"
 		"1:	lodsb					;"
 		"	outb %%al,%w1				;"
@@ -700,7 +704,7 @@ bus_space_write_region_1(bus_space_tag_t t, bus_space_handle_t h,
 		"	loop 1b"				:
 		    "=&a" (__x), "=d" (dummy1), "=S" (dummy2),
 		    "=c" (dummy3)				:
-		    "1" (h + o), "2" (ptr), "3" (cnt)	:
+		    "1" (port), "2" (ptr), "3" (cnt)	:
 		    "memory");
 	} else {
 		int dummy1;
@@ -724,6 +728,7 @@ bus_space_write_region_2(bus_space_tag_t t, bus_space_handle_t h,
 		void *dummy2;
 		int dummy3;
 		int __x;
+		u_int32_t port = h + o;
 		__asm __volatile("cld				;"
 		"1:	lodsw					;"
 		"	outw %%ax,%w1				;"
@@ -731,7 +736,7 @@ bus_space_write_region_2(bus_space_tag_t t, bus_space_handle_t h,
 		"	loop 1b"				: 
 		    "=&a" (__x), "=d" (dummy1), "=S" (dummy2),
 		    "=c" (dummy3)				:
-		    "1" (h + o), "2" (ptr), "3" (cnt)	:
+		    "1" (port), "2" (ptr), "3" (cnt)	:
 		    "memory");
 	} else {
 		int dummy1;
@@ -755,6 +760,7 @@ bus_space_write_region_4(bus_space_tag_t t, bus_space_handle_t h,
 		void *dummy2;
 		int dummy3;
 		int __x;
+		u_int32_t port = h + o;
 		__asm __volatile(" cld				;"
 		"1:	lodsl					;"
 		"	outl %%eax,%w1				;"
@@ -762,7 +768,7 @@ bus_space_write_region_4(bus_space_tag_t t, bus_space_handle_t h,
 		"	loop 1b"				:
 		    "=&a" (__x), "=d" (dummy1), "=S" (dummy2),
 		    "=c" (dummy3)				:
-		    "1" (h + o), "2" (ptr), "3" (cnt)	:
+		    "1" (port), "2" (ptr), "3" (cnt)	:
 		    "memory");
 	} else {
 		int dummy1;
