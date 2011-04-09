@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.279 2011/04/06 21:51:31 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.280 2011/04/09 07:48:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -323,6 +323,7 @@ enum tty_code_code {
 	TTYC_SMKX,	/* keypad_xmit, ks */
 	TTYC_SMSO,	/* enter_standout_mode, so */
 	TTYC_SMUL,	/* enter_underline_mode, us */
+	TTYC_SITM,	/* enter_italics_mode, it */
 	TTYC_VPA,	/* row_address, cv */
 	TTYC_XENL,	/* eat_newline_glitch, xn */
 };
