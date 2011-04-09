@@ -1,4 +1,4 @@
-/* $OpenBSD: uthread_closefrom.c,v 1.4 2007/04/27 12:59:24 kurt Exp $ */
+/* $OpenBSD: uthread_closefrom.c,v 1.5 2011/04/09 14:48:09 miod Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -58,7 +58,7 @@ closefrom(int fd)
 				 * flag when needed.
 				 */
 				for (lock_fd = fd; lock_fd < _thread_max_fdtsize; lock_fd++) {
-					if (flags[lock_fd] != NULL) {
+					if (flags[lock_fd] != 0) {
 						_thread_fd_entry_close(lock_fd);
 					}
 				}
@@ -75,7 +75,7 @@ closefrom(int fd)
 			 * Unlock any locked entries.
 			 */
 			for (lock_fd = fd; lock_fd < _thread_max_fdtsize; lock_fd++) {
-				if (flags[lock_fd] != NULL) {
+				if (flags[lock_fd] != 0) {
 					_FD_UNLOCK(lock_fd, FD_RDWR_CLOSE);
 				}
 			}
