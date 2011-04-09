@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.34 2011/04/06 17:10:38 robert Exp $
+#	$OpenBSD: rc.subr,v 1.35 2011/04/09 15:39:22 schwarze Exp $
 
 # Default functions and variables used by rc.d(8) scripts.
 
@@ -117,6 +117,7 @@ getcap -f /etc/login.conf ${_name} 1>/dev/null 2>&1 && \
 [ -n "${_rcflags}" ] && daemon_flags=${_rcflags}
 [ -n "${_rcuser}"  ] && daemon_user=${_rcuser}
 
-daemon_flags=$(printf '%s\n' "${daemon_flags}" | tr -s "[:space:]" | sed 's/^[ \t]*//;s/[ \t]*$//')
+daemon_flags=$(printf ' %s' ${daemon_flags})
+daemon_flags=${daemon_flags## }
 pexp="${daemon}${daemon_flags:+ ${daemon_flags}}"
 rcexec="su -l -c ${daemon_class} -s /bin/sh ${daemon_user} -c"
