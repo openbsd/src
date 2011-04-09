@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.20 2011/04/04 11:14:52 krw Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.21 2011/04/09 19:53:00 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: April 4 2011 $
+.Dd $Mdocdate: April 9 2011 $
 .Dt DHCLIENT.CONF 5
 .Os
 .Sh NAME
@@ -219,8 +219,7 @@ configuration script,
 .Pp
 The default client configuration script
 processes only options 1 (subnet
-mask), 3 (routers), 6 (domain name servers), 15 (domain-name), and 33
-(static routes).
+mask), 3 (routers), 6 (domain name servers), and 15 (domain-name).
 Use of option modifiers on other options will have no effect unless
 the client configuration script is modified.
 .Pp

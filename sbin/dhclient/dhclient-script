@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: dhclient-script,v 1.21 2011/04/04 12:22:41 krw Exp $
+# $OpenBSD: dhclient-script,v 1.22 2011/04/09 19:53:00 krw Exp $
 #
 # Copyright (c) 2003 Kenneth R Westerback <krw@openbsd.org>
 #
@@ -54,15 +54,6 @@ delete_old_routes() {
 	# Delete existing default route. We only allow one, so no need to
 	# process $old_routers list.
 	route -q $rdomain -n flush -inet -iface $interface
-
-	if [ -n "$old_static_routes" ]; then
-		set $old_static_routes
-		while [ $# -gt 1 ]; do
-			route -q $rdomain delete "$1" "$2"
-			shift; shift
-		done
-	fi
-
 	arp -dan
 }
 
@@ -78,14 +69,6 @@ add_new_routes() {
 		# stop processing the list after the first one.
 		break
 	done
-
-	if [ -n "$new_static_routes" ]; then
-		set $new_static_routes
-		while [ $# -gt 1 ]; do
-			route -q $rdomain add $1 $2
-			shift; shift
-		done
-	fi
 }
 
 add_new_resolv_conf() {
