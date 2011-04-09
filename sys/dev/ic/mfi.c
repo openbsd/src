@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.118 2011/04/09 03:00:18 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.119 2011/04/09 20:23:31 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -633,7 +633,7 @@ int
 mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 {
 	struct scsibus_attach_args saa;
-	uint32_t		status, frames;
+	uint32_t		status, frames, max_sgl;
 	int			i;
 
 	switch (iop) {
@@ -663,9 +663,18 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 
 	status = mfi_fw_state(sc);
 	sc->sc_max_cmds = status & MFI_STATE_MAXCMD_MASK;
-	sc->sc_max_sgl = (status & MFI_STATE_MAXSGL_MASK) >> 16;
-	DNPRINTF(MFI_D_MISC, "%s: max commands: %u, max sgl: %u\n",
-	    DEVNAME(sc), sc->sc_max_cmds, sc->sc_max_sgl);
+	max_sgl = (status & MFI_STATE_MAXSGL_MASK) >> 16;
+	if (sc->sc_64bit_dma) {
+		sc->sc_max_sgl = min(max_sgl, (128 * 1024) / PAGE_SIZE + 1);
+		sc->sc_sgl_size = sizeof(struct mfi_sg64);
+		sc->sc_sgl_flags = MFI_FRAME_SGL64;
+	} else {
+		sc->sc_max_sgl = max_sgl;
+		sc->sc_sgl_size = sizeof(struct mfi_sg32);
+		sc->sc_sgl_flags = MFI_FRAME_SGL32;
+	}
+	DNPRINTF(MFI_D_MISC, "%s: 64bit: %d max commands: %u, max sgl: %u\n",
+	    DEVNAME(sc), sc->sc_64bit_dma, sc->sc_max_cmds, sc->sc_max_sgl);
 
 	/* consumer/producer and reply queue memory */
 	sc->sc_pcq = mfi_allocmem(sc, (sizeof(uint32_t) * sc->sc_max_cmds) +
@@ -678,8 +687,8 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 
 	/* frame memory */
 	/* we are not doing 64 bit IO so only calculate # of 32 bit frames */
-	frames = (sizeof(struct mfi_sg32) * sc->sc_max_sgl +
-	    MFI_FRAME_SIZE - 1) / MFI_FRAME_SIZE + 1;
+	frames = (sc->sc_sgl_size * sc->sc_max_sgl + MFI_FRAME_SIZE - 1) /
+	    MFI_FRAME_SIZE + 1;
 	sc->sc_frames_size = frames * MFI_FRAME_SIZE;
 	sc->sc_frames = mfi_allocmem(sc, sc->sc_frames_size * sc->sc_max_cmds);
 	if (sc->sc_frames == NULL) {
@@ -1149,10 +1158,17 @@ mfi_create_sgl(struct mfi_ccb *ccb, int flags)
 	sgl = ccb->ccb_sgl;
 	sgd = ccb->ccb_dmamap->dm_segs;
 	for (i = 0; i < ccb->ccb_dmamap->dm_nsegs; i++) {
-		sgl->sg32[i].addr = htole32(sgd[i].ds_addr);
-		sgl->sg32[i].len = htole32(sgd[i].ds_len);
-		DNPRINTF(MFI_D_DMA, "%s: addr: %#x  len: %#x\n",
-		    DEVNAME(sc), sgl->sg32[i].addr, sgl->sg32[i].len);
+		if (sc->sc_64bit_dma) {
+			sgl->sg64[i].addr = htole64(sgd[i].ds_addr);
+			sgl->sg64[i].len = htole32(sgd[i].ds_len);
+			DNPRINTF(MFI_D_DMA, "%s: addr: %#x  len: %#x\n",
+			    DEVNAME(sc), sgl->sg64[i].addr, sgl->sg64[i].len);
+		} else {
+			sgl->sg32[i].addr = htole32(sgd[i].ds_addr);
+			sgl->sg32[i].len = htole32(sgd[i].ds_len);
+			DNPRINTF(MFI_D_DMA, "%s: addr: %#x  len: %#x\n",
+			    DEVNAME(sc), sgl->sg32[i].addr, sgl->sg32[i].len);
+		}
 	}
 
 	if (ccb->ccb_direction == MFI_DATA_IN) {
@@ -1165,10 +1181,9 @@ mfi_create_sgl(struct mfi_ccb *ccb, int flags)
 		    ccb->ccb_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 	}
 
+	hdr->mfh_flags |= sc->sc_sgl_flags;
 	hdr->mfh_sg_count = ccb->ccb_dmamap->dm_nsegs;
-	/* for 64 bit io make the sizeof a variable to hold whatever sg size */
-	ccb->ccb_frame_size += sizeof(struct mfi_sg32) *
-	    ccb->ccb_dmamap->dm_nsegs;
+	ccb->ccb_frame_size += sc->sc_sgl_size * ccb->ccb_dmamap->dm_nsegs;
 	ccb->ccb_extra_frames = (ccb->ccb_frame_size - 1) / MFI_FRAME_SIZE;
 
 	DNPRINTF(MFI_D_DMA, "%s: sg_count: %d  frame_size: %d  frames_size: %d"
