@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.17 2010/09/14 16:57:15 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.18 2011/04/09 20:46:33 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB, www.opsycon.se.
@@ -27,7 +27,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/stat.h>
 #include <lib/libkern/libkern.h>
 #include <stand.h>
 
@@ -35,6 +34,7 @@
 #include <mips64/cpu.h>
 
 #include <sys/exec_elf.h>
+#undef ELFSIZE
 #include "loadfile.h"
 
 char *strstr(char *, const char *);	/* strstr.c */
@@ -98,10 +98,10 @@ main(int argc, char *argv[])
 #else
 #undef  CKSEG0_BASE
 #define CKSEG0_BASE	0xffffffff80000000ULL
-		esym = (u_int64_t *)PHYS_TO_CKSEG0(marks[MARK_END]);
+		esym = (u_int64_t *)(uint32_t)PHYS_TO_CKSEG0(marks[MARK_END]);
 #endif
 
-		if (entry != NULL)
+		if (entry != 0)
 			((void (*)())entry)(argc, argv, esym);
 	}
 
