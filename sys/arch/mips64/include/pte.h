@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.10 2009/12/07 19:05:57 miod Exp $	*/
+/*	$OpenBSD: pte.h,v 1.11 2011/04/09 20:20:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -90,7 +90,7 @@ typedef u_int32_t pt_entry_t;	/* Mips page table entry */
 #define	PG_FRAME	0x3fffffc0
 #define PG_SHIFT	6
 
-#define	pfn_to_pad(pa)	(((pa) & PG_FRAME) << PG_SHIFT)
+#define	pfn_to_pad(pa)	((((paddr_t)pa) & PG_FRAME) << PG_SHIFT)
 #define vad_to_pfn(va)	(((va) >> PG_SHIFT) & PG_FRAME)
 
 #define	PG_SIZE_4K	0x00000000
