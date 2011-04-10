@@ -1,4 +1,4 @@
-/*	$OpenBSD: rint.c,v 1.8 2011/04/10 11:10:09 martynas Exp $	*/
+/*	$OpenBSD: rint.c,v 1.9 2011/04/10 16:29:42 martynas Exp $	*/
 
 /*	Written by Michael Shalayeff, 2003,  Public domain.	*/
 
@@ -46,6 +46,9 @@ main(int argc, char *argv[])
 	assert(lrintf(0.0) == 0L);
 	assert(lrint(-0.0) == 0L);
 	assert(lrintf(-0.0) == 0L);
+
+	assert(llrint(4503599627370496.0) == 4503599627370496L);
+	assert(llrint(-4503599627370496.0) == -4503599627370496L);
 
 	fpsetround(FP_RM);
 	assert(lrint(-0.1) == -1L);
