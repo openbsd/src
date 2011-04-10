@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.7 2011/04/09 22:54:40 schwarze Exp $
+# $OpenBSD: security,v 1.8 2011/04/10 23:28:48 schwarze Exp $
 #
 # Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -553,8 +553,9 @@ sub find_special_files {
 		# Special Files
 		elsif (!-d _ && !-f _ && !-l _ && !-S _ && !-p _ ) {
 			$device_files->{$File::Find::name} = $file;
-			$file->{size} = (($rdev >> 8) & 0xff) . ',' .
-			    (($rdev & 0xff) | (($rdev >> 8) & 0xffff00));
+			$file->{major} = (($rdev >> 8) & 0xff) . ',';
+			$file->{minor} = (($rdev >> 8) & 0xffff00) |
+			    ($rdev & 0xff);
 		} else {
 			return;
 		}
@@ -593,7 +594,11 @@ sub check_filelist {
 	my ($files, $mode) = @_;
 	my $current = BACKUP_DIR . "$mode.current";
 	my $backup  = BACKUP_DIR . "$mode.backup";
-	my @fields  = qw(strmode nlink user group size mon day time year);
+	my @fields  = (
+	    qw(strmode nlink user group),
+	    $mode eq 'device' ?  qw(major minor) : 'size',
+	    qw(mon day time year)
+	);
 
 	my %current;
 	if (-s $current) {
