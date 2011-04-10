@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.41 2011/04/02 18:16:50 oga Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.42 2011/04/10 16:40:42 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -444,7 +444,13 @@ pci_init_extents(void)
 	}
 
 	if (pcimem_ex == NULL) {
-		pcimem_ex = extent_create("pcimem", 0, 0xffffffff, M_DEVBUF,
+		/*
+		 * Cover the 36-bit address space addressable by PAE
+		 * here.  As long as vendors continue to support
+		 * 32-bit operating systems, we should never see BARs
+		 * outside that region.
+		 */
+		pcimem_ex = extent_create("pcimem", 0, 0xfffffffff, M_DEVBUF,
 		    NULL, 0, EX_NOWAIT);
 		if (pcimem_ex == NULL)
 			return;
