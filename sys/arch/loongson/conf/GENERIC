@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.32 2011/02/17 20:14:30 miod Exp $
+#	$OpenBSD: GENERIC,v 1.33 2011/04/10 20:27:02 shadchin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -79,7 +79,7 @@ vga*		at pci?
 wsdisplay*	at vga?
 auvia*		at pci?
 audio*		at auvia?
-viaenv*		at pci?
+viapm*		at pci?
 
 # USB Controllers
 ohci*		at pci?

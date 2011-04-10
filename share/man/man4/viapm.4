@@ -1,4 +1,4 @@
-.\"	$OpenBSD: viapm.4,v 1.8 2009/06/26 02:46:27 kevlo Exp $
+.\"	$OpenBSD: viapm.4,v 1.9 2011/04/10 20:27:02 shadchin Exp $
 .\"
 .\" Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2009 $
+.Dd $Mdocdate: April 10 2011 $
 .Dt VIAPM 4
 .Os
 .Sh NAME
 .Nm viapm
-.Nd VIA SMBus controller
+.Nd VIA SMBus controller and VIA VT82C686A/VT8231 hardware monitor
 .Sh SYNOPSIS
 .Cd "viapm* at pci?"
 .Cd "iic* at viapm?"
@@ -27,25 +27,79 @@
 The
 .Nm
 driver provides support for the bus control and power management
-component of the VIA VT8233, VT8235, VT8237, VT8237A, VT8237S, VT8251,
-CX700, CX800 and VX855 South Bridges.
+component of the VIA VT82C596, VT82C596B, VT82C686A, VT8231, VT8233,
+VT8233A, VT8235, VT8237, VT8237A, VT8237S, VT8251, CX700, VX800 and
+VX855 South Bridges.
 Only the SMBus host interface is supported and can be used with the
 .Xr iic 4
 framework.
+.Pp
+The
+.Nm
+driver provides support for the hardware monitor in the VIA VT82C686A
+and VT8231 South Bridges.
+The hardware monitor is used with the
+.Xr sysctl 8
+interface.
+.Pp
+The device has 10 sensors:
+.Bl -column "Sensor" "Units" "Typical" -offset indent
+.It Sy "Sensor" Ta Sy "Units" Ta Sy "Typical Use"
+.It Li "TSENS1" Ta "uK" Ta "CPU temperature"
+.It Li "TSENS2" Ta "uK" Ta "System temperature"
+.It Li "TSENS3" Ta "uK" Ta "Unknown"
+.It Li "FAN1" Ta "RPM" Ta "CPU fan"
+.It Li "FAN2" Ta "RPM" Ta "System fan"
+.It Li "VSENS1" Ta "uV DC" Ta "CPU core voltage (2.0V)"
+.It Li "VSENS2" Ta "uV DC" Ta "North Bridge core voltage (2.5V)"
+.It Li "Vcore" Ta "uV DC" Ta "Internal core voltage (3.3V)"
+.It Li "VSENS3" Ta "uV DC" Ta "+5V"
+.It Li "VSENS4" Ta "uV DC" Ta "+12V"
+.El
+.Pp
+Sensor data is updated every 1.5 seconds.
 .Sh SEE ALSO
 .Xr iic 4 ,
 .Xr intro 4 ,
-.Xr pci 4
+.Xr pci 4 ,
+.Xr sensorsd 8 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
 .Ox 3.9 .
+.Pp
+The
+.Nm viaenv
+driver first appeared in
+.Nx 1.5 .
+.Ox
+support was added in
+.Ox 3.4 .
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
 driver was written by
 .An Mark Kettenis Aq kettenis@openbsd.org .
+.Pp
+The
+.Nm viaenv
+driver was written by
+.An Johan Danielsson
+and ported to
+.Ox 3.4
+by
+.An Alexander Yurchenko Aq grange@openbsd.org .
+The
+.Nm viaenv
+was merged with
+.Nm
+in
+.Ox 5.0 .
 .Sh BUGS
 The driver doesn't support commands with a data buffer size of more
 than 2 bytes.
+.Pp
+Interrupt support is unimplemented, as is support for setting values.
