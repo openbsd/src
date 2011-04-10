@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.22 2009/10/27 23:59:42 deraadt Exp $	*/
+/*	$OpenBSD: client.c,v 1.23 2011/04/10 15:47:28 krw Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -399,8 +399,8 @@ sendfile(char *rname, opt_t opts, struct stat *stb, char *user,
 	 */
 	ENCODE(ername, rname);
 
-	(void) sendcmd(C_RECVREG, "%o %04o %ld %ld %ld %s %s %s", 
-		       opts, stb->st_mode & 07777, (long) stb->st_size, 
+	(void) sendcmd(C_RECVREG, "%o %04o %lld %ld %ld %s %s %s", 
+		       opts, stb->st_mode & 07777, (long long) stb->st_size, 
 		       stb->st_mtime, stb->st_atime,
 		       user, group, ername);
 	if (response() < 0) {
@@ -409,8 +409,8 @@ sendfile(char *rname, opt_t opts, struct stat *stb, char *user,
 	}
 
 
-	debugmsg(DM_MISC, "Send file '%s' %ld bytes\n", rname,
-		 (long) stb->st_size);
+	debugmsg(DM_MISC, "Send file '%s' %lld bytes\n", rname,
+		 (long long) stb->st_size);
 
 	/*
 	 * Set remote time out alarm handler.
@@ -666,8 +666,8 @@ sendlink(char *rname, opt_t opts, struct stat *stb, char *user,
 	 * Gather and send basic link info
 	 */
 	ENCODE(ername, rname);
-	(void) sendcmd(C_RECVSYMLINK, "%o %04o %ld %ld %ld %s %s %s", 
-		       opts, stb->st_mode & 07777, (long) stb->st_size, 
+	(void) sendcmd(C_RECVSYMLINK, "%o %04o %lld %ld %ld %s %s %s", 
+		       opts, stb->st_mode & 07777, (long long) stb->st_size, 
 		       stb->st_mtime, stb->st_atime,
 		       user, group, ername);
 	if (response() < 0)
@@ -869,7 +869,7 @@ update(char *rname, opt_t opts, struct stat *statp)
 	/*
 	 * Parse size
 	 */
-	size = (off_t) strtol(cp, (char **)&cp, 10);
+	size = (off_t) strtoll(cp, (char **)&cp, 10);
 	if (*cp++ != ' ') {
 		error("update: size not delimited");
 		return(US_NOTHING);
@@ -921,8 +921,8 @@ update(char *rname, opt_t opts, struct stat *statp)
 
 	debugmsg(DM_MISC, "update(%s,) local mode %04o remote mode %04o\n", 
 		 rname, lmode, rmode);
-	debugmsg(DM_MISC, "update(%s,) size %ld mtime %d owner '%s' grp '%s'\n",
-		 rname, (long) size, mtime, owner, group);
+	debugmsg(DM_MISC, "update(%s,) size %lld mtime %d owner '%s' grp '%s'"
+		 "\n", rname, (long long) size, mtime, owner, group);
 
 	if (statp->st_mtime != mtime) {
 		if (statp->st_mtime < mtime && IS_ON(opts, DO_YOUNGER)) {
@@ -935,8 +935,8 @@ update(char *rname, opt_t opts, struct stat *statp)
 	}
 
 	if (statp->st_size != size) {
-		debugmsg(DM_MISC, "size does not match (%ld != %ld).\n",
-			 (long) statp->st_size, (long) size);
+		debugmsg(DM_MISC, "size does not match (%lld != %lld).\n",
+			 (long long) statp->st_size, (long long) size);
 		return(US_OUTDATE);
 	} 
 

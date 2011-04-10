@@ -1,4 +1,4 @@
-/*	$OpenBSD: child.c,v 1.14 2009/10/27 23:59:42 deraadt Exp $	*/
+/*	$OpenBSD: child.c,v 1.15 2011/04/10 15:47:28 krw Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -177,7 +177,7 @@ static void
 readchild(CHILD *child)
 {
 	char rbuf[BUFSIZ];
-	int amt;
+	ssize_t amt;
 
 	debugmsg(DM_CALL, "[readchild(%s, %d, %d) start]", 
 		 child->c_name, child->c_pid, child->c_readfd);
@@ -196,7 +196,7 @@ readchild(CHILD *child)
 	 */
 	while ((amt = read(child->c_readfd, rbuf, sizeof(rbuf))) > 0) {
 		/* XXX remove these debug calls */
-		debugmsg(DM_MISC, "[readchild(%s, %d, %d) got %d bytes]", 
+		debugmsg(DM_MISC, "[readchild(%s, %d, %d) got %lld bytes]", 
 			 child->c_name, child->c_pid, child->c_readfd, amt);
 
 		(void) xwrite(fileno(stdout), rbuf, amt);
@@ -205,7 +205,7 @@ readchild(CHILD *child)
 			 child->c_name, child->c_pid, child->c_readfd);
 	}
 
-	debugmsg(DM_MISC, "readchild(%s, %d, %d) done: amt = %d errno = %d\n",
+	debugmsg(DM_MISC, "readchild(%s, %d, %d) done: amt = %lld errno = %d\n",
 		 child->c_name, child->c_pid, child->c_readfd, amt, errno);
 
 	/* 

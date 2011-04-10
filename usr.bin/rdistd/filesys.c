@@ -1,4 +1,4 @@
-/*	$OpenBSD: filesys.c,v 1.11 2009/10/27 23:59:42 deraadt Exp $	*/
+/*	$OpenBSD: filesys.c,v 1.12 2011/04/10 15:47:28 krw Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -402,7 +402,7 @@ is_symlinked(char *path, struct stat *statbuf, int *isvalid)
  * information.
  */
 int
-getfilesysinfo(char *file, long *freespace, long *freefiles)
+getfilesysinfo(char *file, int64_t *freespace, int64_t *freefiles)
 {
 #if	defined(STATFS_TYPE)
 	static statfs_t statfsbuf;
@@ -449,11 +449,11 @@ getfilesysinfo(char *file, long *freespace, long *freefiles)
 	 * to < 0 if the field is unsupported for the filesystem type.
 	 */
 #if	defined(BROKEN_STATFS)
-	if (statfsbuf.f_ffree > 0)
+	if (statfsbuf.f_favail > 0)
 #else
-	if (statfsbuf.f_ffree >= 0)
+	if (statfsbuf.f_favail >= 0)
 #endif 	/* BROKEN_STATFS */
-		*freefiles = statfsbuf.f_ffree;
+		*freefiles = statfsbuf.f_favail;
 
 #else	/* !STATFS_TYPE */
 

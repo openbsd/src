@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.19 2009/10/27 23:59:42 deraadt Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.20 2011/04/10 15:47:28 krw Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -88,6 +88,7 @@ main(int argc, char **argv, char **envp)
 	char *cp;
 	int cmdargs = 0;
 	int c;
+	const char *errstr;
 
 	progname = __progname;
 
@@ -160,10 +161,20 @@ main(int argc, char **argv, char **envp)
 				error("\"%s\" is not a number.", optarg);
 				usage();
 			}
-			if (c == 'a')
-				min_freespace = atoi(optarg);
-			else if (c == 'A')
-				min_freefiles = atoi(optarg);
+			if (c == 'a') {
+				min_freespace = (int64_t)strtonum(optarg,
+					0, LLONG_MAX, &errstr);
+				if (errstr)
+					fatalerr("Minimum free space is %s: "
+						 "'%s'", errstr, optarg);
+			}
+			else if (c == 'A') {
+				min_freefiles = (u_int64_t)strtonum(optarg,
+					0, LLONG_MAX, &errstr);
+				if (errstr)
+					fatalerr("Minimum free files is %s: "
+						 "'%s'", errstr, optarg);
+			}
 			else if (c == 'M')
 				maxchildren = atoi(optarg);
 			else if (c == 't')

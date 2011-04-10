@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.21 2009/10/27 23:59:42 deraadt Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.22 2011/04/10 15:47:28 krw Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -308,7 +308,7 @@ makeconn(char *rhost)
 	char *ruser, *cp;
 	static char *cur_host = NULL;
 	extern char *locuser;
-	extern long min_freefiles, min_freespace;
+	extern int64_t min_freefiles, min_freespace;
 	extern char *remotemsglist;
 	char tuser[BUFSIZ], buf[BUFSIZ];
 	u_char respbuff[BUFSIZ];

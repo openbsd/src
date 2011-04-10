@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.16 2008/01/02 17:44:11 chl Exp $	*/
+/*	$OpenBSD: defs.h,v 1.17 2011/04/10 15:47:28 krw Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -370,7 +370,7 @@ void coredump(void);
 void sighandler(int);
 int sendcmd(char, char *, ...);
 int remline(u_char *, int, int);
-int readrem(char *, int);
+ssize_t readrem(char *, ssize_t);
 char *getusername(UID_T, char *, opt_t);
 char *getgroupname(GID_T, char *, opt_t);
 int response(void);
@@ -420,7 +420,7 @@ mntent_t *getmntpt(char *, struct stat *, int *);
 int is_nfs_mounted(char *, struct stat *, int *);
 int is_ro_mounted(char *, struct stat *, int *);
 int is_symlinked(char *, struct stat *, int *);
-int getfilesysinfo(char *, long *, long *);
+int getfilesysinfo(char *, int64_t *, int64_t *);
 
 /* gram.c */
 int yylex(void);
