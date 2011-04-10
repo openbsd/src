@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_arm.c,v 1.5 2007/05/19 15:49:04 miod Exp $	*/
+/*	$OpenBSD: kvm_arm.c,v 1.6 2011/04/10 12:43:39 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -53,6 +53,7 @@
 #include <sys/param.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <sys/vnode.h>
 
 #include <unistd.h>
 #include <stdlib.h>
