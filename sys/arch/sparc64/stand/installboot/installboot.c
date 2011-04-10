@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.10 2011/03/13 00:13:53 deraadt Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.11 2011/04/10 10:06:09 miod Exp $	*/
 /*	$NetBSD: installboot.c,v 1.8 2001/02/19 22:48:59 cgd Exp $ */
 
 /*-
@@ -270,7 +270,7 @@ loadprotoblocks(fname, size)
 	st = marks[MARK_START];
 	en = marks[MARK_ENTRY];
 
-	if ((ap = (u_long)malloc(sz)) == NULL) {
+	if ((ap = (u_long)malloc(sz)) == 0) {
 		warn("malloc: %s", "");
 		return NULL;
 	}
