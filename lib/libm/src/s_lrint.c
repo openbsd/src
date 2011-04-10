@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_lrint.c,v 1.1 2006/09/25 20:25:41 kettenis Exp $	*/
+/*	$OpenBSD: s_lrint.c,v 1.2 2011/04/10 11:25:14 martynas Exp $	*/
 /* $NetBSD: lrint.c,v 1.3 2004/10/13 15:18:32 drochner Exp $ */
 
 /*-
@@ -61,9 +61,6 @@ LRINTNAME(double x)
 	s = e >> DBL_EXPBITS;
 	e = (e & 0x7ff) - DBL_EXP_BIAS;
 
-	/* 1.0 x 2^-1 is the smallest number which can be rounded to 1 */
-	if (e < -1)
-		return (0);
 	/* 1.0 x 2^31 (or 2^63) is already too large */
 	if (e >= (int)RESTYPE_BITS - 1)
 		return (s ? RESTYPE_MIN : RESTYPE_MAX); /* ??? unspecified */
@@ -79,6 +76,9 @@ LRINTNAME(double x)
 	e = ((i0 >> 20) & 0x7ff) - DBL_EXP_BIAS;
 	i0 &= 0xfffff;
 	i0 |= (1 << 20);
+
+	if (e < 0)
+		return (0);
 
 	shift = e - DBL_FRACBITS;
 	if (shift >=0)
