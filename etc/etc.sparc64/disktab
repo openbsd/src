@@ -1,4 +1,4 @@
-# $OpenBSD: disktab,v 1.13 2010/07/02 20:33:54 tedu Exp $
+# $OpenBSD: disktab,v 1.14 2011/04/10 20:00:43 krw Exp $
 
 miniroot:\
 	:ty=winchester:se#512:nt#2:rm#300:ns#64:nc#90:\
@@ -19,16 +19,7 @@ floppy|floppy3|3in|3.5in High Density Floppy:\
 	:pb#2880:ob#0:\
 	:pc#2880:oc#0:
 
-# test if not having an 'a' works?
-fakecdrom|Fake image for Bootable CDROM:\
-	:ty=winchester:se#512:nt#1:rm#350:ns#640:nc#2048:\
-	:pa#1310720:oa#0:ba#8192:fa#1024:ta=4.2BSD:\
-	:pb#1310720:ob#0:bb#8192:fb#1024:tb=4.2BSD:\
-	:pc#1310720:oc#0:bc#8192:fc#1024:tc=4.2BSD:\
-	:pd#1310720:od#0:bd#8192:fd#1024:td=4.2BSD:
-
 fakeramdisk:\
 	:ty=winchester:se#512:nt#1:rm#350:ns#32:nc#180:\
 	:pa#5760:oa#0:ba#8192:fa#4096:ta=4.2BSD:\
 	:pc#5760:oc#0:
-
