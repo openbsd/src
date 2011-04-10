@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_refresh.c,v 1.16 2009/10/27 23:59:49 deraadt Exp $	*/
+/*	$OpenBSD: vs_refresh.c,v 1.17 2011/04/10 21:21:50 martynas Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -199,9 +199,18 @@ vs_paint(sp, flags)
 		else if (F_ISSET(sp, SC_SCR_CENTER)) {
 			if (vs_sm_fill(sp, LNO, P_MIDDLE))
 				return (1);
-		} else
+		} else {
+			if (LNO == HMAP->lno || LNO == TMAP->lno) {
+				cnt = vs_screens(sp, LNO, &CNO);
+				if (LNO == HMAP->lno && cnt < HMAP->soff)
+					HMAP->soff = cnt;
+				if (LNO == TMAP->lno && cnt > TMAP->soff)
+					TMAP->soff = cnt;
+			}
+
 			if (vs_sm_fill(sp, OOBLNO, P_TOP))
 				return (1);
+		}
 		F_SET(sp, SC_SCR_REDRAW);
 	}
 
