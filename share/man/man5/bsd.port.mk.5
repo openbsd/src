@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.277 2011/04/03 07:25:29 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.278 2011/04/10 17:57:16 jasper Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 3 2011 $
+.Dd $Mdocdate: April 10 2011 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1407,9 +1407,6 @@ containing the other copies must be set here.
 External modules mechanism, documented separately.
 See
 .Xr port-modules 5 .
-.It Ev MOTIFLIB
-Read-only.
-Correct incantation to link with motif.
 .It Ev MULTI_PACKAGES
 Set to a list of package extensions for ports that create multiple packages.
 See
@@ -2028,20 +2025,6 @@ Set to
 if libtool is required for correct behavior of this port.
 Adds correct dependencies, and passes LIBTOOL environment variable to
 scripts invocations.
-.It Ev USE_MOTIF
-Set to
-.Sq any
-if port works with any version of motif;
-.Sq lesstif
-if port requires lesstif to work;
-.Sq openmotif
-if ports requires openmotif to work.
-The
-.Sq any
-setting creates an extra flavor choice of
-.Sq lesstif .
-See also
-.Ev MOTIFLIB
 .It Ev USE_SYSTRACE
 User settings.
 Set to
@@ -2321,9 +2304,6 @@ instead.
 Use
 .Ev CONFIGURE_STYLE
 instead.
-.It Ev HAVE_MOTIF
-Old user settings.
-No longer needed since OpenMotif is now free.
 .It Ev IGNOREFILES
 Set to the list of files that can't be checksummed.
 All uses of it have led to postponing the correct action: talking
