@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.38 2011/04/07 15:30:15 miod Exp $ */
+/*	$OpenBSD: cpu.c,v 1.39 2011/04/10 17:16:51 miod Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -434,7 +434,7 @@ alloc_contiguous_pages(size_t size)
 	error = uvm_pglistalloc(roundup(size, USPACE), 0, 0xffffffff, 0, 0,
 		&mlist, 1, UVM_PLA_NOWAIT | UVM_PLA_ZERO);
 	if (error)
-		return NULL;
+		return 0;
 	m = TAILQ_FIRST(&mlist);
 	pa = VM_PAGE_TO_PHYS(m);
 
