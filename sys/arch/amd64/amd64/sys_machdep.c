@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.10 2011/04/05 21:14:00 guenther Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.11 2011/04/10 03:56:38 guenther Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -136,29 +136,6 @@ amd64_set_ioperm(struct proc *p, void *args, register_t *retval)
 #endif
 
 int
-amd64_get_fsbase(struct proc *p, void *args)
-{
-	return copyout(&p->p_addr->u_pcb.pcb_fsbase, args,
-	    sizeof(p->p_addr->u_pcb.pcb_fsbase));
-}
-
-int
-amd64_set_fsbase(struct proc *p, void *args)
-{
-	int error;
-	uint64_t base;
-
-	if ((error = copyin(args, &base, sizeof(base))) != 0)
-		return (error);
-
-	if (base >= VM_MAXUSER_ADDRESS)
-		return (EINVAL);
-
-	p->p_addr->u_pcb.pcb_fsbase = base;
-	return 0;
-}
-
-int
 sys_sysarch(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_sysarch_args /* {
@@ -195,15 +172,6 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 		error = pmc_read(p, SCARG(uap, parms), retval);
 		break;
 #endif
-
-	case AMD64_GET_FSBASE: 
-		error = amd64_get_fsbase(p, SCARG(uap, parms));
-		break;
-
-	case AMD64_SET_FSBASE: 
-		error = amd64_set_fsbase(p, SCARG(uap, parms));
-		break;
-
 	default:
 		error = EINVAL;
 		break;
