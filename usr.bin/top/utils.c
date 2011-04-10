@@ -1,4 +1,4 @@
-/* $OpenBSD: utils.c,v 1.22 2010/01/29 00:36:09 tedu Exp $	 */
+/* $OpenBSD: utils.c,v 1.23 2011/04/10 03:20:59 guenther Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -341,7 +341,7 @@ format_k(int amt)
 int
 find_pid(pid_t pid)
 {
-	struct kinfo_proc2 *pbase, *cur;
+	struct kinfo_proc *pbase, *cur;
 	int nproc;
 
 	if ((pbase = getprocs(KERN_PROC_KTHREAD, 0, &nproc)) == NULL)

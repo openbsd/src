@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.18 2009/10/27 23:59:41 deraadt Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.19 2011/04/10 03:20:59 guenther Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ struct list {
 
 SLIST_HEAD(listhead, list);
 
-struct kinfo_proc2	*plist;
+struct kinfo_proc	*plist;
 char	*selected;
 char	*delim = "\n";
 int	nproc;
@@ -98,8 +98,8 @@ struct listhead sidlist = SLIST_HEAD_INITIALIZER(list);
 
 int	main(int, char **);
 void	usage(void);
-int	killact(struct kinfo_proc2 *, int);
-int	grepact(struct kinfo_proc2 *, int);
+int	killact(struct kinfo_proc *, int);
+int	grepact(struct kinfo_proc *, int);
 void	makelist(struct listhead *, enum listtype, char *);
 
 extern char *__progname;
@@ -111,8 +111,8 @@ main(int argc, char **argv)
 	extern int optind;
 	char buf[_POSIX2_LINE_MAX], *mstr, **pargv, *p, *q;
 	int i, j, ch, bestidx, rv, criteria;
-	int (*action)(struct kinfo_proc2 *, int);
-	struct kinfo_proc2 *kp;
+	int (*action)(struct kinfo_proc *, int);
+	struct kinfo_proc *kp;
 	struct list *li;
 	u_int32_t bestsec, bestusec;
 	regex_t reg;
@@ -227,9 +227,9 @@ main(int argc, char **argv)
 	if (kd == NULL)
 		errx(STATUS_ERROR, "kvm_openfiles(): %s", buf);
 
-	plist = kvm_getproc2(kd, KERN_PROC_ALL, 0, sizeof(*plist), &nproc);
+	plist = kvm_getprocs(kd, KERN_PROC_ALL, 0, sizeof(*plist), &nproc);
 	if (plist == NULL)
-		errx(STATUS_ERROR, "kvm_getproc2() failed");
+		errx(STATUS_ERROR, "kvm_getprocs() failed");
 
 	/*
 	 * Allocate memory which will be used to keep track of the
@@ -253,7 +253,7 @@ main(int argc, char **argv)
 				continue;
 
 			if (matchargs) {
-				if ((pargv = kvm_getargv2(kd, kp, 0)) == NULL)
+				if ((pargv = kvm_getargv(kd, kp, 0)) == NULL)
 					continue;
 
 				j = 0;
@@ -430,7 +430,7 @@ usage(void)
 }
 
 int
-killact(struct kinfo_proc2 *kp, int dummy)
+killact(struct kinfo_proc *kp, int dummy)
 {
 
 	if (kill(kp->p_pid, signum) == -1 && errno != ESRCH) {
@@ -441,14 +441,14 @@ killact(struct kinfo_proc2 *kp, int dummy)
 }
 
 int
-grepact(struct kinfo_proc2 *kp, int printdelim)
+grepact(struct kinfo_proc *kp, int printdelim)
 {
 	char **argv;
 
 	if (printdelim)
 		fputs(delim, stdout);
 	if (longfmt && matchargs) {
-		if ((argv = kvm_getargv2(kd, kp, 0)) == NULL)
+		if ((argv = kvm_getargv(kd, kp, 0)) == NULL)
 			return (-1);
 
 		printf("%d ", (int)kp->p_pid);

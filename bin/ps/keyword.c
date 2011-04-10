@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.31 2011/03/12 04:54:28 guenther Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.32 2011/04/10 03:20:58 guenther Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@ int	utime(), stime(), ixrss(), idrss(), isrss();
 #endif
 
 /* Compute offset in common structures. */
-#define	POFF(x)	offsetof(struct kinfo_proc2, x)
+#define	POFF(x)	offsetof(struct kinfo_proc, x)
 
 #define	UIDFMT	"u"
 #define	UIDLEN	5
@@ -75,7 +75,7 @@ int	utime(), stime(), ixrss(), idrss(), isrss();
 
 #define	USERLEN	8
 
-/* Bit types must match their respective entries in struct kinfo_proc2 */
+/* Bit types must match their respective entries in struct kinfo_proc */
 VAR var[] = {
 	{"%cpu", "%CPU", NULL, NLIST, pcpu, 4},
 	{"%mem", "%MEM", NULL, NLIST, pmem, 4},

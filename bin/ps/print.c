@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.47 2011/03/12 04:54:28 guenther Exp $	*/
+/*	$OpenBSD: print.c,v 1.48 2011/04/10 03:20:58 guenther Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -92,7 +92,7 @@ printheader(void)
 }
 
 void
-command(const struct kinfo_proc2 *kp, VARENT *ve)
+command(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 	int left, wantspace = 0;
@@ -109,7 +109,7 @@ command(const struct kinfo_proc2 *kp, VARENT *ve)
 	} else
 		left = -1;
 	if (needenv && kd != NULL) {
-		argv = kvm_getenvv2(kd, kp, termwidth);
+		argv = kvm_getenvv(kd, kp, termwidth);
 		if ((p = argv) != NULL) {
 			while (*p) {
 				fmt_puts(*p, &left);
@@ -125,7 +125,7 @@ command(const struct kinfo_proc2 *kp, VARENT *ve)
 	if (needcomm) {
 		if (!commandonly) {
 			if (kd != NULL) {
-				argv = kvm_getargv2(kd, kp, termwidth);
+				argv = kvm_getargv(kd, kp, termwidth);
 				if ((p = argv) != NULL) {
 					if (wantspace) {
 						fmt_putc(' ', &left);
@@ -169,7 +169,7 @@ command(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-ucomm(const struct kinfo_proc2 *kp, VARENT *ve)
+ucomm(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 
@@ -178,7 +178,7 @@ ucomm(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-logname(const struct kinfo_proc2 *kp, VARENT *ve)
+logname(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 
@@ -195,7 +195,7 @@ logname(const struct kinfo_proc2 *kp, VARENT *ve)
 #define pgtok(a)	(((unsigned long long)(a)*getpagesize())/1024)
 
 void
-state(const struct kinfo_proc2 *kp, VARENT *ve)
+state(const struct kinfo_proc *kp, VARENT *ve)
 {
 	extern int ncpu;
 	int flag;
@@ -271,7 +271,7 @@ state(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-pri(const struct kinfo_proc2 *kp, VARENT *ve)
+pri(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 
@@ -280,7 +280,7 @@ pri(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-pnice(const struct kinfo_proc2 *kp, VARENT *ve)
+pnice(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 	v = ve->var;
@@ -288,7 +288,7 @@ pnice(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-euname(const struct kinfo_proc2 *kp, VARENT *ve)
+euname(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 
@@ -298,7 +298,7 @@ euname(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-runame(const struct kinfo_proc2 *kp, VARENT *ve)
+runame(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 
@@ -308,7 +308,7 @@ runame(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-gname(const struct kinfo_proc2 *kp, VARENT *ve)
+gname(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 
@@ -318,7 +318,7 @@ gname(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-rgname(const struct kinfo_proc2 *kp, VARENT *ve)
+rgname(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 
@@ -328,7 +328,7 @@ rgname(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-tdev(const struct kinfo_proc2 *kp, VARENT *ve)
+tdev(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 	dev_t dev;
@@ -346,7 +346,7 @@ tdev(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-tname(const struct kinfo_proc2 *kp, VARENT *ve)
+tname(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 	dev_t dev;
@@ -365,7 +365,7 @@ tname(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-longtname(const struct kinfo_proc2 *kp, VARENT *ve)
+longtname(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 	dev_t dev;
@@ -380,7 +380,7 @@ longtname(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-started(const struct kinfo_proc2 *kp, VARENT *ve)
+started(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 	static time_t now;
@@ -408,7 +408,7 @@ started(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-lstarted(const struct kinfo_proc2 *kp, VARENT *ve)
+lstarted(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 	time_t startt;
@@ -426,7 +426,7 @@ lstarted(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-wchan(const struct kinfo_proc2 *kp, VARENT *ve)
+wchan(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 
@@ -438,7 +438,7 @@ wchan(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-vsize(const struct kinfo_proc2 *kp, VARENT *ve)
+vsize(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 
@@ -448,7 +448,7 @@ vsize(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-rssize(const struct kinfo_proc2 *kp, VARENT *ve)
+rssize(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 
@@ -459,7 +459,7 @@ rssize(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-p_rssize(const struct kinfo_proc2 *kp, VARENT *ve)
+p_rssize(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 
@@ -469,7 +469,7 @@ p_rssize(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-cputime(const struct kinfo_proc2 *kp, VARENT *ve)
+cputime(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 	long secs;
@@ -505,7 +505,7 @@ cputime(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 double
-getpcpu(const struct kinfo_proc2 *kp)
+getpcpu(const struct kinfo_proc *kp)
 {
 	double d;
 
@@ -532,7 +532,7 @@ getpcpu(const struct kinfo_proc2 *kp)
 }
 
 void
-pcpu(const struct kinfo_proc2 *kp, VARENT *ve)
+pcpu(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 
@@ -541,7 +541,7 @@ pcpu(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 double
-getpmem(const struct kinfo_proc2 *kp)
+getpmem(const struct kinfo_proc *kp)
 {
 	double fracmem;
 	int szptudot;
@@ -559,7 +559,7 @@ getpmem(const struct kinfo_proc2 *kp)
 }
 
 void
-pmem(const struct kinfo_proc2 *kp, VARENT *ve)
+pmem(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 
@@ -568,7 +568,7 @@ pmem(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-pagein(const struct kinfo_proc2 *kp, VARENT *ve)
+pagein(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 
@@ -578,7 +578,7 @@ pagein(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-maxrss(const struct kinfo_proc2 *kp, VARENT *ve)
+maxrss(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 
@@ -587,7 +587,7 @@ maxrss(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-tsize(const struct kinfo_proc2 *kp, VARENT *ve)
+tsize(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 
@@ -596,7 +596,7 @@ tsize(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-dsize(const struct kinfo_proc2 *kp, VARENT *ve)
+dsize(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 
@@ -605,7 +605,7 @@ dsize(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-ssize(const struct kinfo_proc2 *kp, VARENT *ve)
+ssize(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 
@@ -665,7 +665,7 @@ printval(char *bp, VAR *v)
 }
 
 void
-pvar(const struct kinfo_proc2 *kp, VARENT *ve)
+pvar(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 
@@ -677,7 +677,7 @@ pvar(const struct kinfo_proc2 *kp, VARENT *ve)
 }
 
 void
-emulname(const struct kinfo_proc2 *kp, VARENT *ve)
+emulname(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pigs.c,v 1.24 2011/03/02 06:48:17 jasper Exp $	*/
+/*	$OpenBSD: pigs.c,v 1.25 2011/04/10 03:20:59 guenther Exp $	*/
 /*	$NetBSD: pigs.c,v 1.3 1995/04/29 05:54:50 cgd Exp $	*/
 
 /*-
@@ -57,7 +57,7 @@ int read_pg(void);
 int select_pg(void);
 void showpigs(int k);
 
-static struct kinfo_proc2 *procbase = NULL;
+static struct kinfo_proc *procbase = NULL;
 static int nproc, pigs_cnt, *pb_indices = NULL;
 static int onproc = -1;
 
@@ -124,7 +124,7 @@ int
 getprocs(void)
 {
 	size_t size;
-	int mib[6] = {CTL_KERN, KERN_PROC2, KERN_PROC_KTHREAD, 0, sizeof(struct kinfo_proc2), 0};
+	int mib[6] = {CTL_KERN, KERN_PROC, KERN_PROC_KTHREAD, 0, sizeof(struct kinfo_proc), 0};
 	
 	int st;
 
@@ -139,12 +139,12 @@ getprocs(void)
 	if ((procbase = malloc(size + 1)) == NULL)
 		return (1);
 
-	mib[5] = (int)(size / sizeof(struct kinfo_proc2));
+	mib[5] = (int)(size / sizeof(struct kinfo_proc));
 	st = sysctl(mib, 6, procbase, &size, NULL, 0);
 	if (st == -1)
 		return (1);
 
-	nproc = (int)(size / sizeof(struct kinfo_proc2));
+	nproc = (int)(size / sizeof(struct kinfo_proc));
 	return (0);
 }
 
@@ -255,7 +255,7 @@ initpigs(void)
 void
 showpigs(int k)
 {
-	struct kinfo_proc2 *kp;
+	struct kinfo_proc *kp;
 	double value;
 	char *uname, *pname;
 

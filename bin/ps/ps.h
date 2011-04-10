@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.h,v 1.8 2008/03/08 19:20:12 millert Exp $	*/
+/*	$OpenBSD: ps.h,v 1.9 2011/04/10 03:20:58 guenther Exp $	*/
 /*	$NetBSD: ps.h,v 1.11 1995/09/29 21:57:03 cgd Exp $	*/
 
 /*-
@@ -51,7 +51,7 @@ typedef struct varent {
 	struct var *var;
 } VARENT;
 
-struct kinfo_proc2;
+struct kinfo_proc;
 typedef struct var {
 	char	*name;		/* name(s) of variable */
 	char	*header;	/* default header */
@@ -63,7 +63,7 @@ typedef struct var {
 #define	NLIST	0x10		/* needs nlist info from kernel */
 	u_int	flag;
 				/* output routine */
-	void	(*oproc)(const struct kinfo_proc2 *, struct varent *);
+	void	(*oproc)(const struct kinfo_proc *, struct varent *);
 	short	width;		/* printing width */
 	char	parsed;		/* have we been parsed yet? (avoid dupes) */
 	/*

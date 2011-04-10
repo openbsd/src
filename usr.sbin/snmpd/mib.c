@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.43 2010/10/15 11:56:13 sthen Exp $	*/
+/*	$OpenBSD: mib.c,v 1.44 2011/04/10 03:20:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -329,8 +329,8 @@ int	 mib_hrprocessor(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_hrswrun(struct oid *, struct ber_oid *, struct ber_element **);
 
 int	 kinfo_proc_comp(const void *, const void *);
-int	 kinfo_proc(u_int32_t, struct kinfo_proc2 **);
-int	 kinfo_args(struct kinfo_proc2 *, char **);
+int	 kinfo_proc(u_int32_t, struct kinfo_proc **);
+int	 kinfo_args(struct kinfo_proc *, char **);
 
 static struct oid hr_mib[] = {
 	{ MIB(host),				OID_MIB },
@@ -607,7 +607,7 @@ int
 mib_hrswrun(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
 	struct ber_element	*ber = *elm;
-	struct kinfo_proc2	*kinfo;
+	struct kinfo_proc	*kinfo;
 	char			*s;
 
 	/* Get and verify the current row index */
@@ -681,20 +681,20 @@ mib_hrswrun(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 kinfo_proc_comp(const void *a, const void *b)
 {
-	struct kinfo_proc2 * const *k1 = a;
-	struct kinfo_proc2 * const *k2 = b;
+	struct kinfo_proc * const *k1 = a;
+	struct kinfo_proc * const *k2 = b;
 
 	return (((*k1)->p_pid > (*k2)->p_pid) ? 1 : -1);
 }
 
 int
-kinfo_proc(u_int32_t idx, struct kinfo_proc2 **kinfo)
+kinfo_proc(u_int32_t idx, struct kinfo_proc **kinfo)
 {
-	static struct kinfo_proc2 *kp = NULL;
+	static struct kinfo_proc *kp = NULL;
 	static size_t		 nkp = 0;
-	int			 mib[] = { CTL_KERN, KERN_PROC2,
+	int			 mib[] = { CTL_KERN, KERN_PROC,
 				    KERN_PROC_ALL, 0, sizeof(*kp), 0 };
-	struct kinfo_proc2	**klist;
+	struct kinfo_proc	**klist;
 	size_t			 size, count, i;
 
 	for (;;) {
@@ -744,7 +744,7 @@ kinfo_proc(u_int32_t idx, struct kinfo_proc2 **kinfo)
 }
 
 int
-kinfo_args(struct kinfo_proc2 *kinfo, char **s)
+kinfo_args(struct kinfo_proc *kinfo, char **s)
 {
 	static char		 str[128];
 	static char		*buf = NULL;

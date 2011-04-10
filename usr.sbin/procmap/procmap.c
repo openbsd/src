@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.36 2011/04/06 11:36:26 miod Exp $ */
+/*	$OpenBSD: procmap.c,v 1.37 2011/04/10 03:20:59 guenther Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -168,7 +168,7 @@ struct nlist nl[] = {
 };
 
 void load_symbols(kvm_t *);
-void process_map(kvm_t *, pid_t, struct kinfo_proc2 *, struct sum *);
+void process_map(kvm_t *, pid_t, struct kinfo_proc *, struct sum *);
 size_t dump_vm_map_entry(kvm_t *, struct kbit *, struct kbit *, int,
     struct sum *);
 char *findname(kvm_t *, struct kbit *, struct kbit *, struct kbit *,
@@ -186,7 +186,7 @@ int
 main(int argc, char *argv[])
 {
 	char errbuf[_POSIX2_LINE_MAX], *kmem = NULL, *kernel = NULL;
-	struct kinfo_proc2 *kproc;
+	struct kinfo_proc *kproc;
 	struct sum total_sum;
 	int many, ch, rc;
 	kvm_t *kd;
@@ -294,8 +294,8 @@ main(int argc, char *argv[])
 		if (pid == 0)
 			kproc = NULL;
 		else {
-			kproc = kvm_getproc2(kd, KERN_PROC_PID, pid,
-			    sizeof(struct kinfo_proc2), &rc);
+			kproc = kvm_getprocs(kd, KERN_PROC_PID, pid,
+			    sizeof(struct kinfo_proc), &rc);
 			if (kproc == NULL || rc == 0) {
 				errno = ESRCH;
 				warn("%d", pid);
@@ -345,7 +345,7 @@ print_sum(struct sum *sum, struct sum *total_sum)
 }
 
 void
-process_map(kvm_t *kd, pid_t pid, struct kinfo_proc2 *proc, struct sum *sum)
+process_map(kvm_t *kd, pid_t pid, struct kinfo_proc *proc, struct sum *sum)
 {
 	struct kbit kbit[4], *vmspace, *vm_map, *header, *vm_map_entry;
 	struct vm_map_entry *last;

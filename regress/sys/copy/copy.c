@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.c,v 1.3 2009/02/15 13:33:22 jsing Exp $	*/
+/*	$OpenBSD: copy.c,v 1.4 2011/04/10 03:20:59 guenther Exp $	*/
 
 /* Written by Ted Unangst 2004 Public Domain */
 
@@ -34,7 +34,7 @@ main(int argc, char **argv)
  	void *goodbuf;
  	void *badbuf;
  	int mib[6];
- 	struct kinfo_proc2 kinfo;
+ 	struct kinfo_proc kinfo;
  	size_t kinfosize = sizeof(kinfo);
  	int s, i;
  	struct ifreq ifrdesc;
@@ -45,10 +45,10 @@ main(int argc, char **argv)
  		err(1, "socket");
 
  	mib[0] = CTL_KERN;
- 	mib[1] = KERN_PROC2;
+ 	mib[1] = KERN_PROC;
  	mib[2] = KERN_PROC_PID;
  	mib[3] = getpid();
- 	mib[4] = sizeof(struct kinfo_proc2);
+ 	mib[4] = sizeof(struct kinfo_proc);
  	mib[5] = 1;
 
  	if (sysctl(mib, 6, &kinfo, &kinfosize, 0, 0))

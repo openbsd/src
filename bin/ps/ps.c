@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.48 2010/07/02 15:43:15 guenther Exp $	*/
+/*	$OpenBSD: ps.c,v 1.49 2011/04/10 03:20:58 guenther Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -91,7 +91,7 @@ int kvm_sysctl_only;
 int
 main(int argc, char *argv[])
 {
-	struct kinfo_proc2 *kp, **kinfo;
+	struct kinfo_proc *kp, **kinfo;
 	struct varent *vent;
 	struct winsize ws;
 	struct passwd *pwd;
@@ -313,7 +313,7 @@ main(int argc, char *argv[])
 	/*
 	 * select procs
 	 */
-	kp = kvm_getproc2(kd, what, flag, sizeof(*kp), &nentries);
+	kp = kvm_getprocs(kd, what, flag, sizeof(*kp), &nentries);
 	if (kp == NULL)
 		errx(1, "%s", kvm_geterr(kd));
 
@@ -378,8 +378,8 @@ scanvars(void)
 static int
 pscomp(const void *v1, const void *v2)
 {
-	const struct kinfo_proc2 *kp1 = *(const struct kinfo_proc2 **)v1;
-	const struct kinfo_proc2 *kp2 = *(const struct kinfo_proc2 **)v2;
+	const struct kinfo_proc *kp1 = *(const struct kinfo_proc **)v1;
+	const struct kinfo_proc *kp2 = *(const struct kinfo_proc **)v2;
 	int i;
 #define VSIZE(k) ((k)->p_vm_dsize + (k)->p_vm_ssize + (k)->p_vm_tsize)
 
