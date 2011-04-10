@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.1 2006/06/01 14:12:20 norby Exp $ */
+/*	$OpenBSD: printconf.c,v 1.2 2011/04/10 22:12:34 jsg Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -35,10 +35,10 @@ void	 print_iface(struct iface *);
 void
 print_mainconf(struct dvmrpd_conf *conf)
 {
-	if (conf->flags |= DVMRPD_FLAG_NO_FIB_UPDATE)
-		printf("fib-update yes\n");
-	else
+	if (conf->flags & DVMRPD_FLAG_NO_FIB_UPDATE)
 		printf("fib-update no\n");
+	else
+		printf("fib-update yes\n");
 }
 
 void
