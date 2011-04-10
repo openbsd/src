@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.15 2010/10/18 04:24:07 deraadt Exp $
+dnl	$OpenBSD: contents,v 1.16 2011/04/10 13:47:19 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -44,7 +44,7 @@ dnl can't use OpenBSDcd because of the multiple bsd.rd
 			and X sets be found via another media or network;
 			otherwise similar to the bsd.rd* images above.
 
-DistributionDescription(eleven)
+DistributionDescription(ten)
 
 OpenBSDbase(57812231,199409896)
 

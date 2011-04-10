@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.1 2011/03/22 18:33:51 jasper Exp $
+dnl	$OpenBSD: contents,v 1.2 2011/04/10 13:47:19 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -9,7 +9,7 @@ OpenBSDrd
 dnl not yet...
 dnl OpenBSDcd
 
-DistributionDescription(eleven)
+DistributionDescription(five)
 
 OpenBSDbase(56389686,167758358)
 

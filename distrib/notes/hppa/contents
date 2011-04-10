@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.24 2010/12/30 19:29:34 miod Exp $
+dnl	$OpenBSD: contents,v 1.25 2011/04/10 13:47:19 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -18,7 +18,7 @@ OpenBSDcd
 
 	xxboot		The OpenBSD/MACHINE LIF boot block.
 
-DistributionDescription(eleven)
+DistributionDescription(ten)
 
 OpenBSDbase(52458159,146213142)
 

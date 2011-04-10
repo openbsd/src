@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.27 2010/10/18 04:24:07 deraadt Exp $
+dnl	$OpenBSD: contents,v 1.28 2011/04/10 13:47:19 miod Exp $
 TopPart
 
 OpenBSDfloppy
@@ -45,7 +45,7 @@ dnl
 dnl In addition, the "tools/" directory contains some utilities that might be
 dnl useful for the installation.
 
-DistributionDescription(eleven)
+DistributionDescription(ten)
 
 OpenBSDbase(55087015,174553690)
 

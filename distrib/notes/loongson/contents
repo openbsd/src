@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.6 2010/10/18 04:24:07 deraadt Exp $
+dnl	$OpenBSD: contents,v 1.7 2011/04/10 13:47:19 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -11,7 +11,7 @@ dnl OpenBSDcd
 
 	boot		The OpenBSD/MACHINE bootloader.
 
-DistributionDescription(eleven)
+DistributionDescription(ten)
 
 OpenBSDbase(56815681,198860931)
 
