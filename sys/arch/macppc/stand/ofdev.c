@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.17 2011/03/13 00:13:53 deraadt Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.18 2011/04/10 09:58:19 miod Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 1997/04/16 20:29:20 thorpej Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
  * Device I/O routines using Open Firmware
  */
 #include <sys/param.h>
+#include <lib/libkern/libkern.h>
 #include <sys/disklabel.h>
 #include <netinet/in.h>
 
