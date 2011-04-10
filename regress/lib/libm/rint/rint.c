@@ -1,14 +1,15 @@
-/*	$OpenBSD: rint.c,v 1.7 2008/12/09 20:35:13 martynas Exp $	*/
+/*	$OpenBSD: rint.c,v 1.8 2011/04/10 11:10:09 martynas Exp $	*/
 
 /*	Written by Michael Shalayeff, 2003,  Public domain.	*/
 
-#include <err.h>
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
 #include <math.h>
+#include <ieeefp.h>
 
 static void
 sigfpe(int sig, siginfo_t *si, void *v)
@@ -33,20 +34,26 @@ main(int argc, char *argv[])
 	sa.sa_flags = SA_SIGINFO;
 	sigaction(SIGFPE, &sa, NULL);
 
-	if (rint(8.6) != 9.)
-		errx(1, "rint");
-	if (rintf(8.6F) != 9)
-		errx(1, "rintf");
-	if (rintl(8.6L) != 9)
-		errx(1, "rintl");
- 	if (lrint(8.6) != 9L)
- 		errx(1, "lrint");
- 	if (lrintf(8.6F) != 9L)
- 		errx(1, "lrintf");
- 	if (llrint(8.6) != 9LL)
- 		errx(1, "llrint");
- 	if (llrintf(8.6F) != 9LL)
- 		errx(1, "llrintf");
+	assert(rint(8.6) == 9.);
+	assert(rintf(8.6F) == 9);
+	assert(rintl(8.6L) == 9);
+ 	assert(lrint(8.6) == 9L);
+ 	assert(lrintf(8.6F) == 9L);
+ 	assert(llrint(8.6) == 9LL);
+ 	assert(llrintf(8.6F) == 9LL);
+
+	assert(lrint(0.0) == 0L);
+	assert(lrintf(0.0) == 0L);
+	assert(lrint(-0.0) == 0L);
+	assert(lrintf(-0.0) == 0L);
+
+	fpsetround(FP_RM);
+	assert(lrint(-0.1) == -1L);
+	assert(lrintf(-0.1) == -1L);
+
+	fpsetround(FP_RP);
+	assert(lrint(0.1) == 1L);
+	assert(lrintf(0.1) == 1L);
 
 	exit(0);
 }
