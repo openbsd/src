@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_lrintf.c,v 1.2 2011/04/10 11:25:14 martynas Exp $	*/
+/*	$OpenBSD: s_lrintf.c,v 1.3 2011/04/10 20:42:09 martynas Exp $	*/
 /* $NetBSD: lrintf.c,v 1.3 2004/10/13 15:18:32 drochner Exp $ */
 
 /*-
@@ -84,9 +84,9 @@ LRINTNAME(float x)
 
 	shift = e - SNG_FRACBITS;
 	if (shift >=0)
-		res = (shift < 32 ? (RESTYPE)i0 << shift : 0);
+		res = (shift < RESTYPE_BITS ? (RESTYPE)i0 << shift : 0);
 	else
-		res = (shift > -32 ? i0 >> -shift : 0);
+		res = (shift > -RESTYPE_BITS ? i0 >> -shift : 0);
 
 	return (s ? -res : res);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_lrint.c,v 1.3 2011/04/10 11:35:01 martynas Exp $	*/
+/*	$OpenBSD: s_lrint.c,v 1.4 2011/04/10 20:42:09 martynas Exp $	*/
 /* $NetBSD: lrint.c,v 1.3 2004/10/13 15:18:32 drochner Exp $ */
 
 /*-
@@ -82,14 +82,14 @@ LRINTNAME(double x)
 
 	shift = e - DBL_FRACBITS;
 	if (shift >=0)
-		res = (shift < 32 ? (RESTYPE)i1 << shift : 0);
+		res = (shift < RESTYPE_BITS ? (RESTYPE)i1 << shift : 0);
 	else
-		res = (shift > -32 ? i1 >> -shift : 0);
+		res = (shift > -RESTYPE_BITS ? i1 >> -shift : 0);
 	shift += 32;
 	if (shift >=0)
-		res |= (shift < 32 ? (RESTYPE)i0 << shift : 0);
+		res |= (shift < RESTYPE_BITS ? (RESTYPE)i0 << shift : 0);
 	else
-		res |= (shift > -32 ? i0 >> -shift : 0);
+		res |= (shift > -RESTYPE_BITS ? i0 >> -shift : 0);
 
 	return (s ? -res : res);
 }
