@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.190 2011/04/05 18:01:21 henning Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.191 2011/04/10 20:09:21 claudio Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -68,6 +68,7 @@
 
 #ifdef IPSEC
 #include <netinet/ip_ipsp.h>
+
 #include <net/if_enc.h>
 #endif
 
@@ -147,8 +148,10 @@ int		bridge_flushrule(struct bridge_iflist *);
 int	bridge_brlconf(struct bridge_softc *, struct ifbrlconf *);
 u_int8_t bridge_filterrule(struct brl_head *, struct ether_header *,
     struct mbuf *);
-struct mbuf *bridge_ip(struct bridge_softc *, int, struct ifnet *,
+#if NPF > 0
+struct mbuf *bridge_filter(struct bridge_softc *, int, struct ifnet *,
     struct ether_header *, struct mbuf *m);
+#endif
 int	bridge_ifenqueue(struct bridge_softc *, struct ifnet *, struct mbuf *);
 void	bridge_fragment(struct bridge_softc *, struct ifnet *,
     struct ether_header *, struct mbuf *);
@@ -999,6 +1002,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	struct ifnet *dst_if;
 	struct ether_addr *dst;
 	struct bridge_softc *sc;
+	struct arpcom *ac;
 	int s, error, len;
 #ifdef IPSEC
 	struct m_tag *mtag;
@@ -1063,11 +1067,32 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 #endif /* IPSEC */
 
 		/* Catch packets that need TCP/UDP hardware checksumming */
-		if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT ||
+		if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT ||
+		    m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT ||
 		    m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT) {
 			m_freem(m);
 			splx(s);
 			return (0);
+		}
+
+		/* check if packet is for local interface */
+		LIST_FOREACH(p, &sc->sc_iflist, next) {
+			if (p->ifp->if_type != IFT_ETHER)
+				continue;
+			ac = (struct arpcom *)p->ifp;
+			dst_if = p->ifp;
+			if (bcmp(ac->ac_enaddr, eh->ether_dhost,
+			    ETHER_ADDR_LEN) == 0
+#if NCARP > 0
+			    || (dst_if->if_carp &&
+			        carp_ourether(dst_if->if_carp, eh, 0) != NULL)
+#endif
+			    ) {
+				bridge_localbroadcast(sc, dst_if, eh, m);
+				m_freem(m);
+				splx(s);
+				return (0);
+			}
 		}
 
 		bridge_span(sc, NULL, m);
@@ -1132,6 +1157,10 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 				}
 				mc = m1;
 			}
+
+			/* bounce packets into alternate rdomains */
+			if (ifp->if_rdomain != dst_if->if_rdomain)
+				bridge_localbroadcast(sc, dst_if, eh, m);
 
 			error = bridge_ifenqueue(sc, dst_if, mc);
 			if (error)
@@ -1304,9 +1333,11 @@ bridgeintr_frame(struct bridge_softc *sc, struct mbuf *m)
 		m_freem(m);
 		return;
 	}
-	m = bridge_ip(sc, BRIDGE_IN, src_if, &eh, m);
+#if NPF > 0
+	m = bridge_filter(sc, BRIDGE_IN, src_if, &eh, m);
 	if (m == NULL)
 		return;
+#endif
 	/*
 	 * If the packet is a multicast or broadcast OR if we don't
 	 * know any better, forward it to all interfaces.
@@ -1344,9 +1375,11 @@ bridgeintr_frame(struct bridge_softc *sc, struct mbuf *m)
 		m_freem(m);
 		return;
 	}
-	m = bridge_ip(sc, BRIDGE_OUT, dst_if, &eh, m);
+#if NPF > 0
+	m = bridge_filter(sc, BRIDGE_OUT, dst_if, &eh, m);
 	if (m == NULL)
 		return;
+#endif
 
 	len = m->m_pkthdr.len;
 #if NVLAN > 0
@@ -1497,15 +1530,15 @@ bridge_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 			eh, 0) != NULL)
 #endif
 		    ) {
-			if (srcifl->bif_flags & IFBIF_LEARNING)
-				bridge_rtupdate(sc,
-				    (struct ether_addr *)&eh->ether_shost,
-				    ifp, 0, IFBAF_DYNAMIC);
 			if (bridge_filterrule(&srcifl->bif_brlin, eh, m) ==
 			    BRL_ACTION_BLOCK) {
 				m_freem(m);
 				return (NULL);
 			}
+			if (srcifl->bif_flags & IFBIF_LEARNING)
+				bridge_rtupdate(sc,
+				    (struct ether_addr *)&eh->ether_shost,
+				    ifp, 0, IFBAF_DYNAMIC);
 
 			/* Make sure the real incoming interface
 			 * is aware */
@@ -1648,9 +1681,11 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 			mc = m1;
 		}
 
-		mc = bridge_ip(sc, BRIDGE_OUT, dst_if, eh, mc);
+#if NPF > 0
+		mc = bridge_filter(sc, BRIDGE_OUT, dst_if, eh, mc);
 		if (mc == NULL)
 			continue;
+#endif
 
 		len = mc->m_pkthdr.len;
 #if NVLAN > 0
@@ -2496,6 +2531,7 @@ bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
 }
 #endif /* IPSEC */
 
+#if NPF > 0
 /*
  * Filter IP packets by peeking into the ethernet frame.  This violates
  * the ISO model, but allows us to act as a IP filter at the data link
@@ -2503,7 +2539,7 @@ bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
  * who've read net/if_ethersubr.c and netinet/ip_input.c
  */
 struct mbuf *
-bridge_ip(struct bridge_softc *sc, int dir, struct ifnet *ifp,
+bridge_filter(struct bridge_softc *sc, int dir, struct ifnet *ifp,
     struct ether_header *eh, struct mbuf *m)
 {
 	struct llc llc;
@@ -2579,20 +2615,9 @@ bridge_ip(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 			ip = mtod(m, struct ip *);
 		}
 
-		if ((m->m_pkthdr.csum_flags & M_IPV4_CSUM_IN_OK) == 0) {
-			if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_IN_BAD) {
-				ipstat.ips_inhwcsum++;
-				ipstat.ips_badsum++;
-				goto dropit;
-			}
-
-			if (in_cksum(m, hlen) != 0) {
-				ipstat.ips_badsum++;
-				goto dropit;
-			}
-		} else {
-			m->m_pkthdr.csum_flags &= ~M_IPV4_CSUM_IN_OK;
-			ipstat.ips_inhwcsum++;
+		if ((ip->ip_sum = in_cksum(m, hlen)) != 0) {
+			ipstat.ips_badsum++;
+			goto dropit;
 		}
 
 		if (ntohs(ip->ip_len) < hlen)
@@ -2614,13 +2639,12 @@ bridge_ip(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 		    dir, AF_INET, hlen, m))
 			return (NULL);
 #endif /* IPSEC */
-#if NPF > 0
+
 		/* Finally, we get to filter the packet! */
 		if (pf_test(dir, ifp, &m, eh) != PF_PASS)
 			goto dropit;
 		if (m == NULL)
 			goto dropit;
-#endif /* NPF > 0 */
 
 		/* Rebuild the IP header */
 		if (m->m_len < hlen && ((m = m_pullup(m, hlen)) == NULL))
@@ -2629,11 +2653,7 @@ bridge_ip(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 			goto dropit;
 		ip = mtod(m, struct ip *);
 		ip->ip_sum = 0;
-		if ((ifp->if_capabilities & IFCAP_CSUM_IPv4)) {
-			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
-			ipstat.ips_outhwcsum++;
-		} else
-			ip->ip_sum = in_cksum(m, hlen);
+		ip->ip_sum = in_cksum(m, hlen);
 
 		break;
 
@@ -2666,12 +2686,10 @@ bridge_ip(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 			return (NULL);
 #endif /* IPSEC */
 
-#if NPF > 0
 		if (pf_test6(dir, ifp, &m, eh) != PF_PASS)
 			goto dropit;
 		if (m == NULL)
 			return (NULL);
-#endif /* NPF > 0 */
 
 		break;
 	}
@@ -2703,6 +2721,7 @@ dropit:
 		m_freem(m);
 	return (NULL);
 }
+#endif /* NPF > 0 */
 
 void
 bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
