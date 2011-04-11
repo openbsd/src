@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.19 2010/07/02 20:33:54 tedu Exp $
+#	$OpenBSD: disktab,v 1.20 2011/04/11 13:09:36 krw Exp $
 
 floppy|floppy3|3in|3.5in High Density Floppy:\
 	:dt=floppy:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
@@ -10,19 +10,3 @@ rdroot:\
 	:ty=ramdisk:se#512:nt#2:rm#300:ns#8:nc#359:\
 	:pa#5744:oa#0:ta=4.2BSD:ba#8192:fa#1024: \
 	:pc#5744:oc#0:
-
-# test if not having an 'a' works?
-OpenBSD2.1|Fake image for Bootable CDROM:\
-	:ty=winchester:se#512:nt#1:rm#350:ns#160:nc#2048:\
-	:pa#327680:oa#0:ba#8192:fa#1024:ta=ISO9660:\
-	:pc#327680:oc#0:bc#8192:fc#1024:tc=ISO9660:\
-
-simpleroot:\
-	:ty=winchester:\
-	:dt=SCSI:\
-	:ns#32:\
-	:nt#64:\
-	:nc#96:\
-	:pa#65536:oa#0:ba#8192:fa#1024:ta=4.2BSD:\
-	:pb#131072:ob#65536:tb=swap:\
-	:pc#196608:oc#0:
