@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.217 2011/04/05 19:37:01 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.218 2011/04/11 06:44:39 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 5 2011 $
+.Dd $Mdocdate: April 11 2011 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -576,10 +576,13 @@ session.
 .It Xo Ic detach-client
 .Op Fl P
 .Op Fl t Ar target-client
+.Op Fl s Ar target-session
 .Xc
 .D1 (alias: Ic detach )
-Detach the current client if bound to a key, or the specified client with
-.Fl t .
+Detach the current client if bound to a key, the client specified with
+.Fl t ,
+or all clients currently attached to to the session specified by
+.Fl s .
 If
 .Fl P
 is given, send SIGHUP to the parent process of the client, typically causing it
