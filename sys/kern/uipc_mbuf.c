@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.154 2011/04/10 23:25:02 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.155 2011/04/11 13:10:13 claudio Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -91,6 +91,11 @@
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_interface.h>
+#endif
 
 struct	mbstat mbstat;		/* mbuf stats */
 struct	pool mbpool;		/* mbuf pool */
@@ -1382,9 +1387,6 @@ m_dup_pkthdr(struct mbuf *to, struct mbuf *from, int wait)
 }
 
 #ifdef DDB
-#include <machine/db_machdep.h>
-#include <ddb/db_interface.h>
-
 void
 m_print(void *v, int (*pr)(const char *, ...))
 {
