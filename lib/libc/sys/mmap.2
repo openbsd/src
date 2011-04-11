@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.37 2008/06/30 05:46:46 otto Exp $
+.\"	$OpenBSD: mmap.2,v 1.38 2011/04/11 17:46:19 tedu Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)mmap.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: June 30 2008 $
+.Dd $Mdocdate: April 11 2011 $
 .Dt MMAP 2
 .Os
 .Sh NAME
@@ -128,6 +128,15 @@ system calls.
 Modifications are private.
 .It Dv MAP_SHARED
 Modifications are shared.
+.It Dv MAP_TRYFIXED
+Attempt to use the hint provided by
+.Fa addr
+even if the kernel would normally prefer a different address, but do not
+fail if the address is not available.
+This option is provided for compatibility with other operating systems
+and its use in
+.Ox
+is discouraged.
 .It Dv MAP_COPY
 Modifications are private and, unlike
 .Dv MAP_PRIVATE ,
