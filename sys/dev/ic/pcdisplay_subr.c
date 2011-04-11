@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplay_subr.c,v 1.10 2011/04/03 15:46:30 miod Exp $ */
+/* $OpenBSD: pcdisplay_subr.c,v 1.11 2011/04/11 19:11:01 matthew Exp $ */
 /* $NetBSD: pcdisplay_subr.c,v 1.16 2000/06/08 07:01:19 cgd Exp $ */
 
 /*
@@ -116,8 +116,8 @@ pcdisplay_cursor(void *id, int on, int row, int col)
 		scr->mem[off] = scr->cursortmp ^ 0x7700;
 	}
 
-	splx(s);
 done:
+	splx(s);
 	return 0;
 #else 	/* PCDISPLAY_SOFTCURSOR */
 	struct pcdisplayscreen *scr = id;
