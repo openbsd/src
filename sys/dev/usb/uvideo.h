@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.53 2011/03/26 08:13:05 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.54 2011/04/11 02:04:48 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -448,6 +448,7 @@ struct uvideo_frame_buffer {
 	int		 offset;
 	int		 buf_size;
 	uint8_t		*buf;
+	uint32_t	 fmt_flags;
 };
 
 #define UVIDEO_MAX_BUFFERS	32

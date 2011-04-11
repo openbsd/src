@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.160 2011/04/04 17:38:24 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.161 2011/04/11 02:04:48 jakemsr Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -249,7 +249,6 @@ struct video_hw_if uvideo_hw_if = {
 #define UVIDEO_FLAG_ISIGHT_STREAM_HEADER	0x1
 #define UVIDEO_FLAG_REATTACH			0x2
 #define UVIDEO_FLAG_VENDOR_CLASS		0x4
-#define UVIDEO_FLAG_FIX_MAX_VIDEO_FRAME_SIZE	0x8
 struct uvideo_devs {
 	struct usb_devno	 uv_dev;
 	char			*ucode_name;
@@ -324,27 +323,6 @@ struct uvideo_devs {
 	    NULL,
 	    NULL,
 	    UVIDEO_FLAG_VENDOR_CLASS
-	},
-	{
-	    /* Needs to fix dwMaxVideoFrameSize */
-	    { USB_VENDOR_CHENSOURCE, USB_PRODUCT_CHENSOURCE_CM12402 },
-	    NULL,
-	    NULL,
-	    UVIDEO_FLAG_FIX_MAX_VIDEO_FRAME_SIZE
-	},
-	{
-	    /* Needs to fix dwMaxVideoFrameSize */
-	    { USB_VENDOR_MICRODIA, USB_PRODUCT_MICRODIA_CAM_1 },
-	    NULL,
-	    NULL,
-	    UVIDEO_FLAG_FIX_MAX_VIDEO_FRAME_SIZE
-	},
-	{
-	    /* Needs to fix dwMaxVideoFrameSize */
-	    { USB_VENDOR_MICROSOFT, USB_PRODUCT_MICROSOFT_LIFECAM },
-	    NULL,
-	    NULL,
-	    UVIDEO_FLAG_FIX_MAX_VIDEO_FRAME_SIZE
 	},
 };
 #define uvideo_lookup(v, p) \
@@ -1077,15 +1055,20 @@ uvideo_vs_parse_desc_frame_sub(struct uvideo_softc *sc,
 		sc->sc_fmtgrp[fmtidx].frame_cur = fd;
 
 	/*
-	 * On some broken device, dwMaxVideoFrameBufferSize is not correct.
-	 * So fix it by frame width/height (XXX YUV2 format only).
+	 * On some devices, dwMaxVideoFrameBufferSize is not correct.
+	 * Version 1.1 of the UVC spec says this field is deprecated.
+	 * For uncompressed pixel formats, the frame buffer size can
+	 * be determined by multiplying width, height, and bytes per pixel.
+	 * Uncompressed formats have a fixed number of bytes per pixel.
+	 * Bytes per pixel can vary with compressed formats.
 	 */
-	if (sc->sc_quirk &&
-	    sc->sc_quirk->flags & UVIDEO_FLAG_FIX_MAX_VIDEO_FRAME_SIZE &&
-	    sc->sc_fmtgrp[fmtidx].pixelformat == V4L2_PIX_FMT_YUYV) {
-		fbuf_size = UGETW(fd->wWidth) * UGETW(fd->wHeight) * 4;
-		DPRINTF(1, "wWidth = %d, wHeight = %d\n",
-			UGETW(fd->wWidth), UGETW(fd->wHeight));
+	if (desc->bDescriptorSubtype == UDESCSUB_VS_FRAME_UNCOMPRESSED) {
+		fbuf_size = UGETW(fd->wWidth) * UGETW(fd->wHeight) *
+		    sc->sc_fmtgrp[fmtidx].format->u.uc.bBitsPerPixel / NBBY;
+		DPRINTF(10, "%s: %s: frame buffer size=%d "
+		    "width=%d height=%d bpp=%d\n", DEVNAME(sc), __func__,
+		    fbuf_size, UGETW(fd->wWidth), UGETW(fd->wHeight),
+		    sc->sc_fmtgrp[fmtidx].format->u.uc.bBitsPerPixel);
 	} else
 		fbuf_size = UGETDW(fd->dwMaxVideoFrameBufferSize);
 
@@ -1315,11 +1298,13 @@ uvideo_vs_negotiation(struct uvideo_softc *sc, int commit)
 {
 	struct usb_video_probe_commit *pc;
 	struct uvideo_format_group *fmtgrp;
+	struct usb_video_header_desc *hd;
+	struct usb_video_frame_desc *frame;
 	uint8_t *p, *cur;
 	uint8_t probe_data[34];
 	uint32_t frame_ival, nivals, min, max, step, diff;
 	usbd_status error;
-	int i, ival_bytes;
+	int i, ival_bytes, changed = 0;
 
 	pc = (struct usb_video_probe_commit *)probe_data;
 
@@ -1401,8 +1386,80 @@ uvideo_vs_negotiation(struct uvideo_softc *sc, int commit)
 	if (error != USBD_NORMAL_COMPLETION)
 		return (error);
 
+	/* check that the format and frame indexes are what we wanted */
+	if (pc->bFormatIndex != fmtgrp->format->bFormatIndex) {
+		changed++;
+		DPRINTF(1, "%s: %s: wanted format 0x%x, got format 0x%x\n",
+		    DEVNAME(sc), __func__, fmtgrp->format->bFormatIndex,
+		    pc->bFormatIndex);
+		for (i = 0; i < sc->sc_fmtgrp_num; i++) {
+			if (sc->sc_fmtgrp[i].format->bFormatIndex ==
+			    pc->bFormatIndex) {
+				fmtgrp = &sc->sc_fmtgrp[i];
+				break;
+			}
+		}
+		if (i == sc->sc_fmtgrp_num) {
+			DPRINTF(1, "%s: %s: invalid format index 0x%x\n",
+			    DEVNAME(sc), __func__, pc->bFormatIndex);
+			return (USBD_INVAL);
+		}
+	}
+	if (pc->bFrameIndex != fmtgrp->frame_cur->bFrameIndex) {
+		changed++;
+		DPRINTF(1, "%s: %s: wanted frame 0x%x, got frame 0x%x\n",
+		    DEVNAME(sc), __func__, fmtgrp->frame_cur->bFrameIndex,
+		    pc->bFrameIndex);
+		for (i = 0; i < fmtgrp->frame_num; i++) {
+			if (fmtgrp->frame[i]->bFrameIndex == pc->bFrameIndex) {
+				frame = fmtgrp->frame[i];
+				break;
+			}
+			if (i == fmtgrp->frame_num) {
+				DPRINTF(1, "%s: %s: invalid frame index 0x%x\n",
+				    DEVNAME(sc), __func__, pc->bFrameIndex);
+				return (USBD_INVAL);
+			}
+		}
+	} else
+		frame = fmtgrp->frame_cur;
+
+	/*
+	 * Uncompressed formats have fixed bits per pixel, which means
+	 * the frame buffer size is fixed and can be calculated.  Because
+	 * some devices return incorrect values, always override the
+	 * the frame size with a calculated value.
+	 */
+	if (frame->bDescriptorSubtype == UDESCSUB_VS_FRAME_UNCOMPRESSED) {
+		USETDW(pc->dwMaxVideoFrameSize,
+		    UGETW(frame->wWidth) * UGETW(frame->wHeight) *
+		    fmtgrp->format->u.uc.bBitsPerPixel / NBBY);
+		DPRINTF(1, "fixed dwMaxVideoFrameSize=%d, "
+		    "width=%d height=%d bpp=%d\n",
+		    UGETDW(pc->dwMaxVideoFrameSize),
+		    UGETW(frame->wWidth), UGETW(frame->wHeight),
+		    fmtgrp->format->u.uc.bBitsPerPixel);
+	} else {
+		/*
+		 * Some UVC 1.00 devices return dwMaxVideoFrameSize = 0.
+		 * If so, fix it by format/frame descriptors.
+		 */
+		hd = sc->sc_desc_vc_header.fix;
+		if (UGETDW(pc->dwMaxVideoFrameSize) == 0 &&
+		    UGETW(hd->bcdUVC) < 0x0110 ) {
+			DPRINTF(1, "%s: dwMaxVideoFrameSize == 0, fixed\n",
+			    DEVNAME(sc));
+			USETDW(pc->dwMaxVideoFrameSize, 
+			    UGETDW(frame->dwMaxVideoFrameBufferSize));
+		}
+	}
+
 	/* commit */
 	if (commit) {
+		if (changed > 0) {
+			/* didn't get the frame format or size we wanted */
+			return (USBD_INVAL);
+		}
 		error = uvideo_vs_set_commit(sc, probe_data);
 		if (error != USBD_NORMAL_COMPLETION)
 			return (error);
@@ -1466,7 +1523,6 @@ uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data,
 	usbd_status error;
 	uint16_t tmp;
 	struct usb_video_probe_commit *pc;
-	struct usb_video_header_desc *hd;
 
 	req.bmRequestType = UVIDEO_GET_IF;
 	req.bRequest = request;
@@ -1485,33 +1541,6 @@ uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data,
 		return (USBD_INVAL);
 	}
 	DPRINTF(1, "%s: GET probe request successfully\n", DEVNAME(sc));
-
-	/*
-	 * Some UVC 1.00 devices return dwMaxVideoFrameSize = 0.
-	 * If so, fix it by format/frame descriptors.
-	 */
-	hd = sc->sc_desc_vc_header.fix;
-	if (UGETDW(pc->dwMaxVideoFrameSize) == 0 &&
-	    UGETW(hd->bcdUVC) < 0x0110 ) {
-		DPRINTF(1, "%s: dwMaxVideoFrameSize == 0, fixed\n",
-		    DEVNAME(sc));
-		USETDW(pc->dwMaxVideoFrameSize, 
-		    UGETDW(sc->sc_fmtgrp_cur->frame_cur
-			->dwMaxVideoFrameBufferSize));
-
-		/*
-		 * On some broken device, the above value is not correct.
-		 * So fix it by frame width/height (XXX YUV2 format only).
-		 */
-		if (sc->sc_quirk &&
-		    sc->sc_quirk->flags &
-			 UVIDEO_FLAG_FIX_MAX_VIDEO_FRAME_SIZE &&
-		    sc->sc_fmtgrp_cur->pixelformat == V4L2_PIX_FMT_YUYV) {
-			USETDW(pc->dwMaxVideoFrameSize, 
-		    	    UGETW(sc->sc_fmtgrp_cur->frame_cur->wWidth) *
-			    UGETW(sc->sc_fmtgrp_cur->frame_cur->wHeight) * 4);
-		}
-	}
 
 	DPRINTF(1, "bmHint=0x%02x\n", UGETW(pc->bmHint));
 	DPRINTF(1, "bFormatIndex=0x%02x\n", pc->bFormatIndex);
@@ -1584,6 +1613,8 @@ uvideo_vs_alloc_frame(struct uvideo_softc *sc)
 	fb->sample = 0;
 	fb->fid = 0;
 	fb->offset = 0;
+	fb->fmt_flags = sc->sc_fmtgrp_cur->frame_cur->bDescriptorSubtype ==
+	    UDESCSUB_VS_FRAME_UNCOMPRESSED ? 0 : V4L2_FMT_FLAG_COMPRESSED;
 
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -2028,7 +2059,14 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 		DPRINTF(2, "%s: %s: EOF (frame size = %d bytes)\n",
 		    DEVNAME(sc), __func__, fb->offset);
 
-		if (fb->offset <= fb->buf_size) {
+		if (fb->offset > fb->buf_size) {
+			DPRINTF(1, "%s: %s: frame too large, skipped!\n",
+			    DEVNAME(sc), __func__);
+		} else if (fb->offset < fb->buf_size &&
+		    !(fb->fmt_flags & V4L2_FMT_FLAG_COMPRESSED)) {
+			DPRINTF(1, "%s: %s: frame too small, skipped!\n",
+			    DEVNAME(sc), __func__);
+		} else {
 #ifdef UVIDEO_DUMP
 			/* do the file write in process context */
 			usb_rem_task(sc->sc_udev, &sc->sc_task_write);
@@ -2041,9 +2079,6 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 				/* read */
 				uvideo_read(sc, fb->buf, fb->offset);
 			}
-		} else {
-			DPRINTF(1, "%s: %s: frame too large, skipped!\n",
-			    DEVNAME(sc), __func__);
 		}
 
 		fb->sample = 0;
