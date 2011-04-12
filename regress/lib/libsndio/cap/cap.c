@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sndio.h>
+#include "tools.h"
 
 struct sio_par par;
 struct sio_cap cap;

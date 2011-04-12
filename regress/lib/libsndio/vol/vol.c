@@ -8,6 +8,7 @@
 #include <poll.h>
 #include <termios.h>
 #include <sndio.h>
+#include "tools.h"
 
 #define BUFSZ 0x100
 unsigned char buf[BUFSZ];

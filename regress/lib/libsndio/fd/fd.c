@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sndio.h>
+#include "tools.h"
 
 struct buf {				/* simple circular fifo */
 	unsigned start;			/* first used byte */

@@ -5,7 +5,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "sndio.h"
+#include <sndio.h>
+#include "tools.h"
 
 #define BUFSZ 0x1000
 unsigned char buf[BUFSZ];
