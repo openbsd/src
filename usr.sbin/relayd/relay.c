@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.131 2011/04/07 13:22:29 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.132 2011/04/12 11:45:18 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -77,6 +77,7 @@ u_int32_t	 relay_hash_addr(struct sockaddr_storage *, u_int32_t);
 
 void		 relay_write(struct bufferevent *, void *);
 void		 relay_read(struct bufferevent *, void *);
+int		 relay_splicelen(struct ctl_relay_event *);
 void		 relay_error(struct bufferevent *, short, void *);
 void		 relay_dump(struct ctl_relay_event *, const void *, size_t);
 
@@ -801,7 +802,22 @@ relay_connected(int fd, short sig, void *arg)
 		}
 		break;
 	case RELAY_PROTO_TCP:
-		/* Use defaults */
+		if (rlay->rl_conf.flags & (F_SSL|F_SSLCLIENT))
+			break;
+		if (setsockopt(con->se_in.s, SOL_SOCKET, SO_SPLICE,
+		    &con->se_out.s, sizeof(int)) == -1) {
+			log_debug("relay_connect: session %d: splice forward "
+			    "failed: %s", con->se_id, strerror(errno));
+			return;
+		}
+		con->se_in.splicelen = 0;
+		if (setsockopt(con->se_out.s, SOL_SOCKET, SO_SPLICE,
+		    &con->se_in.s, sizeof(int)) == -1) {
+			log_debug("relay_connect: session %d: splice backward "
+			    "failed: %s", con->se_id, strerror(errno));
+			return;
+		}
+		con->se_out.splicelen = 0;
 		break;
 	default:
 		fatalx("relay_input: unknown protocol");
@@ -1954,15 +1970,47 @@ relay_close_http(struct rsession *con, u_int code, const char *msg,
 	}
 }
 
+int
+relay_splicelen(struct ctl_relay_event *cre)
+{
+	struct rsession *con = (struct rsession *)cre->con;
+	off_t len;
+	socklen_t optlen;
+
+	optlen = sizeof(len);
+	if (getsockopt(cre->s, SOL_SOCKET, SO_SPLICE, &len, &optlen) == -1) {
+		relay_close(con, strerror(errno));
+		return (0);
+	}
+	if (len > cre->splicelen) {
+		cre->splicelen = len;
+		return (1);
+	}
+	return (0);
+}
+
 void
 relay_error(struct bufferevent *bev, short error, void *arg)
 {
 	struct ctl_relay_event *cre = (struct ctl_relay_event *)arg;
 	struct rsession *con = (struct rsession *)cre->con;
 	struct evbuffer *dst;
+	struct timeval tv, tv_now;
 
 	if (error & EVBUFFER_TIMEOUT) {
-		relay_close(con, "buffer event timeout");
+		if (gettimeofday(&tv_now, NULL) == -1) {
+			relay_close(con, strerror(errno));
+			return;
+		}
+		if (cre->splicelen >= 0 && relay_splicelen(cre))
+			con->se_tv_last = tv_now;
+		if (cre->dst->splicelen >= 0 && relay_splicelen(cre->dst))
+			con->se_tv_last = tv_now;
+		timersub(&tv_now, &con->se_tv_last, &tv);
+		if (timercmp(&tv, &con->se_relay->rl_conf.timeout, >=))
+			relay_close(con, "buffer event timeout");
+		else
+			bufferevent_enable(cre->bev, EV_READ);
 		return;
 	}
 	if (error & (EVBUFFER_READ|EVBUFFER_WRITE|EVBUFFER_EOF)) {
@@ -2016,6 +2064,8 @@ relay_accept(int fd, short sig, void *arg)
 	con->se_out.dst = &con->se_in;
 	con->se_in.con = con;
 	con->se_out.con = con;
+	con->se_in.splicelen = -1;
+	con->se_out.splicelen = -1;
 	con->se_relay = rlay;
 	con->se_id = ++relay_conid;
 	con->se_relayid = rlay->rl_conf.id;
