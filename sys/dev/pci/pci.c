@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.88 2010/12/30 00:58:22 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.89 2011/04/12 20:29:35 deraadt Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -571,9 +571,14 @@ pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, int state)
 		}
 		reg = pci_conf_read(pc, tag, offset + PCI_PMCSR);
 		if ((reg & PCI_PMCSR_STATE_MASK) != state) {
+			int ostate = reg & PCI_PMCSR_STATE_MASK;
+
 			pci_conf_write(pc, tag, offset + PCI_PMCSR,
 			    (reg & ~PCI_PMCSR_STATE_MASK) | state);
-			return (reg & PCI_PMCSR_STATE_MASK);
+			if (state == PCI_PMCSR_STATE_D3 ||
+			    ostate == PCI_PMCSR_STATE_D3)
+				delay(10 * 1000);
+			return (ostate);
 		}
 	}
 	return (state);
