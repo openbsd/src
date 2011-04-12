@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dma_alloc.9,v 1.4 2011/04/07 22:25:07 jmc Exp $
+.\"	$OpenBSD: dma_alloc.9,v 1.5 2011/04/12 20:24:56 deraadt Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 2011 Theo de Raadt
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 7 2011 $
+.Dd $Mdocdate: April 12 2011 $
 .Dt DMA_ALLOC 9
 .Os
 .Sh NAME
@@ -55,6 +55,14 @@ The
 argument is a selection of
 .Xr pool_get 9
 flag arguments.
+.Pp
+The same
+.Va size
+argument must be passed to both
+.Fn dma_alloc
+and the subsequent
+.Fn dma_free .
+Allocations over 65536 will fail.
 .Sh SEE ALSO
 .Xr bus_dma 9 ,
 .Xr mbuf 9 ,
