@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1592 2011/03/23 21:55:09 jsg Exp $
+$OpenBSD: pcidevs,v 1.1593 2011/04/12 22:40:22 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -160,6 +160,7 @@ vendor	EFFICIENTNETS	0x111a	Efficent Networks
 vendor	IDT		0x111d	IDT
 vendor	FORE		0x1127	FORE Systems
 vendor	PHILIPS		0x1131	Philips
+vendor	CISCO		0x1137	Cisco
 vendor	ZIATECH		0x1138	Ziatech
 vendor	CYCLONE		0x113c	Cyclone
 vendor	EQUINOX		0x113f	Equinox
@@ -1673,6 +1674,14 @@ product CIRRUS CS4615		0x6004	CS4615
 product CIRRUS CS4280		0x6003	CS4280/46xx CrystalClear
 product CIRRUS CS4281		0x6005	CS4281 CrystalClear
 
+/* Cisco products */
+product CISCO VIC_PCIE_1	0x0023	VIC PCIE
+product CISCO VIC_PCIE_2	0x0040	VIC PCIE
+product CISCO VIC_PCIE_3	0x0041	VIC PCIE
+product CISCO VIC_MGMT		0x0042	VIC Management
+product CISCO VIC_ETH		0x0043	VIC Ethernet
+product CISCO VIC_FCOE		0x0045	VIC FCoE
+
 /* CMD Technology products -- info gleaned from www.cmd.com */
 /* Fake product id for SiI3112 found on Adaptec 1210SA */
 product CMDTECH AAR_1210SA	0x0240	AAR-1210SA
@@ -2263,6 +2272,32 @@ product INTEL WL_1030_1		0x008a	WiFi Link 1030
 product INTEL WL_1030_2		0x008b	WiFi Link 1030
 product INTEL WL_6030_1		0x0090	Centrino Advanced-N 6030
 product INTEL WL_6030_2  	0x0091	Centrino Advanced-N 6030
+product INTEL SNB_HB		0x0100	Sandy Bridge Host
+product INTEL SNB_IGD		0x0102	Sandy Bridge Video
+product INTEL SNB_M_HB		0x0104	Sandy Bridge Host
+product INTEL SNB_M_IGD		0x0106	Sandy Bridge Video
+product INTEL 6SERIES_SATA_1	0x1c00	6 Series SATA
+product INTEL 6SERIES_SATA_2	0x1c01	6 Series SATA
+product INTEL 6SERIES_AHCI_1	0x1c02	6 Series AHCI
+product INTEL 6SERIES_AHCI_2	0x1c03	6 Series AHCI
+product INTEL 6SERIES_RAID_1	0x1c04	6 Series RAID
+product INTEL 6SERIES_RAID_2	0x1c05	6 Series RAID
+product INTEL 6SERIES_RAID_3	0x1c06	6 Series RAID
+product INTEL 6SERIES_PCIE_1	0x1c10	6 Series PCIE
+product INTEL 6SERIES_PCIE_2	0x1c12	6 Series PCIE
+product INTEL 6SERIES_PCIE_3	0x1c14	6 Series PCIE
+product INTEL 6SERIES_PCIE_4	0x1c16	6 Series PCIE
+product INTEL 6SERIES_PCIE_5	0x1c18	6 Series PCIE
+product INTEL 6SERIES_PCIE_6	0x1c1a	6 Series PCIE
+product INTEL 6SERIES_PCIE_7	0x1c1c	6 Series PCIE
+product INTEL 6SERIES_PCIE_8	0x1c1e	6 Series PCIE
+product INTEL 6SERIES_EHCI	0x1c2d	6 Series USB
+product INTEL 6SERIES_MEI	0x1c3a	6 Series MEI
+product INTEL H67_LPC		0x1c4a	H67 LPC
+product INTEL 6SERIES_HDA	0x1c20	6 Series HD Audio
+product INTEL 6SERIES_SMB	0x1c22	6 Series SMBus
+product INTEL 6SERIES_THERM	0x1c24	6 Series Thermal
+product INTEL 6SERIES_DMI	0x1c25	6 Series DMI-PCI
 product INTEL 80303		0x0309	80303 IOP
 product INTEL 80312		0x030d	80312 I/O Companion
 product INTEL IOXAPIC_A		0x0326	IOxAPIC
@@ -3352,6 +3387,10 @@ product JMICRON SD		0x2381	SD Host Controller
 product JMICRON SDMMC		0x2382	SD/MMC
 product JMICRON MS		0x2383	Memory Stick
 product JMICRON XD		0x2384	xD
+product JMICRON SD_3		0x2386	SD Host Controller
+product JMICRON SDMMC_3		0x2387	SD/MMC
+product JMICRON MS_3		0x2388	Memory Stick
+product JMICRON XD_3		0x2389	xD
 product JMICRON SD_2		0x2391	SD Host Controller
 product JMICRON SDMMC_2		0x2392	SD/MMC
 product JMICRON MS_2		0x2393	Memory Stick
@@ -3648,6 +3687,7 @@ product NETXEN NXB_IMEZ		0x0004	IMEZ 10GbE
 product NETXEN NXB_HMEZ		0x0005	HMEZ 10GbE
 product NETXEN NXB_IMEZ_2	0x0024	IMEZ 10GbE Mgmt
 product NETXEN NXB_HMEZ_2	0x0025	HMEZ 10GbE Mgmt
+product NETXEN NX3031		0x0100	NX3031
 
 /* National Semiconductor products */
 product NS DP83810		0x0001	DP83810 10/100
@@ -3851,6 +3891,7 @@ product SYMBIOS PE_GNIC		0x0702	Packet Engines G-NIC
 product PERICOM PI7C21P100	0x01a7	PI7C21P100 PCIX-PCIX
 product PERICOM PPB_1		0x8140	PCI-PCI
 product PERICOM PPB_2		0x8150	PCI-PCI
+product PERICOM PI7C9X130	0xe130	PI7C9X130 PCIE-PCIX
 
 /* Planex products */
 product PLANEX FNW_3603_TX	0xab06	FNW-3603-TX 10/100
@@ -4625,6 +4666,7 @@ product PLX PEX_8612		0x8612	PEX 8612
 product PLX PEX_8614		0x8614	PEX 8614
 product PLX PEX_8616		0x8616	PEX 8616
 product PLX PEX_8624		0x8624	PEX 8624
+product PLX PEX_8632		0x8632	PEX 8632
 product PLX PEX_8648		0x8648	PEX 8648
 product PLX 9016		0x9016	I/O 9016
 product PLX 9050		0x9050	I/O 9050
@@ -5306,6 +5348,7 @@ product VIATECH VT3351_HB	0x0351	VT3351 Host
 product VIATECH VX800_0		0x0353	VX800 Host
 product VIATECH P4M900		0x0364	P4M900 Host
 product VIATECH VT8371_HB	0x0391	VT8371 Host
+product VIATECH VT6415		0x0415	VT6415 IDE
 product VIATECH VT8501		0x0501	VT8501
 product VIATECH VT82C505	0x0505	VT82C505
 product VIATECH VT82C561	0x0561	VT82C561
