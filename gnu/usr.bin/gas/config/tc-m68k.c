@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc-m68k.c,v 1.5 2002/06/26 11:25:43 espie Exp $	*/
+/*	$OpenBSD: tc-m68k.c,v 1.6 2011/04/12 21:38:16 miod Exp $	*/
 
 /* tc-m68k.c  All the m68020 specific stuff in one convenient, huge,
    slow to compile, easy to find file.
@@ -1233,7 +1233,7 @@ char *instring;
 	
 	if (p == instring) {
 		the_ins.error = "No operator";
-		the_ins.opcode[0] = NULL;
+		the_ins.opcode[0] = 0;
 		/* the_ins.numo=1; */
 		return;
 	}
@@ -1248,7 +1248,7 @@ char *instring;
 	
 	if (opcode == NULL) {
 		the_ins.error = "Unknown operator";
-		the_ins.opcode[0] = NULL;
+		the_ins.opcode[0] = 0;
 		/* the_ins.numo=1; */
 		return;
 	}

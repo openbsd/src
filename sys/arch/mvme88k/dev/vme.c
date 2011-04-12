@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.50 2011/04/07 15:30:15 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.51 2011/04/12 21:38:18 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -94,7 +94,7 @@ vme_map(bus_addr_t addr, bus_size_t size, int flags, bus_space_handle_t *ret)
 	vaddr_t map;
 
 	map = (vaddr_t)mapiodev((paddr_t)addr, size);
-	if (map == NULL)
+	if (map == 0)
 		return ENOMEM;
 
 	*ret = (bus_space_handle_t)map;
@@ -343,7 +343,7 @@ vmepmap(sc, vmeaddr, bustype)
 #endif
 			base = vme2chip_map(base, 16);
 #ifdef DEBUG
-			if (base == NULL) {
+			if (base == 0) {
 				printf("%s: cannot map pa 0x%x\n",
 				    sc->dv_xname, base);
 			}
@@ -356,7 +356,7 @@ vmepmap(sc, vmeaddr, bustype)
 #endif
 			base = vme2chip_map(base, 32);
 #ifdef DEBUG
-			if (base == NULL) {
+			if (base == 0) {
 				printf("%s: cannot map pa 0x%x\n",
 				    sc->dv_xname, base);
 			}
