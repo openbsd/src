@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.16 2010/11/30 14:38:45 reyk Exp $	*/
+/*	$OpenBSD: log.c,v 1.17 2011/04/12 12:37:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -35,6 +35,7 @@
 #include <syslog.h>
 #include <event.h>
 #include <netdb.h>
+#include <ctype.h>
 
 #include <openssl/ssl.h>
 
@@ -416,4 +417,39 @@ print_httperror(u_int code)
 		if (httperr[i].ht_code == code)
 			return (httperr[i].ht_err);
 	return ("Unknown Error");
+}
+
+const char *
+printb_flags(const u_int32_t v, const char *bits)
+{
+	static char	 buf[2][BUFSIZ];
+	static int	 idx = 0;
+	int		 i, any = 0;
+	char		 c, *p, *r;
+
+	p = r = buf[++idx % 2];
+	bzero(p, BUFSIZ);
+
+	if (bits) {
+		bits++;
+		while ((i = *bits++)) {
+			if (v & (1 << (i - 1))) {
+				if (any) {
+					*p++ = ',';
+					*p++ = ' ';
+				}
+				any = 1;
+				for (; (c = *bits) > 32; bits++) {
+					if (c == '_')
+						*p++ = ' ';
+					else
+						*p++ = tolower(c);
+				}
+			} else
+				for (; *bits > 32; bits++)
+					;
+		}
+	}
+
+	return (r);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.150 2011/04/07 13:22:29 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.151 2011/04/12 12:37:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -147,7 +147,7 @@ typedef struct {
 %token	LOADBALANCE LOG LOOKUP MARK MARKED MODE NAT NO DESTINATION
 %token	NODELAY NOTHING ON PARENT PATH PORT PREFORK PROTO
 %token	QUERYSTR REAL REDIRECT RELAY REMOVE REQUEST RESPONSE RETRY
-%token	RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND SESSION SOCKET
+%token	RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND SESSION SOCKET SPLICE
 %token	SSL STICKYADDR STYLE TABLE TAG TCP TIMEOUT TO ROUTER RTLABEL
 %token	TRANSPARENT TRAP UPDATES URL VIRTUAL WITH TTL RTABLE MATCH
 %token	<v.string>	STRING
@@ -875,6 +875,8 @@ tcpflags	: SACK			{ proto->tcpflags |= TCPFLAG_SACK; }
 		| NO SACK		{ proto->tcpflags |= TCPFLAG_NSACK; }
 		| NODELAY		{ proto->tcpflags |= TCPFLAG_NODELAY; }
 		| NO NODELAY		{ proto->tcpflags |= TCPFLAG_NNODELAY; }
+		| SPLICE		{ /* default */ }
+		| NO SPLICE		{ proto->tcpflags |= TCPFLAG_NSPLICE; }
 		| BACKLOG NUMBER	{
 			if ($2 < 0 || $2 > RELAY_MAX_SESSIONS) {
 				yyerror("invalid backlog: %d", $2);
@@ -1785,6 +1787,7 @@ lookup(char *s)
 		{ "send",		SEND },
 		{ "session",		SESSION },
 		{ "socket",		SOCKET },
+		{ "splice",		SPLICE },
 		{ "ssl",		SSL },
 		{ "sticky-address",	STICKYADDR },
 		{ "style",		STYLE },

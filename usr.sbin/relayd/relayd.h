@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.142 2011/04/12 11:45:18 bluhm Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.143 2011/04/12 12:37:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -252,6 +252,13 @@ TAILQ_HEAD(addresslist, address);
 #define F_MATCH			0x00800000
 #define F_DIVERT		0x01000000
 
+#define F_BITS								\
+	"\10\01DISABLE\02BACKUP\03USED\04DOWN\05ADD\06DEL\07CHANGED"	\
+	"\10STICKY-ADDRESS\11CHECK_DONE\12ACTIVE_RULESET\13CHECK_SENT"	\
+	"\14SSL\15NAT_LOOKUP\16DEMOTE\17LOOKUP_PATH\20DEMOTED\21UDP"	\
+	"\22RETURN\23TRAP\24NEEDPF\25PORT\26SSL_CLIENT\27NEEDRT"	\
+	"\30MATCH\31DIVERT"
+
 enum forwardmode {
 	FWD_NORMAL		= 0,
 	FWD_ROUTE,
@@ -490,13 +497,21 @@ enum prototype {
 #define TCPFLAG_BUFSIZ		0x10
 #define TCPFLAG_IPTTL		0x20
 #define TCPFLAG_IPMINTTL	0x40
+#define TCPFLAG_NSPLICE		0x80
 #define TCPFLAG_DEFAULT		0x00
+
+#define TCPFLAG_BITS						\
+	"\10\01NODELAY\02NO_NODELAY\03SACK\04NO_SACK"		\
+	"\05SOCKET_BUFFER_SIZE\06IP_TTL\07IP_MINTTL\10NO_SPLICE"
 
 #define SSLFLAG_SSLV2		0x01
 #define SSLFLAG_SSLV3		0x02
 #define SSLFLAG_TLSV1		0x04
 #define SSLFLAG_VERSION		0x07
 #define SSLFLAG_DEFAULT		(SSLFLAG_SSLV3|SSLFLAG_TLSV1)
+
+#define SSLFLAG_BITS						\
+	"\10\01sslv2\02sslv3\03tlsv1\04version"
 
 #define SSLCIPHERS_DEFAULT	"HIGH:!ADH"
 
@@ -806,6 +821,8 @@ const char *print_availability(u_long, u_long);
 const char *print_host(struct sockaddr_storage *, char *, size_t);
 const char *print_time(struct timeval *, struct timeval *, char *, size_t);
 const char *print_httperror(u_int);
+const char *printb_flags(const u_int32_t, const char *);
+
 
 /* pfe.c */
 pid_t	 pfe(struct relayd *, int [2], int [2], int [RELAY_MAXPROC][2],

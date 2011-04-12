@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.132 2011/04/12 11:45:18 bluhm Exp $	*/
+/*	$OpenBSD: relay.c,v 1.133 2011/04/12 12:37:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -372,7 +372,15 @@ relay_protodebug(struct relay *rlay)
 	int			 i;
 
 	fprintf(stderr, "protocol %d: name %s\n", proto->id, proto->name);
-	fprintf(stderr, "\tflags: 0x%04x\n", proto->flags);
+	fprintf(stderr, "\tflags: %s, relay flags: %s\n",
+	    printb_flags(proto->flags, F_BITS),
+	    printb_flags(rlay->rl_conf.flags, F_BITS));
+	if (proto->tcpflags)
+		fprintf(stderr, "\ttcp flags: %s\n",
+		    printb_flags(proto->tcpflags, TCPFLAG_BITS));
+	if ((rlay->rl_conf.flags & (F_SSL|F_SSLCLIENT)) && proto->sslflags)
+		fprintf(stderr, "\tssl flags: %s\n",
+		    printb_flags(proto->sslflags, SSLFLAG_BITS));
 	if (proto->cache != -1)
 		fprintf(stderr, "\tssl session cache: %d\n", proto->cache);
 	fprintf(stderr, "\ttype: ");
@@ -802,7 +810,8 @@ relay_connected(int fd, short sig, void *arg)
 		}
 		break;
 	case RELAY_PROTO_TCP:
-		if (rlay->rl_conf.flags & (F_SSL|F_SSLCLIENT))
+		if ((proto->tcpflags & TCPFLAG_NSPLICE) ||
+		    (rlay->rl_conf.flags & (F_SSL|F_SSLCLIENT)))
 			break;
 		if (setsockopt(con->se_in.s, SOL_SOCKET, SO_SPLICE,
 		    &con->se_out.s, sizeof(int)) == -1) {
