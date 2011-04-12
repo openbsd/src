@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1592 2011/03/23 21:55:09 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1593 2011/04/12 22:40:22 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -165,6 +165,7 @@
 #define	PCI_VENDOR_IDT	0x111d		/* IDT */
 #define	PCI_VENDOR_FORE	0x1127		/* FORE Systems */
 #define	PCI_VENDOR_PHILIPS	0x1131		/* Philips */
+#define	PCI_VENDOR_CISCO	0x1137		/* Cisco */
 #define	PCI_VENDOR_ZIATECH	0x1138		/* Ziatech */
 #define	PCI_VENDOR_CYCLONE	0x113c		/* Cyclone */
 #define	PCI_VENDOR_EQUINOX	0x113f		/* Equinox */
@@ -1678,6 +1679,14 @@
 #define	PCI_PRODUCT_CIRRUS_CS4280	0x6003		/* CS4280/46xx CrystalClear */
 #define	PCI_PRODUCT_CIRRUS_CS4281	0x6005		/* CS4281 CrystalClear */
 
+/* Cisco products */
+#define	PCI_PRODUCT_CISCO_VIC_PCIE_1	0x0023		/* VIC PCIE */
+#define	PCI_PRODUCT_CISCO_VIC_PCIE_2	0x0040		/* VIC PCIE */
+#define	PCI_PRODUCT_CISCO_VIC_PCIE_3	0x0041		/* VIC PCIE */
+#define	PCI_PRODUCT_CISCO_VIC_MGMT	0x0042		/* VIC Management */
+#define	PCI_PRODUCT_CISCO_VIC_ETH	0x0043		/* VIC Ethernet */
+#define	PCI_PRODUCT_CISCO_VIC_FCOE	0x0045		/* VIC FCoE */
+
 /* CMD Technology products -- info gleaned from www.cmd.com */
 /* Fake product id for SiI3112 found on Adaptec 1210SA */
 #define	PCI_PRODUCT_CMDTECH_AAR_1210SA	0x0240		/* AAR-1210SA */
@@ -2268,6 +2277,32 @@
 #define	PCI_PRODUCT_INTEL_WL_1030_2	0x008b		/* WiFi Link 1030 */
 #define	PCI_PRODUCT_INTEL_WL_6030_1	0x0090		/* Centrino Advanced-N 6030 */
 #define	PCI_PRODUCT_INTEL_WL_6030_2	0x0091		/* Centrino Advanced-N 6030 */
+#define	PCI_PRODUCT_INTEL_SNB_HB	0x0100		/* Sandy Bridge Host */
+#define	PCI_PRODUCT_INTEL_SNB_IGD	0x0102		/* Sandy Bridge Video */
+#define	PCI_PRODUCT_INTEL_SNB_M_HB	0x0104		/* Sandy Bridge Host */
+#define	PCI_PRODUCT_INTEL_SNB_M_IGD	0x0106		/* Sandy Bridge Video */
+#define	PCI_PRODUCT_INTEL_6SERIES_SATA_1	0x1c00		/* 6 Series SATA */
+#define	PCI_PRODUCT_INTEL_6SERIES_SATA_2	0x1c01		/* 6 Series SATA */
+#define	PCI_PRODUCT_INTEL_6SERIES_AHCI_1	0x1c02		/* 6 Series AHCI */
+#define	PCI_PRODUCT_INTEL_6SERIES_AHCI_2	0x1c03		/* 6 Series AHCI */
+#define	PCI_PRODUCT_INTEL_6SERIES_RAID_1	0x1c04		/* 6 Series RAID */
+#define	PCI_PRODUCT_INTEL_6SERIES_RAID_2	0x1c05		/* 6 Series RAID */
+#define	PCI_PRODUCT_INTEL_6SERIES_RAID_3	0x1c06		/* 6 Series RAID */
+#define	PCI_PRODUCT_INTEL_6SERIES_PCIE_1	0x1c10		/* 6 Series PCIE */
+#define	PCI_PRODUCT_INTEL_6SERIES_PCIE_2	0x1c12		/* 6 Series PCIE */
+#define	PCI_PRODUCT_INTEL_6SERIES_PCIE_3	0x1c14		/* 6 Series PCIE */
+#define	PCI_PRODUCT_INTEL_6SERIES_PCIE_4	0x1c16		/* 6 Series PCIE */
+#define	PCI_PRODUCT_INTEL_6SERIES_PCIE_5	0x1c18		/* 6 Series PCIE */
+#define	PCI_PRODUCT_INTEL_6SERIES_PCIE_6	0x1c1a		/* 6 Series PCIE */
+#define	PCI_PRODUCT_INTEL_6SERIES_PCIE_7	0x1c1c		/* 6 Series PCIE */
+#define	PCI_PRODUCT_INTEL_6SERIES_PCIE_8	0x1c1e		/* 6 Series PCIE */
+#define	PCI_PRODUCT_INTEL_6SERIES_EHCI	0x1c2d		/* 6 Series USB */
+#define	PCI_PRODUCT_INTEL_6SERIES_MEI	0x1c3a		/* 6 Series MEI */
+#define	PCI_PRODUCT_INTEL_H67_LPC	0x1c4a		/* H67 LPC */
+#define	PCI_PRODUCT_INTEL_6SERIES_HDA	0x1c20		/* 6 Series HD Audio */
+#define	PCI_PRODUCT_INTEL_6SERIES_SMB	0x1c22		/* 6 Series SMBus */
+#define	PCI_PRODUCT_INTEL_6SERIES_THERM	0x1c24		/* 6 Series Thermal */
+#define	PCI_PRODUCT_INTEL_6SERIES_DMI	0x1c25		/* 6 Series DMI-PCI */
 #define	PCI_PRODUCT_INTEL_80303	0x0309		/* 80303 IOP */
 #define	PCI_PRODUCT_INTEL_80312	0x030d		/* 80312 I/O Companion */
 #define	PCI_PRODUCT_INTEL_IOXAPIC_A	0x0326		/* IOxAPIC */
@@ -3357,6 +3392,10 @@
 #define	PCI_PRODUCT_JMICRON_SDMMC	0x2382		/* SD/MMC */
 #define	PCI_PRODUCT_JMICRON_MS	0x2383		/* Memory Stick */
 #define	PCI_PRODUCT_JMICRON_XD	0x2384		/* xD */
+#define	PCI_PRODUCT_JMICRON_SD_3	0x2386		/* SD Host Controller */
+#define	PCI_PRODUCT_JMICRON_SDMMC_3	0x2387		/* SD/MMC */
+#define	PCI_PRODUCT_JMICRON_MS_3	0x2388		/* Memory Stick */
+#define	PCI_PRODUCT_JMICRON_XD_3	0x2389		/* xD */
 #define	PCI_PRODUCT_JMICRON_SD_2	0x2391		/* SD Host Controller */
 #define	PCI_PRODUCT_JMICRON_SDMMC_2	0x2392		/* SD/MMC */
 #define	PCI_PRODUCT_JMICRON_MS_2	0x2393		/* Memory Stick */
@@ -3653,6 +3692,7 @@
 #define	PCI_PRODUCT_NETXEN_NXB_HMEZ	0x0005		/* HMEZ 10GbE */
 #define	PCI_PRODUCT_NETXEN_NXB_IMEZ_2	0x0024		/* IMEZ 10GbE Mgmt */
 #define	PCI_PRODUCT_NETXEN_NXB_HMEZ_2	0x0025		/* HMEZ 10GbE Mgmt */
+#define	PCI_PRODUCT_NETXEN_NX3031	0x0100		/* NX3031 */
 
 /* National Semiconductor products */
 #define	PCI_PRODUCT_NS_DP83810	0x0001		/* DP83810 10/100 */
@@ -3856,6 +3896,7 @@
 #define	PCI_PRODUCT_PERICOM_PI7C21P100	0x01a7		/* PI7C21P100 PCIX-PCIX */
 #define	PCI_PRODUCT_PERICOM_PPB_1	0x8140		/* PCI-PCI */
 #define	PCI_PRODUCT_PERICOM_PPB_2	0x8150		/* PCI-PCI */
+#define	PCI_PRODUCT_PERICOM_PI7C9X130	0xe130		/* PI7C9X130 PCIE-PCIX */
 
 /* Planex products */
 #define	PCI_PRODUCT_PLANEX_FNW_3603_TX	0xab06		/* FNW-3603-TX 10/100 */
@@ -4630,6 +4671,7 @@
 #define	PCI_PRODUCT_PLX_PEX_8614	0x8614		/* PEX 8614 */
 #define	PCI_PRODUCT_PLX_PEX_8616	0x8616		/* PEX 8616 */
 #define	PCI_PRODUCT_PLX_PEX_8624	0x8624		/* PEX 8624 */
+#define	PCI_PRODUCT_PLX_PEX_8632	0x8632		/* PEX 8632 */
 #define	PCI_PRODUCT_PLX_PEX_8648	0x8648		/* PEX 8648 */
 #define	PCI_PRODUCT_PLX_9016	0x9016		/* I/O 9016 */
 #define	PCI_PRODUCT_PLX_9050	0x9050		/* I/O 9050 */
@@ -5311,6 +5353,7 @@
 #define	PCI_PRODUCT_VIATECH_VX800_0	0x0353		/* VX800 Host */
 #define	PCI_PRODUCT_VIATECH_P4M900	0x0364		/* P4M900 Host */
 #define	PCI_PRODUCT_VIATECH_VT8371_HB	0x0391		/* VT8371 Host */
+#define	PCI_PRODUCT_VIATECH_VT6415	0x0415		/* VT6415 IDE */
 #define	PCI_PRODUCT_VIATECH_VT8501	0x0501		/* VT8501 */
 #define	PCI_PRODUCT_VIATECH_VT82C505	0x0505		/* VT82C505 */
 #define	PCI_PRODUCT_VIATECH_VT82C561	0x0561		/* VT82C561 */

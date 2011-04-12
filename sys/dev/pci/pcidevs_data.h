@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1592 2011/03/23 21:55:09 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1593 2011/04/12 22:40:22 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -4880,6 +4880,30 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CS4281 CrystalClear",
 	},
 	{
+	    PCI_VENDOR_CISCO, PCI_PRODUCT_CISCO_VIC_PCIE_1,
+	    "VIC PCIE",
+	},
+	{
+	    PCI_VENDOR_CISCO, PCI_PRODUCT_CISCO_VIC_PCIE_2,
+	    "VIC PCIE",
+	},
+	{
+	    PCI_VENDOR_CISCO, PCI_PRODUCT_CISCO_VIC_PCIE_3,
+	    "VIC PCIE",
+	},
+	{
+	    PCI_VENDOR_CISCO, PCI_PRODUCT_CISCO_VIC_MGMT,
+	    "VIC Management",
+	},
+	{
+	    PCI_VENDOR_CISCO, PCI_PRODUCT_CISCO_VIC_ETH,
+	    "VIC Ethernet",
+	},
+	{
+	    PCI_VENDOR_CISCO, PCI_PRODUCT_CISCO_VIC_FCOE,
+	    "VIC FCoE",
+	},
+	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_AAR_1210SA,
 	    "AAR-1210SA",
 	},
@@ -6734,6 +6758,110 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_6030_2,
 	    "Centrino Advanced-N 6030",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SNB_HB,
+	    "Sandy Bridge Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SNB_IGD,
+	    "Sandy Bridge Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SNB_M_HB,
+	    "Sandy Bridge Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SNB_M_IGD,
+	    "Sandy Bridge Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_SATA_1,
+	    "6 Series SATA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_SATA_2,
+	    "6 Series SATA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_AHCI_1,
+	    "6 Series AHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_AHCI_2,
+	    "6 Series AHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_RAID_1,
+	    "6 Series RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_RAID_2,
+	    "6 Series RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_RAID_3,
+	    "6 Series RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_PCIE_1,
+	    "6 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_PCIE_2,
+	    "6 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_PCIE_3,
+	    "6 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_PCIE_4,
+	    "6 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_PCIE_5,
+	    "6 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_PCIE_6,
+	    "6 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_PCIE_7,
+	    "6 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_PCIE_8,
+	    "6 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_EHCI,
+	    "6 Series USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_MEI,
+	    "6 Series MEI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_H67_LPC,
+	    "H67 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_HDA,
+	    "6 Series HD Audio",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_SMB,
+	    "6 Series SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_THERM,
+	    "6 Series Thermal",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_DMI,
+	    "6 Series DMI-PCI",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80303,
@@ -11028,6 +11156,22 @@ static const struct pci_known_product pci_known_products[] = {
 	    "xD",
 	},
 	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_SD_3,
+	    "SD Host Controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_SDMMC_3,
+	    "SD/MMC",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_MS_3,
+	    "Memory Stick",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_XD_3,
+	    "xD",
+	},
+	{
 	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_SD_2,
 	    "SD Host Controller",
 	},
@@ -11932,6 +12076,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HMEZ 10GbE Mgmt",
 	},
 	{
+	    PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_NX3031,
+	    "NX3031",
+	},
+	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83810,
 	    "DP83810 10/100",
 	},
@@ -12614,6 +12762,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_PERICOM, PCI_PRODUCT_PERICOM_PPB_2,
 	    "PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_PERICOM, PCI_PRODUCT_PERICOM_PI7C9X130,
+	    "PI7C9X130 PCIE-PCIX",
 	},
 	{
 	    PCI_VENDOR_PLANEX, PCI_PRODUCT_PLANEX_FNW_3603_TX,
@@ -15496,6 +15648,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PEX 8624",
 	},
 	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8632,
+	    "PEX 8632",
+	},
+	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8648,
 	    "PEX 8648",
 	},
@@ -17756,6 +17912,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT8371 Host",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6415,
+	    "VT6415 IDE",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8501,
 	    "VT8501",
 	},
@@ -19630,6 +19790,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_PHILIPS,
 	    "Philips",
+	},
+	{
+	    PCI_VENDOR_CISCO,
+	    "Cisco",
 	},
 	{
 	    PCI_VENDOR_ZIATECH,
