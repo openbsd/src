@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.51 2011/04/06 11:36:26 miod Exp $	*/
+/*	$OpenBSD: mount.c,v 1.52 2011/04/12 14:51:40 jsing Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -232,7 +232,9 @@ main(int argc, char * const argv[])
 			mntonname = mntbuf->f_mntonname;
 		} else {
 			if ((fs = getfsfile(mntpath)) == NULL &&
-			    (fs = getfsspec(mntpath)) == NULL)
+			    (fs = getfsspec(mntpath)) == NULL &&
+			    (isduid(*argv, 0) == 0 ||
+			    (fs = getfsspec(*argv)) == NULL))
 				errx(1, "can't find fstab entry for %s.",
 				    *argv);
 			if (BADTYPE(fs->fs_type))
