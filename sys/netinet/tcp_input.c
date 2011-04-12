@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.244 2011/04/05 18:16:07 blambert Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.245 2011/04/12 10:47:29 mikeb Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3671,6 +3671,9 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	struct mbuf *am;
 	int s;
 	struct socket *oso;
+#if NPF > 0
+	struct pf_divert *divert = NULL;
+#endif
 
 	s = splsoftnet();
 	if ((sc = syn_cache_lookup(src, dst, &scp,
@@ -3754,6 +3757,12 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	inp = (struct inpcb *)so->so_pcb;
 #endif /* INET6 */
 
+#if NPF > 0
+	if (m && m->m_pkthdr.pf.flags & PF_TAG_DIVERTED &&
+	    (divert = pf_find_divert(m)) != NULL)
+		inp->inp_rtableid = divert->rdomain;
+	else
+#endif
 	/* inherit rtable from listening socket */
 	inp->inp_rtableid = sc->sc_rtableid;
 

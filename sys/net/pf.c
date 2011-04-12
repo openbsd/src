@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.739 2011/04/07 19:35:05 miod Exp $ */
+/*	$OpenBSD: pf.c,v 1.740 2011/04/12 10:47:29 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5964,6 +5964,7 @@ done:
 		if ((divert = pf_get_divert(m))) {
 			m->m_pkthdr.pf.flags |= PF_TAG_DIVERTED;
 			divert->port = r->divert.port;
+			divert->rdomain = pd.rdomain;
 			divert->addr.ipv4 = r->divert.addr.v4;
 		}
 	}
@@ -6243,6 +6244,7 @@ done:
 		if ((divert = pf_get_divert(m))) {
 			m->m_pkthdr.pf.flags |= PF_TAG_DIVERTED;
 			divert->port = r->divert.port;
+			divert->rdomain = pd.rdomain;
 			divert->addr.ipv6 = r->divert.addr.v6;
 		}
 	}
