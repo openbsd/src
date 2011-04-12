@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.50 2011/03/31 20:40:51 jmc Exp $
+.\"	$OpenBSD: vi.1,v 1.51 2011/04/12 18:08:00 jmc Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.Dd $Mdocdate: March 31 2011 $
+.Dd $Mdocdate: April 12 2011 $
 .Dt VI 1
 .Os
 .Sh NAME
@@ -2204,9 +2204,11 @@ enters the value into the environment.
 .It Ev EXINIT
 A list of
 .Nm ex
-startup commands; read if the variable
+startup commands, read after
+.Pa /etc/vi.exrc
+unless the variable
 .Ev NEXINIT
-is not set.
+is also set.
 .It Ev HOME
 The user's home directory, used as the initial directory path for the startup
 .Pa $HOME/.nexrc
@@ -2232,7 +2234,8 @@ enters the value into the environment.
 .It Ev NEXINIT
 A list of
 .Nm ex
-startup commands.
+startup commands, read after
+.Pa /etc/vi.exrc .
 .It Ev SHELL
 The user's shell of choice (see also the
 .Cm shell
@@ -2294,25 +2297,52 @@ for more information.
 .\" ignores these signals.
 .El
 .Sh FILES
-.Bl -tag -width "/var/tmp/vi.recover" -compact
+.Bl -tag -width "/var/tmp/vi.recover"
 .It Pa /bin/sh
 The default user shell.
 .It Pa /etc/vi.exrc
 System-wide
 .Nm vi
 startup file.
+It is read for
+.Nm ex
+commands first in the startup sequence.
+Must be owned by root or the user,
+and writable only by the owner.
 .It Pa /tmp
 Temporary file directory.
 .It Pa /var/tmp/vi.recover
 The default recovery file directory.
 .It Pa $HOME/.nexrc
-First choice for user's home directory startup file.
+First choice for user's home directory startup file, read for
+.Nm ex
+commands right after
+.Pa /etc/vi.exrc
+unless either
+.Ev NEXINIT
+or
+.Ev EXINIT
+are set.
+Must be owned by root or the user,
+and writable only by the owner.
 .It Pa $HOME/.exrc
-Second choice for user's home directory startup file.
+Second choice for user's home directory startup file, read for
+.Nm ex
+commands under the same conditions as
+.Pa $HOME/.nexrc .
 .It Pa .nexrc
-First choice for local directory startup file.
+First choice for local directory startup file, read for
+.Nm ex
+commands at the end of the startup sequence if the
+.Cm exrc
+option was turned on earlier.
+Must be owned by the user
+and writable only by the owner.
 .It Pa .exrc
-Second choice for local directory startup file.
+Second choice for local directory startup file, read for
+.Nm ex
+commands under the same conditions as
+.Pa .nexrc .
 .El
 .Sh EXIT STATUS
 The
