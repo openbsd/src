@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.88 2011/04/10 17:57:16 jasper Exp $
+.\"	$OpenBSD: port-modules.5,v 1.89 2011/04/12 12:11:24 kili Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 10 2011 $
+.Dd $Mdocdate: April 12 2011 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -464,6 +464,9 @@ will be built (if haddock has been set), and that the package is
 registered as a library useable by
 .Pa lang/ghc
 (if register has been set).
+Extra arguments and environment additions for the Setup configure
+command can be specified with MODGHC_SETUP_CONF_ARGS and
+MODGHC_SETUP_CONF_ENV.
 .It lang/lua
 Sets MODLUA_VERSION, MODLUA_LIBDIR, MODLUA_DATADIR.
 Appends to RUN_DEPENDS and CATEGORIES.
