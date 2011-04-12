@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_priv.h,v 1.4 2009/08/21 16:48:03 ratchov Exp $	*/
+/*	$OpenBSD: mio_priv.h,v 1.5 2011/04/12 21:40:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -57,9 +57,9 @@ struct mio_ops {
 	int (*revents)(struct mio_hdl *, struct pollfd *);
 };
 
-struct mio_hdl *mio_open_rmidi(const char *, unsigned, int);
-struct mio_hdl *mio_open_thru(const char *, unsigned, int);
-struct mio_hdl *mio_open_aucat(const char *, unsigned, int);
+struct mio_hdl *mio_rmidi_open(const char *, unsigned, int);
+struct mio_hdl *mio_midithru_open(const char *, unsigned, int);
+struct mio_hdl *mio_aucat_open(const char *, unsigned, int);
 void mio_create(struct mio_hdl *, struct mio_ops *, unsigned, int);
 void mio_destroy(struct mio_hdl *);
 

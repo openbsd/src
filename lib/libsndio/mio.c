@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio.c,v 1.8 2010/04/24 06:15:54 ratchov Exp $	*/
+/*	$OpenBSD: mio.c,v 1.9 2011/04/12 21:40:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -61,10 +61,10 @@ mio_open(const char *str, unsigned mode, int nbio)
 	if (str == NULL && !issetugid())
 		str = getenv("MIDIDEVICE");
 	if (str == NULL) {
-		hdl = mio_open_thru("0", mode, nbio);
+		hdl = mio_midithru_open("0", mode, nbio);
 		if (hdl != NULL)
 			return hdl;
-		return mio_open_rmidi("0", mode, nbio);
+		return mio_rmidi_open("0", mode, nbio);
 	}
 	sep = strchr(str, ':');
 	if (sep == NULL) {
@@ -76,19 +76,19 @@ mio_open(const char *str, unsigned mode, int nbio)
 			return NULL;
 		}
 		snprintf(buf, sizeof(buf), "%u", minor(sb.st_rdev));
-		return mio_open_rmidi(buf, mode, nbio);
+		return mio_rmidi_open(buf, mode, nbio);
 	}
 
 	len = sep - str;
 	if (len == (sizeof(prefix_midithru) - 1) &&
 	    memcmp(str, prefix_midithru, len) == 0)
-		return mio_open_thru(sep + 1, mode, nbio);
+		return mio_midithru_open(sep + 1, mode, nbio);
 	if (len == (sizeof(prefix_aucat) - 1) &&
 	    memcmp(str, prefix_aucat, len) == 0)
-		return mio_open_aucat(sep + 1, mode, nbio);
+		return mio_aucat_open(sep + 1, mode, nbio);
 	if (len == (sizeof(prefix_rmidi) - 1) &&
 	    memcmp(str, prefix_rmidi, len) == 0)
-		return mio_open_rmidi(sep + 1, mode, nbio);
+		return mio_rmidi_open(sep + 1, mode, nbio);
 	DPRINTF("mio_open: %s: unknown device type\n", str);
 	return NULL;
 }

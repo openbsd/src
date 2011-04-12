@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_rmidi.c,v 1.7 2010/07/21 23:00:16 ratchov Exp $	*/
+/*	$OpenBSD: mio_rmidi.c,v 1.8 2011/04/12 21:40:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -29,38 +29,36 @@
 
 #include "mio_priv.h"
 
-#define RMIDI_PATH "/dev/rmidi0"
-
-struct rmidi_hdl {
+struct mio_rmidi_hdl {
 	struct mio_hdl mio;
 	int fd;
 };
 
-static void rmidi_close(struct mio_hdl *);
-static size_t rmidi_read(struct mio_hdl *, void *, size_t);
-static size_t rmidi_write(struct mio_hdl *, const void *, size_t);
-static int rmidi_pollfd(struct mio_hdl *, struct pollfd *, int);
-static int rmidi_revents(struct mio_hdl *, struct pollfd *);
+static void mio_rmidi_close(struct mio_hdl *);
+static size_t mio_rmidi_read(struct mio_hdl *, void *, size_t);
+static size_t mio_rmidi_write(struct mio_hdl *, const void *, size_t);
+static int mio_rmidi_pollfd(struct mio_hdl *, struct pollfd *, int);
+static int mio_rmidi_revents(struct mio_hdl *, struct pollfd *);
 
-static struct mio_ops rmidi_ops = {
-	rmidi_close,
-	rmidi_write,
-	rmidi_read,
-	rmidi_pollfd,
-	rmidi_revents,
+static struct mio_ops mio_rmidi_ops = {
+	mio_rmidi_close,
+	mio_rmidi_write,
+	mio_rmidi_read,
+	mio_rmidi_pollfd,
+	mio_rmidi_revents,
 };
 
 struct mio_hdl *
-mio_open_rmidi(const char *str, unsigned mode, int nbio)
+mio_rmidi_open(const char *str, unsigned mode, int nbio)
 {
 	int fd, flags;
-	struct rmidi_hdl *hdl;
+	struct mio_rmidi_hdl *hdl;
 	char path[PATH_MAX];
 
-	hdl = malloc(sizeof(struct rmidi_hdl));
+	hdl = malloc(sizeof(struct mio_rmidi_hdl));
 	if (hdl == NULL)
 		return NULL;
-	mio_create(&hdl->mio, &rmidi_ops, mode, nbio);
+	mio_create(&hdl->mio, &mio_rmidi_ops, mode, nbio);
 
 	snprintf(path, sizeof(path), "/dev/rmidi%s", str);
 	if (mode == (MIO_OUT | MIO_IN))
@@ -90,9 +88,9 @@ mio_open_rmidi(const char *str, unsigned mode, int nbio)
 }
 
 static void
-rmidi_close(struct mio_hdl *sh)
+mio_rmidi_close(struct mio_hdl *sh)
 {
-	struct rmidi_hdl *hdl = (struct rmidi_hdl *)sh;
+	struct mio_rmidi_hdl *hdl = (struct mio_rmidi_hdl *)sh;
 	int rc;
 
 	do {
@@ -102,22 +100,22 @@ rmidi_close(struct mio_hdl *sh)
 }
 
 static size_t
-rmidi_read(struct mio_hdl *sh, void *buf, size_t len)
+mio_rmidi_read(struct mio_hdl *sh, void *buf, size_t len)
 {
-	struct rmidi_hdl *hdl = (struct rmidi_hdl *)sh;
+	struct mio_rmidi_hdl *hdl = (struct mio_rmidi_hdl *)sh;
 	ssize_t n;
 
 	while ((n = read(hdl->fd, buf, len)) < 0) {
 		if (errno == EINTR)
 			continue;
 		if (errno != EAGAIN) {
-			DPERROR("rmidi_read: read");
+			DPERROR("mio_rmidi_read: read");
 			hdl->mio.eof = 1;
 		}
 		return 0;
 	}
 	if (n == 0) {
-		DPRINTF("rmidi_read: eof\n");
+		DPRINTF("mio_rmidi_read: eof\n");
 		hdl->mio.eof = 1;
 		return 0;
 	}
@@ -125,16 +123,16 @@ rmidi_read(struct mio_hdl *sh, void *buf, size_t len)
 }
 
 static size_t
-rmidi_write(struct mio_hdl *sh, const void *buf, size_t len)
+mio_rmidi_write(struct mio_hdl *sh, const void *buf, size_t len)
 {
-	struct rmidi_hdl *hdl = (struct rmidi_hdl *)sh;
+	struct mio_rmidi_hdl *hdl = (struct mio_rmidi_hdl *)sh;
 	ssize_t n;
 
 	while ((n = write(hdl->fd, buf, len)) < 0) {
 		if (errno == EINTR)
 			continue;
 		if (errno != EAGAIN) {
-			DPERROR("rmidi_write: write");
+			DPERROR("mio_rmidi_write: write");
 			hdl->mio.eof = 1;
 		}
  		return 0;
@@ -143,9 +141,9 @@ rmidi_write(struct mio_hdl *sh, const void *buf, size_t len)
 }
 
 static int
-rmidi_pollfd(struct mio_hdl *sh, struct pollfd *pfd, int events)
+mio_rmidi_pollfd(struct mio_hdl *sh, struct pollfd *pfd, int events)
 {
-	struct rmidi_hdl *hdl = (struct rmidi_hdl *)sh;
+	struct mio_rmidi_hdl *hdl = (struct mio_rmidi_hdl *)sh;
 
 	pfd->fd = hdl->fd;
 	pfd->events = events;
@@ -153,7 +151,7 @@ rmidi_pollfd(struct mio_hdl *sh, struct pollfd *pfd, int events)
 }
 
 static int
-rmidi_revents(struct mio_hdl *sh, struct pollfd *pfd)
+mio_rmidi_revents(struct mio_hdl *sh, struct pollfd *pfd)
 {
 	return pfd->revents;
 }
