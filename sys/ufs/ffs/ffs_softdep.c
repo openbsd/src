@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.102 2010/03/29 23:33:39 krw Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.103 2011/04/12 19:45:43 beck Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -545,6 +545,8 @@ workitem_free(item)
 STATIC struct workhead softdep_workitem_pending;
 STATIC struct worklist *worklist_tail;
 STATIC int num_on_worklist;	/* number of worklist items to be processed */
+STATIC int num_indirdep;	/* number of indirdep items to be processed */
+STATIC int max_indirdep;	/* maximum number of indirdep items allowed */
 STATIC int softdep_worklist_busy; /* 1 => trying to do unmount */
 STATIC int softdep_worklist_req; /* serialized waiters */
 STATIC int max_softdeps;	/* maximum number of structs before slowdown */
@@ -1180,6 +1182,8 @@ top:
 void 
 softdep_initialize()
 {
+	extern vsize_t bufkvm;
+	max_indirdep = (int)bufkvm / MAXPHYS * 80 / 100;
 
 	bioops.io_start = softdep_disk_io_initiation;
 	bioops.io_complete = softdep_disk_write_complete;
@@ -1857,12 +1861,14 @@ setup_allocindir_phase2(bp, ip, aip)
 			if (indirdep->ir_savebp != NULL)
 				brelse(newindirdep->ir_savebp);
 			WORKITEM_FREE(newindirdep, D_INDIRDEP);
+			num_indirdep--;
 		}
 		if (indirdep)
 			break;
 		newindirdep = pool_get(&indirdep_pool, PR_WAITOK);
 		newindirdep->ir_list.wk_type = D_INDIRDEP;
 		newindirdep->ir_state = ATTACHED;
+		num_indirdep++;
 		if (ip->i_ump->um_fstype == UM_UFS1)
 			newindirdep->ir_state |= UFS1FMT;
 		LIST_INIT(&newindirdep->ir_deplisthd);
@@ -2497,6 +2503,7 @@ indir_trunc(ip, dbn, level, lbn, countp)
 		}
 		WORKLIST_REMOVE(wk);
 		WORKITEM_FREE(indirdep, D_INDIRDEP);
+		num_indirdep--;
 		if (LIST_FIRST(&bp->b_dep) != NULL) {
 			FREE_LOCK(&lk);
 			panic("indir_trunc: dangling dep");
@@ -3338,6 +3345,7 @@ softdep_disk_io_initiation(bp)
 				wk->wk_state &= ~ONWORKLIST;
 				LIST_REMOVE(wk, wk_list);
 				WORKITEM_FREE(indirdep, D_INDIRDEP);
+				num_indirdep--;
 				FREE_LOCK(&lk);
 				brelse(sbp);
 				ACQUIRE_LOCK(&lk);
