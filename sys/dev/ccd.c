@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.92 2010/09/22 01:18:57 matthew Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.93 2011/04/12 20:18:13 miod Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -795,6 +795,7 @@ ccdbuffer(struct ccd_softc *cs, struct buf *bp, daddr64_t bn, caddr_t addr,
 			ccdisk = ii->ii_index[off % ii->ii_ndisk];
 			cbn = ii->ii_startoff + off / ii->ii_ndisk;
 		}
+		ci = &cs->sc_cinfo[ccdisk];
 		if (cs->sc_cflags & CCDF_MIRROR) {
 			/* Mirrored data */
 			ccdisk2 = ccdisk + ii->ii_ndisk;
@@ -803,11 +804,12 @@ ccdbuffer(struct ccd_softc *cs, struct buf *bp, daddr64_t bn, caddr_t addr,
 			if (bp->b_flags & B_READ &&
 			    bcount > bp->b_bcount / 2 &&
 			    (!(ci2->ci_flags & CCIF_FAILED) ||
-			      ci->ci_flags & CCIF_FAILED))
+			      ci->ci_flags & CCIF_FAILED)) {
 				ccdisk = ccdisk2;
+				ci = ci2;
+			}
 		}
 		cbn *= cs->sc_ileave;
-		ci = &cs->sc_cinfo[ccdisk];
 		CCD_DPRINTF(CCDB_IO, ("ccdisk %d cbn %lld ci %p ci2 %p\n",
 		    ccdisk, cbn, ci, ci2));
 	}
