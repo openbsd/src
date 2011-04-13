@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.46 2011/04/10 03:56:38 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.47 2011/04/13 02:49:12 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -962,14 +962,8 @@ syscall_return:
 	/*
 	 * XXX interrupts off longer than they should be here.
 	 */
-	cli
-	swapgs
-	movw	TF_ES(%rsp),%es
-	movw	TF_FS(%rsp),%fs
-	movw	TF_GS(%rsp),%gs
+	INTR_RESTORE_SELECTORS
 	INTR_RESTORE_GPRS
-	movw	$(GSEL(GUDATA_SEL, SEL_UPL)),%r11
-	movw	%r11,%ds
 	addq	$48,%rsp
 	popq	%rcx	/* return rip */
 	addq	$8,%rsp
@@ -1049,16 +1043,11 @@ iret_return:
 #endif /* DIAGNOSTIC */
 	.globl	intr_fast_exit
 intr_fast_exit:
-	INTR_RESTORE_GPRS
-	testq	$SEL_UPL,56(%rsp)
+	testq	$SEL_UPL,TF_CS(%rsp)
 	je	5f
-	cli
-	swapgs
-	movw	0(%rsp),%gs
-	movw	8(%rsp),%fs
-	movw	16(%rsp),%es
-	movw	24(%rsp),%ds
-5:	addq	$48,%rsp
+	INTR_RESTORE_SELECTORS
+5:	INTR_RESTORE_GPRS
+	addq	$48,%rsp
 	.globl	_C_LABEL(doreti_iret)
 _C_LABEL(doreti_iret):
 	iretq

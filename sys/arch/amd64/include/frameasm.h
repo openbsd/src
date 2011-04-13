@@ -1,4 +1,4 @@
-/*	$OpenBSD: frameasm.h,v 1.4 2011/04/10 03:56:38 guenther Exp $	*/
+/*	$OpenBSD: frameasm.h,v 1.5 2011/04/13 02:49:12 guenther Exp $	*/
 /*	$NetBSD: frameasm.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
@@ -71,6 +71,37 @@
 	movl	%cs,%r11d		; \
 	pushq	%r11			; \
 	pushq	%r13			;
+
+/*
+ * Restore %ds, %es, %fs, and %gs, dealing with the FS.base MSR for
+ * %fs and doing the cli/swapgs for %gs.  Uses %rax, %rcx, and %rdx
+ */
+#define INTR_RESTORE_SELECTORS						\
+	movq	CPUVAR(CURPCB),%rdx	/* for below */			; \
+	/* %es and %ds */						  \
+	movw	TF_ES(%rsp),%es						; \
+	movw	$(GSEL(GUDATA_SEL, SEL_UPL)),%ax			; \
+	movw	%ax,%ds							; \
+	/* Make sure both %fs and FS.base are the desired values */	  \
+	movq	PCB_FSBASE(%rdx),%rax					; \
+	cmpq	$0,%rax							; \
+	jne	96f							; \
+	movw	TF_FS(%rsp),%fs	/* zero FS.base by setting %fs */	; \
+	jmp	98f							; \
+96:	cmpq	CPUVAR(CUR_FSBASE),%rax					; \
+	jne	97f							; \
+	movw	%fs,%cx		/* FS.base same, how about %fs? */	; \
+	cmpw	TF_FS(%rsp),%cx						; \
+	je	99f							; \
+97:	movw	TF_FS(%rsp),%fs		/* set them both */		; \
+	movq	%rax,%rdx						; \
+	shrq	$32,%rdx						; \
+	movl	$MSR_FSBASE,%ecx					; \
+	wrmsr								; \
+98:	movq	%rax,CPUVAR(CUR_FSBASE)					; \
+99:	cli		/* %fs done, so swapgs and do %gs */		; \
+	swapgs								; \
+	movw	TF_GS(%rsp),%gs
 
 
 #define CHECK_ASTPENDING(reg)	movq	CPUVAR(CURPROC),reg		; \

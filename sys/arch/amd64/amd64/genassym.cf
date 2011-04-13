@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.27 2011/04/10 03:56:38 guenther Exp $
+#	$OpenBSD: genassym.cf,v 1.28 2011/04/13 02:49:12 guenther Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -85,6 +85,7 @@ member	pcb_cr3
 member	pcb_rsp
 member	pcb_rbp
 member	pcb_kstack
+member	pcb_fsbase
 member	pcb_onfault
 member	pcb_fpcpu
 member	pcb_pmap
@@ -98,6 +99,7 @@ member	tss_rsp0
 
 struct	cpu_info
 member	CPU_INFO_SCRATCH	ci_scratch
+member	CPU_INFO_CUR_FSBASE	ci_cur_fsbase
 member  CPU_INFO_SELF		ci_self
 member  CPU_INFO_CPUID		ci_cpuid
 member  CPU_INFO_APICID		ci_apicid
