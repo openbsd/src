@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.18 2011/04/07 18:36:26 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.19 2011/04/13 15:22:48 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -812,13 +812,14 @@ TLABEL(all_kern)
 	ldo	127(%sp), %sp
 	depdi	0, 63, 7, %sp
 
-	ldo	TF_SP(%sp), %r8
-	std	%r17, 0(%r8)
+	mfctl	%cr24, %r8
+	ldo	CI_TRAP_SAVE(%r8), %r8
+	std	%r17, 0(%r8)			/* sp */
 	fdc	%r0(%r8)
+	ldo	8(%r8), %r8
 
 	mfctl	%iir, %r16
-	ldo	TF_IIR(%sp), %r8
-	std	%r16, 0(%r8)
+	std	%r16, 0(%r8)			/* iir */
 	fdc	%r0(%r8)
 
 	mtctl	%r1, %cr26
@@ -933,6 +934,14 @@ TLABEL(all_virt)
 	mtsp	%r0, %sr5
 	mtsp	%r0, %sr6
 	mtsp	%r0, %sr7
+
+	/* Copy sp and iir from physical trap save area. */
+	mfctl	%cr24, %r1
+	ldo	CI_TRAP_SAVE(%r1), %r1
+	ldd	0*8(%r1), %arg2
+	ldd	1*8(%r1), %arg3
+	std	%arg2, TF_SP(%arg1)
+	std	%arg3, TF_IIR(%arg1)
 
 	ldo	TRAPFRAME_SIZEOF(%arg1), %sp
 	copy	%sp, %r3
