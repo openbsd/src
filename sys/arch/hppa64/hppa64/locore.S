@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.19 2011/04/13 15:22:48 jsing Exp $	*/
+/*	$OpenBSD: locore.S,v 1.20 2011/04/13 17:36:29 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -1544,10 +1544,10 @@ LEAF_ENTRY(spstrcpy)
 	ldo	HPPA_FRAME_SIZE(%sp), %sp
 	add	arg4, %arg1, arg4
 	/* setup fault handler */
-	mfctl	%cr24, %arg1
-	ldd	CI_CURPROC(%arg1), %r1
+	mfctl	%cr24, %r1
+	ldd	CI_CURPROC(%r1), %r1
 	ldil	L%copy_on_fault, arg7
-	ldd	P_ADDR(arg6), %rp
+	ldd	P_ADDR(%r1), %rp
 	ldo	R%copy_on_fault(arg7), arg7
 	ldd	PCB_ONFAULT+U_PCB(%rp), %r1
 	std	arg7, PCB_ONFAULT+U_PCB(%rp)
@@ -1555,6 +1555,7 @@ LEAF_ENTRY(spstrcpy)
 	mtsp	%arg0, %sr1
 	mtsp	%arg2, %sr2
 	copy	%arg1, %arg0
+	copy	%r0, %ret0
 
 $spstrcpy_loop
 	ldbs,ma	1(%sr1, %arg1), arg7
@@ -1562,6 +1563,7 @@ $spstrcpy_loop
 	stbs,ma	arg7, 1(%sr2, %arg3)
 	comb,<>,n %r0, arg7, $spstrcpy_loop
 	nop
+	ldi	ENAMETOOLONG, %ret0
 
 $spstrcpy_exit
 	ldo	-HPPA_FRAME_SIZE(%sp), %sp
@@ -1571,9 +1573,9 @@ $spstrcpy_exit
 	sub	%arg1, %arg0, %arg1
 	ldd	HPPA_FRAME_RP(%sp), %rp
 	sub,=	%r0, arg5, %r0
-	stw	%arg1, 0(arg5)
+	std	%arg1, 0(arg5)
 	bv	0(%rp)
-	copy	%r0, %ret0
+	nop
 EXIT(spstrcpy)
 
 LEAF_ENTRY(setjmp)
