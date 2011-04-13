@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.4 2011/04/07 13:13:01 jsing Exp $	*/
+/*	$OpenBSD: intr.c,v 1.5 2011/04/13 15:23:53 jsing Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -44,14 +44,6 @@
 #include <machine/iomod.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
-
-#ifdef DDB
-#include <machine/db_machdep.h>
-#endif
-
-#ifdef INTRDEBUG
-#include <ddb/db_output.h>
-#endif
 
 struct hppa_iv {
 	char pri;
@@ -293,13 +285,6 @@ cpu_intr(void *v)
 	}
 	ci->ci_in_intr--;
 	ci->ci_cpl = s;
-
-#ifdef INTRDEBUG
-	if (uvmexp.intrs % 10000)
-		db_printf(".");
-	if (uvmexp.softs % 10000)
-		db_printf("+");
-#endif
 
 	mtctl(imask[ci->ci_cpl], CR_EIEM);
 	ssm(PSL_I, mask);
