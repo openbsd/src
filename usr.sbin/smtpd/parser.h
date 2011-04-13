@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.15 2010/10/09 22:05:35 gilles Exp $	*/
+/*	$OpenBSD: parser.h,v 1.16 2011/04/13 20:53:18 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -21,8 +21,6 @@ enum actions {
 	SHUTDOWN,
 	RELOAD,
 	MONITOR,
-	SCHEDULE,
-	REMOVE,
 	LOG_VERBOSE,
 	LOG_BRIEF,
 	SHOW_QUEUE,

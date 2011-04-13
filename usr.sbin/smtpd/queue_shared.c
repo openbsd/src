@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.36 2011/03/21 09:21:57 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.37 2011/04/13 20:53:18 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -325,28 +325,27 @@ bounce_commit_message(struct message *message)
 }
 
 int
-bounce_record_message(struct message *messagep)
+bounce_record_message(struct message *messagep, struct message *mbounce)
 {
 	char	msgid[MAX_ID_SIZE];
-	struct message mbounce;
 
 	if (messagep->type == T_BOUNCE_MESSAGE) {
 		log_debug("mailer daemons loop detected !");
 		return 0;
 	}
 
-	mbounce = *messagep;
-	mbounce.type = T_BOUNCE_MESSAGE;
-	mbounce.status &= ~S_MESSAGE_PERMFAILURE;
+	*mbounce = *messagep;
+	mbounce->type = T_BOUNCE_MESSAGE;
+	mbounce->status &= ~S_MESSAGE_PERMFAILURE;
 
 	if (! bounce_create_layout(msgid, messagep))
 		return 0;
 
-	strlcpy(mbounce.message_id, msgid, sizeof(mbounce.message_id));
-	if (! bounce_record_envelope(&mbounce))
+	strlcpy(mbounce->message_id, msgid, sizeof(mbounce->message_id));
+	if (! bounce_record_envelope(mbounce))
 		return 0;
 
-	return bounce_commit_message(&mbounce);
+	return bounce_commit_message(mbounce);
 }
 
 int
@@ -457,8 +456,11 @@ queue_message_update(struct message *messagep)
 
 	if (messagep->status & S_MESSAGE_PERMFAILURE) {
 		if (messagep->type != T_BOUNCE_MESSAGE &&
-		    messagep->sender.user[0] != '\0')
-			bounce_record_message(messagep);
+		    messagep->sender.user[0] != '\0') {
+			struct message bounce;
+
+			bounce_record_message(messagep, &bounce);
+		}
 		queue_remove_envelope(messagep);
 		return;
 	}

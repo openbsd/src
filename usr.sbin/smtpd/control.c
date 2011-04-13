@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.56 2010/11/28 13:56:43 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.57 2011/04/13 20:53:18 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -65,8 +65,6 @@ control_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 {
 	struct ctl_conn	*c;
 	struct reload	*reload;
-	struct remove	*rem;
-	struct sched	*sched;
 
 	if (iev->proc == PROC_SMTP) {
 		switch (imsg->hdr.type) {
@@ -76,30 +74,6 @@ control_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 				return;
 			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0,
 			    imsg->fd, NULL, 0);
-			return;
-		}
-	}
-
-	if (iev->proc == PROC_QUEUE) {
-		switch (imsg->hdr.type) {
-		case IMSG_QUEUE_SCHEDULE:
-			sched = imsg->data;
-			c = control_connbyfd(sched->fd);
-			if (c == NULL)
-				return;
-			imsg_compose_event(&c->iev,
-			    sched->ret ? IMSG_CTL_OK : IMSG_CTL_FAIL, 0, 0, -1,
-			    NULL, 0);
-			return;
-
-		case IMSG_QUEUE_REMOVE:
-			rem = imsg->data;
-			c = control_connbyfd(rem->fd);
-			if (c == NULL)
-				return;
-			imsg_compose_event(&c->iev,
-			    rem->ret ? IMSG_CTL_OK : IMSG_CTL_FAIL, 0, 0,
-			    -1, NULL, 0);
 			return;
 		}
 	}
@@ -400,68 +374,6 @@ control_dispatch_ext(int fd, short event, void *arg)
 			imsg_compose_event(&c->iev, IMSG_STATS, 0, 0, -1,
 			    env->stats, sizeof(struct stats));
 			break;
-		case IMSG_QUEUE_SCHEDULE: {
-			struct sched *s = imsg.data;
-
-			if (euid)
-				goto badcred;
-	
-			if (IMSG_DATA_SIZE(&imsg) != sizeof(*s))
-				goto badcred;
-
-			s->fd = fd;
-
-			if (! valid_message_id(s->mid) && ! valid_message_uid(s->mid)) {
-				imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1,
-				    NULL, 0);
-				break;
-			}
-
-			imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_QUEUE_SCHEDULE, 0, 0, -1, s, sizeof(*s));
-			break;
-		}
-
-		case IMSG_QUEUE_REMOVE: {
-			struct remove *s = imsg.data;
-
-			if (euid)
-				goto badcred;
-	
-			if (IMSG_DATA_SIZE(&imsg) != sizeof(*s))
-				goto badcred;
-
-			s->fd = fd;
-
-			if (! valid_message_id(s->mid) && ! valid_message_uid(s->mid)) {
-				imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1,
-				    NULL, 0);
-				break;
-			}
-
-			imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_QUEUE_REMOVE, 0, 0, -1, s, sizeof(*s));
-			break;
-		}
-/*
-		case IMSG_CONF_RELOAD: {
-			struct reload r;
-
-			log_debug("received reload request");
-
-			if (euid)
-				goto badcred;
-
-			if (env->sc_flags & SMTPD_CONFIGURING) {
-				imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1,
-					NULL, 0);
-				break;
-			}
-			env->sc_flags |= SMTPD_CONFIGURING;
-
-			r.fd = fd;
-			imsg_compose_event(env->sc_ievs[PROC_PARENT], IMSG_CONF_RELOAD, 0, 0, -1, &r, sizeof(r));
-			break;
-		}
-*/
 		case IMSG_CTL_SHUTDOWN:
 			/* NEEDS_FIX */
 			log_debug("received shutdown request");

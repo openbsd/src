@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.94 2010/11/28 15:32:00 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.95 2011/04/13 20:53:18 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -54,7 +54,7 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 {
 	struct submit_status	 ss;
 	struct message		*m;
-	struct batch		*b;
+	struct ramqueue_batch	*rq_batch;
 	int			 fd, ret;
 
 	if (iev->proc == PROC_SMTP) {
@@ -97,6 +97,10 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			}
 			imsg_compose_event(iev, IMSG_QUEUE_COMMIT_MESSAGE, 0, 0, -1,
 			    &ss, sizeof ss);
+
+			if (ss.code != 421)
+				queue_pass_to_runner(env, iev, imsg);
+
 			return;
 
 		case IMSG_QUEUE_MESSAGE_FILE:
@@ -165,10 +169,10 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 	if (iev->proc == PROC_MTA) {
 		switch (imsg->hdr.type) {
 		case IMSG_QUEUE_MESSAGE_FD:
-			b = imsg->data;
-			fd = queue_open_message_file(b->message_id);
+			rq_batch = imsg->data;
+			fd = queue_open_message_file(rq_batch->m_id);
 			imsg_compose_event(iev,  IMSG_QUEUE_MESSAGE_FD, 0, 0,
-			    fd, b, sizeof *b);
+			    fd, rq_batch, sizeof *rq_batch);
 			return;
 
 		case IMSG_QUEUE_MESSAGE_UPDATE:
@@ -320,16 +324,6 @@ queue(struct smtpd *env)
 
 	return (0);
 }
-
-struct batch *
-batch_by_id(struct smtpd *env, u_int64_t id)
-{
-	struct batch lookup;
-
-	lookup.id = id;
-	return SPLAY_FIND(batchtree, &env->batch_queue, &lookup);
-}
-
 
 void
 queue_purge(char *queuepath)
