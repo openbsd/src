@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.22 2010/08/30 18:56:18 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.23 2011/04/13 15:25:22 jsing Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -121,8 +121,8 @@ pci*	at ppb?
 
 #ie*	at pci?
 
-#siop*	at pci?			# NCR 538XX SCSI controllers(new)
-#scsibus* at siop?
+siop*	at pci?			# NCR 538XX SCSI controllers(new)
+scsibus* at siop?
 #ahd*	at pci?			# Adaptec 79?? SCSI controllers
 #scsibus* at ahd?
 
@@ -176,7 +176,7 @@ ukphy*		at mii?		# generic unknown PHYs
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
-#sd*	at scsibus?
+sd*	at scsibus?
 #st*	at scsibus?
 #cd*	at scsibus?
 #ch*	at scsibus?
