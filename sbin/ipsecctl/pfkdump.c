@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.29 2010/10/06 22:19:20 mikeb Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.30 2011/04/13 11:31:27 markus Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -282,7 +282,7 @@ print_sa(struct sadb_ext *ext, struct sadb_msg *msg)
 		    ntohl(sa->sadb_sa_spi),
 		    lookup_name(auth_types, sa->sadb_sa_auth),
 		    lookup_name(enc_types, sa->sadb_sa_encrypt));
-	printf("\t\tstate %s replay %u flags %u",
+	printf("\t\tstate %s replay %u flags %x",
 	    lookup_name(states, sa->sadb_sa_state),
 	    sa->sadb_sa_replay, sa->sadb_sa_flags);
 }
@@ -355,11 +355,11 @@ print_proto(struct sadb_ext *ext, struct sadb_msg *msg)
 
 	/* overloaded */
 	if (msg->sadb_msg_type == SADB_X_GRPSPIS)
-		printf("satype %s flags %u",
+		printf("satype %s flags %x",
 		    lookup_name(sa_types, proto->sadb_protocol_proto),
 		    proto->sadb_protocol_flags);
 	else
-		printf("proto %u flags %u",
+		printf("proto %u flags %x",
 		    proto->sadb_protocol_proto, proto->sadb_protocol_flags);
 }
 
