@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.92 2011/04/05 18:01:21 henning Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.93 2011/04/13 07:28:35 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -2286,6 +2286,8 @@ bnx_dma_free(struct bnx_softc *sc)
 
 	/* Destroy the status block. */
 	if (sc->status_block != NULL && sc->status_map != NULL) {
+		bus_dmamap_sync(sc->bnx_dmatag, sc->status_map, 0,
+		    sc->status_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(sc->bnx_dmatag, sc->status_map);
 		bus_dmamem_unmap(sc->bnx_dmatag, (caddr_t)sc->status_block,
 		    BNX_STATUS_BLK_SZ);		
@@ -2423,6 +2425,9 @@ bnx_dma_alloc(struct bnx_softc *sc)
 		rc = ENOMEM;
 		goto bnx_dma_alloc_exit;
 	}
+
+	bus_dmamap_sync(sc->bnx_dmatag, sc->status_map, 0,
+	    sc->status_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 	sc->status_block_paddr = sc->status_map->dm_segs[0].ds_addr;
 
@@ -5152,7 +5157,7 @@ bnx_intr(void *xsc)
 	DBRUNIF(1, sc->interrupts_generated++);
 
 	bus_dmamap_sync(sc->bnx_dmatag, sc->status_map, 0,
-	    sc->status_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+	    sc->status_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 	/*
 	 * If the hardware status block index
@@ -5232,7 +5237,7 @@ bnx_intr(void *xsc)
 	}
 
 	bus_dmamap_sync(sc->bnx_dmatag, sc->status_map, 0,
-	    sc->status_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	    sc->status_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 	/* Re-enable interrupts. */
 	REG_WR(sc, BNX_PCICFG_INT_ACK_CMD,
