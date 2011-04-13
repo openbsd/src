@@ -1,4 +1,4 @@
-/*	$OpenBSD: consinit.c,v 1.13 2008/01/23 16:37:57 jsing Exp $	*/
+/*	$OpenBSD: consinit.c,v 1.14 2011/04/13 00:56:25 deraadt Exp $	*/
 /*	$NetBSD: consinit.c,v 1.9 2000/10/20 05:32:35 mrg Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@
 
 cons_decl(prom_);
 
-int stdin = NULL, stdout = NULL;
+int stdin = 0, stdout = 0;
 
 /*
  * The console is set to this one initially,
