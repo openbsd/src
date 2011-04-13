@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.253 2011/04/05 20:24:32 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.254 2011/04/13 00:19:00 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -820,54 +820,46 @@ em_init(void *arg)
 int 
 em_intr(void *arg)
 {
-	struct em_softc  *sc = arg;
-	struct ifnet	*ifp;
+	struct em_softc	*sc = arg;
+	struct ifnet	*ifp = &sc->interface_data.ac_if;
 	u_int32_t	reg_icr, test_icr;
-	int claimed = 0;
-	int refill;
+	int		refill = 0;
 
-	ifp = &sc->interface_data.ac_if;
+	test_icr = reg_icr = E1000_READ_REG(&sc->hw, ICR);
+	if (sc->hw.mac_type >= em_82571)
+		test_icr = (reg_icr & E1000_ICR_INT_ASSERTED);
+	if (!test_icr)
+		return (0);
 
-	for (;;) {
-		test_icr = reg_icr = E1000_READ_REG(&sc->hw, ICR);
-		if (sc->hw.mac_type >= em_82571)
-			test_icr = (reg_icr & E1000_ICR_INT_ASSERTED);
-		if (!test_icr)
-			break;
+	if (ifp->if_flags & IFF_RUNNING) {
+		em_rxeof(sc, -1);
+		em_txeof(sc);
+		if (!IFQ_IS_EMPTY(&ifp->if_snd))
+			em_start(ifp);
 
-		claimed = 1;
-		refill = 0;
-
-		if (ifp->if_flags & IFF_RUNNING) {
-			em_rxeof(sc, -1);
-			em_txeof(sc);
-			refill = 1;
-		}
-
-		/* Link status change */
-		if (reg_icr & (E1000_ICR_RXSEQ | E1000_ICR_LSC)) {
-			timeout_del(&sc->timer_handle);
-			sc->hw.get_link_status = 1;
-			em_check_for_link(&sc->hw);
-			em_update_link_status(sc);
-			timeout_add_sec(&sc->timer_handle, 1); 
-		}
-
-		if (reg_icr & E1000_ICR_RXO) {
-			sc->rx_overruns++;
-			refill = 1;
-		}
-
-		if (refill && em_rxfill(sc)) {
-			/* Advance the Rx Queue #0 "Tail Pointer". */
-			E1000_WRITE_REG(&sc->hw, RDT, sc->last_rx_desc_filled);
-		}
+		refill = 1;
 	}
 
-	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
-		em_start(ifp);
+	/* Link status change */
+	if (reg_icr & (E1000_ICR_RXSEQ | E1000_ICR_LSC)) {
+		timeout_del(&sc->timer_handle);
+		sc->hw.get_link_status = 1;
+		em_check_for_link(&sc->hw);
+		em_update_link_status(sc);
+		timeout_add_sec(&sc->timer_handle, 1); 
+	}
 
-	return (claimed);
+	if (reg_icr & E1000_ICR_RXO) {
+		sc->rx_overruns++;
+		refill = 1;
+	}
+
+	if (refill && em_rxfill(sc)) {
+		/* Advance the Rx Queue #0 "Tail Pointer". */
+		E1000_WRITE_REG(&sc->hw, RDT, sc->last_rx_desc_filled);
+	}
+
+	return (1);
 }
 
 /*********************************************************************
