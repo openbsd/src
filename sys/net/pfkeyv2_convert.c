@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.34 2010/10/06 22:19:20 mikeb Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.35 2011/04/13 11:28:47 markus Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -288,6 +288,9 @@ export_sa(void **p, struct tdb *tdb)
 
 	if (tdb->tdb_flags & TDBF_NOREPLAY)
 		sadb_sa->sadb_sa_flags |= SADB_X_SAFLAGS_NOREPLAY;
+
+	if (tdb->tdb_flags & TDBF_UDPENCAP)
+		sadb_sa->sadb_sa_flags |= SADB_X_SAFLAGS_UDPENCAP;
 
 	*p += sizeof(struct sadb_sa);
 }
