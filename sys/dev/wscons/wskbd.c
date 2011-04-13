@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.64 2010/11/20 20:52:11 miod Exp $ */
+/* $OpenBSD: wskbd.c,v 1.65 2011/04/13 18:16:33 shadchin Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -216,7 +216,6 @@ int	wskbd_translate(struct wskbd_internal *, u_int, int);
 int	wskbd_enable(struct wskbd_softc *, int);
 #if NWSDISPLAY > 0
 void	change_displayparam(struct wskbd_softc *, int, int, int);
-void	wskbd_holdscreen(struct wskbd_softc *, int);
 #endif
 
 int	wskbd_do_ioctl_sc(struct wskbd_softc *, u_long, caddr_t, int,
@@ -709,28 +708,6 @@ wskbd_rawinput(struct device *dev, u_char *buf, int len)
 #endif
 }
 #endif /* WSDISPLAY_COMPAT_RAWKBD */
-
-#if NWSDISPLAY > 0
-void
-wskbd_holdscreen(struct wskbd_softc *sc, int hold)
-{
-	int new_state;
-
-	if (sc->sc_displaydv != NULL) {
-		wsdisplay_kbdholdscreen(sc->sc_displaydv, hold);
-		new_state = sc->sc_ledstate;
-		if (hold)
-			new_state |= WSKBD_LED_SCROLL;
-		else
-			new_state &= ~WSKBD_LED_SCROLL;
-		if (new_state != sc->sc_ledstate) {
-			(*sc->sc_accessops->set_leds)(sc->sc_accesscookie,
-						      new_state);
-			sc->sc_ledstate = new_state;
-		}
-	}
-}
-#endif
 
 int
 wskbd_enable(struct wskbd_softc *sc, int on)
@@ -1592,7 +1569,9 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 	case KS_Hold_Screen:
 		if (sc != NULL) {
 			update_modifier(id, type, 1, MOD_HOLDSCREEN);
-			wskbd_holdscreen(sc, id->t_modifiers & MOD_HOLDSCREEN);
+			if (sc->sc_displaydv != NULL)
+				wsdisplay_kbdholdscreen(sc->sc_displaydv,
+				    id->t_modifiers & MOD_HOLDSCREEN);
 		}
 		break;
 
