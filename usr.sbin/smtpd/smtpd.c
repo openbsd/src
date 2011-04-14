@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.119 2011/04/14 20:11:08 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.120 2011/04/14 22:46:38 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -57,7 +57,6 @@ void		 forkmda(struct smtpd *, struct imsgev *, u_int32_t,
 		     struct deliver *);
 int		 parent_enqueue_offline(struct smtpd *, char *);
 int		 parent_forward_open(char *);
-int		 setup_spool(uid_t, gid_t);
 int		 path_starts_with(char *, char *);
 
 void		 fork_peers(struct smtpd *);
@@ -492,7 +491,7 @@ main(int argc, char *argv[])
 	if (env.sc_queue == NULL)
 		errx(1, "could not find queue backend");
 
-	if (!env.sc_queue->setup(&env))
+	if (!env.sc_queue->init(&env))
 		errx(1, "invalid directory permissions");
 
 	log_init(debug);

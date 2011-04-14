@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.211 2011/04/14 22:36:09 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.212 2011/04/14 22:46:38 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -931,7 +931,7 @@ enum queue_op {
 
 struct queue_backend {
 	enum queue_type	type;
-	int (*setup)(struct smtpd *);
+	int (*init)(struct smtpd *);
 	int (*message)(struct smtpd *, enum queue_kind, enum queue_op, char *);
 	int (*envelope)(struct smtpd *, enum queue_kind, enum queue_op,
 		struct message *);
