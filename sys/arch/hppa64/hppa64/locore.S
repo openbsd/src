@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.20 2011/04/13 17:36:29 jsing Exp $	*/
+/*	$OpenBSD: locore.S,v 1.21 2011/04/14 14:06:06 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -1514,8 +1514,8 @@ LEAF_ENTRY(copy_on_fault)
 	mtsp	%r0, %sr1
 	mtsp	%r0, %sr2
 	std	%r1, PCB_ONFAULT+U_PCB(%rp)
-	ldd	HPPA_FRAME_RP(%sp), %rp
 	ldo	-HPPA_FRAME_SIZE(%sp), %sp
+	ldd	HPPA_FRAME_RP(%sp), %rp
 	bv	%r0(%rp)
 	ldi	EFAULT, %ret0
 EXIT(copy_on_fault)
