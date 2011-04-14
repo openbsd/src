@@ -40,11 +40,11 @@ ALTENTRY(bcopy)
 	
 	comib,>=,n 15, %arg2, $bcopy_f.byte
 
-	extru	%arg0, 31, 2, %r20
-	extru	%arg1, 31, 2, %r19
+	extrd	%arg0, 63, 2, %r20
+	extrd	%arg1, 63, 2, %r19
 	add	%arg2, %r19, %arg2
 	comb,<> %r20, %r19, $bcopy_f.unaligned
-	dep	%r0, 31, 2, %arg0
+	depd	%r0, 63, 2, %arg0
 	
 	addi	-16, %arg2, %arg2
 $bcopy_f.loop16a

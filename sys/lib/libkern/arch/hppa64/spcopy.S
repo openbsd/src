@@ -47,10 +47,10 @@ LEAF_ENTRY(spcopy)
 	std	%rp, HPPA_FRAME_RP(%sp)
 	ldo	HPPA_FRAME_SIZE(%sp), %sp
 	/* setup fault handler */
-	mfctl	%cr24, %arg1
-	ldd	CI_CURPROC(%arg1), %r1
+	mfctl	%cr24, %r1
+	ldd	CI_CURPROC(%r1), %r1
 	ldil	L%copy_on_fault, %r21
-	ldd	P_ADDR(%r20), %r2
+	ldd	P_ADDR(%r1), %r2
 	ldo	R%copy_on_fault(%r21), %r21
 	ldd	PCB_ONFAULT+U_PCB(%r2), %r1
 	std	%r21, PCB_ONFAULT+U_PCB(%r2)
@@ -62,11 +62,11 @@ LEAF_ENTRY(spcopy)
 	
 	comib,>=,n 15, %ret0, $spcopy.byte
 
-	extru	%arg1, 31, 2, %r20
-	extru	%arg3, 31, 2, %r19
+	extrd	%arg1, 63, 2, %r20
+	extrd	%arg3, 63, 2, %r19
 	add	%ret0, %r19, %ret0
 	comb,<> %r20, %r19, $spcopy.unaligned
-	dep	%r0, 31, 2, %arg1
+	depd	%r0, 63, 2, %arg1
 	
 	addi	-16, %ret0, %ret0
 $spcopy.loop16a
