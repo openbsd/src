@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.212 2011/04/14 22:46:38 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.213 2011/04/14 23:26:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -926,7 +926,8 @@ enum queue_op {
 	QOP_COMMIT,
 	QOP_LOAD,
 	QOP_FD_R,
-	QOP_FD_RW
+	QOP_FD_RW,
+	QOP_PURGE
 };
 
 struct queue_backend {
@@ -1060,6 +1061,7 @@ int	queue_message_delete(struct smtpd *, enum queue_kind, char *);
 int	queue_message_commit(struct smtpd *, enum queue_kind, char *);
 int	queue_message_fd_r(struct smtpd *, enum queue_kind, char *);
 int	queue_message_fd_rw(struct smtpd *, enum queue_kind, char *);
+int	queue_message_purge(struct smtpd *, enum queue_kind, char *);
 int	queue_envelope_create(struct smtpd *, enum queue_kind,
     struct message *);
 int	queue_envelope_delete(struct smtpd *, enum queue_kind,
@@ -1070,11 +1072,8 @@ int	queue_envelope_update(struct smtpd *, enum queue_kind,
     struct message *);
 
 
-
-
 /* queue_shared.c */
 int		 queue_create_layout_message(char *, char *);
-void		 queue_delete_layout_message(char *, char *);
 int		 queue_record_layout_envelope(char *, struct message *);
 int		 queue_remove_layout_envelope(char *, struct message *);
 int		 queue_commit_layout_message(char *, struct message *);

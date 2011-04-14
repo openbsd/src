@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.97 2011/04/14 22:36:09 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.98 2011/04/14 23:26:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -40,14 +40,7 @@ void		queue_imsg(struct smtpd *, struct imsgev *, struct imsg *);
 void		queue_pass_to_runner(struct smtpd *, struct imsgev *, struct imsg *);
 __dead void	queue_shutdown(void);
 void		queue_sig_handler(int, short, void *);
-void		queue_purge(char *);
-
-int		queue_create_layout_message(char *, char *);
-void		queue_delete_layout_message(char *, char *);
-int		queue_record_layout_envelope(char *, struct message *);
-int		queue_remove_layout_envelope(char *, struct message *);
-int		queue_commit_layout_message(char *, struct message *);
-int		queue_open_layout_messagefile(char *, struct message *);
+void		queue_purge(struct smtpd *, enum queue_kind, char *);
 
 void
 queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
@@ -77,9 +70,9 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 
 		case IMSG_QUEUE_REMOVE_MESSAGE:
 			if (m->flags & F_MESSAGE_ENQUEUED)
-				enqueue_delete_message(m->message_id);
+				queue_message_purge(env, Q_ENQUEUE, m->message_id);
 			else
-				queue_delete_incoming_message(m->message_id);
+				queue_message_purge(env, Q_INCOMING, m->message_id);
 			return;
 
 		case IMSG_QUEUE_COMMIT_MESSAGE:
@@ -136,9 +129,9 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 
 			/* Write to disk */
 			if (m->flags & F_MESSAGE_ENQUEUED)
-				ret = enqueue_record_envelope(m);
+				ret = queue_envelope_create(env, Q_ENQUEUE, m);
 			else
-				ret = queue_record_incoming_envelope(m);
+				ret = queue_envelope_create(env, Q_INCOMING, m);
 
 			if (ret == 0) {
 				ss.code = 421;
@@ -315,8 +308,8 @@ queue(struct smtpd *env)
 	config_pipes(env, peers, nitems(peers));
 	config_peers(env, peers, nitems(peers));
 
-	queue_purge(PATH_INCOMING);
-	queue_purge(PATH_ENQUEUE);
+	queue_purge(env, Q_INCOMING, PATH_INCOMING);
+	queue_purge(env, Q_ENQUEUE, PATH_ENQUEUE);
 
 	if (event_dispatch() <  0)
 		fatal("event_dispatch");
@@ -326,7 +319,7 @@ queue(struct smtpd *env)
 }
 
 void
-queue_purge(char *queuepath)
+queue_purge(struct smtpd *env, enum queue_kind qkind, char *queuepath)
 {
 	char		 path[MAXPATHLEN];
 	struct qwalk	*q;
@@ -334,7 +327,7 @@ queue_purge(char *queuepath)
 	q = qwalk_new(queuepath);
 
 	while (qwalk(q, path))
-		queue_delete_layout_message(queuepath, basename(path));
+		queue_message_purge(env, qkind, basename(path));
 
 	qwalk_close(q);
 }

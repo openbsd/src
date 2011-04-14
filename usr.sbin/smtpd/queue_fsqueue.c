@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.5 2011/04/14 22:36:09 gilles Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.6 2011/04/14 23:26:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -45,9 +45,12 @@ static int	fsqueue_envelope_load(struct smtpd *, enum queue_kind, struct message
 static int	fsqueue_envelope_update(struct smtpd *, enum queue_kind, struct message *);
 static int	fsqueue_envelope_delete(struct smtpd *, enum queue_kind, struct message *);
 
+static int	fsqueue_message_create(struct smtpd *, enum queue_kind, char *);
+static int	fsqueue_message_commit(struct smtpd *, enum queue_kind, char *);
 static int	fsqueue_message_fd_r(struct smtpd *, enum queue_kind, char *);
 static int	fsqueue_message_fd_rw(struct smtpd *, enum queue_kind, char *);
 static int	fsqueue_message_delete(struct smtpd *, enum queue_kind, char *);
+static int	fsqueue_message_purge(struct smtpd *, enum queue_kind, char *);
 
 int	fsqueue_init(struct smtpd *);
 int	fsqueue_message(struct smtpd *, enum queue_kind,
@@ -92,6 +95,72 @@ fsqueue_hash(char *msgid)
                 h = ((h << 5) + h) + *msgid;
 	
         return (h % DIRHASH_BUCKETS);
+}
+
+static int
+fsqueue_envelope_create(struct smtpd *env, enum queue_kind qkind,
+    struct message *envelope)
+{
+	char evpname[MAXPATHLEN];
+	FILE *fp;
+	int fd;
+
+	fp = NULL;
+
+again:
+	if (! bsnprintf(evpname, sizeof(evpname), "%s/%s%s/%s.%qu",
+		fsqueue_getpath(qkind), envelope->message_id,
+		PATH_ENVELOPES, envelope->message_id,
+		(u_int64_t)arc4random()))
+		fatalx("fsqueue_envelope_create: snprintf");
+
+	fd = open(evpname, O_WRONLY|O_CREAT|O_EXCL, 0600);
+	if (fd == -1) {
+		if (errno == EEXIST)
+			goto again;
+		if (errno == ENOSPC || errno == ENFILE)
+			goto tempfail;
+		fatal("fsqueue_envelope_create: open");
+	}
+
+	fp = fdopen(fd, "w");
+	if (fp == NULL)
+		fatal("fsqueue_envelope_create: fdopen");
+
+	envelope->creation = time(NULL);
+	if (strlcpy(envelope->message_uid, strrchr(evpname, '/') + 1,
+	    sizeof(envelope->message_uid)) >= sizeof(envelope->message_uid))
+		fatalx("fsqueue_envelope_create: truncation");
+
+	if (qkind == Q_BOUNCE) {
+		envelope->lasttry = 0;
+		envelope->retry = 0;
+	}
+
+	if (fwrite(envelope, sizeof (struct message), 1, fp) != 1) {
+		if (errno == ENOSPC)
+			goto tempfail;
+		fatal("fsqueue_envelope_create: write");
+	}
+
+	if (! safe_fclose(fp)) {
+		fp = NULL;
+		fd = -1;
+		goto tempfail;
+	}
+
+	return 1;
+
+tempfail:
+	unlink(evpname);
+	if (fp)
+		fclose(fp);
+	else if (fd != -1)
+		close(fd);
+	envelope->creation = 0;
+	envelope->message_uid[0] = '\0';
+
+	return 0;
 }
 
 static int
@@ -380,6 +449,27 @@ fsqueue_message_delete(struct smtpd *env, enum queue_kind qkind, char *msgid)
 	return 1;
 }
 
+static int
+fsqueue_message_purge(struct smtpd *env, enum queue_kind qkind, char *msgid)
+{
+	char rootdir[MAXPATHLEN];
+	char purgedir[MAXPATHLEN];
+
+	if (! bsnprintf(rootdir, sizeof(rootdir), "%s/%s",
+		fsqueue_getpath(qkind), msgid))
+		fatalx("fsqueue_message_purge: snprintf");
+
+	if (! bsnprintf(purgedir, sizeof(purgedir), "%s/%s",
+		fsqueue_getpath(Q_PURGE), msgid))
+		fatalx("fsqueue_message_purge: snprintf");
+
+	if (rename(rootdir, purgedir) == -1)
+		fatal("fsqueue_message_purge: rename");
+
+	return 1;
+}
+
+
 int
 fsqueue_init(struct smtpd *env)
 {
@@ -529,6 +619,9 @@ fsqueue_message(struct smtpd *env, enum queue_kind qkind,
         case QOP_FD_RW:
                 return fsqueue_message_fd_rw(env, qkind, msgid);
 
+	case QOP_PURGE:
+		return fsqueue_message_purge(env, qkind, msgid);
+
         default:
 		fatalx("queue_fsqueue_message: unsupported operation.");
         }
@@ -542,7 +635,7 @@ fsqueue_envelope(struct smtpd *env, enum queue_kind qkind,
 {
         switch (qop) {
         case QOP_CREATE:
-                return 0;
+		return fsqueue_envelope_create(env, qkind, envelope);
 
         case QOP_DELETE:
 		return fsqueue_envelope_delete(env, qkind, envelope);

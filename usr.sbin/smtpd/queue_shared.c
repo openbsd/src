@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.41 2011/04/14 22:36:09 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.42 2011/04/14 23:26:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -58,134 +58,6 @@ int		walk_queue(struct qwalk *, char *);
 void		display_envelope(struct message *, int);
 void		getflag(u_int *, int, char *, char *, size_t);
 
-void
-queue_delete_layout_message(char *queuepath, char *msgid)
-{
-	char rootdir[MAXPATHLEN];
-	char purgedir[MAXPATHLEN];
-
-	if (! bsnprintf(rootdir, sizeof(rootdir), "%s/%s", queuepath, msgid))
-		fatalx("snprintf");
-
-	if (! bsnprintf(purgedir, sizeof(purgedir), "%s/%s", PATH_PURGE, msgid))
-		fatalx("snprintf");
-
-	if (rename(rootdir, purgedir) == -1)
-		fatal("queue_delete_layout_message: rename");
-}
-
-int
-queue_record_layout_envelope(char *queuepath, struct message *message)
-{
-	char evpname[MAXPATHLEN];
-	FILE *fp;
-	int fd;
-
-	fp = NULL;
-
-again:
-	if (! bsnprintf(evpname, sizeof(evpname), "%s/%s%s/%s.%qu", queuepath,
-		message->message_id, PATH_ENVELOPES, message->message_id,
-		(u_int64_t)arc4random()))
-		fatalx("queue_record_incoming_envelope: snprintf");
-
-	fd = open(evpname, O_WRONLY|O_CREAT|O_EXCL, 0600);
-	if (fd == -1) {
-		if (errno == EEXIST)
-			goto again;
-		if (errno == ENOSPC || errno == ENFILE)
-			goto tempfail;
-		fatal("queue_record_incoming_envelope: open");
-	}
-
-	fp = fdopen(fd, "w");
-	if (fp == NULL)
-		fatal("queue_record_incoming_envelope: fdopen");
-
-	message->creation = time(NULL);
-	if (strlcpy(message->message_uid, strrchr(evpname, '/') + 1,
-	    sizeof(message->message_uid)) >= sizeof(message->message_uid))
-		fatalx("queue_record_incoming_envelope: truncation");
-
-	if (fwrite(message, sizeof (struct message), 1, fp) != 1) {
-		if (errno == ENOSPC)
-			goto tempfail;
-		fatal("queue_record_incoming_envelope: write");
-	}
-
-	if (! safe_fclose(fp)) {
-		fp = NULL;
-		fd = -1;
-		goto tempfail;
-	}
-
-	return 1;
-
-tempfail:
-	unlink(evpname);
-	if (fp)
-		fclose(fp);
-	else if (fd != -1)
-		close(fd);
-	message->creation = 0;
-	message->message_uid[0] = '\0';
-
-	return 0;
-}
-
-int
-queue_remove_layout_envelope(char *queuepath, struct message *message)
-{
-	char pathname[MAXPATHLEN];
-
-	if (! bsnprintf(pathname, sizeof(pathname), "%s/%s%s/%s", queuepath,
-		message->message_id, PATH_ENVELOPES, message->message_uid))
-		fatal("queue_remove_incoming_envelope: snprintf");
-
-	if (unlink(pathname) == -1)
-		fatal("queue_remove_incoming_envelope: unlink");
-
-	return 1;
-}
-
-void
-enqueue_delete_message(char *msgid)
-{
-	queue_delete_layout_message(PATH_ENQUEUE, msgid);
-}
-
-int
-enqueue_record_envelope(struct message *message)
-{
-	return queue_record_layout_envelope(PATH_ENQUEUE, message);
-}
-
-int
-enqueue_remove_envelope(struct message *message)
-{
-	return queue_remove_layout_envelope(PATH_ENQUEUE, message);
-}
-
-void
-bounce_delete_message(char *msgid)
-{
-	queue_delete_layout_message(PATH_BOUNCE, msgid);
-}
-
-int
-bounce_record_envelope(struct message *message)
-{
-	message->lasttry = 0;
-	message->retry = 0;
-	return queue_record_layout_envelope(PATH_BOUNCE, message);
-}
-
-int
-bounce_remove_envelope(struct message *message)
-{
-	return queue_remove_layout_envelope(PATH_BOUNCE, message);
-}
-
 int
 bounce_record_message(struct smtpd *env, struct message *messagep, struct message *mbounce)
 {
@@ -205,28 +77,10 @@ bounce_record_message(struct smtpd *env, struct message *messagep, struct messag
 		return 0;
 
 	strlcpy(mbounce->message_id, msgid, sizeof(mbounce->message_id));
-	if (! bounce_record_envelope(mbounce))
+	if (! queue_envelope_create(env, Q_BOUNCE, mbounce))
 		return 0;
 
 	return queue_message_commit(env, Q_BOUNCE, msgid);
-}
-
-void
-queue_delete_incoming_message(char *msgid)
-{
-	queue_delete_layout_message(PATH_INCOMING, msgid);
-}
-
-int
-queue_record_incoming_envelope(struct message *message)
-{
-	return queue_record_layout_envelope(PATH_INCOMING, message);
-}
-
-int
-queue_remove_incoming_envelope(struct message *message)
-{
-	return queue_remove_layout_envelope(PATH_INCOMING, message);
 }
 
 void
