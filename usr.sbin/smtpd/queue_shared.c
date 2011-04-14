@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.39 2011/04/14 21:53:46 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.40 2011/04/14 22:00:26 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -70,7 +70,6 @@ queue_create_layout_message(char *queuepath, char *message_id)
 
 	if (mkdtemp(rootdir) == NULL) {
 		if (errno == ENOSPC) {
-			log_debug("FAILED WITH ENOSPC");
 			bzero(message_id, MAX_ID_SIZE);
 			return 0;
 		}
@@ -87,7 +86,6 @@ queue_create_layout_message(char *queuepath, char *message_id)
 
 	if (mkdir(evpdir, 0700) == -1) {
 		if (errno == ENOSPC) {
-			log_debug("FAILED WITH ENOSPC");
 			rmdir(rootdir);
 			bzero(message_id, MAX_ID_SIZE);
 			return 0;
@@ -109,12 +107,8 @@ queue_delete_layout_message(char *queuepath, char *msgid)
 	if (! bsnprintf(purgedir, sizeof(purgedir), "%s/%s", PATH_PURGE, msgid))
 		fatalx("snprintf");
 
-	if (rename(rootdir, purgedir) == -1) {
-		log_debug("ID: %s", msgid);
-		log_debug("PATH: %s", rootdir);
-		log_debug("PURGE: %s", purgedir);
+	if (rename(rootdir, purgedir) == -1)
 		fatal("queue_delete_layout_message: rename");
-	}
 }
 
 int
