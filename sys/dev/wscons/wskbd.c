@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.65 2011/04/13 18:16:33 shadchin Exp $ */
+/* $OpenBSD: wskbd.c,v 1.66 2011/04/14 19:25:54 shadchin Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -196,6 +196,8 @@ struct wskbd_softc {
 #define MOD_ANYSHIFT		(MOD_SHIFT_L | MOD_SHIFT_R | MOD_SHIFTLOCK)
 #define MOD_ANYCONTROL		(MOD_CONTROL_L | MOD_CONTROL_R)
 #define MOD_ANYMETA		(MOD_META_L | MOD_META_R)
+#define MOD_ANYLED		(MOD_SHIFTLOCK | MOD_CAPSLOCK | MOD_NUMLOCK | \
+				 MOD_COMPOSE | MOD_HOLDSCREEN)
 
 #define MOD_ONESET(id, mask)	(((id)->t_modifiers & (mask)) != 0)
 #define MOD_ALLSET(id, mask)	(((id)->t_modifiers & (mask)) == (mask))
@@ -1319,6 +1321,8 @@ update_modifier(struct wskbd_internal *id, u_int type, int toggle, int mask)
 		else
 			id->t_modifiers &= ~mask;
 	}
+	if (mask & MOD_ANYLED)
+		update_leds(id);
 }
 
 #if NWSDISPLAY > 0
@@ -1496,7 +1500,6 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 		    MOD_META_L | MOD_META_R |
 		    MOD_MODESHIFT | MOD_MODELOCK |
 		    MOD_COMMAND | MOD_COMMAND1 | MOD_COMMAND2);
-		update_leds(id);
 		return (0);
 	}
 
@@ -1595,10 +1598,8 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 #endif
 
 	/* If this is a key release or we are in command mode, we are done */
-	if (type != WSCONS_EVENT_KEY_DOWN || iscommand) {
-		update_leds(id);
+	if (type != WSCONS_EVENT_KEY_DOWN || iscommand)
 		return (0);
-	}
 
 	/* Get the keysym */
 	if (id->t_modifiers & (MOD_MODESHIFT|MOD_MODELOCK) &&
@@ -1672,10 +1673,8 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 		break;
 	}
 
-	if (res == KS_voidSymbol) {
-		update_leds(id);
+	if (res == KS_voidSymbol)
 		return (0);
-	}
 
 	if (id->t_composelen > 0) {
 		/*
@@ -1698,8 +1697,6 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 			}
 		}
 	}
-
-	update_leds(id);
 
 	/* We are done, return the symbol */
 	if (KS_GROUP(res) == KS_GROUP_Ascii) {
