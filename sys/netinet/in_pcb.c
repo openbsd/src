@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.114 2011/04/04 13:26:46 henning Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.115 2011/04/14 08:15:26 claudio Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -276,7 +276,8 @@ in_pcbbind(v, nam, p)
 		} else if (sin->sin_addr.s_addr != INADDR_ANY) {
 			sin->sin_port = 0;		/* yech... */
 			if (!(so->so_options & SO_BINDANY) &&
-			    !ifa_ifwithaddr(sintosa(sin), inp->inp_rtableid))
+			    in_iawithaddr(sin->sin_addr, NULL,
+			    inp->inp_rtableid) == 0)
 				return (EADDRNOTAVAIL);
 		}
 		if (lport) {

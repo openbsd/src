@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.40 2011/04/04 13:30:03 henning Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.41 2011/04/14 08:15:26 claudio Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -171,6 +171,8 @@ int	 ip_output(struct mbuf *, ...);
 int	 ip_pcbopts(struct mbuf **, struct mbuf *);
 struct mbuf *
 	 ip_reass(struct ipqent *, struct ipq *);
+struct in_ifaddr *
+	 in_iawithaddr(struct in_addr, struct mbuf *, u_int);
 struct in_ifaddr *
 	 ip_rtaddr(struct in_addr, u_int);
 u_int16_t
