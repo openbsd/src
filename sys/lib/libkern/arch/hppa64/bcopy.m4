@@ -1,4 +1,4 @@
-define(_rcsid,``$OpenBSD: bcopy.m4,v 1.4 2007/11/24 19:42:01 deraadt Exp $'')dnl
+define(_rcsid,``$OpenBSD: bcopy.m4,v 1.5 2011/04/14 13:49:31 jsing Exp $'')dnl
 dnl
 dnl
 dnl  This is the source file for bcopy.S, spcopy.S
@@ -223,10 +223,10 @@ LEAF_ENTRY(spcopy)
 	std	%rp, HPPA_FRAME_RP(%sp)
 	ldo	HPPA_FRAME_SIZE(%sp), %sp
 	/* setup fault handler */
-	mfctl	%cr24, %arg1
-	ldd	CI_CURPROC(%arg1), %r1
+	mfctl	%cr24, %r1
+	ldd	CI_CURPROC(%r1), %r1
 	ldil	L%copy_on_fault, %r21
-	ldd	P_ADDR(%r20), %r2
+	ldd	P_ADDR(%r1), %r2
 	ldo	R%copy_on_fault(%r21), %r21
 	ldd	PCB_ONFAULT+U_PCB(%r2), %r1
 	std	%r21, PCB_ONFAULT+U_PCB(%r2)
