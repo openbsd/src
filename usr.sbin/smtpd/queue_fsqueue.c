@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.6 2011/04/14 23:26:16 gilles Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.7 2011/04/14 23:29:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -39,7 +39,7 @@
 #include "log.h"
 
 static char		*fsqueue_getpath(enum queue_kind);
-static u_int16_t	 fsqueue_hash(char *);
+/*static*/ u_int16_t	 fsqueue_hash(char *);
 
 static int	fsqueue_envelope_load(struct smtpd *, enum queue_kind, struct message *);
 static int	fsqueue_envelope_update(struct smtpd *, enum queue_kind, struct message *);
@@ -86,7 +86,7 @@ fsqueue_getpath(enum queue_kind kind)
 	return NULL;
 }
 
-static u_int16_t
+/*static*/ u_int16_t
 fsqueue_hash(char *msgid)
 {
 	u_int16_t h;
@@ -319,7 +319,7 @@ fsqueue_message_create(struct smtpd *env, enum queue_kind qkind, char *msgid)
 	if (qkind == Q_BOUNCE) {
 		if (! bsnprintf(msgpath, sizeof(msgpath), "%s/%d/%s/message",
 			fsqueue_getpath(Q_QUEUE),
-			queue_hash(msgid_save), msgid_save))
+			fsqueue_hash(msgid_save), msgid_save))
 			return 0;
 
 		if (! bsnprintf(lnkpath, sizeof(lnkpath), "%s/%s/message",

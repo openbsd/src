@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.42 2011/04/14 23:26:16 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.43 2011/04/14 23:29:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -110,17 +110,6 @@ queue_message_update(struct smtpd *env, struct message *messagep)
 
 	/* no error, remove envelope */
 	queue_envelope_delete(env, Q_QUEUE, messagep);
-}
-
-u_int16_t
-queue_hash(char *msgid)
-{
-	u_int16_t	h;
-
-	for (h = 5381; *msgid; msgid++)
-		h = ((h << 5) + h) + *msgid;
-
-	return (h % DIRHASH_BUCKETS);
 }
 
 struct qwalk *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.99 2011/04/14 22:36:09 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.100 2011/04/14 23:29:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -494,9 +494,8 @@ runner_force_message_to_ramqueue(struct ramqueue *rqueue, char *mid)
 	time_t curtm;
 
 	if (! bsnprintf(path, MAXPATHLEN, "%s/%d/%s/envelopes",
-		PATH_QUEUE, queue_hash(mid), mid))
+		PATH_QUEUE, fsqueue_hash(mid), mid))
 		return 0;
-
 
 	dirp = opendir(path);
 	if (dirp == NULL)
