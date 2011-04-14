@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.1 2005/04/01 10:40:48 mickey Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.2 2011/04/14 19:34:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -25,7 +25,6 @@
 struct pcb {
 	u_int64_t pcb_fpregs[HPPA_NFPREGS+1];	/* not in the trapframe */
 	u_int64_t pcb_onfault;		/* SW copy fault handler */
-	vaddr_t pcb_uva;		/* KVA for U-area */
 	u_int64_t pcb_ksp;		/* kernel sp for ctxsw */
 	pa_space_t pcb_space;		/* copy pmap_space, for asm's sake */
 

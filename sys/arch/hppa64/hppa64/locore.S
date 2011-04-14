@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.21 2011/04/14 14:06:06 jsing Exp $	*/
+/*	$OpenBSD: locore.S,v 1.22 2011/04/14 19:34:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -204,7 +204,6 @@ $start_zero_tf
 	mtctl	%arg3, %cr30
 	std	%r0, U_PCB+PCB_ONFAULT(%arg3)
 	std	%r0, U_PCB+PCB_SPACE(%arg3)
-	std	%arg3, U_PCB+PCB_UVA(%arg3)
 
 	ldil	L%proc0, %r1
 	ldo	R%proc0(%r1), %r1
@@ -796,16 +795,16 @@ ENTRY(TLABEL(all),0)
 	depi	0, PSL_I_POS, 1, %r9	/* Leave interrupts disabled. */
 	mtctl	%r9, %ipsw
 
-	mfctl	%cr30, %r9
-
 	mfsp	%sr0, %r8
 	extrd,u,*<> %r24, 63, 2, %r0	/* still pcoq head */
 	cmpb,*= %r0, %r8, TLABEL(all_kern)
 	copy	%sp, %r17
 
+	mfctl	%cr24, %r9
+	ldd	CI_CURPROC(%r9), %r9
 	depdi	1, T_USER_POS, 1, %r1
 	depdi	1, TFF_LAST_POS, 1, %r1
-	ldd	U_PCB+PCB_UVA(%r9), %sp
+	ldd	P_ADDR(%r9), %sp
 	ldo	PAGE_SIZE-TRAPFRAME_SIZEOF(%sp), %sp
 
 TLABEL(all_kern)

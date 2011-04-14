@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.8 2011/04/13 18:45:33 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.9 2011/04/14 19:34:55 kettenis Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -123,7 +123,6 @@ member	u_pcb
 struct	pcb
 member	pcb_fpregs
 member	pcb_onfault
-member	pcb_uva
 member	pcb_ksp
 member	pcb_space
 

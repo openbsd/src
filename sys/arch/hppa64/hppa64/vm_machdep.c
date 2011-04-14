@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.10 2009/03/26 17:24:33 oga Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.11 2011/04/14 19:34:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -112,7 +112,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	bcopy(&p1->p_addr->u_pcb, pcbp, sizeof(*pcbp));
 	/* space is cached for the copy{in,out}'s pleasure */
 	pcbp->pcb_space = p2->p_vmspace->vm_map.pmap->pm_space;
-	pcbp->pcb_uva = (vaddr_t)p2->p_addr;
 	/* reset any of the pending FPU exceptions from parent */
 	pcbp->pcb_fpregs[0] = HPPA_FPU_FORK(pcbp->pcb_fpregs[0]);
 	pcbp->pcb_fpregs[1] = 0;
