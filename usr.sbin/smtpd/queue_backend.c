@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.5 2011/04/14 17:06:43 gilles Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.6 2011/04/14 20:11:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -35,15 +35,19 @@
 #include "smtpd.h"
 #include "log.h"
 
-int	queue_fsqueue_message(struct smtpd *, enum queue_kind,
+/* fsqueue backend */
+int	fsqueue_init(struct smtpd *);
+int	fsqueue_message(struct smtpd *, enum queue_kind,
     enum queue_op, char *);
-int	queue_fsqueue_envelope(struct smtpd *, enum queue_kind,
+int	fsqueue_envelope(struct smtpd *, enum queue_kind,
     enum queue_op , struct message *);
+
 
 struct queue_backend queue_backends[] = {
 	{ QT_FS,
-	  queue_fsqueue_message,
-	  queue_fsqueue_envelope }
+	  fsqueue_init,
+	  fsqueue_message,
+	  fsqueue_envelope }
 };
 
 struct queue_backend *

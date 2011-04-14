@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.118 2011/04/14 17:06:43 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.119 2011/04/14 20:11:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -488,12 +488,12 @@ main(int argc, char *argv[])
 	if ((env.sc_pw =  getpwnam(SMTPD_USER)) == NULL)
 		errx(1, "unknown user %s", SMTPD_USER);
 
-	if (!setup_spool(env.sc_pw->pw_uid, 0))
-		errx(1, "invalid directory permissions");
-
 	env.sc_queue = queue_backend_lookup(QT_FS);
 	if (env.sc_queue == NULL)
 		errx(1, "could not find queue backend");
+
+	if (!env.sc_queue->setup(&env))
+		errx(1, "invalid directory permissions");
 
 	log_init(debug);
 	log_verbose(verbose);
@@ -635,135 +635,6 @@ child_lookup(struct smtpd *env, pid_t pid)
 
 	key.pid = pid;
 	return SPLAY_FIND(childtree, &env->children, &key);
-}
-
-int
-setup_spool(uid_t uid, gid_t gid)
-{
-	unsigned int	 n;
-	char		*paths[] = { PATH_INCOMING, PATH_ENQUEUE, PATH_QUEUE,
-				     PATH_PURGE, PATH_OFFLINE, PATH_BOUNCE };
-	char		 pathname[MAXPATHLEN];
-	struct stat	 sb;
-	int		 ret;
-
-	if (! bsnprintf(pathname, sizeof(pathname), "%s", PATH_SPOOL))
-		fatal("snprintf");
-
-	if (stat(pathname, &sb) == -1) {
-		if (errno != ENOENT) {
-			warn("stat: %s", pathname);
-			return 0;
-		}
-
-		if (mkdir(pathname, 0711) == -1) {
-			warn("mkdir: %s", pathname);
-			return 0;
-		}
-
-		if (chown(pathname, 0, 0) == -1) {
-			warn("chown: %s", pathname);
-			return 0;
-		}
-
-		if (stat(pathname, &sb) == -1)
-			err(1, "stat: %s", pathname);
-	}
-
-	/* check if it's a directory */
-	if (!S_ISDIR(sb.st_mode)) {
-		warnx("%s is not a directory", pathname);
-		return 0;
-	}
-
-	/* check that it is owned by uid/gid */
-	if (sb.st_uid != 0 || sb.st_gid != 0) {
-		warnx("%s must be owned by root:wheel", pathname);
-		return 0;
-	}
-
-	/* check permission */
-	if ((sb.st_mode & (S_IRUSR|S_IWUSR|S_IXUSR)) != (S_IRUSR|S_IWUSR|S_IXUSR) ||
-	    (sb.st_mode & (S_IRGRP|S_IWGRP|S_IXGRP)) != S_IXGRP ||
-	    (sb.st_mode & (S_IROTH|S_IWOTH|S_IXOTH)) != S_IXOTH) {
-		warnx("%s must be rwx--x--x (0711)", pathname);
-		return 0;
-	}
-
-	ret = 1;
-	for (n = 0; n < nitems(paths); n++) {
-		mode_t	mode;
-		uid_t	owner;
-		gid_t	group;
-
-		if (!strcmp(paths[n], PATH_OFFLINE)) {
-			mode = 01777;
-			owner = 0;
-			group = 0;
-		} else {
-			mode = 0700;
-			owner = uid;
-			group = gid;
-		}
-
-		if (! bsnprintf(pathname, sizeof(pathname), "%s%s", PATH_SPOOL,
-			paths[n]))
-			fatal("snprintf");
-
-		if (stat(pathname, &sb) == -1) {
-			if (errno != ENOENT) {
-				warn("stat: %s", pathname);
-				ret = 0;
-				continue;
-			}
-
-			/* chmod is deffered to avoid umask effect */
-			if (mkdir(pathname, 0) == -1) {
-				ret = 0;
-				warn("mkdir: %s", pathname);
-			}
-
-			if (chown(pathname, owner, group) == -1) {
-				ret = 0;
-				warn("chown: %s", pathname);
-			}
-
-			if (chmod(pathname, mode) == -1) {
-				ret = 0;
-				warn("chmod: %s", pathname);
-			}
-
-			if (stat(pathname, &sb) == -1)
-				err(1, "stat: %s", pathname);
-		}
-
-		/* check if it's a directory */
-		if (!S_ISDIR(sb.st_mode)) {
-			ret = 0;
-			warnx("%s is not a directory", pathname);
-		}
-
-		/* check that it is owned by owner/group */
-		if (sb.st_uid != owner) {
-			ret = 0;
-			warnx("%s is not owned by uid %d", pathname, owner);
-		}
-		if (sb.st_gid != group) {
-			ret = 0;
-			warnx("%s is not owned by gid %d", pathname, group);
-		}
-
-		/* check permission */
-		if ((sb.st_mode & 07777) != mode) {
-			char mode_str[12];
-
-			ret = 0;
-			strmode(mode, mode_str);
-			mode_str[10] = '\0';
-			warnx("%s must be %s (%o)", pathname, mode_str + 1, mode);
-		}
-	}
-	return ret;
 }
 
 void

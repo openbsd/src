@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.96 2011/04/13 20:53:18 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.97 2011/04/14 20:11:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -84,7 +84,7 @@ runner_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 		 */
 		if (m->status & S_MESSAGE_TEMPFAILURE) {
 			m->status &= ~S_MESSAGE_TEMPFAILURE;
-			queue_update_envelope(m);
+			queue_envelope_update(env, Q_QUEUE, m);
 			ramqueue_insert(&env->sc_rqueue, m, time(NULL));
 			runner_setup_events(env);
 			return;
@@ -107,7 +107,7 @@ runner_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 		/* successful delivery or permanent failure,
 		 * remove envelope from queue.
 		 */
-		queue_remove_envelope(m);
+		queue_envelope_delete(env, Q_QUEUE, m);
 		return;
 
 	case IMSG_MDA_SESS_NEW:
@@ -126,7 +126,7 @@ runner_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 		m = imsg->data;
 		if (imsg->fd < 0 || !bounce_session(env, imsg->fd, m)) {
 			m->status = 0;
-			queue_update_envelope(m);
+			queue_envelope_update(env, Q_QUEUE, m);
 			ramqueue_insert(&env->sc_rqueue, m, time(NULL));
 			runner_setup_events(env);
 			return;
@@ -339,7 +339,7 @@ runner_process_envelope(struct smtpd *env, struct ramqueue_envelope *rq_evp, tim
 	mda_av = env->sc_maxconn - env->stats->mda.sessions_active;
 	bnc_av = env->sc_maxconn - env->stats->runner.bounces_active;
 	
-	if (! queue_load_envelope(&envelope, rq_evp->id))
+	if (! queue_envelope_load(env, Q_QUEUE, rq_evp->id, &envelope))
 		return 0;
 
 	if (envelope.type & T_MDA_MESSAGE) {
@@ -370,7 +370,7 @@ runner_process_envelope(struct smtpd *env, struct ramqueue_envelope *rq_evp, tim
 		bounce_record_message(&envelope, &bounce);
 		ramqueue_insert(&env->sc_rqueue, &bounce, time(NULL));
 		runner_setup_events(env);
-		queue_remove_envelope(&envelope);
+		queue_envelope_delete(env, Q_QUEUE, &envelope);
 		return 0;
 	}
 
@@ -395,7 +395,8 @@ runner_process_batch(struct smtpd *env, struct ramqueue_envelope *rq_evp, time_t
 	switch (batch->type) {
 	case T_BOUNCE_MESSAGE:		
 		while ((rq_evp = ramqueue_batch_first_envelope(batch))) {
-			if (! queue_load_envelope(&envelope, rq_evp->id))
+			if (! queue_envelope_load(env, Q_QUEUE, rq_evp->id,
+				&envelope))
 				return;
 			envelope.lasttry = curtm;
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
@@ -416,7 +417,8 @@ runner_process_batch(struct smtpd *env, struct ramqueue_envelope *rq_evp, time_t
 	case T_MDA_MESSAGE:
 
 		rq_evp = ramqueue_batch_first_envelope(batch);
-		if (! queue_load_envelope(&envelope, rq_evp->id))
+		if (! queue_envelope_load(env, Q_QUEUE, rq_evp->id,
+			&envelope))
 			return;
 		envelope.lasttry = curtm;
 		fd = queue_open_message_file(envelope.message_id);
@@ -440,7 +442,8 @@ runner_process_batch(struct smtpd *env, struct ramqueue_envelope *rq_evp, time_t
 		    IMSG_BATCH_CREATE, PROC_MTA, 0, -1, batch,
 		    sizeof *batch);
 		while ((rq_evp = ramqueue_batch_first_envelope(batch))) {
-			if (! queue_load_envelope(&envelope, rq_evp->id))
+			if (! queue_envelope_load(env, Q_QUEUE, rq_evp->id,
+				&envelope))
 				return;
 			envelope.lasttry = curtm;
 			envelope.batch_id = batch->b_id;
@@ -502,7 +505,8 @@ runner_force_message_to_ramqueue(struct ramqueue *rqueue, char *mid)
 	curtm = time(NULL);
 	while ((dp = readdir(dirp)) != NULL) {
 		if (valid_message_uid(dp->d_name)) {
-			if (! queue_load_envelope(&envelope, dp->d_name))
+			if (! queue_envelope_load(rqueue->env, Q_QUEUE, dp->d_name,
+				&envelope))
 				continue;
 			ramqueue_insert(rqueue, &envelope, curtm);
 		}

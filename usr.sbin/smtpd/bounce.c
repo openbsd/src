@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.26 2011/03/26 10:59:59 gilles Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.27 2011/04/14 20:11:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -147,14 +147,14 @@ bounce_event(int fd, short event, void *p)
 
 out:
 	if (*ep == '2')
-		queue_remove_envelope(&cc->m);
+		queue_envelope_delete(cc->env, Q_QUEUE, &cc->m);
 	else {
 		if (*ep == '5' || *ep == '6')
 			cc->m.status = S_MESSAGE_PERMFAILURE;
 		else
 			cc->m.status = S_MESSAGE_TEMPFAILURE;
 		message_set_errormsg(&cc->m, "%s", ep);
-		queue_message_update(&cc->m);
+		queue_message_update(cc->env, &cc->m);
 	}
 
 	cc->env->stats->runner.active--;

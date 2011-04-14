@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramqueue.c,v 1.1 2011/04/13 20:53:18 gilles Exp $	*/
+/*	$OpenBSD: ramqueue.c,v 1.2 2011/04/14 20:11:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -140,7 +140,8 @@ ramqueue_load(struct ramqueue *rqueue, time_t *nsched)
 	while (qwalk(q, path)) {
 		curtm = time(NULL);
 
-		if (! queue_load_envelope(&envelope, basename(path)))
+		if (! queue_envelope_load(rqueue->env, Q_QUEUE,
+			basename(path), &envelope))
 			continue;
 		if (ramqueue_expire(rqueue->env, &envelope, curtm))
 			continue;
@@ -216,7 +217,7 @@ ramqueue_expire(struct smtpd *env, struct message *envelope, time_t curtm)
 		    envelope->expire / 60 / 60 / 24);
 		bounce_record_message(envelope, &bounce);
 		ramqueue_insert(&env->sc_rqueue, &bounce, time(NULL));
-		queue_remove_envelope(envelope);
+		queue_envelope_delete(env, Q_QUEUE, envelope);
 		return 1;
 	}
 	return 0;
