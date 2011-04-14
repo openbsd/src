@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramqueue.c,v 1.2 2011/04/14 20:11:08 gilles Exp $	*/
+/*	$OpenBSD: ramqueue.c,v 1.3 2011/04/14 22:36:09 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -215,7 +215,7 @@ ramqueue_expire(struct smtpd *env, struct message *envelope, time_t curtm)
 		message_set_errormsg(envelope,
 		    "message expired after sitting in queue for %d days",
 		    envelope->expire / 60 / 60 / 24);
-		bounce_record_message(envelope, &bounce);
+		bounce_record_message(env, envelope, &bounce);
 		ramqueue_insert(&env->sc_rqueue, &bounce, time(NULL));
 		queue_envelope_delete(env, Q_QUEUE, envelope);
 		return 1;

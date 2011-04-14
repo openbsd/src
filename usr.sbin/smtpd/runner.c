@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.98 2011/04/14 21:53:46 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.99 2011/04/14 22:36:09 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -98,7 +98,7 @@ runner_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 
 			if (m->type != T_BOUNCE_MESSAGE &&
 			    m->sender.user[0] != '\0') {
-				bounce_record_message(m, &bounce);
+				bounce_record_message(env, m, &bounce);
 				ramqueue_insert(&env->sc_rqueue, &bounce, time(NULL));
 				runner_setup_events(env);
 			}
@@ -367,7 +367,7 @@ runner_process_envelope(struct smtpd *env, struct ramqueue_envelope *rq_evp, tim
 		struct message bounce;
 
 		message_set_errormsg(&envelope, "loop has been detected");
-		bounce_record_message(&envelope, &bounce);
+		bounce_record_message(env, &envelope, &bounce);
 		ramqueue_insert(&env->sc_rqueue, &bounce, time(NULL));
 		runner_setup_events(env);
 		queue_envelope_delete(env, Q_QUEUE, &envelope);

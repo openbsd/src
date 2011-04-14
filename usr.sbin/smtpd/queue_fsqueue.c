@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.4 2011/04/14 21:53:46 gilles Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.5 2011/04/14 22:36:09 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -207,6 +207,99 @@ fsqueue_envelope_delete(struct smtpd *env, enum queue_kind qkind,
 }
 
 static int
+fsqueue_message_create(struct smtpd *env, enum queue_kind qkind, char *msgid)
+{
+	char rootdir[MAXPATHLEN];
+	char evpdir[MAXPATHLEN];
+	char *queuepath = fsqueue_getpath(qkind);
+	char msgpath[MAXPATHLEN];
+	char lnkpath[MAXPATHLEN];
+	char msgid_save[MAX_ID_SIZE];
+
+	strlcpy(msgid_save, msgid, sizeof(msgid_save));
+
+	if (! bsnprintf(rootdir, sizeof(rootdir), "%s/%d.XXXXXXXXXXXXXXXX",
+		queuepath, time(NULL)))
+		fatalx("fsqueue_message_create: snprintf");
+
+	if (mkdtemp(rootdir) == NULL) {
+		if (errno == ENOSPC) {
+			bzero(msgid, MAX_ID_SIZE);
+			return 0;
+		}
+		fatal("fsqueue_message_create: mkdtemp");
+	}
+
+	if (strlcpy(msgid, rootdir + strlen(queuepath) + 1, MAX_ID_SIZE)
+	    >= MAX_ID_SIZE)
+		fatalx("fsqueue_message_create: truncation");
+
+	if (! bsnprintf(evpdir, sizeof(evpdir), "%s%s", rootdir,
+		PATH_ENVELOPES))
+		fatalx("fsqueue_message_create: snprintf");
+
+	if (mkdir(evpdir, 0700) == -1) {
+		if (errno == ENOSPC) {
+			rmdir(rootdir);
+			bzero(msgid, MAX_ID_SIZE);
+			return 0;
+		}
+		fatal("fsqueue_message_create: mkdir");
+	}
+
+	if (qkind == Q_BOUNCE) {
+		if (! bsnprintf(msgpath, sizeof(msgpath), "%s/%d/%s/message",
+			fsqueue_getpath(Q_QUEUE),
+			queue_hash(msgid_save), msgid_save))
+			return 0;
+
+		if (! bsnprintf(lnkpath, sizeof(lnkpath), "%s/%s/message",
+			fsqueue_getpath(Q_BOUNCE), msgid))
+			return 0;
+		
+		if (link(msgpath, lnkpath) == -1)
+			fatal("link");
+	}
+
+	return 1;
+}
+
+static int
+fsqueue_message_commit(struct smtpd *env, enum queue_kind qkind, char *msgid)
+{
+	char rootdir[MAXPATHLEN];
+	char queuedir[MAXPATHLEN];
+	
+	if (! bsnprintf(rootdir, sizeof(rootdir), "%s/%s",
+		fsqueue_getpath(qkind), msgid))
+		fatal("fsqueue_message_commit: snprintf");
+
+	if (! bsnprintf(queuedir, sizeof(queuedir), "%s/%d",
+		fsqueue_getpath(Q_QUEUE), fsqueue_hash(msgid)))
+		fatal("fsqueue_message_commit: snprintf");
+	
+	if (mkdir(queuedir, 0700) == -1) {
+		if (errno == ENOSPC)
+			return 0;
+		if (errno != EEXIST)
+			fatal("fsqueue_message_commit: mkdir");
+	}
+
+	if (strlcat(queuedir, "/", sizeof(queuedir)) >= sizeof(queuedir) ||
+	    strlcat(queuedir, msgid, sizeof(queuedir)) >=
+	    sizeof(queuedir))
+		fatalx("fsqueue_message_commit: truncation");
+
+	if (rename(rootdir, queuedir) == -1) {
+		if (errno == ENOSPC)
+			return 0;
+		fatal("fsqueue_message_commit: rename");
+	}
+
+	return 1;
+}
+
+static int
 fsqueue_message_fd_r(struct smtpd *env, enum queue_kind qkind, char *msgid)
 {
 	int fd;
@@ -225,7 +318,6 @@ fsqueue_message_fd_r(struct smtpd *env, enum queue_kind qkind, char *msgid)
 			fatal("fsqueue_message_fd_r: snprintf");
 	}
 
-	log_debug("pathname: %s", pathname);
 	if ((fd = open(pathname, O_RDONLY)) == -1)
 		fatal("fsqueue_message_fd_r: open");
 
@@ -241,7 +333,7 @@ fsqueue_message_fd_rw(struct smtpd *env, enum queue_kind qkind, char *msgid)
 		fsqueue_getpath(qkind),
 		msgid))
 		fatal("fsqueue_message_fd_rw: snprintf");
-	log_debug("path: %s", pathname);
+
 	return open(pathname, O_CREAT|O_EXCL|O_RDWR, 0600);
 }
 
@@ -423,13 +515,13 @@ fsqueue_message(struct smtpd *env, enum queue_kind qkind,
 {
         switch (qop) {
         case QOP_CREATE:
-                return 0;
+		return fsqueue_message_create(env, qkind, msgid);
 
         case QOP_DELETE:
 		return fsqueue_message_delete(env, qkind, msgid);
 
         case QOP_COMMIT:
-                return 0;
+		return fsqueue_message_commit(env, qkind, msgid);
 
         case QOP_FD_R:
                 return fsqueue_message_fd_r(env, qkind, msgid);

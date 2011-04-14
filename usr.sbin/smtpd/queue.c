@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.96 2011/04/14 21:53:45 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.97 2011/04/14 22:36:09 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -66,9 +66,9 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			ss.code = 250;
 			bzero(ss.u.msgid, sizeof ss.u.msgid);
 			if (m->flags & F_MESSAGE_ENQUEUED)
-				ret = enqueue_create_layout(ss.u.msgid);
+				ret = queue_message_create(env, Q_ENQUEUE, ss.u.msgid);
 			else
-				ret = queue_create_incoming_layout(ss.u.msgid);
+				ret = queue_message_create(env, Q_INCOMING, ss.u.msgid);
 			if (ret == 0)
 				ss.code = 421;
 			imsg_compose_event(iev, IMSG_QUEUE_CREATE_MESSAGE, 0, 0, -1,
@@ -85,12 +85,12 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 		case IMSG_QUEUE_COMMIT_MESSAGE:
 			ss.id = m->session_id;
 			if (m->flags & F_MESSAGE_ENQUEUED) {
-				if (enqueue_commit_message(m))
+				if (queue_message_commit(env, Q_ENQUEUE, m->message_id))
 					env->stats->queue.inserts_local++;
 				else
 					ss.code = 421;
 			} else {
-				if (queue_commit_incoming_message(m))
+				if (queue_message_commit(env, Q_INCOMING, m->message_id))
 					env->stats->queue.inserts_remote++;
 				else
 					ss.code = 421;

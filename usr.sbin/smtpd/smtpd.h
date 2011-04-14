@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.210 2011/04/14 20:11:08 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.211 2011/04/14 22:36:09 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1085,12 +1085,12 @@ int		 enqueue_record_envelope(struct message *);
 int		 enqueue_remove_envelope(struct message *);
 int		 enqueue_commit_message(struct message *);
 int		 enqueue_open_messagefile(struct message *);
-int		 bounce_create_layout(char *, struct message *);
+int		 bounce_create_layout(struct smtpd *, char *, struct message *);
 void		 bounce_delete_message(char *);
 int		 bounce_record_envelope(struct message *);
 int		 bounce_remove_envelope(struct message *);
 int		 bounce_commit_message(struct message *);
-int		 bounce_record_message(struct message *, struct message *);
+int		 bounce_record_message(struct smtpd *, struct message *, struct message *);
 int		 queue_create_incoming_layout(char *);
 void		 queue_delete_incoming_message(char *);
 int		 queue_record_incoming_envelope(struct message *);
