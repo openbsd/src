@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.61 2011/04/04 03:49:32 william Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.62 2011/04/14 21:14:28 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -250,6 +250,9 @@ em_set_phy_type(struct em_hw *hw)
 		break;
 	case I82578_E_PHY_ID:
 		hw->phy_type = em_phy_82578;
+		break;
+	case I82580_I_PHY_ID:
+		hw->phy_type = em_phy_82580;
 		break;
 	case BME1000_E_PHY_ID:
 		if (hw->phy_revision == 1) {
@@ -498,6 +501,14 @@ em_set_mac_type(struct em_hw *hw)
 		hw->mac_type = em_82575;
 		hw->initialize_hw_bits_disable = 1;
 		break;
+	case E1000_DEV_ID_82580_COPPER:
+	case E1000_DEV_ID_82580_FIBER:
+	case E1000_DEV_ID_82580_SERDES:
+	case E1000_DEV_ID_82580_SGMII:
+	case E1000_DEV_ID_82580_COPPER_DUAL:
+		hw->mac_type = em_82580;
+		hw->initialize_hw_bits_disable = 1;
+		break;
 	case E1000_DEV_ID_80003ES2LAN_COPPER_SPT:
 	case E1000_DEV_ID_80003ES2LAN_SERDES_SPT:
 	case E1000_DEV_ID_80003ES2LAN_COPPER_DPT:
@@ -565,6 +576,7 @@ em_set_mac_type(struct em_hw *hw)
 		break;
 	case em_80003es2lan:
 	case em_82575:
+	case em_82580:
 		hw->swfw_sync_present = TRUE;
 		/* FALLTHROUGH */
 	case em_82571:
@@ -601,7 +613,7 @@ em_set_media_type(struct em_hw *hw)
 		hw->tbi_compatibility_en = FALSE;
 	}
 
-	if (hw->mac_type == em_82575) {
+	if (hw->mac_type == em_82575 || hw->mac_type == em_82580) {
 		hw->media_type = em_media_type_copper;
 	
 		ctrl_ext = E1000_READ_REG(hw, CTRL_EXT);
@@ -703,7 +715,7 @@ em_reset_hw(struct em_hw *hw)
 	}
 
         /* Set the completion timeout for 82575 chips */
-        if (hw->mac_type == em_82575) {
+        if (hw->mac_type == em_82575 || hw->mac_type == em_82580) {
                 ret_val = em_set_pciex_completion_timeout(hw);
                 if (ret_val) {              
                         DEBUGOUT("PCI-E Set completion timeout has failed.\n");
@@ -1269,6 +1281,7 @@ em_init_hw(struct em_hw *hw)
 	case em_82571:
 	case em_82572:
 	case em_82575:
+	case em_82580:
 	case em_ich8lan:
 	case em_ich9lan:
 	case em_ich10lan:
@@ -2310,6 +2323,33 @@ em_copper_link_82577_setup(struct em_hw *hw)
 	return E1000_SUCCESS;
 }
 
+static int32_t
+em_copper_link_82580_setup(struct em_hw *hw)
+{
+	int32_t ret_val;
+	uint16_t phy_data;
+
+	if (hw->phy_reset_disable)
+		return E1000_SUCCESS;
+
+	ret_val = em_phy_reset(hw);
+	if (ret_val)
+		goto out;
+
+	/* Enable CRS on TX. This must be set for half-duplex operation. */
+	ret_val = em_read_phy_reg(hw, I82580_CFG_REG, &phy_data);
+	if (ret_val)
+		goto out;
+
+	phy_data |= I82580_CFG_ASSERT_CRS_ON_TX |
+	    I82580_CFG_ENABLE_DOWNSHIFT;
+
+	ret_val = em_write_phy_reg(hw, I82580_CFG_REG, phy_data);
+
+out:
+	return ret_val;
+}
+
 /******************************************************************************
  * Setup auto-negotiation and flow control advertisements,
  * and then perform auto-negotiation.
@@ -2498,6 +2538,10 @@ em_setup_copper_link(struct em_hw *hw)
 			return ret_val;
 	} else if (hw->phy_type == em_phy_82577) {
 		ret_val = em_copper_link_82577_setup(hw);
+		if (ret_val)
+			return ret_val;
+	} else if (hw->phy_type == em_phy_82580) {
+		ret_val = em_copper_link_82580_setup(hw);
 		if (ret_val)
 			return ret_val;
 	}
@@ -5013,6 +5057,10 @@ em_match_gig_phy(struct em_hw *hw)
 		if (hw->phy_id == IGP03E1000_E_PHY_ID)
 			match = TRUE;
 		break;
+	case em_82580:
+		if (hw->phy_id == I82580_I_PHY_ID)
+			match = TRUE;
+		break;
 	case em_80003es2lan:
 		if (hw->phy_id == GG82563_E_PHY_ID)
 			match = TRUE;
@@ -5263,6 +5311,7 @@ em_init_eeprom_params(struct em_hw *hw)
 	case em_82573:
 	case em_82574:
 	case em_82575:
+	case em_82580:
 		eeprom->type = em_eeprom_spi;
 		eeprom->opcode_bits = 8;
 		eeprom->delay_usec = 1;
@@ -6533,6 +6582,7 @@ em_read_mac_addr(struct em_hw *hw)
 	case em_82546_rev_3:
 	case em_82571:
 	case em_82575:
+	case em_82580:
 	case em_80003es2lan:
 		if (E1000_READ_REG(hw, STATUS) & E1000_STATUS_FUNC_1)
 			hw->perm_mac_addr[5] ^= 0x01;
@@ -6580,6 +6630,8 @@ em_init_rx_addrs(struct em_hw *hw)
 		rar_num = E1000_RAR_ENTRIES_ICH8LAN;
 	if (hw->mac_type == em_ich8lan)
 		rar_num -= 1;
+	if (hw->mac_type == em_82580)
+		rar_num = E1000_RAR_ENTRIES_82580;
 
 	/* Zero out the other 15 receive addresses. */
 	DEBUGOUT("Clearing RAR[1-15]\n");
@@ -7243,6 +7295,7 @@ em_get_bus_info(struct em_hw *hw)
 	case em_82573:
 	case em_82574:
 	case em_82575:
+	case em_82580:
 	case em_80003es2lan:
 		hw->bus_type = em_bus_type_pci_express;
 		hw->bus_speed = em_bus_speed_2500;
@@ -8457,6 +8510,7 @@ em_get_auto_rd_done(struct em_hw *hw)
 	case em_82573:
 	case em_82574:
 	case em_82575:
+	case em_82580:
 	case em_80003es2lan:
 	case em_ich8lan:
 	case em_ich9lan:

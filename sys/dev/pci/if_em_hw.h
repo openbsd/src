@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.48 2011/04/04 03:49:32 william Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.49 2011/04/14 21:14:28 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -70,6 +70,7 @@ typedef enum {
     em_82573,
     em_82574,
     em_82575,
+    em_82580,
     em_80003es2lan,
     em_ich8lan,
     em_ich9lan,
@@ -238,6 +239,7 @@ typedef enum {
     em_phy_oem,
     em_phy_82577,
     em_phy_82578,
+    em_phy_82580,
     em_phy_undefined = 0xFF
 } em_phy_type;
 
@@ -635,8 +637,12 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
  * reserve one of these spots for our directed address, allowing us room for
  * E1000_RAR_ENTRIES - 1 multicast addresses.
  */
-#define E1000_RAR_ENTRIES 15
-#define E1000_RAR_ENTRIES_ICH8LAN  7
+#define E1000_RAR_ENTRIES		15
+#define E1000_RAR_ENTRIES_ICH8LAN	 7
+#define E1000_RAR_ENTRIES_82575		16
+#define E1000_RAR_ENTRIES_82576		24
+#define E1000_RAR_ENTRIES_82580		24
+#define E1000_RAR_ENTRIES_I350		32
 
 #define MIN_NUMBER_OF_DESCRIPTORS  8
 #define MAX_NUMBER_OF_DESCRIPTORS  0xFFF8
@@ -2735,6 +2741,14 @@ struct em_host_command_info {
 
 #define IGP01E1000_ANALOG_REGS_PAGE  0x20C0
 
+/* 82580 specific PHY registers */
+#define I82580_ADDR_REG			16
+#define I82580_CFG_REG			22
+#define I82580_CFG_ASSERT_CRS_ON_TX	(1 << 15)
+#define I82580_CFG_ENABLE_DOWNSHIFT	(3 << 10) /* auto downshift 100/10 */
+#define I82580_CTRL_REG			23
+#define I82580_CTRL_DOWNSHIFT_MASK	(7 << 10)
+
 /* Bits...
  * 15-5: page
  * 4-0: register offset
@@ -3278,6 +3292,7 @@ struct em_host_command_info {
 #define I82577_E_PHY_ID      0x01540050
 #define I82578_E_PHY_ID      0x004DD040
 #define I82580_I_PHY_ID      0x015403A0
+#define I350_I_PHY_ID        0x015403B0
 #define IGP04E1000_E_PHY_ID  0x02A80391
 #define M88E1141_E_PHY_ID    0x01410CD0
 

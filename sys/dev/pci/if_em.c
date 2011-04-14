@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.254 2011/04/13 00:19:00 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.255 2011/04/14 21:14:28 jsg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -128,6 +128,11 @@ const struct pci_matchid em_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82577LM },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82578DC },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82578DM },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_COPPER },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_FIBER },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_SERDES },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_SGMII },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_COPPER_DUAL },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82583V },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_82567V_3 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_IFE },
@@ -387,6 +392,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 		case em_82572:
 		case em_82574:
 		case em_82575:
+		case em_82580:
 		case em_ich9lan:
 		case em_ich10lan:
 		case em_80003es2lan:
@@ -731,6 +737,7 @@ em_init(void *arg)
 	case em_82571:
 	case em_82572: /* Total Packet Buffer on these is 48k */
 	case em_82575:
+	case em_82580:
 	case em_80003es2lan:
 		pba = E1000_PBA_32K; /* 32K for Rx, 16K for Tx */
 		break;
@@ -1426,7 +1433,8 @@ em_update_link_status(struct em_softc *sc)
 			if ((sc->link_speed == SPEED_1000) &&
 			    ((sc->hw.mac_type == em_82571) ||
 			    (sc->hw.mac_type == em_82572) ||
-			    (sc->hw.mac_type == em_82575))) {
+			    (sc->hw.mac_type == em_82575) ||
+			    (sc->hw.mac_type == em_82580))) {
 				int tarc0;
 
 				tarc0 = E1000_READ_REG(&sc->hw, TARC0);
@@ -1715,7 +1723,8 @@ em_hardware_init(struct em_softc *sc)
 	if (!em_smart_pwr_down &&
 	     (sc->hw.mac_type == em_82571 ||
 	      sc->hw.mac_type == em_82572 ||
-	      sc->hw.mac_type == em_82575)) {
+	      sc->hw.mac_type == em_82575 ||
+	      sc->hw.mac_type == em_82580)) {
 		uint16_t phy_tmp = 0;
 
 		/* Speed up time to link by disabling smart power down */
