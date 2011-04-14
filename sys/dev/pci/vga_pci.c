@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.65 2010/12/26 15:41:00 miod Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.66 2011/04/14 21:02:20 oga Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -180,15 +180,16 @@ static const struct vga_device_description vga_devs[] = {
 	    {	0xffff, 0xffff, 0x0000, 0x0000 }, 1, 0
 	},
 
-	{	/* Thinkpad T510 (and similar models) */
+	{	/*  Anything with on-die intel graphics, for now */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ARRANDALE_IGD,	
-	    	0x17aa, 0x215a },
-	    {	0xffff, 0xffff, 0xffff, 0xffff }, 1, 0
+	    	0x0000, 0x0000 },
+	    {	0xffff, 0xffff, 0x0000, 0x0000 }, 1, 0
 	},
-	{	/* HP G62 (and similar models) */
-	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ARRANDALE_IGD,	
-	    	0x103c, 0x1425 },
-	    {	0xffff, 0xffff, 0xffff, 0xffff }, 1, 0
+
+	{	/*  Anything with on-die intel graphics, for now */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CLARKDALE_IGD,
+	    	0x0000, 0x0000 },
+	    {	0xffff, 0xffff, 0x0000, 0x0000 }, 1, 0
 	},
 
 	{	/* All ATI video until further notice */
