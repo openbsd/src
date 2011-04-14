@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.2 2011/04/14 20:11:08 gilles Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.3 2011/04/14 21:14:20 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -211,7 +211,7 @@ fsqueue_message_delete(struct smtpd *env, enum queue_kind qkind, char *msgid)
 	char msgpath[MAXPATHLEN];
 	u_int16_t hval;
 
-	hval = queue_hash(msgid);
+	hval = fsqueue_hash(msgid);
 	if (! bsnprintf(rootdir, sizeof(rootdir), "%s/%d/%s", PATH_QUEUE,
 		hval, msgid))
 		fatal("queue_delete_message: snprintf");
