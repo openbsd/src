@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.66 2011/04/14 21:02:20 oga Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.67 2011/04/14 21:04:29 oga Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -548,8 +548,8 @@ vga_pci_bar_init(struct vga_pci_softc *dev, struct pci_attach_args *pa)
 			addr += 8;
 			i += 2;
 		} else {
-			addr+=4;
-			++i;
+			addr += 4;
+			i++;
 		}
 	}
 }
