@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.60 2010/09/23 18:49:39 oga Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.61 2011/04/14 20:59:35 pea Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -3160,7 +3160,7 @@ rf_create_configuration(RF_AutoConfig_t *ac, RF_Config_t *config,
 	}
 
 	for(i=0;i<RF_MAXDBGV;i++) {
-		config->debugVars[i][0] = NULL;
+		config->debugVars[i][0] = '\0';
 	}
 
 #ifdef	RAID_DEBUG_ALL
