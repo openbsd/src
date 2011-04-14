@@ -1,4 +1,4 @@
-/*	$OpenBSD: promdev.h,v 1.4 2010/06/29 21:33:54 miod Exp $	*/
+/*	$OpenBSD: promdev.h,v 1.5 2011/04/14 18:27:49 miod Exp $	*/
 /*	$NetBSD: promdev.h,v 1.3 1995/09/18 21:31:50 pk Exp $ */
 
 /*
@@ -59,8 +59,10 @@ extern int	cputyp, nbpg, pgofset, pgshift;
 extern int	debug;
 
 void	prom_init(void);
+void	prom_getether(int, u_char *);
 struct idprom *prom_getidprom(void);
 void	prom_interpret(char *);
+int	prom_makememarr(struct memarr *, u_int, int);
 
 /* Note: dvma_*() routines are for "oldmon" machines only */
 void	dvma_init(void);	
@@ -69,9 +71,15 @@ char	*dvma_mapout(char *, size_t);
 char	*dvma_alloc(int);
 void	dvma_free(char *, int);
 
+int	getticks(void);
+
 int	mmu_init(void);
 extern int	(*pmap_map)(vaddr_t, paddr_t, psize_t);
 extern int	(*pmap_extract)(vaddr_t, paddr_t *);
+
+int	net_open(struct promdata *);
+void	net_close(struct promdata *);
+int	net_mountroot(void);
 
 /*
  * duplicates from pmap.c for mapping device on "oldmon" machines.

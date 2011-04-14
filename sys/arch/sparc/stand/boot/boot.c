@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.9 2010/08/16 14:41:28 miod Exp $	*/
+/*	$OpenBSD: boot.c,v 1.10 2011/04/14 18:27:49 miod Exp $	*/
 /*	$NetBSD: boot.c,v 1.2 1997/09/14 19:27:21 pk Exp $	*/
 
 /*-
@@ -214,14 +214,13 @@ loadk(char *file, u_long *marks)
 	 * boot code has been loaded 1:1, we do not need to allocate
 	 * breathing room after it.
 	 */
+	size = minsize + extra;
 	if (compat != 0) {
 		if (minsize + extra <= RELOC2 - LOWSTACK)
 			size = RELOC2 - LOWSTACK;
 		else
 			compat = 0;
 	}
-	if (compat == 0)
-		size = minsize + extra;
 
 	/* Get a physical load address */
 #ifdef DEBUG

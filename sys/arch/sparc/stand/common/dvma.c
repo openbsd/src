@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvma.c,v 1.4 2010/06/29 21:33:54 miod Exp $	*/
+/*	$OpenBSD: dvma.c,v 1.5 2011/04/14 18:27:49 miod Exp $	*/
 /*	$NetBSD: dvma.c,v 1.2 1995/09/17 00:50:56 pk Exp $	*/
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -39,6 +39,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <machine/pte.h>
 #include <machine/ctlreg.h>
 

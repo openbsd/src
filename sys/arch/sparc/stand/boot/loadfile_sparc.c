@@ -1,4 +1,4 @@
-/* $OpenBSD: loadfile_sparc.c,v 1.1 2010/06/29 21:33:54 miod Exp $ */
+/* $OpenBSD: loadfile_sparc.c,v 1.2 2011/04/14 18:27:49 miod Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ elf32_exec(int fd, off_t filepos, Elf_Ehdr *elf, u_long *marks, int flags)
 	int first;
 	int havesyms;
 	paddr_t minp = ~0, maxp = 0, pos = 0;
-	paddr_t offset = marks[MARK_START], shpp, elfp;
+	paddr_t shpp, elfp;
 	off_t newpos;
 
 	sz = elf->e_phnum * sizeof(Elf_Phdr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netif_sun.c,v 1.1 1997/09/17 10:46:18 downsj Exp $	*/
+/*	$OpenBSD: netif_sun.c,v 1.2 2011/04/14 18:27:49 miod Exp $	*/
 /*	$NetBSD: netif_sun.c,v 1.2 1995/09/18 21:31:48 pk Exp $	*/
 
 /*
@@ -78,7 +78,6 @@ netif_open(machdep_hint)
 {
 	struct promdata *pd = machdep_hint;
 	struct iodesc *io;
-	int fd, error;
 
 	/* find a free socket */
 	io = sockets;

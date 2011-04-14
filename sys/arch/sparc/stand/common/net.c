@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.2 2003/08/14 17:13:57 deraadt Exp $	*/
+/*	$OpenBSD: net.c,v 1.3 2011/04/14 18:27:49 miod Exp $	*/
 /*	$NetBSD: net.c,v 1.2 1997/07/22 17:41:07 drochner Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 #include <netinet/in_systm.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/nfs.h>
 #include <lib/libsa/net.h>
 #include <lib/libsa/netif.h>
 #include <lib/libsa/bootparam.h>
@@ -91,7 +92,7 @@ bad:
 	return (error);
 }
 
-int
+void
 net_close(struct promdata *pd)
 {
 	/* On last close, do netif close, etc. */

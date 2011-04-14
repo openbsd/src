@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.7 2011/03/13 00:13:53 deraadt Exp $	*/
+/*	$OpenBSD: bootxx.c,v 1.8 2011/04/14 18:27:49 miod Exp $	*/
 /*	$NetBSD: bootxx.c,v 1.2 1997/09/14 19:28:17 pk Exp $	*/
 
 /*
@@ -66,7 +66,6 @@ int
 main(int argc, char *argv[])
 {
 	char	*dummy;
-	size_t	n;
 	register void (*entry)(caddr_t) = (void (*)(caddr_t))PROM_LOADADDR;
 
 	prom_init();
