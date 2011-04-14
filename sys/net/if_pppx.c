@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.6 2011/04/02 11:52:44 dlg Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.7 2011/04/14 05:13:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -45,7 +45,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/kernel.h>  
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -130,7 +130,7 @@ struct pppx_dev {
 	LIST_HEAD(,pppx_if)	pxd_pxis;
 };
 
-struct rwlock			pppx_devs_lk = RWLOCK_INITIALIZER("pppxdevs"); 
+struct rwlock			pppx_devs_lk = RWLOCK_INITIALIZER("pppxdevs");
 LIST_HEAD(, pppx_dev)		pppx_devs = LIST_HEAD_INITIALIZER(&pppx_devs);
 struct pool			*pppx_if_pl;
 
@@ -284,7 +284,7 @@ pppxread(dev_t dev, struct uio *uio, int ioflag)
 		IF_DEQUEUE(&pxd->pxd_svcq, m);
 		if (m != NULL)
 			break;
- 
+
 		if (ISSET(ioflag, IO_NDELAY)) {
 			splx(s);
 			return (EWOULDBLOCK);
@@ -434,6 +434,7 @@ pppxioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		error = pppx_add_session(pxd,
 		    (struct pipex_session_req *)addr);
 		break;
+
 	case PIPEXDSESSION:
 		error = pppx_del_session(pxd,
 		    (struct pipex_session_close_req *)addr);
@@ -442,19 +443,20 @@ pppxioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case PIPEXCSESSION:
 		error = pipex_config_session(
 		    (struct pipex_session_config_req *)addr);
-                return (error);
+		break;
 
-        case PIPEXGSTAT:
-                error = pipex_get_stat((struct pipex_session_stat_req *)addr);
-                return (error);
+	case PIPEXGSTAT:
+		error = pipex_get_stat((struct pipex_session_stat_req *)addr);
+		break;
 
-        case PIPEXGCLOSED:
-                error = pipex_get_closed((struct pipex_session_list_req *)addr);
-                return (error);
+	case PIPEXGCLOSED:
+		error = pipex_get_closed((struct pipex_session_list_req *)addr);
+		break;
 
 	case PIPEXSIFDESCR:
-		error = pppx_set_session_descr(pxd, (struct pipex_session_descr_req *)addr);
-		return (error);
+		error = pppx_set_session_descr(pxd,
+		    (struct pipex_session_descr_req *)addr);
+		break;
 
 	case FIONBIO:
 	case FIOASYNC:
@@ -494,7 +496,7 @@ pppxpoll(dev_t dev, int events, struct proc *p)
 
 int
 pppxkqfilter(dev_t dev, struct knote *kn)
-{ 
+{
 	struct pppx_dev *pxd = pppx_dev2pxd(dev);
 	struct mutex *mtx;
 	struct klist *klist;
@@ -531,7 +533,7 @@ filt_pppx_rdetach(struct knote *kn)
 
 	if (ISSET(kn->kn_status, KN_DETACHED))
 		return;
- 
+
 	mtx_enter(&pxd->pxd_rsel_mtx);
 	SLIST_REMOVE(klist, kn, knote, kn_selnext);
 	mtx_leave(&pxd->pxd_rsel_mtx);
@@ -566,7 +568,7 @@ filt_pppx_wdetach(struct knote *kn)
 
 	if (ISSET(kn->kn_status, KN_DETACHED))
 		return;
- 
+
 	mtx_enter(&pxd->pxd_wsel_mtx);
 	SLIST_REMOVE(klist, kn, knote, kn_selnext);
 	mtx_leave(&pxd->pxd_wsel_mtx);
@@ -926,7 +928,8 @@ pppx_del_session(struct pppx_dev *pxd, struct pipex_session_close_req *req)
 }
 
 int
-pppx_set_session_descr(struct pppx_dev *pxd, struct pipex_session_descr_req *req)
+pppx_set_session_descr(struct pppx_dev *pxd,
+    struct pipex_session_descr_req *req)
 {
 	struct pppx_if *pxi;
 
