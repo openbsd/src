@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.226 2011/04/06 15:36:13 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.227 2011/04/14 02:11:23 marco Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3570,35 +3570,20 @@ sr_raid_request_sense(struct sr_workunit *wu)
 int
 sr_raid_start_stop(struct sr_workunit *wu)
 {
-	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct scsi_start_stop	*ss = (struct scsi_start_stop *)xs->cmd;
-	int			rv = 1;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_raid_start_stop\n",
 	    DEVNAME(sd->sd_sc));
 
 	if (!ss)
-		return (rv);
+		return (1);
 
-	if (ss->byte2 == 0x00) {
-		/* START */
-		if (sd->sd_vol_status == BIOC_SVOFFLINE) {
-			/* bring volume online */
-			/* XXX check to see if volume can be brought online */
-			sd->sd_vol_status = BIOC_SVONLINE;
-		}
-		rv = 0;
-	} else /* XXX is this the check? if (byte == 0x01) */ {
-		/* STOP */
-		if (sd->sd_vol_status == BIOC_SVONLINE) {
-			/* bring volume offline */
-			sd->sd_vol_status = BIOC_SVOFFLINE;
-		}
-		rv = 0;
-	}
-
-	return (rv);
+	/*
+	 * do nothing!
+	 * a softraid discipline should always reflect correct status
+	 */
+	return (0);
 }
 
 int
