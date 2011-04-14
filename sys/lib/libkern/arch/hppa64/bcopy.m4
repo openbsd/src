@@ -1,4 +1,4 @@
-define(_rcsid,``$OpenBSD: bcopy.m4,v 1.5 2011/04/14 13:49:31 jsing Exp $'')dnl
+define(_rcsid,``$OpenBSD: bcopy.m4,v 1.6 2011/04/14 13:52:29 jsing Exp $'')dnl
 dnl
 dnl
 dnl  This is the source file for bcopy.S, spcopy.S
@@ -123,11 +123,11 @@ define(`E', `e')dnl
 ifelse($7,`-', `', `0',`0',
 `	comib,>=,n 15, $6, L($1, byte)
 
-	extru	$3, 31, 2, %r20
-	extru	$5, 31, 2, %r19
+	extrd	$3, 63, 2, %r20
+	extrd	$5, 63, 2, %r19
 	add	$6, %r19, $6
 	comb,<> %r20, %r19, L($1, unaligned)
-	dep	%r0, 31, 2, $3
+	depd	%r0, 63, 2, $3
 	hppa_blcopy($1, $2, $3, $4, $5, $6, `a')
 
 	STWL($1, $2, $3, $4, $5, $6, `a')dnl
