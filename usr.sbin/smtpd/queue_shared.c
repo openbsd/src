@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.38 2011/04/14 20:11:08 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.39 2011/04/14 21:53:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -227,18 +227,6 @@ queue_commit_layout_message(char *queuepath, struct message *messagep)
 }
 
 int
-queue_open_layout_messagefile(char *queuepath, struct message *messagep)
-{
-	char pathname[MAXPATHLEN];
-	
-	if (! bsnprintf(pathname, sizeof(pathname), "%s/%s/message", queuepath,
-		messagep->message_id))
-		fatal("queue_open_incoming_message_file: snprintf");
-
-	return open(pathname, O_CREAT|O_EXCL|O_RDWR, 0600);
-}
-
-int
 enqueue_create_layout(char *msgid)
 {
 	return queue_create_layout_message(PATH_ENQUEUE, msgid);
@@ -266,12 +254,6 @@ int
 enqueue_commit_message(struct message *message)
 {
 	return queue_commit_layout_message(PATH_ENQUEUE, message);
-}
-
-int
-enqueue_open_messagefile(struct message *message)
-{
-	return queue_open_layout_messagefile(PATH_ENQUEUE, message);
 }
 
 int
@@ -376,31 +358,6 @@ int
 queue_commit_incoming_message(struct message *message)
 {
 	return queue_commit_layout_message(PATH_INCOMING, message);
-}
-
-int
-queue_open_incoming_message_file(struct message *message)
-{
-	return queue_open_layout_messagefile(PATH_INCOMING, message);
-}
-
-int
-queue_open_message_file(char *msgid)
-{
-	int fd;
-	char pathname[MAXPATHLEN];
-	u_int16_t hval;
-
-	hval = queue_hash(msgid);
-
-	if (! bsnprintf(pathname, sizeof(pathname), "%s/%d/%s/message",
-		PATH_QUEUE, hval, msgid))
-		fatal("queue_open_message_file: snprintf");
-
-	if ((fd = open(pathname, O_RDONLY)) == -1)
-		fatal("queue_open_message_file: open");
-
-	return fd;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.97 2011/04/14 20:11:08 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.98 2011/04/14 21:53:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -56,7 +56,7 @@ void		runner_process_batch(struct smtpd *, struct ramqueue_envelope *, time_t);
 void		runner_purge_run(void);
 void		runner_purge_message(char *);
 
-int		runner_check_loop(struct message *);
+int		runner_check_loop(struct smtpd *, struct message *);
 
 int		runner_force_message_to_ramqueue(struct ramqueue *, char *);
 
@@ -363,7 +363,7 @@ runner_process_envelope(struct smtpd *env, struct ramqueue_envelope *rq_evp, tim
 			return 0;
 	}
 
-	if (runner_check_loop(&envelope)) {
+	if (runner_check_loop(env, &envelope)) {
 		struct message bounce;
 
 		message_set_errormsg(&envelope, "loop has been detected");
@@ -421,7 +421,7 @@ runner_process_batch(struct smtpd *env, struct ramqueue_envelope *rq_evp, time_t
 			&envelope))
 			return;
 		envelope.lasttry = curtm;
-		fd = queue_open_message_file(envelope.message_id);
+		fd = queue_message_fd_r(env, Q_QUEUE, rq_evp->batch->m_id);
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 		    IMSG_MDA_SESS_NEW, PROC_MDA, 0, fd, &envelope,
 		    sizeof envelope);
@@ -585,7 +585,7 @@ delroot:
 }
 
 int
-runner_check_loop(struct message *messagep)
+runner_check_loop(struct smtpd *env, struct message *messagep)
 {
 	int fd;
 	FILE *fp;
@@ -595,7 +595,7 @@ runner_check_loop(struct message *messagep)
 	int ret = 0;
 	int rcvcount = 0;
 
-	fd = queue_open_message_file(messagep->message_id);
+	fd = queue_message_fd_r(env, Q_QUEUE, messagep->message_id);
 	if ((fp = fdopen(fd, "r")) == NULL)
 		fatal("fdopen");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.3 2011/04/14 21:14:20 gilles Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.4 2011/04/14 21:53:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -26,6 +26,7 @@
 #include <err.h>
 #include <errno.h>
 #include <event.h>
+#include <fcntl.h>
 #include <imsg.h>
 #include <libgen.h>
 #include <pwd.h>
@@ -44,6 +45,8 @@ static int	fsqueue_envelope_load(struct smtpd *, enum queue_kind, struct message
 static int	fsqueue_envelope_update(struct smtpd *, enum queue_kind, struct message *);
 static int	fsqueue_envelope_delete(struct smtpd *, enum queue_kind, struct message *);
 
+static int	fsqueue_message_fd_r(struct smtpd *, enum queue_kind, char *);
+static int	fsqueue_message_fd_rw(struct smtpd *, enum queue_kind, char *);
 static int	fsqueue_message_delete(struct smtpd *, enum queue_kind, char *);
 
 int	fsqueue_init(struct smtpd *);
@@ -60,7 +63,7 @@ fsqueue_getpath(enum queue_kind kind)
                 return (PATH_INCOMING);
 
         case Q_ENQUEUE:
-                return (PATH_INCOMING);
+                return (PATH_ENQUEUE);
 
         case Q_QUEUE:
                 return (PATH_QUEUE);
@@ -120,7 +123,7 @@ fsqueue_envelope_load(struct smtpd *env, enum queue_kind qkind,
 	return 1;
 }
 
-int
+static int
 fsqueue_envelope_update(struct smtpd *env, enum queue_kind qkind,
     struct message *envelope)
 {
@@ -175,7 +178,7 @@ tempfail:
 	return 0;
 }
 
-int
+static int
 fsqueue_envelope_delete(struct smtpd *env, enum queue_kind qkind,
     struct message *envelope)
 {
@@ -203,7 +206,46 @@ fsqueue_envelope_delete(struct smtpd *env, enum queue_kind qkind,
 	return 1;
 }
 
-int
+static int
+fsqueue_message_fd_r(struct smtpd *env, enum queue_kind qkind, char *msgid)
+{
+	int fd;
+	char pathname[MAXPATHLEN];
+	u_int16_t hval;
+
+	if (qkind == Q_ENQUEUE || qkind == Q_INCOMING) {
+		if (! bsnprintf(pathname, sizeof(pathname), "%s/%s/message",
+			fsqueue_getpath(qkind), msgid))
+			fatal("fsqueue_message_fd_r: snprintf");
+	}
+	else {
+		hval = fsqueue_hash(msgid);
+		if (! bsnprintf(pathname, sizeof(pathname), "%s/%d/%s/message",
+			fsqueue_getpath(qkind), hval, msgid))
+			fatal("fsqueue_message_fd_r: snprintf");
+	}
+
+	log_debug("pathname: %s", pathname);
+	if ((fd = open(pathname, O_RDONLY)) == -1)
+		fatal("fsqueue_message_fd_r: open");
+
+	return fd;
+}
+
+static int
+fsqueue_message_fd_rw(struct smtpd *env, enum queue_kind qkind, char *msgid)
+{
+	char pathname[MAXPATHLEN];
+	
+	if (! bsnprintf(pathname, sizeof(pathname), "%s/%s/message",
+		fsqueue_getpath(qkind),
+		msgid))
+		fatal("fsqueue_message_fd_rw: snprintf");
+	log_debug("path: %s", pathname);
+	return open(pathname, O_CREAT|O_EXCL|O_RDWR, 0600);
+}
+
+static int
 fsqueue_message_delete(struct smtpd *env, enum queue_kind qkind, char *msgid)
 {
 	char rootdir[MAXPATHLEN];
@@ -390,10 +432,10 @@ fsqueue_message(struct smtpd *env, enum queue_kind qkind,
                 return 0;
 
         case QOP_FD_R:
-                return 0;
+                return fsqueue_message_fd_r(env, qkind, msgid);
 
         case QOP_FD_RW:
-                return 0;
+                return fsqueue_message_fd_rw(env, qkind, msgid);
 
         default:
 		fatalx("queue_fsqueue_message: unsupported operation.");

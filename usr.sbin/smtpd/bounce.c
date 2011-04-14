@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.27 2011/04/14 20:11:08 gilles Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.28 2011/04/14 21:53:45 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -55,7 +55,8 @@ bounce_session(struct smtpd *env, int fd, struct message *messagep)
 	FILE			*msgfp = NULL;
 
 	/* get message content */
-	if ((msgfd = queue_open_message_file(messagep->message_id)) == -1)
+	if ((msgfd = queue_message_fd_r(env, Q_QUEUE,
+		    messagep->message_id)) == -1)
 		goto fail;
 	msgfp = fdopen(msgfd, "r");
 	if (msgfp == NULL)

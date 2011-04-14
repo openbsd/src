@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.95 2011/04/13 20:53:18 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.96 2011/04/14 21:53:45 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -106,9 +106,9 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 		case IMSG_QUEUE_MESSAGE_FILE:
 			ss.id = m->session_id;
 			if (m->flags & F_MESSAGE_ENQUEUED)
-				fd = enqueue_open_messagefile(m);
+				fd = queue_message_fd_rw(env, Q_ENQUEUE, m->message_id);
 			else
-				fd = queue_open_incoming_message_file(m);
+				fd = queue_message_fd_rw(env, Q_INCOMING, m->message_id);
 			if (fd == -1)
 				ss.code = 421;
 			imsg_compose_event(iev, IMSG_QUEUE_MESSAGE_FILE, 0, 0, fd,
@@ -170,7 +170,7 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 		switch (imsg->hdr.type) {
 		case IMSG_QUEUE_MESSAGE_FD:
 			rq_batch = imsg->data;
-			fd = queue_open_message_file(rq_batch->m_id);
+			fd = queue_message_fd_r(env, Q_QUEUE, rq_batch->m_id);
 			imsg_compose_event(iev,  IMSG_QUEUE_MESSAGE_FD, 0, 0,
 			    fd, rq_batch, sizeof *rq_batch);
 			return;
