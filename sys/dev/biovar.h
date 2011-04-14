@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.38 2010/03/26 16:50:59 jsing Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.39 2011/04/14 02:41:40 marco Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -78,7 +78,7 @@ struct bioc_disk {
 #define BIOC_SDOFFLINE		0x01
 #define BIOC_SDOFFLINE_S	"Offline"
 #define BIOC_SDFAILED		0x02
-#define BIOC_SDFAILED_S 	"Failed"
+#define BIOC_SDFAILED_S		"Failed"
 #define BIOC_SDREBUILD		0x03
 #define BIOC_SDREBUILD_S	"Rebuild"
 #define BIOC_SDHOTSPARE		0x04
