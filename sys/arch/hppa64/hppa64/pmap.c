@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.13 2010/07/24 16:25:33 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.14 2011/04/14 13:24:04 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -465,8 +465,7 @@ printf("pde %p epde %p pte 0x%lx\n", pde, epde, pte);
 }
 
 void
-pmap_bootstrap(vstart)
-	vaddr_t vstart;
+pmap_bootstrap(vaddr_t vstart)
 {
 	extern int resvphysmem, __rodata_end, __data_start;
 	vaddr_t va, eaddr, addr = round_page(vstart);
@@ -534,7 +533,7 @@ pmap_bootstrap(vstart)
 }
 
 void
-pmap_init()
+pmap_init(void)
 {
 	DPRINTF(PDB_FOLLOW|PDB_INIT, ("pmap_init()\n"));
 
@@ -623,7 +622,7 @@ pmap_growkernel(vaddr_t kva)
 #endif /* PMAP_GROWKERNEL */
 
 struct pmap *
-pmap_create()
+pmap_create(void)
 {
 	struct pmap *pmap;
 	struct vm_page *pg;
@@ -665,8 +664,7 @@ pmap_create()
 }
 
 void
-pmap_destroy(pmap)
-	struct pmap *pmap;
+pmap_destroy(struct pmap *pmap)
 {
 	int refs;
 
@@ -705,12 +703,7 @@ pmap_collect(struct pmap *pmap)
 }
 
 int
-pmap_enter(pmap, va, pa, prot, flags)
-	struct pmap *pmap;
-	vaddr_t va;
-	paddr_t pa;
-	vm_prot_t prot;
-	int flags;
+pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	volatile pt_entry_t *pde;
 	pt_entry_t pte;
@@ -801,10 +794,7 @@ enter:
 }
 
 void
-pmap_remove(pmap, sva, eva)
-	struct pmap *pmap;
-	vaddr_t sva;
-	vaddr_t eva;
+pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 {
 	struct pv_entry *pve;
 	volatile pt_entry_t *pde;
@@ -861,11 +851,7 @@ pmap_remove(pmap, sva, eva)
 }
 
 void
-pmap_write_protect(pmap, sva, eva, prot)
-	struct pmap *pmap;
-	vaddr_t sva;
-	vaddr_t eva;
-	vm_prot_t prot;
+pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	struct vm_page *pg;
 	volatile pt_entry_t *pde;
@@ -916,8 +902,7 @@ pmap_write_protect(pmap, sva, eva, prot)
 }
 
 void
-pmap_page_remove(pg)
-	struct vm_page *pg;
+pmap_page_remove(struct vm_page *pg)
 {
 	struct pv_entry *pve, *ppve;
 
@@ -956,9 +941,7 @@ pmap_page_remove(pg)
 }
 
 void
-pmap_unwire(pmap, va)
-	struct pmap *pmap;
-	vaddr_t	va;
+pmap_unwire(struct pmap *pmap, vaddr_t	va)
 {
 	volatile pt_entry_t *pde;
 	pt_entry_t pte = 0;
@@ -1051,10 +1034,7 @@ pmap_testbit(struct vm_page *pg, pt_entry_t bit)
 }
 
 boolean_t
-pmap_extract(pmap, va, pap)
-	struct pmap *pmap;
-	vaddr_t va;
-	paddr_t *pap;
+pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 {
 	pt_entry_t pte;
 	vaddr_t mask;
@@ -1134,10 +1114,7 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 }
 
 void
-pmap_kenter_pa(va, pa, prot)
-	vaddr_t va;
-	paddr_t pa;
-	vm_prot_t prot;
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	volatile pt_entry_t *pde;
 	pt_entry_t pte, opte;
@@ -1182,9 +1159,7 @@ pmap_kenter_pa(va, pa, prot)
 }
 
 void
-pmap_kremove(va, size)
-	vaddr_t va;
-	vsize_t size;
+pmap_kremove(vaddr_t va, vsize_t size)
 {
 	struct pv_entry *pve;
 	vaddr_t eva, pdemask;
