@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.117 2011/04/13 20:53:18 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.118 2011/04/14 17:06:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -490,6 +490,10 @@ main(int argc, char *argv[])
 
 	if (!setup_spool(env.sc_pw->pw_uid, 0))
 		errx(1, "invalid directory permissions");
+
+	env.sc_queue = queue_backend_lookup(QT_FS);
+	if (env.sc_queue == NULL)
+		errx(1, "could not find queue backend");
 
 	log_init(debug);
 	log_verbose(verbose);
