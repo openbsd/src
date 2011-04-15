@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.41 2011/04/15 17:01:05 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.42 2011/04/15 17:21:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -225,53 +225,6 @@ ss_to_text(struct sockaddr_storage *ss)
 	}
 
 	return (buf);
-}
-
-int
-valid_message_id(char *mid)
-{
-	u_int8_t cnt;
-
-	/* [0-9]{10}\.[a-zA-Z0-9]{16} */
-	for (cnt = 0; cnt < 10; ++cnt, ++mid)
-		if (! isdigit((int)*mid))
-			return 0;
-
-	if (*mid++ != '.')
-		return 0;
-
-	for (cnt = 0; cnt < 16; ++cnt, ++mid)
-		if (! isalnum((int)*mid))
-			return 0;
-
-	return (*mid == '\0');
-}
-
-int
-valid_message_uid(char *muid)
-{
-	u_int8_t cnt;
-
-	/* [0-9]{10}\.[a-zA-Z0-9]{16}\.[0-9]{0,} */
-	for (cnt = 0; cnt < 10; ++cnt, ++muid)
-		if (! isdigit((int)*muid))
-			return 0;
-
-	if (*muid++ != '.')
-		return 0;
-
-	for (cnt = 0; cnt < 16; ++cnt, ++muid)
-		if (! isalnum((int)*muid))
-			return 0;
-
-	if (*muid++ != '.')
-		return 0;
-
-	for (cnt = 0; *muid != '\0'; ++cnt, ++muid)
-		if (! isdigit((int)*muid))
-			return 0;
-
-	return (cnt != 0);
 }
 
 char *
