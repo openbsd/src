@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_pic.c,v 1.31 2009/09/30 20:16:31 miod Exp $	*/
+/*	$OpenBSD: sio_pic.c,v 1.32 2011/04/15 20:40:05 deraadt Exp $	*/
 /* $NetBSD: sio_pic.c,v 1.28 2000/06/06 03:10:13 thorpej Exp $ */
 
 /*-
@@ -586,6 +586,8 @@ sio_intr_alloc(v, mask, type, irq)
 			return (0);
 
 		case IST_EDGE:
+			intr_shared_edge = 1;
+			/* FALLTHROUGH */
 		case IST_LEVEL:
 			if (type != sio_intr[i].intr_sharetype)
 				continue;

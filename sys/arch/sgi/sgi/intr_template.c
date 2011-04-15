@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr_template.c,v 1.10 2010/01/18 17:01:14 miod Exp $	*/
+/*	$OpenBSD: intr_template.c,v 1.11 2011/04/15 20:40:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -103,7 +103,7 @@ INTR_FUNCTIONNAME(uint32_t hwpend, struct trap_frame *frame)
 	int ipl;
 	int bit;
 	struct intrhand *ih;
-	int rc;
+	int rc, ret;
 	INTR_LOCAL_DECLS
 
 	INTR_GETMASKS;
@@ -166,7 +166,8 @@ INTR_FUNCTIONNAME(uint32_t hwpend, struct trap_frame *frame)
 							__mp_lock(&kernel_lock);
 					}
 #endif
-					if ((*ih->ih_fun)(ih->ih_arg) != 0) {
+					ret = (*ih->ih_fun)(ih->ih_arg);
+					if (ret != 0) {
 						rc = 1;
 						atomic_add_uint64(&ih->ih_count.ec_count, 1);
 					}
@@ -180,6 +181,8 @@ INTR_FUNCTIONNAME(uint32_t hwpend, struct trap_frame *frame)
 					__asm__ (".set noreorder\n");
 					ci->ci_ipl = ipl;
 					__asm__ ("sync\n\t.set reorder\n");
+					if (ret == 1)
+						break;
 				}
 				if (rc == 0)
 					INTR_SPURIOUS(bitno);

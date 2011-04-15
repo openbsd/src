@@ -1,4 +1,4 @@
-/*	$OpenBSD: generic2e_machdep.c,v 1.1 2010/05/08 21:59:56 miod Exp $	*/
+/*	$OpenBSD: generic2e_machdep.c,v 1.2 2011/04/15 20:40:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -239,7 +239,7 @@ generic2e_isa_intr(uint32_t hwpend, struct trap_frame *frame)
 {
 	struct intrhand *ih;
 	uint64_t isr, mask = 0;
-	int rc, irq;
+	int rc, irq, ret;
 	uint8_t ocw1, ocw2;
 	extern uint loongson_isaimr;
 
@@ -283,7 +283,8 @@ generic2e_isa_intr(uint32_t hwpend, struct trap_frame *frame)
 		    ih = ih->ih_next) {
 			splraise(ih->ih_level);
 
-			if ((*ih->ih_fun)(ih->ih_arg) != 0) {
+			ret = (*ih->ih_fun)(ih->ih_arg);
+			if (ret) {
 				rc = 1;
 				ih->ih_count.ec_count++;
 			}
@@ -291,6 +292,8 @@ generic2e_isa_intr(uint32_t hwpend, struct trap_frame *frame)
 			__asm__ (".set noreorder\n");
 			curcpu()->ci_ipl = frame->ipl;
 			__asm__ ("sync\n\t.set reorder\n");
+			if (ret == 1)
+				break;
 		}
 
 		/* Send a specific EOI to the 8259. */

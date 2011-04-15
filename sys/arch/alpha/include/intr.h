@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.38 2011/03/23 16:54:34 pirofti Exp $ */
+/* $OpenBSD: intr.h,v 1.39 2011/04/15 20:40:05 deraadt Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -234,6 +234,8 @@ struct alpha_shared_intr {
 #define	ALPHA_SHARED_INTR_DISABLE(asi, num)				\
 	((asi)[num].intr_maxstrays != 0 &&				\
 	 (asi)[num].intr_nstrays == (asi)[num].intr_maxstrays)
+
+extern int	intr_shared_edge;
 
 /*
  * simulated software interrupt register

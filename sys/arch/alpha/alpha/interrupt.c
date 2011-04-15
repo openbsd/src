@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.30 2010/12/21 14:56:23 claudio Exp $ */
+/* $OpenBSD: interrupt.c,v 1.31 2011/04/15 20:40:03 deraadt Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -100,6 +100,12 @@ extern struct evcount clk_count;
 struct scbvec scb_iovectab[SCB_VECTOIDX(SCB_SIZE - SCB_IOVECBASE)];
 
 void	scb_stray(void *, u_long);
+
+/*
+ * True if the system has any non-level interrupts which are shared
+ * on the same pin.
+ */
+int	intr_shared_edge;
 
 void
 scb_init(void)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yeeloong_machdep.c,v 1.15 2010/10/14 21:23:04 pirofti Exp $	*/
+/*	$OpenBSD: yeeloong_machdep.c,v 1.16 2011/04/15 20:40:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -346,7 +346,7 @@ lemote_isa_intr(uint32_t hwpend, struct trap_frame *frame)
 	 * Now process allowed interrupts.
 	 */
 	if (isr != 0) {
-		int lvl, bitno;
+		int lvl, bitno, ret;
 		uint64_t tmpisr;
 
 		/* Service higher level interrupts first */
@@ -365,13 +365,16 @@ lemote_isa_intr(uint32_t hwpend, struct trap_frame *frame)
 				for (ih = bonito_intrhand[BONITO_ISA_IRQ(bitno)];
 				    ih != NULL; ih = ih->ih_next) {
 					splraise(ih->ih_level);
-					if ((*ih->ih_fun)(ih->ih_arg) != 0) {
+					ret = (*ih->ih_fun)(ih->ih_arg);
+					if (ret) {
 						rc = 1;
 						ih->ih_count.ec_count++;
 					}
 					__asm__ (".set noreorder\n");
 					curcpu()->ci_ipl = frame->ipl;
 					__asm__ ("sync\n\t.set reorder\n");
+					if (ret == 1)
+						break;
 				}
 				if (rc == 0)
 					printf("spurious isa interrupt %d\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.6 2010/09/20 06:33:47 matthew Exp $	*/
+/*	$OpenBSD: intr.c,v 1.7 2011/04/15 20:40:07 deraadt Exp $	*/
 /*	$NetBSD: intr.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -360,6 +360,8 @@ extintr_intr_handler(void *arg)
 				r = (*ih->ih_fun)(ih->ih_arg);
 				if (__predict_true(r != 0)) {
 					ih->ih_count.ec_count++;
+					if (r == 1)
+						break;
 				}
 			}
 		}

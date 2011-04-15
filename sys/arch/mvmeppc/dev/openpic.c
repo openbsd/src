@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.23 2010/09/20 06:33:47 matthew Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.24 2011/04/15 20:40:06 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -291,6 +291,8 @@ i8259_intr_establish(lcv, irq, type, level, ih_fun, ih_arg, what)
 
 	switch (intrtype[irq]) {
 	case IST_EDGE:
+		intr_shared_edge = 1;
+		/* FALLTHROUGH */
 	case IST_LEVEL:
 		if (type == intrtype[irq])
 			break;
@@ -374,6 +376,8 @@ openpic_intr_establish(lcv, irq, type, level, ih_fun, ih_arg, what)
 
 	switch (intrtype[irq]) {
 	case IST_EDGE:
+		intr_shared_edge = 1;
+		/* FALLTHROUGH */
 	case IST_LEVEL:
 		if (type == intrtype[irq])
 			break;
