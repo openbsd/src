@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.70 2011/04/06 21:16:13 martynas Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.71 2011/04/15 17:34:51 oga Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -267,15 +267,6 @@ struct acpi_dev_rank {
 #define	ACPI_IOC_GETFACS	_IOR('A', 0, struct acpi_facs)
 #define	ACPI_IOC_GETTABLE	_IOWR('A', 1, struct acpi_table)
 #define ACPI_IOC_SETSLEEPSTATE	_IOW('A', 2, int)
-
-#define	ACPI_EV_PWRBTN		0x0001	/* Power button was pushed */
-#define	ACPI_EV_SLPBTN		0x0002	/* Sleep button was pushed */
-
-#define	ACPI_EVENT_MASK		0x0003
-
-#define	ACPI_EVENT_COMPOSE(t,i)	(((i) & 0x7fff) << 16 | ((t) & ACPI_EVENT_MASK))
-#define	ACPI_EVENT_TYPE(e)	((e) & ACPI_EVENT_MASK)
-#define	ACPI_EVENT_INDEX(e)	((e) >> 16)
 
 #if defined(_KERNEL)
 struct   acpi_gas;
