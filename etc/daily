@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: daily,v 1.68 2010/09/22 13:01:10 deraadt Exp $
+#	$OpenBSD: daily,v 1.69 2011/04/15 11:23:39 halex Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 # For local additions, create the file /etc/daily.local.
@@ -50,7 +50,7 @@ if [ -d /tmp -a ! -L /tmp ]; then
 	find -x . \
 	    \( -path './ssh-*' -o -path ./.X11-unix -o -path ./.ICE-unix \
 	    	-o -path ./portslocks \) \
-	    -prune -o -type f -atime +3 -execdir rm -f -- {} \;
+	    -prune -o -type f -atime +3 -execdir rm -f -- {} \; 2>&-
 	find -x . -type d -mtime +1 ! -path ./vi.recover ! -path ./.X11-unix \
 	    ! -path ./.ICE-unix ! -path ./portslocks ! -name . \
 	    -execdir rmdir -- {} \; >/dev/null 2>&1; }
@@ -61,7 +61,7 @@ if [ -d /var/tmp -a ! -L /var/tmp ]; then
 	find -x . \
 	    \( -path './ssh-*' -o -path ./.X11-unix -o -path ./.ICE-unix \
 	    	-o -path ./portslocks \) \
-	    -prune -o ! -type d -atime +7 -execdir rm -f -- {} \;
+	    -prune -o ! -type d -atime +7 -execdir rm -f -- {} \; 2>&-
 	find -x . -type d -mtime +1 ! -path ./vi.recover ! -path ./.X11-unix \
 	    ! -path ./.ICE-unix ! -path ./portslocks ! -name . \
 	    -execdir rmdir -- {} \; >/dev/null 2>&1; }
