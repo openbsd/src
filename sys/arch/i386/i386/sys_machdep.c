@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.28 2011/03/12 03:52:26 guenther Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.29 2011/04/15 15:08:19 chl Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.28 1996/05/03 19:42:29 christos Exp $	*/
 
 /*-
@@ -115,8 +115,6 @@ i386_get_ldt(struct proc *p, void *args, register_t *retval)
 		return (EINVAL);
 
 	cp = malloc(ua.num * sizeof(union descriptor), M_TEMP, M_WAITOK);
-	if (cp == NULL)
-		return ENOMEM;
 
 	simple_lock(&pmap->pm_lock);
 
