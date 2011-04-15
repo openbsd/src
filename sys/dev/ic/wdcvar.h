@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.47 2011/04/05 19:57:40 deraadt Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.48 2011/04/15 20:53:28 miod Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -271,8 +271,9 @@ struct wdc_xfer *wdc_get_xfer(int); /* int = WDC_NOSLEEP/CANSLEEP */
 void   wdc_free_xfer(struct channel_softc *, struct wdc_xfer *);
 void  wdcstart(struct channel_softc *);
 int   wdcreset(struct channel_softc *, int);
-#define VERBOSE	1
-#define SILENT	0 /* wdcreset will not print errors */
+#define NOWAIT  0x02
+#define VERBOSE	0x01
+#define SILENT	0x00 /* wdcreset will not print errors */
 int   wdc_wait_for_status(struct channel_softc *, int, int, int);
 int   wdc_dmawait(struct channel_softc *, struct wdc_xfer *, int);
 void  wdcbit_bucket(struct channel_softc *, int);

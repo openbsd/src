@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.98 2011/04/05 19:57:40 deraadt Exp $ */
+/*	$OpenBSD: wd.c,v 1.99 2011/04/15 20:53:28 miod Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -355,13 +355,14 @@ wdactivate(struct device *self, int act)
 		/*
 		 * Do two resets separated by a small delay. The
 		 * first wakes the controller, the second resets
-		 * the channel
+		 * the channel.
 		 */
 		wdc_disable_intr(wd->drvp->chnl_softc);
-		wdc_reset_channel(wd->drvp);
+		wdc_reset_channel(wd->drvp, 1);
 		delay(10000);
-		wdc_reset_channel(wd->drvp);
+		wdc_reset_channel(wd->drvp, 0);
 		wdc_enable_intr(wd->drvp->chnl_softc);
+		wd_get_params(wd, at_poll, &wd->sc_params);
 		break;
 	}
 	return (rv);
@@ -582,7 +583,7 @@ wddone(void *v)
 		    sizeof buf);
 retry:
 		/* Just reset and retry. Can we do more ? */
-		wdc_reset_channel(wd->drvp);
+		wdc_reset_channel(wd->drvp, 0);
 		diskerr(bp, "wd", errbuf, LOG_PRINTF,
 		    wd->sc_wdc_bio.blkdone, wd->sc_dk.dk_label);
 		if (wd->retries++ < WDIORETRIES) {

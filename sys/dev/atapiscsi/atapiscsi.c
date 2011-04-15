@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.96 2010/11/18 21:13:19 miod Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.97 2011/04/15 20:53:28 miod Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -311,9 +311,9 @@ atapiscsi_activate(struct device *self, int act)
 		 * the channel
 		 */
 		wdc_disable_intr(chp);
-		wdc_reset_channel(drvp);
+		wdc_reset_channel(drvp, 1);
 		delay(10000);
-		wdc_reset_channel(drvp);
+		wdc_reset_channel(drvp, 0);
 		wdc_enable_intr(chp);
 		break;
 	}
@@ -1626,7 +1626,7 @@ wdc_atapi_reset_2(chp, xfer, timeout, ret)
 		    chp->wdc->sc_dev.dv_xname, chp->channel,
 		    xfer->drive);
 		sc_xfer->error = XS_SELTIMEOUT;
-		wdc_reset_channel(drvp);
+		wdc_reset_channel(drvp, 0);
 
 		xfer->next = wdc_atapi_done;
 		return;

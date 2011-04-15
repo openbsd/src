@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.111 2011/04/05 19:57:40 deraadt Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.112 2011/04/15 20:53:28 miod Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -934,7 +934,7 @@ wdcintr(void *arg)
 
 /* Put all disk in RESET state */
 void
-wdc_reset_channel(struct ata_drive_datas *drvp)
+wdc_reset_channel(struct ata_drive_datas *drvp, int nowait)
 {
 	struct channel_softc *chp = drvp->chnl_softc;
 	int drive;
@@ -942,14 +942,14 @@ wdc_reset_channel(struct ata_drive_datas *drvp)
 	WDCDEBUG_PRINT(("ata_reset_channel %s:%d for drive %d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, drvp->drive),
 	    DEBUG_FUNCS);
-	(void) wdcreset(chp, VERBOSE);
+	(void) wdcreset(chp, nowait ? NOWAIT : VERBOSE);
 	for (drive = 0; drive < 2; drive++) {
 		chp->ch_drive[drive].state = 0;
 	}
 }
 
 int
-wdcreset(struct channel_softc *chp, int verb)
+wdcreset(struct channel_softc *chp, int flags)
 {
 	int drv_mask1, drv_mask2;
 
@@ -958,10 +958,14 @@ wdcreset(struct channel_softc *chp, int verb)
 
 	chp->wdc->reset(chp);
 
+	if (flags & NOWAIT)
+		return 0;
+
 	drv_mask1 = (chp->ch_drive[0].drive_flags & DRIVE) ? 0x01:0x00;
 	drv_mask1 |= (chp->ch_drive[1].drive_flags & DRIVE) ? 0x02:0x00;
 	drv_mask2 = __wdcwait_reset(chp, drv_mask1);
-	if (verb && drv_mask2 != drv_mask1) {
+
+	if ((flags & VERBOSE) && drv_mask2 != drv_mask1) {
 		printf("%s channel %d: reset failed for",
 		    chp->wdc->sc_dev.dv_xname, chp->channel);
 		if ((drv_mask1 & 0x01) != 0 && (drv_mask2 & 0x01) == 0)
@@ -1554,7 +1558,7 @@ wdc_downgrade_mode(struct ata_drive_datas *drvp)
 
 	wdc->set_modes(chp);
 	/* reset the channel, which will schedule all drives for setup */
-	wdc_reset_channel(drvp);
+	wdc_reset_channel(drvp, 0);
 	return 1;
 }
 

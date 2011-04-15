@@ -1,4 +1,4 @@
-/*	$OpenBSD: atavar.h,v 1.19 2010/07/23 07:47:13 jsg Exp $	*/
+/*	$OpenBSD: atavar.h,v 1.20 2011/04/15 20:53:28 miod Exp $	*/
 /*	$NetBSD: atavar.h,v 1.13 1999/03/10 13:11:43 bouyer Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ void wdc_probe_caps(struct ata_drive_datas*, struct ataparams *);
 void wdc_print_caps(struct ata_drive_datas*);
 int  wdc_downgrade_mode(struct ata_drive_datas*);
 
-void wdc_reset_channel(struct ata_drive_datas *);
+void wdc_reset_channel(struct ata_drive_datas *, int);
 
 int wdc_ata_addref(struct ata_drive_datas *);
 void wdc_ata_delref(struct ata_drive_datas *);
