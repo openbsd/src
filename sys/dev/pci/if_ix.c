@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.50 2011/04/13 00:14:18 dlg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.51 2011/04/15 15:12:27 chl Exp $	*/
 
 /******************************************************************************
 
@@ -863,7 +863,7 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 	struct ix_softc *sc = txr->sc;
 	uint32_t	olinfo_status = 0, cmd_type_len = 0;
 	int             i, j, error;
-	int		first, last = 0;
+	int		first;
 	bus_dmamap_t	map;
 	struct ixgbe_tx_buf *txbuf, *txbuf_mapped;
 	union ixgbe_adv_tx_desc *txd = NULL;
@@ -954,7 +954,6 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 		txd->read.cmd_type_len = htole32(txr->txd_cmd |
 		    cmd_type_len | map->dm_segs[j].ds_len);
 		txd->read.olinfo_status = htole32(olinfo_status);
-		last = i; /* Next descriptor that will get completed */
 
 		if (++i == sc->num_tx_desc)
 			i = 0;
@@ -1587,7 +1586,6 @@ ixgbe_allocate_queues(struct ix_softc *sc)
 		error = ENOMEM;
 		goto fail;
 	}
-	txr = sc->tx_rings;
 
 	/* Next allocate the RX */
 	if (!(sc->rx_rings =
@@ -1597,7 +1595,6 @@ ixgbe_allocate_queues(struct ix_softc *sc)
 		error = ENOMEM;
 		goto rx_fail;
 	}
-	rxr = sc->rx_rings;
 
 	/* For the ring itself */
 	tsize = roundup2(sc->num_tx_desc *
