@@ -154,6 +154,7 @@ static int no_trigraphs = 0;
    2 means #include <...> as well.  */
 
 static int print_deps = 0;
+static int print_phony = 0;
 
 /* Nonzero if missing .h files in -M output are assumed to be generated
    files and not errors.  */
@@ -864,6 +865,12 @@ static IF_STACK_FRAME *if_stack = NULL;
 /* Buffer of -M output.  */
 static char *deps_buffer;
 
+/* Target-name to write with the dependency information.  */
+char *deps_target_base;
+
+/* the prefix string that actually gets written containing the target */
+char *deps_target_full;
+
 /* Number of bytes allocated in above.  */
 static int deps_allocated_size;
 
@@ -1561,6 +1568,24 @@ main (argc, argv)
 	    print_deps_missing_files = 1;
 	    break;
 	  }
+	if (!strcmp(argv[i], "-MT")) {
+	  if (i + 1 == argc)
+	    fatal ("Filename missing after %s option", argv[i]);
+	  i++;
+	  deps_target_base = argv[i];
+	  break;
+	}
+	if (!strcmp(argv[i], "-MF")) {
+	  if (i + 1 == argc)
+	    fatal ("Filename missing after %s option", argv[i]);
+	  i++;
+	  deps_file = argv[i];
+	  break;
+	}
+	if (!strcmp(argv[i], "-MP")) {
+	  print_phony = 1;
+	  break;
+	}
 	if (!strcmp (argv[i], "-M"))
 	  print_deps = 2;
 	else if (!strcmp (argv[i], "-MM"))
@@ -1946,6 +1971,8 @@ main (argc, argv)
      inhibit compilation.  */
   if (print_deps_missing_files && (print_deps == 0 || !inhibit_output))
     fatal ("-MG must be specified with one of -M or -MM");
+  if (print_phony && print_deps == 0)
+    fatal ("-MP must be specified with one of -M, -MM, -MD, or -MMD");
 
   /* Either of two environment variables can specify output of deps.
      Its value is either "OUTPUT_FILE" or "OUTPUT_FILE DEPS_TARGET",
@@ -1994,13 +2021,24 @@ main (argc, argv)
     deps_size = 0;
     deps_column = 0;
 
-    if (deps_target) {
-      deps_output (deps_target, ':');
+    if (deps_target_base) {
+      int size = strlen(deps_target_base) + strlen(in_fname) + 3;
+
+      deps_target_full = (char *) xmalloc (size);
+      strlcpy(deps_target_full, deps_target_base, size);
+      strlcat(deps_target_full, ": ", size);
+      strlcat(deps_target_full, in_fname, size);
+    } else if (deps_target) {
+      int size = strlen(deps_target) + 3;
+
+      deps_target_full = (char *) xmalloc (size);
+      strlcpy(deps_target_full, deps_target, size);
+      strlcat(deps_target_full, ": ", size);
     } else if (*in_fname == 0) {
-      deps_output ("-", ':');
+      deps_target_full = xstrdup("-: ");
     } else {
       char *p, *q;
-      int len;
+      int len, size;
 
       q = base_name (in_fname);
 
@@ -2036,8 +2074,11 @@ main (argc, argv)
       /* Supply our own suffix.  */
       strcpy (q, OBJECT_SUFFIX);
 
-      deps_output (p, ':');
-      deps_output (in_fname, ' ');
+      size = strlen(p) + strlen(in_fname) + 3;
+      deps_target_full = (char *) xmalloc (size);
+      strlcpy(deps_target_full, p, size);
+      strlcat(deps_target_full, ": ", size);
+      strlcat(deps_target_full, in_fname, size);
     }
   }
 
@@ -2174,8 +2215,15 @@ main (argc, argv)
     if (errors == 0) {
       if (deps_file && ! (deps_stream = fopen (deps_file, deps_mode)))
 	pfatal_with_name (deps_file);
+      fputs (deps_target_full, deps_stream);
+      fputs (" \\\n ", deps_stream);
       fputs (deps_buffer, deps_stream);
       putc ('\n', deps_stream);
+      if (print_phony) {
+	fputs (deps_buffer, deps_stream);
+	putc (':', deps_stream);
+	putc ('\n', deps_stream);
+      }
       if (deps_file) {
 	if (ferror (deps_stream) || fclose (deps_stream) != 0)
 	  fatal ("I/O error on output");
@@ -10601,7 +10649,7 @@ deps_output (string, spacer)
     deps_allocated_size = (deps_size + 2 * size + 50) * 2;
     deps_buffer = xrealloc (deps_buffer, deps_allocated_size);
   }
-  if (spacer == ' ') {
+  if (spacer == ' ' && deps_column > 0) {
     deps_buffer[deps_size++] = ' ';
     deps_column++;
   }

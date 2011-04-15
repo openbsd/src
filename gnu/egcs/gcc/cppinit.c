@@ -570,6 +570,11 @@ cpp_cleanup (pfile)
       pfile->deps_buffer = NULL;
       pfile->deps_allocated_size = 0;
     }
+  if (pfile->deps_target_full)
+    {
+      free (pfile->deps_target_full);
+      pfile->deps_target_full = NULL;
+    }
 
   if (pfile->input_buffer)
     {
@@ -718,14 +723,29 @@ initialize_dependency_output (pfile)
   pfile->deps_size = 0;
   pfile->deps_column = 0;
 
-  if (opts->deps_target)
-    deps_output (pfile, opts->deps_target, ':');
+  if (pfile->deps_target_base)
+    {
+      int size = strlen(pfile->deps_target_base) + strlen(opts->in_fname) + 3;
+
+      pfile->deps_target_full = (char *) xmalloc (size);
+      strlcpy(pfile->deps_target_full, pfile->deps_target_base, size);
+      strlcat(pfile->deps_target_full, ": ", size);
+      strlcat(pfile->deps_target_full, opts->in_fname, size);
+    }
+  else if (opts->deps_target)
+    {
+      int size = strlen(opts->deps_target) + 3;
+
+      pfile->deps_target_full = (char *) xmalloc (size);
+      strlcpy(pfile->deps_target_full, opts->deps_target, size);
+      strlcat(pfile->deps_target_full, ": ", size);
+    }
   else if (*opts->in_fname == 0)
-    deps_output (pfile, "-", ':');
+    pfile->deps_target_full = xstrdup("-: ");
   else
     {
       char *p, *q, *r;
-      int len, x;
+      int len, x, size;
 
       /* Discard all directory prefixes from filename.  */
       q = base_name (opts->in_fname);
@@ -754,8 +774,11 @@ initialize_dependency_output (pfile)
       /* Supply our own suffix.  */
       strcpy (q, OBJECT_SUFFIX);
 
-      deps_output (pfile, p, ':');
-      deps_output (pfile, opts->in_fname, ' ');
+      size = strlen(p) + strlen(opts->in_fname) + 3;
+      pfile->deps_target_full = (char *) xmalloc (size);
+      strlcpy(pfile->deps_target_full, p, size);
+      strlcat(pfile->deps_target_full, ": ", size);
+      strlcat(pfile->deps_target_full, opts->in_fname, size);
     }
 }
 
@@ -783,6 +806,11 @@ cpp_start_read (pfile, fname)
       && (opts->print_deps == 0 || !opts->no_output))
     {
       cpp_fatal (pfile, "-MG must be specified with one of -M or -MM");
+      return 0;
+    }
+  if (opts->print_phony && opts->print_deps == 0)
+    {
+      cpp_fatal (pfile, "-MP must be specified with one of -M, -MM, -MD, or -MMD");
       return 0;
     }
 
@@ -1095,8 +1123,16 @@ cpp_finish (pfile)
 	    deps_stream = stdout;
 	  else if ((deps_stream = fopen (opts->deps_file, deps_mode)) == 0)
 	    cpp_pfatal_with_name (pfile, opts->deps_file);
+	  fputs (pfile->deps_target_full, deps_stream);
+	  fputs (" \\\n ", deps_stream);
 	  fputs (pfile->deps_buffer, deps_stream);
 	  putc ('\n', deps_stream);
+	  if (opts->print_phony)
+	    {
+		  fputs (pfile->deps_buffer, deps_stream);
+		  putc (':', deps_stream);
+		  putc ('\n', deps_stream);
+	    }
 	  if (opts->deps_file)
 	    {
 	      if (ferror (deps_stream) || fclose (deps_stream) != 0)
@@ -1455,6 +1491,25 @@ cpp_handle_option (pfile, argc, argv)
 	if (!strcmp (argv[i], "-MG"))
 	  {
 	    opts->print_deps_missing_files = 1;
+	    break;
+	  }
+	if (!strcmp(argv[i], "-MT"))
+	  {
+	    if (i+1 == argc)
+	      goto missing_filename;
+	    pfile->deps_target_base = argv[++i];
+	    break;
+	  }
+	if (!strcmp(argv[i], "-MF"))
+	  {
+	    if (i+1 == argc)
+	      goto missing_filename;
+	    opts->deps_file = argv[++i];
+	    break;
+	  }
+	if (!strcmp(argv[i], "-MP"))
+	  {
+	    opts->print_phony = 1;
 	    break;
 	  }
 	if (!strcmp (argv[i], "-M"))

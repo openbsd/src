@@ -531,7 +531,8 @@ static struct user_specs *user_specs_head, *user_specs_tail;
   || !strcmp (STR, "imacros") || !strcmp (STR, "aux-info") \
   || !strcmp (STR, "idirafter") || !strcmp (STR, "iprefix") \
   || !strcmp (STR, "iwithprefix") || !strcmp (STR, "iwithprefixbefore") \
-  || !strcmp (STR, "isystem") || !strcmp (STR, "specs"))
+  || !strcmp (STR, "isystem") || !strcmp (STR, "specs") \
+  || !strcmp (STR, "MF") || !strcmp(STR, "MT"))
 
 #ifndef WORD_SWITCH_TAKES_ARG
 #define WORD_SWITCH_TAKES_ARG(STR) DEFAULT_WORD_SWITCH_TAKES_ARG (STR)
@@ -599,7 +600,7 @@ static struct compiler default_compilers[] =
 	%{C} %{CC} %{v} %{A*} %{I*} %{P} %{$} %I\
 	%{C:%{!E:%eGNU C does not support -C without using -E}}\
 	%{CC:%{!E:%eGNU C does not support -CC without using -E}}\
-	%{M} %{MM} %{MD:-MD %b.d} %{MMD:-MMD %b.d} %{MG}\
+	%{M} %{MM} %{MD:-MD %b.d} %{MMD:-MMD %b.d} %{MF*} %{MG} %{MP} %{MT*}\
         %{!no-gcc:-D__GNUC__=%v1 -D__GNUC_MINOR__=%v2}\
 	%{ansi|std=*:%{!std=gnu*:-trigraphs -D__STRICT_ANSI__}}\
 	%{!undef:%{!ansi:%{!std=*:%p}%{std=gnu*:%p}} %P} %{trigraphs}\
@@ -613,7 +614,7 @@ static struct compiler default_compilers[] =
       %{!E:%{!M:%{!MM:cc1 %i %1 \
                   %{std*} %{nostdinc*} %{A*} %{I*} %I\
                   %{!Q:-quiet} -dumpbase %b.c %{d*} %{m*} %{a*}\
-                  %{MD:-MD %b.d} %{MMD:-MMD %b.d} %{MG}\
+                  %{MD:-MD %b.d} %{MMD:-MMD %b.d} %{MF*} %{MG} %{MP} %{MT*}\
                   %{!no-gcc:-D__GNUC__=%v1 -D__GNUC_MINOR__=%v2}\
 		  %{ansi|std=*:%{!std=gnu*:-trigraphs -D__STRICT_ANSI__}}\
 		  %{!undef:%{!ansi:%{!std=*:%p}%{std=gnu*:%p}} %P} %{trigraphs}\
@@ -636,7 +637,7 @@ static struct compiler default_compilers[] =
 	%{C} %{CC} %{v} %{A*} %{I*} %{P} %{$} %I\
 	%{C:%{!E:%eGNU C does not support -C without using -E}}\
 	%{CC:%{!E:%eGNU C does not support -CC without using -E}}\
-	%{M} %{MM} %{MD:-MD %b.d} %{MMD:-MMD %b.d} %{MG}\
+	%{M} %{MM} %{MD:-MD %b.d} %{MMD:-MMD %b.d} %{MF*} %{MG} %{MP} %{MT*}\
         %{!no-gcc:-D__GNUC__=%v1 -D__GNUC_MINOR__=%v2}\
 	%{ansi|std=*:%{!std=gnu*:-trigraphs -D__STRICT_ANSI__}}\
 	%{!undef:%{!ansi:%{!std=*:%p}%{std=gnu*:%p}} %P} %{trigraphs}\
@@ -665,7 +666,7 @@ static struct compiler default_compilers[] =
 	%{C} %{CC} %{v} %{A*} %{I*} %{P} %{$} %I\
 	%{C:%{!E:%eGNU C does not support -C without using -E}}\
 	%{CC:%{!E:%eGNU C does not support -CC without using -E}}\
-	%{M} %{MM} %{MD:-MD %b.d} %{MMD:-MMD %b.d} %{MG}\
+	%{M} %{MM} %{MD:-MD %b.d} %{MMD:-MMD %b.d} %{MF*} %{MG} %{MP} %{MT*}\
         %{!no-gcc:-D__GNUC__=%v1 -D__GNUC_MINOR__=%v2}\
 	%{ansi|std=*:%{!std=gnu*:-trigraphs -D__STRICT_ANSI__}}\
 	%{!undef:%{!ansi:%{!std=*:%p}%{std=gnu*:%p}} %P} %{trigraphs}\
@@ -683,7 +684,7 @@ static struct compiler default_compilers[] =
     cpp0 %{nostdinc*} %{C} %{CC} %{v} %{A*} %{I*} %{P} %{$} %I\
 	%{C:%{!E:%eGNU C does not support -C without using -E}}\
 	%{CC:%{!E:%eGNU C does not support -CC without using -E}}\
-	%{M} %{MM} %{MD:-MD %b.d} %{MMD:-MMD %b.d} %{MG}\
+	%{M} %{MM} %{MD:-MD %b.d} %{MMD:-MMD %b.d} %{MF*} %{MG} %{MP} %{MT*}\
         %{!no-gcc:-D__GNUC__=%v1 -D__GNUC_MINOR__=%v2}\
 	%{std=*:%{!std=gnu*:-trigraphs -D__STRICT_ANSI__}}\
 	%{!undef:%{!std=*:%p}%{std=gnu*:%p} %P} %{trigraphs}\
@@ -715,7 +716,8 @@ static struct compiler default_compilers[] =
    {"cpp0 -lang-asm %{nostdinc*} %{C} %{CC} %{v} %{A*} %{I*} %{P} %{$} %I\
 	%{C:%{!E:%eGNU C does not support -C without using -E}}\
 	%{CC:%{!E:%eGNU C does not support -CC without using -E}}\
-	%{M} %{MM} %{MD:-MD %b.d} %{MMD:-MMD %b.d} %{MG} %{trigraphs}\
+	%{M} %{MM} %{MD:-MD %b.d} %{MMD:-MMD %b.d} %{MF*} %{MG} %{MP} %{MT*}\
+	%{trigraphs}\
         -$ %{!undef:%p %P} -D__ASSEMBLER__ \
         %c %{Os:-D__OPTIMIZE_SIZE__} %{O*:%{!O0:-D__OPTIMIZE__}}\
 	%{ffast-math:-D__FAST_MATH__}\
@@ -865,7 +867,10 @@ struct option_map option_map[] =
    {"--print-search-dirs", "-print-search-dirs", 0},
    {"--print-file-name", "-print-file-name=", "aj"},
    {"--print-libgcc-file-name", "-print-libgcc-file-name", 0},
+   {"--set-dependency-file", "-MF", "a"},
    {"--print-missing-file-dependencies", "-MG", 0},
+   {"--print-phony-target-dependencies-too", "-MP", 0},
+   {"--set-dependency-target", "-MT", "a"},
    {"--print-multi-lib", "-print-multi-lib", 0},
    {"--print-multi-directory", "-print-multi-directory", 0},
    {"--print-prog-name", "-print-prog-name=", "aj"},

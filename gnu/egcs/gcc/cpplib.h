@@ -233,6 +233,12 @@ struct cpp_reader
   /* Buffer of -M output.  */
   char *deps_buffer;
 
+  /* Target-name to write with the dependency information.  */
+  char *deps_target_base;
+
+  /* the prefix string that actually gets written containing the target */
+  char *deps_target_full;
+
   /* Number of bytes allocated in above.  */
   int deps_allocated_size;
 
@@ -373,6 +379,7 @@ struct cpp_options {
      2 means #include <...> as well.  */
 
   char print_deps;
+  char print_phony;
 
   /* Nonzero if missing .h files in -M output are assumed to be generated
      files and not errors.  */
