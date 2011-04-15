@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.44 2011/04/15 17:01:05 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.45 2011/04/15 17:30:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -211,23 +211,28 @@ walk_simple(struct qwalk *q, char *fname)
 int
 walk_queue(struct qwalk *q, char *fname)
 {
-	const char	*errstr;
+	char	*ep;
 
 	switch (q->level) {
 	case 0:
 		if (strcmp(fname, "envelope.tmp") == 0)
 			return (QWALK_AGAIN);
-		q->bucket = strtonum(fname, 0, DIRHASH_BUCKETS - 1, &errstr);
-		if (errstr) {
+
+		q->bucket = strtoul(fname, &ep, 16);
+		if (fname[0] == '\0' || *ep != '\0') {
 			log_warnx("walk_queue: invalid bucket: %s", fname);
 			return (QWALK_AGAIN);
 		}
-		if (! bsnprintf(q->path, sizeof(q->path), "%s/%d", PATH_QUEUE,
+		if (errno == ERANGE || q->bucket >= DIRHASH_BUCKETS - 1) {
+			log_warnx("walk_queue: invalid bucket: %s", fname);
+			return (QWALK_AGAIN);
+		}
+		if (! bsnprintf(q->path, sizeof(q->path), "%s/%04x", PATH_QUEUE,
 			q->bucket))
 			fatalx("walk_queue: snprintf");
 		return (QWALK_RECURSE);
 	case 1:
-		if (! bsnprintf(q->path, sizeof(q->path), "%s/%d/%s%s",
+		if (! bsnprintf(q->path, sizeof(q->path), "%s/%04x/%s%s",
 			PATH_QUEUE, q->bucket, fname, PATH_ENVELOPES))
 			fatalx("walk_queue: snprintf");
 		return (QWALK_RECURSE);
