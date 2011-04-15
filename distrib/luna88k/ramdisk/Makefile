@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2011/03/14 19:07:46 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.11 2011/04/15 03:11:22 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -36,7 +36,7 @@ bsd:
 .ifndef(NOBUILD)
 	cd ${.CURDIR}/../../../sys/arch/luna88k/conf && config RAMDISK
 	cd ${.CURDIR}/../../../sys/arch/luna88k/compile/RAMDISK && \
-	    ${MAKE} clean && ${MAKE} depend && ${MAKE}
+	    ${MAKE} clean && exec ${MAKE}
 .endif
 	cp ${.CURDIR}/../../../sys/arch/luna88k/compile/RAMDISK/bsd bsd
 

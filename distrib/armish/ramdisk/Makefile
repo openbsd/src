@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2009/04/17 03:58:54 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 2011/04/15 03:11:22 deraadt Exp $
 
 REV=	${OSrev}
 
@@ -54,7 +54,7 @@ ${IMAGE}: rd_setup do_files rd_teardown
 bsd:
 	cd ${TOP}/../../sys/arch/armish/conf && config RAMDISK
 	cd ${TOP}/../../sys/arch/armish/compile/RAMDISK && \
-	    ${MAKE} clean && ${MAKE} depend && ${MAKE}
+	    ${MAKE} clean && exec ${MAKE}
 	cp ${TOP}/../../sys/arch/armish/compile/RAMDISK/bsd bsd
 
 rd_setup:

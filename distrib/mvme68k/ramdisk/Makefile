@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2011/03/14 19:07:46 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.27 2011/04/15 03:11:22 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -36,7 +36,7 @@ bsd:
 .ifndef(NOBUILD)
 	cd ${.CURDIR}/../../../sys/arch/mvme68k/conf && config RAMDISK
 	cd ${.CURDIR}/../../../sys/arch/mvme68k/compile/RAMDISK && \
-	    ${MAKE} clean && ${MAKE} depend && ${MAKE}
+	    ${MAKE} clean && exec ${MAKE}
 .endif
 	cp ${.CURDIR}/../../../sys/arch/mvme68k/compile/RAMDISK/bsd bsd
 

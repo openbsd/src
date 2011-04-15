@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2011/03/14 19:07:46 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2011/04/15 03:11:22 deraadt Exp $
 
 REV=	${OSrev}
 
@@ -47,7 +47,7 @@ ${IMAGE}: rd_setup do_files rd_teardown
 bsd:
 	cd ${TOP}/../../sys/arch/palm/conf && config RAMDISK
 	cd ${TOP}/../../sys/arch/palm/compile/RAMDISK && \
-	    ${MAKE} clean && ${MAKE} depend && ${MAKE}
+	    ${MAKE} clean && exec ${MAKE}
 	cp ${TOP}/../../sys/arch/palm/compile/RAMDISK/bsd bsd
 
 rd_setup:
