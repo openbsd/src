@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm86.c,v 1.18 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: vm86.c,v 1.19 2011/04/15 04:52:39 guenther Exp $	*/
 /*	$NetBSD: vm86.c,v 1.15 1996/05/03 19:42:33 christos Exp $	*/
 
 /*-
@@ -427,7 +427,7 @@ i386_vm86(struct proc *p, char *args, register_t *retval)
 #undef	DOREG
 
 	/* Going into vm86 mode jumps off the signal stack. */
-	p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	set_vflags(p, vm86s.regs.vmsc.sc_eflags | PSL_VM);
 

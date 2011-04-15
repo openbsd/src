@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.128 2010/11/28 21:00:03 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.129 2011/04/15 04:52:39 guenther Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1437,7 +1437,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	siginfo_t *sip, ksi;
 
 	frame = p->p_md.md_tf;
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	oonstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 	fsize = sizeof ksc;
 	rndfsize = ((fsize + 15) / 16) * 16;
 	kscsize = rndfsize;
@@ -1453,11 +1453,11 @@ sendsig(catcher, sig, mask, code, type, val)
 	 * will fail if the process has not already allocated
 	 * the space with a `brk'.
 	 */
-	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
+	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		scp = (struct sigcontext *)(psp->ps_sigstk.ss_sp +
-		    psp->ps_sigstk.ss_size - rndfsize);
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		scp = (struct sigcontext *)(p->p_sigstk.ss_sp +
+		    p->p_sigstk.ss_size - rndfsize);
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		scp = (struct sigcontext *)(alpha_pal_rdusp() - rndfsize);
 	if ((u_long)scp <= USRSTACK - ptoa(p->p_vmspace->vm_ssize))
@@ -1590,9 +1590,9 @@ sys_sigreturn(p, v, retval)
 	 * Restore the user-supplied information
 	 */
 	if (ksc.sc_onstack)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = ksc.sc_mask &~ sigcantmask;
 
 	p->p_md.md_tf->tf_regs[FRAME_PC] = ksc.sc_pc;

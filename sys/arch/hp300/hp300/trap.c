@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.56 2010/07/02 19:57:14 tedu Exp $	*/
+/*	$OpenBSD: trap.c,v 1.57 2011/04/15 04:52:39 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
@@ -347,8 +347,8 @@ dopanic:
 		type |= T_USER;
 		p->p_sigacts->ps_sigact[SIGILL] = SIG_DFL;
 		i = sigmask(SIGILL);
-		p->p_sigignore &= ~i;
-		p->p_sigcatch &= ~i;
+		p->p_sigacts->ps_sigignore &= ~i;
+		p->p_sigacts->ps_sigcatch &= ~i;
 		p->p_sigmask &= ~i;
 		i = SIGILL;
 		ucode = frame.f_format;	/* XXX was ILL_RESAD_FAULT */

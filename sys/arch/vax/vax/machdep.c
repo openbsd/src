@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.111 2010/12/21 14:56:24 claudio Exp $ */
+/* $OpenBSD: machdep.c,v 1.112 2011/04/15 04:52:40 guenther Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -409,9 +409,9 @@ sys_sigreturn(p, v, retval)
 		return (EINVAL);
 	}
 	if (ksc.sc_onstack & 01)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
 	p->p_sigmask = ksc.sc_mask & ~sigcantmask;
 
@@ -467,11 +467,11 @@ sendsig(catcher, sig, mask, code, type, val)
 	int	onstack;
 
 	syscf = p->p_addr->u_pcb.framep;
-	onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	onstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		cursp = ((int)psp->ps_sigstk.ss_sp + psp->ps_sigstk.ss_size);
+		cursp = ((int)p->p_sigstk.ss_sp + p->p_sigstk.ss_size);
 	else
 		cursp = syscf->sp;
 
@@ -489,7 +489,7 @@ sendsig(catcher, sig, mask, code, type, val)
 		initsiginfo(&gsigf.sf_si, sig, code, type, val);
 	}
 
-	gsigf.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	gsigf.sf_sc.sc_onstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 	gsigf.sf_sc.sc_mask = mask;
 	gsigf.sf_sc.sc_sp = syscf->sp; 
 	gsigf.sf_sc.sc_fp = syscf->fp; 
@@ -524,7 +524,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	syscf->ap = (unsigned)sigf + offsetof(struct sigframe, sf_pc);
 
 	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 int	waittime = -1;

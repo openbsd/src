@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.98 2011/04/03 14:56:28 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.99 2011/04/15 04:52:40 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -176,7 +176,6 @@ exit1(struct proc *p, int rv, int flags)
 	if (p->p_flag & P_PROFIL)
 		stopprofclock(p);
 	p->p_ru = pool_get(&rusage_pool, PR_WAITOK);
-	p->p_sigignore = ~0;
 	p->p_siglist = 0;
 	timeout_del(&p->p_realit_to);
 	timeout_del(&p->p_stats->p_virt_to);
@@ -305,11 +304,12 @@ exit1(struct proc *p, int rv, int flags)
 
 		/*
 		 * Notify parent that we're gone.  If we have P_NOZOMBIE
-		 * or parent has the P_NOCLDWAIT flag set, notify process 1
+		 * or parent has the SAS_NOCLDWAIT flag set, notify process 1
 		 * instead (and hope it will handle this situation).
 		 */
 		if ((p->p_flag & P_NOZOMBIE) ||
-		    (pr->ps_pptr->ps_mainproc->p_flag & P_NOCLDWAIT)) {
+		    (pr->ps_pptr->ps_mainproc->p_sigacts->ps_flags &
+		    SAS_NOCLDWAIT)) {
 			struct process *ppr = pr->ps_pptr;
 			proc_reparent(pr, initproc->p_p);
 			/*

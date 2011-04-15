@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.137 2011/04/13 02:49:12 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.138 2011/04/15 04:52:39 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -553,15 +553,15 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 #endif
 
 	bcopy(tf, &ksc, sizeof(*tf));
-	ksc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	ksc.sc_onstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 	ksc.sc_mask = mask;
 	ksc.sc_fpstate = NULL;
 
 	/* Allocate space for the signal handler context. */
-	if ((psp->ps_flags & SAS_ALTSTACK) && !ksc.sc_onstack &&
+	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 && !ksc.sc_onstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		sp = (register_t)psp->ps_sigstk.ss_sp + psp->ps_sigstk.ss_size;
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		sp = (register_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size;
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		sp = tf->tf_rsp - 128;
 
@@ -670,9 +670,9 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 
 	/* Restore signal stack. */
 	if (ksc.sc_onstack)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = ksc.sc_mask & ~sigcantmask;
 
 	return (EJUSTRETURN);

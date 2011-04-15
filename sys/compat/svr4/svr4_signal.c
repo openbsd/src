@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_signal.c,v 1.12 2009/12/09 16:29:56 jsg Exp $	 */
+/*	$OpenBSD: svr4_signal.c,v 1.13 2011/04/15 04:52:40 guenther Exp $	 */
 /*	$NetBSD: svr4_signal.c,v 1.24 1996/12/06 03:21:53 christos Exp $	 */
 
 /*
@@ -650,7 +650,7 @@ svr4_sys_context(p, v, retval)
 	case 0:
 		DPRINTF(("getcontext(%p)\n", SCARG(uap, uc)));
 		svr4_getcontext(p, &uc, p->p_sigmask,
-		    p->p_sigacts->ps_sigstk.ss_flags & SS_ONSTACK);
+		    p->p_sigstk.ss_flags & SS_ONSTACK);
 		return copyout(&uc, SCARG(uap, uc), sizeof(uc));
 
 	case 1: 
