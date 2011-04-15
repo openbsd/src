@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.34 2011/01/26 16:59:23 mikeb Exp $	*/
+/*	$OpenBSD: iked.h,v 1.35 2011/04/15 13:10:49 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -639,7 +639,6 @@ int	 ikev2_policy2id(struct iked_static_id *, struct iked_id *, int);
 int	 ikev2_childsa_enable(struct iked *, struct iked_sa *);
 int	 ikev2_childsa_delete(struct iked *, struct iked_sa *,
 	    u_int8_t, u_int64_t, u_int64_t *, int);
-int	 ikev2_flows_delete(struct iked *, struct iked_sa *, u_int8_t);
 
 struct ibuf *
 	 ikev2_prfplus(struct iked_hash *, struct ibuf *, struct ibuf *,

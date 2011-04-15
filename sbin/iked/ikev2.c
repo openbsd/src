@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.47 2011/01/28 18:21:37 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.48 2011/04/15 13:10:49 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -3610,36 +3610,6 @@ ikev2_childsa_delete(struct iked *env, struct iked_sa *sa, u_int8_t saproto,
 
 	if (spiptr)
 		*spiptr = peerspi;
-
-	return (found ? 0 : -1);
-}
-
-int
-ikev2_flows_delete(struct iked *env, struct iked_sa *sa, u_int8_t saproto)
-{
-	struct iked_flow	*flow, *nextflow;
-	int			 found = 0;
-
-	for (flow = TAILQ_FIRST(&sa->sa_flows); flow != NULL; flow = nextflow) {
-		nextflow = TAILQ_NEXT(flow, flow_entry);
-
-		if (saproto && flow->flow_saproto != saproto)
-			continue;
-
-		if (flow->flow_loaded)
-			RB_REMOVE(iked_activeflows, &env->sc_activeflows, flow);
-
-		if (pfkey_flow_delete(env->sc_pfkey, flow) != 0)
-			log_debug("%s: failed to delete flow %p", __func__,
-			    flow);
-		else
-			log_debug("%s: deleted flow %p", __func__, flow);
-
-		TAILQ_REMOVE(&sa->sa_flows, flow, flow_entry);
-		flow_free(flow);
-
-		found++;
-	}
 
 	return (found ? 0 : -1);
 }
