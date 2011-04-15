@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.18 2011/01/14 17:18:50 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.19 2011/04/15 03:11:38 deraadt Exp $
 
 kernels: bsd bootblocks
 	cp ${.CURDIR}/../sys/arch/sparc/compile/GENERIC/bsd \
@@ -11,7 +11,7 @@ kernels: bsd bootblocks
 bsd:
 	cd ${.CURDIR}/../sys/arch/sparc/conf && config GENERIC
 	cd ${.CURDIR}/../sys/arch/sparc/compile/GENERIC && \
-	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
+	    ${MAKE} clean && exec ${MAKE}
 
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/*boot* ${RELEASEDIR}

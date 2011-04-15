@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.6 2011/01/14 17:18:50 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 2011/04/15 03:11:38 deraadt Exp $
 
 kernels: bootblocks bsd
 	cp ${.CURDIR}/../sys/arch/hppa64/compile/GENERIC/bsd \
@@ -7,7 +7,7 @@ kernels: bootblocks bsd
 bsd:
 	cd ${.CURDIR}/../sys/arch/hppa64/conf && config GENERIC
 	cd ${.CURDIR}/../sys/arch/hppa64/compile/GENERIC && \
-	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
+	    ${MAKE} clean && exec ${MAKE}
 
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/xxboot ${RELEASEDIR}

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.9 2009/06/26 03:57:11 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.10 2011/04/15 03:11:38 deraadt Exp $
 
 kernels: bsd bootblocks
 	cp ${.CURDIR}/../sys/arch/zaurus/compile/GENERIC/bsd \
@@ -7,7 +7,7 @@ kernels: bsd bootblocks
 bsd:
 	cd ${.CURDIR}/../sys/arch/zaurus/conf && config GENERIC
 	cd ${.CURDIR}/../sys/arch/zaurus/compile/GENERIC && \
-	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
+	    ${MAKE} clean && exec ${MAKE}
 
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/zboot ${RELEASEDIR}

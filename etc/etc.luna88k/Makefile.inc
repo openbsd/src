@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2009/04/21 09:12:26 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2011/04/15 03:11:38 deraadt Exp $
 
 kernels: bsd
 	cp ${.CURDIR}/../sys/arch/luna88k/compile/GENERIC/bsd \
@@ -7,7 +7,7 @@ kernels: bsd
 bsd:
 	cd ${.CURDIR}/../sys/arch/luna88k/conf && config GENERIC
 	cd ${.CURDIR}/../sys/arch/luna88k/compile/GENERIC && \
-	    ${MAKE} clean && ${MAKE} depend && ${MAKE}
+	    ${MAKE} clean && ${MAKE}
 
 MDEXT=	bsd bsd.rd
 

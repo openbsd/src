@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.13 2009/04/22 16:16:22 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.14 2011/04/15 03:11:38 deraadt Exp $
 
 kernels: bsd
 	cp ${.CURDIR}/../sys/arch/mac68k/compile/GENERIC/bsd \
@@ -7,7 +7,7 @@ kernels: bsd
 bsd:
 	cd ${.CURDIR}/../sys/arch/mac68k/conf && config GENERIC
 	cd ${.CURDIR}/../sys/arch/mac68k/compile/GENERIC && \
-	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
+	    ${MAKE} clean && exec ${MAKE}
 
 MDEXT=	bsd bsd.rd 				# utils??
 

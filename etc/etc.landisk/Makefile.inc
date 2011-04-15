@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.6 2010/08/17 19:17:14 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 2011/04/15 03:11:38 deraadt Exp $
 
 kernels: bsd bootblocks
 	cp ${.CURDIR}/../sys/arch/landisk/compile/GENERIC/bsd \
@@ -7,7 +7,7 @@ kernels: bsd bootblocks
 bsd:
 	cd ${.CURDIR}/../sys/arch/landisk/conf && config GENERIC
 	cd ${.CURDIR}/../sys/arch/landisk/compile/GENERIC && \
-	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
+	    ${MAKE} clean && exec ${MAKE}
 
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/mbr ${RELEASEDIR}

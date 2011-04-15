@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.21 2009/04/21 09:12:26 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.22 2011/04/15 03:11:38 deraadt Exp $
 
 kernels: bsd bootblocks
 	cp ${.CURDIR}/../sys/arch/hp300/compile/GENERIC/bsd \
@@ -7,7 +7,7 @@ kernels: bsd bootblocks
 bsd:
 	cd ${.CURDIR}/../sys/arch/hp300/conf && config GENERIC
 	cd ${.CURDIR}/../sys/arch/hp300/compile/GENERIC && \
-	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
+	    ${MAKE} clean && exec ${MAKE}
 
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/uboot.lif ${RELEASEDIR}/SYS_UBOOT

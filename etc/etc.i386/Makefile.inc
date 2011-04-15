@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.18 2009/04/21 09:12:26 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.19 2011/04/15 03:11:38 deraadt Exp $
 
 kernels: bsd bsd.mp bootblocks linux-notes
 	cp ${.CURDIR}/../sys/arch/i386/compile/GENERIC/bsd \
@@ -9,12 +9,12 @@ kernels: bsd bsd.mp bootblocks linux-notes
 bsd:
 	cd ${.CURDIR}/../sys/arch/i386/conf && config GENERIC
 	cd ${.CURDIR}/../sys/arch/i386/compile/GENERIC && \
-	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
+	    ${MAKE} clean && exec ${MAKE}
 
 bsd.mp:
 	cd ${.CURDIR}/../sys/arch/i386/conf && config GENERIC.MP
 	cd ${.CURDIR}/../sys/arch/i386/compile/GENERIC.MP && \
-	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
+	    ${MAKE} clean && exec ${MAKE}
 
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/pxeboot ${RELEASEDIR}

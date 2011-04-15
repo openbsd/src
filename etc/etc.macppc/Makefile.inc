@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.14 2011/01/14 17:18:50 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.15 2011/04/15 03:11:38 deraadt Exp $
 
 kernels: bsd bsd.mp bootblocks
 	cp ${.CURDIR}/../sys/arch/macppc/compile/GENERIC/bsd \
@@ -9,12 +9,12 @@ kernels: bsd bsd.mp bootblocks
 bsd:
 	cd ${.CURDIR}/../sys/arch/macppc/conf && config GENERIC
 	cd ${.CURDIR}/../sys/arch/macppc/compile/GENERIC && \
-	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
+	    ${MAKE} clean && exec ${MAKE}
 
 bsd.mp:
 	cd ${.CURDIR}/../sys/arch/macppc/conf && config GENERIC.MP
 	cd ${.CURDIR}/../sys/arch/macppc/compile/GENERIC.MP && \
-	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
+	    ${MAKE} clean && exec ${MAKE}
 
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/ofwboot ${RELEASEDIR}/ofwboot

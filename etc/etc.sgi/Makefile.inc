@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.12 2011/01/14 17:18:50 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 2011/04/15 03:11:38 deraadt Exp $
 
 kernels: bsd bootblocks
 	cp ${.CURDIR}/../sys/arch/sgi/compile/GENERIC-IP27/bsd \
@@ -13,16 +13,16 @@ kernels: bsd bootblocks
 bsd:
 	cd ${.CURDIR}/../sys/arch/sgi/conf && config GENERIC-IP27
 	cd ${.CURDIR}/../sys/arch/sgi/compile/GENERIC-IP27 && \
-	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
+	    ${MAKE} clean && exec ${MAKE}
 	cd ${.CURDIR}/../sys/arch/sgi/conf && config GENERIC-IP30
 	cd ${.CURDIR}/../sys/arch/sgi/compile/GENERIC-IP30 && \
-	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
+	    ${MAKE} clean && exec ${MAKE}
 	cd ${.CURDIR}/../sys/arch/sgi/conf && config GENERIC-IP30.MP
 	cd ${.CURDIR}/../sys/arch/sgi/compile/GENERIC-IP30.MP && \
-	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
+	    ${MAKE} clean && exec ${MAKE}
 	cd ${.CURDIR}/../sys/arch/sgi/conf && config GENERIC-IP32
 	cd ${.CURDIR}/../sys/arch/sgi/compile/GENERIC-IP32 && \
-	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
+	    ${MAKE} clean && exec ${MAKE}
 
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/boot32 ${RELEASEDIR}
