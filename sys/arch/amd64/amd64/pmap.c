@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.61 2011/03/14 00:05:46 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.62 2011/04/15 15:16:57 chl Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -1790,7 +1790,7 @@ pmap_clear_attrs(struct vm_page *pg, unsigned long clearbits)
 void
 pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
-	pt_entry_t nx, opte, *ptes, *spte, *epte;
+	pt_entry_t nx, *ptes, *spte, *epte;
 	pd_entry_t **pdes;
 	vaddr_t blockend;
 	int shootall = 0;
@@ -1842,7 +1842,6 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		for (/*null */; spte < epte ; spte++) {
 			if (!(*spte & PG_V))
 				continue;
-			opte = *spte;
 			pmap_pte_clearbits(spte, PG_RW);
 			pmap_pte_setbits(spte, nx);
 		}
