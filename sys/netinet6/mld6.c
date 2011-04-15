@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.26 2010/03/22 12:23:32 jsg Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.27 2011/04/15 15:14:44 chl Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -160,7 +160,7 @@ mld6_stop_listening(struct in6_multi *in6m)
 void
 mld6_input(struct mbuf *m, int off)
 {
-	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
+	struct ip6_hdr *ip6;
 	struct mld_hdr *mldh;
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
 	struct in6_multi *in6m;
