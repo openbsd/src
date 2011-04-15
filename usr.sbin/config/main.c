@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.41 2009/10/27 23:59:51 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.42 2011/04/15 02:48:14 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -266,7 +266,6 @@ main(int argc, char *argv[])
 	if (mksymlinks() || mkmakefile() || mkheaders() || mkswap() ||
 	    mkioconf())
 		stop();
-	(void)printf("Don't forget to run \"make depend\"\n");
 	optiondelta();
 	exit(0);
 }
