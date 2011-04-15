@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.63 2011/01/08 18:10:22 deraadt Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.64 2011/04/15 20:52:55 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -253,6 +253,8 @@ printf("vI %d ", irq);
 		o_intrtype[irq] = type;
 		break;
 	case IST_EDGE:
+		intr_shared_edge = 1;
+		/* FALLTHROUGH */
 	case IST_LEVEL:
 		if (type == o_intrtype[irq])
 			break;
@@ -679,7 +681,7 @@ ext_intr_openpic()
 {
 	struct cpu_info *ci = curcpu();
 	int irq, realirq;
-	int r_imen;
+	int r_imen, ret;
 	int pcpl, ocpl;
 	struct intrhand *ih;
 
@@ -725,11 +727,14 @@ ext_intr_openpic()
 				ppc_intr_enable(1);
 
 				KERNEL_LOCK();
-				if ((*ih->ih_fun)(ih->ih_arg))
+				ret = (*ih->ih_fun)(ih->ih_arg);
+				if (ret)
 					ih->ih_count.ec_count++;
 				KERNEL_UNLOCK();
 
 				(void)ppc_intr_disable();
+				if (intr_shared_edge == 00 && ret == 1)
+					break;
 				ih = ih->ih_next;
 			}
 

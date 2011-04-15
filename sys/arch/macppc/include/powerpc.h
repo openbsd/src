@@ -1,4 +1,4 @@
-/*	$OpenBSD: powerpc.h,v 1.8 2005/12/17 07:31:26 miod Exp $	*/
+/*	$OpenBSD: powerpc.h,v 1.9 2011/04/15 20:52:56 deraadt Exp $	*/
 /*	$NetBSD: powerpc.h,v 1.1 1996/09/30 16:34:30 ws Exp $	*/
 
 /*
@@ -81,6 +81,8 @@ void ppc_close_pci_bridge(int);
 void install_extint(void (*handler) (void));
 void ppc_intr_enable(int enable);
 int ppc_intr_disable(void);
+
+extern int intr_shared_edge;
 
 struct dumpmem {
 	vaddr_t         start;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.41 2011/01/08 18:10:22 deraadt Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.42 2011/04/15 20:52:55 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -251,6 +251,8 @@ printf("vI %d ", irq);
 		m_intrtype[irq] = type;
 		break;
 	case IST_EDGE:
+		intr_shared_edge = 1;
+		/* FALLTHROUGH */
 	case IST_LEVEL:
 		if (type == m_intrtype[irq])
 			break;
@@ -499,7 +501,7 @@ mac_ext_intr()
 {
 	int irq = 0;
 	int o_imen, r_imen;
-	int pcpl;
+	int pcpl, ret;
 	struct cpu_info *ci = curcpu();
 	struct intrhand *ih;
 	volatile unsigned long int_state;
@@ -526,8 +528,12 @@ start:
 
 		ih = m_intrhand[irq];
 		while (ih) {
-			if ((*ih->ih_fun)(ih->ih_arg))
+			ret = ((*ih->ih_fun)(ih->ih_arg));
+			if (ret) {
 				ih->ih_count.ec_count++;
+				if (intr_shared_edge == 0 && ret == 1)
+					break;
+			}
 			ih = ih->ih_next;
 		}
 

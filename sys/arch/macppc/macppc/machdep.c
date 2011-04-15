@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.124 2011/04/15 04:52:39 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.125 2011/04/15 20:52:57 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1008,6 +1008,12 @@ systype(char *name)
 
 int ppc_configed_intr_cnt = 0;
 struct intrhand ppc_configed_intr[MAX_PRECONF_INTR];
+
+/*
+ * True if the system has any non-level interrupts which are shared
+ * on the same pin.
+ */
+int	intr_shared_edge;
 
 void *
 ppc_intr_establish(void *lcv, pci_intr_handle_t ih, int type, int level,
