@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.58 2011/04/15 21:47:24 oga Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.59 2011/04/15 22:00:46 oga Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -747,7 +747,6 @@ uvm_pager_dropcluster(struct uvm_object *uobj, struct vm_page *pg,
 				    PG_BUSY);
 				UVM_PAGE_OWN(ppsp[lcv], NULL);
 
-				pmap_page_protect(ppsp[lcv], VM_PROT_NONE);
 				simple_unlock(&ppsp[lcv]->uanon->an_lock);
 				/* kills anon and frees pg */
 				uvm_anfree(ppsp[lcv]->uanon);
