@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.62 2011/01/04 19:19:04 deraadt Exp $
+.\"	$OpenBSD: release.8,v 1.63 2011/04/15 05:17:44 ajacoutot Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -9,7 +9,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: January 4 2011 $
+.Dd $Mdocdate: April 15 2011 $
 .Dt RELEASE 8
 .Os
 .Sh NAME
@@ -155,7 +155,7 @@ Build the kernel compilation directory and compile the kernel:
 .Bd -literal -offset indent
 $ config ${NAME}
 $ cd ../compile/${NAME}
-$ make clean && make depend && make
+$ make clean && make
 .Ed
 .Pp
 (In this instance
