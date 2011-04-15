@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.40 2011/03/29 20:43:51 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.41 2011/04/15 17:01:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -49,6 +49,12 @@
 
 const char *log_in6addr(const struct in6_addr *);
 const char *log_sockaddr(struct sockaddr *);
+
+u_int32_t	filename_to_msgid(char *);
+u_int64_t	filename_to_evpid(char *);
+
+u_int32_t	evpid_to_msgid(u_int64_t);
+u_int64_t	msgid_to_evpid(u_int32_t);
 
 int
 bsnprintf(char *str, size_t size, const char *format, ...)
@@ -572,4 +578,48 @@ log_sockaddr(struct sockaddr *sa)
 		return ("(unknown)");
 	else
 		return (buf);
+}
+
+u_int32_t
+filename_to_msgid(char *filename)
+{
+	u_int32_t ulval;
+	char *ep;
+
+	errno = 0;
+	ulval = strtoul(filename, &ep, 16);
+	if (filename[0] == '\0' || *ep != '\0')
+		return 0;
+	if (errno == ERANGE && ulval == 0xffffffff)
+		return 0;
+
+	return ulval;
+}
+
+u_int64_t
+filename_to_evpid(char *filename)
+{
+	u_int64_t ullval;
+	char *ep;
+
+	errno = 0;
+	ullval = strtoull(filename, &ep, 16);
+	if (filename[0] == '\0' || *ep != '\0')
+		return 0;
+	if (errno == ERANGE && ullval == ULLONG_MAX)
+		return 0;
+
+	return ullval;
+}
+
+u_int32_t
+evpid_to_msgid(u_int64_t evpid)
+{
+	return (evpid >> 32);
+}
+
+u_int64_t
+msgid_to_evpid(u_int32_t msgid)
+{
+	return ((u_int64_t)msgid << 32);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.101 2011/04/13 20:53:18 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.102 2011/04/15 17:01:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -705,8 +705,8 @@ mta_message_log(struct mta_session *s, struct message *m)
 	struct mta_relay	*relay = TAILQ_FIRST(&s->relays);
 	char			*status = m->session_errorline;
 
-	log_info("%s: to=<%s@%s>, delay=%d, relay=%s [%s], stat=%s (%s)",
-	    m->message_id, m->recipient.user,
+	log_info("%016llx: to=<%s@%s>, delay=%d, relay=%s [%s], stat=%s (%s)",
+	    m->evpid, m->recipient.user,
 	    m->recipient.domain, time(NULL) - m->creation,
 	    relay ? relay->fqdn : "(none)",
 	    relay ? ss_to_text(&relay->sa) : "",
@@ -749,9 +749,10 @@ mta_request_datafd(struct mta_session *s)
 	struct ramqueue_batch	rq_batch;
 	struct message	*m;
 
-	rq_batch.b_id = s->id;
 	m = TAILQ_FIRST(&s->recipients);
-	strlcpy(rq_batch.m_id, m->message_id, sizeof(rq_batch.m_id));
+
+	rq_batch.b_id = s->id;
+	rq_batch.msgid = evpid_to_msgid(m->evpid);
 	imsg_compose_event(s->env->sc_ievs[PROC_QUEUE], IMSG_QUEUE_MESSAGE_FD,
 	    0, 0, -1, &rq_batch, sizeof(rq_batch));
 }

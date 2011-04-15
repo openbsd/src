@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.98 2011/04/14 23:26:16 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.99 2011/04/15 17:01:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -42,6 +42,9 @@ __dead void	queue_shutdown(void);
 void		queue_sig_handler(int, short, void *);
 void		queue_purge(struct smtpd *, enum queue_kind, char *);
 
+u_int32_t	filename_to_msgid(char *);
+u_int64_t	filename_to_evpid(char *);
+
 void
 queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 {
@@ -57,11 +60,11 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 		case IMSG_QUEUE_CREATE_MESSAGE:
 			ss.id = m->session_id;
 			ss.code = 250;
-			bzero(ss.u.msgid, sizeof ss.u.msgid);
+			ss.u.msgid = 0;
 			if (m->flags & F_MESSAGE_ENQUEUED)
-				ret = queue_message_create(env, Q_ENQUEUE, ss.u.msgid);
+				ret = queue_message_create(env, Q_ENQUEUE, &ss.u.msgid);
 			else
-				ret = queue_message_create(env, Q_INCOMING, ss.u.msgid);
+				ret = queue_message_create(env, Q_INCOMING, &ss.u.msgid);
 			if (ret == 0)
 				ss.code = 421;
 			imsg_compose_event(iev, IMSG_QUEUE_CREATE_MESSAGE, 0, 0, -1,
@@ -70,20 +73,20 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 
 		case IMSG_QUEUE_REMOVE_MESSAGE:
 			if (m->flags & F_MESSAGE_ENQUEUED)
-				queue_message_purge(env, Q_ENQUEUE, m->message_id);
+				queue_message_purge(env, Q_ENQUEUE, evpid_to_msgid(m->evpid));
 			else
-				queue_message_purge(env, Q_INCOMING, m->message_id);
+				queue_message_purge(env, Q_INCOMING, evpid_to_msgid(m->evpid));
 			return;
 
 		case IMSG_QUEUE_COMMIT_MESSAGE:
 			ss.id = m->session_id;
 			if (m->flags & F_MESSAGE_ENQUEUED) {
-				if (queue_message_commit(env, Q_ENQUEUE, m->message_id))
+				if (queue_message_commit(env, Q_ENQUEUE, evpid_to_msgid(m->evpid)))
 					env->stats->queue.inserts_local++;
 				else
 					ss.code = 421;
 			} else {
-				if (queue_message_commit(env, Q_INCOMING, m->message_id))
+				if (queue_message_commit(env, Q_INCOMING, evpid_to_msgid(m->evpid)))
 					env->stats->queue.inserts_remote++;
 				else
 					ss.code = 421;
@@ -99,9 +102,9 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 		case IMSG_QUEUE_MESSAGE_FILE:
 			ss.id = m->session_id;
 			if (m->flags & F_MESSAGE_ENQUEUED)
-				fd = queue_message_fd_rw(env, Q_ENQUEUE, m->message_id);
+				fd = queue_message_fd_rw(env, Q_ENQUEUE, evpid_to_msgid(m->evpid));
 			else
-				fd = queue_message_fd_rw(env, Q_INCOMING, m->message_id);
+				fd = queue_message_fd_rw(env, Q_INCOMING, evpid_to_msgid(m->evpid));
 			if (fd == -1)
 				ss.code = 421;
 			imsg_compose_event(iev, IMSG_QUEUE_MESSAGE_FILE, 0, 0, fd,
@@ -163,7 +166,7 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 		switch (imsg->hdr.type) {
 		case IMSG_QUEUE_MESSAGE_FD:
 			rq_batch = imsg->data;
-			fd = queue_message_fd_r(env, Q_QUEUE, rq_batch->m_id);
+			fd = queue_message_fd_r(env, Q_QUEUE, rq_batch->msgid);
 			imsg_compose_event(iev,  IMSG_QUEUE_MESSAGE_FD, 0, 0,
 			    fd, rq_batch, sizeof *rq_batch);
 			return;
@@ -326,8 +329,15 @@ queue_purge(struct smtpd *env, enum queue_kind qkind, char *queuepath)
 
 	q = qwalk_new(queuepath);
 
-	while (qwalk(q, path))
-		queue_message_purge(env, qkind, basename(path));
+	while (qwalk(q, path)) {
+		u_int32_t msgid;
+
+		if ((msgid = filename_to_msgid(basename(path))) == 0) {
+			log_warnx("queue_purge: invalid evpid");
+			continue;
+		}
+		queue_message_purge(env, qkind, msgid);
+	}
 
 	qwalk_close(q);
 }

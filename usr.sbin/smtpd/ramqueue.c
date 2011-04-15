@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramqueue.c,v 1.3 2011/04/14 22:36:09 gilles Exp $	*/
+/*	$OpenBSD: ramqueue.c,v 1.4 2011/04/15 17:01:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -49,6 +49,8 @@ void	ramqueue_put_host(struct ramqueue *, struct ramqueue_host *);
 void	ramqueue_put_batch(struct ramqueue *, struct ramqueue_batch *);
 int	ramqueue_load_offline(struct ramqueue *);
 
+u_int32_t	filename_to_msgid(char *);
+u_int64_t	filename_to_evpid(char *);
 
 void
 ramqueue_init(struct smtpd *env, struct ramqueue *rqueue)
@@ -138,10 +140,15 @@ ramqueue_load(struct ramqueue *rqueue, time_t *nsched)
 	if (q == NULL)
 		q = qwalk_new(PATH_QUEUE);
 	while (qwalk(q, path)) {
+		u_int64_t evpid;
+
 		curtm = time(NULL);
 
+		if ((evpid = filename_to_evpid(basename(path))) == 0)
+			continue;
+
 		if (! queue_envelope_load(rqueue->env, Q_QUEUE,
-			basename(path), &envelope))
+			evpid, &envelope))
 			continue;
 		if (ramqueue_expire(rqueue->env, &envelope, curtm))
 			continue;
@@ -170,7 +177,7 @@ ramqueue_insert(struct ramqueue *rqueue, struct message *envelope, time_t curtm)
 	rq_evp = calloc(1, sizeof (*rq_evp));
 	if (rq_evp == NULL)
 		fatal("calloc");
-	strlcpy(rq_evp->id, envelope->message_uid, sizeof(rq_evp->id));
+	rq_evp->evpid = envelope->evpid;
 	rq_evp->sched = ramqueue_next_schedule(envelope, curtm);
 	rq_evp->host = ramqueue_get_host(rqueue, envelope->recipient.domain);
 	rq_evp->batch = ramqueue_get_batch(rqueue, rq_evp->host, envelope);
@@ -295,7 +302,7 @@ ramqueue_get_batch(struct ramqueue *rqueue, struct ramqueue_host *host,
 	struct ramqueue_batch *rq_batch;
 
 	TAILQ_FOREACH(rq_batch, &host->batch_queue, batch_entry) {
-		if (strcmp(rq_batch->m_id, envelope->message_id) == 0)
+		if (rq_batch->msgid == (u_int32_t)(envelope->evpid >> 32))
 			return rq_batch;
 	}
 
@@ -305,7 +312,7 @@ ramqueue_get_batch(struct ramqueue *rqueue, struct ramqueue_host *host,
 	rq_batch->b_id = generate_uid();
 	rq_batch->type = envelope->type;
 	rq_batch->rule = envelope->recipient.rule;
-	strlcpy(rq_batch->m_id, envelope->message_id, sizeof(rq_batch->m_id));
+	rq_batch->msgid = envelope->evpid >> 32;
 	TAILQ_INIT(&rq_batch->envelope_queue);
 	TAILQ_INSERT_TAIL(&host->batch_queue, rq_batch, batch_entry);
 

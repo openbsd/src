@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.213 2011/04/14 23:26:16 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.214 2011/04/15 17:01:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -40,7 +40,7 @@
 #define MAX_LINE_SIZE		 1024
 #define MAX_LOCALPART_SIZE	 128
 #define MAX_DOMAINPART_SIZE	 MAXHOSTNAMELEN
-#define MAX_ID_SIZE		 64
+/*#define MAX_ID_SIZE		 64*/
 #define MAX_TAG_SIZE		 32
 
 /* return and forward path size */
@@ -441,8 +441,9 @@ struct message {
 
 	char				 tag[MAX_TAG_SIZE];
 
-	char				 message_id[MAX_ID_SIZE];
-	char				 message_uid[MAX_ID_SIZE];
+	u_int64_t			 evpid;
+//	char				 message_id[MAX_ID_SIZE];
+//	char				 message_uid[MAX_ID_SIZE];
 
 	char				 session_helo[MAXHOSTNAMELEN];
 	char				 session_hostname[MAXHOSTNAMELEN];
@@ -588,7 +589,7 @@ struct ramqueue_batch {
 	enum message_type		type;
 	u_int64_t			h_id;
 	u_int64_t			b_id;
-	char				m_id[MAX_ID_SIZE];
+	u_int32_t      			msgid;
 	struct rule			rule;
 };
 struct ramqueue_envelope {
@@ -596,7 +597,7 @@ struct ramqueue_envelope {
 	TAILQ_ENTRY(ramqueue_envelope)	 batchqueue_entry;
 	struct ramqueue_host		*host;
 	struct ramqueue_batch		*batch;
-	char				 id[MAX_ID_SIZE];
+	u_int64_t      			 evpid;
 	time_t				 sched;
 };
 
@@ -748,7 +749,8 @@ struct submit_status {
 	int				 code;
 	union submit_path {
 		struct path		 path;
-		char			 msgid[MAX_ID_SIZE];
+		u_int32_t		 msgid;
+		u_int64_t		 evpid;
 		char			 errormsg[MAX_LINE_SIZE];
 	}				 u;
 	enum message_flags		 flags;
@@ -933,7 +935,7 @@ enum queue_op {
 struct queue_backend {
 	enum queue_type	type;
 	int (*init)(struct smtpd *);
-	int (*message)(struct smtpd *, enum queue_kind, enum queue_op, char *);
+	int (*message)(struct smtpd *, enum queue_kind, enum queue_op, u_int32_t *);
 	int (*envelope)(struct smtpd *, enum queue_kind, enum queue_op,
 		struct message *);
 };
@@ -1056,18 +1058,18 @@ u_int16_t	 queue_hash(char *);
 
 /* queue_backend.c */
 struct queue_backend *queue_backend_lookup(enum queue_type);
-int	queue_message_create(struct smtpd *, enum queue_kind, char *);
-int	queue_message_delete(struct smtpd *, enum queue_kind, char *);
-int	queue_message_commit(struct smtpd *, enum queue_kind, char *);
-int	queue_message_fd_r(struct smtpd *, enum queue_kind, char *);
-int	queue_message_fd_rw(struct smtpd *, enum queue_kind, char *);
-int	queue_message_purge(struct smtpd *, enum queue_kind, char *);
+int	queue_message_create(struct smtpd *, enum queue_kind, u_int32_t *);
+int	queue_message_delete(struct smtpd *, enum queue_kind, u_int32_t);
+int	queue_message_commit(struct smtpd *, enum queue_kind, u_int32_t);
+int	queue_message_fd_r(struct smtpd *, enum queue_kind, u_int32_t);
+int	queue_message_fd_rw(struct smtpd *, enum queue_kind, u_int32_t);
+int	queue_message_purge(struct smtpd *, enum queue_kind, u_int32_t);
 int	queue_envelope_create(struct smtpd *, enum queue_kind,
     struct message *);
 int	queue_envelope_delete(struct smtpd *, enum queue_kind,
     struct message *);
 int	queue_envelope_load(struct smtpd *, enum queue_kind,
-    char *, struct message *);
+    u_int64_t, struct message *);
 int	queue_envelope_update(struct smtpd *, enum queue_kind,
     struct message *);
 
@@ -1201,3 +1203,5 @@ struct path	*path_dup(struct path *);
 u_int64_t	 generate_uid(void);
 void		 fdlimit(double);
 int		 availdesc(void);
+u_int32_t	evpid_to_msgid(u_int64_t);
+u_int64_t	msgid_to_evpid(u_int32_t);

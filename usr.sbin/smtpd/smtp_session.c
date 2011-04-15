@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.138 2010/11/28 14:35:58 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.139 2011/04/15 17:01:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -683,9 +683,9 @@ session_pickup(struct session *s, struct submit_status *ss)
 
 		fprintf(s->datafp, "Received: from %s (%s [%s])\n",
 		    s->s_msg.session_helo, s->s_hostname, ss_to_text(&s->s_ss));
-		fprintf(s->datafp, "\tby %s (OpenSMTPD) with %sSMTP id %s",
+		fprintf(s->datafp, "\tby %s (OpenSMTPD) with %sSMTP id %08x",
 		    s->s_env->sc_hostname, s->s_flags & F_EHLO ? "E" : "",
-		    s->s_msg.message_id);
+		    (u_int32_t)(s->s_msg.evpid >> 32));
 
 		if (s->s_flags & F_SECURE) {
 			fprintf(s->datafp, "\n\t(version=%s cipher=%s bits=%d)",
@@ -704,11 +704,11 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_DONE:
-		session_respond(s, "250 2.0.0 %s Message accepted for delivery",
-		    s->s_msg.message_id);
-		log_info("%s: from=<%s%s%s>, size=%ld, nrcpts=%zd, proto=%s, "
+		session_respond(s, "250 2.0.0 %08x Message accepted for delivery",
+		    (u_int32_t)(s->s_msg.evpid >> 32));
+		log_info("%08x: from=<%s%s%s>, size=%ld, nrcpts=%zd, proto=%s, "
 		    "relay=%s [%s]",
-		    s->s_msg.message_id,
+		    (u_int32_t)(s->s_msg.evpid >> 32),
 		    s->s_msg.sender.user,
 		    s->s_msg.sender.user[0] == '\0' ? "" : "@",
 		    s->s_msg.sender.domain,
@@ -719,8 +719,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 		    ss_to_text(&s->s_ss));
 
 		s->s_state = S_HELO;
-		s->s_msg.message_id[0] = '\0';
-		s->s_msg.message_uid[0] = '\0';
+		s->s_msg.evpid = 0;
 		bzero(&s->s_nresp, sizeof(s->s_nresp));
 		break;
 
@@ -975,7 +974,7 @@ session_destroy(struct session *s)
 	if (s->datafp != NULL)
 		fclose(s->datafp);
 
-	if (s->s_msg.message_id[0] != '\0' && s->s_state != S_DONE)
+	if (s->s_msg.evpid != 0 && s->s_state != S_DONE)
 		imsg_compose_event(s->s_env->sc_ievs[PROC_QUEUE],
 		    IMSG_QUEUE_REMOVE_MESSAGE, 0, 0, -1, &s->s_msg,
 		    sizeof(s->s_msg));
@@ -1096,8 +1095,8 @@ session_respond(struct session *s, char *fmt, ...)
 	switch (EVBUFFER_DATA(EVBUFFER_OUTPUT(s->s_bev))[n]) {
 	case '5':
 	case '4':
-		log_info("%s: from=<%s@%s>, relay=%s [%s], stat=LocalError (%.*s)",
-		    s->s_msg.message_id[0] ? s->s_msg.message_id : "(none)",
+		log_info("%08x: from=<%s@%s>, relay=%s [%s], stat=LocalError (%.*s)",
+		    (u_int32_t)(s->s_msg.evpid >> 32),
 		    s->s_msg.sender.user, s->s_msg.sender.domain,
 		    s->s_hostname, ss_to_text(&s->s_ss),
 		    (int)EVBUFFER_LENGTH(EVBUFFER_OUTPUT(s->s_bev)) - n - 2,

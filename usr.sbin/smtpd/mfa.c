@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.54 2010/11/28 14:35:58 gilles Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.55 2011/04/15 17:01:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -205,9 +205,6 @@ void
 mfa_test_rcpt(struct smtpd *env, struct message *m)
 {
 	struct submit_status	 ss;
-
-	if (! valid_message_id(m->message_id))
-		fatalx("mfa_test_rcpt: received corrupted message_id");
 
 	ss.id = m->session_id;
 	ss.code = 530;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.81 2011/03/15 19:24:55 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.82 2011/04/15 17:01:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -99,8 +99,7 @@ smtp_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			s = session_lookup(env, ss->id);
 			if (s == NULL)
 				return;
-			strlcpy(s->s_msg.message_id, ss->u.msgid,
-			    sizeof s->s_msg.message_id);
+			s->s_msg.evpid = (u_int64_t)ss->u.msgid << 32;
 			session_pickup(s, ss);
 			return;
 

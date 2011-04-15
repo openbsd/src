@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.43 2011/04/14 23:29:56 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.44 2011/04/15 17:01:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -61,7 +61,7 @@ void		getflag(u_int *, int, char *, char *, size_t);
 int
 bounce_record_message(struct smtpd *env, struct message *messagep, struct message *mbounce)
 {
-	char	msgid[MAX_ID_SIZE];
+	u_int32_t msgid;
 
 	if (messagep->type == T_BOUNCE_MESSAGE) {
 		log_debug("mailer daemons loop detected !");
@@ -72,11 +72,11 @@ bounce_record_message(struct smtpd *env, struct message *messagep, struct messag
 	mbounce->type = T_BOUNCE_MESSAGE;
 	mbounce->status &= ~S_MESSAGE_PERMFAILURE;
 
-	strlcpy(msgid, messagep->message_id, sizeof(msgid));
-	if (! queue_message_create(env, Q_BOUNCE, msgid))
+	msgid = evpid_to_msgid(messagep->evpid);
+	if (! queue_message_create(env, Q_BOUNCE, &msgid))
 		return 0;
 
-	strlcpy(mbounce->message_id, msgid, sizeof(mbounce->message_id));
+	mbounce->evpid = msgid_to_evpid(msgid);
 	if (! queue_envelope_create(env, Q_BOUNCE, mbounce))
 		return 0;
 
@@ -283,7 +283,7 @@ display_envelope(struct message *envelope, int flags)
 	    status, sizeof(status));
 
 	if (envelope->status)
-		errx(1, "%s: unexpected status 0x%04x", envelope->message_uid,
+		errx(1, "%016llx: unexpected status 0x%04x", envelope->evpid,
 		    envelope->status);
 
 	getflag(&envelope->flags, F_MESSAGE_BOUNCE, "BOUNCE",
@@ -300,7 +300,7 @@ display_envelope(struct message *envelope, int flags)
 	    status, sizeof(status));
 
 	if (envelope->flags)
-		errx(1, "%s: unexpected flags 0x%04x", envelope->message_uid,
+		errx(1, "%016llx: unexpected flags 0x%04x", envelope->evpid,
 		    envelope->flags);
 	
 	if (status[0])
@@ -322,8 +322,8 @@ display_envelope(struct message *envelope, int flags)
 		printf("UNKNOWN");
 	}
 	
-	printf("|%s|%s|%s@%s|%s@%s|%d|%d|%u",
-	    envelope->message_uid,
+	printf("|%016llx|%s|%s@%s|%s@%s|%d|%d|%u",
+	    envelope->evpid,
 	    status,
 	    envelope->sender.user, envelope->sender.domain,
 	    envelope->recipient.user, envelope->recipient.domain,
