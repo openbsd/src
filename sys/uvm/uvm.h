@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.41 2010/06/29 20:39:27 thib Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.42 2011/04/15 21:30:02 oga Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -119,12 +119,6 @@ struct uvm {
 	int aiodoned;			/* daemon sleeps on this */
 	struct proc *aiodoned_proc;	/* daemon's pid */
 	struct mutex aiodoned_lock;
-
-		/* page hash */
-	struct pglist *page_hash;	/* page hash table (vp/off->page) */
-	int page_nhash;			/* number of buckets */
-	int page_hashmask;		/* hash mask */
-	struct mutex hashlock;		/* lock on page_hash array */
 
 	/* static kernel map entry pool */
 	vm_map_entry_t kentry_free;	/* free page pool */
