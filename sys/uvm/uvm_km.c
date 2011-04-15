@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.95 2011/04/15 21:47:24 oga Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.96 2011/04/15 23:04:19 deraadt Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -899,7 +899,6 @@ uvm_km_doputpage(struct uvm_km_free_page *fp)
 	vaddr_t va = (vaddr_t)fp;
 	struct vm_page *pg;
 	int	freeva = 1;
-	paddr_t pa;
 	struct uvm_km_free_page *nextfp = fp->next;
 
 	pg = uvm_atopg(va);
