@@ -1,4 +1,4 @@
-/*	$OpenBSD: iswctype.c,v 1.1 2005/08/07 10:16:23 espie Exp $ */
+/*	$OpenBSD: iswctype.c,v 1.2 2011/04/15 16:11:23 stsp Exp $ */
 /*	$NetBSD: iswctype.c,v 1.15 2005/02/09 21:35:46 kleink Exp $	*/
 
 /*
@@ -170,7 +170,9 @@ towlower(wint_t c)
 int
 wcwidth(wchar_t c)
 {
-        return (((unsigned)__runetype_w(c) & _CTYPE_SWM) >> _CTYPE_SWS);
+	if (__isctype_w((c), _CTYPE_R))
+		return (((unsigned)__runetype_w(c) & _CTYPE_SWM) >> _CTYPE_SWS);
+	return -1;
 }
 
 wctrans_t
