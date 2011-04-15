@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.57 2010/07/24 15:40:39 kettenis Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.58 2011/04/15 21:47:24 oga Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -90,8 +90,6 @@ struct	uvm_pseg psegs[PSEG_NUMSEGS];
 void		uvm_pseg_init(struct uvm_pseg *);
 vaddr_t		uvm_pseg_get(int);
 void		uvm_pseg_release(vaddr_t);
-
-struct vm_page	*uvm_pageratop(vaddr_t);
 
 /*
  * uvm_pager_init: init pagers (at boot time)
@@ -830,7 +828,7 @@ uvm_aio_aiodone(struct buf *bp)
 
 	uobj = NULL;
 	for (i = 0; i < npages; i++) {
-		pgs[i] = uvm_pageratop((vaddr_t)bp->b_data + (i << PAGE_SHIFT));
+		pgs[i] = uvm_atopg((vaddr_t)bp->b_data + (i << PAGE_SHIFT));
 		UVMHIST_LOG(pdhist, "pgs[%ld] = %p", i, pgs[i],0,0);
 	}
 	uvm_pagermapout((vaddr_t)bp->b_data, npages);
@@ -905,21 +903,3 @@ freed:
 	}
 	pool_put(&bufpool, bp);
 }
-
-/*
- * uvm_pageratop: convert KVAs in the pager map back to their page
- * structures.
- */
-struct vm_page *
-uvm_pageratop(vaddr_t kva)
-{
-	struct vm_page *pg;
-	paddr_t pa;
-	boolean_t rv;
- 
-	rv = pmap_extract(pmap_kernel(), kva, &pa);
-	KASSERT(rv);
-	pg = PHYS_TO_VM_PAGE(pa);
-	KASSERT(pg != NULL);
-	return (pg);
-} 

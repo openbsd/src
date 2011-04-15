@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.57 2011/04/07 13:20:25 miod Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.58 2011/04/15 21:47:24 oga Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -475,3 +475,20 @@ uvm_swapout_threads(void)
 			pmap_collect(p->p_vmspace->vm_map.pmap);
 	}
 }
+
+/*
+ * uvm_atopg: convert KVAs back to their page structures.
+ */
+struct vm_page *
+uvm_atopg(vaddr_t kva)
+{
+	struct vm_page *pg;
+	paddr_t pa;
+	boolean_t rv;
+ 
+	rv = pmap_extract(pmap_kernel(), kva, &pa);
+	KASSERT(rv);
+	pg = PHYS_TO_VM_PAGE(pa);
+	KASSERT(pg != NULL);
+	return (pg);
+} 

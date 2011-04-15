@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.94 2011/04/07 15:30:16 miod Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.95 2011/04/15 21:47:24 oga Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -902,11 +902,7 @@ uvm_km_doputpage(struct uvm_km_free_page *fp)
 	paddr_t pa;
 	struct uvm_km_free_page *nextfp = fp->next;
 
-	if (!pmap_extract(pmap_kernel(), va, &pa))
-		panic("lost pa");
-	pg = PHYS_TO_VM_PAGE(pa);
-
-	KASSERT(pg != NULL);
+	pg = uvm_atopg(va);
 
 	pmap_kremove(va, PAGE_SIZE);
 	pmap_update(kernel_map->pmap);
