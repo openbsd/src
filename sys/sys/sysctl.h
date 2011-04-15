@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.111 2011/04/15 04:52:40 guenther Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.112 2011/04/15 17:58:25 guenther Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -519,8 +519,8 @@ do {									\
 									\
 	(kp)->p_siglist = (p)->p_siglist;				\
 	(kp)->p_sigmask = (p)->p_sigmask;				\
-	(kp)->p_sigignore = (sa)->ps_sigignore;				\
-	(kp)->p_sigcatch = (sa)->ps_sigcatch;				\
+	(kp)->p_sigignore = (sa) ? (sa)->ps_sigignore : 0;		\
+	(kp)->p_sigcatch = (sa) ? (sa)->ps_sigcatch : 0;		\
 									\
 	(kp)->p_stat = (p)->p_stat;					\
 	(kp)->p_nice = (pr)->ps_nice;					\
