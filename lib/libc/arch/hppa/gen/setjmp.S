@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.7 2005/08/07 16:40:14 espie Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.8 2011/04/15 21:39:45 ariane Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -114,9 +114,6 @@ EXIT(_setjmp)
 
 ENTRY(siglongjmp,64)
 	/* XXX have to dup this from below */
-	sub,>>	%sp, %arg0, %r0		/* botch if jbuf was on stack */
-	bl,n	longjmperror, %rp
-	nop
 	ldw	16(%arg0), %r1		/* botch if it's a real signal frame */
 	add,=	%r0, %r1, %r0
 	bl,n	longjmperror, %rp
@@ -129,9 +126,6 @@ ENTRY(siglongjmp,64)
 
 ALTENTRY(longjmp)
 	/* XXX have to dup this from below */
-	sub,>>	%sp, %arg0, %r0		/* botch if jbuf was on stack */
-	bl,n	longjmperror, %rp
-	nop
 	ldw	16(%arg0), %r1		/* botch if it's a real signal frame */
 	add,=	%r0, %r1, %r0
 	bl,n	longjmperror, %rp
@@ -156,9 +150,6 @@ ALTENTRY(longjmp)
 	ldw	HPPA_FRAME_ARG(1)(%sp), %arg1
 
 ALTENTRY(_longjmp)
-	sub,>>	%sp, %arg0, %r0		/* botch if jbuf was on stack */
-	bl,n	longjmperror, %rp
-	nop
 	ldw	16(%arg0), %r1		/* botch if it's a real signal frame */
 	add,=	%r0, %r1, %r0
 	bl,n	longjmperror, %rp
