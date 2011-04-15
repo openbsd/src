@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.100 2011/04/14 23:29:56 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.101 2011/04/15 11:39:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -61,6 +61,7 @@ int		runner_check_loop(struct smtpd *, struct message *);
 int		runner_force_message_to_ramqueue(struct ramqueue *, char *);
 
 void		ramqueue_insert(struct ramqueue *, struct message *, time_t);
+/*temporary*/ u_int16_t	 fsqueue_hash(char *);
 
 void
 runner_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
