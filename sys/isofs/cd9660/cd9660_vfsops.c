@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.56 2010/12/21 20:14:43 thib Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.57 2011/04/15 14:57:29 krw Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -479,7 +479,8 @@ iso_disklabelspoof(dev, strat, lp)
 	for (iso_blknum = 16; iso_blknum < 100; iso_blknum++) {
 		bp->b_blkno = iso_blknum * btodb(ISO_DEFAULT_BLOCK_SIZE);
 		bp->b_bcount = ISO_DEFAULT_BLOCK_SIZE;
-		bp->b_flags = B_BUSY | B_READ | B_RAW;
+		CLR(bp->b_flags, B_WRITE | B_DONE);
+		SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
 		bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 
 		/*printf("d_secsize %d iso_blknum %d b_blkno %d bcount %d\n",
