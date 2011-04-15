@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.214 2011/04/15 17:01:05 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.215 2011/04/15 19:03:28 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -442,9 +442,6 @@ struct message {
 	char				 tag[MAX_TAG_SIZE];
 
 	u_int64_t			 evpid;
-//	char				 message_id[MAX_ID_SIZE];
-//	char				 message_uid[MAX_ID_SIZE];
-
 	char				 session_helo[MAXHOSTNAMELEN];
 	char				 session_hostname[MAXHOSTNAMELEN];
 	char				 session_errorline[MAX_LINE_SIZE];
