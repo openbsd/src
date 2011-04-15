@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.22 2009/10/27 23:59:37 deraadt Exp $ */
+/*	$OpenBSD: file.c,v 1.23 2011/04/15 16:05:34 stsp Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -424,6 +424,7 @@ file_mbswidth(const char *s)
 	wchar_t nextchar;
 	(void)memset(&state, 0, sizeof(mbstate_t));
 	old_n = n = strlen(s);
+	int w;
 
 	while (n > 0) {
 		bytesconsumed = mbrtowc(&nextchar, s, n, &state);
@@ -438,8 +439,11 @@ file_mbswidth(const char *s)
 			 * is always right
 			 */
 			width++;
-		} else
-			width += wcwidth(nextchar);
+		} else {
+			w = wcwidth(nextchar);
+			if (w > 0)
+				width += w;
+		}
 
 		s += bytesconsumed, n -= bytesconsumed;
 	}
