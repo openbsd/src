@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc64,v 1.56 2010/12/30 18:49:31 deraadt Exp $
+#	$OpenBSD: Makefile.sparc64,v 1.57 2011/04/15 02:41:28 guenther Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -23,7 +23,7 @@ _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-nostdinc -I. -I$S -I$S/arch
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-main -Wno-uninitialized -Wno-format \
 		-Wstack-larger-than-2047
@@ -68,7 +68,8 @@ NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
 SYSTEM_HEAD=	locore.o param.o ioconf.o
-SYSTEM_DEP=	Makefile ${SYSTEM_HEAD} ${OBJS}
+SYSTEM_OBJ=	${SYSTEM_HEAD} ${OBJS}
+SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_HEAD} vers.o $${OBJS}'; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_HEAD} vers.o ${OBJS}
@@ -88,10 +89,16 @@ LINKFLAGS+=	-S -x
 
 %LOAD
 
+# cc's -MD puts the source and output paths in the dependency file;
+# since those are temp files here we need to fix it up.  It also
+# puts the file in /tmp, so we use -MF to put it in the current
+# directory as assym.P and then generate assym.d from it with a
+# good target name
 assym.h: $S/kern/genassym.sh Makefile \
 	 ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf
 	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
-	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} > assym.h.tmp
+	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} -MF assym.P > assym.h.tmp
+	sed '1s/.*/assym.h: \\/' assym.P > assym.d
 	sort -u assym.h.tmp > assym.h
 
 param.c: $S/conf/param.c
@@ -120,25 +127,14 @@ lint:
 	    ${CFILES} ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
+depend:
+	@touch $@
+
 tags:
 	@echo "see $S/kern/Makefile for tags"
 
-AFILES=	${_machdir}/${_mach}/locore.s
-depend:: .depend
-.depend: ${AFILES} param.c ioconf.c ${CFILES} ${SFILES} assym.h ${DB_STRUCTINFO}
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${AFILES}
-	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-.if !empty(SFILES)
-	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-.endif
-	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
-	    sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} ${CPPFLAGS}
-	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
-	    < assym.dep >> .depend
-	@rm -f assym.dep
-
 db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
-	${CC} ${CFLAGS} ${CPPFLAGS} -gstabs -c $S/ddb/db_structinfo.c
+	${CC} ${CFLAGS} ${CPPFLAGS} -MT $@ -gstabs -c $S/ddb/db_structinfo.c
 	objdump -g db_structinfo.o | awk -f $S/ddb/parse_structinfo.awk > $@
 	rm -f db_structinfo.o
 
@@ -155,6 +151,18 @@ install-kernel-${MACHINE_NAME}:
 	ln /bsd /obsd
 	cp bsd /nbsd
 	mv /nbsd /bsd
+.endif
+
+# pull in the dependency information
+.if !empty(DB_STRUCTINFO) && !exists(${DB_STRUCTINFO})
+ ${SYSTEM_OBJ}: ${DB_STRUCTINFO}
+.endif
+.ifnmake clean
+. for o in ${SYSTEM_OBJ:.o=.d} assym.d ${DB_STRUCTINFO:.h=.d}
+.  if exists($o)
+.   include "$o"
+.  endif
+. endfor
 .endif
 
 %RULES
