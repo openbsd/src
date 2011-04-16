@@ -1,4 +1,4 @@
-/*	$OpenBSD: amsg.h,v 1.19 2011/04/16 10:52:22 ratchov Exp $	*/
+/*	$OpenBSD: amsg.h,v 1.20 2011/04/16 11:24:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -38,7 +38,6 @@ struct amsg {
 #define AMSG_DATA	5	/* data block */
 #define AMSG_POS	6	/* initial position */
 #define AMSG_MOVE	7	/* position changed */
-#define AMSG_GETCAP	8	/* get capabilities */
 #define AMSG_SETVOL	9	/* set volume */
 #define AMSG_HELLO	10	/* say hello, check versions and so ... */
 #define AMSG_BYE	11	/* ask server to drop connection */
@@ -62,15 +61,6 @@ struct amsg {
 			uint32_t appbufsz;	/* client side bufsz */
 			uint32_t _reserved[1];	/* for future use */
 		} par;
-		struct amsg_cap {
-			uint32_t rate;		/* native rate */
-			uint32_t _reserved2[1];	/* for future use */
-			uint16_t rchan;		/* native rec channels */
-			uint16_t pchan;		/* native play channels */
-			uint8_t bits;		/* native bits per sample */
-			uint8_t bps;		/* native ytes per sample */
-			uint8_t _reserved[10];	/* for future use */
-		} cap;
 		struct amsg_data {
 #define AMSG_DATAMAX	0x1000
 			uint32_t size;
@@ -83,7 +73,7 @@ struct amsg {
 		} vol;
 		struct amsg_hello {
 			uint16_t mode;		/* bitmap of MODE_XXX */
-#define AMSG_VERSION	4
+#define AMSG_VERSION	5
 			uint8_t version;	/* protocol version */
 			uint8_t reserved1[5];	/* for future use */
 			char opt[12];		/* profile name */

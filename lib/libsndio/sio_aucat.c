@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_aucat.c,v 1.2 2011/04/16 10:52:22 ratchov Exp $	*/
+/*	$OpenBSD: sio_aucat.c,v 1.3 2011/04/16 11:24:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -317,23 +317,9 @@ sio_aucat_getpar(struct sio_hdl *sh, struct sio_par *par)
 static int
 sio_aucat_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 {
-	struct sio_aucat_hdl *hdl = (struct sio_aucat_hdl *)sh;
 	unsigned i, bps, le, sig, chan, rindex, rmult;
 	static unsigned rates[] = { 8000, 11025, 12000 };
 
-	AMSG_INIT(&hdl->aucat.wmsg);
-	hdl->aucat.wmsg.cmd = AMSG_GETCAP;
-	hdl->aucat.wtodo = sizeof(struct amsg);
-	if (!aucat_wmsg(&hdl->aucat, &hdl->sio.eof))
-		return 0;
-	hdl->aucat.rtodo = sizeof(struct amsg);
-	if (!aucat_rmsg(&hdl->aucat, &hdl->sio.eof))
-		return 0;
-	if (hdl->aucat.rmsg.cmd != AMSG_GETCAP) {
-		DPRINTF("sio_aucat_getcap: protocol err\n");
-		hdl->sio.eof = 1;
-		return 0;
-	}
 	bps = 1;
 	sig = le = 0;
 	cap->confs[0].enc = 0;

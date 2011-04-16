@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.55 2011/04/16 10:52:22 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.56 2011/04/16 11:24:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1283,35 +1283,6 @@ sock_execmsg(struct sock *f)
 		m->u.par.bufsz =
 		    f->bufsz + (f->dev->bufsz / f->dev->round) * f->round;
 		m->u.par.round = f->round;
-		f->rstate = SOCK_RRET;
-		f->rtodo = sizeof(struct amsg);
-		break;
-	case AMSG_GETCAP:
-#ifdef DEBUG
-		if (debug_level >= 3) {
-			sock_dbg(f);
-			dbg_puts(": GETCAP message\n");
-		}
-#endif
-		if (f->pstate != SOCK_INIT) {
-#ifdef DEBUG
-			if (debug_level >= 1) {
-				sock_dbg(f);
-				dbg_puts(": GETCAP, bad state\n");
-			}
-#endif
-			aproc_del(f->pipe.file.rproc);
-			return 0;
-		}
-		AMSG_INIT(m);
-		m->cmd = AMSG_GETCAP;
-		m->u.cap.rate = f->dev->rate;
-		m->u.cap.pchan = (f->opt->mode & MODE_PLAY) ?
-		    (f->opt->rpar.cmax - f->opt->rpar.cmin + 1) : 0;
-		m->u.cap.rchan = (f->opt->mode & (MODE_PLAY | MODE_REC)) ?
-		    (f->opt->wpar.cmax - f->opt->wpar.cmin + 1) : 0;
-		m->u.cap.bits = ADATA_BITS;
-		m->u.cap.bps = sizeof(adata_t);
 		f->rstate = SOCK_RRET;
 		f->rtodo = sizeof(struct amsg);
 		break;
