@@ -1,4 +1,4 @@
-/*	$OpenBSD: divu.S,v 1.10 2005/01/23 18:01:30 mickey Exp $	*/
+/*	$OpenBSD: divu.S,v 1.11 2011/04/16 20:52:12 deraadt Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -15,7 +15,6 @@
 /* @(#)divu.s: Revision: 1.11.88.1 Date: 93/12/07 15:06:01 */
 
 #include <machine/asm.h>
-#define _LOCORE
 #include <machine/frame.h>
 
 ;************************************************************************
