@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.251 2011/04/16 11:44:41 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.252 2011/04/16 23:01:17 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1817,6 +1817,7 @@ mpsave(struct disklabel *lp)
 	char bdev[MAXPATHLEN], *p;
 	struct mountinfo mi[MAXPARTITIONS];
 	FILE *fp;
+	u_int8_t fstype;
 
 	if (!fstabfile)
 		return;
@@ -1824,7 +1825,8 @@ mpsave(struct disklabel *lp)
 	memset(&mi, 0, sizeof(mi));
 
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		if (mountpoints[i] != NULL) {
+		fstype = lp->d_partitions[i].p_fstype;
+		if (mountpoints[i] != NULL || fstype == FS_SWAP) {
 			mi[i].mountpoint = mountpoints[i];
 			mi[i].partno = i;
 		}
@@ -1854,12 +1856,16 @@ mpsave(struct disklabel *lp)
 	qsort((void *)mi, MAXPARTITIONS, sizeof(struct mountinfo), micmp);
 
 	if ((fp = fopen(fstabfile, "w"))) {
-		for (i = 0; i < MAXPARTITIONS && mi[i].mountpoint; i++) {
+		for (i = 0; i < MAXPARTITIONS; i++) {
 			j =  mi[i].partno;
-			fprintf(fp, "%s%c %s %s rw 1 %d\n", bdev, 'a' + j,
-			    mi[i].mountpoint,
-			    fstypesnames[lp->d_partitions[j].p_fstype],
-			    j == 0 ? 1 : 2);
+			fstype = lp->d_partitions[j].p_fstype;
+			if (fstype == FS_SWAP) {
+				fprintf(fp, "%s%c none swap sw\n", bdev, 'a'+j);
+			} else if (mi[i].mountpoint) {
+				fprintf(fp, "%s%c %s %s rw 1 %d\n", bdev,
+				    'a' + j, mi[i].mountpoint,
+				    fstypesnames[fstype], j == 0 ? 1 : 2);
+			}
 		}
 		fclose(fp);
 	}
