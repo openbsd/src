@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.60 2007/06/02 01:29:11 pvalchev Exp $	 */
+/* $OpenBSD: log.c,v 1.61 2011/04/16 10:30:29 sthen Exp $	 */
 /* $EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	 */
 
 /*
@@ -329,14 +329,9 @@ void
 log_verbose(const char *fmt, ...)
 {
 	va_list	ap;
-	int	i;
 
 	if (verbose_logging == 0)
 		return;
-
-	for (i = 0; i < LOG_ENDCLASS; i++)
-		if (log_level[i] > 0)
-			return;
 
 	va_start(ap, fmt);
 	_log_print(0, LOG_NOTICE, fmt, ap, LOG_PRINT, 0);
