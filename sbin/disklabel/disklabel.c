@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.175 2010/12/13 01:01:41 marco Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.176 2011/04/16 11:44:41 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -99,6 +99,7 @@ int	aflag;
 int	cflag;
 int	dflag;
 int	tflag;
+int	uidflag;
 int	verbose;
 int	donothing;
 char	print_unit;
@@ -123,7 +124,7 @@ main(int argc, char *argv[])
 	struct disklabel *lp;
 	FILE *t;
 
-	while ((ch = getopt(argc, argv, "ABEf:hNRWb:cdenp:s:tvw")) != -1)
+	while ((ch = getopt(argc, argv, "ABEf:F:hNRWb:cdenp:s:tvw")) != -1)
 		switch (ch) {
 		case 'A':
 			++aflag;
@@ -171,6 +172,11 @@ main(int argc, char *argv[])
 			break;
 		case 'f':
 			fstabfile = optarg;
+			uidflag = 0;
+			break;
+		case 'F':
+			fstabfile = optarg;
+			++uidflag;
 			break;
 		case 'h':
 			print_unit = '*';
@@ -237,7 +243,7 @@ main(int argc, char *argv[])
 		if (argc != 1)
 			usage();
 		readlabel(f);
-		error = editor(&lab, f);
+		error = editor(f);
 		break;
 	case READ:
 		if (argc != 1)
@@ -430,8 +436,12 @@ writelabel(int f, char *boot, struct disklabel *lp)
 	}
 #endif
 	/* Finally, write out any mount point information. */
-	if (!donothing)
+	if (!donothing) {
+		/* First refresh our copy of the current label to get UID. */
+		if (ioctl(f, DIOCGDINFO, &lab) < 0)
+			err(4, "ioctl DIOCGDINFO");
 		mpsave(lp);
+	}
 
 	return (0);
 }
@@ -1473,7 +1483,7 @@ usage(void)
 	fprintf(stderr,
 	    "       disklabel -e [-c | -d] [-Anv] disk\t\t\t(edit)\n");
 	fprintf(stderr,
-	    "       disklabel -E [-c | -d] [-Anv] [-f tempfile] disk\t\t(simple editor)\n");
+	    "       disklabel -E [-c | -d] [-Anv] [-f | -F tempfile] disk\t(simple editor)\n");
 	fprintf(stderr,
 	    "       disklabel -R [-nv] disk protofile\t\t\t(restore)\n");
 	fprintf(stderr,
