@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.25 2010/09/20 06:33:47 matthew Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.26 2011/04/16 00:40:58 deraadt Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -694,6 +694,8 @@ apic_intr_establish(int irq, int type, int level, int (*ih_fun)(void *),
 		pin->ip_type = type;
 		break;
 	case IST_EDGE:
+		intr_shared_edge = 1;
+		/* FALLTHROUGH */
 	case IST_LEVEL:
 		if (type == pin->ip_type)
 			break;

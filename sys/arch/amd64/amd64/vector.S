@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.28 2011/04/01 22:51:45 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.29 2011/04/16 00:40:56 deraadt Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -483,8 +483,12 @@ IDTVEC(intr_##name##num)						;\
 8:	movl	%r12d,CPUVAR(ILEVEL)					;\
 	call	*IH_FUN(%rbx)		/* call it */			;\
 	orq	%rax,%rax		/* should it be counted? */	;\
-	jz	4f							;\
-	incq	IH_COUNT(%rbx)						;\
+	jz	4f			/* no, skip it */		;\
+	incq	IH_COUNT(%rbx)		/* count the intrs */		;\
+	cmpl	$0,_C_LABEL(intr_shared_edge)				;\
+	jne	4f			/* if no shared edges ... */	;\
+	orq	%rax,%rax		/* 1 means stop trying */	;\
+	jns	5f							;\
 4:	movq	IH_NEXT(%rbx),%rbx	/* next handler in chain */	;\
 	testq	%rbx,%rbx						;\
 	jnz	6b							;\

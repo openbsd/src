@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.71 2010/11/20 20:58:51 miod Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.72 2011/04/16 00:40:58 deraadt Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 /*-
@@ -514,6 +514,8 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 		intrtype[irq] = type;
 		break;
 	case IST_EDGE:
+		intr_shared_edge = 1;
+		/* FALLTHROUGH */
 	case IST_LEVEL:
 		if (type == intrtype[irq])
 			break;

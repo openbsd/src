@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.s,v 1.14 2009/08/10 16:40:50 oga Exp $	*/
+/*	$OpenBSD: vector.s,v 1.15 2011/04/16 00:40:58 deraadt Exp $	*/
 /*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
 
 /*
@@ -137,10 +137,14 @@ _C_LABEL(Xintr_##name##num):						;\
 	jz	5f			/* no, skip it */		;\
 	addl	$1,IH_COUNT(%ebx)	/* count the intrs */		;\
 	adcl	$0,IH_COUNT+4(%ebx)					;\
+	cmp	$0,_C_LABEL(intr_shared_edge)				;\
+	jne	5f			 /* if no shared edges ... */	;\
+	orl	%eax,%eax		/* ... 1 means stop trying */	;\
+	jns	8f							;\
 5:	movl	IH_NEXT(%ebx),%ebx	/* next handler in chain */	;\
 	testl	%ebx,%ebx						;\
 	jnz	7b							;\
-	UNLOCK_KERNEL(IF_PPL(%esp))					;\
+8:	UNLOCK_KERNEL(IF_PPL(%esp))					;\
 	decl	CPUVAR(IDEPTH)						;\
 	STRAY_TEST(name,num)		/* see if it's a stray */	;\
 6:	unmask(num)			/* unmask it in hardware */	;\

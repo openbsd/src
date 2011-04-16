@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.26 2010/12/27 20:22:23 guenther Exp $	*/
+/*	$OpenBSD: intr.c,v 1.27 2011/04/16 00:40:56 deraadt Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -351,6 +351,12 @@ found:
 	return 0;
 }
 
+/*
+ * True if the system has any non-level interrupts which are shared
+ * on the same pin.
+ */
+int	intr_shared_edge;
+
 void *
 intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
     int (*handler)(void *), void *arg, const char *what)
@@ -405,6 +411,8 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 		source->is_type = type;
 		break;
 	case IST_EDGE:
+		intr_shared_edge = 1;
+		/* FALLTHROUGH */
 	case IST_LEVEL:
 		if (source->is_type == type)
 			break;
