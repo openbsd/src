@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.34 2011/04/15 04:52:39 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.35 2011/04/16 22:02:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -57,6 +57,7 @@
 #include <machine/reg.h>
 #include <machine/autoconf.h>
 #include <machine/kcore.h>
+#include <machine/fpu.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -128,6 +129,8 @@ int	physmem, resvmem, resvphysmem, esym;
 struct user *proc0paddr;
 long mem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(32) / sizeof(long)];
 struct extent *hppa_ex;
+struct pool hppa_fppl;
+struct hppa_fpstate proc0fpstate;
 struct consdev *cn_tab;
 
 struct vm_map *exec_map = NULL;
@@ -295,7 +298,10 @@ TODO hpmc/toc/pfr
 	ptlball();
 	ficacheall();
 	fdcacheall();
-printf("out\n");
+
+	proc0paddr->u_pcb.pcb_fpstate = &proc0fpstate;
+	pool_init(&hppa_fppl, sizeof(struct hppa_fpstate), 16, 0, 0,
+	    "hppafp", NULL);
 }
 
 void
@@ -791,7 +797,6 @@ void
 setregs(struct proc *p, struct exec_package *pack, u_long stack,
     register_t *retval)
 {
-	extern paddr_t fpu_curpcb;	/* from locore.S */
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	register_t zero;
@@ -813,15 +818,12 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	copyout(&zero, (caddr_t)(stack + HPPA_FRAME_RP), sizeof(register_t));
 
 	/* reset any of the pending FPU exceptions */
-	if (tf->tf_cr30 == fpu_curpcb) {
-		fpu_exit();
-		fpu_curpcb = 0;
-	}
-	pcb->pcb_fpregs[0] = ((u_int64_t)HPPA_FPU_INIT) << 32;
-	pcb->pcb_fpregs[1] = 0;
-	pcb->pcb_fpregs[2] = 0;
-	pcb->pcb_fpregs[3] = 0;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb->pcb_fpregs, 8 * 4);
+	fpu_proc_flush(p);
+	pcb->pcb_fpstate->hfp_regs.fpr_regs[0] =
+	    ((u_int64_t)HPPA_FPU_INIT) << 32;
+	pcb->pcb_fpstate->hfp_regs.fpr_regs[1] = 0;
+	pcb->pcb_fpstate->hfp_regs.fpr_regs[2] = 0;
+	pcb->pcb_fpstate->hfp_regs.fpr_regs[3] = 0;
 
 	retval[1] = 0;
 }
@@ -833,8 +835,6 @@ void
 sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
     union sigval val)
 {
-	extern paddr_t fpu_curpcb;	/* from locore.S */
-	extern u_int fpu_enable;
 	struct proc *p = curproc;
 	struct trapframe *tf = p->p_md.md_regs;
 	struct sigacts *psp = p->p_sigacts;
@@ -851,13 +851,8 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 		    p->p_comm, p->p_pid, sig, catcher);
 #endif
 
-	/* flush the FPU ctx first */
-	if (tf->tf_cr30 == fpu_curpcb) {
-		mtctl(fpu_enable, CR_CCR);
-		fpu_save(fpu_curpcb);
-		/* fpu_curpcb = 0; only needed if fpregs are preset */
-		mtctl(0, CR_CCR);
-	}
+	/* Save the FPU context first. */
+	fpu_proc_save(p);
 
 	ksc.sc_onstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 
@@ -891,7 +886,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	ksc.sc_pcoqt = tf->tf_iioq[1];
 	bcopy(tf, &ksc.sc_regs[0], 32*8);
 	ksc.sc_regs[0] = tf->tf_sar;
-	bcopy(p->p_addr->u_pcb.pcb_fpregs, ksc.sc_fpregs,
+	bcopy(&p->p_addr->u_pcb.pcb_fpstate->hfp_regs, ksc.sc_fpregs,
 	    sizeof(ksc.sc_fpregs));
 
 	sss += HPPA_FRAME_SIZE;
@@ -935,7 +930,6 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 int
 sys_sigreturn(struct proc *p, void *v, register_t *retval)
 {
-	extern paddr_t fpu_curpcb;	/* from locore.S */
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
@@ -952,10 +946,7 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 #endif
 
 	/* flush the FPU ctx first */
-	if (tf->tf_cr30 == fpu_curpcb) {
-		fpu_exit();
-		fpu_curpcb = 0;
-	}
+	fpu_proc_flush(p);
 
 	if ((error = copyin((caddr_t)scp, (caddr_t)&ksc, sizeof ksc)))
 		return (error);
@@ -974,9 +965,7 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	tf->tf_sar = ksc.sc_regs[0];
 	ksc.sc_regs[0] = tf->tf_flags;
 	bcopy(&ksc.sc_regs[0], tf, 32*8);
-	bcopy(ksc.sc_fpregs, p->p_addr->u_pcb.pcb_fpregs,
-	    sizeof(ksc.sc_fpregs));
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)p->p_addr->u_pcb.pcb_fpregs,
+	bcopy(ksc.sc_fpregs, &p->p_addr->u_pcb.pcb_fpstate->hfp_regs,
 	    sizeof(ksc.sc_fpregs));
 
 	tf->tf_iioq[0] = ksc.sc_pcoqh;

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.9 2011/04/14 19:34:55 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.10 2011/04/16 22:02:32 kettenis Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -121,16 +121,21 @@ struct	user
 member	u_pcb
 
 struct	pcb
-member	pcb_fpregs
+member	pcb_fpstate
 member	pcb_onfault
 member	pcb_ksp
 member	pcb_space
 
 struct	cpu_info
-member	ci_trap_save
+member	ci_curproc
 member	ci_psw
 member	ci_cpl
-member	ci_curproc
+member	ci_trap_save
+member	ci_fpu_state
+
+struct	hppa_fpstate
+member	hfp_regs
+member	hfp_cpu
 
 struct	uvm
 member	page_idle_zero

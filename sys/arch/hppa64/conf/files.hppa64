@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa64,v 1.13 2011/01/02 13:08:36 jsing Exp $
+#	$OpenBSD: files.hppa64,v 1.14 2011/04/16 22:04:36 kettenis Exp $
 #
 # hppa64-specific configuration info
 
@@ -120,6 +120,7 @@ file	arch/hppa64/hppa64/conf.c
 file	arch/hppa64/hppa64/db_interface.c	ddb
 file	arch/hppa64/hppa64/db_disasm.c		ddb
 file	arch/hppa64/hppa64/disksubr.c		disk
+file	arch/hppa64/hppa64/fpu.c
 file	arch/hppa64/hppa64/intr.c
 file	arch/hppa64/hppa64/machdep.c
 file	arch/hppa64/hppa64/mutex.c

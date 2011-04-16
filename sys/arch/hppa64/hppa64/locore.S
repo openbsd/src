@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.23 2011/04/14 19:37:07 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.24 2011/04/16 22:02:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -38,6 +38,7 @@
 	.import esym, data
 	.import proc0, data
 	.import proc0paddr, data
+	.import proc0fpstate, data
 
 #define	EMRG_STACKSIZE	(1*PAGE_SIZE)
 #define	FPEMU_STACKSIZE	(1*PAGE_SIZE)
@@ -201,7 +202,6 @@ $start_zero_tf
 	std	%arg3, R%proc0paddr(%r1)
 
 	ldo	PAGE_SIZE(%arg3), %sp
-	mtctl	%arg3, %cr30
 	std	%r0, U_PCB+PCB_ONFAULT(%arg3)
 	std	%r0, U_PCB+PCB_SPACE(%arg3)
 
@@ -213,7 +213,10 @@ $start_zero_tf
 
 	ldil	TFF_LAST, %r1
 	std	%r1, TF_FLAGS(%arg2)
-	std	%arg3, TF_CR30(%arg2)
+	ldil	L%proc0fpstate, %r1
+	ldo	R%proc0fpstate(%r1), %r1
+	std	%r1, TF_CR30(%arg2)
+	mtctl	%r1, %cr30
 
 	mfctl	%cr24, %r1
 	ldw	CI_PSW(%r1), arg7
@@ -919,7 +922,7 @@ TLABEL(all_virt)
 
 	mfctl	%cr30, %arg2
 	mfctl	%cr27, %arg3		/* XXX */
-	std,ma	%arg2, 8(%sr3,%sp)	/* pa(u) */
+	std,ma	%arg2, 8(%sr3,%sp)
 	std,ma	%arg3, 8(%sr3,%sp)	/* user curthread */
 
 	mfctl	%sar, %arg2
@@ -1044,8 +1047,8 @@ ENTRY(TLABEL(excpt),0)
 	copy	%rp, %r1
 	copy	%arg0, %r8
 	mfctl	%cr30, %r9
-#if (PCB_FPREGS+U_PCB) != 0
-	ldo	PCB_FPREGS+U_PCB(%r9), %r9
+#if FP_REGS != 0
+	ldo	HFP_REGS(%r9), %r9
 #endif
 	.import	fpu_save, code
 	.call
@@ -1151,17 +1154,17 @@ $fpusw_set
 	depdi	3, 37, 2, %r1
 	mtctl	%r1, %cr10	/* ccr */
 
-	ldil	L%fpu_curpcb, %r16
+	mfctl	%cr24, %r16
 	mfctl	%cr30, %r9
-	ldd	R%fpu_curpcb(%r16), %r16
+	ldd	CI_FPU_STATE(%r16), %r16
 
 	comb,=,n %r16, %r0, $fpusw_nosave
 	comb,=,n %r16, %r9, $fpusw_done
 
 	copy	%arg0, %r17
 	copy	%rp, %r1
-#if (PCB_FPREGS+U_PCB) != 0
-	ldo	PCB_FPREGS+U_PCB(%r16), %r16
+#if HFP_REGS != 0
+	ldo	HFP_REGS(%r16), %r16
 #endif
 	.import	fpu_save, code
 	.call
@@ -1175,7 +1178,7 @@ $fpusw_nosave
 	.import	umvexp, data
 	ldil	L%(uvmexp+FPSWTCH), %r1
 	ldw	R%(uvmexp+FPSWTCH)(%r1), %r16
-	ldo	31*8+PCB_FPREGS+U_PCB(%r9), %r17
+	ldo	31*8+HFP_REGS(%r9), %r17
 	ldo	1(%r16), %r16
 	stw	%r16, R%(uvmexp+FPSWTCH)(%r1)
 
@@ -1212,8 +1215,10 @@ $fpusw_nosave
 	fldds,ma -8(%r17), %fr1
 	fldds     0(%r17), %fr0	/* fr0 must be restored last */
 
-	ldil	L%fpu_curpcb, %r1
-	std	%r17, R%fpu_curpcb(%r1)
+	mfctl	%cr24, %r1
+	std	%r9, CI_FPU_STATE(%r1)
+	std	%r1, HFP_CPU(%r9)
+	sync
 
 $fpusw_done
 	rfir

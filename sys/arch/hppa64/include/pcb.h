@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.2 2011/04/14 19:34:55 kettenis Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.3 2011/04/16 22:02:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -20,18 +20,15 @@
 #ifndef _MACHINE_PCB_H_
 #define _MACHINE_PCB_H_
 
+#include <machine/fpu.h>
 #include <machine/reg.h>
 
 struct pcb {
-	u_int64_t pcb_fpregs[HPPA_NFPREGS+1];	/* not in the trapframe */
-	u_int64_t pcb_onfault;		/* SW copy fault handler */
-	u_int64_t pcb_ksp;		/* kernel sp for ctxsw */
-	pa_space_t pcb_space;		/* copy pmap_space, for asm's sake */
+	struct hppa_fpstate *pcb_fpstate;	/* not in the trapframe */
 
-#if 0	/* imaginary part that is after user but in the same page */
-	u_int32_t pcb_pad[53+768];
-	u_int64_t pcb_frame[64];	/* the very end */
-#endif
+	u_int64_t pcb_ksp;		/* kernel sp for ctxsw */
+	u_int64_t pcb_onfault;		/* SW copy fault handler */
+	pa_space_t pcb_space;		/* copy pmap_space, for asm's sake */
 };
 
 struct md_coredump {
