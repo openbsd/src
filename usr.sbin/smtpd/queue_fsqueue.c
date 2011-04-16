@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.8 2011/04/15 17:01:05 gilles Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.9 2011/04/16 09:13:38 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -537,7 +537,7 @@ fsqueue_init(struct smtpd *env)
 		} else {
 			mode = 0700;
 			owner = env->sc_pw->pw_uid;
-			group = env->sc_pw->pw_gid;
+			group = 0;
 		}
 
 		if (! bsnprintf(pathname, sizeof(pathname), "%s%s", PATH_SPOOL,
