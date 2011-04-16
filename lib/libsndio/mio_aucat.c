@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_aucat.c,v 1.2 2011/04/16 10:52:22 ratchov Exp $	*/
+/*	$OpenBSD: mio_aucat.c,v 1.3 2011/04/16 11:51:47 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -73,13 +73,13 @@ bad:
 struct mio_hdl *
 mio_midithru_open(const char *str, unsigned mode, int nbio)
 {
-	return mio_xxx_open(str, "midithru", mode, nbio);
+	return mio_xxx_open(str, MIDICAT_PATH, mode, nbio);
 }
 
 struct mio_hdl *
 mio_aucat_open(const char *str, unsigned mode, int nbio)
 {
-	return mio_xxx_open(str, "softaudio", mode, nbio);
+	return mio_xxx_open(str, AUCAT_PATH, mode, nbio);
 }
 
 static void

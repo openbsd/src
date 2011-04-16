@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.108 2011/03/17 07:55:35 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.109 2011/04/16 11:51:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -764,7 +764,7 @@ aucat_main(int argc, char **argv)
 	}
 	if (nsock > 0) {
 		snprintf(path, sizeof(path), "%s/%s%u", base,
-		    DEFAULT_SOFTAUDIO, unit);
+		    AUCAT_PATH, unit);
 		listen = listen_new(&listen_ops, path);
 		if (listen == NULL)
 			exit(1);
@@ -1034,7 +1034,7 @@ midicat_main(int argc, char **argv)
 	}
 	if (nsock > 0) {
 		snprintf(path, sizeof(path), "%s/%s%u", base,
-		    DEFAULT_MIDITHRU, unit);
+		    MIDICAT_PATH, unit);
 		listen = listen_new(&listen_ops, path);
 		if (listen == NULL)
 			exit(1);
