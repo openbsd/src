@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha.c,v 1.27 2011/04/03 12:42:36 krw Exp $	*/
+/*	$OpenBSD: bha.c,v 1.28 2011/04/16 02:44:46 krw Exp $	*/
 /*	$NetBSD: bha.c,v 1.27 1998/11/19 21:53:00 thorpej Exp $	*/
 
 #undef BHADEBUG
@@ -467,7 +467,7 @@ bha_ccb_free(xsc, xccb)
 	void *xsc, *xccb;
 {
 	struct bha_softc *sc = xsc;
-	struct bha_ccb *ccb;
+	struct bha_ccb *ccb = xccb;
 
 	bha_reset_ccb(sc, ccb);
 
