@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio.c,v 1.9 2011/04/12 21:40:22 ratchov Exp $	*/
+/*	$OpenBSD: mio.c,v 1.10 2011/04/16 10:52:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -28,14 +28,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "debug.h"
 #include "mio_priv.h"
-
-#ifdef DEBUG
-/*
- * debug level, -1 means uninitialized
- */
-int mio_debug = -1;
-#endif
 
 struct mio_hdl *
 mio_open(const char *str, unsigned mode, int nbio)
@@ -47,14 +41,9 @@ mio_open(const char *str, unsigned mode, int nbio)
 	struct stat sb;
 	char *sep, buf[4];
 	int len;
-#ifdef DEBUG
-	char *dbg;
 
-	if (mio_debug < 0) {
-		dbg = issetugid() ? NULL : getenv("MIO_DEBUG");
-		if (!dbg || sscanf(dbg, "%u", &mio_debug) != 1)
-			mio_debug = 0;
-	}
+#ifdef DEBUG
+	sndio_debug_init();
 #endif
 	if ((mode & (MIO_OUT | MIO_IN)) == 0)
 		return NULL;

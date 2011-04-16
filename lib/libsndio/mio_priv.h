@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_priv.h,v 1.5 2011/04/12 21:40:22 ratchov Exp $	*/
+/*	$OpenBSD: mio_priv.h,v 1.6 2011/04/16 10:52:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -19,22 +19,6 @@
 
 #include <sys/param.h>
 #include "sndio.h"
-
-#ifdef DEBUG
-#define DPRINTF(...)						\
-	do {							\
-		if (mio_debug > 0)				\
-			fprintf(stderr, __VA_ARGS__);		\
-	} while(0)
-#define DPERROR(s)						\
-	do {							\
-		if (mio_debug > 0)				\
-			perror(s);				\
-	} while(0)
-#else
-#define DPRINTF(...) do {} while(0)
-#define DPERROR(s) do {} while(0)
-#endif
 
 /*
  * private ``handle'' structure
@@ -62,9 +46,5 @@ struct mio_hdl *mio_midithru_open(const char *, unsigned, int);
 struct mio_hdl *mio_aucat_open(const char *, unsigned, int);
 void mio_create(struct mio_hdl *, struct mio_ops *, unsigned, int);
 void mio_destroy(struct mio_hdl *);
-
-#ifdef DEBUG
-extern int mio_debug;
-#endif
 
 #endif /* !defined(MIO_PRIV_H) */

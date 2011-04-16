@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.54 2011/04/08 13:00:57 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.55 2011/04/16 10:52:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -707,7 +707,7 @@ sock_rdata(struct sock *f)
 	unsigned n;
 
 #ifdef DEBUG
-	if (f->pstate != SOCK_MIDI && f->rtodo == 0) {
+	if (f->rtodo == 0) {
 		sock_dbg(f);
 		dbg_puts(": data block already read\n");
 		dbg_panic();
@@ -719,17 +719,12 @@ sock_rdata(struct sock *f)
 		return 0;
 	if (!ABUF_WOK(obuf) || !(f->pipe.file.state & FILE_ROK))
 		return 0;
-	if (f->pstate == SOCK_MIDI) {
-		if (!rfile_do(p, obuf->len, NULL))
-			return 0;
-	} else {
-		if (!rfile_do(p, f->rtodo, &n))
-			return 0;
-		f->rtodo -= n;
-		if (f->pstate == SOCK_START) {
-			if (!ABUF_WOK(obuf) || (f->pipe.file.state & FILE_EOF))
-				f->pstate = SOCK_READY;
-		}
+	if (!rfile_do(p, f->rtodo, &n))
+		return 0;
+	f->rtodo -= n;
+	if (f->pstate == SOCK_START) {
+		if (!ABUF_WOK(obuf) || (f->pipe.file.state & FILE_EOF))
+			f->pstate = SOCK_READY;
 	}
 	return 1;
 }
@@ -746,7 +741,7 @@ sock_wdata(struct sock *f)
 	unsigned n;
 
 #ifdef DEBUG
-	if (f->pstate != SOCK_MIDI && f->wtodo == 0) {
+	if (f->wtodo == 0) {
 		sock_dbg(f);
 		dbg_puts(": attempted to write zero-sized data block\n");
 		dbg_panic();
@@ -757,7 +752,7 @@ sock_wdata(struct sock *f)
 	p = f->pipe.file.wproc;
 	ibuf = LIST_FIRST(&p->ins);
 #ifdef DEBUG
-	if (f->pstate != SOCK_MIDI && ibuf == NULL) {
+	if (ibuf == NULL) {
 		sock_dbg(f);
 		dbg_puts(": attempted to write on detached buffer\n");
 		dbg_panic();
@@ -767,14 +762,9 @@ sock_wdata(struct sock *f)
 		return 0;
 	if (!ABUF_ROK(ibuf))
 		return 0;
-	if (f->pstate == SOCK_MIDI) {
-		if (!wfile_do(p, ibuf->len, NULL))
-			return 0;
-	} else {
-		if (!wfile_do(p, f->wtodo, &n))
-			return 0;
-		f->wtodo -= n;
-	}
+	if (!wfile_do(p, f->wtodo, &n))
+		return 0;
+	f->wtodo -= n;
 	return 1;
 }
 
@@ -1102,8 +1092,8 @@ sock_execmsg(struct sock *f)
 			dbg_puts(": DATA message\n");
 		}
 #endif
-		if (f->pstate != SOCK_RUN && f->pstate != SOCK_START &&
-		    f->pstate != SOCK_READY) {
+		if (f->pstate != SOCK_MIDI && f->pstate != SOCK_RUN &&
+		    f->pstate != SOCK_START && f->pstate != SOCK_READY) {
 #ifdef DEBUG
 			if (debug_level >= 1) {
 				sock_dbg(f);
@@ -1113,7 +1103,7 @@ sock_execmsg(struct sock *f)
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
-		if (!(f->mode & MODE_PLAY)) {
+		if (!(f->mode & (MODE_PLAY | MODE_MIDIOUT))) {
 #ifdef DEBUG
 			if (debug_level >= 1) {
 				sock_dbg(f);
@@ -1147,7 +1137,8 @@ sock_execmsg(struct sock *f)
 		f->rstate = SOCK_RDATA;
 		f->rtodo = m->u.data.size / obuf->bpf;
 #ifdef DEBUG
-		if (f->rtodo > f->rmax && debug_level >= 2) {
+		if (debug_level >= 2 &&
+		    f->pstate != SOCK_MIDI && f->rtodo > f->rmax) {
 			sock_dbg(f);
 			dbg_puts(": received past current position, rtodo = ");
 			dbg_putu(f->rtodo);
@@ -1158,7 +1149,8 @@ sock_execmsg(struct sock *f)
 			return 0;
 		}
 #endif
-		f->rmax -= f->rtodo;
+		if (f->pstate != SOCK_MIDI)
+			f->rmax -= f->rtodo;
 		if (f->rtodo == 0) {
 #ifdef DEBUG
 			if (debug_level >= 1) {
@@ -1221,7 +1213,7 @@ sock_execmsg(struct sock *f)
 		else
 			f->pstate = SOCK_STOP;
 		AMSG_INIT(m);
-		m->cmd = AMSG_ACK;
+		m->cmd = AMSG_STOP;
 		f->rstate = SOCK_RRET;
 		f->rtodo = sizeof(struct amsg);
 		break;
@@ -1390,7 +1382,7 @@ sock_execmsg(struct sock *f)
 			dbg_puts(": BYE message\n");
 		}
 #endif
-		if (f->pstate != SOCK_INIT) {
+		if (f->pstate != SOCK_INIT && f->pstate != SOCK_MIDI) {
 #ifdef DEBUG
 			if (debug_level >= 1) {
 				sock_dbg(f);
@@ -1422,18 +1414,6 @@ sock_buildmsg(struct sock *f)
 	struct aproc *p;
 	struct abuf *ibuf;
 	unsigned size, max;
-
-	if (f->pstate == SOCK_MIDI) {
-#ifdef DEBUG
-		if (debug_level >= 3) {
-			sock_dbg(f);
-			dbg_puts(": switching to MIDI mode\n");
-		}
-#endif
-		f->wstate = SOCK_WDATA;
-		f->wtodo = 0;
-		return 1;
-	}
 
 	/*
 	 * Send initial position
@@ -1509,7 +1489,8 @@ sock_buildmsg(struct sock *f)
 	ibuf = LIST_FIRST(&p->ins);
 	if (ibuf && ABUF_ROK(ibuf)) {
 #ifdef DEBUG
-		if (ibuf->used > f->wmax && debug_level >= 3) {
+		if (debug_level >= 3 &&
+		    f->pstate != SOCK_MIDI && ibuf->used > f->wmax) {
 			sock_dbg(f);
 			dbg_puts(": attempt to send past current position: used = ");
 			dbg_putu(ibuf->used);
@@ -1518,23 +1499,31 @@ sock_buildmsg(struct sock *f)
 			dbg_puts("\n");
 		}
 #endif
-		max = AMSG_DATAMAX / ibuf->bpf;
 		size = ibuf->used;
-		if (size > f->walign)
-			size = f->walign;
-		if (size > f->wmax)
-			size = f->wmax;
-		if (size > max)
-			size = max;
-		if (size == 0)
-			return 0;
-		f->walign -= size;
-		f->wmax -= size;
-		if (f->walign == 0)
-			f->walign = f->round;
+		if (f->pstate == SOCK_MIDI) {
+			if (size > AMSG_DATAMAX)
+				size = AMSG_DATAMAX;			    
+			if (size == 0)
+				return 0;
+		} else {
+			max = AMSG_DATAMAX / ibuf->bpf;
+			if (size > max)
+				size = max;
+			if (size > f->walign)
+				size = f->walign;
+			if (size > f->wmax)
+				size = f->wmax;
+			if (size == 0)
+				return 0;
+			f->walign -= size;
+			f->wmax -= size;
+			if (f->walign == 0)
+				f->walign = f->round;
+			size *= ibuf->bpf;
+		}
 		AMSG_INIT(&f->wmsg);
 		f->wmsg.cmd = AMSG_DATA;
-		f->wmsg.u.data.size = size * ibuf->bpf;
+		f->wmsg.u.data.size = size;
 		f->wtodo = sizeof(struct amsg);
 		f->wstate = SOCK_WMSG;
 		return 1;
@@ -1575,7 +1564,7 @@ sock_read(struct sock *f)
 	case SOCK_RDATA:
 		if (!sock_rdata(f))
 			return 0;
-		if (f->pstate != SOCK_MIDI && f->rtodo == 0) {
+		if (f->rtodo == 0) {
 			f->rstate = SOCK_RMSG;
 			f->rtodo = sizeof(struct amsg);
 		}
@@ -1623,13 +1612,8 @@ sock_return(struct sock *f)
 			dbg_puts(": sent RRET message\n");
 		}
 #endif
-		if (f->pstate == SOCK_MIDI && (f->mode & MODE_MIDIOUT)) {
-			f->rstate = SOCK_RDATA;
-			f->rtodo = 0;
-		} else {
-			f->rstate = SOCK_RMSG;
-			f->rtodo = sizeof(struct amsg);
-		}
+		f->rstate = SOCK_RMSG;
+		f->rtodo = sizeof(struct amsg);
 		if (f->pipe.file.state & FILE_RINUSE)
 			break;
 		f->pipe.file.state |= FILE_RINUSE;
@@ -1687,7 +1671,7 @@ sock_write(struct sock *f)
 	case SOCK_WDATA:
 		if (!sock_wdata(f))
 			return 0;
-		if (f->pstate == SOCK_MIDI || f->wtodo > 0)
+		if (f->wtodo > 0)
 			break;
 		f->wstate = SOCK_WIDLE;
 		f->wtodo = 0xdeadbeef;

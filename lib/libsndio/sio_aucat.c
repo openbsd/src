@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_aucat.c,v 1.1 2011/04/08 11:18:07 ratchov Exp $	*/
+/*	$OpenBSD: sio_aucat.c,v 1.2 2011/04/16 10:52:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -27,23 +27,21 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "amsg.h"
+#include "aucat.h"
+#include "debug.h"
 #include "sio_priv.h"
 
 struct sio_aucat_hdl {
 	struct sio_hdl sio;
-	int fd;				/* socket */
-	struct amsg rmsg, wmsg;		/* temporary messages */
-	size_t wtodo, rtodo;		/* bytes to complete the packet */
-#define STATE_IDLE	0		/* nothing to do */
-#define STATE_MSG	1		/* message being transferred */
-#define STATE_DATA	2		/* data being transferred */
-	unsigned rstate, wstate;	/* one of above */
+	struct aucat aucat;
 	unsigned rbpf, wbpf;		/* read and write bytes-per-frame */
 	int maxwrite;			/* latency constraint */
 	int events;			/* events the user requested */
 	unsigned curvol, reqvol;	/* current and requested volume */
 	int delta;			/* some of received deltas */
+#define PSTATE_INIT	0
+#define PSTATE_RUN	1
+	int pstate;
 };
 
 static void sio_aucat_close(struct sio_hdl *);
@@ -77,238 +75,96 @@ static struct sio_ops sio_aucat_ops = {
 };
 
 /*
- * read a message, return 0 if blocked
- */
-static int
-sio_aucat_rmsg(struct sio_aucat_hdl *hdl)
-{
-	ssize_t n;
-	unsigned char *data;
-
-	while (hdl->rtodo > 0) {
-		data = (unsigned char *)&hdl->rmsg;
-		data += sizeof(struct amsg) - hdl->rtodo;
-		while ((n = read(hdl->fd, data, hdl->rtodo)) < 0) {
-			if (errno == EINTR)
-				continue;
-			if (errno != EAGAIN) {
-				hdl->sio.eof = 1;
-				DPERROR("sio_aucat_rmsg: read");
-			}
-			return 0;
-		}
-		if (n == 0) {
-			DPRINTF("sio_aucat_rmsg: eof\n");
-			hdl->sio.eof = 1;
-			return 0;
-		}
-		hdl->rtodo -= n;
-	}
-	return 1;
-}
-
-/*
- * write a message, return 0 if blocked
- */
-static int
-sio_aucat_wmsg(struct sio_aucat_hdl *hdl)
-{
-	ssize_t n;
-	unsigned char *data;
-
-	while (hdl->wtodo > 0) {
-		data = (unsigned char *)&hdl->wmsg;
-		data += sizeof(struct amsg) - hdl->wtodo;
-		while ((n = write(hdl->fd, data, hdl->wtodo)) < 0) {
-			if (errno == EINTR)
-				continue;
-			if (errno != EAGAIN) {
-				hdl->sio.eof = 1;
-				DPERROR("sio_aucat_wmsg: write");
-			}
-			return 0;
-		}
-		hdl->wtodo -= n;
-	}
-	return 1;
-}
-
-/*
  * execute the next message, return 0 if blocked
  */
 static int
 sio_aucat_runmsg(struct sio_aucat_hdl *hdl)
 {
-	if (!sio_aucat_rmsg(hdl))
+	if (!aucat_rmsg(&hdl->aucat, &hdl->sio.eof))
 		return 0;
-	switch (hdl->rmsg.cmd) {
+	switch (hdl->aucat.rmsg.cmd) {
 	case AMSG_DATA:
-		if (hdl->rmsg.u.data.size == 0 ||
-		    hdl->rmsg.u.data.size % hdl->rbpf) {
+		if (hdl->aucat.rmsg.u.data.size == 0 ||
+		    hdl->aucat.rmsg.u.data.size % hdl->rbpf) {
 			DPRINTF("sio_aucat_runmsg: bad data message\n");
 			hdl->sio.eof = 1;
 			return 0;
 		}
-		hdl->rstate = STATE_DATA;
-		hdl->rtodo = hdl->rmsg.u.data.size;
-		break;
+		return 1;
 	case AMSG_POS:
-		hdl->maxwrite += hdl->rmsg.u.ts.delta * (int)hdl->wbpf;
+		hdl->maxwrite += hdl->aucat.rmsg.u.ts.delta * (int)hdl->wbpf;
 		DPRINTF("aucat: pos = %d, maxwrite = %d\n",
-		    hdl->rmsg.u.ts.delta, hdl->maxwrite);
-		hdl->delta = hdl->rmsg.u.ts.delta;
-		hdl->rstate = STATE_MSG;
-		hdl->rtodo = sizeof(struct amsg);
+		    hdl->aucat.rmsg.u.ts.delta, hdl->maxwrite);
+		hdl->delta = hdl->aucat.rmsg.u.ts.delta;
 		break;
 	case AMSG_MOVE:
-		hdl->maxwrite += hdl->rmsg.u.ts.delta * hdl->wbpf;
-		hdl->delta += hdl->rmsg.u.ts.delta;
+		hdl->maxwrite += hdl->aucat.rmsg.u.ts.delta * hdl->wbpf;
+		hdl->delta += hdl->aucat.rmsg.u.ts.delta;
 		DPRINTF("aucat: move = %d, delta = %d, maxwrite = %d\n",
-		    hdl->rmsg.u.ts.delta, hdl->delta, hdl->maxwrite);
+		    hdl->aucat.rmsg.u.ts.delta, hdl->delta, hdl->maxwrite);
 		if (hdl->delta >= 0) {
 			sio_onmove_cb(&hdl->sio, hdl->delta);
 			hdl->delta = 0;
 		}
-		hdl->rstate = STATE_MSG;
-		hdl->rtodo = sizeof(struct amsg);
 		break;
 	case AMSG_SETVOL:
-		hdl->curvol = hdl->reqvol = hdl->rmsg.u.vol.ctl;
+		hdl->curvol = hdl->reqvol = hdl->aucat.rmsg.u.vol.ctl;
 		sio_onvol_cb(&hdl->sio, hdl->curvol);
-		hdl->rstate = STATE_MSG;
-		hdl->rtodo = sizeof(struct amsg);
 		break;
-	case AMSG_GETPAR:
-	case AMSG_ACK:
-		hdl->rstate = STATE_IDLE;
-		hdl->rtodo = 0xdeadbeef;
+	case AMSG_STOP:
+		hdl->pstate = PSTATE_INIT;
 		break;
 	default:
-		DPRINTF("sio_aucat_runmsg: unknown message\n");
+		DPRINTF("sio_aucat_runmsg: unhandled message %u\n", hdl->aucat.rmsg.cmd);
 		hdl->sio.eof = 1;
 		return 0;
 	}
+	hdl->aucat.rstate = RSTATE_MSG;
+	hdl->aucat.rtodo = sizeof(struct amsg);
 	return 1;
+}
+
+static int
+sio_aucat_buildmsg(struct sio_aucat_hdl *hdl)
+{
+	if (hdl->curvol != hdl->reqvol) {
+		hdl->aucat.wstate = WSTATE_MSG;
+		hdl->aucat.wtodo = sizeof(struct amsg);
+		hdl->aucat.wmsg.cmd = AMSG_SETVOL;
+		hdl->aucat.wmsg.u.vol.ctl = hdl->reqvol;
+		hdl->curvol = hdl->reqvol;
+		return aucat_wmsg(&hdl->aucat, &hdl->sio.eof);
+	}
+	return 0;
 }
 
 struct sio_hdl *
 sio_aucat_open(const char *str, unsigned mode, int nbio)
 {
-	extern char *__progname;
-	int s;
-	char unit[4], *sep, *opt;
 	struct sio_aucat_hdl *hdl;
-	struct sockaddr_un ca;
-	socklen_t len = sizeof(struct sockaddr_un);
-	uid_t uid;
-
-	sep = strchr(str, '.');
-	if (sep == NULL) {
-		opt = "default";
-		strlcpy(unit, str, sizeof(unit));
-	} else {
-		opt = sep + 1;
-		if (sep - str >= sizeof(unit)) {
-			DPRINTF("sio_open_aucat: %s: too long\n", str);
-			return NULL;
-		}
-		strlcpy(unit, str, opt - str);
-	}
-	DPRINTF("sio_open_aucat: trying %s -> %s.%s\n", str, unit, opt);
-	uid = geteuid();
-	if (strchr(str, '/') != NULL)
-		return NULL;
-	snprintf(ca.sun_path, sizeof(ca.sun_path),
-	    "/tmp/aucat-%u/softaudio%s", uid, unit);
-	ca.sun_family = AF_UNIX;
 
 	hdl = malloc(sizeof(struct sio_aucat_hdl));
 	if (hdl == NULL)
 		return NULL;
+	if (!aucat_open(&hdl->aucat, str, "softaudio", mode, nbio)) {
+		free(hdl);
+		return NULL;
+	}
 	sio_create(&hdl->sio, &sio_aucat_ops, mode, nbio);
-
-	s = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (s < 0)
-		goto bad_free;
-	while (connect(s, (struct sockaddr *)&ca, len) < 0) {
-		if (errno == EINTR)
-			continue;
-		DPERROR("sio_open_aucat: connect");
-		/* try shared server */
-		snprintf(ca.sun_path, sizeof(ca.sun_path),
-		    "/tmp/aucat/softaudio%s", unit);
-		while (connect(s, (struct sockaddr *)&ca, len) < 0) {
-			if (errno == EINTR)
-				continue;
-			DPERROR("sio_open_aucat: connect");
-			goto bad_connect;
-		}
-		break;
-	}
-	if (fcntl(s, F_SETFD, FD_CLOEXEC) < 0) {
-		DPERROR("FD_CLOEXEC");
-		goto bad_connect;
-	}
-	hdl->fd = s;
-	hdl->rstate = STATE_IDLE;
-	hdl->rtodo = 0xdeadbeef;
-	hdl->wstate = STATE_IDLE;
-	hdl->wtodo = 0xdeadbeef;
 	hdl->curvol = SIO_MAXVOL;
 	hdl->reqvol = SIO_MAXVOL;
-
-	/*
-	 * say hello to server
-	 */
-	AMSG_INIT(&hdl->wmsg);
-	hdl->wmsg.cmd = AMSG_HELLO;
-	hdl->wmsg.u.hello.version = AMSG_VERSION;
-	hdl->wmsg.u.hello.mode = mode;
-	strlcpy(hdl->wmsg.u.hello.who, __progname,
-	    sizeof(hdl->wmsg.u.hello.who));
-	strlcpy(hdl->wmsg.u.hello.opt, opt,
-	    sizeof(hdl->wmsg.u.hello.opt));
-	hdl->wtodo = sizeof(struct amsg);
-	if (!sio_aucat_wmsg(hdl))
-		goto bad_connect;
-	hdl->rtodo = sizeof(struct amsg);
-	if (!sio_aucat_rmsg(hdl)) {
-		DPRINTF("sio_open_aucat: mode refused\n");
-		goto bad_connect;
-	}
-	if (hdl->rmsg.cmd != AMSG_ACK) {
-		DPRINTF("sio_open_aucat: protocol err\n");
-		goto bad_connect;
-	}
+	hdl->pstate = PSTATE_INIT;
 	return (struct sio_hdl *)hdl;
- bad_connect:
-	while (close(s) < 0 && errno == EINTR)
-		; /* retry */
- bad_free:
-	free(hdl);
-	return NULL;
 }
 
 static void
 sio_aucat_close(struct sio_hdl *sh)
 {
 	struct sio_aucat_hdl *hdl = (struct sio_aucat_hdl *)sh;
-	char dummy[1];
 
 	if (!hdl->sio.eof && hdl->sio.started)
 		(void)sio_aucat_stop(&hdl->sio);
-	if (!hdl->sio.eof) {
-		AMSG_INIT(&hdl->wmsg);
-		hdl->wmsg.cmd = AMSG_BYE;
-		hdl->wtodo = sizeof(struct amsg);
-		if (!sio_aucat_wmsg(hdl))
-			goto bad_close;
-		while (read(hdl->fd, dummy, 1) < 0 && errno == EINTR)
-			; /* nothing */
-	}
- bad_close:
-	while (close(hdl->fd) < 0 && errno == EINTR)
-		; /* nothing */
+	aucat_close(&hdl->aucat, hdl->sio.eof);
 	free(hdl);
 }
 
@@ -329,18 +185,16 @@ sio_aucat_start(struct sio_hdl *sh)
 	hdl->delta = 0;
 	DPRINTF("aucat: start, maxwrite = %d\n", hdl->maxwrite);
 
-	AMSG_INIT(&hdl->wmsg);
-	hdl->wmsg.cmd = AMSG_START;
-	hdl->wtodo = sizeof(struct amsg);
-	if (!sio_aucat_wmsg(hdl))
+	AMSG_INIT(&hdl->aucat.wmsg);
+	hdl->aucat.wmsg.cmd = AMSG_START;
+	hdl->aucat.wtodo = sizeof(struct amsg);
+	if (!aucat_wmsg(&hdl->aucat, &hdl->sio.eof))
 		return 0;
-	hdl->rstate = STATE_MSG;
-	hdl->rtodo = sizeof(struct amsg);
-	if (fcntl(hdl->fd, F_SETFL, O_NONBLOCK) < 0) {
-		DPERROR("sio_aucat_start: fcntl(0)");
-		hdl->sio.eof = 1;
+	hdl->aucat.rstate = RSTATE_MSG;
+	hdl->aucat.rtodo = sizeof(struct amsg);
+	if (!aucat_setfl(&hdl->aucat, 1, &hdl->sio.eof))
 		return 0;
-	}
+	hdl->pstate = PSTATE_RUN;
 	return 1;
 }
 
@@ -352,28 +206,19 @@ sio_aucat_stop(struct sio_hdl *sh)
 	struct sio_aucat_hdl *hdl = (struct sio_aucat_hdl *)sh;
 	unsigned n, count;
 
-	if (fcntl(hdl->fd, F_SETFL, 0) < 0) {
-		DPERROR("sio_aucat_stop: fcntl(0)");
-		hdl->sio.eof = 1;
+	if (!aucat_setfl(&hdl->aucat, 0, &hdl->sio.eof))
 		return 0;
-	}
-
 	/*
 	 * complete message or data block in progress
 	 */
-	if (hdl->wstate == STATE_MSG) {
-		if (!sio_aucat_wmsg(hdl))
+	if (hdl->aucat.wstate == WSTATE_MSG) {
+		if (!aucat_wmsg(&hdl->aucat, &hdl->sio.eof))
 			return 0;
-		if (hdl->wmsg.cmd == AMSG_DATA) {
-			hdl->wstate = STATE_DATA;
-			hdl->wtodo = hdl->wmsg.u.data.size;
-		} else
-			hdl->wstate = STATE_IDLE;
 	}
-	if (hdl->wstate == STATE_DATA) {
-		hdl->maxwrite = hdl->wtodo;
-		while (hdl->wstate != STATE_IDLE) {
-			count = hdl->wtodo;
+	if (hdl->aucat.wstate == WSTATE_DATA) {
+		hdl->maxwrite = hdl->aucat.wtodo;
+		while (hdl->aucat.wstate != WSTATE_IDLE) {
+			count = hdl->aucat.wtodo;
 			if (count > ZERO_MAX)
 				count = ZERO_MAX;
 			n = sio_aucat_write(&hdl->sio, zero, count);
@@ -385,26 +230,22 @@ sio_aucat_stop(struct sio_hdl *sh)
 	/*
 	 * send stop message
 	 */
-	AMSG_INIT(&hdl->wmsg);
-	hdl->wmsg.cmd = AMSG_STOP;
-	hdl->wtodo = sizeof(struct amsg);
-	if (!sio_aucat_wmsg(hdl))
+	AMSG_INIT(&hdl->aucat.wmsg);
+	hdl->aucat.wmsg.cmd = AMSG_STOP;
+	hdl->aucat.wtodo = sizeof(struct amsg);
+	if (!aucat_wmsg(&hdl->aucat, &hdl->sio.eof))
 		return 0;
-	if (hdl->rstate == STATE_IDLE) {
-		hdl->rstate = STATE_MSG;
-		hdl->rtodo = sizeof(struct amsg);
-	}
 
 	/*
 	 * wait for the STOP ACK
 	 */
-	while (hdl->rstate != STATE_IDLE) {
-		switch (hdl->rstate) {
-		case STATE_MSG:
+	while (hdl->pstate != PSTATE_INIT) {
+		switch (hdl->aucat.rstate) {
+		case RSTATE_MSG:
 			if (!sio_aucat_runmsg(hdl))
 				return 0;
 			break;
-		case STATE_DATA:
+		case RSTATE_DATA:
 			if (!sio_aucat_read(&hdl->sio, zero, ZERO_MAX))
 				return 0;
 			break;
@@ -418,22 +259,22 @@ sio_aucat_setpar(struct sio_hdl *sh, struct sio_par *par)
 {
 	struct sio_aucat_hdl *hdl = (struct sio_aucat_hdl *)sh;
 
-	AMSG_INIT(&hdl->wmsg);
-	hdl->wmsg.cmd = AMSG_SETPAR;
-	hdl->wmsg.u.par.bits = par->bits;
-	hdl->wmsg.u.par.bps = par->bps;
-	hdl->wmsg.u.par.sig = par->sig;
-	hdl->wmsg.u.par.le = par->le;
-	hdl->wmsg.u.par.msb = par->msb;
-	hdl->wmsg.u.par.rate = par->rate;
-	hdl->wmsg.u.par.appbufsz = par->appbufsz;
-	hdl->wmsg.u.par.xrun = par->xrun;
+	AMSG_INIT(&hdl->aucat.wmsg);
+	hdl->aucat.wmsg.cmd = AMSG_SETPAR;
+	hdl->aucat.wmsg.u.par.bits = par->bits;
+	hdl->aucat.wmsg.u.par.bps = par->bps;
+	hdl->aucat.wmsg.u.par.sig = par->sig;
+	hdl->aucat.wmsg.u.par.le = par->le;
+	hdl->aucat.wmsg.u.par.msb = par->msb;
+	hdl->aucat.wmsg.u.par.rate = par->rate;
+	hdl->aucat.wmsg.u.par.appbufsz = par->appbufsz;
+	hdl->aucat.wmsg.u.par.xrun = par->xrun;
 	if (hdl->sio.mode & SIO_REC)
-		hdl->wmsg.u.par.rchan = par->rchan;
+		hdl->aucat.wmsg.u.par.rchan = par->rchan;
 	if (hdl->sio.mode & SIO_PLAY)
-		hdl->wmsg.u.par.pchan = par->pchan;
-	hdl->wtodo = sizeof(struct amsg);
-	if (!sio_aucat_wmsg(hdl))
+		hdl->aucat.wmsg.u.par.pchan = par->pchan;
+	hdl->aucat.wtodo = sizeof(struct amsg);
+	if (!aucat_wmsg(&hdl->aucat, &hdl->sio.eof))
 		return 0;
 	return 1;
 }
@@ -443,33 +284,33 @@ sio_aucat_getpar(struct sio_hdl *sh, struct sio_par *par)
 {
 	struct sio_aucat_hdl *hdl = (struct sio_aucat_hdl *)sh;
 
-	AMSG_INIT(&hdl->wmsg);
-	hdl->wmsg.cmd = AMSG_GETPAR;
-	hdl->wtodo = sizeof(struct amsg);
-	if (!sio_aucat_wmsg(hdl))
+	AMSG_INIT(&hdl->aucat.wmsg);
+	hdl->aucat.wmsg.cmd = AMSG_GETPAR;
+	hdl->aucat.wtodo = sizeof(struct amsg);
+	if (!aucat_wmsg(&hdl->aucat, &hdl->sio.eof))
 		return 0;
-	hdl->rtodo = sizeof(struct amsg);
-	if (!sio_aucat_rmsg(hdl))
+	hdl->aucat.rtodo = sizeof(struct amsg);
+	if (!aucat_rmsg(&hdl->aucat, &hdl->sio.eof))
 		return 0;
-	if (hdl->rmsg.cmd != AMSG_GETPAR) {
+	if (hdl->aucat.rmsg.cmd != AMSG_GETPAR) {
 		DPRINTF("sio_aucat_getpar: protocol err\n");
 		hdl->sio.eof = 1;
 		return 0;
 	}
-	par->bits = hdl->rmsg.u.par.bits;
-	par->bps = hdl->rmsg.u.par.bps;
-	par->sig = hdl->rmsg.u.par.sig;
-	par->le = hdl->rmsg.u.par.le;
-	par->msb = hdl->rmsg.u.par.msb;
-	par->rate = hdl->rmsg.u.par.rate;
-	par->bufsz = hdl->rmsg.u.par.bufsz;
-	par->appbufsz = hdl->rmsg.u.par.appbufsz;
-	par->xrun = hdl->rmsg.u.par.xrun;
-	par->round = hdl->rmsg.u.par.round;
+	par->bits = hdl->aucat.rmsg.u.par.bits;
+	par->bps = hdl->aucat.rmsg.u.par.bps;
+	par->sig = hdl->aucat.rmsg.u.par.sig;
+	par->le = hdl->aucat.rmsg.u.par.le;
+	par->msb = hdl->aucat.rmsg.u.par.msb;
+	par->rate = hdl->aucat.rmsg.u.par.rate;
+	par->bufsz = hdl->aucat.rmsg.u.par.bufsz;
+	par->appbufsz = hdl->aucat.rmsg.u.par.appbufsz;
+	par->xrun = hdl->aucat.rmsg.u.par.xrun;
+	par->round = hdl->aucat.rmsg.u.par.round;
 	if (hdl->sio.mode & SIO_PLAY)
-		par->pchan = hdl->rmsg.u.par.pchan;
+		par->pchan = hdl->aucat.rmsg.u.par.pchan;
 	if (hdl->sio.mode & SIO_REC)
-		par->rchan = hdl->rmsg.u.par.rchan;
+		par->rchan = hdl->aucat.rmsg.u.par.rchan;
 	return 1;
 }
 
@@ -480,15 +321,15 @@ sio_aucat_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 	unsigned i, bps, le, sig, chan, rindex, rmult;
 	static unsigned rates[] = { 8000, 11025, 12000 };
 
-	AMSG_INIT(&hdl->wmsg);
-	hdl->wmsg.cmd = AMSG_GETCAP;
-	hdl->wtodo = sizeof(struct amsg);
-	if (!sio_aucat_wmsg(hdl))
+	AMSG_INIT(&hdl->aucat.wmsg);
+	hdl->aucat.wmsg.cmd = AMSG_GETCAP;
+	hdl->aucat.wtodo = sizeof(struct amsg);
+	if (!aucat_wmsg(&hdl->aucat, &hdl->sio.eof))
 		return 0;
-	hdl->rtodo = sizeof(struct amsg);
-	if (!sio_aucat_rmsg(hdl))
+	hdl->aucat.rtodo = sizeof(struct amsg);
+	if (!aucat_rmsg(&hdl->aucat, &hdl->sio.eof))
 		return 0;
-	if (hdl->rmsg.cmd != AMSG_GETCAP) {
+	if (hdl->aucat.rmsg.cmd != AMSG_GETCAP) {
 		DPRINTF("sio_aucat_getcap: protocol err\n");
 		hdl->sio.eof = 1;
 		return 0;
@@ -565,127 +406,30 @@ static size_t
 sio_aucat_read(struct sio_hdl *sh, void *buf, size_t len)
 {
 	struct sio_aucat_hdl *hdl = (struct sio_aucat_hdl *)sh;
-	ssize_t n;
 
-	while (hdl->rstate != STATE_DATA) {
-		switch (hdl->rstate) {
-		case STATE_MSG:
-			if (!sio_aucat_runmsg(hdl))
-				return 0;
-			break;
-		case STATE_IDLE:
-			DPRINTF("sio_aucat_read: unexpected idle state\n");
-			hdl->sio.eof = 1;
+	while (hdl->aucat.rstate == RSTATE_MSG) {
+		if (!sio_aucat_runmsg(hdl))
 			return 0;
-		}
 	}
-	if (len > hdl->rtodo)
-		len = hdl->rtodo;
-	while ((n = read(hdl->fd, buf, len)) < 0) {
-		if (errno == EINTR)
-			continue;
-		if (errno != EAGAIN) {
-			hdl->sio.eof = 1;
-			DPERROR("sio_aucat_read: read");
-		}
-		return 0;
-	}
-	if (n == 0) {
-		DPRINTF("sio_aucat_read: eof\n");
-		hdl->sio.eof = 1;
-		return 0;
-	}
-	hdl->rtodo -= n;
-	if (hdl->rtodo == 0) {
-		hdl->rstate = STATE_MSG;
-		hdl->rtodo = sizeof(struct amsg);
-	}
-	DPRINTF("aucat: read: n = %zd\n", n);
-	return n;
-}
-
-static int
-sio_aucat_buildmsg(struct sio_aucat_hdl *hdl, size_t len)
-{
-	unsigned sz;
-
-	if (hdl->curvol != hdl->reqvol) {
-		hdl->wstate = STATE_MSG;
-		hdl->wtodo = sizeof(struct amsg);
-		hdl->wmsg.cmd = AMSG_SETVOL;
-		hdl->wmsg.u.vol.ctl = hdl->reqvol;
-		hdl->curvol = hdl->reqvol;
-		return 1;
-	} else if (len > 0 && hdl->maxwrite > 0) {
-		sz = len;
-		if (sz > AMSG_DATAMAX)
-			sz = AMSG_DATAMAX;
-		if (sz > hdl->maxwrite)
-			sz = hdl->maxwrite;
-		sz -= sz % hdl->wbpf;
-		if (sz == 0)
-			sz = hdl->wbpf;
-		hdl->wstate = STATE_MSG;
-		hdl->wtodo = sizeof(struct amsg);
-		hdl->wmsg.cmd = AMSG_DATA;
-		hdl->wmsg.u.data.size = sz;
-		return 1;
-	}
-	return 0;
+	return aucat_rdata(&hdl->aucat, buf, len, &hdl->sio.eof);
 }
 
 static size_t
 sio_aucat_write(struct sio_hdl *sh, const void *buf, size_t len)
 {
 	struct sio_aucat_hdl *hdl = (struct sio_aucat_hdl *)sh;
-	ssize_t n;
+	size_t n;
 
-	while (hdl->wstate != STATE_DATA) {
-		switch (hdl->wstate) {
-		case STATE_IDLE:
-			if (!sio_aucat_buildmsg(hdl, len))
-				return 0;
-			/* PASSTHROUGH */
-		case STATE_MSG:
-			if (!sio_aucat_wmsg(hdl))
-				return 0;
-			if (hdl->wmsg.cmd == AMSG_DATA) {
-				hdl->wstate = STATE_DATA;
-				hdl->wtodo = hdl->wmsg.u.data.size;
-			} else
-				hdl->wstate = STATE_IDLE;
+	while (hdl->aucat.wstate == WSTATE_IDLE) {
+		if (!sio_aucat_buildmsg(hdl))
 			break;
-		default:
-			DPRINTF("sio_aucat_write: bad state\n");
-			abort();
-		}
 	}
-	if (hdl->maxwrite <= 0)
+	if (len <= 0 || hdl->maxwrite <= 0)
 		return 0;
 	if (len > hdl->maxwrite)
 		len = hdl->maxwrite;
-	if (len > hdl->wtodo)
-		len = hdl->wtodo;
-	if (len == 0) {
-		DPRINTF("sio_aucat_write: len == 0\n");
-		abort();
-	}
-	while ((n = write(hdl->fd, buf, len)) < 0) {
-		if (errno == EINTR)
-			continue;
-		if (errno != EAGAIN) {
-			hdl->sio.eof = 1;
-			DPERROR("sio_aucat_write: write");
-		}
-		return 0;
-	}
+	n = aucat_wdata(&hdl->aucat, buf, len, hdl->wbpf, &hdl->sio.eof);
 	hdl->maxwrite -= n;
-	DPRINTF("aucat: write: n = %zd, maxwrite = %d\n", n, hdl->maxwrite);
-	hdl->wtodo -= n;
-	if (hdl->wtodo == 0) {
-		hdl->wstate = STATE_IDLE;
-		hdl->wtodo = 0xdeadbeef;
-	}
 	return n;
 }
 
@@ -703,12 +447,7 @@ sio_aucat_pollfd(struct sio_hdl *sh, struct pollfd *pfd, int events)
 	hdl->events = events;
 	if (hdl->maxwrite <= 0)
 		events &= ~POLLOUT;
-	if (hdl->rstate == STATE_MSG)
-		events |= POLLIN;
-	pfd->fd = hdl->fd;
-	pfd->events = events;
-	DPRINTF("aucat: pollfd: %x -> %x\n", hdl->events, pfd->events);
-	return 1;
+	return aucat_pollfd(&hdl->aucat, pfd, events);
 }
 
 static int
@@ -718,12 +457,12 @@ sio_aucat_revents(struct sio_hdl *sh, struct pollfd *pfd)
 	int revents = pfd->revents;
 
 	if (revents & POLLIN) {
-		while (hdl->rstate == STATE_MSG) {
-			if (!sio_aucat_runmsg(hdl)) {
-				revents &= ~POLLIN;
+		while (hdl->aucat.rstate == RSTATE_MSG) {
+			if (!sio_aucat_runmsg(hdl))
 				break;
-			}
 		}
+		if (hdl->aucat.rstate != RSTATE_DATA)
+			revents &= ~POLLIN;
 	}
 	if (revents & POLLOUT) {
 		if (hdl->maxwrite <= 0)
@@ -731,7 +470,7 @@ sio_aucat_revents(struct sio_hdl *sh, struct pollfd *pfd)
 	}
 	if (hdl->sio.eof)
 		return POLLHUP;
-	DPRINTF("aucat: revents: %x\n", revents & hdl->events);
+	DPRINTF("sio_aucat_revents: %x\n", revents & hdl->events);
 	return revents & (hdl->events | POLLHUP);
 }
 

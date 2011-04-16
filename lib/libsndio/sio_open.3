@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.26 2010/11/06 22:17:26 jmc Exp $
+.\" $OpenBSD: sio_open.3,v 1.27 2011/04/16 10:52:22 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 6 2010 $
+.Dd $Mdocdate: April 16 2011 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -729,7 +729,7 @@ Device to use if
 is called with a NULL
 .Va name
 argument.
-.It Ev SIO_DEBUG
+.It Ev SNDIO_DEBUG
 The debug level:
 may be a value between 0 and 2.
 .El
