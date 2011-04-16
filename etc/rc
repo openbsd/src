@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.350 2011/03/23 15:22:10 stevesk Exp $
+#	$OpenBSD: rc,v 1.351 2011/04/16 05:53:18 ajacoutot Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -800,7 +800,7 @@ rm -f /etc/rc.firsttime.run
 
 [ -f /etc/rc.local ] && . /etc/rc.local
 
-echo -n standard daemons:
+echo -n starting standard daemons:
 
 if [ X"${apmd_flags}" != X"NO" -a -x /usr/sbin/apmd ]; then
 	echo -n ' apmd';	/usr/sbin/apmd ${apmd_flags}
