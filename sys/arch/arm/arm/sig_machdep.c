@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.3 2011/04/15 04:52:39 guenther Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.4 2011/04/16 02:34:19 deraadt Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.22 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*
@@ -216,7 +216,6 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct sigcontext *scp, context;
 	struct trapframe *tf;
-	struct sigacts *psp = p->p_sigacts;
 
 	/*
 	 * we do a rather scary test in userland
