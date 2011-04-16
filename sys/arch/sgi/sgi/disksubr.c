@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.22 2011/04/15 14:57:29 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.23 2011/04/16 03:21:15 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -118,7 +118,7 @@ readsgilabel(struct buf *bp, void (*strat)(struct buf *),
 
 	bp->b_blkno = 0;
 	bp->b_bcount = lp->d_secsize;
-	CLR(bp->b_flags, B_WRITE | B_DONE);
+	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
 	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
 	(*strat)(bp);
 
@@ -200,7 +200,7 @@ finished:
 	    DL_BLKSPERSEC(lp);
 	offset = DL_BLKOFFSET(lp, fsoffs + LABELSECTOR) + LABELOFFSET;
 	bp->b_bcount = lp->d_secsize;
-	CLR(bp->b_flags, B_WRITE | B_DONE);
+	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
 	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
 	(*strat)(bp);
 	if (biowait(bp))
@@ -232,7 +232,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 	bp->b_blkno = DL_BLKTOSEC(lp, partoff+LABELSECTOR) * DL_BLKSPERSEC(lp);
 	offset = DL_BLKOFFSET(lp, partoff + LABELSECTOR) + LABELOFFSET;
 	bp->b_bcount = lp->d_secsize;
-	CLR(bp->b_flags, B_WRITE | B_DONE);
+	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
 	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
 	(*strat)(bp);
 	if ((error = biowait(bp)) != 0)
@@ -240,7 +240,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 
 	dlp = (struct disklabel *)(bp->b_data + offset);
 	*dlp = *lp;
-	CLR(bp->b_flags, B_READ | B_DONE);
+	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
 	SET(bp->b_flags, B_BUSY | B_WRITE | B_RAW);
 	(*strat)(bp);
 	error = biowait(bp);
