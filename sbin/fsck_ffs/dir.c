@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.24 2009/10/27 23:59:32 deraadt Exp $	*/
+/*	$OpenBSD: dir.c,v 1.25 2011/04/16 16:37:21 otto Exp $	*/
 /*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
@@ -443,8 +443,8 @@ linkup(ino_t orphan, ino_t parentdir)
 		idesc.id_type = ADDR;
 		idesc.id_func = pass4check;
 		idesc.id_number = oldlfdir;
-		adjust(&idesc, lncntp[oldlfdir] + 1);
-		lncntp[oldlfdir] = 0;
+		adjust(&idesc, ILNCOUNT(oldlfdir) + 1);
+		ILNCOUNT(oldlfdir) = 0;
 		dp = ginode(lfdir);
 	}
 	if (GET_ISTATE(lfdir) != DFOUND) {
@@ -457,7 +457,7 @@ linkup(ino_t orphan, ino_t parentdir)
 		printf("\n\n");
 		return (0);
 	}
-	lncntp[orphan]--;
+	ILNCOUNT(orphan)--;
 	if (lostdir) {
 		if ((changeino(orphan, "..", lfdir) & ALTERED) == 0 &&
 		    parentdir != (ino_t)-1)
@@ -465,7 +465,7 @@ linkup(ino_t orphan, ino_t parentdir)
 		dp = ginode(lfdir);
 		DIP_SET(dp, di_nlink, DIP(dp, di_nlink) + 1);
 		inodirty();
-		lncntp[lfdir]++;
+		ILNCOUNT(lfdir)++;
 		pwarn("DIR I=%u CONNECTED. ", orphan);
 		if (parentdir != (ino_t)-1) {
 			printf("PARENT WAS I=%u\n", parentdir);
@@ -476,7 +476,7 @@ linkup(ino_t orphan, ino_t parentdir)
 			 * fixes the parent link count so that fsck does
 			 * not need to be rerun.
 			 */
-			lncntp[parentdir]++;
+			ILNCOUNT(parentdir)++;
 		}
 		if (preen == 0)
 			printf("\n");
@@ -636,7 +636,7 @@ allocdir(ino_t parent, ino_t request, int mode)
 	DIP_SET(dp, di_nlink, 2);
 	inodirty();
 	if (ino == ROOTINO) {
-		lncntp[ino] = DIP(dp, di_nlink);
+		ILNCOUNT(ino) = DIP(dp, di_nlink);
 		cacheino(dp, ino);
 		return(ino);
 	}
@@ -650,8 +650,8 @@ allocdir(ino_t parent, ino_t request, int mode)
 	inp->i_dotdot = parent;
 	SET_ISTATE(ino, GET_ISTATE(parent));
 	if (GET_ISTATE(ino) == DSTATE) {
-		lncntp[ino] = DIP(dp, di_nlink);
-		lncntp[parent]++;
+		ILNCOUNT(ino) = DIP(dp, di_nlink);
+		ILNCOUNT(parent)++;
 	}
 	dp = ginode(parent);
 	DIP_SET(dp, di_nlink, DIP(dp, di_nlink) + 1);

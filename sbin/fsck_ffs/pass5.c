@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.39 2010/07/09 06:41:17 otto Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.40 2011/04/16 16:37:21 otto Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -230,7 +230,7 @@ pass5(void)
 		if (fs->fs_postblformat == FS_42POSTBLFMT)
 			ocg->cg_magic = CG_MAGIC;
 		j = fs->fs_ipg * c;
-		for (i = 0; i < cginosused[c]; j++, i++) {
+		for (i = 0; i < inostathead[c].il_numalloced; j++, i++) {
 			switch (GET_ISTATE(j)) {
 
 			case USTATE:

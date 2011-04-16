@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.37 2009/12/10 16:01:51 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.38 2011/04/16 16:37:21 otto Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -113,6 +113,25 @@ reply(char *question)
 		return (1);
 	resolved = 0;
 	return (0);
+}
+
+/*
+ * Look up state information for an inode.
+ */
+struct inostat *
+inoinfo(ino_t inum)
+{
+	static struct inostat unallocated = { USTATE, 0, 0 };
+	struct inostatlist *ilp;
+	int iloff;
+
+	if (inum > maxino)
+		errexit("inoinfo: inumber %d out of range", inum);
+	ilp = &inostathead[inum / sblock.fs_ipg];
+	iloff = inum % sblock.fs_ipg;
+	if (iloff >= ilp->il_numalloced)
+		return (&unallocated);
+	return (&ilp->il_stat[iloff]);
 }
 
 /*

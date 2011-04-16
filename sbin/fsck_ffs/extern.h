@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.10 2007/06/25 19:59:55 otto Exp $	*/
+/*	$OpenBSD: extern.h,v 1.11 2011/04/16 16:37:21 otto Exp $	*/
 /*	$NetBSD: extern.h,v 1.6 1996/09/27 22:45:12 christos Exp $	*/
 
 /*
@@ -54,6 +54,7 @@ int	ftypeok(union dinode *);
 void	getpathname(char *, size_t, ino_t, ino_t);
 void	inocleanup(void);
 void	inodirty(void);
+struct inostat *inoinfo(ino_t);
 int	linkup(ino_t, ino_t);
 int	makeentry(ino_t, ino_t, char *);
 void	pass1(void);

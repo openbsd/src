@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.23 2008/06/10 23:10:29 otto Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.24 2011/04/16 16:37:21 otto Exp $	*/
 /*	$NetBSD: fsck.h,v 1.13 1996/10/11 20:15:46 thorpej Exp $	*/
 
 /*
@@ -66,6 +66,19 @@ union dinode {
 #define BUFSIZ 1024
 #endif
 
+/*
+ * Each inode on the file system is described by the following structure.
+ * The linkcnt is initially set to the value in the inode. Each time it
+ * is found during the descent in passes 2, 3, and 4 the count is
+ * decremented. Any inodes whose count is non-zero after pass 4 needs to
+ * have its link count adjusted by the value remaining in ino_linkcnt.
+ */
+struct inostat {
+	char    ino_state;      /* state of inode, see below */
+	char    ino_type;       /* type of inode */
+	short   ino_linkcnt;    /* number of links not found */
+};
+
 #define	USTATE	01		/* inode not allocated */
 #define	FSTATE	02		/* inode is file */
 #define	DSTATE	03		/* inode is directory */
@@ -73,12 +86,20 @@ union dinode {
 #define	DCLEAR	05		/* directory is to be cleared */
 #define	FCLEAR	06		/* file is to be cleared */
 
-#define GET_ISTATE(ino)		(stmap[(ino)] & 0xf)
-#define GET_ITYPE(ino)		(stmap[(ino)] >> 4)
-#define SET_ISTATE(ino, v)	do { stmap[(ino)] = (stmap[(ino)] & 0xf0) | \
-				    ((v) & 0xf); } while (0)
-#define SET_ITYPE(ino, v)	do { stmap[(ino)] = (stmap[(ino)] & 0x0f) | \
-				    ((v) << 4); } while (0)
+/*
+ * Inode state information is contained on per cylinder group lists
+ * which are described by the following structure.
+ */
+struct inostatlist {
+	long    il_numalloced;  /* number of inodes allocated in this cg */
+	struct inostat *il_stat;/* inostat info for this cylinder group */
+} *inostathead;
+
+#define GET_ISTATE(ino)		(inoinfo(ino)->ino_state)
+#define GET_ITYPE(ino)		(inoinfo(ino)->ino_type)
+#define SET_ISTATE(ino, v)	do { GET_ISTATE(ino) = (v); } while (0)
+#define SET_ITYPE(ino, v)	do { GET_ITYPE(ino) = (v); } while (0)
+#define ILNCOUNT(ino)		(inoinfo(ino)->ino_linkcnt)
 
 /*
  * buffer cache structure.
@@ -233,8 +254,6 @@ daddr64_t	maxfsblock;		/* number of blocks in the file system */
 char	*blockmap;		/* ptr to primary blk allocation map */
 ino_t	maxino;			/* number of inodes in file system */
 ino_t	lastino;		/* last inode in use */
-u_char	*stmap;			/* ptr to inode state and type table */
-int16_t	*lncntp;		/* ptr to link count table */
 
 ino_t	lfdir;			/* lost & found directory inode number */
 char	*lfname;		/* lost & found directory name */
@@ -242,7 +261,6 @@ int	lfmode;			/* lost & found directory creation mode */
 
 daddr64_t	n_blks;			/* number of blocks in use */
 daddr64_t	n_files;		/* number of files in use */
-long   *cginosused;		/* # of allocated inodes in each cg */
 
 #define	clearinode(dp)	\
 	if (sblock.fs_magic == FS_UFS1_MAGIC) {	\

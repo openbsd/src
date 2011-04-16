@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.33 2009/10/27 23:59:32 deraadt Exp $	*/
+/*	$OpenBSD: inode.c,v 1.34 2011/04/16 16:37:21 otto Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -309,7 +309,7 @@ getnextinode(ino_t inumber)
 	static caddr_t nextinop;
 
 	if (inumber != nextino++ || inumber > maxino)
-		errexit("bad inode number %d to nextinode\n", inumber);
+		errexit("bad inode number %d to nextinode %d\n", inumber, nextino);
 	if (inumber >= lastinum) {
 		readcnt++;
 		dblk = fsbtodb(&sblock, ino_to_fsba(&sblock, lastinum));
@@ -361,8 +361,6 @@ setinodebuf(ino_t inum)
 	if (inodebuf == NULL &&
 	    (inodebuf = malloc((unsigned)inobufsize)) == NULL)
 		errexit("Cannot allocate space for inode buffer\n");
-	while (nextino < ROOTINO)
-		(void)getnextinode(nextino);
 }
 
 void
@@ -578,6 +576,7 @@ allocino(ino_t request, int type)
 	struct cg *cgp = &cgrp;
 	int cg;
 	time_t t;
+	struct inostat *info;
 
 	if (request == 0)
 		request = ROOTINO;
@@ -589,6 +588,28 @@ allocino(ino_t request, int type)
 	if (ino == maxino)
 		return (0);
 	cg = ino_to_cg(&sblock, ino);
+	/* If necessary, extend the inoinfo array. grow exponentially */
+	if ((ino % sblock.fs_ipg) >= (uint64_t)inostathead[cg].il_numalloced) {
+		unsigned long newalloced, i;
+		newalloced = MIN(sblock.fs_ipg,
+			MAX(2 * inostathead[cg].il_numalloced, 10));
+		info = calloc(newalloced, sizeof(struct inostat));
+		if (info == NULL) {
+			pwarn("cannot alloc %lu bytes to extend inoinfo\n",
+				sizeof(struct inostat) * newalloced);
+			return 0;
+		}
+		memmove(info, inostathead[cg].il_stat,
+			inostathead[cg].il_numalloced * sizeof(*info));
+		for (i = inostathead[cg].il_numalloced; i < newalloced; i++) {
+			info[i].ino_state = USTATE;
+		}
+		if (inostathead[cg].il_numalloced)
+			free(inostathead[cg].il_stat);
+		inostathead[cg].il_stat = info;
+		inostathead[cg].il_numalloced = newalloced;
+		info = inoinfo(ino);
+	}
 	getblk(&cgblk, cgtod(&sblock, cg), sblock.fs_cgsize);
 	if (!cg_chkmagic(cgp))
 		pfatal("CG %d: BAD MAGIC NUMBER\n", cg);

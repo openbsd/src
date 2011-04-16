@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass3.c,v 1.14 2009/10/27 23:59:32 deraadt Exp $	*/
+/*	$OpenBSD: pass3.c,v 1.15 2011/04/16 16:37:21 otto Exp $	*/
 /*	$NetBSD: pass3.c,v 1.8 1995/03/18 14:55:54 cgd Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ pass3(void)
 		}
 		if (linkup(orphan, inp->i_dotdot)) {
 			inp->i_parent = inp->i_dotdot = lfdir;
-			lncntp[lfdir]--;
+			ILNCOUNT(lfdir)--;
 			pinp = getinoinfo(inp->i_parent);
 			inp->i_parentp = pinp;
 			inp->i_sibling = pinp->i_child;

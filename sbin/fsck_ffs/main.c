@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.36 2010/08/12 15:26:34 jsing Exp $	*/
+/*	$OpenBSD: main.c,v 1.37 2011/04/16 16:37:21 otto Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -282,12 +282,14 @@ checkfilesys(char *filesys, char *mntpt, long auxdata, int child)
 	if (rerun)
 		resolved = 0;
 	ckfini(resolved); /* Don't mark fs clean if fsck needs to be re-run */
+
+	for (cylno = 0; cylno < sblock.fs_ncg; cylno++)
+		free(inostathead[cylno].il_stat);
+	free(inostathead);
+	inostathead = NULL;
+
 	free(blockmap);
 	blockmap = NULL;
-	free(stmap);
-	stmap = NULL;
-	free(lncntp);
-	lncntp = NULL;
 	free(sblock.fs_csp);
 	free(sblk.b_un.b_buf);
 	free(asblk.b_un.b_buf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass4.c,v 1.19 2009/10/27 23:59:32 deraadt Exp $	*/
+/*	$OpenBSD: pass4.c,v 1.20 2011/04/16 16:37:21 otto Exp $	*/
 /*	$NetBSD: pass4.c,v 1.11 1996/09/27 22:45:17 christos Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ pass4(void)
 	info_fn = pass4_info;
 	for (c = 0; c < sblock.fs_ncg; c++) {
 		inumber = c * sblock.fs_ipg;
-		for (i = 0; i < cginosused[c]; i++, inumber++) {
+		for (i = 0; i < inostathead[c].il_numalloced; i++, inumber++) {
 			if (inumber < ROOTINO)
 				continue;
  			idesc.id_number = inumber;
@@ -74,7 +74,7 @@ pass4(void)
 
 			case FSTATE:
 			case DFOUND:
-				n = lncntp[inumber];
+				n = ILNCOUNT(inumber);
 				if (n) {
 					adjust(&idesc, (short)n);
 					break;

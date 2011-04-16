@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.46 2010/08/12 15:26:34 jsing Exp $	*/
+/*	$OpenBSD: setup.c,v 1.47 2011/04/16 16:37:21 otto Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -427,22 +427,11 @@ found:
 		    (unsigned)bmapsize);
 		goto badsblabel;
 	}
-	stmap = calloc((unsigned)(maxino + 1), sizeof(char));
-	if (stmap == NULL) {
-		printf("cannot alloc %u bytes for stmap\n",
-		    (unsigned)(maxino + 1));
-		goto badsblabel;
-	}
-	lncntp = calloc((unsigned)(maxino + 1), sizeof(int16_t));
-	if (lncntp == NULL) {
-		printf("cannot alloc %zu bytes for lncntp\n",
-		    (maxino + 1) * sizeof(int16_t));
-		goto badsblabel;
-	}
-	cginosused = calloc((unsigned)sblock.fs_ncg, sizeof(long));
-	if (cginosused == NULL) {
-		printf("cannot alloc %u bytes for cginosused\n",
-		    (unsigned)sblock.fs_ncg);
+	inostathead = calloc((unsigned)(sblock.fs_ncg),
+	    sizeof(struct inostatlist));
+	if (inostathead == NULL) {
+		printf("cannot alloc %u bytes for inostathead\n",
+		    (unsigned)(sizeof(struct inostatlist) * (sblock.fs_ncg)));
 		goto badsblabel;
 	}
 	numdirs = MAX(sblock.fs_cstotal.cs_ndir, 128);
