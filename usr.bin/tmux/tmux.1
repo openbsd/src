@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.219 2011/04/11 16:44:36 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.220 2011/04/17 19:28:09 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 11 2011 $
+.Dd $Mdocdate: April 17 2011 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -598,9 +598,11 @@ server and clients and destroy all sessions.
 .It Ic kill-session Op Fl t Ar target-session
 Destroy the given session, closing any windows linked to it and no other
 sessions, and detaching all clients attached to it.
-.It Ic list-clients
+.It Ic list-clients Op Fl t Ar target-session
 .D1 (alias: Ic lsc )
-List all clients attached to the server.
+List all clients attached to the server. If 
+.Ar target-session
+is specified, list only clients connected to that session.
 .It Ic list-commands
 .D1 (alias: Ic lscm )
 List the syntax of all commands supported by
