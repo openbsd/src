@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.8 2011/04/15 17:01:05 gilles Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.9 2011/04/17 11:39:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -40,7 +40,7 @@ int	fsqueue_init(struct smtpd *);
 int	fsqueue_message(struct smtpd *, enum queue_kind,
     enum queue_op, u_int32_t *);
 int	fsqueue_envelope(struct smtpd *, enum queue_kind,
-    enum queue_op , struct message *);
+    enum queue_op , struct envelope *);
 
 
 struct queue_backend queue_backends[] = {
@@ -103,29 +103,29 @@ queue_message_fd_rw(struct smtpd *env, enum queue_kind qkind, u_int32_t msgid)
 
 int
 queue_envelope_create(struct smtpd *env, enum queue_kind qkind,
-    struct message *envelope)
+    struct envelope *m)
 {
-	return env->sc_queue->envelope(env, qkind, QOP_CREATE, envelope);
+	return env->sc_queue->envelope(env, qkind, QOP_CREATE, m);
 }
 
 int
 queue_envelope_delete(struct smtpd *env, enum queue_kind qkind,
-    struct message *envelope)
+    struct envelope *m)
 {
-	return env->sc_queue->envelope(env, qkind, QOP_DELETE, envelope);
+	return env->sc_queue->envelope(env, qkind, QOP_DELETE, m);
 }
 
 int
 queue_envelope_load(struct smtpd *env, enum queue_kind qkind,
-    u_int64_t evpid, struct message *envelope)
+    u_int64_t evpid, struct envelope *m)
 {
-	envelope->evpid = evpid;
-	return env->sc_queue->envelope(env, qkind, QOP_LOAD, envelope);
+	m->evpid = evpid;
+	return env->sc_queue->envelope(env, qkind, QOP_LOAD, m);
 }
 
 int
 queue_envelope_update(struct smtpd *env, enum queue_kind qkind,
-    struct message *envelope)
+    struct envelope *m)
 {
-	return env->sc_queue->envelope(env, qkind, QOP_UPDATE, envelope);
+	return env->sc_queue->envelope(env, qkind, QOP_UPDATE, m);
 }

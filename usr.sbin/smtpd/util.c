@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.42 2011/04/15 17:21:24 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.43 2011/04/17 11:39:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -351,16 +351,16 @@ lowercase(char *buf, char *s, size_t len)
 }
 
 void
-message_set_errormsg(struct message *messagep, char *fmt, ...)
+message_set_errormsg(struct envelope *m, char *fmt, ...)
 {
 	int ret;
 	va_list ap;
 
 	va_start(ap, fmt);
 
-	ret = vsnprintf(messagep->session_errorline, MAX_LINE_SIZE, fmt, ap);
+	ret = vsnprintf(m->session_errorline, MAX_LINE_SIZE, fmt, ap);
 	if (ret >= MAX_LINE_SIZE)
-		strlcpy(messagep->session_errorline + (MAX_LINE_SIZE - 4), "...", 4);
+		strlcpy(m->session_errorline + (MAX_LINE_SIZE - 4), "...", 4);
 
 	/* this should not happen */
 	if (ret == -1)
@@ -370,9 +370,9 @@ message_set_errormsg(struct message *messagep, char *fmt, ...)
 }
 
 char *
-message_get_errormsg(struct message *messagep)
+message_get_errormsg(struct envelope *m)
 {
-	return messagep->session_errorline;
+	return m->session_errorline;
 }
 
 void

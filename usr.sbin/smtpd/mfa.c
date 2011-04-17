@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.55 2011/04/15 17:01:05 gilles Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.56 2011/04/17 11:39:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -37,8 +37,8 @@
 void		mfa_imsg(struct smtpd *, struct imsgev *, struct imsg *);
 __dead void	mfa_shutdown(void);
 void		mfa_sig_handler(int, short, void *);
-void		mfa_test_mail(struct smtpd *, struct message *);
-void		mfa_test_rcpt(struct smtpd *, struct message *);
+void		mfa_test_mail(struct smtpd *, struct envelope *);
+void		mfa_test_rcpt(struct smtpd *, struct envelope *);
 void		mfa_test_rcpt_resume(struct smtpd *, struct submit_status *);
 int		mfa_strip_source_route(char *, size_t);
 
@@ -167,7 +167,7 @@ mfa(struct smtpd *env)
 }
 
 void
-mfa_test_mail(struct smtpd *env, struct message *m)
+mfa_test_mail(struct smtpd *env, struct envelope *m)
 {
 	struct submit_status	 ss;
 
@@ -202,7 +202,7 @@ accept:
 }
 
 void
-mfa_test_rcpt(struct smtpd *env, struct message *m)
+mfa_test_rcpt(struct smtpd *env, struct envelope *m)
 {
 	struct submit_status	 ss;
 

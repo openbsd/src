@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.100 2011/04/17 11:16:57 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.101 2011/04/17 11:39:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -47,7 +47,7 @@ void
 queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 {
 	struct submit_status	 ss;
-	struct message		*m;
+	struct envelope		*m;
 	struct ramqueue_batch	*rq_batch;
 	int			 fd, ret;
 
@@ -341,17 +341,17 @@ queue_purge(struct smtpd *env, enum queue_kind qkind, char *queuepath)
 }
 
 void
-queue_submit_envelope(struct smtpd *env, struct message *message)
+queue_submit_envelope(struct smtpd *env, struct envelope *m)
 {
 	imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 	    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1,
-	    message, sizeof(struct message));
+	    m, sizeof(*m));
 }
 
 void
-queue_commit_envelopes(struct smtpd *env, struct message *message)
+queue_commit_envelopes(struct smtpd *env, struct envelope *m)
 {
 	imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 	    IMSG_QUEUE_COMMIT_ENVELOPES, 0, 0, -1,
-	    message, sizeof(struct message));
+	    m, sizeof(*m));
 }

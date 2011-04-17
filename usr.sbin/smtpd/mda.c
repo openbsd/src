@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.52 2011/04/15 17:01:05 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.53 2011/04/17 11:39:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -61,7 +61,7 @@ mda_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			if (s == NULL)
 				fatal(NULL);
 			msgbuf_init(&s->w);
-			s->msg = *(struct message *)imsg->data;
+			s->msg = *(struct envelope *)imsg->data;
 			s->msg.status = S_MESSAGE_TEMPFAILURE;
 			s->id = mda_id++;
 			s->datafp = fdopen(imsg->fd, "r");

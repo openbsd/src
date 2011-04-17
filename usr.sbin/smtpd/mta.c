@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.102 2011/04/15 17:01:05 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.103 2011/04/17 11:39:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -49,9 +49,9 @@ void			 mta_pickup(struct mta_session *, void *);
 void			 mta_event(int, short, void *);
 
 void			 mta_status(struct mta_session *, const char *, ...);
-void			 mta_message_status(struct message *, char *);
-void			 mta_message_log(struct mta_session *, struct message *);
-void			 mta_message_done(struct mta_session *, struct message *);
+void			 mta_message_status(struct envelope *, char *);
+void			 mta_message_log(struct mta_session *, struct envelope *);
+void			 mta_message_done(struct mta_session *, struct envelope *);
 void			 mta_connect_done(int, short, void *);
 void			 mta_request_datafd(struct mta_session *);
 
@@ -61,7 +61,7 @@ mta_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 	struct ramqueue_batch  	*rq_batch;
 	struct mta_session	*s;
 	struct mta_relay	*relay;
-	struct message		*m;
+	struct envelope		*m;
 	struct secret		*secret;
 	struct dns		*dns;
 	struct ssl		*ssl;
@@ -135,7 +135,7 @@ mta_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			m = malloc(sizeof *m);
 			if (m == NULL)
 				fatal(NULL);
-			*m = *(struct message *)imsg->data;
+			*m = *(struct envelope *)imsg->data;
 			strlcpy(m->session_errorline, "000 init",
 			    sizeof(m->session_errorline));
 
@@ -347,7 +347,7 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 	struct secret		 secret;
 	struct mta_relay	*relay;
 	struct sockaddr		*sa;
-	struct message		*m;
+	struct envelope		*m;
 	struct smtp_client	*pcb;
 	int			 max_reuse;
 
@@ -658,7 +658,7 @@ void
 mta_status(struct mta_session *s, const char *fmt, ...)
 {
 	char			*status;
-	struct message		*m, *next;
+	struct envelope		*m, *next;
 	va_list			 ap;
 
 	va_start(ap, fmt);
@@ -683,7 +683,7 @@ mta_status(struct mta_session *s, const char *fmt, ...)
 }
 
 void
-mta_message_status(struct message *m, char *status)
+mta_message_status(struct envelope *m, char *status)
 {
 	/*
 	 * Previous delivery attempts might have assigned an errorline of
@@ -700,7 +700,7 @@ mta_message_status(struct message *m, char *status)
 }
 
 void
-mta_message_log(struct mta_session *s, struct message *m)
+mta_message_log(struct mta_session *s, struct envelope *m)
 {
 	struct mta_relay	*relay = TAILQ_FIRST(&s->relays);
 	char			*status = m->session_errorline;
@@ -717,7 +717,7 @@ mta_message_log(struct mta_session *s, struct message *m)
 }
 
 void
-mta_message_done(struct mta_session *s, struct message *m)
+mta_message_done(struct mta_session *s, struct envelope *m)
 {
 	switch (m->session_errorline[0]) {
 	case '6':
@@ -747,7 +747,7 @@ void
 mta_request_datafd(struct mta_session *s)
 {
 	struct ramqueue_batch	rq_batch;
-	struct message	*m;
+	struct envelope	*m;
 
 	m = TAILQ_FIRST(&s->recipients);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.216 2011/04/17 11:16:57 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.217 2011/04/17 11:39:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -430,8 +430,8 @@ enum message_flags {
 	F_MESSAGE_BOUNCE	= 0x40
 };
 
-struct message {
-	TAILQ_ENTRY(message)		 entry;
+struct envelope {
+	TAILQ_ENTRY(envelope)		 entry;
 
 	enum message_type		 type;
 
@@ -560,7 +560,7 @@ struct session {
 	u_char				*s_buf;
 	int				 s_buflen;
 	struct timeval			 s_tv;
-	struct message			 s_msg;
+	struct envelope			 s_msg;
 	short				 s_nresp[STATE_COUNT];
 	size_t				 rcptcount;
 	long				 s_datalen;
@@ -638,7 +638,7 @@ struct smtpd {
 	TAILQ_HEAD(maplist, map)		*sc_maps, *sc_maps_reload;
 	TAILQ_HEAD(rulelist, rule)		*sc_rules, *sc_rules_reload;
 	SPLAY_HEAD(sessiontree, session)	 sc_sessions;
-	SPLAY_HEAD(msgtree, message)		 sc_messages;
+	SPLAY_HEAD(msgtree, envelope)		 sc_messages;
 	SPLAY_HEAD(ssltree, ssl)		*sc_ssl;
 	SPLAY_HEAD(childtree, child)		 children;
 	SPLAY_HEAD(lkatree, lkasession)		 lka_sessions;
@@ -752,7 +752,7 @@ struct submit_status {
 	}				 u;
 	enum message_flags		 flags;
 	struct sockaddr_storage		 ss;
-	struct message			 msg;
+	struct envelope			 msg;
 };
 
 struct forward_req {
@@ -782,7 +782,7 @@ struct secret {
 
 struct mda_session {
 	LIST_ENTRY(mda_session)	 entry;
-	struct message		 msg;
+	struct envelope		 msg;
 	struct msgbuf		 w;
 	struct event		 ev;
 	u_int32_t		 id;
@@ -816,7 +816,7 @@ struct lkasession {
 	u_int8_t			 iterations;
 	u_int32_t			 pending;
 	enum lkasession_flags		 flags;
-	struct message			 message;
+	struct envelope			 message;
 	struct submit_status		 ss;
 };
 
@@ -871,7 +871,7 @@ struct mta_session {
 	char			*host;
 	int			 port;
 	int			 flags;
-	TAILQ_HEAD(,message)	 recipients;
+	TAILQ_HEAD(,envelope)	 recipients;
 	TAILQ_HEAD(,mta_relay)	 relays;
 	objid_t			 secmapid;
 	char			*secret;
@@ -934,7 +934,7 @@ struct queue_backend {
 	int (*init)(struct smtpd *);
 	int (*message)(struct smtpd *, enum queue_kind, enum queue_op, u_int32_t *);
 	int (*envelope)(struct smtpd *, enum queue_kind, enum queue_op,
-		struct message *);
+	    struct envelope *);
 };
 
 extern void (*imsg_callback)(struct smtpd *, struct imsgev *, struct imsg *);
@@ -955,9 +955,9 @@ int authenticate_user(char *, char *);
 
 
 /* bounce.c */
-int bounce_session(struct smtpd *, int, struct message *);
+int bounce_session(struct smtpd *, int, struct envelope *);
 int bounce_session_switch(struct smtpd *, FILE *, enum session_state *, char *,
-	struct message *);
+	struct envelope *);
 void bounce_event(int, short, void *);
 
 
@@ -1045,8 +1045,8 @@ int		 cmdline_symset(char *);
 
 /* queue.c */
 pid_t		 queue(struct smtpd *);
-void		 queue_submit_envelope(struct smtpd *, struct message *);
-void		 queue_commit_envelopes(struct smtpd *, struct message *);
+void		 queue_submit_envelope(struct smtpd *, struct envelope *);
+void		 queue_commit_envelopes(struct smtpd *, struct envelope *);
 
 
 /* queue_backend.c */
@@ -1058,21 +1058,21 @@ int	queue_message_fd_r(struct smtpd *, enum queue_kind, u_int32_t);
 int	queue_message_fd_rw(struct smtpd *, enum queue_kind, u_int32_t);
 int	queue_message_purge(struct smtpd *, enum queue_kind, u_int32_t);
 int	queue_envelope_create(struct smtpd *, enum queue_kind,
-    struct message *);
+    struct envelope *);
 int	queue_envelope_delete(struct smtpd *, enum queue_kind,
-    struct message *);
+    struct envelope *);
 int	queue_envelope_load(struct smtpd *, enum queue_kind,
-    u_int64_t, struct message *);
+    u_int64_t, struct envelope *);
 int	queue_envelope_update(struct smtpd *, enum queue_kind,
-    struct message *);
+    struct envelope *);
 
 
 /* queue_shared.c */
-void		 queue_message_update(struct smtpd *, struct message *);
+void		 queue_message_update(struct smtpd *, struct envelope *);
 struct qwalk	*qwalk_new(char *);
 int		 qwalk(struct qwalk *, char *);
 void		 qwalk_close(struct qwalk *);
-int		 bounce_record_message(struct smtpd *, struct message *, struct message *);
+int		 bounce_record_message(struct smtpd *, struct envelope *, struct envelope *);
 void		 show_queue(char *, int);
 
 
@@ -1096,7 +1096,7 @@ RB_PROTOTYPE(hosttree, ramqueue_host, host_entry, ramqueue_host_cmp);
 
 /* runner.c */
 pid_t		 runner(struct smtpd *);
-void		 message_reset_flags(struct message *);
+void		 message_reset_flags(struct envelope *);
 
 
 /* smtp.c */
@@ -1164,8 +1164,8 @@ int		 valid_message_uid(char *);
 char		*time_to_text(time_t);
 int		 secure_file(int, char *, struct passwd *, int);
 void		 lowercase(char *, char *, size_t);
-void		 message_set_errormsg(struct message *, char *, ...);
-char		*message_get_errormsg(struct message *);
+void		 message_set_errormsg(struct envelope *, char *, ...);
+char		*message_get_errormsg(struct envelope *);
 void		 sa_set_port(struct sockaddr *, int);
 struct path	*path_dup(struct path *);
 u_int64_t	 generate_uid(void);
@@ -1173,5 +1173,5 @@ void		 fdlimit(double);
 int		 availdesc(void);
 u_int32_t	 evpid_to_msgid(u_int64_t);
 u_int64_t	 msgid_to_evpid(u_int32_t);
-u_int32_t	 filename_to_msgpid(char *);
+u_int32_t	 filename_to_msgid(char *);
 u_int64_t	 filename_to_evpid(char *);

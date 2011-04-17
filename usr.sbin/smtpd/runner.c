@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.103 2011/04/15 19:03:28 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.104 2011/04/17 11:39:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -57,11 +57,11 @@ void		runner_process_batch(struct smtpd *, struct ramqueue_envelope *, time_t);
 void		runner_purge_run(void);
 void		runner_purge_message(u_int32_t);
 
-int		runner_check_loop(struct smtpd *, struct message *);
+int		runner_check_loop(struct smtpd *, struct envelope *);
 
 int		runner_force_message_to_ramqueue(struct ramqueue *, u_int32_t);
 
-void		ramqueue_insert(struct ramqueue *, struct message *, time_t);
+void		ramqueue_insert(struct ramqueue *, struct envelope *, time_t);
 
 /*temporary*/
 u_int16_t	fsqueue_hash(u_int32_t);
@@ -71,7 +71,7 @@ u_int32_t	filename_to_msgid(char *);
 void
 runner_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 {
-	struct message	*m;
+	struct envelope	*m;
 
 	switch (imsg->hdr.type) {
 	case IMSG_QUEUE_COMMIT_MESSAGE:
@@ -100,7 +100,7 @@ runner_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 		 * bounce (and insert bounce in ramqueue).
 		 */
 		if (m->status & S_MESSAGE_PERMFAILURE) {
-			struct message bounce;
+			struct envelope bounce;
 
 			if (m->type != T_BOUNCE_MESSAGE &&
 			    m->sender.user[0] != '\0') {
@@ -349,7 +349,7 @@ int
 runner_process_envelope(struct smtpd *env, struct ramqueue_envelope *rq_evp, time_t curtm)
 {
 	size_t		 mta_av, mda_av, bnc_av;
-	struct message	 envelope;
+	struct envelope	 envelope;
 
 	mta_av = env->sc_maxconn - env->stats->mta.sessions_active;
 	mda_av = env->sc_maxconn - env->stats->mda.sessions_active;
@@ -380,7 +380,7 @@ runner_process_envelope(struct smtpd *env, struct ramqueue_envelope *rq_evp, tim
 	}
 
 	if (runner_check_loop(env, &envelope)) {
-		struct message bounce;
+		struct envelope bounce;
 
 		message_set_errormsg(&envelope, "loop has been detected");
 		bounce_record_message(env, &envelope, &bounce);
@@ -405,7 +405,7 @@ runner_process_batch(struct smtpd *env, struct ramqueue_envelope *rq_evp, time_t
 {
 	struct ramqueue_host	 *host = rq_evp->host;
 	struct ramqueue_batch	 *batch = rq_evp->batch;
-	struct message envelope;
+	struct envelope envelope;
 	int fd;
 
 	switch (batch->type) {
@@ -506,7 +506,7 @@ runner_force_message_to_ramqueue(struct ramqueue *rqueue, u_int32_t msgid)
 	char path[MAXPATHLEN];
 	DIR *dirp;
 	struct dirent *dp;
-	struct message envelope;
+	struct envelope envelope;
 	time_t curtm;
 
 	if (! bsnprintf(path, MAXPATHLEN, "%s/%04x/%08x/envelopes",
@@ -620,7 +620,7 @@ delroot:
 }
 
 int
-runner_check_loop(struct smtpd *env, struct message *messagep)
+runner_check_loop(struct smtpd *env, struct envelope *messagep)
 {
 	int fd;
 	FILE *fp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.45 2011/04/15 17:30:23 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.46 2011/04/17 11:39:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -55,61 +55,61 @@ struct qwalk {
 int		walk_simple(struct qwalk *, char *);
 int		walk_queue(struct qwalk *, char *);
 
-void		display_envelope(struct message *, int);
+void		display_envelope(struct envelope *, int);
 void		getflag(u_int *, int, char *, char *, size_t);
 
 int
-bounce_record_message(struct smtpd *env, struct message *messagep, struct message *mbounce)
+bounce_record_message(struct smtpd *env, struct envelope *m, struct envelope *bounce)
 {
 	u_int32_t msgid;
 
-	if (messagep->type == T_BOUNCE_MESSAGE) {
+	if (m->type == T_BOUNCE_MESSAGE) {
 		log_debug("mailer daemons loop detected !");
 		return 0;
 	}
 
-	*mbounce = *messagep;
-	mbounce->type = T_BOUNCE_MESSAGE;
-	mbounce->status &= ~S_MESSAGE_PERMFAILURE;
+	*bounce = *m;
+	 bounce->type = T_BOUNCE_MESSAGE;
+	 bounce->status &= ~S_MESSAGE_PERMFAILURE;
 
-	msgid = evpid_to_msgid(messagep->evpid);
+	msgid = evpid_to_msgid(m->evpid);
 	if (! queue_message_create(env, Q_BOUNCE, &msgid))
 		return 0;
 
-	mbounce->evpid = msgid_to_evpid(msgid);
-	if (! queue_envelope_create(env, Q_BOUNCE, mbounce))
+	bounce->evpid = msgid_to_evpid(msgid);
+	if (! queue_envelope_create(env, Q_BOUNCE, bounce))
 		return 0;
 
 	return queue_message_commit(env, Q_BOUNCE, msgid);
 }
 
 void
-queue_message_update(struct smtpd *env, struct message *messagep)
+queue_message_update(struct smtpd *env, struct envelope *m)
 {
-	messagep->flags &= ~F_MESSAGE_PROCESSING;
-	messagep->status &= ~(S_MESSAGE_ACCEPTED|S_MESSAGE_REJECTED);
-	messagep->batch_id = 0;
-	messagep->retry++;
+	m->flags &= ~F_MESSAGE_PROCESSING;
+	m->status &= ~(S_MESSAGE_ACCEPTED|S_MESSAGE_REJECTED);
+	m->batch_id = 0;
+	m->retry++;
 
-	if (messagep->status & S_MESSAGE_PERMFAILURE) {
-		if (messagep->type != T_BOUNCE_MESSAGE &&
-		    messagep->sender.user[0] != '\0') {
-			struct message bounce;
+	if (m->status & S_MESSAGE_PERMFAILURE) {
+		if (m->type != T_BOUNCE_MESSAGE &&
+		    m->sender.user[0] != '\0') {
+			struct envelope bounce;
 
-			bounce_record_message(env, messagep, &bounce);
+			bounce_record_message(env, m, &bounce);
 		}
-		queue_envelope_delete(env, Q_QUEUE, messagep);
+		queue_envelope_delete(env, Q_QUEUE, m);
 		return;
 	}
 
-	if (messagep->status & S_MESSAGE_TEMPFAILURE) {
-		messagep->status &= ~S_MESSAGE_TEMPFAILURE;
-		queue_envelope_update(env, Q_QUEUE, messagep);
+	if (m->status & S_MESSAGE_TEMPFAILURE) {
+		m->status &= ~S_MESSAGE_TEMPFAILURE;
+		queue_envelope_update(env, Q_QUEUE, m);
 		return;
 	}
 
 	/* no error, remove envelope */
-	queue_envelope_delete(env, Q_QUEUE, messagep);
+	queue_envelope_delete(env, Q_QUEUE, m);
 }
 
 struct qwalk *
@@ -247,7 +247,7 @@ void
 show_queue(char *queuepath, int flags)
 {
 	char		 path[MAXPATHLEN];
-	struct message	 message;
+	struct envelope	 message;
 	struct qwalk	*q;
 	FILE		*fp;
 
@@ -267,7 +267,7 @@ show_queue(char *queuepath, int flags)
 		}
 
 		errno = 0;
-		if (fread(&message, sizeof(struct message), 1, fp) != 1)
+		if (fread(&message, sizeof(message), 1, fp) != 1)
 			err(1, "%s", path);
 		fclose(fp);
 
@@ -278,42 +278,42 @@ show_queue(char *queuepath, int flags)
 }
 
 void
-display_envelope(struct message *envelope, int flags)
+display_envelope(struct envelope *m, int flags)
 {
 	char	 status[128];
 
 	status[0] = '\0';
 
-	getflag(&envelope->status, S_MESSAGE_TEMPFAILURE, "TEMPFAIL",
+	getflag(&m->status, S_MESSAGE_TEMPFAILURE, "TEMPFAIL",
 	    status, sizeof(status));
 
-	if (envelope->status)
-		errx(1, "%016llx: unexpected status 0x%04x", envelope->evpid,
-		    envelope->status);
+	if (m->status)
+		errx(1, "%016llx: unexpected status 0x%04x", m->evpid,
+		    m->status);
 
-	getflag(&envelope->flags, F_MESSAGE_BOUNCE, "BOUNCE",
+	getflag(&m->flags, F_MESSAGE_BOUNCE, "BOUNCE",
 	    status, sizeof(status));
-	getflag(&envelope->flags, F_MESSAGE_AUTHENTICATED, "AUTH",
+	getflag(&m->flags, F_MESSAGE_AUTHENTICATED, "AUTH",
 	    status, sizeof(status));
-	getflag(&envelope->flags, F_MESSAGE_PROCESSING, "PROCESSING",
+	getflag(&m->flags, F_MESSAGE_PROCESSING, "PROCESSING",
 	    status, sizeof(status));
-	getflag(&envelope->flags, F_MESSAGE_SCHEDULED, "SCHEDULED",
+	getflag(&m->flags, F_MESSAGE_SCHEDULED, "SCHEDULED",
 	    status, sizeof(status));
-	getflag(&envelope->flags, F_MESSAGE_ENQUEUED, "ENQUEUED",
+	getflag(&m->flags, F_MESSAGE_ENQUEUED, "ENQUEUED",
 	    status, sizeof(status));
-	getflag(&envelope->flags, F_MESSAGE_FORCESCHEDULE, "SCHEDULED_MANUAL",
+	getflag(&m->flags, F_MESSAGE_FORCESCHEDULE, "SCHEDULED_MANUAL",
 	    status, sizeof(status));
 
-	if (envelope->flags)
-		errx(1, "%016llx: unexpected flags 0x%04x", envelope->evpid,
-		    envelope->flags);
+	if (m->flags)
+		errx(1, "%016llx: unexpected flags 0x%04x", m->evpid,
+		    m->flags);
 	
 	if (status[0])
 		status[strlen(status) - 1] = '\0';
 	else
 		strlcpy(status, "-", sizeof(status));
 
-	switch (envelope->type) {
+	switch (m->type) {
 	case T_MDA_MESSAGE:
 		printf("MDA");
 		break;
@@ -328,16 +328,16 @@ display_envelope(struct message *envelope, int flags)
 	}
 	
 	printf("|%016llx|%s|%s@%s|%s@%s|%d|%d|%u",
-	    envelope->evpid,
+	    m->evpid,
 	    status,
-	    envelope->sender.user, envelope->sender.domain,
-	    envelope->recipient.user, envelope->recipient.domain,
-	    envelope->lasttry,
-	    envelope->expire,
-	    envelope->retry);
+	    m->sender.user, m->sender.domain,
+	    m->recipient.user, m->recipient.domain,
+	    m->lasttry,
+	    m->expire,
+	    m->retry);
 	
-	if (envelope->session_errorline[0] != '\0')
-		printf("|%s", envelope->session_errorline);
+	if (m->session_errorline[0] != '\0')
+		printf("|%s", m->session_errorline);
 
 	printf("\n");
 }
