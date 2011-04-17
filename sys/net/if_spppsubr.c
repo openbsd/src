@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.84 2011/01/11 15:42:05 deraadt Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.85 2011/04/17 20:44:27 stsp Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -47,6 +47,7 @@
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/workq.h>
 
 #if defined (__OpenBSD__)
 #include <sys/timeout.h>
@@ -410,8 +411,7 @@ HIDE void sppp_print_string(const char *p, u_short len);
 HIDE void sppp_qflush(struct ifqueue *ifq);
 int sppp_update_gw_walker(struct radix_node *rn, void *arg, u_int);
 void sppp_update_gw(struct ifnet *ifp);
-HIDE void sppp_set_ip_addrs(struct sppp *sp, u_int32_t myaddr,
-			      u_int32_t hisaddr);
+HIDE void sppp_set_ip_addrs(void *, void *);
 HIDE void sppp_clear_ip_addrs(struct sppp *sp);
 HIDE void sppp_set_phase(struct sppp *sp);
 
@@ -3024,19 +3024,38 @@ sppp_ipcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 		addlog("\n");
 }
 
+struct sppp_set_ip_addrs_args {
+	struct sppp *sp;
+	u_int32_t myaddr;
+	u_int32_t hisaddr;
+};
+
 HIDE void
 sppp_ipcp_tlu(struct sppp *sp)
 {
+	struct ifnet *ifp = &sp->pp_if;
+	struct sppp_set_ip_addrs_args *args;
+
+	args = malloc(sizeof(*args), M_TEMP, M_NOWAIT);
+	if (args == NULL)
+		return;
+
+	args->sp = sp;
+
 	/* we are up. Set addresses and notify anyone interested */
-	u_int32_t myaddr, hisaddr;
-	sppp_get_ip_addrs(sp, &myaddr, &hisaddr, 0);
+	sppp_get_ip_addrs(sp, &args->myaddr, &args->hisaddr, 0);
 	if ((sp->ipcp.flags & IPCP_MYADDR_DYN) &&
 	    (sp->ipcp.flags & IPCP_MYADDR_SEEN))
-		myaddr = sp->ipcp.req_myaddr;
+		args->myaddr = sp->ipcp.req_myaddr;
 	if ((sp->ipcp.flags & IPCP_HISADDR_DYN) &&
 	    (sp->ipcp.flags & IPCP_HISADDR_SEEN))
-		hisaddr = sp->ipcp.req_hisaddr;
-	sppp_set_ip_addrs(sp, myaddr, hisaddr);
+		args->hisaddr = sp->ipcp.req_hisaddr;
+
+	if (workq_add_task(NULL, 0, sppp_set_ip_addrs, args, NULL)) {
+		free(args, M_TEMP);
+		printf("%s: workq_add_task failed, cannot set "
+		    "addresses\n", ifp->if_xname);
+	}
 }
 
 HIDE void
@@ -4689,15 +4708,27 @@ sppp_update_gw(struct ifnet *ifp)
 }
 
 /*
+ * Work queue task adding addresses from process context.
  * If an address is 0, leave it the way it is.
  */
 HIDE void
-sppp_set_ip_addrs(struct sppp *sp, u_int32_t myaddr, u_int32_t hisaddr)
+sppp_set_ip_addrs(void *arg1, void *arg2)
 {
-	STDDCL;
+	struct sppp_set_ip_addrs_args *args = arg1;
+	struct sppp *sp = args->sp;
+	u_int32_t myaddr = args->myaddr;
+	u_int32_t hisaddr = args->hisaddr;
+	struct ifnet *ifp = &sp->pp_if;
+	int debug = ifp->if_flags & IFF_DEBUG;
  	struct ifaddr *ifa;
  	struct sockaddr_in *si;
 	struct sockaddr_in *dest;
+	int s;
+	
+	/* Arguments are now on local stack so free temporary storage. */
+	free(args, M_TEMP);
+
+	s = splsoftnet();
 
 	/*
 	 * Pick the first AF_INET address from the list,
@@ -4748,10 +4779,12 @@ sppp_set_ip_addrs(struct sppp *sp, u_int32_t myaddr, u_int32_t hisaddr)
 		if (debug && error) {
 			log(LOG_DEBUG, SPP_FMT "sppp_set_ip_addrs: in_ifinit "
 			" failed, error=%d\n", SPP_ARGS(ifp), error);
+			splx(s);
 			return;
 		}
 		sppp_update_gw(ifp);
 	}
+	splx(s);
 }
 
 /*
