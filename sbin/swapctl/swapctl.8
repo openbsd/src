@@ -1,4 +1,4 @@
-.\"	$OpenBSD: swapctl.8,v 1.30 2010/09/03 10:08:22 jmc Exp $
+.\"	$OpenBSD: swapctl.8,v 1.31 2011/04/17 20:17:12 krw Exp $
 .\"	$NetBSD: swapctl.8,v 1.14 1998/05/22 18:27:52 msaitoh Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: April 17 2011 $
 .Dt SWAPCTL 8
 .Os
 .Sh NAME
@@ -71,20 +71,6 @@ itself is called with
 in which case
 it acts as
 .Ic swapctl -A .
-.Pp
-.Sy Note :
-The initial swap device (root disk, partition b) is handled automatically
-by the kernel and does
-.Em not
-need to be added to
-.Pa /etc/fstab
-or added via
-.Nm swapctl .
-It will show up as
-.Qq swap_device
-in the output displayed with the
-.Fl l
-flag.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -168,13 +154,17 @@ may be needed before all file systems are available, such as during
 disk checks of large file systems.
 .El
 .Sh SWAP OPTIONS
-When parsing the
-.Pa /etc/fstab
-file for swap devices, lines such as the following specify additional swap
-devices:
+Lines such as
 .Bd -literal -offset indent
-/dev/sd1b none swap sw 0 0
+/dev/sd1b none swap sw
+d48d0e3fc1c39531.k none swap sw
 .Ed
+.Pp
+specify swap devices in
+.Pa /etc/fstab .
+The initial swap device (root disk, partition b) does not need to appear in
+.Pa /etc/fstab ,
+although it may.
 .Pp
 Additional flags include:
 .Pp
