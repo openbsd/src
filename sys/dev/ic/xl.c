@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.100 2011/04/05 18:01:21 henning Exp $	*/
+/*	$OpenBSD: xl.c,v 1.101 2011/04/17 20:52:43 stsp Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -191,6 +191,9 @@ void xl_testpacket(struct xl_softc *);
 int xl_miibus_readreg(struct device *, int, int);
 void xl_miibus_writereg(struct device *, int, int, int);
 void xl_miibus_statchg(struct device *);
+#ifndef SMALL_KERNEL
+int xl_wol(struct ifnet *, int);
+#endif
 
 int
 xl_activate(struct device *self, int act)
@@ -2368,6 +2371,12 @@ xl_stop(struct xl_softc *sc)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	xl_freetxrx(sc);
+
+#ifndef SMALL_KERNEL
+	/* Call upper layer WOL power routine if WOL is enabled. */
+	if ((sc->xl_flags & XL_FLAG_WOL) && sc->wol_power)
+		sc->wol_power(sc->wol_power_arg);
+#endif
 }
 
 void
@@ -2637,6 +2646,15 @@ xl_attach(struct xl_softc *sc)
 		CSR_WRITE_2(sc, XL_W0_MFG_ID, XL_NO_XCVR_PWR_MAGICBITS);
 	}
 
+#ifndef SMALL_KERNEL
+	/* Check availability of WOL. */
+	if ((sc->xl_caps & XL_CAPS_PWRMGMT) != 0) {
+		ifp->if_capabilities |= IFCAP_WOL;
+		ifp->if_wol = xl_wol;
+		xl_wol(ifp, 0);
+	}
+#endif
+
 	/*
 	 * Call MI attach routines.
 	 */
@@ -2668,6 +2686,24 @@ xl_detach(struct xl_softc *sc)
 
 	return (0);
 }
+
+#ifndef SMALL_KERNEL
+int
+xl_wol(struct ifnet *ifp, int enable)
+{
+	struct xl_softc		*sc = ifp->if_softc;
+
+	XL_SEL_WIN(7);
+	if (enable) {
+		CSR_WRITE_2(sc, XL_W7_BM_PME, XL_BM_PME_MAGIC);
+		sc->xl_flags |= XL_FLAG_WOL;
+	} else {
+		CSR_WRITE_2(sc, XL_W7_BM_PME, 0);
+		sc->xl_flags &= ~XL_FLAG_WOL;
+	}
+	return (0);	
+}
+#endif
 
 struct cfdriver xl_cd = {
 	0, "xl", DV_IFNET

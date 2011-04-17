@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.35 2011/04/03 15:36:03 jasper Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.36 2011/04/17 20:52:43 stsp Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -92,10 +92,14 @@ int xl_pci_match(struct device *, void *, void *);
 void xl_pci_attach(struct device *, struct device *, void *);
 int xl_pci_detach(struct device *, int);
 void xl_pci_intr_ack(struct xl_softc *);
+#ifndef SMALL_KERNEL
+void xl_pci_wol_power(void *);
+#endif
 
 struct xl_pci_softc {
 	struct xl_softc		psc_softc;
 	pci_chipset_tag_t	psc_pc;
+	pcitag_t		psc_tag;
 	bus_size_t		psc_iosize;
 	bus_size_t		psc_funsize;
 };
@@ -156,9 +160,11 @@ xl_pci_attach(struct device *parent, struct device *self, void *aux)
 	u_int32_t command;
 
 	psc->psc_pc = pc;
+	psc->psc_tag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
 
 	sc->xl_flags = 0;
+	sc->wol_power = sc->wol_power_arg = NULL;
 
 	/* set required flags */
 	switch (PCI_PRODUCT(pa->pa_id)) {
@@ -260,6 +266,18 @@ xl_pci_attach(struct device *parent, struct device *self, void *aux)
 			pci_conf_write(pc, pa->pa_tag, XL_PCI_LOMEM, mem);
 			pci_conf_write(pc, pa->pa_tag, XL_PCI_INTLINE, irq);
 		}
+
+#ifndef SMALL_KERNEL
+		/* The card is WOL-capable if it supports PME# assertion
+		 * from D3hot power state. Install a callback to configure
+		 * PCI power state for WOL. It will be invoked when the
+		 * interface stops and WOL was enabled. */
+		command = pci_conf_read(pc, pa->pa_tag, XL_PCI_PWRMGMTCAP);
+		if (command & XL_PME_CAP_D3_HOT) {
+			sc->wol_power = xl_pci_wol_power;
+			sc->wol_power_arg = psc; 
+		}
+#endif
 	}
 
 	/*
@@ -342,3 +360,18 @@ xl_pci_intr_ack(struct xl_softc *sc)
 	bus_space_write_4(sc->xl_funct, sc->xl_funch, XL_PCI_INTR,
 	    XL_PCI_INTRACK);
 }
+
+#ifndef SMALL_KERNEL
+void
+xl_pci_wol_power(void *ppsc)
+{
+	u_int32_t	command;
+	struct xl_pci_softc *psc = (struct xl_pci_softc*)ppsc;
+
+	/* Make sure power management is enabled, and set the card into
+	 * D3hot power state so it stays active after system shutdown. */
+	command = pci_conf_read(psc->psc_pc, psc->psc_tag, XL_PCI_PWRMGMTCTRL);
+	command |= XL_PME_EN | XL_PSTATE_D3;
+	pci_conf_write(psc->psc_pc, psc->psc_tag, XL_PCI_PWRMGMTCTRL, command);
+}
+#endif
