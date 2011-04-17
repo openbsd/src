@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.8 2011/04/10 23:28:48 schwarze Exp $
+# $OpenBSD: security,v 1.9 2011/04/17 10:48:01 schwarze Exp $
 #
 # Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -444,13 +444,14 @@ sub check_mailboxes {
 	nag !(opendir my $dh, $dir), "opendir: $dir: $!" and return;
 	foreach my $name (readdir $dh) {
 		next if $name =~ /^\.\.?$/;
-		my ($mode, $fuid) = (stat "$dir/$name")[2,4];
+		my ($mode, $fuid, $fgid) = (stat "$dir/$name")[2,4,5];
 		my $fname = (getpwuid $fuid)[0] || $fuid;
+		my $gname = (getgrgid $fgid)[0] || $fgid;
 		nag $fname ne $name,
 		    "user $name mailbox is owned by $fname";
 		nag S_IMODE($mode) != (S_IRUSR | S_IWUSR),
-		    sprintf 'user %s mailbox permissions are %04o',
-			 $name, S_IMODE($mode);
+		    sprintf 'user %s mailbox is %s, group %s',
+		        $name, strmode($mode), $gname;
 	}
 	closedir $dh;
 }
