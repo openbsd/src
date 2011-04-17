@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.19 2011/04/05 14:25:42 dlg Exp $ */
+/*	$OpenBSD: mpath.c,v 1.20 2011/04/17 23:18:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -338,6 +338,21 @@ mpath_minphys(struct buf *bp, struct scsi_link *link)
 int
 mpath_path_probe(struct scsi_link *link)
 {
+	static struct cfdata *cf = NULL;
+
+	if (cf == NULL) {
+		for (cf = cfdata; cf->cf_attach != (struct cfattach *)-1;
+		    cf++) {
+			if (cf->cf_attach == NULL)
+				continue;
+			if (cf->cf_driver == &mpath_cd)
+				break;
+		}
+	}
+
+	if (cf->cf_fstate == FSTATE_DNOTFOUND || cf->cf_fstate == FSTATE_DSTAR)
+		return (ENXIO);
+
 	if (link->id == NULL)
 		return (EINVAL);
 
