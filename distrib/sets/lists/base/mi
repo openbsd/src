@@ -2464,6 +2464,7 @@
 ./usr/libexec/rpc.rwalld
 ./usr/libexec/rpc.sprayd
 ./usr/libexec/rshd
+./usr/libexec/security
 ./usr/libexec/sendmail
 ./usr/libexec/sendmail/makemap
 ./usr/libexec/sendmail/sendmail
