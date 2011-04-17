@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.9 2011/04/17 10:48:01 schwarze Exp $
+# $OpenBSD: security,v 1.10 2011/04/17 13:26:07 schwarze Exp $
 #
 # Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -60,7 +60,7 @@ sub check_access_file {
 	or nag $mode & (S_IRUSR | S_IRGRP | S_IROTH) && ! -O $filename,
 	    "Login $login is off but still has a valid shell " .
 	    "and alternate access files in\n" .
-	    "\t home directory are still readable.\n";
+	    "\t home directory are still readable.";
 }
 
 sub check_passwd {
