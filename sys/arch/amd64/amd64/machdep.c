@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.138 2011/04/15 04:52:39 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.139 2011/04/17 20:38:09 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1181,8 +1181,6 @@ typedef void (vector)(void);
 extern vector IDTVEC(osyscall);
 extern vector *IDTVEC(exceptions)[];
 
-int bigmem = 1;
-
 void
 init_x86_64(paddr_t first_avail)
 {
@@ -1267,10 +1265,6 @@ init_x86_64(paddr_t first_avail)
 		avail_start = ACPI_TRAMPOLINE + PAGE_SIZE;
 #endif
 
-	/* Let us know if we're supporting > 4GB ram load */
-	if (bigmem)
-		printf("Bigmem = %d\n", bigmem);
-
 	/*
 	 * We need to go through the BIOS memory map given, and
 	 * fill out mem_clusters and mem_cluster_cnt stuff, taking
@@ -1306,14 +1300,6 @@ init_x86_64(paddr_t first_avail)
 		/* Nuke page zero */
 		if (s1 < avail_start) {
 			s1 = avail_start;
-			if (s1 > e1)
-				continue;
-		}
-
-		/* Crop to fit below 4GB for now */
-		if (!bigmem && (e1 >= (1UL<<32))) {
-			printf("Ignoring %dMB above 4GB\n", (e1-(1UL<<32))>>20);
-			e1 = (1UL << 32) - 1;
 			if (s1 > e1)
 				continue;
 		}
