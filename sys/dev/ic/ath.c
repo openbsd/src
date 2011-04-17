@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.91 2010/09/07 16:21:42 deraadt Exp $  */
+/*      $OpenBSD: ath.c,v 1.92 2011/04/17 20:38:10 stsp Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -2488,7 +2488,6 @@ ath_tx_proc(void *arg, int npending)
 				if (bf->bf_id.id_node != NULL)
 					ieee80211_rssadapt_lower_rate(ic, ni,
 					    &an->an_rssadapt, &bf->bf_id);
-				ifp->if_oerrors++;
 				if (ds->ds_txstat.ts_status & HAL_TXERR_XRETRY)
 					sc->sc_stats.ast_tx_xretries++;
 				if (ds->ds_txstat.ts_status & HAL_TXERR_FIFO)
