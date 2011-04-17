@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_lroundf.c,v 1.1 2008/07/21 20:29:14 martynas Exp $	*/
+/*	$OpenBSD: s_lroundf.c,v 1.2 2011/04/17 13:59:54 martynas Exp $	*/
 /* $NetBSD: lroundf.c,v 1.2 2004/10/13 15:18:32 drochner Exp $ */
 
 /*-
@@ -75,9 +75,9 @@ LROUNDNAME(float x)
 
 	shift = e - SNG_FRACBITS;
 	if (shift >=0)
-		res = (shift < 32 ? (RESTYPE)i0 << shift : 0);
+		res = (shift < RESTYPE_BITS ? (RESTYPE)i0 << shift : 0);
 	else
-		res = (shift > -32 ? i0 >> -shift : 0);
+		res = (shift > -RESTYPE_BITS ? (RESTYPE)i0 >> -shift : 0);
 
 	return (s ? -res : res);
 }

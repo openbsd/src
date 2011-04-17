@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_lround.c,v 1.2 2011/04/17 10:37:07 martynas Exp $	*/
+/*	$OpenBSD: s_lround.c,v 1.3 2011/04/17 13:59:54 martynas Exp $	*/
 /* $NetBSD: lround.c,v 1.2 2004/10/13 15:18:32 drochner Exp $ */
 
 /*-
@@ -75,14 +75,14 @@ LROUNDNAME(double x)
 
 	shift = e - DBL_FRACBITS;
 	if (shift >=0)
-		res = (shift < 32 ? (RESTYPE)i1 << shift : 0);
+		res = (shift < RESTYPE_BITS ? (RESTYPE)i1 << shift : 0);
 	else
-		res = (shift > -32 ? i1 >> -shift : 0);
+		res = (shift > -RESTYPE_BITS ? (RESTYPE)i1 >> -shift : 0);
 	shift += 32;
 	if (shift >=0)
-		res |= (shift < 32 ? (RESTYPE)i0 << shift : 0);
+		res |= (shift < RESTYPE_BITS ? (RESTYPE)i0 << shift : 0);
 	else
-		res |= (shift > -32 ? i0 >> -shift : 0);
+		res |= (shift > -RESTYPE_BITS ? (RESTYPE)i0 >> -shift : 0);
 
 	return (s ? -res : res);
 }
