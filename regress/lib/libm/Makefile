@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.9 2009/04/09 01:26:41 martynas Exp $
+#	$OpenBSD: Makefile,v 1.10 2011/04/17 10:51:32 martynas Exp $
 
-SUBDIR+= exp floor fpaccuracy rint tgamma toint trivial1
+SUBDIR+= exp floor fpaccuracy nextafter rint round tgamma toint trivial1
 
 install:
 
