@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: daily,v 1.69 2011/04/15 11:23:39 halex Exp $
+#	$OpenBSD: daily,v 1.70 2011/04/17 21:26:38 schwarze Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 # For local additions, create the file /etc/daily.local.
@@ -192,8 +192,8 @@ end_part
 MAINOUT=/var/log/security.out
 install -o 0 -g 0 -m 600 -b /dev/null $MAINOUT
 
-start_part "Running /etc/security:"
-run_script "security"
+start_part "Running security(8):"
+/usr/libexec/security
 end_part
 rm -f $PARTOUT
 
