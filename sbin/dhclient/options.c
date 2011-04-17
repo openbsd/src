@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.37 2009/03/10 23:19:36 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.38 2011/04/17 19:57:23 phessler Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -212,6 +212,13 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 			--numelem;
 			fmtbuf[i] = 0;
 			numhunk = 0;
+			if (hunksize == 0) {
+				warning("%s: no size indicator before A"
+				    " in format string: %s",
+				    dhcp_options[code].name,
+				    dhcp_options[code].format);
+				return ("<fmt error>");
+			}
 			break;
 		case 'X':
 			for (k = 0; k < len; k++)
