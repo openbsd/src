@@ -107,7 +107,6 @@
 ./etc/rmt
 ./etc/rpc
 ./etc/sasyncd.conf
-./etc/security
 ./etc/sensorsd.conf
 ./etc/services
 ./etc/shells
