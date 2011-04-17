@@ -1,4 +1,4 @@
-.\" $OpenBSD: useradd.8,v 1.28 2010/09/03 11:22:36 jmc Exp $
+.\" $OpenBSD: useradd.8,v 1.29 2011/04/17 20:32:33 sobrado Exp $
 .\" $NetBSD: useradd.8,v 1.26 2003/02/25 10:36:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: April 17 2011 $
 .Dt USERADD 8
 .Os
 .Sh NAME
@@ -44,13 +44,10 @@
 .Op Fl b Ar base-directory
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-time
-.Oo
-.Fl g Ar gid | name | Li =uid Oc
+.Op Fl g Ar gid | name | Li =uid
 .Op Fl k Ar skel-directory
 .Op Fl L Ar login-class
-.Oo
-.Fl r Ar low Ns Li .. Ns Ar high
-.Oc
+.Op Fl r Ar low Ns Li .. Ns Ar high
 .Op Fl s Ar shell
 .Ek
 .Nm useradd
@@ -62,14 +59,11 @@
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-time
 .Op Fl G Ar secondary-group[,group,...]
-.Oo
-.Fl g Ar gid | name | Li =uid Oc
+.Op Fl g Ar gid | name | Li =uid
 .Op Fl k Ar skel-directory
 .Op Fl L Ar login-class
 .Op Fl p Ar password
-.Oo
-.Fl r Ar low Ns Li .. Ns Ar high
-.Oc
+.Op Fl r Ar low Ns Li .. Ns Ar high
 .Op Fl s Ar shell
 .Op Fl u Ar uid
 .Ar user
