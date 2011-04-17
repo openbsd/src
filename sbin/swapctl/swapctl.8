@@ -1,4 +1,4 @@
-.\"	$OpenBSD: swapctl.8,v 1.31 2011/04/17 20:17:12 krw Exp $
+.\"	$OpenBSD: swapctl.8,v 1.32 2011/04/17 21:20:25 jmc Exp $
 .\"	$NetBSD: swapctl.8,v 1.14 1998/05/22 18:27:52 msaitoh Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
@@ -154,17 +154,17 @@ may be needed before all file systems are available, such as during
 disk checks of large file systems.
 .El
 .Sh SWAP OPTIONS
-Lines such as
+Lines such as the following
+specify swap devices in
+.Pa /etc/fstab :
 .Bd -literal -offset indent
 /dev/sd1b none swap sw
 d48d0e3fc1c39531.k none swap sw
 .Ed
 .Pp
-specify swap devices in
-.Pa /etc/fstab .
-The initial swap device (root disk, partition b) does not need to appear in
+The initial swap device (root disk, partition b) need not appear in
 .Pa /etc/fstab ,
-although it may.
+though it is not an error for it to do so.
 .Pp
 Additional flags include:
 .Pp
