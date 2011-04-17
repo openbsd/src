@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.217 2011/04/17 11:39:23 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.218 2011/04/17 12:46:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -22,11 +22,10 @@
 #endif
 
 #define IMSG_SIZE_CHECK(p) do {					\
-	if (IMSG_DATA_SIZE(&imsg) != sizeof(*p))		\
-		fatalx("bad length imsg received");		\
-} while (0)
+		if (IMSG_DATA_SIZE(&imsg) != sizeof(*p))	\
+			fatalx("bad length imsg received");	\
+	} while (0)
 #define IMSG_DATA_SIZE(imsg)	((imsg)->hdr.len - IMSG_HEADER_SIZE)
-
 
 
 #define CONF_FILE		 "/etc/mail/smtpd.conf"
@@ -40,7 +39,6 @@
 #define MAX_LINE_SIZE		 1024
 #define MAX_LOCALPART_SIZE	 128
 #define MAX_DOMAINPART_SIZE	 MAXHOSTNAMELEN
-/*#define MAX_ID_SIZE		 64*/
 #define MAX_TAG_SIZE		 32
 
 /* return and forward path size */
@@ -127,15 +125,11 @@ enum imsg_type {
 	IMSG_CTL_VERBOSE,
 	IMSG_CONF_START,
 	IMSG_CONF_SSL,
-	IMSG_CONF_SSL_CERT,
-	IMSG_CONF_SSL_KEY,
 	IMSG_CONF_LISTENER,
 	IMSG_CONF_MAP,
 	IMSG_CONF_MAP_CONTENT,
 	IMSG_CONF_RULE,
 	IMSG_CONF_RULE_SOURCE,
-	IMSG_CONF_CONDITION,
-	IMSG_CONF_OPTION,
 	IMSG_CONF_END,
 	IMSG_CONF_RELOAD,
 	IMSG_LKA_MAIL,
@@ -153,13 +147,11 @@ enum imsg_type {
 	IMSG_QUEUE_REMOVE_MESSAGE,
 	IMSG_QUEUE_COMMIT_MESSAGE,
 	IMSG_QUEUE_TEMPFAIL,
-	IMSG_QUEUE_STATS,
 	IMSG_QUEUE_PAUSE_LOCAL,
 	IMSG_QUEUE_PAUSE_OUTGOING,
 	IMSG_QUEUE_RESUME_LOCAL,
 	IMSG_QUEUE_RESUME_OUTGOING,
 
-	IMSG_QUEUE_REMOVE_SUBMISSION,
 	IMSG_QUEUE_MESSAGE_UPDATE,
 	IMSG_QUEUE_MESSAGE_FD,
 	IMSG_QUEUE_MESSAGE_FILE,
@@ -174,12 +166,9 @@ enum imsg_type {
 	IMSG_PARENT_ENQUEUE_OFFLINE,
 	IMSG_PARENT_FORWARD_OPEN,
 	IMSG_PARENT_FORK_MDA,
-	IMSG_PARENT_STATS,
 
 	IMSG_PARENT_AUTHENTICATE,
 	IMSG_PARENT_SEND_CONFIG,
-
-	IMSG_SMTP_STATS,
 
 	IMSG_STATS,
 	IMSG_SMTP_ENQUEUE,
