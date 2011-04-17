@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.139 2011/04/04 11:14:52 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.140 2011/04/17 20:06:08 phessler Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1938,7 +1938,8 @@ check_option(struct client_lease *l, int option)
 	case DHO_END:
 		return (1);
 	default:
-		warning("unknown dhcp option value 0x%x", option);
+		if (!unknown_ok)
+			warning("unknown dhcp option value 0x%x", option);
 		return (unknown_ok);
 	}
 }
