@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.99 2011/04/15 17:01:05 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.100 2011/04/17 11:16:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -42,8 +42,6 @@ __dead void	queue_shutdown(void);
 void		queue_sig_handler(int, short, void *);
 void		queue_purge(struct smtpd *, enum queue_kind, char *);
 
-u_int32_t	filename_to_msgid(char *);
-u_int64_t	filename_to_evpid(char *);
 
 void
 queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)

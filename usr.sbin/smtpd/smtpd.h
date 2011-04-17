@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.215 2011/04/15 19:03:28 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.216 2011/04/17 11:16:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1045,12 +1045,8 @@ int		 cmdline_symset(char *);
 
 /* queue.c */
 pid_t		 queue(struct smtpd *);
-int		 queue_load_envelope(struct message *, char *);
-int		 queue_update_envelope(struct message *);
-int		 queue_remove_envelope(struct message *);
 void		 queue_submit_envelope(struct smtpd *, struct message *);
-void		 queue_commit_envelopes(struct smtpd *, struct message*);
-u_int16_t	 queue_hash(char *);
+void		 queue_commit_envelopes(struct smtpd *, struct message *);
 
 
 /* queue_backend.c */
@@ -1072,37 +1068,12 @@ int	queue_envelope_update(struct smtpd *, enum queue_kind,
 
 
 /* queue_shared.c */
-int		 queue_create_layout_message(char *, char *);
-int		 queue_record_layout_envelope(char *, struct message *);
-int		 queue_remove_layout_envelope(char *, struct message *);
-int		 queue_commit_layout_message(char *, struct message *);
-int		 queue_open_layout_messagefile(char *, struct message *);
-int		 enqueue_create_layout(char *);
-void		 enqueue_delete_message(char *);
-int		 enqueue_record_envelope(struct message *);
-int		 enqueue_remove_envelope(struct message *);
-int		 enqueue_commit_message(struct message *);
-int		 enqueue_open_messagefile(struct message *);
-int		 bounce_create_layout(struct smtpd *, char *, struct message *);
-void		 bounce_delete_message(char *);
-int		 bounce_record_envelope(struct message *);
-int		 bounce_remove_envelope(struct message *);
-int		 bounce_commit_message(struct message *);
-int		 bounce_record_message(struct smtpd *, struct message *, struct message *);
-int		 queue_create_incoming_layout(char *);
-void		 queue_delete_incoming_message(char *);
-int		 queue_record_incoming_envelope(struct message *);
-int		 queue_remove_incoming_envelope(struct message *);
-int		 queue_commit_incoming_message(struct message *);
-int		 queue_open_incoming_message_file(struct message *);
-int		 queue_open_message_file(char *msgid);
 void		 queue_message_update(struct smtpd *, struct message *);
-void		 queue_delete_message(char *);
 struct qwalk	*qwalk_new(char *);
 int		 qwalk(struct qwalk *, char *);
 void		 qwalk_close(struct qwalk *);
+int		 bounce_record_message(struct smtpd *, struct message *, struct message *);
 void		 show_queue(char *, int);
-u_int16_t	 queue_hash(char *);
 
 
 /* ramqueue.c */
@@ -1200,5 +1171,7 @@ struct path	*path_dup(struct path *);
 u_int64_t	 generate_uid(void);
 void		 fdlimit(double);
 int		 availdesc(void);
-u_int32_t	evpid_to_msgid(u_int64_t);
-u_int64_t	msgid_to_evpid(u_int32_t);
+u_int32_t	 evpid_to_msgid(u_int64_t);
+u_int64_t	 msgid_to_evpid(u_int32_t);
+u_int32_t	 filename_to_msgpid(char *);
+u_int64_t	 filename_to_evpid(char *);
