@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.103 2011/04/17 11:39:22 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.104 2011/04/17 13:36:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -38,24 +38,21 @@
 #include "client.h"
 #include "log.h"
 
-void			 mta_imsg(struct smtpd *, struct imsgev *, struct imsg *);
+static void mta_imsg(struct smtpd *, struct imsgev *, struct imsg *);
+static void mta_shutdown(void);
+static void mta_sig_handler(int, short, void *);
+static struct mta_session *mta_lookup(struct smtpd *, u_int64_t);
+static void mta_enter_state(struct mta_session *, int, void *);
+static void mta_pickup(struct mta_session *, void *);
+static void mta_event(int, short, void *);
+static void mta_status(struct mta_session *, const char *, ...);
+static void mta_message_status(struct envelope *, char *);
+static void mta_message_log(struct mta_session *, struct envelope *);
+static void mta_message_done(struct mta_session *, struct envelope *);
+static void mta_connect_done(int, short, void *);
+static void mta_request_datafd(struct mta_session *);
 
-__dead void		 mta_shutdown(void);
-void			 mta_sig_handler(int, short, void *);
-
-struct mta_session	*mta_lookup(struct smtpd *, u_int64_t);
-void			 mta_enter_state(struct mta_session *, int, void *);
-void			 mta_pickup(struct mta_session *, void *);
-void			 mta_event(int, short, void *);
-
-void			 mta_status(struct mta_session *, const char *, ...);
-void			 mta_message_status(struct envelope *, char *);
-void			 mta_message_log(struct mta_session *, struct envelope *);
-void			 mta_message_done(struct mta_session *, struct envelope *);
-void			 mta_connect_done(int, short, void *);
-void			 mta_request_datafd(struct mta_session *);
-
-void
+static void
 mta_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 {
 	struct ramqueue_batch  	*rq_batch;
@@ -240,7 +237,7 @@ mta_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 	fatalx("mta_imsg: unexpected imsg");
 }
 
-void
+static void
 mta_sig_handler(int sig, short event, void *p)
 {
 	switch (sig) {
@@ -253,7 +250,7 @@ mta_sig_handler(int sig, short event, void *p)
 	}
 }
 
-void
+static void
 mta_shutdown(void)
 {
 	log_info("mail transfer agent exiting");
@@ -324,13 +321,7 @@ mta(struct smtpd *env)
 	return (0);
 }
 
-int
-mta_session_cmp(struct mta_session *a, struct mta_session *b)
-{
-	return (a->id < b->id ? -1 : a->id > b->id);
-}
-
-struct mta_session *
+static struct mta_session *
 mta_lookup(struct smtpd *env, u_int64_t id)
 {
 	struct mta_session	 key, *res;
@@ -341,7 +332,7 @@ mta_lookup(struct smtpd *env, u_int64_t id)
 	return (res);
 }
 
-void
+static void
 mta_enter_state(struct mta_session *s, int newstate, void *p)
 {
 	struct secret		 secret;
@@ -535,7 +526,7 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 	}
 }
 
-void
+static void
 mta_pickup(struct mta_session *s, void *p)
 {
 	int	 error;
@@ -606,7 +597,7 @@ mta_pickup(struct mta_session *s, void *p)
 	}
 }
 
-void
+static void
 mta_event(int fd, short event, void *p)
 {
 	struct mta_session	*s = p;
@@ -654,7 +645,7 @@ ro:
 	event_add(&s->ev, &pcb->timeout);
 }
 
-void
+static void
 mta_status(struct mta_session *s, const char *fmt, ...)
 {
 	char			*status;
@@ -682,7 +673,7 @@ mta_status(struct mta_session *s, const char *fmt, ...)
 	free(status);
 }
 
-void
+static void
 mta_message_status(struct envelope *m, char *status)
 {
 	/*
@@ -699,7 +690,7 @@ mta_message_status(struct envelope *m, char *status)
 	strlcpy(m->session_errorline, status, sizeof(m->session_errorline));
 }
 
-void
+static void
 mta_message_log(struct mta_session *s, struct envelope *m)
 {
 	struct mta_relay	*relay = TAILQ_FIRST(&s->relays);
@@ -716,7 +707,7 @@ mta_message_log(struct mta_session *s, struct envelope *m)
 	    status + 4);
 }
 
-void
+static void
 mta_message_done(struct mta_session *s, struct envelope *m)
 {
 	switch (m->session_errorline[0]) {
@@ -737,13 +728,13 @@ mta_message_done(struct mta_session *s, struct envelope *m)
 	free(m);
 }
 
-void
+static void
 mta_connect_done(int fd, short event, void *p)
 {
 	mta_pickup(p, NULL);
 }
 
-void
+static void
 mta_request_datafd(struct mta_session *s)
 {
 	struct ramqueue_batch	rq_batch;
@@ -755,6 +746,12 @@ mta_request_datafd(struct mta_session *s)
 	rq_batch.msgid = evpid_to_msgid(m->evpid);
 	imsg_compose_event(s->env->sc_ievs[PROC_QUEUE], IMSG_QUEUE_MESSAGE_FD,
 	    0, 0, -1, &rq_batch, sizeof(rq_batch));
+}
+
+int
+mta_session_cmp(struct mta_session *a, struct mta_session *b)
+{
+	return (a->id < b->id ? -1 : a->id > b->id);
 }
 
 SPLAY_GENERATE(mtatree, mta_session, entry, mta_session_cmp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.139 2011/04/15 17:01:05 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.140 2011/04/17 13:36:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -39,38 +39,37 @@
 #include "smtpd.h"
 #include "log.h"
 
-int	 	 session_rfc5321_helo_handler(struct session *, char *);
-int		 session_rfc5321_ehlo_handler(struct session *, char *);
-int		 session_rfc5321_rset_handler(struct session *, char *);
-int		 session_rfc5321_noop_handler(struct session *, char *);
-int		 session_rfc5321_data_handler(struct session *, char *);
-int		 session_rfc5321_mail_handler(struct session *, char *);
-int		 session_rfc5321_rcpt_handler(struct session *, char *);
-int		 session_rfc5321_vrfy_handler(struct session *, char *);
-int		 session_rfc5321_expn_handler(struct session *, char *);
-int		 session_rfc5321_turn_handler(struct session *, char *);
-int		 session_rfc5321_help_handler(struct session *, char *);
-int		 session_rfc5321_quit_handler(struct session *, char *);
-int		 session_rfc5321_none_handler(struct session *, char *);
+static int session_rfc5321_helo_handler(struct session *, char *);
+static int session_rfc5321_ehlo_handler(struct session *, char *);
+static int session_rfc5321_rset_handler(struct session *, char *);
+static int session_rfc5321_noop_handler(struct session *, char *);
+static int session_rfc5321_data_handler(struct session *, char *);
+static int session_rfc5321_mail_handler(struct session *, char *);
+static int session_rfc5321_rcpt_handler(struct session *, char *);
+static int session_rfc5321_vrfy_handler(struct session *, char *);
+static int session_rfc5321_expn_handler(struct session *, char *);
+static int session_rfc5321_turn_handler(struct session *, char *);
+static int session_rfc5321_help_handler(struct session *, char *);
+static int session_rfc5321_quit_handler(struct session *, char *);
 
-int		 session_rfc1652_mail_handler(struct session *, char *);
+static int session_rfc1652_mail_handler(struct session *, char *);
 
-int		 session_rfc3207_stls_handler(struct session *, char *);
+static int session_rfc3207_stls_handler(struct session *, char *);
 
-int		 session_rfc4954_auth_handler(struct session *, char *);
-void		 session_rfc4954_auth_plain(struct session *, char *);
-void		 session_rfc4954_auth_login(struct session *, char *);
+static int session_rfc4954_auth_handler(struct session *, char *);
+static void session_rfc4954_auth_plain(struct session *, char *);
+static void session_rfc4954_auth_login(struct session *, char *);
 
-void		 session_read(struct bufferevent *, void *);
-void		 session_read_data(struct session *, char *);
-void		 session_write(struct bufferevent *, void *);
-void		 session_error(struct bufferevent *, short event, void *);
-void		 session_command(struct session *, char *);
-char		*session_readline(struct session *);
-void		 session_respond_delayed(int, short, void *);
-int		 session_set_path(struct path *, char *);
-void		 session_imsg(struct session *, enum smtp_proc_type,
-		     enum imsg_type, u_int32_t, pid_t, int, void *, u_int16_t);
+static void session_read(struct bufferevent *, void *);
+static void session_read_data(struct session *, char *);
+static void session_write(struct bufferevent *, void *);
+static void session_error(struct bufferevent *, short event, void *);
+static void session_command(struct session *, char *);
+static char *session_readline(struct session *);
+static void session_respond_delayed(int, short, void *);
+static int session_set_path(struct path *, char *);
+static void session_imsg(struct session *, enum smtp_proc_type,
+    enum imsg_type, u_int32_t, pid_t, int, void *, u_int16_t);
 
 struct session_cmd {
 	char	 *name;
@@ -104,7 +103,7 @@ struct session_cmd rfc4954_cmdtab[] = {
 	{ "auth",	session_rfc4954_auth_handler }
 };
 
-int
+static int
 session_rfc3207_stls_handler(struct session *s, char *args)
 {
 	if (! ADVERTISE_TLS(s))
@@ -131,7 +130,7 @@ session_rfc3207_stls_handler(struct session *s, char *args)
 	return 1;
 }
 
-int
+static int
 session_rfc4954_auth_handler(struct session *s, char *args)
 {
 	char	*method;
@@ -177,7 +176,7 @@ session_rfc4954_auth_handler(struct session *s, char *args)
 	return 1;
 }
 
-void
+static void
 session_rfc4954_auth_plain(struct session *s, char *arg)
 {
 	struct auth	*a = &s->s_auth;
@@ -236,7 +235,7 @@ abort:
 	s->s_state = S_HELO;
 }
 
-void
+static void
 session_rfc4954_auth_login(struct session *s, char *arg)
 {
 	struct auth	*a = &s->s_auth;
@@ -279,7 +278,7 @@ abort:
 	s->s_state = S_HELO;
 }
 
-int
+static int
 session_rfc1652_mail_handler(struct session *s, char *args)
 {
 	char *body;
@@ -316,7 +315,7 @@ session_rfc1652_mail_handler(struct session *s, char *args)
 	return session_rfc5321_mail_handler(s, args);
 }
 
-int
+static int
 session_rfc5321_helo_handler(struct session *s, char *args)
 {
 	if (args == NULL) {
@@ -339,7 +338,7 @@ session_rfc5321_helo_handler(struct session *s, char *args)
 	return 1;
 }
 
-int
+static int
 session_rfc5321_ehlo_handler(struct session *s, char *args)
 {
 	if (args == NULL) {
@@ -379,7 +378,7 @@ session_rfc5321_ehlo_handler(struct session *s, char *args)
 	return 1;
 }
 
-int
+static int
 session_rfc5321_rset_handler(struct session *s, char *args)
 {
 	s->s_state = S_HELO;
@@ -388,7 +387,7 @@ session_rfc5321_rset_handler(struct session *s, char *args)
 	return 1;
 }
 
-int
+static int
 session_rfc5321_noop_handler(struct session *s, char *args)
 {
 	session_respond(s, "250 2.0.0 OK");
@@ -396,7 +395,7 @@ session_rfc5321_noop_handler(struct session *s, char *args)
 	return 1;
 }
 
-int
+static int
 session_rfc5321_mail_handler(struct session *s, char *args)
 {
 	if (s->s_state == S_GREETED) {
@@ -428,7 +427,7 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 	return 1;
 }
 
-int
+static int
 session_rfc5321_rcpt_handler(struct session *s, char *args)
 {
 	if (s->s_state == S_GREETED) {
@@ -454,7 +453,7 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 	return 1;
 }
 
-int
+static int
 session_rfc5321_quit_handler(struct session *s, char *args)
 {
 	session_respond(s, "221 2.0.0 %s Closing connection", s->s_env->sc_hostname);
@@ -464,7 +463,7 @@ session_rfc5321_quit_handler(struct session *s, char *args)
 	return 1;
 }
 
-int
+static int
 session_rfc5321_data_handler(struct session *s, char *args)
 {
 	if (s->s_state == S_GREETED) {
@@ -490,7 +489,7 @@ session_rfc5321_data_handler(struct session *s, char *args)
 	return 1;
 }
 
-int
+static int
 session_rfc5321_vrfy_handler(struct session *s, char *args)
 {
 	session_respond(s, "252 5.5.1 Cannot VRFY; try RCPT to attempt delivery");
@@ -498,7 +497,7 @@ session_rfc5321_vrfy_handler(struct session *s, char *args)
 	return 1;
 }
 
-int
+static int
 session_rfc5321_expn_handler(struct session *s, char *args)
 {
 	session_respond(s, "502 5.5.2 Sorry, we do not allow this operation");
@@ -506,7 +505,7 @@ session_rfc5321_expn_handler(struct session *s, char *args)
 	return 1;
 }
 
-int
+static int
 session_rfc5321_turn_handler(struct session *s, char *args)
 {
 	session_respond(s, "502 5.5.2 Sorry, we do not allow this operation");
@@ -514,7 +513,7 @@ session_rfc5321_turn_handler(struct session *s, char *args)
 	return 1;
 }
 
-int
+static int
 session_rfc5321_help_handler(struct session *s, char *args)
 {
 	session_respond(s, "214- This is OpenSMTPD");
@@ -526,7 +525,7 @@ session_rfc5321_help_handler(struct session *s, char *args)
 	return 1;
 }
 
-void
+static void
 session_command(struct session *s, char *cmd)
 {
 	char		*ep, *args;
@@ -761,7 +760,7 @@ session_bufferevent_new(struct session *s)
 	    SMTPD_SESSION_TIMEOUT);
 }
 
-void
+static void
 session_read(struct bufferevent *bev, void *p)
 {
 	struct session	*s = p;
@@ -814,7 +813,7 @@ tempfail:
 	free(line);
 }
 
-void
+static void
 session_read_data(struct session *s, char *line)
 {
 	size_t datalen;
@@ -877,7 +876,7 @@ session_read_data(struct session *s, char *line)
 	}
 }
 
-void
+static void
 session_write(struct bufferevent *bev, void *p)
 {
 	struct session	*s = p;
@@ -919,7 +918,7 @@ session_write(struct bufferevent *bev, void *p)
 	}
 }
 
-void
+static void
 session_error(struct bufferevent *bev, short event, void *p)
 {
 	struct session	*s = p;
@@ -1001,7 +1000,7 @@ session_destroy(struct session *s)
 	free(s);
 }
 
-char *
+static char *
 session_readline(struct session *s)
 {
 	char	*line, *line2;
@@ -1059,7 +1058,7 @@ session_cmp(struct session *s1, struct session *s2)
 	return (0);
 }
 
-int
+static int
 session_set_path(struct path *path, char *line)
 {
 	size_t len;
@@ -1139,7 +1138,7 @@ session_respond(struct session *s, char *fmt, ...)
 		bufferevent_enable(s->s_bev, EV_WRITE);
 }
 
-void
+static void
 session_respond_delayed(int fd, short event, void *p)
 {
 	struct session	*s = p;
@@ -1150,7 +1149,7 @@ session_respond_delayed(int fd, short event, void *p)
 /*
  * Send IMSG, waiting for reply safely.
  */
-void
+static void
 session_imsg(struct session *s, enum smtp_proc_type proc, enum imsg_type type,
     u_int32_t peerid, pid_t pid, int fd, void *data, u_int16_t datalen)
 {

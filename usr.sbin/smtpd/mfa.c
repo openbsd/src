@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.56 2011/04/17 11:39:22 gilles Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.57 2011/04/17 13:36:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -34,15 +34,15 @@
 #include "smtpd.h"
 #include "log.h"
 
-void		mfa_imsg(struct smtpd *, struct imsgev *, struct imsg *);
-__dead void	mfa_shutdown(void);
-void		mfa_sig_handler(int, short, void *);
-void		mfa_test_mail(struct smtpd *, struct envelope *);
-void		mfa_test_rcpt(struct smtpd *, struct envelope *);
-void		mfa_test_rcpt_resume(struct smtpd *, struct submit_status *);
-int		mfa_strip_source_route(char *, size_t);
+static void mfa_imsg(struct smtpd *, struct imsgev *, struct imsg *);
+static void mfa_shutdown(void);
+static void mfa_sig_handler(int, short, void *);
+static void mfa_test_mail(struct smtpd *, struct envelope *);
+static void mfa_test_rcpt(struct smtpd *, struct envelope *);
+static void mfa_test_rcpt_resume(struct smtpd *, struct submit_status *);
+static int mfa_strip_source_route(char *, size_t);
 
-void
+static void
 mfa_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 {
 	if (iev->proc == PROC_SMTP) {
@@ -83,7 +83,7 @@ mfa_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 	fatalx("mfa_imsg: unexpected imsg");
 }
 
-void
+static void
 mfa_sig_handler(int sig, short event, void *p)
 {
 	switch (sig) {
@@ -96,7 +96,7 @@ mfa_sig_handler(int sig, short event, void *p)
 	}
 }
 
-void
+static void
 mfa_shutdown(void)
 {
 	log_info("mail filter exiting");
@@ -201,7 +201,7 @@ accept:
 	    0, -1, &ss, sizeof(ss));
 }
 
-void
+static void
 mfa_test_rcpt(struct smtpd *env, struct envelope *m)
 {
 	struct submit_status	 ss;
@@ -232,7 +232,7 @@ refuse:
 	    sizeof(ss));
 }
 
-void
+static void
 mfa_test_rcpt_resume(struct smtpd *env, struct submit_status *ss) {
 	if (ss->code != 250) {
 		imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_MFA_RCPT, 0, 0, -1, ss,
@@ -246,7 +246,7 @@ mfa_test_rcpt_resume(struct smtpd *env, struct submit_status *ss) {
 	    ss, sizeof(*ss));
 }
 
-int
+static int
 mfa_strip_source_route(char *buf, size_t len)
 {
 	char *p;

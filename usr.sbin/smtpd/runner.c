@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.104 2011/04/17 11:39:23 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.105 2011/04/17 13:36:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -41,32 +41,29 @@
 #include "smtpd.h"
 #include "log.h"
 
-void		runner_imsg(struct smtpd *, struct imsgev *, struct imsg *);
 
-__dead void	runner_shutdown(void);
-void		runner_sig_handler(int, short, void *);
-void		runner_setup_events(struct smtpd *);
-void		runner_reset_events(struct smtpd *);
-void		runner_disable_events(struct smtpd *);
+void ramqueue_insert(struct ramqueue *, struct envelope *, time_t);
 
-void		runner_timeout(int, short, void *);
+static void runner_imsg(struct smtpd *, struct imsgev *, struct imsg *);
+static void runner_shutdown(void);
+static void runner_sig_handler(int, short, void *);
+static void runner_setup_events(struct smtpd *);
+static void runner_reset_events(struct smtpd *);
+static void runner_disable_events(struct smtpd *);
+static void runner_timeout(int, short, void *);
+static int runner_process_envelope(struct smtpd *, struct ramqueue_envelope *, time_t);
+static void runner_process_batch(struct smtpd *, struct ramqueue_envelope *, time_t);
+static void runner_purge_run(void);
+static void runner_purge_message(u_int32_t);
+static int runner_check_loop(struct smtpd *, struct envelope *);
+static int runner_force_message_to_ramqueue(struct ramqueue *, u_int32_t);
 
-int		runner_process_envelope(struct smtpd *, struct ramqueue_envelope *, time_t);
-void		runner_process_batch(struct smtpd *, struct ramqueue_envelope *, time_t);
-
-void		runner_purge_run(void);
-void		runner_purge_message(u_int32_t);
-
-int		runner_check_loop(struct smtpd *, struct envelope *);
-
-int		runner_force_message_to_ramqueue(struct ramqueue *, u_int32_t);
-
-void		ramqueue_insert(struct ramqueue *, struct envelope *, time_t);
 
 /*temporary*/
 u_int16_t	fsqueue_hash(u_int32_t);
 u_int64_t	filename_to_evpid(char *);
 u_int32_t	filename_to_msgid(char *);
+
 
 void
 runner_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
@@ -273,6 +270,7 @@ runner(struct smtpd *env)
 
 	runner_setup_events(env);
 	event_dispatch();
+	runner_disable_events(env);
 	runner_shutdown();
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_parser.c,v 1.5 2010/11/28 14:35:58 gilles Exp $	*/
+/*	$OpenBSD: map_parser.c,v 1.6 2011/04/17 13:36:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2010 Gilles Chehade <gilles@openbsd.org>
@@ -34,9 +34,9 @@
 
 struct map_parser *map_parser_lookup(enum map_kind);
 
-void *map_parse_secret(char *, char *, size_t);
-void *map_parse_alias(char *, char *, size_t);
-void *map_parse_virtual(char *, char *, size_t);
+static void *map_parse_secret(char *, char *, size_t);
+static void *map_parse_alias(char *, char *, size_t);
+static void *map_parse_virtual(char *, char *, size_t);
 
 struct map_parser map_parsers[] = {
 	{ K_NONE,	NULL },
@@ -60,7 +60,7 @@ map_parser_lookup(enum map_kind kind)
 	return &map_parsers[i];
 }
 
-void *
+static void *
 map_parse_secret(char *key, char *line, size_t len)
 {
 	struct map_secret *map_secret = NULL;
@@ -103,7 +103,7 @@ err:
 	return NULL;
 }
 
-void *
+static void *
 map_parse_alias(char *key, char *line, size_t len)
 {
 	char	       	*subrcpt;
@@ -144,7 +144,7 @@ error:
 	return NULL;
 }
 
-void *
+static void *
 map_parse_virtual(char *key, char *line, size_t len)
 {
 	char	       	*subrcpt;

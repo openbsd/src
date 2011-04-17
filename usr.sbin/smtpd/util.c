@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.43 2011/04/17 11:39:23 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.44 2011/04/17 13:36:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -49,12 +49,6 @@
 
 const char *log_in6addr(const struct in6_addr *);
 const char *log_sockaddr(struct sockaddr *);
-
-u_int32_t	filename_to_msgid(char *);
-u_int64_t	filename_to_evpid(char *);
-
-u_int32_t	evpid_to_msgid(u_int64_t);
-u_int64_t	msgid_to_evpid(u_int32_t);
 
 int
 bsnprintf(char *str, size_t size, const char *format, ...)

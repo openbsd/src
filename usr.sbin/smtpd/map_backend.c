@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_backend.c,v 1.4 2010/11/28 14:35:58 gilles Exp $	*/
+/*	$OpenBSD: map_backend.c,v 1.5 2011/04/17 13:36:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2010 Gilles Chehade <gilles@openbsd.org>
@@ -38,16 +38,16 @@
 struct map_backend *map_backend_lookup(enum map_src);
 
 /* db(3) backend */
-void *map_db_open(char *);
-void map_db_close(void *);
-char *map_db_get(void *, char *, size_t *);
-int map_db_put(void *, char *, char *);
+static void *map_db_open(char *);
+static void map_db_close(void *);
+static char *map_db_get(void *, char *, size_t *);
+static int map_db_put(void *, char *, char *);
 
 /* stdio(3) backend */
-void *map_stdio_open(char *);
-void map_stdio_close(void *);
-char *map_stdio_get(void *, char *, size_t *);
-int map_stdio_put(void *, char *, char *);
+static void *map_stdio_open(char *);
+static void map_stdio_close(void *);
+static char *map_stdio_get(void *, char *, size_t *);
+static int map_stdio_put(void *, char *, char *);
 
 
 struct map_backend map_backends[] = {
@@ -75,13 +75,13 @@ map_backend_lookup(enum map_src source)
 
 
 /* db(3) backend */
-void *
+static void *
 map_db_open(char *src)
 {
 	return dbopen(src, O_RDONLY, 0600, DB_HASH, NULL);
 }
 
-void
+static void
 map_db_close(void *hdl)
 {
 	DB *db = hdl;
@@ -89,7 +89,7 @@ map_db_close(void *hdl)
 	db->close(db);
 }
 
-char *
+static char *
 map_db_get(void *hdl, char *key, size_t *len)
 {
 	int ret;
@@ -114,7 +114,7 @@ map_db_get(void *hdl, char *key, size_t *len)
 	return result;
 }
 
-int
+static int
 map_db_put(void *hdl, char *key, char *val)
 {
 	return 0;
@@ -122,13 +122,13 @@ map_db_put(void *hdl, char *key, char *val)
 
 
 /* stdio(3) backend */
-void *
+static void *
 map_stdio_open(char *src)
 {
 	return fopen(src, "r");
 }
 
-void
+static void
 map_stdio_close(void *hdl)
 {
 	FILE *fp = hdl;
@@ -136,7 +136,7 @@ map_stdio_close(void *hdl)
 	fclose(fp);
 }
 
-char *
+static char *
 map_stdio_get(void *hdl, char *key, size_t *len)
 {
 	char *buf, *lbuf;
@@ -184,7 +184,7 @@ map_stdio_get(void *hdl, char *key, size_t *len)
 	return result;
 }
 
-int
+static int
 map_stdio_put(void *hdl, char *key, char *val)
 {
 	return 0;

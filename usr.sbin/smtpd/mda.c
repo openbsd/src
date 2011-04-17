@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.53 2011/04/17 11:39:22 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.54 2011/04/17 13:36:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -36,16 +36,16 @@
 #include "smtpd.h"
 #include "log.h"
 
-void			 mda_imsg(struct smtpd *, struct imsgev *, struct imsg *);
-__dead void		 mda_shutdown(void);
-void			 mda_sig_handler(int, short, void *);
-void			 mda_store(struct mda_session *);
-void			 mda_store_event(int, short, void *);
-struct mda_session	*mda_lookup(struct smtpd *, u_int32_t);
+static void mda_imsg(struct smtpd *, struct imsgev *, struct imsg *);
+static void mda_shutdown(void);
+static void mda_sig_handler(int, short, void *);
+static void mda_store(struct mda_session *);
+static void mda_store_event(int, short, void *);
+static struct mda_session *mda_lookup(struct smtpd *, u_int32_t);
 
 u_int32_t mda_id;
 
-void
+static void
 mda_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 {
 	char			 output[128], *error, *parent_error;
@@ -242,7 +242,7 @@ mda_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 	fatalx("mda_imsg: unexpected imsg");
 }
 
-void
+static void
 mda_sig_handler(int sig, short event, void *p)
 {
 	switch (sig) {
@@ -255,7 +255,7 @@ mda_sig_handler(int sig, short event, void *p)
 	}
 }
 
-void
+static void
 mda_shutdown(void)
 {
 	log_info("mail delivery agent exiting");
@@ -324,7 +324,7 @@ mda(struct smtpd *env)
 	return (0);
 }
 
-void
+static void
 mda_store(struct mda_session *s)
 {
 	char		*p;
@@ -354,7 +354,7 @@ mda_store(struct mda_session *s)
 	free(p);
 }
 
-void
+static void
 mda_store_event(int fd, short event, void *p)
 {
 	char			 tmp[16384];
@@ -388,7 +388,7 @@ mda_store_event(int fd, short event, void *p)
 	event_add(&s->ev, NULL);
 }
 
-struct mda_session *
+static struct mda_session *
 mda_lookup(struct smtpd *env, u_int32_t id)
 {
 	struct mda_session *s;

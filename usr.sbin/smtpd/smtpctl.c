@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.58 2011/04/13 20:53:18 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.59 2011/04/17 13:36:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -37,9 +37,9 @@
 #include "smtpd.h"
 #include "parser.h"
 
-__dead void	usage(void);
-int		show_command_output(struct imsg*);
-int		show_stats_output(struct imsg *);
+void usage(void);
+static int show_command_output(struct imsg*);
+static int show_stats_output(struct imsg *);
 
 int proctype;
 struct imsgbuf	*ibuf;
@@ -215,7 +215,7 @@ connected:
 	return (0);
 }
 
-int
+static int
 show_command_output(struct imsg *imsg)
 {
 	switch (imsg->hdr.type) {
@@ -231,7 +231,7 @@ show_command_output(struct imsg *imsg)
 	return (1);
 }
 
-int
+static int
 show_stats_output(struct imsg *imsg)
 {
 	struct stats	*stats;

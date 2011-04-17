@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.83 2011/04/17 11:39:23 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.84 2011/04/17 13:36:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -37,18 +37,19 @@
 #include "smtpd.h"
 #include "log.h"
 
-void		smtp_imsg(struct smtpd *, struct imsgev *, struct imsg *);
-__dead void	smtp_shutdown(void);
-void		smtp_sig_handler(int, short, void *);
-void		smtp_setup_events(struct smtpd *);
-void		smtp_disable_events(struct smtpd *);
-void		smtp_pause(struct smtpd *);
-int		smtp_enqueue(struct smtpd *, uid_t *);
-void		smtp_accept(int, short, void *);
-struct session *smtp_new(struct listener *);
-struct session *session_lookup(struct smtpd *, u_int64_t);
+static void smtp_imsg(struct smtpd *, struct imsgev *, struct imsg *);
+static void smtp_shutdown(void);
+static void smtp_sig_handler(int, short, void *);
+static void smtp_setup_events(struct smtpd *);
+static void smtp_disable_events(struct smtpd *);
+static void smtp_pause(struct smtpd *);
+static int smtp_enqueue(struct smtpd *, uid_t *);
+static void smtp_accept(int, short, void *);
+static struct session *smtp_new(struct listener *);
+static struct session *session_lookup(struct smtpd *, u_int64_t);
 
-void
+
+static void
 smtp_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 {
 	struct session		 skey;
@@ -282,7 +283,7 @@ smtp_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 	fatalx("smtp_imsg: unexpected imsg");
 }
 
-void
+static void
 smtp_sig_handler(int sig, short event, void *p)
 {
 	switch (sig) {
@@ -295,7 +296,7 @@ smtp_sig_handler(int sig, short event, void *p)
 	}
 }
 
-void
+static void
 smtp_shutdown(void)
 {
 	log_info("smtp server exiting");
@@ -370,7 +371,7 @@ smtp(struct smtpd *env)
 	return (0);
 }
 
-void
+static void
 smtp_setup_events(struct smtpd *env)
 {
 	struct listener *l;
@@ -398,7 +399,7 @@ smtp_setup_events(struct smtpd *env)
 	log_debug("smtp: will accept at most %d clients", env->sc_maxconn);
 }
 
-void
+static void
 smtp_disable_events(struct smtpd *env)
 {
 	struct listener	*l;
@@ -415,7 +416,7 @@ smtp_disable_events(struct smtpd *env)
 	env->sc_maxconn = 0;
 }
 
-void
+static void
 smtp_pause(struct smtpd *env)
 {
 	struct listener *l;
@@ -439,7 +440,7 @@ smtp_resume(struct smtpd *env)
 		event_add(&l->ev, NULL);
 }
 
-int
+static int
 smtp_enqueue(struct smtpd *env, uid_t *euid)
 {
 	static struct listener		 local, *l;
@@ -498,7 +499,7 @@ smtp_enqueue(struct smtpd *env, uid_t *euid)
 	return (fd[1]);
 }
 
-void
+static void
 smtp_accept(int fd, short event, void *p)
 {
 	struct listener		*l = p;
@@ -521,7 +522,7 @@ smtp_accept(int fd, short event, void *p)
 }
 
 
-struct session *
+static struct session *
 smtp_new(struct listener *l)
 {
 	struct smtpd	*env = l->env;
@@ -564,7 +565,7 @@ smtp_new(struct listener *l)
 /*
  * Helper function for handling IMSG replies.
  */
-struct session *
+static struct session *
 session_lookup(struct smtpd *env, u_int64_t id)
 {
 	struct session	 key;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.13 2010/11/28 13:56:43 gilles Exp $	*/
+/*	$OpenBSD: config.c,v 1.14 2011/04/17 13:36:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -31,9 +31,9 @@
 #include "smtpd.h"
 #include "log.h"
 
-int	is_peer(struct peer *, enum smtp_proc_type, u_int);
+static int is_peer(struct peer *, enum smtp_proc_type, u_int);
 
-int
+static int
 is_peer(struct peer *p, enum smtp_proc_type peer, u_int peercount)
 {
 	u_int	i;

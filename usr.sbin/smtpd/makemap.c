@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.28 2010/11/28 14:35:58 gilles Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.29 2011/04/17 13:36:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -45,14 +45,13 @@
 extern char *__progname;
 
 __dead void	usage(void);
-int		parse_map(char *);
-int		parse_entry(char *, size_t, size_t);
-int		parse_mapentry(char *, size_t, size_t);
-int		parse_setentry(char *, size_t, size_t);
-int		make_plain(DBT *, char *);
-int		make_aliases(DBT *, char *);
-
-char		*conf_aliases(char *);
+static int parse_map(char *);
+static int parse_entry(char *, size_t, size_t);
+static int parse_mapentry(char *, size_t, size_t);
+static int parse_setentry(char *, size_t, size_t);
+static int make_plain(DBT *, char *);
+static int make_aliases(DBT *, char *);
+static char *conf_aliases(char *);
 
 DB	*db;
 char	*source;

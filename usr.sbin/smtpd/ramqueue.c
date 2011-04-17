@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramqueue.c,v 1.5 2011/04/17 11:39:23 gilles Exp $	*/
+/*	$OpenBSD: ramqueue.c,v 1.6 2011/04/17 13:36:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -38,19 +38,19 @@
 #include "smtpd.h"
 #include "log.h"
 
-int	ramqueue_expire(struct smtpd *, struct envelope *, time_t);
-void	ramqueue_insert(struct ramqueue *, struct envelope *, time_t);
-time_t	ramqueue_next_schedule(struct envelope *, time_t);
-int	ramqueue_host_cmp(struct ramqueue_host *, struct ramqueue_host *);
-struct ramqueue_host *ramqueue_get_host(struct ramqueue *, char *);
-struct ramqueue_batch *ramqueue_get_batch(struct ramqueue *,
-    struct ramqueue_host *, struct envelope *);
-void	ramqueue_put_host(struct ramqueue *, struct ramqueue_host *);
-void	ramqueue_put_batch(struct ramqueue *, struct ramqueue_batch *);
-int	ramqueue_load_offline(struct ramqueue *);
 
-u_int32_t	filename_to_msgid(char *);
-u_int64_t	filename_to_evpid(char *);
+void ramqueue_insert(struct ramqueue *, struct envelope *, time_t);
+int ramqueue_host_cmp(struct ramqueue_host *, struct ramqueue_host *);
+void ramqueue_put_host(struct ramqueue *, struct ramqueue_host *);
+void ramqueue_put_batch(struct ramqueue *, struct ramqueue_batch *);
+int ramqueue_load_offline(struct ramqueue *);
+
+static int ramqueue_expire(struct smtpd *, struct envelope *, time_t);
+static time_t ramqueue_next_schedule(struct envelope *, time_t);
+static struct ramqueue_host *ramqueue_get_host(struct ramqueue *, char *);
+static struct ramqueue_batch *ramqueue_get_batch(struct ramqueue *,
+    struct ramqueue_host *, struct envelope *);
+
 
 void
 ramqueue_init(struct smtpd *env, struct ramqueue *rqueue)
@@ -213,7 +213,7 @@ ramqueue_remove(struct ramqueue *rqueue, struct ramqueue_envelope *rq_evp)
 	rqueue->env->stats->ramqueue.envelopes--;
 }
 
-int
+static int
 ramqueue_expire(struct smtpd *env, struct envelope *envelope, time_t curtm)
 {
 	struct envelope bounce;
@@ -230,7 +230,7 @@ ramqueue_expire(struct smtpd *env, struct envelope *envelope, time_t curtm)
 	return 0;
 }
 
-time_t
+static time_t
 ramqueue_next_schedule(struct envelope *envelope, time_t curtm)
 {
 	time_t delay;
@@ -265,7 +265,7 @@ ramqueue_next_schedule(struct envelope *envelope, time_t curtm)
 	return curtm + delay;
 }
 
-struct ramqueue_host *
+static struct ramqueue_host *
 ramqueue_get_host(struct ramqueue *rqueue, char *hostname)
 {
 	struct ramqueue_host *rq_host, key;
@@ -295,7 +295,7 @@ ramqueue_put_host(struct ramqueue *rqueue, struct ramqueue_host *host)
 	RB_INSERT(hosttree, &rqueue->hosttree, host);
 }
 
-struct ramqueue_batch *
+static struct ramqueue_batch *
 ramqueue_get_batch(struct ramqueue *rqueue, struct ramqueue_host *host,
     struct envelope *envelope)
 {

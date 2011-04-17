@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.39 2011/04/02 16:40:19 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.40 2011/04/17 13:36:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -37,14 +37,14 @@
 #include "smtpd.h"
 #include "log.h"
 
-struct dnssession *dnssession_init(struct smtpd *, struct dns *);
-void	dnssession_destroy(struct smtpd *, struct dnssession *);
-void	dnssession_mx_insert(struct dnssession *, const char *, int);
-void	dns_asr_event_set(struct dnssession *, struct asr_result *);
-void	dns_asr_handler(int, short, void *);
-void	dns_asr_dispatch_host(struct dnssession *);
-void	dns_asr_dispatch_mx(struct dnssession *);
-void	dns_asr_dispatch_cname(struct dnssession *);
+static struct dnssession *dnssession_init(struct smtpd *, struct dns *);
+static void dnssession_destroy(struct smtpd *, struct dnssession *);
+static void dnssession_mx_insert(struct dnssession *, const char *, int);
+static void dns_asr_event_set(struct dnssession *, struct asr_result *);
+static void dns_asr_handler(int, short, void *);
+static void dns_asr_dispatch_host(struct dnssession *);
+static void dns_asr_dispatch_mx(struct dnssession *);
+static void dns_asr_dispatch_cname(struct dnssession *);
 
 struct asr *asr = NULL;
 
@@ -148,7 +148,7 @@ noasr:
 	imsg_compose_event(asker, type, 0, 0, -1, query, sizeof(*query));
 }
 
-void
+static void
 dns_asr_event_set(struct dnssession *dnssession, struct asr_result *ar)
 {
 	struct timeval tv = { 0, 0 };
@@ -160,7 +160,7 @@ dns_asr_event_set(struct dnssession *dnssession, struct asr_result *ar)
 	event_add(&dnssession->ev, &tv);
 }
 
-void
+static void
 dns_asr_handler(int fd, short event, void *arg)
 {
 	struct dnssession *dnssession = arg;
@@ -180,7 +180,7 @@ dns_asr_handler(int fd, short event, void *arg)
 	}
 }
 
-void
+static void
 dns_asr_dispatch_mx(struct dnssession *dnssession)
 {
 	struct dns		*query = &dnssession->query;
@@ -226,7 +226,7 @@ hosts:
 	dns_asr_dispatch_host(dnssession);
 }
 
-void
+static void
 dns_asr_dispatch_host(struct dnssession *dnssession)
 {
 	struct dns		*query = &dnssession->query;
@@ -268,7 +268,7 @@ next:
 	goto next;
 }
 
-void
+static void
 dns_asr_dispatch_cname(struct dnssession *dnssession)
 {
 	struct dns		*query = &dnssession->query;
@@ -296,7 +296,7 @@ dns_asr_dispatch_cname(struct dnssession *dnssession)
 	dnssession_destroy(query->env, dnssession);
 }
 
-struct dnssession *
+static struct dnssession *
 dnssession_init(struct smtpd *env, struct dns *query)
 {
 	struct dnssession *dnssession;
@@ -317,7 +317,7 @@ dnssession_init(struct smtpd *env, struct dns *query)
 	return dnssession;
 }
 
-void
+static void
 dnssession_destroy(struct smtpd *env, struct dnssession *dnssession)
 {
 	env->stats->lka.queries_active--;
@@ -326,7 +326,7 @@ dnssession_destroy(struct smtpd *env, struct dnssession *dnssession)
 	free(dnssession);
 }
 
-void
+static void
 dnssession_mx_insert(struct dnssession *dnssession, const char *host, int prio)
 {
 	size_t i, j;

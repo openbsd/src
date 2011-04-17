@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.101 2011/04/17 11:39:22 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.102 2011/04/17 13:36:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -36,14 +36,13 @@
 #include "smtpd.h"
 #include "log.h"
 
-void		queue_imsg(struct smtpd *, struct imsgev *, struct imsg *);
-void		queue_pass_to_runner(struct smtpd *, struct imsgev *, struct imsg *);
-__dead void	queue_shutdown(void);
-void		queue_sig_handler(int, short, void *);
-void		queue_purge(struct smtpd *, enum queue_kind, char *);
+static void queue_imsg(struct smtpd *, struct imsgev *, struct imsg *);
+static void queue_pass_to_runner(struct smtpd *, struct imsgev *, struct imsg *);
+static void queue_shutdown(void);
+static void queue_sig_handler(int, short, void *);
+static void queue_purge(struct smtpd *, enum queue_kind, char *);
 
-
-void
+static void
 queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 {
 	struct submit_status	 ss;
@@ -214,7 +213,7 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 	fatalx("queue_imsg: unexpected imsg");
 }
 
-void
+static void
 queue_pass_to_runner(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 {
 	imsg_compose_event(env->sc_ievs[PROC_RUNNER], imsg->hdr.type,
@@ -222,7 +221,7 @@ queue_pass_to_runner(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 	    imsg->hdr.len - sizeof imsg->hdr);
 }
 
-void
+static void
 queue_sig_handler(int sig, short event, void *p)
 {
 	switch (sig) {
@@ -235,7 +234,7 @@ queue_sig_handler(int sig, short event, void *p)
 	}
 }
 
-void
+static void
 queue_shutdown(void)
 {
 	log_info("queue handler exiting");
@@ -319,7 +318,7 @@ queue(struct smtpd *env)
 	return (0);
 }
 
-void
+static void
 queue_purge(struct smtpd *env, enum queue_kind qkind, char *queuepath)
 {
 	char		 path[MAXPATHLEN];

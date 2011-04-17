@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.120 2011/04/14 22:46:38 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.121 2011/04/17 13:36:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -44,33 +44,30 @@
 #include "smtpd.h"
 #include "log.h"
 
-void		 parent_imsg(struct smtpd *, struct imsgev *, struct imsg *);
-__dead void	 usage(void);
-void		 parent_shutdown(struct smtpd *);
-void		 parent_send_config(int, short, void *);
-void		 parent_send_config_listeners(struct smtpd *);
-void		 parent_send_config_client_certs(struct smtpd *);
-void		 parent_send_config_ruleset(struct smtpd *, int);
-void		 parent_sig_handler(int, short, void *);
-
-void		 forkmda(struct smtpd *, struct imsgev *, u_int32_t,
-		     struct deliver *);
-int		 parent_enqueue_offline(struct smtpd *, char *);
-int		 parent_forward_open(char *);
-int		 path_starts_with(char *, char *);
-
-void		 fork_peers(struct smtpd *);
-
-struct child	*child_add(struct smtpd *, pid_t, int, int);
-void		 child_del(struct smtpd *, pid_t);
-struct child	*child_lookup(struct smtpd *, pid_t);
+static void parent_imsg(struct smtpd *, struct imsgev *, struct imsg *);
+static void usage(void);
+static void parent_shutdown(struct smtpd *);
+static void parent_send_config(int, short, void *);
+static void parent_send_config_listeners(struct smtpd *);
+static void parent_send_config_client_certs(struct smtpd *);
+static void parent_send_config_ruleset(struct smtpd *, int);
+static void parent_sig_handler(int, short, void *);
+static void forkmda(struct smtpd *, struct imsgev *, u_int32_t,
+    struct deliver *);
+static int parent_enqueue_offline(struct smtpd *, char *);
+static int parent_forward_open(char *);
+static int path_starts_with(char *, char *);
+static void fork_peers(struct smtpd *);
+static struct child *child_lookup(struct smtpd *, pid_t);
+static struct child *child_add(struct smtpd *, pid_t, int, int);
+static void child_del(struct smtpd *, pid_t);
 
 extern char	**environ;
 void		(*imsg_callback)(struct smtpd *, struct imsgev *, struct imsg *);
 
 int __b64_pton(char const *, unsigned char *, size_t);
 
-void
+static void
 parent_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 {
 	struct smtpd		 newenv;
@@ -180,7 +177,7 @@ parent_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 	fatalx("parent_imsg: unexpected imsg");
 }
 
-__dead void
+static void
 usage(void)
 {
 	extern char	*__progname;
@@ -190,7 +187,7 @@ usage(void)
 	exit(1);
 }
 
-void
+static void
 parent_shutdown(struct smtpd *env)
 {
 	struct child	*child;
@@ -208,7 +205,7 @@ parent_shutdown(struct smtpd *env)
 	exit(0);
 }
 
-void
+static void
 parent_send_config(int fd, short event, void *p)
 {
 	parent_send_config_listeners(p);
@@ -216,7 +213,7 @@ parent_send_config(int fd, short event, void *p)
 	parent_send_config_ruleset(p, PROC_LKA);
 }
 
-void
+static void
 parent_send_config_listeners(struct smtpd *env)
 {
 	struct listener		*l;
@@ -262,7 +259,7 @@ parent_send_config_listeners(struct smtpd *env)
 	    0, 0, -1, NULL, 0);
 }
 
-void
+static void
 parent_send_config_client_certs(struct smtpd *env)
 {
 	struct ssl		*s;
@@ -325,7 +322,7 @@ parent_send_config_ruleset(struct smtpd *env, int proc)
 	    0, 0, -1, NULL, 0);
 }
 
-void
+static void
 parent_sig_handler(int sig, short event, void *p)
 {
 	struct smtpd	*env = p;
@@ -542,7 +539,7 @@ main(int argc, char *argv[])
 	return (0);
 }
 
-void
+static void
 fork_peers(struct smtpd *env)
 {
 	SPLAY_INIT(&env->children);
@@ -613,7 +610,7 @@ child_add(struct smtpd *env, pid_t pid, int type, int title)
 	return (child);
 }
 
-void
+static void
 child_del(struct smtpd *env, pid_t pid)
 {
 	struct child	*p;
@@ -627,7 +624,7 @@ child_del(struct smtpd *env, pid_t pid)
 	free(p);
 }
 
-struct child *
+static struct child *
 child_lookup(struct smtpd *env, pid_t pid)
 {
 	struct child	 key;
@@ -662,7 +659,7 @@ imsg_compose_event(struct imsgev *iev, u_int16_t type, u_int32_t peerid,
 	imsg_event_add(iev);
 }
 
-void
+static void
 forkmda(struct smtpd *env, struct imsgev *iev, u_int32_t id,
     struct deliver *deliver)
 {
@@ -864,7 +861,7 @@ forkmda(struct smtpd *env, struct imsgev *iev, u_int32_t id,
 #undef error
 #undef error2
 
-int
+static int
 parent_enqueue_offline(struct smtpd *env, char *runner_path)
 {
 	char		 path[MAXPATHLEN];
@@ -974,7 +971,7 @@ parent_enqueue_offline(struct smtpd *env, char *runner_path)
 	return (1);
 }
 
-int
+static int
 parent_forward_open(char *username)
 {
 	struct passwd *pw;

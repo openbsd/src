@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.15 2010/11/28 14:35:58 gilles Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.16 2011/04/17 13:36:07 gilles Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -32,11 +32,14 @@
 #include "smtpd.h"
 #include "log.h"
 
-struct rule    *ruleset_match(struct smtpd *, char *tag, struct path *, struct sockaddr_storage *);
-int		ruleset_check_source(struct map *, struct sockaddr_storage *);
-int		ruleset_match_mask(struct sockaddr_storage *, struct netaddr *);
-int		ruleset_inet4_match(struct sockaddr_in *, struct netaddr *);
-int		ruleset_inet6_match(struct sockaddr_in6 *, struct netaddr *);
+
+struct rule *ruleset_match(struct smtpd *, char *tag, struct path *, struct sockaddr_storage *);
+
+static int ruleset_check_source(struct map *, struct sockaddr_storage *);
+static int ruleset_match_mask(struct sockaddr_storage *, struct netaddr *);
+static int ruleset_inet4_match(struct sockaddr_in *, struct netaddr *);
+static int ruleset_inet6_match(struct sockaddr_in6 *, struct netaddr *);
+
 
 struct rule *
 ruleset_match(struct smtpd *env, char *tag, struct path *path, struct sockaddr_storage *ss)
@@ -88,7 +91,7 @@ ruleset_match(struct smtpd *env, char *tag, struct path *path, struct sockaddr_s
 	return NULL;
 }
 
-int
+static int
 ruleset_check_source(struct map *map, struct sockaddr_storage *ss)
 {
 	struct mapel *me;
@@ -115,7 +118,7 @@ ruleset_check_source(struct map *map, struct sockaddr_storage *ss)
 	return 0;
 }
 
-int
+static int
 ruleset_match_mask(struct sockaddr_storage *ss, struct netaddr *ssmask)
 {
 	if (ss->ss_family == AF_INET)
@@ -127,7 +130,7 @@ ruleset_match_mask(struct sockaddr_storage *ss, struct netaddr *ssmask)
 	return (0);
 }
 
-int
+static int
 ruleset_inet4_match(struct sockaddr_in *ss, struct netaddr *ssmask)
 {
 	in_addr_t mask;
@@ -147,7 +150,7 @@ ruleset_inet4_match(struct sockaddr_in *ss, struct netaddr *ssmask)
 	return 0;
 }
 
-int
+static int
 ruleset_inet6_match(struct sockaddr_in6 *ss, struct netaddr *ssmask)
 {
 	struct in6_addr	*in;

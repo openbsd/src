@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.42 2011/03/26 10:59:59 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.43 2011/04/17 13:36:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -38,17 +38,16 @@
 
 extern struct imsgbuf	*ibuf;
 
-void	 usage(void);
-void	 sighdlr(int);
-int	 main(int, char *[]);
-void	 build_from(char *, struct passwd *);
-int	 parse_message(FILE *, int, int, FILE *);
-void	 parse_addr(char *, size_t, int);
-void	 parse_addr_terminal(int);
-char	*qualify_addr(char *);
-void	 rcpt_add(char *);
-int	 open_connection(void);
-void	 enqueue_event(int, short, void *);
+void usage(void);
+static void sighdlr(int);
+static void build_from(char *, struct passwd *);
+static int parse_message(FILE *, int, int, FILE *);
+static void parse_addr(char *, size_t, int);
+static void parse_addr_terminal(int);
+static char *qualify_addr(char *);
+static void rcpt_add(char *);
+static int open_connection(void);
+static void enqueue_event(int, short, void *);
 
 enum headerfields {
 	HDR_NONE,
@@ -109,7 +108,7 @@ struct {
 	char		buf[SMTP_LINELEN];
 } pstate;
 
-void
+static void
 sighdlr(int sig)
 {
 	if (sig == SIGALRM) {
@@ -241,7 +240,7 @@ enqueue(int argc, char *argv[])
 	exit(0);
 }
 
-void
+static void
 enqueue_event(int fd, short event, void *p)
 {
 	if (event & EV_TIMEOUT)
@@ -276,7 +275,7 @@ rw:
 	event_add(&msg.ev, &msg.pcb->timeout);
 }
 
-void
+static void
 build_from(char *fake_from, struct passwd *pw)
 {
 	char	*p;
@@ -318,7 +317,7 @@ build_from(char *fake_from, struct passwd *pw)
 	}
 }
 
-int
+static int
 parse_message(FILE *fin, int get_from, int tflag, FILE *fout)
 {
 	char	*buf;
@@ -391,7 +390,7 @@ parse_message(FILE *fin, int get_from, int tflag, FILE *fout)
 	return (!header_seen);
 }
 
-void
+static void
 parse_addr(char *s, size_t len, int is_from)
 {
 	size_t	 pos = 0;
@@ -464,7 +463,7 @@ parse_addr(char *s, size_t len, int is_from)
 		parse_addr(s + pos, len - pos, is_from);
 }
 
-void
+static void
 parse_addr_terminal(int is_from)
 {
 	if (pstate.comment || pstate.quote || pstate.esc)
@@ -481,7 +480,7 @@ parse_addr_terminal(int is_from)
 	}	
 }
 
-char *
+static char *
 qualify_addr(char *in)
 {
 	char	*out;
@@ -496,7 +495,7 @@ qualify_addr(char *in)
 	return (out);
 }
 
-void
+static void
 rcpt_add(char *addr)
 {
 	void	*nrcpts;
@@ -508,7 +507,7 @@ rcpt_add(char *addr)
 	msg.rcpts[msg.rcpt_cnt++] = qualify_addr(addr);
 }
 
-int
+static int
 open_connection(void)
 {
 	struct imsg	imsg;
