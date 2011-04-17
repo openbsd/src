@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.36 2007/06/26 10:34:41 tom Exp $	*/
+/*	$OpenBSD: boot.c,v 1.37 2011/04/17 09:49:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -50,6 +50,7 @@ struct cmd_state cmd;
 /* bootprompt can be set by MD code to avoid prompt first time round */
 int bootprompt = 1;
 char *kernelfile = KERNEL;		/* can be changed by MD code */
+int boottimeout = 5;			/* can be changed by MD code */
 
 void
 boot(dev_t bootdev)
@@ -69,7 +70,7 @@ boot(dev_t bootdev)
 	cmd.boothowto = 0;
 	cmd.conf = "/etc/boot.conf";
 	cmd.addr = (void *)DEFAULT_KERNEL_ADDRESS;
-	cmd.timeout = 5;
+	cmd.timeout = boottimeout;
 
 	st = read_conf();
 	if (!bootprompt)
