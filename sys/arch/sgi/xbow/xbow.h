@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.h,v 1.11 2011/04/05 14:43:11 miod Exp $	*/
+/*	$OpenBSD: xbow.h,v 1.12 2011/04/17 17:44:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -61,14 +61,6 @@ extern	void	(*xbow_intr_widget_intr_clear)(int);
 #define	WIDGET_MIN			8
 #define	WIDGET_MAX			15
 
-#ifdef TGT_OCTANE
-#define	XBOW_MAX			1
-#else
-#define	XBOW_MAX			GDA_MAXNODES
-#endif
-
-/* widget number of the XBow `hub', for each node */
-extern	int	xbow_node_hub_widget[/*XBOW_MAX*/];
 /* interrupt register address on the master hub */
 extern	uint64_t xbow_intr_address;
 

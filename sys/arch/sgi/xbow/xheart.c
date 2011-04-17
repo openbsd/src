@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheart.c,v 1.21 2011/04/05 14:43:11 miod Exp $	*/
+/*	$OpenBSD: xheart.c,v 1.22 2011/04/17 17:44:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -134,7 +134,6 @@ xheart_attach(struct device *parent, struct device *self, void *aux)
 	oba.oba_flags = ONEWIRE_SCAN_NOW | ONEWIRE_NO_PERIODIC_SCAN;
 	config_found(self, &oba, onewirebus_print);
 
-	xbow_node_hub_widget[0/*xaa->xaa_nasid*/] = xaa->xaa_widget;
 	xbow_intr_address = 0x80;
 	xbow_intr_widget_intr_register = xheart_intr_register;
 	xbow_intr_widget_intr_establish = xheart_intr_establish;

@@ -1,7 +1,7 @@
-/*	$OpenBSD: xbow.c,v 1.31 2011/04/05 14:43:11 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.32 2011/04/17 17:44:24 miod Exp $	*/
 
 /*
- * Copyright (c) 2008, 2009 Miodrag Vallat.
+ * Copyright (c) 2008, 2009, 2011 Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -231,9 +231,12 @@ xbowsubmatch(struct device *parent, void *vcf, void *aux)
  * Widget probe order for various components
  */
 
+#ifdef TGT_OCTANE
 /* Octane: probe Heart first, then onboard devices, then other slots */
 const uint8_t xbow_probe_octane[] =
 	{ 0x08, 0x0f, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0 };
+#endif
+#ifdef TGT_ORIGIN
 /* Origin 200: probe onboard devices, and there is nothing more */
 const uint8_t xbow_probe_singlebridge[] =
 	{ 0x08, 0 };
@@ -249,6 +252,7 @@ const uint8_t xbow_probe_pbrick[] =
 /* X-Brick: all widgets are XIO devices, probe in recommended order */
 const uint8_t xbow_probe_xbrick[] =
 	{ 0x08, 0x09, 0x0c, 0x0d, 0x0a, 0x0b, 0x0e, 0x0f, 0 };
+#endif
 
 /*
  * Structures used to carry information between KL and attachment code.
@@ -256,7 +260,6 @@ const uint8_t xbow_probe_xbrick[] =
 
 struct xbow_config {
 	int	valid;
-	int	master;
 	int	widgets[WIDGET_MAX + 1 - WIDGET_MIN];
 };
 
@@ -273,7 +276,9 @@ xbowattach(struct device *parent, struct device *self, void *aux)
 	int16_t nasid = maa->maa_nasid;
 	uint32_t wid, vendor, product;
 	const struct xbow_product *p;
+#ifdef TGT_ORIGIN
 	struct xbow_config cfg;
+#endif
 	struct xbow_kl_config klcfg;
 	uint widget;
 
@@ -295,15 +300,11 @@ xbowattach(struct device *parent, struct device *self, void *aux)
 		printf(": %s", p->productname);
 	printf(" revision %d\n", WIDGET_ID_REV(wid));
 
-	memset(&cfg, 0, sizeof cfg);
 	switch (sys_config.system_type) {
-	case SGI_OCTANE:
-		klcfg.probe_order = xbow_probe_octane;
-		break;
-#ifdef TGT_ORIGIN
 	default:
+#ifdef TGT_ORIGIN
+		memset(&cfg, 0, sizeof cfg);
 		klcfg.cfg = &cfg;
-		klcfg.probe_order = NULL;
 
 		/*
 		 * If widget 0 reports itself as a bridge, this is not a
@@ -312,40 +313,39 @@ xbowattach(struct device *parent, struct device *self, void *aux)
 		 */
 		if (vendor == XBOW_VENDOR_SGI4 &&
 		    product == XBOW_PRODUCT_SGI4_BRIDGE) {
-			/*
-			 * Interrupt widget is hardwired to #a (this is another
-			 * facet of this bridge).
-			 */
-			xbow_node_hub_widget[nasid] = 0x0a;
 			klcfg.probe_order = xbow_probe_singlebridge;
 		} else {
 			/*
 			 * Get crossbow information from the KL configuration.
 			 */
+			klcfg.probe_order = NULL;
 			kl_scan_node(nasid, KLBRD_ANY, xbow_kl_search_brd,
 			    &klcfg);
+			if (klcfg.probe_order == NULL)
+				klcfg.probe_order = xbow_probe_baseio;
 
-			if (cfg.valid == 0)
-				panic("no hub");
-
-			/*
-			 * This widget number is actually the Hub part of the
-			 * crossbow, and is where memory and interrupt logic
-			 * resources are connected to.
-			 */
-			xbow_node_hub_widget[nasid] = cfg.master;
+			/* should not happen, but I can't help being paranoid */
+			if (cfg.valid == 0) {
+				printf("%s: no hub\n", self->dv_xname);
+				return;
+			}
 		}
+		break;
+#endif
+#ifdef TGT_OCTANE
+	case SGI_OCTANE:
+		klcfg.probe_order = xbow_probe_octane;
 		break;
 #endif
 	}
 
-	if (klcfg.probe_order == NULL)
-		klcfg.probe_order = xbow_probe_baseio;
 	for (; *klcfg.probe_order != 0; klcfg.probe_order++) {
 		widget = *klcfg.probe_order;
+#ifdef TGT_ORIGIN
 		if (cfg.valid != 0 &&
 		    !ISSET(cfg.widgets[widget - WIDGET_MIN], XBOW_PORT_ENABLE))
 			continue;
+#endif
 		(void)xbow_attach_widget(self, nasid, widget, xbowsubmatch,
 		    xbowprint);
 	}
@@ -449,7 +449,6 @@ xbow_kl_search_mplane(klinfo_t *c, void *arg)
 	uint w;
 
 	cfg->valid = 1;
-	cfg->master = xbow->xbow_hub_master_link;
 	for (w = WIDGET_MIN; w <= WIDGET_MAX; w++)
 		cfg->widgets[w - WIDGET_MIN] =
 		    xbow->xbow_port_info[w - WIDGET_MIN].port_flag;
@@ -646,7 +645,6 @@ xbow_space_vaddr(bus_space_tag_t t, bus_space_handle_t h)
  * the master nasid; other nodes do not handle interrupts.
  */
 
-int	xbow_node_hub_widget[XBOW_MAX];
 uint64_t xbow_intr_address;
 
 int	(*xbow_intr_widget_intr_register)(int, int, int *) = NULL;

@@ -1,7 +1,7 @@
-/*	$OpenBSD: xbridge.c,v 1.81 2011/04/05 14:43:11 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.82 2011/04/17 17:44:24 miod Exp $	*/
 
 /*
- * Copyright (c) 2008, 2009  Miodrag Vallat.
+ * Copyright (c) 2008, 2009, 2011  Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1898,15 +1898,14 @@ xbridge_setup(struct xbpci_softc *xb)
 	switch (sys_config.system_type) {
 	default:
 #ifdef TGT_ORIGIN
-		dirmap |= xbow_node_hub_widget[
+		dirmap |= kl_hub_widget[
 		    IP27_PHYS_TO_NODE(dma_constraint.ucr_low)] <<
 		      BRIDGE_DIRMAP_WIDGET_SHIFT;
 		break;
 #endif
 #ifdef TGT_OCTANE
 	case SGI_OCTANE:
-		dirmap |= xbow_node_hub_widget[0/*masternasid*/] <<
-		    BRIDGE_DIRMAP_WIDGET_SHIFT;
+		dirmap |= IP30_HEART_WIDGET << BRIDGE_DIRMAP_WIDGET_SHIFT;
 		break;
 #endif
 	}
@@ -1994,8 +1993,19 @@ xbridge_setup(struct xbpci_softc *xb)
 	xbridge_write_reg(xb, BRIDGE_IER, 0);
 	xbridge_write_reg(xb, BRIDGE_INT_MODE, 0);
 	xbridge_write_reg(xb, BRIDGE_INT_DEV, 0);
-	int_addr = ((uint64_t)xbow_node_hub_widget[masternasid] << 48) |
-	    (xbow_intr_address & ((1UL << 48) - 1));
+	int_addr = xbow_intr_address & ((1UL << 48) - 1);
+	switch (sys_config.system_type) {
+	default:
+#ifdef TGT_ORIGIN
+		int_addr |= (uint64_t)kl_hub_widget[masternasid] << 48;
+		break;
+#endif
+#ifdef TGT_OCTANE
+	case SGI_OCTANE:
+		int_addr |= (uint64_t)IP30_HEART_WIDGET << 48;
+		break;
+#endif
+	}
 	xbridge_write_reg(xb, WIDGET_INTDEST_ADDR_LOWER, int_addr);
 	xbridge_write_reg(xb, WIDGET_INTDEST_ADDR_UPPER, int_addr >> 32);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mnode.h,v 1.17 2011/04/05 14:43:10 miod Exp $ */
+/*	$OpenBSD: mnode.h,v 1.18 2011/04/17 17:44:24 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -480,6 +480,9 @@ int	kl_scan_board(lboard_t *, uint, int (*)(klinfo_t *, void *), void *);
 #define	KLSTRUCT_ANY	((uint)~0)
 void	kl_get_location(klinfo_t *, struct sgi_device_location *);
 void	kl_get_console_location(console_t *, struct sgi_device_location *);
+
+/* widget number of the XBow `hub', for each node */
+extern int kl_hub_widget[GDA_MAXNODES];
 
 extern int kl_n_mode;
 extern u_int kl_n_shift;
