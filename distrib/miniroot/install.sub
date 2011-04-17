@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.636 2011/03/22 19:20:15 krw Exp $
+#	$OpenBSD: install.sub,v 1.637 2011/04/17 20:57:10 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1991,6 +1991,7 @@ SERVERLISTALL=/tmp/serverlistall
 SERVERLISTSEC=/tmp/serverlistsec
 SERVERLIST=/tmp/serverlist
 WLANLIST=/tmp/wlanlist
+FSTABFLAG=-f
 
 # Do not limit ourselves during installs or upgrades.
 for _opt in d f l m n p s; do

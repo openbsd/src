@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.26 2011/02/19 10:18:03 miod Exp $
+#	$OpenBSD: install.md,v 1.27 2011/04/17 20:57:11 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -160,7 +160,7 @@ __EOT
 			c*|C*)	break ;;
 			*)	continue ;;
 			esac
-			disklabel -f $_f $_op -A $_disk
+			disklabel $FSTABFLAG $_f $_op -A $_disk
 			return
 		done
 	fi
@@ -182,7 +182,7 @@ boot loader will not be able to locate and load the kernel.
 Do not change any parameters except the partition layout and the label name.
 
 __EOT
-	disklabel -c -f /tmp/fstab.$_disk -E $_disk
+	disklabel -c $FSTABFLAG /tmp/fstab.$_disk -E $_disk
 }
 
 md_congrats() {

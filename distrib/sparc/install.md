@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.64 2009/06/04 00:44:47 krw Exp $
+#	$OpenBSD: install.md,v 1.65 2011/04/17 20:57:11 krw Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -71,7 +71,7 @@ md_prep_disklabel() {
 			c*|C*)	break ;;
 			*)	continue ;;
 			esac
-			disklabel -f $_f $_op -A $_disk
+			disklabel $FSTABFLAG $_f $_op -A $_disk
 			return
 		done
 	fi
@@ -83,7 +83,7 @@ and swap space are created.  You must provide each filesystem's mountpoint
 in this program.
 
 __EOT
-	disklabel -f $_f -E $_disk
+	disklabel $FSTABFLAG $_f -E $_disk
 }
 
 md_congrats() {

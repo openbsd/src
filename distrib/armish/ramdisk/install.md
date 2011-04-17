@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.13 2009/06/11 04:28:50 deraadt Exp $
+#	$OpenBSD: install.md,v 1.14 2011/04/17 20:57:10 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ md_prep_disklabel() {
 			c*|C*)	break ;;
 			*)	continue ;;
 			esac
-			disklabel -f $_f $_op -A $_disk
+			disklabel $FSTABFLAG $_f $_op -A $_disk
 			return
 		done
 	fi
@@ -115,7 +115,7 @@ start of the disk, NOT the start of the OpenBSD MBR partition.
 
 __EOT
 
-	disklabel -f $_f -E $_disk
+	disklabel $FSTABFLAG $_f -E $_disk
 }
 
 md_congrats() {

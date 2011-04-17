@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.218 2011/04/04 14:37:25 ajacoutot Exp $
+#	$OpenBSD: install.sh,v 1.219 2011/04/17 20:57:10 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -70,6 +70,9 @@ _DKDEVS=$(get_dkdevs)
 # Remove traces of previous install attempt.
 rm -f /tmp/fstab.shadow /tmp/fstab /tmp/fstab.*
 
+ask_yn "Use DUIDs rather than device names in fstab?"
+[[ $resp == y ]] && FSTABFLAG=-F
+
 while :; do
 	DISKS_DONE=$(addel "$DISK" $DISKS_DONE)
 	_DKDEVS=$(rmel "$DISK" $_DKDEVS)
@@ -96,7 +99,8 @@ while :; do
 	# Deal with disklabels, including editing the root disklabel
 	# and labeling additional disks. This is machine-dependent since
 	# some platforms may not be able to provide this functionality.
-	# /tmp/fstab.$DISK is created here with 'disklabel -f'.
+	# /tmp/fstab.$DISK is created here with 'disklabel -f' or
+	# 'disklabel -F' depending on the value of $FSTABFLAG.
 	rm -f /tmp/*.$DISK
 	AUTOROOT=n
 	md_prep_disklabel $DISK || { DISK= ; continue ; }
@@ -108,11 +112,19 @@ while :; do
 	if [[ -f /tmp/fstab.$DISK ]]; then
 		# Avoid duplicate mount points on different disks.
 		while read _pp _mp _rest; do
+			if [[ $_mp == "none" ]]; then
+				# Multiple swap partitions are ok.
+				echo "$_pp $_mp $_rest" >>/tmp/fstab
+				continue
+			fi
+			# Non-swap mountpoints must be in only one file.
 			[[ /tmp/fstab.$DISK == $(grep -l " $_mp " /tmp/fstab.*) ]] || \
 				{ _rest=$DISK ; DISK= ; break ; }
 		done </tmp/fstab.$DISK
 		if [[ -z $DISK ]]; then
-			# Allow disklabel(8) to read mountpoint info.
+			# Duplicate mountpoint.
+			# Allow disklabel(8) to read back mountpoint info
+			# if it is immediately run against the same disk.
 			cat /tmp/fstab.$_rest >/etc/fstab
 			rm /tmp/fstab.$_rest
 			set -- $(grep -h " $_mp " /tmp/fstab.*[0-9])
@@ -135,11 +147,6 @@ while :; do
 			: $(( _i += 1 ))
 		done </tmp/fstab.$DISK
 	fi
-
-	# New swap partitions?
-	disklabel $DISK 2>&1 | sed -ne \
-		"/^ *\([a-p]\): .* swap /s,,/dev/$DISK\1 none swap sw 0 0,p" | \
-		grep -v "^/dev/$SWAPDEV " >>/tmp/fstab
 done
 
 # Write fstab entries to fstab in mount point alphabetic order

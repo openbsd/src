@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.55 2009/06/14 00:12:20 deraadt Exp $
+#	$OpenBSD: install.md,v 1.56 2011/04/17 20:57:10 krw Exp $
 #	$NetBSD: install.md,v 1.1.2.4 1996/08/26 15:45:14 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@ md_prep_disklabel() {
 			c*|C*)	break ;;
 			*)	continue ;;
 			esac
-			disklabel -f $_f $_op -A $_disk
+			disklabel $FSTABFLAG $_f $_op -A $_disk
 			return
 		done
 	fi
@@ -68,7 +68,7 @@ in this program.
 
 __EOT
 
-	disklabel -f $_f -E $_disk
+	disklabel $FSTABFLAG $_f -E $_disk
 }
 
 md_congrats() {

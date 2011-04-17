@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.18 2011/01/01 17:25:06 deraadt Exp $
+#	$OpenBSD: install.md,v 1.19 2011/04/17 20:57:10 krw Exp $
 #
 # machine dependent section of installation/upgrade script.
 #
@@ -36,7 +36,7 @@ md_prep_disklabel() {
 			c*|C*)	break ;;
 			*)	continue ;;
 			esac
-			disklabel -f $_f $_op -A $_disk
+			disklabel $FSTABFLAG $_f $_op -A $_disk
 			return
 		done
 	fi
@@ -48,7 +48,7 @@ in this program.
 
 __EOT
 
-	disklabel -f $_f -E $_disk
+	disklabel $FSTABFLAG $_f -E $_disk
 }
 
 md_congrats() {
