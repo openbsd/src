@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.32 2011/02/17 20:14:30 miod Exp $
+# $OpenBSD: GENERIC,v 1.33 2011/04/17 19:18:11 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -25,8 +25,7 @@ option		PCIVERBOSE
 option		USER_PCICONF		# user-space PCI configuration
 option		USBVERBOSE
 
-#config		bsd	swap generic
-config		bsd	root on wd0a
+config		bsd	swap generic
 
 mainbus0 at root
 cpu0	at mainbus?
