@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.44 2011/04/16 10:52:22 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.45 2011/04/18 23:57:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -192,14 +192,48 @@ aucat_wdata(struct aucat *hdl, const void *buf, size_t len, unsigned wbpf, int *
 }
 
 int
-aucat_open(struct aucat *hdl, const char *str, char *sock, unsigned mode, int nbio)
+aucat_connect_un(struct aucat *hdl, char *unit, int isaudio)
 {
-	extern char *__progname;
-	int s, eof;
-	char unit[4], *sep, *opt;
 	struct sockaddr_un ca;
 	socklen_t len = sizeof(struct sockaddr_un);
+	char *sock;
 	uid_t uid;
+	int s;
+
+	uid = geteuid();
+	sock = isaudio ? AUCAT_PATH : MIDICAT_PATH;
+	snprintf(ca.sun_path, sizeof(ca.sun_path),
+	    "/tmp/aucat-%u/%s%s", uid, sock, unit);
+	ca.sun_family = AF_UNIX;
+	s = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (s < 0)
+		return 0;
+	while (connect(s, (struct sockaddr *)&ca, len) < 0) {
+		if (errno == EINTR)
+			continue;
+		DPERROR(ca.sun_path);
+		/* try shared server */
+		snprintf(ca.sun_path, sizeof(ca.sun_path),
+		    "/tmp/aucat/%s%s", sock, unit);
+		while (connect(s, (struct sockaddr *)&ca, len) < 0) {
+			if (errno == EINTR)
+				continue;
+			DPERROR(ca.sun_path);
+			close(s);
+			return 0;
+		}
+		break;
+	}
+	hdl->fd = s;
+	return 1;
+}
+
+int
+aucat_open(struct aucat *hdl, const char *str, unsigned mode, int isaudio)
+{
+	extern char *__progname;
+	int eof;
+	char unit[4], *sep, *opt;
 
 	sep = strchr(str, '.');
 	if (sep == NULL) {
@@ -214,36 +248,12 @@ aucat_open(struct aucat *hdl, const char *str, char *sock, unsigned mode, int nb
 		strlcpy(unit, str, opt - str);
 	}
 	DPRINTF("aucat_init: trying %s -> %s.%s\n", str, unit, opt);
-	uid = geteuid();
-	if (strchr(str, '/') != NULL)
+	if (!aucat_connect_un(hdl, unit, isaudio))
 		return 0;
-	snprintf(ca.sun_path, sizeof(ca.sun_path),
-	    "/tmp/aucat-%u/%s%s", uid, sock, unit);
-	ca.sun_family = AF_UNIX;
-
-	s = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (s < 0)
-		goto bad_free;
-	while (connect(s, (struct sockaddr *)&ca, len) < 0) {
-		if (errno == EINTR)
-			continue;
-		DPERROR("aucat_init: connect");
-		/* try shared server */
-		snprintf(ca.sun_path, sizeof(ca.sun_path),
-		    "/tmp/aucat/%s%s", sock, unit);
-		while (connect(s, (struct sockaddr *)&ca, len) < 0) {
-			if (errno == EINTR)
-				continue;
-			DPERROR("aucat_init: connect");
-			goto bad_connect;
-		}
-		break;
-	}
-	if (fcntl(s, F_SETFD, FD_CLOEXEC) < 0) {
+	if (fcntl(hdl->fd, F_SETFD, FD_CLOEXEC) < 0) {
 		DPERROR("FD_CLOEXEC");
 		goto bad_connect;
 	}
-	hdl->fd = s;
 	hdl->rstate = RSTATE_MSG;
 	hdl->rtodo = sizeof(struct amsg);
 	hdl->wstate = WSTATE_IDLE;
@@ -274,9 +284,8 @@ aucat_open(struct aucat *hdl, const char *str, char *sock, unsigned mode, int nb
 	}
 	return 1;
  bad_connect:
-	while (close(s) < 0 && errno == EINTR)
+	while (close(hdl->fd) < 0 && errno == EINTR)
 		; /* retry */
- bad_free:
 	return 0;
 }
 

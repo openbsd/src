@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_aucat.c,v 1.3 2011/04/16 11:51:47 ratchov Exp $	*/
+/*	$OpenBSD: mio_aucat.c,v 1.4 2011/04/18 23:57:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -52,14 +52,14 @@ static struct mio_ops mio_aucat_ops = {
 };
 
 static struct mio_hdl *
-mio_xxx_open(const char *str, char *sock, unsigned mode, int nbio)
+mio_xxx_open(const char *str, unsigned mode, int nbio, int isaudio)
 {
 	struct mio_aucat_hdl *hdl;
 
 	hdl = malloc(sizeof(struct mio_aucat_hdl));
 	if (hdl == NULL)
 		return NULL;
-	if (!aucat_open(&hdl->aucat, str, sock, mode, nbio))
+	if (!aucat_open(&hdl->aucat, str, mode, isaudio))
 		goto bad;
 	mio_create(&hdl->mio, &mio_aucat_ops, mode, nbio);
 	if (!aucat_setfl(&hdl->aucat, nbio, &hdl->mio.eof))
@@ -73,13 +73,13 @@ bad:
 struct mio_hdl *
 mio_midithru_open(const char *str, unsigned mode, int nbio)
 {
-	return mio_xxx_open(str, MIDICAT_PATH, mode, nbio);
+	return mio_xxx_open(str, mode, nbio, 0);
 }
 
 struct mio_hdl *
 mio_aucat_open(const char *str, unsigned mode, int nbio)
 {
-	return mio_xxx_open(str, AUCAT_PATH, mode, nbio);
+	return mio_xxx_open(str, mode, nbio, 1);
 }
 
 static void
