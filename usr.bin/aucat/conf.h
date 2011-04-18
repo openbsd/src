@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.18 2011/04/16 12:09:05 ratchov Exp $	*/
+/*	$OpenBSD: conf.h,v 1.19 2011/04/18 23:59:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -33,8 +33,8 @@ extern int debug_level;
 /*
  * socket and option names
  */
-#define MIDICAT_PATH		"midicat"
 #define AUCAT_PATH		"aucat"
+#define MIDICAT_PATH		"midicat"
 #define DEFAULT_OPT		"default"
 
 /*
