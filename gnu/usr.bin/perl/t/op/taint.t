@@ -17,7 +17,7 @@ use Config;
 use File::Spec::Functions;
 
 BEGIN { require './test.pl'; }
-plan tests => 302;
+plan tests => 306;
 
 $| = 1;
 
@@ -1318,6 +1318,18 @@ foreach my $ord (78, 163, 256) {
     unlike($err, qr/^\d+$/, 'tainted $!');
 }
 
+{
+    # [perl #87336] lc/uc(first) failing to taint the returned string
+    my $source = "foo$TAINT";
+    my $dest = lc $source;
+    ok(tainted($dest), "lc(tainted) taints its return value");
+    $dest = lcfirst $source;
+    ok(tainted($dest), "lcfirst(tainted) taints its return value");
+    $dest = uc $source;
+    ok(tainted($dest), "uc(tainted) taints its return value");
+    $dest = ucfirst $source;
+    ok(tainted($dest), "ucfirst(tainted) taints its return value");
+}
 
 # This may bomb out with the alarm signal so keep it last
 SKIP: {
