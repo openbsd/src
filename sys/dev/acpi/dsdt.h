@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.57 2011/01/08 05:05:09 jordan Exp $ */
+/* $OpenBSD: dsdt.h,v 1.58 2011/04/18 00:40:26 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -248,7 +248,7 @@ const char		*aml_val_to_string(const struct aml_value *);
 void			aml_disasm(struct aml_scope *scope, int lvl,
 			    void (*dbprintf)(void *, const char *, ...),
 			    void *arg);
-int			aml_xgetpci(struct aml_node *, int64_t *);
+int			aml_getpci(struct aml_node *, int64_t *);
 int			aml_evalhid(struct aml_node *, struct aml_value *);
 
 int			acpi_walkmem(int, const char *);
