@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.14 2011/03/12 17:50:47 deraadt Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.15 2011/04/18 03:58:21 deraadt Exp $	*/
 /*	$NetBSD: pass5.c,v 1.7 2000/01/28 16:01:46 bouyer Exp $ */
 
 /*
@@ -36,7 +36,6 @@
 #include <ufs/ufs/dinode.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 #include <ufs/ext2fs/ext2fs.h>
-#include <ufs/ext2fs/ext2fs_extern.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
