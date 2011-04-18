@@ -499,7 +499,6 @@ ch*)
 
 vnd*)
 	dodisk vnd $U 14 19 $U 0
-	dodisk svnd $U 14 19 $U 2048
 	;;
 
 rd*)

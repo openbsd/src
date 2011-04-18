@@ -473,7 +473,6 @@ ch*)
 
 vnd*)
 	dodisk vnd $U 18 55 $U 0
-	dodisk svnd $U 18 55 $U 2048
 	;;
 
 rd*)

@@ -8,20 +8,20 @@ n1=`namegen`
 
 expect 0 mkdir ${n0} 0755
 dd if=/dev/zero of=tmpdisk bs=1k count=1024 2>/dev/null
-vnconfig svnd1 tmpdisk
-newfs /dev/rsvnd1c >/dev/null
-mount /dev/svnd1c ${n0}
+vnconfig vnd1 tmpdisk
+newfs /dev/rvnd1c >/dev/null
+mount /dev/vnd1c ${n0}
 expect 0 create ${n0}/${n1} 0644
 expect 0 chmod ${n0}/${n1} 0640
 expect 0640 stat ${n0}/${n1} mode
-mount -ur /dev/svnd1c
+mount -ur /dev/vnd1c
 expect EROFS chmod ${n0}/${n1} 0600
 expect 0640 stat ${n0}/${n1} mode
-mount -uw /dev/svnd1c
+mount -uw /dev/vnd1c
 expect 0 chmod ${n0}/${n1} 0600
 expect 0600 stat ${n0}/${n1} mode
 expect 0 unlink ${n0}/${n1}
-umount /dev/svnd1c
-vnconfig -u svnd1
+umount /dev/vnd1c
+vnconfig -u vnd1
 rm tmpdisk
 expect 0 rmdir ${n0}

@@ -403,7 +403,6 @@ ch*)
 
 vnd*)
 	dodisk vnd $U 6 19 $U 0
-	dodisk svnd $U 6 19 $U 2048
 	;;
 
 rd*)

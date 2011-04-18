@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_vnd.8,v 1.18 2010/12/18 21:01:30 tedu Exp $
+.\"	$OpenBSD: mount_vnd.8,v 1.19 2011/04/18 16:52:11 thib Exp $
 .\"
 .\" Copyright (c) 1993 University of Utah.
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -49,7 +49,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 18 2010 $
+.Dd $Mdocdate: April 18 2011 $
 .Dt MOUNT_VND 8
 .Os
 .Sh NAME
@@ -85,25 +85,6 @@ It will associate (or disassociate) the special file
 with the regular file
 .Ar image ,
 allowing the latter to be accessed as though it were a disk.
-Hence a regular file within the file system can be used for swapping
-or can contain a file system that is mounted in the name space.
-.Pp
-Both traditional devices,
-.Xr vnd 4 ,
-and the cache-coherent devices,
-.Pa svnd ,
-are configured through
-.Nm vnconfig .
-.Pa svnd
-should be mounted with the
-.Xr mount 8
-option
-.Dq sync
-if
-.Ar image
-is being read from,
-to ensure consistency in the buffer cache.
-For normal operation this is not necessary.
 .Pp
 .Nm mount_vnd
 works similarly to
@@ -117,7 +98,7 @@ file can be configured to a device
 while booting.
 .Nm mount_vnd
 defaults to the
-.Pa svnd0
+.Pa vnd0
 device.
 .Pp
 For
@@ -173,17 +154,17 @@ is a number between 1000 and
 .Dv INT_MAX .
 DO NOT LOSE THE SALT FILE.
 Encryption only works with
-.Pa svnd .
+.Pa vnd .
 .It Fl k
 Associate an encryption key with the device.
 All data will be encrypted using the Blowfish cipher before it is
 written to the disk.
 Encryption only works with
-.Pa svnd .
+.Pa vnd .
 .It Fl l
 .Nm vnconfig
 only.
-List the (s)vnd devices and indicate which ones are in use.
+List the vnd devices and indicate which ones are in use.
 If a specific
 .Ar vnd_dev
 is given, then only that one will be described.
@@ -231,57 +212,57 @@ Print messages to stdout describing actions taken.
 .El
 .Sh FILES
 .Bl -tag -width /etc/rvnd?? -compact
-.It Pa /dev/{,r}{,s}vnd*
+.It Pa /dev/{,r}vnd*
 .El
 .Sh EXAMPLES
-Configure a CD-ROM or DVD image file as vnode disk svnd0
+Configure a CD-ROM or DVD image file as vnode disk vnd0
 and mount the ISO 9660 file system contained in it:
 .Bd -literal -offset indent
-# vnconfig svnd0 /tmp/diskimage
-# mount -t cd9660 /dev/svnd0c /mnt
+# vnconfig vnd0 /tmp/diskimage
+# mount -t cd9660 /dev/vnd0c /mnt
 .Ed
 .Pp
-Configure an encrypted image file as vnode disk svnd0 and mount the FFS
+Configure an encrypted image file as vnode disk vnd0 and mount the FFS
 file system contained in the
 .Sq a
 partition of the disklabel.
 The encryption key does not echo and must be entered every time
 the vnode disk is configured.
 .Bd -literal -offset indent
-# vnconfig -k svnd0 /tmp/cryptimg
+# vnconfig -k vnd0 /tmp/cryptimg
 Encryption key:
-# mount /dev/svnd0a /mnt
+# mount /dev/vnd0a /mnt
 .Ed
 .Pp
 An equivalent
 .Xr fstab 5
 entry is:
 .Bd -literal -offset indent
-/tmp/cryptimg /dev/svnd0c vnd rw,noauto,-k       0 0
-/dev/svnd0a   /mnt        ffs rw,noauto          0 0
+/tmp/cryptimg /dev/vnd0c vnd rw,noauto,-k       0 0
+/dev/vnd0a   /mnt        ffs rw,noauto          0 0
 .Ed
 .Pp
 Same as above, but now configure the vnode using PKCS #5 PBKDF2 and
 a salt file with 20000 rounds:
 .Bd -literal -offset indent
-# vnconfig -K 20000 svnd0 /tmp/cryptimg
+# vnconfig -K 20000 vnd0 /tmp/cryptimg
 Encryption key:
 Salt file: /tmp/cryptsalt
-# mount /dev/svnd0a /mnt
+# mount /dev/vnd0a /mnt
 .Ed
 .Pp
 An equivalent
 .Xr fstab 5
 entry is:
 .Bd -literal -offset indent
-/tmp/cryptimg /dev/svnd0c vnd rw,noauto,-K=20000 0 0
-/dev/svnd0a   /mnt        ffs rw,noauto          0 0
+/tmp/cryptimg /dev/vnd0c vnd rw,noauto,-K=20000 0 0
+/dev/vnd0a   /mnt        ffs rw,noauto          0 0
 .Ed
 .Pp
 Unmount the file system and unconfigure the vnode device:
 .Bd -literal -offset indent
 # umount /mnt
-# vnconfig -u svnd0
+# vnconfig -u vnd0
 .Ed
 .Pp
 A sample of commands to put in
@@ -290,8 +271,8 @@ in order to have vnd images configured at boot time is listed here:
 .Bd -literal -offset indent
 # Example for automatically configuring a vnd device on startup
 echo "configuring vnd devices:"
-mount /dev/svnd0c
-fsck -p /dev/rsvnd0a
+mount /dev/vnd0c
+fsck -p /dev/rvnd0a
 mount /mnt
 .Ed
 .Pp
@@ -325,3 +306,5 @@ This information is not available when directly using the
 .Sq c
 partition,
 so checking the file system image will fail.
+.Pp
+Swapping to vnd devices is no longer supported.

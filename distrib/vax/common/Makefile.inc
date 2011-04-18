@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.6 2009/04/17 03:58:55 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 2011/04/18 16:52:10 thib Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -7,7 +7,7 @@ COMMONDIR=	${TOP}/common
 UTILS=		${TOP}/../miniroot
 
 MOUNT_POINT?=	/mnt
-VND?=		svnd0
+VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 IMAGE?=		miniroot-${REV}.fs

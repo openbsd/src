@@ -1,7 +1,7 @@
 define(COMM,`#')dnl
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -152,7 +152,7 @@ dnl 2. unit    - beginning unit number for block devices
 dnl 3. blkmaj  - block device major number
 dnl 4. chrmaj  - character device major number
 dnl 5. unit    - beginning unit number for character devices
-dnl 6. off     - offset from 0 for all minor numbers (see svnd for an example)
+dnl 6. off     - offset from 0 for all minor numbers
 dnl 7. step    - optional, defaults to 16, number of partitions per device
 dnl
 

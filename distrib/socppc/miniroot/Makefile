@@ -6,7 +6,7 @@ IMAGE=	miniroot${REV}.fs
 
 MOUNT_POINT=	/mnt
 
-VND?=		svnd0
+VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_CDEV=	/dev/${VND}c
 VND_IDEV=	/dev/${VND}i

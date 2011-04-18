@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2010/10/18 05:40:47 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.17 2011/04/18 16:52:10 thib Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -31,17 +31,17 @@ ${CDROM}:
 	mkdir -p ${.OBJDIR}/cd-dir/
 
 	dd if=/dev/zero of=${.OBJDIR}/${CDROM} bs=2048b count=280
-	vnconfig -v -c -t cdroot svnd0 ${.OBJDIR}/${CDROM}
+	vnconfig -v -c -t cdroot vnd0 ${.OBJDIR}/${CDROM}
 
-	/usr/mdec/sgivol -i -h 80 svnd0
-	/usr/mdec/sgivol -w boot32 ${DESTDIR}/usr/mdec/boot32 svnd0
-	/usr/mdec/sgivol -l boot32 sashARCS svnd0
-	/usr/mdec/sgivol -w boot64 ${DESTDIR}/usr/mdec/boot64 svnd0
-	/usr/mdec/sgivol -l boot64 sash64 svnd0
+	/usr/mdec/sgivol -i -h 80 vnd0
+	/usr/mdec/sgivol -w boot32 ${DESTDIR}/usr/mdec/boot32 vnd0
+	/usr/mdec/sgivol -l boot32 sashARCS vnd0
+	/usr/mdec/sgivol -w boot64 ${DESTDIR}/usr/mdec/boot64 vnd0
+	/usr/mdec/sgivol -l boot64 sash64 vnd0
 
-	disklabel -w svnd0 cdroot "OpenBSD/sgi     "
-	newfs /dev/rsvnd0a
-	mount /dev/svnd0a ${.OBJDIR}/cd-dir
+	disklabel -w vnd0 cdroot "OpenBSD/sgi     "
+	newfs /dev/rvnd0a
+	mount /dev/vnd0a ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
 	cp ${DESTDIR}/usr/mdec/boot32 ${.OBJDIR}/cd-dir/boot32
@@ -62,7 +62,7 @@ ${CDROM}:
 	cp -p ${XBASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
 	umount ${.OBJDIR}/cd-dir
-	vnconfig -u svnd0
+	vnconfig -u vnd0
 
 install:
 	cp ${CDROM} ${RELDIR}/
@@ -75,7 +75,7 @@ install:
 unconfig:
 	-umount /mnt
 	-umount ${.OBJDIR}/cd-dir
-	-vnconfig -u svnd0
+	-vnconfig -u vnd0
 
 clean cleandir:
 	/bin/rm -f ${CDROM}

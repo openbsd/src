@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vnd.4,v 1.21 2008/03/17 16:30:36 sobrado Exp $
+.\"	$OpenBSD: vnd.4,v 1.22 2011/04/18 16:52:12 thib Exp $
 .\"	$NetBSD: vnd.4,v 1.1 1995/12/30 18:10:48 thorpej Exp $
 .\"
 .\" Copyright (c) 1995 Jason R. Thorpe.
@@ -32,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 17 2008 $
+.Dd $Mdocdate: April 18 2011 $
 .Dt VND 4
 .Os
 .Sh NAME
@@ -44,21 +44,8 @@
 The
 .Nm
 driver provides a disk-like interface to a file.
-This is useful for a variety of applications, including swap files and
-building miniroot or floppy disk images.
-There are two variants, the traditional
-.Nm
-that bypasses the buffer cache and thus is suitable for swap on files, but
-not for building disk-images, and the
-.Nm svnd
-.Po
-.Dq safe
-.Nm
-.Pc
-variant that goes
-through the buffer cache, thereby maintaining cache-coherency after the
-block-device is closed which makes it suitable for creating disk images.
-The latter is not good for swapping on, though.
+This is useful for a variety of applications, such as building miniroot or
+floppy disk images.
 .Pp
 This document assumes familiarity with how to generate kernels and
 how to properly configure disks and pseudo-devices in a kernel
@@ -103,7 +90,7 @@ specified in
 of length
 .Va vnd_keylen .
 Encryption only works with
-.Nm svnd
+.Nm vnd
 devices.
 The size of the configured device is returned in
 .Va vnd_size .
@@ -163,8 +150,8 @@ and
 They are documented in
 .Xr sd 4 .
 .Sh FILES
-.Bl -tag -width /dev/{,r}{,s}vnd* -compact
-.It Pa /dev/{,r}{,s}vnd*
+.Bl -tag -width /dev/{,r}vnd* -compact
+.It Pa /dev/{,r}vnd*
 .Nm
 device special files
 .El
@@ -183,16 +170,16 @@ device special files
 .Sh HISTORY
 The
 .Nm
-disk driver was originally written at the University of
-Utah.
+disk driver was originally written at the University of Utah.
 The
 .Nm svnd
 variant was first seen in
 .Ox 2.1 .
-.Sh BUGS
-The
+The orginal
 .Nm
-driver does not work if the file does not reside in a local filesystem.
-However the
+was removed and the
 .Nm svnd
-variant does.
+variant was renamed to
+.Nm
+in
+.Ox 4.9 .

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2011/04/10 20:00:43 krw Exp $
+#	$OpenBSD: Makefile,v 1.8 2011/04/18 16:52:10 thib Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -39,14 +39,14 @@ ${CDROM}: ${BASE} ${XBASE}
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
 	    -V "OpenBSD/${MACHINE}   ${OSREV} Install CD" \
 	    ${.OBJDIR}/cd-dir 2>&1) | tee log
-	vnconfig -v -c svnd0 ${.OBJDIR}/${CDROM}
-	mount -t cd9660 /dev/svnd0a /mnt
+	vnconfig -v -c vnd0 ${.OBJDIR}/${CDROM}
+	mount -t cd9660 /dev/vnd0a /mnt
 	/usr/mdec/installboot -v \
 	    -s `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/${MACHINE}/boot$$" | cut -d' ' -f1` \
 	    -e `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/${MACHINE}/boot$$" | cut -d' ' -f2` \
-	    /mnt/${OSREV}/${MACHINE}/boot /usr/mdec/bootxx /dev/rsvnd0c
+	    /mnt/${OSREV}/${MACHINE}/boot /usr/mdec/bootxx /dev/rvnd0c
 	umount /mnt
-	vnconfig -u svnd0
+	vnconfig -u vnd0
 	# XXX Some ${MACHINE} machines fail to load the kernel correctly if the
 	# XXX cd image is truncated.  It is not yet known why this happens.
 	# XXX For now we pad the image.
@@ -66,7 +66,7 @@ clean cleandir:
 
 unconfig:
 	-umount /mnt
-	-vnconfig -u svnd0
+	-vnconfig -u vnd0
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>

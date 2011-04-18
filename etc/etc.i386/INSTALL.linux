@@ -1,4 +1,4 @@
-$OpenBSD: INSTALL.linux,v 1.15 2010/02/22 10:44:07 giovanni Exp $
+$OpenBSD: INSTALL.linux,v 1.16 2011/04/18 16:52:10 thib Exp $
 
    Linux + OpenBSD: it's possible
 
@@ -55,7 +55,7 @@ contents are unimportant (or whose backups are always up-to-date) next to
 the frontier between OpenBSD and Linux. For instance, it's usually a good
 idea to locate the swap area such that you can grow or shrink it. Keep in
 mind that exceptional usage (very large, temporary swaps) can use a
-temporary file instead of a partition, under both OpenBSD (svnd) and Linux.
+temporary file instead of a partition, under both OpenBSD (vnd) and Linux.
 
 First principles
 ----------------

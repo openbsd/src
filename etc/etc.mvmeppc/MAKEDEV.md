@@ -1,6 +1,6 @@
 define(MACHINE,macppc)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.34 2010/09/30 15:27:54 claudio Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.35 2011/04/18 16:52:11 thib Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -118,48 +118,42 @@ sd*|wd*|ccd*|ofdisk*|raid*)
 
 vnd*)
 	umask 2 ; unit=${i##*[a-z]}
-	for name in vnd svnd; do
-		blk=14; chr=19;
-		case $name in
-		vnd)	off=0;;
-		svnd)	off=128;;
-		esac
-		rm -f $name$unit? r$name$unit?
-		mknod ${name}${unit}a	b $blk $(( $unit * 16 + $off + 0 ))
-		mknod ${name}${unit}b	b $blk $(( $unit * 16 + $off + 1 ))
-		mknod ${name}${unit}c	b $blk $(( $unit * 16 + $off + 2 ))
-		mknod ${name}${unit}d	b $blk $(( $unit * 16 + $off + 3 ))
-		mknod ${name}${unit}e	b $blk $(( $unit * 16 + $off + 4 ))
-		mknod ${name}${unit}f	b $blk $(( $unit * 16 + $off + 5 ))
-		mknod ${name}${unit}g	b $blk $(( $unit * 16 + $off + 6 ))
-		mknod ${name}${unit}h	b $blk $(( $unit * 16 + $off + 7 ))
-		mknod ${name}${unit}i	b $blk $(( $unit * 16 + $off + 8 ))
-		mknod ${name}${unit}j	b $blk $(( $unit * 16 + $off + 9 ))
-		mknod ${name}${unit}k	b $blk $(( $unit * 16 + $off + 10 ))
-		mknod ${name}${unit}l	b $blk $(( $unit * 16 + $off + 11 ))
-		mknod ${name}${unit}m	b $blk $(( $unit * 16 + $off + 12 ))
-		mknod ${name}${unit}n	b $blk $(( $unit * 16 + $off + 13 ))
-		mknod ${name}${unit}o	b $blk $(( $unit * 16 + $off + 14 ))
-		mknod ${name}${unit}p	b $blk $(( $unit * 16 + $off + 15 ))
-		mknod r${name}${unit}a	c $chr $(( $unit * 16 + $off + 0 ))
-		mknod r${name}${unit}b	c $chr $(( $unit * 16 + $off + 1 ))
-		mknod r${name}${unit}c	c $chr $(( $unit * 16 + $off + 2 ))
-		mknod r${name}${unit}d	c $chr $(( $unit * 16 + $off + 3 ))
-		mknod r${name}${unit}e	c $chr $(( $unit * 16 + $off + 4 ))
-		mknod r${name}${unit}f	c $chr $(( $unit * 16 + $off + 5 ))
-		mknod r${name}${unit}g	c $chr $(( $unit * 16 + $off + 6 ))
-		mknod r${name}${unit}h	c $chr $(( $unit * 16 + $off + 7 ))
-		mknod r${name}${unit}i	c $chr $(( $unit * 16 + $off + 8 ))
-		mknod r${name}${unit}j	c $chr $(( $unit * 16 + $off + 9 ))
-		mknod r${name}${unit}k	c $chr $(( $unit * 16 + $off + 10 ))
-		mknod r${name}${unit}l	c $chr $(( $unit * 16 + $off + 11 ))
-		mknod r${name}${unit}m	c $chr $(( $unit * 16 + $off + 12 ))
-		mknod r${name}${unit}n	c $chr $(( $unit * 16 + $off + 13 ))
-		mknod r${name}${unit}o	c $chr $(( $unit * 16 + $off + 14 ))
-		mknod r${name}${unit}p	c $chr $(( $unit * 16 + $off + 15 ))
-		chown root:operator ${name}${unit}[a-p] r${name}${unit}[a-p]
-		chmod 640 ${name}${unit}[a-p] r${name}${unit}[a-p]
-	done
+	blk=14; chr=19;
+	rm -f $name$unit? r$name$unit?
+	mknod ${name}${unit}a	b $blk $(( $unit * 16 + 0 ))
+	mknod ${name}${unit}b	b $blk $(( $unit * 16 + 1 ))
+	mknod ${name}${unit}c	b $blk $(( $unit * 16 + 2 ))
+	mknod ${name}${unit}d	b $blk $(( $unit * 16 + 3 ))
+	mknod ${name}${unit}e	b $blk $(( $unit * 16 + 4 ))
+	mknod ${name}${unit}f	b $blk $(( $unit * 16 + 5 ))
+	mknod ${name}${unit}g	b $blk $(( $unit * 16 + 6 ))
+	mknod ${name}${unit}h	b $blk $(( $unit * 16 + 7 ))
+	mknod ${name}${unit}i	b $blk $(( $unit * 16 + 8 ))
+	mknod ${name}${unit}j	b $blk $(( $unit * 16 + 9 ))
+	mknod ${name}${unit}k	b $blk $(( $unit * 16 + 10 ))
+	mknod ${name}${unit}l	b $blk $(( $unit * 16 + 11 ))
+	mknod ${name}${unit}m	b $blk $(( $unit * 16 + 12 ))
+	mknod ${name}${unit}n	b $blk $(( $unit * 16 + 13 ))
+	mknod ${name}${unit}o	b $blk $(( $unit * 16 + 14 ))
+	mknod ${name}${unit}p	b $blk $(( $unit * 16 + 15 ))
+	mknod r${name}${unit}a	c $chr $(( $unit * 16 + 0 ))
+	mknod r${name}${unit}b	c $chr $(( $unit * 16 + 1 ))
+	mknod r${name}${unit}c	c $chr $(( $unit * 16 + 2 ))
+	mknod r${name}${unit}d	c $chr $(( $unit * 16 + 3 ))
+	mknod r${name}${unit}e	c $chr $(( $unit * 16 + 4 ))
+	mknod r${name}${unit}f	c $chr $(( $unit * 16 + 5 ))
+	mknod r${name}${unit}g	c $chr $(( $unit * 16 + 6 ))
+	mknod r${name}${unit}h	c $chr $(( $unit * 16 + 7 ))
+	mknod r${name}${unit}i	c $chr $(( $unit * 16 + 8 ))
+	mknod r${name}${unit}j	c $chr $(( $unit * 16 + 9 ))
+	mknod r${name}${unit}k	c $chr $(( $unit * 16 + 10 ))
+	mknod r${name}${unit}l	c $chr $(( $unit * 16 + 11 ))
+	mknod r${name}${unit}m	c $chr $(( $unit * 16 + 12 ))
+	mknod r${name}${unit}n	c $chr $(( $unit * 16 + 13 ))
+	mknod r${name}${unit}o	c $chr $(( $unit * 16 + 14 ))
+	mknod r${name}${unit}p	c $chr $(( $unit * 16 + 15 ))
+	chown root:operator ${name}${unit}[a-p] r${name}${unit}[a-p]
+	chmod 640 ${name}${unit}[a-p] r${name}${unit}[a-p]
 	umask 77
 	;;
 

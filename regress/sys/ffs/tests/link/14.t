@@ -9,16 +9,16 @@ n2=`namegen`
 
 expect 0 mkdir ${n0} 0755
 dd if=/dev/zero of=tmpdisk bs=1k count=1024 2>/dev/null
-vnconfig svnd1 tmpdisk
-newfs /dev/rsvnd1c >/dev/null
-mount /dev/svnd1c ${n0}
+vnconfig vnd1 tmpdisk
+newfs /dev/rvnd1c >/dev/null
+mount /dev/vnd1c ${n0}
 expect 0 create ${n0}/${n1} 0644
 expect EXDEV link ${n0}/${n1} ${n2}
 expect 0 unlink ${n0}/${n1}
 expect 0 create ${n1} 0644
 expect EXDEV link ${n1} ${n0}/${n2}
 expect 0 unlink ${n1}
-umount /dev/svnd1c
-vnconfig -u svnd1
+umount /dev/vnd1c
+vnconfig -u vnd1
 rm tmpdisk
 expect 0 rmdir ${n0}

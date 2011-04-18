@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.53 2010/09/30 15:27:54 claudio Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.54 2011/04/18 16:52:10 thib Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -283,8 +283,7 @@ __devitem(wd, {-wd*-}, {-quote(winchester)disk drives (ST506{-,-} IDE{-,-} ESDI{
 __devitem(ccd, ccd*, Concatenated disk devices)dnl
 __devitem(raid, raid*, RAIDframe disk devices)dnl
 __devitem(vnd, vnd*, quote(file)pseudo-disk devices)dnl
-_mkdev(vnd, vnd*, {-dodisk vnd $U major_vnd_b major_vnd_c $U 0{--}ifstep(vnd)
-	dodisk svnd $U major_vnd_b major_vnd_c $U 2048{--}ifstep(vnd)-})dnl
+_mkdev(vnd, vnd*, {-dodisk vnd $U major_vnd_b major_vnd_c $U 0{--}ifstep(vnd)-})dnl
 __devitem(ra, ra*, {-MSCP disks-})dnl
 __devitem(hp, hp*, {-MASSBUS disks-})dnl
 __devitem(hk, hk*, {-UNIBUS RK06 and RK07 disks-})dnl

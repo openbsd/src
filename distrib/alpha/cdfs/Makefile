@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2010/08/26 01:35:44 krw Exp $
+#	$OpenBSD: Makefile,v 1.8 2011/04/18 16:52:09 thib Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -27,14 +27,14 @@ ${CDROM}:
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
 	    -V "OpenBSD/${MACHINE}   ${OSREV} boot-only CD" \
 	    ${.OBJDIR}/cd-dir 2>&1) | tee log
-	vnconfig -v -c svnd0 ${.OBJDIR}/${CDROM}
-	mount -t cd9660 /dev/svnd0a /mnt
+	vnconfig -v -c vnd0 ${.OBJDIR}/${CDROM}
+	mount -t cd9660 /dev/vnd0a /mnt
 	/usr/mdec/installboot -v \
 	    -s `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/${MACHINE}/boot$$" | cut -d' ' -f1` \
 	    -e `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/${MACHINE}/boot$$" | cut -d' ' -f2` \
-	    /mnt/${OSREV}/${MACHINE}/boot /usr/mdec/bootxx /dev/rsvnd0c
+	    /mnt/${OSREV}/${MACHINE}/boot /usr/mdec/bootxx /dev/rvnd0c
 	umount /mnt
-	vnconfig -u svnd0
+	vnconfig -u vnd0
 
 .ifdef RELEASEDIR
 install:
@@ -47,7 +47,7 @@ clean cleandir:
 
 unconfig:
 	-umount /mnt
-	-vnconfig -u svnd0
+	-vnconfig -u vnd0
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>

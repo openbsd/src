@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.637 2011/04/17 20:57:10 krw Exp $
+#	$OpenBSD: install.sub,v 1.638 2011/04/18 16:52:10 thib Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1630,7 +1630,7 @@ install_sets() {
 #	2) have 'xx' in the option field (usually /altroot),
 #	3) have 'noauto' in the option field,
 #	4) are nfs (since name resolution may not be present),
-#	5) are on a svnd device.
+#	5) are on a vnd device.
 #
 # In addition,
 #
@@ -1645,7 +1645,7 @@ munge_fstab() {
 
 	while read _dev _mp _fstype _opt _rest; do
 		# Drop irrelevant lines and filesystems.
-		[[ $_dev == @(/dev/svnd*|\#*) || \
+		[[ $_dev == @(/dev/vnd*|\#*) || \
 			$_fstype == nfs || \
 			! -f /sbin/mount_$_fstype || \
 			$_opt == *noauto* || \

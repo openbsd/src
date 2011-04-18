@@ -1,17 +1,17 @@
-# $OpenBSD: Makefile,v 1.3 2007/04/10 11:23:38 pedro Exp $
+# $OpenBSD: Makefile,v 1.4 2011/04/18 16:52:11 thib Exp $
 
 PROG=	fstest
 
 mount:
 	dd if=/dev/zero of=${.CURDIR}/fakeobj bs=512 count=4k
-	vnconfig svnd0 ${.CURDIR}/fakeobj
-	newfs /dev/rsvnd0c
-	mount /dev/svnd0c /mnt
+	vnconfig vnd0 ${.CURDIR}/fakeobj
+	newfs /dev/rvnd0c
+	mount /dev/vnd0c /mnt
 
 clean:
 	-umount /mnt
-	-vnconfig -u svnd0
-	-vnconfig -u svnd1
+	-vnconfig -u vnd0
+	-vnconfig -u vnd1
 	-rm -f ${.CURDIR}/fakeobj
 	-rm -f ${.OBJDIR}/fstest
 	-rm -f ${.OBJDIR}/fstest.o

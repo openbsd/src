@@ -9,9 +9,9 @@ n2=`namegen`
 
 expect 0 mkdir ${n0} 0755
 dd if=/dev/zero of=tmpdisk bs=1k count=256 2>/dev/null
-vnconfig svnd1 tmpdisk
-newfs /dev/rsvnd1c >/dev/null
-mount /dev/svnd1c ${n0}
+vnconfig vnd1 tmpdisk
+newfs /dev/rvnd1c >/dev/null
+mount /dev/vnd1c ${n0}
 expect 0 create ${n0}/${n1} 0644
 i=0
 while :; do
@@ -22,7 +22,7 @@ while :; do
 	i=`expr $i + 1`
 done
 expect ENOSPC link ${n0}/${n1} ${n0}/${n2}
-umount /dev/svnd1c
-vnconfig -u svnd1
+umount /dev/vnd1c
+vnconfig -u vnd1
 rm tmpdisk
 expect 0 rmdir ${n0}

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2010/10/18 05:40:47 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 2011/04/18 16:52:10 thib Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -18,7 +18,7 @@ XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xetc${OSrev}.tgz \
 		${RELXDIR}/xserv${OSrev}.tgz
 
 MOUNT_POINT?=	/mnt
-VND?=		svnd0
+VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 DISKTYPE=	isoroot

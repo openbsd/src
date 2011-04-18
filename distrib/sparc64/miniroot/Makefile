@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2010/02/26 23:15:48 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2011/04/18 16:52:10 thib Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -17,17 +17,17 @@ all: ${TARGET}
 ${TARGET}: vn_up install_files installboot showit vn_down
 
 vn_up: blank_filesystem
-	vnconfig svnd0 ${TARGET}
-	disklabel -w svnd0 fakeramdisk
-	newfs -m 0 /dev/rsvnd0a
-	mount /dev/svnd0a /mnt
+	vnconfig vnd0 ${TARGET}
+	disklabel -w vnd0 fakeramdisk
+	newfs -m 0 /dev/rvnd0a
+	mount /dev/vnd0a /mnt
 
 showit:
 	df -ki /mnt
 
 vn_down:
 	-umount /mnt
-	-vnconfig -u svnd0
+	-vnconfig -u vnd0
 
 install_files: bsd.rd ofwboot
 
@@ -40,7 +40,7 @@ ofwboot:
 	    ${DESTDIR}/usr/mdec/ofwboot /mnt/ofwboot
 
 installboot:
-	/usr/mdec/installboot -v ${DESTDIR}/usr/mdec/bootblk /dev/svnd0c
+	/usr/mdec/installboot -v ${DESTDIR}/usr/mdec/bootblk /dev/vnd0c
 
 blank_filesystem:
 	dd if=/dev/zero of=${TARGET} bs=512 count=5760
@@ -49,7 +49,7 @@ blank_filesystem:
 
 unconfig:
 	-umount -f /mnt
-	-vnconfig -u /dev/svnd0a
+	-vnconfig -u /dev/vnd0a
 
 .ifdef RELEASEDIR
 install:
