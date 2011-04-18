@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.47 2010/12/30 00:58:22 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.48 2011/04/18 04:18:36 deraadt Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
 	    &sc->sc_cap_off, &reg) && (reg & PCI_PCIE_XCAP_SI)) {
 		if (pci_intr_map(pa, &ih) == 0)
-			sc->sc_intrhand = pci_intr_establish(pc, ih, IPL_TTY,
+			sc->sc_intrhand = pci_intr_establish(pc, ih, IPL_BIO,
 			    ppb_intr, sc, self->dv_xname);
 
 		if (sc->sc_intrhand) {
