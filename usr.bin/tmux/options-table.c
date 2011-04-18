@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.4 2011/04/09 20:00:29 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.5 2011/04/18 19:49:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -194,6 +194,11 @@ const struct options_table_entry session_options_table[] = {
 	},
 
 	{ .name = "mouse-select-pane",
+	  .type = OPTIONS_TABLE_FLAG,
+	  .default_num = 0
+	},
+
+	{ .name = "mouse-select-window",
 	  .type = OPTIONS_TABLE_FLAG,
 	  .default_num = 0
 	},

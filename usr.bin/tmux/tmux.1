@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.221 2011/04/17 20:39:44 jmc Exp $
+.\" $OpenBSD: tmux.1,v 1.222 2011/04/18 19:49:05 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 17 2011 $
+.Dd $Mdocdate: April 18 2011 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1896,6 +1896,11 @@ If on,
 captures the mouse and when a window is split into multiple panes the mouse may
 be used to select the current pane.
 The mouse click is also passed through to the application as normal.
+.It Xo Ic mouse-select-window
+.Op Ic on | off
+.Xc
+If on, clicking the mouse on a window name in the status line will select that
+window.
 .It Ic pane-active-border-bg Ar colour
 .It Ic pane-active-border-fg Ar colour
 Set the pane border colour for the currently active pane.
