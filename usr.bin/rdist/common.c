@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.24 2011/04/10 15:47:28 krw Exp $	*/
+/*	$OpenBSD: common.c,v 1.25 2011/04/18 12:29:59 krw Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -859,7 +859,7 @@ xmalloc(size_t amt)
 	char *ptr;
 
 	if ((ptr = (char *)malloc(amt)) == NULL)
-		fatalerr("Cannot malloc %d bytes of memory.", amt);
+		fatalerr("Cannot malloc %zu bytes of memory.", amt);
 
 	return(ptr);
 }
@@ -873,7 +873,7 @@ xrealloc(char *baseptr, size_t amt)
 	char *new;
 
 	if ((new = (char *)realloc(baseptr, amt)) == NULL)
-		fatalerr("Cannot realloc %d bytes of memory.", amt);
+		fatalerr("Cannot realloc %zu bytes of memory.", amt);
 
 	return(new);
 }
@@ -887,7 +887,7 @@ xcalloc(size_t num, size_t esize)
 	char *ptr;
 
 	if ((ptr = (char *)calloc(num, esize)) == NULL)
-		fatalerr("Cannot calloc %d * %d = %d bytes of memory.",
+		fatalerr("Cannot calloc %zu * %zu = %zu bytes of memory.",
 		      num, esize, num * esize);
 
 	return(ptr);
@@ -903,7 +903,7 @@ xstrdup(const char *str)
 	char *nstr = (char *) malloc(len);
 
 	if (nstr == NULL)
-		fatalerr("Cannot malloc %u bytes of memory.", len);
+		fatalerr("Cannot malloc %zu bytes of memory.", len);
 
 	return(memcpy(nstr, str, len));
 }
