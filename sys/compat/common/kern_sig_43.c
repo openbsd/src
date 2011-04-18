@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig_43.c,v 1.10 2011/04/15 04:52:40 guenther Exp $	*/
+/*	$OpenBSD: kern_sig_43.c,v 1.11 2011/04/18 21:44:56 guenther Exp $	*/
 /*	$NetBSD: kern_sig_43.c,v 1.7 1996/03/14 19:31:47 christos Exp $	*/
 
 /*
@@ -112,26 +112,25 @@ compat_43_sys_sigstack(p, v, retval)
 		syscallarg(struct sigstack *) oss;
 	} */ *uap = v;
 	struct sigstack ss;
+	struct sigacts *psp;
 	int error = 0;
 
-	if (SCARG(uap, oss)) {
-		ss.ss_sp = p->p_sigstk.ss_sp;
-		ss.ss_onstack = p->p_sigstk.ss_flags & SS_ONSTACK;
-		if ((error = copyout(&ss, SCARG(uap, oss), sizeof(ss))))
-			return (error);
-	}
+	psp = p->p_sigacts;
+	ss.ss_sp = psp->ps_sigstk.ss_sp;
+	ss.ss_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	if (SCARG(uap, oss) && (error = copyout((caddr_t)&ss,
+	    (caddr_t)SCARG(uap, oss), sizeof (struct sigstack))))
+		return (error);
 	if (SCARG(uap, nss) == 0)
 		return (0);
-	error = copyin(SCARG(uap, nss), &ss, sizeof(ss));
+	error = copyin((caddr_t)SCARG(uap, nss), (caddr_t)&ss,
+	    sizeof (ss));
 	if (error)
 		return (error);
-	if (p->p_sigstk.ss_flags & SS_ONSTACK)
-		return (EPERM);
-	if (ss.ss_onstack)
-		return (EINVAL);
-	p->p_sigstk.ss_sp = ss.ss_sp;
-	p->p_sigstk.ss_size = 0;
-	p->p_sigstk.ss_flags = 0;
+	psp->ps_flags |= SAS_ALTSTACK;
+	psp->ps_sigstk.ss_sp = ss.ss_sp;
+	psp->ps_sigstk.ss_size = 0;
+	psp->ps_sigstk.ss_flags |= ss.ss_onstack & SS_ONSTACK;
 	return (0);
 }
 
@@ -172,7 +171,7 @@ compat_43_sys_sigvec(p, v, retval)
 			sv->sv_flags |= SV_INTERRUPT;
 		if ((ps->ps_sigreset & bit) != 0)
 			sv->sv_flags |= SV_RESETHAND;
-		if (ps->ps_flags & SAS_NOCLDSTOP)
+		if (p->p_flag & P_NOCLDSTOP)
 			sv->sv_flags |= SA_NOCLDSTOP;
 		sv->sv_mask &= ~bit;
 		error = copyout((caddr_t)sv, (caddr_t)SCARG(uap, osv),

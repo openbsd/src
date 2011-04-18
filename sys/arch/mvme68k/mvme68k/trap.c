@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.72 2011/04/15 04:52:39 guenther Exp $ */
+/*	$OpenBSD: trap.c,v 1.73 2011/04/18 21:44:55 guenther Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -286,8 +286,8 @@ copyfault:
 		type |= T_USER;
 		p->p_sigacts->ps_sigact[SIGILL] = SIG_DFL;
 		i = sigmask(SIGILL);
-		p->p_sigacts->ps_sigignore &= ~i;
-		p->p_sigacts->ps_sigcatch &= ~i;
+		p->p_sigignore &= ~i;
+		p->p_sigcatch &= ~i;
 		p->p_sigmask &= ~i;
 		i = SIGILL;
 		ucode = frame.f_format;	/* XXX was ILL_RESAD_FAULT */

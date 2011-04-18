@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.201 2011/04/15 04:52:40 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.202 2011/04/18 21:44:56 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -45,7 +45,6 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
-#include <sys/signalvar.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/vnode.h>
@@ -1474,7 +1473,7 @@ fill_kproc(struct proc *p, struct kinfo_proc *ki)
 	struct timeval ut, st;
 
 	FILL_KPROC(ki, strlcpy, p, pr, p->p_cred, p->p_ucred, pr->ps_pgrp,
-	    p, pr, s, p->p_vmspace, pr->ps_limit, p->p_stats, p->p_sigacts);
+	    p, pr, s, p->p_vmspace, pr->ps_limit, p->p_stats);
 
 	/* stuff that's too painful to generalize into the macros */
 	if (pr->ps_pptr)

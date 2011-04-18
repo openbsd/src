@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.58 2011/04/15 04:52:39 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.59 2011/04/18 21:44:55 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.68 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
@@ -402,8 +402,8 @@ copyfault:
 		type |= T_USER;
 		p->p_sigacts->ps_sigact[SIGILL] = SIG_DFL;
 		i = sigmask(SIGILL);
-		p->p_sigacts->ps_sigignore &= ~i;
-		p->p_sigacts->ps_sigcatch &= ~i;
+		p->p_sigignore &= ~i;
+		p->p_sigcatch &= ~i;
 		p->p_sigmask &= ~i;
 		i = SIGILL;
 		ucode = frame.f_format;	/* XXX was ILL_RESAD_FAULT */

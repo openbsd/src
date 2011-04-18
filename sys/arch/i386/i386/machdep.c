@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.491 2011/04/16 00:40:58 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.492 2011/04/18 21:44:55 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2189,7 +2189,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	struct sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
 	register_t sp;
-	int oonstack = p->p_sigstk.ss_flags & SS_ONSTACK;
+	int oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/*
 	 * Build the argument list for the signal handler.
@@ -2199,10 +2199,10 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	/*
 	 * Allocate space for the signal handler context.
 	 */
-	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 && !oonstack &&
+	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		sp = (long)p->p_sigstk.ss_sp + p->p_sigstk.ss_size;
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
+		sp = (long)psp->ps_sigstk.ss_sp + psp->ps_sigstk.ss_size;
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		sp = tf->tf_esp;
 
@@ -2377,9 +2377,9 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	}
 
 	if (context.sc_onstack & 01)
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = context.sc_mask & ~sigcantmask;
 
 	return (EJUSTRETURN);

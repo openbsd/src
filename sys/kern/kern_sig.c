@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.120 2011/04/15 04:52:40 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.121 2011/04/18 21:44:56 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -242,9 +242,9 @@ sys_sigaction(struct proc *p, void *v, register_t *retval)
 		if ((ps->ps_siginfo & bit) != 0)
 			sa->sa_flags |= SA_SIGINFO;
 		if (signum == SIGCHLD) {
-			if ((ps->ps_flags & SAS_NOCLDSTOP) != 0)
+			if ((p->p_flag & P_NOCLDSTOP) != 0)
 				sa->sa_flags |= SA_NOCLDSTOP;
-			if ((ps->ps_flags & SAS_NOCLDWAIT) != 0)
+			if ((p->p_flag & P_NOCLDWAIT) != 0)
 				sa->sa_flags |= SA_NOCLDWAIT;
 		}
 		if ((sa->sa_mask & bit) == 0)
@@ -281,22 +281,21 @@ setsigvec(struct proc *p, int signum, struct sigaction *sa)
 	ps->ps_catchmask[signum] = sa->sa_mask &~ sigcantmask;
 	if (signum == SIGCHLD) {
 		if (sa->sa_flags & SA_NOCLDSTOP)
-			atomic_setbits_int(&ps->ps_flags, SAS_NOCLDSTOP);
+			atomic_setbits_int(&p->p_flag, P_NOCLDSTOP);
 		else
-			atomic_clearbits_int(&ps->ps_flags, SAS_NOCLDSTOP);
+			atomic_clearbits_int(&p->p_flag, P_NOCLDSTOP);
 		/*
 		 * If the SA_NOCLDWAIT flag is set or the handler
 		 * is SIG_IGN we reparent the dying child to PID 1
 		 * (init) which will reap the zombie.  Because we use
-		 * init to do our dirty work we never set SAS_NOCLDWAIT
+		 * init to do our dirty work we never set P_NOCLDWAIT
 		 * for PID 1.
 		 */
-		if (initproc->p_sigacts != ps &&
-		    ((sa->sa_flags & SA_NOCLDWAIT) ||
+		if (p->p_pid != 1 && ((sa->sa_flags & SA_NOCLDWAIT) ||
 		    sa->sa_handler == SIG_IGN))
-			atomic_setbits_int(&ps->ps_flags, SAS_NOCLDWAIT);
+			atomic_setbits_int(&p->p_flag, P_NOCLDWAIT);
 		else
-			atomic_clearbits_int(&ps->ps_flags, SAS_NOCLDWAIT);
+			atomic_clearbits_int(&p->p_flag, P_NOCLDWAIT);
 	}
 	if ((sa->sa_flags & SA_RESETHAND) != 0)
 		ps->ps_sigreset |= bit;
@@ -315,23 +314,23 @@ setsigvec(struct proc *p, int signum, struct sigaction *sa)
 	else
 		ps->ps_sigonstack &= ~bit;
 	/*
-	 * Set bit in ps_sigignore for signals that are set to SIG_IGN,
+	 * Set bit in p_sigignore for signals that are set to SIG_IGN,
 	 * and for signals set to SIG_DFL where the default is to ignore.
-	 * However, don't put SIGCONT in ps_sigignore,
+	 * However, don't put SIGCONT in p_sigignore,
 	 * as we have to restart the process.
 	 */
 	if (sa->sa_handler == SIG_IGN ||
 	    (sigprop[signum] & SA_IGNORE && sa->sa_handler == SIG_DFL)) {
 		atomic_clearbits_int(&p->p_siglist, bit);	
 		if (signum != SIGCONT)
-			ps->ps_sigignore |= bit;	/* easier in psignal */
-		ps->ps_sigcatch &= ~bit;
+			p->p_sigignore |= bit;	/* easier in psignal */
+		p->p_sigcatch &= ~bit;
 	} else {
-		ps->ps_sigignore &= ~bit;
+		p->p_sigignore &= ~bit;
 		if (sa->sa_handler == SIG_DFL)
-			ps->ps_sigcatch &= ~bit;
+			p->p_sigcatch &= ~bit;
 		else
-			ps->ps_sigcatch |= bit;
+			p->p_sigcatch |= bit;
 	}
 	splx(s);
 }
@@ -343,13 +342,11 @@ setsigvec(struct proc *p, int signum, struct sigaction *sa)
 void
 siginit(struct proc *p)
 {
-	struct sigacts *ps = p->p_sigacts;
 	int i;
 
 	for (i = 0; i < NSIG; i++)
 		if (sigprop[i] & SA_IGNORE && i != SIGCONT)
-			ps->ps_sigignore |= sigmask(i);
-	ps->ps_flags = SAS_NOCLDWAIT | SAS_NOCLDSTOP;
+			p->p_sigignore |= sigmask(i);
 }
 
 /*
@@ -369,13 +366,13 @@ execsigs(struct proc *p)
 	 * through p_sigmask (unless they were caught,
 	 * and are now ignored by default).
 	 */
-	while (ps->ps_sigcatch) {
-		nc = ffs((long)ps->ps_sigcatch);
+	while (p->p_sigcatch) {
+		nc = ffs((long)p->p_sigcatch);
 		mask = sigmask(nc);
-		ps->ps_sigcatch &= ~mask;
+		p->p_sigcatch &= ~mask;
 		if (sigprop[nc] & SA_IGNORE) {
 			if (nc != SIGCONT)
-				ps->ps_sigignore |= mask;
+				p->p_sigignore |= mask;
 			atomic_clearbits_int(&p->p_siglist, mask);
 		}
 		ps->ps_sigact[nc] = SIG_DFL;
@@ -384,10 +381,11 @@ execsigs(struct proc *p)
 	 * Reset stack state to the user stack.
 	 * Clear set of signals caught on the signal stack.
 	 */
-	p->p_sigstk.ss_flags = SS_DISABLE;
-	p->p_sigstk.ss_size = 0;
-	p->p_sigstk.ss_sp = 0;
-	ps->ps_flags &= ~SAS_NOCLDWAIT;
+	ps->ps_sigstk.ss_flags = SS_DISABLE;
+	ps->ps_sigstk.ss_size = 0;
+	ps->ps_sigstk.ss_sp = 0;
+	ps->ps_flags = 0;
+	atomic_clearbits_int(&p->p_flag, P_NOCLDWAIT);
 	if (ps->ps_sigact[SIGCHLD] == SIG_IGN)
 		ps->ps_sigact[SIGCHLD] = SIG_DFL;
 }
@@ -461,8 +459,8 @@ sys_sigsuspend(struct proc *p, void *v, register_t *retval)
 	 * save it here and mark the sigacts structure
 	 * to indicate this.
 	 */
-	p->p_oldmask = p->p_sigmask;
-	atomic_setbits_int(&p->p_flag, P_SIGSUSPEND);
+	ps->ps_oldmask = p->p_sigmask;
+	ps->ps_flags |= SAS_OLDMASK;
 	p->p_sigmask = SCARG(uap, mask) &~ sigcantmask;
 	while (tsleep(ps, PPAUSE|PCATCH, "pause", 0) == 0)
 		/* void */;
@@ -478,6 +476,7 @@ sys_osigaltstack(struct proc *p, void *v, register_t *retval)
 		syscallarg(const struct osigaltstack *) nss;
 		syscallarg(struct osigaltstack *) oss;
 	} */ *uap = v;
+	struct sigacts *psp;
 	struct osigaltstack ss;
 	const struct osigaltstack *nss;
 	struct osigaltstack *oss;
@@ -486,10 +485,13 @@ sys_osigaltstack(struct proc *p, void *v, register_t *retval)
 	nss = SCARG(uap, nss);
 	oss = SCARG(uap, oss);
 
+	psp = p->p_sigacts;
+	if ((psp->ps_flags & SAS_ALTSTACK) == 0)
+		psp->ps_sigstk.ss_flags |= SS_DISABLE;
 	if (oss) {
-		ss.ss_sp = p->p_sigstk.ss_sp;
-		ss.ss_size = p->p_sigstk.ss_size;
-		ss.ss_flags = p->p_sigstk.ss_flags;
+		ss.ss_sp = psp->ps_sigstk.ss_sp;
+		ss.ss_size = psp->ps_sigstk.ss_size;
+		ss.ss_flags = psp->ps_sigstk.ss_flags;
 		if ((error = copyout(&ss, oss, sizeof(ss))))
 			return (error);
 	}
@@ -498,19 +500,19 @@ sys_osigaltstack(struct proc *p, void *v, register_t *retval)
 	error = copyin(nss, &ss, sizeof(ss));
 	if (error)
 		return (error);
-	if (p->p_sigstk.ss_flags & SS_ONSTACK)
-		return (EPERM);
-	if (ss.ss_flags & ~SS_DISABLE)
-		return (EINVAL);
 	if (ss.ss_flags & SS_DISABLE) {
-		p->p_sigstk.ss_flags = ss.ss_flags;
+		if (psp->ps_sigstk.ss_flags & SS_ONSTACK)
+			return (EINVAL);
+		psp->ps_flags &= ~SAS_ALTSTACK;
+		psp->ps_sigstk.ss_flags = ss.ss_flags;
 		return (0);
 	}
 	if (ss.ss_size < MINSIGSTKSZ)
 		return (ENOMEM);
-	p->p_sigstk.ss_sp = ss.ss_sp;
-	p->p_sigstk.ss_size = ss.ss_size;
-	p->p_sigstk.ss_flags = ss.ss_flags;
+	psp->ps_flags |= SAS_ALTSTACK;
+	psp->ps_sigstk.ss_sp = ss.ss_sp;
+	psp->ps_sigstk.ss_size = ss.ss_size;
+	psp->ps_sigstk.ss_flags = ss.ss_flags;
 	return (0);
 }
 
@@ -521,6 +523,7 @@ sys_sigaltstack(struct proc *p, void *v, register_t *retval)
 		syscallarg(const struct sigaltstack *) nss;
 		syscallarg(struct sigaltstack *) oss;
 	} */ *uap = v;
+	struct sigacts *psp;
 	struct sigaltstack ss;
 	const struct sigaltstack *nss;
 	struct sigaltstack *oss;
@@ -529,24 +532,28 @@ sys_sigaltstack(struct proc *p, void *v, register_t *retval)
 	nss = SCARG(uap, nss);
 	oss = SCARG(uap, oss);
 
-	if (oss && (error = copyout(&p->p_sigstk, oss, sizeof(p->p_sigstk))))
+	psp = p->p_sigacts;
+	if ((psp->ps_flags & SAS_ALTSTACK) == 0)
+		psp->ps_sigstk.ss_flags |= SS_DISABLE;
+	if (oss && (error = copyout(&psp->ps_sigstk,
+	    oss, sizeof(struct sigaltstack))))
 		return (error);
 	if (nss == NULL)
 		return (0);
 	error = copyin(nss, &ss, sizeof(ss));
 	if (error)
 		return (error);
-	if (p->p_sigstk.ss_flags & SS_ONSTACK)
-		return (EPERM);
-	if (ss.ss_flags & ~SS_DISABLE)
-		return (EINVAL);
 	if (ss.ss_flags & SS_DISABLE) {
-		p->p_sigstk.ss_flags = ss.ss_flags;
+		if (psp->ps_sigstk.ss_flags & SS_ONSTACK)
+			return (EINVAL);
+		psp->ps_flags &= ~SAS_ALTSTACK;
+		psp->ps_sigstk.ss_flags = ss.ss_flags;
 		return (0);
 	}
 	if (ss.ss_size < MINSIGSTKSZ)
 		return (ENOMEM);
-	p->p_sigstk = ss;
+	psp->ps_flags |= SAS_ALTSTACK;
+	psp->ps_sigstk = ss;
 	return (0);
 }
 
@@ -730,7 +737,7 @@ trapsignal(struct proc *p, int signum, u_long code, int type,
 	int mask;
 
 	mask = sigmask(signum);
-	if ((p->p_flag & P_TRACED) == 0 && (ps->ps_sigcatch & mask) != 0 &&
+	if ((p->p_flag & P_TRACED) == 0 && (p->p_sigcatch & mask) != 0 &&
 	    (p->p_sigmask & mask) == 0) {
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_PSIG)) {
@@ -746,16 +753,16 @@ trapsignal(struct proc *p, int signum, u_long code, int type,
 		    p->p_sigmask, code, type, sigval);
 		p->p_sigmask |= ps->ps_catchmask[signum];
 		if ((ps->ps_sigreset & mask) != 0) {
-			ps->ps_sigcatch &= ~mask;
+			p->p_sigcatch &= ~mask;
 			if (signum != SIGCONT && sigprop[signum] & SA_IGNORE)
-				ps->ps_sigignore |= mask;
+				p->p_sigignore |= mask;
 			ps->ps_sigact[signum] = SIG_DFL;
 		}
 	} else {
-		p->p_sisig = signum;
-		p->p_sicode = code;	/* XXX for core dump/debugger */
-		p->p_sitype = type;
-		p->p_sigval = sigval;
+		ps->ps_sig = signum;
+		ps->ps_code = code;	/* XXX for core dump/debugger */
+		ps->ps_type = type;
+		ps->ps_sigval = sigval;
 		ptsignal(p, signum, STHREAD);
 	}
 }
@@ -838,15 +845,15 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		/*
 		 * If the signal is being ignored,
 		 * then we forget about it immediately.
-		 * (Note: we don't set SIGCONT in ps_sigignore,
+		 * (Note: we don't set SIGCONT in p_sigignore,
 		 * and if it is set to SIG_IGN,
 		 * action will be SIG_DFL here.)
 		 */
-		if (p->p_sigacts->ps_sigignore & mask)
+		if (p->p_sigignore & mask)
 			return;
 		if (p->p_sigmask & mask)
 			action = SIG_HOLD;
-		else if (p->p_sigacts->ps_sigcatch & mask)
+		else if (p->p_sigcatch & mask)
 			action = SIG_CATCH;
 		else {
 			action = SIG_DFL;
@@ -1061,8 +1068,7 @@ issignal(struct proc *p)
 		 * We should see pending but ignored signals
 		 * only if P_TRACED was on when they were posted.
 		 */
-		if (mask & p->p_sigacts->ps_sigignore &&
-		    (p->p_flag & P_TRACED) == 0)
+		if (mask & p->p_sigignore && (p->p_flag & P_TRACED) == 0)
 			continue;
 
 		if (p->p_flag & P_TRACED &&
@@ -1222,8 +1228,7 @@ proc_stop_sweep(void *v)
 			continue;
 		atomic_clearbits_int(&p->p_flag, P_STOPPED);
 
-		if ((p->p_p->ps_pptr->ps_mainproc->p_sigacts->ps_flags &
-		    SAS_NOCLDSTOP) == 0)
+		if ((p->p_p->ps_pptr->ps_mainproc->p_flag & P_NOCLDSTOP) == 0)
 			prsignal(p->p_p->ps_pptr, SIGCHLD);
 		wakeup(p->p_p->ps_pptr);
 	}
@@ -1257,14 +1262,14 @@ postsig(int signum)
 	sigval.sival_ptr = 0;
 	type = SI_USER;
 
-	if (p->p_sisig != signum) {
+	if (ps->ps_sig != signum) {
 		code = 0;
 		type = SI_USER;
 		sigval.sival_ptr = 0;
 	} else {
-		code = p->p_sicode;
-		type = p->p_sitype;
-		sigval = p->p_sigval;
+		code = ps->ps_code;
+		type = ps->ps_type;
+		sigval = ps->ps_sigval;
 	}
 
 #ifdef KTRACE
@@ -1272,8 +1277,8 @@ postsig(int signum)
 		siginfo_t si;
 		
 		initsiginfo(&si, signum, code, type, sigval);
-		ktrpsig(p, signum, action, p->p_flag & P_SIGSUSPEND ?
-		    p->p_oldmask : p->p_sigmask, type, &si);
+		ktrpsig(p, signum, action, ps->ps_flags & SAS_OLDMASK ?
+		    ps->ps_oldmask : p->p_sigmask, type, &si);
 	}
 #endif
 	if (action == SIG_DFL) {
@@ -1305,25 +1310,25 @@ postsig(int signum)
 #else
 		s = splhigh();
 #endif
-		if (p->p_flag & P_SIGSUSPEND) {
-			atomic_clearbits_int(&p->p_flag, P_SIGSUSPEND);
-			returnmask = p->p_oldmask;
+		if (ps->ps_flags & SAS_OLDMASK) {
+			returnmask = ps->ps_oldmask;
+			ps->ps_flags &= ~SAS_OLDMASK;
 		} else
 			returnmask = p->p_sigmask;
 		p->p_sigmask |= ps->ps_catchmask[signum];
 		if ((ps->ps_sigreset & mask) != 0) {
-			ps->ps_sigcatch &= ~mask;
+			p->p_sigcatch &= ~mask;
 			if (signum != SIGCONT && sigprop[signum] & SA_IGNORE)
-				ps->ps_sigignore |= mask;
+				p->p_sigignore |= mask;
 			ps->ps_sigact[signum] = SIG_DFL;
 		}
 		splx(s);
 		p->p_stats->p_ru.ru_nsignals++;
-		if (p->p_sisig == signum) {
-			p->p_sisig = 0;
-			p->p_sicode = 0;
-			p->p_sitype = SI_USER;
-			p->p_sigval.sival_ptr = NULL;
+		if (ps->ps_sig == signum) {
+			ps->ps_sig = 0;
+			ps->ps_code = 0;
+			ps->ps_type = SI_USER;
+			ps->ps_sigval.sival_ptr = NULL;
 		}
 
 		(*p->p_emul->e_sendsig)(action, signum, returnmask, code,
@@ -1349,7 +1354,7 @@ sigexit(struct proc *p, int signum)
 
 	p->p_acflag |= AXSIG;
 	if (sigprop[signum] & SA_CORE) {
-		p->p_sisig = signum;
+		p->p_sigacts->ps_sig = signum;
 		if (coredump(p) == 0)
 			signum |= WCOREFLAG;
 	}
@@ -1474,8 +1479,8 @@ coredump_trad(struct proc *p, void *cookie)
 	core.c_midmag = 0;
 	strlcpy(core.c_name, p->p_comm, sizeof(core.c_name));
 	core.c_nseg = 0;
-	core.c_signo = p->p_sisig;
-	core.c_ucode = p->p_sicode;
+	core.c_signo = p->p_sigacts->ps_sig;
+	core.c_ucode = p->p_sigacts->ps_code;
 	core.c_cpusize = 0;
 	core.c_tsize = (u_long)ptoa(vm->vm_tsize);
 	core.c_dsize = (u_long)ptoa(vm->vm_dsize);

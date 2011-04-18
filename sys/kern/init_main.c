@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.176 2011/04/15 04:52:40 guenther Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.177 2011/04/18 21:44:56 guenther Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -283,7 +283,7 @@ main(void *framep)
 	session0.s_count = 1;
 	session0.s_leader = pr;
 
-	atomic_setbits_int(&p->p_flag, P_SYSTEM);
+	atomic_setbits_int(&p->p_flag, P_SYSTEM | P_NOCLDWAIT);
 	p->p_stat = SONPROC;
 	pr->ps_nice = NZERO;
 	p->p_emul = &emul_native;
@@ -614,9 +614,6 @@ start_init(void *arg)
 		(void) tsleep((void *)&start_init_exec, PWAIT, "initexec", 0);
 
 	check_console(p);
-
-	/* process 0 ignores SIGCHLD, but we can't */
-	p->p_sigacts->ps_flags = 0;
 
 	/*
 	 * Need just enough stack to hold the faked-up "execve()" arguments.

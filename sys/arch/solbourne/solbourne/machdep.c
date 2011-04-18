@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.17 2011/04/15 04:52:40 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.18 2011/04/18 21:44:55 guenther Exp $	*/
 /*	OpenBSD: machdep.c,v 1.105 2005/04/11 15:13:01 deraadt Exp 	*/
 
 /*
@@ -382,16 +382,16 @@ sendsig(catcher, sig, mask, code, type, val)
 
 	tf = p->p_md.md_tf;
 	oldsp = tf->tf_out[6];
-	oonstack = p->p_sigstk.ss_flags & SS_ONSTACK;
+	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 	/*
 	 * Compute new user stack addresses, subtract off
 	 * one signal frame, and align.
 	 */
-	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 && !oonstack &&
+	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(p->p_sigstk.ss_sp +
-					 p->p_sigstk.ss_size);
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
+		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp +
+					 psp->ps_sigstk.ss_size);
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)oldsp;
 	fp = (struct sigframe *)((int)(fp - 1) & ~7);
@@ -522,9 +522,9 @@ sys_sigreturn(p, v, retval)
 	tf->tf_out[0] = ksc.sc_o0;
 	tf->tf_out[6] = ksc.sc_sp;
 	if (ksc.sc_onstack & 1)
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = ksc.sc_mask & ~sigcantmask;
 	return (EJUSTRETURN);
 }

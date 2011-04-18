@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.4 2011/04/16 02:34:19 deraadt Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.5 2011/04/18 21:44:55 guenther Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.22 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
-	int oonstack = p->p_sigstk.ss_flags & SS_ONSTACK;
+	int oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 	int onstack = 0;
 
 	tf = process_frame(p);
@@ -95,11 +95,11 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
 	/* Do we need to jump onto the signal stack? */
 
 	/* Allocate space for the signal handler context. */
-	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 && !oonstack &&
+	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
 		onstack = 1;
-		fp = (struct sigframe *)((caddr_t)p->p_sigstk.ss_sp +
-		    p->p_sigstk.ss_size);
+		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
+		    psp->ps_sigstk.ss_size);
 	} else
 		fp = (struct sigframe *)tf->tf_usr_sp;
 	/* make room on the stack */
@@ -135,7 +135,7 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
 	frame.sf_sc.sc_spsr   = tf->tf_spsr;
 
 	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = p->p_sigstk.ss_flags & SS_ONSTACK;
+	frame.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
 	frame.sf_sc.sc_mask = returnmask;
@@ -177,7 +177,7 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 #if 0
@@ -216,6 +216,7 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct sigcontext *scp, context;
 	struct trapframe *tf;
+	struct sigacts *psp = p->p_sigacts;
 
 	/*
 	 * we do a rather scary test in userland
@@ -269,9 +270,9 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
+		psp->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 #if 0

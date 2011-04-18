@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.130 2011/04/15 04:52:40 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.131 2011/04/18 21:44:56 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -460,13 +460,13 @@ sendsig(catcher, sig, mask, code, type, val)
 	 * Compute new user stack addresses, subtract off
 	 * one signal frame, and align.
 	 */
-	onstack = p->p_sigstk.ss_flags & SS_ONSTACK;
+	onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
-	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 && !onstack &&
+	if ((psp->ps_flags & SAS_ALTSTACK) && !onstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)((caddr_t)p->p_sigstk.ss_sp +
-		    p->p_sigstk.ss_size);
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
+		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
+		    psp->ps_sigstk.ss_size);
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)oldsp;
 	/* Allocate an aligned sigframe */
@@ -612,9 +612,9 @@ sys_sigreturn(p, v, retval)
 
 	/* Restore signal stack. */
 	if (sc.sc_onstack & SS_ONSTACK)
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	p->p_sigmask = scp->sc_mask & ~sigcantmask;

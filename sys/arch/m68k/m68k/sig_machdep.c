@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.23 2011/04/15 04:52:39 guenther Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.24 2011/04/18 21:44:55 guenther Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.3 1997/04/30 23:28:03 gwr Exp $	*/
 
 /*
@@ -135,7 +135,7 @@ sendsig(catcher, sig, mask, code, type, val)
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = p->p_sigstk.ss_flags & SS_ONSTACK;
+	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/*
 	 * Allocate and validate space for the signal handler
@@ -145,11 +145,11 @@ sendsig(catcher, sig, mask, code, type, val)
 	 * the space with a `brk'.
 	 */
 	fsize = sizeof(struct sigframe);
-	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 && !oonstack &&
+	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(p->p_sigstk.ss_sp +
-					 p->p_sigstk.ss_size - fsize);
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
+		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp +
+					 psp->ps_sigstk.ss_size - fsize);
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ptoa(p->p_vmspace->vm_ssize)) 
@@ -321,9 +321,9 @@ sys_sigreturn(p, v, retval)
 	 * Restore the user supplied information
 	 */
 	if (scp->sc_onstack & 1)
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;

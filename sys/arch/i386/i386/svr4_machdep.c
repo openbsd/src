@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_machdep.c,v 1.28 2011/04/15 10:03:44 claudio Exp $	*/
+/*	$OpenBSD: svr4_machdep.c,v 1.29 2011/04/18 21:44:55 guenther Exp $	*/
 /*	$NetBSD: svr4_machdep.c,v 1.24 1996/05/03 19:42:26 christos Exp $	 */
 
 /*
@@ -63,9 +63,10 @@ svr4_getcontext(struct proc *p, struct svr4_ucontext *uc, int mask,
     int oonstack)
 {
 	struct trapframe *tf = p->p_md.md_regs;
+	struct sigacts *psp = p->p_sigacts;
 	svr4_greg_t *r = uc->uc_mcontext.greg;
 	struct svr4_sigaltstack *s = &uc->uc_stack;
-	struct sigaltstack *sf = &p->p_sigstk;
+	struct sigaltstack *sf = &psp->ps_sigstk;
 
 	bzero(uc, sizeof(struct svr4_ucontext));
 
@@ -133,10 +134,11 @@ svr4_getcontext(struct proc *p, struct svr4_ucontext *uc, int mask,
 int
 svr4_setcontext(struct proc *p, struct svr4_ucontext *uc)
 {
+	struct sigacts *psp = p->p_sigacts;
 	struct trapframe *tf;
 	svr4_greg_t *r = uc->uc_mcontext.greg;
 	struct svr4_sigaltstack *s = &uc->uc_stack;
-	struct sigaltstack *sf = &p->p_sigstk;
+	struct sigaltstack *sf = &psp->ps_sigstk;
 	int mask;
 
 	/*
@@ -314,16 +316,16 @@ svr4_sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	int oonstack;
 
 	tf = p->p_md.md_regs;
-	oonstack = p->p_sigstk.ss_flags & SS_ONSTACK;
+	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/*
 	 * Allocate space for the signal handler context.
 	 */
-	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 && !oonstack &&
+	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct svr4_sigframe *)((char *)p->p_sigstk.ss_sp +
-		    p->p_sigstk.ss_size - sizeof(struct svr4_sigframe));
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
+		fp = (struct svr4_sigframe *)((char *)psp->ps_sigstk.ss_sp +
+		    psp->ps_sigstk.ss_size - sizeof(struct svr4_sigframe));
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else {
 		fp = (struct svr4_sigframe *)tf->tf_esp - 1;
 	}
