@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.108 2011/04/02 15:24:03 thib Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.109 2011/04/18 16:50:22 thib Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -33,25 +33,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * from: Utah $Hdr: vn.c 1.13 94/04/02$
- *
- *	@(#)vn.c	8.6 (Berkeley) 4/1/94
  */
 
 /*
- * Vnode disk driver.
+ * There is a security issue involved with this driver.
  *
- * Block/character interface to a vnode.  Allows one to treat a file
- * as a disk (e.g. build a filesystem in it, mount it, etc.).
- *
- * NOTE 1: This uses either the VOP_BMAP/VOP_STRATEGY interface to the
- * vnode or simple VOP_READ/VOP_WRITE.  The former is suitable for swapping
- * as it doesn't distort the local buffer cache.  The latter is good for
- * building disk images as it keeps the cache consistent after the block
- * device is closed.
- *
- * NOTE 2: There is a security issue involved with this driver.
  * Once mounted all access to the contents of the "mapped" file via
  * the special file is controlled by the permissions on the special
  * file, the protection of the mapped file is ignored (effectively,
@@ -102,12 +88,8 @@ int vnddebug = 0x00;
  * DISKUNIT(), but with the minor masked off.
  */
 #define	vndunit(x)	DISKUNIT(makedev(major(x), minor(x) & 0x7ff))
-#define	vndsimple(x)	(minor(x) & 0x800)
-
-/* same as MAKEDISKDEV, preserving the vndsimple() property */
 #define	VNDLABELDEV(dev)	\
-	makedev(major(dev), DISKMINOR(vndunit(dev), RAW_PART) | \
-	    (vndsimple(dev) ? 0x800 : 0))
+	makedev(major(dev), DISKMINOR(vndunit(dev), RAW_PART))
 
 struct vndbuf {
 	struct buf	vb_buf;
@@ -145,7 +127,6 @@ struct vnd_softc {
 #define	VNF_LABELLING	0x0100
 #define	VNF_WLABEL	0x0200
 #define	VNF_HAVELABEL	0x0400
-#define	VNF_SIMPLE	0x1000
 #define	VNF_READONLY	0x2000
 
 #define	VNDRW(v)	((v)->sc_flags & VNF_READONLY ? FREAD : FREAD|FWRITE)
@@ -157,7 +138,6 @@ int numvnd = 0;
 void	vndattach(int);
 
 void	vndclear(struct vnd_softc *);
-void	vndstart(struct vnd_softc *, struct buf *);
 int	vndsetcred(struct vnd_softc *, struct ucred *);
 void	vndiodone(struct buf *);
 void	vndshutdown(void);
@@ -232,12 +212,6 @@ vndopen(dev_t dev, int flags, int mode, struct proc *p)
 	if ((error = vndlock(sc)) != 0)
 		return (error);
 
-	if (!vndsimple(dev) && sc->sc_vp != NULL &&
-	    (sc->sc_vp->v_type != VREG || sc->sc_keyctx != NULL)) {
-		error = EINVAL;
-		goto bad;
-	}
-
 	if ((flags & FWRITE) && (sc->sc_flags & VNF_READONLY)) {
 		error = EROFS;
 		goto bad;
@@ -252,20 +226,12 @@ vndopen(dev_t dev, int flags, int mode, struct proc *p)
 	part = DISKPART(dev);
 	pmask = 1 << part;
 
-	/*
-	 * If any partition is open, all succeeding openings must be of the
-	 * same type or read-only.
-	 */
-	if (sc->sc_dk.dk_openmask) {
-		if (((sc->sc_flags & VNF_SIMPLE) != 0) !=
-		    (vndsimple(dev) != 0) && (flags & FWRITE)) {
-			error = EBUSY;
-			goto bad;
-		}
-	} else if (vndsimple(dev))
-		sc->sc_flags |= VNF_SIMPLE;
-	else
-		sc->sc_flags &= ~VNF_SIMPLE;
+	/* Allow access to the raw device even if we are open. */
+	if (sc->sc_dk.dk_openmask && !(part == RAW_PART) &&
+	    !(mode == S_IFCHR)) {
+		error = EBUSY;
+		goto bad;
+	}
 
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
@@ -360,33 +326,17 @@ vndclose(dev_t dev, int flags, int mode, struct proc *p)
 	return (0);
 }
 
-/*
- * Two methods are used, the traditional buffercache bypassing and the
- * newer, cache-coherent on unmount, one.
- *
- * Former method:
- * Break the request into bsize pieces and submit using VOP_BMAP/VOP_STRATEGY.
- * Note that this driver can only be used for swapping over NFS on the hp
- * since nfs_strategy on the vax cannot handle u-areas and page tables.
- *
- * Latter method:
- * Repack the buffer into an uio structure and use VOP_READ/VOP_WRITE to
- * access the underlying file.
- */
 void
 vndstrategy(struct buf *bp)
 {
 	int unit = vndunit(bp->b_dev);
 	struct vnd_softc *vnd = &vnd_softc[unit];
-	struct vndbuf *nbp;
-	int bsize;
 	off_t bn;
-	caddr_t addr;
-	size_t resid;
-	int sz, flags, error, s;
+	int sz, s, part;
 	struct iovec aiov;
 	struct uio auio;
 	struct proc *p = curproc;
+	daddr64_t off;
 
 	DNPRINTF(VDB_FOLLOW, "vndstrategy(%p): unit %d\n", bp, unit);
 
@@ -441,167 +391,50 @@ vndstrategy(struct buf *bp)
 	else
 		sz = howmany(bp->b_bcount, DEV_BSIZE);
 
-	/* No bypassing of buffer cache?  */
-	if (vndsimple(bp->b_dev)) {
-		int part = DISKPART(bp->b_dev);
-		daddr64_t off = DL_SECTOBLK(vnd->sc_dk.dk_label,
-		    DL_GETPOFFSET(&vnd->sc_dk.dk_label->d_partitions[part]));
-		aiov.iov_base = bp->b_data;
-		auio.uio_resid = aiov.iov_len = bp->b_bcount;
-		auio.uio_iov = &aiov;
-		auio.uio_iovcnt = 1;
-		auio.uio_offset = dbtob((off_t)(bp->b_blkno + off));
-		auio.uio_segflg = UIO_SYSSPACE;
-		auio.uio_procp = p;
+	part = DISKPART(bp->b_dev);
+	off = DL_SECTOBLK(vnd->sc_dk.dk_label,
+	    DL_GETPOFFSET(&vnd->sc_dk.dk_label->d_partitions[part]));
+	aiov.iov_base = bp->b_data;
+	auio.uio_resid = aiov.iov_len = bp->b_bcount;
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_offset = dbtob((off_t)(bp->b_blkno + off));
+	auio.uio_segflg = UIO_SYSSPACE;
+	auio.uio_procp = p;
 
-		vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
-		if (bp->b_flags & B_READ) {
-			auio.uio_rw = UIO_READ;
-			bp->b_error = VOP_READ(vnd->sc_vp, &auio, 0,
-			    vnd->sc_cred);
-			if (vnd->sc_keyctx)
-				vndencrypt(vnd,	bp->b_data,
-				   bp->b_bcount, bp->b_blkno, 0);
-		} else {
-			if (vnd->sc_keyctx)
-				vndencrypt(vnd, bp->b_data,
-				   bp->b_bcount, bp->b_blkno, 1);
-			auio.uio_rw = UIO_WRITE;
-			/*
-			 * Upper layer has already checked I/O for
-			 * limits, so there is no need to do it again.
-			 */
-			bp->b_error = VOP_WRITE(vnd->sc_vp, &auio,
-			    IO_NOLIMIT, vnd->sc_cred);
-			/* Data in buffer cache needs to be in clear */
-			if (vnd->sc_keyctx)
-				vndencrypt(vnd, bp->b_data,
-				   bp->b_bcount, bp->b_blkno, 0);
-		}
-		VOP_UNLOCK(vnd->sc_vp, 0, p);
-		if (bp->b_error)
-			bp->b_flags |= B_ERROR;
-		bp->b_resid = auio.uio_resid;
-		s = splbio();
-		biodone(bp);
-		splx(s);
-
-		return;
-	}
-
-	if (vnd->sc_vp->v_type != VREG || vnd->sc_keyctx != NULL) {
-		bp->b_error = EINVAL;
-		bp->b_flags |= B_ERROR;
-		s = splbio();
-		biodone(bp);
-		splx(s);
-		return;
-	}
-
-	/* The old-style buffercache bypassing method.  */
-	bn += DL_SECTOBLK(vnd->sc_dk.dk_label,
-	    DL_GETPOFFSET(&vnd->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)]));
-	bn = dbtob(bn);
-	bsize = vnd->sc_vp->v_mount->mnt_stat.f_iosize;
-	addr = bp->b_data;
-	flags = bp->b_flags | B_CALL;
-	for (resid = bp->b_resid; resid; resid -= sz) {
-		struct vnode *vp;
-		daddr64_t nbn;
-		int off, nra;
-
-		nra = 0;
-		vn_lock(vnd->sc_vp, LK_RETRY | LK_EXCLUSIVE, p);
-		error = VOP_BMAP(vnd->sc_vp, bn / bsize, &vp, &nbn, &nra);
-		VOP_UNLOCK(vnd->sc_vp, 0, p);
-		if (error == 0 && (long)nbn == -1)
-			error = EIO;
-#ifdef VNDDEBUG
-		if (!dovndcluster)
-			nra = 0;
-#endif
-
-		if ((off = bn % bsize) != 0)
-			sz = bsize - off;
-		else
-			sz = (1 + nra) * bsize;
-		if (resid < sz)
-			sz = resid;
-
-		DNPRINTF(VDB_IO, "vndstrategy: vp %p/%p bn %x/%lld sz %x\n",
-		    vnd->sc_vp, vp, bn, nbn, sz);
-
-		s = splbio();
-		nbp = getvndbuf();
-		splx(s);
-		nbp->vb_buf.b_flags = flags;
-		nbp->vb_buf.b_bcount = sz;
-		nbp->vb_buf.b_bufsize = bp->b_bufsize;
-		nbp->vb_buf.b_error = 0;
-		if (vp->v_type == VBLK || vp->v_type == VCHR)
-			nbp->vb_buf.b_dev = vp->v_rdev;
-		else
-			nbp->vb_buf.b_dev = NODEV;
-		nbp->vb_buf.b_data = addr;
-		nbp->vb_buf.b_blkno = nbn + btodb(off);
-		nbp->vb_buf.b_proc = bp->b_proc;
-		nbp->vb_buf.b_iodone = vndiodone;
-		nbp->vb_buf.b_vp = vp;
-		nbp->vb_buf.b_dirtyoff = bp->b_dirtyoff;
-		nbp->vb_buf.b_dirtyend = bp->b_dirtyend;
-		nbp->vb_buf.b_validoff = bp->b_validoff;
-		nbp->vb_buf.b_validend = bp->b_validend;
-		LIST_INIT(&nbp->vb_buf.b_dep);
-		nbp->vb_buf.b_bq = NULL;
-
-		/* save a reference to the old buffer */
-		nbp->vb_obp = bp;
-
+	vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
+	if (bp->b_flags & B_READ) {
+		auio.uio_rw = UIO_READ;
+		bp->b_error = VOP_READ(vnd->sc_vp, &auio, 0,
+		    vnd->sc_cred);
+		if (vnd->sc_keyctx)
+			vndencrypt(vnd,	bp->b_data,
+			   bp->b_bcount, bp->b_blkno, 0);
+	} else {
+		if (vnd->sc_keyctx)
+			vndencrypt(vnd, bp->b_data,
+			   bp->b_bcount, bp->b_blkno, 1);
+		auio.uio_rw = UIO_WRITE;
 		/*
-		 * If there was an error or a hole in the file...punt.
-		 * Note that we deal with this after the nbp allocation.
-		 * This ensures that we properly clean up any operations
-		 * that we have already fired off.
-		 *
-		 * XXX we could deal with holes here but it would be
-		 * a hassle (in the write case).
-		 * We must still however charge for the write even if there
-		 * was an error.
+		 * Upper layer has already checked I/O for
+		 * limits, so there is no need to do it again.
 		 */
-		if (error) {
-			nbp->vb_buf.b_error = error;
-			nbp->vb_buf.b_flags |= B_ERROR;
-			bp->b_resid -= (resid - sz);
-			s = splbio();
-			/* charge for the write */
-			if ((nbp->vb_buf.b_flags & B_READ) == 0)
-				nbp->vb_buf.b_vp->v_numoutput++;
-			biodone(&nbp->vb_buf);
-			splx(s);
-			return;
-		}
-
-		vndstart(vnd, &nbp->vb_buf);
-		bn += sz;
-		addr += sz;
+		bp->b_error = VOP_WRITE(vnd->sc_vp, &auio,
+		    IO_NOLIMIT, vnd->sc_cred);
+		/* Data in buffer cache needs to be in clear */
+		if (vnd->sc_keyctx)
+			vndencrypt(vnd, bp->b_data,
+			   bp->b_bcount, bp->b_blkno, 0);
 	}
+	VOP_UNLOCK(vnd->sc_vp, 0, p);
+	if (bp->b_error)
+		bp->b_flags |= B_ERROR;
+	bp->b_resid = auio.uio_resid;
+	s = splbio();
+	biodone(bp);
+	splx(s);
 }
 
-void
-vndstart(struct vnd_softc *vnd, struct buf *bp)
-{
-	DNPRINTF(VDB_IO,
-	    "vndstart(%d): bp %p vp %p blkno %lld addr %p cnt %lx\n",
-	    vnd-vnd_softc, bp, bp->b_vp, bp->b_blkno, bp->b_data,
-	    bp->b_bcount);
-
-	/* Instrumentation. */
-	disk_busy(&vnd->sc_dk);
-
-	if ((bp->b_flags & B_READ) == 0)
-		bp->b_vp->v_numoutput++;
-	VOP_STRATEGY(bp);
-}
 
 void
 vndiodone(struct buf *bp)
@@ -726,8 +559,6 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	case VNDIOCSET:
 		if (vnd->sc_flags & VNF_INITED)
 			return (EBUSY);
-		if (!(vnd->sc_flags & VNF_SIMPLE) && vio->vnd_keylen)
-			return (EINVAL);
 
 		if ((error = vndlock(vnd)) != 0)
 			return (error);
@@ -750,8 +581,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		/* Set disk name depending on how we were created. */
 		bzero(vnd->sc_dk_name, sizeof(vnd->sc_dk_name));
 		if (snprintf(vnd->sc_dk_name, sizeof(vnd->sc_dk_name),
-		    "%svnd%d", ((vnd->sc_flags & VNF_SIMPLE) ? "s" : ""),
-		    unit) >= sizeof(vnd->sc_dk_name)) {
+		    "vnd%d", unit) >= sizeof(vnd->sc_dk_name)) {
 			printf("VNDIOCSET: disk name too long\n");
 			vndunlock(vnd);
 			return(ENXIO);
@@ -777,13 +607,6 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		if (error) {
 			vndunlock(vnd);
 			return (error);
-		}
-
-		if (nd.ni_vp->v_type != VREG && !vndsimple(dev)) {
-			VOP_UNLOCK(nd.ni_vp, 0, p);
-			vn_close(nd.ni_vp, VNDRW(vnd), p->p_ucred, p);
-			vndunlock(vnd);
-			return (EINVAL);
 		}
 
 		if (nd.ni_vp->v_type == VBLK)
