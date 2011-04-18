@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.93 2011/04/13 07:28:35 dlg Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.94 2011/04/18 04:27:31 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -5144,15 +5144,14 @@ bnx_watchdog(struct ifnet *ifp)
 int
 bnx_intr(void *xsc)
 {
-	struct bnx_softc	*sc;
-	struct ifnet		*ifp;
+	struct bnx_softc	*sc = xsc;
+	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	u_int32_t		status_attn_bits;
+	u_int16_t		status_idx;
+	int			rv = 0;
 
-	sc = xsc;
 	if ((sc->bnx_flags & BNX_ACTIVE_FLAG) == 0)
 		return (0);
-
-	ifp = &sc->arpcom.ac_if;
 
 	DBRUNIF(1, sc->interrupts_generated++);
 
@@ -5165,18 +5164,16 @@ bnx_intr(void *xsc)
 	 * driver and we haven't asserted our
 	 * interrupt then there's nothing to do.
 	 */
-	if ((sc->status_block->status_idx == sc->last_status_idx) && 
-	    (REG_RD(sc, BNX_PCICFG_MISC_STATUS) &
-	    BNX_PCICFG_MISC_STATUS_INTA_VALUE))
-		return (0);
+	status_idx = sc->status_block->status_idx;
+	if (status_idx != sc->last_status_idx || 
+	    !ISSET(REG_RD(sc, BNX_PCICFG_MISC_STATUS),
+	    BNX_PCICFG_MISC_STATUS_INTA_VALUE)) {
+		rv = 1;
 
-	/* Ack the interrupt and stop others from occuring. */
-	REG_WR(sc, BNX_PCICFG_INT_ACK_CMD,
-	    BNX_PCICFG_INT_ACK_CMD_USE_INT_HC_PARAM |
-	    BNX_PCICFG_INT_ACK_CMD_MASK_INT);
+		/* Ack the interrupt */
+		REG_WR(sc, BNX_PCICFG_INT_ACK_CMD,
+		    BNX_PCICFG_INT_ACK_CMD_INDEX_VALID | status_idx);
 
-	/* Keep processing data as long as there is work to do. */
-	for (;;) {
 		status_attn_bits = sc->status_block->status_attn_bits;
 
 		DBRUNIF(DB_RANDOMTRUE(bnx_debug_unexpected_attention),
@@ -5201,10 +5198,10 @@ bnx_intr(void *xsc)
 
 			DBRUN(BNX_FATAL,
 			    if (bnx_debug_unexpected_attention == 0)
-			    bnx_breakpoint(sc));
+				bnx_breakpoint(sc));
 
 			bnx_init(sc);
-			return (1);
+			goto out;
 		}
 
 		/* Check for any completed RX frames. */
@@ -5217,40 +5214,22 @@ bnx_intr(void *xsc)
 		    sc->hw_tx_cons)
 			bnx_tx_intr(sc);
 
-		/* Save the status block index value for use during the
+		/*
+		 * Save the status block index value for use during the
 		 * next interrupt.
 		 */
-		sc->last_status_idx = sc->status_block->status_idx;
+		sc->last_status_idx = status_idx;
 
-		/* Prevent speculative reads from getting ahead of the
-		 * status block.
-		 */
-		bus_space_barrier(sc->bnx_btag, sc->bnx_bhandle, 0, 0, 
-		    BUS_SPACE_BARRIER_READ);
-
-		/* If there's no work left then exit the isr. */
-		if ((sc->status_block->status_rx_quick_consumer_index0 ==
-		    sc->hw_rx_cons) &&
-		    (sc->status_block->status_tx_quick_consumer_index0 ==
-		    sc->hw_tx_cons))
-			break;
+		/* Start moving packets again */
+		if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
+			bnx_start(ifp);
 	}
 
+out:
 	bus_dmamap_sync(sc->bnx_dmatag, sc->status_map, 0,
 	    sc->status_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
-	/* Re-enable interrupts. */
-	REG_WR(sc, BNX_PCICFG_INT_ACK_CMD,
-	    BNX_PCICFG_INT_ACK_CMD_INDEX_VALID | sc->last_status_idx |
-	    BNX_PCICFG_INT_ACK_CMD_MASK_INT);
-	REG_WR(sc, BNX_PCICFG_INT_ACK_CMD,
-	    BNX_PCICFG_INT_ACK_CMD_INDEX_VALID | sc->last_status_idx);
-
-	/* Handle any frames that arrived while handling the interrupt. */
-	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
-		bnx_start(ifp);
-
-	return (1);
+	return (rv);
 }
 
 /****************************************************************************/
