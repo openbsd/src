@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.96 2011/04/15 23:04:19 deraadt Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.97 2011/04/18 19:23:46 art Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -811,88 +811,7 @@ uvm_km_thread(void *arg)
 		}
 	}
 }
-#endif
 
-void *
-uvm_km_getpage_pla(int flags, int *slowdown, paddr_t low, paddr_t high,
-    paddr_t alignment, paddr_t boundary)
-{
-	struct pglist pgl;
-	int pla_flags;
-	struct vm_page *pg;
-	vaddr_t va;
-
-	*slowdown = 0;
-	pla_flags = (flags & UVM_KMF_NOWAIT) ? UVM_PLA_NOWAIT : UVM_PLA_WAITOK;
-	if (flags & UVM_KMF_ZERO)
-		pla_flags |= UVM_PLA_ZERO;
-	TAILQ_INIT(&pgl);
-	if (uvm_pglistalloc(PAGE_SIZE, low, high, alignment, boundary, &pgl,
-	    1, pla_flags) != 0)
-		return NULL;
-	pg = TAILQ_FIRST(&pgl);
-	KASSERT(pg != NULL && TAILQ_NEXT(pg, pageq) == NULL);
-	TAILQ_REMOVE(&pgl, pg, pageq);
-
-#ifdef __HAVE_PMAP_DIRECT
-	va = pmap_map_direct(pg);
-	if (__predict_false(va == 0))
-		uvm_pagefree(pg);
-
-#else	/* !__HAVE_PMAP_DIRECT */
-	mtx_enter(&uvm_km_pages.mtx);
-	while (uvm_km_pages.free == 0) {
-		if (flags & UVM_KMF_NOWAIT) {
-			mtx_leave(&uvm_km_pages.mtx);
-			uvm_pagefree(pg);
-			return NULL;
-		}
-		msleep(&uvm_km_pages.free, &uvm_km_pages.mtx, PVM, "getpage",
-		    0);
-	}
-
-	va = uvm_km_pages.page[--uvm_km_pages.free];
-	if (uvm_km_pages.free < uvm_km_pages.lowat &&
-	    curproc != uvm_km_pages.km_proc) {
-		*slowdown = 1;
-		wakeup(&uvm_km_pages.km_proc);
-	}
-	mtx_leave(&uvm_km_pages.mtx);
-
-
-	atomic_setbits_int(&pg->pg_flags, PG_FAKE);
-	UVM_PAGE_OWN(pg, NULL);
-
-	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), UVM_PROT_RW);
-	pmap_update(kernel_map->pmap);
-
-#endif	/* !__HAVE_PMAP_DIRECT */
-	return ((void *)va);
-}
-
-void
-uvm_km_putpage(void *v)
-{
-#ifdef __HAVE_PMAP_DIRECT
-	vaddr_t va = (vaddr_t)v;
-	struct vm_page *pg;
-
-	pg = pmap_unmap_direct(va);
-
-	uvm_pagefree(pg);
-#else	/* !__HAVE_PMAP_DIRECT */
-	struct uvm_km_free_page *fp = v;
-
-	mtx_enter(&uvm_km_pages.mtx);
-	fp->next = uvm_km_pages.freelist;
-	uvm_km_pages.freelist = fp;
-	if (uvm_km_pages.freelistlen++ > 16)
-		wakeup(&uvm_km_pages.km_proc);
-	mtx_leave(&uvm_km_pages.mtx);
-#endif	/* !__HAVE_PMAP_DIRECT */
-}
-
-#ifndef __HAVE_PMAP_DIRECT
 struct uvm_km_free_page *
 uvm_km_doputpage(struct uvm_km_free_page *fp)
 {
@@ -922,8 +841,8 @@ uvm_km_doputpage(struct uvm_km_free_page *fp)
 #endif	/* !__HAVE_PMAP_DIRECT */
 
 void *
-km_alloc(size_t sz, struct kmem_va_mode *kv, struct kmem_pa_mode *kp,
-    struct kmem_dyn_mode *kd)
+km_alloc(size_t sz, const struct kmem_va_mode *kv,
+    const struct kmem_pa_mode *kp, const struct kmem_dyn_mode *kd)
 {
 	struct vm_map *map;
 	struct vm_page *pg;
@@ -1058,7 +977,8 @@ try_map:
 }
 
 void
-km_free(void *v, size_t sz, struct kmem_va_mode *kv, struct kmem_pa_mode *kp)
+km_free(void *v, size_t sz, const struct kmem_va_mode *kv,
+    const struct kmem_pa_mode *kp)
 {
 	vaddr_t sva, eva, va;
 	struct vm_page *pg;
@@ -1113,56 +1033,56 @@ free_va:
 		wakeup(*kv->kv_map);
 }
 
-struct kmem_va_mode kv_any = {
+const struct kmem_va_mode kv_any = {
 	.kv_map = &kernel_map,
 };
 
-struct kmem_va_mode kv_intrsafe = {
+const struct kmem_va_mode kv_intrsafe = {
 	.kv_map = &kmem_map,
 };
 
-struct kmem_va_mode kv_page = {
+const struct kmem_va_mode kv_page = {
 	.kv_singlepage = 1
 };
 
-struct kmem_pa_mode kp_dirty = {
+const struct kmem_pa_mode kp_dirty = {
 	.kp_constraint = &no_constraint
 };
 
-struct kmem_pa_mode kp_dma = {
+const struct kmem_pa_mode kp_dma = {
 	.kp_constraint = &dma_constraint
 };
 
-struct kmem_pa_mode kp_dma_zero = {
+const struct kmem_pa_mode kp_dma_zero = {
 	.kp_constraint = &dma_constraint,
 	.kp_zero = 1
 };
 
-struct kmem_pa_mode kp_zero = {
+const struct kmem_pa_mode kp_zero = {
 	.kp_constraint = &no_constraint,
 	.kp_zero = 1
 };
 
-struct kmem_pa_mode kp_pageable = {
+const struct kmem_pa_mode kp_pageable = {
 	.kp_object = &uvm.kernel_object,
 	.kp_pageable = 1
 /* XXX - kp_nomem, maybe, but we'll need to fix km_free. */
 };
 
-struct kmem_pa_mode kp_none = {
+const struct kmem_pa_mode kp_none = {
 	.kp_nomem = 1
 };
 
-struct kmem_dyn_mode kd_waitok = {
+const struct kmem_dyn_mode kd_waitok = {
 	.kd_waitok = 1,
 	.kd_prefer = UVM_UNKNOWN_OFFSET
 };
 
-struct kmem_dyn_mode kd_nowait = {
+const struct kmem_dyn_mode kd_nowait = {
 	.kd_prefer = UVM_UNKNOWN_OFFSET
 };
 
-struct kmem_dyn_mode kd_trylock = {
+const struct kmem_dyn_mode kd_trylock = {
 	.kd_trylock = 1,
 	.kd_prefer = UVM_UNKNOWN_OFFSET
 };

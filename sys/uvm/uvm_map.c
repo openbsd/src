@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.133 2011/04/06 15:52:13 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.134 2011/04/18 19:23:46 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -396,7 +396,7 @@ uvm_mapent_alloc(struct vm_map *map, int flags)
 {
 	struct vm_map_entry *me, *ne;
 	int s, i;
-	int slowdown, pool_flags;
+	int pool_flags;
 	UVMHIST_FUNC("uvm_mapent_alloc"); UVMHIST_CALLED(maphist);
 
 	pool_flags = PR_WAITOK;
@@ -408,7 +408,8 @@ uvm_mapent_alloc(struct vm_map *map, int flags)
 		simple_lock(&uvm.kentry_lock);
 		me = uvm.kentry_free;
 		if (me == NULL) {
-			ne = uvm_km_getpage(0, &slowdown);
+			ne = km_alloc(PAGE_SIZE, &kv_page, &kp_dirty,
+			    &kd_nowait);
 			if (ne == NULL)
 				panic("uvm_mapent_alloc: cannot allocate map "
 				    "entry");

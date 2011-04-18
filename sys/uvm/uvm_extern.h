@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.94 2011/04/06 15:52:13 art Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.95 2011/04/18 19:23:46 art Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -533,14 +533,6 @@ vaddr_t			uvm_km_valloc_wait(vm_map_t, vsize_t);
 vaddr_t			uvm_km_valloc_align(struct vm_map *, vsize_t, vsize_t, int);
 vaddr_t			uvm_km_valloc_prefer_wait(vm_map_t, vsize_t,
 					voff_t);
-void			*uvm_km_getpage_pla(boolean_t, int *, paddr_t, paddr_t,
-			    paddr_t, paddr_t);
-/* Wrapper around old function prototype. */
-#define uvm_km_getpage(waitok, slowdown)				\
-	uvm_km_getpage_pla(((waitok) ? 0 : UVM_KMF_NOWAIT), (slowdown),	\
-	    (paddr_t)0, (paddr_t)-1, 0, 0)
-
-void			uvm_km_putpage(void *);
 
 struct vm_map		*uvm_km_suballoc(vm_map_t, vaddr_t *,
 				vaddr_t *, vsize_t, int,
@@ -617,25 +609,26 @@ struct kmem_dyn_mode {
  * The exception is kv_page which needs to wait relatively often.
  * All kv_ except kv_intrsafe will potentially sleep.
  */
-extern struct kmem_va_mode kv_any;
-extern struct kmem_va_mode kv_intrsafe;
-extern struct kmem_va_mode kv_page;
+extern const struct kmem_va_mode kv_any;
+extern const struct kmem_va_mode kv_intrsafe;
+extern const struct kmem_va_mode kv_page;
 
-extern struct kmem_pa_mode kp_dirty;
-extern struct kmem_pa_mode kp_zero;
-extern struct kmem_pa_mode kp_dma;
-extern struct kmem_pa_mode kp_dma_zero;
-extern struct kmem_pa_mode kp_pageable;
-extern struct kmem_pa_mode kp_none;
+extern const struct kmem_pa_mode kp_dirty;
+extern const struct kmem_pa_mode kp_zero;
+extern const struct kmem_pa_mode kp_dma;
+extern const struct kmem_pa_mode kp_dma_zero;
+extern const struct kmem_pa_mode kp_pageable;
+extern const struct kmem_pa_mode kp_none;
 
-extern struct kmem_dyn_mode kd_waitok;
-extern struct kmem_dyn_mode kd_nowait;
-extern struct kmem_dyn_mode kd_trylock;
+extern const struct kmem_dyn_mode kd_waitok;
+extern const struct kmem_dyn_mode kd_nowait;
+extern const struct kmem_dyn_mode kd_trylock;
 
 
-void *km_alloc(size_t, struct kmem_va_mode *, struct kmem_pa_mode *,
-    struct kmem_dyn_mode *);
-void km_free(void *, size_t, struct kmem_va_mode *, struct kmem_pa_mode *);
+void *km_alloc(size_t, const struct kmem_va_mode *, const struct kmem_pa_mode *,
+    const struct kmem_dyn_mode *);
+void km_free(void *, size_t, const struct kmem_va_mode *,
+    const struct kmem_pa_mode *);
 
 /* uvm_map.c */
 #define	uvm_map(_m, _a, _sz, _u, _f, _al, _fl) uvm_map_p(_m, _a, _sz, _u, _f, _al, _fl, 0)
