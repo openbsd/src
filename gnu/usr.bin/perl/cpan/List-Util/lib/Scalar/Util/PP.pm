@@ -16,7 +16,7 @@ use B qw(svref_2object);
 
 @ISA     = qw(Exporter);
 @EXPORT  = qw(blessed reftype tainted readonly refaddr looks_like_number);
-$VERSION = "1.22";
+$VERSION = "1.23";
 $VERSION = eval $VERSION;
 
 sub blessed ($) {
@@ -41,20 +41,19 @@ sub refaddr($) {
 
   $addr =~ /0x(\w+)/;
   local $^W;
+  no warnings 'portable';
   hex($1);
 }
 
 {
   my %tmap = qw(
-    B::HV HASH
-    B::AV ARRAY
-    B::CV CODE
-    B::IO IO
-    B::NULL SCALAR
-    B::NV SCALAR
-    B::PV SCALAR
-    B::GV GLOB
-    B::RV REF
+    B::NULL   SCALAR
+
+    B::HV     HASH
+    B::AV     ARRAY
+    B::CV     CODE
+    B::IO     IO
+    B::GV     GLOB
     B::REGEXP REGEXP
   );
 

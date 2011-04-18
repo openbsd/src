@@ -14,7 +14,7 @@ require Exporter;
 
 @ISA        = qw(Exporter);
 @EXPORT_OK  = qw(first min max minstr maxstr reduce sum shuffle);
-$VERSION    = "1.22";
+$VERSION    = "1.23";
 $XS_VERSION = $VERSION;
 $VERSION    = eval $VERSION;
 

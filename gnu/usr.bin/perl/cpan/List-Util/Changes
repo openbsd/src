@@ -1,3 +1,13 @@
+1.23 -- Wed Mar 10 20:50:00 CST 2010
+
+  * Add a test file to ensure 'GETMAGIC' called once [gfx]
+  * "GETMAGIC" should be called only once [gfx]
+  * Use PERL_NO_GET_CONTEXT for efficiency (see perlguts) [gfx]
+  * Don't care about dVAR. ExtUtils::ParseXS deals with it. [gfx]
+  * t/p_max.t, t/p_min.t fail on perl5.8.1.  [tokuhirom]
+  * avoid non-portable warnings
+  * Fix PP::reftype in edge cases [gfx]
+
 1.22 -- Sat Nov 14 09:26:15 CST 2009
 
   * silence a compiler warning about an unreferenced local variable [Steve Hay]

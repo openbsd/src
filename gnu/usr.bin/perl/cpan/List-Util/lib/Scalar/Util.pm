@@ -13,7 +13,7 @@ require List::Util; # List::Util loads the XS
 
 @ISA       = qw(Exporter);
 @EXPORT_OK = qw(blessed dualvar reftype weaken isweak tainted readonly openhandle refaddr isvstring looks_like_number set_prototype);
-$VERSION    = "1.22";
+$VERSION    = "1.23";
 $VERSION   = eval $VERSION;
 
 unless (defined &dualvar) {

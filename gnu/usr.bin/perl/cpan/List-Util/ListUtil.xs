@@ -2,7 +2,7 @@
  * This program is free software; you can redistribute it and/or
  * modify it under the same terms as Perl itself.
  */
-
+#define PERL_NO_GET_CONTEXT /* we want efficiency */
 #include <EXTERN.h>
 #include <perl.h>
 #include <XSUB.h>
@@ -66,7 +66,7 @@ my_cxinc(pTHX)
 #  ifndef SvTAINTED
 
 static bool
-sv_tainted(SV *sv)
+sv_tainted(pTHX_ SV *sv)
 {
     if (SvTYPE(sv) >= SVt_PVMG && SvMAGIC(sv)) {
 	MAGIC *mg = mg_find(sv, 't');
@@ -77,7 +77,7 @@ sv_tainted(SV *sv)
 }
 
 #    define SvTAINTED_on(sv) sv_magic((sv), Nullsv, 't', Nullch, 0)
-#    define SvTAINTED(sv) (SvMAGICAL(sv) && sv_tainted(sv))
+#    define SvTAINTED(sv) (SvMAGICAL(sv) && sv_tainted(aTHX_ sv))
 #  endif
 #  define PL_defgv defgv
 #  define PL_op op
@@ -124,10 +124,6 @@ sv_tainted(SV *sv)
 
 #ifndef dNOOP
 #define dNOOP extern int Perl___notused PERL_UNUSED_DECL
-#endif
-
-#ifndef dVAR
-#define dVAR dNOOP
 #endif
 
 #ifndef GvSVn
@@ -282,7 +278,7 @@ reduce(block,...)
 PROTOTYPE: &@
 CODE:
 {
-    dVAR; dMULTICALL;
+    dMULTICALL;
     SV *ret = sv_newmortal();
     int index;
     GV *agv,*bgv,*gv;
@@ -321,7 +317,7 @@ first(block,...)
 PROTOTYPE: &@
 CODE:
 {
-    dVAR; dMULTICALL;
+    dMULTICALL;
     int index;
     GV *gv;
     HV *stash;
@@ -359,7 +355,6 @@ shuffle(...)
 PROTOTYPE: @
 CODE:
 {
-    dVAR;
     int index;
 #if (PERL_VERSION < 9)
     struct op dmy_op;
@@ -438,7 +433,7 @@ CODE:
 {
     if (SvMAGICAL(sv))
 	mg_get(sv);
-    if(!sv_isobject(sv)) {
+    if(!(SvROK(sv) && SvOBJECT(SvRV(sv)))) {
 	XSRETURN_UNDEF;
     }
     RETVAL = (char*)sv_reftype(SvRV(sv),TRUE);

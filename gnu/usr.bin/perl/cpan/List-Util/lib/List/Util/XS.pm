@@ -3,7 +3,7 @@ use strict;
 use vars qw($VERSION);
 use List::Util;
 
-$VERSION = "1.22";           # FIXUP
+$VERSION = "1.23";           # FIXUP
 $VERSION = eval $VERSION;    # FIXUP
 
 sub _VERSION { # FIXUP

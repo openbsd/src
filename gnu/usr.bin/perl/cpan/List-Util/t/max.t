@@ -50,6 +50,7 @@ is($v, 3, 'overload');
 use overload
   '""' => sub { ${$_[0]} },
   '+0' => sub { ${$_[0]} },
+  '>'  => sub { ${$_[0]} > ${$_[1]} },
   fallback => 1;
   sub new {
     my $class = shift;
