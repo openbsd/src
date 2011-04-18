@@ -17,7 +17,7 @@ sub _carp {
     return warn @_, " at $file line $line\n";
 }
 
-our $VERSION = '0.96';
+our $VERSION = '0.98';
 $VERSION = eval $VERSION;    ## no critic (BuiltinFunctions::ProhibitStringyEval)
 
 use Test::Builder::Module;
@@ -316,6 +316,11 @@ are similar to these:
 
     ok( ultimate_answer() eq 42,        "Meaning of Life" );
     ok( $foo ne '',     "Got some foo" );
+
+C<undef> will only ever match C<undef>.  So you can test a value
+agains C<undef> like this:
+
+    is($not_defined, undef, "undefined as expected");
 
 (Mnemonic:  "This is that."  "This isn't that.")
 
@@ -735,7 +740,7 @@ subtests are equivalent:
 
 =cut
 
-sub subtest($&) {
+sub subtest {
     my ($name, $subtests) = @_;
 
     my $tb = Test::More->builder;
@@ -818,6 +823,11 @@ because the notion of "compile-time" is relative.  Instead, you want:
 
   BEGIN { use_ok('Some::Module') }
   BEGIN { ...some code that depends on the use... }
+
+If you want the equivalent of C<use Foo ()>, use a module but not
+import anything, use C<require_ok>.
+
+  BEGIN { require_ok "Foo" }
 
 
 =cut
