@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.9 2011/01/26 16:59:23 mikeb Exp $	*/
+/*	$OpenBSD: config.c,v 1.10 2011/04/18 08:45:43 reyk Exp $	*/
 /*	$vantronix: config.c,v 1.30 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ config_free_sa(struct iked *env, struct iked_sa *sa)
 
 	config_free_proposals(&sa->sa_proposals, 0);
 	config_free_childsas(env, &sa->sa_childsas, NULL, NULL);
-	config_free_flows(env, &sa->sa_flows);
+	sa_free_flows(env, &sa->sa_flows);
 
 	if (sa->sa_policy) {
 		(void)RB_REMOVE(iked_sapeers, &sa->sa_policy->pol_sapeers, sa);
@@ -219,15 +219,10 @@ config_free_flows(struct iked *env, struct iked_flows *head)
 {
 	struct iked_flow	*flow, *next;
 
-	for (flow = TAILQ_FIRST(head); flow != NULL; flow = next) {
-		next = TAILQ_NEXT(flow, flow_entry);
-
+	for (flow = RB_MIN(iked_flows, head); flow != NULL; flow = next) {
+		next = RB_NEXT(iked_flows, head, flow);
 		log_debug("%s: free %p", __func__, flow);
-
-		if (flow->flow_loaded)
-			RB_REMOVE(iked_activeflows, &env->sc_activeflows, flow);
-		TAILQ_REMOVE(head, flow, flow_entry);
-		(void)pfkey_flow_delete(env->sc_pfkey, flow);
+		RB_REMOVE(iked_flows, head, flow);
 		flow_free(flow);
 	}
 }
@@ -624,7 +619,7 @@ config_setpolicy(struct iked *env, struct iked_policy *pol,
 		}
 	}
 
-	TAILQ_FOREACH(flow, &pol->pol_flows, flow_entry) {
+	RB_FOREACH(flow, iked_flows, &pol->pol_flows) {
 		iov[c].iov_base = flow;
 		iov[c++].iov_len = sizeof(*flow);
 	}
@@ -662,7 +657,7 @@ config_getpolicy(struct iked *env, struct imsg *imsg)
 	offset += sizeof(*pol);
 
 	TAILQ_INIT(&pol->pol_proposals);
-	TAILQ_INIT(&pol->pol_flows);
+	RB_INIT(&pol->pol_flows);
 
 	for (i = 0; i < pol->pol_nproposals; i++) {
 		memcpy(&pp, buf + offset, sizeof(pp));
@@ -690,7 +685,7 @@ config_getpolicy(struct iked *env, struct imsg *imsg)
 		memcpy(flow, buf + offset, sizeof(*flow));
 		offset += sizeof(*flow);
 
-		TAILQ_INSERT_TAIL(&pol->pol_flows, flow, flow_entry);
+		RB_INSERT(iked_flows, &pol->pol_flows, flow);
 	}
 
 	TAILQ_INSERT_TAIL(&env->sc_policies, pol, pol_entry);

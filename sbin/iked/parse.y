@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.20 2011/01/21 11:56:00 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.21 2011/04/18 08:45:43 reyk Exp $	*/
 /*	$vantronix: parse.y,v 1.22 2010/06/03 11:08:34 reyk Exp $	*/
 
 /*
@@ -2122,7 +2122,7 @@ print_policy(struct iked_policy *pol)
 			print_verbose(" inet6");
 	}
 
-	TAILQ_FOREACH(flow, &pol->pol_flows, flow_entry) {
+	RB_FOREACH(flow, iked_flows, &pol->pol_flows) {
 		print_verbose(" from %s",
 		    print_host(&flow->flow_src.addr, NULL, 0));
 		if (flow->flow_src.addr_af != AF_UNSPEC &&
@@ -2411,7 +2411,7 @@ create_ike(char *name, int af, u_int8_t ipproto, struct ipsec_hosts *hosts,
 		pol.pol_lifetime = deflifetime;
 
 	TAILQ_INIT(&pol.pol_proposals);
-	TAILQ_INIT(&pol.pol_flows);
+	RB_INIT(&pol.pol_flows);
 
 	prop[0].prop_id = ++pol.pol_nproposals;
 	prop[0].prop_protoid = IKEV2_SAPROTO_IKE;
@@ -2505,7 +2505,7 @@ create_ike(char *name, int af, u_int8_t ipproto, struct ipsec_hosts *hosts,
 		flows[j].flow_dst.addr_port = hosts->dport;
 
 		pol.pol_nflows++;
-		TAILQ_INSERT_TAIL(&pol.pol_flows, &flows[j], flow_entry);
+		RB_INSERT(iked_flows, &pol.pol_flows, &flows[j]);
 	}
 
 	for (j = 0, ipa = ikecfg; ipa; ipa = ipa->next, j++) {
