@@ -1,4 +1,4 @@
-.\"	$OpenBSD: daily.8,v 1.17 2010/09/22 13:10:05 jmc Exp $
+.\"	$OpenBSD: daily.8,v 1.18 2011/04/18 23:58:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 22 2010 $
+.Dd $Mdocdate: April 18 2011 $
 .Dt DAILY 8
 .Os
 .Sh NAME
@@ -158,11 +158,9 @@ exists, runs the
 .Xr rdist 1
 utility.
 .It
-Runs the system security check script,
-.Pa /etc/security .
-See
+Runs the system
 .Xr security 8
-for further details.
+check script.
 .El
 .Ss /etc/weekly
 This script is run weekly.
@@ -278,6 +276,12 @@ Root
 .Xr security 8 ,
 .Xr yp 8
 .Sh HISTORY
+The
+.Nm daily , weekly ,
+and
+.Nm monthly
+scripts first appeared in
+.Bx 4.3 Reno .
 This manual page first appeared in
 .Ox 3.4 .
 .Sh CAVEATS

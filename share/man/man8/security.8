@@ -1,15 +1,15 @@
-.\" $OpenBSD: security.8,v 1.18 2009/12/25 23:11:00 schwarze Exp $
+.\" $OpenBSD: security.8,v 1.19 2011/04/18 23:58:45 schwarze Exp $
 .\"
 .\" David Leonard, 2001. Public Domain.
 .\"
-.Dd $Mdocdate: December 25 2009 $
+.Dd $Mdocdate: April 18 2011 $
 .Dt SECURITY 8
 .Os
 .Sh NAME
 .Nm security
 .Nd periodic system security check
 .Sh SYNOPSIS
-.Nm /etc/security
+.Nm /usr/libexec/security
 .Sh DESCRIPTION
 .Nm
 is a command script that examines the system for some signs of security
@@ -137,6 +137,22 @@ Avoid trailing slashes.
 .Xr changelist 5 ,
 .Xr daily 8 ,
 .Xr mtree 8
+.Sh HISTORY
+A 
+.Nm
+shell script appeared in
+.Bx 4.3 Reno ,
+but most functionality only came with
+.Bx 4.4 .
+.Sh AUTHORS
+The present manual was written by David Leonard for
+.Ox 2.9 .
+Andrew Fresh and Ingo Schwarze rewrote
+.Nm
+from scratch in
+.Xr perl 1
+for
+.Ox 5.0 .
 .Sh BUGS
 The name of this script may provide a false sense of
 .Nm security .
