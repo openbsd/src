@@ -10,3 +10,4 @@ frustrated.
 full update, for instance... or ignore already installed packages (mostly
 done).
 - get an update path for libraries to be able to adjust dependencies correctly.
+- messy .libs-* match for conflicts, to integrate with spec matching ?
