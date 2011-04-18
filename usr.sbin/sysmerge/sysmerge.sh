@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.66 2010/11/11 10:46:10 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.67 2011/04/18 07:50:29 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -134,7 +134,8 @@ do_populate() {
 			awk '{ print $3 }' ${DESTDIR}/${DBDIR}/${i} > ${WRKDIR}/new
 			awk '{ print $3 }' ${WRKDIR}/${i} > ${WRKDIR}/old
 			if [ -n "`diff -q ${WRKDIR}/old ${WRKDIR}/new`" ]; then
-				OBSOLETE_FILES="`diff -C 0 ${WRKDIR}/new ${WRKDIR}/old | grep -E '^- .' | sed -e 's,^- .,,g'`"
+				local _obs="${_obs} `diff -C 0 ${WRKDIR}/new ${WRKDIR}/old | sed -n -e 's,^- .,,gp'`"
+				set -A OBSOLETE_FILES -- ${_obs}
 			fi
 			rm ${WRKDIR}/new ${WRKDIR}/old
 			
@@ -600,8 +601,8 @@ do_post() {
 		echo "${BKPDIR}\n" >> ${REPORT}
 	fi
 	if [ "${OBSOLETE_FILES}" ]; then
-		echo "===> File(s) removed from previous source (maybe obsolete)" >> ${REPORT}
-		echo "${OBSOLETE_FILES}" >> ${REPORT}
+		echo "===> File(s) removed from previous source (maybe obsolete)" | tee -a ${REPORT}
+		echo "${OBSOLETE_FILES[@]}" | tr "[:space:]" "\n" | tee -a ${REPORT}
 		echo "" >> ${REPORT}
 	fi
 	if [ "${NEWUSR}" -o "${NEWGRP}" ]; then
