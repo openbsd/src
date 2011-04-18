@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.326 2011/04/14 22:24:34 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.327 2011/04/18 04:16:12 deraadt Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2073,6 +2073,8 @@ pciide_dma_finish(void *v, int channel, int drive, int force)
 	status = PCIIDE_DMACTL_READ(sc, channel);
 	WDCDEBUG_PRINT(("pciide_dma_finish: status 0x%x\n", status),
 	    DEBUG_XFERS);
+	if (status == 0xff)
+		return (status);
 
 	if (force == 0 && (status & IDEDMA_CTL_INTR) == 0) {
 		error = WDC_DMAST_NOIRQ;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.112 2011/04/15 20:53:28 miod Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.113 2011/04/18 04:16:13 deraadt Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -702,7 +702,7 @@ wdcattach(struct channel_softc *chp)
 {
 	int channel_flags, ctrl_flags, i;
 	struct ata_atapi_attach aa_link;
-	static int inited = 0;
+	static int inited = 0, s;
 #ifdef WDCDEBUG
 	int    savedmask = wdcdebug_mask;
 #endif
@@ -743,6 +743,7 @@ wdcattach(struct channel_softc *chp)
 #endif /* WDCDEBUG */
 
 	/* initialise global data */
+	s = splbio();
 	if (inited == 0) {
 		/* Initialize the wdc_xfer pool. */
 		pool_init(&wdc_xfer_pool, sizeof(struct wdc_xfer), 0,
@@ -750,6 +751,7 @@ wdcattach(struct channel_softc *chp)
 		inited++;
 	}
 	TAILQ_INIT(&chp->ch_queue->sc_xfer);
+	splx(s);
 
 	for (i = 0; i < 2; i++) {
 		struct ata_drive_datas *drvp = &chp->ch_drive[i];
@@ -879,7 +881,10 @@ wdcdetach(struct channel_softc *chp, int flags)
 	int s, rv;
 
 	s = splbio();
+	chp->dying = 1;
+
 	wdc_kill_pending(chp);
+	timeout_del(&chp->ch_timo);
 
 	rv = config_detach_children((struct device *)chp->wdc, flags);
 	splx(s);
@@ -898,19 +903,21 @@ wdcintr(void *arg)
 {
 	struct channel_softc *chp = arg;
 	struct wdc_xfer *xfer;
-	int ret;
+	u_int8_t st = 0;
+	int ret = 0;
+
+	/* Acknowledge interrupt by reading status */
+	if (chp->_vtbl == 0)
+		st = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+		    wdr_status & _WDC_REGMASK);
+	else
+		st = CHP_READ_REG(chp, wdr_status);
+	if (st == 0xff)
+		return (-1);
 
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) == 0) {
-		/* Acknowledge interrupt by reading status */
-		if (chp->_vtbl == 0) {
-			bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
-			    wdr_status & _WDC_REGMASK);
-		} else {
-			CHP_READ_REG(chp, wdr_status);
-		}
-
 		WDCDEBUG_PRINT(("wdcintr: inactive controller\n"), DEBUG_INTR);
-		return 0;
+		return ret;
 	}
 
 	WDCDEBUG_PRINT(("wdcintr\n"), DEBUG_INTR);
@@ -919,12 +926,15 @@ wdcintr(void *arg)
 		chp->wdc->dma_status =
 		    (*chp->wdc->dma_finish)(chp->wdc->dma_arg, chp->channel,
 		    xfer->drive, 0);
+		if (chp->wdc->dma_status == 0xff)
+			return (-1);
 		if (chp->wdc->dma_status & WDC_DMAST_NOIRQ) {
 			/* IRQ not for us, not detected by DMA engine */
 			return 0;
 		}
 		chp->ch_flags &= ~WDCF_DMA_WAIT;
 	}
+		
 	chp->ch_flags &= ~WDCF_IRQ_WAIT;
 	ret = xfer->c_intr(chp, xfer, 1);
 	if (ret == 0)	/* irq was not for us, still waiting for irq */
@@ -1061,11 +1071,16 @@ wdc_wait_for_status(struct channel_softc *chp, int mask, int bits, int timeout)
 		chp->ch_status = status = CHP_READ_REG(chp, wdr_status);
 		WDC_LOG_STATUS(chp, chp->ch_status);
 
-		if (status == 0xff && (chp->ch_flags & WDCF_ONESLAVE)) {
-			wdc_set_drive(chp, 1);
-			chp->ch_status = status =
-			    CHP_READ_REG(chp, wdr_status);
-			WDC_LOG_STATUS(chp, chp->ch_status);
+		if (status == 0xff) {
+			if ((chp->ch_flags & WDCF_ONESLAVE)) {
+				wdc_set_drive(chp, 1);
+				chp->ch_status = status =
+				    CHP_READ_REG(chp, wdr_status);
+				WDC_LOG_STATUS(chp, chp->ch_status);
+			} else {
+				chp->dying = 1;
+				return -1;
+			}
 		}
 		if ((status & WDCS_BSY) == 0 && (status & mask) == bits)
 			break;
@@ -1117,6 +1132,10 @@ wdc_dmawait(struct channel_softc *chp, struct wdc_xfer *xfer, int timeout)
 		    chp->channel, xfer->drive, 0);
 		if ((chp->wdc->dma_status & WDC_DMAST_NOIRQ) == 0)
 			return 0;
+		if (chp->wdc->dma_status == 0xff) {
+			chp->dying = 1;
+			return -1;
+		}
 		delay(WDCDELAY);
 	}
 	/* timeout, force a DMA halt */
@@ -1700,6 +1719,10 @@ __wdccommand_intr(struct channel_softc *chp, struct wdc_xfer *xfer, int irq)
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive), DEBUG_INTR);
 	if (wdcwait(chp, wdc_c->r_st_pmask, wdc_c->r_st_pmask,
 	    (irq == 0) ? wdc_c->timeout : 0)) {
+		if (chp->dying) {
+			__wdccommand_done(chp, xfer);
+			return -1;
+		}
 		if (irq && (xfer->c_flags & C_TIMEOU) == 0)
 			return 0; /* IRQ was not for us */
 		wdc_c->flags |= AT_TIMEOU;
@@ -1729,6 +1752,8 @@ __wdccommand_done(struct channel_softc *chp, struct wdc_xfer *xfer)
 	WDCDEBUG_PRINT(("__wdccommand_done %s:%d:%d %02x\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 	    chp->ch_status), DEBUG_FUNCS);
+	if (chp->dying)
+		goto killit;
 	if (chp->ch_status & WDCS_DWF)
 		wdc_c->flags |= AT_DF;
 	if (chp->ch_status & WDCS_ERR) {
@@ -1749,12 +1774,17 @@ __wdccommand_done(struct channel_softc *chp, struct wdc_xfer *xfer)
 		   isn't a readable register */
 	}
 
+killit:
 	if (xfer->c_flags & C_POLL) {
 		wdc_enable_intr(chp);
-	}
+	} else
+		timeout_del(&chp->ch_timo);
 
 	wdc_free_xfer(chp, xfer);
 	WDCDEBUG_PRINT(("__wdccommand_done before callback\n"), DEBUG_INTR);
+
+	if (chp->dying)
+		return;
 
 	if (wdc_c->flags & AT_WAIT)
 		wakeup(wdc_c);

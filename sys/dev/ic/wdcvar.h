@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.48 2011/04/15 20:53:28 miod Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.49 2011/04/18 04:16:14 deraadt Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -81,6 +81,8 @@ struct channel_softc { /* Per channel data */
 	 */
 	struct channel_queue *ch_queue;
 	struct timeout ch_timo;
+
+	int dying;
 };
 
 /*

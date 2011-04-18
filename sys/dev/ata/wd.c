@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.99 2011/04/15 20:53:28 miod Exp $ */
+/*	$OpenBSD: wd.c,v 1.100 2011/04/18 04:16:13 deraadt Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -375,6 +375,8 @@ wddetach(struct device *self, int flags)
 	struct buf *bp;
 	int s, bmaj, cmaj, mn;
 
+	timeout_del(&sc->sc_restart_timeout);
+
 	/* Remove unprocessed buffers from queue */
 	s = splbio();
 	while ((bp = bufq_dequeue(&sc->sc_bufq)) != NULL) {
@@ -612,9 +614,14 @@ wdrestart(void *v)
 {
 	struct wd_softc *wd = v;
 	struct buf *bp = wd->sc_bp;
+	struct channel_softc *chnl;
 	int s;
 	WDCDEBUG_PRINT(("wdrestart %s\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
+
+	chnl = (struct channel_softc *)(wd->drvp->chnl_softc);
+	if (chnl->dying)
+		return;
 
 	s = splbio();
 	disk_unbusy(&wd->sc_dk, 0, (bp->b_flags & B_READ));
@@ -642,6 +649,7 @@ int
 wdopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct wd_softc *wd;
+	struct channel_softc *chnl;
 	int unit, part;
 	int error;
 
@@ -651,6 +659,9 @@ wdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	wd = wdlookup(unit);
 	if (wd == NULL)
 		return ENXIO;
+	chnl = (struct channel_softc *)(wd->drvp->chnl_softc);
+	if (chnl->dying)
+		return (ENXIO);
 
 	/*
 	 * If this is the first open of this device, add a reference
