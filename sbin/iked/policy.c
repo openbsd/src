@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.17 2011/04/18 08:45:43 reyk Exp $	*/
+/*	$OpenBSD: policy.c,v 1.18 2011/04/18 09:54:41 reyk Exp $	*/
 /*	$vantronix: policy.c,v 1.29 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -123,16 +123,13 @@ policy_test(struct iked *env, struct iked_policy *key)
 			/*
 			 * Check if a specific flow is requested
 			 * (eg. for acquire messages from the kernel)
-			 * and find a matching flow.  The policy also
-			 * needs to have a valid peer address specified.
+			 * and find a matching flow.
 			 */
 			if (key->pol_nflows &&
 			    (flowkey = RB_MIN(iked_flows,
 			    &key->pol_flows)) != NULL &&
-			    (p->pol_peer.addr_net ||
-			    p->pol_peer.addr_af == AF_UNSPEC ||
 			    (flow = RB_FIND(iked_flows, &p->pol_flows,
-			    flowkey)) == NULL)) {
+			    flowkey)) == NULL) {
 				p = TAILQ_NEXT(p, pol_entry);
 				continue;
 			}

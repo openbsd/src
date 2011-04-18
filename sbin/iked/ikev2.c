@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.49 2011/04/18 08:45:43 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.50 2011/04/18 09:54:41 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -61,6 +61,8 @@ int	 ikev2_ike_auth(struct iked *, struct iked_sa *,
 
 void	 ikev2_init_recv(struct iked *, struct iked_message *,
 	    struct ike_header *);
+int	 ikev2_init_ike_sa_peer(struct iked *, struct iked_policy *,
+	    struct iked_addr *);
 int	 ikev2_init_ike_auth(struct iked *, struct iked_sa *);
 int	 ikev2_init_auth(struct iked *, struct iked_message *);
 int	 ikev2_init_done(struct iked *, struct iked_sa *);
@@ -623,6 +625,13 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 int
 ikev2_init_ike_sa(struct iked *env, struct iked_policy *pol)
 {
+	return (ikev2_init_ike_sa_peer(env, pol, &pol->pol_peer));
+}
+
+int
+ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
+    struct iked_addr *peer)
+{
 	struct iked_message		 req;
 	struct ike_header		*hdr;
 	struct ikev2_payload		*pld;
@@ -638,7 +647,7 @@ ikev2_init_ike_sa(struct iked *env, struct iked_policy *pol)
 	in_port_t			 port;
 
 	if ((sock = ikev2_msg_getsocket(env,
-	    pol->pol_peer.addr_af)) == NULL)
+	    peer->addr_af)) == NULL)
 		return (-1);
 
 	/* Create a new initiator SA */
@@ -652,7 +661,7 @@ ikev2_init_ike_sa(struct iked *env, struct iked_policy *pol)
 		goto done;
 
 	if ((buf = ikev2_msg_init(env, &req,
-	    &pol->pol_peer.addr, pol->pol_peer.addr.ss_len,
+	    &peer->addr, peer->addr.ss_len,
 	    &pol->pol_local.addr, pol->pol_local.addr.ss_len, 0)) == NULL)
 		goto done;
 
@@ -3688,7 +3697,7 @@ ikev2_acquire_sa(struct iked *env, struct iked_flow *acquire)
 		log_debug("%s: found matching policy '%s'", __func__,
 		    p->pol_name);
 
-		if (ikev2_init_ike_sa(env, p) != 0)
+		if (ikev2_init_ike_sa_peer(env, p, acquire->flow_peer) != 0)
 			log_warnx("%s: failed to initiate a "
 			    "IKE_SA_INIT exchange", __func__);
 	} else {
