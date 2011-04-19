@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.53 2011/04/18 19:49:05 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.54 2011/04/19 21:31:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -314,7 +314,13 @@ server_client_handle_key(int key, struct mouse_event *mouse, void *data)
 	if (key == KEYC_MOUSE) {
 		if (c->flags & CLIENT_READONLY)
 			return;
-		if (options_get_number(oo, "mouse-select-pane")) {
+		if (options_get_number(oo, "mouse-select-pane") &&
+		    ((!(mouse->b & MOUSE_DRAG) && mouse->b != MOUSE_UP) ||
+		    wp->mode != &window_copy_mode)) {
+			/*
+			 * Allow pane switching in copy mode only by mouse down
+			 * (click).
+			 */
 			window_set_active_at(w, mouse->x, mouse->y);
 			server_redraw_window_borders(w);
 			wp = w->active;
@@ -445,6 +451,7 @@ server_client_reset_state(struct client *c)
 	struct window_pane	*wp = w->active;
 	struct screen		*s = wp->screen;
 	struct options		*oo = &c->session->options;
+	struct options		*wo = &w->options;
 	int			 status, mode;
 
 	tty_region(&c->tty, 0, c->tty.sy - 1);
@@ -460,14 +467,15 @@ server_client_reset_state(struct client *c)
 	 * none.
 	 */
 	mode = s->mode;
-	if (TAILQ_NEXT(TAILQ_FIRST(&w->panes), entry) != NULL &&
-	    options_get_number(oo, "mouse-select-pane") &&
-	    (mode & ALL_MOUSE_MODES) == 0)
-		mode |= MODE_MOUSE_STANDARD;
-
-	if (options_get_number(oo, "mouse-select-window") &&
-	    (mode & ALL_MOUSE_MODES) == 0)
-		mode |= MODE_MOUSE_STANDARD;
+	if ((mode & ALL_MOUSE_MODES) == 0) {
+		if (TAILQ_NEXT(TAILQ_FIRST(&w->panes), entry) != NULL &&
+		    options_get_number(oo, "mouse-select-pane") == 0)
+			mode |= MODE_MOUSE_STANDARD;
+		else if (options_get_number(oo, "mouse-select-window"))
+			mode |= MODE_MOUSE_STANDARD;
+		else if (options_get_number(wo, "mode-mouse"))
+			mode |= MODE_MOUSE_STANDARD;
+	}
 
 	/*
 	 * Set UTF-8 mouse input if required. If the terminal is UTF-8, the

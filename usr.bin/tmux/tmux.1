@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.222 2011/04/18 19:49:05 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.223 2011/04/19 21:31:33 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 18 2011 $
+.Dd $Mdocdate: April 19 2011 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2310,8 +2310,9 @@ contains
 .Op Ic on | off
 .Xc
 Mouse state in modes.
-If on, the mouse may be used to copy a selection by dragging in copy mode, or
-to select an option in choice mode.
+If on, the mouse may be used to enter copy mode and copy a selection by
+dragging, to enter copy mode and scroll with the mouse wheel, or to select an
+option in choice mode.
 .Pp
 .It Xo Ic monitor-activity
 .Op Ic on | off

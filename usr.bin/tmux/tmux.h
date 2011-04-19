@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.281 2011/04/18 19:49:05 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.282 2011/04/19 21:31:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1081,6 +1081,7 @@ struct mouse_event {
 #define MOUSE_3 2
 #define MOUSE_UP 3
 #define MOUSE_BUTTON 3
+#define MOUSE_DRAG 32
 #define MOUSE_45 64
 	u_int	x;
 	u_int	y;
@@ -1428,6 +1429,7 @@ void	tty_cmd_clearstartofline(struct tty *, const struct tty_ctx *);
 void	tty_cmd_clearstartofscreen(struct tty *, const struct tty_ctx *);
 void	tty_cmd_deletecharacter(struct tty *, const struct tty_ctx *);
 void	tty_cmd_deleteline(struct tty *, const struct tty_ctx *);
+void	tty_cmd_erasecharacter(struct tty *, const struct tty_ctx *);
 void	tty_cmd_insertcharacter(struct tty *, const struct tty_ctx *);
 void	tty_cmd_insertline(struct tty *, const struct tty_ctx *);
 void	tty_cmd_linefeed(struct tty *, const struct tty_ctx *);
