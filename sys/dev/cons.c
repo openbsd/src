@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.20 2010/06/26 23:24:44 guenther Exp $	*/
+/*	$OpenBSD: cons.c,v 1.21 2011/04/19 21:53:36 chl Exp $	*/
 /*	$NetBSD: cons.c,v 1.30 1996/04/08 19:57:30 jonathan Exp $	*/
 
 /*
@@ -199,7 +199,7 @@ cnpoll(dev_t dev, int rw, struct proc *p)
 		return POLLERR;
 	else
 		dev = cn_tab->cn_dev;
-	return (ttpoll(cn_tab->cn_dev, rw, p));
+	return (ttpoll(dev, rw, p));
 }
 
 
