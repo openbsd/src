@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.98 2011/04/19 15:59:11 art Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.99 2011/04/19 20:00:11 matthew Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -976,6 +976,7 @@ try_map:
 			pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), prot);
 		va += PAGE_SIZE;
 	}
+	pmap_update(pmap_kernel());
 	return ((void *)sva);
 }
 
