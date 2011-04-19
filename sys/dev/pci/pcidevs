@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1594 2011/04/14 22:19:39 jsg Exp $
+$OpenBSD: pcidevs,v 1.1595 2011/04/19 23:50:13 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2272,10 +2272,18 @@ product INTEL WL_1030_1		0x008a	WiFi Link 1030
 product INTEL WL_1030_2		0x008b	WiFi Link 1030
 product INTEL WL_6030_1		0x0090	Centrino Advanced-N 6030
 product INTEL WL_6030_2  	0x0091	Centrino Advanced-N 6030
-product INTEL SNB_HB		0x0100	Sandy Bridge Host
-product INTEL SNB_IGD		0x0102	Sandy Bridge Video
-product INTEL SNB_M_HB		0x0104	Sandy Bridge Host
-product INTEL SNB_M_IGD		0x0106	Sandy Bridge Video
+product INTEL CORE2G_HB		0x0100	Core 2G Host
+product INTEL CORE2G_PCIE_1	0x0101	Core 2G PCIE
+product INTEL CORE2G_GT1	0x0102	GT1 Video
+product INTEL CORE2G_M_HB	0x0104	Core 2G Host
+product INTEL CORE2G_PCIE_2	0x0105	Core 2G PCIE
+product INTEL CORE2G_M_GT1	0x0106	GT1 Video
+product INTEL CORE2G_PCIE_3	0x0109	Core 2G PCIE
+product INTEL CORE2G_PCIE_4	0x010d	Core 2G PCIE
+product INTEL CORE2G_GT2	0x0112	GT2 Video
+product INTEL CORE2G_M_GT2	0x0116	GT2 Video
+product INTEL CORE2G_GT2_PLUS	0x0122	GT2+ Video
+product INTEL CORE2G_M_GT2_PLUS	0x0126	GT2+ Video
 product INTEL 6SERIES_SATA_1	0x1c00	6 Series SATA
 product INTEL 6SERIES_SATA_2	0x1c01	6 Series SATA
 product INTEL 6SERIES_AHCI_1	0x1c02	6 Series AHCI
@@ -2291,13 +2299,28 @@ product INTEL 6SERIES_PCIE_5	0x1c18	6 Series PCIE
 product INTEL 6SERIES_PCIE_6	0x1c1a	6 Series PCIE
 product INTEL 6SERIES_PCIE_7	0x1c1c	6 Series PCIE
 product INTEL 6SERIES_PCIE_8	0x1c1e	6 Series PCIE
-product INTEL 6SERIES_EHCI	0x1c2d	6 Series USB
-product INTEL 6SERIES_MEI	0x1c3a	6 Series MEI
-product INTEL H67_LPC		0x1c4a	H67 LPC
 product INTEL 6SERIES_HDA	0x1c20	6 Series HD Audio
 product INTEL 6SERIES_SMB	0x1c22	6 Series SMBus
 product INTEL 6SERIES_THERM	0x1c24	6 Series Thermal
 product INTEL 6SERIES_DMI	0x1c25	6 Series DMI-PCI
+product INTEL 6SERIES_EHCI_1	0x1c26	6 Series USB
+product INTEL 6SERIES_EHCI_2	0x1c2d	6 Series USB
+product INTEL 6SERIES_MEI	0x1c3a	6 Series MEI
+product INTEL 6SERIES_KT	0x1c3d	6 Series KT
+product INTEL P67_LPC		0x1c46	P67 LPC
+product INTEL UM67_LPC		0x1c47	UM67 LPC
+product INTEL HM65_LPC		0x1c49	HM65 LPC
+product INTEL H67_LPC		0x1c4a	H67 LPC
+product INTEL HM67_LPC		0x1c4b	HM67 LPC
+product INTEL Q65_LPC		0x1c4c	Q65 LPC
+product INTEL QS67_LPC		0x1c4d	QS67 LPC
+product INTEL Q67_LPC		0x1c4e	Q67 LPC
+product INTEL QM67_LPC		0x1c4f	QM67 LPC
+product INTEL B65_LPC		0x1c50	B65 LPC
+product INTEL H61_LPC		0x1c51	H61 LPC
+product INTEL C202_LPC		0x1c52	C202 LPC
+product INTEL C204_LPC		0x1c54	C204 LPC
+product INTEL C206_LPC		0x1c56	C206 LPC
 product INTEL 80303		0x0309	80303 IOP
 product INTEL 80312		0x030d	80312 I/O Companion
 product INTEL IOXAPIC_A		0x0326	IOxAPIC
