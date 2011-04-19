@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.90 2011/04/04 21:08:26 claudio Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.91 2011/04/19 22:33:08 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -52,10 +52,12 @@
 #include <sys/pool.h>
 
 int	sosplice(struct socket *, int, off_t);
+void	sounsplice(struct socket *, struct socket *, int);
 int	somove(struct socket *, int);
-void 	filt_sordetach(struct knote *kn);
-int 	filt_soread(struct knote *kn, long hint);
-void 	filt_sowdetach(struct knote *kn);
+
+void	filt_sordetach(struct knote *kn);
+int	filt_soread(struct knote *kn, long hint);
+void	filt_sowdetach(struct knote *kn);
 int	filt_sowrite(struct knote *kn, long hint);
 int	filt_solisten(struct knote *kn, long hint);
 
@@ -192,19 +194,10 @@ sofree(struct socket *so)
 			return;
 	}
 #ifdef SOCKET_SPLICE
-	if (so->so_spliceback) {
-		so->so_snd.sb_flags &= ~SB_SPLICE;
-		so->so_spliceback->so_rcv.sb_flags &= ~SB_SPLICE;
-		so->so_spliceback->so_splice = NULL;
-		if (soreadable(so->so_spliceback))
-			sorwakeup(so->so_spliceback);
-	}
-	if (so->so_splice) {
-		so->so_splice->so_snd.sb_flags &= ~SB_SPLICE;
-		so->so_rcv.sb_flags &= ~SB_SPLICE;
-		so->so_splice->so_spliceback = NULL;
-	}
-	so->so_spliceback = so->so_splice = NULL;
+	if (so->so_spliceback)
+		sounsplice(so->so_spliceback, so, so->so_spliceback != so);
+	if (so->so_splice)
+		sounsplice(so, so->so_splice, 0);
 #endif /* SOCKET_SPLICE */
 	sbrelease(&so->so_snd);
 	sorflush(so);
@@ -1015,14 +1008,8 @@ sosplice(struct socket *so, int fd, off_t max)
 	/* If no fd is given, unsplice by removing existing link. */
 	if (fd < 0) {
 		s = splsoftnet();
-		if (so->so_splice) {
-			so->so_splice->so_snd.sb_flags &= ~SB_SPLICE;
-			so->so_rcv.sb_flags &= ~SB_SPLICE;
-			so->so_splice->so_spliceback = NULL;
-			so->so_splice = NULL;
-			if (soreadable(so))
-				sorwakeup(so);
-		}
+		if (so->so_splice)
+			sounsplice(so, so->so_splice, 1);
 		splx(s);
 		return (0);
 	}
@@ -1086,6 +1073,18 @@ sosplice(struct socket *so, int fd, off_t max)
 	sbunlock(&so->so_rcv);
 	FRELE(fp);
 	return (error);
+}
+
+void
+sounsplice(struct socket *so, struct socket *sosp, int wakeup)
+{
+	splsoftassert(IPL_SOFTNET);
+
+	sosp->so_snd.sb_flags &= ~SB_SPLICE;
+	so->so_rcv.sb_flags &= ~SB_SPLICE;
+	so->so_splice = sosp->so_spliceback = NULL;
+	if (wakeup && soreadable(so))
+		sorwakeup(so);
 }
 
 /*
@@ -1273,11 +1272,7 @@ somove(struct socket *so, int wait)
 		so->so_error = error;
 	if (((so->so_state & SS_CANTRCVMORE) && so->so_rcv.sb_cc == 0) ||
 	    (sosp->so_state & SS_CANTSENDMORE) || maxreached || error) {
-		sosp->so_snd.sb_flags &= ~SB_SPLICE;
-		so->so_rcv.sb_flags &= ~SB_SPLICE;
-		so->so_splice = sosp->so_spliceback = NULL;
-		if (soreadable(so))
-			sorwakeup(so);
+		sounsplice(so, sosp, 1);
 		return (0);
 	}
 	return (1);
