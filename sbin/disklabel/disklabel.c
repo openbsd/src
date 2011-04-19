@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.177 2011/04/16 14:51:00 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.178 2011/04/19 19:16:18 halex Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -1483,7 +1483,7 @@ usage(void)
 	fprintf(stderr,
 	    "       disklabel -e [-c | -d] [-Anv] disk\t\t\t(edit)\n");
 	fprintf(stderr,
-	    "       disklabel -E [-c | -d] [-Anv] [-F|-f tempfile] disk\t(simple editor)\n");
+	    "       disklabel -E [-c | -d] [-Anv] [-F|-f file] disk\t(simple editor)\n");
 	fprintf(stderr,
 	    "       disklabel -R [-nv] disk protofile\t\t\t(restore)\n");
 	fprintf(stderr,
