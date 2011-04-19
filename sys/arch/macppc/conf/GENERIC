@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.206 2011/02/17 20:14:30 miod Exp $g
+#	$OpenBSD: GENERIC,v 1.207 2011/04/19 23:07:54 todd Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -404,3 +404,4 @@ owctr*	at onewire?			# Counter device
 
 pseudo-device	hotplug	1	# devices hot plugging
 pseudo-device	wsmux	2	# mouse & keyboard multiplexor
+pseudo-device	sequencer 1

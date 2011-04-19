@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.44 2011/01/14 19:04:08 jasper Exp $ */
+/*	$OpenBSD: conf.c,v 1.45 2011/04/19 23:07:54 todd Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -131,6 +131,8 @@ cdev_decl(pci);
 
 #include "audio.h"
 #include "video.h"
+#include "midi.h"
+#include "sequencer.h"
 
 #include "pf.h"
 
@@ -201,8 +203,8 @@ struct cdevsw cdevsw[] = {
 #else
 	cdev_notdef(),			/* 51 */
 #endif
-	cdev_notdef(),			/* 52 */
-	cdev_notdef(),			/* 53 */
+	cdev_midi_init(NMIDI,midi),	/* 52: MIDI I/O */
+	cdev_midi_init(NSEQUENCER,sequencer),	/* 53: sequencer I/O */
 	cdev_disk_init(NRAID,raid),	/* 54: RAIDframe disk driver */
 	cdev_notdef(),			/* 55 */
 	/* The following slots are reserved for isdn4bsd. */
