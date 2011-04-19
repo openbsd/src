@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.33 2011/04/19 01:21:51 matthew Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.34 2011/04/19 23:21:15 matthew Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -173,22 +173,26 @@ umass_scsi_probe(struct scsi_link *link)
 {
 	struct umass_softc *sc = link->adapter_softc;
 	struct usb_device_info udi;
+	size_t len;
 
 	/* dont fake devids when more than one scsi device can attach. */
 	if (sc->maxlun > 0)
 		return (0);
 
 	usbd_fill_deviceinfo(sc->sc_udev, &udi, 1);
-	if (udi.udi_serial[0] != '\0') {
-		char buf[USB_MAX_STRING_LEN + 16];
-		size_t len;
 
-		len = snprintf(buf, sizeof(buf), "%04x%04x:%.*s",
-		    udi.udi_vendorNo, udi.udi_productNo,
-		    sizeof(udi.udi_serial), udi.udi_serial);
-		KASSERT(len < sizeof(buf));
-
-		link->id = devid_alloc(DEVID_SERIAL, DEVID_F_PRINT, len, buf);
+	/*
+	 * Create a fake devid using the vendor and product ids and the last
+	 * 12 characters of serial number, as recommended by Section 4.1.1 of
+	 * the USB Mass Storage Class - Bulk Only Transport spec. 
+	 */
+	len = strlen(udi.udi_serial);
+	if (len >= 12) {
+		char buf[21];
+		snprintf(buf, sizeof(buf), "%04x%04x%s", udi.udi_vendorNo,
+		    udi.udi_productNo, udi.udi_serial + len - 12);
+		link->id = devid_alloc(DEVID_SERIAL, DEVID_F_PRINT,
+		    sizeof(buf) - 1, buf);
 	}
 
 	return (0);
