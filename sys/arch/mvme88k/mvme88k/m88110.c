@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.73 2011/01/05 22:16:16 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.74 2011/04/19 21:25:28 miod Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011, Miodrag Vallat.
@@ -296,7 +296,9 @@ m88110_initialize_cpu(cpuid_t cpu)
 	struct cpu_info *ci;
 	u_int ictl, dctl;
 	int i;
+#ifdef i_know_what_i_am_doing
 	int procvers = (get_cpu_pid() & PID_VN) >> VN_SHIFT;
+#endif
 
 	ci = &m88k_cpus[cpu];
 
@@ -352,17 +354,17 @@ m88110_initialize_cpu(cpuid_t cpu)
 	 *   Suggested fix: Clear the PREN bit of the ICTL or the DEN bit
 	 *   of the DCTL.''
 	 *
-	 * So since branch prediction appears to give better performance
-	 * than data cache decoupling, and it is not known whether the
-	 * problem has been understood better and thus the conditions
-	 * narrowed on 5.1, or changes between 4.2 and 5.1 only restrict
-	 * the conditions on which it may occur, we'll enable branch
-	 * prediction on 5.1 processors and data cache decoupling on
-	 * earlier versions.
+	 * Unfortunately, while it would be nice to be able to enable
+	 * branch prediction on later models (which gives better
+	 * performance than data cache decoupling), the CPU hang can
+	 * still occur after hitting several SFU instructions in a row,
+	 * something crashme is good at producing.
 	 */
+#ifdef i_know_what_i_am_doing
 	if (procvers >= 0xf)	/* > 0xb ? */
 		ictl |= CMMU_ICTL_PREN;
 	else
+#endif
 		dctl |= CMMU_DCTL_DEN;
 
 	mc88110_inval_inst();		/* clear instruction cache & TIC */
