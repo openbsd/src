@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.55 2010/10/12 00:53:32 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.56 2011/04/19 21:17:07 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -82,7 +82,6 @@ int	gdt_ioctl_disk(struct gdt_softc *, struct bioc_disk *);
 int	gdt_ioctl_alarm(struct gdt_softc *, struct bioc_alarm *);
 int	gdt_ioctl_setstate(struct gdt_softc *, struct bioc_setstate *);
 #endif /* NBIO > 0 */
-void	gdt_raw_scsi_cmd(struct scsi_xfer *);
 void	gdt_scsi_cmd(struct scsi_xfer *);
 void	gdt_start_ccbs(struct gdt_softc *);
 int	gdt_sync_event(struct gdt_softc *, int, u_int8_t,
@@ -97,10 +96,6 @@ struct cfdriver gdt_cd = {
 
 struct scsi_adapter gdt_switch = {
 	gdt_scsi_cmd, gdtminphys, 0, 0,
-};
-
-struct scsi_adapter gdt_raw_switch = {
-	gdt_raw_scsi_cmd, gdtminphys, 0, 0,
 };
 
 int gdt_cnt = 0;
@@ -483,26 +478,6 @@ gdt_attach(struct gdt_softc *sc)
 	saa.saa_sc_link = &sc->sc_link;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);
-
-	sc->sc_raw_link = malloc(sc->sc_bus_cnt * sizeof (struct scsi_link),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sc->sc_raw_link == NULL)
-		panic("gdt_attach");
-
-	for (i = 0; i < sc->sc_bus_cnt; i++) {
-		/* Fill in the prototype scsi_link. */
-		sc->sc_raw_link[i].adapter_softc = sc;
-		sc->sc_raw_link[i].adapter = &gdt_raw_switch;
-		sc->sc_raw_link[i].adapter_target = 7;
-		sc->sc_raw_link[i].openings = 4;	/* XXX a guess */
-		sc->sc_raw_link[i].adapter_buswidth =
-		    (sc->sc_class & GDT_FC) ? GDT_MAXID : 16;	/* XXX */
-
-		bzero(&saa, sizeof(saa));
-		saa.saa_sc_link = &sc->sc_raw_link[i];
-
-		config_found(&sc->sc_dev, &saa, scsiprint);
-	}
 
 	gdt_polling = 0;
 	return (0);
@@ -987,43 +962,6 @@ gdt_internal_cache_cmd(struct scsi_xfer *xs)
 	}
 
 	xs->error = XS_NOERROR;
-}
-
-/* Start a raw SCSI operation */
-void
-gdt_raw_scsi_cmd(struct scsi_xfer *xs)
-{
-	struct scsi_link *link = xs->sc_link;
-	struct gdt_softc *sc = link->adapter_softc;
-	struct gdt_ccb *ccb;
-	int s;
-
-	GDT_DPRINTF(GDT_D_CMD, ("gdt_raw_scsi_cmd "));
-
-	if (xs->cmdlen > 12 /* XXX create #define */) {
-		GDT_DPRINTF(GDT_D_CMD, ("CDB too big %p ", xs));
-		bzero(&xs->sense, sizeof(xs->sense));
-		xs->sense.error_code = SSD_ERRCODE_VALID | SSD_ERRCODE_CURRENT;
-		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
-		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
-		xs->error = XS_SENSE;
-		scsi_done(xs);
-		return;
-	}
-
-	if ((ccb = gdt_get_ccb(sc, xs->flags)) == NULL) {
-		GDT_DPRINTF(GDT_D_CMD, ("no ccb available for %p ", xs));
-		xs->error = XS_DRIVER_STUFFUP;
-		scsi_done(xs);
-		return;
-	}
-
-	xs->error = XS_DRIVER_STUFFUP;
-	s = splbio();
-	scsi_done(xs);
-	gdt_free_ccb(sc, ccb);
-
-	splx(s);
 }
 
 void
