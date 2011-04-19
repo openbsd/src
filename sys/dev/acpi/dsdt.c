@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.183 2011/04/18 00:40:26 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.184 2011/04/19 23:56:10 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1504,7 +1504,7 @@ aml_callosi(struct aml_scope *scope, struct aml_value *val)
 }
 
 void
-aml_create_defaultobjects()
+aml_create_defaultobjects(void)
 {
 	struct aml_value *tmp;
 	struct aml_defval *def;
@@ -1677,7 +1677,7 @@ int aml_fixup_node(struct aml_node *node, void *arg)
 }
 
 void
-aml_postparse()
+aml_postparse(void)
 {
 	aml_walknodes(&aml_root, AML_WALK_PRE, aml_fixup_node, NULL);
 }
@@ -2156,7 +2156,7 @@ aml_concatres(struct aml_value *a1, struct aml_value *a2)
 	c = aml_allocvalue(AML_OBJTYPE_BUFFER, l1+l2+l3, NULL);
 	memcpy(c->v_buffer,    a1->v_buffer, l1);
 	memcpy(c->v_buffer+l1, a2->v_buffer, l2);
-	memcpy(c->v_buffer+l1+l2, a3,           l3);
+	memcpy(c->v_buffer+l1+l2, a3,        l3);
 
 	return c;
 }
