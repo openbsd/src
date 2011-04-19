@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.50 2010/10/11 14:34:36 claudio Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.51 2011/04/19 23:09:19 todd Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.macppc/MAKEDEV.md,v 1.45 2010/09/30 15:27:54 claudio Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.53 2010/09/30 15:27:54 claudio Exp 
+.\"	OpenBSD: etc.macppc/MAKEDEV.md,v 1.46 2011/04/19 23:07:55 todd Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.54 2011/04/18 16:52:10 thib Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.7 2009/03/18 17:34:25 sobrado Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 11 2010 $
+.Dd $Mdocdate: April 19 2011 $
 .Dt MAKEDEV 8 macppc
 .Os
 .Sh NAME
@@ -246,6 +246,12 @@ FM tuner devices, see
 .It Ar *random
 In-kernel random data source, see
 .Xr random 4 .
+.It Ar rmidi*
+Raw MIDI devices, see
+.Xr midi 4 .
+.It Ar music*
+MIDI sequencer, see
+.Xr music 4 .
 .It Ar systrace*
 System call tracing device, see
 .Xr systrace 4 .
