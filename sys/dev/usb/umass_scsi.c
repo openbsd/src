@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.32 2011/04/06 15:16:54 dlg Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.33 2011/04/19 01:21:51 matthew Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -179,10 +179,16 @@ umass_scsi_probe(struct scsi_link *link)
 		return (0);
 
 	usbd_fill_deviceinfo(sc->sc_udev, &udi, 1);
-	if (strlen(udi.udi_serial) > 0) {
-		link->id = devid_alloc(DEVID_SERIAL, DEVID_F_PRINT, 
-		    min(strlen(udi.udi_serial), sizeof(udi.udi_serial)),
-		    udi.udi_serial);
+	if (udi.udi_serial[0] != '\0') {
+		char buf[USB_MAX_STRING_LEN + 16];
+		size_t len;
+
+		len = snprintf(buf, sizeof(buf), "%04x%04x:%.*s",
+		    udi.udi_vendorNo, udi.udi_productNo,
+		    sizeof(udi.udi_serial), udi.udi_serial);
+		KASSERT(len < sizeof(buf));
+
+		link->id = devid_alloc(DEVID_SERIAL, DEVID_F_PRINT, len, buf);
 	}
 
 	return (0);
