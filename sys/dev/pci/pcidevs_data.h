@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1594 2011/04/14 22:19:39 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1595 2011/04/19 23:50:13 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -6760,20 +6760,52 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Centrino Advanced-N 6030",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SNB_HB,
-	    "Sandy Bridge Host",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE2G_HB,
+	    "Core 2G Host",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SNB_IGD,
-	    "Sandy Bridge Video",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE2G_PCIE_1,
+	    "Core 2G PCIE",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SNB_M_HB,
-	    "Sandy Bridge Host",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE2G_GT1,
+	    "GT1 Video",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SNB_M_IGD,
-	    "Sandy Bridge Video",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE2G_M_HB,
+	    "Core 2G Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE2G_PCIE_2,
+	    "Core 2G PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE2G_M_GT1,
+	    "GT1 Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE2G_PCIE_3,
+	    "Core 2G PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE2G_PCIE_4,
+	    "Core 2G PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE2G_GT2,
+	    "GT2 Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE2G_M_GT2,
+	    "GT2 Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE2G_GT2_PLUS,
+	    "GT2+ Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE2G_M_GT2_PLUS,
+	    "GT2+ Video",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_SATA_1,
@@ -6836,18 +6868,6 @@ static const struct pci_known_product pci_known_products[] = {
 	    "6 Series PCIE",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_EHCI,
-	    "6 Series USB",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_MEI,
-	    "6 Series MEI",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_H67_LPC,
-	    "H67 LPC",
-	},
-	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_HDA,
 	    "6 Series HD Audio",
 	},
@@ -6862,6 +6882,78 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_DMI,
 	    "6 Series DMI-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_EHCI_1,
+	    "6 Series USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_EHCI_2,
+	    "6 Series USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_MEI,
+	    "6 Series MEI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_KT,
+	    "6 Series KT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_P67_LPC,
+	    "P67 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_UM67_LPC,
+	    "UM67 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_HM65_LPC,
+	    "HM65 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_H67_LPC,
+	    "H67 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_HM67_LPC,
+	    "HM67 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_Q65_LPC,
+	    "Q65 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_QS67_LPC,
+	    "QS67 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_Q67_LPC,
+	    "Q67 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_QM67_LPC,
+	    "QM67 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_B65_LPC,
+	    "B65 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_H61_LPC,
+	    "H61 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C202_LPC,
+	    "C202 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C204_LPC,
+	    "C204 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C206_LPC,
+	    "C206 LPC",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80303,
