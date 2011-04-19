@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.109 2011/04/16 11:51:48 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.110 2011/04/19 00:02:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -428,7 +428,6 @@ aucat_main(int argc, char **argv)
 	struct cfmid *cm;
 	struct cfstr *cs;
 	struct cfdev *cd;
-	struct listen *listen = NULL;
 	int c, u_flag, d_flag, l_flag, n_flag, unit;
 	char base[PATH_MAX], path[PATH_MAX];
 	unsigned mode, rate;
@@ -765,9 +764,7 @@ aucat_main(int argc, char **argv)
 	if (nsock > 0) {
 		snprintf(path, sizeof(path), "%s/%s%u", base,
 		    AUCAT_PATH, unit);
-		listen = listen_new(&listen_ops, path);
-		if (listen == NULL)
-			exit(1);
+		listen_new_un(path);
 	}
 	if (geteuid() == 0)
 		privdrop();
@@ -802,8 +799,8 @@ aucat_main(int argc, char **argv)
 			break;
 	}
   fatal:
-	if (nsock > 0)
-		file_close(&listen->file);
+	listen_closeall();
+
 	/*
 	 * give a chance to drain
 	 */
@@ -838,7 +835,6 @@ midicat_main(int argc, char **argv)
 	struct cfmid *cm;
 	struct cfstr *cs;
 	struct cfdev *cd;
-	struct listen *listen = NULL;
 	int c, d_flag, l_flag, unit, fd;
 	char base[PATH_MAX], path[PATH_MAX];
 	struct file *stdx;
@@ -1035,9 +1031,7 @@ midicat_main(int argc, char **argv)
 	if (nsock > 0) {
 		snprintf(path, sizeof(path), "%s/%s%u", base,
 		    MIDICAT_PATH, unit);
-		listen = listen_new(&listen_ops, path);
-		if (listen == NULL)
-			exit(1);
+		listen_new_un(path);
 	}
 	if (geteuid() == 0)
 		privdrop();
@@ -1065,8 +1059,8 @@ midicat_main(int argc, char **argv)
 			break;
 	}
   fatal:
-	if (nsock > 0)
-		file_close(&listen->file);
+	listen_closeall();
+
 	/*
 	 * give a chance to drain
 	 */

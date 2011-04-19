@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.11 2009/09/27 11:51:20 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.12 2011/04/19 00:02:29 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -18,7 +18,6 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
-
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -45,8 +44,8 @@ struct fileops listen_ops = {
 	listen_revents
 };
 
-struct listen *
-listen_new(struct fileops *ops, char *path)
+void
+listen_new_un(char *path)
 {
 	int sock, oldumask;
 	struct sockaddr_un sockname;
@@ -55,7 +54,7 @@ listen_new(struct fileops *ops, char *path)
 	sock = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sock < 0) {
 		perror("socket");
-		return NULL;
+		exit(1);
 	}
 	if (unlink(path) < 0 && errno != ENOENT) {
 		perror("unlink");
@@ -74,7 +73,7 @@ listen_new(struct fileops *ops, char *path)
 		perror("listen");
 		goto bad_close;
 	}
-	f = (struct listen *)file_new(ops, path, 1);
+	f = (struct listen *)file_new(&listen_ops, path, 1);
 	if (f == NULL)
 		goto bad_close;
 	f->path = strdup(path);
@@ -83,10 +82,10 @@ listen_new(struct fileops *ops, char *path)
 		exit(1);
 	}
 	f->fd = sock;
-	return f;
+	return;
  bad_close:
 	close(sock);
-	return NULL;
+	exit(1);	
 }
 
 int
@@ -116,6 +115,7 @@ listen_revents(struct file *file, struct pollfd *pfd)
 		caddrlen = sizeof(caddrlen);
 		sock = accept(f->fd, &caddr, &caddrlen);
 		if (sock < 0) {
+			/* XXX: should we kill the socket here ? */
 			perror("accept");
 			return 0;
 		}
@@ -137,7 +137,21 @@ listen_close(struct file *file)
 {
 	struct listen *f = (struct listen *)file;
 
-	unlink(f->path);
-	free(f->path);
+	if (f->path != NULL) {
+		unlink(f->path);
+		free(f->path);
+	}
 	close(f->fd);
+}
+
+void
+listen_closeall(void)
+{
+	struct file *f, *fnext;
+
+	for (f = LIST_FIRST(&file_list); f != NULL; f = fnext) {
+		fnext = LIST_NEXT(f, entry);
+		if (f->ops == &listen_ops)
+			file_close(f);
+	}
 }
