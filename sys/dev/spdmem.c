@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.2 2010/06/29 09:58:23 jsg Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.3 2011/04/19 21:55:25 chl Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -557,19 +557,17 @@ spdmem_ddr2_decode(struct spdmem_softc *sc, struct spdmem *s)
 void
 spdmem_fbdimm_decode(struct spdmem_softc *sc, struct spdmem *s)
 {
-	int dimm_size, num_banks, cycle_time, d_clk, p_clk, bits;
-	uint8_t rows, cols, banks, dividend, divisor;
+	int dimm_size, cycle_time, d_clk, p_clk, bits;
+	uint8_t rows, cols, dividend, divisor;
 	/*
 	 * FB-DIMM is very much like DDR3
 	 */
 
-	banks = s->sm_data[SPDMEM_FBDIMM_ADDR] & SPDMEM_FBDIMM_ADDR_BANKS;
 	cols = (s->sm_data[SPDMEM_FBDIMM_ADDR] & SPDMEM_FBDIMM_ADDR_COL) >>
 	    SPDMEM_FBDIMM_ADDR_COL_SHIFT;
 	rows = (s->sm_data[SPDMEM_FBDIMM_ADDR] & SPDMEM_FBDIMM_ADDR_ROW) >>
 	    SPDMEM_FBDIMM_ADDR_ROW_SHIFT;
 	dimm_size = rows + 12 + cols +  9 - 20 - 3;
-	num_banks = 1 << (banks + 2);
 
 	if (dimm_size < 1024)
 		printf(" %dMB", dimm_size);
