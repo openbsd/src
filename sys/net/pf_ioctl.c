@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.238 2011/04/06 13:18:39 claudio Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.239 2011/04/19 21:58:03 chl Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -814,11 +814,11 @@ pf_setup_pfsync_matching(struct pf_ruleset *rs)
 
 		if (!rs->rules.inactive.ptr_array)
 			return (ENOMEM);
-	}
 
-	TAILQ_FOREACH(rule, rs->rules.inactive.ptr, entries) {
-		pf_hash_rule(&ctx, rule);
-		(rs->rules.inactive.ptr_array)[rule->nr] = rule;
+		TAILQ_FOREACH(rule, rs->rules.inactive.ptr, entries) {
+			pf_hash_rule(&ctx, rule);
+			(rs->rules.inactive.ptr_array)[rule->nr] = rule;
+		}
 	}
 
 	MD5Final(digest, &ctx);
