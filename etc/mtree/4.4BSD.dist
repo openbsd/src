@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.214 2011/01/24 10:39:46 jakob Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.215 2011/04/19 21:39:18 schwarze Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -2475,7 +2475,7 @@ uucp		uname=uucp gname=daemon
 ..
 
 # ./var/spool/uucppublic
-uucppublic	uname=uucp gname=daemon mode=01775
+uucppublic	uname=uucp gname=daemon mode=0755
 # ./var/spool/uucppublic
 ..
 
