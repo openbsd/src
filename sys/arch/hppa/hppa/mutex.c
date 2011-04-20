@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.10 2011/04/03 18:46:40 miod Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.11 2011/04/20 16:10:53 jsing Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -66,16 +66,19 @@ mtx_enter(struct mutex *mtx)
 	int s;
 
 	for (;;) {
-		s = splraise(mtx->mtx_wantipl);
+		if (mtx->mtx_wantipl != IPL_NONE)
+			s = splraise(mtx->mtx_wantipl);
 		if (try_lock(mtx)) {
-			mtx->mtx_oldipl = s;
+			if (mtx->mtx_wantipl != IPL_NONE)
+				mtx->mtx_oldipl = s;
 			mtx->mtx_owner = curcpu();
 #ifdef DIAGNOSTIC
 			curcpu()->ci_mutex_level++;
 #endif
 			return;
 		}
-		splx(s);
+		if (mtx->mtx_wantipl != IPL_NONE)
+			splx(s);
 	}
 }
 
@@ -84,16 +87,19 @@ mtx_enter_try(struct mutex *mtx)
 {
 	int s;
 	
-	s = splraise(mtx->mtx_wantipl);
+ 	if (mtx->mtx_wantipl != IPL_NONE)
+		s = splraise(mtx->mtx_wantipl);
 	if (try_lock(mtx)) {
-		mtx->mtx_oldipl = s;
+		if (mtx->mtx_wantipl != IPL_NONE)
+			mtx->mtx_oldipl = s;
 		mtx->mtx_owner = curcpu();
 #ifdef DIAGNOSTIC
 		curcpu()->ci_mutex_level++;
 #endif
 		return 1;
 	}
-	splx(s);
+	if (mtx->mtx_wantipl != IPL_NONE)
+		splx(s);
 
 	return 0;
 }
@@ -116,5 +122,6 @@ mtx_leave(struct mutex *mtx)
 	mtx->mtx_lock[2] = 1;
 	mtx->mtx_lock[3] = 1;
 
-	splx(s);
+	if (mtx->mtx_wantipl != IPL_NONE)
+		splx(s);
 }
