@@ -27,7 +27,8 @@ rintf(float x)
 {
 	int32_t i0,jj0,sx;
 	u_int32_t i,i1;
-	float w,t;
+	float t;
+	volatile float w;	/* clip extra precision */
 	GET_FLOAT_WORD(i0,x);
 	sx = (i0>>31)&1;
 	jj0 = ((i0>>23)&0xff)-0x7f;

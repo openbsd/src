@@ -37,7 +37,8 @@ rint(double x)
 {
 	int32_t i0,jj0,sx;
 	u_int32_t i,i1;
-	double w,t;
+	double t;
+	volatile double w;	/* clip extra precision */
 	EXTRACT_WORDS(i0,i1,x);
 	sx = (i0>>31)&1;
 	jj0 = ((i0>>20)&0x7ff)-0x3ff;
