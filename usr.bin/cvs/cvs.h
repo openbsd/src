@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.179 2010/09/29 18:14:52 nicm Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.180 2011/04/20 18:43:57 nicm Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -39,8 +39,6 @@
 #include "xmalloc.h"
 
 #define CVS_VERSION	"OpenCVS 4.5"
-
-#define CVS_CKSUM_LEN	MD5_DIGEST_STRING_LENGTH
 
 #define CVS_REV_BUFSZ	32
 #define CVS_TIME_BUFSZ	64
