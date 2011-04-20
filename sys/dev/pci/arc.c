@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.92 2010/09/07 16:21:44 deraadt Exp $ */
+/*	$OpenBSD: arc.c,v 1.93 2011/04/20 07:13:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -668,14 +668,14 @@ arc_intr(void *arg)
 	char				*kva = ARC_DMA_KVA(sc->sc_requests);
 	struct arc_io_cmd		*cmd;
 	u_int32_t			reg, intrstat;
+	int				ret = 0;
 
 	intrstat = arc_read(sc, ARC_RA_INTRSTAT);
-	if (intrstat == 0x0)
-		return (0);
 	intrstat &= ARC_RA_INTRSTAT_POSTQUEUE | ARC_RA_INTRSTAT_DOORBELL;
 	arc_write(sc, ARC_RA_INTRSTAT, intrstat);
 
 	if (intrstat & ARC_RA_INTRSTAT_DOORBELL) {
+		ret = 1;
 		if (sc->sc_talking) {
 			/* if an ioctl is talking, wake it up */
 			arc_write(sc, ARC_RA_INTRMASK,
@@ -692,6 +692,7 @@ arc_intr(void *arg)
 	}
 
 	while ((reg = arc_pop(sc)) != 0xffffffff) {
+		ret = 1;
 		cmd = (struct arc_io_cmd *)(kva +
 		    ((reg << ARC_RA_REPLY_QUEUE_ADDR_SHIFT) -
 		    (u_int32_t)ARC_DMA_DVA(sc->sc_requests)));
@@ -704,7 +705,7 @@ arc_intr(void *arg)
 		arc_scsi_cmd_done(sc, ccb, reg);
 	}
 
-	return (1);
+	return (ret);
 }
 
 void
