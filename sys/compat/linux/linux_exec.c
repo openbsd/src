@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.33 2011/04/05 15:44:40 pirofti Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.34 2011/04/20 19:14:34 pirofti Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*-
@@ -197,14 +197,17 @@ linux_e_proc_exit(struct proc *p)
 void
 linux_e_proc_fork(struct proc *p, struct proc *parent)
 {
-	struct linux_emuldata *emul = p->p_emuldata;
-	struct linux_emuldata *p_emul = parent->p_emuldata;
+	struct linux_emuldata *emul;
+	struct linux_emuldata *p_emul;
 
 	/* Allocate new emuldata for the new process. */
 	p->p_emuldata = NULL;
 
 	/* fork, use parent's vmspace (our vmspace may not be setup yet) */
 	linux_e_proc_init(p, parent->p_vmspace);
+
+	emul = p->p_emuldata;
+	p_emul = parent->p_emuldata;
 
 	emul->my_set_tid = p_emul->child_set_tid;
 	emul->my_clear_tid = p_emul->child_clear_tid;
