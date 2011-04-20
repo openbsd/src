@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.31 2010/06/13 17:58:19 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.32 2011/04/20 22:28:39 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -1477,6 +1477,7 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 	char *p, *buf;
 	Node *nextarg;
 	FILE *fp;
+	static Awkfloat old_seed = 1;
 
 	t = ptoi(a[0]);
 	x = execute(a[1]);
@@ -1580,11 +1581,12 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 			u = (Awkfloat) (random() % RAND_MAX) / RAND_MAX;
 		break;
 	case FSRAND:
+		u = old_seed;
 		if (isrec(x))	/* no argument provided, want arc4random() */
 			use_arc4 = 1;
 		else {
-			u = getfval(x);
-			srandom((unsigned int) u);
+			old_seed = getfval(x);
+			srandom((unsigned int) old_seed);
 			use_arc4 = 0;
 		}
 		break;
