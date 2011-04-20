@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.150 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: commit.c,v 1.151 2011/04/20 18:41:40 nicm Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -187,7 +187,7 @@ cvs_commit(int argc, char **argv)
 				fatal("no log message specified");
 		} else if (logmsg == NULL) {
 			logmsg = cvs_logmsg_create(NULL, &files_added,
-			    &files_removed, &files_modified);	
+			    &files_removed, &files_modified);
 			if (logmsg == NULL)
 				fatal("This shouldnt happen, honestly!");
 		}
@@ -728,8 +728,8 @@ cvs_commit_local(struct cvs_file *cf)
 static BUF *
 commit_diff(struct cvs_file *cf, RCSNUM *rev, int reverse)
 {
-	int fd1, fd2, f;
-	char *p1, *p2, *p;
+	int fd1, fd2, d;
+	char *p1, *p2;
 	BUF *b;
 
 	(void)xasprintf(&p1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
@@ -750,17 +750,11 @@ commit_diff(struct cvs_file *cf, RCSNUM *rev, int reverse)
 
 	diff_format = D_RCSDIFF;
 
-	if (reverse == 1) {
-		p = p1;
-		p1 = p2;
-		p2 = p;
-
-		f = fd1;
-		fd1 = fd2;
-		fd2 = f;
-	}
-
-	if (diffreg(p1, p2, fd1, fd2, b, D_FORCEASCII) == D_ERROR)
+	if (reverse == 1)
+		d = diffreg(p2, p1, fd2, fd1, b, D_FORCEASCII);
+	else
+		d = diffreg(p1, p2, fd1, fd2, b, D_FORCEASCII);
+	if (d == D_ERROR)
 		fatal("commit_diff: failed to get RCS patch");
 
 	close(fd1);
