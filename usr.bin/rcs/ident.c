@@ -1,4 +1,4 @@
-/*	$OpenBSD: ident.c,v 1.28 2010/07/28 09:07:11 ray Exp $	*/
+/*	$OpenBSD: ident.c,v 1.29 2011/04/20 19:34:16 nicm Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -28,7 +28,6 @@
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 #include "rcsprog.h"

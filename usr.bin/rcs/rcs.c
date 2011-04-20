@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.74 2011/04/04 23:08:30 djm Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.75 2011/04/20 19:34:16 nicm Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -43,9 +43,6 @@
 #include "rcsprog.h"
 #include "rcsutil.h"
 #include "xmalloc.h"
-
-#define RCS_KWEXP_SIZE  1024
-
 
 /* invalid characters in RCS states */
 static const char rcs_state_invch[] = RCS_STATE_INVALCHAR;

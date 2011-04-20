@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.20 2011/03/27 18:20:14 jasper Exp $	*/
+/*	$OpenBSD: buf.c,v 1.21 2011/04/20 19:34:16 nicm Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -30,9 +30,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <stdarg.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 

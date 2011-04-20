@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.211 2010/09/08 15:15:50 tobias Exp $	*/
+/*	$OpenBSD: ci.c,v 1.212 2011/04/20 19:34:16 nicm Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -52,12 +52,6 @@
 #define KW_TYPE_DATE		3
 #define KW_TYPE_STATE		4
 #define KW_TYPE_REVISION	5
-
-#define KW_NUMTOKS_ID		10
-#define KW_NUMTOKS_AUTHOR	3
-#define KW_NUMTOKS_DATE		4
-#define KW_NUMTOKS_STATE	3
-#define KW_NUMTOKS_REVISION	3
 
 /* Maximum number of tokens in a keyword. */
 #define KW_NUMTOKS_MAX		10

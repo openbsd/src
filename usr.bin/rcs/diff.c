@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.32 2011/04/01 17:25:26 nicm Exp $	*/
+/*	$OpenBSD: diff.c,v 1.33 2011/04/20 19:34:16 nicm Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -69,7 +69,6 @@
 
 #include <ctype.h>
 #include <err.h>
-#include <limits.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdio.h>
