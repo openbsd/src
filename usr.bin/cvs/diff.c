@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.159 2010/07/30 21:47:18 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.160 2011/04/20 18:33:13 nicm Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -239,7 +239,7 @@ cvs_diff(int argc, char **argv)
 			cvs_client_send_request("Argument -n");
 			break;
 		case D_UNIFIED:
-			if (cvs_cmdop == CVS_OP_RDIFF)
+			if (cvs_cmdop == CVS_OP_RDIFF || diff_context == 3)
 				cvs_client_send_request("Argument -u");
 			else {
 				cvs_client_send_request("Argument -U %d",
