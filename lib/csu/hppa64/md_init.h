@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.1 2005/04/01 10:56:43 mickey Exp $ */
+/* $OpenBSD: md_init.h,v 1.2 2011/04/20 14:33:27 jsing Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -38,8 +38,8 @@
 	"	.EXPORT "#entry_pt",ENTRY,PRIV_LEV=3,ARGW0=NO,ARGW1=NO,ARGW2=NO,ARGW3=NO,RTNVAL=NO					\n"	\
 	"	.align 4				\n"	\
 	#entry_pt"					\n"	\
-	"	std %r2, -20(%r30)			\n"	\
-	"	ldo 64(%r30),%r30			\n"	\
+	"	std %rp, -16(%sp)			\n"	\
+	"	ldo 128(%sp),%sp			\n"	\
 	"	/* fall thru */				\n"	\
 	"	.previous")
 
@@ -47,7 +47,7 @@
 #define MD_SECTION_EPILOGUE(sect)				\
 	__asm (							\
 	"	.section "#sect",\"ax\",@progbits	\n"	\
-	"	ldd -84(%r30),%r2			\n"	\
-	"	bv %r0(%r2)				\n"	\
-	"	ldo -64(%r30),%r30			\n"	\
+	"	ldd -144(%sp),%rp			\n"	\
+	"	bv %r0(%rp)				\n"	\
+	"	ldo -128(%sp),%sp			\n"	\
 	"	.previous")
