@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.67 2011/04/18 07:50:29 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.68 2011/04/20 09:37:35 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -65,7 +65,7 @@ usage() {
 trap "restore_bak; clean_src; rm -rf ${WRKDIR}; exit 1" 1 2 3 13 15
 
 if [ "`id -u`" -ne 0 ]; then
-	echo " *** Error: need root privileges to run this script"
+	echo "\t*** ERROR: need root privileges to run this script"
 	usage
 	error_rm_wrkdir
 fi
@@ -79,8 +79,7 @@ fi
 
 do_populate() {
 	mkdir -p ${DESTDIR}/${DBDIR} || error_rm_wrkdir
-	echo "===> Creating and populating temporary root under"
-	echo "     ${TEMPROOT}"
+	echo "===> Populating temporary root under ${TEMPROOT}"
 	mkdir -p ${TEMPROOT}
 	if [ "${SRCDIR}" ]; then
 		SRCSUM=srcsum
@@ -186,6 +185,7 @@ do_install_and_rm() {
 
 mm_install() {
 	local INSTDIR
+	unset RUNNING
 	INSTDIR=${1#.}
 	INSTDIR=${INSTDIR%/*}
 
@@ -202,37 +202,32 @@ mm_install() {
 
 	case "${1#.}" in
 	/dev/MAKEDEV)
-		echo -n "===> A new ${DESTDIR%/}/dev/MAKEDEV script was installed, "
-		echo "running MAKEDEV"
+		RUNNING=" (running MAKEDEV(8))"
 		(cd ${DESTDIR}/dev && /bin/sh MAKEDEV all)
 		export NEED_REBOOT=1
 		;;
 	/etc/login.conf)
 		if [ -f ${DESTDIR}/etc/login.conf.db ]; then
-			echo -n "===> A new ${DESTDIR%/}/etc/login.conf file was installed, "
-			echo "running cap_mkdb"
+			RUNNING=" (running cap_mkdb(1))"
 			cap_mkdb ${DESTDIR}/etc/login.conf
 		fi
 		export NEED_REBOOT=1
 		;;
 	/etc/mail/access|/etc/mail/genericstable|/etc/mail/mailertable|/etc/mail/virtusertable)
+		RUNNING=" (running makemap(8))"
 		DBFILE=`echo ${1} | sed -e 's,.*/,,'`
-		echo -n "===> A new ${DESTDIR%/}/${1#.} file was installed, "
-		echo "running makemap"
 		/usr/libexec/sendmail/makemap hash ${DESTDIR}/${1#.} < ${DESTDIR}/${1#.}
 		;;
 	/etc/mail/aliases)
-		echo -n "===> A new ${DESTDIR%/}/etc/mail/aliases file was installed, "
-		echo "running newaliases"
+		RUNNING=" (running newaliases(8))"
 		if [ "${DESTDIR}" ]; then
-			chroot ${DESTDIR} newaliases || export NEED_NEWALIASES=1
+			chroot ${DESTDIR} newaliases >/dev/null || export NEED_NEWALIASES=1
 		else
-			newaliases
+			newaliases >/dev/null
 		fi
 		;;
 	/etc/master.passwd)
-		echo -n "===> A new ${DESTDIR%/}/etc/master.passwd file was installed, "
-		echo "running pwd_mkdb"
+		RUNNING=" (running pwd_mkdb(8))"
 		pwd_mkdb -d ${DESTDIR}/etc -p ${DESTDIR}/etc/master.passwd
 		;;
 	esac
@@ -280,17 +275,15 @@ merge_loop() {
 				if which ${EDIT} > /dev/null 2>&1; then
 					${EDIT} ${COMPFILE}.merged
 				else
-					echo " *** Error: ${EDIT} can not be found or is not executable"
+					echo "\t*** ERROR: ${EDIT} can not be found or is not executable"
 				fi
 				INSTALL_MERGED=v
 				;;
 			[iI])
 				mv "${COMPFILE}.merged" "${COMPFILE}"
-				echo ""
-				if mm_install "${COMPFILE}"; then
-					echo "===> Merged version of ${COMPFILE} installed successfully"
-				else
-					echo " *** Warning: problem installing ${COMPFILE}, it will remain to merge by hand"
+				echo "\n===> Installing merged version of ${COMPFILE#.}${RUNNING}"
+				if ! mm_install "${COMPFILE}"; then
+					echo "\t*** WARNING: problem installing ${COMPFILE#.}, it will remain to merge by hand"
 				fi
 				unset MERGE_AGAIN
 				;;
@@ -353,11 +346,11 @@ diff_loop() {
 				done
 				# automatically install files which differ only by CVS Id or that are binaries
 				if [ -z "`diff -q -I'[$]OpenBSD:.*$' "${DESTDIR}${COMPFILE#.}" "${COMPFILE}"`" -o -n "${FORCE_UPG}" -o -n "${IS_BINFILE}" ]; then
+					echo "===> Installing ${COMPFILE#.}${RUNNING}"
 					if mm_install "${COMPFILE}"; then
-						echo "===> ${COMPFILE} installed successfully"
 						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
 					else
-						echo " *** Warning: problem installing ${COMPFILE}, it will remain to merge by hand"
+						echo "\t*** WARNING: problem installing ${COMPFILE#.}, it will remain to merge by hand"
 					fi
 					return
 				fi
@@ -433,7 +426,7 @@ diff_loop() {
 						echo "===> ${COMPFILE#.} link created successfully"
 						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
 					else
-						echo " *** Warning: problem creating ${COMPFILE#.} link, manual intervention will be needed"
+						echo "\t*** WARNING: problem creating ${COMPFILE#.} link, manual intervention will be needed"
 					fi
 					return
 				fi
@@ -442,11 +435,11 @@ diff_loop() {
 				echo ""
 				NO_INSTALLED=1
 			else
+				echo "===> Installing ${COMPFILE#.}${RUNNING}"
 				if mm_install "${COMPFILE}"; then
-					echo "===> ${COMPFILE} installed successfully"
 					AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
 				else
-					echo " *** Warning: problem installing ${COMPFILE}, it will remain to merge by hand"
+					echo "\t*** WARNING: problem installing ${COMPFILE#.}, it will remain to merge by hand"
 				fi
 				return
 			fi
@@ -484,13 +477,12 @@ diff_loop() {
 						echo "===> ${COMPFILE#.} link created successfully"
 						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
 					else
-						echo " *** Warning: problem creating ${COMPFILE#.} link, manual intervention will be needed"
+						echo "\t*** WARNING: problem creating ${COMPFILE#.} link, manual intervention will be needed"
 					fi
 				else
-					if mm_install "${COMPFILE}"; then
-						echo "===> ${COMPFILE} installed successfully"
-					else
-						echo " *** Warning: problem installing ${COMPFILE}, it will remain to merge by hand"
+					echo "===> Installing ${COMPFILE#.}${RUNNING}"
+					if ! mm_install "${COMPFILE}"; then
+						echo "\t*** WARNING: problem installing ${COMPFILE#.}, it will remain to merge by hand"
 					fi
 				fi
 			else
@@ -577,7 +569,7 @@ do_compare() {
 }
 
 do_post() {
-	echo "===> Making sure your directory hierarchy has correct perms, running mtree"
+	echo "===> Checking directory hierarchy permissions (running mtree(8))"
 	mtree -qdef ${DESTDIR}/etc/mtree/4.4BSD.dist -p ${DESTDIR:=/} -U > /dev/null
 	if [ -n "${XTGZ}" ]; then
 		mtree -qdef ${DESTDIR}/etc/mtree/BSD.x11.dist -p ${DESTDIR:=/} -U > /dev/null
@@ -601,8 +593,8 @@ do_post() {
 		echo "${BKPDIR}\n" >> ${REPORT}
 	fi
 	if [ "${OBSOLETE_FILES}" ]; then
-		echo "===> File(s) removed from previous source (maybe obsolete)" | tee -a ${REPORT}
-		echo "${OBSOLETE_FILES[@]}" | tr "[:space:]" "\n" | tee -a ${REPORT}
+		echo "===> File(s) removed from previous source (maybe obsolete)" >> ${REPORT}
+		echo "${OBSOLETE_FILES[@]}" | tr "[:space:]" "\n" >> ${REPORT}
 		echo "" >> ${REPORT}
 	fi
 	if [ "${NEWUSR}" -o "${NEWGRP}" ]; then
@@ -621,21 +613,29 @@ do_post() {
 	fi
 
 	if [ -e "${REPORT}" ]; then
-		if [ "${OBSOLETE_FILES}" -o "${FILES_IN_TEMPROOT}" -o "${NEED_NEWALIASES}" ]; then
-			echo "===> Manual intervention may be needed, see ${REPORT}"
-		else
-			echo "===> Output log available at ${REPORT}"
-		fi
-		echo "===> When done, ${WRKDIR} and its subdirectories should be removed"
+		echo "===> Output log available at ${REPORT}"
 	else
 		echo "===> Removing ${WRKDIR}"
 		rm -rf "${WRKDIR}"
 	fi
 
-	if [ "${NEED_REBOOT}" ]; then
-		echo "\n *** WARNING: some new and/or updated file(s) may require a reboot!"
-		unset NEED_REBOOT
+	if [ "${FILES_IN_TEMPROOT}" ]; then
+		echo "\t*** WARNING: some files are still left for comparison"
 	fi
+
+	if [ "${OBSOLETE_FILES}" ]; then
+		echo "\t*** WARNING: file(s) detected as obsolete: ${OBSOLETE_FILES[@]}"
+	fi
+
+	if [ "${NEED_NEWALIASES}" ]; then
+		echo "\t*** WARNING: newaliases(8) failed to run properly"
+	fi
+
+	if [ "${NEED_REBOOT}" ]; then
+		echo "\t*** WARNING: some new/updated file(s) may require a reboot"
+	fi
+
+	unset FILES_IN_TEMPROOT OBSOLETE_FILES NEED_NEWALIASES NEED_REBOOT
 
 	clean_src
 	rm -f ${DESTDIR}/${DBDIR}/.*.bak
@@ -660,11 +660,11 @@ while getopts bds:x: arg; do
 			TGZ=${WRKDIR}/etc.tgz
 			TGZURL=${OPTARG}
 			if ! ${FETCH_CMD} -o ${TGZ} ${TGZURL}; then
-				echo " *** Error: could not retrieve ${TGZURL}"
+				echo "\t*** ERROR: could not retrieve ${TGZURL}"
 				error_rm_wrkdir
 			fi
 		else
-			echo " *** Error: ${OPTARG} is not a path to src nor etcXX.tgz"
+			echo "\t*** ERROR: ${OPTARG} is not a path to src nor etcXX.tgz"
 			error_rm_wrkdir
 		fi
 		;;
@@ -677,11 +677,11 @@ while getopts bds:x: arg; do
 			XTGZ=${WRKDIR}/xetc.tgz
 			XTGZURL=${OPTARG}
 			if ! ${FETCH_CMD} -o ${XTGZ} ${XTGZURL}; then
-				echo " *** Error: could not retrieve ${XTGZURL}"
+				echo "\t*** ERROR: could not retrieve ${XTGZURL}"
 				error_rm_wrkdir
 			fi
 		else
-			echo " *** Error: ${OPTARG} is not a path to xetcXX.tgz"
+			echo "\t*** ERROR: ${OPTARG} is not a path to xetcXX.tgz"
 			error_rm_wrkdir
 		fi
 		;;
@@ -703,7 +703,7 @@ if [ -z "${SRCDIR}" -a -z "${TGZ}" -a -z "${XTGZ}" ]; then
 	if [ -f "/usr/src/etc/Makefile" ]; then
 		SRCDIR=/usr/src
 	else
-		echo " *** Error: please specify a valid path to src or (x)etcXX.tgz"
+		echo "\t*** ERROR: please specify a valid path to src or (x)etcXX.tgz"
 		usage
 		error_rm_wrkdir
 	fi
