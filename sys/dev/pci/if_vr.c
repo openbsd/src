@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.109 2011/04/05 18:01:21 henning Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.110 2011/04/20 01:05:28 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1055,9 +1055,6 @@ vr_intr(void *arg)
 		return 0;
 	}
 
-	/* Disable interrupts. */
-	CSR_WRITE_2(sc, VR_IMR, 0x0000);
-
 	status = CSR_READ_2(sc, VR_ISR);
 	if (status)
 		CSR_WRITE_2(sc, VR_ISR, status);
@@ -1125,9 +1122,6 @@ vr_intr(void *arg)
 			}
 		}
 	}
-
-	/* Re-enable interrupts. */
-	CSR_WRITE_2(sc, VR_IMR, VR_INTRS);
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		vr_start(ifp);
