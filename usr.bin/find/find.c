@@ -1,4 +1,4 @@
-/*	$OpenBSD: find.c,v 1.14 2009/10/27 23:59:38 deraadt Exp $	*/
+/*	$OpenBSD: find.c,v 1.15 2011/04/21 01:14:21 jacekm Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -143,12 +143,15 @@ FTS *tree;			/* pointer to top of FTS hierarchy */
 
 FTSENT *entry;			/* shared with SIGINFO handler */
 
-void
+int
 find_execute(PLAN *plan,	/* search plan */
     char **paths)		/* array of pathnames to traverse */
 {
 	sigset_t fullset, oset;
+	int rval;
 	PLAN *p;
+
+	rval = 0;
     
 	if (!(tree = fts_open(paths, ftsoptions, NULL)))
 		err(1, "fts_open");
@@ -178,12 +181,14 @@ find_execute(PLAN *plan,	/* search plan */
 		case FTS_NS:
 			(void)fflush(stdout);
 			warn("%s", entry->fts_path);
+			rval = 1;
 			continue;
 		}
 #define	BADCH	" \t\n\\'\""
 		if (isxargs && strpbrk(entry->fts_path, BADCH)) {
 			(void)fflush(stdout);
 			warnx("%s: illegal path", entry->fts_path);
+			rval = 1;
 			continue;
 		}
 
@@ -196,4 +201,5 @@ find_execute(PLAN *plan,	/* search plan */
 		    ;
 	}
 	(void)fts_close(tree);
+	return (rval);
 }

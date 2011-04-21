@@ -1,4 +1,4 @@
-/* *      $OpenBSD: extern.h,v 1.15 2004/09/15 18:43:45 deraadt Exp $*/
+/* *      $OpenBSD: extern.h,v 1.16 2011/04/21 01:14:21 jacekm Exp $*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 void	 brace_subst(char *, char **, char *, int);
 void	*emalloc(unsigned int);
 PLAN	*find_create(char ***);
-void	 find_execute(PLAN *, char **);
+int	 find_execute(PLAN *, char **);
 PLAN	*find_formplan(char **);
 PLAN	*not_squish(PLAN *);
 OPTION	*option(char *);
