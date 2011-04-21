@@ -1,4 +1,4 @@
-/*	$Id: tbl_data.c,v 1.9 2011/02/10 00:06:30 schwarze Exp $ */
+/*	$Id: tbl_data.c,v 1.10 2011/04/21 22:59:54 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -102,8 +102,10 @@ data(struct tbl_node *tbl, struct tbl_span *dp,
 		return(0);
 	}
 
-	dat->string = mandoc_malloc(*pos - sv + 1);
-	memcpy(dat->string, &p[sv], *pos - sv);
+	assert(*pos - sv >= 0);
+
+	dat->string = mandoc_malloc((size_t)(*pos - sv + 1));
+	memcpy(dat->string, &p[sv], (size_t)(*pos - sv));
 	dat->string[*pos - sv] = '\0';
 
 	if (p[*pos])

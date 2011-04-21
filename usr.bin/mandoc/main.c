@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.74 2011/03/20 23:36:42 schwarze Exp $ */
+/*	$Id: main.c,v 1.75 2011/04/21 22:59:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -35,7 +35,6 @@
 #include "roff.h"
 
 #define	REPARSE_LIMIT	1000
-#define	UNCONST(a)	((void *)(uintptr_t)(const void *)(a))
 
 typedef	void		(*out_mdoc)(void *, const struct mdoc *);
 typedef	void		(*out_man)(void *, const struct man *);
@@ -63,11 +62,13 @@ enum	outt {
 };
 
 struct	curparse {
-	const char	 *file;		/* Current parse. */
-	int		  fd;		/* Current parse. */
-	int		  line;		/* Line number in the file. */
-	enum mandoclevel  wlevel;	/* Ignore messages below this. */
-	int		  wstop;	/* Stop after a file with a warning. */
+	enum mandoclevel  exit_status;	/* status of all file parses */
+	const char	 *file;		/* current file-name */
+	enum mandoclevel  file_status;	/* error status of current parse */
+	int		  fd;		/* current file-descriptor */
+	int		  line;		/* line number in the file */
+	enum mandoclevel  wlevel;	/* ignore messages below this */
+	int		  wstop;	/* stop after a file with a warning */
 	enum intt	  inttype;	/* which parser to use */
 	struct man	 *pman;		/* persistent man parser */
 	struct mdoc	 *pmdoc;	/* persistent mdoc parser */
@@ -217,7 +218,7 @@ static	void		  fdesc(struct curparse *);
 static	void		  ffile(const char *, struct curparse *);
 static	int		  pfile(const char *, struct curparse *);
 static	int		  moptions(enum intt *, char *);
-static	int		  mmsg(enum mandocerr, void *, 
+static	void		  mmsg(enum mandocerr, void *, 
 				int, int, const char *);
 static	void		  pset(const char *, int, struct curparse *);
 static	int		  toptions(struct curparse *, char *);
@@ -226,8 +227,6 @@ static	void		  version(void) __attribute__((noreturn));
 static	int		  woptions(struct curparse *, char *);
 
 static	const char	 *progname;
-static	enum mandoclevel  file_status = MANDOCLEVEL_OK;
-static	enum mandoclevel  exit_status = MANDOCLEVEL_OK;
 
 int
 main(int argc, char *argv[])
@@ -246,6 +245,7 @@ main(int argc, char *argv[])
 	curp.inttype = INTT_AUTO;
 	curp.outtype = OUTT_ASCII;
 	curp.wlevel  = MANDOCLEVEL_FATAL;
+	curp.exit_status = MANDOCLEVEL_OK;
 
 	/* LINTED */
 	while (-1 != (c = getopt(argc, argv, "m:O:T:VW:")))
@@ -286,7 +286,7 @@ main(int argc, char *argv[])
 
 	while (*argv) {
 		ffile(*argv, &curp);
-		if (MANDOCLEVEL_OK != exit_status && curp.wstop)
+		if (MANDOCLEVEL_OK != curp.exit_status && curp.wstop)
 			break;
 		++argv;
 	}
@@ -300,7 +300,7 @@ main(int argc, char *argv[])
 	if (curp.roff)
 		roff_free(curp.roff);
 
-	return((int)exit_status);
+	return((int)curp.exit_status);
 }
 
 
@@ -345,7 +345,7 @@ ffile(const char *file, struct curparse *curp)
 
 	if (-1 == (curp->fd = open(curp->file, O_RDONLY, 0))) {
 		perror(curp->file);
-		exit_status = MANDOCLEVEL_SYSERR;
+		curp->exit_status = MANDOCLEVEL_SYSERR;
 		return;
 	}
 
@@ -363,7 +363,7 @@ pfile(const char *file, struct curparse *curp)
 
 	if (-1 == (fd = open(file, O_RDONLY, 0))) {
 		perror(file);
-		file_status = MANDOCLEVEL_SYSERR;
+		curp->file_status = MANDOCLEVEL_SYSERR;
 		return(0);
 	}
 
@@ -381,7 +381,7 @@ pfile(const char *file, struct curparse *curp)
 	if (-1 == close(fd))
 		perror(file);
 
-	return(MANDOCLEVEL_FATAL > file_status ? 1 : 0);
+	return(MANDOCLEVEL_FATAL > curp->file_status ? 1 : 0);
 }
 
 
@@ -390,11 +390,7 @@ resize_buf(struct buf *buf, size_t initial)
 {
 
 	buf->sz = buf->sz > initial/2 ? 2 * buf->sz : initial;
-	buf->buf = realloc(buf->buf, buf->sz);
-	if (NULL == buf->buf) {
-		perror(NULL);
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
+	buf->buf = mandoc_realloc(buf->buf, buf->sz);
 }
 
 
@@ -485,7 +481,7 @@ fdesc(struct curparse *curp)
 
 	curp->mdoc = NULL;
 	curp->man = NULL;
-	file_status = MANDOCLEVEL_OK;
+	curp->file_status = MANDOCLEVEL_OK;
 
 	/* Make sure the mandotory roff parser is initialised. */
 
@@ -498,26 +494,26 @@ fdesc(struct curparse *curp)
 
 	pdesc(curp);
 
-	if (MANDOCLEVEL_FATAL <= file_status)
+	if (MANDOCLEVEL_FATAL <= curp->file_status)
 		goto cleanup;
 
 	/* NOTE a parser may not have been assigned, yet. */
 
 	if ( ! (curp->man || curp->mdoc)) {
 		fprintf(stderr, "%s: Not a manual\n", curp->file);
-		file_status = MANDOCLEVEL_FATAL;
+		curp->file_status = MANDOCLEVEL_FATAL;
 		goto cleanup;
 	}
 
 	/* Clean up the parse routine ASTs. */
 
 	if (curp->mdoc && ! mdoc_endparse(curp->mdoc)) {
-		assert(MANDOCLEVEL_FATAL <= file_status);
+		assert(MANDOCLEVEL_FATAL <= curp->file_status);
 		goto cleanup;
 	}
 
 	if (curp->man && ! man_endparse(curp->man)) {
-		assert(MANDOCLEVEL_FATAL <= file_status);
+		assert(MANDOCLEVEL_FATAL <= curp->file_status);
 		goto cleanup;
 	}
 
@@ -529,7 +525,7 @@ fdesc(struct curparse *curp)
 	 * the requested level, do not produce output.
 	 */
 
-	if (MANDOCLEVEL_OK != file_status && curp->wstop)
+	if (MANDOCLEVEL_OK != curp->file_status && curp->wstop)
 		goto cleanup;
 
 	/* If unset, allocate output dev now (if applicable). */
@@ -604,8 +600,8 @@ fdesc(struct curparse *curp)
 	assert(curp->roff);
 	roff_reset(curp->roff);
 
-	if (exit_status < file_status)
-		exit_status = file_status;
+	if (curp->exit_status < curp->file_status)
+		curp->exit_status = curp->file_status;
 
 	return;
 }
@@ -624,7 +620,7 @@ pdesc(struct curparse *curp)
 	 */
 
 	if ( ! read_whole_file(curp, &blk, &with_mmap)) {
-		file_status = MANDOCLEVEL_SYSERR;
+		curp->file_status = MANDOCLEVEL_SYSERR;
 		return;
 	}
 
@@ -640,6 +636,11 @@ pdesc(struct curparse *curp)
 		free(blk.buf);
 }
 
+/*
+ * Main parse routine for an opened file.  This is called for each
+ * opened file and simply loops around the full input file, possibly
+ * nesting (i.e., with `so').
+ */
 static void
 parsebuf(struct curparse *curp, struct buf blk, int start)
 {
@@ -650,12 +651,6 @@ parsebuf(struct curparse *curp, struct buf blk, int start)
 	int		 pos; /* byte number in the ln buffer */
 	int		 lnn; /* line number in the real file */
 	unsigned char	 c;
-
-	/*
-	 * Main parse routine for an opened file.  This is called for
-	 * each opened file and simply loops around the full input file,
-	 * possibly nesting (i.e., with `so').
-	 */
 
 	memset(&ln, 0, sizeof(struct buf));
 
@@ -793,7 +788,7 @@ rerun:
 			pos = 0;
 			continue;
 		case (ROFF_APPEND):
-			pos = strlen(ln.buf);
+			pos = (int)strlen(ln.buf);
 			continue;
 		case (ROFF_RERUN):
 			goto rerun;
@@ -801,7 +796,7 @@ rerun:
 			pos = 0;
 			continue;
 		case (ROFF_ERR):
-			assert(MANDOCLEVEL_FATAL <= file_status);
+			assert(MANDOCLEVEL_FATAL <= curp->file_status);
 			break;
 		case (ROFF_SO):
 			if (pfile(ln.buf + of, curp)) {
@@ -818,7 +813,7 @@ rerun:
 		 * call, make sure we don't continue parsing.
 		 */
 
-		if (MANDOCLEVEL_FATAL <= file_status)
+		if (MANDOCLEVEL_FATAL <= curp->file_status)
 			break;
 
 		/*
@@ -866,7 +861,7 @@ rerun:
 					curp->line, ln.buf, of);
 
 		if (0 == rc) {
-			assert(MANDOCLEVEL_FATAL <= file_status);
+			assert(MANDOCLEVEL_FATAL <= curp->file_status);
 			break;
 		}
 
@@ -1026,7 +1021,7 @@ woptions(struct curparse *curp, char *arg)
 	return(1);
 }
 
-static int
+static void
 mmsg(enum mandocerr t, void *arg, int ln, int col, const char *msg)
 {
 	struct curparse *cp;
@@ -1039,7 +1034,7 @@ mmsg(enum mandocerr t, void *arg, int ln, int col, const char *msg)
 
 	cp = (struct curparse *)arg;
 	if (level < cp->wlevel)
-		return(1);
+		return;
 
 	fprintf(stderr, "%s:%d:%d: %s: %s",
 	    cp->file, ln, col + 1, mandoclevels[level], mandocerrs[t]);
@@ -1047,8 +1042,6 @@ mmsg(enum mandocerr t, void *arg, int ln, int col, const char *msg)
 		fprintf(stderr, ": %s", msg);
 	fputc('\n', stderr);
 
-	if (file_status < level)
-		file_status = level;
-	
-	return(level < MANDOCLEVEL_FATAL);
+	if (cp->file_status < level)
+		cp->file_status = level;
 }

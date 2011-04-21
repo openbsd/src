@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.33 2011/04/05 22:19:11 schwarze Exp $ */
+/*	$Id: roff.c,v 1.34 2011/04/21 22:59:54 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -596,7 +596,7 @@ roff_parse(struct roff *r, const char *buf, int *pos)
 	t = (r->current_string = roff_getstrn(r, mac, maclen))
 	    ? ROFF_USERDEF : roff_hash_find(mac, maclen);
 
-	*pos += maclen;
+	*pos += (int)maclen;
 	while (buf[*pos] && ' ' == buf[*pos])
 		(*pos)++;
 
@@ -1131,7 +1131,7 @@ roff_rm(ROFF_ARGS)
 
 	cp = *bufp + pos;
 	while ('\0' != *cp) {
-		name = roff_getname(r, &cp, ln, cp - *bufp);
+		name = roff_getname(r, &cp, ln, (int)(cp - *bufp));
 		if ('\0' != *name)
 			roff_setstr(r, name, NULL, 0);
 	}
@@ -1366,7 +1366,7 @@ roff_setstr(struct roff *r, const char *name, const char *string,
 	 * One additional byte for the '\n' in multiline mode,
 	 * and one for the terminating '\0'.
 	 */
-	newch = strlen(string) + (multiline ? 2 : 1);
+	newch = strlen(string) + (multiline ? 2u : 1u);
 	if (NULL == n->string) {
 		n->string = mandoc_malloc(newch);
 		*n->string = '\0';
@@ -1377,7 +1377,7 @@ roff_setstr(struct roff *r, const char *name, const char *string,
 	}
 
 	/* Skip existing content in the destination buffer. */
-	c = n->string + oldch;
+	c = n->string + (int)oldch;
 
 	/* Append new content to the destination buffer. */
 	while (*string) {

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.64 2011/01/30 18:28:01 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.65 2011/04/21 22:59:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -595,7 +595,7 @@ append_delims(struct mdoc *m, int line, int *pos, char *buf)
 		else if (ARGS_EOLN == ac)
 			break;
 
-		assert(DELIM_NONE != mdoc_isdelim(p));
+		assert(DELIM_NONE != mandoc_isdelim(p));
 		if ( ! mdoc_word_alloc(m, line, la, p))
 			return(0);
 
@@ -706,8 +706,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 	if ( ! (MDOC_CALLABLE & mdoc_macros[tok].flags)) {
 		/* FIXME: do this in validate */
 		if (buf[*pos]) 
-			if ( ! mdoc_pmsg(m, line, ppos, MANDOCERR_ARGSLOST))
-				return(0);
+			mdoc_pmsg(m, line, ppos, MANDOCERR_ARGSLOST);
 
 		if ( ! rew_sub(MDOC_BODY, m, tok, line, ppos))
 			return(0);
@@ -850,9 +849,9 @@ in_line(MACRO_PROT_ARGS)
 					return(0);
 			} else if ( ! nc && 0 == cnt) {
 				mdoc_argv_free(arg);
-				if ( ! mdoc_pmsg(m, line, ppos, MANDOCERR_MACROEMPTY))
-					return(0);
+				mdoc_pmsg(m, line, ppos, MANDOCERR_MACROEMPTY);
 			}
+
 			if ( ! mdoc_macro(m, ntok, line, la, pos, buf))
 				return(0);
 			if ( ! nl)
@@ -866,7 +865,7 @@ in_line(MACRO_PROT_ARGS)
 		 * the word. 
 		 */
 
-		d = ARGS_QWORD == ac ? DELIM_NONE : mdoc_isdelim(p);
+		d = ARGS_QWORD == ac ? DELIM_NONE : mandoc_isdelim(p);
 
 		if (DELIM_NONE != d) {
 			/*
@@ -932,8 +931,7 @@ in_line(MACRO_PROT_ARGS)
 			return(0);
 	} else if ( ! nc && 0 == cnt) {
 		mdoc_argv_free(arg);
-		if ( ! mdoc_pmsg(m, line, ppos, MANDOCERR_MACROEMPTY))
-			return(0);
+		mdoc_pmsg(m, line, ppos, MANDOCERR_MACROEMPTY);
 	}
 
 	if ( ! nl)
@@ -1057,7 +1055,7 @@ blk_full(MACRO_PROT_ARGS)
 				ARGS_PHRASE != ac &&
 				ARGS_PPHRASE != ac &&
 				ARGS_QWORD != ac &&
-				DELIM_OPEN == mdoc_isdelim(p)) {
+				DELIM_OPEN == mandoc_isdelim(p)) {
 			if ( ! mdoc_word_alloc(m, line, la, p))
 				return(0);
 			continue;
@@ -1220,7 +1218,7 @@ blk_part_imp(MACRO_PROT_ARGS)
 			break;
 
 		if (NULL == body && ARGS_QWORD != ac &&
-		    DELIM_OPEN == mdoc_isdelim(p)) {
+		    DELIM_OPEN == mandoc_isdelim(p)) {
 			if ( ! mdoc_word_alloc(m, line, la, p))
 				return(0);
 			continue;
@@ -1295,9 +1293,9 @@ blk_part_imp(MACRO_PROT_ARGS)
 	 * is ugly behaviour nodding its head to OpenBSD's overwhelming
 	 * crufty use of `Op' breakage.
 	 */
-	if (n != body && ! mdoc_vmsg(m, MANDOCERR_SCOPENEST,
-	    line, ppos, "%s broken", mdoc_macronames[tok]))
-		return(0);
+	if (n != body)
+		mdoc_vmsg(m, MANDOCERR_SCOPENEST, line, ppos, 
+				"%s broken", mdoc_macronames[tok]);
 
 	if (n && ! rew_sub(MDOC_BODY, m, tok, line, ppos))
 		return(0);
@@ -1351,7 +1349,7 @@ blk_part_exp(MACRO_PROT_ARGS)
 		/* Flush out leading punctuation. */
 
 		if (NULL == head && ARGS_QWORD != ac &&
-		    DELIM_OPEN == mdoc_isdelim(p)) {
+		    DELIM_OPEN == mandoc_isdelim(p)) {
 			assert(NULL == body);
 			if ( ! mdoc_word_alloc(m, line, la, p))
 				return(0);
@@ -1498,7 +1496,7 @@ in_line_argn(MACRO_PROT_ARGS)
 
 		if ( ! (MDOC_IGNDELIM & mdoc_macros[tok].flags) && 
 				ARGS_QWORD != ac &&
-				0 == j && DELIM_OPEN == mdoc_isdelim(p)) {
+				0 == j && DELIM_OPEN == mandoc_isdelim(p)) {
 			if ( ! mdoc_word_alloc(m, line, la, p))
 				return(0);
 			continue;
@@ -1527,7 +1525,7 @@ in_line_argn(MACRO_PROT_ARGS)
 		if ( ! (MDOC_IGNDELIM & mdoc_macros[tok].flags) &&
 				ARGS_QWORD != ac &&
 				! flushed &&
-				DELIM_NONE != mdoc_isdelim(p)) {
+				DELIM_NONE != mandoc_isdelim(p)) {
 			if ( ! rew_elem(m, tok))
 				return(0);
 			flushed = 1;
@@ -1666,7 +1664,8 @@ static int
 obsolete(MACRO_PROT_ARGS)
 {
 
-	return(mdoc_pmsg(m, line, ppos, MANDOCERR_MACROOBS));
+	mdoc_pmsg(m, line, ppos, MANDOCERR_MACROOBS);
+	return(1);
 }
 
 

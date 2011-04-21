@@ -1,6 +1,6 @@
-/*	$Id: mandoc.c,v 1.23 2011/03/15 03:03:49 schwarze Exp $ */
+/*	$Id: mandoc.c,v 1.24 2011/04/21 22:59:54 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -350,7 +350,7 @@ mandoc_getarg(char **cpp, mandocmsg msg, void *data, int ln, int *pos)
 		while (' ' == *cp)
 			cp++;
 	}
-	*pos += (cp - start) + (quoted ? 1 : 0);
+	*pos += (int)(cp - start) + (quoted ? 1 : 0);
 	*cpp = cp;
 
 	if ('\0' == *cp && msg && (white || ' ' == cp[-1]))
@@ -358,7 +358,6 @@ mandoc_getarg(char **cpp, mandocmsg msg, void *data, int ln, int *pos)
 
 	return(start);
 }
-
 
 static int
 a2time(time_t *t, const char *fmt, const char *p)
@@ -376,7 +375,6 @@ a2time(time_t *t, const char *fmt, const char *p)
 
 	return(0);
 }
-
 
 static char *
 time2a(time_t t)
@@ -413,7 +411,6 @@ fail:
 	return(NULL);
 }
 
-
 char *
 mandoc_normdate(char *in, mandocmsg msg, void *data, int ln, int pos)
 {
@@ -434,7 +431,6 @@ mandoc_normdate(char *in, mandocmsg msg, void *data, int ln, int pos)
 	out = t ? time2a(t) : NULL;
 	return(out ? out : mandoc_strdup(in));
 }
-
 
 int
 mandoc_eos(const char *p, size_t sz, int enclosed)
@@ -479,7 +475,6 @@ mandoc_eos(const char *p, size_t sz, int enclosed)
 	return(found && !enclosed);
 }
 
-
 int
 mandoc_hyph(const char *start, const char *c)
 {
@@ -505,4 +500,55 @@ mandoc_hyph(const char *start, const char *c)
 		return(0);
 
 	return(1);
+}
+
+/*
+ * Check if a string is a punctuation delimiter.  This only applies to
+ * mdoc(7) documents, but as it's used in both front-ends and back-ends,
+ * it needs to go here (instead of, say, in libmdoc.h).
+ */
+enum mdelim
+mandoc_isdelim(const char *p)
+{
+
+	if ('\0' == p[0])
+		return(DELIM_NONE);
+
+	if ('\0' == p[1])
+		switch (p[0]) {
+		case('('):
+			/* FALLTHROUGH */
+		case('['):
+			return(DELIM_OPEN);
+		case('|'):
+			return(DELIM_MIDDLE);
+		case('.'):
+			/* FALLTHROUGH */
+		case(','):
+			/* FALLTHROUGH */
+		case(';'):
+			/* FALLTHROUGH */
+		case(':'):
+			/* FALLTHROUGH */
+		case('?'):
+			/* FALLTHROUGH */
+		case('!'):
+			/* FALLTHROUGH */
+		case(')'):
+			/* FALLTHROUGH */
+		case(']'):
+			return(DELIM_CLOSE);
+		default:
+			return(DELIM_NONE);
+		}
+
+	if ('\\' != p[0])
+		return(DELIM_NONE);
+
+	if (0 == strcmp(p + 1, "."))
+		return(DELIM_CLOSE);
+	if (0 == strcmp(p + 1, "*(Ba"))
+		return(DELIM_MIDDLE);
+
+	return(DELIM_NONE);
 }

@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.81 2011/03/20 23:36:42 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.82 2011/04/21 22:59:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -134,6 +134,8 @@ mdoc_free1(struct mdoc *mdoc)
 		free(mdoc->meta.vol);
 	if (mdoc->meta.msec)
 		free(mdoc->meta.msec);
+	if (mdoc->meta.date)
+		free(mdoc->meta.date);
 }
 
 
@@ -297,7 +299,7 @@ mdoc_parseln(struct mdoc *m, int ln, char *buf, int offs)
 }
 
 
-int
+void
 mdoc_vmsg(struct mdoc *mdoc, enum mandocerr t, 
 		int ln, int pos, const char *fmt, ...)
 {
@@ -308,7 +310,7 @@ mdoc_vmsg(struct mdoc *mdoc, enum mandocerr t,
 	vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
 	va_end(ap);
 
-	return((*mdoc->msg)(t, mdoc->data, ln, pos, buf));
+	(*mdoc->msg)(t, mdoc->data, ln, pos, buf);
 }
 
 

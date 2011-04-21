@@ -1,4 +1,4 @@
-/*	$Id: out.c,v 1.12 2011/01/30 16:05:29 schwarze Exp $ */
+/*	$Id: out.c,v 1.13 2011/04/21 22:59:54 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -427,7 +427,8 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp)
 	 */
 
 	assert(NULL == tbl->cols);
-	tbl->cols = calloc(sp->tbl->cols, sizeof(struct roffcol));
+	tbl->cols = mandoc_calloc
+		((size_t)sp->tbl->cols, sizeof(struct roffcol));
 
 	hp = sp->head;
 

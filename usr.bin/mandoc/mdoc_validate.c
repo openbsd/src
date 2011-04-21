@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.90 2011/03/20 23:36:42 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.91 2011/04/21 22:59:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -70,6 +70,8 @@ static	void	 check_args(struct mdoc *, struct mdoc_node *);
 
 static	int	 concat(struct mdoc *, char *, 
 			const struct mdoc_node *, size_t);
+static	enum mdoc_sec	a2sec(const char *);
+static	size_t		macro2len(enum mdoct);
 
 static	int	 ebool(POST_ARGS);
 static	int	 berr_ge1(POST_ARGS);
@@ -173,7 +175,7 @@ static	v_pre	 pres_sh[] = { pre_sh, NULL };
 static	v_pre	 pres_ss[] = { pre_ss, NULL };
 static	v_pre	 pres_std[] = { pre_std, NULL };
 
-const	struct valids mdoc_valids[MDOC_MAX] = {
+static const struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Ap */
 	{ pres_dd, posts_dd },			/* Dd */
 	{ pres_dt, posts_dt },			/* Dt */
@@ -317,6 +319,30 @@ static	const enum mdoct rsord[RSORD_MAX] = {
 	MDOC__U
 };
 
+static	const char * const secnames[SEC__MAX] = {
+	NULL,
+	"NAME",
+	"LIBRARY",
+	"SYNOPSIS",
+	"DESCRIPTION",
+	"IMPLEMENTATION NOTES",
+	"RETURN VALUES",
+	"ENVIRONMENT",
+	"FILES",
+	"EXIT STATUS",
+	"EXAMPLES",
+	"DIAGNOSTICS",
+	"COMPATIBILITY",
+	"ERRORS",
+	"SEE ALSO",
+	"STANDARDS",
+	"HISTORY",
+	"AUTHORS",
+	"CAVEATS",
+	"BUGS",
+	"SECURITY CONSIDERATIONS",
+	NULL
+};
 
 int
 mdoc_valid_pre(struct mdoc *mdoc, struct mdoc_node *n)
@@ -416,10 +442,10 @@ check_count(struct mdoc *m, enum mdoc_type type,
 	}
 
 	t = lvl == CHECK_WARN ? MANDOCERR_ARGCWARN : MANDOCERR_ARGCOUNT;
-
-	return(mdoc_vmsg(m, t, m->last->line, m->last->pos,
+	mdoc_vmsg(m, t, m->last->line, m->last->pos,
 			"want %s%d children (have %d)",
-			p, val, m->last->nchild));
+			p, val, m->last->nchild);
+	return(1);
 }
 
 static int
@@ -1236,7 +1262,7 @@ post_an(POST_ARGS)
 static int
 post_it(POST_ARGS)
 {
-	int		  i, cols, rc;
+	int		  i, cols;
 	enum mdoc_list	  lt;
 	struct mdoc_node *n, *c;
 	enum mandocerr	  er;
@@ -1302,10 +1328,9 @@ post_it(POST_ARGS)
 		else
 			er = MANDOCERR_SYNTARGCOUNT;
 
-		rc = mdoc_vmsg(mdoc, er, 
-				mdoc->last->line, mdoc->last->pos, 
+		mdoc_vmsg(mdoc, er, mdoc->last->line, mdoc->last->pos, 
 				"columns == %d (have %d)", cols, i);
-		return(rc);
+		return(MANDOCERR_ARGCOUNT == er);
 	default:
 		break;
 	}
@@ -1366,7 +1391,7 @@ post_bl_block_width(POST_ARGS)
 		width = 6;
 	else if (MDOC_MAX == (tok = mdoc_hash_find(n->norm->Bl.width)))
 		return(1);
-	else if (0 == (width = mdoc_macro2len(tok)))  {
+	else if (0 == (width = macro2len(tok)))  {
 		mdoc_nmsg(mdoc, n, MANDOCERR_BADWIDTH);
 		return(1);
 	}
@@ -1423,7 +1448,7 @@ post_bl_block_tag(POST_ARGS)
 			break;
 		}
 
-		if (0 != (ssz = mdoc_macro2len(nn->tok)))
+		if (0 != (ssz = macro2len(nn->tok)))
 			sz = ssz;
 
 		break;
@@ -1817,7 +1842,7 @@ post_sh_head(POST_ARGS)
 	if ( ! concat(mdoc, buf, mdoc->last->child, BUFSIZ))
 		return(0);
 
-	sec = mdoc_str2sec(buf);
+	sec = a2sec(buf);
 
 	/* The NAME should be first. */
 
@@ -2123,7 +2148,8 @@ post_bx(POST_ARGS)
 
 	n = mdoc->last->child;
 	if (n && NULL != (n = n->next))
-		*n->string = toupper((unsigned char)*n->string);
+		*n->string = (char)toupper
+			((unsigned char)*n->string);
 
 	return(1);
 }
@@ -2250,3 +2276,107 @@ concat(struct mdoc *m, char *p, const struct mdoc_node *n, size_t sz)
 	return(1);
 }
 
+static enum mdoc_sec 
+a2sec(const char *p)
+{
+	int		 i;
+
+	for (i = 0; i < (int)SEC__MAX; i++) 
+		if (secnames[i] && 0 == strcmp(p, secnames[i]))
+			return((enum mdoc_sec)i);
+
+	return(SEC_CUSTOM);
+}
+
+static size_t
+macro2len(enum mdoct macro)
+{
+
+	switch (macro) {
+	case(MDOC_Ad):
+		return(12);
+	case(MDOC_Ao):
+		return(12);
+	case(MDOC_An):
+		return(12);
+	case(MDOC_Aq):
+		return(12);
+	case(MDOC_Ar):
+		return(12);
+	case(MDOC_Bo):
+		return(12);
+	case(MDOC_Bq):
+		return(12);
+	case(MDOC_Cd):
+		return(12);
+	case(MDOC_Cm):
+		return(10);
+	case(MDOC_Do):
+		return(10);
+	case(MDOC_Dq):
+		return(12);
+	case(MDOC_Dv):
+		return(12);
+	case(MDOC_Eo):
+		return(12);
+	case(MDOC_Em):
+		return(10);
+	case(MDOC_Er):
+		return(17);
+	case(MDOC_Ev):
+		return(15);
+	case(MDOC_Fa):
+		return(12);
+	case(MDOC_Fl):
+		return(10);
+	case(MDOC_Fo):
+		return(16);
+	case(MDOC_Fn):
+		return(16);
+	case(MDOC_Ic):
+		return(10);
+	case(MDOC_Li):
+		return(16);
+	case(MDOC_Ms):
+		return(6);
+	case(MDOC_Nm):
+		return(10);
+	case(MDOC_No):
+		return(12);
+	case(MDOC_Oo):
+		return(10);
+	case(MDOC_Op):
+		return(14);
+	case(MDOC_Pa):
+		return(32);
+	case(MDOC_Pf):
+		return(12);
+	case(MDOC_Po):
+		return(12);
+	case(MDOC_Pq):
+		return(12);
+	case(MDOC_Ql):
+		return(16);
+	case(MDOC_Qo):
+		return(12);
+	case(MDOC_So):
+		return(12);
+	case(MDOC_Sq):
+		return(12);
+	case(MDOC_Sy):
+		return(6);
+	case(MDOC_Sx):
+		return(16);
+	case(MDOC_Tn):
+		return(10);
+	case(MDOC_Va):
+		return(12);
+	case(MDOC_Vt):
+		return(12);
+	case(MDOC_Xr):
+		return(10);
+	default:
+		break;
+	};
+	return(0);
+}

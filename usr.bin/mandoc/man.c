@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.57 2011/03/20 23:36:42 schwarze Exp $ */
+/*	$Id: man.c,v 1.58 2011/04/21 22:59:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -618,7 +618,7 @@ err:	/* Error out. */
 }
 
 
-int
+void
 man_vmsg(struct man *man, enum mandocerr t, 
 		int ln, int pos, const char *fmt, ...)
 {
@@ -628,7 +628,7 @@ man_vmsg(struct man *man, enum mandocerr t,
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
 	va_end(ap);
-	return((*man->msg)(t, man->data, ln, pos, buf));
+	(*man->msg)(t, man->data, ln, pos, buf);
 }
 
 

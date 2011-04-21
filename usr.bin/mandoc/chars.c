@@ -1,4 +1,4 @@
-/*	$Id: chars.c,v 1.16 2011/01/30 16:05:29 schwarze Exp $ */
+/*	$Id: chars.c,v 1.17 2011/04/21 22:59:54 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -88,17 +88,8 @@ chars_init(enum chars type)
 	 * (they're in-line re-ordered during lookup).
 	 */
 
-	tab = malloc(sizeof(struct ctab));
-	if (NULL == tab) {
-		perror(NULL);
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
-
-	htab = calloc(PRINT_HI - PRINT_LO + 1, sizeof(struct ln **));
-	if (NULL == htab) {
-		perror(NULL);
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
+	tab = mandoc_malloc(sizeof(struct ctab));
+	htab = mandoc_calloc(PRINT_HI - PRINT_LO + 1, sizeof(struct ln **));
 
 	for (i = 0; i < LINES_MAX; i++) {
 		hash = (int)lines[i].code[0] - PRINT_LO;

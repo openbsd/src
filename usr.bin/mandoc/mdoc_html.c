@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.54 2011/03/20 23:36:42 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.55 2011/04/21 22:59:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -406,6 +406,7 @@ print_mdoc_node(MDOC_ARGS)
 {
 	int		 child;
 	struct tag	*t;
+	struct htmlpair	 tag;
 
 	child = 1;
 	t = h->tags.head;
@@ -429,8 +430,10 @@ print_mdoc_node(MDOC_ARGS)
 		print_text(h, n->string);
 		return;
 	case (MDOC_EQN):
+		PAIR_CLASS_INIT(&tag, "eqn");
+		print_otag(h, TAG_SPAN, 1, &tag);
 		print_text(h, n->eqn->data);
-		return;
+		break;
 	case (MDOC_TBL):
 		/*
 		 * This will take care of initialising all of the table
@@ -477,6 +480,8 @@ print_mdoc_node(MDOC_ARGS)
 	switch (n->type) {
 	case (MDOC_ROOT):
 		mdoc_root_post(m, n, h);
+		break;
+	case (MDOC_EQN):
 		break;
 	default:
 		if (mdocs[n->tok].post && ENDBODY_NOT == n->end)

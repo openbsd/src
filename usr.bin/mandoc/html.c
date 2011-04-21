@@ -1,4 +1,4 @@
-/*	$Id: html.c,v 1.23 2011/01/30 16:05:29 schwarze Exp $ */
+/*	$Id: html.c,v 1.24 2011/04/21 22:59:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -116,11 +116,7 @@ ml_alloc(char *outopts, enum htmltype type)
 	toks[2] = "includes";
 	toks[3] = NULL;
 
-	h = calloc(1, sizeof(struct html));
-	if (NULL == h) {
-		perror(NULL);
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
+	h = mandoc_calloc(1, sizeof(struct html));
 
 	h->type = type;
 	h->tags.head = NULL;
@@ -210,7 +206,7 @@ print_gen_head(struct html *h)
 	}
 }
 
-
+/* ARGSUSED */
 static void
 print_num(struct html *h, const char *p, size_t len)
 {
@@ -220,7 +216,6 @@ print_num(struct html *h, const char *p, size_t len)
 	if (rhs)
 		putchar((int)*rhs);
 }
-
 
 static void
 print_spec(struct html *h, enum roffdeco d, const char *p, size_t len)
@@ -397,11 +392,7 @@ print_otag(struct html *h, enum htmltag tag,
 	/* Push this tags onto the stack of open scopes. */
 
 	if ( ! (HTML_NOSTACK & htmltags[tag].flags)) {
-		t = malloc(sizeof(struct tag));
-		if (NULL == t) {
-			perror(NULL);
-			exit((int)MANDOCLEVEL_SYSERR);
-		}
+		t = mandoc_malloc(sizeof(struct tag));
 		t->tag = tag;
 		t->next = h->tags.head;
 		h->tags.head = t;
@@ -519,29 +510,9 @@ void
 print_text(struct html *h, const char *word)
 {
 
-	if (word[0] && '\0' == word[1])
-		switch (word[0]) {
-		case('.'):
-			/* FALLTHROUGH */
-		case(','):
-			/* FALLTHROUGH */
-		case(';'):
-			/* FALLTHROUGH */
-		case(':'):
-			/* FALLTHROUGH */
-		case('?'):
-			/* FALLTHROUGH */
-		case('!'):
-			/* FALLTHROUGH */
-		case(')'):
-			/* FALLTHROUGH */
-		case(']'):
-			if ( ! (HTML_IGNDELIM & h->flags))
-				h->flags |= HTML_NOSPACE;
-			break;
-		default:
-			break;
-		}
+	if (DELIM_CLOSE == mandoc_isdelim(word))
+		if ( ! (HTML_IGNDELIM & h->flags))
+			h->flags |= HTML_NOSPACE;
 
 	if ( ! (HTML_NOSPACE & h->flags)) {
 		/* Manage keeps! */
@@ -571,20 +542,8 @@ print_text(struct html *h, const char *word)
 
 	h->flags &= ~HTML_IGNDELIM;
 
-	/* 
-	 * Note that we don't process the pipe: the parser sees it as
-	 * punctuation, but we don't in terms of typography.
-	 */
-	if (word[0] && '\0' == word[1])
-		switch (word[0]) {
-		case('('):
-			/* FALLTHROUGH */
-		case('['):
-			h->flags |= HTML_NOSPACE;
-			break;
-		default:
-			break;
-		}
+	if (DELIM_OPEN == mandoc_isdelim(word))
+		h->flags |= HTML_NOSPACE;
 }
 
 
