@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.24 2011/04/16 22:02:32 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.25 2011/04/21 12:42:59 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -70,49 +70,6 @@
 #define	HPPA_FPU_FORK(s) ((s) & ~((u_int64_t)(HPPA_FPU_XMASK)<<32))
 #define	HPPA_PMSFUS	0x20	/* ??? */
 
-/*
- * Interrupts stuff
- */
-#define	CPU_NINTS	64
-
-#define	IPL_NONE	0
-#define	IPL_SOFTCLOCK	1   
-#define	IPL_SOFTNET	2
-#define	IPL_BIO		3
-#define	IPL_NET		4
-#define	IPL_SOFTTTY	5
-#define	IPL_TTY		6
-#define	IPL_VM		7
-#define	IPL_AUDIO	8
-#define	IPL_CLOCK	9
-#define	IPL_STATCLOCK	10
-#define	IPL_SCHED	IPL_STATCLOCK
-#define	IPL_HIGH	11
-
-#define	NIPL		12
-
-#define	IST_NONE        0
-#define	IST_PULSE       1
-#define	IST_EDGE        2
-#define	IST_LEVEL       3
-
-#define	splsoftclock()	splraise(IPL_SOFTCLOCK)
-#define	splsoftnet()	splraise(IPL_SOFTNET)
-#define	splbio()	splraise(IPL_BIO)
-#define	splnet()	splraise(IPL_NET)
-#define	splsofttty()	splraise(IPL_SOFTTTY)
-#define	spltty()	splraise(IPL_TTY)
-#define	splvm()		splraise(IPL_VM)
-#define	splaudio()	splraise(IPL_AUDIO)
-#define	splclock()	splraise(IPL_CLOCK)
-#define	splsched()	splraise(IPL_SCHED)
-#define	splstatclock()	splraise(IPL_STATCLOCK)
-#define	splhigh()	splraise(IPL_HIGH)
-#define	spl0()		spllower(IPL_NONE)
-#define	splx(c)		spllower(c)
-
-#define	setsoftast()		(astpending = 1)
-
 #ifndef _LOCORE
 #include <sys/time.h>
 #include <sys/sched.h>
@@ -155,7 +112,7 @@ struct cpu_info {
 };
 
 struct cpu_info *curcpu(void);
-#define	cpu_number()	(curcpu()->ci_number)
+#define	cpu_number()		(curcpu()->ci_number)
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_number == 0)
 #define	CPU_INFO_ITERATOR	int
 #define	CPU_INFO_FOREACH(cii,ci) \
@@ -163,21 +120,6 @@ struct cpu_info *curcpu(void);
 #define	CPU_INFO_UNIT(ci)	((ci)->ci_number)
 #define MAXCPUS	1
 #define cpu_unidle(ci)
-
-#ifdef DIAGNOSTIC   
-void splassert_fail(int, int, const char *);
-extern int splassert_ctl;
-void splassert_check(int, const char *);
-#define splassert(__wantipl) do {			\
-	if (splassert_ctl > 0) {			\
-		splassert_check(__wantipl, __func__);	\
-	}						\
-} while (0)
-#define splsoftassert(__wantipl) splassert(__wantipl)
-#else
-#define splassert(__wantipl)		do { /* nada */ } while (0)
-#define splsoftassert(__wantipl)	do { /* nada */ } while (0)
-#endif /* DIAGNOSTIC */
 
 /* types */
 enum hppa_cpu_type {
@@ -228,16 +170,13 @@ extern int want_resched, astpending;
 
 #define DELAY(x) delay(x)
 
-int	splraise(int cpl);
-int	spllower(int cpl);
-
 void	delay(u_int us);
 void	hppa_init(paddr_t start);
 void	trap(int type, struct trapframe *frame);
-int	spcopy(pa_space_t ssp, const void *src,
-		    pa_space_t dsp, void *dst, size_t size);
-int	spstrcpy(pa_space_t ssp, const void *src,
-		      pa_space_t dsp, void *dst, size_t size, size_t *rsize);
+int	spcopy(pa_space_t ssp, const void *src, pa_space_t dsp, void *dst,
+	    size_t size);
+int	spstrcpy(pa_space_t ssp, const void *src, pa_space_t dsp, void *dst,
+	    size_t size, size_t *rsize);
 int	copy_on_fault(void);
 void	switch_trampoline(void);
 int	cpu_dumpsize(void);
