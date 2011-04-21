@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.69 2011/04/21 15:54:24 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.70 2011/04/21 15:57:14 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -133,7 +133,7 @@ do_populate() {
 			awk '{ print $3 }' ${DESTDIR}/${DBDIR}/${i} | sed 's/^./X/;s/$/X/' > ${WRKDIR}/new
 			awk '{ print $3 }' ${WRKDIR}/${i} | sed 's/^./X/;s/$/X/' > ${WRKDIR}/old
 			if [ -n "`diff -q ${WRKDIR}/old ${WRKDIR}/new`" ]; then
-				local _diff=`grep -v -F ${WRKDIR}/old ${WRKDIR}/new | sed 's/^X//;s/X$//'`
+				local _diff=`grep -v -f ${WRKDIR}/old ${WRKDIR}/new | sed 's/^X//;s/X$//'`
 				_obs="${_diff} ${_obs}"
 				set -A OBSOLETE_FILES -- ${_obs}
 			fi
