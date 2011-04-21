@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.6 2011/04/03 18:46:40 miod Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.7 2011/04/21 04:34:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -52,10 +52,12 @@ mtx_enter(struct mutex *mtx)
 {
 	int psr;
 
-	psr = getpsr();
-	mtx->mtx_oldipl = psr & PSR_PIL;
-	if (mtx->mtx_oldipl < mtx->mtx_wantipl)
-		setpsr((psr & ~PSR_PIL) | mtx->mtx_wantipl);
+	if (mtx->mtx_wantipl != IPL_NONE << 8) {
+		psr = getpsr();
+		mtx->mtx_oldipl = psr & PSR_PIL;
+		if (mtx->mtx_oldipl < mtx->mtx_wantipl)
+			setpsr((psr & ~PSR_PIL) | mtx->mtx_wantipl);
+	}
 
 	MUTEX_ASSERT_UNLOCKED(mtx);
 	mtx->mtx_lock = 1;
@@ -69,10 +71,12 @@ mtx_enter_try(struct mutex *mtx)
 {
 	int psr;
 
-	psr = getpsr();
-	mtx->mtx_oldipl = psr & PSR_PIL;
-	if (mtx->mtx_oldipl < mtx->mtx_wantipl)
-		setpsr((psr & ~PSR_PIL) | mtx->mtx_wantipl);
+	if (mtx->mtx_wantipl != IPL_NONE << 8) {
+		psr = getpsr();
+		mtx->mtx_oldipl = psr & PSR_PIL;
+		if (mtx->mtx_oldipl < mtx->mtx_wantipl)
+			setpsr((psr & ~PSR_PIL) | mtx->mtx_wantipl);
+	}
 
 	MUTEX_ASSERT_UNLOCKED(mtx);
 	mtx->mtx_lock = 1;
@@ -91,5 +95,6 @@ mtx_leave(struct mutex *mtx)
 	curcpu()->ci_mutex_level--;
 #endif
 	mtx->mtx_lock = 0;
-	splx(mtx->mtx_oldipl);
+	if (mtx->mtx_wantipl != IPL_NONE << 8)
+		splx(mtx->mtx_oldipl);
 }
