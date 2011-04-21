@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.68 2011/04/20 09:37:35 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.69 2011/04/21 15:54:24 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -130,10 +130,11 @@ do_populate() {
 			fi
 
 			# check for obsolete files
-			awk '{ print $3 }' ${DESTDIR}/${DBDIR}/${i} > ${WRKDIR}/new
-			awk '{ print $3 }' ${WRKDIR}/${i} > ${WRKDIR}/old
+			awk '{ print $3 }' ${DESTDIR}/${DBDIR}/${i} | sed 's/^./X/;s/$/X/' > ${WRKDIR}/new
+			awk '{ print $3 }' ${WRKDIR}/${i} | sed 's/^./X/;s/$/X/' > ${WRKDIR}/old
 			if [ -n "`diff -q ${WRKDIR}/old ${WRKDIR}/new`" ]; then
-				local _obs="${_obs} `diff -C 0 ${WRKDIR}/new ${WRKDIR}/old | sed -n -e 's,^- .,,gp'`"
+				local _diff=`grep -v -F ${WRKDIR}/old ${WRKDIR}/new | sed 's/^X//;s/X$//'`
+				_obs="${_diff} ${_obs}"
 				set -A OBSOLETE_FILES -- ${_obs}
 			fi
 			rm ${WRKDIR}/new ${WRKDIR}/old
