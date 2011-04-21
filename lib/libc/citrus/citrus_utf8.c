@@ -1,4 +1,4 @@
-/*	$OpenBSD: citrus_utf8.c,v 1.3 2010/08/05 17:13:53 stsp Exp $ */
+/*	$OpenBSD: citrus_utf8.c,v 1.4 2011/04/21 00:16:06 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins
@@ -253,7 +253,8 @@ _citrus_utf8_ctype_mbsrtowcs(wchar_t * __restrict pwcs,
 			*pwcs = (wchar_t)*src;
 			nb = 1;
 		} else {
-			nb = _citrus_utf8_ctype_mbrtowc(pwcs, src, n, us);
+			nb = _citrus_utf8_ctype_mbrtowc(pwcs, src,
+			    _CITRUS_UTF8_MB_CUR_MAX, us);
 			if (nb == (size_t)-1) {
 				*s = src;
 				return (nb);
