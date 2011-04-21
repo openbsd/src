@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.175 2011/04/21 02:37:31 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.176 2011/04/21 07:13:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1234,6 +1234,10 @@ nomem:
 		ahci_put_ccb(ccb);
 	}
 
+	/* grab a ccb for use during error recovery */
+	ap->ap_ccb_err = &ap->ap_ccbs[sc->sc_ncmds - 1];
+	TAILQ_REMOVE(&ap->ap_ccb_free, ap->ap_ccb_err, ccb_entry);
+
 	/* Wait for ICC change to complete */
 	ahci_pwait_clr(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_ICC, 1);
 
@@ -1291,10 +1295,6 @@ nomem:
 	ahci_write(sc, AHCI_REG_IS, 1 << port);
 
 	ahci_enable_interrupts(ap);
-
-	/* grab a ccb for use during error recovery */
-	ap->ap_ccb_err = &ap->ap_ccbs[sc->sc_ncmds - 1];
-	TAILQ_REMOVE(&ap->ap_ccb_free, ap->ap_ccb_err, ccb_entry);
 
 freeport:
 	if (rc != 0)
