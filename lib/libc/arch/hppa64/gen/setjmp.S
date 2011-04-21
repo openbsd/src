@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.2 2005/08/07 16:40:14 espie Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.3 2011/04/21 14:02:42 jsing Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -49,63 +49,63 @@
  * and a struct sigcontext, see <signal.h>
  */
 
-ENTRY(sigsetjmp, 64)
+ENTRY(sigsetjmp, 128)
 	sub,<>	%r0, %arg1, %r0
 	b,n	_setjmp
 	nop
 
-	stw	%arg1, 44(%arg0)	; last of reserved words
+	std	%arg1, 88(%arg0)	; last of reserved words
 
 ALTENTRY(setjmp)
-	stw	%rp, HPPA_FRAME_CRP(%sp)
-	stw	%arg0, HPPA_FRAME_ARG(0)(%sp)
+	std	%rp, HPPA_FRAME_RP(%sp)
+	std	%arg0, HPPA_FRAME_ARG(0)(%sp)
 
 	copy	%r3, %r1
 	copy	%sp, %r3
-	stw,ma	%r1, HPPA_FRAME_SIZE(%sp)
+	std,ma	%r1, HPPA_FRAME_SIZE(%sp)
 
 	bl	sigblock, %rp
 	copy	%r0, %arg0
 
 	ldo	HPPA_FRAME_SIZE(%r3), %sp
-	ldw,mb	-HPPA_FRAME_SIZE(%sp),%r3
-	ldw	HPPA_FRAME_CRP(%sp), %rp
-	ldw	HPPA_FRAME_ARG(0)(%sp), %arg0
+	ldd,mb	-HPPA_FRAME_SIZE(%sp),%r3
+	ldd	HPPA_FRAME_RP(%sp), %rp
+	ldd	HPPA_FRAME_ARG(0)(%sp), %arg0
 
-	stw	%r0, 0(%arg0)		; no onstack
+	std	%r0, 0(%arg0)		; no onstack
 	b	_setjmp$dosaves
-	stw	%ret0, 4(%arg0)		; mask
+	std	%ret0, 8(%arg0)		; mask
 
 ALTENTRY(_setjmp)
 	/* A sigcontext is at the beginning of our jmp_buf. */
-	stw	%r0, 0(%arg0)		; no onstack
-	stw	%r0, 4(%arg0)		; mask
+	std	%r0, 0(%arg0)		; no onstack
+	std	%r0, 8(%arg0)		; mask
 _setjmp$dosaves
-	stw	%r0, 8(%arg0)		; set sc.sc_ps
-	stw	%sp, 12(%arg0)		; sc.sc_sp = %sp
-	stw	%r0, 16(%arg0)		; sc.sc_fp
+	std	%r0, 16(%arg0)		; set sc.sc_ps
+	std	%sp, 24(%arg0)		; sc.sc_sp = %sp
+	std	%r0, 32(%arg0)		; sc.sc_fp
 	ldo	4(%rp), %r1
-	stw	%rp, 20(%arg0)		; sc.sc_pcoqh = %rp
-	stw	%r1, 24(%arg0)		; sc.sc_pcoqt = %rp + 4
+	std	%rp, 40(%arg0)		; sc.sc_pcoqh = %rp
+	std	%r1, 48(%arg0)		; sc.sc_pcoqt = %rp + 4
 
 	/* We store all callee-saved registers after the sigcontext. */
-	ldo	48(%arg0), %r1		; offset to after sc
-	stwm	%r3, 4(%r1)
-	stwm	%r4, 4(%r1)
-	stwm	%r5, 4(%r1)
-	stwm	%r6, 4(%r1)
-	stwm	%r7, 4(%r1)
-	stwm	%r8, 4(%r1)
-	stwm	%r9, 4(%r1)
-	stwm	%r10, 4(%r1)
-	stwm	%r11, 4(%r1)
-	stwm	%r12, 4(%r1)
-	stwm	%r13, 4(%r1)
-	stwm	%r14, 4(%r1)
-	stwm	%r15, 4(%r1)
-	stwm	%r16, 4(%r1)
-	stwm	%r17, 4(%r1)
-	stwm	%r18, 4(%r1)
+	ldo	96(%arg0), %r1		; offset to after sc
+	std,ma	%r3, 8(%r1)
+	std,ma	%r4, 8(%r1)
+	std,ma	%r5, 8(%r1)
+	std,ma	%r6, 8(%r1)
+	std,ma	%r7, 8(%r1)
+	std,ma	%r8, 8(%r1)
+	std,ma	%r9, 8(%r1)
+	std,ma	%r10, 8(%r1)
+	std,ma	%r11, 8(%r1)
+	std,ma	%r12, 8(%r1)
+	std,ma	%r13, 8(%r1)
+	std,ma	%r14, 8(%r1)
+	std,ma	%r15, 8(%r1)
+	std,ma	%r16, 8(%r1)
+	std,ma	%r17, 8(%r1)
+	std,ma	%r18, 8(%r1)
 
 	/* Return 0. */
 	bv	%r0(%rp)
@@ -117,12 +117,12 @@ ENTRY(siglongjmp,64)
 	sub,>>	%sp, %arg0, %r0		/* botch if jbuf was on stack */
 	bl,n	longjmperror, %rp
 	nop
-	ldw	16(%arg0), %r1		/* botch if it's a real signal frame */
+	ldd	32(%arg0), %r1		/* botch if it's a real signal frame */
 	add,=	%r0, %r1, %r0
 	bl,n	longjmperror, %rp
 	nop
 
-	ldw	44(%arg0), %arg2
+	ldd	88(%arg0), %arg2
 	sub,<>	%r0, %arg2, %r0
 	b	_longjmp
 	nop
@@ -132,61 +132,61 @@ ALTENTRY(longjmp)
 	sub,>>	%sp, %arg0, %r0		/* botch if jbuf was on stack */
 	bl,n	longjmperror, %rp
 	nop
-	ldw	16(%arg0), %r1		/* botch if it's a real signal frame */
+	ldw	32(%arg0), %r1		/* botch if it's a real signal frame */
 	add,=	%r0, %r1, %r0
 	bl,n	longjmperror, %rp
 	nop
 
-	stw	%rp, HPPA_FRAME_CRP(%sp)
-	stw	%arg0, HPPA_FRAME_ARG(0)(%sp)
-	stw	%arg1, HPPA_FRAME_ARG(1)(%sp)
+	std	%rp, HPPA_FRAME_RP(%sp)
+	std	%arg0, HPPA_FRAME_ARG(0)(%sp)
+	std	%arg1, HPPA_FRAME_ARG(1)(%sp)
 
 	copy	%r3, %r1
 	copy	%sp, %r3
-	stw,ma	%r1, HPPA_FRAME_SIZE(%sp)
+	std,ma	%r1, HPPA_FRAME_SIZE(%sp)
 
 	bl	sigsetmask, %rp
-	ldw	4(%arg0), %arg0
+	ldd	8(%arg0), %arg0
 
 	ldo	HPPA_FRAME_SIZE(%r3), %sp
-	ldw,mb	-HPPA_FRAME_SIZE(%sp),%r3
-	ldw	HPPA_FRAME_CRP(%sp), %rp
-	ldw	HPPA_FRAME_ARG(0)(%sp), %arg0
+	ldd,mb	-HPPA_FRAME_SIZE(%sp),%r3
+	ldd	HPPA_FRAME_RP(%sp), %rp
+	ldd	HPPA_FRAME_ARG(0)(%sp), %arg0
 	b	_longjmp$restores
-	ldw	HPPA_FRAME_ARG(1)(%sp), %arg1
+	ldd	HPPA_FRAME_ARG(1)(%sp), %arg1
 
 ALTENTRY(_longjmp)
 	sub,>>	%sp, %arg0, %r0		/* botch if jbuf was on stack */
 	bl,n	longjmperror, %rp
 	nop
-	ldw	16(%arg0), %r1		/* botch if it's a real signal frame */
+	ldd	32(%arg0), %r1		/* botch if it's a real signal frame */
 	add,=	%r0, %r1, %r0
 	bl,n	longjmperror, %rp
 	nop
 
 _longjmp$restores
 	/* restore callee-saved registers */
-	ldo	48(%arg0), %r1
-	ldwm	4(%r1), %r3
-	ldwm	4(%r1), %r4
-	ldwm	4(%r1), %r5
-	ldwm	4(%r1), %r6
-	ldwm	4(%r1), %r7
-	ldwm	4(%r1), %r8
-	ldwm	4(%r1), %r9
-	ldwm	4(%r1), %r10
-	ldwm	4(%r1), %r11
-	ldwm	4(%r1), %r12
-	ldwm	4(%r1), %r13
-	ldwm	4(%r1), %r14
-	ldwm	4(%r1), %r15
-	ldwm	4(%r1), %r16
-	ldwm	4(%r1), %r17
-	ldwm	4(%r1), %r18
+	ldo	96(%arg0), %r1
+	ldd,ma	8(%r1), %r3
+	ldd,ma	8(%r1), %r4
+	ldd,ma	8(%r1), %r5
+	ldd,ma	8(%r1), %r6
+	ldd,ma	8(%r1), %r7
+	ldd,ma	8(%r1), %r8
+	ldd,ma	8(%r1), %r9
+	ldd,ma	8(%r1), %r10
+	ldd,ma	8(%r1), %r11
+	ldd,ma	8(%r1), %r12
+	ldd,ma	8(%r1), %r13
+	ldd,ma	8(%r1), %r14
+	ldd,ma	8(%r1), %r15
+	ldd,ma	8(%r1), %r16
+	ldd,ma	8(%r1), %r17
+	ldd,ma	8(%r1), %r18
 
 	/* restore the rest */
-	ldw	12(%arg0), %sp
-	ldw	20(%arg0), %rp		/* check the priv level */
+	ldd	24(%arg0), %sp
+	ldd	40(%arg0), %rp		/* check the priv level */
 	sub,<>	%arg1, %r0, %r0
 	ldo	1(%arg1), %arg1
 	bv	%r0(%rp)
