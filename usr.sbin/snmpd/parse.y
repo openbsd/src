@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.19 2010/10/18 13:29:49 sthen Exp $	*/
+/*	$OpenBSD: parse.y,v 1.20 2011/04/21 14:55:22 sthen Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -112,13 +112,13 @@ typedef struct {
 
 %token	INCLUDE
 %token  LISTEN ON
-%token	SYSTEM CONTACT DESCR LOCATION NAME OBJECTID SERVICES
+%token	SYSTEM CONTACT DESCR LOCATION NAME OBJECTID SERVICES RTFILTER
 %token	READONLY READWRITE OCTETSTRING INTEGER COMMUNITY TRAP RECEIVER
 %token	ERROR
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostcmn
-%type	<v.number>	optwrite
+%type	<v.number>	optwrite yesno
 %type	<v.data>	objtype
 %type	<v.oid>		oid hostoid
 
@@ -154,6 +154,21 @@ varset		: STRING '=' STRING	{
 				fatal("cannot store variable");
 			free($1);
 			free($3);
+		}
+		;
+
+yesno		:  STRING			{
+			if (!strcmp($1, "yes"))
+				$$ = 1;
+			else if (!strcmp($1, "no"))
+				$$ = 0;
+			else {
+				yyerror("syntax error, "
+				    "either yes or no expected");
+				free($1);
+				YYERROR;
+			}
+			free($1);
 		}
 		;
 
@@ -211,6 +226,15 @@ main		: LISTEN ON STRING		{
 			hlist = &conf->sc_trapreceivers;
 		} host				{
 			hlist = NULL;
+		}
+		| RTFILTER yesno		{
+			if ($2 == 1)
+				conf->sc_rtfilter = ROUTE_FILTER(RTM_NEWADDR) |
+				    ROUTE_FILTER(RTM_DELADDR) |
+				    ROUTE_FILTER(RTM_IFINFO) |
+				    ROUTE_FILTER(RTM_IFANNOUNCE);
+			else
+				conf->sc_rtfilter = 0;
 		}
 		;
 
@@ -378,6 +402,7 @@ lookup(char *s)
 		{ "community",		COMMUNITY },
 		{ "contact",		CONTACT },
 		{ "description",	DESCR },
+		{ "filter-routes",	RTFILTER },
 		{ "include",		INCLUDE },
 		{ "integer",		INTEGER },
 		{ "listen",		LISTEN },

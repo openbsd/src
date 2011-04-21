@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.13 2010/07/18 08:03:04 jmc Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.14 2011/04/21 14:55:22 sthen Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 18 2010 $
+.Dd $Mdocdate: April 21 2011 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -84,6 +84,18 @@ The default value is
 Specify the name of the read-write community.
 The default value is
 .Ar private .
+.Pp
+.It Xo
+.Ic filter-routes
+.Pq Ic yes Ns \&| Ns Ic no
+.Xc
+If set to
+.Ic yes ,
+ask the kernel to filter route update messages on the routing socket.
+Routing table information will not be available, but CPU use will be
+reduced during bulk updates.
+The default is
+.Ic no .
 .Pp
 .It Ic system contact Ar string
 Specify the name or description of the system contact, typically a

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.16 2011/03/07 07:43:02 henning Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.17 2011/04/21 14:55:22 sthen Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -44,6 +44,8 @@
 #include <event.h>
 
 #include "snmpd.h"
+
+extern struct snmpd	*env;
 
 struct {
 	struct event		 ks_ev;
@@ -159,6 +161,10 @@ kr_init(void)
 	if (setsockopt(kr_state.ks_fd, SOL_SOCKET, SO_USELOOPBACK,
 	    &opt, sizeof(opt)) == -1)
 		log_warn("kr_init: setsockopt");	/* not fatal */
+
+	if (env->sc_rtfilter && setsockopt(kr_state.ks_fd, PF_ROUTE,
+	    ROUTE_MSGFILTER, &env->sc_rtfilter, sizeof(env->sc_rtfilter)) == -1)
+		log_warn("kr_init: setsockopt(ROUTE_MSGFILTER)");
 
 	/* grow receive buffer, don't wanna miss messages */
 	optlen = sizeof(default_rcvbuf);
