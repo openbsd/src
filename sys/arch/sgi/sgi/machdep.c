@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.107 2011/04/03 22:32:39 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.108 2011/04/21 18:09:49 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -610,10 +610,10 @@ cpu_startup()
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf(version);
-	printf("real mem = %u (%uMB)\n", ptoa(physmem),
-	    ptoa(physmem)/1024/1024);
-	printf("rsvd mem = %u (%uMB)\n", ptoa(rsvdmem),
-	    ptoa(rsvdmem)/1024/1024);
+	printf("real mem = %lu (%luMB)\n", ptoa((psize_t)physmem),
+	    ptoa((psize_t)physmem)/1024/1024);
+	printf("rsvd mem = %lu (%luMB)\n", ptoa((psize_t)rsvdmem),
+	    ptoa((psize_t)rsvdmem)/1024/1024);
 
 	/*
 	 * Allocate a submap for exec arguments. This map effectively
@@ -629,8 +629,8 @@ cpu_startup()
 #ifdef PMAPDEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %u (%uMB)\n", ptoa(uvmexp.free),
-	    ptoa(uvmexp.free)/1024/1024);
+	printf("avail mem = %lu (%luMB)\n", ptoa((psize_t)uvmexp.free),
+	    ptoa((psize_t)uvmexp.free)/1024/1024);
 
 	/*
 	 * Set up CPU-specific registers, cache, etc.
