@@ -1,4 +1,4 @@
-/*	$OpenBSD: cacvar.h,v 1.5 2008/10/29 21:17:15 brad Exp $	*/
+/*	$OpenBSD: cacvar.h,v 1.6 2011/04/21 23:10:08 krw Exp $	*/
 /*	$NetBSD: cacvar.h,v 1.7 2000/10/19 14:28:47 ad Exp $	*/
 
 /*-
@@ -110,6 +110,9 @@ struct cac_softc {
 	int			(*sc_ioctl)(struct device *, u_long, caddr_t);
 	struct ksensor		*sc_sensors;
 	struct ksensordev	sc_sensordev;
+
+	struct mutex		sc_ccb_mtx; /* ccb queue protection */
+	struct scsi_iopool	sc_iopool;
 };
 
 /* XXX These have to become spinlocks in case of fine SMP */

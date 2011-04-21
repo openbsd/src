@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.43 2011/04/05 19:54:35 jasper Exp $	*/
+/*	$OpenBSD: cac.c,v 1.44 2011/04/21 23:10:08 krw Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -103,9 +103,9 @@ struct scsi_adapter cac_switch = {
 	cac_scsi_cmd, cacminphys, 0, 0,
 };
 
-struct	cac_ccb *cac_ccb_alloc(struct cac_softc *, int);
+void	*cac_ccb_alloc(void *);
 void	cac_ccb_done(struct cac_softc *, struct cac_ccb *);
-void	cac_ccb_free(struct cac_softc *, struct cac_ccb *);
+void	cac_ccb_free(void *, void *);
 int	cac_ccb_poll(struct cac_softc *, struct cac_ccb *, int);
 int	cac_ccb_start(struct cac_softc *, struct cac_ccb *);
 int	cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
@@ -156,6 +156,8 @@ cac_init(struct cac_softc *sc, int startfw)
 
 	SIMPLEQ_INIT(&sc->sc_ccb_free);
 	SIMPLEQ_INIT(&sc->sc_ccb_queue);
+	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
+	scsi_iopool_init(&sc->sc_iopool, sc, cac_ccb_alloc, cac_ccb_free);
 
         size = sizeof(struct cac_ccb) * CAC_MAX_CCBS;
 
@@ -204,7 +206,9 @@ cac_init(struct cac_softc *sc, int startfw)
 		}
 
 		ccb->ccb_paddr = sc->sc_ccbs_paddr + i * sizeof(struct cac_ccb);
+		mtx_enter(&sc->sc_ccb_mtx);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_ccb_free, ccb, ccb_chain);
+		mtx_leave(&sc->sc_ccb_mtx);
 	}
 
 	/* Start firmware background tasks, if needed. */
@@ -245,6 +249,7 @@ cac_init(struct cac_softc *sc, int startfw)
 	sc->sc_link.openings = CAC_MAX_CCBS / sc->sc_nunits;
 	if (sc->sc_link.openings < 4 )
 		sc->sc_link.openings = 4;
+	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
@@ -344,11 +349,18 @@ cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 	    command, drive, blkno, data, datasize, flags, xs);
 #endif
 
-	if ((ccb = cac_ccb_alloc(sc, 0)) == NULL) {
-#ifdef CAC_DEBUG
-		printf("%s: unable to alloc CCB\n", sc->sc_dv.dv_xname);
-#endif
-		return (ENOMEM);
+	if (xs) {
+		ccb = xs->io;
+		/*
+		 * The xs may have been restarted by the scsi layer, so
+		 * ensure the ccb starts in the proper state.
+		 */
+		ccb->ccb_flags = 0;
+	} else {
+		/* Internal command. Need to get our own ccb. */
+		ccb = scsi_io_get(&sc->sc_iopool, SCSI_POLL | SCSI_NOSLEEP);
+		if (ccb == NULL)
+			return (EBUSY);
 	}
 
 	if ((flags & (CAC_CCB_DATA_IN | CAC_CCB_DATA_OUT)) != 0) {
@@ -396,11 +408,9 @@ cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 	ccb->ccb_xs = xs;
 
 	if (!xs || xs->flags & SCSI_POLL) {
-
 		/* Synchronous commands musn't wait. */
 		if ((*sc->sc_cl->cl_fifo_full)(sc)) {
-			cac_ccb_free(sc, ccb);
-			rv = ENOMEM; /* Causes XS_NO_CCB, i/o is retried. */
+			rv = EBUSY;
 		} else {
 			ccb->ccb_flags |= CAC_CCB_ACTIVE;
 			(*sc->sc_cl->cl_submit)(sc, ccb);
@@ -408,6 +418,9 @@ cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 		}
 	} else
 		rv = cac_ccb_start(sc, ccb);
+
+	if (xs == NULL)
+		scsi_io_put(&sc->sc_iopool, ccb);
 
 	return (rv);
 }
@@ -419,8 +432,9 @@ int
 cac_ccb_poll(struct cac_softc *sc, struct cac_ccb *wantccb, int timo)
 {
 	struct cac_ccb *ccb;
-	int s, t = timo * 100;
+	int t;
 
+	t = timo * 100;
 	do {
 		for (; t--; DELAY(10))
 			if ((ccb = (*sc->sc_cl->cl_completed)(sc)) != NULL)
@@ -429,9 +443,7 @@ cac_ccb_poll(struct cac_softc *sc, struct cac_ccb *wantccb, int timo)
 			printf("%s: timeout\n", sc->sc_dv.dv_xname);
 			return (EBUSY);
 		}
-		s = splbio();
 		cac_ccb_done(sc, ccb);
-		splx(s);
 	} while (ccb != wantccb);
 
 	return (0);
@@ -439,17 +451,27 @@ cac_ccb_poll(struct cac_softc *sc, struct cac_ccb *wantccb, int timo)
 
 /*
  * Enqueue the specified command (if any) and attempt to start all enqueued
- * commands.  Must be called at splbio.
+ * commands.
  */
 int
 cac_ccb_start(struct cac_softc *sc, struct cac_ccb *ccb)
 {
-	if (ccb != NULL)
+	if (ccb != NULL) {
+		mtx_enter(&sc->sc_ccb_mtx);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_ccb_queue, ccb, ccb_chain);
+		mtx_leave(&sc->sc_ccb_mtx);
+	}
 
-	while ((ccb = SIMPLEQ_FIRST(&sc->sc_ccb_queue)) != NULL &&
-	    !(*sc->sc_cl->cl_fifo_full)(sc)) {
+	while (!(*sc->sc_cl->cl_fifo_full)(sc)) {
+		mtx_enter(&sc->sc_ccb_mtx);
+		if (SIMPLEQ_EMPTY(&sc->sc_ccb_queue)) {
+			mtx_leave(&sc->sc_ccb_mtx);
+			break;
+		}
+		ccb = SIMPLEQ_FIRST(&sc->sc_ccb_queue);
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_queue, ccb_chain);
+		mtx_leave(&sc->sc_ccb_mtx);
+
 		ccb->ccb_flags |= CAC_CCB_ACTIVE;
 		(*sc->sc_cl->cl_submit)(sc, ccb);
 	}
@@ -494,7 +516,6 @@ cac_ccb_done(struct cac_softc *sc, struct cac_ccb *ccb)
 		printf("%s: invalid request\n", sc->sc_dv.dv_xname);
 	}
 
-	cac_ccb_free(sc, ccb);
 	if (xs) {
 		if (error)
 			xs->error = XS_DRIVER_STUFFUP;
@@ -508,15 +529,24 @@ cac_ccb_done(struct cac_softc *sc, struct cac_ccb *ccb)
 /*
  * Allocate a CCB.
  */
-struct cac_ccb *
-cac_ccb_alloc(struct cac_softc *sc, int nosleep)
+void *
+cac_ccb_alloc(void *xsc)
 {
-	struct cac_ccb *ccb;
+	struct cac_softc *sc = xsc;
+	struct cac_ccb *ccb = NULL;
 
-	if ((ccb = SIMPLEQ_FIRST(&sc->sc_ccb_free)) != NULL)
+	mtx_enter(&sc->sc_ccb_mtx);
+	if ((*sc->sc_cl->cl_fifo_full)(sc) ||
+	    SIMPLEQ_EMPTY(&sc->sc_ccb_free)) {
+#ifdef CAC_DEBUG
+		printf("%s: unable to alloc CCB\n", sc->sc_dv.dv_xname);
+#endif
+	} else {
+		ccb = SIMPLEQ_FIRST(&sc->sc_ccb_free);
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_free, ccb_chain);
-	else
-		ccb = NULL;
+	}
+	mtx_leave(&sc->sc_ccb_mtx);
+
 	return (ccb);
 }
 
@@ -524,11 +554,16 @@ cac_ccb_alloc(struct cac_softc *sc, int nosleep)
  * Put a CCB onto the freelist.
  */
 void
-cac_ccb_free(struct cac_softc *sc, struct cac_ccb *ccb)
+cac_ccb_free(void *xsc, void *xccb)
 {
+	struct cac_softc *sc = xsc;
+	struct cac_ccb *ccb = xccb;
 
 	ccb->ccb_flags = 0;
+
+	mtx_enter(&sc->sc_ccb_mtx);
 	SIMPLEQ_INSERT_HEAD(&sc->sc_ccb_free, ccb, ccb_chain);
+	mtx_leave(&sc->sc_ccb_mtx);
 }
 
 int
@@ -708,18 +743,13 @@ cac_scsi_cmd(xs)
 		poll = xs->flags & SCSI_POLL;
 		if ((error = cac_cmd(sc, op, xs->data, blockcnt * DEV_BSIZE,
 		    target, blockno, flags, xs))) {
-
-			if (error == ENOMEM || error == EBUSY) {
-				xs->error = XS_NO_CCB;
-				scsi_done(xs);
-				splx(s);
-				return;
-			} else {
+			splx(s);
+			if (error == EBUSY)
+				xs->error = XS_BUSY;
+			else
 				xs->error = XS_DRIVER_STUFFUP;
-				scsi_done(xs);
-				splx(s);
-				return;
-			}
+			scsi_done(xs);
+			return;
 		}
 
 		splx(s);
