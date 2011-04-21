@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.1 2005/04/01 10:40:48 mickey Exp $	*/
+/*	$OpenBSD: frame.h,v 1.2 2011/04/21 13:13:16 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -26,6 +26,7 @@
 #define	HPPA_FRAME_SIZE		(128)
 #define	HPPA_FRAME_PSP		(-8)
 #define	HPPA_FRAME_RP		(-16)
+#define	HPPA_FRAME_ARG(n)       (-(16 + 8 * ((n) + 1)))
 
 /*
  * Macros to decode processor status word.
