@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork.S,v 1.3 2006/01/05 22:19:49 kettenis Exp $	*/
+/*	$OpenBSD: rfork.S,v 1.4 2011/04/21 14:12:20 jsing Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -30,9 +30,9 @@
 
 SYSENTRY(rfork)
 	SYSCALL(rfork)
-	addi	-1, ret1, ret1
-	bv	r0(rp)
-	and	ret0, ret1, ret0
+	addi	-1, %ret1, %ret1
+	bv	%r0(%rp)
+	and	%ret0, %ret1, %ret0
 SYSEXIT(rfork)
 
 	.end

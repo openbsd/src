@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.3 2006/01/05 22:19:49 kettenis Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.4 2011/04/21 14:12:20 jsing Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -30,25 +30,25 @@
 
 SYSENTRY(sigprocmask)
 	/* just in case compiler forgot about this */
-	std	arg2, HPPA_FRAME_ARG(2)(sp)
+	std	%arg2, HPPA_FRAME_ARG(2)(%sp)
 
-	comb,<>,n r0, arg1, sigprocmask$nblock
+	comb,<>,n %r0, %arg1, sigprocmask$nblock
 
 	b	sigprocmask$call
-	ldi	1, arg0
+	ldi	1, %arg0
 
 sigprocmask$nblock
-	ldd	0(arg1), arg1
-	std	arg1, HPPA_FRAME_ARG(1)(sp)
+	ldd	0(%arg1), %arg1
+	std	%arg1, HPPA_FRAME_ARG(1)(%sp)
 
 sigprocmask$call
 	SYSCALL(sigprocmask)
 
-	ldd	HPPA_FRAME_ARG(2)(sp), arg2
-	add,=	r0, arg2, r0
-	std	ret0, 0(arg2)
-	bv	r0(rp)
-	copy	r0, ret0
+	ldd	HPPA_FRAME_ARG(2)(%sp), %arg2
+	add,=	%r0, %arg2, %r0
+	std	%ret0, 0(%arg2)
+	bv	%r0(%rp)
+	copy	%r0, %ret0
 SYSEXIT(sigprocmask)
 
 	.end

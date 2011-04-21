@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigpending.S,v 1.3 2006/01/05 22:19:49 kettenis Exp $	*/
+/*	$OpenBSD: sigpending.S,v 1.4 2011/04/21 14:12:20 jsing Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -30,10 +30,10 @@
 
 SYSENTRY(sigpending)
 	SYSCALL(sigpending)
-	ldd	HPPA_FRAME_ARG(0)(sp), t1
-	std	ret0, 0(t1)
-	bv	r0(rp)
-	copy	r0, ret0
+	ldd	HPPA_FRAME_ARG(0)(%sp), %arg3
+	std	%ret0, 0(%arg3)
+	bv	%r0(%rp)
+	copy	%r0, %ret0
 SYSEXIT(sigpending)
 
 	.end

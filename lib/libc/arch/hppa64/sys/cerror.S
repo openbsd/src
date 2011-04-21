@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.2 2011/04/04 12:42:39 guenther Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.3 2011/04/21 14:12:20 jsing Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -33,16 +33,16 @@ WEAK_ALIAS(__cerror, ___cerror)
 	.import errno, data
 ENTRY(___cerror,0)
 #ifdef PIC
-	addil	LT%errno, r19
-	ldd	RT%errno(r1), r1
-	std	t1, 0(r1)
+	addil	LT%errno, %r19
+	ldd	RT%errno(%r1), %r1
+	std	%arg3, 0(%r1)
 #else
-	ldil	L%errno, r1
-	std	t1, R%errno(r1)
+	ldil	L%errno, %r1
+	std	%arg3, R%errno(%r1)
 #endif
-	ldi	-1, ret0
-	bv	r0(rp)
-	ldi	-1, ret1
+	ldi	-1, %ret0
+	bv	%r0(%rp)
+	ldi	-1, %ret1
 EXIT(___cerror)
 
 	.end

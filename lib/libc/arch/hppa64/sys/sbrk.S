@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.3 2006/01/05 22:19:49 kettenis Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.4 2011/04/21 14:12:20 jsing Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -37,29 +37,29 @@ __curbrk
 
 SYSENTRY(sbrk)
 #ifdef PIC
-	addil	LT%__curbrk, r19
-	ldd	RT%__curbrk(r1), t1
-	ldd	0(t1), t2
+	addil	LT%__curbrk, %r19
+	ldd	RT%__curbrk(%r1), %arg3
+	ldd	0(%arg3), %arg2
 #else
-	ldil	L%__curbrk, t1
-	ldd	R%__curbrk(t1), t2
+	ldil	L%__curbrk, %arg3
+	ldd	R%__curbrk(%arg3), %arg2
 #endif
-	add	arg0, t2, arg0
-	std	arg0, HPPA_FRAME_ARG(0)(sp)
+	add	%arg0, %arg2, %arg0
+	std	%arg0, HPPA_FRAME_ARG(0)(%sp)
 
 	SYSCALL(break)
 
 #ifdef PIC
-	addil	LT%__curbrk, r19
-	ldd	RT%__curbrk(r1), t1
+	addil	LT%__curbrk, %r19
+	ldd	RT%__curbrk(%r1), %arg3
 #else
-	ldil	L%__curbrk, t1
-	ldo	R%__curbrk(t1), t1
+	ldil	L%__curbrk, %arg3
+	ldo	R%__curbrk(%arg3), %arg3
 #endif
-	ldd	HPPA_FRAME_ARG(0)(sp), arg0
-	ldd	0(t1), ret0
-	bv	r0(rp)
-	std	arg0, 0(t1)
+	ldd	HPPA_FRAME_ARG(0)(%sp), %arg0
+	ldd	0(%arg3), %ret0
+	bv	%r0(%rp)
+	std	%arg0, 0(%arg3)
 
 SYSEXIT(sbrk)
 
