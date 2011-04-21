@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichiic.c,v 1.25 2011/04/09 04:33:40 deraadt Exp $	*/
+/*	$OpenBSD: ichiic.c,v 1.26 2011/04/21 21:56:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -86,6 +86,7 @@ struct cfdriver ichiic_cd = {
 
 const struct pci_matchid ichiic_ids[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_SMB },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_SMB },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_SMB },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_SMB },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_SMB },
