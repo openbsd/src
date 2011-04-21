@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.23 2011/04/18 22:18:30 krw Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.24 2011/04/21 02:44:15 krw Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -404,13 +404,13 @@ makeconn(char *rhost)
 			return(0);
 	}
 	if (min_freespace) {
-		(void) sendcmd(C_SETCONFIG, "%c%d", SC_FREESPACE, 
+		(void) sendcmd(C_SETCONFIG, "%c%lld", SC_FREESPACE, 
 			       min_freespace);
 		if (response() < 0)
 			return(0);
 	}
 	if (min_freefiles) {
-		(void) sendcmd(C_SETCONFIG, "%c%d", SC_FREEFILES, 
+		(void) sendcmd(C_SETCONFIG, "%c%lld", SC_FREEFILES, 
 			       min_freefiles);
 		if (response() < 0)
 			return(0);
