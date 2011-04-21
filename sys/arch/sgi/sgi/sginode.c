@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.24 2011/04/21 18:09:01 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.25 2011/04/21 18:16:57 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2011 Miodrag Vallat.
  *
@@ -488,7 +488,7 @@ kl_dma_select(paddr_t base, psize_t size)
 	if (size > maxsize) {
 		maxsize = size;
 		dma_constraint.ucr_low = base;
-		dma_constraint.ucr_high = base | ((1UL << 31) - 1);
+		dma_constraint.ucr_high = base + ((1UL << 31) - 1);
 	}
 }
 
