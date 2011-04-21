@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.23 2011/04/08 04:30:11 jordan Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.24 2011/04/21 20:28:16 jordan Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -986,22 +986,27 @@ sr_raid6_addio(struct sr_workunit *wu, int dsk, daddr64_t blk, daddr64_t len,
 void
 sr_raid6_xorp(void *p, void *d, int len)
 {
-	uint8_t *pbuf = p, *data = d;
+	uint32_t *pbuf = p, *data = d;
 
+	len >>= 2;
 	while (len--)
-		pbuf[len] ^= data[len];
+		*pbuf++ ^= *data++;
 }
 
 void
 sr_raid6_xorq(void *q, void *d, int len, int gn)
 {
-	uint8_t		*qbuf = q, *data = d;
-	uint8_t		*gn_map = gf_map[gn];
+	uint32_t 	*qbuf = q, *data = d, x;
+	uint8_t	 	*gn_map = gf_map[gn];
 
-	/* Have to do this a byte at a time */
-	/* Faster multiply.. gn is always constant */
-	while (len--)
-		qbuf[len] ^= gn_map[data[len]];
+	len >>= 2;
+	while (len--) {
+		x = *data++;
+		*qbuf++ ^= (((uint32_t)gn_map[x & 0xff]) |
+		  	    ((uint32_t)gn_map[(x >> 8) & 0xff] << 8) |
+			    ((uint32_t)gn_map[(x >> 16) & 0xff] << 16) |
+			    ((uint32_t)gn_map[(x >> 24) & 0xff] << 24));
+	}
 }
 
 /* Create GF256 log/pow tables: polynomial = 0x11D */
