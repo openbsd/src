@@ -10,6 +10,7 @@ VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_CDEV=	/dev/${VND}c
 VND_IDEV=	/dev/${VND}i
+VND_IRDEV=	/dev/r${VND}i
 VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
@@ -32,7 +33,7 @@ ${IMAGE}: rd_setup do_files rd_teardown
 .endif
 
 do_files:
-	dd if=${DESTDIR}/usr/mdec/boot.elf of=${VND_IDEV}
+	dd if=${DESTDIR}/usr/mdec/boot.elf of=${VND_IRDEV}
 	gzip -c < ${.OBJDIR}/../ramdisk/bsd.rd > ${MOUNT_POINT}/bsd.rd
 	ln ${MOUNT_POINT}/bsd.rd ${MOUNT_POINT}/bsd
 
