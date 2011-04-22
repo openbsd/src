@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.29 2011/03/08 00:13:41 bluhm Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.30 2011/04/22 11:59:26 bluhm Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: March 8 2011 $
+.Dd $Mdocdate: April 22 2011 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -363,12 +363,15 @@ Otherwise the spliced data transfer continues within the kernel
 until the optional maximum is reached, one of the connections
 terminates or an error occurs.
 A successful
-.Xr select 2
+.Xr select 2 ,
+.Xr poll 2 ,
 or
-.Xr poll 2
-operation testing the ability to read from the source socket,
-indicates that the splicing has terminated.
-In this case, the error status can be examined with
+.Xr kqueue 2
+operation testing the ability to read from the source socket indicates
+that the splicing has terminated.
+After reaching the maximum, it becomes readable only when more data
+is available.
+The error status can be examined with
 .Dv SO_ERROR
 at the source socket.
 Note that if a maximum is given, it is only guaranteed that no more
