@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.54 2011/04/03 15:36:03 jasper Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.55 2011/04/22 23:19:54 deraadt Exp $	*/
 /* $FreeBSD: src/sys/dev/isp/isp_pci.c,v 1.148 2007/06/26 23:08:57 mjacob Exp $*/
 /*-
  * Copyright (c) 1997-2006 by Matthew Jacob
@@ -739,7 +739,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	isp->isp_dblev = ISP_LOGDEFAULT;
 #else
 	isp->isp_dblev = ISP_LOGWARN|ISP_LOGERR;
-#ifdef	SCSIDEBUG
+#if 0
 	isp->isp_dblev |= ISP_LOGDEBUG1|ISP_LOGDEBUG2;
 #endif
 #ifdef	DEBUG
