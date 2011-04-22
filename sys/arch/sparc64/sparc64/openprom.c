@@ -1,4 +1,4 @@
-/*	$OpenBSD: openprom.c,v 1.15 2009/04/12 22:17:52 kettenis Exp $	*/
+/*	$OpenBSD: openprom.c,v 1.16 2011/04/22 12:47:26 marco Exp $	*/
 /*	$NetBSD: openprom.c,v 1.4 2002/01/10 06:21:53 briggs Exp $ */
 
 /*
@@ -107,7 +107,7 @@ openpromread(dev_t dev, struct uio *uio, int flags)
 		len = mdesc_len - uio->uio_offset;
 		if (len > uio->uio_resid)
 			len = uio->uio_resid;
-		
+
 		error = uiomove(v, len, uio);
 		if (error)
 			return (error);
