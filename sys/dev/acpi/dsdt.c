@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.184 2011/04/19 23:56:10 deraadt Exp $ */
+/* $OpenBSD: dsdt.c,v 1.185 2011/04/22 18:22:01 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -818,7 +818,7 @@ aml_showvalue(struct aml_value *val, int lvl)
 		break;
 	case AML_OBJTYPE_FIELDUNIT:
 	case AML_OBJTYPE_BUFFERFIELD:
-		printf(" field: bitpos=%.4x bitlen=%.4x ref1:%x ref2:%x [%s]\n",
+		printf(" field: bitpos=%.4x bitlen=%.4x ref1:%p ref2:%p [%s]\n",
 		    val->v_field.bitpos, val->v_field.bitlen,
 		    val->v_field.ref1, val->v_field.ref2,
 		    aml_mnem(val->v_field.type, NULL));
@@ -1102,7 +1102,7 @@ aml_msb(u_int64_t val)
 int64_t
 aml_evalexpr(int64_t lhs, int64_t rhs, int opcode)
 {
-	int64_t res;
+	int64_t res = 0;
 
 	switch (opcode) {
 		/* Math operations */
@@ -2095,7 +2095,7 @@ aml_compare(struct aml_value *a1, struct aml_value *a2, int opcode)
 struct aml_value *
 aml_concat(struct aml_value *a1, struct aml_value *a2)
 {
-	struct aml_value *c;
+	struct aml_value *c = NULL;
 
 	/* Convert arg2 to type of arg1 */
 	a2 = aml_convert(a2, a1->type, -1);
@@ -2610,7 +2610,7 @@ aml_disasm(struct aml_scope *scope, int lvl,
 	struct aml_opcode *htab;
 	uint64_t ival;
 	struct aml_value *rv, tmp;
-	uint8_t *end;
+	uint8_t *end = NULL;
 	struct aml_scope *ms;
 	char *ch;
 	char  mch[64];

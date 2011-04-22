@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitimer.c,v 1.8 2008/06/11 04:42:09 marco Exp $ */
+/* $OpenBSD: acpitimer.c,v 1.9 2011/04/22 18:22:01 jordan Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -93,7 +93,7 @@ acpitimerattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	printf(": %ld Hz, %d bits\n", ACPI_FREQUENCY,
+	printf(": %d Hz, %d bits\n", ACPI_FREQUENCY,
 	    psc->sc_fadt->flags & FADT_TMR_VAL_EXT ? 32 : 24);
 
 #ifdef __HAVE_TIMECOUNTER
