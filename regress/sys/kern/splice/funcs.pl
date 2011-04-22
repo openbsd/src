@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.4 2011/03/13 01:27:23 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.5 2011/04/22 02:06:00 bluhm Exp $
 
 # Copyright (c) 2010,2011 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -22,7 +22,7 @@ use Digest::MD5;
 use IO::Socket qw(sockatmark);
 use Socket;
 use Time::HiRes qw(time alarm sleep);
-use constant SO_SPLICE => 0x1023;
+use BSD::Socket::Splice qw(setsplice getsplice geterror);
 
 ########################################################################
 # Client funcs
@@ -188,10 +188,8 @@ sub relay_splice {
 	my $splicelen;
 	my $shortsplice = 0;
 	do {
-		my $splicemax = $max ? $max - $len : 0;  # XXX should be quad
-		# XXX this works for i386 only
-		my $sosplice = pack('iii', fileno(STDOUT), $splicemax, 0);
-		setsockopt(STDIN, SOL_SOCKET, SO_SPLICE, $sosplice)
+		my $splicemax = $max ? $max - $len : 0;
+		setsplice(\*STDIN, \*STDOUT, $splicemax)
 		    or die ref($self), " splice stdin to stdout failed: $!";
 
 		if ($self->{readblocking}) {
@@ -214,14 +212,13 @@ sub relay_splice {
 			    or die ref($self), " select failed: $!";
 		}
 
-		my $error = getsockopt(STDIN, SOL_SOCKET, SO_ERROR)
+		defined(my $error = geterror(\*STDIN))
 		    or die ref($self), " get error from stdin failed: $!";
-		$! = unpack('i', $error)
+		$! = $error
 		    and die ref($self), " splice failed: $!";
 
-		$sosplice = getsockopt(STDIN, SOL_SOCKET, SO_SPLICE)
+		defined($splicelen = getsplice(\*STDIN))
 		    or die ref($self), " get splice len from stdin failed: $!";
-		$splicelen = unpack('ii', $sosplice);  # XXX should be quad
 		print STDERR "SPLICELEN: ", $splicelen, "\n";
 		!$max || $splicelen <= $splicemax
 		    or die ref($self), " splice len $splicelen ".

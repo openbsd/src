@@ -3,7 +3,7 @@
 
 use Errno;
 use IO::Socket;
-use constant SO_SPLICE => 0x1023;
+use BSD::Socket::Splice "SO_SPLICE";
 
 my $s = IO::Socket::INET->new(
     Proto => "udp",

@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.1 2011/01/07 22:06:08 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2011/04/22 02:06:00 bluhm Exp $
 
-# The following ports must be installed for the args-* regression test:
-# p5-IO-Socket-INET6  object interface for AF_INET and AF_INET6 domain sockets
-# p5-Socket6          Perl defines relating to AF_INET6 sockets
+# The following ports must be installed for the regression tests:
+# p5-BSD-Socket-Splice	perl interface to OpenBSD socket splicing
+# p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
+# p5-Socket6		Perl defines relating to AF_INET6 sockets
 
 ERRS !=			ls error-*.pl
 ARGS !=			ls args-*.pl
@@ -15,9 +16,9 @@ CLEANFILES =		*.log ktrace.out
 # a local and remote ip address for the tcp connections.  To control
 # the remote machine you need a hostname for ssh to log in.  All the
 # test files must be in the same directory local and remote.
-#LOCAL_ADDR ?=
-#REMOTE_ADDR ?=
-#REMOTE_SSH ?=
+LOCAL_ADDR ?=
+REMOTE_ADDR ?=
+REMOTE_SSH ?=
 
 # The error tests try to splice unsuitable sockets and check the
 # kernel error code.
@@ -40,7 +41,7 @@ run-regress-$e: $e
 run-regress-$a: $a
 	time perl relay.pl copy $a
 	time perl relay.pl splice $a
-.if REMOTE_SSH
+.if ! empty (REMOTE_SSH)
 	time perl remote.pl copy ${LOCAL_ADDR} ${REMOTE_ADDR} ${REMOTE_SSH} $a
 	time perl remote.pl splice ${LOCAL_ADDR} ${REMOTE_ADDR} ${REMOTE_SSH} $a
 .endif
