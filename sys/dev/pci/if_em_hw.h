@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.49 2011/04/14 21:14:28 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.50 2011/04/22 10:09:57 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -76,6 +76,7 @@ typedef enum {
     em_ich9lan,
     em_ich10lan,
     em_pchlan,
+    em_pch2lan,
     em_num_macs
 } em_mac_type;
 
@@ -239,6 +240,7 @@ typedef enum {
     em_phy_oem,
     em_phy_82577,
     em_phy_82578,
+    em_phy_82579,
     em_phy_82580,
     em_phy_undefined = 0xFF
 } em_phy_type;
@@ -531,6 +533,8 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_PCH_M_HV_LC         0x10EB
 #define E1000_DEV_ID_PCH_D_HV_DM         0x10EF
 #define E1000_DEV_ID_PCH_D_HV_DC         0x10F0
+#define E1000_DEV_ID_PCH2_LV_LM          0x1502
+#define E1000_DEV_ID_PCH2_LV_V           0x1503
 #define E1000_DEV_ID_82575EB_PT          0x10A7
 #define E1000_DEV_ID_82575EB_PF          0x10A9
 #define E1000_DEV_ID_82575GB_QP          0x10D6
@@ -543,6 +547,8 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_82583V              0x150C
 #define E1000_DEV_ID_82576_NS_SERDES     0x1518
 #define E1000_DEV_ID_82576_SERDES_QUAD   0x150D
+#define E1000_DEV_ID_PCH2_LV_LM          0x1502
+#define E1000_DEV_ID_PCH2_LV_V           0x1503
 #define E1000_DEV_ID_82580_COPPER        0x150E
 #define E1000_DEV_ID_82580_FIBER         0x150F
 #define E1000_DEV_ID_82580_SERDES        0x1510
@@ -3291,6 +3297,7 @@ struct em_host_command_info {
 #define BME1000_E_PHY_ID_R2  0x01410CB1
 #define I82577_E_PHY_ID      0x01540050
 #define I82578_E_PHY_ID      0x004DD040
+#define I82579_E_PHY_ID      0x01540090
 #define I82580_I_PHY_ID      0x015403A0
 #define I350_I_PHY_ID        0x015403B0
 #define IGP04E1000_E_PHY_ID  0x02A80391
