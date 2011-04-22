@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.43 2011/03/12 05:12:14 deraadt Exp $
+#	$OpenBSD: bsd.README,v 1.44 2011/04/22 21:11:50 jmc Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -183,7 +183,7 @@ LIBOWN		Library owner. [${BINOWN}]
 
 LIBMODE		Library mode. [${NONBINMODE}]
 
-DOCDIR		Base path for system documentation (e.g. PSD, USD, etc.)
+DOCDIR		Base path for system documentation
 	        installation. [/usr/share/doc]
 
 DOCGRP		Documentation group. [bin]
