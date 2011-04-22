@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.109 2011/04/18 16:50:22 thib Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.110 2011/04/22 21:28:56 miod Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -226,9 +226,11 @@ vndopen(dev_t dev, int flags, int mode, struct proc *p)
 	part = DISKPART(dev);
 	pmask = 1 << part;
 
-	/* Allow access to the raw device even if we are open. */
-	if (sc->sc_dk.dk_openmask && !(part == RAW_PART) &&
-	    !(mode == S_IFCHR)) {
+	/*
+	 * If any partition is open, all succeeding openings must be of the
+	 * same type or read-only.
+	 */
+	if (sc->sc_dk.dk_openmask && (flags & FWRITE)) {
 		error = EBUSY;
 		goto bad;
 	}
