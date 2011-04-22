@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.351 2011/04/16 05:53:18 ajacoutot Exp $
+#	$OpenBSD: rc,v 1.352 2011/04/22 06:08:14 ajacoutot Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -162,7 +162,17 @@ export PATH
 if [ X"$1" = X"shutdown" ]; then
 	dd if=/dev/arandom of=/var/db/host.random bs=65536 count=1 >/dev/null 2>&1
 	chmod 600 /var/db/host.random >/dev/null 2>&1
-	if [ $? -eq 0 -a -f /etc/rc.shutdown ]; then
+	local _c=$?
+	if [ ${_c} -eq 0 -a -n "${rc_scripts}" ]; then
+		echo -n 'stopping package daemons:'
+		while [ -n "${rc_scripts}" ]; do
+			_r=${rc_scripts##* }
+			rc_scripts=${rc_scripts%%*( )${_r}}
+			[ -x /etc/rc.d/${_r} ] && /etc/rc.d/${_r} stop
+		done
+		echo '.'
+	fi
+	if [ ${_c} -eq 0 -a -f /etc/rc.shutdown ]; then
 		echo /etc/rc.shutdown in progress...
 		. /etc/rc.shutdown
 		echo /etc/rc.shutdown complete.
@@ -797,6 +807,15 @@ if [ -f /etc/rc.firsttime ]; then
 	. /etc/rc.firsttime.run 2>&1 | mail -s 'rc.firsttime output' root >/dev/null
 fi
 rm -f /etc/rc.firsttime.run
+
+# Run rc.d(8) scripts from packages
+if [ -n "${rc_scripts}" ]; then
+	echo -n 'starting package daemons:'
+	for _r in $rc_scripts; do
+		[ -x /etc/rc.d/${_r} ] && /etc/rc.d/${_r} start
+	done
+	echo '.'
+fi
 
 [ -f /etc/rc.local ] && . /etc/rc.local
 
