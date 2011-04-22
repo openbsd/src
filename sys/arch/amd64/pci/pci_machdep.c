@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.42 2011/04/10 16:40:42 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.43 2011/04/22 15:02:35 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -362,10 +362,8 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 
 #if NIOAPIC > 0
 	if (ih.line & APIC_INT_VIA_APIC)
-		snprintf(irqstr, sizeof(irqstr), "apic %d int %d (irq %d)",
-		    APIC_IRQ_APIC(ih.line),
-		    APIC_IRQ_PIN(ih.line),
-		    pci_intr_line(pc, ih));
+		snprintf(irqstr, sizeof(irqstr), "apic %d int %d",
+		    APIC_IRQ_APIC(ih.line), APIC_IRQ_PIN(ih.line));
 	else
 		snprintf(irqstr, sizeof(irqstr), "irq %d",
 		    pci_intr_line(pc, ih));
