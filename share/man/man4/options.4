@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.210 2011/04/05 18:51:25 thib Exp $
+.\"	$OpenBSD: options.4,v 1.211 2011/04/22 21:49:29 krw Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: April 5 2011 $
+.Dd $Mdocdate: April 22 2011 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -760,11 +760,11 @@ and
 must have non-zero values for any debugging info to be printed.
 Only
 .Em SCSIDEBUG_LEVEL
+has a default value (SDEV_DB1 | SDEV_DB2) that is non-zero.
 .It Cd option SCSIDEBUG_BUSES= Ns Ar value
 Define which SCSI buses will print debug info.
 Each bit enables debugging info for the corresponding bus.
 e.g. a value of 0x1 enables debug info for bus 0.
-has a default value that is non-zero.
 .It Cd option SCSIDEBUG_LEVEL= Ns Ar value
 Define which of the four levels of debugging info are printed.
 Each bit enables a level, and multiple levels are specified by setting multiple
