@@ -1,4 +1,4 @@
-.\"	$OpenBSD: reboot.8,v 1.39 2007/11/19 08:51:49 jmc Exp $
+.\"	$OpenBSD: reboot.8,v 1.40 2011/04/22 14:11:08 ajacoutot Exp $
 .\"	$NetBSD: reboot.8,v 1.3 1995/10/05 05:36:21 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)reboot.8	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: November 19 2007 $
+.Dd $Mdocdate: April 22 2011 $
 .Dt REBOOT 8
 .Os
 .Sh NAME
@@ -47,8 +47,14 @@ The
 .Nm halt
 and
 .Nm reboot
-utilities flush the file system cache to disk, run the system
-shutdown script, send all running processes a
+utilities flush the file system cache to disk, execute the
+.Xr rc.d 8
+scripts specified by the
+.Va rc_scripts
+variable defined in
+.Xr rc.conf 8
+in a reverse order,
+run the system shutdown script, send all running processes a
 .Dv SIGTERM
 .Pq and subsequently a Dv SIGKILL ,
 and, respectively, halt or restart the system.
@@ -117,6 +123,7 @@ will attempt to power down the machine after it has halted.
 .Xr boot_sparc64 8 ,
 .Xr boot_vax 8 ,
 .Xr boot_zaurus 8 ,
+.Xr rc.d 8 ,
 .Xr rc.shutdown 8 ,
 .Xr savecore 8 ,
 .Xr shutdown 8 ,
