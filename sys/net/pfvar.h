@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.327 2011/04/12 10:47:29 mikeb Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.328 2011/04/22 15:49:28 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1705,7 +1705,7 @@ extern void			 pf_tbladdr_copyout(struct pf_addr_wrap *);
 extern void			 pf_calc_skip_steps(struct pf_rulequeue *);
 extern struct pool		 pf_src_tree_pl, pf_sn_item_pl, pf_rule_pl;
 extern struct pool		 pf_state_pl, pf_state_key_pl, pf_state_item_pl,
-				    pf_altq_pl, pf_pooladdr_pl, pf_rule_item_pl;
+				    pf_altq_pl, pf_rule_item_pl;
 extern struct pool		 pf_state_scrub_pl;
 extern void			 pf_purge_thread(void *);
 extern void			 pf_purge_expired_src_nodes(int);
