@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.740 2011/04/12 10:47:29 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.741 2011/04/23 10:00:36 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5921,14 +5921,14 @@ done:
 				    "ip options in pf_test()");
 			}
 
-			pf_scrub_ip(&m, s->state_flags, s->min_ttl, s->set_tos);
+			pf_scrub_ip(m, s->state_flags, s->min_ttl, s->set_tos);
 			pf_tag_packet(m, s->tag, s->rtableid[pd.didx]);
 			if (pqid || (pd.tos & IPTOS_LOWDELAY))
 				qid = s->pqid;
 			else
 				qid = s->qid;
 		} else {
-			pf_scrub_ip(&m, r->scrub_flags, r->min_ttl, r->set_tos);
+			pf_scrub_ip(m, r->scrub_flags, r->min_ttl, r->set_tos);
 			if (pqid || (pd.tos & IPTOS_LOWDELAY))
 				qid = r->pqid;
 			else
@@ -6205,13 +6205,13 @@ done:
 
 	if (action != PF_DROP) {
 		if (s) {
-			pf_scrub_ip6(&m, s->min_ttl);
+			pf_scrub_ip6(m, s->min_ttl);
 			if (pqid || (pd.tos & IPTOS_LOWDELAY))
 				qid = s->pqid;
 			else
 				qid = s->qid;
 		} else {
-			pf_scrub_ip6(&m, r->min_ttl);
+			pf_scrub_ip6(m, r->min_ttl);
 			if (pqid || (pd.tos & IPTOS_LOWDELAY))
 				qid = r->pqid;
 			else

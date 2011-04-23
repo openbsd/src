@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.328 2011/04/22 15:49:28 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.329 2011/04/23 10:00:36 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1790,8 +1790,8 @@ int	pf_normalize_tcp_stateful(struct mbuf *, int, struct pf_pdesc *,
 	    u_short *, struct tcphdr *, struct pf_state *,
 	    struct pf_state_peer *, struct pf_state_peer *, int *);
 int	pf_normalize_mss(struct mbuf *, int, struct pf_pdesc *, u_int16_t);
-void	pf_scrub_ip(struct mbuf **, u_int16_t, u_int8_t, u_int8_t);
-void	pf_scrub_ip6(struct mbuf **, u_int8_t);
+void	pf_scrub_ip(struct mbuf *, u_int16_t, u_int8_t, u_int8_t);
+void	pf_scrub_ip6(struct mbuf *, u_int8_t);
 u_int32_t
 	pf_state_expires(const struct pf_state *);
 void	pf_purge_expired_fragments(void);

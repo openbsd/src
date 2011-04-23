@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.131 2011/04/04 14:14:53 henning Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.132 2011/04/23 10:00:36 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1548,9 +1548,8 @@ pf_normalize_mss(struct mbuf *m, int off, struct pf_pdesc *pd, u_int16_t maxmss)
 }
 
 void
-pf_scrub_ip(struct mbuf **m0, u_int16_t flags, u_int8_t min_ttl, u_int8_t tos)
+pf_scrub_ip(struct mbuf *m, u_int16_t flags, u_int8_t min_ttl, u_int8_t tos)
 {
-	struct mbuf		*m = *m0;
 	struct ip		*h = mtod(m, struct ip *);
 
 	/* Clear IP_DF if no-df was requested */
@@ -1572,9 +1571,8 @@ pf_scrub_ip(struct mbuf **m0, u_int16_t flags, u_int8_t min_ttl, u_int8_t tos)
 
 #ifdef INET6
 void
-pf_scrub_ip6(struct mbuf **m0, u_int8_t min_ttl)
+pf_scrub_ip6(struct mbuf *m, u_int8_t min_ttl)
 {
-	struct mbuf		*m = *m0;
 	struct ip6_hdr		*h = mtod(m, struct ip6_hdr *);
 
 	/* Enforce a minimum ttl, may cause endless packet loops */
