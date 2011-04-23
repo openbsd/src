@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.27 2011/04/23 19:52:36 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.28 2011/04/23 21:23:52 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2011 Miodrag Vallat.
  *
@@ -156,7 +156,8 @@ kl_first_pass_board(lboard_t *boardinfo, void *arg)
 	 * interrupt widget is hardwired to #a (which is another facet
 	 * of the bridge).
 	 */
-	kl_hub_widget[boardinfo->brd_nasid] = 0x0a;
+	if (kl_hub_widget[boardinfo->brd_nasid] == 0)
+		kl_hub_widget[boardinfo->brd_nasid] = 0x0a;
 
 	kl_scan_board(boardinfo, KLSTRUCT_ANY, kl_first_pass_comp, arg);
 
