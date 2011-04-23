@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.133 2009/01/28 13:24:07 hshoexer Exp $	 */
+/* $OpenBSD: exchange.c,v 1.134 2011/04/23 03:17:04 lum Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -1427,7 +1427,9 @@ exchange_finalize(struct message *msg)
 		    "exchange_finalize: phase 1 done: %s, %s", id_doi,
 		    id_trp));
 
-		log_verbose("isakmpd: phase 1 done: %s, %s", id_doi, id_trp);
+		log_verbose("isakmpd: phase 1 done%s: %s, %s",
+			(exchange->initiator == 0) ? " (as responder)" : "",
+			id_doi, id_trp);
 	}
 	exchange->doi->finalize_exchange(msg);
 	if (exchange->finalize)

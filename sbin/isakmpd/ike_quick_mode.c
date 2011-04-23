@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.105 2010/06/29 19:50:16 reyk Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.106 2011/04/23 03:17:04 lum Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -1432,7 +1432,8 @@ post_quick_mode(struct message *msg)
 		}
 	}
 
-	log_verbose("isakmpd: quick mode done: %s",
+	log_verbose("isakmpd: quick mode done%s: %s",
+	    (exchange->initiator == 0) ? " (as responder)" : "",
 	    !msg->isakmp_sa || !msg->isakmp_sa->transport ? "<no transport>"
 	    : msg->isakmp_sa->transport->vtbl->decode_ids
 	    (msg->isakmp_sa->transport));
