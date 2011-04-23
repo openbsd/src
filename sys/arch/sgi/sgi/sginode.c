@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.26 2011/04/23 19:35:57 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.27 2011/04/23 19:52:36 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2011 Miodrag Vallat.
  *
@@ -227,11 +227,11 @@ kl_first_pass_comp(klinfo_t *comp, void *arg)
 	int ip35 = *(int *)arg;
 	klcpu_t *cpucomp;
 	klmembnk_m_t *memcomp_m;
+	klxbow_t *xbowcomp;
 	arc_config64_t *arc;
 #ifdef DEBUG
 	klmembnk_n_t *memcomp_n;
 	klhub_t *hubcomp;
-	klxbow_t *xbowcomp;
 	klscsi_t *scsicomp;
 	klscctl_t *scsi2comp;
 	int i;
@@ -330,19 +330,12 @@ kl_first_pass_comp(klinfo_t *comp, void *arg)
 		}
 		break;
 
-#ifdef DEBUG
-	case KLSTRUCT_HUB:
-		hubcomp = (klhub_t *)comp;
-		DB_PRF(("\t  port %d flag %d speed %dMHz\n",
-		    hubcomp->hub_port.port_nasid, hubcomp->hub_port.port_flag,
-		    hubcomp->hub_speed / 1000000));
-		break;
-
 	case KLSTRUCT_XBOW:
 		xbowcomp = (klxbow_t *)comp;
 		DB_PRF(("\t hub master link %d\n",
 		    xbowcomp->xbow_hub_master_link));
 		kl_hub_widget[comp->nasid] = xbowcomp->xbow_hub_master_link;
+#ifdef DEBUG
 		for (i = 0; i < MAX_XBOW_LINKS; i++) {
 			if (!ISSET(xbowcomp->xbow_port_info[i].port_flag,
 			    XBOW_PORT_ENABLE))
@@ -351,6 +344,15 @@ kl_first_pass_comp(klinfo_t *comp, void *arg)
 			    xbowcomp->xbow_port_info[i].port_nasid,
 			    xbowcomp->xbow_port_info[i].port_flag));
 		}
+#endif
+		break;
+
+#ifdef DEBUG
+	case KLSTRUCT_HUB:
+		hubcomp = (klhub_t *)comp;
+		DB_PRF(("\t  port %d flag %d speed %dMHz\n",
+		    hubcomp->hub_port.port_nasid, hubcomp->hub_port.port_flag,
+		    hubcomp->hub_speed / 1000000));
 		break;
 
 	case KLSTRUCT_SCSI2:
