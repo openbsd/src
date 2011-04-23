@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.132 2011/04/05 12:50:15 guenther Exp $	*/
+/*	$OpenBSD: locore.s,v 1.133 2011/04/23 22:16:13 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -528,11 +528,7 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	%edx,%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-#ifdef DDB
-	orl	$(PG_V|PG_KW),%eax
-#else
 	orl	$(PG_V|PG_KR),%eax
-#endif
 	fillkpt
 
 	/* Map the data, BSS, and bootstrap tables read-write. */

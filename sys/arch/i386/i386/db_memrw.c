@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_memrw.c,v 1.12 2007/02/20 21:15:01 tom Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.13 2011/04/23 22:16:13 deraadt Exp $	*/
 /*	$NetBSD: db_memrw.c,v 1.6 1999/04/12 20:38:19 pk Exp $	*/
 
 /*
@@ -58,45 +58,95 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
 }
 
 /*
+ * Write bytes somewhere in the kernel text.  Make the text
+ * pages writable temporarily.
+ */
+static void
+db_write_text(vaddr_t addr, size_t size, char *data)
+{
+	pt_entry_t *pte, oldpte, tmppte;
+	vaddr_t pgva;
+	size_t limit;
+	char *dst;
+
+	if (size == 0)
+		return;
+
+	dst = (char *)addr;
+
+	do {
+		/*
+		 * Get the PTE for the page.
+		 */
+		pte = kvtopte(addr);
+		oldpte = *pte;
+
+		if ((oldpte & PG_V) == 0) {
+			printf(" address %p not a valid page\n", dst);
+			return;
+		}
+
+		/*
+		 * Get the VA for the page.
+		 */
+		if (oldpte & PG_PS)
+			pgva = (vaddr_t)dst & PG_LGFRAME;
+		else
+			pgva = trunc_page((vaddr_t)dst);
+
+		/*
+		 * Compute number of bytes that can be written
+		 * with this mapping and subtract it from the
+		 * total size.
+		 */
+#ifdef NBPD_L2
+		if (oldpte & PG_PS)
+			limit = NBPD_L2 - ((vaddr_t)dst & (NBPD_L2 - 1));
+		else
+#endif
+			limit = PAGE_SIZE - ((vaddr_t)dst & PGOFSET);
+		if (limit > size)
+			limit = size;
+		size -= limit;
+
+		tmppte = (oldpte & ~PG_KR) | PG_KW;
+		*pte = tmppte;
+		pmap_update_pg(pgva);
+
+		/*
+		 * Page is now writable.  Do as much access as we
+		 * can in this page.
+		 */
+		for (; limit > 0; limit--)
+			*dst++ = *data++;
+
+		/*
+		 * Restore the old PTE.
+		 */
+		*pte = oldpte;
+
+		pmap_update_pg(pgva);
+		
+	} while (size != 0);
+}
+
+/*
  * Write bytes to kernel address space for debugger.
  */
 void
 db_write_bytes(vaddr_t addr, size_t size, char *data)
 {
 	char	*dst;
-
-	pt_entry_t *ptep0 = 0;
-	pt_entry_t	oldmap0 = { 0 };
-	vaddr_t	addr1;
-	pt_entry_t *ptep1 = 0;
-	pt_entry_t	oldmap1 = { 0 };
 	extern char	etext;
 
 	if (addr >= VM_MIN_KERNEL_ADDRESS &&
 	    addr < (vaddr_t)&etext) {
-		ptep0 = kvtopte(addr);
-		oldmap0 = *ptep0;
-		*(int *)ptep0 |= /* INTEL_PTE_WRITE */ PG_RW;
-
-		addr1 = trunc_page(addr + size - 1);
-		if (trunc_page(addr) != addr1) {
-			/* data crosses a page boundary */
-			ptep1 = kvtopte(addr1);
-			oldmap1 = *ptep1;
-			*(int *)ptep1 |= /* INTEL_PTE_WRITE */ PG_RW;
-		}
-		tlbflush();
+		db_write_text(addr, size, data);
+		return;
 	}
 
 	dst = (char *)addr;
 
 	while (size-- > 0)
 		*dst++ = *data++;
-
-	if (ptep0) {
-		*ptep0 = oldmap0;
-		if (ptep1)
-			*ptep1 = oldmap1;
-		tlbflush();
-	}
 }
