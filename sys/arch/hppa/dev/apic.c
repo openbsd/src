@@ -1,4 +1,4 @@
-/*	$OpenBSD: apic.c,v 1.12 2010/09/20 06:33:47 matthew Exp $	*/
+/*	$OpenBSD: apic.c,v 1.13 2011/04/23 22:20:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -236,12 +236,11 @@ apic_intr(void *v)
 	int claimed = 0;
 
 	while (iv) {
-		if (iv->handler(iv->arg)) {
-			if (iv->cnt)
-				iv->cnt->ec_count++;
-			else
-				claimed = 1;
-		}
+		claimed = iv->handler(iv->arg);
+		if (claimed != 0 && iv->cnt)
+			iv->cnt->ec_count++;
+		if (claimed == 1)
+			break;
 		iv = iv->next;
 	}
 
