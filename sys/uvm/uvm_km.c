@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.99 2011/04/19 20:00:11 matthew Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.100 2011/04/23 17:48:48 kettenis Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -1003,6 +1003,7 @@ km_free(void *v, size_t sz, const struct kmem_va_mode *kv,
 		struct uvm_km_free_page *fp = v;
 		mtx_enter(&uvm_km_pages.mtx);
 		fp->next = uvm_km_pages.freelist;
+		uvm_km_pages.freelist = fp;
 		if (uvm_km_pages.freelistlen++ > 16)
 			wakeup(&uvm_km_pages.km_proc);
 		mtx_leave(&uvm_km_pages.mtx);
