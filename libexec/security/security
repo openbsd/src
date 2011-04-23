@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.10 2011/04/17 13:26:07 schwarze Exp $
+# $OpenBSD: security,v 1.11 2011/04/23 13:43:44 schwarze Exp $
 #
 # Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -621,26 +621,25 @@ sub check_filelist {
 			    !S_ISBLK($files->{$f}{mode});
 			foreach my $k (@fields) {
 				next if $old->{$k} eq $files->{$f}{$k};
-				push @{$changed{change}},
+				push @{$changed{changes}},
 				    [ @$old{@fields}, $f ],
 				    [ @{$files->{$f}}{@fields}, $f ];
 				last;
 			}
 			next;
 		}
-		push @{$changed{add}}, [ @{$files->{$f}}{@fields}, $f ];
+		push @{$changed{additions}}, [ @{$files->{$f}}{@fields}, $f ];
 	}
 	foreach my $f (sort keys %current) {
-		push @{$changed{delete}}, [ @{$current{$f}}{@fields}, $f ];
+		push @{$changed{deletions}}, [ @{$current{$f}}{@fields}, $f ];
 	};
 
-	$check_title = (ucfirst $mode) . ' additions:';
-	nag 1, $_ for adjust_columns @{$changed{add}};
-	$check_title = (ucfirst $mode) . ' deletions:';
-	nag 1, $_ for adjust_columns @{$changed{delete}};
-	$mode =~ s/device/block device/;
-	$check_title = (ucfirst $mode) . ' changes:';
-	nag 1, $_ for adjust_columns @{$changed{change}};
+	foreach my $k (qw( additions deletions changes )) {
+		next unless exists $changed{$k};
+		$mode = 'block device' if $mode eq 'device' && $k eq 'changes';
+		$check_title = (ucfirst $mode) . " $k:";
+		nag 1, $_ for adjust_columns @{$changed{$k}};
+	}
 
 	return if !%changed;
 	copy $current, $backup;
