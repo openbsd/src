@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.75 2011/04/06 12:05:00 sthen Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.76 2011/04/23 10:00:13 sthen Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -286,6 +286,7 @@ int waittime = 5;		/* time to wait for response (in seconds) */
 int nflag;			/* print addresses numerically */
 int dump;
 int xflag;			/* show ICMP extension header */
+int tflag;			/* tos flag was set */
 
 int
 main(int argc, char *argv[])
@@ -430,6 +431,7 @@ main(int argc, char *argv[])
 			if (errno || !*optarg || *ep || l < 0 || l > 255)
 				errx(1, "tos must be 0 to 255.");
 			last_tos = tos = (int)l;
+			tflag = 1;
 			break;
 		case 'v':
 			verbose++;
@@ -644,7 +646,7 @@ main(int argc, char *argv[])
 
 				tos_returned = inner_ip->ip_tos;
 
-				if (tos_returned != last_tos)
+				if (tflag && (tos_returned != last_tos))
 					printf (" (TOS=%d!)", tos_returned);
 
 				last_tos = tos_returned;
