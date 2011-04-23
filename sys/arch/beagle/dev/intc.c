@@ -1,4 +1,4 @@
-/* $OpenBSD: intc.c,v 1.4 2010/09/20 06:33:48 matthew Exp $ */
+/* $OpenBSD: intc.c,v 1.5 2011/04/23 03:54:42 drahn Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -109,7 +109,7 @@ struct intrq {
 	int iq_ist;			/* share type */
 };
 
-volatile int current_ipl_level;
+volatile int current_ipl_level = IPL_HIGH;
 volatile int softint_pending;
 
 struct intrq intc_handler[NIRQ];
