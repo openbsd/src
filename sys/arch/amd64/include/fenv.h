@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.h,v 1.1 2011/04/21 21:12:56 martynas Exp $	*/
+/*	$OpenBSD: fenv.h,v 1.2 2011/04/23 21:54:20 martynas Exp $	*/
 /*	$NetBSD: fenv.h,v 1.1 2010/07/31 21:47:54 joerg Exp $	*/
 
 /*-
@@ -49,7 +49,8 @@
  * exception constants defined above.
  */
 #define	FE_ALL_EXCEPT		\
-	(FE_DIVBYZERO | FE_INEXACT | FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW)
+	(FE_DIVBYZERO | FE_INEXACT | FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW | \
+	 FE_DENORMAL)
 
 /*
  * Each symbol representing the rounding direction, expands to an integer
