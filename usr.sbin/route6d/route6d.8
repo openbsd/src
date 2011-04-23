@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route6d.8,v 1.20 2010/09/19 21:59:23 jmc Exp $
+.\"	$OpenBSD: route6d.8,v 1.21 2011/04/23 10:14:59 sobrado Exp $
 .\"	$KAME: route6d.8,v 1.11 2002/06/02 15:00:30 itojun Exp $
 .\"
 .\" Copyright (c) 1996 WIDE Project. All rights reserved.
@@ -15,56 +15,34 @@
 .\" LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
 .\" A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: September 19 2010 $
+.Dd $Mdocdate: April 23 2011 $
 .Dt ROUTE6D 8
 .Os
 .Sh NAME
 .Nm route6d
 .Nd RIP6 routing daemon
 .Sh SYNOPSIS
+.Bk -words
 .Nm route6d
 .Op Fl aDdhlnqSs
-.Oo
-.Fl A Ar prefix
 .Sm off
-.No / Ar preflen , if1\ \&
-.Op , Ar if2 , ...
-.Oc
+.Op Fl A No \~ Ar prefix No / Ar preflen , Ar if1 Op , Ar if2 , ...
 .Sm on
-.Bk -words
-.Oo
-.Fl L Ar prefix
 .Sm off
-.No / Ar preflen , if1\ \&
-.Op , Ar if2 , ...
-.Oc
+.Op Fl L No \~ Ar prefix No / Ar preflen , Ar if1 Op , Ar if2 , ...
 .Sm on
-.Ek
-.Oo
-.Fl N Ar if1
 .Sm off
-.Op , Ar if2 , ...
-.Oc
+.Op Fl N No \~ Ar if1 Op , Ar if2 , ...
 .Sm on
-.Bk -words
-.Oo
-.Fl O Ar prefix
 .Sm off
-.No / Ar preflen , if1\ \&
-.Op , Ar if2 , ...
-.Oc
+.Op Fl O No \~ Ar prefix No / Ar preflen , Ar if1 Op , Ar if2 , ...
 .Sm on
-.Ek
 .Op Fl R Ar routelog
-.Bk -words
-.Oo
-.Fl T Ar if1
 .Sm off
-.Op , Ar if2 , ...
-.Oc
+.Op Fl T No \~ Ar if1 Op , Ar if2 , ...
 .Sm on
-.Ek
 .Op Fl t Ar tag
+.Ek
 .Sh DESCRIPTION
 The
 .Nm

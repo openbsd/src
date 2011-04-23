@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ndp.8,v 1.27 2010/09/03 11:22:36 jmc Exp $
+.\"	$OpenBSD: ndp.8,v 1.28 2011/04/23 10:14:59 sobrado Exp $
 .\"	$KAME: ndp.8,v 1.28 2002/07/17 08:46:33 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: April 23 2011 $
 .Dt NDP 8
 .Os
 .\"
@@ -47,11 +47,7 @@
 .Op Fl f Ar filename
 .Op Fl I Op Ar interface | Ic delete
 .Op Fl i Ar interface Op Ar flag ...
-.Oo
-.Fl s Ar nodename etheraddr
-.Op Ic temp
-.Op Ic proxy
-.Oc
+.Op Fl s Ar nodename etheraddr Oo Ic temp Oc Op Ic proxy
 .Op Ar hostname
 .Ek
 .\"

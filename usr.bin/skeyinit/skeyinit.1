@@ -1,8 +1,8 @@
-.\"	$OpenBSD: skeyinit.1,v 1.34 2007/05/31 19:20:16 jmc Exp $
+.\"	$OpenBSD: skeyinit.1,v 1.35 2011/04/23 10:14:59 sobrado Exp $
 .\"	$NetBSD: skeyinit.1,v 1.4 1995/07/07 22:24:09 jtc Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 23 2011 $
 .Dt SKEYINIT 1
 .Os
 .Sh NAME
@@ -14,9 +14,7 @@
 .Op Fl CDErsx
 .Op Fl a Ar auth-type
 .Op Fl n Ar count
-.Oo
-.Fl md4 | Fl md5 | rmd160 | sha1
-.Oc
+.Op Fl md4 | md5 | rmd160 | sha1
 .Op Ar user
 .Ek
 .Sh DESCRIPTION
