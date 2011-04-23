@@ -19,6 +19,7 @@
 ./usr/include/amd64/disklabel.h
 ./usr/include/amd64/endian.h
 ./usr/include/amd64/exec.h
+./usr/include/amd64/fenv.h
 ./usr/include/amd64/float.h
 ./usr/include/amd64/fpu.h
 ./usr/include/amd64/frame.h

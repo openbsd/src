@@ -747,6 +747,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/disklabel.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/endian.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/exec.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/fenv.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/float.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/fpu.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/frame.ph
