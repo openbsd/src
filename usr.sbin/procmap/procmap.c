@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.37 2011/04/10 03:20:59 guenther Exp $ */
+/*	$OpenBSD: procmap.c,v 1.38 2011/04/23 01:01:34 tedu Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -828,7 +828,7 @@ findname(kvm_t *kd, struct kbit *vmspace,
 	    (caddr_t)vme->end) {
 		name = "  [ stack ]";
 	} else if (D(vmspace, vmspace)->vm_daddr <= (caddr_t)vme->start &&
-	    D(vmspace, vmspace)->vm_daddr + MAXDSIZ >= (caddr_t)vme->end &&
+	    D(vmspace, vmspace)->vm_daddr + BRKSIZ >= (caddr_t)vme->end &&
 	    D(vmspace, vmspace)->vm_dsize * getpagesize() / 2 <
 	    (vme->end - vme->start)) {
 		name = "  [ heap ]";
