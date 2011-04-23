@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.25 2011/04/21 18:16:57 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.26 2011/04/23 19:35:57 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2011 Miodrag Vallat.
  *
@@ -43,7 +43,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/memconf.h>
@@ -63,8 +63,6 @@
 
 void	kl_add_memory_ip27(int16_t, int16_t *, unsigned int);
 void	kl_add_memory_ip35(int16_t, int16_t *, unsigned int);
-
-void	kl_dma_select(paddr_t, psize_t);
 
 int	kl_first_pass_board(lboard_t *, void *);
 int	kl_first_pass_comp(klinfo_t *, void *);
@@ -476,29 +474,9 @@ kl_get_console()
 }
 
 /*
- * Pick the given window as the DMAable memory window, if it contains more
- * memory than our former choice. Expects the base address to be aligned on
- * a 2GB boundary.
- */
-void
-kl_dma_select(paddr_t base, psize_t size)
-{
-	static psize_t maxsize = 0;
-
-	if (size > maxsize) {
-		maxsize = size;
-		dma_constraint.ucr_low = base;
-		dma_constraint.ucr_high = base + ((1UL << 31) - 1);
-	}
-}
-
-/*
  * Process memory bank information.
  * There are two different routines, because IP27 and IP35 do not
  * layout memory the same way.
- *
- * This is the opportunity to pick the largest populated 2GB window on a
- * 2GB boundary, as our DMA window.
  */
 
 /*
@@ -513,25 +491,11 @@ kl_add_memory_ip27(int16_t nasid, int16_t *sizes, unsigned int cnt)
 	paddr_t basepa;
 	uint64_t fp, lp, np;
 	unsigned int seg, nmeg;
-	paddr_t twogseg;
-	psize_t twogcnt;
 
 	basepa = (paddr_t)nasid << kl_n_shift;
-
-	/* note we know kl_n_shift > 31, so 2GB windows can not span nodes */
-	twogseg = basepa >> 31;
-	twogcnt = 0;
-
 	while (cnt-- != 0) {
 		nmeg = *sizes++;
 		for (seg = 0; seg < 4; basepa += (1 << 27), seg++) {
-			/* did we cross a 2GB boundary? */
-			if ((basepa >> 31) != twogseg) {
-				kl_dma_select(twogseg << 31, twogcnt);
-				twogseg = basepa >> 31;
-				twogcnt = 0;
-			}
-
 			if (nmeg <= 128)
 				np = seg == 0 ? nmeg : 0;
 			else
@@ -558,11 +522,10 @@ kl_add_memory_ip27(int16_t nasid, int16_t *sizes, unsigned int cnt)
 				physmem += atop(32 << 20);
 			}
 
-			twogcnt += ptoa(lp - fp);
-
 			if (memrange_register(fp, lp,
 			    ~(atop(1UL << kl_n_shift) - 1),
-			    VM_FREELIST_DEFAULT) != 0) {
+			    lp <= atop(2UL << 30) ?
+			      VM_FREELIST_DEFAULT : VM_FREELIST_DMA32) != 0) {
 				/*
 				 * We could hijack the smallest segment here.
 				 * But is it really worth doing?
@@ -573,8 +536,6 @@ kl_add_memory_ip27(int16_t nasid, int16_t *sizes, unsigned int cnt)
 			}
 		}
 	}
-
-	kl_dma_select(twogseg << 31, twogcnt);
 }
 
 /*
@@ -586,23 +547,9 @@ kl_add_memory_ip35(int16_t nasid, int16_t *sizes, unsigned int cnt)
 {
 	paddr_t basepa;
 	uint64_t fp, lp, np;
-	paddr_t twogseg;
-	psize_t twogcnt;
 
 	basepa = (paddr_t)nasid << kl_n_shift;
-
-	/* note we know kl_n_shift > 31, so 2GB windows can not span nodes */
-	twogseg = basepa >> 31;
-	twogcnt = 0;
-
 	while (cnt-- != 0) {
-		/* did we cross a 2GB boundary? */
-		if ((basepa >> 31) != twogseg) {
-			kl_dma_select(twogseg << 31, twogcnt);
-			twogseg = basepa >> 31;
-			twogcnt = 0;
-		}
-
 		np = *sizes++;
 		if (np != 0) {
 			DB_PRF(("IP35 memory from %p to %p (%u MB)\n",
@@ -624,11 +571,10 @@ kl_add_memory_ip35(int16_t nasid, int16_t *sizes, unsigned int cnt)
 				physmem += atop(64 << 20);
 			}
 
-			twogcnt += ptoa(lp - fp);
-
 			if (memrange_register(fp, lp,
 			    ~(atop(1UL << kl_n_shift) - 1),
-			    VM_FREELIST_DEFAULT) != 0) {
+			    lp <= atop(2UL << 30) ?
+			      VM_FREELIST_DEFAULT : VM_FREELIST_DMA32) != 0) {
 				/*
 				 * We could hijack the smallest segment here.
 				 * But is it really worth doing?
@@ -640,8 +586,6 @@ kl_add_memory_ip35(int16_t nasid, int16_t *sizes, unsigned int cnt)
 		}
 		basepa += 1UL << 30;	/* 1 GB */
 	}
-
-	kl_dma_select(twogseg << 31, twogcnt);
 }
 
 /*
