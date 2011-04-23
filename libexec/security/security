@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.11 2011/04/23 13:43:44 schwarze Exp $
+# $OpenBSD: security,v 1.12 2011/04/23 19:47:06 schwarze Exp $
 #
 # Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -383,7 +383,7 @@ sub check_homedir {
 	my ($mode, $fuid) = (stat(_))[2,4];
 	nag $fuid && $fuid != $uid,
 	    "user $name home directory is owned by " .
-	    ((getpwuid $fuid)[0] || $fuid);
+	    ((getpwuid $fuid)[0] // $fuid);
 	nag $mode & S_IWGRP,
 	    "user $name home directory is group writable";
 	nag $mode & S_IWOTH,
@@ -402,7 +402,7 @@ sub check_dot_readable {
 		my ($mode, $fuid) = (stat(_))[2,4];
 		nag $fuid && $fuid != $uid,
 		    "user $name $f file is owned by " .
-		    ((getpwuid $fuid)[0] || $fuid);
+		    ((getpwuid $fuid)[0] // $fuid);
 		nag $mode & S_IRGRP,
 		    "user $name $f file is group readable";
 		nag $mode & S_IROTH,
@@ -430,7 +430,7 @@ sub check_dot_writeable {
 		my ($mode, $fuid) = (stat(_))[2,4];
 		nag $fuid && $fuid != $uid,
 		    "user $name $f file is owned by " .
-		    ((getpwuid $fuid)[0] || $fuid);
+		    ((getpwuid $fuid)[0] // $fuid);
 		nag $mode & S_IWGRP,
 		    "user $name $f file is group writable";
 		nag $mode & S_IWOTH,
@@ -445,8 +445,8 @@ sub check_mailboxes {
 	foreach my $name (readdir $dh) {
 		next if $name =~ /^\.\.?$/;
 		my ($mode, $fuid, $fgid) = (stat "$dir/$name")[2,4,5];
-		my $fname = (getpwuid $fuid)[0] || $fuid;
-		my $gname = (getgrgid $fgid)[0] || $fgid;
+		my $fname = (getpwuid $fuid)[0] // $fuid;
+		my $gname = (getgrgid $fgid)[0] // $fgid;
 		nag $fname ne $name,
 		    "user $name mailbox is owned by $fname";
 		nag S_IMODE($mode) != (S_IRUSR | S_IWUSR),
@@ -564,8 +564,8 @@ sub find_special_files {
 		$file->{mode}    = $mode;
 		$file->{strmode} = strmode $mode;
 		$file->{nlink}   = $nlink;
-		$file->{user}    = (getpwuid $uid)[0];
-		$file->{group}   = (getgrgid $gid)[0];
+		$file->{user}    = (getpwuid $uid)[0] // $uid;
+		$file->{group}   = (getgrgid $gid)[0] // $gid;
 		$file->{size}    = $size;
 		@$file{qw(wday mon day time year)} =
 		    split ' ', localtime $mtime;
