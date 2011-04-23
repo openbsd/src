@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.93 2011/04/19 21:39:18 schwarze Exp $
+#	$OpenBSD: special,v 1.94 2011/04/23 13:52:53 schwarze Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -86,7 +86,6 @@ resolv.conf	type=file mode=0644 uname=root gname=wheel optional
 resolv.conf.tail type=file mode=0644 uname=root gname=wheel optional
 ripd.conf	type=file mode=0600 uname=root gname=wheel
 sasyncd.conf	type=file mode=0600 uname=root gname=wheel
-security	type=file mode=0644 uname=root gname=wheel
 sensorsd.conf	type=file mode=0644 uname=root gname=wheel
 shells		type=file mode=0644 uname=root gname=wheel
 skey		type=dir mode=01730 uname=root gname=auth optional
