@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.25 2011/04/18 12:29:59 krw Exp $	*/
+/*	$OpenBSD: common.c,v 1.26 2011/04/24 02:23:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -101,11 +101,6 @@ init(int argc, char **argv, char **envp)
 {
 	int i;
 
-#ifdef SIGSEGV_CHECK
-	if (!isserver)
-		(void) signal(SIGSEGV, sighandler);
-#endif
-
 	/*
 	 * Save a copy of our argc and argv before setargs() overwrites them
 	 */
@@ -200,22 +195,6 @@ lostconn(void)
 	finish();
 }
 
-#ifdef SIGSEGV_CHECK
-/*
- * Do a core dump
- */
-void
-coredump(void)
-{
-	error("Segmentation violation - dumping core [PID = %d, %s]",
-	      getpid(), 
-	      (isserver) ? "isserver" : ((amchild) ? "amchild" : "parent"));
-	abort();
-	/*NOTREACHED*/
-	fatalerr("Abort failed - no core dump.  Exiting...");
-}
-#endif
-
 /*
  * General signal handler
  */
@@ -224,17 +203,20 @@ sighandler(int sig)
 {
 	int save_errno = errno;
 
+	/* XXX signal race */
 	debugmsg(DM_CALL, "sighandler() received signal %d\n", sig);
 
 	switch (sig) {
 	case SIGALRM:
 		contimedout = TRUE;
+		/* XXX signal race */
 		checkhostname();
 		error("Response time out");
 		finish();
 		break;
 
 	case SIGPIPE:
+		/* XXX signal race */
 		lostconn();
 		break;
 
@@ -242,20 +224,16 @@ sighandler(int sig)
 		debug = !debug;
 		break;
 
-#ifdef SIGSEGV_CHECK
-	case SIGSEGV:
-		coredump();
-		break;
-#endif
-
 	case SIGHUP:
 	case SIGINT:
 	case SIGQUIT:
 	case SIGTERM:
+		/* XXX signal race */
 		finish();
 		break;
 
 	default:
+		/* XXX signal race */
 		fatalerr("No signal handler defined for signal %d.", sig);
 	}
 	errno = save_errno;
