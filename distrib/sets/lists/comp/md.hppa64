@@ -166,6 +166,7 @@
 ./usr/include/hppa64/eisa_machdep.h
 ./usr/include/hppa64/endian.h
 ./usr/include/hppa64/exec.h
+./usr/include/hppa64/fenv.h
 ./usr/include/hppa64/float.h
 ./usr/include/hppa64/frame.h
 ./usr/include/hppa64/hil_machdep.h

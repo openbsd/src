@@ -558,6 +558,7 @@
 ./usr/include/hppa/eisa_machdep.h
 ./usr/include/hppa/endian.h
 ./usr/include/hppa/exec.h
+./usr/include/hppa/fenv.h
 ./usr/include/hppa/float.h
 ./usr/include/hppa/fpu.h
 ./usr/include/hppa/frame.h

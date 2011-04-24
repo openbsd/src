@@ -709,6 +709,7 @@
 ./usr/libdata/perl5/hppa64-openbsd/5.12.2/threads
 ./usr/libdata/perl5/hppa64-openbsd/5.12.2/threads.pm
 ./usr/libdata/perl5/hppa64-openbsd/5.12.2/threads/shared.pm
+./usr/libdata/perl5/site_perl/hppa-openbsd/hppa64/fenv.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/_h2ph_pre.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/a.out.ph

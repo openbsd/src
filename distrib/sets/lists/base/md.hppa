@@ -1839,6 +1839,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/eisa_machdep.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/endian.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/exec.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/fenv.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/float.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/fpu.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/frame.ph
