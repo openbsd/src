@@ -1,0 +1,309 @@
+2006-06-09  Nick Clifton  <nickc@redhat.com>
+
+	* po/fi.po: Updated Finnish translation.
+
+2006-06-07  Joseph S. Myers  <joseph@codesourcery.com>
+
+	* po/Make-in (pdf, ps): New dummy targets.
+
+2006-05-30  Nick Clifton  <nickc@redhat.com>
+
+	* po/es.po: Updated Spanish translation.
+
+2006-05-26  Richard Sandiford  <richard@codesourcery.com>
+
+	* m68k-opc.c (m68k_opcodes): Fix the masks of the Coldfire fmovemd
+	and fmovem entries.  Put register list entries before immediate
+	mask entries.  Use "l" rather than "L" in the fmovem entries.
+	* m68k-dis.c (match_insn_m68k): Remove the PRIV argument and work it
+	out from INFO.
+	(m68k_scan_mask): New function, split out from...
+	(print_insn_m68k): ...here.  If no architecture has been set,
+	first try printing an m680x0 instruction, then try a Coldfire one.
+
+2006-05-24  Nick Clifton  <nickc@redhat.com>
+
+	* po/ga.po: Updated Irish translation.
+
+2006-05-22  Nick Clifton  <nickc@redhat.com>
+
+	* crx-dis.c (EXTRACT): Make macro work on 64-bit hosts.
+
+2006-05-22  Nick Clifton  <nickc@redhat.com>
+
+	* po/nl.po: Updated translation.
+
+2006-05-18  Alan Modra  <amodra@bigpond.net.au>
+
+	* avr-dis.c (avr_operand): Warning fix.
+
+2006-05-04  Thiemo Seufer  <ths@mips.com>
+
+	* mips-opc.c (mips_builtin_opcodes): Fix mftr argument order.
+
+2006-04-16  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* po/POTFILES.in: Regenerated.
+
+2006-04-12   Hochstein  <hochstein@algo.informatik.tu-darmstadt.de>
+
+	PR binutils/2454
+	* avr-dis.c (avr_operand): Arrange for a comment to appear before
+	the symolic form of an address, so that the output of objdump -d
+	can be reassembled.
+
+2006-04-10  DJ Delorie  <dj@redhat.com>
+
+	* m32c-asm.c: Regenerate.
+
+2006-04-06  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* Makefile.am: Add install-html target.
+	* Makefile.in: Regenerate.
+
+2006-04-06  Nick Clifton  <nickc@redhat.com>
+
+	* po/vi/po: Updated Vietnamese translation.
+
+2006-03-31  Paul Koning  <ni1d@arrl.net>
+
+	* pdp11-opc.c (pdp11_opcodes): Fix opcode for SEC instruction.
+
+2006-03-16  Bernd Schmidt  <bernd.schmidt@analog.com>
+
+	* bfin-dis.c (decode_dsp32shiftimm_0): Simplify and correct the
+	logic to identify halfword shifts.
+
+2006-03-16  Paul Brook  <paul@codesourcery.com>
+
+	* arm-dis.c (arm_opcodes): Rename swi to svc.
+	(thumb_opcodes): Ditto.
+
+2006-03-13  DJ Delorie  <dj@redhat.com>
+
+	* m32c-asm.c: Regenerate.
+	* m32c-desc.c: Likewise.
+	* m32c-desc.h: Likewise.
+	* m32c-dis.c: Likewise.
+	* m32c-ibld.c: Likewise.
+	* m32c-opc.c: Likewise.
+	* m32c-opc.h: Likewise.
+
+2006-03-10  DJ Delorie  <dj@redhat.com>
+
+	* m32c-desc.c: Regenerate with mul.l, mulu.l.
+	* m32c-opc.c: Likewise.
+	* m32c-opc.h: Likewise.
+
+
+2006-03-09  Nick Clifton  <nickc@redhat.com>
+
+	* po/sv.po: Updated Swedish translation.
+
+2006-03-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/2428
+	* i386-dis.c (REP_Fixup): New function.
+	(AL): Remove duplicate.
+	(Xbr): New.
+	(Xvr): Likewise.
+	(Ybr): Likewise.
+	(Yvr): Likewise.
+	(indirDXr): Likewise.
+	(ALr): Likewise.
+	(eAXr): Likewise.
+	(dis386): Updated entries of ins, outs, movs, lods and stos.
+
+2006-03-05  Nick Clifton  <nickc@redhat.com>
+
+	* cgen-ibld.in (insert_normal): Cope with attempts to insert a
+	signed 32-bit value into an unsigned 32-bit field when the host is
+	a 64-bit machine.
+	* fr30-ibld.c: Regenerate.
+	* frv-ibld.c: Regenerate.
+	* ip2k-ibld.c: Regenerate.
+	* iq2000-asm.c: Regenerate.
+	* iq2000-ibld.c: Regenerate.
+	* m32c-ibld.c: Regenerate.
+	* m32r-ibld.c: Regenerate.
+	* openrisc-ibld.c: Regenerate.
+	* xc16x-ibld.c: Regenerate.
+	* xstormy16-ibld.c: Regenerate.
+
+2006-03-03 Shrirang Khisti <shrirangk@kpitcummins.com)
+
+	* xc16x-asm.c: Regenerate.
+	* xc16x-dis.c: Regenerate.
+
+2006-02-27  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* po/Make-in: Add html target.
+
+2006-02-27  H.J. Lu <hongjiu.lu@intel.com>
+
+	* i386-dis.c (IS_3BYTE_OPCODE): New for 3-byte opcodes used by
+	Intel Merom New Instructions.
+	(THREE_BYTE_0): Likewise.
+	(THREE_BYTE_1): Likewise.
+	(three_byte_table): Likewise.
+	(dis386_twobyte): Use THREE_BYTE_0 for entry 0x38. Use
+	THREE_BYTE_1 for entry 0x3a.
+	(twobyte_has_modrm): Updated.
+	(twobyte_uses_SSE_prefix): Likewise.
+	(print_insn): Handle 3-byte opcodes used by Intel Merom New
+	Instructions.
+
+2006-02-24  David S. Miller  <davem@sunset.davemloft.net>
+
+	* sparc-dis.c (v9_priv_reg_names): Add "gl" entry.
+	(v9_hpriv_reg_names): New table.
+	(print_insn_sparc): Allow values up to 16 for '?' and '!'.
+	New cases '$' and '%' for read/write hyperprivileged register.
+	* sparc-opc.c (sparc_opcodes): Add new entries for UA2005
+	window handling and rdhpr/wrhpr instructions.
+
+2006-02-24  DJ Delorie  <dj@redhat.com>
+
+	* m32c-desc.c: Regenerate with linker relaxation attributes.
+	* m32c-desc.h: Likewise.
+	* m32c-dis.c: Likewise.
+	* m32c-opc.c: Likewise.
+
+2006-02-24  Paul Brook  <paul@codesourcery.com>
+
+	* arm-dis.c (arm_opcodes): Add V7 instructions.
+	(thumb32_opcodes): Ditto.  Handle V7M MSR/MRS variants.
+	(print_arm_address): New function.
+	(print_insn_arm): Use it.  Add 'P' and 'U' cases.
+	(psr_name): New function.
+	(print_insn_thumb32): Add 'U', 'C' and 'D' cases.
+
+2006-02-23  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ia64-opc-i.c (bXc): New.
+	(mXc): Likewise.
+	(OpX2TaTbYaXcC): Likewise.
+	(TF). Likewise.
+	(TFCM). Likewise.
+	(ia64_opcodes_i): Add instructions for tf.
+
+	* ia64-opc.h (IMMU5b): New.
+
+	* ia64-asmtab.c: Regenerated.
+
+2006-02-23  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ia64-gen.c: Update copyright years.
+	* ia64-opc-b.c: Likewise.
+
+2006-02-22  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ia64-gen.c (lookup_regindex): Handle ".vm".
+	(print_dependency_table): Handle '\"'.
+
+	* ia64-ic.tbl: Updated from SDM 2.2.
+	* ia64-raw.tbl: Likewise.
+	* ia64-waw.tbl: Likewise.
+	* ia64-asmtab.c: Regenerated.
+
+	* ia64-opc-b.c (ia64_opcodes_b): Add vmsw.0 and vmsw.1.
+
+2006-02-17  Shrirang Khisti  <shrirangk@kpitcummins.com>
+            Anil Paranjape   <anilp1@kpitcummins.com>
+            Shilin Shakti    <shilins@kpitcummins.com>
+
+	* xc16x-desc.h: New file
+	* xc16x-desc.c: New file
+	* xc16x-opc.h: New file
+	* xc16x-opc.c: New file
+	* xc16x-ibld.c: New file
+	* xc16x-asm.c: New file
+	* xc16x-dis.c: New file
+	* Makefile.am: Entries for xc16x
+	* Makefile.in: Regenerate
+	* cofigure.in: Add xc16x target information.
+	* configure: Regenerate.
+	* disassemble.c: Add xc16x target information.
+
+2006-02-11  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-dis.c (dis386_twobyte): Use "movZ" for debug register
+	moves.
+
+2006-02-11  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-dis.c ('Z'): Add a new macro.
+	(dis386_twobyte): Use "movZ" for control register moves.
+
+2006-02-10  Nick Clifton  <nickc@redhat.com>
+
+	* iq2000-asm.c: Regenerate.
+
+2006-02-07  Nathan Sidwell  <nathan@codesourcery.com>
+
+	* m68k-dis.c (print_insn_m68k): Use bfd_m68k_mach_to_features.
+
+2006-01-26  David Ung  <davidu@mips.com>
+
+	* mips-opc.c: Add I33 masks to these MIPS32R2 instructions: prefx,
+	ceil.l.d, ceil.l.s, cvt.d.l, cvt.l.d, cvt.l.s, cvt.s.l, floor.l.d,
+	floor.l.s, ldxc1, lwxc1, madd.d, madd.s, msub.d, msub.s, nmadd.d,
+	nmadd.s, nmsub.d, nmsub.s, recip.d, recip.s, round.l.d, rsqrt.d,
+	rsqrt.s, sdxc1, swxc1, trunc.l.d, trunc.l.s.
+
+2006-01-18  Arnold Metselaar  <arnoldm@sourceware.org>
+
+	* z80-dis.c (struct buffer, prt_d, prt_d_n, arit_d, ld_r_d,
+	ld_d_r, pref_xd_cb): Use signed char to hold data to be
+	disassembled.
+	* z80-dis.c (TXTSIZ): Increase buffer size to 24, this fixes
+	buffer overflows when disassembling instructions like
+	ld (ix+123),0x23
+	* z80-dis.c (opc_ind, pref_xd_cb): Suppress '+' in an indexed
+	operand, if the offset is negative.
+
+2006-01-17  Arnold Metselaar  <arnoldm@sourceware.org>
+
+	* z80-dis.c (struct buffer, prt_d, prt_d_n, pref_xd_cb): Use
+	unsigned char to hold data to be disassembled.
+
+2006-01-17  Andreas Schwab  <schwab@suse.de>
+
+	PR binutils/1486
+	* disassemble.c (disassemble_init_for_target): Set
+	disassembler_needs_relocs for bfd_arch_arm.
+
+2006-01-16  Paul Brook  <paul@codesourcery.com>
+
+	* m68k-opc.c (m68k_opcodes): Fix opcodes for ColdFire f?abss,
+	f?add?, and f?sub? instructions.
+
+2006-01-16  Nick Clifton  <nickc@redhat.com>
+
+	* po/zh_CN.po: New Chinese (simplified) translation.
+	* configure.in (ALL_LINGUAS): Add "zh_CH".
+	* configure: Regenerate.
+
+2006-01-05  Paul Brook  <paul@codesourcery.com>
+
+	* m68k-opc.c (m68k_opcodes): Add missing ColdFire fdsqrtd entry.
+
+2006-01-06  DJ Delorie  <dj@redhat.com>
+
+	* m32c-desc.c: Regenerate.
+	* m32c-opc.c: Regenerate.
+	* m32c-opc.h: Regenerate.
+
+2006-01-03  DJ Delorie  <dj@redhat.com>
+
+	* cgen-ibld.in (extract_normal): Avoid memory range errors.
+	* m32c-ibld.c: Regenerated.
+
+For older changes see ChangeLog-2005
+
+Local Variables:
+mode: change-log
+left-margin: 8
+fill-column: 74
+version-control: never
+End:

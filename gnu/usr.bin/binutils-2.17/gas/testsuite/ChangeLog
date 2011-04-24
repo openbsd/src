@@ -1,0 +1,352 @@
+2006-06-14  Thiemo Seufer  <ths@mips.com>
+
+	* gas/mips/mips16e-jrc.d, gas/mips/mips16e-save.d,
+	gas/mips/mips32-dsp.d, gas/mips/mips32-mt.d: Explicitly specify
+	o32 ABI.
+
+2006-05-26  Richard Sandiford  <richard@codesourcery.com>
+
+	* gas/m68k/mcf-fpu.s: Add fmovemd and fmovem instructions.
+	* gas/m68k/mcf-fpu.d: Adjust accordingly.
+
+2006-05-22  Nick Clifton  <nickc@redhat.com>
+
+	* gas/mips/mips32-dsp.l: Fix expected unsigned decoding of -1 in
+	warning messages.
+	* gas/mips/mips32-mt.l: Likewise.
+
+2006-05-19  Thiemo Seufer  <ths@mips.com>
+
+	* gas/mips/vxworks1-el.d, gas/mips/vxworks1-xgot-el.d: Add little
+	endian testcases.
+	* gas/mips/vxworks1.d, gas/mips/vxworks1-xgot.d: Build as big endian.
+	* gas/mips/mips.exp: Run new testcases.
+
+2006-05-11  Thiemo Seufer  <ths@mips.com>
+
+	* gas/mips/jal-range.l: Don't check the range of j or jal
+	addresses.
+
+2006-05-04  Thiemo Seufer  <ths@mips.com>
+
+	* gas/mips/mips32-mt.d: Fix mftr argument order.
+
+2006-05-02  Joseph Myers  <joseph@codesourcery.com>
+
+	* gas/arm/iwmmxt.s: Increase offsets for wstrb and wstrh.
+	* gas/arm/iwmmxt.d: Update expected results.
+	* gas/arm/iwmmxt-bad2.s: Test wstrb, wstrh, wldrb and wldrh.
+	* gas/arm/iwmmxt-bad2.l: Update expected error messages.
+
+2006-04-16  Nick Clifton  <nickc@redhat.com>
+
+	* gas/arm/arch7.d: Skip test for non-ELF targets.
+	* gas/arm/blx-local.d: Likewise.
+	* gas/arm/svc.d: Likewise.
+	* gas/arm/thumb2_bcond.d: Likewise.
+	* gas/arm/thumb2_it_bad.d: Likewise.
+
+2006-04-07  Paul Brook  <paul@codesourcery.com>
+
+	* gas/arm/blx-local.d: New test.
+	* gas/arm/blx-local.d: New test.
+
+2006-04-07  Paul Brook  <paul@codesourcery.com>
+
+	* gas/arm/thumb2_pool.d: New test.
+	* gas/arm/thumb2_pool.s: New test.
+
+2006-04-05  Richard Sandiford  <richard@codesourcery.com>
+
+	* gas/sparc/vxworks-pic.s, gas/sparc/vxworks-pic.d: New test.
+	* gas/sparc/sparc.exp: Run it.  Remove sparc*-*-vxworks* XFAILs.
+
+2006-03-23  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/i386/rep.s: Pad with .p2align.
+	* gas/i386/rep.d: Adjust.
+
+2006-03-22  Richard Sandiford  <richard@codesourcery.com>
+
+	* gas/mips/vxworks1.s, gas/mips/vxworks1.d,
+	* gas/mips/vxworks1-xgot.d: New tests.
+	* gas/mips/mips.exp: Run them.  Do not run other tests on VxWorks.
+	
+2006-03-21  Paul Brook  <paul@codesourcery.com>
+
+	* gas/arm/thumb32.d: Correct expected output.
+
+2006-03-20  Paul Brook  <paul@codesourcery.com>
+
+	* gas/arm/thumb2_bcond.d: New test.
+	* gas/arm/thumb2_bcond.s: New test.
+	* gas/arm/thumb2_it_bad.d: New test.
+	* gas/arm/thumb2_it_bad.l: New test.
+	* gas/arm/thumb2_it_bad.s: New test.
+
+2006-03-17  Paul Brook  <paul@codesourcery.com>
+
+	* gas/arm/thumb32.d: Add ldm and stm tests.
+	* gas/arm/thumb32.s: Ditto.
+
+2006-03-16  Bernd Schmidt  <bernd.schmidt@analog.com>
+
+	* gas/bfin/shift2.s: Add new tests.
+	* gas/bfin/shift.d: Match changed disassembler behaviour.
+	* gas/bfin/parallel2.d: Likewise.
+	* gas/bfin/shift2.d: Likewise; also match new tests.
+
+2006-03-16  Paul Brook  <paul@codesourcery.com>
+
+	* gas/arm/svc.d: New test.
+	* gas/arm/svc.s: New test.
+	* gas/arm/inst.d: Accept svc mnemonic.
+	* gas/arm/thumb.d: Ditto.
+	* gas/arm/wince_inst.d: Ditto.
+
+2006-03-09  Paul Brook  <paul@codesourcery.com>
+
+	* gas/arm/nomapping.d: New test.
+	* gas/arm/nomapping.s: New test.
+
+2006-03-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/2428
+	* gas/i386/i386.exp: Add rep, rep-suffix, x86-64-rep and
+	x86-64-rep-suffix.
+
+	* gas/i386/naked.d: Replace repz with rep.
+	* gas/i386/x86_64.d: Likewise.
+
+	* gas/i386/rep-suffix.d: New file. 
+	* gas/i386/rep-suffix.s: Likewise.
+	* gas/i386/rep.d: Likewise.
+	* gas/i386/rep.s: Likewise.
+	* gas/i386/x86-64-rep-suffix.d: Likewise.
+	* gas/i386/x86-64-rep-suffix.s: Likewise.
+	* gas/i386/x86-64-rep.d: Likewise.
+	* gas/i386/x86-64-rep.s: Likewise.
+
+2006-03-07  Richard Sandiford  <richard@codesourcery.com>
+
+	* gas/arm/abs12.s, gas/arm/abs12.d: New test.
+	* gas/arm/pic.d: Skip for *-*-vxworks*...
+	* gas/arm/pic_vxworks.d: ...use this version instead.
+	* gas/arm/unwind_vxworks.d: Fix expected output.
+
+2006-03-06  Nathan Sidwell  <nathan@codesourcery.com>
+
+	* gas/m68k/arch-cpu-1.s: Tweak.
+	* gas/m68k/arch-cpu-1.d: Tweak.
+
+2006-02-28  Jan Beulich  <jbeulich@novell.com>
+
+	* gas/all/altmacro.s: Adjust.
+	* gas/all/altmac2.s: Adjust.
+
+2006-02-28  Jan Beulich  <jbeulich@novell.com>
+
+	* gas/macros/paren[sd]: New.
+	* gas/macros/macros.exp: Run new test.
+
+2006-02-27  H.J. Lu <hongjiu.lu@intel.com>
+
+	* gas/i386/i386.exp: Add merom and x86-64-merom.
+
+	* gas/i386/merom.d: New file.
+	* gas/i386/merom.s: Likewise.
+	* gas/i386/x86-64-merom.d: Likewise.
+	* gas/i386/x86-64-merom.s: Likewise.
+
+2006-02-24  David S. Miller  <davem@sunset.davemloft.net>
+
+	* gas/sparc/rdhpr.s: New test.
+	* gas/sparc/rdhpr.d: New test.
+	* gas/sparc/wrhpr.s: New test.
+	* gas/sparc/wrhpr.d: New test.
+	* gas/sparc/window.s: New test.
+	* gas/sparc/window.d: New test.
+	* gas/sparc/rdpr.s: Add case for reading %gl register.
+	* gas/sparc/rdpr.d: Likewise.
+	* gas/sparc/wrpr.s: Add case for writing %gl register.
+	* gas/sparc/wrpr.d: Likewise.
+	* gas/sparc/sparc.exp: Update for new tests.
+	
+2006-02-24  Paul Brook  <paul@codesourcery.com>
+
+	* gas/arm/thumb32.d: Fix expected msr and mrs output.
+	* gas/arm/arch7.d: New test.
+	* gas/arm/arch7.s: New test.
+	* gas/arm/arch7m-bad.l: New test.
+	* gas/arm/arch7m-bad.d: New test.
+	* gas/arm/arch7m-bad.s: New test.
+
+2006-02-23  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/ia64/opc-i.s: Add tests for tf.
+	* gas/ia64/pseudo.s: Likewise.
+	* gas/ia64/opc-i.d: Updated.
+	* gas/ia64/pseudo.d: Likewise.
+
+2006-02-22  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/ia64/dv-raw-err.s: Add check for vmsw.0.
+	* gas/ia64/dv-raw-err.l: Updated.
+
+	* gas/ia64/opc-b.s: Add vmsw.0 and vmsw.1.
+	* gas/ia64/opc-b.d: Updated.
+
+2005-02-22  Paul Brook  <paul@codesourcery.com>
+
+	* gas/arm/thumb32.d: Fix expected pld opcode.
+
+2006-02-17  Shrirang Khisti  <shrirangk@kpitcummins.com>
+            Anil Paranjape   <anilp1@kpitcummins.com>
+            Shilin Shakti    <shilins@kpitcummins.com>
+
+	* gas/xc16x: New directory.
+	* gas/xc16x/xc16x.exp: New file
+	* gas/xc16x/add.s: New file
+	* gas/xc16x/add_test.s: New file
+	* gas/xc16x/addb.s: New file
+	* gas/xc16x/addc.s: New file
+	* gas/xc16x/addcb.s: New file   
+	* gas/xc16x/and.s: New file
+	* gas/xc16x/andb.s: New file
+	* gas/xc16x/bfldl.s: New file
+	* gas/xc16x/bit.s: New file
+	* gas/xc16x/calla.s: New file
+	* gas/xc16x/calli.s: New file
+	* gas/xc16x/cmp.s: New file  
+	* gas/xc16x/cmp_test.s: New file
+	* gas/xc16x/cmpb.s: New file
+	* gas/xc16x/cmpi.s: New file
+	* gas/xc16x/cpl.s: New file
+	* gas/xc16x/div.s: New file
+	* gas/xc16x/jmpa.s: New file
+	* gas/xc16x/jmpi.s: New file
+	* gas/xc16x/jmpr.s: New file
+	* gas/xc16x/mov.s: New file
+	* gas/xc16x/mov_test.s: New file 
+	* gas/xc16x/movb.s: New file
+	* gas/xc16x/movbs.s: New file
+	* gas/xc16x/movbz.s: New file  
+	* gas/xc16x/mul.s: New file
+	* gas/xc16x/neg.s: New file
+	* gas/xc16x/nop.s: New file
+	* gas/xc16x/or.s: New file
+	* gas/xc16x/orb.s: New file
+	* gas/xc16x/prior.s: New file
+	* gas/xc16x/pushpop.s: New file
+	* gas/xc16x/ret.s: New file
+	* gas/xc16x/scxt.s: New file
+	* gas/xc16x/shlrol.s: New file
+	* gas/xc16x/sub.s: New file
+	* gas/xc16x/sub_test.s: New file 
+	* gas/xc16x/subb.s: New file
+	* gas/xc16x/subcb.s: New file
+	* gas/xc16x/syscontrol1.s: New file
+	* gas/xc16x/syscontrol2.s: New file
+	* gas/xc16x/trap.s: New file
+	* gas/xc16x/xor.s: New file
+	* gas/xc16x/xorb.s: New file
+
+2006-02-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/i386/x86-64-crx-suffix.d: Undo the last change.
+
+2006-02-11  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/i386/i386.exp: Add "x86-64-drx" and "x86-64-drx-suffix".
+
+	* gas/i386/x86-64-crx-suffix.d: Minor update.
+
+	* gas/i386/x86-64-drx-suffix.d: New file.
+	* gas/i386/x86-64-drx.d: Likewise.
+	* gas/i386/x86-64-drx.s: Likewise.
+
+2006-02-11  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/i386/i386.exp: Add "x86-64-crx" and "x86-64-crx-suffix".
+
+	* gas/i386/x86-64-crx-suffix.d: New file.
+	* gas/i386/x86-64-crx.d: Likewise.
+	* gas/i386/x86-64-crx.s: Likewise.
+
+2006-02-07  Nathan Sidwell  <nathan@codesourcery.com>
+
+	* testsuite/gas/m68k/all.exp: Add arch-cpu-1 test.
+	* testsuite/gas/m68k/arch-cpu-1.[sd]: New.
+
+2005-02-02  Paul Brook  <paul@codesourcery.com>
+
+	* gas/arm/thumb2_invert.d: New test.
+	* gas/arm/thumb2_invert.s: New test.
+
+2006-01-31  Paul Brook  <paul@codesourcery.com>
+
+	* gas/testsuite/gas/arm/iwmmxt-bad.s: Add check for bad register name.
+	* gas/testsuite/gas/arm/iwmmxt-bad.l: Ditto.
+
+2006-01-18  Arnold Metselaar  <arnoldm@sourceware.org>
+
+	* gas/z80/z80.exp: Add offset.
+	* gas/z80/offset.d: New file.
+	* gas/z80/offset.s: New file.
+
+2006-01-16  Paul Brook  <paul@codesourcery.com>
+
+	* gas/m68k/all.exp: Add mcf-fpu.
+	* gas/m68k/mcf-fpu.d: New file.
+	* gas/m68k/mcf-fpu.s: New file.
+
+2006-01-11  Nick Clifton  <nickc@redhat.com>
+
+	* gas/tic54x/address.d: Work with 64bit hosts.
+	* gas/tic54x/addrfar.d: Likewise.
+	* gas/tic54x/align.d: Likewise.
+	* gas/tic54x/all-opcodes.d: Likewise.
+	* gas/tic54x/asg.d: Likewise.
+	* gas/tic54x/cons.d: Likewise.
+	* gas/tic54x/consfar.d: Likewise.
+	* gas/tic54x/extaddr.d: Likewise.
+	* gas/tic54x/field.d: Likewise.
+	* gas/tic54x/labels.d: Likewise.
+	* gas/tic54x/loop.d: Likewise.
+	* gas/tic54x/lp.d: Likewise.
+	* gas/tic54x/macro.d: Likewise.
+	* gas/tic54x/math.d: Likewise.
+	* gas/tic54x/opcodes.d: Likewise.
+	* gas/tic54x/sections.d: Likewise.
+	* gas/tic54x/set.d: Likewise.
+	* gas/tic54x/struct.d: Likewise.
+	* gas/tic54x/subsym.d: Likewise.
+
+2006-01-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/2117
+	* gas/ia64/ia64.exp: Add ltoff22x-2, ltoff22x-3, ltoff22x-4 and
+	ltoff22x-5.
+
+	* gas/ia64/ltoff22x-2.d: New file.
+	* gas/ia64/ltoff22x-2.s: Likewise.
+	* gas/ia64/ltoff22x-3.d: Likewise.
+	* gas/ia64/ltoff22x-3.s: Likewise.
+	* gas/ia64/ltoff22x-4.d: Likewise.
+	* gas/ia64/ltoff22x-4.s: Likewise.
+	* gas/ia64/ltoff22x-5.d: Likewise.
+	* gas/ia64/ltoff22x-5.s: Likewise.
+
+2006-01-03  Hans-Peter Nilsson  <hp@bitrange.com>
+
+	PR gas/2101
+	* gas/mmix/hex2.s, gas/mmix/hex2.d: New test.
+
+For older changes see ChangeLog-2005
+
+Local Variables:
+mode: change-log
+left-margin: 8
+fill-column: 74
+version-control: never
+End:

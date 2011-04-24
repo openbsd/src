@@ -1,0 +1,54 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_PREREQ(2.59)
+AC_INIT
+AC_CONFIG_SRCDIR([gprof.c])
+
+AC_CANONICAL_TARGET([])
+AC_ISC_POSIX
+
+changequote(,)dnl
+BFD_VERSION=`sed -n -e 's/^.._INIT_AUTOMAKE.*,[ 	]*\([^ 	]*\)[ 	]*).*/\1/p' < ${srcdir}/../bfd/configure.in`
+changequote([,])dnl
+AM_INIT_AUTOMAKE(gprof, ${BFD_VERSION})
+
+AM_PROG_LIBTOOL
+
+dnl For simplicity, we use the BFD configuration file for most
+dnl things.  However, we also need our own configuration file for
+dnl the automake PACKAGE and VERSION macros.  We don't name it
+dnl config.h, to avoid any possible confusion with the bfd config.h.
+AC_CONFIG_HEADERS([gconfig.h:gconfig.in])
+
+AC_PROG_CC
+AC_PROG_INSTALL
+
+AC_CHECK_FUNCS(setmode)
+
+ALL_LINGUAS="fr tr sv es id da pt_BR de vi rw ga"
+CY_GNU_GETTEXT
+
+AM_MAINTAINER_MODE
+AC_EXEEXT
+
+AC_CHECK_HEADERS(sys/gmon_out.h)
+
+AC_MSG_CHECKING(for a known getopt prototype in unistd.h)
+AC_CACHE_VAL(gprof_cv_decl_getopt_unistd_h,
+[AC_TRY_COMPILE([#include <unistd.h>], [extern int getopt (int, char *const*, const char *);],
+gprof_cv_decl_getopt_unistd_h=yes, gprof_cv_decl_getopt_unistd_h=no)])
+AC_MSG_RESULT($gprof_cv_decl_getopt_unistd_h)
+if test $gprof_cv_decl_getopt_unistd_h = yes; then
+  AC_DEFINE([HAVE_DECL_GETOPT], 1,
+	    [Is the prototype for getopt in <unistd.h> in the expected format?])
+fi
+
+AM_BINUTILS_WARNINGS
+
+dnl Required by html and install-html
+AC_SUBST(datarootdir)
+AC_SUBST(docdir)
+AC_SUBST(htmldir)
+
+AC_CONFIG_FILES([Makefile po/Makefile.in:po/Make-in])
+AC_CONFIG_COMMANDS([default],[[sed -e '/POTFILES =/r po/POTFILES' po/Makefile.in > po/Makefile]],[[]])
+AC_OUTPUT

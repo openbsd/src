@@ -1,0 +1,7 @@
+#
+# Some ARM tests
+#
+
+if {[istarget *arm*-*-*] || [istarget *xscale*-*-*]} {
+    run_dump_tests [lsort [glob -nocomplain $srcdir/$subdir/*.d]]
+}
