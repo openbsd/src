@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.14 2011/04/24 07:46:58 stsp Exp $
+#	$OpenBSD: Makefile.inc,v 1.15 2011/04/24 08:54:06 stsp Exp $
 
 # stdio sources
 .PATH: ${LIBCSRCDIR}/stdio
@@ -16,8 +16,7 @@ SRCS+=	asprintf.c clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c fgetc.c \
 	vfscanf.c vprintf.c vscanf.c vsnprintf.c vsprintf.c vsscanf.c \
 	wbuf.c wsetup.c flockfile.c __svfscanf.c \
 	fgetwc.c fgetws.c fputwc.c fputws.c fwide.c getwc.c getwchar.c \
-	putwc.c putwchar.c ungetwc.c \
-	fwprintf.c swprintf.c vfwprintf.c vswprintf.c vwprintf.c wprintf.c
+	putwc.c putwchar.c ungetwc.c
 
 MAN+=	fclose.3 ferror.3 fflush.3 fgetln.3 fgets.3 fopen.3 fputs.3 \
 	fread.3 fseek.3 funopen.3 getc.3 mktemp.3 perror.3 printf.3 putc.3 \
