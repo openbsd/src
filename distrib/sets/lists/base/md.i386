@@ -1852,6 +1852,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/disklabel.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/endian.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/exec.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/i386/fenv.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/float.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/frame.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/gdt.ph

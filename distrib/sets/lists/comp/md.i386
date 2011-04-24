@@ -564,6 +564,7 @@
 ./usr/include/i386/disklabel.h
 ./usr/include/i386/endian.h
 ./usr/include/i386/exec.h
+./usr/include/i386/fenv.h
 ./usr/include/i386/float.h
 ./usr/include/i386/frame.h
 ./usr/include/i386/gdt.h
