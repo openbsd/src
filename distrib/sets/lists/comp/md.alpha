@@ -22,6 +22,7 @@
 ./usr/include/alpha/ecoff_machdep.h
 ./usr/include/alpha/endian.h
 ./usr/include/alpha/exec.h
+./usr/include/alpha/fenv.h
 ./usr/include/alpha/float.h
 ./usr/include/alpha/fpu.h
 ./usr/include/alpha/frame.h

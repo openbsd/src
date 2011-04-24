@@ -731,6 +731,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/ecoff_machdep.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/endian.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/exec.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/fenv.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/float.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/fpu.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/frame.ph
