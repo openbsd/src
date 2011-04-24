@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.115 2010/03/23 21:31:02 espie Exp $
+#	$OpenBSD: Makefile,v 1.116 2011/04/24 22:04:43 guenther Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -67,6 +67,11 @@ afterinstall:
 	cd ${.CURDIR}/share/man && exec ${MAKE} makedb
 .endif
 
+.ifdef DESTDIR
+build:
+	@echo cannot build with DESTDIR set
+	@false
+.else
 build:
 .ifdef GLOBAL_AUTOCONF_CACHE
 	cp /dev/null ${GLOBAL_AUTOCONF_CACHE}
@@ -79,6 +84,7 @@ build:
 	cd ${.CURDIR}/gnu/lib && ${MAKE} depend && ${MAKE} && \
 	    NOMAN=1 exec ${SUDO} ${MAKE} install
 	${MAKE} depend && ${MAKE} && exec ${SUDO} ${MAKE} install
+.endif
 
 CROSS_TARGETS=cross-env cross-dirs cross-obj cross-includes cross-binutils \
 	cross-gcc cross-tools cross-lib cross-bin cross-etc-root-var \
