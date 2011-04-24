@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.194 2011/04/10 17:10:08 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.195 2011/04/24 20:31:26 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -649,25 +649,32 @@ azalia_intr(void *v)
 {
 	azalia_t *az = v;
 	uint32_t intsts;
+	int ret = 0;
 
 	intsts = AZ_READ_4(az, INTSTS);
-	if (intsts == 0)
-		return (0);
+	if (intsts == 0 || intsts == 0xffffffff)
+		return (ret);
 
 	AZ_WRITE_4(az, INTSTS, intsts);
 
-	if (intsts & az->pstream.intr_bit)
+	if (intsts & az->pstream.intr_bit) {
 		azalia_stream_intr(&az->pstream);
+		ret = 1;
+	}
 
-	if (intsts & az->rstream.intr_bit)
+	if (intsts & az->rstream.intr_bit) {
 		azalia_stream_intr(&az->rstream);
+		ret = 1;
+	}
 
 	if ((intsts & HDA_INTSTS_CIS) &&
 	    (AZ_READ_1(az, RIRBCTL) & HDA_RIRBCTL_RINTCTL) &&
-	    (AZ_READ_1(az, RIRBSTS) & HDA_RIRBSTS_RINTFL))
+	    (AZ_READ_1(az, RIRBSTS) & HDA_RIRBSTS_RINTFL)) {
 		azalia_rirb_intr(az);
+		ret = 1;
+	}
 
-	return (1);
+	return (ret);
 }
 
 void
