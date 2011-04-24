@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.176 2011/04/21 07:13:01 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.177 2011/04/24 11:09:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1237,6 +1237,7 @@ nomem:
 	/* grab a ccb for use during error recovery */
 	ap->ap_ccb_err = &ap->ap_ccbs[sc->sc_ncmds - 1];
 	TAILQ_REMOVE(&ap->ap_ccb_free, ap->ap_ccb_err, ccb_entry);
+	ap->ap_ccb_err->ccb_xa.state = ATA_S_COMPLETE;
 
 	/* Wait for ICC change to complete */
 	ahci_pwait_clr(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_ICC, 1);
