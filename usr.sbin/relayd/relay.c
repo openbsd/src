@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.133 2011/04/12 12:37:22 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.134 2011/04/24 10:07:43 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -907,7 +907,7 @@ void
 relay_write(struct bufferevent *bev, void *arg)
 {
 	struct ctl_relay_event	*cre = (struct ctl_relay_event *)arg;
-	struct rsession		*con = (struct rsession *)cre->con;
+	struct rsession		*con = cre->con;
 	if (gettimeofday(&con->se_tv_last, NULL) == -1)
 		con->se_done = 1;
 	if (con->se_done)
@@ -936,7 +936,7 @@ void
 relay_read(struct bufferevent *bev, void *arg)
 {
 	struct ctl_relay_event	*cre = (struct ctl_relay_event *)arg;
-	struct rsession		*con = (struct rsession *)cre->con;
+	struct rsession		*con = cre->con;
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 
 	if (gettimeofday(&con->se_tv_last, NULL) == -1)
@@ -961,7 +961,7 @@ int
 relay_resolve(struct ctl_relay_event *cre,
     struct protonode *proot, struct protonode *pn)
 {
-	struct rsession		*con = (struct rsession *)cre->con;
+	struct rsession		*con = cre->con;
 	char			 buf[IBUF_READ_SIZE], *ptr;
 	int			 id;
 
@@ -1028,7 +1028,7 @@ relay_resolve(struct ctl_relay_event *cre,
 char *
 relay_expand_http(struct ctl_relay_event *cre, char *val, char *buf, size_t len)
 {
-	struct rsession	*con = (struct rsession *)cre->con;
+	struct rsession	*con = cre->con;
 	struct relay	*rlay = (struct relay *)con->se_relay;
 	char		 ibuf[128];
 
@@ -1105,7 +1105,7 @@ int
 relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
     struct protonode *pn, struct protonode *pk, int header)
 {
-	struct rsession		*con = (struct rsession *)cre->con;
+	struct rsession		*con = cre->con;
 	char			 buf[IBUF_READ_SIZE], *ptr;
 	int			 ret = PN_DROP, mark = 0;
 	struct protonode	*next;
@@ -1221,7 +1221,7 @@ void
 relay_read_httpcontent(struct bufferevent *bev, void *arg)
 {
 	struct ctl_relay_event	*cre = (struct ctl_relay_event *)arg;
-	struct rsession		*con = (struct rsession *)cre->con;
+	struct rsession		*con = cre->con;
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 	size_t			 size;
 
@@ -1256,7 +1256,7 @@ void
 relay_read_httpchunks(struct bufferevent *bev, void *arg)
 {
 	struct ctl_relay_event	*cre = (struct ctl_relay_event *)arg;
-	struct rsession		*con = (struct rsession *)cre->con;
+	struct rsession		*con = cre->con;
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 	char			*line;
 	long			 lval;
@@ -1374,7 +1374,7 @@ void
 relay_read_http(struct bufferevent *bev, void *arg)
 {
 	struct ctl_relay_event	*cre = (struct ctl_relay_event *)arg;
-	struct rsession		*con = (struct rsession *)cre->con;
+	struct rsession		*con = cre->con;
 	struct relay		*rlay = (struct relay *)con->se_relay;
 	struct protocol		*proto = rlay->rl_proto;
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
@@ -1672,7 +1672,7 @@ static int
 _relay_lookup_url(struct ctl_relay_event *cre, char *host, char *path,
     char *query, enum digest_type type)
 {
-	struct rsession		*con = (struct rsession *)cre->con;
+	struct rsession		*con = cre->con;
 	struct protonode	*proot, *pnv, pkv;
 	char			*val, *md = NULL;
 	int			 ret = PN_FAIL;
@@ -1726,7 +1726,7 @@ int
 relay_lookup_url(struct ctl_relay_event *cre, const char *str,
     enum digest_type type)
 {
-	struct rsession	*con = (struct rsession *)cre->con;
+	struct rsession	*con = cre->con;
 	int		 i, j, dots;
 	char		*hi[RELAY_MAXLOOKUPLEVELS], *p, *pp, *c, ch;
 	char		 ph[MAXHOSTNAMELEN];
@@ -1803,7 +1803,7 @@ relay_lookup_url(struct ctl_relay_event *cre, const char *str,
 int
 relay_lookup_query(struct ctl_relay_event *cre)
 {
-	struct rsession		*con = (struct rsession *)cre->con;
+	struct rsession		*con = cre->con;
 	struct protonode	*proot, *pnv, pkv;
 	char			*val, *ptr;
 	int			 ret;
@@ -1846,7 +1846,7 @@ relay_lookup_query(struct ctl_relay_event *cre)
 int
 relay_lookup_cookie(struct ctl_relay_event *cre, const char *str)
 {
-	struct rsession		*con = (struct rsession *)cre->con;
+	struct rsession		*con = cre->con;
 	struct protonode	*proot, *pnv, pkv;
 	char			*val, *ptr;
 	int			 ret;
@@ -1982,7 +1982,7 @@ relay_close_http(struct rsession *con, u_int code, const char *msg,
 int
 relay_splicelen(struct ctl_relay_event *cre)
 {
-	struct rsession *con = (struct rsession *)cre->con;
+	struct rsession *con = cre->con;
 	off_t len;
 	socklen_t optlen;
 
@@ -2002,7 +2002,7 @@ void
 relay_error(struct bufferevent *bev, short error, void *arg)
 {
 	struct ctl_relay_event *cre = (struct ctl_relay_event *)arg;
-	struct rsession *con = (struct rsession *)cre->con;
+	struct rsession *con = cre->con;
 	struct evbuffer *dst;
 	struct timeval tv, tv_now;
 
@@ -2061,8 +2061,7 @@ relay_accept(int fd, short sig, void *arg)
 	if (fcntl(s, F_SETFL, O_NONBLOCK) == -1)
 		goto err;
 
-	if ((con = (struct rsession *)
-	    calloc(1, sizeof(struct rsession))) == NULL)
+	if ((con = calloc(1, sizeof(*con))) == NULL)
 		goto err;
 
 	con->se_in.s = s;
@@ -2354,7 +2353,7 @@ relay_bindany(int fd, short event, void *arg)
 		return;
 	}
 
-	if (relay_connect((struct rsession *)con) == -1)
+	if (relay_connect(con) == -1)
 		relay_close(con, "session failed");
 }
 
@@ -2979,7 +2978,7 @@ relay_ssl_readcb(int fd, short event, void *arg)
 {
 	struct bufferevent *bufev = arg;
 	struct ctl_relay_event *cre = (struct ctl_relay_event *)bufev->cbarg;
-	struct rsession *con = (struct rsession *)cre->con;
+	struct rsession *con = cre->con;
 	struct relay *rlay = (struct relay *)con->se_relay;
 	int ret = 0, ssl_err = 0;
 	short what = EVBUFFER_READ;
@@ -3054,7 +3053,7 @@ relay_ssl_writecb(int fd, short event, void *arg)
 {
 	struct bufferevent *bufev = arg;
 	struct ctl_relay_event *cre = (struct ctl_relay_event *)bufev->cbarg;
-	struct rsession *con = (struct rsession *)cre->con;
+	struct rsession *con = cre->con;
 	struct relay *rlay = (struct relay *)con->se_relay;
 	int ret = 0, ssl_err;
 	short what = EVBUFFER_WRITE;

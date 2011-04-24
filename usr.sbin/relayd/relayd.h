@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.143 2011/04/12 12:37:22 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.144 2011/04/24 10:07:43 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -153,7 +153,7 @@ struct ctl_relay_event {
 	struct bufferevent	*bev;
 	struct evbuffer		*output;
 	struct ctl_relay_event	*dst;
-	void			*con;
+	struct rsession		*con;
 	SSL			*ssl;
 	u_int8_t		*nodes;
 	struct proto_tree	*tree;
