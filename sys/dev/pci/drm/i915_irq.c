@@ -31,7 +31,6 @@
 #include "i915_drm.h"
 #include "i915_drv.h"
 
-int	inteldrm_intr(void *);
 void	i915_enable_irq(struct inteldrm_softc *, u_int32_t);
 void	i915_disable_irq(struct inteldrm_softc *, u_int32_t);
 void	ironlake_enable_graphics_irq(struct inteldrm_softc *, u_int32_t);
