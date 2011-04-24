@@ -1,3 +1,0 @@
-if [istarget v850*-*-*] {
-    run_dump_test "split-lo16"
-}

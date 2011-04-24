@@ -1,3 +1,0 @@
-if [istarget frv*-*-*] {
-    run_dump_test "fr450-link"
-}

@@ -1,7 +1,0 @@
-#
-# Some pj tests
-#
-if [istarget pj*] then {
-    run_dump_test "ops"
-}
-
