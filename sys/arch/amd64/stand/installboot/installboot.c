@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.18 2011/03/19 11:55:58 krw Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.19 2011/04/24 22:44:22 krw Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -737,6 +737,8 @@ sr_installboot(int devfd)
 	if (verbose)
 		fprintf(stderr, "%s is %d blocks x %d bytes\n",
 		    boot, nblocks, bsize);
+
+	close(fd);
 }
 
 void
