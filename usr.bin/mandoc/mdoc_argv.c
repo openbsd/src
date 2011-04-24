@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.36 2011/04/21 22:59:54 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.37 2011/04/24 16:22:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "mdoc.h"
 #include "mandoc.h"
 #include "libmdoc.h"
 #include "libmandoc.h"
@@ -40,6 +41,7 @@ static	int		 argv_opt_single(struct mdoc *, int,
 				struct mdoc_argv *, int *, char *);
 static	int		 argv_multi(struct mdoc *, int, 
 				struct mdoc_argv *, int *, char *);
+static	void		 argn_free(struct mdoc_arg *, int);
 
 enum	argvflag {
 	ARGV_NONE, /* no args to flag (e.g., -split) */
@@ -202,6 +204,60 @@ static	const int argflags[MDOC_MAX] = {
 	0, /* Ta */
 };
 
+static	const enum mdocargt args_Ex[] = {
+	MDOC_Std,
+	MDOC_ARG_MAX
+};
+
+static	const enum mdocargt args_An[] = {
+	MDOC_Split,
+	MDOC_Nosplit,
+	MDOC_ARG_MAX
+};
+
+static	const enum mdocargt args_Bd[] = {
+	MDOC_Ragged,
+	MDOC_Unfilled,
+	MDOC_Filled,
+	MDOC_Literal,
+	MDOC_File,
+	MDOC_Offset,
+	MDOC_Compact,
+	MDOC_Centred,
+	MDOC_ARG_MAX
+};
+
+static	const enum mdocargt args_Bf[] = {
+	MDOC_Emphasis,
+	MDOC_Literal,
+	MDOC_Symbolic,
+	MDOC_ARG_MAX
+};
+
+static	const enum mdocargt args_Bk[] = {
+	MDOC_Words,
+	MDOC_ARG_MAX
+};
+
+static	const enum mdocargt args_Bl[] = {
+	MDOC_Bullet,
+	MDOC_Dash,
+	MDOC_Hyphen,
+	MDOC_Item,
+	MDOC_Enum,
+	MDOC_Tag,
+	MDOC_Diag,
+	MDOC_Hang,
+	MDOC_Ohang,
+	MDOC_Inset,
+	MDOC_Column,
+	MDOC_Width,
+	MDOC_Offset,
+	MDOC_Compact,
+	MDOC_Nested,
+	MDOC_ARG_MAX
+};
+
 /*
  * Parse an argument from line text.  This comes in the form of -key
  * [value0...], which may either have a single mandatory value, at least
@@ -290,14 +346,14 @@ mdoc_argv_free(struct mdoc_arg *p)
 	assert(p->argc);
 
 	for (i = (int)p->argc - 1; i >= 0; i--)
-		mdoc_argn_free(p, i);
+		argn_free(p, i);
 
 	free(p->argv);
 	free(p);
 }
 
-void
-mdoc_argn_free(struct mdoc_arg *p, int iarg)
+static void
+argn_free(struct mdoc_arg *p, int iarg)
 {
 	struct mdoc_argv *arg;
 	int		  j;
@@ -562,7 +618,7 @@ args_checkpunct(const char *p)
 		return(0);
 
 	buf[j] = '\0';
-	if (DELIM_CLOSE != mandoc_isdelim(buf))
+	if (DELIM_CLOSE != mdoc_isdelim(buf))
 		return(0);
 
 	while (' ' == p[i])
@@ -579,7 +635,7 @@ args_checkpunct(const char *p)
 			return(0);
 
 		buf[j] = '\0';
-		d = mandoc_isdelim(buf);
+		d = mdoc_isdelim(buf);
 		if (DELIM_NONE == d || DELIM_OPEN == d)
 			return(0);
 
@@ -592,69 +648,46 @@ args_checkpunct(const char *p)
 
 /*
  * Match up an argument string (e.g., `-foo bar' having "foo") with the
- * correrct identifier.  It must apply to the given macro.  If none was
+ * correct identifier.  It must apply to the given macro.  If none was
  * found (including bad matches), return MDOC_ARG_MAX.
  */
 static enum mdocargt
 argv_a2arg(enum mdoct tok, const char *p)
 {
-	enum mdocargt	 args[MDOC_ARG_MAX];
-	int		 i, len;
+	const enum mdocargt *args;
 
-	len = 0;
+	args = NULL;
 
 	switch (tok) {
 	case (MDOC_An):
-		args[len++] = MDOC_Split;
-		args[len++] = MDOC_Nosplit;
+		args = args_An;
 		break;
 	case (MDOC_Bd):
-		args[len++] = MDOC_Ragged;
-		args[len++] = MDOC_Unfilled;
-		args[len++] = MDOC_Filled;
-		args[len++] = MDOC_Literal;
-		args[len++] = MDOC_File;
-		args[len++] = MDOC_Offset;
-		args[len++] = MDOC_Compact;
-		args[len++] = MDOC_Centred;
+		args = args_Bd;
 		break;
 	case (MDOC_Bf):
-		args[len++] = MDOC_Emphasis;
-		args[len++] = MDOC_Literal;
-		args[len++] = MDOC_Symbolic;
+		args = args_Bf;
 		break;
 	case (MDOC_Bk):
-		args[len++] = MDOC_Words;
+		args = args_Bk;
 		break;
 	case (MDOC_Bl):
-		args[len++] = MDOC_Bullet;
-		args[len++] = MDOC_Dash;
-		args[len++] = MDOC_Hyphen;
-		args[len++] = MDOC_Item;
-		args[len++] = MDOC_Enum;
-		args[len++] = MDOC_Tag;
-		args[len++] = MDOC_Diag;
-		args[len++] = MDOC_Hang;
-		args[len++] = MDOC_Ohang;
-		args[len++] = MDOC_Inset;
-		args[len++] = MDOC_Column;
-		args[len++] = MDOC_Width;
-		args[len++] = MDOC_Offset;
-		args[len++] = MDOC_Compact;
-		args[len++] = MDOC_Nested;
+		args = args_Bl;
 		break;
 	case (MDOC_Rv):
 		/* FALLTHROUGH */
 	case (MDOC_Ex):
-		args[len++] = MDOC_Std;
+		args = args_Ex;
 		break;
 	default:
-		break;
+		return(MDOC_ARG_MAX);
 	}
 
-	for (i = 0; i < len; i++)
-		if (0 == strcmp(p, mdoc_argnames[args[i]]))
-			return(args[i]);
+	assert(args);
+
+	for ( ; MDOC_ARG_MAX != *args ; args++)
+		if (0 == strcmp(p, mdoc_argnames[*args]))
+			return(*args);
 
 	return(MDOC_ARG_MAX);
 }

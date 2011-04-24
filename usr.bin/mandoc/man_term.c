@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.66 2011/03/20 23:36:42 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.67 2011/04/24 16:22:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -27,7 +27,6 @@
 #include "out.h"
 #include "man.h"
 #include "term.h"
-#include "chars.h"
 #include "main.h"
 
 #define	INDENT		  7

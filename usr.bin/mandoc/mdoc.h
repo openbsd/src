@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.45 2011/03/20 23:36:42 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.46 2011/04/24 16:22:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -17,9 +17,6 @@
 #ifndef MDOC_H
 #define MDOC_H
 
-/* 
- * What follows is a list of ALL possible macros. 
- */
 enum	mdoct {
 	MDOC_Ap = 0,
 	MDOC_Dd,
@@ -146,43 +143,37 @@ enum	mdoct {
 	MDOC_MAX
 };
 
-/* 
- * What follows is a list of ALL possible macro arguments. 
- */
 enum	mdocargt {
-	MDOC_Split,
-	MDOC_Nosplit,
-	MDOC_Ragged,
-	MDOC_Unfilled,
-	MDOC_Literal,
-	MDOC_File,
-	MDOC_Offset,
-	MDOC_Bullet,
-	MDOC_Dash,
-	MDOC_Hyphen,
-	MDOC_Item,
-	MDOC_Enum,
-	MDOC_Tag,
-	MDOC_Diag,
-	MDOC_Hang,
-	MDOC_Ohang,
-	MDOC_Inset,
-	MDOC_Column,
-	MDOC_Width,
-	MDOC_Compact,
-	MDOC_Std,
-	MDOC_Filled,
-	MDOC_Words,
-	MDOC_Emphasis,
-	MDOC_Symbolic,
-	MDOC_Nested,
-	MDOC_Centred,
+	MDOC_Split, /* -split */
+	MDOC_Nosplit, /* -nospli */
+	MDOC_Ragged, /* -ragged */
+	MDOC_Unfilled, /* -unfilled */
+	MDOC_Literal, /* -literal */
+	MDOC_File, /* -file */
+	MDOC_Offset, /* -offset */
+	MDOC_Bullet, /* -bullet */
+	MDOC_Dash, /* -dash */
+	MDOC_Hyphen, /* -hyphen */
+	MDOC_Item, /* -item */
+	MDOC_Enum, /* -enum */
+	MDOC_Tag, /* -tag */
+	MDOC_Diag, /* -diag */
+	MDOC_Hang, /* -hang */
+	MDOC_Ohang, /* -ohang */
+	MDOC_Inset, /* -inset */
+	MDOC_Column, /* -column */
+	MDOC_Width, /* -width */
+	MDOC_Compact, /* -compact */
+	MDOC_Std, /* -std */
+	MDOC_Filled, /* -filled */
+	MDOC_Words, /* -words */
+	MDOC_Emphasis, /* -emphasis */
+	MDOC_Symbolic, /* -symbolic */
+	MDOC_Nested, /* -nested */
+	MDOC_Centred, /* -centered */
 	MDOC_ARG_MAX
 };
 
-/* 
- * Type of a syntax node. 
- */
 enum	mdoc_type {
 	MDOC_TEXT,
 	MDOC_ELEM,
@@ -197,37 +188,36 @@ enum	mdoc_type {
 
 /* 
  * Section (named/unnamed) of `Sh'.   Note that these appear in the
- * conventional order imposed by mdoc.7.
+ * conventional order imposed by mdoc.7.  In the case of SEC_NONE, no
+ * section has been invoked (this shouldn't happen).  SEC_CUSTOM refers
+ * to other sections.
  */
 enum	mdoc_sec {
-	SEC_NONE = 0, /* No section, yet. */
-	SEC_NAME,
-	SEC_LIBRARY,
-	SEC_SYNOPSIS,
-	SEC_DESCRIPTION,
-	SEC_IMPLEMENTATION,
-	SEC_RETURN_VALUES,
-	SEC_ENVIRONMENT, 
-	SEC_FILES,
-	SEC_EXIT_STATUS,
-	SEC_EXAMPLES,
-	SEC_DIAGNOSTICS,
-	SEC_COMPATIBILITY,
-	SEC_ERRORS,
-	SEC_SEE_ALSO,
-	SEC_STANDARDS,
-	SEC_HISTORY,
-	SEC_AUTHORS,
-	SEC_CAVEATS,
-	SEC_BUGS,
-	SEC_SECURITY,
-	SEC_CUSTOM, /* User-defined. */
+	SEC_NONE = 0,
+	SEC_NAME, /* NAME */
+	SEC_LIBRARY, /* LIBRARY */
+	SEC_SYNOPSIS, /* SYNOPSIS */
+	SEC_DESCRIPTION, /* DESCRIPTION */
+	SEC_IMPLEMENTATION, /* IMPLEMENTATION NOTES */
+	SEC_RETURN_VALUES, /* RETURN VALUES */
+	SEC_ENVIRONMENT,  /* ENVIRONMENT */
+	SEC_FILES, /* FILES */
+	SEC_EXIT_STATUS, /* EXIT STATUS */
+	SEC_EXAMPLES, /* EXAMPLES */
+	SEC_DIAGNOSTICS, /* DIAGNOSTICS */
+	SEC_COMPATIBILITY, /* COMPATIBILITY */
+	SEC_ERRORS, /* ERRORS */
+	SEC_SEE_ALSO, /* SEE ALSO */
+	SEC_STANDARDS, /* STANDARDS */
+	SEC_HISTORY, /* HISTORY */
+	SEC_AUTHORS, /* AUTHORS */
+	SEC_CAVEATS, /* CAVEATS */
+	SEC_BUGS, /* BUGS */
+	SEC_SECURITY, /* SECURITY */
+	SEC_CUSTOM, 
 	SEC__MAX
 };
 
-/* 
- * Information from prologue. 
- */
 struct	mdoc_meta {
 	char		 *msec; /* `Dt' section (1, 3p, etc.) */
 	char		 *vol; /* `Dt' volume (implied) */
@@ -270,68 +260,50 @@ enum	mdoc_endbody {
 	ENDBODY_NOSPACE /* is broken: don't append a space */
 };
 
-/*
- * Normalised `Bl' list type.
- */
 enum	mdoc_list {
 	LIST__NONE = 0,
-	LIST_bullet,
-	LIST_column,
-	LIST_dash,
-	LIST_diag,
-	LIST_enum,
-	LIST_hang,
-	LIST_hyphen,
-	LIST_inset,
-	LIST_item,
-	LIST_ohang,
-	LIST_tag,
+	LIST_bullet, /* -bullet */
+	LIST_column, /* -column */
+	LIST_dash, /* -dash */
+	LIST_diag, /* -diag */
+	LIST_enum, /* -enum */
+	LIST_hang, /* -hang */
+	LIST_hyphen, /* -hyphen */
+	LIST_inset, /* -inset */
+	LIST_item, /* -item */
+	LIST_ohang, /* -ohang */
+	LIST_tag, /* -tag */
 	LIST_MAX
 };
 
-/*
- * Normalised `Bd' display type.
- */
 enum	mdoc_disp {
 	DISP__NONE = 0,
-	DISP_centred,
-	DISP_ragged,
-	DISP_unfilled,
-	DISP_filled,
-	DISP_literal
+	DISP_centred, /* -centered */
+	DISP_ragged, /* -ragged */
+	DISP_unfilled, /* -unfilled */
+	DISP_filled, /* -filled */
+	DISP_literal /* -literal */
 };
 
-/*
- * Normalised `An' splitting argument. 
- */
 enum	mdoc_auth {
 	AUTH__NONE = 0,
-	AUTH_split,
-	AUTH_nosplit
+	AUTH_split, /* -split */
+	AUTH_nosplit /* -nosplit */
 };
 
-/*
- * Normalised `Bf' font type.
- */
 enum	mdoc_font {
 	FONT__NONE = 0,
-	FONT_Em,
-	FONT_Li,
-	FONT_Sy
+	FONT_Em, /* Em, -emphasis */
+	FONT_Li, /* Li, -literal */
+	FONT_Sy /* Sy, -symbolic */
 };
 
-/*
- * Normalised arguments for `Bd'.
- */
 struct	mdoc_bd {
 	const char	 *offs; /* -offset */
 	enum mdoc_disp	  type; /* -ragged, etc. */
 	int		  comp; /* -compact */
 };
 
-/*
- * Normalised arguments for `Bl'.
- */
 struct	mdoc_bl {
 	const char	 *width; /* -width */
 	const char	 *offs; /* -offset */
@@ -341,16 +313,10 @@ struct	mdoc_bl {
 	const char	**cols; /* -column val ptr */
 };
 
-/*
- * Normalised arguments for `Bf'.
- */
 struct	mdoc_bf {
 	enum mdoc_font	  font; /* font */
 };
 
-/*
- * Normalised arguments for `An'.
- */
 struct	mdoc_an {
 	enum mdoc_auth	  auth; /* -split, etc. */
 };
@@ -391,6 +357,8 @@ struct	mdoc_node {
 #define	MDOC_LINE	 (1 << 3) /* first macro/text on line */
 #define	MDOC_SYNPRETTY	 (1 << 4) /* SYNOPSIS-style formatting */
 #define	MDOC_ENDED	 (1 << 5) /* rendering has been ended */
+#define	MDOC_DELIMO	 (1 << 6)
+#define	MDOC_DELIMC	 (1 << 7)
 	enum mdoc_type	  type; /* AST node type */
 	enum mdoc_sec	  sec; /* current named section */
 	union mdoc_data	 *norm; /* normalised args */
@@ -406,34 +374,18 @@ struct	mdoc_node {
 	enum mdoc_endbody end; /* BODY */
 };
 
-/*
- * Names of macros.  Index is enum mdoct.  Indexing into this returns
- * the normalised name, e.g., mdoc_macronames[MDOC_Sh] -> "Sh".
- */
+/* Names of macros.  Index is enum mdoct. */
 extern	const char *const *mdoc_macronames;
 
-/*
- * Names of macro args.  Index is enum mdocargt.  Indexing into this
- * returns the normalised name, e.g., mdoc_argnames[MDOC_File] ->
- * "file".
- */
+/* Names of macro args.  Index is enum mdocargt. */
 extern	const char *const *mdoc_argnames;
 
 __BEGIN_DECLS
 
 struct	mdoc;
 
-void	 	  mdoc_free(struct mdoc *);
-struct	mdoc	 *mdoc_alloc(struct regset *, void *, mandocmsg);
-void		  mdoc_reset(struct mdoc *);
-int	 	  mdoc_parseln(struct mdoc *, int, char *, int);
 const struct mdoc_node *mdoc_node(const struct mdoc *);
 const struct mdoc_meta *mdoc_meta(const struct mdoc *);
-int		  mdoc_endparse(struct mdoc *);
-int		  mdoc_addspan(struct mdoc *,
-			const struct tbl_span *);
-int		  mdoc_addeqn(struct mdoc *,
-			const struct eqn *);
 
 __END_DECLS
 

@@ -1,6 +1,6 @@
-/*	$Id: chars.in,v 1.14 2011/03/16 22:16:25 naddy Exp $ */
+/*	$Id: chars.in,v 1.15 2011/04/24 16:22:02 schwarze Exp $ */
 /*
- * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -375,6 +375,8 @@ STRING("right-parenthesis",	")",		41)
 STRING("right-singlequote",	"\'",		8217)
 STRING("rp",			")",		41)
 STRING("Tm",			"(Tm)",		8482)
+STRING("Px",			"POSIX",	0)
+STRING("Ai",			"ANSI",		0)
 
 /* Lines. */
 CHAR("ba",			"|",		124)

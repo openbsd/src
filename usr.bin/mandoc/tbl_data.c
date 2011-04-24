@@ -1,4 +1,4 @@
-/*	$Id: tbl_data.c,v 1.10 2011/04/21 22:59:54 schwarze Exp $ */
+/*	$Id: tbl_data.c,v 1.11 2011/04/24 16:22:02 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -60,7 +60,8 @@ data(struct tbl_node *tbl, struct tbl_span *dp,
 	 */
 
 	if (NULL == cp) {
-		TBL_MSG(tbl, MANDOCERR_TBLEXTRADAT, ln, *pos);
+		mandoc_msg(MANDOCERR_TBLEXTRADAT, 
+				tbl->parse, ln, *pos, NULL);
 		/* Skip to the end... */
 		while (p[*pos])
 			(*pos)++;
@@ -126,7 +127,8 @@ data(struct tbl_node *tbl, struct tbl_span *dp,
 			TBL_CELL_DHORIZ == dat->layout->pos ||
 			TBL_CELL_DOWN == dat->layout->pos)
 		if (TBL_DATA_DATA == dat->pos && '\0' != *dat->string)
-			TBL_MSG(tbl, MANDOCERR_TBLIGNDATA, ln, sv);
+			mandoc_msg(MANDOCERR_TBLIGNDATA, 
+					tbl->parse, ln, sv, NULL);
 
 	return(1);
 }
@@ -168,7 +170,8 @@ tbl_cdata(struct tbl_node *tbl, int ln, const char *p)
 		dat->string = mandoc_strdup(p);
 
 	if (TBL_CELL_DOWN == dat->layout->pos) 
-		TBL_MSG(tbl, MANDOCERR_TBLIGNDATA, ln, pos);
+		mandoc_msg(MANDOCERR_TBLIGNDATA, 
+				tbl->parse, ln, pos, NULL);
 
 	return(0);
 }
@@ -206,7 +209,7 @@ tbl_data(struct tbl_node *tbl, int ln, const char *p)
 	pos = 0;
 
 	if ('\0' == p[pos]) {
-		TBL_MSG(tbl, MANDOCERR_TBL, ln, pos);
+		mandoc_msg(MANDOCERR_TBL, tbl->parse, ln, pos, NULL);
 		return(0);
 	}
 

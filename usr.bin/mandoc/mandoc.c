@@ -1,4 +1,4 @@
-/*	$Id: mandoc.c,v 1.24 2011/04/21 22:59:54 schwarze Exp $ */
+/*	$Id: mandoc.c,v 1.25 2011/04/24 16:22:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -292,7 +292,7 @@ mandoc_strdup(const char *ptr)
  * or to the null byte terminating the argument line.
  */
 char *
-mandoc_getarg(char **cpp, mandocmsg msg, void *data, int ln, int *pos)
+mandoc_getarg(struct mparse *parse, char **cpp, int ln, int *pos)
 {
 	char	 *start, *cp;
 	int	  quoted, pairs, white;
@@ -339,8 +339,8 @@ mandoc_getarg(char **cpp, mandocmsg msg, void *data, int ln, int *pos)
 	}
 
 	/* Quoted argument without a closing quote. */
-	if (1 == quoted && msg)
-		(*msg)(MANDOCERR_BADQUOTE, data, ln, *pos, NULL);
+	if (1 == quoted)
+		mandoc_msg(MANDOCERR_BADQUOTE, parse, ln, *pos, NULL);
 
 	/* Null-terminate this argument and move to the next one. */
 	if (pairs)
@@ -353,8 +353,8 @@ mandoc_getarg(char **cpp, mandocmsg msg, void *data, int ln, int *pos)
 	*pos += (int)(cp - start) + (quoted ? 1 : 0);
 	*cpp = cp;
 
-	if ('\0' == *cp && msg && (white || ' ' == cp[-1]))
-		(*msg)(MANDOCERR_EOLNSPACE, data, ln, *pos, NULL);
+	if ('\0' == *cp && (white || ' ' == cp[-1]))
+		mandoc_msg(MANDOCERR_EOLNSPACE, parse, ln, *pos, NULL);
 
 	return(start);
 }
@@ -412,20 +412,20 @@ fail:
 }
 
 char *
-mandoc_normdate(char *in, mandocmsg msg, void *data, int ln, int pos)
+mandoc_normdate(struct mparse *parse, char *in, int ln, int pos)
 {
 	char		*out;
 	time_t		 t;
 
 	if (NULL == in || '\0' == *in ||
 	    0 == strcmp(in, "$" "Mdocdate$")) {
-		(*msg)(MANDOCERR_NODATE, data, ln, pos, NULL);
+		mandoc_msg(MANDOCERR_NODATE, parse, ln, pos, NULL);
 		time(&t);
 	}
 	else if (!a2time(&t, "$" "Mdocdate: %b %d %Y $", in) &&
 	    !a2time(&t, "%b %d, %Y", in) &&
 	    !a2time(&t, "%Y-%m-%d", in)) {
-		(*msg)(MANDOCERR_BADDATE, data, ln, pos, NULL);
+		mandoc_msg(MANDOCERR_BADDATE, parse, ln, pos, NULL);
 		t = 0;
 	}
 	out = t ? time2a(t) : NULL;
@@ -503,52 +503,27 @@ mandoc_hyph(const char *start, const char *c)
 }
 
 /*
- * Check if a string is a punctuation delimiter.  This only applies to
- * mdoc(7) documents, but as it's used in both front-ends and back-ends,
- * it needs to go here (instead of, say, in libmdoc.h).
+ * Find out whether a line is a macro line or not.  If it is, adjust the
+ * current position and return one; if it isn't, return zero and don't
+ * change the current position.
  */
-enum mdelim
-mandoc_isdelim(const char *p)
+int
+mandoc_getcontrol(const char *cp, int *ppos)
 {
+	int		pos;
 
-	if ('\0' == p[0])
-		return(DELIM_NONE);
+	pos = *ppos;
 
-	if ('\0' == p[1])
-		switch (p[0]) {
-		case('('):
-			/* FALLTHROUGH */
-		case('['):
-			return(DELIM_OPEN);
-		case('|'):
-			return(DELIM_MIDDLE);
-		case('.'):
-			/* FALLTHROUGH */
-		case(','):
-			/* FALLTHROUGH */
-		case(';'):
-			/* FALLTHROUGH */
-		case(':'):
-			/* FALLTHROUGH */
-		case('?'):
-			/* FALLTHROUGH */
-		case('!'):
-			/* FALLTHROUGH */
-		case(')'):
-			/* FALLTHROUGH */
-		case(']'):
-			return(DELIM_CLOSE);
-		default:
-			return(DELIM_NONE);
-		}
+	if ('\\' == cp[pos] && '.' == cp[pos + 1])
+		pos += 2;
+	else if ('.' == cp[pos] || '\'' == cp[pos])
+		pos++;
+	else
+		return(0);
 
-	if ('\\' != p[0])
-		return(DELIM_NONE);
+	while (' ' == cp[pos] || '\t' == cp[pos])
+		pos++;
 
-	if (0 == strcmp(p + 1, "."))
-		return(DELIM_CLOSE);
-	if (0 == strcmp(p + 1, "*(Ba"))
-		return(DELIM_MIDDLE);
-
-	return(DELIM_NONE);
+	*ppos = pos;
+	return(1);
 }

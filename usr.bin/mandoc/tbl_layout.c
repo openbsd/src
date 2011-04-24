@@ -1,4 +1,4 @@
-/*	$Id: tbl_layout.c,v 1.7 2011/01/16 01:11:50 schwarze Exp $ */
+/*	$Id: tbl_layout.c,v 1.8 2011/04/24 16:22:02 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -100,7 +100,8 @@ mod:
 			(*pos)++;
 			goto mod;
 		}
-		TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos);
+		mandoc_msg(MANDOCERR_TBLLAYOUT, 
+				tbl->parse, ln, *pos, NULL);
 		return(0);
 	}
 
@@ -117,7 +118,8 @@ mod:
 		/* No greater than 4 digits. */
 
 		if (4 == i) {
-			TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos);
+			mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
+					ln, *pos, NULL);
 			return(0);
 		}
 
@@ -156,7 +158,8 @@ mod:
 		(*pos)--;
 		break;
 	default:
-		TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos - 1);
+		mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
+				ln, *pos - 1, NULL);
 		return(0);
 	}
 
@@ -171,7 +174,8 @@ mod:
 		break;
 	}
 
-	TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos - 1);
+	mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
+			ln, *pos - 1, NULL);
 	return(0);
 }
 
@@ -189,7 +193,8 @@ cell(struct tbl_node *tbl, struct tbl_row *rp,
 			break;
 
 	if (KEYS_MAX == i) {
-		TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos);
+		mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse, 
+				ln, *pos, NULL);
 		return(0);
 	}
 
@@ -205,7 +210,8 @@ cell(struct tbl_node *tbl, struct tbl_row *rp,
 
 	if (TBL_CELL_SPAN == c) {
 		if (NULL == rp->first) {
-			TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos);
+			mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
+					ln, *pos, NULL);
 			return(0);
 		} else if (rp->last)
 			switch (rp->last->pos) {
@@ -213,7 +219,8 @@ cell(struct tbl_node *tbl, struct tbl_row *rp,
 			case (TBL_CELL_DVERT):
 			case (TBL_CELL_HORIZ):
 			case (TBL_CELL_DHORIZ):
-				TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos);
+				mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
+						ln, *pos, NULL);
 				return(0);
 			default:
 				break;
@@ -226,7 +233,7 @@ cell(struct tbl_node *tbl, struct tbl_row *rp,
 	 */
 
 	if (TBL_CELL_DOWN == c && rp == tbl->first_row) {
-		TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos);
+		mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse, ln, *pos, NULL);
 		return(0);
 	}
 
@@ -244,7 +251,7 @@ cell(struct tbl_node *tbl, struct tbl_row *rp,
 	if (rp->last && (TBL_CELL_VERT == c || TBL_CELL_DVERT == c) &&
 			(TBL_CELL_VERT == rp->last->pos || 
 			 TBL_CELL_DVERT == rp->last->pos)) {
-		TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos - 1);
+		mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse, ln, *pos - 1, NULL);
 		return(0);
 	}
 
@@ -285,7 +292,8 @@ cell:
 	if ('.' == p[*pos]) {
 		tbl->part = TBL_PART_DATA;
 		if (NULL == tbl->first_row) 
-			TBL_MSG(tbl, MANDOCERR_TBLNOLAYOUT, ln, *pos);
+			mandoc_msg(MANDOCERR_TBLNOLAYOUT, tbl->parse, 
+					ln, *pos, NULL);
 		(*pos)++;
 		return;
 	}

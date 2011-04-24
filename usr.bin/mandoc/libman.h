@@ -1,6 +1,6 @@
-/*	$Id: libman.h,v 1.28 2011/04/21 22:59:54 schwarze Exp $ */
+/*	$Id: libman.h,v 1.29 2011/04/24 16:22:02 schwarze Exp $ */
 /*
- * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,16 +17,13 @@
 #ifndef LIBMAN_H
 #define LIBMAN_H
 
-#include "man.h"
-
 enum	man_next {
 	MAN_NEXT_SIBLING = 0,
 	MAN_NEXT_CHILD
 };
 
 struct	man {
-	void		*data; /* private application data */
-	mandocmsg	 msg; /* output message handler */
+	struct mparse	*parse; /* parse pointer */
 	int		 flags; /* parse flags */
 #define	MAN_HALT	(1 << 0) /* badness happened: die */
 #define	MAN_ELINE	(1 << 1) /* Next-line element scope. */
@@ -64,25 +61,19 @@ extern	const struct man_macro *const man_macros;
 __BEGIN_DECLS
 
 #define		  man_pmsg(m, l, p, t) \
-		  (*(m)->msg)((t), (m)->data, (l), (p), NULL)
+		  mandoc_msg((t), (m)->parse, (l), (p), NULL)
 #define		  man_nmsg(m, n, t) \
-		  (*(m)->msg)((t), (m)->data, (n)->line, (n)->pos, NULL)
+		  mandoc_msg((t), (m)->parse, (n)->line, (n)->pos, NULL)
 int		  man_word_alloc(struct man *, int, int, const char *);
 int		  man_block_alloc(struct man *, int, int, enum mant);
 int		  man_head_alloc(struct man *, int, int, enum mant);
+int		  man_tail_alloc(struct man *, int, int, enum mant);
 int		  man_body_alloc(struct man *, int, int, enum mant);
 int		  man_elem_alloc(struct man *, int, int, enum mant);
 void		  man_node_delete(struct man *, struct man_node *);
 void		  man_hash_init(void);
-enum	mant	  man_hash_find(const char *);
+enum mant	  man_hash_find(const char *);
 int		  man_macroend(struct man *);
-int		  man_args(struct man *, int, int *, char *, char **);
-#define	ARGS_ERROR	(-1)
-#define	ARGS_EOLN	(0)
-#define	ARGS_WORD	(1)
-#define	ARGS_QWORD	(1)
-void		  man_vmsg(struct man *, enum mandocerr,
-			int, int, const char *, ...);
 int		  man_valid_post(struct man *);
 int		  man_valid_pre(struct man *, struct man_node *);
 int		  man_unscope(struct man *, 

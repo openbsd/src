@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.43 2011/04/21 22:59:54 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.44 2011/04/24 16:22:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -26,6 +26,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "man.h"
 #include "mandoc.h"
 #include "libman.h"
 #include "libmandoc.h"
@@ -192,8 +193,8 @@ check_root(CHKARGS)
 
 	        m->meta.title = mandoc_strdup("unknown");
 		m->meta.msec = mandoc_strdup("1");
-		m->meta.date = mandoc_normdate(NULL,
-		    m->msg, m->data, n->line, n->pos);
+		m->meta.date = mandoc_normdate
+			(m->parse, NULL, n->line, n->pos);
 	}
 
 	return(1);
@@ -243,7 +244,7 @@ check_##name(CHKARGS) \
 { \
 	if (n->nchild ineq (x)) \
 		return(1); \
-	man_vmsg(m, MANDOCERR_ARGCOUNT, n->line, n->pos, \
+	mandoc_vmsg(MANDOCERR_ARGCOUNT, m->parse, n->line, n->pos, \
 			"line arguments %s %d (have %d)", \
 			#ineq, (x), n->nchild); \
 	return(1); \
@@ -295,14 +296,17 @@ check_ft(CHKARGS)
 	}
 
 	if (0 == ok) {
-		man_vmsg(m, MANDOCERR_BADFONT,
-				n->line, n->pos, "%s", cp);
+		mandoc_vmsg
+			(MANDOCERR_BADFONT, m->parse,
+			 n->line, n->pos, "%s", cp);
 		*cp = '\0';
 	}
 
 	if (1 < n->nchild)
-		man_vmsg(m, MANDOCERR_ARGCOUNT, n->line, n->pos,
-				"want one child (have %d)", n->nchild);
+		mandoc_vmsg
+			(MANDOCERR_ARGCOUNT, m->parse, n->line, 
+			 n->pos, "want one child (have %d)", 
+			 n->nchild);
 
 	return(1);
 }
@@ -311,13 +315,11 @@ static int
 check_sec(CHKARGS)
 {
 
-	if (MAN_HEAD == n->type && 0 == n->nchild) {
-		man_nmsg(m, n, MANDOCERR_SYNTARGCOUNT);
-		return(0);
-	} else if (MAN_BODY == n->type && 0 == n->nchild)
-		man_nmsg(m, n, MANDOCERR_NOBODY);
+	if ( ! (MAN_HEAD == n->type && 0 == n->nchild)) 
+		return(1);
 
-	return(1);
+	man_nmsg(m, n, MANDOCERR_SYNTARGCOUNT);
+	return(0);
 }
 
 
@@ -326,7 +328,8 @@ check_part(CHKARGS)
 {
 
 	if (MAN_BODY == n->type && 0 == n->nchild)
-		man_nmsg(m, n, MANDOCERR_NOBODY);
+		mandoc_msg(MANDOCERR_ARGCWARN, m->parse, n->line, 
+				n->pos, "want children (have none)");
 
 	return(1);
 }
@@ -422,8 +425,8 @@ post_TH(CHKARGS)
 		n = n->next;
 	if (n)
 		pos = n->pos;
-	m->meta.date = mandoc_normdate(n ? n->string : NULL,
-	    m->msg, m->data, line, pos);
+	m->meta.date = mandoc_normdate
+		(m->parse, n ? n->string : NULL, line, pos);
 
 	/* TITLE MSEC DATE ->SOURCE<- VOL */
 

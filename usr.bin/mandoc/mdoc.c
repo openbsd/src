@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.82 2011/04/21 22:59:54 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.83 2011/04/24 16:22:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -24,6 +24,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "mdoc.h"
 #include "mandoc.h"
 #include "libmdoc.h"
 #include "libmandoc.h"
@@ -188,14 +189,13 @@ mdoc_free(struct mdoc *mdoc)
  * Allocate volatile and non-volatile parse resources.  
  */
 struct mdoc *
-mdoc_alloc(struct regset *regs, void *data, mandocmsg msg)
+mdoc_alloc(struct regset *regs, struct mparse *parse)
 {
 	struct mdoc	*p;
 
 	p = mandoc_calloc(1, sizeof(struct mdoc));
 
-	p->msg = msg;
-	p->data = data;
+	p->parse = parse;
 	p->regs = regs;
 
 	mdoc_hash_init();
@@ -293,26 +293,10 @@ mdoc_parseln(struct mdoc *m, int ln, char *buf, int offs)
 			m->flags &= ~MDOC_SYNOPSIS;
 	}
 
-	return(('.' == buf[offs] || '\'' == buf[offs]) ? 
+	return(mandoc_getcontrol(buf, &offs) ?
 			mdoc_pmacro(m, ln, buf, offs) :
 			mdoc_ptext(m, ln, buf, offs));
 }
-
-
-void
-mdoc_vmsg(struct mdoc *mdoc, enum mandocerr t, 
-		int ln, int pos, const char *fmt, ...)
-{
-	char		 buf[256];
-	va_list		 ap;
-
-	va_start(ap, fmt);
-	vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
-	va_end(ap);
-
-	(*mdoc->msg)(t, mdoc->data, ln, pos, buf);
-}
-
 
 int
 mdoc_macro(MACRO_PROT_ARGS)
@@ -341,8 +325,8 @@ mdoc_macro(MACRO_PROT_ARGS)
 		if (NULL == m->meta.os)
 			m->meta.os = mandoc_strdup("LOCAL");
 		if (NULL == m->meta.date)
-			m->meta.date = mandoc_normdate(NULL,
-			    m->msg, m->data, line, ppos);
+			m->meta.date = mandoc_normdate
+				(m->parse, NULL, line, ppos);
 		m->flags |= MDOC_PBODY;
 	}
 
@@ -673,15 +657,6 @@ mdoc_ptext(struct mdoc *m, int line, char *buf, int offs)
 	char		 *c, *ws, *end;
 	struct mdoc_node *n;
 
-	/* Ignore bogus comments. */
-
-	if ('\\' == buf[offs] && 
-			'.' == buf[offs + 1] && 
-			'"' == buf[offs + 2]) {
-		mdoc_pmsg(m, line, offs, MANDOCERR_BADCOMMENT);
-		return(1);
-	}
-
 	/* No text before an initial macro. */
 
 	if (SEC_NONE == m->lastnamed) {
@@ -808,64 +783,57 @@ static int
 mdoc_pmacro(struct mdoc *m, int ln, char *buf, int offs)
 {
 	enum mdoct	  tok;
-	int		  i, j, sv;
+	int		  i, sv;
 	char		  mac[5];
 	struct mdoc_node *n;
 
-	/* Empty lines are ignored. */
+	/* Empty post-control lines are ignored. */
 
-	offs++;
-
-	if ('\0' == buf[offs])
+	if ('"' == buf[offs]) {
+		mdoc_pmsg(m, ln, offs, MANDOCERR_BADCOMMENT);
+		return(1);
+	} else if ('\0' == buf[offs])
 		return(1);
 
-	i = offs;
-
-	/* Accept tabs/whitespace after the initial control char. */
-
-	if (' ' == buf[i] || '\t' == buf[i]) {
-		i++;
-		while (buf[i] && (' ' == buf[i] || '\t' == buf[i]))
-			i++;
-		if ('\0' == buf[i])
-			return(1);
-	}
-
-	sv = i;
+	sv = offs;
 
 	/* 
 	 * Copy the first word into a nil-terminated buffer.
 	 * Stop copying when a tab, space, or eoln is encountered.
 	 */
 
-	j = 0;
-	while (j < 4 && '\0' != buf[i] && ' ' != buf[i] && '\t' != buf[i])
-		mac[j++] = buf[i++];
-	mac[j] = '\0';
+	i = 0;
+	while (i < 4 && '\0' != buf[offs] && 
+			' ' != buf[offs] && '\t' != buf[offs])
+		mac[i++] = buf[offs++];
 
-	tok = (j > 1 || j < 4) ? mdoc_hash_find(mac) : MDOC_MAX;
+	mac[i] = '\0';
+
+	tok = (i > 1 || i < 4) ? mdoc_hash_find(mac) : MDOC_MAX;
+
 	if (MDOC_MAX == tok) {
-		mdoc_vmsg(m, MANDOCERR_MACRO, ln, sv, "%s", buf + sv - 1);
+		mandoc_vmsg(MANDOCERR_MACRO, m->parse, 
+				ln, sv, "%s", buf + sv - 1);
 		return(1);
 	}
 
 	/* Disregard the first trailing tab, if applicable. */
 
-	if ('\t' == buf[i])
-		i++;
+	if ('\t' == buf[offs])
+		offs++;
 
 	/* Jump to the next non-whitespace word. */
 
-	while (buf[i] && ' ' == buf[i])
-		i++;
+	while (buf[offs] && ' ' == buf[offs])
+		offs++;
 
 	/* 
 	 * Trailing whitespace.  Note that tabs are allowed to be passed
 	 * into the parser as "text", so we only warn about spaces here.
 	 */
 
-	if ('\0' == buf[i] && ' ' == buf[i - 1])
-		mdoc_pmsg(m, ln, i - 1, MANDOCERR_EOLNSPACE);
+	if ('\0' == buf[offs] && ' ' == buf[offs - 1])
+		mdoc_pmsg(m, ln, offs - 1, MANDOCERR_EOLNSPACE);
 
 	/*
 	 * If an initial macro or a list invocation, divert directly
@@ -873,7 +841,7 @@ mdoc_pmacro(struct mdoc *m, int ln, char *buf, int offs)
 	 */
 
 	if (NULL == m->last || MDOC_It == tok || MDOC_El == tok) {
-		if ( ! mdoc_macro(m, tok, ln, sv, &i, buf)) 
+		if ( ! mdoc_macro(m, tok, ln, sv, &offs, buf)) 
 			goto err;
 		return(1);
 	}
@@ -912,7 +880,7 @@ mdoc_pmacro(struct mdoc *m, int ln, char *buf, int offs)
 
 	/* Normal processing of a macro. */
 
-	if ( ! mdoc_macro(m, tok, ln, sv, &i, buf)) 
+	if ( ! mdoc_macro(m, tok, ln, sv, &offs, buf)) 
 		goto err;
 
 	return(1);
@@ -923,4 +891,48 @@ err:	/* Error out. */
 	return(0);
 }
 
+enum mdelim
+mdoc_isdelim(const char *p)
+{
 
+	if ('\0' == p[0])
+		return(DELIM_NONE);
+
+	if ('\0' == p[1])
+		switch (p[0]) {
+		case('('):
+			/* FALLTHROUGH */
+		case('['):
+			return(DELIM_OPEN);
+		case('|'):
+			return(DELIM_MIDDLE);
+		case('.'):
+			/* FALLTHROUGH */
+		case(','):
+			/* FALLTHROUGH */
+		case(';'):
+			/* FALLTHROUGH */
+		case(':'):
+			/* FALLTHROUGH */
+		case('?'):
+			/* FALLTHROUGH */
+		case('!'):
+			/* FALLTHROUGH */
+		case(')'):
+			/* FALLTHROUGH */
+		case(']'):
+			return(DELIM_CLOSE);
+		default:
+			return(DELIM_NONE);
+		}
+
+	if ('\\' != p[0])
+		return(DELIM_NONE);
+
+	if (0 == strcmp(p + 1, "."))
+		return(DELIM_CLOSE);
+	if (0 == strcmp(p + 1, "*(Ba"))
+		return(DELIM_MIDDLE);
+
+	return(DELIM_NONE);
+}

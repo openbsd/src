@@ -1,4 +1,4 @@
-/*	$Id: arch.c,v 1.5 2010/07/31 23:42:04 schwarze Exp $ */
+/*	$Id: arch.c,v 1.6 2011/04/24 16:22:02 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -18,6 +18,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "mdoc.h"
 #include "mandoc.h"
 #include "libmdoc.h"
 

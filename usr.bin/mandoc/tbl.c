@@ -1,4 +1,4 @@
-/*	$Id: tbl.c,v 1.5 2011/01/25 12:24:26 schwarze Exp $ */
+/*	$Id: tbl.c,v 1.6 2011/04/24 16:22:02 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -22,7 +22,6 @@
 #include <time.h>
 
 #include "mandoc.h"
-#include "roff.h"
 #include "libmandoc.h"
 #include "libroff.h"
 
@@ -67,15 +66,14 @@ tbl_read(struct tbl_node *tbl, int ln, const char *p, int offs)
 }
 
 struct tbl_node *
-tbl_alloc(int pos, int line, void *data, const mandocmsg msg)
+tbl_alloc(int pos, int line, struct mparse *parse)
 {
 	struct tbl_node	*p;
 
 	p = mandoc_calloc(1, sizeof(struct tbl_node));
 	p->line = line;
 	p->pos = pos;
-	p->data = data;
-	p->msg = msg;
+	p->parse = parse;
 	p->part = TBL_PART_OPTS;
 	p->opts.tab = '\t';
 	p->opts.linesize = 12;
@@ -126,14 +124,16 @@ void
 tbl_restart(int line, int pos, struct tbl_node *tbl)
 {
 	if (TBL_PART_CDATA == tbl->part)
-		TBL_MSG(tbl, MANDOCERR_TBLBLOCK, tbl->line, tbl->pos);
+		mandoc_msg(MANDOCERR_TBLBLOCK, tbl->parse, 
+				tbl->line, tbl->pos, NULL);
 
 	tbl->part = TBL_PART_LAYOUT;
 	tbl->line = line;
 	tbl->pos = pos;
 
 	if (NULL == tbl->first_span || NULL == tbl->first_span->first)
-		TBL_MSG(tbl, MANDOCERR_TBLNODATA, tbl->line, tbl->pos);
+		mandoc_msg(MANDOCERR_TBLNODATA, tbl->parse,
+				tbl->line, tbl->pos, NULL);
 }
 
 const struct tbl_span *
@@ -154,12 +154,14 @@ tbl_end(struct tbl_node *tbl)
 {
 
 	if (NULL == tbl->first_span || NULL == tbl->first_span->first)
-		TBL_MSG(tbl, MANDOCERR_TBLNODATA, tbl->line, tbl->pos);
+		mandoc_msg(MANDOCERR_TBLNODATA, tbl->parse, 
+				tbl->line, tbl->pos, NULL);
 
 	if (tbl->last_span)
 		tbl->last_span->flags |= TBL_SPAN_LAST;
 
 	if (TBL_PART_CDATA == tbl->part)
-		TBL_MSG(tbl, MANDOCERR_TBLBLOCK, tbl->line, tbl->pos);
+		mandoc_msg(MANDOCERR_TBLBLOCK, tbl->parse, 
+				tbl->line, tbl->pos, NULL);
 }
 

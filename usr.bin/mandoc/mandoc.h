@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.36 2011/04/21 22:59:54 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.37 2011/04/24 16:22:02 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -74,6 +74,7 @@ enum	mandocerr {
 	MANDOCERR_CHILD, /* child violates parent syntax */
 	MANDOCERR_NESTEDDISP, /* nested displays are not portable */
 	MANDOCERR_SCOPEREP, /* already in literal mode */
+	MANDOCERR_LINESCOPE, /* line scope broken */
 
 	/* related to missing macro arguments */
 	MANDOCERR_MACROEMPTY, /* skipping empty macro */
@@ -121,7 +122,6 @@ enum	mandocerr {
 	MANDOCERR_NOTEXT, /* skipping text before the first section header */
 	MANDOCERR_MACRO, /* skipping unknown macro */
 	MANDOCERR_REQUEST, /* NOT IMPLEMENTED: skipping request */
-	MANDOCERR_LINESCOPE, /* line scope broken */
 	MANDOCERR_ARGCOUNT, /* argument count wrong */
 	MANDOCERR_NOSCOPE, /* skipping end of block that is not open */
 	MANDOCERR_SCOPEBROKEN, /* missing end of block */
@@ -137,6 +137,7 @@ enum	mandocerr {
 
 	MANDOCERR_FATAL, /* ===== start of fatal errors ===== */
 
+	MANDOCERR_NOTMANUAL, /* manual isn't really a manual */
 	MANDOCERR_COLUMNS, /* column syntax is inconsistent */
 	MANDOCERR_BADDISP, /* NOT IMPLEMENTED: .Bd -file */
 	MANDOCERR_SYNTLINESCOPE, /* line scope broken, syntax violated */
@@ -277,67 +278,37 @@ struct	eqn {
 };
 
 /*
- * Available registers (set in libroff, accessed elsewhere).
+ * The type of parse sequence.  This value is usually passed via the
+ * mandoc(1) command line of -man and -mdoc.  It's almost exclusively
+ * -mandoc but the others have been retained for compatibility.
  */
-enum	regs {
-	REG_nS = 0,
-	REG__MAX
+enum	mparset {
+	MPARSE_AUTO, /* magically determine the document type */
+	MPARSE_MDOC, /* assume -mdoc */
+	MPARSE_MAN /* assume -man */
 };
 
-/*
- * A register (struct reg) can consist of many types: this consists of
- * normalised types from the original string form.
- */
-union	regval {
-	unsigned  u; /* unsigned integer */
-};
+typedef	void	(*mandocmsg)(enum mandocerr, enum mandoclevel,
+			const char *, int, int, const char *);
 
-/*
- * A single register entity.  If "set" is zero, the value of the
- * register should be the default one, which is per-register.  It's
- * assumed that callers know which type in "v" corresponds to which
- * register value.
- */
-struct	reg {
-	int		  set; /* whether set or not */
-	union regval	  v; /* parsed data */
-};
-
-/*
- * The primary interface to setting register values is in libroff,
- * although libmdoc and libman from time to time will manipulate
- * registers (such as `.Sh SYNOPSIS' enabling REG_nS).
- */
-struct	regset {
-	struct reg	  regs[REG__MAX];
-};
-
-/*
- * A punctuation delimiter, used only in mdoc(7) documents, is opening,
- * closing, or "middle mark" punctuation.  These govern spacing.
- * Opening punctuation (e.g., the opening parenthesis) suppresses the
- * following space; closing punctuation (e.g., the closing parenthesis)
- * suppresses the leading space; middle punctuation (e.g., the vertical
- * bar) can do either.  The middle punctuation delimiter bends the rules
- * depending on usage.
- */
-enum	mdelim {
-	DELIM_NONE = 0,
-	DELIM_OPEN,
-	DELIM_MIDDLE,
-	DELIM_CLOSE
-};
-
-typedef	void	(*mandocmsg)(enum mandocerr, void *,
-			int, int, const char *);
+struct	mparse;
+struct	mdoc;
+struct	man;
 
 __BEGIN_DECLS
+
+void		  mparse_free(struct mparse *);
+void		  mparse_reset(struct mparse *);
+struct mparse	 *mparse_alloc(enum mparset, 
+			enum mandoclevel, mandocmsg, void *);
+enum mandoclevel  mparse_readfd(struct mparse *, int, const char *);
+void		  mparse_result(struct mparse *, struct mdoc **, struct man **);
+const char	 *mparse_strerror(enum mandocerr);
+const char	 *mparse_strlevel(enum mandoclevel);
 
 void		 *mandoc_calloc(size_t, size_t);
 void		 *mandoc_malloc(size_t);
 void		 *mandoc_realloc(void *, size_t);
-#define	DELIMSZ	  6 /* hint: max possible size of a delimiter */
-enum mdelim	  mandoc_isdelim(const char *);
 
 __END_DECLS
 

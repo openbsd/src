@@ -1,6 +1,6 @@
-/*	$Id: man_macro.c,v 1.28 2011/04/21 22:59:54 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.29 2011/04/24 16:22:02 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,7 +19,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "man.h"
 #include "mandoc.h"
+#include "libmandoc.h"
 #include "libman.h"
 
 enum	rew {
@@ -32,6 +34,8 @@ static	int		 blk_close(MACRO_PROT_ARGS);
 static	int		 blk_exp(MACRO_PROT_ARGS);
 static	int		 blk_imp(MACRO_PROT_ARGS);
 static	int		 in_line_eoln(MACRO_PROT_ARGS);
+static	int		 man_args(struct man *, int, 
+				int *, char *, char **);
 
 static	int		 rew_scope(enum man_type, 
 				struct man *, enum mant);
@@ -290,7 +294,7 @@ blk_close(MACRO_PROT_ARGS)
 int
 blk_exp(MACRO_PROT_ARGS)
 {
-	int		 w, la;
+	int		 la;
 	char		*p;
 
 	/* 
@@ -311,13 +315,8 @@ blk_exp(MACRO_PROT_ARGS)
 
 	for (;;) {
 		la = *pos;
-		w = man_args(m, line, pos, buf, &p);
-
-		if (-1 == w)
-			return(0);
-		if (0 == w)
+		if ( ! man_args(m, line, pos, buf, &p))
 			break;
-
 		if ( ! man_word_alloc(m, line, la, p))
 			return(0);
 	}
@@ -342,7 +341,7 @@ blk_exp(MACRO_PROT_ARGS)
 int
 blk_imp(MACRO_PROT_ARGS)
 {
-	int		 w, la;
+	int		 la;
 	char		*p;
 	struct man_node	*n;
 
@@ -366,13 +365,8 @@ blk_imp(MACRO_PROT_ARGS)
 
 	for (;;) {
 		la = *pos;
-		w = man_args(m, line, pos, buf, &p);
-
-		if (-1 == w)
-			return(0);
-		if (0 == w)
+		if ( ! man_args(m, line, pos, buf, &p))
 			break;
-
 		if ( ! man_word_alloc(m, line, la, p))
 			return(0);
 	}
@@ -400,7 +394,7 @@ blk_imp(MACRO_PROT_ARGS)
 int
 in_line_eoln(MACRO_PROT_ARGS)
 {
-	int		 w, la;
+	int		 la;
 	char		*p;
 	struct man_node	*n;
 
@@ -411,11 +405,7 @@ in_line_eoln(MACRO_PROT_ARGS)
 
 	for (;;) {
 		la = *pos;
-		w = man_args(m, line, pos, buf, &p);
-
-		if (-1 == w)
-			return(0);
-		if (0 == w)
+		if ( ! man_args(m, line, pos, buf, &p))
 			break;
 		if ( ! man_word_alloc(m, line, la, p))
 			return(0);
@@ -478,3 +468,18 @@ man_macroend(struct man *m)
 	return(man_unscope(m, m->first, MANDOCERR_SCOPEEXIT));
 }
 
+static int
+man_args(struct man *m, int line, int *pos, char *buf, char **v)
+{
+	char	 *start;
+
+	assert(*pos);
+	*v = start = buf + *pos;
+	assert(' ' != *start);
+
+	if ('\0' == *start)
+		return(0);
+
+	*v = mandoc_getarg(m->parse, v, line, pos);
+	return(1);
+}

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.91 2011/04/21 22:59:54 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.92 2011/04/24 16:22:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -29,6 +29,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "mdoc.h"
 #include "mandoc.h"
 #include "libmdoc.h"
 #include "libmandoc.h"
@@ -150,9 +151,9 @@ static	v_post	 posts_notext[] = { ewarn_eq0, NULL };
 static	v_post	 posts_ns[] = { post_ns, NULL };
 static	v_post	 posts_os[] = { post_os, post_prol, NULL };
 static	v_post	 posts_rs[] = { post_rs, NULL };
-static	v_post	 posts_sh[] = { post_ignpar, hwarn_ge1, bwarn_ge1, post_sh, NULL };
+static	v_post	 posts_sh[] = { post_ignpar, hwarn_ge1, post_sh, NULL };
 static	v_post	 posts_sp[] = { ewarn_le1, NULL };
-static	v_post	 posts_ss[] = { post_ignpar, hwarn_ge1, bwarn_ge1, NULL };
+static	v_post	 posts_ss[] = { post_ignpar, hwarn_ge1, NULL };
 static	v_post	 posts_st[] = { post_st, NULL };
 static	v_post	 posts_std[] = { post_std, NULL };
 static	v_post	 posts_text[] = { ewarn_ge1, NULL };
@@ -442,7 +443,7 @@ check_count(struct mdoc *m, enum mdoc_type type,
 	}
 
 	t = lvl == CHECK_WARN ? MANDOCERR_ARGCWARN : MANDOCERR_ARGCOUNT;
-	mdoc_vmsg(m, t, m->last->line, m->last->pos,
+	mandoc_vmsg(t, m->parse, m->last->line, m->last->pos,
 			"want %s%d children (have %d)",
 			p, val, m->last->nchild);
 	return(1);
@@ -577,10 +578,9 @@ check_parent(PRE_ARGS, enum mdoct tok, enum mdoc_type t)
 			(t == n->parent->type))
 		return(1);
 
-	mdoc_vmsg(mdoc, MANDOCERR_SYNTCHILD,
-				n->line, n->pos, "want parent %s",
-				MDOC_ROOT == t ? "<root>" : 
-					mdoc_macronames[tok]);
+	mandoc_vmsg(MANDOCERR_SYNTCHILD, mdoc->parse, n->line, 
+			n->pos, "want parent %s", MDOC_ROOT == t ? 
+			"<root>" : mdoc_macronames[tok]);
 	return(0);
 }
 
@@ -1328,7 +1328,8 @@ post_it(POST_ARGS)
 		else
 			er = MANDOCERR_SYNTARGCOUNT;
 
-		mdoc_vmsg(mdoc, er, mdoc->last->line, mdoc->last->pos, 
+		mandoc_vmsg(er, mdoc->parse, mdoc->last->line, 
+				mdoc->last->pos, 
 				"columns == %d (have %d)", cols, i);
 		return(MANDOCERR_ARGCOUNT == er);
 	default:
@@ -1997,16 +1998,16 @@ post_dd(POST_ARGS)
 
 	n = mdoc->last;
 	if (NULL == n->child || '\0' == n->child->string[0]) {
-		mdoc->meta.date = mandoc_normdate(NULL,
-		    mdoc->msg, mdoc->data, n->line, n->pos);
+		mdoc->meta.date = mandoc_normdate
+			(mdoc->parse, NULL, n->line, n->pos);
 		return(1);
 	}
 
 	if ( ! concat(mdoc, buf, n->child, DATESIZE))
 		return(0);
 
-	mdoc->meta.date = mandoc_normdate(buf,
-	    mdoc->msg, mdoc->data, n->line, n->pos);
+	mdoc->meta.date = mandoc_normdate
+		(mdoc->parse, buf, n->line, n->pos);
 
 	return(1);
 }
@@ -2189,7 +2190,7 @@ post_os(POST_ARGS)
 			return(0);
 		}
 #else /*!OSNAME */
-		if (uname(&utsname)) {
+		if (-1 == uname(&utsname)) {
 			mdoc_nmsg(mdoc, n, MANDOCERR_UNAME);
                         mdoc->meta.os = mandoc_strdup("UNKNOWN");
                         return(post_prol(mdoc));

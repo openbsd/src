@@ -1,4 +1,4 @@
-/*	$Id: tbl_opts.c,v 1.3 2011/04/21 22:59:54 schwarze Exp $ */
+/*	$Id: tbl_opts.c,v 1.4 2011/04/24 16:22:02 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "mandoc.h"
+#include "libmandoc.h"
 #include "libroff.h"
 
 enum	tbl_ident {
@@ -88,7 +89,8 @@ arg(struct tbl_node *tbl, int ln, const char *p, int *pos, enum tbl_ident key)
 	/* Arguments always begin with a parenthesis. */
 
 	if ('(' != p[*pos]) {
-		TBL_MSG(tbl, MANDOCERR_TBL, ln, *pos);
+		mandoc_msg(MANDOCERR_TBL, tbl->parse, 
+				ln, *pos, NULL);
 		return(0);
 	}
 
@@ -103,12 +105,14 @@ arg(struct tbl_node *tbl, int ln, const char *p, int *pos, enum tbl_ident key)
 	switch (key) {
 	case (KEY_DELIM):
 		if ('\0' == p[(*pos)++]) {
-			TBL_MSG(tbl, MANDOCERR_TBL, ln, *pos - 1);
+			mandoc_msg(MANDOCERR_TBL, tbl->parse,
+					ln, *pos - 1, NULL);
 			return(0);
 		} 
 
 		if ('\0' == p[(*pos)++]) {
-			TBL_MSG(tbl, MANDOCERR_TBL, ln, *pos - 1);
+			mandoc_msg(MANDOCERR_TBL, tbl->parse,
+					ln, *pos - 1, NULL);
 			return(0);
 		} 
 		break;
@@ -116,7 +120,8 @@ arg(struct tbl_node *tbl, int ln, const char *p, int *pos, enum tbl_ident key)
 		if ('\0' != (tbl->opts.tab = p[(*pos)++]))
 			break;
 
-		TBL_MSG(tbl, MANDOCERR_TBL, ln, *pos - 1);
+		mandoc_msg(MANDOCERR_TBL, tbl->parse,
+				ln, *pos - 1, NULL);
 		return(0);
 	case (KEY_LINESIZE):
 		for (i = 0; i < KEY_MAXNUMSZ && p[*pos]; i++, (*pos)++) {
@@ -131,13 +136,14 @@ arg(struct tbl_node *tbl, int ln, const char *p, int *pos, enum tbl_ident key)
 			break;
 		}
 
-		(*tbl->msg)(MANDOCERR_TBL, tbl->data, ln, *pos, NULL);
+		mandoc_msg(MANDOCERR_TBL, tbl->parse, ln, *pos, NULL);
 		return(0);
 	case (KEY_DPOINT):
 		if ('\0' != (tbl->opts.decimal = p[(*pos)++]))
 			break;
 
-		TBL_MSG(tbl, MANDOCERR_TBL, ln, *pos - 1);
+		mandoc_msg(MANDOCERR_TBL, tbl->parse, 
+				ln, *pos - 1, NULL);
 		return(0);
 	default:
 		abort();
@@ -149,7 +155,7 @@ arg(struct tbl_node *tbl, int ln, const char *p, int *pos, enum tbl_ident key)
 	if (')' == p[(*pos)++])
 		return(1);
 
-	TBL_MSG(tbl, MANDOCERR_TBL, ln, *pos - 1);
+	mandoc_msg(MANDOCERR_TBL, tbl->parse, ln, *pos - 1, NULL);
 	return(0);
 }
 
@@ -196,7 +202,7 @@ again:	/*
 	/* Exit if buffer is empty (or overrun). */
 
 	if (KEY_MAXNAME == i || 0 == i) {
-		TBL_MSG(tbl, MANDOCERR_TBL, ln, *pos);
+		mandoc_msg(MANDOCERR_TBL, tbl->parse, ln, *pos, NULL);
 		return;
 	}
 
@@ -235,7 +241,7 @@ again:	/*
 	 */
 
 	if (KEY_MAXKEYS == i)
-		TBL_MSG(tbl, MANDOCERR_TBLOPT, ln, sv);
+		mandoc_msg(MANDOCERR_TBLOPT, tbl->parse, ln, sv, NULL);
 
 	goto again;
 	/* NOTREACHED */

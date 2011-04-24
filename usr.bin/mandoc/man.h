@@ -1,4 +1,4 @@
-/*	$Id: man.h,v 1.36 2011/03/20 23:36:42 schwarze Exp $ */
+/*	$Id: man.h,v 1.37 2011/04/24 16:22:02 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -17,9 +17,6 @@
 #ifndef MAN_H
 #define MAN_H
 
-/* 
- * What follows is a list of ALL possible macros. 
- */
 enum	mant {
 	MAN_br = 0,
 	MAN_TH,
@@ -57,9 +54,6 @@ enum	mant {
 	MAN_MAX
 };
 
-/* 
- * Type of a syntax node. 
- */
 enum	man_type {
 	MAN_TEXT,
 	MAN_ELEM,
@@ -67,13 +61,11 @@ enum	man_type {
 	MAN_BLOCK,
 	MAN_HEAD,
 	MAN_BODY,
+	MAN_TAIL,
 	MAN_TBL,
 	MAN_EQN
 };
 
-/* 
- * Information from prologue. 
- */
 struct	man_meta {
 	char		*msec; /* `TH' section (1, 3p, etc.) */
 	char		*date; /* `TH' normalised date */
@@ -82,9 +74,6 @@ struct	man_meta {
 	char		*source; /* `TH' source (e.g., GNU) */
 };
 
-/* 
- * Single node in tree-linked AST. 
- */
 struct	man_node {
 	struct man_node	*parent; /* parent AST node */
 	struct man_node	*child; /* first child AST node */
@@ -101,29 +90,18 @@ struct	man_node {
 	enum man_type	 type; /* AST node type */
 	char		*string; /* TEXT node argument */
 	struct man_node	*head; /* BLOCK node HEAD ptr */
+	struct man_node *tail; /* BLOCK node TAIL ptr */
 	struct man_node	*body; /* BLOCK node BODY ptr */
 	const struct tbl_span *span; /* TBL */
 	const struct eqn *eqn; /* EQN */
 };
 
-/*
- * Names of macros.  Index is enum mant.  Indexing into this returns
- * the normalised name, e.g., man_macronames[MAN_SH] -> "SH".
- */
+/* Names of macros.  Index is enum mant. */
 extern	const char *const *man_macronames;
 
 __BEGIN_DECLS
 
 struct	man;
-
-void	 	  man_free(struct man *);
-struct	man	 *man_alloc(struct regset *, void *, mandocmsg);
-void		  man_reset(struct man *);
-int	 	  man_parseln(struct man *, int, char *, int);
-int		  man_endparse(struct man *);
-int		  man_addspan(struct man *,
-			const struct tbl_span *);
-int		  man_addeqn(struct man *, const struct eqn *);
 
 const struct man_node *man_node(const struct man *);
 const struct man_meta *man_meta(const struct man *);

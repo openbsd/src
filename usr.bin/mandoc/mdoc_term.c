@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.131 2011/03/20 23:36:42 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.132 2011/04/24 16:22:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -28,7 +28,6 @@
 #include "out.h"
 #include "term.h"
 #include "mdoc.h"
-#include "chars.h"
 #include "main.h"
 
 #define	INDENT		  5
@@ -348,7 +347,11 @@ print_mdoc_node(DECL_ARGS)
 	case (MDOC_TEXT):
 		if (' ' == *n->string && MDOC_LINE & n->flags)
 			term_newln(p);
+		if (MDOC_DELIMC & n->flags)
+			p->flags |= TERMP_NOSPACE;
 		term_word(p, n->string);
+		if (MDOC_DELIMO & n->flags)
+			p->flags |= TERMP_NOSPACE;
 		break;
 	case (MDOC_EQN):
 		term_word(p, n->eqn->data);
@@ -1176,25 +1179,30 @@ termp_rs_pre(DECL_ARGS)
 static int
 termp_rv_pre(DECL_ARGS)
 {
-	const struct mdoc_node	*nn;
+	int		 nchild;
 
 	term_newln(p);
 	term_word(p, "The");
 
-	for (nn = n->child; nn; nn = nn->next) {
+	nchild = n->nchild;
+	for (n = n->child; n; n = n->next) {
 		term_fontpush(p, TERMFONT_BOLD);
-		term_word(p, nn->string);
+		term_word(p, n->string);
 		term_fontpop(p);
+
 		p->flags |= TERMP_NOSPACE;
-		if (nn->next && NULL == nn->next->next)
-			term_word(p, "(), and");
-		else if (nn->next)
-			term_word(p, "(),");
-		else
-			term_word(p, "()");
+		term_word(p, "()");
+
+		if (nchild > 2 && n->next) {
+			p->flags |= TERMP_NOSPACE;
+			term_word(p, ",");
+		}
+
+		if (n->next && NULL == n->next->next)
+			term_word(p, "and");
 	}
 
-	if (n->child && n->child->next)
+	if (nchild > 1)
 		term_word(p, "functions return");
 	else
 		term_word(p, "function returns");
@@ -1217,31 +1225,34 @@ termp_rv_pre(DECL_ARGS)
 static int
 termp_ex_pre(DECL_ARGS)
 {
-	const struct mdoc_node	*nn;
+	int		 nchild;
 
+	term_newln(p);
 	term_word(p, "The");
 
-	for (nn = n->child; nn; nn = nn->next) {
+	nchild = n->nchild;
+	for (n = n->child; n; n = n->next) {
 		term_fontpush(p, TERMFONT_BOLD);
-		term_word(p, nn->string);
+		term_word(p, n->string);
 		term_fontpop(p);
-		p->flags |= TERMP_NOSPACE;
-		if (nn->next && NULL == nn->next->next)
-			term_word(p, ", and");
-		else if (nn->next)
+
+		if (nchild > 2 && n->next) {
+			p->flags |= TERMP_NOSPACE;
 			term_word(p, ",");
-		else
-			p->flags &= ~TERMP_NOSPACE;
+		}
+
+		if (n->next && NULL == n->next->next)
+			term_word(p, "and");
 	}
 
-	if (n->child && n->child->next)
+	if (nchild > 1)
 		term_word(p, "utilities exit");
 	else
 		term_word(p, "utility exits");
 
        	term_word(p, "0 on success, and >0 if an error occurs.");
-	p->flags |= TERMP_SENTENCE;
 
+	p->flags |= TERMP_SENTENCE;
 	return(0);
 }
 
@@ -1281,30 +1292,32 @@ termp_bl_post(DECL_ARGS)
 		term_newln(p);
 }
 
-
 /* ARGSUSED */
 static int
 termp_xr_pre(DECL_ARGS)
 {
-	const struct mdoc_node *nn;
 
-	if (NULL == n->child)
+	if (NULL == (n = n->child))
 		return(0);
 
-	assert(MDOC_TEXT == n->child->type);
-	nn = n->child;
+	assert(MDOC_TEXT == n->type);
+	term_word(p, n->string);
 
-	term_word(p, nn->string);
-	if (NULL == (nn = nn->next)) 
+	if (NULL == (n = n->next)) 
 		return(0);
+
 	p->flags |= TERMP_NOSPACE;
 	term_word(p, "(");
-	term_word(p, nn->string);
+	p->flags |= TERMP_NOSPACE;
+
+	assert(MDOC_TEXT == n->type);
+	term_word(p, n->string);
+
+	p->flags |= TERMP_NOSPACE;
 	term_word(p, ")");
 
 	return(0);
 }
-
 
 /*
  * This decides how to assert whitespace before any of the SYNOPSIS set
@@ -1519,30 +1532,43 @@ termp_ft_pre(DECL_ARGS)
 static int
 termp_fn_pre(DECL_ARGS)
 {
-	const struct mdoc_node	*nn;
+	int		 pretty;
+
+	pretty = MDOC_SYNPRETTY & n->flags;
 
 	synopsis_pre(p, n);
 
+	if (NULL == (n = n->child))
+		return(0);
+
+	assert(MDOC_TEXT == n->type);
 	term_fontpush(p, TERMFONT_BOLD);
-	term_word(p, n->child->string);
+	term_word(p, n->string);
 	term_fontpop(p);
 
 	p->flags |= TERMP_NOSPACE;
 	term_word(p, "(");
+	p->flags |= TERMP_NOSPACE;
 
-	for (nn = n->child->next; nn; nn = nn->next) {
+	for (n = n->next; n; n = n->next) {
+		assert(MDOC_TEXT == n->type);
 		term_fontpush(p, TERMFONT_UNDER);
-		term_word(p, nn->string);
+		term_word(p, n->string);
 		term_fontpop(p);
 
-		if (nn->next)
+		if (n->next) {
+			p->flags |= TERMP_NOSPACE;
 			term_word(p, ",");
+		}
 	}
 
+	p->flags |= TERMP_NOSPACE;
 	term_word(p, ")");
 
-	if (MDOC_SYNPRETTY & n->flags)
+	if (pretty) {
+		p->flags |= TERMP_NOSPACE;
 		term_word(p, ";");
+	}
 
 	return(0);
 }
@@ -1564,12 +1590,16 @@ termp_fa_pre(DECL_ARGS)
 		term_word(p, nn->string);
 		term_fontpop(p);
 
-		if (nn->next)
+		if (nn->next) {
+			p->flags |= TERMP_NOSPACE;
 			term_word(p, ",");
+		}
 	}
 
-	if (n->child && n->next && n->next->tok == MDOC_Fa)
+	if (n->child && n->next && n->next->tok == MDOC_Fa) {
+		p->flags |= TERMP_NOSPACE;
 		term_word(p, ",");
+	}
 
 	return(0);
 }
@@ -2004,6 +2034,7 @@ termp_fo_pre(DECL_ARGS)
 	} else if (MDOC_BODY == n->type) {
 		p->flags |= TERMP_NOSPACE;
 		term_word(p, "(");
+		p->flags |= TERMP_NOSPACE;
 		return(1);
 	} 
 
@@ -2027,10 +2058,13 @@ termp_fo_post(DECL_ARGS)
 	if (MDOC_BODY != n->type) 
 		return;
 
+	p->flags |= TERMP_NOSPACE;
 	term_word(p, ")");
 
-	if (MDOC_SYNPRETTY & n->flags)
+	if (MDOC_SYNPRETTY & n->flags) {
+		p->flags |= TERMP_NOSPACE;
 		term_word(p, ";");
+	}
 }
 
 
@@ -2104,6 +2138,7 @@ termp____post(DECL_ARGS)
 	if (NULL == n->parent || MDOC_Rs != n->parent->tok)
 		return;
 
+	p->flags |= TERMP_NOSPACE;
 	if (NULL == n->next) {
 		term_word(p, ".");
 		p->flags |= TERMP_SENTENCE;
@@ -2140,6 +2175,7 @@ termp_lk_pre(DECL_ARGS)
 
 	term_fontpop(p);
 
+	p->flags |= TERMP_NOSPACE;
 	term_word(p, ":");
 
 	term_fontpush(p, TERMFONT_BOLD);

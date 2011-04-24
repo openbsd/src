@@ -1,4 +1,4 @@
-/*	$Id: out.h,v 1.9 2011/03/07 01:35:33 schwarze Exp $ */
+/*	$Id: out.h,v 1.10 2011/04/24 16:22:02 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -17,34 +17,17 @@
 #ifndef OUT_H
 #define OUT_H
 
-__BEGIN_DECLS
-
-struct	roffcol {
-	size_t		 width; /* width of cell */
-	size_t		 decimal; /* decimal position in cell */
-};
-
-typedef	size_t (*tbl_strlen)(const char *, void *);
-typedef	size_t (*tbl_len)(size_t, void *);
-
-struct	rofftbl {
-	tbl_strlen	 slen; /* calculate string length */
-	tbl_len		 len; /* produce width of empty space */
-	struct roffcol	*cols; /* master column specifiers */
-	void		*arg; /* passed to slen and len */
-};
-
 enum	roffscale {
-	SCALE_CM,
-	SCALE_IN,
-	SCALE_PC,
-	SCALE_PT,
-	SCALE_EM,
-	SCALE_MM,
-	SCALE_EN,
-	SCALE_BU,
-	SCALE_VS,
-	SCALE_FS,
+	SCALE_CM, /* centimeters (c) */
+	SCALE_IN, /* inches (i) */
+	SCALE_PC, /* pica (P) */
+	SCALE_PT, /* points (p) */
+	SCALE_EM, /* ems (m) */
+	SCALE_MM, /* mini-ems (M) */
+	SCALE_EN, /* ens (n) */
+	SCALE_BU, /* default horizontal (u) */
+	SCALE_VS, /* default vertical (v) */
+	SCALE_FS, /* syn. for u (f) */
 	SCALE_MAX
 };
 
@@ -64,10 +47,32 @@ enum	roffdeco {
 	DECO_MAX
 };
 
+enum	chars {
+	CHARS_ASCII, /* 7-bit ascii representation */
+	CHARS_HTML /* unicode values */
+};
+
+struct	roffcol {
+	size_t		 width; /* width of cell */
+	size_t		 decimal; /* decimal position in cell */
+};
+
 struct	roffsu {
 	enum roffscale	  unit;
 	double		  scale;
 };
+
+typedef	size_t	(*tbl_strlen)(const char *, void *);
+typedef	size_t	(*tbl_len)(size_t, void *);
+
+struct	rofftbl {
+	tbl_strlen	 slen; /* calculate string length */
+	tbl_len		 len; /* produce width of empty space */
+	struct roffcol	*cols; /* master column specifiers */
+	void		*arg; /* passed to slen and len */
+};
+
+__BEGIN_DECLS
 
 #define	SCALE_VS_INIT(p, v) \
 	do { (p)->unit = SCALE_VS; \
@@ -79,10 +84,18 @@ struct	roffsu {
 	     (p)->scale = (v); } \
 	while (/* CONSTCOND */ 0)
 
-int	  a2roffsu(const char *, struct roffsu *, enum roffscale);
-int	  a2roffdeco(enum roffdeco *, const char **, size_t *);
-void	  time2a(time_t, char *, size_t);
-void	  tblcalc(struct rofftbl *tbl, const struct tbl_span *);
+int	  	  a2roffsu(const char *, struct roffsu *, enum roffscale);
+int	  	  a2roffdeco(enum roffdeco *, const char **, size_t *);
+void	  	  time2a(time_t, char *, size_t);
+void	  	  tblcalc(struct rofftbl *tbl, const struct tbl_span *);
+
+void		 *chars_init(enum chars);
+const char	 *chars_num2char(const char *, size_t);
+const char	 *chars_spec2str(void *, const char *, size_t, size_t *);
+int		  chars_spec2cp(void *, const char *, size_t);
+const char	 *chars_res2str(void *, const char *, size_t, size_t *);
+int		  chars_res2cp(void *, const char *, size_t);
+void		  chars_free(void *);
 
 __END_DECLS
 

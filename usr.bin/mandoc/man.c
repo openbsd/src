@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.58 2011/04/21 22:59:54 schwarze Exp $ */
+/*	$Id: man.c,v 1.59 2011/04/24 16:22:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "man.h"
 #include "mandoc.h"
 #include "libman.h"
 #include "libmandoc.h"
@@ -91,15 +92,14 @@ man_free(struct man *man)
 
 
 struct man *
-man_alloc(struct regset *regs, void *data, mandocmsg msg)
+man_alloc(struct regset *regs, struct mparse *parse)
 {
 	struct man	*p;
 
 	p = mandoc_calloc(1, sizeof(struct man));
 
 	man_hash_init();
-	p->data = data;
-	p->msg = msg;
+	p->parse = parse;
 	p->regs = regs;
 
 	man_alloc1(p);
@@ -126,7 +126,8 @@ man_parseln(struct man *m, int ln, char *buf, int offs)
 	m->flags |= MAN_NEWLINE;
 
 	assert( ! (MAN_HALT & m->flags));
-	return(('.' == buf[offs] || '\'' == buf[offs]) ? 
+
+	return (mandoc_getcontrol(buf, &offs) ?
 			man_pmacro(m, ln, buf, offs) : 
 			man_ptext(m, ln, buf, offs));
 }
@@ -199,6 +200,10 @@ man_node_append(struct man *man, struct man_node *p)
 		assert(MAN_BLOCK == p->parent->type);
 		p->parent->head = p;
 		break;
+	case (MAN_TAIL):
+		assert(MAN_BLOCK == p->parent->type);
+		p->parent->tail = p;
+		break;
 	case (MAN_BODY):
 		assert(MAN_BLOCK == p->parent->type);
 		p->parent->body = p;
@@ -249,6 +254,19 @@ man_elem_alloc(struct man *m, int line, int pos, enum mant tok)
 	struct man_node *p;
 
 	p = man_node_alloc(m, line, pos, MAN_ELEM, tok);
+	if ( ! man_node_append(m, p))
+		return(0);
+	m->next = MAN_NEXT_CHILD;
+	return(1);
+}
+
+
+int
+man_tail_alloc(struct man *m, int line, int pos, enum mant tok)
+{
+	struct man_node *p;
+
+	p = man_node_alloc(m, line, pos, MAN_TAIL, tok);
 	if ( ! man_node_append(m, p))
 		return(0);
 	m->next = MAN_NEXT_CHILD;
@@ -400,20 +418,10 @@ man_descope(struct man *m, int line, int offs)
 	return(man_body_alloc(m, line, offs, m->last->tok));
 }
 
-
 static int
 man_ptext(struct man *m, int line, char *buf, int offs)
 {
 	int		 i;
-
-	/* Ignore bogus comments. */
-
-	if ('\\' == buf[offs] && 
-			'.' == buf[offs + 1] && 
-			'"' == buf[offs + 2]) {
-		man_pmsg(m, line, offs, MANDOCERR_BADCOMMENT);
-		return(1);
-	}
 
 	/* Literal free-form text whitespace is preserved. */
 
@@ -472,67 +480,54 @@ man_ptext(struct man *m, int line, char *buf, int offs)
 	return(man_descope(m, line, offs));
 }
 
-
 static int
 man_pmacro(struct man *m, int ln, char *buf, int offs)
 {
-	int		 i, j, ppos;
+	int		 i, ppos;
 	enum mant	 tok;
 	char		 mac[5];
 	struct man_node	*n;
 
-	/* Comments and empties are quickly ignored. */
-
-	offs++;
-
-	if ('\0' == buf[offs])
+	if ('"' == buf[offs]) {
+		man_pmsg(m, ln, offs, MANDOCERR_BADCOMMENT);
+		return(1);
+	} else if ('\0' == buf[offs])
 		return(1);
 
-	i = offs;
-
-	/*
-	 * Skip whitespace between the control character and initial
-	 * text.  "Whitespace" is both spaces and tabs.
-	 */
-
-	if (' ' == buf[i] || '\t' == buf[i]) {
-		i++;
-		while (buf[i] && (' ' == buf[i] || '\t' == buf[i]))
-			i++;
-		if ('\0' == buf[i])
-			goto out;
-	}
-
-	ppos = i;
+	ppos = offs;
 
 	/*
 	 * Copy the first word into a nil-terminated buffer.
 	 * Stop copying when a tab, space, or eoln is encountered.
 	 */
 
-	j = 0;
-	while (j < 4 && '\0' != buf[i] && ' ' != buf[i] && '\t' != buf[i])
-		mac[j++] = buf[i++];
-	mac[j] = '\0';
+	i = 0;
+	while (i < 4 && '\0' != buf[offs] && 
+			' ' != buf[offs] && '\t' != buf[offs])
+		mac[i++] = buf[offs++];
 
-	tok = (j > 0 && j < 4) ? man_hash_find(mac) : MAN_MAX;
+	mac[i] = '\0';
+
+	tok = (i > 0 && i < 4) ? man_hash_find(mac) : MAN_MAX;
+
 	if (MAN_MAX == tok) {
-		man_vmsg(m, MANDOCERR_MACRO, ln, ppos, "%s", buf + ppos - 1);
+		mandoc_vmsg(MANDOCERR_MACRO, m->parse, ln, 
+				ppos, "%s", buf + ppos - 1);
 		return(1);
 	}
 
 	/* The macro is sane.  Jump to the next word. */
 
-	while (buf[i] && ' ' == buf[i])
-		i++;
+	while (buf[offs] && ' ' == buf[offs])
+		offs++;
 
 	/* 
 	 * Trailing whitespace.  Note that tabs are allowed to be passed
 	 * into the parser as "text", so we only warn about spaces here.
 	 */
 
-	if ('\0' == buf[i] && ' ' == buf[i - 1])
-		man_pmsg(m, ln, i - 1, MANDOCERR_EOLNSPACE);
+	if ('\0' == buf[offs] && ' ' == buf[offs - 1])
+		man_pmsg(m, ln, offs - 1, MANDOCERR_EOLNSPACE);
 
 	/* 
 	 * Remove prior ELINE macro, as it's being clobbered by a new
@@ -550,8 +545,8 @@ man_pmacro(struct man *m, int ln, char *buf, int offs)
 		if (MAN_NSCOPED & man_macros[n->tok].flags)
 			n = n->parent;
 
-		man_vmsg(m, MANDOCERR_LINESCOPE, n->line, n->pos,
-				"%s", man_macronames[n->tok]);
+		mandoc_vmsg(MANDOCERR_LINESCOPE, m->parse, n->line, 
+				n->pos, "%s", man_macronames[n->tok]);
 
 		man_node_delete(m, n);
 		m->flags &= ~MAN_ELINE;
@@ -569,10 +564,9 @@ man_pmacro(struct man *m, int ln, char *buf, int offs)
 	/* Call to handler... */
 
 	assert(man_macros[tok].fp);
-	if ( ! (*man_macros[tok].fp)(m, tok, ln, ppos, &i, buf))
+	if ( ! (*man_macros[tok].fp)(m, tok, ln, ppos, &offs, buf))
 		goto err;
 
-out:
 	/* 
 	 * We weren't in a block-line scope when entering the
 	 * above-parsed macro, so return.
@@ -609,28 +603,13 @@ out:
 
 	if ( ! man_unscope(m, m->last->parent, MANDOCERR_MAX))
 		return(0);
-	return(man_body_alloc(m, ln, offs, m->last->tok));
+	return(man_body_alloc(m, ln, ppos, m->last->tok));
 
 err:	/* Error out. */
 
 	m->flags |= MAN_HALT;
 	return(0);
 }
-
-
-void
-man_vmsg(struct man *man, enum mandocerr t, 
-		int ln, int pos, const char *fmt, ...)
-{
-	char		 buf[256];
-	va_list		 ap;
-
-	va_start(ap, fmt);
-	vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
-	va_end(ap);
-	(*man->msg)(t, man->data, ln, pos, buf);
-}
-
 
 /*
  * Unlink a node from its context.  If "m" is provided, the last parse
