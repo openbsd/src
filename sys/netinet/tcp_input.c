@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.245 2011/04/12 10:47:29 mikeb Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.246 2011/04/24 19:36:54 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -895,7 +895,8 @@ after_listen:
 #endif
 
 #if NPF > 0
-	if (m->m_pkthdr.pf.statekey) {
+	if (m->m_pkthdr.pf.statekey && !inp->inp_pf_sk &&
+	    !((struct pf_state_key *)m->m_pkthdr.pf.statekey)->inp) {
 		((struct pf_state_key *)m->m_pkthdr.pf.statekey)->inp = inp;
 		inp->inp_pf_sk = m->m_pkthdr.pf.statekey;
 	}
@@ -1338,6 +1339,19 @@ trimthenstep6:
 		    ((opti.ts_present &&
 		    TSTMP_LT(tp->ts_recent, opti.ts_val)) ||
 		    SEQ_GT(th->th_seq, tp->rcv_nxt))) {
+#if NPF > 0
+			/*
+			 * The socket will be recreated but the new state
+			 * has already been linked to the socket.  Remove the
+			 * link between old socket and new state.  Otherwise
+			 * closing the socket would remove the state.
+			 */
+			if (inp->inp_pf_sk) {
+				((struct pf_state_key *)inp->inp_pf_sk)->inp =
+				    NULL;
+				inp->inp_pf_sk = NULL;
+			}
+#endif
 			/*
 			* Advance the iss by at least 32768, but
 			* clear the msb in order to make sure
