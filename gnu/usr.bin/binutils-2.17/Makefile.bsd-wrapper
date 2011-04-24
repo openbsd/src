@@ -1,0 +1,160 @@
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 2011/04/24 20:19:23 miod Exp $
+
+NEW_BINUTILS=alpha amd64 arm hppa hppa64 i386 mips64 powerpc sh sparc sparc64
+
+.for _arch in ${MACHINE_CPU}
+.  if !empty(NEW_BINUTILS:M${_arch})
+USING_NEW_BINUTILS?=yes
+.else
+USING_NEW_BINUTILS?=no
+.  endif
+.endfor
+
+SUBDIRS=	opcodes bfd
+CONF_SUBDIRS=	opcodes bfd
+
+# This allows moving the whole binutils installation around for 
+# testing purposes
+PREFIX=/usr
+.if ${PREFIX} != "/usr"
+MANDIR=${PREFIX}/share/man/cat
+.endif
+
+MAN=		binutils/doc/objdump.1 c++filt.1
+
+#### cross-compilation
+###.if !defined(TARGET_ARCH)
+###CONF_SUBDIRS+=	gdb
+###SUBDIRS+=	gdb
+###INST_SUBDIRS+=	gdb
+###MAN+=		gdb/gdb.1
+###.endif
+
+.if ${USING_NEW_BINUTILS:L} == "yes"
+SUBDIRS+=	binutils ld gas
+CONF_SUBDIRS+=	binutils ld gas
+INST_SUBDIRS+=	binutils ld gas
+MAN+=		binutils/doc/addr2line.1 binutils/doc/ar.1 \
+		binutils/doc/objcopy.1 binutils/doc/ranlib.1 \
+		binutils/doc/readelf.1 binutils/doc/strings.1 \
+		binutils/doc/strip.1 \
+		gas/doc/as.1 ld/ld.1
+.  else
+CONF_SUBDIRS=${SUBDIRS}
+CONF_SUBDIRS+= binutils
+.endif
+
+# Used by the GNU Makefile
+ALL_MODULES=${SUBDIRS:S/^/all-/g}
+CONFIGURE_MODULES=${CONF_SUBDIRS:S/^/configure-/g}
+CONFIGURE_HOST_MODULES=${CONF_SUBDIRS:S/^/configure-/g}
+ALL_HOST_MODULES=${SUBDIRS:S/^/all-/g}
+INSTALL_MODULES=${INST_SUBDIRS:S/^/install-/g}
+INFO_HOST_MODULES=${SUBDIRS:S/^/info-/g}
+INSTALL_INFO_HOST_MODULES=${INST_SUBDIRS:S/^/install-info-/g}
+
+# cross-compilation
+.if defined(TARGET_ARCH)
+CONFIGTARGET=--target=${TARGET_ARCH}-unknown-openbsd${OSREV}
+.else
+CONFIGTARGET=
+.endif
+
+all:	config.status
+	SUBDIRS='${SUBDIRS}' \
+	  CONFIGURE_HOST_MODULES='${CONFIGURE_HOST_MODULES}' \
+	  ${MAKE} CC="${CC}" \
+	    CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS=${LDSTATIC} \
+	    scriptdir=${PREFIX}/libdata \
+	    tooldir=${PREFIX} \
+	    MAKEINFO='makeinfo --no-split' \
+	    MAKEINFOFLAGS='' \
+	    BSDSRCDIR=${BSDSRCDIR} \
+	    ALL_MODULES="${ALL_MODULES}" \
+	    ALL_HOST_MODULES='${ALL_HOST_MODULES}' \
+	    INFO_HOST_MODULES='${INFO_HOST_MODULES}' all info
+.if ${USING_NEW_BINUTILS:L} != "yes"
+	cd ${.OBJDIR}/binutils && \
+	    ${MAKE} CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" \
+	    LDFLAGS=${LDSTATIC} objdump
+.endif
+
+.include <bsd.own.mk>
+
+.ifdef GLOBAL_AUTOCONF_CACHE
+CF=	--cache-file=${GLOBAL_AUTOCONF_CACHE}
+.else
+CF=
+.endif
+
+do-config: .USE
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	MAKEINFO='makeinfo --no-split' \
+	sh ${.CURDIR}/configure --prefix=${PREFIX} \
+	    --infodir='$${prefix}/share/info' \
+	    --disable-nls --disable-gdbtk --disable-install-libbfd ${CF} \
+	    ${CONFIGTARGET}
+	cd ${.OBJDIR} && \
+	    sed -e 's,SUBDIRS *=,SUBDIRS ?=,' <Makefile >Makefile.tmp && \
+	    mv -f Makefile.tmp Makefile
+	cd ${.OBJDIR} && \
+	    ${MAKE} ${CONFIGURE_MODULES}
+.if ${USING_NEW_BINUTILS:L} == "yes"
+	# We need to generate as.1 and ld.1 immediately after config.status
+	# for the manpage machinery to work properly.
+	cd ${.OBJDIR}/gas/doc && ${MAKE} as.1
+	cd ${.OBJDIR}/ld && ${MAKE} ld.1
+.endif
+
+config: do-config
+.ifndef GLOBAL_AUTOCONF_CACHE
+	-rm -f config.cache
+.endif
+
+config.status: do-config
+
+# Need to pass SUBDIRS because of install-info
+install: maninstall
+	SUBDIRS='${INST_SUBDIRS}' ${MAKE} DESTDIR='${DESTDIR}' \
+	    INSTALL_MAN= \
+	    scriptdir=${PREFIX}/libdata \
+	    tooldir=${PREFIX} \
+	    BSDSRCDIR=${BSDSRCDIR} \
+	    INSTALL_MODULES='${INSTALL_MODULES}' \
+	    INSTALL_PROGRAM='install -c -S' \
+	    INSTALL_INFO_HOST_MODULES='${INSTALL_INFO_HOST_MODULES}' \
+	      install install-info
+.if ${USING_NEW_BINUTILS:L} != "yes"
+	cd ${.OBJDIR}/binutils && \
+		${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} \
+		    -g ${BINGRP} -m ${BINMODE} objdump ${DESTDIR}${PREFIX}/bin
+.endif
+
+clean cleandir:
+	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
+
+c++filt.1: binutils/cxxfilt.man
+	sed -e 's,@PROGRAM@,c++filt,' <${.CURDIR}/binutils/cxxfilt.man >$@
+
+depend:
+	# Nothing here so far...
+
+lint:
+	# Nothing here so far...
+
+tags:
+	# Nothing here so far...
+
+BEFOREMAN=config.status
+
+.PHONY: config
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+
+.ifdef NOMAN
+maninstall:
+	@echo NOMAN is set
+.else
+.include <bsd.man.mk>
+.endif

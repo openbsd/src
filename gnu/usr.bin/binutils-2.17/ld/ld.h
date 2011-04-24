@@ -252,6 +252,10 @@ typedef struct {
 
   bfd_boolean text_read_only;
 
+  /* Classic ELF executable which has data and bss next to each
+     other with no padding for GOT/PLT. */
+  bfd_boolean data_bss_contig;
+
   char *map_filename;
   FILE *map_file;
 

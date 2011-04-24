@@ -299,6 +299,9 @@ static const struct ld_option ld_options[] =
   { {NULL, required_argument, NULL, '\0'},
     'Y', N_("PATH"), N_("Default search path for Solaris compatibility"),
     ONE_DASH },
+  { {"Zmagic", no_argument, NULL, 'Z'},
+      'Z', NULL, N_("Do not page align got/plt, old style executable"),
+      EXACTLY_TWO_DASHES },
   { {"start-group", no_argument, NULL, '('},
     '(', NULL, N_("Start a group"), TWO_DASHES },
   { {"end-group", no_argument, NULL, ')'},
@@ -1279,6 +1282,9 @@ parse_args (unsigned argc, char **argv)
 	  break;
 	case 'y':
 	  add_ysym (optarg);
+	  break;
+	case 'Z':
+	  config.data_bss_contig = TRUE;
 	  break;
 	case OPTION_SPARE_DYNAMIC_TAGS:
 	  link_info.spare_dynamic_tags = strtoul (optarg, NULL, 0);

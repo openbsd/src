@@ -66,7 +66,7 @@ MAKEINFOHTML = $(MAKEINFO) --html
 AM_MAKEINFOHTMLFLAGS = $(AM_MAKEINFOFLAGS)
 DVIPS = dvips
 man1dir = $(mandir)/man1
-am__installdirs = "$(DESTDIR)$(man1dir)"
+am__installdirs =
 NROFF = nroff
 MANS = $(man_MANS)
 ACLOCAL = @ACLOCAL@
@@ -205,7 +205,7 @@ target_alias = @target_alias@
 target_cpu = @target_cpu@
 target_os = @target_os@
 target_vendor = @target_vendor@
-AUTOMAKE_OPTIONS = cygnus
+AUTOMAKE_OPTIONS = cygnus no-installman
 
 # What version of the manual you want; "all" includes everything
 CONFIG = all
@@ -443,7 +443,7 @@ CTAGS:
 
 check-am:
 check: check-am
-all-am: Makefile $(MANS)
+all-am: Makefile
 installdirs:
 	for dir in "$(DESTDIR)$(man1dir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
@@ -494,7 +494,7 @@ info: info-am
 
 info-am: $(INFO_DEPS) info-local
 
-install-data-am: install-data-local install-man
+install-data-am: install-data-local
 
 install-exec-am:
 
@@ -552,7 +552,7 @@ ps: ps-am
 
 ps-am: $(PSS)
 
-uninstall-am: uninstall-man
+uninstall-am:
 
 uninstall-man: uninstall-man1
 

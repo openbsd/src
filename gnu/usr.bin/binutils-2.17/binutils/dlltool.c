@@ -1139,7 +1139,11 @@ run (const char *what, char *args)
   int i;
   const char **argv;
   char *errmsg_fmt, *errmsg_arg;
+#if defined(__MSDOS__) && !defined(__GO32__)
   char *temp_base = choose_temp_base ();
+#else
+  char *temp_base = NULL;
+#endif
 
   inform ("run: %s %s", what, args);
 

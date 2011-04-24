@@ -145,6 +145,14 @@ all problems in hand-written assembler code.
 @itemx -no-mfix-vr4130
 Insert nops to work around the VR4130 @samp{mflo}/@samp{mfhi} errata.
 
+@item -mfix-loongson2f-btb
+@itemx -mno-fix-loongson2f-btb
+Clear the Branch Target Buffer before any jump through a register.  This
+option is intended to be used on kernel code for the Loongson 2F processor
+only; userland code compiled with this option will fault, and kernel code
+compiled with this option run on another processor than Loongson 2E and 2F
+will yield unpredictable results.
+
 @item -m4010
 @itemx -no-m4010
 Generate code for the LSI @sc{r4010} chip.  This tells the assembler to

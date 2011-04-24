@@ -1011,6 +1011,11 @@ Create an ELF @code{PT_GNU_RELRO} segment header in the object.
 
 Other keywords are ignored for Solaris compatibility.  
 
+@kindex -Z
+@item -Z
+Produce 'Standard' executables, disables Writable XOR Executable features
+in resulting binaries.
+
 @kindex -(
 @cindex groups of archives
 @item -( @var{archives} -)

@@ -202,7 +202,8 @@ const char extra_symbol_chars[] = "*%-(["
 	 && !defined (TE_LINUX)				\
  	 && !defined (TE_NETWARE)			\
 	 && !defined (TE_FreeBSD)			\
-	 && !defined (TE_NetBSD)))
+	 && !defined (TE_NetBSD)			\
+	 && !defined (TE_OpenBSD)))
 /* This array holds the chars that always start a comment.  If the
    pre-processor is disabled, these aren't very useful.  The option
    --divide will remove '/' from this list.  */
@@ -3491,7 +3492,7 @@ output_insn ()
       /* All opcodes on i386 have either 1 or 2 bytes.  Merom New
 	 Instructions have 3 bytes.  We may use one more higher byte
 	 to specify a prefix the instruction requires.  */
-      if ((i.tm.cpu_flags & CpuMNI) != 0)
+      if ((i.tm.cpu_flags & (CpuMNI|CpuAES|CpuPCLMUL)) != 0)
 	{
 	  if (i.tm.base_opcode & 0xff000000)
 	    {
@@ -3532,7 +3533,7 @@ check_prefix:
 	}
       else
 	{
-	  if ((i.tm.cpu_flags & CpuMNI) != 0)
+	  if ((i.tm.cpu_flags & (CpuMNI|CpuAES|CpuPCLMUL)) != 0)
 	    {
 	      p = frag_more (3);
 	      *p++ = (i.tm.base_opcode >> 16) & 0xff;

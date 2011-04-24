@@ -373,6 +373,7 @@ TARG_ENV_HFILES = \
 	config/te-nbsd.h \
 	config/te-nbsd532.h \
 	config/te-netware.h \
+	config/te-obsd.h \
 	config/te-pc532mach.h \
 	config/te-pe.h \
 	config/te-psos.h \
@@ -478,7 +479,8 @@ DEP_FLAGS = -DOBJ_MAYBE_ELF \
 # How to link with both our special library facilities
 # and the system's installed libraries.
 
-GASLIBS = @OPCODES_LIB@ @BFDLIB@ ../libiberty/libiberty.a
+GASLIBS = @OPCODES_LIB@ @BFDLIB@ -liberty
+GASLIBSDEP = @OPCODES_LIB@ @BFDLIB@
 
 # Files to be copied away after each stage in building.
 STAGESTUFF = *.o $(noinst_PROGRAMS)
@@ -491,7 +493,7 @@ as_new_SOURCES = $(GAS_CFILES)
 as_new_LDADD = $(TARG_CPU_O) $(OBJ_FORMAT_O) $(ATOF_TARG_O) \
 	$(extra_objects) $(GASLIBS) $(INTLLIBS) $(LIBM)
 as_new_DEPENDENCIES = $(TARG_CPU_O) $(OBJ_FORMAT_O) $(ATOF_TARG_O) \
-	$(extra_objects) $(GASLIBS) $(INTLDEPS)
+	$(extra_objects) $(GASLIBSDEP) $(INTLDEPS)
 
 # Stuff that every object file depends upon.  If anything is removed
 # from this list, remove it from dep-in.sed as well.
@@ -710,7 +712,7 @@ install-exec-bindir: $(noinst_PROGRAMS)
 	$(mkinstalldirs) $(DESTDIR)$(bindir)
 	@list='$(noinst_PROGRAMS)'; for p in $$list; do \
 	  if test -f $$p; then \
-	    echo " $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(bindir)/`echo $$p|sed -e 's/$(EXEEXT)$$//' -e 's/-new//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`"; \
+	    echo " $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(DESTDIR)$(bindir)/`echo $$p|sed -e 's/$(EXEEXT)$$//' -e 's/-new//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`"; \
 	    $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(DESTDIR)$(bindir)/`echo $$p|sed -e 's/$(EXEEXT)$$//' -e 's/-new//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
 	  else :; fi; \
 	done

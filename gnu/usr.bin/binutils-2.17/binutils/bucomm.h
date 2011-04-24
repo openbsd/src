@@ -199,7 +199,7 @@ int display_info (void);
 
 void print_arelt_descr (FILE *, bfd *, bfd_boolean);
 
-char *make_tempname (char *);
+char *make_tempname (char *, int);
 
 bfd_vma parse_vma (const char *, const char *);
 

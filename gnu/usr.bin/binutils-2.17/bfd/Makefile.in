@@ -1374,7 +1374,7 @@ $(BFD32_LIBS) \
  $(ALL_MACHINES) \
  $(BFD32_BACKENDS) \
  $(BFD64_BACKENDS) \
- $(OPTIONAL_BACKENDS): $(BFD_H) $(BFD_H_DEPS) $(LOCAL_H_DEPS)
+ $(OPTIONAL_BACKENDS) @COREFILE@: $(BFD_H) $(BFD_H_DEPS) $(LOCAL_H_DEPS)
 
 install-bfdlibLTLIBRARIES: @INSTALL_LIBBFD_TRUE@install_libbfd
 	@$(NORMAL_INSTALL)
@@ -1385,17 +1385,12 @@ uninstall-bfdlibLTLIBRARIES: @INSTALL_LIBBFD_TRUE@uninstall_libbfd
 .PHONY: install_libbfd uninstall_libbfd
 install_libbfd: $(bfdlib_LTLIBRARIES) $(BFD_H)
 	$(mkinstalldirs) $(DESTDIR)$(bfdlibdir)
-	$(mkinstalldirs) $(DESTDIR)$(bfdincludedir)
 	@list='$(bfdlib_LTLIBRARIES)'; for p in $$list; do \
 	  if test -f $$p; then \
 	    echo "$(LIBTOOL)  --mode=install $(INSTALL) $$p $(DESTDIR)$(bfdlibdir)/$$p"; \
 	    $(LIBTOOL)  --mode=install $(INSTALL) $$p $(DESTDIR)$(bfdlibdir)/$$p; \
 	  else :; fi; \
 	done
-	$(INSTALL_DATA) $(BFD_H) $(DESTDIR)$(bfdincludedir)/bfd.h
-	$(INSTALL_DATA) $(INCDIR)/ansidecl.h $(DESTDIR)$(bfdincludedir)/ansidecl.h
-	$(INSTALL_DATA) $(INCDIR)/symcat.h $(DESTDIR)$(bfdincludedir)/symcat.h
-	$(INSTALL_DATA) $(INCDIR)/bfdlink.h $(DESTDIR)$(bfdincludedir)/bfdlink.h
 
 uninstall_libbfd:
 	list='$(bfdlib_LTLIBRARIES)'; for p in $$list; do \
@@ -1452,7 +1447,7 @@ host-aout.lo: Makefile
 aout-params.h: gen-aout
 	./gen-aout host > aout-params.h
 gen-aout: $(srcdir)/gen-aout.c Makefile
-	$(CC) -o gen-aout $(CFLAGS) $(LFLAGS) $(srcdir)/gen-aout.c
+	$(CC) -o gen-aout $(CSEARCH) $(CFLAGS) $(LFLAGS) $(srcdir)/gen-aout.c
 
 $(BFD_H): stmp-bfd-h ; @true
 
@@ -2402,6 +2397,8 @@ peigen.lo: peigen.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h \
 pepigen.lo: pepigen.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h \
   $(INCDIR)/coff/internal.h $(INCDIR)/coff/ia64.h $(INCDIR)/coff/external.h \
   $(INCDIR)/coff/pe.h libcoff.h $(INCDIR)/bfdlink.h libpei.h
+netbsd-core.lo: netbsd-core.c $(INCDIR)/filenames.h libaout.h \
+  $(INCDIR)/bfdlink.h 
 # IF YOU PUT ANYTHING HERE IT WILL GO AWAY
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

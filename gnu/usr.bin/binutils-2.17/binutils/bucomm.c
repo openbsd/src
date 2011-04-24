@@ -389,11 +389,12 @@ print_arelt_descr (FILE *file, bfd *abfd, bfd_boolean verbose)
 /* Return the name of a temporary file in the same directory as FILENAME.  */
 
 char *
-make_tempname (char *filename)
+make_tempname (char *filename, int isdir)
 {
   static char template[] = "stXXXXXX";
   char *tmpname;
   char *slash = strrchr (filename, '/');
+  char c;
 
 #ifdef HAVE_DOS_BASED_FILE_SYSTEM
   {
@@ -408,8 +409,6 @@ make_tempname (char *filename)
 
   if (slash != (char *) NULL)
     {
-      char c;
-
       c = *slash;
       *slash = 0;
       tmpname = xmalloc (strlen (filename) + sizeof (template) + 2);
@@ -423,15 +422,31 @@ make_tempname (char *filename)
 #endif
       strcat (tmpname, "/");
       strcat (tmpname, template);
-      mktemp (tmpname);
-      *slash = c;
     }
   else
     {
       tmpname = xmalloc (sizeof (template));
       strcpy (tmpname, template);
-      mktemp (tmpname);
     }
+
+  if (isdir)
+    {
+      if (mkdtemp (tmpname) == (char *) NULL)
+      tmpname = NULL;
+    }
+  else
+    {
+      int fd;
+
+      fd = mkstemp (tmpname);
+      if (fd == -1)
+      tmpname = NULL;
+      else
+      close (fd);
+    }
+  if (slash != (char *) NULL)
+    *slash = c;
+
   return tmpname;
 }
 

@@ -632,7 +632,9 @@ extern const bfd_target bfd_elf32_shl_vec;
 extern const bfd_target bfd_elf32_shl_symbian_vec;
 extern const bfd_target bfd_elf32_shlin_vec;
 extern const bfd_target bfd_elf32_shlnbsd_vec;
+extern const bfd_target bfd_elf32_shlobsd_vec;
 extern const bfd_target bfd_elf32_shnbsd_vec;
+extern const bfd_target bfd_elf32_shobsd_vec;
 extern const bfd_target bfd_elf32_sparc_vec;
 extern const bfd_target bfd_elf32_sparc_vxworks_vec;
 extern const bfd_target bfd_elf32_tradbigmips_vec;
@@ -939,7 +941,9 @@ static const bfd_target * const _bfd_target_vector[] = {
         &bfd_elf32_shl_symbian_vec,
         &bfd_elf32_shlin_vec,
 	&bfd_elf32_shlnbsd_vec,
+	&bfd_elf32_shlobsd_vec,
 	&bfd_elf32_shnbsd_vec,
+	&bfd_elf32_shobsd_vec,
 #ifdef BFD64
 	&bfd_elf32_sh64_vec,
 	&bfd_elf32_sh64l_vec,

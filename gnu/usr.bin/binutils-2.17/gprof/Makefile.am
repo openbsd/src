@@ -26,8 +26,8 @@ sources = basic_blocks.c call_graph.c cg_arcs.c cg_dfn.c \
 	search_list.c symtab.c sym_ids.c utils.c \
 	i386.c alpha.c vax.c tahoe.c sparc.c mips.c
 gprof_SOURCES = $(sources) flat_bl.c bsd_callg_bl.c fsf_callg_bl.c
-gprof_DEPENDENCIES = ../bfd/libbfd.la ../libiberty/libiberty.a $(INTLDEPS)
-gprof_LDADD = ../bfd/libbfd.la ../libiberty/libiberty.a $(INTLLIBS)
+gprof_DEPENDENCIES = ../bfd/libbfd.la $(INTLDEPS)
+gprof_LDADD = ../bfd/libbfd.la -liberty $(INTLLIBS)
 
 noinst_HEADERS = \
 	basic_blocks.h call_graph.h cg_arcs.h cg_dfn.h cg_print.h \

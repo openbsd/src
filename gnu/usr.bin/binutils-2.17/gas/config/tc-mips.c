@@ -692,6 +692,8 @@ static int mips_fix_vr4130;
    efficient expansion.  */
 
 static int mips_relax_branch;
+
+static int mips_fix_loongson2f_btb;
 
 /* The expansion of many macros depends on the type of symbol that
    they refer to.  For example, when generating position-dependent code,
@@ -964,6 +966,7 @@ static void mips_no_prev_insn (void);
 static void mips16_macro_build
   (expressionS *, const char *, const char *, va_list);
 static void load_register (int, expressionS *, int);
+static void macro_build (expressionS *, const char *, const char *, ...);
 static void macro_start (void);
 static void macro_end (void);
 static void macro (struct mips_cl_insn * ip);
@@ -2971,6 +2974,41 @@ macro_read_relocs (va_list *args, bfd_reloc_code_real_type *r)
       r[i] = (bfd_reloc_code_real_type) va_arg (*args, int);
 }
 
+/* Fix jump through register issue on loongson2f processor for kernel code:
+   force a BTB clear before the jump to prevent it from being incorrectly
+   prefetched by the branch prediction engine. */
+
+static void
+macro_build_jrpatch (expressionS *ep, unsigned int sreg)
+{
+  if (!mips_fix_loongson2f_btb)
+    return;
+
+  if (sreg == ZERO || sreg == KT0 || sreg == KT1 || sreg == AT)
+    return;
+
+  if (mips_opts.noat)
+    {
+      as_warn (_("unable to apply loongson2f BTB workaround when .set noat"));
+      return;
+    }
+
+  /* li $at, COP_0_BTB_CLEAR | COP_0_RAS_DISABLE */
+  ep->X_op = O_constant;
+  ep->X_add_number = 3;
+  macro_build (ep, "ori", "t,r,i", AT, ZERO, BFD_RELOC_LO16);
+
+  /* dmtc0 $at, COP_0_DIAG */
+  macro_build (NULL, "dmtc0", "t,G", AT, 22);
+
+  /* Hide these two instructions to avoid getting a ``macro expanded into
+     multiple instructions'' warning. */
+  if (mips_relax.sequence != 2)
+    mips_macro_warning.sizes[0] -= 2 * 4;
+  if (mips_relax.sequence != 1)
+    mips_macro_warning.sizes[1] -= 2 * 4;
+}
+
 /* Build an instruction created by a macro expansion.  This is passed
    a pointer to the count of instructions created so far, an
    expression, the name of the instruction to build, an operand format
@@ -3361,6 +3399,7 @@ macro_build_jalr (expressionS *ep)
       frag_grow (8);
       f = frag_more (0);
     }
+  macro_build_jrpatch (ep, PIC_CALL_REG);
   macro_build (NULL, "jalr", "d,s", RA, PIC_CALL_REG);
   if (HAVE_NEWABI)
     fix_new_exp (frag_now, f - frag_now->fr_literal,
@@ -5490,6 +5529,26 @@ macro (struct mips_cl_insn *ip)
 	macro_build (NULL, ADDRESS_ADD_INSN, "d,v,t", treg, tempreg, breg);
       break;
 
+    case M_JR_S:
+      macro_build_jrpatch (&expr1, sreg);
+      macro_build (NULL, "jr", "s", sreg);
+      return;	/* didn't modify $at */
+
+    case M_J_S:
+      macro_build_jrpatch (&expr1, sreg);
+      macro_build (NULL, "j", "s", sreg);
+      return;	/* didn't modify $at */
+
+    case M_JALR_S:
+      macro_build_jrpatch (&expr1, sreg);
+      macro_build (NULL, "jalr", "s", sreg);
+      return;	/* didn't modify $at */
+
+    case M_JALR_DS:
+      macro_build_jrpatch (&expr1, sreg);
+      macro_build (NULL, "jalr", "d,s", dreg, sreg);
+      return;	/* didn't modify $at */
+
     case M_J_A:
       /* The j instruction may not be used in PIC code, since it
 	 requires an absolute address.  We convert it to a b
@@ -5508,12 +5567,16 @@ macro (struct mips_cl_insn *ip)
       /* Fall through.  */
     case M_JAL_2:
       if (mips_pic == NO_PIC)
-	macro_build (NULL, "jalr", "d,s", dreg, sreg);
+	{
+	  macro_build_jrpatch (&expr1, sreg);
+	  macro_build (NULL, "jalr", "d,s", dreg, sreg);
+	}
       else
 	{
 	  if (sreg != PIC_CALL_REG)
 	    as_warn (_("MIPS PIC call to register other than $25"));
 
+	  macro_build_jrpatch (&expr1, sreg);
 	  macro_build (NULL, "jalr", "d,s", dreg, sreg);
 	  if (mips_pic == SVR4_PIC && !HAVE_NEWABI)
 	    {
@@ -10592,9 +10655,13 @@ struct option md_longopts[] =
 #define OPTION_NO_FIX_VR4130 (OPTION_FIX_BASE + 5)
   {"mfix-vr4130",    no_argument, NULL, OPTION_FIX_VR4130},
   {"mno-fix-vr4130", no_argument, NULL, OPTION_NO_FIX_VR4130},
+#define	OPTION_FIX_LOONGSON2F_BTB (OPTION_FIX_BASE + 6)
+#define	OPTION_NO_FIX_LOONGSON2F_BTB (OPTION_FIX_BASE + 7)
+  {"mfix-loongson2f-btb", no_argument, NULL, OPTION_FIX_LOONGSON2F_BTB},
+  {"mno-fix-loongson2f-btb", no_argument, NULL, OPTION_NO_FIX_LOONGSON2F_BTB},
 
   /* Miscellaneous options.  */
-#define OPTION_MISC_BASE (OPTION_FIX_BASE + 6)
+#define OPTION_MISC_BASE (OPTION_FIX_BASE + 8)
 #define OPTION_TRAP (OPTION_MISC_BASE + 0)
   {"trap", no_argument, NULL, OPTION_TRAP},
   {"no-break", no_argument, NULL, OPTION_TRAP},
@@ -10861,6 +10928,14 @@ md_parse_option (int c, char *arg)
 
     case OPTION_NO_FIX_VR4130:
       mips_fix_vr4130 = 0;
+      break;
+
+    case OPTION_FIX_LOONGSON2F_BTB:
+      mips_fix_loongson2f_btb = 1;
+      break;
+
+    case OPTION_NO_FIX_LOONGSON2F_BTB:
+      mips_fix_loongson2f_btb = 0;
       break;
 
     case OPTION_RELAX_BRANCH:
@@ -14515,6 +14590,7 @@ MIPS options:\n\
   fprintf (stream, _("\
 -mfix-vr4120		work around certain VR4120 errata\n\
 -mfix-vr4130		work around VR4130 mflo/mfhi errata\n\
+-mfix-loongson2f-btb	work around Loongson2F BTB errata\n\
 -mgp32			use 32-bit GPRs, regardless of the chosen ISA\n\
 -mfp32			use 32-bit FPRs, regardless of the chosen ISA\n\
 -mno-shared		optimize output for executables\n\

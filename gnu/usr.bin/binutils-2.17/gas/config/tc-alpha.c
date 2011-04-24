@@ -1829,7 +1829,7 @@ insert_operand (unsigned insn,
 
       insn = (*operand->insert) (insn, val, &errmsg);
       if (errmsg)
-	as_warn (errmsg);
+	as_warn ("%s", errmsg);
     }
   else
     insn |= ((val & ((1 << operand->bits) - 1)) << operand->shift);

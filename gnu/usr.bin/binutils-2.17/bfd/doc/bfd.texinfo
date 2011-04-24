@@ -144,7 +144,7 @@ To use the library, include @file{bfd.h} and link with @file{libbfd.a}.
 BFD provides a common interface to the parts of an object file
 for a calling application. 
 
-When an application sucessfully opens a target file (object, archive, or
+When an application successfully opens a target file (object, archive, or
 whatever), a pointer to an internal structure is returned. This pointer
 points to a structure called @code{bfd}, described in
 @file{bfd.h}.  Our convention is to call this pointer a BFD, and

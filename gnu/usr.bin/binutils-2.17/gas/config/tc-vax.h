@@ -24,7 +24,7 @@
 #define TARGET_BYTES_BIG_ENDIAN 0
 
 #ifdef OBJ_AOUT
-#ifdef TE_NetBSD
+#if defined(TE_NetBSD) || defined(TE_OpenBSD)
 #define TARGET_FORMAT "a.out-vax-netbsd"
 #endif
 #ifndef TARGET_FORMAT

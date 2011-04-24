@@ -567,7 +567,6 @@ segT   subseg_get (const char *, int);
 struct expressionS;
 struct fix;
 typedef struct symbol symbolS;
-struct relax_type;
 typedef struct frag fragS;
 
 /* literal.c */

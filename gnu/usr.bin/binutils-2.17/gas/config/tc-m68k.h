@@ -30,7 +30,7 @@ struct fix;
 #ifdef TE_SUN3
 #define TARGET_FORMAT "a.out-sunos-big"
 #endif
-#ifdef TE_NetBSD
+#if defined(TE_NetBSD) || defined(TE_OpenBSD)
 #define TARGET_FORMAT "a.out-m68k-netbsd"
 #endif
 #ifdef TE_LINUX

@@ -37,11 +37,11 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-bin_PROGRAMS = $(am__EXEEXT_5) $(am__EXEEXT_6) $(am__EXEEXT_7) \
+bin_PROGRAMS = $(am__EXEEXT_6) $(am__EXEEXT_7) \
 	$(am__EXEEXT_8) $(am__EXEEXT_9) $(am__EXEEXT_10) \
 	@BUILD_NLMCONV@ @BUILD_SRCONV@ @BUILD_DLLTOOL@ @BUILD_WINDRES@ \
 	$(am__EXEEXT_11) $(am__EXEEXT_12) @BUILD_DLLWRAP@ @BUILD_MISC@
-noinst_PROGRAMS = $(am__EXEEXT_13) $(am__EXEEXT_14) $(am__EXEEXT_15)
+noinst_PROGRAMS = $(am__EXEEXT_14) $(am__EXEEXT_15)
 EXTRA_PROGRAMS = $(am__EXEEXT_1) srconv$(EXEEXT) sysdump$(EXEEXT) \
 	coffdump$(EXEEXT) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 	$(am__EXEEXT_4)
@@ -92,7 +92,7 @@ am_addr2line_OBJECTS = addr2line.$(OBJEXT) budemang.$(OBJEXT) \
 addr2line_OBJECTS = $(am_addr2line_OBJECTS)
 addr2line_LDADD = $(LDADD)
 am__DEPENDENCIES_1 = ../bfd/libbfd.la
-am__DEPENDENCIES_2 = ../libiberty/libiberty.a
+am__DEPENDENCIES_2 =
 am__DEPENDENCIES_3 =
 addr2line_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2) \
 	$(am__DEPENDENCIES_3)
@@ -210,7 +210,7 @@ YACCCOMPILE = $(YACC) $(YFLAGS) $(AM_YFLAGS)
 LTYACCCOMPILE = $(LIBTOOL) --mode=compile $(YACC) $(YFLAGS) \
 	$(AM_YFLAGS)
 SOURCES = $(addr2line_SOURCES) $(ar_SOURCES) $(coffdump_SOURCES) \
-	$(cxxfilt_SOURCES) $(dlltool_SOURCES) $(dllwrap_SOURCES) \
+	$(dlltool_SOURCES) $(dllwrap_SOURCES) \
 	$(nlmconv_SOURCES) $(nm_new_SOURCES) $(objcopy_SOURCES) \
 	$(objdump_SOURCES) $(ranlib_SOURCES) $(readelf_SOURCES) \
 	$(size_SOURCES) $(srconv_SOURCES) $(strings_SOURCES) \
@@ -253,7 +253,7 @@ CPPFLAGS = @CPPFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DATADIRNAME = @DATADIRNAME@
 DEFS = @DEFS@
-DEMANGLER_NAME = @DEMANGLER_NAME@
+#DEMANGLER_NAME = @DEMANGLER_NAME@
 DEPDIR = @DEPDIR@
 DLLTOOL_DEFS = @DLLTOOL_DEFS@
 ECHO_C = @ECHO_C@
@@ -385,17 +385,17 @@ OBJDUMP_PROG = objdump
 
 # This is the demangler, as a standalone program.
 # Note: This one is used as the installed name too, unlike the above.
-DEMANGLER_PROG = cxxfilt
+#DEMANGLER_PROG = cxxfilt
 ADDR2LINE_PROG = addr2line
 NLMCONV_PROG = nlmconv
 DLLTOOL_PROG = dlltool
 WINDRES_PROG = windres
 DLLWRAP_PROG = dllwrap
 SRCONV_PROG = srconv$(EXEEXT) sysdump$(EXEEXT) coffdump$(EXEEXT) 
-PROGS = $(SIZE_PROG) $(OBJDUMP_PROG) $(NM_PROG) $(AR_PROG) $(STRINGS_PROG) $(STRIP_PROG) $(RANLIB_PROG) $(DEMANGLER_PROG) $(OBJCOPY_PROG) @BUILD_NLMCONV@ @BUILD_SRCONV@ @BUILD_DLLTOOL@ @BUILD_WINDRES@ $(ADDR2LINE_PROG) $(READELF_PROG) @BUILD_DLLWRAP@ @BUILD_MISC@
+PROGS = $(OBJDUMP_PROG) $(AR_PROG) $(STRINGS_PROG) $(STRIP_PROG) $(RANLIB_PROG) $(DEMANGLER_PROG) $(OBJCOPY_PROG) @BUILD_NLMCONV@ @BUILD_SRCONV@ @BUILD_DLLTOOL@ @BUILD_WINDRES@ $(ADDR2LINE_PROG) $(READELF_PROG) @BUILD_DLLWRAP@ @BUILD_MISC@
 
 # Stuff that goes in tooldir/ if appropriate.
-TOOL_PROGS = nm-new strip-new ar ranlib dlltool objdump
+TOOL_PROGS = strip-new ar ranlib dlltool objdump
 BASEDIR = $(srcdir)/..
 BFDDIR = $(BASEDIR)/bfd
 INCDIR = $(BASEDIR)/include
@@ -437,7 +437,7 @@ WRITE_DEBUG_SRCS = $(DEBUG_SRCS) wrstabs.c
 BULIBS = bucomm.c version.c filemode.c
 BFDLIB = ../bfd/libbfd.la
 OPCODES = ../opcodes/libopcodes.la
-LIBIBERTY = ../libiberty/libiberty.a
+LIBIBERTY = -liberty
 POTFILES = $(CFILES) $(DEBUG_SRCS) $(HFILES)
 EXPECT = expect
 RUNTEST = runtest
@@ -466,7 +466,7 @@ strip_new_SOURCES = objcopy.c is-strip.c rename.c $(WRITE_DEBUG_SRCS) $(BULIBS)
 nm_new_SOURCES = nm.c budemang.c $(BULIBS)
 objdump_SOURCES = objdump.c dwarf.c budemang.c prdbg.c $(DEBUG_SRCS) $(BULIBS)
 objdump_LDADD = $(OPCODES) $(BFDLIB) $(LIBIBERTY) $(INTLLIBS)
-cxxfilt_SOURCES = cxxfilt.c $(BULIBS)
+#cxxfilt_SOURCES = cxxfilt.c $(BULIBS)
 ar_SOURCES = arparse.y arlex.l ar.c not-ranlib.c arsup.c rename.c binemul.c \
 	emul_$(EMULATION).c $(BULIBS)
 
@@ -599,9 +599,6 @@ ar$(EXEEXT): $(ar_OBJECTS) $(ar_DEPENDENCIES)
 coffdump$(EXEEXT): $(coffdump_OBJECTS) $(coffdump_DEPENDENCIES) 
 	@rm -f coffdump$(EXEEXT)
 	$(LINK) $(coffdump_LDFLAGS) $(coffdump_OBJECTS) $(coffdump_LDADD) $(LIBS)
-cxxfilt$(EXEEXT): $(cxxfilt_OBJECTS) $(cxxfilt_DEPENDENCIES) 
-	@rm -f cxxfilt$(EXEEXT)
-	$(LINK) $(cxxfilt_LDFLAGS) $(cxxfilt_OBJECTS) $(cxxfilt_LDADD) $(LIBS)
 dlltool$(EXEEXT): $(dlltool_OBJECTS) $(dlltool_DEPENDENCIES) 
 	@rm -f dlltool$(EXEEXT)
 	$(LINK) $(dlltool_LDFLAGS) $(dlltool_OBJECTS) $(dlltool_LDADD) $(LIBS)
@@ -1135,7 +1132,7 @@ mostlyclean-local:
 install-exec-local: install-binPROGRAMS $(bin_PROGRAMS) $(noinst_PROGRAMS)
 	@list='$(noinst_PROGRAMS)'; for p in $$list; do \
 	  if test -f $$p; then \
-	    echo " $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(bindir)/`echo $$p|sed -e 's/$(EXEEXT)$$//' -e 's/-new//' -e 's/cxxfilt/$(DEMANGLER_NAME)/'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`"; \
+	    echo " $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(DESTDIR)$(bindir)/`echo $$p|sed -e 's/$(EXEEXT)$$//' -e 's/-new//' -e 's/cxxfilt/$(DEMANGLER_NAME)/'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`"; \
 	    $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(DESTDIR)$(bindir)/`echo $$p|sed -e 's/$(EXEEXT)$$//' -e 's/-new//' -e 's/cxxfilt/$(DEMANGLER_NAME)/'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
 	  else :; fi; \
 	done

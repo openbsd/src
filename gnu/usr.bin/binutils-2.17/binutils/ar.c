@@ -922,7 +922,7 @@ write_archive (bfd *iarch)
 
   old_name = xmalloc (strlen (bfd_get_filename (iarch)) + 1);
   strcpy (old_name, bfd_get_filename (iarch));
-  new_name = make_tempname (old_name);
+  new_name = make_tempname (old_name, 0);
 
   output_filename = new_name;
 

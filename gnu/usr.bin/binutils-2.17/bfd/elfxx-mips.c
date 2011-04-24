@@ -8862,11 +8862,16 @@ _bfd_mips_elf_finish_dynamic_sections (bfd *output_bfd,
 		 decided not to make.  This is for the n64 irix rld,
 		 which doesn't seem to apply any relocations if there
 		 are trailing null entries.  */
-	      s = mips_elf_rel_dyn_section (info, FALSE);
-	      dyn.d_un.d_val = (s->reloc_count
-				* (ABI_64_P (output_bfd)
-				   ? sizeof (Elf64_Mips_External_Rel)
-				   : sizeof (Elf32_External_Rel)));
+	      if (SGI_COMPAT (output_bfd))
+		{
+		  s = mips_elf_rel_dyn_section (info, FALSE);
+		  dyn.d_un.d_val = (s->reloc_count
+				    * (ABI_64_P (output_bfd)
+				       ? sizeof (Elf64_Mips_External_Rel)
+				       : sizeof (Elf32_External_Rel)));
+		}
+	      else
+		swap_out_p = FALSE;
 	      break;
 
 	    default:

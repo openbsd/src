@@ -432,6 +432,10 @@ case "${target}" in
   *-*-netware*)
     noconfigdirs="$noconfigdirs target-newlib target-libiberty target-libgloss ${libgcj} target-libmudflap"
     ;;
+  *-*-openbsd*)
+    # Skip some stuff on all OpenBSD configurations.
+    noconfigdirs="$noconfigdirs gdb target-libiberty"
+    ;;
   *-*-rtems*)
     noconfigdirs="$noconfigdirs target-libgloss ${libgcj}"
     ;;
@@ -1952,6 +1956,8 @@ for item in ${target_configdirs} ; do
   olditem=${item}
 done
 serialization_dependencies=serdep.tmp
+# override on OpenBSD
+serialization_dependencies=/dev/null
 AC_SUBST_FILE(serialization_dependencies)
 
 # Base args.  Strip norecursion, cache-file, srcdir, host, build,

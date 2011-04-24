@@ -111,7 +111,8 @@ case ${generic_target} in
   arm-*-linux-*)			fmt=elf  em=linux ;;
   arm-*-uclinux*)			fmt=elf  em=linux ;;
   arm-*-netbsdelf*)                 	fmt=elf  em=nbsd ;;
-  arm-*-*n*bsd*)			fmt=aout em=nbsd ;;
+  arm-*-netbsd*)			fmt=aout em=nbsd ;;
+  arm-*-openbsd*)			fmt=elf  em=obsd ;;
   arm-*-nto*)				fmt=elf ;;
   arm-epoc-pe | thumb-epoc-pe)		fmt=coff em=epoc-pe ;;
   arm-wince-pe | arm-*-wince)		fmt=coff em=wince-pe ;;
@@ -144,7 +145,11 @@ case ${generic_target} in
   hppa-*-*elf*)				fmt=elf em=hppa ;;
   hppa-*-lites*)			fmt=elf em=hppa ;;
   hppa-*-netbsd*)			fmt=elf em=nbsd ;;
-  hppa-*-openbsd*)			fmt=elf em=hppa ;;
+  hppa-*-openbsd*)
+    case ${cpu} in
+      hppa*64*)				fmt=elf em=obsdhppa64 ;;
+      hppa*)				fmt=elf em=obsd ;;
+    esac ;;
   hppa-*-osf*)				fmt=som em=hppa ;;
   hppa-*-hpux11*)
     case ${cpu} in
@@ -179,8 +184,8 @@ case ${generic_target} in
       *)				fmt=aout em=nbsd ;;
     esac ;;
   i386-*-openbsd[0-2].* | \
-  i386-*-openbsd3.[0-2])		fmt=aout em=nbsd ;;
-  i386-*-openbsd*)			fmt=elf em=nbsd ;;
+  i386-*-openbsd3.[0-2])		fmt=aout em=obsd ;;
+  i386-*-openbsd*)			fmt=elf em=obsd ;;
   i386-*-linux*aout*)			fmt=aout em=linux ;;
   i386-*-linux*oldld)			fmt=aout em=linux ;;
   i386-*-linux*coff*)			fmt=coff em=linux ;;
@@ -245,7 +250,7 @@ case ${generic_target} in
   m68k-*-gnu*)				fmt=elf ;;
   m68k-*-netbsdelf*)			fmt=elf em=nbsd ;;
   m68k-*-netbsd*)			fmt=aout em=nbsd bfd_gas=yes ;;
-  m68k-*-openbsd*)			fmt=aout em=nbsd bfd_gas=yes ;;
+  m68k-*-openbsd*)			fmt=aout em=obsd bfd_gas=yes ;;
   m68k-*-psos*)				fmt=elf em=psos;;
 
   maxq-*-coff)      			fmt=coff bfd_gas=yes ;;
@@ -301,7 +306,8 @@ case ${generic_target} in
   ppc-*-aix5.*)				fmt=coff em=aix5 ;;
   ppc-*-aix*)				fmt=coff ;;
   ppc-*-beos*)				fmt=coff ;;
-  ppc-*-*n*bsd* | ppc-*-elf*)		fmt=elf ;;
+  ppc-*-netbsd* | ppc-*-elf*)		fmt=elf ;;
+  ppc-*-openbsd*)			fmt=elf em=obsd ;;
   ppc-*-eabi* | ppc-*-sysv4*)		fmt=elf ;;
   ppc-*-linux-*)			fmt=elf em=linux ;;
   ppc-*-solaris*)			fmt=elf ;;
@@ -322,6 +328,7 @@ case ${generic_target} in
   sh5*-*-netbsd*)			fmt=elf em=nbsd ;;
   sh64*-*-netbsd*)			fmt=elf em=nbsd ;;
   sh*-*-netbsdelf*)			fmt=elf em=nbsd ;;
+  sh*-*-openbsd*)			fmt=elf em=obsd endian=little ;;
   sh*-*-symbianelf*)			fmt=elf endian=little ;;
   sh-*-elf*)				fmt=elf ;;
   sh-*-coff*)				fmt=coff ;;
@@ -352,10 +359,10 @@ case ${generic_target} in
   sparc-*-openbsd[0-2].* | \
   sparc-*-openbsd3.[0-1])
     case ${cpu} in
-      sparc64)				fmt=elf em=nbsd ;;
-      *)				fmt=aout em=nbsd ;;
+      sparc64)				fmt=elf em=obsd ;;
+      *)				fmt=aout em=obsd ;;
     esac ;;
-  sparc-*-openbsd*)			fmt=elf em=nbsd ;;
+  sparc-*-openbsd*)			fmt=elf em=obsd ;;
 
   tic30-*-*aout*)			fmt=aout bfd_gas=yes ;;
   tic30-*-*coff*)			fmt=coff bfd_gas=yes ;;

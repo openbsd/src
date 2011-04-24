@@ -4823,7 +4823,7 @@ next_char_of_string (void)
 	    int i;
 
 	    for (i = 0, number = 0;
-		 ISDIGIT (c) && i < 3;
+		 i < 3 && ISDIGIT (c);
 		 c = *input_line_pointer++, i++)
 	      {
 		number = number * 8 + c - '0';

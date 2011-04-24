@@ -4627,9 +4627,12 @@ get_program_header_size (bfd *abfd)
       return elf_tdata (abfd)->program_header_size;
     }
 
-  /* Assume we will need exactly two PT_LOAD segments: one for text
-     and one for data.  */
-  segs = 2;
+  /* We used to assume that two PT_LOAD segments would be enough,
+     code and data, with the change to pad the PLT and GOT, this is no
+     longer true. Now there can be several PT_LOAD sections. 7 seems
+     to be enough with BSS_PLT and .rodata-X, where we have text, data,
+     GOT, dynamic, PLT, bss */
+  segs = 7;
 
   s = bfd_get_section_by_name (abfd, ".interp");
   if (s != NULL && (s->flags & SEC_LOAD) != 0)
@@ -7852,6 +7855,70 @@ elfcore_grok_netbsd_note (bfd *abfd, Elf_Internal_Note *note)
 }
 
 static bfd_boolean
+elfcore_grok_openbsd_procinfo (bfd *abfd, Elf_Internal_Note *note)
+{
+  /* Signal number at offset 0x08. */
+  elf_tdata (abfd)->core_signal
+    = bfd_h_get_32 (abfd, (bfd_byte *) note->descdata + 0x08);
+
+  /* Process ID at offset 0x20. */
+  elf_tdata (abfd)->core_pid
+    = bfd_h_get_32 (abfd, (bfd_byte *) note->descdata + 0x20);
+
+  /* Command name at 0x48 (max 32 bytes, including nul). */
+  elf_tdata (abfd)->core_command
+    = _bfd_elfcore_strndup (abfd, note->descdata + 0x48, 31);
+
+  return TRUE;
+}
+
+static bfd_boolean
+elfcore_grok_openbsd_note (bfd *abfd, Elf_Internal_Note *note)
+{
+  if (note->type == NT_OPENBSD_PROCINFO)
+    return elfcore_grok_openbsd_procinfo (abfd, note);
+
+  if (note->type == NT_OPENBSD_REGS)
+    return elfcore_make_note_pseudosection (abfd, ".reg", note);
+
+  if (note->type == NT_OPENBSD_FPREGS)
+    return elfcore_make_note_pseudosection (abfd, ".reg2", note);
+
+  if (note->type == NT_OPENBSD_XFPREGS)
+    return elfcore_make_note_pseudosection (abfd, ".reg-xfp", note);
+
+  if (note->type == NT_OPENBSD_AUXV)
+    {
+      asection *sect = bfd_make_section_anyway (abfd, ".auxv");
+
+      if (sect == NULL)
+	return FALSE;
+      sect->_raw_size = note->descsz;
+      sect->filepos = note->descpos;
+      sect->flags = SEC_HAS_CONTENTS;
+      sect->alignment_power = 1 + bfd_get_arch_size (abfd) / 32;
+
+      return TRUE;
+    }
+
+  if (note->type == NT_OPENBSD_WCOOKIE)
+    {
+      asection *sect = bfd_make_section_anyway (abfd, ".wcookie");
+
+      if (sect == NULL)
+	return FALSE;
+      sect->_raw_size = note->descsz;
+      sect->filepos = note->descpos;
+      sect->flags = SEC_HAS_CONTENTS;
+      sect->alignment_power = 1 + bfd_get_arch_size (abfd) / 32;
+
+      return TRUE;
+    }
+
+  return TRUE;
+}
+
+static bfd_boolean
 elfcore_grok_nto_status (bfd *abfd, Elf_Internal_Note *note, pid_t *tid)
 {
   void *ddata = note->descdata;
@@ -8192,6 +8259,11 @@ elfcore_read_notes (bfd *abfd, file_ptr offset, bfd_size_type size)
       if (strncmp (in.namedata, "NetBSD-CORE", 11) == 0)
         {
           if (! elfcore_grok_netbsd_note (abfd, &in))
+            goto error;
+        }
+      else if (strncmp (in.namedata, "OpenBSD", 7) == 0)
+        {
+          if (! elfcore_grok_openbsd_note (abfd, &in))
             goto error;
         }
       else if (strncmp (in.namedata, "QNX", 3) == 0)

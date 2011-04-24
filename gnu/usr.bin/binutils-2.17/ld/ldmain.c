@@ -323,6 +323,7 @@ main (int argc, char **argv)
   force_make_executable = FALSE;
   config.magic_demand_paged = TRUE;
   config.text_read_only = TRUE;
+  config.data_bss_contig = FALSE;
 
   emulation = get_emulation (argc, argv);
   ldemul_choose_mode (emulation);

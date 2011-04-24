@@ -9700,7 +9700,7 @@ do
     all_targets=true
   else
     # Canonicalize the secondary target names.
-    result=`$ac_config_sub $targ_alias 2>/dev/null`
+    result=`${CONFIG_SHELL-/bin/sh} $ac_config_sub $targ_alias 2>/dev/null`
     if test -n "$result"; then
 	targ=$result
     else

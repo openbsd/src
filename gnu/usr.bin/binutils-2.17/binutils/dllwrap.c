@@ -349,7 +349,11 @@ run (const char *what, char *args)
   int i;
   const char **argv;
   char *errmsg_fmt, *errmsg_arg;
+#if defined(__MSDOS__) && !defined(__GO32__)
   char *temp_base = choose_temp_base ();
+#else
+  char *temp_base = NULL;
+#endif
   int in_quote;
   char sep;
 
@@ -800,12 +804,9 @@ main (int argc, char **argv)
 
   if (! def_file_seen)
     {
-      char *fileprefix = choose_temp_base ();
-
-      def_file_name = (char *) xmalloc (strlen (fileprefix) + 5);
-      sprintf (def_file_name, "%s.def",
-	       (dontdeltemps) ? mybasename (fileprefix) : fileprefix);
-      delete_def_file = 1;
+      def_file_name = make_temp_file (".def");
+      if (dontdeltemps)
+	def_file_name = mybasename (def_file_name);
       free (fileprefix);
       delete_def_file = 1;
       warn (_("no export definition file provided.\n\
@@ -983,12 +984,10 @@ Creating one, but that may not be what you want"));
 
   if (! base_file_name)
     {
-      char *fileprefix = choose_temp_base ();
-      base_file_name = (char *) xmalloc (strlen (fileprefix) + 6);
-      sprintf (base_file_name, "%s.base",
-	       (dontdeltemps) ? mybasename (fileprefix) : fileprefix);
+      base_file_name = make_temp_file (".base");
+      if (dontdeltemps)
+	base_file_name = mybasename (base_file_name);
       delete_base_file = 1;
-      free (fileprefix);
     }
 
   {

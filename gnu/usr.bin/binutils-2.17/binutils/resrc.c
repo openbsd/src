@@ -183,7 +183,11 @@ run_cmd (char *cmd, const char *redir)
   int i;
   const char **argv;
   char *errmsg_fmt, *errmsg_arg;
+#if defined(__MSDOS__) && !defined(__GO32__)
   char *temp_base = choose_temp_base ();
+#else
+  char *temp_base = NULL;
+#endif
   int in_quote;
   char sep;
   int redir_handle = -1;
@@ -294,12 +298,7 @@ open_input_stream (char *cmd)
 {
   if (istream_type == ISTREAM_FILE)
     {
-      char *fileprefix;
-
-      fileprefix = choose_temp_base ();
-      cpp_temp_file = (char *) xmalloc (strlen (fileprefix) + 5);
-      sprintf (cpp_temp_file, "%s.irc", fileprefix);
-      free (fileprefix);
+      cpp_temp_file = make_temp_file (".irc");
 
       if (run_cmd (cmd, cpp_temp_file))
 	fatal (_("can't execute `%s': %s"), cmd, strerror (errno));
