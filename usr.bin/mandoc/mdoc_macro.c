@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.66 2011/04/24 16:22:02 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.67 2011/04/24 16:49:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -596,7 +596,8 @@ dword(struct mdoc *m, int line,
 
 	if (DELIM_OPEN == d)
 		m->last->flags |= MDOC_DELIMO;
-	else if (DELIM_CLOSE == d)
+	else if (DELIM_CLOSE == d && m->last->prev &&
+			m->last->prev->tok != MDOC_No)
 		m->last->flags |= MDOC_DELIMC;
 
 	return(1);
