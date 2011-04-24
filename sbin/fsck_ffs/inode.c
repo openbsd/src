@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.34 2011/04/16 16:37:21 otto Exp $	*/
+/*	$OpenBSD: inode.c,v 1.35 2011/04/24 07:07:03 otto Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -650,8 +650,7 @@ allocino(ino_t request, int type)
 	DIP_SET(dp, di_blocks, btodb(sblock.fs_fsize));
 	n_files++;
 	inodirty();
-	if (newinofmt)
-		SET_ITYPE(ino, IFTODT(type));
+	SET_ITYPE(ino, IFTODT(type));
 	return (ino);
 }
 

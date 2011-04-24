@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.25 2011/04/16 16:37:21 otto Exp $	*/
+/*	$OpenBSD: dir.c,v 1.26 2011/04/24 07:07:03 otto Exp $	*/
 /*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
@@ -115,29 +115,8 @@ dirscan(struct inodesc *idesc)
 	for (dp = fsck_readdir(idesc); dp != NULL; dp = fsck_readdir(idesc)) {
 		dsize = dp->d_reclen;
 		memcpy(dbuf, dp, (size_t)dsize);
-#		if (BYTE_ORDER == LITTLE_ENDIAN)
-			if (!newinofmt) {
-				struct direct *tdp = (struct direct *)dbuf;
-				u_char tmp;
-
-				tmp = tdp->d_namlen;
-				tdp->d_namlen = tdp->d_type;
-				tdp->d_type = tmp;
-			}
-#		endif
 		idesc->id_dirp = (struct direct *)dbuf;
 		if ((n = (*idesc->id_func)(idesc)) & ALTERED) {
-#			if (BYTE_ORDER == LITTLE_ENDIAN)
-				if (!newinofmt && !doinglevel2) {
-					struct direct *tdp;
-					u_char tmp;
-
-					tdp = (struct direct *)dbuf;
-					tmp = tdp->d_namlen;
-					tdp->d_namlen = tdp->d_type;
-					tdp->d_type = tmp;
-				}
-#			endif
 			bp = getdirblk(idesc->id_blkno, blksiz);
 			memcpy(bp->b_un.b_buf + idesc->id_loc - dsize, dbuf,
 			    (size_t)dsize);
@@ -230,19 +209,9 @@ dircheck(struct inodesc *idesc, struct direct *dp)
 		return (0);
 	if (dp->d_ino == 0)
 		return (1);
-	size = DIRSIZ(!newinofmt, dp);
-#	if (BYTE_ORDER == LITTLE_ENDIAN)
-		if (!newinofmt) {
-			type = dp->d_namlen;
-			namlen = dp->d_type;
-		} else {
-			namlen = dp->d_namlen;
-			type = dp->d_type;
-		}
-#	else
-		namlen = dp->d_namlen;
-		type = dp->d_type;
-#	endif
+	size = DIRSIZ(0, dp);
+	namlen = dp->d_namlen;
+	type = dp->d_type;
 	if (dp->d_reclen < size ||
 	    idesc->id_filesize < size ||
 	    type > 15)
@@ -334,27 +303,9 @@ mkentry(struct inodesc *idesc)
 	dirp = (struct direct *)(((char *)dirp) + oldlen);
 	dirp->d_ino = idesc->id_parent;	/* ino to be entered is in id_parent */
 	dirp->d_reclen = newent.d_reclen;
-	if (newinofmt)
-		dirp->d_type = GET_ITYPE(idesc->id_parent);
-	else
-		dirp->d_type = 0;
+	dirp->d_type = GET_ITYPE(idesc->id_parent);
 	dirp->d_namlen = newent.d_namlen;
 	memcpy(dirp->d_name, idesc->id_name, (size_t)dirp->d_namlen + 1);
-#	if (BYTE_ORDER == LITTLE_ENDIAN)
-		/*
-		 * If the entry was split, dirscan() will only reverse the byte
-		 * order of the original entry, and not the new one, before
-		 * writing it back out.  So, we reverse the byte order here if
-		 * necessary.
-		 */
-		if (oldlen != 0 && !newinofmt && !doinglevel2) {
-			u_char tmp;
-
-			tmp = dirp->d_namlen;
-			dirp->d_namlen = dirp->d_type;
-			dirp->d_type = tmp;
-		}
-#	endif
 	return (ALTERED|STOP);
 }
 
@@ -366,10 +317,7 @@ chgino(struct inodesc *idesc)
 	if (memcmp(dirp->d_name, idesc->id_name, (int)dirp->d_namlen + 1))
 		return (KEEPON);
 	dirp->d_ino = idesc->id_parent;
-	if (newinofmt)
-		dirp->d_type = GET_ITYPE(idesc->id_parent);
-	else
-		dirp->d_type = 0;
+	dirp->d_type = GET_ITYPE(idesc->id_parent);
 	return (ALTERED|STOP);
 }
 
@@ -615,10 +563,7 @@ allocdir(ino_t parent, ino_t request, int mode)
 	struct inoinfo *inp;
 
 	ino = allocino(request, IFDIR|mode);
-	if (newinofmt)
-		dirp = &dirhead;
-	else
-		dirp = (struct dirtemplate *)&odirhead;
+	dirp = &dirhead;
 	dirp->dot_ino = ino;
 	dirp->dotdot_ino = parent;
 	dp = ginode(ino);

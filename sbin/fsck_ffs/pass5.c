@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.40 2011/04/16 16:37:21 otto Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.41 2011/04/24 07:07:03 otto Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ pass5(void)
 	struct cg *cg = &cgrp;
 	daddr64_t dbase, dmax;
 	daddr64_t d;
-	long i, j, k;
+	long i, j, k, rewritecg = 0;
 	struct csum *cs;
 	struct csum_total cstotal;
 	struct inodesc idesc[3];
@@ -80,7 +80,7 @@ pass5(void)
 				pwarn("DELETING CLUSTERING MAPS\n");
 			if (preen || reply("DELETE CLUSTERING MAPS")) {
 				fs->fs_contigsumsize = 0;
-				doinglevel1 = 1;
+				rewritecg = 1;
 				sbdirty();
 			}
 		}
@@ -107,7 +107,7 @@ pass5(void)
 						    doit);
 					fs->fs_cgsize =
 					    fragroundup(fs, CGSIZE(fs));
-					doinglevel1 = 1;
+					rewritecg = 1;
 					sbdirty();
 				}
 			}
@@ -164,11 +164,8 @@ pass5(void)
 			fs->fs_postblformat);
 	}
 	memset(&idesc[0], 0, sizeof idesc);
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 3; i++)
 		idesc[i].id_type = ADDR;
-		if (doinglevel2)
-			idesc[i].id_fix = FIX;
-	}
 	memset(&cstotal, 0, sizeof(struct csum_total));
 	dmax = blknum(fs, fs->fs_size + fs->fs_frag - 1);
 	for (d = fs->fs_size; d < dmax; d++)
@@ -320,7 +317,7 @@ pass5(void)
 			memcpy(cs, &newcg->cg_cs, sizeof *cs);
 			sbdirty();
 		}
-		if (doinglevel1) {
+		if (rewritecg) {
 			memcpy(cg, newcg, (size_t)fs->fs_cgsize);
 			cgdirty();
 			continue;

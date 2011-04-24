@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.30 2011/04/16 16:37:21 otto Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.31 2011/04/24 07:07:03 otto Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -259,13 +259,6 @@ pass2check(struct inodesc *idesc)
 	char pathbuf[MAXPATHLEN + 1];
 
 	/*
-	 * If converting, set directory entry type.
-	 */
-	if (doinglevel2 && dirp->d_ino > 0 && dirp->d_ino < maxino) {
-		dirp->d_type = GET_ITYPE(dirp->d_ino);
-		ret |= ALTERED;
-	}
-	/*
 	 * check for "."
 	 */
 	if (idesc->id_entryno != 0)
@@ -277,7 +270,7 @@ pass2check(struct inodesc *idesc)
 			if (reply("FIX") == 1)
 				ret |= ALTERED;
 		}
-		if (newinofmt && dirp->d_type != DT_DIR) {
+		if (dirp->d_type != DT_DIR) {
 			direrror(idesc->id_number, "BAD TYPE VALUE FOR '.'");
 			dirp->d_type = DT_DIR;
 			if (reply("FIX") == 1)
@@ -287,21 +280,9 @@ pass2check(struct inodesc *idesc)
 	}
 	direrror(idesc->id_number, "MISSING '.'");
 	proto.d_ino = idesc->id_number;
-	if (newinofmt)
-		proto.d_type = DT_DIR;
-	else
-		proto.d_type = 0;
+	proto.d_type = DT_DIR;
 	proto.d_namlen = 1;
 	(void)strlcpy(proto.d_name, ".", sizeof proto.d_name);
-#	if BYTE_ORDER == LITTLE_ENDIAN
-		if (!newinofmt) {
-			u_char tmp;
-
-			tmp = proto.d_type;
-			proto.d_type = proto.d_namlen;
-			proto.d_namlen = tmp;
-		}
-#	endif
 	entrysize = DIRSIZ(0, &proto);
 	if (dirp->d_ino != 0 && strcmp(dirp->d_name, "..") != 0) {
 		pfatal("CANNOT FIX, FIRST ENTRY IN DIRECTORY CONTAINS %s\n",
@@ -330,21 +311,9 @@ chk1:
 		goto chk2;
 	inp = getinoinfo(idesc->id_number);
 	proto.d_ino = inp->i_parent;
-	if (newinofmt)
-		proto.d_type = DT_DIR;
-	else
-		proto.d_type = 0;
+	proto.d_type = DT_DIR;
 	proto.d_namlen = 2;
 	(void)strlcpy(proto.d_name, "..", sizeof proto.d_name);
-#	if BYTE_ORDER == LITTLE_ENDIAN
-		if (!newinofmt) {
-			u_char tmp;
-
-			tmp = proto.d_type;
-			proto.d_type = proto.d_namlen;
-			proto.d_namlen = tmp;
-		}
-#	endif
 	entrysize = DIRSIZ(0, &proto);
 	if (idesc->id_entryno == 0) {
 		n = DIRSIZ(0, dirp);
@@ -360,7 +329,7 @@ chk1:
 	}
 	if (dirp->d_ino != 0 && strcmp(dirp->d_name, "..") == 0) {
 		inp->i_dotdot = dirp->d_ino;
-		if (newinofmt && dirp->d_type != DT_DIR) {
+		if (dirp->d_type != DT_DIR) {
 			direrror(idesc->id_number, "BAD TYPE VALUE FOR '..'");
 			dirp->d_type = DT_DIR;
 			if (reply("FIX") == 1)
@@ -473,8 +442,7 @@ again:
 			/* FALLTHROUGH */
 
 		case FSTATE:
-			if (newinofmt && dirp->d_type !=
-			    GET_ITYPE(dirp->d_ino)) {
+			if (dirp->d_type != GET_ITYPE(dirp->d_ino)) {
 				fileerror(idesc->id_number, dirp->d_ino,
 				    "BAD TYPE VALUE");
 				dirp->d_type = GET_ITYPE(dirp->d_ino);

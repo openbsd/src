@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.47 2011/04/16 16:37:21 otto Exp $	*/
+/*	$OpenBSD: setup.c,v 1.48 2011/04/24 07:07:03 otto Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -260,96 +260,57 @@ found:
 			dirty(&asblk);
 		}
 	}
-	if (sblock.fs_inodefmt >= FS_44INODEFMT) {
-		if (sblock.fs_maxfilesize != maxfilesize) {
-			pwarn("INCORRECT MAXFILESIZE=%llu IN SUPERBLOCK",
-			    (unsigned long long)sblock.fs_maxfilesize);
-			sblock.fs_maxfilesize = maxfilesize;
-			if (preen)
-				printf(" (FIXED)\n");
-			if (preen || reply("FIX") == 1) {
-				sbdirty();
-				dirty(&asblk);
-			}
-		}
-		maxsymlinklen = sblock.fs_magic == FS_UFS1_MAGIC ?
-		    MAXSYMLINKLEN_UFS1 : MAXSYMLINKLEN_UFS2;
-		if (sblock.fs_maxsymlinklen != maxsymlinklen) {
-			pwarn("INCORRECT MAXSYMLINKLEN=%d IN SUPERBLOCK",
-			    sblock.fs_maxsymlinklen);
-			sblock.fs_maxsymlinklen = maxsymlinklen;
-			if (preen)
-				printf(" (FIXED)\n");
-			if (preen || reply("FIX") == 1) {
-				sbdirty();
-				dirty(&asblk);
-			}
-		}
-		if (sblock.fs_qbmask != ~sblock.fs_bmask) {
-			pwarn("INCORRECT QBMASK=%lx IN SUPERBLOCK",
-			    (unsigned long)sblock.fs_qbmask);
-			sblock.fs_qbmask = ~sblock.fs_bmask;
-			if (preen)
-				printf(" (FIXED)\n");
-			if (preen || reply("FIX") == 1) {
-				sbdirty();
-				dirty(&asblk);
-			}
-		}
-		if (sblock.fs_qfmask != ~sblock.fs_fmask) {
-			pwarn("INCORRECT QFMASK=%lx IN SUPERBLOCK",
-			    (unsigned long)sblock.fs_qfmask);
-			sblock.fs_qfmask = ~sblock.fs_fmask;
-			if (preen)
-				printf(" (FIXED)\n");
-			if (preen || reply("FIX") == 1) {
-				sbdirty();
-				dirty(&asblk);
-			}
-		}
-		newinofmt = 1;
-	} else {
-		sblock.fs_qbmask = ~sblock.fs_bmask;
-		sblock.fs_qfmask = ~sblock.fs_fmask;
-		newinofmt = 0;
+	if (sblock.fs_inodefmt < FS_44INODEFMT) {
+		pwarn("Format of filesystem is too old.\n");
+		pwarn("Must update to modern format using a version of fsck\n");
+		pfatal("from before release 5.0 with the command ``fsck -c 2''\n");
+		exit(8);
 	}
-	/*
-	 * Convert to new inode format.
-	 */
-	if (cvtlevel >= 2 && sblock.fs_inodefmt < FS_44INODEFMT) {
-		if (preen)
-			pwarn("CONVERTING TO NEW INODE FORMAT\n");
-		else if (!reply("CONVERT TO NEW INODE FORMAT"))
-			return(0);
-		doinglevel2++;
-		sblock.fs_inodefmt = FS_44INODEFMT;
+	if (sblock.fs_maxfilesize != maxfilesize) {
+		pwarn("INCORRECT MAXFILESIZE=%llu IN SUPERBLOCK",
+		    (unsigned long long)sblock.fs_maxfilesize);
 		sblock.fs_maxfilesize = maxfilesize;
-		sblock.fs_maxsymlinklen = MAXSYMLINKLEN_UFS1;
-		sblock.fs_qbmask = ~sblock.fs_bmask;
-		sblock.fs_qfmask = ~sblock.fs_fmask;
-		sbdirty();
-		dirty(&asblk);
-	}
-	/*
-	 * Convert to new cylinder group format.
-	 */
-	if (cvtlevel >= 1 && sblock.fs_postblformat == FS_42POSTBLFMT) {
 		if (preen)
-			pwarn("CONVERTING TO NEW CYLINDER GROUP FORMAT\n");
-		else if (!reply("CONVERT TO NEW CYLINDER GROUP FORMAT"))
-			return(0);
-		doinglevel1++;
-		sblock.fs_postblformat = FS_DYNAMICPOSTBLFMT;
-		sblock.fs_nrpos = 8;
-		sblock.fs_postbloff =
-		    (char *)(&sblock.fs_maxbsize) -
-		    (char *)(&sblock.fs_firstfield);
-		sblock.fs_rotbloff = &sblock.fs_space[0] -
-		    (u_char *)(&sblock.fs_firstfield);
-		sblock.fs_cgsize =
-			fragroundup(&sblock, CGSIZE(&sblock));
-		sbdirty();
-		dirty(&asblk);
+			printf(" (FIXED)\n");
+		if (preen || reply("FIX") == 1) {
+			sbdirty();
+			dirty(&asblk);
+		}
+	}
+	maxsymlinklen = sblock.fs_magic == FS_UFS1_MAGIC ?
+	    MAXSYMLINKLEN_UFS1 : MAXSYMLINKLEN_UFS2;
+	if (sblock.fs_maxsymlinklen != maxsymlinklen) {
+		pwarn("INCORRECT MAXSYMLINKLEN=%d IN SUPERBLOCK",
+		    sblock.fs_maxsymlinklen);
+		sblock.fs_maxsymlinklen = maxsymlinklen;
+		if (preen)
+			printf(" (FIXED)\n");
+		if (preen || reply("FIX") == 1) {
+			sbdirty();
+			dirty(&asblk);
+		}
+	}
+	if (sblock.fs_qbmask != ~sblock.fs_bmask) {
+		pwarn("INCORRECT QBMASK=%lx IN SUPERBLOCK",
+		    (unsigned long)sblock.fs_qbmask);
+		sblock.fs_qbmask = ~sblock.fs_bmask;
+		if (preen)
+			printf(" (FIXED)\n");
+		if (preen || reply("FIX") == 1) {
+			sbdirty();
+			dirty(&asblk);
+		}
+	}
+	if (sblock.fs_qfmask != ~sblock.fs_fmask) {
+		pwarn("INCORRECT QFMASK=%lx IN SUPERBLOCK",
+		    (unsigned long)sblock.fs_qfmask);
+		sblock.fs_qfmask = ~sblock.fs_fmask;
+		if (preen)
+			printf(" (FIXED)\n");
+		if (preen || reply("FIX") == 1) {
+			sbdirty();
+			dirty(&asblk);
+		}
 	}
 	if (sblock.fs_cgsize != fragroundup(&sblock, CGSIZE(&sblock))) {
 		pwarn("INCONSISTENT CGSIZE=%d\n", sblock.fs_cgsize);

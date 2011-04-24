@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.24 2011/04/16 16:37:21 otto Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.25 2011/04/24 07:07:03 otto Exp $	*/
 /*	$NetBSD: fsck.h,v 1.13 1996/10/11 20:15:46 thorpej Exp $	*/
 
 /*
@@ -237,9 +237,6 @@ char	yflag;			/* assume a yes response */
 int	bflag;			/* location of alternate super block */
 int	debug;			/* output debugging info */
 int	cvtlevel;		/* convert to newer file system format */
-int	doinglevel1;		/* converting to new cylinder group format */
-int	doinglevel2;		/* converting to new inode format */
-int	newinofmt;		/* filesystem has new inode format */
 char    usedsoftdep;            /* just fix soft dependency inconsistencies */
 int	preen;			/* just fix normal inconsistencies */
 char    resolved;               /* cleared if unresolved changes => not clean */
