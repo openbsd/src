@@ -1,4 +1,4 @@
-#	$OpenBSD: BSD.x11.dist,v 1.15 2010/11/11 11:28:49 matthieu Exp $
+#	$OpenBSD: BSD.x11.dist,v 1.16 2011/04/24 13:12:11 matthieu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -224,8 +224,6 @@
             ..
             share
                 X11
-                    doc
-                    ..
                     locale
                         C
                         ..
@@ -389,6 +387,8 @@
                     renderproto
                     ..
 		    xextproto
+		    ..
+		    xorg-docs
 		    ..
 		    xtrans
 		    ..
