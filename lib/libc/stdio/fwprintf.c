@@ -1,5 +1,4 @@
-/*	$OpenBSD: local.h,v 1.16 2011/04/24 07:46:58 stsp Exp $	*/
-
+/*	$OpenBSD: fwprintf.c,v 1.1 2011/04/24 07:46:58 stsp Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,63 +31,18 @@
  * SUCH DAMAGE.
  */
 
-/*
- * Information local to this implementation of stdio,
- * in particular, macros and private variables.
- */
+#include <stdio.h>
+#include <stdarg.h>
+#include <wchar.h>
 
-#include <wchar.h> 
-#include "wcio.h"
-#include "fileext.h"
+int
+fwprintf(FILE * __restrict fp, const wchar_t * __restrict fmt, ...)
+{
+	int ret;
+	va_list ap;
 
-int	__sflush(FILE *);
-int	__sflush_locked(FILE *);
-FILE	*__sfp(void);
-int	__srefill(FILE *);
-int	__sread(void *, char *, int);
-int	__swrite(void *, const char *, int);
-fpos_t	__sseek(void *, fpos_t, int);
-int	__sclose(void *);
-void	__sinit(void);
-void	_cleanup(void);
-void	__smakebuf(FILE *);
-int	__swhatbuf(FILE *, size_t *, int *);
-int	_fwalk(int (*)(FILE *));
-int	__swsetup(FILE *);
-int	__sflags(const char *, int *);
-wint_t __fgetwc_unlock(FILE *);
-int	__vfprintf(FILE *, const char *, __va_list);
-int	__vfwprintf(FILE * __restrict, const wchar_t * __restrict, __va_list);
-
-extern void __atexit_register_cleanup(void (*)(void));
-extern int __sdidinit;
-
-/*
- * Return true if the given FILE cannot be written now.
- */
-#define	cantwrite(fp) \
-	((((fp)->_flags & __SWR) == 0 || (fp)->_bf._base == NULL) && \
-	 __swsetup(fp))
-
-/*
- * Test whether the given stdio file has an active ungetc buffer;
- * release such a buffer, without restoring ordinary unread data.
- */
-#define	HASUB(fp) (_UB(fp)._base != NULL)
-#define	FREEUB(fp) { \
-	if (_UB(fp)._base != (fp)->_ubuf) \
-		free(_UB(fp)._base); \
-	_UB(fp)._base = NULL; \
+	va_start(ap, fmt);
+	ret = vfwprintf(fp, fmt, ap);
+	va_end(ap);
+	return (ret);
 }
-
-/*
- * test for an fgetln() buffer.
- */
-#define	HASLB(fp) ((fp)->_lb._base != NULL)
-#define	FREELB(fp) { \
-	free((char *)(fp)->_lb._base); \
-	(fp)->_lb._base = NULL; \
-}
-
-#define FLOCKFILE(fp)	do { if (__isthreaded) flockfile(fp); } while (0)
-#define FUNLOCKFILE(fp)	do { if (__isthreaded) funlockfile(fp); } while (0)
