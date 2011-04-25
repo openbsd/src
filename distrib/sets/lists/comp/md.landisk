@@ -214,6 +214,7 @@
 ./usr/include/sh/disklabel.h
 ./usr/include/sh/endian.h
 ./usr/include/sh/exec.h
+./usr/include/sh/fenv.h
 ./usr/include/sh/float.h
 ./usr/include/sh/fpu.h
 ./usr/include/sh/frame.h

@@ -1749,6 +1749,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/db_machdep.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/endian.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/exec.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/fenv.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/float.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/frame.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/ieee.ph

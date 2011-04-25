@@ -2217,6 +2217,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/disklabel.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/endian.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/exec.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/sh/fenv.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/float.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/fpu.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/frame.ph

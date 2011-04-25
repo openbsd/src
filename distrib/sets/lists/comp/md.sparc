@@ -134,6 +134,7 @@
 ./usr/include/sparc/endian.h
 ./usr/include/sparc/exec.h
 ./usr/include/sparc/fbvar.h
+./usr/include/sparc/fenv.h
 ./usr/include/sparc/fgaio.h
 ./usr/include/sparc/float.h
 ./usr/include/sparc/frame.h

@@ -2247,6 +2247,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/db_machdep.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/endian.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/exec.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/fenv.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/float.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/fpu.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/frame.ph

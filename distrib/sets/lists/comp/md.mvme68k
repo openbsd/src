@@ -121,6 +121,7 @@
 ./usr/include/m68k/db_machdep.h
 ./usr/include/m68k/endian.h
 ./usr/include/m68k/exec.h
+./usr/include/m68k/fenv.h
 ./usr/include/m68k/float.h
 ./usr/include/m68k/frame.h
 ./usr/include/m68k/ieee.h

@@ -126,6 +126,7 @@
 ./usr/include/powerpc/disklabel.h
 ./usr/include/powerpc/endian.h
 ./usr/include/powerpc/exec.h
+./usr/include/powerpc/fenv.h
 ./usr/include/powerpc/float.h
 ./usr/include/powerpc/fpu.h
 ./usr/include/powerpc/frame.h

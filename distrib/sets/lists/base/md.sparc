@@ -1569,6 +1569,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/endian.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/exec.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/fbvar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/fenv.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/fgaio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/float.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/frame.ph
