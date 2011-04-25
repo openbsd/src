@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.44 2009/11/12 16:25:22 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.45 2011/04/25 15:24:16 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -586,6 +586,7 @@ sig(int signo)
 	case SIGHUP:
 	case SIGTERM:
 	case SIGTRAP:
+		/* XXX signal race */
 		if (pipeout)
 			quit("Signal on pipe: cannot recover\n");
 		msg("Rewriting attempted as response to unknown signal.\n");
@@ -595,7 +596,8 @@ sig(int signo)
 		exit(X_REWRITE);
 		/* NOTREACHED */
 	case SIGSEGV:
-		msg("SIGSEGV: ABORTING!\n");
+#define SIGSEGV_MSG "SIGSEGV: ABORTING!\n"
+		write(STDERR_FILENO, SIGSEGV_MSG, strlen(SIGSEGV_MSG));
 		(void)signal(SIGSEGV, SIG_DFL);
 		(void)kill(0, SIGSEGV);
 		/* NOTREACHED */
