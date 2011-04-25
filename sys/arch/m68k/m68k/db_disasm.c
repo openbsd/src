@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.10 2007/11/26 09:28:33 martynas Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.11 2011/04/25 15:14:30 miod Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.19 1996/10/30 08:22:39 is Exp $	*/
 
 /*
@@ -90,7 +90,7 @@ void make_cond(dis_buffer_t *, int , char *);
 void print_fcond(dis_buffer_t *, char);
 void print_mcond(dis_buffer_t *, char);
 void print_disp(dis_buffer_t *, int, int, int);
-void print_addr(dis_buffer_t *, u_long);
+void print_addr(dis_buffer_t *, u_long, int);
 void print_reglist(dis_buffer_t *, int, u_short);
 void print_freglist(dis_buffer_t *, int, u_short, int);
 void print_fcode(dis_buffer_t *, u_short);
@@ -875,7 +875,7 @@ opcode_branch(dbuf, opc)
 		addchar('b');
 	}
 	addchar('\t');
-	print_addr(dbuf, disp + (u_long)dbuf->val + 2);
+	print_addr(dbuf, disp + (u_long)dbuf->val + 2, 0);
 }
 
 /*
@@ -2406,14 +2406,14 @@ get_modregstr_moto(dbuf, bit, mod, sz, dd)
 	case MOD_SPECIAL:
 		if (reg == 0) {
 			/* abs short addr */
-			print_addr(dbuf, *(dbuf->val + 1 + dd));
+			print_addr(dbuf, *(dbuf->val + 1 + dd), 0);
 			dbuf->used++;
 			addchar('.');
 			addchar('w');
 			break;
 		} else if (reg == 1) {
 			/* abs long addr */
-			print_addr(dbuf, *(u_long *)(dbuf->val + 1 + dd));
+			print_addr(dbuf, *(u_long *)(dbuf->val + 1 + dd), 0);
 			dbuf->used += 2;
 			addchar('.');
 			addchar('l');
@@ -2437,9 +2437,8 @@ get_modregstr_moto(dbuf, bit, mod, sz, dd)
 				prints(dbuf, *(dbuf->val + 1 + dd), sz);
 				dbuf->used++;
 			} else if (sz == SIZE_LONG) {
-				addchar('#');
-				prints(dbuf, *(long *)(dbuf->val + 1 + dd),
-				    sz);
+				print_addr(dbuf, *(u_long *)(dbuf->val + 1 + dd),
+				    1);
 				dbuf->used += 2;
 			} else if (sz == SIZE_QUAD) {
 				dbuf->used += 4;
@@ -2616,12 +2615,12 @@ get_modregstr_mit(dbuf, bit, mod, sz, dd)
 	case MOD_SPECIAL:
 		if (reg == 0) {
 			/* abs short addr */
-			print_addr(dbuf, *(dbuf->val + 1 + dd));
+			print_addr(dbuf, *(dbuf->val + 1 + dd), 0);
 			dbuf->used++;
 			break;
 		} else if (reg == 1) {
 			/* abs long addr */
-			print_addr(dbuf, *(u_long *)(dbuf->val + 1 + dd));
+			print_addr(dbuf, *(u_long *)(dbuf->val + 1 + dd), 0);
 			dbuf->used += 2;
 			break;
 		} else if (reg == 2) {
@@ -2643,9 +2642,8 @@ get_modregstr_mit(dbuf, bit, mod, sz, dd)
 				prints(dbuf, *(dbuf->val + 1 + dd), sz);
 				dbuf->used++;
 			} else if (sz == SIZE_LONG) {
-				addchar('#');
-				prints(dbuf, *(long *)(dbuf->val + 1 + dd),
-				    sz);
+				print_addr(dbuf, *(u_long *)(dbuf->val + 1 + dd),
+				    1);
 				dbuf->used += 2;
 			} else if (sz == SIZE_QUAD) {
 				dbuf->used += 4;
@@ -3004,9 +3002,10 @@ print_disp(dbuf, disp, sz, rel)
 }
 
 void
-print_addr(dbuf, addr)
+print_addr(dbuf, addr, wantexact)
 	dis_buffer_t *dbuf;
 	u_long addr;
+	int wantexact;
 {
 	db_expr_t diff;
 	db_sym_t sym;
@@ -3015,7 +3014,10 @@ print_addr(dbuf, addr)
 	diff = INT_MAX;
 	symname = NULL;
 	sym = db_search_symbol(addr, DB_STGY_ANY, &diff);
-	db_symbol_values(sym, &symname, 0);
+	if (wantexact && diff != 0)
+		symname = NULL;
+	else
+		db_symbol_values(sym, &symname, 0);
 
 	if (symname) {
 		if (diff == 0)
