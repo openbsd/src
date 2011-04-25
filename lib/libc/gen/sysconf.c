@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysconf.c,v 1.12 2010/10/28 02:06:00 deraadt Exp $ */
+/*	$OpenBSD: sysconf.c,v 1.13 2011/04/25 20:10:10 sthen Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,6 +39,7 @@
 #include <sys/vmmeter.h>
 
 #include <errno.h>
+#include <grp.h>
 #include <pwd.h>
 #include <unistd.h>
 
@@ -119,7 +120,7 @@ sysconf(int name)
 		return (_POSIX_THREAD_SAFE_FUNCTIONS);
 
 	case _SC_GETGR_R_SIZE_MAX:
-		return (_PW_BUF_LEN);
+		return (_GR_BUF_LEN);
 
 	case _SC_GETPW_R_SIZE_MAX:
 		return (_PW_BUF_LEN);

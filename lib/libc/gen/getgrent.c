@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrent.c,v 1.36 2009/12/19 22:41:39 schwarze Exp $ */
+/*	$OpenBSD: getgrent.c,v 1.37 2011/04/25 20:10:10 sthen Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -53,7 +53,7 @@ static struct group_storage {
 #define	MAXLINELENGTH	1024
 	char line[MAXLINELENGTH];
 } gr_storage;
-#define GETGR_R_SIZE_MAX	(1024+200*sizeof(char*))
+#define GETGR_R_SIZE_MAX	_GR_BUF_LEN
 
 /* File pointers are locked with the 'gr' mutex */
 _THREAD_PRIVATE_KEY(gr);
