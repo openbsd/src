@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vnd.4,v 1.24 2011/04/18 21:02:33 thib Exp $
+.\"	$OpenBSD: vnd.4,v 1.25 2011/04/25 20:21:04 mk Exp $
 .\"	$NetBSD: vnd.4,v 1.1 1995/12/30 18:10:48 thorpej Exp $
 .\"
 .\" Copyright (c) 1995 Jason R. Thorpe.
@@ -32,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 18 2011 $
+.Dd $Mdocdate: April 25 2011 $
 .Dt VND 4
 .Os
 .Sh NAME
@@ -89,9 +89,6 @@ specified in
 .Va vnd_key
 of length
 .Va vnd_keylen .
-Encryption only works with
-.Nm vnd
-devices.
 The size of the configured device is returned in
 .Va vnd_size .
 .Bd -literal -offset indent
