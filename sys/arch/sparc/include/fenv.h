@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.h,v 1.2 2011/04/25 21:04:29 martynas Exp $	*/
+/*	$OpenBSD: fenv.h,v 1.1 2011/04/25 21:04:29 martynas Exp $	*/
 /*	$NetBSD: fenv.h,v 1.1.2.2 2011/02/08 16:19:41 bouyer Exp $	*/
 
 /*-
@@ -29,8 +29,8 @@
  * $FreeBSD$
  */
 
-#ifndef	_SPARC64_FENV_H_
-#define	_SPARC64_FENV_H_
+#ifndef	_SPARC_FENV_H_
+#define	_SPARC_FENV_H_
 
 #include <sys/stdint.h>
 
@@ -78,4 +78,4 @@ extern const fenv_t	__fe_dfl_env;
 
 __END_DECLS
 
-#endif	/* !_SPARC64_FENV_H_ */
+#endif	/* !_SPARC_FENV_H_ */

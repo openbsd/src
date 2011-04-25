@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.2 2011/04/25 21:04:29 martynas Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.1 2011/04/25 21:04:29 martynas Exp $	*/
 /*	$NetBSD: fenv.c,v 1.1 2011/01/31 00:19:33 christos Exp $	*/
 
 /*-
@@ -33,11 +33,11 @@
 
 /* Load floating-point state register (all 64bits) */
 #define	__ldxfsr(__r)	__asm__	__volatile__		\
-	("ldx %0, %%fsr" : : "m" (__r))
+	("ld %0, %%fsr" : : "m" (__r))
 
 /* Save floating-point state register (all 64bits) */
 #define	__stxfsr(__r)	__asm__	__volatile__		\
-	("stx %%fsr, %0" : "=m" (*(__r)))
+	("st %%fsr, %0" : "=m" (*(__r)))
 
 /*
  * The following constant represents the default floating-point environment
