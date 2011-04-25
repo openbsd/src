@@ -1,4 +1,4 @@
-/*	$OpenBSD: worms.c,v 1.19 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: worms.c,v 1.20 2011/04/25 13:30:07 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -177,10 +177,11 @@ main(int argc, char *argv[])
 	short *ip;
 	int CO, LI, last, bottom, ch, length, number, trail;
 	short **ref;
-	const char *field;
+	const char *field, *errstr;
+	struct timespec sleeptime;
 	struct termios term;
 	speed_t speed;
-	u_int delay = 0;
+	time_t delay = 0;
 
 	/* set default delay based on terminal baud rate */
 	if (tcgetattr(STDOUT_FILENO, &term) == 0 &&
@@ -194,10 +195,9 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "d:fhl:n:t")) != -1)
 		switch(ch) {
 		case 'd':
-			if ((delay = (u_int)strtoul(optarg, (char **)NULL, 10)) < 1
-			    || delay > 1000)
-				errx(1, "invalid delay (1-1000)");
-			delay *= 1000;  /* ms -> us */
+			delay = (time_t)strtonum(optarg, 0, 1000, &errstr);
+			if (errstr)
+			    errx(1, "delay (0-1000) is %s: %s", errstr, optarg);
 			break;
 		case 'f':
 			field = "WORM";
@@ -220,6 +220,11 @@ main(int argc, char *argv[])
 			    "usage: worms [-ft] [-d delay] [-l length] [-n number]\n");
 			exit(1);
 		}
+
+	/* Convert delay from ms -> ns */
+	sleeptime.tv_sec = 0;
+	sleeptime.tv_nsec = delay * 500000;
+	timespecadd(&sleeptime, &sleeptime, &sleeptime);
 
 	srandomdev();
 	if (!(worm = calloc((size_t)number, sizeof(struct worm))))
@@ -284,7 +289,7 @@ main(int argc, char *argv[])
 			endwin();
 			exit(0);
 		}
-		if (delay) usleep(delay);
+		nanosleep(&sleeptime, NULL);
 		for (n = 0, w = &worm[0]; n < number; n++, w++) {
 			if ((x = w->xpos[h = w->head]) < 0) {
 				mvaddch(y = w->ypos[h] = bottom,
