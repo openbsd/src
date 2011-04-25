@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rc.8,v 1.31 2011/04/22 14:11:08 ajacoutot Exp $
+.\"	$OpenBSD: rc.8,v 1.32 2011/04/25 08:25:44 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)rc.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: April 22 2011 $
+.Dd $Mdocdate: April 25 2011 $
 .Dt RC 8
 .Os
 .Sh NAME
@@ -44,19 +44,19 @@
 .Nm rc
 is the command script that is invoked by
 .Xr init 8
-during an automatic reboot and after single user mode is exited;
-it performs system housekeeping chores and starts up system daemons.
+when booting into multi-user mode,
+and after single user mode is exited.
+It performs system housekeeping chores and starts up system daemons.
 Additionally,
 .Nm rc
 is intricately tied to the
 .Xr netstart 8
 script, which runs commands and daemons pertaining to the network.
 .Nm rc
-is also used to execute
+is also used to execute any
 .Xr rc.d 8
-scripts defined in the rc_scripts variable in
-.Nm rc.conf.local
-in the specified order.
+scripts defined in
+.Xr rc.conf.local 8 .
 The
 .Nm rc.securelevel ,
 .Nm rc.firsttime ,
@@ -64,14 +64,14 @@ and
 .Nm rc.local
 scripts hold commands which are pertinent only to a specific site.
 .Pp
-All of these startup scripts are (or can be) controlled to some
+All of these startup scripts are controlled to some
 extent by variables defined in
 .Xr rc.conf 8
 and
 .Xr rc.conf.local 8 ,
 which specify which daemons and services to run.
 .Pp
-When an automatic reboot is in progress,
+When booting into multi-user mode
 .Nm rc
 is invoked with the argument
 .Em autoboot .
@@ -89,7 +89,6 @@ caused by hardware or software failure.
 If this auto-check and repair succeeds, then the second part of
 .Nm rc
 is run.
-.Pp
 However, if the file
 .Pa /fastboot
 exists,
@@ -99,10 +98,9 @@ This file is then removed so that fsck will be run on subsequent boots.
 .Pp
 The second part of
 .Nm rc ,
-which is run after an auto-reboot succeeds and also if
-.Nm rc
-is invoked when a single user shell terminates (see
-.Xr init 8 ) ,
+which is also run by
+.Xr init 8
+after a single user shell terminates,
 then asks
 .Xr rc.conf 8
 for configuration variables,
@@ -159,12 +157,10 @@ stock installation.
 .Sh CONFIGURATION EXAMPLES
 The
 .Xr rc.conf 8
-file contains a series of Bourne-shell syntax assignments that
-are used to configure kernel configurations, network configuration,
+file contains a series of Bourne shell syntax assignments that
+are used to configure the kernel, the network,
 and various other system daemons.
-As described above, this file is sourced (using
-.Xr sh 1
-of course) by
+This file is then sourced by
 .Pa /etc/rc .
 Various comments in
 .Xr rc.conf 8
@@ -200,12 +196,12 @@ lpd_flags="-l"      # for normal use: "" (or "-l" for debugging)
 .Pp
 To start the a and b
 .Xr rc.d 8
-scripts in a reserved order, one could specify rc_scripts in the
+scripts in reverse order, one could specify rc_scripts in the
 the following way:
 .Bd -literal -offset indent
 rc_scripts="b a"
 .Ed
-.Sh EXTERNAL INFLUENCES
+.Sh ENVIRONMENT
 Before
 .Xr init 8
 starts
@@ -216,32 +212,30 @@ login class as described in
 .Xr login.conf 5 .
 .Sh FILES
 .Bl -tag -width "/etc/rc.securelevelXX" -compact
+.It Pa /etc/netstart
+Command script for network startup.
 .It Pa /etc/rc
 Command scripts for system startup.
+.It Pa /etc/rc.conf
+System daemon configuration database.
+.It Pa /etc/rc.conf.local
+Site specific daemon configuration database.
 .It Pa /etc/rc.d
 Directory to hold
 .Xr rc.d 8
 scripts.
 .It Pa /etc/rc.d/rc.subr
-File that contains functions used by the
+Functions used by the
 .Xr rc.d 8
 scripts.
-.It Pa /etc/rc.local
-Site specific command scripts for system startup.
-.It Pa /etc/rc.conf
-System daemon configuration database.
-.It Pa /etc/rc.conf.local
-Site specific daemon configuration database.
 .It Pa /etc/rc.firsttime
 Commands run on the first boot after creation.
+.It Pa /etc/rc.local
+Site specific command scripts for system startup.
 .It Pa /etc/rc.securelevel
 Commands run before the security level changes.
 .It Pa /etc/rc.shutdown
 Commands run at system shutdown.
-.It Pa /etc/login.conf
-Login class capability database.
-.It Pa /etc/netstart
-Command script for network startup.
 .It Pa /fastboot
 Tells
 .Nm rc
@@ -250,16 +244,13 @@ not to run
 during the next boot.
 .El
 .Sh SEE ALSO
-.Xr login.conf 5 ,
 .Xr sysctl.conf 5 ,
 .Xr securelevel 7 ,
 .Xr init 8 ,
 .Xr netstart 8 ,
 .Xr rc.conf 8 ,
 .Xr rc.d 8 ,
-.Xr rc.shutdown 8 ,
-.Xr reboot 8 ,
-.Xr savecore 8
+.Xr rc.shutdown 8
 .Sh HISTORY
 The
 .Nm
