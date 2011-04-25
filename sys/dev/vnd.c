@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.113 2011/04/23 22:00:09 miod Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.114 2011/04/25 19:29:11 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -83,11 +83,7 @@ int vnddebug = 0x00;
 #define	DNPRINTF(f, p...)	/* nothing */
 #endif	/* VNDDEBUG */
 
-/*
- * vndunit is a bit weird.  have to reconstitute the dev_t for
- * DISKUNIT(), but with the minor masked off.
- */
-#define	vndunit(x)	DISKUNIT(makedev(major(x), minor(x) & 0x7ff))
+#define	vndunit(x)	DISKUNIT(makedev(major(x), minor(x)))
 #define	VNDLABELDEV(dev)	\
 	makedev(major(dev), DISKMINOR(vndunit(dev), RAW_PART))
 
