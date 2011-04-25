@@ -18,7 +18,7 @@
 <body>
 <h1>Sources for Time Zone and Daylight Saving Time Data</h1>
 <address>
-@(#)tz-link.htm	8.30
+@(#)tz-link.htm	8.32
 </address>
 <p>
 This file is in the public domain, so clarified as of
@@ -96,7 +96,9 @@ href="http://en.wikipedia.org/wiki/Unix_shell">shell</a> commands download
 these files to a <abbr>GNU</abbr>/Linux or similar host;
 see the downloaded
 <code>README</code> file for what to do next.</p>
-<pre style="margin-left: 2em"><code><a href="http://www.gnu.org/software/wget/">wget</a> 'ftp://elsie.nci.nih.gov/pub/tz*.tar.gz'
+<pre style="margin-left: 2em"><code>mkdir tz
+cd tz
+<a href="http://www.gnu.org/software/wget/">wget</a> 'ftp://elsie.nci.nih.gov/pub/tz*.tar.gz'
 <a href="http://www.gnu.org/software/gzip/">gzip</a> -dc tzcode*.tar.gz | <a href="http://www.gnu.org/software/tar/">tar</a> -xf -
 gzip -dc tzdata*.tar.gz | tar -xf -
 </code></pre>
@@ -315,6 +317,17 @@ Microsoft Windows program.</li>
 WorldClock for Windows and Windows Mobile</a>
 lets users "see the time in up to 25 locations in the world at once."
 (From Hans Nieuwenhuis, 2009-11-02.)
+</li>
+<li>
+<a href="http://www.relativedata.com/time-zone-master">
+Time Zone Master Basic
+</a> "allows people to display multiple desktop clocks, and to
+research current and historical time information, as well as times of
+astronomical events (sunrise/transit/set, moonrise/transit/set, phases,
+season starts) for user-selected dates in the past and future. It can
+automatically download, compile and use the tzdata**.gz database files
+as they are released to keep the data up to date. The software is
+free." (Davie Patte)
 </li>
 </ul>
 <h2>Other time zone databases</h2>

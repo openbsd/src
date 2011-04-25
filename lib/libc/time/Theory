@@ -1,12 +1,13 @@
-$OpenBSD: Theory,v 1.14 2010/08/23 22:35:34 millert Exp $
-@(#)Theory	8.4
+$OpenBSD: Theory,v 1.15 2011/04/25 13:27:27 millert Exp $
+@(#)Theory	8.6
 This file is in the public domain, so clarified as of
 2009-05-17 by Arthur David Olson.
 
 ----- Outline -----
 
 	Time and date functions
-	Names of time zone regions
+	Scope of the tz database
+	Names of time zone rule files
 	Time zone abbreviations
 	Calendrical issues
 	Time and time zones on Mars
@@ -193,6 +194,31 @@ more powerful time conversion functions can be standardized, so much the
 better.
 
 
+----- Scope of the tz database -----
+
+The tz database attempts to record the history and predicted future of 
+all computer-based clocks that track civil time.  To represent this 
+data, the world is partitioned into regions whose clocks all agree 
+about time stamps that occur after the somewhat-arbitrary cutoff point 
+of the POSIX Epoch (1970-01-01 00:00:00 UTC).  For each such region, 
+the database records all known clock transitions, and labels the region 
+with a notable location.
+
+Clock transitions before 1970 are recorded for each such location, 
+because most POSIX-compatible systems support negative time stamps and 
+could misbehave if data were omitted for pre-1970 transitions.
+However, the database is not designed for and does not suffice for 
+applications requiring accurate handling of all past times everywhere, 
+as it would take far too much effort and guesswork to record all 
+details of pre-1970 civil timekeeping.
+
+As noted in the README file, the tz database is not authoritative 
+(particularly not for pre-1970 time stamps), and it surely has errors.
+Corrections are welcome and encouraged.  Users requiring authoritative 
+data should consult national standards bodies and the references cited 
+in the database's comments.
+
+
 ----- Names of time zone rule files -----
 
 The time zone rule file naming conventions attempt to strike a balance
@@ -288,8 +314,7 @@ and these older names are still supported.
 See the file `backward' for most of these older names
 (e.g. `US/Eastern' instead of `America/New_York').
 The other old-fashioned names still supported are
-`WET', `CET', `MET', `EET' (see the file `europe'),
-and `Factory' (see the file `factory').
+`WET', `CET', `MET', and `EET' (see the file `europe').
 
 
 ----- Time zone abbreviations -----
