@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.28 2011/04/03 17:58:31 dlg Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.29 2011/04/25 12:40:52 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -346,6 +346,7 @@ ioprbs_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.openings = 1;
 	sc->sc_link.adapter_buswidth = 1;
 	sc->sc_link.adapter_target = 1;
+	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
