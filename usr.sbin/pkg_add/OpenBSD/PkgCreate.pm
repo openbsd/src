@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.43 2011/03/19 12:06:11 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.44 2011/04/25 00:16:58 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -445,6 +445,13 @@ sub makesum_plist
 	$state->{mandir} //= OpenBSD::Temp::permanent_dir(
 	    $ENV{TMPDIR} // '/tmp', "manpage");
 	my $tempname = $state->{mandir}."/".basename($dest);
+	if (-f $tempname) {
+		my $i = 0;
+		do {
+			$tempname = $state->{mandir}."/".$i.basename($dest);
+			$i++;
+		} while (-f $tempname);
+	}
 	open my $fh, ">", $tempname or $state->error("can't create #1: #2", 
 	    $tempname, $!);
 	chmod 0444, $fh;
