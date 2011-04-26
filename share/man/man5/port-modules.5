@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.89 2011/04/12 12:11:24 kili Exp $
+.\"	$OpenBSD: port-modules.5,v 1.90 2011/04/26 13:42:06 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 12 2011 $
+.Dd $Mdocdate: April 26 2011 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -607,6 +607,7 @@ to RUN_DEPENDS and also sets NO_REGRESS to Yes.
 If both GNOME_PROJECT and GNOME_VERSION are set, this module defines
 DISTNAME, VERSION, MASTER_SITES, adds x11/gnome to CATEGORIES and
 EXTRACT_SUFX will default to .tar.bz2 if unset.
+Appends to FAKE_FLAGS.
 Unconditionally sets DESKTOP_FILES, MODGNOME_HELP_FILES,
 MODGNOME_BUILD_DEPENDS, MODGNOME_RUN_DEPENDS and USE_GMAKE.
 If CONFIGURE_STYLE is set to either gnu or autoconf
