@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.27 2010/11/02 22:15:09 krw Exp $
+/*	$OpenBSD: trm.c,v 1.28 2011/04/26 15:46:58 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -78,7 +78,7 @@ void	trm_wait_30us(bus_space_tag_t, bus_space_handle_t);
 
 void	trm_scsi_cmd(struct scsi_xfer *);
 
-struct trm_scsi_req_q *trm_GetFreeSRB(struct trm_softc *);
+void	*trm_srb_alloc(void *);
 
 void	trm_DataOutPhase0(struct trm_softc *, struct trm_scsi_req_q *, u_int8_t *);
 void	trm_DataInPhase0 (struct trm_softc *, struct trm_scsi_req_q *, u_int8_t *);
@@ -98,7 +98,8 @@ void	trm_SetXferParams  (struct trm_softc *, struct trm_dcb *, int);
 void	trm_DataIO_transfer(struct trm_softc *, struct trm_scsi_req_q *, u_int16_t);
 
 int	trm_StartSRB    (struct trm_softc *, struct trm_scsi_req_q *);
-void	trm_ReleaseSRB  (struct trm_softc *, struct trm_scsi_req_q *);
+void	trm_srb_reinit	(struct trm_softc *, struct trm_scsi_req_q *);
+void	trm_srb_free    (void *, void *);
 void	trm_RewaitSRB   (struct trm_softc *, struct trm_scsi_req_q *);
 void	trm_FinishSRB   (struct trm_softc *, struct trm_scsi_req_q *);
 void	trm_RequestSense(struct trm_softc *, struct trm_scsi_req_q *);
@@ -214,26 +215,26 @@ u_int8_t trm_clock_period[8] = {
 
 /*
  * ------------------------------------------------------------
- * Function : trm_GetFreeSRB
+ * Function : trm_srb_alloc
  * Purpose  : Get the first free SRB
  * Inputs   : 
  * Return   : NULL or a free SCSI Request block
  * ------------------------------------------------------------
  */
-struct trm_scsi_req_q *
-trm_GetFreeSRB(struct trm_softc *sc)
+void *
+trm_srb_alloc(void *xsc)
 {
+	struct trm_softc *sc = xsc;
 	struct trm_scsi_req_q *pSRB;
 
-	/* ASSUME we are called from inside a splbio()/splx() region */
-
+	mtx_enter(&sc->sc_srb_mtx);
 	pSRB = TAILQ_FIRST(&sc->freeSRB);
-
 	if (pSRB != NULL)
 		TAILQ_REMOVE(&sc->freeSRB, pSRB, link);
+	mtx_leave(&sc->sc_srb_mtx);
 
 #ifdef TRM_DEBUG0
-	printf("%s: trm_GetFreeSRB. pSRB = %p, next pSRB = %p\n",
+	printf("%s: trm_srb_alloc. pSRB = %p, next pSRB = %p\n",
 	    sc->sc_device.dv_xname, pSRB, TAILQ_FIRST(&sc->freeSRB));
 #endif
 
@@ -380,20 +381,14 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 		return;
 	}
 
+	pSRB = xs->io;
+	trm_srb_reinit(sc, pSRB);
+	
 	xs->error  = XS_NOERROR;
 	xs->status = SCSI_OK;
 	xs->resid  = 0;
 
 	intflag = splbio();
-
-	pSRB = trm_GetFreeSRB(sc);
-
-	if (pSRB == NULL) {
-		splx(intflag);
-		xs->error = XS_NO_CCB;
-		scsi_done(xs);
-		return;
-	}
 
 	/* 
 	 * BuildSRB(pSRB,pDCB);
@@ -417,10 +412,6 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 			printf("DMA transfer map unable to load, error = %d\n",
 			    error);
 			xs->error = XS_DRIVER_STUFFUP;
-			/*
-			 * free SRB
-			 */
-			TAILQ_INSERT_HEAD(&sc->freeSRB, pSRB, link);
 			splx(intflag);
 			scsi_done(xs);
 			return;
@@ -459,20 +450,20 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 		return;
 	}
 
-	/* Avoid use after free (via scsi_done()) of xs! */
+	splx(intflag);
 	for (timeout = xs->timeout; timeout > 0; timeout--) {
+		intflag = splbio();
 		trm_Interrupt(sc);
-		if (pSRB->xs == NULL) {
-			splx(intflag);
-			return;
-		}
+		splx(intflag);
+		if (ISSET(xs->flags, ITSDONE))
+			break;
 		DELAY(1000);
 	}
 
-	if (timeout == 0 && pSRB->xs != NULL)
+	if (!ISSET(xs->flags, ITSDONE) && timeout == 0)
 		trm_timeout(pSRB);
 
-	splx(intflag);
+	scsi_done(xs);
 }
 
 /*
@@ -1532,6 +1523,7 @@ trm_MsgInPhase0(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *psc
 					    sc->sc_device.dv_xname);
 #endif
 					pSRB = &sc->SRB[0];
+					trm_srb_reinit(sc, pSRB);
 					pSRB->SRBState = TRM_UNEXPECT_RESEL;
 					pDCB->pActiveSRB = pSRB;
 					trm_EnableMsgOut(sc, MSG_ABORT_TAG);
@@ -1926,7 +1918,6 @@ trm_Reselect(struct trm_softc *sc)
  * ------------------------------------------------------------
  * Function : trm_FinishSRB
  * Purpose  : Complete execution of a SCSI command
- *            Signal completion to the generic SCSI driver    
  * Inputs   : 
  * ------------------------------------------------------------
  */
@@ -1937,7 +1928,7 @@ trm_FinishSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 	struct scsi_sense_data *s1, *s2;
 	struct scsi_xfer *xs = pSRB->xs;
 	struct trm_dcb *pDCB = pSRB->pSRBDCB;
-	int target, lun;
+	int target, lun, intflag;
 
 #ifdef TRM_DEBUG0
 	printf("%s: trm_FinishSRB. sc = %p, pSRB = %p\n",
@@ -1945,14 +1936,36 @@ trm_FinishSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 #endif
 	pDCB->DCBFlag &= ~TRM_QUEUE_FULL;
 
+	intflag = splbio();
+	if (pSRB->TagNumber != TRM_NO_TAG) {
+		pSRB->pSRBDCB->TagMask &= ~(1 << pSRB->TagNumber);
+		pSRB->TagNumber = TRM_NO_TAG;
+	}
+	/* SRB may have started & finished, or be waiting and timed out */
+	if ((pSRB->SRBFlag & TRM_ON_WAITING_SRB) != 0) {
+		pSRB->SRBFlag &= ~TRM_ON_WAITING_SRB;
+		TAILQ_REMOVE(&sc->waitingSRB, pSRB, link);
+	}
+	if ((pSRB->SRBFlag & TRM_ON_GOING_SRB) != 0) {
+		pSRB->SRBFlag &= ~TRM_ON_GOING_SRB;
+		TAILQ_REMOVE(&sc->goingSRB, pSRB, link);
+	}
+	splx(intflag);
+
 	if (xs == NULL) {
-		trm_ReleaseSRB(sc, pSRB);
 		return;
 	}
 
 	timeout_del(&xs->stimeout);
 
 	xs->status = pSRB->TargetStatus;
+	if (xs->datalen != 0) {
+		bus_dmamap_sync(sc->sc_dmatag, pSRB->dmamapxfer,
+		    0, pSRB->dmamapxfer->dm_mapsize,
+		    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
+		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmatag, pSRB->dmamapxfer);
+	}
 
 	switch (xs->status) {
 	case SCSI_INTERM_COND_MET:
@@ -2075,8 +2088,6 @@ trm_FinishSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 		}
 	}
 
-	trm_ReleaseSRB(sc, pSRB);
-
 	/*
 	 * Notify cmd done
 	 */
@@ -2087,51 +2098,22 @@ trm_FinishSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 		    xs->cmd->opcode, xs->error, xs->status);
 #endif
 
-	scsi_done(xs);
+	if (ISSET(xs->flags, SCSI_POLL))
+		SET(xs->flags, ITSDONE);
+	else
+		scsi_done(xs);
 }
 
 /*
  * ------------------------------------------------------------
- * Function : trm_ReleaseSRB
+ * Function : trm_srb_reinit
  * Purpose  : 
  * Inputs   : 
  * ------------------------------------------------------------
  */
 void
-trm_ReleaseSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
+trm_srb_reinit(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 {
-	struct scsi_xfer *xs = pSRB->xs;
-	int intflag;
-
-	intflag = splbio();
-
-	if (pSRB->TagNumber != TRM_NO_TAG) {
-		pSRB->pSRBDCB->TagMask &= ~(1 << pSRB->TagNumber);
-		pSRB->TagNumber = TRM_NO_TAG;
-	}
-
-	if (xs != NULL) {
-		timeout_del(&xs->stimeout);
-
-		if (xs->datalen != 0) {
-			bus_dmamap_sync(sc->sc_dmatag, pSRB->dmamapxfer,
-			    0, pSRB->dmamapxfer->dm_mapsize,
-			    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
-			    BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(sc->sc_dmatag, pSRB->dmamapxfer);
-		}
-	}
-
-	/* SRB may have started & finished, or be waiting and timed out */
-	if ((pSRB->SRBFlag & TRM_ON_WAITING_SRB) != 0) {
-		pSRB->SRBFlag &= ~TRM_ON_WAITING_SRB;
-		TAILQ_REMOVE(&sc->waitingSRB, pSRB, link);
-	}
-	if ((pSRB->SRBFlag & TRM_ON_GOING_SRB) != 0) {
-		pSRB->SRBFlag &= ~TRM_ON_GOING_SRB;
-		TAILQ_REMOVE(&sc->goingSRB, pSRB, link);
-	}
-
 	bzero(&pSRB->SegmentX[0], sizeof(pSRB->SegmentX));
 	bzero(&pSRB->CmdBlock[0], sizeof(pSRB->CmdBlock));
 	bzero(&pSRB->scsisense,   sizeof(pSRB->scsisense));
@@ -2148,11 +2130,28 @@ trm_ReleaseSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 
 	pSRB->xs      = NULL;
 	pSRB->pSRBDCB = NULL;
+}
 
-	if (pSRB != &sc->SRB[0])
+/*
+ * ------------------------------------------------------------
+ * Function : trm_srb_free
+ * Purpose  : 
+ * Inputs   : 
+ * ------------------------------------------------------------
+ */
+void
+trm_srb_free(void *xsc, void *xpSRB)
+{
+	struct trm_softc *sc = xsc;
+	struct trm_scsi_req_q *pSRB = xpSRB;
+
+	trm_srb_reinit(sc, pSRB);
+
+	if (pSRB != &sc->SRB[0]) {
+		mtx_enter(&sc->sc_srb_mtx);
 		TAILQ_INSERT_TAIL(&sc->freeSRB, pSRB, link);
-
-	splx(intflag);
+		mtx_leave(&sc->sc_srb_mtx);
+	}
 }
 
 /*
@@ -2410,6 +2409,9 @@ trm_initACB(struct trm_softc *sc, int unit)
 	TAILQ_INIT(&sc->waitingSRB);
 	TAILQ_INIT(&sc->goingSRB);
 
+	mtx_init(&sc->sc_srb_mtx, IPL_BIO);
+	scsi_iopool_init(&sc->sc_iopool, sc, trm_srb_alloc, trm_srb_free);
+
 	sc->pActiveDCB     = NULL;
 	sc->sc_AdapterUnit = unit;
 	sc->sc_AdaptSCSIID = pEEpromBuf->NvramScsiId;
@@ -2450,6 +2452,7 @@ trm_initACB(struct trm_softc *sc, int unit)
 	sc->sc_link.openings         = 30; /* So TagMask (32 bit integer) always has space */
 	sc->sc_link.adapter          = &sc->sc_adapter;
 	sc->sc_link.adapter_buswidth = ((sc->sc_config & HCC_WIDE_CARD) == 0) ? 8:16;
+	sc->sc_link.pool	     = &sc->sc_iopool;
 
 	trm_reset(sc);
 }
