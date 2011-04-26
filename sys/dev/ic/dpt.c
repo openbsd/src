@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt.c,v 1.31 2011/04/26 22:46:25 matthew Exp $	*/
+/*	$OpenBSD: dpt.c,v 1.32 2011/04/26 22:55:58 matthew Exp $	*/
 /*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
 
 /*-
@@ -85,6 +85,11 @@ struct cfdriver dpt_cd = {
 
 void	*dpt_ccb_alloc(void *);
 void	dpt_ccb_free(void *, void *);
+
+struct scsi_adapter dpt_switch = {
+	dpt_scsi_cmd,
+	dpt_minphys
+};
 
 #ifndef offsetof
 #define offsetof(type, member) ((size_t)(&((type *)0)->member))
@@ -350,10 +355,7 @@ dpt_init(sc, intrstr)
 		panic("%s: dpt_cmd failed", sc->sc_dv.dv_xname);
         DELAY(20000);
 	
-	/* Fill in the adapter, each link and attach in turn */
-	sc->sc_adapter.scsi_cmd = dpt_scsi_cmd;
-	sc->sc_adapter.scsi_minphys = dpt_minphys;
-
+	/* Fill in each link and attach in turn */
 	for (i = 0; i <= ec->ec_maxchannel; i++) {
 		struct scsi_link *link;
 		sc->sc_hbaid[i] = ec->ec_hba[3 - i];
@@ -362,7 +364,7 @@ dpt_init(sc, intrstr)
 		link->adapter_target = sc->sc_hbaid[i];
 		link->luns = ec->ec_maxlun + 1;
 		link->adapter_buswidth = ec->ec_maxtarget + 1;
-		link->adapter = &sc->sc_adapter;
+		link->adapter = &dpt_switch;
 		link->adapter_softc = sc;
 		link->openings = sc->sc_nccbs;
 		link->pool = &sc->sc_iopool;
