@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigprocmask.2,v 1.8 2007/05/31 19:19:34 jmc Exp $
+.\"	$OpenBSD: sigprocmask.2,v 1.9 2011/04/26 23:04:23 schwarze Exp $
 .\"	$NetBSD: sigprocmask.2,v 1.6 1995/02/27 12:37:33 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,14 +30,14 @@
 .\"
 .\"	@(#)sigprocmask.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 26 2011 $
 .Dt SIGPROCMASK 2
 .Os
 .Sh NAME
 .Nm sigprocmask
 .Nd manipulate current signal mask
 .Sh SYNOPSIS
-.Fd #include <signal.h>
+.In signal.h
 .Ft int
 .Fn sigprocmask "int how" "const sigset_t *set" "sigset_t *oset"
 .Sh DESCRIPTION
@@ -52,14 +52,9 @@ If
 is not null, the action of
 .Fn sigprocmask
 depends on the value of the parameter
-.Fa how .
-The signal mask is changed as a function of the specified
-.Fa set
-and the current mask.
-The function is specified by
-.Fa how
-using one of the following values from
-.Aq Pa sys/signal.h :
+.Fa how ,
+which can be one of the following constants defined in
+.In sys/signal.h :
 .Bl -tag -width SIG_UNBLOCK
 .It Dv SIG_BLOCK
 The new mask is the union of the current mask and the specified
@@ -82,7 +77,7 @@ When
 is null,
 the value of
 .Ar how
-is insignificant and the mask remains unset
+is insignificant and the mask remains unchanged,
 providing a way to examine the signal mask without modification.
 .Pp
 The system
@@ -92,10 +87,7 @@ or
 .Dv SIGSTOP
 to be blocked.
 .Sh RETURN VALUES
-A 0 value indicated that the call succeeded.
-A \-1 return value indicates an error occurred and
-.Va errno
-is set to indicated the reason.
+.Rv -std
 .Sh ERRORS
 The
 .Fn sigprocmask
@@ -115,4 +107,4 @@ has a value other than those listed here.
 The
 .Fn sigprocmask
 function call is expected to conform to
-.St -p1003.1-88 .
+.St -p1003.1-2008 .
