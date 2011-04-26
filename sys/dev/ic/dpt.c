@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt.c,v 1.30 2011/04/26 18:31:16 matthew Exp $	*/
+/*	$OpenBSD: dpt.c,v 1.31 2011/04/26 22:46:25 matthew Exp $	*/
 /*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
 
 /*-
@@ -83,6 +83,8 @@ struct cfdriver dpt_cd = {
 	NULL, "dpt", DV_DULL
 };
 
+void	*dpt_ccb_alloc(void *);
+void	dpt_ccb_free(void *, void *);
 
 #ifndef offsetof
 #define offsetof(type, member) ((size_t)(&((type *)0)->member))
@@ -297,6 +299,9 @@ dpt_init(sc, intrstr)
 	SLIST_INIT(&sc->sc_free_ccb);
 	i = dpt_create_ccbs(sc, sc->sc_ccbs, sc->sc_nccbs);
 
+	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
+	scsi_iopool_init(&sc->sc_iopool, sc, dpt_ccb_alloc, dpt_ccb_free);
+
 	if (i == 0) {
 		printf("%s: unable to create CCBs\n", sc->sc_dv.dv_xname);
 		return;
@@ -360,6 +365,7 @@ dpt_init(sc, intrstr)
 		link->adapter = &sc->sc_adapter;
 		link->adapter_softc = sc;
 		link->openings = sc->sc_nccbs;
+		link->pool = &sc->sc_iopool;
 		config_found(&sc->sc_dv, link, scsiprint);
 	}
 }
@@ -602,18 +608,16 @@ dpt_minphys(struct buf *bp, struct scsi_link *sl)
  * Put a CCB onto the freelist.
  */
 void
-dpt_free_ccb(sc, ccb)
-	struct dpt_softc *sc;
-	struct dpt_ccb *ccb;
+dpt_ccb_free(void *xsc, void *xccb)
 {
-	int s;
+	struct dpt_softc *sc = xsc;
+	struct dpt_ccb *ccb = xccb;
 
-	s = splbio();
 	ccb->ccb_flg = 0;
 
-	if (SLIST_NEXT(ccb, ccb_chain) == NULL)
-		wakeup(&sc->sc_free_ccb);
-	splx(s);
+	mtx_enter(&sc->sc_ccb_mtx);
+	SLIST_INSERT_HEAD(&sc->sc_free_ccb, ccb, ccb_chain);
+	mtx_leave(&sc->sc_ccb_mtx);
 }
 
 /*
@@ -675,31 +679,20 @@ dpt_create_ccbs(sc, ccbstore, count)
  * none are available right now and we are permitted to sleep, then wait 
  * until one becomes free, otherwise return an error.
  */
-struct dpt_ccb *
-dpt_alloc_ccb(sc, flg)
-	struct dpt_softc *sc;
-	int flg;
+void *
+dpt_ccb_alloc(void *xsc)
 {
+	struct dpt_softc *sc = xsc;
 	struct dpt_ccb *ccb;
-	int s;
 
-	s = splbio();
-
-	for (;;) {
-		ccb = SLIST_FIRST(&sc->sc_free_ccb);
-		if (ccb) {
-			SLIST_REMOVE_HEAD(&sc->sc_free_ccb, ccb_chain);
-			break;
-		}
-		if ((flg & SCSI_NOSLEEP) != 0) {
-			splx(s);
-			return (NULL);
-		}
-		tsleep(&sc->sc_free_ccb, PRIBIO, "dptccb", 0);
+	mtx_enter(&sc->sc_ccb_mtx);
+	ccb = SLIST_FIRST(&sc->sc_free_ccb);
+	if (ccb != NULL) {
+		SLIST_REMOVE_HEAD(&sc->sc_free_ccb, ccb_chain);
+		ccb->ccb_flg |= CCB_ALLOC;
 	}
+	mtx_leave(&sc->sc_ccb_mtx);
 
-	ccb->ccb_flg |= CCB_ALLOC;
-	splx(s);
 	return (ccb);
 }
 
@@ -781,8 +774,7 @@ dpt_done_ccb(sc, ccb)
 		xs->status = ccb->ccb_scsi_status;
 	}
 
-	/* Free up the CCB and mark the command as done */
-	dpt_free_ccb(sc, ccb);
+	/* Mark the command as done */
 	scsi_done(xs);
 }
 
@@ -808,34 +800,22 @@ dpt_scsi_cmd(struct scsi_xfer *xs)
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("dpt_scsi_cmd\n"));
 
-	/* Protect the queue */
-	s = splbio();
-
 	/* Cmds must be no more than 12 bytes for us */
 	if (xs->cmdlen > 12) {
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
-		/* XXX we can't reset devices just yet */
-		if ((xs->flags & SCSI_RESET) != 0) {
-			xs->error = XS_DRIVER_STUFFUP;
-			scsi_done(xs);
-			splx(s);
-			return;
-		}
-
-	/* Get a CCB */
-	if ((ccb = dpt_alloc_ccb(sc, xs->flags)) == NULL) {
-		xs->error = XS_NO_CCB;
+	/* XXX we can't reset devices just yet */
+	if ((xs->flags & SCSI_RESET) != 0) {
+		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
-	splx(s);
+	ccb = xs->io;
+	ccb->ccb_flg &= ~CCB_ALLOC;
 
 	ccb->ccb_xs = xs;
 	ccb->ccb_timeout = xs->timeout;
@@ -878,7 +858,6 @@ dpt_scsi_cmd(struct scsi_xfer *xs)
 				printf("error %d loading dma map\n", error);
 		
 			xs->error = XS_DRIVER_STUFFUP;
-			dpt_free_ccb(sc, ccb);
 			scsi_done(xs);
 			return;
 		}
@@ -932,8 +911,7 @@ dpt_scsi_cmd(struct scsi_xfer *xs)
 	
 	if (dpt_cmd(sc, &ccb->ccb_eata_cp, ccb->ccb_ccbpa, CP_DMA_CMD, 0)) {
 		printf("%s: dpt_cmd failed\n", sc->sc_dv.dv_xname);
-		dpt_free_ccb(sc, ccb);
-		xs->error = XS_NO_CCB;
+		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
 		return;
 	}
@@ -1040,7 +1018,7 @@ dpt_hba_inquire(sc, ei)
 	dmat = sc->sc_dmat;
 
 	/* Get a CCB and mark as private */
-	if ((ccb = dpt_alloc_ccb(sc, 0)) == NULL)
+	if ((ccb = scsi_io_get(&sc->sc_iopool, SCSI_NOSLEEP)) == NULL)
 		panic("%s: no CCB for inquiry", sc->sc_dv.dv_xname);
 	
 	ccb->ccb_flg |= CCB_PRIVATE;
@@ -1095,5 +1073,5 @@ dpt_hba_inquire(sc, ei)
 	/* Sync up the DMA map and free CCB, returning */
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, sc->sc_scroff, 
 	    sizeof(struct eata_inquiry_data), BUS_DMASYNC_POSTREAD);
-	dpt_free_ccb(sc, ccb);
+	scsi_io_put(&sc->sc_iopool, ccb);
 }

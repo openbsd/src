@@ -1,4 +1,4 @@
-/*	$OpenBSD: dptvar.h,v 1.7 2011/04/26 18:05:12 matthew Exp $	*/
+/*	$OpenBSD: dptvar.h,v 1.8 2011/04/26 22:46:25 matthew Exp $	*/
 /*	$NetBSD: dptvar.h,v 1.5 1999/10/23 16:26:32 ad Exp $	*/
 
 /*
@@ -77,6 +77,8 @@ struct dpt_softc {
 	int		sc_nccbs;	/* number of CCBs available */
 	int		sc_open;	/* device is open */
 	SLIST_HEAD(, dpt_ccb) sc_free_ccb;/* free ccb list */
+	struct mutex	sc_ccb_mtx;	/* free ccb list mutex */
+	struct scsi_iopool sc_iopool;
 };
 
 int	dpt_intr(void *);
@@ -91,11 +93,9 @@ int	dpt_poll(struct dpt_softc *, struct dpt_ccb *);
 int	dpt_cmd(struct dpt_softc *, struct eata_cp *, u_int32_t, int, int);
 void	dpt_hba_inquire(struct dpt_softc *, struct eata_inquiry_data **);
 void	dpt_reset_ccb(struct dpt_softc *, struct dpt_ccb *);
-void	dpt_free_ccb(struct dpt_softc *, struct dpt_ccb *);
 void	dpt_done_ccb(struct dpt_softc *, struct dpt_ccb *);
 int	dpt_init_ccb(struct dpt_softc *, struct dpt_ccb *);
 int	dpt_create_ccbs(struct dpt_softc *, struct dpt_ccb *, int);
-struct dpt_ccb	*dpt_alloc_ccb(struct dpt_softc *, int);
 #ifdef DEBUG
 void	dpt_dump_sp(struct eata_sp *);
 #endif
