@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.48 2011/04/10 03:20:59 guenther Exp $	*/
+/*	$OpenBSD: w.c,v 1.49 2011/04/26 07:29:05 jasper Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -77,7 +77,7 @@ int		ttywidth;	/* width of tty */
 int		argwidth;	/* width of tty */
 int		header = 1;	/* true if -h flag: don't print heading */
 int		nflag = 1;	/* true if -n flag: don't convert addrs */
-int		sortidle;	/* sort bu idle time */
+int		sortidle;	/* sort by idle time */
 char	       *sel_user;	/* login of particular user selected */
 char		domain[MAXHOSTNAMELEN];
 
