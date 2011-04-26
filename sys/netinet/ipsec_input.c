@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.102 2011/04/06 19:15:34 markus Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.103 2011/04/26 22:30:38 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -138,7 +138,25 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	if ((sproto == IPPROTO_ESP && !esp_enable) ||
 	    (sproto == IPPROTO_AH && !ah_enable) ||
 	    (sproto == IPPROTO_IPCOMP && !ipcomp_enable)) {
-		rip_input(m, skip, sproto);
+		switch (af) {
+#ifdef INET
+		case AF_INET:
+			rip_input(m, skip, sproto);
+			break;
+#endif /* INET */
+#ifdef INET6
+		case AF_INET6:
+			rip6_input(&m, &skip, sproto);
+			break;
+#endif /* INET6 */
+		default:
+			DPRINTF(("ipsec_common_input(): unsupported protocol "
+			    "family %d\n", af));
+			m_freem(m);
+			IPSEC_ISTAT(espstat.esps_nopf, ahstat.ahs_nopf,
+			    ipcompstat.ipcomps_nopf);
+			return EPFNOSUPPORT;
+		}
 		return 0;
 	}
 	if ((sproto == IPPROTO_IPCOMP) && (m->m_flags & M_COMP)) {
