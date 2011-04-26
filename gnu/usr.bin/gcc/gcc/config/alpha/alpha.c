@@ -344,12 +344,19 @@ override_options ()
       flag_pic = 0;
     }
 
+#if defined(OPENBSD_NATIVE) || defined(OPENBSD_CROSS)
+  if (TARGET_FLOAT_VAX)
+    alpha_fprm = ALPHA_FPRM_NORM;
+  else
+    alpha_fprm = ALPHA_FPRM_DYN;
+#else
   /* On Unicos/Mk, the native compiler consistenly generates /d suffices for 
      floating-point instructions.  Make that the default for this target.  */
   if (TARGET_ABI_UNICOSMK)
     alpha_fprm = ALPHA_FPRM_DYN;
   else
     alpha_fprm = ALPHA_FPRM_NORM;
+#endif
 
   alpha_tp = ALPHA_TP_PROG;
   alpha_fptm = ALPHA_FPTM_N;
