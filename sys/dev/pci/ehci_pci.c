@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.22 2010/10/20 20:34:19 mk Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.23 2011/04/26 00:37:34 deraadt Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -312,7 +312,7 @@ ehci_pci_takecontroller(struct ehci_pci_softc *sc, int silent)
 					break;
 				DELAY(1000);
 			}
-			if (silent == 00 && (legsup & EHCI_LEGSUP_BIOSOWNED))
+			if (silent == 0 && (legsup & EHCI_LEGSUP_BIOSOWNED))
 				printf("%s: timed out waiting for BIOS\n",
 				    sc->sc.sc_bus.bdev.dv_xname);
 		}
