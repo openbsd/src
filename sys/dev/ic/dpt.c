@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt.c,v 1.29 2011/04/26 18:05:12 matthew Exp $	*/
+/*	$OpenBSD: dpt.c,v 1.30 2011/04/26 18:31:16 matthew Exp $	*/
 /*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
 
 /*-
@@ -85,7 +85,7 @@ struct cfdriver dpt_cd = {
 
 
 #ifndef offsetof
-#define offsetof(type, member) (int)((&((type *)0)->member))
+#define offsetof(type, member) ((size_t)(&((type *)0)->member))
 #endif /* offsetof */
 
 static char *dpt_cname[] = {
@@ -530,8 +530,7 @@ dpt_readcfg(sc)
 	 */
 	dpt_outb(sc, HA_COMMAND, CP_PIO_GETCFG);
 	memset(ec, 0, sizeof(*ec));
-	i = ((int)&((struct eata_cfg *)0)->ec_cfglen + 
-	    sizeof(ec->ec_cfglen)) >> 1;
+	i = (offsetof(struct eata_cfg, ec_cfglen) + sizeof(ec->ec_cfglen)) >> 1;
 	p = (u_int16_t *)ec;
 	
 	if (dpt_wait(sc, 0xFF, HA_ST_DATA_RDY, 2000)) {
@@ -544,15 +543,13 @@ dpt_readcfg(sc)
  	while (i--)
 		*p++ = dpt_inw(sc, HA_DATA);
 
-        if ((i = ec->ec_cfglen) > (sizeof(struct eata_cfg)
-            - (int)(&(((struct eata_cfg *)0L)->ec_cfglen))
-            - sizeof(ec->ec_cfglen)))
-                i = sizeof(struct eata_cfg)
-                  - (int)(&(((struct eata_cfg *)0L)->ec_cfglen))
-                  - sizeof(ec->ec_cfglen);
+	i = ec->ec_cfglen;
+	if (i > sizeof(struct eata_cfg) - offsetof(struct eata_cfg, ec_cfglen) -
+	    sizeof(ec->ec_cfglen))
+		i = sizeof(struct eata_cfg) - offsetof(struct eata_cfg, ec_cfglen) -
+		    sizeof(ec->ec_cfglen);
 
-        j = i + (int)(&(((struct eata_cfg *)0L)->ec_cfglen)) + 
-            sizeof(ec->ec_cfglen);
+        j = i + offsetof(struct eata_cfg, ec_cfglen) + sizeof(ec->ec_cfglen);
         i >>= 1;
 
 	while (i--)
