@@ -130,7 +130,6 @@
 ./usr/lib/libutil.so.11.2
 ./usr/lib/libwrap.so.4.0
 ./usr/lib/libz.so.4.1
-./usr/libdata/perl5/site_perl/sparc-openbsd/sparc64/fenv.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/_h2ph_pre.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/a.out.ph
