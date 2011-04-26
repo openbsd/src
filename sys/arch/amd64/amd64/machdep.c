@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.140 2011/04/18 21:44:55 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.141 2011/04/26 17:33:17 jsing Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1704,6 +1704,7 @@ getbootinfo(char *bootinfo, int bootinfo_size)
 {
 	bootarg32_t *q;
 	bios_ddb_t *bios_ddb;
+	bios_rootduid_t *bios_rootduid;
 
 #undef BOOTINFO_DEBUG
 #ifdef BOOTINFO_DEBUG
@@ -1788,6 +1789,11 @@ getbootinfo(char *bootinfo, int bootinfo_size)
 #ifdef DDB
 			db_console = bios_ddb->db_console;
 #endif
+			break;
+
+		case BOOTARG_ROOTDUID:
+			bios_rootduid = (bios_rootduid_t *)q->ba_arg;
+			bcopy(bios_rootduid, rootduid, sizeof(rootduid));
 			break;
 
 		default:

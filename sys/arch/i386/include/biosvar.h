@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.55 2011/03/23 16:54:35 pirofti Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.56 2011/04/26 17:33:17 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -209,6 +209,11 @@ typedef struct _bios_bootmac {
 typedef struct _bios_ddb {
 	int	db_console;
 } __packed bios_ddb_t;
+
+#define BOOTARG_ROOTDUID 9
+typedef struct _bios_rootduid {
+	u_char	duid[8];
+} __packed bios_rootduid_t;
 
 #if defined(_KERNEL) || defined (_STANDALONE)
 
