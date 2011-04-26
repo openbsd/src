@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsi.h,v 1.7 2010/07/10 22:24:14 jordan Exp $ */
+/*	$OpenBSD: iscsi.h,v 1.8 2011/04/26 21:30:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -433,10 +433,21 @@ struct iscsi_pdu_logout_request {
 	u_int8_t	_reserved4[16];
 } __packed;
 
+#define ISCSI_LOGOUT_F		0x80
+#define ISCSI_LOGOUT_CLOSE_SESS	0
+#define ISCSI_LOGOUT_CLOSE_CONN	1
+#define ISCSI_LOGOUT_RCVRY_CONN	2
+
+#define ISCSI_LOGOUT_RESP_SUCCESS	0
+#define ISCSI_LOGOUT_RESP_UNKN_CID	1
+#define ISCSI_LOGOUT_RESP_NO_SUPPORT	2
+#define ISCSI_LOGOUT_RESP_ERROR		3
+
 struct iscsi_pdu_logout_response {
 	u_int8_t	opcode;
 	u_int8_t	flags;
-	u_int8_t	_reserved1[2];
+	u_int8_t	response;
+	u_int8_t	_reserved1;
 
 	u_int8_t	ahslen;
 	u_int8_t	datalen[3];
