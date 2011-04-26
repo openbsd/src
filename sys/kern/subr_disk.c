@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.119 2011/04/16 03:21:16 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.120 2011/04/26 17:20:20 jsing Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -77,6 +77,8 @@ int	disk_change;		/* set if a disk has been attached/detached
 				 * since last we looked at this variable. This
 				 * is reset by hw_sysctl()
 				 */
+
+u_char	rootduid[8];		/* DUID of root disk. */
 
 /* softraid callback, do not use! */
 void (*softraid_disk_attach)(struct disk *, int);
@@ -1082,6 +1084,8 @@ setroot(struct device *bootdv, int part, int exitflags)
 	struct device *rootdv, *dv;
 	dev_t nrootdev, nswapdev = NODEV, temp = NODEV;
 	struct ifnet *ifp = NULL;
+	struct disk *dk = NULL;
+	u_char duid[8];
 	char buf[128];
 #if defined(NFSCLIENT)
 	extern char *nfsbootdevname;
@@ -1187,6 +1191,22 @@ gotswap:
 		 * `swap generic'
 		 */
 		rootdv = bootdv;
+		bzero(&duid, sizeof(duid));
+		if (bcmp(rootduid, &duid, sizeof(rootduid)) != 0) {
+			TAILQ_FOREACH(dk, &disklist, dk_link)
+				if (dk->dk_label && bcmp(dk->dk_label->d_uid,
+				    &rootduid, sizeof(rootduid)) == 0)
+					break;
+			if (dk == NULL)
+				panic("root device (%02hhx%02hhx%02hhx%02hhx"
+				    "%02hhx%02hhx%02hhx%02hhx) not found",
+				    rootduid[0], rootduid[1], rootduid[2],
+				    rootduid[3], rootduid[4], rootduid[5],
+				    rootduid[6], rootduid[7]);
+			bcopy(rootduid, duid, sizeof(duid));
+			rootdv = dk->dk_device;
+		}
+
 		majdev = findblkmajor(rootdv);
 		if (majdev >= 0) {
 			/*
@@ -1243,6 +1263,12 @@ gotswap:
 	}
 
 	printf("root on %s%c", rootdv->dv_xname, 'a' + part);
+
+	if (dk != NULL && bcmp(rootduid, &duid, sizeof(rootduid)) == 0)
+		printf(" (%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx.%c)",
+		    rootduid[0], rootduid[1], rootduid[2], rootduid[3],
+		    rootduid[4], rootduid[5], rootduid[6], rootduid[7],
+		    'a' + part);
 
 	/*
 	 * Make the swap partition on the root drive the primary swap.
