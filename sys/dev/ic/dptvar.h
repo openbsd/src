@@ -1,4 +1,4 @@
-/*	$OpenBSD: dptvar.h,v 1.6 2010/07/20 20:46:18 mk Exp $	*/
+/*	$OpenBSD: dptvar.h,v 1.7 2011/04/26 18:05:12 matthew Exp $	*/
 /*	$NetBSD: dptvar.h,v 1.5 1999/10/23 16:26:32 ad Exp $	*/
 
 /*
@@ -50,27 +50,15 @@ struct dpt_ccb {
 	int		ccb_scsi_status;	/* from status packet */
 	int		ccb_id;			/* unique ID of this CCB */
 	SLIST_ENTRY(dpt_ccb) ccb_chain;		/* link to next CCB */
-#ifdef __NetBSD__
-	struct scsipi_sense_data ccb_sense;	/* SCSI sense data on error */
-	struct scsipi_xfer *ccb_xs;		/* initiating SCSI command */
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 	struct scsi_sense_data ccb_sense;
 	struct scsi_xfer *ccb_xs;
-#endif /* __OpenBSD__ */
 };
 
 struct dpt_softc {
 	struct device sc_dv;		/* generic device data */
 	bus_space_handle_t sc_ioh;	/* bus space handle */
-#ifdef __NetBSD__
-	struct scsipi_adapter sc_adapter;/* scsipi adapter */
-	struct scsipi_link sc_link[3];	/* prototype link for each channel */
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 	struct scsi_adapter sc_adapter;/* scsipi adapter */
 	struct scsi_link sc_link[3];	/* prototype link for each channel */
-#endif /* __OpenBSD__ */
 	struct eata_cfg sc_ec;		/* EATA configuration data */
 	bus_space_tag_t	sc_iot;		/* bus space tag */
 	bus_dma_tag_t	sc_dmat;	/* bus DMA tag */
@@ -97,12 +85,7 @@ void	dpt_init(struct dpt_softc *, const char *);
 void	dpt_shutdown(void *);
 void	dpt_timeout(void *);
 void	dpt_minphys(struct buf *, struct scsi_link *);
-#ifdef __NetBSD__
-int	dpt_scsi_cmd(struct scsipi_xfer *);
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 void	dpt_scsi_cmd(struct scsi_xfer *);
-#endif /* __OpenBSD__ */
 int	dpt_wait(struct dpt_softc *, u_int8_t, u_int8_t, int);
 int	dpt_poll(struct dpt_softc *, struct dpt_ccb *);
 int	dpt_cmd(struct dpt_softc *, struct eata_cp *, u_int32_t, int, int);

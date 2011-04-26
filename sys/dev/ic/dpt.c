@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt.c,v 1.28 2010/07/20 20:46:18 mk Exp $	*/
+/*	$OpenBSD: dpt.c,v 1.29 2011/04/26 18:05:12 matthew Exp $	*/
 /*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
 
 /*-
@@ -71,39 +71,18 @@
 #include <sys/buf.h>
 
 #include <machine/endian.h>
-#ifdef __NetBSD__
-#include <machine/bswap.h>
-#endif /* __NetBSD__ */
 #include <machine/bus.h>
 
-#ifdef __NetBSD__
-#include <dev/scsipi/scsi_all.h>
-#include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsiconf.h>
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
-#endif /* __OpenBSD__ */
 
 #include <dev/ic/dptreg.h>
 #include <dev/ic/dptvar.h>
 
-#ifdef __OpenBSD__
 struct cfdriver dpt_cd = {
 	NULL, "dpt", DV_DULL
 };
-#endif /* __OpenBSD__ */
 
-#ifdef __NetBSD__
-/* A default for our link struct */
-static struct scsipi_device dpt_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
-};
-#endif /* __NetBSD__ */
 
 #ifndef offsetof
 #define offsetof(type, member) (int)((&((type *)0)->member))
@@ -367,38 +346,17 @@ dpt_init(sc, intrstr)
         DELAY(20000);
 	
 	/* Fill in the adapter, each link and attach in turn */
-#ifdef __NetBSD__
-	sc->sc_adapter.scsipi_cmd = dpt_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = dpt_minphys;
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 	sc->sc_adapter.scsi_cmd = dpt_scsi_cmd;
 	sc->sc_adapter.scsi_minphys = dpt_minphys;
-#endif /* __OpenBSD__ */
 
 	for (i = 0; i <= ec->ec_maxchannel; i++) {
-#ifdef __NetBSD__
-		struct scsipi_link *link;
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 		struct scsi_link *link;
-#endif /* __OpenBSD__ */
 		sc->sc_hbaid[i] = ec->ec_hba[3 - i];
 		link = &sc->sc_link[i];
-#ifdef __NetBSD__
-		link->scsipi_scsi.scsibus = i;
-		link->scsipi_scsi.adapter_target = sc->sc_hbaid[i];
-		link->scsipi_scsi.max_lun = ec->ec_maxlun;
-		link->scsipi_scsi.max_target = ec->ec_maxtarget;
-		link->type = BUS_SCSI;
-		link->device = &dpt_dev;
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 		link->scsibus = i;
 		link->adapter_target = sc->sc_hbaid[i];
 		link->luns = ec->ec_maxlun + 1;
 		link->adapter_buswidth = ec->ec_maxtarget + 1;
-#endif /* __OpenBSD__ */
 		link->adapter = &sc->sc_adapter;
 		link->adapter_softc = sc;
 		link->openings = sc->sc_nccbs;
@@ -736,12 +694,7 @@ dpt_alloc_ccb(sc, flg)
 			SLIST_REMOVE_HEAD(&sc->sc_free_ccb, ccb_chain);
 			break;
 		}
-#ifdef __NetBSD__
-		if ((flg & XS_CTL_NOSLEEP) != 0) {
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 		if ((flg & SCSI_NOSLEEP) != 0) {
-#endif /* __OpenBSD__ */
 			splx(s);
 			return (NULL);
 		}
@@ -763,14 +716,8 @@ dpt_done_ccb(sc, ccb)
 	struct dpt_softc *sc;
 	struct dpt_ccb *ccb;
 {
-#ifdef __NetBSD__
-	struct scsipi_sense_data *s1, *s2;
-	struct scsipi_xfer *xs;
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 	struct scsi_sense_data *s1, *s2;
 	struct scsi_xfer *xs;
-#endif /* __OpenBSD__ */
 	bus_dma_tag_t dmat;
 	
 	dmat = sc->sc_dmat;
@@ -819,12 +766,7 @@ dpt_done_ccb(sc, ccb)
 			switch (ccb->ccb_scsi_status) {
 			case SCSI_CHECK:
 				s1 = &ccb->ccb_sense;
-#ifdef __NetBSD__
-				s2 = &xs->sense.scsi_sense;
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 				s2 = &xs->sense;
-#endif /* __OpenBSD__ */
 				*s2 = *s1;
 				xs->error = XS_SENSE;
 				break;
@@ -844,34 +786,17 @@ dpt_done_ccb(sc, ccb)
 
 	/* Free up the CCB and mark the command as done */
 	dpt_free_ccb(sc, ccb);
-#ifdef __NetBSD__
-	xs->xs_status |= XS_STS_DONE;
-	scsipi_done(xs);
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 	scsi_done(xs);
-#endif /* __OpenBSD__ */
 }
 
 /*
  * Start a SCSI command.
  */
-#ifdef __NetBSD__
-int
-dpt_scsi_cmd(struct scsipi_xfer *xs)
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 void
 dpt_scsi_cmd(struct scsi_xfer *xs)
-#endif /* __OpenBSD__ */
 {
 	int error, i, flags, s;
-#ifdef __NetBSD__
-	struct scsipi_link *sc_link;
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 	struct scsi_link *sc_link;
-#endif /* __OpenBSD__ */
 	struct dpt_softc *sc;
 	struct dpt_ccb *ccb;
 	struct eata_sg *sg;
@@ -880,12 +805,7 @@ dpt_scsi_cmd(struct scsi_xfer *xs)
 	bus_dmamap_t xfer;
 
 	sc_link = xs->sc_link;
-#ifdef __NetBSD__
-	flags = xs->xs_control;
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 	flags = xs->flags;
-#endif /* __OpenBSD__ */
 	sc = sc_link->adapter_softc;
 	dmat = sc->sc_dmat;
 
@@ -903,12 +823,7 @@ dpt_scsi_cmd(struct scsi_xfer *xs)
 	}
 
 		/* XXX we can't reset devices just yet */
-#ifdef __NetBSD__
-		if ((flags & XS_CTL_RESET) != 0) {
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 		if ((xs->flags & SCSI_RESET) != 0) {
-#endif /* __OpenBSD__ */
 			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
 			splx(s);
@@ -916,12 +831,7 @@ dpt_scsi_cmd(struct scsi_xfer *xs)
 		}
 
 	/* Get a CCB */
-#ifdef __NetBSD__
-	if ((ccb = dpt_alloc_ccb(sc, flags)) == NULL) {
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 	if ((ccb = dpt_alloc_ccb(sc, xs->flags)) == NULL) {
-#endif /* __OpenBSD__ */
 		xs->error = XS_NO_CCB;
 		scsi_done(xs);
 		splx(s);
@@ -934,39 +844,19 @@ dpt_scsi_cmd(struct scsi_xfer *xs)
 	ccb->ccb_timeout = xs->timeout;
 
 	cp = &ccb->ccb_eata_cp;
-#ifdef __NetBSD__
-	memcpy(&cp->cp_scsi_cmd, xs->cmd, xs->cmdlen);
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 	bcopy(xs->cmd, &cp->cp_scsi_cmd, xs->cmdlen);
-#endif /* __OpenBSD__ */
 	cp->cp_ccbid = ccb->ccb_id;
-#ifdef __NetBSD__
-	cp->cp_id = sc_link->scsipi_scsi.target;
-	cp->cp_lun = sc_link->scsipi_scsi.lun;
-	cp->cp_channel = sc_link->scsipi_scsi.channel;
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 	cp->cp_id = sc_link->target;
 	cp->cp_lun = sc_link->lun;
 	cp->cp_channel = sc_link->scsibus;
-#endif /* __OpenBSD__ */
 	cp->cp_senselen = sizeof(ccb->ccb_sense);
 	cp->cp_stataddr = htobe32(sc->sc_sppa);
 	cp->cp_dispri = 1;
 	cp->cp_identify = 1;
 	cp->cp_autosense = 1;
-#ifdef __NetBSD__
-	cp->cp_datain = ((flags & XS_CTL_DATA_IN) != 0);
-	cp->cp_dataout = ((flags & XS_CTL_DATA_OUT) != 0);
-	cp->cp_interpret = (sc->sc_hbaid[sc_link->scsipi_scsi.channel] ==
-	    sc_link->scsipi_scsi.target);
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 	cp->cp_datain = ((xs->flags & SCSI_DATA_IN) != 0);
 	cp->cp_dataout = ((xs->flags & SCSI_DATA_OUT) != 0);
 	cp->cp_interpret = (sc->sc_hbaid[sc_link->scsibus] == sc_link->target);
-#endif /* __OpenBSD__ */
 
 	/* Synchronous xfers musn't write-back through the cache */
 	if (xs->bp != NULL && (xs->bp->b_flags & (B_ASYNC | B_READ)) == 0)
@@ -979,16 +869,9 @@ dpt_scsi_cmd(struct scsi_xfer *xs)
 	    
 	if (xs->datalen) {
 		xfer = ccb->ccb_dmamap_xfer;
-#ifdef __NetBSD__
-		error = bus_dmamap_load(dmat, xfer, xs->data, 
-		    xs->datalen, NULL, (flags & XS_CTL_NOSLEEP) ? 
-		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 		error = bus_dmamap_load(dmat, xfer, xs->data, 
 		    xs->datalen, NULL, (xs->flags & SCSI_NOSLEEP) ? 
 		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
-#endif /* __OpenBSD__ */
 
 		if (error) {
 			printf("%s: dpt_scsi_cmd: ", sc->sc_dv.dv_xname); 
@@ -1081,14 +964,8 @@ void
 dpt_timeout(arg)
 	void *arg;
 {
-#ifdef __NetBSD__
-	struct scsipi_link *sc_link;
-	struct scsipi_xfer *xs;
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 	struct scsi_link *sc_link;
 	struct scsi_xfer *xs;
-#endif /* __OpenBSD__ */
 	struct dpt_softc *sc;
  	struct dpt_ccb *ccb;
 	int s;
@@ -1098,12 +975,7 @@ dpt_timeout(arg)
 	sc_link = xs->sc_link;
 	sc  = sc_link->adapter_softc;
 
-#ifdef __NetBSD__
-	scsi_print_addr(sc_link);
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 	sc_print_addr(sc_link);
-#endif /* __OpenBSD__ */
 	printf("timed out (status:%02x aux status:%02x)", 
 	    dpt_inb(sc, HA_STATUS), dpt_inb(sc, HA_AUX_STATUS));
 
