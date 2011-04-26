@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.134 2011/04/18 19:23:46 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.135 2011/04/26 23:50:21 ariane Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -743,6 +743,14 @@ uvm_map_p(struct vm_map *map, vaddr_t *startp, vsize_t size,
 	UVMHIST_LOG(maphist, "(map=%p, *startp=0x%lx, size=%ld, flags=0x%lx)",
 	    map, *startp, size, flags);
 	UVMHIST_LOG(maphist, "  uobj/offset %p/%ld", uobj, (u_long)uoffset,0,0);
+
+	/*
+	 * Holes are incompatible with other types of mappings.
+	 */
+	if (flags & UVM_FLAG_HOLE) {
+		KASSERT(uobj == NULL && (flags & UVM_FLAG_FIXED) != 0 &&
+		    (flags & (UVM_FLAG_OVERLAY | UVM_FLAG_COPYONW)) == 0);
+	}
 
 #ifdef KVA_GUARDPAGES
 	if (map == kernel_map && !(flags & UVM_FLAG_FIXED)) {
