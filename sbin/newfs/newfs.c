@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.88 2010/12/13 00:02:58 marco Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.89 2011/04/26 14:02:14 otto Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -293,10 +293,12 @@ main(int argc, char *argv[])
 	if (ffsflag && argc - mfs != 1)
 		usage();
 
-	/* Increase our data size to the max */
-	if (getrlimit(RLIMIT_DATA, &rl) == 0) {
-		rl.rlim_cur = rl.rlim_max;
-		(void)setrlimit(RLIMIT_DATA, &rl);
+	if (mfs) {
+		/* Increase our data size to the max */
+		if (getrlimit(RLIMIT_DATA, &rl) == 0) {
+			rl.rlim_cur = rl.rlim_max;
+			(void)setrlimit(RLIMIT_DATA, &rl);
+		}
 	}
 
 	special = argv[0];
