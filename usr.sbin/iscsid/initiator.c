@@ -1,4 +1,4 @@
-/*	$OpenBSD: initiator.c,v 1.5 2011/04/05 18:26:19 claudio Exp $ */
+/*	$OpenBSD: initiator.c,v 1.6 2011/04/27 07:25:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -57,7 +57,7 @@ initiator_cleanup(struct initiator *i)
 
 	while ((s = TAILQ_FIRST(&i->sessions)) != NULL) {
 		TAILQ_REMOVE(&i->sessions, s, entry);
-		session_close(s);
+		session_cleanup(s);
 	}
 	free(initiator);
 }
@@ -81,11 +81,19 @@ struct task_login {
 	u_int8_t		 stage;
 };
 
+struct task_logout {
+	struct task		 task;
+	struct connection	*c;
+	u_int8_t		 reason;
+};
+
 struct pdu *initiator_login_build(struct task_login *, struct kvp *);
 void	initiator_login_cb(struct connection *, void *, struct pdu *);
 
 void	initiator_discovery_cb(struct connection *, void *, struct pdu *);
 struct pdu *initiator_text_build(struct task *, struct session *, struct kvp *);
+
+void	initiator_logout_cb(struct connection *, void *, struct pdu *);
 
 struct kvp *
 initiator_login_kvp(struct session *s)
@@ -126,25 +134,25 @@ initiator_login(struct connection *c)
 	tl->stage = ISCSI_LOGIN_STG_SECNEG;
 
 	if (!(kvp = initiator_login_kvp(c->session))) {
-		log_warnx("initiator_login_kvp failed");
+		log_warn("initiator_login_kvp failed");
 		free(tl);
 		conn_fail(c);
 		return;
 	}
 
 	if (!(p = initiator_login_build(tl, kvp))) {
-		log_warnx("initiator_login_build failed");
+		log_warn("initiator_login_build failed");
 		free(tl);
+		free(kvp);
 		conn_fail(c);
 		return;
 	}
 
 	free(kvp);
 
-	task_init(&tl->task, c->session, 1, tl, initiator_login_cb);
+	task_init(&tl->task, c->session, 1, tl, initiator_login_cb, NULL);
 	task_pdu_add(&tl->task, p);
-	/* XXX this is wrong, login needs to run on a specific connection */
-	session_task_issue(c->session, &tl->task);
+	conn_task_issue(c, &tl->task);
 }
 
 struct pdu *
@@ -214,18 +222,161 @@ initiator_discovery(struct session *s)
 
 	if (!(t = calloc(1, sizeof(*t)))) {
 		log_warn("initiator_discovery");
+		/* XXX conn_fail(c); */
 		return;
 	}
 
 	if (!(p = initiator_text_build(t, s, kvp))) {
 		log_warnx("initiator_text_build failed");
 		free(t);
+		/* conn_fail(c); */
 		return;
 	}
 
-	task_init(t, s, 0, t, initiator_discovery_cb);
+	task_init(t, s, 0, t, initiator_discovery_cb, NULL);
 	task_pdu_add(t, p);
 	session_task_issue(s, t);
+}
+
+void
+initiator_discovery_cb(struct connection *c, void *arg, struct pdu *p)
+{
+	struct task *t = arg;
+	struct iscsi_pdu_text_response *lresp;
+	u_char *buf = NULL;
+	struct kvp *kvp, *k;
+	size_t n, size;
+
+	lresp = pdu_getbuf(p, NULL, PDU_HEADER);
+	switch (ISCSI_PDU_OPCODE(lresp->opcode)) {
+	case ISCSI_OP_TEXT_RESPONSE:
+		size = lresp->datalen[0] << 16 | lresp->datalen[1] << 8 |
+		    lresp->datalen[2];
+		if (size == 0) {
+			/* empty response */
+			conn_logout(c);
+			break;
+		}
+		buf = pdu_getbuf(p, &n, PDU_DATA);
+		if (size > n || buf == NULL)
+			goto fail;
+		kvp = pdu_to_text(buf, size);
+		if (kvp == NULL)
+			goto fail;
+		log_debug("ISCSI_OP_TEXT_RESPONSE");
+		for (k = kvp; k->key; k++) {
+			log_debug("%s\t=>\t%s", k->key, k->value);
+		}
+		free(kvp);
+		conn_logout(c);
+		break;
+	default:
+		log_debug("initiator_discovery_cb: unexpected message type %x",
+		    ISCSI_PDU_OPCODE(lresp->opcode));
+fail:
+		conn_fail(c);
+	}
+	task_cleanup(t, c);
+	free(t);
+	pdu_free(p);
+}
+
+void
+initiator_logout(struct connection *c, u_int8_t reason, int onconn)
+{
+	struct task_logout *tl;
+	struct pdu *p;
+	struct iscsi_pdu_logout_request *loreq;
+
+	if (!(tl = calloc(1, sizeof(*tl)))) {
+		log_warn("initiator_logout");
+		conn_fail(c);
+		return;
+	}
+	tl->c = c;
+	tl->reason = reason;
+
+	if (!(p = pdu_new())) {
+		log_warn("initiator_logout");
+		conn_fail(c);
+		return;
+	}
+	if (!(loreq = pdu_gethdr(p))) {
+		log_warn("initiator_logout");
+		conn_fail(c);
+		return;
+	}
+
+	loreq->opcode = ISCSI_OP_LOGOUT_REQUEST;
+	loreq->flags = ISCSI_LOGOUT_F | reason;
+	if (reason != 0)
+		loreq->cid = c->cid;
+
+	task_init(&tl->task, c->session, 0, tl, initiator_logout_cb, NULL);
+	task_pdu_add(&tl->task, p);
+	if (onconn)
+		conn_task_issue(c, &tl->task);
+	else
+		session_task_issue(c->session, &tl->task);
+}
+
+void
+initiator_logout_cb(struct connection *c, void *arg, struct pdu *p)
+{
+	struct task_logout *tl = arg;
+	struct iscsi_pdu_logout_response *loresp;
+
+	c = tl->c;
+	loresp = pdu_getbuf(p, NULL, PDU_HEADER);
+	log_debug("initiator_logout_cb: "
+	    "reason %d, Time2Wait %d, Time2Retain %d",
+	    loresp->response, loresp->time2wait, loresp->time2retain);
+
+	switch (loresp->response) {
+	case ISCSI_LOGOUT_RESP_SUCCESS:
+		conn_fsm(tl->c, CONN_EV_LOGGED_OUT);
+		break;
+	case ISCSI_LOGOUT_RESP_UNKN_CID:
+		/* connection ID not found, retry will not help */
+		log_warnx("%s: logout failed, cid %d unknown, giving up\n",
+		    tl->c->session->config.SessionName,
+		    tl->c->cid);
+		break;
+	case ISCSI_LOGOUT_RESP_NO_SUPPORT:
+	case ISCSI_LOGOUT_RESP_ERROR:
+	default:
+		/* need to retry logout after loresp->time2wait secs */
+		conn_fail(tl->c);
+		break;
+	}
+
+	task_cleanup(&tl->task, c);
+	free(tl);
+	pdu_free(p);
+}
+
+void
+initiator_nop_in_imm(struct connection *c, struct pdu *p)
+{
+	struct iscsi_pdu_nop_in *nopin;
+	struct task *t;
+
+	/* fixup NOP-IN to make it a NOP-OUT */
+	nopin = pdu_getbuf(p, NULL, PDU_HEADER);
+	nopin->maxcmdsn = 0;
+	nopin->opcode = ISCSI_OP_I_NOP | ISCSI_OP_F_IMMEDIATE;
+
+	/* and schedule an immediate task */
+	if (!(t = calloc(1, sizeof(*t)))) {
+		log_warn("initiator_nop_in_imm");
+		pdu_free(p);
+		return;
+	}
+
+	task_init(t, c->session, 1, NULL, NULL, NULL);
+	t->itt = 0xffffffff; /* change ITT because it is just a ping reply */
+	task_pdu_add(t, p);
+	conn_task_issue(c, t);
 }
 
 struct pdu *
@@ -250,66 +401,6 @@ initiator_text_build(struct task *t, struct session *s, struct kvp *kvp)
 	bcopy(&n, &lreq->ahslen, sizeof(n));
 
 	return p;
-}
-
-void
-initiator_discovery_cb(struct connection *c, void *arg, struct pdu *p)
-{
-	struct iscsi_pdu_text_response *lresp;
-	u_char *buf = NULL;
-	struct kvp *kvp, *k;
-	size_t n, size;
-
-	lresp = pdu_getbuf(p, NULL, PDU_HEADER);
-	switch (ISCSI_PDU_OPCODE(lresp->opcode)) {
-	case ISCSI_OP_TEXT_RESPONSE:
-		buf = pdu_getbuf(p, &n, PDU_DATA);
-		if (buf == NULL)
-			goto fail;
-		size = lresp->datalen[0] << 16 | lresp->datalen[1] << 8 |
-		    lresp->datalen[2];
-		if (size > n)
-			goto fail;
-		kvp = pdu_to_text(buf, size);
-		if (kvp == NULL)
-			goto fail;
-		log_debug("ISCSI_OP_TEXT_RESPONSE");
-		for (k = kvp; k->key; k++) {
-			log_debug("%s\t=>\t%s", k->key, k->value);
-		}
-		free(kvp);
-		free(arg);
-		conn_close(c);
-		break;
-	default:
-fail:
-		conn_fail(c);
-	}
-	pdu_free(p);
-}
-
-void
-initiator_nop_in_imm(struct connection *c, struct pdu *p)
-{
-	struct iscsi_pdu_nop_in *nopin;
-	struct task *t;
-
-	/* fixup NOP-IN to make it a NOP-OUT */
-	nopin = pdu_getbuf(p, NULL, PDU_HEADER);
-	nopin->maxcmdsn = 0;
-	nopin->opcode = ISCSI_OP_I_NOP | ISCSI_OP_F_IMMEDIATE;
-
-	/* and schedule an immediate task */
-	if (!(t = calloc(1, sizeof(*t)))) {
-		log_warn("initiator_nop_in_imm");
-		pdu_free(p);
-		return;
-	}
-
-	task_init(t, c->session, 1, NULL, NULL);
-	t->itt = 0xffffffff; /* change ITT because it is just a ping reply */
-	task_pdu_add(t, p);
-	conn_task_issue(c, t);
 }
 
 char *

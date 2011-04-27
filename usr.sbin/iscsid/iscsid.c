@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.c,v 1.3 2010/09/25 16:20:06 sobrado Exp $ */
+/*	$OpenBSD: iscsid.c,v 1.4 2011/04/27 07:25:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -164,7 +164,6 @@ iscsid_ctrl_dispatch(void *ch, struct pdu *pdu)
 
 	switch (cmh->type) {
 	case CTRL_INITIATOR_CONFIG:
-log_debug("CTRL_INITIATOR_CONFIG");
 		if (cmh->len[0] != sizeof(*ic)) {
 			log_warnx("CTRL_INITIATOR_CONFIG bad size");
 			control_compose(ch, CTRL_FAILURE, NULL, 0);
@@ -175,7 +174,6 @@ log_debug("CTRL_INITIATOR_CONFIG");
 		control_compose(ch, CTRL_SUCCESS, NULL, 0);
 		break;
 	case CTRL_SESSION_CONFIG:
-log_debug("CTRL_SESSION_CONFIG");
 		if (cmh->len[0] != sizeof(*sc)) {
 			log_warnx("CTRL_INITIATOR_CONFIG bad size");
 			control_compose(ch, CTRL_FAILURE, NULL, 0);
@@ -185,7 +183,6 @@ log_debug("CTRL_SESSION_CONFIG");
 		if (cmh->len[1])
 			sc->TargetName = pdu_getbuf(pdu, NULL, 2);
 		else if (sc->SessionType != SESSION_TYPE_DISCOVERY) {
-log_debug("no TargetName but not discovery");
 			control_compose(ch, CTRL_FAILURE, NULL, 0);
 			goto done;
 		} else
@@ -195,7 +192,6 @@ log_debug("no TargetName but not discovery");
 		else
 			sc->InitiatorName = NULL;
 
-log_debug("session %s to %s", sc->SessionName, log_sockaddr(&sc->connection.TargetAddr));
 		s = session_find(initiator, sc->SessionName);
 		if (s == NULL) {
 			s = session_new(initiator, sc->SessionType);
@@ -206,12 +202,8 @@ log_debug("session %s to %s", sc->SessionName, log_sockaddr(&sc->connection.Targ
 		}
 
 		session_config(s, sc);
-
-		if (s->state == SESS_FREE) {
-			log_debug("new connection to %s",
-			    log_sockaddr(&s->config.connection.TargetAddr));
-			conn_new(s, &s->config.connection);
-		}
+		if (s->state == SESS_INIT)
+			session_fsm(s, SESS_EV_START, NULL);
 
 		control_compose(ch, CTRL_SUCCESS, NULL, 0);
 		break;

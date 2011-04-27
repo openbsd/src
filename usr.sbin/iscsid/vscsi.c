@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.4 2011/01/06 15:32:47 claudio Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.5 2011/04/27 07:25:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -48,6 +48,7 @@ struct scsi_task {
 };
 
 void vscsi_callback(struct connection *, void *, struct pdu *);
+void vscsi_fail(void *arg);
 void vscsi_dataout(struct session *, struct scsi_task *, u_int32_t, size_t);
 
 void
@@ -125,7 +126,7 @@ vscsi_dispatch(int fd, short event, void *arg)
 	}
 #endif
 
-	task_init(&t->task, s, 0, t, vscsi_callback);
+	task_init(&t->task, s, 0, t, vscsi_callback, vscsi_fail);
 	task_pdu_add(&t->task, p);
 	session_task_issue(s, &t->task);
 }
@@ -229,7 +230,6 @@ send_status:
 			fatal("This does not work as it should");
 		vscsi_data(VSCSI_DATA_READ, t->tag, buf, size);
 		if (sresp->flags & 1) {
-			log_debug("and a vscsi_status");
 			task_cleanup(&t->task, c);
 			vscsi_status(t->tag, status, NULL, 0);
 			free(t);
@@ -253,6 +253,18 @@ send_status:
 }
 
 void
+vscsi_fail(void *arg)
+{
+	struct scsi_task *t = arg;
+	int tag;
+
+	task_cleanup(&t->task, NULL);
+	tag = t->tag;
+	free(t);
+	vscsi_status(tag, VSCSI_STAT_RESET, NULL, 0);
+}
+
+void
 vscsi_dataout(struct session *s, struct scsi_task *t, u_int32_t ttt, size_t len)
 {
 	struct pdu *p;
@@ -262,6 +274,7 @@ vscsi_dataout(struct session *s, struct scsi_task *t, u_int32_t ttt, size_t len)
 	u_int32_t t32, dsn = 0;
 
 	for (off = 0; off < len; off += size) {
+		/* XXX hardcoded numbers, bad bad bad */
 		size = len - off > 8 * 1024 ? 8 * 1024 : len - off;
 
 		if (!(p = pdu_new()))

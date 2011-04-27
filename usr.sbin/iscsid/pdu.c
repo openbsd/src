@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdu.c,v 1.4 2011/01/04 13:09:19 claudio Exp $ */
+/*	$OpenBSD: pdu.c,v 1.5 2011/04/27 07:25:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -92,7 +92,7 @@ pdu_to_text(char *buf, size_t len)
 	unsigned int nkvp = 0, i;
 
 	/* remove padding zeros */
-	for (n = len; buf[n - 1] == '\0'; n--)
+	for (n = len; n > 0 && buf[n - 1] == '\0'; n--)
 		;
 	if (n == len) {
 		log_debug("pdu_to_text: badly terminated text data");

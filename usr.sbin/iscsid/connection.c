@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.8 2011/04/05 01:07:24 claudio Exp $ */
+/*	$OpenBSD: connection.c,v 1.9 2011/04/27 07:25:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -38,7 +38,6 @@
 #include "iscsid.h"
 #include "log.h"
 
-void	conn_fsm(struct connection *, enum c_event);
 void	conn_dispatch(int, short, void *);
 void	conn_write_dispatch(int, short, void *);
 
@@ -46,6 +45,8 @@ int	c_do_connect(struct connection *, enum c_event);
 int	c_do_login(struct connection *, enum c_event);
 int	c_do_loggedin(struct connection *, enum c_event);
 int	c_do_logout(struct connection *, enum c_event);
+int	c_do_loggedout(struct connection *, enum c_event);
+int	c_do_fail(struct connection *, enum c_event);
 
 const char *conn_state(int);
 const char *conn_event(enum c_event);
@@ -109,6 +110,8 @@ conn_free(struct connection *c)
 	event_del(&c->wev);
 	close(c->fd);
 
+	taskq_cleanup(&c->tasks);
+
 	TAILQ_REMOVE(&c->session->connections, c, entry);
 	free(c);
 }
@@ -124,11 +127,11 @@ conn_dispatch(int fd, short event, void *arg)
 		return;
 	}
 	if ((n = pdu_read(c)) == -1) {
-		conn_fail(c);
+		conn_fsm(c, CONN_EV_FAIL);
 		return;
 	}
 	if (n == 0) {    /* connection closed */
-		conn_fsm(c, CONN_EV_CLOSE);
+		conn_fsm(c, CONN_EV_CLOSED);
 		return;
 	}
 
@@ -155,18 +158,19 @@ conn_write_dispatch(int fd, short event, void *arg)
 		    &error, &len) == -1 || (errno = error)) {
 			log_warn("cwd connect(%s)",
 			    log_sockaddr(&c->config.TargetAddr));
-			conn_fail(c);
+			conn_fsm(c, CONN_EV_FAIL);
 			return;
 		}
 		conn_fsm(c, CONN_EV_CONNECTED);
 		break;
 	default:
 		if ((n = pdu_write(c)) == -1) {
-			conn_fail(c);
+			log_warn("pdu_write");
+			conn_fsm(c, CONN_EV_FAIL);
 			return;
 		}
 		if (n == 0) {    /* connection closed */
-			conn_fsm(c, CONN_EV_CLOSE);
+			conn_fsm(c, CONN_EV_CLOSED);
 			return;
 		}
 
@@ -177,14 +181,15 @@ conn_write_dispatch(int fd, short event, void *arg)
 }
 
 void
-conn_close(struct connection *c)
+conn_logout(struct connection *c)
 {
-	conn_fsm(c, CONN_EV_CLOSE);
+	conn_fsm(c, CONN_EV_LOGOUT);
 }
 
 void
 conn_fail(struct connection *c)
 {
+	log_debug("conn_fail");
 	conn_fsm(c, CONN_EV_FAIL);
 }
 
@@ -198,16 +203,18 @@ conn_loggedin(struct connection *c)
 }
 
 int
+conn_task_ready(struct connection *c)
+{
+	if ((c->state & CONN_LOGGED_IN) && TAILQ_EMPTY(&c->tasks))
+		return 1;
+	return 0;
+}
+
+void
 conn_task_issue(struct connection *c, struct task *t)
 {
-	/* XXX need to verify that we're in the right state for the task */
-
-	if (!TAILQ_EMPTY(&c->tasks))
-		return 0;
-
 	TAILQ_INSERT_TAIL(&c->tasks, t, entry);
 	conn_task_schedule(c);
-	return 1;
 }
 
 void
@@ -225,7 +232,7 @@ conn_task_schedule(struct connection *c)
 	for (p = TAILQ_FIRST(&t->sendq); p != NULL; p = np) {
 		np = TAILQ_NEXT(p, entry);
 		TAILQ_REMOVE(&t->sendq, p, entry);
-		conn_pdu_write(c, p);	/* maybe inline ? */
+		conn_pdu_write(c, p);
 	}
 	if (t->callback == NULL) {
 		/* no callback, immediate command expecting no answer */
@@ -264,11 +271,15 @@ struct {
 	enum c_event	event;
 	int		(*action)(struct connection *, enum c_event);
 } fsm[] = {
-	{ CONN_FREE, CONN_EV_CONNECT, c_do_connect },
-	{ CONN_XPT_WAIT, CONN_EV_CONNECTED, c_do_login },
-	{ CONN_IN_LOGIN, CONN_EV_LOGGED_IN, c_do_loggedin },
-	{ CONN_IN_LOGIN, CONN_EV_DISCOVERY, c_do_loggedin },
-	{ CONN_LOGGED_IN, CONN_EV_CLOSE, c_do_logout },
+	{ CONN_FREE, CONN_EV_CONNECT, c_do_connect },		/* T1 */
+	{ CONN_XPT_WAIT, CONN_EV_CONNECTED, c_do_login },	/* T4 */
+	{ CONN_IN_LOGIN, CONN_EV_LOGGED_IN, c_do_loggedin },	/* T5 */
+	{ CONN_IN_LOGIN, CONN_EV_DISCOVERY, c_do_loggedin },	/* T5 */
+	{ CONN_LOGGED_IN, CONN_EV_LOGOUT, c_do_logout },	/* T9 */
+	{ CONN_LOGOUT_REQ, CONN_EV_LOGOUT, c_do_logout },	/* T10 */
+	{ CONN_IN_LOGOUT, CONN_EV_LOGGED_OUT, c_do_loggedout },	/* T13 */
+	{ CONN_ANYSTATE, CONN_EV_CLOSED, c_do_fail },
+	{ CONN_ANYSTATE, CONN_EV_FAIL, c_do_fail },
 	{ 0, 0, NULL }
 };
 
@@ -279,28 +290,34 @@ conn_fsm(struct connection *c, enum c_event event)
 
 	for (i = 0; fsm[i].action != NULL; i++) {
 		if (c->state & fsm[i].state && event == fsm[i].event) {
+			log_debug("conn_fsm[%s]: %s ev %s",
+			    c->session->config.SessionName,
+			    conn_state(c->state), conn_event(event));
 			ns = fsm[i].action(c, event);
-			log_debug("conn_fsm[%s]: %s ev %s -> %s",
-			   c->session->config.SessionName, conn_state(c->state),
-			   conn_event(event), conn_state(ns));
 			if (ns == -1)
 				/* XXX better please */
 				fatalx("conn_fsm: action failed");
+			log_debug("conn_fsm[%s]: new state %s",
+			    c->session->config.SessionName, conn_state(ns));
 			c->state = ns;
 			return;
 		}
 	}
 	log_warnx("conn_fsm[%s]: unhandled state transition [%s, %s]",
-		c->session->config.SessionName, conn_state(c->state),
-		conn_event(event));
+	    c->session->config.SessionName, conn_state(c->state),
+	    conn_event(event));
 	fatalx("bork bork bork");
 }
 
 int
 c_do_connect(struct connection *c, enum c_event ev)
 {
-	if (c->fd == -1)
-		fatalx("c_do_connect, lost socket");
+	if (c->fd == -1) {
+		log_warnx("connect(%s), lost socket",
+		    log_sockaddr(&c->config.TargetAddr));
+		session_fsm(c->session, SESS_EV_CONN_FAIL, c);
+		return (CONN_FREE);
+	}
 
 	if (connect(c->fd, (struct sockaddr *)&c->config.TargetAddr,
 	    c->config.TargetAddr.ss_len) == -1) {
@@ -310,7 +327,8 @@ c_do_connect(struct connection *c, enum c_event ev)
 		} else {
 			log_warn("connect(%s)",
 			    log_sockaddr(&c->config.TargetAddr));
-			return (-1);
+			session_fsm(c->session, SESS_EV_CONN_FAIL, c);
+			return (CONN_FREE);
 		}
 	}
 	/* move forward */
@@ -339,8 +357,38 @@ int
 c_do_logout(struct connection *c, enum c_event ev)
 {
 	/* do full logout */
+	initiator_logout(c, ISCSI_LOGOUT_CLOSE_SESS, 1);
+	return (CONN_IN_LOGOUT);
+}
+
+int
+c_do_loggedout(struct connection *c, enum c_event ev)
+{
+	/* close TCP session and cleanup */
+	event_del(&c->ev);
+	event_del(&c->wev);
+	close(c->fd);
+
+	session_fsm(c->session, SESS_EV_CONN_CLOSED, c);
+
 	return (CONN_FREE);
 }
+
+int
+c_do_fail(struct connection *c, enum c_event ev)
+{
+	/* cleanup events so that the connection does not retrigger */
+	event_del(&c->ev);
+	event_del(&c->wev);
+	close(c->fd);
+
+	session_fsm(c->session, SESS_EV_CONN_FAIL, c);
+
+	if (c->state & CONN_NOT_LOGGED_IN)
+		return (CONN_FREE);
+	return (CONN_CLEANUP_WAIT);
+}
+
 
 const char *
 conn_state(int s)
@@ -389,8 +437,12 @@ conn_event(enum c_event e)
 		return "logged in";
 	case CONN_EV_DISCOVERY:
 		return "discovery";
-	case CONN_EV_CLOSE:
-		return "close";
+	case CONN_EV_LOGOUT:
+		return "logout";
+	case CONN_EV_LOGGED_OUT:
+		return "logged out";
+	case CONN_EV_CLOSED:
+		return "closed";
 	}
 
 	snprintf(buf, sizeof(buf), "UKNWN %d", e);

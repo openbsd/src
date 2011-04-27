@@ -1,4 +1,4 @@
-/*	$OpenBSD: task.c,v 1.6 2011/01/06 15:40:04 claudio Exp $ */
+/*	$OpenBSD: task.c,v 1.7 2011/04/27 07:25:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -39,16 +39,37 @@
 
 void
 task_init(struct task *t, struct session *s, int immediate, void *carg,
-    void (*c)(struct connection *, void *, struct pdu *))
+    void (*c)(struct connection *, void *, struct pdu *),
+    void (*f)(void *))
 {
 	TAILQ_INIT(&t->sendq);
 	TAILQ_INIT(&t->recvq);
 	t->callback = c;
+	t->failback = f;
 	t->callarg = carg;
+	/* skip reserved and maybe bad ITT values */
+	if (s->itt == 0xffffffff || s->itt == 0)
+		s->itt = 1;
 	t->itt = s->itt++; /* XXX we could do better here */
 	t->cmdseqnum = s->cmdseqnum;
 	if (!immediate)
 		s->cmdseqnum++;
+}
+
+void
+taskq_cleanup(struct taskq *tq)
+{
+	struct task *t;
+
+	while ((t = TAILQ_FIRST(tq))) {
+		TAILQ_REMOVE(tq, t, entry);
+		if (t->failback)
+			t->failback(t->callarg);
+		else {
+			task_cleanup(t, NULL);
+			free(t);
+		}
+	}
 }
 
 void
@@ -58,7 +79,11 @@ task_cleanup(struct task *t, struct connection *c)
 	pdu_free_queue(&t->sendq);
 	pdu_free_queue(&t->recvq);
 	/* XXX need some state to know if queued or not */
-	TAILQ_REMOVE(&c->tasks, t, entry);
+	if (c) {
+		TAILQ_REMOVE(&c->tasks, t, entry);
+		if (!TAILQ_EMPTY(&c->tasks))
+			conn_task_schedule(c);
+	}
 }
 
 void

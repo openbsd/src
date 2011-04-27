@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.h,v 1.5 2011/04/05 18:26:19 claudio Exp $ */
+/*	$OpenBSD: iscsid.h,v 1.6 2011/04/27 07:25:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -63,9 +63,11 @@ TAILQ_HEAD(taskq, task);
 #define SEQ_GT(a,b)     ((int)((a)-(b)) > 0)
 #define SEQ_GEQ(a,b)    ((int)((a)-(b)) >= 0)
 
-#define SESS_FREE		0x0001
-#define SESS_LOGGED_IN		0x0002
-#define SESS_FAILED		0x0003
+#define SESS_INIT		0x0001
+#define SESS_FREE		0x0002
+#define SESS_LOGGED_IN		0x0003
+#define SESS_FAILED		0x0004
+#define SESS_ANYSTATE		0xffff
 
 #define CONN_DONE		0x0000	/* no real state just return value */
 #define	CONN_FREE		0x0001
@@ -78,6 +80,7 @@ TAILQ_HEAD(taskq, task);
 #define	CONN_CLEANUP_WAIT	0x0080
 #define	CONN_IN_CLEANUP		0x0100
 #define CONN_ANYSTATE		0xffff
+#define CONN_NOT_LOGGED_IN	(CONN_FREE | CONN_XPT_WAIT | CONN_XPT_UP)
 
 enum c_event {
 	CONN_EV_FAIL,
@@ -85,7 +88,16 @@ enum c_event {
 	CONN_EV_CONNECTED,
 	CONN_EV_LOGGED_IN,
 	CONN_EV_DISCOVERY,
-	CONN_EV_CLOSE
+	CONN_EV_LOGOUT,
+	CONN_EV_LOGGED_OUT,
+	CONN_EV_CLOSED
+};
+
+enum s_event {
+	SESS_EV_START,
+	SESS_EV_CONN_FAIL,
+	SESS_EV_CONN_CLOSED,
+	SESS_EV_FAIL
 };
 
 struct pdu {
@@ -182,6 +194,12 @@ struct initiator {
 	u_int			target;
 };
 
+struct sessev {
+	SIMPLEQ_ENTRY(sessev)	 entry;
+	struct connection	*conn;
+	enum s_event		 event;
+};
+
 struct session {
 	TAILQ_ENTRY(session)	 entry;
 	struct connection_head	 connections;
@@ -191,6 +209,8 @@ struct session {
 	struct session_params	 his;
 	struct session_params	 active;
 	struct initiator	*initiator;
+	struct event		 fsm_ev;
+	SIMPLEQ_HEAD(, sessev)	 fsmq;
 	u_int32_t		 cmdseqnum;
 	u_int32_t		 itt;
 	u_int32_t		 isid_base;	/* only 24 bits */
@@ -224,8 +244,10 @@ struct task {
 	struct pduq		 recvq;
 	void			*callarg;
 	void	(*callback)(struct connection *, void *, struct pdu *);
+	void	(*failback)(void *);
 	u_int32_t		 cmdseqnum;
 	u_int32_t		 itt;
+	u_int8_t		 pending;
 };
 
 struct kvp {
@@ -243,6 +265,7 @@ void	initiator_cleanup(struct initiator *);
 struct session *initiator_t2s(u_int);
 void	initiator_login(struct connection *);
 void	initiator_discovery(struct session *);
+void	initiator_logout(struct connection *, u_int8_t, int);
 void	initiator_nop_in_imm(struct connection *, struct pdu *);
 char	*default_initiator_name(void);
 
@@ -254,20 +277,23 @@ int	control_compose(void *, u_int16_t, void *, size_t);
 
 struct session	*session_find(struct initiator *, char *);
 struct session	*session_new(struct initiator *, u_int8_t);
-void	session_close(struct session *);
+void	session_cleanup(struct session *);
 void	session_config(struct session *, struct session_config *);
 void	session_task_issue(struct session *, struct task *);
 void	session_schedule(struct session *);
 void	session_task_login(struct connection *);
+void	session_fsm(struct session *, enum s_event, struct connection *);
 
 void	conn_new(struct session *, struct connection_config *);
 void	conn_free(struct connection *);
-int	conn_task_issue(struct connection *, struct task *);
+int	conn_task_ready(struct connection *);
+void	conn_task_issue(struct connection *, struct task *);
 void	conn_task_schedule(struct connection *);
 void	conn_pdu_write(struct connection *, struct pdu *);
-void	conn_close(struct connection *);
+void	conn_logout(struct connection *);
 void	conn_fail(struct connection *);
 void	conn_loggedin(struct connection *);
+void	conn_fsm(struct connection *, enum c_event);
 
 void	*pdu_gethdr(struct pdu *);
 int	text_to_pdu(struct kvp *, struct pdu *);
@@ -290,7 +316,9 @@ int	socket_setblockmode(int, int);
 const char *log_sockaddr(void *);
 
 void	task_init(struct task *, struct session *, int, void *,
-	    void (*)(struct connection *, void *, struct pdu *));
+	    void (*)(struct connection *, void *, struct pdu *),
+	    void (*)(void *));
+void	taskq_cleanup(struct taskq *);
 void	task_cleanup(struct task *, struct connection *c);
 void	task_pdu_add(struct task *, struct pdu *);
 void	task_pdu_cb(struct connection *, struct pdu *);
