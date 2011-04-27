@@ -1,11 +1,10 @@
-#	$OpenBSD: Makefile,v 1.7 2011/04/16 10:52:22 ratchov Exp $
+#	$OpenBSD: Makefile,v 1.8 2011/04/27 21:20:36 ratchov Exp $
 
 LIB=	sndio
 MAN=	sio_open.3 mio_open.3 sndio.7
 SRCS=	debug.c aucat.c sio_aucat.c sio_sun.c sio.c \
 	mio_rmidi.c mio_aucat.c mio.c
-CFLAGS+=-Wall -Wstrict-prototypes -Werror -Wundef -DDEBUG \
-	-I${.CURDIR} -I${.CURDIR}/../../usr.bin/aucat
+CFLAGS+=-Wall -Wstrict-prototypes -Werror -Wundef -DDEBUG
 
 MLINKS = \
 	sio_open.3 sio_close.3 \
