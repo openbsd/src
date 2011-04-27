@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.29 2011/04/25 12:40:52 miod Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.30 2011/04/27 18:54:19 matthew Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -95,8 +95,6 @@ void	ioprbs_adjqparam(struct device *, int);
 void	ioprbs_attach(struct device *, struct device *, void *);
 void	ioprbs_copy_internal_data(struct scsi_xfer *, u_int8_t *,
 	    size_t);
-struct scsi_xfer *ioprbs_dequeue(struct ioprbs_softc *);
-void	ioprbs_enqueue(struct ioprbs_softc *, struct scsi_xfer *, int);
 void	ioprbs_enqueue_ccb(struct ioprbs_softc *, struct ioprbs_ccb *);
 int	ioprbs_exec_ccb(struct ioprbs_ccb *);
 void	ioprbs_free_ccb(void *, void *);
@@ -185,7 +183,6 @@ ioprbs_attach(struct device *parent, struct device *self, void *aux)
 
 	TAILQ_INIT(&sc->sc_free_ccb);
 	TAILQ_INIT(&sc->sc_ccbq);
-	LIST_INIT(&sc->sc_queue);
 	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
 	scsi_iopool_init(&sc->sc_iopool, sc, ioprbs_get_ccb, ioprbs_free_ccb);
 
@@ -396,133 +393,87 @@ ioprbs_unconfig(struct ioprbs_softc *sc, int evreg)
 }
 
 void
-ioprbs_scsi_cmd(xs)
-	struct scsi_xfer *xs;
+ioprbs_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
 	struct ioprbs_softc *sc = link->adapter_softc;
 	struct ioprbs_ccb *ccb = xs->io;
-	u_int32_t blockno, blockcnt;
-	struct scsi_rw *rw;
-	struct scsi_rw_big *rwb;
+	u_int64_t blockno;
+	u_int32_t blockcnt;
 	int s;
 
-	s = splbio();
+	xs->error = XS_NOERROR;
 
-	/* Don't double enqueue if we came from ioprbs_chain. */
-	if (xs != LIST_FIRST(&sc->sc_queue))
-		ioprbs_enqueue(sc, xs, 0);
-
-	while ((xs = ioprbs_dequeue(sc))) {
-		xs->error = XS_NOERROR;
-
-		ccb = NULL;
-
-		switch (xs->cmd->opcode) {
-		case TEST_UNIT_READY:
-		case REQUEST_SENSE:
-		case INQUIRY:
-		case MODE_SENSE:
-		case START_STOP:
-		case READ_CAPACITY:
+	switch (xs->cmd->opcode) {
+	case TEST_UNIT_READY:
+	case REQUEST_SENSE:
+	case INQUIRY:
+	case MODE_SENSE:
+	case START_STOP:
+	case READ_CAPACITY:
 #if 0
-		case VERIFY:
+	case VERIFY:
 #endif
-			ioprbs_internal_cache_cmd(xs);
-			scsi_done(xs);
-			goto ready;
+		ioprbs_internal_cache_cmd(xs);
+		scsi_done(xs);
+		return;
 
-		case PREVENT_ALLOW:
-			DPRINTF(("PREVENT/ALLOW "));
-			/* XXX Not yet implemented */
-			xs->error = XS_NOERROR;
-			scsi_done(xs);
-			goto ready;
+	case PREVENT_ALLOW:
+		DPRINTF(("PREVENT/ALLOW "));
+		/* XXX Not yet implemented */
+		xs->error = XS_NOERROR;
+		scsi_done(xs);
+		return;
 
-		case SYNCHRONIZE_CACHE:
-			DPRINTF(("SYNCHRONIZE_CACHE "));
-			/* XXX Not yet implemented */
-			xs->error = XS_NOERROR;
-			scsi_done(xs);
-			goto ready;
+	case SYNCHRONIZE_CACHE:
+		DPRINTF(("SYNCHRONIZE_CACHE "));
+		/* XXX Not yet implemented */
+		xs->error = XS_NOERROR;
+		scsi_done(xs);
+		return;
 
-		default:
-			DPRINTF(("unknown opc %d ", xs->cmd->opcode));
-			/* XXX Not yet implemented */
+	default:
+		DPRINTF(("unknown opc %d ", xs->cmd->opcode));
+		/* XXX Not yet implemented */
+		xs->error = XS_DRIVER_STUFFUP;
+		scsi_done(xs);
+		return;
+
+	case READ_COMMAND:
+	case READ_BIG:
+	case WRITE_COMMAND:
+	case WRITE_BIG:
+		DPRINTF(("rw opc %d ", xs->cmd->opcode));
+
+		scsi_cmd_rw_decode(xs->cmd, &blockno, &blockcnt);
+		if (blockno >= sc->sc_secperunit ||
+		    blockcnt > sc->sc_secperunit - blockno) {
+			printf("%s: out of bounds %llu-%u >= %u\n",
+			    sc->sc_dv.dv_xname, blockno, blockcnt,
+			    sc->sc_secperunit);
+			/*
+			 * XXX Should be XS_SENSE but that
+			 * would require setting up a faked
+			 * sense too.
+			 */
 			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
-			goto ready;
-
-		case READ_COMMAND:
-		case READ_BIG:
-		case WRITE_COMMAND:
-		case WRITE_BIG:
-			DPRINTF(("rw opc %d ", xs->cmd->opcode));
-
-			if (xs->cmd->opcode != SYNCHRONIZE_CACHE) {
-				/* A read or write operation. */
-				if (xs->cmdlen == 6) {
-					rw = (struct scsi_rw *)xs->cmd;
-					blockno = _3btol(rw->addr) &
-					    (SRW_TOPADDR << 16 | 0xffff);
-					blockcnt =
-					    rw->length ? rw->length : 0x100;
-				} else {
-					rwb = (struct scsi_rw_big *)xs->cmd;
-					blockno = _4btol(rwb->addr);
-					blockcnt = _2btol(rwb->length);
-				}
-				if (blockno >= sc->sc_secperunit ||
-				    blockno + blockcnt > sc->sc_secperunit) {
-					printf(
-					    "%s: out of bounds %u-%u >= %u\n",
-					    sc->sc_dv.dv_xname, blockno,
-					    blockcnt, sc->sc_secperunit);
-					/*
-					 * XXX Should be XS_SENSE but that
-					 * would require setting up a faked
-					 * sense too.
-					 */
-					xs->error = XS_DRIVER_STUFFUP;
-					scsi_done(xs);
-					goto ready;
-				}
-			}
-
-			ccb->ic_blockno = blockno;
-			ccb->ic_blockcnt = blockcnt;
-			ccb->ic_xs = xs;
-			ccb->ic_timeout = xs->timeout;
-
-			ioprbs_enqueue_ccb(sc, ccb);
-
-			/* XXX what if enqueue did not start a transfer? */
-			if (xs->flags & SCSI_POLL) {
-#if 0
-				if (!ioprbs_wait(sc, ccb, ccb->ic_timeout)) {
-					splx(s);
-					printf("%s: command timed out\n",
-					    sc->sc_dv.dv_xname);
-					xs->error = XS_NO_CCB;
-					scsi_done(xs);
-					splx(s);
-					return;
-				}
-				scsi_done(xs);
-#endif
-			}
+			return;
 		}
 
-	ready:
-		/*
-		 * Don't process the queue if we are polling.
-		 */
+		ccb->ic_blockno = blockno;
+		ccb->ic_blockcnt = blockcnt;
+		ccb->ic_xs = xs;
+		ccb->ic_timeout = xs->timeout;
+
+		s = splbio();
+		ioprbs_enqueue_ccb(sc, ccb);
+		splx(s);
+
 		if (xs->flags & SCSI_POLL) {
-			break;
+			/* XXX Should actually poll... */
 		}
 	}
-
-	splx(s);
 }
 
 void
@@ -609,47 +560,6 @@ ioprbs_adjqparam(struct device *dv, int mpi)
 
 	ldadjqparam((struct ld_softc *)dv, mpi);
 #endif
-}
-
-/*
- * Insert a command into the driver queue, either at the front or at the tail.
- * It's ok to overload the freelist link as these structures are never on
- * the freelist at this time.
- */
-void
-ioprbs_enqueue(sc, xs, infront)
-	struct ioprbs_softc *sc;
-	struct scsi_xfer *xs;
-	int infront;
-{
-	if (infront || LIST_FIRST(&sc->sc_queue) == NULL) {
-		if (LIST_FIRST(&sc->sc_queue) == NULL)
-			sc->sc_queuelast = xs;
-		LIST_INSERT_HEAD(&sc->sc_queue, xs, free_list);
-		return;
-	}
-	LIST_INSERT_AFTER(sc->sc_queuelast, xs, free_list);
-	sc->sc_queuelast = xs;
-}
-
-/*
- * Pull a command off the front of the driver queue.
- */
-struct scsi_xfer *
-ioprbs_dequeue(sc)
-	struct ioprbs_softc *sc;
-{
-	struct scsi_xfer *xs;
-
-	xs = LIST_FIRST(&sc->sc_queue);
-	if (xs == NULL)
-		return (NULL);
-	LIST_REMOVE(xs, free_list);
-
-	if (LIST_FIRST(&sc->sc_queue) == NULL)
-		sc->sc_queuelast = NULL;
-
-	return (xs);
 }
 
 void

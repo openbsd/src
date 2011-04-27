@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbsvar.h,v 1.6 2011/04/03 17:58:31 dlg Exp $	*/
+/*	$OpenBSD: ioprbsvar.h,v 1.7 2011/04/27 18:54:19 matthew Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -71,8 +71,6 @@ struct ioprbs_softc {
 	/* commands on hold for controller resources */
 	TAILQ_HEAD(, ioprbs_ccb) sc_ready;
 	/* commands which have been returned by the controller */
-	LIST_HEAD(, scsi_xfer) sc_queue;
-	struct scsi_xfer *sc_queuelast;
 	struct scsi_iopool sc_iopool;
 	struct mutex sc_ccb_mtx;
 };
