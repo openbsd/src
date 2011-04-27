@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.168 2011/04/27 04:03:11 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.169 2011/04/27 05:11:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -1447,6 +1447,11 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 	case MPI_IOCSTATUS_SCSI_INVALID_TARGETID:
 	case MPI_IOCSTATUS_SCSI_DEVICE_NOT_THERE:
 		xs->error = XS_SELTIMEOUT;
+		break;
+
+	case MPI_IOCSTATUS_SCSI_IOC_TERMINATED:
+	case MPI_IOCSTATUS_SCSI_EXT_TERMINATED:
+		xs->error = XS_RESET;
 		break;
 
 	default:
