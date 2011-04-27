@@ -1,4 +1,4 @@
-/*	$OpenBSD: du.c,v 1.22 2009/10/27 23:59:37 deraadt Exp $	*/
+/*	$OpenBSD: du.c,v 1.23 2011/04/27 07:52:11 sobrado Exp $	*/
 /*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
@@ -173,8 +173,9 @@ main(int argc, char *argv[])
 			 */
 			if (listdirs ||
 			    (!listfiles && p->fts_level == FTS_ROOTLEVEL)) {
-				prtout((quad_t)howmany(p->fts_number, blocksize),
-				    p->fts_path, hflag);
+				prtout((quad_t)howmany(p->fts_number,
+				    (unsigned long)blocksize), p->fts_path,
+				    hflag);
 			}
 			break;
 		case FTS_DC:			/* Ignore. */
@@ -193,8 +194,8 @@ main(int argc, char *argv[])
 			 * the root of a traversal, display the total.
 			 */
 			if (listfiles || p->fts_level == FTS_ROOTLEVEL)
-				prtout(howmany(p->fts_statp->st_blocks, blocksize),
-				    p->fts_path, hflag);
+				prtout(howmany(p->fts_statp->st_blocks,
+				    blocksize), p->fts_path, hflag);
 			p->fts_parent->fts_number += p->fts_statp->st_blocks;
 			if (cflag)
 				totalblocks += p->fts_statp->st_blocks;
