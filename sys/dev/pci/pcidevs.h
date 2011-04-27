@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1596 2011/04/24 03:10:50 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1597 2011/04/27 07:52:00 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2297,6 +2297,8 @@
 #define	PCI_PRODUCT_INTEL_6SERIES_RAID_1	0x1c04		/* 6 Series RAID */
 #define	PCI_PRODUCT_INTEL_6SERIES_RAID_2	0x1c05		/* 6 Series RAID */
 #define	PCI_PRODUCT_INTEL_6SERIES_RAID_3	0x1c06		/* 6 Series RAID */
+#define	PCI_PRODUCT_INTEL_6SERIES_SATA_3	0x1c08		/* 6 Series SATA */
+#define	PCI_PRODUCT_INTEL_6SERIES_SATA_4	0x1c09		/* 6 Series SATA */
 #define	PCI_PRODUCT_INTEL_6SERIES_PCIE_1	0x1c10		/* 6 Series PCIE */
 #define	PCI_PRODUCT_INTEL_6SERIES_PCIE_2	0x1c12		/* 6 Series PCIE */
 #define	PCI_PRODUCT_INTEL_6SERIES_PCIE_3	0x1c14		/* 6 Series PCIE */
