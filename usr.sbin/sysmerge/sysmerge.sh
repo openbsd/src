@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.70 2011/04/21 15:57:14 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.71 2011/04/27 08:44:48 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -282,9 +282,9 @@ merge_loop() {
 				;;
 			[iI])
 				mv "${COMPFILE}.merged" "${COMPFILE}"
-				echo "\n===> Installing merged version of ${COMPFILE#.}${RUNNING}"
+				echo "\n===> Merging ${COMPFILE#.}${RUNNING}"
 				if ! mm_install "${COMPFILE}"; then
-					echo "\t*** WARNING: problem installing ${COMPFILE#.}, it will remain to merge by hand"
+					echo "\t*** WARNING: problem merging ${COMPFILE#.}"
 				fi
 				unset MERGE_AGAIN
 				;;
@@ -347,11 +347,11 @@ diff_loop() {
 				done
 				# automatically install files which differ only by CVS Id or that are binaries
 				if [ -z "`diff -q -I'[$]OpenBSD:.*$' "${DESTDIR}${COMPFILE#.}" "${COMPFILE}"`" -o -n "${FORCE_UPG}" -o -n "${IS_BINFILE}" ]; then
-					echo "===> Installing ${COMPFILE#.}${RUNNING}"
+					echo "===> Updating ${COMPFILE#.}${RUNNING}"
 					if mm_install "${COMPFILE}"; then
 						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
 					else
-						echo "\t*** WARNING: problem installing ${COMPFILE#.}, it will remain to merge by hand"
+						echo "\t*** WARNING: problem updating ${COMPFILE#.}"
 					fi
 					return
 				fi
@@ -427,7 +427,7 @@ diff_loop() {
 						echo "===> ${COMPFILE#.} link created successfully"
 						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
 					else
-						echo "\t*** WARNING: problem creating ${COMPFILE#.} link, manual intervention will be needed"
+						echo "\t*** WARNING: problem creating ${COMPFILE#.} link"
 					fi
 					return
 				fi
@@ -440,7 +440,7 @@ diff_loop() {
 				if mm_install "${COMPFILE}"; then
 					AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
 				else
-					echo "\t*** WARNING: problem installing ${COMPFILE#.}, it will remain to merge by hand"
+					echo "\t*** WARNING: problem installing ${COMPFILE#.}"
 				fi
 				return
 			fi
@@ -478,12 +478,12 @@ diff_loop() {
 						echo "===> ${COMPFILE#.} link created successfully"
 						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
 					else
-						echo "\t*** WARNING: problem creating ${COMPFILE#.} link, manual intervention will be needed"
+						echo "\t*** WARNING: problem creating ${COMPFILE#.} link"
 					fi
 				else
 					echo "===> Installing ${COMPFILE#.}${RUNNING}"
 					if ! mm_install "${COMPFILE}"; then
-						echo "\t*** WARNING: problem installing ${COMPFILE#.}, it will remain to merge by hand"
+						echo "\t*** WARNING: problem installing ${COMPFILE#.}"
 					fi
 				fi
 			else
