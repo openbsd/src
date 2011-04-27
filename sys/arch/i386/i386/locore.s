@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.133 2011/04/23 22:16:13 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.134 2011/04/27 11:30:53 bluhm Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -126,7 +126,6 @@
 	popl	%edx		; \
 	popl	%ecx		; \
 	popl	%eax		; \
-	sti			; \
 	addl	$8,%esp		; \
 	iret
 
