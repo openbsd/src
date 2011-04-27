@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.h,v 1.6 2011/04/27 07:25:26 claudio Exp $ */
+/*	$OpenBSD: iscsid.h,v 1.7 2011/04/27 19:02:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -48,8 +48,10 @@ struct ctrlmsghdr {
 /* Control message types */
 #define CTRL_SUCCESS		1
 #define CTRL_FAILURE		2
-#define CTRL_INITIATOR_CONFIG	3
-#define CTRL_SESSION_CONFIG	4
+#define CTRL_INPROGRESS		3
+#define CTRL_INITIATOR_CONFIG	4
+#define CTRL_SESSION_CONFIG	5
+#define CTRL_LOG_VERBOSE	6
 
 
 TAILQ_HEAD(session_head, session);
@@ -289,6 +291,7 @@ void	conn_free(struct connection *);
 int	conn_task_ready(struct connection *);
 void	conn_task_issue(struct connection *, struct task *);
 void	conn_task_schedule(struct connection *);
+void	conn_task_cleanup(struct connection *c, struct task *);
 void	conn_pdu_write(struct connection *, struct pdu *);
 void	conn_logout(struct connection *);
 void	conn_fail(struct connection *);
@@ -319,7 +322,6 @@ void	task_init(struct task *, struct session *, int, void *,
 	    void (*)(struct connection *, void *, struct pdu *),
 	    void (*)(void *));
 void	taskq_cleanup(struct taskq *);
-void	task_cleanup(struct task *, struct connection *c);
 void	task_pdu_add(struct task *, struct pdu *);
 void	task_pdu_cb(struct connection *, struct pdu *);
 

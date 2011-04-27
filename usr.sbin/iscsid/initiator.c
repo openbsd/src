@@ -1,4 +1,4 @@
-/*	$OpenBSD: initiator.c,v 1.6 2011/04/27 07:25:26 claudio Exp $ */
+/*	$OpenBSD: initiator.c,v 1.7 2011/04/27 19:02:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -204,7 +204,7 @@ initiator_login_cb(struct connection *c, void *arg, struct pdu *p)
 		log_debug("Unknown crap");
 	}
 
-	task_cleanup(&tl->task, c);
+	conn_task_cleanup(c, &tl->task);
 	conn_loggedin(c);
 	free(tl);
 	pdu_free(p);
@@ -276,7 +276,7 @@ initiator_discovery_cb(struct connection *c, void *arg, struct pdu *p)
 fail:
 		conn_fail(c);
 	}
-	task_cleanup(t, c);
+	conn_task_cleanup(c, t);
 	free(t);
 	pdu_free(p);
 }
@@ -350,7 +350,7 @@ initiator_logout_cb(struct connection *c, void *arg, struct pdu *p)
 		break;
 	}
 
-	task_cleanup(&tl->task, c);
+	conn_task_cleanup(c, &tl->task);
 	free(tl);
 	pdu_free(p);
 }

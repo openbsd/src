@@ -1,4 +1,4 @@
-/*	$OpenBSD: task.c,v 1.7 2011/04/27 07:25:26 claudio Exp $ */
+/*	$OpenBSD: task.c,v 1.8 2011/04/27 19:02:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -66,23 +66,9 @@ taskq_cleanup(struct taskq *tq)
 		if (t->failback)
 			t->failback(t->callarg);
 		else {
-			task_cleanup(t, NULL);
+			conn_task_cleanup(NULL, t);
 			free(t);
 		}
-	}
-}
-
-void
-task_cleanup(struct task *t, struct connection *c)
-{
-/* XXX THIS FEELS WRONG FOR NOW */
-	pdu_free_queue(&t->sendq);
-	pdu_free_queue(&t->recvq);
-	/* XXX need some state to know if queued or not */
-	if (c) {
-		TAILQ_REMOVE(&c->tasks, t, entry);
-		if (!TAILQ_EMPTY(&c->tasks))
-			conn_task_schedule(c);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.5 2011/04/27 07:25:26 claudio Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.6 2011/04/27 19:02:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -188,7 +188,7 @@ vscsi_callback(struct connection *c, void *arg, struct pdu *p)
 	sresp = pdu_getbuf(p, NULL, PDU_HEADER);
 	switch (ISCSI_PDU_OPCODE(sresp->opcode)) {
 	case ISCSI_OP_SCSI_RESPONSE:
-		task_cleanup(&t->task, c);
+		conn_task_cleanup(c, &t->task);
 		tag = t->tag;
 		free(t);
 
@@ -230,13 +230,13 @@ send_status:
 			fatal("This does not work as it should");
 		vscsi_data(VSCSI_DATA_READ, t->tag, buf, size);
 		if (sresp->flags & 1) {
-			task_cleanup(&t->task, c);
+			conn_task_cleanup(c, &t->task);
 			vscsi_status(t->tag, status, NULL, 0);
 			free(t);
 		}
 		break;
 	case ISCSI_OP_R2T:
-		task_cleanup(&t->task, c);
+		conn_task_cleanup(c, &t->task);
 		r2t = (struct iscsi_pdu_rt2 *)sresp;
 		if (ntohl(r2t->buffer_offs))
 			fatalx("vscsi: r2t bummer failure");
@@ -258,7 +258,7 @@ vscsi_fail(void *arg)
 	struct scsi_task *t = arg;
 	int tag;
 
-	task_cleanup(&t->task, NULL);
+	conn_task_cleanup(NULL, &t->task);
 	tag = t->tag;
 	free(t);
 	vscsi_status(tag, VSCSI_STAT_RESET, NULL, 0);

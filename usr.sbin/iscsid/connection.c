@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.9 2011/04/27 07:25:26 claudio Exp $ */
+/*	$OpenBSD: connection.c,v 1.10 2011/04/27 19:02:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -236,10 +236,25 @@ conn_task_schedule(struct connection *c)
 	}
 	if (t->callback == NULL) {
 		/* no callback, immediate command expecting no answer */
-		task_cleanup(t, c);
+		conn_task_cleanup(c, t);
 		free(t);
 	}
 }
+
+void
+conn_task_cleanup(struct connection *c, struct task *t)
+{
+/* XXX THIS FEELS WRONG FOR NOW */
+	pdu_free_queue(&t->sendq);
+	pdu_free_queue(&t->recvq);
+	/* XXX need some state to know if queued or not */
+	if (c) {
+		TAILQ_REMOVE(&c->tasks, t, entry);
+		if (!TAILQ_EMPTY(&c->tasks))
+			conn_task_schedule(c);
+	}
+}
+
 
 void
 conn_pdu_write(struct connection *c, struct pdu *p)
