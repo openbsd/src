@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyreg.h,v 1.16 2010/10/04 09:32:43 ratchov Exp $	*/
+/*	$OpenBSD: envyreg.h,v 1.17 2011/04/27 07:01:33 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -108,7 +108,8 @@
 #define ENVY_MT_INTR		0
 #define   ENVY_MT_INTR_PACK	0x01
 #define   ENVY_MT_INTR_RACK	0x02
-#define   ENVY_MT_INTR_ERR	0x08	/* HT only fifo error */
+#define   ENVY_MT_INTR_ERR	0x08	/* fifo error on HT, else reads 0 */
+#define   ENVY_MT_INTR_ALL	0x0b	/* all of above */
 #define   ENVY_MT_INTR_PMASK	0x40	/* !HT only */
 #define   ENVY_MT_INTR_RMASK	0x80	/* !HT only */
 #define ENVY_MT_RATE		1

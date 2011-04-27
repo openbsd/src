@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.49 2010/12/22 09:54:27 jakemsr Exp $	*/
+/*	$OpenBSD: envy.c,v 1.50 2011/04/27 07:01:33 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1951,8 +1951,14 @@ envy_intr(void *self)
 
 	st = envy_mt_read_1(sc, ENVY_MT_INTR);
 	mintr = envy_ccs_read(sc, ENVY_CCS_INTSTAT);
-	if (st == 0 && mintr == 0)
+	if (!(st & ENVY_MT_INTR_ALL) && !(mintr & ENVY_CCS_INT_MIDI0))
 		return 0;
+	if (st & ENVY_MT_INTR_ERR) {
+		err = envy_mt_read_1(sc, ENVY_MT_ERR);
+		envy_mt_write_1(sc, ENVY_MT_ERR, err);
+	}
+	envy_mt_write_1(sc, ENVY_MT_INTR, st);
+	envy_ccs_write(sc, ENVY_CCS_INTSTAT, mintr);
 
 #ifdef ENVY_DEBUG
 	if (sc->nintr < ENVY_NINTR) {
@@ -1967,7 +1973,6 @@ envy_intr(void *self)
 		sc->nintr++;
 	}
 #endif
-	envy_ccs_write(sc, ENVY_CCS_INTSTAT, mintr);
 	if (mintr & ENVY_CCS_INT_MIDI0) {
 		for (max = 128; max > 0; max--) {
 			mstat = envy_ccs_read(sc, ENVY_CCS_MIDISTAT0);
@@ -1987,8 +1992,6 @@ envy_intr(void *self)
 			ctl = envy_mt_read_1(sc, ENVY_MT_CTL);
 			if (ctl & ENVY_MT_CTL_PSTART) {
 				envy_mt_write_1(sc,
-				    ENVY_MT_INTR, ENVY_MT_INTR_PACK);
-				envy_mt_write_1(sc,
 				    ENVY_MT_CTL, ctl & ~ENVY_MT_CTL_PSTART);
 				st &= ~ENVY_MT_INTR_PACK;
 				sc->obusy = 0;
@@ -2007,8 +2010,6 @@ envy_intr(void *self)
 			ctl = envy_mt_read_1(sc, ENVY_MT_CTL);
 			if (ctl & ENVY_MT_CTL_RSTART(sc)) {
 				envy_mt_write_1(sc,
-				    ENVY_MT_INTR, ENVY_MT_INTR_RACK);
-				envy_mt_write_1(sc,
 				    ENVY_MT_CTL, ctl & ~ENVY_MT_CTL_RSTART(sc));
 				st &= ~ENVY_MT_INTR_RACK;
 				sc->ibusy = 0;
@@ -2020,11 +2021,6 @@ envy_intr(void *self)
 #endif
 		}
 	}
-	if (sc->isht && (st & ENVY_MT_INTR_ERR)) {
-		err = envy_mt_read_1(sc, ENVY_MT_ERR);
-		envy_mt_write_1(sc, ENVY_MT_ERR, err);
-	}
-	envy_mt_write_1(sc, ENVY_MT_INTR, st);
 	return 1;
 }
 
