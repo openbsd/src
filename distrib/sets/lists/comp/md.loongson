@@ -608,6 +608,7 @@
 ./usr/include/mips64/db_machdep.h
 ./usr/include/mips64/endian.h
 ./usr/include/mips64/exec.h
+./usr/include/mips64/fenv.h
 ./usr/include/mips64/float.h
 ./usr/include/mips64/fpu.h
 ./usr/include/mips64/frame.h

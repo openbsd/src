@@ -1900,6 +1900,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/db_machdep.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/endian.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/exec.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/fenv.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/float.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/fpu.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/frame.ph
