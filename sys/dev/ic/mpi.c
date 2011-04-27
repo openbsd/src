@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.167 2011/03/04 15:44:39 mikeb Exp $ */
+/*	$OpenBSD: mpi.c,v 1.168 2011/04/27 04:03:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -2462,28 +2462,39 @@ mpi_fc_rescan(void *xsc, void *xarg)
 	struct mpi_cfg_hdr			hdr;
 	struct mpi_cfg_fc_device_pg0		pg;
 	struct scsi_link			*link;
-	u_int32_t				id;
+	u_int8_t				devmap[256 / NBBY];
+	u_int32_t				id = 0xffffff;
 	int					i;
 
 	mtx_enter(&sc->sc_evt_rescan_mtx);
 	sc->sc_evt_rescan_sem = 0;
 	mtx_leave(&sc->sc_evt_rescan_mtx);
 
-	for (i = 0; i < sc->sc_buswidth; i++) {
-		id = MPI_PAGE_ADDRESS_FC_BTID | i;
+	bzero(devmap, sizeof(devmap));
 
+	do {
 		if (mpi_req_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_FC_DEV, 0,
 		    id, 0, &hdr) != 0) {
-			printf("%s: header get for rescan of %d failed\n",
-			    DEVNAME(sc), i);
+			printf("%s: header get for rescan of 0x%08x failed\n",
+			    DEVNAME(sc), id);
 			return;
 		}
 
+		bzero(&pg, sizeof(pg));
+		if (mpi_req_cfg_page(sc, id, 0, &hdr, 1, &pg, sizeof(pg)) != 0)
+			break;
+
+		if (ISSET(pg.flags, MPI_CFG_FC_DEV_0_FLAGS_BUSADDR_VALID) &&
+		    pg.current_bus == 0)
+			setbit(devmap, pg.current_target_id);
+
+		id = htole32(pg.port_id);
+	} while (id <= 0xff0000);
+
+	for (i = 0; i < sc->sc_buswidth; i++) {
 		link = scsi_get_link(sc->sc_scsibus, i, 0);
 
-		memset(&pg, 0, sizeof(pg));
-		if (mpi_req_cfg_page(sc, id, 0, &hdr, 1,
-		    &pg, sizeof(pg)) == 0) {
+		if (isset(devmap, i)) {
 			if (link == NULL)
 				scsi_probe_target(sc->sc_scsibus, i);
 		} else {

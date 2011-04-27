@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.40 2010/09/13 05:28:29 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.41 2011/04/27 04:03:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -1431,6 +1431,9 @@ struct mpi_cfg_fc_device_pg0 {
 
 	u_int8_t		protocol;
 	u_int8_t		flags;
+#define MPI_CFG_FC_DEV_0_FLAGS_BUSADDR_VALID		(1<<0)
+#define MPI_CFG_FC_DEV_0_FLAGS_PLOGI_INVALID		(1<<1)
+#define MPI_CFG_FC_DEV_0_FLAGS_PRLI_INVALID		(1<<2)
 	u_int16_t		bb_credit;
 
 	u_int16_t		max_rx_frame_size;
