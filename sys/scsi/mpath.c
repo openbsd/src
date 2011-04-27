@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.20 2011/04/17 23:18:01 dlg Exp $ */
+/*	$OpenBSD: mpath.c,v 1.21 2011/04/27 05:22:24 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -295,7 +295,7 @@ mpath_done(struct scsi_xfer *mxs)
 	struct mpath_dev *d = mpath_devs[link->target];
 	struct mpath_path *p;
 
-	if (mxs->error == XS_RESET) {
+	if (mxs->error == XS_RESET || mxs->error == XS_SELTIMEOUT) {
 		mtx_enter(&d->d_mtx);
 		SIMPLEQ_INSERT_HEAD(&d->d_ccbs, ccb, c_entry);
 		p = mpath_next_path(d);
