@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_emc.c,v 1.1 2011/04/05 14:25:42 dlg Exp $ */
+/*	$OpenBSD: mpath_emc.c,v 1.2 2011/04/27 07:14:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -232,23 +232,26 @@ emc_mpath_offline(struct scsi_link *link)
 int
 emc_inquiry(struct emc_softc *sc, char *model, char *serial)
 {
-	u_int8_t buffer[255];
+	u_int8_t *buffer;
 	struct scsi_inquiry *cdb;
 	struct scsi_xfer *xs;
 	size_t length;
 	int error;
 	u_int8_t slen, mlen;
 
-	length = MIN(sc->sc_path.p_link->inqdata.additional_length + 5,
-	    sizeof(buffer));
+	length = MIN(sc->sc_path.p_link->inqdata.additional_length + 5, 255);
 	if (length < 160) {
 		printf("%s: FC (Legacy)\n");
 		return (0);
 	}
 
+	buffer = dma_alloc(length, PR_WAITOK);
+
 	xs = scsi_xs_get(sc->sc_path.p_link, scsi_autoconf);
-	if (xs == NULL)
-		return (EBUSY);
+	if (xs == NULL) {
+		error = EBUSY;
+		goto done;
+	}
 
         cdb = (struct scsi_inquiry *)xs->cmd;
         cdb->opcode = INQUIRY;
@@ -263,36 +266,48 @@ emc_inquiry(struct emc_softc *sc, char *model, char *serial)
         scsi_xs_put(xs);
 
 	if (error != 0)
-		return (error);
+		goto done;
 
 	slen = buffer[160];
-	if (slen == 0 || slen + 161 > length)
-		return (EIO);
+	if (slen == 0 || slen + 161 > length) {
+		error = EIO;
+		goto done;
+	}
 
 	mlen = buffer[99];
-	if (mlen == 0 || slen + mlen + 161 > length)
-		return (EIO);
+	if (mlen == 0 || slen + mlen + 161 > length) {
+		error = EIO;
+		goto done;
+	}
 
 	scsi_strvis(serial, buffer + 161, slen);
 	scsi_strvis(model, buffer + 161 + slen, mlen);
 
-	return (0);
+	error = 0;
+done:
+	dma_free(buffer, length);
+	return (error);
 }
 
 int
 emc_sp_info(struct emc_softc *sc)
 {
-	struct emc_vpd_sp_info pg;
+	struct emc_vpd_sp_info *pg;
 	int error;
+
+	pg = dma_alloc(sizeof(*pg), PR_WAITOK);
 
 	error = scsi_inquire_vpd(sc->sc_path.p_link, &pg, sizeof(pg),
 	    EMC_VPD_SP_INFO, scsi_autoconf);
 	if (error != 0)
-                return (error);
+		goto done;
 
-	sc->sc_sp = pg.current_sp;
-	sc->sc_port = pg.port;
-	sc->sc_lun_state = pg.lun_state;
+	sc->sc_sp = pg->current_sp;
+	sc->sc_port = pg->port;
+	sc->sc_lun_state = pg->lun_state;
 
-        return (0);
+	error = 0;
+done:
+	dma_free(pg, sizeof(*pg));
+        return (error);
 }

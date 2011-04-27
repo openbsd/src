@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_rdac.c,v 1.1 2011/04/05 14:25:42 dlg Exp $ */
+/*	$OpenBSD: mpath_rdac.c,v 1.2 2011/04/27 07:14:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -273,63 +273,73 @@ rdac_mpath_offline(struct scsi_link *link)
 int
 rdac_c8(struct rdac_softc *sc)
 {
-	struct rdac_vpd_extdevid pg;
+	struct rdac_vpd_extdevid *pg;
 	char array[31];
 	char vol[31];
 	int i;
+	int rv = 1;
 
-	if (scsi_inquire_vpd(sc->sc_path.p_link, &pg, sizeof(pg), 0xc8,
+	pg = dma_alloc(sizeof(*pg), PR_WAITOK | PR_ZERO);
+
+	if (scsi_inquire_vpd(sc->sc_path.p_link, pg, sizeof(*pg), 0xc8,
 	    scsi_autoconf) != 0) {
 		printf("%s: unable to fetch vpd page c8\n", DEVNAME(sc));
-		return (1);
+		goto done;
 	}
 
-	if (_4btol(pg.pg_id) != RDAC_VPD_ID_EXTDEVID) {
+	if (_4btol(pg->pg_id) != RDAC_VPD_ID_EXTDEVID) {
 		printf("%s: extended hardware id page is invalid\n",
 		    DEVNAME(sc));
-		return (1);
+		goto done;
 	}
 
 	memset(array, 0, sizeof(array));
-	for (i = 0; i < sizeof(pg.array_label) / 2; i++)
-		array[i] = pg.array_label[i * 2 + 1];
+	for (i = 0; i < sizeof(pg->array_label) / 2; i++)
+		array[i] = pg->array_label[i * 2 + 1];
 
 	memset(vol, 0, sizeof(vol));
-	for (i = 0; i < sizeof(pg.vol_label) / 2; i++)
-		vol[i] = pg.vol_label[i * 2 + 1];
+	for (i = 0; i < sizeof(pg->vol_label) / 2; i++)
+		vol[i] = pg->vol_label[i * 2 + 1];
 
 	printf("%s: array %s, volume %s\n", DEVNAME(sc), array, vol);
 
-	return (0);
+	rv = 0;
+done:
+	dma_free(pg, sizeof(*pg));
+	return (rv);
 }
 
 int
 rdac_c9(struct rdac_softc *sc)
 {
-	struct rdac_vpd_volaccessctl pg;
+	struct rdac_vpd_volaccessctl *pg;
+	int rv = 1;
 
-	if (scsi_inquire_vpd(sc->sc_path.p_link, &pg, sizeof(pg),
+	pg = dma_alloc(sizeof(*pg), PR_WAITOK | PR_ZERO);
+
+	if (scsi_inquire_vpd(sc->sc_path.p_link, pg, sizeof(*pg),
 	    RDAC_VPD_VOLACCESSCTL, scsi_autoconf) != 0) {
 		printf("%s: unable to fetch vpd page c9\n", DEVNAME(sc));
-		return (1);
+		goto done;
 	}
 
-	if (_4btol(pg.pg_id) != RDAC_VPD_ID_VOLACCESSCTL) {
+	if (_4btol(pg->pg_id) != RDAC_VPD_ID_VOLACCESSCTL) {
 		printf("%s: volume access control page id is invalid\n",
 		    DEVNAME(sc));
-		return (1);
+		goto done;
 	}
 
-	if (ISSET(pg.avtcvp, RDAC_VOLACCESSCTL_AVT)) {
+	if (ISSET(pg->avtcvp, RDAC_VOLACCESSCTL_AVT)) {
 		printf("%s: avt\n", DEVNAME(sc));
-		return (0);
-	}
-	if (ISSET(pg.avtcvp, RDAC_VOLACCESSCTL_OWNER)) {
+		rv = 0;
+	} else if (ISSET(pg->avtcvp, RDAC_VOLACCESSCTL_OWNER)) {
 		printf("%s: owner\n", DEVNAME(sc));
-		return (0);
-	}
+		rv = 0;
+	} else
+		printf("%s: unowned\n", DEVNAME(sc));
 
-	printf("%s: unowned\n", DEVNAME(sc));
-	return (1);
+done:
+	dma_free(pg, sizeof(*pg));
+	return (rv);
 }
 
