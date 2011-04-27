@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.28 2011/04/26 15:46:58 krw Exp $
+/*	$OpenBSD: trm.c,v 1.29 2011/04/27 03:39:32 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -787,23 +787,16 @@ trm_Interrupt(void *vsc)
 	bus_space_tag_t	iot;
 	u_int16_t phase;
 	u_int8_t scsi_status, scsi_intstatus;
-	int intflag;
 
-	intflag = splbio();
-
-	if (sc == NULL) {
-		splx(intflag);
+	if (sc == NULL)
 		return 0;
-	}
 
 	ioh = sc->sc_iohandle;
 	iot = sc->sc_iotag;
 
 	scsi_status = bus_space_read_2(iot, ioh, TRM_S1040_SCSI_STATUS);
-	if (!(scsi_status & SCSIINTERRUPT)) {
-		splx(intflag);
+	if (!(scsi_status & SCSIINTERRUPT))
 		return 0;
-	}
 	scsi_intstatus = bus_space_read_1(iot, ioh, TRM_S1040_SCSI_INTSTATUS);
 
 #ifdef TRM_DEBUG0
@@ -850,11 +843,9 @@ trm_Interrupt(void *vsc)
 		stateV(sc, pSRB, &scsi_status); 
 
 	} else {
-		splx(intflag);
 		return 0;
 	}
 
-	splx(intflag);
 	return 1;
 }
 
