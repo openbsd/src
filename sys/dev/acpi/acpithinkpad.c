@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.25 2011/01/02 04:56:57 jordan Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.26 2011/04/27 20:55:42 jcs Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -114,7 +114,9 @@ struct cfdriver acpithinkpad_cd = {
 	NULL, "acpithinkpad", DV_DULL
 };
 
-const char *acpithinkpad_hids[] = { ACPI_DEV_THINKPAD, 0 };
+const char *acpithinkpad_hids[] = {
+	ACPI_DEV_IBM, ACPI_DEV_LENOVO, 0
+};
 
 int
 thinkpad_match(struct device *parent, void *match, void *aux)
