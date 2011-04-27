@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.169 2011/04/27 05:11:09 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.170 2011/04/27 06:04:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -104,7 +104,7 @@ int			mpi_ppr(struct mpi_softc *, struct scsi_link *,
 int			mpi_inq(struct mpi_softc *, u_int16_t, int);
 
 int			mpi_cfg_sas(struct mpi_softc *);
-void			mpi_fc_info(struct mpi_softc *);
+int			mpi_cfg_fc(struct mpi_softc *);
 
 void			mpi_timeout_xs(void *);
 int			mpi_load_xs(struct mpi_ccb *);
@@ -300,7 +300,8 @@ mpi_attach(struct mpi_softc *sc)
 			goto free_replies;
 		break;
 	case MPI_PORTFACTS_PORTTYPE_FC:
-		mpi_fc_info(sc);
+		if (mpi_cfg_fc(sc) != 0)
+			goto free_replies;
 		break;
 	}
 
@@ -850,28 +851,48 @@ out:
 	return (rv);
 }
 
-void
-mpi_fc_info(struct mpi_softc *sc)
+int
+mpi_cfg_fc(struct mpi_softc *sc)
 {
 	struct mpi_cfg_hdr		hdr;
-	struct mpi_cfg_fc_port_pg0	pg;
+	struct mpi_cfg_fc_port_pg0	pg0;
+	struct mpi_cfg_fc_port_pg1	pg1;
 
 	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_FC_PORT, 0, 0,
 	    &hdr) != 0) {
-		DNPRINTF(MPI_D_MISC, "%s: mpi_fc_print unable to fetch "
-		    "FC port header 0\n", DEVNAME(sc));
-		return;
+		printf("%s: unable to fetch FC port header 0\n", DEVNAME(sc));
+		return (1);
 	}
 
-	if (mpi_cfg_page(sc, 0, &hdr, 1, &pg, sizeof(pg)) != 0) {
-		DNPRINTF(MPI_D_MISC, "%s: mpi_fc_print unable to fetch "
-		    "FC port page 0\n",
-		    DEVNAME(sc));
-		return;
+	if (mpi_cfg_page(sc, 0, &hdr, 1, &pg0, sizeof(pg0)) != 0) {
+		printf("%s: unable to fetch FC port page 0\n", DEVNAME(sc));
+		return (1);
 	}
 
-	sc->sc_link.port_wwn = letoh64(pg.wwpn);
-	sc->sc_link.node_wwn = letoh64(pg.wwnn);
+	sc->sc_link.port_wwn = letoh64(pg0.wwpn);
+	sc->sc_link.node_wwn = letoh64(pg0.wwnn);
+
+	/* configure port config more to our liking */
+	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_FC_PORT, 1, 0,
+	    &hdr) != 0) {
+		printf("%s: unable to fetch FC port header 1\n", DEVNAME(sc));
+		return (1);
+	}
+
+	if (mpi_cfg_page(sc, 0, &hdr, 1, &pg1, sizeof(pg1)) != 0) {
+		printf("%s: unable to fetch FC port page 1\n", DEVNAME(sc));
+		return (1);
+	}
+
+	SET(pg1.flags, htole32(MPI_CFG_FC_PORT_0_FLAGS_IMMEDIATE_ERROR |
+	    MPI_CFG_FC_PORT_0_FLAGS_VERBOSE_RESCAN));
+
+	if (mpi_cfg_page(sc, 0, &hdr, 0, &pg1, sizeof(pg1)) != 0) {
+		printf("%s: unable to set FC port page 1\n", DEVNAME(sc));
+		return (1);
+	}
+
+	return (0);
 }
 
 void
