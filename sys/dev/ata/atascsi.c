@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.102 2011/04/02 15:23:36 krw Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.103 2011/04/27 23:51:09 matthew Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -238,7 +238,7 @@ atascsi_lookup_port(struct scsi_link *link)
 	struct atascsi 			*as = link->adapter_softc;
 	struct atascsi_host_port 	*ahp;
 
-	if (link->target > as->as_link.adapter_buswidth)
+	if (link->target >= as->as_link.adapter_buswidth)
 		return (NULL);
 
 	ahp = as->as_host_ports[link->target];
@@ -261,12 +261,12 @@ atascsi_probe(struct scsi_link *link)
 	u_int16_t			cmdset;
 
 	port = link->target;
-	if (port > as->as_link.adapter_buswidth)
+	if (port >= as->as_link.adapter_buswidth)
 		return (ENXIO);
 
 	/* if this is a PMP port, check it's valid */
 	if (link->lun > 0) {
-		if (link->lun > as->as_host_ports[port]->ahp_nports)
+		if (link->lun >= as->as_host_ports[port]->ahp_nports)
 			return (ENXIO);
 	}
 
@@ -479,7 +479,7 @@ atascsi_free(struct scsi_link *link)
 	int				port;
 
 	port = link->target;
-	if (port > as->as_link.adapter_buswidth)
+	if (port >= as->as_link.adapter_buswidth)
 		return;
 
 	ahp = as->as_host_ports[port];
