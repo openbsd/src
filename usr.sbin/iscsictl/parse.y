@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2010/09/25 16:23:01 sobrado Exp $ */
+/*	$OpenBSD: parse.y,v 1.3 2011/04/27 19:20:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -41,6 +41,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <scsi/iscsi.h>
 #include "iscsid.h"
 #include "iscsictl.h"
 
@@ -99,7 +100,7 @@ typedef struct {
 %}
 
 %token  TARGET TARGETNAME TARGETADDR
-%token	INITIATORNAME INITIATORADDR
+%token	INITIATORNAME INITIATORADDR ISID
 %token	ENABLED DISABLED NORMAL DISCOVERY
 %token  ADDRESS INET INET6 PORT
 %token	INCLUDE
@@ -118,6 +119,7 @@ grammar		: /* empty */
 		| grammar '\n'
 		| grammar include '\n'
 		| grammar varset '\n'
+		| grammar initiator '\n'
 		| grammar target '\n'
 		| grammar error '\n'		{ file->errors++; }
 		;
@@ -163,6 +165,33 @@ optnl		: '\n' optnl
 		;
 
 nl		: '\n' optnl		/* one or more newlines */
+		;
+
+initiator	: ISID STRING NUMBER NUMBER {
+			u_int32_t mask1, mask2;
+
+			if (!strcasecmp($2, "oui")) {
+				conf->initiator.isid_base = ISCSI_ISID_OUI;
+				mask1 = 0x3fffff00;
+				mask2 = 0x000000ff;
+			} else if (!strcasecmp($2, "en")) {
+				conf->initiator.isid_base = ISCSI_ISID_EN;
+				mask1 = 0x00ffffff;
+				mask2 = 0;
+			} else if (!strcasecmp($2, "rand")) {
+				conf->initiator.isid_base = ISCSI_ISID_RAND;
+				mask1 = 0x00ffffff;
+				mask2 = 0;
+			} else {
+				yyerror("isid type %s unknown", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			conf->initiator.isid_base |= $3 & mask1;
+			conf->initiator.isid_base |= ($4 >> 16) & mask2;
+			conf->initiator.isid_qual = $4;
+		}
 		;
 
 target		: TARGET STRING {
@@ -333,6 +362,7 @@ lookup(char *s)
 		{"inet6",		INET6},
 		{"initiatoraddr",	INITIATORADDR},
 		{"initiatorname",	INITIATORNAME},
+		{"isid",		ISID},
 		{"normal",		NORMAL},
 		{"port",		PORT},
 		{"target",		TARGET},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsictl.c,v 1.2 2010/09/25 16:23:01 sobrado Exp $ */
+/*	$OpenBSD: iscsictl.c,v 1.3 2011/04/27 19:20:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -60,10 +60,12 @@ main (int argc, char* argv[])
 	struct pdu *pdu;
 	struct ctrlmsghdr *cmh;
 	struct session_config *sc;
+	struct initiator_config *ic;
 	struct session_ctlcfg *s;
 	struct iscsi_config *cf;
 	char *tname, *iname;
 	int ch, csock;
+	int *vp, val = 0;
 
 	/* check flags */
 	while ((ch = getopt(argc, argv, "f:s:")) != -1) {
@@ -100,7 +102,22 @@ main (int argc, char* argv[])
 	switch (res->action) {
 	case NONE:
 	case LOG_VERBOSE:
+		val = 1;
+		/* FALLTHROUGH */
 	case LOG_BRIEF:
+		if ((pdu = pdu_new()) == NULL)
+			err(1, "pdu_new");
+		if ((cmh = pdu_alloc(sizeof(*cmh))) == NULL)
+			err(1, "pdu_alloc");
+		bzero(cmh, sizeof(*cmh));
+		cmh->type = CTRL_LOG_VERBOSE;
+		cmh->len[0] = sizeof(int);
+		if ((vp = pdu_dup(&val, sizeof(int))) == NULL)
+			err(1, "pdu_dup");
+		pdu_addbuf(pdu, cmh, sizeof(*cmh), 0);
+		pdu_addbuf(pdu, vp, sizeof(int), 1);
+		run_command(csock, pdu);
+		break;
 	case SHOW:
 	case SHOW_SUM:
 		usage();
@@ -108,6 +125,21 @@ main (int argc, char* argv[])
 	case RELOAD:
 		if ((cf = parse_config(confname)) == NULL)
 			errx(1, "errors while loading configuration file.");
+		if (cf->initiator.isid_base != 0) {
+			if ((pdu = pdu_new()) == NULL)
+				err(1, "pdu_new");
+			if ((cmh = pdu_alloc(sizeof(*cmh))) == NULL)
+				err(1, "pdu_alloc");
+			bzero(cmh, sizeof(*cmh));
+			cmh->type = CTRL_INITIATOR_CONFIG;
+			cmh->len[0] = sizeof(*ic);
+			if ((ic = pdu_dup(&cf->initiator,
+			    sizeof(cf->initiator))) == NULL)
+				err(1, "pdu_dup");
+			pdu_addbuf(pdu, cmh, sizeof(*cmh), 0);
+			pdu_addbuf(pdu, ic, sizeof(*ic), 1);
+			run_command(csock, pdu);
+		}
 		SIMPLEQ_FOREACH(s, &cf->sessions, entry) {
 			if ((pdu = pdu_new()) == NULL)
 				err(1, "pdu_new");
@@ -167,7 +199,6 @@ main (int argc, char* argv[])
 
 		run_command(csock, pdu);
 	}
-printf("sent pdu to daemon\n");
 
 	close(csock);
 
@@ -203,6 +234,9 @@ run_command(int csock, struct pdu *pdu)
 		case CTRL_FAILURE:
 			printf("command failed\n");
 			done = 1;
+			break;
+		case CTRL_INPROGRESS:
+			printf("command in progress...\n");
 			break;
 		}
 	}

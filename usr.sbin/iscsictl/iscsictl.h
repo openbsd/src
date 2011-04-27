@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsictl.h,v 1.1 2010/09/24 09:45:17 claudio Exp $ */
+/*	$OpenBSD: iscsictl.h,v 1.2 2011/04/27 19:20:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -20,6 +20,7 @@
 
 struct iscsi_config {
 	SIMPLEQ_HEAD(, session_ctlcfg)	sessions;
+	struct initiator_config		initiator;
 };
 
 struct session_ctlcfg {
