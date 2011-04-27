@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.31 2010/09/07 16:21:42 deraadt Exp $  */
+/*      $OpenBSD: athvar.h,v 1.32 2011/04/27 16:06:13 deraadt Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -260,9 +260,7 @@ struct ath_softc {
 
 	struct ath_desc		*sc_desc;	/* TX/RX descriptors */
 	bus_dma_segment_t	sc_dseg;
-#ifndef __NetBSD__
 	int			sc_dnseg;	/* number of segments */
-#endif
 	bus_dmamap_t		sc_ddmamap;	/* DMA map for descriptors */
 	bus_addr_t		sc_desc_paddr;	/* physical addr of sc_desc */
 	bus_addr_t		sc_desc_len;	/* size of sc_desc */
