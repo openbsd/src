@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.170 2011/04/27 06:04:48 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.171 2011/04/27 06:06:30 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -1629,7 +1629,7 @@ mpi_scsi_probe_virtual(struct scsi_link *link)
 	rv = mpi_req_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_RAID_VOL,
 	    0, link->target, MPI_PG_POLL, &hdr);
 	if (rv != 0)
-		return (rv);
+		return (0);
 
 	len = hdr.page_length * 4;
 	rp0 = malloc(len, M_TEMP, M_NOWAIT);
