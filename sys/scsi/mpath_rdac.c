@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_rdac.c,v 1.2 2011/04/27 07:14:50 dlg Exp $ */
+/*	$OpenBSD: mpath_rdac.c,v 1.3 2011/04/27 09:09:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -21,7 +21,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/kernel.h>  
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -233,15 +233,14 @@ rdac_activate(struct device *self, int act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 	case DVACT_SUSPEND:
-        case DVACT_RESUME:
-                break;
+	case DVACT_RESUME:
+		break;
 	case DVACT_DEACTIVATE:
 		if (sc->sc_path.p_dev != NULL)
 			mpath_path_detach(&sc->sc_path);
 		break;
 	}
-        return (rv);
-
+	return (rv);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_emc.c,v 1.2 2011/04/27 07:14:50 dlg Exp $ */
+/*	$OpenBSD: mpath_emc.c,v 1.3 2011/04/27 09:09:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -21,7 +21,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/kernel.h>  
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -193,14 +193,14 @@ emc_activate(struct device *self, int act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 	case DVACT_SUSPEND:
-        case DVACT_RESUME:
-                break;
+	case DVACT_RESUME:
+		break;
 	case DVACT_DEACTIVATE:
 		if (sc->sc_path.p_dev != NULL)
 			mpath_path_detach(&sc->sc_path);
 		break;
 	}
-        return (rv);
+	return (rv);
 }
 
 void
@@ -253,17 +253,17 @@ emc_inquiry(struct emc_softc *sc, char *model, char *serial)
 		goto done;
 	}
 
-        cdb = (struct scsi_inquiry *)xs->cmd;
-        cdb->opcode = INQUIRY;
-        _lto2b(length, cdb->length);
+	cdb = (struct scsi_inquiry *)xs->cmd;
+	cdb->opcode = INQUIRY;
+	_lto2b(length, cdb->length);
 
-        xs->cmdlen = sizeof(*cdb);
-        xs->flags |= SCSI_DATA_IN;
-        xs->data = buffer;
-        xs->datalen = length;
+	xs->cmdlen = sizeof(*cdb);
+	xs->flags |= SCSI_DATA_IN;
+	xs->data = buffer;
+	xs->datalen = length;
 
-        error = scsi_xs_sync(xs);
-        scsi_xs_put(xs);
+	error = scsi_xs_sync(xs);
+	scsi_xs_put(xs);
 
 	if (error != 0)
 		goto done;
@@ -309,5 +309,5 @@ emc_sp_info(struct emc_softc *sc)
 	error = 0;
 done:
 	dma_free(pg, sizeof(*pg));
-        return (error);
+	return (error);
 }

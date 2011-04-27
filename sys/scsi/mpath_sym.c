@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_sym.c,v 1.1 2011/04/05 14:25:42 dlg Exp $ */
+/*	$OpenBSD: mpath_sym.c,v 1.2 2011/04/27 09:09:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -19,7 +19,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/kernel.h>  
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -163,17 +163,17 @@ sym_mpath_start(struct scsi_xfer *xs)
 int
 sym_mpath_checksense(struct scsi_xfer *xs)
 {
-        return (0);
+	return (0);
 }
 
 int
 sym_mpath_online(struct scsi_link *link)
 {
-        return (0);
+	return (0);
 }
 
 int
 sym_mpath_offline(struct scsi_link *link)
 {
-        return (0);
+	return (0);
 }
