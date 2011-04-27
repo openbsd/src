@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.c,v 1.4 2011/04/27 07:25:26 claudio Exp $ */
+/*	$OpenBSD: iscsid.c,v 1.5 2011/04/27 19:16:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -157,6 +157,7 @@ iscsid_ctrl_dispatch(void *ch, struct pdu *pdu)
 	struct initiator_config *ic;
 	struct session_config *sc;
 	struct session *s;
+	int *valp;
 
 	cmh = pdu_getbuf(pdu, NULL, 0);
 	if (cmh == NULL)
@@ -175,7 +176,7 @@ iscsid_ctrl_dispatch(void *ch, struct pdu *pdu)
 		break;
 	case CTRL_SESSION_CONFIG:
 		if (cmh->len[0] != sizeof(*sc)) {
-			log_warnx("CTRL_INITIATOR_CONFIG bad size");
+			log_warnx("CTRL_SESSION_CONFIG bad size");
 			control_compose(ch, CTRL_FAILURE, NULL, 0);
 			break;
 		}
@@ -205,6 +206,16 @@ iscsid_ctrl_dispatch(void *ch, struct pdu *pdu)
 		if (s->state == SESS_INIT)
 			session_fsm(s, SESS_EV_START, NULL);
 
+		control_compose(ch, CTRL_SUCCESS, NULL, 0);
+		break;
+	case CTRL_LOG_VERBOSE:
+		if (cmh->len[0] != sizeof(int)) {
+			log_warnx("CTRL_LOG_VERBOSE bad size");
+			control_compose(ch, CTRL_FAILURE, NULL, 0);
+			break;
+		}
+		valp = pdu_getbuf(pdu, NULL, 1);
+		log_verbose(*valp);
 		control_compose(ch, CTRL_SUCCESS, NULL, 0);
 		break;
 	default:
