@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.110 2011/04/19 00:02:28 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.111 2011/04/27 17:58:43 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -65,9 +65,9 @@
 #endif
 
 #ifdef DEBUG
-int debug_level = 0;
+volatile sig_atomic_t debug_level = 0;
 #endif
-volatile int quit_flag = 0;
+volatile sig_atomic_t quit_flag = 0;
 
 /*
  * SIGINT handler, it raises the quit flag. If the flag is already set,

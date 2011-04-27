@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.19 2011/04/18 23:59:15 ratchov Exp $	*/
+/*	$OpenBSD: conf.h,v 1.20 2011/04/27 17:58:43 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -27,7 +27,7 @@
  * 3 - structural changes (new aproc structures and files stream params changes)
  * 4 - data blocks and messages
  */
-extern int debug_level;
+extern volatile sig_atomic_t debug_level;
 #endif
 
 /*
