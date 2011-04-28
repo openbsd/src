@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.63 2010/11/04 17:55:28 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.64 2011/04/28 07:20:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -158,7 +158,7 @@ aproc_new(struct aproc_ops *ops, char *name)
 
 	p = malloc(sizeof(struct aproc));
 	if (p == NULL)
-		err(1, name);
+		err(1, "%s", name);
 	LIST_INIT(&p->ins);
 	LIST_INIT(&p->outs);
 	p->name = name;
