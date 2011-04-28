@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.15 2011/04/28 00:17:28 mikeb Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.16 2011/04/28 00:21:33 mikeb Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
 .\"
@@ -169,7 +169,7 @@ needs the following rules.
 Adjust the rules as needed.
 .Bd -literal -offset 2n
 anchor "ftp-proxy/*"
-pass in quick proto tcp to port ftp divert-to 127.0.0.1 port 8021
+pass in quick inet proto tcp to port ftp divert-to 127.0.0.1 port 8021
 .Ed
 .Sh SEE ALSO
 .Xr ftp 1 ,
