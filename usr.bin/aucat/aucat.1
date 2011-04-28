@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.76 2011/04/28 06:19:57 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.77 2011/04/28 07:28:18 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -547,7 +547,7 @@ as the MTC source, i.e. the audio server, not the audio player.
 .Sh ENVIRONMENT
 .Bl -tag -width "AUCAT_COOKIE" -compact
 .It Ev AUCAT_COOKIE
-file containing user's session cookie.
+File containing user's session cookie.
 .It Ev AUDIODEVICE
 .Xr sndio 7
 audio device to use if the
@@ -555,27 +555,27 @@ audio device to use if the
 option is not specified.
 .El
 .Sh EXAMPLES
-The following will mix and play two stereo streams,
+Mix and play two stereo streams,
 the first at 48kHz and the second at 44.1kHz:
 .Bd -literal -offset indent
 $ aucat -r 48000 -i file1.raw -r 44100 -i file2.raw
 .Ed
 .Pp
-The following will record channels 2 and 3 into one stereo file and
+Record channels 2 and 3 into one stereo file and
 channels 6 and 7 into another stereo file using a 96kHz sampling rate for
 both:
 .Bd -literal -offset indent
 $ aucat -r 96000 -C 2:3 -o file1.raw -C 6:7 -o file2.raw
 .Ed
 .Pp
-The following will split a stereo file into two mono files:
+Split a stereo file into two mono files:
 .Bd -literal -offset indent
 $ aucat -n -i stereo.wav -C 0:0 -o left.wav -C 1:1 -o right.wav
 .Ed
 .Pp
-The following will start
+Start
 .Nm
-in server mode using default parameters, but will create an
+in server mode using default parameters, creating an
 additional sub-device for output to channels 2:3 only (rear speakers
 on most cards), exposing the
 .Pa aucat:0
@@ -586,9 +586,9 @@ devices:
 $ aucat -l -s default -c 2:3 -s rear
 .Ed
 .Pp
-The following will start
+Start
 .Nm
-in server mode creating the default sub-device with low volume and
+in server mode, creating the default sub-device with low volume and
 an additional sub-device for high volume output, exposing the
 .Pa aucat:0
 and
@@ -598,9 +598,9 @@ devices:
 $ aucat -l -v 65 -s default -v 127 -s max
 .Ed
 .Pp
-The following will start
+Start
 .Nm
-in server mode configuring the audio device to use
+in server mode, configuring the audio device to use
 a 48kHz sample frequency, 240-frame block size,
 and 2-block buffers.
 The corresponding latency is 10ms, which is
