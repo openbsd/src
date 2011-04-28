@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.75 2011/02/09 20:24:39 jakemsr Exp $	*/
+/*	$OpenBSD: usb.c,v 1.76 2011/04/28 07:35:15 jakemsr Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -106,7 +106,6 @@ int usb_run_tasks, usb_run_abort_tasks;
 int explore_pending;
 
 void	usb_explore(void *);
-void	usb_first_explore(void *);
 void	usb_create_task_threads(void *);
 void	usb_task_thread(void *);
 struct proc *usb_task_thread_proc = NULL;
@@ -206,7 +205,7 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 #if 1
 		/*
 		 * Turning this code off will delay attachment of USB devices
-		 * until the USB event thread is running, which means that
+		 * until the USB task thread is running, which means that
 		 * the keyboard will not work until after cold boot.
 		 */
 		if (cold && (sc->sc_dev.dv_cfdata->cf_flags & 1))
@@ -225,7 +224,7 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 		if (sc->sc_bus->usbrev == USBREV_2_0)
 			explore_pending++;
 		config_pending_incr();
-		kthread_create_deferred(usb_first_explore, sc);
+		usb_needs_explore(sc->sc_bus->root_hub, 1);
 	}
 }
 
@@ -360,46 +359,6 @@ usb_rem_wait_task(usbd_device_handle dev, struct usb_task *task)
 {
 	usb_rem_task(dev, task);
 	usb_wait_task(dev, task);
-}
-
-void
-usb_first_explore(void *arg)
-{
-	struct usb_softc *sc = arg;
-	struct timeval now, waited;
-	int pwrdly, waited_ms;
-
-	getmicrouptime(&now);
-	timersub(&now, &sc->sc_ptime, &waited);
-	waited_ms = waited.tv_sec * 1000 + waited.tv_usec / 1000;
-
-	/* Wait for power to come good. */
-	pwrdly = sc->sc_bus->root_hub->hub->hubdesc.bPwrOn2PwrGood * 
-	    UHD_PWRON_FACTOR + USB_EXTRA_POWER_UP_TIME;
-	if (pwrdly > waited_ms)
-		usb_delay_ms(sc->sc_bus, pwrdly - waited_ms);
-
-	/*
-	 * USB1 waits for USB2 to finish their first probe.
-	 * We only really need to have "companion" USB1 controllers
-	 * wait, but it's hard to determine what's a companion and
-	 * what isn't.
-	 */
-	while (sc->sc_bus->usbrev != USBREV_2_0 && explore_pending)
-		(void)tsleep((void *)&explore_pending, PWAIT, "config", 0);
-
-	/*
-	 * Add first explore task to the queue.  The tasks are run in order
-	 * in a single thread, so adding tasks to the queue in the correct
-	 * order means they will run in the correct order.
-	 */
-	usb_needs_explore(sc->sc_bus->root_hub, 1);
-
-	/* Wake up any companions waiting for handover before their probes. */
-	if (sc->sc_bus->usbrev == USBREV_2_0) {
-		explore_pending--;
-		wakeup((void *)&explore_pending);
- 	}
 }
 
 void
@@ -706,6 +665,8 @@ void
 usb_explore(void *v)
 {
 	struct usb_softc *sc = v;
+	struct timeval now, waited;
+	int pwrdly, waited_ms;
 
 	DPRINTFN(2,("%s: %s\n", __func__, sc->sc_dev.dv_xname));
 #ifdef USB_DEBUG
@@ -713,12 +674,41 @@ usb_explore(void *v)
 		return;
 #endif
 
-	if (!sc->sc_bus->dying)
-		sc->sc_bus->root_hub->hub->explore(sc->sc_bus->root_hub);
+	if (sc->sc_bus->dying)
+		return;
+
+	if (sc->sc_bus->flags & USB_BUS_CONFIG_PENDING) {
+		/*
+		 * If this is a low/full speed hub and there is a high
+		 * speed hub that hasn't explored yet, reshedule this
+		 * task, allowing the high speed explore task to run.
+		 */
+		if (sc->sc_bus->usbrev < USBREV_2_0 && explore_pending > 0) {
+			usb_add_task(sc->sc_bus->root_hub,
+			    &sc->sc_explore_task);
+			return;
+		}
+
+		/*
+		 * Wait for power to stabilize.
+		 */
+		getmicrouptime(&now);
+		timersub(&now, &sc->sc_ptime, &waited);
+		waited_ms = waited.tv_sec * 1000 + waited.tv_usec / 1000;
+
+		pwrdly = sc->sc_bus->root_hub->hub->hubdesc.bPwrOn2PwrGood * 
+		    UHD_PWRON_FACTOR + USB_EXTRA_POWER_UP_TIME;
+		if (pwrdly > waited_ms)
+			usb_delay_ms(sc->sc_bus, pwrdly - waited_ms);
+	}
+
+	sc->sc_bus->root_hub->hub->explore(sc->sc_bus->root_hub);
 
 	if (sc->sc_bus->flags & USB_BUS_CONFIG_PENDING) {
 		DPRINTF(("%s: %s: first explore done\n", __func__,
 		    sc->sc_dev.dv_xname));
+		if (sc->sc_bus->usbrev == USBREV_2_0 && explore_pending)
+			explore_pending--;
 		config_pending_decr();
 		sc->sc_bus->flags &= ~(USB_BUS_CONFIG_PENDING);
 	}
