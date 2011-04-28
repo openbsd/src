@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.51 2011/03/23 16:54:37 pirofti Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.52 2011/04/28 20:36:29 ariane Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -262,6 +262,13 @@ int             pmap_dumpmmu(int (*)(dev_t, daddr64_t, caddr_t, size_t), daddr64
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 
 #define PMAP_PREFER(fo, ap)		pmap_prefer((fo), (ap))
+
+extern int	cache_alias_dist;
+/* pmap prefer alignment */
+#define PMAP_PREFER_ALIGN()		cache_alias_dist
+/* pmap prefer offset in alignment */
+#define PMAP_PREFER_OFFSET(of)						\
+	((of) & (cache_alias_dist ? cache_alias_dist - 1 : 0))
 
 #define PMAP_EXCLUDE_DECLS	/* tells MI pmap.h *not* to include decls */
 
