@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.76 2010/07/19 12:48:23 millert Exp $
+#  $OpenBSD: Makefile,v 1.77 2011/04/28 18:05:39 martynas Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -61,6 +61,18 @@ ARCH_SRCS = e_sqrt.c e_sqrtf.c e_remainder.c e_remainderf.c \
 .elif (${MACHINE_ARCH} == "sh")
 .PATH:	${.CURDIR}/arch/sh
 ARCH_SRCS = e_sqrt.c e_sqrtf.c s_fabsf.c
+.elif (${MACHINE_ARCH} == "arm")
+.PATH:	${.CURDIR}/arch/arm
+.elif (${MACHINE_ARCH} == "hppa64")
+.PATH:	${.CURDIR}/arch/hppa64
+.elif (${MACHINE_ARCH} == "m88k")
+.PATH:	${.CURDIR}/arch/m88k
+.elif (${MACHINE_ARCH} == "mips64")
+.PATH:	${.CURDIR}/arch/mips64
+.elif (${MACHINE_ARCH} == "powerpc")
+.PATH:	${.CURDIR}/arch/powerpc
+.elif (${MACHINE_ARCH} == "sparc")
+.PATH:	${.CURDIR}/arch/sparc
 .elif (${MACHINE_ARCH} == "vax")
 .PATH:	${.CURDIR}/arch/vax
 NOIEEE_ARCH = n_argred.S n_infnan.S n_sqrt.S
@@ -82,6 +94,7 @@ COMMON_SRCS = b_exp__D.c b_log__D.c b_tgamma.c \
 	e_rem_pio2.c \
 	e_rem_pio2f.c e_remainder.c e_remainderf.c e_scalb.c e_scalbf.c \
 	e_sinh.c e_sinhf.c e_sqrt.c e_sqrtf.c \
+	fenv.c \
 	k_cos.c k_cosf.c k_rem_pio2.c k_rem_pio2f.c k_sin.c k_sinf.c \
 	k_tan.c k_tanf.c \
 	s_lround.c s_lroundf.c s_llround.c s_llroundf.c \
@@ -99,7 +112,7 @@ COMMON_SRCS = b_exp__D.c b_log__D.c b_tgamma.c \
 	s_floor.c s_floorf.c s_frexpf.c s_ilogb.c s_ilogbf.c \
 	s_log1p.c \
 	s_log1pf.c s_logb.c s_logbf.c s_llrint.c s_llrintf.c s_lrint.c \
-	s_lrintf.c s_modff.c s_nan.c \
+	s_lrintf.c s_modff.c s_nan.c s_nearbyint.c \
 	s_nextafter.c s_nextafterf.c s_remquo.c s_remquof.c s_rint.c \
 	s_rintf.c s_round.c s_roundf.c \
 	s_scalbln.c s_scalbn.c s_scalbnf.c s_signgam.c s_significand.c \

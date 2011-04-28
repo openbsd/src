@@ -1,4 +1,4 @@
-/*	$OpenBSD: math.h,v 1.27 2010/12/14 11:16:15 martynas Exp $	*/
+/*	$OpenBSD: math.h,v 1.28 2011/04/28 18:05:39 martynas Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -201,9 +201,7 @@ double erfc(double);
 double lgamma(double);
 double tgamma(double);
 
-#if 0
 double nearbyint(double);
-#endif
 double rint(double);
 long int lrint(double);
 long long int llrint(double);
@@ -312,9 +310,7 @@ float tgammaf(float);
 
 float ceilf(float);
 float floorf(float);
-#if 0
 float nearbyintf(float);
-#endif
 float rintf(float);
 long int lrintf(float);
 long long int llrintf(float);
@@ -444,8 +440,8 @@ long double tgammal(long double);
 #if 0
 long double ceill(long double);
 long double floorl(long double);
-long double nearbyintl(long double);
 #endif
+long double nearbyintl(long double);
 long double rintl(long double);
 #if 0
 long int lrintl(long double);
