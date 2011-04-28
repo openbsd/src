@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.77 2011/04/28 18:05:39 martynas Exp $
+#  $OpenBSD: Makefile,v 1.78 2011/04/28 19:31:22 todd Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -69,10 +69,14 @@ ARCH_SRCS = e_sqrt.c e_sqrtf.c s_fabsf.c
 .PATH:	${.CURDIR}/arch/m88k
 .elif (${MACHINE_ARCH} == "mips64")
 .PATH:	${.CURDIR}/arch/mips64
+.elif (${MACHINE_ARCH} == "mips64el")
+.PATH:	${.CURDIR}/arch/mips64
 .elif (${MACHINE_ARCH} == "powerpc")
 .PATH:	${.CURDIR}/arch/powerpc
 .elif (${MACHINE_ARCH} == "sparc")
 .PATH:	${.CURDIR}/arch/sparc
+.elif (${MACHINE_ARCH} == "sparc64")
+.PATH:	${.CURDIR}/arch/sparc64
 .elif (${MACHINE_ARCH} == "vax")
 .PATH:	${.CURDIR}/arch/vax
 NOIEEE_ARCH = n_argred.S n_infnan.S n_sqrt.S
