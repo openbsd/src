@@ -166,6 +166,7 @@
 ./usr/include/landisk/disklabel.h
 ./usr/include/landisk/endian.h
 ./usr/include/landisk/exec.h
+./usr/include/landisk/fenv.h
 ./usr/include/landisk/float.h
 ./usr/include/landisk/fpu.h
 ./usr/include/landisk/frame.h

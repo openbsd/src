@@ -161,6 +161,7 @@
 ./usr/include/mac68k/disklabel.h
 ./usr/include/mac68k/endian.h
 ./usr/include/mac68k/exec.h
+./usr/include/mac68k/fenv.h
 ./usr/include/mac68k/float.h
 ./usr/include/mac68k/frame.h
 ./usr/include/mac68k/ieee.h

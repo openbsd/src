@@ -560,6 +560,7 @@
 ./usr/include/macppc/disklabel.h
 ./usr/include/macppc/endian.h
 ./usr/include/macppc/exec.h
+./usr/include/macppc/fenv.h
 ./usr/include/macppc/float.h
 ./usr/include/macppc/fpu.h
 ./usr/include/macppc/frame.h

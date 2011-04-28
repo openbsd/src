@@ -1696,6 +1696,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/disklabel.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/endian.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/exec.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/fenv.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/float.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/frame.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/hil_machdep.ph

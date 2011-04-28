@@ -1869,6 +1869,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/disklabel.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/endian.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/exec.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/fenv.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/float.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/fpu.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/frame.ph

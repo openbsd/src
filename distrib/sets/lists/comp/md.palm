@@ -217,6 +217,7 @@
 ./usr/include/palm/disklabel.h
 ./usr/include/palm/endian.h
 ./usr/include/palm/exec.h
+./usr/include/palm/fenv.h
 ./usr/include/palm/float.h
 ./usr/include/palm/fp.h
 ./usr/include/palm/frame.h

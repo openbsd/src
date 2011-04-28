@@ -1813,6 +1813,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/disklabel.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/endian.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/exec.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/fenv.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/float.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/frame.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/ieee.ph

@@ -768,6 +768,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/disklabel.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/endian.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/exec.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/armish/fenv.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/float.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/fp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/frame.ph

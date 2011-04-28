@@ -126,6 +126,7 @@
 ./usr/include/luna88k/disklabel.h
 ./usr/include/luna88k/endian.h
 ./usr/include/luna88k/exec.h
+./usr/include/luna88k/fenv.h
 ./usr/include/luna88k/float.h
 ./usr/include/luna88k/fpu.h
 ./usr/include/luna88k/frame.h
@@ -168,6 +169,7 @@
 ./usr/include/m88k/db_machdep.h
 ./usr/include/m88k/endian.h
 ./usr/include/m88k/exec.h
+./usr/include/m88k/fenv.h
 ./usr/include/m88k/float.h
 ./usr/include/m88k/fpu.h
 ./usr/include/m88k/frame.h

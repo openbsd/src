@@ -2147,6 +2147,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/palm/disklabel.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/palm/endian.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/palm/exec.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/palm/fenv.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/palm/float.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/palm/fp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/palm/frame.ph

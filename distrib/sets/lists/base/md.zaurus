@@ -2449,6 +2449,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/disklabel.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/endian.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/exec.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/fenv.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/float.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/fp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/frame.ph

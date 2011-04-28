@@ -606,6 +606,7 @@
 ./usr/include/sgi/ecoff_machdep.h
 ./usr/include/sgi/endian.h
 ./usr/include/sgi/exec.h
+./usr/include/sgi/fenv.h
 ./usr/include/sgi/float.h
 ./usr/include/sgi/fpu.h
 ./usr/include/sgi/frame.h

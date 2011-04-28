@@ -1775,6 +1775,7 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa64/eisa_machdep.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa64/endian.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa64/exec.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa64/fenv.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa64/float.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa64/frame.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa64/hil_machdep.ph

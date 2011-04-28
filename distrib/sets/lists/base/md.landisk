@@ -1782,6 +1782,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/disklabel.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/endian.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/exec.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/landisk/fenv.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/float.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/fpu.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/frame.ph

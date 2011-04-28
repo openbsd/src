@@ -2320,6 +2320,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/endian.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/exec.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/fdt.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/fenv.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/float.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/fpu.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/frame.ph

@@ -218,6 +218,7 @@
 ./usr/include/zaurus/disklabel.h
 ./usr/include/zaurus/endian.h
 ./usr/include/zaurus/exec.h
+./usr/include/zaurus/fenv.h
 ./usr/include/zaurus/float.h
 ./usr/include/zaurus/fp.h
 ./usr/include/zaurus/frame.h

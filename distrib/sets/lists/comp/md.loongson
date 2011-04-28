@@ -559,6 +559,7 @@
 ./usr/include/loongson/disklabel.h
 ./usr/include/loongson/endian.h
 ./usr/include/loongson/exec.h
+./usr/include/loongson/fenv.h
 ./usr/include/loongson/float.h
 ./usr/include/loongson/fpu.h
 ./usr/include/loongson/frame.h

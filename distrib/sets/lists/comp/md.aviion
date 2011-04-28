@@ -19,6 +19,7 @@
 ./usr/include/aviion/disklabel.h
 ./usr/include/aviion/endian.h
 ./usr/include/aviion/exec.h
+./usr/include/aviion/fenv.h
 ./usr/include/aviion/float.h
 ./usr/include/aviion/fpu.h
 ./usr/include/aviion/frame.h
@@ -175,6 +176,7 @@
 ./usr/include/m88k/db_machdep.h
 ./usr/include/m88k/endian.h
 ./usr/include/m88k/exec.h
+./usr/include/m88k/fenv.h
 ./usr/include/m88k/float.h
 ./usr/include/m88k/fpu.h
 ./usr/include/m88k/frame.h

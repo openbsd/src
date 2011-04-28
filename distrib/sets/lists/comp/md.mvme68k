@@ -162,6 +162,7 @@
 ./usr/include/mvme68k/disklabel.h
 ./usr/include/mvme68k/endian.h
 ./usr/include/mvme68k/exec.h
+./usr/include/mvme68k/fenv.h
 ./usr/include/mvme68k/float.h
 ./usr/include/mvme68k/frame.h
 ./usr/include/mvme68k/ieee.h

@@ -680,6 +680,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/disklabel.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/endian.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/exec.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/fenv.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/float.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/fpu.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/frame.ph
@@ -1794,6 +1795,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/db_machdep.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/endian.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/exec.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/fenv.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/float.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/fpu.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/frame.ph

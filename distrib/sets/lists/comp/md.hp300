@@ -122,6 +122,7 @@
 ./usr/include/hp300/disklabel.h
 ./usr/include/hp300/endian.h
 ./usr/include/hp300/exec.h
+./usr/include/hp300/fenv.h
 ./usr/include/hp300/float.h
 ./usr/include/hp300/frame.h
 ./usr/include/hp300/hil_machdep.h

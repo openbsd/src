@@ -122,6 +122,7 @@
 ./usr/include/m88k/db_machdep.h
 ./usr/include/m88k/endian.h
 ./usr/include/m88k/exec.h
+./usr/include/m88k/fenv.h
 ./usr/include/m88k/float.h
 ./usr/include/m88k/fpu.h
 ./usr/include/m88k/frame.h
@@ -171,6 +172,7 @@
 ./usr/include/mvme88k/disklabel.h
 ./usr/include/mvme88k/endian.h
 ./usr/include/mvme88k/exec.h
+./usr/include/mvme88k/fenv.h
 ./usr/include/mvme88k/float.h
 ./usr/include/mvme88k/fpu.h
 ./usr/include/mvme88k/frame.h

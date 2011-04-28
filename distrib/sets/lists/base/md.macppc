@@ -1902,6 +1902,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/disklabel.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/endian.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/exec.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/fenv.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/float.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/fpu.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/frame.ph

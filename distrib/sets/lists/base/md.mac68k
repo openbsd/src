@@ -1793,6 +1793,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/disklabel.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/endian.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/exec.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/fenv.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/float.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/frame.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/ieee.ph

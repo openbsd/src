@@ -70,6 +70,7 @@
 ./usr/include/armish/disklabel.h
 ./usr/include/armish/endian.h
 ./usr/include/armish/exec.h
+./usr/include/armish/fenv.h
 ./usr/include/armish/float.h
 ./usr/include/armish/fp.h
 ./usr/include/armish/frame.h
