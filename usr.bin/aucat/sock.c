@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.56 2011/04/16 11:24:18 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.57 2011/04/28 06:19:57 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -93,15 +93,16 @@ struct ctl_ops ctl_sockops = {
 	sock_quitreq
 };
 
-unsigned sock_sesrefs = 0;	/* connections to the session */
-uid_t sock_sesuid;		/* owner of the session */
+unsigned sock_sesrefs = 0;		/* connections to the session */
+uint8_t sock_sescookie[AMSG_COOKIELEN];	/* owner of the session */
 
 void
 sock_close(struct file *arg)
 {
 	struct sock *f = (struct sock *)arg;
 
-	sock_sesrefs--;
+	if (f->pstate != SOCK_AUTH)
+		sock_sesrefs--;
 	pipe_close(&f->pipe.file);
 	if (f->dev) {
 		dev_unref(f->dev);
@@ -322,34 +323,13 @@ sock_new(struct fileops *ops, int fd)
 {
 	struct aproc *rproc, *wproc;
 	struct sock *f;
-	uid_t uid, gid;
-
-	/*
-	 * ensure that all connections belong to the same user,
-	 * for privacy reasons.
-	 *
-	 * XXX: is there a portable way of doing this ?
-	 */
-	if (getpeereid(fd, &uid, &gid) < 0) {
-		close(fd);
-		return NULL;
-	}
-	if (sock_sesrefs == 0) {
-		/* start a new session */
-		sock_sesuid = uid;
-	} else if (uid != sock_sesuid) {
-		/* session owned by another user, drop connection */
-		close(fd);
-		return NULL;
-	}
-	sock_sesrefs++;
 
 	f = (struct sock *)pipe_new(ops, fd, "sock");
 	if (f == NULL) {
 		close(fd);
 		return NULL;
 	}
-	f->pstate = SOCK_HELLO;
+	f->pstate = SOCK_AUTH;
 	f->mode = 0;
 	f->opt = NULL;
 	f->dev = NULL;
@@ -980,6 +960,23 @@ sock_midiattach(struct sock *f)
 }
 
 int
+sock_auth(struct sock *f)
+{
+	struct amsg_auth *p = &f->rmsg.u.auth;
+
+	if (sock_sesrefs == 0) {
+		/* start a new session */
+		memcpy(sock_sescookie, p->cookie, AMSG_COOKIELEN);
+	} else if (memcmp(sock_sescookie, p->cookie, AMSG_COOKIELEN) != 0) {
+		/* another session is active, drop connection */
+		return 0;
+	}
+	sock_sesrefs++;
+	f->pstate = SOCK_HELLO;
+	return 1;
+}
+
+int
 sock_hello(struct sock *f)
 {
 	struct amsg_hello *p = &f->rmsg.u.hello;
@@ -1319,6 +1316,30 @@ sock_execmsg(struct sock *f)
 			ctl_slotvol(f->dev->midi, f->slot, m->u.vol.ctl);
 		f->rtodo = sizeof(struct amsg);
 		f->rstate = SOCK_RMSG;
+		break;
+	case AMSG_AUTH:
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			sock_dbg(f);
+			dbg_puts(": AUTH message\n");
+		}
+#endif
+		if (f->pstate != SOCK_AUTH) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				sock_dbg(f);
+				dbg_puts(": AUTH, bad state\n");
+			}
+#endif
+			aproc_del(f->pipe.file.rproc);
+			return 0;
+		}
+		if (!sock_auth(f)) {
+			aproc_del(f->pipe.file.rproc);
+			return 0;
+		}
+		f->rstate = SOCK_RMSG;
+		f->rtodo = sizeof(struct amsg);
 		break;
 	case AMSG_HELLO:
 #ifdef DEBUG

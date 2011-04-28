@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.75 2011/03/21 16:33:17 okan Exp $
+.\"	$OpenBSD: aucat.1,v 1.76 2011/04/28 06:19:57 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 21 2011 $
+.Dd $Mdocdate: April 28 2011 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -33,6 +33,7 @@
 .Op Fl h Ar fmt
 .Op Fl i Ar file
 .Op Fl j Ar flag
+.Op Fl L Ar addr
 .Op Fl m Ar mode
 .Op Fl o Ar file
 .Op Fl q Ar device
@@ -140,6 +141,17 @@ For instance, this feature could be used to request mono streams to
 be sent on multiple outputs or to record a stereo input into a mono stream.
 The default is
 .Ar on .
+.It Fl L Ar addr
+Specify a local network address to listen on in server mode.
+.Nm
+will listen on TCP port 11025+n, where n is the unit number
+specified with
+.Fl U .
+Without this option,
+.Nm
+listens on the
+.Ux Ns -domain
+socket only, and is not reachable from any network.
 .It Fl l
 Detach and become a daemon.
 .It Fl m Ar mode
@@ -533,7 +545,9 @@ Note that the sequencer must use
 .Va aucat:0
 as the MTC source, i.e. the audio server, not the audio player.
 .Sh ENVIRONMENT
-.Bl -tag -width "AUDIODEVICE" -compact
+.Bl -tag -width "AUCAT_COOKIE" -compact
+.It Ev AUCAT_COOKIE
+file containing user's session cookie.
 .It Ev AUDIODEVICE
 .Xr sndio 7
 audio device to use if the

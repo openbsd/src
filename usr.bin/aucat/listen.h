@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.h,v 1.6 2011/04/19 00:02:29 ratchov Exp $	*/
+/*	$OpenBSD: listen.h,v 1.7 2011/04/28 06:19:57 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -29,6 +29,7 @@ struct listen {
 };
 
 void listen_new_un(char *);
+void listen_new_tcp(char *, unsigned);
 int listen_nfds(struct file *);
 int listen_pollfd(struct file *, struct pollfd *, int);
 int listen_revents(struct file *, struct pollfd *);

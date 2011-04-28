@@ -1,4 +1,4 @@
-.\"	$OpenBSD: midicat.1,v 1.14 2011/03/21 16:33:17 okan Exp $
+.\"	$OpenBSD: midicat.1,v 1.15 2011/04/28 06:19:57 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 21 2011 $
+.Dd $Mdocdate: April 28 2011 $
 .Dt MIDICAT 1
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Nm midicat
 .Op Fl dl
 .Op Fl i Ar file
+.Op Fl L Ar addr
 .Op Fl o Ar file
 .Op Fl q Ar port
 .Op Fl s Ar name
@@ -57,6 +58,17 @@ Read data to send from this file.
 If the option argument is
 .Sq -
 then standard input will be used.
+.It Fl L Ar addr
+Specify a local network address to listen on in server mode.
+.Nm
+will listen on TCP port 11041+n, where n is the unit number
+specified with
+.Fl U .
+Without this option,
+.Nm
+listens on the
+.Ux Ns -domain
+socket only, and is not reachable from any network.
 .It Fl l
 Detach and become a daemon.
 .It Fl o Ar file

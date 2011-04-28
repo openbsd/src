@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.13 2011/04/27 17:58:43 deraadt Exp $	*/
+/*	$OpenBSD: listen.c,v 1.14 2011/04/28 06:19:57 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -19,6 +19,10 @@
 #include <sys/signal.h>
 #include <sys/stat.h>
 #include <sys/un.h>
+
+#include <netinet/in.h>
+#include <netdb.h>
+
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -87,6 +91,67 @@ listen_new_un(char *path)
  bad_close:
 	close(sock);
 	exit(1);	
+}
+
+void
+listen_new_tcp(char *addr, unsigned port)
+{
+	char *host, serv[sizeof(unsigned) * 3 + 1];
+	struct addrinfo *ailist, *ai, aihints;
+	struct listen *f;
+	int s, error, opt = 1, n = 0;
+	
+	/* 
+	 * obtain a list of possible addresses for the host/port 
+	 */
+	memset(&aihints, 0, sizeof(struct addrinfo));
+	snprintf(serv, sizeof(serv), "%u", port);
+	host = strcmp(addr, "*") == 0 ? NULL : addr;
+	aihints.ai_flags |= AI_PASSIVE;
+	aihints.ai_socktype = SOCK_STREAM;
+	aihints.ai_protocol = IPPROTO_TCP;
+	error = getaddrinfo(host, serv, &aihints, &ailist);
+	if (error) {
+		fprintf(stderr, "%s: %s\n", addr, gai_strerror(error));
+		exit(1);
+	}
+
+	/* 
+	 * for each address, try create a listening socket bound on
+	 * that address
+	 */
+	for (ai = ailist; ai != NULL; ai = ai->ai_next) {
+		s = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+		if (s < 0) {
+			perror("socket");
+			continue;
+		}
+		opt = 1;
+		if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) < 0) {
+			perror("setsockopt");
+			goto bad_close;
+		}
+		if (bind(s, ai->ai_addr, ai->ai_addrlen) < 0) {
+			perror("bind");
+			goto bad_close;
+		}
+		if (listen(s, 1) < 0) {
+			perror("listen");
+			goto bad_close;
+		}
+		f = (struct listen *)file_new(&listen_ops, addr, 1);
+		if (f == NULL) {
+		bad_close:
+			close(s);
+			continue;
+		}
+		f->path = NULL;
+		f->fd = s;
+		n++;
+	}
+	freeaddrinfo(ailist);
+	if (n == 0)
+		exit(1);
 }
 
 int

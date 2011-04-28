@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.45 2011/04/18 23:57:35 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.46 2011/04/28 06:19:57 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -17,10 +17,15 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/un.h>
+
+#include <netinet/in.h>
+#include <netdb.h>
 
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +34,7 @@
 
 #include "aucat.h"
 #include "debug.h"
+
 
 /*
  * read a message, return 0 if not completed
@@ -192,6 +198,134 @@ aucat_wdata(struct aucat *hdl, const void *buf, size_t len, unsigned wbpf, int *
 }
 
 int
+aucat_mkcookie(unsigned char *cookie)
+{
+	struct stat sb;
+	char buf[PATH_MAX], tmp[PATH_MAX], *path;
+	ssize_t len;
+	int fd;
+
+	/*
+	 * try to load the cookie
+	 */
+	path = issetugid() ? NULL : getenv("AUCAT_COOKIE");
+	if (path == NULL) {
+		path = issetugid() ? NULL : getenv("HOME");
+		if (path == NULL)
+			goto bad_gen;
+		snprintf(buf, PATH_MAX, "%s/.aucat_cookie", path);
+		path = buf;
+	}
+	fd = open(path, O_RDONLY);
+	if (fd < 0) {
+		if (errno != ENOENT)
+			DPERROR(path);
+		goto bad_gen;
+	}
+	if (fstat(fd, &sb) < 0) {
+		DPERROR(path);
+		goto bad_close;
+	}
+	if (sb.st_mode & 0077) {
+		DPRINTF("%s has wrong permissions\n", path);
+		goto bad_close;
+	}
+	len = read(fd, cookie, AMSG_COOKIELEN);
+	if (len < 0) {
+		DPERROR(path);
+		goto bad_close;
+	}
+	if (len != AMSG_COOKIELEN) {
+		DPRINTF("%s: short read\n", path);
+		goto bad_close;
+	}
+	close(fd);
+	return 1;
+bad_close:
+	close(fd);
+bad_gen:
+	/*
+	 * generate a new cookie
+	 */
+	arc4random_buf(cookie, AMSG_COOKIELEN);
+
+	/*
+	 * try to save the cookie
+	 */
+	if (path == NULL)
+		return 1;
+	if (strlcpy(tmp, path, PATH_MAX) >= PATH_MAX ||
+	    strlcat(tmp, ".XXXXXXXX", PATH_MAX) >= PATH_MAX) {
+		DPRINTF("%s: too long\n", path);
+		return 1;
+	}
+	fd = mkstemp(tmp);
+	if (fd < 0) {
+		DPERROR(tmp);
+		return 1;
+	}
+	if (write(fd, cookie, AMSG_COOKIELEN) < 0) {
+		DPERROR(tmp);
+		unlink(tmp);
+		close(fd);
+		return 1;
+	}
+	close(fd);
+	if (rename(tmp, path) < 0) {
+		DPERROR(tmp);
+		unlink(tmp);
+	}
+	return 1;
+}
+
+int
+aucat_connect_tcp(struct aucat *hdl, char *host, char *unit, int isaudio)
+{
+	int s, error;
+	struct addrinfo *ailist, *ai, aihints;
+	unsigned port;
+	char serv[NI_MAXSERV];
+
+	if (sscanf(unit, "%u", &port) != 1) {
+		DPRINTF("%s: bad unit number\n", unit);
+		return 0;
+	}
+	if (isaudio)
+		port += AUCAT_PORT;
+	else
+		port += MIDICAT_PORT;
+	snprintf(serv, sizeof(serv), "%u", port);
+	memset(&aihints, 0, sizeof(struct addrinfo));
+	aihints.ai_socktype = SOCK_STREAM;
+	aihints.ai_protocol = IPPROTO_TCP;
+	error = getaddrinfo(host, serv, &aihints, &ailist);
+	if (error) {
+		DPRINTF("%s: %s\n", host, gai_strerror(error));
+		return 0;
+	}
+	s = -1;
+	for (ai = ailist; ai != NULL; ai = ai->ai_next) {
+		s = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+		if (s < 0) {
+			DPERROR("socket");
+			continue;
+		}
+		if (connect(s, ai->ai_addr, ai->ai_addrlen) < 0) {
+			DPERROR("connect");
+			close(s);
+			s = -1;
+			continue;
+		}
+		break;
+	}
+	freeaddrinfo(ailist);
+	if (s < 0)
+		return 0;
+	hdl->fd = s;
+	return 1;
+}
+
+int
 aucat_connect_un(struct aucat *hdl, char *unit, int isaudio)
 {
 	struct sockaddr_un ca;
@@ -232,9 +366,23 @@ int
 aucat_open(struct aucat *hdl, const char *str, unsigned mode, int isaudio)
 {
 	extern char *__progname;
-	int eof;
+	int eof, hashost;
 	char unit[4], *sep, *opt;
+	char host[NI_MAXHOST];
 
+	sep = strchr(str, '/');
+	if (sep == NULL) {
+		hashost = 0;
+	} else {
+		if (sep - str >= sizeof(host)) {
+			DPRINTF("aucat_open: %s: host too long\n", str);
+			return 0;
+		}
+		memcpy(host, str, sep - str);
+		host[sep - str] = '\0';
+		hashost = 1;
+		str = sep + 1;
+	}
 	sep = strchr(str, '.');
 	if (sep == NULL) {
 		opt = "default";
@@ -248,8 +396,13 @@ aucat_open(struct aucat *hdl, const char *str, unsigned mode, int isaudio)
 		strlcpy(unit, str, opt - str);
 	}
 	DPRINTF("aucat_init: trying %s -> %s.%s\n", str, unit, opt);
-	if (!aucat_connect_un(hdl, unit, isaudio))
-		return 0;
+	if (hashost) {
+		if (!aucat_connect_tcp(hdl, host, unit, isaudio))
+			return 0;
+	} else {
+		if (!aucat_connect_un(hdl, unit, isaudio))
+			return 0;
+	}
 	if (fcntl(hdl->fd, F_SETFD, FD_CLOEXEC) < 0) {
 		DPERROR("FD_CLOEXEC");
 		goto bad_connect;
@@ -262,6 +415,13 @@ aucat_open(struct aucat *hdl, const char *str, unsigned mode, int isaudio)
 	/*
 	 * say hello to server
 	 */
+	AMSG_INIT(&hdl->wmsg);
+	hdl->wmsg.cmd = AMSG_AUTH;
+	if (!aucat_mkcookie(hdl->wmsg.u.auth.cookie))
+		goto bad_connect;
+	hdl->wtodo = sizeof(struct amsg);
+	if (!aucat_wmsg(hdl, &eof))
+		goto bad_connect;
 	AMSG_INIT(&hdl->wmsg);
 	hdl->wmsg.cmd = AMSG_HELLO;
 	hdl->wmsg.u.hello.version = AMSG_VERSION;
