@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpathvar.h,v 1.1 2011/04/05 14:25:42 dlg Exp $ */
+/*	$OpenBSD: mpathvar.h,v 1.2 2011/04/28 10:43:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -24,7 +24,6 @@ struct mpath_group;
 
 struct mpath_ops {
 	char	op_name[16];
-	void	(*op_start)(struct scsi_xfer *);
 	int	(*op_checksense)(struct scsi_xfer *);
 	int	(*op_online)(struct scsi_link *);
 	int	(*op_offline)(struct scsi_link *);

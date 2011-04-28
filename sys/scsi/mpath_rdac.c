@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_rdac.c,v 1.3 2011/04/27 09:09:36 dlg Exp $ */
+/*	$OpenBSD: mpath_rdac.c,v 1.4 2011/04/28 10:43:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -148,7 +148,6 @@ int		rdac_mpath_offline(struct scsi_link *);
 
 struct mpath_ops rdac_mpath_ops = {
 	"rdac",
-	rdac_mpath_start,
 	rdac_mpath_checksense,
 	rdac_mpath_online,
 	rdac_mpath_offline,

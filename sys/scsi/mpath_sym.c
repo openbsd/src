@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_sym.c,v 1.2 2011/04/27 09:09:36 dlg Exp $ */
+/*	$OpenBSD: mpath_sym.c,v 1.3 2011/04/28 10:43:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -67,7 +67,6 @@ int		sym_mpath_offline(struct scsi_link *);
 
 struct mpath_ops sym_mpath_ops = {
 	"sym",
-	sym_mpath_start,
 	sym_mpath_checksense,
 	sym_mpath_online,
 	sym_mpath_offline
