@@ -1,4 +1,4 @@
-/*	$OpenBSD: midiplay.c,v 1.12 2010/02/13 13:45:29 ratchov Exp $	*/
+/*	$OpenBSD: midiplay.c,v 1.13 2011/04/28 07:23:46 ratchov Exp $	*/
 /*	$NetBSD: midiplay.c,v 1.8 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -336,14 +336,14 @@ playdata(u_char *buf, u_int tot, char *name)
 		err(1, "clock_gettime");
 	for (;;) {
 		/* Locate lowest curtime */
-		bestcur = ~0;
+		bestcur = ULONG_MAX;
 		for (t = 0; t < ntrks; t++) {
 			if (tracks[t].curtime < bestcur) {
 				bestcur = tracks[t].curtime;
 				besttrk = t;
 			}
 		}
-		if (bestcur == ~0)
+		if (bestcur == ULONG_MAX)
 			break;
 		if (verbose > 1) {
 			printf("DELAY %4ld TRACK %2d ", bestcur-now, besttrk);
@@ -393,7 +393,7 @@ playdata(u_char *buf, u_int tot, char *name)
 			tp->start += mlen;
 		}
 		if (tp->start >= tp->end)
-			tp->curtime = ~0;
+			tp->curtime = ULONG_MAX;
 		else
 			tp->curtime += getvar(tp);
 	}
