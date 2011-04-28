@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.21 2011/03/25 14:51:31 claudio Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.22 2011/04/28 00:17:28 mikeb Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -374,7 +374,7 @@ handle_connection(const int listen_fd, short event, void *ev)
 {
 	struct sockaddr_storage tmp_ss;
 	struct sockaddr *client_sa, *server_sa, *fixed_server_sa;
-	struct sockaddr *client_to_proxy_sa, *proxy_to_server_sa;
+	struct sockaddr *proxy_to_server_sa;
 	struct session *s;
 	socklen_t len;
 	int client_fd, fc, on;
@@ -411,7 +411,6 @@ handle_connection(const int listen_fd, short event, void *ev)
 	/* Cast it once, and be done with it. */
 	client_sa = sstosa(&s->client_ss);
 	server_sa = sstosa(&s->server_ss);
-	client_to_proxy_sa = sstosa(&tmp_ss);
 	proxy_to_server_sa = sstosa(&s->proxy_ss);
 	fixed_server_sa = sstosa(&fixed_server_ss);
 
@@ -423,14 +422,17 @@ handle_connection(const int listen_fd, short event, void *ev)
 	 * Find out the real server and port that the client wanted.
 	 */
 	len = sizeof(struct sockaddr_storage);
-	if ((getsockname(s->client_fd, client_to_proxy_sa, &len)) < 0) {
+	if (getsockname(s->client_fd, server_sa, &len) < 0) {
 		logmsg(LOG_CRIT, "#%d getsockname failed: %s", s->id,
 		    strerror(errno));
 		goto fail;
 	}
-	if (server_lookup(client_sa, client_to_proxy_sa, server_sa,
-	    &s->client_rd) != 0) {
-	    	logmsg(LOG_CRIT, "#%d server lookup failed (no rdr?)", s->id);
+	len = sizeof(s->client_rd);
+	if (client_sa->sa_family == AF_INET &&
+	    getsockopt(s->client_fd, IPPROTO_IP, SO_RTABLE, &s->client_rd,
+	    &len)) {
+		logmsg(LOG_CRIT, "#%d getsockopt failed: %s", s->id,
+		    strerror(errno));
 		goto fail;
 	}
 	if (fixed_server) {

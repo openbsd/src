@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.14 2009/11/21 13:59:31 claudio Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.15 2011/04/28 00:17:28 mikeb Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 21 2009 $
+.Dd $Mdocdate: April 28 2011 $
 .Dt FTP-PROXY 8
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 is a proxy for the Internet File Transfer Protocol.
 FTP control connections should be redirected into the proxy using the
 .Xr pf 4
-.Ar rdr-to
+.Ar divert-to
 command, after which the proxy connects to the server on behalf of
 the client.
 .Pp
@@ -169,7 +169,7 @@ needs the following rules.
 Adjust the rules as needed.
 .Bd -literal -offset 2n
 anchor "ftp-proxy/*"
-pass in quick proto tcp to port ftp rdr-to 127.0.0.1 port 8021
+pass in quick proto tcp to port ftp divert-to 127.0.0.1 port 8021
 .Ed
 .Sh SEE ALSO
 .Xr ftp 1 ,
