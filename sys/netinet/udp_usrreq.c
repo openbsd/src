@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.141 2011/04/24 19:36:54 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.142 2011/04/28 09:56:27 claudio Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -412,10 +412,11 @@ udp_input(struct mbuf *m, ...)
 #ifdef INET6
 	if ((ip6 && IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) ||
 	    (ip && IN_MULTICAST(ip->ip_dst.s_addr)) ||
-	    (ip && in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif))) {
+	    (ip && in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif,
+	    m->m_pkthdr.rdomain))) {
 #else /* INET6 */
 	if (IN_MULTICAST(ip->ip_dst.s_addr) ||
-	    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif)) {
+	    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif, m->m_pkthdr.rdomain)) {
 #endif /* INET6 */
 		struct inpcb *last;
 		/*

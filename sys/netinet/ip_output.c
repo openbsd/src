@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.218 2011/04/05 20:33:12 henning Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.219 2011/04/28 09:56:27 claudio Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -544,7 +544,8 @@ reroute:
 	 * such a packet; if the packet is going in an IPsec tunnel, skip
 	 * this check.
 	 */
-	if ((sproto == 0) && (in_broadcast(dst->sin_addr, ifp))) {
+	if ((sproto == 0) && (in_broadcast(dst->sin_addr, ifp,
+	    m->m_pkthdr.rdomain))) {
 		if ((ifp->if_flags & IFF_BROADCAST) == 0) {
 			error = EADDRNOTAVAIL;
 			goto bad;

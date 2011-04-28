@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.246 2011/04/24 19:36:54 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.247 2011/04/28 09:56:27 claudio Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -477,7 +477,8 @@ tcp_input(struct mbuf *m, ...)
 	case AF_INET:
 		ip = mtod(m, struct ip *);
 		if (IN_MULTICAST(ip->ip_dst.s_addr) ||
-		    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif))
+		    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif,
+		    m->m_pkthdr.rdomain))
 			goto drop;
 #ifdef TCP_ECN
 		/* save ip_tos before clearing it for checksum */

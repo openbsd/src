@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.118 2011/04/28 07:10:03 claudio Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.119 2011/04/28 09:56:27 claudio Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -280,7 +280,8 @@ in_pcbbind(v, nam, p)
 			    inp->inp_rtableid) == NULL)
 				/* SOCK_RAW does not use in_pcbbind() */
 				if (!(so->so_type == SOCK_DGRAM &&
-				    in_broadcast(sin->sin_addr, NULL)))
+				    in_broadcast(sin->sin_addr, NULL,
+				    inp->inp_rtableid)))
 					return (EADDRNOTAVAIL);
 		}
 		if (lport) {

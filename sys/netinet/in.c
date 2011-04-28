@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.64 2010/11/28 20:24:33 claudio Exp $	*/
+/*	$OpenBSD: in.c,v 1.65 2011/04/28 09:56:27 claudio Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -886,12 +886,13 @@ in_scrubprefix(target)
  * Return 1 if the address might be a local broadcast address.
  */
 int
-in_broadcast(in, ifp)
-	struct in_addr in;
-	struct ifnet *ifp;
+in_broadcast(struct in_addr in, struct ifnet *ifp, u_int rtableid)
 {
 	struct ifnet *ifn, *if_first, *if_target;
 	struct ifaddr *ifa;
+	u_int rdomain;
+
+	rdomain = rtable_l2(rtableid);
 
 	if (in.s_addr == INADDR_BROADCAST ||
 	    in.s_addr == INADDR_ANY)
@@ -912,6 +913,8 @@ in_broadcast(in, ifp)
 	 * If ifp is NULL, check against all the interfaces.
 	 */
         for (ifn = if_first; ifn != if_target; ifn = TAILQ_NEXT(ifn, if_list)) {
+		if (ifn->if_rdomain != rdomain)
+			continue;
 		if ((ifn->if_flags & IFF_BROADCAST) == 0)
 			continue;
 		TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list)
