@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.10 2011/04/27 19:02:07 claudio Exp $ */
+/*	$OpenBSD: connection.c,v 1.11 2011/04/28 18:32:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -252,6 +252,8 @@ conn_task_cleanup(struct connection *c, struct task *t)
 		TAILQ_REMOVE(&c->tasks, t, entry);
 		if (!TAILQ_EMPTY(&c->tasks))
 			conn_task_schedule(c);
+		else
+			session_schedule(c->session);
 	}
 }
 
