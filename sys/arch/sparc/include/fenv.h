@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.h,v 1.1 2011/04/25 21:04:29 martynas Exp $	*/
+/*	$OpenBSD: fenv.h,v 1.2 2011/04/28 17:34:23 martynas Exp $	*/
 /*	$NetBSD: fenv.h,v 1.1.2.2 2011/02/08 16:19:41 bouyer Exp $	*/
 
 /*-
@@ -32,50 +32,75 @@
 #ifndef	_SPARC_FENV_H_
 #define	_SPARC_FENV_H_
 
-#include <sys/stdint.h>
-
-typedef	unsigned long int	fenv_t;
-typedef	unsigned long int	fexcept_t;
+/*
+ * Each symbol representing a floating point exception expands to an integer
+ * constant expression with values, such that bitwise-inclusive ORs of _all
+ * combinations_ of the constants result in distinct values.
+ *
+ * We use such values that allow direct bitwise operations on FPU registers.
+ */
+#define	FE_INEXACT		0x020
+#define	FE_DIVBYZERO		0x040
+#define	FE_UNDERFLOW		0x080
+#define	FE_OVERFLOW		0x100
+#define	FE_INVALID		0x200
 
 /*
- * Exception flags
- *
- * Symbols are defined in such a way, to correspond to the accrued
- * exception bits (aexc) fields of FSR.
+ * The following symbol is simply the bitwise-inclusive OR of all floating-point
+ * exception constants defined above.
  */
-#define	FE_INEXACT      0x00000020	/* 0000100000 */
-#define	FE_DIVBYZERO    0x00000040	/* 0001000000 */
-#define	FE_UNDERFLOW    0x00000080	/* 0010000000 */
-#define	FE_OVERFLOW     0x00000100	/* 0100000000 */
-#define	FE_INVALID	0x00000200	/* 1000000000 */
-
-#define	FE_ALL_EXCEPT	(FE_DIVBYZERO | FE_INEXACT | \
-    FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW)
+#define	FE_ALL_EXCEPT		(FE_INEXACT | FE_DIVBYZERO | FE_UNDERFLOW | \
+				 FE_OVERFLOW | FE_INVALID)
+#define	_MASK_SHIFT		18
 
 /*
- * Rounding modes
+ * Each symbol representing the rounding direction, expands to an integer
+ * constant expression whose value is distinct non-negative value.
  *
- * We can't just use the hardware bit values here, because that would
- * make FE_UPWARD and FE_DOWNWARD negative, which is not allowed.
+ * We use such values that allow direct bitwise operations on FPU registers.
  */
-#define	FE_TONEAREST	0x0
-#define	FE_TOWARDZERO	0x1
-#define	FE_UPWARD	0x2
-#define	FE_DOWNWARD	0x3
-#define	_ROUND_MASK	(FE_TONEAREST | FE_DOWNWARD | \
-    FE_UPWARD | FE_TOWARDZERO)
-#define	_ROUND_SHIFT	30
+#define	FE_TONEAREST		0x0
+#define	FE_TOWARDZERO		0x1
+#define	FE_UPWARD		0x2
+#define	FE_DOWNWARD		0x3
 
-__BEGIN_DECLS
+/*
+ * The following symbol is simply the bitwise-inclusive OR of all floating-point
+ * rounding direction constants defined above.
+ */
+#define	_ROUND_MASK		(FE_TONEAREST | FE_TOWARDZERO | FE_UPWARD | \
+				 FE_DOWNWARD)
+#define	_ROUND_SHIFT		30
 
-/* Default floating-point environment */
-extern const fenv_t	__fe_dfl_env;
-#define	FE_DFL_ENV	(&__fe_dfl_env)
+/*
+ * fenv_t represents the entire floating-point environment.
+ */
+typedef	unsigned long		fenv_t;
 
-/* We need to be able to map status flag positions to mask flag positions */
-#define	_FPUSW_SHIFT	18
-#define	_ENABLE_MASK	(FE_ALL_EXCEPT << _FPUSW_SHIFT)
+/*
+ * The following constant represents the default floating-point environment
+ * (that is, the one installed at program startup) and has type pointer to
+ * const-qualified fenv_t.
+ *
+ * It can be used as an argument to the functions within the <fenv.h> header
+ * that manage the floating-point environment, namely fesetenv() and
+ * feupdateenv().
+ */
+extern	fenv_t			__fe_dfl_env;
+#define	FE_DFL_ENV		((const fenv_t *)&__fe_dfl_env)
 
-__END_DECLS
+/*
+ * fexcept_t represents the floating-point status flags collectively, including
+ * any status the implementation associates with the flags.
+ *
+ * A floating-point status flag is a system variable whose value is set (but
+ * never cleared) when a floating-point exception is raised, which occurs as a
+ * side effect of exceptional floating-point arithmetic to provide auxiliary
+ * information.
+ *
+ * A floating-point control mode is a system variable whose value may be set by
+ * the user to affect the subsequent behavior of floating-point arithmetic.
+ */
+typedef	unsigned long		fexcept_t;
 
 #endif	/* !_SPARC_FENV_H_ */

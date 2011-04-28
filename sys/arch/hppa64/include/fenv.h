@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.h,v 1.2 2011/04/28 17:34:23 martynas Exp $	*/
+/*	$OpenBSD: fenv.h,v 1.1 2011/04/28 17:34:23 martynas Exp $	*/
 
 /*
  * Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef	_HPPA_FENV_H_
-#define	_HPPA_FENV_H_
+#ifndef	_HPPA64_FENV_H_
+#define	_HPPA64_FENV_H_
 
 /*
  * Each symbol representing a floating point exception expands to an integer
@@ -89,4 +89,4 @@ extern	fenv_t			__fe_dfl_env;
  */
 typedef	unsigned int		fexcept_t;
 
-#endif	/* !_HPPA_FENV_H_ */
+#endif	/* !_HPPA64_FENV_H_ */

@@ -1,5 +1,6 @@
-/*	$OpenBSD: fenv.h,v 1.1 2011/04/24 00:35:22 martynas Exp $	*/
+/*	$OpenBSD: fenv.h,v 1.2 2011/04/28 17:34:23 martynas Exp $	*/
 /*	$NetBSD: fenv.h,v 1.1.6.2 2010/10/24 22:48:02 jym Exp $	*/
+
 /*-
  * Copyright (c) 2004-2005 David Schultz <das (at) FreeBSD.ORG>
  * All rights reserved.
@@ -26,11 +27,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	_X86_FENV_H_
-#define	_X86_FENV_H_
-
-#include <sys/stdint.h>
-#include <i386/npx.h>
+#ifndef	_I386_FENV_H_
+#define	_I386_FENV_H_
 
 /*
  * Each symbol representing a floating point exception expands to an integer
@@ -39,19 +37,20 @@
  *
  * We use such values that allow direct bitwise operations on FPU/SSE registers.
  */
-#define	FE_INVALID	0x01	/* 000000000001 */
-#define	FE_DENORMAL	0x02	/* 000000000010 */
-#define	FE_DIVBYZERO	0x04	/* 000000000100 */
-#define	FE_OVERFLOW	0x08	/* 000000001000 */
-#define	FE_UNDERFLOW	0x10	/* 000000010000 */
-#define	FE_INEXACT	0x20	/* 000000100000 */
+#define	FE_INVALID		0x01
+#define	FE_DENORMAL		0x02
+#define	FE_DIVBYZERO		0x04
+#define	FE_OVERFLOW		0x08
+#define	FE_UNDERFLOW		0x10
+#define	FE_INEXACT		0x20
 
 /*
  * The following symbol is simply the bitwise-inclusive OR of all floating-point
  * exception constants defined above.
  */
-#define FE_ALL_EXCEPT	(FE_DIVBYZERO | FE_DENORMAL | FE_INEXACT | \
-			 FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW)
+#define	FE_ALL_EXCEPT		(FE_INVALID | FE_DENORMAL | FE_DIVBYZERO | \
+				 FE_OVERFLOW | FE_UNDERFLOW | FE_INEXACT)
+#define	_SSE_MASK_SHIFT		7
 
 /*
  * Each symbol representing the rounding direction, expands to an integer
@@ -59,34 +58,30 @@
  *
  * We use such values that allow direct bitwise operations on FPU/SSE registers.
  */
-#define	FE_TONEAREST	0x000	/* 000000000000 */
-#define	FE_DOWNWARD	0x400	/* 010000000000 */
-#define	FE_UPWARD	0x800	/* 100000000000 */
-#define	FE_TOWARDZERO	0xC00	/* 110000000000 */
+#define	FE_TONEAREST		0x000
+#define	FE_DOWNWARD		0x400
+#define	FE_UPWARD		0x800
+#define	FE_TOWARDZERO		0xc00
 
 /*
- * As compared to the x87 control word, the SSE unit's control has the rounding
- * control bits offset by 3 and the exception mask bits offset by 7
+ * The following symbol is simply the bitwise-inclusive OR of all floating-point
+ * rounding direction constants defined above.
  */
-#define	__X87_ROUND_MASK	0xC00		/* 110000000000 */
-#define	__SSE_ROUND_SHIFT	3
-#define	__SSE_EMASK_SHIFT	7
+#define	_X87_ROUND_MASK		(FE_TONEAREST | FE_DOWNWARD | FE_UPWARD | \
+				 FE_TOWARDZERO)
+#define	_SSE_ROUND_SHIFT	3
 
 /*
- * fenv_t represents the entire floating-point environment
+ * fenv_t represents the entire floating-point environment.
  */
-typedef struct {
+typedef	struct {
 	struct {
-		uint16_t control;	/* Control word register */
-		uint16_t unused1;
-		uint16_t status;	/* Status word register */
-		uint16_t unused2;
-		uint16_t tag;		/* Tag word register */
-		uint16_t unused3;
-		uint32_t others[4];	/* EIP, Pointer Selector, etc */
-	} x87;
-		
-	uint32_t mxcsr;			/* Control and status register */
+		unsigned int __control;		/* Control word register */
+		unsigned int __status;		/* Status word register */
+		unsigned int __tag;		/* Tag word register */
+		unsigned int __others[4];	/* EIP, Pointer Selector, etc */
+	} __x87;
+	unsigned int __mxcsr;			/* Control, status register */
 } fenv_t;
 
 /*
@@ -95,10 +90,11 @@ typedef struct {
  * const-qualified fenv_t.
  *
  * It can be used as an argument to the functions within the <fenv.h> header
- * that manage the floating-point environment.
+ * that manage the floating-point environment, namely fesetenv() and
+ * feupdateenv().
  */
-extern  fenv_t		__fe_dfl_env;
-#define FE_DFL_ENV      ((const fenv_t *) &__fe_dfl_env)
+extern	fenv_t			__fe_dfl_env;
+#define	FE_DFL_ENV		((const fenv_t *)&__fe_dfl_env)
 
 /*
  * fexcept_t represents the floating-point status flags collectively, including
@@ -112,6 +108,6 @@ extern  fenv_t		__fe_dfl_env;
  * A floating-point control mode is a system variable whose value may be set by
  * the user to affect the subsequent behavior of floating-point arithmetic.
  */
-typedef uint32_t fexcept_t;
+typedef	unsigned int		fexcept_t;
 
-#endif	/* ! _X86_FENV_H_ */
+#endif	/* !_I386_FENV_H_ */

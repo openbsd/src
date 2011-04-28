@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.1 2011/04/20 22:27:59 martynas Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.2 2011/04/28 17:34:23 martynas Exp $	*/
 
 /*
  * Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
@@ -30,8 +30,8 @@
  * feupdateenv().
  */
 fenv_t __fe_dfl_env = {
-	0x00000000,			/* Control register */
-	0x00000000			/* Status register */
+	0x00000000,				/* Control register */
+	0x00000000				/* Status register */
 };
 
 /*
@@ -172,6 +172,7 @@ fegetround(void)
 {
 	unsigned int fpcr;
 
+	/* Store the current floating-point control register */
 	__asm__ __volatile__ ("fmovel fpcr, %0" : "=dm" (fpcr));
 
 	return (fpcr & _ROUND_MASK);
@@ -194,9 +195,7 @@ fesetround(int round)
 	/* Store the current floating-point control register */
 	__asm__ __volatile__ ("fmovel fpcr, %0" : "=dm" (fpcr));
 
-	/*
-	 * Set the rounding direction
-	 */
+	/* Set the rounding direction */
 	fpcr &= ~_ROUND_MASK;
 	fpcr |= round;
 
@@ -242,7 +241,7 @@ feholdexcept(fenv_t *envp)
 
 	/* Mask all exceptions */
 	fpcr = envp->__control;
-	fpcr &= ~(FE_ALL_EXCEPT << _EMASK_SHIFT);
+	fpcr &= ~(FE_ALL_EXCEPT << _MASK_SHIFT);
 	__asm__ __volatile__ ("fmovel %0, fpcr" : : "dm" (fpcr));
 
 	return (0);
@@ -266,15 +265,15 @@ fesetenv(const fenv_t *envp)
 	__asm__ __volatile__ ("fmovel fpsr, %0" : "=dm" (fenv.__status));
 
 	/* Set the requested control flags */
-	fenv.__control &= ~((FE_ALL_EXCEPT << _EMASK_SHIFT) | _ROUND_MASK);
-	fenv.__control |= envp->__control & ((FE_ALL_EXCEPT << _EMASK_SHIFT) |
+	fenv.__control &= ~((FE_ALL_EXCEPT << _MASK_SHIFT) | _ROUND_MASK);
+	fenv.__control |= envp->__control & ((FE_ALL_EXCEPT << _MASK_SHIFT) |
 	    _ROUND_MASK);
 
 	/* Set the requested status flags */
 	fenv.__status &= ~FE_ALL_EXCEPT;
 	fenv.__status |= envp->__status & FE_ALL_EXCEPT;
 
-	/* Load the current floating-point control and status registers */
+	/* Load the floating-point control and status registers */
 	__asm__ __volatile__ ("fmovel %0, fpcr" : : "dm" (fenv.__control));
 	__asm__ __volatile__ ("fmovel %0, fpsr" : : "dm" (fenv.__status));
 
@@ -319,8 +318,8 @@ feenableexcept(int mask)
 	/* Store the current floating-point control register */
 	__asm__ __volatile__ ("fmovel fpcr, %0" : "=dm" (fpcr));
 
-	omask = (fpcr >> _EMASK_SHIFT) & FE_ALL_EXCEPT;
-	fpcr |= mask << _EMASK_SHIFT;
+	omask = (fpcr >> _MASK_SHIFT) & FE_ALL_EXCEPT;
+	fpcr |= mask << _MASK_SHIFT;
 
 	/* Load the floating-point control register */
 	__asm__ __volatile__ ("fmovel %0, fpcr" : : "dm" (fpcr));
@@ -339,8 +338,8 @@ fedisableexcept(int mask)
 	/* Store the current floating-point control register */
 	__asm__ __volatile__ ("fmovel fpcr, %0" : "=dm" (fpcr));
 
-	omask = (fpcr >> _EMASK_SHIFT) & FE_ALL_EXCEPT;
-	fpcr &= ~(mask << _EMASK_SHIFT);
+	omask = (fpcr >> _MASK_SHIFT) & FE_ALL_EXCEPT;
+	fpcr &= ~(mask << _MASK_SHIFT);
 
 	/* Load the floating-point control register */
 	__asm__ __volatile__ ("fmovel %0, fpcr" : : "dm" (fpcr));
@@ -356,5 +355,5 @@ fegetexcept(void)
 	/* Store the current floating-point control register */
 	__asm__ __volatile__ ("fmovel fpcr, %0" : "=dm" (fpcr));
 
-	return ((fpcr >> _EMASK_SHIFT) & FE_ALL_EXCEPT);
+	return ((fpcr >> _MASK_SHIFT) & FE_ALL_EXCEPT);
 }

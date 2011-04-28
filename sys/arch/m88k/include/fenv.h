@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.h,v 1.2 2011/04/28 17:34:23 martynas Exp $	*/
+/*	$OpenBSD: fenv.h,v 1.1 2011/04/28 17:34:23 martynas Exp $	*/
 
 /*
  * Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef	_HPPA_FENV_H_
-#define	_HPPA_FENV_H_
+#ifndef	_M88K_FENV_H_
+#define	_M88K_FENV_H_
 
 /*
  * Each symbol representing a floating point exception expands to an integer
@@ -27,8 +27,8 @@
  * We use such values that allow direct bitwise operations on FPU registers.
  */
 #define	FE_INEXACT		0x01
-#define	FE_UNDERFLOW		0x02
-#define	FE_OVERFLOW		0x04
+#define	FE_OVERFLOW		0x02
+#define	FE_UNDERFLOW		0x04
 #define	FE_DIVBYZERO		0x08
 #define	FE_INVALID		0x10
 
@@ -36,9 +36,8 @@
  * The following symbol is simply the bitwise-inclusive OR of all floating-point
  * exception constants defined above.
  */
-#define	FE_ALL_EXCEPT		(FE_INEXACT | FE_UNDERFLOW | FE_OVERFLOW | \
-				 FE_DIVBYZERO | FE_INVALID)
-#define	_MASK_SHIFT		27
+#define	FE_ALL_EXCEPT		(FE_INEXACT | FE_DIVBYZERO | FE_UNDERFLOW | \
+				 FE_OVERFLOW | FE_INVALID)
 
 /*
  * Each symbol representing the rounding direction, expands to an integer
@@ -46,22 +45,25 @@
  *
  * We use such values that allow direct bitwise operations on FPU registers.
  */
-#define	FE_TONEAREST		0x000
-#define	FE_TOWARDZERO		0x200
-#define	FE_UPWARD		0x400
-#define	FE_DOWNWARD		0x600
+#define	FE_TONEAREST		0x0000
+#define	FE_TOWARDZERO		0x4000
+#define	FE_DOWNWARD		0x8000
+#define	FE_UPWARD		0xC000
 
 /*
  * The following symbol is simply the bitwise-inclusive OR of all floating-point
  * rounding direction constants defined above.
  */
-#define	_ROUND_MASK		(FE_TONEAREST | FE_TOWARDZERO | FE_UPWARD | \
-				 FE_DOWNWARD)
+#define	_ROUND_MASK		(FE_TONEAREST | FE_TOWARDZERO | FE_DOWNWARD | \
+				 FE_UPWARD)
 
 /*
  * fenv_t represents the entire floating-point environment.
  */
-typedef	unsigned int		fenv_t;
+typedef	struct {
+	unsigned int __control;			/* Control register */
+	unsigned int __status;			/* Status register */
+} fenv_t;
 
 /*
  * The following constant represents the default floating-point environment
@@ -89,4 +91,4 @@ extern	fenv_t			__fe_dfl_env;
  */
 typedef	unsigned int		fexcept_t;
 
-#endif	/* !_HPPA_FENV_H_ */
+#endif	/* !_M88K_FENV_H_ */

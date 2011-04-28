@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.1 2011/04/23 22:39:14 martynas Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.2 2011/04/28 17:34:23 martynas Exp $	*/
 
 /*
  * Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
@@ -176,9 +176,7 @@ fesetround(int round)
 	__asm__ __volatile__ ("mf_fpcr %0" : "=f" (fpcr));
 	__asm__ __volatile__ ("trapb");
 
-	/*
-	 * Set the rounding direction
-	 */
+	/* Set the rounding direction */
 	fpcr &= ~((unsigned long)_ROUND_MASK << _ROUND_SHIFT);
 	fpcr |= (unsigned long)round << _ROUND_SHIFT;
 
@@ -200,10 +198,10 @@ fegetenv(fenv_t *envp)
 	unsigned long fpcr;
 
 	/* Store the current floating-point sticky flags */
-	envp->__excepts = sysarch(ALPHA_FPGETSTICKY, 0L);
+	envp->__sticky = sysarch(ALPHA_FPGETSTICKY, 0L) & FE_ALL_EXCEPT;
 
 	/* Store the current floating-point masks */
-	envp->__mask = sysarch(ALPHA_FPGETMASK, 0L);
+	envp->__mask = sysarch(ALPHA_FPGETMASK, 0L) & FE_ALL_EXCEPT;
 
 	/* Store the current floating-point control register */
 	__asm__ __volatile__ ("trapb");
@@ -229,13 +227,11 @@ feholdexcept(fenv_t *envp)
 	fegetenv(envp);
 
 	/* Clear exception flags */
-	a.mask = envp->__excepts;
-	a.mask &= ~FE_ALL_EXCEPT;
+	a.mask = 0;
 	sysarch(ALPHA_FPSETSTICKY, &a);
 
 	/* Mask all exceptions */
-	a.mask = envp->__excepts;
-	a.mask &= ~FE_ALL_EXCEPT;
+	a.mask = 0;
 	sysarch(ALPHA_FPSETMASK, &a);
 
 	return (0);
@@ -256,7 +252,7 @@ fesetenv(const fenv_t *envp)
 	struct alpha_fp_except_args a;
 
 	/* Load the floating-point sticky flags */
-	a.mask = envp->__excepts & FE_ALL_EXCEPT;
+	a.mask = envp->__sticky & FE_ALL_EXCEPT;
 	sysarch(ALPHA_FPSETSTICKY, &a);
 
 	/* Load the floating-point masks */
@@ -268,6 +264,7 @@ fesetenv(const fenv_t *envp)
 	__asm__ __volatile__ ("mf_fpcr %0" : "=f" (fpcr));
 	__asm__ __volatile__ ("trapb");
 
+	/* Set the requested flags */
 	fpcr &= ~((unsigned long)_ROUND_MASK << _ROUND_SHIFT);
 	fpcr |= ((unsigned long)envp->__round & _ROUND_MASK) << _ROUND_SHIFT;
 

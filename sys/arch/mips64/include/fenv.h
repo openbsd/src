@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.h,v 1.1 2011/04/26 21:14:07 martynas Exp $	*/
+/*	$OpenBSD: fenv.h,v 1.2 2011/04/28 17:34:23 martynas Exp $	*/
 
 /*
  * Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
@@ -26,18 +26,19 @@
  *
  * We use such values that allow direct bitwise operations on FPU registers.
  */
-#define	FE_INEXACT	0x04
-#define	FE_UNDERFLOW	0x08
-#define	FE_OVERFLOW	0x10
-#define	FE_DIVBYZERO	0x20
-#define	FE_INVALID	0x40
+#define	FE_INEXACT		0x04
+#define	FE_UNDERFLOW		0x08
+#define	FE_OVERFLOW		0x10
+#define	FE_DIVBYZERO		0x20
+#define	FE_INVALID		0x40
 
 /*
  * The following symbol is simply the bitwise-inclusive OR of all floating-point
  * exception constants defined above.
  */
-#define	FE_ALL_EXCEPT		\
-	(FE_DIVBYZERO | FE_INEXACT | FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW)
+#define	FE_ALL_EXCEPT		(FE_INEXACT | FE_UNDERFLOW | FE_OVERFLOW | \
+				 FE_DIVBYZERO | FE_INVALID)
+#define	_MASK_SHIFT		5
 
 /*
  * Each symbol representing the rounding direction, expands to an integer
@@ -51,19 +52,28 @@
 #define	FE_DOWNWARD		0x3
 
 /*
- * FPSCR encodes rounding modes by bits 0-1.
- * FPSCR flags and exception mask shifts by 5.
+ * The following symbol is simply the bitwise-inclusive OR of all floating-point
+ * rounding direction constants defined above.
  */
-#define	_ROUND_MASK		0x3
-#define	_EMASK_SHIFT		5
+#define	_ROUND_MASK		(FE_TONEAREST | FE_TOWARDZERO | FE_UPWARD | \
+				 FE_DOWNWARD)
 
 /*
- * fenv_t represents the entire floating-point environment
+ * fenv_t represents the entire floating-point environment.
  */
-typedef unsigned int fenv_t;
+typedef	unsigned int fenv_t;
 
-extern fenv_t			__fe_dfl_env;
-#define	FE_DFL_ENV		((const fenv_t *) &__fe_dfl_env)
+/*
+ * The following constant represents the default floating-point environment
+ * (that is, the one installed at program startup) and has type pointer to
+ * const-qualified fenv_t.
+ *
+ * It can be used as an argument to the functions within the <fenv.h> header
+ * that manage the floating-point environment, namely fesetenv() and
+ * feupdateenv().
+ */
+extern	fenv_t			__fe_dfl_env;
+#define	FE_DFL_ENV		((const fenv_t *)&__fe_dfl_env)
 
 /*
  * fexcept_t represents the floating-point status flags collectively, including
@@ -77,6 +87,6 @@ extern fenv_t			__fe_dfl_env;
  * A floating-point control mode is a system variable whose value may be set by
  * the user to affect the subsequent behavior of floating-point arithmetic.
  */
-typedef unsigned int fexcept_t;
+typedef	unsigned int		fexcept_t;
 
-#endif	/* ! _MIPS64_FENV_H_ */
+#endif	/* !_MIPS64_FENV_H_ */

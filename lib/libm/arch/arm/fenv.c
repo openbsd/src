@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.1 2011/04/24 00:20:27 martynas Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.2 2011/04/28 17:34:23 martynas Exp $	*/
 
 /*
  * Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
@@ -138,9 +138,7 @@ fesetround(int round)
 	if (round & ~_ROUND_MASK)
 		return (-1);
 
-	/*
-	 * Set the rounding direction
-	 */
+	/* Set the rounding direction */
 	_softfloat_float_rounding_mode &= ~_ROUND_MASK;
 	_softfloat_float_rounding_mode |= round;
 
@@ -155,7 +153,7 @@ int
 fegetenv(fenv_t *envp)
 {
 	/* Store the current floating-point sticky flags */
-	envp->__excepts = _softfloat_float_exception_flags;
+	envp->__sticky = _softfloat_float_exception_flags;
 
 	/* Store the current floating-point masks */
 	envp->__mask = _softfloat_float_exception_mask;
@@ -199,7 +197,7 @@ int
 fesetenv(const fenv_t *envp)
 {
 	/* Load the floating-point sticky flags */
-	_softfloat_float_exception_flags = envp->__excepts & FE_ALL_EXCEPT;
+	_softfloat_float_exception_flags = envp->__sticky & FE_ALL_EXCEPT;
 
 	/* Load the floating-point masks */
 	_softfloat_float_exception_mask = envp->__mask & FE_ALL_EXCEPT;

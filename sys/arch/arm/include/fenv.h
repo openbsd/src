@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.h,v 1.1 2011/04/24 00:20:27 martynas Exp $	*/
+/*	$OpenBSD: fenv.h,v 1.2 2011/04/28 17:34:23 martynas Exp $	*/
 
 /*
  * Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
@@ -36,8 +36,8 @@
  * The following symbol is simply the bitwise-inclusive OR of all floating-point
  * exception constants defined above.
  */
-#define	FE_ALL_EXCEPT		\
-	(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW | FE_UNDERFLOW | FE_INEXACT)
+#define	FE_ALL_EXCEPT		(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW | \
+				 FE_UNDERFLOW | FE_INEXACT)
 
 /*
  * Each symbol representing the rounding direction, expands to an integer
@@ -54,20 +54,29 @@
  * The following symbol is simply the bitwise-inclusive OR of all floating-point
  * rounding direction constants defined above.
  */
-#define	_ROUND_MASK		\
-	(FE_TOWARDZERO | FE_DOWNWARD | FE_TONEAREST | FE_UPWARD)
+#define	_ROUND_MASK		(FE_TONEAREST | FE_UPWARD | FE_DOWNWARD | \
+				 FE_TOWARDZERO)
 
 /*
- * fenv_t represents the entire floating-point environment
+ * fenv_t represents the entire floating-point environment.
  */
-typedef struct {
-	unsigned short __excepts;
-	unsigned short __mask;
-	unsigned short __round;
+typedef	struct {
+	unsigned int __sticky;
+	unsigned int __mask;
+	unsigned int __round;
 } fenv_t;
 
-extern fenv_t			__fe_dfl_env;
-#define	FE_DFL_ENV		((const fenv_t *) &__fe_dfl_env)
+/*
+ * The following constant represents the default floating-point environment
+ * (that is, the one installed at program startup) and has type pointer to
+ * const-qualified fenv_t.
+ *
+ * It can be used as an argument to the functions within the <fenv.h> header
+ * that manage the floating-point environment, namely fesetenv() and
+ * feupdateenv().
+ */
+extern	fenv_t			__fe_dfl_env;
+#define	FE_DFL_ENV		((const fenv_t *)&__fe_dfl_env)
 
 /*
  * fexcept_t represents the floating-point status flags collectively, including
@@ -81,6 +90,6 @@ extern fenv_t			__fe_dfl_env;
  * A floating-point control mode is a system variable whose value may be set by
  * the user to affect the subsequent behavior of floating-point arithmetic.
  */
-typedef unsigned short fexcept_t;
+typedef	unsigned int		fexcept_t;
 
-#endif	/* ! _ARM_FENV_H_ */
+#endif	/* !_ARM_FENV_H_ */
