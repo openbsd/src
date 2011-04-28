@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.h,v 1.22 2011/03/23 16:54:35 pirofti Exp $	*/
+/*	$OpenBSD: pmap_motorola.h,v 1.23 2011/04/28 20:53:32 ariane Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -139,6 +139,12 @@ void	pmap_kenter_cache(vaddr_t, paddr_t, pt_entry_t);
 #ifdef M68K_MMU_HP
 vaddr_t	pmap_prefer(vaddr_t, vaddr_t);
 #define	PMAP_PREFER(foff, va)	pmap_prefer((foff), (va))
+
+extern int	pmap_aliasmask;	/* separation at which VA aliasing is ok */
+/* pmap prefer alignment */
+#define PMAP_PREFER_ALIGN()	(pmap_aliasmask ? pmap_aliasmask + 1 : 0)
+/* pmap prefer offset */
+#define PMAP_PREFER_OFFSET(of)	((of) & pmap_aliasmask)
 #endif
 
 #endif	/* _KERNEL */
