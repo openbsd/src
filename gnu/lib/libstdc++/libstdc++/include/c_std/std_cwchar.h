@@ -141,24 +141,24 @@ namespace std
   using ::fputws;
   using ::fwide;
 #if defined(_GLIBCPP_USE_WCHAR_T)
-  using ::fwprintf;
   using ::fwscanf;
-  using ::swprintf;
   using ::swscanf;
-  using ::vfwprintf;
   using ::vfwscanf;
-  using ::vswprintf;
   using ::vswscanf;
-  using ::vwprintf;
   using ::vwscanf;
   using ::wcsftime;
   using ::wcstod;
   using ::wcstof;
   using ::wcstol;
   using ::wcstoul;
-  using ::wprintf;
   using ::wscanf;
 #endif
+  using ::fwprintf;
+  using ::swprintf;
+  using ::vfwprintf;
+  using ::vswprintf;
+  using ::vwprintf;
+  using ::wprintf;
   using ::getwc;
   using ::getwchar;
   using ::mbrlen;
