@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.22 2011/04/05 15:28:49 dlg Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.23 2011/04/28 11:24:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -557,13 +557,13 @@ vscsiclose(dev_t dev, int flags, int mode, struct proc *p)
 
 	while ((ccb = TAILQ_FIRST(&sc->sc_ccb_t2i)) != NULL) {
 		TAILQ_REMOVE(&sc->sc_ccb_t2i, ccb, ccb_entry);
-		ccb->ccb_xs->error = XS_DRIVER_STUFFUP;
+		ccb->ccb_xs->error = XS_RESET;
 		vscsi_done(sc, ccb);
 	}
 
 	while ((ccb = TAILQ_FIRST(&sc->sc_ccb_i2t)) != NULL) {
 		TAILQ_REMOVE(&sc->sc_ccb_i2t, ccb, ccb_entry);
-		ccb->ccb_xs->error = XS_DRIVER_STUFFUP;
+		ccb->ccb_xs->error = XS_RESET;
 		vscsi_done(sc, ccb);
 	}
 
