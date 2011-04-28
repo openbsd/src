@@ -88,7 +88,7 @@
 ./usr/lib/gcc-lib/hppa64-unknown-openbsd4.9/3.3.5/collect2
 ./usr/lib/gcc-lib/hppa64-unknown-openbsd4.9/3.3.5/specs
 ./usr/lib/libasn1.so.18.0
-./usr/lib/libc.so.58.1
+./usr/lib/libc.so.58.2
 ./usr/lib/libcom_err.so.18.0
 ./usr/lib/libcrypto.so.19.0
 ./usr/lib/libcurses.so.12.0
@@ -102,7 +102,7 @@
 ./usr/lib/libkafs.so.18.0
 ./usr/lib/libkrb5.so.18.0
 ./usr/lib/libkvm.so.10.0
-./usr/lib/libm.so.5.2
+./usr/lib/libm.so.5.3
 ./usr/lib/libmenu.so.5.0
 ./usr/lib/libmenuw.so.5.0
 ./usr/lib/libmilter.so.2.1
@@ -122,7 +122,7 @@
 ./usr/lib/libskey.so.5.1
 ./usr/lib/libsndio.so.4.0
 ./usr/lib/libssl.so.16.0
-./usr/lib/libstdc++.so.49.0
+./usr/lib/libstdc++.so.50.0
 ./usr/lib/libtermcap.so.12.0
 ./usr/lib/libtermlib.so.12.0
 ./usr/lib/libusbhid.so.3.0
@@ -1629,6 +1629,7 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/expat.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/expat_external.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/fcntl.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/fenv.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/float.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/fnmatch.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/form.ph

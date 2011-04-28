@@ -942,6 +942,7 @@
 ./usr/include/expat.h
 ./usr/include/expat_external.h
 ./usr/include/fcntl.h
+./usr/include/fenv.h
 ./usr/include/float.h
 ./usr/include/fnmatch.h
 ./usr/include/form.h

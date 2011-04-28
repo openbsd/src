@@ -927,6 +927,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/expat.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/expat_external.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/fcntl.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/fenv.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/float.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/fnmatch.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/form.ph
