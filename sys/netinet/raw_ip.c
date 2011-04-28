@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.55 2011/04/24 19:36:54 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.56 2011/04/28 07:11:58 claudio Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -434,13 +434,15 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			error = EINVAL;
 			break;
 		}
-		if ((TAILQ_EMPTY(&ifnet)) ||
-		    ((addr->sin_family != AF_INET) &&
-		     (addr->sin_family != AF_IMPLINK)) ||
-		    (addr->sin_addr.s_addr &&
-		     (!(so->so_options & SO_BINDANY) &&
-		     in_iawithaddr(addr->sin_addr, inp->inp_rtableid) ==
-		     NULL))) {
+		if (TAILQ_EMPTY(&ifnet) ||
+		    addr->sin_family != AF_INET ||
+		    addr->sin_addr.s_addr == 0) {
+			error = EADDRNOTAVAIL;
+			break;
+		}
+		if (!((so->so_options & SO_BINDANY) ||
+		     in_iawithaddr(addr->sin_addr, inp->inp_rtableid) ||
+		     in_broadcast(addr->sin_addr, NULL))) {
 			error = EADDRNOTAVAIL;
 			break;
 		}
@@ -459,8 +461,7 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			error = EADDRNOTAVAIL;
 			break;
 		}
-		if ((addr->sin_family != AF_INET) &&
-		     (addr->sin_family != AF_IMPLINK)) {
+		if (addr->sin_family != AF_INET) {
 			error = EAFNOSUPPORT;
 			break;
 		}
