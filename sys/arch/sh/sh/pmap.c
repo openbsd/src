@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.17 2010/12/14 20:24:25 jasper Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.18 2011/04/28 20:40:36 ariane Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
@@ -902,6 +902,28 @@ pmap_prefer(vaddr_t foff, vaddr_t va)
 		va += ((foff - va) & sh_cache_prefer_mask);
 
 	return va;
+}
+
+/*
+ * pmap_prefer_align()
+ *
+ * Return virtual cache alignment.
+ */
+vaddr_t
+pmap_prefer_align(void)
+{
+	return SH_HAS_VIRTUAL_ALIAS ? sh_cache_prefer_mask + 1 : 0;
+}
+
+/*
+ * pmap_prefer_offset(vaddr_t of)
+ *
+ * Calculate offset in virtual cache.
+ */
+vaddr_t
+pmap_prefer_offset(vaddr_t of)
+{
+	return of & (SH_HAS_VIRTUAL_ALIAS ? sh_cache_prefer_mask : 0);
 }
 #endif /* SH4 */
 

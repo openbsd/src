@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.9 2010/12/26 15:41:00 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.10 2011/04/28 20:40:36 ariane Exp $	*/
 /*	$NetBSD: pmap.h,v 1.28 2006/04/10 23:12:11 uwe Exp $	*/
 
 /*-
@@ -81,6 +81,13 @@ pmap_remove_all(struct pmap *pmap)
 #ifdef SH4
 #define	PMAP_PREFER(pa, va)		pmap_prefer((pa), (va))
 vaddr_t	pmap_prefer(vaddr_t, vaddr_t);
+vaddr_t	pmap_prefer_align(void);
+vaddr_t	pmap_prefer_offset(vaddr_t);
+
+/* pmap prefer alignment */
+#define PMAP_PREFER_ALIGN()		pmap_prefer_align()
+/* pmap prefer offset in alignment */
+#define PMAP_PREFER_OFFSET(of)		pmap_prefer_offset(of)
 #endif /* SH4 */
 
 #define	__HAVE_PMAP_DIRECT
