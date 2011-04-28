@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.120 2011/04/26 17:20:20 jsing Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.121 2011/04/28 17:50:17 marco Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -790,7 +790,7 @@ disk_construct(struct disk *diskp, char *lockname)
 	mtx_init(&diskp->dk_mtx, IPL_BIO);
 
 	diskp->dk_flags |= DKF_CONSTRUCTED;
-	    
+
 	return (0);
 }
 
@@ -1003,7 +1003,7 @@ dk_mountroot(void)
 #endif
 	default:
 #ifdef FFS
-		{ 
+		{
 		extern int ffs_mountroot(void);
 
 		printf("filesystem type %d not known.. assuming ffs\n",
@@ -1011,7 +1011,7 @@ dk_mountroot(void)
 		mountrootfn = ffs_mountroot;
 		}
 #else
-		panic("disk 0x%x filesystem type %d not known", 
+		panic("disk 0x%x filesystem type %d not known",
 		    rootdev, dl.d_partitions[part].p_fstype);
 #endif
 	}
