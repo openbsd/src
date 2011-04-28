@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.25 2011/03/23 16:54:36 pirofti Exp $ */
+/*      $OpenBSD: pmap.h,v 1.26 2011/04/28 20:46:30 ariane Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -124,6 +124,13 @@ extern	struct pmap *const kernel_pmap_ptr;
 #define	PMAP_STEAL_MEMORY		/* Enable 'stealing' during boot */
 
 #define PMAP_PREFER(pa, va)		pmap_prefer(pa, va)
+
+extern vaddr_t CpuCacheAliasMask;	/* from mips64/mips64/cpu.c */
+/* pmap prefer alignment */
+#define PMAP_PREFER_ALIGN()						\
+	(CpuCacheAliasMask ? CpuCacheAliasMask + 1 : 0)
+/* pmap prefer offset in alignment */
+#define PMAP_PREFER_OFFSET(of)		((of) & CpuCacheAliasMask)
 
 #define	pmap_update(x)			do { /* nothing */ } while (0)
 
