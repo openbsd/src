@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldd.1,v 1.8 2009/03/02 09:27:34 sobrado Exp $
+.\"	$OpenBSD: ldd.1,v 1.9 2011/04/29 07:19:19 jmc Exp $
 .\"
 .\" Copyright (c) 1996 Per Fogelstrom
 .\"
@@ -24,7 +24,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: March 2 2009 $
+.Dd $Mdocdate: April 29 2011 $
 .Dt LDD 1
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@
 .Nd list dynamic object dependencies
 .Sh SYNOPSIS
 .Nm ldd
-.Op Fl x
+.\".Op Fl x
 .Ar program ...
 .Sh DESCRIPTION
 .Nm
@@ -48,14 +48,14 @@ sets the environment variable
 .Ev LD_TRACE_LOADED_OBJECTS
 and then execs
 .Ar program .
-.Pp
-If
-.Nm
-is invoked with the
-.Fl x
-flag, the tags from
-.Ar program
-are listed without using current ldconfig configuration.
+.\".Pp
+.\"If
+.\".Nm
+.\"is invoked with the
+.\".Fl x
+.\"flag, the tags from
+.\".Ar program
+.\"are listed without using current ldconfig configuration.
 .Sh DIAGNOSTICS
 Exit status 0 if no error.
 Exit status 1 if arg error.
