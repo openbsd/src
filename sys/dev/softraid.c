@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.228 2011/04/29 13:03:12 dlg Exp $ */
+/* $OpenBSD: softraid.c,v 1.229 2011/04/29 13:04:38 dlg Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1509,7 +1509,7 @@ sr_meta_native_attach(struct sr_discipline *sd, int force)
 
 	if (sr && not_sr) {
 		printf("%s: not all chunks are of the native metadata format\n",
-		     DEVNAME(sc));
+		    DEVNAME(sc));
 		goto bad;
 	}
 
@@ -2555,7 +2555,7 @@ sr_hotspare_rebuild(struct sr_discipline *sd)
 	struct sr_chunk_head	*cl;
 	struct sr_chunk		*hotspare, *chunk = NULL;
 	struct sr_workunit	*wu;
-	struct sr_ccb           *ccb;
+	struct sr_ccb		*ccb;
 	int			i, s, chunk_no, busy;
 
 	/*
