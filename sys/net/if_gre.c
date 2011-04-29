@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.53 2011/04/04 15:50:18 claudio Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.54 2011/04/29 15:14:10 claudio Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -115,7 +115,6 @@ int gre_allow = 0;
 int gre_wccp = 0;
 int ip_mobile_allow = 0;
 
-void gre_compute_route(struct gre_softc *);
 void gre_keepalive(void *);
 void gre_send_keepalive(void *);
 void gre_link_state(struct gre_softc *);
@@ -536,8 +535,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 
 		/*
-		 * set tunnel endpoints, compute a less specific route
-		 * to the remote end and mark if as up
+		 * set tunnel endpoints and mark if as up
 		 */
 		sa = &ifr->ifr_addr;
 		if (cmd == GRESADDRS )
@@ -547,12 +545,10 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 recompute:
 		if ((sc->g_src.s_addr != INADDR_ANY) &&
 		    (sc->g_dst.s_addr != INADDR_ANY)) {
-			if (sc->route.ro_rt != 0) {
-				/* free old route */
+			if (sc->route.ro_rt != 0)
 				RTFREE(sc->route.ro_rt);
-				sc->route.ro_rt = (struct rtentry *) 0;
-			}
-			gre_compute_route(sc);
+			/* ip_output() will do the lookup */
+			bzero(&sc->route, sizeof(sc->route));
 			ifp->if_flags |= IFF_UP;
 		}
 		break;
@@ -657,47 +653,6 @@ recompute:
 
 	splx(s);
 	return (error);
-}
-
-/*
- * computes a route to our destination that is not the one
- * which would be taken by ip_output(), as this one will loop back to
- * us. If the interface is p2p as  a--->b, then a routing entry exists
- * If we now send a packet to b (e.g. ping b), this will come down here
- * gets src=a, dst=b tacked on and would from ip_output() sent back to
- * if_gre.
- * Goal here is to compute a route to b that is less specific than
- * a-->b. We know that this one exists as in normal operation we have
- * at least a default route which matches.
- */
-
-void
-gre_compute_route(struct gre_softc *sc)
-{
-	struct route *ro;
-
-	ro = &sc->route;
-
-	bzero(ro, sizeof(struct route));
-	ro->ro_dst.sa_family = AF_INET;
-	ro->ro_dst.sa_len = sizeof(ro->ro_dst);
-	((struct sockaddr_in *) &ro->ro_dst)->sin_addr = sc->g_dst;
-
-	ro->ro_rt = rtalloc1(&ro->ro_dst, RT_REPORT | RT_NOCLONING,
-	    sc->g_rtableid);
-	if (ro->ro_rt == NULL)
-		return;
-
-	/*
-	 * Check whether we just created a loop. An even more paranoid
-	 * check would be against all GRE interfaces, but that would
-	 * not allow people to link GRE tunnels.
-	 */
-	if (ro->ro_rt->rt_ifp == &sc->sc_if) {
-		RTFREE(ro->ro_rt);
-		ro->ro_rt = NULL;
-		return;
-	}
 }
 
 /*
