@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.173 2011/04/06 15:16:54 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.174 2011/04/29 02:10:05 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -857,6 +857,7 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 	sc_link->target = target;
 	sc_link->lun = lun;
 	sc_link->interpret_sense = scsi_interpret_sense;
+	sc_link->node_wwn = sc_link->port_wwn = 0;
 	TAILQ_INIT(&sc_link->queue);
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_link created.\n"));
