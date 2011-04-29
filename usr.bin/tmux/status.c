@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.74 2011/04/24 21:32:07 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.75 2011/04/29 07:07:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -642,7 +642,7 @@ status_job_callback(struct job *job)
 		buf = xstrdup(line);
 
 	so->out = buf;
-	server_redraw_client(c);
+	server_status_client(c);
 }
 
 /* Return winlink status line entry and adjust gc as necessary. */
