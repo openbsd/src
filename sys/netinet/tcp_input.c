@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.247 2011/04/28 09:56:27 claudio Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.248 2011/04/29 06:28:21 blambert Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2278,12 +2278,12 @@ dropwithreset:
 		goto drop;
 	if (tiflags & TH_ACK) {
 		tcp_respond(tp, mtod(m, caddr_t), th, (tcp_seq)0, th->th_ack,
-		    TH_RST, 0);
+		    TH_RST, m->m_pkthdr.rdomain);
 	} else {
 		if (tiflags & TH_SYN)
 			tlen++;
 		tcp_respond(tp, mtod(m, caddr_t), th, th->th_seq + tlen,
-		    (tcp_seq)0, TH_RST|TH_ACK, 0);
+		    (tcp_seq)0, TH_RST|TH_ACK, m->m_pkthdr.rdomain);
 	}
 	m_freem(m);
 	return;
