@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.182 2011/04/04 14:25:16 mikeb Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.183 2011/04/29 12:36:31 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -902,6 +902,11 @@ carp_clone_create(ifc, unit)
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, ETHER_HDR_LEN);
 #endif
+
+	/* Hook carp_addr_updated to cope with address and route changes. */
+	sc->ah_cookie = hook_establish(sc->sc_if.if_addrhooks, 0,
+	    carp_addr_updated, sc);
+
 	return (0);
 }
 
@@ -984,6 +989,8 @@ carpdetach(struct carp_softc *sc)
 	carp_multicast_cleanup(sc);
 
 	s = splnet();
+	if (sc->ah_cookie != NULL)
+		hook_disestablish(sc->sc_if.if_addrhooks, sc->ah_cookie);
 	if (sc->sc_carpdev != NULL) {
 		if (sc->lh_cookie != NULL)
 			hook_disestablish(sc->sc_carpdev->if_linkstatehooks,
@@ -2045,14 +2052,6 @@ carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 
 	carp_set_state_all(sc, INIT);
 
-	/*
-	 * Hook if_addrhooks so that we get a callback after in_ifinit has run,
-	 * to correct any inappropriate routes that it inserted.
-	 */
-	if (sc->ah_cookie == NULL)
-		sc->ah_cookie = hook_establish(sc->sc_if.if_addrhooks, 0,
-		    carp_addr_updated, sc);
-
 	return (0);
 }
 
@@ -2137,10 +2136,10 @@ carp_set_addr6(struct carp_softc *sc, struct sockaddr_in6 *sin6)
 	if (sc->sc_naddrs6 == 0 && (error = carp_join_multicast6(sc)) != 0)
 		return (error);
 
-	if (sc->sc_carpdev != NULL && sc->sc_naddrs6)
+	if (sc->sc_carpdev != NULL)
 		sc->sc_if.if_flags |= IFF_UP;
+
 	carp_set_state_all(sc, INIT);
-	carp_setrun_all(sc, 0);
 
 	return (0);
 }
