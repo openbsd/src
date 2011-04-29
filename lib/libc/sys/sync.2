@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sync.2,v 1.11 2007/05/31 19:19:34 jmc Exp $
+.\"	$OpenBSD: sync.2,v 1.12 2011/04/29 07:12:44 jmc Exp $
 .\"	$NetBSD: sync.2,v 1.4 1995/02/27 12:38:41 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)sync.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 29 2011 $
 .Dt SYNC 2
 .Os
 .Sh NAME
@@ -49,8 +49,7 @@ The kernel keeps this information in core to reduce
 the number of disk I/O transfers required by the system.
 As information in the cache is lost after a system crash a
 .Fn sync
-call is issued frequently by the in-kernel process
-.Xr update 8
+call is issued frequently by the in-kernel process update
 (about every 30 seconds).
 .Pp
 The function
@@ -58,8 +57,7 @@ The function
 may be used to synchronize individual file descriptor attributes.
 .Sh SEE ALSO
 .Xr fsync 2 ,
-.Xr sync 8 ,
-.Xr update 8
+.Xr sync 8
 .Sh HISTORY
 A
 .Fn sync
