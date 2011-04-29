@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iswalnum.3,v 1.3 2010/09/10 18:38:19 jmc Exp $
+.\"	$OpenBSD: iswalnum.3,v 1.4 2011/04/29 11:24:24 stsp Exp $
 .\"	$NetBSD: iswalnum.3,v 1.8 2003/09/08 17:54:31 wiz Exp $
 .\"
 .\" Copyright (c) 1991 The Regents of the University of California.
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)isalnum.3	5.2 (Berkeley) 6/29/91
 .\"
-.Dd $Mdocdate: September 10 2010 $
+.Dd $Mdocdate: April 29 2011 $
 .Dt ISWALNUM 3
 .Os
 .Sh NAME
@@ -115,3 +115,6 @@ The argument to these functions must be
 or a valid
 .Fa wchar_t
 value with the current locale; otherwise, the result is undefined.
+.Sh BUGS
+In a UTF-8 locale these functions return wrong answers for some characters
+because they do not cover the entire Unicode character set.
