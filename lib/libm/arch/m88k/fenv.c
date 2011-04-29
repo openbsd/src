@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.2 2011/04/28 22:07:10 miod Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.3 2011/04/29 21:37:40 martynas Exp $	*/
 
 /*
  * Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
@@ -109,8 +109,8 @@ feraiseexcept(int excepts)
 		d *= 2.0;
 	}
 	if (excepts & FE_UNDERFLOW) {
-		d = 0x1p-1022;
-		d /= 0x1p1023;
+		d = 0x1p1023;
+		d = 0x1p-1022 / d;
 	}
 	if (excepts & FE_INEXACT) {
 		d = 0x1p-1022;
