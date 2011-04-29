@@ -1,4 +1,4 @@
-/*	$OpenBSD: orientation_test.c,v 1.1 2009/11/21 09:56:10 guenther Exp $ */
+/*	$OpenBSD: orientation_test.c,v 1.2 2011/04/29 15:26:30 stsp Exp $ */
 
 /*
  * Copyright (c) 2009 Philip Guenther
@@ -218,7 +218,7 @@ main(int argc, char *argv[])
 
 
 	/* WIDE CHAR TIME! */
-	/* the four functions prefixed with "//X" are unimplemented */
+	/* the two functions prefixed with "//X" are unimplemented */
 
 	/* input */
 	TEST_WIDE(getwc(f));
@@ -231,7 +231,7 @@ main(int argc, char *argv[])
 	TEST_WIDE(putwc(L'c', f));
 	TEST_WIDE(fputwc(L'c', f));
 	TEST_WIDE(fputws(L"foo", f));
-//X	TEST_WIDE(fwprintf(f, L"%s\n", L"foo"));
+	TEST_WIDE(fwprintf(f, L"%s\n", L"foo"));
 
 	/* input from stdin */
 	TEST_WIDE_STD(stdin, getwchar());
@@ -239,7 +239,7 @@ main(int argc, char *argv[])
 
 	/* output to stdout */
 	TEST_WIDE_STD(stdout, putwchar(L'c'));
-//X	TEST_WIDE_STD(stdout, wprintf(L"foo"));
+	TEST_WIDE_STD(stdout, wprintf(L"foo"));
 
 
 	TEST_UNCHANGED_STD(stderr, perror("foo"));
