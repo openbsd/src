@@ -1,4 +1,4 @@
-/*	$OpenBSD: apply.c,v 1.24 2009/10/27 23:59:35 deraadt Exp $	*/
+/*	$OpenBSD: apply.c,v 1.25 2011/04/29 05:45:11 lum Exp $	*/
 /*	$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $	*/
 
 /*-
@@ -44,8 +44,8 @@
 #include <string.h>
 #include <unistd.h>
 
-void	usage(void);
-int	mysystem(const char *);
+__dead	void	usage(void);
+static	int	mysystem(const char *);
 
 int
 main(int argc, char *argv[])
@@ -179,9 +179,8 @@ main(int argc, char *argv[])
 		/* Run the command. */
 		if (debug)
 			(void)printf("%s\n", c);
-		else
-			if (mysystem(c))
-				rval = 1;
+		else if (mysystem(c))
+			rval = 1;
 	}
 
 	if (argc != 1)
@@ -191,14 +190,14 @@ main(int argc, char *argv[])
 }
 
 /*
- * system --
+ * mysystem --
  * 	Private version of system(3).  Use the user's SHELL environment
  *	variable as the shell to execute.
  */
-int
+static int
 mysystem(const char *command)
 {
-	static char *name, *shell;
+	static const char *name, *shell;
 	pid_t pid;
 	int pstat;
 	sigset_t mask, omask;
@@ -235,7 +234,7 @@ mysystem(const char *command)
 	return(pid == -1 ? -1 : pstat);
 }
 
-void
+__dead void
 usage(void)
 {
 	(void)fprintf(stderr,
