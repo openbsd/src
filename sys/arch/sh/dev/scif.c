@@ -1,4 +1,4 @@
-/*	$OpenBSD: scif.c,v 1.14 2010/07/02 17:27:01 nicm Exp $	*/
+/*	$OpenBSD: scif.c,v 1.15 2011/04/30 16:08:44 miod Exp $	*/
 /*	$NetBSD: scif.c,v 1.47 2006/07/23 22:06:06 ad Exp $ */
 
 /*-
@@ -121,11 +121,7 @@
 void	scifstart(struct tty *);
 int	scifparam(struct tty *, struct termios *);
 
-void scifcnprobe(struct consdev *);
-void scifcninit(struct consdev *);
-void scifcnputc(dev_t, int);
-int scifcngetc(dev_t);
-void scifcnpoolc(dev_t, int);
+cons_decl(scif);
 void scif_intr_init(void);
 int scifintr(void *);
 
