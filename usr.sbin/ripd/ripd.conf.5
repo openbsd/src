@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ripd.conf.5,v 1.12 2010/01/02 19:44:53 schwarze Exp $
+.\"	$OpenBSD: ripd.conf.5,v 1.13 2011/04/30 07:52:33 sthen Exp $
 .\"
 .\" Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 2 2010 $
+.Dd $Mdocdate: April 30 2011 $
 .Dt RIPD.CONF 5
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ Global settings concerns the main behaviour of the daemon.
 .Bl -tag -width Ds -compact
 .It Xo
 .Ic fib-update
-.Pq Ic yes Ns \&| Ns Ic no
+.Pq Ic yes Ns | Ns Ic no
 .Xc
 If set to
 .Ic no ,
@@ -87,7 +87,7 @@ Table 0 is the default table.
 .Op Ic no
 .Ic redistribute
 .Sm off
-.Po Ic static Ns \&| Ns Ic connected Ns \&| Ns
+.Po Ic static Ns | Ns Ic connected Ns | Ns
 .Ic default Pc
 .Sm on
 .Xc
@@ -128,7 +128,7 @@ will force the route to be not announced.
 .It Xo
 .Ic split-horizon
 .Sm off
-.Po Ic simple Ns \&| Ns Ic poisoned Ns \&| Ns
+.Po Ic simple Ns | Ns Ic poisoned Ns | Ns
 .Ic none Pc
 .Sm on
 .Xc
@@ -145,7 +145,7 @@ The default is
 .Pp
 .It Xo
 .Ic triggered-updates
-.Pq Ic yes Ns \&| Ns Ic no
+.Pq Ic yes Ns | Ns Ic no
 .Xc
 Immediately trigger responses when a route changes.
 The default is
@@ -192,8 +192,8 @@ is 0\-255.
 The default key-id is 1.
 .It Xo
 .Ic auth-type
-.Po Ic none Ns \&| Ns
-.Ic simple Ns \&| Ns Ic crypt Pc
+.Po Ic none Ns | Ns
+.Ic simple Ns | Ns Ic crypt Pc
 .Xc
 Set the authentication type.
 The default is

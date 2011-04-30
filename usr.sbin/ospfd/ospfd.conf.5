@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.44 2011/02/02 23:27:51 sthen Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.45 2011/04/30 07:52:33 sthen Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 2 2011 $
+.Dd $Mdocdate: April 30 2011 $
 .Dt OSPFD.CONF 5
 .Os
 .Sh NAME
@@ -82,7 +82,7 @@ The only settings that can be set globally and not overruled are listed below.
 .Bl -tag -width Ds -compact
 .It Xo
 .Ic fib-update
-.Pq Ic yes Ns \&| Ns Ic no
+.Pq Ic yes Ns | Ns Ic no
 .Xc
 If set to
 .Ic \&no ,
@@ -108,7 +108,7 @@ Table 0 is the default table.
 .Op Ic no
 .Ic redistribute
 .Sm off
-.Po Ic static Ns \&| Ns Ic connected Ns \&| Ns
+.Po Ic static Ns | Ns Ic connected Ns | Ns
 .Ic default Pc
 .Sm on
 .Op Ic set ...
@@ -170,7 +170,7 @@ redistribute static set { metric 300 type 2 }
 .Pp
 .It Xo
 .Ic rfc1583compat
-.Pq Ic yes Ns \&| Ns Ic no
+.Pq Ic yes Ns | Ns Ic no
 .Xc
 If set to
 .Ic yes ,
@@ -189,7 +189,7 @@ AS-external OSPF LSAs.
 .Pp
 .It Xo
 .Ic spf-delay
-.Po Ar seconds Ns \&| Ns
+.Po Ar seconds Ns | Ns
 .Ic msec Ar milliseconds Pc
 .Xc
 Set the SPF delay.
@@ -199,7 +199,7 @@ The default value is 1 second; valid range is 10 milliseconds\-10 seconds.
 .Pp
 .It Xo
 .Ic spf-holdtime
-.Po Ar seconds Ns \&| Ns
+.Po Ar seconds Ns | Ns
 .Ic msec Ar milliseconds Pc
 .Xc
 Set the SPF holdtime.
@@ -209,7 +209,7 @@ The default value is 5 seconds; the valid range is 10 milliseconds\-5 seconds.
 .Pp
 .It Xo
 .Ic stub Ic router
-.Pq Ic yes Ns \&| Ns Ic no
+.Pq Ic yes Ns | Ns Ic no
 .Xc
 If set to
 .Ic yes ,
@@ -325,8 +325,8 @@ The default key-id is 1.
 While key-id 0 is valid, it is unavailable on various other implementations.
 .It Xo
 .Ic auth-type
-.Po Ic none Ns \&| Ns
-.Ic simple Ns \&| Ns Ic crypt Pc
+.Po Ic none Ns | Ns
+.Ic simple Ns | Ns Ic crypt Pc
 .Xc
 Set the authentication type.
 The default is
@@ -360,7 +360,7 @@ Set retransmit interval.
 The default value is 5 seconds; valid range is 5\-3600 seconds.
 .It Xo
 .Ic router-dead-time
-.Po Ar seconds Ns \&| Ns Ic minimal Pc
+.Po Ar seconds Ns | Ns Ic minimal Pc
 .Xc
 Set the router dead time, a.k.a. neighbor inactivity timer.
 The default value is 40 seconds; valid range is 2\-2147483647 seconds.

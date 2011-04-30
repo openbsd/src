@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.5 2010/09/01 13:54:54 claudio Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.6 2011/04/30 07:52:33 sthen Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 1 2010 $
+.Dd $Mdocdate: April 30 2011 $
 .Dt LDPD.CONF 5
 .Os
 .Sh NAME
@@ -67,7 +67,7 @@ Global settings concerns the main behaviour of the daemon.
 .Bl -tag -width Ds -compact
 .It Xo
 .Ic fib-update
-.Pq Ic yes Ns \&| Ns Ic no
+.Pq Ic yes Ns | Ns Ic no
 .Xc
 If set to
 .Ic no ,
@@ -101,7 +101,7 @@ The default value is 180; valid range is 1\-65535.
 .Pp
 .It Xo
 .Ic distribution
-.Pq Ic independent Ns \&| Ns Ic ordered
+.Pq Ic independent Ns | Ns Ic ordered
 .Xc
 Select the distribution mode.
 .Ic independent
@@ -113,7 +113,7 @@ to wait a mapping from nexthop before distributing it to peers.
 .Pp
 .It Xo
 .Ic retention
-.Pq Ic liberal Ns \&| Ns Ic conservative
+.Pq Ic liberal Ns | Ns Ic conservative
 .Xc
 Select the retention mode.
 .Ic conservative
@@ -124,7 +124,7 @@ from nexthops.
 .Pp
 .It Xo
 .Ic advertisement
-.Pq Ic unsolicited Ns \&| Ns Ic ondemand
+.Pq Ic unsolicited Ns | Ns Ic ondemand
 .Xc
 Select the advertisement mode.
 .Ic unsolicited

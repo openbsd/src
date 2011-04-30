@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospf6d.conf.5,v 1.7 2010/05/17 17:47:47 jmc Exp $
+.\"	$OpenBSD: ospf6d.conf.5,v 1.8 2011/04/30 07:52:33 sthen Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 17 2010 $
+.Dd $Mdocdate: April 30 2011 $
 .Dt OSPF6D.CONF 5
 .Os
 .Sh NAME
@@ -75,7 +75,7 @@ The only settings that can be set globally and not overruled are listed below.
 .Bl -tag -width Ds -compact
 .It Xo
 .Ic fib-update
-.Pq Ic yes Ns \&| Ns Ic no
+.Pq Ic yes Ns | Ns Ic no
 .Xc
 If set to
 .Ic \&no ,
@@ -95,7 +95,7 @@ option to ensure that no traffic tries to transit via this router.
 .Op Ic no
 .Ic redistribute
 .Sm off
-.Po Ic static Ns \&| Ns Ic connected Ns \&| Ns
+.Po Ic static Ns | Ns Ic connected Ns | Ns
 .Ic default Pc
 .Sm on
 .Op Ic set ...\&
@@ -183,7 +183,7 @@ The default value is 5 seconds; the valid range is 1\-5 seconds.
 .Pp
 .It Xo
 .Ic stub Ic router
-.Pq Ic yes Ns \&| Ns Ic no
+.Pq Ic yes Ns | Ns Ic no
 .Xc
 If set to
 .Ic yes ,

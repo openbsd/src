@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.113 2010/10/23 16:44:56 sthen Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.114 2011/04/30 07:52:33 sthen Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 23 2010 $
+.Dd $Mdocdate: April 30 2011 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -145,13 +145,13 @@ The default is 120 seconds.
 .It Xo
 .Ic dump
 .Op Ic rib Ar name
-.Pq Ic table Ns \&| Ns Ic table-mp
+.Pq Ic table Ns | Ns Ic table-mp
 .Ar file Op Ar timeout
 .Xc
 .It Xo
 .Ic dump
-.Pq Ic all Ns \&| Ns Ic updates
-.Pq Ic in Ns \&| Ns Ic out
+.Pq Ic all Ns | Ns Ic updates
+.Pq Ic in Ns | Ns Ic out
 .Ar file Op Ar timeout
 .Xc
 Dump the RIB, a.k.a. the
@@ -197,7 +197,7 @@ dump updates out "/tmp/updates-out-%H%M" 300
 .Pp
 .It Xo
 .Ic fib-update
-.Pq Ic yes Ns \&| Ns Ic no
+.Pq Ic yes Ns | Ns Ic no
 .Xc
 If set to
 .Ic no ,
@@ -244,12 +244,12 @@ Log received and sent updates.
 .Xc
 .It Xo
 .Ic network
-.Pq Ic inet Ns \&| Ns Ic inet6
+.Pq Ic inet Ns | Ns Ic inet6
 .Ic static Op Ic set ...\&
 .Xc
 .It Xo
 .Ic network
-.Pq Ic inet Ns \&| Ns Ic inet6
+.Pq Ic inet Ns | Ns Ic inet6
 .Ic connected Op Ic set ...\&
 .Xc
 Announce the specified network as belonging to our AS.
@@ -280,7 +280,7 @@ section.
 .Ic nexthop
 .Ic qualify
 .Ic via
-.Pq Ic bgp Ns \&| Ns Ic default
+.Pq Ic bgp Ns | Ns Ic default
 .Xc
 If set to
 .Ic bgp ,
@@ -297,7 +297,7 @@ daemons like
 .Ic rde
 .Ic med
 .Ic compare
-.Pq Ic always Ns \&| Ns Ic strict
+.Pq Ic always Ns | Ns Ic strict
 .Xc
 If set to
 .Ic always ,
@@ -339,7 +339,7 @@ are created automatically and used as default.
 .It Xo
 .Ic rde
 .Ic route-age
-.Pq Ic ignore Ns \&| Ns Ic evaluate
+.Pq Ic ignore Ns | Ns Ic evaluate
 .Xc
 If set to
 .Ic evaluate ,
@@ -352,7 +352,7 @@ The default is
 .Pp
 .It Xo
 .Ic route-collector
-.Pq Ic yes Ns \&| Ns Ic no
+.Pq Ic yes Ns | Ns Ic no
 .Xc
 If set to
 .Ic yes ,
@@ -391,7 +391,7 @@ By default /var/run/bgpd.sock is used and no restricted socket is created.
 .Pp
 .It Xo
 .Ic transparent-as
-.Pq Ic yes Ns \&| Ns Ic no
+.Pq Ic yes Ns | Ns Ic no
 .Xc
 If set to
 .Ic yes ,
@@ -450,7 +450,7 @@ for best compatibility with other implementations.
 .Pp
 .It Xo
 .Ic fib-update
-.Pq Ic yes Ns \&| Ns Ic no
+.Pq Ic yes Ns | Ns Ic no
 .Xc
 If set to
 .Ic no ,
@@ -599,8 +599,8 @@ The default for IBGP peers is
 .Pp
 .It Xo
 .Ic announce
-.Pq Ic IPv4 Ns \&| Ns Ic IPv6
-.Pq Ic none Ns \&| Ns Ic unicast Ns \&| Ns Ic vpn
+.Pq Ic IPv4 Ns | Ns Ic IPv6
+.Pq Ic none Ns | Ns Ic unicast Ns | Ns Ic vpn
 .Xc
 For the given address family, control which subsequent address families
 (at the moment, only
@@ -616,7 +616,7 @@ announced and processed.
 .Pp
 .It Xo
 .Ic announce as-4byte
-.Pq Ic yes Ns \&| Ns Ic no
+.Pq Ic yes Ns | Ns Ic no
 .Xc
 If set to
 .Ic no ,
@@ -627,7 +627,7 @@ The default is
 .Pp
 .It Xo
 .Ic announce capabilities
-.Pq Ic yes Ns \&| Ns Ic no
+.Pq Ic yes Ns | Ns Ic no
 .Xc
 If set to
 .Ic no ,
@@ -638,7 +638,7 @@ The default is
 .Pp
 .It Xo
 .Ic announce refresh
-.Pq Ic yes Ns \&| Ns Ic no
+.Pq Ic yes Ns | Ns Ic no
 .Xc
 If set to
 .Ic no ,
@@ -648,7 +648,7 @@ The default is
 .Pp
 .It Xo
 .Ic announce restart
-.Pq Ic yes Ns \&| Ns Ic no
+.Pq Ic yes Ns | Ns Ic no
 .Xc
 If set to
 .Ic yes ,
@@ -714,8 +714,8 @@ Do not start the session when bgpd comes up but stay in
 .Pp
 .It Xo
 .Ic dump
-.Pq Ic all Ns \&| Ns Ic updates
-.Pq Ic in Ns \&| Ns Ic out
+.Pq Ic all Ns | Ns Ic updates
+.Pq Ic in Ns | Ns Ic out
 .Ar file Op Ar timeout
 .Xc
 Do a peer specific MRT dump.
@@ -730,7 +730,7 @@ section in
 .Pp
 .It Xo
 .Ic enforce neighbor-as
-.Pq Ic yes Ns \&| Ns Ic no
+.Pq Ic yes Ns | Ns Ic no
 .Xc
 If set to
 .Ic yes ,
@@ -757,8 +757,8 @@ Inherited from the global configuration if not given.
 .Pp
 .It Xo
 .Ic ipsec
-.Pq Ic ah Ns \&| Ns Ic esp
-.Pq Ic in Ns \&| Ns Ic out
+.Pq Ic ah Ns | Ns Ic esp
+.Pq Ic in Ns | Ns Ic out
 .Ic spi Ar spi-number authspec Op Ar encspec
 .Xc
 Enable IPsec with static keying.
@@ -793,7 +793,7 @@ Keys must be given in hexadecimal format.
 .Pp
 .It Xo
 .Ic ipsec
-.Pq Ic ah Ns \&| Ns Ic esp
+.Pq Ic ah Ns | Ns Ic esp
 .Ic ike
 .Xc
 Enable IPsec with dynamic keying.
@@ -898,8 +898,8 @@ These sets are rewritten into filter rules and can be viewed with
 .Pp
 .It Xo
 .Ic softreconfig
-.Pq Ic in Ns \&| Ns Ic out
-.Pq Ic yes Ns \&| Ns Ic no
+.Pq Ic in Ns | Ns Ic out
+.Pq Ic yes Ns | Ns Ic no
 .Xc
 Turn soft reconfiguration on or off for the specified direction.
 If soft reconfiguration is turned on, filter changes will be applied on
@@ -926,7 +926,7 @@ tcp md5sig key deadbeef
 .Pp
 .It Xo
 .Ic transparent-as
-.Pq Ic yes Ns \&| Ns Ic no
+.Pq Ic yes Ns | Ns Ic no
 .Xc
 If set to
 .Ic yes ,
@@ -938,7 +938,7 @@ setting.
 .Pp
 .It Xo
 .Ic ttl-security
-.Pq Ic yes Ns \&| Ns Ic no
+.Pq Ic yes Ns | Ns Ic no
 .Xc
 Enable or disable ttl-security.
 When enabled,
@@ -1112,7 +1112,7 @@ See also the
 section for further information about the encoding.
 .Pp
 .It Xo
-.Pq Ic from Ns \&| Ns Ic to
+.Pq Ic from Ns | Ns Ic to
 .Ar peer
 .Xc
 This rule applies only to
@@ -1140,7 +1140,7 @@ if enclosed in curly brackets:
 deny from { 128.251.16.1, 251.128.16.2, group hojo }
 .Ed
 .Pp
-.It Pq Ic inet Ns \&| Ns Ic inet6
+.It Pq Ic inet Ns | Ns Ic inet6
 This rule applies only to routes matching the stated address family.
 The address family needs to be set only in rules that use
 .Ic prefixlen
