@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.99 2011/04/19 14:20:37 halex Exp $
+.\"	$OpenBSD: disklabel.8,v 1.100 2011/04/30 14:48:39 jmc Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: April 19 2011 $
+.Dd $Mdocdate: April 30 2011 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -648,11 +648,11 @@ Any existing bootstrap code will be clobbered.
 .Pp
 .Dl # disklabel -w /dev/rsd0c sd2212 foo
 .Pp
-Read the on-disk label for sd0, edit it and reinstall in-core as
-well as on-disk.
+Read the on-disk label from a disk with DUID 3eb7f9da875cb9ee,
+edit it and reinstall in-core as well as on-disk.
 Existing bootstrap code is unaffected.
 .Pp
-.Dl # disklabel -e sd0
+.Dl # disklabel -E 3eb7f9da875cb9ee
 .Pp
 Restore the on-disk and in-core label for sd0 from information in
 .Pa mylabel .
