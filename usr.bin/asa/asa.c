@@ -1,4 +1,4 @@
-/*	$OpenBSD: asa.c,v 1.9 2009/10/27 23:59:35 deraadt Exp $	*/
+/*	$OpenBSD: asa.c,v 1.10 2011/04/30 16:45:22 lum Exp $	*/
 /*	$NetBSD: asa.c,v 1.10 1995/04/21 03:01:41 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ __dead void usage(void);
 int
 main(int argc, char *argv[])
 {
-	int ch;
+	int ch, exval = 0;
 	FILE *fp;
 
 	while ((ch = getopt(argc, argv, "")) != -1) {
@@ -62,13 +62,14 @@ main(int argc, char *argv[])
 		for (; *argv != NULL; argv++) {
 			if ((fp = fopen(*argv, "r")) == NULL) {
 				warn("%s", *argv);
+				exval = 1;
 				continue;
 			}
 			asa(fp);
 			fclose(fp);
 		}
 
-	exit(0);
+	exit(exval);
 }
 
 void
