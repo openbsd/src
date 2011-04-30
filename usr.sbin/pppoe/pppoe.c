@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe.c,v 1.17 2008/06/24 08:21:46 sobrado Exp $	*/
+/*	$OpenBSD: pppoe.c,v 1.18 2011/04/30 18:47:48 nicm Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -504,7 +504,8 @@ signal_init(void)
 void
 drop_privs(struct passwd *pw, int server_mode)
 {
-	int groups[2], ng = 1;
+	int ng = 1;
+	gid_t groups[2];
 	struct group *gr;
 
 	groups[0] = pw->pw_gid;
