@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.128 2011/04/30 14:56:20 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.129 2011/04/30 15:46:46 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -946,7 +946,7 @@ omalloc_make_chunks(struct dir_info *d, int bits)
 			return NULL;
 		}
 	} else {
-		bp->size = (1UL << bits);
+		bp->size = 1U << bits;
 		bp->shift = bits;
 		bp->total = bp->free = MALLOC_PAGESIZE >> bits;
 		bp->page = pp;
@@ -1081,16 +1081,16 @@ free_bytes(struct dir_info *d, struct region_info *r, void *ptr)
 	/* Find the chunk number on the page */
 	i = ((uintptr_t)ptr & MALLOC_PAGEMASK) >> info->shift;
 
-	if ((uintptr_t)ptr & ((1UL << (info->shift)) - 1)) {
+	if ((uintptr_t)ptr & ((1U << (info->shift)) - 1)) {
 		wrterror("modified chunk-pointer", ptr);
 		return;
 	}
-	if (info->bits[i / MALLOC_BITS] & (1UL << (i % MALLOC_BITS))) {
+	if (info->bits[i / MALLOC_BITS] & (1U << (i % MALLOC_BITS))) {
 		wrterror("chunk is already free", ptr);
 		return;
 	}
 
-	info->bits[i / MALLOC_BITS] |= 1UL << (i % MALLOC_BITS);
+	info->bits[i / MALLOC_BITS] |= 1U << (i % MALLOC_BITS);
 	info->free++;
 
 	if (info->size != 0)
