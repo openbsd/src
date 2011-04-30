@@ -44,6 +44,7 @@
 
 #include "assym.h"
 #include <machine/asm.h>
+#include <machine/hibernate_var.h>
 #include <machine/specialreg.h>
 #include <machine/param.h>
 #include <machine/segments.h>
@@ -52,6 +53,7 @@
 #define _ACPI_TRMP_LABEL(a) a = . - _C_LABEL(acpi_real_mode_resume) + ACPI_TRAMPOLINE
 #define _ACPI_TRMP_OFFSET(a) a = . - _C_LABEL(acpi_real_mode_resume)
 #define _ACPI_RM_SEGMENT (ACPI_TRAMPOLINE >> 4)
+#define HIBERNATE_STACK_OFFSET 0x0F00
 
 /*
  * On wakeup, we'll start executing at acpi_real_mode_resume.
@@ -80,6 +82,7 @@
 	.global _C_LABEL(acpi_resume_end)
 	.global _C_LABEL(do_real_mode_post)
 _C_LABEL(acpi_real_mode_resume):
+_ACPI_TRMP_OFFSET(acpi_s3_vector_real)
 	nop
 	cli
 	cld
@@ -317,6 +320,72 @@ _C_LABEL(acpi_protected_mode_resume):
 	xorl  %eax, %eax
 	jmp	*acpi_saved_ret
 
+	/*
+	 * hibernate_resume_machine drops to real mode and
+	 * restarts the OS using the saved S3 resume vector
+	 */
+	.code32
+NENTRY(hibernate_resume_machine)
+	cli
+	/* Jump to the identity mapped version of ourself */
+	mov	$hibernate_resume_vector_2, %eax
+	jmp	*%eax
+_ACPI_TRMP_LABEL(hibernate_resume_vector_2)
+
+	/* Get out of 32 bit CS */
+	lgdt	gdt_16
+	ljmp	$0x8, $hibernate_resume_vector_3
+
+_ACPI_TRMP_LABEL(hibernate_resume_vector_3)
+	.code16
+	movl	%cr0, %eax
+	/* Disable CR0.PG - no paging */
+	andl	$(~CR0_PG), %eax
+	/* Disable CR0.PE - real mode */
+	andl	$(~CR0_PE), %eax
+	movl	%eax, %cr0
+
+	/* Flush TLB */
+	xorl	%eax, %eax
+	movl	%eax, %cr3
+
+	/* Set up real mode segment selectors */
+	movw	$0x0400, %ax
+	movw	%ax, %ds
+	movw	%ax, %es
+	movw	%ax, %fs
+	movw	%ax, %gs
+	movl	$0x0FFE, %esp
+	lidtl	clean_idt
+
+	/* Jump to the S3 resume vector */
+	ljmp	$0x0400, $acpi_s3_vector_real
+
+	.code32
+	/* Switch to hibernate resume pagetable */
+NENTRY(hibernate_activate_resume_pt)
+	/* Enable large pages */
+	movl	%eax, %cr4
+	orl	$(CR4_PSE), %eax
+	movl	%eax, %cr4
+
+	movl	$HIBERNATE_PT_PAGE, %eax
+	movl	%eax,	%cr3
+	jmp	1f
+
+1:	nop
+	ret
+
+NENTRY(hibernate_switch_stack)
+	movl	(%esp), %eax
+	movl	%eax, HIBERNATE_STACK_PAGE + HIBERNATE_STACK_OFFSET
+	movl	$(HIBERNATE_STACK_PAGE + HIBERNATE_STACK_OFFSET), %eax
+	movl	%eax, %esp
+
+	/* On our own stack from here onward */
+	ret
+
+	.code16
 	.align 8
 _ACPI_TRMP_OFFSET(tmp_gdt)
 	.word	tmp_gdt_end - tmp_gdtable
@@ -367,6 +436,56 @@ _ACPI_TRMP_OFFSET(clean_idt)
 	.word	0xffff
 	.long	0
 	.word	0
+
+	/*
+	 * gdt_16 is the gdt used when returning to real mode for bios
+	 * reads/writes (sets up a 16 bit segment)
+	 */
+	.align 8
+_ACPI_TRMP_LABEL(gdt_16)
+	.word   gdt_16_end - gdt_16_table
+	.long   gdt_16_table
+
+	.align 8
+_ACPI_TRMP_LABEL(gdt_16_table)
+	/*
+	 * null
+	 */
+	.word   0, 0
+	.byte   0, 0, 0, 0
+	/*
+	 * Code
+	 * Limit: 0xffffffff
+	 * Base: 0x00000000
+	 * Descriptor Type: Code
+	 * Segment Type: CRA
+	 * Present: True
+	 * Priv: 0
+ 	 * AVL: False
+	 * 64-bit: False
+	 * 32-bit: False
+	 *
+	 */
+	.word   0xffff, 0
+	.byte   0, 0x9f, 0x8f, 0
+
+	/*
+	 * Data
+	 * Limit: 0xffffffff
+	 * Base: 0x00000000
+	 * Descriptor Type:
+	 * Segment Type: W
+	 * Present: True
+	 * Priv: 0
+	 * AVL: False
+	 * 64-bit: False
+	 * 32-bit: False
+	 *
+	 */
+	.word   0xffff, 0
+	.byte   0, 0x93, 0x8f, 0
+
+_ACPI_TRMP_LABEL(gdt_16_end)
 
 	.align 4
 _C_LABEL(do_real_mode_post):
@@ -437,6 +556,7 @@ _C_LABEL(acpi_resume_end):
 	 * for use during the ACPI suspend/resume process.
 	 */
 
+	.code32
 NENTRY(acpi_savecpu)
 	movl	(%esp), %eax
 	movl	%eax, acpi_saved_ret

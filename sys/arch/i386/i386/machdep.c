@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.493 2011/04/19 22:14:54 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.494 2011/04/30 15:33:18 mlarkin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -108,6 +108,7 @@
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/gdt.h>
+#include <machine/kcore.h>
 #include <machine/pio.h>
 #include <machine/bus.h>
 #include <machine/psl.h>
@@ -206,10 +207,7 @@ struct uvm_constraint_range *uvm_md_constraints[] = {
 extern int	boothowto;
 int	physmem;
 
-struct dumpmem {
-	paddr_t	start;
-	paddr_t	end;
-} dumpmem[VM_PHYSSEG_MAX];
+struct dumpmem dumpmem[VM_PHYSSEG_MAX];
 u_int ndumpmem;
 
 /*
@@ -3070,9 +3068,9 @@ init386(paddr_t first_avail)
 				e = 0xfffff000;
 			}
 
-			/* skip first eight pages */
-			if (a < 8 * NBPG)
-				a = 8 * NBPG;
+			/* skip first 16 pages for tramps and hibernate */
+			if (a < 16 * NBPG)
+				a = 16 * NBPG;
 
 			/* skip shorter than page regions */
 			if (a >= e || (e - a) < NBPG) {
