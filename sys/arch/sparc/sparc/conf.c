@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.56 2011/01/14 19:04:08 jasper Exp $	*/
+/*	$OpenBSD: conf.c,v 1.57 2011/04/30 15:24:07 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -268,6 +268,8 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NRAID,raid),     /* 123: RAIDframe disk driver */
 	cdev_bio_init(NBIO,bio),	/* 124: ioctl tunnel */
 	cdev_ptm_init(NPTY,ptm),	/* 125: pseudo-tty ptm device */
+	cdev_notdef(),			/* 126 */
+	cdev_notdef(),			/* 127 */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 128: vscsi */
 	cdev_disk_init(1,diskmap),	/* 129: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 130: pppx */

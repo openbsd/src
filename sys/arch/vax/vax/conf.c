@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.62 2011/01/14 19:04:08 jasper Exp $ */
+/*	$OpenBSD: conf.c,v 1.63 2011/04/30 15:24:07 miod Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -439,6 +439,8 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 74 */
 #endif
 	cdev_ptm_init(NPTY,ptm),	/* 75: pseudo-tty ptm device */
+	cdev_notdef(),			/* 76 */
+	cdev_notdef(),			/* 77 */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 78: vscsi */
 	cdev_disk_init(1,diskmap),	/* 79: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 80: pppx */
