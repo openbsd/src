@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppd.h,v 1.16 2007/06/04 14:59:45 henning Exp $	*/
+/*	$OpenBSD: pppd.h,v 1.17 2011/04/30 18:49:38 nicm Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -212,7 +212,6 @@ void print_string(char *, int,  void (*) (void *, char *, ...), void *);
 int fmtmsg(char *, int, char *, ...);		/* snprintf++ */
 int vfmtmsg(char *, int, char *, va_list);	/* vsnprintf++ */
 void script_setenv(char *, char *);	/* set script env var */
-void script_unsetenv(char *);		/* unset script env var */
 
 /* Procedures exported from auth.c */
 void link_required(int);	/* we are starting to use the link */
@@ -246,10 +245,8 @@ void check_access(FILE *, char *);
 
 /* Procedures exported from demand.c */
 void demand_conf(void);		/* config interface(s) for demand-dial */
-void demand_block(void);	/* set all NPs to queue up packets */
 void demand_drop(void); 	/* set all NPs to drop packets */
 void demand_unblock(void);	/* set all NPs to pass packets */
-void demand_discard(void);	/* set all NPs to discard packets */
 void demand_rexmit(int);	/* retransmit saved frames for an NP */
 int  loop_chars(unsigned char *, int); /* process chars from loopback */
 int  loop_frame(unsigned char *, int); /* process frame from loopback */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.48 2009/10/27 23:59:53 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.49 2011/04/30 18:49:38 nicm Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -1668,28 +1668,4 @@ script_setenv(var, value)
 
     script_env[i] = newstring;
     script_env[i+1] = 0;
-}
-
-/*
- * script_unsetenv - remove a variable from the environment
- * for scripts.
- */
-void
-script_unsetenv(var)
-    char *var;
-{
-    int vl = strlen(var);
-    int i;
-    char *p;
-
-    if (script_env == 0)
-	return;
-    for (i = 0; (p = script_env[i]) != 0; ++i) {
-	if (strncmp(p, var, vl) == 0 && p[vl] == '=') {
-	    free(p);
-	    while ((script_env[i] = script_env[i+1]) != 0)
-		++i;
-	    break;
-	}
-    }
 }
