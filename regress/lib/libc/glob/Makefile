@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.3 2010/09/24 13:32:55 djm Exp $
+#	$OpenBSD: Makefile,v 1.4 2011/05/01 04:25:40 guenther Exp $
 
 PROG=	globtest
 
 run-regress-${PROG}:
-	mkdir -p `sed 's@/[^/]*$$@@' ${.CURDIR}/files | sort -u`
-	touch `cat ${.CURDIR}/files`
+	mkdir -m 755 -p `sed 's@/[^/]*$$@@' ${.CURDIR}/files | sort -u`
+	umask 022; touch `cat ${.CURDIR}/files`
 	chmod 0755 `grep '/r[^/]*$$' ${.CURDIR}/files`
 	chmod 0444 `grep '/s[^/]*$$' ${.CURDIR}/files`
 	chmod 0711 `grep '/t[^/]*$$' ${.CURDIR}/files`
