@@ -1857,6 +1857,8 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/float.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/frame.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/gdt.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/i386/hibernate.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/i386/hibernate_var.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/i82093reg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/i82093var.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/i82489reg.ph
@@ -1869,6 +1871,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/intrdefs.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/ioctl_fd.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/joystick.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/i386/kcore.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/kvm86.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/limits.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/linux_machdep.ph
