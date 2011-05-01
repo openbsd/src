@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.166 2010/09/02 14:03:21 sobrado Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.167 2011/05/01 10:42:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -368,6 +368,8 @@ main(int argc, char *argv[])
 	free(ibuf_se);
 	msgbuf_clear(&ibuf_rde->w);
 	free(ibuf_rde);
+	free(rcname);
+	free(cname);
 
 	log_info("Terminating");
 	return (0);
