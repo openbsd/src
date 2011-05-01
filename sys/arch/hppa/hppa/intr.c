@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.38 2011/03/24 10:52:22 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.39 2011/05/01 21:59:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -227,6 +227,9 @@ cpu_intr_establish(int pri, int irq, int (*handler)(void *), void *arg,
 		intr_more += 2 * CPU_NINTS;
 		for (ev = iv->next + CPU_NINTS; ev < intr_more; ev++)
 			ev->share = iv->share, iv->share = ev;
+		free(cnt, M_DEVBUF);
+		iv->cnt = NULL;
+	} else if (name == NULL) {
 		free(cnt, M_DEVBUF);
 		iv->cnt = NULL;
 	} else
