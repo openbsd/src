@@ -1678,7 +1678,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/scsi/scsiconf.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/scsi/sdvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/scsi/ses.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/scsi/ssvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/search.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/setjmp.ph

@@ -2199,7 +2199,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/scsi/scsiconf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/scsi/sdvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/scsi/ses.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/scsi/ssvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/search.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/setjmp.ph

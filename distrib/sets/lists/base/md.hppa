@@ -2310,7 +2310,6 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/scsi/scsiconf.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/scsi/sdvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/scsi/ses.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/scsi/ssvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/search.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/setjmp.ph

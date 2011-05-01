@@ -1471,7 +1471,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi/scsiconf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi/sdvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi/ses.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/scsi/ssvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/search.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/setjmp.ph

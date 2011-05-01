@@ -2295,7 +2295,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/scsiconf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/sdvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/ses.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/ssvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/search.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/setjmp.ph

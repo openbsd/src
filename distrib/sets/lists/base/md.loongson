@@ -2324,7 +2324,6 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/scsi/scsiconf.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/scsi/sdvar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/scsi/ses.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/scsi/ssvar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/search.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/setjmp.ph

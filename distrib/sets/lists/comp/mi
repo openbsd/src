@@ -1444,7 +1444,6 @@
 ./usr/include/scsi/scsiconf.h
 ./usr/include/scsi/sdvar.h
 ./usr/include/scsi/ses.h
-./usr/include/scsi/ssvar.h
 ./usr/include/search.h
 ./usr/include/semaphore.h
 ./usr/include/setjmp.h
