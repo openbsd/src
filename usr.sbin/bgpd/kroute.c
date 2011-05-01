@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.187 2011/03/07 07:43:02 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.188 2011/05/01 12:56:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1155,6 +1155,8 @@ kr_net_reload(u_int rtableid, struct network_head *nh)
 		xn = kr_net_find(kt, n);
 		if (xn) {
 			xn->net.old = 0;
+			filterset_free(&xn->net.attrset);
+			filterset_move(&n->net.attrset, &xn->net.attrset);
 			kr_net_delete(n);
 		} else
 			TAILQ_INSERT_TAIL(&kt->krn, n, entry);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.65 2010/11/29 17:02:41 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.66 2011/05/01 12:56:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -514,6 +514,22 @@ filterset_cmp(struct filter_set *a, struct filter_set *b)
 
 	/* equal */
 	return (0);
+}
+
+void
+filterset_move(struct filter_set_head *source, struct filter_set_head *dest)
+{
+	struct filter_set	*s;
+
+	TAILQ_INIT(dest);
+
+	if (source == NULL)
+		return;
+
+	while ((s = TAILQ_FIRST(source)) != NULL) {
+		TAILQ_REMOVE(source, s, entry);
+		TAILQ_INSERT_TAIL(dest, s, entry);
+	}
 }
 
 int

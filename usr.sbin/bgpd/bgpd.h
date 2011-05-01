@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.263 2010/10/24 17:20:08 deraadt Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.264 2011/05/01 12:56:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -931,6 +931,8 @@ void		 pftable_ref(u_int16_t);
 /* rde_filter.c */
 void		 filterset_free(struct filter_set_head *);
 int		 filterset_cmp(struct filter_set *, struct filter_set *);
+void		 filterset_move(struct filter_set_head *,
+		    struct filter_set_head *);
 const char	*filterset_name(enum action_types);
 
 /* util.c */
