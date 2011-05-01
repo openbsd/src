@@ -391,22 +391,32 @@ NOSETENV[[:blank:]]*:	{
 			    return(NTWKADDR);
 			}
 
-[[:upper:]][[:upper:][:digit:]_]* {
-			    if (strcmp(yytext, "ALL") == 0) {
-				LEXTRACE("ALL ");
-				return(ALL);
-			    }
+ALL {
+			    LEXTRACE("ALL ");
+			    return(ALL);
+
+			}
+
+<INITIAL>ROLE {
 #ifdef HAVE_SELINUX
-			    /* XXX - restrict type/role to initial state */
-			    if (strcmp(yytext, "TYPE") == 0) {
-				LEXTRACE("TYPE ");
-				return(TYPE);
-			    }
-			    if (strcmp(yytext, "ROLE") == 0) {
-				LEXTRACE("ROLE ");
-				return(ROLE);
-			    }
-#endif /* HAVE_SELINUX */
+			    LEXTRACE("ROLE ");
+			    return(ROLE);
+#else
+			    goto got_alias;
+#endif
+			}
+
+<INITIAL>TYPE {
+#ifdef HAVE_SELINUX
+			    LEXTRACE("TYPE ");
+			    return(TYPE);
+#else
+			    goto got_alias;
+#endif
+			}
+
+[[:upper:]][[:upper:][:digit:]_]* {
+			got_alias:
 			    if (!fill(yytext, yyleng))
 				yyterminate();
 			    LEXTRACE("ALIAS ");
