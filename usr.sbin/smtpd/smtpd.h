@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.219 2011/04/17 13:36:07 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.220 2011/05/01 12:57:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -191,7 +191,6 @@ struct imsgev {
 	void			(*handler)(int, short, void *);
 	struct event		 ev;
 	void			*data;
-	struct smtpd		*env;
 	int			 proc;
 	short			 events;
 };
@@ -506,7 +505,6 @@ struct listener {
 	in_port_t		 port;
 	struct timeval		 timeout;
 	struct event		 ev;
-	struct smtpd		*env;
 	char			 ssl_cert_name[PATH_MAX];
 	struct ssl		*ssl;
 	void			*ssl_ctx;
@@ -544,7 +542,6 @@ struct session {
 	struct event			 s_ev;
 	struct bufferevent		*s_bev;
 	struct listener			*s_l;
-	struct smtpd			*s_env;
 	void				*s_ssl;
 	u_char				*s_buf;
 	int				 s_buflen;
@@ -588,7 +585,6 @@ struct ramqueue_envelope {
 };
 
 struct ramqueue {
-	struct smtpd			       *env;
 	struct ramqueue_envelope	       *current_evp;
 	RB_HEAD(hosttree, ramqueue_host)	hosttree;
 	TAILQ_HEAD(,ramqueue_envelope)		queue;
@@ -758,7 +754,6 @@ struct dns {
 	int			 type;
 	struct imsgev		*asker;
 	struct sockaddr_storage	 ss;
-	struct smtpd		*env;
 	struct dns		*next;
 };
 
@@ -855,7 +850,6 @@ struct mta_relay {
 struct mta_session {
 	SPLAY_ENTRY(mta_session) entry;
 	u_int64_t		 id;
-	struct smtpd		*env;
 	enum mta_state		 state;
 	char			*host;
 	int			 port;
@@ -920,22 +914,22 @@ enum queue_op {
 
 struct queue_backend {
 	enum queue_type	type;
-	int (*init)(struct smtpd *);
-	int (*message)(struct smtpd *, enum queue_kind, enum queue_op, u_int32_t *);
-	int (*envelope)(struct smtpd *, enum queue_kind, enum queue_op,
-	    struct envelope *);
+	int (*init)(void);
+	int (*message)(enum queue_kind, enum queue_op, u_int32_t *);
+	int (*envelope)(enum queue_kind, enum queue_op, struct envelope *);
 };
 
 
-extern void (*imsg_callback)(struct smtpd *, struct imsgev *, struct imsg *);
+extern struct smtpd	*env;
+extern void (*imsg_callback)(struct imsgev *, struct imsg *);
 
 
 /* aliases.c */
-int aliases_exist(struct smtpd *, objid_t, char *);
-int aliases_get(struct smtpd *, objid_t, struct expandtree *, char *);
-int aliases_vdomain_exists(struct smtpd *, objid_t, char *);
-int aliases_virtual_exist(struct smtpd *, objid_t, struct path *);
-int aliases_virtual_get(struct smtpd *, objid_t, struct expandtree *, struct path *);
+int aliases_exist(objid_t, char *);
+int aliases_get(objid_t, struct expandtree *, char *);
+int aliases_vdomain_exists(objid_t, char *);
+int aliases_virtual_exist(objid_t, struct path *);
+int aliases_virtual_get(objid_t, struct expandtree *, struct path *);
 int alias_parse(struct expandnode *, char *);
 
 
@@ -944,9 +938,8 @@ int authenticate_user(char *, char *);
 
 
 /* bounce.c */
-int bounce_session(struct smtpd *, int, struct envelope *);
-int bounce_session_switch(struct smtpd *, FILE *, enum session_state *, char *,
-	struct envelope *);
+int bounce_session(int, struct envelope *);
+int bounce_session_switch(FILE *, enum session_state *, char *, struct envelope *);
 void bounce_event(int, short, void *);
 
 
@@ -956,27 +949,26 @@ void bounce_event(int, short, void *);
 #define PURGE_RULES		0x04
 #define PURGE_SSL		0x08
 #define PURGE_EVERYTHING	0xff
-void purge_config(struct smtpd *, u_int8_t);
-void unconfigure(struct smtpd *);
-void configure(struct smtpd *);
-void init_pipes(struct smtpd *);
-void config_pipes(struct smtpd *, struct peer *, u_int);
-void config_peers(struct smtpd *, struct peer *, u_int);
+void purge_config(u_int8_t);
+void unconfigure(void);
+void configure(void);
+void init_pipes(void);
+void config_pipes(struct peer *, u_int);
+void config_peers(struct peer *, u_int);
 
 
 /* control.c */
-pid_t control(struct smtpd *);
+pid_t control(void);
 void session_socket_blockmode(int, enum blockmodes);
 void session_socket_no_linger(int);
 int session_socket_error(int);
 
 
 /* dns.c */
-void dns_query_host(struct smtpd *, char *, int, u_int64_t);
-void dns_query_mx(struct smtpd *, char *, int, u_int64_t);
-void dns_query_ptr(struct smtpd *, struct sockaddr_storage *,
-    u_int64_t);
-void dns_async(struct smtpd *, struct imsgev *, int, struct dns *);
+void dns_query_host(char *, int, u_int64_t);
+void dns_query_mx(char *, int, u_int64_t);
+void dns_query_ptr(struct sockaddr_storage *, u_int64_t);
+void dns_async(struct imsgev *, int, struct dns *);
 int dnssession_cmp(struct dnssession *, struct dnssession *);
 SPLAY_PROTOTYPE(dnstree, dnssession, nodes, dnssession_cmp);
 
@@ -1001,27 +993,27 @@ int forwards_get(int, struct expandtree *);
 
 
 /* lka.c */
-pid_t lka(struct smtpd *);
+pid_t lka(void);
 int lkasession_cmp(struct lkasession *, struct lkasession *);
 SPLAY_PROTOTYPE(lkatree, lkasession, nodes, lkasession_cmp);
 
 
 /* map.c */
-void *map_lookup(struct smtpd *, objid_t, char *, enum map_kind);
-struct map *map_find(struct smtpd *, objid_t);
-struct map *map_findbyname(struct smtpd *, const char *);
+void *map_lookup(objid_t, char *, enum map_kind);
+struct map *map_find(objid_t);
+struct map *map_findbyname(const char *);
 
 
 /* mda.c */
-pid_t mda(struct smtpd *);
+pid_t mda(void);
 
 
 /* mfa.c */
-pid_t mfa(struct smtpd *);
+pid_t mfa(void);
 
 
 /* mta.c */
-pid_t mta(struct smtpd *);
+pid_t mta(void);
 int mta_session_cmp(struct mta_session *, struct mta_session *);
 SPLAY_PROTOTYPE(mtatree, mta_session, entry, mta_session_cmp);
 
@@ -1032,40 +1024,36 @@ int cmdline_symset(char *);
 
 
 /* queue.c */
-pid_t queue(struct smtpd *);
-void queue_submit_envelope(struct smtpd *, struct envelope *);
-void queue_commit_envelopes(struct smtpd *, struct envelope *);
+pid_t queue(void);
+void queue_submit_envelope(struct envelope *);
+void queue_commit_envelopes(struct envelope *);
 
 
 /* queue_backend.c */
 struct queue_backend *queue_backend_lookup(enum queue_type);
-int queue_message_create(struct smtpd *, enum queue_kind, u_int32_t *);
-int queue_message_delete(struct smtpd *, enum queue_kind, u_int32_t);
-int queue_message_commit(struct smtpd *, enum queue_kind, u_int32_t);
-int queue_message_fd_r(struct smtpd *, enum queue_kind, u_int32_t);
-int queue_message_fd_rw(struct smtpd *, enum queue_kind, u_int32_t);
-int queue_message_purge(struct smtpd *, enum queue_kind, u_int32_t);
-int queue_envelope_create(struct smtpd *, enum queue_kind,
-    struct envelope *);
-int queue_envelope_delete(struct smtpd *, enum queue_kind,
-    struct envelope *);
-int queue_envelope_load(struct smtpd *, enum queue_kind,
-    u_int64_t, struct envelope *);
-int queue_envelope_update(struct smtpd *, enum queue_kind,
-    struct envelope *);
+int queue_message_create(enum queue_kind, u_int32_t *);
+int queue_message_delete(enum queue_kind, u_int32_t);
+int queue_message_commit(enum queue_kind, u_int32_t);
+int queue_message_fd_r(enum queue_kind, u_int32_t);
+int queue_message_fd_rw(enum queue_kind, u_int32_t);
+int queue_message_purge(enum queue_kind, u_int32_t);
+int queue_envelope_create(enum queue_kind, struct envelope *);
+int queue_envelope_delete(enum queue_kind, struct envelope *);
+int queue_envelope_load(enum queue_kind, u_int64_t, struct envelope *);
+int queue_envelope_update(enum queue_kind, struct envelope *);
 
 
 /* queue_shared.c */
-void queue_message_update(struct smtpd *, struct envelope *);
+void queue_message_update(struct envelope *);
 struct qwalk	*qwalk_new(char *);
 int qwalk(struct qwalk *, char *);
 void qwalk_close(struct qwalk *);
-int bounce_record_message(struct smtpd *, struct envelope *, struct envelope *);
+int bounce_record_message(struct envelope *, struct envelope *);
 void show_queue(char *, int);
 
 
 /* ramqueue.c */
-void ramqueue_init(struct smtpd *, struct ramqueue *);
+void ramqueue_init(struct ramqueue *);
 int ramqueue_load(struct ramqueue *, time_t *);
 int ramqueue_load_offline(struct ramqueue *);
 int ramqueue_host_cmp(struct ramqueue_host *, struct ramqueue_host *);
@@ -1083,13 +1071,13 @@ RB_PROTOTYPE(hosttree, ramqueue_host, host_entry, ramqueue_host_cmp);
 
 
 /* runner.c */
-pid_t runner(struct smtpd *);
+pid_t runner(void);
 void message_reset_flags(struct envelope *);
 
 
 /* smtp.c */
-pid_t smtp(struct smtpd *);
-void smtp_resume(struct smtpd *);
+pid_t smtp(void);
+void smtp_resume(void);
 
 
 /* smtp_session.c */
@@ -1117,8 +1105,8 @@ void ssl_init(void);
 void ssl_transaction(struct session *);
 void ssl_session_init(struct session *);
 void ssl_session_destroy(struct session *);
-int ssl_load_certfile(struct smtpd *, const char *, u_int8_t);
-void ssl_setup(struct smtpd *, struct listener *);
+int ssl_load_certfile(const char *, u_int8_t);
+void ssl_setup(struct listener *);
 int ssl_cmp(struct ssl *, struct ssl *);
 SPLAY_PROTOTYPE(ssltree, ssl, ssl_nodes, ssl_cmp);
 

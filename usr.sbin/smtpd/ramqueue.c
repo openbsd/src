@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramqueue.c,v 1.6 2011/04/17 13:36:07 gilles Exp $	*/
+/*	$OpenBSD: ramqueue.c,v 1.7 2011/05/01 12:57:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -45,7 +45,7 @@ void ramqueue_put_host(struct ramqueue *, struct ramqueue_host *);
 void ramqueue_put_batch(struct ramqueue *, struct ramqueue_batch *);
 int ramqueue_load_offline(struct ramqueue *);
 
-static int ramqueue_expire(struct smtpd *, struct envelope *, time_t);
+static int ramqueue_expire(struct envelope *, time_t);
 static time_t ramqueue_next_schedule(struct envelope *, time_t);
 static struct ramqueue_host *ramqueue_get_host(struct ramqueue *, char *);
 static struct ramqueue_batch *ramqueue_get_batch(struct ramqueue *,
@@ -53,11 +53,10 @@ static struct ramqueue_batch *ramqueue_get_batch(struct ramqueue *,
 
 
 void
-ramqueue_init(struct smtpd *env, struct ramqueue *rqueue)
+ramqueue_init(struct ramqueue *rqueue)
 {
 	bzero(rqueue, sizeof (*rqueue));
 	TAILQ_INIT(&rqueue->queue);
-	rqueue->env = env;
 	rqueue->current_evp = NULL;
 }
 
@@ -105,7 +104,6 @@ int
 ramqueue_load_offline(struct ramqueue *rqueue)
 {
 	char		 path[MAXPATHLEN];
-	struct smtpd	*env = rqueue->env;
 	static struct qwalk    *q = NULL;
 
 	log_debug("ramqueue: offline queue loading in progress");
@@ -147,10 +145,9 @@ ramqueue_load(struct ramqueue *rqueue, time_t *nsched)
 		if ((evpid = filename_to_evpid(basename(path))) == 0)
 			continue;
 
-		if (! queue_envelope_load(rqueue->env, Q_QUEUE,
-			evpid, &envelope))
+		if (! queue_envelope_load(Q_QUEUE, evpid, &envelope))
 			continue;
-		if (ramqueue_expire(rqueue->env, &envelope, curtm))
+		if (ramqueue_expire(&envelope, curtm))
 			continue;
 		ramqueue_insert(rqueue, &envelope, curtm);
 
@@ -195,9 +192,9 @@ ramqueue_insert(struct ramqueue *rqueue, struct envelope *envelope, time_t curtm
 	if (evp == NULL)
 		TAILQ_INSERT_TAIL(&rqueue->queue, rq_evp, queue_entry);
 
-	rqueue->env->stats->ramqueue.envelopes++;
-	SET_IF_GREATER(rqueue->env->stats->ramqueue.envelopes,
-	    rqueue->env->stats->ramqueue.envelopes_max);
+ 	env->stats->ramqueue.envelopes++;
+	SET_IF_GREATER(env->stats->ramqueue.envelopes,
+	    env->stats->ramqueue.envelopes_max);
 }
 
 void
@@ -210,11 +207,11 @@ ramqueue_remove(struct ramqueue *rqueue, struct ramqueue_envelope *rq_evp)
 
 	TAILQ_REMOVE(&rq_batch->envelope_queue, rq_evp, batchqueue_entry);
 	TAILQ_REMOVE(&rqueue->queue, rq_evp, queue_entry);
-	rqueue->env->stats->ramqueue.envelopes--;
+	env->stats->ramqueue.envelopes--;
 }
 
 static int
-ramqueue_expire(struct smtpd *env, struct envelope *envelope, time_t curtm)
+ramqueue_expire(struct envelope *envelope, time_t curtm)
 {
 	struct envelope bounce;
 
@@ -222,9 +219,9 @@ ramqueue_expire(struct smtpd *env, struct envelope *envelope, time_t curtm)
 		message_set_errormsg(envelope,
 		    "message expired after sitting in queue for %d days",
 		    envelope->expire / 60 / 60 / 24);
-		bounce_record_message(env, envelope, &bounce);
+		bounce_record_message(envelope, &bounce);
 		ramqueue_insert(&env->sc_rqueue, &bounce, time(NULL));
-		queue_envelope_delete(env, Q_QUEUE, envelope);
+		queue_envelope_delete(Q_QUEUE, envelope);
 		return 1;
 	}
 	return 0;
@@ -280,9 +277,9 @@ ramqueue_get_host(struct ramqueue *rqueue, char *hostname)
 		strlcpy(rq_host->hostname, hostname, sizeof(rq_host->hostname));
 		TAILQ_INIT(&rq_host->batch_queue);
 		RB_INSERT(hosttree, &rqueue->hosttree, rq_host);
-		rqueue->env->stats->ramqueue.hosts++;
-		SET_IF_GREATER(rqueue->env->stats->ramqueue.hosts,
-		    rqueue->env->stats->ramqueue.hosts_max);
+		env->stats->ramqueue.hosts++;
+		SET_IF_GREATER(env->stats->ramqueue.hosts,
+		    env->stats->ramqueue.hosts_max);
 	}
 
 	return rq_host;
@@ -316,9 +313,9 @@ ramqueue_get_batch(struct ramqueue *rqueue, struct ramqueue_host *host,
 	TAILQ_INIT(&rq_batch->envelope_queue);
 	TAILQ_INSERT_TAIL(&host->batch_queue, rq_batch, batch_entry);
 
-	rqueue->env->stats->ramqueue.batches++;
-	SET_IF_GREATER(rqueue->env->stats->ramqueue.batches,
-	    rqueue->env->stats->ramqueue.batches_max);
+	env->stats->ramqueue.batches++;
+	SET_IF_GREATER(env->stats->ramqueue.batches,
+	    env->stats->ramqueue.batches_max);
 	return rq_batch;
 }
 

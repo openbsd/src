@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.41 2011/04/17 13:36:07 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.42 2011/05/01 12:57:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -41,18 +41,18 @@ static int alias_is_filename(struct expandnode *, char *, size_t);
 static int alias_is_include(struct expandnode *, char *, size_t);
 
 int
-aliases_exist(struct smtpd *env, objid_t mapid, char *username)
+aliases_exist(objid_t mapid, char *username)
 {
 	struct map *map;
 	struct map_alias *map_alias;
 	char buf[MAX_LOCALPART_SIZE];
 
-	map = map_find(env, mapid);
+	map = map_find(mapid);
 	if (map == NULL)
 		return 0;
 
 	lowercase(buf, username, sizeof(buf));
-	map_alias = map_lookup(env, mapid, buf, K_ALIAS);
+	map_alias = map_lookup(mapid, buf, K_ALIAS);
 	if (map_alias == NULL)
 		return 0;
 
@@ -67,7 +67,7 @@ aliases_exist(struct smtpd *env, objid_t mapid, char *username)
 }
 
 int
-aliases_get(struct smtpd *env, objid_t mapid, struct expandtree *expandtree, char *username)
+aliases_get(objid_t mapid, struct expandtree *expandtree, char *username)
 {
 	struct map *map;
 	struct map_alias *map_alias;
@@ -75,12 +75,12 @@ aliases_get(struct smtpd *env, objid_t mapid, struct expandtree *expandtree, cha
 	char buf[MAX_LOCALPART_SIZE];
 	size_t nbaliases;
 
-	map = map_find(env, mapid);
+	map = map_find(mapid);
 	if (map == NULL)
 		return 0;
 
 	lowercase(buf, username, sizeof(buf));
-	map_alias = map_lookup(env, mapid, buf, K_ALIAS);
+	map_alias = map_lookup(mapid, buf, K_ALIAS);
 	if (map_alias == NULL)
 		return 0;
 
@@ -103,18 +103,18 @@ aliases_get(struct smtpd *env, objid_t mapid, struct expandtree *expandtree, cha
 }
 
 int
-aliases_vdomain_exists(struct smtpd *env, objid_t mapid, char *hostname)
+aliases_vdomain_exists(objid_t mapid, char *hostname)
 {
 	struct map *map;
 	struct map_virtual *map_virtual;
 	char buf[MAXHOSTNAMELEN];
 
-	map = map_find(env, mapid);
+	map = map_find(mapid);
 	if (map == NULL)
 		return 0;
 
 	lowercase(buf, hostname, sizeof(buf));
-	map_virtual = map_lookup(env, mapid, buf, K_VIRTUAL);
+	map_virtual = map_lookup(mapid, buf, K_VIRTUAL);
 	if (map_virtual == NULL)
 		return 0;
 
@@ -128,14 +128,14 @@ aliases_vdomain_exists(struct smtpd *env, objid_t mapid, char *hostname)
 }
 
 int
-aliases_virtual_exist(struct smtpd *env, objid_t mapid, struct path *path)
+aliases_virtual_exist(objid_t mapid, struct path *path)
 {
 	struct map *map;
 	struct map_virtual *map_virtual;
 	char buf[MAX_LINE_SIZE];
 	char *pbuf = buf;
 
-	map = map_find(env, mapid);
+	map = map_find(mapid);
 	if (map == NULL)
 		return 0;
 
@@ -144,10 +144,10 @@ aliases_virtual_exist(struct smtpd *env, objid_t mapid, struct path *path)
 		return 0;
 	lowercase(buf, buf, sizeof(buf));
 
-	map_virtual = map_lookup(env, mapid, buf, K_VIRTUAL);
+	map_virtual = map_lookup(mapid, buf, K_VIRTUAL);
 	if (map_virtual == NULL) {
 		pbuf = strchr(buf, '@');
-		map_virtual = map_lookup(env, mapid, pbuf, K_VIRTUAL);
+		map_virtual = map_lookup(mapid, pbuf, K_VIRTUAL);
 	}
 	if (map_virtual == NULL)
 		return 0;
@@ -160,8 +160,8 @@ aliases_virtual_exist(struct smtpd *env, objid_t mapid, struct path *path)
 }
 
 int
-aliases_virtual_get(struct smtpd *env, objid_t mapid,
-    struct expandtree *expandtree, struct path *path)
+aliases_virtual_get(objid_t mapid, struct expandtree *expandtree,
+    struct path *path)
 {
 	struct map *map;
 	struct map_virtual *map_virtual;
@@ -170,7 +170,7 @@ aliases_virtual_get(struct smtpd *env, objid_t mapid,
 	char *pbuf = buf;
 	int nbaliases;
 
-	map = map_find(env, mapid);
+	map = map_find(mapid);
 	if (map == NULL)
 		return 0;
 
@@ -179,10 +179,10 @@ aliases_virtual_get(struct smtpd *env, objid_t mapid,
 		return 0;
 	lowercase(buf, buf, sizeof(buf));
 
-	map_virtual = map_lookup(env, mapid, buf, K_VIRTUAL);
+	map_virtual = map_lookup(mapid, buf, K_VIRTUAL);
 	if (map_virtual == NULL) {
 		pbuf = strchr(buf, '@');
-		map_virtual = map_lookup(env, mapid, pbuf, K_VIRTUAL);
+		map_virtual = map_lookup(mapid, pbuf, K_VIRTUAL);
 	}
 	if (map_virtual == NULL)
 		return 0;

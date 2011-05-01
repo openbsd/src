@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.54 2011/04/17 13:36:07 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.55 2011/05/01 12:57:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -36,17 +36,17 @@
 #include "smtpd.h"
 #include "log.h"
 
-static void mda_imsg(struct smtpd *, struct imsgev *, struct imsg *);
+static void mda_imsg(struct imsgev *, struct imsg *);
 static void mda_shutdown(void);
 static void mda_sig_handler(int, short, void *);
 static void mda_store(struct mda_session *);
 static void mda_store_event(int, short, void *);
-static struct mda_session *mda_lookup(struct smtpd *, u_int32_t);
+static struct mda_session *mda_lookup(u_int32_t);
 
 u_int32_t mda_id;
 
 static void
-mda_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
+mda_imsg(struct imsgev *iev, struct imsg *imsg)
 {
 	char			 output[128], *error, *parent_error;
 	struct deliver		 deliver;
@@ -121,7 +121,7 @@ mda_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 	if (iev->proc == PROC_PARENT) {
 		switch (imsg->hdr.type) {
 		case IMSG_PARENT_FORK_MDA:
-			s = mda_lookup(env, imsg->hdr.peerid);
+			s = mda_lookup(imsg->hdr.peerid);
 
 			if (imsg->fd < 0)
 				fatalx("mda: fd pass fail");
@@ -131,7 +131,7 @@ mda_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			return;
 
 		case IMSG_MDA_DONE:
-			s = mda_lookup(env, imsg->hdr.peerid);
+			s = mda_lookup(imsg->hdr.peerid);
 
 			/*
 			 * Grab last line of mda stdout/stderr if available.
@@ -263,7 +263,7 @@ mda_shutdown(void)
 }
 
 pid_t
-mda(struct smtpd *env)
+mda(void)
 {
 	pid_t		 pid;
 	struct passwd	*pw;
@@ -285,7 +285,7 @@ mda(struct smtpd *env)
 		return (pid);
 	}
 
-	purge_config(env, PURGE_EVERYTHING);
+	purge_config(PURGE_EVERYTHING);
 
 	pw = env->sc_pw;
 
@@ -307,15 +307,15 @@ mda(struct smtpd *env)
 	imsg_callback = mda_imsg;
 	event_init();
 
-	signal_set(&ev_sigint, SIGINT, mda_sig_handler, env);
-	signal_set(&ev_sigterm, SIGTERM, mda_sig_handler, env);
+	signal_set(&ev_sigint, SIGINT, mda_sig_handler, NULL);
+	signal_set(&ev_sigterm, SIGTERM, mda_sig_handler, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
-	config_pipes(env, peers, nitems(peers));
-	config_peers(env, peers, nitems(peers));
+	config_pipes(peers, nitems(peers));
+	config_peers(peers, nitems(peers));
 
 	if (event_dispatch() < 0)
 		fatal("event_dispatch");
@@ -389,7 +389,7 @@ mda_store_event(int fd, short event, void *p)
 }
 
 static struct mda_session *
-mda_lookup(struct smtpd *env, u_int32_t id)
+mda_lookup(u_int32_t id)
 {
 	struct mda_session *s;
 

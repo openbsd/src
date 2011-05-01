@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.32 2011/03/15 19:24:55 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.33 2011/05/01 12:57:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -112,7 +112,7 @@ ssl_connect(int fd, short event, void *p)
 	s->s_flags |= F_SECURE;
 
 	if (s->s_flags & F_PEERHASTLS) {
-		session_respond(s, "EHLO %s", s->s_env->sc_hostname);
+		session_respond(s, "EHLO %s", env->sc_hostname);
 	}
 
 	return;
@@ -346,7 +346,7 @@ ssl_ctx_create(void)
 }
 
 int
-ssl_load_certfile(struct smtpd *env, const char *name, u_int8_t flags)
+ssl_load_certfile(const char *name, u_int8_t flags)
 {
 	struct ssl	*s;
 	struct ssl	 key;
@@ -423,7 +423,7 @@ ssl_init(void)
 }
 
 void
-ssl_setup(struct smtpd *env, struct listener *l)
+ssl_setup(struct listener *l)
 {
 	struct ssl	key;
 	DH *dh;
@@ -536,16 +536,16 @@ ssl_session_accept(int fd, short event, void *p)
 	s->s_flags |= F_SECURE;
 
 	if (s->s_l->flags & F_SMTPS) {
-		s->s_env->stats->smtp.smtps++;
-		s->s_env->stats->smtp.smtps_active++;
-		SET_IF_GREATER(s->s_env->stats->smtp.smtps_active,
-			s->s_env->stats->smtp.smtps_maxactive);
+		env->stats->smtp.smtps++;
+		env->stats->smtp.smtps_active++;
+		SET_IF_GREATER(env->stats->smtp.smtps_active,
+			env->stats->smtp.smtps_maxactive);
 	}
 	if (s->s_l->flags & F_STARTTLS) {
-		s->s_env->stats->smtp.starttls++;
-		s->s_env->stats->smtp.starttls_active++;
-		SET_IF_GREATER(s->s_env->stats->smtp.starttls_active,
-			s->s_env->stats->smtp.starttls_maxactive);
+		env->stats->smtp.starttls++;
+		env->stats->smtp.starttls_active++;
+		SET_IF_GREATER(env->stats->smtp.starttls_active,
+			env->stats->smtp.starttls_maxactive);
 	}
 
 	session_bufferevent_new(s);
@@ -645,11 +645,11 @@ ssl_session_destroy(struct session *s)
 
 	if (s->s_l->flags & F_SMTPS) {
 		if (s->s_flags & F_SECURE)
-			s->s_env->stats->smtp.smtps_active--;
+			env->stats->smtp.smtps_active--;
 	}
 	if (s->s_l->flags & F_STARTTLS) {
 		if (s->s_flags & F_SECURE)
-			s->s_env->stats->smtp.starttls_active--;
+			env->stats->smtp.starttls_active--;
 	}
 }
 

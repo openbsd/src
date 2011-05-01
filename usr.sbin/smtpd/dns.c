@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.40 2011/04/17 13:36:07 gilles Exp $	*/
+/*	$OpenBSD: dns.c,v 1.41 2011/05/01 12:57:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -37,8 +37,8 @@
 #include "smtpd.h"
 #include "log.h"
 
-static struct dnssession *dnssession_init(struct smtpd *, struct dns *);
-static void dnssession_destroy(struct smtpd *, struct dnssession *);
+static struct dnssession *dnssession_init(struct dns *);
+static void dnssession_destroy(struct dnssession *);
 static void dnssession_mx_insert(struct dnssession *, const char *, int);
 static void dns_asr_event_set(struct dnssession *, struct asr_result *);
 static void dns_asr_handler(int, short, void *);
@@ -53,7 +53,7 @@ struct asr *asr = NULL;
  */
 
 void
-dns_query_host(struct smtpd *env, char *host, int port, u_int64_t id)
+dns_query_host(char *host, int port, u_int64_t id)
 {
 	struct dns	 query;
 
@@ -67,7 +67,7 @@ dns_query_host(struct smtpd *env, char *host, int port, u_int64_t id)
 }
 
 void
-dns_query_mx(struct smtpd *env, char *host, int port, u_int64_t id)
+dns_query_mx(char *host, int port, u_int64_t id)
 {
 	struct dns	 query;
 
@@ -81,7 +81,7 @@ dns_query_mx(struct smtpd *env, char *host, int port, u_int64_t id)
 }
 
 void
-dns_query_ptr(struct smtpd *env, struct sockaddr_storage *ss, u_int64_t id)
+dns_query_ptr(struct sockaddr_storage *ss, u_int64_t id)
 {
 	struct dns	 query;
 
@@ -95,7 +95,7 @@ dns_query_ptr(struct smtpd *env, struct sockaddr_storage *ss, u_int64_t id)
 
 /* LKA interface */
 void
-dns_async(struct smtpd *env, struct imsgev *asker, int type, struct dns *query)
+dns_async(struct imsgev *asker, int type, struct dns *query)
 {
 	struct dnssession *dnssession;
 
@@ -104,10 +104,9 @@ dns_async(struct smtpd *env, struct imsgev *asker, int type, struct dns *query)
 		goto noasr;
 	}
 
-	query->env   = env;
 	query->type  = type;
 	query->asker = asker;
-	dnssession = dnssession_init(env, query);
+	dnssession = dnssession_init(query);
 
 	switch (type) {
 	case IMSG_DNS_HOST:
@@ -140,7 +139,7 @@ dns_async(struct smtpd *env, struct imsgev *asker, int type, struct dns *query)
 	}
 
 	env->stats->lka.queries_failure++;
-	dnssession_destroy(env, dnssession);
+	dnssession_destroy(dnssession);
 noasr:
 	query->error = EAI_AGAIN;
 	if (type != IMSG_DNS_PTR)
@@ -240,10 +239,10 @@ next:
 		if (dnssession->mxcurrent == dnssession->mxarraysz) {
 			query->error = (dnssession->mxfound) ? 0 : EAI_NONAME;
 			if (query->error)
-				query->env->stats->lka.queries_failure++;
+				env->stats->lka.queries_failure++;
 			imsg_compose_event(query->asker, IMSG_DNS_HOST_END, 0,
 			    0, -1, query, sizeof(*query));
-			dnssession_destroy(query->env, dnssession);
+			dnssession_destroy(dnssession);
 			return;
 		}
 		mx = dnssession->mxarray + dnssession->mxcurrent++;
@@ -287,17 +286,17 @@ dns_asr_dispatch_cname(struct dnssession *dnssession)
 		break;
 	case ASR_DONE:
 		/* This is necessarily an error */
-		query->env->stats->lka.queries_failure++;
+		env->stats->lka.queries_failure++;
 		query->error = ar.ar_err;
 		break;
 	}
 	imsg_compose_event(query->asker, IMSG_DNS_PTR, 0, 0, -1, query,
 	    sizeof(*query));
-	dnssession_destroy(query->env, dnssession);
+	dnssession_destroy(dnssession);
 }
 
 static struct dnssession *
-dnssession_init(struct smtpd *env, struct dns *query)
+dnssession_init(struct dns *query)
 {
 	struct dnssession *dnssession;
 
@@ -318,7 +317,7 @@ dnssession_init(struct smtpd *env, struct dns *query)
 }
 
 static void
-dnssession_destroy(struct smtpd *env, struct dnssession *dnssession)
+dnssession_destroy(struct dnssession *dnssession)
 {
 	env->stats->lka.queries_active--;
 	SPLAY_REMOVE(dnstree, &env->dns_sessions, dnssession);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.29 2011/04/17 13:36:07 gilles Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.30 2011/05/01 12:57:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -58,6 +58,8 @@ char	*source;
 char	*oflag;
 int	 dbputs;
 
+struct smtpd	*env = NULL;
+
 enum program {
 	P_MAKEMAP,
 	P_NEWALIASES
@@ -73,13 +75,13 @@ enum output_type {
  * Stub functions so that makemap compiles using minimum object files.
  */
 void
-purge_config(struct smtpd *env, u_int8_t what)
+purge_config(u_int8_t what)
 {
 	bzero(env, sizeof(struct smtpd));
 }
 
 int
-ssl_load_certfile(struct smtpd *env, const char *name, u_int8_t flags)
+ssl_load_certfile(const char *name, u_int8_t flags)
 {
 	return (0);
 }
@@ -92,6 +94,9 @@ main(int argc, char *argv[])
 	char		*opts;
 	char		*conf;
 	int		 ch;
+	struct smtpd	 smtpd;
+
+	env = &smtpd;
 
 	log_init(1);
 
@@ -383,15 +388,15 @@ error:
 char *
 conf_aliases(char *cfgpath)
 {
-	struct smtpd	 env;
+	struct smtpd	 smtpd;
 	struct map	*map;
 	char		*path;
 	char		*p;
 
-	if (parse_config(&env, cfgpath, 0))
+	if (parse_config(&smtpd, cfgpath, 0))
 		exit(1);
 
-	map = map_findbyname(&env, "aliases");
+	map = map_findbyname("aliases");
 	if (map == NULL)
 		return (PATH_ALIASES);
 

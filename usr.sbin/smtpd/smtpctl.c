@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.59 2011/04/17 13:36:07 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.60 2011/05/01 12:57:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -46,6 +46,8 @@ struct imsgbuf	*ibuf;
 
 int sendmail = 0;
 extern char *__progname;
+
+struct smtpd	*env = NULL;
 
 __dead void
 usage(void)

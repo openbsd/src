@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.121 2011/04/17 13:36:07 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.122 2011/05/01 12:57:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -44,42 +44,43 @@
 #include "smtpd.h"
 #include "log.h"
 
-static void parent_imsg(struct smtpd *, struct imsgev *, struct imsg *);
+static void parent_imsg(struct imsgev *, struct imsg *);
 static void usage(void);
-static void parent_shutdown(struct smtpd *);
+static void parent_shutdown(void);
 static void parent_send_config(int, short, void *);
-static void parent_send_config_listeners(struct smtpd *);
-static void parent_send_config_client_certs(struct smtpd *);
-static void parent_send_config_ruleset(struct smtpd *, int);
+static void parent_send_config_listeners(void);
+static void parent_send_config_client_certs(void);
+static void parent_send_config_ruleset(int);
 static void parent_sig_handler(int, short, void *);
-static void forkmda(struct smtpd *, struct imsgev *, u_int32_t,
-    struct deliver *);
-static int parent_enqueue_offline(struct smtpd *, char *);
+static void forkmda(struct imsgev *, u_int32_t, struct deliver *);
+static int parent_enqueue_offline(char *);
 static int parent_forward_open(char *);
 static int path_starts_with(char *, char *);
-static void fork_peers(struct smtpd *);
-static struct child *child_lookup(struct smtpd *, pid_t);
-static struct child *child_add(struct smtpd *, pid_t, int, int);
-static void child_del(struct smtpd *, pid_t);
+static void fork_peers(void);
+static struct child *child_lookup(pid_t);
+static struct child *child_add(pid_t, int, int);
+static void child_del(pid_t);
 
 extern char	**environ;
-void		(*imsg_callback)(struct smtpd *, struct imsgev *, struct imsg *);
+void		(*imsg_callback)(struct imsgev *, struct imsg *);
+
+struct smtpd	*env = NULL;
 
 int __b64_pton(char const *, unsigned char *, size_t);
 
 static void
-parent_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
+parent_imsg(struct imsgev *iev, struct imsg *imsg)
 {
-	struct smtpd		 newenv;
+	struct smtpd		 newenv, *saveenv;
 	struct forward_req	*fwreq;
 	struct reload		*reload;
 	struct auth		*auth;
-	int			 fd;
+	int			 fd, r;
 
 	if (iev->proc == PROC_SMTP) {
 		switch (imsg->hdr.type) {
 		case IMSG_PARENT_SEND_CONFIG:
-			parent_send_config_listeners(env);
+			parent_send_config_listeners();
 			return;
 
 		case IMSG_PARENT_AUTHENTICATE:
@@ -113,7 +114,7 @@ parent_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 	if (iev->proc == PROC_QUEUE) {
 		switch (imsg->hdr.type) {
 		case IMSG_PARENT_ENQUEUE_OFFLINE:
-			if (! parent_enqueue_offline(env, imsg->data))
+			if (! parent_enqueue_offline(imsg->data))
 				imsg_compose_event(iev,
 				    IMSG_PARENT_ENQUEUE_OFFLINE, 0, 0, -1,
 				    NULL, 0);
@@ -124,7 +125,7 @@ parent_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 	if (iev->proc == PROC_MDA) {
 		switch (imsg->hdr.type) {
 		case IMSG_PARENT_FORK_MDA:
-			forkmda(env, iev, imsg->hdr.peerid, imsg->data);
+			forkmda(iev, imsg->hdr.peerid, imsg->data);
 			return;
 		}
 	}
@@ -134,7 +135,11 @@ parent_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 		case IMSG_CONF_RELOAD:
 			reload = imsg->data;
 			reload->ret = 0;
-			if (parse_config(&newenv, env->sc_conffile, 0) == 0) {
+			saveenv = env;
+			env = &newenv;
+			r = parse_config(&newenv, saveenv->sc_conffile, 0);
+			env = saveenv;
+			if (r == 0) {
 				strlcpy(env->sc_hostname, newenv.sc_hostname,
 				    sizeof env->sc_hostname);
 				env->sc_listeners = newenv.sc_listeners;
@@ -143,9 +148,9 @@ parent_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 				env->sc_rules = newenv.sc_rules;
 				env->sc_ssl = newenv.sc_ssl;
 				
-				parent_send_config_client_certs(env);
-				parent_send_config_ruleset(env, PROC_MFA);
-				parent_send_config_ruleset(env, PROC_LKA);
+				parent_send_config_client_certs();
+				parent_send_config_ruleset(PROC_MFA);
+				parent_send_config_ruleset(PROC_LKA);
 				imsg_compose_event(env->sc_ievs[PROC_SMTP],
 				    IMSG_CONF_RELOAD, 0, 0, -1, NULL, 0);
 				reload->ret = 1;
@@ -188,7 +193,7 @@ usage(void)
 }
 
 static void
-parent_shutdown(struct smtpd *env)
+parent_shutdown(void)
 {
 	struct child	*child;
 	pid_t		 pid;
@@ -208,13 +213,13 @@ parent_shutdown(struct smtpd *env)
 static void
 parent_send_config(int fd, short event, void *p)
 {
-	parent_send_config_listeners(p);
-	parent_send_config_client_certs(p);
-	parent_send_config_ruleset(p, PROC_LKA);
+	parent_send_config_listeners();
+	parent_send_config_client_certs();
+	parent_send_config_ruleset(PROC_LKA);
 }
 
 static void
-parent_send_config_listeners(struct smtpd *env)
+parent_send_config_listeners(void)
 {
 	struct listener		*l;
 	struct ssl		*s;
@@ -260,7 +265,7 @@ parent_send_config_listeners(struct smtpd *env)
 }
 
 static void
-parent_send_config_client_certs(struct smtpd *env)
+parent_send_config_client_certs(void)
 {
 	struct ssl		*s;
 	struct iovec		 iov[4];
@@ -292,7 +297,7 @@ parent_send_config_client_certs(struct smtpd *env)
 }
 
 void
-parent_send_config_ruleset(struct smtpd *env, int proc)
+parent_send_config_ruleset(int proc)
 {
 	struct rule		*r;
 	struct map		*m;
@@ -325,7 +330,6 @@ parent_send_config_ruleset(struct smtpd *env, int proc)
 static void
 parent_sig_handler(int sig, short event, void *p)
 {
-	struct smtpd	*env = p;
 	struct child	*child;
 	int		 die = 0, status, fail;
 	pid_t		 pid;
@@ -342,7 +346,7 @@ parent_sig_handler(int sig, short event, void *p)
 			if (pid <= 0)
 				continue;
 
-			child = child_lookup(env, pid);
+			child = child_lookup(pid);
 			if (child == NULL)
 				fatalx("unexpected SIGCHLD");
 
@@ -394,12 +398,12 @@ parent_sig_handler(int sig, short event, void *p)
 				fatalx("unexpected child type");
 			}
 
-			child_del(env, child->pid);
+			child_del(child->pid);
 			free(cause);
 		} while (pid > 0 || (pid == -1 && errno == EINTR));
 
 		if (die)
-			parent_shutdown(env);
+			parent_shutdown();
 		break;
 	default:
 		fatalx("unexpected signal");
@@ -413,7 +417,7 @@ main(int argc, char *argv[])
 	int		 debug, verbose;
 	int		 opts;
 	const char	*conffile = CONF_FILE;
-	struct smtpd	 env;
+	struct smtpd	 smtpd;
 	struct event	 ev_sigint;
 	struct event	 ev_sigterm;
 	struct event	 ev_sigchld;
@@ -428,6 +432,8 @@ main(int argc, char *argv[])
 		{ PROC_SMTP,	imsg_dispatch },
 		{ PROC_QUEUE,	imsg_dispatch }
 	};
+
+	env = &smtpd;
 
 	opts = 0;
 	debug = 0;
@@ -465,14 +471,14 @@ main(int argc, char *argv[])
 	argv += optind;
 	argc -= optind;
 
-	if (parse_config(&env, conffile, opts))
+	if (parse_config(&smtpd, conffile, opts))
 		exit(1);
 
-	if (strlcpy(env.sc_conffile, conffile, MAXPATHLEN) >= MAXPATHLEN)
+	if (strlcpy(env->sc_conffile, conffile, MAXPATHLEN) >= MAXPATHLEN)
 		errx(1, "config file exceeds MAXPATHLEN");
 
 
-	if (env.sc_opts & SMTPD_OPT_NOACTION) {
+	if (env->sc_opts & SMTPD_OPT_NOACTION) {
 		fprintf(stderr, "configuration OK\n");
 		exit(0);
 	}
@@ -481,14 +487,14 @@ main(int argc, char *argv[])
 	if (geteuid())
 		errx(1, "need root privileges");
 
-	if ((env.sc_pw =  getpwnam(SMTPD_USER)) == NULL)
+	if ((env->sc_pw =  getpwnam(SMTPD_USER)) == NULL)
 		errx(1, "unknown user %s", SMTPD_USER);
 
-	env.sc_queue = queue_backend_lookup(QT_FS);
-	if (env.sc_queue == NULL)
+	env->sc_queue = queue_backend_lookup(QT_FS);
+	if (env->sc_queue == NULL)
 		errx(1, "could not find queue backend");
 
-	if (!env.sc_queue->init(&env))
+	if (!env->sc_queue->init())
 		errx(1, "invalid directory permissions");
 
 	log_init(debug);
@@ -500,38 +506,38 @@ main(int argc, char *argv[])
 
 	log_info("startup%s", (debug > 1)?" [debug mode]":"");
 
-	if (env.sc_hostname[0] == '\0')
+	if (env->sc_hostname[0] == '\0')
 		errx(1, "machine does not have a hostname set");
 
-	env.stats = mmap(NULL, sizeof(struct stats), PROT_WRITE|PROT_READ,
+	env->stats = mmap(NULL, sizeof(struct stats), PROT_WRITE|PROT_READ,
 	    MAP_ANON|MAP_SHARED, -1, (off_t)0);
-	if (env.stats == MAP_FAILED)
+	if (env->stats == MAP_FAILED)
 		fatal("mmap");
-	bzero(env.stats, sizeof(struct stats));
+	bzero(env->stats, sizeof(struct stats));
 
-	env.stats->parent.start = time(NULL);
+	env->stats->parent.start = time(NULL);
 
-	fork_peers(&env);
+	fork_peers();
 
 	imsg_callback = parent_imsg;
 	event_init();
 
-	signal_set(&ev_sigint, SIGINT, parent_sig_handler, &env);
-	signal_set(&ev_sigterm, SIGTERM, parent_sig_handler, &env);
-	signal_set(&ev_sigchld, SIGCHLD, parent_sig_handler, &env);
-	signal_set(&ev_sighup, SIGHUP, parent_sig_handler, &env);
+	signal_set(&ev_sigint, SIGINT, parent_sig_handler, NULL);
+	signal_set(&ev_sigterm, SIGTERM, parent_sig_handler, NULL);
+	signal_set(&ev_sigchld, SIGCHLD, parent_sig_handler, NULL);
+	signal_set(&ev_sighup, SIGHUP, parent_sig_handler, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sigchld, NULL);
 	signal_add(&ev_sighup, NULL);
 	signal(SIGPIPE, SIG_IGN);
 
-	config_pipes(&env, peers, nitems(peers));
-	config_peers(&env, peers, nitems(peers));
+	config_pipes(peers, nitems(peers));
+	config_peers(peers, nitems(peers));
 
-	evtimer_set(&env.sc_ev, parent_send_config, &env);
+	evtimer_set(&env->sc_ev, parent_send_config, NULL);
 	bzero(&tv, sizeof(tv));
-	evtimer_add(&env.sc_ev, &tv);
+	evtimer_add(&env->sc_ev, &tv);
 
 	if (event_dispatch() < 0)
 		fatal("event_dispatch");
@@ -540,7 +546,7 @@ main(int argc, char *argv[])
 }
 
 static void
-fork_peers(struct smtpd *env)
+fork_peers(void)
 {
 	SPLAY_INIT(&env->children);
 
@@ -569,7 +575,7 @@ fork_peers(struct smtpd *env)
 	env->sc_instances[PROC_RUNNER] = 1;
 	env->sc_instances[PROC_SMTP] = 1;
 
-	init_pipes(env);
+	init_pipes();
 
 	env->sc_title[PROC_CONTROL] = "control";
 	env->sc_title[PROC_LKA] = "lookup agent";
@@ -580,20 +586,20 @@ fork_peers(struct smtpd *env)
 	env->sc_title[PROC_RUNNER] = "runner";
 	env->sc_title[PROC_SMTP] = "smtp server";
 
-	child_add(env, control(env), CHILD_DAEMON, PROC_CONTROL);
-	child_add(env, lka(env), CHILD_DAEMON, PROC_LKA);
-	child_add(env, mda(env), CHILD_DAEMON, PROC_MDA);
-	child_add(env, mfa(env), CHILD_DAEMON, PROC_MFA);
-	child_add(env, mta(env), CHILD_DAEMON, PROC_MTA);
-	child_add(env, queue(env), CHILD_DAEMON, PROC_QUEUE);
-	child_add(env, runner(env), CHILD_DAEMON, PROC_RUNNER);
-	child_add(env, smtp(env), CHILD_DAEMON, PROC_SMTP);
+	child_add(control(), CHILD_DAEMON, PROC_CONTROL);
+	child_add(lka(), CHILD_DAEMON, PROC_LKA);
+	child_add(mda(), CHILD_DAEMON, PROC_MDA);
+	child_add(mfa(), CHILD_DAEMON, PROC_MFA);
+	child_add(mta(), CHILD_DAEMON, PROC_MTA);
+	child_add(queue(), CHILD_DAEMON, PROC_QUEUE);
+	child_add(runner(), CHILD_DAEMON, PROC_RUNNER);
+	child_add(smtp(), CHILD_DAEMON, PROC_SMTP);
 
 	setproctitle("[priv]");
 }
 
 struct child *
-child_add(struct smtpd *env, pid_t pid, int type, int title)
+child_add(pid_t pid, int type, int title)
 {
 	struct child	*child;
 
@@ -611,11 +617,11 @@ child_add(struct smtpd *env, pid_t pid, int type, int title)
 }
 
 static void
-child_del(struct smtpd *env, pid_t pid)
+child_del(pid_t pid)
 {
 	struct child	*p;
 
-	p = child_lookup(env, pid);
+	p = child_lookup(pid);
 	if (p == NULL)
 		fatalx("child_del: unknown child");
 
@@ -625,7 +631,7 @@ child_del(struct smtpd *env, pid_t pid)
 }
 
 static struct child *
-child_lookup(struct smtpd *env, pid_t pid)
+child_lookup(pid_t pid)
 {
 	struct child	 key;
 
@@ -660,7 +666,7 @@ imsg_compose_event(struct imsgev *iev, u_int16_t type, u_int32_t peerid,
 }
 
 static void
-forkmda(struct smtpd *env, struct imsgev *iev, u_int32_t id,
+forkmda(struct imsgev *iev, u_int32_t id,
     struct deliver *deliver)
 {
 	char		 ebuf[128], sfn[32];
@@ -722,7 +728,7 @@ forkmda(struct smtpd *env, struct imsgev *iev, u_int32_t id,
 	if (pid > 0) {
 		if (seteuid(0) < 0)
 			fatal("forkmda: cannot restore privileges");
-		child = child_add(env, pid, CHILD_MDA, -1);
+		child = child_add(pid, CHILD_MDA, -1);
 		child->mda_out = allout;
 		child->mda_id = id;
 		close(pipefd[0]);
@@ -862,7 +868,7 @@ forkmda(struct smtpd *env, struct imsgev *iev, u_int32_t id,
 #undef error2
 
 static int
-parent_enqueue_offline(struct smtpd *env, char *runner_path)
+parent_enqueue_offline(char *runner_path)
 {
 	char		 path[MAXPATHLEN];
 	struct passwd	*pw;
@@ -966,7 +972,7 @@ parent_enqueue_offline(struct smtpd *env, char *runner_path)
 		_exit(1);
 	}
 
-	child_add(env, pid, CHILD_ENQUEUE_OFFLINE, -1);
+	child_add(pid, CHILD_ENQUEUE_OFFLINE, -1);
 
 	return (1);
 }
@@ -1054,7 +1060,7 @@ imsg_dispatch(int fd, short event, void *p)
 			fatal("imsg_get");
 		if (n == 0)
 			break;
-		imsg_callback(iev->env, iev, &imsg);
+		imsg_callback(iev, &imsg);
 		imsg_free(&imsg);
 	}
 	imsg_event_add(iev);

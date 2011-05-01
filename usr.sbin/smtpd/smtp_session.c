@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.140 2011/04/17 13:36:07 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.141 2011/05/01 12:57:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -333,7 +333,7 @@ session_rfc5321_helo_handler(struct session *s, char *args)
 	s->s_flags &= F_SECURE|F_AUTHENTICATED;
 
 	session_respond(s, "250 %s Hello %s [%s], pleased to meet you",
-	    s->s_env->sc_hostname, args, ss_to_text(&s->s_ss));
+	    env->sc_hostname, args, ss_to_text(&s->s_ss));
 
 	return 1;
 }
@@ -358,14 +358,14 @@ session_rfc5321_ehlo_handler(struct session *s, char *args)
 	s->s_flags |= F_8BITMIME;
 
 	session_respond(s, "250-%s Hello %s [%s], pleased to meet you",
-	    s->s_env->sc_hostname, args, ss_to_text(&s->s_ss));
+	    env->sc_hostname, args, ss_to_text(&s->s_ss));
 
 	/* unconditionnal extensions go first */
 	session_respond(s, "250-8BITMIME");
 	session_respond(s, "250-ENHANCEDSTATUSCODES");
 
 	/* XXX - we also want to support reading SIZE from MAIL parameters */
-	session_respond(s, "250-SIZE %zu", s->s_env->sc_maxsize);
+	session_respond(s, "250-SIZE %zu", env->sc_maxsize);
 
 	if (ADVERTISE_TLS(s))
 		session_respond(s, "250-STARTTLS");
@@ -456,7 +456,7 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 static int
 session_rfc5321_quit_handler(struct session *s, char *args)
 {
-	session_respond(s, "221 2.0.0 %s Closing connection", s->s_env->sc_hostname);
+	session_respond(s, "221 2.0.0 %s Closing connection", env->sc_hostname);
 
 	s->s_flags |= F_QUIT;
 
@@ -603,7 +603,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 	if ((ss != NULL && ss->code == 421) ||
 	    (s->s_msg.status & S_MESSAGE_TEMPFAILURE)) {
 		session_respond(s, "421 Service temporarily unavailable");
-		s->s_env->stats->smtp.tempfail++;
+		env->stats->smtp.tempfail++;
 		s->s_flags |= F_QUIT;
 		return;
 	}
@@ -612,7 +612,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 	case S_INIT:
 		s->s_state = S_GREETED;
 		log_debug("session_pickup: greeting client");
-		session_respond(s, SMTPD_BANNER, s->s_env->sc_hostname);
+		session_respond(s, SMTPD_BANNER, env->sc_hostname);
 		break;
 
 	case S_TLS:
@@ -683,7 +683,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 		fprintf(s->datafp, "Received: from %s (%s [%s])\n",
 		    s->s_msg.session_helo, s->s_hostname, ss_to_text(&s->s_ss));
 		fprintf(s->datafp, "\tby %s (OpenSMTPD) with %sSMTP id %08x",
-		    s->s_env->sc_hostname, s->s_flags & F_EHLO ? "E" : "",
+		    env->sc_hostname, s->s_flags & F_EHLO ? "E" : "",
 		    (u_int32_t)(s->s_msg.evpid >> 32));
 
 		if (s->s_flags & F_SECURE) {
@@ -808,7 +808,7 @@ session_read(struct bufferevent *bev, void *p)
 
 tempfail:
 	session_respond(s, "421 4.0.0 Service temporarily unavailable");
-	s->s_env->stats->smtp.tempfail++;
+	env->stats->smtp.tempfail++;
 	s->s_flags |= F_QUIT;
 	free(line);
 }
@@ -832,7 +832,7 @@ session_read_data(struct session *s, char *line)
 		} else if (s->s_msg.status & S_MESSAGE_TEMPFAILURE) {
 			session_respond(s, "421 4.0.0 Temporary failure");
 			s->s_flags |= F_QUIT;
-			s->s_env->stats->smtp.tempfail++;
+			env->stats->smtp.tempfail++;
 		} else {
 			session_imsg(s, PROC_QUEUE, IMSG_QUEUE_COMMIT_MESSAGE,
 			    0, 0, -1, &s->s_msg, sizeof(s->s_msg));
@@ -859,7 +859,7 @@ session_read_data(struct session *s, char *line)
 	 */
 	datalen = ftell(s->datafp);
 	if (SIZE_MAX - datalen < len + 1 ||
-	    datalen + len + 1 > s->s_env->sc_maxsize) {
+	    datalen + len + 1 > env->sc_maxsize) {
 		s->s_msg.status |= S_MESSAGE_PERMFAILURE;
 		return;
 	}
@@ -927,12 +927,12 @@ session_error(struct bufferevent *bev, short event, void *p)
 	if (event & EVBUFFER_READ) {
 		if (event & EVBUFFER_TIMEOUT) {
 			log_warnx("client %s read timeout", ip);
-			s->s_env->stats->smtp.read_timeout++;
+			env->stats->smtp.read_timeout++;
 		} else if (event & EVBUFFER_EOF)
-			s->s_env->stats->smtp.read_eof++;
+			env->stats->smtp.read_eof++;
 		else if (event & EVBUFFER_ERROR) {
 			log_warn("client %s read error", ip);
-			s->s_env->stats->smtp.read_error++;
+			env->stats->smtp.read_error++;
 		}
 
 		session_destroy(s);
@@ -942,12 +942,12 @@ session_error(struct bufferevent *bev, short event, void *p)
 	if (event & EVBUFFER_WRITE) {
 		if (event & EVBUFFER_TIMEOUT) {
 			log_warnx("client %s write timeout", ip);
-			s->s_env->stats->smtp.write_timeout++;
+			env->stats->smtp.write_timeout++;
 		} else if (event & EVBUFFER_EOF)
-			s->s_env->stats->smtp.write_eof++;
+			env->stats->smtp.write_eof++;
 		else if (event & EVBUFFER_ERROR) {
 			log_warn("client %s write error", ip);
-			s->s_env->stats->smtp.write_error++;
+			env->stats->smtp.write_error++;
 		}
 
 		if (s->s_flags & F_WRITEONLY)
@@ -974,7 +974,7 @@ session_destroy(struct session *s)
 		fclose(s->datafp);
 
 	if (s->s_msg.evpid != 0 && s->s_state != S_DONE)
-		imsg_compose_event(s->s_env->sc_ievs[PROC_QUEUE],
+		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 		    IMSG_QUEUE_REMOVE_MESSAGE, 0, 0, -1, &s->s_msg,
 		    sizeof(s->s_msg));
 
@@ -986,16 +986,16 @@ session_destroy(struct session *s)
 	if (s->s_fd != -1 && close(s->s_fd) == -1)
 		fatal("session_destroy: close");
 
-	s->s_env->stats->smtp.sessions_active--;
+	env->stats->smtp.sessions_active--;
 
 	/* resume when session count decreases to 95% */
-	resume = s->s_env->sc_maxconn * 95 / 100;
-	if (s->s_env->stats->smtp.sessions_active == resume) {
+	resume = env->sc_maxconn * 95 / 100;
+	if (env->stats->smtp.sessions_active == resume) {
 		log_warnx("re-enabling incoming connections");
-		smtp_resume(s->s_env);
+		smtp_resume();
 	}
 
-	SPLAY_REMOVE(sessiontree, &s->s_env->sc_sessions, s);
+	SPLAY_REMOVE(sessiontree, &env->sc_sessions, s);
 	bzero(s, sizeof(*s));
 	free(s);
 }
@@ -1011,7 +1011,7 @@ session_readline(struct session *s)
 	if (line == NULL) {
 		if (EVBUFFER_LENGTH(s->s_bev->input) > SMTP_LINE_MAX) {
 			session_respond(s, "500 5.0.0 Line too long");
-			s->s_env->stats->smtp.linetoolong++;
+			env->stats->smtp.linetoolong++;
 			s->s_flags |= F_QUIT;
 		}
 		return NULL;
@@ -1023,7 +1023,7 @@ session_readline(struct session *s)
 
 	if (nr > SMTP_LINE_MAX) {
 		session_respond(s, "500 5.0.0 Line too long");
-		s->s_env->stats->smtp.linetoolong++;
+		env->stats->smtp.linetoolong++;
 		s->s_flags |= F_QUIT;
 		return NULL;
 	}
@@ -1032,7 +1032,7 @@ session_readline(struct session *s)
 	    (line2 = evbuffer_readln(s->s_bev->input, NULL,
 		EVBUFFER_EOL_CRLF)) != NULL) {
 		session_respond(s, "500 5.0.0 Pipelining unsupported");
-		s->s_env->stats->smtp.toofast++;
+		env->stats->smtp.toofast++;
 		s->s_flags |= F_QUIT;
 		free(line);
 		free(line2);
@@ -1131,7 +1131,7 @@ session_respond(struct session *s, char *fmt, ...)
 	if (delay > 0) {
 		struct timeval tv = { delay, 0 };
 
-		s->s_env->stats->smtp.delays++;
+		env->stats->smtp.delays++;
 		evtimer_set(&s->s_ev, session_respond_delayed, s);
 		evtimer_add(&s->s_ev, &tv);
 	} else
@@ -1170,7 +1170,7 @@ session_imsg(struct session *s, enum smtp_proc_type proc, enum imsg_type type,
 	 */
 	s->s_flags |= F_WRITEONLY;
 	bufferevent_disable(s->s_bev, EV_READ);
-	imsg_compose_event(s->s_env->sc_ievs[proc], type, peerid, pid, fd, data,
+	imsg_compose_event(env->sc_ievs[proc], type, peerid, pid, fd, data,
 	    datalen);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.57 2011/04/17 13:36:07 gilles Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.58 2011/05/01 12:57:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -34,25 +34,25 @@
 #include "smtpd.h"
 #include "log.h"
 
-static void mfa_imsg(struct smtpd *, struct imsgev *, struct imsg *);
+static void mfa_imsg(struct imsgev *, struct imsg *);
 static void mfa_shutdown(void);
 static void mfa_sig_handler(int, short, void *);
-static void mfa_test_mail(struct smtpd *, struct envelope *);
-static void mfa_test_rcpt(struct smtpd *, struct envelope *);
-static void mfa_test_rcpt_resume(struct smtpd *, struct submit_status *);
+static void mfa_test_mail(struct envelope *);
+static void mfa_test_rcpt(struct envelope *);
+static void mfa_test_rcpt_resume(struct submit_status *);
 static int mfa_strip_source_route(char *, size_t);
 
 static void
-mfa_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
+mfa_imsg(struct imsgev *iev, struct imsg *imsg)
 {
 	if (iev->proc == PROC_SMTP) {
 		switch (imsg->hdr.type) {
 		case IMSG_MFA_MAIL:
-			mfa_test_mail(env, imsg->data);
+			mfa_test_mail(imsg->data);
 			return;
 
 		case IMSG_MFA_RCPT:
-			mfa_test_rcpt(env, imsg->data);
+			mfa_test_rcpt(imsg->data);
 			return;
 		}
 	}
@@ -67,7 +67,7 @@ mfa_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			return;
 
 		case IMSG_LKA_RULEMATCH:
-			mfa_test_rcpt_resume(env, imsg->data);
+			mfa_test_rcpt_resume(imsg->data);
 			return;
 		}
 	}
@@ -105,7 +105,7 @@ mfa_shutdown(void)
 
 
 pid_t
-mfa(struct smtpd *env)
+mfa(void)
 {
 	pid_t		 pid;
 	struct passwd	*pw;
@@ -129,7 +129,7 @@ mfa(struct smtpd *env)
 		return (pid);
 	}
 
-	purge_config(env, PURGE_EVERYTHING);
+	purge_config(PURGE_EVERYTHING);
 
 	pw = env->sc_pw;
 
@@ -149,15 +149,15 @@ mfa(struct smtpd *env)
 	imsg_callback = mfa_imsg;
 	event_init();
 
-	signal_set(&ev_sigint, SIGINT, mfa_sig_handler, env);
-	signal_set(&ev_sigterm, SIGTERM, mfa_sig_handler, env);
+	signal_set(&ev_sigint, SIGINT, mfa_sig_handler, NULL);
+	signal_set(&ev_sigterm, SIGTERM, mfa_sig_handler, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
-	config_pipes(env, peers, nitems(peers));
-	config_peers(env, peers, nitems(peers));
+	config_pipes(peers, nitems(peers));
+	config_peers(peers, nitems(peers));
 
 	if (event_dispatch() < 0)
 		fatal("event_dispatch");
@@ -167,7 +167,7 @@ mfa(struct smtpd *env)
 }
 
 void
-mfa_test_mail(struct smtpd *env, struct envelope *m)
+mfa_test_mail(struct envelope *m)
 {
 	struct submit_status	 ss;
 
@@ -202,7 +202,7 @@ accept:
 }
 
 static void
-mfa_test_rcpt(struct smtpd *env, struct envelope *m)
+mfa_test_rcpt(struct envelope *m)
 {
 	struct submit_status	 ss;
 
@@ -233,7 +233,7 @@ refuse:
 }
 
 static void
-mfa_test_rcpt_resume(struct smtpd *env, struct submit_status *ss) {
+mfa_test_rcpt_resume(struct submit_status *ss) {
 	if (ss->code != 250) {
 		imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_MFA_RCPT, 0, 0, -1, ss,
 		    sizeof(*ss));

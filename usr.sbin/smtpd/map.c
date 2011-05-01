@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.22 2010/11/28 14:35:58 gilles Exp $	*/
+/*	$OpenBSD: map.c,v 1.23 2011/05/01 12:57:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -35,7 +35,7 @@ struct map_backend *map_backend_lookup(enum map_src);
 struct map_parser *map_parser_lookup(enum map_kind);
 
 struct map *
-map_findbyname(struct smtpd *env, const char *name)
+map_findbyname(const char *name)
 {
 	struct map	*m;
 
@@ -47,7 +47,7 @@ map_findbyname(struct smtpd *env, const char *name)
 }
 
 struct map *
-map_find(struct smtpd *env, objid_t id)
+map_find(objid_t id)
 {
 	struct map	*m;
 
@@ -59,7 +59,7 @@ map_find(struct smtpd *env, objid_t id)
 }
 
 void *
-map_lookup(struct smtpd *env, objid_t mapid, char *key, enum map_kind kind)
+map_lookup(objid_t mapid, char *key, enum map_kind kind)
 {
 	void *hdl = NULL;
 	char *result = NULL;
@@ -69,7 +69,7 @@ map_lookup(struct smtpd *env, objid_t mapid, char *key, enum map_kind kind)
 	struct map_backend *backend = NULL;
 	struct map_parser *parser = NULL;
 
-	map = map_find(env, mapid);
+	map = map_find(mapid);
 	if (map == NULL)
 		return NULL;
 

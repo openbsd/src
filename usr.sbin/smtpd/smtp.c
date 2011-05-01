@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.84 2011/04/17 13:36:07 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.85 2011/05/01 12:57:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -37,20 +37,20 @@
 #include "smtpd.h"
 #include "log.h"
 
-static void smtp_imsg(struct smtpd *, struct imsgev *, struct imsg *);
+static void smtp_imsg(struct imsgev *, struct imsg *);
 static void smtp_shutdown(void);
 static void smtp_sig_handler(int, short, void *);
-static void smtp_setup_events(struct smtpd *);
-static void smtp_disable_events(struct smtpd *);
-static void smtp_pause(struct smtpd *);
-static int smtp_enqueue(struct smtpd *, uid_t *);
+static void smtp_setup_events(void);
+static void smtp_disable_events(void);
+static void smtp_pause(void);
+static int smtp_enqueue(uid_t *);
 static void smtp_accept(int, short, void *);
 static struct session *smtp_new(struct listener *);
-static struct session *session_lookup(struct smtpd *, u_int64_t);
+static struct session *session_lookup(u_int64_t);
 
 
 static void
-smtp_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
+smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 {
 	struct session		 skey;
 	struct submit_status	*ss;
@@ -64,7 +64,7 @@ smtp_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 		switch (imsg->hdr.type) {
 		case IMSG_DNS_PTR:
 			dns = imsg->data;
-			s = session_lookup(env, dns->id);
+			s = session_lookup(dns->id);
 			if (s == NULL)
 				fatalx("smtp: impossible quit");
 			strlcpy(s->s_hostname,
@@ -83,7 +83,7 @@ smtp_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 		case IMSG_MFA_MAIL:
 			log_debug("smtp: got imsg_mfa_mail/rcpt");
 			ss = imsg->data;
-			s = session_lookup(env, ss->id);
+			s = session_lookup(ss->id);
 			if (s == NULL)
 				return;
 			session_pickup(s, ss);
@@ -97,7 +97,7 @@ smtp_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 		switch (imsg->hdr.type) {
 		case IMSG_QUEUE_CREATE_MESSAGE:
 			log_debug("smtp: imsg_queue_create_message returned");
-			s = session_lookup(env, ss->id);
+			s = session_lookup(ss->id);
 			if (s == NULL)
 				return;
 			s->s_msg.evpid = (u_int64_t)ss->u.msgid << 32;
@@ -106,7 +106,7 @@ smtp_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 
 		case IMSG_QUEUE_MESSAGE_FILE:
 			log_debug("smtp: imsg_queue_message_file returned");
-			s = session_lookup(env, ss->id);
+			s = session_lookup(ss->id);
 			if (s == NULL) {
 				close(imsg->fd);
 				return;
@@ -136,7 +136,7 @@ smtp_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 
 		case IMSG_QUEUE_COMMIT_ENVELOPES:
 			log_debug("smtp: got imsg_queue_commit_envelopes");
-			s = session_lookup(env, ss->id);
+			s = session_lookup(ss->id);
 			if (s == NULL)
 				return;
 			session_pickup(s, ss);
@@ -144,7 +144,7 @@ smtp_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 
 		case IMSG_QUEUE_COMMIT_MESSAGE:
 			log_debug("smtp: got imsg_queue_commit_message");
-			s = session_lookup(env, ss->id);
+			s = session_lookup(ss->id);
 			if (s == NULL)
 				return;
 			session_pickup(s, ss);
@@ -152,7 +152,7 @@ smtp_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 
 		case IMSG_SMTP_ENQUEUE:
 			imsg_compose_event(iev, IMSG_SMTP_ENQUEUE, 0, 0,
-			    smtp_enqueue(env, NULL), imsg->data,
+			    smtp_enqueue(NULL), imsg->data,
 			    sizeof(struct envelope));
 			return;
 		}
@@ -171,7 +171,7 @@ smtp_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 				s->s_msg.status |= S_MESSAGE_TEMPFAILURE;
 			}
 			if (env->sc_listeners)
-				smtp_disable_events(env);
+				smtp_disable_events();
 			imsg_compose_event(iev, IMSG_PARENT_SEND_CONFIG, 0, 0, -1,
 			    NULL, 0);
 			return;
@@ -237,13 +237,13 @@ smtp_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 		case IMSG_CONF_END:
 			if (!(env->sc_flags & SMTPD_CONFIGURING))
 				return;
-			smtp_setup_events(env);
+			smtp_setup_events();
 			env->sc_flags &= ~SMTPD_CONFIGURING;
 			return;
 
 		case IMSG_PARENT_AUTHENTICATE:
 			auth = imsg->data;
-			s = session_lookup(env, auth->id);
+			s = session_lookup(auth->id);
 			if (s == NULL)
 				return;
 			if (auth->success) {
@@ -266,16 +266,16 @@ smtp_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 		switch (imsg->hdr.type) {
 		case IMSG_SMTP_ENQUEUE:
 			imsg_compose_event(iev, IMSG_SMTP_ENQUEUE,
-			    imsg->hdr.peerid, 0, smtp_enqueue(env, imsg->data),
+			    imsg->hdr.peerid, 0, smtp_enqueue(imsg->data),
 			    NULL, 0);
 			return;
 
 		case IMSG_SMTP_PAUSE:
-			smtp_pause(env);
+			smtp_pause();
 			return;
 
 		case IMSG_SMTP_RESUME:
-			smtp_resume(env);
+			smtp_resume();
 			return;
 		}
 	}
@@ -304,7 +304,7 @@ smtp_shutdown(void)
 }
 
 pid_t
-smtp(struct smtpd *env)
+smtp(void)
 {
 	pid_t		 pid;
 	struct passwd	*pw;
@@ -330,7 +330,7 @@ smtp(struct smtpd *env)
 	}
 
 	ssl_init();
-	purge_config(env, PURGE_EVERYTHING);
+	purge_config(PURGE_EVERYTHING);
 
 	pw = env->sc_pw;
 
@@ -350,8 +350,8 @@ smtp(struct smtpd *env)
 	imsg_callback = smtp_imsg;
 	event_init();
 
-	signal_set(&ev_sigint, SIGINT, smtp_sig_handler, env);
-	signal_set(&ev_sigterm, SIGTERM, smtp_sig_handler, env);
+	signal_set(&ev_sigint, SIGINT, smtp_sig_handler, NULL);
+	signal_set(&ev_sigterm, SIGTERM, smtp_sig_handler, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
 	signal(SIGPIPE, SIG_IGN);
@@ -361,8 +361,8 @@ smtp(struct smtpd *env)
 	 * the listening sockets arrive. */
 	env->sc_maxconn = availdesc() / 2;
 
-	config_pipes(env, peers, nitems(peers));
-	config_peers(env, peers, nitems(peers));
+	config_pipes(peers, nitems(peers));
+	config_peers(peers, nitems(peers));
 
 	if (event_dispatch() < 0)
 		fatal("event_dispatch");
@@ -372,7 +372,7 @@ smtp(struct smtpd *env)
 }
 
 static void
-smtp_setup_events(struct smtpd *env)
+smtp_setup_events(void)
 {
 	struct listener *l;
 	int avail = availdesc();
@@ -385,10 +385,9 @@ smtp_setup_events(struct smtpd *env)
 		session_socket_blockmode(l->fd, BM_NONBLOCK);
 		if (listen(l->fd, SMTPD_BACKLOG) == -1)
 			fatal("listen");
-		l->env = env;
 		event_set(&l->ev, l->fd, EV_READ|EV_PERSIST, smtp_accept, l);
 		event_add(&l->ev, NULL);
-		ssl_setup(env, l);
+		ssl_setup(l);
 		avail--;
 	}
 
@@ -400,7 +399,7 @@ smtp_setup_events(struct smtpd *env)
 }
 
 static void
-smtp_disable_events(struct smtpd *env)
+smtp_disable_events(void)
 {
 	struct listener	*l;
 
@@ -417,7 +416,7 @@ smtp_disable_events(struct smtpd *env)
 }
 
 static void
-smtp_pause(struct smtpd *env)
+smtp_pause(void)
 {
 	struct listener *l;
 
@@ -429,7 +428,7 @@ smtp_pause(struct smtpd *env)
 }
 
 void
-smtp_resume(struct smtpd *env)
+smtp_resume(void)
 {
 	struct listener *l;
 
@@ -441,7 +440,7 @@ smtp_resume(struct smtpd *env)
 }
 
 static int
-smtp_enqueue(struct smtpd *env, uid_t *euid)
+smtp_enqueue(uid_t *euid)
 {
 	static struct listener		 local, *l;
 	static struct sockaddr_storage	 sa;
@@ -463,7 +462,6 @@ smtp_enqueue(struct smtpd *env, uid_t *euid)
 		memcpy(&sa, res->ai_addr, res->ai_addrlen);
 		freeaddrinfo(res);
 	}
-	l->env = env;
 
 	/*
 	 * Some enqueue requests buffered in IMSG may still arrive even after
@@ -518,14 +516,13 @@ smtp_accept(int fd, short event, void *p)
 
 	
 	s->s_flags |= F_WRITEONLY;
-	dns_query_ptr(l->env, &s->s_ss, s->s_id);
+	dns_query_ptr(&s->s_ss, s->s_id);
 }
 
 
 static struct session *
 smtp_new(struct listener *l)
 {
-	struct smtpd	*env = l->env;
 	struct session	*s;
 
 	log_debug("smtp_new: incoming client on listener: %p", l);
@@ -535,14 +532,13 @@ smtp_new(struct listener *l)
 
 	if (env->stats->smtp.sessions_active >= env->sc_maxconn) {
 		log_warnx("client limit hit, disabling incoming connections");
-		smtp_pause(env);
+		smtp_pause();
 		return (NULL);
 	}
 	
 	if ((s = calloc(1, sizeof(*s))) == NULL)
 		fatal(NULL);
 	s->s_id = generate_uid();
-	s->s_env = env;
 	s->s_l = l;
 	strlcpy(s->s_msg.tag, l->tag, sizeof(s->s_msg.tag));
 	SPLAY_INSERT(sessiontree, &env->sc_sessions, s);
@@ -566,7 +562,7 @@ smtp_new(struct listener *l)
  * Helper function for handling IMSG replies.
  */
 static struct session *
-session_lookup(struct smtpd *env, u_int64_t id)
+session_lookup(u_int64_t id)
 {
 	struct session	 key;
 	struct session	*s;

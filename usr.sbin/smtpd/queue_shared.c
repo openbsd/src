@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.46 2011/04/17 11:39:22 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.47 2011/05/01 12:57:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -59,7 +59,7 @@ void		display_envelope(struct envelope *, int);
 void		getflag(u_int *, int, char *, char *, size_t);
 
 int
-bounce_record_message(struct smtpd *env, struct envelope *m, struct envelope *bounce)
+bounce_record_message(struct envelope *m, struct envelope *bounce)
 {
 	u_int32_t msgid;
 
@@ -73,18 +73,18 @@ bounce_record_message(struct smtpd *env, struct envelope *m, struct envelope *bo
 	 bounce->status &= ~S_MESSAGE_PERMFAILURE;
 
 	msgid = evpid_to_msgid(m->evpid);
-	if (! queue_message_create(env, Q_BOUNCE, &msgid))
+	if (! queue_message_create(Q_BOUNCE, &msgid))
 		return 0;
 
 	bounce->evpid = msgid_to_evpid(msgid);
-	if (! queue_envelope_create(env, Q_BOUNCE, bounce))
+	if (! queue_envelope_create(Q_BOUNCE, bounce))
 		return 0;
 
-	return queue_message_commit(env, Q_BOUNCE, msgid);
+	return queue_message_commit(Q_BOUNCE, msgid);
 }
 
 void
-queue_message_update(struct smtpd *env, struct envelope *m)
+queue_message_update(struct envelope *m)
 {
 	m->flags &= ~F_MESSAGE_PROCESSING;
 	m->status &= ~(S_MESSAGE_ACCEPTED|S_MESSAGE_REJECTED);
@@ -96,20 +96,20 @@ queue_message_update(struct smtpd *env, struct envelope *m)
 		    m->sender.user[0] != '\0') {
 			struct envelope bounce;
 
-			bounce_record_message(env, m, &bounce);
+			bounce_record_message(m, &bounce);
 		}
-		queue_envelope_delete(env, Q_QUEUE, m);
+		queue_envelope_delete(Q_QUEUE, m);
 		return;
 	}
 
 	if (m->status & S_MESSAGE_TEMPFAILURE) {
 		m->status &= ~S_MESSAGE_TEMPFAILURE;
-		queue_envelope_update(env, Q_QUEUE, m);
+		queue_envelope_update(Q_QUEUE, m);
 		return;
 	}
 
 	/* no error, remove envelope */
-	queue_envelope_delete(env, Q_QUEUE, m);
+	queue_envelope_delete(Q_QUEUE, m);
 }
 
 struct qwalk *

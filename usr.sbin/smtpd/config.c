@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.14 2011/04/17 13:36:07 gilles Exp $	*/
+/*	$OpenBSD: config.c,v 1.15 2011/05/01 12:57:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -45,17 +45,17 @@ is_peer(struct peer *p, enum smtp_proc_type peer, u_int peercount)
 }
 
 void
-unconfigure(struct smtpd *env)
+unconfigure(void)
 {
 }
 
 void
-configure(struct smtpd *env)
+configure(void)
 {
 }
 
 void
-purge_config(struct smtpd *env, u_int8_t what)
+purge_config(u_int8_t what)
 {
 	struct listener	*l;
 	struct map	*m;
@@ -104,7 +104,7 @@ purge_config(struct smtpd *env, u_int8_t what)
 }
 
 void
-init_pipes(struct smtpd *env)
+init_pipes(void)
 {
 	int	 i;
 	int	 j;
@@ -149,7 +149,7 @@ init_pipes(struct smtpd *env)
 }
 
 void
-config_pipes(struct smtpd *env, struct peer *p, u_int peercount)
+config_pipes(struct peer *p, u_int peercount)
 {
 	u_int	i;
 	u_int	j;
@@ -184,7 +184,7 @@ config_pipes(struct smtpd *env, struct peer *p, u_int peercount)
 }
 
 void
-config_peers(struct smtpd *env, struct peer *p, u_int peercount)
+config_peers(struct peer *p, u_int peercount)
 {
 	int	count;
 	u_int	src;
@@ -212,7 +212,6 @@ config_peers(struct smtpd *env, struct peer *p, u_int peercount)
 			env->sc_ievs[dst][count].events = EV_READ;
 			env->sc_ievs[dst][count].proc = dst;
 			env->sc_ievs[dst][count].data = &env->sc_ievs[dst][count];
-			env->sc_ievs[dst][count].env = env;
 
 			event_set(&(env->sc_ievs[dst][count].ev),
 			    env->sc_ievs[dst][count].ibuf.fd,

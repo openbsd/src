@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.72 2010/11/28 14:35:58 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.73 2011/05/01 12:57:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -280,7 +280,7 @@ expire		: EXPIRE STRING {
 credentials	: AUTH STRING	{
 			struct map *m;
 
-			if ((m = map_findbyname(conf, $2)) == NULL) {
+			if ((m = map_findbyname($2)) == NULL) {
 				yyerror("no such map: %s", $2);
 				free($2);
 				YYERROR;
@@ -338,7 +338,7 @@ main		: QUEUE INTERVAL interval	{
 			if ($7)
 				flags |= F_AUTH;
 
-			if ($5 && ssl_load_certfile(conf, cert, F_SCERT) < 0) {
+			if ($5 && ssl_load_certfile(cert, F_SCERT) < 0) {
 				yyerror("cannot load certificate: %s", cert);
 				free($8);
 				free($6);
@@ -685,7 +685,7 @@ mapref		: STRING			{
 		| MAP STRING			{
 			struct map	*m;
 
-			if ((m = map_findbyname(conf, $2)) == NULL) {
+			if ((m = map_findbyname($2)) == NULL) {
 				yyerror("no such map: %s", $2);
 				free($2);
 				YYERROR;
@@ -718,7 +718,7 @@ condition	: NETWORK mapref		{
 			struct map	*m;
 
 			if ($3) {
-				if ((m = map_findbyname(conf, $3)) == NULL) {
+				if ((m = map_findbyname($3)) == NULL) {
 					yyerror("no such map: %s", $3);
 					free($3);
 					YYERROR;
@@ -736,7 +736,7 @@ condition	: NETWORK mapref		{
 			struct cond	*c;
 			struct map	*m;
 
-			if ((m = map_findbyname(conf, $2)) == NULL) {
+			if ((m = map_findbyname($2)) == NULL) {
 				yyerror("no such map: %s", $2);
 				free($2);
 				YYERROR;
@@ -756,7 +756,7 @@ condition	: NETWORK mapref		{
 			struct mapel	*me;
 
 			if ($2) {
-				if ((m = map_findbyname(conf, $2)) == NULL) {
+				if ((m = map_findbyname($2)) == NULL) {
 					yyerror("no such map: %s", $2);
 					free($2);
 					YYERROR;
@@ -906,7 +906,7 @@ action		: DELIVER TO MAILDIR user		{
 			}
 
 			if ($6 != NULL) {
-				if (ssl_load_certfile(conf, $6, F_CCERT) < 0) {
+				if (ssl_load_certfile($6, F_CCERT) < 0) {
 					yyerror("cannot load certificate: %s",
 					    $6);
 					free($6);
@@ -981,13 +981,13 @@ from		: FROM mapref			{
 		| FROM LOCAL			{
 			struct map	*m;
 
-			m = map_findbyname(conf, "localhost");
+			m = map_findbyname("localhost");
 			$$ = m->m_id;
 		}
 		| /* empty */			{
 			struct map	*m;
 
-			m = map_findbyname(conf, "localhost");
+			m = map_findbyname("localhost");
 			$$ = m->m_id;
 		}
 		;
@@ -1008,7 +1008,7 @@ rule		: decision on from			{
 
 			if ((rule = calloc(1, sizeof(*rule))) == NULL)
 				fatal("out of memory");
-			rule->r_sources = map_find(conf, $3);
+			rule->r_sources = map_find($3);
 
 
 			if ((conditions = calloc(1, sizeof(*conditions))) == NULL)
@@ -1513,7 +1513,7 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	conf->sc_opts = opts;
 
 	if ((file = pushfile(filename, 0)) == NULL) {
-		purge_config(conf, PURGE_EVERYTHING);
+		purge_config(PURGE_EVERYTHING);
 		free(m);
 		return (-1);
 	}
@@ -1568,7 +1568,7 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 		}
 
 	if (errors) {
-		purge_config(conf, PURGE_EVERYTHING);
+		purge_config(PURGE_EVERYTHING);
 		return (-1);
 	}
 
@@ -1858,7 +1858,7 @@ set_localaddrs(void)
 	if (getifaddrs(&ifap) == -1)
 		fatal("getifaddrs");
 
-	m = map_findbyname(conf, "localhost");
+	m = map_findbyname("localhost");
 
 	for (p = ifap; p != NULL; p = p->ifa_next) {
 		switch (p->ifa_addr->sa_family) {

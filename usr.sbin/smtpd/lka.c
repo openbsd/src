@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.125 2011/04/17 13:36:07 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.126 2011/05/01 12:57:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -41,28 +41,28 @@
 #include "smtpd.h"
 #include "log.h"
 
-struct rule *ruleset_match(struct smtpd *, char *, struct path *, struct sockaddr_storage *);
-static void lka_imsg(struct smtpd *, struct imsgev *, struct imsg *);
+struct rule *ruleset_match(char *, struct path *, struct sockaddr_storage *);
+static void lka_imsg(struct imsgev *, struct imsg *);
 static void lka_shutdown(void);
 static void lka_sig_handler(int, short, void *);
-static void lka_expand_pickup(struct smtpd *, struct lkasession *);
-static int lka_expand_resume(struct smtpd *, struct lkasession *);
-static int lka_resolve_node(struct smtpd *, char *, struct path *, struct expandnode *);
-static int lka_verify_mail(struct smtpd *, struct path *);
-static int lka_resolve_path(struct smtpd *, struct lkasession *, struct path *);
-static struct lkasession *lka_session_init(struct smtpd *, struct submit_status *);
-static void lka_request_forwardfile(struct smtpd *, struct lkasession *, char *);
+static void lka_expand_pickup(struct lkasession *);
+static int lka_expand_resume(struct lkasession *);
+static int lka_resolve_node(char *, struct path *, struct expandnode *);
+static int lka_verify_mail(struct path *);
+static int lka_resolve_path(struct lkasession *, struct path *);
+static struct lkasession *lka_session_init(struct submit_status *);
+static void lka_request_forwardfile(struct lkasession *, char *);
 static void lka_clear_expandtree(struct expandtree *);
 static void lka_clear_deliverylist(struct deliverylist *);
 static int lka_encode_credentials(char *, size_t, struct map_secret *);
 static size_t lka_expand(char *, size_t, struct path *, struct path *);
-static void lka_rcpt_action(struct smtpd *, char *, struct path *);
-static void lka_session_destroy(struct smtpd *, struct lkasession *);
-static void lka_expansion_done(struct smtpd *, struct lkasession *);
-static void lka_session_fail(struct smtpd *, struct lkasession *, struct submit_status *);
+static void lka_rcpt_action(char *, struct path *);
+static void lka_session_destroy(struct lkasession *);
+static void lka_expansion_done(struct lkasession *);
+static void lka_session_fail(struct lkasession *, struct submit_status *);
 
 static void
-lka_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
+lka_imsg(struct imsgev *iev, struct imsg *imsg)
 {
 	struct lkasession	 skey;
 	struct submit_status	*ss;
@@ -77,7 +77,7 @@ lka_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 
 	if (imsg->hdr.type == IMSG_DNS_HOST || imsg->hdr.type == IMSG_DNS_MX ||
 	    imsg->hdr.type == IMSG_DNS_PTR) {
-		dns_async(env, iev, imsg->hdr.type, imsg->data);
+		dns_async(iev, imsg->hdr.type, imsg->data);
 		return;
 	}
 
@@ -90,7 +90,7 @@ lka_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			    ss->u.path.domain[0] == '\0')
 				ss->code = 250;
 			else
-				if (lka_verify_mail(env, &ss->u.path))
+				if (lka_verify_mail(&ss->u.path))
 					ss->code = 250;
 			imsg_compose_event(iev, IMSG_LKA_MAIL, 0, 0, -1, ss,
 			    sizeof *ss);
@@ -99,8 +99,7 @@ lka_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 		case IMSG_LKA_RULEMATCH:
 			ss = imsg->data;
 			ss->code = 530;
-			rule = ruleset_match(env, ss->msg.tag, &ss->u.path,
-			    &ss->ss);
+			rule = ruleset_match(ss->msg.tag, &ss->u.path, &ss->ss);
 			if (rule) {
 				ss->code = 250;
 				ss->u.path.rule = *rule;
@@ -113,11 +112,11 @@ lka_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			ss = imsg->data;
 			ss->code = 250;
 			path = &ss->u.path;
-			s = lka_session_init(env, ss);
-			if (! lka_resolve_path(env, s, path))
-				lka_session_fail(env, s, ss);
+			s = lka_session_init(ss);
+			if (! lka_resolve_path(s, path))
+				lka_session_fail(s, ss);
 			else
-				lka_expand_pickup(env, s);
+				lka_expand_pickup(s);
 			return;
 		}
 	}
@@ -128,10 +127,10 @@ lka_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			struct map_secret *map_secret;
 
 			secret = imsg->data;
-			map = map_find(env, secret->secmapid);
+			map = map_find(secret->secmapid);
 			if (map == NULL)
 				fatalx("lka: secrets map not found");
-			map_secret = map_lookup(env, map->m_id, secret->host, K_SECRET);
+			map_secret = map_lookup(map->m_id, secret->host, K_SECRET);
 			log_debug("lka: %s secret lookup (%d)", secret->host,
 			    map_secret != NULL);
 			secret->secret[0] = '\0';
@@ -182,7 +181,7 @@ lka_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			rule = TAILQ_LAST(env->sc_rules_reload, rulelist);
 			tmp = env->sc_maps;
 			env->sc_maps = env->sc_maps_reload;
-			rule->r_sources = map_findbyname(env, imsg->data);
+			rule->r_sources = map_findbyname(imsg->data);
 			if (rule->r_sources == NULL)
 				fatalx("lka: maps inconsistency");
 			env->sc_maps = tmp;
@@ -199,9 +198,9 @@ lka_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 
 		case IMSG_CONF_END:
 			if (env->sc_rules)
-				purge_config(env, PURGE_RULES);
+				purge_config(PURGE_RULES);
 			if (env->sc_maps)
-				purge_config(env, PURGE_MAPS);
+				purge_config(PURGE_MAPS);
 			env->sc_rules = env->sc_rules_reload;
 			env->sc_maps = env->sc_maps_reload;
 			return;
@@ -225,7 +224,7 @@ lka_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 				}
 				close(imsg->fd);
 				s->path.flags |= F_PATH_FORWARDED;
-				lka_expand_pickup(env, s);
+				lka_expand_pickup(s);
 			} else {
 				if (fwreq->status) {
 					/* .forward not present */
@@ -233,12 +232,12 @@ lka_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 					strlcpy(path->pw_name, fwreq->pw_name,
 					    sizeof path->pw_name);
 					TAILQ_INSERT_TAIL(&s->deliverylist, path, entry);
-					lka_expand_pickup(env, s);
+					lka_expand_pickup(s);
 				} else {
 					/* opening .forward failed */
 					s->ss.code = 530;
 					s->flags |= F_ERROR;
-					lka_expand_pickup(env, s);
+					lka_expand_pickup(s);
 				}
 			}
 			return;
@@ -281,7 +280,7 @@ lka_shutdown(void)
 }
 
 pid_t
-lka(struct smtpd *env)
+lka(void)
 {
 	pid_t		 pid;
 	struct passwd	*pw;
@@ -307,7 +306,7 @@ lka(struct smtpd *env)
 		return (pid);
 	}
 
-	purge_config(env, PURGE_EVERYTHING);
+	purge_config(PURGE_EVERYTHING);
 
 	pw = env->sc_pw;
 
@@ -323,9 +322,9 @@ lka(struct smtpd *env)
 	event_init();
 	SPLAY_INIT(&env->lka_sessions);
 
-	signal_set(&ev_sigint, SIGINT, lka_sig_handler, env);
-	signal_set(&ev_sigterm, SIGTERM, lka_sig_handler, env);
-	signal_set(&ev_sigchld, SIGCHLD, lka_sig_handler, env);
+	signal_set(&ev_sigint, SIGINT, lka_sig_handler, NULL);
+	signal_set(&ev_sigterm, SIGTERM, lka_sig_handler, NULL);
+	signal_set(&ev_sigchld, SIGCHLD, lka_sig_handler, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sigchld, NULL);
@@ -338,8 +337,8 @@ lka(struct smtpd *env)
 	 */
 	fdlimit(1.0);
 
-	config_pipes(env, peers, nitems(peers));
-	config_peers(env, peers, nitems(peers));
+	config_pipes(peers, nitems(peers));
+	config_peers(peers, nitems(peers));
 
 	if (event_dispatch() < 0)
 		fatal("event_dispatch");
@@ -349,7 +348,7 @@ lka(struct smtpd *env)
 }
 
 int
-lka_verify_mail(struct smtpd *env, struct path *path)
+lka_verify_mail(struct path *path)
 {
 	return 1;
 }
@@ -464,7 +463,7 @@ copy:
 }
 
 int
-lka_resolve_node(struct smtpd *env, char *tag, struct path *path, struct expandnode *expnode)
+lka_resolve_node(char *tag, struct path *path, struct expandnode *expnode)
 {
 	struct path psave = *path;
 
@@ -494,7 +493,7 @@ lka_resolve_node(struct smtpd *env, char *tag, struct path *path, struct expandn
 
 		log_debug("lka_resolve_node: resolved to address: %s@%s",
 		    path->user, path->domain);
-		lka_rcpt_action(env, tag, path);
+		lka_rcpt_action(tag, path);
 		break;
 
 	case EXPAND_FILENAME:
@@ -526,7 +525,7 @@ lka_resolve_node(struct smtpd *env, char *tag, struct path *path, struct expandn
 			sizeof(path->domain)) >= sizeof(path->domain))
 			return 0;
 
-		lka_rcpt_action(env, tag, path);
+		lka_rcpt_action(tag, path);
 		break;
 	case EXPAND_INVALID:
 	case EXPAND_INCLUDE:
@@ -538,7 +537,7 @@ lka_resolve_node(struct smtpd *env, char *tag, struct path *path, struct expandn
 }
 
 void
-lka_expand_pickup(struct smtpd *env, struct lkasession *lkasession)
+lka_expand_pickup(struct lkasession *lkasession)
 {
 	int	ret;
 
@@ -550,7 +549,7 @@ lka_expand_pickup(struct smtpd *env, struct lkasession *lkasession)
 	while (! (lkasession->flags & F_ERROR) &&
 	    ! lkasession->pending && lkasession->iterations < 5) {
 		++lkasession->iterations;
-		ret = lka_expand_resume(env, lkasession);
+		ret = lka_expand_resume(lkasession);
 		if (ret == -1) {
 			lkasession->ss.code = 530;
 			lkasession->flags |= F_ERROR;
@@ -563,11 +562,11 @@ lka_expand_pickup(struct smtpd *env, struct lkasession *lkasession)
 	if (lkasession->pending)
 		return;
 
-	lka_expansion_done(env, lkasession);
+	lka_expansion_done(lkasession);
 }
 
 int
-lka_expand_resume(struct smtpd *env, struct lkasession *lkasession)
+lka_expand_resume(struct lkasession *lkasession)
 {
 	u_int8_t done = 1;
 	struct expandnode *expnode = NULL;
@@ -583,7 +582,7 @@ lka_expand_resume(struct smtpd *env, struct lkasession *lkasession)
 		done = 0;
 
 		/* convert node to path, then inherit flags from lkasession */
-		if (! lka_resolve_node(env, lkasession->message.tag, &path, expnode))
+		if (! lka_resolve_node(lkasession->message.tag, &path, expnode))
 			return -1;
 		path.flags = lkasessionpath->flags;
 
@@ -591,7 +590,7 @@ lka_expand_resume(struct smtpd *env, struct lkasession *lkasession)
 		 * we need to dup because path may be added to the deliverylist.
 		 */
 		pathp = path_dup(&path);
-		if (! lka_resolve_path(env, lkasession, pathp))
+		if (! lka_resolve_path(lkasession, pathp))
 			return -1;
 
 		/* decrement refcount on this node and flag it as processed */
@@ -612,7 +611,7 @@ lka_expand_resume(struct smtpd *env, struct lkasession *lkasession)
 }
 
 void
-lka_expansion_done(struct smtpd *env, struct lkasession *lkasession)
+lka_expansion_done(struct lkasession *lkasession)
 {
 	struct envelope message;
 	struct path *path;
@@ -631,21 +630,21 @@ lka_expansion_done(struct smtpd *env, struct lkasession *lkasession)
 		lka_expand(path->rule.r_value.buffer,
 		    sizeof(path->rule.r_value.buffer), path, &message.sender);
 		message.recipient = *path;
-		queue_submit_envelope(env, &message);
+		queue_submit_envelope(&message);
 		
 		TAILQ_REMOVE(&lkasession->deliverylist, path, entry);
 		free(path);
 	}
-	queue_commit_envelopes(env, &message);
+	queue_commit_envelopes(&message);
 
 done:
 	lka_clear_expandtree(&lkasession->expandtree);
 	lka_clear_deliverylist(&lkasession->deliverylist);
-	lka_session_destroy(env, lkasession);
+	lka_session_destroy(lkasession);
 }
 
 int
-lka_resolve_path(struct smtpd *env, struct lkasession *lkasession, struct path *path)
+lka_resolve_path(struct lkasession *lkasession, struct path *path)
 {
 	if (IS_RELAY(*path)) {
 		path = path_dup(path);
@@ -668,9 +667,9 @@ lka_resolve_path(struct smtpd *env, struct lkasession *lkasession, struct path *
 		if (sep != NULL)
 			*sep = '\0';
 
-		if (aliases_exist(env, path->rule.r_amap, username)) {
+		if (aliases_exist(path->rule.r_amap, username)) {
 			path->flags |= F_PATH_ALIAS;
-			if (! aliases_get(env, path->rule.r_amap,
+			if (! aliases_get(path->rule.r_amap,
 				&lkasession->expandtree, path->user))
 				return 0;
 			return 1;
@@ -690,14 +689,14 @@ lka_resolve_path(struct smtpd *env, struct lkasession *lkasession, struct path *
 		if (path->flags & F_PATH_FORWARDED)
 			TAILQ_INSERT_TAIL(&lkasession->deliverylist, path, entry);
 		else
-			lka_request_forwardfile(env, lkasession, path->pw_name);
+			lka_request_forwardfile(lkasession, path->pw_name);
 
 		return 1;
 	}
 	case C_VDOM: {
-		if (aliases_virtual_exist(env, path->rule.r_condition.c_map, path)) {
+		if (aliases_virtual_exist(path->rule.r_condition.c_map, path)) {
 			path->flags |= F_PATH_VIRTUAL;
-			if (! aliases_virtual_get(env, path->rule.r_condition.c_map,
+			if (! aliases_virtual_get(path->rule.r_condition.c_map,
 				&lkasession->expandtree, path))
 				return 0;
 			return 1;
@@ -712,7 +711,7 @@ lka_resolve_path(struct smtpd *env, struct lkasession *lkasession, struct path *
 }
 
 static void
-lka_rcpt_action(struct smtpd *env, char *tag, struct path *path)
+lka_rcpt_action(char *tag, struct path *path)
 {
 	struct rule *r;
 
@@ -720,7 +719,7 @@ lka_rcpt_action(struct smtpd *env, char *tag, struct path *path)
 		(void)strlcpy(path->domain, env->sc_hostname,
 		    sizeof (path->domain));
 
-	r = ruleset_match(env, tag, path, NULL);
+	r = ruleset_match(tag, path, NULL);
 	if (r == NULL) {
 		path->rule.r_action = A_RELAY;
 		return;
@@ -786,7 +785,7 @@ lka_encode_credentials(char *dst, size_t size, struct map_secret *map_secret)
 }
 
 static struct lkasession *
-lka_session_init(struct smtpd *env, struct submit_status *ss)
+lka_session_init(struct submit_status *ss)
 {
 	struct lkasession *lkasession;
 
@@ -807,23 +806,23 @@ lka_session_init(struct smtpd *env, struct submit_status *ss)
 }
 
 static void
-lka_session_fail(struct smtpd *env, struct lkasession *lkasession, struct submit_status *ss)
+lka_session_fail(struct lkasession *lkasession, struct submit_status *ss)
 {
 	ss->code = 530;
 	imsg_compose_event(env->sc_ievs[PROC_MFA], IMSG_LKA_RCPT, 0, 0, -1,
 	    ss, sizeof(*ss));
-	lka_session_destroy(env, lkasession);
+	lka_session_destroy(lkasession);
 }
 
 static void
-lka_session_destroy(struct smtpd *env, struct lkasession *lkasession)
+lka_session_destroy(struct lkasession *lkasession)
 {
 	SPLAY_REMOVE(lkatree, &env->lka_sessions, lkasession);
 	free(lkasession);
 }
 
 static void
-lka_request_forwardfile(struct smtpd *env, struct lkasession *lkasession, char *username)
+lka_request_forwardfile(struct lkasession *lkasession, char *username)
 {
 	struct forward_req	 fwreq;
 
