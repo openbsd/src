@@ -3922,6 +3922,10 @@ i915_gem_idle(struct inteldrm_softc *dev_priv)
 	struct drm_device	*dev = (struct drm_device *)dev_priv->drmdev;
 	int			 ret;
 
+	/* If drm attach failed */
+	if (dev == NULL)
+		return (0);
+
 	DRM_LOCK();
 	if (dev_priv->mm.suspended || dev_priv->ring.ring_obj == NULL) {
 		DRM_UNLOCK();
