@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.309 2011/03/27 14:15:02 nicm Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.310 2011/05/02 22:22:54 chl Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -469,7 +469,7 @@ rcs_head_get(RCSFILE *file)
 		/* HEAD should be the last revision on the default branch */
 		TAILQ_FOREACH(brp, &(rdp->rd_branches), rb_list) {
 			if (rcsnum_cmp(brp->rb_num, file->rf_branch,
-			    file->rf_branch->rn_len) == NULL)
+			    file->rf_branch->rn_len) == 0)
 				break;
 		}
 		rcsnum_free(rootrev);
