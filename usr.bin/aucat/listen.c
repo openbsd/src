@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.14 2011/04/28 06:19:57 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.15 2011/05/02 22:24:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -21,6 +21,7 @@
 #include <sys/un.h>
 
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <netdb.h>
 
 #include <err.h>
@@ -175,7 +176,7 @@ listen_revents(struct file *file, struct pollfd *pfd)
 	struct listen *f = (struct listen *)file;
 	struct sockaddr caddr;
 	socklen_t caddrlen;
-	int sock;
+	int sock, opt;
 
 	if (pfd->revents & POLLIN) {
 		caddrlen = sizeof(caddrlen);
@@ -189,6 +190,15 @@ listen_revents(struct file *file, struct pollfd *pfd)
 			perror("fcntl(sock, O_NONBLOCK)");
 			close(sock);
 			return 0;
+		}
+		if (f->path == NULL) {
+			opt = 1;
+			if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY,
+				&opt, sizeof(int)) < 0) {
+				perror("setsockopt");
+				close(sock);
+				return 0;
+			}
 		}
 		if (sock_new(&sock_ops, sock) == NULL) {
 			close(sock);
