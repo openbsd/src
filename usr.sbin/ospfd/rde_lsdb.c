@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.45 2011/03/24 08:36:00 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.46 2011/05/02 11:45:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -529,8 +529,6 @@ lsa_num_links(struct vertex *v)
 	default:
 		fatalx("lsa_num_links: invalid LSA type");
 	}
-
-	return (0);
 }
 
 void

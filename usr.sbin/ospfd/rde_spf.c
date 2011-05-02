@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.70 2011/03/24 08:36:00 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.71 2011/05/02 11:45:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -35,16 +35,18 @@ RB_PROTOTYPE(rt_tree, rt_node, entry, rt_compare)
 RB_GENERATE(rt_tree, rt_node, entry, rt_compare)
 struct vertex			*spf_root = NULL;
 
-void		 calc_nexthop(struct vertex *, struct vertex *,
-		     struct area *, struct lsa_rtr_link *);
-void		 rt_nexthop_clear(struct rt_node *);
-void		 rt_nexthop_add(struct rt_node *, struct v_nexthead *,
-		     struct in_addr);
-void		 rt_update(struct in_addr, u_int8_t, struct v_nexthead *,
-		     u_int32_t, u_int32_t, struct in_addr, struct in_addr,
-		     enum path_type, enum dst_type, u_int8_t, u_int32_t);
-void		 rt_invalidate(struct area *);
-int		 linked(struct vertex *, struct vertex *);
+void	 calc_nexthop(struct vertex *, struct vertex *,
+	     struct area *, struct lsa_rtr_link *);
+void	 rt_nexthop_clear(struct rt_node *);
+void	 rt_nexthop_add(struct rt_node *, struct v_nexthead *,
+	     struct in_addr);
+void	 rt_update(struct in_addr, u_int8_t, struct v_nexthead *,
+	     u_int32_t, u_int32_t, struct in_addr, struct in_addr,
+	     enum path_type, enum dst_type, u_int8_t, u_int32_t);
+void	 rt_invalidate(struct area *);
+struct lsa_rtr_link	*get_rtr_link(struct vertex *, int);
+struct lsa_net_link	*get_net_link(struct vertex *, int);
+int	 linked(struct vertex *, struct vertex *);
 
 void
 spf_calc(struct area *area)
@@ -1024,7 +1026,7 @@ linked(struct vertex *w, struct vertex *v)
 					return (1);
 				break;
 			default:
-				fatalx("spf_calc: invalid type");
+				fatalx("linked: invalid type");
 			}
 		}
 		return (0);
@@ -1037,12 +1039,12 @@ linked(struct vertex *w, struct vertex *v)
 					return (1);
 				break;
 			default:
-				fatalx("spf_calc: invalid type");
+				fatalx("linked: invalid type");
 			}
 		}
 		return (0);
 	default:
-		fatalx("spf_calc: invalid LSA type");
+		fatalx("linked: invalid LSA type");
 	}
 
 	return (0);
