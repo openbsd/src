@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shar.1,v 1.11 2008/06/03 19:51:02 jmc Exp $
+.\"	$OpenBSD: shar.1,v 1.12 2011/05/02 11:14:11 jmc Exp $
 .\"	$NetBSD: shar.1,v 1.4 1995/08/18 14:55:40 pk Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)shar.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: June 3 2008 $
+.Dd $Mdocdate: May 2 2011 $
 .Dt SHAR 1
 .Os
 .Sh NAME
@@ -61,7 +61,7 @@ To create a shell archive of the program
 and mail it to Rick:
 .Bd -literal -offset indent
 $ cd ls
-$ shar `find . -print` \&| mail -s "ls source" rick
+$ shar `find . -print` | mail -s "ls source" rick
 .Ed
 .Pp
 To recreate the program directory:

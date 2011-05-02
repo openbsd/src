@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tun.4,v 1.38 2010/09/23 01:24:32 matthew Exp $
+.\"	$OpenBSD: tun.4,v 1.39 2011/05/02 11:14:11 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Marcus D. Watts  All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 .\" USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 23 2010 $
+.Dd $Mdocdate: May 2 2011 $
 .Dt TUN 4
 .Os
 .Sh NAME
@@ -132,7 +132,7 @@ will not be changed even when given.
 Flags default to
 .Dv IFF_POINTOPOINT
 for layer 3 and to
-.Dv IFF_BROADCAST \&| IFF_MULTICAST
+.Dv IFF_BROADCAST | IFF_MULTICAST
 for layer 2 mode.
 It is an error to set both
 .Dv IFF_POINTOPOINT

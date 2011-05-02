@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.91 2011/01/23 20:43:55 schwarze Exp $
+.\"	$OpenBSD: make.1,v 1.92 2011/05/02 11:14:11 jmc Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: January 23 2011 $
+.Dd $Mdocdate: May 2 2011 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -991,13 +991,13 @@ The
 .Ar operator
 may be any one of the following:
 .Bl -tag -width "Cm XX"
-.It Cm \&|\&|
+.It Cm ||
 logical OR
 .It Cm \&&&
 Logical
 .Tn AND ;
 of higher precedence than
-.Dq \&|\&| .
+.Cm || .
 .El
 .Pp
 As in C,

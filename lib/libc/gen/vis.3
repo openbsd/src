@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vis.3,v 1.27 2011/03/14 15:56:48 deraadt Exp $
+.\"	$OpenBSD: vis.3,v 1.28 2011/05/02 11:14:11 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 14 2011 $
+.Dd $Mdocdate: May 2 2011 $
 .Dt VIS 3
 .Os
 .Sh NAME
@@ -180,11 +180,7 @@ Also encode tab.
 Also encode newline.
 .It Dv VIS_WHITE
 Synonym for
-.Dv VIS_SP
-\&|
-.Dv VIS_TAB
-\&|
-.Dv VIS_NL .
+.Dv VIS_SP | VIS_TAB | VIS_NL .
 .It Dv VIS_SAFE
 Only encode
 .Dq unsafe

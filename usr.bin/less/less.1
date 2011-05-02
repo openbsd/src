@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.21 2011/02/03 22:11:22 jmc Exp $
+.\"	$OpenBSD: less.1,v 1.22 2011/05/02 11:14:11 jmc Exp $
 .\"
 .\" Copyright (C) 2002  Mark Nudelman
 .\"
@@ -23,7 +23,7 @@
 .\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 3 2011 $
+.Dd $Mdocdate: May 2 2011 $
 .Dt LESS 1
 .Os
 .Sh NAME
@@ -114,11 +114,7 @@ Like SPACE, but if N is specified, it becomes the new window size.
 .It Ic ESC-SPACE
 Like SPACE, but scrolls a full screensful, even if it reaches
 end-of-file in the process.
-.It Xo
-.Ic RETURN No \&| Ic ^N No \&|
-.Ic e No \&| Ic ^E No \&|
-.Ic j No \&| Ic ^J
-.Xc
+.It Ic RETURN | ^N | e | ^E | j | ^J
 Scroll forward N lines, default 1.
 The entire N lines are displayed, even if N is more than the screen size.
 .It Ic d | ^D
@@ -129,11 +125,7 @@ Scroll backward N lines, default one window (see option -z below).
 If N is more than the screen size, only the final screenful is displayed.
 .It Ic w
 Like ESC-v, but if N is specified, it becomes the new window size.
-.It Xo
-.Ic y No \&| Ic ^Y No \&|
-.Ic ^P No \&| Ic k No \&|
-.Ic ^K
-.Xc
+.It Ic y | ^Y | ^P | k | ^K
 Scroll backward N lines, default 1.
 The entire N lines are displayed, even if N is more than the screen size.
 Warning: some systems use ^Y as a special job control character.
@@ -404,11 +396,7 @@ to initially display each file starting at the end rather than the beginning.
 Prints the version number of
 .Nm
 being run.
-.It Xo
-.Ic q No \&| Ic Q No \&|
-.Ic :q No \&| Ic :Q No \&|
-.Ic ZZ
-.Xc
+.It Ic q | Q | :q | :Q | ZZ
 Exits
 .Nm less .
 .El
@@ -445,7 +433,7 @@ The shell is taken from the environment variable
 .Ev SHELL ,
 or defaults to "sh".
 .\" On MS-DOS and OS/2 systems, the shell is the normal command processor.
-.It Ic \&| <m> Ar shell-command
+.It Ic | <m> Ar shell-command
 <m> represents any mark letter.
 Pipes a section of the input file to the given shell command.
 The section of the file to be piped is between the first line on

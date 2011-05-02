@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctags.1,v 1.24 2010/11/04 14:32:28 jmc Exp $
+.\"	$OpenBSD: ctags.1,v 1.25 2011/05/02 11:14:11 jmc Exp $
 .\"	$NetBSD: ctags.1,v 1.4 1995/03/26 20:14:04 glass Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ctags.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: November 4 2010 $
+.Dd $Mdocdate: May 2 2011 $
 .Dt CTAGS 1
 .Os
 .Sh NAME
@@ -105,8 +105,8 @@ it may be desired to run the output through
 .Xr sort 1 .
 Sample use:
 .Bd -literal -offset indent
-$ ctags \-v files \&| sort \-f > index
-$ vgrind \-x index
+$ ctags -v files | sort -f > index
+$ vgrind -x index
 .Ed
 .It Fl w
 Suppress warning diagnostics.

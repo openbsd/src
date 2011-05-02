@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.45 2009/10/22 15:02:12 sobrado Exp $
+.\"	$OpenBSD: fstat.1,v 1.46 2011/05/02 11:14:11 jmc Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)fstat.1	8.3 (Berkeley) 2/25/94
 .\"
-.Dd $Mdocdate: October 22 2009 $
+.Dd $Mdocdate: May 2 2011 $
 .Dt FSTAT 1
 .Os
 .Sh NAME
@@ -165,7 +165,7 @@ the letter
 indicates open for writing.
 This field is useful when trying to find the processes that are
 preventing a file system from being downgraded to read-only.
-.It Li SZ\&|DV
+.It Li SZ | DV
 If the file is not a character or block special file, prints the size of
 the file in bytes.
 Otherwise, if the

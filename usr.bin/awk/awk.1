@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.39 2011/03/22 15:55:43 jmc Exp $
+.\"	$OpenBSD: awk.1,v 1.40 2011/05/02 11:14:11 jmc Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 22 2011 $
+.Dd $Mdocdate: May 2 2011 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -88,7 +88,7 @@ Disable file output
 process creation
 .Po
 .Ar cmd | Ic getline ,
-.Ic print No \&| ,
+.Ic print | ,
 .Ic system
 .Pc
 and access to the environment
