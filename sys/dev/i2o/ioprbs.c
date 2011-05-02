@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.30 2011/04/27 18:54:19 matthew Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.31 2011/05/02 22:15:11 chl Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -669,7 +669,8 @@ ioprbs_get_ccb(void *cookie)
 	mtx_leave(&sc->sc_ccb_mtx);
 
 	/* initialise the command */
-	ccb->ic_flags = 0;
+	if (ccb)
+		ccb->ic_flags = 0;
 
 	return (ccb);
 }
