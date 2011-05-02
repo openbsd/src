@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.35 2011/04/24 07:07:03 otto Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.36 2011/05/02 22:23:59 chl Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -202,7 +202,6 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	struct zlncnt *zlnp;
 	int ndb, j;
 	mode_t mode;
-	char *symbuf;
 	u_int64_t lndb;
 
 	dp = getnextinode(inumber);
