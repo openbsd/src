@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP32,v 1.15 2010/07/03 03:59:17 krw Exp $
+#	$OpenBSD: RAMDISK-IP32,v 1.16 2011/05/02 19:51:05 miod Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 
@@ -10,8 +10,6 @@ option		DST=0		# use daylight savings rules
 
 # Make options
 makeoption	LINK_ADDRESS="0xffffffff80100000"
-
-option		ARCBIOS		# Systems uses ARC firmware.
 
 option		PCIVERBOSE
 option		USBVERBOSE
@@ -35,6 +33,7 @@ option		RAMDISK_HOOKS
 
 # Define what targets to support
 option		TGT_O2		# O2, O2+
+option		ARCBIOS
 option		CPU_R5000	# R5000/RM5200 support
 option		CPU_RM7000	# RM7000 support
 option		CPU_R10000	# R10000/R12000/R14000/R16000 support
@@ -153,6 +152,7 @@ msk*		at mskc?	#  each port of above
 bge*		at pci?		# Broadcom BCM570x (aka Tigon3)
 vge*		at pci?		# VIA VT612x
 bnx*		at pci?		# Broadcom BCM5706/5708 GigE
+sis*		at pci?		# SiS 900/7016 ethernet
 
 ##### Media Independent Interface (mii) drivers
 exphy*		at mii?		# 3Com internal PHYs

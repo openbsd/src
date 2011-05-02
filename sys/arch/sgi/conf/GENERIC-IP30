@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP30,v 1.33 2010/11/26 20:13:55 miod Exp $
+#	$OpenBSD: GENERIC-IP30,v 1.34 2011/05/02 19:51:05 miod Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 #
@@ -18,19 +18,16 @@ maxusers	32		# Estimated number of users
 # Make options
 makeoption	LINK_ADDRESS="0xa800000020020000"
 
-# MD options
-option		ARCBIOS		# We use arcbios for FW communication.
-
 option		PCIVERBOSE
 option		USER_PCICONF	# User-space PCI configuration
 option		USBVERBOSE
 
 # Define what targets to support
 option		TGT_OCTANE	# Octane, Octane 2
-option		TGT_COHERENT
+option		TGT_COHERENT	# mandatory
+option		ARCBIOS		# mandatory
 option		CPU_R10000	# R10000/R12000/R14000/R16000 support
 
-# Specify storage configuration (it's a joke..)
 config		bsd	swap generic
 
 #
@@ -80,10 +77,19 @@ scsibus*	at isp?
 scsibus*	at mpi?
 scsibus*	at siop?
 
+# CardBus bus support
+cbb*		at pci?
+cardslot*	at cbb?
+cardbus*	at cardslot?
+pcmcia*		at cardslot?
+
 # USB Controllers
-ohci*		at pci?	# Open Host Controller
-uhci*		at pci?	# Universal Host Controller
-ehci*		at pci?	# Enhanced Host Controller
+ohci*		at pci?		# Open Host Controller
+ohci*		at cardbus?
+uhci*		at pci?		# Universal Host Controller
+uhci*		at cardbus?
+ehci*		at pci?		# Enhanced Host Controller
+ehci*		at cardbus?
 
 # USB bus support
 usb*		at ohci?
@@ -152,18 +158,25 @@ pcn*		at pci?		# AMD PCnet-PCI Ethernet
 epic*		at pci?		# SMC EPIC/100 ethernet
 de*		at pci?		# DC21X4X-based ethernet
 dc*		at pci?		# 21143, "tulip" clone ethernet
+dc*		at cardbus?
 sf*		at pci?		# Adaptec AIC-6915 ethernet
 em*		at pci?		# Intel Pro/1000 ethernet
 ep*		at pci?		# 3Com 3c59x
+ep*		at pcmcia?
 fxp*		at pci?		# EtherExpress 10/100B ethernet
+fxp*		at cardbus?
 mtd*		at pci?		# Myson MTD803 3-in-1 Ethernet
 ne*		at pci?		# NE2000-compatible Ethernet
+ne*		at pcmcia?
 ti*		at pci?		# Alteon ACEnic gigabit Ethernet
 stge*		at pci?		# Sundance TC9021 GigE
 vr*		at pci?		# VIA Rhine Fast Ethernet
 xl*		at pci?		# 3C9xx ethernet
+xl*		at cardbus?
 re*		at pci?		# Realtek 8169/8169S/8110S
+re*		at cardbus?
 rl*		at pci?		# Realtek 81[23]9 ethernet
+rl*		at cardbus?
 hme*		at pci?		# Sun Happy Meal
 gem*		at pci?		# Sun 'gem' ethernet
 cas*		at pci?		# Sun Cassini 100/Gigabit
@@ -174,6 +187,7 @@ msk*		at mskc?	#  each port of above
 bge*		at pci?		# Broadcom BCM570x (aka Tigon3)
 vge*		at pci?		# VIA VT612x
 bnx*		at pci?		# Broadcom BCM5706/5708 GigE
+sis*		at pci?		# SiS 900/7016 ethernet
 
 ##### Media Independent Interface (mii) drivers
 exphy*		at mii?		# 3Com internal PHYs
@@ -205,7 +219,11 @@ gentbi*		at mii?		# Generic 1000BASE-X ten-bit PHY
 ukphy*		at mii?		# "unknown" PHYs
 
 #### Wireless
-wi*		at pci?
+acx*		at pci?		# TI ACX100/ACX111 (802.11b/g)
+acx*		at cardbus?
+malo*		at pci?		# Marvell Libertas
+wi*		at pci?		# WaveLAN IEEE 802.11DS
+wi*		at pcmcia?
 
 #### Audio
 cmpci*		at pci?		# C-Media CMI8338/8738
@@ -242,9 +260,12 @@ hifn*		at pci?		# Hifn7751/7811/7951
 ubsec*		at pci?		# Broadcom 58xx
 
 # PCI "universal" communication device
-puc*	at pci?
-com*	at puc?
-#lpt*	at puc?
+puc*		at pci?
+com*		at puc?
+#lpt*		at puc?
+
+com*		at pcmcia?
+com*		at cardbus?
 
 pseudo-device	crypto	1
 pseudo-device	hotplug	1		# devices hot plugging

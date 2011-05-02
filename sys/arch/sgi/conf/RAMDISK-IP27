@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP27,v 1.23 2010/07/03 03:59:17 krw Exp $
+#	$OpenBSD: RAMDISK-IP27,v 1.24 2011/05/02 19:51:05 miod Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 
@@ -10,8 +10,6 @@ option		DST=0		# use daylight savings rules
 
 # Make options
 makeoption	LINK_ADDRESS="0xa800000000040000"
-
-option		ARCBIOS		# Systems uses ARC firmware.
 
 option		PCIVERBOSE
 option		USBVERBOSE
@@ -36,6 +34,7 @@ option		RAMDISK_HOOKS
 # Define what targets to support
 option		TGT_ORIGIN	# IP27/IP35
 option		TGT_COHERENT
+option		ARCBIOS	
 option		CPU_R10000	# R10000/R12000/R14000/R16000 support
 
 # Specify storage configuration using ramdisk
@@ -170,6 +169,7 @@ msk*		at mskc?	#  each port of above
 bge*		at pci?		# Broadcom BCM570x (aka Tigon3)
 vge*		at pci?		# VIA VT612x
 bnx*		at pci?		# Broadcom BCM5706/5708 GigE
+sis*		at pci?		# SiS 900/7016 ethernet
 
 ##### Media Independent Interface (mii) drivers
 exphy*		at mii?		# 3Com internal PHYs
