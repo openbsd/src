@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.50 2011/04/22 10:09:57 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.51 2011/05/02 12:25:42 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -950,6 +950,7 @@ struct em_ffvt_entry {
 #define E1000_FLA      0x0001C  /* Flash Access - RW */
 #define E1000_MDIC     0x00020  /* MDI Control - RW */
 #define E1000_SCTL     0x00024  /* SerDes Control - RW */
+#define E1000_FEXTNVM4 0x00024  /* Future Extended NVM 4 - RW */
 #define E1000_FEXTNVM  0x00028  /* Future Extended NVM register */
 #define E1000_FCAL     0x00028  /* Flow Control Address Low - RW */
 #define E1000_FCAH     0x0002C  /* Flow Control Address High -RW */
@@ -1168,6 +1169,7 @@ struct em_ffvt_entry {
 #define E1000_82542_FLA      E1000_FLA
 #define E1000_82542_MDIC     E1000_MDIC
 #define E1000_82542_SCTL     E1000_SCTL
+#define E1000_82542_FEXTNVM4 E1000_FEXTNVM4
 #define E1000_82542_FEXTNVM  E1000_FEXTNVM
 #define E1000_82542_FCAL     E1000_FCAL
 #define E1000_82542_FCAH     E1000_FCAH
@@ -1377,6 +1379,10 @@ struct em_ffvt_entry {
 #define E1000_82542_RSSIR       E1000_RSSIR
 #define E1000_82542_KUMCTRLSTA E1000_KUMCTRLSTA
 #define E1000_82542_SW_FW_SYNC E1000_SW_FW_SYNC
+
+#define E1000_FEXTNVM4_BEACON_DURATION_MASK    0x7
+#define E1000_FEXTNVM4_BEACON_DURATION_8USEC   0x7
+#define E1000_FEXTNVM4_BEACON_DURATION_16USEC  0x3
 
 /* Statistics counters collected by the MAC */
 struct em_hw_stats {
