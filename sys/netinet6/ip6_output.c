@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.120 2011/04/05 11:48:28 blambert Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.121 2011/05/02 22:17:28 chl Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2299,14 +2299,14 @@ copypktopts(struct ip6_pktopts *dst, struct ip6_pktopts *src, int canwait)
 	if (src->ip6po_pktinfo) {
 		dst->ip6po_pktinfo = malloc(sizeof(*dst->ip6po_pktinfo),
 		    M_IP6OPT, canwait);
-		if (dst->ip6po_pktinfo == NULL && canwait == M_NOWAIT)
+		if (dst->ip6po_pktinfo == NULL)
 			goto bad;
 		*dst->ip6po_pktinfo = *src->ip6po_pktinfo;
 	}
 	if (src->ip6po_nexthop) {
 		dst->ip6po_nexthop = malloc(src->ip6po_nexthop->sa_len,
 		    M_IP6OPT, canwait);
-		if (dst->ip6po_nexthop == NULL && canwait == M_NOWAIT)
+		if (dst->ip6po_nexthop == NULL)
 			goto bad;
 		bcopy(src->ip6po_nexthop, dst->ip6po_nexthop,
 		    src->ip6po_nexthop->sa_len);
