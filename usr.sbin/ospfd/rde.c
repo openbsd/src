@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.92 2011/03/24 08:35:59 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.93 2011/05/02 11:17:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -227,7 +227,8 @@ int
 rde_imsg_compose_ospfe(int type, u_int32_t peerid, pid_t pid, void *data,
     u_int16_t datalen)
 {
-	return (imsg_compose_event(iev_ospfe, type, peerid, pid, -1, data, datalen));
+	return (imsg_compose_event(iev_ospfe, type, peerid, pid, -1,
+	    data, datalen));
 }
 
 /* ARGSUSED */
@@ -295,7 +296,8 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			if (nbr == NULL)
 				break;
 
-			if (state != nbr->state && (nbr->state & NBR_STA_FULL ||
+			if (state != nbr->state &&
+			    (nbr->state & NBR_STA_FULL ||
 			    state & NBR_STA_FULL))
 				area_track(nbr->area, state);
 
@@ -442,10 +444,10 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 
 				/* reflood self originated LSA */
 				if (self && v)
-					imsg_compose_event(iev_ospfe, IMSG_LS_FLOOD,
-					    v->peerid, 0, -1, v->lsa,
-					    ntohs(v->lsa->hdr.len));
-				/* lsa not added so free it */
+					imsg_compose_event(iev_ospfe,
+					    IMSG_LS_FLOOD, v->peerid, 0, -1,
+					    v->lsa, ntohs(v->lsa->hdr.len));
+				/* new LSA was not added so free it */
 				if (self)
 					free(lsa);
 			} else if (r < 0) {
@@ -458,8 +460,9 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				 * in the table we should reset the session.
 				 */
 				if (rde_req_list_exists(nbr, &lsa->hdr)) {
-					imsg_compose_event(iev_ospfe, IMSG_LS_BADREQ,
-					    imsg.hdr.peerid, 0, -1, NULL, 0);
+					imsg_compose_event(iev_ospfe,
+					    IMSG_LS_BADREQ, imsg.hdr.peerid,
+					    0, -1, NULL, 0);
 					free(lsa);
 					break;
 				}
@@ -502,7 +505,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				break;
 
 			v = lsa_find(nbr->area, lsa_hdr.type, lsa_hdr.ls_id,
-				    lsa_hdr.adv_rtr);
+			    lsa_hdr.adv_rtr);
 			if (v == NULL)
 				db_hdr = NULL;
 			else
@@ -528,9 +531,9 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			}
 			if (imsg.hdr.len == IMSG_HEADER_SIZE) {
 				LIST_FOREACH(area, &rdeconf->area_list, entry) {
-					imsg_compose_event(iev_ospfe, IMSG_CTL_AREA,
-					    0, imsg.hdr.pid, -1, area,
-					    sizeof(*area));
+					imsg_compose_event(iev_ospfe,
+					    IMSG_CTL_AREA, 0, imsg.hdr.pid, -1,
+					    area, sizeof(*area));
 					lsa_dump(&area->lsa_tree, imsg.hdr.type,
 					    imsg.hdr.pid);
 				}
@@ -539,9 +542,9 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			} else {
 				memcpy(&aid, imsg.data, sizeof(aid));
 				if ((area = area_find(rdeconf, aid)) != NULL) {
-					imsg_compose_event(iev_ospfe, IMSG_CTL_AREA,
-					    0, imsg.hdr.pid, -1, area,
-					    sizeof(*area));
+					imsg_compose_event(iev_ospfe,
+					    IMSG_CTL_AREA, 0, imsg.hdr.pid, -1,
+					    area, sizeof(*area));
 					lsa_dump(&area->lsa_tree, imsg.hdr.type,
 					    imsg.hdr.pid);
 					if (!area->stub)
@@ -550,8 +553,8 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 						    imsg.hdr.pid);
 				}
 			}
-			imsg_compose_event(iev_ospfe, IMSG_CTL_END, 0, imsg.hdr.pid,
-			    -1, NULL, 0);
+			imsg_compose_event(iev_ospfe, IMSG_CTL_END, 0,
+			    imsg.hdr.pid, -1, NULL, 0);
 			break;
 		case IMSG_CTL_SHOW_RIB:
 			LIST_FOREACH(area, &rdeconf->area_list, entry) {
@@ -564,15 +567,15 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			aid.s_addr = 0;
 			rt_dump(aid, imsg.hdr.pid, RIB_EXT);
 
-			imsg_compose_event(iev_ospfe, IMSG_CTL_END, 0, imsg.hdr.pid,
-			    -1, NULL, 0);
+			imsg_compose_event(iev_ospfe, IMSG_CTL_END, 0,
+			    imsg.hdr.pid, -1, NULL, 0);
 			break;
 		case IMSG_CTL_SHOW_SUM:
 			rde_send_summary(imsg.hdr.pid);
 			LIST_FOREACH(area, &rdeconf->area_list, entry)
 				rde_send_summary_area(area, imsg.hdr.pid);
-			imsg_compose_event(iev_ospfe, IMSG_CTL_END, 0, imsg.hdr.pid,
-			    -1, NULL, 0);
+			imsg_compose_event(iev_ospfe, IMSG_CTL_END, 0,
+			    imsg.hdr.pid, -1, NULL, 0);
 			break;
 		case IMSG_CTL_LOG_VERBOSE:
 			/* already checked by ospfe */
@@ -764,7 +767,8 @@ rde_send_delete_kroute(struct rt_node *r)
 	kr.prefix.s_addr = r->prefix.s_addr;
 	kr.prefixlen = r->prefixlen;
 
-	imsg_compose_event(iev_main, IMSG_KROUTE_DELETE, 0, 0, -1, &kr, sizeof(kr));
+	imsg_compose_event(iev_main, IMSG_KROUTE_DELETE, 0, 0, -1,
+	    &kr, sizeof(kr));
 }
 
 void
