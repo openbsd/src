@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.91 2011/04/19 22:33:08 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.92 2011/05/02 13:48:38 mikeb Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1436,6 +1436,19 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 			break;
 		    }
 
+		case SO_RTABLE:
+			if (so->so_proto && so->so_proto->pr_domain &&
+			    so->so_proto->pr_domain->dom_protosw &&
+			    so->so_proto->pr_ctloutput) {
+				struct domain *dom = so->so_proto->pr_domain;
+
+				level = dom->dom_protosw->pr_protocol;
+				return ((*so->so_proto->pr_ctloutput)
+				    (PRCO_SETOPT, so, level, optname, &m0));
+			}
+			error = ENOPROTOOPT;
+			break;
+
 #ifdef SOCKET_SPLICE
 		case SO_SPLICE:
 			if (m == NULL) {
@@ -1544,6 +1557,20 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 			    (val % hz) * tick;
 			break;
 		    }
+
+		case SO_RTABLE:
+			(void)m_free(m);
+			if (so->so_proto && so->so_proto->pr_domain &&
+			    so->so_proto->pr_domain->dom_protosw &&
+			    so->so_proto->pr_ctloutput) {
+				struct domain *dom = so->so_proto->pr_domain;
+
+				level = dom->dom_protosw->pr_protocol;
+				return ((*so->so_proto->pr_ctloutput)
+				    (PRCO_GETOPT, so, level, optname, mp));
+			}
+			return (ENOPROTOOPT);
+			break;
 
 #ifdef SOCKET_SPLICE
 		case SO_SPLICE:

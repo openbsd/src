@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.219 2011/04/28 09:56:27 claudio Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.220 2011/05/02 13:48:38 mikeb Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1383,7 +1383,7 @@ ip_ctloutput(op, so, level, optname, mp)
 			}
 #endif
 			break;
-		case SO_RTABLE:
+		case IP_RTABLE:
 			if (m == NULL || m->m_len < sizeof(u_int)) {
 				error = EINVAL;
 				break;

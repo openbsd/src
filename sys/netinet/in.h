@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.87 2011/04/28 09:56:27 claudio Exp $	*/
+/*	$OpenBSD: in.h,v 1.88 2011/05/02 13:48:38 mikeb Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -281,6 +281,8 @@ struct ip_opts {
 #define IP_MINTTL		32   /* minimum TTL for packet or drop */
 #define IP_RECVDSTPORT		33   /* bool; receive IP dst port w/dgram */
 #define IP_PIPEX		34   /* bool; using PIPEX */
+
+#define IP_RTABLE		0x1021	/* int; routing table, see SO_RTABLE */
 
 /*
  * Security levels - IPsec, not IPSO
