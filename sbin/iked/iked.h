@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.36 2011/04/18 08:45:43 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.37 2011/05/02 12:39:18 mikeb Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -333,6 +333,7 @@ struct iked_sa {
 #define IKED_SATYPE_LOCAL		 1		/* Local SA */
 
 	struct iked_addr		 sa_peer;
+	struct iked_addr		 sa_polpeer;
 	struct iked_addr		 sa_local;
 	int				 sa_fd;
 
@@ -566,7 +567,7 @@ struct iked_sa *
 void	 sa_free(struct iked *, struct iked_sa *);
 void	 sa_free_flows(struct iked *, struct iked_saflows *);
 int	 sa_address(struct iked_sa *, struct iked_addr *,
-	    struct sockaddr_storage *);
+	    struct sockaddr_storage *, int);
 void	 childsa_free(struct iked_childsa *);
 struct iked_childsa *
 	 childsa_lookup(struct iked_sa *, u_int64_t, u_int8_t);

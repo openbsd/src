@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.18 2011/04/18 09:54:41 reyk Exp $	*/
+/*	$OpenBSD: policy.c,v 1.19 2011/05/02 12:39:18 mikeb Exp $	*/
 /*	$vantronix: policy.c,v 1.29 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -365,7 +365,7 @@ sa_free_flows(struct iked *env, struct iked_saflows *head)
 
 int
 sa_address(struct iked_sa *sa, struct iked_addr *addr,
-    struct sockaddr_storage *peer)
+    struct sockaddr_storage *peer, int initiator)
 {
 	struct iked_policy	*pol = sa->sa_policy;
 
@@ -384,6 +384,8 @@ sa_address(struct iked_sa *sa, struct iked_addr *addr,
 	}
 
 	if (addr == &sa->sa_peer) {
+		memcpy(&sa->sa_polpeer, initiator ? &pol->pol_peer :
+		    &sa->sa_peer, sizeof(sa->sa_polpeer));
 		/* XXX Re-insert node into the tree */
 		(void)RB_REMOVE(iked_sapeers, &pol->pol_sapeers, sa);
 		RB_INSERT(iked_sapeers, &pol->pol_sapeers, sa);
@@ -477,15 +479,15 @@ sa_peer_lookup(struct iked_policy *pol, struct sockaddr_storage *peer)
 {
 	struct iked_sa	 key;
 
-	memcpy(&key.sa_peer.addr, peer, sizeof(*peer));
+	memcpy(&key.sa_polpeer.addr, peer, sizeof(*peer));
 	return (RB_FIND(iked_sapeers, &pol->pol_sapeers, &key));
 }
 
 static __inline int
 sa_peer_cmp(struct iked_sa *a, struct iked_sa *b)
 {
-	return (sockaddr_cmp((struct sockaddr *)&a->sa_peer.addr,
-	    (struct sockaddr *)&b->sa_peer.addr, -1));
+	return (sockaddr_cmp((struct sockaddr *)&a->sa_polpeer.addr,
+	    (struct sockaddr *)&b->sa_polpeer.addr, -1));
 }
 
 RB_GENERATE(iked_sapeers, iked_sa, sa_peer_entry, sa_peer_cmp);

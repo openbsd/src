@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.50 2011/04/18 09:54:41 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.51 2011/05/02 12:39:18 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -418,8 +418,8 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 		return;
 	}
 
-	if (sa_address(sa, &sa->sa_peer, &msg->msg_peer) == -1 ||
-	    sa_address(sa, &sa->sa_local, &msg->msg_local) == -1)
+	if (sa_address(sa, &sa->sa_peer, &msg->msg_peer, initiator) == -1 ||
+	    sa_address(sa, &sa->sa_local, &msg->msg_local, initiator) == -1)
 		return;
 
 	sa->sa_fd = msg->msg_fd;
