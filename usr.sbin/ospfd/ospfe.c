@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.80 2011/03/25 08:52:21 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.81 2011/05/02 09:22:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -252,7 +252,8 @@ int
 ospfe_imsg_compose_rde(int type, u_int32_t peerid, pid_t pid,
     void *data, u_int16_t datalen)
 {
-	return (imsg_compose_event(iev_rde, type, peerid, pid, -1, data, datalen));
+	return (imsg_compose_event(iev_rde, type, peerid, pid, -1,
+	    data, datalen));
 }
 
 /* ARGSUSED */
@@ -264,14 +265,12 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 	struct ifaddrdel	*ifc;
 	struct imsg	 imsg;
 	struct imsgev	*iev = bula;
-	struct imsgbuf	*ibuf;
+	struct imsgbuf	*ibuf = &iev->ibuf;
 	struct area	*area = NULL;
 	struct iface	*iface = NULL;
 	struct kif	*kif;
 	struct auth_md	 md;
 	int		 n, link_ok, stub_changed, shut = 0;
-
-	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
@@ -423,7 +422,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 {
 	struct lsa_hdr		 lsa_hdr;
 	struct imsgev		*iev = bula;
-	struct imsgbuf		*ibuf;
+	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct nbr		*nbr;
 	struct lsa_hdr		*lhp;
 	struct lsa_ref		*ref;
@@ -434,8 +433,6 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 	struct abr_rtr		 ar;
 	int			 n, noack = 0, shut = 0;
 	u_int16_t		 l, age;
-
-	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
@@ -784,7 +781,7 @@ orig_rtr_lsa(struct area *area)
 			rtr_link.metric = htons(iface->metric);
 			num_links++;
 			if (ibuf_add(buf, &rtr_link, sizeof(rtr_link)))
-				fatalx("orig_rtr_lsa: buf_add failed");
+				fatalx("orig_rtr_lsa: ibuf_add failed");
 			continue;
 		}
 
@@ -808,7 +805,7 @@ orig_rtr_lsa(struct area *area)
 					rtr_link.metric = htons(iface->metric);
 				num_links++;
 				if (ibuf_add(buf, &rtr_link, sizeof(rtr_link)))
-					fatalx("orig_rtr_lsa: buf_add failed");
+					fatalx("orig_rtr_lsa: ibuf_add failed");
 			}
 			if (iface->state & IF_STA_POINTTOPOINT) {
 				log_debug("orig_rtr_lsa: stub net, "
@@ -825,7 +822,7 @@ orig_rtr_lsa(struct area *area)
 				rtr_link.metric = htons(iface->metric);
 				num_links++;
 				if (ibuf_add(buf, &rtr_link, sizeof(rtr_link)))
-					fatalx("orig_rtr_lsa: buf_add failed");
+					fatalx("orig_rtr_lsa: ibuf_add failed");
 			}
 			continue;
 		case IF_TYPE_BROADCAST:
@@ -1109,8 +1106,9 @@ ospfe_iface_ctl(struct ctl_conn *c, unsigned int idx)
 		LIST_FOREACH(iface, &area->iface_list, entry)
 			if (idx == 0 || idx == iface->ifindex) {
 				ictl = if_to_ctl(iface);
-				imsg_compose_event(&c->iev, IMSG_CTL_SHOW_INTERFACE,
-				    0, 0, -1, ictl, sizeof(struct ctl_iface));
+				imsg_compose_event(&c->iev,
+				    IMSG_CTL_SHOW_INTERFACE, 0, 0, -1,
+				    ictl, sizeof(struct ctl_iface));
 			}
 }
 
@@ -1173,7 +1171,7 @@ ospfe_demote_iface(struct iface *iface, int active)
 		dmsg.level = 1;
 
 	log_warnx("ospfe_demote_iface: group %s level %d", dmsg.demote_group,
-		dmsg.level);
+	    dmsg.level);
 
 	ospfe_imsg_compose_parent(IMSG_DEMOTE, 0, &dmsg, sizeof(dmsg));
 }
