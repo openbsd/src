@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.45 2010/09/07 16:21:46 deraadt Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.46 2011/05/02 22:20:20 chl Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -837,7 +837,7 @@ ray_stop(struct ray_softc *sc)
 		wakeup(ray_report_params);
 	}
 	if (sc->sc_updreq) {
-		sc->sc_repreq->r_failcause = RAY_FAILCAUSE_EDEVSTOP;
+		sc->sc_updreq->r_failcause = RAY_FAILCAUSE_EDEVSTOP;
 		wakeup(ray_update_params);
 	}
 
@@ -1295,7 +1295,7 @@ ray_intr_start(struct ray_softc *sc)
 
 	if (firsti == RAY_CCS_LINK_NULL)
 		return;
-	i = 0;
+
 	if (!RAY_ECF_READY(sc)) {
 		/*
 		 * if this can really happen perhaps we need to save
