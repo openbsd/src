@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.2 2011/04/27 07:25:26 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.3 2011/05/02 06:32:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
@@ -16,13 +16,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
 
 #include <scsi/iscsi.h>
+#include <scsi/scsi_all.h>
+#include <dev/vscsivar.h>
 
 #include <event.h>
 #include <stdio.h>
@@ -35,7 +37,10 @@
 
 void	session_fsm_callback(int, short, void *);
 int	sess_do_start(struct session *, struct sessev *);
-int	sess_do_fail(struct session *, struct sessev *);
+int	sess_do_conn_loggedin(struct session *, struct sessev *);
+int	sess_do_conn_fail(struct session *, struct sessev *);
+int	sess_do_conn_closed(struct session *, struct sessev *);
+int	sess_do_down(struct session *, struct sessev *);
 
 const char *sess_state(int);
 const char *sess_event(enum s_event);
@@ -87,12 +92,34 @@ session_cleanup(struct session *s)
 {
 	struct connection *c;
 
+	taskq_cleanup(&s->tasks);
+
 	while ((c = TAILQ_FIRST(&s->connections)) != NULL)
 		conn_free(c);
 
 	free(s->config.TargetName);
 	free(s->config.InitiatorName);
 	free(s);
+}
+
+int
+session_shutdown(struct session *s)
+{
+	log_debug("session[%s] going down", s->config.SessionName);
+
+	s->action = SESS_ACT_DOWN;
+	if (s->state & (SESS_INIT | SESS_FREE | SESS_DOWN)) {
+		struct connection *c;
+		while ((c = TAILQ_FIRST(&s->connections)) != NULL)
+			conn_free(c);
+		return 0;
+	}
+
+	/* cleanup task queue and issue a logout */
+	taskq_cleanup(&s->tasks);
+	initiator_logout(s, NULL, ISCSI_LOGOUT_CLOSE_SESS);
+
+	return 1;
 }
 
 void
@@ -128,6 +155,32 @@ session_task_issue(struct session *s, struct task *t)
 }
 
 void
+session_logout_issue(struct session *s, struct task *t)
+{
+	struct connection *c, *rc = NULL;
+
+	/* find first free session or first available session */
+	TAILQ_FOREACH(c, &s->connections, entry) {
+		if (conn_task_ready(c)) {
+			conn_fsm(c, CONN_EV_LOGOUT);
+			conn_task_issue(c, t);
+			return;
+		}
+		if (c->state & CONN_RUNNING)
+			rc = c;
+	}
+
+	if (rc) {
+		conn_fsm(rc, CONN_EV_LOGOUT);
+		conn_task_issue(rc, t);
+		return;
+	}
+
+	/* XXX must open new connection, gulp */
+	fatalx("session_logout_issue needs more work");
+}
+
+void
 session_schedule(struct session *s)
 {
 	struct task *t = TAILQ_FIRST(&s->tasks);
@@ -154,7 +207,7 @@ session_schedule(struct session *s)
 void
 session_fsm(struct session *s, enum s_event ev, struct connection *c)
 {
-	struct timeval  tv;
+	struct timeval tv;
 	struct sessev *sev;
 
 	if ((sev = malloc(sizeof(*sev))) == NULL)
@@ -174,8 +227,11 @@ struct {
 	int		(*action)(struct session *, struct sessev *);
 } s_fsm[] = {
 	{ SESS_INIT, SESS_EV_START, sess_do_start },
-	{ SESS_FREE, SESS_EV_CONN_FAIL, sess_do_fail },
-	{ SESS_FREE, SESS_EV_CONN_CLOSED, sess_do_fail },
+	{ SESS_FREE, SESS_EV_CONN_LOGGED_IN, sess_do_conn_loggedin },
+	{ SESS_LOGGED_IN, SESS_EV_CONN_LOGGED_IN, sess_do_conn_loggedin },
+	{ SESS_RUNNING, SESS_EV_CONN_FAIL, sess_do_conn_fail },
+	{ SESS_RUNNING, SESS_EV_CONN_CLOSED, sess_do_conn_closed },
+	{ SESS_RUNNING, SESS_EV_CLOSED, sess_do_down },
 	{ 0, 0, NULL }
 };
 
@@ -223,12 +279,34 @@ sess_do_start(struct session *s, struct sessev *sev)
 	    log_sockaddr(&s->config.connection.TargetAddr));
 	conn_new(s, &s->config.connection);
 
-	return (SESS_FREE);
+	return SESS_FREE;
 }
 
 int
-sess_do_fail(struct session *s, struct sessev *sev)
+sess_do_conn_loggedin(struct session *s, struct sessev *sev)
 {
+	if (s->state & SESS_LOGGED_IN)
+		return SESS_LOGGED_IN;
+
+	if (s->config.SessionType == SESSION_TYPE_DISCOVERY)
+		initiator_discovery(s);
+	else
+		vscsi_event(VSCSI_REQPROBE, s->target, -1);
+
+	return SESS_LOGGED_IN;
+}
+
+int
+sess_do_conn_fail(struct session *s, struct sessev *sev)
+{
+	struct connection *c = sev->conn;
+	int state = SESS_FREE;
+
+	if (sev->conn == NULL) {
+		log_warnx("Just what do you think you're doing, Dave?");
+		return -1;
+	}
+
 	/*
 	 * cleanup connections:
 	 * Connections in state FREE can be removed.
@@ -236,7 +314,63 @@ sess_do_fail(struct session *s, struct sessev *sev)
 	 * the FAILED state. If no sessions are left and the session was
 	 * not already FREE then explicit recovery needs to be done.
 	 */
-	return (SESS_FREE);
+
+	switch (c->state) {
+	case CONN_FREE:
+		conn_free(c);
+		break;
+	case CONN_CLEANUP_WAIT:
+		break;
+	default:
+		log_warnx("It can only be attributable to human error.");
+		return -1;
+	}
+
+	TAILQ_FOREACH(c, &s->connections, entry) {
+		if (c->state & CONN_FAILED) {
+			state = SESS_FAILED;
+			break;
+		} else if (c->state & CONN_RUNNING)
+			state = SESS_LOGGED_IN;
+	}
+
+	return state;
+}
+
+int
+sess_do_conn_closed(struct session *s, struct sessev *sev)
+{
+	struct connection *c = sev->conn;
+	int state = SESS_FREE;
+
+	if (c == NULL || c->state != CONN_FREE) {
+		log_warnx("Just what do you think you're doing, Dave?");
+		return -1;
+	}
+	conn_free(c);
+
+	TAILQ_FOREACH(c, &s->connections, entry) {
+		if (c->state & CONN_FAILED) {
+			state = SESS_FAILED;
+			break;
+		} else if (c->state & CONN_RUNNING)
+			state = SESS_LOGGED_IN;
+	}
+
+	return state;
+}
+
+int
+sess_do_down(struct session *s, struct sessev *sev)
+{
+	struct connection *c;
+
+	while ((c = TAILQ_FIRST(&s->connections)) != NULL)
+		conn_free(c);
+
+	/* XXX anything else to reset to initial state? */
+
+	return SESS_DOWN;
 }
 
 const char *
@@ -253,6 +387,8 @@ sess_state(int s)
 		return "LOGGED_IN";
 	case SESS_FAILED:
 		return "FAILED";
+	case SESS_DOWN:
+		return "DOWN";
 	default:
 		snprintf(buf, sizeof(buf), "UKNWN %x", s);
 		return buf;
@@ -268,10 +404,14 @@ sess_event(enum s_event e)
 	switch (e) {
 	case SESS_EV_START:
 		return "start";
+	case SESS_EV_CONN_LOGGED_IN:
+		return "connection logged in";
 	case SESS_EV_CONN_FAIL:
 		return "connection fail";
 	case SESS_EV_CONN_CLOSED:
 		return "connection closed";
+	case SESS_EV_CLOSED:
+		return "session closed";
 	case SESS_EV_FAIL:
 		return "fail";
 	}

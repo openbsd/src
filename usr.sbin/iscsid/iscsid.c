@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.c,v 1.5 2011/04/27 19:16:15 claudio Exp $ */
+/*	$OpenBSD: iscsid.c,v 1.6 2011/05/02 06:32:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -36,8 +36,12 @@
 
 void		main_sig_handler(int, short, void *);
 __dead void	usage(void);
+void		shutdown_cb(int, short, void *);
 
 struct initiator *initiator;
+struct event exit_ev;
+int exit_rounds;
+#define ISCSI_EXIT_WAIT 5
 
 int
 main(int argc, char *argv[])
@@ -127,12 +131,18 @@ main(int argc, char *argv[])
 void
 main_sig_handler(int sig, short event, void *arg)
 {
+	struct timeval tv;
+
 	/* signal handler rules don't apply, libevent decouples for us */
 	switch (sig) {
 	case SIGTERM:
 	case SIGINT:
 	case SIGHUP:
-		event_loopexit(NULL);
+		initiator_shutdown(initiator);
+		evtimer_set(&exit_ev, shutdown_cb, NULL);
+		timerclear(&tv);
+		if (evtimer_add(&exit_ev, &tv) == -1)
+			fatal("main_sig_handler");
 		break;
 	default:
 		fatalx("unexpected signal");
@@ -226,4 +236,19 @@ iscsid_ctrl_dispatch(void *ch, struct pdu *pdu)
 
 done:
 	pdu_free(pdu);
+}
+
+void
+shutdown_cb(int fd, short event, void *arg)
+{
+	struct timeval tv;
+
+	if (exit_rounds++ >= ISCSI_EXIT_WAIT || initiator_isdown(initiator))
+		event_loopexit(NULL);
+
+	timerclear(&tv);
+	tv.tv_sec = 1;
+
+	if (evtimer_add(&exit_ev, &tv) == -1)
+		fatal("shutdown_cb");
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: initiator.c,v 1.7 2011/04/27 19:02:07 claudio Exp $ */
+/*	$OpenBSD: initiator.c,v 1.8 2011/05/02 06:32:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -47,7 +47,7 @@ initiator_init(void)
 	    arc4random_uniform(0xffffff) | ISCSI_ISID_RAND;
 	initiator->config.isid_qual = arc4random_uniform(0xffff);
 	TAILQ_INIT(&initiator->sessions);
-	return (initiator);
+	return initiator;
 }
 
 void
@@ -60,6 +60,30 @@ initiator_cleanup(struct initiator *i)
 		session_cleanup(s);
 	}
 	free(initiator);
+}
+
+void
+initiator_shutdown(struct initiator *i)
+{
+	struct session *s;
+
+	log_debug("initiator_shutdown: going down");
+
+	TAILQ_FOREACH(s, &initiator->sessions, entry)
+		session_shutdown(s);	
+}
+
+int
+initiator_isdown(struct initiator *i)
+{
+	struct session *s;
+	int inprogres = 0;
+
+	TAILQ_FOREACH(s, &initiator->sessions, entry) {
+		if ((s->state & SESS_RUNNING) && !(s->state & SESS_FREE))
+			inprogres = 1;
+	}
+	return !inprogres;
 }
 
 struct session *
@@ -205,7 +229,7 @@ initiator_login_cb(struct connection *c, void *arg, struct pdu *p)
 	}
 
 	conn_task_cleanup(c, &tl->task);
-	conn_loggedin(c);
+	conn_fsm(c, CONN_EV_LOGGED_IN);
 	free(tl);
 	pdu_free(p);
 }
@@ -254,7 +278,7 @@ initiator_discovery_cb(struct connection *c, void *arg, struct pdu *p)
 		    lresp->datalen[2];
 		if (size == 0) {
 			/* empty response */
-			conn_logout(c);
+			session_shutdown(c->session);
 			break;
 		}
 		buf = pdu_getbuf(p, &n, PDU_DATA);
@@ -268,7 +292,7 @@ initiator_discovery_cb(struct connection *c, void *arg, struct pdu *p)
 			log_debug("%s\t=>\t%s", k->key, k->value);
 		}
 		free(kvp);
-		conn_logout(c);
+		session_shutdown(c->session);
 		break;
 	default:
 		log_debug("initiator_discovery_cb: unexpected message type %x",
@@ -282,7 +306,7 @@ fail:
 }
 
 void
-initiator_logout(struct connection *c, u_int8_t reason, int onconn)
+initiator_logout(struct session *s, struct connection *c, u_int8_t reason)
 {
 	struct task_logout *tl;
 	struct pdu *p;
@@ -290,7 +314,7 @@ initiator_logout(struct connection *c, u_int8_t reason, int onconn)
 
 	if (!(tl = calloc(1, sizeof(*tl)))) {
 		log_warn("initiator_logout");
-		conn_fail(c);
+		/* XXX sess_fail */
 		return;
 	}
 	tl->c = c;
@@ -298,26 +322,29 @@ initiator_logout(struct connection *c, u_int8_t reason, int onconn)
 
 	if (!(p = pdu_new())) {
 		log_warn("initiator_logout");
-		conn_fail(c);
+		/* XXX sess_fail */
+		free(tl);
 		return;
 	}
 	if (!(loreq = pdu_gethdr(p))) {
 		log_warn("initiator_logout");
-		conn_fail(c);
+		/* XXX sess_fail */
+		pdu_free(p);
+		free(tl);
 		return;
 	}
 
 	loreq->opcode = ISCSI_OP_LOGOUT_REQUEST;
 	loreq->flags = ISCSI_LOGOUT_F | reason;
-	if (reason != 0)
+	if (reason != ISCSI_LOGOUT_CLOSE_SESS)
 		loreq->cid = c->cid;
 
-	task_init(&tl->task, c->session, 0, tl, initiator_logout_cb, NULL);
+	task_init(&tl->task, s, 0, tl, initiator_logout_cb, NULL);
 	task_pdu_add(&tl->task, p);
-	if (onconn)
+	if (c && (c->state & CONN_RUNNING))
 		conn_task_issue(c, &tl->task);
 	else
-		session_task_issue(c->session, &tl->task);
+		session_logout_issue(s, &tl->task);
 }
 
 void
@@ -326,21 +353,27 @@ initiator_logout_cb(struct connection *c, void *arg, struct pdu *p)
 	struct task_logout *tl = arg;
 	struct iscsi_pdu_logout_response *loresp;
 
-	c = tl->c;
 	loresp = pdu_getbuf(p, NULL, PDU_HEADER);
 	log_debug("initiator_logout_cb: "
-	    "reason %d, Time2Wait %d, Time2Retain %d",
+	    "response %d, Time2Wait %d, Time2Retain %d",
 	    loresp->response, loresp->time2wait, loresp->time2retain);
 
 	switch (loresp->response) {
 	case ISCSI_LOGOUT_RESP_SUCCESS:
-		conn_fsm(tl->c, CONN_EV_LOGGED_OUT);
+		if (tl->reason == ISCSI_LOGOUT_CLOSE_SESS) {
+			conn_fsm(c, CONN_EV_LOGGED_OUT);
+			session_fsm(c->session, SESS_EV_CLOSED, NULL);
+		} else {
+			conn_fsm(tl->c, CONN_EV_LOGGED_OUT);
+			session_fsm(c->session, SESS_EV_CONN_CLOSED, tl->c);
+		}
 		break;
 	case ISCSI_LOGOUT_RESP_UNKN_CID:
 		/* connection ID not found, retry will not help */
 		log_warnx("%s: logout failed, cid %d unknown, giving up\n",
 		    tl->c->session->config.SessionName,
 		    tl->c->cid);
+		conn_fsm(tl->c, CONN_EV_FREE);
 		break;
 	case ISCSI_LOGOUT_RESP_NO_SUPPORT:
 	case ISCSI_LOGOUT_RESP_ERROR:
