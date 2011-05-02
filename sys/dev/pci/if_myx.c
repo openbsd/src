@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.12 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.13 2011/05/02 22:13:27 chl Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1078,13 +1078,6 @@ myx_init_rings(struct myx_softc *sc)
 	    malloc(sc->sc_rxbufsize, M_DEVBUF, M_WAITOK);
 	sc->sc_rxbufdesc[MYX_RXBIG] = (struct myx_rxbufdesc *)
 	    malloc(sc->sc_rxbufdescsize, M_DEVBUF, M_WAITOK);
-	if (sc->sc_rxbuf[MYX_RXSMALL] == NULL ||
-	    sc->sc_rxbufdesc[MYX_RXSMALL] == NULL ||
-	    sc->sc_rxbuf[MYX_RXBIG] == NULL ||
-	    sc->sc_rxbufdesc[MYX_RXBIG] == NULL) {
-		printf("%s: failed to allocate rx buffers\n", DEVNAME(sc));
-		goto err;
-	}
 
 	for (i = 0; i < sc->sc_rxndesc; i++) {
 		/*
