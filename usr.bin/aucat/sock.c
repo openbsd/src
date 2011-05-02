@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.57 2011/04/28 06:19:57 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.58 2011/05/02 22:20:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -58,7 +58,7 @@ void
 sock_dbg(struct sock *f)
 {
 	static char *pstates[] = {
-		"hel", "ini", "sta", "rdy", "run", "stp", "mid"
+		"aut", "hel", "ini", "sta", "rdy", "run", "stp", "mid"
 	};
 	static char *rstates[] = { "rdat", "rmsg", "rret" };
 	static char *wstates[] = { "widl", "wmsg", "wdat" };
