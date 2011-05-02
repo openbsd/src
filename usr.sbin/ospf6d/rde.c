@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.50 2010/08/22 20:55:10 bluhm Exp $ */
+/*	$OpenBSD: rde.c,v 1.51 2011/05/02 06:34:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -21,7 +21,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
-#include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <err.h>
@@ -375,8 +374,8 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				    req_hdr.type, req_hdr.ls_id,
 				    req_hdr.adv_rtr)) == NULL) {
 					imsg_compose_event(iev_ospfe,
-					    IMSG_LS_BADREQ,
-					    imsg.hdr.peerid, 0, -1, NULL, 0);
+					    IMSG_LS_BADREQ, imsg.hdr.peerid,
+					    0, -1, NULL, 0);
 					continue;
 				}
 				imsg_compose_event(iev_ospfe, IMSG_LS_UPD,
@@ -405,7 +404,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			}
 
 			v = lsa_find(nbr->iface, lsa->hdr.type, lsa->hdr.ls_id,
-				    lsa->hdr.adv_rtr);
+			    lsa->hdr.adv_rtr);
 			if (v == NULL)
 				db_hdr = NULL;
 			else
@@ -448,9 +447,8 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				/* reflood self originated LSA */
 				if (self && v)
 					imsg_compose_event(iev_ospfe,
-					    IMSG_LS_FLOOD,
-					    v->peerid, 0, -1, v->lsa,
-					    ntohs(v->lsa->hdr.len));
+					    IMSG_LS_FLOOD, v->peerid, 0, -1,
+					    v->lsa, ntohs(v->lsa->hdr.len));
 				/* new LSA was not added so free it */
 				if (self)
 					free(lsa);
@@ -465,8 +463,8 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				 */
 				if (rde_req_list_exists(nbr, &lsa->hdr)) {
 					imsg_compose_event(iev_ospfe,
-					    IMSG_LS_BADREQ,
-					    imsg.hdr.peerid, 0, -1, NULL, 0);
+					    IMSG_LS_BADREQ, imsg.hdr.peerid,
+					    0, -1, NULL, 0);
 					free(lsa);
 					break;
 				}
