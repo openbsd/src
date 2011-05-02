@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.58 2011/05/02 22:20:18 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.59 2011/05/02 22:32:29 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -752,7 +752,12 @@ int
 sock_setpar(struct sock *f)
 {
 	struct amsg_par *p = &f->rmsg.u.par;
-	unsigned min, max, rate;
+	unsigned min, max, rate, pchan, rchan, appbufsz;
+
+	rchan = ntohs(p->rchan);
+	pchan = ntohs(p->pchan);
+	appbufsz = ntohl(p->appbufsz);
+	rate = ntohl(p->rate);
 
 	if (AMSG_ISSET(p->bits)) {
 		if (p->bits < BITS_MIN || p->bits > BITS_MAX) {
@@ -799,13 +804,13 @@ sock_setpar(struct sock *f)
 		f->rpar.le = f->wpar.le = p->le ? 1 : 0;
 	if (AMSG_ISSET(p->msb))
 		f->rpar.msb = f->wpar.msb = p->msb ? 1 : 0;
-	if (AMSG_ISSET(p->rchan) && (f->mode & MODE_RECMASK)) {
-		if (p->rchan < 1)
-			p->rchan = 1;
-		if (p->rchan > NCHAN_MAX)
-			p->rchan = NCHAN_MAX;
+	if (AMSG_ISSET(rchan) && (f->mode & MODE_RECMASK)) {
+		if (rchan < 1)
+			rchan = 1;
+		if (rchan > NCHAN_MAX)
+			rchan = NCHAN_MAX;
 		f->wpar.cmin = f->opt->wpar.cmin;
-		f->wpar.cmax = f->opt->wpar.cmin + p->rchan - 1;
+		f->wpar.cmax = f->opt->wpar.cmin + rchan - 1;
 		if (f->wpar.cmax > f->opt->wpar.cmax)
 			f->wpar.cmax = f->opt->wpar.cmax;
 #ifdef DEBUG
@@ -819,13 +824,13 @@ sock_setpar(struct sock *f)
 		}
 #endif
 	}
-	if (AMSG_ISSET(p->pchan) && (f->mode & MODE_PLAY)) {
-		if (p->pchan < 1)
-			p->pchan = 1;
-		if (p->pchan > NCHAN_MAX)
-			p->pchan = NCHAN_MAX;
+	if (AMSG_ISSET(pchan) && (f->mode & MODE_PLAY)) {
+		if (pchan < 1)
+			pchan = 1;
+		if (pchan > NCHAN_MAX)
+			pchan = NCHAN_MAX;
 		f->rpar.cmin = f->opt->rpar.cmin;
-		f->rpar.cmax = f->opt->rpar.cmin + p->pchan - 1;
+		f->rpar.cmax = f->opt->rpar.cmin + pchan - 1;
 		if (f->rpar.cmax > f->opt->rpar.cmax)
 			f->rpar.cmax = f->opt->rpar.cmax;
 #ifdef DEBUG
@@ -839,20 +844,20 @@ sock_setpar(struct sock *f)
 		}
 #endif
 	}
-	if (AMSG_ISSET(p->rate)) {
-		if (p->rate < RATE_MIN)
-			p->rate = RATE_MIN;
-		if (p->rate > RATE_MAX)
-			p->rate = RATE_MAX;
-		f->round = dev_roundof(f->dev, p->rate);
-		f->rpar.rate = f->wpar.rate = p->rate;
-		if (!AMSG_ISSET(p->appbufsz)) {
-			p->appbufsz = f->dev->bufsz / f->dev->round * f->round;
+	if (AMSG_ISSET(rate)) {
+		if (rate < RATE_MIN)
+			rate = RATE_MIN;
+		if (rate > RATE_MAX)
+			rate = RATE_MAX;
+		f->round = dev_roundof(f->dev, rate);
+		f->rpar.rate = f->wpar.rate = rate;
+		if (!AMSG_ISSET(appbufsz)) {
+			appbufsz = f->dev->bufsz / f->dev->round * f->round;
 #ifdef DEBUG
 			if (debug_level >= 3) {
 				sock_dbg(f);
 				dbg_puts(": using ");
-				dbg_putu(p->appbufsz);
+				dbg_putu(appbufsz);
 				dbg_puts(" fr app buffer size\n");
 			}
 #endif
@@ -861,7 +866,7 @@ sock_setpar(struct sock *f)
 		if (debug_level >= 3) {
 			sock_dbg(f);
 			dbg_puts(": using ");
-			dbg_putu(p->rate);
+			dbg_putu(rate);
 			dbg_puts("Hz sample rate, ");
 			dbg_putu(f->round);
 			dbg_puts(" fr block size\n");
@@ -894,19 +899,19 @@ sock_setpar(struct sock *f)
 		}
 #endif
 	}
-	if (AMSG_ISSET(p->appbufsz)) {
+	if (AMSG_ISSET(appbufsz)) {
 		rate = (f->mode & MODE_PLAY) ? f->rpar.rate : f->wpar.rate;
 		min = 1;
 		max = 1 + rate / f->dev->round;
 		min *= f->round;
 		max *= f->round;
-		p->appbufsz += f->round - 1;
-		p->appbufsz -= p->appbufsz % f->round;
-		if (p->appbufsz < min)
-			p->appbufsz = min;
-		if (p->appbufsz > max)
-			p->appbufsz = max;
-		f->bufsz = p->appbufsz;
+		appbufsz += f->round - 1;
+		appbufsz -= appbufsz % f->round;
+		if (appbufsz < min)
+			appbufsz = min;
+		if (appbufsz > max)
+			appbufsz = max;
+		f->bufsz = appbufsz;
 #ifdef DEBUG
 		if (debug_level >= 3) {
 			sock_dbg(f);
@@ -980,14 +985,16 @@ int
 sock_hello(struct sock *f)
 {
 	struct amsg_hello *p = &f->rmsg.u.hello;
+	unsigned mode;
 
+	mode = ntohs(p->mode);
 #ifdef DEBUG
 	if (debug_level >= 3) {
 		sock_dbg(f);
 		dbg_puts(": hello from <");
 		dbg_puts(p->who);
 		dbg_puts(">, mode = ");
-		dbg_putx(p->mode);
+		dbg_putx(mode);
 		dbg_puts(", ver ");
 		dbg_putu(p->version);
 		dbg_puts("\n");
@@ -1004,7 +1011,7 @@ sock_hello(struct sock *f)
 #endif
 		return 0;
 	}
-	switch (p->mode) {
+	switch (mode) {
 	case MODE_MIDIIN:
 	case MODE_MIDIOUT:
 	case MODE_MIDIOUT | MODE_MIDIIN:
@@ -1017,7 +1024,7 @@ sock_hello(struct sock *f)
 		if (debug_level >= 1) {
 			sock_dbg(f);
 			dbg_puts(": ");
-			dbg_putx(p->mode);
+			dbg_putx(mode);
 			dbg_puts(": unsupported mode\n");
 		}
 #endif
@@ -1028,12 +1035,12 @@ sock_hello(struct sock *f)
 		return 0;
 	if (!dev_ref(f->opt->dev))
 		return 0;
-	if ((p->mode & MODE_REC) && (f->opt->mode & MODE_MON)) {
-		p->mode &= ~MODE_REC;
-		p->mode |= MODE_MON;
+	if ((mode & MODE_REC) && (f->opt->mode & MODE_MON)) {
+		mode &= ~MODE_REC;
+		mode |= MODE_MON;
 	}
 	f->dev = f->opt->dev;
-	f->mode = (p->mode & f->opt->mode) & f->dev->mode;
+	f->mode = (mode & f->opt->mode) & f->dev->mode;
 #ifdef DEBUG
 	if (debug_level >= 3) {
 		sock_dbg(f);
@@ -1042,7 +1049,7 @@ sock_hello(struct sock *f)
 		dbg_puts("\n");
 	}
 #endif
-	if (f->mode != p->mode) {
+	if (f->mode != mode) {
 #ifdef DEBUG
 		if (debug_level >= 1) {
 			sock_dbg(f);
@@ -1080,8 +1087,9 @@ sock_execmsg(struct sock *f)
 {
 	struct amsg *m = &f->rmsg;
 	struct abuf *obuf;
+	unsigned size, ctl;
 
-	switch (m->cmd) {
+	switch (ntohl(m->cmd)) {
 	case AMSG_DATA:
 #ifdef DEBUG
 		if (debug_level >= 4) {
@@ -1121,7 +1129,8 @@ sock_execmsg(struct sock *f)
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
-		if (m->u.data.size % obuf->bpf != 0) {
+		size = ntohl(m->u.data.size);
+		if (size % obuf->bpf != 0) {
 #ifdef DEBUG
 			if (debug_level >= 1) {
 				sock_dbg(f);
@@ -1132,7 +1141,7 @@ sock_execmsg(struct sock *f)
 			return 0;
 		}
 		f->rstate = SOCK_RDATA;
-		f->rtodo = m->u.data.size / obuf->bpf;
+		f->rtodo = size / obuf->bpf;
 #ifdef DEBUG
 		if (debug_level >= 2 &&
 		    f->pstate != SOCK_MIDI && f->rtodo > f->rmax) {
@@ -1210,7 +1219,7 @@ sock_execmsg(struct sock *f)
 		else
 			f->pstate = SOCK_STOP;
 		AMSG_INIT(m);
-		m->cmd = AMSG_STOP;
+		m->cmd = htonl(AMSG_STOP);
 		f->rstate = SOCK_RRET;
 		f->rtodo = sizeof(struct amsg);
 		break;
@@ -1256,7 +1265,7 @@ sock_execmsg(struct sock *f)
 			return 0;
 		}
 		AMSG_INIT(m);
-		m->cmd = AMSG_GETPAR;
+		m->cmd = htonl(AMSG_GETPAR);
 		m->u.par.legacy_mode = f->mode;
 		if (f->mode & MODE_PLAY) {
 			m->u.par.bits = f->rpar.bits;
@@ -1264,8 +1273,8 @@ sock_execmsg(struct sock *f)
 			m->u.par.sig = f->rpar.sig;
 			m->u.par.le = f->rpar.le;
 			m->u.par.msb = f->rpar.msb;
-			m->u.par.rate = f->rpar.rate;
-			m->u.par.pchan = f->rpar.cmax - f->rpar.cmin + 1;
+			m->u.par.rate = htonl(f->rpar.rate);
+			m->u.par.pchan = htons(f->rpar.cmax - f->rpar.cmin + 1);
 		}
 		if (f->mode & MODE_RECMASK) {
 			m->u.par.bits = f->wpar.bits;
@@ -1273,13 +1282,13 @@ sock_execmsg(struct sock *f)
 			m->u.par.sig = f->wpar.sig;
 			m->u.par.le = f->wpar.le;
 			m->u.par.msb = f->wpar.msb;
-			m->u.par.rate = f->wpar.rate;
-			m->u.par.rchan = f->wpar.cmax - f->wpar.cmin + 1;
+			m->u.par.rate = htonl(f->wpar.rate);
+			m->u.par.rchan = htons(f->wpar.cmax - f->wpar.cmin + 1);
 		}
-		m->u.par.appbufsz = f->bufsz;
-		m->u.par.bufsz =
-		    f->bufsz + (f->dev->bufsz / f->dev->round) * f->round;
-		m->u.par.round = f->round;
+		m->u.par.appbufsz = htonl(f->bufsz);
+		m->u.par.bufsz = htonl(
+			f->bufsz + (f->dev->bufsz / f->dev->round) * f->round);
+		m->u.par.round = htonl(f->round);
 		f->rstate = SOCK_RRET;
 		f->rtodo = sizeof(struct amsg);
 		break;
@@ -1301,7 +1310,8 @@ sock_execmsg(struct sock *f)
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
-		if (m->u.vol.ctl > MIDI_MAXCTL) {
+		ctl = ntohl(m->u.vol.ctl);
+		if (ctl > MIDI_MAXCTL) {
 #ifdef DEBUG
 			if (debug_level >= 1) {
 				sock_dbg(f);
@@ -1311,9 +1321,9 @@ sock_execmsg(struct sock *f)
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
-		sock_setvol(f, m->u.vol.ctl);
+		sock_setvol(f, ctl);
 		if (f->slot >= 0)
-			ctl_slotvol(f->dev->midi, f->slot, m->u.vol.ctl);
+			ctl_slotvol(f->dev->midi, f->slot, ctl);
 		f->rtodo = sizeof(struct amsg);
 		f->rstate = SOCK_RMSG;
 		break;
@@ -1363,7 +1373,7 @@ sock_execmsg(struct sock *f)
 			return 0;
 		}
 		AMSG_INIT(m);
-		m->cmd = AMSG_ACK;
+		m->cmd = htonl(AMSG_ACK);
 		f->rstate = SOCK_RRET;
 		f->rtodo = sizeof(struct amsg);
 		break;
@@ -1420,8 +1430,8 @@ sock_buildmsg(struct sock *f)
 		}
 #endif
 		AMSG_INIT(&f->wmsg);
-		f->wmsg.cmd = AMSG_POS;
-		f->wmsg.u.ts.delta = f->startpos;
+		f->wmsg.cmd = htonl(AMSG_POS);
+		f->wmsg.u.ts.delta = htonl(f->startpos);
 		f->rmax += f->startpos;
 		f->wtodo = sizeof(struct amsg);
 		f->wstate = SOCK_WMSG;
@@ -1444,8 +1454,8 @@ sock_buildmsg(struct sock *f)
 		f->wmax += f->delta;
 		f->rmax += f->delta;
 		AMSG_INIT(&f->wmsg);
-		f->wmsg.cmd = AMSG_MOVE;
-		f->wmsg.u.ts.delta = f->delta;
+		f->wmsg.cmd = htonl(AMSG_MOVE);
+		f->wmsg.u.ts.delta = htonl(f->delta);
 		f->wtodo = sizeof(struct amsg);
 		f->wstate = SOCK_WMSG;
 		f->delta = 0;
@@ -1466,8 +1476,8 @@ sock_buildmsg(struct sock *f)
 		}
 #endif
 		AMSG_INIT(&f->wmsg);
-		f->wmsg.cmd = AMSG_SETVOL;
-		f->wmsg.u.vol.ctl = f->vol;
+		f->wmsg.cmd = htonl(AMSG_SETVOL);
+		f->wmsg.u.vol.ctl = htonl(f->vol);
 		f->wtodo = sizeof(struct amsg);
 		f->wstate = SOCK_WMSG;
 		f->lastvol = f->vol;
@@ -1514,8 +1524,8 @@ sock_buildmsg(struct sock *f)
 			size *= ibuf->bpf;
 		}
 		AMSG_INIT(&f->wmsg);
-		f->wmsg.cmd = AMSG_DATA;
-		f->wmsg.u.data.size = size;
+		f->wmsg.cmd = htonl(AMSG_DATA);
+		f->wmsg.u.data.size = htonl(size);
 		f->wtodo = sizeof(struct amsg);
 		f->wstate = SOCK_WMSG;
 		return 1;
@@ -1648,7 +1658,7 @@ sock_write(struct sock *f)
 	case SOCK_WMSG:
 		if (!sock_wmsg(f, &f->wmsg, &f->wtodo))
 			return 0;
-		if (f->wmsg.cmd != AMSG_DATA) {
+		if (ntohl(f->wmsg.cmd) != AMSG_DATA) {
 			f->wstate = SOCK_WIDLE;
 			f->wtodo = 0xdeadbeef;
 			break;
@@ -1657,7 +1667,7 @@ sock_write(struct sock *f)
 		 * XXX: why not set f->wtodo in sock_wmsg() ?
 		 */
 		f->wstate = SOCK_WDATA;
-		f->wtodo = f->wmsg.u.data.size /
+		f->wtodo = ntohl(f->wmsg.u.data.size) /
 		    LIST_FIRST(&f->pipe.file.wproc->ins)->bpf;
 		/* PASSTHROUGH */
 	case SOCK_WDATA:
