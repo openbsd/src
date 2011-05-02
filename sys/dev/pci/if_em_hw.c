@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.64 2011/05/02 12:25:42 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.65 2011/05/02 18:16:58 dhill Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -9863,20 +9863,6 @@ em_hv_phy_workarounds_ich8lan(struct em_hw *hw)
 	}
 
 	if (hw->phy_type == em_phy_82578) {
-		if (hw->revision_id < 3) {
-			/* PHY config */
-			ret_val = em_write_phy_reg(hw, (1 << 6) | 0x29,
-						   0x66C0);
-			if (ret_val)
-				goto out;
-
-			/* PHY config */
-			ret_val = em_write_phy_reg(hw, (1 << 6) | 0x1E,
-						   0xFFFF);
-			if (ret_val)
-				goto out;
-		}
-
 		/*
 		 * Return registers to default by doing a soft reset then
 		 * writing 0x3140 to the control register.
