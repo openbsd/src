@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.229 2011/04/29 13:04:38 dlg Exp $ */
+/* $OpenBSD: softraid.c,v 1.230 2011/05/03 17:08:51 matthew Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1085,6 +1085,8 @@ sr_boot_assembly(struct sr_softc *sc)
 
 	SLIST_INIT(&sdklist);
 	SLIST_INIT(&mlh);
+	SLIST_INIT(&bvh);
+	SLIST_INIT(&kdh);
 
 	dk = TAILQ_FIRST(&disklist);
 	while (dk != TAILQ_END(&disklist)) {
@@ -1126,9 +1128,6 @@ sr_boot_assembly(struct sr_softc *sc)
 	/*
 	 * Create a list of volumes and associate chunks with each volume.
 	 */
-
-	SLIST_INIT(&bvh);
-	SLIST_INIT(&kdh);
 
 	for (mle = SLIST_FIRST(&mlh); mle != SLIST_END(&mlh); mle = mlenext) {
 
