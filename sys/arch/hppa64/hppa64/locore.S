@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.24 2011/04/16 22:02:32 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.25 2011/05/03 20:59:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -464,6 +464,21 @@ $syscall_return
 	ldd	TF_SP(%arg0), %arg2		/* sp */
 	std	%arg2, 14*8(%r1)
 
+	ldd	TF_SR2(%arg0), %arg2
+	ldd	TF_SR3(%arg0), %arg3
+	mtsp	%arg2, %sr2
+	mtsp	%arg3, %sr3
+
+	ldd	TF_SR4(%arg0), %arg2
+	ldd	TF_SR5(%arg0), %arg3
+	mtsp	%arg2, %sr4
+	mtsp	%arg3, %sr5
+
+	ldd	TF_SR6(%arg0), %arg2
+	ldd	TF_SR7(%arg0), %arg3
+	mtsp	%arg2, %sr6
+	mtsp	%arg3, %sr7
+
 	/*
 	 * Restore general registers.
 	 */
@@ -870,12 +885,21 @@ TLABEL(all_virt)
 	mfsp	%sr1, %arg3
 	std,ma	%arg2, 8(%sr3,%sp)	/* %sr0 */
 	std,ma	%arg3, 8(%sr3,%sp)	/* %sr1 */
+
+	mfsp	%sr2, %arg2
+	mfsp	%sr3, %arg3
 	std,ma	%arg2, 8(%sr3,%sp)	/* %sr2 */
-	std,ma	%arg2, 8(%sr3,%sp)	/* %sr3 */
+	std,ma	%arg3, 8(%sr3,%sp)	/* %sr3 */
+
+	mfsp	%sr4, %arg2
+	mfsp	%sr5, %arg3
 	std,ma	%arg2, 8(%sr3,%sp)	/* %sr4 */
-	std,ma	%arg2, 8(%sr3,%sp)	/* %sr5 */
+	std,ma	%arg3, 8(%sr3,%sp)	/* %sr5 */
+
+	mfsp	%sr6, %arg2
+	mfsp	%sr7, %arg3
 	std,ma	%arg2, 8(%sr3,%sp)	/* %sr6 */
-	std,ma	%arg2, 8(%sr3,%sp)	/* %sr7 */
+	std,ma	%arg3, 8(%sr3,%sp)	/* %sr7 */
 
 	mfctl	%cr0, %arg3
 	mfctl	%cr10, %arg2
