@@ -1,4 +1,4 @@
-.\"	$OpenBSD: midicat.1,v 1.15 2011/04/28 06:19:57 ratchov Exp $
+.\"	$OpenBSD: midicat.1,v 1.16 2011/05/03 08:00:54 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 28 2011 $
+.Dd $Mdocdate: May 3 2011 $
 .Dt MIDICAT 1
 .Os
 .Sh NAME
@@ -69,6 +69,11 @@ Without this option,
 listens on the
 .Ux Ns -domain
 socket only, and is not reachable from any network.
+If the option argument is
+.Sq -
+then
+.Nm
+will accept connections from any address.
 .It Fl l
 Detach and become a daemon.
 .It Fl o Ar file

@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.15 2011/05/02 22:24:23 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.16 2011/05/03 08:00:54 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -107,7 +107,7 @@ listen_new_tcp(char *addr, unsigned port)
 	 */
 	memset(&aihints, 0, sizeof(struct addrinfo));
 	snprintf(serv, sizeof(serv), "%u", port);
-	host = strcmp(addr, "*") == 0 ? NULL : addr;
+	host = strcmp(addr, "-") == 0 ? NULL : addr;
 	aihints.ai_flags |= AI_PASSIVE;
 	aihints.ai_socktype = SOCK_STREAM;
 	aihints.ai_protocol = IPPROTO_TCP;
