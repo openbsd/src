@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.39 2011/04/02 17:04:35 guenther Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.40 2011/05/03 15:59:50 marco Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -63,7 +63,7 @@ int	kqueue_write(struct file *fp, off_t *poff, struct uio *uio,
 int	kqueue_ioctl(struct file *fp, u_long com, caddr_t data,
 		    struct proc *p);
 int	kqueue_poll(struct file *fp, int events, struct proc *p);
-int 	kqueue_kqfilter(struct file *fp, struct knote *kn);
+int	kqueue_kqfilter(struct file *fp, struct knote *kn);
 int	kqueue_stat(struct file *fp, struct stat *st, struct proc *p);
 int	kqueue_close(struct file *fp, struct proc *p);
 void	kqueue_wakeup(struct kqueue *kq);
@@ -325,7 +325,7 @@ filt_timerexpire(void *knx)
 
 /*
  * data contains amount of time to sleep, in milliseconds
- */ 
+ */
 int
 filt_timerattach(struct knote *kn)
 {
