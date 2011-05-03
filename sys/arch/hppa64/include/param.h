@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.13 2011/04/07 15:45:17 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.14 2011/05/03 21:00:23 kettenis Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -62,7 +62,7 @@
 
 #define	MACHINE_STACK_GROWS_UP	1	/* stack grows to higher addresses */
 
-#define	USPACE		(4 * NBPG)	/* pages for user struct and kstack */
+#define	USPACE		(5 * NBPG)	/* pages for user struct and kstack */
 #define	USPACE_ALIGN	(0)		/* u-area alignment 0-none */
 
 #ifndef	MSGBUFSIZE
