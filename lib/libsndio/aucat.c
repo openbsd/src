@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.48 2011/05/02 22:32:29 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.49 2011/05/03 20:15:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -377,6 +377,8 @@ aucat_open(struct aucat *hdl, const char *str, unsigned mode, int isaudio)
 	char unit[4], *sep, *opt;
 	char host[NI_MAXHOST];
 
+	if (str == NULL)
+		str = "0";
 	sep = strchr(str, '/');
 	if (sep == NULL) {
 		hashost = 0;

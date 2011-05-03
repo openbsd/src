@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.2 2011/04/16 10:52:22 ratchov Exp $	*/
+/*	$OpenBSD: sio.c,v 1.3 2011/05/03 20:15:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -58,15 +58,10 @@ sio_open(const char *str, unsigned mode, int nbio)
 	if (str == NULL && !issetugid())
 		str = getenv("AUDIODEVICE");
 	if (str == NULL) {
-		hdl = sio_aucat_open("0", mode, nbio);
+		hdl = sio_aucat_open(NULL, mode, nbio);
 		if (hdl != NULL)
 			return hdl;
-		if (stat("/dev/audio", &sb) == 0 && S_ISCHR(sb.st_mode)) {
-			snprintf(buf, sizeof(buf), "%u",
-			    minor(sb.st_rdev) & 0xf);
-		} else
-			strlcpy(buf, "0", sizeof(buf));
-		hdl = sio_sun_open(buf, mode, nbio);
+		hdl = sio_sun_open(NULL, mode, nbio);
 		if (hdl != NULL)
 			return hdl;
 		return NULL;
