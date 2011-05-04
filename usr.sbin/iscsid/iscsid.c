@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.c,v 1.6 2011/05/02 06:32:56 claudio Exp $ */
+/*	$OpenBSD: iscsid.c,v 1.7 2011/05/04 21:00:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -42,6 +42,24 @@ struct initiator *initiator;
 struct event exit_ev;
 int exit_rounds;
 #define ISCSI_EXIT_WAIT 5
+
+const struct session_params	iscsi_sess_defaults = {
+	.MaxBurstLength = 262144,
+	.FirstBurstLength = 65536,
+	.DefaultTime2Wait = 2,
+	.DefaultTime2Retain = 20,
+	.MaxOutstandingR2T = 1,
+	.MaxConnections = 1,
+	.InitialR2T = 1,
+	.ImmediateData = 1,
+	.DataPDUInOrder = 1,
+	.DataSequenceInOrder = 1,
+	.ErrorRecoveryLevel = 0
+};
+
+const struct connection_params	iscsi_conn_defaults = {
+	.MaxRecvDataSegmentLength = 8192
+};
 
 int
 main(int argc, char *argv[])
@@ -252,3 +270,44 @@ shutdown_cb(int fd, short event, void *arg)
 	if (evtimer_add(&exit_ev, &tv) == -1)
 		fatal("shutdown_cb");
 }
+
+#define MERGE_MIN(r, a, b, v)				\
+	res->v = (mine->v < his->v ? mine->v : his->v)
+#define MERGE_MAX(r, a, b, v)				\
+	res->v = (mine->v > his->v ? mine->v : his->v)
+#define MERGE_OR(r, a, b, v)				\
+	res->v = (mine->v || his->v)
+#define MERGE_AND(r, a, b, v)				\
+	res->v = (mine->v && his->v)
+
+void
+iscsi_merge_sess_params(struct session_params *res,
+    struct session_params *mine, struct session_params *his)
+{
+	MERGE_MIN(res, mine, his, MaxBurstLength);
+	MERGE_MIN(res, mine, his, FirstBurstLength);
+	MERGE_MAX(res, mine, his, DefaultTime2Wait);
+	MERGE_MIN(res, mine, his, DefaultTime2Retain);
+	MERGE_MIN(res, mine, his, MaxOutstandingR2T);
+	res->TargetPortalGroupTag = his->TargetPortalGroupTag;
+	MERGE_MIN(res, mine, his, MaxConnections);
+	MERGE_OR(res, mine, his, InitialR2T);
+	MERGE_AND(res, mine, his, ImmediateData);
+	MERGE_OR(res, mine, his, DataPDUInOrder);
+	MERGE_OR(res, mine, his, DataSequenceInOrder);
+	MERGE_MIN(res, mine, his, ErrorRecoveryLevel);
+
+}
+
+void
+iscsi_merge_conn_params(struct connection_params *res,
+    struct connection_params *mine, struct connection_params *his)
+{
+	res->MaxRecvDataSegmentLength = his->MaxRecvDataSegmentLength;
+	/* XXX HeaderDigest and DataDigest */
+}
+
+#undef MERGE_MIN
+#undef MERGE_MAX
+#undef MERGE_OR
+#undef MERGE_AND

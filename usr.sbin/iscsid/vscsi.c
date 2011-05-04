@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.7 2011/04/28 18:25:42 claudio Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.8 2011/05/04 21:00:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -275,8 +275,8 @@ vscsi_dataout(struct connection *c, struct scsi_task *t, u_int32_t ttt,
 	u_int32_t t32, dsn = 0;
 
 	for (off = 0; off < len; off += size) {
-		/* XXX hardcoded numbers, bad bad bad */
-		size = len - off > 8 * 1024 ? 8 * 1024 : len - off;
+		size = len - off > c->active.MaxRecvDataSegmentLength ?
+		    c->active.MaxRecvDataSegmentLength : len - off;
 
 		if (!(p = pdu_new()))
 			fatal("vscsi_r2t");

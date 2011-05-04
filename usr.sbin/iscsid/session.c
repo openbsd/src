@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.3 2011/05/02 06:32:56 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.4 2011/05/04 21:00:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
@@ -72,6 +72,10 @@ session_new(struct initiator *i, u_int8_t st)
 	s->itt = arc4random();
 	s->initiator = i;
 	s->state = SESS_INIT;
+	s->mine = initiator_sess_defaults;
+	s->mine.MaxConnections = s->config.MaxConnections;
+	s->his = iscsi_sess_defaults;
+	s->active = iscsi_sess_defaults;
 
 	if (st == SESSION_TYPE_DISCOVERY)
 		s->target = 0;

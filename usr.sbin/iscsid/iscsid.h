@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.h,v 1.8 2011/05/02 06:32:56 claudio Exp $ */
+/*	$OpenBSD: iscsid.h,v 1.9 2011/05/04 21:00:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -22,6 +22,7 @@
 #define ISCSID_USER	"_iscsid"
 
 #define ISCSID_BASE_NAME	"iqn.1995-11.org.openbsd.iscsid"
+#define ISCSID_DEF_CONNS	8
 
 #define PDU_READ_SIZE		(256 * 1024)
 #define CONTROL_READ_SIZE	8192
@@ -73,19 +74,20 @@ TAILQ_HEAD(taskq, task);
 #define SESS_ANYSTATE		0xffff
 #define SESS_RUNNING		(SESS_FREE | SESS_LOGGED_IN | SESS_FAILED)
 
-#define	CONN_FREE		0x0001
-#define	CONN_XPT_WAIT		0x0002
-#define	CONN_XPT_UP		0x0004
-#define	CONN_IN_LOGIN		0x0008
-#define	CONN_LOGGED_IN		0x0010
-#define	CONN_IN_LOGOUT		0x0020
-#define	CONN_LOGOUT_REQ		0x0040
-#define	CONN_CLEANUP_WAIT	0x0080
-#define	CONN_IN_CLEANUP		0x0100
+#define CONN_FREE		0x0001
+#define CONN_XPT_WAIT		0x0002
+#define CONN_XPT_UP		0x0004
+#define CONN_IN_LOGIN		0x0008
+#define CONN_LOGGED_IN		0x0010
+#define CONN_IN_LOGOUT		0x0020
+#define CONN_LOGOUT_REQ		0x0040
+#define CONN_CLEANUP_WAIT	0x0080
+#define CONN_IN_CLEANUP		0x0100
 #define CONN_ANYSTATE		0xffff
 #define CONN_RUNNING		(CONN_LOGGED_IN | CONN_LOGOUT_REQ)
 #define CONN_FAILED		(CONN_CLEANUP_WAIT | CONN_IN_CLEANUP)
-#define CONN_NEVER_LOGGED_IN	(CONN_FREE | CONN_XPT_WAIT | CONN_XPT_UP)
+#define CONN_NEVER_LOGGED_IN	(CONN_FREE | CONN_XPT_WAIT | CONN_XPT_UP | \
+				    CONN_IN_LOGIN)
 
 enum c_event {
 	CONN_EV_FAIL,
@@ -177,7 +179,7 @@ struct session_params {
 	u_int16_t		 TargetPortalGroupTag;
 				 /* 1- 65535: IS */
 	u_int16_t		 MaxConnections;
-				 /* 1, 1-65535 (min()): LO */
+				 /* 1, 1-65535 (min()): LS */
 	u_int8_t		 InitialR2T;
 				 /* yes, bool (||): LS  */
 	u_int8_t		 ImmediateData;
@@ -269,7 +271,16 @@ struct kvp {
 #define KVP_KEY_ALLOCED		0x01
 #define KVP_VALUE_ALLOCED	0x02
 
+extern const struct session_params iscsi_sess_defaults;
+extern const struct connection_params iscsi_conn_defaults;
+extern struct session_params initiator_sess_defaults;
+extern struct connection_params initiator_conn_defaults;
+
 void	iscsid_ctrl_dispatch(void *, struct pdu *);
+void	iscsi_merge_sess_params(struct session_params *,
+	    struct session_params *, struct session_params *);
+void	iscsi_merge_conn_params(struct connection_params *,
+	    struct connection_params *, struct connection_params *);
 
 struct initiator *initiator_init(void);
 void	initiator_cleanup(struct initiator *);
@@ -304,7 +315,9 @@ void	conn_free(struct connection *);
 int	conn_task_ready(struct connection *);
 void	conn_task_issue(struct connection *, struct task *);
 void	conn_task_schedule(struct connection *);
-void	conn_task_cleanup(struct connection *c, struct task *);
+void	conn_task_cleanup(struct connection *, struct task *);
+int	conn_parse_kvp(struct connection *, struct kvp *);
+int	conn_gen_kvp(struct connection *, struct kvp *, size_t *);
 void	conn_pdu_write(struct connection *, struct pdu *);
 void	conn_fail(struct connection *);
 void	conn_fsm(struct connection *, enum c_event);
@@ -312,6 +325,8 @@ void	conn_fsm(struct connection *, enum c_event);
 void	*pdu_gethdr(struct pdu *);
 int	text_to_pdu(struct kvp *, struct pdu *);
 struct kvp *pdu_to_text(char *, size_t);
+u_int64_t	text_to_num(const char *, u_int64_t, u_int64_t, const char **);
+int		text_to_bool(const char *, const char **);
 void	pdu_free_queue(struct pduq *);
 ssize_t	pdu_read(struct connection *);
 ssize_t	pdu_write(struct connection *);

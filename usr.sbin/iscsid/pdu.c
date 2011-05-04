@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdu.c,v 1.5 2011/04/27 07:25:26 claudio Exp $ */
+/*	$OpenBSD: pdu.c,v 1.6 2011/05/04 21:00:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -24,6 +24,7 @@
 
 #include <errno.h>
 #include <event.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
@@ -57,6 +58,9 @@ text_to_pdu(struct kvp *k, struct pdu *p)
 	char *buf, *s;
 	size_t	len = 0, rem;
 	int n, nk;
+
+	if (k == NULL)
+		return (0);
 
 	nk = 0;
 	while(k[nk].key) {
@@ -121,6 +125,91 @@ pdu_to_text(char *buf, size_t len)
 	}
 	return k;
 }
+
+/* Modified version of strtonum() to fit iscsid's need 
+ *
+ * Copyright (c) 2004 Ted Unangst and Todd Miller
+ * All rights reserved.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+u_int64_t
+text_to_num(const char *numstr, u_int64_t minval, u_int64_t maxval,
+    const char **errstrp)
+{
+	unsigned long long ull = 0;
+	char *ep;
+	int error = 0;
+	struct errval {
+		const char *errstr;
+		int err;
+	} ev[4] = {
+		{ NULL,		0 },
+		{ "invalid",	EINVAL },
+		{ "too small",  ERANGE },
+		{ "too large",	ERANGE }
+	};
+#define INVALID		1
+#define TOOSMALL	2
+#define TOOLARGE	3
+
+	ev[0].err = errno;
+	errno = 0;
+	if (minval > maxval)
+		error = INVALID;
+	else {
+		ull = strtoull(numstr, &ep, 0);
+		if (numstr == ep || *ep != '\0')
+			error = INVALID;
+		else if (ull < minval)
+			error = TOOSMALL;
+		else if ((ull == ULLONG_MAX && errno == ERANGE) || ull > maxval)
+			error = TOOLARGE;
+	}
+	if (errstrp != NULL)
+		*errstrp = ev[error].errstr;
+	errno = ev[error].err;
+	if (error)
+		ull = 0;
+
+	return (ull);
+#undef INVALID
+#undef TOOSMALL
+#undef TOOLARGE
+}
+
+int
+text_to_bool(const char *buf, const char **errstrp)
+{
+	int val = 0;
+
+	if (!strcmp(buf, "Yes")) {
+		val = 1;
+		errno = 0;
+	} else if (!strcmp(buf, "No"))
+		errno = 0;
+	else 
+		errno = EINVAL;
+
+	if (errstrp != NULL) {
+		if (errno == 0)
+			*errstrp = NULL;
+		else
+			*errstrp = "invalid";
+	}
+	return (val);
+}
+
 
 /*
  * Internal functions to send/recv pdus.

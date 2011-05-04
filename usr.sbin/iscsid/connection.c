@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.12 2011/05/02 06:32:56 claudio Exp $ */
+/*	$OpenBSD: connection.c,v 1.13 2011/05/04 21:00:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -30,6 +30,7 @@
 #include <event.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <strings.h>
 #include <unistd.h>
 
 #include "iscsid.h"
@@ -62,6 +63,12 @@ conn_new(struct session *s, struct connection_config *cc)
 	c->session = s;
 	c->cid = arc4random();
 	c->config = *cc;
+	c->mine = initiator_conn_defaults;
+	c->mine.HeaderDigest = s->config.HeaderDigest;
+	c->mine.DataDigest = s->config.DataDigest;
+	c->his = iscsi_conn_defaults;
+	c->active = iscsi_conn_defaults;
+
 	TAILQ_INIT(&c->pdu_w);
 	TAILQ_INIT(&c->tasks);
 	TAILQ_INSERT_TAIL(&s->connections, c, entry);
@@ -226,7 +233,6 @@ conn_task_schedule(struct connection *c)
 void
 conn_task_cleanup(struct connection *c, struct task *t)
 {
-/* XXX THIS FEELS WRONG FOR NOW */
 	pdu_free_queue(&t->sendq);
 	pdu_free_queue(&t->recvq);
 	/* XXX need some state to know if queued or not */
@@ -239,6 +245,104 @@ conn_task_cleanup(struct connection *c, struct task *t)
 	}
 }
 
+#define SET_NUM(p, x, v, min, max)				\
+do {								\
+	if (!strcmp((p)->key, #v)) {				\
+		(x)->his.v = text_to_num((p)->value, (min), (max), &err); \
+		if (err) {					\
+			log_warnx("bad param %s=%s: %s",	\
+			    (p)->key, (p)->value, err);		\
+			errors++;				\
+		}						\
+log_debug("SET_NUM: %s = %llu", #v, (u_int64_t)(x)->his.v);	\
+	}							\
+} while (0)
+
+#define SET_BOOL(p, x, v)					\
+do {								\
+	if (!strcmp((p)->key, #v)) {				\
+		(x)->his.v = text_to_bool((p)->value, &err);	\
+		if (err) {					\
+			log_warnx("bad param %s=%s: %s",	\
+			    (p)->key, (p)->value, err);		\
+			errors++;				\
+		}						\
+log_debug("SET_BOOL: %s = %u", #v, (int)(x)->his.v);		\
+	}							\
+} while (0)
+
+int
+conn_parse_kvp(struct connection *c, struct kvp *kvp)
+{
+	struct kvp *k;
+	struct session *s = c->session;
+	const char *err;
+	int errors = 0;
+
+
+	for (k = kvp; k->key; k++) {
+		SET_NUM(k, s, MaxBurstLength, 512, 16777215);
+		SET_NUM(k, s, FirstBurstLength, 512, 16777215);
+		SET_NUM(k, s, DefaultTime2Wait, 0, 3600);
+		SET_NUM(k, s, DefaultTime2Retain, 0, 3600);
+		SET_NUM(k, s, MaxOutstandingR2T, 1, 65535);
+		SET_NUM(k, s, TargetPortalGroupTag, 1, 65535);
+		SET_NUM(k, s, MaxConnections, 1, 65535);
+		SET_BOOL(k, s, InitialR2T);
+		SET_BOOL(k, s, ImmediateData);
+		SET_BOOL(k, s, DataPDUInOrder);
+		SET_BOOL(k, s, DataSequenceInOrder);
+		SET_NUM(k, s, ErrorRecoveryLevel, 0, 2);
+		SET_NUM(k, c, MaxRecvDataSegmentLength, 512, 16777215);
+	}
+
+	if (errors) {
+		log_warnx("conn_parse_kvp: errors found");
+		return -1;
+	}
+	return 0;
+}
+
+#undef SET_NUM
+#undef SET_BOOL
+
+int
+conn_gen_kvp(struct connection *c, struct kvp *kvp, size_t *nkvp)
+{
+	struct session *s = c->session;
+	size_t i = 0;
+
+	if (s->mine.MaxConnections != iscsi_sess_defaults.MaxConnections) {
+		i++;
+		if (kvp && i < *nkvp) {
+			kvp[i].key = strdup("MaxConnections");
+			if (kvp[i].key == NULL)
+				return (-1);
+			if (asprintf(&kvp[i].value, "%u",
+			    (unsigned int)s->mine.MaxConnections) == -1) {
+				kvp[i].value = NULL;
+				return (-1);
+			}
+		}
+	}
+	if (c->mine.MaxRecvDataSegmentLength !=
+	    iscsi_conn_defaults.MaxRecvDataSegmentLength) {
+		i++;
+		if (kvp && i < *nkvp) {
+			kvp[i].key = strdup("MaxRecvDataSegmentLength");
+			if (kvp[i].key == NULL)
+				return (-1);
+			if (asprintf(&kvp[i].value, "%u",
+			    (unsigned int)c->mine.MaxRecvDataSegmentLength) == -1) {
+				kvp[i].value = NULL;
+				return (-1);
+			}
+		}
+	}
+
+	*nkvp = i;
+	return (0);
+}
 
 void
 conn_pdu_write(struct connection *c, struct pdu *p)
