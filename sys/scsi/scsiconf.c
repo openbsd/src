@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.174 2011/04/29 02:10:05 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.175 2011/05/04 20:49:41 sthen Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -789,9 +789,12 @@ scsibus_printlink(struct scsi_link *link)
 
 		if (ISSET(link->id->d_flags, DEVID_F_PRINT)) {
 			for (i = 0; i < link->id->d_len; i++) {
-				if (id[i] == '\0' || id[i] == ' ')
-					printf("_");
-				else if (id[i] < 0x20 || id[i] >= 0x80) {
+				if (id[i] == '\0' || id[i] == ' ') {
+					/* skip leading blanks */
+					/* collapse multiple blanks into one */
+					if (i > 0 && id[i-1] != id[i])
+						printf("_");
+				} else if (id[i] < 0x20 || id[i] >= 0x80) {
 					/* non-printable characters */
 					printf("~");
 				} else {
