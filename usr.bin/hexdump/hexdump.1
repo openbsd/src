@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hexdump.1,v 1.21 2010/09/03 11:09:29 jmc Exp $
+.\"	$OpenBSD: hexdump.1,v 1.22 2011/05/04 06:49:11 jmc Exp $
 .\"	$NetBSD: hexdump.1,v 1.14 2001/12/07 14:46:24 bjh21 Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)hexdump.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: May 4 2011 $
 .Dt HEXDUMP 1
 .Os
 .Sh NAME
@@ -182,7 +182,9 @@ Any whitespace before or after the slash is ignored.
 .Pp
 The format is required and must be surrounded by double quote
 .Pq \&"\& \&"
-marks.
+marks
+(the quote mark is a special character in many shell programs,
+and may have to be escaped from the shell).
 It is interpreted as a fprintf-style format string (see
 .Xr fprintf 3 ) ,
 with the
@@ -346,14 +348,25 @@ option.
 .Sh EXIT STATUS
 .Ex -std hexdump
 .Sh EXAMPLES
-Display the input in perusal format:
+Display characters using a fieldwidth of 4,
+and using special names for control characters:
+.Pp
+.Dl $ hexdump -e '"%4_u"' file
+.Pp
+An example file for use with the
+.Fl f
+option, to display the input in perusal format:
 .Bd -literal -offset indent
 "%06.6_ao "  12/1 "%3_u "
 "\et\et" "%_p "
 "\en"
 .Ed
 .Pp
-Implement the \-x option:
+An example file for use with the
+.Fl f
+option, which implements the equivalent of the
+.Fl x
+option:
 .Bd -literal -offset indent
 "%07.7_Ax\en"
 "%07.7_ax  " 8/2 "%04x " "\en"
