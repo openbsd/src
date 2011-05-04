@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.43 2011/04/06 11:36:25 miod Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.44 2011/05/04 21:40:07 oga Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -355,7 +355,6 @@ int
 main(int argc, char *argv[])
 {
 	struct command	*cmdp;
-	char dvname_store[MAXPATHLEN];
 
 	if (argc < 2)
 		usage();
@@ -363,23 +362,8 @@ main(int argc, char *argv[])
 	/*
 	 * Open the device
 	 */
-	fd = opendisk(argv[1], O_RDWR, dvname_store, sizeof(dvname_store), 0);
-	if (fd == -1) {
-		if (errno == ENOENT) {
-			/*
-			 * Device doesn't exist.  Probably trying to open
-			 * a device which doesn't use disk semantics for
-			 * device name.  Try again, specifying "cooked",
-			 * which leaves off the "r" in front of the device's
-			 * name.
-			 */
-			fd = opendisk(argv[1], O_RDWR, dvname_store,
-			    sizeof(dvname_store), 1);
-			if (fd == -1)
-				err(1, "%s", argv[1]);
-		} else
-			err(1, "%s", argv[1]);
-	}
+	if ((fd = opendev(argv[1], O_RDWR, OPENDEV_PART, NULL)) == -1)
+		err(1, "%s", argv[1]);
 
 	/* Skip program name and device name. */
 	if (argc != 2) {
