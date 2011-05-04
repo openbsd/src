@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.248 2011/04/29 06:28:21 blambert Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.249 2011/05/04 08:20:05 blambert Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -741,7 +741,7 @@ findpcb:
 			case TH_RST:
 				syn_cache_reset(&src.sa, &dst.sa, th,
 				    inp->inp_rtableid);
-				break;
+				goto drop;
 
 			case TH_SYN|TH_ACK:
 				/*
@@ -772,6 +772,7 @@ findpcb:
 					 * do not free it.
 					 */
 					m = NULL;
+					goto drop;
 				} else {
 					/*
 					 * We have created a
@@ -783,7 +784,6 @@ findpcb:
 					if (tp == NULL)
 						goto badsyn;	/*XXX*/
 
-					goto after_listen;
 				}
 				break;
 
@@ -876,16 +876,15 @@ findpcb:
 				 * SYN looks ok; create compressed TCP
 				 * state for it.
 				 */
-				if (so->so_qlen <= so->so_qlimit &&
+				if (so->so_qlen > so->so_qlimit ||
 				    syn_cache_add(&src.sa, &dst.sa, th, iphlen,
-				    so, m, optp, optlen, &opti, reuse))
-					m = NULL;
+				    so, m, optp, optlen, &opti, reuse) == -1)
+					goto drop;
+				return;
 			}
-			goto drop;
 		}
 	}
 
-after_listen:
 #ifdef DIAGNOSTIC
 	/*
 	 * Should not happen now that all embryonic connections
@@ -4056,7 +4055,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		tb.t_state = TCPS_LISTEN;
 		if (tcp_dooptions(&tb, optp, optlen, th, m, iphlen, oi,
 		    sotoinpcb(so)->inp_rtableid))
-			return (0);
+			return (-1);
 	} else
 		tb.t_flags = 0;
 
@@ -4095,14 +4094,14 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 			tcpstat.tcps_sndacks++;
 			tcpstat.tcps_sndtotal++;
 		}
-		return (1);
+		return (0);
 	}
 
 	sc = pool_get(&syn_cache_pool, PR_NOWAIT|PR_ZERO);
 	if (sc == NULL) {
 		if (ipopts)
 			(void) m_free(ipopts);
-		return (0);
+		return (-1);
 	}
 
 	/*
@@ -4187,7 +4186,8 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		syn_cache_put(sc);
 		tcpstat.tcps_sc_dropped++;
 	}
-	return (1);
+
+	return (0);
 }
 
 int
