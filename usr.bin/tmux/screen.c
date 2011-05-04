@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.17 2010/12/11 17:56:01 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.18 2011/05/04 17:43:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -96,7 +96,7 @@ screen_set_title(struct screen *s, const char *title)
 {
 	char	tmp[BUFSIZ];
 
-	strnvis(tmp, title, sizeof tmp, VIS_OCTAL|VIS_TAB|VIS_NL);
+	strlcpy(tmp, title, sizeof tmp);
 
 	xfree(s->title);
 	s->title = xstrdup(tmp);
