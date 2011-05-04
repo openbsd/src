@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.122 2011/05/01 12:57:11 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.123 2011/05/04 20:45:30 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -61,6 +61,18 @@ static struct child *child_lookup(pid_t);
 static struct child *child_add(pid_t, int, int);
 static void child_del(pid_t);
 
+static int	queueing_add(char *);
+static void	queueing_done(void);
+
+struct queueing {
+	TAILQ_ENTRY(queueing)	 entry;
+	char			*path;
+};
+
+#define QUEUEING_MAX 5
+static size_t			queueing_running = 0;
+TAILQ_HEAD(, queueing)		queueing_q;
+
 extern char	**environ;
 void		(*imsg_callback)(struct imsgev *, struct imsg *);
 
@@ -114,7 +126,7 @@ parent_imsg(struct imsgev *iev, struct imsg *imsg)
 	if (iev->proc == PROC_QUEUE) {
 		switch (imsg->hdr.type) {
 		case IMSG_PARENT_ENQUEUE_OFFLINE:
-			if (! parent_enqueue_offline(imsg->data))
+			if (! queueing_add(imsg->data))
 				imsg_compose_event(iev,
 				    IMSG_PARENT_ENQUEUE_OFFLINE, 0, 0, -1,
 				    NULL, 0);
@@ -392,6 +404,7 @@ parent_sig_handler(int sig, short event, void *p)
 				imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 				    IMSG_PARENT_ENQUEUE_OFFLINE, 0, 0, -1,
 				    NULL, 0);
+				queueing_done();
 				break;
 
 			default:
@@ -440,6 +453,8 @@ main(int argc, char *argv[])
 	verbose = 0;
 
 	log_init(1);
+
+	TAILQ_INIT(&queueing_q);
 
 	while ((c = getopt(argc, argv, "dD:nf:v")) != -1) {
 		switch (c) {
@@ -972,9 +987,45 @@ parent_enqueue_offline(char *runner_path)
 		_exit(1);
 	}
 
+	queueing_running++;
 	child_add(pid, CHILD_ENQUEUE_OFFLINE, -1);
 
 	return (1);
+}
+
+static int
+queueing_add(char *path)
+{
+	struct queueing	*q;
+
+	if (queueing_running < QUEUEING_MAX)
+		/* skip queue */
+		return parent_enqueue_offline(path);
+
+	q = malloc(sizeof(*q) + strlen(path) + 1);
+	if (q == NULL)
+		return (-1);
+	q->path = (char *)q + sizeof(*q);
+	memmove(q->path, path, strlen(path) + 1);
+	TAILQ_INSERT_TAIL(&queueing_q, q, entry);
+
+	return (1);
+}
+
+static void
+queueing_done(void)
+{
+	struct queueing	*q;
+
+	queueing_running--;
+
+	while(queueing_running < QUEUEING_MAX) {
+		if ((q = TAILQ_FIRST(&queueing_q)) == NULL)
+			break; /* all done */
+		TAILQ_REMOVE(&queueing_q, q, entry);
+		parent_enqueue_offline(q->path);
+		free(q);
+	}
 }
 
 static int
