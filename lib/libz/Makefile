@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2005/11/24 20:49:23 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.15 2011/05/04 07:36:38 jasper Exp $
 
 LIB=	z
 WANTLINT=
@@ -38,6 +38,9 @@ MLINKS=	compress.3 zlibVersion.3 compress.3 deflateInit.3 \
 	compress.3 crc32.3 compress.3 crc32_combine.3
 CFLAGS+=-DHAVE_STRERROR -DHAVE_MEMCPY -DHAS_vsnprintf -DHAS_snprintf
 
+PC_FILES=zlib.pc
+CLEANFILES+=${PC_FILES}
+
 includes:
 	@cd ${.CURDIR}; for i in $(HDRS); do \
 		j="cmp -s $$i ${DESTDIR}/usr/include/$$i || \
@@ -46,5 +49,12 @@ includes:
 		echo $$j; \
 		eval "$$j"; \
 	done
+
+beforeinstall:
+	/bin/sh ${.CURDIR}/generate_pkgconfig.sh -c ${.CURDIR} -o ${.OBJDIR}
+	[ -d ${DESTDIR}/usr/lib/pkgconfig/ ] || \
+		${INSTALL} -o root -g ${SHAREGRP} -d ${DESTDIR}/usr/lib/pkgconfig/
+	${INSTALL} ${INSTALL_COPY} -o root -g ${SHAREGRP} \
+	    -m ${SHAREMODE} ${.OBJDIR}/${PC_FILES} ${DESTDIR}/usr/lib/pkgconfig/
 
 .include <bsd.lib.mk>
