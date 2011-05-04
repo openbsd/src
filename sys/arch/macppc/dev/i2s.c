@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.18 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.19 2011/05/04 15:50:49 jasper Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -637,9 +637,7 @@ i2s_get_port(h, mc)
 }
 
 int
-i2s_query_devinfo(h, dip)
-	void *h;
-	mixer_devinfo_t *dip;
+i2s_query_devinfo(void *h, mixer_devinfo_t *dip)
 {
 	struct i2s_softc *sc = h;
 	int n = 0;
@@ -674,6 +672,7 @@ i2s_query_devinfo(h, dip)
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		dip->un.v.num_channels = 2;
+		dip->un.v.delta = 8;
 		strlcpy(dip->un.v.units.name, AudioNvolume,
 		    sizeof(dip->un.v.units.name));
 		return 0;
