@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.151 2011/04/24 19:36:54 bluhm Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.152 2011/05/04 16:05:49 blambert Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -403,7 +403,6 @@ int	      m_defrag(struct mbuf *, int);
 struct	mbuf *m_prepend(struct mbuf *, int, int);
 struct	mbuf *m_pulldown(struct mbuf *, int, int, int *);
 struct	mbuf *m_pullup(struct mbuf *, int);
-struct	mbuf *m_pullup2(struct mbuf *, int);
 struct	mbuf *m_split(struct mbuf *, int, int);
 struct  mbuf *m_inject(struct mbuf *, int, int, int);
 struct  mbuf *m_getptr(struct mbuf *, int, int *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.17 2010/02/06 15:16:27 jcs Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.18 2011/05/04 16:05:49 blambert Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -141,7 +141,7 @@ ieee80211_eapol_key_input(struct ieee80211com *ic, struct mbuf *m,
 	}
 
 	/* make sure the key data field is contiguous */
-	if (m->m_len < totlen && (m = m_pullup2(m, totlen)) == NULL) {
+	if (m->m_len < totlen && (m = m_pullup(m, totlen)) == NULL) {
 		ic->ic_stats.is_rx_nombuf++;
 		goto done;
 	}

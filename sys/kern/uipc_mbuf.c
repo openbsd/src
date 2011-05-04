@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.156 2011/04/18 19:23:46 art Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.157 2011/05/04 16:05:49 blambert Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -917,20 +917,16 @@ m_adj(struct mbuf *mp, int req_len)
 }
 
 /*
- * Rearange an mbuf chain so that len bytes are contiguous
- * and in the data area of an mbuf (so that mtod and dtom
- * will work for a structure of size len).  Returns the resulting
+ * Rearrange an mbuf chain so that len bytes are contiguous
+ * and in the data area of an mbuf (so that mtod will work
+ * for a structure of size len).  Returns the resulting
  * mbuf chain on success, frees it and returns null on failure.
- * If there is room, it will add up to max_protohdr-len extra bytes to the
- * contiguous region in an attempt to avoid being called next time.
  */
-struct mbuf *
-m_pullup(struct mbuf *n, int len)
+struct mbuf *   
+m_pullup(struct mbuf *n, int len)       
 {
 	struct mbuf *m;
 	int count;
-	int space;
-	int s;
 
 	/*
 	 * If first mbuf has no cluster, and has room for len bytes
@@ -944,62 +940,7 @@ m_pullup(struct mbuf *n, int len)
 		m = n;
 		n = n->m_next;
 		len -= m->m_len;
-	} else {
-		if (len > MHLEN)
-			goto bad;
-		MGET(m, M_DONTWAIT, n->m_type);
-		if (m == NULL)
-			goto bad;
-		m->m_len = 0;
-		if (n->m_flags & M_PKTHDR)
-			M_MOVE_PKTHDR(m, n);
-	}
-	space = &m->m_dat[MLEN] - (m->m_data + m->m_len);
-	s = splnet();
-	do {
-		count = min(min(max(len, max_protohdr), space), n->m_len);
-		bcopy(mtod(n, caddr_t), mtod(m, caddr_t) + m->m_len,
-		    (unsigned)count);
-		len -= count;
-		m->m_len += count;
-		n->m_len -= count;
-		space -= count;
-		if (n->m_len)
-			n->m_data += count;
-		else
-			n = m_free_unlocked(n);
-	} while (len > 0 && n);
-	if (len > 0) {
-		(void)m_free_unlocked(m);
-		splx(s);
-		goto bad;
-	}
-	splx(s);
-	m->m_next = n;
-	return (m);
-bad:
-	m_freem(n);
-	return (NULL);
-}
-
-/*
- * m_pullup2() works like m_pullup, save that len can be <= MCLBYTES.
- * m_pullup2() only works on values of len such that MHLEN < len <= MCLBYTES,
- * it calls m_pullup() for values <= MHLEN.  It also only coagulates the
- * requested number of bytes.  (For those of us who expect unwieldy option
- * headers.
- *
- * KEBE SAYS:  Remember that dtom() calls with data in clusters does not work!
- */
-struct mbuf *   
-m_pullup2(struct mbuf *n, int len)       
-{
-	struct mbuf *m;
-	int count;
-
-	if (len <= MHLEN)
-		return m_pullup(n, len);
-	if ((n->m_flags & M_EXT) != 0 &&
+	} else if ((n->m_flags & M_EXT) != 0 && len > MHLEN &&
 	    n->m_data + len < &n->m_data[MCLBYTES] && n->m_next) {
 		if (n->m_len >= len)
 			return (n);
@@ -1012,20 +953,16 @@ m_pullup2(struct mbuf *n, int len)
 		MGET(m, M_DONTWAIT, n->m_type);
 		if (m == NULL)
 			goto bad;
-		MCLGET(m, M_DONTWAIT);
-		if ((m->m_flags & M_EXT) == 0) {
-			m_free(m);
-			goto bad;
+		if (len > MHLEN) {
+			MCLGET(m, M_DONTWAIT);
+			if ((m->m_flags & M_EXT) == 0) {
+				m_free(m);
+				goto bad;
+			}
 		}
 		m->m_len = 0;
-		if (n->m_flags & M_PKTHDR) {
-			/* Too many adverse side effects. */
-			/* M_MOVE_PKTHDR(m, n); */
-			m->m_flags = (n->m_flags & M_COPYFLAGS) |
-			    M_EXT | M_CLUSTER;
-			M_MOVE_HDR(m, n);
-			/* n->m_data is cool. */
-		}
+		if (n->m_flags & M_PKTHDR)
+			M_MOVE_PKTHDR(m, n);
 	}
 
 	do {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.85 2011/04/17 20:44:27 stsp Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.86 2011/05/04 16:05:49 blambert Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -540,7 +540,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 
 	/* preserve the alignment */
 	if (m->m_len < m->m_pkthdr.len) {
-		m = m_pullup2(m, m->m_pkthdr.len);
+		m = m_pullup(m, m->m_pkthdr.len);
 		if (m == NULL) {
 			if (debug)
 				log(LOG_DEBUG,

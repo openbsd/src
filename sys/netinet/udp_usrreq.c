@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.142 2011/04/28 09:56:27 claudio Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.143 2011/05/04 16:05:49 blambert Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -352,7 +352,7 @@ udp_input(struct mbuf *m, ...)
 		 * to userland
 		 */
 		if (spi != 0) {
-			if ((m = m_pullup2(m, skip)) == NULL) {
+			if ((m = m_pullup(m, skip)) == NULL) {
 				udpstat.udps_hdrops++;
 				return;
 			}
