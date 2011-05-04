@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsparse.c,v 1.4 2010/10/29 17:49:37 nicm Exp $	*/
+/*	$OpenBSD: rcsparse.c,v 1.5 2011/05/04 17:37:33 nicm Exp $	*/
 /*
  * Copyright (c) 2010 Tobias Stoeckmann <tobias@openbsd.org>
  *
@@ -989,7 +989,7 @@ rcsparse_token(RCSFILE *rfp, int allowed)
 
 	switch (allowed) {
 	case RCS_TYPE_COMMITID:
-		/* XXX validate commitd */
+		/* XXX validate commitid */
 		break;
 	case RCS_TYPE_LOGIN:
 		if (!valid_login(pdp->rp_buf)) {
