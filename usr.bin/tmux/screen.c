@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.18 2011/05/04 17:43:11 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.19 2011/05/04 17:43:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -21,7 +21,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <vis.h>
 
 #include "tmux.h"
 
