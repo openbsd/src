@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.29 2009/08/14 15:31:23 reyk Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.30 2011/05/05 12:01:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -284,7 +284,7 @@ recv_icmp(int s, short event, void *arg)
 	    (struct sockaddr *)&ss, &slen);
 	if (r == -1 || r != ICMP_BUF_SIZE) {
 		if (r == -1 && errno != EAGAIN && errno != EINTR)
-			log_debug("recv_icmp: receive error");
+			log_debug("%s: receive error", __func__);
 		goto retry;
 	}
 
@@ -301,11 +301,11 @@ recv_icmp(int s, short event, void *arg)
 		goto retry;
 	host = host_find(cie->env, id);
 	if (host == NULL) {
-		log_warn("recv_icmp: ping for unknown host received");
+		log_warn("%s: ping for unknown host received", __func__);
 		goto retry;
 	}
 	if (bcmp(&ss, &host->conf.ss, slen)) {
-		log_warnx("recv_icmp: forged icmp packet?");
+		log_warnx("%s: forged icmp packet?", __func__);
 		goto retry;
 	}
 

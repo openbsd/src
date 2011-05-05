@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.36 2010/05/14 11:11:10 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.37 2011/05/05 12:01:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -54,28 +54,28 @@ control_init(void)
 	mode_t			 old_umask;
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
-		log_warn("control_init: socket");
+		log_warn("%s: socket", __func__);
 		return (-1);
 	}
 
 	sun.sun_family = AF_UNIX;
 	if (strlcpy(sun.sun_path, RELAYD_SOCKET,
 	    sizeof(sun.sun_path)) >= sizeof(sun.sun_path)) {
-		log_warn("control_init: %s name too long", RELAYD_SOCKET);
+		log_warn("%s: %s name too long", __func__, RELAYD_SOCKET);
 		close(fd);
 		return (-1);
 	}
 
 	if (unlink(RELAYD_SOCKET) == -1)
 		if (errno != ENOENT) {
-			log_warn("control_init: unlink %s", RELAYD_SOCKET);
+			log_warn("%s: unlink %s", __func__, RELAYD_SOCKET);
 			close(fd);
 			return (-1);
 		}
 
 	old_umask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|S_IXOTH);
 	if (bind(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
-		log_warn("control_init: bind: %s", RELAYD_SOCKET);
+		log_warn("%s: bind: %s", __func__, RELAYD_SOCKET);
 		close(fd);
 		(void)umask(old_umask);
 		return (-1);
@@ -83,7 +83,7 @@ control_init(void)
 	(void)umask(old_umask);
 
 	if (chmod(RELAYD_SOCKET, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP) == -1) {
-		log_warn("control_init: chmod");
+		log_warn("%s: chmod", __func__);
 		close(fd);
 		(void)unlink(RELAYD_SOCKET);
 		return (-1);
@@ -105,7 +105,7 @@ control_listen(struct relayd *env, struct imsgev *i_main,
 	iev_hce = i_hce;
 
 	if (listen(control_state.fd, CONTROL_BACKLOG) == -1) {
-		log_warn("control_listen: listen");
+		log_warn("%s: listen", __func__);
 		return (-1);
 	}
 
@@ -136,7 +136,7 @@ control_accept(int listenfd, short event, void *arg)
 	if ((connfd = accept(listenfd,
 	    (struct sockaddr *)&sun, &len)) == -1) {
 		if (errno != EWOULDBLOCK && errno != EINTR)
-			log_warn("control_accept: accept");
+			log_warn("%s: accept", __func__);
 		return;
 	}
 
@@ -144,7 +144,7 @@ control_accept(int listenfd, short event, void *arg)
 
 	if ((c = calloc(1, sizeof(struct ctl_conn))) == NULL) {
 		close(connfd);
-		log_warn("control_accept");
+		log_warn("%s: calloc", __func__);
 		return;
 	}
 
@@ -176,7 +176,7 @@ control_close(int fd)
 	struct ctl_conn	*c;
 
 	if ((c = control_connbyfd(fd)) == NULL) {
-		log_warn("control_close: fd %d: not found", fd);
+		log_warn("%s: fd %d not found", __func__, fd);
 		return;
 	}
 
@@ -200,7 +200,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 	struct relayd		*env = arg;
 
 	if ((c = control_connbyfd(fd)) == NULL) {
-		log_warn("control_dispatch_imsg: fd %d: not found", fd);
+		log_warn("%s: fd %d not found", __func__, fd);
 		return;
 	}
 
@@ -349,8 +349,9 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			break;
 		case IMSG_CTL_NOTIFY:
 			if (c->flags & CTL_CONN_NOTIFY) {
-				log_debug("control_dispatch_imsg: "
-				    "client requested notify more than once");
+				log_debug("%s: "
+				    "client requested notify more than once",
+				    __func__);
 				imsg_compose_event(&c->iev, IMSG_CTL_FAIL,
 				    0, 0, -1, NULL, 0);
 				break;
@@ -374,8 +375,8 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			log_verbose(verbose);
 			break;
 		default:
-			log_debug("control_dispatch_imsg: "
-			    "error handling imsg %d", imsg.hdr.type);
+			log_debug("%s: error handling imsg %d",
+			    __func__, imsg.hdr.type);
 			break;
 		}
 		imsg_free(&imsg);

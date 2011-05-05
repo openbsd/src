@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_route.c,v 1.2 2011/05/05 10:20:24 phessler Exp $	*/
+/*	$OpenBSD: pfe_route.c,v 1.3 2011/05/05 12:01:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2009 Reyk Floeter <reyk@openbsd.org>
@@ -90,8 +90,9 @@ sync_routes(struct relayd *env, struct router *rt)
 			if (host->up == HOST_UNKNOWN)
 				continue;
 
-			log_debug("sync_routes: "
+			log_debug("%s: "
 			    "router %s route %s/%d gateway %s %s priority %d",
+			    __func__,
 			    rt->rt_conf.name, buf, nr->nr_conf.prefixlen,
 			    host->conf.name,
 			    HOST_ISUP(host->up) ? "up" : "down",
@@ -123,7 +124,7 @@ pfe_route(struct relayd *env, struct ctl_netroute *crt)
 
 	if ((nr = route_find(env, crt->id)) == NULL ||
 	    (host = host_find(env, crt->hostid)) == NULL) {
-		log_debug("pfe_route: invalid host or route id");
+		log_debug("%s: invalid host or route id", __func__);
 		return (-1);
 	}
 
@@ -228,13 +229,13 @@ pfe_route(struct relayd *env, struct ctl_netroute *crt)
 		}
 	}
 
-	log_debug("pfe_route: gateway %s %s", gwname,
+	log_debug("%s: gateway %s %s", __func__, gwname,
 	    HOST_ISUP(crt->up) ? "added" : "deleted");
 
 	return (0);
 
  bad:
-	log_debug("pfe_route: failed to %s gateway %s: %d %s",
+	log_debug("%s: failed to %s gateway %s: %d %s", __func__,
 	    HOST_ISUP(crt->up) ? "add" : "delete", gwname,
 	    errno, strerror(errno));
 

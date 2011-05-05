@@ -1,4 +1,4 @@
-/*	$OpenBSD: carp.c,v 1.7 2009/09/30 12:22:03 claudio Exp $ */
+/*	$OpenBSD: carp.c,v 1.8 2011/05/05 12:01:43 reyk Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -65,11 +65,11 @@ carp_demote_init(char *group, int force)
 
 	if ((c = carp_group_find(group)) == NULL) {
 		if ((c = calloc(1, sizeof(struct carpgroup))) == NULL) {
-			log_warn("carp_demote_init calloc");
+			log_warn("%s: calloc", __func__);
 			return (-1);
 		}
 		if ((c->group = strdup(group)) == NULL) {
-			log_warn("carp_demote_init strdup");
+			log_warn("%s: strdup, __func__");
 			free(c);
 			return (-1);
 		}
@@ -111,22 +111,23 @@ carp_demote_get(char *group)
 	struct ifgroupreq	ifgr;
 
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-		log_warn("carp_demote_get: socket");
+		log_warn("%s: socket", __func__);
 		return (-1);
 	}
 
 	bzero(&ifgr, sizeof(ifgr));
 	if (strlcpy(ifgr.ifgr_name, group, sizeof(ifgr.ifgr_name)) >=
 	    sizeof(ifgr.ifgr_name)) {
-		log_warn("carp_demote_get: invalid group");
+		log_warn("%s: invalid group", __func__);
 		return (-1);
 	}
 
 	if (ioctl(s, SIOCGIFGATTR, (caddr_t)&ifgr) == -1) {
 		if (errno == ENOENT)
-			log_warnx("group \"%s\" does not exist", group);
+			log_warnx("%s: group \"%s\" does not exist",
+			    __func__, group);
 		else
-			log_warn("carp_demote_get: ioctl");
+			log_warn("%s: ioctl", __func__);
 		close(s);
 		return (-1);
 	}
@@ -141,12 +142,12 @@ carp_demote_set(char *group, int demote)
 	struct carpgroup	*c;
 
 	if ((c = carp_group_find(group)) == NULL) {
-		log_warnx("carp_group_find for %s returned NULL?!", group);
+		log_warnx("%s: carp group %s not found", __func__, group);
 		return (-1);
 	}
 
 	if (c->changed_by + demote < 0) {
-		log_warnx("carp_demote_set: changed_by + demote < 0");
+		log_warnx("%s: changed_by + demote < 0", __func__);
 		return (-1);
 	}
 
@@ -169,7 +170,7 @@ carp_demote_reset(char *group, int value)
 	int			 demote = 0;
 
 	if (value < 0) {
-		log_warnx("carp_demote_reset: value < 0");
+		log_warnx("%s: value < 0", __func__);
 		return (-1);
 	}
 
@@ -194,22 +195,22 @@ carp_demote_ioctl(char *group, int demote)
 	struct ifgroupreq	ifgr;
 
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-		log_warn("carp_demote_get: socket");
+		log_warn("%s: socket", __func__);
 		return (-1);
 	}
 
 	bzero(&ifgr, sizeof(ifgr));
 	if (strlcpy(ifgr.ifgr_name, group, sizeof(ifgr.ifgr_name)) >=
 	    sizeof(ifgr.ifgr_name)) {
-		log_warn("carp_demote_ioctl: invalid group");
+		log_warn("%s: invalid group", __func__);
 		return (-1);
 	}
 	ifgr.ifgr_attrib.ifg_carp_demoted = demote;
 
 	if ((res = ioctl(s, SIOCSIFGATTR, (caddr_t)&ifgr)) == -1)
-		log_warn("unable to %s the demote state "
-		    "of group '%s'", (demote > 0) ? "increment" : "decrement",
-		    group);
+		log_warn("%s: unable to %s the demote state "
+		    "of group '%s'", __func__,
+		    (demote > 0) ? "increment" : "decrement", group);
 	else
 		log_info("%s the demote state of group '%s'",
 		    (demote > 0) ? "incremented" : "decremented", group);

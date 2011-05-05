@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.153 2011/05/05 10:20:24 phessler Exp $	*/
+/*	$OpenBSD: parse.y,v 1.154 2011/05/05 12:01:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -2101,16 +2101,16 @@ pushfile(const char *name, int secret)
 	struct file	*nfile;
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL) {
-		log_warn("malloc");
+		log_warn("%s: malloc", __func__);
 		return (NULL);
 	}
 	if ((nfile->name = strdup(name)) == NULL) {
-		log_warn("malloc");
+		log_warn("%s: malloc", __func__);
 		free(nfile);
 		return (NULL);
 	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
-		log_warn("%s", nfile->name);
+		log_warn("%s: %s", __func__, nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -2169,7 +2169,7 @@ parse_config(const char *filename, int opts)
 				free(conf->sc_rts);
 			free(conf);
 		}
-		log_warn("cannot allocate memory");
+		log_warn("%s: cannot allocate memory", __func__);
 		return (NULL);
 	}
 
@@ -2473,7 +2473,7 @@ host_dns(const char *s, struct addresslist *al, int max,
 	if (error == EAI_AGAIN || error == EAI_NODATA || error == EAI_NONAME)
 		return (0);
 	if (error) {
-		log_warnx("host_dns: could not parse \"%s\": %s", s,
+		log_warnx("%s: could not parse \"%s\": %s", __func__, s,
 		    gai_strerror(error));
 		return (-1);
 	}
@@ -2490,7 +2490,8 @@ host_dns(const char *s, struct addresslist *al, int max,
 		if (ifname != NULL) {
 			if (strlcpy(h->ifname, ifname, sizeof(h->ifname)) >=
 			    sizeof(h->ifname))
-				log_warnx("host_dns: interface name truncated");
+				log_warnx("%s: interface name truncated",
+				    __func__);
 			freeaddrinfo(res0);
 			return (-1);
 		}
@@ -2514,7 +2515,7 @@ host_dns(const char *s, struct addresslist *al, int max,
 		cnt++;
 	}
 	if (cnt == max && res) {
-		log_warnx("host_dns: %s resolves to more than %d hosts",
+		log_warnx("%s: %s resolves to more than %d hosts", __func__,
 		    s, max);
 	}
 	freeaddrinfo(res0);
@@ -2553,7 +2554,8 @@ host_if(const char *s, struct addresslist *al, int max,
 		if (ifname != NULL) {
 			if (strlcpy(h->ifname, ifname, sizeof(h->ifname)) >=
 			    sizeof(h->ifname))
-				log_warnx("host_if: interface name truncated");
+				log_warnx("%s: interface name truncated",
+				    __func__);
 			freeifaddrs(ifap);
 			return (-1);
 		}
@@ -2585,7 +2587,7 @@ host_if(const char *s, struct addresslist *al, int max,
 	}
 
 	if (cnt > max) {
-		log_warnx("host_if: %s resolves to more than %d hosts",
+		log_warnx("%s: %s resolves to more than %d hosts", __func__,
 		    s, max);
 	}
 	freeifaddrs(ifap);
@@ -2610,7 +2612,8 @@ host(const char *s, struct addresslist *al, int max,
 		if (ifname != NULL) {
 			if (strlcpy(h->ifname, ifname, sizeof(h->ifname)) >=
 			    sizeof(h->ifname)) {
-				log_warnx("host: interface name truncated");
+				log_warnx("%s: interface name truncated",
+				    __func__);
 				return (-1);
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.39 2010/12/20 12:38:06 dhill Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.40 2011/05/05 12:01:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -201,7 +201,7 @@ tcp_send_req(int s, short event, void *arg)
 		if (bs == -1) {
 			if (errno == EAGAIN || errno == EINTR)
 				goto retry;
-			log_warnx("tcp_send_req: cannot send request");
+			log_warnx("%s: cannot send request", __func__);
 			cte->host->up = HOST_DOWN;
 			close(cte->s);
 			hce_notify_done(cte->host, HCE_TCP_WRITE_FAIL);
@@ -325,8 +325,8 @@ check_http_code(struct ctl_tcp_event *cte)
 
 	if (strncmp(head, "HTTP/1.1 ", strlen("HTTP/1.1 ")) &&
 	    strncmp(head, "HTTP/1.0 ", strlen("HTTP/1.0 "))) {
-		log_debug("check_http_code: %s failed "
-		    "(cannot parse HTTP version)", host->conf.name);
+		log_debug("%s: %s failed (cannot parse HTTP version)",
+		    __func__, host->conf.name);
 		host->up = HOST_DOWN;
 		return (1);
 	}
@@ -338,14 +338,14 @@ check_http_code(struct ctl_tcp_event *cte)
 	(void)strlcpy(scode, head, sizeof(scode));
 	code = strtonum(scode, 100, 999, &estr);
 	if (estr != NULL) {
-		log_debug("check_http_code: %s failed "
-		    "(cannot parse HTTP code)", host->conf.name);
+		log_debug("%s: %s failed (cannot parse HTTP code)",
+		    __func__, host->conf.name);
 		host->up = HOST_DOWN;
 		return (1);
 	}
 	if (code != cte->table->conf.retcode) {
-		log_debug("check_http_code: %s failed "
-		    "(invalid HTTP code returned)", host->conf.name);
+		log_debug("%s: %s failed (invalid HTTP code returned)",
+		    __func__, host->conf.name);
 		host->he = HCE_HTTP_CODE_FAIL;
 		host->up = HOST_DOWN;
 	} else {
@@ -376,8 +376,8 @@ check_http_digest(struct ctl_tcp_event *cte)
 	host->he = HCE_HTTP_DIGEST_ERROR;
 
 	if ((head = strstr(head, "\r\n\r\n")) == NULL) {
-		log_debug("check_http_digest: %s failed "
-		    "(no end of headers)", host->conf.name);
+		log_debug("%s: %s failed (no end of headers)",
+		    __func__, host->conf.name);
 		host->up = HOST_DOWN;
 		return (1);
 	}
@@ -386,8 +386,8 @@ check_http_digest(struct ctl_tcp_event *cte)
 	digeststr(cte->table->conf.digest_type, head, strlen(head), digest);
 
 	if (strcmp(cte->table->conf.digest, digest)) {
-		log_warnx("check_http_digest: %s failed "
-		    "(wrong digest)", host->conf.name);
+		log_warnx("%s: %s failed (wrong digest)",
+		    __func__, host->conf.name);
 		host->he = HCE_HTTP_DIGEST_FAIL;
 		host->up = HOST_DOWN;
 	} else {

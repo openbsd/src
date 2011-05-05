@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.22 2010/05/26 13:56:08 nicm Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.23 2011/05/05 12:01:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -384,13 +384,13 @@ relay_dns_log(struct rsession *con, u_int8_t *buf, size_t len)
 
 	/* Validate the header length */
 	if (len < sizeof(*hdr)) {
-		log_debug("relay_dns_log: session %d: short dns packet",
+		log_debug("%s: session %d: short dns packet", __func__,
 		    con->se_id);
 		return;
 	}
 
-	log_debug("relay_dns_log: session %d: %s id 0x%x "
-	    "flags 0x%x:0x%x qd %u an %u ns %u ar %u",
+	log_debug("%s: session %d: %s id 0x%x "
+	    "flags 0x%x:0x%x qd %u an %u ns %u ar %u", __func__,
 	    con->se_id,
 	    hdr->dns_flags0 & DNS_F0_QR ? "response" : "request",
 	    ntohs(hdr->dns_id),
@@ -497,13 +497,13 @@ relay_dns_request(struct rsession *con)
 	    (struct sockaddr *)&con->se_out.ss, slen) == -1) {
 		if (con->se_retry) {
 			con->se_retry--;
-			log_debug("relay_dns_request: session %d: "
-			    "forward failed: %s, %s",
+			log_debug("%s: session %d: "
+			    "forward failed: %s, %s", __func__,
 			    con->se_id, strerror(errno),
 			    con->se_retry ? "next retry" : "last retry");
 			goto retry;
 		}
-		log_debug("relay_dns_request: session %d: forward failed: %s",
+		log_debug("%s: session %d: forward failed: %s", __func__,
 		    con->se_id, strerror(errno));
 		return (-1);
 	}

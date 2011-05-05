@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.66 2010/11/16 15:31:01 jsg Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.67 2011/05/05 12:01:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -283,7 +283,7 @@ pfe_dispatch_imsg(int fd, short event, void *ptr)
 					host->up_cnt++;
 			}
 			if (host->check_cnt != st.check_cnt) {
-				log_debug("pfe_dispatch_imsg: host %d => %d",
+				log_debug("%s: host %d => %d", __func__,
 				    host->conf.id, host->up);
 				fatalx("pfe_dispatch_imsg: desynchronized");
 			}
@@ -301,7 +301,7 @@ pfe_dispatch_imsg(int fd, short event, void *ptr)
 			    == NULL)
 				fatalx("pfe_dispatch_imsg: invalid table id");
 
-			log_debug("pfe_dispatch_imsg: state %d for host %u %s",
+			log_debug("%s: state %d for host %u %s", __func__,
 			    st.up, host->conf.id, host->conf.name);
 
 			/*
@@ -326,7 +326,7 @@ pfe_dispatch_imsg(int fd, short event, void *ptr)
 			pfe_sync();
 			break;
 		default:
-			log_debug("pfe_dispatch_imsg: unexpected imsg %d",
+			log_debug("%s: unexpected imsg %d", __func__,
 			    imsg.hdr.type);
 			break;
 		}
@@ -376,7 +376,7 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 
 		switch (imsg.hdr.type) {
 		case IMSG_RECONF:
-			log_debug("pfe: reloading configuration");
+			log_debug("%s: reloading configuration", __func__);
 			if (imsg.hdr.len !=
 			    sizeof(struct relayd) + IMSG_HEADER_SIZE)
 				fatalx("corrupted reload data");
@@ -431,9 +431,9 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 			if (rdr->table == NULL || rdr->backup == NULL)
 				fatal("pfe_dispatch_parent:"
 				    " corrupted configuration");
-			log_debug("pfe_dispatch_parent: rdr->table: %s",
-			    rdr->table->conf.name);
-			log_debug("pfe_dispatch_parent: rdr->backup: %s",
+			log_debug("%s: redirect table %s, backup %s",
+			    __func__,
+			    rdr->table->conf.name,
 			    rdr->backup->conf.name);
 			TAILQ_INIT(&rdr->virts);
 			TAILQ_INSERT_TAIL(env->sc_rdrs, rdr, entry);
@@ -445,13 +445,13 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 			TAILQ_INSERT_TAIL(&rdr->virts, virt, entry);
 			break;
 		case IMSG_RECONF_END:
-			log_warnx("pfe: configuration reloaded");
+			log_warnx("%s: configuration reloaded", __func__);
 			init_tables(env);
 			pfe_setup_events();
 			pfe_sync();
 			break;
 		default:
-			log_debug("pfe_dispatch_parent: unexpected imsg %d",
+			log_debug("%s: unexpected imsg %d", __func__,
 			    imsg.hdr.type);
 			break;
 		}
@@ -523,7 +523,7 @@ pfe_dispatch_relay(int fd, short event, void * ptr)
 			    env->sc_statinterval.tv_sec;
 			break;
 		default:
-			log_debug("pfe_dispatch_relay: unexpected imsg %d",
+			log_debug("%s: unexpected imsg %d", __func__,
 			    imsg.hdr.type);
 			break;
 		}
@@ -694,7 +694,7 @@ disable_rdr(struct ctl_conn *c, struct ctl_id *id)
 	rdr->conf.flags &= ~(F_ADD);
 	rdr->conf.flags |= F_DEL;
 	rdr->table->conf.flags |= F_DISABLE;
-	log_debug("disable_rdr: disabled rdr %d", rdr->conf.id);
+	log_debug("%s: redirect %d", __func__, rdr->conf.id);
 	pfe_sync();
 	return (0);
 }
@@ -719,7 +719,7 @@ enable_rdr(struct ctl_conn *c, struct ctl_id *id)
 	rdr->conf.flags &= ~(F_DISABLE);
 	rdr->conf.flags &= ~(F_DEL);
 	rdr->conf.flags |= F_ADD;
-	log_debug("enable_rdr: enabled rdr %d", rdr->conf.id);
+	log_debug("%s: redirect %d", __func__, rdr->conf.id);
 
 	bzero(&eid, sizeof(eid));
 
@@ -765,7 +765,7 @@ disable_table(struct ctl_conn *c, struct ctl_id *id)
 		imsg_compose_event(&iev_relay[n],
 		    IMSG_TABLE_DISABLE, 0, 0, -1,
 		    &table->conf.id, sizeof(table->conf.id));
-	log_debug("disable_table: disabled table %d", table->conf.id);
+	log_debug("%s: table %d", __func__, table->conf.id);
 	pfe_sync();
 	return (0);
 }
@@ -802,7 +802,7 @@ enable_table(struct ctl_conn *c, struct ctl_id *id)
 		imsg_compose_event(&iev_relay[n],
 		    IMSG_TABLE_ENABLE, 0, 0, -1,
 		    &table->conf.id, sizeof(table->conf.id));
-	log_debug("enable_table: enabled table %d", table->conf.id);
+	log_debug("%s: table %d", __func__, table->conf.id);
 	pfe_sync();
 	return (0);
 }
@@ -848,7 +848,7 @@ disable_host(struct ctl_conn *c, struct ctl_id *id, struct host *host)
 		imsg_compose_event(&iev_relay[n],
 		    IMSG_HOST_DISABLE, 0, 0, -1,
 		    &host->conf.id, sizeof(host->conf.id));
-	log_debug("disable_host: disabled host %d", host->conf.id);
+	log_debug("%s: host %d", __func__, host->conf.id);
 
 	if (!host->conf.parentid) {
 		/* Disable all children */
@@ -890,7 +890,7 @@ enable_host(struct ctl_conn *c, struct ctl_id *id, struct host *host)
 		imsg_compose_event(&iev_relay[n],
 		    IMSG_HOST_ENABLE, 0, 0, -1,
 		    &host->conf.id, sizeof(host->conf.id));
-	log_debug("enable_host: enabled host %d", host->conf.id);
+	log_debug("%s: host %d", __func__, host->conf.id);
 
 	if (!host->conf.parentid) {
 		/* Enable all children */
@@ -944,7 +944,7 @@ pfe_sync(void)
 		if (rdr->conf.flags & F_DOWN) {
 			if (rdr->conf.flags & F_ACTIVE_RULESET) {
 				flush_table(env, rdr);
-				log_debug("pfe_sync: disabling ruleset");
+				log_debug("%s: disabling ruleset", __func__);
 				rdr->conf.flags &= ~(F_ACTIVE_RULESET);
 				id.id = rdr->conf.id;
 				imsg.hdr.type = IMSG_CTL_PULL_RULESET;
@@ -954,7 +954,7 @@ pfe_sync(void)
 				control_imsg_forward(&imsg);
 			}
 		} else if (!(rdr->conf.flags & F_ACTIVE_RULESET)) {
-			log_debug("pfe_sync: enabling ruleset");
+			log_debug("%s: enabling ruleset", __func__);
 			rdr->conf.flags |= F_ACTIVE_RULESET;
 			id.id = rdr->conf.id;
 			imsg.hdr.type = IMSG_CTL_PUSH_RULESET;
@@ -995,7 +995,7 @@ pfe_sync(void)
 		}
 		if (demote.level == 0)
 			continue;
-		log_debug("pfe_sync: demote %d table '%s' group '%s'",
+		log_debug("%s: demote %d table '%s' group '%s'", __func__,
 		    demote.level, table->conf.name, table->conf.demote_group);
 		(void)strlcpy(demote.group, table->conf.demote_group,
 		    sizeof(demote.group));

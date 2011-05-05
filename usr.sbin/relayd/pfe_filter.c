@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.45 2010/10/26 15:04:37 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.46 2011/05/05 12:01:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -68,7 +68,7 @@ init_filter(struct relayd *env)
 		fatal("init_filter: DIOCGETSTATUS");
 	if (!status.running)
 		fatalx("init_filter: pf is disabled");
-	log_debug("init_filter: filter init done");
+	log_debug("%s: filter init done", __func__);
 }
 
 void
@@ -110,7 +110,7 @@ init_tables(struct relayd *env)
 
 	if (ioctl(env->sc_pf->dev, DIOCRADDTABLES, &io) == -1)
 		fatal("init_tables: cannot create tables");
-	log_debug("init_tables: created %d tables", io.pfrio_nadd);
+	log_debug("%s: created %d tables", __func__, io.pfrio_nadd);
 
 	free(tables);
 
@@ -151,7 +151,7 @@ kill_tables(struct relayd *env)
 			fatal("kill_tables: ioctl failed");
 		cnt += io.pfrio_ndel;
 	}
-	log_debug("kill_tables: deleted %d tables", cnt);
+	log_debug("%s: deleted %d tables", __func__, cnt);
 	return;
 
  toolong:
@@ -320,7 +320,7 @@ flush_table(struct relayd *env, struct rdr *rdr)
 	if (ioctl(env->sc_pf->dev, DIOCRCLRTSTATS, &io) == -1)
 		fatal("flush_table: cannot flush table stats");
 
-	log_debug("flush_table: flushed table %s", rdr->conf.name);
+	log_debug("%s: flushed table %s", __func__, rdr->conf.name);
 	return;
 
  toolong:
@@ -377,16 +377,16 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 	    PF_ANCHOR_NAME_SIZE)
 		goto toolong;
 	if (transaction_init(env, anchor) == -1) {
-		log_warn("sync_ruleset: transaction init failed");
+		log_warn("%s: transaction init failed", __func__);
 		return;
 	}
 
 	if (!enable) {
 		if (transaction_commit(env) == -1)
-			log_warn("sync_ruleset: "
-			    "remove rules transaction failed");
+			log_warn("%s: remove rules transaction failed",
+			    __func__);
 		else
-			log_debug("sync_ruleset: rules removed");
+			log_debug("%s: rules removed", __func__);
 		return;
 	}
 
@@ -489,11 +489,10 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 
 		if (ioctl(env->sc_pf->dev, DIOCADDRULE, &rio) == -1)
 			fatal("cannot add rule");
-		log_debug("sync_ruleset: rule added to anchor \"%s\"",
-		    anchor);
+		log_debug("%s: rule added to anchor \"%s\"", __func__, anchor);
 	}
 	if (transaction_commit(env) == -1)
-		log_warn("sync_ruleset: add rules transaction failed");
+		log_warn("%s: add rules transaction failed", __func__);
 	return;
 
  toolong:
@@ -519,7 +518,7 @@ flush_rulesets(struct relayd *env)
 			goto toolong;
 		if (transaction_init(env, anchor) == -1 ||
 		    transaction_commit(env) == -1)
-			log_warn("flush_rulesets: transaction for %s/ failed",
+			log_warn("%s: transaction for %s/ failed", __func__,
 			    RELAYD_ANCHOR);
 	}
 	if (strlcpy(anchor, RELAYD_ANCHOR, sizeof(anchor)) >=
@@ -527,9 +526,9 @@ flush_rulesets(struct relayd *env)
 		goto toolong;
 	if (transaction_init(env, anchor) == -1 ||
 	    transaction_commit(env) == -1)
-		log_warn("flush_rulesets: transaction for %s failed",
+		log_warn("%s: transaction for %s failed", __func__,
 		    RELAYD_ANCHOR);
-	log_debug("flush_rulesets: flushed rules");
+	log_debug("%s: flushed rules", __func__);
 	return;
 
  toolong:
@@ -576,14 +575,14 @@ natlook(struct relayd *env, struct ctl_natlook *cnl)
 		pnl.direction = PF_OUT;
 		cnl->in = 0;
 		if (ioctl(env->sc_pf->dev, DIOCNATLOOK, &pnl) == -1) {
-			log_debug("natlook: error: %s", strerror(errno));
+			log_debug("%s: ioctl: %s", __func__, strerror(errno));
 			return (-1);
 		}
 	}
 
 	inet_ntop(pnl.af, &pnl.rsaddr, ibuf, sizeof(ibuf));
 	inet_ntop(pnl.af, &pnl.rdaddr, obuf, sizeof(obuf));
-	log_debug("natlook: %s %s:%d -> %s:%d",
+	log_debug("%s: %s %s:%d -> %s:%d", __func__,
 	    pnl.direction == PF_IN ? "in" : "out",
 	    ibuf, ntohs(pnl.rsport), obuf, ntohs(pnl.rdport));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.8 2009/06/09 16:26:03 deraadt Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.9 2011/05/05 12:01:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -141,7 +141,7 @@ snmp_getsock(struct imsgev *iev)
 	}
 
 	if (s != -1) {
-		log_debug("snmp_getsock: got new snmp socket %d", s);
+		log_debug("%s: got new snmp socket %d", __func__, s);
 		if (iev_snmp == NULL && (iev_snmp = (struct imsgev *)
 		    calloc(1, sizeof(struct imsgev))) == NULL)
 			fatal("snmp_getsock: calloc");
@@ -161,13 +161,13 @@ snmp_sock(int fd, short event, void *arg)
 		bzero(&tv, sizeof(tv));
 		goto retry;
 	case EV_READ:
-		log_debug("snmp_sock: snmp socket closed %d", env->sc_snmp);
+		log_debug("%s: snmp socket closed %d", __func__, env->sc_snmp);
 		(void)close(env->sc_snmp);
 		break;
 	}
 
 	if ((env->sc_snmp = snmp_getsock(iev_main)) == -1) {
-		DPRINTF("snmp_sock: failed to open snmp socket");
+		DPRINTF("%s: failed to open snmp socket", __func__);
 		goto retry;
 	}
 
@@ -189,7 +189,7 @@ snmp_element(const char *oid, enum snmp_type type, void *buf, int64_t val)
 	u_int64_t		 l;
 	struct snmp_imsg	 sm;
 
-	DPRINTF("snmp_element: oid %s type %d buf %p val %lld",
+	DPRINTF("%s: oid %s type %d buf %p val %lld", __func__,
 	    oid, type, buf, val);
 
 	bzero(&iov, sizeof(iov));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.57 2011/02/08 08:52:28 sthen Exp $	*/
+/*	$OpenBSD: hce.c,v 1.58 2011/05/05 12:01:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -299,7 +299,7 @@ hce_notify_done(struct host *host, enum host_error he)
 	host->he = he;
 
 	if (host->up == HOST_DOWN && host->retry_cnt) {
-		log_debug("hce_notify_done: host %s retry %d",
+		log_debug("%s: host %s retry %d", __func__,
 		    host->conf.name, host->retry_cnt);
 		host->up = host->last_up;
 		host->retry_cnt--;
@@ -318,7 +318,7 @@ hce_notify_done(struct host *host, enum host_error he)
 	host->flags |= (F_CHECK_SENT|F_CHECK_DONE);
 	msg = host_error(he);
 	if (msg)
-		log_debug("hce_notify_done: %s (%s)", host->conf.name, msg);
+		log_debug("%s: %s (%s)", __func__, host->conf.name, msg);
 
 	imsg_compose_event(iev_pfe, IMSG_HOST_STATUS,
 	    0, 0, -1, &st, sizeof(st));
@@ -452,7 +452,7 @@ hce_dispatch_imsg(int fd, short event, void *ptr)
 			log_verbose(verbose);
 			break;
 		default:
-			log_debug("hce_dispatch_msg: unexpected imsg %d",
+			log_debug("%s: unexpected imsg %d", __func__,
 			    imsg.hdr.type);
 			break;
 		}
@@ -508,7 +508,7 @@ hce_dispatch_parent(int fd, short event, void * ptr)
 			script_done(env, &scr);
 			break;
 		case IMSG_RECONF:
-			log_debug("hce: reloading configuration");
+			log_debug("%s: reloading configuration", __func__);
 			if (imsg.hdr.len !=
 			    sizeof(struct relayd) + IMSG_HEADER_SIZE)
 				fatalx("corrupted reload data");
@@ -547,11 +547,11 @@ hce_dispatch_parent(int fd, short event, void * ptr)
 			}
 			break;
 		case IMSG_RECONF_END:
-			log_warnx("hce: configuration reloaded");
+			log_warnx("%s: configuration reloaded", __func__);
 			hce_setup_events();
 			break;
 		default:
-			log_debug("hce_dispatch_parent: unexpected imsg %d",
+			log_debug("%s: unexpected imsg %d", __func__,
 			    imsg.hdr.type);
 			break;
 		}

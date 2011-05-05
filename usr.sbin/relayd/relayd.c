@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.100 2011/02/13 13:28:38 okan Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.101 2011/05/05 12:01:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -340,12 +340,12 @@ check_child(pid_t pid, const char *pname)
 
 	if (waitpid(pid, &status, WNOHANG) > 0) {
 		if (WIFEXITED(status)) {
-			log_warnx("check_child: lost child: %s exited", pname);
+			log_warnx("%s: lost child: %s exited", __func__, pname);
 			return (1);
 		}
 		if (WIFSIGNALED(status)) {
-			log_warnx("check_child: lost child: %s terminated; "
-			    "signal %d", pname, WTERMSIG(status));
+			log_warnx("%s: lost child: %s terminated; "
+			    "signal %d", __func__, pname, WTERMSIG(status));
 			return (1);
 		}
 	}
@@ -676,7 +676,7 @@ main_dispatch_pfe(int fd, short event, void *ptr)
 			log_verbose(verbose);
 			break;
 		default:
-			log_debug("main_dispatch_pfe: unexpected imsg %d",
+			log_debug("%s: unexpected imsg %d", __func__,
 			    imsg.hdr.type);
 			break;
 		}
@@ -736,7 +736,7 @@ main_dispatch_hce(int fd, short event, void * ptr)
 			(void)snmp_sendsock(iev);
 			break;
 		default:
-			log_debug("main_dispatch_hce: unexpected imsg %d",
+			log_debug("%s: unexpected imsg %d", __func__,
 			    imsg.hdr.type);
 			break;
 		}
@@ -804,7 +804,7 @@ main_dispatch_relay(int fd, short event, void * ptr)
 			    0, 0, s, &bnd.bnd_id, sizeof(bnd.bnd_id));
 			break;
 		default:
-			log_debug("main_dispatch_relay: unexpected imsg %d",
+			log_debug("%s: unexpected imsg %d", __func__,
 			    imsg.hdr.type);
 			break;
 		}
@@ -999,7 +999,7 @@ expand_string(char *label, size_t len, const char *srch, const char *repl)
 	char *p, *q;
 
 	if ((tmp = calloc(1, len)) == NULL) {
-		log_debug("expand_string: calloc");
+		log_debug("%s: calloc", __func__);
 		return (-1);
 	}
 	p = q = label;
@@ -1007,14 +1007,14 @@ expand_string(char *label, size_t len, const char *srch, const char *repl)
 		*q = '\0';
 		if ((strlcat(tmp, p, len) >= len) ||
 		    (strlcat(tmp, repl, len) >= len)) {
-			log_debug("expand_string: string too long");
+			log_debug("%s: string too long", __func__);
 			return (-1);
 		}
 		q += strlen(srch);
 		p = q;
 	}
 	if (strlcat(tmp, p, len) >= len) {
-		log_debug("expand_string: string too long");
+		log_debug("%s: string too long", __func__);
 		return (-1);
 	}
 	(void)strlcpy(label, tmp, len);	/* always fits */
@@ -1136,13 +1136,13 @@ protonode_header(enum direction dir, struct protocol *proto,
 	if (pn != NULL)
 		return (pn);
 	if ((pn = (struct protonode *)calloc(1, sizeof(*pn))) == NULL) {
-		log_warn("out of memory");
+		log_warn("%s: calloc", __func__);
 		return (NULL);
 	}
 	pn->key = strdup(pk->key);
 	if (pn->key == NULL) {
 		free(pn);
-		log_warn("out of memory");
+		log_warn("%s: strdup", __func__);
 		return (NULL);
 	}
 	pn->value = NULL;
@@ -1155,8 +1155,8 @@ protonode_header(enum direction dir, struct protocol *proto,
 	else
 		pn->id = proto->request_nodes++;
 	if (pn->id == INT_MAX) {
-		log_warnx("too many protocol "
-		    "nodes defined");
+		log_warnx("%s: too many protocol "
+		    "nodes defined", __func__);
 		return (NULL);
 	}
 	RB_INSERT(proto_tree, tree, pn);
@@ -1176,7 +1176,7 @@ protonode_add(enum direction dir, struct protocol *proto,
 		tree = &proto->request_tree;
 
 	if ((pn = calloc(1, sizeof (*pn))) == NULL) {
-		log_warn("out of memory");
+		log_warn("%s: calloc", __func__);
 		return (-1);
 	}
 	bcopy(node, pn, sizeof(*pn));
@@ -1188,7 +1188,7 @@ protonode_add(enum direction dir, struct protocol *proto,
 	else
 		pn->id = proto->request_nodes++;
 	if (pn->id == INT_MAX) {
-		log_warnx("too many protocol nodes defined");
+		log_warnx("%s: too many protocol nodes defined", __func__);
 		free(pn);
 		return (-1);
 	}
@@ -1367,7 +1367,7 @@ socket_rlimit(int maxfd)
 
 	if (getrlimit(RLIMIT_NOFILE, &rl) == -1)
 		fatal("socket_rlimit: failed to get resource limit");
-	log_debug("socket_rlimit: max open files %d", rl.rlim_max);
+	log_debug("%s: max open files %d", __func__, rl.rlim_max);
 
 	/*
 	 * Allow the maximum number of open file descriptors for this
