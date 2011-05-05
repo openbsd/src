@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev1.c,v 1.6 2011/01/21 11:56:00 reyk Exp $	*/
+/*	$OpenBSD: ikev1.c,v 1.7 2011/05/05 12:17:10 reyk Exp $	*/
 /*	$vantronix: ikev1.c,v 1.13 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -44,27 +44,27 @@
 #include "iked.h"
 #include "ikev2.h"
 
-int	 ikev1_dispatch_parent(int, struct iked_proc *, struct imsg *);
-int	 ikev1_dispatch_ikev2(int, struct iked_proc *, struct imsg *);
-int	 ikev1_dispatch_cert(int, struct iked_proc *, struct imsg *);
+int	 ikev1_dispatch_parent(int, struct privsep_proc *, struct imsg *);
+int	 ikev1_dispatch_ikev2(int, struct privsep_proc *, struct imsg *);
+int	 ikev1_dispatch_cert(int, struct privsep_proc *, struct imsg *);
 
 void	 ikev1_msg_cb(int, short, void *);
 void	 ikev1_recv(struct iked *, struct iked_message *);
 
-static struct iked_proc procs[] = {
+static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	ikev1_dispatch_parent },
 	{ "ikev2",	PROC_IKEV2,	ikev1_dispatch_ikev2 },
 	{ "certstore",	PROC_CERT,	ikev1_dispatch_cert }
 };
 
 pid_t
-ikev1(struct iked *env, struct iked_proc *p)
+ikev1(struct iked *env, struct privsep_proc *p)
 {
 	return (run_proc(env, p, procs, nitems(procs), NULL, NULL));
 }
 
 int
-ikev1_dispatch_parent(int fd, struct iked_proc *p, struct imsg *imsg)
+ikev1_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct iked		*env = p->env;
 
@@ -90,7 +90,7 @@ ikev1_dispatch_parent(int fd, struct iked_proc *p, struct imsg *imsg)
 }
 
 int
-ikev1_dispatch_ikev2(int fd, struct iked_proc *p, struct imsg *imsg)
+ikev1_dispatch_ikev2(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct iked		*env = p->env;
 	struct iked_message	 msg;
@@ -123,7 +123,7 @@ ikev1_dispatch_ikev2(int fd, struct iked_proc *p, struct imsg *imsg)
 }
 
 int
-ikev1_dispatch_cert(int fd, struct iked_proc *p, struct imsg *imsg)
+ikev1_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	return (-1);
 }

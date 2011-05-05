@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.12 2010/12/22 17:53:54 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.13 2011/05/05 12:17:10 reyk Exp $	*/
 /*	$vantronix: ca.c,v 1.29 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -67,11 +67,11 @@ struct ibuf *
 int	 ca_x509_subjectaltname_cmp(X509 *, struct iked_static_id *);
 int	 ca_x509_subjectaltname(X509 *cert, struct iked_id *);
 int	 ca_key_serialize(EVP_PKEY *, struct iked_id *);
-int	 ca_dispatch_parent(int, struct iked_proc *, struct imsg *);
-int	 ca_dispatch_ikev1(int, struct iked_proc *, struct imsg *);
-int	 ca_dispatch_ikev2(int, struct iked_proc *, struct imsg *);
+int	 ca_dispatch_parent(int, struct privsep_proc *, struct imsg *);
+int	 ca_dispatch_ikev1(int, struct privsep_proc *, struct imsg *);
+int	 ca_dispatch_ikev2(int, struct privsep_proc *, struct imsg *);
 
-static struct iked_proc procs[] = {
+static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	ca_dispatch_parent },
 	{ "ikev1",	PROC_IKEV1,	ca_dispatch_ikev1 },
 	{ "ikev2",	PROC_IKEV2,	ca_dispatch_ikev2 }
@@ -88,7 +88,7 @@ struct ca_store {
 };
 
 pid_t
-caproc(struct iked *env, struct iked_proc *p)
+caproc(struct iked *env, struct privsep_proc *p)
 {
 	struct ca_store	*store;
 	FILE		*fp = NULL;
@@ -142,7 +142,7 @@ ca_reset(struct iked *env, void *arg)
 }
 
 int
-ca_dispatch_parent(int fd, struct iked_proc *p, struct imsg *imsg)
+ca_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct iked		*env = p->env;
 	struct ca_store	*store = env->sc_priv;
@@ -165,13 +165,13 @@ ca_dispatch_parent(int fd, struct iked_proc *p, struct imsg *imsg)
 }
 
 int
-ca_dispatch_ikev1(int fd, struct iked_proc *p, struct imsg *imsg)
+ca_dispatch_ikev1(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	return (-1);
 }
 
 int
-ca_dispatch_ikev2(int fd, struct iked_proc *p, struct imsg *imsg)
+ca_dispatch_ikev2(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct iked	*env = p->env;
 
@@ -194,7 +194,7 @@ ca_dispatch_ikev2(int fd, struct iked_proc *p, struct imsg *imsg)
 
 int
 ca_setcert(struct iked *env, struct iked_sahdr *sh, struct iked_id *id,
-    u_int8_t type, u_int8_t *data, size_t len, enum iked_procid procid)
+    u_int8_t type, u_int8_t *data, size_t len, enum privsep_procid procid)
 {
 	struct iovec		iov[4];
 	int			iovcnt = 0;
@@ -237,7 +237,7 @@ ca_setcert(struct iked *env, struct iked_sahdr *sh, struct iked_id *id,
 int
 ca_setreq(struct iked *env, struct iked_sahdr *sh,
     struct iked_static_id *localid, u_int8_t type, u_int8_t *data,
-    size_t len, enum iked_procid procid)
+    size_t len, enum privsep_procid procid)
 {
 	struct iovec		iov[4];
 	int			iovcnt = 0;
@@ -282,7 +282,7 @@ ca_setreq(struct iked *env, struct iked_sahdr *sh,
 
 int
 ca_setauth(struct iked *env, struct iked_sa *sa,
-    struct ibuf *authmsg, enum iked_procid id)
+    struct ibuf *authmsg, enum privsep_procid id)
 {
 	struct iovec		 iov[3];
 	int			 iovcnt = 3;

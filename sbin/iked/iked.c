@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.8 2011/01/21 11:56:00 reyk Exp $	*/
+/*	$OpenBSD: iked.c,v 1.9 2011/05/05 12:17:10 reyk Exp $	*/
 /*	$vantronix: iked.c,v 1.22 2010/06/02 14:43:30 reyk Exp $	*/
 
 /*
@@ -49,12 +49,12 @@ __dead void usage(void);
 
 void	 parent_shutdown(struct iked *);
 void	 parent_sig_handler(int, short, void *);
-int	 parent_dispatch_ikev1(int, struct iked_proc *, struct imsg *);
-int	 parent_dispatch_ikev2(int, struct iked_proc *, struct imsg *);
-int	 parent_dispatch_ca(int, struct iked_proc *, struct imsg *);
+int	 parent_dispatch_ikev1(int, struct privsep_proc *, struct imsg *);
+int	 parent_dispatch_ikev2(int, struct privsep_proc *, struct imsg *);
+int	 parent_dispatch_ca(int, struct privsep_proc *, struct imsg *);
 int	 parent_configure(struct iked *);
 
-static struct iked_proc procs[] = {
+static struct privsep_proc procs[] = {
 	{ "ikev1",	PROC_IKEV1, parent_dispatch_ikev1, ikev1 },
 	{ "ikev2",	PROC_IKEV2, parent_dispatch_ikev2, ikev2 },
 	{ "ca",		PROC_CERT, parent_dispatch_ca, caproc, IKED_CA }
@@ -314,7 +314,7 @@ parent_sig_handler(int sig, short event, void *p)
 }
 
 int
-parent_dispatch_ikev1(int fd, struct iked_proc *p, struct imsg *imsg)
+parent_dispatch_ikev1(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	switch (imsg->hdr.type) {
 	default:
@@ -325,7 +325,7 @@ parent_dispatch_ikev1(int fd, struct iked_proc *p, struct imsg *imsg)
 }
 
 int
-parent_dispatch_ikev2(int fd, struct iked_proc *p, struct imsg *imsg)
+parent_dispatch_ikev2(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	switch (imsg->hdr.type) {
 	default:
@@ -336,7 +336,7 @@ parent_dispatch_ikev2(int fd, struct iked_proc *p, struct imsg *imsg)
 }
 
 int
-parent_dispatch_ca(int fd, struct iked_proc *p, struct imsg *imsg)
+parent_dispatch_ca(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct iked	*env = p->env;
 	int		 v;

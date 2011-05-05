@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.9 2011/01/21 11:56:00 reyk Exp $	*/
+/*	$OpenBSD: types.h,v 1.10 2011/05/05 12:17:10 reyk Exp $	*/
 /*	$vantronix: types.h,v 1.24 2010/05/11 12:05:56 reyk Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ enum imsg_type {
 	IMSG_AUTH
 };
 
-enum iked_procid {
+enum privsep_procid {
 	PROC_PARENT = 0,
 	PROC_IKEV1,
 	PROC_IKEV2,

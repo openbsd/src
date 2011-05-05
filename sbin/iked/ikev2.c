@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.51 2011/05/02 12:39:18 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.52 2011/05/05 12:17:10 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -47,9 +47,9 @@
 #include "eap.h"
 #include "dh.h"
 
-int	 ikev2_dispatch_parent(int, struct iked_proc *, struct imsg *);
-int	 ikev2_dispatch_ikev1(int, struct iked_proc *, struct imsg *);
-int	 ikev2_dispatch_cert(int, struct iked_proc *, struct imsg *);
+int	 ikev2_dispatch_parent(int, struct privsep_proc *, struct imsg *);
+int	 ikev2_dispatch_ikev1(int, struct privsep_proc *, struct imsg *);
+int	 ikev2_dispatch_cert(int, struct privsep_proc *, struct imsg *);
 
 struct iked_sa *
 	 ikev2_getimsgdata(struct iked *, struct imsg *, struct iked_sahdr *,
@@ -100,20 +100,20 @@ ssize_t	 ikev2_add_ts_payload(struct ibuf *, u_int, struct iked_sa *);
 int	 ikev2_add_data(struct ibuf *, void *, size_t);
 int	 ikev2_add_buf(struct ibuf *buf, struct ibuf *);
 
-static struct iked_proc procs[] = {
+static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	ikev2_dispatch_parent },
 	{ "ikev1",	PROC_IKEV1,	ikev2_dispatch_ikev1 },
 	{ "certstore",	PROC_CERT,	ikev2_dispatch_cert }
 };
 
 pid_t
-ikev2(struct iked *env, struct iked_proc *p)
+ikev2(struct iked *env, struct privsep_proc *p)
 {
 	return (run_proc(env, p, procs, nitems(procs), NULL, NULL));
 }
 
 int
-ikev2_dispatch_parent(int fd, struct iked_proc *p, struct imsg *imsg)
+ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct iked		*env = p->env;
 
@@ -147,7 +147,7 @@ ikev2_dispatch_parent(int fd, struct iked_proc *p, struct imsg *imsg)
 }
 
 int
-ikev2_dispatch_ikev1(int fd, struct iked_proc *p, struct imsg *imsg)
+ikev2_dispatch_ikev1(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct iked		*env = p->env;
 	struct iked_message	 msg;
@@ -180,7 +180,7 @@ ikev2_dispatch_ikev1(int fd, struct iked_proc *p, struct imsg *imsg)
 }
 
 int
-ikev2_dispatch_cert(int fd, struct iked_proc *p, struct imsg *imsg)
+ikev2_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct iked		*env = p->env;
 	struct iked_sahdr	 sh;

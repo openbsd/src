@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.10 2011/04/18 08:45:43 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.11 2011/05/05 12:17:10 reyk Exp $	*/
 /*	$vantronix: config.c,v 1.30 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -432,7 +432,7 @@ config_getmode(struct iked *env, u_int type)
 }
 
 int
-config_setreset(struct iked *env, u_int mode, enum iked_procid id)
+config_setreset(struct iked *env, u_int mode, enum privsep_procid id)
 {
 	imsg_compose_proc(env, id, IMSG_CTL_RESET, -1, &mode, sizeof(mode));
 	return (0);
@@ -482,7 +482,7 @@ config_getreset(struct iked *env, struct imsg *imsg)
 
 int
 config_setsocket(struct iked *env, struct sockaddr_storage *ss,
-    in_port_t port, enum iked_procid id)
+    in_port_t port, enum privsep_procid id)
 {
 	int	 s;
 
@@ -532,7 +532,7 @@ config_getsocket(struct iked *env, struct imsg *imsg,
 }
 
 int
-config_setpfkey(struct iked *env, enum iked_procid id)
+config_setpfkey(struct iked *env, enum privsep_procid id)
 {
 	int	 s;
 
@@ -551,7 +551,7 @@ config_getpfkey(struct iked *env, struct imsg *imsg)
 }
 
 int
-config_setuser(struct iked *env, struct iked_user *usr, enum iked_procid id)
+config_setuser(struct iked *env, struct iked_user *usr, enum privsep_procid id)
 {
 	if (env->sc_opts & IKED_OPT_NOACTION) {
 		print_user(usr);
@@ -580,7 +580,7 @@ config_getuser(struct iked *env, struct imsg *imsg)
 
 int
 config_setpolicy(struct iked *env, struct iked_policy *pol,
-    enum iked_procid id)
+    enum privsep_procid id)
 {
 	struct iked_proposal	*prop;
 	struct iked_flow	*flow;
@@ -703,7 +703,7 @@ config_getpolicy(struct iked *env, struct imsg *imsg)
 }
 
 int
-config_setcompile(struct iked *env, enum iked_procid id)
+config_setcompile(struct iked *env, enum privsep_procid id)
 {
 	if (env->sc_opts & IKED_OPT_NOACTION)
 		return (0);

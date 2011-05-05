@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.14 2011/01/26 16:59:24 mikeb Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.15 2011/05/05 12:17:10 reyk Exp $	*/
 /*	$vantronix: pfkey.c,v 1.11 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -1200,7 +1200,7 @@ pfkey_socket(void)
 {
 	int	 		fd;
 
-	if (iked_process != PROC_PARENT)
+	if (privsep_process != PROC_PARENT)
 		fatal("pfkey_socket: called from unprivileged process");
 
 	if ((fd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) == -1)

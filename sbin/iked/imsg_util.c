@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg_util.c,v 1.1 2010/12/22 17:43:10 reyk Exp $	*/
+/*	$OpenBSD: imsg_util.c,v 1.2 2011/05/05 12:17:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -85,7 +85,7 @@ imsg_composev_event(struct imsgev *iev, u_int16_t type, u_int32_t peerid,
 }
 
 int
-imsg_compose_proc(struct iked *env, enum iked_procid id,
+imsg_compose_proc(struct iked *env, enum privsep_procid id,
     u_int16_t type, int fd, void *data, u_int16_t datalen)
 {
 	return (imsg_compose_event(&env->sc_ievs[id],
@@ -93,7 +93,7 @@ imsg_compose_proc(struct iked *env, enum iked_procid id,
 }
 
 int
-imsg_composev_proc(struct iked *env, enum iked_procid id,
+imsg_composev_proc(struct iked *env, enum privsep_procid id,
     u_int16_t type, int fd, const struct iovec *iov, int iovcnt)
 {
 	return (imsg_composev_event(&env->sc_ievs[id],
@@ -102,14 +102,14 @@ imsg_composev_proc(struct iked *env, enum iked_procid id,
 
 int
 imsg_forward_proc(struct iked *env, struct imsg *imsg,
-    enum iked_procid id)
+    enum privsep_procid id)
 {
 	return (imsg_compose_proc(env, id, imsg->hdr.type,
 	    imsg->fd, imsg->data, IMSG_DATA_SIZE(imsg)));
 }
 
 void
-imsg_flush_proc(struct iked *env, enum iked_procid id)
+imsg_flush_proc(struct iked *env, enum privsep_procid id)
 {
 	imsg_flush(&env->sc_ievs[id].ibuf);
 }

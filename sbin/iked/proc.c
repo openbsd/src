@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.2 2010/09/16 09:27:35 mikeb Exp $	*/
+/*	$OpenBSD: proc.c,v 1.3 2011/05/05 12:17:10 reyk Exp $	*/
 /*	$vantronix: proc.c,v 1.11 2010/06/01 16:45:56 jsg Exp $	*/
 
 /*
@@ -37,15 +37,15 @@
 
 #include "iked.h"
 
-void	 proc_shutdown(struct iked_proc *);
+void	 proc_shutdown(struct privsep_proc *);
 void	 proc_sig_handler(int, short, void *);
 
 void
-init_procs(struct iked *env, struct iked_proc *p, u_int nproc)
+init_procs(struct iked *env, struct privsep_proc *p, u_int nproc)
 {
 	u_int	 i;
 
-	iked_process = PROC_PARENT;
+	privsep_process = PROC_PARENT;
 	init_pipes(env);
 
 	for (i = 0; i < nproc; i++, p++) {
@@ -59,7 +59,7 @@ kill_procs(struct iked *env)
 {
 	u_int	 i;
 
-	if (iked_process != PROC_PARENT)
+	if (privsep_process != PROC_PARENT)
 		return;
 
 	for (i = 0; i < PROC_MAX; i++) {
@@ -89,12 +89,12 @@ init_pipes(struct iked *env)
 }
 
 void
-config_pipes(struct iked *env, struct iked_proc *p, u_int nproc)
+config_pipes(struct iked *env, struct privsep_proc *p, u_int nproc)
 {
 	u_int	 i, j, k, found;
 
 	for (i = 0; i < PROC_MAX; i++) {
-		if (i != iked_process) {
+		if (i != privsep_process) {
 			for (j = 0; j < PROC_MAX; j++) {
 				close(env->sc_pipes[i][j]);
 				env->sc_pipes[i][j] = -1;
@@ -115,7 +115,7 @@ config_pipes(struct iked *env, struct iked_proc *p, u_int nproc)
 }
 
 void
-config_procs(struct iked *env, struct iked_proc *p, u_int nproc)
+config_procs(struct iked *env, struct privsep_proc *p, u_int nproc)
 {
 	u_int	src, dst, i;
 
@@ -123,7 +123,7 @@ config_procs(struct iked *env, struct iked_proc *p, u_int nproc)
 	 * listen on appropriate pipes
 	 */
 	for (i = 0; i < nproc; i++, p++) {
-		src = iked_process;
+		src = privsep_process;
 		dst = p->id;
 		p->env = env;
 
@@ -143,7 +143,7 @@ config_procs(struct iked *env, struct iked_proc *p, u_int nproc)
 }
 
 void
-proc_shutdown(struct iked_proc *p)
+proc_shutdown(struct privsep_proc *p)
 {
 	struct iked	*env = p->env;
 
@@ -160,7 +160,7 @@ proc_sig_handler(int sig, short event, void *arg)
 	switch (sig) {
 	case SIGINT:
 	case SIGTERM:
-		proc_shutdown((struct iked_proc *)arg);
+		proc_shutdown((struct privsep_proc *)arg);
 		break;
 	case SIGCHLD:
 	case SIGHUP:
@@ -174,8 +174,8 @@ proc_sig_handler(int sig, short event, void *arg)
 }
 
 pid_t
-run_proc(struct iked *env, struct iked_proc *p,
-    struct iked_proc *procs, u_int nproc,
+run_proc(struct iked *env, struct privsep_proc *p,
+    struct privsep_proc *procs, u_int nproc,
     void (*init)(struct iked *, void *), void *arg)
 {
 	pid_t		 pid;
@@ -220,7 +220,7 @@ run_proc(struct iked *env, struct iked_proc *p,
 	}
 #endif
 
-	iked_process = p->id;
+	privsep_process = p->id;
 	setproctitle("%s", p->title);
 
 #ifndef DEBUG
@@ -269,7 +269,7 @@ run_proc(struct iked *env, struct iked_proc *p,
 void
 dispatch_proc(int fd, short event, void *arg)
 {
-	struct iked_proc	*p = (struct iked_proc *)arg;
+	struct privsep_proc	*p = (struct privsep_proc *)arg;
 	struct iked		*env = p->env;
 	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
