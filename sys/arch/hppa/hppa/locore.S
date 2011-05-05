@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.185 2011/04/16 21:55:49 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.186 2011/05/05 20:50:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1249,7 +1249,7 @@ LEAF_ENTRY($itlb_s)
 ALTENTRY($itlb_t)
 	TLB_STATS_PRE(itlb)
 	TLB_PULL(0, TLABEL(all))
-	extru,=	r25, 5, 1, r0	/* gate needs a kernel pid */
+	extru,=	r25, 5, 1, r0	/* gateway page needs to be public */
 	depi	0, 30, 15, r25
 	mfsp	sr1, r16
 	mtsp	r8, sr1
@@ -1377,7 +1377,7 @@ EXIT($tlbd_l)
 LEAF_ENTRY($itlb_l)
 	TLB_STATS_PRE(itlb)
 	TLB_PULL_L(0, TLABEL(all))
-	extru,=	r25, 5, 1, r0	/* gate needs a kernel pid */
+	extru,=	r25, 5, 1, r0	/* gateway page needs to be public */
 	depi	0, 30, 15, r25
 	IITLBAF(17)
 	IITLBPF(25)
@@ -1500,7 +1500,7 @@ EXIT($tlbd_u)
 LEAF_ENTRY($itlb_u)
 	TLB_STATS_PRE(itlb)
 	TLB_PULL_L(0, TLABEL(all))
-	extru,=	r25, 5, 1, r0	/* gate needs a kernel pid */
+	extru,=	r25, 5, 1, r0	/* gateway page needs to be public */
 	depi	0, 30, 15, r25
 	TLB_PCX2PCXU
 	iitlbt	r17, r25
