@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.34 2011/04/24 01:13:55 krw Exp $	*/
+/*	$OpenBSD: mt.c,v 1.35 2011/05/05 19:51:48 krw Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -211,7 +211,8 @@ main(int argc, char *argv[])
 	}
 
 	flags = comp->c_ronly ? O_RDONLY : O_WRONLY | O_CREAT;
-	if ((mtfd = _rmtopendev(tape, flags, 0, &realtape)) < 0) {
+	/* NOTE: OPENDEV_PART required since cd(4) devices go through here. */
+	if ((mtfd = _rmtopendev(tape, flags, OPENDEV_PART, &realtape)) < 0) {
 		if (errno != 0)
 			warn("%s", host ? tape : realtape);
 		exit(2);
