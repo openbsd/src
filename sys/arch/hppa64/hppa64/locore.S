@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.26 2011/05/05 15:10:09 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.27 2011/05/05 20:48:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -1025,6 +1025,8 @@ EXIT(TLABEL(all))
 
 TLABEL(itlb)
 	PTPULL(0, TLABEL(all))
+	extrd,u,*= %r17, 5, 1, %r0	/* gateway page needs to be public */
+	depdi	0, 62, 31, %r17
 	iitlbt	%r16, %r17
 	rfi,r
 	nop
