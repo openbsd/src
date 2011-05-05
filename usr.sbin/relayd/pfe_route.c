@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_route.c,v 1.1 2009/08/13 13:51:21 reyk Exp $	*/
+/*	$OpenBSD: pfe_route.c,v 1.2 2011/05/05 10:20:24 phessler Exp $	*/
 
 /*
  * Copyright (c) 2009 Reyk Floeter <reyk@openbsd.org>
@@ -91,10 +91,11 @@ sync_routes(struct relayd *env, struct router *rt)
 				continue;
 
 			log_debug("sync_routes: "
-			    "router %s route %s/%d gateway %s %s",
+			    "router %s route %s/%d gateway %s %s priority %d",
 			    rt->rt_conf.name, buf, nr->nr_conf.prefixlen,
 			    host->conf.name,
-			    HOST_ISUP(host->up) ? "up" : "down");
+			    HOST_ISUP(host->up) ? "up" : "down",
+			    host->conf.priority);
 
 			crt.id = nr->nr_conf.id;
 			crt.hostid = host->conf.id;
@@ -139,6 +140,7 @@ pfe_route(struct relayd *env, struct ctl_netroute *crt)
 	rm.rm_hdr.rtm_seq = env->sc_rtseq++;
 	rm.rm_hdr.rtm_addrs = RTA_DST | RTA_GATEWAY;
 	rm.rm_hdr.rtm_tableid = nr->nr_router->rt_conf.rtable;
+	rm.rm_hdr.rtm_priority = host->conf.priority;
 
 	if (strlen(nr->nr_router->rt_conf.label)) {
 		rm.rm_hdr.rtm_addrs |= RTA_LABEL;

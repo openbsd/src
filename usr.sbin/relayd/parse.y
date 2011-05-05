@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.152 2011/04/12 12:43:13 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.153 2011/05/05 10:20:24 phessler Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -34,6 +34,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
+#include <net/route.h>
 
 #include <ctype.h>
 #include <unistd.h>
@@ -145,7 +146,7 @@ typedef struct {
 %token	EXTERNAL FILENAME FILTER FORWARD FROM HASH HEADER HOST ICMP
 %token	INCLUDE INET INET6 INTERFACE INTERVAL IP LABEL LISTEN
 %token	LOADBALANCE LOG LOOKUP MARK MARKED MODE NAT NO DESTINATION
-%token	NODELAY NOTHING ON PARENT PATH PORT PREFORK PROTO
+%token	NODELAY NOTHING ON PARENT PATH PORT PREFORK PRIORITY PROTO
 %token	QUERYSTR REAL REDIRECT RELAY REMOVE REQUEST RESPONSE RETRY
 %token	RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND SESSION SOCKET SPLICE
 %token	SSL STICKYADDR STYLE TABLE TAG TCP TIMEOUT TO ROUTER RTLABEL
@@ -1622,6 +1623,17 @@ hostflags	: RETRY NUMBER		{
 			}
 			hst->conf.parentid = $2;
 		}
+		| PRIORITY NUMBER		{
+			if (hst->conf.priority) {
+				yyerror("priority already set");
+				YYERROR;
+			}
+			if ($2 < 0 || $2 > RTP_MAX) {
+				yyerror("invalid priority value: %d\n", $2);
+				YYERROR;
+			}
+			hst->conf.priority = $2;
+		}
 		| IP TTL NUMBER		{
 			if (hst->conf.ttl) {
 				yyerror("ttl value already set");
@@ -1774,6 +1786,7 @@ lookup(char *s)
 		{ "path",		PATH },
 		{ "port",		PORT },
 		{ "prefork",		PREFORK },
+		{ "priority",		PRIORITY },
 		{ "protocol",		PROTO },
 		{ "query",		QUERYSTR },
 		{ "real",		REAL },
