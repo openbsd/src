@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2svar.h,v 1.6 2010/02/26 21:53:43 jasper Exp $	*/
+/*	$OpenBSD: i2svar.h,v 1.7 2011/05/05 18:54:23 jasper Exp $	*/
 
 /*-
  * Copyright (c) 2001,2003 Tsubai Masanari.  All rights reserved.
@@ -70,6 +70,7 @@ struct i2s_softc {
 	u_int sc_vol_r;
 	u_int sc_bass;
 	u_int sc_treble;
+	u_int sc_mute;
 
 	bus_dma_tag_t sc_dmat;
 	dbdma_regmap_t *sc_odma;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.19 2011/05/04 15:50:49 jasper Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.20 2011/05/05 18:54:23 jasper Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -155,6 +155,7 @@ i2s_attach(struct device *parent, struct i2s_softc *sc, struct confargs *ca)
 	printf(": irq %d,%d,%d\n", cirq, oirq, iirq);
 
 	i2s_set_rate(sc, 44100);
+	sc->sc_mute = 0;
 	i2s_gpio_init(sc, ca->ca_node, parent);
 }
 
@@ -512,15 +513,14 @@ enum {
 	I2S_VOL_OUTPUT,
 	I2S_INPUT_SELECT,
 	I2S_VOL_INPUT,
+	I2S_MUTE, 		/* should be before bass/treble */
 	I2S_BASS,
 	I2S_TREBLE,
 	I2S_ENUM_LAST
 };
 
 int
-i2s_set_port(h, mc)
-	void *h;
-	mixer_ctrl_t *mc;
+i2s_set_port(void *h, mixer_ctrl_t *mc)
 {
 	struct i2s_softc *sc = h;
 	int l, r;
@@ -552,6 +552,30 @@ i2s_set_port(h, mc)
 	case I2S_VOL_OUTPUT:
 		(*sc->sc_setvolume)(sc, l, r);
 		return 0;
+
+	case I2S_MUTE:
+		if (mc->type != AUDIO_MIXER_ENUM)
+			return (EINVAL);
+
+		sc->sc_mute = (mc->un.ord != 0);
+
+		if (sc->sc_mute) {
+			if (sc->sc_output_mask & 1 << 0)
+				i2s_mute_speaker(sc, 1);
+			if (sc->sc_output_mask & 1 << 1)
+				i2s_mute_headphone(sc, 1);
+			if (sc->sc_output_mask & 1 << 2)
+				i2s_mute_lineout(sc, 1);
+		} else {
+			if (sc->sc_output_mask & 1 << 0)
+				i2s_mute_speaker(sc, 0);
+			if (sc->sc_output_mask & 1 << 1)
+				i2s_mute_headphone(sc, 0);
+			if (sc->sc_output_mask & 1 << 2)
+				i2s_mute_lineout(sc, 0);
+		}
+
+		return (0);
 
 	case I2S_BASS:
 		if (sc->sc_setbass != NULL)
@@ -589,9 +613,7 @@ i2s_set_port(h, mc)
 }
 
 int
-i2s_get_port(h, mc)
-	void *h;
-	mixer_ctrl_t *mc;
+i2s_get_port(void *h, mixer_ctrl_t *mc)
 {
 	struct i2s_softc *sc = h;
 
@@ -606,6 +628,10 @@ i2s_get_port(h, mc)
 		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = sc->sc_vol_l;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = sc->sc_vol_r;
 		return 0;
+
+	case I2S_MUTE:
+		mc->un.ord = sc->sc_mute;
+		return (0);
 
 	case I2S_INPUT_SELECT:
 		mc->un.mask = sc->sc_record_source;
@@ -670,13 +696,29 @@ i2s_query_devinfo(void *h, mixer_devinfo_t *dip)
 		dip->mixer_class = I2S_OUTPUT_CLASS;
 		strlcpy(dip->label.name, AudioNmaster, sizeof(dip->label.name));
 		dip->type = AUDIO_MIXER_VALUE;
-		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		dip->prev = AUDIO_MIXER_LAST;
+		dip->next = I2S_MUTE;
 		dip->un.v.num_channels = 2;
 		dip->un.v.delta = 8;
 		strlcpy(dip->un.v.units.name, AudioNvolume,
 		    sizeof(dip->un.v.units.name));
 		return 0;
 
+	case I2S_MUTE:
+		dip->mixer_class = I2S_OUTPUT_CLASS;
+		dip->prev = I2S_VOL_OUTPUT;
+		dip->next = AUDIO_MIXER_LAST;
+		strlcpy(dip->label.name, AudioNmute, sizeof(dip->label.name));
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->un.e.num_mem = 2;
+		strlcpy(dip->un.e.member[0].label.name, AudioNoff,
+		    sizeof dip->un.e.member[0].label.name);
+		dip->un.e.member[0].ord = 0;
+		strlcpy(dip->un.e.member[1].label.name, AudioNon,
+		    sizeof dip->un.e.member[1].label.name);
+		dip->un.e.member[1].ord = 1;
+		return (0);
+ 
 	case I2S_INPUT_SELECT:
 		dip->mixer_class = I2S_RECORD_CLASS;
 		strlcpy(dip->label.name, AudioNsource, sizeof(dip->label.name));
@@ -1086,7 +1128,8 @@ i2s_cint(v)
 	if (((sense & 0x02) >> 1) == headphone_detect_active) {
 		DPRINTF(("headphone is inserted\n"));
 		sc->sc_output_mask |= 1 << 1;
-		i2s_mute_headphone(sc, 0);
+		if (!sc->sc_mute)
+			i2s_mute_headphone(sc, 0);
 	} else {
 		DPRINTF(("headphone is NOT inserted\n"));
 	}
@@ -1100,14 +1143,16 @@ i2s_cint(v)
 	if (((sense & 0x02) >> 1) == lineout_detect_active) {
 		DPRINTF(("lineout is inserted\n"));
 		sc->sc_output_mask |= 1 << 2;
-		i2s_mute_lineout(sc, 0);
+		if (!sc->sc_mute)
+			i2s_mute_lineout(sc, 0);
 	} else {
 		DPRINTF(("lineout is NOT inserted\n"));
 	}
 
 	if (sc->sc_output_mask == 0) {
 		sc->sc_output_mask |= 1 << 0;
-		i2s_mute_speaker(sc, 0);
+		if (!sc->sc_mute)
+			i2s_mute_speaker(sc, 0);
 	}
 
 	return 1;
