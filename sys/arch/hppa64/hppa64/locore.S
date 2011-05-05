@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.25 2011/05/03 20:59:22 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.26 2011/05/05 15:10:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -464,21 +464,6 @@ $syscall_return
 	ldd	TF_SP(%arg0), %arg2		/* sp */
 	std	%arg2, 14*8(%r1)
 
-	ldd	TF_SR2(%arg0), %arg2
-	ldd	TF_SR3(%arg0), %arg3
-	mtsp	%arg2, %sr2
-	mtsp	%arg3, %sr3
-
-	ldd	TF_SR4(%arg0), %arg2
-	ldd	TF_SR5(%arg0), %arg3
-	mtsp	%arg2, %sr4
-	mtsp	%arg3, %sr5
-
-	ldd	TF_SR6(%arg0), %arg2
-	ldd	TF_SR7(%arg0), %arg3
-	mtsp	%arg2, %sr6
-	mtsp	%arg3, %sr7
-
 	/*
 	 * Restore general registers.
 	 */
@@ -531,6 +516,21 @@ $syscall_return
 	ldd	TF_CR27(%arg0), %arg3		/* user curthread */
 	mtctl	%arg2, %cr30
 	mtctl	%arg3, %cr27
+
+	ldd	TF_SR2(%arg0), %arg2
+	ldd	TF_SR3(%arg0), %arg3
+	mtsp	%arg2, %sr2
+	mtsp	%arg3, %sr3
+
+	ldd	TF_SR6(%arg0), %arg2
+	ldd	TF_SR7(%arg0), %arg3
+	mtsp	%arg2, %sr6
+	mtsp	%arg3, %sr7
+
+	ldd	TF_SR4(%arg0), %arg2
+	ldd	TF_SR5(%arg0), %arg3
+	mtsp	%arg2, %sr4
+	mtsp	%arg3, %sr5
 
 	/* Clear system masks before restoring queues and space registers. */
 	rsm	(PSL_R|PSL_Q|PSL_P|PSL_I|PSL_D), %r0
