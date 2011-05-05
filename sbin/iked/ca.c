@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.14 2011/05/05 12:55:52 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.15 2011/05/05 12:59:31 reyk Exp $	*/
 /*	$vantronix: ca.c,v 1.29 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ ca_reset(struct privsep *ps, void *arg)
 int
 ca_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct iked		*env = p->p_ps->ps_env;
+	struct iked		*env = p->p_env;
 	struct ca_store	*store = env->sc_priv;
 	u_int			 mode;
 
@@ -174,7 +174,7 @@ ca_dispatch_ikev1(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 ca_dispatch_ikev2(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct iked	*env = p->p_ps->ps_env;
+	struct iked	*env = p->p_env;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CERTREQ:

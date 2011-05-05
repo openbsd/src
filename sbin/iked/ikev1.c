@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev1.c,v 1.8 2011/05/05 12:55:52 reyk Exp $	*/
+/*	$OpenBSD: ikev1.c,v 1.9 2011/05/05 12:59:31 reyk Exp $	*/
 /*	$vantronix: ikev1.c,v 1.13 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ ikev1(struct privsep *ps, struct privsep_proc *p)
 int
 ikev1_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct iked		*env = p->p_ps->ps_env;
+	struct iked		*env = p->p_env;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_RESET:
@@ -92,7 +92,7 @@ ikev1_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 ikev1_dispatch_ikev2(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct iked		*env = p->p_ps->ps_env;
+	struct iked		*env = p->p_env;
 	struct iked_message	 msg;
 	u_int8_t		*buf;
 	ssize_t			 len;

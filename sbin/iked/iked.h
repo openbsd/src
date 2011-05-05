@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.39 2011/05/05 12:55:52 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.40 2011/05/05 12:59:31 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -467,6 +467,7 @@ struct privsep_proc {
 				    struct privsep_proc *);
 	const char		*p_chroot;
 	struct privsep		*p_ps;
+	struct iked		*p_env;
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.4 2011/05/05 12:55:52 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.5 2011/05/05 12:59:31 reyk Exp $	*/
 /*	$vantronix: proc.c,v 1.11 2010/06/01 16:45:56 jsg Exp $	*/
 
 /*
@@ -126,6 +126,7 @@ config_procs(struct privsep *ps, struct privsep_proc *p, u_int nproc)
 		src = privsep_process;
 		dst = p->p_id;
 		p->p_ps = ps;
+		p->p_env = ps->ps_env;
 
 		imsg_init(&ps->ps_ievs[dst].ibuf,
 		    ps->ps_pipes[src][dst]);

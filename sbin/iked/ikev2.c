@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.53 2011/05/05 12:55:52 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.54 2011/05/05 12:59:31 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ ikev2(struct privsep *ps, struct privsep_proc *p)
 int
 ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct iked		*env = p->p_ps->ps_env;
+	struct iked		*env = p->p_env;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_RESET:
@@ -149,7 +149,7 @@ ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 ikev2_dispatch_ikev1(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct iked		*env = p->p_ps->ps_env;
+	struct iked		*env = p->p_env;
 	struct iked_message	 msg;
 	u_int8_t		*buf;
 	ssize_t			 len;
@@ -182,7 +182,7 @@ ikev2_dispatch_ikev1(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 ikev2_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct iked		*env = p->p_ps->ps_env;
+	struct iked		*env = p->p_env;
 	struct iked_sahdr	 sh;
 	struct iked_sa		*sa;
 	u_int8_t		 type;
