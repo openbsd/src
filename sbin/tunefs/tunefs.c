@@ -1,4 +1,4 @@
-/*	$OpenBSD: tunefs.c,v 1.30 2009/10/27 23:59:34 deraadt Exp $	*/
+/*	$OpenBSD: tunefs.c,v 1.31 2011/05/05 16:29:33 millert Exp $	*/
 /*	$NetBSD: tunefs.c,v 1.33 2005/01/19 20:46:16 xtraeme Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ static	void	bwrite(daddr64_t, char *, int, const char *);
 static	void	bread(daddr64_t, char *, int, const char *);
 static	int	getnum(const char *, const char *, int, int);
 static	void	getsb(struct fs *, const char *);
-static	int	openpartition(const char *, int, char *, size_t);
+static	int	openpartition(char *, int, char **);
 static	void	usage(void);
 
 int
@@ -79,8 +79,8 @@ main(int argc, char *argv[])
 {
 #define	OPTSTRING	"AFNe:g:h:m:o:"
 	int		i, ch, Aflag, Fflag, Nflag, openflags;
-	const char	*special, *chg[2];
-	char		device[MAXPATHLEN];
+	char		*special;
+	const char	*chg[2];
 	int		maxbpg, minfree, optim;
 	int		avgfilesize, avgfpdir;
 
@@ -151,10 +151,8 @@ main(int argc, char *argv[])
 	openflags = Nflag ? O_RDONLY : O_RDWR;
 	if (Fflag)
 		fi = open(special, openflags);
-	else {
-		fi = openpartition(special, openflags, device, sizeof(device));
-		special = device;
-	}
+	else
+		fi = openpartition(special, openflags, &special);
 	if (fi == -1)
 		err(1, "%s", special);
 	getsb(&sblock, special);
@@ -319,11 +317,11 @@ bread(daddr64_t blk, char *buffer, int cnt, const char *file)
 }
 
 static int
-openpartition(const char *name, int flags, char *device, size_t devicelen)
+openpartition(char *name, int flags, char **devicep)
 {
 	char		rawspec[MAXPATHLEN], *p;
 	struct fstab	*fs;
-	int		fd, oerrno;
+	int		fd;
 
 	fs = getfsfile(name);
 	if (fs) {
@@ -334,11 +332,8 @@ openpartition(const char *name, int flags, char *device, size_t devicelen)
 		} else
 			name = fs->fs_spec;
 	}
-	fd = opendisk(name, flags, device, devicelen, 0);
-	if (fd == -1 && errno == ENOENT) {
-		oerrno = errno;
-		strlcpy(device, name, devicelen);
-		errno = oerrno;
-	}
+	fd = opendev(name, flags, 0, devicep);
+	if (fd == -1 && errno == ENOENT)
+		devicep = &name;
 	return (fd);
 }
