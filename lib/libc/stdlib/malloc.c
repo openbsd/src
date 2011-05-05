@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.129 2011/04/30 15:46:46 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.130 2011/05/05 12:11:20 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -113,6 +113,7 @@ struct dir_info {
 	struct region_info free_regions[MALLOC_MAXCACHE];
 					/* delayed free chunk slots */
 	void *delayed_chunks[MALLOC_DELAYED_CHUNKS + 1];
+	u_short chunk_start;
 #ifdef MALLOC_STATS
 	size_t inserts;
 	size_t insert_collisions;
@@ -1013,40 +1014,31 @@ malloc_bytes(struct dir_info *d, size_t size)
 
 	if (bp->canary != d->canary1)
 		wrterror("chunk info corrupted", NULL);
-	/* Find first word of bitmap which isn't empty */
-	for (lp = bp->bits; !*lp; lp++)
-		/* EMPTY */;
 
-	/* Find that bit, and tweak it */
-	u = 1;
-	k = 0;
-	while (!(*lp & u)) {
-		u += u;
-		k++;
-	}
-
-	/* advance a random # of positions */
-	if (bp->free > 1) {
-		i = getrnibble() % bp->free;
-		while (i > 0) {
-			u += u;
-			k++;
-			if (k >= MALLOC_BITS) {
-				while (!*++lp)
-					/* EMPTY */;
-				u = 1;
-				k = 0;
-				if (lp - bp->bits > (bp->total - 1) /
-				    MALLOC_BITS) {
-					wrterror("chunk overflow", NULL);
-					errno = EFAULT;
-					return (NULL);
-				}
-			}
-			if (*lp & u)
-				i--;
+	i = d->chunk_start;
+	if (bp->free > 1)
+		i += getrnibble();
+	if (i >= bp->total)
+		i &= bp->total - 1;
+	for (;;) {
+		for (;;) {
+			lp = &bp->bits[i / MALLOC_BITS];
+			if (!*lp) {
+				i += MALLOC_BITS;
+				i &= ~(MALLOC_BITS - 1); 
+				if (i >= bp->total)
+					i = 0;
+			} else
+				break;
 		}
+		k = i % MALLOC_BITS;
+		u = 1 << k;
+		if (*lp & u)
+			break;
+		if (++i >= bp->total)
+			i = 0;
 	}
+	d->chunk_start += i + 1;
 
 	*lp ^= u;
 
