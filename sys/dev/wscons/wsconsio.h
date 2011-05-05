@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.62 2011/04/07 15:06:32 shadchin Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.63 2011/05/05 15:30:31 shadchin Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -242,6 +242,10 @@ struct wsmouse_calibcoords {
 };
 #define	WSMOUSEIO_SCALIBCOORDS	_IOW('W', 36, struct wsmouse_calibcoords)
 #define	WSMOUSEIO_GCALIBCOORDS	_IOR('W', 37, struct wsmouse_calibcoords)
+
+#define	WSMOUSEIO_SETMODE	_IOW('W', 38, int)
+#define		WSMOUSE_COMPAT		0
+#define		WSMOUSE_NATIVE		1
 
 /*
  * Display ioctls (64 - 95)
