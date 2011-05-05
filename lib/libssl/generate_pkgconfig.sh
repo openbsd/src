@@ -1,17 +1,31 @@
 #!/bin/sh
 #
-# $OpenBSD: generate_pkgconfig.sh,v 1.6 2011/05/03 17:28:25 jasper Exp $
+# $OpenBSD: generate_pkgconfig.sh,v 1.7 2011/05/05 20:58:15 jasper Exp $
+#
+# Copyright (c) 2010,2011 Jasper Lievisse Adriaanse <jasper@openbsd.org>
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 # Generate pkg-config files for OpenSSL.
 
 usage() {
-	echo "usage: ${0##*/} [-k] -c current_directory -o obj_directory"
+	echo "usage: ${0##*/} -c current_directory -o obj_directory"
 	exit 1
 }
 
 curdir=
 objdir=
-while getopts "c:ko:" flag; do
+while getopts "c:o:" flag; do
 	case "$flag" in
 		c)
 			curdir=$OPTARG
@@ -36,8 +50,9 @@ if [ ! -w "${objdir}" ]; then
 	exit 1
 fi
 
-ssl_version=$(sed -nE 's/^#define[[:blank:]]+SHLIB_VERSION_NUMBER[[:blank:]]+"(.*)".*/\1/p' \
-	${curdir}/src/crypto/opensslv.h)
+version_re="s/^#define[[:blank:]]+SHLIB_VERSION_NUMBER[[:blank:]]+\"(.*)\".*/\1/p"
+version_file=${curdir}/src/crypto/opensslv.h
+lib_version=$(sed -nE ${version_re} ${version_file})
 
 # Put -I${includedir} into Cflags so configure script tests like
 #   test -n "`pkg-config --cflags openssl`"
@@ -52,7 +67,7 @@ includedir=\${prefix}/include
 
 Name: OpenSSL-libcrypto
 Description: OpenSSL cryptography library
-Version: ${ssl_version}
+Version: ${lib_version}
 Requires: 
 Libs: -L\${libdir} -lcrypto
 Cflags: -I\${includedir}
@@ -68,7 +83,7 @@ includedir=\${prefix}/include
 
 Name: OpenSSL
 Description: Secure Sockets Layer and cryptography libraries
-Version: ${ssl_version}
+Version: ${lib_version}
 Requires: 
 Libs: -L\${libdir} -lssl -lcrypto
 Cflags: -I\${includedir}
@@ -84,7 +99,7 @@ includedir=\${prefix}/include
 
 Name: OpenSSL
 Description: Secure Sockets Layer and cryptography libraries and tools
-Version: ${ssl_version}
+Version: ${lib_version}
 Requires: 
 Libs: -L\${libdir} -lssl -lcrypto
 Cflags: -I\${includedir}
