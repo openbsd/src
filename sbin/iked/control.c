@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.5 2010/12/22 16:37:52 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.6 2011/05/05 12:55:52 reyk Exp $	*/
 /*	$vantronix: control.c,v 1.4 2010/05/14 07:35:52 reyk Exp $	*/
 
 /*
@@ -51,8 +51,9 @@ void	 control_dispatch_imsg(int, short, void *);
 void	 control_imsg_forward(struct imsg *);
 
 int
-control_init(struct iked *env, struct control_sock *cs)
+control_init(struct privsep *ps, struct control_sock *cs)
 {
+	struct iked		*env = ps->ps_env;
 	struct sockaddr_un	 sun;
 	int			 fd;
 	mode_t			 old_umask, mode;

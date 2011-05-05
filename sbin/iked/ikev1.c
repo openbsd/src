@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev1.c,v 1.7 2011/05/05 12:17:10 reyk Exp $	*/
+/*	$OpenBSD: ikev1.c,v 1.8 2011/05/05 12:55:52 reyk Exp $	*/
 /*	$vantronix: ikev1.c,v 1.13 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -58,15 +58,15 @@ static struct privsep_proc procs[] = {
 };
 
 pid_t
-ikev1(struct iked *env, struct privsep_proc *p)
+ikev1(struct privsep *ps, struct privsep_proc *p)
 {
-	return (run_proc(env, p, procs, nitems(procs), NULL, NULL));
+	return (run_proc(ps, p, procs, nitems(procs), NULL, NULL));
 }
 
 int
 ikev1_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct iked		*env = p->env;
+	struct iked		*env = p->p_ps->ps_env;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_RESET:
@@ -92,7 +92,7 @@ ikev1_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 ikev1_dispatch_ikev2(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct iked		*env = p->env;
+	struct iked		*env = p->p_ps->ps_env;
 	struct iked_message	 msg;
 	u_int8_t		*buf;
 	ssize_t			 len;

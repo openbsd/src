@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.13 2011/05/05 12:17:10 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.14 2011/05/05 12:55:52 reyk Exp $	*/
 /*	$vantronix: ca.c,v 1.29 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #include "iked.h"
 #include "ikev2.h"
 
-void	 ca_reset(struct iked *, void *);
+void	 ca_reset(struct privsep *, void *);
 int	 ca_reload(struct iked *);
 
 int	 ca_getreq(struct iked *, struct imsg *);
@@ -88,7 +88,7 @@ struct ca_store {
 };
 
 pid_t
-caproc(struct iked *env, struct privsep_proc *p)
+caproc(struct privsep *ps, struct privsep_proc *p)
 {
 	struct ca_store	*store;
 	FILE		*fp = NULL;
@@ -110,12 +110,13 @@ caproc(struct iked *env, struct privsep_proc *p)
 	if (ca_key_serialize(key, &store->ca_privkey) != 0)
 		fatalx("ca: failed to serialize private key");
 
-	return (run_proc(env, p, procs, nitems(procs), ca_reset, store));
+	return (run_proc(ps, p, procs, nitems(procs), ca_reset, store));
 }
 
 void
-ca_reset(struct iked *env, void *arg)
+ca_reset(struct privsep *ps, void *arg)
 {
+	struct iked	*env = ps->ps_env;
 	struct ca_store	*store = arg;
 
 	if (store->ca_cas != NULL)
@@ -144,7 +145,7 @@ ca_reset(struct iked *env, void *arg)
 int
 ca_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct iked		*env = p->env;
+	struct iked		*env = p->p_ps->ps_env;
 	struct ca_store	*store = env->sc_priv;
 	u_int			 mode;
 
@@ -154,7 +155,7 @@ ca_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		memcpy(&mode, imsg->data, sizeof(mode));
 		if (mode == RESET_ALL || mode == RESET_CA) {
 			log_debug("%s: config reload", __func__);
-			ca_reset(env, store);
+			ca_reset(&env->sc_ps, store);
 		}
 		break;
 	default:
@@ -173,7 +174,7 @@ ca_dispatch_ikev1(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 ca_dispatch_ikev2(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct iked	*env = p->env;
+	struct iked	*env = p->p_ps->ps_env;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CERTREQ:

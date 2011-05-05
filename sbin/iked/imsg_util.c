@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg_util.c,v 1.2 2011/05/05 12:17:10 reyk Exp $	*/
+/*	$OpenBSD: imsg_util.c,v 1.3 2011/05/05 12:55:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -88,7 +88,7 @@ int
 imsg_compose_proc(struct iked *env, enum privsep_procid id,
     u_int16_t type, int fd, void *data, u_int16_t datalen)
 {
-	return (imsg_compose_event(&env->sc_ievs[id],
+	return (imsg_compose_event(&env->sc_ps.ps_ievs[id],
 	    type, -1, 0, fd, data, datalen));
 }
 
@@ -96,7 +96,7 @@ int
 imsg_composev_proc(struct iked *env, enum privsep_procid id,
     u_int16_t type, int fd, const struct iovec *iov, int iovcnt)
 {
-	return (imsg_composev_event(&env->sc_ievs[id],
+	return (imsg_composev_event(&env->sc_ps.ps_ievs[id],
 	    type, -1, 0, fd, iov, iovcnt));
 }
 
@@ -111,7 +111,7 @@ imsg_forward_proc(struct iked *env, struct imsg *imsg,
 void
 imsg_flush_proc(struct iked *env, enum privsep_procid id)
 {
-	imsg_flush(&env->sc_ievs[id].ibuf);
+	imsg_flush(&env->sc_ps.ps_ievs[id].ibuf);
 }
 
 /*

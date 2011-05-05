@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.9 2011/05/05 12:17:10 reyk Exp $	*/
+/*	$OpenBSD: iked.c,v 1.10 2011/05/05 12:55:52 reyk Exp $	*/
 /*	$vantronix: iked.c,v 1.22 2010/06/02 14:43:30 reyk Exp $	*/
 
 /*
@@ -78,6 +78,7 @@ main(int argc, char *argv[])
 	int		 opts = 0;
 	const char	*conffile = IKED_CONFIG;
 	struct iked	*env = NULL;
+	struct privsep	*ps;
 
 	log_init(1);
 
@@ -121,6 +122,9 @@ main(int argc, char *argv[])
 
 	env->sc_opts = opts;
 
+	ps = &env->sc_ps;
+	ps->ps_env = env;
+
 	if (strlcpy(env->sc_conffile, conffile, MAXPATHLEN) >= MAXPATHLEN)
 		errx(1, "config file exceeds MAXPATHLEN");
 
@@ -131,11 +135,11 @@ main(int argc, char *argv[])
 	if (geteuid())
 		errx(1, "need root privileges");
 
-	if ((env->sc_pw =  getpwnam(IKED_USER)) == NULL)
+	if ((ps->ps_pw =  getpwnam(IKED_USER)) == NULL)
 		errx(1, "unknown user %s", IKED_USER);
 
 	/* Configure the control socket */
-	env->sc_csock.cs_name = IKED_SOCKET;
+	ps->ps_csock.cs_name = IKED_SOCKET;
 
 	log_init(debug);
 	log_verbose(verbose);
@@ -144,26 +148,26 @@ main(int argc, char *argv[])
 		err(1, "failed to daemonize");
 
 	group_init();
-	init_procs(env, procs, nitems(procs));
+	init_procs(ps, procs, nitems(procs));
 
 	setproctitle("parent");
 
 	event_init();
 
-	signal_set(&env->sc_evsigint, SIGINT, parent_sig_handler, env);
-	signal_set(&env->sc_evsigterm, SIGTERM, parent_sig_handler, env);
-	signal_set(&env->sc_evsigchld, SIGCHLD, parent_sig_handler, env);
-	signal_set(&env->sc_evsighup, SIGHUP, parent_sig_handler, env);
-	signal_set(&env->sc_evsigpipe, SIGPIPE, parent_sig_handler, env);
+	signal_set(&ps->ps_evsigint, SIGINT, parent_sig_handler, ps);
+	signal_set(&ps->ps_evsigterm, SIGTERM, parent_sig_handler, ps);
+	signal_set(&ps->ps_evsigchld, SIGCHLD, parent_sig_handler, ps);
+	signal_set(&ps->ps_evsighup, SIGHUP, parent_sig_handler, ps);
+	signal_set(&ps->ps_evsigpipe, SIGPIPE, parent_sig_handler, ps);
 
-	signal_add(&env->sc_evsigint, NULL);
-	signal_add(&env->sc_evsigterm, NULL);
-	signal_add(&env->sc_evsigchld, NULL);
-	signal_add(&env->sc_evsighup, NULL);
-	signal_add(&env->sc_evsigpipe, NULL);
+	signal_add(&ps->ps_evsigint, NULL);
+	signal_add(&ps->ps_evsigterm, NULL);
+	signal_add(&ps->ps_evsigchld, NULL);
+	signal_add(&ps->ps_evsighup, NULL);
+	signal_add(&ps->ps_evsigpipe, NULL);
 
-	config_pipes(env, procs, nitems(procs));
-	config_procs(env, procs, nitems(procs));
+	config_pipes(ps, procs, nitems(procs));
+	config_procs(ps, procs, nitems(procs));
 
 	if (parent_configure(env) == -1)
 		fatalx("configuration failed");
@@ -181,13 +185,13 @@ parent_configure(struct iked *env)
 	struct sockaddr_storage	 ss;
 
 	if (parse_config(env->sc_conffile, env) == -1) {
-		kill_procs(env);
+		kill_procs(&env->sc_ps);
 		exit(1);
 	}
 
 	if (env->sc_opts & IKED_OPT_NOACTION) {
 		fprintf(stderr, "configuration OK\n");
-		kill_procs(env);
+		kill_procs(&env->sc_ps);
 		exit(0);
 	}
 
@@ -249,9 +253,9 @@ parent_reload(struct iked *env, int reset, const char *filename)
 }
 
 void
-parent_sig_handler(int sig, short event, void *p)
+parent_sig_handler(int sig, short event, void *arg)
 {
-	struct iked	*env = p;
+	struct privsep	*ps = arg;
 	int		 die = 0, status, fail, id;
 	pid_t		 pid;
 	char		*cause;
@@ -264,7 +268,7 @@ parent_sig_handler(int sig, short event, void *p)
 		 * This is safe because libevent uses async signal handlers
 		 * that run in the event loop and not in signal context.
 		 */
-		parent_reload(env, 0, NULL);
+		parent_reload(ps->ps_env, 0, NULL);
 		break;
 	case SIGPIPE:
 		log_info("%s: ignoring SIGPIPE", __func__);
@@ -296,9 +300,9 @@ parent_sig_handler(int sig, short event, void *p)
 			die = 1;
 
 			for (id = 0; id < PROC_MAX; id++)
-				if (pid == env->sc_pid[id]) {
+				if (pid == ps->ps_pid[id]) {
 					log_warnx("lost child: %s %s",
-					    env->sc_title[id], cause);
+					    ps->ps_title[id], cause);
 					break;
 				}
 
@@ -306,7 +310,7 @@ parent_sig_handler(int sig, short event, void *p)
 		} while (pid > 0 || (pid == -1 && errno == EINTR));
 
 		if (die)
-			parent_shutdown(env);
+			parent_shutdown(ps->ps_env);
 		break;
 	default:
 		fatalx("unexpected signal");
@@ -338,7 +342,7 @@ parent_dispatch_ikev2(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 parent_dispatch_ca(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct iked	*env = p->env;
+	struct iked	*env = p->p_ps->ps_env;
 	int		 v;
 	char		*str = NULL;
 	u_int		 type = imsg->hdr.type;
@@ -377,7 +381,7 @@ parent_shutdown(struct iked *env)
 	u_int		 i;
 
 	for (i = 0; i < PROC_MAX; i++)
-		kill(env->sc_pid[i], SIGTERM);
+		kill(env->sc_ps.ps_pid[i], SIGTERM);
 
 	do {
 		pid = waitpid(WAIT_MYPGRP, NULL, 0);

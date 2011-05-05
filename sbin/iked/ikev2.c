@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.52 2011/05/05 12:17:10 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.53 2011/05/05 12:55:52 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -107,15 +107,15 @@ static struct privsep_proc procs[] = {
 };
 
 pid_t
-ikev2(struct iked *env, struct privsep_proc *p)
+ikev2(struct privsep *ps, struct privsep_proc *p)
 {
-	return (run_proc(env, p, procs, nitems(procs), NULL, NULL));
+	return (run_proc(ps, p, procs, nitems(procs), NULL, NULL));
 }
 
 int
 ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct iked		*env = p->env;
+	struct iked		*env = p->p_ps->ps_env;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_RESET:
@@ -149,7 +149,7 @@ ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 ikev2_dispatch_ikev1(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct iked		*env = p->env;
+	struct iked		*env = p->p_ps->ps_env;
 	struct iked_message	 msg;
 	u_int8_t		*buf;
 	ssize_t			 len;
@@ -182,7 +182,7 @@ ikev2_dispatch_ikev1(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 ikev2_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct iked		*env = p->env;
+	struct iked		*env = p->p_ps->ps_env;
 	struct iked_sahdr	 sh;
 	struct iked_sa		*sa;
 	u_int8_t		 type;
