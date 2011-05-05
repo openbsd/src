@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.6 2008/04/13 00:22:17 djm Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.7 2011/05/05 12:25:51 sthen Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -60,7 +60,6 @@
 
 const char *opcode(int);
 const char *sock_ntop(struct sockaddr *);
-u_int16_t pick_proxy_port(void);
 static void usage(void);
 
 extern	char *__progname;
@@ -70,24 +69,23 @@ int	verbose = 0;
 int
 main(int argc, char *argv[])
 {
-	int c, fd = 0, on = 1, out_fd = 0, peer, reqsize = 0;
+	int c, fd = 0, on = 1, out_fd = 0, reqsize = 0;
 	int transwait = DEFTRANSWAIT;
 	char *p;
 	struct tftphdr *tp;
 	struct passwd *pw;
 	union {
 		struct cmsghdr hdr;
-		char buf[CMSG_SPACE(sizeof(struct sockaddr_storage))];
+		char buf[CMSG_SPACE(sizeof(struct sockaddr_storage)) +
+		    CMSG_SPACE(sizeof(in_port_t))];
 	} cmsgbuf;
 	char req[PKTSIZE];
 	struct cmsghdr *cmsg;
 	struct msghdr msg;
 	struct iovec iov;
 
-	struct sockaddr_storage from, proxy, server, proxy_to_server, s_in;
-	struct sockaddr_in sock_out;
+	struct sockaddr_storage from, server, proxy_to_server;
 	socklen_t j;
-	in_port_t bindport;
 
 	openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
 
@@ -140,19 +138,8 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	j = sizeof(s_in);
-	if (getsockname(fd, (struct sockaddr *)&s_in, &j) == -1) {
-		syslog(LOG_ERR, "getsockname: %m");
-		exit(1);
-	}
-
-	bindport = ((struct sockaddr_in *)&s_in)->sin_port;
-
-	/* req will be pushed back out at the end, unchanged */
-	j = sizeof(from);
-	if ((reqsize = recvfrom(fd, req, sizeof(req), MSG_PEEK,
-	    (struct sockaddr *)&from, &j)) < 0) {
-		syslog(LOG_ERR, "recvfrom: %m");
+	if (setsockopt(fd, IPPROTO_IP, IP_RECVDSTPORT, &on, sizeof(on)) == -1) {
+		syslog(LOG_ERR, "setsockopt(IP_RECVDSTPORT): %m");
 		exit(1);
 	}
 
@@ -166,7 +153,7 @@ main(int argc, char *argv[])
 	msg.msg_control = &cmsgbuf.buf;
 	msg.msg_controllen = sizeof(cmsgbuf.buf);
 
-	if (recvmsg(fd, &msg, 0) < 0) {
+	if ((reqsize = recvmsg(fd, &msg, 0)) < 0) {
 		syslog(LOG_ERR, "recvmsg: %m");
 		exit(1);
 	}
@@ -174,33 +161,23 @@ main(int argc, char *argv[])
 	close(fd);
 	close(1);
 
-	peer = socket(from.ss_family, SOCK_DGRAM, 0);
-	if (peer < 0) {
-		syslog(LOG_ERR, "socket: %m");
-		exit(1);
-	}
-	memset(&s_in, 0, sizeof(s_in));
-	s_in.ss_family = from.ss_family;
-	s_in.ss_len = from.ss_len;
+	memset(&server, 0, sizeof(server));
+	server.ss_family = from.ss_family;
+	server.ss_len = from.ss_len;
 
-	/* get local address if possible */
+	/* get server address and port */
 	for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL;
 	    cmsg = CMSG_NXTHDR(&msg, cmsg)) {
 		if (cmsg->cmsg_level == IPPROTO_IP &&
 		    cmsg->cmsg_type == IP_RECVDSTADDR) {
-			memcpy(&((struct sockaddr_in *)&s_in)->sin_addr,
+			memcpy(&((struct sockaddr_in *)&server)->sin_addr,
 			    CMSG_DATA(cmsg), sizeof(struct in_addr));
-			break;
 		}
-	}
-
-	if (bind(peer, (struct sockaddr *)&s_in, s_in.ss_len) < 0) {
-		syslog(LOG_ERR, "bind: %m");
-		exit(1);
-	}
-	if (connect(peer, (struct sockaddr *)&from, from.ss_len) < 0) {
-		syslog(LOG_ERR, "connect: %m");
-		exit(1);
+		if (cmsg->cmsg_level == IPPROTO_IP &&
+		    cmsg->cmsg_type == IP_RECVDSTPORT) {
+			memcpy(&((struct sockaddr_in *)&server)->sin_port,
+			    CMSG_DATA(cmsg), sizeof(in_port_t));
+		}
 	}
 
 	tp = (struct tftphdr *)req;
@@ -214,34 +191,10 @@ main(int argc, char *argv[])
 			exit(0);
 	}
 
-	j = sizeof(struct sockaddr_storage);
-	if (getsockname(fd, (struct sockaddr *)&proxy, &j) == -1) {
-		syslog(LOG_ERR, "getsockname: %m");
-		exit(1);
-	}
-
-	((struct sockaddr_in *)&proxy)->sin_port = bindport;
-
-	/* find the un-rdr'd server and port the client wanted */
-	if (server_lookup((struct sockaddr *)&from,
-	    (struct sockaddr *)&proxy, (struct sockaddr *)&server,
-	    IPPROTO_UDP) != 0) {
-		syslog(LOG_ERR, "pf connection lookup failed (no rdr?)");
-		exit(1);
-	}
-
 	/* establish a new outbound connection to the remote server */
 	if ((out_fd = socket(((struct sockaddr *)&from)->sa_family,
 	    SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 		syslog(LOG_ERR, "couldn't create new socket");
-		exit(1);
-	}
-
-	bzero((char *)&sock_out, sizeof(sock_out));
-	sock_out.sin_family = from.ss_family;
-	sock_out.sin_port = htons(pick_proxy_port());
-	if (bind(out_fd, (struct sockaddr *)&sock_out, sizeof(sock_out)) < 0) {
-		syslog(LOG_ERR, "couldn't bind to new socket: %m");
 		exit(1);
 	}
 
@@ -259,11 +212,9 @@ main(int argc, char *argv[])
 	}
 
 	if (verbose)
-		syslog(LOG_INFO, "%s:%d -> %s:%d/%s:%d -> %s:%d \"%s %s\"",
+		syslog(LOG_INFO, "%s:%d -> %s:%d -> %s:%d \"%s %s\"",
 			sock_ntop((struct sockaddr *)&from),
 			ntohs(((struct sockaddr_in *)&from)->sin_port),
-			sock_ntop((struct sockaddr *)&proxy),
-			ntohs(((struct sockaddr_in *)&proxy)->sin_port),
 			sock_ntop((struct sockaddr *)&proxy_to_server),
 			ntohs(((struct sockaddr_in *)&proxy_to_server)->sin_port),
 			sock_ntop((struct sockaddr *)&server),
@@ -279,7 +230,8 @@ main(int argc, char *argv[])
 
 	/* rdr from server to us on our random port -> client on its port */
 	if (add_rdr(1, (struct sockaddr *)&server,
-	    (struct sockaddr *)&proxy_to_server, ntohs(sock_out.sin_port),
+	    (struct sockaddr *)&proxy_to_server,
+	    ntohs(((struct sockaddr_in *)&proxy_to_server)->sin_port),
 	    (struct sockaddr *)&from,
 	    ntohs(((struct sockaddr_in *)&from)->sin_port),
 	    IPPROTO_UDP) == -1) {
@@ -378,13 +330,6 @@ sock_ntop(struct sockaddr *sa)
 	}
 
 	return (NULL);
-}
-
-u_int16_t
-pick_proxy_port(void)
-{
-	return (IPPORT_HIFIRSTAUTO +
-	    arc4random_uniform(IPPORT_HILASTAUTO - IPPORT_HIFIRSTAUTO));
 }
 
 static void

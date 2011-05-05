@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.h,v 1.2 2009/07/30 20:40:27 sthen Exp $ */
+/*	$OpenBSD: filter.h,v 1.3 2011/05/05 12:25:51 sthen Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -26,5 +26,3 @@ int do_commit(void);
 int do_rollback(void);
 void init_filter(char *, int);
 int prepare_commit(u_int32_t);
-int server_lookup(struct sockaddr *, struct sockaddr *, struct sockaddr *,
-    u_int8_t);
