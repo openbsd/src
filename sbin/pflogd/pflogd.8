@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pflogd.8,v 1.41 2010/05/14 18:17:02 schwarze Exp $
+.\"	$OpenBSD: pflogd.8,v 1.42 2011/05/06 18:30:43 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 14 2010 $
+.Dd $Mdocdate: May 6 2011 $
 .Dt PFLOGD 8
 .Os
 .Sh NAME
@@ -135,6 +135,40 @@ Check the integrity of an existing log file, and return.
 .It Ar expression
 Selects which packets will be dumped, using the regular language of
 .Xr tcpdump 8 .
+Tcpdump has been extended to be able to filter on the pfloghdr
+structure defined in
+.Aq Ar net/if_pflog.h .
+It can restrict the output
+to packets logged on a specified interface, a rule number, a reason,
+a direction, an IP family or an action.
+.Pp
+.Bl -tag -width "ruleset authpfXXX" -offset 3n -compact
+.It ip
+Address family equals IPv4.
+.It ip6
+Address family equals IPv6.
+.It ifname kue0
+Interface name equals "kue0".
+.It on kue0
+Interface name equals "kue0".
+.It ruleset authpf
+Ruleset name equals "authpf".
+.It rulenum 10
+Rule number equals 10.
+.It reason match
+Reason equals match.
+Also accepts "bad-offset", "fragment", "short", "normalize",
+"memory", "bad-timestamp", "congestion", "ip-option", "proto-cksum",
+"state-mismatch", "state-insert", "state-limit", "src-limit",
+and "synproxy".
+.It action pass
+Action equals pass.
+Also accepts "block" and "match".
+.It inbound
+The direction was inbound.
+.It outbound
+The direction was outbound.
+.El
 .El
 .Sh FILES
 .Bl -tag -width /var/run/pflogd.pid -compact
@@ -166,41 +200,6 @@ operation of
 .Bd -literal -offset indent
 # tcpdump -n -e -ttt -i pflog0
 .Ed
-.Pp
-Tcpdump has been extended to be able to filter on the pfloghdr
-structure defined in
-.Aq Ar net/if_pflog.h .
-Tcpdump can restrict the output
-to packets logged on a specified interface, a rule number, a reason,
-a direction, an IP family or an action.
-.Pp
-.Bl -tag -width "ruleset authpf " -compact
-.It ip
-Address family equals IPv4.
-.It ip6
-Address family equals IPv6.
-.It ifname kue0
-Interface name equals "kue0".
-.It on kue0
-Interface name equals "kue0".
-.It ruleset authpf
-Ruleset name equals "authpf".
-.It rulenum 10
-Rule number equals 10.
-.It reason match
-Reason equals match.
-Also accepts "bad-offset", "fragment", "short", "normalize",
-"memory", "bad-timestamp", "congestion", "ip-option", "proto-cksum",
-"state-mismatch", "state-insert", "state-limit", "src-limit",
-and "synproxy".
-.It action pass
-Action equals pass.
-Also accepts "block" and "match".
-.It inbound
-The direction was inbound.
-.It outbound
-The direction was outbound.
-.El
 .Pp
 Display the logs in real time of inbound packets that were blocked on
 the wi0 interface:
