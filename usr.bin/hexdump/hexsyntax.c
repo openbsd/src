@@ -1,4 +1,4 @@
-/*	$OpenBSD: hexsyntax.c,v 1.11 2009/10/27 23:59:39 deraadt Exp $	*/
+/*	$OpenBSD: hexsyntax.c,v 1.12 2011/05/06 15:46:29 otto Exp $	*/
 /*	$NetBSD: hexsyntax.c,v 1.8 1998/04/08 23:48:57 jeremy Exp $	*/
 
 /*-
@@ -115,7 +115,7 @@ newsyntax(int argc, char ***argvp)
 
 	if (!fshead) {
 		add("\"%07.7_Ax\n\"");
-		add("\"%07.7_ax \" 8/2 \"%04x \" \"\\n\"");
+		add("\"%07.7_ax \" 8/2 \"   %04x \" \"\\n\"");
 	}
 
 	*argvp += optind;
