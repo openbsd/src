@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.152 2011/04/05 11:48:28 blambert Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.153 2011/05/06 17:55:00 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -379,10 +379,11 @@ ubsec_intr(void *arg)
 
 	stat = READ_REG(sc, BS_STAT);
 
-	stat &= sc->sc_statmask;
-	if (stat == 0)
+	if ((stat & (BS_STAT_MCR1_DONE|BS_STAT_MCR2_DONE|BS_STAT_MCR4_DONE|
+	    BS_STAT_DMAERR)) == 0)
 		return (0);
 
+	stat &= sc->sc_statmask;
 	WRITE_REG(sc, BS_STAT, stat);		/* IACK */
 
 	/*
