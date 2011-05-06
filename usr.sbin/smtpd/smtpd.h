@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.220 2011/05/01 12:57:11 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.221 2011/05/06 19:21:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -627,7 +627,6 @@ struct smtpd {
 	SPLAY_HEAD(ssltree, ssl)		*sc_ssl;
 	SPLAY_HEAD(childtree, child)		 children;
 	SPLAY_HEAD(lkatree, lkasession)		 lka_sessions;
-	SPLAY_HEAD(dnstree, dnssession)		 dns_sessions;
 	SPLAY_HEAD(mtatree, mta_session)	 mta_sessions;
 	LIST_HEAD(mdalist, mda_session)		 mda_sessions;
 
@@ -804,23 +803,6 @@ struct lkasession {
 	struct submit_status		 ss;
 };
 
-struct mx {
-        char    host[MAXHOSTNAMELEN];
-        int     prio;
-};
-
-struct dnssession {
-        SPLAY_ENTRY(dnssession)          nodes;
-        u_int64_t                        id;
-        struct dns                       query;
-        struct event                     ev;
-        struct asr_query                *aq;
-        struct mx                        mxarray[MAX_MX_COUNT];
-        size_t                           mxarraysz;
-        size_t                           mxcurrent;
-	size_t				 mxfound;
-};
-
 enum mta_state {
 	MTA_INVALID_STATE,
 	MTA_INIT,
@@ -969,8 +951,6 @@ void dns_query_host(char *, int, u_int64_t);
 void dns_query_mx(char *, int, u_int64_t);
 void dns_query_ptr(struct sockaddr_storage *, u_int64_t);
 void dns_async(struct imsgev *, int, struct dns *);
-int dnssession_cmp(struct dnssession *, struct dnssession *);
-SPLAY_PROTOTYPE(dnstree, dnssession, nodes, dnssession_cmp);
 
 
 /* enqueue.c */

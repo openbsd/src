@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.41 2011/05/01 12:57:11 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.42 2011/05/06 19:21:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -36,6 +36,31 @@
 #include "dnsutil.h"
 #include "smtpd.h"
 #include "log.h"
+
+
+struct mx {
+	char	host[MAXHOSTNAMELEN];
+	int	prio;
+};
+
+struct dnssession {
+	SPLAY_ENTRY(dnssession)		 nodes;
+	u_int64_t			 id;
+	struct dns			 query;
+	struct event			 ev;
+	struct asr_query		*aq;
+	struct mx			 mxarray[MAX_MX_COUNT];
+	size_t				 mxarraysz;
+	size_t				 mxcurrent;
+	size_t				 mxfound;
+};
+
+static int  dnssession_cmp(struct dnssession *, struct dnssession *);
+
+SPLAY_HEAD(dnstree, dnssession) dns_sessions = SPLAY_INITIALIZER(&dns_sessions);
+
+SPLAY_PROTOTYPE(dnstree, dnssession, nodes, dnssession_cmp);
+
 
 static struct dnssession *dnssession_init(struct dns *);
 static void dnssession_destroy(struct dnssession *);
@@ -312,7 +337,7 @@ dnssession_init(struct dns *query)
 
 	dnssession->id = query->id;
 	dnssession->query = *query;
-	SPLAY_INSERT(dnstree, &env->dns_sessions, dnssession);
+	SPLAY_INSERT(dnstree, &dns_sessions, dnssession);
 	return dnssession;
 }
 
@@ -320,7 +345,7 @@ static void
 dnssession_destroy(struct dnssession *dnssession)
 {
 	env->stats->lka.queries_active--;
-	SPLAY_REMOVE(dnstree, &env->dns_sessions, dnssession);
+	SPLAY_REMOVE(dnstree, &dns_sessions, dnssession);
 	event_del(&dnssession->ev);
 	free(dnssession);
 }
@@ -348,7 +373,7 @@ dnssession_mx_insert(struct dnssession *dnssession, const char *host, int prio)
 	    sizeof (dnssession->mxarray[i].host));
 }
 
-int
+static int
 dnssession_cmp(struct dnssession *s1, struct dnssession *s2)
 {
 	/*
