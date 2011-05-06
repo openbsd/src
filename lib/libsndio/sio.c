@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.4 2011/05/06 07:30:20 ratchov Exp $	*/
+/*	$OpenBSD: sio.c,v 1.5 2011/05/06 10:25:17 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -33,6 +33,17 @@
 
 #define SIO_PAR_MAGIC	0x83b905a4
 
+struct sio_backend {
+	char *prefix;
+	struct sio_hdl *(*open)(const char *, unsigned, int);
+};
+
+static struct sio_backend backends[] = {
+	{ "aucat", sio_aucat_open },
+	{ "sun", sio_sun_open },
+	{ NULL, NULL }
+};
+
 void
 sio_initpar(struct sio_par *par)
 {
@@ -43,8 +54,7 @@ sio_initpar(struct sio_par *par)
 struct sio_hdl *
 sio_open(const char *str, unsigned mode, int nbio)
 {
-	static char prefix_aucat[] = "aucat";
-	static char prefix_sun[] = "sun";
+	struct sio_backend *b;
 	struct sio_hdl *hdl;
 	char *sep;
 	int len;
@@ -57,12 +67,11 @@ sio_open(const char *str, unsigned mode, int nbio)
 	if (str == NULL && !issetugid())
 		str = getenv("AUDIODEVICE");
 	if (str == NULL) {
-		hdl = sio_aucat_open(NULL, mode, nbio);
-		if (hdl != NULL)
-			return hdl;
-		hdl = sio_sun_open(NULL, mode, nbio);
-		if (hdl != NULL)
-			return hdl;
+		for (b = backends; b->prefix != NULL; b++) {
+			hdl = b->open(NULL, mode, nbio);
+			if (hdl != NULL)
+				return hdl;
+		}
 		return NULL;
 	}
 	sep = strchr(str, ':');
@@ -71,12 +80,10 @@ sio_open(const char *str, unsigned mode, int nbio)
 		return NULL;
 	}
 	len = sep - str;
-	if (len == (sizeof(prefix_aucat) - 1) &&
-	    memcmp(str, prefix_aucat, len) == 0)
-		return sio_aucat_open(sep + 1, mode, nbio);
-	if (len == (sizeof(prefix_sun) - 1) &&
-	    memcmp(str, prefix_sun, len) == 0)
-		return sio_sun_open(sep + 1, mode, nbio);
+	for (b = backends; b->prefix != NULL; b++) {
+		if (strlen(b->prefix) == len && memcmp(b->prefix, str, len) == 0)
+			return b->open(sep + 1, mode, nbio);
+	}
 	DPRINTF("sio_open: %s: unknown device type\n", str);
 	return NULL;
 }
