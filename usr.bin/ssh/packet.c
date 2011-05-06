@@ -1,4 +1,4 @@
-/* $OpenBSD: packet.c,v 1.172 2010/11/13 23:27:50 djm Exp $ */
+/* $OpenBSD: packet.c,v 1.173 2011/05/06 21:14:05 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -418,10 +418,8 @@ packet_set_state(int mode, u_int32_t seqnr, u_int64_t blocks, u_int32_t packets,
 	state->bytes = bytes;
 }
 
-/* returns 1 if connection is via ipv4 */
-
-int
-packet_connection_is_ipv4(void)
+static int
+packet_connection_af(void)
 {
 	struct sockaddr_storage to;
 	socklen_t tolen = sizeof(to);
@@ -430,9 +428,7 @@ packet_connection_is_ipv4(void)
 	if (getsockname(active_state->connection_out, (struct sockaddr *)&to,
 	    &tolen) < 0)
 		return 0;
-	if (to.ss_family != AF_INET)
-		return 0;
-	return 1;
+	return to.ss_family;
 }
 
 /* Sets the connection into non-blocking mode. */
@@ -1736,14 +1732,24 @@ packet_not_very_much_data_to_write(void)
 static void
 packet_set_tos(int tos)
 {
-	if (!packet_connection_is_on_socket() ||
-	    !packet_connection_is_ipv4())
+	if (!packet_connection_is_on_socket())
 		return;
-	debug3("%s: set IP_TOS 0x%02x", __func__, tos);
-	if (setsockopt(active_state->connection_in, IPPROTO_IP, IP_TOS, &tos,
-	    sizeof(tos)) < 0)
-		error("setsockopt IP_TOS %d: %.100s:",
-		    tos, strerror(errno));
+	switch (packet_connection_af()) {
+	case AF_INET:
+		debug3("%s: set IP_TOS 0x%02x", __func__, tos);
+		if (setsockopt(active_state->connection_in,
+		    IPPROTO_IP, IP_TOS, &tos, sizeof(tos)) < 0)
+			error("setsockopt IP_TOS %d: %.100s:",
+			    tos, strerror(errno));
+		break;
+	case AF_INET6:
+		debug3("%s: set IPV6_TCLASS 0x%02x", __func__, tos);
+		if (setsockopt(active_state->connection_in,
+		    IPPROTO_IPV6, IPV6_TCLASS, &tos, sizeof(tos)) < 0)
+			error("setsockopt IPV6_TCLASS %d: %.100s:",
+			    tos, strerror(errno));
+		break;
+	}
 }
 
 /* Informs that the current session is interactive.  Sets IP flags for that. */
