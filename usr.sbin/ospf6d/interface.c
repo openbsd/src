@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.15 2009/09/20 20:45:06 stsp Exp $ */
+/*	$OpenBSD: interface.c,v 1.16 2011/05/06 13:48:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -250,7 +250,7 @@ if_update(struct iface *iface, int mtu, int flags, u_int8_t type,
 		iface->type = IF_TYPE_BROADCAST;
 	if (flags & IFF_LOOPBACK) {
 		iface->type = IF_TYPE_POINTOPOINT;
-		iface->state = IF_STA_LOOPBACK;
+		iface->cflags |= F_IFACE_PASSIVE;
 	}
 }
 
@@ -386,14 +386,18 @@ if_act_start(struct iface *iface)
 		iface->cflags |= F_IFACE_PASSIVE;
 	}
 
+	gettimeofday(&now, NULL);
+	iface->uptime = now.tv_sec;
+
+	/* loopback interfaces have a special state */
+	if (iface->flags & IFF_LOOPBACK)
+		iface->state = IF_STA_LOOPBACK;
+
 	if (iface->cflags & F_IFACE_PASSIVE) {
 		/* for an update of stub network entries */
 		orig_rtr_lsa(iface);
 		return (0);
 	}
-
-	gettimeofday(&now, NULL);
-	iface->uptime = now.tv_sec;
 
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
