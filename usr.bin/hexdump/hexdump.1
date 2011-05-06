@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hexdump.1,v 1.23 2011/05/06 15:46:29 otto Exp $
+.\"	$OpenBSD: hexdump.1,v 1.24 2011/05/06 18:11:43 otto Exp $
 .\"	$NetBSD: hexdump.1,v 1.14 2001/12/07 14:46:24 bjh21 Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -264,16 +264,15 @@ Nonprinting characters are displayed as a single dot
 .It Cm _u
 Output US ASCII characters, with the exception that control characters are
 displayed using the following, lower-case, names.
-Characters greater than 0xff, hexadecimal, are displayed as hexadecimal
-strings.
-.Bl -column \&000_nu \&001_so \&002_st \&003_et \&004_eo
-.It \&000\ nul\t001\ soh\t002\ stx\t003\ etx\t004\ eot\t005\ enq
-.It \&006\ ack\t007\ bel\t008\ bs\t009\ ht\t00A\ lf\t00B\ vt
-.It \&00C\ ff\t00D\ cr\t00E\ so\t00F\ si\t010\ dle\t011\ dc1
-.It \&012\ dc2\t013\ dc3\t014\ dc4\t015\ nak\t016\ syn\t017\ etb
-.It \&018\ can\t019\ em\t01A\ sub\t01B\ esc\t01C\ fs\t01D\ gs
-.It \&01E\ rs\t01F\ us\t07F\ del
-.El
+Other non-printable characters are displayed as hexadecimal strings.
+.Bd -literal -offset 3n
+000 nul  001 soh  002 stx  003 etx  004 eot  005 enq
+006 ack  007 bel  008 bs   009 ht   00A lf   00B vt
+00C ff   00D cr   00E so   00F si   010 dle  011 dc1
+012 dc2  013 dc3  014 dc4  015 nak  016 syn  017 etb
+018 can  019 em   01A sub  01B esc  01C fs   01D gs
+01E rs   01F us   07F del
+.Ed
 .El
 .Pp
 The default and supported byte counts for the conversion characters
