@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.76 2011/03/24 08:35:59 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.77 2011/05/06 13:50:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -836,8 +836,7 @@ merge_interfaces(struct area *a, struct area *xa)
 			LIST_REMOVE(xi, entry);
 			LIST_INSERT_HEAD(&a->iface_list, xi, entry);
 			xi->area = a;
-			if (ospfd_process == PROC_OSPF_ENGINE &&
-			    !(xi->state == IF_STA_LOOPBACK))
+			if (ospfd_process == PROC_OSPF_ENGINE)
 				xi->state = IF_STA_NEW;
 			continue;
 		}
