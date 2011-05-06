@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio.c,v 1.10 2011/04/16 10:52:22 ratchov Exp $	*/
+/*	$OpenBSD: mio.c,v 1.11 2011/05/06 07:30:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -38,8 +38,7 @@ mio_open(const char *str, unsigned mode, int nbio)
 	static char prefix_rmidi[] = "rmidi";
 	static char prefix_aucat[] = "aucat";
 	struct mio_hdl *hdl;
-	struct stat sb;
-	char *sep, buf[4];
+	char *sep;
 	int len;
 
 #ifdef DEBUG
@@ -57,17 +56,9 @@ mio_open(const char *str, unsigned mode, int nbio)
 	}
 	sep = strchr(str, ':');
 	if (sep == NULL) {
-		/*
-		 * try legacy "/dev/rmidioxxx" device name
-		 */
-		if (stat(str, &sb) < 0 || !S_ISCHR(sb.st_mode)) {
-			DPRINTF("mio_open: %s: missing ':' separator\n", str);
-			return NULL;
-		}
-		snprintf(buf, sizeof(buf), "%u", minor(sb.st_rdev));
-		return mio_rmidi_open(buf, mode, nbio);
+		DPRINTF("mio_open: %s: ':' missing in device name\n", str);
+		return NULL;
 	}
-
 	len = sep - str;
 	if (len == (sizeof(prefix_midithru) - 1) &&
 	    memcmp(str, prefix_midithru, len) == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.3 2011/05/03 20:15:23 ratchov Exp $	*/
+/*	$OpenBSD: sio.c,v 1.4 2011/05/06 07:30:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -46,8 +46,7 @@ sio_open(const char *str, unsigned mode, int nbio)
 	static char prefix_aucat[] = "aucat";
 	static char prefix_sun[] = "sun";
 	struct sio_hdl *hdl;
-	struct stat sb;
-	char *sep, buf[NAME_MAX];
+	char *sep;
 	int len;
 
 #ifdef DEBUG
@@ -68,15 +67,8 @@ sio_open(const char *str, unsigned mode, int nbio)
 	}
 	sep = strchr(str, ':');
 	if (sep == NULL) {
-		/*
-		 * try legacy "/dev/audioxxx" or ``socket'' device name
-		 */
-		if (stat(str, &sb) < 0 || !S_ISCHR(sb.st_mode)) {
-			snprintf(buf, sizeof(buf), "0.%s", str);
-			return sio_aucat_open(buf, mode, nbio);
-		}
-		snprintf(buf, sizeof(buf), "%u", minor(sb.st_rdev) & 0xf);
-		return sio_sun_open(buf, mode, nbio);
+		DPRINTF("sio_open: %s: ':' missing in device name\n", str);
+		return NULL;
 	}
 	len = sep - str;
 	if (len == (sizeof(prefix_aucat) - 1) &&
