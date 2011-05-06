@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.20 2011/04/20 06:51:34 deraadt Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.21 2011/05/06 17:31:16 mikeb Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -414,7 +414,7 @@ aesni_process(struct cryptop *crp)
 		return (EINVAL);
 
 	LIST_FOREACH(ses, &aesni_sc->sc_sessions, ses_entries) {
-		if (ses->ses_sid == crp->crp_sid)
+		if (ses->ses_sid == (crp->crp_sid & 0xffffffff))
 			break;
 	}
 
