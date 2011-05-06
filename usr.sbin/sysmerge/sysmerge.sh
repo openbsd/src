@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.71 2011/04/27 08:44:48 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.72 2011/05/06 16:17:18 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -237,6 +237,11 @@ mm_install() {
 mm_install_link() {
 	_LINKT=`readlink ${COMPFILE}`
 	_LINKF=`dirname ${DESTDIR}${COMPFILE#.}`
+
+	DIR_MODE=`stat -f "%OMp%OLp" "${TEMPROOT}/${_LINKF}"`
+	[ ! -d "${_LINKF}" ] && \
+		install -d -o root -g wheel -m "${DIR_MODE}" "${_LINKF}"
+
 	rm -f ${COMPFILE}
 	(cd ${_LINKF} && ln -sf ${_LINKT} .)
 	return
