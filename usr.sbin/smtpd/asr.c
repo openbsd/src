@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.7 2011/03/27 17:39:17 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.8 2011/05/07 13:16:17 eric Exp $	*/
 /*
  * Copyright (c) 2010,2011 Eric Faurot <eric@openbsd.org>
  *
@@ -1918,7 +1918,7 @@ asr_get_port(const char *servname, const char *proto, int numonly)
 	e = NULL;
 	port = strtonum(servname, 0, USHRT_MAX, &e);
 	if (e == NULL)
-		return htons(port);
+		return (port);
 	if (errno == ERANGE)
 		return (-3); /* invalid */
 	if (numonly)
@@ -1926,7 +1926,7 @@ asr_get_port(const char *servname, const char *proto, int numonly)
 
 	memset(&sed, 0, sizeof(sed));
 	r = getservbyname_r(servname, proto, &se, &sed);
-	port = se.s_port;
+	port = ntohs(se.s_port);
 	endservent_r(&sed);
 
 	if (r == -1)
@@ -1942,8 +1942,6 @@ asr_add_sockaddr2(struct asr_query *aq,
 		  int protocol)
 {
 	struct addrinfo		*ai;
-	struct sockaddr_in	*sin;
-	struct sockaddr_in6	*sin6;
 	const char		*proto;
 	int			 port;
 
@@ -1976,18 +1974,8 @@ asr_add_sockaddr2(struct asr_query *aq,
 	ai->ai_addr = (void*)(ai + 1);
 	memmove(ai->ai_addr, sa, sa->sa_len);
 
-	if (port != -1) {
-		switch(ai->ai_family) {
-		case PF_INET:
-			sin = (struct sockaddr_in*)ai->ai_addr;
-			sin->sin_port = port;
-			break;
-		case PF_INET6:
-			sin6 = (struct sockaddr_in6*)ai->ai_addr;
-			sin6->sin6_port = port;
-			break;
-		}
-	}
+	if (port != -1)
+		sockaddr_set_port((struct sockaddr*)ai->ai_addr, port);
 
 	if (aq->aq_aifirst == NULL)
 		aq->aq_aifirst = ai;
