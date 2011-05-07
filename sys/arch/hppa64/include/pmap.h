@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.5 2011/04/28 20:43:41 ariane Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.6 2011/05/07 15:27:01 oga Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -21,7 +21,7 @@
 #define _MACHINE_PMAP_H_
 
 #include <machine/pte.h>
-#include <uvm/uvm_pglist.h>
+#include <uvm/uvm_page.h>
 #include <uvm/uvm_object.h>
 
 struct pmap {

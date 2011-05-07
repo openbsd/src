@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.41 2011/04/28 20:42:28 ariane Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.42 2011/05/07 15:27:01 oga Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -30,7 +30,6 @@
 #define _MACHINE_PMAP_H_
 
 #include <machine/pte.h>
-#include <uvm/uvm_pglist.h>
 #include <uvm/uvm_object.h>
 
 #ifdef	_KERNEL
