@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.72 2011/05/06 16:17:18 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.73 2011/05/08 09:49:34 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -531,8 +531,11 @@ do_compare() {
 	cd ${TEMPROOT} || error_rm_wrkdir
 
 	# use -size +0 to avoid comparing empty log files and device nodes;
-	# however, we want to keep the symlinks
-	for COMPFILE in `find . -type f -size +0 -or -type l`; do
+	# however, we want to keep the symlinks; group and master.passwd
+	# need to be handled first in case mm_install needs a new user/group
+	local _c1="./etc/group ./etc/master.passwd"
+	local _c2=`find . -type f -size +0 -or -type l | grep -vE '(./etc/group|./etc/master.passwd)'`
+	for COMPFILE in ${_c1} ${_c2}; do
 		unset IS_BINFILE
 		unset IS_LINK
 		# links need to be treated in a different way
