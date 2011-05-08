@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.53 2011/04/06 21:51:31 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.54 2011/05/08 20:35:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -714,20 +714,20 @@ cmd_find_session(struct cmd_ctx *ctx, const char *arg, int prefer_unattached)
 	/* A NULL argument means the current session. */
 	if (arg == NULL)
 		return (cmd_current_session(ctx, prefer_unattached));
-	tmparg = xstrdup(arg);
 
 	/* Lookup as pane id. */
 	if ((wp = cmd_lookup_paneid(arg)) != NULL)
 		return (cmd_pane_session(ctx, wp, NULL));
 
 	/* Trim a single trailing colon if any. */
+	tmparg = xstrdup(arg);
 	arglen = strlen(tmparg);
 	if (arglen != 0 && tmparg[arglen - 1] == ':')
 		tmparg[arglen - 1] = '\0';
 
 	/* An empty session name is the current session. */
 	if (*tmparg == '\0') {
-		xfree (tmparg);
+		xfree(tmparg);
 		return (cmd_current_session(ctx, prefer_unattached));
 	}
 
