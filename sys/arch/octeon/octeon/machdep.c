@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.10 2011/05/08 13:45:03 syuu Exp $ */
+/*	$OpenBSD: machdep.c,v 1.11 2011/05/08 20:49:19 syuu Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -273,26 +273,28 @@ octeon_memory_init(struct boot_info *boot_info)
 
 	if (boot_info->board_type != BOARD_TYPE_SIM) {
 		if(realmem_bytes > OCTEON_DRAM_FIRST_256_END){
-#if 0
+#if 0 /* XXX: need fix on mips64 pmap code */
 			/* take out the upper non-cached 1/2 */
 			phys_avail[2] = 0x410000000ULL;
 			phys_avail[3] = (0x410000000ULL 
 					 + OCTEON_DRAM_FIRST_256_END);
 			physmem += btoc(phys_avail[3] - phys_avail[2]);
-			mem_layout[1].mem_first_page = atop(phys_avail[2]);
-			mem_layout[1].mem_last_page = atop(phys_avail[3]-1);
-			mem_layout[1].mem_freelist = VM_FREELIST_DEFAULT;
-			realmem_bytes -= OCTEON_DRAM_FIRST_256_END;
+			mem_layout[2].mem_first_page = atop(phys_avail[2]);
+			mem_layout[2].mem_last_page = atop(phys_avail[3]-1);
+			mem_layout[2].mem_freelist = VM_FREELIST_DEFAULT;
 #endif
+			realmem_bytes -= OCTEON_DRAM_FIRST_256_END;
+
 			/* Now map the rest of the memory */
 			phys_avail[4] = 0x20000000ULL;
 			phys_avail[5] = (0x20000000ULL + realmem_bytes);
 			physmem += btoc(phys_avail[5] - phys_avail[4]);
-			mem_layout[2].mem_first_page = atop(phys_avail[4]);
-			mem_layout[2].mem_last_page = atop(phys_avail[5]-1);
-			mem_layout[2].mem_freelist = VM_FREELIST_DEFAULT;
+			mem_layout[1].mem_first_page = atop(phys_avail[4]);
+			mem_layout[1].mem_last_page = atop(phys_avail[5]-1);
+			mem_layout[1].mem_freelist = VM_FREELIST_DEFAULT;
 			realmem_bytes=0;
 		}else{
+#if 0 /* XXX: need fix on mips64 pmap code */
 			/* Now map the rest of the memory */
 			phys_avail[2] = 0x410000000ULL;
 			phys_avail[3] = (0x410000000ULL + realmem_bytes);
@@ -301,6 +303,7 @@ octeon_memory_init(struct boot_info *boot_info)
 			mem_layout[1].mem_last_page = atop(phys_avail[3]-1);
 			mem_layout[1].mem_freelist = VM_FREELIST_DEFAULT;
 			realmem_bytes=0;
+#endif
 		}
  	}
 
