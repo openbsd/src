@@ -1,4 +1,4 @@
-/*	$OpenBSD: combusvar.h,v 1.1 2010/10/01 16:13:59 syuu Exp $	*/
+/*	$OpenBSD: uartbusvar.h,v 1.1 2011/05/08 13:39:30 syuu Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -26,18 +26,16 @@
  *
  */
 
-#ifndef	_COMBUSVAR_H_
-#define	_COMBUSVAR_H_
+#ifndef	_UARTBUSVAR_H_
+#define	_UARTBUSVAR_H_
 
 #include <machine/bus.h>
 
-struct combus_attach_args {
-	char		*cba_name;
-
-	bus_space_tag_t  cba_iot;
-	bus_space_tag_t  cba_memt;
-	bus_addr_t	 cba_baseaddr;
-	int	 	 cba_intr;
+struct uartbus_attach_args {
+	char		*uba_name;
+	bus_space_tag_t  uba_memt;
+	bus_addr_t	 uba_baseaddr;
+	int	 	 uba_intr;
 };
 
-#endif	/* _COMBUSVAR_H_ */
+#endif	/* _UARTBUSVAR_H_ */

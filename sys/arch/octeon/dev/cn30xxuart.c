@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_oct.c,v 1.3 2011/05/08 13:24:55 syuu Exp $	*/
+/*	$OpenBSD: cn30xxuart.c,v 1.1 2011/05/08 13:39:30 syuu Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -34,25 +34,25 @@
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 #include <dev/cons.h>
 
-#include <octeon/dev/combusvar.h>
+#include <octeon/dev/iobusvar.h>
+#include <octeon/dev/uartbusvar.h>
 #include <octeon/dev/octeonreg.h>
 
-int	com_oct_probe(struct device *, void *, void *);
-void	com_oct_attach(struct device *, struct device *, void *);
+int	cn30xxuart_probe(struct device *, void *, void *);
+void	cn30xxuart_attach(struct device *, struct device *, void *);
 
-struct cfattach com_oct_ca = {
-	sizeof(struct com_softc), com_oct_probe, com_oct_attach
+struct cfattach cn30xxuart_ca = {
+	sizeof(struct com_softc), cn30xxuart_probe, cn30xxuart_attach
 };
 
 extern struct cfdriver com_cd;
 
-cons_decl(com_oct);
+cons_decl(cn30xxuart);
 
 #define  OCTEON_MIO_UART0               0x8001180000000800ull
 #define  OCTEON_MIO_UART0_LSR           0x8001180000000828ull
@@ -64,26 +64,26 @@ cons_decl(com_oct);
 #define  USR_TXFIFO_NOTFULL		2
 
 static int delay_changed = 1;
-int com_oct_delay(void);
-void com_oct_wait_txhr_empty(int);
+int cn30xxuart_delay(void);
+void cn30xxuart_wait_txhr_empty(int);
 
 int
-com_oct_probe(struct device *parent, void *match, void *aux)
+cn30xxuart_probe(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
-	struct combus_attach_args *cba = aux;
-	bus_space_tag_t iot = cba->cba_memt;
+	struct uartbus_attach_args *uba = aux;
+	bus_space_tag_t iot = uba->uba_memt;
 	bus_space_handle_t ioh;
 	int rv = 0, console;
 
-	if (strcmp(cba->cba_name, com_cd.cd_name) != 0)
+	if (strcmp(uba->uba_name, com_cd.cd_name) != 0)
 		return 0;
 
 	console = 1;
 
 	/* if it's in use as console, it's there. */
 	if (!(console && !comconsattached)) {
-		if (bus_space_map(iot, cba->cba_baseaddr, COM_NPORTS, 0, &ioh)) {
+		if (bus_space_map(iot, uba->uba_baseaddr, COM_NPORTS, 0, &ioh)) {
 			printf(": can't map uart registers\n");
 			return 1;
 		}
@@ -99,16 +99,16 @@ com_oct_probe(struct device *parent, void *match, void *aux)
 }
 
 void
-com_oct_attach(struct device *parent, struct device *self, void *aux)
+cn30xxuart_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_softc *sc = (void *)self;
-	struct combus_attach_args *cba = aux;
+	struct uartbus_attach_args *uba = aux;
 	int console;
 
 	console = 1;
 
-	sc->sc_iot = cba->cba_memt;
-	sc->sc_iobase = cba->cba_baseaddr;
+	sc->sc_iot = uba->uba_memt;
+	sc->sc_iobase = uba->uba_baseaddr;
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
 	sc->sc_frequency = curcpu()->ci_hw.clock;
@@ -134,7 +134,7 @@ com_oct_attach(struct device *parent, struct device *self, void *aux)
 
 	com_attach_subr(sc);
 
-	octeon_intr_establish(cba->cba_intr, IPL_TTY, comintr,
+	octeon_intr_establish(uba->uba_intr, IPL_TTY, comintr,
 	    (void *)sc, sc->sc_dev.dv_xname);
 }
 
@@ -142,7 +142,7 @@ com_oct_attach(struct device *parent, struct device *self, void *aux)
  * Early console routines.
  */
 int 
-com_oct_delay(void)
+cn30xxuart_delay(void)
 {
 	int divisor;
 	u_char lcr;
@@ -160,7 +160,7 @@ com_oct_delay(void)
 }
 
 void
-com_oct_wait_txhr_empty(int d)
+cn30xxuart_wait_txhr_empty(int d)
 {
 	while (((*(uint64_t*)OCTEON_MIO_UART0_LSR & LSR_TXRDY) == 0) &&
         	((*(uint64_t*)OCTEON_MIO_UART0_USR & USR_TXFIFO_NOTFULL) == 0))
@@ -168,39 +168,39 @@ com_oct_wait_txhr_empty(int d)
 }
 
 void
-com_octcninit(struct consdev *consdev)
+cn30xxuartcninit(struct consdev *consdev)
 {
 }
 
 void
-com_octcnprobe(struct consdev *consdev)
+cn30xxuartcnprobe(struct consdev *consdev)
 {
 }
 
 void
-com_octcnpollc(dev_t dev, int c)
+cn30xxuartcnpollc(dev_t dev, int c)
 {
 }
 
 void
-com_octcnputc (dev_t dev, int c)
+cn30xxuartcnputc (dev_t dev, int c)
 {
 	int d;
 
 	/* 1/10th the time to transmit 1 character (estimate). */
-	d = com_oct_delay();
-        com_oct_wait_txhr_empty(d);
+	d = cn30xxuart_delay();
+        cn30xxuart_wait_txhr_empty(d);
 	*(uint64_t*)OCTEON_MIO_UART0_RBR = (uint8_t)c;
-        com_oct_wait_txhr_empty(d);
+        cn30xxuart_wait_txhr_empty(d);
 }
 
 int
-com_octcngetc (dev_t dev)
+cn30xxuartcngetc (dev_t dev)
 {
 	int c, d;
 
 	/* 1/10th the time to transmit 1 character (estimate). */
-	d = com_oct_delay();
+	d = cn30xxuart_delay();
 
 	while ((*(uint64_t*)OCTEON_MIO_UART0_LSR & LSR_RXRDY) == 0)
 		delay(d);

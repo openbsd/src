@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.8 2011/05/08 13:24:55 syuu Exp $ */
+/*	$OpenBSD: machdep.c,v 1.9 2011/05/08 13:39:30 syuu Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -206,8 +206,8 @@ vaddr_t	mips_init(__register_t, __register_t, __register_t, __register_t);
 boolean_t is_memory_range(paddr_t, psize_t, psize_t);
 void	octeon_memory_init(struct boot_info *);
 
-cons_decl(com_oct);
-struct consdev octcons = cons_init(com_oct);
+cons_decl(cn30xxuart);
+struct consdev octcons = cons_init(cn30xxuart);
 
 #define btoc(x) (((x)+PAGE_MASK)>>PAGE_SHIFT)
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.7 2011/05/08 13:24:55 syuu Exp $
+#	$OpenBSD: files.octeon,v 1.8 2011/05/08 13:39:30 syuu Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -60,13 +60,13 @@ device	octcf: disk
 attach	octcf at iobus
 file	arch/octeon/dev/octcf.c				octcf
 
-define	combus {[base = -1]}
-device	combus
-attach	combus at mainbus
-file	arch/octeon/dev/combus.c			combus
+define	uartbus {[base = -1]}
+device	uartbus
+attach	uartbus at mainbus
+file	arch/octeon/dev/octeon_uartbus.c		uartbus
 
-attach	com at combus with com_oct
-file	arch/octeon/dev/com_oct.c			com_oct
+attach	com at uartbus with cn30xxuart
+file	arch/octeon/dev/cn30xxuart.c			cn30xxuart
 
 device	pcibus
 attach	pcibus at iobus

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.6 2011/05/08 13:24:55 syuu Exp $
+#	$OpenBSD: GENERIC,v 1.7 2011/05/08 13:39:30 syuu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -29,12 +29,12 @@ mainbus0	at root
 cpu0		at mainbus0
 clock0		at mainbus0
 iobus0		at mainbus0
-combus0		at mainbus0
+uartbus0	at mainbus0
 
 octcf0		at iobus0
 
-com0		at combus0
-com1		at combus0
+com0		at uartbus0
+com1		at uartbus0
 
 pcibus*		at iobus0
 pci*		at pcibus?
