@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.104 2011/05/05 19:23:05 matthew Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.105 2011/05/08 19:46:10 matthew Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1590,10 +1590,12 @@ atascsi_io_get(void *cookie)
 void
 atascsi_io_put(void *cookie, void *io)
 {
-	struct ata_xfer		*xa = io;
+	struct atascsi_host_port	*ahp = cookie;
+	struct atascsi			*as = ahp->ahp_as;
+	struct ata_xfer			*xa = io;
 
 	xa->state = ATA_S_COMPLETE; /* XXX this state machine is dumb */
-	xa->ata_put_xfer(xa);
+	as->as_methods->ata_put_xfer(xa);
 }
 
 void

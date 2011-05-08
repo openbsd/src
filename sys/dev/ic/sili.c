@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.47 2011/01/26 21:41:00 drahn Exp $ */
+/*	$OpenBSD: sili.c,v 1.48 2011/05/08 19:46:10 matthew Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -211,6 +211,7 @@ struct atascsi_methods sili_atascsi_methods = {
 	sili_ata_probe,
 	sili_ata_free,
 	sili_ata_get_xfer,
+	sili_ata_put_xfer,
 	sili_ata_cmd
 };
 
@@ -833,7 +834,6 @@ sili_ccb_alloc(struct sili_port *sp)
 		ccb->ccb_xa.fis = (struct ata_fis_h2d *)&prb->fis;
 		ccb->ccb_xa.packetcmd = ((struct sili_prb_packet *)prb)->cdb;
 		ccb->ccb_xa.tag = i;
-		ccb->ccb_xa.ata_put_xfer = sili_ata_put_xfer;
 		ccb->ccb_xa.state = ATA_S_COMPLETE;
 
 		sili_put_ccb(ccb);

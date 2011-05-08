@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.177 2011/04/24 11:09:48 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.178 2011/05/08 19:46:10 matthew Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -622,6 +622,7 @@ struct atascsi_methods ahci_atascsi_methods = {
 	ahci_ata_probe,
 	ahci_ata_free,
 	ahci_ata_get_xfer,
+	ahci_ata_put_xfer,
 	ahci_ata_cmd
 };
 
@@ -1227,8 +1228,6 @@ nomem:
 		    (struct ata_fis_h2d *)ccb->ccb_cmd_table->cfis;
 		ccb->ccb_xa.packetcmd = ccb->ccb_cmd_table->acmd;
 		ccb->ccb_xa.tag = i;
-
-		ccb->ccb_xa.ata_put_xfer = ahci_ata_put_xfer;
 
 		ccb->ccb_xa.state = ATA_S_COMPLETE;
 		ahci_put_ccb(ccb);
