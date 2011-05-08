@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.57 2011/05/08 20:34:12 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.58 2011/05/08 20:45:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -331,7 +331,8 @@ server_client_handle_key(int key, struct mouse_event *mouse, void *data)
 		if (mouse->y + 1 == c->tty.sy &&
 		    options_get_number(oo, "mouse-select-window") &&
 		    options_get_number(oo, "status")) {
-			if (mouse->b == MOUSE_UP) {
+			if (mouse->b == MOUSE_UP &&
+			    c->last_mouse.b != MOUSE_UP) {
 				status_set_window_at(c, mouse->x);
 				return;
 			}
