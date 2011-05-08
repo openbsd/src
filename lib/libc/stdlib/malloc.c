@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.130 2011/05/05 12:11:20 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.131 2011/05/08 07:08:13 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -192,6 +192,11 @@ static u_char getrnibble(void);
 
 extern char	*__progname;
 
+#ifdef MALLOC_STATS
+void malloc_dump(int);
+static void malloc_exit(void);
+#endif
+
 /* low bits of r->p determine size: 0 means >= page size and p->size holding
  *  real size, otherwise r->size is a shift count, or 1 for malloc(0)
  */
@@ -216,142 +221,6 @@ hash(void *p)
 #endif
 	return sum;
 }
-
-#ifdef MALLOC_STATS
-static void
-dump_chunk(int fd, struct chunk_info *p, int fromfreelist)
-{
-	char buf[64];
-
-	while (p != NULL) {
-		snprintf(buf, sizeof(buf), "chunk %d %d/%d %p\n", p->size,
-		    p->free, p->total, p->page);
-		write(fd, buf, strlen(buf));
-		if (!fromfreelist)
-			break;
-		p = LIST_NEXT(p, entries);
-		if (p != NULL) {
-			snprintf(buf, sizeof(buf), "    ");
-			write(fd, buf, strlen(buf));
-		}
-	}
-}
-
-static void
-dump_free_chunk_info(int fd, struct dir_info *d)
-{
-	char buf[64];
-	int i;
-
-	snprintf(buf, sizeof(buf), "Free chunk structs:\n");
-	write(fd, buf, strlen(buf));
-	for (i = 0; i < MALLOC_MAXSHIFT; i++) {
-		struct chunk_info *p = LIST_FIRST(&d->chunk_dir[i]);
-		if (p != NULL) {
-			snprintf(buf, sizeof(buf), "%2d) ", i);
-			write(fd, buf, strlen(buf));
-			dump_chunk(fd, p, 1);
-		}
-	}
-
-}
-
-static void
-dump_free_page_info(int fd, struct dir_info *d)
-{
-	char buf[64];
-	int i;
-
-	snprintf(buf, sizeof(buf), "Free pages cached: %zu\n",
-	    d->free_regions_size);
-	write(fd, buf, strlen(buf));
-	for (i = 0; i < mopts.malloc_cache; i++) {
-		if (d->free_regions[i].p != NULL) {
-			snprintf(buf, sizeof(buf), "%2d) ", i);
-			write(fd, buf, strlen(buf));
-			snprintf(buf, sizeof(buf), "free at %p: %zu\n",
-			    d->free_regions[i].p, d->free_regions[i].size);
-			write(fd, buf, strlen(buf));
-		}
-	}
-}
-
-static void
-malloc_dump1(int fd, struct dir_info *d)
-{
-	char buf[64];
-	size_t i, realsize;
-
-	snprintf(buf, sizeof(buf), "Malloc dir of %s at %p\n", __progname, d);
-	write(fd, buf, strlen(buf));
-	if (d == NULL)
-		return;
-	snprintf(buf, sizeof(buf), "Regions slots %zu\n", d->regions_total);
-	write(fd, buf, strlen(buf));
-	snprintf(buf, sizeof(buf), "Finds %zu/%zu %f\n", d->finds,
-	    d->find_collisions,
-	    1.0 + (double)d->find_collisions / d->finds);
-	write(fd, buf, strlen(buf));
-	snprintf(buf, sizeof(buf), "Inserts %zu/%zu %f\n", d->inserts,
-	    d->insert_collisions,
-	    1.0 + (double)d->insert_collisions / d->inserts);
-	write(fd, buf, strlen(buf));
-	snprintf(buf, sizeof(buf), "Deletes %zu/%zu\n", d->deletes,
-	     d->delete_moves);
-	write(fd, buf, strlen(buf));
-	snprintf(buf, sizeof(buf), "Cheap reallocs %zu/%zu\n",
-	    d->cheap_reallocs, d->cheap_realloc_tries);
-	write(fd, buf, strlen(buf));
-	snprintf(buf, sizeof(buf), "Regions slots free %zu\n", d->regions_free);
-	write(fd, buf, strlen(buf));
-	for (i = 0; i < d->regions_total; i++) {
-		if (d->r[i].p != NULL) {
-			size_t h = hash(d->r[i].p) &
-			    (d->regions_total - 1);
-			snprintf(buf, sizeof(buf), "%4zx) #%zx %zd ",
-			    i, h, h - i);
-			write(fd, buf, strlen(buf));
-			REALSIZE(realsize, &d->r[i]);
-			if (realsize > MALLOC_MAXCHUNK) {
-				snprintf(buf, sizeof(buf),
-				    "%p: %zu\n", d->r[i].p, realsize);
-				write(fd, buf, strlen(buf));
-			} else
-				dump_chunk(fd,
-				    (struct chunk_info *)d->r[i].size, 0);
-		}
-	}
-	dump_free_chunk_info(fd, d);
-	dump_free_page_info(fd, d);
-	snprintf(buf, sizeof(buf), "In use %zu\n", malloc_used);
-	write(fd, buf, strlen(buf));
-	snprintf(buf, sizeof(buf), "Guarded %zu\n", malloc_guarded);
-	write(fd, buf, strlen(buf));
-}
-
-
-void
-malloc_dump(int fd)
-{
-	malloc_dump1(fd, g_pool);
-}
-
-static void
-malloc_exit(void)
-{
-	static const char q[] = "malloc() warning: Couldn't dump stats\n";
-	int save_errno = errno, fd;
-
-	fd = open("malloc.out", O_RDWR|O_APPEND);
-	if (fd != -1) {
-		malloc_dump(fd);
-		close(fd);
-	} else
-		write(STDERR_FILENO, q, sizeof(q) - 1);
-	errno = save_errno;
-}
-#endif /* MALLOC_STATS */
-
 
 static void
 wrterror(char *msg, void *p)
@@ -1516,3 +1385,138 @@ posix_memalign(void **memptr, size_t alignment, size_t size)
 	return 0;
 }
 
+#ifdef MALLOC_STATS
+static void
+dump_chunk(int fd, struct chunk_info *p, int fromfreelist)
+{
+	char buf[64];
+
+	while (p != NULL) {
+		snprintf(buf, sizeof(buf), "chunk %d %d/%d %p\n", p->size,
+		    p->free, p->total, p->page);
+		write(fd, buf, strlen(buf));
+		if (!fromfreelist)
+			break;
+		p = LIST_NEXT(p, entries);
+		if (p != NULL) {
+			snprintf(buf, sizeof(buf), "    ");
+			write(fd, buf, strlen(buf));
+		}
+	}
+}
+
+static void
+dump_free_chunk_info(int fd, struct dir_info *d)
+{
+	char buf[64];
+	int i;
+
+	snprintf(buf, sizeof(buf), "Free chunk structs:\n");
+	write(fd, buf, strlen(buf));
+	for (i = 0; i < MALLOC_MAXSHIFT; i++) {
+		struct chunk_info *p = LIST_FIRST(&d->chunk_dir[i]);
+		if (p != NULL) {
+			snprintf(buf, sizeof(buf), "%2d) ", i);
+			write(fd, buf, strlen(buf));
+			dump_chunk(fd, p, 1);
+		}
+	}
+
+}
+
+static void
+dump_free_page_info(int fd, struct dir_info *d)
+{
+	char buf[64];
+	int i;
+
+	snprintf(buf, sizeof(buf), "Free pages cached: %zu\n",
+	    d->free_regions_size);
+	write(fd, buf, strlen(buf));
+	for (i = 0; i < mopts.malloc_cache; i++) {
+		if (d->free_regions[i].p != NULL) {
+			snprintf(buf, sizeof(buf), "%2d) ", i);
+			write(fd, buf, strlen(buf));
+			snprintf(buf, sizeof(buf), "free at %p: %zu\n",
+			    d->free_regions[i].p, d->free_regions[i].size);
+			write(fd, buf, strlen(buf));
+		}
+	}
+}
+
+static void
+malloc_dump1(int fd, struct dir_info *d)
+{
+	char buf[64];
+	size_t i, realsize;
+
+	snprintf(buf, sizeof(buf), "Malloc dir of %s at %p\n", __progname, d);
+	write(fd, buf, strlen(buf));
+	if (d == NULL)
+		return;
+	snprintf(buf, sizeof(buf), "Regions slots %zu\n", d->regions_total);
+	write(fd, buf, strlen(buf));
+	snprintf(buf, sizeof(buf), "Finds %zu/%zu %f\n", d->finds,
+	    d->find_collisions,
+	    1.0 + (double)d->find_collisions / d->finds);
+	write(fd, buf, strlen(buf));
+	snprintf(buf, sizeof(buf), "Inserts %zu/%zu %f\n", d->inserts,
+	    d->insert_collisions,
+	    1.0 + (double)d->insert_collisions / d->inserts);
+	write(fd, buf, strlen(buf));
+	snprintf(buf, sizeof(buf), "Deletes %zu/%zu\n", d->deletes,
+	     d->delete_moves);
+	write(fd, buf, strlen(buf));
+	snprintf(buf, sizeof(buf), "Cheap reallocs %zu/%zu\n",
+	    d->cheap_reallocs, d->cheap_realloc_tries);
+	write(fd, buf, strlen(buf));
+	snprintf(buf, sizeof(buf), "Regions slots free %zu\n", d->regions_free);
+	write(fd, buf, strlen(buf));
+	for (i = 0; i < d->regions_total; i++) {
+		if (d->r[i].p != NULL) {
+			size_t h = hash(d->r[i].p) &
+			    (d->regions_total - 1);
+			snprintf(buf, sizeof(buf), "%4zx) #%zx %zd ",
+			    i, h, h - i);
+			write(fd, buf, strlen(buf));
+			REALSIZE(realsize, &d->r[i]);
+			if (realsize > MALLOC_MAXCHUNK) {
+				snprintf(buf, sizeof(buf),
+				    "%p: %zu\n", d->r[i].p, realsize);
+				write(fd, buf, strlen(buf));
+			} else
+				dump_chunk(fd,
+				    (struct chunk_info *)d->r[i].size, 0);
+		}
+	}
+	dump_free_chunk_info(fd, d);
+	dump_free_page_info(fd, d);
+	snprintf(buf, sizeof(buf), "In use %zu\n", malloc_used);
+	write(fd, buf, strlen(buf));
+	snprintf(buf, sizeof(buf), "Guarded %zu\n", malloc_guarded);
+	write(fd, buf, strlen(buf));
+}
+
+
+void
+malloc_dump(int fd)
+{
+	malloc_dump1(fd, g_pool);
+}
+
+static void
+malloc_exit(void)
+{
+	static const char q[] = "malloc() warning: Couldn't dump stats\n";
+	int save_errno = errno, fd;
+
+	fd = open("malloc.out", O_RDWR|O_APPEND);
+	if (fd != -1) {
+		malloc_dump(fd);
+		close(fd);
+	} else
+		write(STDERR_FILENO, q, sizeof(q) - 1);
+	errno = save_errno;
+}
+
+#endif /* MALLOC_STATS */
