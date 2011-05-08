@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.32 2010/09/22 01:18:57 matthew Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.33 2011/05/08 09:07:06 dlg Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -52,14 +52,7 @@
  *	Leffler, et al.: The Design and Implementation of the 4.3BSD
  *	    UNIX Operating System (Addison Welley, 1989)
  * on pages 231-233.
- *
- * The routines "getphysbuf" and "putphysbuf" steal and return a swap
- * buffer.  Leffler, et al., says that swap buffers are used to do the
- * I/O, so raw I/O requests don't have to be single-threaded.
  */
-
-struct buf *getphysbuf(void);
-void putphysbuf(struct buf *bp);
 
 /*
  * Do "physical I/O" on behalf of a user.  "Physical I/O" is I/O directly
@@ -80,30 +73,17 @@ physio(void (*strategy)(struct buf *), dev_t dev, int flags,
 	flags &= B_READ | B_WRITE;
 
 	/* Create a buffer. */
-	bp = getphysbuf();
-
-	/* [raise the processor priority level to splbio;] */
 	s = splbio();
-
-	/* [while the buffer is marked busy] */
-	while (bp->b_flags & B_BUSY) {
-		/* [mark the buffer wanted] */
-		bp->b_flags |= B_WANTED;
-		/* [wait until the buffer is available] */
-		tsleep(bp, PRIBIO+1, "physbuf", 0);
-	}
-
-	/* Mark it busy, so nobody else will use it. */
-	bp->b_flags |= B_BUSY;
-
-	/* [lower the priority level] */
-	splx(s);
+	bp = pool_get(&bufpool, PR_WAITOK | PR_ZERO);
 
 	/* [set up the fixed part of the buffer for a transfer] */
+	bp->b_vnbufs.le_next = NOLIST;
 	bp->b_dev = dev;
 	bp->b_error = 0;
 	bp->b_proc = p;
+	bp->b_flags = B_BUSY;
 	LIST_INIT(&bp->b_dep);
+	splx(s);
 
 	/*
 	 * [while there are data to transfer and no I/O error]
@@ -237,54 +217,15 @@ after_unlock:
 done:
 	/*
 	 * [clean up the state of the buffer]
-	 * Remember if somebody wants it, so we can wake them up below.
-	 * Also, if we had to steal it, give it back.
 	 */
 	s = splbio();
-	bp->b_flags &= ~(B_BUSY | B_PHYS | B_RAW);
-	putphysbuf(bp);
-	splx(s);
-
-	return (error);
-}
-
-/*
- * Get a swap buffer structure, for use in physical I/O.
- * Mostly taken from /sys/vm/swap_pager.c, except that it no longer
- * records buffer list-empty conditions, and sleeps at PRIBIO + 1,
- * rather than PSWP + 1 (and on a different wchan).
- */
-struct buf *
-getphysbuf(void)
-{
-	struct buf *bp;
-
-	bp = pool_get(&bufpool, PR_WAITOK | PR_ZERO);
-	bp->b_vnbufs.le_next = NOLIST;
-
-	return (bp);
-}
-
-/*
- * Get rid of a swap buffer structure which has been used in physical I/O.
- * Mostly taken from /sys/vm/swap_pager.c, except that it now uses
- * wakeup() rather than the VM-internal thread_wakeup(), and that the caller
- * must mask disk interrupts, rather than putphysbuf() itself.
- */
-void
-putphysbuf(struct buf *bp)
-{
-	splassert(IPL_BIO);
-
 	/* XXXCDC: is this necessary? */
 	if (bp->b_vp)
 		brelvp(bp);
-
-#ifdef DIAGNOSTIC
-	if (bp->b_flags & B_WANTED)
-		panic("putphysbuf: private buf B_WANTED");
-#endif
+	splx(s);
 	pool_put(&bufpool, bp);
+
+	return (error);
 }
 
 /*
