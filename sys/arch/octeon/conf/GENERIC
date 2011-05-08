@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.5 2011/04/25 22:23:10 syuu Exp $
+#	$OpenBSD: GENERIC,v 1.6 2011/05/08 13:24:55 syuu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -28,15 +28,15 @@ config	bsd	swap generic
 mainbus0	at root
 cpu0		at mainbus0
 clock0		at mainbus0
-obio0		at mainbus0
+iobus0		at mainbus0
 combus0		at mainbus0
 
-octcf0		at obio0
+octcf0		at iobus0
 
 com0		at combus0
 com1		at combus0
 
-pcibus*		at obio0
+pcibus*		at iobus0
 pci*		at pcibus?
 
 # IDE Controller

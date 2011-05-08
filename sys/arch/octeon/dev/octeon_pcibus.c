@@ -1,5 +1,5 @@
-/*	$OpenBSD: octeon_pcibus.c,v 1.5 2010/12/04 20:01:05 syuu Exp $	*/
-/*	$OpenBSD: octeon_pcibus.c,v 1.5 2010/12/04 20:01:05 syuu Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.6 2011/05/08 13:24:55 syuu Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.6 2011/05/08 13:24:55 syuu Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -62,7 +62,7 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/ppbreg.h>
 
-#include <octeon/dev/obiovar.h>
+#include <octeon/dev/iobusvar.h>
 #include <octeon/dev/octeon_pcibus.h>
 #include <octeon/dev/octeon_pcibusvar.h>
 
@@ -191,9 +191,9 @@ struct mips_bus_space octeon_pcibus_pci_mem_space_tag = {
 int
 octeon_pcibus_match(struct device *parent, void *vcf, void *aux)
 {
-	struct obio_attach_args *oba = aux;
+	struct iobus_attach_args *aa = aux;
 
-	if (strcmp(oba->oba_name, pcibus_cd.cd_name) == 0)
+	if (strcmp(aa->aa_name, pcibus_cd.cd_name) == 0)
 		return 1;
 
 	return 0;
@@ -203,12 +203,12 @@ void
 octeon_pcibus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct octeon_pcibus_softc *sc;
-	struct obio_attach_args *oba;
+	struct iobus_attach_args *aa;
 	struct pcibus_attach_args pba;
 
 	sc = (struct octeon_pcibus_softc *)self;
-	oba = aux;
-	sc->sc_oba = oba;
+	aa = aux;
+	sc->sc_aa = aa;
 
 	/*
 	 * Attach PCI bus.
@@ -413,20 +413,20 @@ void *
 octeon_pcibus_pci_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
     int (*cb)(void *), void *cbarg, char *name)
 {
-	return obio_intr_establish(ih, level, cb, cbarg, name);
+	return octeon_intr_establish(ih, level, cb, cbarg, name);
 }
 
 void
 octeon_pcibus_pci_intr_disestablish(void *cookie, void *ihp)
 {
 	struct octeon_pcibus_softc *sc;
-	struct obio_attach_args *oba;
+	struct iobus_attach_args *aa;
 
 	sc = (struct octeon_pcibus_softc *)cookie;
-	oba = sc->sc_oba;
+	aa = sc->sc_aa;
 
 // XXX: this cause panic...
-//	obio_intr_disestablish(ihp);
+//	iobus_intr_disestablish(ihp);
 }
 
 /*

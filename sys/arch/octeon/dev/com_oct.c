@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_oct.c,v 1.2 2010/10/01 16:13:59 syuu Exp $	*/
+/*	$OpenBSD: com_oct.c,v 1.3 2011/05/08 13:24:55 syuu Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -34,12 +34,12 @@
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 #include <dev/cons.h>
 
-#include <octeon/dev/obiovar.h>
 #include <octeon/dev/combusvar.h>
 #include <octeon/dev/octeonreg.h>
 
@@ -134,7 +134,7 @@ com_oct_attach(struct device *parent, struct device *self, void *aux)
 
 	com_attach_subr(sc);
 
-	obio_intr_establish(cba->cba_intr, IPL_TTY, comintr,
+	octeon_intr_establish(cba->cba_intr, IPL_TTY, comintr,
 	    (void *)sc, sc->sc_dev.dv_xname);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.7 2010/11/28 20:53:41 syuu Exp $ */
+/*	$OpenBSD: machdep.c,v 1.8 2011/05/08 13:24:55 syuu Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -77,7 +77,7 @@
 
 #include <mips64/archtype.h>
 
-#include <octeon/dev/obiovar.h>
+#include <octeon/dev/iobusvar.h>
 #include <octeon/dev/octeonreg.h>
 
 struct boot_desc {
@@ -787,8 +787,8 @@ static int (*ipi_handler)(void *);
 
 uint32_t ipi_intr(uint32_t, struct trap_frame *);
 
-extern bus_space_t obio_tag;
-extern bus_space_handle_t obio_h;
+extern bus_space_t iobus_tag;
+extern bus_space_handle_t iobus_h;
 
 void
 hw_cpu_boot_secondary(struct cpu_info *ci)
@@ -847,9 +847,9 @@ hw_cpu_hatch(struct cpu_info *ci)
 	cpu_startclock(ci);
 	ncpus++;
 	cpuset_add(&cpus_running, ci);
-	obio_intr_init();
+	octeon_intr_init();
 	mips64_ipi_init();
-	obio_setintrmask(0);
+	octeon_setintrmask(0);
 	spl0();
 	(void)updateimask(0);
 
@@ -868,14 +868,14 @@ ipi_intr(uint32_t hwpend, struct trap_frame *frame)
 	/*
 	 * Mask all pending interrupts.
 	 */
-	bus_space_write_8(&obio_tag, obio_h, CIU_IP3_EN0(cpuid), 0);
+	bus_space_write_8(&iobus_tag, iobus_h, CIU_IP3_EN0(cpuid), 0);
 
 	ipi_handler((void *)cpuid);
 
 	/*
 	 * Reenable interrupts which have been serviced.
 	 */
-	bus_space_write_8(&obio_tag, obio_h, CIU_IP3_EN0(cpuid),
+	bus_space_write_8(&iobus_tag, iobus_h, CIU_IP3_EN0(cpuid),
 		(1ULL << CIU_INT_MBOX0)|(1ULL << CIU_INT_MBOX1));
 	return hwpend;
 }
@@ -886,9 +886,9 @@ hw_ipi_intr_establish(int (*func)(void *), u_long cpuid)
 	if (cpuid == 0)
 		ipi_handler = func;
 
-	bus_space_write_8(&obio_tag, obio_h, CIU_MBOX_CLR(cpuid),
+	bus_space_write_8(&iobus_tag, iobus_h, CIU_MBOX_CLR(cpuid),
 		0xffffffff);
-	bus_space_write_8(&obio_tag, obio_h, CIU_IP3_EN0(cpuid),
+	bus_space_write_8(&iobus_tag, iobus_h, CIU_IP3_EN0(cpuid),
 		(1ULL << CIU_INT_MBOX0)|(1ULL << CIU_INT_MBOX1));
 	set_intr(INTPRI_IPI, CR_INT_1, ipi_intr);
 
@@ -898,15 +898,15 @@ hw_ipi_intr_establish(int (*func)(void *), u_long cpuid)
 void
 hw_ipi_intr_set(u_long cpuid)
 {
-	bus_space_write_8(&obio_tag, obio_h, CIU_MBOX_SET(cpuid), 1);
+	bus_space_write_8(&iobus_tag, iobus_h, CIU_MBOX_SET(cpuid), 1);
 }
 
 void
 hw_ipi_intr_clear(u_long cpuid)
 {
 	uint64_t clr =
-		bus_space_read_8(&obio_tag, obio_h, CIU_MBOX_CLR(cpuid));
-	bus_space_write_8(&obio_tag, obio_h, CIU_MBOX_CLR(cpuid), clr);
+		bus_space_read_8(&iobus_tag, iobus_h, CIU_MBOX_CLR(cpuid));
+	bus_space_write_8(&iobus_tag, iobus_h, CIU_MBOX_CLR(cpuid), clr);
 }
 
 void

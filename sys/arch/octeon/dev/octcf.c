@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.1 2010/10/26 00:02:01 syuu Exp $ */
+/*	$OpenBSD: octcf.c,v 1.2 2011/05/08 13:24:55 syuu Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -83,7 +83,7 @@
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
 
-#include <octeon/dev/obiovar.h>
+#include <octeon/dev/iobusvar.h>
 #include <octeon/dev/octeonreg.h>
 
 #define OCTCF_REG_SIZE	8
@@ -173,15 +173,15 @@ void
 octcfattach(struct device *parent, struct device *self, void *aux)
 {
 	struct octcf_softc *wd = (void *)self;
-	struct obio_attach_args *oba = aux;
+	struct iobus_attach_args *aa = aux;
 	int i, blank;
 	char buf[41], c, *p, *q;
 	OCTCFDEBUG_PRINT(("octcfattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
 	uint8_t status;
 
-	wd->sc_iot = oba->oba_memt;
+	wd->sc_iot = aa->aa_bust;
 
-	if (bus_space_map(wd->sc_iot, oba->oba_baseaddr,
+	if (bus_space_map(wd->sc_iot, aa->aa_unit->addr,
 	    OCTCF_REG_SIZE, BUS_SPACE_MAP_KSEG0, &wd->sc_ioh)) {
 		printf(": couldn't map registers\n");
 		return;

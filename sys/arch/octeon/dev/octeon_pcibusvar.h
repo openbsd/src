@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_pcibusvar.h,v 1.2 2010/12/04 16:46:35 miod Exp $	*/
+/*	$OpenBSD: octeon_pcibusvar.h,v 1.3 2011/05/08 13:24:55 syuu Exp $	*/
 /*	$NetBSD: octeon_pcibusvar.h,v 1.4 2008/04/28 20:23:28 martin Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@ struct extent;
 struct octeon_pcibus_softc {
 	struct device sc_dev;
 	struct mips_pci_chipset sc_pc;
-	struct obio_attach_args *sc_oba;
+	struct iobus_attach_args *sc_aa;
 };
 
 #ifdef _KERNEL
