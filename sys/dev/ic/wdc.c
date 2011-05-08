@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.113 2011/04/18 04:16:13 deraadt Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.114 2011/05/08 17:33:56 matthew Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -861,9 +861,6 @@ wdcstart(struct channel_softc *chp)
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) != 0)
 		panic("wdcstart: channel waiting for irq");
 #endif /* DIAGNOSTIC */
-	if (chp->wdc->cap & WDC_CAPABILITY_HWLOCK)
-		if (!(chp->wdc->claim_hw)(chp, 0))
-			return;
 
 	WDCDEBUG_PRINT(("wdcstart: xfer %p channel %d drive %d\n", xfer,
 	    chp->channel, xfer->drive), DEBUG_XFERS);
@@ -1919,7 +1916,6 @@ wdc_get_xfer(int flags)
 void
 wdc_free_xfer(struct channel_softc *chp, struct wdc_xfer *xfer)
 {
-	struct wdc_softc *wdc = chp->wdc;
 	int s;
 
 	if (xfer->c_flags & C_PRIVATEXFER) {
@@ -1928,8 +1924,6 @@ wdc_free_xfer(struct channel_softc *chp, struct wdc_xfer *xfer)
 		return;
 	}
 
-	if (wdc->cap & WDC_CAPABILITY_HWLOCK)
-		(*wdc->free_hw)(chp);
 	s = splbio();
 	chp->ch_flags &= ~WDCF_ACTIVE;
 	TAILQ_REMOVE(&chp->ch_queue->sc_xfer, xfer, c_xferchain);

@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.49 2011/04/18 04:16:14 deraadt Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.50 2011/05/08 17:33:57 matthew Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -157,9 +157,6 @@ struct wdc_softc { /* Per controller state */
 #define WDC_CAPABILITY_MODE   0x0004	/* controller knows its PIO/DMA modes */
 #define WDC_CAPABILITY_DMA    0x0008	/* DMA */
 #define WDC_CAPABILITY_UDMA   0x0010	/* Ultra-DMA/33 */
-#define WDC_CAPABILITY_HWLOCK 0x0020	/* Needs to lock HW */
-#define WDC_CAPABILITY_ATA_NOSTREAM 0x0040 /* Don't use stream funcs on ATA */
-#define WDC_CAPABILITY_ATAPI_NOSTREAM 0x0080 /* Don't use stream f on ATAPI */
 #define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0100 /* only reset once */
 #define WDC_CAPABILITY_PREATA 0x0200	/* ctrl can be a pre-ata one */
 #define WDC_CAPABILITY_IRQACK 0x0400	/* callback to ack interrupt */
@@ -195,10 +192,6 @@ struct wdc_softc { /* Per controller state */
 #define WDC_DMAST_NOIRQ	0x01 /* missing IRQ */
 #define WDC_DMAST_ERR	0x02 /* DMA error */
 #define WDC_DMAST_UNDER	0x04 /* DMA underrun */
-
-	/* if WDC_CAPABILITY_HWLOCK set in 'cap' */
-	int             (*claim_hw)(void *, int);
-	void            (*free_hw)(void *);
 
 	/* if WDC_CAPABILITY_MODE set in 'cap' */
 	void            (*set_modes)(struct channel_softc *);
