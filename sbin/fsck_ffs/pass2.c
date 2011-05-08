@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.31 2011/04/24 07:07:03 otto Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.32 2011/05/08 14:38:40 otto Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -236,7 +236,6 @@ pass2(void)
 		    inp->i_number == ROOTINO)
 			continue;
 		pinp = getinoinfo(inp->i_parent);
-		inp->i_parentp = pinp;
 		inp->i_sibling = pinp->i_child;
 		pinp->i_child = inp;
 	}

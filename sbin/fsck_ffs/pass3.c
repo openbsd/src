@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass3.c,v 1.15 2011/04/16 16:37:21 otto Exp $	*/
+/*	$OpenBSD: pass3.c,v 1.16 2011/05/08 14:38:40 otto Exp $	*/
 /*	$NetBSD: pass3.c,v 1.8 1995/03/18 14:55:54 cgd Exp $	*/
 
 /*
@@ -75,7 +75,6 @@ pass3(void)
 			inp->i_parent = inp->i_dotdot = lfdir;
 			ILNCOUNT(lfdir)--;
 			pinp = getinoinfo(inp->i_parent);
-			inp->i_parentp = pinp;
 			inp->i_sibling = pinp->i_child;
 			pinp->i_child = inp;
 			SET_ISTATE(orphan, GET_ISTATE(inp->i_parent));

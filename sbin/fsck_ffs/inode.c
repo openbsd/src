@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.35 2011/04/24 07:07:03 otto Exp $	*/
+/*	$OpenBSD: inode.c,v 1.36 2011/05/08 14:38:40 otto Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -397,7 +397,7 @@ cacheino(union dinode *dp, ino_t inumber)
 	inpp = &inphead[inumber % numdirs];
 	inp->i_nexthash = *inpp;
 	*inpp = inp;
-	inp->i_child = inp->i_sibling = inp->i_parentp = 0;
+	inp->i_child = inp->i_sibling = 0;
 	if (inumber == ROOTINO)
 		inp->i_parent = ROOTINO;
 	else

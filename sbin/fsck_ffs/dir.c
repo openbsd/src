@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.26 2011/04/24 07:07:03 otto Exp $	*/
+/*	$OpenBSD: dir.c,v 1.27 2011/05/08 14:38:40 otto Exp $	*/
 /*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ propagate(ino_t inumber)
 		else if (inp->i_sibling)
 			inp = inp->i_sibling;
 		else
-			inp = inp->i_parentp;
+			inp = getinoinfo(inp->i_parent);
 	}
 }
 
