@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.71 2011/05/02 11:45:55 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.72 2011/05/09 12:24:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -63,8 +63,8 @@ spf_calc(struct area *area)
 	cand_list_clr();
 
 	/* initialize SPF tree */
-	if ((v = spf_root = lsa_find(area, LSA_TYPE_ROUTER, rde_router_id(),
-	    rde_router_id())) == NULL)
+	if ((v = spf_root = lsa_find_area(area, LSA_TYPE_ROUTER,
+	    rde_router_id(), rde_router_id())) == NULL)
 		/* empty area because no interface is active */
 		return;
 
@@ -86,7 +86,7 @@ spf_calc(struct area *area)
 				case LINK_TYPE_POINTTOPOINT:
 				case LINK_TYPE_VIRTUAL:
 					/* find router LSA */
-					w = lsa_find(area, LSA_TYPE_ROUTER,
+					w = lsa_find_area(area, LSA_TYPE_ROUTER,
 					    rtr_link->id, rtr_link->id);
 					break;
 				case LINK_TYPE_TRANSIT_NET:
@@ -100,7 +100,7 @@ spf_calc(struct area *area)
 			case LSA_TYPE_NETWORK:
 				net_link = get_net_link(v, i);
 				/* find router LSA */
-				w = lsa_find(area, LSA_TYPE_ROUTER,
+				w = lsa_find_area(area, LSA_TYPE_ROUTER,
 				    net_link->att_rtr, net_link->att_rtr);
 				break;
 			default:
@@ -231,7 +231,7 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 
 		/* TODO type 3 area address range check */
 
-		if ((w = lsa_find(area, LSA_TYPE_ROUTER,
+		if ((w = lsa_find_area(area, LSA_TYPE_ROUTER,
 		    htonl(v->adv_rtr),
 		    htonl(v->adv_rtr))) == NULL)
 			return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.71 2011/05/06 13:50:37 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.72 2011/05/09 12:24:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -167,6 +167,7 @@ if_new(struct kif *kif, struct kif_addr *ka)
 	LIST_INIT(&iface->nbr_list);
 	TAILQ_INIT(&iface->ls_ack_list);
 	TAILQ_INIT(&iface->auth_md_list);
+	RB_INIT(&iface->lsa_tree);
 
 	iface->crypt_seq_num = arc4random() & 0x0fffffff;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.42 2011/03/24 08:35:59 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.43 2011/05/09 12:24:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -313,6 +313,7 @@ nbr_new(u_int32_t nbr_id, struct iface *iface, int self)
 	bzero(&rn, sizeof(rn));
 	rn.id.s_addr = nbr->id.s_addr;
 	rn.area_id.s_addr = nbr->iface->area->id.s_addr;
+	rn.ifindex = nbr->iface->ifindex;
 	rn.state = nbr->state;
 	rn.self = self;
 	ospfe_imsg_compose_rde(IMSG_NEIGHBOR_UP, nbr->peerid, 0, &rn,
@@ -519,6 +520,8 @@ nbr_act_snapshot(struct nbr *nbr)
 {
 	stop_db_tx_timer(nbr);
 
+	ospfe_imsg_compose_rde(IMSG_NEIGHBOR_CAPA, nbr->peerid, 0,
+	    &nbr->capa_options, sizeof(nbr->capa_options));
 	ospfe_imsg_compose_rde(IMSG_DB_SNAPSHOT, nbr->peerid, 0, NULL, 0);
 
 	return (0);
@@ -677,7 +680,7 @@ nbr_to_ctl(struct nbr *nbr)
 	nctl.state_chng_cnt = nbr->stats.sta_chng;
 
 	nctl.priority = nbr->priority;
-	nctl.options = nbr->options;
+	nctl.options = nbr->options | nbr->capa_options;
 
 	gettimeofday(&now, NULL);
 	if (evtimer_pending(&nbr->inactivity_timer, &tv)) {

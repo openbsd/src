@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.81 2011/05/02 09:22:23 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.82 2011/05/09 12:24:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -375,6 +375,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 			LIST_INIT(&niface->nbr_list);
 			TAILQ_INIT(&niface->ls_ack_list);
 			TAILQ_INIT(&niface->auth_md_list);
+			RB_INIT(&niface->lsa_tree);
 
 			niface->area = narea;
 			LIST_INSERT_HEAD(&narea->iface_list, niface, entry);
@@ -544,6 +545,12 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 						&lsa_hdr, imsg.data);
 				    }
 				}
+			} else if (lsa_hdr.type == LSA_TYPE_LINK_OPAQ) {
+				/*
+				 * Flood on interface only
+				 */
+				noack += lsa_flood(nbr->iface, nbr,
+				    &lsa_hdr, imsg.data);
 			} else {
 				/*
 				 * Flood on all area interfaces. For
@@ -676,6 +683,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 				}
 			break;
 		case IMSG_CTL_AREA:
+		case IMSG_CTL_IFACE:
 		case IMSG_CTL_END:
 		case IMSG_CTL_SHOW_DATABASE:
 		case IMSG_CTL_SHOW_DB_EXT:
@@ -684,6 +692,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 		case IMSG_CTL_SHOW_DB_SELF:
 		case IMSG_CTL_SHOW_DB_SUM:
 		case IMSG_CTL_SHOW_DB_ASBR:
+		case IMSG_CTL_SHOW_DB_OPAQ:
 		case IMSG_CTL_SHOW_RIB:
 		case IMSG_CTL_SHOW_SUM:
 		case IMSG_CTL_SHOW_SUM_AREA:

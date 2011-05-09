@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.89 2011/01/12 15:07:46 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.90 2011/05/09 12:24:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -80,6 +80,7 @@ enum imsg_type {
 	IMSG_CTL_SHOW_DB_SELF,
 	IMSG_CTL_SHOW_DB_SUM,
 	IMSG_CTL_SHOW_DB_ASBR,
+	IMSG_CTL_SHOW_DB_OPAQ,
 	IMSG_CTL_SHOW_NBR,
 	IMSG_CTL_SHOW_RIB,
 	IMSG_CTL_SHOW_SUM,
@@ -88,6 +89,7 @@ enum imsg_type {
 	IMSG_CTL_FIB_DECOUPLE,
 	IMSG_CTL_FIB_RELOAD,
 	IMSG_CTL_AREA,
+	IMSG_CTL_IFACE,
 	IMSG_CTL_KROUTE,
 	IMSG_CTL_KROUTE_ADDR,
 	IMSG_CTL_IFINFO,
@@ -99,6 +101,7 @@ enum imsg_type {
 	IMSG_NEIGHBOR_UP,
 	IMSG_NEIGHBOR_DOWN,
 	IMSG_NEIGHBOR_CHANGE,
+	IMSG_NEIGHBOR_CAPA,
 	IMSG_NETWORK_ADD,
 	IMSG_NETWORK_DEL,
 	IMSG_DD,
@@ -310,6 +313,7 @@ struct iface {
 	LIST_HEAD(, nbr)	 nbr_list;
 	struct auth_md_head	 auth_md_list;
 	struct lsa_head		 ls_ack_list;
+	struct lsa_tree		 lsa_tree;
 
 	char			 name[IF_NAMESIZE];
 	char			 demote_group[IFNAMSIZ];

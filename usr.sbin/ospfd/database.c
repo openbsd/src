@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.28 2011/03/04 09:24:46 claudio Exp $ */
+/*	$OpenBSD: database.c,v 1.29 2011/05/09 12:24:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -138,7 +138,8 @@ send_db_description(struct nbr *nbr)
 		fatalx("send_db_description: unknown interface type");
 	}
 
-	dd_hdr.opts = area_ospf_options(nbr->iface->area);
+	/* XXX button or not for opaque LSA? */
+	dd_hdr.opts = area_ospf_options(nbr->iface->area) | OSPF_OPTION_O;
 	dd_hdr.bits = bits;
 	dd_hdr.dd_seq_num = htonl(nbr->dd_seq_num);
 
@@ -211,6 +212,13 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 	case NBR_STA_XSTRT:
 		if (dupe)
 			return;
+		nbr->capa_options = dd_hdr.opts;
+		if ((nbr->capa_options & nbr->options) != nbr->options) {
+			log_warnx("recv_db_description: neighbor ID %s "
+			    "sent inconsistent options %x vs. %x",
+			    inet_ntoa(nbr->id), nbr->capa_options,
+			    nbr->options);
+		}
 		/*
 		 * check bits: either I,M,MS or only M
 		 */
