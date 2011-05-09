@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_route.c,v 1.3 2011/05/05 12:01:44 reyk Exp $	*/
+/*	$OpenBSD: pfe_route.c,v 1.4 2011/05/09 12:08:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2009 Reyk Floeter <reyk@openbsd.org>
@@ -35,8 +35,6 @@
 #include <openssl/ssl.h>
 
 #include "relayd.h"
-
-extern struct imsgev	*iev_main;
 
 struct relay_rtmsg {
 	struct rt_msghdr	rm_hdr;
@@ -102,8 +100,8 @@ sync_routes(struct relayd *env, struct router *rt)
 			crt.hostid = host->conf.id;
 			crt.up = host->up;
 
-			imsg_compose_event(iev_main, IMSG_RTMSG,
-			    0, 0, -1, &crt, sizeof(crt));
+			proc_compose_imsg(env->sc_ps, PROC_PARENT, -1,
+			    IMSG_RTMSG, -1, &crt, sizeof(crt));
 		}
 	}
 }

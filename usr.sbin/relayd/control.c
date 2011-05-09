@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.37 2011/05/05 12:01:43 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.38 2011/05/09 12:08:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -40,18 +40,19 @@
 
 struct ctl_connlist ctl_conns;
 
-struct ctl_conn	*control_connbyfd(int);
+void		 control_accept(int, short, void *);
 void		 control_close(int);
 
-struct imsgev	*iev_main = NULL;
-struct imsgev	*iev_hce = NULL;
-
 int
-control_init(void)
+control_init(struct privsep *ps, struct control_sock *cs)
 {
+	struct relayd		*env = ps->ps_env;
 	struct sockaddr_un	 sun;
 	int			 fd;
-	mode_t			 old_umask;
+	mode_t			 old_umask, mode;
+
+	if (cs->cs_name == NULL)
+		return (0);
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
 		log_warn("%s: socket", __func__);
@@ -59,67 +60,74 @@ control_init(void)
 	}
 
 	sun.sun_family = AF_UNIX;
-	if (strlcpy(sun.sun_path, RELAYD_SOCKET,
+	if (strlcpy(sun.sun_path, cs->cs_name,
 	    sizeof(sun.sun_path)) >= sizeof(sun.sun_path)) {
-		log_warn("%s: %s name too long", __func__, RELAYD_SOCKET);
+		log_warn("%s: %s name too long", __func__, cs->cs_name);
 		close(fd);
 		return (-1);
 	}
 
-	if (unlink(RELAYD_SOCKET) == -1)
+	if (unlink(cs->cs_name) == -1)
 		if (errno != ENOENT) {
-			log_warn("%s: unlink %s", __func__, RELAYD_SOCKET);
+			log_warn("%s: unlink %s", __func__, cs->cs_name);
 			close(fd);
 			return (-1);
 		}
 
-	old_umask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|S_IXOTH);
+	if (cs->cs_restricted) {
+		old_umask = umask(S_IXUSR|S_IXGRP|S_IXOTH);
+		mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
+	} else {
+		old_umask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|S_IXOTH);
+		mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP;
+	}
+
 	if (bind(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
-		log_warn("%s: bind: %s", __func__, RELAYD_SOCKET);
+		log_warn("%s: bind: %s", __func__, cs->cs_name);
 		close(fd);
 		(void)umask(old_umask);
 		return (-1);
 	}
 	(void)umask(old_umask);
 
-	if (chmod(RELAYD_SOCKET, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP) == -1) {
+	if (chmod(cs->cs_name, mode) == -1) {
 		log_warn("%s: chmod", __func__);
 		close(fd);
-		(void)unlink(RELAYD_SOCKET);
+		(void)unlink(cs->cs_name);
 		return (-1);
 	}
 
-	session_socket_blockmode(fd, BM_NONBLOCK);
-	control_state.fd = fd;
-	TAILQ_INIT(&ctl_conns);
+	socket_set_blockmode(fd, BM_NONBLOCK);
+	cs->cs_fd = fd;
+	cs->cs_env = env;
 
 	return (0);
 }
 
 int
-control_listen(struct relayd *env, struct imsgev *i_main,
-    struct imsgev *i_hce)
+control_listen(struct control_sock *cs)
 {
+	if (cs->cs_name == NULL)
+		return (0);
 
-	iev_main = i_main;
-	iev_hce = i_hce;
-
-	if (listen(control_state.fd, CONTROL_BACKLOG) == -1) {
+	if (listen(cs->cs_fd, CONTROL_BACKLOG) == -1) {
 		log_warn("%s: listen", __func__);
 		return (-1);
 	}
 
-	event_set(&control_state.ev, control_state.fd, EV_READ | EV_PERSIST,
-	    control_accept, env);
-	event_add(&control_state.ev, NULL);
+	event_set(&cs->cs_ev, cs->cs_fd, EV_READ | EV_PERSIST,
+	    control_accept, cs->cs_env);
+	event_add(&cs->cs_ev, NULL);
 
 	return (0);
 }
 
 void
-control_cleanup(void)
+control_cleanup(struct control_sock *cs)
 {
-	(void)unlink(RELAYD_SOCKET);
+	if (cs->cs_name == NULL)
+		return;
+	(void)unlink(cs->cs_name);
 }
 
 /* ARGSUSED */
@@ -140,7 +148,7 @@ control_accept(int listenfd, short event, void *arg)
 		return;
 	}
 
-	session_socket_blockmode(connfd, BM_NONBLOCK);
+	socket_set_blockmode(connfd, BM_NONBLOCK);
 
 	if ((c = calloc(1, sizeof(struct ctl_conn))) == NULL) {
 		close(connfd);
@@ -323,8 +331,8 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			    0, 0, -1, NULL, 0);
 			break;
 		case IMSG_CTL_POLL:
-			imsg_compose_event(iev_hce, IMSG_CTL_POLL,
-			    0, 0,-1, NULL, 0);
+			proc_compose_imsg(env->sc_ps, PROC_HCE, -1,
+			    IMSG_CTL_POLL, -1, NULL, 0);
 			imsg_compose_event(&c->iev, IMSG_CTL_OK,
 			    0, 0, -1, NULL, 0);
 			break;
@@ -334,8 +342,8 @@ control_dispatch_imsg(int fd, short event, void *arg)
 				    0, 0, -1, NULL, 0);
 				break;
 			}
-			imsg_compose_event(iev_main, IMSG_CTL_RELOAD,
-			    0, 0, -1, NULL, 0);
+			proc_compose_imsg(env->sc_ps, PROC_PARENT, -1, IMSG_CTL_RELOAD,
+			    -1, NULL, 0);
 			/*
 			 * we unconditionnaly return a CTL_OK imsg because
 			 * we have no choice.
@@ -358,20 +366,17 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			}
 			c->flags |= CTL_CONN_NOTIFY;
 			break;
-		case IMSG_CTL_LOG_VERBOSE:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(verbose))
-				break;
+		case IMSG_CTL_VERBOSE:
+			IMSG_SIZE_CHECK(&imsg, &verbose);
 
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 
-			imsg_compose_event(iev_hce, IMSG_CTL_LOG_VERBOSE,
-			    0, 0, -1, &verbose, sizeof(verbose));
-			imsg_compose_event(iev_main, IMSG_CTL_LOG_VERBOSE,
-			    0, 0, -1, &verbose, sizeof(verbose));
+			proc_forward_imsg(env->sc_ps, &imsg, PROC_PARENT, 0);
+			proc_forward_imsg(env->sc_ps, &imsg, PROC_HCE, 0);
+			proc_forward_imsg(env->sc_ps, &imsg, PROC_RELAY, -1);
+
 			memcpy(imsg.data, &verbose, sizeof(verbose));
 			control_imsg_forward(&imsg);
-
 			log_verbose(verbose);
 			break;
 		default:
@@ -398,7 +403,7 @@ control_imsg_forward(struct imsg *imsg)
 }
 
 void
-session_socket_blockmode(int fd, enum blockmodes bm)
+socket_set_blockmode(int fd, enum blockmodes bm)
 {
 	int	flags;
 

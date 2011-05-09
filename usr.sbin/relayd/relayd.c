@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.101 2011/05/05 12:01:44 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.102 2011/05/09 12:08:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -34,7 +34,6 @@
 #include <err.h>
 #include <errno.h>
 #include <event.h>
-#include <signal.h>
 #include <unistd.h>
 #include <ctype.h>
 #include <pwd.h>
@@ -47,39 +46,30 @@
 
 __dead void	 usage(void);
 
-void		 main_sig_handler(int, short, void *);
-void		 main_shutdown(struct relayd *);
-void		 main_dispatch_pfe(int, short, void *);
-void		 main_dispatch_hce(int, short, void *);
-void		 main_dispatch_relay(int, short, void *);
-int		 check_child(pid_t, const char *);
-int		 send_all(struct relayd *, enum imsg_type,
-		    void *, u_int16_t);
+void		 parent_sig_handler(int, short, void *);
+void		 parent_shutdown(struct relayd *);
+int		 parent_dispatch_pfe(int, struct privsep_proc *, struct imsg *);
+int		 parent_dispatch_hce(int, struct privsep_proc *, struct imsg *);
+int		 parent_dispatch_relay(int, struct privsep_proc *, struct imsg *);
 void		 reconfigure(void);
 void		 purge_tree(struct proto_tree *);
 int		 bindany(struct ctl_bindany *);
 
-int		 pipe_parent2pfe[2];
-int		 pipe_parent2hce[2];
-int		 pipe_pfe2hce[2];
-int		 pipe_parent2relay[RELAY_MAXPROC][2];
-int		 pipe_pfe2relay[RELAY_MAXPROC][2];
-
 struct relayd	*relayd_env;
 
-struct imsgev	*iev_pfe;
-struct imsgev	*iev_hce;
-struct imsgev	*iev_relay;
-
-pid_t		 pfe_pid = 0;
-pid_t		 hce_pid = 0;
-pid_t		 relay_pid = 0;
+static struct privsep_proc procs[] = {
+	{ "pfe",	PROC_PFE, parent_dispatch_pfe, pfe },
+	{ "hce",	PROC_HCE, parent_dispatch_hce, hce },
+	{ "relay",	PROC_RELAY, parent_dispatch_relay, relay }
+};
 
 void
-main_sig_handler(int sig, short event, void *arg)
+parent_sig_handler(int sig, short event, void *arg)
 {
-	struct relayd		*env = arg;
-	int			 die = 0;
+	struct privsep	*ps = arg;
+	int		 die = 0, status, fail, id;
+	pid_t		 pid;
+	char		*cause;
 
 	switch (sig) {
 	case SIGTERM:
@@ -87,20 +77,39 @@ main_sig_handler(int sig, short event, void *arg)
 		die = 1;
 		/* FALLTHROUGH */
 	case SIGCHLD:
-		if (check_child(pfe_pid, "pf update engine")) {
-			pfe_pid = 0;
-			die  = 1;
-		}
-		if (check_child(hce_pid, "host check engine")) {
-			hce_pid = 0;
-			die  = 1;
-		}
-		if (check_child(relay_pid, "socket relay engine")) {
-			relay_pid = 0;
-			die  = 1;
-		}
+		do {
+			pid = waitpid(WAIT_ANY, &status, WNOHANG);
+			if (pid <= 0)
+				continue;
+
+			fail = 0;
+			if (WIFSIGNALED(status)) {
+				fail = 1;
+				asprintf(&cause, "terminated; signal %d",
+				    WTERMSIG(status));
+			} else if (WIFEXITED(status)) {
+				if (WEXITSTATUS(status) != 0) {
+					fail = 1;
+					asprintf(&cause, "exited abnormally");
+				} else
+					asprintf(&cause, "exited okay");
+			} else
+				fatalx("unexpected cause of SIGCHLD");
+
+			die = 1;
+
+			for (id = 0; id < PROC_MAX; id++)
+				if (pid == ps->ps_pid[id]) {
+					log_warnx("lost child: %s %s",
+					    ps->ps_title[id], cause);
+					break;
+				}
+
+			free(cause);
+		} while (pid > 0 || (pid == -1 && errno == EINTR));
+
 		if (die)
-			main_shutdown(env);
+			parent_shutdown(ps->ps_env);
 		break;
 	case SIGHUP:
 		reconfigure();
@@ -131,8 +140,8 @@ main(int argc, char *argv[])
 	int			 debug;
 	u_int32_t		 opts;
 	struct relayd		*env;
+	struct privsep		*ps;
 	const char		*conffile;
-	struct imsgev		*iev;
 
 	opts = 0;
 	debug = 0;
@@ -170,9 +179,13 @@ main(int argc, char *argv[])
 	if (argc > 0)
 		usage();
 
-	if ((env = parse_config(conffile, opts)) == NULL)
+	if ((env = parse_config(conffile, opts)) == NULL ||
+	    (ps = calloc(1, sizeof(*ps))) == NULL)
 		exit(1);
+
 	relayd_env = env;
+	env->sc_ps = ps;
+	ps->ps_env = env;
 
 	if (env->sc_opts & RELAYD_OPT_NOACTION) {
 		fprintf(stderr, "configuration OK\n");
@@ -184,8 +197,11 @@ main(int argc, char *argv[])
 	if (geteuid())
 		errx(1, "need root privileges");
 
-	if (getpwnam(RELAYD_USER) == NULL)
+	if ((ps->ps_pw =  getpwnam(RELAYD_USER)) == NULL)
 		errx(1, "unknown user %s", RELAYD_USER);
+
+	/* Configure the control socket */
+	ps->ps_csock.cs_name = RELAYD_SOCKET;
 
 	if (!debug) {
 		log_init(debug);
@@ -195,179 +211,50 @@ main(int argc, char *argv[])
 
 	log_info("startup");
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
-	    pipe_parent2pfe) == -1)
-		fatal("socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
-	    pipe_parent2hce) == -1)
-		fatal("socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
-	    pipe_pfe2hce) == -1)
-		fatal("socketpair");
-	for (c = 0; c < env->sc_prefork_relay; c++) {
-		if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
-		    pipe_parent2relay[c]) == -1)
-			fatal("socketpair");
-		if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
-		    pipe_pfe2relay[c]) == -1)
-			fatal("socketpair");
-		session_socket_blockmode(pipe_pfe2relay[c][0], BM_NONBLOCK);
-		session_socket_blockmode(pipe_pfe2relay[c][1], BM_NONBLOCK);
-		session_socket_blockmode(pipe_parent2relay[c][0], BM_NONBLOCK);
-		session_socket_blockmode(pipe_parent2relay[c][1], BM_NONBLOCK);
-	}
-
-	session_socket_blockmode(pipe_parent2pfe[0], BM_NONBLOCK);
-	session_socket_blockmode(pipe_parent2pfe[1], BM_NONBLOCK);
-	session_socket_blockmode(pipe_parent2hce[0], BM_NONBLOCK);
-	session_socket_blockmode(pipe_parent2hce[1], BM_NONBLOCK);
-	session_socket_blockmode(pipe_pfe2hce[0], BM_NONBLOCK);
-	session_socket_blockmode(pipe_pfe2hce[1], BM_NONBLOCK);
-
-	pfe_pid = pfe(env, pipe_parent2pfe, pipe_parent2hce,
-	    pipe_parent2relay, pipe_pfe2hce, pipe_pfe2relay);
-	hce_pid = hce(env, pipe_parent2pfe, pipe_parent2hce,
-	    pipe_parent2relay, pipe_pfe2hce, pipe_pfe2relay);
-	if (env->sc_prefork_relay > 0)
-		relay_pid = relay(env, pipe_parent2pfe, pipe_parent2hce,
-		    pipe_parent2relay, pipe_pfe2hce, pipe_pfe2relay);
+	ps->ps_instances[PROC_RELAY] = env->sc_prefork_relay;
+	proc_init(ps, procs, nitems(procs));
 
 	setproctitle("parent");
 
 	event_init();
 
-	signal_set(&env->sc_evsigint, SIGINT, main_sig_handler, env);
-	signal_set(&env->sc_evsigterm, SIGTERM, main_sig_handler, env);
-	signal_set(&env->sc_evsigchld, SIGCHLD, main_sig_handler, env);
-	signal_set(&env->sc_evsighup, SIGHUP, main_sig_handler, env);
-	signal_set(&env->sc_evsigpipe, SIGPIPE, main_sig_handler, env);
+	signal_set(&ps->ps_evsigint, SIGINT, parent_sig_handler, ps);
+	signal_set(&ps->ps_evsigterm, SIGTERM, parent_sig_handler, ps);
+	signal_set(&ps->ps_evsigchld, SIGCHLD, parent_sig_handler, ps);
+	signal_set(&ps->ps_evsighup, SIGHUP, parent_sig_handler, ps);
+	signal_set(&ps->ps_evsigpipe, SIGPIPE, parent_sig_handler, ps);
 
-	signal_add(&env->sc_evsigint, NULL);
-	signal_add(&env->sc_evsigterm, NULL);
-	signal_add(&env->sc_evsigchld, NULL);
-	signal_add(&env->sc_evsighup, NULL);
-	signal_add(&env->sc_evsigpipe, NULL);
+	signal_add(&ps->ps_evsigint, NULL);
+	signal_add(&ps->ps_evsigterm, NULL);
+	signal_add(&ps->ps_evsigchld, NULL);
+	signal_add(&ps->ps_evsighup, NULL);
+	signal_add(&ps->ps_evsigpipe, NULL);
 
-	close(pipe_parent2pfe[1]);
-	close(pipe_parent2hce[1]);
-	close(pipe_pfe2hce[0]);
-	close(pipe_pfe2hce[1]);
-	for (c = 0; c < env->sc_prefork_relay; c++) {
-		close(pipe_pfe2relay[c][0]);
-		close(pipe_pfe2relay[c][1]);
-		close(pipe_parent2relay[c][0]);
-	}
-
-	if ((iev_pfe = calloc(1, sizeof(struct imsgev))) == NULL ||
-	    (iev_hce = calloc(1, sizeof(struct imsgev))) == NULL)
-		fatal(NULL);
-
-	if (env->sc_prefork_relay > 0) {
-		if ((iev_relay = calloc(env->sc_prefork_relay,
-		    sizeof(struct imsgev))) == NULL)
-			fatal(NULL);
-	}
-
-	imsg_init(&iev_pfe->ibuf, pipe_parent2pfe[0]);
-	imsg_init(&iev_hce->ibuf, pipe_parent2hce[0]);
-	iev_pfe->handler = main_dispatch_pfe;
-	iev_pfe->data = env;
-	iev_hce->handler = main_dispatch_hce;
-	iev_hce->data = env;
-
-	for (c = 0; c < env->sc_prefork_relay; c++) {
-		iev = &iev_relay[c];
-		imsg_init(&iev->ibuf, pipe_parent2relay[c][1]);
-		iev->handler = main_dispatch_relay;
-		iev->events = EV_READ;
-		event_set(&iev->ev, iev->ibuf.fd, iev->events,
-		    iev->handler, iev);
-		event_add(&iev->ev, NULL);
-	}
-
-	iev_pfe->events = EV_READ;
-	event_set(&iev_pfe->ev, iev_pfe->ibuf.fd, iev_pfe->events,
-	    iev_pfe->handler, iev_pfe);
-	event_add(&iev_pfe->ev, NULL);
-
-	iev_hce->events = EV_READ;
-	event_set(&iev_hce->ev, iev_hce->ibuf.fd, iev_hce->events,
-	    iev_hce->handler, iev_hce);
-	event_add(&iev_hce->ev, NULL);
-
-	if (env->sc_flags & F_DEMOTE)
-		carp_demote_reset(env->sc_demote_group, 0);
-
+	proc_config(ps, procs, nitems(procs));
 	init_routes(env);
 
 	event_dispatch();
 
-	main_shutdown(env);
+	parent_shutdown(env);
 	/* NOTREACHED */
 	return (0);
 }
 
 void
-main_shutdown(struct relayd *env)
+parent_shutdown(struct relayd *env)
 {
-	pid_t	pid;
-
-	if (pfe_pid)
-		kill(pfe_pid, SIGTERM);
-	if (hce_pid)
-		kill(hce_pid, SIGTERM);
-	if (relay_pid)
-		kill(relay_pid, SIGTERM);
-
-	do {
-		if ((pid = wait(NULL)) == -1 &&
-		    errno != EINTR && errno != ECHILD)
-			fatal("wait");
-	} while (pid != -1 || (pid == -1 && errno == EINTR));
-
-	control_cleanup();
+	proc_kill(env->sc_ps);
+	control_cleanup(&env->sc_ps->ps_csock);
 	carp_demote_shutdown();
 	if (env->sc_flags & F_DEMOTE)
 		carp_demote_reset(env->sc_demote_group, 128);
-	log_info("terminating");
+
+	free(env->sc_ps);
+	free(env);
+
+	log_info("parent terminating, pid %d", getpid());
+
 	exit(0);
-}
-
-int
-check_child(pid_t pid, const char *pname)
-{
-	int	status;
-
-	if (waitpid(pid, &status, WNOHANG) > 0) {
-		if (WIFEXITED(status)) {
-			log_warnx("%s: lost child: %s exited", __func__, pname);
-			return (1);
-		}
-		if (WIFSIGNALED(status)) {
-			log_warnx("%s: lost child: %s terminated; "
-			    "signal %d", __func__, pname, WTERMSIG(status));
-			return (1);
-		}
-	}
-
-	return (0);
-}
-
-int
-send_all(struct relayd *env, enum imsg_type type, void *buf, u_int16_t len)
-{
-	int		 i;
-
-	if (imsg_compose_event(iev_pfe, type, 0, 0, -1, buf, len) == -1)
-		return (-1);
-	if (imsg_compose_event(iev_hce, type, 0, 0, -1, buf, len) == -1)
-		return (-1);
-	for (i = 0; i < env->sc_prefork_relay; i++) {
-		if (imsg_compose_event(&iev_relay[i], type, 0, 0, -1, buf, len)
-		    == -1)
-			return (-1);
-	}
-	return (0);
 }
 
 void
@@ -405,6 +292,7 @@ reconfigure(void)
 {
 	struct relayd		*env = relayd_env;
 	struct relayd		*new_env = NULL;
+	struct privsep		*ps = env->sc_ps;
 	struct rdr		*rdr;
 	struct address		*virt;
 	struct table            *table;
@@ -433,41 +321,40 @@ reconfigure(void)
 	/*
 	 * first reconfigure pfe
 	 */
-	imsg_compose_event(iev_pfe, IMSG_RECONF, 0, 0, -1, env, sizeof(*env));
+	proc_compose_imsg(ps, PROC_PFE, -1, IMSG_RECONF, -1, env, sizeof(*env));
 	TAILQ_FOREACH(table, env->sc_tables, entry) {
-		imsg_compose_event(iev_pfe, IMSG_RECONF_TABLE, 0, 0, -1,
+		proc_compose_imsg(ps, PROC_PFE, -1, IMSG_RECONF_TABLE, -1,
 		    &table->conf, sizeof(table->conf));
 		TAILQ_FOREACH(host, &table->hosts, entry) {
-			imsg_compose_event(iev_pfe, IMSG_RECONF_HOST, 0, 0, -1,
-			    &host->conf, sizeof(host->conf));
+			proc_compose_imsg(ps, PROC_PFE, -1, IMSG_RECONF_HOST,
+			    -1, &host->conf, sizeof(host->conf));
 		}
 	}
 	TAILQ_FOREACH(rdr, env->sc_rdrs, entry) {
-		imsg_compose_event(iev_pfe, IMSG_RECONF_RDR, 0, 0, -1,
+		proc_compose_imsg(ps, PROC_PFE, -1, IMSG_RECONF_RDR, -1,
 		    &rdr->conf, sizeof(rdr->conf));
 		TAILQ_FOREACH(virt, &rdr->virts, entry)
-			imsg_compose_event(iev_pfe, IMSG_RECONF_VIRT, 0, 0, -1,
-				virt, sizeof(*virt));
+			proc_compose_imsg(ps, PROC_PFE, -1, IMSG_RECONF_VIRT,
+			    -1, virt, sizeof(*virt));
 	}
-	imsg_compose_event(iev_pfe, IMSG_RECONF_END, 0, 0, -1, NULL, 0);
+	proc_compose_imsg(ps, PROC_PFE, -1, IMSG_RECONF_END, -1, NULL, 0);
 
 	/*
 	 * then reconfigure hce
 	 */
-	imsg_compose_event(iev_hce, IMSG_RECONF, 0, 0, -1, env, sizeof(*env));
+	proc_compose_imsg(ps, PROC_HCE, -1, IMSG_RECONF, -1, env, sizeof(*env));
 	TAILQ_FOREACH(table, env->sc_tables, entry) {
-		imsg_compose_event(iev_hce, IMSG_RECONF_TABLE, 0, 0, -1,
+		proc_compose_imsg(ps, PROC_HCE, -1, IMSG_RECONF_TABLE, -1,
 		    &table->conf, sizeof(table->conf));
 		if (table->sendbuf != NULL)
-			imsg_compose_event(iev_hce, IMSG_RECONF_SENDBUF,
-			    0, 0, -1, table->sendbuf,
-			    strlen(table->sendbuf) + 1);
+			proc_compose_imsg(ps, PROC_HCE, -1, IMSG_RECONF_SENDBUF,
+			    -1, table->sendbuf, strlen(table->sendbuf) + 1);
 		TAILQ_FOREACH(host, &table->hosts, entry) {
-			imsg_compose_event(iev_hce, IMSG_RECONF_HOST, 0, 0, -1,
-			    &host->conf, sizeof(host->conf));
+			proc_compose_imsg(ps, PROC_HCE, -1, IMSG_RECONF_HOST,
+			    -1, &host->conf, sizeof(host->conf));
 		}
 	}
-	imsg_compose_event(iev_hce, IMSG_RECONF_END, 0, 0, -1, NULL, 0);
+	proc_compose_imsg(ps, PROC_HCE, -1, IMSG_RECONF_END, -1, NULL, 0);
 }
 
 void
@@ -581,236 +468,95 @@ purge_table(struct tablelist *head, struct table *table)
 	free(table);
 }
 
-void
-imsg_event_add(struct imsgev *iev)
+int
+parent_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	if (iev->handler == NULL) {
-		imsg_flush(&iev->ibuf);
-		return;
+	struct relayd		*env = p->p_env;
+	struct ctl_demote	 demote;
+	struct ctl_netroute	 crt;
+
+	switch (imsg->hdr.type) {
+	case IMSG_DEMOTE:
+		IMSG_SIZE_CHECK(imsg, &demote);
+		memcpy(&demote, imsg->data, sizeof(demote));
+		carp_demote_set(demote.group, demote.level);
+		break;
+	case IMSG_RTMSG:
+		IMSG_SIZE_CHECK(imsg, &crt);
+		memcpy(&crt, imsg->data, sizeof(crt));
+		pfe_route(env, &crt);
+		break;
+	case IMSG_CTL_RELOAD:
+		/*
+		 * so far we only get here if no L7 (relay) is done.
+		 */
+		reconfigure();
+		break;
+	default:
+		return (-1);
 	}
 
-	iev->events = EV_READ;
-	if (iev->ibuf.w.queued)
-		iev->events |= EV_WRITE;
-
-	event_del(&iev->ev);
-	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev);
-	event_add(&iev->ev, NULL);
+	return (0);
 }
 
 int
-imsg_compose_event(struct imsgev *iev, u_int16_t type,
-    u_int32_t peerid, pid_t pid, int fd, void *data, u_int16_t datalen)
+parent_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	int	ret;
-
-	if ((ret = imsg_compose(&iev->ibuf, type, peerid,
-	    pid, fd, data, datalen)) != -1)
-		imsg_event_add(iev);
-	return (ret);
-}
-
-void
-main_dispatch_pfe(int fd, short event, void *ptr)
-{
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
-	struct ctl_demote	 demote;
-	struct ctl_netroute	 crt;
-	struct relayd		*env;
-	int			 verbose;
-
-	iev = ptr;
-	ibuf = &iev->ibuf;
-	env = (struct relayd *)iev->data;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read_error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
-		}
-	}
-
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("main_dispatch_pfe: imsg_read error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		case IMSG_DEMOTE:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(demote))
-				fatalx("main_dispatch_pfe: "
-				    "invalid size of demote request");
-			memcpy(&demote, imsg.data, sizeof(demote));
-			carp_demote_set(demote.group, demote.level);
-			break;
-		case IMSG_RTMSG:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(crt))
-				fatalx("main_dispatch_pfe: "
-				    "invalid size of rtmsg request");
-			memcpy(&crt, imsg.data, sizeof(crt));
-			pfe_route(env, &crt);
-			break;
-		case IMSG_CTL_RELOAD:
-			/*
-			 * so far we only get here if no L7 (relay) is done.
-			 */
-			reconfigure();
-			break;
-		case IMSG_CTL_LOG_VERBOSE:
-			memcpy(&verbose, imsg.data, sizeof(verbose));
-			log_verbose(verbose);
-			break;
-		default:
-			log_debug("%s: unexpected imsg %d", __func__,
-			    imsg.hdr.type);
-			break;
-		}
-		imsg_free(&imsg);
-	}
-	imsg_event_add(iev);
-}
-
-void
-main_dispatch_hce(int fd, short event, void * ptr)
-{
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
+	struct relayd		*env = p->p_env;
+	struct privsep		*ps = env->sc_ps;
 	struct ctl_script	 scr;
-	struct relayd		*env;
 
-	env = relayd_env;
-	iev = ptr;
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
-		}
+	switch (imsg->hdr.type) {
+	case IMSG_SCRIPT:
+		IMSG_SIZE_CHECK(imsg, &scr);
+		bcopy(imsg->data, &scr, sizeof(scr));
+		scr.retval = script_exec(env, &scr);
+		proc_compose_imsg(ps, PROC_HCE, -1, IMSG_SCRIPT,
+		    -1, &scr, sizeof(scr));
+		break;
+	case IMSG_SNMPSOCK:
+		(void)snmp_sendsock(env, p->p_id);
+		break;
+	default:
+		return (-1);
 	}
 
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("main_dispatch_hce: imsg_read error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		case IMSG_SCRIPT:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(scr))
-				fatalx("main_dispatch_hce: "
-				    "invalid size of script request");
-			bcopy(imsg.data, &scr, sizeof(scr));
-			scr.retval = script_exec(env, &scr);
-			imsg_compose_event(iev_hce, IMSG_SCRIPT,
-			    0, 0, -1, &scr, sizeof(scr));
-			break;
-		case IMSG_SNMPSOCK:
-			(void)snmp_sendsock(iev);
-			break;
-		default:
-			log_debug("%s: unexpected imsg %d", __func__,
-			    imsg.hdr.type);
-			break;
-		}
-		imsg_free(&imsg);
-	}
-	imsg_event_add(iev);
+	return (0);
 }
 
-void
-main_dispatch_relay(int fd, short event, void * ptr)
+int
+parent_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct relayd		*env = relayd_env;
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
+	struct relayd		*env = p->p_env;
+	struct privsep		*ps = env->sc_ps;
 	struct ctl_bindany	 bnd;
 	int			 s;
 
-	iev = ptr;
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
-		}
-	}
-
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("main_dispatch_relay: imsg_read error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		case IMSG_BINDANY:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(bnd))
-				fatalx("invalid imsg header len");
-			bcopy(imsg.data, &bnd, sizeof(bnd));
-			if (bnd.bnd_proc > env->sc_prefork_relay)
-				fatalx("pfe_dispatch_relay: "
-				    "invalid relay proc");
-			switch (bnd.bnd_proto) {
-			case IPPROTO_TCP:
-			case IPPROTO_UDP:
-				break;
-			default:
-				fatalx("pfe_dispatch_relay: requested socket "
-				    "for invalid protocol");
-				/* NOTREACHED */
-			}
-			s = bindany(&bnd);
-			imsg_compose_event(&iev_relay[bnd.bnd_proc],
-			    IMSG_BINDANY,
-			    0, 0, s, &bnd.bnd_id, sizeof(bnd.bnd_id));
+	switch (imsg->hdr.type) {
+	case IMSG_BINDANY:
+		IMSG_SIZE_CHECK(imsg, &bnd);
+		bcopy(imsg->data, &bnd, sizeof(bnd));
+		if (bnd.bnd_proc > env->sc_prefork_relay)
+			fatalx("pfe_dispatch_relay: "
+			    "invalid relay proc");
+		switch (bnd.bnd_proto) {
+		case IPPROTO_TCP:
+		case IPPROTO_UDP:
 			break;
 		default:
-			log_debug("%s: unexpected imsg %d", __func__,
-			    imsg.hdr.type);
-			break;
+			fatalx("pfe_dispatch_relay: requested socket "
+			    "for invalid protocol");
+			/* NOTREACHED */
 		}
-		imsg_free(&imsg);
+		s = bindany(&bnd);
+		proc_compose_imsg(ps, PROC_RELAY, bnd.bnd_proc,
+		    IMSG_BINDANY, s, &bnd.bnd_id, sizeof(bnd.bnd_id));
+		break;
+	default:
+		return (-1);
 	}
-	imsg_event_add(iev);
+
+	return (0);
 }
 
 struct host *

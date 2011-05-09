@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.145 2011/05/05 10:20:24 phessler Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.146 2011/05/09 12:08:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -648,12 +648,156 @@ struct router {
 };
 TAILQ_HEAD(routerlist, router);
 
-enum {
-	PROC_MAIN,
+
+/* initially control.h */
+struct control_sock {
+	const char	*cs_name;
+	struct event	 cs_ev;
+	int		 cs_fd;
+	int		 cs_restricted;
+	void		*cs_env;
+};
+
+struct {
+	struct event	 ev;
+	int		 fd;
+} control_state;
+
+enum blockmodes {
+	BM_NORMAL,
+	BM_NONBLOCK
+};
+
+
+struct imsgev {
+	struct imsgbuf		 ibuf;
+	void			(*handler)(int, short, void *);
+	struct event		 ev;
+	struct privsep_proc	*proc;
+	void			*data;
+	short			 events;
+};
+
+#define IMSG_SIZE_CHECK(imsg, p) do {				\
+	if (IMSG_DATA_SIZE(imsg) < sizeof(*p))			\
+		fatalx("bad length imsg received");		\
+} while (0)
+#define IMSG_DATA_SIZE(imsg)	((imsg)->hdr.len - IMSG_HEADER_SIZE)
+
+struct ctl_conn {
+	TAILQ_ENTRY(ctl_conn)	 entry;
+	u_int8_t		 flags;
+#define CTL_CONN_NOTIFY		 0x01
+	struct imsgev	 	 iev;
+
+};
+TAILQ_HEAD(ctl_connlist, ctl_conn);
+
+enum imsg_type {
+	IMSG_NONE,
+	IMSG_CTL_OK,		/* answer to relayctl requests */
+	IMSG_CTL_FAIL,
+	IMSG_CTL_VERBOSE,
+	IMSG_CTL_END,
+	IMSG_CTL_RDR,
+	IMSG_CTL_TABLE,
+	IMSG_CTL_HOST,
+	IMSG_CTL_RELAY,
+	IMSG_CTL_SESSION,
+	IMSG_CTL_ROUTER,
+	IMSG_CTL_NETROUTE,
+	IMSG_CTL_TABLE_CHANGED,
+	IMSG_CTL_PULL_RULESET,
+	IMSG_CTL_PUSH_RULESET,
+	IMSG_CTL_SHOW_SUM,	/* relayctl requests */
+	IMSG_CTL_RDR_ENABLE,
+	IMSG_CTL_RDR_DISABLE,
+	IMSG_CTL_TABLE_ENABLE,
+	IMSG_CTL_TABLE_DISABLE,
+	IMSG_CTL_HOST_ENABLE,
+	IMSG_CTL_HOST_DISABLE,
+	IMSG_CTL_SHUTDOWN,
+	IMSG_CTL_RELOAD,
+	IMSG_CTL_POLL,
+	IMSG_CTL_NOTIFY,
+	IMSG_CTL_RDR_STATS,
+	IMSG_CTL_RELAY_STATS,
+	IMSG_RDR_ENABLE,	/* notifies from pfe to hce */
+	IMSG_RDR_DISABLE,
+	IMSG_TABLE_ENABLE,
+	IMSG_TABLE_DISABLE,
+	IMSG_HOST_ENABLE,
+	IMSG_HOST_DISABLE,
+	IMSG_HOST_STATUS,	/* notifies from hce to pfe */
+	IMSG_SYNC,
+	IMSG_NATLOOK,
+	IMSG_DEMOTE,
+	IMSG_STATISTICS,
+	IMSG_RECONF,		/* reconfiguration notifies */
+	IMSG_RECONF_TABLE,
+	IMSG_RECONF_SENDBUF,
+	IMSG_RECONF_HOST,
+	IMSG_RECONF_RDR,
+	IMSG_RECONF_VIRT,
+	IMSG_RECONF_PROTO,
+	IMSG_RECONF_REQUEST_TREE,
+	IMSG_RECONF_RESPONSE_TREE,
+	IMSG_RECONF_PNODE_KEY,
+	IMSG_RECONF_PNODE_VAL,
+	IMSG_RECONF_RELAY,
+	IMSG_RECONF_END,
+	IMSG_SCRIPT,
+	IMSG_SNMPSOCK,
+	IMSG_BINDANY,
+	IMSG_RTMSG		/* from pfe to parent */
+};
+
+enum privsep_procid {
+	PROC_PARENT	= 0,
 	PROC_PFE,
 	PROC_HCE,
-	PROC_RELAY
-} relayd_process;
+	PROC_RELAY,
+	PROC_MAX
+} privsep_process;
+
+/* Attach the control socket to the following process */
+#define PROC_CONTROL	PROC_PFE
+
+struct privsep {
+	int				*ps_pipes[PROC_MAX][PROC_MAX];
+	struct imsgev			*ps_ievs[PROC_MAX];
+	const char			*ps_title[PROC_MAX];
+	pid_t				 ps_pid[PROC_MAX];
+
+	u_int				 ps_instances[PROC_MAX];
+	u_int				 ps_instance;
+
+	struct control_sock		 ps_csock;
+
+	/* Event and signal handlers */
+	struct event			 ps_evsigint;
+	struct event			 ps_evsigterm;
+	struct event			 ps_evsigchld;
+	struct event			 ps_evsighup;
+	struct event			 ps_evsigpipe;
+
+	struct passwd			*ps_pw;
+	struct relayd			*ps_env;
+};
+
+struct privsep_proc {
+	const char		*p_title;
+	enum privsep_procid	 p_id;
+	int			(*p_cb)(int, struct privsep_proc *,
+				    struct imsg *);
+	pid_t			(*p_init)(struct privsep *,
+				    struct privsep_proc *);
+	void			(*p_shutdown)(void);
+	u_int			 p_instance;
+	const char		*p_chroot;
+	struct privsep		*p_ps;
+	struct relayd		*p_env;
+};
 
 struct relayd {
 	u_int8_t		 sc_opts;
@@ -697,12 +841,7 @@ struct relayd {
 	struct ctl_icmp_event	 sc_icmp6_send;
 	struct ctl_icmp_event	 sc_icmp6_recv;
 
-	/* Event and signal handlers */
-	struct event		 sc_evsigint;
-	struct event		 sc_evsigterm;
-	struct event		 sc_evsigchld;
-	struct event		 sc_evsighup;
-	struct event		 sc_evsigpipe;
+	struct privsep		*sc_ps;
 };
 
 #define RELAYD_OPT_VERBOSE		0x01
@@ -711,102 +850,15 @@ struct relayd {
 #define RELAYD_OPT_LOGNOTIFY		0x10
 #define RELAYD_OPT_LOGALL		0x18
 
-/* initially control.h */
-struct {
-	struct event	 ev;
-	int		 fd;
-} control_state;
-
-enum blockmodes {
-	BM_NORMAL,
-	BM_NONBLOCK
-};
-
-struct imsgev {
-	struct imsgbuf		 ibuf;
-	void			(*handler)(int, short, void *);
-	struct event		 ev;
-	void			*data;
-	short			 events;
-};
-
-struct ctl_conn {
-	TAILQ_ENTRY(ctl_conn)	 entry;
-	u_int8_t		 flags;
-#define CTL_CONN_NOTIFY		 0x01
-	struct imsgev	 	 iev;
-
-};
-TAILQ_HEAD(ctl_connlist, ctl_conn);
-
-enum imsg_type {
-	IMSG_NONE,
-	IMSG_CTL_OK,		/* answer to relayctl requests */
-	IMSG_CTL_FAIL,
-	IMSG_CTL_END,
-	IMSG_CTL_RDR,
-	IMSG_CTL_TABLE,
-	IMSG_CTL_HOST,
-	IMSG_CTL_RELAY,
-	IMSG_CTL_SESSION,
-	IMSG_CTL_ROUTER,
-	IMSG_CTL_NETROUTE,
-	IMSG_CTL_TABLE_CHANGED,
-	IMSG_CTL_PULL_RULESET,
-	IMSG_CTL_PUSH_RULESET,
-	IMSG_CTL_SHOW_SUM,	/* relayctl requests */
-	IMSG_CTL_RDR_ENABLE,
-	IMSG_CTL_RDR_DISABLE,
-	IMSG_CTL_TABLE_ENABLE,
-	IMSG_CTL_TABLE_DISABLE,
-	IMSG_CTL_HOST_ENABLE,
-	IMSG_CTL_HOST_DISABLE,
-	IMSG_CTL_SHUTDOWN,
-	IMSG_CTL_RELOAD,
-	IMSG_CTL_POLL,
-	IMSG_CTL_NOTIFY,
-	IMSG_CTL_RDR_STATS,
-	IMSG_CTL_RELAY_STATS,
-	IMSG_CTL_LOG_VERBOSE,
-	IMSG_RDR_ENABLE,	/* notifies from pfe to hce */
-	IMSG_RDR_DISABLE,
-	IMSG_TABLE_ENABLE,
-	IMSG_TABLE_DISABLE,
-	IMSG_HOST_ENABLE,
-	IMSG_HOST_DISABLE,
-	IMSG_HOST_STATUS,	/* notifies from hce to pfe */
-	IMSG_SYNC,
-	IMSG_NATLOOK,
-	IMSG_DEMOTE,
-	IMSG_STATISTICS,
-	IMSG_RECONF,		/* reconfiguration notifies */
-	IMSG_RECONF_TABLE,
-	IMSG_RECONF_SENDBUF,
-	IMSG_RECONF_HOST,
-	IMSG_RECONF_RDR,
-	IMSG_RECONF_VIRT,
-	IMSG_RECONF_PROTO,
-	IMSG_RECONF_REQUEST_TREE,
-	IMSG_RECONF_RESPONSE_TREE,
-	IMSG_RECONF_PNODE_KEY,
-	IMSG_RECONF_PNODE_VAL,
-	IMSG_RECONF_RELAY,
-	IMSG_RECONF_END,
-	IMSG_SCRIPT,
-	IMSG_SNMPSOCK,
-	IMSG_BINDANY,
-	IMSG_RTMSG		/* from pfe to parent */
-};
-
 /* control.c */
-int	control_init(void);
-int	control_listen(struct relayd *, struct imsgev *, struct imsgev *);
-void    control_accept(int, short, void *);
-void    control_dispatch_imsg(int, short, void *);
-void	control_imsg_forward(struct imsg *);
-void    control_cleanup(void);
-
-void    session_socket_blockmode(int, enum blockmodes);
+int	 control_init(struct privsep *, struct control_sock *);
+int	 control_listen(struct control_sock *);
+void	 control_cleanup(struct control_sock *);
+void	 control_dispatch_imsg(int, short, void *);
+void	 control_imsg_forward(struct imsg *);
+struct ctl_conn	*
+	 control_connbyfd(int);
+void	 socket_set_blockmode(int, enum blockmodes);
 
 extern  struct ctl_connlist ctl_conns;
 
@@ -826,8 +878,7 @@ const char *printb_flags(const u_int32_t, const char *);
 
 
 /* pfe.c */
-pid_t	 pfe(struct relayd *, int [2], int [2], int [RELAY_MAXPROC][2],
-	    int [2], int [RELAY_MAXPROC][2]);
+pid_t	 pfe(struct privsep *, struct privsep_proc *);
 void	 show(struct ctl_conn *);
 void	 show_sessions(struct ctl_conn *);
 int	 enable_rdr(struct ctl_conn *, struct ctl_id *);
@@ -854,13 +905,11 @@ void	 sync_routes(struct relayd *, struct router *);
 int	 pfe_route(struct relayd *, struct ctl_netroute *);
 
 /* hce.c */
-pid_t	 hce(struct relayd *, int [2], int [2], int [RELAY_MAXPROC][2],
-	    int [2], int [RELAY_MAXPROC][2]);
+pid_t	 hce(struct privsep *, struct privsep_proc *);
 void	 hce_notify_done(struct host *, enum host_error);
 
 /* relay.c */
-pid_t	 relay(struct relayd *, int [2], int [2], int [RELAY_MAXPROC][2],
-	    int [2], int [RELAY_MAXPROC][2]);
+pid_t	 relay(struct privsep *, struct privsep_proc *);
 void	 relay_notify_done(struct host *, const char *);
 int	 relay_session_cmp(struct rsession *, struct rsession *);
 int	 relay_load_certfiles(struct relay *);
@@ -893,7 +942,7 @@ void	 check_icmp(struct relayd *, struct timeval *);
 void	 check_tcp(struct ctl_tcp_event *);
 
 /* check_script.c */
-void	 check_script(struct host *);
+void	 check_script(struct relayd *, struct host *);
 void	 script_done(struct relayd *, struct ctl_script *);
 int	 script_exec(struct relayd *, struct ctl_script *);
 
@@ -958,9 +1007,9 @@ void		 pn_unref(u_int16_t);
 void		 pn_ref(u_int16_t);
 
 /* snmp.c */
-void	 snmp_init(struct relayd *, struct imsgev *);
-int	 snmp_sendsock(struct imsgev *);
-void	 snmp_hosttrap(struct table *, struct host *);
+void	 snmp_init(struct relayd *, enum privsep_procid);
+int	 snmp_sendsock(struct relayd *, enum privsep_procid);
+void	 snmp_hosttrap(struct relayd *, struct table *, struct host *);
 
 /* shuffle.c */
 void		shuffle_init(struct shuffle *);
@@ -975,3 +1024,26 @@ void	log_info(const char *, ...);
 void	log_debug(const char *, ...);
 __dead void fatal(const char *);
 __dead void fatalx(const char *);
+
+/* proc.c */
+void	 proc_init(struct privsep *, struct privsep_proc *, u_int);
+void	 proc_kill(struct privsep *);
+void	 proc_config(struct privsep *, struct privsep_proc *, u_int);
+void	 proc_dispatch(int, short event, void *);
+pid_t	 proc_run(struct privsep *, struct privsep_proc *,
+	    struct privsep_proc *, u_int,
+	    void (*)(struct privsep *, struct privsep_proc *, void *), void *);
+int	 proc_compose_imsg(struct privsep *, enum privsep_procid, int,
+	    u_int16_t, int, void *, u_int16_t);
+int	 proc_composev_imsg(struct privsep *, enum privsep_procid, int,
+	    u_int16_t, int, const struct iovec *, int);
+int	 proc_forward_imsg(struct privsep *, struct imsg *,
+	    enum privsep_procid, int);
+void	 proc_flush_imsg(struct privsep *, enum privsep_procid, int);
+struct imsgbuf *
+	 proc_ibuf(struct privsep *, enum privsep_procid, int);
+void	 imsg_event_add(struct imsgev *);
+int	 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
+	    pid_t, int, void *, u_int16_t);
+int	 imsg_composev_event(struct imsgev *, u_int16_t, u_int32_t,
+	    pid_t, int, const struct iovec *, int);

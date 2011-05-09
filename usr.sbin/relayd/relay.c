@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.135 2011/05/05 12:01:44 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.136 2011/05/09 12:08:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -47,16 +47,17 @@
 
 #include "relayd.h"
 
-void		 relay_sig_handler(int sig, short, void *);
 void		 relay_statistics(int, short, void *);
-void		 relay_dispatch_pfe(int, short, void *);
-void		 relay_dispatch_parent(int, short, void *);
+int		 relay_dispatch_parent(int, struct privsep_proc *,
+		    struct imsg *);
+int		 relay_dispatch_pfe(int, struct privsep_proc *,
+		    struct imsg *);
 void		 relay_shutdown(void);
 
 void		 relay_privinit(void);
 void		 relay_nodedebug(const char *, struct protonode *);
 void		 relay_protodebug(struct relay *);
-void		 relay_init(void);
+void		 relay_init(struct privsep *, struct privsep_proc *p, void *);
 void		 relay_launch(void);
 int		 relay_socket(struct sockaddr_storage *, in_port_t,
 		    struct protocol *, int, int);
@@ -134,142 +135,22 @@ volatile sig_atomic_t relay_sessions;
 objid_t relay_conid;
 
 static struct relayd		*env = NULL;
-struct imsgev			*iev_pfe;
-struct imsgev			*iev_main;
 int				 proc_id;
 
-void
-relay_sig_handler(int sig, short event, void *arg)
-{
-	switch (sig) {
-	case SIGTERM:
-	case SIGINT:
-		(void)event_loopexit(NULL);
-		break;
-	case SIGCHLD:
-	case SIGHUP:
-	case SIGPIPE:
-		/* ignore */
-		break;
-	default:
-		fatalx("relay_sig_handler: unexpected signal");
-	}
-}
+static struct privsep_proc procs[] = {
+	{ "parent",	PROC_PARENT,	relay_dispatch_parent },
+	{ "pfe",	PROC_PFE,	relay_dispatch_pfe },
+};
 
 pid_t
-relay(struct relayd *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
-    int pipe_parent2relay[RELAY_MAXPROC][2], int pipe_pfe2hce[2],
-    int pipe_pfe2relay[RELAY_MAXPROC][2])
+relay(struct privsep *ps, struct privsep_proc *p)
 {
-	pid_t		 pid;
-	struct passwd	*pw;
-	int		 i;
-
-	switch (pid = fork()) {
-	case -1:
-		fatal("relay: cannot fork");
-	case 0:
-		break;
-	default:
-		return (pid);
-	}
-
-	env = x_env;
-	purge_config(env, PURGE_RDRS);
+	env = ps->ps_env;
 
 	/* Need root privileges for relay initialization */
 	relay_privinit();
 
-	if ((pw = getpwnam(RELAYD_USER)) == NULL)
-		fatal("relay: getpwnam");
-
-#ifndef DEBUG
-	if (chroot(pw->pw_dir) == -1)
-		fatal("relay: chroot");
-	if (chdir("/") == -1)
-		fatal("relay: chdir(\"/\")");
-
-#else
-#warning disabling privilege revocation and chroot in DEBUG mode
-#endif
-
-	setproctitle("socket relay engine");
-	relayd_process = PROC_RELAY;
-
-#ifndef DEBUG
-	if (setgroups(1, &pw->pw_gid) ||
-	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
-	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-		fatal("relay: can't drop privileges");
-#endif
-
-	/* Fork child handlers */
-	for (i = 1; i < env->sc_prefork_relay; i++) {
-		if (fork() == 0) {
-			proc_id = i;
-			break;
-		}
-	}
-
-	event_init();
-
-	/* Per-child initialization */
-	relay_init();
-
-	signal_set(&env->sc_evsigint, SIGINT, relay_sig_handler, env);
-	signal_set(&env->sc_evsigterm, SIGTERM, relay_sig_handler, env);
-	signal_set(&env->sc_evsigchld, SIGCHLD, relay_sig_handler, env);
-	signal_set(&env->sc_evsighup, SIGHUP, relay_sig_handler, env);
-	signal_set(&env->sc_evsigpipe, SIGPIPE, relay_sig_handler, env);
-
-	signal_add(&env->sc_evsigint, NULL);
-	signal_add(&env->sc_evsigterm, NULL);
-	signal_add(&env->sc_evsigchld, NULL);
-	signal_add(&env->sc_evsighup, NULL);
-	signal_add(&env->sc_evsigpipe, NULL);
-
-	/* setup pipes */
-	close(pipe_pfe2hce[0]);
-	close(pipe_pfe2hce[1]);
-	close(pipe_parent2hce[0]);
-	close(pipe_parent2hce[1]);
-	close(pipe_parent2pfe[0]);
-	close(pipe_parent2pfe[1]);
-	for (i = 0; i < env->sc_prefork_relay; i++) {
-		if (i == proc_id)
-			continue;
-		close(pipe_parent2relay[i][0]);
-		close(pipe_parent2relay[i][1]);
-		close(pipe_pfe2relay[i][0]);
-		close(pipe_pfe2relay[i][1]);
-	}
-	close(pipe_parent2relay[proc_id][1]);
-	close(pipe_pfe2relay[proc_id][1]);
-
-	if ((iev_pfe = calloc(1, sizeof(struct imsgev))) == NULL ||
-	    (iev_main = calloc(1, sizeof(struct imsgev))) == NULL)
-		fatal("relay");
-	imsg_init(&iev_pfe->ibuf, pipe_pfe2relay[proc_id][0]);
-	imsg_init(&iev_main->ibuf, pipe_parent2relay[proc_id][0]);
-	iev_pfe->handler = relay_dispatch_pfe;
-	iev_main->handler = relay_dispatch_parent;
-
-	iev_pfe->events = EV_READ;
-	event_set(&iev_pfe->ev, iev_pfe->ibuf.fd, iev_pfe->events,
-	    iev_pfe->handler, iev_pfe);
-	event_add(&iev_pfe->ev, NULL);
-
-	iev_main->events = EV_READ;
-	event_set(&iev_main->ev, iev_main->ibuf.fd, iev_main->events,
-	    iev_main->handler, iev_main);
-	event_add(&iev_main->ev, NULL);
-
-	relay_launch();
-
-	event_dispatch();
-	relay_shutdown();
-
-	return (0);
+	return (proc_run(ps, p, procs, nitems(procs), relay_init, NULL));
 }
 
 void
@@ -286,8 +167,6 @@ relay_shutdown(void)
 			relay_close(con, "shutdown");
 	}
 	usleep(200);	/* XXX relay needs to shutdown last */
-	log_info("socket relay engine exiting");
-	_exit(0);
 }
 
 void
@@ -462,11 +341,16 @@ relay_privinit(void)
 }
 
 void
-relay_init(void)
+relay_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
 	struct relay	*rlay;
 	struct host	*host;
 	struct timeval	 tv;
+
+	/* We use a custom shutdown callback */
+	p->p_shutdown = relay_shutdown;
+
+	purge_config(env, PURGE_RDRS);
 
 	/* Unlimited file descriptors (use system limits) */
 	socket_rlimit(-1);
@@ -518,6 +402,8 @@ relay_init(void)
 	evtimer_set(&env->sc_statev, relay_statistics, NULL);
 	bcopy(&env->sc_statinterval, &tv, sizeof(tv));
 	evtimer_add(&env->sc_statev, &tv);
+
+	relay_launch();
 }
 
 void
@@ -566,7 +452,7 @@ relay_statistics(int fd, short events, void *arg)
 
 		crs.id = rlay->rl_conf.id;
 		crs.proc = proc_id;
-		imsg_compose_event(iev_pfe, IMSG_STATISTICS, 0, 0, -1,
+		proc_compose_imsg(env->sc_ps, PROC_PFE, -1, IMSG_STATISTICS, -1,
 		    &crs, sizeof(crs));
 
 		for (con = SPLAY_ROOT(&rlay->rl_sessions);
@@ -2151,7 +2037,7 @@ relay_accept(int fd, short sig, void *arg)
 			return;
 		}
 
-		imsg_compose_event(iev_pfe, IMSG_NATLOOK, 0, 0, -1, cnl,
+		proc_compose_imsg(env->sc_ps, PROC_PFE, -1, IMSG_NATLOOK, -1, cnl,
 		    sizeof(*cnl));
 
 		/* Schedule timeout */
@@ -2330,8 +2216,8 @@ relay_bindanyreq(struct rsession *con, in_port_t port, int proto)
 	bnd.bnd_port = port;
 	bnd.bnd_proto = proto;
 	bcopy(&con->se_in.ss, &bnd.bnd_ss, sizeof(bnd.bnd_ss));
-	imsg_compose_event(iev_main, IMSG_BINDANY,
-	    0, 0, -1, &bnd, sizeof(bnd));
+	proc_compose_imsg(env->sc_ps, PROC_PARENT, -1, IMSG_BINDANY,
+	    -1, &bnd, sizeof(bnd));
 
 	/* Schedule timeout */
 	evtimer_set(&con->se_ev, relay_bindany, con);
@@ -2442,7 +2328,8 @@ relay_close(struct rsession *con, const char *msg)
 		if (EVBUFFER_LENGTH(con->se_log) &&
 		    evbuffer_add_printf(con->se_log, "\r\n") != -1)
 			ptr = evbuffer_readline(con->se_log);
-		log_info("relay %s, session %d (%d active), %d, %s -> %s:%d, "
+		log_info("relay %s, "
+		    "session %d (%d active), %d, %s -> %s:%d, "
 		    "%s%s%s", rlay->rl_conf.name, con->se_id, relay_sessions,
 		    con->se_mark, ibuf, obuf, ntohs(con->se_out.port), msg,
 		    ptr == NULL ? "" : ",", ptr == NULL ? "" : ptr);
@@ -2495,7 +2382,7 @@ relay_close(struct rsession *con, const char *msg)
 
 	if (con->se_cnl != NULL) {
 #if 0
-		imsg_compose_event(iev_pfe, IMSG_KILLSTATES, 0, 0, -1,
+		proc_compose_imsg(env->sc_ps, PROC_PFE, -1, IMSG_KILLSTATES, -1,
 		    cnl, sizeof(*cnl));
 #endif
 		free(con->se_cnl);
@@ -2505,13 +2392,9 @@ relay_close(struct rsession *con, const char *msg)
 	relay_sessions--;
 }
 
-void
-relay_dispatch_pfe(int fd, short event, void *ptr)
+int
+relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
 	struct relay		*rlay;
 	struct rsession		*con;
 	struct ctl_natlook	 cnl;
@@ -2520,203 +2403,139 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 	struct table		*table;
 	struct ctl_status	 st;
 	objid_t			 id;
-	int			 verbose;
 
-	iev = ptr;
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("relay_dispatch_pfe: imsg_read_error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
+	switch (imsg->hdr.type) {
+	case IMSG_HOST_DISABLE:
+		memcpy(&id, imsg->data, sizeof(id));
+		if ((host = host_find(env, id)) == NULL)
+			fatalx("relay_dispatch_pfe: desynchronized");
+		if ((table = table_find(env, host->conf.tableid)) ==
+		    NULL)
+			fatalx("relay_dispatch_pfe: invalid table id");
+		if (host->up == HOST_UP)
+			table->up--;
+		host->flags |= F_DISABLE;
+		host->up = HOST_UNKNOWN;
+		break;
+	case IMSG_HOST_ENABLE:
+		memcpy(&id, imsg->data, sizeof(id));
+		if ((host = host_find(env, id)) == NULL)
+			fatalx("relay_dispatch_pfe: desynchronized");
+		host->flags &= ~(F_DISABLE);
+		host->up = HOST_UNKNOWN;
+		break;
+	case IMSG_TABLE_DISABLE:
+		memcpy(&id, imsg->data, sizeof(id));
+		if ((table = table_find(env, id)) == NULL)
+			fatalx("relay_dispatch_pfe: desynchronized");
+		table->conf.flags |= F_DISABLE;
+		table->up = 0;
+		TAILQ_FOREACH(host, &table->hosts, entry)
+			host->up = HOST_UNKNOWN;
+		break;
+	case IMSG_TABLE_ENABLE:
+		memcpy(&id, imsg->data, sizeof(id));
+		if ((table = table_find(env, id)) == NULL)
+			fatalx("relay_dispatch_pfe: desynchronized");
+		table->conf.flags &= ~(F_DISABLE);
+		table->up = 0;
+		TAILQ_FOREACH(host, &table->hosts, entry)
+			host->up = HOST_UNKNOWN;
+		break;
+	case IMSG_HOST_STATUS:
+		IMSG_SIZE_CHECK(imsg, &st);
+		memcpy(&st, imsg->data, sizeof(st));
+		if ((host = host_find(env, st.id)) == NULL)
+			fatalx("relay_dispatch_pfe: invalid host id");
+		if (host->flags & F_DISABLE)
+			break;
+		if (host->up == st.up) {
+			log_debug("%s: host %d => %d", __func__,
+			    host->conf.id, host->up);
+			fatalx("relay_dispatch_pfe: desynchronized");
 		}
-	}
 
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("relay_dispatch_pfe: msgbuf_write");
-	}
+		if ((table = table_find(env, host->conf.tableid))
+		    == NULL)
+			fatalx("relay_dispatch_pfe: invalid table id");
 
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("relay_dispatch_pfe: imsg_read error");
-		if (n == 0)
-			break;
+		DPRINTF("%s: [%d] state %d for "
+		    "host %u %s", __func__, proc_id, st.up,
+		    host->conf.id, host->conf.name);
 
-		switch (imsg.hdr.type) {
-		case IMSG_HOST_DISABLE:
-			memcpy(&id, imsg.data, sizeof(id));
-			if ((host = host_find(env, id)) == NULL)
-				fatalx("relay_dispatch_pfe: desynchronized");
-			if ((table = table_find(env, host->conf.tableid)) ==
-			    NULL)
-				fatalx("relay_dispatch_pfe: invalid table id");
-			if (host->up == HOST_UP)
-				table->up--;
-			host->flags |= F_DISABLE;
-			host->up = HOST_UNKNOWN;
-			break;
-		case IMSG_HOST_ENABLE:
-			memcpy(&id, imsg.data, sizeof(id));
-			if ((host = host_find(env, id)) == NULL)
-				fatalx("relay_dispatch_pfe: desynchronized");
-			host->flags &= ~(F_DISABLE);
-			host->up = HOST_UNKNOWN;
-			break;
-		case IMSG_TABLE_DISABLE:
-			memcpy(&id, imsg.data, sizeof(id));
-			if ((table = table_find(env, id)) == NULL)
-				fatalx("relay_dispatch_pfe: desynchronized");
-			table->conf.flags |= F_DISABLE;
-			table->up = 0;
-			TAILQ_FOREACH(host, &table->hosts, entry)
-				host->up = HOST_UNKNOWN;
-			break;
-		case IMSG_TABLE_ENABLE:
-			memcpy(&id, imsg.data, sizeof(id));
-			if ((table = table_find(env, id)) == NULL)
-				fatalx("relay_dispatch_pfe: desynchronized");
-			table->conf.flags &= ~(F_DISABLE);
-			table->up = 0;
-			TAILQ_FOREACH(host, &table->hosts, entry)
-				host->up = HOST_UNKNOWN;
-			break;
-		case IMSG_HOST_STATUS:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(st))
-				fatalx("relay_dispatch_pfe: invalid request");
-			memcpy(&st, imsg.data, sizeof(st));
-			if ((host = host_find(env, st.id)) == NULL)
-				fatalx("relay_dispatch_pfe: invalid host id");
-			if (host->flags & F_DISABLE)
-				break;
-			if (host->up == st.up) {
-				log_debug("%s: host %d => %d", __func__,
-				    host->conf.id, host->up);
-				fatalx("relay_dispatch_pfe: desynchronized");
-			}
-
-			if ((table = table_find(env, host->conf.tableid))
-			    == NULL)
-				fatalx("relay_dispatch_pfe: invalid table id");
-
-			DPRINTF("%s: [%d] state %d for "
-			    "host %u %s", __func__, proc_id, st.up,
-			    host->conf.id, host->conf.name);
-
-			if ((st.up == HOST_UNKNOWN && host->up == HOST_DOWN) ||
-			    (st.up == HOST_DOWN && host->up == HOST_UNKNOWN)) {
-				host->up = st.up;
-				break;
-			}
-			if (st.up == HOST_UP)
-				table->up++;
-			else
-				table->up--;
+		if ((st.up == HOST_UNKNOWN && host->up == HOST_DOWN) ||
+		    (st.up == HOST_DOWN && host->up == HOST_UNKNOWN)) {
 			host->up = st.up;
 			break;
-		case IMSG_NATLOOK:
-			bcopy(imsg.data, &cnl, sizeof(cnl));
-			if ((con = session_find(env, cnl.id)) == NULL ||
-			    con->se_cnl == NULL) {
-				log_debug("%s: session %d: expired",
-				    __func__, cnl.id);
-				break;
-			}
-			bcopy(&cnl, con->se_cnl, sizeof(*con->se_cnl));
-			evtimer_del(&con->se_ev);
-			evtimer_set(&con->se_ev, relay_natlook, con);
-			bzero(&tv, sizeof(tv));
-			evtimer_add(&con->se_ev, &tv);
-			break;
-		case IMSG_CTL_SESSION:
-			TAILQ_FOREACH(rlay, env->sc_relays, rl_entry)
-				SPLAY_FOREACH(con, session_tree,
-				    &rlay->rl_sessions)
-					imsg_compose_event(iev,
-					    IMSG_CTL_SESSION,
-					    0, 0, -1, con, sizeof(*con));
-			imsg_compose_event(iev, IMSG_CTL_END,
-			    0, 0, -1, NULL, 0);
-			break;
-		case IMSG_CTL_LOG_VERBOSE:
-			memcpy(&verbose, imsg.data, sizeof(verbose));
-			log_verbose(verbose);
-			break;
-		default:
-			log_debug("%s: unexpected imsg %d", __func__,
-			    imsg.hdr.type);
+		}
+		if (st.up == HOST_UP)
+			table->up++;
+		else
+			table->up--;
+		host->up = st.up;
+		break;
+	case IMSG_NATLOOK:
+		bcopy(imsg->data, &cnl, sizeof(cnl));
+		if ((con = session_find(env, cnl.id)) == NULL ||
+		    con->se_cnl == NULL) {
+			log_debug("%s: session %d: expired",
+			    __func__, cnl.id);
 			break;
 		}
-		imsg_free(&imsg);
+		bcopy(&cnl, con->se_cnl, sizeof(*con->se_cnl));
+		evtimer_del(&con->se_ev);
+		evtimer_set(&con->se_ev, relay_natlook, con);
+		bzero(&tv, sizeof(tv));
+		evtimer_add(&con->se_ev, &tv);
+		break;
+	case IMSG_CTL_SESSION:
+		TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
+			SPLAY_FOREACH(con, session_tree,
+			    &rlay->rl_sessions) {
+				proc_compose_imsg(env->sc_ps, p->p_id, -1,
+				    IMSG_CTL_SESSION,
+				    -1, con, sizeof(*con));
+			}
+		}
+		proc_compose_imsg(env->sc_ps, p->p_id, -1, IMSG_CTL_END,
+		    -1, NULL, 0);
+		break;
+	default:
+		return (-1);
 	}
-	imsg_event_add(iev);
+
+	return (0);
 }
 
-void
-relay_dispatch_parent(int fd, short event, void * ptr)
+int
+relay_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct rsession		*con;
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
 	struct timeval		 tv;
 	objid_t			 id;
 
-	iev = ptr;
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("relay_dispatch_parent: imsg_read error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
-		}
-	}
-
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("relay_dispatch_parent: msgbuf_write");
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("relay_dispatch_parent: imsg_read error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		case IMSG_BINDANY:
-			bcopy(imsg.data, &id, sizeof(id));
-			if ((con = session_find(env, id)) == NULL) {
-				log_debug("%s: session %d: expired",
-				    __func__, id);
-				break;
-			}
-
-			/* Will validate the result later */
-			con->se_bnds = imsg.fd;
-
-			evtimer_del(&con->se_ev);
-			evtimer_set(&con->se_ev, relay_bindany, con);
-			bzero(&tv, sizeof(tv));
-			evtimer_add(&con->se_ev, &tv);
-			break;
-		default:
-			log_debug("%s: unexpected imsg %d", __func__,
-			    imsg.hdr.type);
+	switch (imsg->hdr.type) {
+	case IMSG_BINDANY:
+		bcopy(imsg->data, &id, sizeof(id));
+		if ((con = session_find(env, id)) == NULL) {
+			log_debug("%s: session %d: expired",
+			    __func__, id);
 			break;
 		}
-		imsg_free(&imsg);
+
+		/* Will validate the result later */
+		con->se_bnds = imsg->fd;
+
+		evtimer_del(&con->se_ev);
+		evtimer_set(&con->se_ev, relay_bindany, con);
+		bzero(&tv, sizeof(tv));
+		evtimer_add(&con->se_ev, &tv);
+		break;
+	default:
+		return (-1);
 	}
-	imsg_event_add(iev);
+
+	return (0);
 }
 
 SSL_CTX *

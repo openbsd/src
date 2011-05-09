@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.42 2010/12/31 21:22:42 guenther Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.43 2011/05/09 12:08:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -189,7 +189,7 @@ main(int argc, char *argv[])
 		verbose = 2;
 		/* FALLTHROUGH */
 	case LOG_BRIEF:
-		imsg_compose(ibuf, IMSG_CTL_LOG_VERBOSE, 0, 0, -1,
+		imsg_compose(ibuf, IMSG_CTL_VERBOSE, 0, 0, -1,
 		    &verbose, sizeof(verbose));
 		printf("logging request sent.\n");
 		done = 1;

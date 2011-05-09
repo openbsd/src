@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.154 2011/05/05 12:01:43 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.155 2011/05/09 12:08:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1253,6 +1253,7 @@ relay		: RELAY STRING	{
 			conf->sc_relaycount++;
 			SPLAY_INIT(&rlay->rl_sessions);
 			TAILQ_INSERT_TAIL(conf->sc_relays, rlay, rl_entry);
+
 			tableport = 0;
 
 			while ((r = TAILQ_FIRST(&relays)) != NULL) {

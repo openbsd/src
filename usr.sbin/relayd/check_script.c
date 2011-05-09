@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_script.c,v 1.11 2011/02/28 00:09:11 sthen Exp $	*/
+/*	$OpenBSD: check_script.c,v 1.12 2011/05/09 12:08:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -39,11 +39,10 @@
 
 void	 script_sig_alarm(int);
 
-extern struct imsgev		*iev_main;
-pid_t				 child = -1;
+pid_t			 child = -1;
 
 void
-check_script(struct host *host)
+check_script(struct relayd *env, struct host *host)
 {
 	struct ctl_script	 scr;
 
@@ -51,7 +50,8 @@ check_script(struct host *host)
 	host->flags &= ~(F_CHECK_SENT|F_CHECK_DONE);
 
 	scr.host = host->conf.id;
-	imsg_compose_event(iev_main, IMSG_SCRIPT, 0, 0, -1, &scr, sizeof(scr));
+	proc_compose_imsg(env->sc_ps, PROC_PARENT, 0, IMSG_SCRIPT,
+	    -1, &scr, sizeof(scr));
 }
 
 void
