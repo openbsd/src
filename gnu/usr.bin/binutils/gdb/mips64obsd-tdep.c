@@ -20,6 +20,7 @@
    Boston, MA 02111-1307, USA.  */
 
 #include "defs.h"
+#include "gdbcore.h"
 #include "osabi.h"
 #include "regcache.h"
 #include "regset.h"
@@ -30,6 +31,7 @@
 #include "gdb_string.h"
 
 #include "mips-tdep.h"
+#include "obsd-tdep.h"
 #include "solib-svr4.h"
 
 #define MIPS64OBSD_NUM_REGS 73
@@ -127,8 +129,77 @@ static const struct tramp_frame mips64obsd_sigframe =
   },
   mips64obsd_sigframe_init
 };
-
 
+
+/* Check the code at PC for a dynamic linker lazy resolution stub.  Because
+   they aren't in the .plt section, we pattern-match on the code generated
+   by GNU ld.  They look like this:
+
+   ld t9,0x8010(gp)
+   daddu t7,ra
+   jalr t9,ra
+   daddiu t8,zero,INDEX
+
+   Also return the dynamic symbol index used in the last instruction.  */
+
+static int
+mips64obsd_in_dynsym_stub (CORE_ADDR pc, char *name)
+{
+  unsigned char buf[28], *p;
+  ULONGEST insn;
+
+  read_memory (pc - 12, buf, 28);
+
+  p = buf + 12;
+  while (p >= buf)
+    {
+      insn = extract_unsigned_integer (p, 4);
+      /* ld t9,0x8010(gp) */
+      if (insn == 0xdf998010)
+	break;
+      p -= 4;
+    }
+  if (p < buf)
+    return 0;
+
+  insn = extract_unsigned_integer (p + 4, 4);
+  /* daddu t7,ra */
+  if (insn != 0x03e0782d)
+    return 0;
+  
+  insn = extract_unsigned_integer (p + 8, 4);
+  /* jalr t9,ra */
+  if (insn != 0x0320f809)
+    return 0;
+
+  insn = extract_unsigned_integer (p + 12, 4);
+  /* daddiu t8,zero,0 */
+  if ((insn & 0xffff0000) != 0x64180000)
+    return 0;
+
+  return (insn & 0xffff);
+}
+
+/* Return non-zero iff PC belongs to the dynamic linker resolution code
+   or to a stub.  */
+
+int
+mips64obsd_in_dynsym_resolve_code (CORE_ADDR pc)
+{
+  /* Check whether PC is in the dynamic linker.  This also checks whether
+     it is in the .plt section, which MIPS does not use.  */
+  if (in_solib_dynsym_resolve_code (pc))
+    return 1;
+
+  /* Pattern match for the stub.  It would be nice if there were a more
+     efficient way to avoid this check.  */
+  if (mips64obsd_in_dynsym_stub (pc, NULL))
+    return 1;
+
+  return 0;
+}
+
+
 static void
 mips64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
@@ -145,8 +216,10 @@ mips64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 #endif
 
   /* OpenBSD/mips64 has SVR4-style shared libraries.  */
+  set_gdbarch_in_solib_call_trampoline (gdbarch, mips64obsd_in_dynsym_stub);
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_lp64_fetch_link_map_offsets);
+  set_gdbarch_skip_solib_resolver (gdbarch, obsd_skip_solib_resolver);
 }
 
 
