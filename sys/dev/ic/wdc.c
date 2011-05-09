@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.114 2011/05/08 17:33:56 matthew Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.115 2011/05/09 22:25:50 matthew Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -718,6 +718,11 @@ wdcattach(struct channel_softc *chp)
 	if (!chp->_vtbl)
 		chp->_vtbl = &wdc_default_vtbl;
 
+	for (i = 0; i < 2; i++) {
+		chp->ch_drive[i].chnl_softc = chp;
+		chp->ch_drive[i].drive = i;
+	}
+
 	if (chp->wdc->drv_probe != NULL) {
 		chp->wdc->drv_probe(chp);
 	} else {
@@ -756,8 +761,6 @@ wdcattach(struct channel_softc *chp)
 	for (i = 0; i < 2; i++) {
 		struct ata_drive_datas *drvp = &chp->ch_drive[i];
 
-		drvp->chnl_softc = chp;
-		drvp->drive = i;
 		/* If controller can't do 16bit flag the drives as 32bit */
 		if ((chp->wdc->cap &
 		    (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) ==

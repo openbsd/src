@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.328 2011/04/27 07:55:05 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.329 2011/05/09 22:25:50 matthew Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -4301,13 +4301,7 @@ sii3112_drv_probe(struct channel_softc *chp)
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
 	uint32_t scontrol, sstatus;
 	uint8_t scnt, sn, cl, ch;
-	int i, s;
-
-	/* XXX This should be done by other code. */
-	for (i = 0; i < 2; i++) {
-		chp->ch_drive[i].chnl_softc = chp;
-		chp->ch_drive[i].drive = i;
-	}
+	int s;
 
 	/*
 	 * The 3112 is a 2-port part, and only has one drive per channel
@@ -7103,13 +7097,7 @@ pdc205xx_drv_probe(struct channel_softc *chp)
 	bus_space_handle_t *iohs;
 	u_int32_t scontrol, sstatus;
 	u_int16_t scnt, sn, cl, ch;
-	int i, s;
-
-	/* XXX This should be done by other code. */
-	for (i = 0; i < 2; i++) {
-		chp->ch_drive[i].chnl_softc = chp;
-		chp->ch_drive[i].drive = i;
-	}
+	int s;
 
 	SCONTROL_WRITE(ps, chp->channel, 0);
 	delay(50*1000);
@@ -7763,13 +7751,7 @@ svwsata_drv_probe(struct channel_softc *chp)
 	int channel = chp->channel;
 	uint32_t scontrol, sstatus;
 	uint8_t scnt, sn, cl, ch;
-	int i, s;
-
-	/* XXX This should be done by other code. */
-	for (i = 0; i < 2; i++) {
-		chp->ch_drive[i].chnl_softc = chp;
-		chp->ch_drive[i].drive = i;
-	}
+	int s;
 
 	/*
 	 * Request communication initialization sequence, any speed.
