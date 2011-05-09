@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.122 2011/04/06 11:36:25 miod Exp $ */
+/*	$OpenBSD: loader.c,v 1.123 2011/05/09 18:13:34 otto Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -87,12 +87,6 @@ _dl_set_sod(const char *path, struct sod *sod)
 		_dl_build_sod(++fname, sod);
 	else
 		_dl_build_sod(path, sod);
-}
-
-void
-_dl_debug_state(void)
-{
-	/* Debugger stub */
 }
 
 /*
