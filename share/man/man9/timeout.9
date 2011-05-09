@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.29 2009/04/21 19:30:14 mk Exp $
+.\"	$OpenBSD: timeout.9,v 1.30 2011/05/09 22:08:25 dlg Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 21 2009 $
+.Dd $Mdocdate: May 9 2011 $
 .Dt TIMEOUT 9
 .Os
 .Sh NAME
@@ -85,11 +85,6 @@ It is the responsibility of the caller to provide these functions with
 pre-allocated timeout structures.
 All functions in this API may be used in interrupt context below
 .Fn splclock .
-.Pp
-This API replaces the historic functions
-.Fn timeout
-and
-.Fn untimeout .
 .Pp
 The function
 .Fn timeout_set
