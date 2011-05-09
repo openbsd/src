@@ -721,6 +721,7 @@ wav_new_in(struct fileops *ops,
 			f->rbytes = -1;
 		f->map = NULL;
 	}
+	f->pstate = WAV_INIT;
 	f->mmc = tr;
 	f->join = join;
 	f->mode = mode;
@@ -805,6 +806,7 @@ wav_new_out(struct fileops *ops,
 		f->wbytes = -1;
 		f->startpos = f->endpos = 0;
 	}
+	f->pstate = WAV_INIT;
 	f->mmc = tr;
 	f->join = join;
 	f->mode = mode;
