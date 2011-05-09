@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_isapnp.c,v 1.8 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: wdc_isapnp.c,v 1.9 2011/05/09 22:33:54 matthew Exp $	*/
 /*	$NetBSD: wdc_isapnp.c,v 1.13 1999/03/22 10:00:12 mycroft Exp $	*/
 
 /*-
@@ -135,10 +135,9 @@ wdc_isapnp_attach(parent, self, aux)
 	sc->sc_wdcdev.nchannels = 1;
 	sc->wdc_channel.channel = 0;
 	sc->wdc_channel.wdc = &sc->sc_wdcdev;
-	sc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
-	    M_DEVBUF, M_NOWAIT);
+	sc->wdc_channel.ch_queue = wdc_alloc_queue();
 	if (sc->wdc_channel.ch_queue == NULL) {
-		printf(": can't allocate memory for command queue\n");
+		printf(": cannot allocate channel queue\n");
 		return;
 	}
 

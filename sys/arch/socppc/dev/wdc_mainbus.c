@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_mainbus.c,v 1.1 2009/09/06 20:09:34 kettenis Exp $	*/
+/*	$OpenBSD: wdc_mainbus.c,v 1.2 2011/05/09 22:33:54 matthew Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -132,10 +132,9 @@ wdc_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	chp->channel = 0;
 	chp->wdc = &sc->sc_wdcdev;
 
-	chp->ch_queue = malloc(sizeof(struct channel_queue), M_DEVBUF,
-	    M_NOWAIT);
+	chp->ch_queue = wdc_alloc_queue();
 	if (chp->ch_queue == NULL) {
-		printf("%s: can't allocate memory for command queue\n",
+		printf("%s: cannot allocate channel queue\n",
 		    self->dv_xname);
 		/* XXX disestablish interrupt */
 		return;

@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc_isa.c,v 1.13 2008/06/26 05:42:16 ray Exp $     */
+/*      $OpenBSD: wdc_isa.c,v 1.14 2011/05/09 22:33:54 matthew Exp $     */
 /*	$NetBSD: wdc_isa.c,v 1.15 1999/05/19 14:41:25 bouyer Exp $ */
 
 /*-
@@ -164,10 +164,9 @@ wdc_isa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_wdcdev.nchannels = 1;
 	sc->wdc_channel.channel = 0;
 	sc->wdc_channel.wdc = &sc->sc_wdcdev;
-	sc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
-	    M_DEVBUF, M_NOWAIT);
+	sc->wdc_channel.ch_queue = wdc_alloc_queue();
 	if (sc->wdc_channel.ch_queue == NULL) {
-		printf("%s: can't allocate memory for command queue",
+		printf("%s: cannot allocate channel queue",
 		    sc->sc_wdcdev.sc_dev.dv_xname);
 		return;
 	}

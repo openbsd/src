@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.25 2011/03/31 13:05:27 jasper Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.26 2011/05/09 22:33:54 matthew Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -343,10 +343,9 @@ wdc_pcmcia_attach(parent, self, aux)
 	sc->sc_wdcdev.nchannels = 1;
 	sc->wdc_channel.channel = 0;
 	sc->wdc_channel.wdc = &sc->sc_wdcdev;
-	sc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
-	    M_DEVBUF, M_NOWAIT);
+	sc->wdc_channel.ch_queue = wdc_alloc_queue();
 	if (sc->wdc_channel.ch_queue == NULL) {
-		printf("can't allocate memory for command queue\n");
+		printf("cannot allocate channel queue\n");
 		goto ch_queue_alloc_failed;
 	}
 	if (quirks & WDC_PCMCIA_NO_EXTRA_RESETS)
@@ -406,7 +405,7 @@ wdc_pcmcia_detach(self, flags)
 		return (error);
 
         if (sc->wdc_channel.ch_queue != NULL)
-                free(sc->wdc_channel.ch_queue, M_DEVBUF);
+                wdc_free_queue(sc->wdc_channel.ch_queue);
 
         /* Unmap our i/o window and i/o space. */
         pcmcia_io_unmap(sc->sc_pf, sc->sc_iowindow);

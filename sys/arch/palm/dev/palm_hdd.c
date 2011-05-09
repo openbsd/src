@@ -1,4 +1,4 @@
-/*	$OpenBSD: palm_hdd.c,v 1.2 2009/09/09 11:30:56 marex Exp $	*/
+/*	$OpenBSD: palm_hdd.c,v 1.3 2011/05/09 22:33:54 matthew Exp $	*/
 
 /*
  * Copyright (c) 2009 Marek Vasut <marex@openbsd.org>
@@ -88,7 +88,7 @@ void palm_hdd_attach(struct device *parent, struct device *self, void *aux)
 
 	chp->channel = 0;
 	chp->wdc = &sc->sc_wdcdev;
-	chp->ch_queue = malloc(sizeof(struct channel_queue), M_DEVBUF, M_NOWAIT);
+	chp->ch_queue = wdc_alloc_queue();
 
 	printf("\n");
 

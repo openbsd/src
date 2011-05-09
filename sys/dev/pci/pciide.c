@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.329 2011/05/09 22:25:50 matthew Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.330 2011/05/09 22:33:54 matthew Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2155,11 +2155,10 @@ pciide_chansetup(struct pciide_softc *sc, int channel, pcireg_t interface)
 	cp->name = PCIIDE_CHANNEL_NAME(channel);
 	cp->wdc_channel.channel = channel;
 	cp->wdc_channel.wdc = &sc->sc_wdcdev;
-	cp->wdc_channel.ch_queue =
-	    malloc(sizeof(struct channel_queue), M_DEVBUF, M_NOWAIT);
+	cp->wdc_channel.ch_queue = wdc_alloc_queue();
 	if (cp->wdc_channel.ch_queue == NULL) {
 		printf("%s: %s "
-		    "cannot allocate memory for command queue",
+		    "cannot allocate channel queue",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		return (0);
 	}
@@ -2173,7 +2172,7 @@ pciide_chanfree(struct pciide_softc *sc, int channel)
 {
 	struct pciide_channel *cp = &sc->pciide_channels[channel];
 	if (cp->wdc_channel.ch_queue)
-		free(cp->wdc_channel.ch_queue, M_DEVBUF);
+		wdc_free_queue(cp->wdc_channel.ch_queue);
 }
 
 /* some common code used by several chip channel_map */
@@ -3636,12 +3635,11 @@ cmd_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
 		cp->wdc_channel.ch_queue =
 		    sc->pciide_channels[0].wdc_channel.ch_queue;
 	} else {
-		cp->wdc_channel.ch_queue =
-		    malloc(sizeof(struct channel_queue), M_DEVBUF, M_NOWAIT);
+		cp->wdc_channel.ch_queue = wdc_alloc_queue();
 	}
 	if (cp->wdc_channel.ch_queue == NULL) {
 		printf(
-		    "%s: %s cannot allocate memory for command queue",
+		    "%s: %s cannot allocate channel queue",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		return;
 	}
@@ -4001,11 +3999,10 @@ cmd680_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
 	cp->wdc_channel.channel = channel;
 	cp->wdc_channel.wdc = &sc->sc_wdcdev;
 
-	cp->wdc_channel.ch_queue =
-	    malloc(sizeof(struct channel_queue), M_DEVBUF, M_NOWAIT);
+	cp->wdc_channel.ch_queue = wdc_alloc_queue();
 	if (cp->wdc_channel.ch_queue == NULL) {
 		printf("%s %s: "
-		    "can't allocate memory for command queue",
+		    "cannot allocate channel queue",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		    return;
 	}
@@ -4604,11 +4601,10 @@ sii3114_chansetup(struct pciide_softc *sc, int channel)
 	cp->name = channel_names[channel];
 	cp->wdc_channel.channel = channel;
 	cp->wdc_channel.wdc = &sc->sc_wdcdev;
-	cp->wdc_channel.ch_queue =
-	    malloc(sizeof(struct channel_queue), M_DEVBUF, M_NOWAIT);
+	cp->wdc_channel.ch_queue = wdc_alloc_queue();
 	if (cp->wdc_channel.ch_queue == NULL) {
 		printf("%s %s channel: "
-		    "can't allocate memory for command queue",
+		    "cannot allocate channel queue",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		return (0);
 	}
@@ -4804,10 +4800,9 @@ cy693_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	cp->name = PCIIDE_CHANNEL_NAME(0);
 	cp->wdc_channel.channel = 0;
 	cp->wdc_channel.wdc = &sc->sc_wdcdev;
-	cp->wdc_channel.ch_queue =
-	    malloc(sizeof(struct channel_queue), M_DEVBUF, M_NOWAIT);
+	cp->wdc_channel.ch_queue = wdc_alloc_queue();
 	if (cp->wdc_channel.ch_queue == NULL) {
-		printf(": cannot allocate memory for command queue\n");
+		printf(": cannot allocate channel queue\n");
 		return;
 	}
 	printf(", %s %s to ", PCIIDE_CHANNEL_NAME(0),
@@ -6804,11 +6799,10 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		cp->name = NULL;
 		cp->wdc_channel.channel = channel;
 		cp->wdc_channel.wdc = &sc->sc_wdcdev;
-		cp->wdc_channel.ch_queue =
-		    malloc(sizeof(struct channel_queue), M_DEVBUF, M_NOWAIT);
+		cp->wdc_channel.ch_queue = wdc_alloc_queue();
 		if (cp->wdc_channel.ch_queue == NULL) {
 			printf("%s: channel %d: "
-			    "can't allocate memory for command queue\n",
+			    "cannot allocate channel queue\n",
 			sc->sc_wdcdev.sc_dev.dv_xname, channel);
 			continue;
 		}

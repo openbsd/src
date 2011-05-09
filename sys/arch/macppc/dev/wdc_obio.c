@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.28 2010/08/29 23:06:53 deraadt Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.29 2011/05/09 22:33:53 matthew Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.15 2001/07/25 20:26:33 bouyer Exp $	*/
 
 /*-
@@ -217,10 +217,9 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 	chp->channel = 0;
 	chp->wdc = &sc->sc_wdcdev;
 
-	chp->ch_queue = malloc(sizeof(struct channel_queue), M_DEVBUF,
-	    M_NOWAIT);
+	chp->ch_queue = wdc_alloc_queue();
 	if (chp->ch_queue == NULL) {
-		printf("%s: can't allocate memory for command queue",
+		printf("%s: cannot allocate channel queue",
 		sc->sc_wdcdev.sc_dev.dv_xname);
 		return;
 	}
@@ -240,7 +239,7 @@ wdc_obio_detach(struct device *self, int flags)
 	if ((error = wdcdetach(chp, flags)) != 0)
 		return (error);
 
-	free(chp->ch_queue, M_DEVBUF);
+	wdc_free_queue(chp->ch_queue);
 
 	if (sc->sc_use_dma) {
 		unmapiodev((void *)sc->sc_dmareg, sc->sc_dmasize);
