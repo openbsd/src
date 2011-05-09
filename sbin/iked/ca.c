@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.15 2011/05/05 12:59:31 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.16 2011/05/09 11:15:18 reyk Exp $	*/
 /*	$vantronix: ca.c,v 1.29 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ caproc(struct privsep *ps, struct privsep_proc *p)
 	if (ca_key_serialize(key, &store->ca_privkey) != 0)
 		fatalx("ca: failed to serialize private key");
 
-	return (run_proc(ps, p, procs, nitems(procs), ca_reset, store));
+	return (proc_run(ps, p, procs, nitems(procs), ca_reset, store));
 }
 
 void
@@ -230,7 +230,7 @@ ca_setcert(struct iked *env, struct iked_sahdr *sh, struct iked_id *id,
 	iov[iovcnt].iov_len = len;
 	iovcnt++;
 
-	if (imsg_composev_proc(env, procid, IMSG_CERT, -1, iov, iovcnt) == -1)
+	if (proc_composev_imsg(env, procid, IMSG_CERT, -1, iov, iovcnt) == -1)
 		return (-1);
 	return (0);
 }
@@ -271,7 +271,7 @@ ca_setreq(struct iked *env, struct iked_sahdr *sh,
 	iov[iovcnt].iov_len = len;
 	iovcnt++;
 
-	if (imsg_composev_proc(env, procid,
+	if (proc_composev_imsg(env, procid,
 	    IMSG_CERTREQ, -1, iov, iovcnt) == -1)
 		goto done;
 
@@ -308,7 +308,7 @@ ca_setauth(struct iked *env, struct iked_sa *sa,
 		log_debug("%s: auth length %d", __func__, ibuf_size(authmsg));
 	}
 
-	if (imsg_composev_proc(env, id, IMSG_AUTH, -1, iov, iovcnt) == -1)
+	if (proc_composev_imsg(env, id, IMSG_AUTH, -1, iov, iovcnt) == -1)
 		return (-1);
 	return (0);
 }
@@ -363,7 +363,7 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 	iov[1].iov_base = &type;
 	iov[1].iov_len = sizeof(type);
 
-	if (imsg_composev_proc(env, PROC_IKEV2, cmd, -1, iov, iovcnt) == -1)
+	if (proc_composev_imsg(env, PROC_IKEV2, cmd, -1, iov, iovcnt) == -1)
 		return (-1);
 	return (0);
 }
@@ -598,7 +598,7 @@ ca_reload(struct iked *env)
 		    ibuf_length(env->sc_certreq) == SHA_DIGEST_LENGTH ?
 		    "" : "s");
 
-		(void)imsg_composev_proc(env, PROC_IKEV2, IMSG_CERTREQ, -1,
+		(void)proc_composev_imsg(env, PROC_IKEV2, IMSG_CERTREQ, -1,
 		    iov, iovcnt);
 	}
 

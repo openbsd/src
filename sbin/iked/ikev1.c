@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev1.c,v 1.9 2011/05/05 12:59:31 reyk Exp $	*/
+/*	$OpenBSD: ikev1.c,v 1.10 2011/05/09 11:15:18 reyk Exp $	*/
 /*	$vantronix: ikev1.c,v 1.13 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ static struct privsep_proc procs[] = {
 pid_t
 ikev1(struct privsep *ps, struct privsep_proc *p)
 {
-	return (run_proc(ps, p, procs, nitems(procs), NULL, NULL));
+	return (proc_run(ps, p, procs, nitems(procs), NULL, NULL));
 }
 
 int
@@ -160,7 +160,7 @@ ikev1_msg_cb(int fd, short event, void *arg)
 		iov[1].iov_base = buf;
 		iov[1].iov_len = len;
 
-		imsg_composev_proc(env, PROC_IKEV2, IMSG_IKE_MESSAGE, -1,
+		proc_composev_imsg(env, PROC_IKEV2, IMSG_IKE_MESSAGE, -1,
 		    iov, 2);
 		goto done;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.6 2011/05/05 12:55:52 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.7 2011/05/09 11:15:18 reyk Exp $	*/
 /*	$vantronix: control.c,v 1.4 2010/05/14 07:35:52 reyk Exp $	*/
 
 /*
@@ -265,9 +265,9 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			memcpy(&v, imsg.data, sizeof(v));
 			log_verbose(v);
 
-			imsg_forward_proc(env, &imsg, PROC_PARENT);
-			imsg_forward_proc(env, &imsg, PROC_IKEV2);
-			imsg_forward_proc(env, &imsg, PROC_IKEV1);
+			proc_forward_imsg(env, &imsg, PROC_PARENT);
+			proc_forward_imsg(env, &imsg, PROC_IKEV2);
+			proc_forward_imsg(env, &imsg, PROC_IKEV1);
 			break;
 		case IMSG_CTL_RELOAD:
 		case IMSG_CTL_RESET:
@@ -275,7 +275,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 		case IMSG_CTL_DECOUPLE:
 		case IMSG_CTL_ACTIVE:
 		case IMSG_CTL_PASSIVE:
-			imsg_forward_proc(env, &imsg, PROC_PARENT);
+			proc_forward_imsg(env, &imsg, PROC_PARENT);
 			break;
 		default:
 			log_debug("%s: error handling imsg %d",

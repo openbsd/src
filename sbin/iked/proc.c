@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.5 2011/05/05 12:59:31 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.6 2011/05/09 11:15:18 reyk Exp $	*/
 /*	$vantronix: proc.c,v 1.11 2010/06/01 16:45:56 jsg Exp $	*/
 
 /*
@@ -22,6 +22,7 @@
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/param.h>
+#include <sys/wait.h>
 #include <sys/socket.h>
 
 #include <stdio.h>
@@ -37,17 +38,25 @@
 
 #include "iked.h"
 
+void	 proc_setup(struct privsep *);
 void	 proc_shutdown(struct privsep_proc *);
 void	 proc_sig_handler(int, short, void *);
 
 void
-init_procs(struct privsep *ps, struct privsep_proc *p, u_int nproc)
+proc_init(struct privsep *ps, struct privsep_proc *p, u_int nproc)
 {
 	u_int	 i;
 
+	/*
+	 * Called from parent
+	 */
 	privsep_process = PROC_PARENT;
-	init_pipes(ps);
+	ps->ps_title[PROC_PARENT] = "parent";
+	ps->ps_pid[PROC_PARENT] = getpid();
 
+	proc_setup(ps);
+
+	/* Engage! */
 	for (i = 0; i < nproc; i++, p++) {
 		ps->ps_title[p->p_id] = p->p_title;
 		ps->ps_pid[p->p_id] = (*p->p_init)(ps, p);
@@ -55,9 +64,10 @@ init_procs(struct privsep *ps, struct privsep_proc *p, u_int nproc)
 }
 
 void
-kill_procs(struct privsep *ps)
+proc_kill(struct privsep *ps)
 {
-	u_int	 i;
+	pid_t		 pid;
+	u_int		 i;
 
 	if (privsep_process != PROC_PARENT)
 		return;
@@ -67,20 +77,24 @@ kill_procs(struct privsep *ps)
 			continue;
 		kill(ps->ps_pid[i], SIGTERM);
 	}
+
+	do {
+		pid = waitpid(WAIT_ANY, NULL, 0);
+	} while (pid != -1 || (pid == -1 && errno == EINTR));
 }
 
 void
-init_pipes(struct privsep *ps)
+proc_setup(struct privsep *ps)
 {
-	int	 i, j, fds[2];
+	int	 i, j, sockpair[2];
 
 	for (i = 0; i < PROC_MAX; i++)
 		for (j = 0; j < PROC_MAX; j++) {
 			if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
-			    fds) == -1)
-				fatal("socketpair");
-			ps->ps_pipes[i][j] = fds[0];
-			ps->ps_pipes[j][i] = fds[1];
+			    sockpair) == -1)
+				fatal("sockpair");
+			ps->ps_pipes[i][j] = sockpair[0];
+			ps->ps_pipes[j][i] = sockpair[1];
 			socket_set_blockmode(ps->ps_pipes[i][j],
 			    BM_NONBLOCK);
 			socket_set_blockmode(ps->ps_pipes[j][i],
@@ -89,10 +103,15 @@ init_pipes(struct privsep *ps)
 }
 
 void
-config_pipes(struct privsep *ps, struct privsep_proc *p, u_int nproc)
+proc_config(struct privsep *ps, struct privsep_proc *p, u_int nproc)
 {
-	u_int	 i, j, k, found;
+	u_int	 src, dst, i, j, k, found;
 
+	src = privsep_process;
+
+	/*
+	 * close unused pipes
+	 */
 	for (i = 0; i < PROC_MAX; i++) {
 		if (i != privsep_process) {
 			for (j = 0; j < PROC_MAX; j++) {
@@ -112,25 +131,18 @@ config_pipes(struct privsep *ps, struct privsep_proc *p, u_int nproc)
 			}
 		}
 	}
-}
-
-void
-config_procs(struct privsep *ps, struct privsep_proc *p, u_int nproc)
-{
-	u_int	src, dst, i;
 
 	/*
 	 * listen on appropriate pipes
 	 */
 	for (i = 0; i < nproc; i++, p++) {
-		src = privsep_process;
 		dst = p->p_id;
 		p->p_ps = ps;
 		p->p_env = ps->ps_env;
 
 		imsg_init(&ps->ps_ievs[dst].ibuf,
 		    ps->ps_pipes[src][dst]);
-		ps->ps_ievs[dst].handler = dispatch_proc;
+		ps->ps_ievs[dst].handler = proc_dispatch;
 		ps->ps_ievs[dst].events = EV_READ;
 		ps->ps_ievs[dst].data = p;
 		ps->ps_ievs[dst].name = p->p_title;
@@ -158,10 +170,12 @@ proc_shutdown(struct privsep_proc *p)
 void
 proc_sig_handler(int sig, short event, void *arg)
 {
+	struct privsep_proc	*p = arg;
+
 	switch (sig) {
 	case SIGINT:
 	case SIGTERM:
-		proc_shutdown((struct privsep_proc *)arg);
+		proc_shutdown(p);
 		break;
 	case SIGCHLD:
 	case SIGHUP:
@@ -175,7 +189,7 @@ proc_sig_handler(int sig, short event, void *arg)
 }
 
 pid_t
-run_proc(struct privsep *ps, struct privsep_proc *p,
+proc_run(struct privsep *ps, struct privsep_proc *p,
     struct privsep_proc *procs, u_int nproc,
     void (*init)(struct privsep *, void *), void *arg)
 {
@@ -186,7 +200,7 @@ run_proc(struct privsep *ps, struct privsep_proc *p,
 
 	switch (pid = fork()) {
 	case -1:
-		fatal("run_proc: cannot fork");
+		fatal("proc_run: cannot fork");
 	case 0:
 		break;
 	default:
@@ -208,27 +222,28 @@ run_proc(struct privsep *ps, struct privsep_proc *p,
 
 #ifndef DEBUG
 	if (chroot(root) == -1)
-		fatal("run_proc: chroot");
+		fatal("proc_run: chroot");
 	if (chdir("/") == -1)
-		fatal("run_proc: chdir(\"/\")");
+		fatal("proc_run: chdir(\"/\")");
 #else
 #warning disabling privilege revocation and chroot in DEBUG MODE
 	if (p->p_chroot != NULL) {
 		if (chroot(root) == -1)
-			fatal("run_proc: chroot");
+			fatal("proc_run: chroot");
 		if (chdir("/") == -1)
-			fatal("run_proc: chdir(\"/\")");
+			fatal("proc_run: chdir(\"/\")");
 	}
 #endif
 
 	privsep_process = p->p_id;
+
 	setproctitle("%s", p->p_title);
 
 #ifndef DEBUG
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-		fatal("run_proc: cannot drop privileges");
+		fatal("proc_run: cannot drop privileges");
 #endif
 
 	event_init();
@@ -245,8 +260,7 @@ run_proc(struct privsep *ps, struct privsep_proc *p,
 	signal_add(&ps->ps_evsighup, NULL);
 	signal_add(&ps->ps_evsigpipe, NULL);
 
-	config_pipes(ps, procs, nproc);
-	config_procs(ps, procs, nproc);
+	proc_config(ps, procs, nproc);
 
 	arc4random_buf(seed, sizeof(seed));
 	RAND_seed(seed, sizeof(seed));
@@ -268,7 +282,7 @@ run_proc(struct privsep *ps, struct privsep_proc *p,
 }
 
 void
-dispatch_proc(int fd, short event, void *arg)
+proc_dispatch(int fd, short event, void *arg)
 {
 	struct privsep_proc	*p = (struct privsep_proc *)arg;
 	struct privsep		*ps = p->p_ps;
@@ -277,13 +291,15 @@ dispatch_proc(int fd, short event, void *arg)
 	struct imsg		 imsg;
 	ssize_t			 n;
 	int			 verbose;
+	const char		*title;
 
+	title = ps->ps_title[privsep_process];
 	iev = &ps->ps_ievs[p->p_id];
 	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
-			fatal(p->p_title);
+			fatal(title);
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
 			event_del(&iev->ev);
@@ -294,12 +310,12 @@ dispatch_proc(int fd, short event, void *arg)
 
 	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
-			fatal(p->p_title);
+			fatal(title);
 	}
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal(p->p_title);
+			fatal(title);
 		if (n == 0)
 			break;
 
@@ -325,9 +341,82 @@ dispatch_proc(int fd, short event, void *arg)
 		default:
 			log_warnx("%s: %s got imsg %d", __func__, p->p_title,
 			    imsg.hdr.type);
-			fatalx(p->p_title);
+			fatalx(title);
 		}
 		imsg_free(&imsg);
 	}
 	imsg_event_add(iev);
+}
+
+void
+imsg_event_add(struct imsgev *iev)
+{
+	if (iev->handler == NULL) {
+		imsg_flush(&iev->ibuf);
+		return;
+	}
+
+	iev->events = EV_READ;
+	if (iev->ibuf.w.queued)
+		iev->events |= EV_WRITE;
+
+	event_del(&iev->ev);
+	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev->data);
+	event_add(&iev->ev, NULL);
+}
+
+int
+imsg_compose_event(struct imsgev *iev, u_int16_t type, u_int32_t peerid,
+    pid_t pid, int fd, void *data, u_int16_t datalen)
+{
+	int	ret;
+
+	if ((ret = imsg_compose(&iev->ibuf, type, peerid,
+	    pid, fd, data, datalen)) == -1)
+		return (ret);
+	imsg_event_add(iev);
+	return (ret);
+}
+
+int
+imsg_composev_event(struct imsgev *iev, u_int16_t type, u_int32_t peerid,
+    pid_t pid, int fd, const struct iovec *iov, int iovcnt)
+{
+	int	ret;
+
+	if ((ret = imsg_composev(&iev->ibuf, type, peerid,
+	    pid, fd, iov, iovcnt)) == -1)
+		return (ret);
+	imsg_event_add(iev);
+	return (ret);
+}
+
+int
+proc_compose_imsg(struct iked *env, enum privsep_procid id,
+    u_int16_t type, int fd, void *data, u_int16_t datalen)
+{
+	return (imsg_compose_event(&env->sc_ps.ps_ievs[id],
+	    type, -1, 0, fd, data, datalen));
+}
+
+int
+proc_composev_imsg(struct iked *env, enum privsep_procid id,
+    u_int16_t type, int fd, const struct iovec *iov, int iovcnt)
+{
+	return (imsg_composev_event(&env->sc_ps.ps_ievs[id],
+	    type, -1, 0, fd, iov, iovcnt));
+}
+
+int
+proc_forward_imsg(struct iked *env, struct imsg *imsg,
+    enum privsep_procid id)
+{
+	return (proc_compose_imsg(env, id, imsg->hdr.type,
+	    imsg->fd, imsg->data, IMSG_DATA_SIZE(imsg)));
+}
+
+void
+proc_flush_imsg(struct iked *env, enum privsep_procid id)
+{
+	imsg_flush(&env->sc_ps.ps_ievs[id].ibuf);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.10 2011/05/05 12:55:52 reyk Exp $	*/
+/*	$OpenBSD: iked.c,v 1.11 2011/05/09 11:15:18 reyk Exp $	*/
 /*	$vantronix: iked.c,v 1.22 2010/06/02 14:43:30 reyk Exp $	*/
 
 /*
@@ -20,8 +20,8 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/wait.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <sys/uio.h>
 
 #include <net/if.h>
@@ -148,7 +148,7 @@ main(int argc, char *argv[])
 		err(1, "failed to daemonize");
 
 	group_init();
-	init_procs(ps, procs, nitems(procs));
+	proc_init(ps, procs, nitems(procs));
 
 	setproctitle("parent");
 
@@ -166,8 +166,7 @@ main(int argc, char *argv[])
 	signal_add(&ps->ps_evsighup, NULL);
 	signal_add(&ps->ps_evsigpipe, NULL);
 
-	config_pipes(ps, procs, nitems(procs));
-	config_procs(ps, procs, nitems(procs));
+	proc_config(ps, procs, nitems(procs));
 
 	if (parent_configure(env) == -1)
 		fatalx("configuration failed");
@@ -185,13 +184,13 @@ parent_configure(struct iked *env)
 	struct sockaddr_storage	 ss;
 
 	if (parse_config(env->sc_conffile, env) == -1) {
-		kill_procs(&env->sc_ps);
+		proc_kill(&env->sc_ps);
 		exit(1);
 	}
 
 	if (env->sc_opts & IKED_OPT_NOACTION) {
 		fprintf(stderr, "configuration OK\n");
-		kill_procs(&env->sc_ps);
+		proc_kill(&env->sc_ps);
 		exit(0);
 	}
 
@@ -357,8 +356,8 @@ parent_dispatch_ca(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_CTL_DECOUPLE:
 	case IMSG_CTL_ACTIVE:
 	case IMSG_CTL_PASSIVE:
-		imsg_compose_proc(env, PROC_IKEV1, type, -1, NULL, 0);
-		imsg_compose_proc(env, PROC_IKEV2, type, -1, NULL, 0);
+		proc_compose_imsg(env, PROC_IKEV1, type, -1, NULL, 0);
+		proc_compose_imsg(env, PROC_IKEV2, type, -1, NULL, 0);
 		break;
 	case IMSG_CTL_RELOAD:
 		if (IMSG_DATA_SIZE(imsg) > 0)
@@ -377,15 +376,7 @@ parent_dispatch_ca(int fd, struct privsep_proc *p, struct imsg *imsg)
 void
 parent_shutdown(struct iked *env)
 {
-	pid_t		 pid;
-	u_int		 i;
-
-	for (i = 0; i < PROC_MAX; i++)
-		kill(env->sc_ps.ps_pid[i], SIGTERM);
-
-	do {
-		pid = waitpid(WAIT_MYPGRP, NULL, 0);
-	} while (pid != -1 || (pid == -1 && errno == EINTR));
+	proc_kill(&env->sc_ps);
 
 	free(env);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg_util.c,v 1.3 2011/05/05 12:55:52 reyk Exp $	*/
+/*	$OpenBSD: imsg_util.c,v 1.4 2011/05/09 11:15:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -39,80 +39,6 @@
 #include <event.h>
 
 #include "iked.h"
-#include "ikev2.h"
-
-void
-imsg_event_add(struct imsgev *iev)
-{
-	if (iev->handler == NULL) {
-		imsg_flush(&iev->ibuf);
-		return;
-	}
-
-	iev->events = EV_READ;
-	if (iev->ibuf.w.queued)
-		iev->events |= EV_WRITE;
-
-	event_del(&iev->ev);
-	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev->data);
-	event_add(&iev->ev, NULL);
-}
-
-int
-imsg_compose_event(struct imsgev *iev, u_int16_t type, u_int32_t peerid,
-    pid_t pid, int fd, void *data, u_int16_t datalen)
-{
-	int	ret;
-
-	if ((ret = imsg_compose(&iev->ibuf, type, peerid,
-	    pid, fd, data, datalen)) == -1)
-		return (ret);
-	imsg_event_add(iev);
-	return (ret);
-}
-
-int
-imsg_composev_event(struct imsgev *iev, u_int16_t type, u_int32_t peerid,
-    pid_t pid, int fd, const struct iovec *iov, int iovcnt)
-{
-	int	ret;
-
-	if ((ret = imsg_composev(&iev->ibuf, type, peerid,
-	    pid, fd, iov, iovcnt)) == -1)
-		return (ret);
-	imsg_event_add(iev);
-	return (ret);
-}
-
-int
-imsg_compose_proc(struct iked *env, enum privsep_procid id,
-    u_int16_t type, int fd, void *data, u_int16_t datalen)
-{
-	return (imsg_compose_event(&env->sc_ps.ps_ievs[id],
-	    type, -1, 0, fd, data, datalen));
-}
-
-int
-imsg_composev_proc(struct iked *env, enum privsep_procid id,
-    u_int16_t type, int fd, const struct iovec *iov, int iovcnt)
-{
-	return (imsg_composev_event(&env->sc_ps.ps_ievs[id],
-	    type, -1, 0, fd, iov, iovcnt));
-}
-
-int
-imsg_forward_proc(struct iked *env, struct imsg *imsg,
-    enum privsep_procid id)
-{
-	return (imsg_compose_proc(env, id, imsg->hdr.type,
-	    imsg->fd, imsg->data, IMSG_DATA_SIZE(imsg)));
-}
-
-void
-imsg_flush_proc(struct iked *env, enum privsep_procid id)
-{
-	imsg_flush(&env->sc_ps.ps_ievs[id].ibuf);
-}
 
 /*
  * Extending the imsg buffer API for internal use

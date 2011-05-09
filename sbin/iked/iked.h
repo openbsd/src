@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.40 2011/05/05 12:59:31 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.41 2011/05/09 11:15:18 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -741,16 +741,25 @@ void	 timer_register_initiator(struct iked *,
 void	 timer_unregister_initiator(struct iked *);
 
 /* proc.c */
-void	 init_procs(struct privsep *, struct privsep_proc *, u_int);
-void	 kill_procs(struct privsep *);
-void	 init_pipes(struct privsep *);
-void	 config_pipes(struct privsep *, struct privsep_proc *, u_int);
-void	 config_procs(struct privsep *, struct privsep_proc *, u_int);
-void	 purge_config(struct privsep *, u_int8_t);
-void	 dispatch_proc(int, short event, void *);
-pid_t	 run_proc(struct privsep *, struct privsep_proc *,
+void	 proc_init(struct privsep *, struct privsep_proc *, u_int);
+void	 proc_kill(struct privsep *);
+void	 proc_config(struct privsep *, struct privsep_proc *, u_int);
+void	 proc_dispatch(int, short event, void *);
+pid_t	 proc_run(struct privsep *, struct privsep_proc *,
 	    struct privsep_proc *, u_int,
 	    void (*)(struct privsep *, void *), void *);
+void	 imsg_event_add(struct imsgev *);
+int	 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
+	    pid_t, int, void *, u_int16_t);
+int	 imsg_composev_event(struct imsgev *, u_int16_t, u_int32_t,
+	    pid_t, int, const struct iovec *, int);
+int	 proc_compose_imsg(struct iked *, enum privsep_procid,
+	    u_int16_t, int, void *, u_int16_t);
+int	 proc_composev_imsg(struct iked *, enum privsep_procid,
+	    u_int16_t, int, const struct iovec *, int);
+int	 proc_forward_imsg(struct iked *, struct imsg *,
+	    enum privsep_procid);
+void	 proc_flush_imsg(struct iked *, enum privsep_procid);
 
 /* util.c */
 void	 socket_set_blockmode(int, enum blockmodes);
@@ -786,18 +795,6 @@ int	 expand_string(char *, size_t, const char *, const char *);
 u_int8_t *string2unicode(const char *, size_t *);
 
 /* imsg_util.c */
-void	 imsg_event_add(struct imsgev *);
-int	 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
-	    pid_t, int, void *, u_int16_t);
-int	 imsg_composev_event(struct imsgev *, u_int16_t, u_int32_t,
-	    pid_t, int, const struct iovec *, int);
-int	 imsg_compose_proc(struct iked *, enum privsep_procid,
-	    u_int16_t, int, void *, u_int16_t);
-int	 imsg_composev_proc(struct iked *, enum privsep_procid,
-	    u_int16_t, int, const struct iovec *, int);
-int	 imsg_forward_proc(struct iked *, struct imsg *,
-	    enum privsep_procid);
-void	 imsg_flush_proc(struct iked *, enum privsep_procid);
 struct ibuf *
 	 ibuf_new(void *, size_t);
 struct ibuf *

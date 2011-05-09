@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.11 2011/05/05 12:17:10 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.12 2011/05/09 11:15:18 reyk Exp $	*/
 /*	$vantronix: config.c,v 1.30 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -388,8 +388,8 @@ config_setcoupled(struct iked *env, u_int couple)
 	u_int	 type;
 
 	type = couple ? IMSG_CTL_COUPLE : IMSG_CTL_DECOUPLE;
-	imsg_compose_proc(env, PROC_IKEV1, type, -1, NULL, 0);
-	imsg_compose_proc(env, PROC_IKEV2, type, -1, NULL, 0);
+	proc_compose_imsg(env, PROC_IKEV1, type, -1, NULL, 0);
+	proc_compose_imsg(env, PROC_IKEV2, type, -1, NULL, 0);
 
 	return (0);
 }
@@ -407,8 +407,8 @@ config_setmode(struct iked *env, u_int passive)
 	u_int	 type;
 
 	type = passive ? IMSG_CTL_PASSIVE : IMSG_CTL_ACTIVE;
-	imsg_compose_proc(env, PROC_IKEV1, type, -1, NULL, 0);
-	imsg_compose_proc(env, PROC_IKEV2, type, -1, NULL, 0);
+	proc_compose_imsg(env, PROC_IKEV1, type, -1, NULL, 0);
+	proc_compose_imsg(env, PROC_IKEV2, type, -1, NULL, 0);
 
 	return (0);
 }
@@ -434,7 +434,7 @@ config_getmode(struct iked *env, u_int type)
 int
 config_setreset(struct iked *env, u_int mode, enum privsep_procid id)
 {
-	imsg_compose_proc(env, id, IMSG_CTL_RESET, -1, &mode, sizeof(mode));
+	proc_compose_imsg(env, id, IMSG_CTL_RESET, -1, &mode, sizeof(mode));
 	return (0);
 }
 
@@ -488,7 +488,7 @@ config_setsocket(struct iked *env, struct sockaddr_storage *ss,
 
 	if ((s = udp_bind((struct sockaddr *)ss, port)) == -1)
 		return (-1);
-	imsg_compose_proc(env, id, IMSG_UDP_SOCKET, s,
+	proc_compose_imsg(env, id, IMSG_UDP_SOCKET, s,
 	    ss, sizeof(*ss));
 	return (0);
 }
@@ -538,7 +538,7 @@ config_setpfkey(struct iked *env, enum privsep_procid id)
 
 	if ((s = pfkey_socket()) == -1)
 		return (-1);
-	imsg_compose_proc(env, id, IMSG_PFKEY_SOCKET, s, NULL, 0);
+	proc_compose_imsg(env, id, IMSG_PFKEY_SOCKET, s, NULL, 0);
 	return (0);
 }
 
@@ -558,7 +558,7 @@ config_setuser(struct iked *env, struct iked_user *usr, enum privsep_procid id)
 		return (0);
 	}
 
-	imsg_compose_proc(env, id, IMSG_CFG_USER, -1, usr, sizeof(*usr));
+	proc_compose_imsg(env, id, IMSG_CFG_USER, -1, usr, sizeof(*usr));
 	return (0);
 }
 
@@ -629,7 +629,7 @@ config_setpolicy(struct iked *env, struct iked_policy *pol,
 		return (0);
 	}
 
-	if (imsg_composev_proc(env, id, IMSG_CFG_POLICY, -1,
+	if (proc_composev_imsg(env, id, IMSG_CFG_POLICY, -1,
 	    iov, iovcnt) == -1)
 		return (-1);
 
@@ -708,7 +708,7 @@ config_setcompile(struct iked *env, enum privsep_procid id)
 	if (env->sc_opts & IKED_OPT_NOACTION)
 		return (0);
 
-	imsg_compose_proc(env, id, IMSG_COMPILE, -1, NULL, 0);
+	proc_compose_imsg(env, id, IMSG_COMPILE, -1, NULL, 0);
 	return (0);
 }
 
