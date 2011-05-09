@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfwprintf.c,v 1.3 2011/04/28 17:38:46 stsp Exp $ */
+/*	$OpenBSD: vfwprintf.c,v 1.4 2011/05/09 19:49:51 stsp Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -1051,6 +1051,8 @@ overflow:
 	ret = -1;
 
 finish:
+	if (convbuf)
+		free(convbuf);
 #ifdef FLOATING_POINT
 	if (dtoaresult)
 		__freedtoa(dtoaresult);
