@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_priv.h,v 1.2 2011/04/16 10:52:22 ratchov Exp $	*/
+/*	$OpenBSD: sio_priv.h,v 1.3 2011/05/09 17:34:14 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -19,6 +19,8 @@
 
 #include <sys/param.h>
 #include "sndio.h"
+
+#define SIO_MAXNFDS	4
 
 /*
  * private ``handle'' structure
