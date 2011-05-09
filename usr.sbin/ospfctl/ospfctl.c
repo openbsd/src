@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.55 2010/09/25 13:29:56 claudio Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.56 2011/05/09 12:25:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -47,7 +47,7 @@ const char	*fmt_timeframe(time_t t);
 const char	*fmt_timeframe_core(time_t t);
 const char	*log_id(u_int32_t );
 const char	*log_adv_rtr(u_int32_t);
-void		 show_database_head(struct in_addr, u_int8_t);
+void		 show_database_head(struct in_addr, char *, u_int8_t);
 int		 show_database_msg(struct imsg *);
 char		*print_ls_type(u_int8_t);
 void		 show_db_hdr_msg_detail(struct lsa_hdr *);
@@ -183,6 +183,9 @@ main(int argc, char *argv[])
 	case SHOW_DBASBR:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_ASBR, 0, 0, -1, NULL, 0);
 		break;
+	case SHOW_DBOPAQ:
+		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_OPAQ, 0, 0, -1, NULL, 0);
+		break;
 	case SHOW_RIB:
 		printf("%-20s %-17s %-12s %-9s %-7s %-8s\n", "Destination",
 		    "Nexthop", "Path Type", "Type", "Cost", "Uptime");
@@ -283,6 +286,7 @@ main(int argc, char *argv[])
 			case SHOW_DBRTR:
 			case SHOW_DBSUM:
 			case SHOW_DBASBR:
+			case SHOW_DBOPAQ:
 				done = show_db_msg_detail(&imsg);
 				break;
 			case SHOW_RIB:
@@ -586,9 +590,10 @@ mask2prefixlen(in_addr_t ina)
 }
 
 void
-show_database_head(struct in_addr aid, u_int8_t type)
+show_database_head(struct in_addr aid, char *ifname, u_int8_t type)
 {
 	char	*header, *format;
+	int	 cleanup = 0;
 
 	switch (type) {
 	case LSA_TYPE_ROUTER:
@@ -608,24 +613,47 @@ show_database_head(struct in_addr aid, u_int8_t type)
 		if ((header = strdup("Type-5 AS External Link States")) == NULL)
 			err(1, NULL);
 		break;
+	case LSA_TYPE_LINK_OPAQ:
+		format = "Type-9 Link Local Opaque Link States";
+		break;
+	case LSA_TYPE_AREA_OPAQ:
+		format = "Type-10 Area Local Opaque Link States";
+		break;
+	case LSA_TYPE_AS_OPAQ:
+		format = NULL;
+		if ((header = strdup("Type-11 AS Wide Opaque Link States")) ==
+		    NULL)
+			err(1, NULL);
+		break;
 	default:
-		errx(1, "unknown LSA type");
+		if (asprintf(&format, "LSA type %x", ntohs(type)) == -1)
+			err(1, NULL);
+		cleanup = 1;
+		break;
 	}
-	if (type != LSA_TYPE_EXTERNAL)
+	if (type == LSA_TYPE_LINK_OPAQ) {
+		if (asprintf(&header, "%s (Area %s Interface %s)", format,
+		    inet_ntoa(aid), ifname) == -1)
+			err(1, NULL);
+	} else if (type != LSA_TYPE_EXTERNAL && type != LSA_TYPE_AS_OPAQ)
 		if (asprintf(&header, "%s (Area %s)", format,
 		    inet_ntoa(aid)) == -1)
 			err(1, NULL);
 
 	printf("\n%-15s %s\n\n", "", header);
 	free(header);
+	if (cleanup)
+		free(format);
 }
 
 int
 show_database_msg(struct imsg *imsg)
 {
 	static struct in_addr	 area_id;
+	static char		 ifname[IF_NAMESIZE];
 	static u_int8_t		 lasttype;
 	struct area		*area;
+	struct iface		*iface;
 	struct lsa_hdr		*lsa;
 
 	switch (imsg->hdr.type) {
@@ -633,7 +661,7 @@ show_database_msg(struct imsg *imsg)
 	case IMSG_CTL_SHOW_DB_SELF:
 		lsa = imsg->data;
 		if (lsa->type != lasttype) {
-			show_database_head(area_id, lsa->type);
+			show_database_head(area_id, ifname, lsa->type);
 			printf("%-15s %-15s %-4s %-10s %-8s\n", "Link ID",
 			    "Adv Router", "Age", "Seq#", "Checksum");
 		}
@@ -646,6 +674,11 @@ show_database_msg(struct imsg *imsg)
 	case IMSG_CTL_AREA:
 		area = imsg->data;
 		area_id = area->id;
+		lasttype = 0;
+		break;
+	case IMSG_CTL_IFACE:
+		iface = imsg->data;
+		strlcpy(ifname, iface->name, sizeof(ifname));
 		lasttype = 0;
 		break;
 	case IMSG_CTL_END:
@@ -672,6 +705,12 @@ print_ls_type(u_int8_t type)
 		return ("Summary (Router)");
 	case LSA_TYPE_EXTERNAL:
 		return ("AS External");
+	case LSA_TYPE_LINK_OPAQ:
+		return ("Type-9 Opaque");
+	case LSA_TYPE_AREA_OPAQ:
+		return ("Type-10 Opaque");
+	case LSA_TYPE_AS_OPAQ:
+		return ("Type-11 Opaque");
 	default:
 		return ("Unknown");
 	}
@@ -702,6 +741,13 @@ show_db_hdr_msg_detail(struct lsa_hdr *lsa)
 	case LSA_TYPE_EXTERNAL:
 		printf("Link State ID: %s (External Network Number)\n",
 		     log_id(lsa->ls_id));
+		break;
+	case LSA_TYPE_LINK_OPAQ:
+	case LSA_TYPE_AREA_OPAQ:
+	case LSA_TYPE_AS_OPAQ:
+		printf("Link State ID: %s Type %d ID %d\n", log_id(lsa->ls_id),
+		    LSA_24_GETHI(ntohl(lsa->ls_id)),
+		    LSA_24_GETLO(ntohl(lsa->ls_id)));
 		break;
 	}
 
@@ -744,9 +790,11 @@ int
 show_db_msg_detail(struct imsg *imsg)
 {
 	static struct in_addr	 area_id;
+	static char		 ifname[IF_NAMESIZE];
 	static u_int8_t		 lasttype;
 	struct in_addr		 addr, data;
 	struct area		*area;
+	struct iface		*iface;
 	struct lsa		*lsa;
 	struct lsa_rtr_link	*rtr_link;
 	struct lsa_asext	*asext;
@@ -758,7 +806,7 @@ show_db_msg_detail(struct imsg *imsg)
 	case IMSG_CTL_SHOW_DB_EXT:
 		lsa = imsg->data;
 		if (lsa->hdr.type != lasttype)
-			show_database_head(area_id, lsa->hdr.type);
+			show_database_head(area_id, ifname, lsa->hdr.type);
 		show_db_hdr_msg_detail(&lsa->hdr);
 		addr.s_addr = lsa->data.asext.mask;
 		printf("Network Mask: %s\n", inet_ntoa(addr));
@@ -781,7 +829,7 @@ show_db_msg_detail(struct imsg *imsg)
 	case IMSG_CTL_SHOW_DB_NET:
 		lsa = imsg->data;
 		if (lsa->hdr.type != lasttype)
-			show_database_head(area_id, lsa->hdr.type);
+			show_database_head(area_id, ifname, lsa->hdr.type);
 		show_db_hdr_msg_detail(&lsa->hdr);
 		addr.s_addr = lsa->data.net.mask;
 		printf("Network Mask: %s\n", inet_ntoa(addr));
@@ -802,7 +850,7 @@ show_db_msg_detail(struct imsg *imsg)
 	case IMSG_CTL_SHOW_DB_RTR:
 		lsa = imsg->data;
 		if (lsa->hdr.type != lasttype)
-			show_database_head(area_id, lsa->hdr.type);
+			show_database_head(area_id, ifname, lsa->hdr.type);
 		show_db_hdr_msg_detail(&lsa->hdr);
 		printf("Flags: %s\n", print_ospf_flags(lsa->data.rtr.flags));
 		nlinks = ntohs(lsa->data.rtr.nlinks);
@@ -859,7 +907,7 @@ show_db_msg_detail(struct imsg *imsg)
 	case IMSG_CTL_SHOW_DB_ASBR:
 		lsa = imsg->data;
 		if (lsa->hdr.type != lasttype)
-			show_database_head(area_id, lsa->hdr.type);
+			show_database_head(area_id, ifname, lsa->hdr.type);
 		show_db_hdr_msg_detail(&lsa->hdr);
 		addr.s_addr = lsa->data.sum.mask;
 		printf("Network Mask: %s\n", inet_ntoa(addr));
@@ -867,9 +915,22 @@ show_db_msg_detail(struct imsg *imsg)
 		    LSA_METRIC_MASK);
 		lasttype = lsa->hdr.type;
 		break;
+	case IMSG_CTL_SHOW_DB_OPAQ:
+		lsa = imsg->data;
+		if (lsa->hdr.type != lasttype)
+			show_database_head(area_id, ifname, lsa->hdr.type);
+		show_db_hdr_msg_detail(&lsa->hdr);
+		/* XXX should we hexdump the data? */
+		lasttype = lsa->hdr.type;
+		break;
 	case IMSG_CTL_AREA:
 		area = imsg->data;
 		area_id = area->id;
+		lasttype = 0;
+		break;
+	case IMSG_CTL_IFACE:
+		iface = imsg->data;
+		strlcpy(ifname, iface->name, sizeof(ifname));
 		lasttype = 0;
 		break;
 	case IMSG_CTL_END:
@@ -914,12 +975,15 @@ print_ospf_options(u_int8_t opts)
 {
 	static char	optbuf[32];
 
-	snprintf(optbuf, sizeof(optbuf), "*|*|%s|%s|%s|%s|%s|*",
+	snprintf(optbuf, sizeof(optbuf), "%s|%s|%s|%s|%s|%s|%s|%s",
+	    opts & OSPF_OPTION_DN ? "DN" : "-",
+	    opts & OSPF_OPTION_O ? "O" : "-",
 	    opts & OSPF_OPTION_DC ? "DC" : "-",
 	    opts & OSPF_OPTION_EA ? "EA" : "-",
 	    opts & OSPF_OPTION_NP ? "N/P" : "-",
 	    opts & OSPF_OPTION_MC ? "MC" : "-",
-	    opts & OSPF_OPTION_E ? "E" : "-");
+	    opts & OSPF_OPTION_E ? "E" : "-",
+	    opts & OSPF_OPTION_MT ? "MT" : "-");
 	return (optbuf);
 }
 
