@@ -1,9 +1,9 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.73 2011/05/08 09:49:34 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.74 2011/05/09 14:18:34 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
-# Copyright (c) 2008, 2009, 2010 Antoine Jacoutot <ajacoutot@openbsd.org>
+# Copyright (c) 2008, 2009, 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -486,9 +486,9 @@ diff_loop() {
 						echo "\t*** WARNING: problem creating ${COMPFILE#.} link"
 					fi
 				else
-					echo "===> Installing ${COMPFILE#.}${RUNNING}"
+					echo "===> Updating ${COMPFILE#.}${RUNNING}"
 					if ! mm_install "${COMPFILE}"; then
-						echo "\t*** WARNING: problem installing ${COMPFILE#.}"
+						echo "\t*** WARNING: problem updating ${COMPFILE#.}"
 					fi
 				fi
 			else
