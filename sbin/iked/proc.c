@@ -1,8 +1,7 @@
-/*	$OpenBSD: proc.c,v 1.6 2011/05/09 11:15:18 reyk Exp $	*/
-/*	$vantronix: proc.c,v 1.11 2010/06/01 16:45:56 jsg Exp $	*/
+/*	$OpenBSD: proc.c,v 1.7 2011/05/09 11:27:08 reyk Exp $	*/
 
 /*
- * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
+ * Copyright (c) 2010,2011 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
