@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.106 2011/04/15 21:35:16 oga Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.107 2011/05/10 21:38:04 oga Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -1474,23 +1474,6 @@ uvm_pagecopy(struct vm_page *src, struct vm_page *dst)
 {
 	atomic_clearbits_int(&dst->pg_flags, PG_CLEAN);
 	pmap_copy_page(src, dst);
-}
-
-/*
- * uvm_page_lookup_freelist: look up the free list for the specified page
- */
-int
-uvm_page_lookup_freelist(struct vm_page *pg)
-{
-#if VM_PHYSSEG_MAX == 1
-	return (vm_physmem[0].free_list);
-#else
-	int lcv;
-
-	lcv = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), NULL);
-	KASSERT(lcv != -1);
-	return (vm_physmem[lcv].free_list);
-#endif
 }
 
 /*

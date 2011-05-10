@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.46 2011/05/07 15:27:01 oga Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.47 2011/05/10 21:38:04 oga Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -255,8 +255,6 @@ void		uvm_pagealloc_pg(struct vm_page *, struct uvm_object *,
 
 struct uvm_constraint_range; /* XXX move to uvm_extern.h? */
 psize_t		uvm_pagecount(struct uvm_constraint_range*);
-
-int		uvm_page_lookup_freelist(struct vm_page *);
 
 #if  VM_PHYSSEG_MAX == 1
 /*
