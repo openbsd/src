@@ -3900,6 +3900,7 @@
 ./usr/share/man/cat3/ftw.0
 ./usr/share/man/cat3/funlockfile.0
 ./usr/share/man/cat3/funopen.0
+./usr/share/man/cat3/fwprintf.0
 ./usr/share/man/cat3/fwide.0
 ./usr/share/man/cat3/fwopen.0
 ./usr/share/man/cat3/fwrite.0
@@ -5488,6 +5489,7 @@
 ./usr/share/man/cat3/rtbl_set_separator.0
 ./usr/share/man/cat3/ruserok.0
 ./usr/share/man/cat3/savetty.0
+./usr/share/man/cat3/swprintf.0
 ./usr/share/man/cat3/scalb.0
 ./usr/share/man/cat3/scalbf.0
 ./usr/share/man/cat3/scalbln.0
@@ -5927,6 +5929,9 @@
 ./usr/share/man/cat3/verrx.0
 ./usr/share/man/cat3/vfprintf.0
 ./usr/share/man/cat3/vfscanf.0
+./usr/share/man/cat3/vfwprintf.0
+./usr/share/man/cat3/vswprintf.0
+./usr/share/man/cat3/vwprintf.0
 ./usr/share/man/cat3/vidattr.0
 ./usr/share/man/cat3/vidputs.0
 ./usr/share/man/cat3/vis.0
@@ -6053,6 +6058,7 @@
 ./usr/share/man/cat3/wmouse_trafo.0
 ./usr/share/man/cat3/wmove.0
 ./usr/share/man/cat3/wnoutrefresh.0
+./usr/share/man/cat3/wprintf.0
 ./usr/share/man/cat3/wprintw.0
 ./usr/share/man/cat3/wredrawln.0
 ./usr/share/man/cat3/wrefresh.0

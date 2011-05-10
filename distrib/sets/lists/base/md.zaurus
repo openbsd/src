@@ -2025,7 +2025,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/nnpfs/nnpfs_global.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/nnpfs/nnpfs_locl.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/nnpfs/nnpfs_message.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/nnpfs/nnpfs_msg_locl.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/nnpfs/nnpfs_node.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/nnpfs/nnpfs_pioctl.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/nnpfs/nnpfs_queue.ph
