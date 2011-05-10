@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.52 2011/05/07 15:31:25 oga Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.53 2011/05/10 21:48:17 oga Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1139,7 +1139,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
  * => aobj must be locked or have a reference count of 0.
  */
 
-void
+int
 uao_dropswap(struct uvm_object *uobj, int pageidx)
 {
 	int slot;
@@ -1148,6 +1148,7 @@ uao_dropswap(struct uvm_object *uobj, int pageidx)
 	if (slot) {
 		uvm_swap_free(slot, 1);
 	}
+	return (slot);
 }
 
 

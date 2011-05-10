@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.100 2011/04/23 17:48:48 kettenis Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.101 2011/05/10 21:48:17 oga Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -267,36 +267,33 @@ uvm_km_pgremove(struct uvm_object *uobj, vaddr_t start, vaddr_t end)
 {
 	struct vm_page *pp;
 	voff_t curoff;
+	int slot;
 	UVMHIST_FUNC("uvm_km_pgremove"); UVMHIST_CALLED(maphist);
 
 	KASSERT(uobj->pgops == &aobj_pager);
 
 	for (curoff = start ; curoff < end ; curoff += PAGE_SIZE) {
 		pp = uvm_pagelookup(uobj, curoff);
-		if (pp == NULL)
-			continue;
-
-		UVMHIST_LOG(maphist,"  page %p, busy=%ld", pp,
-		    pp->pg_flags & PG_BUSY, 0, 0);
-
-		if (pp->pg_flags & PG_BUSY) {
+		if (pp && pp->pg_flags & PG_BUSY) {
 			atomic_setbits_int(&pp->pg_flags, PG_WANTED);
 			UVM_UNLOCK_AND_WAIT(pp, &uobj->vmobjlock, 0,
 			    "km_pgrm", 0);
 			simple_lock(&uobj->vmobjlock);
 			curoff -= PAGE_SIZE; /* loop back to us */
 			continue;
-		} else {
-			/* free the swap slot... */
-			uao_dropswap(uobj, curoff >> PAGE_SHIFT);
+		}
 
-			/*
-			 * ...and free the page; note it may be on the
-			 * active or inactive queues.
-			 */
+		/* free the swap slot, then the page */
+		slot = uao_dropswap(uobj, curoff >> PAGE_SHIFT);
+
+		if (pp != NULL) {
 			uvm_lock_pageq();
 			uvm_pagefree(pp);
 			uvm_unlock_pageq();
+		} else if (slot != 0) {
+			simple_lock(&uvm.swap_data_lock);
+			uvmexp.swpgonly--;
+			simple_unlock(&uvm.swap_data_lock);
 		}
 	}
 }
