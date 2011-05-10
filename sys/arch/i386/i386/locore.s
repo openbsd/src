@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.134 2011/04/27 11:30:53 bluhm Exp $	*/
+/*	$OpenBSD: locore.s,v 1.135 2011/05/10 11:11:56 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1461,6 +1461,7 @@ IDTVEC(align)
  * This will cause the process to get a SIGBUS.
  */
 NENTRY(resume_iret)
+	sti
 	ZTRAP(T_PROTFLT)
 NENTRY(resume_pop_ds)
 	pushl	%es
@@ -1476,6 +1477,7 @@ NENTRY(resume_pop_gs)
 	movw	%ax,%fs
 NENTRY(resume_pop_fs)
 	movl	$T_PROTFLT,TF_TRAPNO(%esp)
+	sti
 	jmp	calltrap
 
 NENTRY(alltraps)
