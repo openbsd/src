@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.32 2009/11/04 19:14:10 kettenis Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.33 2011/05/10 00:58:42 dlg Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -263,16 +263,21 @@ timeout_add_nsec(struct timeout *to, int nsecs)
 	timeout_add(to, to_ticks);
 }
 
-void
+int
 timeout_del(struct timeout *to)
 {
+	int ret = 0;
+
 	mtx_enter(&timeout_mutex);
 	if (to->to_flags & TIMEOUT_ONQUEUE) {
 		CIRCQ_REMOVE(&to->to_list);
 		to->to_flags &= ~TIMEOUT_ONQUEUE;
+		ret = 1;
 	}
 	to->to_flags &= ~TIMEOUT_TRIGGERED;
 	mtx_leave(&timeout_mutex);
+
+	return (ret);
 }
 
 /*
