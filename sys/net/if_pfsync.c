@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.162 2011/04/02 17:16:34 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.163 2011/05/10 01:10:08 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -345,6 +345,7 @@ int
 pfsync_clone_destroy(struct ifnet *ifp)
 {
 	struct pfsync_softc *sc = ifp->if_softc;
+	struct pfsync_deferral *pd;
 	int s;
 
 	timeout_del(&sc->sc_bulk_tmo);
@@ -358,8 +359,11 @@ pfsync_clone_destroy(struct ifnet *ifp)
 	pfsync_drop(sc);
 
 	s = splsoftnet();
-	while (sc->sc_deferred > 0)
-		pfsync_undefer(TAILQ_FIRST(&sc->sc_deferrals), 0);
+	while (sc->sc_deferred > 0) {
+		pd = TAILQ_FIRST(&sc->sc_deferrals);
+		timeout_del(&pd->pd_tmo);
+		pfsync_undefer(pd, 0);
+	}
 	splx(s);
 
 	pool_destroy(&sc->sc_pool);
@@ -1712,8 +1716,11 @@ pfsync_defer(struct pf_state *st, struct mbuf *m)
 	    m->m_flags & (M_BCAST|M_MCAST))
 		return (0);
 
-	if (sc->sc_deferred >= 128)
-		pfsync_undefer(TAILQ_FIRST(&sc->sc_deferrals), 0);
+	if (sc->sc_deferred >= 128) {
+		pd = TAILQ_FIRST(&sc->sc_deferrals);
+		if (timeout_del(&pd->pd_tmo))
+			pfsync_undefer(pd, 0);
+	}
 
 	pd = pool_get(&sc->sc_pool, M_NOWAIT);
 	if (pd == NULL)
@@ -1743,7 +1750,6 @@ pfsync_undefer(struct pfsync_deferral *pd, int drop)
 
 	splsoftassert(IPL_SOFTNET);
 
-	timeout_del(&pd->pd_tmo); /* bah */
 	TAILQ_REMOVE(&sc->sc_deferrals, pd, pd_entry);
 	sc->sc_deferred--;
 
@@ -1788,7 +1794,8 @@ pfsync_deferred(struct pf_state *st, int drop)
 
 	TAILQ_FOREACH(pd, &sc->sc_deferrals, pd_entry) {
 		 if (pd->pd_st == st) {
-			pfsync_undefer(pd, drop);
+			if (timeout_del(&pd->pd_tmo))
+				pfsync_undefer(pd, drop);
 			return;
 		}
 	}
