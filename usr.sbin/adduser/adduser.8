@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.39 2007/05/31 19:20:21 jmc Exp $
+.\"	$OpenBSD: adduser.8,v 1.40 2011/05/10 16:49:07 lum Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $From: adduser.8,v 1.12 1996/08/28 17:54:13 adam Exp $
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: May 10 2011 $
 .Dt ADDUSER 8
 .Os
 .Sh NAME
@@ -371,13 +371,13 @@ and
 Realname (fullname)
 is
 .Dq Prof. Falken .
-Password is
-.Dq joshua
-(don't use such a password!).
-Send user falken
-a welcome message:
+The password has been created using
+.Xr encrypt 1 :
 .Pp
-.Dl "# adduser -batch falken guest,staff,beer 'Prof. Falken' joshua"
+.Bd -literal -offset inedent
+# adduser -batch falken guest,staff,beer 'Prof. Falken' \e
+    $2a$06$1Sdjxjoxg4cNmT6zAxriGOLgdLXQ3HdJ2dKBbzEk68jSrO1EtLJ3C
+.Ed
 .Pp
 Create user
 .Dq vehlefanz
@@ -385,9 +385,24 @@ in login group
 .Dq guest .
 Start the free UID search at 5000.
 No other groups, no realname, no password.
-Do not send a welcome message:
+Send a welcome message:
 .Pp
-.Dl "# adduser -uid_start 5000 -group guest -message no -batch vehlefanz"
+.Bd -literal -offset inedent
+# adduser -uid_start 5000 -group guest \e
+    -message /etc/adduser.message -batch vehlefanz
+.Ed
+.Pp
+Create user
+.Dq jsmith
+and place in the
+.Dq jsmith
+login group.
+Also add to the
+.Dq staff
+group.
+No password:
+.Pp
+.Dl "# adduser -group USER -batch jsmith staff"
 .Sh SEE ALSO
 .Xr chpass 1 ,
 .Xr finger 1 ,
