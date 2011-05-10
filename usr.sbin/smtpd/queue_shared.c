@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.47 2011/05/01 12:57:11 eric Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.48 2011/05/10 17:04:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -223,7 +223,7 @@ walk_queue(struct qwalk *q, char *fname)
 			log_warnx("walk_queue: invalid bucket: %s", fname);
 			return (QWALK_AGAIN);
 		}
-		if (errno == ERANGE || q->bucket >= DIRHASH_BUCKETS - 1) {
+		if (errno == ERANGE || q->bucket >= DIRHASH_BUCKETS) {
 			log_warnx("walk_queue: invalid bucket: %s", fname);
 			return (QWALK_AGAIN);
 		}
