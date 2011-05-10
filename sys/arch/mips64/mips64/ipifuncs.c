@@ -1,4 +1,4 @@
-/* $OpenBSD: ipifuncs.c,v 1.7 2011/05/10 07:42:16 syuu Exp $ */
+/* $OpenBSD: ipifuncs.c,v 1.8 2011/05/10 07:58:47 syuu Exp $ */
 /* $NetBSD: ipifuncs.c,v 1.40 2008/04/28 20:23:10 martin Exp $ */
 
 /*-
@@ -41,8 +41,6 @@
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/atomic.h>
-
-#include <ddb/db_output.h>
 
 static int	mips64_ipi_intr(void *);
 static void	mips64_ipi_nop(void);
@@ -162,15 +160,6 @@ mips64_ipi_nop(void)
 #endif
 }
 
-#if defined(MP_LOCKDEBUG)
-#ifndef DDB
-#error "MP_LOCKDEBUG requires DDB"
-#endif
-
-/* CPU-dependent timing, needs this to be settable from ddb. */
-extern int __mp_lock_spinout;
-#endif
-
 /*
  * All-CPU rendezvous.  CPUs are signalled, all execute the setup function 
  * (if specified), rendezvous, execute the action function (if specified),
@@ -180,26 +169,18 @@ extern int __mp_lock_spinout;
  * Note that the supplied external functions _must_ be reentrant and aware
  * that they are running in parallel and in an unknown lock context.
  */
+
 void
 smp_rendezvous_action(void)
 {
 	void* local_func_arg = smp_rv_func_arg;
 	void (*local_action_func)(void*) = smp_rv_action_func;
 	unsigned int cpumask = 1 << cpu_number();
-#ifdef MP_LOCKDEBUG
-	int ticks = __mp_lock_spinout;
-#endif
 
 	/* Ensure we have up-to-date values. */
 	atomic_setbits_int(&smp_rv_waiters[0], cpumask);
-	while (smp_rv_waiters[0] != smp_rv_map) {
-#ifdef MP_LOCKDEBUG
-		if (--ticks == 0) {
-			db_printf("smp_rendezvous_action timeout\n");
-			Debugger();
-		} 
-#endif
-	}
+	while (smp_rv_waiters[0] != smp_rv_map)
+		;
 
 	/* action function */
 	if (local_action_func != NULL)
@@ -215,9 +196,6 @@ smp_rendezvous_cpus(unsigned long map,
 	void *arg)
 {
 	unsigned int cpumask = 1 << cpu_number();
-#ifdef MP_LOCKDEBUG
-	int ticks = __mp_lock_spinout;
-#endif
 
 	if (ncpus == 1) {
 		if (action_func != NULL)
@@ -242,14 +220,8 @@ smp_rendezvous_cpus(unsigned long map,
 	if (map & cpumask)
 		smp_rendezvous_action();
 
-	while (smp_rv_waiters[1] != smp_rv_map) {
-#ifdef MP_LOCKDEBUG
-		if (--ticks == 0) {
-			db_printf("smp_rendezvous_action timeout\n");
-			Debugger();
-		} 
-#endif
-	}
+	while (smp_rv_waiters[1] != smp_rv_map)
+		;
 	/* release lock */
 	mtx_leave(&smp_ipi_mtx);
 }
