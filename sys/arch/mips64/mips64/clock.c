@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.34 2010/09/20 06:33:47 matthew Exp $ */
+/*	$OpenBSD: clock.c,v 1.35 2011/05/10 07:42:16 syuu Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -194,7 +194,11 @@ delay(int n)
 
 	delayconst = ci->ci_delayconst;
 	if (delayconst == 0)
+#if CPU_OCTEON
+		delayconst = bootcpu_hwinfo.clock;
+#else
 		delayconst = bootcpu_hwinfo.clock / 2;
+#endif
 	p = cp0_get_count();
 	dly = (delayconst / 1000000) * n;
 	while (dly > 0) {
@@ -262,7 +266,11 @@ cpu_initclocks()
 	tick = 1000000 / hz;	/* number of micro-seconds between interrupts */
 	tickadj = 240000 / (60 * hz);		/* can adjust 240ms in 60s */
 
+#ifdef CPU_OCTEON
+	cp0_timecounter.tc_frequency = (uint64_t)ci->ci_hw.clock;
+#else
 	cp0_timecounter.tc_frequency = (uint64_t)ci->ci_hw.clock / 2;
+#endif
 	tc_init(&cp0_timecounter);
 	cpu_startclock(ci);
 }
@@ -285,7 +293,11 @@ cpu_startclock(struct cpu_info *ci)
 
 	/* Start the clock. */
 	s = splclock();
+#ifdef CPU_OCTEON
+	ci->ci_cpu_counter_interval = (ci->ci_hw.clock) / hz;
+#else
 	ci->ci_cpu_counter_interval = (ci->ci_hw.clock / 2) / hz;
+#endif
 	ci->ci_cpu_counter_last = cp0_get_count() + ci->ci_cpu_counter_interval;
 	cp0_set_compare(ci->ci_cpu_counter_last);
 	ci->ci_clock_started++;
