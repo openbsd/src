@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.61 2011/05/09 18:13:34 otto Exp $ */
+/*	$OpenBSD: library.c,v 1.62 2011/05/10 04:50:35 otto Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -251,10 +251,3 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 	}
 	return(object);
 }
-
-void
-_dl_debug_state(void)
-{
-        /* Debugger stub */
-}
-
