@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.53 2007/01/03 15:26:04 simon Exp $
+#	$OpenBSD: adduser.perl,v 1.54 2011/05/11 08:18:43 lum Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -34,7 +34,6 @@ use Fcntl qw(:DEFAULT :flock);
 ################
 # main
 #
-$test = 0;			# test mode, only for development
 $check_only = 0;
 
 $SIG{'INT'} = 'cleanup';
@@ -78,8 +77,8 @@ sub variables {
     $defaultpasswd = "yes";	# use password for new users
     $dotdir = "/etc/skel";	# copy dotfiles from this dir
     $dotdir_bak = $dotdir;
-    $send_message = "no"; # send message to new user
-    $send_message_bak = '/etc/adduser.message';
+    $send_message = "no"; 	# send message to new user
+    $message_file = "/etc/adduser.message";
     $config = "/etc/adduser.conf"; # config file for adduser
     $config_read = 1;		# read config file
     $logfile = "/var/log/adduser"; # logfile
@@ -91,7 +90,7 @@ sub variables {
     $etc_login_conf = "/etc/login.conf";
     @pwd_mkdb = ("pwd_mkdb", "-p");	# program for building passwd database
     $encryptionmethod = "auto";
-    $rcsid = '$OpenBSD: adduser.perl,v 1.53 2007/01/03 15:26:04 simon Exp $';
+    $rcsid = '$OpenBSD: adduser.perl,v 1.54 2011/05/11 08:18:43 lum Exp $';
 
     # List of directories where shells located
     @path = ('/bin', '/usr/bin', '/usr/local/bin');
@@ -124,19 +123,11 @@ sub variables {
     # shell
     %shell = ();		# $shell{`basename sh`} = sh
 
-    # only for me (=Wolfram)
-    if ($test) {
-	$home = "/home/w/tmp/adduser/home";
-	$etc_shells = "./shells";
-	$etc_passwd = "./master.passwd";
-	$group = "./group";
-	@pwd_mkdb = ("pwd_mkdb", "-p", "-d", ".");
-	$config = "adduser.conf";
-	$send_message = "./adduser.message";
-	$logfile = "./log.adduser";
-    }
-
     umask 022;			# don't give login group write access
+
+    # regexs used in determining user supplied yes/no
+    $yes = qr/^(yes|YES|y|Y)$/;
+    $no = qr/^(no|NO|n|N)$/;
 
     $ENV{'PATH'} = "/sbin:/bin:/usr/sbin:/usr/bin";
     @passwd_backup = ();
@@ -693,15 +684,12 @@ sub new_users_passwd_update {
 sub new_users_sendmessage {
     return 1 if $send_message eq "no";
 
-    local($cc) =
-	&confirm_list("Send message to ``$name'' and:",
-		      1, "no", ("root", "second_mail_address",
-		      "no carbon copy"));
-    local($e);
-    $cc = "" if $cc eq "no";
+    return 1 if !&confirm_yn("Send welcome message to ``$name''", "yes");
 
     @message_buffer = ();
-    message_read ($send_message);
+    message_read ($message_file);
+
+    local($e);
 
     foreach $e (@message_buffer) {
 	print eval "\"$e\"";
@@ -709,7 +697,7 @@ sub new_users_sendmessage {
     print "\n";
 
     local(@message_buffer_append) = ();
-    if (!&confirm_yn("Add anything to default message", "no")) {
+    if (!&confirm_yn("Add anything to the message", "no")) {
 	print "Use ``.'' or ^D alone on a line to finish your message.\n";
 	push(@message_buffer_append, "\n");
 	while($read = <STDIN>) {
@@ -717,9 +705,13 @@ sub new_users_sendmessage {
 	    push(@message_buffer_append, $read);
 	}
     }
+    local($cc) =
+	&confirm_list("Copy message to another user?:",
+		      1, "no", ("root", "second_mail_address",
+		      "no"));
+    $cc = "" if $cc eq "no";
 
-    &sendmessage("$name $cc", (@message_buffer, @message_buffer_append))
-	if (&confirm_yn("Send message", "yes"));
+    &sendmessage("$name $cc", (@message_buffer, @message_buffer_append));
 }
 
 sub sendmessage {
@@ -734,6 +726,7 @@ sub sendmessage {
 	    print M eval "\"$e\"";
 	}
 	close M;
+	print "Mail sent!\n" if $verbose;
     }
 }
 
@@ -840,6 +833,7 @@ sub batch {
     $defaultshell = &shell_default_valid($defaultshell);
     return 0 unless $home = &home_partition_valid($home);
     return 0 if $dotdir ne &dotdir_default_valid($dotdir);
+    $message_file = &choosetxt_yn_default($send_message, $message_file);
     $send_message = &message_default;
 
     return 0 if $name ne &new_users_name_valid($name);
@@ -918,7 +912,7 @@ sub encryption_check {
 
 # misc
 sub check_root {
-    die "You are not root!\n" if $< && !$test;
+    die "You are not root!\n" if $<;
 }
 
 sub usage {
@@ -943,8 +937,8 @@ usage: adduser
     [-v|-verbose]
 
 home=$home shell=$defaultshell dotdir=$dotdir login_group=$defaultgroup
-login_class=$defaultclass message_file=$send_message uid_start=$uid_start
-uid_end=$uid_end
+login_class=$defaultclass uid_start=$uid_start uid_end=$uid_end 
+send_message=$send_message message_file=$message_file
 USAGE
     exit 1;
 }
@@ -1045,8 +1039,10 @@ sub parse_arguments {
 	elsif (/^--?(uid_end)$/)	 { $uid_end = $argv[0]; shift @argv }
 	elsif (/^--?(group)$/)	 { $defaultgroup = $argv[0]; shift @argv }
 	elsif (/^--?(check_only)$/) { $check_only = 1 }
-	elsif (/^--?(message)$/) { $send_message = $argv[0]; shift @argv;
-				   $sendmessage = 1; }
+	elsif (/^--?(message)$/) {
+	    $send_message = $argv[0]; shift @argv;
+	    $message_file = &choosetxt_yn_default($send_message, $message_file);
+	}
 	elsif (/^--?(unencrypted)$/)	{ $unencrypted = 1 }
 	elsif (/^--?(batch)$/)	 {
 	    @batch = splice(@argv, 0, 4); $verbose = 0;
@@ -1109,11 +1105,6 @@ sub create_conf {
     $defaultpasswd = &password_default; # maybe use password
     $defaultencryption = &encryption_default;	# Encryption method
 
-    if ($send_message ne 'no') {
-	&message_create($send_message);
-    } else {
-	&message_create($send_message_bak);
-    }
     &config_write(1);
 }
 
@@ -1279,14 +1270,46 @@ sub confirm_list {
     return &confirm_list($message, $allow, $confirm, @list);
 }
 
+# YES, NO, DEFAULT or userstring
+# 1. return "" if "no" or no string is provided by the user.
+# 2. return the $default parameter if "yes" or "default" provided.
+# otherwise return user provided string.
+sub confirm_yn_default {
+    local($message, $confirm, $default) = @_;
+
+    print "$message [$confirm]: ";
+    chop($read = <STDIN>);
+    $read =~ s/^\s*//;
+    $read =~ s/\s*$//;
+    return "" unless $read;
+
+    return choosetxt_yn_default($read, $default);
+}
+
+sub choosetxt_yn_default {
+    local($read, $default) = @_;
+
+    if ($read =~ "$no") {
+	return "";
+    }
+    if ($read eq "default") {
+	return $default;
+    }
+    if ($read =~ "$yes") {
+	if ($verbose == 1) {
+	    return $read;
+	}
+	return $default;
+    }
+    return $read;
+}
+
 # YES or NO question
 # return 1 if &confirm("message", "yes") and answer is yes
 #	or if &confirm("message", "no") an answer is no
 # otherwise 0
 sub confirm_yn {
     local($message, $confirm) = @_;
-    local($yes) = '^(yes|YES|y|Y)$';
-    local($no) = '^(no|NO|n|N)$';
     local($read, $c);
 
     if ($confirm && ($confirm =~ "$yes" || $confirm == 1)) {
@@ -1340,30 +1363,62 @@ sub dotdir_default_valid {
 
 # ask for messages to new users
 sub message_default {
-    local($file) = $send_message;
-    local(@d) = ($file, $send_message_bak, "no");
+    local($tmp_message_file) = $message_file;
 
     while($verbose) {
-	$file = &confirm_list("Send message from file:", 1, $file, @d);
-	last if $file eq "no";
-	last if &filetest($file, 1);
+	$send_message = "no";
 
-	# maybe create message file
-	&message_create($file) if &confirm_yn("Create ``$file''?", "yes");
-	last if &filetest($file, 0);
-	last if !&confirm_yn("File ``$file'' does not exist, try again?",
+	$message_file = &confirm_yn_default(
+			    "Send welcome message?: /path/file default no",
+				"no", $tmp_message_file);
+	if ($message_file eq "") {
+	    $message_file = $tmp_message_file;
+	    last;
+	}
+	if ($message_file =~ $yes) {
+	    $message_file = &confirm_yn_default(
+		 	     "Really? Type the filepath, 'default' or 'no'",
+			     "no", $tmp_message_file);
+	    if ($message_file eq "") {
+	        $message_file = $tmp_message_file;
+	        last;
+	    }
+	}
+
+	# try and create the message file
+	if (&filetest($message_file, 0)) {
+	    if (&confirm_yn("File ``$message_file'' exists. Overwrite?:",
+			    "no")) {
+	        print "Retry: choose a different location\n";
+	        next;
+	    }
+	    if (&message_create($message_file)) {
+		print "Message file ``$message_file'' overwritten\n"
+		    if verbose;
+	    }
+	} else {
+	    if (&message_create($message_file)) {
+		print "Message file ``$message_file'' created\n" if verbose;
+	    }
+	}
+
+	if (&filetest($message_file, 0)) {
+	    $send_message = "yes";
+	    last;
+	}
+	last if !&confirm_yn("Unable to create ``$message_file'', try again?",
 			     "yes");
     }
 
-    if ($file eq "no" || !&filetest($file, 0)) {
-	warn "Do not send message\n" if $verbose;
-	$file = "no";
+    if ($send_message eq "no" || !&filetest($message_file, 0)) {
+	warn "Do not send message(s)\n" if $verbose;
+	$send_message = "no";
     } else {
-	&message_read($file);
+	&message_read($message_file);
     }
 
-    $changes++ if $file ne $send_message && $verbose;
-    return $file;
+    $changes++ if $tmp_message_file ne $message_file && $verbose;
+    return $send_message;
 }
 
 # create message file
@@ -1541,8 +1596,11 @@ encryptionmethod = "$defaultencryption"
 # copy dotfiles from this dir ("/etc/skel" or "no")
 dotdir = "$dotdir"
 
-# send this file to new user ("/etc/adduser.message" or "no")
+# send message to user? ("yes" or "no")
 send_message = "$send_message"
+
+# send this file to new user ("/etc/adduser.message")
+message_file = "$message_file";
 
 # config file for adduser ("/etc/adduser.conf")
 config = "$config"
