@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.182 2011/03/31 10:36:42 jasper Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.183 2011/05/11 07:37:04 blambert Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -197,7 +197,7 @@ reserve_spi(u_int rdomain, u_int32_t sspi, u_int32_t tspi,
     union sockaddr_union *src, union sockaddr_union *dst,
     u_int8_t sproto, int *errval)
 {
-	struct tdb *tdbp;
+	struct tdb *tdbp, *exists;
 	u_int32_t spi;
 	int nums, s;
 
@@ -236,6 +236,9 @@ reserve_spi(u_int rdomain, u_int32_t sspi, u_int32_t tspi,
 	else
 		nums = 100;  /* Arbitrarily chosen */
 
+	/* allocate ahead of time to avoid potential sleeping race in loop */
+	tdbp = tdb_alloc(rdomain);
+
 	while (nums--) {
 		if (sspi == tspi)  /* Specific SPI asked. */
 			spi = tspi;
@@ -250,13 +253,12 @@ reserve_spi(u_int rdomain, u_int32_t sspi, u_int32_t tspi,
 
 		/* Check whether we're using this SPI already. */
 		s = spltdb();
-		tdbp = gettdb(rdomain, spi, dst, sproto);
+		exists = gettdb(rdomain, spi, dst, sproto);
 		splx(s);
 
-		if (tdbp != (struct tdb *) NULL)
+		if (exists)
 			continue;
 
-		tdbp = tdb_alloc(rdomain);
 
 		tdbp->tdb_spi = spi;
 		bcopy(&dst->sa, &tdbp->tdb_dst.sa, SA_LEN(&dst->sa));
@@ -278,6 +280,7 @@ reserve_spi(u_int rdomain, u_int32_t sspi, u_int32_t tspi,
 	}
 
 	(*errval) = EEXIST;
+	tdb_free(tdbp);
 	return 0;
 }
 
