@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.h,v 1.8 2010/10/15 09:51:15 jsg Exp $	*/
+/*	$OpenBSD: dhcp.h,v 1.9 2011/05/11 14:38:36 krw Exp $	*/
 
 /* Protocol structures... */
 
@@ -86,7 +86,8 @@ struct dhcp_packet {
 
 /* Magic cookie validating dhcp options field (and bootp vendor
    extensions field). */
-#define DHCP_OPTIONS_COOKIE	"\143\202\123\143"
+#define DHCP_OPTIONS_COOKIE		"\143\202\123\143"
+#define DHCP_OPTIONS_MESSAGE_TYPE	"\065\001\000"
 
 /* DHCP Option codes: */
 

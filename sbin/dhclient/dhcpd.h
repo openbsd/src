@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.72 2011/04/04 11:14:52 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.73 2011/05/11 14:38:36 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -207,7 +207,7 @@ extern struct client_state *client;
 extern struct client_config *config;
 
 /* options.c */
-int cons_options(unsigned char *, const int, struct option_data *);
+int cons_options(struct option_data *);
 char *pretty_print_option(unsigned int, unsigned char *, int, int, int);
 void do_packet(int, unsigned int, struct iaddr, struct hardware *);
 

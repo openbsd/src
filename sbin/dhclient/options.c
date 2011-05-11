@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.38 2011/04/17 19:57:23 phessler Exp $	*/
+/*	$OpenBSD: options.c,v 1.39 2011/05/11 14:38:36 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -131,18 +131,24 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
  * to see if it's DHO_END to decide if all the options were copied.
  */
 int
-cons_options(unsigned char *buf, const int buflen, struct option_data *options)
+cons_options(struct option_data *options)
 {
+	unsigned char *buf = client->packet.options;
+	int buflen = 576 - DHCP_FIXED_LEN;
 	int ix, incr, length, bufix, code, lastopt = -1;
 
 	bzero(buf, buflen);
 
-	if (buflen > 3)
-		memcpy(buf, DHCP_OPTIONS_COOKIE, 4);
-	bufix = 4;
+	memcpy(buf, DHCP_OPTIONS_COOKIE, 4);
+	if (options[DHO_DHCP_MESSAGE_TYPE].data) {
+		memcpy(&buf[4], DHCP_OPTIONS_MESSAGE_TYPE, 3);
+		buf[6] = options[DHO_DHCP_MESSAGE_TYPE].data[0];
+		bufix = 7;
+	} else
+		bufix = 4;
 
 	for (code = DHO_SUBNET_MASK; code < DHO_END; code++) {
-		if (!options[code].data)
+		if (!options[code].data || code == DHO_DHCP_MESSAGE_TYPE)
 			continue;
 
 		length = options[code].len;
