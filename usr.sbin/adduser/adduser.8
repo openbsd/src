@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.40 2011/05/10 16:49:07 lum Exp $
+.\"	$OpenBSD: adduser.8,v 1.41 2011/05/11 07:05:35 lum Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $From: adduser.8,v 1.12 1996/08/28 17:54:13 adam Exp $
-.Dd $Mdocdate: May 10 2011 $
+.Dd $Mdocdate: May 11 2011 $
 .Dt ADDUSER 8
 .Os
 .Sh NAME
@@ -373,8 +373,7 @@ is
 .Dq Prof. Falken .
 The password has been created using
 .Xr encrypt 1 :
-.Pp
-.Bd -literal -offset inedent
+.Bd -literal -offset indent
 # adduser -batch falken guest,staff,beer 'Prof. Falken' \e
     $2a$06$1Sdjxjoxg4cNmT6zAxriGOLgdLXQ3HdJ2dKBbzEk68jSrO1EtLJ3C
 .Ed
@@ -386,8 +385,7 @@ in login group
 Start the free UID search at 5000.
 No other groups, no realname, no password.
 Send a welcome message:
-.Pp
-.Bd -literal -offset inedent
+.Bd -literal -offset indent
 # adduser -uid_start 5000 -group guest \e
     -message /etc/adduser.message -batch vehlefanz
 .Ed
