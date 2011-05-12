@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.132 2011/05/12 09:29:30 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.133 2011/05/12 09:35:37 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -143,7 +143,7 @@ struct dir_info {
 /*
  * This structure describes a page worth of chunks.
  *
- * How many bits per u_long in the bitmap
+ * How many bits per u_short in the bitmap
  */
 #define MALLOC_BITS		(NBBY * sizeof(u_short))
 struct chunk_info {
