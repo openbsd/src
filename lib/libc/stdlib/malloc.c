@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.133 2011/05/12 09:35:37 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.134 2011/05/12 12:03:40 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -1571,23 +1571,20 @@ malloc_dump1(int fd, struct dir_info *d)
 	write(fd, buf, strlen(buf));
 	if (d == NULL)
 		return;
-	snprintf(buf, sizeof(buf), "Regions slots %zu\n", d->regions_total);
+	snprintf(buf, sizeof(buf), "Region slots free %zu/%zu\n",
+		d->regions_free, d->regions_total);
 	write(fd, buf, strlen(buf));
-	snprintf(buf, sizeof(buf), "Finds %zu/%zu %f\n", d->finds,
-	    d->find_collisions,
-	    1.0 + (double)d->find_collisions / d->finds);
+	snprintf(buf, sizeof(buf), "Finds %zu/%zu\n", d->finds,
+	    d->find_collisions);
 	write(fd, buf, strlen(buf));
-	snprintf(buf, sizeof(buf), "Inserts %zu/%zu %f\n", d->inserts,
-	    d->insert_collisions,
-	    1.0 + (double)d->insert_collisions / d->inserts);
+	snprintf(buf, sizeof(buf), "Inserts %zu/%zu\n", d->inserts,
+	    d->insert_collisions);
 	write(fd, buf, strlen(buf));
 	snprintf(buf, sizeof(buf), "Deletes %zu/%zu\n", d->deletes,
 	     d->delete_moves);
 	write(fd, buf, strlen(buf));
 	snprintf(buf, sizeof(buf), "Cheap reallocs %zu/%zu\n",
 	    d->cheap_reallocs, d->cheap_realloc_tries);
-	write(fd, buf, strlen(buf));
-	snprintf(buf, sizeof(buf), "Regions slots free %zu\n", d->regions_free);
 	write(fd, buf, strlen(buf));
 	dump_free_chunk_info(fd, d);
 	dump_free_page_info(fd, d);
