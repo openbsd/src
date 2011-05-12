@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.39 2011/05/01 21:59:38 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.40 2011/05/12 12:54:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -118,9 +118,6 @@ cpu_intr_init(void)
 
 	for (level = 0; level < NIPL - 1; level++)
 		imask[level + 1] |= imask[level];
-
-	printf("biomask 0x%lx netmask 0x%lx ttymask 0x%lx\n",
-	    imask[IPL_BIO], imask[IPL_NET], imask[IPL_TTY]);
 
 	/* XXX the whacky trick is to prevent hardclock from happenning */
 	mfctl(CR_ITMR, mask);
