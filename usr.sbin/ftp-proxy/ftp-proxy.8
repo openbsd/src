@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.16 2011/04/28 00:21:33 mikeb Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.17 2011/05/12 18:36:07 mcbride Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 28 2011 $
+.Dd $Mdocdate: May 12 2011 $
 .Dt FTP-PROXY 8
 .Os
 .Sh NAME
@@ -166,10 +166,13 @@ The pf rules do not log by default.
 To make use of the proxy,
 .Xr pf.conf 5
 needs the following rules.
-Adjust the rules as needed.
+Adjust the rules as needed; depending on the rest of your ruleset the
+last rule explicitly allowing ftp sessions from the proxy may not be
+necessary.
 .Bd -literal -offset 2n
 anchor "ftp-proxy/*"
 pass in quick inet proto tcp to port ftp divert-to 127.0.0.1 port 8021
+pass out inet proto tcp from (self) to any port ftp
 .Ed
 .Sh SEE ALSO
 .Xr ftp 1 ,
