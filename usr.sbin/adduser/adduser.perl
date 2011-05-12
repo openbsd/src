@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.54 2011/05/11 08:18:43 lum Exp $
+#	$OpenBSD: adduser.perl,v 1.55 2011/05/12 05:13:42 lum Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -90,7 +90,7 @@ sub variables {
     $etc_login_conf = "/etc/login.conf";
     @pwd_mkdb = ("pwd_mkdb", "-p");	# program for building passwd database
     $encryptionmethod = "auto";
-    $rcsid = '$OpenBSD: adduser.perl,v 1.54 2011/05/11 08:18:43 lum Exp $';
+    $rcsid = '$OpenBSD: adduser.perl,v 1.55 2011/05/12 05:13:42 lum Exp $';
 
     # List of directories where shells located
     @path = ('/bin', '/usr/bin', '/usr/local/bin');
@@ -1394,11 +1394,11 @@ sub message_default {
 	    }
 	    if (&message_create($message_file)) {
 		print "Message file ``$message_file'' overwritten\n"
-		    if verbose;
+		    if $verbose;
 	    }
 	} else {
 	    if (&message_create($message_file)) {
-		print "Message file ``$message_file'' created\n" if verbose;
+		print "Message file ``$message_file'' created\n" if $verbose;
 	    }
 	}
 
