@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.55 2011/05/12 05:13:42 lum Exp $
+#	$OpenBSD: adduser.perl,v 1.56 2011/05/12 10:38:27 lum Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -90,7 +90,7 @@ sub variables {
     $etc_login_conf = "/etc/login.conf";
     @pwd_mkdb = ("pwd_mkdb", "-p");	# program for building passwd database
     $encryptionmethod = "auto";
-    $rcsid = '$OpenBSD: adduser.perl,v 1.55 2011/05/12 05:13:42 lum Exp $';
+    $rcsid = '$OpenBSD: adduser.perl,v 1.56 2011/05/12 10:38:27 lum Exp $';
 
     # List of directories where shells located
     @path = ('/bin', '/usr/bin', '/usr/local/bin');
@@ -1580,6 +1580,7 @@ sub config_write {
 # Note: adduser reads *and* writes this file.
 #	You may change values, but don't add new things before the
 #	line ``$do_not_delete''
+#	Also, unquoted strings may cause warnings
 #
 
 # verbose = [0-2]
@@ -1587,7 +1588,7 @@ verbose = $verbose
 
 # Get new password for new users
 # defaultpasswd =  yes | no
-defaultpasswd = $defaultpasswd
+defaultpasswd = "$defaultpasswd"
 
 # Default encryption method for user passwords
 # Methods are all those listed in login.conf(5)
@@ -1623,14 +1624,14 @@ shellpref = ($shpref)
 defaultshell = "$defaultshell"
 
 # defaultgroup ('USER' for same as username or any other valid group)
-defaultgroup = $defaultgroup
+defaultgroup = "$defaultgroup"
 
 # new users get this uid
 uid_start = $uid_start
 uid_end = $uid_end
 
 # default login.conf(5) login class
-defaultclass = $defaultclass
+defaultclass = "$defaultclass"
 
 # login classes available from login.conf(5)
 # login_classes = ('default', 'daemon', 'staff')
