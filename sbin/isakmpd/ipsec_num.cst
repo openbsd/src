@@ -1,4 +1,4 @@
-#	$OpenBSD: ipsec_num.cst,v 1.17 2010/09/22 13:45:16 mikeb Exp $
+#	$OpenBSD: ipsec_num.cst,v 1.18 2011/05/13 07:41:20 markus Exp $
 #	$EOM: ipsec_num.cst,v 1.5 2000/10/13 17:56:52 angelos Exp $
 
 #
@@ -65,7 +65,7 @@ IPSEC_ENCAP
   UDP_ENCAP_TUNNEL			3
   UDP_ENCAP_TRANSPORT			4
   UDP_ENCAP_TUNNEL_DRAFT		61443	# draft-ietf-ipsec-nat-t-ike
-  UDP_ENCAP_TRANSPORT_DRAFT		61443	# draft-ietf-ipsec-nat-t-ike
+  UDP_ENCAP_TRANSPORT_DRAFT		61444	# draft-ietf-ipsec-nat-t-ike
 .
 
 # IPSEC authentication algorithm.
