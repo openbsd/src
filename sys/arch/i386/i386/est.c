@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.36 2010/07/05 22:47:41 jsg Exp $ */
+/*	$OpenBSD: est.c,v 1.37 2011/05/13 11:30:26 jasper Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -862,10 +862,8 @@ struct fqlist {
 	struct est_op *table;
 };
 
-#define NELEM(x) (sizeof(x) / sizeof((x)[0]))
-
 #define ENTRY(ven, bus_clk, tab) \
-	{ CPUVENDOR_##ven, bus_clk == BUS133 ? 1 : 0, NELEM(tab), tab }
+	{ CPUVENDOR_##ven, bus_clk == BUS133 ? 1 : 0, nitems(tab), tab }
 
 #define BUS_CLK(fqp) ((fqp)->bus_clk ? BUS133 : BUS100)
 
@@ -1082,7 +1080,7 @@ est_init(const char *cpu_device, int vendor)
 		/*
 		 * Find an entry which matches (vendor, bus_clock, idhi, idlo)
 		 */
-		for (i = 0; i < NELEM(est_cpus); i++) {
+		for (i = 0; i < nitems(est_cpus); i++) {
 			fql = &est_cpus[i];
 			if (vendor == fql->vendor && bus_clock == BUS_CLK(fql)
 			    && idhi == fql->table[0].ctrl
