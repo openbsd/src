@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.95 2011/04/24 19:36:54 bluhm Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.96 2011/05/13 14:31:17 oga Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -97,8 +97,6 @@
 #include <netinet6/tcpipv6.h>
 #include <netinet6/in6_var.h>
 #endif /* INET6 */
-
-#include "pf.h"
 
 #ifdef notyet
 extern struct mbuf *m_copypack();
@@ -1078,10 +1076,6 @@ send:
 
 	/* force routing domain */
 	m->m_pkthdr.rdomain = tp->t_inpcb->inp_rtableid;
-
-#if NPF > 0
-	m->m_pkthdr.pf.inp = tp->t_inpcb;
-#endif
 
 	switch (tp->pf) {
 	case 0:	/*default to PF_INET*/

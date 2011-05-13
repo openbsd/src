@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.42 2011/04/24 19:36:54 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.43 2011/05/13 14:31:17 oga Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -61,8 +61,6 @@
  *	@(#)raw_ip.c	8.2 (Berkeley) 1/4/94
  */
 
-#include "pf.h"
-
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -77,9 +75,6 @@
 #include <net/if.h>
 #include <net/route.h>
 #include <net/if_types.h>
-#if NPF > 0
-#include <net/pfvar.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -205,16 +200,6 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 				continue;
 			}
 		}
-#if NPF > 0
-		if (m->m_pkthdr.pf.statekey && !in6p->inp_pf_sk &&
-		    !((struct pf_state_key *)m->m_pkthdr.pf.statekey)->inp &&
-		    (in6p->inp_socket->so_state & SS_ISCONNECTED) &&
-		    proto != IPPROTO_ICMPV6) {
-			((struct pf_state_key *)m->m_pkthdr.pf.statekey)->inp =
-			    in6p;
-			in6p->inp_pf_sk = m->m_pkthdr.pf.statekey;
-		}
-#endif
 		if (last) {
 			struct	mbuf *n;
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
@@ -502,11 +487,6 @@ rip6_output(struct mbuf *m, ...)
 	if (in6p->in6p_flags & IN6P_MINMTU)
 		flags |= IPV6_MINMTU;
 
-#if NPF > 0
-	if (in6p->inp_socket->so_state & SS_ISCONNECTED &&
-	    so->so_proto->pr_protocol != IPPROTO_ICMPV6)
-		m->m_pkthdr.pf.inp = in6p;
-#endif
 	error = ip6_output(m, optp, &in6p->in6p_route, flags,
 	    in6p->in6p_moptions, &oifp, in6p);
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {

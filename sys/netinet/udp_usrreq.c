@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.143 2011/05/04 16:05:49 blambert Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.144 2011/05/13 14:31:17 oga Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -561,7 +561,7 @@ udp_input(struct mbuf *m, ...)
 	/*
 	 * Locate pcb for datagram.
 	 */
-#if NPF > 0
+#if 0
 	if (m->m_pkthdr.pf.statekey)
 		inp = ((struct pf_state_key *)m->m_pkthdr.pf.statekey)->inp;
 #endif
@@ -618,15 +618,6 @@ udp_input(struct mbuf *m, ...)
 			return;
 		}
 	}
-
-#if NPF > 0
-	if (m->m_pkthdr.pf.statekey && !inp->inp_pf_sk &&
-	    !((struct pf_state_key *)m->m_pkthdr.pf.statekey)->inp &&
-	    (inp->inp_socket->so_state & SS_ISCONNECTED)) {
-		((struct pf_state_key *)m->m_pkthdr.pf.statekey)->inp = inp;
-		inp->inp_pf_sk = m->m_pkthdr.pf.statekey;
-	}
-#endif
 
 #ifdef IPSEC
 	mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
@@ -1042,10 +1033,6 @@ udp_output(struct mbuf *m, ...)
 	/* force routing domain */
 	m->m_pkthdr.rdomain = inp->inp_rtableid;
 
-#if NPF > 0
-	if (inp->inp_socket->so_state & SS_ISCONNECTED)
-		m->m_pkthdr.pf.inp = inp;
-#endif
 	error = ip_output(m, inp->inp_options, &inp->inp_route,
 	    inp->inp_socket->so_options &
 	    (SO_DONTROUTE | SO_BROADCAST | SO_JUMBO),
