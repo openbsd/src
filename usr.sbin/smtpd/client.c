@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.35 2011/03/26 10:59:59 gilles Exp $	*/
+/*	$OpenBSD: client.c,v 1.36 2011/05/14 11:06:32 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -884,7 +884,8 @@ client_socket_write(struct smtp_client *sp)
 char *
 buf_getln(struct ibuf_read *r)
 {
-	char	*buf = r->buf, *line;
+	char	*line;
+	u_char	*buf = r->buf;
 	size_t	 bufsz = r->wpos, i;
 
 	/* look for terminating newline */
@@ -916,7 +917,7 @@ buf_getln(struct ibuf_read *r)
 int
 buf_read(int fd, struct ibuf_read *r)
 {
-	char		*buf = r->buf + r->wpos;
+	u_char		*buf = r->buf + r->wpos;
 	size_t		 bufsz = sizeof(r->buf) - r->wpos;
 	ssize_t		 n;
 
