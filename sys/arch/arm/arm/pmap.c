@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.30 2011/01/04 21:11:39 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.31 2011/05/14 19:19:32 matthew Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -4023,7 +4023,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	/*
 	 * Initialise the L2 descriptor table pool and cache
 	 */
-	pool_init(&pmap_l2ptp_pool, L2_TABLE_SIZE_REAL, 0, L2_TABLE_SIZE_REAL,
+	pool_init(&pmap_l2ptp_pool, L2_TABLE_SIZE_REAL, L2_TABLE_SIZE_REAL, 0,
 	    0, "l2ptppl", NULL);
 	pool_set_ctordtor(&pmap_l2ptp_pool, pmap_l2ptp_ctor, NULL, NULL);
 
