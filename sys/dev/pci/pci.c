@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.89 2011/04/12 20:29:35 deraadt Exp $	*/
+/*	$OpenBSD: pci.c,v 1.90 2011/05/14 13:23:38 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -167,6 +167,7 @@ pciattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_memt = pba->pba_memt;
 	sc->sc_dmat = pba->pba_dmat;
 	sc->sc_pc = pba->pba_pc;
+	sc->sc_flags = pba->pba_flags;
 	sc->sc_ioex = pba->pba_ioex;
 	sc->sc_memex = pba->pba_memex;
 	sc->sc_pmemex = pba->pba_pmemex;
@@ -371,7 +372,8 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	/* This is a simplification of the NetBSD code.
 	   We don't support turning off I/O or memory
 	   on broken hardware. <csapuntz@stanford.edu> */
-	pa.pa_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pa.pa_flags = sc->sc_flags;
+	pa.pa_flags |= PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 
 	if (sc->sc_bridgetag == NULL) {
 		pa.pa_intrswiz = 0;

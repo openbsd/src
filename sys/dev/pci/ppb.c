@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.48 2011/04/18 04:18:36 deraadt Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.49 2011/05/14 13:23:38 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -291,12 +291,10 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_memt = pa->pa_memt;
 	pba.pba_dmat = pa->pa_dmat;
 	pba.pba_pc = pc;
+	pba.pba_flags = pa->pa_flags & ~PCI_FLAGS_MRM_OKAY;
 	pba.pba_ioex = sc->sc_ioex;
 	pba.pba_memex = sc->sc_memex;
 	pba.pba_pmemex = sc->sc_pmemex;
-#if 0
-	pba.pba_flags = pa->pa_flags & ~PCI_FLAGS_MRM_OKAY;
-#endif
 	pba.pba_domain = pa->pa_domain;
 	pba.pba_bus = PPB_BUSINFO_SECONDARY(busdata);
 	pba.pba_bridgeih = sc->sc_ih;

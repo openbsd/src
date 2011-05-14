@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.63 2010/09/07 16:21:45 deraadt Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.64 2011/05/14 13:23:38 kettenis Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -90,6 +90,7 @@ struct pcibus_attach_args {
 	bus_space_tag_t pba_memt;	/* pci mem space tag */
 	bus_dma_tag_t pba_dmat;		/* DMA tag */
 	pci_chipset_tag_t pba_pc;
+	int		pba_flags;	/* flags; see below */
 
 	struct extent	*pba_ioex;
 	struct extent	*pba_memex;
@@ -180,6 +181,7 @@ struct pci_softc {
 	bus_space_tag_t sc_iot, sc_memt;
 	bus_dma_tag_t sc_dmat;
 	pci_chipset_tag_t sc_pc;
+	int sc_flags;
 	struct extent *sc_ioex;
 	struct extent *sc_memex;
 	struct extent *sc_pmemex;
