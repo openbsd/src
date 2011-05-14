@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.39 2010/12/05 15:15:14 kettenis Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.40 2011/05/14 09:57:56 kettenis Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -498,6 +498,19 @@ typedef u_int8_t pci_revision_t;
 	(((ofs) & PCI_VPD_ADDRESS_MASK) << PCI_VPD_ADDRESS_SHIFT)
 #define	PCI_VPD_DATAREG(ofs)	((ofs) + 4)
 #define	PCI_VPD_OPFLAG		0x80000000
+
+/*
+ * Message Signaled Interrups; access via capability pointer.
+ */
+#define PCI_MSI_MC		0x00
+#define PCI_MSI_MC_C64		0x00800000
+#define PCI_MSI_MC_MME		0x00700000
+#define PCI_MSI_MC_MMC		0x000e0000
+#define PCI_MSI_MC_MSIE		0x00010000
+#define PCI_MSI_MA		0x04
+#define PCI_MSI_MAU32		0x08
+#define PCI_MSI_MD32		0x08
+#define PCI_MSI_MD64		0x0c
 
 /*
  * Power Management Control Status Register; access via capability pointer.
