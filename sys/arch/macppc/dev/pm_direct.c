@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.22 2007/02/18 19:33:48 gwk Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.23 2011/05/14 12:01:16 mpi Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -54,10 +54,6 @@
 /* hardware dependent values */
 #define ADBDelay 100		/* XXX */
 
-/* define the types of the Power Manager */
-#define PM_HW_UNKNOWN		0x00	/* don't know */
-#define	PM_HW_PB5XX		0x02	/* PowerBook Duo and 5XX series */
-
 /* useful macros */
 #define PM_SR()			read_via_reg(VIA1, vSR)
 #define PM_VIA_INTR_ENABLE()	write_via_reg(VIA1, vIER, 0x90)
@@ -74,11 +70,6 @@
 #define PM_IS_ON		(0x08 == (read_via_reg(VIA2, vBufB) & 0x08))
 #define PM_IS_OFF		(0x00 == (read_via_reg(VIA2, vBufB) & 0x08))
 #endif
-
-/*
- * Variables for internal use
- */
-int	pmHardware = PM_HW_UNKNOWN;
 
 /* these values shows that number of data returned after 'send' cmd is sent */
 signed char pm_send_cmd_type[] = {
@@ -164,12 +155,8 @@ void	pm_printerr(char *, int, int, char *);
 
 int	pm_wait_busy(int);
 int	pm_wait_free(int);
-
-/* these functions are for the PB Duo series and the PB 5XX series */
-int	pm_receive_pm2(u_char *);
-int	pm_send_pm2(u_char);
-int	pm_pmgrop_pm2(PMData *);
-void	pm_intr_pm2(void);
+int	pm_receive(u_char *);
+int	pm_send(u_char);
 
 /* these functions also use the variables of adb_direct.c */
 void	pm_adb_get_TALK_result(PMData *);
@@ -221,18 +208,6 @@ pm_printerr(ttl, rval, num, data)
 }
 #endif
 
-
-
-/*
- * Check the hardware type of the Power Manager
- */
-void
-pm_setup_adb()
-{
-	pmHardware = PM_HW_PB5XX;	/* XXX */
-}
-
-
 /*
  * Wait until PM IC is busy
  */
@@ -274,7 +249,7 @@ pm_wait_free(int delay)
  * Receive data from PM for the PB Duo series and the PB 5XX series
  */
 int
-pm_receive_pm2(u_char *data)
+pm_receive(u_char *data)
 {
 	int i;
 	int rval;
@@ -313,7 +288,7 @@ pm_receive_pm2(u_char *data)
  * Send data to PM for the PB Duo series and the PB 5XX series
  */
 int
-pm_send_pm2(data)
+pm_send(data)
 	u_char data;
 {
 	int rval;
@@ -346,7 +321,7 @@ pm_send_pm2(data)
  * My PMgrOp routine for the PB Duo series and the PB 5XX series
  */
 int
-pm_pmgrop_pm2(PMData *pmdata)
+pmgrop(PMData *pmdata)
 {
 	int i;
 	int s;
@@ -376,20 +351,20 @@ pm_pmgrop_pm2(PMData *pmdata)
 			break;			/* timeout */
 
 		/* send PM command */
-		if ((rval = pm_send_pm2((u_char)(pm_cmd & 0xff))))
+		if ((rval = pm_send((u_char)(pm_cmd & 0xff))))
 			break;				/* timeout */
 
 		/* send number of PM data */
 		num_pm_data = pmdata->num_data;
 		if (pm_send_cmd_type[pm_cmd] < 0) {
-			if ((rval = pm_send_pm2((u_char)(num_pm_data & 0xff))) != 0)
+			if ((rval = pm_send((u_char)(num_pm_data & 0xff))) != 0)
 				break;		/* timeout */
 			pmdata->command = 0;
 		}
 		/* send PM data */
 		pm_buf = (u_char *)pmdata->s_buf;
 		for (i = 0 ; i < num_pm_data; i++)
-			if ((rval = pm_send_pm2(pm_buf[i])) != 0)
+			if ((rval = pm_send(pm_buf[i])) != 0)
 				break;			/* timeout */
 		if (i != num_pm_data)
 			break;				/* timeout */
@@ -407,7 +382,7 @@ pm_pmgrop_pm2(PMData *pmdata)
 		pm_data = pmdata->command;
 		pm_num_rx_data--;
 		if (pm_num_rx_data == 0)
-			if ((rval = pm_receive_pm2(&pm_data)) != 0) {
+			if ((rval = pm_receive(&pm_data)) != 0) {
 				rval = 0xffffcd37;
 				break;
 			}
@@ -415,7 +390,7 @@ pm_pmgrop_pm2(PMData *pmdata)
 
 		/* receive number of PM data */
 		if (pm_num_rx_data < 0) {
-			if ((rval = pm_receive_pm2(&pm_data)) != 0)
+			if ((rval = pm_receive(&pm_data)) != 0)
 				break;		/* timeout */
 			num_pm_data = pm_data;
 		} else
@@ -425,7 +400,7 @@ pm_pmgrop_pm2(PMData *pmdata)
 		/* receive PM data */
 		pm_buf = (u_char *)pmdata->r_buf;
 		for (i = 0; i < num_pm_data; i++) {
-			if ((rval = pm_receive_pm2(&pm_data)) != 0)
+			if ((rval = pm_receive(&pm_data)) != 0)
 				break;			/* timeout */
 			pm_buf[i] = pm_data;
 		}
@@ -445,7 +420,7 @@ pm_pmgrop_pm2(PMData *pmdata)
  * My PM interrupt routine for the PB Duo series and the PB 5XX series
  */
 void
-pm_intr_pm2()
+pm_intr()
 {
 	int s;
 	int rval;
@@ -459,7 +434,7 @@ pm_intr_pm2()
 	pmdata.num_data = 0;
 	pmdata.s_buf = &pmdata.data[2];
 	pmdata.r_buf = &pmdata.data[2];
-	rval = pm_pmgrop_pm2(&pmdata);
+	rval = pmgrop(&pmdata);
 	if (rval != 0) {
 #ifdef ADB_DEBUG
 		if (adb_debug)
@@ -498,40 +473,6 @@ pm_intr_pm2()
 
 	splx(s);
 }
-
-
-/*
- * My PMgrOp routine
- */
-int
-pmgrop(PMData *pmdata)
-{
-	switch (pmHardware) {
-	case PM_HW_PB5XX:
-		return (pm_pmgrop_pm2(pmdata));
-	default:
-		/* return (pmgrop_mrg(pmdata)); */
-		return 1;
-	}
-}
-
-
-/*
- * My PM interrupt routine
- */
-void
-pm_intr()
-{
-	switch (pmHardware) {
-	case PM_HW_PB5XX:
-		pm_intr_pm2();
-		break;
-	default:
-		break;
-	}
-}
-
-
 
 /*
  * Synchronous ADBOp routine for the Power Manager
