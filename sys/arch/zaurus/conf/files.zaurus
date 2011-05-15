@@ -1,4 +1,4 @@
-#	$OpenBSD: files.zaurus,v 1.26 2010/06/07 16:34:20 drahn Exp $
+#	$OpenBSD: files.zaurus,v 1.27 2011/05/15 08:52:48 matthieu Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -97,7 +97,6 @@ include "dev/i2o/files.i2o"
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
-include "dev/pckbc/files.pckbc"
 
 # Include USB stuff
 include "dev/usb/files.usb"

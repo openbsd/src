@@ -1,4 +1,4 @@
-#	$OpenBSD: files.palm,v 1.3 2010/12/06 20:10:18 jasper Exp $
+#	$OpenBSD: files.palm,v 1.4 2011/05/15 08:52:48 matthieu Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -58,7 +58,6 @@ include "dev/i2o/files.i2o"
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
-include "dev/pckbc/files.pckbc"
 
 # Include USB stuff
 include "dev/usb/files.usb"
