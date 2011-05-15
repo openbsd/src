@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd.c,v 1.9 2011/04/02 12:04:44 dlg Exp $ */
+/* $OpenBSD: npppd.c,v 1.10 2011/05/15 15:47:52 markus Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.9 2011/04/02 12:04:44 dlg Exp $
+ * $Id: npppd.c,v 1.10 2011/05/15 15:47:52 markus Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"
@@ -1143,6 +1143,15 @@ npppd_ppp_pipex_disable(npppd *_this, npppd_ppp *ppp)
 		/* PPTP specific informations */
 		req.pcr_session_id = call->id;
 		req.pcr_protocol = PIPEX_PROTO_PPTP;
+		break;
+#endif
+#ifdef USE_NPPPD_L2TP
+	case PPP_TUNNEL_L2TP:
+		l2tp = (l2tp_call *)ppp->phy_context;
+
+		/* L2TP specific context */
+		req.pcr_session_id = l2tp->session_id;
+		req.pcr_protocol = PIPEX_PROTO_L2TP;
 		break;
 #endif
 	default:
