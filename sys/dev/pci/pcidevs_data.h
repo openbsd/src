@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1600 2011/05/15 12:00:43 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1601 2011/05/15 18:55:18 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -6833,15 +6833,15 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6700PXH_A,
-	    "PCIE-PCIE",
+	    "6700PXH PCIE-PCIX",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6700PXH_B,
-	    "PCIE-PCIE",
+	    "6700PXH PCIE-PCIX",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6702PXH,
-	    "PCIE-PCIE",
+	    "6702PXH PCIE-PCIX",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOP332_A,
