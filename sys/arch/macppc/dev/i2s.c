@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.20 2011/05/05 18:54:23 jasper Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.21 2011/05/15 09:10:26 mpi Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -46,6 +46,7 @@
 
 #include <macppc/dev/i2svar.h>
 #include <macppc/dev/i2sreg.h>
+#include <macppc/pci/macobio.h>
 
 #ifdef I2S_DEBUG
 # define DPRINTF(x) printf x 
@@ -78,10 +79,6 @@ void i2s_init(struct i2s_softc *, int);
 int i2s_intr(void *);
 int i2s_iintr(void *);
 
-/* XXX */
-void keylargo_fcr_enable(int, u_int32_t);
-void keylargo_fcr_disable(int, u_int32_t);
-
 struct cfdriver i2s_cd = {
 	NULL, "i2s", DV_DULL
 };
@@ -94,25 +91,6 @@ static u_char *headphone_detect;
 static int headphone_detect_active;
 static u_char *lineout_detect;
 static int lineout_detect_active;
-
-/* GPIO bits */
-#define GPIO_OUTSEL	0xf0	/* Output select */
-		/*	0x00	GPIO bit0 is output
-			0x10	media-bay power
-			0x20	reserved
-			0x30	MPIC */
-
-#define GPIO_ALTOE	0x08	/* Alternate output enable */
-		/*	0x00	Use DDR
-			0x08	Use output select */
-
-#define GPIO_DDR	0x04	/* Data direction */
-#define GPIO_DDR_OUTPUT	0x04	/* Output */
-#define GPIO_DDR_INPUT	0x00	/* Input */
-
-#define GPIO_LEVEL	0x02	/* Pin level (RO) */
-
-#define	GPIO_DATA	0x01	/* Data */
 
 void
 i2s_attach(struct device *parent, struct i2s_softc *sc, struct confargs *ca)
@@ -992,7 +970,7 @@ i2s_set_rate(sc, rate)
 	/* Clear CLKSTOPPEND */
 	out32rb(sc->sc_reg + I2S_INT, I2S_INT_CLKSTOPPEND);
 
-	keylargo_fcr_disable(I2SClockOffset, I2S0CLKEN);
+	macobio_disable(I2SClockOffset, I2S0CLKEN);
 
 	/* Wait until clock is stopped */
 	for (timo = 50; timo > 0; timo--) {
@@ -1008,7 +986,7 @@ done:
 	    in32rb(sc->sc_reg + I2S_FORMAT), reg));
 	out32rb(sc->sc_reg + I2S_FORMAT, reg);
 
-	keylargo_fcr_enable(I2SClockOffset, I2S0CLKEN);
+	macobio_enable(I2SClockOffset, I2S0CLKEN);
 
 	sc->sc_rate = rate;
 

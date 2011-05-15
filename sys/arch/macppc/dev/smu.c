@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.22 2009/08/12 14:11:52 kettenis Exp $	*/
+/*	$OpenBSD: smu.c,v 1.23 2011/05/15 09:10:26 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -31,7 +31,8 @@
 #include <dev/i2c/i2cvar.h>
 #include <dev/ofw/openfirm.h>
 
-#include <arch/macppc/dev/maci2cvar.h>
+#include <macppc/dev/maci2cvar.h>
+#include <macppc/pci/macobio.h>
 
 int     smu_match(struct device *, void *, void *);
 void    smu_attach(struct device *, struct device *, void *);
@@ -153,14 +154,6 @@ int	smu_i2c_exec(void *, i2c_op_t, i2c_addr_t,
 	    const void *, size_t, void *buf, size_t, int);
 
 void	smu_slew_voltage(u_int);
-
-#define GPIO_DDR        0x04    /* Data direction */
-#define GPIO_DDR_OUTPUT 0x04    /* Output */
-#define GPIO_DDR_INPUT  0x00    /* Input */
-
-#define GPIO_LEVEL	0x02	/* Pin level (RO) */
-
-#define GPIO_DATA       0x01    /* Data */
 
 int
 smu_match(struct device *parent, void *cf, void *aux)
