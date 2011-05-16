@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.2 2011/05/16 21:42:03 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.3 2011/05/16 21:52:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -218,7 +218,6 @@ lka_session_pickup(struct lka_session *lks, struct envelope *ep)
          * we need to be interruptible in case lka_session_resume()
          * has sent an imsg and expects an answer.
          */
-	ret = 0;
 	while (! (lks->flags & F_ERROR) &&
 	    ! lks->pending && lks->iterations < 5) {
 		++lks->iterations;
