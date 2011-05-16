@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.58 2011/05/01 12:57:11 eric Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.59 2011/05/16 21:05:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -167,23 +167,23 @@ mfa(void)
 }
 
 void
-mfa_test_mail(struct envelope *m)
+mfa_test_mail(struct envelope *e)
 {
 	struct submit_status	 ss;
 
-	ss.id = m->id;
+	ss.id = e->session_id;
 	ss.code = 530;
-	ss.u.path = m->sender;
+	ss.u.maddr = e->delivery.from;
 
-	if (mfa_strip_source_route(ss.u.path.user, sizeof(ss.u.path.user)))
+	if (mfa_strip_source_route(ss.u.maddr.user, sizeof(ss.u.maddr.user)))
 		goto refuse;
 
-	if (! valid_localpart(ss.u.path.user) ||
-	    ! valid_domainpart(ss.u.path.domain)) {
+	if (! valid_localpart(ss.u.maddr.user) ||
+	    ! valid_domainpart(ss.u.maddr.domain)) {
 		/*
 		 * "MAIL FROM:<>" is the exception we allow.
 		 */
-		if (!(ss.u.path.user[0] == '\0' && ss.u.path.domain[0] == '\0'))
+		if (!(ss.u.maddr.user[0] == '\0' && ss.u.maddr.domain[0] == '\0'))
 			goto refuse;
 	}
 
@@ -202,26 +202,23 @@ accept:
 }
 
 static void
-mfa_test_rcpt(struct envelope *m)
+mfa_test_rcpt(struct envelope *e)
 {
 	struct submit_status	 ss;
 
-	ss.id = m->session_id;
+	ss.id = e->session_id;
 	ss.code = 530;
-	ss.u.path = m->session_rcpt;
-	ss.ss = m->session_ss;
-	ss.msg = *m;
-	ss.msg.recipient = m->session_rcpt;
-	ss.flags = m->flags;
+	ss.u.maddr = e->delivery.rcpt_orig;
+	ss.ss = e->delivery.ss;
+	ss.envelope = *e;
+	ss.envelope.delivery.rcpt = e->delivery.rcpt_orig;
+	ss.flags = e->delivery.flags;
 
-	mfa_strip_source_route(ss.u.path.user, sizeof(ss.u.path.user));
-
-	if (! valid_localpart(ss.u.path.user) ||
-	    ! valid_domainpart(ss.u.path.domain))
+	mfa_strip_source_route(ss.u.maddr.user, sizeof(ss.u.maddr.user));
+	
+	if (! valid_localpart(ss.u.maddr.user) ||
+	    ! valid_domainpart(ss.u.maddr.domain))
 		goto refuse;
-
-	if (ss.flags & F_MESSAGE_AUTHENTICATED)
-		ss.u.path.flags |= F_PATH_AUTHENTICATED;
 
 	imsg_compose_event(env->sc_ievs[PROC_LKA], IMSG_LKA_RULEMATCH, 0, 0, -1,
 	    &ss, sizeof(ss));
@@ -240,8 +237,8 @@ mfa_test_rcpt_resume(struct submit_status *ss) {
 		return;
 	}
 
-	ss->msg.recipient = ss->u.path;
-	ss->msg.expire = ss->msg.recipient.rule.r_qexpire;
+	ss->envelope.delivery.rcpt = ss->u.maddr;
+	ss->envelope.delivery.expire = ss->envelope.rule.r_qexpire;
 	imsg_compose_event(env->sc_ievs[PROC_LKA], IMSG_LKA_RCPT, 0, 0, -1,
 	    ss, sizeof(*ss));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.10 2011/05/01 12:57:11 eric Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.11 2011/05/16 21:05:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -100,26 +100,26 @@ queue_message_fd_rw(enum queue_kind qkind, u_int32_t msgid)
 }
 
 int
-queue_envelope_create(enum queue_kind qkind, struct envelope *m)
+queue_envelope_create(enum queue_kind qkind, struct envelope *ep)
 {
-	return env->sc_queue->envelope(qkind, QOP_CREATE, m);
+	return env->sc_queue->envelope(qkind, QOP_CREATE, ep);
 }
 
 int
-queue_envelope_delete(enum queue_kind qkind, struct envelope *m)
+queue_envelope_delete(enum queue_kind qkind, struct envelope *ep)
 {
-	return env->sc_queue->envelope(qkind, QOP_DELETE, m);
+	return env->sc_queue->envelope(qkind, QOP_DELETE, ep);
 }
 
 int
-queue_envelope_load(enum queue_kind qkind, u_int64_t evpid, struct envelope *m)
+queue_envelope_load(enum queue_kind qkind, u_int64_t evpid, struct envelope *ep)
 {
-	m->evpid = evpid;
-	return env->sc_queue->envelope(qkind, QOP_LOAD, m);
+	ep->delivery.id = evpid;
+	return env->sc_queue->envelope(qkind, QOP_LOAD, ep);
 }
 
 int
-queue_envelope_update(enum queue_kind qkind, struct envelope *m)
+queue_envelope_update(enum queue_kind qkind, struct envelope *ep)
 {
-	return env->sc_queue->envelope(qkind, QOP_UPDATE, m);
+	return env->sc_queue->envelope(qkind, QOP_UPDATE, ep);
 }

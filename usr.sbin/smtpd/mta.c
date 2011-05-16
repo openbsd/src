@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.105 2011/05/01 12:57:11 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.106 2011/05/16 21:05:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -58,7 +58,7 @@ mta_imsg(struct imsgev *iev, struct imsg *imsg)
 	struct ramqueue_batch  	*rq_batch;
 	struct mta_session	*s;
 	struct mta_relay	*relay;
-	struct envelope		*m;
+	struct envelope		*e;
 	struct secret		*secret;
 	struct dns		*dns;
 	struct ssl		*ssl;
@@ -96,6 +96,8 @@ mta_imsg(struct imsgev *iev, struct imsg *imsg)
 			}
 
 			/* use auth? */
+			log_debug("host: %s", rq_batch->rule.r_value.relayhost.hostname);
+			log_debug("flags: %d", rq_batch->rule.r_value.relayhost.flags);
 			if ((rq_batch->rule.r_value.relayhost.flags & F_SSL) &&
 			    (rq_batch->rule.r_value.relayhost.flags & F_AUTH)) {
 				s->flags |= MTA_USE_AUTH;
@@ -126,21 +128,21 @@ mta_imsg(struct imsgev *iev, struct imsg *imsg)
 
 
 		case IMSG_BATCH_APPEND:
-			m = imsg->data;
-			s = mta_lookup(m->batch_id);
-			m = malloc(sizeof *m);
-			if (m == NULL)
+			e = imsg->data;
+			s = mta_lookup(e->batch_id);
+			e = malloc(sizeof *e);
+			if (e == NULL)
 				fatal(NULL);
-			*m = *(struct envelope *)imsg->data;
-			strlcpy(m->session_errorline, "000 init",
-			    sizeof(m->session_errorline));
+			*e = *(struct envelope *)imsg->data;
+			strlcpy(e->delivery.errorline, "000 init",
+			    sizeof(e->delivery.errorline));
 
 			if (s->host == NULL) {
-				s->host = strdup(m->recipient.domain);
+				s->host = strdup(e->delivery.rcpt.domain);
 				if (s->host == NULL)
 					fatal("strdup");
 			}
- 			TAILQ_INSERT_TAIL(&s->recipients, m, entry);
+ 			TAILQ_INSERT_TAIL(&s->recipients, e, entry);
 			return;
 
 		case IMSG_BATCH_CLOSE:
@@ -337,7 +339,7 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 	struct secret		 secret;
 	struct mta_relay	*relay;
 	struct sockaddr		*sa;
-	struct envelope		*m;
+	struct envelope		*e;
 	struct smtp_client	*pcb;
 	int			 max_reuse;
 
@@ -475,17 +477,17 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 			client_auth(pcb, s->secret);
 
 		/* set envelope sender */
-		m = TAILQ_FIRST(&s->recipients);
-		if (m->sender.user[0] && m->sender.domain[0])
-			client_sender(pcb, "%s@%s", m->sender.user,
-			    m->sender.domain);
+		e = TAILQ_FIRST(&s->recipients);
+		if (e->delivery.from.user[0] && e->delivery.from.domain[0])
+			client_sender(pcb, "%s@%s", e->delivery.from.user,
+			    e->delivery.from.domain);
 		else
 			client_sender(pcb, "");
 			
 		/* set envelope recipients */
-		TAILQ_FOREACH(m, &s->recipients, entry)
-			client_rcpt(pcb, m, "%s@%s", m->recipient.user,
-			    m->recipient.domain);
+		TAILQ_FOREACH(e, &s->recipients, entry)
+			client_rcpt(pcb, e, "%s@%s", e->delivery.rcpt.user,
+			    e->delivery.rcpt.domain);
 
 		s->pcb = pcb;
 		event_set(&s->ev, s->fd, EV_READ|EV_WRITE, mta_event, s);
@@ -498,8 +500,8 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 		 */
 
 		/* update queue status */
-		while ((m = TAILQ_FIRST(&s->recipients)))
-			mta_message_done(s, m);
+		while ((e = TAILQ_FIRST(&s->recipients)))
+			mta_message_done(s, e);
 
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 		    IMSG_BATCH_DONE, 0, 0, -1, NULL, 0);
@@ -648,7 +650,7 @@ static void
 mta_status(struct mta_session *s, const char *fmt, ...)
 {
 	char			*status;
-	struct envelope		*m, *next;
+	struct envelope		*e, *next;
 	va_list			 ap;
 
 	va_start(ap, fmt);
@@ -656,16 +658,16 @@ mta_status(struct mta_session *s, const char *fmt, ...)
 		fatal("vasprintf");
 	va_end(ap);
 
-	for (m = TAILQ_FIRST(&s->recipients); m; m = next) {
-		next = TAILQ_NEXT(m, entry);
+	for (e = TAILQ_FIRST(&s->recipients); e; e = next) {
+		next = TAILQ_NEXT(e, entry);
 
 		/* save new status */
-		mta_message_status(m, status);
+		mta_message_status(e, status);
 
 		/* remove queue entry */
 		if (*status == '2' || *status == '5' || *status == '6') {
-			mta_message_log(s, m);
-			mta_message_done(s, m);
+			mta_message_log(s, e);
+			mta_message_done(s, e);
 		}
 	}
 
@@ -673,31 +675,31 @@ mta_status(struct mta_session *s, const char *fmt, ...)
 }
 
 static void
-mta_message_status(struct envelope *m, char *status)
+mta_message_status(struct envelope *e, char *status)
 {
 	/*
 	 * Previous delivery attempts might have assigned an errorline of
 	 * higher status (eg. 5yz is of higher status than 4yz), so check
 	 * this before deciding to overwrite existing status with a new one.
 	 */
-	if (*status != '2' && strncmp(m->session_errorline, status, 3) > 0)
+	if (*status != '2' && strncmp(e->delivery.errorline, status, 3) > 0)
 		return;
 
 	/* change status */
-	log_debug("mta: new status for %s@%s: %s", m->recipient.user,
-	    m->recipient.domain, status);
-	strlcpy(m->session_errorline, status, sizeof(m->session_errorline));
+	log_debug("mta: new status for %s@%s: %s", e->delivery.rcpt.user,
+	    e->delivery.rcpt.domain, status);
+	strlcpy(e->delivery.errorline, status, sizeof(e->delivery.errorline));
 }
 
 static void
-mta_message_log(struct mta_session *s, struct envelope *m)
+mta_message_log(struct mta_session *s, struct envelope *e)
 {
 	struct mta_relay	*relay = TAILQ_FIRST(&s->relays);
-	char			*status = m->session_errorline;
+	char			*status = e->delivery.errorline;
 
 	log_info("%016llx: to=<%s@%s>, delay=%d, relay=%s [%s], stat=%s (%s)",
-	    m->evpid, m->recipient.user,
-	    m->recipient.domain, time(NULL) - m->creation,
+	    e->delivery.id, e->delivery.rcpt.user,
+	    e->delivery.rcpt.domain, time(NULL) - e->delivery.creation,
 	    relay ? relay->fqdn : "(none)",
 	    relay ? ss_to_text(&relay->sa) : "",
 	    *status == '2' ? "Sent" :
@@ -707,24 +709,24 @@ mta_message_log(struct mta_session *s, struct envelope *m)
 }
 
 static void
-mta_message_done(struct mta_session *s, struct envelope *m)
+mta_message_done(struct mta_session *s, struct envelope *e)
 {
-	switch (m->session_errorline[0]) {
+	switch (e->delivery.errorline[0]) {
 	case '6':
 	case '5':
-		m->status = S_MESSAGE_PERMFAILURE;
+		e->delivery.status = DS_PERMFAILURE;
 		break;
 	case '2':
-		m->status = S_MESSAGE_ACCEPTED;
+		e->delivery.status = DS_ACCEPTED;
 		break;
 	default:
-		m->status = S_MESSAGE_TEMPFAILURE;
+		e->delivery.status = DS_TEMPFAILURE;
 		break;
 	}
 	imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-	    IMSG_QUEUE_MESSAGE_UPDATE, 0, 0, -1, m, sizeof(*m));
-	TAILQ_REMOVE(&s->recipients, m, entry);
-	free(m);
+	    IMSG_QUEUE_MESSAGE_UPDATE, 0, 0, -1, e, sizeof(*e));
+	TAILQ_REMOVE(&s->recipients, e, entry);
+	free(e);
 }
 
 static void
@@ -737,12 +739,12 @@ static void
 mta_request_datafd(struct mta_session *s)
 {
 	struct ramqueue_batch	rq_batch;
-	struct envelope	*m;
+	struct envelope	*e;
 
-	m = TAILQ_FIRST(&s->recipients);
+	e = TAILQ_FIRST(&s->recipients);
 
 	rq_batch.b_id = s->id;
-	rq_batch.msgid = evpid_to_msgid(m->evpid);
+	rq_batch.msgid = evpid_to_msgid(e->delivery.id);
 	imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_QUEUE_MESSAGE_FD,
 	    0, 0, -1, &rq_batch, sizeof(rq_batch));
 }

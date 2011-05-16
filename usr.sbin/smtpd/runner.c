@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.106 2011/05/01 12:57:11 eric Exp $	*/
+/*	$OpenBSD: runner.c,v 1.107 2011/05/16 21:05:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -68,27 +68,27 @@ u_int32_t	filename_to_msgid(char *);
 void
 runner_imsg(struct imsgev *iev, struct imsg *imsg)
 {
-	struct envelope	*m;
+	struct envelope	*e;
 
 	switch (imsg->hdr.type) {
 	case IMSG_QUEUE_COMMIT_MESSAGE:
-		m = imsg->data;
-		runner_force_message_to_ramqueue(&env->sc_rqueue, m->evpid>>32);
+		e = imsg->data;
+		runner_force_message_to_ramqueue(&env->sc_rqueue, e->delivery.id>>32);
 		runner_reset_events();
 		return;
 
 	case IMSG_QUEUE_MESSAGE_UPDATE:
-		m = imsg->data;
-		m->retry++;
+		e = imsg->data;
+		e->delivery.retry++;
 		env->stats->runner.active--;
 
 		/* temporary failure, message remains in queue,
 		 * gets reinserted in ramqueue
 		 */
-		if (m->status & S_MESSAGE_TEMPFAILURE) {
-			m->status &= ~S_MESSAGE_TEMPFAILURE;
-			queue_envelope_update(Q_QUEUE, m);
-			ramqueue_insert(&env->sc_rqueue, m, time(NULL));
+		if (e->delivery.status & DS_TEMPFAILURE) {
+			e->delivery.status &= ~DS_TEMPFAILURE;
+			queue_envelope_update(Q_QUEUE, e);
+			ramqueue_insert(&env->sc_rqueue, e, time(NULL));
 			runner_reset_events();
 			return;
 		}
@@ -96,12 +96,12 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 		/* permanent failure, eventually generate a
 		 * bounce (and insert bounce in ramqueue).
 		 */
-		if (m->status & S_MESSAGE_PERMFAILURE) {
+		if (e->delivery.status & DS_PERMFAILURE) {
 			struct envelope bounce;
 
-			if (m->type != T_BOUNCE_MESSAGE &&
-			    m->sender.user[0] != '\0') {
-				bounce_record_message(m, &bounce);
+			if (e->delivery.type != D_BOUNCE &&
+			    e->delivery.from.user[0] != '\0') {
+				bounce_record_message(e, &bounce);
 				ramqueue_insert(&env->sc_rqueue, &bounce, time(NULL));
 				runner_reset_events();
 			}
@@ -110,7 +110,7 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 		/* successful delivery or permanent failure,
 		 * remove envelope from queue.
 		 */
-		queue_envelope_delete(Q_QUEUE, m);
+		queue_envelope_delete(Q_QUEUE, e);
 		return;
 
 	case IMSG_MDA_SESS_NEW:
@@ -126,11 +126,11 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 		return;
 
 	case IMSG_SMTP_ENQUEUE:
-		m = imsg->data;
-		if (imsg->fd < 0 || !bounce_session(imsg->fd, m)) {
-			m->status = 0;
-			queue_envelope_update(Q_QUEUE, m);
-			ramqueue_insert(&env->sc_rqueue, m, time(NULL));
+		e = imsg->data;
+		if (imsg->fd < 0 || !bounce_session(imsg->fd, e)) {
+			e->delivery.status = 0;
+			queue_envelope_update(Q_QUEUE, e);
+			ramqueue_insert(&env->sc_rqueue, e, time(NULL));
 			runner_reset_events();
 			return;
 		}
@@ -355,21 +355,21 @@ runner_process_envelope(struct ramqueue_envelope *rq_evp, time_t curtm)
 	if (! queue_envelope_load(Q_QUEUE, rq_evp->evpid, &envelope))
 		return 0;
 
-	if (envelope.type & T_MDA_MESSAGE) {
+	if (envelope.delivery.type & D_MDA) {
 		if (env->sc_opts & SMTPD_MDA_PAUSED)
 			return 0;
 		if (mda_av == 0)
 			return 0;
 	}
 
-	if (envelope.type & T_MTA_MESSAGE) {
+	if (envelope.delivery.type & D_MTA) {
 		if (env->sc_opts & SMTPD_MTA_PAUSED)
 			return 0;
 		if (mta_av == 0)
 			return 0;
 	}
 
-	if (envelope.type & T_BOUNCE_MESSAGE) {
+	if (envelope.delivery.type & D_BOUNCE) {
 		if (env->sc_opts & (SMTPD_MDA_PAUSED|SMTPD_MTA_PAUSED))
 			return 0;
 		if (bnc_av == 0)
@@ -379,7 +379,7 @@ runner_process_envelope(struct ramqueue_envelope *rq_evp, time_t curtm)
 	if (runner_check_loop(&envelope)) {
 		struct envelope bounce;
 
-		message_set_errormsg(&envelope, "loop has been detected");
+		envelope_set_errormsg(&envelope, "loop has been detected");
 		bounce_record_message(&envelope, &bounce);
 		ramqueue_insert(&env->sc_rqueue, &bounce, time(NULL));
 		runner_setup_events();
@@ -387,10 +387,6 @@ runner_process_envelope(struct ramqueue_envelope *rq_evp, time_t curtm)
 		return 0;
 	}
 
-	log_debug("dispatching host: %p, batch: %p, envelope: %p, %016llx",
-	    rq_evp->host,
-	    rq_evp->batch,
-	    rq_evp, rq_evp->evpid);
 	runner_process_batch(rq_evp, curtm);
 
 	return 1;
@@ -406,12 +402,12 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 	int fd;
 
 	switch (batch->type) {
-	case T_BOUNCE_MESSAGE:		
+	case D_BOUNCE:
 		while ((rq_evp = ramqueue_batch_first_envelope(batch))) {
 			if (! queue_envelope_load(Q_QUEUE, rq_evp->evpid,
 				&envelope))
 				return;
-			envelope.lasttry = curtm;
+			envelope.delivery.lasttry = curtm;
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 			    IMSG_SMTP_ENQUEUE, PROC_SMTP, 0, -1, &envelope,
 			    sizeof envelope);
@@ -427,12 +423,12 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 		    env->stats->runner.maxactive);
 		break;
 		
-	case T_MDA_MESSAGE:
+	case D_MDA:
 
 		rq_evp = ramqueue_batch_first_envelope(batch);
 		if (! queue_envelope_load(Q_QUEUE, rq_evp->evpid, &envelope))
 			return;
-		envelope.lasttry = curtm;
+		envelope.delivery.lasttry = curtm;
 		fd = queue_message_fd_r(Q_QUEUE, rq_evp->evpid>>32);
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 		    IMSG_MDA_SESS_NEW, PROC_MDA, 0, fd, &envelope,
@@ -449,7 +445,7 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 		    env->stats->runner.maxactive);
 		break;
 		
-	case T_MTA_MESSAGE:
+	case D_MTA:
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 		    IMSG_BATCH_CREATE, PROC_MTA, 0, -1, batch,
 		    sizeof *batch);
@@ -457,7 +453,7 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 			if (! queue_envelope_load(Q_QUEUE, rq_evp->evpid,
 				&envelope))
 				return;
-			envelope.lasttry = curtm;
+			envelope.delivery.lasttry = curtm;
 			envelope.batch_id = batch->b_id;
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 			    IMSG_BATCH_APPEND, PROC_MTA, 0, -1, &envelope,
@@ -616,17 +612,17 @@ delroot:
 }
 
 int
-runner_check_loop(struct envelope *messagep)
+runner_check_loop(struct envelope *ep)
 {
 	int fd;
 	FILE *fp;
 	char *buf, *lbuf;
 	size_t len;
-	struct path chkpath;
+	struct mailaddr maddr;
 	int ret = 0;
 	int rcvcount = 0;
 
-	fd = queue_message_fd_r(Q_QUEUE, messagep->evpid>>32);
+	fd = queue_message_fd_r(Q_QUEUE, ep->delivery.id>>32);
 	if ((fp = fdopen(fd, "r")) == NULL)
 		fatal("fdopen");
 
@@ -655,18 +651,18 @@ runner_check_loop(struct envelope *messagep)
 		}
 
 		else if (strncasecmp("Delivered-To: ", buf, 14) == 0) {
-			struct path rcpt;
+			struct mailaddr rcpt;
 
-			bzero(&chkpath, sizeof (struct path));
-			if (! recipient_to_path(&chkpath, buf + 14))
+			bzero(&maddr, sizeof (struct mailaddr));
+			if (! email_to_mailaddr(&maddr, buf + 14))
 				continue;
 
-			rcpt = messagep->recipient;
-			if (messagep->type == T_BOUNCE_MESSAGE)
-				rcpt = messagep->sender;
+			rcpt = ep->delivery.rcpt;
+			if (ep->delivery.type == D_BOUNCE)
+				rcpt = ep->delivery.from;
 
-			if (strcasecmp(chkpath.user, rcpt.user) == 0 &&
-			    strcasecmp(chkpath.domain, rcpt.domain) == 0) {
+			if (strcasecmp(maddr.user, rcpt.user) == 0 &&
+			    strcasecmp(maddr.domain, rcpt.domain) == 0) {
 				ret = 1;
 				break;
 			}

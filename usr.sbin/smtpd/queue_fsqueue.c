@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.11 2011/05/01 12:57:11 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.12 2011/05/16 21:05:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -91,7 +91,7 @@ fsqueue_hash(u_int32_t h)
 }
 
 static int
-fsqueue_envelope_create(enum queue_kind qkind, struct envelope *m)
+fsqueue_envelope_create(enum queue_kind qkind, struct envelope *ep)
 {
 	char evpname[MAXPATHLEN];
 	FILE *fp;
@@ -105,7 +105,8 @@ again:
 	rnd = (u_int32_t)arc4random();
 	if (rnd == 0)
 		goto again;
-	evpid = m->evpid | rnd;
+	evpid = ep->delivery.id | rnd;
+
 
 	if (! bsnprintf(evpname, sizeof(evpname), "%s/%08x%s/%016llx",
 		fsqueue_getpath(qkind),
@@ -126,15 +127,15 @@ again:
 	if (fp == NULL)
 		fatal("fsqueue_envelope_create: fdopen");
 
-	m->creation = time(NULL);
-	m->evpid = evpid;
+	ep->delivery.creation = time(NULL);
+	ep->delivery.id = evpid;
 
 	if (qkind == Q_BOUNCE) {
-		m->lasttry = 0;
-		m->retry = 0;
+		ep->delivery.lasttry = 0;
+		ep->delivery.retry = 0;
 	}
 
-	if (fwrite(m, sizeof (*m), 1, fp) != 1) {
+	if (fwrite(ep, sizeof (*ep), 1, fp) != 1) {
 		if (errno == ENOSPC)
 			goto tempfail;
 		fatal("fsqueue_envelope_create: write");
@@ -154,23 +155,23 @@ tempfail:
 		fclose(fp);
 	else if (fd != -1)
 		close(fd);
-	m->creation = 0;
-	m->evpid = 0;
+	ep->delivery.creation = 0;
+	ep->delivery.id = 0;
 
 	return 0;
 }
 
 static int
-fsqueue_envelope_load(enum queue_kind qkind, struct envelope *m)
+fsqueue_envelope_load(enum queue_kind qkind, struct envelope *ep)
 {
 	char pathname[MAXPATHLEN];
 	FILE *fp;
 
 	if (! bsnprintf(pathname, sizeof(pathname), "%s/%04x/%08x%s/%016llx",
 		fsqueue_getpath(qkind),
-		fsqueue_hash(evpid_to_msgid(m->evpid)),
-		evpid_to_msgid(m->evpid),
-		PATH_ENVELOPES, m->evpid))
+		fsqueue_hash(evpid_to_msgid(ep->delivery.id)),
+		evpid_to_msgid(ep->delivery.id),
+		PATH_ENVELOPES, ep->delivery.id))
 		fatalx("fsqueue_envelope_load: snprintf");
 
 	fp = fopen(pathname, "r");
@@ -179,31 +180,31 @@ fsqueue_envelope_load(enum queue_kind qkind, struct envelope *m)
 			return 0;
 		fatal("fsqueue_envelope_load: fopen");
 	}
-	if (fread(m, sizeof(*m), 1, fp) != 1)
+	if (fread(ep, sizeof (*ep), 1, fp) != 1)
 		fatal("fsqueue_envelope_load: fread");
 	fclose(fp);
 	return 1;
 }
 
 static int
-fsqueue_envelope_update(enum queue_kind qkind, struct envelope *m)
+fsqueue_envelope_update(enum queue_kind qkind, struct envelope *ep)
 {
 	char temp[MAXPATHLEN];
 	char dest[MAXPATHLEN];
 	FILE *fp;
 	u_int64_t batch_id;
 
-	batch_id = m->batch_id;
-	m->batch_id = 0;
+	batch_id = ep->batch_id;
+	ep->batch_id = 0;
 
 	if (! bsnprintf(temp, sizeof(temp), "%s/envelope.tmp", PATH_QUEUE))
 		fatalx("fsqueue_envelope_update");
 
 	if (! bsnprintf(dest, sizeof(dest), "%s/%04x/%08x%s/%016llx",
 		fsqueue_getpath(qkind),
-		fsqueue_hash(evpid_to_msgid(m->evpid)),
-		evpid_to_msgid(m->evpid),
-		PATH_ENVELOPES, m->evpid))
+		fsqueue_hash(evpid_to_msgid(ep->delivery.id)),
+		evpid_to_msgid(ep->delivery.id),
+		PATH_ENVELOPES, ep->delivery.id))
 		fatal("fsqueue_envelope_update: snprintf");
 
 	fp = fopen(temp, "w");
@@ -212,7 +213,7 @@ fsqueue_envelope_update(enum queue_kind qkind, struct envelope *m)
 			goto tempfail;
 		fatal("fsqueue_envelope_update: open");
 	}
-	if (fwrite(m, sizeof(*m), 1, fp) != 1) {
+	if (fwrite(ep, sizeof (*ep), 1, fp) != 1) {
 		if (errno == ENOSPC)
 			goto tempfail;
 		fatal("fsqueue_envelope_update: fwrite");
@@ -226,7 +227,7 @@ fsqueue_envelope_update(enum queue_kind qkind, struct envelope *m)
 		fatal("fsqueue_envelope_update: rename");
 	}
 
-	m->batch_id = batch_id;
+	ep->batch_id = batch_id;
 	return 1;
 
 tempfail:
@@ -235,35 +236,35 @@ tempfail:
 	if (fp)
 		fclose(fp);
 
-	m->batch_id = batch_id;
+	ep->batch_id = batch_id;
 	return 0;
 }
 
 static int
-fsqueue_envelope_delete(enum queue_kind qkind, struct envelope *m)
+fsqueue_envelope_delete(enum queue_kind qkind, struct envelope *ep)
 {
 	char pathname[MAXPATHLEN];
 	u_int16_t hval;
 
-	hval = fsqueue_hash(evpid_to_msgid(m->evpid));
+	hval = fsqueue_hash(evpid_to_msgid(ep->delivery.id));
 
 	if (! bsnprintf(pathname, sizeof(pathname), "%s/%04x/%08x%s/%016llx",
 		fsqueue_getpath(qkind),
 		hval,
-		evpid_to_msgid(m->evpid),
+		evpid_to_msgid(ep->delivery.id),
 		PATH_ENVELOPES,
-		m->evpid))
+		ep->delivery.id))
 		fatal("fsqueue_envelope_delete: snprintf");
 
 	if (unlink(pathname) == -1)
 		fatal("fsqueue_envelope_delete: unlink");
 
 	if (! bsnprintf(pathname, sizeof(pathname), "%s/%04x/%08x%s", PATH_QUEUE,
-		hval, evpid_to_msgid(m->evpid), PATH_ENVELOPES))
+		hval, evpid_to_msgid(ep->delivery.id), PATH_ENVELOPES))
 		fatal("fsqueue_envelope_delete: snprintf");
 
 	if (rmdir(pathname) != -1)
-		fsqueue_message_delete(qkind, evpid_to_msgid(m->evpid));
+		fsqueue_message_delete(qkind, evpid_to_msgid(ep->delivery.id));
 
 	return 1;
 }

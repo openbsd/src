@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.123 2011/05/04 20:45:30 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.124 2011/05/16 21:05:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -109,7 +109,7 @@ parent_imsg(struct imsgev *iev, struct imsg *imsg)
 		switch (imsg->hdr.type) {
 		case IMSG_PARENT_FORWARD_OPEN:
 			fwreq = imsg->data;
-			fd = parent_forward_open(fwreq->pw_name);
+			fd = parent_forward_open(fwreq->as_user);
 			fwreq->status = 0;
 			if (fd == -2) {
 				/* no ~/.forward, however it's optional. */

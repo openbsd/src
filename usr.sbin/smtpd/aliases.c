@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.42 2011/05/01 12:57:11 eric Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.43 2011/05/16 21:05:51 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -88,7 +88,7 @@ aliases_get(objid_t mapid, struct expandtree *expandtree, char *username)
 	nbaliases = 0;
 	RB_FOREACH(expnode, expandtree, &map_alias->expandtree) {
 		if (expnode->type == EXPAND_INCLUDE)
-			nbaliases += aliases_expand_include(expandtree, expnode->u.filename);
+			nbaliases += aliases_expand_include(expandtree, expnode->u.buffer);
 		else {
 			expandtree_increment_node(expandtree, expnode);
 			nbaliases++;
@@ -128,7 +128,7 @@ aliases_vdomain_exists(objid_t mapid, char *hostname)
 }
 
 int
-aliases_virtual_exist(objid_t mapid, struct path *path)
+aliases_virtual_exist(objid_t mapid, struct mailaddr *maddr)
 {
 	struct map *map;
 	struct map_virtual *map_virtual;
@@ -139,8 +139,8 @@ aliases_virtual_exist(objid_t mapid, struct path *path)
 	if (map == NULL)
 		return 0;
 
-	if (! bsnprintf(buf, sizeof(buf), "%s@%s", path->user,
-		path->domain))
+	if (! bsnprintf(buf, sizeof(buf), "%s@%s", maddr->user,
+		maddr->domain))
 		return 0;
 	lowercase(buf, buf, sizeof(buf));
 
@@ -161,7 +161,7 @@ aliases_virtual_exist(objid_t mapid, struct path *path)
 
 int
 aliases_virtual_get(objid_t mapid, struct expandtree *expandtree,
-    struct path *path)
+    struct mailaddr *maddr)
 {
 	struct map *map;
 	struct map_virtual *map_virtual;
@@ -174,8 +174,8 @@ aliases_virtual_get(objid_t mapid, struct expandtree *expandtree,
 	if (map == NULL)
 		return 0;
 
-	if (! bsnprintf(buf, sizeof(buf), "%s@%s", path->user,
-		path->domain))
+	if (! bsnprintf(buf, sizeof(buf), "%s@%s", maddr->user,
+		maddr->domain))
 		return 0;
 	lowercase(buf, buf, sizeof(buf));
 
@@ -191,7 +191,7 @@ aliases_virtual_get(objid_t mapid, struct expandtree *expandtree,
 	nbaliases = 0;
 	RB_FOREACH(expnode, expandtree, &map_virtual->expandtree) {
 		if (expnode->type == EXPAND_INCLUDE)
-			nbaliases += aliases_expand_include(expandtree, expnode->u.filename);
+			nbaliases += aliases_expand_include(expandtree, expnode->u.buffer);
 		else {
 			expandtree_increment_node(expandtree, expnode);
 			nbaliases++;
@@ -280,10 +280,9 @@ alias_parse(struct expandnode *alias, char *line)
 int
 alias_is_filter(struct expandnode *alias, char *line, size_t len)
 {
-	if (strncmp(line, "\"|", 2) == 0 &&
-	    line[len - 1] == '"') {
-		if (strlcpy(alias->u.filter, line, sizeof(alias->u.filter)) >=
-		    sizeof(alias->u.filter))
+	if (*line == '|') {
+		if (strlcpy(alias->u.buffer, line + 1,
+			sizeof(alias->u.buffer)) >= sizeof(alias->u.buffer))
 			return 0;
 		alias->type = EXPAND_FILTER;
 		return 1;
@@ -294,8 +293,8 @@ alias_is_filter(struct expandnode *alias, char *line, size_t len)
 int
 alias_is_username(struct expandnode *alias, char *line, size_t len)
 {
-	if (strlcpy(alias->u.username, line,
-	    sizeof(alias->u.username)) >= sizeof(alias->u.username))
+	if (strlcpy(alias->u.user, line,
+	    sizeof(alias->u.user)) >= sizeof(alias->u.user))
 		return 0;
 
 	while (*line) {
@@ -356,8 +355,8 @@ alias_is_filename(struct expandnode *alias, char *line, size_t len)
 	if (*line != '/')
 		return 0;
 
-	if (strlcpy(alias->u.filename, line,
-	    sizeof(alias->u.filename)) >= sizeof(alias->u.filename))
+	if (strlcpy(alias->u.buffer, line,
+	    sizeof(alias->u.buffer)) >= sizeof(alias->u.buffer))
 		return 0;
 	alias->type = EXPAND_FILENAME;
 	return 1;

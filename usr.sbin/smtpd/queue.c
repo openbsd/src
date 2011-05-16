@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.103 2011/05/01 12:57:11 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.104 2011/05/16 21:05:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -46,19 +46,19 @@ static void
 queue_imsg(struct imsgev *iev, struct imsg *imsg)
 {
 	struct submit_status	 ss;
-	struct envelope		*m;
+	struct envelope		*e;
 	struct ramqueue_batch	*rq_batch;
 	int			 fd, ret;
 
 	if (iev->proc == PROC_SMTP) {
-		m = imsg->data;
+		e = imsg->data;
 
 		switch (imsg->hdr.type) {
 		case IMSG_QUEUE_CREATE_MESSAGE:
-			ss.id = m->session_id;
+			ss.id = e->session_id;
 			ss.code = 250;
 			ss.u.msgid = 0;
-			if (m->flags & F_MESSAGE_ENQUEUED)
+			if (e->delivery.flags & DF_ENQUEUED)
 				ret = queue_message_create(Q_ENQUEUE, &ss.u.msgid);
 			else
 				ret = queue_message_create(Q_INCOMING, &ss.u.msgid);
@@ -69,21 +69,21 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 			return;
 
 		case IMSG_QUEUE_REMOVE_MESSAGE:
-			if (m->flags & F_MESSAGE_ENQUEUED)
-				queue_message_purge(Q_ENQUEUE, evpid_to_msgid(m->evpid));
+			if (e->delivery.flags & DF_ENQUEUED)
+				queue_message_purge(Q_ENQUEUE, evpid_to_msgid(e->delivery.id));
 			else
-				queue_message_purge(Q_INCOMING, evpid_to_msgid(m->evpid));
+				queue_message_purge(Q_INCOMING, evpid_to_msgid(e->delivery.id));
 			return;
 
 		case IMSG_QUEUE_COMMIT_MESSAGE:
-			ss.id = m->session_id;
-			if (m->flags & F_MESSAGE_ENQUEUED) {
-				if (queue_message_commit(Q_ENQUEUE, evpid_to_msgid(m->evpid)))
+			ss.id = e->session_id;
+			if (e->delivery.flags & DF_ENQUEUED) {
+				if (queue_message_commit(Q_ENQUEUE, evpid_to_msgid(e->delivery.id)))
 					env->stats->queue.inserts_local++;
 				else
 					ss.code = 421;
 			} else {
-				if (queue_message_commit(Q_INCOMING, evpid_to_msgid(m->evpid)))
+				if (queue_message_commit(Q_INCOMING, evpid_to_msgid(e->delivery.id)))
 					env->stats->queue.inserts_remote++;
 				else
 					ss.code = 421;
@@ -97,11 +97,11 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 			return;
 
 		case IMSG_QUEUE_MESSAGE_FILE:
-			ss.id = m->session_id;
-			if (m->flags & F_MESSAGE_ENQUEUED)
-				fd = queue_message_fd_rw(Q_ENQUEUE, evpid_to_msgid(m->evpid));
+			ss.id = e->session_id;
+			if (e->delivery.flags & DF_ENQUEUED)
+				fd = queue_message_fd_rw(Q_ENQUEUE, evpid_to_msgid(e->delivery.id));
 			else
-				fd = queue_message_fd_rw(Q_INCOMING, evpid_to_msgid(m->evpid));
+				fd = queue_message_fd_rw(Q_INCOMING, evpid_to_msgid(e->delivery.id));
 			if (fd == -1)
 				ss.code = 421;
 			imsg_compose_event(iev, IMSG_QUEUE_MESSAGE_FILE, 0, 0, fd,
@@ -115,23 +115,17 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 	}
 
 	if (iev->proc == PROC_LKA) {
-		m = imsg->data;
+		e = imsg->data;
 
 		switch (imsg->hdr.type) {
 		case IMSG_QUEUE_SUBMIT_ENVELOPE:
-			m->id = generate_uid();
-			ss.id = m->session_id;
-
-			if (IS_MAILBOX(m->recipient) || IS_EXT(m->recipient))
-				m->type = T_MDA_MESSAGE;
-			else
-				m->type = T_MTA_MESSAGE;
+			ss.id = e->session_id;
 
 			/* Write to disk */
-			if (m->flags & F_MESSAGE_ENQUEUED)
-				ret = queue_envelope_create(Q_ENQUEUE, m);
+			if (e->delivery.flags & DF_ENQUEUED)
+				ret = queue_envelope_create(Q_ENQUEUE, e);
 			else
-				ret = queue_envelope_create(Q_INCOMING, m);
+				ret = queue_envelope_create(Q_INCOMING, e);
 
 			if (ret == 0) {
 				ss.code = 421;
@@ -142,7 +136,7 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 			return;
 
 		case IMSG_QUEUE_COMMIT_ENVELOPES:
-			ss.id = m->session_id;
+			ss.id = e->session_id;
 			ss.code = 250;
 			imsg_compose_event(env->sc_ievs[PROC_SMTP],
 			    IMSG_QUEUE_COMMIT_ENVELOPES, 0, 0, -1, &ss,
@@ -340,17 +334,17 @@ queue_purge(enum queue_kind qkind, char *queuepath)
 }
 
 void
-queue_submit_envelope(struct envelope *m)
+queue_submit_envelope(struct envelope *ep)
 {
 	imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 	    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1,
-	    m, sizeof(*m));
+	    ep, sizeof(*ep));
 }
 
 void
-queue_commit_envelopes(struct envelope *m)
+queue_commit_envelopes(struct envelope *ep)
 {
 	imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 	    IMSG_QUEUE_COMMIT_ENVELOPES, 0, 0, -1,
-	    m, sizeof(*m));
+	    ep, sizeof(*ep));
 }

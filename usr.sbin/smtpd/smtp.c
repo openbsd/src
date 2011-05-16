@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.85 2011/05/01 12:57:11 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.86 2011/05/16 21:05:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -70,8 +70,8 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 			strlcpy(s->s_hostname,
 			    dns->error ? "<unknown>" : dns->host,
 			    sizeof s->s_hostname);
-			strlcpy(s->s_msg.session_hostname, s->s_hostname,
-			    sizeof s->s_msg.session_hostname);
+			strlcpy(s->s_msg.delivery.hostname, s->s_hostname,
+			    sizeof s->s_msg.delivery.hostname);
 			session_init(s->s_l, s);
 			return;
 		}
@@ -100,7 +100,7 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 			s = session_lookup(ss->id);
 			if (s == NULL)
 				return;
-			s->s_msg.evpid = (u_int64_t)ss->u.msgid << 32;
+			s->s_msg.delivery.id = (u_int64_t)ss->u.msgid << 32;
 			session_pickup(s, ss);
 			return;
 
@@ -129,7 +129,7 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 				fatalx("smtp: session is gone");
 			if (s->s_flags & F_WRITEONLY)
 				/* session is write-only, must not destroy it. */
-				s->s_msg.status |= S_MESSAGE_TEMPFAILURE;
+				s->s_msg.delivery.status |= DS_TEMPFAILURE;
 			else
 				fatalx("smtp: corrupt session");
 			return;
@@ -168,7 +168,7 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 			 */
 			SPLAY_FOREACH(s, sessiontree, &env->sc_sessions) {
 				s->s_l = NULL;
-				s->s_msg.status |= S_MESSAGE_TEMPFAILURE;
+				s->s_msg.delivery.status |= DS_TEMPFAILURE;
 			}
 			if (env->sc_listeners)
 				smtp_disable_events();
@@ -248,10 +248,10 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 				return;
 			if (auth->success) {
 				s->s_flags |= F_AUTHENTICATED;
-				s->s_msg.flags |= F_MESSAGE_AUTHENTICATED;
+				s->s_msg.delivery.flags |= DF_AUTHENTICATED;
 			} else {
 				s->s_flags &= ~F_AUTHENTICATED;
-				s->s_msg.flags &= ~F_MESSAGE_AUTHENTICATED;
+				s->s_msg.delivery.flags &= ~DF_AUTHENTICATED;
 			}
 			session_pickup(s, NULL);
 			return;
@@ -479,18 +479,18 @@ smtp_enqueue(uid_t *euid)
 
 	s->s_fd = fd[0];
 	s->s_ss = sa;
-	s->s_msg.flags |= F_MESSAGE_ENQUEUED;
+	s->s_msg.delivery.flags |= DF_ENQUEUED;
 
 	if (euid)
 		bsnprintf(s->s_hostname, sizeof(s->s_hostname), "%d@localhost",
 		    *euid);
 	else {
 		strlcpy(s->s_hostname, "localhost", sizeof(s->s_hostname));
-		s->s_msg.flags |= F_MESSAGE_BOUNCE;
+		s->s_msg.delivery.flags |= DF_BOUNCE;
 	}
 
-	strlcpy(s->s_msg.session_hostname, s->s_hostname,
-	    sizeof(s->s_msg.session_hostname));
+	strlcpy(s->s_msg.delivery.hostname, s->s_hostname,
+	    sizeof(s->s_msg.delivery.hostname));
 
 	session_init(l, s);
 

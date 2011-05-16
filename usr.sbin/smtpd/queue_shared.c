@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.48 2011/05/10 17:04:43 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.49 2011/05/16 21:05:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -59,24 +59,24 @@ void		display_envelope(struct envelope *, int);
 void		getflag(u_int *, int, char *, char *, size_t);
 
 int
-bounce_record_message(struct envelope *m, struct envelope *bounce)
+bounce_record_message(struct envelope *e, struct envelope *bounce)
 {
 	u_int32_t msgid;
 
-	if (m->type == T_BOUNCE_MESSAGE) {
+	if (e->delivery.type == D_BOUNCE) {
 		log_debug("mailer daemons loop detected !");
 		return 0;
 	}
 
-	*bounce = *m;
-	 bounce->type = T_BOUNCE_MESSAGE;
-	 bounce->status &= ~S_MESSAGE_PERMFAILURE;
+	*bounce = *e;
+	 bounce->delivery.type = D_BOUNCE;
+	 bounce->delivery.status &= ~DS_PERMFAILURE;
 
-	msgid = evpid_to_msgid(m->evpid);
+	msgid = evpid_to_msgid(e->delivery.id);
 	if (! queue_message_create(Q_BOUNCE, &msgid))
 		return 0;
 
-	bounce->evpid = msgid_to_evpid(msgid);
+	bounce->delivery.id = msgid_to_evpid(msgid);
 	if (! queue_envelope_create(Q_BOUNCE, bounce))
 		return 0;
 
@@ -84,32 +84,33 @@ bounce_record_message(struct envelope *m, struct envelope *bounce)
 }
 
 void
-queue_message_update(struct envelope *m)
+queue_message_update(struct envelope *e)
 {
-	m->flags &= ~F_MESSAGE_PROCESSING;
-	m->status &= ~(S_MESSAGE_ACCEPTED|S_MESSAGE_REJECTED);
-	m->batch_id = 0;
-	m->retry++;
+	e->batch_id = 0;
+	e->delivery.flags &= ~DF_PROCESSING;
+	e->delivery.status &= ~(DS_ACCEPTED|DS_REJECTED);
+	e->delivery.retry++;
 
-	if (m->status & S_MESSAGE_PERMFAILURE) {
-		if (m->type != T_BOUNCE_MESSAGE &&
-		    m->sender.user[0] != '\0') {
+
+	if (e->delivery.status & DS_PERMFAILURE) {
+		if (e->delivery.type != D_BOUNCE &&
+		    e->delivery.from.user[0] != '\0') {
 			struct envelope bounce;
 
-			bounce_record_message(m, &bounce);
+			bounce_record_message(e, &bounce);
 		}
-		queue_envelope_delete(Q_QUEUE, m);
+		queue_envelope_delete(Q_QUEUE, e);
 		return;
 	}
 
-	if (m->status & S_MESSAGE_TEMPFAILURE) {
-		m->status &= ~S_MESSAGE_TEMPFAILURE;
-		queue_envelope_update(Q_QUEUE, m);
+	if (e->delivery.status & DS_TEMPFAILURE) {
+		e->delivery.status &= ~DS_TEMPFAILURE;
+		queue_envelope_update(Q_QUEUE, e);
 		return;
 	}
 
 	/* no error, remove envelope */
-	queue_envelope_delete(Q_QUEUE, m);
+	queue_envelope_delete(Q_QUEUE, e);
 }
 
 struct qwalk *
@@ -278,49 +279,49 @@ show_queue(char *queuepath, int flags)
 }
 
 void
-display_envelope(struct envelope *m, int flags)
+display_envelope(struct envelope *e, int flags)
 {
 	char	 status[128];
 
 	status[0] = '\0';
 
-	getflag(&m->status, S_MESSAGE_TEMPFAILURE, "TEMPFAIL",
+	getflag(&e->delivery.status, DS_TEMPFAILURE, "TEMPFAIL",
 	    status, sizeof(status));
 
-	if (m->status)
-		errx(1, "%016llx: unexpected status 0x%04x", m->evpid,
-		    m->status);
+	if (e->delivery.status)
+		errx(1, "%016llx: unexpected status 0x%04x", e->delivery.id,
+		    e->delivery.status);
 
-	getflag(&m->flags, F_MESSAGE_BOUNCE, "BOUNCE",
+	getflag(&e->delivery.flags, DF_BOUNCE, "BOUNCE",
 	    status, sizeof(status));
-	getflag(&m->flags, F_MESSAGE_AUTHENTICATED, "AUTH",
+	getflag(&e->delivery.flags, DF_AUTHENTICATED, "AUTH",
 	    status, sizeof(status));
-	getflag(&m->flags, F_MESSAGE_PROCESSING, "PROCESSING",
+	getflag(&e->delivery.flags, DF_PROCESSING, "PROCESSING",
 	    status, sizeof(status));
-	getflag(&m->flags, F_MESSAGE_SCHEDULED, "SCHEDULED",
+	getflag(&e->delivery.flags, DF_SCHEDULED, "SCHEDULED",
 	    status, sizeof(status));
-	getflag(&m->flags, F_MESSAGE_ENQUEUED, "ENQUEUED",
+	getflag(&e->delivery.flags, DF_ENQUEUED, "ENQUEUED",
 	    status, sizeof(status));
-	getflag(&m->flags, F_MESSAGE_FORCESCHEDULE, "SCHEDULED_MANUAL",
+	getflag(&e->delivery.flags, DF_FORCESCHEDULE, "SCHEDULED_MANUAL",
 	    status, sizeof(status));
 
-	if (m->flags)
-		errx(1, "%016llx: unexpected flags 0x%04x", m->evpid,
-		    m->flags);
+	if (e->delivery.flags)
+		errx(1, "%016llx: unexpected flags 0x%04x", e->delivery.id,
+		    e->delivery.flags);
 	
 	if (status[0])
 		status[strlen(status) - 1] = '\0';
 	else
 		strlcpy(status, "-", sizeof(status));
 
-	switch (m->type) {
-	case T_MDA_MESSAGE:
+	switch (e->delivery.type) {
+	case D_MDA:
 		printf("MDA");
 		break;
-	case T_MTA_MESSAGE:
+	case D_MTA:
 		printf("MTA");
 		break;
-	case T_BOUNCE_MESSAGE:
+	case D_BOUNCE:
 		printf("BOUNCE");
 		break;
 	default:
@@ -328,16 +329,16 @@ display_envelope(struct envelope *m, int flags)
 	}
 	
 	printf("|%016llx|%s|%s@%s|%s@%s|%d|%d|%u",
-	    m->evpid,
+	    e->delivery.id,
 	    status,
-	    m->sender.user, m->sender.domain,
-	    m->recipient.user, m->recipient.domain,
-	    m->lasttry,
-	    m->expire,
-	    m->retry);
+	    e->delivery.from.user, e->delivery.from.domain,
+	    e->delivery.rcpt.user, e->delivery.rcpt.domain,
+	    e->delivery.lasttry,
+	    e->delivery.expire,
+	    e->delivery.retry);
 	
-	if (m->session_errorline[0] != '\0')
-		printf("|%s", m->session_errorline);
+	if (e->delivery.errorline[0] != '\0')
+		printf("|%s", e->delivery.errorline);
 
 	printf("\n");
 }

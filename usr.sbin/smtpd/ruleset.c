@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.17 2011/05/01 12:57:11 eric Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.18 2011/05/16 21:05:52 gilles Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -33,7 +33,7 @@
 #include "log.h"
 
 
-struct rule *ruleset_match(char *tag, struct path *, struct sockaddr_storage *);
+struct rule *ruleset_match(struct envelope *);
 
 static int ruleset_check_source(struct map *, struct sockaddr_storage *);
 static int ruleset_match_mask(struct sockaddr_storage *, struct netaddr *);
@@ -42,19 +42,25 @@ static int ruleset_inet6_match(struct sockaddr_in6 *, struct netaddr *);
 
 
 struct rule *
-ruleset_match(char *tag, struct path *path, struct sockaddr_storage *ss)
+ruleset_match(struct envelope *evp)
 {
 	struct rule *r;
 	struct map *map;
 	struct mapel *me;
+	struct mailaddr *maddr = &evp->delivery.rcpt;
+	struct sockaddr_storage *ss = &evp->delivery.ss;
+
+	log_debug("flags: %d", evp->delivery.flags);
+	if (evp->delivery.flags & DF_INTERNAL)
+		ss = NULL;
 
 	TAILQ_FOREACH(r, env->sc_rules, r_entry) {
 
-		if (r->r_tag[0] != '\0' && strcmp(r->r_tag, tag) != 0)
+		if (r->r_tag[0] != '\0' && strcmp(r->r_tag, evp->tag) != 0)
 			continue;
 
 		if (ss != NULL &&
-		    (!(path->flags & F_PATH_AUTHENTICATED) &&
+		    (!(evp->delivery.flags & DF_AUTHENTICATED) &&
 			! ruleset_check_source(r->r_sources, ss)))
 			continue;
 
@@ -69,12 +75,12 @@ ruleset_match(char *tag, struct path *path, struct sockaddr_storage *ss)
 			switch (map->m_src) {
 			case S_NONE:
 				TAILQ_FOREACH(me, &map->m_contents, me_entry) {
-					if (hostname_match(path->domain, me->me_key.med_string))
+					if (hostname_match(maddr->domain, me->me_key.med_string))
 						return r;
 				}
 				break;
 			case S_DB:
-				if (map_lookup(map->m_id, path->domain, K_VIRTUAL) != NULL)
+				if (map_lookup(map->m_id, maddr->domain, K_VIRTUAL) != NULL)
 					return r;
 				break;
 			default:
@@ -84,7 +90,7 @@ ruleset_match(char *tag, struct path *path, struct sockaddr_storage *ss)
 		}
 
 		if (r->r_condition.c_type == C_VDOM)
-			if (aliases_vdomain_exists(r->r_condition.c_map, path->domain))
+			if (aliases_vdomain_exists(r->r_condition.c_map, maddr->domain))
 				return r;
 	}
 
