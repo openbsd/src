@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.17 2011/05/12 18:36:07 mcbride Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.18 2011/05/16 16:38:51 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 12 2011 $
+.Dd $Mdocdate: May 16 2011 $
 .Dt FTP-PROXY 8
 .Os
 .Sh NAME
@@ -166,8 +166,8 @@ The pf rules do not log by default.
 To make use of the proxy,
 .Xr pf.conf 5
 needs the following rules.
-Adjust the rules as needed; depending on the rest of your ruleset the
-last rule explicitly allowing ftp sessions from the proxy may not be
+Adjust the rules as needed; depending on the rest of the ruleset, the
+last rule explicitly allowing FTP sessions from the proxy may not be
 necessary.
 .Bd -literal -offset 2n
 anchor "ftp-proxy/*"
