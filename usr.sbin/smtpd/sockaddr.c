@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockaddr.c,v 1.3 2011/03/27 17:39:17 eric Exp $	*/
+/*	$OpenBSD: sockaddr.c,v 1.4 2011/05/16 10:57:41 blambert Exp $	*/
 /*
  * Copyright (c) 2010		Eric Faurot	<eric@faurot.net>
  *
@@ -125,8 +125,8 @@ sockaddr_as_fqdn(const struct sockaddr *sa, char *dst, size_t max)
 	case AF_INET6:
 		in6_addr = &((const struct sockaddr_in6 *)sa)->sin6_addr;
 		snprintf(dst, max,
-		    "%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d."
-		    "%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d."
+		    "%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x."
+		    "%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x."
 		    "ip6.arpa.",
 		    in6_addr->s6_addr[15] & 0xf,
 		    (in6_addr->s6_addr[15] >> 4) & 0xf,
