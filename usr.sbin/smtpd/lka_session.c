@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.1 2011/05/16 21:05:51 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.2 2011/05/16 21:42:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -424,6 +424,16 @@ lka_session_resolve_node(struct envelope *ep, struct expandnode *xn)
 		    xn->u.user);
 		dlv->type  = D_MDA;
 		dlv->agent.mda.to = xn->u;
+
+		/* overwrite the initial condition before we expand the
+		 * envelope again. if we came from a C_VDOM, not doing
+		 * so would lead to a VDOM loop causing recipient to be
+		 * rejected.
+		 *
+		 * i'll find a more elegant solution later, for now it
+		 * fixes an annoying bug.
+		 */
+		ep->rule.r_condition.c_type = C_DOM;
 
 		/* if expansion of a user results in same user ... deliver */
 		if (strcmp(xn->u.user, xn->as_user) == 0)
