@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.52 2011/05/02 11:14:11 jmc Exp $
+.\"	$OpenBSD: vi.1,v 1.53 2011/05/16 16:41:58 jmc Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.Dd $Mdocdate: May 2 2011 $
+.Dd $Mdocdate: May 16 2011 $
 .Dt VI 1
 .Os
 .Sh NAME
@@ -330,13 +330,6 @@ but without the double quote.
 .Nm nex Ns / Ns Nm nvi
 permits the use of any character without another meaning in the position where
 a buffer name is expected.
-Where a
-.Nm vi
-command synopsis shows both a
-.Bq Em buffer
-and a
-.Bq Em count ,
-they may be presented in any order.
 .Pp
 All buffers are either in
 .Em line mode
@@ -389,7 +382,7 @@ It is specified using a line-oriented motion.
 .It
 It is specified using one of the following motion commands:
 .Aq Cm control-A ,
-.Aq Cm character ,
+.Cm ` Ns Aq Cm character ,
 .Cm n ,
 .Cm N ,
 .Cm % ,
@@ -424,16 +417,40 @@ contents.
 The numeric buffers are only available in
 .Nm vi
 mode.
-.Pp
-There is also a buffer which the user cannot access.
-Commands that store text in a buffer use it automatically, while commands that
-take text from a buffer use it as a default source.
 .Sh VI COMMANDS
 The following section describes the commands available in the command
 mode of the
 .Nm vi
 editor.
-In each entry below, the tag line is a usage synopsis for the command character.
+In each command synopsis below, the following notation is used:
+.Pp
+.Bl -tag -width buffer -compact -offset 3u
+.It Ar buffer
+Temporary area where commands may place text.
+If not specified, the default buffer is used.
+See also
+.Sx BUFFERS ,
+above.
+.It Ar motion
+A cursor movement command which indicates the other end of the affected region
+of text, the first being the current cursor position.
+Repeating the command character makes it affect the whole
+current line.
+.It Ar count
+A positive number used to specify the desired number of iterations
+of a command.
+It defaults to 1 if not specified.
+.El
+.Pp
+.Ar buffer
+and
+.Ar count ,
+if both present, may be specified in any order.
+.Ar motion
+and
+.Ar count ,
+if both present, are effectively multiplied together
+and considered part of the motion.
 .Pp
 .Bl -tag -width Ds -compact
 .It Xo
@@ -643,19 +660,24 @@ The second form returns to the first character of the context marked by
 .Pp
 .It Xo
 .Op Ar count
-.Cm (\&
+.Cm \&(
 .Xc
-Back up
-.Ar count
-sentences.
-.Pp
 .It Xo
 .Op Ar count
-.Cm )\&
+.Cm \&)
 .Xc
-Move forward
+Move
 .Ar count
-sentences.
+sentences backward or forward, respectively.
+A sentence is an area of text that begins with the first nonblank character
+following the previous sentence, paragraph, or section
+boundary and continues until the next period, exclamation mark,
+or question mark character, followed by any number of closing parentheses,
+brackets, double or single quote characters, followed by
+either an end-of-line or two whitespace characters.
+Groups of empty lines
+.Pq or lines containing only whitespace characters
+are treated as a single sentence.
 .Pp
 .It Xo
 .Op Ar count
@@ -734,13 +756,16 @@ times.
 .Pp
 .It Xo
 .Op Ar count
-.Pf \ \&< Ar motion
+.Cm <
+.Ar motion
 .Xc
 .It Xo
 .Op Ar count
-.Pf \ \&> Ar motion
+.Cm >
+.Ar motion
 .Xc
-Shift lines left or right.
+Shift lines left or right, respectively, by an amount of
+.Cm shiftwidth .
 .Pp
 .It Cm @ Ar buffer
 Execute a named
