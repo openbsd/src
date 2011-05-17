@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.46 2011/05/16 21:05:52 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.47 2011/05/17 18:54:32 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -252,7 +252,7 @@ time_to_text(time_t when)
  * Check file for security. Based on usr.bin/ssh/auth.c.
  */
 int
-secure_file(int fd, char *path, struct passwd *pw, int mayread)
+secure_file(int fd, char *path, char *userdir, uid_t uid, int mayread)
 {
 	char		 buf[MAXPATHLEN];
 	char		 homedir[MAXPATHLEN];
@@ -262,13 +262,13 @@ secure_file(int fd, char *path, struct passwd *pw, int mayread)
 	if (realpath(path, buf) == NULL)
 		return 0;
 
-	if (realpath(pw->pw_dir, homedir) == NULL)
+	if (realpath(userdir, homedir) == NULL)
 		homedir[0] = '\0';
 
 	/* Check the open file to avoid races. */
 	if (fstat(fd, &st) < 0 ||
 	    !S_ISREG(st.st_mode) ||
-	    (st.st_uid != 0 && st.st_uid != pw->pw_uid) ||
+	    (st.st_uid != 0 && st.st_uid != uid) ||
 	    (st.st_mode & (mayread ? 022 : 066)) != 0)
 		return 0;
 
@@ -279,7 +279,7 @@ secure_file(int fd, char *path, struct passwd *pw, int mayread)
 		strlcpy(buf, cp, sizeof(buf));
 
 		if (stat(buf, &st) < 0 ||
-		    (st.st_uid != 0 && st.st_uid != pw->pw_uid) ||
+		    (st.st_uid != 0 && st.st_uid != uid) ||
 		    (st.st_mode & 022) != 0)
 			return 0;
 

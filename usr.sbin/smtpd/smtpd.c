@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.125 2011/05/17 16:42:06 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.126 2011/05/17 18:54:32 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -687,16 +687,18 @@ forkmda(struct imsgev *iev, u_int32_t id,
     struct deliver *deliver)
 {
 	char		 ebuf[128], sfn[32];
-	struct passwd	*pw;
+	struct user_backend *ub;
+	struct user u;
 	struct child	*child;
 	pid_t		 pid;
 	int		 n, allout, pipefd[2];
 
 	log_debug("forkmda: to %s as %s", deliver->to, deliver->user);
 
+	bzero(&u, sizeof (u));
+	ub = user_backend_lookup(USER_GETPWNAM);
 	errno = 0;
-	pw = getpwnam(deliver->user);
-	if (pw == NULL) {
+	if (! ub->getbyname(&u, deliver->user)) {
 		n = snprintf(ebuf, sizeof ebuf, "getpwnam: %s",
 		    errno ? strerror(errno) : "no such user");
 		imsg_compose_event(iev, IMSG_MDA_DONE, id, 0, -1, ebuf, n + 1);
@@ -704,7 +706,7 @@ forkmda(struct imsgev *iev, u_int32_t id,
 	}
 
 	/* lower privs early to allow fork fail due to ulimit */
-	if (seteuid(pw->pw_uid) < 0)
+	if (seteuid(u.uid) < 0)
 		fatal("cannot lower privileges");
 
 	if (pipe(pipefd) < 0) {
@@ -757,7 +759,7 @@ forkmda(struct imsgev *iev, u_int32_t id,
 #define error(m) { perror(m); _exit(1); }
 	if (seteuid(0) < 0)
 		error("forkmda: cannot restore privileges");
-	if (chdir(pw->pw_dir) < 0 && chdir("/") < 0)
+	if (chdir(u.directory) < 0 && chdir("/") < 0)
 		error("chdir");
 	if (dup2(pipefd[0], STDIN_FILENO) < 0 ||
 	    dup2(allout, STDOUT_FILENO) < 0 ||
@@ -765,9 +767,9 @@ forkmda(struct imsgev *iev, u_int32_t id,
 		error("forkmda: dup2");
 	if (closefrom(STDERR_FILENO + 1) < 0)
 		error("closefrom");
-	if (setgroups(1, &pw->pw_gid) ||
-	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
-	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+	if (setgroups(1, &u.gid) ||
+	    setresgid(u.gid, u.gid, u.gid) ||
+	    setresuid(u.uid, u.uid, u.uid))
 		error("forkmda: cannot drop privileges");
 	if (setsid() < 0)
 		error("setsid");
@@ -888,7 +890,8 @@ static int
 parent_enqueue_offline(char *runner_path)
 {
 	char		 path[MAXPATHLEN];
-	struct passwd	*pw;
+	struct user_backend *ub;
+	struct user	 u;
 	struct stat	 sb;
 	pid_t		 pid;
 
@@ -916,8 +919,10 @@ parent_enqueue_offline(char *runner_path)
 		fatal("parent_enqueue_offline: chflags");
 	}
 
+	ub = user_backend_lookup(USER_GETPWNAM);
+	bzero(&u, sizeof (u));
 	errno = 0;
-	if ((pw = getpwuid(sb.st_uid)) == NULL) {
+	if (! ub->getbyuid(&u, sb.st_uid)) {
 		log_warn("parent_enqueue_offline: getpwuid for uid %d failed",
 		    sb.st_uid);
 		unlink(path);
@@ -944,9 +949,9 @@ parent_enqueue_offline(char *runner_path)
 
 		bzero(&args, sizeof(args));
 
-		if (setgroups(1, &pw->pw_gid) ||
-		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
-		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) ||
+		if (setgroups(1, &u.gid) ||
+		    setresgid(u.gid, u.gid, u.gid) ||
+		    setresuid(u.uid, u.uid, u.uid) ||
 		    closefrom(STDERR_FILENO + 1) == -1) {
 			unlink(path);
 			_exit(1);
@@ -958,7 +963,7 @@ parent_enqueue_offline(char *runner_path)
 		}
 		unlink(path);
 
-		if (chdir(pw->pw_dir) == -1 && chdir("/") == -1)
+		if (chdir(u.directory) == -1 && chdir("/") == -1)
 			_exit(1);
 
 		if (setsid() == -1 ||
@@ -1033,15 +1038,17 @@ queueing_done(void)
 static int
 parent_forward_open(char *username)
 {
-	struct passwd *pw;
+	struct user_backend *ub;
+	struct user u;
 	char pathname[MAXPATHLEN];
 	int fd;
 
-	pw = getpwnam(username);
-	if (pw == NULL)
+	bzero(&u, sizeof (u));
+	ub = user_backend_lookup(USER_GETPWNAM);
+	if (! ub->getbyname(&u, username))
 		return -1;
 
-	if (! bsnprintf(pathname, sizeof (pathname), "%s/.forward", pw->pw_dir))
+	if (! bsnprintf(pathname, sizeof (pathname), "%s/.forward", u.directory))
 		fatal("snprintf");
 
 	fd = open(pathname, O_RDONLY);
@@ -1052,7 +1059,7 @@ parent_forward_open(char *username)
 		return -1;
 	}
 
-	if (! secure_file(fd, pathname, pw, 1)) {
+	if (! secure_file(fd, pathname, u.directory, u.uid, 1)) {
 		log_warnx("%s: unsecure file", pathname);
 		close(fd);
 		return -1;

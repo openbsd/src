@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.223 2011/05/17 16:42:06 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.224 2011/05/17 18:54:32 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -914,7 +914,7 @@ struct queue_backend {
 };
 
 
-/* queue structures */
+/* auth structures */
 enum auth_type {
 	AUTH_INVALID=0,
 	AUTH_BSD,
@@ -924,6 +924,28 @@ enum auth_type {
 struct auth_backend {
 	enum auth_type	type;
 	int (*authenticate)(char *, char *);
+};
+
+
+/* user structures */
+enum user_type {
+	USER_INVALID=0,
+	USER_GETPWNAM,
+};
+
+#define	MAXPASSWORDLEN	128
+struct user {
+	char username[MAXLOGNAME];
+	char directory[MAXPATHLEN];
+	char password[MAXPASSWORDLEN];
+	uid_t uid;
+	gid_t gid;
+};
+
+struct user_backend {
+	enum user_type	type;
+	int (*getbyname)(struct user *, char *);
+	int (*getbyuid)(struct user *, uid_t);
 };
 
 
@@ -1126,6 +1148,10 @@ int	 ssl_ctx_use_private_key(void *, char *, off_t);
 int	 ssl_ctx_use_certificate_chain(void *, char *, off_t);
 
 
+/* user_backend.c */
+struct user_backend *user_backend_lookup(enum user_type);
+
+
 /* util.c */
 typedef struct arglist arglist;
 struct arglist {
@@ -1146,7 +1172,7 @@ char *ss_to_text(struct sockaddr_storage *);
 int valid_message_id(char *);
 int valid_message_uid(char *);
 char *time_to_text(time_t);
-int secure_file(int, char *, struct passwd *, int);
+int secure_file(int, char *, char *, uid_t, int);
 void lowercase(char *, char *, size_t);
 void envelope_set_errormsg(struct envelope *, char *, ...);
 char *envelope_get_errormsg(struct envelope *);

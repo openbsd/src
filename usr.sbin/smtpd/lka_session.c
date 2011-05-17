@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.3 2011/05/16 21:52:53 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.4 2011/05/17 18:54:32 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -29,7 +29,6 @@
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
-#include <pwd.h>
 #include <resolv.h>
 #include <signal.h>
 #include <stdio.h>
@@ -75,9 +74,10 @@ lka_session(struct submit_status *ss)
 int
 lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 {
-	struct passwd *pw;
 	char *user;
 	char *sep;
+	struct user_backend *ub;
+	struct user u;
 	char username[MAX_LOCALPART_SIZE];
 
 	/* remote delivery, no need to process further */
@@ -108,17 +108,20 @@ lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 			return 1;
 		}
 
-		if ((pw = getpwnam(username)) == NULL)
+		bzero(&u, sizeof (u));
+		ub = user_backend_lookup(USER_GETPWNAM);
+		if (! ub->getbyname(&u, username))
 			return 0;
 
-		(void)strlcpy(ep->delivery.agent.mda.as_user, pw->pw_name,
+		(void)strlcpy(ep->delivery.agent.mda.as_user, u.username,
 		    sizeof (ep->delivery.agent.mda.as_user));
 
 		ep->delivery.type = D_MDA;
 		switch (ep->rule.r_action) {
 		case A_MBOX:
 			ep->delivery.agent.mda.method = A_MBOX;
-			(void)strlcpy(ep->delivery.agent.mda.to.user, pw->pw_name,
+			(void)strlcpy(ep->delivery.agent.mda.to.user,
+			    u.username,
 			    sizeof (ep->delivery.agent.mda.to.user));
 			break;
 		case A_MAILDIR:
@@ -133,7 +136,7 @@ lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 			fatalx("lka_session_envelope_expand: unexpected rule action");
 			return 0;
 		}
-		lka_session_request_forwardfile(lks, ep, pw->pw_name);
+		lka_session_request_forwardfile(lks, ep, u.username);
 		return 1;
 	}
 
@@ -474,7 +477,8 @@ lka_session_expand_format(char *buf, size_t len, struct envelope *ep)
 {
 	char *p, *pbuf;
 	size_t ret, lret = 0;
-	struct passwd *pw;
+	struct user_backend *ub;
+	struct user u;
 	char lbuffer[MAX_RULEBUFFER_LEN];
 	struct delivery *dlv = &ep->delivery;
 	
@@ -486,11 +490,13 @@ lka_session_expand_format(char *buf, size_t len, struct envelope *ep)
 	     ++p, len -= lret, pbuf += lret, ret += lret) {
 		if (p == buf && *p == '~') {
 			if (*(p + 1) == '/' || *(p + 1) == '\0') {
-				pw = getpwnam(dlv->agent.mda.as_user);
-				if (pw == NULL)
+
+				bzero(&u, sizeof (u));
+				ub = user_backend_lookup(USER_GETPWNAM);
+				if (! ub->getbyname(&u, dlv->agent.mda.as_user))
 					return 0;
 				
-				lret = strlcat(pbuf, pw->pw_dir, len);
+				lret = strlcat(pbuf, u.directory, len);
 				if (lret >= len)
 					return 0;
 				continue;
@@ -509,12 +515,13 @@ lka_session_expand_format(char *buf, size_t len, struct envelope *ep)
 				if (delim == NULL)
 					goto copy;
 				*delim = '\0';
-				
-				pw = getpwnam(username);
-				if (pw == NULL)
+
+				bzero(&u, sizeof (u));
+				ub = user_backend_lookup(USER_GETPWNAM);
+				if (! ub->getbyname(&u, username))
 					return 0;
 
-				lret = strlcat(pbuf, pw->pw_dir, len);
+				lret = strlcat(pbuf, u.directory, len);
 				if (lret >= len)
 					return 0;
 				p += strlen(username);
