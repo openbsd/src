@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.88 2010/11/20 23:58:13 tedu Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.89 2011/05/17 12:44:05 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -2109,7 +2109,7 @@ pfr_detach_table(struct pfr_ktable *kt)
 int
 pfr_pool_get(struct pfr_ktable *kt, int *pidx, struct pf_addr *counter,
     struct pf_addr **raddr, struct pf_addr **rmask, struct pfi_kif **kif,
-    sa_family_t af)
+    sa_family_t af, int (*filter)(sa_family_t, struct pf_addr *))
 {
 	struct pfr_kentry	*ke, *ke2;
 	struct pf_addr		*addr;
@@ -2163,6 +2163,10 @@ _next_block:
 
 	if (!KENTRY_NETWORK(ke)) {
 		/* this is a single IP address - no possible nested block */
+		if (filter && filter(af, addr)) {
+			idx++;
+			goto _next_block;
+		}
 		PF_ACPY(counter, addr, af);
 		*pidx = idx;
 		kt->pfrkt_match++;
@@ -2181,6 +2185,8 @@ _next_block:
 		/* no need to check KENTRY_RNF_ROOT() here */
 		if (ke2 == ke) {
 			/* lookup return the same block - perfect */
+			if (filter && filter(af, addr))
+				goto _next_entry;
 			PF_ACPY(counter, addr, af);
 			*pidx = idx;
 			kt->pfrkt_match++;
@@ -2188,7 +2194,7 @@ _next_block:
 				*kif = ((struct pfr_kentry_route *)ke)->kif;
 			return (0);
 		}
-
+_next_entry:
 		/* we need to increase the counter past the nested block */
 		pfr_prepare_network(&mask, AF_INET, ke2->pfrke_net);
 		PF_POOLMASK(addr, addr, SUNION2PF(&mask, af), &pfr_ffaddr, af);

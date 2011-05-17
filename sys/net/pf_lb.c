@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.13 2010/06/27 01:39:43 henning Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.14 2011/05/17 12:44:05 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -103,6 +103,7 @@ void			 pf_hash(struct pf_addr *, struct pf_addr *,
 int			 pf_get_sport(struct pf_pdesc *, struct pf_rule *,
 			    struct pf_addr *, u_int16_t *, u_int16_t,
 			    u_int16_t, struct pf_src_node **);
+int			 pf_islinklocal(sa_family_t, struct pf_addr *);
 
 #define mix(a,b,c) \
 	do {					\
@@ -264,6 +265,14 @@ pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
 }
 
 int
+pf_islinklocal(sa_family_t af, struct pf_addr *addr)
+{
+	if (af == AF_INET6 && IN6_IS_ADDR_LINKLOCAL(&addr->v6))
+		return (1);
+	return (0);
+}
+
+int
 pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
     struct pf_addr *naddr, struct pf_addr *init_addr, struct pf_src_node **sns,
     struct pf_pool *rpool, enum pf_sn_types type)
@@ -383,12 +392,12 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 		if (rpool->addr.type == PF_ADDR_TABLE) {
 			if (pfr_pool_get(rpool->addr.p.tbl,
 			    &rpool->tblidx, &rpool->counter,
-			    &raddr, &rmask, &rpool->kif, af))
+			    &raddr, &rmask, &rpool->kif, af, NULL))
 				return (1);
 		} else if (rpool->addr.type == PF_ADDR_DYNIFTL) {
 			if (pfr_pool_get(rpool->addr.p.dyn->pfid_kt,
 			    &rpool->tblidx, &rpool->counter,
-			    &raddr, &rmask, &rpool->kif, af))
+			    &raddr, &rmask, &rpool->kif, af, pf_islinklocal))
 				return (1);
 		} else if (pf_match_addr(0, raddr, rmask, &rpool->counter, af))
 			return (1);
