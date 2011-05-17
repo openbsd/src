@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.62 2011/04/15 15:16:57 chl Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.63 2011/05/17 18:06:13 ariane Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -289,10 +289,8 @@ extern paddr_t msgbuf_paddr;
 extern vaddr_t idt_vaddr;			/* we allocate IDT early */
 extern paddr_t idt_paddr;
 
-#ifdef _LP64
 extern vaddr_t lo32_vaddr;
 extern vaddr_t lo32_paddr;
-#endif
 
 vaddr_t virtual_avail;
 extern int end;
@@ -649,7 +647,8 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	idt_paddr = first_avail;			/* steal a page */
 	first_avail += 2 * PAGE_SIZE;
 
-#ifdef _LP64
+#if defined(MULTIPROCESSOR) || \
+    (NACPI > 0 && !defined(SMALL_KERNEL))
 	/*
 	 * Grab a page below 4G for things that need it (i.e.
 	 * having an initial %cr3 for the MP trampoline).
@@ -659,6 +658,7 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	lo32_paddr = first_avail;
 	first_avail += PAGE_SIZE;
 #endif
+
 	/*
 	 * init the global lists.
 	 */
