@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.50 2011/04/04 12:44:10 deraadt Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.51 2011/05/17 00:17:01 guenther Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -775,6 +775,11 @@ morespace:
 		if (fp->f_count == LONG_MAX-2 ||
 		    fp->f_msgcount == LONG_MAX-2) {
 			error = EDEADLK;
+			goto fail;
+		}
+		/* kq descriptors cannot be copied */
+		if (fp->f_type == DTYPE_KQUEUE) {
+			error = EINVAL;
 			goto fail;
 		}
 		bcopy(&fp, rp, sizeof fp);
