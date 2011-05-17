@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2007 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2007, 2009, 2010 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -14,7 +14,7 @@
 #include <sendmail.h>
 #include "map.h"
 
-SM_RCSID("@(#)$Sendmail: daemon.c,v 8.680 2008/02/14 00:20:26 ca Exp $")
+SM_RCSID("@(#)$Sendmail: daemon.c,v 8.691 2011/01/25 18:31:30 ca Exp $")
 
 #if defined(SOCK_STREAM) || defined(__GNU_LIBRARY__)
 # define USE_SOCK_STREAM	1
@@ -199,7 +199,7 @@ getrequests(e)
 	if (tTd(15, 1))
 	{
 		for (idx = 0; idx < NDaemons; idx++)
-			sm_dprintf("getrequests: daemon %s: %d\n",
+			sm_dprintf("getrequests: daemon %s: socket %d\n",
 				Daemons[idx].d_name,
 				Daemons[idx].d_socket);
 	}
@@ -1267,7 +1267,8 @@ setupdaemon(daemonaddr)
 	  case AF_INET6:
 		if (IN6_IS_ADDR_UNSPECIFIED(&daemonaddr->sin6.sin6_addr))
 			daemonaddr->sin6.sin6_addr =
-			    LocalDaemon ? in6addr_loopback : in6addr_any;
+			    (LocalDaemon && V6LoopbackAddrFound) ?
+			    in6addr_loopback : in6addr_any;
 		port = daemonaddr->sin6.sin6_port;
 		break;
 #endif /* NETINET6 */
@@ -2161,7 +2162,8 @@ makeconnection(host, port, mci, e, enough)
 		  case AF_INET:
 			clt_addr.sin.sin_addr.s_addr = inet_addr(p);
 			if (clt_addr.sin.sin_addr.s_addr != INADDR_NONE &&
-			    clt_addr.sin.sin_addr.s_addr != INADDR_LOOPBACK)
+			    clt_addr.sin.sin_addr.s_addr !=
+				htonl(INADDR_LOOPBACK))
 			{
 				clt_bind = true;
 				socksize = sizeof(struct sockaddr_in);
@@ -2218,7 +2220,8 @@ makeconnection(host, port, mci, e, enough)
 #if NETINET6
 		  case AF_INET6:
 			if (IN6_IS_ADDR_UNSPECIFIED(&clt_addr.sin6.sin6_addr))
-				clt_addr.sin6.sin6_addr = LocalDaemon ?
+				clt_addr.sin6.sin6_addr =
+					(LocalDaemon && V6LoopbackAddrFound) ?
 					in6addr_loopback : in6addr_any;
 			else
 				clt_bind = true;
@@ -2342,7 +2345,7 @@ makeconnection(host, port, mci, e, enough)
 			}
 		}
 gothostent:
-		if (hp == NULL)
+		if (hp == NULL || hp->h_addr == NULL)
 		{
 #if NAMED_BIND
 			/* check for name server timeouts */
@@ -2664,6 +2667,7 @@ gothostent:
 #if NETINET
 			  case AF_INET:
 				addr.sin.sin_addr.s_addr = ConnectOnlyTo.sin.sin_addr.s_addr;
+				addr.sa.sa_family = ConnectOnlyTo.sa.sa_family;
 				break;
 #endif /* NETINET */
 
@@ -2871,7 +2875,10 @@ nextaddr:
 
 	/* Use the configured HeloName as appropriate */
 	if (HeloName != NULL && HeloName[0] != '\0')
+	{
+		SM_FREE_CLR(mci->mci_heloname);
 		mci->mci_heloname = newstr(HeloName);
+	}
 
 	mci_setstat(mci, EX_OK, NULL, NULL);
 	return EX_OK;

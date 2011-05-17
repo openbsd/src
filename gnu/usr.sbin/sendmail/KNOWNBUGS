@@ -12,6 +12,14 @@ distribution).
 
 This list is not guaranteed to be complete.
 
+* Header values which are too long may be truncated.
+
+  If a value of a structured header is longer than 256 (MAXNAME)
+  characters then it may be truncated during output. For example,
+  if a single address in the To: header is longer than 256 characters
+  then it will be truncated which may result in a syntactically
+  invalid address.
+
 * Delivery to programs that generate too much output may cause problems
 
   If e-mail is delivered to a program which generates too much
@@ -258,4 +266,4 @@ Kresolve sequence dnsmx canon
   be used if set instead of LOCAL_RELAY ($R).  This will be fixed in a
   future version.
 
-$Revision: 1.12 $, Last updated $Date: 2008/05/04 18:34:04 $
+$Revision: 1.13 $, Last updated $Date: 2011/05/17 15:54:23 $

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2007 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2011 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -10,7 +10,7 @@
  * the sendmail distribution.
  *
  *
- *	$Sendmail: conf.h,v 1.134 2007/09/24 23:05:37 ca Exp $
+ *	$Sendmail: conf.h,v 1.144 2011/05/03 16:24:00 ca Exp $
  */
 
 /*
@@ -381,6 +381,12 @@ typedef int		pid_t;
 #   ifndef __svr4__
 #    define __svr4__		/* use all System V Release 4 defines below */
 #   endif /* ! __svr4__ */
+#   if SOLARIS >= 21100
+#    include <paths.h>
+#   endif /* SOLARIS >= 21100 */
+#   ifndef _PATH_VARRUN
+#    define _PATH_VARRUN	"/var/run/"
+#   endif /* _PATH_VARRUN */
 #   define GIDSET_T	gid_t
 #   define USE_SA_SIGACTION	1	/* use sa_sigaction field */
 #   define BROKEN_PTHREAD_SLEEP	1	/* sleep after pthread_create() fails */
@@ -443,7 +449,7 @@ typedef int		pid_t;
 #   endif /* SOLARIS >= 20700 || (SOLARIS < 10000 && SOLARIS >= 207) */
 #   if SOLARIS >= 20800 || (SOLARIS < 10000 && SOLARIS >= 208)
 #    undef _PATH_SENDMAILPID	/* tmpfs /var/run added in 2.8 */
-#    define _PATH_SENDMAILPID	"/var/run/sendmail.pid"
+#    define _PATH_SENDMAILPID	_PATH_VARRUN "sendmail.pid"
 #    ifndef SMRSH_CMDDIR
 #     define SMRSH_CMDDIR	"/var/adm/sm.bin"
 #    endif /* ! SMRSH_CMDDIR */
@@ -460,6 +466,9 @@ typedef int		pid_t;
 #   endif /* SOLARIS >= 21000 || (SOLARIS < 10000 && SOLARIS >= 210) */
 #   if SOLARIS >= 21100 || (SOLARIS < 10000 && SOLARIS >= 211)
 #    define GETLDAPALIASBYNAME_VERSION 2	/* changed in S11 */
+#    define HAVE_NANOSLEEP	1	/* moved from librt to libc in S11 */
+#    define SOCKADDR_LEN_T	socklen_t	/* arg#3 to accept, getsockname */
+#    define SOCKOPT_LEN_T	socklen_t	/* arg#5 to getsockopt */
 #   endif /* SOLARIS >= 21100 || (SOLARIS < 10000 && SOLARIS >= 211) */
 #   ifndef HASGETUSERSHELL
 #    define HASGETUSERSHELL 0	/* getusershell(3) causes core dumps pre-2.7 */
@@ -1013,6 +1022,9 @@ extern unsigned int sleepX __P((unsigned int seconds));
 #    if __FreeBSD_version >= 222000	/* 2.2.2-release and later */
 #     define HASSETUSERCONTEXT	1	/* BSDI-style login classes */
 #    endif /* __FreeBSD_version >= 222000 */
+#    if __FreeBSD_version >= 300000	/* 3.0.0-release and later */
+#     define HAVE_NANOSLEEP	1	/* has nanosleep(2) */
+#    endif /* __FreeBSD_version >= 300000 */
 #    if __FreeBSD_version >= 330000	/* 3.3.0-release and later */
 #     ifndef SMRSH_CMDDIR
 #      define SMRSH_CMDDIR	"/usr/libexec/sm.bin"
@@ -1021,6 +1033,10 @@ extern unsigned int sleepX __P((unsigned int seconds));
 #      define SMRSH_PATH	"/bin:/usr/bin"
 #     endif /* ! SMRSH_PATH */
 #    endif /* __FreeBSD_version >= 330000 */
+#    if __FreeBSD_version >= 430000	/* 4.3.0-release and later */
+#     define SOCKADDR_LEN_T	socklen_t	/* e.g., arg#3 to accept, getsockname */
+#     define SOCKOPT_LEN_T	socklen_t	/* arg#5 to getsockopt */
+#    endif /* __FreeBSD_version >= 430000 */
 #    define USESYSCTL		1	/* use sysctl(3) for getting ncpus */
 #    include <sys/sysctl.h>
 #   endif /* __FreeBSD__ >= 2 */
@@ -1050,6 +1066,9 @@ extern unsigned int sleepX __P((unsigned int seconds));
 #   if OpenBSD >= 200505
 #    undef NETISO	/* iso.h removed in 3.7 */
 #   endif /* OpenBSD >= 200505 */
+#   if OpenBSD >= 200800
+#    define HAVE_NANOSLEEP	1	/* has nanosleep(2) */
+#   endif /* OpenBSD >= 200800 */
 #  endif /* defined(__OpenBSD__) */
 # endif /* defined(__DragonFly__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) */
 
@@ -2799,6 +2818,20 @@ struct utsname
 # if !defined(MAXHOSTNAMELEN) && !defined(_SCO_unix_) && !defined(NonStop_UX_BXX) && !defined(ALTOS_SYSTEM_V)
 #  define MAXHOSTNAMELEN	256
 # endif /* !defined(MAXHOSTNAMELEN) && !defined(_SCO_unix_) && !defined(NonStop_UX_BXX) && !defined(ALTOS_SYSTEM_V) */
+
+
+# if _FFR_LINUX_MHNL && defined(__linux__) && MAXHOSTNAMELEN < 255
+   /*
+   **  override Linux weirdness: a FQHN can be 255 chars long
+   **  SUSv3 requires HOST_NAME_MAX ("Maximum length of a host
+   **  name (not including the terminating null) as returned from the
+   **  gethostname() function.") to be at least 255.  c.f.:
+   **  http://www.opengroup.org/onlinepubs/009695399
+   **  but Linux defines that to 64 too.
+   */
+#  undef MAXHOSTNAMELEN
+#  define MAXHOSTNAMELEN	256
+# endif /* _FFR_LINUX_MHNL && defined(__linux__) && MAXHOSTNAMELEN < 255 */
 
 # if !defined(SIGCHLD) && defined(SIGCLD)
 #  define SIGCHLD	SIGCLD

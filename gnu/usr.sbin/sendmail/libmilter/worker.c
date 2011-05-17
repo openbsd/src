@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2003-2004, 2007 Sendmail, Inc. and its suppliers.
+ *  Copyright (c) 2003-2004, 2007, 2009-2011 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -11,7 +11,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: worker.c,v 8.10 2007/12/03 22:06:05 ca Exp $")
+SM_RCSID("@(#)$Sendmail: worker.c,v 8.19 2011/02/14 23:33:48 ca Exp $")
 
 #include "libmilter.h"
 
@@ -165,7 +165,9 @@ mi_start_session(ctx)
 {
 	static long id = 0;
 
-	SM_ASSERT(Tskmgr.tm_signature == TM_SIGNATURE);
+	/* this can happen if the milter is shutting down */
+	if (Tskmgr.tm_signature != TM_SIGNATURE)
+		return MI_FAILURE;
 	SM_ASSERT(ctx != NULL);
 	POOL_LEV_DPRINTF(4, ("PIPE r=[%d] w=[%d]", RD_PIPE, WR_PIPE));
 	TASKMGR_LOCK();
@@ -210,24 +212,43 @@ mi_close_session(ctx)
 	SM_ASSERT(ctx != NULL);
 
 	(void) mi_list_del_ctx(ctx);
-	if (ValidSocket(ctx->ctx_sd))
-	{
-		(void) closesocket(ctx->ctx_sd);
-		ctx->ctx_sd = INVALID_SOCKET;
-	}
-	if (ctx->ctx_reply != NULL)
-	{
-		free(ctx->ctx_reply);
-		ctx->ctx_reply = NULL;
-	}
-	if (ctx->ctx_privdata != NULL)
-	{
-		smi_log(SMI_LOG_WARN, "%s: private data not NULL",
-			ctx->ctx_smfi->xxfi_name);
-	}
-	mi_clr_macros(ctx, 0);
-	free(ctx);
+	mi_clr_ctx(ctx);
 
+	return MI_SUCCESS;
+}
+
+/*
+**  NONBLOCKING -- set nonblocking mode for a file descriptor.
+**
+**	Parameters:
+**		fd -- file descriptor
+**		name -- name for (error) logging
+**
+**	Returns:
+**		MI_SUCCESS/MI_FAILURE
+*/
+
+static int
+nonblocking(int fd, const char *name)
+{
+	int r;
+
+	errno = 0;
+	r = fcntl(fd, F_GETFL, 0);
+	if (r == -1)
+	{
+		smi_log(SMI_LOG_ERR, "fcntl(%s, F_GETFL)=%s",
+			name, sm_errstring(errno));
+		return MI_FAILURE;
+	}
+	errno = 0;
+	r = fcntl(fd, F_SETFL, r | O_NONBLOCK);
+	if (r == -1)
+	{
+		smi_log(SMI_LOG_ERR, "fcntl(%s, F_SETFL, O_NONBLOCK)=%s",
+			name, sm_errstring(errno));
+		return MI_FAILURE;
+	}
 	return MI_SUCCESS;
 }
 
@@ -259,9 +280,15 @@ mi_pool_controller_init()
 	if (pipe(Tskmgr.tm_p) != 0)
 	{
 		smi_log(SMI_LOG_ERR, "can't create event pipe: %s",
-			sm_errstring(r));
+			sm_errstring(errno));
 		return MI_FAILURE;
 	}
+	r = nonblocking(WR_PIPE, "WR_PIPE");
+	if (r != MI_SUCCESS)
+		return r;
+	r = nonblocking(RD_PIPE, "RD_PIPE");
+	if (r != MI_SUCCESS)
+		return r;
 
 	(void) smutex_init(&Tskmgr.tm_w_mutex);
 	(void) scond_init(&Tskmgr.tm_w_cond);
@@ -328,6 +355,7 @@ mi_pool_controller(arg)
 	int dim_pfd = 0;
 	bool rebuild_set = true;
 	int pcnt = 0; /* error count for poll() failures */
+	time_t lastcheck;
 
 	Tskmgr.tm_tid = sthread_get_id();
 	if (pthread_detach(Tskmgr.tm_tid) != 0)
@@ -345,12 +373,12 @@ mi_pool_controller(arg)
 	}
 	dim_pfd = PFD_STEP;
 
+	lastcheck = time(NULL);
 	for (;;)
 	{
 		SMFICTX_PTR ctx;
 		int nfd, rfd, i;
 		time_t now;
-		time_t lastcheck;
 
 		POOL_LEV_DPRINTF(4, ("Let's %s again...", WAITFN));
 
@@ -364,20 +392,20 @@ mi_pool_controller(arg)
 		/* check for timed out sessions? */
 		if (lastcheck + DT_CHECK_OLD_SESSIONS < now)
 		{
-			SM_TAILQ_FOREACH(ctx, &WRK_CTX_HEAD, ctx_link)
+			ctx = SM_TAILQ_FIRST(&WRK_CTX_HEAD);
+			while (ctx != SM_TAILQ_END(&WRK_CTX_HEAD))
 			{
+				SMFICTX_PTR ctx_nxt;
+
+				ctx_nxt = SM_TAILQ_NEXT(ctx, ctx_link);
 				if (ctx->ctx_wstate == WKST_WAITING)
 				{
 					if (ctx->ctx_wait == 0)
-					{
 						ctx->ctx_wait = now;
-						continue;
-					}
-
-					/* if session timed out, close it */
-					if (ctx->ctx_wait + OLD_SESSION_TIMEOUT
-					    < now)
+					else if (ctx->ctx_wait + OLD_SESSION_TIMEOUT
+						 < now)
 					{
+						/* if session timed out, close it */
 						sfsistat (*fi_close) __P((SMFICTX *));
 
 						POOL_LEV_DPRINTF(4,
@@ -389,10 +417,9 @@ mi_pool_controller(arg)
 							(void) (*fi_close)(ctx);
 
 						mi_close_session(ctx);
-						ctx = SM_TAILQ_FIRST(&WRK_CTX_HEAD);
-						continue;
 					}
 				}
+				ctx = ctx_nxt;
 			}
 			lastcheck = now;
 		}
@@ -465,6 +492,7 @@ mi_pool_controller(arg)
 					}
 				}
 			}
+			rebuild_set = false;
 		}
 
 		TASKMGR_UNLOCK();
@@ -510,25 +538,23 @@ mi_pool_controller(arg)
 			/* has a worker signaled an end of task ? */
 			if (WAIT_FD(i) == RD_PIPE)
 			{
-				char evt = 0;
-				int r = 0;
+				char evts[256];
+				ssize_t r;
 
 				POOL_LEV_DPRINTF(4,
 					("PIPE WILL READ evt = %08X %08X",
 					pfd[i].events, pfd[i].revents));
 
-				if ((pfd[i].revents & MI_POLL_RD_FLAGS) != 0)
+				r = 1;
+				while ((pfd[i].revents & MI_POLL_RD_FLAGS) != 0
+					&& r != -1)
 				{
-					r = read(RD_PIPE, &evt, sizeof(evt));
-					if (r == sizeof(evt))
-					{
-						/* Do nothing */
-					}
+					r = read(RD_PIPE, evts, sizeof(evts));
 				}
 
 				POOL_LEV_DPRINTF(4,
 					("PIPE DONE READ i=[%d] fd=[%d] r=[%d] evt=[%d]",
-					i, RD_PIPE, r, evt));
+					i, RD_PIPE, (int) r, evts[0]));
 
 				if ((pfd[i].revents & ~MI_POLL_RD_FLAGS) != 0)
 				{

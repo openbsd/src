@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2008 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2011 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -52,7 +52,7 @@
 
 #ifdef _DEFINE
 # ifndef lint
-SM_UNUSED(static char SmailId[]) = "@(#)$Sendmail: sendmail.h,v 8.1059 2008/02/15 23:19:58 ca Exp $";
+SM_UNUSED(static char SmailId[]) = "@(#)$Sendmail: sendmail.h,v 8.1089 2011/03/15 23:14:36 ca Exp $";
 # endif /* ! lint */
 #endif /* _DEFINE */
 
@@ -327,7 +327,7 @@ typedef struct address ADDRESS;
 				 (s) == QS_SENT || \
 				 (s) == QS_DISCARDED)
 #define QS_IS_DEAD(s)		((s) >= QS_DONTSEND)
-
+#define QS_IS_TEMPFAIL(s)	((s) == QS_QUEUEUP || (s) == QS_RETRY)
 
 #define NULLADDR	((ADDRESS *) NULL)
 
@@ -607,7 +607,7 @@ extern bool	filesys_free __P((long));
 ERROR: change SASL_SEC_MASK_ notify sendmail.org!
 #  endif /* SASL_SEC_NOPLAINTEXT & SASL_SEC_MASK) == 0 ... */
 # endif /* SASL >= 20101 */
-# define MAXOUTLEN 8192			/* length of output buffer */
+# define MAXOUTLEN 8192	/* length of output buffer, should be 2^n */
 
 /* functions */
 extern char	*intersect __P((char *, char *, SM_RPOOL_T *));
@@ -730,6 +730,7 @@ MCI
 # define MCIF_HELO	0x00800000	/* we used HELO: ignore extensions */
 #endif /* _FFR_IGNORE_EXT_ON_HELO */
 #define MCIF_INLONGLINE 0x01000000	/* in the middle of a long line */
+#define MCIF_AUTH2	0x02000000	/* got 2 AUTH lines */
 #define MCIF_ONLY_EHLO	0x10000000	/* use only EHLO in smtpinit */
 
 /* states */
@@ -749,6 +750,7 @@ extern void	mci_close __P((MCI *, char *where));
 extern void	mci_dump __P((SM_FILE_T *, MCI *, bool));
 extern void	mci_dump_all __P((SM_FILE_T *, bool));
 extern void	mci_flush __P((bool, MCI *));
+extern void	mci_clr_extensions __P((MCI *));
 extern MCI	*mci_get __P((char *, MAILER *));
 extern int	mci_lock_host __P((MCI *));
 extern bool	mci_match __P((char *, MAILER *));
@@ -931,6 +933,10 @@ struct envelope
 	int		e_dlvr_flag;	/* deliver by flag */
 	SM_RPOOL_T	*e_rpool;	/* resource pool for this envelope */
 	unsigned int	e_features;	/* server features */
+#if _FFR_MILTER_ENHSC
+#define ENHSC_LEN	11
+	char		e_enhsc[ENHSC_LEN];	/* enhanced status code */
+#endif /* _FFR_MILTER_ENHSC */
 };
 
 /* values for e_flags */
@@ -982,7 +988,7 @@ extern ENVELOPE	BlankEnvelope;
 
 /* functions */
 extern void	clearenvelope __P((ENVELOPE *, bool, SM_RPOOL_T *));
-extern void	dropenvelope __P((ENVELOPE *, bool, bool));
+extern int	dropenvelope __P((ENVELOPE *, bool, bool));
 extern ENVELOPE	*newenvelope __P((ENVELOPE *, ENVELOPE *, SM_RPOOL_T *));
 extern void	clrsessenvelope __P((ENVELOPE *));
 extern void	printenvflags __P((ENVELOPE *));
@@ -1163,6 +1169,33 @@ struct hostsig_t
 
 typedef struct hostsig_t HOSTSIG_T;
 
+/*
+**  The standard udp packet size PACKETSZ (512) is not sufficient for some
+**  nameserver answers containing very many resource records. The resolver
+**  may switch to tcp and retry if it detects udp packet overflow.
+**  Also note that the resolver routines res_query and res_search return
+**  the size of the *un*truncated answer in case the supplied answer buffer
+**  it not big enough to accommodate the entire answer.
+*/
+
+# ifndef MAXPACKET
+#  define MAXPACKET 8192	/* max packet size used internally by BIND */
+# endif /* ! MAXPACKET */
+
+/*
+**  The resolver functions res_{send,query,querydomain} expect the
+**  answer buffer to be aligned, but some versions of gcc4 reverse
+**  25 years of history and no longer align char buffers on the
+**  stack, resulting in crashes on strict-alignment platforms.  Use
+**  this union when putting the buffer on the stack to force the
+**  alignment, then cast to (HEADER *) or (unsigned char *) as needed.
+*/
+typedef union
+{
+	HEADER		qb1;
+	unsigned char	qb2[MAXPACKET];
+} querybuf;
+
 /* functions */
 extern bool	getcanonname __P((char *, int, bool, int *));
 extern int	getmxrr __P((char *, char **, unsigned short *, bool, int *, bool, int *));
@@ -1242,11 +1275,15 @@ MAP
 #define MF_OPENBOGUS	0x00800000	/* open failed, don't call map_close */
 #define MF_CLOSING	0x01000000	/* map is being closed */
 
-#define DYNOPENMAP(map) if (!bitset(MF_OPEN, (map)->map_mflags)) \
-	{	\
-		if (!openmap(map))	\
-			return NULL;	\
-	}
+#define DYNOPENMAP(map) \
+	do		\
+	{		\
+		if (!bitset(MF_OPEN, (map)->map_mflags)) \
+		{	\
+			if (!openmap(map))	\
+				return NULL;	\
+		}	\
+	} while (0)
 
 
 /* indices for map_actions */
@@ -1561,11 +1598,23 @@ extern void	stabapply __P((void (*)(STAB *, int), int));
 #define MD_HOSTSTAT	'h'		/* print persistent host stat info */
 #define MD_PURGESTAT	'H'		/* purge persistent host stat info */
 #define MD_QUEUERUN	'q'		/* queue run */
+#define MD_CHECKCONFIG	'C'		/* check configuration file */
 
 #if _FFR_LOCAL_DAEMON
 EXTERN bool	LocalDaemon;
+# if NETINET6
+EXTERN bool	V6LoopbackAddrFound;	/* found an IPv6 loopback address */
+#  define SETV6LOOPBACKADDRFOUND(sa)	\
+	do	\
+	{	\
+		if (isloopback(sa))	\
+			V6LoopbackAddrFound = true;	\
+	} while (0)
+# endif /* NETINET6 */
 #else /* _FFR_LOCAL_DAEMON */
 # define LocalDaemon	false
+# define V6LoopbackAddrFound	false
+# define SETV6LOOPBACKADDRFOUND(sa)
 #endif /* _FFR_LOCAL_DAEMON */
 
 /* Note: see also include/sendmail/pathnames.h: GET_CLIENT_CF */
@@ -1580,6 +1629,7 @@ EXTERN bool	LocalDaemon;
 #define SM_DEFER	'd'		/* defer map lookups as well as queue */
 #define SM_VERIFY	'v'		/* verify only (used internally) */
 #define DM_NOTSET	(-1)	/* DeliveryMode (per daemon) option not set */
+# define SM_IS_INTERACTIVE(m)	((m) == SM_DELIVER)
 
 #define WILL_BE_QUEUED(m)	((m) == SM_QUEUE || (m) == SM_DEFER)
 
@@ -1880,7 +1930,7 @@ struct termescape
 
 /* functions */
 extern bool	init_tls_library __P((void));
-extern bool	inittls __P((SSL_CTX **, unsigned long, bool, char *, char *, char *, char *, char *));
+extern bool	inittls __P((SSL_CTX **, unsigned long, long, bool, char *, char *, char *, char *, char *));
 extern bool	initclttls __P((bool));
 extern void	setclttls __P((bool));
 extern bool	initsrvtls __P((bool));
@@ -1906,6 +1956,7 @@ EXTERN char	*CRLFile;	/* file CRLs */
 EXTERN char	*CRLPath;	/* path to CRLs (dir. with hashes) */
 #endif /* _FFR_CRLPATH */
 EXTERN unsigned long	TLS_Srv_Opts;	/* TLS server options */
+EXTERN long	Srv_SSL_Options, Clt_SSL_Options; /* SSL options */
 #endif /* STARTTLS */
 
 /*
@@ -1986,6 +2037,9 @@ EXTERN int	QueueFileMode;	/* mode on files in mail queue */
 EXTERN int	QueueMode;	/* which queue items to act upon */
 EXTERN int	QueueSortOrder;	/* queue sorting order algorithm */
 EXTERN time_t	MinQueueAge;	/* min delivery interval */
+#if _FFR_EXPDELAY
+EXTERN time_t	MaxQueueAge;	/* max delivery interval */
+#endif /* _FFR_EXPDELAY */
 EXTERN time_t	QueueIntvl;	/* intervals between running the queue */
 EXTERN char	*QueueDir;	/* location of queue directory */
 EXTERN QUEUE_CHAR	*QueueLimitId;		/* limit queue run to id */
@@ -2091,7 +2145,11 @@ extern void	inittimeouts __P((char *, bool));
 */
 
 /* macros for debugging flags */
-#define tTd(flag, level)	(tTdvect[flag] >= (unsigned char)level)
+#if NOT_SENDMAIL
+# define tTd(flag, level)	(tTdvect[flag] >= (unsigned char)level)
+#else
+# define tTd(flag, level)	(tTdvect[flag] >= (unsigned char)level && !IntSig)
+#endif
 #define tTdlevel(flag)		(tTdvect[flag])
 
 /* variables */
@@ -2114,22 +2172,26 @@ extern unsigned char	tTdvect[100];	/* trace vector */
 */
 
 /* set exit status */
-#define setstat(s)	{ \
-				if (ExitStat == EX_OK || ExitStat == EX_TEMPFAIL) \
-					ExitStat = s; \
-			}
+#define setstat(s)	\
+	do		\
+	{		\
+		if (ExitStat == EX_OK || ExitStat == EX_TEMPFAIL) \
+			ExitStat = s; \
+	} while (0)
 
 
 #define STRUCTCOPY(s, d)	d = s
 
 /* free a pointer if it isn't NULL and set it to NULL */
 #define SM_FREE_CLR(p)	\
-			if ((p) != NULL) \
-			{ \
-				sm_free(p); \
-				(p) = NULL; \
-			} \
-			else
+	do		\
+	{		\
+		if ((p) != NULL) \
+		{ \
+			sm_free(p); \
+			(p) = NULL; \
+		} \
+	} while (0)
 
 /*
 **  Update a permanent string variable with a new value.
@@ -2176,6 +2238,15 @@ extern unsigned char	tTdvect[100];	/* trace vector */
 #define XS_DEFAULT	0
 #define XS_STARTTLS	1
 #define XS_AUTH		2
+#define XS_GREET	3
+#define XS_EHLO		4
+#define XS_MAIL		5
+#define XS_RCPT		6
+#define XS_DATA		7
+#define XS_EOM		8
+#define XS_DATA2	9
+#define XS_RCPT2	10
+#define XS_QUIT		15
 
 /*
 **  Global variables.
@@ -2235,11 +2306,16 @@ EXTERN bool	UseNameServer;	/* using DNS -- interpret h_errno & MX RRs */
 EXTERN char	InetMode;		/* default network for daemon mode */
 EXTERN char	OpMode;		/* operation mode, see below */
 EXTERN char	SpaceSub;	/* substitution for <lwsp> */
-EXTERN int	BadRcptThrottle; /* Throttle rejected RCPTs per SMTP message */
 #if _FFR_BADRCPT_SHUTDOWN
 EXTERN int	BadRcptShutdown; /* Shutdown connection for rejected RCPTs */
 EXTERN int	BadRcptShutdownGood; /* above even when there are good RCPTs */
 #endif /* _FFR_BADRCPT_SHUTDOWN */
+EXTERN int	BadRcptThrottle; /* Throttle rejected RCPTs per SMTP message */
+#if _FFR_RCPTTHROTDELAY
+EXTERN unsigned int BadRcptThrottleDelay; /* delay for BadRcptThrottle */
+#else
+# define BadRcptThrottleDelay	1
+#endif /* _FFR_RCPTTHROTDELAY */
 EXTERN int	CheckpointInterval;	/* queue file checkpoint interval */
 EXTERN int	ConfigLevel;	/* config file level */
 EXTERN int	ConnRateThrottle;	/* throttle for SMTP connection rate */
@@ -2349,6 +2425,7 @@ EXTERN char	*RunAsUserName;	/* user to become for bulk of run */
 EXTERN char	*SafeFileEnv;	/* chroot location for file delivery */
 EXTERN char	*ServiceSwitchFile;	/* backup service switch */
 EXTERN char	*volatile ShutdownRequest;/* a sendmail shutdown has been requested */
+EXTERN bool	volatile IntSig;
 EXTERN char	*SmtpGreeting;	/* SMTP greeting message (old $e macro) */
 EXTERN char	*SmtpPhase;	/* current phase in SMTP processing */
 EXTERN char	SmtpError[MAXLINE];	/* save failure error messages */
@@ -2376,6 +2453,9 @@ extern const SM_EXC_TYPE_T EtypeQuickAbort; /* type of a QuickAbort exception */
 
 
 EXTERN int ConnectionRateWindowSize;
+#if STARTTLS && USE_OPENSSL_ENGINE
+EXTERN bool	SSLEngineInitialized;
+#endif /* STARTTLS && USE_OPENSSL_ENGINE */
 
 /*
 **  Declarations of useful functions
@@ -2428,6 +2508,8 @@ extern int	smtprcpt __P((ADDRESS *, MAILER *, MCI *, ENVELOPE *, ADDRESS *, time
 extern void	smtprset __P((MAILER *, MCI *, ENVELOPE *));
 
 #define REPLYTYPE(r)	((r) / 100)		/* first digit of reply code */
+#define REPLYCLASS(r)	(((r) / 10) % 10)	/* second digit of reply code */
+#define REPLYMINOR(r)	((r) % 10)	/* last digit of reply code */
 #define ISSMTPCODE(c)	(isascii(c[0]) && isdigit(c[0]) && \
 		    isascii(c[1]) && isdigit(c[1]) && \
 		    isascii(c[2]) && isdigit(c[2]))

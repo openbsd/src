@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2008 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2010 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: conf.c,v 8.1141 2008/04/14 02:09:35 ca Exp $")
+SM_RCSID("@(#)$Sendmail: conf.c,v 8.1168 2011/01/25 18:31:30 ca Exp $")
 
 #include <sm/sendmail.h>
 #include <sendmail/pathnames.h>
@@ -50,8 +50,11 @@ static int	get_num_procs_online __P((void));
 static int	add_hostnames __P((SOCKADDR *));
 
 #if NETINET6 && NEEDSGETIPNODE
-static struct hostent *getipnodebyname __P((char *, int, int, int *));
-static struct hostent *getipnodebyaddr __P((char *, int, int, int *));
+static struct hostent *sm_getipnodebyname __P((const char *, int, int, int *));
+static struct hostent *sm_getipnodebyaddr __P((const void *, size_t, int, int *));
+#else /* NETINET6 && NEEDSGETIPNODE */
+#define sm_getipnodebyname getipnodebyname 
+#define sm_getipnodebyaddr getipnodebyaddr
 #endif /* NETINET6 && NEEDSGETIPNODE */
 
 
@@ -392,6 +395,9 @@ setdefaults(e)
 #if REQUIRES_DIR_FSYNC
 	RequiresDirfsync = true;
 #endif /* REQUIRES_DIR_FSYNC */
+#if _FFR_RCPTTHROTDELAY
+	BadRcptThrottleDelay = 1;
+#endif /* _FFR_RCPTTHROTDELAY */
 	ConnectionRateWindowSize = 60;
 	setupmaps();
 	setupqueues();
@@ -782,7 +788,7 @@ inithostmaps()
 		else if (strcmp(maptype[i], "ldap") == 0 &&
 		    stab("aliases.ldap", ST_MAP, ST_FIND) == NULL)
 		{
-			(void) strlcpy(buf, "aliases.ldap ldap -b . -h localhost -k mail=%0 -v mailgroup",
+			(void) sm_strlcpy(buf, "aliases.ldap ldap -b . -h localhost -k mail=%0 -v mailgroup",
 				sizeof buf);
 			(void) makemapentry(buf);
 		}
@@ -968,7 +974,10 @@ switch_map_find(service, maptype, mapreturn)
 				p = strpbrk(buf, "#\n");
 				if (p != NULL)
 					*p = '\0';
-				p = strpbrk(buf, " \t");
+#ifndef SM_NSSWITCH_DELIMS
+# define SM_NSSWITCH_DELIMS	" \t"
+#endif /* SM_NSSWITCH_DELIMS */
+				p = strpbrk(buf, SM_NSSWITCH_DELIMS);
 				if (p != NULL)
 					*p++ = '\0';
 				if (buf[0] == '\0')
@@ -981,7 +990,7 @@ switch_map_find(service, maptype, mapreturn)
 						  buf);
 					continue;
 				}
-				while (isspace(*p))
+				while (isascii(*p) && isspace(*p))
 					p++;
 				if (*p == '\0')
 					continue;
@@ -1007,7 +1016,7 @@ switch_map_find(service, maptype, mapreturn)
 					if (p == NULL)
 						break;
 					*p++ = '\0';
-					while (isspace(*p))
+					while (isascii(*p) && isspace(*p))
 						p++;
 				}
 				if (svcno < MAXMAPSTACK)
@@ -2282,7 +2291,8 @@ refuseconnections(e, dn, active)
 # define MIN_DELAY_LOG	90	/* wait before logging this again */
 # define D_MSG_LA "delaying connections on daemon %s: load average=%d >= %d"
 		/* sleep to flatten out connection load */
-		sm_setproctitle(true, e, D_MSG_LA, Daemons[dn].d_name, limit);
+		sm_setproctitle(true, e, D_MSG_LA, Daemons[dn].d_name,
+			        CurrentLA, limit);
 		if (LogLevel > 8 && (now = curtime()) > log_delay)
 		{
 			sm_syslog(LOG_INFO, NOQID, D_MSG_LA,
@@ -2593,7 +2603,7 @@ setproctitle(fmt, va_alist)
 **		none.
 */
 
-/*VARARGS2*/
+/*VARARGS3*/
 void
 #ifdef __STDC__
 sm_setproctitle(bool status, ENVELOPE *e, const char *fmt, ...)
@@ -3376,6 +3386,10 @@ enoughdiskspace(msize, e)
 {
 	int i;
 
+#if _FFR_TESTS
+	if (tTd(4, 101))
+		return false;
+#endif /* _FFR_TESTS */
 	if (MinBlocksFree <= 0 && msize <= 0)
 	{
 		if (tTd(4, 80))
@@ -4076,7 +4090,7 @@ strtol(nptr, endptr, base)
 	*/
 	do {
 		c = *s++;
-	} while (isspace(c));
+	} while (isascii(c) && isspace(c));
 	if (c == '-') {
 		neg = 1;
 		c = *s++;
@@ -4112,9 +4126,9 @@ strtol(nptr, endptr, base)
 	cutlim = cutoff % (unsigned long) base;
 	cutoff /= (unsigned long) base;
 	for (acc = 0, any = 0;; c = *s++) {
-		if (isdigit(c))
+		if (isascii(c) && isdigit(c))
 			c -= '0';
-		else if (isalpha(c))
+		else if (isascii(c) && isalpha(c))
 			c -= isupper(c) ? 'A' - 10 : 'a' - 10;
 		else
 			break;
@@ -4179,7 +4193,7 @@ strstr(big, little)
 /*
 **  SM_GETHOSTBY{NAME,ADDR} -- compatibility routines for gethostbyXXX
 **
-**	Some operating systems have wierd problems with the gethostbyXXX
+**	Some operating systems have weird problems with the gethostbyXXX
 **	routines.  For example, Solaris versions at least through 2.3
 **	don't properly deliver a canonical h_name field.  This tries to
 **	work around these problems.
@@ -4203,8 +4217,8 @@ strstr(big, little)
 # endif /* ! AI_ALL */
 
 static struct hostent *
-getipnodebyname(name, family, flags, err)
-	char *name;
+sm_getipnodebyname(name, family, flags, err)
+	const char *name;
 	int family;
 	int flags;
 	int *err;
@@ -4227,9 +4241,9 @@ getipnodebyname(name, family, flags, err)
 }
 
 static struct hostent *
-getipnodebyaddr(addr, len, family, err)
-	char *addr;
-	int len;
+sm_getipnodebyaddr(addr, len, family, err)
+	const void *addr;
+	size_t len;
 	int family;
 	int *err;
 {
@@ -4296,7 +4310,7 @@ sm_gethostbyname(name, family)
 #  if ADDRCONFIG_IS_BROKEN
 	flags &= ~AI_ADDRCONFIG;
 #  endif /* ADDRCONFIG_IS_BROKEN */
-	h = getipnodebyname(name, family, flags, &err);
+	h = sm_getipnodebyname(name, family, flags, &err);
 	SM_SET_H_ERRNO(err);
 # else /* NETINET6 */
 	h = gethostbyname(name);
@@ -4335,7 +4349,7 @@ sm_gethostbyname(name, family)
 					       hbuf, family);
 
 # if NETINET6
-				h = getipnodebyname(hbuf, family, flags, &err);
+				h = sm_getipnodebyname(hbuf, family, flags, &err);
 				SM_SET_H_ERRNO(err);
 				save_errno = errno;
 # else /* NETINET6 */
@@ -4432,7 +4446,7 @@ sm_gethostbyaddr(addr, len, type)
 	{
 		int err;
 
-		hp = getipnodebyaddr(addr, len, type, &err);
+		hp = sm_getipnodebyaddr(addr, len, type, &err);
 		SM_SET_H_ERRNO(err);
 	}
 # else /* NETINET6 */
@@ -4855,6 +4869,7 @@ load_if_names()
 		switch (af)
 		{
 		  case AF_INET6:
+			SETV6LOOPBACKADDRFOUND(*sa);
 #  ifdef __KAME__
 			/* convert into proper scoped address */
 			if ((IN6_IS_ADDR_LINKLOCAL(&sa->sin6.sin6_addr) ||
@@ -5054,6 +5069,7 @@ load_if_names()
 
 #   if NETINET6
 		  case AF_INET6:
+			SETV6LOOPBACKADDRFOUND(*sa);
 #    ifdef __KAME__
 			/* convert into proper scoped address */
 			if ((IN6_IS_ADDR_LINKLOCAL(&sa->sin6.sin6_addr) ||
@@ -5919,6 +5935,9 @@ char	*OsCompileOptions[] =
 #if HASWAITPID
 	"HASWAITPID",
 #endif /* HASWAITPID */
+#if HAVE_NANOSLEEP
+	"HAVE_NANOSLEEP",
+#endif /* HAVE_NANOSLEEP */
 #if IDENTPROTO
 	"IDENTPROTO",
 #endif /* IDENTPROTO */
@@ -6009,6 +6028,9 @@ char	*OsCompileOptions[] =
 #ifdef USESYSCTL
 	"USESYSCTL",
 #endif /* USESYSCTL */
+#if USE_OPENSSL_ENGINE
+	"USE_OPENSSL_ENGINE",
+#endif /* USE_OPENSSL_ENGINE */
 #if USING_NETSCAPE_LDAP
 	"USING_NETSCAPE_LDAP",
 #endif /* USING_NETSCAPE_LDAP */
@@ -6045,6 +6067,10 @@ char	*FFRCompileOptions[] =
 	/* Deal with MTAs that send a reply during the DATA phase. */
 	"_FFR_CATCH_BROKEN_MTAS",
 #endif /* _FFR_CATCH_BROKEN_MTAS */
+#if _FFR_CHECKCONFIG
+	/* New OpMode to check the configuration file */
+	"_FFR_CHECKCONFIG",
+#endif /* _FFR_CHECKCONFIG */
 #if _FFR_CHK_QUEUE
 	/* Stricter checks about queue directory permissions. */
 	"_FFR_CHK_QUEUE",
@@ -6119,6 +6145,10 @@ char	*FFRCompileOptions[] =
 	/* EightBitAddrOK: allow 8-bit e-mail addresses */
 	"_FFR_EIGHT_BIT_ADDR_OK",
 #endif /* _FFR_EIGHT_BIT_ADDR_OK */
+#if _FFR_EXPDELAY
+	/* exponential queue delay */
+	"_FFR_EXPDELAY",
+#endif /* _FFR_EXPDELAY */
 #if _FFR_EXTRA_MAP_CHECK
 	/* perform extra checks on $( $) in R lines */
 	"_FFR_EXTRA_MAP_CHECK",
@@ -6177,10 +6207,17 @@ char	*FFRCompileOptions[] =
 	/* Ignore extensions offered in response to HELO */
 	"_FFR_IGNORE_EXT_ON_HELO",
 #endif /* _FFR_IGNORE_EXT_ON_HELO */
+#if _FFR_LINUX_MHNL
+	/* Set MAXHOSTNAMELEN to 256 (Linux) */
+	"_FFR_LINUX_MHNL",
+#endif /* _FFR_LINUX_MHNL */
 #if _FFR_LOCAL_DAEMON
 	/* Local daemon mode (-bl) which only accepts loopback connections */
 	"_FFR_LOCAL_DAEMON",
 #endif /* _FFR_LOCAL_DAEMON */
+#if _FFR_MAIL_MACRO
+	"_FFR_MAIL_MACRO",
+#endif /* _FFR_MAIL_MACRO */
 #if _FFR_MAXDATASIZE
 	/*
 	**  It is possible that a header is larger than MILTER_CHUNK_SIZE,
@@ -6201,6 +6238,10 @@ char	*FFRCompileOptions[] =
 	/* Limit sleep(2) time in libsm/clock.c */
 	"_FFR_MAX_SLEEP_TIME",
 #endif /* _FFR_MAX_SLEEP_TIME */
+#if _FFR_MDS_NEGOTIATE
+	/* MaxDataSize negotation with libmilter */
+	"_FFR_MDS_NEGOTIATE",
+#endif /* _FFR_MDS_NEGOTIATE */
 #if _FFR_MEMSTAT
 	/* Check free memory */
 	"_FFR_MEMSTAT",
@@ -6234,6 +6275,10 @@ char	*FFRCompileOptions[] =
 
 	"_FFR_MILTER_CHECK_REJECTIONS_TOO",
 #endif /* _FFR_MILTER_CHECK_REJECTIONS_TOO */
+#if _FFR_MILTER_ENHSC
+	/* extract enhanced status code from milter replies for dsn= logging */
+	"_FFR_MILTER_ENHSC",
+#endif /* _FFR_MILTER_ENHSC */
 #if _FFR_MIME7TO8_OLD
 	/* Old mime7to8 code, the new is broken for at least one example. */
 	"_FFR_MIME7TO8_OLD",
@@ -6287,6 +6332,10 @@ char	*FFRCompileOptions[] =
 	/* Debug output for the queue scheduler. */
 	"_FFR_QUEUE_SCHED_DBG",
 #endif /* _FFR_QUEUE_SCHED_DBG */
+#if _FFR_RCPTTHROTDELAY
+	/* configurable delay for BadRcptThrottle */
+	"_FFR_RCPTTHROTDELAY",
+#endif /* _FFR_RCPTTHROTDELAY */
 #if _FFR_REDIRECTEMPTY
 	/*
 	**  envelope <> can't be sent to mailing lists, only owner-
@@ -6363,6 +6412,10 @@ char	*FFRCompileOptions[] =
 	/* SuperSafe per DaemonPortOptions: 'T' (better letter?) */
 	"_FFR_SS_PER_DAEMON",
 #endif /* _FFR_SS_PER_DAEMON */
+#if _FFR_TESTS
+	/* enable some test code */
+	"_FFR_TESTS",
+#endif /* _FFR_TESTS */
 #if _FFR_TIMERS
 	/* Donated code (unused). */
 	"_FFR_TIMERS",

@@ -3142,7 +3142,7 @@ starts with '+' and the items are separated by '++'.  Allowed
 extensions are:
 
 CN:name		name must match ${cn_subject}
-CN		${server_name} must match ${cn_subject}
+CN		${client_name}/${server_name} must match ${cn_subject}
 CS:name		name must match ${cert_subject}
 CI:name		name must match ${cert_issuer}
 
@@ -4701,4 +4701,4 @@ M4 DIVERSIONS
    8	DNS based blacklists
    9	special local rulesets (1 and 2)
 
-$Revision: 1.28 $, Last updated $Date: 2008/05/04 18:34:04 $
+$Revision: 1.29 $, Last updated $Date: 2011/05/17 15:54:23 $

@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: envelope.c,v 8.305 2008/03/31 16:32:13 ca Exp $")
+SM_RCSID("@(#)$Sendmail: envelope.c,v 8.312 2010/02/03 16:36:40 ca Exp $")
 
 /*
 **  CLRSESSENVELOPE -- clear session oriented data in an envelope
@@ -163,14 +163,14 @@ newenvelope(e, parent, rpool)
 **		split -- if true, split by recipient if message is queued up
 **
 **	Returns:
-**		none.
+**		EX_* status (currently: 0: success, EX_IOERR on panic)
 **
 **	Side Effects:
 **		housekeeping necessary to dispose of an envelope.
 **		Unlocks this queue file.
 */
 
-void
+int
 dropenvelope(e, fulldrop, split)
 	register ENVELOPE *e;
 	bool fulldrop;
@@ -209,12 +209,15 @@ dropenvelope(e, fulldrop, split)
 
 	/* we must have an id to remove disk files */
 	if (id == NULL)
-		return;
+		return EX_OK;
 
 	/* if verify-only mode, we can skip most of this */
 	if (OpMode == MD_VERIFY)
 		goto simpledrop;
 
+	if (tTd(92, 2))
+		sm_dprintf("dropenvelope: e_id=%s, EF_LOGSENDER=%d, LogLevel=%d\n",
+			e->e_id, bitset(EF_LOGSENDER, e->e_flags), LogLevel);
 	if (LogLevel > 4 && bitset(EF_LOGSENDER, e->e_flags))
 		logsender(e, NULL);
 	e->e_flags &= ~EF_LOGSENDER;
@@ -243,11 +246,13 @@ dropenvelope(e, fulldrop, split)
 		e->e_flags |= EF_FATALERRS|EF_CLRQUEUE;
 	}
 
+
 	e->e_flags &= ~EF_QUEUERUN;
 	for (q = e->e_sendqueue; q != NULL; q = q->q_next)
 	{
 		if (QS_IS_UNDELIVERED(q->q_state))
 			queueit = true;
+
 
 		/* see if a notification is needed */
 		if (bitset(QPINGONFAILURE, q->q_flags) &&
@@ -618,7 +623,11 @@ simpledrop:
 	}
 	e->e_id = NULL;
 	e->e_flags &= ~EF_HAS_DF;
+	if (panic)
+		return EX_IOERR;
+	return EX_OK;
 }
+
 /*
 **  CLEARENVELOPE -- clear an envelope without unlocking
 **
@@ -714,6 +723,9 @@ clearenvelope(e, fullclear, rpool)
 		bh = bh->h_link;
 		nhp = &(*nhp)->h_link;
 	}
+#if _FFR_MILTER_ENHSC
+	e->e_enhsc[0] = '\0';
+#endif /* _FFR_MILTER_ENHSC */
 }
 /*
 **  INITSYS -- initialize instantiation of system

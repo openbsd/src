@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2007 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2010 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -14,7 +14,7 @@
 #include <sendmail.h>
 #include <sm/time.h>
 
-SM_RCSID("@(#)$Sendmail: deliver.c,v 8.1015 2007/10/17 21:35:30 ca Exp $")
+SM_RCSID("@(#)$Sendmail: deliver.c,v 8.1024 2011/01/12 23:52:59 ca Exp $")
 
 #if HASSETUSERCONTEXT
 # include <login_cap.h>
@@ -575,12 +575,12 @@ sendall(e, mode)
 #endif /* HASFLOCK */
 		if (e->e_nrcpts > 0)
 			e->e_flags |= EF_INQUEUE;
-		dropenvelope(e, splitenv != NULL, true);
+		(void) dropenvelope(e, splitenv != NULL, true);
 		for (ee = splitenv; ee != NULL; ee = ee->e_sibling)
 		{
 			if (ee->e_nrcpts > 0)
 				ee->e_flags |= EF_INQUEUE;
-			dropenvelope(ee, false, true);
+			(void) dropenvelope(ee, false, true);
 		}
 		return;
 
@@ -602,7 +602,7 @@ sendall(e, mode)
 
 			/* now drop the envelope in the parent */
 			e->e_flags |= EF_INQUEUE;
-			dropenvelope(e, splitenv != NULL, false);
+			(void) dropenvelope(e, splitenv != NULL, false);
 
 			/* arrange to reacquire lock after fork */
 			e->e_id = qid;
@@ -615,7 +615,7 @@ sendall(e, mode)
 
 			/* drop envelope in parent */
 			ee->e_flags |= EF_INQUEUE;
-			dropenvelope(ee, false, false);
+			(void) dropenvelope(ee, false, false);
 
 			/* and save qid for reacquisition */
 			ee->e_id = qid;
@@ -762,14 +762,14 @@ sendall(e, mode)
 	}
 
 	sendenvelope(e, mode);
-	dropenvelope(e, true, true);
+	(void) dropenvelope(e, true, true);
 	for (ee = splitenv; ee != NULL; ee = ee->e_sibling)
 	{
 		CurEnv = ee;
 		if (mode != SM_VERIFY)
 			openxscript(ee);
 		sendenvelope(ee, mode);
-		dropenvelope(ee, true, true);
+		(void) dropenvelope(ee, true, true);
 	}
 	CurEnv = e;
 
@@ -1391,7 +1391,7 @@ deliver(e, firstto)
 	else
 		p = e->e_from.q_paddr;
 	rpath = remotename(p, m, RF_SENDERADDR|RF_CANONICAL, &rcode, e);
-	if (strlen(rpath) > MAXSHORTSTR)
+	if (strlen(rpath) > MAXNAME)
 	{
 		rpath = shortenstring(rpath, MAXSHORTSTR);
 
@@ -1850,7 +1850,7 @@ deliver(e, firstto)
 	**	If we are running SMTP, we just need to clean up.
 	*/
 
-	/* XXX this seems a bit wierd */
+	/* XXX this seems a bit weird */
 	if (ctladdr == NULL && m != ProgMailer && m != FileMailer &&
 	    bitset(QGOODUID, e->e_from.q_flags))
 		ctladdr = &e->e_from;
@@ -2144,6 +2144,7 @@ tryhost:
 			mci->mci_lastuse = curtime();
 			mci->mci_deliveries = 0;
 			mci->mci_exitstat = i;
+			mci_clr_extensions(mci);
 # if NAMED_BIND
 			mci->mci_herrno = h_errno;
 # endif /* NAMED_BIND */
@@ -2978,7 +2979,7 @@ reconnect:	/* after switching to an encrypted connection */
 					char *s;
 
 					/*
-					**  TLS negotation failed, what to do?
+					**  TLS negotiation failed, what to do?
 					**  fall back to unencrypted connection
 					**  or abort? How to decide?
 					**  set a macro and call a ruleset.
@@ -3021,7 +3022,7 @@ reconnect:	/* after switching to an encrypted connection */
 
 			/*
 			**  rcode == EX_SOFTWARE is special:
-			**  the TLS negotation failed
+			**  the TLS negotiation failed
 			**  we have to drop the connection no matter what
 			**  However, we call tls_server to give it the chance
 			**  to log the problem and return an appropriate
@@ -3104,7 +3105,7 @@ reconnect:	/* after switching to an encrypted connection */
 			    mci->mci_state != MCIS_CLOSED)
 			{
 				SET_HELO(mci->mci_flags);
-				mci->mci_flags &= ~MCIF_EXTENS;
+				mci_clr_extensions(mci);
 				goto reconnect;
 			}
 		}
@@ -3157,7 +3158,7 @@ reconnect:	/* after switching to an encrypted connection */
 						     &mci->mci_out,
 						     mci->mci_conn, tmo) == 0)
 					{
-						mci->mci_flags &= ~MCIF_EXTENS;
+						mci_clr_extensions(mci);
 						mci->mci_flags |= MCIF_AUTHACT|
 								  MCIF_ONLY_EHLO;
 						goto reconnect;
@@ -6075,8 +6076,9 @@ initclttls(tls_ok)
 		return false;
 	if (clt_ctx != NULL)
 		return true;	/* already done */
-	tls_ok_clt = inittls(&clt_ctx, TLS_I_CLT, false, CltCertFile,
-			     CltKeyFile, CACertPath, CACertFile, DHParams);
+	tls_ok_clt = inittls(&clt_ctx, TLS_I_CLT, Clt_SSL_Options, false,
+			     CltCertFile, CltKeyFile,
+			     CACertPath, CACertFile, DHParams);
 	return tls_ok_clt;
 }
 
@@ -6108,6 +6110,17 @@ starttls(m, mci, e)
 
 	if (clt_ctx == NULL && !initclttls(true))
 		return EX_TEMPFAIL;
+
+# if USE_OPENSSL_ENGINE
+	if (!SSLEngineInitialized && !SSL_set_engine(NULL))
+	{
+		sm_syslog(LOG_ERR, NOQID,
+			  "STARTTLS=client, SSL_set_engine=failed");
+		return EX_TEMPFAIL;
+	}
+	SSLEngineInitialized = true;
+# endif /* USE_OPENSSL_ENGINE */
+
 	smtpmessage("STARTTLS", m, mci);
 
 	/* get the reply */
