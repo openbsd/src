@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile,v 1.40 2010/12/24 10:36:48 espie Exp $
+# $OpenBSD: Makefile,v 1.41 2011/05/17 19:54:29 landry Exp $
 
 REGRESS_TARGETS=pkgnames signatures depends-check longnames update-check1 \
 	collision-check3 collision-check5 partial-update-test conflict-update \
 	merge-update split-update big-merge family-circus missing \
 	lib-report1 lib-report2 lib-report3 loop1 \
 	lib-report4 lib-report5 lib-report6 lib-report7 \
-	qttest gstest
+	qttest gstest exotest
 
 
 
@@ -24,7 +24,7 @@ D$i ?= ${.OBJDIR}/dest$i
 DEST$i ?= ${D$i}/usr/local
 .endfor
 
-# current maxes: D26, SRC17, plist14
+# current maxes: D28, SRC19, plist16
 pkgnames:
 	perl ${.CURDIR}/check-name
 
@@ -184,6 +184,11 @@ gstest: rep0/gs-0.tgz rep0/gs-0-no_x11.tgz rep0/purple-0.tgz
 	-@ROOT=${D27} PKG_PATH=${.OBJDIR}/rep0 ${ADD_PKG} purple-0
 	@if ROOT=${D27} PKG_PATH=${.OBJDIR}/rep0 ${ADD_PKG} -r gs-0-no_x11; then exit 1; fi
 
+exotest: rep0/exo-0.tgz rep1/exo-1.tgz
+	@-rm -rf ${D28}
+	@ROOT=${D28} PKG_PATH=${.OBJDIR}/rep0 ${ADD_PKG} exo
+	@ROOT=${D28} PKG_PATH=${.OBJDIR}/rep1 ${ADD_PKG} -u exo
+
 plist1:
 	@echo "@owner "`id -un` >$@
 	@echo "@group "`id -gn` >>$@
@@ -256,6 +261,21 @@ plist14:
 	@echo "@group "`id -gn` >>$@
 	@echo phonon >>$@
 
+plist15:
+	@echo "@owner "`id -un` >>$@
+	@echo "@group "`id -gn` >>$@
+	@echo foo/ >>$@
+	@echo foo/a >>$@
+	@echo bar >>$@
+
+plist16:
+	@echo "@owner "`id -un` >>$@
+	@echo "@group "`id -gn` >>$@
+	@echo foo/ >>$@
+	@echo foo/a >>$@
+	@echo bar/ >>$@
+	@echo bar/a >>$@
+
 rep0/a-0.tgz:
 	@${CREATE_PKG} -P't/b:b-*:b-0' -f ${.CURDIR}/empty $@
 
@@ -323,6 +343,17 @@ rep1/qt-1.tgz: plist14
 	@mkdir -p ${SRC16}
 	touch ${SRC16}/phonon
 	@${CREATE_PKG} -B src16 -f plist14 $@
+
+rep0/exo-0.tgz: plist15
+	@mkdir -p ${SRC18}/foo
+	touch ${SRC18}/foo/a
+	cd ${SRC18} && ln -s foo bar
+	@${CREATE_PKG} -B src18 -f plist15 $@
+
+rep1/exo-1.tgz: plist16
+	@mkdir -p ${SRC19}/{foo,bar}
+	touch ${SRC19}/{bar,foo}/a
+	@${CREATE_PKG} -B src19 -f plist16 $@
 
 rep0/gs-0.tgz:
 	@${CREATE_PKG} -f ${.CURDIR}/empty $@
