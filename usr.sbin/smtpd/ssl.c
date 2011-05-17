@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.34 2011/05/14 11:08:23 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.35 2011/05/17 16:32:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -117,6 +117,7 @@ ssl_connect(int fd, short event, void *p)
 
 	return;
 retry:
+	event_set(&s->s_ev, s->s_fd, EV_TIMEOUT|retry_flag, ssl_connect, s);
 	event_add(&s->s_ev, &s->s_tv);
 }
 
