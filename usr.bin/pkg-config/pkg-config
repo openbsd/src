@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.42 2011/03/21 13:28:06 espie Exp $
+# $OpenBSD: pkg-config,v 1.43 2011/05/18 11:12:13 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -234,31 +234,26 @@ sub handle_config
 		}
 	}
 
-	my $deps = $cfg->get_property('Requires', $variables);
-	if (defined $deps) {
-		for my $dep (@$deps) {
-			if ($dep =~ m/^(.*?)\s*([<=>]+)\s*([\d\.]+)$/) {
-				handle_config($1, $2, $3, $list);
-			} else {
-				handle_config($dep, undef, undef, $list);
-			}
-		}
-		print STDERR "package $p requires ",
-		    join(',', @$deps), "\n" if $D;
-	}
+	my $get_props = sub {
+		my $property = shift;
 
-	$deps = $cfg->get_property('Requires.private', $variables);
-	if (defined $deps) {
-		for my $dep (@$deps) {
-			if ($dep =~ m/^(.*?)\s*([<=>]+)\s*([\d\.]+)$/) {
-				handle_config($1, $2, $3, $list);
-			} else {
-				handle_config($dep, undef, undef, $list);
+		my $deps = $cfg->get_property($property, $variables);
+		if (defined $deps) {
+			for my $dep (@$deps) {
+				if ($dep =~ m/^(.*?)\s*([<=>]+)\s*([\d\.]+)$/) {
+					handle_config($1, $2, $3, $list);
+				} else {
+					handle_config($dep, undef, undef, $list);
+				}
 			}
+			print STDERR "package $p ", lc($property), " ",
+			    join(',', @$deps), "\n" if $D;
 		}
-		print STDERR "package $p requires (private)",
-		    join(',', @$deps), "\n" if $D;
-	}
+	};
+
+	&$get_props("Requires");
+	&$get_props("Requires.private");
+
 }
 
 # look for the .pc file in each of the PKGPATH elements. Return the path or
