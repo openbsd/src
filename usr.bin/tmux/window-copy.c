@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.69 2011/04/24 21:06:12 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.70 2011/05/18 08:04:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -790,7 +790,7 @@ window_copy_mouse(
 	 * If already reading motion, move the cursor while buttons are still
 	 * pressed, or stop the selection on their release.
 	 */
-	if (s->mode & MODE_MOUSE_ANY) {
+	if (s->mode & MODE_MOUSE_BUTTON) {
 		if ((m->b & MOUSE_BUTTON) != MOUSE_UP) {
 			window_copy_update_cursor(wp, m->x, m->y);
 			if (window_copy_update_selection(wp))
@@ -803,7 +803,7 @@ window_copy_mouse(
 	/* Otherwise if other buttons pressed, start selection and motion. */
 	if ((m->b & MOUSE_BUTTON) != MOUSE_UP) {
 		s->mode &= ~MODE_MOUSE_STANDARD;
-		s->mode |= MODE_MOUSE_ANY;
+		s->mode |= MODE_MOUSE_BUTTON;
 
 		window_copy_update_cursor(wp, m->x, m->y);
 		window_copy_start_selection(wp);
@@ -813,7 +813,7 @@ window_copy_mouse(
 	return;
 
 reset_mode:
-	s->mode &= ~MODE_MOUSE_ANY;
+	s->mode &= ~MODE_MOUSE_BUTTON;
 	s->mode |= MODE_MOUSE_STANDARD;
 	if (sess != NULL) {
 		window_copy_copy_selection(wp);
