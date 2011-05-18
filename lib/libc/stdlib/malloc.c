@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.134 2011/05/12 12:03:40 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.135 2011/05/18 18:07:20 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -49,9 +49,6 @@
 
 #include "thread_private.h"
 
-#define MALLOC_MINSHIFT		4
-#define MALLOC_MAXSHIFT		16
-
 #if defined(__sparc__) && !defined(__sparcv9__)
 #define MALLOC_PAGESHIFT	(13U)
 #elif defined(__mips64__)
@@ -60,12 +57,14 @@
 #define MALLOC_PAGESHIFT	(PGSHIFT)
 #endif
 
+#define MALLOC_MINSHIFT		4
+#define MALLOC_MAXSHIFT		(MALLOC_PAGESHIFT - 1)
 #define MALLOC_PAGESIZE		(1UL << MALLOC_PAGESHIFT)
 #define MALLOC_MINSIZE		(1UL << MALLOC_MINSHIFT)
 #define MALLOC_PAGEMASK		(MALLOC_PAGESIZE - 1)
 #define MASK_POINTER(p)		((void *)(((uintptr_t)(p)) & ~MALLOC_PAGEMASK))
 
-#define MALLOC_MAXCHUNK		(1 << (MALLOC_PAGESHIFT-1))
+#define MALLOC_MAXCHUNK		(1 << MALLOC_MAXSHIFT)
 #define MALLOC_MAXCACHE		256
 #define MALLOC_DELAYED_CHUNKS	15	/* max of getrnibble() */
 /*
@@ -106,12 +105,11 @@ struct dir_info {
 	u_int32_t canary1;
 	struct region_info *r;		/* region slots */
 	size_t regions_total;		/* number of region slots */
-	size_t regions_bits;		/* log2 of total */
 	size_t regions_free;		/* number of free slots */
 					/* list of free chunk info structs */
 	struct chunk_head chunk_info_list;
 					/* lists of chunks with free slots */
-	struct chunk_head chunk_dir[MALLOC_MAXSHIFT];
+	struct chunk_head chunk_dir[MALLOC_MAXSHIFT + 1];
 	size_t free_regions_size;	/* free pages cached */
 					/* free pages cache */
 	struct region_info free_regions[MALLOC_MAXCACHE];
@@ -605,8 +603,7 @@ omalloc_init(struct dir_info **dp)
 	d = (struct dir_info *)(p + MALLOC_PAGESIZE +
 	    (arc4random_uniform(d_avail) << MALLOC_MINSHIFT));
 
-	d->regions_bits = 9;
-	d->regions_free = d->regions_total = 1 << d->regions_bits;
+	d->regions_free = d->regions_total = 512;
 	regioninfo_size = d->regions_total * sizeof(struct region_info);
 	d->r = MMAP(regioninfo_size);
 	if (d->r == MAP_FAILED) {
@@ -615,7 +612,7 @@ omalloc_init(struct dir_info **dp)
 		return 1;
 	}
 	LIST_INIT(&d->chunk_info_list);
-	for (i = 0; i < MALLOC_MAXSHIFT; i++)
+	for (i = 0; i <= MALLOC_MAXSHIFT; i++)
 		LIST_INIT(&d->chunk_dir[i]);
 	malloc_used += regioninfo_size;
 	d->canary1 = mopts.malloc_canary ^ (u_int32_t)(uintptr_t)d;
@@ -636,7 +633,6 @@ omalloc_init(struct dir_info **dp)
 static int
 omalloc_grow(struct dir_info *d)
 {
-	size_t newbits;
 	size_t newtotal;
 	size_t newsize;
 	size_t mask;
@@ -646,7 +642,6 @@ omalloc_grow(struct dir_info *d)
 	if (d->regions_total > SIZE_MAX / sizeof(struct region_info) / 2 )
 		return 1;
 
-	newbits = d->regions_bits + 1;
 	newtotal = d->regions_total * 2;
 	newsize = newtotal * sizeof(struct region_info);
 	mask = newtotal - 1;
@@ -678,7 +673,6 @@ omalloc_grow(struct dir_info *d)
 		malloc_used -= d->regions_total * sizeof(struct region_info);
 	d->regions_free = d->regions_free + d->regions_total;
 	d->regions_total = newtotal;
-	d->regions_bits = newbits;
 	d->r = p;
 	return 0;
 }
@@ -1530,7 +1524,7 @@ dump_free_chunk_info(int fd, struct dir_info *d)
 
 	snprintf(buf, sizeof(buf), "Free chunk structs:\n");
 	write(fd, buf, strlen(buf));
-	for (i = 0; i < MALLOC_MAXSHIFT; i++) {
+	for (i = 0; i <= MALLOC_MAXSHIFT; i++) {
 		struct chunk_info *p = LIST_FIRST(&d->chunk_dir[i]);
 		if (p != NULL) {
 			snprintf(buf, sizeof(buf), "%2d) ", i);
