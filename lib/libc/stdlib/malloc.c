@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.135 2011/05/18 18:07:20 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.136 2011/05/18 18:09:37 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -67,6 +67,7 @@
 #define MALLOC_MAXCHUNK		(1 << MALLOC_MAXSHIFT)
 #define MALLOC_MAXCACHE		256
 #define MALLOC_DELAYED_CHUNKS	15	/* max of getrnibble() */
+#define MALLOC_INITIAL_REGIONS	512
 /*
  * When the P option is active, we move allocations between half a page
  * and a whole page towards the end, subject to alignment constraints.
@@ -603,7 +604,7 @@ omalloc_init(struct dir_info **dp)
 	d = (struct dir_info *)(p + MALLOC_PAGESIZE +
 	    (arc4random_uniform(d_avail) << MALLOC_MINSHIFT));
 
-	d->regions_free = d->regions_total = 512;
+	d->regions_free = d->regions_total = MALLOC_INITIAL_REGIONS;
 	regioninfo_size = d->regions_total * sizeof(struct region_info);
 	d->r = MMAP(regioninfo_size);
 	if (d->r == MAP_FAILED) {
