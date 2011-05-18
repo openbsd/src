@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-key.c,v 1.37 2011/04/05 18:55:38 nicm Exp $ */
+/* $OpenBSD: mode-key.c,v 1.38 2011/05/18 18:06:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -82,6 +82,8 @@ const struct mode_key_cmdstr mode_key_cmdstr_copy[] = {
 	{ MODEKEYCOPY_BOTTOMLINE, "bottom-line" },
 	{ MODEKEYCOPY_CANCEL, "cancel" },
 	{ MODEKEYCOPY_CLEARSELECTION, "clear-selection" },
+	{ MODEKEYCOPY_COPYLINE, "copy-line" },
+	{ MODEKEYCOPY_COPYENDOFLINE, "copy-end-of-line" },
 	{ MODEKEYCOPY_COPYSELECTION, "copy-selection" },
 	{ MODEKEYCOPY_DOWN, "cursor-down" },
 	{ MODEKEYCOPY_ENDOFLINE, "end-of-line" },
@@ -110,6 +112,7 @@ const struct mode_key_cmdstr mode_key_cmdstr_copy[] = {
 	{ MODEKEYCOPY_SEARCHDOWN, "search-forward" },
 	{ MODEKEYCOPY_SEARCHREVERSE, "search-reverse" },
 	{ MODEKEYCOPY_SEARCHUP, "search-backward" },
+	{ MODEKEYCOPY_SELECTLINE, "select-line" },
 	{ MODEKEYCOPY_STARTNUMBERPREFIX, "start-number-prefix" },
 	{ MODEKEYCOPY_STARTOFLINE, "start-of-line" },
 	{ MODEKEYCOPY_STARTSELECTION, "begin-selection" },
@@ -198,6 +201,7 @@ const struct mode_key_entry mode_key_vi_copy[] = {
 	{ ':',			0, MODEKEYCOPY_GOTOLINE },
 	{ '?',			0, MODEKEYCOPY_SEARCHUP },
 	{ 'B',			0, MODEKEYCOPY_PREVIOUSSPACE },
+	{ 'D',			0, MODEKEYCOPY_COPYENDOFLINE },
 	{ 'E',			0, MODEKEYCOPY_NEXTSPACEEND },
 	{ 'F',			0, MODEKEYCOPY_JUMPBACK },
 	{ 'G',			0, MODEKEYCOPY_HISTORYBOTTOM },
@@ -323,6 +327,7 @@ const struct mode_key_entry mode_key_emacs_copy[] = {
 	{ '\005' /* C-e */,	0, MODEKEYCOPY_ENDOFLINE },
 	{ '\006' /* C-f */,	0, MODEKEYCOPY_RIGHT },
 	{ '\007' /* C-g */,	0, MODEKEYCOPY_CLEARSELECTION },
+	{ '\013' /* C-k */,	0, MODEKEYCOPY_COPYENDOFLINE },
 	{ '\016' /* C-n */,	0, MODEKEYCOPY_DOWN },
 	{ '\020' /* C-p */,	0, MODEKEYCOPY_UP },
 	{ '\022' /* C-r */,	0, MODEKEYCOPY_SEARCHUP },
