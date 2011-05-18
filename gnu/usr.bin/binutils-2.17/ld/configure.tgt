@@ -250,6 +250,7 @@ ia64-*-freebsd* | ia64-*-kfreebsd*-gnu)
 		        targ_emul=elf64_ia64_fbsd
 			targ_extra_emuls="elf64_ia64" ;;
 ia64-*-netbsd*)		targ_emul=elf64_ia64 ;;
+ia64-*-openbsd*)	targ_emul=elf64_ia64 ;;
 ia64-*-linux*)		targ_emul=elf64_ia64 ;;
 ia64-*-aix*)		targ_emul=elf64_aix
 			;;

@@ -229,6 +229,7 @@ case ${generic_target} in
   ia64-*-linux-*)			fmt=elf em=linux ;;
   ia64-*-hpux*)				fmt=elf em=hpux ;;
   ia64-*-netbsd*)			fmt=elf em=nbsd ;;
+  ia64-*-openbsd*)			fmt=elf em=obsd ;;
 
   ip2k-*-*)				fmt=elf ;;
 
