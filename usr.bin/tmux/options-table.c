@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.7 2011/05/08 20:34:12 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.8 2011/05/18 20:24:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -73,6 +73,11 @@ const struct options_table_entry server_options_table[] = {
 	{ .name = "quiet",
 	  .type = OPTIONS_TABLE_FLAG,
 	  .default_num = 0 /* overridden in main() */
+	},
+
+	{ .name = "set-clipboard",
+	  .type = OPTIONS_TABLE_FLAG,
+	  .default_num = 1
 	},
 
 	{ .name = NULL }
@@ -360,7 +365,8 @@ const struct options_table_entry session_options_table[] = {
 
 	{ .name = "terminal-overrides",
 	  .type = OPTIONS_TABLE_STRING,
-	  .default_str = "*88col*:colors=88,*256col*:colors=256,xterm*:XT"
+	  .default_str = "*88col*:colors=88,*256col*:colors=256"
+	  		 ",xterm*:XT:Ms=\\E]52;%p1%s;%p2%s\\007"
 	},
 
 	{ .name = "update-environment",

@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.71 2011/05/18 18:06:36 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.72 2011/05/18 20:24:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1344,6 +1344,9 @@ window_copy_copy_selection(struct window_pane *wp)
 		return;
 	}
 	off--;	/* remove final \n */
+
+	if (options_get_number(&global_options, "set-clipboard"))
+		screen_write_setselection(&wp->ictx.ctx, buf, off);
 
 	/* Add the buffer to the stack. */
 	limit = options_get_number(&global_options, "buffer-limit");
