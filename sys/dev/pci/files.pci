@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.278 2011/04/10 20:27:02 shadchin Exp $
+#	$OpenBSD: files.pci,v 1.279 2011/05/18 14:21:21 sthen Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -643,7 +643,7 @@ device	age: ether, ifnet, mii, ifmedia, mii_phy
 attach	age at pci
 file	dev/pci/if_age.c		age
 
-# Attansic/Atheros L1C/L2C Gigabit Ethernet
+# Attansic/Atheros L1C/L1D/L2C Gigabit Ethernet
 device	alc: ether, ifnet, mii, ifmedia, mii_phy
 attach	alc at pci
 file	dev/pci/if_alc.c		alc

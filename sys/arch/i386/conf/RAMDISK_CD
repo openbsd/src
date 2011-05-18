@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.185 2011/04/03 12:32:05 claudio Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.186 2011/05/18 14:21:20 sthen Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -372,7 +372,7 @@ xge*	at pci?				# Neterion Xframe-I/II 10Gb ethernet
 vic*	at pci?				# VMware VMXnet virtual interface
 et*	at pci?				# Agere/LSI ET1310
 age*	at pci?				# Attansic L1 Ethernet
-alc*	at pci?				# Attansic L1C/L2C Ethernet
+alc*	at pci?				# Attansic L1C/L1D/L2C Ethernet
 ale*	at pci?				# Attansic L1E Ethernet
 lii*	at pci?				# Attansic L2 Ethernet
 jme*	at pci?				# JMicron JMC250/JMC260 Ethernet

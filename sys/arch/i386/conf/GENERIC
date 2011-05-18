@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.713 2011/04/10 20:27:02 shadchin Exp $
+#	$OpenBSD: GENERIC,v 1.714 2011/05/18 14:21:20 sthen Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -632,7 +632,7 @@ gem*	at pci?				# Sun 'gem' ethernet
 vic*	at pci?				# VMware VMXnet virtual interface
 et*	at pci?				# Agere/LSI ET1310
 age*	at pci?				# Attansic L1 Ethernet
-alc*	at pci?				# Attansic L1C/L2C Ethernet
+alc*	at pci?				# Attansic L1C/L1D/L2C Ethernet
 ale*	at pci?				# Attansic L1E Ethernet
 lii*	at pci?				# Attansic L2 Ethernet
 jme*	at pci?				# JMicron JMC250/JMC260 Ethernet
