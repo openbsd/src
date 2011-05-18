@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-load-buffer.c,v 1.16 2011/01/04 00:42:46 nicm Exp $ */
+/* $OpenBSD: cmd-load-buffer.c,v 1.17 2011/05/18 08:07:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -154,7 +154,7 @@ cmd_load_buffer_callback(struct client *c, void *data)
 
 	psize = EVBUFFER_LENGTH(c->stdin_event->input);
 	if (psize == 0 || (pdata = malloc(psize + 1)) == NULL) {
-		free(data);
+		xfree(data);
 		return;
 	}
 	bufferevent_read(c->stdin_event, pdata, psize);
@@ -170,5 +170,5 @@ cmd_load_buffer_callback(struct client *c, void *data)
 		bufferevent_enable(c->stderr_event, EV_WRITE);
 	}
 
-	free (data);
+	xfree(data);
 }
