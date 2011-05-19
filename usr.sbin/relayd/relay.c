@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.136 2011/05/09 12:08:47 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.137 2011/05/19 08:56:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -54,7 +54,6 @@ int		 relay_dispatch_pfe(int, struct privsep_proc *,
 		    struct imsg *);
 void		 relay_shutdown(void);
 
-void		 relay_privinit(void);
 void		 relay_nodedebug(const char *, struct protonode *);
 void		 relay_protodebug(struct relay *);
 void		 relay_init(struct privsep *, struct privsep_proc *p, void *);
@@ -146,26 +145,13 @@ pid_t
 relay(struct privsep *ps, struct privsep_proc *p)
 {
 	env = ps->ps_env;
-
-	/* Need root privileges for relay initialization */
-	relay_privinit();
-
 	return (proc_run(ps, p, procs, nitems(procs), relay_init, NULL));
 }
 
 void
 relay_shutdown(void)
 {
-	struct rsession	*con;
-
-	struct relay	*rlay;
-	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
-		if (rlay->rl_conf.flags & F_DISABLE)
-			continue;
-		close(rlay->rl_s);
-		while ((con = SPLAY_ROOT(&rlay->rl_sessions)) != NULL)
-			relay_close(con, "shutdown");
-	}
+	config_purge(env, CONFIG_ALL);
 	usleep(200);	/* XXX relay needs to shutdown last */
 }
 
@@ -250,7 +236,8 @@ relay_protodebug(struct relay *rlay)
 	const char		*name;
 	int			 i;
 
-	fprintf(stderr, "protocol %d: name %s\n", proto->id, proto->name);
+	fprintf(stderr, "protocol %d: name %s\n",
+	    proto->id, proto->name);
 	fprintf(stderr, "\tflags: %s, relay flags: %s\n",
 	    printb_flags(proto->flags, F_BITS),
 	    printb_flags(rlay->rl_conf.flags, F_BITS));
@@ -304,106 +291,56 @@ relay_protodebug(struct relay *rlay)
 	}
 }
 
-void
-relay_privinit(void)
+int
+relay_privinit(struct relay *rlay)
 {
-	struct relay	*rlay;
 	extern int	 debug;
 
-	if (env->sc_flags & (F_SSL|F_SSLCLIENT))
-		ssl_init(env);
+	log_debug("%s: adding relay %s", __func__, rlay->rl_conf.name);
 
-	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
-		log_debug("%s: adding relay %s", __func__, rlay->rl_conf.name);
+	if (debug)
+		relay_protodebug(rlay);
 
-		if (debug)
-			relay_protodebug(rlay);
-
-		switch (rlay->rl_proto->type) {
-		case RELAY_PROTO_DNS:
-			relay_udp_privinit(env, rlay);
-			break;
-		case RELAY_PROTO_TCP:
-		case RELAY_PROTO_HTTP:
-			/* Use defaults */
-			break;
-		}
-
-		if (rlay->rl_conf.flags & F_UDP)
-			rlay->rl_s = relay_udp_bind(&rlay->rl_conf.ss,
-			    rlay->rl_conf.port, rlay->rl_proto);
-		else
-			rlay->rl_s = relay_socket_listen(&rlay->rl_conf.ss,
-			    rlay->rl_conf.port, rlay->rl_proto);
-		if (rlay->rl_s == -1)
-			fatal("relay_privinit: failed to listen");
+	switch (rlay->rl_proto->type) {
+	case RELAY_PROTO_DNS:
+		relay_udp_privinit(env, rlay);
+		break;
+	case RELAY_PROTO_TCP:
+	case RELAY_PROTO_HTTP:
+		/* Use defaults */
+		break;
 	}
+
+	if (rlay->rl_conf.flags & F_UDP)
+		rlay->rl_s = relay_udp_bind(&rlay->rl_conf.ss,
+		    rlay->rl_conf.port, rlay->rl_proto);
+	else
+		rlay->rl_s = relay_socket_listen(&rlay->rl_conf.ss,
+		    rlay->rl_conf.port, rlay->rl_proto);
+	if (rlay->rl_s == -1)
+		return (-1);
+
+	return (0);
 }
 
 void
 relay_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
-	struct relay	*rlay;
-	struct host	*host;
 	struct timeval	 tv;
+
+	if (config_init(ps->ps_env) == -1)
+		fatal("failed to initialize configuration");
 
 	/* We use a custom shutdown callback */
 	p->p_shutdown = relay_shutdown;
 
-	purge_config(env, PURGE_RDRS);
-
 	/* Unlimited file descriptors (use system limits) */
 	socket_rlimit(-1);
-
-	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
-		if ((rlay->rl_conf.flags & (F_SSL|F_SSLCLIENT)) &&
-		    (rlay->rl_ssl_ctx = relay_ssl_ctx_create(rlay)) == NULL)
-			fatal("relay_init: failed to create SSL context");
-
-		if (rlay->rl_dsttable != NULL) {
-			switch (rlay->rl_conf.dstmode) {
-			case RELAY_DSTMODE_ROUNDROBIN:
-				rlay->rl_dstkey = 0;
-				break;
-			case RELAY_DSTMODE_LOADBALANCE:
-			case RELAY_DSTMODE_HASH:
-				rlay->rl_dstkey =
-				    hash32_str(rlay->rl_conf.name, HASHINIT);
-				rlay->rl_dstkey =
-				    hash32_str(rlay->rl_dsttable->conf.name,
-				    rlay->rl_dstkey);
-				break;
-			}
-			rlay->rl_dstnhosts = 0;
-			TAILQ_FOREACH(host, &rlay->rl_dsttable->hosts, entry) {
-				if (rlay->rl_dstnhosts >= RELAY_MAXHOSTS)
-					fatal("relay_init: "
-					    "too many hosts in table");
-				host->idx = rlay->rl_dstnhosts;
-				rlay->rl_dsthost[rlay->rl_dstnhosts++] = host;
-			}
-			log_info("adding %d hosts from table %s%s",
-			    rlay->rl_dstnhosts, rlay->rl_dsttable->conf.name,
-			    rlay->rl_dsttable->conf.check ? "" : " (no check)");
-		}
-
-		switch (rlay->rl_proto->type) {
-		case RELAY_PROTO_DNS:
-			relay_udp_init(rlay);
-			break;
-		case RELAY_PROTO_TCP:
-		case RELAY_PROTO_HTTP:
-			/* Use defaults */
-			break;
-		}
-	}
 
 	/* Schedule statistics timer */
 	evtimer_set(&env->sc_statev, relay_statistics, NULL);
 	bcopy(&env->sc_statinterval, &tv, sizeof(tv));
 	evtimer_add(&env->sc_statev, &tv);
-
-	relay_launch();
 }
 
 void
@@ -474,10 +411,52 @@ relay_statistics(int fd, short events, void *arg)
 void
 relay_launch(void)
 {
-	struct relay	*rlay;
 	void		(*callback)(int, short, void *);
+	struct relay	*rlay;
+	struct host	*host;
 
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
+		if ((rlay->rl_conf.flags & (F_SSL|F_SSLCLIENT)) &&
+		    (rlay->rl_ssl_ctx = relay_ssl_ctx_create(rlay)) == NULL)
+			fatal("relay_init: failed to create SSL context");
+
+		if (rlay->rl_dsttable != NULL) {
+			switch (rlay->rl_conf.dstmode) {
+			case RELAY_DSTMODE_ROUNDROBIN:
+				rlay->rl_dstkey = 0;
+				break;
+			case RELAY_DSTMODE_LOADBALANCE:
+			case RELAY_DSTMODE_HASH:
+				rlay->rl_dstkey =
+				    hash32_str(rlay->rl_conf.name, HASHINIT);
+				rlay->rl_dstkey =
+				    hash32_str(rlay->rl_dsttable->conf.name,
+				    rlay->rl_dstkey);
+				break;
+			}
+			rlay->rl_dstnhosts = 0;
+			TAILQ_FOREACH(host, &rlay->rl_dsttable->hosts, entry) {
+				if (rlay->rl_dstnhosts >= RELAY_MAXHOSTS)
+					fatal("relay_init: "
+					    "too many hosts in table");
+				host->idx = rlay->rl_dstnhosts;
+				rlay->rl_dsthost[rlay->rl_dstnhosts++] = host;
+			}
+			log_info("adding %d hosts from table %s%s",
+			    rlay->rl_dstnhosts, rlay->rl_dsttable->conf.name,
+			    rlay->rl_dsttable->conf.check ? "" : " (no check)");
+		}
+
+		switch (rlay->rl_proto->type) {
+		case RELAY_PROTO_DNS:
+			relay_udp_init(rlay);
+			break;
+		case RELAY_PROTO_TCP:
+		case RELAY_PROTO_HTTP:
+			/* Use defaults */
+			break;
+		}
+
 		log_debug("%s: running relay %s", __func__,
 		    rlay->rl_conf.name);
 
@@ -2320,7 +2299,7 @@ relay_close(struct rsession *con, const char *msg)
 	if (con->se_out.bev != NULL)
 		bufferevent_disable(con->se_out.bev, EV_READ|EV_WRITE);
 
-	if (env->sc_opts & RELAYD_OPT_LOGUPDATE) {
+	if ((env->sc_opts & RELAYD_OPT_LOGUPDATE) && msg != NULL) {
 		bzero(&ibuf, sizeof(ibuf));
 		bzero(&obuf, sizeof(obuf));
 		(void)print_host(&con->se_in.ss, ibuf, sizeof(ibuf));
@@ -2531,6 +2510,27 @@ relay_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		bzero(&tv, sizeof(tv));
 		evtimer_add(&con->se_ev, &tv);
 		break;
+	case IMSG_CFG_TABLE:
+		config_gettable(env, imsg);
+		break;
+	case IMSG_CFG_HOST:
+		config_gethost(env, imsg);
+		break;
+	case IMSG_CFG_PROTO:
+		config_getproto(env, imsg);
+		break;
+	case IMSG_CFG_PROTONODE:
+		return (config_getprotonode(env, imsg));
+	case IMSG_CFG_RELAY:
+		config_getrelay(env, imsg);
+		break;
+	case IMSG_CFG_DONE:
+		config_getcfg(env, imsg);
+		relay_launch();
+		break;
+	case IMSG_CTL_RESET:
+		config_getreset(env, imsg);
+		break;
 	default:
 		return (-1);
 	}
@@ -2578,7 +2578,7 @@ relay_ssl_ctx_create(struct relay *rlay)
 	if ((rlay->rl_conf.flags & F_SSLCLIENT) &&
 	    (rlay->rl_ssl_ca != NULL)) {
 		if (!ssl_ctx_load_verify_memory(ctx,
-		    rlay->rl_ssl_ca, rlay->rl_ssl_ca_len))
+		    rlay->rl_ssl_ca, rlay->rl_conf.ssl_ca_len))
 			goto err;
 		SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
 	}
@@ -2588,12 +2588,12 @@ relay_ssl_ctx_create(struct relay *rlay)
 
 	log_debug("%s: loading certificate", __func__);
 	if (!ssl_ctx_use_certificate_chain(ctx,
-	    rlay->rl_ssl_cert, rlay->rl_ssl_cert_len))
+	    rlay->rl_ssl_cert, rlay->rl_conf.ssl_cert_len))
 		goto err;
 
 	log_debug("%s: loading private key", __func__);
 	if (!ssl_ctx_use_private_key(ctx, rlay->rl_ssl_key,
-	    rlay->rl_ssl_key_len))
+	    rlay->rl_conf.ssl_key_len))
 		goto err;
 	if (!SSL_CTX_check_private_key(ctx))
 		goto err;
@@ -3070,7 +3070,7 @@ relay_load_file(const char *name, off_t *len)
 
 	close(fd);
 
-	*len = size + 1;
+	*len = size;
 	return (buf);
 
  fail:
@@ -3087,9 +3087,9 @@ relay_load_certfiles(struct relay *rlay)
 	char	 certfile[PATH_MAX];
 	char	 hbuf[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
 
-	if ((rlay->rl_conf.flags & F_SSLCLIENT) && (proto->sslca != NULL)) {
+	if ((rlay->rl_conf.flags & F_SSLCLIENT) && strlen(proto->sslca)) {
 		if ((rlay->rl_ssl_ca = relay_load_file(proto->sslca,
-		    &rlay->rl_ssl_ca_len)) == NULL)
+		    &rlay->rl_conf.ssl_ca_len)) == NULL)
 			return (-1);
 		log_debug("%s: using ca %s", __func__, proto->sslca);
 	}
@@ -3104,7 +3104,7 @@ relay_load_certfiles(struct relay *rlay)
 	    "/etc/ssl/%s.crt", hbuf) == -1)
 		return (-1);
 	if ((rlay->rl_ssl_cert = relay_load_file(certfile,
-	    &rlay->rl_ssl_cert_len)) == NULL)
+	    &rlay->rl_conf.ssl_cert_len)) == NULL)
 		return (-1);
 	log_debug("%s: using certificate %s", __func__, certfile);
 
@@ -3112,7 +3112,7 @@ relay_load_certfiles(struct relay *rlay)
 	    "/etc/ssl/private/%s.key", hbuf) == -1)
 		return -1;
 	if ((rlay->rl_ssl_key = relay_load_file(certfile,
-	    &rlay->rl_ssl_key_len)) == NULL)
+	    &rlay->rl_conf.ssl_key_len)) == NULL)
 		return (-1);
 	log_debug("%s: using private key %s", __func__, certfile);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.59 2011/05/09 12:08:47 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.60 2011/05/19 08:56:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -72,14 +72,15 @@ hce(struct privsep *ps, struct privsep_proc *p)
 void
 hce_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
-	purge_config(env, PURGE_RDRS|PURGE_RELAYS|PURGE_PROTOS);
+	if (config_init(ps->ps_env) == -1)
+		fatal("failed to initialize configuration");
 
 	env->sc_id = getpid() & 0xffff;
 
 	/* Allow maximum available sockets for TCP checks */
 	socket_rlimit(-1);
 
-	hce_setup_events();
+	snmp_init(env, PROC_PARENT);
 }
 
 void
@@ -88,18 +89,17 @@ hce_setup_events(void)
 	struct timeval	 tv;
 	struct table	*table;
 
-	snmp_init(env, PROC_PARENT);
-
-	if (!TAILQ_EMPTY(env->sc_tables)) {
+	if (!(TAILQ_EMPTY(env->sc_tables) ||
+	    event_initialized(&env->sc_ev))) {
 		evtimer_set(&env->sc_ev, hce_launch_checks, env);
 		bzero(&tv, sizeof(tv));
 		evtimer_add(&env->sc_ev, &tv);
 	}
 
 	if (env->sc_flags & F_SSL) {
-		ssl_init(env);
 		TAILQ_FOREACH(table, env->sc_tables, entry) {
-			if (!(table->conf.flags & F_SSL))
+			if (!(table->conf.flags & F_SSL) ||
+			    table->ssl_ctx != NULL)
 				continue;
 			table->ssl_ctx = ssl_ctx_create(env);
 		}
@@ -116,8 +116,10 @@ hce_disable_events(void)
 	TAILQ_FOREACH(table, env->sc_tables, entry) {
 		TAILQ_FOREACH(host, &table->hosts, entry) {
 			host->he = HCE_ABORT;
-			event_del(&host->cte.ev);
-			close(host->cte.s);
+			if (event_initialized(&host->cte.ev)) {
+				event_del(&host->cte.ev);
+				close(host->cte.s);
+			}
 		}
 	}
 	if (env->sc_has_icmp) {
@@ -146,7 +148,11 @@ hce_launch_checks(int fd, short event, void *arg)
 			if ((host->flags & F_CHECK_DONE) == 0)
 				host->he = HCE_INTERVAL_TIMEOUT;
 			host->flags &= ~(F_CHECK_SENT|F_CHECK_DONE);
-			event_del(&host->cte.ev);
+			if (event_initialized(&host->cte.ev)) {
+				event_del(&host->cte.ev);
+				close(host->cte.s);
+			}
+			host->cte.s = -1;
 		}
 	}
 
@@ -331,9 +337,6 @@ int
 hce_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct ctl_script	 scr;
-	size_t			 len;
-	static struct table	*table = NULL;
-	struct host		*host, *parent;
 
 	switch (imsg->hdr.type) {
 	case IMSG_SCRIPT:
@@ -341,46 +344,21 @@ hce_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		bcopy(imsg->data, &scr, sizeof(scr));
 		script_done(env, &scr);
 		break;
-	case IMSG_RECONF:
-		IMSG_SIZE_CHECK(imsg, env);
-		log_debug("%s: reloading configuration", __func__);
-		hce_disable_events();
-		purge_config(env, PURGE_TABLES);
-		merge_config(env, (struct relayd *)imsg->data);
-
-		env->sc_tables = calloc(1, sizeof(*env->sc_tables));
-		if (env->sc_tables == NULL)
-			fatal(NULL);
-
-		TAILQ_INIT(env->sc_tables);
+	case IMSG_CFG_TABLE:
+		config_gettable(env, imsg);
 		break;
-	case IMSG_RECONF_TABLE:
-		if ((table = calloc(1, sizeof(*table))) == NULL)
-			fatal(NULL);
-		memcpy(&table->conf, imsg->data, sizeof(table->conf));
-		TAILQ_INIT(&table->hosts);
-		TAILQ_INSERT_TAIL(env->sc_tables, table, entry);
+	case IMSG_CFG_HOST:
+		config_gethost(env, imsg);
 		break;
-	case IMSG_RECONF_SENDBUF:
-		len = imsg->hdr.len - IMSG_HEADER_SIZE;
-		table->sendbuf = calloc(1, len);
-		(void)strlcpy(table->sendbuf, (char *)imsg->data, len);
+	case IMSG_SNMPSOCK:
+		snmp_getsock(env, imsg);
 		break;
-	case IMSG_RECONF_HOST:
-		if ((host = calloc(1, sizeof(*host))) == NULL)
-			fatal(NULL);
-		memcpy(&host->conf, imsg->data, sizeof(host->conf));
-		host->tablename = table->conf.name;
-		TAILQ_INSERT_TAIL(&table->hosts, host, entry);
-		if (host->conf.parentid) {
-			parent = host_find(env, host->conf.parentid);
-			SLIST_INSERT_HEAD(&parent->children,
-			    host, child);
-		}
-		break;
-	case IMSG_RECONF_END:
-		log_warnx("%s: configuration reloaded", __func__);
+	case IMSG_CFG_DONE:
+		config_getcfg(env, imsg);
 		hce_setup_events();
+		break;
+	case IMSG_CTL_RESET:
+		config_getreset(env, imsg);
 		break;
 	default:
 		return (-1);

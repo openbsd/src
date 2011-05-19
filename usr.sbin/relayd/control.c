@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.38 2011/05/09 12:08:47 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.39 2011/05/19 08:56:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -327,31 +327,12 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			}
 			break;
 		case IMSG_CTL_SHUTDOWN:
-			imsg_compose_event(&c->iev, IMSG_CTL_FAIL,
-			    0, 0, -1, NULL, 0);
+		case IMSG_CTL_RELOAD:
+			proc_forward_imsg(env->sc_ps, &imsg, PROC_PARENT, -1);
 			break;
 		case IMSG_CTL_POLL:
 			proc_compose_imsg(env->sc_ps, PROC_HCE, -1,
 			    IMSG_CTL_POLL, -1, NULL, 0);
-			imsg_compose_event(&c->iev, IMSG_CTL_OK,
-			    0, 0, -1, NULL, 0);
-			break;
-		case IMSG_CTL_RELOAD:
-			if (env->sc_prefork_relay > 0) {
-				imsg_compose_event(&c->iev, IMSG_CTL_FAIL,
-				    0, 0, -1, NULL, 0);
-				break;
-			}
-			proc_compose_imsg(env->sc_ps, PROC_PARENT, -1, IMSG_CTL_RELOAD,
-			    -1, NULL, 0);
-			/*
-			 * we unconditionnaly return a CTL_OK imsg because
-			 * we have no choice.
-			 *
-			 * so in this case, the reply relayctl gets means
-			 * that the reload command has been set,
-			 * it doesn't say whether the command succeeded or not.
-			 */
 			imsg_compose_event(&c->iev, IMSG_CTL_OK,
 			    0, 0, -1, NULL, 0);
 			break;
@@ -371,8 +352,8 @@ control_dispatch_imsg(int fd, short event, void *arg)
 
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 
-			proc_forward_imsg(env->sc_ps, &imsg, PROC_PARENT, 0);
-			proc_forward_imsg(env->sc_ps, &imsg, PROC_HCE, 0);
+			proc_forward_imsg(env->sc_ps, &imsg, PROC_PARENT, -1);
+			proc_forward_imsg(env->sc_ps, &imsg, PROC_HCE, -1);
 			proc_forward_imsg(env->sc_ps, &imsg, PROC_RELAY, -1);
 
 			memcpy(imsg.data, &verbose, sizeof(verbose));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_route.c,v 1.4 2011/05/09 12:08:47 reyk Exp $	*/
+/*	$OpenBSD: pfe_route.c,v 1.5 2011/05/19 08:56:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2009 Reyk Floeter <reyk@openbsd.org>
@@ -96,9 +96,10 @@ sync_routes(struct relayd *env, struct router *rt)
 			    HOST_ISUP(host->up) ? "up" : "down",
 			    host->conf.priority);
 
-			crt.id = nr->nr_conf.id;
-			crt.hostid = host->conf.id;
 			crt.up = host->up;
+			memcpy(&crt.nr, &nr->nr_conf, sizeof(nr->nr_conf));
+			memcpy(&crt.host, &host->conf, sizeof(host->conf));
+			memcpy(&crt.rt, &rt->rt_conf, sizeof(rt->rt_conf));
 
 			proc_compose_imsg(env->sc_ps, PROC_PARENT, -1,
 			    IMSG_RTMSG, -1, &crt, sizeof(crt));
@@ -115,19 +116,11 @@ pfe_route(struct relayd *env, struct ctl_netroute *crt)
 	struct sockaddr_in		*s4;
 	struct sockaddr_in6		*s6;
 	size_t				 len = 0;
-	struct netroute			 *nr;
-	struct host			*host;
 	char				*gwname;
 	int				 i = 0;
 
-	if ((nr = route_find(env, crt->id)) == NULL ||
-	    (host = host_find(env, crt->hostid)) == NULL) {
-		log_debug("%s: invalid host or route id", __func__);
-		return (-1);
-	}
-
-	gw = &host->conf.ss;
-	gwname = host->conf.name;
+	gw = &crt->host.ss;
+	gwname = crt->host.name;
 
 	bzero(&rm, sizeof(rm));
 	bzero(&sr, sizeof(sr));
@@ -138,18 +131,18 @@ pfe_route(struct relayd *env, struct ctl_netroute *crt)
 	rm.rm_hdr.rtm_flags = RTF_STATIC | RTF_GATEWAY | RTF_MPATH;
 	rm.rm_hdr.rtm_seq = env->sc_rtseq++;
 	rm.rm_hdr.rtm_addrs = RTA_DST | RTA_GATEWAY;
-	rm.rm_hdr.rtm_tableid = nr->nr_router->rt_conf.rtable;
-	rm.rm_hdr.rtm_priority = host->conf.priority;
+	rm.rm_hdr.rtm_tableid = crt->rt.rtable;
+	rm.rm_hdr.rtm_priority = crt->host.priority;
 
-	if (strlen(nr->nr_router->rt_conf.label)) {
+	if (strlen(crt->rt.label)) {
 		rm.rm_hdr.rtm_addrs |= RTA_LABEL;
 		sr.sr_len = sizeof(sr);
 		if (snprintf(sr.sr_label, sizeof(sr.sr_label),
-		    "%s", nr->nr_router->rt_conf.label) == -1)
+		    "%s", crt->rt.label) == -1)
 			goto bad;
 	}
 
-	if (nr->nr_conf.ss.ss_family == AF_INET) {
+	if (crt->nr.ss.ss_family == AF_INET) {
 		rm.rm_hdr.rtm_msglen = len =
 		    sizeof(rm.rm_hdr) + sizeof(rm.rm_u.u4);
 
@@ -159,7 +152,7 @@ pfe_route(struct relayd *env, struct ctl_netroute *crt)
 		s4->sin_family = AF_INET;
 		s4->sin_len = sizeof(rm.rm_u.u4.rm_dst);
 		s4->sin_addr.s_addr =
-		    ((struct sockaddr_in *)&nr->nr_conf.ss)->sin_addr.s_addr;
+		    ((struct sockaddr_in *)&crt->nr.ss)->sin_addr.s_addr;
 
 		s4 = &rm.rm_u.u4.rm_gateway;
 		s4->sin_family = AF_INET;
@@ -171,19 +164,19 @@ pfe_route(struct relayd *env, struct ctl_netroute *crt)
 		s4 = &rm.rm_u.u4.rm_netmask;
 		s4->sin_family = AF_INET;
 		s4->sin_len = sizeof(rm.rm_u.u4.rm_netmask);
-		if (nr->nr_conf.prefixlen)
+		if (crt->nr.prefixlen)
 			s4->sin_addr.s_addr =
-			    htonl(0xffffffff << (32 - nr->nr_conf.prefixlen));
-		else if (nr->nr_conf.prefixlen < 0)
+			    htonl(0xffffffff << (32 - crt->nr.prefixlen));
+		else if (crt->nr.prefixlen < 0)
 			rm.rm_hdr.rtm_flags |= RTF_HOST;
-	} else if (nr->nr_conf.ss.ss_family == AF_INET6) {
+	} else if (crt->nr.ss.ss_family == AF_INET6) {
 		rm.rm_hdr.rtm_msglen = len =
 		    sizeof(rm.rm_hdr) + sizeof(rm.rm_u.u6);
 
 		bcopy(&sr, &rm.rm_u.u6.rm_label, sizeof(sr));
 
 		s6 = &rm.rm_u.u6.rm_dst;
-		bcopy(((struct sockaddr_in6 *)&nr->nr_conf.ss),
+		bcopy(((struct sockaddr_in6 *)&crt->nr.ss),
 		    s6, sizeof(*s6));
 		s6->sin6_family = AF_INET6;
 		s6->sin6_len = sizeof(*s6);
@@ -197,14 +190,14 @@ pfe_route(struct relayd *env, struct ctl_netroute *crt)
 		s6 = &rm.rm_u.u6.rm_netmask;
 		s6->sin6_family = AF_INET6;
 		s6->sin6_len = sizeof(*s6);
-		if (nr->nr_conf.prefixlen) {
-			for (i = 0; i < nr->nr_conf.prefixlen / 8; i++)
+		if (crt->nr.prefixlen) {
+			for (i = 0; i < crt->nr.prefixlen / 8; i++)
 				s6->sin6_addr.s6_addr[i] = 0xff;
-			i = nr->nr_conf.prefixlen % 8;
+			i = crt->nr.prefixlen % 8;
 			if (i)
-				s6->sin6_addr.s6_addr[nr->nr_conf.prefixlen
+				s6->sin6_addr.s6_addr[crt->nr.prefixlen
 				    / 8] = 0xff00 >> i;
-		} else if (nr->nr_conf.prefixlen < 0)
+		} else if (crt->nr.prefixlen < 0)
 			rm.rm_hdr.rtm_flags |= RTF_HOST;
 	} else
 		fatal("pfe_route: invalid address family");

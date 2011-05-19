@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.146 2011/05/09 12:08:47 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.147 2011/05/19 08:56:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -51,14 +51,17 @@
 #define RELAY_BACKLOG		10
 #define RELAY_MAXLOOKUPLEVELS	5
 
+#define CONFIG_RELOAD		0x00
+#define CONFIG_TABLES		0x01
+#define CONFIG_RDRS		0x02
+#define CONFIG_RELAYS		0x04
+#define CONFIG_PROTOS		0x08
+#define CONFIG_ROUTES		0x10
+#define CONFIG_RTS		0x20
+#define CONFIG_ALL		0xff
+
 #define SMALL_READ_BUF_SIZE	1024
 #define ICMP_BUF_SIZE		64
-
-#define PURGE_TABLES		0x01
-#define PURGE_RDRS		0x02
-#define PURGE_RELAYS		0x04
-#define PURGE_PROTOS		0x08
-#define PURGE_EVERYTHING	0xff
 
 #define SNMP_RECONNECT_TIMEOUT	{ 3, 0 }	/* sec, usec */
 
@@ -76,6 +79,11 @@ struct shuffle {
 
 
 typedef u_int32_t objid_t;
+
+struct ctl_flags {
+	u_int8_t	 cf_opts;
+	u_int32_t	 cf_flags;
+};
 
 struct ctl_status {
 	objid_t		 id;
@@ -98,12 +106,6 @@ struct ctl_script {
 struct ctl_demote {
 	char		 group[IFNAMSIZ];
 	int		 level;
-};
-
-struct ctl_netroute {
-	objid_t		 id;
-	objid_t		 hostid;
-	int		 up;
 };
 
 struct ctl_icmp_event {
@@ -218,6 +220,7 @@ struct portrange {
 };
 
 struct address {
+	objid_t			 rdrid;
 	struct sockaddr_storage	 ss;
 	int			 ipproto;
 	struct portrange	 port;
@@ -370,7 +373,6 @@ struct table {
 	int			 skipped;
 	struct hostlist		 hosts;
 	SSL_CTX			*ssl_ctx;
-	int			 sendbuf_len;
 	char			*sendbuf;
 };
 TAILQ_HEAD(tablelist, table);
@@ -465,15 +467,25 @@ enum noderesult {
 	PN_FAIL			= -1
 };
 
+struct protonode_config {
+	objid_t			 	 protoid;
+	size_t			 	 keylen;
+	size_t			 	 valuelen;
+	size_t			 	 len;
+	u_int			 	 dir;
+};
+
 struct protonode {
+	struct protonode_config		 conf;
 	objid_t				 id;
-	char				*key;
 	enum nodeaction			 action;
-	char				*value;
 	u_int8_t			 flags;
 	enum nodetype			 type;
 	u_int16_t			 mark;
 	u_int16_t			 label;
+
+	char				*key;
+	char				*value;
 
 	SIMPLEQ_HEAD(, protonode)	 head;
 	SIMPLEQ_ENTRY(protonode)	 entry;
@@ -526,7 +538,7 @@ struct protocol {
 	u_int8_t		 tcpipminttl;
 	u_int8_t		 sslflags;
 	char			 sslciphers[768];
-	char			*sslca;
+	char			 sslca[MAXPATHLEN];
 	char			 name[MAX_NAME_SIZE];
 	int			 cache;
 	enum prototype		 type;
@@ -565,6 +577,9 @@ struct relay_config {
 	struct sockaddr_storage	 dstaf;
 	struct timeval		 timeout;
 	enum forwardmode	 fwdmode;
+	off_t			 ssl_cert_len;
+	off_t			 ssl_key_len;
+	off_t			 ssl_ca_len;
 };
 
 struct relay {
@@ -589,11 +604,8 @@ struct relay {
 
 	SSL_CTX			*rl_ssl_ctx;
 	char			*rl_ssl_cert;
-	off_t			 rl_ssl_cert_len;
 	char			*rl_ssl_key;
-	off_t			 rl_ssl_key_len;
 	char			*rl_ssl_ca;
-	off_t			 rl_ssl_ca_len;
 
 	struct ctl_stats	 rl_stats[RELAY_MAXPROC + 1];
 
@@ -635,11 +647,11 @@ struct router_config {
 	objid_t			 gwtable;
 	in_port_t		 gwport;
 	int			 rtable;
+	int			 af;
 };
 
 struct router {
 	struct router_config	 rt_conf;
-	int			 rt_af;
 
 	struct table		*rt_gwtable;
 	struct netroutelist	 rt_netroutes;
@@ -648,6 +660,12 @@ struct router {
 };
 TAILQ_HEAD(routerlist, router);
 
+struct ctl_netroute {
+	int			up;
+	struct host_config	host;
+	struct netroute_config	nr;
+	struct router_config	rt;
+};
 
 /* initially control.h */
 struct control_sock {
@@ -718,6 +736,7 @@ enum imsg_type {
 	IMSG_CTL_HOST_DISABLE,
 	IMSG_CTL_SHUTDOWN,
 	IMSG_CTL_RELOAD,
+	IMSG_CTL_RESET,
 	IMSG_CTL_POLL,
 	IMSG_CTL_NOTIFY,
 	IMSG_CTL_RDR_STATS,
@@ -733,30 +752,28 @@ enum imsg_type {
 	IMSG_NATLOOK,
 	IMSG_DEMOTE,
 	IMSG_STATISTICS,
-	IMSG_RECONF,		/* reconfiguration notifies */
-	IMSG_RECONF_TABLE,
-	IMSG_RECONF_SENDBUF,
-	IMSG_RECONF_HOST,
-	IMSG_RECONF_RDR,
-	IMSG_RECONF_VIRT,
-	IMSG_RECONF_PROTO,
-	IMSG_RECONF_REQUEST_TREE,
-	IMSG_RECONF_RESPONSE_TREE,
-	IMSG_RECONF_PNODE_KEY,
-	IMSG_RECONF_PNODE_VAL,
-	IMSG_RECONF_RELAY,
-	IMSG_RECONF_END,
 	IMSG_SCRIPT,
 	IMSG_SNMPSOCK,
 	IMSG_BINDANY,
-	IMSG_RTMSG		/* from pfe to parent */
+	IMSG_RTMSG,		/* from pfe to parent */
+	IMSG_CFG_TABLE,		/* configuration from parent */
+	IMSG_CFG_HOST,
+	IMSG_CFG_RDR,
+	IMSG_CFG_VIRT,
+	IMSG_CFG_ROUTER,
+	IMSG_CFG_ROUTE,
+	IMSG_CFG_PROTO,
+	IMSG_CFG_PROTONODE,
+	IMSG_CFG_RELAY,
+	IMSG_CFG_DONE
 };
 
 enum privsep_procid {
+	PROC_ALL	= -1,
 	PROC_PARENT	= 0,
-	PROC_PFE,
 	PROC_HCE,
 	PROC_RELAY,
+	PROC_PFE,
 	PROC_MAX
 } privsep_process;
 
@@ -768,6 +785,7 @@ struct privsep {
 	struct imsgev			*ps_ievs[PROC_MAX];
 	const char			*ps_title[PROC_MAX];
 	pid_t				 ps_pid[PROC_MAX];
+	u_int8_t			 ps_what[PROC_MAX];
 
 	u_int				 ps_instances[PROC_MAX];
 	u_int				 ps_instance;
@@ -781,6 +799,7 @@ struct privsep {
 	struct event			 ps_evsighup;
 	struct event			 ps_evsigpipe;
 
+	int				 ps_noaction;
 	struct passwd			*ps_pw;
 	struct relayd			*ps_env;
 };
@@ -802,7 +821,7 @@ struct privsep_proc {
 struct relayd {
 	u_int8_t		 sc_opts;
 	u_int32_t		 sc_flags;
-	const char		*sc_confpath;
+	const char		*sc_conffile;
 	struct pfdata		*sc_pf;
 	int			 sc_rtsock;
 	int			 sc_rtseq;
@@ -842,6 +861,7 @@ struct relayd {
 	struct ctl_icmp_event	 sc_icmp6_recv;
 
 	struct privsep		*sc_ps;
+	int			 sc_reload;
 };
 
 #define RELAYD_OPT_VERBOSE		0x01
@@ -863,8 +883,9 @@ void	 socket_set_blockmode(int, enum blockmodes);
 extern  struct ctl_connlist ctl_conns;
 
 /* parse.y */
-struct relayd	*parse_config(const char *, int);
-int		 cmdline_symset(char *);
+int	 parse_config(const char *, struct relayd *);
+int	 load_config(const char *, struct relayd *);
+int	 cmdline_symset(char *);
 
 /* log.c */
 const char *host_error(enum host_error);
@@ -889,7 +910,7 @@ int	 disable_table(struct ctl_conn *, struct ctl_id *);
 int	 disable_host(struct ctl_conn *, struct ctl_id *, struct host *);
 
 /* pfe_filter.c */
-void	 init_filter(struct relayd *);
+void	 init_filter(struct relayd *, int);
 void	 init_tables(struct relayd *);
 void	 flush_table(struct relayd *, struct rdr *);
 void	 sync_table(struct relayd *, struct rdr *, struct table *);
@@ -910,6 +931,7 @@ void	 hce_notify_done(struct host *, enum host_error);
 
 /* relay.c */
 pid_t	 relay(struct privsep *, struct privsep_proc *);
+int	 relay_privinit(struct relay *);
 void	 relay_notify_done(struct host *, const char *);
 int	 relay_session_cmp(struct rsession *, struct rsession *);
 int	 relay_load_certfiles(struct relay *);
@@ -962,6 +984,7 @@ struct host	*host_find(struct relayd *, objid_t);
 struct table	*table_find(struct relayd *, objid_t);
 struct rdr	*rdr_find(struct relayd *, objid_t);
 struct netroute	*route_find(struct relayd *, objid_t);
+struct router	*router_find(struct relayd *, objid_t);
 struct host	*host_findbyname(struct relayd *, const char *);
 struct table	*table_findbyname(struct relayd *, const char *);
 struct table	*table_findbyconf(struct relayd *, struct table *);
@@ -970,14 +993,15 @@ void		 event_again(struct event *, int, short,
 		    void (*)(int, short, void *),
 		    struct timeval *, struct timeval *, void *);
 struct relay	*relay_find(struct relayd *, objid_t);
+struct protocol	*proto_find(struct relayd *, objid_t);
 struct rsession	*session_find(struct relayd *, objid_t);
 struct relay	*relay_findbyname(struct relayd *, const char *);
 struct relay	*relay_findbyaddr(struct relayd *, struct relay_config *);
 int		 expand_string(char *, size_t, const char *, const char *);
 void		 translate_string(char *);
-void		 purge_config(struct relayd *, u_int8_t);
+void		 purge_tree(struct proto_tree *);
 void		 purge_table(struct tablelist *, struct table *);
-void		 merge_config(struct relayd *, struct relayd *);
+void		 purge_relay(struct relayd *, struct relay *);
 char		*digeststr(enum digest_type, const u_int8_t *, size_t, char *);
 const char	*canonicalize_host(const char *, char *, size_t);
 struct protonode *protonode_header(enum direction, struct protocol *,
@@ -992,6 +1016,8 @@ void		 imsg_event_add(struct imsgev *);
 int	 	 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
 		    pid_t, int, void *, u_int16_t);
 void		 socket_rlimit(int);
+char		*get_string(u_int8_t *, size_t);
+void		*get_data(u_int8_t *, size_t);
 
 /* carp.c */
 int	 carp_demote_init(char *, int);
@@ -1008,7 +1034,8 @@ void		 pn_ref(u_int16_t);
 
 /* snmp.c */
 void	 snmp_init(struct relayd *, enum privsep_procid);
-int	 snmp_sendsock(struct relayd *, enum privsep_procid);
+int	 snmp_setsock(struct relayd *, enum privsep_procid);
+int	 snmp_getsock(struct relayd *, struct imsg *);
 void	 snmp_hosttrap(struct relayd *, struct table *, struct host *);
 
 /* shuffle.c */
@@ -1028,11 +1055,13 @@ __dead void fatalx(const char *);
 /* proc.c */
 void	 proc_init(struct privsep *, struct privsep_proc *, u_int);
 void	 proc_kill(struct privsep *);
+void	 proc_clear(struct privsep *, int);
 void	 proc_config(struct privsep *, struct privsep_proc *, u_int);
 void	 proc_dispatch(int, short event, void *);
 pid_t	 proc_run(struct privsep *, struct privsep_proc *,
 	    struct privsep_proc *, u_int,
 	    void (*)(struct privsep *, struct privsep_proc *, void *), void *);
+void	 proc_range(struct privsep *, enum privsep_procid, int *, int *);
 int	 proc_compose_imsg(struct privsep *, enum privsep_procid, int,
 	    u_int16_t, int, void *, u_int16_t);
 int	 proc_composev_imsg(struct privsep *, enum privsep_procid, int,
@@ -1047,3 +1076,26 @@ int	 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
 	    pid_t, int, void *, u_int16_t);
 int	 imsg_composev_event(struct imsgev *, u_int16_t, u_int32_t,
 	    pid_t, int, const struct iovec *, int);
+
+/* config.c */
+int	 config_init(struct relayd *);
+void	 config_purge(struct relayd *, u_int);
+int	 config_setreset(struct relayd *, u_int);
+int	 config_getreset(struct relayd *, struct imsg *);
+int	 config_getcfg(struct relayd *, struct imsg *);
+int	 config_settable(struct relayd *, struct table *);
+int	 config_gettable(struct relayd *, struct imsg *);
+int	 config_gethost(struct relayd *, struct imsg *);
+int	 config_setrdr(struct relayd *, struct rdr *);
+int	 config_getrdr(struct relayd *, struct imsg *);
+int	 config_getvirt(struct relayd *, struct imsg *);
+int	 config_setrt(struct relayd *, struct router *);
+int	 config_getrt(struct relayd *, struct imsg *);
+int	 config_getroute(struct relayd *, struct imsg *);
+int	 config_setproto(struct relayd *env, struct protocol *);
+int	 config_getproto(struct relayd *, struct imsg *);
+int	 config_setprotonode(struct relayd *, enum privsep_procid,
+	    struct protocol *, enum direction);
+int	 config_getprotonode(struct relayd *, struct imsg *);
+int	 config_setrelay(struct relayd *env, struct relay *);
+int	 config_getrelay(struct relayd *, struct imsg *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.1 2011/05/09 12:09:58 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.2 2011/05/19 08:56:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010,2011 Reyk Floeter <reyk@openbsd.org>
@@ -105,6 +105,8 @@ proc_kill(struct privsep *ps)
 	do {
 		pid = waitpid(WAIT_ANY, NULL, 0);
 	} while (pid != -1 || (pid == -1 && errno == EINTR));
+
+	proc_clear(ps, 1);
 }
 
 void
@@ -134,6 +136,8 @@ proc_setup(struct privsep *ps)
 				fatal(NULL);
 
 			for (n = 0; n < count; n++) {
+				if (ps->ps_noaction)
+					continue;
 				if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
 				    sockpair) == -1)
 					fatal("socketpair");
@@ -175,7 +179,8 @@ proc_config(struct privsep *ps, struct privsep_proc *p, u_int nproc)
 				    ps->ps_instance == instance)
 					continue;
 
-				close(ps->ps_pipes[i][j][n]);
+				if (!ps->ps_noaction)
+					close(ps->ps_pipes[i][j][n]);
 				ps->ps_pipes[i][j][n] = -1;
 			}
 		}
@@ -221,6 +226,35 @@ proc_config(struct privsep *ps, struct privsep_proc *p, u_int nproc)
 }
 
 void
+proc_clear(struct privsep *ps, int purge)
+{
+	u_int	 src = privsep_process, dst, n, count;
+
+	if (ps == NULL)
+		return;
+
+	for (dst = 0; dst < PROC_MAX; dst++) {
+		if (src == dst || ps->ps_ievs[dst] == NULL)
+			continue;
+
+		count = ps->ps_instances[src] * ps->ps_instances[dst];
+
+		for (n = 0; n < count; n++) {
+			if (ps->ps_pipes[src][dst][n] == -1)
+				continue;
+			if (purge) {
+				event_del(&(ps->ps_ievs[dst][n].ev));
+				imsg_clear(&(ps->ps_ievs[dst][n].ibuf));
+				close(ps->ps_pipes[src][dst][n]);
+			} else
+				imsg_flush(&(ps->ps_ievs[dst][n].ibuf));
+		}
+		if (purge)
+			free(ps->ps_ievs[dst]);
+	}
+}
+
+void
 proc_shutdown(struct privsep_proc *p)
 {
 	struct privsep	*ps = p->p_ps;
@@ -230,6 +264,8 @@ proc_shutdown(struct privsep_proc *p)
 
 	if (p->p_shutdown != NULL)
 		(*p->p_shutdown)();
+
+	proc_clear(ps, 1);
 
 	log_info("%s exiting, pid %d", p->p_title, getpid());
 
@@ -267,6 +303,9 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 	const char	*root;
 	u_int32_t	 seed[256];
 	u_int		 n;
+
+	if (ps->ps_noaction)
+		return (0);
 
 	switch (pid = fork()) {
 	case -1:
@@ -403,7 +442,7 @@ proc_dispatch(int fd, short event, void *arg)
 		if (n == 0)
 			break;
 
-#ifdef DEBUG
+#if DEBUG > 1
 		log_debug("%s: %s %d got imsg %d from %s %d",
 		    __func__, title, ps->ps_instance + 1,
 		    imsg.hdr.type, p->p_title, p->p_instance);
@@ -522,6 +561,7 @@ proc_compose_imsg(struct privsep *ps, enum privsep_procid id, int n,
 		if (imsg_compose_event(&ps->ps_ievs[id][n],
 		    type, -1, 0, fd, data, datalen) == -1)
 			return (-1);
+
 	return (0);
 }
 

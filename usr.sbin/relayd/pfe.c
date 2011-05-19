@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.68 2011/05/09 12:08:47 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.69 2011/05/19 08:56:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -46,7 +46,7 @@ int	 pfe_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 int	 pfe_dispatch_hce(int, struct privsep_proc *, struct imsg *);
 int	 pfe_dispatch_relay(int, struct privsep_proc *, struct imsg *);
 
-static struct relayd	*env = NULL;
+static struct relayd		*env = NULL;
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	pfe_dispatch_parent },
@@ -59,25 +59,23 @@ pfe(struct privsep *ps, struct privsep_proc *p)
 {
 	env = ps->ps_env;
 
-	init_filter(env);
-	init_tables(env);
-
 	return (proc_run(ps, p, procs, nitems(procs), pfe_init, NULL));
 }
 
 void
 pfe_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
+	if (config_init(ps->ps_env) == -1)
+		fatal("failed to initialize configuration");
+
 	p->p_shutdown = pfe_shutdown;
-	purge_config(env, PURGE_PROTOS);
-	pfe_setup_events();
-	pfe_sync();
 }
 
 void
 pfe_shutdown(void)
 {
 	flush_rulesets(env);
+	config_purge(env, CONFIG_ALL);
 }
 
 void
@@ -86,9 +84,11 @@ pfe_setup_events(void)
 	struct timeval	 tv;
 
 	/* Schedule statistics timer */
-	evtimer_set(&env->sc_statev, pfe_statistics, NULL);
-	bcopy(&env->sc_statinterval, &tv, sizeof(tv));
-	evtimer_add(&env->sc_statev, &tv);
+	if (!event_initialized(&env->sc_statev)) {
+		evtimer_set(&env->sc_statev, pfe_statistics, NULL);
+		bcopy(&env->sc_statinterval, &tv, sizeof(tv));
+		evtimer_add(&env->sc_statev, &tv);
+	}
 }
 
 void
@@ -172,87 +172,42 @@ pfe_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 pfe_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	static struct rdr	*rdr = NULL;
-	static struct table	*table = NULL;
-	struct host		*host, *parent;
-	struct address		*virt;
-
 	switch (imsg->hdr.type) {
-	case IMSG_RECONF:
-		IMSG_SIZE_CHECK(imsg, env);
-
-		log_debug("%s: reloading configuration", __func__);
-
-		pfe_disable_events();
-		purge_config(env, PURGE_RDRS|PURGE_TABLES);
-		merge_config(env, (struct relayd *)imsg->data);
-
-		/*
-		 * no relays when reconfiguring yet.
-		 */
-		env->sc_relays = NULL;
-		env->sc_protos = NULL;
-
-		env->sc_tables = calloc(1, sizeof(*env->sc_tables));
-		env->sc_rdrs = calloc(1, sizeof(*env->sc_rdrs));
-		if (env->sc_tables == NULL || env->sc_rdrs == NULL)
-			fatal(NULL);
-
-		TAILQ_INIT(env->sc_tables);
-		TAILQ_INIT(env->sc_rdrs);
+	case IMSG_CFG_TABLE:
+		config_gettable(env, imsg);
 		break;
-	case IMSG_RECONF_TABLE:
-		if ((table = calloc(1, sizeof(*table))) == NULL)
-			fatal(NULL);
-		memcpy(&table->conf, imsg->data, sizeof(table->conf));
-		TAILQ_INIT(&table->hosts);
-		TAILQ_INSERT_TAIL(env->sc_tables, table, entry);
+	case IMSG_CFG_HOST:
+		config_gethost(env, imsg);
 		break;
-	case IMSG_RECONF_HOST:
-		if ((host = calloc(1, sizeof(*host))) == NULL)
-			fatal(NULL);
-		memcpy(&host->conf, imsg->data, sizeof(host->conf));
-		host->tablename = table->conf.name;
-		TAILQ_INSERT_TAIL(&table->hosts, host, entry);
-		if (host->conf.parentid) {
-			parent = host_find(env, host->conf.parentid);
-			SLIST_INSERT_HEAD(&parent->children,
-			    host, child);
-		}
+	case IMSG_CFG_RDR:
+		config_getrdr(env, imsg);
 		break;
-	case IMSG_RECONF_RDR:
-		if ((rdr = calloc(1, sizeof(*rdr))) == NULL)
-			fatal(NULL);
-		memcpy(&rdr->conf, imsg->data,
-		    sizeof(rdr->conf));
-		rdr->table = table_find(env,
-		     rdr->conf.table_id);
-		if (rdr->conf.backup_id == EMPTY_TABLE)
-			rdr->backup = &env->sc_empty_table;
-		else
-			rdr->backup = table_find(env,
-			    rdr->conf.backup_id);
-		if (rdr->table == NULL || rdr->backup == NULL)
-			fatal("pfe_dispatch_parent:"
-			    " corrupted configuration");
-		log_debug("%s: redirect table %s, backup %s",
-		    __func__,
-		    rdr->table->conf.name,
-		    rdr->backup->conf.name);
-		TAILQ_INIT(&rdr->virts);
-		TAILQ_INSERT_TAIL(env->sc_rdrs, rdr, entry);
+	case IMSG_CFG_VIRT:
+		config_getvirt(env, imsg);
 		break;
-	case IMSG_RECONF_VIRT:
-		if ((virt = calloc(1, sizeof(*virt))) == NULL)
-			fatal(NULL);
-		memcpy(virt, imsg->data, sizeof(*virt));
-		TAILQ_INSERT_TAIL(&rdr->virts, virt, entry);
+	case IMSG_CFG_ROUTER:
+		config_getrt(env, imsg);
 		break;
-	case IMSG_RECONF_END:
-		log_warnx("%s: configuration reloaded", __func__);
+	case IMSG_CFG_ROUTE:
+		config_getroute(env, imsg);
+		break;
+	case IMSG_CFG_PROTO:
+		config_getproto(env, imsg);
+		break;
+	case IMSG_CFG_PROTONODE:
+		break;
+	case IMSG_CFG_RELAY:
+		config_getrelay(env, imsg);
+		break;
+	case IMSG_CFG_DONE:
+		config_getcfg(env, imsg);
+		init_filter(env, imsg->fd);
 		init_tables(env);
 		pfe_setup_events();
 		pfe_sync();
+		break;
+	case IMSG_CTL_RESET:
+		config_getreset(env, imsg);
 		break;
 	default:
 		return (-1);
@@ -741,6 +696,9 @@ pfe_sync(void)
 	}
 
 	TAILQ_FOREACH(table, env->sc_tables, entry) {
+		if (table->conf.check == CHECK_NOCHECK)
+			continue;
+
 		/*
 		 * clean up change flag.
 		 */

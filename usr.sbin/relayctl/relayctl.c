@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.43 2011/05/09 12:08:46 reyk Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.44 2011/05/19 08:56:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -179,8 +179,14 @@ main(int argc, char *argv[])
 	case POLL:
 		imsg_compose(ibuf, IMSG_CTL_POLL, 0, 0, -1, NULL, 0);
 		break;
+	case LOAD:
+		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, -1,
+		    res->path, strlen(res->path));
+		done = 1;
+		break;
 	case RELOAD:
 		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, -1, NULL, 0);
+		done = 1;
 		break;
 	case MONITOR:
 		imsg_compose(ibuf, IMSG_CTL_NOTIFY, 0, 0, -1, NULL, 0);
@@ -229,13 +235,14 @@ main(int argc, char *argv[])
 			case HOST_DISABLE:
 			case HOST_ENABLE:
 			case POLL:
-			case RELOAD:
 			case SHUTDOWN:
 				done = show_command_output(&imsg);
 				break;
 			case NONE:
 			case LOG_VERBOSE:
 			case LOG_BRIEF:
+			case RELOAD:
+			case LOAD:
 				break;
 			case MONITOR:
 				done = monitor(&imsg);

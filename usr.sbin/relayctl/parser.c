@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.24 2010/09/04 21:31:04 tedu Exp $	*/
+/*	$OpenBSD: parser.c,v 1.25 2011/05/19 08:56:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -46,7 +46,8 @@ enum token_type {
 	HOSTID,
 	TABLEID,
 	RDRID,
-	KEYWORD
+	KEYWORD,
+	PATH
 };
 
 struct token {
@@ -65,10 +66,12 @@ static const struct token t_rdr_id[];
 static const struct token t_table_id[];
 static const struct token t_host_id[];
 static const struct token t_log[];
+static const struct token t_load[];
 
 static const struct token t_main[] = {
 	{KEYWORD,	"monitor",	MONITOR,	NULL},
 	{KEYWORD,	"show",		NONE,		t_show},
+	{KEYWORD,	"load",		LOAD,		t_load},
 	{KEYWORD,	"poll",		POLL,		NULL},
 	{KEYWORD,	"reload",	RELOAD,		NULL},
 	{KEYWORD,	"stop",		SHUTDOWN,	NULL},
@@ -128,6 +131,11 @@ static const struct token t_host_id[] = {
 static const struct token t_log[] = {
 	{KEYWORD,	"verbose",	LOG_VERBOSE, 	NULL},
 	{KEYWORD,	"brief",	LOG_BRIEF, 	NULL},
+	{ENDTOKEN, 	"",		NONE,		NULL}
+};
+
+static const struct token t_load[] = {
+	{PATH,		"",		NONE,		NULL},
 	{ENDTOKEN, 	"",		NONE,		NULL}
 };
 
@@ -228,6 +236,13 @@ match_token(const char *word, const struct token *table,
 			t = &table[i];
 			match++;
 			break;
+		case PATH:
+			if (!match && word != NULL && strlen(word) > 0) {
+				res->path = strdup(word);
+				match++;
+				t = &table[i];
+			}
+			break;
 		case ENDTOKEN:
 			break;
 		}
@@ -267,6 +282,9 @@ show_valid_args(const struct token *table)
 			break;
 		case HOSTID:
 			fprintf(stderr, "  <hostid>\n");
+			break;
+		case PATH:
+			fprintf(stderr, "  <path>\n");
 			break;
 		case ENDTOKEN:
 			break;

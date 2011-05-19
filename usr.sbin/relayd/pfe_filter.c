@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.46 2011/05/05 12:01:44 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.47 2011/05/19 08:56:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -33,6 +33,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <errno.h>
 
 #include <openssl/ssl.h>
@@ -53,17 +54,21 @@ void	 kill_tables(struct relayd *);
 int	 kill_srcnodes(struct relayd *, struct table *);
 
 void
-init_filter(struct relayd *env)
+init_filter(struct relayd *env, int s)
 {
 	struct pf_status	status;
 
 	if (!(env->sc_flags & F_NEEDPF))
 		return;
 
-	if ((env->sc_pf = calloc(1, sizeof(*(env->sc_pf)))) == NULL)
-		fatal("calloc");
-	if ((env->sc_pf->dev = open(PF_SOCKET, O_RDWR)) == -1)
-		fatal("init_filter: cannot open pf socket");
+	if (s == -1)
+		fatalx("init_filter: invalid socket");
+	if (env->sc_pf == NULL) {
+		if ((env->sc_pf = calloc(1, sizeof(*(env->sc_pf)))) == NULL)
+			fatal("calloc");
+	} else
+		close(env->sc_pf->dev);
+	env->sc_pf->dev = s;
 	if (ioctl(env->sc_pf->dev, DIOCGETSTATUS, &status) == -1)
 		fatal("init_filter: DIOCGETSTATUS");
 	if (!status.running)
@@ -366,7 +371,7 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 	char			 anchor[PF_ANCHOR_NAME_SIZE];
 	struct table		*t = rdr->table;
 
-	if (!(env->sc_flags & F_NEEDPF))
+	if ((env->sc_flags & F_NEEDPF) == 0)
 		return;
 
 	bzero(anchor, sizeof(anchor));

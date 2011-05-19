@@ -1,4 +1,4 @@
-.\" $OpenBSD: relayctl.8,v 1.26 2009/10/22 15:02:12 sobrado Exp $
+.\" $OpenBSD: relayctl.8,v 1.27 2011/05/19 08:56:49 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 22 2009 $
+.Dd $Mdocdate: May 19 2011 $
 .Dt RELAYCTL 8
 .Os
 .Sh NAME
@@ -39,6 +39,8 @@ Treat it as though it were always down.
 .It Cm host enable Op Ar name | id
 Enable the host.
 Start checking its health again.
+.It Cm load Ar filename
+Reload the configuration from the specified file.
 .It Cm monitor
 Continuously report any changes in the host checking engine and the
 .Xr pf 4
