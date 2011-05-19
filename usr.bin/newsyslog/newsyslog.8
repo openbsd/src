@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.45 2009/11/28 14:42:04 schwarze Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.46 2011/05/19 05:11:39 lum Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -41,7 +41,7 @@
 .\" the suitability of this software for any purpose.  It is
 .\" provided "as is" without express or implied warranty.
 .\"
-.Dd $Mdocdate: November 28 2009 $
+.Dd $Mdocdate: May 19 2011 $
 .Dt NEWSYSLOG 8
 .Os
 .Sh NAME
@@ -213,7 +213,7 @@ or set to
 then the size of
 the log file is not taken into account when determining when to trim the
 log file.
-By default, files smaller than 512 bytes are not rotated unless the
+By default, files smaller than 256 bytes are not rotated unless the
 .Sq B
 (binary) flag is set or the
 .Fl F
