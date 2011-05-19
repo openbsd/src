@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.35 2011/04/09 15:39:22 schwarze Exp $
+#	$OpenBSD: rc.subr,v 1.36 2011/05/19 09:50:50 ajacoutot Exp $
 
 # Default functions and variables used by rc.d(8) scripts.
 
@@ -24,7 +24,7 @@ rc_stop() {
 }
 
 rc_do() {
-	if [ X"${RC_DEBUG}" = X"1" ]; then
+	if [ -n "${RC_DEBUG}" ]; then
 		echo "doing $@" && "$@"
 	else
 		"$@" >/dev/null 2>&1
