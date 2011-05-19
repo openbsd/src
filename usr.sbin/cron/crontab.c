@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.61 2011/04/04 15:17:52 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.62 2011/05/19 15:00:17 phessler Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -547,7 +547,7 @@ replace_cmd(void) {
 		case FALSE:
 			e = load_entry(tmp, check_error, pw, envp);
 			if (e)
-				free(e);
+				free_entry(e);
 			break;
 		case TRUE:
 			break;

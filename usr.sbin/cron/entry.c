@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.32 2009/10/29 18:56:47 markus Exp $	*/
+/*	$OpenBSD: entry.c,v 1.33 2011/05/19 15:00:17 phessler Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -59,7 +59,8 @@ void
 free_entry(entry *e) {
 	free(e->cmd);
 	free(e->pwd);
-	env_free(e->envp);
+	if (e->envp)
+		env_free(e->envp);
 	free(e);
 }
 
@@ -103,6 +104,10 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 	 */
 
 	e = (entry *) calloc(sizeof(entry), sizeof(char));
+	if (e == NULL) {
+		ecode = e_memory;
+		goto eof;
+	}
 
 	if (ch == '@') {
 		/* all of these should be flagged and load-limited; i.e.,
@@ -387,13 +392,8 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 	return (e);
 
  eof:
-	if (e->envp)
-		env_free(e->envp);
-	if (e->pwd)
-		free(e->pwd);
-	if (e->cmd)
-		free(e->cmd);
-	free(e);
+	if (e)
+		free_entry(e);
 	while (ch != '\n' && !feof(file))
 		ch = get_char(file);
 	if (ecode != e_none && error_func)
