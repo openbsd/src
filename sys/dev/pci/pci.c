@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.90 2011/05/14 13:23:38 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.91 2011/05/19 20:14:55 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -63,6 +63,10 @@ struct pci_dev {
 	pcireg_t pd_int;
 	pcireg_t pd_map[NMAPREG];
 	pcireg_t pd_mask[NMAPREG];
+	pcireg_t pd_msi_mc;
+	pcireg_t pd_msi_ma;
+	pcireg_t pd_msi_mau32;
+	pcireg_t pd_msi_md;
 	int pd_pmcsr_state;
 };
 
@@ -216,8 +220,8 @@ void
 pci_suspend(struct pci_softc *sc)
 {
 	struct pci_dev *pd;
-	pcireg_t bhlc;
-	int i;
+	pcireg_t bhlc, reg;
+	int off, i;
 
 	LIST_FOREACH(pd, &sc->sc_devs, pd_next) {
 		/*
@@ -240,6 +244,22 @@ pci_suspend(struct pci_softc *sc)
 		pd->pd_int = pci_conf_read(sc->sc_pc, pd->pd_tag,
 		    PCI_INTERRUPT_REG);
 
+		if (pci_get_capability(sc->sc_pc, pd->pd_tag,
+		    PCI_CAP_MSI, &off, &reg)) {
+			pd->pd_msi_ma = pci_conf_read(sc->sc_pc, pd->pd_tag,
+			    off + PCI_MSI_MA);
+			if (reg & PCI_MSI_MC_C64) {
+				pd->pd_msi_mau32 = pci_conf_read(sc->sc_pc,
+				    pd->pd_tag, off + PCI_MSI_MAU32);
+				pd->pd_msi_md = pci_conf_read(sc->sc_pc,
+				    pd->pd_tag, off + PCI_MSI_MD64);
+			} else {
+				pd->pd_msi_md = pci_conf_read(sc->sc_pc,
+				    pd->pd_tag, off + PCI_MSI_MD32);
+			}
+			pd->pd_msi_mc = reg;
+		}
+
 		if (pci_dopm) {
 			/* Place the device into D3. */
 			pd->pd_pmcsr_state = pci_get_powerstate(sc->sc_pc,
@@ -255,7 +275,7 @@ pci_resume(struct pci_softc *sc)
 {
 	struct pci_dev *pd;
 	pcireg_t bhlc, reg;
-	int i;
+	int off, i;
 
 	LIST_FOREACH(pd, &sc->sc_devs, pd_next) {
 		/*
@@ -285,6 +305,23 @@ pci_resume(struct pci_softc *sc)
 		    pd->pd_bhlc);
 		pci_conf_write(sc->sc_pc, pd->pd_tag, PCI_INTERRUPT_REG,
 		    pd->pd_int);
+
+		if (pci_get_capability(sc->sc_pc, pd->pd_tag,
+		    PCI_CAP_MSI, &off, &reg)) {
+			pci_conf_write(sc->sc_pc, pd->pd_tag,
+			    off + PCI_MSI_MA, pd->pd_msi_ma);
+			if (reg & PCI_MSI_MC_C64) {
+				pci_conf_write(sc->sc_pc, pd->pd_tag,
+				    off + PCI_MSI_MAU32, pd->pd_msi_mau32);
+				pci_conf_write(sc->sc_pc, pd->pd_tag,
+				    off + PCI_MSI_MD64, pd->pd_msi_md);
+			} else {
+				pci_conf_write(sc->sc_pc, pd->pd_tag,
+				    off + PCI_MSI_MD32, pd->pd_msi_md);
+			}
+			pci_conf_write(sc->sc_pc, pd->pd_tag,
+			    off + PCI_MSI_MC, pd->pd_msi_mc);
+		}
 	}
 }
 
