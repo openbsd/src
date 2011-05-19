@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.1 2011/05/19 08:56:49 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.2 2011/05/19 09:13:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 Reyk Floeter <reyk@openbsd.org>
@@ -329,8 +329,12 @@ config_gettable(struct relayd *env, struct imsg *imsg)
 	s = sizeof(tb->conf);
 
 	sb = IMSG_DATA_SIZE(imsg) - s;
-	if (sb > 0)
-		tb->sendbuf = get_string(p + s, sb);
+	if (sb > 0) {
+		if ((tb->sendbuf = get_string(p + s, sb)) == NULL) {
+			free(tb);
+			return (-1);
+		}
+	}
 
 	TAILQ_INIT(&tb->hosts);
 	TAILQ_INSERT_TAIL(env->sc_tables, tb, entry);
@@ -611,17 +615,23 @@ config_getproto(struct relayd *env, struct imsg *imsg)
 {
 	struct protocol		*proto;
 	size_t			 styl;
+	size_t			 s;
+	u_int8_t		*p = imsg->data;
 
 	if ((proto = calloc(1, sizeof(*proto))) == NULL)
 		return (-1);
 
 	IMSG_SIZE_CHECK(imsg, proto);
-	memcpy(proto, imsg->data, sizeof(*proto));
+	memcpy(proto, p, sizeof(*proto));
+	s = sizeof(*proto);
 
-	styl = IMSG_DATA_SIZE(imsg) - sizeof(*proto);
-	if (styl > 0)
-		proto->style = get_string((char *)imsg->data +
-		    sizeof(*proto), styl);
+	styl = IMSG_DATA_SIZE(imsg) - s;
+	if (styl > 0) {
+		if ((proto->style = get_string(p + s, styl)) == NULL) {
+			free(proto);
+			return (-1);
+		}
+	}
 
 	proto->request_nodes = 0;
 	proto->response_nodes = 0;
@@ -722,15 +732,29 @@ config_getprotonode(struct relayd *env, struct imsg *imsg)
 		bzero(&pn.head, sizeof(pn.head));
 
 		if (pn.conf.keylen) {
-			pn.key = get_string(p + s, pn.conf.keylen);
+			if ((pn.key = get_string(p + s,
+			    pn.conf.keylen)) == NULL) {
+				log_debug("%s: failed to get key", __func__);
+				return (-1);
+			}
 			s += pn.conf.keylen;
 		}
 		if (pn.conf.valuelen) {
-			pn.value = get_string(p + s, pn.conf.valuelen);
+			if ((pn.value = get_string(p + s,
+			    pn.conf.valuelen)) == NULL) {
+				log_debug("%s: failed to get value", __func__);
+				if (pn.key != NULL)
+					free(pn.key);
+				return (-1);
+			}
 			s += pn.conf.valuelen;
 		}
 
 		if (protonode_add(pn.conf.dir, proto, &pn) == -1) {
+			if (pn.key != NULL)
+				free(pn.key);
+			if (pn.value != NULL)
+				free(pn.value);
 			log_debug("%s: failed to add protocol node", __func__);
 			return (-1);
 		}
