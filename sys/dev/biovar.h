@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.39 2011/04/14 02:41:40 marco Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.40 2011/05/20 14:46:44 marco Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -213,7 +213,7 @@ struct bioc_discipline {
 	void		*bd_data;
 };
 
-#define BIOCINSTALLBOOT _IOWR('B', 40, struct bioc_installboot)
+#define BIOCINSTALLBOOT _IOWR('B', 41, struct bioc_installboot)
 struct bioc_installboot {
 	void		*bb_cookie;
 	char		bb_dev[16];
