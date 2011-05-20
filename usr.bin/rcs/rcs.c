@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.75 2011/04/20 19:34:16 nicm Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.76 2011/05/20 19:21:10 nicm Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -50,75 +50,6 @@ static const char rcs_state_invch[] = RCS_STATE_INVALCHAR;
 /* invalid characters in RCS symbol names */
 static const char rcs_sym_invch[] = RCS_SYM_INVALCHAR;
 
-/* comment leaders, depending on the file's suffix */
-static const struct rcs_comment {
-	const char	*rc_suffix;
-	const char	*rc_cstr;
-} rcs_comments[] = {
-	{ "1",    ".\\\" " },
-	{ "2",    ".\\\" " },
-	{ "3",    ".\\\" " },
-	{ "4",    ".\\\" " },
-	{ "5",    ".\\\" " },
-	{ "6",    ".\\\" " },
-	{ "7",    ".\\\" " },
-	{ "8",    ".\\\" " },
-	{ "9",    ".\\\" " },
-	{ "a",    "-- "    },	/* Ada		 */
-	{ "ada",  "-- "    },
-	{ "adb",  "-- "    },
-	{ "asm",  ";; "    },	/* assembler (MS-DOS) */
-	{ "ads",  "-- "    },	/* Ada */
-	{ "bat",  ":: "    },	/* batch (MS-DOS) */
-	{ "body", "-- "    },	/* Ada */
-	{ "c",    " * "    },	/* C */
-	{ "c++",  "// "    },	/* C++ */
-	{ "cc",   "// "    },
-	{ "cpp",  "// "    },
-	{ "cxx",  "// "    },
-	{ "m",    "// "    },	/* Objective-C */
-	{ "cl",   ";;; "   },	/* Common Lisp	 */
-	{ "cmd",  ":: "    },	/* command (OS/2) */
-	{ "cmf",  "c "     },	/* CM Fortran	 */
-	{ "csh",  "# "     },	/* shell	 */
-	{ "e",    "# "     },	/* efl		 */
-	{ "epsf", "% "     },	/* encapsulated postscript */
-	{ "epsi", "% "     },	/* encapsulated postscript */
-	{ "el",   "; "     },	/* Emacs Lisp	 */
-	{ "f",    "c "     },	/* Fortran	 */
-	{ "for",  "c "     },
-	{ "h",    " * "    },	/* C-header	 */
-	{ "hh",   "// "    },	/* C++ header	 */
-	{ "hpp",  "// "    },
-	{ "hxx",  "// "    },
-	{ "in",   "# "     },	/* for Makefile.in */
-	{ "l",    " * "    },	/* lex */
-	{ "mac",  ";; "    },	/* macro (DEC-10, MS-DOS, PDP-11, VMS, etc) */
-	{ "mak",  "# "     },	/* makefile, e.g. Visual C++ */
-	{ "me",   ".\\\" " },	/* me-macros	t/nroff	 */
-	{ "ml",   "; "     },	/* mocklisp	 */
-	{ "mm",   ".\\\" " },	/* mm-macros	t/nroff	 */
-	{ "ms",   ".\\\" " },	/* ms-macros	t/nroff	 */
-	{ "man",  ".\\\" " },	/* man-macros	t/nroff	 */
-	{ "p",    " * "    },	/* pascal	 */
-	{ "pas",  " * "    },
-	{ "pl",   "# "     },	/* Perl	(conflict with Prolog) */
-	{ "pm",   "# "     },	/* Perl	module */
-	{ "ps",   "% "     },	/* postscript */
-	{ "psw",  "% "     },	/* postscript wrap */
-	{ "pswm", "% "     },	/* postscript wrap */
-	{ "r",    "# "     },	/* ratfor	 */
-	{ "rc",   " * "    },	/* Microsoft Windows resource file */
-	{ "red",  "% "     },	/* psl/rlisp	 */
-	{ "sh",   "# "     },	/* shell	 */
-	{ "sl",   "% "     },	/* psl		 */
-	{ "spec", "-- "    },	/* Ada		 */
-	{ "tex",  "% "     },	/* tex		 */
-	{ "y",    " * "    },	/* yacc		 */
-	{ "ye",   " * "    },	/* yacc-efl	 */
-	{ "yr",   " * "    },	/* yacc-ratfor	 */
-};
-
 struct rcs_kw rcs_expkw[] =  {
 	{ "Author",	RCS_KW_AUTHOR   },
 	{ "Date",	RCS_KW_DATE     },
@@ -132,19 +63,6 @@ struct rcs_kw rcs_expkw[] =  {
 	{ "Source",	RCS_KW_SOURCE   },
 	{ "State",	RCS_KW_STATE    },
 };
-
-#define NB_COMTYPES	(sizeof(rcs_comments)/sizeof(rcs_comments[0]))
-
-static const char *rcs_errstrs[] = {
-	"No error",
-	"No such entry",
-	"Duplicate entry found",
-	"Bad RCS number",
-	"Invalid RCS symbol",
-	"Parse error",
-};
-
-#define RCS_NERR   (sizeof(rcs_errstrs)/sizeof(rcs_errstrs[0]))
 
 int rcs_errno = RCS_ERR_NOERR;
 char *timezone_flag = NULL;
@@ -510,17 +428,6 @@ out:
 }
 
 /*
- * rcs_head_get()
- *
- * Retrieve the revision number of the head revision for the RCS file <file>.
- */
-const RCSNUM *
-rcs_head_get(RCSFILE *file)
-{
-	return (file->rf_head);
-}
-
-/*
  * rcs_head_set()
  *
  * Set the revision number of the head revision for the RCS file <file> to
@@ -552,23 +459,6 @@ const RCSNUM *
 rcs_branch_get(RCSFILE *file)
 {
 	return (file->rf_branch);
-}
-
-/*
- * rcs_branch_set()
- *
- * Set the default branch for the RCS file <file> to <bnum>.
- * Returns 0 on success, -1 on failure.
- */
-int
-rcs_branch_set(RCSFILE *file, const RCSNUM *bnum)
-{
-	if (file->rf_branch == NULL)
-		file->rf_branch = rcsnum_alloc();
-
-	rcsnum_cpy(bnum, file->rf_branch, 0);
-	file->rf_flags &= ~RCS_SYNCED;
-	return (0);
 }
 
 /*
@@ -864,17 +754,6 @@ rcs_lock_remove(RCSFILE *file, const char *user, RCSNUM *rev)
 }
 
 /*
- * rcs_desc_get()
- *
- * Retrieve the description for the RCS file <file>.
- */
-const char *
-rcs_desc_get(RCSFILE *file)
-{
-	return (file->rf_desc);
-}
-
-/*
  * rcs_desc_set()
  *
  * Set the description for the RCS file <file>.
@@ -889,41 +768,6 @@ rcs_desc_set(RCSFILE *file, const char *desc)
 		xfree(file->rf_desc);
 	file->rf_desc = tmp;
 	file->rf_flags &= ~RCS_SYNCED;
-}
-
-/*
- * rcs_comment_lookup()
- *
- * Lookup the assumed comment leader based on a file's suffix.
- * Returns a pointer to the string on success, or NULL on failure.
- */
-const char *
-rcs_comment_lookup(const char *filename)
-{
-	int i;
-	const char *sp;
-
-	if ((sp = strrchr(filename, '.')) == NULL) {
-		rcs_errno = RCS_ERR_NOENT;
-		return (NULL);
-	}
-	sp++;
-
-	for (i = 0; i < (int)NB_COMTYPES; i++)
-		if (strcmp(rcs_comments[i].rc_suffix, sp) == 0)
-			return (rcs_comments[i].rc_cstr);
-	return (NULL);
-}
-
-/*
- * rcs_comment_get()
- *
- * Retrieve the comment leader for the RCS file <file>.
- */
-const char *
-rcs_comment_get(RCSFILE *file)
-{
-	return (file->rf_comment);
 }
 
 /*
@@ -1564,25 +1408,6 @@ rcs_kflag_get(const char *flags)
 }
 
 /*
- * rcs_errstr()
- *
- * Get the error string matching the RCS error code <code>.
- */
-const char *
-rcs_errstr(int code)
-{
-	const char *esp;
-
-	if (code < 0 || (code >= (int)RCS_NERR && code != RCS_ERR_ERRNO))
-		esp = NULL;
-	else if (code == RCS_ERR_ERRNO)
-		esp = strerror(errno);
-	else
-		esp = rcs_errstrs[code];
-	return (esp);
-}
-
-/*
  * rcs_freedelta()
  *
  * Free the contents of a delta structure.
@@ -2001,24 +1826,6 @@ rcs_state_check(const char *state)
 		}
 
 	return (ret);
-}
-
-/*
- * rcs_state_get()
- *
- * Get the state for a given revision of a specified RCSFILE.
- *
- * Returns NULL on failure.
- */
-const char *
-rcs_state_get(RCSFILE *rfp, RCSNUM *rev)
-{
-	struct rcs_delta *rdp;
-
-	if ((rdp = rcs_findrev(rfp, rev)) == NULL)
-		return (NULL);
-
-	return (rdp->rd_state);
 }
 
 /*

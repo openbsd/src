@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.12 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.13 2011/05/20 19:21:10 nicm Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -347,23 +347,6 @@ rcsnum_inc(RCSNUM *num)
 	if (num->rn_id[num->rn_len - 1] == RCSNUM_MAXNUM)
 		return (NULL);
 	num->rn_id[num->rn_len - 1]++;
-	return (num);
-}
-
-/*
- * rcsnum_dec()
- *
- * Decreases the revision number specified in <num>, if doing so will not
- * result in an ending value below 1. E.g. 4.2 will go to 4.1 but 4.1 will
- * be returned as 4.1.
- */
-RCSNUM *
-rcsnum_dec(RCSNUM *num)
-{
-	/* XXX - Is it an error for the number to be 0? */
-	if (num->rn_id[num->rn_len - 1] <= 1)
-		return (num);
-	num->rn_id[num->rn_len - 1]--;
 	return (num);
 }
 
