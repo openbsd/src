@@ -1,4 +1,4 @@
-/*	$OpenBSD: trigger.c,v 1.19 2010/10/29 17:49:37 nicm Exp $	*/
+/*	$OpenBSD: trigger.c,v 1.20 2011/05/20 19:22:47 nicm Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2008 Jonathan Armani <dbd@asystant.net>
@@ -254,7 +254,6 @@ parse_cmd(int type, char *cmd, const char *repo,
 		return (NULL);
 	}
 
-	/* XXX move this out of this function */
 	/* before doing any stuff, check if the command starts with % */
 	for (p = cmd; *p != '%' && !isspace(*p) && *p != '\0'; p++)
 		;
