@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.493 2011/05/02 07:04:59 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.494 2011/05/20 22:57:20 sthen Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 2 2011 $
+.Dd $Mdocdate: May 20 2011 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -1184,6 +1184,9 @@ Packets passing in or out on such interfaces are passed as if pf was
 disabled, i.e. pf does not process them in any way.
 This can be useful on loopback and other virtual interfaces, when
 packet filtering is not desired and can have unexpected effects.
+.Ar ifspec
+is only evaluated when the ruleset is loaded; interfaces created
+later will not be skipped.
 .It Ar set state-defaults
 The
 .Ar state-defaults
