@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.69 2011/05/19 08:56:49 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.70 2011/05/20 09:43:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -222,6 +222,9 @@ pfe_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct ctl_natlook	 cnl;
 	struct ctl_stats	 crs;
 	struct relay		*rlay;
+	struct ctl_conn		*c;
+	struct rsession		 con;
+	int			 cid;
 
 	switch (imsg->hdr.type) {
 	case IMSG_NATLOOK:
@@ -246,6 +249,35 @@ pfe_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 		bcopy(&crs, &rlay->rl_stats[crs.proc], sizeof(crs));
 		rlay->rl_stats[crs.proc].interval =
 		    env->sc_statinterval.tv_sec;
+		break;
+	case IMSG_CTL_SESSION:
+		IMSG_SIZE_CHECK(imsg, &con);
+		memcpy(&con, imsg->data, sizeof(con));
+		if ((c = control_connbyfd(con.se_cid)) == NULL) {
+			log_debug("%s: control connection %d not found",
+			    __func__, con.se_cid);
+			return (0);
+		}
+		imsg_compose_event(&c->iev,
+		    IMSG_CTL_SESSION, 0, 0, -1,
+		    &con, sizeof(con));
+		break;
+	case IMSG_CTL_END:
+		IMSG_SIZE_CHECK(imsg, &cid);
+		memcpy(&cid, imsg->data, sizeof(cid));
+		if ((c = control_connbyfd(cid)) == NULL) {
+			log_debug("%s: control connection %d not found",
+			    __func__, cid);
+			return (0);
+		}
+		if (c->waiting == 0) {
+			log_debug("%s: no pending control requests", __func__);
+			return (0);
+		} else if (--c->waiting == 0) {
+			/* Last ack for a previous request */
+			imsg_compose_event(&c->iev, IMSG_CTL_END,
+			    0, 0, -1, NULL, 0);
+		}
 		break;
 	default:
 		return (-1);
@@ -346,59 +378,18 @@ end:
 void
 show_sessions(struct ctl_conn *c)
 {
-	int			 n, proc, done;
-	struct imsg		 imsg;
-	struct imsgbuf		*ibuf;
-	struct rsession		 con;
+	int			 proc, cid;
 
 	for (proc = 0; proc < env->sc_prefork_relay; proc++) {
-		ibuf = proc_ibuf(env->sc_ps, PROC_RELAY, proc);
+		cid = c->iev.ibuf.fd;
 
 		/*
 		 * Request all the running sessions from the process
 		 */
 		proc_compose_imsg(env->sc_ps, PROC_RELAY, proc,
-		    IMSG_CTL_SESSION, -1, NULL, 0);
-		proc_flush_imsg(env->sc_ps, PROC_RELAY, proc);
-		
-		/*
-		 * Wait for the reply and forward the messages to the
-		 * control connection.
-		 */
-		done = 0;
-		while (!done) {
-			do {
-				if ((n = imsg_read(ibuf)) == -1)
-					fatalx("imsg_read error");
-			} while (n == -2); /* handle non-blocking I/O */
-			while (!done) {
-				if ((n = imsg_get(ibuf, &imsg)) == -1)
-					fatalx("imsg_get error");
-				if (n == 0)
-					break;
-
-				switch (imsg.hdr.type) {
-				case IMSG_CTL_SESSION:
-					IMSG_SIZE_CHECK(&imsg, &con);
-					memcpy(&con, imsg.data, sizeof(con));
-
-					imsg_compose_event(&c->iev,
-					    IMSG_CTL_SESSION, 0, 0, -1,
-					    &con, sizeof(con));
-					break;
-				case IMSG_CTL_END:
-					done = 1;
-					break;
-				default:
-					fatalx("wrong message for session");
-					break;
-				}
-				imsg_free(&imsg);
-			}
-		}
+		    IMSG_CTL_SESSION, -1, &cid, sizeof(cid));
+		c->waiting++;
 	}
-
-	imsg_compose_event(&c->iev, IMSG_CTL_END, 0, 0, -1, NULL, 0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.137 2011/05/19 08:56:49 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.138 2011/05/20 09:43:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1939,6 +1939,7 @@ relay_accept(int fd, short sig, void *arg)
 	con->se_relay = rlay;
 	con->se_id = ++relay_conid;
 	con->se_relayid = rlay->rl_conf.id;
+	con->se_pid = getpid();
 	con->se_hashkey = rlay->rl_dstkey;
 	con->se_in.tree = &proto->request_tree;
 	con->se_out.tree = &proto->response_tree;
@@ -2375,13 +2376,14 @@ int
 relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct relay		*rlay;
-	struct rsession		*con;
+	struct rsession		*con, se;
 	struct ctl_natlook	 cnl;
 	struct timeval		 tv;
 	struct host		*host;
 	struct table		*table;
 	struct ctl_status	 st;
 	objid_t			 id;
+	int			 cid;
 
 	switch (imsg->hdr.type) {
 	case IMSG_HOST_DISABLE:
@@ -2468,16 +2470,20 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 		evtimer_add(&con->se_ev, &tv);
 		break;
 	case IMSG_CTL_SESSION:
+		IMSG_SIZE_CHECK(imsg, &cid);
+		memcpy(&cid, imsg->data, sizeof(cid));
 		TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
 			SPLAY_FOREACH(con, session_tree,
 			    &rlay->rl_sessions) {
+				memcpy(&se, con, sizeof(se));
+				se.se_cid = cid;
 				proc_compose_imsg(env->sc_ps, p->p_id, -1,
 				    IMSG_CTL_SESSION,
-				    -1, con, sizeof(*con));
+				    -1, &se, sizeof(se));
 			}
 		}
 		proc_compose_imsg(env->sc_ps, p->p_id, -1, IMSG_CTL_END,
-		    -1, NULL, 0);
+		    -1, &cid, sizeof(cid));
 		break;
 	default:
 		return (-1);

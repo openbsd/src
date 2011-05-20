@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.39 2011/05/19 08:56:49 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.40 2011/05/20 09:43:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -234,6 +234,14 @@ control_dispatch_imsg(int fd, short event, void *arg)
 
 		if (n == 0)
 			break;
+
+		if (c->waiting) {
+			log_debug("%s: unexpected imsg %d",
+			    __func__, imsg.hdr.type);
+			imsg_free(&imsg);
+			control_close(fd);
+			return;
+		}
 
 		switch (imsg.hdr.type) {
 		case IMSG_CTL_SHOW_SUM:

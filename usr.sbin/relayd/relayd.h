@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.147 2011/05/19 08:56:49 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.148 2011/05/20 09:43:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -428,6 +428,8 @@ struct rsession {
 	struct ctl_natlook		*se_cnl;
 	int				 se_bnds;
 
+	int				 se_cid;
+	pid_t				 se_pid;
 	SPLAY_ENTRY(rsession)		 se_nodes;
 };
 SPLAY_HEAD(session_tree, rsession);
@@ -705,6 +707,7 @@ struct imsgev {
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	 entry;
 	u_int8_t		 flags;
+	u_int			 waiting;
 #define CTL_CONN_NOTIFY		 0x01
 	struct imsgev	 	 iev;
 

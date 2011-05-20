@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.44 2011/05/19 08:56:49 reyk Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.45 2011/05/20 09:43:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -447,7 +447,8 @@ show_session_msg(struct imsg *imsg)
 			fatal("show_session_msg: gettimeofday");
 		print_time(&tv_now, &con->se_tv_start, a, sizeof(a));
 		print_time(&tv_now, &con->se_tv_last, b, sizeof(b));
-		printf("\tage %s, idle %s, relay %u", a, b, con->se_relayid);
+		printf("\tage %s, idle %s, relay %u, pid %u",
+		    a, b, con->se_relayid, con->se_pid);
 		if (con->se_mark)
 			printf(", mark %u", con->se_mark);
 		printf("\n");
