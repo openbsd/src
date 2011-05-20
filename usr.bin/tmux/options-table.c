@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.9 2011/05/20 19:03:58 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.10 2011/05/20 19:17:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -368,6 +368,7 @@ const struct options_table_entry session_options_table[] = {
 	  .default_str = "*88col*:colors=88,*256col*:colors=256"
 	                 ",xterm*:XT:Ms=\\E]52;%p1%s;%p2%s\\007"
 	                 ":Cc=\\E]12;%p1%s\\007:Cr=\\E]112\\007"
+			 ":Cs=\\E[%p1%d q:Csr=\\E[2 q"
 	},
 
 	{ .name = "update-environment",
