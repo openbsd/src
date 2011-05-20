@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.136 2011/05/18 18:09:37 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.137 2011/05/20 20:02:08 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -236,6 +236,7 @@ wrterror(char *msg, void *p)
 	char		*q = " error: ";
 	struct iovec	iov[6];
 	char		buf[20];
+	int		saved_errno = errno;
 
 	iov[0].iov_base = __progname;
 	iov[0].iov_len = strlen(__progname);
@@ -260,7 +261,8 @@ wrterror(char *msg, void *p)
 	if (mopts.malloc_stats)
 		malloc_dump(STDERR_FILENO);
 #endif /* MALLOC_STATS */
-	//malloc_active--;
+
+	errno = saved_errno;
 	if (mopts.malloc_abort)
 		abort();
 }
@@ -1620,6 +1622,7 @@ malloc_dump(int fd)
 	int i;
 	void *p;
 	struct region_info *r;
+	int saved_errno = errno;
 
 	for (i = 0; i <= MALLOC_DELAYED_CHUNKS; i++) {
 		p = g_pool->delayed_chunks[i];
@@ -1634,6 +1637,7 @@ malloc_dump(int fd)
 	/* XXX leak when run multiple times */
 	RB_INIT(&leakhead);
 	malloc_dump1(fd, g_pool);
+	errno = saved_errno;
 }
 
 static void
