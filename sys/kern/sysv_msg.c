@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.23 2010/01/14 23:12:11 schwarze Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.24 2011/05/20 16:06:25 blambert Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 /*
  * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
@@ -250,9 +250,6 @@ sys_msgsnd(struct proc *p, void *v, register_t *retval)
 	struct msg *msg;
 	size_t msgsz = SCARG(uap, msgsz);
 	int error;
-
-	if (SCARG(uap, msgp) == NULL)
-		panic("NULL userbuffer");
 
 	if ((que = que_lookup(SCARG(uap, msqid))) == NULL)
 		return (EINVAL);
