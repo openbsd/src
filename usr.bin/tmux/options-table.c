@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.8 2011/05/18 20:24:29 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.9 2011/05/20 19:03:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -366,13 +366,14 @@ const struct options_table_entry session_options_table[] = {
 	{ .name = "terminal-overrides",
 	  .type = OPTIONS_TABLE_STRING,
 	  .default_str = "*88col*:colors=88,*256col*:colors=256"
-	  		 ",xterm*:XT:Ms=\\E]52;%p1%s;%p2%s\\007"
+	                 ",xterm*:XT:Ms=\\E]52;%p1%s;%p2%s\\007"
+	                 ":Cc=\\E]12;%p1%s\\007:Cr=\\E]112\\007"
 	},
 
 	{ .name = "update-environment",
 	  .type = OPTIONS_TABLE_STRING,
 	  .default_str = "DISPLAY SSH_ASKPASS SSH_AUTH_SOCK SSH_AGENT_PID "
-	                    "SSH_CONNECTION WINDOWID XAUTHORITY"
+	                 "SSH_CONNECTION WINDOWID XAUTHORITY"
 
 	},
 
