@@ -1,4 +1,4 @@
-#	$OpenBSD: cert-hostkey.sh,v 1.5 2010/08/31 12:24:09 djm Exp $
+#	$OpenBSD: cert-hostkey.sh,v 1.6 2011/05/20 02:43:36 djm Exp $
 #	Placed in the Public Domain.
 
 tid="certified host keys"
@@ -29,7 +29,7 @@ for ktype in rsa dsa ecdsa ; do
 	    -n $HOSTS $OBJ/cert_host_key_${ktype} ||
 		fail "couldn't sign cert_host_key_${ktype}"
 	# v00 ecdsa certs do not exist
-	test "{ktype}" = "ecdsa" && continue
+	test "${ktype}" = "ecdsa" && continue
 	cp $OBJ/cert_host_key_${ktype} $OBJ/cert_host_key_${ktype}_v00
 	cp $OBJ/cert_host_key_${ktype}.pub $OBJ/cert_host_key_${ktype}_v00.pub
 	${SSHKEYGEN} -t v00 -h -q -s $OBJ/host_ca_key \
