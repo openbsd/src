@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.61 2010/06/28 23:21:41 mcbride Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.62 2011/05/20 22:50:44 sthen Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -714,7 +714,8 @@ pfi_get_ifaces(const char *name, struct pfi_kif *buf, int *size)
 int
 pfi_skip_if(const char *filter, struct pfi_kif *p)
 {
-	int	n;
+	struct ifg_list	*i;
+	int		 n;
 
 	if (filter == NULL || !*filter)
 		return (0);
@@ -724,10 +725,12 @@ pfi_skip_if(const char *filter, struct pfi_kif *p)
 	if (n < 1 || n >= IFNAMSIZ)
 		return (1);	/* sanity check */
 	if (filter[n-1] >= '0' && filter[n-1] <= '9')
-		return (1);	/* only do exact match in that case */
-	if (strncmp(p->pfik_name, filter, n))
-		return (1);	/* prefix doesn't match */
-	return (p->pfik_name[n] < '0' || p->pfik_name[n] > '9');
+		return (1);     /* group names may not end in a digit */
+	if (p->pfik_ifp != NULL)
+		TAILQ_FOREACH(i, &p->pfik_ifp->if_groups, ifgl_next)
+			if (!strncmp(i->ifgl_group->ifg_group, filter, n))
+				return (0);	/* iface is in group "filter" */
+	return (1);
 }
 
 int
