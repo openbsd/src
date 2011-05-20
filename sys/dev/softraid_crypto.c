@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.65 2011/04/06 03:14:51 marco Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.66 2011/05/20 19:37:58 mikeb Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -1115,7 +1115,7 @@ sr_crypto_rw(struct sr_workunit *wu)
 	if (wu->swu_xs->flags & SCSI_DATA_OUT) {
 		crp = sr_crypto_getcryptop(wu, 1);
 		if (crp == NULL)
-			panic("sr_crypto_rw: no crypto op");
+			return (1);
 		crp->crp_callback = sr_crypto_write;
 		crp->crp_opaque = wu;
 		s = splvm();
