@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.165 2011/04/05 21:37:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.166 2011/05/21 21:29:20 kettenis Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -228,7 +228,8 @@ MLINKS+=mutex.9 mtx_enter_try.9
 MLINKS+=namei.9 lookup.9 namei.9 relookup.9 namei.9 NDINIT.9
 MLINKS+=pci_conf_read.9 pci_conf_write.9 pci_conf_read.9 pci_make_tag.9 \
 	pci_conf_read.9 pci_decompose_tag.9
-MLINKS+=pci_intr_map.9 pci_intr_string.9 pci_intr_map.9 pci_intr_line.9 \
+MLINKS+=pci_intr_map.8 pci_intr_map_msi.9 pci_intr_map.9 pci_intr_string.9 \
+	pci_intr_map.9 pci_intr_line.9 \
 	pci_intr_map.9 pci_intr_establish.9 \
 	pci_intr_map.9 pci_intr_disestablish.9
 MLINKS+=pfind.9 pgfind.9
