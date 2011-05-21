@@ -3,6 +3,9 @@
 /* Define this to enable BIND8 like NSTATS & XSTATS. */
 #undef BIND8_STATS
 
+/* NSD default chroot directory */
+#undef CHROOTDIR
+
 /* Pathname to the NSD configuration file */
 #undef CONFIGFILE
 
@@ -218,6 +221,9 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
+/* Define to 1 if you have the `strlcat' function. */
+#undef HAVE_STRLCAT
+
 /* Define to 1 if you have the `strlcpy' function. */
 #undef HAVE_STRLCPY
 
@@ -238,6 +244,9 @@
 
 /* Define to 1 if you have the <sys/bitypes.h> header file. */
 #undef HAVE_SYS_BITYPES_H
+
+/* Define to 1 if you have the <sys/mman.h> header file. */
+#undef HAVE_SYS_MMAN_H
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #undef HAVE_SYS_PARAM_H
@@ -292,6 +301,9 @@
 
 /* Define to the maximum ip-addresses to serve. */
 #undef MAX_INTERFACES
+
+/* Define if memcmp() does not compare unsigned bytes */
+#undef MEMCMP_IS_BROKEN
 
 /* Undefine this to enable internal runtime checks. */
 #undef NDEBUG
@@ -353,6 +365,9 @@
 /* the user name to drop privileges to */
 #undef USER
 
+/* Define this to enable mmap instead of malloc. Experimental. */
+#undef USE_MMAP_ALLOC
+
 /* Define to the NSD version to answer version.server query. */
 #undef VERSION
 
@@ -366,6 +381,13 @@
 /* NSD default location for zone files. Empty string or NULL to disable. */
 #undef ZONESDIR
 
+/* Define to 1 if on AIX 3.
+   System headers sometimes define this.
+   We just want to avoid a redefinition error message.  */
+#ifndef _ALL_SOURCE
+# undef _ALL_SOURCE
+#endif
+
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
 
@@ -374,38 +396,6 @@
 
 /* Define for large files, on AIX-style hosts. */
 #undef _LARGE_FILES
-
-/* Define to 1 if on MINIX. */
-#undef _MINIX
-
-/* Define to 2 if the system does not provide POSIX.1 features except with
-   this defined. */
-#undef _POSIX_1_SOURCE
-
-/* Define to 1 if you need to in order for `stat' and other things to work. */
-#undef _POSIX_SOURCE
-
-/* Enable extensions on AIX 3, Interix.  */
-#ifndef _ALL_SOURCE
-# undef _ALL_SOURCE
-#endif
-/* Enable GNU extensions on systems that have them.  */
-#ifndef _GNU_SOURCE
-# undef _GNU_SOURCE
-#endif
-/* Enable threading extensions on Solaris.  */
-#ifndef _POSIX_PTHREAD_SEMANTICS
-# undef _POSIX_PTHREAD_SEMANTICS
-#endif
-/* Enable extensions on HP NonStop.  */
-#ifndef _TANDEM_SOURCE
-# undef _TANDEM_SOURCE
-#endif
-/* Enable general extensions on Solaris.  */
-#ifndef __EXTENSIONS__
-# undef __EXTENSIONS__
-#endif
-
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
@@ -437,7 +427,7 @@
 /* Define to rpl_malloc if the replacement function should be used. */
 #undef malloc
 
-/* Define to `long int' if <sys/types.h> does not define. */
+/* Define to `long' if <sys/types.h> does not define. */
 #undef off_t
 
 /* Define to `int' if <sys/types.h> does not define. */
@@ -446,7 +436,7 @@
 /* Define "sig_atomic_t" to "int" if "sig_atomic_t" is missing */
 #undef sig_atomic_t
 
-/* Define to `unsigned int' if <sys/types.h> does not define. */
+/* Define to `unsigned' if <sys/types.h> does not define. */
 #undef size_t
 
 /* Define "socklen_t" to "int" if "socklen_t" is missing */
@@ -475,6 +465,9 @@
 
 /* Define "uint8_t" to "unsigned char" if "uint8_t" is missing */
 #undef uint8_t
+
+/* Define "uintptr_t" to "void*" if "uintptr_t" is missing */
+#undef uintptr_t
 
 /* Define as `fork' if `vfork' does not work. */
 #undef vfork
@@ -607,6 +600,9 @@ int inet_aton(const char *cp, struct in_addr *addr);
 #ifndef HAVE_MEMMOVE
 void *memmove(void *dest, const void *src, size_t n);
 #endif
+#ifndef HAVE_STRLCAT
+size_t strlcat(char *dst, const char *src, size_t siz);
+#endif
 #ifndef HAVE_STRLCPY
 size_t strlcpy(char *dst, const char *src, size_t siz);
 #endif
@@ -621,6 +617,20 @@ char *strptime(const char *s, const char *format, struct tm *tm);
 #define STRPTIME_WORKS 1
 #define strptime(a,b,c) nsd_strptime((a),(b),(c))
 #endif
+
+
+
+#ifdef MEMCMP_IS_BROKEN
+#  ifdef memcmp
+#  undef memcmp
+#  endif
+#define memcmp memcmp_nsd
+int memcmp(const void *x, const void *y, size_t n);
+#endif
+
+
+
+
 
 /* provide timespec def if not available */
 #ifndef CONFIG_DEFINES
