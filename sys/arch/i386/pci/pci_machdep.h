@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.21 2011/01/04 21:17:49 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.22 2011/05/21 15:14:57 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.7 1997/06/06 23:29:18 thorpej Exp $	*/
 
 /*
@@ -96,8 +96,8 @@ pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
 		    pcireg_t);
 struct pci_attach_args;
-int		pci_intr_map(struct pci_attach_args *,
-		    pci_intr_handle_t *);
+int		pci_intr_map_msi(struct pci_attach_args *, pci_intr_handle_t *);
+int		pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 #define		pci_intr_line(c, ih)	((ih).line)
 const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,

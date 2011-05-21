@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.59 2011/04/22 15:02:35 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.60 2011/05/21 15:14:57 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -103,6 +103,8 @@ extern bios_pciinfo_t *bios_pciinfo;
 #include "ioapic.h"
 
 #include <machine/i82093var.h>
+#include <machine/i82489reg.h>
+#include <machine/i82489var.h>
 #if NIOAPIC > 0
 #include <machine/mpbiosvar.h>
 #endif
@@ -478,6 +480,22 @@ not2:
 }
 
 int
+pci_intr_map_msi(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+{
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t tag = pa->pa_tag;
+
+	if ((pa->pa_flags & PCI_FLAGS_MSI_ENABLED) == 0 ||
+	    pci_get_capability(pc, tag, PCI_CAP_MSI, NULL, NULL) == 0)
+		return 1;
+
+	ihp->tag = tag;
+	ihp->line = APIC_INT_VIA_MSG;
+	ihp->pin = 0;
+	return 0;
+}
+
+int
 pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int pin = pa->pa_rawintrpin;
@@ -607,6 +625,9 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 	static char irqstr[64];
 	int line = ih.line & APIC_INT_LINE_MASK;
 
+	if (ih.line & APIC_INT_VIA_MSG)
+		return ("msi");
+
 #if NIOAPIC > 0
 	if (ih.line & APIC_INT_VIA_APIC) {
 		snprintf(irqstr, sizeof irqstr, "apic %d int %d",
@@ -627,6 +648,9 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 void	acpiprt_route_interrupt(int bus, int dev, int pin);
 #endif
 
+extern struct intrhand *apic_intrhand[256];
+extern int apic_maxlevel[256];
+
 void *
 pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg, const char *what)
@@ -634,6 +658,46 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 	void *ret;
 	int bus, dev;
 	int l = ih.line & APIC_INT_LINE_MASK;
+	pcitag_t tag = ih.tag;
+
+	if (ih.line & APIC_INT_VIA_MSG) {
+		struct intrhand *ih;
+		pcireg_t reg;
+		int off, vec;
+
+		if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
+			panic("%s: no msi capability", __func__);
+
+		vec = idt_vec_alloc(level, level + 15);
+		if (vec == 0)
+			return (NULL);
+
+		ih = malloc(sizeof(*ih), M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
+		if (ih == NULL)
+			panic("%s: can't malloc handler info", __func__);
+
+		ih->ih_fun = func;
+		ih->ih_arg = arg;
+		ih->ih_next = NULL;
+		ih->ih_level = level;
+		ih->ih_irq = vec;
+		evcount_attach(&ih->ih_count, what, &ih->ih_irq);
+
+		apic_maxlevel[vec] = level;
+		apic_intrhand[vec] = ih;
+		idt_vec_set(vec, apichandler[vec & 0xf]);
+
+		if (reg & PCI_MSI_MC_C64) {
+			pci_conf_write(pc, tag, off + PCI_MSI_MA, 0xfee00000);
+			pci_conf_write(pc, tag, off + PCI_MSI_MAU32, 0);
+			pci_conf_write(pc, tag, off + PCI_MSI_MD64, vec);
+		} else {
+			pci_conf_write(pc, tag, off + PCI_MSI_MA, 0xfee00000);
+			pci_conf_write(pc, tag, off + PCI_MSI_MD32, vec);
+		}
+		pci_conf_write(pc, tag, off, reg | PCI_MSI_MC_MSIE);
+		return (ih);
+	}
 
 	pci_decompose_tag(pc, ih.tag, &bus, &dev, NULL);
 #if NACPIPRT > 0
