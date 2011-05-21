@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.20 2011/05/21 19:23:29 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.21 2011/05/21 20:47:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -85,7 +85,7 @@ struct ppc_pci_chipset {
 #define	pci_intr_map(pa, ihp)						\
     (*((pa)->pa_pc)->pc_intr_map)((pa)->pa_pc->pc_intr_v, 		\
 	(pa)->pa_intrtag, (pa)->pa_intrpin, (pa)->pa_intrline, (ihp))
-#define	pci_intr_map_msi(pa, ihp)	(1)
+#define	pci_intr_map_msi(pa, ihp)	(-1)
 #define	pci_intr_string(c, ih)						\
     (*(c)->pc_intr_string)((c)->pc_intr_v, (ih))
 #define	pci_intr_line(c, ih)						\
