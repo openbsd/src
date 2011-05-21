@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.5 2011/05/21 18:04:51 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.6 2011/05/21 18:11:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -116,12 +116,9 @@ lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 		(void)strlcpy(ep->delivery.agent.mda.as_user, u.username,
 		    sizeof (ep->delivery.agent.mda.as_user));
 
-		log_debug("###1");
-
 		ep->delivery.type = D_MDA;
 		switch (ep->rule.r_action) {
 		case A_MBOX:
-			log_debug("###1.1");
 			ep->delivery.agent.mda.method = A_MBOX;
 			(void)strlcpy(ep->delivery.agent.mda.to.user,
 			    u.username,
@@ -130,7 +127,6 @@ lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 		case A_MAILDIR:
 		case A_FILENAME:
 		case A_EXT:
-			log_debug("###1.2");
 			ep->delivery.agent.mda.method = ep->rule.r_action;
 			(void)strlcpy(ep->delivery.agent.mda.to.buffer,
 			    ep->rule.r_value.buffer,
@@ -141,7 +137,6 @@ lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 			return 0;
 		}
 
-		log_debug("###2");
 		lka_session_request_forwardfile(lks, ep, u.username);
 		return 1;
 	}
@@ -243,7 +238,7 @@ lka_session_pickup(struct lka_session *lks, struct envelope *ep)
 
 	if (lks->pending)
 		return;
-	log_debug("#2plop: %d", ep->delivery.agent.mda.method);
+
 	lka_session_done(lks);
 }
 
@@ -252,8 +247,6 @@ lka_session_resume(struct lka_session *lks, struct envelope *ep)
 {
 	struct expandnode *xn;
         u_int8_t done = 1;
-
-	log_debug("#1plop: %d", ep->delivery.agent.mda.method);
 
 	RB_FOREACH(xn, expandtree, &lks->expandtree) {
 
