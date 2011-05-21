@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.35 2011/05/17 16:32:58 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.36 2011/05/21 17:01:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -391,8 +391,8 @@ ssl_load_certfile(const char *name, u_int8_t flags)
 
 	if ((s->ssl_dhparams = ssl_load_file(certfile,
 		    &s->ssl_dhparams_len)) == NULL) {
-		log_warnx("no DH parameters found in %s", certfile);
-		log_warnx("using built-in DH parameters");
+		log_info("no DH parameters found in %s", certfile);
+		log_info("using built-in DH parameters");
 	}
 
 	SPLAY_INSERT(ssltree, env->sc_ssl, s);
