@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.7 2010/12/04 17:06:31 miod Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.8 2011/05/21 21:04:29 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -71,6 +71,7 @@ struct hppa64_pci_chipset_tag {
     (*(c)->pc_conf_write)((c)->_cookie, (t), (r), (v))
 #define	pci_intr_map(p, ihp)						\
     (*(p)->pa_pc->pc_intr_map)((p), (ihp))
+#define	pci_intr_map_msi(p, ihp)	(-1)
 #define	pci_intr_line(c, ih)	(ih)
 #define	pci_intr_string(c, ih)						\
     (*(c)->pc_intr_string)((c)->_cookie, (ih))
