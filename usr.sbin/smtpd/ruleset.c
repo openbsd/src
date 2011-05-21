@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.18 2011/05/16 21:05:52 gilles Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.19 2011/05/21 18:39:03 gilles Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -50,7 +50,6 @@ ruleset_match(struct envelope *evp)
 	struct mailaddr *maddr = &evp->delivery.rcpt;
 	struct sockaddr_storage *ss = &evp->delivery.ss;
 
-	log_debug("flags: %d", evp->delivery.flags);
 	if (evp->delivery.flags & DF_INTERNAL)
 		ss = NULL;
 

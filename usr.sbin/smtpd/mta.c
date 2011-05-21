@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.106 2011/05/16 21:05:52 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.107 2011/05/21 18:39:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -96,8 +96,6 @@ mta_imsg(struct imsgev *iev, struct imsg *imsg)
 			}
 
 			/* use auth? */
-			log_debug("host: %s", rq_batch->rule.r_value.relayhost.hostname);
-			log_debug("flags: %d", rq_batch->rule.r_value.relayhost.flags);
 			if ((rq_batch->rule.r_value.relayhost.flags & F_SSL) &&
 			    (rq_batch->rule.r_value.relayhost.flags & F_AUTH)) {
 				s->flags |= MTA_USE_AUTH;
