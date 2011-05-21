@@ -1,7 +1,7 @@
 #
 # Makefile -- one file to make them all, nsd(8)
 #
-# Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
+# Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
 #
 # See LICENSE for the license.
 #
@@ -20,6 +20,7 @@ configdir = @configdir@
 piddir = @piddir@
 dbdir = @dbdir@
 pidfile = @pidfile@
+logfile = @logfile@
 dbfile = @dbfile@
 difffile = @difffile@
 xfrdfile = @xfrdfile@
@@ -51,6 +52,7 @@ EDIT		= sed \
 			-e 's,@configdir\@,$(configdir),g' \
 			-e 's,@zonesdir\@,$(zonesdir),g' \
 			-e 's,@pidfile\@,$(pidfile),g' \
+			-e 's,@logfile\@,$(logfile),g' \
 			-e 's,@dbfile\@,$(dbfile),g' \
 			-e 's,@difffile\@,$(difffile),g' \
 			-e 's,@xfrdfile\@,$(xfrdfile),g' \
@@ -60,7 +62,8 @@ EDIT		= sed \
 			-e 's,@spriority\@,$(spriority),g' \
 			-e 's,@kpriority\@,$(kpriority),g' 
 
-TARGETS 	= nsd nsd-zonec nsd-notify nsd-xfer nsdc.sh nsd-checkconf nsd-patch nsd.conf.sample
+TARGETS 	= nsd nsd-zonec nsd-notify nsd-xfer nsdc.sh nsd-checkconf nsd-patch nsd.conf.sample \
+		 nsd.8 zonec.8 nsd-notify.8 nsd-xfer.8 nsdc.8 nsd-checkconf.8 nsd-patch.8 nsd.conf.5
 
 ALL_OBJECTS	=			\
 	answer.o			\
@@ -306,14 +309,46 @@ all:	$(TARGETS)
 $(ALL_OBJECTS):
 	$(COMPILE) -c $<
 
-nsdc.sh:	$(srcdir)/nsdc.sh.in
+nsdc.sh:	$(srcdir)/nsdc.sh.in config.h
 	rm -f nsdc.sh
 	$(EDIT) $(srcdir)/nsdc.sh.in > nsdc.sh
 	chmod +x nsdc.sh
 
-nsd.conf.sample:	$(srcdir)/nsd.conf.sample.in
+nsd.conf.sample:	$(srcdir)/nsd.conf.sample.in config.h
 	rm -f nsd.conf.sample
 	$(EDIT) $(srcdir)/nsd.conf.sample.in > nsd.conf.sample
+
+nsd.conf.5:	$(srcdir)/nsd.conf.5.in config.h
+	rm -f nsd.conf.5
+	$(EDIT) $(srcdir)/nsd.conf.5.in > nsd.conf.5
+
+nsd.8:	$(srcdir)/nsd.8.in config.h
+	rm -f nsd.8
+	$(EDIT) $(srcdir)/nsd.8.in > nsd.8
+
+nsdc.8:	$(srcdir)/nsdc.8.in config.h
+	rm -f nsdc.8
+	$(EDIT) $(srcdir)/nsdc.8.in > nsdc.8
+
+zonec.8:	$(srcdir)/zonec.8.in config.h
+	rm -f zonec.8
+	$(EDIT) $(srcdir)/zonec.8.in > zonec.8
+
+nsd-notify.8:	$(srcdir)/nsd-notify.8.in config.h
+	rm -f nsd-notify.8
+	$(EDIT) $(srcdir)/nsd-notify.8.in > nsd-notify.8
+
+nsd-xfer.8:	$(srcdir)/nsd-xfer.8.in config.h
+	rm -f nsd-xfer.8
+	$(EDIT) $(srcdir)/nsd-xfer.8.in > nsd-xfer.8
+
+nsd-checkconf.8:	$(srcdir)/nsd-checkconf.8.in config.h
+	rm -f nsd-checkconf.8
+	$(EDIT) $(srcdir)/nsd-checkconf.8.in > nsd-checkconf.8
+
+nsd-patch.8:	$(srcdir)/nsd-patch.8.in config.h
+	rm -f nsd-patch.8
+	$(EDIT) $(srcdir)/nsd-patch.8.in > nsd-patch.8
 
 install: all
 	$(INSTALL) -d $(DESTDIR)$(sbindir)
@@ -377,10 +412,13 @@ clean:
 	rm -f $(TARGETS)
 
 realclean: clean
-	rm -f Makefile config.h config.log config.status configure
+	rm -f Makefile config.h config.log config.status
 	rm -rf autom4te*
 	rm -f zlexer.c zparser.h zparser.c zparser.stamp
 	rm -f configlexer.c configparser.h configparser.c configparser.stamp
+
+devclean: realclean
+	rm -f config.h.in configure
 
 basename.o:	$(srcdir)/compat/basename.c
 	$(COMPILE) -c $(srcdir)/compat/basename.c -o $@

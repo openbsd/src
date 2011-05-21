@@ -1,7 +1,7 @@
 /*
  * query.c -- nsd(8) the resolver.
  *
- * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -452,10 +452,21 @@ answer_notify(struct nsd* nsd, struct query *query)
 		/* tsig is added in add_additional later (if needed) */
 		return QUERY_PROCESSED;
 	}
-	VERBOSITY(1, (LOG_INFO, "got notify for zone: %s; Refused by acl: %s %s",
+
+	if (verbosity > 1) {
+		char address[128];
+		if (addr2ip(query->addr, address, sizeof(address))) {
+			DEBUG(DEBUG_XFRD,1, (LOG_INFO, "addr2ip failed"));
+			strlcpy(address, "[unknown]", sizeof(address));
+		}
+
+		VERBOSITY(1, (LOG_INFO, "notify for zone %s from client %s refused, %s%s",
 			dname_to_string(query->qname, NULL),
+			address,
 			why?why->key_name:"no acl matches",
 			why?why->ip_address_spec:"."));
+	}
+
 	return query_error(query, NSD_RC_REFUSE);
 }
 
@@ -1188,14 +1199,9 @@ answer_query(struct nsd *nsd, struct query *q)
 	answer_lookup_zone(nsd, q, &answer, 0, exact, closest_match,
 		closest_encloser, q->qname);
 
-	encode_answer(q, &answer);
-	if (ANCOUNT(q->packet) + NSCOUNT(q->packet) + ARCOUNT(q->packet) == 0)
-	{
-		/* no answers, no need for compression */
-		return;
-	}
 	offset = dname_label_offsets(q->qname)[domain_dname(closest_encloser)->label_count - 1] + QHEADERSZ;
 	query_add_compression_domain(q, closest_encloser, offset);
+	encode_answer(q, &answer);
 	query_clear_compression_tables(q);
 }
 

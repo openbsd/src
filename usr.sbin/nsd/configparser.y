@@ -1,7 +1,7 @@
 /*
  * configparser.y -- yacc grammar for NSD configuration files
  *
- * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *

@@ -1,7 +1,7 @@
 /*
  * server.c -- nsd(8) network input/output
  *
- * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -325,6 +325,12 @@ initialize_dname_compression_tables(struct nsd *nsd)
 	size_t needed = domain_table_count(nsd->db->domains) + 1;
 	needed += EXTRA_DOMAIN_NUMBERS;
 	if(compression_table_capacity < needed) {
+		if(compressed_dname_offsets) {
+			region_remove_cleanup(nsd->db->region,
+				cleanup_dname_compression_tables,
+				compressed_dname_offsets);
+			free(compressed_dname_offsets);
+		}
 		compressed_dname_offsets = (uint16_t *) xalloc(
 			needed * sizeof(uint16_t));
 		region_add_cleanup(nsd->db->region, cleanup_dname_compression_tables,
@@ -1191,6 +1197,7 @@ server_main(struct nsd *nsd)
 		}
 		fsync(xfrd_listener.fd);
 		close(xfrd_listener.fd);
+		(void)kill(xfrd_pid, SIGTERM);
 	}
 
 	namedb_fd_close(nsd->db);

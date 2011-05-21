@@ -2,7 +2,7 @@
 #
 # nsdc.sh -- a shell script to manage the beast
 #
-# Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
+# Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
 #
 # See LICENSE for the license.
 #
@@ -276,6 +276,11 @@ send_notify() {
 	ifc_spec=""
 	if test I$2 != INOIFC; then
 		ifc_spec="-a $2"
+		# with a : is IPv6
+		case "$2" in
+		*:*) ifc_is_ip6="yes" ;;
+		*) ifc_is_ip6="no" ;;
+		esac
 	fi
 	shift 2
 
@@ -284,6 +289,13 @@ send_notify() {
 		key_spec=$2
 		shift 2
 		secret=""
+		# skip if ifc is set and mismatch v4-v6
+		if test -n "$ifc_spec"; then
+			case "$ip_spec" in
+			*:*) if test "$ifc_is_ip6" = "no"; then continue; fi;;
+			*) if test "$ifc_is_ip6" = "yes"; then continue; fi;;
+			esac
+		fi
 
 		if test K${key_spec} != KNOKEY -a K${key_spec} != KBLOCKED; then
 			secret=`${nsd_checkconf} -s ${key_spec} ${configfile}`

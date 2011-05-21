@@ -1,7 +1,7 @@
 /*
  * axfr.c -- generating AXFR responses.
  *
- * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -166,17 +166,18 @@ answer_axfr_ixfr(struct nsd *nsd, struct query *q)
 			if(!zone_opt ||
 			   acl_check_incoming(zone_opt->provide_xfr, q, &acl)==-1)
 			{
-				char address[128];
-
-				if (addr2ip(q->addr, address, 128)) {
-					DEBUG(DEBUG_XFRD,1, (LOG_INFO,
-						"addr2ip failed"));
-					strlcpy(address, "[unknown]", sizeof(address));
+				if (verbosity > 0) {
+					char address[128];
+					if (addr2ip(q->addr, address, sizeof(address))) {
+						DEBUG(DEBUG_XFRD,1, (LOG_INFO,
+							"addr2ip failed"));
+						strlcpy(address, "[unknown]", sizeof(address));
+					}
+					VERBOSITY(1, (LOG_INFO, "axfr for zone %s from client %s refused, %s",
+						dname_to_string(q->qname, NULL), address, acl?"blocked":"no acl matches"));
 				}
-
-				VERBOSITY(1, (LOG_INFO, "axfr for zone %s from client %s refused, %s", dname_to_string(q->qname, NULL), address, acl?"blocked":"no acl matches"));
 				DEBUG(DEBUG_XFRD,1, (LOG_INFO, "axfr refused, %s",
-						acl?"blocked":"no acl matches"));
+					acl?"blocked":"no acl matches"));
 				RCODE_SET(q->packet, RCODE_REFUSE);
 				return QUERY_PROCESSED;
 			}

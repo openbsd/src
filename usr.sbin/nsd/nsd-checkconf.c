@@ -1,7 +1,7 @@
 /*
  * checkconf - Read and repeat configuration file to output.
  *
- * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -24,6 +24,14 @@ extern int optind;
 	if (strcasecmp(#NAME, (VAR)) == 0) { 	\
 		quote_acl((zone->NAME)); 	\
 		return; 			\
+	}
+
+#define ZONE_GET_OUTGOING(NAME, VAR)			\
+	if (strcasecmp(#NAME, (VAR)) == 0) {		\
+		acl_options_t* acl; 			\
+		for(acl=zone->NAME; acl; acl=acl->next)	\
+			quote(acl->ip_address_spec);	\
+		return; 				\
 	}
 
 #define ZONE_GET_STR(NAME, VAR) 		\
@@ -183,6 +191,15 @@ print_acl(const char* varname, acl_options_t* acl)
 	}
 }
 
+static void
+print_acl_ips(const char* varname, acl_options_t* acl)
+{
+	while(acl)
+	{
+		printf("\t%s %s\n", varname, acl->ip_address_spec);
+		acl=acl->next;
+	}
+}
 
 void
 config_print_zone(nsd_options_t* opt, const char* k, int s, const char *o, const char *z)
@@ -229,7 +246,7 @@ config_print_zone(nsd_options_t* opt, const char* k, int s, const char *o, const
 				ZONE_GET_ACL(allow_notify, o);
 				ZONE_GET_ACL(notify, o);
 				ZONE_GET_BIN(notify_retry, o);
-				ZONE_GET_ACL(outgoing_interface, o);
+				ZONE_GET_OUTGOING(outgoing_interface, o);
 				ZONE_GET_BIN(allow_axfr_fallback, o);
 				printf("Zone option not handled: %s %s\n", z, o);
 				exit(1);
@@ -333,7 +350,7 @@ config_test_print_server(nsd_options_t* opt)
 		printf("\tnotify-retry: %d\n", zone->notify_retry);
 		print_acl("notify:", zone->notify);
 		print_acl("provide-xfr:", zone->provide_xfr);
-		print_acl("outgoing-interface:", zone->outgoing_interface);
+		print_acl_ips("outgoing-interface:", zone->outgoing_interface);
 		printf("\tallow-axfr-fallback: %s\n", zone->allow_axfr_fallback?"yes":"no");
 	}
 

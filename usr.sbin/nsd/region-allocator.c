@@ -1,7 +1,7 @@
 /*
  * region-allocator.c -- region based memory allocator.
  *
- * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -202,6 +202,21 @@ region_add_cleanup(region_type *region, void (*action)(void *), void *data)
 
 	++region->cleanup_count;
 	return region->cleanup_count;
+}
+
+void
+region_remove_cleanup(region_type *region, void (*action)(void *), void *data)
+{
+	size_t i;
+	for(i=0; i<region->cleanup_count; i++) {
+		if(region->cleanups[i].action == action &&
+		   region->cleanups[i].data == data) {
+			region->cleanup_count--;
+			region->cleanups[i] =
+				region->cleanups[region->cleanup_count];
+			return;
+		}
+	}
 }
 
 void *

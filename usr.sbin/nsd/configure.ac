@@ -4,7 +4,7 @@ dnl
 
 sinclude(acx_nlnetlabs.m4)
 
-AC_INIT(NSD,3.2.7,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,3.2.8,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 AC_AIX
@@ -60,6 +60,11 @@ AC_ARG_WITH([kill_priority],
 	AC_HELP_STRING([--with-kill_priority=number], [NSD shutdown priority]),
 	[kill_priority=$withval])
 AC_SUBST(kill_priority)
+
+#
+# Default logfile
+#
+logfile=${localstatedir}/log/nsd.log
 
 #
 # Database directory
