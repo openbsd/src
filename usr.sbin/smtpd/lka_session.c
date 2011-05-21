@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.4 2011/05/17 18:54:32 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.5 2011/05/21 18:04:51 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -116,9 +116,12 @@ lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 		(void)strlcpy(ep->delivery.agent.mda.as_user, u.username,
 		    sizeof (ep->delivery.agent.mda.as_user));
 
+		log_debug("###1");
+
 		ep->delivery.type = D_MDA;
 		switch (ep->rule.r_action) {
 		case A_MBOX:
+			log_debug("###1.1");
 			ep->delivery.agent.mda.method = A_MBOX;
 			(void)strlcpy(ep->delivery.agent.mda.to.user,
 			    u.username,
@@ -127,6 +130,7 @@ lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 		case A_MAILDIR:
 		case A_FILENAME:
 		case A_EXT:
+			log_debug("###1.2");
 			ep->delivery.agent.mda.method = ep->rule.r_action;
 			(void)strlcpy(ep->delivery.agent.mda.to.buffer,
 			    ep->rule.r_value.buffer,
@@ -136,6 +140,8 @@ lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 			fatalx("lka_session_envelope_expand: unexpected rule action");
 			return 0;
 		}
+
+		log_debug("###2");
 		lka_session_request_forwardfile(lks, ep, u.username);
 		return 1;
 	}
@@ -168,6 +174,7 @@ lka_session_forward_reply(struct forward_req *fwreq, int fd)
 	lks->pending--;
 	
 	ep = &fwreq->envelope;
+
 	if (fd != -1) {
 		/* opened .forward okay */
 		if (! forwards_get(fd, &lks->expandtree, fwreq->as_user)) {
@@ -236,7 +243,7 @@ lka_session_pickup(struct lka_session *lks, struct envelope *ep)
 
 	if (lks->pending)
 		return;
-
+	log_debug("#2plop: %d", ep->delivery.agent.mda.method);
 	lka_session_done(lks);
 }
 
@@ -245,6 +252,8 @@ lka_session_resume(struct lka_session *lks, struct envelope *ep)
 {
 	struct expandnode *xn;
         u_int8_t done = 1;
+
+	log_debug("#1plop: %d", ep->delivery.agent.mda.method);
 
 	RB_FOREACH(xn, expandtree, &lks->expandtree) {
 
@@ -397,8 +406,10 @@ int
 lka_session_resolve_node(struct envelope *ep, struct expandnode *xn)
 {
 	struct delivery *dlv;
+	struct delivery olddlv;
 
 	dlv = &ep->delivery;
+	memcpy(&olddlv, dlv, sizeof (*dlv));
         bzero(&dlv->agent, sizeof (dlv->agent));
 
 	switch (xn->type) {
@@ -438,8 +449,10 @@ lka_session_resolve_node(struct envelope *ep, struct expandnode *xn)
 		ep->rule.r_condition.c_type = C_DOM;
 
 		/* if expansion of a user results in same user ... deliver */
-		if (strcmp(xn->u.user, xn->as_user) == 0)
+		if (strcmp(xn->u.user, xn->as_user) == 0) {
+			ep->delivery.agent.mda.method = olddlv.agent.mda.method;
 			break;
+		}
 
 		/* otherwise rewrite delivery user with expansion result */
 		(void)strlcpy(dlv->agent.mda.to.user, xn->u.user,
