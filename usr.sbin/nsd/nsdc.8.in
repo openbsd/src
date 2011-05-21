@@ -1,0 +1,169 @@
+.TH "NSDC" "8" "Mar 22, 2011" "NLnet Labs" "NSDC 3.2.8"
+.\" Copyright (c) 2001\-2011, NLnet Labs. All rights reserved.
+.\" See LICENSE for the license.
+.SH "NAME"
+.LP
+.B nsdc
+\- Name Server Daemon (NSD) control script.
+.SH "SYNOPSIS"
+.LP
+.B nsdc
+.RB [ \-c
+.IR configfile ]
+.I start
+|
+.I stop
+|
+.I reload
+|
+.I rebuild
+|
+.I restart
+|
+.I running
+|
+.I update
+|
+.I notify
+|
+.I patch
+.SH "DESCRIPTION"
+.LP
+.B Nsdc
+is the shell script that used to control nsd(8) and zonec(8) from 
+.B NSD
+distribution.
+.B Nsdc
+is also suitable to be linked into
+.I /etc/rc.d
+directory on
+.I BSD
+like systems for automatic startup of nsd(8) at boot time.
+.P
+At every invokation,
+.B nsdc
+will try to read the nsd.conf(5) configuration file. An example of 
+such configuration file is distributed with the
+.B NSD
+package as
+.IR nsd.conf.sample .
+The config file is checked for errors before it is used, see 
+nsd\-checkconf(8).
+.P
+Possible
+.B nsdc
+applications are:
+.TP
+.I start
+Start nsd(8).
+.TP
+.I stop
+Shut down nsd(8) by sending 
+.I SIGTERM 
+to it. 
+.TP
+.I reload
+Initiate nsd(8) name space database reload by sending
+.IR SIGHUP.
+.TP 
+.I rebuild
+Rebuild the nsd(8) database by invoking zonec(8) with appropriate 
+arguments.
+.TP 
+.I restart
+Restart nsdc(8). This equals to nsdc stop && nsdc start.
+.TP
+.I running
+Check whether nsd(8) is running. Returns error message and error 
+code if it is not running, and no message and zero error code 
+otherwise. 
+.TP
+.I update
+Updates all the slave zones which have
+.I allow\-notify:
+from localhost (127.0.0.1 or ::1) allowed.
+If a TSIG key is specified for the allow\-notify statement in the 
+config file, it will be used to secure the notify. Note that NSD 
+keeps track of zone timeouts automatically, this is only needed if 
+you want to manually force updates by sending notify messages to the 
+localhost. 
+.P
+.RS
+Another method you can use is to stop nsd, delete the xfrd.state
+file and then start nsd again. It will try to update all zones.
+This method does not require allow\-notify: statements.
+.RE
+.TP
+.I notify
+Sends notify messages to all the slaves for all the zones that have the
+.I notify:
+keyword in the
+.I nsd.conf
+file. If a TSIG key is specified for a notify statement, it will be 
+used to secure the notification message to that slave server.
+.TP
+.I patch
+Merge zone transfer changes back to zone files. It reads in the nsd 
+database (nsd.db) and difffile (ixfr.db), and overwrites the zone 
+text files if they have been updated. Running this regularly 
+ensures that the difffile does not grow infinitely. If any zone text
+files have been changed (including those of the master zones), the
+nsd.db is rebuild and nsd is reloaded.
+.SH "OPTIONS"
+.TP
+.B \-c\fI configfile
+Specify configfile to use instead of the default
+.IR @nsdconfigfile@ .
+.SH "FILES"
+.TP
+@nsdconfigfile@
+Configuration file for nsd to change default pathnames and
+.B NSD 
+flags. The zone names, pathnames to zone files and access control 
+lists are also in nsd.conf(5).
+.TP
+@dbfile@
+default
+.B NSD
+database
+.TP
+@dbfile@.lock
+Lockfile for the
+.B NSD
+database access by operator tools.
+.TP
+@difffile@
+Journal of zone transfers, the diff file containing the new zone 
+contents transferred.
+.TP
+@xfrdfile@
+State for the zone transfer process of 
+.BR NSD. 
+Contains timeouts for the zones and whether zones are expired.
+.TP
+@pidfile@
+the process id of the name server.
+.SH "DIAGNOSTICS"
+.LP
+.B Nsdc
+will return zero return code if operation was successful and
+an error message to standard output plus a non\-zero return code
+otherwise.
+.SH "SEE ALSO"
+.LP
+nsd(8), nsd.conf(5), nsd\-checkconf(8), nsd\-notify(8), 
+nsd\-patch(8), nsd\-xfer(8), zonec(8)
+.SH "AUTHORS"
+.LP
+.B NSD
+was written by NLnet Labs and RIPE NCC joint team. Please see
+CREDITS file in the distribution for further details.
+.SH "BUGS"
+Syntax checking of the config file is rudimentary and error 
+messages may be wrong. If you do a nsdc patch, whilst a (long) zone 
+transfer is busy, the zone transfer contents will be partially 
+lost. After a reload, this will be detected and the zone transfer 
+should be restarted. The reload that happens at the end of nsdc 
+patch also frees up memory churn in 
+.B NSD 
+caused by zone transfers.

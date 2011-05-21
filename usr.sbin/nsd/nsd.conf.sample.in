@@ -1,7 +1,7 @@
 #
 # nsd.conf -- the NSD(8) configuration file, nsd.conf(5).
 #
-# Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
+# Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
 #
 # See LICENSE for the license.
 #
@@ -38,7 +38,7 @@ server:
 	# nsid: "aabbccdd"
 
 	# log messages to file. Default to stderr and syslog (with facility LOG_DAEMON).
-	# logfile: "/var/log/nsd.log"
+	# logfile: "@logfile@"
 
 	# Number of NSD servers to fork.
 	# server-count: 1

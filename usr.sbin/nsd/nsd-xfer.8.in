@@ -1,0 +1,83 @@
+.TH "nsd\-xfer" "8" "Mar 22, 2011" "NLnet Labs" "nsd 3.2.8"
+.\" Copyright (c) 2001\-2011, NLnet Labs. All rights reserved.
+.\" See LICENSE for the license.
+.SH "NAME"
+.LP
+.B nsd\-xfer
+\- AXFR client to transfer zones from a name server
+.SH "SYNOPSIS"
+.LP 
+.B nsd\-xfer
+.RB [ \-4 ] 
+.RB [ \-6 ] 
+.RB [ \-a
+.IR address[@port] ]
+.RB [ \-p
+.IR port ]
+.RB [ \-s
+.IR serial ]
+.RB [ \-T
+.IR tsiginfo ]
+.RB [ \-v ]
+.B \-z
+.I zone
+.B \-f
+.I file
+.I servers
+.SH "DESCRIPTION"
+.LP 
+.B Nsd\-xfer 
+is program to transfer zones from a name server using AXFR.
+.B NSD 
+is a complete implementation of an authoritative DNS nameserver.
+.SH "OPTIONS"
+.LP 
+.TP
+.B \-4
+Only send to IPv4 addresses.
+.TP
+.B \-6
+Only send to IPv6 addresses.
+.TP
+.B \-a\fI address[@port]
+Specify the source address (and port) to send from.
+.TP
+.B \-f\fI file
+The file to store the zone in.
+.TP
+.B \-p\fI port
+Specify the port to send to.
+.TP
+.B \-s\fI serial
+Specify the serial of the current zone. The zone is only transferred
+if the master server has a zone with a greater serial number.
+.TP
+.B \-T\fI tsiginfo
+Use TSIG to verify the zone transfer. The
+.I tsiginfo
+file must contain the TSIG key information. The file is removed 
+upon successful reading of the key. The format of the tsiginfo file
+is described in the doc/README file (section 3.3).
+.TP 
+.B \-v
+Be more verbose.
+.TP
+.B \-z\fI zone
+Specify the zone to receive.
+.TP 
+.I servers
+List of nameservers to try.
+.SH "EXAMPLES"
+.LP 
+To run this program the standard way type:
+.LP 
+# nsd\-xfer \-z foobar.cz \-f foobar.cz.zone 1.2.3.4
+.SH "SEE ALSO"
+.LP
+nsd(8), nsdc(8), nsd.conf(5), nsd-checkconf(8),
+nsd-notify(8), nsd-patch(8), zonec(8)
+.SH "AUTHORS"
+.LP
+.B NSD
+was written by NLnet Labs and RIPE NCC joint team. Please see CREDITS
+file in the distribution for further details.

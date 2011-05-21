@@ -10,7 +10,7 @@
   * - Does not properly processes year day
   *
   * LICENSE
-  * Copyright (c) 2008, NLnet Labs, Matthijs Mekking
+  * Copyright (c) 2008-2011, NLnet Labs, Matthijs Mekking.
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without

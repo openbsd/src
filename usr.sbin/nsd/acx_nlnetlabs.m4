@@ -1,5 +1,5 @@
 # acx_nlnetlabs.m4 - common macros for configure checks
-# Copyright 2009, Wouter Wijngaards, NLnet Labs.   
+# Copyright 2009-2011, NLnet Labs, Wouter Wijngaards.
 # BSD licensed.
 #
 # Version 10

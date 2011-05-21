@@ -1,7 +1,7 @@
 /*
  * region-allocator.h -- region based memory allocator.
  *
- * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -76,6 +76,11 @@ size_t region_add_cleanup(region_type *region,
 			  void (*action)(void *),
 			  void *data);
 
+/* 
+ * Remove cleanup, both action and data must match exactly.
+ */
+void region_remove_cleanup(region_type *region,
+        void (*action)(void *), void *data);
 
 /*
  * Allocate SIZE bytes of memory inside REGION.  The memory is

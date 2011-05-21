@@ -1,7 +1,7 @@
 /*
  * tsig.h -- TSIG definitions (RFC 2845).
  *
- * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -105,7 +105,7 @@ tsig_init(region_type *region)
 
 #if defined(HAVE_SSL)
 	return tsig_openssl_init(region);
-#endif
+#endif /* defined(HAVE_SSL) */
 	return 1;
 }
 
@@ -670,5 +670,5 @@ tsig_finalize()
 {
 #if defined(HAVE_SSL)
 	tsig_openssl_finalize();
-#endif
+#endif /* defined(HAVE_SSL) */
 }

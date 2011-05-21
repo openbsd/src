@@ -1,7 +1,7 @@
 /*
  * xfrd-disk.c - XFR (transfer) Daemon TCP system source file. Read/Write state to disk.
  *
- * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *

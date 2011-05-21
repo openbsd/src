@@ -1,7 +1,7 @@
 /*
  * xfrd.c - XFR (transfer) Daemon source file. Coordinates SOA updates.
  *
- * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -204,6 +204,7 @@ xfrd_shutdown()
 	}
 
 	/* shouldn't we clean up memory used by xfrd process */
+	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd shutdown complete"));
 
 	exit(0);
 }

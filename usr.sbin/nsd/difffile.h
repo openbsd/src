@@ -1,7 +1,7 @@
 /*
  * difffile.h - nsd.diff file handling header file. Read/write diff files.
  *
- * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *

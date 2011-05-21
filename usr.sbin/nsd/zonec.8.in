@@ -1,0 +1,126 @@
+.TH "zonec" "8" "Mar 22, 2011" "NLnet Labs" "nsd 3.2.8"
+.\" Copyright (c) 2001\-2011, NLnet Labs. All rights reserved.
+.\" See LICENSE for the license.
+.SH "NAME"
+.LP
+.B zonec
+\- NSD zone compiler version 3.2.8.
+.SH "SYNOPSIS"
+.LP
+.B zonec
+.RB [ \-v ]
+.RB [ \-h ]
+.RB [ \-C ]
+.RB [ \-L ]
+.RB [ \-F ]
+.RB [ \-c
+.IR configfile ]
+.RB [ \-d
+.IR directory ]
+.RB [ \-o
+.IR origin ]
+.RB [ \-z
+.IR zonefile ]
+.RB [ \-f
+.IR database ]
+.SH "DESCRIPTION"
+.LP
+.B Zonec
+is the nsd(8) database compiler for creating name space databases 
+from a set of input master zone files specified in nsd.conf(5) file. 
+.LP
+It is normally invoked via nsdc(8) rebuild command. 
+.B Zonec
+will then parse every zone in nsd.conf(5) file and add it to the 
+name space database,
+.I @dbfile@
+by default, that is used by nsd(8) to answer incoming queries.
+.SH "OPTIONS"
+.TP
+.B \-c\fI configfile
+Read specified configfile instead of the default 
+.IR @nsdconfigfile@ .
+.TP
+.B \-C 
+No config file is read (use with \-f, \-o and \-z).
+.TP
+.B \-d\fI directory
+Change the working directory to
+.I directory
+before doing any work. Overrides zonesdir: option in config file.
+.TP
+.B \-f\fI database
+Create the specified
+.I database
+instead of the file specified as database: in the config file.
+.TP
+.B \-o\fI origin
+Use this as the first origin. Zone information is read from 
+zonefile specified with \-z. When reading zones from config file 
+this option is ignored.
+.TP
+.B \-z\fI zonefile
+Reads all zone information from
+.IR zonefile .
+If 
+.IR zonefile
+equals `\-`, then all zone information is read from stdin, making 
+constructs like:
+.LP
+.RS
+.B # cat zones* 
+| 
+.B ./zonec \-C \-f nsd.db \-o example.net \-z \-
+.RE
+.LP
+.RS
+possible. When reading zones from config file this option is 
+ignored.
+.RE
+.TP
+.B \-v
+Increase the verbosity of zonec. This flag can be specified multiple 
+times to increase the level of verbosity. The first level of
+verbosity will print per zone summary information. The second level 
+of will print progress information for each 10,000 RRs processed.
+.TP
+.B \-F
+Set debug facilities. (If compiled with \-\-enable\-checking.)
+.TP
+.B \-L
+Set debug level. (If compiled with \-\-enable\-checking.)
+.SH "FILES"
+.TP
+@dbfile@
+default
+.B NSD
+database
+.TP
+@nsdconfigfile@
+default
+.B NSD
+configuration file
+.SH "DIAGNOSTICS"
+.LP
+.B Zonec
+will log all the problems via the standard error output and
+progress via stdout if the
+.B v
+option is specified.
+.SH "SEE ALSO"
+.LP
+nsd(8), nsdc(8), nsd.conf(5), nsd\-checkconf(8), nsd-notify(8), 
+nsd-patch(8), nsd-xfer(8)
+.SH "AUTHORS"
+.LP
+.B NSD
+was written by NLnet Labs and RIPE NCC joint team. Please see 
+CREDITS file in the distribution for further details.
+.SH "BUGS"
+.LP
+.B Zonec 
+has rather weak error diagnostics that will change in further 
+versions.
+.B Zonec
+expects the input files to be free of syntax errors and very little
+fool proof checks are done.
