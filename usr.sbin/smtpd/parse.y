@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.73 2011/05/01 12:57:11 eric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.74 2011/05/21 16:58:04 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -808,12 +808,22 @@ condition	: NETWORK mapref		{
 
 			$$ = c;
 		}
-		| ALL				{
+		| ALL alias			{
 			struct cond	*c;
+			struct map	*m;
 
 			if ((c = calloc(1, sizeof *c)) == NULL)
 				fatal("out of memory");
 			c->c_type = C_ALL;
+
+			if ($2) {
+				if ((m = map_findbyname($2)) == NULL) {
+					yyerror("no such map: %s", $2);
+					free($2);
+					YYERROR;
+				}
+				rule->r_amap = m->m_id;
+			}
 			$$ = c;
 		}
 		;
@@ -1044,6 +1054,16 @@ rule		: decision on from			{
 				TAILQ_INSERT_TAIL(conf->sc_rules, subr, r_entry);
 
 				free(cond);
+			}
+
+			if (rule->r_amap) {
+				if (rule->r_action == A_RELAY ||
+				    rule->r_action == A_RELAYVIA) {
+					yyerror("aliases set on a relay rule");
+					free(conditions);
+					free(rule);
+					YYERROR;
+				}
 			}
 
 			free(conditions);
