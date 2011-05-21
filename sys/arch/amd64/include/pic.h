@@ -1,4 +1,4 @@
-/*	$OpenBSD: pic.h,v 1.5 2005/05/31 09:34:23 art Exp $	*/
+/*	$OpenBSD: pic.h,v 1.6 2011/05/21 15:58:27 kettenis Exp $	*/
 /*	$NetBSD: pic.h,v 1.1 2003/02/26 21:26:11 fvdl Exp $	*/
 
 #ifndef _X86_PIC_H
@@ -35,9 +35,11 @@ struct pic {
 #define PIC_I8259	0
 #define PIC_IOAPIC	1
 #define PIC_LAPIC	2
-#define PIC_SOFT	3
+#define PIC_MSI		3
+#define PIC_SOFT	4
 
 extern struct pic i8259_pic;
 extern struct pic local_pic;
+extern struct pic msi_pic;
 extern struct pic softintr_pic;
 #endif

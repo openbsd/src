@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.43 2011/04/22 15:02:35 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.44 2011/05/21 15:58:27 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -252,6 +252,55 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 	PCI_CONF_UNLOCK();
 }
 
+void msi_hwmask(struct pic *, int);
+void msi_hwunmask(struct pic *, int);
+void msi_setup(struct pic *, struct cpu_info *, int, int, int);
+
+struct pic msi_pic = {
+	{0, {NULL}, NULL, 0, "msi", NULL, 0, 0},
+	PIC_MSI,
+#ifdef MULTIPROCESSOR
+	{},
+#endif
+	msi_hwmask,
+	msi_hwunmask,
+	msi_setup,
+	msi_setup,
+	NULL,
+	ioapic_edge_stubs
+};
+
+void
+msi_hwmask(struct pic *pic, int pin)
+{
+}
+
+void
+msi_hwunmask(struct pic *pic, int pin)
+{
+}
+
+void
+msi_setup(struct pic *pic, struct cpu_info *ci, int pin, int idtvec, int type)
+{
+}
+
+int
+pci_intr_map_msi(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+{
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t tag = pa->pa_tag;
+
+	if ((pa->pa_flags & PCI_FLAGS_MSI_ENABLED) == 0 ||
+	    pci_get_capability(pc, tag, PCI_CAP_MSI, NULL, NULL) == 0)
+		return 1;
+
+	ihp->tag = tag;
+	ihp->line = APIC_INT_VIA_MSG;
+	ihp->pin = 0;
+	return 0;
+}
+
 int
 pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
@@ -360,6 +409,9 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 	if (ih.line == 0)
 		panic("pci_intr_string: bogus handle 0x%x", ih.line);
 
+	if (ih.line & APIC_INT_VIA_MSG)
+		return ("msi");
+
 #if NIOAPIC > 0
 	if (ih.line & APIC_INT_VIA_APIC)
 		snprintf(irqstr, sizeof(irqstr), "apic %d int %d",
@@ -384,7 +436,37 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 {
 	int pin, irq;
 	int bus, dev;
+	pcitag_t tag = ih.tag;
 	struct pic *pic;
+
+	if (ih.line & APIC_INT_VIA_MSG) {
+		struct intrhand *ih;
+		struct intrsource *source;
+		pcireg_t reg;
+		int off, vec;
+
+		if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
+			panic("%s: no msi capability", __func__);
+
+		ih = intr_establish(-1, &msi_pic, tag, IST_PULSE, level,
+		    func, arg, what);
+		if (ih == NULL)
+			return (NULL);
+
+		source = ih->ih_cpu->ci_isources[ih->ih_slot];
+		vec = source->is_idtvec;
+
+		if (reg & PCI_MSI_MC_C64) {
+			pci_conf_write(pc, tag, off + PCI_MSI_MA, 0xfee00000);
+			pci_conf_write(pc, tag, off + PCI_MSI_MAU32, 0);
+			pci_conf_write(pc, tag, off + PCI_MSI_MD64, vec);
+		} else {
+			pci_conf_write(pc, tag, off + PCI_MSI_MA, 0xfee00000);
+			pci_conf_write(pc, tag, off + PCI_MSI_MD32, vec);
+		}
+		pci_conf_write(pc, tag, off, reg | PCI_MSI_MC_MSIE);
+		return (ih);
+	}
 
 	pci_decompose_tag(pc, ih.tag, &bus, &dev, NULL);
 #if NACPIPRT > 0
