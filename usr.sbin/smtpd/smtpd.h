@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.224 2011/05/17 18:54:32 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.225 2011/05/21 18:43:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -276,18 +276,13 @@ struct map {
 	TAILQ_HEAD(mapel_list, mapel)	 m_contents;
 };
 
+
 struct map_backend {
-	enum map_src source;
 	void *(*open)(char *);
 	void (*close)(void *);
-	char *(*get)(void *, char *, size_t *);
-	int (*put)(void *, char *, char *);
+	void *(*lookup)(void *, char *, enum map_kind);
 };
 
-struct map_parser {
-	enum map_kind kind;
-	void *(*extract)(char *, char *, size_t);
-};
 
 enum cond_type {
 	C_ALL,
