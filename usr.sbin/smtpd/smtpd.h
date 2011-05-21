@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.225 2011/05/21 18:43:08 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.226 2011/05/21 19:57:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -340,18 +340,6 @@ enum delivery_type {
 	D_MTA,
 	D_BOUNCE
 };
-
-/*
-enum delivery_method {
-	DM_INVALID = 0,
-	DM_RELAY,
-	DM_RELAYVIA,
-	DM_MAILDIR,
-	DM_MBOX,
-	DM_FILENAME,
-	DM_EXT
-};
-*/
 
 enum delivery_status {
 	DS_PERMFAILURE	= 0x2,
