@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.5 2010/12/04 17:06:31 miod Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.6 2011/05/21 21:36:39 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*
@@ -75,6 +75,7 @@ void landisk_pci_conf_interrupt(void *v, int bus, int dev, int pin,
 	landisk_pci_attach_hook(pa, self, pba)
 #define	pci_intr_map(pa, ihp) \
 	landisk_pci_intr_map(pa, ihp)
+#define	pci_intr_map_msi(pa, ihp)	(-1)
 #define	pci_intr_string(v, ih) \
 	landisk_pci_intr_string(v, ih)
 #define	pci_intr_establish(v, ih, level, ih_fun, ih_arg, ih_name) \

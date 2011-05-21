@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.24 2010/12/04 17:06:31 miod Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.25 2011/05/21 21:36:39 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.6 1996/11/19 04:49:21 cgd Exp $	*/
 
 /*
@@ -105,6 +105,7 @@ int alpha_sysctl_chipset(int *, u_int, char *, size_t *);
     (*(c)->pc_conf_write)((c)->pc_conf_v, (t), (r), (v))
 #define	pci_intr_map(pa, ihp)						\
     (*((pa)->pa_pc)->pc_intr_map)((pa), (ihp))
+#define	pci_intr_map_msi(pa, ihp)	(-1)
 #define	pci_intr_string(c, ih)						\
     (*(c)->pc_intr_string)((c)->pc_intr_v, (ih))
 #define	pci_intr_line(c, ih)						\
