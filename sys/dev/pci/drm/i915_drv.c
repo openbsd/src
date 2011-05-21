@@ -711,19 +711,21 @@ inteldrm_intr(void *arg)
 	struct drm_device	*dev = (struct drm_device *)dev_priv->drmdev;
 	u_int32_t		 iir, pipea_stats = 0, pipeb_stats = 0;
 
-	/* we're not set up, don't poke the hw */
-	if (dev_priv->hw_status_page == NULL)
+	/*
+	 * we're not set up, don't poke the hw  and if we're vt switched
+	 * then nothing will be enabled
+	 */
+	if (dev_priv->hw_status_page == NULL || dev_priv->mm.suspended)
 		return (0);
+
+	iir = I915_READ(IIR);
+	if (iir == 0)
+		return (0);
+
 	/*
 	 * lock is to protect from writes to PIPESTAT and IMR from other cores.
 	 */
 	mtx_enter(&dev_priv->user_irq_lock);
-	iir = I915_READ(IIR);
-	if (iir == 0) {
-		mtx_leave(&dev_priv->user_irq_lock);
-		return (0);
-	}
-
 	/*
 	 * Clear the PIPE(A|B)STAT regs before the IIR
 	 */
