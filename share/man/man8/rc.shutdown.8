@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rc.shutdown.8,v 1.11 2011/04/22 14:11:08 ajacoutot Exp $
+.\"	$OpenBSD: rc.shutdown.8,v 1.12 2011/05/22 06:27:27 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Aaron Campbell
 .\" All rights reserved.
@@ -24,44 +24,65 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 22 2011 $
+.Dd $Mdocdate: May 22 2011 $
 .Dt RC.SHUTDOWN 8
 .Os
 .Sh NAME
 .Nm rc.shutdown
 .Nd command script run at system shutdown
+.Sh SYNOPSIS
+.Nm /etc/rc.shutdown
 .Sh DESCRIPTION
-When the system is administratively shut down using either the
+When the system is shut down using the
 .Xr reboot 8
 or
 .Xr halt 8
-command,
+commands,
+or when
+.Xr init 8
+is signalled to do so,
+or when a keyboard-requested halt is issued (if the architecture supports it),
 .Xr rc 8
 is invoked with the argument
-.Dq shutdown ,
-which checks for the existence of a
-.Pa /etc/rc.shutdown
-script to run before halting the system.
-This script, like
-.Xr rc.local 8 ,
-is entirely for commands added by the system administrator.
+.Dq shutdown .
+This document details the actions taken by
+.Xr rc 8
+in such an instance.
 .Pp
-The
-.Nm
-script is also executed by
-.Xr init 8
-if a keyboard-requested halt is issued (for architectures that support this).
+Firstly it saves random data for reseeding the kernel random number
+generator during the next boot.
+It then stops any daemons
+defined in the
+.Va rc_scripts
+variable in
+.Xr rc.conf.local 8 ,
+by passing them the
+.Cm stop
+argument.
 .Pp
+.Xr rc 8
+then runs
+.Nm .
+The administrator should place in this file
+any commands they wish to have executed during shutdown.
+.Pp
+Finally, all
+.Xr carp 4
+interfaces are brought down and then the system shuts down.
 If
 .Nm
-sets the variable
+has the variable
 .Va powerdown
-to
+set to
 .Dq YES ,
-.Xr halt 8
-will attempt to power down the machine after it has halted.
+the machine will attempt to power off after it has halted.
+.Pp
+If
+.Xr init 8
+is exiting single-user mode it will also run the first part of shutdown
+(saving random data),
+though not the latter.
 .Sh SEE ALSO
-.Xr halt 8 ,
 .Xr init 8 ,
 .Xr rc 8 ,
 .Xr rc.conf 8 ,
