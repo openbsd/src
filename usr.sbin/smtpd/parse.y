@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.74 2011/05/21 16:58:04 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.75 2011/05/22 21:03:14 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -28,7 +28,9 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 
+#include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -99,6 +101,7 @@ int		 interface(const char *, const char *, const char *,
 		    struct listenerlist *, int, in_port_t, u_int8_t);
 void		 set_localaddrs(void);
 int		 delaytonum(char *);
+int		 is_if_in_group(const char *, const char *);
 
 typedef struct {
 	union {
@@ -1820,7 +1823,8 @@ interface(const char *s, const char *tag, const char *cert,
 		fatal("getifaddrs");
 
 	for (p = ifap; p != NULL; p = p->ifa_next) {
-		if (strcmp(s, p->ifa_name) != 0)
+		if (strcmp(p->ifa_name, s) != 0 &&
+		    ! is_if_in_group(p->ifa_name, s))
 			continue;
 
 		if ((h = calloc(1, sizeof(*h))) == NULL)
@@ -1957,4 +1961,48 @@ delaytonum(char *str)
   	
 bad:
 	return (-1);
+}
+
+int
+is_if_in_group(const char *ifname, const char *groupname)
+{
+        unsigned int		 len;
+        struct ifgroupreq        ifgr;
+        struct ifg_req          *ifg;
+	int			 s;
+	int			 ret = 0;
+
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+		err(1, "socket");
+
+        memset(&ifgr, 0, sizeof(ifgr));
+        strlcpy(ifgr.ifgr_name, ifname, IFNAMSIZ);
+        if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1) {
+                if (errno == EINVAL || errno == ENOTTY)
+			goto end;
+		err(1, "SIOCGIFGROUP");
+        }
+
+        len = ifgr.ifgr_len;
+        ifgr.ifgr_groups =
+            (struct ifg_req *)calloc(len/sizeof(struct ifg_req),
+		sizeof(struct ifg_req));
+        if (ifgr.ifgr_groups == NULL)
+                err(1, "getifgroups");
+        if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1)
+                err(1, "SIOCGIFGROUP");
+	
+        ifg = ifgr.ifgr_groups;
+        for (; ifg && len >= sizeof(struct ifg_req); ifg++) {
+                len -= sizeof(struct ifg_req);
+		if (strcmp(ifg->ifgrq_group, groupname) == 0) {
+			ret = 1;
+			break;
+		}
+        }
+        free(ifgr.ifgr_groups);
+
+end:
+	close(s);
+	return ret;
 }

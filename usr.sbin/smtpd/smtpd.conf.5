@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.39 2011/05/22 13:38:31 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.40 2011/05/22 21:03:14 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -101,7 +101,8 @@ Specify an
 and
 .Ar port
 to listen on.
-An IP address or domain name may be used in place of
+An interface group, an IP address or adomain name may
+be used in place of
 .Ar interface .
 .Pp
 Secured connections are provided either using STARTTLS
