@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.253 2011/05/22 13:04:40 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.254 2011/05/22 17:49:26 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -755,6 +755,7 @@ editor_resize(struct disklabel *lp, char *p)
 	}
 
 	DL_SETPSIZE(pp, secs);
+	get_bsize(&label, partno);
 
 	/*
 	 * Pack partitions above the resized partition, leaving unused
@@ -785,6 +786,7 @@ editor_resize(struct disklabel *lp, char *p)
 			fputs("No room left for all partitions\n", stderr);
 			return;
 		}
+		get_bsize(&label, i);
 		prev = pp;
 	}
 	*lp = label;
@@ -1767,8 +1769,8 @@ editor_help(void)
 " m [part] - modify partition\n"
 "\n"
 "Suffixes can be used to indicate units other than sectors:\n"
-"\t'b' (bytes), 'k' (kilobytes), 'm' (megabytes), 'g' (gigabytes)\n"
-"\t'c' (cylinders), '%' (% of total disk), '&' (% of free space).\n"
+" 'b' (bytes), 'k' (kilobytes), 'm' (megabytes), 'g' (gigabytes) 't' (terabytes)\n"
+" 'c' (cylinders), '%' (% of total disk), '&' (% of free space).\n"
 "Values in non-sector units are truncated to the nearest cylinder boundary.");
 
 }
