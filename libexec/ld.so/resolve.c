@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.53 2011/05/10 04:50:35 otto Exp $ */
+/*	$OpenBSD: resolve.c,v 1.54 2011/05/22 22:43:47 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -213,6 +213,90 @@ _dl_cleanup_objects()
 	}
 }
 
+struct dep_node_head _dlsym_search_list;
+int _dl_search_list_valid = 0;
+
+void
+_dl_rebuild_allobj_grouplist()
+{
+	struct dep_node *n, *m;
+	int global;
+	static int maxgrouplist = 0;
+	static int maxchildlist = 0;
+	int childlistlen = 0, grouplistlen = 0;
+
+	DL_DEB(("rebuil\n"));
+
+	/* get rid of old list */
+	while( (n = TAILQ_FIRST(&_dlsym_search_list)) != NULL) {
+		TAILQ_REMOVE(&_dlsym_search_list, n, next_sib);
+		n->data->obj_global = 0; /* clear the cached global flag */
+		_dl_free(n);
+	}
+
+	/* rebuild list */
+	_dl_newsymsearch();
+	/*
+	 * search dlopened objects: global or req_obj == dlopened_obj
+	 * and and it's children
+	 */
+	
+	 _dl_newsymsearch();
+
+	TAILQ_FOREACH(n, &_dlopened_child_list, next_sib) {
+		childlistlen++;
+#if 0
+		DL_DEB(("opened list: %s\n", n->data->load_name)); 
+#endif
+		global = n->data->obj_flags & RTLD_GLOBAL;
+
+		if (n->data->lastlookup == _dl_searchnum)
+			continue;
+
+		grouplistlen = 0;
+		TAILQ_FOREACH(m, &n->data->grpsym_list, next_sib) {
+			grouplistlen++;
+			if (m->data->lastlookup == _dl_searchnum)
+				continue;
+			if (!global && m->data != n->data) {
+				continue;
+			}
+			m->data->obj_global |= global & RTLD_GLOBAL;
+
+			_dl_append_search(m->data);
+		}
+	}
+	if (grouplistlen > maxgrouplist) {
+		maxgrouplist = grouplistlen ;
+		DL_DEB(("maxgrouplist = %d\n", maxgrouplist));
+	}
+	if (childlistlen > maxchildlist) {
+		maxchildlist = childlistlen;
+		DL_DEB(("maxchildlist = %d\n", maxchildlist));
+	}
+
+#if 0
+	TAILQ_FOREACH(n, &_dlsym_search_list, next_sib) {
+		DL_DEB(("objects: %s global %d\n",
+		    n->data->load_name,
+		    n->data->obj_global));
+	}
+#endif
+
+	_dl_search_list_valid = 1;
+}
+
+void
+_dl_append_search(elf_object_t *object)
+{
+	struct dep_node *n;
+	n = _dl_malloc(sizeof *n);
+	n->data = object;
+
+	object->lastlookup = _dl_searchnum;
+	TAILQ_INSERT_TAIL(&_dlsym_search_list, n, next_sib);
+}
+
 void
 _dl_remove_object(elf_object_t *object)
 {
@@ -322,6 +406,8 @@ _dl_find_symbol(const char *name, const Elf_Sym **this,
 	const char *p = name;
 	elf_object_t *object = NULL, *weak_object = NULL;
 	int found = 0;
+	int visit = 0;
+	static int maxvisit = 0;
 	struct dep_node *n, *m;
 
 
@@ -372,13 +458,11 @@ _dl_find_symbol(const char *name, const Elf_Sym **this,
 				}
 			}
 		}
-	} else {
+	} else if ((flags & (SYM_SEARCH_NEXT|SYM_SEARCH_SELF|SYM_SEARCH_OTHER))) {
 		int skip = 0;
 
 		if ((flags & SYM_SEARCH_SELF) || (flags & SYM_SEARCH_NEXT))
 			skip = 1;
-
-		_dl_newsymsearch();
 
 		/*
 		 * search dlopened objects: global or req_obj == dlopened_obj
@@ -389,7 +473,6 @@ _dl_find_symbol(const char *name, const Elf_Sym **this,
 			    (n->data != req_obj->load_object))
 				continue;
 
-			n->data->lastlookup_head = _dl_searchnum;
 			TAILQ_FOREACH(m, &n->data->grpsym_list, next_sib) {
 				if (skip == 1) {
 					if (m->data == req_obj) {
@@ -402,7 +485,6 @@ _dl_find_symbol(const char *name, const Elf_Sym **this,
 				if ((flags & SYM_SEARCH_OTHER) &&
 				    (m->data == req_obj))
 					continue;
-				m->data->lastlookup = _dl_searchnum;
 				if (_dl_find_symbol_obj(m->data, name, h, flags,
 				    this, &weak_sym, &weak_object)) {
 					object = m->data;
@@ -411,9 +493,46 @@ _dl_find_symbol(const char *name, const Elf_Sym **this,
 				}
 			}
 		}
+	} else {
+		if (_dl_search_list_valid == 0) {
+			_dl_rebuild_allobj_grouplist();
+		}
+
+		TAILQ_FOREACH(n, &_dlsym_search_list, next_sib) {
+			if (n->data == req_obj->load_object) {
+				TAILQ_FOREACH(m, &n->data->grpsym_list,
+				    next_sib) {
+					visit++;
+					if (_dl_find_symbol_obj(m->data, name,
+					    h, flags, this, &weak_sym,
+					    &weak_object)) {
+						object = m->data;
+						found = 1;
+						goto found;
+					}
+				}
+			}
+			if (((n->data->obj_global & RTLD_GLOBAL) == 0) &&
+			    (n->data != req_obj->load_object))
+				continue;
+
+			//DL_DEB(("searching for %s in %s\n", name, n->data->load_name));
+			visit++;
+			if (_dl_find_symbol_obj(n->data, name, h, flags,
+			    this, &weak_sym, &weak_object)) {
+				object = n->data;
+				found = 1;
+				DL_DEB(("sym %s is in %s\n", name, object->load_name));
+				goto found;
+			}
+		}
 	}
 
 found:
+	if (visit > maxvisit) {
+		maxvisit = visit;
+		DL_DEB(("maxvisit is %d\n", maxvisit));
+	}
 	if (weak_object != NULL && found == 0) {
 		object=weak_object;
 		*this = weak_sym;

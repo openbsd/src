@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.82 2010/07/01 19:25:44 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.83 2011/05/22 22:43:47 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -108,6 +108,7 @@ dlopen(const char *libname, int flags)
 			_dl_unload_shlib(object);
 			_dl_exit(0);
 		}
+		_dl_search_list_valid = 0;
 		err = _dl_rtld(object);
 		if (err != 0) {
 			_dl_real_close(object);
@@ -263,6 +264,7 @@ dlclose(void *handle)
 
 	retval = _dl_real_close(handle);
 
+	_dl_search_list_valid = 0;
 
 	if (_dl_debug_map->r_brk) {
 		_dl_debug_map->r_state = RT_CONSISTENT;
