@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.33 2010/12/07 11:39:40 jsg Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.34 2011/05/22 13:21:24 claudio Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -210,7 +210,7 @@ pflogioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 int
-pflog_packet(struct pfi_kif *kif, struct mbuf *m, sa_family_t af, u_int8_t dir,
+pflog_packet(struct pfi_kif *kif, struct mbuf *m, u_int8_t dir,
     u_int8_t reason, struct pf_rule *rm, struct pf_rule *am,
     struct pf_ruleset *ruleset, struct pf_pdesc *pd)
 {
@@ -226,7 +226,7 @@ pflog_packet(struct pfi_kif *kif, struct mbuf *m, sa_family_t af, u_int8_t dir,
 
 	bzero(&hdr, sizeof(hdr));
 	hdr.length = PFLOG_REAL_HDRLEN;
-	hdr.af = af;
+	hdr.af = pd->af;
 	hdr.action = rm->action;
 	hdr.reason = reason;
 	memcpy(hdr.ifname, kif->pfik_name, sizeof(hdr.ifname));
