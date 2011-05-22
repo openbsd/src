@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.146 2011/03/23 15:51:11 fgsch Exp $	*/
+/*	$OpenBSD: com.c,v 1.147 2011/05/22 22:36:53 drahn Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -538,7 +538,8 @@ compwroff(struct com_softc *sc)
 	 */
 	bus_space_write_1(iot, ioh, com_fifo, 0);
 	delay(100);
-	(void) bus_space_read_1(iot, ioh, com_data);
+	if (ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY))
+		(void) bus_space_read_1(iot, ioh, com_data);
 	delay(100);
 	bus_space_write_1(iot, ioh, com_fifo,
 			  FIFO_RCV_RST | FIFO_XMT_RST);
