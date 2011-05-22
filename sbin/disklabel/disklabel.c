@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.178 2011/04/19 19:16:18 halex Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.179 2011/05/22 13:05:47 otto Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -120,7 +120,7 @@ u_int64_t getnum(char *, u_int64_t, u_int64_t, const char **);
 int
 main(int argc, char *argv[])
 {
-	int ch, f, i, writeable, error = 0;
+	int ch, f, writeable, error = 0;
 	struct disklabel *lp;
 	FILE *t;
 
