@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.252 2011/04/16 23:01:17 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.253 2011/05/22 13:04:40 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -733,11 +733,11 @@ editor_resize(struct disklabel *lp, char *p)
 		fputs("Cannot resize spoofed partition\n", stderr);
 		return;
 	}
-	secs = getuint(lp, "grow (+) or shrink (-) (with unit)",
-	    "amount to grow (+) or shrink (-) partition including unit",
-	    0, editor_countfree(lp), 0, DO_CONVERSIONS);
+	secs = getuint(lp, "[+|-]new size (with unit)",
+	    "new size or amount to grow (+) or shrink (-) partition including unit",
+	    sz, editor_countfree(lp), 0, DO_CONVERSIONS);
 
-	if (secs == 0 || secs == -1) {
+	if (secs <= 0) {
 		fputs("Command aborted\n", stderr);
 		return;
 	}
@@ -749,16 +749,12 @@ editor_resize(struct disklabel *lp, char *p)
 	else
 		secs = ((secs - cylsecs + 1) / cylsecs) * cylsecs;
 #endif
-	if (DL_GETPOFFSET(pp) + sz + secs > ending_sector) {
+	if (DL_GETPOFFSET(pp) + secs > ending_sector) {
 		fputs("Amount too big\n", stderr);
 		return;
 	}
-	if (sz + secs < 0) {
-		fputs("Amount too small\n", stderr);
-		return;
-	}
 
-	DL_SETPSIZE(pp, sz + secs);
+	DL_SETPSIZE(pp, secs);
 
 	/*
 	 * Pack partitions above the resized partition, leaving unused
@@ -1201,13 +1197,19 @@ getuint(struct disklabel *lp, char *prompt, char *helpstring,
 					break;
 				case '%':
 					buf[--n] = '\0';
-					percent = strtod(buf, NULL) / 100.0;
+					p = &buf[0];
+					if (*p == '+' || *p == '-')
+						operator = *p++;
+					percent = strtod(p, NULL) / 100.0;
 					snprintf(buf, sizeof(buf), "%lld",
 					    DL_GETDSIZE(lp));
 					break;
 				case '&':
 					buf[--n] = '\0';
-					percent = strtod(buf, NULL) / 100.0;
+					p = &buf[0];
+					if (*p == '+' || *p == '-')
+						operator = *p++;
+					percent = strtod(p, NULL) / 100.0;
 					snprintf(buf, sizeof(buf), "%lld",
 					    maxval);
 					break;
@@ -1750,19 +1752,19 @@ editor_help(void)
 {
 	puts("Available commands:");
 	puts(
-"  ? | h    - show help                  n [part] - set mount point\n"
-"  A        - auto partition all space   p [unit] - print partitions\n"
-"  a [part] - add partition              q        - quit & save changes\n"
-"  b        - set OpenBSD boundaries     R [part] - resize a partition\n"
-"  c [part] - change partition size      r        - display free space\n"
-"  D        - reset label to default     s [path] - save label to file\n"
-"  d [part] - delete partition           U        - undo all changes\n"
-"  e        - edit drive parameters      u        - undo last change\n"
-"  g [d|u]  - [d]isk or [u]ser geometry  w        - write label to disk\n"
-"  i        - modify disklabel UID       X        - toggle expert mode\n"
-"  l [unit] - print disk label header    x        - exit & lose changes\n"
-"  M        - disklabel(8) man page      z        - delete all partitions\n"
-"  m [part] - modify partition\n"
+" ? | h    - show help                 n [part] - set mount point\n"
+" A        - auto partition all space  p [unit] - print partitions\n"
+" a [part] - add partition             q        - quit & save changes\n"
+" b        - set OpenBSD boundaries    R [part] - resize auto allocated partition\n"
+" c [part] - change partition size     r        - display free space\n"
+" D        - reset label to default    s [path] - save label to file\n"
+" d [part] - delete partition          U        - undo all changes\n"
+" e        - edit drive parameters     u        - undo last change\n"
+" g [d|u]  - [d]isk or [u]ser geometry w        - write label to disk\n"
+" i        - modify disklabel UID      X        - toggle expert mode\n"
+" l [unit] - print disk label header   x        - exit & lose changes\n"
+" M        - disklabel(8) man page     z        - delete all partitions\n"
+" m [part] - modify partition\n"
 "\n"
 "Suffixes can be used to indicate units other than sectors:\n"
 "\t'b' (bytes), 'k' (kilobytes), 'm' (megabytes), 'g' (gigabytes)\n"
