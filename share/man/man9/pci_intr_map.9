@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci_intr_map.9,v 1.11 2011/05/21 21:29:20 kettenis Exp $
+.\"	$OpenBSD: pci_intr_map.9,v 1.12 2011/05/22 06:20:46 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Michael Shalayeff
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 21 2011 $
+.Dd $Mdocdate: May 22 2011 $
 .Dt PCI_INTR_MAP 9
 .Os
 .Sh NAME
@@ -65,7 +65,8 @@ This process may include resolving the mapping through
 firmware-provided information.
 For devices that support Message Signaled Interrupts (MSI) the
 .Fn pci_intr_map_msi
-function should be called instead.  This function can fail if the
+function should be called instead.
+This function can fail if the
 system does not support MSI.
 In that case
 .Fn pci_intr_map
@@ -93,7 +94,7 @@ See
 .Xr spl 9
 for an explanation of the
 .Va ipl
-.Dq interrupt priority levels.
+.Dq interrupt priority levels .
 .Sh EXAMPLES
 A typical code sequence for establishing a handler
 for a device interrupt in the driver might be:
