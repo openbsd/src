@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.100 2011/04/30 14:48:39 jmc Exp $
+.\"	$OpenBSD: disklabel.8,v 1.101 2011/05/22 17:47:44 otto Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: April 30 2011 $
+.Dd $Mdocdate: May 22 2011 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -596,18 +596,18 @@ is left unallocated.
 The sizes below are approximations,
 and may vary from architecture to architecture.
 .Pp
-.Sy Disks \*(Gt 6.5 Gigabytes
+.Sy Disks \*(Gt 7 Gigabytes
 .Bd -literal -offset indent -compact
 /		 5% of disk.  80M \(en 1G
 swap		 5% of disk.  80M \(en 2x max physical memory
 /tmp		 8% of disk. 120M \(en 4G
 /var		13% of disk.  80M \(en 2x size of crash dump
-/usr		 2% of disk. 600M \(en 2G
+/usr		 5% of disk. 900M \(en 2G
 /usr/X11R6	 3% of disk. 512M \(en 1G
-/usr/local	 5% of disk.   2G \(en 6G
+/usr/local	10% of disk.   2G \(en 10G
 /usr/src	 3% of disk.   1G \(en 2G
 /usr/obj	 3% of disk.   1G \(en 2G
-/home		53% of disk.   1G \(en 300G
+/home		45% of disk.   1G \(en 300G
 .Ed
 .Pp
 .Sy Disks \*(Gt 2 Gigabytes
