@@ -3900,9 +3900,9 @@
 ./usr/share/man/cat3/ftw.0
 ./usr/share/man/cat3/funlockfile.0
 ./usr/share/man/cat3/funopen.0
-./usr/share/man/cat3/fwprintf.0
 ./usr/share/man/cat3/fwide.0
 ./usr/share/man/cat3/fwopen.0
+./usr/share/man/cat3/fwprintf.0
 ./usr/share/man/cat3/fwrite.0
 ./usr/share/man/cat3/gai_strerror.0
 ./usr/share/man/cat3/gamma.0
@@ -5489,7 +5489,6 @@
 ./usr/share/man/cat3/rtbl_set_separator.0
 ./usr/share/man/cat3/ruserok.0
 ./usr/share/man/cat3/savetty.0
-./usr/share/man/cat3/swprintf.0
 ./usr/share/man/cat3/scalb.0
 ./usr/share/man/cat3/scalbf.0
 ./usr/share/man/cat3/scalbln.0
@@ -5804,6 +5803,7 @@
 ./usr/share/man/cat3/swap16.0
 ./usr/share/man/cat3/swap32.0
 ./usr/share/man/cat3/swap64.0
+./usr/share/man/cat3/swprintf.0
 ./usr/share/man/cat3/syncok.0
 ./usr/share/man/cat3/sys_siglist.0
 ./usr/share/man/cat3/sys_signame.0
@@ -5930,8 +5930,6 @@
 ./usr/share/man/cat3/vfprintf.0
 ./usr/share/man/cat3/vfscanf.0
 ./usr/share/man/cat3/vfwprintf.0
-./usr/share/man/cat3/vswprintf.0
-./usr/share/man/cat3/vwprintf.0
 ./usr/share/man/cat3/vidattr.0
 ./usr/share/man/cat3/vidputs.0
 ./usr/share/man/cat3/vis.0
@@ -5942,12 +5940,14 @@
 ./usr/share/man/cat3/vsnprintf.0
 ./usr/share/man/cat3/vsprintf.0
 ./usr/share/man/cat3/vsscanf.0
+./usr/share/man/cat3/vswprintf.0
 ./usr/share/man/cat3/vsyslog.0
 ./usr/share/man/cat3/vsyslog_r.0
 ./usr/share/man/cat3/vw_printw.0
 ./usr/share/man/cat3/vw_scanw.0
 ./usr/share/man/cat3/vwarn.0
 ./usr/share/man/cat3/vwarnx.0
+./usr/share/man/cat3/vwprintf.0
 ./usr/share/man/cat3/vwprintw.0
 ./usr/share/man/cat3/vwscanw.0
 ./usr/share/man/cat3/wadd_wch.0
@@ -6568,6 +6568,7 @@
 ./usr/share/man/cat9/pci_intr_establish.0
 ./usr/share/man/cat9/pci_intr_line.0
 ./usr/share/man/cat9/pci_intr_map.0
+./usr/share/man/cat9/pci_intr_map_msi.0
 ./usr/share/man/cat9/pci_intr_string.0
 ./usr/share/man/cat9/pci_make_tag.0
 ./usr/share/man/cat9/pfind.0
