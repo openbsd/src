@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.78 2011/05/03 08:00:54 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.79 2011/05/23 07:06:53 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 3 2011 $
+.Dd $Mdocdate: May 23 2011 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -466,11 +466,11 @@ Streams created with the
 option are controlled by the following MMC messages:
 .Bl -tag -width relocateXXX -offset indent
 .It relocate
-Streams are relocated to the requested time postion
+Streams are relocated to the requested time position
 relative to the beginning of the stream, at which playback
 and recording must start.
 If the requested position is beyond the end of file,
-the stream is temporarly disabled until a valid postion is requested.
+the stream is temporarly disabled until a valid position is requested.
 This message is ignored by client streams (server mode).
 The given time position is sent to MIDI ports as an MTC
 .Dq "full frame"
