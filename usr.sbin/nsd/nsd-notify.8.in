@@ -59,7 +59,7 @@ To run this program the standard way type:
 .SH "SEE ALSO"
 .LP 
 nsd(8), nsdc(8), nsd.conf(5), nsd\-checkconf(8),
-nsd\-patch(8), nsd\-xfer(8), zonec(8)
+nsd\-patch(8), nsd\-xfer(8), nsd\-zonec(8)
 .SH "AUTHORS"
 .B NSD
 was written by NLnet Labs and RIPE NCC joint team. Please see CREDITS

@@ -56,7 +56,7 @@ argument and put itself into background and answers queries on port
 .I port
 option. The
 .I database
-must be generated beforehand with zonec(8). By default, 
+must be generated beforehand with nsd\-zonec(8). By default, 
 .B NSD 
 will bind to all local interfaces available. Use the 
 .B \-a
@@ -248,7 +248,7 @@ option is specified.
 .SH "SEE ALSO"
 .LP
 nsdc(8), nsd.conf(5), nsd\-checkconf(8), nsd\-notify(8), 
-nsd\-patch(8), nsd\-xfer(8), zonec(8)
+nsd\-patch(8), nsd\-xfer(8), nsd\-zonec(8)
 .SH "AUTHORS"
 .LP
 .B NSD
@@ -259,7 +259,7 @@ CREDITS file in the distribution for further details.
 .B NSD
 will answer the queries erroneously if the
 .I database
-was not properly compiled with zonec(8). Therefore problems with 
-misconfigured master zone files or zonec(8) bugs may not be visible 
+was not properly compiled with nsd\-zonec(8). Therefore problems with 
+misconfigured master zone files or nsd\-zonec(8) bugs may not be visible 
 until the queries are actually answered with
 .BR NSD .

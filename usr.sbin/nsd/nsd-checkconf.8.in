@@ -25,7 +25,7 @@ error, and performs additional checks on the contents. The
 configfile format is described in nsd.conf(5).
 .P
 The utility of this program is to check a config file for errors 
-before using it in nsd(8) or zonec(8). This program can also be used 
+before using it in nsd(8) or nsd\-zonec(8). This program can also be used 
 for shell scripts to access the nsd config file, using the \-o and 
 \-z options.
 .P
@@ -86,7 +86,7 @@ configuration file
 .SH "SEE ALSO"
 .LP
 nsd(8), nsdc(8), nsd.conf(5), nsd\-notify(8), nsd\-patch(8), 
-nsd-xfer(8), zonec(8)
+nsd-xfer(8), nsd\-zonec(8)
 .SH "AUTHORS"
 .LP
 .B NSD

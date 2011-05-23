@@ -61,7 +61,7 @@ default
 configuration file
 .SH "SEE ALSO"
 nsd(8), nsdc(8), nsd.conf(5), nsd-checkconf(8), nsd-notify(8), 
-nsd-xfer(8), zonec(8)
+nsd-xfer(8), nsd\-zonec(8)
 .SH "AUTHORS"
 .LP
 .B NSD

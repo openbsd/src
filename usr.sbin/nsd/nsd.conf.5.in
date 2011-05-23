@@ -199,7 +199,7 @@ username. Can be username, id or id.gid. Same as commandline option
 Change the working directory to the specified directory before 
 accessing zone files. Same as commandline option 
 .B \-d 
-for zonec(8). Also nsd(8) will access files (pid file, database 
+for nsd\-zonec(8). Also nsd(8) will access files (pid file, database 
 file, log file) relative to this directory. Set the value to "" 
 (the empty string) to disable the change of working directory.
 .TP
@@ -248,7 +248,7 @@ each zone.
 .TP
 .B zonefile:\fR <filename>
 The file containing the zone information. This file is used by 
-zonec(8). This attribute must be present in each zone.
+nsd\-zonec(8). This attribute must be present in each zone.
 .TP
 .B allow\-notify:\fR <ip\-spec> <key\-name | NOKEY | BLOCKED>
 Access control list. The listed (primary) address is allowed to 
@@ -507,7 +507,7 @@ configuration file
 .SH "SEE ALSO" 
 .LP
 nsd(8), nsdc(8), nsd\-checkconf(8), nsd-notify(8), 
-nsd-patch(8), nsd-xfer(8), zonec(8)
+nsd-patch(8), nsd-xfer(8), nsd\-zonec(8)
 .SH "AUTHORS"
 .LP
 .B NSD
