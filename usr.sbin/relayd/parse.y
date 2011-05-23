@@ -1,7 +1,8 @@
-/*	$OpenBSD: parse.y,v 1.156 2011/05/19 08:56:49 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.157 2011/05/23 10:44:59 reyk Exp $	*/
 
 /*
- * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2007-2011 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -28,7 +29,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/queue.h>
-#include <sys/hash.h>
+#include <sys/ioctl.h>
 
 #include <net/if.h>
 #include <net/pfvar.h>
@@ -121,6 +122,7 @@ void		 host_free(struct addresslist *);
 struct table	*table_inherit(struct table *);
 struct relay	*relay_inherit(struct relay *, struct relay *);
 int		 getservice(char *);
+int		 is_if_in_group(const char *, const char *);
 
 typedef struct {
 	union {
@@ -2556,9 +2558,6 @@ host_if(const char *s, struct addresslist *al, int max,
 	struct address		*h;
 	int			 cnt = 0, af;
 
-	if (if_nametoindex(s) == 0)
-		return (0);
-
 	if (getifaddrs(&ifap) == -1)
 		fatal("getifaddrs");
 
@@ -2568,7 +2567,8 @@ host_if(const char *s, struct addresslist *al, int max,
  nextaf:
 	for (p = ifap; p != NULL && cnt < max; p = p->ifa_next) {
 		if (p->ifa_addr->sa_family != af ||
-		    strcmp(s, p->ifa_name) != 0)
+		    (strcmp(s, p->ifa_name) != 0 &&
+		    !is_if_in_group(p->ifa_name, s)))
 			continue;
 		if ((h = calloc(1, sizeof(*h))) == NULL)
 			fatal("calloc");
@@ -2802,4 +2802,48 @@ getservice(char *n)
 	}
 
 	return (htons((u_short)llval));
+}
+
+int
+is_if_in_group(const char *ifname, const char *groupname)
+{
+        unsigned int		 len;
+        struct ifgroupreq        ifgr;
+        struct ifg_req          *ifg;
+	int			 s;
+	int			 ret = 0;
+
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+		err(1, "socket");
+
+        memset(&ifgr, 0, sizeof(ifgr));
+        strlcpy(ifgr.ifgr_name, ifname, IFNAMSIZ);
+        if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1) {
+                if (errno == EINVAL || errno == ENOTTY)
+			goto end;
+		err(1, "SIOCGIFGROUP");
+        }
+
+        len = ifgr.ifgr_len;
+        ifgr.ifgr_groups =
+            (struct ifg_req *)calloc(len / sizeof(struct ifg_req),
+		sizeof(struct ifg_req));
+        if (ifgr.ifgr_groups == NULL)
+                err(1, "getifgroups");
+        if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1)
+                err(1, "SIOCGIFGROUP");
+
+        ifg = ifgr.ifgr_groups;
+        for (; ifg && len >= sizeof(struct ifg_req); ifg++) {
+                len -= sizeof(struct ifg_req);
+		if (strcmp(ifg->ifgrq_group, groupname) == 0) {
+			ret = 1;
+			break;
+		}
+        }
+        free(ifgr.ifgr_groups);
+
+end:
+	close(s);
+	return (ret);
 }
