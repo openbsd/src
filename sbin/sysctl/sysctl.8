@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.157 2010/10/11 08:44:34 claudio Exp $
+.\"	$OpenBSD: sysctl.8,v 1.158 2011/05/23 07:18:45 djm Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: October 11 2010 $
+.Dd $Mdocdate: May 23 2011 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -491,14 +491,16 @@ To set the list of reserved TCP ports that should not be allocated
 by the kernel dynamically:
 .Pp
 .Dl # sysctl net.inet.tcp.baddynamic=749,750,751,760,761,871
+.Dl # sysctl net.inet.udp.baddynamic=749,750,751,760,761,871,1024-2048
 .Pp
 This can be used to keep daemons
 from stealing a specific port that another program needs to function.
-List elements may be separated by commas and/or whitespace.
+List elements may be separated by commas and/or whitespace;
+a hyphen may be used to specify a range of ports.
 .Pp
 It is also possible to add or remove ports from the current list:
 .Bd -literal -offset indent
-# sysctl net.inet.tcp.baddynamic=+748
+# sysctl net.inet.tcp.baddynamic=+748,6000-6999
 # sysctl net.inet.tcp.baddynamic=-871
 .Ed
 .Pp
