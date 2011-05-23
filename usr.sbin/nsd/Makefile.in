@@ -63,7 +63,7 @@ EDIT		= sed \
 			-e 's,@kpriority\@,$(kpriority),g' 
 
 TARGETS 	= nsd nsd-zonec nsd-notify nsd-xfer nsdc.sh nsd-checkconf nsd-patch nsd.conf.sample \
-		 nsd.8 zonec.8 nsd-notify.8 nsd-xfer.8 nsdc.8 nsd-checkconf.8 nsd-patch.8 nsd.conf.5
+		 nsd.8 nsd-zonec.8 nsd-notify.8 nsd-xfer.8 nsdc.8 nsd-checkconf.8 nsd-patch.8 nsd.conf.5
 
 ALL_OBJECTS	=			\
 	answer.o			\
@@ -330,9 +330,9 @@ nsdc.8:	$(srcdir)/nsdc.8.in config.h
 	rm -f nsdc.8
 	$(EDIT) $(srcdir)/nsdc.8.in > nsdc.8
 
-zonec.8:	$(srcdir)/zonec.8.in config.h
-	rm -f zonec.8
-	$(EDIT) $(srcdir)/zonec.8.in > zonec.8
+nsd-zonec.8:	$(srcdir)/zonec.8.in config.h
+	rm -f nsd-zonec.8
+	$(EDIT) $(srcdir)/zonec.8.in > nsd-zonec.8
 
 nsd-notify.8:	$(srcdir)/nsd-notify.8.in config.h
 	rm -f nsd-notify.8
