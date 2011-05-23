@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.175 2011/03/12 04:54:28 guenther Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.176 2011/05/23 01:33:20 djm Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -1003,49 +1003,75 @@ parse(char *string, int flags)
 	}
 }
 
+static void
+parse_ports(char *portspec, int *port, int *high_port)
+{
+	char *dash;
+	const char *errstr;
+
+	if ((dash = strchr(portspec, '-')) != NULL)
+		*dash++ = '\0';
+	*port = strtonum(portspec, 0, 65535, &errstr);
+	if (errstr != NULL)
+		errx(1, "port is %s: %s", errstr, portspec);
+	if (dash != NULL) {
+		*high_port = strtonum(dash, 0, 65535, &errstr);
+		if (errstr != NULL)
+			errx(1, "high port is %s: %s", errstr, dash);
+		if (*high_port < *port)
+			errx(1, "high port %d is lower than %d",
+			    *high_port, *port);
+	} else
+		*high_port = *port;
+}
+
 void
 parse_baddynamic(int mib[], size_t len, char *string, void **newvalp,
     size_t *newsizep, int flags, int nflag)
 {
 	static u_int32_t newbaddynamic[DP_MAPSIZE];
-	in_port_t port;
+	int port, high_port, baddynamic_loaded = 0, full_list_set = 0;
 	size_t size;
 	char action, *cp;
-	const char *errstr;
 
-	if (strchr((char *)*newvalp, '+') || strchr((char *)*newvalp, '-')) {
-		size = sizeof(newbaddynamic);
-		if (sysctl(mib, len, newbaddynamic, &size, 0, 0) == -1) {
-			if (flags == 0)
-				return;
-			if (!nflag)
-				(void)printf("%s: ", string);
-			(void)puts("kernel does contain bad dynamic port tables");
-			return;
-		}
-
-		while (*newvalp && (cp = strsep((char **)newvalp, ", \t")) && *cp) {
-			if (*cp != '+' && *cp != '-')
+	while (*newvalp && (cp = strsep((char **)newvalp, ", \t")) && *cp) {
+		if (*cp == '+' || *cp == '-') {
+			if (full_list_set)
 				errx(1, "cannot mix +/- with full list");
 			action = *cp++;
-			port = strtonum(cp, 0, 65535, &errstr);
-			if (errstr != NULL)
-				errx(1, "port is %s: %s", errstr, cp);
-			if (action == '+')
+			if (!baddynamic_loaded) {
+				size = sizeof(newbaddynamic);
+				if (sysctl(mib, len, newbaddynamic,
+				    &size, 0, 0) == -1) {
+					if (flags == 0)
+						return;
+					if (!nflag)
+						printf("%s: ", string);
+					puts("kernel does contain bad dynamic "
+					    "port tables");
+					return;
+				}
+				baddynamic_loaded = 1;
+			}
+			parse_ports(cp, &port, &high_port);
+			for (; port <= high_port; port++) {
+				if (action == '+')
+					DP_SET(newbaddynamic, port);
+				else
+					DP_CLR(newbaddynamic, port);
+			}
+		} else {
+			if (baddynamic_loaded)
+				errx(1, "cannot mix +/- with full list");
+			if (!full_list_set) {
+				bzero(newbaddynamic, sizeof(newbaddynamic));
+				full_list_set = 1;
+			}
+			parse_ports(cp, &port, &high_port);
+			for (; port <= high_port; port++)
 				DP_SET(newbaddynamic, port);
-			else
-				DP_CLR(newbaddynamic, port);
-		}
-	} else {
-		(void)memset((void *)newbaddynamic, 0, sizeof(newbaddynamic));
-		while (*newvalp && (cp = strsep((char **)newvalp, ", \t")) && *cp) {
-			port = strtonum(cp, 0, 65535, &errstr);
-			if (errstr != NULL)
-				errx(1, "port is %s: %s", errstr, cp);
-			DP_SET(newbaddynamic, port);
 		}
 	}
-
 	*newvalp = (void *)newbaddynamic;
 	*newsizep = sizeof(newbaddynamic);
 }
