@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.74 2010/03/21 09:13:30 otto Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.75 2011/05/23 10:56:17 dcoppa Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ extern int	mfs;		/* run as the memory based filesystem */
 extern int	Nflag;		/* run mkfs without writing file system */
 extern int	Oflag;		/* format as an 4.3BSD file system */
 extern daddr64_t fssize;	/* file system size */
-extern int	sectorsize;	/* bytes/sector */
+extern long long	sectorsize;	/* bytes/sector */
 extern int	fsize;		/* fragment size */
 extern int	bsize;		/* block size */
 extern int	maxfrgspercg;	/* maximum fragments per cylinder group */
@@ -404,8 +404,8 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 		lastminfpg = roundup(sblock.fs_iblkno +
 		    sblock.fs_ipg / INOPF(&sblock), sblock.fs_frag);
 		if (sblock.fs_size < lastminfpg)
-			errx(28, "file system size %jd < minimum size of %d",
-			    (intmax_t)sblock.fs_size, lastminfpg);
+			errx(28, "file system size %jd < minimum size of %d "
+			    "sectors", (intmax_t)sblock.fs_size, lastminfpg);
 
 		if (sblock.fs_size % sblock.fs_fpg >= lastminfpg ||
 		    sblock.fs_size % sblock.fs_fpg == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.89 2011/04/26 14:02:14 otto Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.90 2011/05/23 10:56:17 dcoppa Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ int	mfs;			/* run as the memory based filesystem */
 int	Nflag;			/* run without writing file system */
 int	Oflag = 1;		/* 0 = 4.3BSD ffs, 1 = 4.4BSD ffs, 2 = ffs2 */
 daddr64_t	fssize;			/* file system size */
-int	sectorsize;		/* bytes/sector */
+long long	sectorsize;		/* bytes/sector */
 int	fsize = 0;		/* fragment size */
 int	bsize = 0;		/* block size */
 int	maxfrgspercg = INT_MAX;	/* maximum fragments per cylinder group */
@@ -169,6 +169,8 @@ main(int argc, char *argv[])
 	char **saveargv = argv;
 	int ffsflag = 1;
 	const char *errstr;
+	long long fssize_input = 0;
+	int fssize_usebytes = 0;
 
 	if (strstr(__progname, "mfs"))
 		mfs = Nflag = quiet = 1;
@@ -192,9 +194,9 @@ main(int argc, char *argv[])
 			oflagset = 1;
 			break;
 		case 'S':
-			sectorsize = strtonum(optarg, 1, INT_MAX, &errstr);
-			if (errstr)
-				fatal("sector size is %s: %s", errstr, optarg);
+			if (scan_scaled(optarg, &sectorsize) == -1 ||
+			    sectorsize <= 0 || (sectorsize % DEV_BSIZE))
+				fatal("sector size invalid: %s", optarg);
 			break;
 		case 'T':
 			disktype = optarg;
@@ -265,10 +267,15 @@ main(int argc, char *argv[])
 			quiet = 1;
 			break;
 		case 's':
-			fssize = strtonum(optarg, 1, LLONG_MAX, &errstr);
-			if (errstr)
-				fatal("file system size is %s: %s",
-				    errstr, optarg);
+			if (scan_scaled(optarg, &fssize_input) == -1 ||
+			    fssize_input <= 0)
+				fatal("file system size invalid: %s", optarg);
+			fssize_usebytes = 0;    /* in case of multiple -s */
+			for (s1 = optarg; *s1 != '\0'; s1++)
+				if (isalpha(*s1)) {
+					fssize_usebytes = 1;
+					break;
+				}
 			break;
 		case 't':
 			fstype = optarg;
@@ -414,17 +421,25 @@ main(int argc, char *argv[])
 			      argv[0], *cp);
 	}
 havelabel:
-	if (fssize == 0)
-		fssize = DL_GETPSIZE(pp);
-	if (fssize > DL_GETPSIZE(pp) && !mfs)
-	       fatal("%s: maximum file system size on the `%c' partition is %lld",
-			argv[0], *cp, DL_GETPSIZE(pp));
-
 	if (sectorsize == 0) {
 		sectorsize = lp->d_secsize;
 		if (sectorsize <= 0)
 			fatal("%s: no default sector size", argv[0]);
 	}
+
+	if (fssize_usebytes) {
+		fssize = (daddr64_t)fssize_input / (daddr64_t)sectorsize;
+		if ((daddr64_t)fssize_input % (daddr64_t)sectorsize != 0)
+			fssize++;
+	} else if (fssize_input == 0)
+		fssize = DL_GETPSIZE(pp);
+	else
+		fssize = (daddr64_t)fssize_input;
+
+	if (fssize > DL_GETPSIZE(pp) && !mfs)
+	       fatal("%s: maximum file system size on the `%c' partition is "
+		   "%lld sectors", argv[0], *cp, DL_GETPSIZE(pp));
+
 	fssize *= sectorsize / DEV_BSIZE;
 	if (oflagset == 0 && fssize >= INT_MAX)
 		Oflag = 2;	/* FFS2 */
