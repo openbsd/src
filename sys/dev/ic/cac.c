@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.45 2011/05/20 05:40:10 otto Exp $	*/
+/*	$OpenBSD: cac.c,v 1.46 2011/05/23 07:25:19 otto Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -320,7 +320,7 @@ cac_intr(v)
 	struct cac_ccb *ccb;
 	int istat, ret = 0;
 
-	if (!(istat = (sc->sc_cl->cl_intr_pending)(sc)))
+	if (!(istat = (*sc->sc_cl->cl_intr_pending)(sc)))
 		return 0;
 
 	if (istat & CAC_INTR_FIFO_NEMPTY)
@@ -409,9 +409,12 @@ cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 
 	if (!xs || xs->flags & SCSI_POLL) {
 		/* Synchronous commands musn't wait. */
+		mtx_enter(&sc->sc_ccb_mtx);
 		if ((*sc->sc_cl->cl_fifo_full)(sc)) {
+			mtx_leave(&sc->sc_ccb_mtx);
 			rv = EBUSY;
 		} else {
+			mtx_leave(&sc->sc_ccb_mtx);
 			ccb->ccb_flags |= CAC_CCB_ACTIVE;
 			(*sc->sc_cl->cl_submit)(sc, ccb);
 			rv = cac_ccb_poll(sc, ccb, 2000);
@@ -462,9 +465,10 @@ cac_ccb_start(struct cac_softc *sc, struct cac_ccb *ccb)
 		mtx_leave(&sc->sc_ccb_mtx);
 	}
 
-	while (!(*sc->sc_cl->cl_fifo_full)(sc)) {
+	while (1) {
 		mtx_enter(&sc->sc_ccb_mtx);
-		if (SIMPLEQ_EMPTY(&sc->sc_ccb_queue)) {
+		if (SIMPLEQ_EMPTY(&sc->sc_ccb_queue) ||
+		    (*sc->sc_cl->cl_fifo_full)(sc)) {
 			mtx_leave(&sc->sc_ccb_mtx);
 			break;
 		}
@@ -536,8 +540,7 @@ cac_ccb_alloc(void *xsc)
 	struct cac_ccb *ccb = NULL;
 
 	mtx_enter(&sc->sc_ccb_mtx);
-	if ((*sc->sc_cl->cl_fifo_full)(sc) ||
-	    SIMPLEQ_EMPTY(&sc->sc_ccb_free)) {
+	if (SIMPLEQ_EMPTY(&sc->sc_ccb_free)) {
 #ifdef CAC_DEBUG
 		printf("%s: unable to alloc CCB\n", sc->sc_dv.dv_xname);
 #endif
@@ -622,7 +625,7 @@ cac_scsi_cmd(xs)
 	u_int32_t blockno, blockcnt, size;
 	struct scsi_rw *rw;
 	struct scsi_rw_big *rwb;
-	int op, flags, s, error, poll;
+	int op, flags, s, error;
 	const char *p;
 
 	if (target >= sc->sc_nunits || link->lun != 0) {
@@ -633,7 +636,6 @@ cac_scsi_cmd(xs)
 
 	s = splbio();
 	xs->error = XS_NOERROR;
-	xs->free_list.le_next = NULL;
 	dinfo = &sc->sc_dinfos[target];
 
 	switch (xs->cmd->opcode) {
@@ -739,7 +741,6 @@ cac_scsi_cmd(xs)
 			break;
 		}
 
-		poll = xs->flags & SCSI_POLL;
 		if ((error = cac_cmd(sc, op, xs->data, blockcnt * DEV_BSIZE,
 		    target, blockno, flags, xs))) {
 			splx(s);
@@ -760,8 +761,8 @@ cac_scsi_cmd(xs)
 		xs->error = XS_DRIVER_STUFFUP;
 	}
 
-	scsi_done(xs);
 	splx(s);
+	scsi_done(xs);
 }
 
 /*
