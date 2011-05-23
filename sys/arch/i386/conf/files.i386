@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.202 2011/04/30 15:33:18 mlarkin Exp $
+#	$OpenBSD: files.i386,v 1.203 2011/05/23 09:54:20 claudio Exp $
 #
 # new style config file for i386 architecture
 #
@@ -37,6 +37,7 @@ file	arch/i386/i386/pmap.c
 file	arch/i386/i386/powernow.c	!small_kernel
 file	arch/i386/i386/powernow-k7.c	!small_kernel
 file	arch/i386/i386/powernow-k8.c	!small_kernel
+file	arch/i386/i386/k1x-pstate.c	!small_kernel
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs
 file	arch/i386/i386/sys_machdep.c
