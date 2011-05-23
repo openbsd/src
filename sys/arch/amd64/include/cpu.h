@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.66 2011/04/13 02:49:12 guenther Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.67 2011/05/23 09:52:24 claudio Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -317,6 +317,10 @@ void x86_bus_space_mallocok(void);
 /* powernow-k8.c */
 void k8_powernow_init(struct cpu_info *);
 void k8_powernow_setperf(int);
+
+/* k1x-pstate.c */
+void k1x_init(struct cpu_info *);
+void k1x_setperf(int);
 
 void est_init(struct cpu_info *);
 void est_setperf(int);

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.61 2011/04/02 18:16:50 oga Exp $
+#	$OpenBSD: files.amd64,v 1.62 2011/05/23 09:52:24 claudio Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -64,6 +64,7 @@ file	arch/amd64/isa/clock.c
 
 file	arch/amd64/amd64/powernow-k8.c		!small_kernel
 file	arch/amd64/amd64/est.c			!small_kernel
+file	arch/amd64/amd64/k1x-pstate.c		!small_kernel
 
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
