@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1602 2011/05/22 18:34:42 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1603 2011/05/24 15:36:38 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -16240,6 +16240,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "8185",
 	},
 	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8188,
+	    "8188CE",
+	},
+	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTL8190P,
 	    "RTL8190P",
 	},
@@ -16314,6 +16318,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_R5U822,
 	    "5U822 SD/MMC",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RSU823,
+	    "5U823 SD/MMC",
 	},
 	{
 	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_R5U832,
@@ -17126,6 +17134,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_MEMSTICK_SLOT,
 	    "Memory Stick Slot",
+	},
+	{
+	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_RS780,
+	    "RS780 PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_STALLION, PCI_PRODUCT_STALLION_EASYIO,
