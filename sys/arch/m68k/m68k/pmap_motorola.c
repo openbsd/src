@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.60 2011/04/28 20:53:32 ariane Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.61 2011/05/24 15:27:36 ariane Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -310,6 +310,16 @@ void pmap_check_wiring(char *, vaddr_t);
 
 static struct pv_entry *pa_to_pvh(paddr_t);
 static struct pv_entry *pg_to_pvh(struct vm_page *);
+int pmap_largekva = 0;
+
+/*
+ * Allow the kernel to grow up to Sysmap, until pmap_init has initialized.
+ */
+vaddr_t
+pmap_growkernel(vaddr_t addr)
+{
+	return pmap_largekva ? VM_MAX_KERNEL_ADDRESS : (vaddr_t)Sysmap;
+}
 
 static __inline struct pv_entry *
 pa_to_pvh(paddr_t pa)
@@ -410,23 +420,7 @@ pmap_init()
 	 * unavailable regions which we have mapped in pmap_bootstrap().
 	 */
 	PMAP_INIT_MD();
-	addr = (vaddr_t) Sysmap;
-	if (uvm_map(kernel_map, &addr, MACHINE_MAX_PTSIZE,
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
-				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED))) {
-		/*
-		 * If this fails, it is probably because the static
-		 * portion of the kernel page table isn't big enough
-		 * and we overran the page table map.
-		 */
-		panic("pmap_init: bogons in the VM system!");
-	}
 
-	PMAP_DPRINTF(PDB_INIT,
-	    ("pmap_init: Sysseg %p, Sysmap %p, Sysptmap %p\n",
-	    Sysseg, Sysmap, Sysptmap));
 	PMAP_DPRINTF(PDB_INIT,
 	    ("  pstart %lx, pend %lx, vstart %lx, vend %lx\n",
 	    avail_start, avail_end, virtual_avail, virtual_end));
@@ -464,18 +458,6 @@ pmap_init()
 	 */
 	npages = min(atop(MACHINE_MAX_KPTSIZE), maxproc+16);
 	s = ptoa(npages) + round_page(npages * sizeof(struct kpt_page));
-
-	/*
-	 * Verify that space will be allocated in region for which
-	 * we already have kernel PT pages.
-	 */
-	addr = 0;
-	rv = uvm_map(kernel_map, &addr, s, NULL, UVM_UNKNOWN_OFFSET, 0,
-		     UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				 UVM_ADV_RANDOM, UVM_FLAG_NOMERGE));
-	if (rv || (addr + s) >= (vaddr_t)Sysmap)
-		panic("pmap_init: kernel PT too small");
-	uvm_unmap(kernel_map, addr, addr + s);
 
 	/*
 	 * Now allocate the space and link the pages together to
@@ -518,6 +500,25 @@ pmap_init()
 	s = maxproc * MACHINE_STSIZE;
 	st_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, 0, FALSE,
 	    &st_map_store);
+
+	pmap_largekva = 1;
+
+	addr = (vaddr_t) Sysmap;
+	if (uvm_map(kernel_map, &addr, MACHINE_MAX_PTSIZE,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
+		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
+				UVM_INH_NONE, UVM_ADV_RANDOM,
+				UVM_FLAG_FIXED))) {
+		/*
+		 * If this fails, it is probably because the static
+		 * portion of the kernel page table isn't big enough
+		 * and we overran the page table map.
+		 */
+		panic("pmap_init: bogons in the VM system!");
+	}
+	PMAP_DPRINTF(PDB_INIT,
+	    ("pmap_init: Sysseg %p, Sysmap %p, Sysptmap %p\n",
+	    Sysseg, Sysmap, Sysptmap));
 
 	addr = MACHINE_PTBASE;
 	if ((MACHINE_PTMAXSIZE / MACHINE_MAX_PTSIZE) < maxproc) {

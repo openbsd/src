@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.h,v 1.23 2011/04/28 20:53:32 ariane Exp $	*/
+/*	$OpenBSD: pmap_motorola.h,v 1.24 2011/05/24 15:27:36 ariane Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -135,6 +135,8 @@ extern char		*vmmap;		/* map for mem, dumps, etc. */
 
 int	pmap_enter_cache(pmap_t, vaddr_t, paddr_t, vm_prot_t, int, pt_entry_t);
 void	pmap_kenter_cache(vaddr_t, paddr_t, pt_entry_t);
+
+#define PMAP_GROWKERNEL			/* turn on pmap_growkernel interface */
 
 #ifdef M68K_MMU_HP
 vaddr_t	pmap_prefer(vaddr_t, vaddr_t);

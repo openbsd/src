@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.82 2010/12/24 21:49:04 tedu Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.83 2011/05/24 15:27:36 ariane Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -181,43 +181,14 @@ sys_mquery(struct proc *p, void *v, register_t *retval)
 	} else {
 		fp = NULL;
 		uobj = NULL;
-		uoff = 0;
+		uoff = UVM_UNKNOWN_OFFSET;
 	}
 
-	if (vaddr == 0)
-		vaddr = uvm_map_hint(p, prot);
-
-	/* prevent a user requested address from falling in heap space */
-	if ((vaddr + size > (vaddr_t)p->p_vmspace->vm_daddr) &&
-	    (vaddr < (vaddr_t)p->p_vmspace->vm_daddr + BRKSIZ)) {
-		if (flags & UVM_FLAG_FIXED) {
-			error = EINVAL;
-			goto done;
-		}
-		vaddr = round_page((vaddr_t)p->p_vmspace->vm_daddr + BRKSIZ);
-	}
-	vm_map_lock(&p->p_vmspace->vm_map);
-
-again:
-	if (uvm_map_findspace(&p->p_vmspace->vm_map, vaddr, size,
-	    &vaddr, uobj, uoff, 0, flags) == NULL) {
-		if (flags & UVM_FLAG_FIXED)
-			error = EINVAL;
-		else
-			error = ENOMEM;
-	} else {
-		/* prevent a returned address from falling in heap space */
-		if ((vaddr + size > (vaddr_t)p->p_vmspace->vm_daddr)
-		    && (vaddr < (vaddr_t)p->p_vmspace->vm_daddr + BRKSIZ)) {
-			vaddr = round_page((vaddr_t)p->p_vmspace->vm_daddr +
-			    BRKSIZ);
-			goto again;
-		}
-		error = 0;
+	error = uvm_map_mquery(&p->p_vmspace->vm_map, &vaddr, size, uoff,
+	    flags);
+	if (error == 0)
 		*retval = (register_t)(vaddr);
-	}
-	vm_map_unlock(&p->p_vmspace->vm_map);
-done:
+
 	if (fp != NULL)
 		FRELE(fp);
 	return (error);
@@ -241,7 +212,7 @@ sys_mincore(struct proc *p, void *v, register_t *retval)
 	struct uvm_object *uobj;
 	struct vm_amap *amap;
 	struct vm_anon *anon;
-	vm_map_entry_t entry;
+	vm_map_entry_t entry, next;
 	vaddr_t start, end, lim;
 	vm_map_t map;
 	vsize_t len, npgs;
@@ -290,15 +261,16 @@ sys_mincore(struct proc *p, void *v, register_t *retval)
 	}
 
 	for (/* nothing */;
-	     entry != &map->header && entry->start < end;
-	     entry = entry->next) {
+	     entry != NULL && entry->start < end;
+	     entry = RB_NEXT(uvm_map_addr, &map->addr, entry)) {
 		KASSERT(!UVM_ET_ISSUBMAP(entry));
 		KASSERT(start >= entry->start);
 
 		/* Make sure there are no holes. */
+		next = RB_NEXT(uvm_map_addr, &map->addr, entry);
 		if (entry->end < end &&
-		     (entry->next == &map->header ||
-		      entry->next->start > entry->end)) {
+		     (next == NULL ||
+		      next->start > entry->end)) {
 			error = ENOMEM;
 			goto out;
 		}
@@ -451,17 +423,6 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 		if (vm_min_address > 0 && addr < vm_min_address)
 			return (EINVAL);
 
-	} else {
-
-		/*
-		 * not fixed: make sure we skip over the largest possible heap.
-		 * we will refine our guess later (e.g. to account for VAC, etc)
-		 */
-		if (addr == 0)
-			addr = uvm_map_hint(p, prot);
-		else if (!(flags & MAP_TRYFIXED) &&
-		    addr < (vaddr_t)p->p_vmspace->vm_daddr)
-			addr = uvm_map_hint(p, prot);
 	}
 
 	/*
@@ -604,13 +565,6 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 
 	error = uvm_mmap(&p->p_vmspace->vm_map, &addr, size, prot, maxprot,
 	    flags, handle, pos, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur, p);
-	if (error == ENOMEM && !(flags & (MAP_FIXED | MAP_TRYFIXED))) {
-		/* once more, with feeling */
-		addr = uvm_map_hint1(p, prot, 0);
-		error = uvm_mmap(&p->p_vmspace->vm_map, &addr, size, prot,
-		    maxprot, flags, handle, pos,
-		    p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur, p);
-	}
 
 	if (error == 0)
 		/* remember to add offset */
@@ -721,7 +675,7 @@ sys_munmap(struct proc *p, void *v, register_t *retval)
 	vsize_t size, pageoff;
 	vm_map_t map;
 	vaddr_t vm_min_address = VM_MIN_ADDRESS;
-	struct vm_map_entry *dead_entries;
+	struct uvm_map_deadq dead_entries;
 
 	/*
 	 * get syscall args...
@@ -763,12 +717,12 @@ sys_munmap(struct proc *p, void *v, register_t *retval)
 	/*
 	 * doit!
 	 */
-	uvm_unmap_remove(map, addr, addr + size, &dead_entries, p, FALSE);
+	TAILQ_INIT(&dead_entries);
+	uvm_unmap_remove(map, addr, addr + size, &dead_entries, FALSE, TRUE);
 
 	vm_map_unlock(map);	/* and unlock */
 
-	if (dead_entries != NULL)
-		uvm_unmap_detach(dead_entries, 0);
+	uvm_unmap_detach(&dead_entries, 0);
 
 	return (0);
 }
@@ -1099,7 +1053,7 @@ uvm_mmap(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 		if (*addr & PAGE_MASK)
 			return(EINVAL);
 		uvmflag |= UVM_FLAG_FIXED;
-		uvm_unmap_p(map, *addr, *addr + size, p);	/* zap! */
+		uvm_unmap(map, *addr, *addr + size);	/* zap! */
 	}
 
 	/*
@@ -1193,7 +1147,7 @@ uvm_mmap(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 			(flags & MAP_SHARED) ? UVM_INH_SHARE : UVM_INH_COPY,
 			advice, uvmflag);
 
-	error = uvm_map_p(map, addr, size, uobj, foff, align, uvmflag, p);
+	error = uvm_map(map, addr, size, uobj, foff, align, uvmflag);
 
 	if (error == 0) {
 		/*

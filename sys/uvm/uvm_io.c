@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_io.c,v 1.17 2009/07/25 12:55:40 miod Exp $	*/
+/*	$OpenBSD: uvm_io.c,v 1.18 2011/05/24 15:27:36 ariane Exp $	*/
 /*	$NetBSD: uvm_io.c,v 1.12 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ uvm_io(vm_map_t map, struct uio *uio, int flags)
 {
 	vaddr_t baseva, endva, pageoffset, kva;
 	vsize_t chunksz, togo, sz;
-	vm_map_entry_t dead_entries;
+	struct uvm_map_deadq dead_entries;
 	int error, extractflags;
 
 	/*
@@ -93,7 +93,7 @@ uvm_io(vm_map_t map, struct uio *uio, int flags)
 	chunksz = min(round_page(togo + pageoffset), MAXBSIZE);
 	error = 0;
 
-	extractflags = UVM_EXTRACT_QREF | UVM_EXTRACT_CONTIG;
+	extractflags = 0;
 	if (flags & UVM_IO_FIXPROT)
 		extractflags |= UVM_EXTRACT_FIXPROT;
 
@@ -107,7 +107,7 @@ uvm_io(vm_map_t map, struct uio *uio, int flags)
 		 * step 2: extract mappings from the map into kernel_map
 		 */
 
-		error = uvm_map_extract(map, baseva, chunksz, kernel_map, &kva,
+		error = uvm_map_extract(map, baseva, chunksz, &kva,
 		    extractflags);
 		if (error) {
 
@@ -139,12 +139,11 @@ uvm_io(vm_map_t map, struct uio *uio, int flags)
 		 */
 
 		vm_map_lock(kernel_map);
+		TAILQ_INIT(&dead_entries);
 		uvm_unmap_remove(kernel_map, kva, kva+chunksz,
-		    &dead_entries, NULL, FALSE);
+		    &dead_entries, FALSE, TRUE);
 		vm_map_unlock(kernel_map);
-
-		if (dead_entries != NULL)
-			uvm_unmap_detach(dead_entries, AMAP_REFALL);
+		uvm_unmap_detach(&dead_entries, AMAP_REFALL);
 
 		/*
 		 * We defer checking the error return from uiomove until

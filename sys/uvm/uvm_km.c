@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.101 2011/05/10 21:48:17 oga Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.102 2011/05/24 15:27:36 ariane Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -184,7 +184,13 @@ uvm_km_init(vaddr_t start, vaddr_t end)
 	 * before installing.
 	 */
 
-	uvm_map_setup(&kernel_map_store, base, end, VM_MAP_PAGEABLE);
+	uvm_map_setup(&kernel_map_store, base, end,
+#ifdef KVA_GUARDPAGES
+	    VM_MAP_PAGEABLE | VM_MAP_GUARDPAGES
+#else
+	    VM_MAP_PAGEABLE
+#endif
+	    );
 	kernel_map_store.pmap = pmap_kernel();
 	if (base != start && uvm_map(&kernel_map_store, &base, start - base,
 	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
@@ -473,16 +479,16 @@ uvm_km_free(struct vm_map *map, vaddr_t addr, vsize_t size)
 void
 uvm_km_free_wakeup(struct vm_map *map, vaddr_t addr, vsize_t size)
 {
-	struct vm_map_entry *dead_entries;
+	struct uvm_map_deadq dead_entries;
 
 	vm_map_lock(map);
+	TAILQ_INIT(&dead_entries);
 	uvm_unmap_remove(map, trunc_page(addr), round_page(addr+size), 
-	     &dead_entries, NULL, FALSE);
+	     &dead_entries, FALSE, TRUE);
 	wakeup(map);
 	vm_map_unlock(map);
 
-	if (dead_entries != NULL)
-		uvm_unmap_detach(dead_entries, 0);
+	uvm_unmap_detach(&dead_entries, 0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.152 2011/03/12 03:52:26 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.153 2011/05/24 15:27:36 ariane Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -604,14 +604,16 @@ pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, struct pcb *pcb)
 	vaddr_t va = 0;
 
 	vm_map_lock(map);
-	for (ent = (&map->header)->next; ent != &map->header; ent = ent->next) {
-		/*
-		 * This entry has greater va than the entries before.
-		 * We need to make it point to the last page, not past it.
-		 */
+	RB_FOREACH_REVERSE(ent, uvm_map_addr, &map->addr) {
 		if (ent->protection & VM_PROT_EXECUTE)
-			va = trunc_page(ent->end - 1);
+			break;
 	}
+	/*
+	 * This entry has greater va than the entries before.
+	 * We need to make it point to the last page, not past it.
+	 */
+	if (ent)
+		va = trunc_page(ent->end - 1);
 	vm_map_unlock(map);
 
 	if (va <= pm->pm_hiexec) {
@@ -1246,7 +1248,7 @@ pmap_free_pvpage(void)
 {
 	int s;
 	struct vm_map *map;
-	struct vm_map_entry *dead_entries;
+	struct uvm_map_deadq dead_entries;
 	struct pv_page *pvp;
 
 	s = splvm(); /* protect kmem_map */
@@ -1267,13 +1269,12 @@ pmap_free_pvpage(void)
 		TAILQ_REMOVE(&pv_unusedpgs, pvp, pvinfo.pvpi_list);
 
 		/* unmap the page */
-		dead_entries = NULL;
+		TAILQ_INIT(&dead_entries);
 		uvm_unmap_remove(map, (vaddr_t)pvp, ((vaddr_t)pvp) + PAGE_SIZE,
-		    &dead_entries, NULL, FALSE);
+		    &dead_entries, FALSE, TRUE);
 		vm_map_unlock(map);
 
-		if (dead_entries != NULL)
-			uvm_unmap_detach(dead_entries, 0);
+		uvm_unmap_detach(&dead_entries, 0);
 
 		pv_nfpvents -= PVE_PER_PVPAGE;  /* update free count */
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.95 2011/04/18 19:23:46 art Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.96 2011/05/24 15:27:36 ariane Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -185,6 +185,7 @@ typedef int		vm_prot_t;
 #define UVM_FLAG_AMAPPAD 0x100000 /* for bss: pad amap to reduce malloc() */
 #define UVM_FLAG_TRYLOCK 0x200000 /* fail if we can not lock map */
 #define	UVM_FLAG_HOLE    0x400000 /* no backend */
+#define UVM_FLAG_QUERY   0x800000 /* do everything, except actual execution */
 
 /* macros to extract info */
 #define UVM_PROTECTION(X)	((X) & UVM_PROT_MASK)
@@ -631,10 +632,9 @@ void km_free(void *, size_t, const struct kmem_va_mode *,
     const struct kmem_pa_mode *);
 
 /* uvm_map.c */
-#define	uvm_map(_m, _a, _sz, _u, _f, _al, _fl) uvm_map_p(_m, _a, _sz, _u, _f, _al, _fl, 0)
-int			uvm_map_p(vm_map_t, vaddr_t *, vsize_t,
+int			uvm_map(vm_map_t, vaddr_t *, vsize_t,
 				struct uvm_object *, voff_t, vsize_t,
-				uvm_flag_t, struct proc *);
+				uvm_flag_t);
 int			uvm_map_pageable(vm_map_t, vaddr_t, 
 				vaddr_t, boolean_t, int);
 int			uvm_map_pageable_all(vm_map_t, int, vsize_t);
