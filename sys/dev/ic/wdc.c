@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.116 2011/05/09 22:33:54 matthew Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.117 2011/05/24 23:18:47 matthew Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -122,6 +122,10 @@ int at_poll = AT_POLL;
 int wdc_floating_bus(struct channel_softc *, int);
 int wdc_preata_drive(struct channel_softc *, int);
 int wdc_ata_present(struct channel_softc *, int);
+
+struct cfdriver wdc_cd = {
+	NULL, "wdc", DV_DULL
+};
 
 struct channel_softc_vtbl wdc_default_vtbl = {
 	wdc_default_read_reg,
@@ -727,7 +731,7 @@ wdc_free_queue(struct channel_queue *queue)
 void
 wdcattach(struct channel_softc *chp)
 {
-	int channel_flags, ctrl_flags, i;
+	int i;
 	struct ata_atapi_attach aa_link;
 #ifdef WDCDEBUG
 	int    savedmask = wdcdebug_mask;
@@ -809,8 +813,6 @@ wdcattach(struct channel_softc *chp)
 				drvp->drive_flags &= ~DRIVE_OLD;
 		}
 	}
-	ctrl_flags = chp->wdc->sc_dev.dv_cfdata->cf_flags;
-	channel_flags = (ctrl_flags >> (NBBY * chp->channel)) & 0xff;
 
 	WDCDEBUG_PRINT(("wdcattach: ch_drive_flags 0x%x 0x%x\n",
 	    chp->ch_drive[0].drive_flags, chp->ch_drive[1].drive_flags),
