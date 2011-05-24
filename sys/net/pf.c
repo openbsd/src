@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.744 2011/05/22 13:21:24 claudio Exp $ */
+/*	$OpenBSD: pf.c,v 1.745 2011/05/24 14:01:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5930,14 +5930,16 @@ done:
 				    "ip options in pf_test()");
 			}
 
-			pf_scrub_ip(m, s->state_flags, s->min_ttl, s->set_tos);
+			pf_scrub(m, s->state_flags, pd.af, s->min_ttl,
+			    s->set_tos);
 			pf_tag_packet(m, s->tag, s->rtableid[pd.didx]);
 			if (pqid || (pd.tos & IPTOS_LOWDELAY))
 				qid = s->pqid;
 			else
 				qid = s->qid;
 		} else {
-			pf_scrub_ip(m, r->scrub_flags, r->min_ttl, r->set_tos);
+			pf_scrub(m, a->scrub_flags, pd.af, a->min_ttl,
+			    a->set_tos);
 			if (pqid || (pd.tos & IPTOS_LOWDELAY))
 				qid = r->pqid;
 			else
@@ -6214,14 +6216,16 @@ done:
 				    "dangerous v6 headers");
 			}
 
-			pf_scrub_ip6(m, s->min_ttl);
+			pf_scrub(m, s->state_flags, pd.af, s->min_ttl,
+			    s->set_tos);
 			pf_tag_packet(m, s->tag, s->rtableid[pd.didx]);
 			if (pqid || (pd.tos & IPTOS_LOWDELAY))
 				qid = s->pqid;
 			else
 				qid = s->qid;
 		} else {
-			pf_scrub_ip6(m, r->min_ttl);
+			pf_scrub(m, a->scrub_flags, pd.af, a->min_ttl,
+			    a->set_tos);
 			if (pqid || (pd.tos & IPTOS_LOWDELAY))
 				qid = r->pqid;
 			else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.132 2011/04/23 10:00:36 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.133 2011/05/24 14:01:52 claudio Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1548,35 +1548,41 @@ pf_normalize_mss(struct mbuf *m, int off, struct pf_pdesc *pd, u_int16_t maxmss)
 }
 
 void
-pf_scrub_ip(struct mbuf *m, u_int16_t flags, u_int8_t min_ttl, u_int8_t tos)
+pf_scrub(struct mbuf *m, u_int16_t flags, sa_family_t af, u_int8_t min_ttl,
+    u_int8_t tos)
 {
 	struct ip		*h = mtod(m, struct ip *);
+#ifdef INET6
+	struct ip6_hdr		*h6 = mtod(m, struct ip6_hdr *);
+#endif
 
 	/* Clear IP_DF if no-df was requested */
-	if (flags & PFSTATE_NODF && h->ip_off & htons(IP_DF))
+	if (flags & PFSTATE_NODF && af == AF_INET && h->ip_off & htons(IP_DF))
 		h->ip_off &= htons(~IP_DF);
 
 	/* Enforce a minimum ttl, may cause endless packet loops */
-	if (min_ttl && h->ip_ttl < min_ttl)
+	if (min_ttl && af == AF_INET && h->ip_ttl < min_ttl)
 		h->ip_ttl = min_ttl;
+#ifdef INET6
+	if (min_ttl && af == AF_INET6 && h6->ip6_hlim < min_ttl)
+		h6->ip6_hlim = min_ttl;
+#endif
 
 	/* Enforce tos */
-	if (flags & PFSTATE_SETTOS)
-		h->ip_tos = tos;
+	if (flags & PFSTATE_SETTOS) {
+		if (af == AF_INET)
+			h->ip_tos = tos;
+#ifdef INET6
+		if (af == AF_INET6) {
+			/* drugs are unable to explain such idiocy */
+			h6->ip6_flow &= htonl(0x0ff00000);
+			h6->ip6_flow |= htonl(((u_int32_t)tos) << 20);
+		}
+#endif
+	}
 
 	/* random-id, but not for fragments */
-	if (flags & PFSTATE_RANDOMID && !(h->ip_off & ~htons(IP_DF)))
+	if (flags & PFSTATE_RANDOMID && af == AF_INET &&
+	    !(h->ip_off & ~htons(IP_DF)))
 		h->ip_id = htons(ip_randomid());
 }
-
-#ifdef INET6
-void
-pf_scrub_ip6(struct mbuf *m, u_int8_t min_ttl)
-{
-	struct ip6_hdr		*h = mtod(m, struct ip6_hdr *);
-
-	/* Enforce a minimum ttl, may cause endless packet loops */
-	if (min_ttl && h->ip6_hlim < min_ttl)
-		h->ip6_hlim = min_ttl;
-}
-#endif
