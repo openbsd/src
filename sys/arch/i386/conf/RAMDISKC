@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.97 2011/01/07 19:33:08 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.98 2011/05/24 20:27:11 matthew Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -108,7 +108,6 @@ uhub*	at usb?			# USB Hubs
 uhub*	at uhub?		# USB Hubs
 umass*	at uhub?		# USB Mass Storage devices
 scsibus* at umass?
-atapiscsi* at umass?
 uhidev*	at uhub?		# Human Interface Devices
 ukbd*	at uhidev?		# USB keyboard
 wskbd*	at ukbd? mux 1

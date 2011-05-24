@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.50 2010/07/03 03:59:16 krw Exp $
+#	$OpenBSD: RAMDISK,v 1.51 2011/05/24 20:27:11 matthew Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -98,7 +98,6 @@ ukbd*	at uhidev?
 wskbd*	at ukbd? mux 1
 #umass*	at uhub?		# USB Mass Storage devices
 #scsibus* at umass?
-#atapiscsi* at umass?
 #ums*	at uhidev?
 #wsmouse* at ums? mux 0
 #aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet

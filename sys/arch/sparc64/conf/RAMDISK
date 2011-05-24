@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.99 2011/03/08 19:57:51 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.100 2011/05/24 20:27:11 matthew Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -245,7 +245,6 @@ ukbd*	at uhidev?		# USB keyboard
 wskbd*	at ukbd?
 umass*	at uhub?		# USB Mass Storage devices
 scsibus* at umass?
-atapiscsi* at umass?
 aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
 axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
 cue*	at uhub?		# CATC USB-EL1201A based Ethernet

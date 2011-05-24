@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP32,v 1.16 2011/05/02 19:51:05 miod Exp $
+#	$OpenBSD: RAMDISK-IP32,v 1.17 2011/05/24 20:27:11 matthew Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 
@@ -92,8 +92,6 @@ ubsa*		at uhub?	# Belkin serial adapter
 ucom*		at ubsa?
 #ulpt*		at uhub?	# USB Printers	
 umass*		at uhub?	# USB Mass Storage devices
-atapiscsi*	at umass?
-scsibus*	at atapiscsi?
 scsibus*	at umass?
 uhidev*		at uhub?	# Human Interface Devices
 ums*		at uhidev?	# USB mouse

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.99 2009/11/04 19:14:10 kettenis Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.100 2011/05/24 20:27:11 matthew Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -41,8 +41,6 @@
  */
 
 #define Static
-
-#define UMASS_ATAPISTR		"atapiscsi"
 
 /* periph_quirks */
 #define	PQUIRK_NOSENSE		ADEV_NOSENSE	/* can't REQUEST SENSE */

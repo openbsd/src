@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.33 2011/04/10 20:27:02 shadchin Exp $
+#	$OpenBSD: GENERIC,v 1.34 2011/05/24 20:27:11 matthew Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -122,8 +122,6 @@ uchcom*		at uhub?	# WinChipHead CH341/340 serial
 ucom*		at uchcom?
 ulpt*		at uhub?	# USB Printers	
 umass*		at uhub?	# USB Mass Storage devices
-atapiscsi*	at umass?
-scsibus*	at atapiscsi?
 scsibus*	at umass?
 urio*		at uhub?	# Diamond Multimedia Rio 500
 uscanner*	at uhub? disable# USB Scanners

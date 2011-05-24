@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.13 2010/07/03 01:48:18 matthew Exp $
+# $OpenBSD: RAMDISK,v 1.14 2011/05/24 20:27:11 matthew Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -93,7 +93,6 @@ uhub*	at usb?
 uhub*	at uhub? port ? configuration ? interface ?
 umass*	at uhub?		# USB Mass Storage devices
 scsibus* at umass?
-atapiscsi* at umass?
 aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
 atu*	at uhub?		# Atmel AT76c50x based 802.11b
 axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet

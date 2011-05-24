@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.34 2011/04/19 23:21:15 matthew Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.35 2011/05/24 20:27:11 matthew Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,8 +30,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "atapiscsi.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -57,7 +55,6 @@
 struct umass_scsi_softc {
 	struct umassbus_softc	base;
 	struct scsi_link	sc_link;
-	struct scsi_adapter	sc_adapter;
 	struct scsi_iopool	sc_iopool;
 	int			sc_open;
 
@@ -68,11 +65,15 @@ struct umass_scsi_softc {
 #define UMASS_SCSIID_HOST	0x00
 #define UMASS_SCSIID_DEVICE	0x01
 
-#define UMASS_ATAPI_DRIVE	0
-
 int umass_scsi_probe(struct scsi_link *);
 void umass_scsi_cmd(struct scsi_xfer *);
 void umass_scsi_minphys(struct buf *, struct scsi_link *);
+
+struct scsi_adapter umass_scsi_switch = {
+	umass_scsi_cmd,
+	umass_scsi_minphys,
+	umass_scsi_probe
+};
 
 void umass_scsi_cb(struct umass_softc *sc, void *priv, int residue,
 		   int status);
@@ -111,7 +112,6 @@ umass_scsi_attach(struct umass_softc *sc)
 	return (0);
 }
 
-#if NATAPISCSI > 0
 int
 umass_atapi_attach(struct umass_softc *sc)
 {
@@ -139,7 +139,6 @@ umass_atapi_attach(struct umass_softc *sc)
 
 	return (0);
 }
-#endif
 
 struct umass_scsi_softc *
 umass_scsi_setup(struct umass_softc *sc)
@@ -152,14 +151,9 @@ umass_scsi_setup(struct umass_softc *sc)
 
 	scsi_iopool_init(&scbus->sc_iopool, scbus, umass_io_get, umass_io_put);
 
-	/* Fill in the adapter. */
-	scbus->sc_adapter.scsi_cmd = umass_scsi_cmd;
-	scbus->sc_adapter.scsi_minphys = umass_scsi_minphys;
-	scbus->sc_adapter.dev_probe = umass_scsi_probe;
-
 	/* Fill in the link. */
 	scbus->sc_link.adapter_buswidth = 2;
-	scbus->sc_link.adapter = &scbus->sc_adapter;
+	scbus->sc_link.adapter = &umass_scsi_switch;
 	scbus->sc_link.adapter_softc = sc;
 	scbus->sc_link.openings = 1;
 	scbus->sc_link.quirks |= SDEV_ONLYBIG | sc->sc_busquirks;

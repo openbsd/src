@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.82 2011/03/28 15:24:54 claudio Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.83 2011/05/24 20:27:11 matthew Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -79,7 +79,6 @@ uhid*	at uhidev?			# USB Generic HID devices
 # USB Mass Storage devices
 umass*	at uhub?
 scsibus* at umass?
-atapiscsi* at umass?
 
 # USB Modems
 #umodem*	at uhub?

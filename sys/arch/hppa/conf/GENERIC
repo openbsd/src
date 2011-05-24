@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.142 2011/02/17 20:14:30 miod Exp $
+#	$OpenBSD: GENERIC,v 1.143 2011/05/24 20:27:11 matthew Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -108,7 +108,6 @@ uark*	at uhub?		# Arkmicro ARK3116 serial
 ucom*	at uark?
 umass*	at uhub?		# USB Mass Storage devices
 scsibus* at umass?
-atapiscsi* at umass?
 uhidev*	at uhub?		# Human Interface Devices
 ums*	at uhidev?		# USB mouse
 wsmouse* at ums? mux 0
