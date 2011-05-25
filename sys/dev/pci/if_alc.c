@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.12 2011/05/18 14:20:27 sthen Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.13 2011/05/25 02:22:20 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -154,6 +154,16 @@ alc_miibus_readreg(struct device *dev, int phy, int reg)
 	int i;
 
 	if (phy != sc->alc_phyaddr)
+		return (0);
+
+	/*
+	 * For AR8132 fast ethernet controller, do not report 1000baseT
+	 * capability to mii(4). Even though AR8132 uses the same
+	 * model/revision number of F1 gigabit PHY, the PHY has no
+	 * ability to establish 1000baseT link.
+	 */
+	if ((sc->alc_flags & ALC_FLAG_FASTETHER) != 0 &&
+	    reg == MII_EXTSR)
 		return (0);
 
 	CSR_WRITE_4(sc, ALC_MDIO, MDIO_OP_EXECUTE | MDIO_OP_READ |
@@ -670,6 +680,10 @@ alc_attach(struct device *parent, struct device *self, void *aux)
 	/* Set PHY address. */
 	sc->alc_phyaddr = ALC_PHY_ADDR;
 
+	/* Get PCI and chip id/revision. */
+	sc->sc_product = PCI_PRODUCT(pa->pa_id);
+	sc->alc_rev = PCI_REVISION(pa->pa_class);
+
 	/* Initialize DMA parameters. */
 	sc->alc_dma_rd_burst = 0;
 	sc->alc_dma_wr_burst = 0;
@@ -690,6 +704,10 @@ alc_attach(struct device *parent, struct device *self, void *aux)
 			    sc->sc_dev.dv_xname,
 			    alc_dma_burst[sc->alc_dma_wr_burst]);
 		}
+		if (alc_dma_burst[sc->alc_dma_rd_burst] > 1024)
+			sc->alc_dma_rd_burst = 3;
+		if (alc_dma_burst[sc->alc_dma_wr_burst] > 1024)
+			sc->alc_dma_wr_burst = 3;
 		/* Clear data link and flow-control protocol error. */
 		val = CSR_READ_4(sc, ALC_PEX_UNC_ERR_SEV);
 		val &= ~(PEX_UNC_ERR_SEV_DLP | PEX_UNC_ERR_SEV_FCP);
@@ -747,7 +765,6 @@ alc_attach(struct device *parent, struct device *self, void *aux)
 	 * used in AR8132 can't establish gigabit link even if it
 	 * shows the same PHY model/revision number of AR8131.
 	 */
-	sc->sc_product = PCI_PRODUCT(pa->pa_id);
 	switch (sc->sc_product) {
 	case PCI_PRODUCT_ATTANSIC_L2C_1:
 	case PCI_PRODUCT_ATTANSIC_L2C_2:
@@ -789,7 +806,7 @@ alc_attach(struct device *parent, struct device *self, void *aux)
 	 * Don't use Tx CMB. It is known to have silicon bug.
 	 */
 	sc->alc_flags |= ALC_FLAG_CMB_BUG;
-	sc->alc_rev = PCI_REVISION(pa->pa_class);
+
 	sc->alc_chip_rev = CSR_READ_4(sc, ALC_MASTER_CFG) >>
 	    MASTER_CHIP_REV_SHIFT;
 	if (alcdebug) {
@@ -2179,10 +2196,10 @@ alc_init(struct ifnet *ifp)
 	 */
 	CSR_WRITE_4(sc, ALC_INTR_RETRIG_TIMER, ALC_USECS(0));
 	/* Configure CMB. */
-	CSR_WRITE_4(sc, ALC_CMB_TD_THRESH, 4);
-	if ((sc->alc_flags & ALC_FLAG_CMB_BUG) == 0)
+	if ((sc->alc_flags & ALC_FLAG_CMB_BUG) == 0) {
+		CSR_WRITE_4(sc, ALC_CMB_TD_THRESH, 4);
 		CSR_WRITE_4(sc, ALC_CMB_TX_TIMER, ALC_USECS(5000));
-	else
+	} else
 		CSR_WRITE_4(sc, ALC_CMB_TX_TIMER, ALC_USECS(0));
 	/*
 	 * Hardware can be configured to issue SMB interrupt based

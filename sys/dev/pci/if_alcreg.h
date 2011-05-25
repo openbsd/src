@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alcreg.h,v 1.3 2011/05/20 08:36:55 kevlo Exp $	*/
+/*	$OpenBSD: if_alcreg.h,v 1.4 2011/05/25 02:22:20 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1007,13 +1007,8 @@ struct tx_desc {
 #define	ALC_PROC_MAX		(ALC_RX_RING_CNT - 1)
 #define	ALC_PROC_DEFAULT	(ALC_RX_RING_CNT / 4)
 
-#define	ALC_JUMBO_FRAMELEN	(9 * 1024)
-#define	ALC_JUMBO_MTU		\
-	(ALC_JUMBO_FRAMELEN - sizeof(struct ether_vlan_header) - ETHER_CRC_LEN)
-#define	ALC_MAX_FRAMELEN	(ETHER_MAX_LEN + EVL_ENCAPLEN)
-
 /*
- * The number of bits reserved for MSS in AR8121/AR8132 controllers
+ * The number of bits reserved for MSS in AR813x/AR815x controllers
  * are 13 bits. This limits the maximum interface MTU size in TSO
  * case(8191 + sizeof(struct ip) + sizeof(struct tcphdr)) as upper
  * stack should not generate TCP segments with MSS greater than the
