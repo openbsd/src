@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.117 2011/05/24 23:18:47 matthew Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.118 2011/05/25 03:26:20 matthew Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -74,8 +74,6 @@
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
 #include <dev/ic/wdcevent.h>
-
-#include "atapiscsi.h"
 
 #define WDCDELAY  100 /* 100 microseconds */
 #define WDCNDELAY_RST (WDC_RESET_WAIT * 1000 / WDCDELAY)
