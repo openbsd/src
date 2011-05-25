@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.43 2011/05/18 11:12:13 jasper Exp $
+# $OpenBSD: pkg-config,v 1.44 2011/05/25 12:16:34 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -21,6 +21,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 use File::Basename;
+use Memoize;
 use OpenBSD::PkgConfig;
 
 my @PKGPATH = qw(/usr/lib/pkgconfig /usr/local/lib/pkgconfig /usr/X11R6/lib/pkgconfig);
@@ -103,6 +104,12 @@ GetOptions(	'debug' => \$D,
 		'variable=s' => \$mode{variable},
 		'define-variable=s' => $variables,
 	);
+
+# handle_config() is not a slow routine per se, but we spend
+# a lot of time in it, so cache the return values. The most gain
+# is from configure scripts/build commands which query several modules
+# at the same time.
+memoize('handle_config');
 
 # Initial value of printerr depends on the options...
 if (!defined $mode{printerr}) {
