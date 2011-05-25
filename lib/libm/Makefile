@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.79 2011/05/25 21:28:43 martynas Exp $
+#  $OpenBSD: Makefile,v 1.80 2011/05/25 22:19:25 martynas Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -216,6 +216,7 @@ MLINKS+=logb.3 significand.3
 MLINKS+=lrint.3 llrint.3
 MLINKS+=lround.3 llround.3
 MLINKS+=remainder.3 drem.3 remainder.3 remquo.3
+MLINKS+=rint.3 nearbyint.3
 MLINKS+=scalbn.3 scalbln.3
 MLINKS+=sqrt.3 cbrt.3
 
@@ -271,6 +272,7 @@ MLINKS+=lround.3 llroundf.3
 MLINKS+=lround.3 lroundf.3
 MLINKS+=math.3 mathf.3
 MLINKS+=nan.3 nanf.3
+MLINKS+=nearbyint.3 nearbyintf.3
 MLINKS+=nextafter.3 nextafterf.3
 MLINKS+=remainder.3 dremf.3
 MLINKS+=remainder.3 remainderf.3
@@ -302,6 +304,7 @@ MLINKS+=fmax.3 fminl.3
 MLINKS+=ilogb.3 ilogbl.3
 MLINKS+=logb.3 logbl.3
 MLINKS+=nan.3 nanl.3
+MLINKS+=nearbyint.3 nearbyintl.3
 MLINKS+=rint.3 rintl.3
 MLINKS+=scalbln.3 scalblnl.3
 MLINKS+=scalbn.3 scalbnl.3
