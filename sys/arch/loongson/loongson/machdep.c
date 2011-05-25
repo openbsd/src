@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.27 2011/03/31 20:37:44 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.28 2011/05/25 21:22:27 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -207,6 +207,13 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv,
 	extern char exception[], e_exception[];
 	extern char *hw_vendor, *hw_prod;
 	extern void xtlb_miss;
+
+	/*
+	 * Make sure we can access the extended address space.
+	 * This is not necessary on real hardware, but some emulators
+	 * are not aware of this.
+	 */
+	setsr(getsr() | SR_KX | SR_UX);
 
 	/*
 	 * Clear the compiled BSS segment in OpenBSD code.
