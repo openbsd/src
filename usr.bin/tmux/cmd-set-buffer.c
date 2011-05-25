@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-buffer.c,v 1.8 2011/01/04 00:42:47 nicm Exp $ */
+/* $OpenBSD: cmd-set-buffer.c,v 1.9 2011/05/25 17:51:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -61,6 +61,7 @@ cmd_set_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 	if (cause != NULL) {
 		ctx->error(ctx, "buffer %s", cause);
 		xfree(cause);
+		xfree(pdata);
 		return (-1);
 	}
 
