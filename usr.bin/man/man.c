@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.40 2010/10/22 14:08:53 mikeb Exp $	*/
+/*	$OpenBSD: man.c,v 1.41 2011/05/25 14:36:04 deraadt Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static void	 append_subdirs(TAG *, const char *);
 static void	 build_page(char *, char **);
 static void	 cat(char *);
 static char	*check_pager(char *);
-static int	 cleanup(void);
+static int	 cleanup(int);
 static void	 how(char *);
 static void	 jump(char **, char *, char *);
 static int	 manual(char *, TAG *, glob_t *);
@@ -242,7 +242,7 @@ main(int argc, char *argv[])
 
 	/* 6: If nothing found, we're done. */
 	if (!found) {
-		(void)cleanup();
+		(void)cleanup(0);
 		exit (1);
 	}
 
@@ -253,7 +253,7 @@ main(int argc, char *argv[])
 				continue;
 			cat(*ap);
 		}
-		exit (cleanup());
+		exit (cleanup(0));
 	}
 	if (f_how) {
 		for (ap = pg.gl_pathv; *ap != NULL; ++ap) {
@@ -261,7 +261,7 @@ main(int argc, char *argv[])
 				continue;
 			how(*ap);
 		}
-		exit(cleanup());
+		exit(cleanup(0));
 	}
 	if (f_where) {
 		for (ap = pg.gl_pathv; *ap != NULL; ++ap) {
@@ -269,7 +269,7 @@ main(int argc, char *argv[])
 				continue;
 			(void)puts(*ap);
 		}
-		exit(cleanup());
+		exit(cleanup(0));
 	}
 
 	/*
@@ -283,7 +283,7 @@ main(int argc, char *argv[])
 	}
 	if ((cmd = malloc(len)) == NULL) {
 		warn(NULL);
-		(void)cleanup();
+		(void)cleanup(0);
 		exit(1);
 	}
 	p = cmd;
@@ -304,7 +304,7 @@ main(int argc, char *argv[])
 	/* Use system(3) in case someone's pager is "pager arg1 arg2". */
 	(void)system(cmd);
 
-	exit(cleanup());
+	exit(cleanup(0));
 }
 
 /*
@@ -445,7 +445,7 @@ manual(char *page, TAG *tag, glob_t *pg)
 		    GLOB_APPEND | GLOB_BRACE | GLOB_NOSORT | GLOB_QUOTE,
 		    NULL, pg)) {
 			warn("globbing");
-			(void)cleanup();
+			(void)cleanup(0);
 			exit(1);
 		}
 		if (pg->gl_matchc == 0)
@@ -534,7 +534,7 @@ next:				anyfound = 1;
 		if ((ep = malloc(sizeof(ENTRY))) == NULL ||
 		    (ep->s = strdup(page)) == NULL) {
 			warn(NULL);
-			(void)cleanup();
+			(void)cleanup(0);
 			exit(1);
 		}
 		TAILQ_INSERT_TAIL(&missp->list, ep, q);
@@ -597,7 +597,7 @@ build_page(char *fmt, char **pathp)
 	(void)strlcpy(tpath, _PATH_TMPFILE, sizeof(tpath));
 	if ((fd = mkstemp(tpath)) == -1) {
 		warn("%s", tpath);
-		(void)cleanup();
+		(void)cleanup(0);
 		exit(1);
 	}
 	(void)snprintf(buf, sizeof(buf), "%s > %s", fmt, tpath);
@@ -606,18 +606,21 @@ build_page(char *fmt, char **pathp)
 	(void)close(fd);
 	if ((*pathp = strdup(tpath)) == NULL) {
 		warn(NULL);
-		(void)cleanup();
+		(void)cleanup(0);
 		exit(1);
 	}
 
 	/* Link the built file into the remove-when-done list. */
 	if ((ep = malloc(sizeof(ENTRY))) == NULL) {
 		warn(NULL);
-		(void)cleanup();
+		(void)cleanup(0);
 		exit(1);
 	}
 	ep->s = *pathp;
+
+	sigprocmask(SIG_BLOCK, &blocksigs, &osigs);
 	TAILQ_INSERT_TAIL(&intmpp->list, ep, q);
+	sigprocmask(SIG_SETMASK, &osigs, NULL);
 }
 
 /*
@@ -634,7 +637,7 @@ how(char *fname)
 
 	if (!(fp = fopen(fname, "r"))) {
 		warn("%s", fname);
-		(void)cleanup();
+		(void)cleanup(0);
 		exit (1);
 	}
 #define	S1	"SYNOPSIS"
@@ -691,18 +694,18 @@ cat(char *fname)
 
 	if ((fd = open(fname, O_RDONLY, 0)) < 0) {
 		warn("%s", fname);
-		(void)cleanup();
+		(void)cleanup(0);
 		exit(1);
 	}
 	while ((n = read(fd, buf, sizeof(buf))) > 0)
 		if (write(STDOUT_FILENO, buf, n) != n) {
 			warn("write");
-			(void)cleanup();
+			(void)cleanup(0);
 			exit (1);
 		}
 	if (n == -1) {
 		warn("read");
-		(void)cleanup();
+		(void)cleanup(0);
 		exit(1);
 	}
 	(void)close(fd);
@@ -765,7 +768,7 @@ jump(char **argv, char *flag, char *name)
 static void
 onsig(int signo)
 {
-	(void)cleanup();	/* XXX signal race */
+	(void)cleanup(1);
 
 	(void)signal(signo, SIG_DFL);
 	(void)kill(getpid(), signo);
@@ -779,24 +782,27 @@ onsig(int signo)
  *	Clean up temporary files, show any error messages.
  */
 static int
-cleanup(void)
+cleanup(int insig)
 {
 	TAG *intmpp, *missp;
 	ENTRY *ep;
-	int rval;
+	int rval = 0;
 
-	rval = 0;
-	ep = (missp = getlist("_missing")) == NULL ?
-	    NULL : TAILQ_FIRST(&missp->list);
-	if (ep != NULL)
-		for (; ep != NULL; ep = TAILQ_NEXT(ep, q)) {
-			if (section)
-				warnx("no entry for %s in section %s of the manual.",
-					ep->s, section->s);
-			else
-				warnx("no entry for %s in the manual.", ep->s);
-			rval = 1;
-		}
+	if (insig == 0) {
+		ep = (missp = getlist("_missing")) == NULL ?
+		    NULL : TAILQ_FIRST(&missp->list);
+		if (ep != NULL)
+			for (; ep != NULL; ep = TAILQ_NEXT(ep, q)) {
+				if (section)
+					warnx("no entry for %s in "
+					    "section %s of the manual.",
+						ep->s, section->s);
+				else
+					warnx("no entry for %s in the manual.",
+					    ep->s);
+				rval = 1;
+			}
+	}
 
 	ep = (intmpp = getlist("_intmp")) == NULL ?
 	    NULL : TAILQ_FIRST(&intmpp->list);
