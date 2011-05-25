@@ -1,4 +1,4 @@
-/*	$OpenBSD: smfb.c,v 1.11 2010/12/26 15:40:59 miod Exp $	*/
+/*	$OpenBSD: smfb.c,v 1.12 2011/05/25 21:15:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -543,7 +543,7 @@ smfb_erasecols(void *cookie, int row, int col, int num, long attr)
 	num *= f->fontwidth;
 
 	smfb_fillrect(fb, ri->ri_xorigin + col, ri->ri_yorigin + row,
-	    num, f->fontheight, ri->ri_devcmap[bg]);
+	    num, f->fontheight, bg);
 
 	return 0;
 }
@@ -569,7 +569,7 @@ smfb_eraserows(void *cookie, int row, int num, long attr)
 		y = ri->ri_yorigin + row * f->fontheight;
 		w = ri->ri_emuwidth;
 	}
-	smfb_fillrect(fb, x, y, w, num, ri->ri_devcmap[bg]);
+	smfb_fillrect(fb, x, y, w, num, bg);
 
 	return 0;
 }
