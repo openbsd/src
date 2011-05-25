@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.9 2005/12/09 22:54:15 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.10 2011/05/25 07:42:15 mpi Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -49,7 +49,14 @@
 	{ "altivec", CTLTYPE_INT }, \
 }
 
-extern int ppc_altivec;
+/* Frequency scaling */
+#define FREQ_FULL	0
+#define FREQ_HALF	1
+#define FREQ_QUARTER	2	/* Not supported on IBM 970FX */
+
+extern u_int32_t	ppc_curfreq;
+extern u_int32_t	ppc_maxfreq;
+extern int		ppc_altivec;
 
 extern void (*ppc64_slew_voltage)(u_int);
 
