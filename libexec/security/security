@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.13 2011/05/10 17:53:56 schwarze Exp $
+# $OpenBSD: security,v 1.14 2011/05/25 21:16:29 schwarze Exp $
 #
 # Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -55,9 +55,7 @@ sub check_access_file {
 	my ($filename, $login) = @_;
 	return unless -e $filename;
 	my $mode = (stat(_))[2];
-	nag !defined $mode,
-	    "stat: $filename: $!"
-	or nag $mode & (S_IRUSR | S_IRGRP | S_IROTH) && ! -O $filename,
+	nag $mode & (S_IRUSR | S_IRGRP | S_IROTH) && ! -O $filename,
 	    "Login $login is off but still has a valid shell " .
 	    "and alternate access files in\n" .
 	    "\t home directory are still readable.";
@@ -318,9 +316,7 @@ sub check_hostname_if {
 	while (my $filename = glob '/etc/hostname.*') {
 		next unless -e $filename;
 		my $mode = (stat(_))[2];
-		nag !defined $mode,
-		    "stat: $filename: $!"
-		or nag $mode & S_IRWXO,
+		nag $mode & S_IRWXO,
 		    "$filename is world readable.";
 	}
 }
@@ -452,6 +448,9 @@ sub check_mailboxes {
 	foreach my $name (readdir $dh) {
 		next if $name =~ /^\.\.?$/;
 		my ($mode, $fuid, $fgid) = (stat "$dir/$name")[2,4,5];
+		nag !defined $mode,
+		    "stat: $dir/$name: $!"
+		    and next;
 		my $fname = (getpwuid $fuid)[0] // $fuid;
 		my $gname = (getgrgid $fgid)[0] // $fgid;
 		nag $fname ne $name,
@@ -549,6 +548,9 @@ sub find_special_files {
 
 		my ($dev, $ino, $mode, $nlink, $uid, $gid, $rdev, $size,
 		    $atime, $mtime, $ctime, $blksize, $blocks) = lstat;
+		nag !defined $dev,
+		    "stat: $_: $!"
+		    and return;
 
 		# SUID/SGID files
 		my $file = {};
