@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.h,v 1.1 2011/04/21 21:12:56 martynas Exp $	*/
+/*	$OpenBSD: fenv.h,v 1.2 2011/05/25 21:46:49 martynas Exp $	*/
 /*	$NetBSD: fenv.h,v 1.2.4.1 2011/02/08 16:18:55 bouyer Exp $	*/
 
 /*
@@ -43,6 +43,7 @@ int	fetestexcept(int);
 
 int	fegetround(void);
 int	fesetround(int);
+
 int	fegetenv(fenv_t *);
 int	feholdexcept(fenv_t *);
 int	fesetenv(const fenv_t *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: math.h,v 1.28 2011/04/28 18:05:39 martynas Exp $	*/
+/*	$OpenBSD: math.h,v 1.29 2011/05/25 21:46:49 martynas Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -21,6 +21,7 @@
 #include <sys/cdefs.h>
 #include <sys/limits.h>
 
+__BEGIN_DECLS
 /*
  * ANSI/POSIX
  */
@@ -145,7 +146,6 @@ extern int signgam;
 #define	HUGE		MAXFLOAT
 #endif /* __BSD_VISIBLE */
 
-__BEGIN_DECLS
 /*
  * ANSI/POSIX
  */

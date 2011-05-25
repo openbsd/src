@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.h,v 1.2 2011/04/28 17:34:23 martynas Exp $	*/
+/*	$OpenBSD: fenv.h,v 1.3 2011/05/25 21:46:49 martynas Exp $	*/
 /*	$NetBSD: fenv.h,v 1.1.2.2 2011/02/08 16:19:41 bouyer Exp $	*/
 
 /*-
@@ -86,7 +86,9 @@ typedef	unsigned long		fenv_t;
  * that manage the floating-point environment, namely fesetenv() and
  * feupdateenv().
  */
+__BEGIN_DECLS
 extern	fenv_t			__fe_dfl_env;
+__END_DECLS
 #define	FE_DFL_ENV		((const fenv_t *)&__fe_dfl_env)
 
 /*
