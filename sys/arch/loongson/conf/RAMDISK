@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.17 2011/05/24 20:27:11 matthew Exp $
+#	$OpenBSD: RAMDISK,v 1.18 2011/05/25 21:19:59 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -55,6 +55,7 @@ pckbc0		at isa?				# Yeeloong only
 pckbd*		at pckbc?			# Yeeloong only
 wskbd*		at pckbd? mux 1			# Yeeloong only
 com0		at isa? port 0x2f8 irq 3	# Fuloong 2F only
+com1		at isa? port 0x3f8 irq 3	# Fuloong 2E only
 pciide*		at pci?
 wd*		at pciide? flags 0x0000
 sisfb*		at pci?				# Lynloong/Fuloong 2F only
