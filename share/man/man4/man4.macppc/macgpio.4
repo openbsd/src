@@ -1,4 +1,4 @@
-.\"	$OpenBSD: macgpio.4,v 1.7 2010/04/06 06:46:30 jmc Exp $
+.\"	$OpenBSD: macgpio.4,v 1.8 2011/05/25 18:14:55 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Gordon Willem Klok <gwk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 6 2010 $
+.Dd $Mdocdate: May 25 2011 $
 .Dt MACGPIO 4 macppc
 .Os
 .Sh NAME
@@ -33,6 +33,10 @@ Apple machines.
 provides support for the following devices:
 .Pp
 .Bl -tag -width 14n -offset indent -compact
+.It Xr dfs 4
+Dynamic Frequency Switching
+.It Xr pgs 4
+programmer's switch
 .It Xr sysbutton 4
 Xserve G4 and G5 front system identifier button
 .El
