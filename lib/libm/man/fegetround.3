@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fegetround.3,v 1.1 2011/05/25 21:28:43 martynas Exp $
+.\"	$OpenBSD: fegetround.3,v 1.2 2011/05/26 15:42:27 jmc Exp $
 .\"
 .\" Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 25 2011 $
+.Dd $Mdocdate: May 26 2011 $
 .Dt FEGETROUND 3
 .Os
 .Sh NAME
@@ -67,11 +67,11 @@ The
 function return zero on success, and non-zero if an error occurred.
 .Sh SEE ALSO
 .Xr feclearexcept 3 ,
-.Xr fegetenv 3 ,
-.Xr feenableexcept 3
+.Xr feenableexcept 3 ,
+.Xr fegetenv 3
 .Sh STANDARDS
 The
-.Fn fegetround ,
+.Fn fegetround
 and
 .Fn fesetround
 functions conform to

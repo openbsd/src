@@ -1,4 +1,4 @@
-.\"	$OpenBSD: feclearexcept.3,v 1.1 2011/05/25 21:28:43 martynas Exp $
+.\"	$OpenBSD: feclearexcept.3,v 1.2 2011/05/26 15:42:27 jmc Exp $
 .\"
 .\" Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 25 2011 $
+.Dd $Mdocdate: May 26 2011 $
 .Dt FECLEAREXCEPT 3
 .Os
 .Sh NAME
@@ -53,7 +53,7 @@ due to rounding.
 Invalid operation exceptions occur when a program attempts to
 perform calculations for which there is no reasonable representable
 answer.
-
+.Pp
 For instance, subtraction of infinities, division of zero by zero,
 ordered comparison involving \*(Nas, and taking the square root of a
 negative number are all invalid operations.
@@ -66,7 +66,7 @@ to be represented as a non-zero value in the destination type.
 .It Dv FE_DENORMAL
 Denormalization exception occurs when the result of a floating-point
 expression is a denormalized number.
-
+.Pp
 This is available only on the floating-point implementations of
 amd64 and i386 processors.
 .El
@@ -83,7 +83,7 @@ function clears the floating-point exceptions represented by
 .Pp
 The
 .Fn fegetexceptflag
-function stores representation of the states of the floating-point
+function stores a representation of the states of the floating-point
 flags indicated by
 .Pa excepts
 in the object pointed to by
@@ -127,12 +127,12 @@ and
 functions return zero on success, and non-zero if an error occurred.
 The
 .Fn fetestexcept
-function returns bitmask of a specified subset of the floating-point
-exception flags are currently set.
+function returns a bitmask of a specified subset of the floating-point
+exception flags which are currently set.
 .Sh SEE ALSO
-.Xr fegetround 3 ,
+.Xr feenableexcept 3 ,
 .Xr fegetenv 3 ,
-.Xr feenableexcept 3
+.Xr fegetround 3
 .Sh STANDARDS
 The
 .Fn feclearexcept ,
@@ -161,7 +161,7 @@ These functions first appeared in
 .Sh CAVEATS
 On some architectures,
 .Fn feraiseexcept
-function additionally raises the 
+additionally raises the
 .Dq inexact
 floating-point exception whenever it raises the
 .Dq overflow

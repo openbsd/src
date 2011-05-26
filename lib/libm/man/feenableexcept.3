@@ -1,4 +1,4 @@
-.\"	$OpenBSD: feenableexcept.3,v 1.1 2011/05/25 21:28:43 martynas Exp $
+.\"	$OpenBSD: feenableexcept.3,v 1.2 2011/05/26 15:42:27 jmc Exp $
 .\"
 .\" Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 25 2011 $
+.Dd $Mdocdate: May 26 2011 $
 .Dt FEENABLEEXCEPT 3
 .Os
 .Sh NAME
@@ -38,7 +38,6 @@ The
 input argument is a bitmask specifying an exception type and
 containing any of the values listed in
 .Xr feclearexcept 3 .
-.El
 .Pp
 The
 .Fn feenableexcept
@@ -71,8 +70,8 @@ function returns the current exception mask.
 .Sh SEE ALSO
 .Xr sigaction 2 ,
 .Xr feclearexcept 3 ,
-.Xr fegetround 3 ,
-.Xr fegetenv 3
+.Xr fegetenv 3 ,
+.Xr fegetround 3
 .Sh STANDARDS
 The
 .Fn feenableexcept ,
