@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.138 2011/03/10 23:14:30 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.139 2011/05/26 01:40:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -896,7 +896,7 @@ iic_probe_sensor(struct device *self, u_int8_t addr)
 		name = "mcp98242";
 	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x0054 &&
 	    (iicprobew(0x07) & 0xfffc) == 0x2100 &&
-	    (iicprobew(0x00) & 0xffe0) == 0x0000) {
+	    (iicprobew(0x00) & 0xff00) == 0x0000) {
 		name = "mcp98243";
 	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x11d4 &&
 	    iicprobew(0x07) == 0x0800 &&
