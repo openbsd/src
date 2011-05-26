@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2011/05/04 07:36:38 jasper Exp $
+#	$OpenBSD: Makefile,v 1.16 2011/05/26 13:52:55 jasper Exp $
 
 LIB=	z
 WANTLINT=
@@ -52,8 +52,6 @@ includes:
 
 beforeinstall:
 	/bin/sh ${.CURDIR}/generate_pkgconfig.sh -c ${.CURDIR} -o ${.OBJDIR}
-	[ -d ${DESTDIR}/usr/lib/pkgconfig/ ] || \
-		${INSTALL} -o root -g ${SHAREGRP} -d ${DESTDIR}/usr/lib/pkgconfig/
 	${INSTALL} ${INSTALL_COPY} -o root -g ${SHAREGRP} \
 	    -m ${SHAREMODE} ${.OBJDIR}/${PC_FILES} ${DESTDIR}/usr/lib/pkgconfig/
 
