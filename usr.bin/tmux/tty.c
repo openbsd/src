@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.108 2011/05/20 19:17:39 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.109 2011/05/26 07:08:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -248,7 +248,7 @@ tty_stop_tty(struct tty *tty)
 	if (tty_term_has(tty->term, TTYC_CS1) && tty->cstyle != 0) {
 		if (tty_term_has(tty->term, TTYC_CSR1))
 			tty_raw(tty, tty_term_string(tty->term, TTYC_CSR1));
-		else if (tty_term_has(tty->term, TTYC_CS1))
+		else
 			tty_raw(tty, tty_term_string1(tty->term, TTYC_CS1, 0));
 	}
 	tty_raw(tty, tty_term_string(tty->term, TTYC_CR));
