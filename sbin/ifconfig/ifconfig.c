@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.246 2011/03/23 18:36:41 jsg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.247 2011/05/26 13:10:11 sthen Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3155,19 +3155,15 @@ in6_status(int force)
 void
 settunnel(const char *src, const char *dst)
 {
-	struct addrinfo hints, *srcres, *dstres;
+	struct addrinfo *srcres, *dstres;
 	int ecode;
 	struct if_laddrreq req;
 
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = afp->af_af;
-	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
-
-	if ((ecode = getaddrinfo(src, NULL, &hints, &srcres)) != 0)
+	if ((ecode = getaddrinfo(src, NULL, NULL, &srcres)) != 0)
 		errx(1, "error in parsing address string: %s",
 		    gai_strerror(ecode));
 
-	if ((ecode = getaddrinfo(dst, NULL, &hints, &dstres)) != 0)
+	if ((ecode = getaddrinfo(dst, NULL, NULL, &dstres)) != 0)
 		errx(1, "error in parsing address string: %s",
 		    gai_strerror(ecode));
 
