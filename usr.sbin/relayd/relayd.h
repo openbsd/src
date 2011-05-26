@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.148 2011/05/20 09:43:53 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.149 2011/05/26 14:38:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -101,6 +101,9 @@ struct ctl_id {
 struct ctl_script {
 	objid_t		 host;
 	int		 retval;
+	struct timeval	 timeout;
+	char		 name[MAXHOSTNAMELEN];
+	char		 path[MAXPATHLEN];
 };
 
 struct ctl_demote {
