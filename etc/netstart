@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.131 2011/02/09 17:22:06 sobrado Exp $
+#	$OpenBSD: netstart,v 1.132 2011/05/26 15:22:53 mpf Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -260,12 +260,12 @@ fi
 
 # Configure all the non-loopback interfaces which we know about, but
 # do not start interfaces which must be delayed. Refer to hostname.if(5)
-ifmstart "" "trunk vlan carp gif gre pfsync pppoe tun bridge"
+ifmstart "" "trunk svlan vlan carp gif gre pfsync pppoe tun bridge"
 
 # The trunk interfaces need to come up first in this list.
-# The vlan interfaces need to come up after trunk.
+# The (s)vlan interfaces need to come up after trunk.
 # Configure all the carp interfaces which we know about before default route.
-ifmstart "trunk vlan carp"
+ifmstart "trunk svlan vlan carp"
 
 if [ "$ip6kernel" = "YES" -a "x$rtsolif" != "x" ]; then
 	fw=`sysctl -n net.inet6.ip6.forwarding`
