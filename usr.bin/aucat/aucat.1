@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.81 2011/05/26 07:42:21 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.82 2011/05/26 13:30:51 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -248,13 +248,13 @@ options.
 .It Fl v Ar volume
 Software volume attenuation of the playback stream.
 The value must be between 1 and 127,
-corresponding to \-42dB and \-0dB attenuation in 1\/3dB steps.
+corresponding to \-42dB and \-0dB attenuation in 1/3dB steps.
 In server mode, clients inherit this parameter.
-Reducing the volume in advance allows client volume to stay independent
+Reducing the volume in advance allows a client's volume to stay independent
 from the number of clients as long as their number is small enough.
-18 volume units (i.e., \-6dB attenuation) allows the number
+18 volume units (i.e. \-6dB attenuation) allows the number
 of playback streams to be doubled.
-The default is 127 i.e., no attenuation.
+The default is 127 i.e. no attenuation.
 .It Fl w Ar flag
 Control
 .Nm
@@ -269,7 +269,7 @@ If the flag is
 then the master volume (corresponding to the mix of all playback streams)
 is automatically adjusted to avoid clipping.
 Using
-.Fl w Va off
+.Va off
 makes sense when all streams are recorded or produced with properly lowered
 volumes.
 The default is
