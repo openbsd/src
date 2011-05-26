@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.64 2011/04/28 07:20:03 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.65 2011/05/26 07:18:40 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1016,7 +1016,7 @@ struct aproc_ops mix_ops = {
 };
 
 struct aproc *
-mix_new(char *name, int maxlat, unsigned round)
+mix_new(char *name, int maxlat, unsigned round, unsigned autovol)
 {
 	struct aproc *p;
 
@@ -1027,6 +1027,7 @@ mix_new(char *name, int maxlat, unsigned round)
 	p->u.mix.maxlat = maxlat;
 	p->u.mix.ctl = NULL;
 	p->u.mix.mon = NULL;
+	p->u.mix.autovol = autovol;
 	return p;
 }
 
@@ -1039,6 +1040,9 @@ mix_setmaster(struct aproc *p)
 	unsigned n;
 	struct abuf *i, *j;
 	int weight;
+
+	if (!p->u.mix.autovol)
+		return;
 
 	/*
 	 * count the number of inputs. If a set of inputs

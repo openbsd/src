@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.79 2011/05/23 07:06:53 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.80 2011/05/26 07:18:40 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 23 2011 $
+.Dd $Mdocdate: May 26 2011 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .Op Fl t Ar mode
 .Op Fl U Ar unit
 .Op Fl v Ar volume
+.Op Fl w Ar flag
 .Op Fl x Ar policy
 .Op Fl z Ar nframes
 .Ek
@@ -114,7 +115,7 @@ Preceding streams
 control MIDI ports
 .Pq Fl q ,
 and per-device options
-.Pq Fl abz
+.Pq Fl abwz
 apply to this device.
 Device mode and parameters are determined from streams
 attached to it.
@@ -255,6 +256,25 @@ of clients as long as their number is small enough.
 A good compromise is to use \-4dB attenuation (12 volume units)
 for each additional client expected
 (115 if 2 clients are expected, 103 for 3 clients, and so on).
+.It Fl w Ar flag
+Control
+.Nm
+behaviour when the maximum volume of the hardware is reached
+and a new stream is connected.
+This happens only when stream volumes
+are not properly set using the
+.Fl v
+option.
+If the flag is
+.Va on ,
+then the master volume (corresponding to the mix of all playback streams)
+is automatically adjusted to avoid clipping.
+Using
+.Fl w Va off
+makes sense when all streams are recorded or produced with properly lowered
+volumes.
+The default is
+.Va on .
 .It Fl x Ar policy
 Action when the output stream cannot accept
 recorded data fast enough or the input stream
@@ -298,7 +318,7 @@ to a 400 frame block size.
 .Pp
 On the command line,
 per-device parameters
-.Pq Fl abz
+.Pq Fl abwz
 must precede the device definition
 .Pq Fl f ,
 and per-stream parameters

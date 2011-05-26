@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.64 2010/10/21 18:57:42 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.65 2011/05/26 07:18:40 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -114,7 +114,7 @@ struct dev *dev_list = NULL;
 struct dev *
 dev_new_sio(char *path,
     unsigned mode, struct aparams *dipar, struct aparams *dopar,
-    unsigned bufsz, unsigned round, unsigned hold)
+    unsigned bufsz, unsigned round, unsigned hold, unsigned autovol)
 {
 	struct dev *d;
 
@@ -132,6 +132,7 @@ dev_new_sio(char *path,
 	d->reqbufsz = bufsz;
 	d->reqround = round;
 	d->hold = hold;
+	d->autovol = autovol;
 	d->pstate = DEV_CLOSED;
 	d->next = dev_list;
 	dev_list = d;
@@ -299,7 +300,7 @@ dev_open(struct dev *d)
 	 * Create mixer, demuxer and monitor
 	 */
 	if (d->mode & MODE_PLAY) {
-		d->mix = mix_new("play", d->bufsz, d->round);
+		d->mix = mix_new("play", d->bufsz, d->round, d->autovol);
 		d->mix->refs++;
 		d->mix->u.mix.ctl = d->midi;
 	}
