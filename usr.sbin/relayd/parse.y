@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.157 2011/05/23 10:44:59 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.158 2011/05/26 14:48:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Reyk Floeter <reyk@openbsd.org>
@@ -776,6 +776,7 @@ tablecheck	: ICMP			{ table->conf.check = CHECK_ICMP; }
 				free($2);
 				YYERROR;
 			}
+			conf->sc_flags |= F_SCRIPT;
 			free($2);
 		}
 		;
@@ -2239,6 +2240,8 @@ load_config(const char *filename, struct relayd *x_conf)
 	struct host	*h, *ph;
 
 	conf = x_conf;
+	conf->sc_flags = 0;
+
 	loadcfg = 1;
 	errors = 0;
 	last_host_id = last_table_id = last_rdr_id = last_proto_id =

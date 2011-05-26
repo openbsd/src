@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_script.c,v 1.13 2011/05/26 14:38:03 reyk Exp $	*/
+/*	$OpenBSD: check_script.c,v 1.14 2011/05/26 14:48:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -101,6 +101,11 @@ script_exec(struct relayd *env, struct ctl_script *scr)
 	struct timeval		*tv;
 	const char		*file, *arg;
 	struct passwd		*pw;
+
+	if ((env->sc_flags & F_SCRIPT) == 0) {
+		log_warnx("%s: script disabled", __func__);
+		return (-1);
+	}
 
 	DPRINTF("%s: running script %s, host %s",
 	    __func__, scr->path, scr->name);
