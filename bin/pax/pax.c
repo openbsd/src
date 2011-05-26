@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.31 2010/12/02 04:08:27 tedu Exp $	*/
+/*	$OpenBSD: pax.c,v 1.32 2011/05/26 14:42:06 deraadt Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -294,7 +294,7 @@ main(int argc, char **argv)
 void
 sig_cleanup(int which_sig)
 {
-	/* XXX signal races */
+	char errbuf[80];
 
 	/*
 	 * restore modes and times for any dirs we may have created
@@ -302,16 +302,21 @@ sig_cleanup(int which_sig)
 	 * will clearly see the message on a line by itself.
 	 */
 	vflag = vfpart = 1;
-	if (which_sig == SIGXCPU)
-		paxwarn(0, "Cpu time limit reached, cleaning up.");
-	else
-		paxwarn(0, "Signal caught, cleaning up.");
 
-	ar_close();
-	proc_dir();
+	/* paxwarn() uses stdio; fake it as well as we can */
+	if (which_sig == SIGXCPU)
+		strlcpy(errbuf, "Cpu time limit reached, cleaning up.",
+		    sizeof errbuf);
+	else
+		strlcpy(errbuf, "Signal caught, cleaning up.",
+		    sizeof errbuf);
+	(void) write(STDERR_FILENO, errbuf, strlen(errbuf));
+
+	ar_close();			/* XXX signal race */
+	proc_dir();			/* XXX signal race */
 	if (tflag)
-		atdir_end();
-	exit(1);
+		atdir_end();		/* XXX signal race */
+	_exit(1);
 }
 
 /*
