@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.54 2011/05/22 22:43:47 drahn Exp $ */
+/*	$OpenBSD: resolve.c,v 1.55 2011/05/26 05:10:49 otto Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -236,13 +236,11 @@ _dl_rebuild_allobj_grouplist()
 
 	/* rebuild list */
 	_dl_newsymsearch();
+
 	/*
 	 * search dlopened objects: global or req_obj == dlopened_obj
 	 * and and it's children
 	 */
-	
-	 _dl_newsymsearch();
-
 	TAILQ_FOREACH(n, &_dlopened_child_list, next_sib) {
 		childlistlen++;
 #if 0
