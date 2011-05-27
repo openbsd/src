@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.61 2011/05/24 15:27:36 ariane Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.62 2011/05/27 20:10:18 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -406,6 +406,8 @@ pmap_init()
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_init()\n"));
 
+	TAILQ_INIT(&pv_page_freelist);
+
 #ifndef __HAVE_PMAP_DIRECT
 	/*
 	 * Before we do anything else, initialize the PTE pointers
@@ -570,7 +572,7 @@ pmap_alloc_pv()
 		pvp->pvp_pgi.pgi_freelist = pv = &pvp->pvp_pv[1];
 		for (i = NPVPPG - 2; i; i--, pv++)
 			pv->pv_next = pv + 1;
-		pv->pv_next = 0;
+		pv->pv_next = NULL;
 		pv_nfree += pvp->pvp_pgi.pgi_nfree = NPVPPG - 1;
 		TAILQ_INSERT_HEAD(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
 		pv = &pvp->pvp_pv[0];
@@ -582,7 +584,7 @@ pmap_alloc_pv()
 		}
 		pv = pvp->pvp_pgi.pgi_freelist;
 #ifdef DIAGNOSTIC
-		if (pv == 0)
+		if (pv == NULL)
 			panic("pmap_alloc_pv: pgi_nfree inconsistent");
 #endif
 		pvp->pvp_pgi.pgi_freelist = pv->pv_next;
