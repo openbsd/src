@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.4 2011/01/26 17:07:59 reyk Exp $	*/
+/*	$OpenBSD: timer.c,v 1.5 2011/05/27 12:01:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -34,7 +34,7 @@
 
 struct timer_cbarg {
 	int		 tmr_active;
-	struct event	 tmr_ev; 
+	struct event	 tmr_ev;
 	struct iked	*tmr_env;
 	struct timeval	 tmr_first;
 	struct timeval	 tmr_last;

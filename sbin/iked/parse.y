@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.21 2011/04/18 08:45:43 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.22 2011/05/27 12:01:02 reyk Exp $	*/
 /*	$vantronix: parse.y,v 1.22 2010/06/03 11:08:34 reyk Exp $	*/
 
 /*
@@ -149,9 +149,9 @@ const struct ipsec_xf ipsecencxfs[] = {
 	{ "3des",		IKEV2_XFORMENCR_3DES,		24 },
 	{ "3des-cbc",		IKEV2_XFORMENCR_3DES,		24 },
 	{ "aes-128",		IKEV2_XFORMENCR_AES_CBC,	16, 16 },
-	{ "aes-192",		IKEV2_XFORMENCR_AES_CBC, 	24, 24 },
-	{ "aes-256",		IKEV2_XFORMENCR_AES_CBC, 	32, 32 },
-	{ "aes-ctr",		IKEV2_XFORMENCR_AES_CTR, 	16, 16, 4 },
+	{ "aes-192",		IKEV2_XFORMENCR_AES_CBC,	24, 24 },
+	{ "aes-256",		IKEV2_XFORMENCR_AES_CBC,	32, 32 },
+	{ "aes-ctr",		IKEV2_XFORMENCR_AES_CTR,	16, 16, 4 },
 	{ "aes-128-gcm",	IKEV2_XFORMENCR_AES_GCM_16,	16, 16, 4, 1 },
 	{ "aes-192-gcm",	IKEV2_XFORMENCR_AES_GCM_16,	24, 24, 4, 1 },
 	{ "aes-256-gcm",	IKEV2_XFORMENCR_AES_GCM_16,	32, 32, 4, 1 },
@@ -713,7 +713,7 @@ transform	: AUTHXF STRING			{
 ike_sa		: /* empty */	{
 			$$ = NULL;
 		}
-		| IKESA 		{
+		| IKESA		{
 			encxfs = ikeencxfs;
 		} transforms	{
 			if (($$ = calloc(1, sizeof(*$$))) == NULL)
@@ -725,9 +725,9 @@ ike_sa		: /* empty */	{
 child_sa	: /* empty */	{
 			$$ = NULL;
 		}
-		| CHILDSA 		{
+		| CHILDSA	{
 			encxfs = ipsecencxfs;
-		} transforms		{
+		} transforms	{
 			if (($$ = calloc(1, sizeof(*$$))) == NULL)
 				err(1, "child_sa: calloc");
 			$$->xfs = $3;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.19 2010/10/08 16:15:22 reyk Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.20 2011/05/27 12:01:02 reyk Exp $	*/
 /*	$vantronix: ikeca.c,v 1.13 2010/06/03 15:52:52 reyk Exp $	*/
 
 /*
@@ -204,8 +204,8 @@ ca_sign(struct ca *ca, char *keyname, int type, char *envargs)
 		    " -passin file:%s", name, envargs, PATH_OPENSSL,
 		    ca->sslpath, keyname, ca->sslpath, ca->sslpath,
 		    ca->extcnf, ca->sslpath, keyname, ca->passfile);
-	} else 
-	    err(1, "unknown host type %d", type);
+	} else
+		err(1, "unknown host type %d", type);
 
 	system(cmd);
 
@@ -233,7 +233,7 @@ ca_certificate(struct ca *ca, char *keyname, int type, int action)
 	ca_key_create(ca, keyname);
 	ca_request(ca, keyname);
 	ca_sign(ca, keyname, type, envargs);
-	
+
 	return (0);
 }
 
@@ -373,7 +373,7 @@ ca_install(struct ca *ca, char *dir)
 	char		 src[PATH_MAX];
 	char		 dst[PATH_MAX];
 	char		*p = NULL;
-	
+
 	snprintf(src, sizeof(src), "%s/ca.crt", ca->sslpath);
 	if (stat(src, &st) == -1) {
 		printf("CA '%s' does not exist\n", ca->caname);
@@ -572,9 +572,9 @@ ca_export(struct ca *ca, char *keyname, char *myname, char *password)
 		snprintf(cmd, sizeof(cmd), "env EXPASS=%s %s pkcs12 -export"
 		    " -name %s -CAfile %s/ca.crt -inkey %s/private/%s.key"
 		    " -in %s/%s.crt -out %s/private/%s.pfx -passout env:EXPASS"
-		    " -passin file:%s", pass, PATH_OPENSSL, keyname, ca->sslpath,
-		    ca->sslpath, keyname, ca->sslpath, keyname, ca->sslpath,
-		    oname, ca->passfile);
+		    " -passin file:%s", pass, PATH_OPENSSL, keyname,
+		    ca->sslpath, ca->sslpath, keyname, ca->sslpath, keyname,
+		    ca->sslpath, oname, ca->passfile);
 		system(cmd);
 	}
 

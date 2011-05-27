@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.9 2010/10/08 10:13:47 jsg Exp $	*/
+/*	$OpenBSD: parser.c,v 1.10 2011/05/27 12:01:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -95,9 +95,9 @@ static const struct token t_main[] = {
 };
 
 static const struct token t_log[] = {
-	{ KEYWORD,	"verbose",	LOG_VERBOSE, 	NULL },
-	{ KEYWORD,	"brief",	LOG_BRIEF, 	NULL },
-	{ ENDTOKEN, 	"",		NONE,		NULL }
+	{ KEYWORD,	"verbose",	LOG_VERBOSE,	NULL },
+	{ KEYWORD,	"brief",	LOG_BRIEF,	NULL },
+	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 
 static const struct token t_reset[] = {
@@ -111,7 +111,7 @@ static const struct token t_reset[] = {
 
 static const struct token t_load[] = {
 	{ PATH,		"",		NONE,		NULL },
-	{ ENDTOKEN, 	"",		NONE,		NULL }
+	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 
 static const struct token t_ca[] = {
@@ -126,7 +126,7 @@ static const struct token t_ca_modifiers[] = {
 	{ KEYWORD,	"certificate",	CA_CERTIFICATE,	t_ca_cert },
 	{ KEYWORD,	"key",		NONE,		t_ca_key },
 	{ KEYWORD,	"export",	CA_EXPORT,	t_ca_export },
-	{ ENDTOKEN, 	"",		NONE,		NULL }
+	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 
 static const struct token t_ca_pass_val[] = {
@@ -201,7 +201,7 @@ static const struct token t_ca_key_modifiers[] = {
 
 static const struct token t_ca_key_path[] = {
 	{ PATH,		"",		NONE,		NULL },
-	{ PATH, 	"",		NONE,		NULL }
+	{ PATH,		"",		NONE,		NULL }
 };
 
 static const struct token t_show[] = {

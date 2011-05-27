@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap_ms.c,v 1.1 2010/06/03 16:41:12 reyk Exp $	*/
+/*	$OpenBSD: chap_ms.c,v 1.2 2011/05/27 12:01:02 reyk Exp $	*/
 /*	$vantronix: chap_ms.c,v 1.7 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -159,7 +159,7 @@ mschap_challenge_hash(u_int8_t *peer_challenge, u_int8_t *auth_challenge,
 		name++;
 
 	EVP_DigestInit(&ctx, EVP_sha1());
-	EVP_DigestUpdate(&ctx, peer_challenge, MSCHAPV2_CHALLENGE_SZ); 
+	EVP_DigestUpdate(&ctx, peer_challenge, MSCHAPV2_CHALLENGE_SZ);
 	EVP_DigestUpdate(&ctx, auth_challenge, MSCHAPV2_CHALLENGE_SZ);
 	EVP_DigestUpdate(&ctx, name, strlen(name));
 	EVP_DigestFinal(&ctx, md, &mdlen);
@@ -395,7 +395,7 @@ mschap_radiuskey(u_int8_t *plain, const u_int8_t *crypted,
 	EVP_DigestUpdate(&ctx, crypted, 2);
 	EVP_DigestFinal(&ctx, b, &mdlen);
 
-	for(i = 0; i < mdlen; i++) {
+	for (i = 0; i < mdlen; i++) {
 		p[i] = b[i] ^ crypted[i+2];
 	}
 
@@ -404,7 +404,7 @@ mschap_radiuskey(u_int8_t *plain, const u_int8_t *crypted,
 	EVP_DigestUpdate(&ctx, crypted + 2, mdlen);
 	EVP_DigestFinal(&ctx, b, &mdlen);
 
-	for(i = 0; i < mdlen; i++) {
+	for (i = 0; i < mdlen; i++) {
 		p[i+16] = b[i] ^ crypted[i+18];
 	}
 

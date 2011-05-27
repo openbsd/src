@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.16 2011/05/09 11:15:18 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.17 2011/05/27 12:01:02 reyk Exp $	*/
 /*	$vantronix: ca.c,v 1.29 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -978,7 +978,7 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 		goto done;
 	}
 
- 	if (!result) {
+	if (!result) {
 		/* XXX should we accept self-signed certificates? */
 		errstr = "rejecting self-signed certificate";
 		goto done;

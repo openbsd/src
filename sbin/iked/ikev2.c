@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.55 2011/05/09 11:15:18 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.56 2011/05/27 12:01:02 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -2634,7 +2634,8 @@ ikev2_sa_negotiate(struct iked_sa *sa, struct iked_proposals *local,
 						continue;
 
 					print_debug("%s: xform %d "
-					    "<-> %d (%d): %s %s (keylength %d <-> %d)", __func__,
+					    "<-> %d (%d): %s %s "
+					    "(keylength %d <-> %d)", __func__,
 					    ppeer->prop_id, plocal->prop_id,
 					    tlocal->xform_score,
 					    print_map(type,

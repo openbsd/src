@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.12 2011/01/21 11:56:00 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.13 2011/05/27 12:01:02 reyk Exp $	*/
 /*	$vantronix: util.c,v 1.39 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -500,7 +500,7 @@ u_int8_t
 mask2prefixlen6(struct sockaddr *sa)
 {
 	struct sockaddr_in6	*sa_in6 = (struct sockaddr_in6 *)sa;
-	u_int8_t	 	 l = 0, *ap, *ep;
+	u_int8_t		 l = 0, *ap, *ep;
 
 	/*
 	 * sin6_len is the size of the sockaddr so substract the offset of

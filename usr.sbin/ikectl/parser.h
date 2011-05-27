@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.9 2010/10/08 10:13:47 jsg Exp $	*/
+/*	$OpenBSD: parser.h,v 1.10 2011/05/27 12:01:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -60,7 +60,7 @@ struct parse_result {
 	enum actions	 action;
 	struct imsgbuf	*ibuf;
 	char		*path;
-	char 		*caname;
+	char		*caname;
 	char		*pass;
 	char		*host;
 	char		*peer;

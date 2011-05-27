@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikectl.c,v 1.11 2010/10/08 11:41:56 jsg Exp $	*/
+/*	$OpenBSD: ikectl.c,v 1.12 2011/05/27 12:01:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -72,7 +72,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-q] [-s socket] command [arg ...]\n", __progname);
+	fprintf(stderr, "usage: %s [-q] [-s socket] command [arg ...]\n",
+	    __progname);
 	exit(1);
 }
 

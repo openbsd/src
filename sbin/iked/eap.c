@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap.c,v 1.4 2010/12/21 13:24:11 mikeb Exp $	*/
+/*	$OpenBSD: eap.c,v 1.5 2011/05/27 12:01:02 reyk Exp $	*/
 /*	$vantronix: eap.c,v 1.12 2010/05/31 11:30:08 reyk Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ eap_identity_response(struct eap_message *eap)
 {
 	size_t				 len;
 	char				*str;
-	u_int8_t 			*ptr = (u_int8_t *)eap;
+	u_int8_t			*ptr = (u_int8_t *)eap;
 
 	len = betoh16(eap->eap_length) - sizeof(*eap);
 	ptr += sizeof(*eap);
@@ -241,7 +241,7 @@ eap_mschap(struct iked *env, struct iked_sa *sa, struct eap_message *eap)
 			return (-1);
 
 		msp = &msr->msr_response.resp_peer;
-		mschap_nt_response(ibuf_data(sa->sa_eap.id_buf), 
+		mschap_nt_response(ibuf_data(sa->sa_eap.id_buf),
 		    msp->msp_challenge, usr->usr_name, strlen(usr->usr_name),
 		    pass, passlen, ntresponse);
 
@@ -257,8 +257,9 @@ eap_mschap(struct iked *env, struct iked_sa *sa, struct eap_message *eap)
 
 		bzero(&successmsg, sizeof(successmsg));
 		mschap_auth_response(pass, passlen,
-		    ntresponse, ibuf_data(sa->sa_eap.id_buf), msp->msp_challenge,
-		    usr->usr_name, strlen(usr->usr_name), successmsg);
+		    ntresponse, ibuf_data(sa->sa_eap.id_buf),
+		    msp->msp_challenge, usr->usr_name, strlen(usr->usr_name),
+		    successmsg);
 		if ((sa->sa_eapmsk = ibuf_new(NULL, MSCHAP_MSK_SZ)) == NULL) {
 			log_debug("%s: failed to get MSK", __func__);
 			free(pass);
