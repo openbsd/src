@@ -1,7 +1,10 @@
 #! /usr/bin/perl
 
-# $OpenBSD: check-path,v 1.1 2011/05/27 12:24:45 espie Exp $
-use Test::Simple tests => 4;
+# $OpenBSD: check-path,v 1.2 2011/05/27 12:34:06 espie Exp $
+
+# unit test the matching of extra-info and @pkgpath between packing-lists.
+
+use Test::Simple tests => 10;
 use OpenBSD::PackingList;
 
 sub make_plist
@@ -15,13 +18,27 @@ sub make_plist
 }
 
 
-my $p1 = make_plist('path1');
-my $p1bis = make_plist('path1');
-my $p2 = make_plist('path2');
-my $p2bis = make_plist('path2', 'path1');
-my $p3 = make_plist('path3', 'path1');
+my $p1 = make_plist('p1');
+my $p1bis = make_plist('p1');
+my $p2 = make_plist('p2');
+my $p2bis = make_plist('p2', 'p1');
+my $p3 = make_plist('p3', 'p1');
+my $p4 = make_plist('p4,flavor');
+my $p4bis = make_plist('newp4', 'p4,flavor');
+my $p4ter = make_plist('newp4', 'p4,otherflavor');
+my $p5 = make_plist('p5,f1,f2');
+my $p5bis = make_plist('newp5', 'p5,f1,f2');
+my $p5ter = make_plist('newp5', 'p5,f2');
+my $p5four = make_plist('newp5', 'p5,f2,f1');
+my $p5five = make_plist('newp5', 'other,f1,f2');
 
 ok($p1->match_pkgpath($p1bis), "same path matches");
 ok(!$p1->match_pkgpath($p2), "different paths don't");
 ok($p1->match_pkgpath($p2bis), "look into the list too");
 ok(!$p2bis->match_pkgpath($p3), "extra elements can't match by themselves");
+ok($p4->match_pkgpath($p4bis), "paths with same flavors do match");
+ok(!$p4->match_pkgpath($p4ter), "paths with distinct flavor do not match");
+ok($p5->match_pkgpath($p5bis), "same flavor combo does match");
+ok(!$p5->match_pkgpath($p5ter), "different flavor combo does not match");
+ok($p5->match_pkgpath($p5four), "reordered flavors should match");
+ok(!$p5->match_pkgpath($p5five), "same flavor but distinct dir does not match");
