@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.13 2011/05/25 02:22:20 kevlo Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.14 2011/05/27 07:45:44 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1443,7 +1443,7 @@ alc_watchdog(struct ifnet *ifp)
 	alc_init(ifp);
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
-		 alc_start(ifp);
+		alc_start(ifp);
 }
 
 int
@@ -2160,8 +2160,8 @@ alc_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, ALC_SMB_BASE_ADDR_LO, ALC_ADDR_LO(paddr));
 
 	if (sc->sc_product == PCI_PRODUCT_ATTANSIC_L2C_1) {
-		/* Reconfigure SRAM - Vendor magic. */ 
-		CSR_WRITE_4(sc, ALC_SRAM_RX_FIFO_LEN, 0x000002A0); 
+		/* Reconfigure SRAM - Vendor magic. */
+		CSR_WRITE_4(sc, ALC_SRAM_RX_FIFO_LEN, 0x000002A0);
 		CSR_WRITE_4(sc, ALC_SRAM_TX_FIFO_LEN, 0x00000100);
 		CSR_WRITE_4(sc, ALC_SRAM_RX_FIFO_ADDR, 0x029F0000);
 		CSR_WRITE_4(sc, ALC_SRAM_RD0_ADDR, 0x02BF02A0);
