@@ -1,6 +1,7 @@
-# $OpenBSD: Makefile,v 1.42 2011/05/21 21:59:40 landry Exp $
+# $OpenBSD: Makefile,v 1.43 2011/05/27 12:24:45 espie Exp $
 
-REGRESS_TARGETS=pkgnames signatures depends-check longnames update-check1 \
+REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames \
+	update-check1 \
 	collision-check3 collision-check5 partial-update-test conflict-update \
 	merge-update split-update big-merge family-circus missing \
 	lib-report1 lib-report2 lib-report3 loop1 \
@@ -27,6 +28,9 @@ DEST$i ?= ${D$i}/usr/local
 # current maxes: D29, SRC20, plist17
 pkgnames:
 	perl ${.CURDIR}/check-name
+
+pkgpaths:
+	perl ${.CURDIR}/check-path
 
 signatures: 
 	-rm -f signatures.out
