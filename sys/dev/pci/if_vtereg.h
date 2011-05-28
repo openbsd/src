@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vtereg.h,v 1.1 2011/01/15 04:35:34 kevlo Exp $	*/
+/*	$OpenBSD: if_vtereg.h,v 1.2 2011/05/28 08:31:51 kevlo Exp $	*/
 /*-
  * Copyright (c) 2010, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -43,7 +43,7 @@
 #define	MCR0_ACCPT_LONG_PKT		0x0008
 #define	MCR0_ACCPT_DRIBBLE		0x0010
 #define	MCR0_PROMISC			0x0020
-#define	MCR0_BROADCAST			0x0040
+#define	MCR0_BROADCAST_DIS		0x0040
 #define	MCR0_RX_EARLY_INTR		0x0080
 #define	MCR0_MULTICAST			0x0100
 #define	MCR0_FC_ENB			0x0200

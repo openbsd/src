@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vte.c,v 1.4 2011/03/14 03:01:19 kevlo Exp $	*/
+/*	$OpenBSD: if_vte.c,v 1.5 2011/05/28 08:31:51 kevlo Exp $	*/
 /*-
  * Copyright (c) 2010, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1457,8 +1457,7 @@ vte_iff(struct vte_softc *sc)
 	}
 
 	mcr = CSR_READ_2(sc, VTE_MCR0);
-	/* Always accept broadcast frames so MCR0_BROADCAST bit must be 0 */
-	mcr &= ~(MCR0_PROMISC | MCR0_BROADCAST | MCR0_MULTICAST);
+	mcr &= ~(MCR0_PROMISC | MCR0_BROADCAST_DIS | MCR0_MULTICAST);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
