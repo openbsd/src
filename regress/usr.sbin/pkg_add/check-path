@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 
-# $OpenBSD: check-path,v 1.3 2011/05/27 12:50:26 espie Exp $
+# $OpenBSD: check-path,v 1.4 2011/05/28 13:30:40 espie Exp $
 
 # unit test the matching of extra-info and @pkgpath between packing-lists.
 
@@ -34,38 +34,38 @@ sub symetry
 	return 1;
 }
 
-my $p1 = make_plist('p1');
-my $p1bis = make_plist('p1');
-my $p2 = make_plist('p2');
-my $p2bis = make_plist('p2', 'p1');
-my $p3 = make_plist('p3', 'p1');
-my $p4 = make_plist('p4,flavor');
-my $p4bis = make_plist('newp4', 'p4,flavor');
-my $p4ter = make_plist('newp4', 'p4,otherflavor');
-my $p5 = make_plist('p5,f1,f2');
-my $p5bis = make_plist('newp5', 'p5,f1,f2');
-my $p5ter = make_plist('newp5', 'p5,f2');
-my $p5four = make_plist('newp5', 'p5,f2,f1');
-my $p5five = make_plist('newp5', 'other,f1,f2');
-my $p5six = make_plist('newp5', 'p5,f1[,f2]');
-my $p5seven = make_plist('p5,f1');
-my $p5eight = make_plist('p5,f1,f3');
-my $p5nine = make_plist('p5,f1,f2,f3');
+my @p = (
+	make_plist('p1'), 			# 0
+	make_plist('p1'), 			# 1
+	make_plist('p2'), 			# 2
+	make_plist('p2', 'p1'),			# 3
+	make_plist('p3', 'p1'),			# 4 
+	make_plist('p4,flavor'),		# 5
+	make_plist('newp4', 'p4,flavor'),	# 6
+	make_plist('newp4', 'p4,otherflavor'),	# 7
+	make_plist('p5,f1,f2'),			# 8
+	make_plist('newp5', 'p5,f1,f2'),	# 9
+	make_plist('newp5', 'p5,f2'),		# 10
+	make_plist('newp5', 'p5,f2,f1'),	# 11
+	make_plist('newp5', 'other,f1,f2'),	# 12
+	make_plist('newp5', 'p5,f1[,f2]'),	# 13
+	make_plist('p5,f1'),			# 14
+	make_plist('p5,f1,f3'),			# 15
+	make_plist('p5,f1,f2,f3'),		# 16
+);
 
-ok(symetry($p1, $p1bis, $p2, $p2bis, $p3, $p4, $p4bis, $p4ter, $p5, $p5bis, 
-	$p5ter, $p5four, $p5five, $p5six, $p5seven, $p5eight, $p5nine),
-    "match_pkgpath is symetric");
-ok($p1->match_pkgpath($p1bis), "same path matches");
-ok(!$p1->match_pkgpath($p2), "different paths don't");
-ok($p1->match_pkgpath($p2bis), "look into the list too");
-ok(!$p2bis->match_pkgpath($p3), "extra elements can't match by themselves");
-ok($p4->match_pkgpath($p4bis), "paths with same flavors do match");
-ok(!$p4->match_pkgpath($p4ter), "paths with distinct flavor do not match");
-ok($p5->match_pkgpath($p5bis), "same flavor combo does match");
-ok(!$p5->match_pkgpath($p5ter), "different flavor combo does not match");
-ok($p5->match_pkgpath($p5four), "reordered flavors should match");
-ok(!$p5->match_pkgpath($p5five), "same flavor but distinct dir does not match");
-ok($p5->match_pkgpath($p5six), "optional parts should match");
-ok($p5seven->match_pkgpath($p5six), "optional parts should match");
-ok(!$p5eight->match_pkgpath($p5six), "detect bad parts");
-ok(!$p5nine->match_pkgpath($p5six), "detect bad parts");
+ok(symetry(@p), "match_pkgpath is symetric");
+ok($p[0]->match_pkgpath($p[1]), "same path matches");
+ok(!$p[0]->match_pkgpath($p[2]), "different paths don't");
+ok($p[0]->match_pkgpath($p[3]), "look into the list too");
+ok(!$p[3]->match_pkgpath($p[4]), "extra elements can't match by themselves");
+ok($p[5]->match_pkgpath($p[6]), "paths with same flavors do match");
+ok(!$p[5]->match_pkgpath($p[7]), "paths with distinct flavor do not match");
+ok($p[8]->match_pkgpath($p[9]), "same flavor combo does match");
+ok(!$p[8]->match_pkgpath($p[10]), "different flavor combo does not match");
+ok($p[8]->match_pkgpath($p[11]), "reordered flavors should match");
+ok(!$p[8]->match_pkgpath($p[12]), "same flavor but distinct dir does not match");
+ok($p[8]->match_pkgpath($p[13]), "optional parts should match");
+ok($p[14]->match_pkgpath($p[13]), "optional parts should match");
+ok(!$p[15]->match_pkgpath($p[13]), "detect bad parts");
+ok(!$p[16]->match_pkgpath($p[13]), "detect bad parts");
