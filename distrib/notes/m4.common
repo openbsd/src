@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.93 2010/10/18 04:24:07 deraadt Exp $
+dnl	$OpenBSD: m4.common,v 1.94 2011/05/28 06:25:41 jmc Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -367,7 +367,7 @@ dnl XXX add a MDVLAN feature and document vlan setup
 
 	- the IPv6 settings (address, prefix length, and default router).
 	  You may enter ``rtsol'' when asked for the address for the
-	  interface to configure automatically via router sollicitation
+	  interface to configure automatically via router solicitation
 	  messages.
 
 	After all interfaces have been configured, if there have been
