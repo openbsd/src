@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.13 2011/04/05 18:01:21 henning Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.14 2011/05/28 08:28:41 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -103,7 +103,7 @@ int	age_init_rx_ring(struct age_softc *);
 void	age_init_rr_ring(struct age_softc *);
 void	age_init_cmb_block(struct age_softc *);
 void	age_init_smb_block(struct age_softc *);
-int	age_newbuf(struct age_softc *, struct age_rxdesc *, int);
+int	age_newbuf(struct age_softc *, struct age_rxdesc *);
 void	age_mac_config(struct age_softc *);
 void	age_txintr(struct age_softc *, int);
 void	age_rxeof(struct age_softc *sc, struct rx_rdesc *);
@@ -1343,7 +1343,7 @@ age_rxeof(struct age_softc *sc, struct rx_rdesc *rxrd)
 		mp = rxd->rx_m;
 		desc = rxd->rx_desc;
 		/* Add a new receive buffer to the ring. */
-		if (age_newbuf(sc, rxd, 0) != 0) {
+		if (age_newbuf(sc, rxd) != 0) {
 			ifp->if_iqdrops++;
 			/* Reuse Rx buffers. */
 			if (sc->age_cdata.age_rxhead != NULL) {
@@ -2083,7 +2083,7 @@ age_init_rx_ring(struct age_softc *sc)
 		rxd = &sc->age_cdata.age_rxdesc[i];
 		rxd->rx_m = NULL;
 		rxd->rx_desc = &rd->age_rx_ring[i];
-		if (age_newbuf(sc, rxd, 1) != 0)
+		if (age_newbuf(sc, rxd) != 0)
 			return (ENOBUFS);
 	}
 
@@ -2130,17 +2130,17 @@ age_init_smb_block(struct age_softc *sc)
 }
 
 int
-age_newbuf(struct age_softc *sc, struct age_rxdesc *rxd, int init)
+age_newbuf(struct age_softc *sc, struct age_rxdesc *rxd)
 {
 	struct rx_desc *desc;
 	struct mbuf *m;
 	bus_dmamap_t map;
 	int error;
 
-	MGETHDR(m, init ? M_WAITOK : M_DONTWAIT, MT_DATA);
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (ENOBUFS);
-	MCLGET(m, init ? M_WAITOK : M_DONTWAIT);
+	MCLGET(m, M_DONTWAIT);
 	if (!(m->m_flags & M_EXT)) {
 		 m_freem(m);
 		 return (ENOBUFS);
@@ -2153,17 +2153,8 @@ age_newbuf(struct age_softc *sc, struct age_rxdesc *rxd, int init)
 	    sc->age_cdata.age_rx_sparemap, m, BUS_DMA_NOWAIT);
 
 	if (error != 0) {
-		if (!error) {
-			bus_dmamap_unload(sc->sc_dmat,
-			    sc->age_cdata.age_rx_sparemap);
-			error = EFBIG;
-			printf("%s: too many segments?!\n", 
-			    sc->sc_dev.dv_xname);
-		}
 		m_freem(m);
-
-		if (init)
-			printf("%s: can't load RX mbuf\n", sc->sc_dev.dv_xname);
+		printf("%s: can't load RX mbuf\n", sc->sc_dev.dv_xname);
 		return (error);
 	}
 
