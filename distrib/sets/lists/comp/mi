@@ -5998,6 +5998,7 @@
 ./usr/share/man/cat3/wclrtoeol.0
 ./usr/share/man/cat3/wcolor_set.0
 ./usr/share/man/cat3/wcrtomb.0
+./usr/share/man/cat3/wcscasecmp.0
 ./usr/share/man/cat3/wcscat.0
 ./usr/share/man/cat3/wcschr.0
 ./usr/share/man/cat3/wcscmp.0
@@ -6006,6 +6007,7 @@
 ./usr/share/man/cat3/wcslcat.0
 ./usr/share/man/cat3/wcslcpy.0
 ./usr/share/man/cat3/wcslen.0
+./usr/share/man/cat3/wcsncasecmp.0
 ./usr/share/man/cat3/wcsncat.0
 ./usr/share/man/cat3/wcsncmp.0
 ./usr/share/man/cat3/wcsncpy.0

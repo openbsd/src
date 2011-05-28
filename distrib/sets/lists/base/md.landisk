@@ -51,7 +51,7 @@
 ./usr/lib/apache/modules/mod_usertrack.so
 ./usr/lib/apache/modules/mod_vhost_alias.so
 ./usr/lib/libasn1.so.18.0
-./usr/lib/libc.so.58.2
+./usr/lib/libc.so.58.3
 ./usr/lib/libcom_err.so.18.0
 ./usr/lib/libcrypto.so.19.0
 ./usr/lib/libcurses.so.12.0
