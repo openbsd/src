@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs.c,v 1.20 2011/03/13 00:13:53 deraadt Exp $	*/
+/*	$OpenBSD: ufs.c,v 1.21 2011/05/28 19:50:52 miod Exp $	*/
 /*	$NetBSD: ufs.c,v 1.16 1996/09/30 16:01:22 ws Exp $	*/
 
 /*-
@@ -98,6 +98,7 @@ static int	read_inode(ino_t, struct open_file *);
 static int	block_map(struct open_file *, daddr32_t, daddr32_t *);
 static int	buf_read_file(struct open_file *, char **, size_t *);
 static int	search_directory(char *, struct open_file *, ino_t *);
+static int	ufs_close_internal(struct file *);
 #ifdef COMPAT_UFS
 static void	ffs_oldfscompat(struct fs *);
 #endif
@@ -526,10 +527,9 @@ ufs_open(char *path, struct open_file *f)
 out:
 	if (buf)
 		free(buf, fs->fs_bsize);
-	if (rc) {
-		free(fp->f_fs, SBSIZE);
-		free(fp, sizeof(struct file));
-	}
+	if (rc)
+		(void)ufs_close_internal(fp);
+
 	return (rc);
 }
 
@@ -537,11 +537,18 @@ int
 ufs_close(struct open_file *f)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
-	int level;
 
 	f->f_fsdata = (void *)0;
 	if (fp == (struct file *)0)
 		return (0);
+
+	return (ufs_close_internal(fp));
+}
+
+static int
+ufs_close_internal(struct file *fp)
+{
+	int level;
 
 	for (level = 0; level < NIADDR; level++) {
 		if (fp->f_blk[level])
