@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wmemchr.3,v 1.4 2010/09/10 18:38:20 jmc Exp $
+.\"	$OpenBSD: wmemchr.3,v 1.5 2011/05/28 15:16:46 espie Exp $
 .\"
 .\"	$NetBSD: wmemchr.3,v 1.9 2003/09/08 17:54:33 wiz Exp $
 .\"
@@ -35,7 +35,7 @@
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: September 10 2010 $
+.Dd $Mdocdate: May 28 2011 $
 .Dt WMEMCHR 3
 .Os
 .Sh NAME
@@ -47,6 +47,7 @@
 .Nm wcscat ,
 .Nm wcschr ,
 .Nm wcscmp ,
+.Nm wcscasecmp ,
 .Nm wcscpy ,
 .Nm wcscspn ,
 .Nm wcslcat ,
@@ -54,6 +55,7 @@
 .Nm wcslen ,
 .Nm wcsncat ,
 .Nm wcsncmp ,
+.Nm wcsncasecmp ,
 .Nm wcsncpy ,
 .Nm wcspbrk ,
 .Nm wcsrchr ,
@@ -78,6 +80,8 @@
 .Fn wcschr "const wchar_t *s" "wchar_t c"
 .Ft int
 .Fn wcscmp "const wchar_t *s1" "const wchar_t *s2"
+.Ft int
+.Fn wcscasecmp "const wchar_t *s1" "const wchar_t *s2"
 .Ft wchar_t *
 .Fn wcscpy "wchar_t * restrict s1" "const wchar_t * restrict s2"
 .Ft size_t
@@ -92,6 +96,8 @@
 .Fn wcsncat "wchar_t * restrict s1" "const wchar_t * restrict s2" "size_t n"
 .Ft int
 .Fn wcsncmp "const wchar_t *s1" "const wchar_t * s2" "size_t n"
+.Ft int
+.Fn wcsncasecmp "const wchar_t *s1" "const wchar_t * s2" "size_t n"
 .Ft wchar_t *
 .Fn wcsncpy "wchar_t * restrict s1" "const wchar_t * restrict s2" "size_t n"
 .Ft wchar_t *
@@ -117,6 +123,7 @@ counterpart, such as
 .Xr strcat 3 ,
 .Xr strchr 3 ,
 .Xr strcmp 3 ,
+.Xr strcasecmp 3 ,
 .Xr strcpy 3 ,
 .Xr strcspn 3 ,
 .Xr strlcat 3 ,
@@ -124,6 +131,7 @@ counterpart, such as
 .Xr strlen 3 ,
 .Xr strncat 3 ,
 .Xr strncmp 3 ,
+.Xr strncasecmp 3 ,
 .Xr strncpy 3 ,
 .Xr strpbrk 3 ,
 .Xr strrchr 3 ,
@@ -134,7 +142,13 @@ These functions conform to
 .St -isoC-99
 and were first introduced in
 .St -isoC-amd1 ,
-with the exception of
+except for
+.Fn wcscasecmp
+and
+.Fn wcsncasecmp ,
+which conform to
+.St -p1003.1-2008 ,
+and for
 .Fn wcslcat
 and
 .Fn wcslcpy ,

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.24 2011/04/04 18:16:24 stsp Exp $
+#	$OpenBSD: Makefile.inc,v 1.25 2011/05/28 15:16:46 espie Exp $
 
 # string sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/string ${LIBCSRCDIR}/string
@@ -10,7 +10,7 @@ SRCS+=	bm.c memccpy.c memrchr.c strcasecmp.c strcasestr.c strcoll.c strdup.c \
 	wcslen.c wcsncat.c wcsncmp.c wcsncpy.c wcspbrk.c wcsrchr.c wcsspn.c \
 	wcsstr.c wcstok.c wcswcs.c wcswidth.c wmemchr.c wmemcmp.c wmemcpy.c \
 	wmemmove.c wmemset.c \
-	timingsafe_bcmp.c
+	timingsafe_bcmp.c wcscasecmp.c
 
 # machine-dependent net sources
 # m-d Makefile.inc must include sources for:
@@ -167,6 +167,7 @@ MLINKS+=wmemchr.3 wmemset.3
 MLINKS+=wmemchr.3 wcscat.3
 MLINKS+=wmemchr.3 wcschr.3
 MLINKS+=wmemchr.3 wcscmp.3
+MLINKS+=wmemchr.3 wcscasecmp.3
 MLINKS+=wmemchr.3 wcscpy.3
 MLINKS+=wmemchr.3 wcscspn.3
 MLINKS+=wmemchr.3 wcslcat.3
@@ -174,6 +175,7 @@ MLINKS+=wmemchr.3 wcslcpy.3
 MLINKS+=wmemchr.3 wcslen.3
 MLINKS+=wmemchr.3 wcsncat.3
 MLINKS+=wmemchr.3 wcsncmp.3
+MLINKS+=wmemchr.3 wcsncasecmp.3
 MLINKS+=wmemchr.3 wcsncpy.3
 MLINKS+=wmemchr.3 wcspbrk.3
 MLINKS+=wmemchr.3 wcsrchr.3
