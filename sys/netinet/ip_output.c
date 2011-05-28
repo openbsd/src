@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.220 2011/05/02 13:48:38 mikeb Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.221 2011/05/28 12:51:40 weerd Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -160,6 +160,15 @@ ip_output(struct mbuf *m0, ...)
 		ipstat.ips_localout++;
 	} else {
 		hlen = ip->ip_hl << 2;
+	}
+
+	/*
+	 * We should not send traffic to 0/8 say both Stevens and RFCs
+	 * 5735 section 3 and 1122 sections 3.2.1.3 and 3.3.6.
+	 */
+	if ((ntohl(ip->ip_dst.s_addr) >> IN_CLASSA_NSHIFT) == 0) {
+		error = ENETUNREACH;
+		goto bad;
 	}
 
 	/*
