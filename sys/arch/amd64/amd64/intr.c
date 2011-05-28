@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.27 2011/04/16 00:40:56 deraadt Exp $	*/
+/*	$OpenBSD: intr.c,v 1.28 2011/05/28 21:10:40 kettenis Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -171,10 +171,6 @@ intr_calculatemasks(struct cpu_info *ci)
 		ci->ci_iunmask[level] = ~ci->ci_imask[level];
 }
 
-
-/*
- * XXX if defined(MULTIPROCESSOR) && .. ?
- */
 #if NIOAPIC > 0
 int
 intr_find_mpmapping(int bus, int pin, int *handle)
