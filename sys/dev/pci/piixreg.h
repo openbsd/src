@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixreg.h,v 1.3 2006/01/03 22:39:03 grange Exp $	*/
+/*	$OpenBSD: piixreg.h,v 1.4 2011/05/28 14:56:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -29,6 +29,7 @@
 
 /* PCI configuration registers */
 #define PIIX_SMB_BASE	0x90		/* SMBus base address */
+#define PIIX_SMB_BASE_MASK	0xfffe
 #define PIIX_SMB_HOSTC	0xd0		/* SMBus host configuration */
 #define PIIX_SMB_HOSTC_HSTEN	(1 << 16)	/* enable host controller */
 #define PIIX_SMB_HOSTC_SMI	(0 << 17)	/* SMI */
@@ -63,5 +64,17 @@
 #define PIIX_SMB_SC_ALERTEN	(1 << 3)	/* enable SMBALERT# */
 
 #define PIIX_SMB_SIZE	0x10		/* SMBus I/O space size */
+
+/* AMD SB800 configuration registers */
+#define SB800_PMREG_BASE	0xcd6
+#define SB800_PMREG_SIZE	2	/* index/data pair */
+#define SB800_PMREG_SMB0EN	0x2c	/* 16-bit register */
+#define SB800_SMB0EN_EN		0x0001
+#define SB800_SMB0EN_BASE_MASK	0xffe0
+
+#define SB800_SMB_HOSTC	0x10		/* I2C bus configuration */
+#define SB800_SMB_HOSTC_SMI	(1 << 0)	/* SMI */
+
+#define SB800_SMB_SIZE	0x14		/* SMBus I/O space size */
 
 #endif	/* !_DEV_PCI_PIIXREG_H_ */

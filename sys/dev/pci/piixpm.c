@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpm.c,v 1.35 2011/04/09 04:33:40 deraadt Exp $	*/
+/*	$OpenBSD: piixpm.c,v 1.36 2011/05/28 14:56:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -114,28 +114,80 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct piixpm_softc *sc = (struct piixpm_softc *)self;
 	struct pci_attach_args *pa = aux;
-	struct i2cbus_attach_args iba;
-	pcireg_t base, conf;
+	bus_space_handle_t ioh;
+	u_int16_t smb0en;
+	bus_addr_t base;
+	pcireg_t conf;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
+	struct i2cbus_attach_args iba;
 
-	/* Read configuration */
-	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_HOSTC);
-	DPRINTF((": conf 0x%08x", conf));
-
-	if ((conf & PIIX_SMB_HOSTC_HSTEN) == 0) {
-		printf(": SMBus disabled\n");
-		return;
-	}
-
-	/* Map I/O space */
 	sc->sc_iot = pa->pa_iot;
-	base = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_BASE) & 0xffff;
-	if (PCI_MAPREG_IO_ADDR(base) == 0 ||
-	    bus_space_map(sc->sc_iot, PCI_MAPREG_IO_ADDR(base),
-	    PIIX_SMB_SIZE, 0, &sc->sc_ioh)) {
-		printf(": can't map i/o space\n");
-		return;
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ATI &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_SBX00_SMB &&
+	    PCI_REVISION(pa->pa_class) >= 0x40) {
+		/* 
+		 * On the AMD SB800, the SMBus I/O registers are well
+		 * hidden.  We need to look at the "SMBus0En" Power
+		 * Management register to find out where they live.
+		 * We use indirect IO access through the index/data
+		 * pair at 0xcd6/0xcd7 to access "SMBus0En".  Since
+		 * the index/data pair may be needed by other drivers,
+		 * we only map them for the duration that we actually
+		 * need them.
+		 */
+		if (bus_space_map(sc->sc_iot, SB800_PMREG_BASE,
+		    SB800_PMREG_SIZE, 0, &ioh) != 0) {
+			printf(": can't map i/o space\n");
+			return;
+		}
+
+		/* Read "SmBus0En" */
+		bus_space_write_1(sc->sc_iot, ioh, 0, SB800_PMREG_SMB0EN);
+		smb0en = bus_space_read_1(sc->sc_iot, ioh, 1);
+		bus_space_write_1(sc->sc_iot, ioh, 0, SB800_PMREG_SMB0EN + 1);
+		smb0en |= (bus_space_read_1(sc->sc_iot, ioh, 1) << 8);
+
+		bus_space_unmap(sc->sc_iot, ioh, SB800_PMREG_SIZE);
+
+		if ((smb0en & SB800_SMB0EN_EN) == 0) {
+			printf(": SMBus disabled\n");
+			return;
+		}
+
+		/* Map I/O space */
+		base = smb0en & SB800_SMB0EN_BASE_MASK;
+		if (base == 0 || bus_space_map(sc->sc_iot, base,
+		    SB800_SMB_SIZE, 0, &sc->sc_ioh)) {
+			printf(": can't map i/o space");
+			return;
+		}
+
+		/* Read configuration */
+		conf = bus_space_read_1(sc->sc_iot, sc->sc_ioh, SB800_SMB_HOSTC);
+		if (conf & SB800_SMB_HOSTC_SMI)
+			conf = PIIX_SMB_HOSTC_SMI;
+		else
+			conf = PIIX_SMB_HOSTC_IRQ;
+	} else {
+		/* Read configuration */
+		conf = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_HOSTC);
+		DPRINTF((": conf 0x%08x", conf));
+
+		if ((conf & PIIX_SMB_HOSTC_HSTEN) == 0) {
+			printf(": SMBus disabled\n");
+			return;
+		}
+
+		/* Map I/O space */
+		base = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_BASE) &
+		    PIIX_SMB_BASE_MASK;
+		if (base == 0 || bus_space_map(sc->sc_iot, base,
+		    PIIX_SMB_SIZE, 0, &sc->sc_ioh)) {
+			printf(": can't map i/o space\n");
+			return;
+		}
 	}
 
 	sc->sc_poll = 1;
