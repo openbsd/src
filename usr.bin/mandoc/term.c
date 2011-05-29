@@ -1,6 +1,6 @@
-/*	$Id: term.c,v 1.58 2011/04/24 16:22:02 schwarze Exp $ */
+/*	$Id: term.c,v 1.59 2011/05/29 21:22:18 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -29,13 +29,10 @@
 #include "term.h"
 #include "main.h"
 
-static	void		  spec(struct termp *, enum roffdeco,
-				const char *, size_t);
-static	void		  res(struct termp *, const char *, size_t);
-static	void		  bufferc(struct termp *, char);
-static	void		  adjbuf(struct termp *p, size_t);
-static	void		  encode(struct termp *, const char *, size_t);
-
+static	void		 adjbuf(struct termp *p, int);
+static	void		 bufferc(struct termp *, char);
+static	void		 encode(struct termp *, const char *, size_t);
+static	void		 encode1(struct termp *, int);
 
 void
 term_free(struct termp *p)
@@ -44,7 +41,7 @@ term_free(struct termp *p)
 	if (p->buf)
 		free(p->buf);
 	if (p->symtab)
-		chars_free(p->symtab);
+		mchars_free(p->symtab);
 
 	free(p);
 }
@@ -68,18 +65,6 @@ term_end(struct termp *p)
 
 	(*p->end)(p);
 }
-
-
-struct termp *
-term_alloc(enum termenc enc)
-{
-	struct termp	*p;
-
-	p = mandoc_calloc(1, sizeof(struct termp));
-	p->enc = enc;
-	return(p);
-}
-
 
 /*
  * Flush a line of text.  A "line" is loosely defined as being something
@@ -152,12 +137,12 @@ term_flushln(struct termp *p)
 	vis = vend = 0;
 	i = 0;
 
-	while (i < (int)p->col) {
+	while (i < p->col) {
 		/*
 		 * Handle literal tab characters: collapse all
 		 * subsequent tabs into a single huge set of spaces.
 		 */
-		while (i < (int)p->col && '\t' == p->buf[i]) {
+		while (i < p->col && '\t' == p->buf[i]) {
 			vend = (vis / p->tabwidth + 1) * p->tabwidth;
 			vbl += vend - vis;
 			vis = vend;
@@ -171,7 +156,7 @@ term_flushln(struct termp *p)
 		 * space is printed according to regular spacing rules).
 		 */
 
-		for (j = i, jhy = 0; j < (int)p->col; j++) {
+		for (j = i, jhy = 0; j < p->col; j++) {
 			if ((j && ' ' == p->buf[j]) || '\t' == p->buf[j])
 				break;
 
@@ -214,7 +199,7 @@ term_flushln(struct termp *p)
 		}
 
 		/* Write out the [remaining] word. */
-		for ( ; i < (int)p->col; i++) {
+		for ( ; i < p->col; i++) {
 			if (vend > bp && jhy > 0 && i > jhy)
 				break;
 			if ('\t' == p->buf[i])
@@ -341,44 +326,6 @@ term_vspace(struct termp *p)
 	(*p->endline)(p);
 }
 
-
-static void
-numbered(struct termp *p, const char *word, size_t len)
-{
-	const char	*rhs;
-
-	rhs = chars_num2char(word, len);
-	if (rhs) 
-		encode(p, rhs, 1);
-}
-
-
-static void
-spec(struct termp *p, enum roffdeco d, const char *word, size_t len)
-{
-	const char	*rhs;
-	size_t		 sz;
-
-	rhs = chars_spec2str(p->symtab, word, len, &sz);
-	if (rhs) 
-		encode(p, rhs, sz);
-	else if (DECO_SSPECIAL == d)
-		encode(p, word, len);
-}
-
-
-static void
-res(struct termp *p, const char *word, size_t len)
-{
-	const char	*rhs;
-	size_t		 sz;
-
-	rhs = chars_res2str(p->symtab, word, len, &sz);
-	if (rhs)
-		encode(p, rhs, sz);
-}
-
-
 void
 term_fontlast(struct termp *p)
 {
@@ -443,7 +390,6 @@ term_fontpop(struct termp *p)
 	p->fonti--;
 }
 
-
 /*
  * Handle pwords, partial words, which may be either a single word or a
  * phrase that cannot be broken down (such as a literal string).  This
@@ -452,9 +398,11 @@ term_fontpop(struct termp *p)
 void
 term_word(struct termp *p, const char *word)
 {
-	const char	*seq;
+	const char	*seq, *cp;
+	char		 c;
+	int		 sz, uc;
 	size_t		 ssz;
-	enum roffdeco	 deco;
+	enum mandoc_esc	 esc;
 
 	if ( ! (TERMP_NOSPACE & p->flags)) {
 		if ( ! (TERMP_KEEP & p->flags)) {
@@ -474,7 +422,7 @@ term_word(struct termp *p, const char *word)
 
 	p->flags &= ~(TERMP_SENTENCE | TERMP_IGNDELIM);
 
-	while (*word) {
+	while ('\0' != *word) {
 		if ((ssz = strcspn(word, "\\")) > 0)
 			encode(p, word, ssz);
 
@@ -482,45 +430,71 @@ term_word(struct termp *p, const char *word)
 		if ('\\' != *word)
 			continue;
 
-		seq = ++word;
-		word += a2roffdeco(&deco, &seq, &ssz);
+		word++;
+		esc = mandoc_escape(&word, &seq, &sz);
+		if (ESCAPE_ERROR == esc)
+			break;
 
-		switch (deco) {
-		case (DECO_NUMBERED):
-			numbered(p, seq, ssz);
+		if (TERMENC_ASCII != p->enc)
+			switch (esc) {
+			case (ESCAPE_UNICODE):
+				uc = mchars_num2uc(seq + 1, sz - 1);
+				if ('\0' == uc)
+					break;
+				encode1(p, uc);
+				continue;
+			case (ESCAPE_SPECIAL):
+				uc = mchars_spec2cp(p->symtab, seq, sz);
+				if (uc <= 0)
+					break;
+				encode1(p, uc);
+				continue;
+			default:
+				break;
+			}
+
+		switch (esc) {
+		case (ESCAPE_UNICODE):
+			encode1(p, '?');
 			break;
-		case (DECO_RESERVED):
-			res(p, seq, ssz);
+		case (ESCAPE_NUMBERED):
+			c = mchars_num2char(seq, sz);
+			if ('\0' != c)
+				encode(p, &c, 1);
 			break;
-		case (DECO_SPECIAL):
-			/* FALLTHROUGH */
-		case (DECO_SSPECIAL):
-			spec(p, deco, seq, ssz);
+		case (ESCAPE_SPECIAL):
+			cp = mchars_spec2str(p->symtab, seq, sz, &ssz);
+			if (NULL != cp) 
+				encode(p, cp, ssz);
+			else if (1 == ssz)
+				encode(p, seq, sz);
 			break;
-		case (DECO_BOLD):
+		case (ESCAPE_FONTBOLD):
 			term_fontrepl(p, TERMFONT_BOLD);
 			break;
-		case (DECO_ITALIC):
+		case (ESCAPE_FONTITALIC):
 			term_fontrepl(p, TERMFONT_UNDER);
 			break;
-		case (DECO_ROMAN):
+		case (ESCAPE_FONT):
+			/* FALLTHROUGH */
+		case (ESCAPE_FONTROMAN):
 			term_fontrepl(p, TERMFONT_NONE);
 			break;
-		case (DECO_PREVIOUS):
+		case (ESCAPE_FONTPREV):
 			term_fontlast(p);
+			break;
+		case (ESCAPE_NOSPACE):
+			if ('\0' == *word)
+				p->flags |= TERMP_NOSPACE;
 			break;
 		default:
 			break;
 		}
-
-		if (DECO_NOSPACE == deco && '\0' == *word)
-			p->flags |= TERMP_NOSPACE;
 	}
 }
 
-
 static void
-adjbuf(struct termp *p, size_t sz)
+adjbuf(struct termp *p, int sz)
 {
 
 	if (0 == p->maxcols)
@@ -528,9 +502,9 @@ adjbuf(struct termp *p, size_t sz)
 	while (sz >= p->maxcols)
 		p->maxcols <<= 2;
 
-	p->buf = mandoc_realloc(p->buf, p->maxcols);
+	p->buf = mandoc_realloc
+		(p->buf, sizeof(int) * (size_t)p->maxcols);
 }
-
 
 static void
 bufferc(struct termp *p, char c)
@@ -539,15 +513,44 @@ bufferc(struct termp *p, char c)
 	if (p->col + 1 >= p->maxcols)
 		adjbuf(p, p->col + 1);
 
-	p->buf[(int)p->col++] = c;
+	p->buf[p->col++] = c;
 }
 
+/*
+ * See encode().
+ * Do this for a single (probably unicode) value.
+ * Does not check for non-decorated glyphs.
+ */
+static void
+encode1(struct termp *p, int c)
+{
+	enum termfont	  f;
+
+	if (p->col + 4 >= p->maxcols)
+		adjbuf(p, p->col + 4);
+
+	f = term_fonttop(p);
+
+	if (TERMFONT_NONE == f) {
+		p->buf[p->col++] = c;
+		return;
+	} else if (TERMFONT_UNDER == f) {
+		p->buf[p->col++] = '_';
+	} else
+		p->buf[p->col++] = c;
+
+	p->buf[p->col++] = 8;
+	p->buf[p->col++] = c;
+}
 
 static void
 encode(struct termp *p, const char *word, size_t sz)
 {
 	enum termfont	  f;
-	int		  i;
+	int		  i, len;
+
+	/* LINTED */
+	len = sz;
 
 	/*
 	 * Encode and buffer a string of characters.  If the current
@@ -556,34 +559,33 @@ encode(struct termp *p, const char *word, size_t sz)
 	 */
 
 	if (TERMFONT_NONE == (f = term_fonttop(p))) {
-		if (p->col + sz >= p->maxcols) 
-			adjbuf(p, p->col + sz);
-		memcpy(&p->buf[(int)p->col], word, sz);
-		p->col += sz;
+		if (p->col + len >= p->maxcols) 
+			adjbuf(p, p->col + len);
+		for (i = 0; i < len; i++)
+			p->buf[p->col++] = word[i];
 		return;
 	}
 
 	/* Pre-buffer, assuming worst-case. */
 
-	if (p->col + 1 + (sz * 3) >= p->maxcols)
-		adjbuf(p, p->col + 1 + (sz * 3));
+	if (p->col + 1 + (len * 3) >= p->maxcols)
+		adjbuf(p, p->col + 1 + (len * 3));
 
-	for (i = 0; i < (int)sz; i++) {
-		if ( ! isgraph((u_char)word[i])) {
-			p->buf[(int)p->col++] = word[i];
+	for (i = 0; i < len; i++) {
+		if ( ! isgraph((unsigned char)word[i])) {
+			p->buf[p->col++] = word[i];
 			continue;
 		}
 
 		if (TERMFONT_UNDER == f)
-			p->buf[(int)p->col++] = '_';
+			p->buf[p->col++] = '_';
 		else
-			p->buf[(int)p->col++] = word[i];
+			p->buf[p->col++] = word[i];
 
-		p->buf[(int)p->col++] = 8;
-		p->buf[(int)p->col++] = word[i];
+		p->buf[p->col++] = 8;
+		p->buf[p->col++] = word[i];
 	}
 }
-
 
 size_t
 term_len(const struct termp *p, size_t sz)
@@ -596,58 +598,98 @@ term_len(const struct termp *p, size_t sz)
 size_t
 term_strlen(const struct termp *p, const char *cp)
 {
-	size_t		 sz, ssz, rsz, i;
-	enum roffdeco	 d;
+	size_t		 sz, rsz, i;
+	int		 ssz, c;
 	const char	*seq, *rhs;
+	enum mandoc_esc	 esc;
+	static const char rej[] = { '\\', ASCII_HYPH, ASCII_NBRSP, '\0' };
 
-	for (sz = 0; '\0' != *cp; )
-		/*
-		 * Account for escaped sequences within string length
-		 * calculations.  This follows the logic in term_word()
-		 * as we must calculate the width of produced strings.
-		 */
-		if ('\\' == *cp) {
-			seq = ++cp;
-			cp += a2roffdeco(&d, &seq, &ssz);
+	/*
+	 * Account for escaped sequences within string length
+	 * calculations.  This follows the logic in term_word() as we
+	 * must calculate the width of produced strings.
+	 */
 
-			switch (d) {
-			case (DECO_RESERVED):
-				rhs = chars_res2str
-					(p->symtab, seq, ssz, &rsz);
+	sz = 0;
+	while ('\0' != *cp) {
+		rsz = strcspn(cp, rej);
+		for (i = 0; i < rsz; i++)
+			sz += (*p->width)(p, *cp++);
+
+		c = 0;
+		switch (*cp) {
+		case ('\\'):
+			cp++;
+			esc = mandoc_escape(&cp, &seq, &ssz);
+			if (ESCAPE_ERROR == esc)
+				return(sz);
+
+			if (TERMENC_ASCII != p->enc)
+				switch (esc) {
+				case (ESCAPE_UNICODE):
+					c = mchars_num2uc
+						(seq + 1, ssz - 1);
+					if ('\0' == c)
+						break;
+					sz += (*p->width)(p, c);
+					continue;
+				case (ESCAPE_SPECIAL):
+					c = mchars_spec2cp
+						(p->symtab, seq, ssz);
+					if (c <= 0)
+						break;
+					sz += (*p->width)(p, c);
+					continue;
+				default:
+					break;
+				}
+
+			rhs = NULL;
+
+			switch (esc) {
+			case (ESCAPE_UNICODE):
+				sz += (*p->width)(p, '?');
 				break;
-			case (DECO_SPECIAL):
-				/* FALLTHROUGH */
-			case (DECO_SSPECIAL):
-				rhs = chars_spec2str
+			case (ESCAPE_NUMBERED):
+				c = mchars_num2char(seq, ssz);
+				if ('\0' != c)
+					sz += (*p->width)(p, c);
+				break;
+			case (ESCAPE_SPECIAL):
+				rhs = mchars_spec2str
 					(p->symtab, seq, ssz, &rsz);
 
-				/* Allow for one-char escapes. */
-				if (DECO_SSPECIAL != d || rhs)
+				if (ssz != 1 || rhs)
 					break;
 
 				rhs = seq;
 				rsz = ssz;
 				break;
 			default:
-				rhs = NULL;
 				break;
 			}
 
-			if (rhs)
-				for (i = 0; i < rsz; i++)
-					sz += (*p->width)(p, *rhs++);
-		} else if (ASCII_NBRSP == *cp) {
+			if (NULL == rhs)
+				break;
+
+			for (i = 0; i < rsz; i++)
+				sz += (*p->width)(p, *rhs++);
+			break;
+		case (ASCII_NBRSP):
 			sz += (*p->width)(p, ' ');
 			cp++;
-		} else if (ASCII_HYPH == *cp) {
+			break;
+		case (ASCII_HYPH):
 			sz += (*p->width)(p, '-');
 			cp++;
-		} else
-			sz += (*p->width)(p, *cp++);
+			break;
+		default:
+			break;
+		}
+	}
 
 	return(sz);
 }
-
 
 /* ARGSUSED */
 size_t
@@ -684,7 +726,6 @@ term_vspan(const struct termp *p, const struct roffsu *su)
 	return(/* LINTED */(size_t)
 			r);
 }
-
 
 size_t
 term_hspan(const struct termp *p, const struct roffsu *su)

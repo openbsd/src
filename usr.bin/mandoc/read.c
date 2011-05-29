@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.1 2011/04/24 16:22:02 schwarze Exp $ */
+/*	$Id: read.c,v 1.2 2011/05/29 21:22:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -134,7 +134,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"tab in non-literal context",
 	"end of line whitespace",
 	"bad comment style",
-	"unknown escape sequence",
+	"bad escape sequence",
 	"unterminated quoted string",
 	
 	"generic error",
@@ -437,7 +437,7 @@ rerun:
 
 		/*
 		 * If input parsers have not been allocated, do so now.
-		 * We keep these instanced betwen parsers, but set them
+		 * We keep these instanced between parsers, but set them
 		 * locally per parse routine since we can use different
 		 * parsers with each one.
 		 */

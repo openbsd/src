@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.67 2011/04/24 16:22:02 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.68 2011/05/29 21:22:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -152,14 +152,7 @@ terminal_man(void *arg, const struct man *man)
 	p->tabwidth = term_len(p, 5);
 
 	if (NULL == p->symtab)
-		switch (p->enc) {
-		case (TERMENC_ASCII):
-			p->symtab = chars_init(CHARS_ASCII);
-			break;
-		default:
-			abort();
-			/* NOTREACHED */
-		}
+		p->symtab = mchars_alloc();
 
 	n = man_node(man);
 	m = man_meta(man);

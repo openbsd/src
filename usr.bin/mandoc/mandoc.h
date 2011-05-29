@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.37 2011/04/24 16:22:02 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.38 2011/05/29 21:22:18 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -288,10 +288,25 @@ enum	mparset {
 	MPARSE_MAN /* assume -man */
 };
 
+enum	mandoc_esc {
+	ESCAPE_ERROR = 0, /* bail! unparsable escape */
+	ESCAPE_IGNORE, /* escape to be ignored */
+	ESCAPE_SPECIAL, /* a regular special character */
+	ESCAPE_FONT, /* a generic font mode */
+	ESCAPE_FONTBOLD, /* bold font mode */
+	ESCAPE_FONTITALIC, /* italic font mode */
+	ESCAPE_FONTROMAN, /* roman font mode */
+	ESCAPE_FONTPREV, /* previous font mode */
+	ESCAPE_NUMBERED, /* a numbered glyph */
+	ESCAPE_UNICODE, /* a unicode codepoint */
+	ESCAPE_NOSPACE /* suppress space if the last on a line */
+};
+
 typedef	void	(*mandocmsg)(enum mandocerr, enum mandoclevel,
 			const char *, int, int, const char *);
 
 struct	mparse;
+struct	mchars;
 struct	mdoc;
 struct	man;
 
@@ -309,6 +324,16 @@ const char	 *mparse_strlevel(enum mandoclevel);
 void		 *mandoc_calloc(size_t, size_t);
 void		 *mandoc_malloc(size_t);
 void		 *mandoc_realloc(void *, size_t);
+
+enum mandoc_esc	  mandoc_escape(const char **, const char **, int *);
+
+struct mchars	 *mchars_alloc(void);
+char	 	  mchars_num2char(const char *, size_t);
+int		  mchars_num2uc(const char *, size_t);
+const char	 *mchars_spec2str(struct mchars *, const char *, size_t, size_t *);
+int		  mchars_spec2cp(struct mchars *, const char *, size_t);
+void		  mchars_free(struct mchars *);
+
 
 __END_DECLS
 

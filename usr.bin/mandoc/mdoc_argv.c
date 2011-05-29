@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.37 2011/04/24 16:22:02 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.38 2011/05/29 21:22:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -28,11 +28,25 @@
 #include "libmandoc.h"
 
 #define	MULTI_STEP	 5 /* pre-allocate argument values */
+#define	DELIMSZ	  	 6 /* max possible size of a delimiter */
+
+enum	argsflag {
+	ARGSFL_NONE = 0,
+	ARGSFL_DELIM, /* handle delimiters of [[::delim::][ ]+]+ */
+	ARGSFL_TABSEP /* handle tab/`Ta' separated phrases */
+};
+
+enum	argvflag {
+	ARGV_NONE, /* no args to flag (e.g., -split) */
+	ARGV_SINGLE, /* one arg to flag (e.g., -file xxx)  */
+	ARGV_MULTI, /* multiple args (e.g., -column xxx yyy) */
+	ARGV_OPT_SINGLE /* optional arg (e.g., -offset [xxx]) */
+};
 
 static	enum mdocargt	 argv_a2arg(enum mdoct, const char *);
 static	enum margserr	 args(struct mdoc *, int, int *, 
-				char *, int, char **);
-static	int		 args_checkpunct(const char *);
+				char *, enum argsflag, char **);
+static	int		 args_checkpunct(const char *, int);
 static	int		 argv(struct mdoc *, int, 
 				struct mdoc_argv *, int *, char *);
 static	int		 argv_single(struct mdoc *, int, 
@@ -42,13 +56,6 @@ static	int		 argv_opt_single(struct mdoc *, int,
 static	int		 argv_multi(struct mdoc *, int, 
 				struct mdoc_argv *, int *, char *);
 static	void		 argn_free(struct mdoc_arg *, int);
-
-enum	argvflag {
-	ARGV_NONE, /* no args to flag (e.g., -split) */
-	ARGV_SINGLE, /* one arg to flag (e.g., -file xxx)  */
-	ARGV_MULTI, /* multiple args (e.g., -column xxx yyy) */
-	ARGV_OPT_SINGLE /* optional arg (e.g., -offset [xxx]) */
-};
 
 static	const enum argvflag argvflags[MDOC_ARG_MAX] = {
 	ARGV_NONE,	/* MDOC_Split */
@@ -79,129 +86,129 @@ static	const enum argvflag argvflags[MDOC_ARG_MAX] = {
 	ARGV_NONE	/* MDOC_Symbolic */
 };
 
-static	const int argflags[MDOC_MAX] = {
-	0, /* Ap */
-	0, /* Dd */
-	0, /* Dt */
-	0, /* Os */
-	0, /* Sh */
-	0, /* Ss */ 
-	0, /* Pp */ 
-	ARGS_DELIM, /* D1 */
-	ARGS_DELIM, /* Dl */
-	0, /* Bd */
-	0, /* Ed */
-	0, /* Bl */
-	0, /* El */
-	0, /* It */
-	ARGS_DELIM, /* Ad */ 
-	ARGS_DELIM, /* An */
-	ARGS_DELIM, /* Ar */
-	0, /* Cd */
-	ARGS_DELIM, /* Cm */
-	ARGS_DELIM, /* Dv */ 
-	ARGS_DELIM, /* Er */ 
-	ARGS_DELIM, /* Ev */ 
-	0, /* Ex */
-	ARGS_DELIM, /* Fa */ 
-	0, /* Fd */ 
-	ARGS_DELIM, /* Fl */
-	ARGS_DELIM, /* Fn */ 
-	ARGS_DELIM, /* Ft */ 
-	ARGS_DELIM, /* Ic */ 
-	0, /* In */ 
-	ARGS_DELIM, /* Li */
-	0, /* Nd */ 
-	ARGS_DELIM, /* Nm */ 
-	ARGS_DELIM, /* Op */
-	0, /* Ot */
-	ARGS_DELIM, /* Pa */
-	0, /* Rv */
-	ARGS_DELIM, /* St */ 
-	ARGS_DELIM, /* Va */
-	ARGS_DELIM, /* Vt */ 
-	ARGS_DELIM, /* Xr */
-	0, /* %A */
-	0, /* %B */
-	0, /* %D */
-	0, /* %I */
-	0, /* %J */
-	0, /* %N */
-	0, /* %O */
-	0, /* %P */
-	0, /* %R */
-	0, /* %T */
-	0, /* %V */
-	ARGS_DELIM, /* Ac */
-	0, /* Ao */
-	ARGS_DELIM, /* Aq */
-	ARGS_DELIM, /* At */
-	ARGS_DELIM, /* Bc */
-	0, /* Bf */ 
-	0, /* Bo */
-	ARGS_DELIM, /* Bq */
-	ARGS_DELIM, /* Bsx */
-	ARGS_DELIM, /* Bx */
-	0, /* Db */
-	ARGS_DELIM, /* Dc */
-	0, /* Do */
-	ARGS_DELIM, /* Dq */
-	ARGS_DELIM, /* Ec */
-	0, /* Ef */
-	ARGS_DELIM, /* Em */ 
-	0, /* Eo */
-	ARGS_DELIM, /* Fx */
-	ARGS_DELIM, /* Ms */
-	ARGS_DELIM, /* No */
-	ARGS_DELIM, /* Ns */
-	ARGS_DELIM, /* Nx */
-	ARGS_DELIM, /* Ox */
-	ARGS_DELIM, /* Pc */
-	ARGS_DELIM, /* Pf */
-	0, /* Po */
-	ARGS_DELIM, /* Pq */
-	ARGS_DELIM, /* Qc */
-	ARGS_DELIM, /* Ql */
-	0, /* Qo */
-	ARGS_DELIM, /* Qq */
-	0, /* Re */
-	0, /* Rs */
-	ARGS_DELIM, /* Sc */
-	0, /* So */
-	ARGS_DELIM, /* Sq */
-	0, /* Sm */
-	ARGS_DELIM, /* Sx */
-	ARGS_DELIM, /* Sy */
-	ARGS_DELIM, /* Tn */
-	ARGS_DELIM, /* Ux */
-	ARGS_DELIM, /* Xc */
-	0, /* Xo */
-	0, /* Fo */ 
-	0, /* Fc */ 
-	0, /* Oo */
-	ARGS_DELIM, /* Oc */
-	0, /* Bk */
-	0, /* Ek */
-	0, /* Bt */
-	0, /* Hf */
-	0, /* Fr */
-	0, /* Ud */
-	0, /* Lb */
-	0, /* Lp */
-	ARGS_DELIM, /* Lk */
-	ARGS_DELIM, /* Mt */
-	ARGS_DELIM, /* Brq */
-	0, /* Bro */
-	ARGS_DELIM, /* Brc */
-	0, /* %C */
-	0, /* Es */
-	0, /* En */
-	0, /* Dx */
-	0, /* %Q */
-	0, /* br */
-	0, /* sp */
-	0, /* %U */
-	0, /* Ta */
+static	const enum argsflag argflags[MDOC_MAX] = {
+	ARGSFL_NONE, /* Ap */
+	ARGSFL_NONE, /* Dd */
+	ARGSFL_NONE, /* Dt */
+	ARGSFL_NONE, /* Os */
+	ARGSFL_NONE, /* Sh */
+	ARGSFL_NONE, /* Ss */ 
+	ARGSFL_NONE, /* Pp */ 
+	ARGSFL_DELIM, /* D1 */
+	ARGSFL_DELIM, /* Dl */
+	ARGSFL_NONE, /* Bd */
+	ARGSFL_NONE, /* Ed */
+	ARGSFL_NONE, /* Bl */
+	ARGSFL_NONE, /* El */
+	ARGSFL_NONE, /* It */
+	ARGSFL_DELIM, /* Ad */ 
+	ARGSFL_DELIM, /* An */
+	ARGSFL_DELIM, /* Ar */
+	ARGSFL_NONE, /* Cd */
+	ARGSFL_DELIM, /* Cm */
+	ARGSFL_DELIM, /* Dv */ 
+	ARGSFL_DELIM, /* Er */ 
+	ARGSFL_DELIM, /* Ev */ 
+	ARGSFL_NONE, /* Ex */
+	ARGSFL_DELIM, /* Fa */ 
+	ARGSFL_NONE, /* Fd */ 
+	ARGSFL_DELIM, /* Fl */
+	ARGSFL_DELIM, /* Fn */ 
+	ARGSFL_DELIM, /* Ft */ 
+	ARGSFL_DELIM, /* Ic */ 
+	ARGSFL_NONE, /* In */ 
+	ARGSFL_DELIM, /* Li */
+	ARGSFL_NONE, /* Nd */ 
+	ARGSFL_DELIM, /* Nm */ 
+	ARGSFL_DELIM, /* Op */
+	ARGSFL_NONE, /* Ot */
+	ARGSFL_DELIM, /* Pa */
+	ARGSFL_NONE, /* Rv */
+	ARGSFL_DELIM, /* St */ 
+	ARGSFL_DELIM, /* Va */
+	ARGSFL_DELIM, /* Vt */ 
+	ARGSFL_DELIM, /* Xr */
+	ARGSFL_NONE, /* %A */
+	ARGSFL_NONE, /* %B */
+	ARGSFL_NONE, /* %D */
+	ARGSFL_NONE, /* %I */
+	ARGSFL_NONE, /* %J */
+	ARGSFL_NONE, /* %N */
+	ARGSFL_NONE, /* %O */
+	ARGSFL_NONE, /* %P */
+	ARGSFL_NONE, /* %R */
+	ARGSFL_NONE, /* %T */
+	ARGSFL_NONE, /* %V */
+	ARGSFL_DELIM, /* Ac */
+	ARGSFL_NONE, /* Ao */
+	ARGSFL_DELIM, /* Aq */
+	ARGSFL_DELIM, /* At */
+	ARGSFL_DELIM, /* Bc */
+	ARGSFL_NONE, /* Bf */ 
+	ARGSFL_NONE, /* Bo */
+	ARGSFL_DELIM, /* Bq */
+	ARGSFL_DELIM, /* Bsx */
+	ARGSFL_DELIM, /* Bx */
+	ARGSFL_NONE, /* Db */
+	ARGSFL_DELIM, /* Dc */
+	ARGSFL_NONE, /* Do */
+	ARGSFL_DELIM, /* Dq */
+	ARGSFL_DELIM, /* Ec */
+	ARGSFL_NONE, /* Ef */
+	ARGSFL_DELIM, /* Em */ 
+	ARGSFL_NONE, /* Eo */
+	ARGSFL_DELIM, /* Fx */
+	ARGSFL_DELIM, /* Ms */
+	ARGSFL_DELIM, /* No */
+	ARGSFL_DELIM, /* Ns */
+	ARGSFL_DELIM, /* Nx */
+	ARGSFL_DELIM, /* Ox */
+	ARGSFL_DELIM, /* Pc */
+	ARGSFL_DELIM, /* Pf */
+	ARGSFL_NONE, /* Po */
+	ARGSFL_DELIM, /* Pq */
+	ARGSFL_DELIM, /* Qc */
+	ARGSFL_DELIM, /* Ql */
+	ARGSFL_NONE, /* Qo */
+	ARGSFL_DELIM, /* Qq */
+	ARGSFL_NONE, /* Re */
+	ARGSFL_NONE, /* Rs */
+	ARGSFL_DELIM, /* Sc */
+	ARGSFL_NONE, /* So */
+	ARGSFL_DELIM, /* Sq */
+	ARGSFL_NONE, /* Sm */
+	ARGSFL_DELIM, /* Sx */
+	ARGSFL_DELIM, /* Sy */
+	ARGSFL_DELIM, /* Tn */
+	ARGSFL_DELIM, /* Ux */
+	ARGSFL_DELIM, /* Xc */
+	ARGSFL_NONE, /* Xo */
+	ARGSFL_NONE, /* Fo */ 
+	ARGSFL_NONE, /* Fc */ 
+	ARGSFL_NONE, /* Oo */
+	ARGSFL_DELIM, /* Oc */
+	ARGSFL_NONE, /* Bk */
+	ARGSFL_NONE, /* Ek */
+	ARGSFL_NONE, /* Bt */
+	ARGSFL_NONE, /* Hf */
+	ARGSFL_NONE, /* Fr */
+	ARGSFL_NONE, /* Ud */
+	ARGSFL_NONE, /* Lb */
+	ARGSFL_NONE, /* Lp */
+	ARGSFL_DELIM, /* Lk */
+	ARGSFL_DELIM, /* Mt */
+	ARGSFL_DELIM, /* Brq */
+	ARGSFL_NONE, /* Bro */
+	ARGSFL_DELIM, /* Brc */
+	ARGSFL_NONE, /* %C */
+	ARGSFL_NONE, /* Es */
+	ARGSFL_NONE, /* En */
+	ARGSFL_NONE, /* Dx */
+	ARGSFL_NONE, /* %Q */
+	ARGSFL_NONE, /* br */
+	ARGSFL_NONE, /* sp */
+	ARGSFL_NONE, /* %U */
+	ARGSFL_NONE, /* Ta */
 };
 
 static	const enum mdocargt args_Ex[] = {
@@ -371,18 +378,17 @@ argn_free(struct mdoc_arg *p, int iarg)
 }
 
 enum margserr
-mdoc_zargs(struct mdoc *m, int line, int *pos, 
-		char *buf, int flags, char **v)
+mdoc_zargs(struct mdoc *m, int line, int *pos, char *buf, char **v)
 {
 
-	return(args(m, line, pos, buf, flags, v));
+	return(args(m, line, pos, buf, ARGSFL_NONE, v));
 }
 
 enum margserr
 mdoc_args(struct mdoc *m, int line, int *pos, 
 		char *buf, enum mdoct tok, char **v)
 {
-	int		  fl;
+	enum argsflag	  fl;
 	struct mdoc_node *n;
 
 	fl = argflags[tok];
@@ -399,38 +405,20 @@ mdoc_args(struct mdoc *m, int line, int *pos,
 
 	for (n = m->last; n; n = n->parent)
 		if (MDOC_Bl == n->tok)
-			break;
-
-	if (n && LIST_column == n->norm->Bl.type) {
-		fl |= ARGS_TABSEP;
-		fl &= ~ARGS_DELIM;
-	}
+			if (LIST_column == n->norm->Bl.type) {
+				fl = ARGSFL_TABSEP;
+				break;
+			}
 
 	return(args(m, line, pos, buf, fl, v));
 }
 
 static enum margserr
 args(struct mdoc *m, int line, int *pos, 
-		char *buf, int fl, char **v)
+		char *buf, enum argsflag fl, char **v)
 {
-	int		 i;
 	char		*p, *pp;
 	enum margserr	 rc;
-
-	/*
-	 * Parse out the terms (like `val' in `.Xx -arg val' or simply
-	 * `.Xx val'), which can have all sorts of properties:
-	 *
-	 *   ARGS_DELIM: use special handling if encountering trailing
-	 *   delimiters in the form of [[::delim::][ ]+]+.
-	 *
-	 *   ARGS_NOWARN: don't post warnings.  This is only used when
-	 *   re-parsing delimiters, as the warnings have already been
-	 *   posted.
-	 *
-	 *   ARGS_TABSEP: use special handling for tab/`Ta' separated
-	 *   phrases like in `Bl -column'.
-	 */
 
 	assert(' ' != buf[*pos]);
 
@@ -451,15 +439,9 @@ args(struct mdoc *m, int line, int *pos,
 
 	*v = &buf[*pos];
 
-	if (ARGS_DELIM & fl && args_checkpunct(&buf[*pos])) {
-		i = strlen(&buf[*pos]) + *pos;
-		if (i && ' ' != buf[i - 1])
+	if (ARGSFL_DELIM == fl)
+		if (args_checkpunct(buf, *pos))
 			return(ARGS_PUNCT);
-		if (ARGS_NOWARN & fl)
-			return(ARGS_PUNCT);
-		mdoc_pmsg(m, line, *pos, MANDOCERR_EOLNSPACE);
-		return(ARGS_PUNCT);
-	}
 
 	/*
 	 * First handle TABSEP items, restricted to `Bl -column'.  This
@@ -468,7 +450,7 @@ args(struct mdoc *m, int line, int *pos,
 	 * for arguments at a later phase.
 	 */
 
-	if (ARGS_TABSEP & fl) {
+	if (ARGSFL_TABSEP == fl) {
 		/* Scan ahead to tab (can't be escaped). */
 		p = strchr(*v, '\t');
 		pp = NULL;
@@ -507,7 +489,7 @@ args(struct mdoc *m, int line, int *pos,
 		}
 
 		/* Whitespace check for eoln case... */
-		if ('\0' == *p && ' ' == *(p - 1) && ! (ARGS_NOWARN & fl))
+		if ('\0' == *p && ' ' == *(p - 1))
 			mdoc_pmsg(m, line, *pos, MANDOCERR_EOLNSPACE);
 
 		*pos += (int)(p - *v);
@@ -550,7 +532,7 @@ args(struct mdoc *m, int line, int *pos,
 		}
 
 		if ('\0' == buf[*pos]) {
-			if (ARGS_NOWARN & fl || MDOC_PPHRASE & m->flags)
+			if (MDOC_PPHRASE & m->flags)
 				return(ARGS_QWORD);
 			mdoc_pmsg(m, line, *pos, MANDOCERR_BADQUOTE);
 			return(ARGS_QWORD);
@@ -565,31 +547,14 @@ args(struct mdoc *m, int line, int *pos,
 		while (' ' == buf[*pos])
 			(*pos)++;
 
-		if (0 == buf[*pos] && ! (ARGS_NOWARN & fl))
+		if ('\0' == buf[*pos])
 			mdoc_pmsg(m, line, *pos, MANDOCERR_EOLNSPACE);
 
 		return(ARGS_QWORD);
 	}
 
-	/* 
-	 * A non-quoted term progresses until either the end of line or
-	 * a non-escaped whitespace.
-	 */
-
-	for ( ; buf[*pos]; (*pos)++)
-		if (*pos && ' ' == buf[*pos] && '\\' != buf[*pos - 1])
-			break;
-
-	if ('\0' == buf[*pos])
-		return(ARGS_WORD);
-
-	buf[(*pos)++] = '\0';
-
-	while (' ' == buf[*pos])
-		(*pos)++;
-
-	if ('\0' == buf[*pos] && ! (ARGS_NOWARN & fl))
-		mdoc_pmsg(m, line, *pos, MANDOCERR_EOLNSPACE);
+	p = &buf[*pos];
+	*v = mandoc_getarg(m->parse, &p, line, pos);
 
 	return(ARGS_WORD);
 }
@@ -601,49 +566,47 @@ args(struct mdoc *m, int line, int *pos,
  * whitespace may separate these tokens.
  */
 static int
-args_checkpunct(const char *p)
+args_checkpunct(const char *buf, int i)
 {
-	int		 i, j;
-	char		 buf[DELIMSZ];
+	int		 j;
+	char		 dbuf[DELIMSZ];
 	enum mdelim	 d;
-
-	i = 0;
 
 	/* First token must be a close-delimiter. */
 
-	for (j = 0; p[i] && ' ' != p[i] && j < DELIMSZ; j++, i++)
-		buf[j] = p[i];
+	for (j = 0; buf[i] && ' ' != buf[i] && j < DELIMSZ; j++, i++)
+		dbuf[j] = buf[i];
 
 	if (DELIMSZ == j)
 		return(0);
 
-	buf[j] = '\0';
-	if (DELIM_CLOSE != mdoc_isdelim(buf))
+	dbuf[j] = '\0';
+	if (DELIM_CLOSE != mdoc_isdelim(dbuf))
 		return(0);
 
-	while (' ' == p[i])
+	while (' ' == buf[i])
 		i++;
 
 	/* Remaining must NOT be open/none. */
 	
-	while (p[i]) {
+	while (buf[i]) {
 		j = 0;
-		while (p[i] && ' ' != p[i] && j < DELIMSZ)
-			buf[j++] = p[i++];
+		while (buf[i] && ' ' != buf[i] && j < DELIMSZ)
+			dbuf[j++] = buf[i++];
 
 		if (DELIMSZ == j)
 			return(0);
 
-		buf[j] = '\0';
-		d = mdoc_isdelim(buf);
+		dbuf[j] = '\0';
+		d = mdoc_isdelim(dbuf);
 		if (DELIM_NONE == d || DELIM_OPEN == d)
 			return(0);
 
-		while (' ' == p[i])
+		while (' ' == buf[i])
 			i++;
 	}
 
-	return('\0' == p[i]);
+	return('\0' == buf[i]);
 }
 
 /*
@@ -654,40 +617,40 @@ args_checkpunct(const char *p)
 static enum mdocargt
 argv_a2arg(enum mdoct tok, const char *p)
 {
-	const enum mdocargt *args;
+	const enum mdocargt *argsp;
 
-	args = NULL;
+	argsp = NULL;
 
 	switch (tok) {
 	case (MDOC_An):
-		args = args_An;
+		argsp = args_An;
 		break;
 	case (MDOC_Bd):
-		args = args_Bd;
+		argsp = args_Bd;
 		break;
 	case (MDOC_Bf):
-		args = args_Bf;
+		argsp = args_Bf;
 		break;
 	case (MDOC_Bk):
-		args = args_Bk;
+		argsp = args_Bk;
 		break;
 	case (MDOC_Bl):
-		args = args_Bl;
+		argsp = args_Bl;
 		break;
 	case (MDOC_Rv):
 		/* FALLTHROUGH */
 	case (MDOC_Ex):
-		args = args_Ex;
+		argsp = args_Ex;
 		break;
 	default:
 		return(MDOC_ARG_MAX);
 	}
 
-	assert(args);
+	assert(argsp);
 
-	for ( ; MDOC_ARG_MAX != *args ; args++)
-		if (0 == strcmp(p, mdoc_argnames[*args]))
-			return(*args);
+	for ( ; MDOC_ARG_MAX != *argsp ; argsp++)
+		if (0 == strcmp(p, mdoc_argnames[*argsp]))
+			return(*argsp);
 
 	return(MDOC_ARG_MAX);
 }
@@ -702,7 +665,7 @@ argv_multi(struct mdoc *m, int line,
 	for (v->sz = 0; ; v->sz++) {
 		if ('-' == buf[*pos])
 			break;
-		ac = args(m, line, pos, buf, 0, &p);
+		ac = args(m, line, pos, buf, ARGSFL_NONE, &p);
 		if (ARGS_ERROR == ac)
 			return(0);
 		else if (ARGS_EOLN == ac)
@@ -728,7 +691,7 @@ argv_opt_single(struct mdoc *m, int line,
 	if ('-' == buf[*pos])
 		return(1);
 
-	ac = args(m, line, pos, buf, 0, &p);
+	ac = args(m, line, pos, buf, ARGSFL_NONE, &p);
 	if (ARGS_ERROR == ac)
 		return(0);
 	if (ARGS_EOLN == ac)
@@ -754,7 +717,7 @@ argv_single(struct mdoc *m, int line,
 
 	ppos = *pos;
 
-	ac = args(m, line, pos, buf, 0, &p);
+	ac = args(m, line, pos, buf, ARGSFL_NONE, &p);
 	if (ARGS_EOLN == ac) {
 		mdoc_pmsg(m, line, ppos, MANDOCERR_SYNTARGVCOUNT);
 		return(0);

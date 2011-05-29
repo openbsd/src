@@ -1,4 +1,4 @@
-/*	$Id: chars.in,v 1.15 2011/04/24 16:22:02 schwarze Exp $ */
+/*	$Id: chars.in,v 1.16 2011/05/29 21:22:18 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -16,15 +16,12 @@
  */
 
 /*
- * The ASCII translation tables.  STRING corresponds to predefined
- * strings (cf. mdoc_samples.7 and tmac/mdoc/doc-nroff).  CHAR
- * corresponds to special characters (cf. groff_char.7).  BOTH contains
- * sequences that are equivalent in both STRING and CHAR.
+ * The ASCII translation tables.  
  *
- * Either way, the left-hand side corresponds to the input sequence (\x,
- * \(xx, \*(xx and so on) whose length is listed second element.  The
- * right-hand side is what's produced by the front-end, with the fourth
- * element being its length.
+ * The left-hand side corresponds to the input sequence (\x, \(xx, \*(xx
+ * and so on) whose length is listed second element.  The right-hand
+ * side is what's produced by the front-end, with the fourth element
+ * being its length.
  *
  * XXX - C-escape strings!
  * XXX - update LINES_MAX if adding more!
@@ -36,25 +33,25 @@ static const char ascii_nbrsp[2] = { ASCII_NBRSP, '\0' };
 CHAR_TBL_START
 
 /* Spacing. */
-CHAR("c",			"",		0)
+CHAR("c",			"",		8203)
 CHAR("0",			" ",		8194)
 CHAR(" ",			ascii_nbrsp,	160)
 CHAR("~",			ascii_nbrsp,	160)
-CHAR("%",			"",		0)
-CHAR("&",			"",		0)
-CHAR("^",			"",		0)
-CHAR("|",			"",		0)
-CHAR("}",			"",		0)
+CHAR("%",			"",		8203)
+CHAR("&",			"",		8203)
+CHAR("^",			"",		8203)
+CHAR("|",			"",		8203)
+CHAR("}",			"",		8203)
 
 /* Accents. */
 CHAR("a\"",			"\"",		779)
 CHAR("a-",			"-",		175)
 CHAR("a.",			".",		729)
 CHAR("a^",			"^",		770)
-BOTH("\'",			"\'",		769)
-BOTH("aa",			"\'",		769)
-BOTH("ga",			"`",		768)
-BOTH("`",			"`",		768)
+CHAR("\'",			"\'",		769)
+CHAR("aa",			"\'",		769)
+CHAR("ga",			"`",		768)
+CHAR("`",			"`",		768)
 CHAR("ab",			"`",		774)
 CHAR("ac",			",",		807)
 CHAR("ad",			"\"",		776)
@@ -68,8 +65,8 @@ CHAR("ti",			"~",		126)
 /* Quotes. */
 CHAR("Bq",			",,",		8222)
 CHAR("bq",			",",		8218)
-BOTH("lq",			"``",		8220)
-BOTH("rq",			"\'\'",		8221)
+CHAR("lq",			"``",		8220)
+CHAR("rq",			"\'\'",		8221)
 CHAR("oq",			"`",		8216)
 CHAR("cq",			"\'",		8217)
 CHAR("aq",			"\'",		39)
@@ -232,8 +229,8 @@ CHAR("<-",			"<-",		8592)
 CHAR("->",			"->",		8594)
 CHAR("<>",			"<>",		8596)
 CHAR("da",			"v",		8595)
-BOTH("ua",			"^",		8593)
-BOTH("va",			"^v",		8597)
+CHAR("ua",			"^",		8593)
+CHAR("va",			"^v",		8597)
 CHAR("lA",			"<=",		8656)
 CHAR("rA",			"=>",		8658)
 CHAR("hA",			"<=>",		8660)
@@ -270,8 +267,8 @@ CHAR("di",			"-:-",		247)
 CHAR("tdi",			"-:-",		247)
 CHAR("f/",			"/",		8260)
 CHAR("**",			"*",		8727)
-BOTH("<=",			"<=",		8804)
-BOTH(">=",			">=",		8805)
+CHAR("<=",			"<=",		8804)
+CHAR(">=",			">=",		8805)
 CHAR("<<",			"<<",		8810)
 CHAR(">>",			">>",		8811)
 CHAR("eq",			"=",		61)
@@ -347,36 +344,6 @@ CHAR("Ye",			"Y",		165)
 CHAR("Po",			"L",		163)
 CHAR("Cs",			"x",		164)
 CHAR("Fn",			"f",		402)
-
-/* Old style. */
-STRING("Am",			"&",		38)
-STRING("Ba",			"|",		124)
-STRING("Ge",			">=",		8805)
-STRING("Gt",			">",		62)
-STRING("If",			"infinity",	0)
-STRING("Le",			"<=",		8804)
-STRING("Lq",			"``",		8220)
-STRING("Lt",			"<",		60)
-STRING("Na",			"NaN",		0)
-STRING("Ne",			"!=",		8800)
-STRING("Pi",			"pi",		960)
-STRING("Pm",			"+-",		177)
-STRING("Rq",			"\'\'",		8221)
-STRING("left-bracket",		"[",		91)
-STRING("left-parenthesis",	"(",		40)
-STRING("left-singlequote",	"`",		8216)
-STRING("lp",			"(",		40)
-STRING("q",			"\"",		34)
-STRING("quote-left",		"`",		8216)
-STRING("quote-right",		"\'",		8217)
-STRING("R",			"(R)",		174)
-STRING("right-bracket",		"]",		93)
-STRING("right-parenthesis",	")",		41)
-STRING("right-singlequote",	"\'",		8217)
-STRING("rp",			")",		41)
-STRING("Tm",			"(Tm)",		8482)
-STRING("Px",			"POSIX",	0)
-STRING("Ai",			"ANSI",		0)
 
 /* Lines. */
 CHAR("ba",			"|",		124)

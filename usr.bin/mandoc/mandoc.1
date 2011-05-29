@@ -1,6 +1,6 @@
-.\"	$OpenBSD: mandoc.1,v 1.43 2011/01/09 15:24:57 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.44 2011/05/29 21:22:18 schwarze Exp $
 .\"
-.\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 9 2011 $
+.Dd $Mdocdate: May 29 2011 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -158,6 +158,15 @@ utility accepts the following
 .Fl T
 arguments, which correspond to output modes:
 .Bl -tag -width Ds
+.It Fl T Ns Cm utf8
+Encode output in the UTF-8 multi-byte format.
+See
+.Xr UTF-8 Output .
+.It Fl T Ns Cm locale
+Encode output using the current
+.Xr locale 1 .
+See
+.Sx Locale Output .
 .It Fl T Ns Cm ascii
 Produce 7-bit ASCII output.
 This is the default.
@@ -189,6 +198,23 @@ See
 .Pp
 If multiple input files are specified, these will be processed by the
 corresponding filter in-order.
+.Ss UTF-8 Output
+Use
+.Fl T Ns Cm utf8
+to force a UTF-8 locale.
+See
+.Sx Locale Output
+for details and options.
+.Ss Locale Output
+Locale-depending output encoding is triggered with
+.Fl T Ns Cm locale .
+This option is not available on all systems: systems without locale
+support, or those whose internal representation is not natively UCS-4,
+will fall back to
+.Fl T Ns Cm ascii .
+See
+.Sx ASCII Output
+for font style specification and available command-line arguments.
 .Ss ASCII Output
 Output produced by
 .Fl T Ns Cm ascii ,
@@ -209,6 +235,9 @@ Emboldened characters are rendered as
 The special characters documented in
 .Xr mandoc_char 7
 are rendered best-effort in an ASCII equivalent.
+If no equivalent is found,
+.Sq \&?
+is used instead.
 .Pp
 Output width is limited to 78 visible columns unless literal input lines
 exceed this limit.
@@ -460,6 +489,13 @@ Each input and output format is separately noted.
 .Ss ASCII Compatibility
 .Bl -bullet -compact
 .It
+Unrenderable unicode codepoints specified with
+.Sq \e[uNNNN]
+escapes are printed as
+.Sq \&?
+in mandoc.
+In GNU troff, these raise an error.
+.It
 The
 .Sq \&Bd \-literal
 and
@@ -470,7 +506,7 @@ in
 .Fl T Ns Cm ascii
 are synonyms, as are \-filled and \-ragged.
 .It
-In GNU troff, the
+In historic GNU troff, the
 .Sq \&Pa
 .Xr mdoc 7
 macro does not underline when scoped under an
@@ -495,8 +531,6 @@ macro in
 has no effect.
 .It
 Words aren't hyphenated.
-.It
-Sentences are unilaterally monospaced.
 .El
 .Ss HTML/XHTML Compatibility
 .Bl -bullet -compact

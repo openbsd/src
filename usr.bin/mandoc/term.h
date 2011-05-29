@@ -1,4 +1,4 @@
-/*	$Id: term.h,v 1.29 2011/01/09 14:30:48 schwarze Exp $ */
+/*	$Id: term.h,v 1.30 2011/05/29 21:22:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -22,7 +22,9 @@ __BEGIN_DECLS
 struct	termp;
 
 enum	termenc {
-	TERMENC_ASCII
+	TERMENC_ASCII,
+	TERMENC_LOCALE,
+	TERMENC_UTF8
 };
 
 enum	termtype {
@@ -42,35 +44,6 @@ enum	termfont {
 
 typedef void	(*term_margin)(struct termp *, const void *);
 
-struct	termp_ps {
-	int		  flags;
-#define	PS_INLINE	 (1 << 0)	/* we're in a word */
-#define	PS_MARGINS	 (1 << 1)	/* we're in the margins */
-#define	PS_NEWPAGE	 (1 << 2)	/* new page, no words yet */
-	size_t		  pscol;	/* visible column (AFM units) */
-	size_t		  psrow;	/* visible row (AFM units) */
-	char		 *psmarg;	/* margin buf */
-	size_t		  psmargsz;	/* margin buf size */
-	size_t		  psmargcur;	/* cur index in margin buf */
-	char		  last;		/* character buffer */
-	enum termfont	  lastf;	/* last set font */
-	size_t		  scale;	/* font scaling factor */
-	size_t		  pages;	/* number of pages shown */
-	size_t		  lineheight;	/* line height (AFM units) */
-	size_t		  top;		/* body top (AFM units) */
-	size_t		  bottom;	/* body bottom (AFM units) */
-	size_t		  height;	/* page height (AFM units */
-	size_t		  width;	/* page width (AFM units) */
-	size_t		  left;		/* body left (AFM units) */
-	size_t		  header;	/* header pos (AFM units) */
-	size_t		  footer;	/* footer pos (AFM units) */
-	size_t		  pdfbytes; 	/* current output byte */
-	size_t		  pdflastpg;	/* byte of last page mark */
-	size_t		  pdfbody;	/* start of body object */
-	size_t		 *pdfobjs;	/* table of object offsets */
-	size_t		  pdfobjsz;	/* size of pdfobjs */
-};
-
 struct	termp_tbl {
 	int		  width;	/* width in fixed chars */
 	int		  decimal;	/* decimal point position */
@@ -82,10 +55,10 @@ struct	termp {
 	size_t		  defrmargin;	/* Right margin of the device. */
 	size_t		  rmargin;	/* Current right margin. */
 	size_t		  maxrmargin;	/* Max right margin. */
-	size_t		  maxcols;	/* Max size of buf. */
+	int		  maxcols;	/* Max size of buf. */
 	size_t		  offset;	/* Margin offest. */
 	size_t		  tabwidth;	/* Distance of tab positions. */
-	size_t		  col;		/* Bytes in buf. */
+	int		  col;		/* Bytes in buf. */
 	size_t		  viscol;	/* Chars on current line. */
 	int		  overstep;	/* See termp_flushln(). */
 	int		  flags;
@@ -103,29 +76,26 @@ struct	termp {
 #define	TERMP_ANPREC	 (1 << 13)	/* See termp_an_pre(). */
 #define	TERMP_KEEP	 (1 << 14)	/* Keep words together. */
 #define	TERMP_PREKEEP	 (1 << 15)	/* ...starting with the next one. */
-	char		 *buf;		/* Output buffer. */
+	int		 *buf;		/* Output buffer. */
 	enum termenc	  enc;		/* Type of encoding. */
-	void		 *symtab;	/* Encoded-symbol table. */
+	struct mchars	 *symtab;	/* Encoded-symbol table. */
 	enum termfont	  fontl;	/* Last font set. */
 	enum termfont	  fontq[10];	/* Symmetric fonts. */
 	int		  fonti;	/* Index of font stack. */
 	term_margin	  headf;	/* invoked to print head */
 	term_margin	  footf;	/* invoked to print foot */
-	void		(*letter)(struct termp *, char);
+	void		(*letter)(struct termp *, int);
 	void		(*begin)(struct termp *);
 	void		(*end)(struct termp *);
 	void		(*endline)(struct termp *);
 	void		(*advance)(struct termp *, size_t);
-	size_t		(*width)(const struct termp *, char);
+	size_t		(*width)(const struct termp *, int);
 	double		(*hspan)(const struct termp *,
 				const struct roffsu *);
 	const void	 *argf;		/* arg for headf/footf */
-	union {
-		struct termp_ps ps;
-	} engine;
+	struct termp_ps	 *ps;
 };
 
-struct termp	 *term_alloc(enum termenc);
 void		  term_tbl(struct termp *, const struct tbl_span *);
 void		  term_free(struct termp *);
 void		  term_newln(struct termp *);

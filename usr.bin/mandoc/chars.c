@@ -1,6 +1,6 @@
-/*	$Id: chars.c,v 1.18 2011/04/24 16:22:02 schwarze Exp $ */
+/*	$Id: chars.c,v 1.19 2011/05/29 21:22:18 schwarze Exp $ */
 /*
- * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -16,12 +16,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "mandoc.h"
-#include "out.h"
+#include "libmandoc.h"
 
 #define	PRINT_HI	 126
 #define	PRINT_LO	 32
@@ -31,52 +32,37 @@ struct	ln {
 	const char	 *code;
 	const char	 *ascii;
 	int		  unicode;
-	int		  type;
-#define	CHARS_CHAR	 (1 << 0)
-#define	CHARS_STRING	 (1 << 1)
-#define CHARS_BOTH	 (CHARS_CHAR | CHARS_STRING)
 };
 
-#define	LINES_MAX	  353
+#define	LINES_MAX	  325
 
 #define CHAR(in, ch, code) \
-	{ NULL, (in), (ch), (code), CHARS_CHAR },
-#define STRING(in, ch, code) \
-	{ NULL, (in), (ch), (code), CHARS_STRING },
-#define BOTH(in, ch, code) \
-	{ NULL, (in), (ch), (code), CHARS_BOTH },
+	{ NULL, (in), (ch), (code) },
 
 #define	CHAR_TBL_START	  static struct ln lines[LINES_MAX] = {
 #define	CHAR_TBL_END	  };
 
 #include "chars.in"
 
-struct	ctab {
-	enum chars	  type;
+struct	mchars {
 	struct ln	**htab;
 };
 
-static	inline int	  match(const struct ln *,
-				const char *, size_t, int);
-static	const struct ln	 *find(struct ctab *, const char *, size_t, int);
-
+static	inline int	  match(const struct ln *, const char *, size_t);
+static	const struct ln	 *find(struct mchars *, const char *, size_t);
 
 void
-chars_free(void *arg)
+mchars_free(struct mchars *arg)
 {
-	struct ctab	*tab;
 
-	tab = (struct ctab *)arg;
-
-	free(tab->htab);
-	free(tab);
+	free(arg->htab);
+	free(arg);
 }
 
-
-void *
-chars_init(enum chars type)
+struct mchars *
+mchars_alloc(void)
 {
-	struct ctab	 *tab;
+	struct mchars	 *tab;
 	struct ln	**htab;
 	struct ln	 *pp;
 	int		  i, hash;
@@ -88,7 +74,7 @@ chars_init(enum chars type)
 	 * (they're in-line re-ordered during lookup).
 	 */
 
-	tab = mandoc_malloc(sizeof(struct ctab));
+	tab = mandoc_malloc(sizeof(struct mchars));
 	htab = mandoc_calloc(PRINT_HI - PRINT_LO + 1, sizeof(struct ln **));
 
 	for (i = 0; i < LINES_MAX; i++) {
@@ -105,7 +91,6 @@ chars_init(enum chars type)
 	}
 
 	tab->htab = htab;
-	tab->type = type;
 	return(tab);
 }
 
@@ -114,89 +99,66 @@ chars_init(enum chars type)
  * Special character to Unicode codepoint.
  */
 int
-chars_spec2cp(void *arg, const char *p, size_t sz)
+mchars_spec2cp(struct mchars *arg, const char *p, size_t sz)
 {
 	const struct ln	*ln;
 
-	ln = find((struct ctab *)arg, p, sz, CHARS_CHAR);
+	ln = find(arg, p, sz);
 	if (NULL == ln)
 		return(-1);
 	return(ln->unicode);
 }
-
-
-/* 
- * Reserved word to Unicode codepoint.
- */
-int
-chars_res2cp(void *arg, const char *p, size_t sz)
-{
-	const struct ln	*ln;
-
-	ln = find((struct ctab *)arg, p, sz, CHARS_STRING);
-	if (NULL == ln)
-		return(-1);
-	return(ln->unicode);
-}
-
 
 /*
- * Numbered character to literal character,
- * represented as a null-terminated string for additional safety.
+ * Numbered character string to ASCII codepoint.
+ * This can only be a printable character (i.e., alnum, punct, space) so
+ * prevent the character from ruining our state (backspace, newline, and
+ * so on).
+ * If the character is illegal, returns '\0'.
  */
-const char *
-chars_num2char(const char *p, size_t sz)
+char
+mchars_num2char(const char *p, size_t sz)
 {
 	int		  i;
-	static char	  c[2];
 
-	if (sz > 3)
-		return(NULL);
-	i = atoi(p);
-	if (i < 0 || i > 255)
-		return(NULL);
-	c[0] = (char)i;
-	c[1] = '\0';
-	return(c);
+	if ((i = mandoc_strntou(p, sz, 10)) < 0)
+		return('\0');
+	return(isprint(i) ? i : '\0');
 }
 
+/*
+ * Hex character string to Unicode codepoint.
+ * If the character is illegal, returns '\0'.
+ */
+int
+mchars_num2uc(const char *p, size_t sz)
+{
+	int               i;
+
+	if ((i = mandoc_strntou(p, sz, 16)) < 0)
+		return('\0');
+	/* FIXME: make sure we're not in a bogus range. */
+	return(i > 0x80 && i <= 0x10FFFF ? i : '\0');
+}
 
 /* 
  * Special character to string array.
  */
 const char *
-chars_spec2str(void *arg, const char *p, size_t sz, size_t *rsz)
+mchars_spec2str(struct mchars *arg, const char *p, size_t sz, size_t *rsz)
 {
 	const struct ln	*ln;
 
-	ln = find((struct ctab *)arg, p, sz, CHARS_CHAR);
+	ln = find(arg, p, sz);
 	if (NULL == ln)
 		return(NULL);
 
 	*rsz = strlen(ln->ascii);
 	return(ln->ascii);
 }
-
-
-/* 
- * Reserved word to string array.
- */
-const char *
-chars_res2str(void *arg, const char *p, size_t sz, size_t *rsz)
-{
-	const struct ln	*ln;
-
-	ln = find((struct ctab *)arg, p, sz, CHARS_STRING);
-	if (NULL == ln)
-		return(NULL);
-
-	*rsz = strlen(ln->ascii);
-	return(ln->ascii);
-}
-
 
 static const struct ln *
-find(struct ctab *tab, const char *p, size_t sz, int type)
+find(struct mchars *tab, const char *p, size_t sz)
 {
 	struct ln	 *pp, *prev;
 	struct ln	**htab;
@@ -222,7 +184,7 @@ find(struct ctab *tab, const char *p, size_t sz, int type)
 		return(NULL);
 
 	for (prev = NULL; pp; pp = pp->next) {
-		if ( ! match(pp, p, sz, type)) {
+		if ( ! match(pp, p, sz)) {
 			prev = pp;
 			continue;
 		}
@@ -239,13 +201,10 @@ find(struct ctab *tab, const char *p, size_t sz, int type)
 	return(NULL);
 }
 
-
 static inline int
-match(const struct ln *ln, const char *p, size_t sz, int type)
+match(const struct ln *ln, const char *p, size_t sz)
 {
 
-	if ( ! (ln->type & type))
-		return(0);
 	if (strncmp(ln->code, p, sz))
 		return(0);
 	return('\0' == ln->code[(int)sz]);

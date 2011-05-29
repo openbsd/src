@@ -1,4 +1,4 @@
-/*	$Id: html.h,v 1.15 2011/01/31 03:04:26 schwarze Exp $ */
+/*	$Id: html.h,v 1.16 2011/05/29 21:22:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -120,7 +120,7 @@ struct	html {
 	struct tagq	  tags; /* stack of open tags */
 	struct rofftbl	  tbl; /* current table */
 	struct tag	 *tblt; /* current open table scope */
-	void		 *symtab; /* character-escapes */
+	struct mchars	 *symtab; /* character-escapes */
 	char		 *base_man; /* base for manpage href */
 	char		 *base_includes; /* base for include href */
 	char		 *style; /* style-sheet URI */
@@ -142,19 +142,19 @@ void		  print_text(struct html *, const char *);
 void		  print_tblclose(struct html *);
 void		  print_tbl(struct html *, const struct tbl_span *);
 
+void		  bufcat_fmt(struct html *, const char *, ...);
+void		  bufcat(struct html *, const char *);
+void		  bufcat_id(struct html *, const char *);
+void		  bufcat_style(struct html *, 
+			const char *, const char *);
 void		  bufcat_su(struct html *, const char *, 
 			const struct roffsu *);
+void		  bufinit(struct html *);
 void		  buffmt_man(struct html *, 
 			const char *, const char *);
 void		  buffmt_includes(struct html *, const char *);
-void		  buffmt(struct html *, const char *, ...);
-void		  bufcat(struct html *, const char *);
-void		  bufcat_style(struct html *, 
-			const char *, const char *);
-void		  bufncat(struct html *, const char *, size_t);
-void		  bufinit(struct html *);
 
-void		  html_idcat(char *, const char *, int);
+int		  html_strlen(const char *);
 
 __END_DECLS
 

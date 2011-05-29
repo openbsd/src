@@ -1,4 +1,4 @@
-/*	$Id: libmdoc.h,v 1.45 2011/04/24 16:22:02 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.46 2011/05/29 21:22:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -62,20 +62,20 @@ struct	mdoc_macro {
 
 enum	margserr {
 	ARGS_ERROR,
-	ARGS_EOLN,
-	ARGS_WORD,
-	ARGS_PUNCT,
-	ARGS_QWORD,
-	ARGS_PHRASE,
-	ARGS_PPHRASE,
-	ARGS_PEND
+	ARGS_EOLN, /* end-of-line */
+	ARGS_WORD, /* normal word */
+	ARGS_PUNCT, /* series of punctuation */
+	ARGS_QWORD, /* quoted word */
+	ARGS_PHRASE, /* Ta'd phrase (-column) */
+	ARGS_PPHRASE, /* tabbed phrase (-column) */
+	ARGS_PEND /* last phrase (-column) */
 };
 
 enum	margverr {
 	ARGV_ERROR,
-	ARGV_EOLN,
-	ARGV_ARG,
-	ARGV_WORD
+	ARGV_EOLN, /* end of line */
+	ARGV_ARG, /* valid argument */
+	ARGV_WORD /* normal word (or bad argument---same thing) */
 };
 
 /*
@@ -133,14 +133,8 @@ void		  mdoc_argv_free(struct mdoc_arg *);
 enum margserr	  mdoc_args(struct mdoc *, int,
 			int *, char *, enum mdoct, char **);
 enum margserr	  mdoc_zargs(struct mdoc *, int, 
-			int *, char *, int, char **);
-#define	ARGS_DELIM	(1 << 1)
-#define	ARGS_TABSEP	(1 << 2)
-#define	ARGS_NOWARN	(1 << 3)
-
+			int *, char *, char **);
 int		  mdoc_macroend(struct mdoc *);
-
-#define	DELIMSZ	  6 /* hint: max possible size of a delimiter */
 enum mdelim	  mdoc_isdelim(const char *);
 
 __END_DECLS
