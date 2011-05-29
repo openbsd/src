@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.26 2011/04/27 20:55:42 jcs Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.27 2011/05/29 05:02:16 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -401,12 +401,7 @@ thinkpad_cmos(struct acpithinkpad_softc *sc, uint8_t cmd)
 	bzero(&arg, sizeof(arg));
 	arg.type = AML_OBJTYPE_INTEGER;
 	arg.v_integer = cmd;
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "\\UCMS",
-	    1, &arg, NULL)) {
-		printf("%s: cmos command 0x%x failed\n", DEVNAME(sc), cmd);
-		return (1);
-	}
-
+	aml_evalname(sc->sc_acpi, sc->sc_devnode, "\\UCMS", 1, &arg, NULL);
 	return (0);
 }
 
