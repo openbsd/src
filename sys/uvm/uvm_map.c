@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.137 2011/05/29 15:18:19 ariane Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.138 2011/05/29 17:18:22 ariane Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -87,6 +87,7 @@
  */
 
 /* #define DEBUG */
+#define VMMAP_MIN_ADDR	PAGE_SIZE	/* auto-allocate address lower bound */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4360,7 +4361,7 @@ struct uvm_map_free*
 uvm_free(struct vm_map *map, vaddr_t addr)
 {
 	/* Special case the first page, to prevent mmap from returning 0. */
-	if (addr < PAGE_SIZE)
+	if (addr < VMMAP_MIN_ADDR)
 		return NULL;
 
 	if ((map->flags & VM_MAP_ISVMSPACE) == 0) {
@@ -4384,7 +4385,7 @@ vsize_t
 uvm_map_boundary(struct vm_map *map, vaddr_t min, vaddr_t max)
 {
 	/* Treat the first page special, mmap returning 0 breaks too much. */
-	max = uvm_map_boundfix(min, max, PAGE_SIZE);
+	max = uvm_map_boundfix(min, max, VMMAP_MIN_ADDR);
 
 	if ((map->flags & VM_MAP_ISVMSPACE) == 0) {
 		max = uvm_map_boundfix(min, max, uvm_maxkaddr);
