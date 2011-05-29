@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.120 2011/05/13 14:31:16 oga Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.121 2011/05/29 13:22:53 claudio Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -809,6 +809,27 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro, int soopts,
 
 	ia = (struct in_ifaddr *)0;
 	/*
+	 * If the destination address is multicast and an outgoing
+	 * interface has been set as a multicast option, use the
+	 * address of that interface as our source address.
+	 */
+	if (IN_MULTICAST(sin->sin_addr.s_addr) && mopts != NULL) {
+		struct ifnet *ifp;
+
+		if (mopts->imo_multicast_ifp != NULL) {
+			ifp = mopts->imo_multicast_ifp;
+			TAILQ_FOREACH(ia, &in_ifaddr, ia_list)
+				if (ia->ia_ifp == ifp &&
+				    rtable_l2(rtableid) == ifp->if_rdomain)
+					break;
+			if (ia == 0) {
+				*errorp = EADDRNOTAVAIL;
+				return NULL;
+			}
+			return satosin(&ia->ia_addr);
+		}
+	}
+	/*
 	 * If route is known or can be allocated now,
 	 * our src addr is taken from the i/f, else punt.
 	 */
@@ -857,27 +878,6 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro, int soopts,
 		if (ia == 0) {
 			*errorp = EADDRNOTAVAIL;
 			return NULL;
-		}
-	}
-	/*
-	 * If the destination address is multicast and an outgoing
-	 * interface has been set as a multicast option, use the
-	 * address of that interface as our source address.
-	 */
-	if (IN_MULTICAST(sin->sin_addr.s_addr) && mopts != NULL) {
-		struct ip_moptions *imo;
-		struct ifnet *ifp;
-
-		imo = mopts;
-		if (imo->imo_multicast_ifp != NULL) {
-			ifp = imo->imo_multicast_ifp;
-			TAILQ_FOREACH(ia, &in_ifaddr, ia_list)
-				if (ia->ia_ifp == ifp)
-					break;
-			if (ia == 0) {
-				*errorp = EADDRNOTAVAIL;
-				return NULL;
-			}
 		}
 	}
 	return satosin(&ia->ia_addr);
