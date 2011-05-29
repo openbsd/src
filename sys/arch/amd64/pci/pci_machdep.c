@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.44 2011/05/21 15:58:27 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.45 2011/05/29 10:47:42 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -291,7 +291,7 @@ pci_intr_map_msi(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
 
-	if ((pa->pa_flags & PCI_FLAGS_MSI_ENABLED) == 0 ||
+	if ((pa->pa_flags & PCI_FLAGS_MSI_ENABLED) == 0 || mp_busses == NULL ||
 	    pci_get_capability(pc, tag, PCI_CAP_MSI, NULL, NULL) == 0)
 		return 1;
 
