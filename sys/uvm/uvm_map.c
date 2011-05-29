@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.136 2011/05/24 15:27:36 ariane Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.137 2011/05/29 15:18:19 ariane Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -475,16 +475,6 @@ uvm_mapent_addr_remove(struct vm_map *map, struct vm_map_entry *entry)
 	RB_LEFT(entry, daddrs.addr_entry) = RB_RIGHT(entry, daddrs.addr_entry) =
 	    RB_PARENT(entry, daddrs.addr_entry) = UVMMAP_DEADBEEF;
 }
-
-/*
- * Clamp start and end to map boundaries.
- */
-#define VM_MAP_RANGE_CHECK(_map, _start, _end)				\
-	do {								\
-		(_start) = MAX((_start), vm_map_min((_map)));		\
-		(_end) = MIN((_end), vm_map_max((_map)));		\
-		(_start) = MIN((_start), (_end));			\
-	} while (0)
 
 /*
  * uvm_map_reference: add reference to a map
@@ -1795,8 +1785,9 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 {
 	struct vm_map_entry *prev_hint, *next, *entry;
 
-	VM_MAP_RANGE_CHECK(map, start, end);
-	if (start == end)
+	start = MAX(start, map->min_offset);
+	end = MIN(end, map->max_offset);
+	if (start >= end)
 		return;
 
 	if ((map->flags & VM_MAP_INTRSAFE) == 0)
@@ -2130,11 +2121,16 @@ uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
 	struct vm_map_entry *first, *last, *tmp;
 	int error;
 
+	if (start > end)
+		return EINVAL;
+	if (start < map->min_offset)
+		return EFAULT; /* why? see first XXX below */
+	if (end > map->max_offset)
+		return EINVAL; /* why? see second XXX below */
+
 	KASSERT(map->flags & VM_MAP_PAGEABLE);
 	if ((lockflags & UVM_LK_ENTER) == 0)
 		vm_map_lock(map);
-
-	VM_MAP_RANGE_CHECK(map, start, end);
 
 	/*
 	 * Find first entry.
@@ -2917,8 +2913,11 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 	vm_prot_t mask;
 	int error;
 
-	VM_MAP_RANGE_CHECK(map, start, end);
-	if (start == end)
+	if (start > end)
+		return EINVAL;
+	start = MAX(start, map->min_offset);
+	end = MIN(end, map->max_offset);
+	if (start >= end)
 		return 0;
 
 	error = 0;
@@ -3685,9 +3684,11 @@ uvm_map_submap(struct vm_map *map, vaddr_t start, vaddr_t end,
 	struct vm_map_entry *entry;
 	int result;
 
-	vm_map_lock(map);
+	if (start > map->max_offset || end > map->max_offset ||
+	    start < map->min_offset || end < map->min_offset)
+		return EINVAL;
 
-	VM_MAP_RANGE_CHECK(map, start, end);
+	vm_map_lock(map);
 
 	if (uvm_map_lookup_entry(map, start, &entry)) {
 		UVM_MAP_CLIP_START(map, entry, start);
@@ -3826,9 +3827,14 @@ uvm_map_inherit(struct vm_map *map, vaddr_t start, vaddr_t end,
 		return (EINVAL);
 	}
 
-	vm_map_lock(map);
+	if (start > end)
+		return EINVAL;
+	start = MAX(start, map->min_offset);
+	end = MIN(end, map->max_offset);
+	if (start >= end)
+		return 0;
 
-	VM_MAP_RANGE_CHECK(map, start, end);
+	vm_map_lock(map);
 
 	entry = uvm_map_entrybyaddr(&map->addr, start);
 	if (entry->end > start)
@@ -3870,9 +3876,14 @@ uvm_map_advice(struct vm_map *map, vaddr_t start, vaddr_t end, int new_advice)
 		return (EINVAL);
 	}
 
-	vm_map_lock(map);
+	if (start > end)
+		return EINVAL;
+	start = MAX(start, map->min_offset);
+	end = MIN(end, map->max_offset);
+	if (start >= end)
+		return 0;
 
-	VM_MAP_RANGE_CHECK(map, start, end);
+	vm_map_lock(map);
 
 	entry = uvm_map_entrybyaddr(&map->addr, start);
 	if (entry != NULL && entry->end > start)
@@ -4117,8 +4128,10 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 	KASSERT((flags & (PGO_FREE|PGO_DEACTIVATE)) !=
 	    (PGO_FREE|PGO_DEACTIVATE));
 
+	if (start > end || start < map->min_offset || end > map->max_offset)
+		return EINVAL;
+
 	vm_map_lock_read(map);
-	VM_MAP_RANGE_CHECK(map, start, end);
 	first = uvm_map_entrybyaddr(&map->addr, start);
 
 	/*
