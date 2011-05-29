@@ -1,4 +1,4 @@
-/*	$OpenBSD: k1x-pstate.c,v 1.1 2011/05/23 09:52:24 claudio Exp $ */
+/*	$OpenBSD: k1x-pstate.c,v 1.2 2011/05/29 12:29:28 claudio Exp $ */
 /*
  * Copyright (c) 2011 Bryan Steele <brynet@gmail.com>
  *
@@ -172,7 +172,9 @@ k1x_acpi_init(struct k1x_cpu_state *cstate, u_int64_t msr)
 void
 k1x_init(struct cpu_info *ci)
 {
+#if NACPICPU > 0
 	u_int64_t msr;
+#endif
 	u_int i;
 	struct k1x_cpu_state *cstate;
 	struct k1x_state *state;
