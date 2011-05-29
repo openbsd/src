@@ -1,4 +1,4 @@
-/*	$Id: predefs.in,v 1.1 2011/05/29 21:22:18 schwarze Exp $ */
+/*	$Id: predefs.in,v 1.2 2011/05/29 21:32:42 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -29,13 +29,13 @@ PREDEF("Am", "&")
 PREDEF("Ba", "|")
 PREDEF("Ge", "\\(>=")
 PREDEF("Gt", ">")
-PREDEF("If", "\\(if")
+PREDEF("If", "infinity")
 PREDEF("Le", "\\(<=")
 PREDEF("Lq", "\\(lq")
 PREDEF("Lt", "<")
 PREDEF("Na", "NaN")
 PREDEF("Ne", "\\(!=")
-PREDEF("Pi", "\\(*p")
+PREDEF("Pi", "pi")
 PREDEF("Pm", "\\(+-")
 PREDEF("Rq", "\\(rq")
 PREDEF("left-bracket", "[")
@@ -50,7 +50,7 @@ PREDEF("right-bracket", "]")
 PREDEF("right-parenthesis", ")")
 PREDEF("rp", ")")
 PREDEF("right-singlequote", "\\(cq")
-PREDEF("Tm", "\\(tm")
+PREDEF("Tm", "(Tm)")
 PREDEF("Px", "POSIX")
 PREDEF("Ai", "ANSI")
 PREDEF("\'", "\\\'")
