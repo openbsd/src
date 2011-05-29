@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1604 2011/05/28 21:18:37 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1605 2011/05/29 09:40:50 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -681,7 +681,7 @@
 #define	PCI_PRODUCT_AMD_AMD64_11_DRAM	0x1302		/* AMD64 11h DRAM Cfg */
 #define	PCI_PRODUCT_AMD_AMD64_11_MISC	0x1303		/* AMD64 11h Misc Cfg */
 #define	PCI_PRODUCT_AMD_AMD64_11_LINK	0x1304		/* AMD64 11h Link Cfg */
-#define	PCI_PRODUCT_AMD_AMD64_14_HB	0x1500		/* AMD64 14h Host */
+#define	PCI_PRODUCT_AMD_AMD64_14_HB	0x1510		/* AMD64 14h Host */
 #define	PCI_PRODUCT_AMD_AMD64_14_PCIE_1	0x1512		/* AMD64 14h PCIE */
 #define	PCI_PRODUCT_AMD_AMD64_14_PCIE_2	0x1513		/* AMD64 14h PCIE */
 #define	PCI_PRODUCT_AMD_AMD64_14_PCIE_3	0x1514		/* AMD64 14h PCIE */
