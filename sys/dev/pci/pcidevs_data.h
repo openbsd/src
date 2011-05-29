@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1607 2011/05/29 14:35:46 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1608 2011/05/29 16:21:09 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -2252,12 +2252,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SB700 ISA",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_PCIPCI1,
-	    "SB700 PCI-PCI",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB800_PCIE_1,
+	    "SB800 PCIE",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_PCIPCI2,
-	    "SB700 PCI-PCI",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB800_PCIE_2,
+	    "SB800 PCIE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB800_PCIE_3,
+	    "SB800 PCIE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB800_PCIE_4,
+	    "SB800 PCIE",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_MIGP_RS250,
@@ -3056,8 +3064,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SR5690 PCIE",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RX200_HB,
-	    "Radeon XPRESS 200",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS400_HB,
+	    "RS400 Host",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RC410_HB,
+	    "RC410 Host",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RX480_PCIE,
