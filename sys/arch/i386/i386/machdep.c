@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.495 2011/05/23 09:54:20 claudio Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.496 2011/05/29 14:50:26 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1345,7 +1345,7 @@ amd_family6_setperf_setup(struct cpu_info *ci)
 		k8_powernow_init();
 		break;
 	}
-	if (ci->ci_family == 0x10 || ci->ci_family == 0x11)
+	if (ci->ci_family >= 0x10)
 		k1x_init(ci);
 }
 #endif
