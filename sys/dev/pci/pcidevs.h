@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1606 2011/05/29 12:25:46 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1607 2011/05/29 14:35:46 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -977,6 +977,8 @@
 #define	PCI_PRODUCT_ATI_SB700_OHCI_5	0x439b		/* SB700 USB */
 #define	PCI_PRODUCT_ATI_SB700_IDE	0x439c		/* SB700 IDE */
 #define	PCI_PRODUCT_ATI_SB700_ISA	0x439d		/* SB700 ISA */
+#define	PCI_PRODUCT_ATI_SB700_PCIPCI1	0x43a0		/* SB700 PCI-PCI */
+#define	PCI_PRODUCT_ATI_SB700_PCIPCI2	0x43a1		/* SB700 PCI-PCI */
 #define	PCI_PRODUCT_ATI_RADEON_MIGP_RS250	0x4437		/* Radeon Mobility IGP */
 #define	PCI_PRODUCT_ATI_MACH64_ET	0x4554		/* Mach64 ET */
 #define	PCI_PRODUCT_ATI_RAGEPRO	0x4742		/* Rage Pro */
