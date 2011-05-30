@@ -43,10 +43,10 @@ double
 tanh(double x)
 {
 	double t,z;
-	int32_t jx,ix;
+	int32_t jx,ix,lx;
 
     /* High word of |x|. */
-	GET_HIGH_WORD(jx,x);
+	EXTRACT_WORDS(jx,lx,x);
 	ix = jx&0x7fffffff;
 
     /* x is INF or NaN */
@@ -57,6 +57,8 @@ tanh(double x)
 
     /* |x| < 22 */
 	if (ix < 0x40360000) {		/* |x|<22 */
+	    if ((ix | lx) == 0)
+		return x;		/* x == +-0 */
 	    if (ix<0x3c800000) 		/* |x|<2**-55 */
 		return x*(one+x);    	/* tanh(small) = small */
 	    if (ix>=0x3ff00000) {	/* |x|>=1  */
