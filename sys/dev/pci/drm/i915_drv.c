@@ -359,7 +359,15 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (pci_intr_map(pa, &dev_priv->ih) != 0) {
+	/*
+	 * i945G/GM report MSI capability despite not actually supporting it.
+	 * so explicitly disable it.
+	 */
+	if (IS_I945G(dev_priv) || IS_I945GM(dev_priv))
+		pa->pa_flags &= ~PCI_FLAGS_MSI_ENABLED;
+
+	if (pci_intr_map_msi(pa, &dev_priv->ih) != 0 &&
+	    pci_intr_map(pa, &dev_priv->ih) != 0) {
 		printf(": couldn't map interrupt\n");
 		return;
 	}
