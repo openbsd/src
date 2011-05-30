@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.h,v 1.8 2005/03/28 21:28:22 deraadt Exp $	*/
+/*	$OpenBSD: edit.h,v 1.9 2011/05/30 17:14:35 martynas Exp $	*/
 
 /* NAME:
  *      edit.h - globals for edit modes
@@ -37,7 +37,7 @@ typedef struct {
 
 EXTERN X_chars edchars;
 
-/* x_fc_glob() flags */
+/* x_cf_glob() flags */
 #define XCF_COMMAND	BIT(0)	/* Do command completion */
 #define XCF_FILE	BIT(1)	/* Do file completion */
 #define XCF_FULLPATH	BIT(2)	/* command completion: store full path */
