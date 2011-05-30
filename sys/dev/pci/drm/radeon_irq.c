@@ -196,6 +196,8 @@ radeondrm_intr(void *arg)
 	drm_radeon_private_t	*dev_priv = dev->dev_private;
 	u_int32_t		 stat, r500_disp_int;
 
+	if (dev_priv->cp_running == 0)
+		return (0);
 	/* XXX wtf? */
 	if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_R600)
 		return (0);

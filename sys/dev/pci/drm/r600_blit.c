@@ -128,7 +128,7 @@ set_shaders(struct drm_device *dev)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	u64 gpu_addr;
-	int shader_size, i;
+	int i;
 	u32 *vs, *ps;
 	uint32_t sq_pgm_resources;
 	DRM_DEBUG("\n");
@@ -137,12 +137,10 @@ set_shaders(struct drm_device *dev)
 	vs = (u32 *) ((char *)dev->agp_buffer_map->handle + dev_priv->blit_vb->offset);
 	ps = (u32 *) ((char *)dev->agp_buffer_map->handle + dev_priv->blit_vb->offset + 256);
 
-	shader_size = r6xx_vs_size;
-	for (i = 0; i < shader_size; i++)
-		vs[i] = r6xx_vs[i];
-	shader_size = r6xx_ps_size;
-	for (i = 0; i < shader_size; i++)
-		ps[i] = r6xx_ps[i];
+	for (i = 0; i < r6xx_vs_size; i++)
+		vs[i] = cpu_to_le32(r6xx_vs[i]);
+	for (i = 0; i < r6xx_ps_size; i++)
+		ps[i] = cpu_to_le32(r6xx_ps[i]);
 
 	dev_priv->blit_vb->used = 512;
 
@@ -194,6 +192,9 @@ set_vtx_resource(drm_radeon_private_t *dev_priv, u64 gpu_addr)
 	DRM_DEBUG("\n");
 
 	sq_vtx_constant_word2 = (((gpu_addr >> 32) & 0xff) | (16 << 8));
+#ifdef __BIG_ENDIAN
+	sq_vtx_constant_word2 |= (2 << 30);
+#endif
 
 	BEGIN_RING(9);
 	OUT_RING(CP_PACKET3(R600_IT_SET_RESOURCE, 7));
@@ -290,7 +291,11 @@ draw_auto(drm_radeon_private_t *dev_priv)
 	OUT_RING(DI_PT_RECTLIST);
 
 	OUT_RING(CP_PACKET3(R600_IT_INDEX_TYPE, 0));
+#ifdef __BIG_ENDIAN
+	OUT_RING((2 << 2) | DI_INDEX_SIZE_16_BIT);
+#else
 	OUT_RING(DI_INDEX_SIZE_16_BIT);
+#endif
 
 	OUT_RING(CP_PACKET3(R600_IT_NUM_INSTANCES, 0));
 	OUT_RING(1);
@@ -306,7 +311,7 @@ draw_auto(drm_radeon_private_t *dev_priv)
 static inline void
 set_default_state(drm_radeon_private_t *dev_priv)
 {
-	int default_state_dw, i;
+	int i;
 	u32 sq_config, sq_gpr_resource_mgmt_1, sq_gpr_resource_mgmt_2;
 	u32 sq_thread_resource_mgmt, sq_stack_resource_mgmt_1, sq_stack_resource_mgmt_2;
 	int num_ps_gprs, num_vs_gprs, num_temp_gprs, num_gs_gprs, num_es_gprs;
@@ -458,14 +463,12 @@ set_default_state(drm_radeon_private_t *dev_priv)
 				    R600_NUM_ES_STACK_ENTRIES(num_es_stack_entries));
 
 	if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_RV770) {
-		default_state_dw = r7xx_default_size * 4;
-		BEGIN_RING(default_state_dw + 10);
-		for (i = 0; i < default_state_dw; i++)
+		BEGIN_RING(r7xx_default_size + 10);
+		for (i = 0; i < r7xx_default_size; i++)
 			OUT_RING(r7xx_default_state[i]);
 	} else {
-		default_state_dw = r6xx_default_size * 4;
-		BEGIN_RING(default_state_dw + 10);
-		for (i = 0; i < default_state_dw; i++)
+		BEGIN_RING(r6xx_default_size + 10);
+		for (i = 0; i < r6xx_default_size; i++)
 			OUT_RING(r6xx_default_state[i]);
 	}
 	OUT_RING(CP_PACKET3(R600_IT_EVENT_WRITE, 0));
@@ -538,9 +541,12 @@ int
 r600_prepare_blit_copy(struct drm_device *dev, struct drm_file *file_priv)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
+	int ret;
 	DRM_DEBUG("\n");
 
-	r600_nomm_get_vb(dev);
+	ret = r600_nomm_get_vb(dev);
+	if (ret)
+		return ret;
 
 	dev_priv->blit_vb->file_priv = file_priv;
 
@@ -736,7 +742,7 @@ r600_blit_copy(struct drm_device *dev,
 
 			/* dst */
 			set_render_target(dev_priv, COLOR_8_8_8_8,
-					  dst_x + cur_size, h,
+					  (dst_x + cur_size) / 4, h,
 					  dst_gpu_addr);
 
 			/* scissors */
@@ -773,11 +779,9 @@ r600_blit_swap(struct drm_device *dev,
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	int cb_format, tex_format;
+	int sx2, sy2, dx2, dy2;
 	u64 vb_addr;
 	u32 *vb;
-
-	vb = (u32 *) ((char *)dev->agp_buffer_map->handle +
-		      dev_priv->blit_vb->offset + dev_priv->blit_vb->used);
 
 	if ((dev_priv->blit_vb->used + 48) > dev_priv->blit_vb->total) {
 
@@ -787,19 +791,13 @@ r600_blit_swap(struct drm_device *dev,
 			return;
 
 		set_shaders(dev);
-		vb = r600_nomm_get_vb_ptr(dev);
 	}
+	vb = r600_nomm_get_vb_ptr(dev);
 
-	if (cpp == 4) {
-		cb_format = COLOR_8_8_8_8;
-		tex_format = FMT_8_8_8_8;
-	} else if (cpp == 2) {
-		cb_format = COLOR_5_6_5;
-		tex_format = FMT_5_6_5;
-	} else {
-		cb_format = COLOR_8;
-		tex_format = FMT_8;
-	}
+	sx2 = sx + w;
+	sy2 = sy + h;
+	dx2 = dx + w;
+	dy2 = dy + h;
 
 	vb[0] = i2f(dx);
 	vb[1] = i2f(dy);
@@ -807,31 +805,46 @@ r600_blit_swap(struct drm_device *dev,
 	vb[3] = i2f(sy);
 
 	vb[4] = i2f(dx);
-	vb[5] = i2f(dy + h);
+	vb[5] = i2f(dy2);
 	vb[6] = i2f(sx);
-	vb[7] = i2f(sy + h);
+	vb[7] = i2f(sy2);
 
-	vb[8] = i2f(dx + w);
-	vb[9] = i2f(dy + h);
-	vb[10] = i2f(sx + w);
-	vb[11] = i2f(sy + h);
+	vb[8] = i2f(dx2);
+	vb[9] = i2f(dy2);
+	vb[10] = i2f(sx2);
+	vb[11] = i2f(sy2);
+
+	switch(cpp) {
+	case 4:
+		cb_format = COLOR_8_8_8_8;
+		tex_format = FMT_8_8_8_8;
+		break;
+	case 2:
+		cb_format = COLOR_5_6_5;
+		tex_format = FMT_5_6_5;
+		break;
+	default:
+		cb_format = COLOR_8;
+		tex_format = FMT_8;
+		break;
+	}
 
 	/* src */
 	set_tex_resource(dev_priv, tex_format,
 			 src_pitch / cpp,
-			 sy + h, src_pitch / cpp,
+			 sy2, src_pitch / cpp,
 			 src_gpu_addr);
 
 	cp_set_surface_sync(dev_priv,
-			    R600_TC_ACTION_ENA, (src_pitch * (sy + h)), src_gpu_addr);
+			    R600_TC_ACTION_ENA, src_pitch * sy2, src_gpu_addr);
 
 	/* dst */
 	set_render_target(dev_priv, cb_format,
-			  dst_pitch / cpp, dy + h,
+			  dst_pitch / cpp, dy2,
 			  dst_gpu_addr);
 
 	/* scissors */
-	set_scissors(dev_priv, dx, dy, dx + w, dy + h);
+	set_scissors(dev_priv, dx, dy, dx2, dy2);
 
 	/* Vertex buffer setup */
 	vb_addr = dev_priv->gart_buffers_offset +
@@ -844,7 +857,7 @@ r600_blit_swap(struct drm_device *dev,
 
 	cp_set_surface_sync(dev_priv,
 			    R600_CB_ACTION_ENA | R600_CB0_DEST_BASE_ENA,
-			    dst_pitch * (dy + h), dst_gpu_addr);
+			    dst_pitch * dy2, dst_gpu_addr);
 
 	dev_priv->blit_vb->used += 12 * 4;
 }

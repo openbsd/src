@@ -747,6 +747,8 @@ radeondrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 			return (radeon_surface_alloc(dev, data, file_priv));
 		case DRM_IOCTL_RADEON_SURF_FREE:
 			return (radeon_surface_free(dev, data, file_priv));
+		case DRM_IOCTL_RADEON_CS:
+			return (radeon_cs_ioctl(dev, data, file_priv));
 		}
 	}
 
@@ -800,10 +802,14 @@ radeondrm_write_rptr(struct drm_radeon_private *dev_priv, u_int32_t off,
 u_int32_t
 radeondrm_get_ring_head(struct drm_radeon_private *dev_priv)
 {
-	if (dev_priv->writeback_works)
+	if (dev_priv->writeback_works) {
 		return (radeondrm_read_rptr(dev_priv, 0));
-	else
-		return (RADEON_READ(RADEON_CP_RB_RPTR));
+	} else {
+		if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_R600)
+			return (RADEON_READ(R600_CP_RB_RPTR));
+		else
+			return (RADEON_READ(RADEON_CP_RB_RPTR));
+	}
 }
 
 void

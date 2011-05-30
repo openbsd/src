@@ -1,5 +1,5 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.20 2010/05/25 17:15:49 oga Exp $
+# $OpenBSD: files.drm,v 1.21 2011/05/30 21:50:46 oga Exp $
 
 # direct rendering modules
 define drmbase {}
@@ -26,6 +26,7 @@ file	dev/pci/drm/r300_cmdbuf.c	radeondrm
 file	dev/pci/drm/r600_blit.c		radeondrm
 file	dev/pci/drm/r600_blit_shaders.c	radeondrm
 file	dev/pci/drm/radeon_cp.c		radeondrm
+file	dev/pci/drm/radeon_cs.c         radeondrm
 file	dev/pci/drm/radeon_drv.c	radeondrm
 file	dev/pci/drm/radeon_irq.c	radeondrm
 file	dev/pci/drm/radeon_mem.c	radeondrm

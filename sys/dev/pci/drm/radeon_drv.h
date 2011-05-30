@@ -140,9 +140,9 @@ enum radeon_family {
 	CHIP_R600,
 	CHIP_RV610,
 	CHIP_RV630,
+	CHIP_RV670,
 	CHIP_RV620,
 	CHIP_RV635,
-	CHIP_RV670,
 	CHIP_RS780,
 	CHIP_RS880,
 	CHIP_RV770,
@@ -217,6 +217,46 @@ struct radeon_virt_surface {
 	u32 flags;
 	struct drm_file *file_priv;
 #define PCIGART_FILE_PRIV	((void *) -1L)
+};
+  
+struct drm_radeon_kernel_chunk {
+	uint32_t chunk_id;
+	uint32_t length_dw;
+	uint32_t __user *chunk_data;
+	uint32_t *kdata;
+};
+
+struct drm_radeon_cs_parser {
+	struct drm_device *dev;
+	struct drm_file *file_priv;
+	uint32_t num_chunks;
+	struct drm_radeon_kernel_chunk *chunks;
+	int ib_index;
+	int reloc_index;
+	uint32_t card_offset;
+	void *ib;
+};
+
+/* command submission struct */
+struct drm_radeon_cs_priv {
+	struct mutex cs_mutex;
+	uint32_t id_wcnt;
+	uint32_t id_scnt;
+	uint32_t id_last_wcnt;
+	uint32_t id_last_scnt;
+
+	int (*parse)(struct drm_radeon_cs_parser *parser);
+	void (*id_emit)(struct drm_radeon_cs_parser *parser, uint32_t *id);
+	uint32_t (*id_last_get)(struct drm_device *dev);
+	/* this ib handling callback are for hidding memory manager drm
+	 * from memory manager less drm, free have to emit ib discard
+	 * sequence into the ring */
+	int (*ib_get)(struct drm_radeon_cs_parser *parser);
+	uint32_t (*ib_get_ptr)(struct drm_device *dev, void *ib);
+	void (*ib_free)(struct drm_radeon_cs_parser *parser, int error);
+	/* do a relocation either MM or non-MM */
+	int (*relocate)(struct drm_radeon_cs_parser *parser,
+			uint32_t *reloc, uint64_t *offset);
 };
 
 #define RADEON_FLUSH_EMITED	(1 << 0)
@@ -329,6 +369,9 @@ typedef struct drm_radeon_private {
 	int r700_sc_earlyz_tile_fifo_fize;
 	/* r6xx/r7xx drm blit vertex buffer */
 	struct drm_buf *blit_vb;
+	/* CS */
+	struct drm_radeon_cs_priv	 cs;
+	struct drm_buf			*cs_buf;
 
 	uint32_t chip_family; /* extract from flags */
 } drm_radeon_private_t;
@@ -375,6 +418,7 @@ void		radeondrm_out_ring_table(struct drm_radeon_private *,
 		    u_int32_t *, int);
 
 				/* radeon_cp.c */
+u32	RADEON_READ_MM(struct drm_radeon_private *, int);
 u32	radeon_read_fb_location(drm_radeon_private_t *);
 void	radeon_write_fb_location(drm_radeon_private_t *, u32);
 void	radeon_write_fb_location(drm_radeon_private_t *, u32);
@@ -466,6 +510,9 @@ void	r600_done_blit_copy(struct drm_device *);
 void	r600_blit_copy(struct drm_device *, uint64_t, uint64_t, int);
 void	r600_blit_swap(struct drm_device *, uint64_t, uint64_t, int, int,
 	    int, int, int, int, int, int, int);
+
+int	radeon_cs_ioctl(struct drm_device *, void *, struct drm_file *);
+int	r600_cs_init(struct drm_device *);
 
 /* Register definitions, register access macros and drmAddMap constants
  * for Radeon kernel driver.
@@ -669,6 +716,7 @@ void	r600_blit_swap(struct drm_device *, uint64_t, uint64_t, int, int,
 #define R400_GB_PIPE_SELECT             0x402c
 #define RV530_GB_PIPE_SELECT2           0x4124
 #define R500_DYN_SCLK_PWMEM_PIPE        0x000d /* PLL */
+#define	R500_SU_REG_DEST		0x42c8
 #define R300_GB_TILE_CONFIG             0x4018
 #       define R300_ENABLE_TILING       (1 << 0)
 #       define R300_PIPE_COUNT_RV350    (0 << 1)
@@ -1833,8 +1881,8 @@ extern u32 radeon_get_scratch(drm_radeon_private_t *dev_priv, int index);
 
 #define RADEON_PCIGART_TABLE_SIZE      (32*1024)
 
-#define RADEON_READ(reg)	bus_space_read_4(dev_priv->regs->bst,	\
-				    dev_priv->regs->bsh, (reg))
+#define RADEON_READ(reg)	RADEON_READ_MM(dev_priv, reg)	
+			
 #define RADEON_WRITE(reg,val)						\
 	do {								\
 		if (reg < 0x10000) {					\
