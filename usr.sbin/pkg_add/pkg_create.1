@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.74 2011/03/19 09:39:39 jmc Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.75 2011/05/30 09:59:38 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: March 19 2011 $
+.Dd $Mdocdate: May 30 2011 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -697,6 +697,37 @@ When ports get renamed, or flavors change, extra
 annotations can help
 .Nm pkg_add
 get a sense of continuity.
+Note that these
+.Ar pkgpath
+can take extra optional components, to allow the matching of several
+flavors at once, and are order independent.
+For instance,
+.Bd -literal -offset indent
+@pkgpath some/dir,f1,f2
+.Pp
+.Ed
+and
+.Bd -literal -offset indent
+@pkgpath some/dir,f2,f2,f1
+.Ed
+.Pp
+are equivalent.
+.Bd -literal -offset indent
+@pkgpath some/dir,f1[,f2,f3][,f4]
+.Ed
+.Pp
+will match all pkgpaths to some/dir with flavor f1, and optionally f4, and
+optionally both f2 and f3, e.g.,
+.Ar some/dir,f1,f4 ,
+.Ar some/dir,f1,f2,f3 ,
+.Ar some/dir,f1,f2,f3,f4 ,
+.Ar some/dir,f1
+would match,
+but
+.Ar some/dir,f1,f5 ,
+.Ar some/dir,f2,f3 ,
+.Ar some/dir,f1,f2,f4
+would not.
 .Pp
 .It Cm @rcscript Ar filename
 Script for the

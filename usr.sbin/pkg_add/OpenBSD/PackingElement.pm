@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.195 2011/03/19 16:56:05 schwarze Exp $
+# $OpenBSD: PackingElement.pm,v 1.196 2011/05/30 09:59:38 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -893,7 +893,10 @@ sub new
 	$cdrom =~ s/^\'(.*)\'$/$1/;
 	$ftp =~ s/^\"(.*)\"$/$1/;
 	$ftp =~ s/^\'(.*)\'$/$1/;
-	bless { subdir => $subdir, cdrom => $cdrom, ftp => $ftp}, $class;
+	bless { subdir => $subdir,
+		path => OpenBSD::PkgPath->new($subdir), 
+	    cdrom => $cdrom, 
+	    ftp => $ftp}, $class;
 }
 
 sub may_quote
@@ -909,8 +912,10 @@ sub may_quote
 sub stringize
 {
 	my $self = shift;
-	return "subdir=".$self->{subdir}." cdrom=".may_quote($self->{cdrom}).
-	    " ftp=".may_quote($self->{ftp});
+	return join(' ',
+	    "subdir=".$self->{subdir},
+	    "cdrom=".may_quote($self->{cdrom}),
+	    "ftp=".may_quote($self->{ftp}));
 }
 
 package OpenBSD::PackingElement::Name;
@@ -1027,6 +1032,13 @@ our @ISA=qw(OpenBSD::PackingElement::Meta);
 sub keyword() { "pkgpath" }
 __PACKAGE__->register_with_factory;
 sub category() { "pkgpath" }
+
+sub new
+{
+	my ($class, $fullpkgpath) = @_;
+	bless {name => $fullpkgpath, 
+	    path => OpenBSD::PkgPath::WithOpts->new($fullpkgpath)}, $class;
+}
 
 package OpenBSD::PackingElement::Incompatibility;
 our @ISA=qw(OpenBSD::PackingElement::Meta);
@@ -1844,6 +1856,91 @@ sub register_old_keyword
 for my $k (qw(src display mtree ignore_inst dirrm pkgcfl pkgdep newdepend
     libdepend ignore)) {
 	__PACKAGE__->register_old_keyword($k);
+}
+
+package OpenBSD::PkgPath;
+sub new
+{
+	my ($class, $fullpkgpath) = @_;
+	my ($dir, @mandatory) = split(/\,/, $fullpkgpath);
+	return bless {dir => $dir,
+		mandatory => {map {($_, 1)} @mandatory},
+	}, $class;
+}
+
+sub trim
+{
+	my ($self, $has, $from, $to_rm) = @_;
+	for my $f (keys %$to_rm) {
+		if ($has->{$f}) {
+			delete $from->{$f};
+		} else {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+sub match2
+{
+	my ($self, $has, $h) = @_;
+	if (keys %$h) {
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+sub match
+{
+	my ($self, $other) = @_;
+	# make a copy of options
+	my %h = %{$other->{mandatory}};
+	if (!$self->trim($other->{mandatory}, \%h, $self->{mandatory})) {
+		return 0;
+	}
+	if ($self->match2($other->{mandatory}, \%h)) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+package OpenBSD::PkgPath::WithOpts;
+our @ISA = qw(OpenBSD::PkgPath);
+
+sub new
+{
+	my ($class, $fullpkgpath) = @_;
+	my @opts = ();
+	while ($fullpkgpath =~ s/\[\,(.*?)\]//) {
+		push(@opts, {map {($_, 1)} split(/\,/, $1) });
+	};
+	my $o = $class->SUPER::new($fullpkgpath);
+	if (@opts == 0) {
+		bless $o, "OpenBSD::PkgPath";
+	} else {
+		$o->{opts} = \@opts;
+	}
+	return $o;
+}
+
+sub match2
+{
+	my ($self, $has, $h) = @_;
+	if (!keys %$h) {
+		return 1;
+	}
+	for my $opts (@{$self->{opts}}) {
+		my %h2 = %$h;
+		if ($self->trim($has, \%h2, $opts)) {
+			$h = \%h2;
+			if (!keys %$h) {
+				return 1;
+			}
+		}
+	}
+	return 0;
 }
 
 1;
