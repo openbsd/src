@@ -5910,6 +5910,12 @@ inteldrm_965_reset(struct inteldrm_softc *dev_priv, u_int8_t flags)
 	pcireg_t	reg;
 	int		i = 0;
 
+	/*
+	 * There seems to be soemthing wrong with !full reset modes, so force
+	 * the whole shebang for now.
+	 */
+	flags = GDRST_FULL;
+
 	if (flags == GDRST_FULL)
 		inteldrm_save_display(dev_priv);
 
