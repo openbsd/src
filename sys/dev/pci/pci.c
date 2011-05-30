@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.91 2011/05/19 20:14:55 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.92 2011/05/30 19:09:46 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -370,8 +370,10 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	struct pci_attach_args pa;
 	struct pci_dev *pd;
 	struct device *dev;
-	pcireg_t id, class, intr, bhlcr;
-	int ret = 0, pin, bus, device, function;
+	pcireg_t id, class, intr, bhlcr, cap;
+	int pin, bus, device, function;
+	int off, ret = 0;
+	uint64_t addr;
 
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
 
@@ -436,6 +438,29 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 		    ((pin + pa.pa_intrswiz - 1) % 4) + 1;
 	}
 	pa.pa_intrline = PCI_INTERRUPT_LINE(intr);
+
+	if (pci_get_ht_capability(pc, tag, PCI_HT_CAP_MSI, &off, &cap)) {
+		/*
+		 * XXX Should we enable MSI mapping ourselves on
+		 * systems that have it disabled?
+		 */
+		if (cap & PCI_HT_MSI_ENABLED) {
+			if ((cap & PCI_HT_MSI_FIXED) == 0) {
+				addr = pci_conf_read(pc, tag,
+				    off + PCI_HT_MSI_ADDR);
+				addr |= (uint64_t)pci_conf_read(pc, tag,
+				    off + PCI_HT_MSI_ADDR_HI32) << 32;
+			} else
+				addr = PCI_HT_MSI_FIXED_ADDR;
+
+			/* 
+			 * XXX This will fail to enable MSI on systems
+			 * that don't use the canonical address.
+			 */
+			if (addr == PCI_HT_MSI_FIXED_ADDR)
+				pa.pa_flags |= PCI_FLAGS_MSI_ENABLED;
+		}
+	}
 
 	if (match != NULL) {
 		ret = (*match)(&pa);
@@ -545,6 +570,35 @@ pci_get_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
 #endif
 		reg = pci_conf_read(pc, tag, ofs);
 		if (PCI_CAPLIST_CAP(reg) == capid) {
+			if (offset)
+				*offset = ofs;
+			if (value)
+				*value = reg;
+			return (1);
+		}
+		ofs = PCI_CAPLIST_NEXT(reg);
+	}
+
+	return (0);
+}
+
+int
+pci_get_ht_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
+    int *offset, pcireg_t *value)
+{
+	pcireg_t reg;
+	unsigned int ofs;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_HT, &ofs, NULL) == 0)
+		return (0);
+
+	while (ofs != 0) {
+#ifdef DIAGNOSTIC
+		if ((ofs & 3) || (ofs < 0x40))
+			panic("pci_get_ht_capability");
+#endif
+		reg = pci_conf_read(pc, tag, ofs);
+		if (PCI_HT_CAP(reg) == capid) {
 			if (offset)
 				*offset = ofs;
 			if (value)

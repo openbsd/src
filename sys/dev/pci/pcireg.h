@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.40 2011/05/14 09:57:56 kettenis Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.41 2011/05/30 19:09:46 kettenis Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -479,7 +479,7 @@ typedef u_int8_t pci_revision_t;
 #define PCI_CAP_MSI		0x05
 #define PCI_CAP_CPCI_HOTSWAP	0x06
 #define PCI_CAP_PCIX		0x07
-#define PCI_CAP_LDT		0x08
+#define PCI_CAP_HT		0x08
 #define PCI_CAP_VENDSPEC	0x09
 #define PCI_CAP_DEBUGPORT	0x0a
 #define PCI_CAP_CPCI_RSRCCTL	0x0b
@@ -521,6 +521,25 @@ typedef u_int8_t pci_revision_t;
 #define PCI_PMCSR_STATE_D1	0x01
 #define PCI_PMCSR_STATE_D2	0x02
 #define PCI_PMCSR_STATE_D3	0x03
+
+/*
+ * HyperTransport; access via capability pointer.
+ */
+#define PCI_HT_CAP(cr) ((((cr) >> 27) < 0x08) ? \
+    (((cr) >> 27) & 0x1c) : (((cr) >> 27) & 0x1f))
+
+#define PCI_HT_CAP_SLAVE	0x00
+#define PCI_HT_CAP_HOST		0x04
+#define PCI_HT_CAP_INTERRUPT	0x10
+#define PCI_HT_CAP_MSI		0x15
+
+#define PCI_HT_MSI_ENABLED	0x00010000
+#define PCI_HT_MSI_FIXED	0x00020000
+
+#define PCI_HT_MSI_FIXED_ADDR	0xffe00000UL
+
+#define PCI_HT_MSI_ADDR		0x04
+#define PCI_HT_MSI_ADDR_HI32	0x08
 
 /*
  * PCI Express; access via capability pointer.

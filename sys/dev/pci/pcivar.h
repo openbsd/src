@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.65 2011/05/21 10:34:53 kettenis Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.66 2011/05/30 19:09:46 kettenis Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -231,8 +231,10 @@ int	pci_io_find(pci_chipset_tag_t, pcitag_t, int, bus_addr_t *,
 int	pci_mem_find(pci_chipset_tag_t, pcitag_t, int, bus_addr_t *,
 	    bus_size_t *, int *);
 
-int pci_get_capability(pci_chipset_tag_t, pcitag_t, int,
-			    int *, pcireg_t *);
+int	pci_get_capability(pci_chipset_tag_t, pcitag_t, int,
+	    int *, pcireg_t *);
+int	pci_get_ht_capability(pci_chipset_tag_t, pcitag_t, int,
+	    int *, pcireg_t *);
 
 struct pci_matchid {
 	pci_vendor_id_t		pm_vid;
