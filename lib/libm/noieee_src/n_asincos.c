@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_asincos.c,v 1.10 2009/10/27 23:59:29 deraadt Exp $	*/
+/*	$OpenBSD: n_asincos.c,v 1.11 2011/05/30 18:34:38 martynas Exp $	*/
 /*	$NetBSD: n_asincos.c,v 1.1 1995/10/10 23:36:34 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -81,6 +81,8 @@
  *      1.99 ulps.
  */
 
+/* LINTLIBRARY */
+
 #include <sys/cdefs.h>
 #include <math.h>
 
@@ -102,9 +104,13 @@ asin(double x)
 
 }
 
-#ifdef __weak_alias
+#ifdef	lint
+/* PROTOLIB1 */
+long double asinl(long double);
+/* PROTOLIB0 */
+#else	/* lint */
 __weak_alias(asinl, asin);
-#endif /* __weak_alias */
+#endif	/* lint */
 
 /* ACOS(X)
  * RETURNS ARC COS OF X
@@ -173,6 +179,10 @@ acos(double x)
 	return(t+t);
 }
 
-#ifdef __weak_alias
+#ifdef	lint
+/* PROTOLIB1 */
+long double acosl(long double);
+/* PROTOLIB0 */
+#else	/* lint */
 __weak_alias(acosl, acos);
-#endif /* __weak_alias */
+#endif	/* lint */

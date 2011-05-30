@@ -1,8 +1,10 @@
-/*	$OpenBSD: e_sqrt.c,v 1.1 2009/04/05 19:26:27 martynas Exp $	*/
+/*	$OpenBSD: e_sqrt.c,v 1.2 2011/05/30 18:34:38 martynas Exp $	*/
 
 /*
  * Written by Martynas Venckus.  Public domain
  */
+
+/* LINTLIBRARY */
 
 #include <sys/types.h>
 #include <sys/cdefs.h>
@@ -34,5 +36,9 @@ sqrt(double d)
 }
 
 /* No extended-precision is present. */
+#ifdef	lint
+/* PROTOLIB1 */
+long double sqrtl(long double);
+#else	/* lint */
 __weak_alias(sqrtl,sqrt);
-
+#endif	/* lint */

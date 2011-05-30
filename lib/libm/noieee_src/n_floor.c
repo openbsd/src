@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_floor.c,v 1.13 2009/10/27 23:59:29 deraadt Exp $	*/
+/*	$OpenBSD: n_floor.c,v 1.14 2011/05/30 18:34:38 martynas Exp $	*/
 /*	$NetBSD: n_floor.c,v 1.1 1995/10/10 23:36:48 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -28,6 +28,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+/* LINTLIBRARY */
 
 #include <sys/cdefs.h>
 #include <math.h>
@@ -114,6 +116,9 @@ rint(double x)
 	return (t - s);
 }
 
-#ifdef __weak_alias    
+#ifdef	lint
+/* PROTOLIB1 */
+long double rintl(long double);
+#else	/* lint */
 __weak_alias(rintl, rint);
-#endif /* __weak_alias */
+#endif	/* lint */

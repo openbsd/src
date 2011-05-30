@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_atan.c,v 1.8 2009/10/27 23:59:29 deraadt Exp $	*/
+/*	$OpenBSD: n_atan.c,v 1.9 2011/05/30 18:34:38 martynas Exp $	*/
 /*	$NetBSD: n_atan.c,v 1.1 1995/10/10 23:36:36 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -73,6 +73,8 @@
  *	0.85 ulps.
  */
 
+/* LINTLIBRARY */
+
 #include <sys/cdefs.h>
 #include <math.h>
 
@@ -83,6 +85,9 @@ atan(double x)
 	return(atan2(x,one));
 }
 
-#ifdef __weak_alias
+#ifdef	lint
+/* PROTOLIB1 */
+long double atanl(long double);
+#else	/* lint */
 __weak_alias(atanl, atan);
-#endif /* __weak_alias */
+#endif	/* lint */

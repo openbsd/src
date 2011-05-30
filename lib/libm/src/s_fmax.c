@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_fmax.c,v 1.4 2008/12/10 01:08:24 martynas Exp $	*/
+/*	$OpenBSD: s_fmax.c,v 1.5 2011/05/30 18:34:38 martynas Exp $	*/
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -25,6 +25,8 @@
  * SUCH DAMAGE.
  */
 
+/* LINTLIBRARY */
+
 #include <sys/cdefs.h>
 #include <float.h>
 #include <math.h>
@@ -48,8 +50,11 @@ fmax(double x, double y)
 	return (x > y ? x : y);
 }
 
-#if LDBL_MANT_DIG == 53
-#ifdef __weak_alias
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double fmaxl(long double, long double);
+#else	/* lint */
 __weak_alias(fmaxl, fmax);
-#endif /* __weak_alias */
-#endif /* LDBL_MANT_DIG == 53 */
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

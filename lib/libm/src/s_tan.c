@@ -40,6 +40,8 @@
  *	TRIG(x) returns trig(x) nearly rounded 
  */
 
+/* LINTLIBRARY */
+
 #include <sys/cdefs.h>
 #include <float.h>
 #include <math.h>
@@ -70,8 +72,11 @@ tan(double x)
 	}
 }
 
-#if LDBL_MANT_DIG == 53
-#ifdef __weak_alias
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double tanl(long double);
+#else	/* lint */
 __weak_alias(tanl, tan);
-#endif /* __weak_alias */
-#endif /* LDBL_MANT_DIG == 53 */
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

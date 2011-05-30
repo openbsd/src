@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_support.c,v 1.18 2009/10/27 23:59:29 deraadt Exp $	*/
+/*	$OpenBSD: n_support.c,v 1.19 2011/05/30 18:34:38 martynas Exp $	*/
 /*	$NetBSD: n_support.c,v 1.1 1995/10/10 23:37:06 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -64,6 +64,8 @@
  * REVISED BY K.C. NG on 1/22/85, 2/13/85, 3/24/85.
  */
 
+/* LINTLIBRARY */
+
 #include <sys/cdefs.h>
 #include <math.h>
 
@@ -117,9 +119,13 @@ scalbn(double x, int N)
         return(x);
 }
 
-#ifdef __weak_alias    
+#ifdef	lint
+/* PROTOLIB1 */
+long double scalbnl(long double, int);
+/* PROTOLIB0 */
+#else	/* lint */
 __weak_alias(scalbnl, scalbn);
-#endif /* __weak_alias */
+#endif	/* lint */
 
 double
 copysign(double x, double y)
@@ -135,9 +141,13 @@ copysign(double x, double y)
         return(x);
 }
 
-#ifdef __weak_alias    
+#ifdef	lint
+/* PROTOLIB1 */
+long double copysignl(long double, long double);
+/* PROTOLIB0 */
+#else	/* lint */
 __weak_alias(copysignl, copysign);
-#endif /* __weak_alias */
+#endif	/* lint */
 
 double
 logb(double x)
@@ -162,9 +172,13 @@ logb(double x)
 #endif	/* defined(__vax__) */
 }
 
-#ifdef __weak_alias    
+#ifdef	lint
+/* PROTOLIB1 */
+long double logbl(long double);
+/* PROTOLIB0 */
+#else	/* lint */
 __weak_alias(logbl, logb);
-#endif /* __weak_alias */
+#endif	/* lint */
 
 double
 remainder(double x, double p)
@@ -315,9 +329,13 @@ sqrt(double x)
 end:        return(scalbn(q,n));
 }
 
-#ifdef __weak_alias    
+#ifdef	lint
+/* PROTOLIB1 */
+long double sqrtl(long double);
+/* PROTOLIB0 */
+#else	/* lint */
 __weak_alias(sqrtl, sqrt);
-#endif /* __weak_alias */
+#endif	/* lint */
 
 #if 0
 /* REMAINDER(X,Y)

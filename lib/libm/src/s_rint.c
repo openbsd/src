@@ -20,6 +20,8 @@
  *	Inexact flag raised if x not equal to rint(x).
  */
 
+/* LINTLIBRARY */
+
 #include <sys/cdefs.h>
 #include <float.h>
 #include <math.h>
@@ -77,8 +79,11 @@ rint(double x)
 	return w-TWO52[sx];
 }
 
-#if LDBL_MANT_DIG == 53
-#ifdef __weak_alias
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double rintl(long double);
+#else	/* lint */
 __weak_alias(rintl, rint);
-#endif /* __weak_alias */
-#endif /* LDBL_MANT_DIG == 53 */
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

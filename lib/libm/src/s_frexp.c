@@ -20,6 +20,8 @@
  * with *exp=0. 
  */
 
+/* LINTLIBRARY */
+
 #include <sys/cdefs.h>
 #include <float.h>
 #include <math.h>
@@ -49,8 +51,11 @@ frexp(double x, int *eptr)
 	return x;
 }
 
-#if LDBL_MANT_DIG == 53
-#ifdef __weak_alias
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double frexpl(long double, int *);
+#else	/* lint */
 __weak_alias(frexpl, frexp);
-#endif /* __weak_alias */
-#endif /* LDBL_MANT_DIG == 53 */
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

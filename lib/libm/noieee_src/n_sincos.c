@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_sincos.c,v 1.9 2009/10/27 23:59:29 deraadt Exp $	*/
+/*	$OpenBSD: n_sincos.c,v 1.10 2011/05/30 18:34:38 martynas Exp $	*/
 /*	$NetBSD: n_sincos.c,v 1.1 1995/10/10 23:37:04 ragge Exp $	*/
 /*
  * Copyright (c) 1987, 1993
@@ -28,6 +28,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+/* LINTLIBRARY */
 
 #include <sys/cdefs.h>
 #include <math.h>
@@ -63,9 +65,13 @@ sin(double x)
 	return x+x*sin__S(x*x);
 }
 
-#ifdef __weak_alias
+#ifdef	lint
+/* PROTOLIB1 */
+long double sinl(long double);
+/* PROTOLIB0 */
+#else	/* lint */
 __weak_alias(sinl, sin);
-#endif /* __weak_alias */
+#endif  /* lint */
 
 double
 cos(double x)
@@ -97,6 +103,10 @@ cos(double x)
 	return copysign(a,s);
 }
 
-#ifdef __weak_alias
+#ifdef	lint
+/* PROTOLIB1 */
+long double cosl(long double);
+/* PROTOLIB0 */
+#else	/* lint */
 __weak_alias(cosl, cos);
-#endif /* __weak_alias */
+#endif  /* lint */

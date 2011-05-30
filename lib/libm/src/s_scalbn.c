@@ -17,6 +17,8 @@
  * exponentiation or a multiplication.
  */
 
+/* LINTLIBRARY */
+
 #include <sys/cdefs.h>
 #include <float.h>
 #include <math.h>
@@ -56,8 +58,11 @@ scalbn (double x, int n)
         return x*twom54;
 }
 
-#if LDBL_MANT_DIG == 53
-#ifdef __weak_alias
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double scalbnl(long double, int);
+#else	/* lint */
 __weak_alias(scalbnl, scalbn);
-#endif /* __weak_alias */
-#endif /* LDBL_MANT_DIG == 53 */
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

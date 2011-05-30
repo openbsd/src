@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_exp2.c,v 1.2 2008/12/09 20:00:35 martynas Exp $	*/
+/*	$OpenBSD: s_exp2.c,v 1.3 2011/05/30 18:34:38 martynas Exp $	*/
 /*-
  * Copyright (c) 2005 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -24,6 +24,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+/* LINTLIBRARY */
 
 #include <sys/cdefs.h>
 #include <float.h>
@@ -390,8 +392,11 @@ exp2(double x)
 	}
 }
 
-#if LDBL_MANT_DIG == 53
-#ifdef __weak_alias
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double exp2l(long double);
+#else	/* lint */
 __weak_alias(exp2l, exp2);
-#endif /* __weak_alias */
-#endif /* LDBL_MANT_DIG == 53 */
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */
