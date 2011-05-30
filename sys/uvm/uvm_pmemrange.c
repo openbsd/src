@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.22 2011/04/06 12:31:10 mlarkin Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.23 2011/05/30 21:23:36 oga Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -854,7 +854,7 @@ retry_desperate:
 	}
 
 	/*
-	 * The hart of the contig case.
+	 * The heart of the contig case.
 	 *
 	 * The code actually looks like this:
 	 *
