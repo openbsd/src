@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.196 2011/05/30 09:59:38 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.197 2011/05/30 10:07:19 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -899,6 +899,11 @@ sub new
 	    ftp => $ftp}, $class;
 }
 
+sub subdir
+{
+	return shift->{subdir};
+}
+
 sub may_quote
 {
 	my $s = shift;
@@ -1038,6 +1043,11 @@ sub new
 	my ($class, $fullpkgpath) = @_;
 	bless {name => $fullpkgpath, 
 	    path => OpenBSD::PkgPath::WithOpts->new($fullpkgpath)}, $class;
+}
+
+sub subdir
+{
+	return shift->{name};
 }
 
 package OpenBSD::PackingElement::Incompatibility;
@@ -1858,6 +1868,7 @@ for my $k (qw(src display mtree ignore_inst dirrm pkgcfl pkgdep newdepend
 	__PACKAGE__->register_old_keyword($k);
 }
 
+# Real pkgpath objects, with matching properties
 package OpenBSD::PkgPath;
 sub new
 {
@@ -1868,6 +1879,10 @@ sub new
 	}, $class;
 }
 
+# a pkgpath has a dir, and some flavors/multi parts. To match, we must
+# remove them all. So, keep a full hash of everything we have (has), and
+# when stuff $to_rm matches, remove them from $from.
+# We match when we're left with nothing.
 sub trim
 {
 	my ($self, $has, $from, $to_rm) = @_;
@@ -1881,6 +1896,7 @@ sub trim
 	return 1;
 }
 
+# basic match: after mandatory, nothing left
 sub match2
 {
 	my ($self, $has, $h) = @_;
@@ -1891,6 +1907,7 @@ sub match2
 	}
 }
 
+# zap mandatory, check that what's left is okay.
 sub match
 {
 	my ($self, $other) = @_;
@@ -1925,6 +1942,8 @@ sub new
 	return $o;
 }
 
+# match with options: systematically trim any optional part that  fully
+# matches, until we're left with nothing, or some options keep happening.
 sub match2
 {
 	my ($self, $has, $h) = @_;
