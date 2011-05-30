@@ -1,4 +1,4 @@
-/*	$OpenBSD: snprintf.c,v 1.17 2009/11/09 00:18:27 kurt Exp $ */
+/*	$OpenBSD: snprintf.c,v 1.18 2011/05/30 18:48:33 martynas Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,6 +37,7 @@
 #include <stdarg.h>
 #include "local.h"
 
+/* PRINTFLIKE3 */
 int
 snprintf(char *str, size_t n, const char *fmt, ...)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: err.c,v 1.9 2005/08/08 08:05:33 espie Exp $ */
+/*	$OpenBSD: err.c,v 1.10 2011/05/30 18:48:33 martynas Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,6 +32,7 @@
 #include <err.h>
 #include <stdarg.h>
 
+/* PRINTFLIKE2 */
 __dead void
 _err(int eval, const char *fmt, ...)
 {
@@ -42,5 +43,6 @@ _err(int eval, const char *fmt, ...)
 	va_end(ap);
 }
 
+/* PRINTFLIKE2 */
 __weak_alias(err, _err);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scanf.c,v 1.9 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: scanf.c,v 1.10 2011/05/30 18:48:33 martynas Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+/* SCANFLIKE1 */
 int
 scanf(const char *fmt, ...)
 {

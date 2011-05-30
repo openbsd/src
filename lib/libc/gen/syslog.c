@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog.c,v 1.30 2009/11/18 07:43:22 guenther Exp $ */
+/*	$OpenBSD: syslog.c,v 1.31 2011/05/30 18:48:33 martynas Exp $ */
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -63,6 +63,7 @@ gettime(char *buf, size_t maxsize)
  * syslog, vsyslog --
  *	print message on log file; output is intended for syslogd(8).
  */
+/* PRINTFLIKE2 */
 void
 syslog(int pri, const char *fmt, ...)
 {

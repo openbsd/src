@@ -1,4 +1,4 @@
-/*	$OpenBSD: fprintf.c,v 1.6 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: fprintf.c,v 1.7 2011/05/30 18:48:33 martynas Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+/* PRINTFLIKE2 */
 int
 fprintf(FILE *fp, const char *fmt, ...)
 {

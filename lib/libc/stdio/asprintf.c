@@ -1,4 +1,4 @@
-/*	$OpenBSD: asprintf.c,v 1.18 2009/11/09 00:18:27 kurt Exp $	*/
+/*	$OpenBSD: asprintf.c,v 1.19 2011/05/30 18:48:33 martynas Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -23,6 +23,7 @@
 #include <stdarg.h>
 #include "local.h"
 
+/* PRINTFLIKE2 */
 int
 asprintf(char **str, const char *fmt, ...)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog_r.c,v 1.2 2009/11/21 10:23:31 chl Exp $ */
+/*	$OpenBSD: syslog_r.c,v 1.3 2011/05/30 18:48:33 martynas Exp $ */
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -54,6 +54,7 @@ void	__vsyslog_r(int pri, struct syslog_data *, size_t (*)(char *, size_t),
 
 /* Reentrant version of syslog, i.e. syslog_r() */
 
+/* PRINTFLIKE3 */
 void
 syslog_r(int pri, struct syslog_data *data, const char *fmt, ...)
 {

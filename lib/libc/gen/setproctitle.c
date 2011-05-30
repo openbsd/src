@@ -1,4 +1,4 @@
-/*	$OpenBSD: setproctitle.c,v 1.11 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: setproctitle.c,v 1.12 2011/05/30 18:48:33 martynas Exp $ */
 /*
  * Copyright (c) 1994, 1995 Christopher G. Demetriou
  * All rights reserved.
@@ -44,6 +44,7 @@
 
 extern char *__progname;		/* Program name, from crt0. */
 
+/* PRINTFLIKE1 */
 void
 setproctitle(const char *fmt, ...)
 {

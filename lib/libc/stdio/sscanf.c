@@ -1,4 +1,4 @@
-/*	$OpenBSD: sscanf.c,v 1.12 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: sscanf.c,v 1.13 2011/05/30 18:48:33 martynas Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -44,6 +44,7 @@ eofread(void *cookie, char *buf, int len)
 	return (0);
 }
 
+/* SCANFLIKE2 */
 int
 sscanf(const char *str, const char *fmt, ...)
 {

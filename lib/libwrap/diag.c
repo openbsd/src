@@ -1,4 +1,4 @@
-/*	$OpenBSD: diag.c,v 1.5 2009/10/27 23:59:30 deraadt Exp $	*/
+/*	$OpenBSD: diag.c,v 1.6 2011/05/30 18:48:33 martynas Exp $	*/
 
  /*
   * Routines to report various classes of problems. Each report is decorated
@@ -48,6 +48,7 @@ va_list ap;
 
 /* tcpd_warn - report problem of some sort and proceed */
 
+/* PRINTFLIKE1 */
 void	tcpd_warn(char *format, ...)
 {
     va_list ap;
@@ -59,6 +60,7 @@ void	tcpd_warn(char *format, ...)
 
 /* tcpd_jump - report serious problem and jump */
 
+/* PRINTFLIKE1 */
 void    tcpd_jump(char *format, ...)
 {
     va_list ap;
