@@ -1,4 +1,4 @@
-/*	$OpenBSD: isinf.c,v 1.4 2008/12/10 01:15:02 martynas Exp $	*/
+/*	$OpenBSD: isinf.c,v 1.5 2011/05/30 17:28:15 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+/* LINTLIBRARY */
 
 #include <sys/types.h>
 #include <sys/cdefs.h>
@@ -37,16 +39,17 @@ __isinff(float f)
 	return (p->sng_exp == SNG_EXP_INFNAN && p->sng_frac == 0);
 }
 
-#if LDBL_MANT_DIG == 53
-#ifdef __weak_alias
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+int __isinfl(long double);
+#else	/* lint */
 __weak_alias(__isinfl, __isinf);
-#endif /* __weak_alias */
-#endif /* LDBL_MANT_DIG == 53 */
+#endif	/* __weak_alias */
+#endif	/* LDBL_MANT_DIG == 53 */
 
 /*
  * 3BSD compatibility aliases.
  */
-#ifdef __weak_alias
 __weak_alias(isinf, __isinf);
 __weak_alias(isinff, __isinff);
-#endif /* __weak_alias */
