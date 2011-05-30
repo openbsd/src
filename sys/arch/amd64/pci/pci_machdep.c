@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.45 2011/05/29 10:47:42 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.46 2011/05/30 19:27:40 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -151,6 +151,49 @@ void
 pci_attach_hook(struct device *parent, struct device *self,
     struct pcibus_attach_args *pba)
 {
+	pci_chipset_tag_t pc = pba->pba_pc;
+	pcitag_t tag;
+	pcireg_t id, class;
+
+	if (pba->pba_bus != 0)
+		return;
+
+	/*
+	 * In order to decide whether the system supports MSI we look
+	 * at the host bridge, which should be device 0 function 0 on
+	 * bus 0.  It is better to not enable MSI on systems that
+	 * support it than the other way around, so be conservative
+	 * here.  So we don't enable MSI if we don't find a host
+	 * bridge there.  We also deliberately don't enable MSI on
+	 * chipsets from low-end manifacturers like VIA and SiS.
+	 */
+	tag = pci_make_tag(pc, 0, 0, 0);
+	id = pci_conf_read(pc, tag, PCI_ID_REG);
+	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
+
+	if (PCI_CLASS(class) != PCI_CLASS_BRIDGE ||
+	    PCI_SUBCLASS(class) != PCI_SUBCLASS_BRIDGE_HOST)
+		return;
+
+	switch (PCI_VENDOR(id)) {
+	case PCI_VENDOR_INTEL:
+	case PCI_VENDOR_NVIDIA:
+	case PCI_VENDOR_AMD:
+		pba->pba_flags |= PCI_FLAGS_MSI_ENABLED;
+		break;
+	}
+
+	/*
+	 * Don't enable MSI on a HyperTransport bus.  In order to
+	 * determine that bus 0 is a HyperTransport bus, we look at
+	 * device 24 function 0, which is the HyperTransport
+	 * host/primary interface integrated on most 64-bit AMD CPUs.
+	 * If that device has a HyperTransport capability, bus 0 must
+	 * be a HyperTransport bus and we disable MSI.
+	 */
+	tag = pci_make_tag(pc, 0, 24, 0);
+	if (pci_get_capability(pc, tag, PCI_CAP_HT, NULL, NULL))
+		pba->pba_flags &= ~PCI_FLAGS_MSI_ENABLED;
 }
 
 int
