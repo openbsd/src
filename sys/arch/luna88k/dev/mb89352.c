@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.16 2011/04/03 12:42:36 krw Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.17 2011/05/30 20:01:29 miod Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -374,10 +374,8 @@ spc_acb_alloc(xsc)
 
 	mtx_enter(&sc->sc_acb_mtx);
 	acb = TAILQ_FIRST(&sc->free_list);
-	if (acb) {
+	if (acb)
 		TAILQ_REMOVE(&sc->free_list, acb, chain);
-		acb->flags |= ACB_ALLOC;
-	}
 	mtx_leave(&sc->sc_acb_mtx);
 
 	return acb;

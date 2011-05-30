@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352var.h,v 1.3 2011/04/03 12:42:36 krw Exp $	*/
+/*	$OpenBSD: mb89352var.h,v 1.4 2011/05/30 20:01:29 miod Exp $	*/
 /*	$NetBSD: mb89352var.h,v 1.6 2003/08/02 12:48:09 tsutsui Exp $	*/
 /*	NecBSD: mb89352var.h,v 1.4 1998/03/14 07:31:22 kmatsuda Exp 	*/
 
@@ -83,7 +83,6 @@ struct spc_acb {
 	TAILQ_ENTRY(spc_acb) chain;
 	struct scsi_xfer *xs;	/* SCSI xfer ctrl block from above */
 	int flags;
-#define ACB_ALLOC	0x01
 #define ACB_NEXUS	0x02
 #define ACB_SENSE	0x04
 #define ACB_ABORT	0x40
