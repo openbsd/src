@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.715 2011/05/24 20:27:11 matthew Exp $
+#	$OpenBSD: GENERIC,v 1.716 2011/05/30 22:03:47 oga Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -358,6 +358,7 @@ amdagp*		at pchb?
 intelagp*	at pchb?
 sisagp*		at pchb?
 viaagp*		at pchb?
+mmuagp*		at pchb?
 
 agp*		at intagp?	# AGP bridges
 agp*		at aliagp?	# AGP bridges
@@ -365,6 +366,7 @@ agp*		at amdagp?	# AGP bridges
 agp*		at intelagp?	# AGP bridges
 agp*		at sisagp?	# AGP bridges
 agp*		at viaagp?	# AGP bridges
+agp*		at mmuagp?	
 
 #option		DRMDEBUG
 inteldrm*	at vga?		# Intel i915, i945 DRM driver
