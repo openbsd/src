@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.123 2010/07/02 19:57:14 tedu Exp $ */
+/*	$OpenBSD: machdep.c,v 1.124 2011/05/30 22:25:21 oga Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -177,7 +177,7 @@ mvme68k_init()
 	uvmexp.pagesize = NBPG;
 	uvm_setpagesize();
 	uvm_page_physload(atop(avail_start), atop(avail_end),
-	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
+	    atop(avail_start), atop(avail_end), 0);
 
 	/* 
 	 * Put machine specific exception vectors in place.

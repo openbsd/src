@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.107 2011/05/10 21:38:04 oga Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.108 2011/05/30 22:25:24 oga Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -459,14 +459,11 @@ uvm_pageboot_alloc(vsize_t size)
  * => return false if out of memory.
  */
 
-/* subroutine: try to allocate from memory chunks on the specified freelist */
-static boolean_t uvm_page_physget_freelist(paddr_t *, int);
-
-static boolean_t
-uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
+boolean_t
+uvm_page_physget(paddr_t *paddrp)
 {
 	int lcv, x;
-	UVMHIST_FUNC("uvm_page_physget_freelist"); UVMHIST_CALLED(pghist);
+	UVMHIST_FUNC("uvm_page_physget"); UVMHIST_CALLED(pghist);
 
 	/* pass 1: try allocating from a matching end */
 #if (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST) || \
@@ -479,9 +476,6 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 
 		if (uvm.page_init_done == TRUE)
 			panic("uvm_page_physget: called _after_ bootstrap");
-
-		if (vm_physmem[lcv].free_list != freelist)
-			continue;
 
 		/* try from front */
 		if (vm_physmem[lcv].avail_start == vm_physmem[lcv].start &&
@@ -555,18 +549,6 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 	return (FALSE);        /* whoops! */
 }
 
-boolean_t
-uvm_page_physget(paddr_t *paddrp)
-{
-	int i;
-	UVMHIST_FUNC("uvm_page_physget"); UVMHIST_CALLED(pghist);
-
-	/* try in the order of freelist preference */
-	for (i = 0; i < VM_NFREELIST; i++)
-		if (uvm_page_physget_freelist(paddrp, i) == TRUE)
-			return (TRUE);
-	return (FALSE);
-}
 #endif /* PMAP_STEAL_MEMORY */
 
 /*
@@ -579,8 +561,8 @@ uvm_page_physget(paddr_t *paddrp)
  */
 
 void
-uvm_page_physload_flags(paddr_t start, paddr_t end, paddr_t avail_start,
-    paddr_t avail_end, int free_list, int flags)
+uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
+    paddr_t avail_end, int flags)
 {
 	int preload, lcv;
 	psize_t npages;
@@ -589,9 +571,6 @@ uvm_page_physload_flags(paddr_t start, paddr_t end, paddr_t avail_start,
 
 	if (uvmexp.pagesize == 0)
 		panic("uvm_page_physload: page size not set!");
-
-	if (free_list >= VM_NFREELIST || free_list < VM_FREELIST_DEFAULT)
-		panic("uvm_page_physload: bad free list %d", free_list);
 
 	if (start >= end)
 		panic("uvm_page_physload: start >= end");
@@ -732,7 +711,6 @@ uvm_page_physload_flags(paddr_t start, paddr_t end, paddr_t avail_start,
 		ps->pgs = pgs;
 		ps->lastpg = pgs + npages - 1;
 	}
-	ps->free_list = free_list;
 	vm_nphysseg++;
 
 	/*

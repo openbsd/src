@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.141 2011/04/26 17:33:17 jsing Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.142 2011/05/30 22:25:20 oga Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1360,7 +1360,6 @@ init_x86_64(paddr_t first_avail)
 	for (x = 0; x < mem_cluster_cnt; x++) {
 		paddr_t seg_start = mem_clusters[x].start;
 		paddr_t seg_end = seg_start + mem_clusters[x].size;
-		int seg_type;
 
 		if (seg_start < first_avail) seg_start = first_avail;
 		if (seg_start > seg_end) continue;
@@ -1368,20 +1367,12 @@ init_x86_64(paddr_t first_avail)
 
 		physmem += atop(mem_clusters[x].size);
 
-		/* XXX - Should deal with 4GB boundary */
-		if (seg_start >= (1UL<<32))
-			seg_type = VM_FREELIST_HIGH;
-		else if (seg_end <= 16*1024*1024)
-			seg_type = VM_FREELIST_LOW;
-		else
-			seg_type = VM_FREELIST_DEFAULT;
-
 #if DEBUG_MEMLOAD
 		printf("loading 0x%lx-0x%lx (0x%lx-0x%lx)\n",
 		    seg_start, seg_end, atop(seg_start), atop(seg_end));
 #endif
 		uvm_page_physload(atop(seg_start), atop(seg_end),
-		    atop(seg_start), atop(seg_end), seg_type);
+		    atop(seg_start), atop(seg_end), 0);
 	}
 #if DEBUG_MEMLOAD
 	printf("avail_start = 0x%lx\n", avail_start);

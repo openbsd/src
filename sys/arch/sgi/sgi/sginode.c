@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.28 2011/04/23 21:23:52 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.29 2011/05/30 22:25:22 oga Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2011 Miodrag Vallat.
  *
@@ -526,9 +526,7 @@ kl_add_memory_ip27(int16_t nasid, int16_t *sizes, unsigned int cnt)
 			}
 
 			if (memrange_register(fp, lp,
-			    ~(atop(1UL << kl_n_shift) - 1),
-			    lp <= atop(2UL << 30) ?
-			      VM_FREELIST_DEFAULT : VM_FREELIST_DMA32) != 0) {
+			    ~(atop(1UL << kl_n_shift) - 1)) != 0) {
 				/*
 				 * We could hijack the smallest segment here.
 				 * But is it really worth doing?
@@ -575,9 +573,7 @@ kl_add_memory_ip35(int16_t nasid, int16_t *sizes, unsigned int cnt)
 			}
 
 			if (memrange_register(fp, lp,
-			    ~(atop(1UL << kl_n_shift) - 1),
-			    lp <= atop(2UL << 30) ?
-			      VM_FREELIST_DEFAULT : VM_FREELIST_DMA32) != 0) {
+			    ~(atop(1UL << kl_n_shift) - 1)) != 0) {
 				/*
 				 * We could hijack the smallest segment here.
 				 * But is it really worth doing?

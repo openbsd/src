@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.14 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.15 2011/05/30 22:25:20 oga Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 2003/04/26 18:39:49 fvdl Exp $	*/
 
 /*-
@@ -109,11 +109,6 @@
 #define VM_PHYSSEG_MAX		16	/* actually we could have this many segments */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 #define VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
-
-#define	VM_NFREELIST		3
-#define	VM_FREELIST_DEFAULT	0
-#define	VM_FREELIST_LOW	1
-#define	VM_FREELIST_HIGH	2
 
 #define __HAVE_VM_PAGE_MD
 struct pv_entry;

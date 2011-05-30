@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.46 2011/04/10 17:16:51 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.47 2011/05/30 22:25:22 oga Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -137,8 +137,7 @@ ip30_setup()
 		 * Add memory not obtained through ARCBios.
 		 */
 		if (start >= IP30_MEMORY_BASE + IP30_MEMORY_ARCBIOS_LIMIT) {
-			memrange_register(atop(start), atop(end),
-			    0, VM_FREELIST_DEFAULT);
+			memrange_register(atop(start), atop(end), 0);
 		}
 	}
 

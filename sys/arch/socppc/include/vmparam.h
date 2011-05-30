@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.4 2011/03/03 21:38:49 ajacoutot Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.5 2011/05/30 22:25:22 oga Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 1996/09/30 16:34:38 ws Exp $	*/
 
 /*-
@@ -96,9 +96,6 @@ extern vaddr_t ppc_kvm_stolen;
 #define	VM_PHYSSEG_MAX		1
 #define	VM_PHYSSEG_NOADD
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
-
-#define VM_NFREELIST		1
-#define VM_FREELIST_DEFAULT	0
 
 #ifdef _KERNEL
 

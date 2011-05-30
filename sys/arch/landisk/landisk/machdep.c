@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.23 2010/06/27 12:41:23 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.24 2011/05/30 22:25:21 oga Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -163,7 +163,7 @@ landisk_startup(int howto, char *_esym)
 	kernend = atop(round_page(SH3_P1SEG_TO_PHYS(kernend)));
 	uvm_page_physload(atop(IOM_RAM_BEGIN),
 	    atop(IOM_RAM_BEGIN + ramsize), kernend,
-	    atop(IOM_RAM_BEGIN + ramsize), VM_FREELIST_DEFAULT);
+	    atop(IOM_RAM_BEGIN + ramsize), 0);
 	cpu_init_kcore_hdr();	/* need to be done before pmap_bootstrap */
 
 	/* Initialize proc0 u-area */

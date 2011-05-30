@@ -497,9 +497,9 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	dev = (struct drm_device *)dev_priv->drmdev;
 
 	/* XXX would be a lot nicer to get agp info before now */
-	uvm_page_physload_flags(atop(dev->agp->base), atop(dev->agp->base +
+	uvm_page_physload(atop(dev->agp->base), atop(dev->agp->base +
 	    dev->agp->info.ai_aperture_size), atop(dev->agp->base),
-	    atop(dev->agp->base + dev->agp->info.ai_aperture_size), 0,
+	    atop(dev->agp->base + dev->agp->info.ai_aperture_size),
 	    PHYSLOAD_DEVICE);
 	/* array of vm pages that physload introduced. */
 	dev_priv->pgs = PHYS_TO_VM_PAGE(dev->agp->base);

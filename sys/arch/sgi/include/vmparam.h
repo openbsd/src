@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.8 2011/03/23 16:54:36 pirofti Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.9 2011/05/30 22:25:22 oga Exp $ */
 /* public domain */
 #ifndef _MACHINE_VMPARAM_H_
 #define _MACHINE_VMPARAM_H_
@@ -15,9 +15,6 @@
  * Other systems, like the O2, do not have such a restriction, but can not
  * have more than 2GB of physical memory, so this doesn't affect them.
  */
-
-#define	VM_NFREELIST		2
-#define	VM_FREELIST_DMA32	1	/* memory suitable for 32-bit DMA */
 
 #include <mips64/vmparam.h>
 

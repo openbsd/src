@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.11 2011/05/08 20:49:19 syuu Exp $ */
+/*	$OpenBSD: machdep.c,v 1.12 2011/05/30 22:25:22 oga Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -227,7 +227,6 @@ octeon_memory_init(struct boot_info *boot_info)
 	endpfn = atop(96 << 20);
 	mem_layout[0].mem_first_page = startpfn;
 	mem_layout[0].mem_last_page = endpfn;
-	mem_layout[0].mem_freelist = VM_FREELIST_DEFAULT;
 
 	physmem = endpfn - startpfn;
 
@@ -281,7 +280,6 @@ octeon_memory_init(struct boot_info *boot_info)
 			physmem += btoc(phys_avail[3] - phys_avail[2]);
 			mem_layout[2].mem_first_page = atop(phys_avail[2]);
 			mem_layout[2].mem_last_page = atop(phys_avail[3]-1);
-			mem_layout[2].mem_freelist = VM_FREELIST_DEFAULT;
 #endif
 			realmem_bytes -= OCTEON_DRAM_FIRST_256_END;
 
@@ -291,7 +289,6 @@ octeon_memory_init(struct boot_info *boot_info)
 			physmem += btoc(phys_avail[5] - phys_avail[4]);
 			mem_layout[1].mem_first_page = atop(phys_avail[4]);
 			mem_layout[1].mem_last_page = atop(phys_avail[5]-1);
-			mem_layout[1].mem_freelist = VM_FREELIST_DEFAULT;
 			realmem_bytes=0;
 		}else{
 #if 0 /* XXX: need fix on mips64 pmap code */
@@ -301,7 +298,6 @@ octeon_memory_init(struct boot_info *boot_info)
 			physmem += btoc(phys_avail[3] - phys_avail[2]);
 			mem_layout[1].mem_first_page = atop(phys_avail[2]);
 			mem_layout[1].mem_last_page = atop(phys_avail[3]-1);
-			mem_layout[1].mem_freelist = VM_FREELIST_DEFAULT;
 			realmem_bytes=0;
 #endif
 		}
@@ -403,7 +399,6 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 	for (i = 0; i < MAXMEMSEGS && mem_layout[i].mem_last_page != 0; i++) {
 		uint64_t fp, lp;
 		uint64_t firstkernpage, lastkernpage;
-		unsigned int freelist;
 		paddr_t firstkernpa, lastkernpa;
 
 		/* kernel is linked in CKSEG0 */
@@ -415,14 +410,13 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 
 		fp = mem_layout[i].mem_first_page;
 		lp = mem_layout[i].mem_last_page;
-		freelist = mem_layout[i].mem_freelist;
 
 		/* Account for kernel and kernel symbol table. */
 		if (fp >= firstkernpage && lp < lastkernpage)
 			continue;	/* In kernel. */
 
 		if (lp < firstkernpage || fp > lastkernpage) {
-			uvm_page_physload(fp, lp, fp, lp, freelist);
+			uvm_page_physload(fp, lp, fp, lp, 0);
 			continue;	/* Outside kernel. */
 		}
 
@@ -432,11 +426,11 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 			lp = firstkernpage;
 		else { /* Need to split! */
 			uint64_t xp = firstkernpage;
-			uvm_page_physload(fp, xp, fp, xp, freelist);
+			uvm_page_physload(fp, xp, fp, xp, 0);
 			fp = lastkernpage;
 		}
 		if (lp > fp) {
-			uvm_page_physload(fp, lp, fp, lp, freelist);
+			uvm_page_physload(fp, lp, fp, lp, 0);
 		}
 	}
 

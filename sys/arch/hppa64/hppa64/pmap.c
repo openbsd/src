@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.15 2011/04/14 19:34:55 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.16 2011/05/30 22:25:21 oga Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -528,8 +528,7 @@ pmap_bootstrap(vaddr_t vstart)
 	eaddr = physmem - atop(round_page(MSGBUFSIZE));
 	resvphysmem = atop(addr);
 	DPRINTF(PDB_INIT, ("physmem: 0x%lx - 0x%lx\n", resvphysmem, eaddr));
-	uvm_page_physload(0, physmem,
-	    resvphysmem, eaddr, VM_FREELIST_DEFAULT);
+	uvm_page_physload(0, physmem, resvphysmem, eaddr, 0);
 }
 
 void

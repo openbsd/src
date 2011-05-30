@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.32 2010/04/06 19:15:29 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.33 2011/05/30 22:25:22 oga Exp $	*/
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
  *
@@ -163,8 +163,7 @@ diskconf(void)
  * Register a memory region.
  */
 int
-memrange_register(uint64_t startpfn, uint64_t endpfn, uint64_t bmask,
-    unsigned int freelist)
+memrange_register(uint64_t startpfn, uint64_t endpfn, uint64_t bmask)
 {
 	struct phys_mem_desc *cur, *m = NULL;
 	int i;
@@ -209,18 +208,16 @@ memrange_register(uint64_t startpfn, uint64_t endpfn, uint64_t bmask,
 				m = cur;	/* first free segment */
 			continue;
 		}
-		/* merge contiguous areas if on the same freelist */
-		if (cur->mem_freelist == freelist) {
-			if (cur->mem_first_page == endpfn &&
-			    ((cur->mem_last_page ^ startpfn) & bmask) == 0) {
-				cur->mem_first_page = startpfn;
-				return 0;
-			}
-			if (cur->mem_last_page == startpfn &&
-			    ((cur->mem_first_page ^ endpfn) & bmask) == 0) {
-				cur->mem_last_page = endpfn;
-				return 0;
-			}
+		/* merge contiguous areas */
+		if (cur->mem_first_page == endpfn &&
+		    ((cur->mem_last_page ^ startpfn) & bmask) == 0) {
+			cur->mem_first_page = startpfn;
+			return 0;
+		}
+		if (cur->mem_last_page == startpfn &&
+		    ((cur->mem_first_page ^ endpfn) & bmask) == 0) {
+			cur->mem_last_page = endpfn;
+			return 0;
 		}
 	}
 
@@ -229,7 +226,6 @@ memrange_register(uint64_t startpfn, uint64_t endpfn, uint64_t bmask,
 	
 	m->mem_first_page = startpfn;
 	m->mem_last_page = endpfn;
-	m->mem_freelist = freelist;
 	return 0;
 }
 

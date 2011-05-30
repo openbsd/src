@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.9 2010/12/15 05:30:19 tedu Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.10 2011/05/30 22:25:21 oga Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -113,9 +113,6 @@
  * Constants which control the way the VM system deals with memory segments.
  */
 #define	VM_PHYSSEG_NOADD
-
-#define	VM_NFREELIST		1
-#define	VM_FREELIST_DEFAULT	0
 
 #ifndef _LOCORE
 

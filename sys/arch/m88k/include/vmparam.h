@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.10 2010/12/31 21:38:08 miod Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.11 2011/05/30 22:25:21 oga Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -85,9 +85,6 @@
 #define	VM_PHYSSEG_MAX		1
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
 #define	VM_PHYSSEG_NOADD
-
-#define VM_NFREELIST		1
-#define VM_FREELIST_DEFAULT	0
 
 #ifndef _LOCORE
 /*

@@ -1,4 +1,4 @@
-/* $OpenBSD: vmparam.h,v 1.20 2011/03/23 16:54:34 pirofti Exp $ */
+/* $OpenBSD: vmparam.h,v 1.21 2011/05/30 22:25:20 oga Exp $ */
 /* $NetBSD: vmparam.h,v 1.18 2000/05/22 17:13:54 thorpej Exp $ */
 
 /*
@@ -124,9 +124,6 @@
 #define	VM_PHYSSEG_MAX		16		/* XXX */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 #define	VM_PHYSSEG_NOADD			/* no more after vm_mem_init */
-
-#define	VM_NFREELIST		1
-#define	VM_FREELIST_DEFAULT	0
 
 /*
  * pmap-specific data stored in the vm_physmem[] array.

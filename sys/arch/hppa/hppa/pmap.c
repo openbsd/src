@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.156 2011/05/02 19:42:39 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.157 2011/05/30 22:25:21 oga Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -587,8 +587,7 @@ pmap_bootstrap(vstart)
 	resvphysmem = atop(addr);
 	eaddr = physmem - atop(round_page(MSGBUFSIZE));
 	DPRINTF(PDB_INIT, ("physmem: 0x%x - 0x%x\n", resvphysmem, eaddr));
-	uvm_page_physload(0, eaddr,
-	    resvphysmem, eaddr, VM_FREELIST_DEFAULT);
+	uvm_page_physload(0, eaddr, resvphysmem, eaddr, 0);
 
 	/* TODO optimize/inline the kenter */
 	for (va = 0; va < ptoa(physmem); va += PAGE_SIZE) {

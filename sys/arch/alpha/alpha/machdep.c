@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.130 2011/04/18 21:44:55 guenther Exp $ */
+/* $OpenBSD: machdep.c,v 1.131 2011/05/30 22:25:20 oga Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -559,7 +559,7 @@ nobootinfo:
 				    "0x%lx / 0x%lx\n", pfn0, kernstartpfn);
 #endif
 				uvm_page_physload(pfn0, kernstartpfn,
-				    pfn0, kernstartpfn, VM_FREELIST_DEFAULT);
+				    pfn0, kernstartpfn, 0);
 			}
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
 		    }
@@ -573,7 +573,7 @@ nobootinfo:
 				    "0x%lx / 0x%lx\n", kernendpfn, pfn1);
 #endif
 				uvm_page_physload(kernendpfn, pfn1,
-				    kernendpfn, pfn1, VM_FREELIST_DEFAULT);
+				    kernendpfn, pfn1, 0);
 			}
 		} else {
 			/*
@@ -583,8 +583,7 @@ nobootinfo:
 			printf("Loading cluster %d: 0x%lx / 0x%lx\n", i,
 			    pfn0, pfn1);
 #endif
-			uvm_page_physload(pfn0, pfn1, pfn0, pfn1,
-			    VM_FREELIST_DEFAULT);
+			uvm_page_physload(pfn0, pfn1, pfn0, pfn1, 0);
 		}
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
 	    }

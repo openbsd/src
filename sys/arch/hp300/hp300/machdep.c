@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.129 2010/07/02 19:57:14 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.130 2011/05/30 22:25:21 oga Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ hp300_init()
 	 * hp300 only has one segment.
 	 */
 	uvm_page_physload(atop(avail_start), atop(avail_end),
-	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
+	    atop(avail_start), atop(avail_end), 0);
 
 	/* Initialize the interrupt handlers. */
 	intr_init();

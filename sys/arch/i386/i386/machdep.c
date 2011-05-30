@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.496 2011/05/29 14:50:26 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.497 2011/05/30 22:25:21 oga Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3142,12 +3142,11 @@ init386(paddr_t first_avail)
 #ifdef DEBUG
 		printf(" %x-%x (<16M)", lim, kb);
 #endif
-		uvm_page_physload(lim, kb, lim, kb, VM_FREELIST_FIRST16);
+		uvm_page_physload(lim, kb, lim, kb, 0);
 	}
 
 	for (i = 0; i < ndumpmem; i++) {
 		paddr_t a, e;
-		paddr_t lim;
 
 		a = dumpmem[i].start;
 		e = dumpmem[i].end;
@@ -3157,27 +3156,10 @@ init386(paddr_t first_avail)
 			e = atop(avail_end);
 
 		if (a < e) {
-			if (a < atop(16 * 1024 * 1024)) {
-				lim = MIN(atop(16 * 1024 * 1024), e);
-#ifdef DEBUG
-				printf(" %x-%x (<16M)", a, lim);
-#endif
-				uvm_page_physload(a, lim, a, lim,
-				    VM_FREELIST_FIRST16);
-				if (e > lim) {
-#ifdef DEBUG
-					printf(" %x-%x", lim, e);
-#endif
-					uvm_page_physload(lim, e, lim, e,
-					    VM_FREELIST_DEFAULT);
-				}
-			} else {
 #ifdef DEBUG
 				printf(" %x-%x", a, e);
 #endif
-				uvm_page_physload(a, e, a, e,
-				    VM_FREELIST_DEFAULT);
-			}
+				uvm_page_physload(a, e, a, e, 0);
 		}
 	}
 #ifdef DEBUG

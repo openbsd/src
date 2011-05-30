@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.108 2011/04/21 18:09:49 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.109 2011/05/30 22:25:22 oga Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -315,7 +315,6 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	for (i = 0; i < MAXMEMSEGS && mem_layout[i].mem_last_page != 0; i++) {
 		uint64_t fp, lp;
 		uint64_t firstkernpage, lastkernpage;
-		unsigned int freelist;
 		paddr_t firstkernpa, lastkernpa;
 
 		if (IS_XKPHYS((vaddr_t)start))
@@ -332,14 +331,13 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 
 		fp = mem_layout[i].mem_first_page;
 		lp = mem_layout[i].mem_last_page;
-		freelist = mem_layout[i].mem_freelist;
 
 		/* Account for kernel and kernel symbol table. */
 		if (fp >= firstkernpage && lp < lastkernpage)
 			continue;	/* In kernel. */
 
 		if (lp < firstkernpage || fp > lastkernpage) {
-			uvm_page_physload(fp, lp, fp, lp, freelist);
+			uvm_page_physload(fp, lp, fp, lp, 0);
 			continue;	/* Outside kernel. */
 		}
 
@@ -349,11 +347,11 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 			lp = firstkernpage;
 		else { /* Need to split! */
 			uint64_t xp = firstkernpage;
-			uvm_page_physload(fp, xp, fp, xp, freelist);
+			uvm_page_physload(fp, xp, fp, xp, 0);
 			fp = lastkernpage;
 		}
 		if (lp > fp) {
-			uvm_page_physload(fp, lp, fp, lp, freelist);
+			uvm_page_physload(fp, lp, fp, lp, 0);
 		}
 	}
 

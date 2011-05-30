@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.37 2011/03/23 16:54:37 pirofti Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.38 2011/05/30 22:25:22 oga Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.13 1997/07/12 16:20:03 perry Exp $	*/
 
 /*
@@ -129,9 +129,6 @@ struct vm_page_md {
 	(pg)->mdpage.pv_head.pv_va = 0;		\
 	(pg)->mdpage.pv_head.pv_flags = 0;	\
 } while (0)
-
-#define VM_NFREELIST		1
-#define VM_FREELIST_DEFAULT	0
 
 #if defined (_KERNEL) && !defined(_LOCORE)
 struct vm_map;

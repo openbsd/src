@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.42 2011/01/05 22:20:19 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.43 2011/05/30 22:25:20 oga Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -757,7 +757,7 @@ aviion_bootstrap()
 	 * XXX so we will need to upload two ranges of pages on them.
 	 */
 	uvm_page_physload(atop(avail_start), atop(avail_end),
-	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
+	    atop(avail_start), atop(avail_end), 0);
 
 	/*
 	 * Initialize message buffer.

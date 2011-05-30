@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.23 2011/03/23 16:54:36 pirofti Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.24 2011/05/30 22:25:21 oga Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.5 1994/10/26 21:10:10 cgd Exp $	*/
 
 /*
@@ -105,11 +105,6 @@
 /* map PIE below 256MB (non-pie link address) to avoid mmap pressure */
 #define VM_PIE_MIN_ADDR		PAGE_SIZE
 #define VM_PIE_MAX_ADDR		(0x10000000UL)
-
-#ifndef VM_NFREELIST
-#define	VM_NFREELIST		1
-#endif
-#define	VM_FREELIST_DEFAULT	0
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)

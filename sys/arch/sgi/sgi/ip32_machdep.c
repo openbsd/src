@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip32_machdep.c,v 1.15 2010/04/06 19:15:29 miod Exp $ */
+/*	$OpenBSD: ip32_machdep.c,v 1.16 2011/05/30 22:25:22 oga Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -98,8 +98,7 @@ crime_configure_memory(void)
 		first_page = atop(addr);
 		last_page = atop(addr + size);
 
-		memrange_register(first_page, last_page, 0,
-		    VM_FREELIST_DEFAULT);
+		memrange_register(first_page, last_page, 0);
 	}
 
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/* 	$OpenBSD: vmparam.h,v 1.6 2011/03/23 16:54:34 pirofti Exp $	*/
+/* 	$OpenBSD: vmparam.h,v 1.7 2011/05/30 22:25:20 oga Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.23 2003/05/22 05:47:07 thorpej Exp $	*/
 
 /*
@@ -92,9 +92,5 @@
  *	- ISADMA for the ISA DMA range on Sharks only
  */
 #endif /* _KERNEL */
-
-#define	VM_NFREELIST		2
-#define	VM_FREELIST_DEFAULT	0
-
 
 #endif	/* _MACHINE_VMPARAM_H_ */

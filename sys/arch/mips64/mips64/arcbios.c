@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.29 2010/03/03 12:25:09 jsing Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.30 2011/05/30 22:25:21 oga Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -365,8 +365,7 @@ bios_configure_memory()
 					break;
 				}
 			if (seg_start < seg_end)
-				memrange_register(seg_start, seg_end, 0,
-				    VM_FREELIST_DEFAULT);
+				memrange_register(seg_start, seg_end, 0);
 			break;
 		case ExceptionBlock:
 		case SystemParameterBlock:

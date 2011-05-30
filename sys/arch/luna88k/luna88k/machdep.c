@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.75 2011/01/05 22:20:22 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.76 2011/05/30 22:25:21 oga Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -960,7 +960,7 @@ luna88k_bootstrap()
 	 * luna88k only has one segment.
 	 */
 	uvm_page_physload(atop(avail_start), atop(avail_end),
-	    atop(avail_start), atop(avail_end),VM_FREELIST_DEFAULT);
+	    atop(avail_start), atop(avail_end), 0);
 
 	/*
 	 * Initialize message buffer.

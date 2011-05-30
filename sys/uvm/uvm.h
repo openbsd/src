@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.42 2011/04/15 21:30:02 oga Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.43 2011/05/30 22:25:24 oga Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -62,9 +62,6 @@
 #include <uvm/uvm_swap_encrypt.h>
 #endif
 
-/*
- * pull in VM_NFREELIST
- */
 #include <machine/vmparam.h>
 
 /*

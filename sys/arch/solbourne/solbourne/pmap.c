@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.4 2010/12/06 20:57:18 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.5 2011/05/30 22:25:22 oga Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat
  *
@@ -455,17 +455,14 @@ pmap_bootstrap(size_t promdata)
 #endif
 		uvm_page_physload(
 		    atop(PTW1_TO_PHYS(ekern)), prompa,
-		    atop(PTW1_TO_PHYS(ekern)), prompa,
-		    VM_FREELIST_DEFAULT);
+		    atop(PTW1_TO_PHYS(ekern)), prompa, 0);
 		uvm_page_physload(
 		    prompa + promlen, atop(PHYSMEM_BASE) + physmem,
-		    prompa + promlen, atop(PHYSMEM_BASE) + physmem,
-		    VM_FREELIST_DEFAULT);
+		    prompa + promlen, atop(PHYSMEM_BASE) + physmem, 0);
 	} else {
 		uvm_page_physload(
 		    atop(PTW1_TO_PHYS(ekern)), atop(PHYSMEM_BASE) + physmem,
-		    atop(PTW1_TO_PHYS(ekern)), atop(PHYSMEM_BASE) + physmem,
-		    VM_FREELIST_DEFAULT);
+		    atop(PTW1_TO_PHYS(ekern)), atop(PHYSMEM_BASE) + physmem, 0);
 	}
 }
 
