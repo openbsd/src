@@ -1,4 +1,4 @@
-/* $OpenBSD: lib_tstp.c,v 1.10 2010/01/12 23:22:07 nicm Exp $ */
+/* $OpenBSD: lib_tstp.c,v 1.11 2011/05/30 21:59:35 deraadt Exp $ */
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -48,7 +48,7 @@
 #define _POSIX_SOURCE
 #endif
 
-MODULE_ID("$Id: lib_tstp.c,v 1.10 2010/01/12 23:22:07 nicm Exp $")
+MODULE_ID("$Id: lib_tstp.c,v 1.11 2011/05/30 21:59:35 deraadt Exp $")
 
 #if defined(SIGTSTP) && (HAVE_SIGACTION || HAVE_SIGVEC)
 #define USE_SIGTSTP 1
@@ -237,11 +237,21 @@ static void
 cleanup(int sig)
 {
     /*
-     * XXX signal race. This kind of comment is completely ingenious!
+     * XXX signal race.
      *
-     * Actually, doing any sort of I/O from within an signal handler is
-     * "unsafe".  But we'll _try_ to clean up the screen and terminal
-     * settings on the way out.
+     * 1) Walking the SCREEN list is unsafe, since all list management
+     *    is done without any signal blocking.
+     * 2) On systems which have REENTRANT turned on, set_term() uses
+     *    _nc_lock_global() which could deadlock or misbehave in other ways.
+     * 3) endwin() calls all sorts of stuff, many of which use stdio or
+     *    other library functions which are clearly unsafe.
+     * 4) The comment about atexit() is wrong.  atexit() should never be
+     *    called, because ...
+     * 5) The call to exit() at the bottom is unsafe:  exit() depends
+     *    depends on stdio being coherent (obviously it is not).  stdio
+     *    could call free(), and also calls atexit() and dtor handlers,
+     *    which are probably not written to be safe.  The signal handler
+     *    should be calling _exit().
      */
     if (!_nc_globals.cleanup_nested++
 	&& (sig == SIGINT
