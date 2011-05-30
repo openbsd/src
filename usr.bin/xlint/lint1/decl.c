@@ -1,4 +1,4 @@
-/*	$OpenBSD: decl.c,v 1.26 2010/07/27 20:07:56 guenther Exp $	*/
+/*	$OpenBSD: decl.c,v 1.27 2011/05/30 15:15:58 martynas Exp $	*/
 /*	$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: decl.c,v 1.26 2010/07/27 20:07:56 guenther Exp $";
+static char rcsid[] = "$OpenBSD: decl.c,v 1.27 2011/05/30 15:15:58 martynas Exp $";
 #endif
 
 #include <sys/param.h>
@@ -1891,7 +1891,7 @@ decl1ext(sym_t *dsym, int initflg)
 	if (plibflg && llibflg &&
 	    dsym->s_type->t_tspec == FUNC && dsym->s_type->t_proto) {
 		/*
-		 * With both LINTLIBRARY and PROTOLIB the prototyp is
+		 * With both LINTLIBRARY and PROTOLIB the prototype is
 		 * written as a function definition to the output file.
 		 */
 		rval = dsym->s_type->t_subt->t_tspec != VOID;

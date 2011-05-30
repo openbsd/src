@@ -1,4 +1,4 @@
-/*	$OpenBSD: func.c,v 1.20 2007/10/17 20:10:44 chl Exp $	*/
+/*	$OpenBSD: func.c,v 1.21 2011/05/30 15:15:58 martynas Exp $	*/
 /*	$NetBSD: func.c,v 1.7 1995/10/02 17:31:40 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: func.c,v 1.20 2007/10/17 20:10:44 chl Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.21 2011/05/30 15:15:58 martynas Exp $";
 #endif
 
 #include <stdlib.h>
@@ -347,7 +347,7 @@ funcdef(sym_t *fsym)
 
 	if (fsym->s_osdef && !fsym->s_type->t_proto) {
 		if (sflag && hflag && strcmp(fsym->s_name, "main") != 0)
-			/* function definition is not a prototyp */
+			/* function definition is not a prototype */
 			warning(286);
 	}
 
