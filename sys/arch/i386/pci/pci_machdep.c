@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.61 2011/05/29 10:47:42 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.62 2011/05/30 19:24:28 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -195,6 +195,9 @@ void
 pci_attach_hook(struct device *parent, struct device *self,
     struct pcibus_attach_args *pba)
 {
+	pci_chipset_tag_t pc = pba->pba_pc;
+	pcitag_t tag;
+	pcireg_t id, class;
 
 #if NBIOS > 0
 	if (pba->pba_bus == 0)
@@ -204,6 +207,108 @@ pci_attach_hook(struct device *parent, struct device *self,
 	if (pba->pba_bus == 0)
 		printf(": configuration mode %d", pci_mode);
 #endif
+
+	if (pba->pba_bus != 0)
+		return;
+
+	/*
+	 * In order to decide whether the system supports MSI we look
+	 * at the host bridge, which should be device 0 function 0 on
+	 * bus 0.  It is better to not enable MSI on systems that
+	 * support it than the other way around, so be conservative
+	 * here.  So we don't enable MSI if we don't find a host
+	 * bridge there.  We also deliberately don't enable MSI on
+	 * chipsets from low-end manifacturers like VIA and SiS.
+	 */
+	tag = pci_make_tag(pc, 0, 0, 0);
+	id = pci_conf_read(pc, tag, PCI_ID_REG);
+	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
+
+	if (PCI_CLASS(class) != PCI_CLASS_BRIDGE ||
+	    PCI_SUBCLASS(class) != PCI_SUBCLASS_BRIDGE_HOST)
+		return;
+
+	switch (PCI_VENDOR(id)) {
+	case PCI_VENDOR_INTEL:
+		/*
+		 * For Intel platforms, MSI support was introduced
+		 * with the new Pentium 4 processor interrupt delivery
+		 * mechanism, so we blacklist all PCI chipsets that
+		 * support Pentium III and earlier CPUs.
+		 */
+		switch (PCI_PRODUCT(id)) {
+		case PCI_PRODUCT_INTEL_PCMC: /* 82434LX/NX */
+		case PCI_PRODUCT_INTEL_82437FX:
+		case PCI_PRODUCT_INTEL_82437MX:
+		case PCI_PRODUCT_INTEL_82437VX:
+		case PCI_PRODUCT_INTEL_82439HX:
+		case PCI_PRODUCT_INTEL_82439TX:
+		case PCI_PRODUCT_INTEL_82440BX:
+		case PCI_PRODUCT_INTEL_82440BX_AGP:
+		case PCI_PRODUCT_INTEL_82440MX_HB:
+		case PCI_PRODUCT_INTEL_82441FX:
+		case PCI_PRODUCT_INTEL_82443BX:
+		case PCI_PRODUCT_INTEL_82443BX_AGP:
+		case PCI_PRODUCT_INTEL_82443BX_NOAGP:
+		case PCI_PRODUCT_INTEL_82443GX:
+		case PCI_PRODUCT_INTEL_82443LX:
+		case PCI_PRODUCT_INTEL_82443LX_AGP:
+		case PCI_PRODUCT_INTEL_82810_HB:
+		case PCI_PRODUCT_INTEL_82810E_HB:
+		case PCI_PRODUCT_INTEL_82815_HB:
+		case PCI_PRODUCT_INTEL_82820_HB:
+		case PCI_PRODUCT_INTEL_82830M_HB:
+		case PCI_PRODUCT_INTEL_82840_HB:
+			break;
+		default:
+			pba->pba_flags |= PCI_FLAGS_MSI_ENABLED;
+			break;
+		}
+		break;
+	case PCI_VENDOR_NVIDIA:
+		/*
+		 * Since NVIDIA chipsets are completely undocumented,
+		 * we have to make a guess here.  We assume that all
+		 * chipsets that support PCIe include support for MSI,
+		 * since support for MSI is mandated by the PCIe
+		 * standard.
+		 */
+		switch (PCI_PRODUCT(id)) {
+		case PCI_PRODUCT_NVIDIA_NFORCE_PCHB:
+		case PCI_PRODUCT_NVIDIA_NFORCE2_PCHB:
+			break;
+		default:
+			pba->pba_flags |= PCI_FLAGS_MSI_ENABLED;
+			break;
+		}
+		break;
+	case PCI_VENDOR_AMD:
+		/*
+		 * The AMD-750 and AMD-760 chipsets don't support MSI.
+		 */
+		switch (PCI_PRODUCT(id)) {
+		case PCI_PRODUCT_AMD_SC751_SC:
+		case PCI_PRODUCT_AMD_761_PCHB:
+		case PCI_PRODUCT_AMD_762_PCHB:
+			break;
+		default:
+			pba->pba_flags |= PCI_FLAGS_MSI_ENABLED;
+			break;
+		}
+		break;
+	}
+
+	/*
+	 * Don't enable MSI on a HyperTransport bus.  In order to
+	 * determine that bus 0 is a HyperTransport bus, we look at
+	 * device 24 function 0, which is the HyperTransport
+	 * host/primary interface integrated on most 64-bit AMD CPUs.
+	 * If that device has a HyperTransport capability, bus 0 must
+	 * be a HyperTransport bus and we disable MSI.
+	 */
+	tag = pci_make_tag(pc, 0, 24, 0);
+	if (pci_get_capability(pc, tag, PCI_CAP_HT, NULL, NULL))
+		pba->pba_flags &= ~PCI_FLAGS_MSI_ENABLED;
 }
 
 int
