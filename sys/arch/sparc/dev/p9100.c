@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.49 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.50 2011/05/31 17:40:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005, 2006, 2008, Miodrag Vallat.
@@ -382,9 +382,7 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	/*
 	 * Plug-in accelerated console operations.
 	 */
-	if (sc->sc_sunfb.sf_dev.dv_cfdata->cf_flags != 0 ||
-	    sc->sc_sunfb.sf_width == 800)
-		p9100_ras_init(sc);
+	p9100_ras_init(sc);
 
 	/* enable video */
 	p9100_burner(sc, 1, 0);
@@ -434,9 +432,7 @@ p9100_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 #endif
 			fbwscons_setcolormap(&sc->sc_sunfb, p9100_setcolor);
 			/* Restore proper acceleration state as well */
-			if (sc->sc_sunfb.sf_dev.dv_cfdata->cf_flags != 0 ||
-			    sc->sc_sunfb.sf_width == 800)
-				p9100_ras_init(sc);
+			p9100_ras_init(sc);
 			break;
 		}
 		break;
@@ -1340,9 +1336,7 @@ p9100_prom(void *v)
 	    sc->sc_mapmode != WSDISPLAYIO_MODE_EMUL) {
 		p9100_initialize_ramdac(sc, sc->sc_lcdwidth, 8);
 		fbwscons_setcolormap(&sc->sc_sunfb, p9100_setcolor);
-		if (sc->sc_sunfb.sf_dev.dv_cfdata->cf_flags != 0 ||
-		    sc->sc_sunfb.sf_width == 800)
-			p9100_ras_init(sc);
+		p9100_ras_init(sc);
 	}
 }
 #endif	/* NTCTRL > 0 */
