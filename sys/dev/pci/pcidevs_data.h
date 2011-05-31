@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1609 2011/05/29 20:24:21 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1610 2011/05/31 20:48:41 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -3010,6 +3010,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SR5690_HB,
 	    "SR5690 Host",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_HB,
+	    "RD890 Host",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SR5670_HB,

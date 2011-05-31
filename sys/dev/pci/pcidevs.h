@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1609 2011/05/29 20:24:21 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1610 2011/05/31 20:48:41 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1167,6 +1167,7 @@
 #define	PCI_PRODUCT_ATI_RD790_PCIE_5	0x597e		/* RD790 PCIE */
 #define	PCI_PRODUCT_ATI_RD790_PCIE_4	0x597f		/* RD790 PCIE */
 #define	PCI_PRODUCT_ATI_SR5690_HB	0x5a10		/* SR5690 Host */
+#define	PCI_PRODUCT_ATI_RD890_HB	0x5a11		/* RD890 Host */
 #define	PCI_PRODUCT_ATI_SR5670_HB	0x5a12		/* SR5670 Host */
 #define	PCI_PRODUCT_ATI_SR5650_HB	0x5a13		/* SR5650 Host */
 #define	PCI_PRODUCT_ATI_SR5690_PCIE_0	0x5a16		/* SR5690 PCIE */
