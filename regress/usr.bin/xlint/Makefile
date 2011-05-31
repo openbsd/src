@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.28 2010/07/25 23:00:05 guenther Exp $
+# $OpenBSD: Makefile,v 1.29 2011/05/31 22:35:19 martynas Exp $
 
 TEST_MODULES=	1 2 3 4 5 6 7 8 9 10 12 13 14 15 16 17 18 19 20 21 22 \
-	23 24 25
+	23 24 25 26
 LINT=		lint
 
 .for i in ${TEST_MODULES}

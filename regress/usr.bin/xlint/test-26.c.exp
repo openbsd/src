@@ -1,0 +1,5 @@
+test-26.c:13: warning: empty body of the if statement
+test-26.c:14: warning: expression has null effect
+test-26.c:17: warning: empty body of the else statement
+test-26.c:18: warning: expression has null effect
+Lint pass2:
