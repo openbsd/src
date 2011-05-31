@@ -1,4 +1,4 @@
-/*	$OpenBSD: invtrig.c,v 1.1 2008/12/09 20:00:35 martynas Exp $	*/
+/*	$OpenBSD: invtrig.c,v 1.2 2011/05/31 21:08:29 martynas Exp $	*/
 /*-
  * Copyright (c) 2008 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -26,6 +26,8 @@
  */
 
 #include <stdint.h>
+
+#ifndef	lint
 
 #define STRUCT_DECLS
 #include "invtrig.h"
@@ -82,3 +84,5 @@ const LONGDOUBLE aT[] = {
 
 const LONGDOUBLE
 pi_lo = { 0xece675d1fc8f8cbbULL, 0xbfbeU }; /* -5.01655761266833202345e-20L */
+
+#endif	/* !lint */
