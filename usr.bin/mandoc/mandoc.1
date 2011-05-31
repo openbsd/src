@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.44 2011/05/29 21:22:18 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.45 2011/05/31 22:44:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 29 2011 $
+.Dd $Mdocdate: May 31 2011 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -27,7 +27,7 @@
 .Op Fl O Ns Ar option
 .Op Fl T Ns Ar output
 .Op Fl W Ns Ar level
-.Op Ar file...
+.Op Ar
 .Sh DESCRIPTION
 The
 .Nm
@@ -159,12 +159,11 @@ utility accepts the following
 arguments, which correspond to output modes:
 .Bl -tag -width Ds
 .It Fl T Ns Cm utf8
-Encode output in the UTF-8 multi-byte format.
+Encode output in the UTF\-8 multi-byte format.
 See
-.Xr UTF-8 Output .
+.Sx UTF\-8 Output .
 .It Fl T Ns Cm locale
-Encode output using the current
-.Xr locale 1 .
+Encode output using the current locale.
 See
 .Sx Locale Output .
 .It Fl T Ns Cm ascii
@@ -198,10 +197,10 @@ See
 .Pp
 If multiple input files are specified, these will be processed by the
 corresponding filter in-order.
-.Ss UTF-8 Output
+.Ss UTF\-8 Output
 Use
 .Fl T Ns Cm utf8
-to force a UTF-8 locale.
+to force a UTF\-8 locale.
 See
 .Sx Locale Output
 for details and options.
@@ -265,7 +264,7 @@ If a style-sheet is not specified with
 defaults to simple output readable in any graphical or text-based web
 browser.
 .Pp
-Special characters are rendered in decimal-encoded UTF-8.
+Special characters are rendered in decimal-encoded UTF\-8.
 .Pp
 The following
 .Fl O
