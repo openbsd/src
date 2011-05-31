@@ -1,4 +1,4 @@
-/*	$OpenBSD: decl.c,v 1.27 2011/05/30 15:15:58 martynas Exp $	*/
+/*	$OpenBSD: decl.c,v 1.28 2011/05/31 22:27:54 martynas Exp $	*/
 /*	$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: decl.c,v 1.27 2011/05/30 15:15:58 martynas Exp $";
+static char rcsid[] = "$OpenBSD: decl.c,v 1.28 2011/05/31 22:27:54 martynas Exp $";
 #endif
 
 #include <sys/param.h>
@@ -141,7 +141,7 @@ initdecl(void)
 		{ DOUBLE,   { sizeof (double) * CHAR_BIT, 8 * CHAR_BIT, -1,
 			      DOUBLE, DOUBLE,
 			      0, 0, 1, 1, 1, "double" } },
-		{ LDOUBLE,  { sizeof (ldbl_t) * CHAR_BIT, 10 * CHAR_BIT, -1,
+		{ LDOUBLE,  { sizeof (ldbl_t) * CHAR_BIT, 16 * CHAR_BIT, -1,
 			      LDOUBLE, LDOUBLE,
 			      0, 0, 1, 1, 1, "long double" } },
 		{ COMPLEX,  { sizeof (float _Complex) * CHAR_BIT,
@@ -153,7 +153,7 @@ initdecl(void)
 			      DCOMPLEX, DCOMPLEX,
 			      0, 0, 1, 1, 3, "double _Complex" } },
 		{ LDCOMPLEX,{ sizeof (long double _Complex) * CHAR_BIT,
-			      20 * CHAR_BIT, -1,
+			      32 * CHAR_BIT, -1,
 			      LDCOMPLEX, LDCOMPLEX,
 			      0, 0, 1, 1, 3, "long double _Complex" } },
 #if 0
@@ -166,7 +166,7 @@ initdecl(void)
 			      DIMAGINARY, DIMAGINARY,
 			      0, 0, 1, 1, 2, "double _Imaginary" } },
 		{ LDIMAGINARY,{ sizeof (long double _Imaginary) * CHAR_BIT,
-			      10 * CHAR_BIT, -1,
+			      16 * CHAR_BIT, -1,
 			      LDIMAGINARY, LDIMAGINARY,
 			      0, 0, 1, 1, 2, "long double _Imaginary" } },
 #endif
