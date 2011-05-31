@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.50 2010/09/22 01:18:57 matthew Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.51 2011/05/31 17:35:35 matthew Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -434,7 +434,7 @@ rdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *proc)
 			return (EBADF);
 
 		error = setdisklabel(sc->sc_dk.dk_label,
-		    (struct disklabel *)data, /*sd->sc_dk.dk_openmask : */0);
+		    (struct disklabel *)data, sc->sc_dk.dk_openmask);
 		if (error == 0) {
 			if (cmd == DIOCWDINFO)
 				error = writedisklabel(DISKLABELDEV(dev),
