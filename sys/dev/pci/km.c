@@ -1,4 +1,4 @@
-/*	$OpenBSD: km.c,v 1.4 2009/01/26 15:07:49 kettenis Exp $	*/
+/*	$OpenBSD: km.c,v 1.5 2011/05/31 00:19:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -29,7 +29,7 @@
 
 
 /*
- * AMD Family 10h/11h Processors, Function 3 -- Miscellaneous Control
+ * AMD Family 10h/11h/14h Processors, Function 3 -- Miscellaneous Control
  */
 
 /* Function 3 Registers */
@@ -69,7 +69,8 @@ struct cfdriver km_cd = {
 
 static const struct pci_matchid km_devices[] = {
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_10_MISC },
-	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_11_MISC }
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_11_MISC },
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_14_MISC }
 };
 
 

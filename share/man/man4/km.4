@@ -1,4 +1,4 @@
-.\"	$OpenBSD: km.4,v 1.5 2009/07/23 17:19:07 cnst Exp $
+.\"	$OpenBSD: km.4,v 1.6 2011/05/31 00:19:54 deraadt Exp $
 .\"
 .\" Copyright (c) 2008 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 23 2009 $
+.Dd $Mdocdate: May 31 2011 $
 .Dt KM 4
 .Os
 .Sh NAME
@@ -26,7 +26,7 @@
 The
 .Nm
 driver provides support for the temperature sensors available in the
-AMD Family 10h and 11h processors.
+AMD Family 10h, 11h and 14h processors.
 .Pp
 Each chip reports one temperature sensor.
 Multiprocessor systems have one instance of
@@ -47,14 +47,21 @@ interface.
 .%D March 26, 2008
 .%R Publication # 31116
 .%P pp. 236--237 and pp. 243--244
-.\" .%O http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/31116.PDF
+.\" .%O http://support.amd.com/us/Processor_TechDocs/31116.pdf
 .Re
 .Rs
 .%T "BIOS and Kernel Developer's Guide for AMD Family 11h Processors"
 .%D July 07, 2008
 .%R Publication # 41256
 .%P pp. 156--157 and pp. 159--160
-.\" .%O http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/41256.pdf
+.\" .%O http://support.amd.com/us/Processor_TechDocs/41256.pdf
+.Re
+.Rs
+.%T "BIOS and Kernel Developer's Guide for AMD Family 14h Models 00h-04h Processors"
+.%D May 02, 2011
+.%R Publication # 43170
+.%P pp. 277--278 and pp. 280--282
+.\" .%O http://support.amd.com/us/Processor_TechDocs/43170.pdf
 .Re
 .Sh HISTORY
 The
