@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile.inc,v 1.4 2010/06/27 19:56:11 phessler Exp $
+# $OpenBSD: Makefile.inc,v 1.5 2011/05/31 08:00:25 schwarze Exp $
 
 DIFF=diff -au
 MANDOC?=mandoc
-#MANDOCOPTS=-fstrict -Wall
-NROFF=nroff -mandoc
+#MANDOCOPTS=-Wall
+NROFF=/usr/local/bin/nroff -c -mandoc -Tascii
 SED=sed
 SH=/bin/sh
 
@@ -17,7 +17,7 @@ groff: ${GROFF_TARGETS:C/$/.out_ascii/}
 	@echo "  -> ${*}"
 	@${MANDOC} ${MANDOCOPTS} ${.CURDIR}/${*}.in | ${SED} '$$d' \
 		> ${*}.mandoc_ascii
-	@${DIFF} ${*}.out_ascii ${*}.mandoc_ascii
+	@${DIFF} ${.CURDIR}/${*}.out_ascii ${*}.mandoc_ascii
 
 .in.out_ascii:
 	@echo "  -> ${*}"
