@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.40 2010/09/28 14:14:54 yasuoka Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.41 2011/05/31 13:07:20 sthen Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -275,8 +275,8 @@ gre_input(struct mbuf *m, ...)
 }
 
 /*
- * Input routine for IPPRPOTO_MOBILE.
- * This is a little bit diffrent from the other modes, as the
+ * Input routine for IPPROTO_MOBILE.
+ * This is a little bit different from the other modes, as the
  * encapsulating header was not prepended, but instead inserted
  * between IP header and payload.
  */
