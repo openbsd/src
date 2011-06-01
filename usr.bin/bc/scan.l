@@ -1,5 +1,5 @@
 %{
-/*      $OpenBSD: scan.l,v 1.24 2011/03/07 08:11:15 otto Exp $	*/
+/*      $OpenBSD: scan.l,v 1.25 2011/06/01 07:18:23 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -38,6 +38,8 @@ History		*hist;
 static char	*strbuf = NULL;
 static size_t	strbuf_sz = 1;
 static bool	dot_seen;
+static int	use_el;
+static volatile sig_atomic_t skipchars;
 
 static void	init_strbuf(void);
 static void	add_str(const char *);
@@ -236,12 +238,18 @@ add_str(const char *str)
 void
 abort_line(int sig)
 {
-	static const char str[] = "[\n]P\n";
+	static const char str1[] = "[\n]P\n";
+	static const char str2[] = "[^C\n]P\n";
 	int save_errno;
+	const LineInfo *info;
 
 	save_errno = errno;
-	YY_FLUSH_BUFFER;	/* XXX signal race? */
-	write(STDOUT_FILENO, str, sizeof(str) - 1);
+	if (use_el) {
+		write(STDOUT_FILENO, str2, sizeof(str2) - 1);
+		info = el_line(el);
+		skipchars = info->lastchar - info->buffer;
+	} else
+		write(STDOUT_FILENO, str1, sizeof(str1) - 1);
 	errno = save_errno;
 }
 
@@ -295,17 +303,32 @@ static int
 bc_yyinput(char *buf, int maxlen)
 {
 	int num;
-	if (yyin == stdin && interactive) {
+
+	if (el != NULL)
+		el_get(el, EL_EDITMODE, &use_el);
+		
+	if (yyin == stdin && interactive && use_el) {
 		const char *bp;
+		sigset_t oset, nset;
 
 		if ((bp = el_gets(el, &num)) == NULL || num == 0)
 			return (0);
+		sigemptyset(&nset);
+		sigaddset(&nset, SIGINT);
+		sigprocmask(SIG_BLOCK, &nset, &oset);
+		if (skipchars < num) {
+			bp += skipchars;
+			num -= skipchars;
+		}
+		skipchars = 0;
+		sigprocmask(SIG_SETMASK, &oset, NULL);
 		if (num > maxlen) {
 			el_push(el, (char *)(void *)bp + maxlen);
 			num = maxlen;
 		}
 		memcpy(buf, bp, num);
 		history(hist, &he, H_ENTER, bp);
+		el_get(el, EL_EDITMODE, &use_el);
 	} else {
 		int c = '*';
 		for (num = 0; num < maxlen &&
