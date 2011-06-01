@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.36 2009/06/02 12:46:33 deraadt Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.37 2011/06/01 04:35:22 matthew Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Mats O Jansson <moj@stacken.kth.se>
@@ -1173,7 +1173,7 @@ userconf_add(char *dev, int len, short unit, short state)
 	}
 
 	/* cf_attach, cf_driver, cf_unit, cf_fstate, cf_loc, cf_flags,
-	   cf_parents, cf_locnames, cf_locnames and cf_ivstubs */
+	   cf_parents, cf_locnames, and cf_locnames */
 }
 
 int
