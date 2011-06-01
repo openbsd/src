@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcscasecmp.c,v 1.1 2011/05/28 15:16:46 espie Exp $ */
+/*	$OpenBSD: wcscasecmp.c,v 1.2 2011/06/01 19:29:48 naddy Exp $ */
 
 /*
  * Copyright (c) 2011 Marc Espie
@@ -30,7 +30,7 @@
 #include "locale/runetype.h"
 
 int
-wcscasecmp(const wchar_t *s1, const char *s2)
+wcscasecmp(const wchar_t *s1, const wchar_t *s2)
 {
 	wchar_t l1, l2;
 
