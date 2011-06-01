@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.106 2011/06/01 06:18:07 guenther Exp $
+;	$OpenBSD: syscalls.master,v 1.107 2011/06/01 06:20:41 guenther Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -227,7 +227,7 @@
 114	COMPAT_43	{ int sys_sendmsg(int s, caddr_t msg, int flags); } \
 			    osendmsg
 115	OBSOL		vtrace
-116	STD		{ int sys_gettimeofday(struct timeval *tp, \
+116	STD NOLOCK	{ int sys_gettimeofday(struct timeval *tp, \
 			    struct timezone *tzp); }
 117	STD		{ int sys_getrusage(int who, struct rusage *rusage); }
 118	STD		{ int sys_getsockopt(int s, int level, int name, \
@@ -459,11 +459,11 @@
 230	UNIMPL		shmdt
 231	UNIMPL		shmget
 #endif
-232	STD		{ int sys_clock_gettime(clockid_t clock_id, \
+232	STD NOLOCK	{ int sys_clock_gettime(clockid_t clock_id, \
 			    struct timespec *tp); }
 233	STD		{ int sys_clock_settime(clockid_t clock_id, \
 			    const struct timespec *tp); }
-234	STD		{ int sys_clock_getres(clockid_t clock_id, \
+234	STD NOLOCK	{ int sys_clock_getres(clockid_t clock_id, \
 			    struct timespec *tp); }
 235	UNIMPL		timer_create
 236	UNIMPL		timer_delete
@@ -473,7 +473,7 @@
 ;
 ; System calls 240-249 are reserved for other IEEE Std1003.1b syscalls
 ;
-240	STD		{ int sys_nanosleep(const struct timespec *rqtp, \
+240	STD NOLOCK	{ int sys_nanosleep(const struct timespec *rqtp, \
 			    struct timespec *rmtp); }
 241	UNIMPL
 242	UNIMPL
@@ -489,7 +489,7 @@
 251	STD		{ int sys_rfork(int flags); }
 252	STD		{ int sys_poll(struct pollfd *fds, \
 			    u_int nfds, int timeout); }
-253	STD		{ int sys_issetugid(void); }
+253	STD NOLOCK	{ int sys_issetugid(void); }
 254	STD		{ int sys_lchown(const char *path, uid_t uid, gid_t gid); }
 255	STD		{ pid_t sys_getsid(pid_t pid); }
 256	STD		{ int sys_msync(void *addr, size_t len, int flags); }
@@ -587,8 +587,8 @@
 #else
 297	UNIMPL
 #endif
-298	STD		{ int sys_sched_yield(void); }
-299	STD		{ pid_t sys_getthrid(void); }
+298	STD NOLOCK	{ int sys_sched_yield(void); }
+299	STD NOLOCK	{ pid_t sys_getthrid(void); }
 300	STD		{ int sys_thrsleep(void *ident, clockid_t clock_id, \
 			    const struct timespec *tp, void *lock); }
 301	STD		{ int sys_thrwakeup(void *ident, int n); }
