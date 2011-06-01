@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.63 2010/09/08 15:50:11 deraadt Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.64 2011/06/01 03:25:01 matthew Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -350,6 +350,9 @@ config_attach(struct device *parent, void *match, void *aux, cfprint_t print)
 	cd = cf->cf_driver;
 	ca = cf->cf_attach;
 
+	KASSERT(cd->cd_devs != NULL);
+	KASSERT(dev->dv_unit < cd->cd_ndevs);
+	KASSERT(cd->cd_devs[dev->dv_unit] == NULL);
 	cd->cd_devs[dev->dv_unit] = dev;
 
 	/*
@@ -543,11 +546,18 @@ config_detach(struct device *dev, int flags)
 	 * after parents, we only need to search the latter part of
 	 * the list.)
 	 */
+	i = 0;
 	for (d = TAILQ_NEXT(dev, dv_list); d != NULL;
 	     d = TAILQ_NEXT(d, dv_list)) {
-		if (d->dv_parent == dev)
-			panic("config_detach: detached device has children");
+		if (d->dv_parent == dev) {
+			printf("config_detach: %s attached at %s\n",
+			    d->dv_xname, dev->dv_xname);
+			i = 1;
+		}
 	}
+	if (i != 0)
+		panic("config_detach: detached device (%s) has children",
+		    dev->dv_xname);
 #endif
 
 	/*
