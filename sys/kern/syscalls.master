@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.105 2011/04/04 12:44:10 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.106 2011/06/01 06:18:07 guenther Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -76,7 +76,7 @@
 			    int flags); } ogetfsstat
 19	COMPAT_43	{ long sys_lseek(int fd, long offset, int whence); } \
 			    olseek
-20	STD NOLOCK	{ pid_t sys_getpid(void); }
+20	STD		{ pid_t sys_getpid(void); }
 21	STD		{ int sys_mount(const char *type, const char *path, \
 			    int flags, void *data); }
 22	STD		{ int sys_unmount(const char *path, int flags); }
