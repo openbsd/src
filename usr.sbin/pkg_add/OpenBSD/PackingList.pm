@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.112 2011/05/30 09:59:38 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.113 2011/06/01 11:20:04 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -49,7 +49,7 @@ package OpenBSD::PackingList::hashpath;
 sub match
 {
 	my ($h, $plist) = @_;
-	my $f = $plist->fullpkgpath;
+	my $f = $plist->fullpkgpath2;
 	if (!defined $f) {
 		return 0;
 	}
@@ -450,18 +450,29 @@ sub fullpkgpath
 {
 	my $self = shift;
 	if (defined $self->{extrainfo} && $self->{extrainfo}->{subdir} ne '') {
+		return $self->{extrainfo}->{subdir};
+	} else {
+		return undef;
+	}
+}
+
+sub fullpkgpath2
+{
+	my $self = shift;
+	if (defined $self->{extrainfo} && $self->{extrainfo}->{subdir} ne '') {
 		return $self->{extrainfo}->{path};
 	} else {
 		return undef;
 	}
 }
+
 sub pkgpath
 {
 	my $self = shift;
 	if (!defined $self->{_hashpath}) {
 		my $h = $self->{_hashpath} =
 		    bless {}, "OpenBSD::PackingList::hashpath";
-		my $f = $self->fullpkgpath;
+		my $f = $self->fullpkgpath2;
 		if (defined $f) {
 			push(@{$h->{$f->{dir}}}, $f);
 		}
