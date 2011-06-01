@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.138 2011/05/29 17:18:22 ariane Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.139 2011/06/01 22:29:25 ariane Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -924,7 +924,8 @@ pmap_prefer_retry:
 				 * a page.
 				 */
 				sel_addr &= ~(align - 1);
-				sel_addr &= ~(pmap_align - 1);
+				if (pmap_align != 0)
+					sel_addr &= ~(pmap_align - 1);
 
 				KDASSERT(sel_addr <= sel_max - sel_min);
 				/*
