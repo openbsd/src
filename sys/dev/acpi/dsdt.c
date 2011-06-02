@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.185 2011/04/22 18:22:01 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.186 2011/06/02 17:15:53 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -244,7 +244,7 @@ struct aml_opcode aml_table[] = {
 	{ AMLOP_INDEX,		"Index",	"tir",	},
 	{ AMLOP_DEREFOF,	"DerefOf",	"t",	},
 	{ AMLOP_REFOF,		"RefOf",	"S",	},
-	{ AMLOP_CONDREFOF,	"CondRef",	"SS",	},
+	{ AMLOP_CONDREFOF,	"CondRef",	"Sr",	},
 
 	{ AMLOP_LOADTABLE,	"LoadTable",	"tttttt" },
 	{ AMLOP_STALL,		"Stall",	"i",	},
@@ -3537,10 +3537,11 @@ aml_parse(struct aml_scope *scope, int ret_type, const char *stype)
 		ival = 0;
 		if (opargs[0]->node != NULL) {
 			/* Create Object Reference */
-			opargs[2] = aml_allocvalue(AML_OBJTYPE_OBJREF, opcode,
+			rv = aml_allocvalue(AML_OBJTYPE_OBJREF, opcode,
 				opargs[0]);
 			aml_addref(opargs[0], "CondRef");
-			aml_store(scope, opargs[1], 0, opargs[2]);
+			aml_store(scope, opargs[1], 0, rv);
+			aml_delref(&rv, 0);
 
 			/* Mark that we found it */
 			ival = -1;
