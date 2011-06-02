@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.49 2011/04/06 11:36:26 miod Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.50 2011/06/02 16:19:13 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -417,7 +417,7 @@ ktrsyscall(struct ktr_syscall *ktr)
 static void
 ktrsysret(struct ktr_sysret *ktr)
 {
-	int ret = ktr->ktr_retval;
+	register_t ret = ktr->ktr_retval;
 	int error = ktr->ktr_error;
 	int code = ktr->ktr_code;
 
@@ -428,14 +428,14 @@ ktrsysret(struct ktr_sysret *ktr)
 
 	if (error == 0) {
 		if (fancy) {
-			(void)printf("%d", ret);
+			(void)printf("%ld", (long)ret);
 			if (ret < 0 || ret > 9)
-				(void)printf("/%#x", ret);
+				(void)printf("/%#lx", (long)ret);
 		} else {
 			if (decimal)
-				(void)printf("%d", ret);
+				(void)printf("%ld", (long)ret);
 			else
-				(void)printf("%#x", ret);
+				(void)printf("%#lx", (long)ret);
 		}
 	} else if (error == ERESTART)
 		(void)printf("RESTART");

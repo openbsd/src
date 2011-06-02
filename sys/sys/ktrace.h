@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.h,v 1.9 2006/05/17 02:11:25 tedu Exp $	*/
+/*	$OpenBSD: ktrace.h,v 1.10 2011/06/02 16:19:12 deraadt Exp $	*/
 /*	$NetBSD: ktrace.h,v 1.12 1996/02/04 02:12:29 christos Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ struct ktr_sysret {
 	short	ktr_code;
 	short	ktr_eosys;
 	int	ktr_error;
-	int	ktr_retval;
+	register_t ktr_retval;
 };
 
 /*
