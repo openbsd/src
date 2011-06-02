@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.117 2011/06/02 16:14:40 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.118 2011/06/02 19:09:29 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -491,7 +491,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	struct vnd_user *vnu;
 	struct vattr vattr;
 	struct nameidata nd;
-	int error, part, pmask, s;
+	int error, part, pmask;
 
 	DNPRINTF(VDB_FOLLOW, "vndioctl(%x, %lx, %p, %x, %p): unit %d\n",
 	    dev, cmd, addr, flag, p, unit);
@@ -646,12 +646,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 		/* Detach the disk. */
 		disk_detach(&vnd->sc_dk);
-
-		/* This must be atomic. */
-		s = splhigh();
 		vndunlock(vnd);
-		bzero(vnd, sizeof(struct vnd_softc));
-		splx(s);
 		break;
 
 	case VNDIOCGET:
@@ -801,6 +796,7 @@ vndclear(struct vnd_softc *vnd)
 	vnd->sc_vp = NULL;
 	vnd->sc_cred = NULL;
 	vnd->sc_size = 0;
+	bzero(vnd->sc_file, sizeof(vnd->sc_file));
 }
 
 daddr64_t
