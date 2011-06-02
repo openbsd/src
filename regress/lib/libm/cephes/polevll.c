@@ -1,4 +1,4 @@
-/*	$OpenBSD: polevll.c,v 1.1 2011/05/30 20:23:35 martynas Exp $	*/
+/*	$OpenBSD: polevll.c,v 1.2 2011/06/02 21:47:40 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -70,6 +70,9 @@
  *
  */
 
+#include <float.h>
+
+#if	LDBL_MANT_DIG == 64
 #include "mconf.h"
 
 #if UNK
@@ -192,3 +195,4 @@ do
 while( --n );
 return( y );
 }
+#endif	/* LDBL_MANT_DIG == 64 */
