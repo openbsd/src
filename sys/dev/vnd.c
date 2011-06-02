@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.121 2011/06/02 19:16:28 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.122 2011/06/02 19:17:24 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -92,14 +92,6 @@ struct vndbuf {
 	struct buf	*vb_obp;
 };
 
-/*
- * struct vndbuf allocator
- */
-struct pool     vndbufpl;
-
-#define	getvndbuf()	pool_get(&vndbufpl, PR_WAITOK)
-#define	putvndbuf(vbp)	pool_put(&vndbufpl, vbp);
-
 struct vnd_softc {
 	struct device	 sc_dev;
 	struct disk	 sc_dk;
@@ -189,10 +181,6 @@ vndattach(int num)
 		device_ref(&sc->sc_dev);
 	}
 	numvnd = num;
-
-	pool_init(&vndbufpl, sizeof(struct vndbuf), 0, 0, 0, "vndbufpl", NULL);
-	pool_setlowat(&vndbufpl, 16);
-	pool_sethiwat(&vndbufpl, 1024);
 }
 
 int
