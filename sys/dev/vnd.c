@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.120 2011/06/02 19:12:02 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.121 2011/06/02 19:16:28 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -103,7 +103,6 @@ struct pool     vndbufpl;
 struct vnd_softc {
 	struct device	 sc_dev;
 	struct disk	 sc_dk;
-	char		 sc_dk_name[16];
 
 	char		 sc_file[VNDNLEN];	/* file we're covering */
 	int		 sc_flags;		/* flags */
@@ -181,9 +180,13 @@ vndattach(int num)
 	}
 	vnd_softc = (struct vnd_softc *)mem;
 	for (i = 0; i < num; i++) {
-		rw_init(&vnd_softc[i].sc_rwlock, "vndlock");
-		vnd_softc[i].sc_dev.dv_unit = i;
-		device_ref(&vnd_softc[i].sc_dev);
+		struct vnd_softc *sc = &vnd_softc[i];
+
+		rw_init(&sc->sc_rwlock, "vndlock");
+		sc->sc_dev.dv_unit = i;
+		snprintf(sc->sc_dev.dv_xname, sizeof(sc->sc_dev.dv_xname),
+		    "vnd%d", i);
+		device_ref(&sc->sc_dev);
 	}
 	numvnd = num;
 
@@ -520,24 +523,6 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			return (error);
 		}
 
-		/* Set device name. */
-		bzero(vnd->sc_dev.dv_xname, sizeof(vnd->sc_dev.dv_xname));
-		if (snprintf(vnd->sc_dev.dv_xname, sizeof(vnd->sc_dev.dv_xname),
-		    "vnd%d", unit) >= sizeof(vnd->sc_dev.dv_xname)) {
-			printf("VNDIOCSET: device name too long\n");
-			vndunlock(vnd);
-			return(ENXIO);
-		}
-
-		/* Set disk name depending on how we were created. */
-		bzero(vnd->sc_dk_name, sizeof(vnd->sc_dk_name));
-		if (snprintf(vnd->sc_dk_name, sizeof(vnd->sc_dk_name),
-		    "vnd%d", unit) >= sizeof(vnd->sc_dk_name)) {
-			printf("VNDIOCSET: disk name too long\n");
-			vndunlock(vnd);
-			return(ENXIO);
-		}
-
 		/* Set geometry for device. */
 		vnd->sc_secsize = vio->vnd_secsize;
 		vnd->sc_ntracks = vio->vnd_ntracks;
@@ -608,7 +593,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		    vnd->sc_vp, (unsigned long long)vnd->sc_size);
 
 		/* Attach the disk. */
-		vnd->sc_dk.dk_name = vnd->sc_dk_name;
+		vnd->sc_dk.dk_name = vnd->sc_dev.dv_xname;
 		disk_attach(&vnd->sc_dev, &vnd->sc_dk);
 
 		vndunlock(vnd);
