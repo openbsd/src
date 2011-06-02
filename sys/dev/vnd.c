@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.116 2011/05/31 17:35:35 matthew Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.117 2011/06/02 16:14:40 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -182,6 +182,7 @@ vndattach(int num)
 	vnd_softc = (struct vnd_softc *)mem;
 	for (i = 0; i < num; i++) {
 		rw_init(&vnd_softc[i].sc_rwlock, "vndlock");
+		device_ref(&vnd_softc[i].sc_dev);
 	}
 	numvnd = num;
 
