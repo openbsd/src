@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.33 2011/05/09 18:03:08 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.34 2011/06/02 18:50:39 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -272,7 +272,7 @@ thru_eof(struct aproc *p, struct abuf *ibuf)
 {
 	if (!(p->flags & APROC_QUIT))
 		return;
-	if (LIST_EMPTY(&p->ins) || LIST_EMPTY(&p->outs))
+	if (LIST_EMPTY(&p->ins))
 		aproc_del(p);
 }
 
@@ -281,7 +281,7 @@ thru_hup(struct aproc *p, struct abuf *obuf)
 {
 	if (!(p->flags & APROC_QUIT))
 		return;
-	if (LIST_EMPTY(&p->outs))
+	if (LIST_EMPTY(&p->ins))
 		aproc_del(p);
 }
 
@@ -788,7 +788,7 @@ ctl_slotdel(struct aproc *p, int index)
 		if (s->ops)
 			return;
 	}
-	if (!LIST_EMPTY(&p->outs) || !LIST_EMPTY(&p->ins))
+	if (LIST_EMPTY(&p->ins))
 		aproc_del(p);
 }
 
@@ -1166,7 +1166,7 @@ ctl_eof(struct aproc *p, struct abuf *ibuf)
 		if (s->ops != NULL)
 			s->ops->quit(s->arg);
 	}
-	if (!LIST_EMPTY(&p->outs) || !LIST_EMPTY(&p->ins))
+	if (LIST_EMPTY(&p->ins))
 		aproc_del(p);
 }
 
@@ -1182,7 +1182,7 @@ ctl_hup(struct aproc *p, struct abuf *obuf)
 		if (s->ops)
 			return;
 	}
-	if (!LIST_EMPTY(&p->outs) || !LIST_EMPTY(&p->ins))
+	if (LIST_EMPTY(&p->ins))
 		aproc_del(p);
 }
 
