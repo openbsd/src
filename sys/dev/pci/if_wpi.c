@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.109 2010/09/07 16:21:45 deraadt Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.110 2011/06/02 18:36:53 mk Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -215,7 +215,7 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Install interrupt handler. */
-	if (pci_intr_map(pa, &ih) != 0) {
+	if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
 		printf(": can't map interrupt\n");
 		return;
 	}
