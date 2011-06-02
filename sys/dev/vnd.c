@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.122 2011/06/02 19:17:24 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.123 2011/06/02 19:18:21 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -235,7 +235,6 @@ vndopen(dev_t dev, int flags, int mode, struct proc *p)
 	sc->sc_dk.dk_openmask =
 	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
-	error = 0;
 bad:
 	vndunlock(sc);
 	return (error);
