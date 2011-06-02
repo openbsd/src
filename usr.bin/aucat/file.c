@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.25 2011/06/02 16:58:02 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.26 2011/06/02 19:03:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -24,10 +24,10 @@
  * the module also provides trivial timeout implementation,
  * derived from:
  *
- * 	anoncvs@moule.caoua.org:/cvs
+ * 	anoncvs@moule.caoua.org:/midish
  *
- *		midish/timo.c rev 1.16
- * 		midish/mdep.c rev 1.69
+ *		midish/timo.c rev 1.18
+ * 		midish/mdep.c rev 1.71
  *
  * A timeout is used to schedule the call of a routine (the callback)
  * there is a global list of timeouts that is processed inside the
@@ -297,7 +297,8 @@ file_poll(void)
 	struct file *f, *fnext;
 	struct aproc *p;
 	struct timespec ts;
-	long delta_nsec;
+	long long delta_nsec;
+	int res;
 
 	if (LIST_EMPTY(&file_list) && timo_queue == NULL) {
 #ifdef DEBUG
@@ -346,20 +347,25 @@ file_poll(void)
 		dbg_puts("\n");
 	}
 #endif
-	if (nfds > 0) {
-		if (poll(pfds, nfds, -1) < 0) {
-			if (errno == EINTR)
-				return 1;
-			err(1, "file_poll: poll failed");
-		}
-		clock_gettime(CLOCK_MONOTONIC, &ts);
-		delta_nsec = 1000000000L * (ts.tv_sec - file_ts.tv_sec);
-		delta_nsec += ts.tv_nsec - file_ts.tv_nsec;
-		if (delta_nsec > 0) {
-			file_ts = ts;
+	res = poll(pfds, nfds, -1);
+	if (res < 0 && errno != EINTR)
+		err(1, "poll");
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	delta_nsec = 1000000000LL * (ts.tv_sec - file_ts.tv_sec);
+	delta_nsec += ts.tv_nsec - file_ts.tv_nsec;
+	if (delta_nsec > 0) {
+		file_ts = ts;
+		if (delta_nsec < 1000000000LL)
 			timo_update(delta_nsec / 1000);
+		else {
+#ifdef DEBUG
+			dbg_puts("ignored huge clock delta\n");
+#endif
 		}
 	}
+	if (res <= 0)
+		return 1;
+
 	f = LIST_FIRST(&file_list);
 	while (f != NULL) {
 		if (f->pfd == NULL) {
