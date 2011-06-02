@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.46 2011/05/30 19:27:40 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.47 2011/06/02 19:59:00 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -177,6 +177,19 @@ pci_attach_hook(struct device *parent, struct device *self,
 
 	switch (PCI_VENDOR(id)) {
 	case PCI_VENDOR_INTEL:
+		/*
+		 * In the land of VMWare you can have the latest
+		 * 64-bit AMD multicore CPU behind a prehistoric Intel
+		 * host bridge.  Give them what they deserve.
+		 */
+		switch (PCI_PRODUCT(id)) {
+		case PCI_PRODUCT_INTEL_82443BX:
+			break;
+		default:
+			pba->pba_flags |= PCI_FLAGS_MSI_ENABLED;
+			break;
+		}
+		break;
 	case PCI_VENDOR_NVIDIA:
 	case PCI_VENDOR_AMD:
 		pba->pba_flags |= PCI_FLAGS_MSI_ENABLED;
