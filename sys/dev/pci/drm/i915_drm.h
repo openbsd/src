@@ -1,3 +1,4 @@
+/* $OpenBSD: i915_drm.h,v 1.13 2011/06/02 18:22:00 weerd Exp $ */
 /*
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.

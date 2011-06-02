@@ -1,3 +1,4 @@
+/* $OpenBSD: drm_lock.c,v 1.17 2011/06/02 18:22:00 weerd Exp $ */
 /*-
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
  * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.

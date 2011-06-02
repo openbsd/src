@@ -1,3 +1,4 @@
+/* $OpenBSD: radeon_drv.h,v 1.34 2011/06/02 18:22:00 weerd Exp $ */
 /* radeon_drv.h -- Private header for radeon driver -*- linux-c -*-
  *
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.

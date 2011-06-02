@@ -1,3 +1,4 @@
+/* $OpenBSD: r300_cmdbuf.c,v 1.13 2011/06/02 18:22:00 weerd Exp $ */
 /* r300_cmdbuf.c -- Command buffer emission for R300 -*- linux-c -*-
  *
  * Copyright (C) The Weather Channel, Inc.  2002.

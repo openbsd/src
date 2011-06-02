@@ -1,3 +1,4 @@
+/* $OpenBSD: r600_microcode.h,v 1.2 2011/06/02 18:22:00 weerd Exp $ */
 /*-
  * Copyright 2007 Advanced Micro Devices, Inc.
  * All Rights Reserved.

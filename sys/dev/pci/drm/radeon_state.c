@@ -1,3 +1,4 @@
+/* $OpenBSD: radeon_state.c,v 1.30 2011/06/02 18:22:00 weerd Exp $ */
 /* radeon_state.c -- State support for Radeon -*- linux-c -*- */
 /*
  * Copyright 2000 VA Linux Systems, Inc., Fremont, California.

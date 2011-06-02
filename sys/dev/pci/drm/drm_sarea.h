@@ -1,3 +1,4 @@
+/* $OpenBSD: drm_sarea.h,v 1.3 2011/06/02 18:22:00 weerd Exp $ */
 /**
  * \file drm_sarea.h
  * \brief SAREA definitions

@@ -1,3 +1,4 @@
+/* $OpenBSD: radeon_drv.c,v 1.55 2011/06/02 18:22:00 weerd Exp $ */
 /* radeon_drv.c -- ATI Radeon driver -*- linux-c -*-
  * Created: Wed Feb 14 17:10:04 2001 by gareth@valinux.com
  */

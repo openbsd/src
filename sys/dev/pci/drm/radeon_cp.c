@@ -1,3 +1,4 @@
+/* $OpenBSD: radeon_cp.c,v 1.48 2011/06/02 18:22:00 weerd Exp $ */
 /* radeon_cp.c -- CP support for Radeon -*- linux-c -*- */
 /*
  * Copyright 2000 Precision Insight, Inc., Cedar Park, Texas.

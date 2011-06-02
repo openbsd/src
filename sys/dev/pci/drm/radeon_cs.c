@@ -1,3 +1,4 @@
+/* $OpenBSD: radeon_cs.c,v 1.2 2011/06/02 18:22:00 weerd Exp $ */
 /*-
  * Copyright 2008 Jerome Glisse.
  * All Rights Reserved.

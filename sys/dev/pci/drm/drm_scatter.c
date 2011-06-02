@@ -1,3 +1,4 @@
+/* $OpenBSD: drm_scatter.c,v 1.15 2011/06/02 18:22:00 weerd Exp $ */
 /*-
  * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
  * All Rights Reserved.

@@ -1,3 +1,4 @@
+/* $OpenBSD: drm.h,v 1.7 2011/06/02 18:22:00 weerd Exp $ */
 /**
  * \file drm.h
  * Header for the Direct Rendering Manager

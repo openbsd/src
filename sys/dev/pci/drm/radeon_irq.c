@@ -1,3 +1,4 @@
+/* $OpenBSD: radeon_irq.c,v 1.26 2011/06/02 18:22:00 weerd Exp $ */
 /* radeon_irq.c -- IRQ handling for radeon -*- linux-c -*- */
 /*
  * Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.

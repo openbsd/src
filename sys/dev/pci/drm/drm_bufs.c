@@ -1,3 +1,4 @@
+/* $OpenBSD: drm_bufs.c,v 1.48 2011/06/02 18:22:00 weerd Exp $ */
 /*-
  * Copyright 1999, 2000 Precision Insight, Inc., Cedar Park, Texas.
  * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.

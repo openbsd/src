@@ -1,3 +1,4 @@
+/* $OpenBSD: drm_agpsupport.c,v 1.20 2011/06/02 18:22:00 weerd Exp $ */
 /*-
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
  * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.

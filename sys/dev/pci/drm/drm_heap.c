@@ -1,3 +1,4 @@
+/* $OpenBSD: drm_heap.c,v 1.5 2011/06/02 18:22:00 weerd Exp $ */
 /*
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
