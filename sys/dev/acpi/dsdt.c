@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.186 2011/06/02 17:15:53 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.187 2011/06/02 19:26:35 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2166,7 +2166,7 @@ struct aml_value *
 aml_mid(struct aml_value *src, int index, int length)
 {
 	if (index > src->length)
-		index = 0;
+		index = src->length;
 	if ((index + length) > src->length)
 		length = src->length - index;
 	return aml_allocvalue(src->type, length, src->v_buffer + index);
