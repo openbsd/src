@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.105 2011/05/08 19:46:10 matthew Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.106 2011/06/02 00:07:30 matthew Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -156,6 +156,11 @@ u_int		ata_identify_block_logical_align(struct ata_identify *);
 void		*atascsi_io_get(void *);
 void		atascsi_io_put(void *, void *);
 struct atascsi_port * atascsi_lookup_port(struct scsi_link *);
+
+int		atascsi_port_identify(struct atascsi_port *,
+		    struct ata_identify *);
+int		atascsi_port_set_features(struct atascsi_port *, int, int);
+
 
 struct atascsi *
 atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
@@ -331,36 +336,22 @@ atascsi_probe(struct scsi_link *link)
 		 * identification from working, so we retry a few times
 		 * with a fairly long delay.
 		 */
+
+		identify = dma_alloc(sizeof(*identify), PR_WAITOK | PR_ZERO);
+
 		int count = (link->lun > 0) ? 6 : 1;
 		while (count--) {
-			xa = scsi_io_get(&ahp->ahp_iopool, SCSI_NOSLEEP);
-			if (xa == NULL)
-				panic("no free xfers on a new port");
-			identify = dma_alloc(sizeof(*identify),
-			    PR_WAITOK | PR_ZERO);
-			xa->pmp_port = ap->ap_pmp_port;
-			xa->data = identify;
-			xa->datalen = sizeof(*identify);
-			xa->fis->flags = ATA_H2D_FLAGS_CMD | ap->ap_pmp_port;
-			xa->fis->command = (type == ATA_PORT_T_DISK) ?
-			    ATA_C_IDENTIFY : ATA_C_IDENTIFY_PACKET;
-			xa->fis->device = 0;
-			xa->flags = ATA_F_READ | ATA_F_PIO | ATA_F_POLL;
-			xa->timeout = 1000;
-			xa->complete = ata_polled_complete;
-			xa->atascsi_private = &ahp->ahp_iopool;
-			ata_exec(as, xa);
-			rv = ata_polled(xa);
+			rv = atascsi_port_identify(ap, identify);
 			if (rv == 0) {
 				bcopy(identify, &ap->ap_identify,
 				    sizeof(ap->ap_identify));
-				dma_free(identify, sizeof(*identify));
 				break;
 			}
-			dma_free(identify, sizeof(*identify));
 			if (count > 0)
 				delay(5000000);
 		}
+
+		dma_free(identify, sizeof(*identify));
 
 		if (rv != 0) {
 			goto error;
@@ -410,36 +401,14 @@ atascsi_probe(struct scsi_link *link)
 
 	/* Enable write cache if supported */
 	if (ISSET(cmdset, ATA_IDENTIFY_WRITECACHE)) {
-		xa = scsi_io_get(&ahp->ahp_iopool, SCSI_NOSLEEP);
-		if (xa == NULL)
-			panic("no free xfers on a new port");
-		xa->fis->command = ATA_C_SET_FEATURES;
-		xa->fis->features = ATA_SF_WRITECACHE_EN;
-		xa->fis->flags = ATA_H2D_FLAGS_CMD | ap->ap_pmp_port;
-		xa->flags = ATA_F_READ | ATA_F_PIO | ATA_F_POLL;
-		xa->timeout = 1000;
-		xa->complete = ata_polled_complete;
-		xa->pmp_port = ap->ap_pmp_port;
-		xa->atascsi_private = &ahp->ahp_iopool;
-		ata_exec(as, xa);
-		ata_polled(xa); /* we dont care if it doesnt work */
+		/* We don't care if it fails. */
+		(void)atascsi_port_set_features(ap, ATA_SF_WRITECACHE_EN, 0);
 	}
 
 	/* Enable read lookahead if supported */
 	if (ISSET(cmdset, ATA_IDENTIFY_LOOKAHEAD)) {
-		xa = scsi_io_get(&ahp->ahp_iopool, SCSI_NOSLEEP);
-		if (xa == NULL)
-			panic("no free xfers on a new port");
-		xa->fis->command = ATA_C_SET_FEATURES;
-		xa->fis->features = ATA_SF_LOOKAHEAD_EN;
-		xa->fis->flags = ATA_H2D_FLAGS_CMD | ap->ap_pmp_port;
-		xa->flags = ATA_F_READ | ATA_F_PIO | ATA_F_POLL;
-		xa->timeout = 1000;
-		xa->complete = ata_polled_complete;
-		xa->pmp_port = ap->ap_pmp_port;
-		xa->atascsi_private = &ahp->ahp_iopool;
-		ata_exec(as, xa);
-		ata_polled(xa); /* we dont care if it doesnt work */
+		/* We don't care if it fails. */
+		(void)atascsi_port_set_features(ap, ATA_SF_LOOKAHEAD_EN, 0);
 	}
 
 	/*
@@ -454,7 +423,7 @@ atascsi_probe(struct scsi_link *link)
 		panic("no free xfers on a new port");
 	xa->fis->command = ATA_C_SEC_FREEZE_LOCK;
 	xa->fis->flags = ATA_H2D_FLAGS_CMD | ap->ap_pmp_port;
-	xa->flags = ATA_F_READ | ATA_F_PIO | ATA_F_POLL;
+	xa->flags = ATA_F_POLL;
 	xa->timeout = 1000;
 	xa->complete = ata_polled_complete;
 	xa->pmp_port = ap->ap_pmp_port;
@@ -1647,4 +1616,52 @@ ata_swapcopy(void *src, void *dst, size_t len)
 
 	for (i = 0; i < len; i++)
 		d[i] = swap16(s[i]);
+}
+
+int
+atascsi_port_identify(struct atascsi_port *ap, struct ata_identify *identify)
+{
+	struct atascsi			*as = ap->ap_as;
+	struct atascsi_host_port	*ahp = ap->ap_host_port;
+	struct ata_xfer			*xa;
+
+	xa = scsi_io_get(&ahp->ahp_iopool, SCSI_NOSLEEP);
+	if (xa == NULL)
+		panic("no free xfers on a new port");
+	xa->pmp_port = ap->ap_pmp_port;
+	xa->data = identify;
+	xa->datalen = sizeof(*identify);
+	xa->fis->flags = ATA_H2D_FLAGS_CMD | ap->ap_pmp_port;
+	xa->fis->command = (ap->ap_type == ATA_PORT_T_DISK) ?
+	    ATA_C_IDENTIFY : ATA_C_IDENTIFY_PACKET;
+	xa->fis->device = 0;
+	xa->flags = ATA_F_READ | ATA_F_PIO | ATA_F_POLL;
+	xa->timeout = 1000;
+	xa->complete = ata_polled_complete;
+	xa->atascsi_private = &ahp->ahp_iopool;
+	ata_exec(as, xa);
+	return (ata_polled(xa));
+}
+
+int
+atascsi_port_set_features(struct atascsi_port *ap, int subcommand, int arg)
+{
+	struct atascsi			*as = ap->ap_as;
+	struct atascsi_host_port	*ahp = ap->ap_host_port;
+	struct ata_xfer			*xa;
+
+	xa = scsi_io_get(&ahp->ahp_iopool, SCSI_NOSLEEP);
+	if (xa == NULL)
+		panic("no free xfers on a new port");
+	xa->fis->command = ATA_C_SET_FEATURES;
+	xa->fis->features = subcommand;
+	xa->fis->sector_count = arg;
+	xa->fis->flags = ATA_H2D_FLAGS_CMD | ap->ap_pmp_port;
+	xa->flags = ATA_F_POLL;
+	xa->timeout = 1000;
+	xa->complete = ata_polled_complete;
+	xa->pmp_port = ap->ap_pmp_port;
+	xa->atascsi_private = &ahp->ahp_iopool;
+	ata_exec(as, xa);
+	return (ata_polled(xa));
 }
