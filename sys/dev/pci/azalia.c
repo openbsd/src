@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.196 2011/06/02 18:02:47 kettenis Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.197 2011/06/02 18:36:49 kettenis Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -501,7 +501,7 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* interrupt */
-	if (pci_intr_map(pa, &ih)) {
+	if (pci_intr_map_msi(pa, &ih) && pci_intr_map(pa, &ih)) {
 		printf(": can't map interrupt\n");
 		return;
 	}
