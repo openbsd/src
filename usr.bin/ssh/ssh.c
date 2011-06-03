@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh.c,v 1.361 2011/05/24 07:15:47 djm Exp $ */
+/* $OpenBSD: ssh.c,v 1.362 2011/06/03 00:54:38 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -943,6 +943,7 @@ control_persist_detach(void)
 		if (devnull > STDERR_FILENO)
 			close(devnull);
 	}
+	setproctitle("%s [mux]", options.control_path);
 }
 
 /* Do fork() after authentication. Used by "ssh -f" */
