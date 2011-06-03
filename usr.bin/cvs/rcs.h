@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.98 2010/10/31 15:37:34 nicm Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.99 2011/06/03 10:02:25 chl Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -28,6 +28,7 @@
 #define RCS_H
 
 #include <stdio.h>
+#include <time.h>
 
 #include "buf.h"
 
