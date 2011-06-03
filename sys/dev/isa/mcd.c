@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.56 2010/09/22 01:18:57 matthew Exp $ */
+/*	$OpenBSD: mcd.c,v 1.57 2011/06/03 18:22:25 matthew Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -67,6 +67,7 @@
 #include <sys/stat.h>
 #include <sys/uio.h>
 #include <sys/ioctl.h>
+#include <sys/dkio.h>
 #include <sys/mtio.h>
 #include <sys/cdio.h>
 #include <sys/errno.h>
@@ -218,7 +219,7 @@ struct cfdriver mcd_cd = {
 	NULL, "mcd", DV_DISK
 };
 
-void	mcdgetdisklabel(dev_t, struct mcd_softc *, struct disklabel *, int);
+int	mcdgetdisklabel(dev_t, struct mcd_softc *, struct disklabel *, int);
 int	mcd_get_parms(struct mcd_softc *);
 void	mcdstrategy(struct buf *);
 void	mcdstart(struct mcd_softc *);
@@ -725,15 +726,13 @@ mcdioctl(dev, cmd, addr, flag, p)
 #endif
 }
 
-void
+int
 mcdgetdisklabel(dev, sc, lp, spoofonly)
 	dev_t dev;
 	struct mcd_softc *sc;
 	struct disklabel *lp;
 	int spoofonly;
 {
-	char *errstring;
-	
 	bzero(lp, sizeof(struct disklabel));
 
 	lp->d_secsize = sc->blksize;
@@ -759,11 +758,7 @@ mcdgetdisklabel(dev, sc, lp, spoofonly)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(DISKLABELDEV(dev), mcdstrategy, lp, spoofonly);
-	if (errstring) {
-		/*printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);*/
-		return;
-	}
+	return (readdisklabel(DISKLABELDEV(dev), mcdstrategy, lp, spoofonly));
 }
 
 int
