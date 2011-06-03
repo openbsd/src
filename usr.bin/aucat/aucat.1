@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.83 2011/06/03 09:01:14 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.84 2011/06/03 16:20:10 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -517,21 +517,23 @@ Streams created with the
 .Fl t
 option export the server clock using MTC, allowing non-audio
 software or hardware to be synchronized to the audio stream.
+Maximum accuracy is achieved when the number of blocks per
+second is equal to one of the standard MTC clock rates (96, 100 and 120Hz).
 The following sample rates
 .Pq Fl r
 and block sizes
 .Pq Fl z
-are recommended for maximum accuracy:
+are recommended:
 .Pp
 .Bl -bullet -offset indent -compact
 .It
-44100Hz, 441 frames
+44100Hz, 441 frames (MTC rate is 100Hz)
 .It
-48000Hz, 400 frames
+48000Hz, 400 frames (MTC rate is 120Hz)
 .It
-48000Hz, 480 frames
+48000Hz, 480 frames (MTC rate is 100Hz)
 .It
-48000Hz, 500 frames
+48000Hz, 500 frames (MTC rate is 96Hz)
 .El
 .Pp
 For instance, the following command will create two devices:
