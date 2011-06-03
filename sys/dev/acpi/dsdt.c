@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.188 2011/06/03 03:56:15 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.189 2011/06/03 16:44:16 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2441,14 +2441,14 @@ aml_parsefieldlist(struct aml_scope *mscope, int opcode, int flags,
 /*
  * Mutex/Event utility functions
  */
-int	acpi_xmutex_acquire(struct aml_scope *, struct aml_value *, int);
-void	acpi_xmutex_release(struct aml_scope *, struct aml_value *);
-int	acpi_xevent_wait(struct aml_scope *, struct aml_value *, int);
-void	acpi_xevent_signal(struct aml_scope *, struct aml_value *);
-void	acpi_xevent_reset(struct aml_scope *, struct aml_value *);
+int	acpi_mutex_acquire(struct aml_scope *, struct aml_value *, int);
+void	acpi_mutex_release(struct aml_scope *, struct aml_value *);
+int	acpi_event_wait(struct aml_scope *, struct aml_value *, int);
+void	acpi_event_signal(struct aml_scope *, struct aml_value *);
+void	acpi_event_reset(struct aml_scope *, struct aml_value *);
 
 int
-acpi_xmutex_acquire(struct aml_scope *scope, struct aml_value *mtx,
+acpi_mutex_acquire(struct aml_scope *scope, struct aml_value *mtx,
     int timeout)
 {
 	int err;
@@ -2464,14 +2464,14 @@ acpi_xmutex_acquire(struct aml_scope *scope, struct aml_value *mtx,
 		    mtx->node->name);
 		return (0);
 	} else if (timeout == 0) {
-		return (1);
+		return (-1);
 	}
 	/* Wait for mutex */
 	return (0);
 }
 
 void
-acpi_xmutex_release(struct aml_scope *scope, struct aml_value *mtx)
+acpi_mutex_release(struct aml_scope *scope, struct aml_value *mtx)
 {
 	int err;
 
@@ -2486,7 +2486,7 @@ acpi_xmutex_release(struct aml_scope *scope, struct aml_value *mtx)
 }
 
 int
-acpi_xevent_wait(struct aml_scope *scope, struct aml_value *evt, int timeout)
+acpi_event_wait(struct aml_scope *scope, struct aml_value *evt, int timeout)
 {
 	/* Wait for event to occur; do work in meantime */
 	evt->v_evt.state = 0;
@@ -2501,21 +2501,21 @@ acpi_xevent_wait(struct aml_scope *scope, struct aml_value *evt, int timeout)
 		return (0);
 	} else if (timeout == 0) {
 		/* Zero timeout */
-		return (1);
+		return (-1);
 	}
 	/* Wait for timeout or signal */
 	return (0);
 }
 
 void
-acpi_xevent_signal(struct aml_scope *scope, struct aml_value *evt)
+acpi_event_signal(struct aml_scope *scope, struct aml_value *evt)
 {
 	evt->v_evt.state = 1;
 	/* Wakeup waiters */
 }
 
 void
-acpi_xevent_reset(struct aml_scope *scope, struct aml_value *evt)
+acpi_event_reset(struct aml_scope *scope, struct aml_value *evt)
 {
 	evt->v_evt.state = 0;
 }
@@ -3686,29 +3686,29 @@ aml_parse(struct aml_scope *scope, int ret_type, const char *stype)
 	case AMLOP_ACQUIRE:
 		/* Acquire: Sw => Bool */
 		rv = aml_gettgt(opargs[0], opcode);
-		ival = acpi_xmutex_acquire(scope, rv,
+		ival = acpi_mutex_acquire(scope, rv,
 		    opargs[1]->v_integer);
 		break;
 	case AMLOP_RELEASE:
 		/* Release: S */
 		rv = aml_gettgt(opargs[0], opcode);
-		acpi_xmutex_release(scope, rv);
+		acpi_mutex_release(scope, rv);
 		break;
 	case AMLOP_WAIT:
 		/* Wait: Si => Bool */
 		rv = aml_gettgt(opargs[0], opcode);
-		ival = acpi_xevent_wait(scope, rv,
+		ival = acpi_event_wait(scope, rv,
 		    opargs[1]->v_integer);
 		break;
 	case AMLOP_RESET:
 		/* Reset: S */
 		rv = aml_gettgt(opargs[0], opcode);
-		acpi_xevent_reset(scope, rv);
+		acpi_event_reset(scope, rv);
 		break;
 	case AMLOP_SIGNAL:
 		/* Signal: S */
 		rv = aml_gettgt(opargs[0], opcode);
-		acpi_xevent_signal(scope, rv);
+		acpi_event_signal(scope, rv);
 		break;
 
 		/* Named objects */
