@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.187 2011/06/02 19:26:35 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.188 2011/06/03 03:56:15 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1888,6 +1888,9 @@ aml_pushscope(struct aml_scope *parent, struct aml_value *range,
 	scope->parent = parent;
 	scope->type = type;
 	scope->sc = acpi_softc;
+
+	if (parent)
+		scope->depth = parent->depth+1;
 
 	aml_lastscope = scope;
 
