@@ -1,4 +1,4 @@
-/*      $OpenBSD: extern.h,v 1.7 2011/03/07 08:11:15 otto Exp $	*/
+/*      $OpenBSD: extern.h,v 1.8 2011/06/03 06:10:33 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -27,6 +27,7 @@ int		yylex(void);
 void		yyerror(char *);
 void		fatal(const char *);
 void		abort_line(int);
+unsigned char	bc_eof(EditLine *, int);
 
 extern int	lineno;
 extern char	*yytext;

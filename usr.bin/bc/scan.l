@@ -1,5 +1,5 @@
 %{
-/*      $OpenBSD: scan.l,v 1.25 2011/06/01 07:18:23 otto Exp $	*/
+/*      $OpenBSD: scan.l,v 1.26 2011/06/03 06:10:33 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -251,6 +251,23 @@ abort_line(int sig)
 	} else
 		write(STDOUT_FILENO, str1, sizeof(str1) - 1);
 	errno = save_errno;
+}
+
+/*
+ * Avoid the echo of ^D by the default code of editline and take
+ * into account skipchars to make ^D work when the cursor is at start of
+ * line after a ^C.
+ */
+unsigned char
+bc_eof(EditLine *e, int ch)
+{
+	const struct lineinfo *info = el_line(e);
+
+	if (info->buffer + skipchars == info->cursor &&
+	    info->cursor == info->lastchar)
+		return (CC_EOF);
+	else
+		return (CC_ERROR);
 }
 
 int
