@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.59 2011/05/02 22:32:29 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.60 2011/06/03 16:22:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -530,6 +530,7 @@ void
 sock_attach(struct sock *f, int force)
 {
 	struct abuf *rbuf, *wbuf;
+	unsigned rch, wch;
 
 	rbuf = LIST_FIRST(&f->pipe.file.rproc->outs);
 	wbuf = LIST_FIRST(&f->pipe.file.wproc->ins);
@@ -567,11 +568,13 @@ sock_attach(struct sock *f, int force)
 	 * because dev_xxx() functions are supposed to
 	 * work (i.e., not to crash)
 	 */
+	if (f->opt->join) {
+		rch = f->opt->rpar.cmax - f->opt->rpar.cmin + 1;
+		wch = f->opt->wpar.cmax - f->opt->wpar.cmin + 1;
+	} else
+		rch = wch = 0;
 	dev_attach(f->dev, f->pipe.file.name, f->mode,
-	    rbuf, &f->rpar,
-	    f->opt->join ? f->opt->rpar.cmax - f->opt->rpar.cmin + 1 : 0,
-	    wbuf, &f->wpar, 
-	    f->opt->join ? f->opt->wpar.cmax - f->opt->wpar.cmin + 1 : 0,
+	    rbuf, &f->rpar, rch, wbuf, &f->wpar, wch,
 	    f->xrun, f->opt->maxweight);
 	if (f->mode & MODE_PLAY)
 		dev_setvol(f->dev, rbuf, MIDI_TO_ADATA(f->vol));
