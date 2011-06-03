@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.34 2010/09/28 13:20:50 miod Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.35 2011/06/03 21:14:11 matthew Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -452,7 +452,7 @@ hdstrategy(struct buf *bp)
 	sc = (void *)hd->sc_dev.dv_parent;
 
 	lp = hd->sc_disk.dk_label;
-	if ((bounds_check_with_label(bp, hd->sc_disk.dk_label, 1)) <= 0)
+	if ((bounds_check_with_label(bp, hd->sc_disk.dk_label)) <= 0)
 		goto done;
 
 	if (bp->b_bcount == 0)

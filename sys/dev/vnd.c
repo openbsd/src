@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.123 2011/06/02 19:18:21 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.124 2011/06/03 21:14:11 matthew Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -352,7 +352,7 @@ vndstrategy(struct buf *bp)
 
 	/* If we have a label, do a boundary check. */
 	if (vnd->sc_flags & VNF_HAVELABEL) {
-		if (bounds_check_with_label(bp, vnd->sc_dk.dk_label, 1) <= 0) {
+		if (bounds_check_with_label(bp, vnd->sc_dk.dk_label) <= 0) {
 			s = splbio();
 			biodone(bp);
 			splx(s);

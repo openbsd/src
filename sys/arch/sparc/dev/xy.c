@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.50 2010/09/22 06:40:25 krw Exp $	*/
+/*	$OpenBSD: xy.c,v 1.51 2011/06/03 21:14:11 matthew Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -1018,8 +1018,7 @@ xystrategy(bp)
 	 * partition. Adjust transfer if needed, and signal errors or early
 	 * completion. */
 
-	if (bounds_check_with_label(bp, xy->sc_dk.dk_label,
-	    (xy->flags & XY_WLABEL) != 0) <= 0)
+	if (bounds_check_with_label(bp, xy->sc_dk.dk_label) <= 0)
 		goto done;
 
 	/*

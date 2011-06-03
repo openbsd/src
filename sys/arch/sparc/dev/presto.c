@@ -1,4 +1,4 @@
-/*	$OpenBSD: presto.c,v 1.20 2010/09/22 06:40:25 krw Exp $	*/
+/*	$OpenBSD: presto.c,v 1.21 2011/06/03 21:14:11 matthew Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -287,7 +287,7 @@ prestostrategy(struct buf *bp)
 	}
 
 	/* Do not write on "no trespassing" areas... */
-	if (bounds_check_with_label(bp, sc->sc_dk.dk_label, 1) <= 0)
+	if (bounds_check_with_label(bp, sc->sc_dk.dk_label) <= 0)
 		goto bad;
 
 	/* Bound the request size, then move data between buf and nvram */

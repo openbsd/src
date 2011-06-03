@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.93 2011/04/12 20:18:13 miod Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.94 2011/06/03 21:14:11 matthew Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -649,7 +649,6 @@ ccdstrategy(struct buf *bp)
 	int unit = DISKUNIT(bp->b_dev);
 	struct ccd_softc *cs = &ccd_softc[unit];
 	int s;
-	int wlabel;
 	struct disklabel *lp;
 
 	CCD_DPRINTF(CCDB_FOLLOW, ("ccdstrategy(%p): unit %d\n", bp, unit));
@@ -671,8 +670,7 @@ ccdstrategy(struct buf *bp)
 	 * Do bounds checking and adjust transfer.  If there's an
 	 * error, the bounds check will flag that for us.
 	 */
-	wlabel = cs->sc_flags & (CCDF_WLABEL|CCDF_LABELLING);
-	if (bounds_check_with_label(bp, lp, wlabel) <= 0)
+	if (bounds_check_with_label(bp, lp) <= 0)
 		goto done;
 
 	bp->b_resid = bp->b_bcount;

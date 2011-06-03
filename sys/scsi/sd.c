@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.226 2011/05/31 17:35:35 matthew Exp $	*/
+/*	$OpenBSD: sd.c,v 1.227 2011/06/03 21:14:11 matthew Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -573,8 +573,7 @@ sdstrategy(struct buf *bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (bounds_check_with_label(bp, sc->sc_dk.dk_label,
-	    (sc->flags & (SDF_WLABEL|SDF_LABELLING)) != 0) <= 0)
+	if (bounds_check_with_label(bp, sc->sc_dk.dk_label) <= 0)
 		goto done;
 
 	/* Place it in the queue of disk activities for this disk. */

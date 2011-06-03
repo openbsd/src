@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.2 2011/05/08 13:24:55 syuu Exp $ */
+/*	$OpenBSD: octcf.c,v 1.3 2011/06/03 21:14:11 matthew Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -326,8 +326,7 @@ octcfstrategy(struct buf *bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (bounds_check_with_label(bp, wd->sc_dk.dk_label,
-	    (wd->sc_flags & (OCTCFF_WLABEL|OCTCFF_LABELLING)) != 0) <= 0)
+	if (bounds_check_with_label(bp, wd->sc_dk.dk_label) <= 0)
 		goto done;
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();

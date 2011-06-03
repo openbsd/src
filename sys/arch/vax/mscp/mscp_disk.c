@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.33 2011/04/06 18:12:47 miod Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.34 2011/06/03 21:14:11 matthew Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -318,8 +318,7 @@ rastrategy(bp)
 	 * Determine the size of the transfer, and make sure it is
 	 * within the boundaries of the partition.
 	 */
-	if (bounds_check_with_label(bp, ra->ra_disk.dk_label,
-	    ra->ra_wlabel) <= 0)
+	if (bounds_check_with_label(bp, ra->ra_disk.dk_label) <= 0)
 		goto done;
 
 	/* Make some statistics... /bqt */

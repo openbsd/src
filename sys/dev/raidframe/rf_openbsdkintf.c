@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.61 2011/04/14 20:59:35 pea Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.62 2011/06/03 21:14:11 matthew Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -724,7 +724,6 @@ raidstrategy(struct buf *bp)
 	RF_Raid_t *raidPtr;
 	struct raid_softc *rs = &raid_softc[raidID];
 	struct disklabel *lp;
-	int wlabel;
 
 	s = splbio();
 
@@ -761,10 +760,9 @@ raidstrategy(struct buf *bp)
 	 * Do bounds checking and adjust transfer.  If there's an
 	 * error, the bounds check will flag that for us.
 	 */
-	wlabel = rs->sc_flags & (RAIDF_WLABEL | RAIDF_LABELLING);
-	if (bounds_check_with_label(bp, lp, wlabel) <= 0) {
-		db1_printf(("Bounds check failed!!:%d %d\n",
-		    (int)bp->b_blkno, (int)wlabel));
+	if (bounds_check_with_label(bp, lp) <= 0) {
+		db1_printf(("Bounds check failed!!: %d\n",
+		    (int)bp->b_blkno));
 		biodone(bp);
 		goto raidstrategy_end;
 	}

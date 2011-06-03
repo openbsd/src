@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.63 2010/09/22 01:18:57 matthew Exp $	*/
+/*	$OpenBSD: hd.c,v 1.64 2011/06/03 21:14:11 matthew Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -692,9 +692,8 @@ hdstrategy(bp)
 	 * Do bounds checking, adjust transfer. if error, process;
 	 * If end of partition, just return.
 	 */
-	if (bounds_check_with_label(bp, lp,
-	    (rs->sc_flags & HDF_WLABEL) != 0) <= 0)
-			goto done;
+	if (bounds_check_with_label(bp, lp) <= 0)
+		goto done;
 
 	s = splbio();
  	dp = &rs->sc_tab;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.199 2011/05/31 17:35:35 matthew Exp $	*/
+/*	$OpenBSD: cd.c,v 1.200 2011/06/03 21:14:11 matthew Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -525,8 +525,7 @@ cdstrategy(struct buf *bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (bounds_check_with_label(bp, sc->sc_dk.dk_label,
-	    (sc->sc_flags & (CDF_WLABEL|CDF_LABELLING)) != 0) <= 0)
+	if (bounds_check_with_label(bp, sc->sc_dk.dk_label) <= 0)
 		goto done;
 
 	/* Place it in the queue of disk activities for this disk. */
