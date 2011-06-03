@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.58 2011/04/18 00:40:26 jordan Exp $ */
+/* $OpenBSD: dsdt.h,v 1.59 2011/06/03 03:54:19 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -21,16 +21,15 @@
 struct aml_scope {
 	struct acpi_softc	*sc;
 	uint8_t			*pos;
+	uint8_t			*start;
 	uint8_t			*end;
 	struct aml_node		*node;
 	struct aml_scope	*parent;
 	struct aml_value	*locals;
 	struct aml_value	*args;
-	int			nargs;
-	int			flags;
 	struct aml_value	*retv;
-	uint8_t			*start;
 	int			type;
+	int			depth;
 };
 
 
