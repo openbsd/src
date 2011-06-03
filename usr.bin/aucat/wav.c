@@ -14,9 +14,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <fcntl.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "abuf.h"
@@ -661,6 +662,25 @@ wav_quitreq(void *arg)
 }
 
 /*
+ * determine the header by the file name
+ */
+unsigned
+wav_autohdr(char *name, unsigned hdr)
+{
+	size_t len;
+
+	if (hdr != HDR_AUTO)
+		return hdr;
+	if (name == NULL)
+		return HDR_RAW;
+	len = strlen(name);
+	if (len >= 4 && strcasecmp(name + len - 4, ".wav") == 0)
+		return HDR_WAV;
+	else
+		return HDR_RAW;
+}
+
+/*
  * create a file reader in the ``INIT'' state
  */
 struct wav *
@@ -671,6 +691,7 @@ wav_new_in(struct fileops *ops,
 	int fd;
 	struct wav *f;
 
+	hdr = wav_autohdr(name, hdr);
 	if (name != NULL) {
 		fd = open(name, O_RDONLY | O_NONBLOCK, 0666);
 		if (fd < 0) {
@@ -726,7 +747,7 @@ wav_new_in(struct fileops *ops,
 	f->join = join;
 	f->mode = mode;
 	f->hpar = *par;
-	f->hdr = 0;
+	f->hdr = hdr;
 	f->xrun = xrun;
 	f->maxweight = MIDI_TO_ADATA(volctl);
 	f->slot = ctl_slotnew(f->dev->midi, "play", &ctl_wavops, f, 1);
@@ -760,6 +781,7 @@ wav_new_out(struct fileops *ops,
 	int fd;
 	struct wav *f;
 
+	hdr = wav_autohdr(name, hdr);
 	if (name == NULL) {
 		name = "stdout";
 		fd = STDOUT_FILENO;
