@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig.c,v 1.12 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$OpenBSD: sig.c,v 1.13 2011/06/03 23:34:56 deraadt Exp $	*/
 /*	$NetBSD: sig.c,v 1.15 2009/02/19 15:20:22 christos Exp $	*/
 
 /*-
@@ -62,7 +62,7 @@ private void sig_handler(int);
 private void
 sig_handler(int signo)
 {
-	int i;
+	int i, save_errno = errno;
 	sigset_t nset, oset;
 
 	(void) sigemptyset(&nset);
@@ -98,6 +98,7 @@ sig_handler(int signo)
 	sigemptyset(&sel->el_signal->sig_action[i].sa_mask);
 	(void) sigprocmask(SIG_SETMASK, &oset, NULL);
 	(void) kill(0, signo);
+	errno = save_errno;
 }
 
 
