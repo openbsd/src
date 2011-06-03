@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndio.7,v 1.4 2011/04/28 06:19:57 ratchov Exp $
+.\" $OpenBSD: sndio.7,v 1.5 2011/06/03 18:57:51 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 28 2011 $
+.Dd $Mdocdate: June 3 2011 $
 .Dt SNDIO 7
 .Os
 .Sh NAME
@@ -121,9 +121,13 @@ number, typically 0.
 Corresponds to the profile string registered using the
 .Fl s
 option of
-.Xr aucat 1 .
+.Xr aucat 1
+or
+.Xr midicat 1 .
 Only meaningful for
 .Pa aucat
+and
+.Pa midithru
 device types.
 .El
 .Pp
