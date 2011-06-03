@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.256 2011/04/22 10:09:57 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.257 2011/06/03 13:06:06 kettenis Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -3014,26 +3014,38 @@ void
 em_write_pci_cfg(struct em_hw *hw, uint32_t reg, uint16_t *value)
 {
 	struct pci_attach_args *pa = &((struct em_osdep *)hw->back)->em_pa;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	/* Should we do read/mask/write...?  16 vs 32 bit!!! */
-	pci_conf_write(pc, pa->pa_tag, reg, *value);
+	pcireg_t val;
+
+	val = pci_conf_read(pa->pa_pc, pa->pa_tag, reg & ~0x3);
+	if (reg & 0x2) {
+		val &= 0x0000ffff;
+		val |= (*value << 16);
+	} else {
+		val &= 0xffff0000;
+		val |= *value;
+	}
+	pci_conf_write(pa->pa_pc, pa->pa_tag, reg & ~0x3, val);
 }
 
 void
 em_read_pci_cfg(struct em_hw *hw, uint32_t reg, uint16_t *value)
 {
 	struct pci_attach_args *pa = &((struct em_osdep *)hw->back)->em_pa;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	*value = pci_conf_read(pc, pa->pa_tag, reg);
+	pcireg_t val;
+
+	val = pci_conf_read(pa->pa_pc, pa->pa_tag, reg & ~0x3);
+	if (reg & 0x2)
+		*value = (val >> 16) & 0xffff;
+	else
+		*value = val & 0xffff;
 }
 
 void
 em_pci_set_mwi(struct em_hw *hw)
 {
 	struct pci_attach_args *pa = &((struct em_osdep *)hw->back)->em_pa;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	/* Should we do read/mask/write...?  16 vs 32 bit!!! */
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 		(hw->pci_cmd_word | CMD_MEM_WRT_INVALIDATE));
 }
 
@@ -3041,9 +3053,8 @@ void
 em_pci_clear_mwi(struct em_hw *hw)
 {
 	struct pci_attach_args *pa = &((struct em_osdep *)hw->back)->em_pa;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	/* Should we do read/mask/write...?  16 vs 32 bit!!! */
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 		(hw->pci_cmd_word & ~CMD_MEM_WRT_INVALIDATE));
 }
 
