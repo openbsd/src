@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ohash_init.3,v 1.14 2007/05/31 19:19:30 jmc Exp $
+.\"	$OpenBSD: ohash_init.3,v 1.15 2011/06/03 22:51:16 jmc Exp $
 .\" Copyright (c) 1999 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 3 2011 $
 .Dt OPEN_HASH 3
 .Os
 .Sh NAME
@@ -211,6 +211,7 @@ call.
 .Pp
 Multi-threaded applications should explicitly protect ohash table access.
 .Sh SEE ALSO
+.Xr hcreate 3 ,
 .Xr ohash_interval 3
 .Rs
 .%A Donald E. Knuth
