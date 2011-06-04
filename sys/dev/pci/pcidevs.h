@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1611 2011/06/03 09:37:29 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1612 2011/06/04 10:56:55 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -757,7 +757,7 @@
 #define	PCI_PRODUCT_AMD_HUDSON2_SMB	0x780b		/* Hudson-2 SMBus */
 #define	PCI_PRODUCT_AMD_HUDSON2_IDE	0x780c		/* Hudson-2 IDE */
 #define	PCI_PRODUCT_AMD_RS780_HB	0x9600		/* RS780 Host */
-#define	PCI_PRODUCT_AMD_RS780_HB_2	0x9601		/* RS780 Host */
+#define	PCI_PRODUCT_AMD_RS880_HB	0x9601		/* RS880 Host */
 #define	PCI_PRODUCT_AMD_RS780_PCIE_1	0x9602		/* RS780 PCIE */
 #define	PCI_PRODUCT_AMD_RS780_PCIE_2	0x9603		/* RS780 PCIE */
 #define	PCI_PRODUCT_AMD_RS780_PCIE_3	0x9604		/* RS780 PCIE */
