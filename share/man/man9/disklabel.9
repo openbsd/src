@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.9,v 1.14 2011/06/04 02:25:23 krw Exp $
+.\"	$OpenBSD: disklabel.9,v 1.15 2011/06/04 08:26:55 jmc Exp $
 .\"	$NetBSD: disklabel.9,v 1.7 1999/03/06 22:09:29 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@ and sets the
 .Dv B_ERROR
 flag in
 .Dq Va b_flags .
-A value of -1 is returned if any of the bound checks failed or
+A value of \-1 is returned if any of the bound checks failed or
 transfer was attempted exactly at the end of disk partition.
 Otherwise the value of 1 is returned.
 .Sh SEE ALSO
