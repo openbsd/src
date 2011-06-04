@@ -1,4 +1,4 @@
-#	$OpenBSD: BSD.x11.dist,v 1.17 2011/05/30 21:20:15 matthieu Exp $
+#	$OpenBSD: BSD.x11.dist,v 1.18 2011/06/04 15:34:57 matthieu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -15,64 +15,6 @@
                 ..
             ..
             xinit
-            ..
-            xkb
-                compat
-                ..
-                geometry
-                    digital
-                    ..
-                    ibm
-                    ..
-                    sgi
-                    ..
-                ..
-                keycodes
-                    digital
-                    ..
-                    sgi
-                    ..
-                ..
-                keymap
-                    digital
-                    ..
-                    sgi
-                    ..
-                    sun
-                    ..
-                ..
-                rules
-                ..
-                semantics
-                ..
-                symbols
-                    digital
-                    ..
-                    fujitsu
-                    ..
-                    hp
-                    ..
-                    macintosh
-                    ..
-                    nec
-                    ..
-                    pc
-                    ..
-                    sgi
-                    ..
-                    sony
-                    ..
-                    sun
-                    ..
-                    xfree68
-                    ..
-                ..
-                torture
-                ..
-                types
-                ..
-            ..
-            xsm
             ..
         ..
         fonts
@@ -346,6 +288,60 @@
                         zh_TW.big5
                         ..
                     ..
+		    xkb
+			compat
+			..
+			geometry
+			   digital_vndr
+			   ..
+			   sgi_vndr
+			   ..
+			..
+			keycodes
+			    digital_vndr
+			    ..
+			    sgi_vndr
+			    ..
+			..
+			keymap
+			   digital_vndr
+			   ..
+			   sgi_vndr
+			   ..
+			   sun_vndr
+			   ..
+			..
+			rules
+			..
+			semantics
+			..
+			symbols
+			    digital_vndr
+			    ..
+			    fujitsu_vndr
+			    ..
+			    hp_vndr
+			    ..
+			    macintosh_vndr
+			    ..
+			    nec_vndr
+			    ..
+			    nokia_vndr
+			    ..
+			    sgi_vndr
+			    ..
+			    sony_vndr
+			    ..
+			    srvr_ctrl
+			    ..
+			    sun_vndr
+			    ..
+			    xfree68_vndr
+			    ..
+			..
+			types
+			..
+		    ..
                 ..
                 aclocal
                 ..
