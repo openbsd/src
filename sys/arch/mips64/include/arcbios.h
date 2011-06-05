@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.17 2010/09/12 12:27:06 kettenis Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.18 2011/06/05 20:58:46 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -407,7 +407,7 @@ typedef struct arc_param_blk_64
 	u_int64_t	adapter0_vect;	/* ?? */
 } arc_param_blk_64_t;
 
-#ifdef _LP64
+#ifdef __LP64__
 #define ArcBiosBase32	((arc_param_blk_32_t *) 0xffffffff80001000)
 #define ArcBiosBase64	((arc_param_blk_64_t *) 0xffffffff80001000)
 #else
