@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.48 2011/06/05 10:07:30 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.49 2011/06/05 18:09:00 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -554,6 +554,23 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 void
 pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
+	struct intrhand *ih = cookie;
+	struct cpu_info *ci;
+	struct pic *pic;
+
+	ci = ih->ih_cpu;
+	pic = ci->ci_isources[ih->ih_slot]->is_pic;
+
+	if (pic == &msi_pic) {
+		pcitag_t tag = ih->ih_pin;
+		pcireg_t reg;
+		int off;
+
+		if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
+			panic("%s: no msi capability", __func__);
+		pci_conf_write(pc, tag, off, reg & ~PCI_MSI_MC_MSIE);
+	}
+
 	intr_disestablish(cookie);
 }
 
