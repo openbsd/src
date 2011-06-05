@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.50 2011/05/30 22:16:29 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.51 2011/06/05 22:14:22 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -169,8 +169,7 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	/* Check for PCI Express capabilities and setup hotplug support. */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
 	    &sc->sc_cap_off, &reg) && (reg & PCI_PCIE_XCAP_SI)) {
-		if (pci_intr_map_msi(pa, &ih) == 0 ||
-		    pci_intr_map(pa, &ih) == 0)
+		if (pci_intr_map(pa, &ih) == 0)
 			sc->sc_intrhand = pci_intr_establish(pc, ih, IPL_BIO,
 			    ppb_intr, sc, self->dv_xname);
 
