@@ -1,4 +1,4 @@
-/*	$OpenBSD: netboot.c,v 1.7 2005/12/17 07:31:25 miod Exp $	*/
+/*	$OpenBSD: netboot.c,v 1.8 2011/06/05 21:49:36 miod Exp $	*/
 /*	$NetBSD: netboot.c,v 1.1 1996/09/18 20:03:12 cgd Exp $	*/
 
 /*
@@ -40,22 +40,16 @@
 
 #include <sys/param.h>
 #include <sys/exec.h>
-#include <sys/exec_ecoff.h>
 
 #include <machine/rpb.h>
 #include <machine/prom.h>
-
-#define _KERNEL
-#include "include/pte.h"
-
-int loadfile(char *, u_int64_t *);
 
 char boot_file[128];
 char boot_flags[128];
 
 extern char bootprog_name[], bootprog_rev[];
 
-vaddr_t ffp_save, ptbr_save;
+vaddr_t ptbr_save;
 
 int debug;
 
@@ -63,6 +57,8 @@ void
 main()
 {
 	u_int64_t entry;
+	u_long marks[MARK_MAX];
+	int rc;
 
 	/* Init prom callback vector. */
 	init_prom_calls();
@@ -78,12 +74,18 @@ main()
 
 	if (boot_file[0] == '\0')
 		bcopy("bsd", boot_file, sizeof "bsd");
+	else
+		(void)printf("Boot: %s %s\n", boot_file, boot_flags);
 
-	(void)printf("Boot: %s %s\n", boot_file, boot_flags);
-
-	if (!loadfile(boot_file, &entry)) {
+	(void)printf("Loading %s...\n", boot_file);
+	marks[MARK_START] = 0;
+	rc = loadfile(boot_file, &marks, LOAD_KERNEL | COUNT_KERNEL);
+	(void)printf("\n");
+	if (rc == 0) {
+		entry = marks[MARK_START];
 		(void)printf("Entering kernel at 0x%lx...\n", entry);
-		(*(void (*)())entry)(ffp_save, ptbr_save, 0);
+		(*(void (*)(u_int64_t, u_int64_t, u_int64_t))entry)
+		    (0, ptbr_save, 0);
 	}
 
 	(void)printf("Boot failed!  Halting...\n");

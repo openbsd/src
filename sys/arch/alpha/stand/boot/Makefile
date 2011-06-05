@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2007/11/25 18:25:29 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.17 2011/06/05 21:49:36 miod Exp $
 #	$NetBSD: Makefile,v 1.17 1997/04/17 07:27:46 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -7,22 +7,24 @@ S=	${.CURDIR}/../../../..
 
 PROG = boot
 
-SRCS = start.S boot.c loadfile.c disk.c conf.c prom.c prom_disp.S OSFpal.c
-SRCS+= devopen.c filesystem.c prom_swpal.S
+SRCS = start.S boot.c disk.c conf.c prom.c prom_disp.S OSFpal.c
+SRCS+= devopen.c filesystem.c loadfile_subr.c prom_swpal.S
 NOMAN=
 INSTALL_STRIP=
 BINMODE= 444
 
 BOOT_RELOC = ${SECONDARY_LOAD_ADDRESS}
-HEADERSIZE_PROG = headersize
 
-CLEANFILES+= vers.c vers.o ${PROG}.sym ${PROG}.nosym ${HEADERSIZE_PROG}
+CLEANFILES+= vers.c vers.o ${PROG}.sym ${PROG}.nosym
 
 .PATH:	${S}/lib/libkern/arch/alpha ${S}/lib/libkern
 SRCS+=	__divlu.S __remqu.S __reml.S strlen.c bzero.c __divl.S __divqu.S \
 	__remlu.S
 
-DEFNS= -DCOMPAT_UFS -DALPHA_BOOT_ELF
+.PATH:	${S}/lib/libkern/arch/alpha ${S}/lib/libsa
+SRCS+=	loadfile.c
+
+DEFNS= -DCOMPAT_UFS
 
 AFLAGS += -DASSEMBLER ${DEFNS}
 CPPFLAGS += -I${.CURDIR}/../../../../lib/libsa -I${.CURDIR}/../.. -I${S} ${DEFNS}
@@ -32,10 +34,8 @@ ${PROG}.nosym: ${PROG}.sym
 	cp ${PROG}.sym ${PROG}.nosym
 	strip ${PROG}.nosym
 
-${PROG}: ${PROG}.nosym #${HEADERSIZE_PROG}
+${PROG}: ${PROG}.nosym
 	objcopy --output-target=binary ${PROG}.nosym ${PROG}
-#	dd if=${PROG}.nosym of=${PROG} \
-#	    bs=`./${HEADERSIZE_PROG} ${BOOT_RELOC} ${PROG}.nosym` skip=1
 
 # no lint here (yet?)
 lint:

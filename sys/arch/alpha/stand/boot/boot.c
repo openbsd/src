@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.19 2005/05/30 01:41:33 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.20 2011/06/05 21:49:36 miod Exp $	*/
 /*	$NetBSD: boot.c,v 1.10 1997/01/18 01:58:33 cgd Exp $	*/
 
 /*
@@ -37,19 +37,14 @@
 
 #include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 
 #include <sys/param.h>
 #include <sys/exec.h>
-#include <sys/exec_ecoff.h>
 
 #include <machine/rpb.h>
 #include <machine/prom.h>
 #include <machine/autoconf.h>
-
-#define _KERNEL
-#include "include/pte.h"
-
-int loadfile(char *, u_int64_t *);
 
 char boot_file[128];
 char boot_flags[128];
@@ -58,9 +53,7 @@ extern char bootprog_name[];
 
 struct bootinfo_v1 bootinfo_v1;
 
-extern paddr_t ffp_save, ptbr_save;
-
-extern vaddr_t ssym, esym;
+paddr_t ptbr_save;
 
 int debug;
 
@@ -69,7 +62,14 @@ main()
 {
 	char *name, **namep;
 	u_int64_t entry;
-	int win;
+	int rc;
+	u_long marks[MARK_MAX];
+#ifdef DEBUG
+	struct rpb *r;
+	struct mddt *mddtp;
+	struct mddt_cluster *memc;
+	int i;
+#endif
 
 	/* Init prom callback vector. */
 	init_prom_calls();
@@ -80,6 +80,17 @@ main()
 	/* switch to OSF pal code. */
 	OSFpal();
 
+#ifdef DEBUG
+	r = (struct rpb *)HWRPB_ADDR;
+	mddtp = (struct mddt *)(HWRPB_ADDR + r->rpb_memdat_off);
+	printf("%d memory clusters\n", mddtp->mddt_cluster_cnt);
+	for (i = 0; i < mddtp->mddt_cluster_cnt; i++) {
+		memc = &mddtp->mddt_clusters[i];
+		printf("%d: (%d) %lx-%lx\n", i, memc->mddt_usage,
+		    memc->mddt_pfn << PAGE_SHIFT,
+		    (memc->mddt_pfn + memc->mddt_pg_cnt) << PAGE_SHIFT);
+	}
+#endif
 	prom_getenv(PROM_E_BOOTED_FILE, boot_file, sizeof(boot_file));
 	prom_getenv(PROM_E_BOOTED_OSFLAGS, boot_flags, sizeof(boot_flags));
 
@@ -88,16 +99,20 @@ main()
 		name = boot_file;
 	} else
 		name = "bsd";
-	win = (loadfile(name, &entry) == 0);
-	if (!win)
+
+	(void)printf("Loading %s...\n", name);
+	marks[MARK_START] = 0;
+	rc = loadfile(name, marks, LOAD_KERNEL | COUNT_KERNEL);
+	(void)printf("\n");
+	if (rc != 0)
 		goto fail;
 
 	/*
 	 * Fill in the bootinfo for the kernel.
 	 */
 	bzero(&bootinfo_v1, sizeof(bootinfo_v1));
-	bootinfo_v1.ssym = ssym;
-	bootinfo_v1.esym = esym;
+	bootinfo_v1.ssym = marks[MARK_SYM];
+	bootinfo_v1.esym = marks[MARK_END];
 	bcopy(name, bootinfo_v1.booted_kernel,
 	    sizeof(bootinfo_v1.booted_kernel));
 	bcopy(boot_flags, bootinfo_v1.boot_flags,
@@ -108,9 +123,9 @@ main()
 	bootinfo_v1.cnputc = NULL;
 	bootinfo_v1.cnpollc = NULL;
 
+	entry = marks[MARK_START];
 	(*(void (*)(u_int64_t, u_int64_t, u_int64_t, void *, u_int64_t,
-	    u_int64_t))entry)(ffp_save, ptbr_save, BOOTINFO_MAGIC,
-	    &bootinfo_v1, 1, 0);
+	    u_int64_t))entry)(0, ptbr_save, BOOTINFO_MAGIC, &bootinfo_v1, 1, 0);
 
 fail:
 	halt();
