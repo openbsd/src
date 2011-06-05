@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.66 2011/05/20 19:37:58 mikeb Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.67 2011/06/05 11:09:00 stsp Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -671,13 +671,12 @@ sr_crypto_create_key_disk(struct sr_discipline *sd, dev_t dev)
 
 	/* Open device. */
 	if (bdevvp(dev, &vn)) {
-		printf("%s:, sr_create_key_disk: can't allocate vnode\n",
-		    DEVNAME(sc));
+		printf("%s: cannot open key disk %s\n", DEVNAME(sc), devname);
 		goto done;
 	}
 	if (VOP_OPEN(vn, FREAD | FWRITE, NOCRED, curproc)) {
-		DNPRINTF(SR_D_META,"%s: sr_create_key_disk cannot open %s\n",
-		    DEVNAME(sc), devname);
+		DNPRINTF(SR_D_META,"%s: sr_crypto_create_key_disk cannot "
+		    "open %s\n", DEVNAME(sc), devname);
 		vput(vn);
 		goto fail;
 	}
@@ -687,8 +686,8 @@ sr_crypto_create_key_disk(struct sr_discipline *sd, dev_t dev)
 	part = DISKPART(dev);
 	if (VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)&label,
 	    FREAD, NOCRED, curproc)) {
-		DNPRINTF(SR_D_META, "%s: sr_create_key_disk ioctl failed\n",
-		    DEVNAME(sc));
+		DNPRINTF(SR_D_META, "%s: sr_crypto_create_key_disk ioctl "
+		    "failed\n", DEVNAME(sc));
 		VOP_CLOSE(vn, FREAD | FWRITE, NOCRED, curproc);
 		vput(vn);
 		goto fail;
@@ -834,13 +833,12 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, dev_t dev)
 
 	/* Open device. */
 	if (bdevvp(dev, &vn)) {
-		printf("%s:, sr_read_key_disk: can't allocate vnode\n",
-		    DEVNAME(sc));
+		printf("%s: cannot open key disk %s\n", DEVNAME(sc), devname);
 		goto done;
 	}
 	if (VOP_OPEN(vn, FREAD | FWRITE, NOCRED, curproc)) {
-		DNPRINTF(SR_D_META,"%s: sr_read_key_disk cannot open %s\n",
-		    DEVNAME(sc), devname);
+		DNPRINTF(SR_D_META,"%s: sr_crypto_read_key_disk cannot "
+		    "open %s\n", DEVNAME(sc), devname);
 		vput(vn);
 		goto done;
 	}
@@ -850,8 +848,8 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, dev_t dev)
 	part = DISKPART(dev);
 	if (VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)&label, FREAD,
 	    NOCRED, curproc)) {
-		DNPRINTF(SR_D_META, "%s: sr_read_key_disk ioctl failed\n",
-		    DEVNAME(sc));
+		DNPRINTF(SR_D_META, "%s: sr_crypto_read_key_disk ioctl "
+		    "failed\n", DEVNAME(sc));
 		VOP_CLOSE(vn, FREAD | FWRITE, NOCRED, curproc);
 		vput(vn);
 		goto done;
