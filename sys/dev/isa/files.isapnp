@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isapnp,v 1.29 2008/05/21 18:49:47 kettenis Exp $
+#	$OpenBSD: files.isapnp,v 1.30 2011/06/05 20:57:16 deraadt Exp $
 #	$NetBSD: files.isapnp,v 1.7 1997/10/16 17:16:36 matt Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
@@ -18,7 +18,7 @@ file	dev/isa/isapnpres.c		isapnp
 #
 
 attach	mpu at isapnp with mpu_isapnp
-file	dev/isa/mpu_isapnp.c		mpu & midi
+file	dev/isa/mpu_isapnp.c		mpu_isapnp & midi
 
 attach	com at isapnp with com_isapnp
 file	dev/isa/com_isapnp.c		com_isapnp
