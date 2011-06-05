@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.34 2011/06/03 21:14:11 matthew Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.35 2011/06/05 18:40:33 matthew Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -93,7 +93,6 @@ struct ra_softc {
 	u_long	ra_mediaid;	/* media id */
 	int	ra_hwunit;	/* Hardware unit number */
 	int	ra_havelabel;	/* true if we have a label */
-	int	ra_wlabel;	/* label sector is currently writable */
 };
 
 #define rx_softc ra_softc
@@ -201,10 +200,6 @@ raopen(dev, flag, fmt, p)
 		if (ra_putonline(ra) == MSCP_FAILED)
 			return ENXIO;
 
-	/* If the disk has no label; allow writing everywhere */
-	if (ra->ra_havelabel == 0)
-		ra->ra_wlabel = 1;
-
 	part = DISKPART(dev);
 	if (part >= ra->ra_disk.dk_label->d_npartitions)
 		return ENXIO;
@@ -269,7 +264,6 @@ raclose(dev, flags, fmt, p)
 			    "raclose", 0);
 		splx(s);
 		ra->ra_state = CLOSED;
-		ra->ra_wlabel = 0;
 	}
 #endif
 	return (0);
@@ -392,18 +386,9 @@ raioctl(dev, cmd, data, flag, p)
 		else {
 			error = setdisklabel(lp, tp, 0);
 			if (error == 0 && cmd == DIOCWDINFO) {
-				ra->ra_wlabel = 1;
 				error = writedisklabel(dev, rastrategy, lp);
-				ra->ra_wlabel = 0;
 			}
 		}
-		break;
-
-	case DIOCWLABEL:
-		if ((flag & FWRITE) == 0)
-			error = EBADF;
-		else
-			ra->ra_wlabel = 1;
 		break;
 
 	default:
@@ -716,7 +701,6 @@ rxioctl(dev, cmd, data, flag, p)
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:
-	case DIOCWLABEL:
 		break;
 
 	default:

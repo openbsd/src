@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.58 2011/06/03 21:14:11 matthew Exp $ */
+/*	$OpenBSD: mcd.c,v 1.59 2011/06/05 18:40:33 matthew Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -123,8 +123,6 @@ struct mcd_softc {
 	int	flags;
 #define	MCDF_LOCKED	0x01
 #define	MCDF_WANTED	0x02
-#define	MCDF_WLABEL	0x04	/* label is writable */
-#define	MCDF_LABELLING	0x08	/* writing label */
 #define	MCDF_LOADED	0x10	/* parameters loaded */
 #define	MCDF_EJECTING	0x20	/* please eject at close */
 	short	status;
@@ -649,19 +647,14 @@ mcdioctl(dev, cmd, addr, flag, p)
 
 		if ((error = mcdlock(sc)) != 0)
 			return error;
-		sc->flags |= MCDF_LABELLING;
 
 		error = setdisklabel(sc->sc_dk.dk_label,
 		    (struct disklabel *)addr, /*sc->sc_dk.dk_openmask : */0);
 		if (error == 0) {
 		}
 
-		sc->flags &= ~MCDF_LABELLING;
 		mcdunlock(sc);
 		return error;
-
-	case DIOCWLABEL:
-		return EBADF;
 
 	case CDIOCPLAYTRACKS:
 		return mcd_playtracks(sc, (struct ioc_play_track *)addr);

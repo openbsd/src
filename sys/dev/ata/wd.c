@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.102 2011/06/03 21:14:11 matthew Exp $ */
+/*	$OpenBSD: wd.c,v 1.103 2011/06/05 18:40:33 matthew Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -869,7 +869,6 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 
 		if ((error = wdlock(wd)) != 0)
 			goto exit;
-		wd->sc_flags |= WDF_LABELLING;
 
 		error = setdisklabel(wd->sc_dk.dk_label,
 		    (struct disklabel *)addr, wd->sc_dk.dk_openmask);
@@ -881,20 +880,7 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 				    wdstrategy, wd->sc_dk.dk_label);
 		}
 
-		wd->sc_flags &= ~WDF_LABELLING;
 		wdunlock(wd);
-		goto exit;
-
-	case DIOCWLABEL:
-		if ((flag & FWRITE) == 0) {
-			error = EBADF;
-			goto exit;
-		}
-
-		if (*(int *)addr)
-			wd->sc_flags |= WDF_WLABEL;
-		else
-			wd->sc_flags &= ~WDF_WLABEL;
 		goto exit;
 
 #ifdef notyet

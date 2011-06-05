@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdvar.h,v 1.10 2007/02/21 22:32:05 miod Exp $	*/
+/*	$OpenBSD: hdvar.h,v 1.11 2011/06/05 18:40:33 matthew Exp $	*/
 /*	$NetBSD: rdvar.h,v 1.6 1997/01/30 09:14:19 thorpej Exp $	*/
 
 /*
@@ -83,7 +83,6 @@ struct	hd_softc {
 #define HDF_OPENING	0x04
 #define HDF_CLOSING	0x08
 #define HDF_WANTED	0x10
-#define HDF_WLABEL	0x20
 
 #ifdef _KERNEL
 extern	const struct hdidentinfo hdidentinfo[];

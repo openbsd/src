@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.227 2011/06/03 21:14:11 matthew Exp $	*/
+/*	$OpenBSD: sd.c,v 1.228 2011/06/05 18:40:33 matthew Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -880,7 +880,6 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	 */
 	if ((sc->sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
 		switch (cmd) {
-		case DIOCWLABEL:
 		case DIOCLOCK:
 		case DIOCEJECT:
 		case SCIOCIDENTIFY:
@@ -931,7 +930,6 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 		if ((error = sdlock(sc)) != 0)
 			goto exit;
-		sc->flags |= SDF_LABELLING;
 
 		error = setdisklabel(sc->sc_dk.dk_label,
 		    (struct disklabel *)addr, sc->sc_dk.dk_openmask);
@@ -941,19 +939,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 				    sdstrategy, sc->sc_dk.dk_label);
 		}
 
-		sc->flags &= ~SDF_LABELLING;
 		sdunlock(sc);
-		goto exit;
-
-	case DIOCWLABEL:
-		if ((flag & FWRITE) == 0) {
-			error = EBADF;
-			goto exit;
-		}
-		if (*(int *)addr)
-			sc->flags |= SDF_WLABEL;
-		else
-			sc->flags &= ~SDF_WLABEL;
 		goto exit;
 
 	case DIOCLOCK:

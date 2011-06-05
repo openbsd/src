@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.80 2010/11/18 21:13:19 miod Exp $	*/
+/*	$OpenBSD: fd.c,v 1.81 2011/06/05 18:40:33 matthew Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -1761,12 +1761,6 @@ fdioctl(dev, cmd, addr, flag, p)
 		((struct partinfo *)addr)->part =
 		    &fd->sc_dk.dk_label->d_partitions[FDPART(dev)];
 		return 0;
-
-	case DIOCWLABEL:
-		if ((flag & FWRITE) == 0)
-			return EBADF;
-		/* XXX do something */
-		return (0);
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:

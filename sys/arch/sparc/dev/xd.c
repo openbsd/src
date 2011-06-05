@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.54 2011/06/03 21:14:11 matthew Exp $	*/
+/*	$OpenBSD: xd.c,v 1.55 2011/06/05 18:40:33 matthew Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -846,15 +846,6 @@ xdioctl(dev, command, addr, flag, p)
 		((struct partinfo *) addr)->disklab = xd->sc_dk.dk_label;
 		((struct partinfo *) addr)->part =
 		    &xd->sc_dk.dk_label->d_partitions[DISKPART(dev)];
-		return 0;
-
-	case DIOCWLABEL:	/* change write status of disk label */
-		if ((flag & FWRITE) == 0)
-			return EBADF;
-		if (*(int *) addr)
-			xd->flags |= XD_WLABEL;
-		else
-			xd->flags &= ~XD_WLABEL;
 		return 0;
 
 	case DIOCWDINFO:	/* write disk label */

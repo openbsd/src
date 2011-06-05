@@ -1,4 +1,4 @@
-/*	$OpenBSD: xyvar.h,v 1.6 2004/09/29 07:35:12 miod Exp $	*/
+/*	$OpenBSD: xyvar.h,v 1.7 2011/06/05 18:40:33 matthew Exp $	*/
 /*	$NetBSD: xyvar.h,v 1.4 1996/03/31 22:39:04 pk Exp $	*/
 
 /*
@@ -123,7 +123,6 @@ struct xy_softc {
  * flags
  */
 
-#define XY_WLABEL 0x0001           /* write label */
 /*
  * state
  */

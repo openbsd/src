@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkio.h,v 1.8 2010/06/08 12:46:49 jsing Exp $	*/
+/*	$OpenBSD: dkio.h,v 1.9 2011/06/05 18:40:33 matthew Exp $	*/
 /*	$NetBSD: dkio.h,v 1.1 1996/01/30 18:21:48 thorpej Exp $	*/
 
 /*
@@ -50,7 +50,6 @@
 
 #define DIOCSSTEP	_IOW('d', 107, int)	/* set step rate */
 #define DIOCSRETRIES	_IOW('d', 108, int)	/* set # of retries */
-#define DIOCWLABEL	_IOW('d', 109, int)	/* write en/disable label */
 
 #define DIOCSBAD	_IOW('d', 110, struct dkbad)	/* set kernel dkbad */
 #define DIOCEJECT	_IO('d', 112)		/* eject removable disk */

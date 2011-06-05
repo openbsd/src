@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.3 2011/06/03 21:14:11 matthew Exp $ */
+/*	$OpenBSD: octcf.c,v 1.4 2011/06/05 18:40:33 matthew Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -114,8 +114,6 @@ struct octcf_softc {
 	struct buf *sc_bp;
 	struct ataparams sc_params;/* drive characteristics found */
 	int sc_flags;
-#define OCTCFF_WLABEL		0x04 /* label is writable */
-#define OCTCFF_LABELLING	0x08 /* writing label */
 #define OCTCFF_LOADED		0x10 /* parameters loaded */
 	u_int64_t sc_capacity;
 	bus_space_tag_t       sc_iot;
@@ -634,7 +632,6 @@ octcfioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 
 		if ((error = octcflock(wd)) != 0)
 			goto exit;
-		wd->sc_flags |= OCTCFF_LABELLING;
 
 		error = setdisklabel(wd->sc_dk.dk_label,
 		    (struct disklabel *)addr, /*wd->sc_dk.dk_openmask : */0);
@@ -644,20 +641,7 @@ octcfioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 				    octcfstrategy, wd->sc_dk.dk_label);
 		}
 
-		wd->sc_flags &= ~OCTCFF_LABELLING;
 		octcfunlock(wd);
-		goto exit;
-
-	case DIOCWLABEL:
-		if ((flag & FWRITE) == 0) {
-			error = EBADF;
-			goto exit;
-		}
-
-		if (*(int *)addr)
-			wd->sc_flags |= OCTCFF_WLABEL;
-		else
-			wd->sc_flags &= ~OCTCFF_WLABEL;
 		goto exit;
 
 #ifdef notyet

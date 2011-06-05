@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.35 2011/06/03 21:14:11 matthew Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.36 2011/06/05 18:40:33 matthew Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -732,11 +732,6 @@ hdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			if (cmd == DIOCWDINFO)
 				error = writedisklabel(dev, hdstrategy, lp);
 		}
-		break;
-
-	case DIOCWLABEL:
-		if ((flag & FWRITE) == 0)
-			error = EBADF;
 		break;
 
 	default:

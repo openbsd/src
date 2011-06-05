@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.62 2011/06/03 21:14:11 matthew Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.63 2011/06/05 18:40:33 matthew Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -215,8 +215,6 @@ struct raid_softc {
 
 /* sc_flags */
 #define	RAIDF_INITED	0x01	/* Unit has been initialized. */
-#define	RAIDF_WLABEL	0x02	/* Label area is writable. */
-#define	RAIDF_LABELLING	0x04	/* Unit is currently being labelled. */
 #define	RAIDF_WANTED	0x40	/* Someone is waiting to obtain a lock. */
 #define	RAIDF_LOCKED	0x80	/* Unit is locked. */
 
@@ -856,7 +854,6 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	switch (cmd) {
 	case DIOCSDINFO:
 	case DIOCWDINFO:
-	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 	}
@@ -867,7 +864,6 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case DIOCSDINFO:
 	case DIOCWDINFO:
 	case DIOCGPART:
-	case DIOCWLABEL:
 	case DIOCRLDINFO:
 	case DIOCGPDINFO:
 	case RAIDFRAME_SHUTDOWN:
@@ -1551,8 +1547,6 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if ((error = raidlock(rs)) != 0)
 			return (error);
 
-		rs->sc_flags |= RAIDF_LABELLING;
-
 		error = setdisklabel(rs->sc_dkdev.dk_label, lp, 0);
 		if (error == 0) {
 			if (cmd == DIOCWDINFO)
@@ -1560,21 +1554,12 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				    raidstrategy, rs->sc_dkdev.dk_label);
 		}
 
-		rs->sc_flags &= ~RAIDF_LABELLING;
-
 		raidunlock(rs);
 
 		if (error)
 			return (error);
 		break;
 	}
-
-	case DIOCWLABEL:
-		if (*(int *)data != 0)
-			rs->sc_flags |= RAIDF_WLABEL;
-		else
-			rs->sc_flags &= ~RAIDF_WLABEL;
-		break;
 
 	case DIOCGPDINFO:
 		raidgetdisklabel(dev, rs, (struct disklabel *)data, 1);

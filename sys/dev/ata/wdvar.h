@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdvar.h,v 1.15 2011/04/05 19:57:40 deraadt Exp $	*/
+/*	$OpenBSD: wdvar.h,v 1.16 2011/06/05 18:40:33 matthew Exp $	*/
 /*	$NetBSD: wdvar.h,v 1.3 1998/11/11 19:38:27 bouyer Exp $	*/
 
 /*
@@ -74,8 +74,6 @@ struct wd_softc {
 	int sc_flags;
 #define WDF_LOCKED	  0x01
 #define WDF_WANTED	  0x02
-#define WDF_WLABEL	  0x04 /* label is writable */
-#define WDF_LABELLING	  0x08 /* writing label */
 /*
  * XXX Nothing resets this yet, but disk change sensing will when ATA-4 is
  * more fully implemented.

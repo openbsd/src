@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.94 2011/06/03 21:14:11 matthew Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.95 2011/06/05 18:40:33 matthew Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -134,8 +134,6 @@ struct ccd_softc {
 
 /* sc_flags */
 #define CCDF_INITED	0x01	/* unit has been initialized */
-#define CCDF_WLABEL	0x02	/* label area is writable */
-#define CCDF_LABELLING	0x04	/* unit is currently being labelled */
 
 #ifdef CCDDEBUG
 #define CCD_DCALL(m,c)		if (ccddebug & (m)) c
@@ -1031,7 +1029,6 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case CCDIOCCLR:
 	case DIOCWDINFO:
 	case DIOCSDINFO:
-	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 	}
@@ -1227,8 +1224,6 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if ((error = ccdlock(cs)) != 0)
 			return (error);
 
-		cs->sc_flags |= CCDF_LABELLING;
-
 		error = setdisklabel(cs->sc_dkdev.dk_label,
 		    (struct disklabel *)data, 0);
 		if (error == 0) {
@@ -1237,19 +1232,10 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				    ccdstrategy, cs->sc_dkdev.dk_label);
 		}
 
-		cs->sc_flags &= ~CCDF_LABELLING;
-
 		ccdunlock(cs);
 
 		if (error)
 			return (error);
-		break;
-
-	case DIOCWLABEL:
-		if (*(int *)data != 0)
-			cs->sc_flags |= CCDF_WLABEL;
-		else
-			cs->sc_flags &= ~CCDF_WLABEL;
 		break;
 
 	default:

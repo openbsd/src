@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdvar.h,v 1.6 2004/09/29 07:35:11 miod Exp $	*/
+/*	$OpenBSD: xdvar.h,v 1.7 2011/06/05 18:40:33 matthew Exp $	*/
 /*	$NetBSD: xdvar.h,v 1.5 1996/03/31 22:38:56 pk Exp $	*/
 
 /*
@@ -120,7 +120,6 @@ struct xd_softc {
  * flags
  */
 
-#define XD_WLABEL 0x0001           /* write label */
 /*
  * state
  */

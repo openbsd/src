@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.124 2011/06/03 21:14:11 matthew Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.125 2011/06/05 18:40:33 matthew Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -111,8 +111,6 @@ struct vnd_softc {
 /* sc_flags */
 #define	VNF_ALIVE	0x0001
 #define	VNF_INITED	0x0002
-#define	VNF_LABELLING	0x0100
-#define	VNF_WLABEL	0x0200
 #define	VNF_HAVELABEL	0x0400
 #define	VNF_READONLY	0x2000
 
@@ -688,7 +686,6 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 		if ((error = vndlock(vnd)) != 0)
 			return (error);
-		vnd->sc_flags |= VNF_LABELLING;
 
 		error = setdisklabel(vnd->sc_dk.dk_label,
 		    (struct disklabel *)addr, vnd->sc_dk.dk_openmask);
@@ -698,18 +695,8 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 				    vndstrategy, vnd->sc_dk.dk_label);
 		}
 
-		vnd->sc_flags &= ~VNF_LABELLING;
 		vndunlock(vnd);
 		return (error);
-
-	case DIOCWLABEL:
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-		if (*(int *)addr)
-			vnd->sc_flags |= VNF_WLABEL;
-		else
-			vnd->sc_flags &= ~VNF_WLABEL;
-		return (0);
 
 	default:
 		return (ENOTTY);
