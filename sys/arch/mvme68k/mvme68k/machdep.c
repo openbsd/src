@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.124 2011/05/30 22:25:21 oga Exp $ */
+/*	$OpenBSD: machdep.c,v 1.125 2011/06/05 19:41:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -124,20 +124,6 @@ struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
 
 extern vaddr_t avail_end;
-
-/*
- * Declare these as initialized data so we can patch them.
- */
-#ifndef	BUFCACHEPERCENT
-#define	BUFCACHEPERCENT	5
-#endif
-
-#ifdef	BUFPAGES
-int	bufpages = BUFPAGES;
-#else
-int	bufpages = 0;
-#endif
-int	bufcachepercent = BUFCACHEPERCENT;
 
 int   physmem;			/* size of physical memory, in pages */
 

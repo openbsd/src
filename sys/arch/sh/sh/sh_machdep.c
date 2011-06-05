@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.29 2011/04/18 21:44:55 guenther Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.30 2011/06/05 19:41:10 deraadt Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -112,17 +112,6 @@
 #include <sh/trap.h>
 #include <sh/intr.h>
 #include <sh/kcore.h>
-
-#ifndef BUFCACHEPERCENT
-#define BUFCACHEPERCENT 5
-#endif
-
-#ifdef  BUFPAGES
-int	bufpages = BUFPAGES;
-#else
-int	bufpages = 0;
-#endif
-int	bufcachepercent = BUFCACHEPERCENT;
 
 /* Our exported CPU info; we can have only one. */
 int cpu_arch;

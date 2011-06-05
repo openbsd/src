@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.129 2011/04/07 19:07:42 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.130 2011/06/05 19:41:04 deraadt Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -114,9 +114,6 @@ long buflowpages;	/* bufpages low water mark */
 long bufhighpages; 	/* bufpages high water mark */
 long bufbackpages; 	/* number of pages we back off when asked to shrink */
 
-/* XXX - should be defined here. */
-extern int bufcachepercent;
-
 vsize_t bufkvm;
 
 struct proc *cleanerproc;
@@ -193,9 +190,6 @@ bufinit(void)
 {
 	u_int64_t dmapages;
 	struct bqueues *dp;
-
-	/* XXX - for now */
-	bufhighpages = buflowpages = bufpages = bufcachepercent = bufkvm = 0;
 
 	dmapages = uvm_pagecount(&dma_constraint);
 

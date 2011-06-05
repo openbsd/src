@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.31 2009/12/08 22:12:06 miod Exp $	*/
+/*	$OpenBSD: param.c,v 1.32 2011/06/05 19:41:09 deraadt Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -100,6 +100,15 @@ int	mblowat = MBLOWAT;
 #endif
 int	mcllowat = MCLLOWAT;
 
+#ifndef BUFCACHEPERCENT
+#define BUFCACHEPERCENT	42
+#endif
+int     bufcachepercent = BUFCACHEPERCENT;
+
+#ifndef  BUFPAGES
+#define BUFPAGES	0
+#endif
+long     bufpages = BUFPAGES;
 
 int	fscale = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.43 2011/05/30 22:25:20 oga Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.44 2011/06/05 19:41:06 deraadt Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -132,20 +132,6 @@ u_int	hatch_pending_count = 0;
 __cpu_simple_lock_t cpu_hatch_mutex = __SIMPLELOCK_LOCKED;
 __cpu_simple_lock_t cpu_boot_mutex = __SIMPLELOCK_LOCKED;
 #endif
-
-/*
- * Declare these as initialized data so we can patch them.
- */
-#ifndef BUFCACHEPERCENT
-#define BUFCACHEPERCENT 5
-#endif
-
-#ifdef	BUFPAGES
-int bufpages = BUFPAGES;
-#else
-int bufpages = 0;
-#endif
-int bufcachepercent = BUFCACHEPERCENT;
 
 struct uvm_constraint_range  dma_constraint = { 0x0, (paddr_t)-1 };
 struct uvm_constraint_range *uvm_md_constraints[] = { NULL };

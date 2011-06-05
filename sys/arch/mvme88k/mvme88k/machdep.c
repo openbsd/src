@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.242 2011/05/30 22:25:21 oga Exp $	*/
+/* $OpenBSD: machdep.c,v 1.243 2011/06/05 19:41:07 deraadt Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -144,20 +144,6 @@ struct vm_map *phys_map = NULL;
 __cpu_simple_lock_t cpu_hatch_mutex;
 __cpu_simple_lock_t cpu_boot_mutex = __SIMPLELOCK_LOCKED;
 #endif
-
-/*
- * Declare these as initialized data so we can patch them.
- */
-#ifndef BUFCACHEPERCENT
-#define BUFCACHEPERCENT 5
-#endif
-
-#ifdef	BUFPAGES
-int bufpages = BUFPAGES;
-#else
-int bufpages = 0;
-#endif
-int bufcachepercent = BUFCACHEPERCENT;
 
 /*
  * 32 or 34 bit physical address bus depending upon the CPU flavor.

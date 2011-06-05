@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.12 2011/05/30 22:25:22 oga Exp $ */
+/*	$OpenBSD: machdep.c,v 1.13 2011/06/05 19:41:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -152,18 +152,6 @@ struct boot_info {
 char	machine[] = MACHINE;		/* Machine "architecture" */
 char	cpu_model[30];
 char	pmon_bootp[80];
-
-/*
- * Declare these as initialized data so we can patch them.
- */
-#ifndef	BUFCACHEPERCENT
-#define	BUFCACHEPERCENT	5	/* Can be changed in config. */
-#endif
-#ifndef	BUFPAGES
-#define BUFPAGES 0		/* Can be changed in config. */
-#endif
-int	bufpages = BUFPAGES;
-int	bufcachepercent = BUFCACHEPERCENT;
 
 /*
  * Even though the system is 64bit, the hardware is constrained to up

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.109 2011/05/30 22:25:22 oga Exp $ */
+/*	$OpenBSD: machdep.c,v 1.110 2011/06/05 19:41:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -81,19 +81,6 @@ void dump_tlb(void);
 /* The following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* Machine "architecture" */
 char	cpu_model[30];
-
-/*
- * Declare these as initialized data so we can patch them.
- */
-#ifndef	BUFCACHEPERCENT
-#define	BUFCACHEPERCENT	5	/* Can be changed in config. */
-#endif
-#ifndef	BUFPAGES
-#define BUFPAGES 0		/* Can be changed in config. */
-#endif
-
-int	bufpages = BUFPAGES;
-int	bufcachepercent = BUFCACHEPERCENT;
 
 /* low 32 bits range. */
 struct uvm_constraint_range  dma_constraint = { 0x0, 0x7fffffff };

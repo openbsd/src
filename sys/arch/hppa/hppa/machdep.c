@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.201 2011/04/18 21:44:55 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.202 2011/06/05 19:41:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -75,20 +75,6 @@
 #endif
 
 #include <hppa/dev/cpudevs.h>
-
-/*
- * Patchable buffer cache parameters
- */
-#ifndef BUFCACHEPERCENT
-#define BUFCACHEPERCENT 10
-#endif /* BUFCACHEPERCENT */
-
-#ifdef BUFPAGES
-int bufpages = BUFPAGES;
-#else
-int bufpages = 0;
-#endif
-int bufcachepercent = BUFCACHEPERCENT;
 
 /*
  * Different kinds of flags used throughout the kernel.

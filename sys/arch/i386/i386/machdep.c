@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.499 2011/06/05 15:00:37 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.500 2011/06/05 19:41:07 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -184,17 +184,6 @@ int	cpu_apmhalt = 0;	/* sysctl'd to 1 for halt -p hack */
 #ifdef USER_LDT
 int	user_ldt_enable = 0;	/* sysctl'd to 1 to enable */
 #endif
-
-#ifndef BUFCACHEPERCENT
-#define BUFCACHEPERCENT 10
-#endif
-
-#ifdef	BUFPAGES
-int	bufpages = BUFPAGES;
-#else
-int	bufpages = 0;
-#endif
-int	bufcachepercent = BUFCACHEPERCENT;
 
 struct uvm_constraint_range  isa_constraint = { 0x0, 0x00ffffffUL };
 struct uvm_constraint_range  dma_constraint = { 0x0, 0xffffffffUL };

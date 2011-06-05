@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.113 2011/04/18 21:44:56 guenther Exp $ */
+/* $OpenBSD: machdep.c,v 1.114 2011/06/05 19:41:08 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -107,17 +107,6 @@
 #include <vax/vax/db_disasm.h>
 
 #include "led.h"
-
-#ifndef BUFCACHEPERCENT
-#define BUFCACHEPERCENT 5
-#endif
-
-#ifdef	BUFPAGES
-int bufpages = BUFPAGES;
-#else
-int bufpages = 0;
-#endif
-int bufcachepercent = BUFCACHEPERCENT;
 
 extern int virtual_avail, virtual_end;
 /*

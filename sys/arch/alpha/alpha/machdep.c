@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.131 2011/05/30 22:25:20 oga Exp $ */
+/* $OpenBSD: machdep.c,v 1.132 2011/06/05 19:41:06 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -127,20 +127,6 @@ void	dumpsys(void);
 void	identifycpu(void);
 void	regdump(struct trapframe *framep);
 void	printregs(struct reg *);
-
-/*
- * Declare these as initialized data so we can patch them.
- */
-#ifndef BUFCACHEPERCENT
-#define BUFCACHEPERCENT 10
-#endif
-
-#ifdef	BUFPAGES
-int	bufpages = BUFPAGES;
-#else
-int	bufpages = 0;
-#endif
-int	bufcachepercent = BUFCACHEPERCENT;
 
 struct uvm_constraint_range  isa_constraint = { 0x0, 0x00ffffffUL };
 struct uvm_constraint_range  dma_constraint = { 0x0, (paddr_t)-1 };
