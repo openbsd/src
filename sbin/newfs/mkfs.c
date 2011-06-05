@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.75 2011/05/23 10:56:17 dcoppa Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.76 2011/06/05 15:20:37 chl Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -217,7 +217,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 		     fsize);
 	}
 	if (fsize < sectorsize) {
-		errx(18, "fragment size %d is too small, minimum is %d",
+		errx(18, "fragment size %d is too small, minimum is %lld",
 		     fsize, sectorsize);
 	}
 	if (bsize < MINBSIZE) {
@@ -488,7 +488,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 	 */
 	if (!mfs) {
 #define B2MBFACTOR (1 / (1024.0 * 1024.0))
-		printf("%s: %.1fMB in %jd sectors of %d bytes\n", fsys,
+		printf("%s: %.1fMB in %jd sectors of %lld bytes\n", fsys,
 		    (float)sblock.fs_size * sblock.fs_fsize * B2MBFACTOR,
 		    (intmax_t)fsbtodb(&sblock, sblock.fs_size), sectorsize);
 		printf("%d cylinder groups of %.2fMB, %d blocks, %d"
