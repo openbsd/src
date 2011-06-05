@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.497 2011/05/30 22:25:21 oga Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.498 2011/06/05 14:09:10 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -417,12 +417,6 @@ cpu_startup()
 	    (unsigned long long)ptoa((psize_t)physmem)/1024U/1024U);
 
 	/*
-	 * Determine how many buffers to allocate.  We use bufcachepercent%
-	 * of the memory below 4GB.
-	 */
-	if (bufpages == 0)
-		bufpages = atop(avail_end) * bufcachepercent / 100;
-
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
