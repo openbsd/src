@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.5,v 1.19 2007/05/31 19:19:43 jmc Exp $
+.\"	$OpenBSD: disklabel.5,v 1.20 2011/06/05 11:57:17 krw Exp $
 .\"	$NetBSD: disklabel.5,v 1.3 1995/03/18 14:54:36 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)disklabel.5.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2011 $
 .Dt DISKLABEL 5
 .Os
 .Sh NAME
@@ -67,15 +67,6 @@ without any information about the disk geometry.
 It is at an offset
 .Dv LABELOFFSET
 from the beginning of the sector, to allow room for the initial bootstrap.
-The disk sector containing the label is normally made read-only
-so that it is not accidentally overwritten by pack-to-pack copies
-or swap operations;
-the
-.Dv DIOCWLABEL
-.Xr ioctl 2 ,
-which is done as needed by the
-.Xr disklabel 8
-program, allows modification of the label sector.
 .Pp
 A copy of the in-core label for a disk can be obtained with the
 .Dv DIOCGDINFO

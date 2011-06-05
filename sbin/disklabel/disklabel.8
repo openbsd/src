@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.102 2011/05/23 08:40:56 otto Exp $
+.\"	$OpenBSD: disklabel.8,v 1.103 2011/06/05 11:57:17 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: May 23 2011 $
+.Dd $Mdocdate: June 5 2011 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -66,10 +66,6 @@
 .Fl R
 .Op Fl nv
 .Ar disk Ar protofile
-.Nm disklabel
-.Fl N | W
-.Op Fl nv
-.Ar disk
 .Pp
 .Nm disklabel
 .Fl B\ \&
@@ -184,8 +180,6 @@ The same as
 except that entries will be written using disk device names.
 .It Fl h
 Print partition sizes in human readable format.
-.It Fl N
-Disallow writing of the pack label area on the selected disk.
 .It Fl n
 Make no permanent changes to the disklabel
 .Pq useful for debugging purposes .
@@ -216,8 +210,6 @@ entry.
 .It Fl v
 Print additional information during operation
 .Pq verbose mode .
-.It Fl W
-Allow writing of the pack label area on the selected disk.
 .It Fl w
 Write a standard label on the designated drive.
 .It Ar disk
@@ -491,17 +483,6 @@ Comments are delimited by
 .Ar #
 and newline.
 Any existing bootstrap code will be unaffected.
-.Pp
-The sixth form of the command
-.Pq protect
-is used to control write access to the label area of a disk
-so that the label cannot be inadvertently overwritten.
-The
-.Fl N
-and
-.Fl W
-options are only available on architectures that support this feature,
-such as vax, hp300 and some sparc models.
 .Pp
 The final three forms of
 .Nm
