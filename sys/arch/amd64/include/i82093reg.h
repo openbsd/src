@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82093reg.h,v 1.3 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: i82093reg.h,v 1.4 2011/06/05 19:36:25 deraadt Exp $	*/
 /* 	$NetBSD: i82093reg.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $ */
 
 /*-
@@ -46,9 +46,6 @@
  * store the register number of interest in IOAPIC_REG, and store/fetch
  * the real value in IOAPIC_DATA.
  */
-   
-
-
 #define	IOAPIC_REG		0x0000
 #define IOAPIC_DATA		0x0010
 
