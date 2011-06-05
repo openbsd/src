@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.498 2011/06/05 14:09:10 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.499 2011/06/05 15:00:37 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -416,7 +416,6 @@ cpu_startup()
 	    (unsigned long long)ptoa((psize_t)physmem),
 	    (unsigned long long)ptoa((psize_t)physmem)/1024U/1024U);
 
-	/*
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
