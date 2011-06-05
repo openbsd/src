@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpcireg.h,v 1.4 2009/05/06 22:25:57 jakemsr Exp $	*/
+/*	$OpenBSD: cmpcireg.h,v 1.5 2011/06/05 14:13:47 naddy Exp $	*/
 /*	$NetBSD: cmpcireg.h,v 1.7 2005/12/11 12:22:48 christos Exp $	*/
 
 /*
@@ -230,8 +230,8 @@
 #define CMPCI_REG_DMA1_BYTES		0x8C
 #define CMPCI_REG_DMA1_SAMPLES		0x8E
 
-#define CMPCI_REG_8768_MISC		0x92
-#define   CMPCI_REG_CHB3D8C		0x20
+#define CMPCI_REG_8768_MISC		0x90
+#define   CMPCI_REG_CHB3D8C		0x00200000
 
 /* sample rate */
 #define CMPCI_REG_RATE_5512		0
