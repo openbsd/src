@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.46 2011/06/06 07:57:07 jasper Exp $
+# $OpenBSD: pkg-config,v 1.47 2011/06/06 11:16:59 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -566,16 +566,16 @@ sub compare
 	return 0 if ($a eq $b);
 
 	# is there a valid non-numeric suffix to deal with later?
-	# only a(lpha) and b(eta) are allowed for now (do pre and rc later).
+	# accepter are (in order): a(lpha) < b(eta) < rc < ' '.
 	# suffix[0] is the 'alpha' part, suffix[1] is the '1' part in 'alpha1'.
-	if ($a =~ m/(beta|b|alpha|a)([\d]+)$/) {
+	if ($a =~ m/(rc|beta|b|alpha|a)([\d]+)$/) {
 		print STDERR "valid suffix $1$2 found in $a.\n" if $D;
 		$suffix_a[0] = $1;
 		$suffix_a[1] = $2;
 		$a =~ s/$suffix_a[0]$suffix_a[1]//g;
 	}
 
-	if ($b =~ m/(beta|b|alpha|a)([\d]+)$/) {
+	if ($b =~ m/(rc|beta|b|alpha|a)([\d]+)$/) {
 		print STDERR "valid suffix $1$2 found in $b.\n" if $D;
 		$suffix_b[0] = $1;
 		$suffix_b[1] = $2;
@@ -612,7 +612,7 @@ sub compare
 						return -1 if ($suffix_a[1] < $suffix_b[1]);
 					}
 
-					# beta beats alpha
+					# rc beats beta beats alpha
 					if (&$first_char($suffix_a[0]) lt &$first_char($suffix_b[0])) {
 						print STDERR "$full_a (installed) < $full_b (wanted)\n" if $D;
 						return -1;
