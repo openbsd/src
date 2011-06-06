@@ -1,12 +1,11 @@
-#	$OpenBSD: Makefile,v 1.3 2011/06/06 17:35:33 jasper Exp $
+#	$OpenBSD: Makefile,v 1.4 2011/06/06 17:45:53 jasper Exp $
 
-#REGRESS_TARGETS=cmp-vers1 cmp-vers2 cmp-vers3 cmp-vers4 cmp-vers5 cmp-vers6 \
-#	builddir define-variable
 REGRESS_TARGETS=	corrupt1 \
 			corrupt2 \
 			print-provides \
 			print-req \
 			print-req-priv \
+			logfile \
 			sysroot-cflags \
 			sysroot-libs
 
@@ -69,6 +68,13 @@ cmp-vers6:
 # Tests for various environment variables
 builddir:
 	# Test PKG_CONFIG_TOP_BUILD_DIR
+
+logfile:
+	# Test PKG_CONFIG_LOG
+	@echo "[/usr/bin/pkg-config] [--exists] [sysroot >= 0.0.0]" > $@.want
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ PKG_CONFIG_LOG=$@.got \
+		pkg-config --exists "sysroot >= 0.0.0"
+	@diff -u $@.want $@.got
 
 sysroot-cflags:
 	# Test PKG_CONFIG_SYSROOT_DIR (cflags)
