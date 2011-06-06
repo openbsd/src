@@ -1,6 +1,14 @@
-#	$OpenBSD: Makefile,v 1.6 2011/06/06 17:58:07 jasper Exp $
+#	$OpenBSD: Makefile,v 1.7 2011/06/06 18:59:44 jasper Exp $
 
-REGRESS_TARGETS=corrupt1 \
+REGRESS_TARGETS=cmp-vers1-1 \
+		cmp-vers1-2 \
+		cmp-vers1-3 \
+		cmp-vers2-1 \
+		cmp-vers2-2 \
+		cmp-vers2-3 \
+		cmp-vers2-4 \
+		cmp-vers3 \
+		corrupt1 \
 		corrupt2 \
 		print-provides \
 		print-req \
@@ -50,14 +58,39 @@ print-req-priv:
 	@diff -u ${WANT} ${GOT}
 
 # Tests for version comparison
-cmp-vers1:
-	# Test regular versions (a < b)
+cmp-vers1-1:
+	# Test regular versions (a <= b)
+	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config --exists \
+		"vers1 <= 0.0.2"; then false; fi
 
-cmp-vers2:
-	# Test regular versions (a > b)
+cmp-vers1-2:
+	# Test regular versions (a <= b)
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config --exists "vers1 <= 0.1.0"
+
+cmp-vers1-3:
+	# Test regular versions (a < b)
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config --exists "vers1 < 0.2"
+
+cmp-vers2-1:
+	# Test regular versions (a >= b)
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config --exists "vers2 >= 0.0.1"
+
+cmp-vers2-2:
+	# Test regular versions (a >= b)
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config --exists "vers2 >= 0.0.0"
+
+cmp-vers2-3:
+	# Test regular versions (a >= b)
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config --exists "vers2 >= 0.1.0"
+
+cmp-vers2-4:
+	# Test regular versions (a >= b)
+	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config --exists \
+		"vers2 > 0.2.0.0"; then false; fi
 
 cmp-vers3:
 	# Test regular versions (a = b)
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config --exists "vers2 = 0.2.0"
 
 cmp-vers4:
 	# Test suffixed versions (alpha)
@@ -75,6 +108,7 @@ builddir:
 logfile:
 	# Test PKG_CONFIG_LOG
 	@echo "[/usr/bin/pkg-config] [--exists] [sysroot >= 0.0.0]" > ${WANT}
+	@rm -f ${GOT}
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ PKG_CONFIG_LOG=${GOT} \
 		pkg-config --exists "sysroot >= 0.0.0"
 	@diff -u ${WANT} ${GOT}
