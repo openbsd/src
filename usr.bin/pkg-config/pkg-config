@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.49 2011/06/06 12:32:17 jasper Exp $
+# $OpenBSD: pkg-config,v 1.50 2011/06/06 17:10:43 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -32,8 +32,8 @@ if (defined($ENV{PKG_CONFIG_LIBDIR}) && $ENV{PKG_CONFIG_LIBDIR}) {
 }
 
 my $logfile = '';
-if (defined($ENV{PKG_CONFIG_LOGFILE}) && $ENV{PKG_CONFIG_LOGFILE}) {
-	$logfile = $ENV{PKG_CONFIG_LOGFILE};
+if (defined($ENV{PKG_CONFIG_LOG}) && $ENV{PKG_CONFIG_LOG}) {
+	$logfile = $ENV{PKG_CONFIG_LOG};
 }
 
 my $allow_uninstalled =
