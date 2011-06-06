@@ -1,4 +1,4 @@
-.\"	$OpenBSD: amas.4,v 1.1 2009/05/07 20:06:24 ariane Exp $
+.\"	$OpenBSD: amas.4,v 1.2 2011/06/06 23:18:28 sthen Exp $
 .\"
 .\" Copyright (c) 2009 Ariane van der Steldt <ariane@stack.nl>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 7 2009 $
+.Dd $Mdocdate: June 6 2011 $
 .Dt AMAS 4
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@ device can run in either interleaved mode or in non-interleaved mode.
 In interleaved mode, the physical memory addresses are rotated across
 each chip.
 .Nm
-sits between the CPU cores, the dram controller and the hypertransport bus.
+sits between the CPU cores, the DRAM controller and the HyperTransport bus.
 When a CPU requests a memory page,
 .Nm
 decides if the request is serviced from memory local to the chip,
@@ -58,21 +58,21 @@ all should contain the same information.
 .%D February 2006
 .%R Publication # 26094
 .%P pp. 66\(en80
-.\" .%O http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/26094.PDF
+.\" .%O http://support.amd.com/us/Processor_TechDocs/26094.PDF
 .Re
 .Rs
 .%T "BIOS and Kernel Developer's Guide (BKDG) For AMD Family 10h Processors"
 .%D March 2008
 .%R Publication # 31116
 .%P pp. 158\(en167
-.\" .%O http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/31116.PDF
+.\" .%O http://support.amd.com/us/Processor_TechDocs/31116.pdf
 .Re
 .Rs
 .%T "BIOS and Kernel Developer's Guide (BKDG) For AMD Family 11h Processors"
 .%D July 2008
 .%R Publication # 41256
 .%P pp. 109\(en114
-.\" .%O http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/41256.pdf
+.\" .%O http://support.amd.com/us/Processor_TechDocs/41256.pdf
 .Re
 .Sh HISTORY
 The
