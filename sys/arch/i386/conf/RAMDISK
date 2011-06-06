@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.173 2011/01/07 19:33:08 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.174 2011/06/06 06:15:02 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -248,7 +248,7 @@ em*	at pci?				# Intel Pro/1000 ethernet
 re*	at pci?				# Realtek 8169/8169S/8110S
 vge*	at pci?				# VIA VT612x
 nfe*	at pci?				# NVIDIA nForce Ethernet
-pcn*	at pci?				# AMD PCnet-PCI Ethernet
+#pcn*	at pci?				# AMD PCnet-PCI Ethernet
 
 # Wireless network cards
 wi*	at pci?				# WaveLAN IEEE 802.11DS
