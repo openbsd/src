@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.45 2011/06/02 12:46:03 sthen Exp $
+# $OpenBSD: pkg-config,v 1.46 2011/06/06 07:57:07 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -240,7 +240,7 @@ sub handle_config
 		my $deps = $cfg->get_property($property, $variables);
 		if (defined $deps) {
 			for my $dep (@$deps) {
-				if ($dep =~ m/^(.*?)\s*([<=>]+)\s*([\d\.]+)$/) {
+				if ($dep =~ m/^(.*?)\s*([<=>]+)\s*([\d\.]+|[\d\.]+[\w]*[\d]+)$/) {
 					handle_config($1, $2, $3, $list);
 				} else {
 					handle_config($dep, undef, undef, $list);
@@ -560,15 +560,88 @@ sub self_version
 sub compare
 {
 	my ($a, $b) = @_;
+	my ($full_a, $full_b) = ($a, $b);
+	my (@suffix_a, @suffix_b);
 
 	return 0 if ($a eq $b);
+
+	# is there a valid non-numeric suffix to deal with later?
+	# only a(lpha) and b(eta) are allowed for now (do pre and rc later).
+	# suffix[0] is the 'alpha' part, suffix[1] is the '1' part in 'alpha1'.
+	if ($a =~ m/(beta|b|alpha|a)([\d]+)$/) {
+		print STDERR "valid suffix $1$2 found in $a.\n" if $D;
+		$suffix_a[0] = $1;
+		$suffix_a[1] = $2;
+		$a =~ s/$suffix_a[0]$suffix_a[1]//g;
+	}
+
+	if ($b =~ m/(beta|b|alpha|a)([\d]+)$/) {
+		print STDERR "valid suffix $1$2 found in $b.\n" if $D;
+		$suffix_b[0] = $1;
+		$suffix_b[1] = $2;
+		$b =~ s/$suffix_b[0]$suffix_b[1]//g;
+	}
 
 	my @a = split /\./, $a;
 	my @b = split /\./, $b;
 
 	while (@a && @b) { #so long as both lists have something
-		return 1 if $a[0] > $b[0];
-		return -1 if $a[0] < $b[0];
+		if (!(@suffix_a || @suffix_b)) {
+			# simple comparison when no suffixes are in the game.
+			return 1 if $a[0] > $b[0];
+			return -1 if $a[0] < $b[0];
+		} else {
+			# extended comparison.
+			if (((scalar(@a) == 1) || (scalar(@b) == 1)) && 
+			    ($a[0] == $b[0])){
+				# one of the arrays has reached the last element,
+				# compare the suffix.
+
+				# directly compare suffixes, provided both suffixes
+				# are present.
+				if (@suffix_a && @suffix_b) {
+					my $first_char = sub {
+						return substr(shift, 0, 1);
+					};
+
+					# suffixes are equal, compare on numeric
+					if (&$first_char($suffix_a[0]) eq
+					    &$first_char($suffix_b[0])) {
+						return 0 if ($suffix_a[1] == $suffix_b[1]);
+						return 1 if ($suffix_a[1] > $suffix_b[1]);
+						return -1 if ($suffix_a[1] < $suffix_b[1]);
+					}
+
+					# beta beats alpha
+					if (&$first_char($suffix_a[0]) lt &$first_char($suffix_b[0])) {
+						print STDERR "$full_a (installed) < $full_b (wanted)\n" if $D;
+						return -1;
+					} else {
+						print STDERR "$full_a (installed) > $full_b (wanted)\n" if $D;
+						return 1;
+					}
+
+				} else {
+					# one of either is lacking a suffix,
+					# thereby beating the other.
+					# e.g.: 1.02 > 1.02b1
+					if (@suffix_a) { # a is older
+						print STDERR "$full_a (installed) < $full_b (wanted)\n" if $D;
+						return -1;
+					}
+
+					if (@suffix_b) { # b is older
+						print STDERR "$full_a (installed) > $full_b (wanted)\n" if $D;
+						return 1;
+					}
+				}
+				
+			} else {
+				return 1 if $a[0] > $b[0];
+				return -1 if $a[0] < $b[0];
+			}
+				
+		}
 		shift @a; shift @b;
 	}
 	return 1 if @a;
