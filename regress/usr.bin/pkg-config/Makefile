@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2011/06/06 18:59:44 jasper Exp $
+#	$OpenBSD: Makefile,v 1.8 2011/06/06 20:49:26 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -130,6 +130,45 @@ sysroot-libs:
 # Misc. tests
 define-variable:
 	# Test --define-variable
+
+# This fails as we read and check Requires as well as Requires.private where
+# only Requires needs to be checked here.
+# XXX: Test Requires.private too.
+missing-req-1:
+	# Test for missing packages in Requires (libs)
+	@echo "Package nonexisting was not found in the pkg-config search path" > ${WANT}
+	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config --libs \
+		missing-req 2> ${GOT}; then false; fi
+	@diff -u ${WANT} ${GOT}
+
+missing-req-2:
+	# Test for missing packages in Requires (cflags)
+	@echo "Package nonexisting was not found in the pkg-config search path" > ${WANT}
+	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config --cflags \
+		missing-req 2> ${GOT}; then false; fi
+	@diff -u ${WANT} ${GOT}
+
+# This currently fails, because eventhough we only request the version
+# '1' is still being set as return value 
+missing-req-3:
+	@echo "0.0.0" > ${WANT}
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config --modversion \
+		missing-req > ${GOT}
+	@diff -u ${WANT} ${GOT}
+
+whitespace-cflags:
+	# Test whitespace on various positions in Cflags
+	@echo "-I/tmp/include -I/tmp/include/include\ dir" > ${WANT}
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config --cflags \
+		whitespace > ${GOT}
+	@diff -u ${WANT} ${GOT}
+
+whitespace-libs:
+	# Test whitespace on various positions in Libs
+	@echo "-L/tmp/lib -L/tmp/lib/foo -lbaz\ quux" > ${WANT}
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config --libs \
+		whitespace > ${GOT}
+	@diff -u ${WANT} ${GOT}
 
 clean:
 	rm -f *.want *.got
