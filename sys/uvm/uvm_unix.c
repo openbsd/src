@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.41 2011/05/24 15:27:36 ariane Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.42 2011/06/06 17:10:23 ariane Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -167,7 +167,9 @@ uvm_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
 
 	offset = chdr->c_hdrsize + chdr->c_seghdrsize + chdr->c_cpusize;
 
-	RB_FOREACH(entry, uvm_map_addr, &map->addr) {
+	for (entry = map->header.next; entry != &map->header;
+	    entry = entry->next) {
+
 		/* should never happen for a user process */
 		if (UVM_ET_ISSUBMAP(entry)) {
 			panic("uvm_coredump: user process with submap?");
@@ -259,7 +261,9 @@ uvm_coredump_walkmap(struct proc *p, void *iocookie,
 	vaddr_t top;
 	int error;
 
-	RB_FOREACH(entry, uvm_map_addr, &map->addr) {
+	for (entry = map->header.next; entry != &map->header;
+	    entry = entry->next) {
+
 		state.cookie = cookie;
 		state.prot = entry->protection;
 		state.flags = 0;
