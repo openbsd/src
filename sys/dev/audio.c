@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.111 2010/11/18 21:15:14 miod Exp $	*/
+/*	$OpenBSD: audio.c,v 1.112 2011/06/06 06:13:45 deraadt Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -244,7 +244,7 @@ struct filterops audioread_filtops =
 
 #if NWSKBD > 0
 /* Mixer manipulation using keyboard */
-int wskbd_set_mixervolume(long);
+int wskbd_set_mixervolume(long, int);
 #endif
 
 int
@@ -3358,20 +3358,23 @@ filt_audiowrite(struct knote *kn, long hint)
 
 #if NWSKBD > 0
 int
-wskbd_set_mixervolume(long dir)
+wskbd_set_mixervolume(long dir, int out)
 {
 	struct audio_softc *sc;
 	mixer_devinfo_t mi;
 	int error;
 	u_int gain;
 	u_char balance, mute;
+	struct au_mixer_ports *ports;
 
 	if (audio_cd.cd_ndevs == 0 || (sc = audio_cd.cd_devs[0]) == NULL) {
 		DPRINTF(("wskbd_set_mixervolume: audio_cd\n"));
 		return (ENXIO);
 	}
 
-	if (sc->sc_outports.master == -1) {
+	ports = out ? &sc->sc_outports : &sc->sc_inports;
+
+	if (ports->master == -1) {
 		DPRINTF(("wskbd_set_mixervolume: master == -1\n"));
 		return (ENXIO);
 	}
@@ -3379,7 +3382,7 @@ wskbd_set_mixervolume(long dir)
 	if (dir == 0) {
 		/* Mute */
 
-		error = au_get_mute(sc, &sc->sc_outports, &mute);
+		error = au_get_mute(sc, ports, &mute);
 		if (error != 0) {
 			DPRINTF(("wskbd_set_mixervolume:"
 			    " au_get_mute: %d\n", error));
@@ -3388,7 +3391,7 @@ wskbd_set_mixervolume(long dir)
 
 		mute = !mute;
 
-		error = au_set_mute(sc, &sc->sc_outports, mute);
+		error = au_set_mute(sc, ports, mute);
 		if (error != 0) {
 			DPRINTF(("wskbd_set_mixervolume:"
 			    " au_set_mute: %d\n", error));
@@ -3397,7 +3400,7 @@ wskbd_set_mixervolume(long dir)
 	} else {
 		/* Raise or lower volume */
 
-		mi.index = sc->sc_outports.master;
+		mi.index = ports->master;
 		error = sc->hw_if->query_devinfo(sc->hw_hdl, &mi);
 		if (error != 0) {
 			DPRINTF(("wskbd_set_mixervolume:"
@@ -3405,14 +3408,14 @@ wskbd_set_mixervolume(long dir)
 			return (error);
 		}
 
-		au_get_gain(sc, &sc->sc_outports, &gain, &balance);
+		au_get_gain(sc, ports, &gain, &balance);
 
 		if (dir > 0)
 			gain += mi.un.v.delta;
 		else
 			gain -= mi.un.v.delta;
 
-		error = au_set_gain(sc, &sc->sc_outports, gain, balance);
+		error = au_set_gain(sc, ports, gain, balance);
 		if (error != 0) {
 			DPRINTF(("wskbd_set_mixervolume:"
 			    " au_set_gain: %d\n", error));

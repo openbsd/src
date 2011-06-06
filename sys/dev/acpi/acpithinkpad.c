@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.27 2011/05/29 05:02:16 deraadt Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.28 2011/06/06 06:13:46 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/workq.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -26,6 +27,9 @@
 #include <dev/acpi/dsdt.h>
 
 #include <machine/apmvar.h>
+
+#include "audio.h"
+#include "wskbd.h"
 
 #define	THINKPAD_HKEY_VERSION		0x0100
 
@@ -59,6 +63,7 @@
 #define	THINKPAD_BUTTON_VOLUME_DOWN	0x1016
 #define	THINKPAD_BUTTON_VOLUME_MUTE	0x1017
 #define	THINKPAD_BUTTON_THINKVANTAGE	0x1018
+#define	THINKPAD_BUTTON_MICROPHONE_MUTE	0x101b
 #define	THINKPAD_BUTTON_FN_F11		0x100b
 #define	THINKPAD_BUTTON_HIBERNATE	0x100c
 #define	THINKPAD_LID_OPEN		0x5001
@@ -105,6 +110,10 @@ int	thinkpad_brightness_down(struct acpithinkpad_softc *);
 
 void    thinkpad_sensor_attach(struct acpithinkpad_softc *sc);
 void    thinkpad_sensor_refresh(void *);
+
+#if NAUDIO > 0 && NWSKBD > 0
+extern int wskbd_set_mixervolume(long dir, int out);
+#endif
 
 struct cfattach acpithinkpad_ca = {
 	sizeof(struct acpithinkpad_softc), thinkpad_match, thinkpad_attach
@@ -313,6 +322,13 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 			break;
 		case THINKPAD_BUTTON_VOLUME_UP:
 			thinkpad_volume_up(sc);
+			handled = 1;
+			break;
+		case THINKPAD_BUTTON_MICROPHONE_MUTE:
+#if NAUDIO > 0 && NWSKBD > 0
+			workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
+			    (void *)(long)0, (void *)(int)0);
+#endif
 			handled = 1;
 			break;
 		case THINKPAD_BUTTON_THINKVANTAGE:

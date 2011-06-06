@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.66 2011/04/14 19:25:54 shadchin Exp $ */
+/* $OpenBSD: wskbd.c,v 1.67 2011/06/06 06:13:46 deraadt Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -300,7 +300,7 @@ static struct wskbd_internal wskbd_console_data;
 void	wskbd_update_layout(struct wskbd_internal *, kbd_t);
 
 #if NAUDIO > 0
-extern int wskbd_set_mixervolume(long dir);
+extern int wskbd_set_mixervolume(long dir, int out);
 #endif
 
 void
@@ -1630,15 +1630,15 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 #if NAUDIO > 0
 		case KS_AudioMute:
 			workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
-			    (void *)(long)0, NULL);
+			    (void *)(long)0, (void *)(int)1);
 			break;
 		case KS_AudioLower:
 			workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
-			    (void *)(long)-1, NULL);
+			    (void *)(long)-1, (void*)(int)1);
 			break;
 		case KS_AudioRaise:
 			workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
-			    (void *)(long)1, NULL);
+			    (void *)(long)1, (void*)(int)1);
 			return (0);
 #endif
 		default:
