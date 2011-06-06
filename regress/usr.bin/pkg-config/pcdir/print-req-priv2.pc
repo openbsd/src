@@ -1,0 +1,4 @@
+Name: print-req-priv2
+Description: pkg-config(1) regress file
+Version: 0.0.0
+Requires.private:
