@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.42 2010/12/30 14:30:12 jsing Exp $
+#	$OpenBSD: genassym.cf,v 1.43 2011/06/06 14:23:26 jsing Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -43,12 +43,13 @@ include <sys/user.h>
 include <uvm/uvm.h>
 
 include <machine/cpu.h>
-include <machine/psl.h>
-include <machine/reg.h>
-include <machine/pte.h>
 include <machine/frame.h>
-include <machine/pmap.h>
 include <machine/iomod.h>
+include <machine/mutex.h>
+include <machine/pmap.h>
+include <machine/psl.h>
+include <machine/pte.h>
+include <machine/reg.h>
 
 # general constants
 export	NBPG
