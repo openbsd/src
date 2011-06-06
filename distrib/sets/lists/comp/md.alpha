@@ -33,6 +33,7 @@
 ./usr/include/alpha/ioctl_fd.h
 ./usr/include/alpha/kcore.h
 ./usr/include/alpha/limits.h
+./usr/include/alpha/loadfile_machdep.h
 ./usr/include/alpha/lock.h
 ./usr/include/alpha/logout.h
 ./usr/include/alpha/mutex.h

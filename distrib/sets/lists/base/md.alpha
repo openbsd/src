@@ -742,6 +742,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/ioctl_fd.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/kcore.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/limits.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/lock.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/logout.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/mutex.ph
