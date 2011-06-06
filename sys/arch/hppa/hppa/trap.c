@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.114 2011/04/03 14:56:28 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.115 2011/06/06 14:20:50 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -257,7 +257,7 @@ trap(int type, struct trapframe *frame)
 	case T_DBREAK:
 	dead_end:
 #ifdef DDB
-		if (kdb_trap (type, va, frame)) {
+		if (kdb_trap(type, va, frame)) {
 			if (type == T_IBREAK) {
 				/* skip break instruction */
 				frame->tf_iioq_head = frame->tf_iioq_tail;
@@ -613,9 +613,9 @@ datalign_user:
 	case T_DATAPID | T_USER:
 		/* FALLTHROUGH to unimplemented */
 	default:
-#if 0
-if (kdb_trap (type, va, frame))
-	return;
+#ifdef TRAPDEBUG
+		if (kdb_trap(type, va, frame))
+			return;
 #endif
 		panic("trap: unimplemented \'%s\' (%d)", tts, trapnum);
 	}
