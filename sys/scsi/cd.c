@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.201 2011/06/05 18:40:33 matthew Exp $	*/
+/*	$OpenBSD: cd.c,v 1.202 2011/06/06 01:59:49 matthew Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -100,8 +100,6 @@ struct cd_softc {
 	struct disk sc_dk;
 
 	int sc_flags;
-#define	CDF_LOCKED	0x01
-#define	CDF_WANTED	0x02
 #define	CDF_ANCIENT	0x10		/* disk is ancient; for minphys */
 #define	CDF_DYING	0x40		/* dying, when deactivated */
 #define CDF_WAITING	0x100

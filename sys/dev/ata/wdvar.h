@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdvar.h,v 1.16 2011/06/05 18:40:33 matthew Exp $	*/
+/*	$OpenBSD: wdvar.h,v 1.17 2011/06/06 01:59:49 matthew Exp $	*/
 /*	$NetBSD: wdvar.h,v 1.3 1998/11/11 19:38:27 bouyer Exp $	*/
 
 /*
@@ -72,8 +72,6 @@ struct wd_softc {
 	int openings;
 	struct ataparams sc_params;/* drive characteristics found */
 	int sc_flags;
-#define WDF_LOCKED	  0x01
-#define WDF_WANTED	  0x02
 /*
  * XXX Nothing resets this yet, but disk change sensing will when ATA-4 is
  * more fully implemented.
