@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.48 2011/06/06 11:18:55 jasper Exp $
+# $OpenBSD: pkg-config,v 1.49 2011/06/06 12:32:17 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -40,7 +40,7 @@ my $allow_uninstalled =
 	defined $ENV{PKG_CONFIG_DISABLE_UNINSTALLED} ? 0 : 1;
 my $found_uninstalled = 0;
 
-my $version = 0.23; # pretend to be this version of pkgconfig
+my $version = 0.25; # pretend to be this version of pkgconfig
 
 my %configs = ();
 setup_self();
@@ -568,18 +568,16 @@ sub compare
 	# is there a valid non-numeric suffix to deal with later?
 	# accepter are (in order): a(lpha) < b(eta) < rc < ' '.
 	# suffix[0] is the 'alpha' part, suffix[1] is the '1' part in 'alpha1'.
-	if ($a =~ m/(rc|beta|b|alpha|a)([\d]+)$/) {
+	if ($a =~ s/(rc|beta|b|alpha|a)(\d+)$//) {
 		print STDERR "valid suffix $1$2 found in $a.\n" if $D;
 		$suffix_a[0] = $1;
 		$suffix_a[1] = $2;
-		$a =~ s/$suffix_a[0]$suffix_a[1]//g;
 	}
 
-	if ($b =~ m/(rc|beta|b|alpha|a)([\d]+)$/) {
+	if ($b =~ s/(rc|beta|b|alpha|a)(\d+)$//) {
 		print STDERR "valid suffix $1$2 found in $b.\n" if $D;
 		$suffix_b[0] = $1;
 		$suffix_b[1] = $2;
-		$b =~ s/$suffix_b[0]$suffix_b[1]//g;
 	}
 
 	my @a = split /\./, $a;
@@ -592,7 +590,7 @@ sub compare
 			return $rc if defined($rc);
 		} else {
 			# extended comparison.
-			if (((scalar(@a) == 1) || (scalar(@b) == 1)) && 
+			if (((@a == 1) || (@b == 1)) && 
 			    ($a[0] == $b[0])){
 				# one of the arrays has reached the last element,
 				# compare the suffix.
