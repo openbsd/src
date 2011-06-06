@@ -1,50 +1,53 @@
-#	$OpenBSD: Makefile,v 1.5 2011/06/06 17:49:23 jasper Exp $
+#	$OpenBSD: Makefile,v 1.6 2011/06/06 17:58:07 jasper Exp $
 
-REGRESS_TARGETS=	corrupt1 \
-			corrupt2 \
-			print-provides \
-			print-req \
-			print-req-priv \
-			logfile \
-			sysroot-cflags \
-			sysroot-libs
+REGRESS_TARGETS=corrupt1 \
+		corrupt2 \
+		print-provides \
+		print-req \
+		print-req-priv \
+		logfile \
+		sysroot-cflags \
+		sysroot-libs
 
-# Checks for corrupt pkg-config files.
+WANT=		${.OBJDIR}/$@.want
+GOT=		${.OBJDIR}/$@.got
+
+# Tests for corrupt pkg-config files.
 corrupt1:
 	# Test for missing variables/fields
-	@echo "Package 'corrupt1' has no Version: field" > ${.OBJDIR}/$@.want
+	@echo "Package 'corrupt1' has no Version: field" > ${WANT}
 	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config \
-		--exists $@ 2> ${.OBJDIR}/$@.got; then false; fi
-	@diff -u ${.OBJDIR}/$@.want ${.OBJDIR}/$@.got
+		--exists $@ 2> ${GOT}; then false; fi
+	@diff -u ${WANT} ${GOT}
 
 corrupt2:
 	# Test for missing variables/fields
-	@echo "Package 'corrupt2' has no Name: field" > ${.OBJDIR}/$@.want
+	@echo "Package 'corrupt2' has no Name: field" > ${WANT}
 	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config \
-		--exists $@ 2> ${.OBJDIR}/$@.got; then false; fi
-	@diff -u ${.OBJDIR}/$@.want ${.OBJDIR}/$@.got
+		--exists $@ 2> ${GOT}; then false; fi
+	@diff -u ${WANT} ${GOT}
 
-# Checks for various printing features
+# Tests for various printing features
 print-provides:
 	# Test --print-provides
-	@echo "print-provides = 0.0.0" > ${.OBJDIR}/$@.want
+	@echo "print-provides = 0.0.0" > ${WANT}
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config \
-		--print-provides $@ > ${.OBJDIR}/$@.got
-	@diff -u ${.OBJDIR}/$@.want ${.OBJDIR}/$@.got
+		--print-provides $@ > ${GOT}
+	@diff -u ${WANT} ${GOT}
 
 print-req:
 	# Test --print-requires
-	@echo "print-req2>=0.0.1" > ${.OBJDIR}/$@.want
+	@echo "print-req2>=0.0.1" > ${WANT}
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config \
 		--print-requires $@ > $@.got
-	@diff -u ${.OBJDIR}/$@.want ${.OBJDIR}/$@.got
+	@diff -u ${WANT} ${GOT}
 	
 print-req-priv:
 	# Test --print-requires-private
-	@echo "print-req-priv2>=0.0.1" > ${.OBJDIR}/$@.want
+	@echo "print-req-priv2>=0.0.1" > ${WANT}
 	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config \
-		--print-requires-private $@ > ${.OBJDIR}/$@.got; then false; fi
-	@diff -u ${.OBJDIR}/$@.want ${.OBJDIR}/$@.got
+		--print-requires-private $@ > ${GOT}; then false; fi
+	@diff -u ${WANT} ${GOT}
 
 # Tests for version comparison
 cmp-vers1:
@@ -71,24 +74,24 @@ builddir:
 
 logfile:
 	# Test PKG_CONFIG_LOG
-	@echo "[/usr/bin/pkg-config] [--exists] [sysroot >= 0.0.0]" > ${.OBJDIR}/$@.want
-	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ PKG_CONFIG_LOG=${.OBJDIR}/$@.got \
+	@echo "[/usr/bin/pkg-config] [--exists] [sysroot >= 0.0.0]" > ${WANT}
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ PKG_CONFIG_LOG=${GOT} \
 		pkg-config --exists "sysroot >= 0.0.0"
-	@diff -u ${.OBJDIR}/$@.want ${.OBJDIR}/$@.got
+	@diff -u ${WANT} ${GOT}
 
 sysroot-cflags:
 	# Test PKG_CONFIG_SYSROOT_DIR (cflags)
-	@echo "-I/altroot/tmp/include -I/altroot/tmp/include/foo" > ${.OBJDIR}/$@.want
+	@echo "-I/altroot/tmp/include -I/altroot/tmp/include/foo" > ${WANT}
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ PKG_CONFIG_SYSROOT_DIR=/altroot \
-		pkg-config --cflags sysroot > ${.OBJDIR}/$@.got
-	@diff -u ${.OBJDIR}/$@.want ${.OBJDIR}/$@.got
+		pkg-config --cflags sysroot > ${GOT}
+	@diff -u ${WANT} ${GOT}
 
 sysroot-libs:
 	# Test PKG_CONFIG_SYSROOT_DIR (libs)
-	@echo "-L/altroot/tmp/lib -L/altroot/tmp/lib/foo -lc" > ${.OBJDIR}/$@.want
+	@echo "-L/altroot/tmp/lib -L/altroot/tmp/lib/foo -lc" > ${WANT}
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ PKG_CONFIG_SYSROOT_DIR=/altroot \
-		pkg-config --libs sysroot > ${.OBJDIR}/$@.got
-	@diff -u ${.OBJDIR}/$@.want ${.OBJDIR}/$@.got
+		pkg-config --libs sysroot > ${GOT}
+	@diff -u ${WANT} ${GOT}
 
 # Misc. tests
 define-variable:
