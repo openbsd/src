@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.50 2011/06/06 17:10:43 jasper Exp $
+# $OpenBSD: pkg-config,v 1.51 2011/06/06 17:49:37 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -59,7 +59,7 @@ $D = 1 if defined $ENV{PKG_CONFIG_DEBUG_SPEW};
 
 if ($logfile) {
 	open my $L, ">>" , $logfile or die;
-	print $L beautify_list($_, @ARGV), "\n";
+	print $L beautify_list($0, @ARGV), "\n";
 	close $L;
 }
 
