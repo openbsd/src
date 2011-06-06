@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.47 2011/06/06 11:16:59 jasper Exp $
+# $OpenBSD: pkg-config,v 1.48 2011/06/06 11:18:55 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -588,8 +588,8 @@ sub compare
 	while (@a && @b) { #so long as both lists have something
 		if (!(@suffix_a || @suffix_b)) {
 			# simple comparison when no suffixes are in the game.
-			return 1 if $a[0] > $b[0];
-			return -1 if $a[0] < $b[0];
+			my $rc = compare_numeric($a[0], $b[0], 0);
+			return $rc if defined($rc);
 		} else {
 			# extended comparison.
 			if (((scalar(@a) == 1) || (scalar(@b) == 1)) && 
@@ -607,9 +607,7 @@ sub compare
 					# suffixes are equal, compare on numeric
 					if (&$first_char($suffix_a[0]) eq
 					    &$first_char($suffix_b[0])) {
-						return 0 if ($suffix_a[1] == $suffix_b[1]);
-						return 1 if ($suffix_a[1] > $suffix_b[1]);
-						return -1 if ($suffix_a[1] < $suffix_b[1]);
+					    	return compare_numeric($suffix_a[1], $suffix_b[1], 1);
 					}
 
 					# rc beats beta beats alpha
@@ -637,8 +635,8 @@ sub compare
 				}
 				
 			} else {
-				return 1 if $a[0] > $b[0];
-				return -1 if $a[0] < $b[0];
+				my $rc = compare_numeric($a[0], $b[0], 0);
+				return $rc if defined($rc);
 			}
 				
 		}
@@ -647,6 +645,17 @@ sub compare
 	return 1 if @a;
 	return -1 if @b;
 	return 0;
+}
+
+# simple numeric comparison, with optional equality test.
+sub compare_numeric
+{
+	my ($x, $y, $eq) = @_;
+
+	return 1 if $x > $y;
+	return -1 if $x < $y;
+	return 0 if (($x == $y) and ($eq == 1));
+	return undef;
 }
 
 # got a package meeting the requested specific version?
