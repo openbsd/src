@@ -1,12 +1,14 @@
-#	$OpenBSD: Makefile,v 1.2 2011/06/06 14:31:15 jasper Exp $
+#	$OpenBSD: Makefile,v 1.3 2011/06/06 17:35:33 jasper Exp $
 
 #REGRESS_TARGETS=cmp-vers1 cmp-vers2 cmp-vers3 cmp-vers4 cmp-vers5 cmp-vers6 \
-#	sysroot builddir define-variable
+#	builddir define-variable
 REGRESS_TARGETS=	corrupt1 \
 			corrupt2 \
 			print-provides \
 			print-req \
-			print-req-priv
+			print-req-priv \
+			sysroot-cflags \
+			sysroot-libs
 
 # Checks for corrupt pkg-config files.
 corrupt1:
@@ -65,11 +67,22 @@ cmp-vers6:
 	# Test suffixed versions (rc)
 
 # Tests for various environment variables
-sysroot:
-	# Test PKG_CONFIG_SYSROOT_DIR
-
 builddir:
 	# Test PKG_CONFIG_TOP_BUILD_DIR
+
+sysroot-cflags:
+	# Test PKG_CONFIG_SYSROOT_DIR (cflags)
+	@echo "-I/altroot/tmp/include -I/altroot/tmp/include/foo" > $@.want
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ PKG_CONFIG_SYSROOT_DIR=/altroot \
+		pkg-config --cflags sysroot > $@.got
+	@diff -u $@.want $@.got
+
+sysroot-libs:
+	# Test PKG_CONFIG_SYSROOT_DIR (libs)
+	@echo "-L/altroot/tmp/lib -L/altroot/tmp/lib/foo -lc" > $@.want
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ PKG_CONFIG_SYSROOT_DIR=/altroot \
+		pkg-config --libs sysroot > $@.got
+	@diff -u $@.want $@.got
 
 # Misc. tests
 define-variable:
