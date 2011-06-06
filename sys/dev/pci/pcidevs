@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1613 2011/06/04 11:46:34 kettenis Exp $
+$OpenBSD: pcidevs,v 1.1614 2011/06/06 13:21:52 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1372,9 +1372,6 @@ product ATI RADEON_HD3470	0x95c0	Radeon HD 3470
 product ATI RADEON_HD3400_M82	0x95c4	Mobility Radeon HD 3400
 product ATI RADEON_HD3450	0x95c5	Radeon HD 3450
 product ATI RADEON_HD3450_AGP	0x95c6	Radeon HD 3450 AGP
-product ATI RS780_HB		0x9600	RS780 Host
-product ATI RS780_PCIE_1	0x9602	RS780 PCIE
-product ATI RS780_PCIE_2	0x9609	RS780 PCIE
 product ATI RS780_HDA		0x960f	RS780 HD Audio
 product ATI RADEON_HD3200_1	0x9610	Radeon HD 3200
 product ATI RADEON_HD3100	0x9611	Radeon HD 3100
