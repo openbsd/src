@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.43 2011/05/24 15:27:36 ariane Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.44 2011/06/06 17:18:26 ariane Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@ static void	ps_str_e(struct ps_strings *, u_long *, int *);
 static char *
 _kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long va, u_long *cnt)
 {
-	u_long addr, offset, slot;
+	u_long addr, head, offset, slot;
 	struct vm_anon *anonp, anon;
 	struct vm_map_entry vme;
 	struct vm_amap amap;
@@ -140,28 +140,27 @@ _kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long va, u_long *cnt)
 	if (kd->swapspc == 0) {
 		kd->swapspc = _kvm_malloc(kd, kd->nbpg);
 		if (kd->swapspc == 0)
-			return (NULL);
+			return (0);
 	}
 
 	/*
 	 * Look through the address map for the memory object
 	 * that corresponds to the given virtual address.
+	 * The header just has the entire valid range.
 	 */
-	addr = (u_long)RB_ROOT(&p->p_vmspace->vm_map.addr);
+	head = (u_long)&p->p_vmspace->vm_map.header;
+	addr = head;
 	while (1) {
-		if (addr == 0)
-			return (NULL);
 		if (KREAD(kd, addr, &vme))
-			return (NULL);
+			return (0);
 
-		if (va < vme.start)
-			addr = (u_long)RB_LEFT(&vme, daddrs.addr_entry);
-		else if (va >= vme.end + vme.guard + vme.fspace)
-			addr = (u_long)RB_RIGHT(&vme, daddrs.addr_entry);
-		else if (va >= vme.end)
-			return (NULL);
-		else
+		if (va >= vme.start && va < vme.end &&
+		    vme.aref.ar_amap != NULL)
 			break;
+
+		addr = (u_long)vme.next;
+		if (addr == head)
+			return (0);
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.39 2011/05/24 15:27:36 ariane Exp $ */
+/*	$OpenBSD: procmap.c,v 1.40 2011/06/06 17:18:26 ariane Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -169,13 +169,10 @@ struct nlist nl[] = {
 
 void load_symbols(kvm_t *);
 void process_map(kvm_t *, pid_t, struct kinfo_proc *, struct sum *);
-struct vm_map_entry *load_vm_map_entries(kvm_t *, struct vm_map_entry *,
-    struct vm_map_entry *);
-void unload_vm_map_entries(struct vm_map_entry *);
-size_t dump_vm_map_entry(kvm_t *, struct kbit *, struct vm_map_entry *,
+size_t dump_vm_map_entry(kvm_t *, struct kbit *, struct kbit *, int,
     struct sum *);
-char *findname(kvm_t *, struct kbit *, struct vm_map_entry *, struct kbit *,
-    struct kbit *, struct kbit *);
+char *findname(kvm_t *, struct kbit *, struct kbit *, struct kbit *,
+	    struct kbit *, struct kbit *);
 int search_cache(kvm_t *, struct kbit *, char **, char *, size_t);
 #if 0
 void load_name_cache(kvm_t *);
@@ -184,19 +181,6 @@ void cache_enter(struct namecache *);
 static void __dead usage(void);
 static pid_t strtopid(const char *);
 void print_sum(struct sum *, struct sum *);
-
-/*
- * uvm_map address tree implementation.
- */
-static int no_impl(void *, void *);
-static int
-no_impl(void *p, void *q)
-{
-	errx(1, "uvm_map address comparison not implemented");
-	return 0;
-}
-
-RB_GENERATE(uvm_map_addr, vm_map_entry, daddrs.addr_entry, no_impl);
 
 int
 main(int argc, char *argv[])
@@ -363,12 +347,12 @@ print_sum(struct sum *sum, struct sum *total_sum)
 void
 process_map(kvm_t *kd, pid_t pid, struct kinfo_proc *proc, struct sum *sum)
 {
-	struct kbit kbit[3], *vmspace, *vm_map;
-	struct vm_map_entry *vm_map_entry;
+	struct kbit kbit[4], *vmspace, *vm_map, *header, *vm_map_entry;
+	struct vm_map_entry *last;
+	u_long addr, next;
 	size_t total = 0;
 	char *thing;
 	uid_t uid;
-	int vmmap_flags;
 
 	if ((uid = getuid())) {
 		if (pid == 0) {
@@ -383,9 +367,13 @@ process_map(kvm_t *kd, pid_t pid, struct kinfo_proc *proc, struct sum *sum)
 
 	vmspace = &kbit[0];
 	vm_map = &kbit[1];
+	header = &kbit[2];
+	vm_map_entry = &kbit[3];
 
 	A(vmspace) = 0;
 	A(vm_map) = 0;
+	A(header) = 0;
+	A(vm_map_entry) = 0;
 
 	if (pid > 0) {
 		A(vmspace) = (u_long)proc->p_vmspace;
@@ -428,38 +416,34 @@ process_map(kvm_t *kd, pid_t pid, struct kinfo_proc *proc, struct sum *sum)
 		printf("%s %p = {", thing, P(vm_map));
 
 		printf(" pmap = %p,\n", D(vm_map, vm_map)->pmap);
-		printf("    lock = <struct lock>\n");
+		printf("    lock = <struct lock>,");
+		printf(" header = <struct vm_map_entry>,");
+		printf(" nentries = %d,\n", D(vm_map, vm_map)->nentries);
 		printf("    size = %lx,", D(vm_map, vm_map)->size);
 		printf(" ref_count = %d,", D(vm_map, vm_map)->ref_count);
 		printf(" ref_lock = <struct simplelock>,\n");
-		printf("    min_offset-max_offset = 0x%lx-0x%lx\n",
-		    D(vm_map, vm_map)->min_offset,
-		    D(vm_map, vm_map)->max_offset);
-		printf("    b_start-b_end = 0x%lx-0x%lx\n",
-		    D(vm_map, vm_map)->b_start,
-		    D(vm_map, vm_map)->b_end);
-		printf("    s_start-s_end = 0x%lx-0x%lx\n",
-		    D(vm_map, vm_map)->s_start,
-		    D(vm_map, vm_map)->s_end);
-		vmmap_flags = D(vm_map, vm_map)->flags;
-		printf("    flags = %x <%s%s%s%s%s%s >,\n",
-		    vmmap_flags,
-		    vmmap_flags & VM_MAP_PAGEABLE ? " PAGEABLE" : "",
-		    vmmap_flags & VM_MAP_INTRSAFE ? " INTRSAFE" : "",
-		    vmmap_flags & VM_MAP_WIREFUTURE ? " WIREFUTURE" : "",
-		    vmmap_flags & VM_MAP_BUSY ? " BUSY" : "",
-		    vmmap_flags & VM_MAP_WANTLOCK ? " WANTLOCK" : "",
+		printf("    hint = %p,", D(vm_map, vm_map)->hint);
+		printf(" hint_lock = <struct simplelock>,\n");
+		printf("    first_free = %p,", D(vm_map, vm_map)->first_free);
+		printf(" flags = %x <%s%s%s%s%s%s >,\n", D(vm_map, vm_map)->flags,
+		    D(vm_map, vm_map)->flags & VM_MAP_PAGEABLE ? " PAGEABLE" : "",
+		    D(vm_map, vm_map)->flags & VM_MAP_INTRSAFE ? " INTRSAFE" : "",
+		    D(vm_map, vm_map)->flags & VM_MAP_WIREFUTURE ? " WIREFUTURE" : "",
+		    D(vm_map, vm_map)->flags & VM_MAP_BUSY ? " BUSY" : "",
+		    D(vm_map, vm_map)->flags & VM_MAP_WANTLOCK ? " WANTLOCK" : "",
 #if VM_MAP_TOPDOWN > 0
-		    vmmap_flags & VM_MAP_TOPDOWN ? " TOPDOWN" :
+		    D(vm_map, vm_map)->flags & VM_MAP_TOPDOWN ? " TOPDOWN" :
 #endif
 		    "");
-		printf("    timestamp = %u }\n", D(vm_map, vm_map)->timestamp);
+		printf("    flags_lock = <struct simplelock>,");
+		printf(" timestamp = %u }\n", D(vm_map, vm_map)->timestamp);
 	}
 	if (print_ddb) {
 		printf("MAP %p: [0x%lx->0x%lx]\n", P(vm_map),
 		    D(vm_map, vm_map)->min_offset,
 		    D(vm_map, vm_map)->max_offset);
-		printf("\tsz=%ld, ref=%d, version=%d, flags=0x%x\n",
+		printf("\t#ent=%d, sz=%ld, ref=%d, version=%d, flags=0x%x\n",
+		    D(vm_map, vm_map)->nentries,
 		    D(vm_map, vm_map)->size,
 		    D(vm_map, vm_map)->ref_count,
 		    D(vm_map, vm_map)->timestamp,
@@ -467,6 +451,11 @@ process_map(kvm_t *kd, pid_t pid, struct kinfo_proc *proc, struct sum *sum)
 		printf("\tpmap=%p(resident=<unknown>)\n",
 		    D(vm_map, vm_map)->pmap);
 	}
+
+	A(header) = A(vm_map) + offsetof(struct vm_map, header);
+	S(header) = sizeof(struct vm_map_entry);
+	memcpy(D(header, vm_map_entry), &D(vm_map, vm_map)->header, S(header));
+	dump_vm_map_entry(kd, vmspace, header, 1, sum);
 
 	/* headers */
 #ifdef DISABLED_HEADERS
@@ -493,12 +482,19 @@ process_map(kvm_t *kd, pid_t pid, struct kinfo_proc *proc, struct sum *sum)
 		    (int)sizeof(int)  * 2, "Inode");
 
 	/* these are the "sub entries" */
-	RB_ROOT(&D(vm_map, vm_map)->addr) =
-	    load_vm_map_entries(kd, RB_ROOT(&D(vm_map, vm_map)->addr), NULL);
-	RB_FOREACH(vm_map_entry, uvm_map_addr, &D(vm_map, vm_map)->addr)
-		total += dump_vm_map_entry(kd, vmspace, vm_map_entry, sum);
-	unload_vm_map_entries(RB_ROOT(&D(vm_map, vm_map)->addr));
+	next = (u_long)D(header, vm_map_entry)->next;
+	D(vm_map_entry, vm_map_entry)->next =
+	    D(header, vm_map_entry)->next + 1;
+	last = P(header);
 
+	while (next != 0 && D(vm_map_entry, vm_map_entry)->next != last) {
+		addr = next;
+		A(vm_map_entry) = addr;
+		S(vm_map_entry) = sizeof(struct vm_map_entry);
+		KDEREF(kd, vm_map_entry);
+		total += dump_vm_map_entry(kd, vmspace, vm_map_entry, 0, sum);
+		next = (u_long)D(vm_map_entry, vm_map_entry)->next;
+	}
 	if (print_solaris)
 		printf("%-*s %8luK\n",
 		    (int)sizeof(void *) * 2 - 2, " total",
@@ -531,58 +527,12 @@ load_symbols(kvm_t *kd)
 	    sizeof(kernel_map_addr));
 }
 
-/*
- * Recreate the addr tree of vm_map in local memory.
- */
-struct vm_map_entry *
-load_vm_map_entries(kvm_t *kd, struct vm_map_entry *kptr,
-    struct vm_map_entry *parent)
-{
-	static struct kbit map_ent;
-	struct vm_map_entry *result;
-
-	if (kptr == NULL)
-		return NULL;
-
-	A(&map_ent) = (u_long)kptr;
-	S(&map_ent) = sizeof(struct vm_map_entry);
-	KDEREF(kd, &map_ent);
-
-	result = malloc(sizeof(*result));
-	if (result == NULL)
-		err(1, "malloc");
-	memcpy(result, D(&map_ent, vm_map_entry), sizeof(struct vm_map_entry));
-
-	/*
-	 * Recurse to download rest of the tree.
-	 */
-	RB_LEFT(result, daddrs.addr_entry) = load_vm_map_entries(kd,
-	    RB_LEFT(result, daddrs.addr_entry), result);
-	RB_RIGHT(result, daddrs.addr_entry) = load_vm_map_entries(kd,
-	    RB_RIGHT(result, daddrs.addr_entry), result);
-	RB_PARENT(result, daddrs.addr_entry) = parent;
-	return result;
-}
-
-/*
- * Release the addr tree of vm_map.
- */
-void
-unload_vm_map_entries(struct vm_map_entry *ent)
-{
-	if (ent == NULL)
-		return;
-
-	unload_vm_map_entries(RB_LEFT(ent, daddrs.addr_entry));
-	unload_vm_map_entries(RB_RIGHT(ent, daddrs.addr_entry));
-	free(ent);
-}
-
 size_t
 dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
-    struct vm_map_entry *vme, struct sum *sum)
+    struct kbit *vm_map_entry, int ishead, struct sum *sum)
 {
 	struct kbit kbit[4], *uvm_obj, *vp, *vfs, *amap;
+	struct vm_map_entry *vme;
 	ino_t inode = 0;
 	dev_t dev = 0;
 	size_t sz = 0;
@@ -597,9 +547,15 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 	A(vp) = 0;
 	A(vfs) = 0;
 
-	if (debug & PRINT_VM_MAP_ENTRY) {
-		printf("%s = {", "vm_map_entry");
-		printf(" start = %lx,", vme->start);
+	vme = D(vm_map_entry, vm_map_entry);
+
+	if ((ishead && (debug & PRINT_VM_MAP_HEADER)) ||
+	    (!ishead && (debug & PRINT_VM_MAP_ENTRY))) {
+		printf("%s %p = {", ishead ? "vm_map.header" : "vm_map_entry",
+		    P(vm_map_entry));
+		printf(" prev = %p,", vme->prev);
+		printf(" next = %p,\n", vme->next);
+		printf("    start = %lx,", vme->start);
 		printf(" end = %lx,", vme->end);
 		printf(" object.uvm_obj/sub_map = %p,\n", vme->object.uvm_obj);
 		printf("    offset = %lx,", (unsigned long)vme->offset);
@@ -619,6 +575,9 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		    vme->flags & UVM_MAP_STATIC ? " STATIC" : "",
 		    vme->flags & UVM_MAP_KMEM ? " KMEM" : "");
 	}
+
+	if (ishead)
+		return (0);
 
 	A(vp) = 0;
 	A(uvm_obj) = 0;
@@ -684,7 +643,7 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		}
 	}
 
-	name = findname(kd, vmspace, vme, vp, vfs, uvm_obj);
+	name = findname(kd, vmspace, vm_map_entry, vp, vfs, uvm_obj);
 
 	if (print_map) {
 		printf("0x%lx 0x%lx %c%c%c %c%c%c %s %s %d %d %d",
@@ -722,9 +681,8 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		    major(dev), minor(dev), inode, inode ? name : "");
 
 	if (print_ddb) {
-		printf(" - <lost address>: 0x%lx->0x%lx: "
-		    "obj=%p/0x%lx, amap=%p/%d\n",
-		    vme->start, vme->end,
+		printf(" - %p: 0x%lx->0x%lx: obj=%p/0x%lx, amap=%p/%d\n",
+		    P(vm_map_entry), vme->start, vme->end,
 		    vme->object.uvm_obj, (unsigned long)vme->offset,
 		    vme->aref.ar_amap, vme->aref.ar_pageoff);
 		printf("\tsubmap=%c, cow=%c, nc=%c, prot(max)=%d/%d, inh=%d, "
@@ -803,11 +761,14 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 
 char *
 findname(kvm_t *kd, struct kbit *vmspace,
-    struct vm_map_entry *vme, struct kbit *vp,
+    struct kbit *vm_map_entry, struct kbit *vp,
     struct kbit *vfs, struct kbit *uvm_obj)
 {
 	static char buf[1024], *name;
+	struct vm_map_entry *vme;
 	size_t l;
+
+	vme = D(vm_map_entry, vm_map_entry);
 
 	if (UVM_ET_ISOBJ(vme)) {
 		if (A(vfs)) {
@@ -867,7 +828,9 @@ findname(kvm_t *kd, struct kbit *vmspace,
 	    (caddr_t)vme->end) {
 		name = "  [ stack ]";
 	} else if (D(vmspace, vmspace)->vm_daddr <= (caddr_t)vme->start &&
-	    D(vmspace, vmspace)->vm_daddr + BRKSIZ >= (caddr_t)vme->end) {
+	    D(vmspace, vmspace)->vm_daddr + BRKSIZ >= (caddr_t)vme->end &&
+	    D(vmspace, vmspace)->vm_dsize * getpagesize() / 2 <
+	    (vme->end - vme->start)) {
 		name = "  [ heap ]";
 	} else if (UVM_ET_ISHOLE(vme))
 		name = "  [ hole ]";
