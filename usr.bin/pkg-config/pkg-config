@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.51 2011/06/06 17:49:37 jasper Exp $
+# $OpenBSD: pkg-config,v 1.52 2011/06/07 06:42:19 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -145,7 +145,11 @@ while (@ARGV){
 	    	$op = shift @ARGV;
 		$v = shift @ARGV;
 	}
-	handle_config($p, $op, $v, $cfg_full_list);
+	# For these modes we just need some meta-information and
+	# parsing the requirements is not needed.
+	if (!($mode{modversion} || $mode{printprovides})) {
+		handle_config($p, $op, $v, $cfg_full_list);
+	}
 	push(@$top_config, $p);
 }
 
