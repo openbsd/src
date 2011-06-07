@@ -1,4 +1,4 @@
-/* $OpenBSD: i2sreg.h,v 1.2 2007/04/21 15:48:22 gwk Exp $ */
+/* $OpenBSD: i2sreg.h,v 1.3 2011/06/07 16:29:51 mpi Exp $ */
 /*-
  * Copyright (c) 2002 Tsubai Masanari.  All rights reserved.
  *
@@ -35,6 +35,10 @@
 /* I2S_INT register definitions */
 #define I2SClockOffset		0x3c
 #define I2S_INT_CLKSTOPPEND	0x01000000
+
+#define I2S_SELECT_SPEAKER	1 << 0
+#define I2S_SELECT_HEADPHONE	1 << 1
+#define I2S_SELECT_LINEOUT	1 << 2
 
 /* FCR(0x3c) bits */
 #define I2S0CLKEN	0x1000
