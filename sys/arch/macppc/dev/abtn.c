@@ -1,4 +1,4 @@
-/*	$OpenBSD: abtn.c,v 1.12 2009/01/10 18:00:59 robert Exp $	*/
+/*	$OpenBSD: abtn.c,v 1.13 2011/06/07 16:18:00 mpi Exp $	*/
 /*	$NetBSD: abtn.c,v 1.1 1999/07/12 17:48:26 tsubai Exp $	*/
 
 /*-
@@ -128,17 +128,17 @@ abtn_adbcomplete(caddr_t buffer, caddr_t data, int adb_command)
 	case 0x08:	/* mute */
 	case 0x01:	/* mute, AV hardware */
 		workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
-		    (void *)(long)0, NULL);
+		    (void *)(long)0, (void *)(int)1);
 		break;
 	case 0x07:	/* decrease volume */
 	case 0x02:	/* decrease volume, AV hardware */
 		workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
-		    (void *)(long)-1, NULL);
+		    (void *)(long)-1, (void *)(int)1);
 		break;
 	case 0x06:	/* increase volume */
 	case 0x03:	/* increase volume, AV hardware */
 		workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
-		    (void *)(long)1, NULL);
+		    (void *)(long)1, (void *)(int)1);
 		break;
 #endif
 	case 0x0c:	/* mirror display key */
