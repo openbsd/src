@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2011/06/06 21:21:42 jasper Exp $
+#	$OpenBSD: Makefile,v 1.10 2011/06/07 06:42:47 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -153,8 +153,6 @@ missing-req-2:
 		missing-req 2> ${GOT}; then false; fi
 	@diff -u ${WANT} ${GOT}
 
-# This currently fails, because eventhough we only request the version
-# '1' is still being set as return value
 missing-req-3:
 	@echo "0.0.0" > ${WANT}
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config --modversion \
