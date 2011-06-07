@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.52 2011/06/07 06:42:19 jasper Exp $
+# $OpenBSD: pkg-config,v 1.53 2011/06/07 12:22:46 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -503,7 +503,7 @@ sub do_list
 		}
 		$fname = basename($f, '.pc');
 		printf("%${x}s %s - %s\n", $fname,
-		    stringize($cfg->get_property('Name', $variables)),
+		    stringize($cfg->get_property('Name', $variables), ' '),
 		    stringize($cfg->get_property('Description', $variables),
 		    ' '));
 	}
@@ -686,7 +686,7 @@ sub versionmatch
 sub mismatch
 {
 	my ($p, $cfg, $op, $v) = @_;
-	my $name = stringize($cfg->get_property('Name'));
+	my $name = stringize($cfg->get_property('Name'), ' ');
 	my $version = stringize($cfg->get_property('Version'));
 	my $url = stringize($cfg->get_property('URL'));
 
