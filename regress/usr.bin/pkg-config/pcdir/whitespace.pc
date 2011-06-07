@@ -3,7 +3,7 @@ exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
 
-Name: whitespace
+Name: Whitespace test
 Description: pkg-config(1) regress file
 Version: 0.0.0
 Libs: -L${libdir} -L${libdir}/foo -lbaz\ quux

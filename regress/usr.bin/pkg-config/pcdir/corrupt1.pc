@@ -1,4 +1,4 @@
-Name: corrupt1
+Name: Corrupt .pc test
 Description: pkg-config(1) regress file
 Requires:
 Libs:
