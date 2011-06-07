@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.17 2011/03/07 01:35:33 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.18 2011/06/07 23:40:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 7 2011 $
+.Dd $Mdocdate: June 7 2011 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -205,16 +205,20 @@ appears as the first macro.
 Beyond
 .Sx \&TH ,
 at least one macro or text node must appear in the document.
-Documents are generally structured as follows:
+.Pp
+The following is a well-formed skeleton
+.Nm
+file for a utility
+.Qq progname :
 .Bd -literal -offset indent
-\&.TH FOO 1 2009-10-10
+\&.TH PROGNAME 1 2009-10-10
 \&.SH NAME
-\efBfoo\efR \e(en a description goes here
+\efBprogname\efR \e(en a description goes here
 \&.\e\*q .SH LIBRARY
 \&.\e\*q For sections 2 & 3 only.
 \&.\e\*q Not used in OpenBSD.
 \&.SH SYNOPSIS
-\efBfoo\efR [\efB\e-options\efR] arguments...
+\efBprogname\efR [\efB\e-options\efR] arguments...
 \&.SH DESCRIPTION
 The \efBfoo\efR utility processes files...
 \&.\e\*q .SH IMPLEMENTATION NOTES

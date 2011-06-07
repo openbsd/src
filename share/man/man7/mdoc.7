@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.69 2011/06/05 17:24:15 jmc Exp $
+.\"	$OpenBSD: mdoc.7,v 1.70 2011/06/07 23:40:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 5 2011 $
+.Dd $Mdocdate: June 7 2011 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -42,23 +42,23 @@ document follows simple rules: lines beginning with the control
 character
 .Sq \&.
 are parsed for macros.
-Other lines are interpreted within the scope of
-prior macros:
+Text lines, those not beginning with the control character, are
+interpreted within the scope of prior macros:
 .Bd -literal -offset indent
 \&.Sh Macro lines change control state.
-Other lines are interpreted within the current state.
+Text lines are interpreted within the current state.
 .Ed
 .Sh LANGUAGE SYNTAX
 .Nm
 documents may contain only graphable 7-bit ASCII characters, the space
 character, and, in certain circumstances, the tab character.
 .Pp
-If the first character of a line is a space, that line is printed
+If the first character of a text line is a space, that line is printed
 with a leading newline.
 .Ss Comments
 Text following a
 .Sq \e\*q ,
-whether in a macro or free-form text line, is ignored to the end of
+whether in a macro or text line, is ignored to the end of
 line.
 A macro line with only a control character and comment escape,
 .Sq \&.\e\*q ,
@@ -71,6 +71,8 @@ Within a macro line, the following characters are reserved:
 .Bl -tag -width Ds -offset indent -compact
 .It \&.
 .Pq period
+.It \e.
+.Pq escaped period
 .It \&,
 .Pq comma
 .It \&:
@@ -91,14 +93,17 @@ Within a macro line, the following characters are reserved:
 .Pq exclamation
 .It \&|
 .Pq vertical bar
+.It \e*(Ba
+.Pq reserved-word vertical bar
 .El
 .Pp
 For general use in macro lines, these characters can either be escaped
 with a non-breaking space
 .Pq Sq \e&
 or, if applicable, an appropriate escape sequence can be used.
+In text lines, these may be used as normal punctuation.
 .Ss Special Characters
-Special characters may occur in both macro and free-form lines.
+Special characters may occur in both macro and text lines.
 Sequences begin with the escape character
 .Sq \e
 followed by either an open-parenthesis
@@ -127,18 +132,15 @@ escape followed by an indicator: B (bold), I (italic), R (Roman), or P
 .Pp
 A numerical representation 3, 2, or 1 (bold, italic, and Roman,
 respectively) may be used instead.
-A text decoration is valid within
-the current font scope only: if a macro opens a font scope alongside
-its own scope, such as
+If a macro opens a font scope after calling
+.Sq \ef ,
+such as with
+.Sx \&Bf ,
+the
+.Sq \ef
+mode will be restored upon exiting the
 .Sx \&Bf
-.Cm \&Sy ,
-in-scope invocations of
-.Sq \ef
-are only valid within the font scope of the macro.
-If
-.Sq \ef
-is specified outside of any font scope, such as in unenclosed, free-form
-text, it will affect the remainder of the document.
+scope.
 .Pp
 Note this form is
 .Em not
@@ -172,9 +174,9 @@ and
 .Pq vertical bar .
 .Ss Whitespace
 Whitespace consists of the space character.
-In free-form lines, whitespace is preserved within a line; unescaped
+In text lines, whitespace is preserved within a line; unescaped
 trailing spaces are stripped from input (unless in a literal context).
-Blank free-form lines, which may include whitespace, are only permitted
+Blank text lines, which may include whitespace, are only permitted
 within literal contexts.
 .Pp
 In macro lines, whitespace delimits arguments and is discarded.
@@ -194,7 +196,7 @@ Thus, the following produces
 \&.Op "Fl a"
 .Ed
 .Pp
-In free-form mode, quotes are regarded as opaque text.
+In text lines, quotes are regarded as opaque text.
 .Ss Scaling Widths
 Many macros support scaled widths for their arguments, such as
 stipulating a two-inch list indentation with the following:
@@ -265,8 +267,8 @@ The proper spacing is also intelligently preserved if a sentence ends at
 the boundary of a macro line.
 For example:
 .Pp
-.Dl \&Xr mandoc 1 \.
-.Dl \&Fl T \&Ns \&Cm ascii \.
+.Dl \&.Xr mandoc 1 \&.
+.Dl \&.Fl T \&Ns \&Cm ascii \&.
 .Sh MANUAL STRUCTURE
 A well-formed
 .Nm
@@ -295,19 +297,20 @@ sections, although this varies between manual sections.
 .Pp
 The following is a well-formed skeleton
 .Nm
-file:
+file for a utility
+.Qq progname :
 .Bd -literal -offset indent
 \&.Dd $\&Mdocdate$
-\&.Dt mdoc 7
+\&.Dt PROGNAME section
 \&.Os
 \&.Sh NAME
-\&.Nm foo
+\&.Nm progname
 \&.Nd a description goes here
 \&.\e\*q .Sh LIBRARY
 \&.\e\*q For sections 2, 3, & 9 only.
 \&.\e\*q Not used in OpenBSD.
 \&.Sh SYNOPSIS
-\&.Nm foo
+\&.Nm progname
 \&.Op Fl options
 \&.Ar
 \&.Sh DESCRIPTION
@@ -354,6 +357,10 @@ The syntax for this as follows:
 \&.Nd a one line description
 .Ed
 .Pp
+Multiple
+.Sq \&Nm
+names should be separated by commas.
+.Pp
 The
 .Sx \&Nm
 macro(s) must precede the
@@ -381,15 +388,17 @@ configuration.
 For the first, utilities (sections 1, 6, and 8), this is
 generally structured as follows:
 .Bd -literal -offset indent
-\&.Nm foo
-\&.Op Fl v
-\&.Op Fl o Ar file
-\&.Op Ar
 \&.Nm bar
 \&.Op Fl v
 \&.Op Fl o Ar file
 \&.Op Ar
+\&.Nm foo
+\&.Op Fl v
+\&.Op Fl o Ar file
+\&.Op Ar
 .Ed
+.Pp
+Commands should be ordered alphabetically.
 .Pp
 For the second, function calls (sections 2, 3, 9):
 .Bd -literal -offset indent
@@ -400,6 +409,14 @@ For the second, function calls (sections 2, 3, 9):
 \&.Ft "char *"
 \&.Fn bar "const char *src"
 .Ed
+.Pp
+Ordering of
+.Sx \&In ,
+.Sx \&Vt ,
+.Sx \&Fn ,
+and
+.Sx \&Fo
+macros should follow C header-file conventions.
 .Pp
 And for the third, configurations (section 4):
 .Bd -literal -offset indent
@@ -449,9 +466,15 @@ or
 .Sx \&Ss
 macro or the end of an enclosing block, whichever comes first.
 .It Em DESCRIPTION
-This expands upon the brief, one line description in
-.Em NAME .
-It usually contains a breakdown of the options (if documenting a
+This begins with an expansion of the brief, one line description in
+.Em NAME :
+.Bd -literal -offset indent
+The
+\&.Nm
+utility does this, that, and the other.
+.Ed
+.Pp
+It usually follows with a breakdown of the options (if documenting a
 command), such as:
 .Bd -literal -offset indent
 The arguments are as follows:
@@ -599,7 +622,10 @@ column, if applicable, describes closure rules.
 Multi-line scope closed by an explicit closing macro.
 All macros contains bodies; only
 .Sx \&Bf
-contains a head.
+and
+.Pq optionally
+.Sx \&Bl
+contain a head.
 .Bd -literal -offset indent
 \&.Yo \(lB\-arg \(lBparm...\(rB\(rB \(lBhead...\(rB
 \(lBbody...\(rB
@@ -797,7 +823,7 @@ then the macro accepts an arbitrary number of arguments.
 .It Sx \&Fx  Ta    Yes      Ta    Yes      Ta    n
 .It Sx \&Hf  Ta    \&No     Ta    \&No     Ta    n
 .It Sx \&Ic  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&In  Ta    \&No     Ta    \&No     Ta    n
+.It Sx \&In  Ta    \&No     Ta    \&No     Ta    1
 .It Sx \&Lb  Ta    \&No     Ta    \&No     Ta    1
 .It Sx \&Li  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Lk  Ta    Yes      Ta    Yes      Ta    >0
@@ -1035,7 +1061,7 @@ Its syntax is as follows:
 .Pp
 Display blocks are used to select a different indentation and
 justification than the one used by the surrounding text.
-They may contain both macro lines and free-form text lines.
+They may contain both macro lines and text lines.
 By default, a display block is preceded by a vertical space.
 .Pp
 The
@@ -1153,7 +1179,7 @@ and
 For each macro, keep its output together on the same output line,
 until the end of the macro or the end of the input line is reached,
 whichever comes first.
-Line breaks in free-form text lines are unaffected.
+Line breaks in text lines are unaffected.
 The syntax is as follows:
 .Pp
 .D1 Pf \. Sx \&Bk Fl words
@@ -1847,9 +1873,9 @@ A function name.
 Its syntax is as follows:
 .Bd -ragged -offset indent
 .Pf \. Ns Sx \&Fn
-.Op Cm functype
-.Cm funcname
-.Op Oo Cm argtype Oc Cm argname
+.Op Ar functype
+.Ar funcname
+.Op Oo Ar argtype Oc Ar argname
 .Ed
 .Pp
 Function arguments are surrounded in parenthesis and
@@ -1857,8 +1883,8 @@ are delimited by commas.
 If no arguments are specified, blank parenthesis are output.
 .Pp
 Examples:
-.Dl \&.Fn "int funcname" "int arg0" "int arg1"
-.Dl \&.Fn funcname "int arg0"
+.Dl \&.Fn \*qint funcname\*q \*qint arg0\*q \*qint arg1\*q
+.Dl \&.Fn funcname \*qint arg0\*q
 .Dl \&.Fn funcname arg0
 .Bd -literal -offset indent -compact
 \&.Ft functype
@@ -1878,17 +1904,17 @@ This is a multi-line version of
 .Sx \&Fn .
 Its syntax is as follows:
 .Pp
-.D1 Pf \. Sx \&Fo Cm funcname
+.D1 Pf \. Sx \&Fo Ar funcname
 .Pp
 Invocations usually occur in the following context:
 .Bd -ragged -offset indent
-.Pf \. Sx \&Ft Cm functype
+.Pf \. Sx \&Ft Ar functype
 .br
-.Pf \. Sx \&Fo Cm funcname
+.Pf \. Sx \&Fo Ar funcname
 .br
-.Pf \. Sx \&Fa Oo Cm argtype Oc Cm argname
+.Pf \. Sx \&Fa Oo Ar argtype Oc Ar argname
 .br
-\.\.\.
+\&.\.\.
 .br
 .Pf \. Sx \&Fc
 .Ed
@@ -1907,7 +1933,7 @@ and
 A function type.
 Its syntax is as follows:
 .Pp
-.D1 Pf \. Sx \&Ft Cm functype
+.D1 Pf \. Sx \&Ft Ar functype
 .Pp
 Examples:
 .Dl \&.Ft int
@@ -1988,7 +2014,7 @@ and
 .Fl diag
 have the following syntax:
 .Pp
-.D1 Pf \. Sx \&It Cm args
+.D1 Pf \. Sx \&It Ar args
 .Pp
 Lists of type
 .Fl bullet ,
@@ -2061,10 +2087,10 @@ See also
 Specify a library.
 The syntax is as follows:
 .Pp
-.D1 Pf \. Sx \&Lb Cm library
+.D1 Pf \. Sx \&Lb Ar library
 .Pp
 The
-.Cm library
+.Ar library
 parameter may be a system library, such as
 .Cm libz
 or
@@ -2094,7 +2120,7 @@ and
 Format a hyperlink.
 Its syntax is as follows:
 .Pp
-.D1 Pf \. Sx \&Lk Cm uri Op Cm name
+.D1 Pf \. Sx \&Lk Ar uri Op Ar name
 .Pp
 Examples:
 .Dl \&.Lk http://bsd.lv \*qThe BSD.lv Project\*q
@@ -2109,7 +2135,7 @@ Synonym for
 Display a mathematical symbol.
 Its syntax is as follows:
 .Pp
-.D1 Pf \. Sx \&Ms Cm symbol
+.D1 Pf \. Sx \&Ms Ar symbol
 .Pp
 Examples:
 .Dl \&.Ms sigma
@@ -2120,7 +2146,7 @@ Format a
 hyperlink.
 Its syntax is as follows:
 .Pp
-.D1 Pf \. Sx \&Mt Cm address
+.D1 Pf \. Sx \&Mt Ar address
 .Pp
 Examples:
 .Dl \&.Mt discuss@manpages.bsd.lv
@@ -2258,10 +2284,10 @@ any
 file.
 Its syntax is as follows:
 .Pp
-.D1 Pf \. Sx \&Os Op Cm system Op Cm version
+.D1 Pf \. Sx \&Os Op Ar system Op Ar version
 .Pp
 The optional
-.Cm system
+.Ar system
 parameter specifies the relevant operating system or environment.
 Left unspecified, it defaults to the local operating system version.
 This is the suggested form.
@@ -2320,14 +2346,14 @@ Removes the space
 between its arguments.
 Its syntax is as follows:
 .Pp
-.D1 Pf \. \&Pf Cm prefix suffix
+.D1 Pf \. \&Pf Ar prefix suffix
 .Pp
 The
-.Cm suffix
+.Ar suffix
 argument may be a macro.
 .Pp
 Examples:
-.Dl \&.Pf \e. \&Sx \&Pf \&Cm prefix suffix
+.Dl \&.Pf \e. \&Sx \&Pf \&Ar prefix suffix
 .Ss \&Po
 Multi-line version of
 .Sx \&Pq .
@@ -2452,7 +2478,7 @@ By default, spacing is
 When switched
 .Cm off ,
 no white space is inserted between macro arguments and between the
-output generated from adjacent macros, but free-form text lines
+output generated from adjacent macros, but text lines
 still get normal spacing between words and sentences.
 .Ss \&So
 Multi-line version of
@@ -2675,15 +2701,15 @@ Link to another manual
 .Pq Qq cross-reference .
 Its syntax is as follows:
 .Pp
-.D1 Pf \. Sx \&Xr Cm name section
+.D1 Pf \. Sx \&Xr Ar name section
 .Pp
 The
-.Cm name
+.Ar name
 and
-.Cm section
+.Ar section
 are the name and section of the linked manual.
 If
-.Cm section
+.Ar section
 is followed by non-punctuation, an
 .Sx \&Ns
 is inserted into the token stream.
@@ -2708,10 +2734,10 @@ This macro should not be used; it is implemented for compatibility with
 historical manuals.
 Its syntax is as follows:
 .Pp
-.D1 Pf \. Sx \&sp Op Cm height
+.D1 Pf \. Sx \&sp Op Ar height
 .Pp
 The
-.Cm height
+.Ar height
 argument must be formatted as described in
 .Sx Scaling Widths .
 If unspecified,

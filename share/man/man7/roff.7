@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.11 2011/01/25 01:09:51 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.12 2011/06/07 23:40:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 25 2011 $
+.Dd $Mdocdate: June 7 2011 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -467,15 +467,20 @@ than having the request or macro follow as
 The scope of a conditional is always parsed, but only executed if the
 conditional evaluates to true.
 .Pp
-Note that text following an
-.Sq \&.\e}
-escape sequence is discarded.
-Furthermore, if an explicit closing sequence
+Note that the
 .Sq \e}
-is specified in a free-form line, the entire line is accepted within the
-scope of the prior request, not only the text preceding the close, with the
+is converted into a zero-width escape sequence if not passed as a
+standalone macro
+.Sq \&.\e} .
+For example,
+.Pp
+.D1 \&.Fl a \e} b
+.Pp
+will result in
 .Sq \e}
-collapsing into a zero-width space.
+being considered an argument of the
+.Sq \&Fl
+macro.
 .Ss \&ig
 Ignore input.
 Its syntax can be either
@@ -586,7 +591,7 @@ The
 will be read and its contents processed as input in place of the
 .Sq \&.so
 request line.
-To avoid inadvertant inclusion of unrelated files,
+To avoid inadvertent inclusion of unrelated files,
 .Xr mandoc 1
 only accepts relative paths not containing the strings
 .Qq ../

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc_char.7,v 1.8 2011/02/09 22:53:18 schwarze Exp $
+.\"	$OpenBSD: mandoc_char.7,v 1.9 2011/06/07 23:40:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 9 2011 $
+.Dd $Mdocdate: June 7 2011 $
 .Dt MANDOC_CHAR 7
 .Os
 .Sh NAME
@@ -481,8 +481,13 @@ Greek letters:
 .It \e(ts    Ta \(ts        Ta sigma terminal
 .El
 .Sh PREDEFINED STRINGS
-These are not recommended for use, as they differ across
-implementations:
+Predefined strings are inherited from the macro packages of historical
+troff implementations.
+They are
+.Em not recommended
+for use, as they differ across implementations.
+Manuals using these predefined strings are almost certainly not
+portable.
 .Pp
 .Bl -column -compact -offset indent "Input" "Rendered" "Description"
 .It Em Input Ta Em Rendered Ta Em Description
@@ -512,7 +517,19 @@ implementations:
 .It \e*(>=   Ta \*(>=       Ta greater-than-equal
 .It \e*(aa   Ta \*(aa       Ta acute
 .It \e*(ga   Ta \*(ga       Ta grave
+.It \e*(Px   Ta \*(Px       Ta POSIX standard name
+.It \e*(Ai   Ta \*(Ai       Ta ANSI standard name
 .El
+.Sh UNICODE CHARACTERS
+The escape sequence
+.Pp
+.Dl \e[uXXXX]
+.Pp
+is interpreted as a Unicode codepoint.
+The codepoint must be in the range above U+0080 and less than U+10FFFF.
+For compatibility, points must be zero-padded to four characters; if
+greater than four characters, no zero padding is allowed.
+Unicode surrogates are not allowed.
 .Sh NUMBERED CHARACTERS
 For backward compatibility with existing manuals,
 .Xr mandoc 1
@@ -534,6 +551,9 @@ troff implementations, at this time limited to GNU troff
 .Pq Qq groff .
 .Pp
 .Bl -dash -compact
+.It
+The \eN\(aq\(aq escape sequence is limited to printable characters; in
+groff, it accepts arbitrary character numbers.
 .It
 In
 .Fl T Ns Cm ascii ,
