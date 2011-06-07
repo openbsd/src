@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2011/06/07 06:42:47 jasper Exp $
+#	$OpenBSD: Makefile,v 1.11 2011/06/07 12:18:22 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -21,6 +21,7 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		missing-req-3 \
 		whitespace-cflags \
 		whitespace-libs \
+		whitespace-name
 
 WANT=		${.OBJDIR}/$@.want
 GOT=		${.OBJDIR}/$@.got
@@ -171,6 +172,13 @@ whitespace-libs:
 	@echo "-L/tmp/lib -L/tmp/lib/foo -lbaz\ quux" > ${WANT}
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config --libs \
 		whitespace > ${GOT}
+	@diff -u ${WANT} ${GOT}
+
+whitespace-name:
+	# Test whitespace in Name
+	@echo "Requested 'whitespace > 0.2.0' but version of Whitespace test is 0.0.0" > ${WANT}
+	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config --print-errors \
+		"whitespace > 0.2.0" 2> ${GOT}; then false; fi
 	@diff -u ${WANT} ${GOT}
 
 clean:
