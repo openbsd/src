@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.27 2011/04/17 20:57:11 krw Exp $
+#	$OpenBSD: install.md,v 1.28 2011/06/07 09:38:59 jasper Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ md_prep_disklabel()
 	0)	/usr/mdec/sgivol $_disk
 	cat <<__EOT
 
-A SGI Volume Header was found on the disk. Normally you want to replace it
+An SGI Volume Header was found on the disk. Normally you want to replace it
 with a new Volume Header suitable for installing OpenBSD. Doing this will
 of course delete all data currently on the disk.
 __EOT
