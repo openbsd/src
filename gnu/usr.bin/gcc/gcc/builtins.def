@@ -159,6 +159,20 @@ DEF_LIB_ALWAYS_BUILTIN(BUILT_IN_LABS,
 		       "__builtin_labs",
 		       BT_FN_LONG_LONG)
 
+#ifdef	__arm__
+DEF_FALLBACK_BUILTIN(BUILT_IN_FABS,
+		     "__builtin_fabs",
+		     BT_FN_DOUBLE_DOUBLE,
+		     ATTR_CONST_NOTHROW_LIST)
+DEF_FALLBACK_BUILTIN(BUILT_IN_FABSF,
+		     "__builtin_fabsf",
+		     BT_FN_FLOAT_FLOAT,
+		     ATTR_CONST_NOTHROW_LIST)
+DEF_FALLBACK_BUILTIN(BUILT_IN_FABSL,
+		     "__builtin_fabsl",
+		     BT_FN_LONG_DOUBLE_LONG_DOUBLE,
+		     ATTR_CONST_NOTHROW_LIST)
+#else	/* __arm__ */
 DEF_LIB_ALWAYS_BUILTIN(BUILT_IN_FABS,
 		       "__builtin_fabs",
 		       BT_FN_DOUBLE_DOUBLE)
@@ -168,6 +182,7 @@ DEF_LIB_ALWAYS_BUILTIN(BUILT_IN_FABSF,
 DEF_LIB_ALWAYS_BUILTIN(BUILT_IN_FABSL,
 		       "__builtin_fabsl",
 		       BT_FN_LONG_DOUBLE_LONG_DOUBLE)
+#endif	/* __arm__ */
 
 DEF_C99_BUILTIN(BUILT_IN_LLABS,
 		"__builtin_llabs",
