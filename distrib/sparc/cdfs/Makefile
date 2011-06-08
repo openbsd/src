@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2011/04/18 16:52:10 thib Exp $
+#	$OpenBSD: Makefile,v 1.9 2011/06/08 19:16:19 krw Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -27,6 +27,7 @@ ${CDROM}:
 	    -s `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/sparc/boot$$" | cut -d' ' -f1` \
 	    -e `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/sparc/boot$$" | cut -d' ' -f2` \
 	    /mnt/${OSREV}/sparc/boot /usr/mdec/bootxx /dev/rvnd0c
+	disklabel -w vnd0 fakecdrom "OpenBSD/sparc   "
 	umount /mnt
 	vnconfig -u vnd0
 	# XXX Some sparc machines fail to load the kernel correctly if the

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2011/04/10 20:00:43 krw Exp $
+#	$OpenBSD: Makefile,v 1.11 2011/06/08 19:16:19 krw Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -41,6 +41,10 @@ ${CDROM}: ${BASE} ${XBASE}
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
 	    -V "OpenBSD/${MACHINE} ${OSREV} Install CD" \
 	    -o ${.OBJDIR}/${CDROM} ${.OBJDIR}/cd-dir
+	vnconfig -v -c vnd0 ${.OBJDIR}/${CDROM}
+	disklabel -w vnd0 fakecdrom "OpenBSD${REV}${MACHINE}"
+	vnconfig -u vnd0
+	mksuncd f ${.OBJDIR}/${CDROM} ${.OBJDIR}/../miniroot/miniroot${REV}.fs
 
 install:
 	cp ${CDROM} ${RELDIR}/

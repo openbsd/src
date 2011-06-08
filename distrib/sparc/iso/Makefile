@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2011/04/18 16:52:10 thib Exp $
+#	$OpenBSD: Makefile,v 1.9 2011/06/08 19:16:19 krw Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -45,6 +45,7 @@ ${CDROM}: ${BASE} ${XBASE}
 	    -s `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/${MACHINE}/boot$$" | cut -d' ' -f1` \
 	    -e `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/${MACHINE}/boot$$" | cut -d' ' -f2` \
 	    /mnt/${OSREV}/${MACHINE}/boot /usr/mdec/bootxx /dev/rvnd0c
+	disklabel -w vnd0 fakecdrom "OpenBSD/${MACHINE}   "
 	umount /mnt
 	vnconfig -u vnd0
 	# XXX Some ${MACHINE} machines fail to load the kernel correctly if the
