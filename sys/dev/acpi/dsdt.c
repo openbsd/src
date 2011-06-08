@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.189 2011/06/03 16:44:16 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.190 2011/06/08 05:38:28 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2614,7 +2614,7 @@ aml_disasm(struct aml_scope *scope, int lvl,
 	uint64_t ival;
 	struct aml_value *rv, tmp;
 	uint8_t *end = NULL;
-	struct aml_scope *ms;
+	struct aml_scope ms;
 	char *ch;
 	char  mch[64];
 
@@ -2902,51 +2902,55 @@ aml_disasm(struct aml_scope *scope, int lvl,
 			scope->pos = end;
 			break;
 		case 'F':
-			/* Field List */
-			tmp.v_buffer = scope->pos;
-			tmp.length   = end - scope->pos;
+			/* Scope: Field List */
+			memset(&ms, 0, sizeof(ms));
+			ms.node = scope->node;
+			ms.start = scope->pos;
+			ms.end = end;
+			ms.pos = ms.start;
+			ms.type = AMLOP_FIELD;
 
-			ms = aml_pushscope(scope, &tmp, scope->node, 0);
-			while (ms && ms->pos < ms->end) {
-				if (*ms->pos == 0x00) {
-					ms->pos++;
-					aml_parselength(ms);
-				} else if (*ms->pos == 0x01) {
-					ms->pos+=3;
+			while (ms.pos < ms.end) {
+				if (*ms.pos == 0x00) {
+					ms.pos++;
+					aml_parselength(&ms);
+				} else if (*ms.pos == 0x01) {
+					ms.pos+=3;
 				} else {
-					ms->pos = aml_parsename(ms->node,
-					     ms->pos, &rv, 1);
-					aml_parselength(ms);
+					ms.pos = aml_parsename(ms.node,
+					     ms.pos, &rv, 1);
+					aml_parselength(&ms);
 					dbprintf(arg,"	%s\n",
 					    aml_nodename(rv->node));
 					aml_delref(&rv, 0);
 				}
 			}
-			aml_popscope(ms);
 
 			/* Display address and closing bracket */
 			dbprintf(arg,"%.4x ", aml_pc(scope->pos));
 			for (pc=0; pc<(lvl & 0x7FFF); pc++) {
-				dbprintf(arg,"	");
+				dbprintf(arg,"  ");
 			}
 			scope->pos = end;
 			break;
 		case 'T':
 			/* Scope: Termlist */
-			tmp.v_buffer = scope->pos;
-			tmp.length   = end - scope->pos;
+			memset(&ms, 0, sizeof(ms));
+			ms.node = scope->node;
+			ms.start = scope->pos;
+			ms.end = end;
+			ms.pos = ms.start;
+			ms.type = AMLOP_SCOPE;
 
-			ms = aml_pushscope(scope, &tmp, scope->node, 0);
-			while (ms && ms->pos < ms->end) {
-				aml_disasm(ms, (lvl + 1) & 0x7FFF,
+			while (ms.pos < ms.end) {
+				aml_disasm(&ms, (lvl + 1) & 0x7FFF,
 				    dbprintf, arg);
 			}
-			aml_popscope(ms);
 
 			/* Display address and closing bracket */
 			dbprintf(arg,"%.4x ", aml_pc(scope->pos));
 			for (pc=0; pc<(lvl & 0x7FFF); pc++) {
-				dbprintf(arg,"	");
+				dbprintf(arg,"  ");
 			}
 			scope->pos = end;
 			break;
