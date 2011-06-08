@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.62 2011/05/30 19:24:28 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.63 2011/06/08 22:57:59 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -764,6 +764,7 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 	int bus, dev;
 	int l = ih.line & APIC_INT_LINE_MASK;
 	pcitag_t tag = ih.tag;
+	int irq = ih.line;
 
 	if (ih.line & APIC_INT_VIA_MSG) {
 		struct intrhand *ih;
@@ -785,8 +786,10 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 		ih->ih_arg = arg;
 		ih->ih_next = NULL;
 		ih->ih_level = level;
-		ih->ih_irq = vec;
-		evcount_attach(&ih->ih_count, what, &ih->ih_irq);
+		ih->ih_irq = irq;
+		ih->ih_pin = tag.mode1;
+		ih->ih_vec = vec;
+		evcount_attach(&ih->ih_count, what, &ih->ih_vec);
 
 		apic_maxlevel[vec] = level;
 		apic_intrhand[vec] = ih;
@@ -828,6 +831,27 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 void
 pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
+	struct intrhand *ih = cookie;
+
+	if (ih->ih_irq & APIC_INT_VIA_MSG) {
+		pcitag_t tag = { .mode1 = ih->ih_pin };
+		pcireg_t reg;
+		int off;
+		
+		if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
+			panic("%s: no msi capability", __func__);
+
+		pci_conf_write(pc, tag, off, reg &= ~PCI_MSI_MC_MSIE);
+
+		apic_maxlevel[ih->ih_vec] = 0;
+		apic_intrhand[ih->ih_vec] = NULL;
+		idt_vec_free(ih->ih_vec);
+
+		evcount_detach(&ih->ih_count);
+		free(ih, M_DEVBUF);
+		return;
+	}
+
 	/* XXX oh, unroute the pci int link? */
 	isa_intr_disestablish(NULL, cookie);
 }
