@@ -1,4 +1,4 @@
-.\"	$OpenBSD: flex.1,v 1.30 2010/10/18 14:42:16 jmc Exp $
+.\"	$OpenBSD: flex.1,v 1.31 2011/06/08 20:22:02 jmc Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: October 18 2010 $
+.Dd $Mdocdate: June 8 2011 $
 .Dt FLEX 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl 78BbcdFfhIiLlnpsTtVvw+?
+.Op Fl 78BbdFfhIiLlnpsTtVvw+?
 .Op Fl C Ns Op Cm aeFfmr
 .Op Fl Fl help
 .Op Fl Fl version
@@ -2541,10 +2541,6 @@ maximal compression.
 .Pp
 .Fl Cfe
 is often a good compromise between speed and size for production scanners.
-.It Fl c
-A do-nothing, deprecated option included for
-.Tn POSIX
-compliance.
 .It Fl d
 Makes the generated scanner run in debug mode.
 Whenever a pattern is recognized and the global
@@ -4256,7 +4252,7 @@ specification,
 though its presence is optional.
 .Pp
 The flags
-.Op Fl 78BbCcdFfhIiLloPpSsTVw+? ,
+.Op Fl 78BbCdFfhIiLloPpSsTVw+? ,
 .Op Fl -help ,
 and
 .Op Fl -version

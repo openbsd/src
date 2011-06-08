@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 2009/10/27 23:59:39 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 2011/06/08 20:22:02 jmc Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -33,7 +33,7 @@
  * PURPOSE.
  */
 
-/* $Header: /home/cvs/src/usr.bin/lex/main.c,v 1.11 2009/10/27 23:59:39 deraadt Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/main.c,v 1.12 2011/06/08 20:22:02 jmc Exp $ */
 
 
 #include "flexdef.h"
@@ -1115,13 +1115,12 @@ void usage()
 	FILE *f = stdout;
 
 	fprintf( f,
-_( "%s [-bcdfhilnpstvwBFILTV78+? -C[aefFmr] -ooutput -Pprefix -Sskeleton]\n" ),
+_( "%s [-bdfhilnpstvwBFILTV78+? -C[aefFmr] -ooutput -Pprefix -Sskeleton]\n" ),
 		program_name );
 	fprintf( f, _( "\t[--help --version] [file ...]\n" ) );
 
 	fprintf( f, _( "\t-b  generate backing-up information to %s\n" ),
 		backing_name );
-	fprintf( f, _( "\t-c  do-nothing POSIX option\n" ) );
 	fprintf( f, _( "\t-d  turn on debug mode in generated scanner\n" ) );
 	fprintf( f, _( "\t-f  generate fast, large scanner\n" ) );
 	fprintf( f, _( "\t-h  produce this help message\n" ) );
