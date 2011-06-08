@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdtoa.c,v 1.1 2008/09/07 20:36:08 martynas Exp $	*/
+/*	$OpenBSD: hdtoa.c,v 1.2 2011/06/08 22:14:17 martynas Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -33,12 +33,7 @@
 
 #include "gdtoaimp.h"
 
-/* Strings values used by dtoa() */
-#define	INFSTR	"Infinity"
-#define	NANSTR	"NaN"
-
 #define	DBL_ADJ		(DBL_MAX_EXP - 2 + ((DBL_MANT_DIG - 1) % 4))
-#define	LDBL_ADJ	(LDBL_MAX_EXP - 2 + ((LDBL_MANT_DIG - 1) % 4))
 
 /*
  * Round up the given digit string.  If the digit string is fff...f,
@@ -137,16 +132,6 @@ __hdtoa(double d, const char *xdigs, int ndigits, int *decpt, int *sign,
 	case FP_ZERO:
 		*decpt = 1;
 		return (nrv_alloc("0", rve, 1));
-	case FP_SUBNORMAL:
-		d *= 0x1p514;
-		*decpt = p->dflt_exp - (514 + DBL_ADJ);
-		break;
-	case FP_INFINITE:
-		*decpt = INT_MAX;
-		return (nrv_alloc(INFSTR, rve, sizeof(INFSTR) - 1));
-	case FP_NAN:
-		*decpt = INT_MAX;
-		return (nrv_alloc(NANSTR, rve, sizeof(NANSTR) - 1));
 	default:
 		abort();
 	}
@@ -162,6 +147,8 @@ __hdtoa(double d, const char *xdigs, int ndigits, int *decpt, int *sign,
 	 */
 	bufsize = (sigfigs > ndigits) ? sigfigs : ndigits;
 	s0 = rv_alloc(bufsize);
+	if (s0 == NULL)
+		return (NULL);
 
 	/*
 	 * We work from right to left, first adding any requested zero
