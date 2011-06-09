@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.156 2011/05/23 14:33:51 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.157 2011/06/09 22:59:08 oga Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ SUBDIR=	ac accton acpidump adduser amd apm apmd arp \
 	memconfig mksuncd mopd mrinfo mrouted mtrace mtree ndp netgroup_mkdb \
 	nsd ntpd openssl ospfctl ospfd ospf6d ospf6ctl pcidump pkg_add popa3d \
 	portmap ppp pppd pppoe procmap pstat pwd_mkdb quot quotaon rarpd \
-	rbootd rdate rdconfig relayctl relayd repquota rip6query ripctl ripd \
+	rbootd rdate relayctl relayd repquota rip6query ripctl ripd \
 	rmt route6d rpc.bootparamd rpc.lockd rpc.statd rtadvd rtsold rwhod \
 	sa sasyncd sensorsd sliplogin slstats smtpd snmpctl snmpd spamdb \
 	spray syslogc syslogd sysmerge tcpdrop tcpdump timed tokenadm \
