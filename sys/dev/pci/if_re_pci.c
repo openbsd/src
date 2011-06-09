@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.33 2011/05/29 22:13:10 kettenis Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.34 2011/06/09 19:34:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -181,7 +181,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Allocate interrupt */
-	if (pci_intr_map_msi(pa, &ih) && pci_intr_map(pa, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
 		return;
 	}
