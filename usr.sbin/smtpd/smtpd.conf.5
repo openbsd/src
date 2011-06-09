@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.41 2011/05/22 22:03:43 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.42 2011/06/09 17:41:52 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: May 22 2011 $
+.Dd $Mdocdate: June 9 2011 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -277,9 +277,21 @@ Mail is piped to the specified
 which is run with the privileges of the user the message is destined to.
 This parameter may use conversion specifiers that are expanded before use
 (see above).
-.It Ic relay
+.It Xo
+.Ic relay
+.Op Ic as Ar address
+.Xc
 Mail is relayed.
 The routing decision is based on the DNS system.
+.Pp
+If
+.Ic as
+parameter is specified, then smtpd will rewrite the sender advertised
+in the SMTP session.
+.Ar address
+may be a user, a domain prefixed with @ or an email address, causing
+smtpd to rewrite the user-part, the domain-part or the entire address
+respectively.
 .It Xo
 .Ic relay via
 .Ar host
@@ -287,6 +299,7 @@ The routing decision is based on the DNS system.
 .Op Ic tls | smtps | ssl
 .Op Ic certificate Ar name
 .Op Ic auth Ar map
+.Op Ic as Ar address
 .Xc
 Mail is relayed through the specified
 .Ar host
@@ -318,6 +331,15 @@ is desired, use the
 parameter to specify the
 .Ar map
 that holds the credentials.
+.Pp
+If
+.Ic as
+parameter is specified, then smtpd will rewrite the sender advertised
+in the SMTP session.
+.Ar address
+may be a user, a domain prefixed with @ or an email address, causing
+smtpd to rewrite the user-part, the domain-part or the entire address
+respectively.
 .It Ic expire Ar n {s|m|h|d}
 Specify how long a message that matched this rule can stay in the queue.
 .El

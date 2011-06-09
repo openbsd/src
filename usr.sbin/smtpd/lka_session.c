@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.6 2011/05/21 18:11:40 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.7 2011/06/09 17:41:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -391,6 +391,10 @@ lka_session_deliver(struct lka_session *lks, struct envelope *ep)
 		default:
 			break;
 		}
+	}
+	else if (new_ep->delivery.type == D_MTA) {
+		if (ep->rule.r_as)
+			new_ep->delivery.from = *ep->rule.r_as;
 	}
 	TAILQ_INSERT_TAIL(&lks->deliverylist, new_ep, entry);
 }
