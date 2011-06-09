@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.125 2011/06/05 18:40:33 matthew Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.126 2011/06/09 05:41:18 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -320,20 +320,14 @@ vndstrategy(struct buf *bp)
 	if ((vnd->sc_flags & VNF_INITED) == 0) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
-		s = splbio();
-		biodone(bp);
-		splx(s);
-		return;
+		goto done;
 	}
 
 	/* Ensure that the requested block is sector aligned. */
 	if (bp->b_blkno % DL_BLKSPERSEC(vnd->sc_dk.dk_label) != 0) {
 		bp->b_error = EINVAL;
 		bp->b_flags |= B_ERROR;
-		s = splbio();
-		biodone(bp);
-		splx(s);
-		return;
+		goto done;
 	}
 
 	bn = bp->b_blkno;
@@ -342,20 +336,13 @@ vndstrategy(struct buf *bp)
 	if (bn < 0) {
 		bp->b_error = EINVAL;
 		bp->b_flags |= B_ERROR;
-		s = splbio();
-		biodone(bp);
-		splx(s);
-		return;
+		goto done;
 	}
 
 	/* If we have a label, do a boundary check. */
 	if (vnd->sc_flags & VNF_HAVELABEL) {
-		if (bounds_check_with_label(bp, vnd->sc_dk.dk_label) <= 0) {
-			s = splbio();
-			biodone(bp);
-			splx(s);
-			return;
-		}
+		if (bounds_check_with_label(bp, vnd->sc_dk.dk_label) <= 0)
+			goto done;
 
 		/*
 		 * bounds_check_with_label() changes bp->b_resid, reset it
@@ -407,6 +394,7 @@ vndstrategy(struct buf *bp)
 	if (bp->b_error)
 		bp->b_flags |= B_ERROR;
 	bp->b_resid = auio.uio_resid;
+done:
 	s = splbio();
 	biodone(bp);
 	splx(s);
