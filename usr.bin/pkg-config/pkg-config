@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.55 2011/06/09 10:43:28 jasper Exp $
+# $OpenBSD: pkg-config,v 1.56 2011/06/09 12:28:03 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -49,7 +49,7 @@ my %mode = ();
 my $variables = {};
 my $D = 0; # debug flag
 
-$variables->{pc_top_builddir} = $ENV{PKG_CONFIG_TOP_BUILD_DIR} // 
+$variables->{pc_top_builddir} = $ENV{PKG_CONFIG_TOP_BUILD_DIR} //
 	'$(top_builddir)';
 
 $variables->{pc_sysrootdir} //= $ENV{PKG_CONFIG_SYSROOT_DIR};
@@ -595,7 +595,7 @@ sub compare
 			return $rc if defined($rc);
 		} else {
 			# extended comparison.
-			if (((@a == 1) || (@b == 1)) && 
+			if (((@a == 1) || (@b == 1)) &&
 			    ($a[0] == $b[0])){
 				# one of the arrays has reached the last element,
 				# compare the suffix.
@@ -636,12 +636,10 @@ sub compare
 						return -1;
 					}
 				}
-				
 			} else {
 				my $rc = compare_numeric($a[0], $b[0], 0);
 				return $rc if defined($rc);
 			}
-				
 		}
 		shift @a; shift @b;
 	}
