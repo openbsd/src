@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lint.1,v 1.26 2007/09/05 19:31:21 jmc Exp $
+.\"	$OpenBSD: lint.1,v 1.27 2011/06/09 15:19:03 jsg Exp $
 .\"	$NetBSD: lint.1,v 1.3 1995/10/23 13:45:31 jpo Exp $
 .\"
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 5 2007 $
+.Dd $Mdocdate: June 9 2011 $
 .Dt LINT 1
 .Os
 .Sh NAME
@@ -44,6 +44,7 @@
 .Op Fl I Ns Ar directory
 .Op Fl L Ns Ar directory
 .Op Fl l Ns Ar library
+.Op Fl MD
 .Op Fl o Ns Ar outputfile
 .Op Fl U Ns Ar name
 .Ar
@@ -52,6 +53,7 @@
 .Fl C Ns Ar library
 .Op Fl D Ns Ar name Ns Op =def
 .Op Fl I Ns Ar directory
+.Op Fl MD
 .Op Fl U Ns Ar name
 .Ar
 .Sh DESCRIPTION
@@ -244,6 +246,11 @@ before searching the standard place.
 .It Fl l Ns Ar library
 Include the lint library
 .Pa llib-l Ns Ar library Ns Pa \&.ln .
+.It Fl MD
+Ignored, so the same flags can be passed to
+.Nm lint
+and
+.Xr cpp 1 .
 .It Fl n
 Do not check compatibility against the standard library.
 .It Fl o Ns Ar outputfile

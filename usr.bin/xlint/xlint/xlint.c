@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlint.c,v 1.34 2010/02/03 20:46:31 miod Exp $	*/
+/*	$OpenBSD: xlint.c,v 1.35 2011/06/09 15:19:03 jsg Exp $	*/
 /*	$NetBSD: xlint.c,v 1.3 1995/10/23 14:29:30 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: xlint.c,v 1.34 2010/02/03 20:46:31 miod Exp $";
+static char rcsid[] = "$OpenBSD: xlint.c,v 1.35 2011/06/09 15:19:03 jsg Exp $";
 #endif
 
 #include <sys/param.h>
@@ -266,9 +266,9 @@ static void
 usage()
 {
 	(void)printf("usage: lint [-ceFfgHhprsVvxz] [-i | -nu] [-Dname[=def]] [-Idirectory]\n");
-	(void)printf("\t[-Ldirectory] [-llibrary] [-ooutputfile] [-Uname] file ...\n");
+	(void)printf("\t[-Ldirectory] [-llibrary] [-ooutputfile] [-MD] [-Uname] file ...\n");
 	(void)printf("       lint [-ceFfgHhprsVvz] -Clibrary [-Dname[=def]]\n");
-	(void)printf("\t[-Idirectory] [-Uname] file ...\n");
+	(void)printf("\t[-Idirectory] [-MD] [-Uname] file ...\n");
 	terminate(-1);
 }
 
@@ -355,7 +355,7 @@ main(int argc, char *argv[])
 	(void)signal(SIGTERM, terminate);
 
 	while (argc > optind) {
-		c = getopt(argc, argv, "abcefghil:no:prstuvxyzC:D:FHI:L:U:V");
+		c = getopt(argc, argv, "abcefghil:no:prstuvxyzC:D:FHI:L:M:U:V");
 
 		switch (c) {
 
@@ -461,6 +461,9 @@ main(int argc, char *argv[])
 
 		case 'L':
 			appcstrg(&libsrchpath, optarg);
+			break;
+
+		case 'M':
 			break;
 
 		case 'H':
