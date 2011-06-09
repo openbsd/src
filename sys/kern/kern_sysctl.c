@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.202 2011/04/18 21:44:56 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.203 2011/06/09 21:10:55 sthen Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1147,7 +1147,7 @@ fill_file2(struct kinfo_file2 *kf, struct file *fp, struct filedesc *fdp,
 			kf->inp_laddru[2] = inpcb->inp_laddr6.s6_addr32[2];
 			kf->inp_laddru[3] = inpcb->inp_laddr6.s6_addr32[3];
 			kf->inp_fport = inpcb->inp_fport;
-			kf->inp_faddru[0] = inpcb->inp_laddr6.s6_addr32[0];
+			kf->inp_faddru[0] = inpcb->inp_faddr6.s6_addr32[0];
 			kf->inp_faddru[1] = inpcb->inp_faddr6.s6_addr32[1];
 			kf->inp_faddru[2] = inpcb->inp_faddr6.s6_addr32[2];
 			kf->inp_faddru[3] = inpcb->inp_faddr6.s6_addr32[3];
