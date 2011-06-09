@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.54 2011/06/07 18:42:30 jasper Exp $
+# $OpenBSD: pkg-config,v 1.55 2011/06/09 10:43:28 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -628,12 +628,12 @@ sub compare
 					# e.g.: 1.02 > 1.02b1
 					if (@suffix_a) { # a is older
 						print STDERR "$full_a (installed) < $full_b (wanted)\n" if $D;
-						return -1;
+						return 1;
 					}
 
 					if (@suffix_b) { # b is older
 						print STDERR "$full_a (installed) > $full_b (wanted)\n" if $D;
-						return 1;
+						return -1;
 					}
 				}
 				
