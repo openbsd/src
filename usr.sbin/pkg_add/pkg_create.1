@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.76 2011/05/30 10:35:40 jmc Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.77 2011/06/09 11:19:33 sthen Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: May 30 2011 $
+.Dd $Mdocdate: June 9 2011 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -291,7 +291,7 @@ the stem of the
 .Ar pkgspec .
 Classical use case for postgresql:
 .Bd -literal -offset 3n
-@ask-update postgresql-server<-8 Make sure your existing database is backed up
+@ask-update postgresql-server-<8 Make sure your existing database is backed up
 .Ed
 .Pp
 Use very sparingly.
