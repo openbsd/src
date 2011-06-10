@@ -2964,7 +2964,6 @@
 ./usr/share/man/cat8/rc.shutdown.0
 ./usr/share/man/cat8/rc.subr.0
 ./usr/share/man/cat8/rdate.0
-./usr/share/man/cat8/rdconfig.0
 ./usr/share/man/cat8/rdump.0
 ./usr/share/man/cat8/reboot.0
 ./usr/share/man/cat8/relayctl.0

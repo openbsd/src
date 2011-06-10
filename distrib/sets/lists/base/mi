@@ -2644,7 +2644,6 @@
 ./usr/sbin/rarpd
 ./usr/sbin/rbootd
 ./usr/sbin/rdate
-./usr/sbin/rdconfig
 ./usr/sbin/relayctl
 ./usr/sbin/relayd
 ./usr/sbin/repquota
