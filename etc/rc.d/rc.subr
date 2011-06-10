@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.36 2011/05/19 09:50:50 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.37 2011/06/10 08:43:26 ajacoutot Exp $
 
 # Default functions and variables used by rc.d(8) scripts.
 
@@ -40,8 +40,19 @@ rc_print() {
 
 rc_wait() {
 	i=0
-	while [ $i -lt 30 ]; do
-		rc_do rc_check || return 0
+	[ -n "$2" ] && w=$2 || w=30
+	while [ $i -lt $w ]; do
+		case "$1" in
+			start)
+				rc_do rc_check && return 0
+				;;
+			stop)
+				rc_do rc_check || return 0
+				;;
+			*)
+				break
+				;;
+		esac
 		sleep 1
 		i=$((i+1))
 	done
@@ -69,16 +80,27 @@ rc_cmd() {
 			if type rc_pre >/dev/null; then
 				rc_do rc_pre
 			fi
+			[ $? -eq 0 ] && rc_do rc_start
 			[ $? -eq 0 ] && \
-				rc_do rc_start && \
-				rc_print ok || rc_print failed
+				if [ -n "${_bg}" ]; then
+					sleep 1 && rc_do rc_wait start
+				else
+					: # do nothing
+				fi
+			[ $? -eq 0 ] && \
+				rc_print ok || \
+					(
+					type rc_post >/dev/null && rc_do rc_post
+					rc_print failed
+					return 1
+					)
 			)
 		;;
 	stop)
 		if rc_do rc_check; then rc_do rc_stop || \
 			( rc_print failed ) && \
 			(
-				rc_do rc_wait &&
+				rc_do rc_wait stop &&
 				(
 				if type rc_post >/dev/null; then \
 					rc_do rc_post
