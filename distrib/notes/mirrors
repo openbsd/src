@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.103 2011/05/04 13:33:16 sthen Exp $
+dnl	$OpenBSD: mirrors,v 1.104 2011/06/10 12:40:03 sthen Exp $
 This is a list of currently known FTP and HTTP servers at the time
 of the OSREV release.  For a more recent list, please refer to
 
@@ -85,6 +85,7 @@ Korea:
     http://ftp.kaist.ac.kr/pub/OpenBSD (Daejeon)
     ftp://ftp.kaist.ac.kr/pub/OpenBSD (Daejeon)
     http://mirror.yongbok.net/OpenBSD (Seoul)
+    ftp://mirror.yongbok.net/pub/OpenBSD (Seoul)
 
 The Netherlands:
     http://ftp.nluug.nl/pub/OpenBSD (Utrecht)
@@ -93,10 +94,6 @@ The Netherlands:
     ftp://ftp.bit.nl/pub/OpenBSD (Ede)
     http://ftp.z74.net/pub/OpenBSD (Amersfoort)
     ftp://ftp.z74.net/pub/OpenBSD (Amersfoort)
-
-Norway:
-    http://baksmell.netrunner.nu/pub/OpenBSD (Trondheim)
-    ftp://baksmell.netrunner.nu/pub/OpenBSD (Trondheim)
 
 Poland:
     http://piotrkosoft.net/pub/OpenBSD (Oswiecim)
@@ -107,6 +104,8 @@ Russia:
     ftp://ftp.chg.ru/pub/OpenBSD (Chernogolovka-Moscow)
     http://ftp.gamma.ru/OpenBSD (Moscow)
     ftp://ftp.gamma.ru/pub/OpenBSD (Moscow)
+    http://mirror.corbina.net/pub/OpenBSD (Moscow)
+    ftp://mirror.corbina.net/pub/OpenBSD (Moscow)
 
 Saudi Arabia:
     http://mirrors.isu.net.sa/pub/ftp.openbsd.org (Riyadh)
