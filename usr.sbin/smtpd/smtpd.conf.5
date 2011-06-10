@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.42 2011/06/09 17:41:52 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.43 2011/06/10 11:30:35 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: June 9 2011 $
+.Dd $Mdocdate: June 10 2011 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -284,13 +284,17 @@ This parameter may use conversion specifiers that are expanded before use
 Mail is relayed.
 The routing decision is based on the DNS system.
 .Pp
-If
+If the
 .Ic as
-parameter is specified, then smtpd will rewrite the sender advertised
+parameter is specified,
+.Xr smtpd 8
+will rewrite the sender advertised
 in the SMTP session.
 .Ar address
-may be a user, a domain prefixed with @ or an email address, causing
-smtpd to rewrite the user-part, the domain-part or the entire address
+may be a user, a domain prefixed with
+.Sq @ ,
+or an email address, causing
+smtpd to rewrite the user-part, the domain-part, or the entire address,
 respectively.
 .It Xo
 .Ic relay via
@@ -332,13 +336,17 @@ parameter to specify the
 .Ar map
 that holds the credentials.
 .Pp
-If
+If the
 .Ic as
-parameter is specified, then smtpd will rewrite the sender advertised
+parameter is specified,
+.Xr smtpd 8
+will rewrite the sender advertised
 in the SMTP session.
 .Ar address
-may be a user, a domain prefixed with @ or an email address, causing
-smtpd to rewrite the user-part, the domain-part or the entire address
+may be a user, a domain prefixed with
+.Sq @ ,
+or an email address, causing
+smtpd to rewrite the user-part, the domain-part, or the entire address,
 respectively.
 .It Ic expire Ar n {s|m|h|d}
 Specify how long a message that matched this rule can stay in the queue.
