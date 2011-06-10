@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.d.8,v 1.12 2011/05/26 14:38:47 jmc Exp $
+.\" 	$OpenBSD: rc.d.8,v 1.13 2011/06/10 08:46:56 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 26 2011 $
+.Dd $Mdocdate: June 10 2011 $
 .Dt RC.D 8
 .Os
 .Sh NAME
@@ -145,9 +145,3 @@ will change the corresponding pattern used with
 so that
 .Ar actions
 may not work on already running processes.
-.Pp
-There is currently no way to know whether a background process
-.Pq Va rc_bg
-was successfully started so
-.Fn rc_start
-will always succeed in this case.
