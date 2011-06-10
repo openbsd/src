@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.11 2010/08/27 08:24:53 deraadt Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.12 2011/06/10 12:46:35 claudio Exp $	*/
 
 /******************************************************************************
 
@@ -39,10 +39,6 @@
 
 #include <dev/pci/ixgbe.h>
 
-#if 0
-#include "tcp_lro.h"
-#endif
-
 /* Tunables */
 
 /*
@@ -76,12 +72,6 @@
 #define DBA_ALIGN	128
 
 /*
- * This parameter controls the maximum no of times the driver will loop in
- * the isr. Minimum Value = 1
- */
-#define MAX_INTR	10
-
-/*
  * This parameter controls the duration of transmit watchdog timer.
  */
 #define IXGBE_TX_TIMEOUT                   5	/* set to 5 seconds */
@@ -96,7 +86,7 @@
 #define IXGBE_MAX_FRAME_SIZE	0x3F00
 
 /* Flow control constants */
-#define IXGBE_FC_PAUSE		0x680
+#define IXGBE_FC_PAUSE		0xFFFF
 #define IXGBE_FC_HI		0x20000
 #define IXGBE_FC_LO		0x10000
 
@@ -119,47 +109,38 @@
 #define IXGBE_82598_SCATTER		100
 #define IXGBE_82599_SCATTER		32
 #define IXGBE_MSIX_BAR			3
-#if 0
 #define IXGBE_TSO_SIZE			65535
-#else
-#define IXGBE_TSO_SIZE			IXGBE_MAX_FRAME_SIZE
-#endif
 #define IXGBE_TX_BUFFER_SIZE		((uint32_t) 1514)
-#define IXGBE_RX_HDR_SIZE		((uint32_t) 256)
-#define CSUM_OFFLOAD			7	/* Bits in csum flags */
-
-/* The number of MSIX messages the 82598 supports */
-#define IXGBE_MSGS			18
-
-/* For 6.X code compatibility */
-#if __FreeBSD_version < 700000
-#define ETHER_BPF_MTAP		BPF_MTAP
-#define CSUM_TSO		0
-#define IFCAP_TSO4		0
-#define FILTER_STRAY
-#define FILTER_HANDLED
-#endif
+#define IXGBE_RX_HDR                    128
+#define IXGBE_VFTA_SIZE                 128
+#define IXGBE_BR_SIZE                   4096
+#define IXGBE_QUEUE_IDLE                0
+#define IXGBE_QUEUE_WORKING             1
+#define IXGBE_QUEUE_HUNG                2
 
 /*
  * Interrupt Moderation parameters 
- * 	for now we hardcode, later
- *	it would be nice to do dynamic
  */
-#define MAX_IRQ_SEC	8000
-#define DEFAULT_ITR	1000000000/(MAX_IRQ_SEC * 256)
-#define LINK_ITR	1000000000/(1950 * 256)
+#define IXGBE_LOW_LATENCY       128
+#define IXGBE_AVE_LATENCY       400
+#define IXGBE_BULK_LATENCY      1200
+#define IXGBE_LINK_ITR          2000
 
 /* Used for auto RX queue configuration */
 extern int mp_ncpus;
 
 struct ixgbe_tx_buf {
+	uint32_t	eop_index;
 	struct mbuf	*m_head;
 	bus_dmamap_t	map;
 };
 
 struct ixgbe_rx_buf {
 	struct mbuf	*m_head;
-	bus_dmamap_t	 map;
+	struct mbuf	*m_pack;
+	struct mbuf	*fmp;
+	bus_dmamap_t	hmap;
+	bus_dmamap_t	pmap;
 };
 
 /*
@@ -175,29 +156,42 @@ struct ixgbe_dma_alloc {
 };
 
 /*
+ * Driver queue struct: this is the interrupt container
+ *  for the associated tx and rx ring.
+ */
+struct ix_queue {
+	struct ix_softc         *sc;
+	uint32_t		msix;           /* This queue's MSIX vector */
+	uint32_t		eims;           /* This queue's EIMS bit */
+	uint32_t		eitr_setting;
+	/* struct resource	*res; */
+	void			*tag;
+	struct tx_ring		*txr;
+	struct rx_ring		*rxr;
+	uint64_t		irqs;
+};
+
+/*
  * The transmit ring, one per tx queue
  */
 struct tx_ring {
         struct ix_softc		*sc;
 	struct mutex		tx_mtx;
 	uint32_t		me;
-	uint32_t		msix;
-	uint32_t		eims;
+	int			queue_status;
 	uint32_t		watchdog_timer;
 	union ixgbe_adv_tx_desc	*tx_base;
-	uint32_t		*tx_hwb;
 	struct ixgbe_dma_alloc	txdma;
-	struct ixgbe_dma_alloc	txwbdma;
-	uint32_t		next_avail_tx_desc;
-	uint32_t		next_tx_to_clean;
+	uint32_t		next_avail_desc;
+	uint32_t		next_to_clean;
 	struct ixgbe_tx_buf	*tx_buffers;
 	volatile uint16_t	tx_avail;
 	uint32_t		txd_cmd;
 	bus_dma_tag_t		txtag;
+	uint32_t		bytes; /* Used for AIM calc */
+	uint32_t		packets;
 	/* Soft Stats */
-	uint32_t		no_tx_desc_avail;
-	uint32_t		no_tx_desc_late;
-	uint64_t		tx_irq;
+	uint64_t		no_desc_avail;
 	uint64_t		tx_packets;
 };
 
@@ -209,71 +203,91 @@ struct rx_ring {
         struct ix_softc		*sc;
 	struct mutex		rx_mtx;
 	uint32_t		me;
-	uint32_t		msix;
-	uint32_t		eims;
-	uint32_t		payload;
 	union ixgbe_adv_rx_desc	*rx_base;
 	struct ixgbe_dma_alloc	rxdma;
 #if 0
 	struct lro_ctrl		lro;
 #endif
-        unsigned int		last_rx_desc_filled;
+	int			lro_enabled;
+	int			hdr_split;
+	int			hw_rsc;
+	int			discard;
+        unsigned int		next_to_refresh;
         unsigned int		next_to_check;
+	unsigned int		last_desc_filled;
 	int			rx_ndescs;
 	struct ixgbe_rx_buf	*rx_buffers;
-	bus_dma_tag_t		rxtag;
-	struct mbuf		*fmp;
-	struct mbuf		*lmp;
+
+	uint32_t		bytes; /* Used for AIM calc */
+	uint32_t		packets;
+
 	/* Soft stats */
 	uint64_t		rx_irq;
-	uint64_t		packet_count;
-	uint64_t 		byte_count;
+	uint64_t		rx_split_packets;
+	uint64_t		rx_packets;
+	uint64_t		rx_bytes;
+	uint64_t		rx_discarded;
+	uint64_t		rsc_num;
 };
 
 /* Our adapter structure */
 struct ix_softc {
-	struct device		 dev;
-	struct arpcom		 arpcom;
+	struct device		dev;
+	struct arpcom		arpcom;
 
 	struct ixgbe_hw	hw;
-	struct ixgbe_osdep	 osdep;
+	struct ixgbe_osdep	osdep;
 
-	struct resource	*pci_mem;
-	struct resource	*msix_mem;
+	/* struct resource	*pci_mem; */
+	/* struct resource	*msix_mem; */
+
+	void			*tag;
+	/* struct resource 	*res; */
+
+	struct ifmedia		media;
+	struct timeout		timer;
+	int			msix;
+	int			if_flags;
+
+	struct mutex		core_mtx;
+
+	uint16_t		num_vlans;
+	uint16_t		num_queues;
 
 	/*
-	 * Interrupt resources:
-	 *  Oplin has 20 MSIX messages
-	 *  so allocate that for now.
+	 * Shadow VFTA table, this is needed because
+	 * the real vlan filter table gets cleared during
+	 * a soft reset and the driver needs to be able
+	 * to repopulate it.
 	 */
-	void		*tag[IXGBE_MSGS];
-	struct resource *res[IXGBE_MSGS];
-	int		rid[IXGBE_MSGS];
-	uint32_t	eims_mask;
+	uint32_t		shadow_vfta[IXGBE_VFTA_SIZE];
 
-	struct ifmedia	media;
-	struct timeout	timer;
-	int		msix;
-	int		if_flags;
+	/* Info about the interface */
+	uint			optics;
+	int			advertise;  /* link speeds */
+	int			link_active;
+	uint16_t		max_frame_size;
+	uint16_t		num_segs;
+	uint32_t		link_speed;
+	int			link_up;
+	uint32_t		linkvec;
 
-	struct mutex	core_mtx;
+	/* Mbuf cluster size */
+	uint32_t		rx_mbuf_sz;
 
-	/* Legacy Fast Intr handling */
-	int		sfp_probe;
-	workq_fn	link_task;
+	/* Support for pluggable optics */
+	int			sfp_probe;
+	workq_fn		link_task;	/* Link tasklet */
+	workq_fn		mod_task;	/* SFP tasklet */
+	workq_fn		msf_task;	/* Multispeed Fiber */
 
-	/* Info about the board itself */
-	uint32_t	part_num;
-	int		link_active;
-	uint16_t	max_frame_size;
-	uint32_t	link_speed;
-	uint32_t	tx_int_delay;
-	uint32_t	tx_abs_int_delay;
-	uint32_t	rx_int_delay;
-	uint32_t	rx_abs_int_delay;
-
-	/* Indicates the cluster size to use */
-	int		bigbufs;
+	/*
+	 * Queues:
+	 *   This is the irq holder, it has
+	 *   and RX/TX pair or rings associated
+	 *   with it.
+	 */
+	struct ix_queue		*queues;
 
 	/*
 	 * Transmit rings:
@@ -281,27 +295,28 @@ struct ix_softc {
 	 */
 	struct tx_ring	*tx_rings;
 	int		num_tx_desc;
-	int		num_tx_queues;
 
 	/*
 	 * Receive rings:
 	 *	Allocated at run time, an array of rings.
 	 */
 	struct rx_ring	*rx_rings;
+	uint64_t	que_mask;
 	int		num_rx_desc;
-	int		num_rx_queues;
 	uint32_t	rx_process_limit;
-	uint		optics;
+
+	/* Multicast array memory */
+	uint8_t		*mta;
 
 	/* Misc stats maintained by the driver */
 	unsigned long   dropped_pkts;
-	unsigned long   mbuf_alloc_failed;
-	unsigned long   mbuf_cluster_failed;
+	unsigned long   mbuf_defrag_failed;
+	unsigned long   mbuf_header_failed;
+	unsigned long   mbuf_packet_failed;
 	unsigned long   no_tx_map_avail;
 	unsigned long   no_tx_dma_setup;
 	unsigned long   watchdog_events;
 	unsigned long   tso_tx;
-	unsigned long	linkvec;
 	unsigned long	link_irq;
 
 	struct ixgbe_hw_stats stats;
