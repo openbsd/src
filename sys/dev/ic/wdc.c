@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.118 2011/05/25 03:26:20 matthew Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.119 2011/06/10 01:38:46 deraadt Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -1092,9 +1092,6 @@ wdc_wait_for_status(struct channel_softc *chp, int mask, int bits, int timeout)
 				chp->ch_status = status =
 				    CHP_READ_REG(chp, wdr_status);
 				WDC_LOG_STATUS(chp, chp->ch_status);
-			} else {
-				chp->dying = 1;
-				return -1;
 			}
 		}
 		if ((status & WDCS_BSY) == 0 && (status & mask) == bits)
