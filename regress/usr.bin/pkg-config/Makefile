@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2011/06/07 13:05:37 jasper Exp $
+#	$OpenBSD: Makefile,v 1.13 2011/06/11 11:53:57 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -26,6 +26,7 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers5-7 \
 		corrupt1 \
 		corrupt2 \
+		corrupt3 \
 		print-provides \
 		print-req \
 		print-req-priv \
@@ -46,16 +47,24 @@ GOT=		${.OBJDIR}/$@.got
 # Tests for corrupt pkg-config files.
 corrupt1:
 	# Test for missing variables/fields
-	@echo "Package 'corrupt1' has no Version: field" > ${WANT}
-	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} \
-		--exists $@ 2> ${GOT}; then false; fi
+	@echo "Package '$@' has no Version: field" > ${WANT}
+	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  --short-errors \
+                --errors-to-stdout --print-errors --exists $@ 2> ${GOT}; then false; fi
 	@diff -u ${WANT} ${GOT}
 
 corrupt2:
 	# Test for missing variables/fields
-	@echo "Package 'corrupt2' has no Name: field" > ${WANT}
-	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} \
-		--exists $@ 2> ${GOT}; then false; fi
+	@echo "Package '$@' has no Name: field" > ${WANT}
+	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --short-errors \
+		--errors-to-stdout --print-errors --exists $@ 2> ${GOT}; then false; fi
+	@diff -u ${WANT} ${GOT}
+
+corrupt3:
+	# Test for empty file
+	@echo "Package file '$@.pc' appears to be empty" > ${WANT}
+	@echo "Package '$@' has no Name: field" >> ${WANT}
+	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --short-errors \
+		--errors-to-stdout --print-errors --libs $@ 2> ${GOT}; then false; fi
 	@diff -u ${WANT} ${GOT}
 
 # Tests for various printing features
@@ -72,7 +81,7 @@ print-req:
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} \
 		--print-requires $@ > $@.got
 	@diff -u ${WANT} ${GOT}
-	
+
 print-req-priv:
 	# Test --print-requires-private
 	@echo "print-req-priv2>=0.0.1" > ${WANT}
@@ -277,12 +286,19 @@ sysroot-libs:
 		${PKG_CONFIG} --libs sysroot > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
+# Tests for static linking
+static-libs1:
+	# Test grabbing Libs.private from this package
+
+static-libs2:
+	# Test grabbing Libs.private from other packages in order
+
 # Misc. tests
 define-variable:
 	# Test --define-variable
 
 # This fails as we read and check Requires as well as Requires.private where
-# only Requires needs to be checked here.
+# only Requires needs to be checked here as we ask for Libs and not Cflags.
 # XXX: Test Requires.private too.
 missing-req-1:
 	# Test for missing packages in Requires (libs)
