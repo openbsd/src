@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2011/06/11 11:53:57 jasper Exp $
+#	$OpenBSD: Makefile,v 1.14 2011/06/11 12:04:44 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -315,6 +315,7 @@ missing-req-2:
 	@diff -u ${WANT} ${GOT}
 
 missing-req-3:
+	# Test for missing packages in Requires (version)
 	@echo "0.0.0" > ${WANT}
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --modversion \
 		missing-req > ${GOT}
