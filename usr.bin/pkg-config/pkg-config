@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.57 2011/06/09 12:32:30 jasper Exp $
+# $OpenBSD: pkg-config,v 1.58 2011/06/11 12:09:06 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -21,6 +21,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 use File::Basename;
+use File::stat;
 use OpenBSD::PkgConfig;
 
 my @PKGPATH = qw(/usr/lib/pkgconfig /usr/local/lib/pkgconfig /usr/X11R6/lib/pkgconfig);
@@ -47,7 +48,6 @@ setup_self();
 
 my %mode = ();
 my $variables = {};
-my $D = 0; # debug flag
 
 $variables->{pc_top_builddir} = $ENV{PKG_CONFIG_TOP_BUILD_DIR} //
 	'$(top_builddir)';
@@ -55,7 +55,8 @@ $variables->{pc_top_builddir} = $ENV{PKG_CONFIG_TOP_BUILD_DIR} //
 $variables->{pc_sysrootdir} //= $ENV{PKG_CONFIG_SYSROOT_DIR};
 # The default '/' is implied.
 
-$D = 1 if defined $ENV{PKG_CONFIG_DEBUG_SPEW};
+my $D;
+defined $ENV{PKG_CONFIG_DEBUG_SPEW} ? $D = 1 : $D = 0;
 
 if ($logfile) {
 	open my $L, ">>" , $logfile or die;
@@ -319,13 +320,22 @@ sub validate_config
 {
 	my ($f, $cfg) = @_;
 	my @required_elems = ('Name', 'Description', 'Version');
-	my $e;
+
+	# Check if we're dealing with an empty file, but don't error out just
+	# yet, we'll do that when we realize there's no Name field.
+	if ((stat($f)->size == 0) && $mode{printerr}) {
+		my $p = $f;
+		$p =~ s/(^.*\/)(.*?)$/$2/g;
+		print STDERR "Package file '$p' appears to be empty\n";
+	}
 
 	foreach (@required_elems) {
-		$e = $cfg->get_property($_, $variables);
+		my $e = $cfg->get_property($_, $variables);
 		if (!defined $e) {
 			$f =~ s/(^.*\/)(.*?)\.pc$/$2/g;
-			print STDERR "Package '$f' has no $_: field\n";
+			if ($mode{printerr}) {
+				print STDERR "Package '$f' has no $_: field\n";
+			}
 			return undef;
 		}
 	}
@@ -570,9 +580,9 @@ sub compare
 	return 0 if ($a eq $b);
 
 	# is there a valid non-numeric suffix to deal with later?
-	# accepter are (in order): a(lpha) < b(eta) < rc < ' '.
+	# accepted are (in order): a(lpha) < b(eta) < rc < ' '.
 	# suffix[0] is the 'alpha' part, suffix[1] is the '1' part in 'alpha1'.
-	# XXX: add back 'rc'.
+	# XXX: add back 'rc'
 	if ($a =~ s/(beta|b|alpha|a)(\d+)$//) {
 		print STDERR "valid suffix $1$2 found in $a$1$2.\n" if $D;
 		$suffix_a[0] = $1;
