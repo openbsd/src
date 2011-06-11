@@ -1802,7 +1802,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/intr.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/iop.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/kcore.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/keyboard.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/limits.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/lock.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/mutex.ph

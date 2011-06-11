@@ -170,7 +170,6 @@
 ./usr/include/mac68k/intr.h
 ./usr/include/mac68k/iop.h
 ./usr/include/mac68k/kcore.h
-./usr/include/mac68k/keyboard.h
 ./usr/include/mac68k/limits.h
 ./usr/include/mac68k/lock.h
 ./usr/include/mac68k/mutex.h
