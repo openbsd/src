@@ -63,7 +63,8 @@ EDIT		= sed \
 			-e 's,@kpriority\@,$(kpriority),g' 
 
 TARGETS 	= nsd nsd-zonec nsd-notify nsd-xfer nsdc.sh nsd-checkconf nsd-patch nsd.conf.sample \
-		 nsd.cat8 nsd-zonec.cat8 nsd-notify.cat8 nsd-xfer.cat8 nsdc.cat8 nsd-checkconf.cat8 nsd-patch.cat8 nsd.conf.cat5
+		 nsd.8 nsd-zonec.8 nsd-notify.8 nsd-xfer.8 nsdc.8 \
+		 nsd-checkconf.8 nsd-patch.8 nsd.conf.5
 
 ALL_OBJECTS	=			\
 	answer.o			\
@@ -318,37 +319,37 @@ nsd.conf.sample:	$(srcdir)/nsd.conf.sample.in config.h
 	rm -f nsd.conf.sample
 	$(EDIT) $(srcdir)/nsd.conf.sample.in > nsd.conf.sample
 
-nsd.conf.cat5:	$(srcdir)/nsd.conf.5.in config.h
+nsd.conf.5:	$(srcdir)/nsd.conf.5.in config.h
 	rm -f nsd.conf.5
-	$(EDIT) $(srcdir)/nsd.conf.5.in | mandoc > nsd.conf.cat5
+	$(EDIT) $(srcdir)/nsd.conf.5.in > nsd.conf.5
 
-nsd.cat8:	$(srcdir)/nsd.8.in config.h
+nsd.8:	$(srcdir)/nsd.8.in config.h
 	rm -f nsd.8
-	$(EDIT) $(srcdir)/nsd.8.in | mandoc > nsd.cat8
+	$(EDIT) $(srcdir)/nsd.8.in > nsd.8
 
-nsdc.cat8:	$(srcdir)/nsdc.8.in config.h
+nsdc.8:	$(srcdir)/nsdc.8.in config.h
 	rm -f nsdc.8
-	$(EDIT) $(srcdir)/nsdc.8.in | mandoc > nsdc.cat8
+	$(EDIT) $(srcdir)/nsdc.8.in > nsdc.8
 
-nsd-zonec.cat8:	$(srcdir)/zonec.8.in config.h
+nsd-zonec.8:	$(srcdir)/zonec.8.in config.h
 	rm -f nsd-zonec.8
-	$(EDIT) $(srcdir)/zonec.8.in | mandoc > nsd-zonec.cat8
+	$(EDIT) $(srcdir)/zonec.8.in > nsd-zonec.8
 
-nsd-notify.cat8:	$(srcdir)/nsd-notify.8.in config.h
+nsd-notify.8:	$(srcdir)/nsd-notify.8.in config.h
 	rm -f nsd-notify.8
-	$(EDIT) $(srcdir)/nsd-notify.8.in | mandoc > nsd-notify.cat8
+	$(EDIT) $(srcdir)/nsd-notify.8.in > nsd-notify.8
 
-nsd-xfer.cat8:	$(srcdir)/nsd-xfer.8.in config.h
+nsd-xfer.8:	$(srcdir)/nsd-xfer.8.in config.h
 	rm -f nsd-xfer.8
-	$(EDIT) $(srcdir)/nsd-xfer.8.in | mandoc > nsd-xfer.cat8
+	$(EDIT) $(srcdir)/nsd-xfer.8.in > nsd-xfer.8
 
-nsd-checkconf.cat8:	$(srcdir)/nsd-checkconf.8.in config.h
+nsd-checkconf.8:	$(srcdir)/nsd-checkconf.8.in config.h
 	rm -f nsd-checkconf.8
-	$(EDIT) $(srcdir)/nsd-checkconf.8.in | mandoc > nsd-checkconf.cat8
+	$(EDIT) $(srcdir)/nsd-checkconf.8.in > nsd-checkconf.8
 
-nsd-patch.cat8:	$(srcdir)/nsd-patch.8.in config.h
+nsd-patch.8:	$(srcdir)/nsd-patch.8.in config.h
 	rm -f nsd-patch.8
-	$(EDIT) $(srcdir)/nsd-patch.8.in | mandoc > nsd-patch.cat8
+	$(EDIT) $(srcdir)/nsd-patch.8.in > nsd-patch.8
 
 install: all
 	$(INSTALL) -d $(DESTDIR)$(sbindir)

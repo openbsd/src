@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 2011/01/24 10:39:46 jakob Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 2011/06/11 12:48:19 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -27,8 +27,15 @@ PROG=	nsd nsd-zonec nsd-notify nsd-checkconf nsd-patch nsd-xfer
 MAN=	nsd.8 nsdc.8 nsd-zonec.8 nsd-notify.8 nsd-checkconf.8 nsd-patch.8 \
 	nsd-xfer.8 nsd.conf.5
 
+all:	gnu
 
-all:	config.status
+.ifndef NOMAN
+${MANALL} ${PSALL}: ${MAN}
+
+${MAN}:	gnu
+.endif
+
+gnu:	config.status
 	${MAKE}
 
 .FORCE: .IGNORE
