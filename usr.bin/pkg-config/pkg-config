@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.58 2011/06/11 12:09:06 jasper Exp $
+# $OpenBSD: pkg-config,v 1.59 2011/06/12 17:08:44 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -142,7 +142,7 @@ while (@ARGV){
 	my $op = undef;
 	my $v = undef;
 	if (@ARGV >= 2  && $ARGV[0] =~ /^[<=>]+$/ &&
-	    $ARGV[1] =~ /^[\d\.]+\w?$/) {
+	    $ARGV[1] =~ /^[\d\.]+[\w\.]*$/) {
 	    	$op = shift @ARGV;
 		$v = shift @ARGV;
 	}
@@ -583,13 +583,13 @@ sub compare
 	# accepted are (in order): a(lpha) < b(eta) < rc < ' '.
 	# suffix[0] is the 'alpha' part, suffix[1] is the '1' part in 'alpha1'.
 	# XXX: add back 'rc'
-	if ($a =~ s/(beta|b|alpha|a)(\d+)$//) {
+	if ($a =~ s/(rc|beta|b|alpha|a)(\d+)$//) {
 		print STDERR "valid suffix $1$2 found in $a$1$2.\n" if $D;
 		$suffix_a[0] = $1;
 		$suffix_a[1] = $2;
 	}
 
-	if ($b =~ s/(beta|b|alpha|a)(\d+)$//) {
+	if ($b =~ s/(rc|beta|b|alpha|a)(\d+)$//) {
 		print STDERR "valid suffix $1$2 found in $b$1$2.\n" if $D;
 		$suffix_b[0] = $1;
 		$suffix_b[1] = $2;
