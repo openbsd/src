@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2011/06/11 12:04:44 jasper Exp $
+#	$OpenBSD: Makefile,v 1.15 2011/06/12 18:16:39 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -48,23 +48,23 @@ GOT=		${.OBJDIR}/$@.got
 corrupt1:
 	# Test for missing variables/fields
 	@echo "Package '$@' has no Version: field" > ${WANT}
-	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  --short-errors \
-                --errors-to-stdout --print-errors --exists $@ 2> ${GOT}; then false; fi
+	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} \
+                --errors-to-stdout --print-errors --exists $@ > ${GOT}; then false; fi
 	@diff -u ${WANT} ${GOT}
 
 corrupt2:
 	# Test for missing variables/fields
 	@echo "Package '$@' has no Name: field" > ${WANT}
-	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --short-errors \
-		--errors-to-stdout --print-errors --exists $@ 2> ${GOT}; then false; fi
+	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} \
+		--errors-to-stdout --print-errors --exists $@ > ${GOT}; then false; fi
 	@diff -u ${WANT} ${GOT}
 
 corrupt3:
 	# Test for empty file
 	@echo "Package file '$@.pc' appears to be empty" > ${WANT}
 	@echo "Package '$@' has no Name: field" >> ${WANT}
-	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --short-errors \
-		--errors-to-stdout --print-errors --libs $@ 2> ${GOT}; then false; fi
+	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} \
+		--errors-to-stdout --print-errors --libs $@ > ${GOT}; then false; fi
 	@diff -u ${WANT} ${GOT}
 
 # Tests for various printing features
@@ -127,63 +127,63 @@ cmp-vers3:
 cmp-vers4-1:
 	# Test suffixed versions (alpha >)
 	@touch ${WANT}
-	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  --short-errors \
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  \
 		--errors-to-stdout --print-errors "alpha > 0.1.0" > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers4-2:
 	# Test suffixed versions (alpha >)
 	@touch ${WANT}
-	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  --short-errors \
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  \
 		--errors-to-stdout --print-errors "alpha > 0.1.0alpha1" > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers4-3:
 	# Test suffixed versions (alpha >=)
 	@touch ${WANT}
-	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  --short-errors \
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  \
 		--errors-to-stdout --print-errors "alpha >= 0.1.0" > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers4-4:
 	# Test suffixed versions (alpha >=)
 	@touch ${WANT}
-	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  --short-errors \
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  \
 		--errors-to-stdout --print-errors "alpha >= 0.1.0alpha2" > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers4-5:
 	# Test suffixed versions (alpha <)
 	@touch ${WANT}
-	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  --short-errors \
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  \
 		--errors-to-stdout --print-errors "alpha < 0.1.1" > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers4-6:
 	# Test suffixed versions (alpha <)
 	@touch ${WANT}
-	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  --short-errors \
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  \
 		--errors-to-stdout --print-errors "alpha < 0.1.0alpha3" > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers4-7:
 	# Test suffixed versions (alpha <=)
 	@touch ${WANT}
-	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  --short-errors \
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  \
 		--errors-to-stdout --print-errors "alpha < 0.1.1" > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers4-8:
 	# Test suffixed versions (alpha <=)
 	@touch ${WANT}
-	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  --short-errors \
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  \
 		--errors-to-stdout --print-errors "alpha <= 0.1.0alpha2" > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers4-9:
 	# Test suffixed versions (alpha =)
 	@touch ${WANT}
-	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  --short-errors \
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  \
 		--errors-to-stdout --print-errors "alpha = 0.1.0alpha2" > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
@@ -191,49 +191,49 @@ cmp-vers4-9:
 cmp-vers5-1:
 	# Test suffixed versions (beta > alpha)
 	@touch ${WANT}
-	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  --short-errors \
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  \
 		--errors-to-stdout --print-errors "beta > 0.1.0alpha1" > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers5-2:
 	# Test suffixed versions (beta >= alpha)
 	@touch ${WANT}
-	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  --short-errors \
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  \
 		--errors-to-stdout --print-errors "beta >= 0.1.0beta1" > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers5-3:
 	# Test suffixed versions (alpha < rc)
 	@touch ${WANT}
-	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  --short-errors \
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  \
 		--errors-to-stdout --print-errors "alpha < 0.1.0rc2" > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers5-4:
 	# Test suffixed versions (beta < rc)
 	@touch ${WANT}
-	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  --short-errors \
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  \
 		--errors-to-stdout --print-errors "beta < 0.1.0rc2" > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers5-5:
 	# Test suffixed versions (alpha < beta)
 	@touch ${WANT}
-	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  --short-errors \
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  \
 		--errors-to-stdout --print-errors "alpha < 0.1.0beta2" > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers5-6:
 	# Test suffixed versions (rc > alpha)
 	@touch ${WANT}
-	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  --short-errors \
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  \
 		--errors-to-stdout --print-errors "rc > 0.1.0alpha2" > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers5-7:
 	# Test suffixed versions (rc > beta)
 	@touch ${WANT}
-	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  --short-errors \
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  \
 		--errors-to-stdout --print-errors "rc > 0.1.0beta2" > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
@@ -242,21 +242,21 @@ cmp-vers5-7:
 cmp-vers5-8:
 	# Test suffixed versions (' ' > alpha)
 	@touch ${WANT}
-	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  --short-errors \
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  \
 		--errors-to-stdout --print-errors "vers1 > 0.1.0alpha2" > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers5-9:
 	# Test suffixed versions (' ' > beta)
 	@touch ${WANT}
-	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  --short-errors \
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  \
 		--errors-to-stdout --print-errors "beta <= 0.1.0beta2" > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers5-10:
 	# Test suffixed versions (' ' > rc)
 	@touch ${WANT}
-	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  --short-errors \
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  \
 		--errors-to-stdout --print-errors "beta <= 0.1.0rc2" > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
@@ -304,42 +304,42 @@ missing-req-1:
 	# Test for missing packages in Requires (libs)
 	@echo "Package nonexisting was not found in the pkg-config search path" > ${WANT}
 	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config --libs \
-		missing-req 2> ${GOT}; then false; fi
+		--errors-to-stdout --print-errors missing-req > ${GOT}; then false; fi
 	@diff -u ${WANT} ${GOT}
 
 missing-req-2:
 	# Test for missing packages in Requires (cflags)
 	@echo "Package nonexisting was not found in the pkg-config search path" > ${WANT}
 	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ pkg-config --cflags \
-		missing-req 2> ${GOT}; then false; fi
+		--errors-to-stdout --print-errors missing-req > ${GOT}; then false; fi
 	@diff -u ${WANT} ${GOT}
 
 missing-req-3:
 	# Test for missing packages in Requires (version)
 	@echo "0.0.0" > ${WANT}
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --modversion \
-		missing-req > ${GOT}
+		--errors-to-stdout --print-errors missing-req > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 whitespace-cflags:
 	# Test whitespace on various positions in Cflags
 	@echo "-I/tmp/include -I/tmp/include/include\ dir" > ${WANT}
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --cflags \
-		whitespace > ${GOT}
+		--errors-to-stdout --print-errors whitespace > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 whitespace-libs:
 	# Test whitespace on various positions in Libs
 	@echo "-L/tmp/lib -L/tmp/lib/foo -lbaz\ quux" > ${WANT}
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --libs \
-		whitespace > ${GOT}
+		--errors-to-stdout --print-errors whitespace > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 whitespace-name:
 	# Test whitespace in Name
 	@echo "Requested 'whitespace > 0.2.0' but version of Whitespace test is 0.0.0" > ${WANT}
-	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --print-errors \
-		"whitespace > 0.2.0" 2> ${GOT}; then false; fi
+	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --errors-to-stdout \
+		--print-errors "whitespace > 0.2.0" > ${GOT}; then false; fi
 	@diff -u ${WANT} ${GOT}
 
 clean:
