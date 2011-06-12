@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.61 2011/06/12 17:13:17 jasper Exp $
+# $OpenBSD: pkg-config,v 1.62 2011/06/12 18:16:25 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -116,7 +116,7 @@ if (!defined $mode{printerr}) {
 	}
 }
 
-pr_debug("\n" . beautify_list($0, @ARGV));
+say_debug("\n" . beautify_list($0, @ARGV));
 
 my $rc = 0;
 
@@ -252,7 +252,7 @@ sub handle_config
 					handle_config($dep, undef, undef, $list);
 				}
 			}
-			pr_debug("package $p " . lc($property) . " " . join(',', @$deps));
+			say_debug("package $p " . lc($property) . " " . join(',', @$deps));
 		}
 	};
 
@@ -270,7 +270,7 @@ sub pathresolve
 	if ($allow_uninstalled && $p !~ m/\-uninstalled$/) {
 		foreach my $d (@PKGPATH) {
 			my $f = "$d/$p-uninstalled.pc";
-			pr_debug("pathresolve($p) looking in $f");
+			say_debug("pathresolve($p) looking in $f");
 			if (-f $f) {
 				$found_uninstalled = 1;
 				return $f;
@@ -280,7 +280,7 @@ sub pathresolve
 
 	foreach my $d (@PKGPATH) {
 		my $f = "$d/$p.pc";
-		pr_debug("pathresolve($p) looking in $f");
+		say_debug("pathresolve($p) looking in $f");
 		return $f if -f $f;
 	}
 	return undef;
@@ -297,7 +297,7 @@ sub get_config
 	if (!$@) {
 		return validate_config($f, $cfg);
 	} else {
-		pr_debug($@);
+		say_debug($@);
 	}
 	return undef;
 }
@@ -306,7 +306,7 @@ sub cache_find_config
 {
 	my $name = shift;
 
-	pr_debug("processing $name");
+	say_debug("processing $name");
 
 	if (exists $configs{$name}) {
 		return $configs{$name};
@@ -326,14 +326,14 @@ sub validate_config
 	if (stat($f)->size == 0) {
 		my $p = $f;
 		$p =~ s/(^.*\/)(.*?)$/$2/g;
-		pr_error("Package file '$p' appears to be empty");
+		say_error("Package file '$p' appears to be empty");
 	}
 
 	foreach (@required_elems) {
 		my $e = $cfg->get_property($_, $variables);
 		if (!defined $e) {
 			$f =~ s/(^.*\/)(.*?)\.pc$/$2/g;
-			pr_error("Package '$f' has no $_: field");
+			say_error("Package '$f' has no $_: field");
 			return undef;
 		}
 	}
@@ -360,7 +360,7 @@ sub find_config
 	if (defined $f) {
 		return get_config($f);
 	}
-	pr_error("Package $p was not found in the pkg-config search path");
+	say_error("Package $p was not found in the pkg-config search path");
 
 	return undef;
 }
@@ -503,7 +503,7 @@ sub do_list
 	foreach my $f (@files) {
 		my $cfg = get_config($f);
 		if (!defined $cfg) {
-			print STDERR "Problem reading file $f\n";
+			say_warning("Problem reading file $f");
 			$error = 1;
 			next;
 		}
@@ -579,13 +579,13 @@ sub compare
 	# accepted are (in order): a(lpha) < b(eta) < rc < ' '.
 	# suffix[0] is the 'alpha' part, suffix[1] is the '1' part in 'alpha1'.
 	if ($a =~ s/(rc|beta|b|alpha|a)(\d+)$//) {
-		pr_debug("valid suffix $1$2 found in $a$1$2.");
+		say_debug("valid suffix $1$2 found in $a$1$2.");
 		$suffix_a[0] = $1;
 		$suffix_a[1] = $2;
 	}
 
 	if ($b =~ s/(rc|beta|b|alpha|a)(\d+)$//) {
-		pr_debug("valid suffix $1$2 found in $b$1$2.");
+		say_debug("valid suffix $1$2 found in $b$1$2.");
 		$suffix_b[0] = $1;
 		$suffix_b[1] = $2;
 	}
@@ -620,10 +620,10 @@ sub compare
 
 					# rc beats beta beats alpha
 					if (&$first_char($suffix_a[0]) lt &$first_char($suffix_b[0])) {
-						pr_debug("$full_a (installed) < $full_b (wanted)");
+						say_debug("$full_a (installed) < $full_b (wanted)");
 						return -1;
 					} else {
-						pr_debug("$full_a (installed) > $full_b (wanted)");
+						say_debug("$full_a (installed) > $full_b (wanted)");
 						return 1;
 					}
 
@@ -632,12 +632,12 @@ sub compare
 					# thereby beating the other.
 					# e.g.: 1.02 > 1.02b1
 					if (@suffix_a) { # a is older
-						pr_debug("$full_a (installed) < $full_b (wanted)");
+						say_debug("$full_a (installed) < $full_b (wanted)");
 						return 1;
 					}
 
 					if (@suffix_b) { # b is older
-						pr_debug("$full_a (installed) > $full_b (wanted)");
+						say_debug("$full_a (installed) > $full_b (wanted)");
 						return -1;
 					}
 				}
@@ -677,7 +677,7 @@ sub versionmatch
 	# can't possibly match if we can't find the version string
 	return 0 if $inst eq '';
 
-	pr_debug("comparing $want (wanted) to $inst (installed)");
+	say_debug("comparing $want (wanted) to $inst (installed)");
 	my $value = compare($inst, $want);
 	if    ($op eq '>=') { return $value >= 0; }
 	elsif ($op eq '=')  { return $value == 0; }
@@ -694,8 +694,8 @@ sub mismatch
 	my $version = stringize($cfg->get_property('Version'));
 	my $url = stringize($cfg->get_property('URL'));
 
-	print STDERR "Requested '$p $op $v' but version of $name is $version\n";
-	print STDERR "You may find new versions of $name at $url\n" if $url;
+	say_warning("Requested '$p $op $v' but version of $name is $version");
+	say_warning("You may find new versions of $name at $url") if $url;
 }
 
 sub simplify_and_reverse
@@ -728,7 +728,7 @@ sub print_requires
 		} elsif (defined($mode{printrequiresprivate})) {
 			$value = $cfg->get_property('Requires.private', $variables);
 		} else {
-			pr_debug("Unknown mode for print_requires.");
+			say_debug("Unknown mode for print_requires.");
 			return 1;
 		}
 
@@ -746,14 +746,33 @@ sub beautify_list
 	return join(' ', map {"[$_]"} @_);
 }
 
-sub pr_debug
+sub say_debug
 {
-	my $str = shift;
-	print STDERR $str . "\n" if $mode{debug};
+	say_msg(shift) if $mode{debug};
 }
 
-sub pr_error
+sub say_error
 {
-	my $str = shift;
-	print STDERR $str . "\n" if $mode{printerr};
+	say_msg(shift) if $mode{printerr}
+}
+
+sub say_warning
+{
+	say_msg(shift);
+}
+
+sub say_msg
+{
+	my ($str) = shift;
+
+	# If --errors-to-stdout was given, close STDERR (to be safe),
+	# then dup the output to STDOUT and delete the key from %mode so we
+	# won't keep checking it. STDERR stays dup'ed.
+	if ($mode{estdout}) {
+		close(STDERR);
+		open(STDERR, ">&STDOUT") or die "Can't dup STDOUT: $!";
+		delete($mode{estdout});
+	}
+
+	print STDERR $str . "\n";
 }
