@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.60 2011/06/12 17:11:01 jasper Exp $
+# $OpenBSD: pkg-config,v 1.61 2011/06/12 17:13:17 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -55,8 +55,7 @@ $variables->{pc_top_builddir} = $ENV{PKG_CONFIG_TOP_BUILD_DIR} //
 $variables->{pc_sysrootdir} //= $ENV{PKG_CONFIG_SYSROOT_DIR};
 # The default '/' is implied.
 
-my $D;
-defined $ENV{PKG_CONFIG_DEBUG_SPEW} ? $D = 1 : $D = 0;
+defined $ENV{PKG_CONFIG_DEBUG_SPEW} ? $mode{debug} = 1 : $mode{debug} = 0;
 
 if ($logfile) {
 	open my $L, ">>" , $logfile or die;
@@ -73,7 +72,7 @@ if ($logfile) {
 # without having to go back and reload the files from disk.
 
 Getopt::Long::Configure('no_ignore_case');
-GetOptions(	'debug' => \$D,
+GetOptions(	'debug' => \$mode{debug},
 		'help' => \&help, #does not return
 		'usage' => \&help, #does not return
 		'list-all' => \$mode{list},
@@ -107,15 +106,17 @@ GetOptions(	'debug' => \$D,
 
 # Initial value of printerr depends on the options...
 if (!defined $mode{printerr}) {
-	if (defined $mode{libs} || defined $mode{cflags}
-	    || defined $mode{version} || defined $mode{list}) {
+	if (defined $mode{libs}
+	    or defined $mode{cflags}
+	    or defined $mode{version}
+	    or defined $mode{list}) {
 		$mode{printerr} = 1;
 	} else {
 		$mode{printerr} = 0;
 	}
 }
 
-print STDERR "\n", beautify_list($0, @ARGV), "\n" if $D;
+pr_debug("\n" . beautify_list($0, @ARGV));
 
 my $rc = 0;
 
@@ -251,8 +252,7 @@ sub handle_config
 					handle_config($dep, undef, undef, $list);
 				}
 			}
-			print STDERR "package $p ", lc($property), " ",
-			    join(',', @$deps), "\n" if $D;
+			pr_debug("package $p " . lc($property) . " " . join(',', @$deps));
 		}
 	};
 
@@ -270,7 +270,7 @@ sub pathresolve
 	if ($allow_uninstalled && $p !~ m/\-uninstalled$/) {
 		foreach my $d (@PKGPATH) {
 			my $f = "$d/$p-uninstalled.pc";
-			print STDERR "pathresolve($p) looking in $f\n" if $D;
+			pr_debug("pathresolve($p) looking in $f");
 			if (-f $f) {
 				$found_uninstalled = 1;
 				return $f;
@@ -280,7 +280,7 @@ sub pathresolve
 
 	foreach my $d (@PKGPATH) {
 		my $f = "$d/$p.pc";
-		print STDERR "pathresolve($p) looking in $f\n" if $D;
+		pr_debug("pathresolve($p) looking in $f");
 		return $f if -f $f;
 	}
 	return undef;
@@ -297,7 +297,7 @@ sub get_config
 	if (!$@) {
 		return validate_config($f, $cfg);
 	} else {
-		print STDERR $@, "\n" if $D;
+		pr_debug($@);
 	}
 	return undef;
 }
@@ -306,7 +306,7 @@ sub cache_find_config
 {
 	my $name = shift;
 
-	print STDERR "processing $name\n" if $D;
+	pr_debug("processing $name");
 
 	if (exists $configs{$name}) {
 		return $configs{$name};
@@ -323,19 +323,17 @@ sub validate_config
 
 	# Check if we're dealing with an empty file, but don't error out just
 	# yet, we'll do that when we realize there's no Name field.
-	if ((stat($f)->size == 0) && $mode{printerr}) {
+	if (stat($f)->size == 0) {
 		my $p = $f;
 		$p =~ s/(^.*\/)(.*?)$/$2/g;
-		print STDERR "Package file '$p' appears to be empty\n";
+		pr_error("Package file '$p' appears to be empty");
 	}
 
 	foreach (@required_elems) {
 		my $e = $cfg->get_property($_, $variables);
 		if (!defined $e) {
 			$f =~ s/(^.*\/)(.*?)\.pc$/$2/g;
-			if ($mode{printerr}) {
-				print STDERR "Package '$f' has no $_: field\n";
-			}
+			pr_error("Package '$f' has no $_: field");
 			return undef;
 		}
 	}
@@ -362,10 +360,8 @@ sub find_config
 	if (defined $f) {
 		return get_config($f);
 	}
-	if ($mode{printerr}) {
-	    print STDERR
-	    	"Package $p was not found in the pkg-config search path\n";
-	}
+	pr_error("Package $p was not found in the pkg-config search path");
+
 	return undef;
 }
 
@@ -583,13 +579,13 @@ sub compare
 	# accepted are (in order): a(lpha) < b(eta) < rc < ' '.
 	# suffix[0] is the 'alpha' part, suffix[1] is the '1' part in 'alpha1'.
 	if ($a =~ s/(rc|beta|b|alpha|a)(\d+)$//) {
-		print STDERR "valid suffix $1$2 found in $a$1$2.\n" if $D;
+		pr_debug("valid suffix $1$2 found in $a$1$2.");
 		$suffix_a[0] = $1;
 		$suffix_a[1] = $2;
 	}
 
 	if ($b =~ s/(rc|beta|b|alpha|a)(\d+)$//) {
-		print STDERR "valid suffix $1$2 found in $b$1$2.\n" if $D;
+		pr_debug("valid suffix $1$2 found in $b$1$2.");
 		$suffix_b[0] = $1;
 		$suffix_b[1] = $2;
 	}
@@ -624,10 +620,10 @@ sub compare
 
 					# rc beats beta beats alpha
 					if (&$first_char($suffix_a[0]) lt &$first_char($suffix_b[0])) {
-						print STDERR "$full_a (installed) < $full_b (wanted)\n" if $D;
+						pr_debug("$full_a (installed) < $full_b (wanted)");
 						return -1;
 					} else {
-						print STDERR "$full_a (installed) > $full_b (wanted)\n" if $D;
+						pr_debug("$full_a (installed) > $full_b (wanted)");
 						return 1;
 					}
 
@@ -636,12 +632,12 @@ sub compare
 					# thereby beating the other.
 					# e.g.: 1.02 > 1.02b1
 					if (@suffix_a) { # a is older
-						print STDERR "$full_a (installed) < $full_b (wanted)\n" if $D;
+						pr_debug("$full_a (installed) < $full_b (wanted)");
 						return 1;
 					}
 
 					if (@suffix_b) { # b is older
-						print STDERR "$full_a (installed) > $full_b (wanted)\n" if $D;
+						pr_debug("$full_a (installed) > $full_b (wanted)");
 						return -1;
 					}
 				}
@@ -681,7 +677,7 @@ sub versionmatch
 	# can't possibly match if we can't find the version string
 	return 0 if $inst eq '';
 
-	print "comparing $want (wanted) to $inst (installed)\n" if $D;
+	pr_debug("comparing $want (wanted) to $inst (installed)");
 	my $value = compare($inst, $want);
 	if    ($op eq '>=') { return $value >= 0; }
 	elsif ($op eq '=')  { return $value == 0; }
@@ -732,7 +728,7 @@ sub print_requires
 		} elsif (defined($mode{printrequiresprivate})) {
 			$value = $cfg->get_property('Requires.private', $variables);
 		} else {
-			print STDERR "Unknown mode for print_requires.\n" if $D;
+			pr_debug("Unknown mode for print_requires.");
 			return 1;
 		}
 
@@ -748,4 +744,16 @@ sub print_requires
 sub beautify_list
 {
 	return join(' ', map {"[$_]"} @_);
+}
+
+sub pr_debug
+{
+	my $str = shift;
+	print STDERR $str . "\n" if $mode{debug};
+}
+
+sub pr_error
+{
+	my $str = shift;
+	print STDERR $str . "\n" if $mode{printerr};
 }
