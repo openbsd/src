@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.92 2011/05/30 19:09:46 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.93 2011/06/12 11:13:28 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -564,10 +564,13 @@ pci_get_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
 
 	ofs = PCI_CAPLIST_PTR(pci_conf_read(pc, tag, ofs));
 	while (ofs != 0) {
-#ifdef DIAGNOSTIC
+		/*
+		 * Some devices, like parts of the NVIDIA C51 chipset,
+		 * have a broken Capabilities List.  So we need to do
+		 * a sanity check here.
+		 */
 		if ((ofs & 3) || (ofs < 0x40))
-			panic("pci_get_capability");
-#endif
+			return (0);
 		reg = pci_conf_read(pc, tag, ofs);
 		if (PCI_CAPLIST_CAP(reg) == capid) {
 			if (offset)
