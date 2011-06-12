@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.62 2011/06/12 18:16:25 jasper Exp $
+# $OpenBSD: pkg-config,v 1.63 2011/06/12 21:33:49 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -342,14 +342,14 @@ sub validate_config
 }
 
 # pkg-config won't install a pkg-config.pc file itself, but it may be
-
-# listed as a dependency in other files.
-# so, prime the cache with self
+# listed as a dependency in other files. so prime the cache with self.
 sub setup_self
 {
 	my $pkg_pc = OpenBSD::PkgConfig->new;
 	$pkg_pc->add_property('Version', $version);
 	$pkg_pc->add_variable('pc_path', join(":", @PKGPATH));
+	$pkg_pc->add_property('URL', "http://www.openbsd.org/cgi-bin/man.cgi?query=pkg-config");
+	$pkg_pc->add_property('Description', "fetch metadata about installed software packages");
 	$configs{'pkg-config'} = $pkg_pc;
 }
 
@@ -763,7 +763,7 @@ sub say_warning
 
 sub say_msg
 {
-	my ($str) = shift;
+	my $str = shift;
 
 	# If --errors-to-stdout was given, close STDERR (to be safe),
 	# then dup the output to STDOUT and delete the key from %mode so we
