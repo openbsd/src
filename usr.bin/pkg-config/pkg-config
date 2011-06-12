@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.59 2011/06/12 17:08:44 jasper Exp $
+# $OpenBSD: pkg-config,v 1.60 2011/06/12 17:11:01 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -409,11 +409,11 @@ sub do_modversion
 	if (defined $cfg) {
 		my $value = $cfg->get_property('Version', $variables);
 		if (defined $value) {
-			if (!defined($mode{printprovides})){
-				print stringize($value), "\n";
+			if (defined($mode{printprovides})){
+				print "$p = " . stringize($value) . "\n";
 				return undef;
 			} else {
-				print "$p = " . stringize($value) . "\n";
+				print stringize($value), "\n";
 				return undef;
 			}
 		}
@@ -582,7 +582,6 @@ sub compare
 	# is there a valid non-numeric suffix to deal with later?
 	# accepted are (in order): a(lpha) < b(eta) < rc < ' '.
 	# suffix[0] is the 'alpha' part, suffix[1] is the '1' part in 'alpha1'.
-	# XXX: add back 'rc'
 	if ($a =~ s/(rc|beta|b|alpha|a)(\d+)$//) {
 		print STDERR "valid suffix $1$2 found in $a$1$2.\n" if $D;
 		$suffix_a[0] = $1;
