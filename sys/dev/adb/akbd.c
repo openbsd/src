@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.8 2010/05/23 15:09:38 deraadt Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.9 2011/06/13 16:29:11 shadchin Exp $	*/
 /*	$NetBSD: akbd.c,v 1.17 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -48,10 +48,6 @@
 #include <dev/adb/adb.h>
 #include <dev/adb/akbdmap.h>
 #include <dev/adb/akbdvar.h>
-
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-#define KEYBOARD_ARRAY
-#endif
 #include <dev/adb/keyboard.h>
 
 /*
