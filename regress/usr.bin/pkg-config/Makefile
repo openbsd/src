@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2011/06/12 18:16:39 jasper Exp $
+#	$OpenBSD: Makefile,v 1.16 2011/06/13 09:07:28 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -33,6 +33,8 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		logfile \
 		sysroot-cflags \
 		sysroot-libs \
+		variable-get \
+		variable-set \
 		missing-req-1 \
 		missing-req-2 \
 		missing-req-3 \
@@ -294,8 +296,20 @@ static-libs2:
 	# Test grabbing Libs.private from other packages in order
 
 # Misc. tests
-define-variable:
+variable-get:
+	# Test --variable
+	@echo "/tmp" > ${WANT}
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --errors-to-stdout \
+		--print-errors --variable prefix sysroot > ${GOT}
+	@diff -u ${WANT} ${GOT}
+
+variable-set:
 	# Test --define-variable
+	@echo "-I/usr/local2/include -I/usr/local2/include/foo" > ${WANT}
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --errors-to-stdout \
+		--print-errors --define-variable=prefix=/usr/local2 \
+		--cflags sysroot > ${GOT}
+	@diff -u ${WANT} ${GOT}
 
 # This fails as we read and check Requires as well as Requires.private where
 # only Requires needs to be checked here as we ask for Libs and not Cflags.
