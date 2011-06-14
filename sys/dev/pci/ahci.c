@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.179 2011/06/02 16:50:05 krw Exp $ */
+/*	$OpenBSD: ahci.c,v 1.180 2011/06/14 10:40:14 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -456,6 +456,8 @@ int			ahci_ati_sb700_attach(struct ahci_softc *,
 			    struct pci_attach_args *);
 int			ahci_amd_hudson2_attach(struct ahci_softc *,
 			    struct pci_attach_args *);
+int			ahci_intel_3400_1_attach(struct ahci_softc *,
+			    struct pci_attach_args *);
 int			ahci_nvidia_mcp_attach(struct ahci_softc *,
 			    struct pci_attach_args *);
 
@@ -477,6 +479,9 @@ static const struct ahci_device ahci_devices[] = {
 	    NULL,		ahci_ati_sb700_attach },
 	{ PCI_VENDOR_ATI,	PCI_PRODUCT_ATI_SBX00_SATA_6,
 	    NULL,		ahci_ati_sb700_attach },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_3400_AHCI_1,
+	    NULL,		ahci_intel_3400_1_attach },
 
 	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP65_AHCI_2,
 	    NULL,		ahci_nvidia_mcp_attach },
@@ -707,6 +712,13 @@ ahci_amd_hudson2_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 {
 	ahci_ati_sb_idetoahci(sc, pa);
 
+	return (0);
+}
+
+int
+ahci_intel_3400_1_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
+{
+	sc->sc_flags |= AHCI_F_IPMS_PROBE;
 	return (0);
 }
 
