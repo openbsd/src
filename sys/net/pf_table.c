@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.89 2011/05/17 12:44:05 mikeb Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.90 2011/06/14 10:14:01 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -61,7 +61,12 @@
 	copyout((from), (to), (size)) :		\
 	(bcopy((from), (to), (size)), 0))
 
-#define YIELD(cnt, ok) do { if ((cnt % 1024 == 1023) && (ok)) yield(); } while (0)
+#define YIELD(cnt, ok)				\
+	do {					\
+		if ((cnt % 1024 == 1023) &&	\
+		    (ok))			\
+			yield();		\
+	} while (0)
 
 #define	FILLIN_SIN(sin, addr)			\
 	do {					\
@@ -275,7 +280,7 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 				ad.pfra_fback = PFR_FB_DUPLICATE;
 			else if (p == NULL)
 				ad.pfra_fback = PFR_FB_ADDED;
-			else if ((p->pfrke_flags & PFRKE_FLAG_NOT) != 
+			else if ((p->pfrke_flags & PFRKE_FLAG_NOT) !=
 			    ad.pfra_not)
 				ad.pfra_fback = PFR_FB_CONFLICT;
 			else
@@ -1096,7 +1101,8 @@ pfr_walktree(struct radix_node *rn, void *arg, u_int id)
 				bcopy(ke->pfrke_counters->pfrkc_bytes,
 				    as.pfras_bytes, sizeof(as.pfras_bytes));
 			} else {
-				bzero(as.pfras_packets, sizeof(as.pfras_packets));
+				bzero(as.pfras_packets,
+				    sizeof(as.pfras_packets));
 				bzero(as.pfras_bytes, sizeof(as.pfras_bytes));
 				as.pfras_a.pfra_fback = PFR_FB_NOCOUNT;
 			}
@@ -1687,7 +1693,7 @@ pfr_commit_ktable(struct pfr_ktable *kt, long tzero)
 			q = pfr_lookup_addr(kt, &ad, 1);
 			if (q != NULL) {
 				if ((q->pfrke_flags & PFRKE_FLAG_NOT) !=
-				   (p->pfrke_flags & PFRKE_FLAG_NOT))
+				    (p->pfrke_flags & PFRKE_FLAG_NOT))
 					SLIST_INSERT_HEAD(&changeq, q,
 					    pfrke_workq);
 				q->pfrke_flags |= PFRKE_FLAG_MARK;
