@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.191 2011/04/19 03:47:29 dlg Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.192 2011/06/15 09:11:01 mikeb Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1787,6 +1787,21 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 	if (inp->inp_flags & INP_RECVTTL) {
 		*mp = sbcreatecontrol((caddr_t) &ip->ip_ttl,
 		    sizeof(u_int8_t), IP_RECVTTL, IPPROTO_IP);
+		if (*mp)
+			mp = &(*mp)->m_next;
+	}
+	if (inp->inp_flags & INP_RECVRTABLE) {
+		u_int rtableid = inp->inp_rtableid;
+#if NPF > 0
+		struct pf_divert *divert;
+
+		if (m && m->m_pkthdr.pf.flags & PF_TAG_DIVERTED &&
+		    (divert = pf_find_divert(m)) != NULL)
+			rtableid = divert->rdomain;
+#endif
+
+		*mp = sbcreatecontrol((caddr_t) &rtableid,
+		    sizeof(u_int), IP_RECVRTABLE, IPPROTO_IP);
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
