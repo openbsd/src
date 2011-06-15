@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.47 2011/03/17 21:30:24 deraadt Exp $ */
+/*	$OpenBSD: safte.c,v 1.48 2011/06/15 01:10:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -112,7 +112,6 @@ safte_match(struct device *parent, void *match, void *aux)
 	struct scsi_inquiry_data *inqbuf;
 	struct scsi_attach_args	*sa = aux;
 	struct scsi_inquiry_data *inq = sa->sa_inqbuf;
-	struct scsi_inquiry *cmd;
 	struct scsi_xfer *xs;
 	struct safte_inq *si;
 	int error, flags = 0, length;
@@ -147,15 +146,11 @@ safte_match(struct device *parent, void *match, void *aux)
 	xs = scsi_xs_get(sa->sa_sc_link, flags | SCSI_DATA_IN);
 	if (xs == NULL)
 		goto fail;
-	xs->cmdlen = sizeof(*cmd);
-	xs->data = (void *)inqbuf;
-	xs->datalen = length;
+
 	xs->retries = 2;
 	xs->timeout = 10000;
 
-	cmd = (struct scsi_inquiry *)xs->cmd;
-	cmd->opcode = INQUIRY;
-	_lto2b(length, cmd->length);
+	scsi_init_inquiry(xs, 0, 0, inqbuf, length);
 
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);

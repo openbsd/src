@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.199 2011/03/17 21:30:24 deraadt Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.200 2011/06/15 01:10:05 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -894,6 +894,25 @@ scsi_test_unit_ready(struct scsi_link *sc_link, int retries, int flags)
 	return (error);
 }
 
+void
+scsi_init_inquiry(struct scsi_xfer *xs, u_int8_t flags, u_int8_t pagecode,
+    void *data, size_t len)
+{
+	struct scsi_inquiry *cmd;
+
+	cmd = (struct scsi_inquiry *)xs->cmd;
+	cmd->opcode = INQUIRY;
+	cmd->flags = flags;
+	cmd->pagecode = pagecode;
+	_lto2b(len, cmd->length);
+
+	xs->cmdlen = sizeof(*cmd);
+
+	xs->flags |= SCSI_DATA_IN;
+	xs->data = data;
+	xs->datalen = len;
+}
+
 /*
  * Do a scsi operation asking a device what it is.
  * Use the scsi_cmd routine in the switch table.
@@ -902,9 +921,7 @@ int
 scsi_inquire(struct scsi_link *link, struct scsi_inquiry_data *inqbuf,
     int flags)
 {
-	struct scsi_inquiry *cmd;
 	struct scsi_xfer *xs;
-	size_t length;
 	int error;
 
 	xs = scsi_xs_get(link, flags);
@@ -915,17 +932,7 @@ scsi_inquire(struct scsi_link *link, struct scsi_inquiry_data *inqbuf,
 	 * Ask for only the basic 36 bytes of SCSI2 inquiry information. This
 	 * avoids problems with devices that choke trying to supply more.
 	 */
-	length = SID_INQUIRY_HDR + SID_SCSI2_ALEN;
-
-	cmd = (struct scsi_inquiry *)xs->cmd;
-	cmd->opcode = INQUIRY;
-	_lto2b(length, cmd->length);
-
-	xs->cmdlen = sizeof(*cmd);
-
-	xs->flags |= SCSI_DATA_IN;
-	xs->data = (void *)inqbuf;
-	xs->datalen = length;
+	scsi_init_inquiry(xs, 0, 0, inqbuf, SID_INQUIRY_HDR + SID_SCSI2_ALEN);
 
 	bzero(inqbuf, sizeof(*inqbuf));
 	memset(&inqbuf->vendor, ' ', sizeof inqbuf->vendor);
@@ -947,7 +954,6 @@ int
 scsi_inquire_vpd(struct scsi_link *sc_link, void *buf, u_int buflen,
     u_int8_t page, int flags)
 {
-	struct scsi_inquiry *cmd;
 	struct scsi_xfer *xs;
 	int error;
 
@@ -957,19 +963,14 @@ scsi_inquire_vpd(struct scsi_link *sc_link, void *buf, u_int buflen,
 	xs = scsi_xs_get(sc_link, flags | SCSI_DATA_IN | SCSI_SILENT);
 	if (xs == NULL)
 		return (ENOMEM);
-	xs->cmdlen = sizeof(*cmd);
-	xs->data = buf;
-	xs->datalen = buflen;
+
 	xs->retries = 2;
 	xs->timeout = 10000;
 
-	cmd = (struct scsi_inquiry *)xs->cmd;
-	cmd->opcode = INQUIRY;
-	cmd->flags = SI_EVPD;
-	cmd->pagecode = page;
-	_lto2b(buflen, cmd->length);
+	scsi_init_inquiry(xs, SI_EVPD, page, buf, buflen);
 
 	error = scsi_xs_sync(xs);
+
 	scsi_xs_put(xs);
 
 	return (error);
