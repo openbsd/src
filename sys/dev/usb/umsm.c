@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.74 2011/04/24 02:56:11 deraadt Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.75 2011/06/15 14:02:10 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -107,15 +107,16 @@ struct umsm_type {
 /* device type */
 #define	DEV_NORMAL	0x0000
 #define	DEV_HUAWEI	0x0001
-#define DEV_TRUINSTALL	0x0002
+#define	DEV_TRUINSTALL	0x0002
 #define	DEV_UMASS1	0x0010
 #define	DEV_UMASS2	0x0020
 #define	DEV_UMASS3	0x0040
 #define	DEV_UMASS4	0x0080
 #define	DEV_UMASS5	0x0100
 #define	DEV_UMASS6	0x0200
+#define	DEV_UMASS7	0x0400
 #define DEV_UMASS	(DEV_UMASS1 | DEV_UMASS2 | DEV_UMASS3 | DEV_UMASS4 | \
-    DEV_UMASS5 | DEV_UMASS6)
+    DEV_UMASS5 | DEV_UMASS6 | DEV_UMASS7)
 };
  
 static const struct umsm_type umsm_devs[] = {
@@ -155,8 +156,10 @@ static const struct umsm_type umsm_devs[] = {
 	{{ USB_VENDOR_QUANTA2, USB_PRODUCT_QUANTA2_UMASS }, DEV_UMASS4},
 	{{ USB_VENDOR_QUANTA2, USB_PRODUCT_QUANTA2_Q101 }, 0},
 
-	{{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_UMASS_INSTALLER2 }, DEV_UMASS6},
+	{{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_AC2746 }, 0},
 	{{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_UMASS_INSTALLER }, DEV_UMASS4},
+	{{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_UMASS_INSTALLER2 }, DEV_UMASS6},
+	{{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_UMASS_INSTALLER3 }, DEV_UMASS7},
 	{{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_K3565Z }, 0},
 	{{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_MF112 }, DEV_UMASS4},
 	{{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_MF633 }, 0},
@@ -637,9 +640,10 @@ umsm_truinstall_changemode(usbd_device_handle dev)
 usbd_status
 umsm_umass_changemode(struct umsm_softc *sc) 
 {
-#define UMASS_CMD_REZERO_UNIT	0x01
-#define UMASS_CMD_START_STOP	0x1b
-#define UMASS_CMDPARAM_EJECT	0x02
+#define UMASS_CMD_REZERO_UNIT		0x01
+#define UMASS_CMD_START_STOP		0x1b
+#define UMASS_CMDPARAM_EJECT		0x02
+#define UMASS_SERVICE_ACTION_OUT	0x9f
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	usbd_xfer_handle xfer;
@@ -707,6 +711,12 @@ umsm_umass_changemode(struct umsm_softc *sc)
 		cbw.CBWCDB[7] = 0x01;
 		cbw.CBWCDB[8] = 0x01;
 		cbw.CBWCDB[9] = 0x01;
+		break;
+	case DEV_UMASS7:	/* ZTE */
+		USETDW(cbw.dCBWDataTransferLength, 0xc0);
+		cbw.bCBWFlags = CBWFLAGS_IN;
+		cbw.CBWCDB[0] = UMASS_SERVICE_ACTION_OUT;
+		cbw.CBWCDB[1] = 0x03;
 		break;
 	default:
 		DPRINTF(("%s: unknown device type.\n", sc->sc_dev.dv_xname));
