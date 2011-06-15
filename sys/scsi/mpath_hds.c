@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_hds.c,v 1.3 2011/06/15 01:23:25 dlg Exp $ */
+/*	$OpenBSD: mpath_hds.c,v 1.4 2011/06/15 01:44:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -37,6 +37,10 @@
 #include <scsi/scsiconf.h>
 #include <scsi/mpathvar.h>
 
+#define HDS_INQ_LDEV_OFFSET	44
+#define HDS_INQ_LDEV_LEN	4
+#define HDS_INQ_CTRL_OFFSET	49
+#define HDS_INQ_PORT_OFFSET	50
 #define HDS_INQ_TYPE_OFFSET	128
 #define HDS_INQ_TYPE		0x44463030 /* "DF00" */
 
@@ -98,6 +102,7 @@ struct hds_device {
 };
 
 int		hds_inquiry(struct scsi_link *, int *);
+int		hds_info(struct hds_softc *);
 int		hds_preferred(struct hds_softc *, int *);
 
 struct hds_device hds_devices[] = {
@@ -151,6 +156,11 @@ hds_attach(struct device *parent, struct device *self, void *aux)
 
 	if (hds_inquiry(link, &sc->sc_mode) != 0) {
 		printf("%s: unable to query controller mode\n");
+		return;
+	}
+
+	if (hds_info(sc) != 0) {
+		printf("%s: unable to query path info\n");
 		return;
 	}
 
@@ -228,16 +238,14 @@ hds_inquiry(struct scsi_link *link, int *mode)
 	if (len < HDS_INQ_TYPE_OFFSET + sizeof(int))
 		return (ENXIO);
 
-	buf = dma_alloc(len, PR_WAITOK);
-
 	xs = scsi_xs_get(link, scsi_autoconf);
 	if (xs == NULL)
 		return (ENOMEM);
 
+	buf = dma_alloc(len, PR_WAITOK);
 	scsi_init_inquiry(xs, 0, 0, buf, len);
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
-
 	if (error)
 		goto done;
 
@@ -249,7 +257,45 @@ hds_inquiry(struct scsi_link *link, int *mode)
 		error = ENXIO;
 
 done:
-	dma_free(buf, 128);
+	dma_free(buf, len);
+	return (error);
+}
+
+int
+hds_info(struct hds_softc *sc)
+{
+	struct scsi_link *link = sc->sc_path.p_link;
+	struct scsi_xfer *xs;
+	u_int8_t *buf;
+	size_t len = link->inqdata.additional_length + 5;
+	char ldev[9], ctrl, port;
+	int error;
+
+	xs = scsi_xs_get(link, scsi_autoconf);
+	if (xs == NULL)
+		return (ENOMEM);
+
+	buf = dma_alloc(len, PR_WAITOK);
+	scsi_init_inquiry(xs, 0, 0, buf, len);
+	error = scsi_xs_sync(xs);
+	scsi_xs_put(xs);
+	if (error)
+		goto done;
+
+	bzero(ldev, sizeof(ldev));
+	scsi_strvis(ldev, &buf[HDS_INQ_LDEV_OFFSET], HDS_INQ_LDEV_LEN);
+	ctrl = buf[HDS_INQ_CTRL_OFFSET];
+	port = buf[HDS_INQ_PORT_OFFSET];
+
+	if (ctrl >= '0' && ctrl <= '9' && port >= 'A' && port <= 'B') {
+		printf("%s: ldev %s, controller %c, port %c, %s\n",
+		    DEVNAME(sc), ldev, ctrl, port,
+		    sc->sc_mode == HDS_SYMMETRIC ? "symmetric" : "asymmetric");
+	} else
+		error = ENXIO;
+
+done:
+	dma_free(buf, len);
 	return (error);
 }
 
