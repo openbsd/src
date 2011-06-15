@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.42 2011/04/07 20:16:19 jordan Exp $ */
+/* $OpenBSD: acpitz.c,v 1.43 2011/06/15 00:15:54 marco Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -204,7 +204,7 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	if ((sc->sc_crt = acpitz_gettempreading(sc, "_CRT")) == -1)
 		printf(": no critical temperature defined\n");
 	else
-		printf(": critical temperature %d degC\n", KTOC(sc->sc_crt));
+		printf(": critical temperature is %d degC\n", KTOC(sc->sc_crt));
 
 	sc->sc_hot = acpitz_gettempreading(sc, "_HOT");
 	sc->sc_tc1 = acpitz_getreading(sc, "_TC1");
@@ -327,7 +327,8 @@ acpitz_refresh(void *arg)
 	/* critical trip points */
 	if (sc->sc_crt != -1 && sc->sc_crt <= sc->sc_tmp) {
 		/* do critical shutdown */
-		printf("%s: Critical temperature %dC (%dK), shutting down\n",
+		printf("%s: critical temperature exceeded %dC (%dK), shutting "
+		    "down\n",
 		    DEVNAME(sc), KTOC(sc->sc_tmp), sc->sc_tmp);
 		psignal(initproc, SIGUSR2);
 	}
