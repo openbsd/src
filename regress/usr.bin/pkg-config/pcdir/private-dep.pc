@@ -1,0 +1,5 @@
+Name: Requires test package
+Description: pkg-config(1) regress file
+Version: 1.0.0
+Libs: -L/private-dep/lib -lprivate-dep
+Cflags: -I/private-dep/include

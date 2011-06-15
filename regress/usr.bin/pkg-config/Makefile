@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2011/06/15 10:48:39 jasper Exp $
+#	$OpenBSD: Makefile,v 1.18 2011/06/15 11:54:32 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -38,6 +38,7 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		static-libs1 \
 		static-libs2 \
 		static-libs3 \
+		static-libs4 \
 		variable-get \
 		variable-set \
 		missing-req-1 \
@@ -317,7 +318,7 @@ static-libs1:
 
 static-libs2:
 	# Test grabbing Libs.private from Requires in order
-	@echo "-L/usr/local/lib -lutil -lz -lc -lm" > ${WANT}
+	@echo "-L/usr/local/lib -lutil -lz -lc -lm -ll" > ${WANT}
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --print-errors \
 		--errors-to-stdout --libs --static static2 > ${GOT}
 	@diff -u ${WANT} ${GOT}
@@ -327,6 +328,13 @@ static-libs3:
 	@echo "-L/usr/local/lib -L/tmp/lib -L/tmp/lib/foo -lutil -lz -lc -lm -lbaz\ quux" > ${WANT}
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --print-errors \
 		--errors-to-stdout --libs --static static3 > ${GOT}
+	@diff -u ${WANT} ${GOT}
+
+static-libs4:
+	# Test Requires.private
+	@echo "-L/requires-test/lib -L/private-dep/lib -L/public-dep/lib -lrequires-test -lprivate-dep -lpublic-dep" > ${WANT}
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --print-errors \
+		--errors-to-stdout --libs --static requires-test > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 # Misc. tests

@@ -1,0 +1,11 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: Static compilation test
+Description: pkg-config(1) regress file
+Version: 0.0.0
+Libs: -L${libdir} -lc
+Libs.private: -lm -ll
+Cflags: -I${includedir}/foo
