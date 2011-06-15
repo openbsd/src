@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip.4,v 1.29 2011/02/03 16:08:24 otto Exp $
+.\"	$OpenBSD: ip.4,v 1.30 2011/06/15 09:13:32 mikeb Exp $
 .\"	$NetBSD: ip.4,v 1.3 1994/11/30 16:22:19 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ip.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd $Mdocdate: February 3 2011 $
+.Dd $Mdocdate: June 15 2011 $
 .Dt IP 4
 .Os
 .Sh NAME
@@ -221,7 +221,42 @@ The regular range of non-reserved ports.
 A high range, for fun.
 .It Dv IP_PORTRANGE_LOW
 Reserved ports; between 600 and 1023.
+.Ed
+.Pp
+If the
+.Dv IP_RECVRTABLE
+option is enabled on a
+.Dv SOCK_DGRAM
+socket,
+the
+.Xr recvmsg 2
+call will return the source routing domain for a
+.Tn UDP
+datagram.
+The
+.Va msg_control
+field in the
+.Vt msghdr
+structure points to a buffer that contains a
+.Vt cmsghdr
+structure followed by the routing table id.
+The
+.Vt cmsghdr
+fields have the following values:
+.Bd -literal -offset indent
+cmsg_len = CMSG_LEN(sizeof(u_int))
+cmsg_level = IPPROTO_IP
+cmsg_type = IP_RECVRTABLE
 .El
+.Pp
+The
+.Dv SO_RTABLE
+option can get or set a routing domain of the socket.
+The actual routing table number is supplied as an integer argument:
+.Bd -literal -offset indent
+int rtid = 1;
+setsockopt(s, IPPROTO_IP, SO_RTABLE, &rtid, sizeof(rtid));
+.Ed
 .Ss "Multicast Options"
 .Tn IP
 multicasting is supported only on
