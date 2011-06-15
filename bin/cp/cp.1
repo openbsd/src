@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cp.1,v 1.32 2010/09/03 09:53:20 jmc Exp $
+.\"	$OpenBSD: cp.1,v 1.33 2011/06/15 18:17:10 tedu Exp $
 .\"	$NetBSD: cp.1,v 1.9 1995/07/25 19:36:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)cp.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: June 15 2011 $
 .Dt CP 1
 .Os
 .Sh NAME
@@ -78,8 +78,6 @@ The options are as follows:
 For each existing destination pathname, remove it and
 create a new file, without prompting for confirmation,
 regardless of its permissions.
-This option overrides any use of
-.Fl i .
 .It Fl H
 If the
 .Fl R
@@ -138,6 +136,14 @@ or
 .Xr tar 1
 instead.
 .El
+.Pp
+The last of any
+.Fl f
+or
+.Fl i
+options is the one which affects
+.Nm cp Ns 's
+behavior.
 .Pp
 For each destination file that already exists, its contents are
 overwritten if permissions allow, but its mode, user ID, and group
