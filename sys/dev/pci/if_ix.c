@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.52 2011/06/10 12:46:35 claudio Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.53 2011/06/15 00:03:00 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -115,6 +115,7 @@ void	ixgbe_initialize_receive_units(struct ix_softc *);
 void	ixgbe_free_receive_structures(struct ix_softc *);
 void	ixgbe_free_receive_buffers(struct rx_ring *);
 int	ixgbe_rxfill(struct rx_ring *);
+void	ixgbe_rxrefill(void *);
 
 void	ixgbe_enable_intr(struct ix_softc *);
 void	ixgbe_disable_intr(struct ix_softc *);
@@ -215,6 +216,7 @@ ixgbe_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Set up the timer callout */
 	timeout_set(&sc->timer, ixgbe_local_timer, sc);
+	timeout_set(&sc->rx_refill, ixgbe_rxrefill, sc);
 
 	/* Determine hardware revision */
 	ixgbe_identify_hardware(sc);
@@ -367,6 +369,7 @@ ixgbe_detach(struct device *self, int flags)
 	if_detach(ifp);
 
 	timeout_del(&sc->timer);
+	timeout_del(&sc->rx_refill);
 	ixgbe_free_pci_resources(sc);
 
 	ixgbe_free_transmit_structures(sc);
@@ -945,10 +948,13 @@ ixgbe_legacy_irq(void *arg)
 		timeout_add_sec(&sc->timer, 1);
 	}
 
-	if (refill && ixgbe_rxfill(que->rxr)) {
-		/* Advance the Rx Queue "Tail Pointer" */
-		IXGBE_WRITE_REG(&sc->hw, IXGBE_RDT(que->rxr->me),
-		    que->rxr->last_desc_filled);
+	if (refill) {
+		if (ixgbe_rxfill(que->rxr)) {
+			/* Advance the Rx Queue "Tail Pointer" */
+			IXGBE_WRITE_REG(&sc->hw, IXGBE_RDT(que->rxr->me),
+			    que->rxr->last_desc_filled);
+		} else if (que->rxr->rx_ndescs < 2)
+			timeout_add(&sc->rx_refill, 0);
 	}
 
 	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
@@ -1366,6 +1372,7 @@ ixgbe_stop(void *arg)
 	if (sc->hw.phy.multispeed_fiber)
 		ixgbe_hw0(&sc->hw, disable_tx_laser);
 	timeout_del(&sc->timer);
+	timeout_del(&sc->rx_refill);
 
 	/* reprogram the RAR[0] in case user changed it. */
 	ixgbe_hw(&sc->hw, set_rar, 0, sc->hw.mac.addr, 0, IXGBE_RAH_AV);
@@ -2718,6 +2725,23 @@ ixgbe_rxfill(struct rx_ring *rxr)
 	}
 
 	return (post);
+}
+
+void
+ixgbe_rxrefill(void *xsc)
+{
+	struct ix_softc *sc = xsc;
+	struct ix_queue *que = sc->queues;
+	int s;
+
+	s = splnet();
+	if (ixgbe_rxfill(que->rxr)) {
+		/* Advance the Rx Queue "Tail Pointer" */
+		IXGBE_WRITE_REG(&sc->hw, IXGBE_RDT(que->rxr->me),
+		    que->rxr->last_desc_filled);
+	} else if (que->rxr->rx_ndescs < 2)
+		timeout_add(&sc->rx_refill, 1);
+	splx(s);
 }
 
 /*********************************************************************
