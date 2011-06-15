@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_hds.c,v 1.2 2011/04/28 10:43:36 dlg Exp $ */
+/*	$OpenBSD: mpath_hds.c,v 1.3 2011/06/15 01:23:25 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -37,10 +37,27 @@
 #include <scsi/scsiconf.h>
 #include <scsi/mpathvar.h>
 
+#define HDS_INQ_TYPE_OFFSET	128
+#define HDS_INQ_TYPE		0x44463030 /* "DF00" */
+
+#define HDS_VPD			0xe0
+
+struct hds_vpd {
+        struct scsi_vpd_hdr	hdr; /* HDS_VPD */
+	u_int8_t		state;
+#define HDS_VPD_VALID			0x80
+#define HDS_VPD_PREFERRED		0x40
+
+	/* followed by lots of unknown stuff */
+};
+
+#define HDS_SYMMETRIC		0
+#define HDS_ASYMMETRIC		1
+
 struct hds_softc {
 	struct device		sc_dev;
 	struct mpath_path	sc_path;
-	int			sc_active;
+	int			sc_mode;
 };
 #define DEVNAME(_s) ((_s)->sc_dev.dv_xname)
 
@@ -80,7 +97,8 @@ struct hds_device {
 	char *product;
 };
 
-int		hds_priority(struct hds_softc *);
+int		hds_inquiry(struct scsi_link *, int *);
+int		hds_preferred(struct hds_softc *, int *);
 
 struct hds_device hds_devices[] = {
 /*	  " vendor "  "     device     " */
@@ -94,8 +112,9 @@ hds_match(struct device *parent, void *match, void *aux)
 {
 	struct scsi_attach_args *sa = aux;
 	struct scsi_inquiry_data *inq = sa->sa_inqbuf;
+	struct scsi_link *link = sa->sa_sc_link;
 	struct hds_device *s;
-	int i;
+	int i, mode;
 
 	if (mpath_path_probe(sa->sa_sc_link) != 0)
 		return (0);
@@ -104,7 +123,8 @@ hds_match(struct device *parent, void *match, void *aux)
 		s = &hds_devices[i];
 
 		if (bcmp(s->vendor, inq->vendor, strlen(s->vendor)) == 0 &&
-		    bcmp(s->product, inq->product, strlen(s->product)) == 0)
+		    bcmp(s->product, inq->product, strlen(s->product)) == 0 &&
+		    hds_inquiry(link, &mode) == 0)
 			return (3);
 	}
 
@@ -117,6 +137,7 @@ hds_attach(struct device *parent, struct device *self, void *aux)
 	struct hds_softc *sc = (struct hds_softc *)self;
 	struct scsi_attach_args *sa = aux;
 	struct scsi_link *link = sa->sa_sc_link;
+	int preferred = 1;
 
 	printf("\n");
 
@@ -128,10 +149,17 @@ hds_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_path.p_link = link;
 	sc->sc_path.p_ops = &hds_mpath_ops;
 
-	if (hds_priority(sc) != 0)
+	if (hds_inquiry(link, &sc->sc_mode) != 0) {
+		printf("%s: unable to query controller mode\n");
 		return;
+	}
 
-	if (!sc->sc_active)
+	if (hds_preferred(sc, &preferred) != 0) {
+		printf("%s: unable to query preferred path\n", DEVNAME(sc));
+		return;
+	}
+
+	if (!preferred)
 		return;
 
 	if (mpath_path_attach(&sc->sc_path) != 0)
@@ -190,68 +218,68 @@ hds_mpath_offline(struct scsi_link *link)
 }
 
 int
-hds_priority(struct hds_softc *sc)
+hds_inquiry(struct scsi_link *link, int *mode)
 {
-	u_int8_t *buffer;
-	struct scsi_inquiry *cdb;
 	struct scsi_xfer *xs;
-	size_t length;
-	u_int8_t ldev[9];
-	u_int8_t ctrl;
-	u_int8_t port;
-	int p, c;
+	u_int8_t *buf;
+	size_t len = link->inqdata.additional_length + 5;
 	int error;
 
-	length = MIN(sc->sc_path.p_link->inqdata.additional_length + 5, 255);
-	if (length < 51)
-		return (EIO);
+	if (len < HDS_INQ_TYPE_OFFSET + sizeof(int))
+		return (ENXIO);
 
-	buffer = dma_alloc(length, PR_WAITOK);
+	buf = dma_alloc(len, PR_WAITOK);
 
-	xs = scsi_xs_get(sc->sc_path.p_link, scsi_autoconf);
-	if (xs == NULL) {
-		error = EBUSY;
-		goto done;
-	}
+	xs = scsi_xs_get(link, scsi_autoconf);
+	if (xs == NULL)
+		return (ENOMEM);
 
-	cdb = (struct scsi_inquiry *)xs->cmd;
-	cdb->opcode = INQUIRY;
-	_lto2b(length, cdb->length);
-
-	xs->cmdlen = sizeof(*cdb);
-	xs->flags |= SCSI_DATA_IN;
-	xs->data = buffer;
-	xs->datalen = length;
-
+	scsi_init_inquiry(xs, 0, 0, buf, len);
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
 
-	if (error != 0)
+	if (error)
 		goto done;
 
-	/* XXX magical */
-	bzero(ldev, sizeof(ldev));
-	scsi_strvis(ldev, buffer + 44, 4);
-	ctrl = buffer[49];
-	port = buffer[50];
+	if (buf[128] == '\0')
+		*mode = HDS_ASYMMETRIC;
+	else if (_4btol(&buf[HDS_INQ_TYPE_OFFSET]) == HDS_INQ_TYPE)
+		*mode = HDS_SYMMETRIC;
+	else
+		error = ENXIO;
 
-	if (strlen(ldev) > 4 || ldev[3] < '0' || ldev[3] > 'F' ||
-	    ctrl < '0' || ctrl > '9' ||
-	    port < 'A' || port > 'B') {
-		error = EIO;
+done:
+	dma_free(buf, 128);
+	return (error);
+}
+
+int
+hds_preferred(struct hds_softc *sc, int *preferred)
+{
+	struct scsi_link *link = sc->sc_path.p_link;
+	struct hds_vpd *pg;
+	int error;
+
+	if (sc->sc_mode == HDS_SYMMETRIC) {
+		*preferred = 1;
+		return (0);
+	}
+
+	pg = dma_alloc(sizeof(*pg), PR_WAITOK);
+
+	error = scsi_inquire_vpd(link, pg, sizeof(*pg), HDS_VPD, scsi_autoconf);
+	if (error)
+		goto done;
+
+	if (_2btol(pg->hdr.page_length) < sizeof(pg->state) ||
+	     !ISSET(pg->state, HDS_VPD_VALID)) {
+		error = ENXIO;
 		goto done;
 	}
 
-	c = ctrl - '0';
-	p = port - 'A';
-	if ((c & 0x1) == (p & 0x1))
-		sc->sc_active = 1;
+	*preferred = ISSET(pg->state, HDS_VPD_PREFERRED);
 
-	printf("%s: ldev %s, controller %c, port %c\n", DEVNAME(sc), ldev,
-	    ctrl, port);
-
-	error = 0;
 done:
-	dma_free(buffer, length);
+	dma_free(pg, sizeof(*pg));
 	return (error);
 }
