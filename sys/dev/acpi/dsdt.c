@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.190 2011/06/08 05:38:28 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.191 2011/06/15 08:11:51 pirofti Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2385,11 +2385,8 @@ aml_createfield(struct aml_value *field, int opcode,
 
 	if (field->type == AML_OBJTYPE_BUFFERFIELD &&
 	    data->type != AML_OBJTYPE_BUFFER)
-	{
-		printf("WARN: %s not buffer\n",
-		    aml_nodename(data->node));
 		data = aml_convert(data, AML_OBJTYPE_BUFFER, -1);
-	}
+
 	field->v_field.type = opcode;
 	field->v_field.bitpos = bpos;
 	field->v_field.bitlen = blen;
