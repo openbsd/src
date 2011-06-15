@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mv.1,v 1.28 2010/12/28 09:57:38 jmc Exp $
+.\"	$OpenBSD: mv.1,v 1.29 2011/06/15 23:47:37 tedu Exp $
 .\"	$NetBSD: mv.1,v 1.8 1995/03/21 09:06:51 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)mv.1	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: December 28 2010 $
+.Dd $Mdocdate: June 15 2011 $
 .Dt MV 1
 .Os
 .Sh NAME
@@ -85,6 +85,11 @@ The options are as follows:
 .It Fl f
 Do not prompt for confirmation before overwriting the destination
 path.
+The
+.Fl f
+option overrides any previous
+.Fl f
+options.
 .It Fl i
 Causes
 .Nm
@@ -93,15 +98,12 @@ overwrite an existing file.
 If the response from the standard input begins with the character
 .Dq y ,
 the move is attempted.
-.El
-.Pp
-The last of any
-.Fl f
-or
+The
 .Fl i
-options is the one which affects
-.Nm mv Ns 's
-behavior.
+option overrides any previous
+.Fl f
+options.
+.El
 .Pp
 The
 .Nm
