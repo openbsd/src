@@ -1,4 +1,4 @@
-/*	$OpenBSD: ams.c,v 1.5 2007/04/10 22:37:17 miod Exp $	*/
+/*	$OpenBSD: ams.c,v 1.6 2011/06/15 21:32:05 miod Exp $	*/
 /*	$NetBSD: ams.c,v 1.11 2000/12/19 03:13:40 tsubai Exp $	*/
 
 /*
@@ -77,6 +77,9 @@ int
 amsmatch(struct device *parent, void *cf, void *aux)
 {
 	struct adb_attach_args *aa_args = aux;
+
+	if (strcmp(aa_args->name, adb_device_name) != 0)
+		return (0);
 
 	if (aa_args->origaddr == ADBADDR_MS)
 		return 1;

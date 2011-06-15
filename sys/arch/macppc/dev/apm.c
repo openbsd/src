@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.14 2009/02/26 17:19:47 oga Exp $	*/
+/*	$OpenBSD: apm.c,v 1.15 2011/06/15 21:32:04 miod Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -112,6 +112,10 @@ int
 apmmatch(struct device *parent, void *match, void *aux)
 {
 	struct adb_attach_args *aa = (void *)aux;
+
+	if (strcmp(aa->name, adb_device_name) != 0)
+		return 0;
+
 	if (aa->origaddr != ADBADDR_APM ||
 	    aa->handler_id != ADBADDR_APM ||
 	    aa->adbaddr != ADBADDR_APM)

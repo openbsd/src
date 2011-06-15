@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.h,v 1.3 2007/03/13 20:56:56 miod Exp $	*/
+/*	$OpenBSD: adb.h,v 1.4 2011/06/15 21:32:05 miod Exp $	*/
 /*	$NetBSD: adbsys.h,v 1.4 2000/12/19 02:59:24 tsubai Exp $	*/
 
 /*-
@@ -43,10 +43,13 @@
  * Arguments used to attach a device to the Apple Desktop Bus
  */
 struct adb_attach_args {
-	int	origaddr;
-	int	adbaddr;
-	int	handler_id;
+	const char	*name;		/* adb_device_name if real adb device */
+	int		 origaddr;
+	int		 adbaddr;
+	int		 handler_id;
 };
+
+extern const char adb_device_name[];
 
 #define	ADB_CMDADDR(cmd)	((u_int8_t)(cmd & 0xf0) >> 4)
 #define	ADBFLUSH(dev)		((((u_int8_t)dev & 0x0f) << 4) | 0x01)

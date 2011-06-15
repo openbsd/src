@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.9 2011/06/13 16:29:11 shadchin Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.10 2011/06/15 21:32:05 miod Exp $	*/
 /*	$NetBSD: akbd.c,v 1.17 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -99,6 +99,9 @@ int
 akbdmatch(struct device *parent, void *vcf, void *aux)
 {
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
+
+	if (strcmp(aa_args->name, adb_device_name) != 0)
+		return (0);
 
 	if (aa_args->origaddr == ADBADDR_KBD)
 		return (1);

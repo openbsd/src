@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.27 2009/03/15 20:40:25 miod Exp $	*/
+/*	$OpenBSD: adb.c,v 1.28 2011/06/15 21:32:03 miod Exp $	*/
 /*	$NetBSD: adb.c,v 1.47 2005/06/16 22:43:36 jmc Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.51 2005/06/16 22:43:36 jmc Exp $	*/
 
@@ -2804,6 +2804,7 @@ adb_attach_deferred(void *v)
 		/* Get the ADB information */
 		adbaddr = get_ind_adb_info(&adbdata, adbindex);
 
+		aa_args.name = adb_device_name;
 		aa_args.origaddr = (int)(adbdata.origADBAddr);
 		aa_args.adbaddr = adbaddr;
 		aa_args.handler_id = (int)(adbdata.devType);
