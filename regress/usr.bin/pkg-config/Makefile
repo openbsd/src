@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2011/06/13 09:07:28 jasper Exp $
+#	$OpenBSD: Makefile,v 1.17 2011/06/15 10:48:39 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -33,6 +33,11 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		logfile \
 		sysroot-cflags \
 		sysroot-libs \
+		static-cflags1 \
+		static-cflags2 \
+		static-libs1 \
+		static-libs2 \
+		static-libs3 \
 		variable-get \
 		variable-set \
 		missing-req-1 \
@@ -81,14 +86,14 @@ print-req:
 	# Test --print-requires
 	@echo "print-req2>=0.0.1" > ${WANT}
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} \
-		--print-requires $@ > $@.got
+		--print-requires $@ > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 print-req-priv:
 	# Test --print-requires-private
 	@echo "print-req-priv2>=0.0.1" > ${WANT}
-	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} \
-		--print-requires-private $@ > ${GOT}; then false; fi
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} \
+		--print-requires-private $@ > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 # Tests for version comparison
@@ -289,11 +294,40 @@ sysroot-libs:
 	@diff -u ${WANT} ${GOT}
 
 # Tests for static linking
+static-cflags1:
+	# Test grabbing Cflags (without Requires.private)
+	@echo "-I/usr/local/include/foo" > ${WANT}
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --print-errors \
+		--errors-to-stdout --cflags --static static > ${GOT}
+	@diff -u ${WANT} ${GOT}
+
+static-cflags2:
+	# Test grabbing Cflags (with Requires.private)
+	@echo "-I/usr/local/include -I/usr/local/include/foo" > ${WANT}
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --print-errors \
+		--errors-to-stdout --cflags --static static2 > ${GOT}
+	@diff -u ${WANT} ${GOT}
+
 static-libs1:
 	# Test grabbing Libs.private from this package
+	@echo "-L/usr/local/lib -lc -lm" > ${WANT}
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --print-errors \
+		--errors-to-stdout --libs --static static > ${GOT}
+	@diff -u ${WANT} ${GOT}
 
 static-libs2:
-	# Test grabbing Libs.private from other packages in order
+	# Test grabbing Libs.private from Requires in order
+	@echo "-L/usr/local/lib -lutil -lz -lc -lm" > ${WANT}
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --print-errors \
+		--errors-to-stdout --libs --static static2 > ${GOT}
+	@diff -u ${WANT} ${GOT}
+
+static-libs3:
+	# Test grabbing Libs.private from Requires.private in order
+	@echo "-L/usr/local/lib -L/tmp/lib -L/tmp/lib/foo -lutil -lz -lc -lm -lbaz\ quux" > ${WANT}
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --print-errors \
+		--errors-to-stdout --libs --static static3 > ${GOT}
+	@diff -u ${WANT} ${GOT}
 
 # Misc. tests
 variable-get:
@@ -313,7 +347,6 @@ variable-set:
 
 # This fails as we read and check Requires as well as Requires.private where
 # only Requires needs to be checked here as we ask for Libs and not Cflags.
-# XXX: Test Requires.private too.
 missing-req-1:
 	# Test for missing packages in Requires (libs)
 	@echo "Package nonexisting was not found in the pkg-config search path" > ${WANT}
