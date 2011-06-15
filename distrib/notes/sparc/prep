@@ -18,18 +18,12 @@ Unlike SunOS and the OpenBOOT ROM, a generic OpenBSD kernel numbers
 SCSI drives sequentially as it finds them.  The drive with the
 lowest SCSI-ID will be called sd0, the next one sd1, etc.
 
-To ease the installation process, two OpenBSD kernels are provided in
-the installation sets.  The default OpenBSD kernel (bsd) is set up
-to use the OpenBSD mapping, while a special kernel (bsd.scsi3) is
-set up to match the Sun mapping above by hard-wiring SCSI-ID#3 to sd0
-and SCSI-ID#0 to sd3. The remaining drives will be dynamically mapped
-to other sd* numbers.
-
 This is mostly a non-issue if you have only one drive on your system,
-but can get confusing if you have multiple drives.  If you plan
-to eliminate SunOS altogether it may be best to correct the SCSI-IDs
-of your drives, while if you plan to leave SunOS installed, it may
-be better to install OpenBSD on a drive with SCSI-ID 1 or 0.
+but can get confusing if you have multiple drives (unless you choose
+to use DUIDs to access partitions).  If you plan to eliminate SunOS
+altogether it may be best to correct the SCSI-IDs of your drives,
+while if you plan to leave SunOS installed, it may be better to
+install OpenBSD on a drive with SCSI-ID 1 or 0.
 
 Older OpenBoot proms (versions 1.x) provide an environment variable,
 sd-targets, that controls the drive<->SCSI-ID mapping; you can change
@@ -39,11 +33,6 @@ default-value is ``31204567'', which means unit 0 and 3 are exchanged.
 To revert to the ``normal'' behaviour, enter the following command:
 
     ok setenv sd-targets 01234567
-
-NOTE: if you elect to build a custom kernel you may want to "hardwire"
-the SCSI-IDs to sd0->SCSI-ID 0 or your desired scheme, this helps
-prevent accidents if you change the SCSI bus configuration or a drive
-is down.
 
 Your OpenBOOT ROM may need some setup.  If you are running OpenBSD on
 a sun4c, sun4e or sun4m system, the ROM must be set to "new" command

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.73 2011/03/09 17:11:40 ian Exp $
+dnl	$OpenBSD: install,v 1.74 2011/06/15 21:36:48 miod Exp $
 OpenBSDInstallPrelude({:-SMD disks-:})
 
 There are several ways to install OpenBSD onto a disk.  The normal way
@@ -289,15 +289,15 @@ The installboot man page says to do something like this:
 You can now extract the provided "*.tgz" files onto your disk.
 
     sunos# ls -FC
-    base{:--:}OSrev.tgz      comp{:--:}OSrev.tgz   man{:--:}OSrev.tgz       xserv{:--:}OSrev.tgz
-    bsd             etc{:--:}OSrev.tgz    xbase{:--:}OSrev.tgz
-    bsd.scsi3       game{:--:}OSrev.tgz   xfont{:--:}OSrev.tgz
+    base{:--:}OSrev.tgz      comp{:--:}OSrev.tgz      man{:--:}OSrev.tgz       xfont{:--:}OSrev.tgz
+    bsd             etc{:--:}OSrev.tgz       xbase{:--:}OSrev.tgz     xserv{:--:}OSrev.tgz
+    bsd.rd          game{:--:}OSrev.tgz      xetc{:--:}OSrev.tgz      xshare{:--:}OSrev.tgz
     sunos{:-#-:} gunzip < base{:--:}OSrev.tgz | (cd /mnt; gtar xvpf -)
     [...] for each set
 
-And finally copy an OpenBSD kernel (either bsd or bsd.scsi3) onto your disk.
+And finally copy the OpenBSD kernel onto your disk.
 
-    sunos# cp bsd.scsi3 /mnt/bsd
+    sunos# cp bsd /mnt/bsd
 
 The GNU gunzip and gtar programs are not distributed as part of SunOS,
 but may be present in your /usr/local/bin.  If not, you will need to
@@ -382,15 +382,15 @@ The installboot man page says to do something like this:
 You can now extract the provided "*.tgz" files onto your disk.
 
     solaris# ls -FC
-    base{:--:}OSrev.tgz      comp{:--:}OSrev.tgz   man{:--:}OSrev.tgz       xserv{:--:}OSrev.tgz
-    bsd             etc{:--:}OSrev.tgz    xbase{:--:}OSrev.tgz
-    bsd.scsi3       game{:--:}OSrev.tgz   xfont{:--:}OSrev.tgz
+    base{:--:}OSrev.tgz      comp{:--:}OSrev.tgz      man{:--:}OSrev.tgz       xfont{:--:}OSrev.tgz
+    bsd             etc{:--:}OSrev.tgz       xbase{:--:}OSrev.tgz     xserv{:--:}OSrev.tgz
+    bsd.rd          game{:--:}OSrev.tgz      xetc{:--:}OSrev.tgz      xshare{:--:}OSrev.tgz
     solaris{:-#-:} gunzip < base{:--:}OSrev.tgz | (cd /mnt; tar xvpf -)
     [...] for each set
 
-And finally copy an OpenBSD kernel (either bsd or bsd.scsi3) onto your disk.
+And finally copy the OpenBSD kernel onto your disk.
 
-    solaris# cp bsd.scsi3 /mnt/bsd
+    solaris# cp bsd /mnt/bsd
 
 The GNU gunzip program is not distributed as part of Solaris, but may be
 present in your /usr/local/bin.  If not, you will need to obtain it from a

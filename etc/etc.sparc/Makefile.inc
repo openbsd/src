@@ -1,12 +1,8 @@
-#	$OpenBSD: Makefile.inc,v 1.19 2011/04/15 03:11:38 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.20 2011/06/15 21:36:50 miod Exp $
 
 kernels: bsd bootblocks
 	cp ${.CURDIR}/../sys/arch/sparc/compile/GENERIC/bsd \
 	    ${RELEASEDIR}/bsd
-	s=`printf "find sd\nexit" | config -e ${RELEASEDIR}/bsd | \
-	    grep scsibus | awk '{print $$1}'`; \
-	    printf "add sd0\n%s\n%s\nchange %s\ny\n3\n\n\nquit\n" $$s $$s $$s | \
-	    config -e -o ${RELEASEDIR}/bsd.scsi3 ${RELEASEDIR}/bsd
 
 bsd:
 	cd ${.CURDIR}/../sys/arch/sparc/conf && config GENERIC
@@ -18,7 +14,7 @@ bootblocks:
 	${DESTDIR}/usr/mdec/binstall net /tmp && \
 	    mv /tmp/boot.sparc.openbsd ${RELEASEDIR}/boot.net
 
-MDEXT=	bsd bsd.rd bsd.scsi3 cd${OSrev}.iso \
+MDEXT=	bsd bsd.rd cd${OSrev}.iso \
 	floppy${OSrev}.fs miniroot${OSrev}.fs \
 	boot boot.net bootxx installboot
 

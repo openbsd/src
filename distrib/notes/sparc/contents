@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.64 2011/04/10 13:47:19 miod Exp $
+dnl	$OpenBSD: contents,v 1.65 2011/06/15 21:36:48 miod Exp $
 TopPart
 
 OpenBSDminiroot
@@ -11,9 +11,6 @@ OpenBSDfloppy
 OpenBSDdistsets
 
 OpenBSDbsd
-
-	bsd.scsi3	A kernel with SCSI target 3 re-mapped as 0 and 0
-			re-mapped as 3.
 
 OpenBSDrd
 
