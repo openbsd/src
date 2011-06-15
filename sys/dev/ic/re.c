@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.135 2011/04/14 21:06:37 jsg Exp $	*/
+/*	$OpenBSD: re.c,v 1.136 2011/06/15 13:19:19 jsg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -841,9 +841,9 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		break;
 	case RL_HWREV_8401E:
 	case RL_HWREV_8105E:
-		sc->rl_flags |= RL_FLAG_PHYWAKE | RL_FLAG_PHYWAKE_PM |
-		    RL_FLAG_PAR | RL_FLAG_DESCV2 | RL_FLAG_MACSTAT |
-		    RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD;
+		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
+		    RL_FLAG_PHYWAKE_PM | RL_FLAG_PAR | RL_FLAG_DESCV2 |
+		    RL_FLAG_MACSTAT | RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD;
 		break;
 	case RL_HWREV_8168_SPIN1:
 	case RL_HWREV_8168_SPIN2:
@@ -880,9 +880,9 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		    RL_FLAG_AUTOPAD | RL_FLAG_NOJUMBO;
 		break;
 	case RL_HWREV_8168E_VL:
-		sc->rl_flags |= RL_FLAG_PHYWAKE | RL_FLAG_PAR |
-		    RL_FLAG_DESCV2 | RL_FLAG_MACSTAT | RL_FLAG_CMDSTOP |
-		    RL_FLAG_AUTOPAD | RL_FLAG_NOJUMBO;
+		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
+		    RL_FLAG_PAR | RL_FLAG_DESCV2 | RL_FLAG_MACSTAT |
+		    RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD | RL_FLAG_NOJUMBO;
 		break;
 	case RL_HWREV_8169_8110SB:
 	case RL_HWREV_8169_8110SBL:
@@ -1145,8 +1145,11 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	timeout_set(&sc->timer_handle, re_tick, sc);
 
 	/* Take PHY out of power down mode. */
-	if (sc->rl_flags & RL_FLAG_PHYWAKE_PM)
+	if (sc->rl_flags & RL_FLAG_PHYWAKE_PM) {
 		CSR_WRITE_1(sc, RL_PMCH, CSR_READ_1(sc, RL_PMCH) | 0x80);
+		if (sc->sc_hwrev == RL_HWREV_8401E)
+			CSR_WRITE_1(sc, 0xD1, CSR_READ_1(sc, 0xD1) & ~0x08);
+	}
 	if (sc->rl_flags & RL_FLAG_PHYWAKE) {
 		re_gmii_writereg((struct device *)sc, 1, 0x1f, 0);
 		re_gmii_writereg((struct device *)sc, 1, 0x0e, 0);
