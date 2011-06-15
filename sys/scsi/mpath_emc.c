@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_emc.c,v 1.4 2011/04/28 10:43:36 dlg Exp $ */
+/*	$OpenBSD: mpath_emc.c,v 1.5 2011/06/15 01:10:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -232,7 +232,6 @@ int
 emc_inquiry(struct emc_softc *sc, char *model, char *serial)
 {
 	u_int8_t *buffer;
-	struct scsi_inquiry *cdb;
 	struct scsi_xfer *xs;
 	size_t length;
 	int error;
@@ -252,14 +251,7 @@ emc_inquiry(struct emc_softc *sc, char *model, char *serial)
 		goto done;
 	}
 
-	cdb = (struct scsi_inquiry *)xs->cmd;
-	cdb->opcode = INQUIRY;
-	_lto2b(length, cdb->length);
-
-	xs->cmdlen = sizeof(*cdb);
-	xs->flags |= SCSI_DATA_IN;
-	xs->data = buffer;
-	xs->datalen = length;
+	scsi_init_inquiry(xs, 0, 0, buffer, length);
 
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
