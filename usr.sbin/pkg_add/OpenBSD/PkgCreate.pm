@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.44 2011/04/25 00:16:58 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.45 2011/06/15 10:12:13 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -248,10 +248,6 @@ sub discover_directories
 {
 }
 
-sub remove_temp
-{
-}
-
 package OpenBSD::PackingElement::RcScript;
 sub archive
 {
@@ -441,18 +437,14 @@ sub makesum_plist
 		return $self->SUPER::makesum_plist($plist, $state);
 	}
 	my $dest = $self->source_to_dest;
-	my $d = dirname($self->cwd."/".$dest);
+	my $fullname = $self->cwd."/".$dest;
+	my $d = dirname($fullname);
 	$state->{mandir} //= OpenBSD::Temp::permanent_dir(
 	    $ENV{TMPDIR} // '/tmp', "manpage");
-	my $tempname = $state->{mandir}."/".basename($dest);
-	if (-f $tempname) {
-		my $i = 0;
-		do {
-			$tempname = $state->{mandir}."/".$i.basename($dest);
-			$i++;
-		} while (-f $tempname);
-	}
-	open my $fh, ">", $tempname or $state->error("can't create #1: #2", 
+	my $tempname = $state->{mandir}."/".$fullname;
+	require File::Path;
+	File::Path::make_path($state->{mandir}."/".$d);
+	open my $fh, ">", $tempname or $state->error("can't create #1: #2",
 	    $tempname, $!);
 	chmod 0444, $fh;
 	if (-d $state->{base}.$d) {
@@ -471,16 +463,6 @@ sub makesum_plist
 	my $e = OpenBSD::PackingElement::Manpage->add($plist, $dest);
 	$e->{wtempname} = $tempname;
 	$e->compute_checksum($e, $state, $state->{base});
-}
-
-sub remove_temp
-{
-	my $self = shift;
-
-	if (defined $self->{wtempname}) {
-		unlink($self->{wtempname});
-		$self->{wtempname} = undef;
-	}
 }
 
 package OpenBSD::PackingElement::Depend;
@@ -1085,7 +1067,7 @@ sub finish_manpages
 		require OpenBSD::Makewhatis;
 
 		try {
-			OpenBSD::Makewhatis::scan_manpages($state->{manpages}, 
+			OpenBSD::Makewhatis::scan_manpages($state->{manpages},
 			    $state);
 		} catchall {
 			$state->errsay("Error in makewhatis: #1", $_);
@@ -1093,9 +1075,9 @@ sub finish_manpages
 		$state->{v} --;
 	}
 
-	$plist->remove_temp;
 	if (defined $state->{mandir}) {
-		rmdir($state->{mandir});
+		require File::Path;
+		File::Path::remove_tree($state->{mandir});
 	}
 }
 
