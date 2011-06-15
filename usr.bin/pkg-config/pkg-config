@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.63 2011/06/12 21:33:49 jasper Exp $
+# $OpenBSD: pkg-config,v 1.64 2011/06/15 11:54:03 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -256,8 +256,10 @@ sub handle_config
 		}
 	};
 
+	if (defined $mode{cflags} or $mode{static} or $mode{printreqprivate}) {
+		&$get_props("Requires.private");
+	}
 	&$get_props("Requires");
-	&$get_props("Requires.private");
 
 }
 
@@ -357,9 +359,9 @@ sub find_config
 {
 	my ($p) = @_;
 	my $f = pathresolve($p);
-	if (defined $f) {
-		return get_config($f);
-	}
+
+	return get_config($f) if defined($f);
+
 	say_error("Package $p was not found in the pkg-config search path");
 
 	return undef;
@@ -456,6 +458,7 @@ sub do_libs
 		my $l = $configs{$pkg}->get_property('Libs', $variables);
 		push(@$libs, @$l) if defined $l;
 	}
+	
 	my $a = OpenBSD::PkgConfig->compress($libs,
 		sub {
 			local $_ = shift;
