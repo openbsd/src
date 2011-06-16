@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2011/06/16 08:34:59 jasper Exp $
+#	$OpenBSD: Makefile,v 1.20 2011/06/16 09:16:18 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -311,7 +311,7 @@ static-cflags2:
 
 static-libs1:
 	# Test grabbing Libs.private from this package
-	@echo "-L/usr/local/lib -lc -lm" > ${WANT}
+	@echo "-L/usr/local/lib -lc -lm -ll" > ${WANT}
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --print-errors \
 		--errors-to-stdout --libs --static static > ${GOT}
 	@diff -u ${WANT} ${GOT}
@@ -325,7 +325,7 @@ static-libs2:
 
 static-libs3:
 	# Test grabbing Libs.private from Requires.private in order
-	@echo "-L/usr/local/lib -L/tmp/lib -L/tmp/lib/foo -lutil -lz -lc -lm -lbaz\ quux" > ${WANT}
+	@echo "-L/usr/local/lib -L/tmp/lib -L/tmp/lib/foo -lutil -lz -lc -lm -ll -lbaz\ quux" > ${WANT}
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --print-errors \
 		--errors-to-stdout --libs --static static3 > ${GOT}
 	@diff -u ${WANT} ${GOT}
