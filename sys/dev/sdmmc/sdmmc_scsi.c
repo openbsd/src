@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.26 2010/10/25 10:36:49 krw Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.27 2011/06/16 01:09:16 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -80,6 +80,7 @@ void	*sdmmc_ccb_alloc(void *);
 void	sdmmc_ccb_free(void *, void *);
 
 void	sdmmc_scsi_cmd(struct scsi_xfer *);
+void	sdmmc_inquiry(struct scsi_xfer *);
 void	sdmmc_start_xs(struct sdmmc_softc *, struct sdmmc_ccb *);
 void	sdmmc_complete_xs(void *);
 void	sdmmc_done_xs(struct sdmmc_ccb *);
@@ -296,7 +297,6 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 	struct sdmmc_softc *sc = link->adapter_softc;
 	struct sdmmc_scsi_softc *scbus = sc->sc_scsibus;
 	struct sdmmc_scsi_target *tgt = &scbus->sc_tgt[link->target];
-	struct scsi_inquiry_data inq;
 	struct scsi_read_cap_data rcd;
 	u_int32_t blockno;
 	u_int32_t blockcnt;
@@ -327,17 +327,7 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 		break;
 
 	case INQUIRY:
-		bzero(&inq, sizeof inq);
-		inq.device = T_DIRECT;
-		inq.version = 2;
-		inq.response_format = 2;
-		inq.additional_length = 32;
-		strlcpy(inq.vendor, "SD/MMC ", sizeof(inq.vendor));
-		snprintf(inq.product, sizeof(inq.product),
-		    "Drive #%02d", link->target);
-		strlcpy(inq.revision, "   ", sizeof(inq.revision));
-		bcopy(&inq, xs->data, MIN(xs->datalen, sizeof inq));
-		scsi_done(xs);
+		sdmmc_inquiry(xs);
 		return;
 
 	case TEST_UNIT_READY:
@@ -381,6 +371,39 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 	ccb->ccb_blockno = blockno;
 
 	sdmmc_start_xs(sc, ccb);
+}
+
+void
+sdmmc_inquiry(struct scsi_xfer *xs)
+{
+	struct scsi_link *link = xs->sc_link;
+	struct scsi_inquiry_data inq;
+	struct scsi_inquiry *cdb = (struct scsi_inquiry *)xs->cmd;
+
+        if (xs->cmdlen != sizeof(*cdb)) {
+		xs->error = XS_DRIVER_STUFFUP;
+		goto done;
+	}
+
+	if (ISSET(cdb->flags, SI_EVPD)) {
+		xs->error = XS_DRIVER_STUFFUP;
+		goto done;
+	}
+
+	bzero(&inq, sizeof inq);
+	inq.device = T_DIRECT;
+	inq.version = 2;
+	inq.response_format = 2;
+	inq.additional_length = 32;
+	strlcpy(inq.vendor, "SD/MMC ", sizeof(inq.vendor));
+	snprintf(inq.product, sizeof(inq.product),
+	    "Drive #%02d", link->target);
+	strlcpy(inq.revision, "   ", sizeof(inq.revision));
+
+	bcopy(&inq, xs->data, MIN(xs->datalen, sizeof(inq)));
+
+done:
+	scsi_done(xs);
 }
 
 void
