@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.109 2011/01/24 18:32:54 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.110 2011/06/16 19:48:22 oga Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -338,7 +338,7 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Install interrupt handler. */
-	if (pci_intr_map(pa, &ih) != 0) {
+	if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
 		printf(": can't map interrupt\n");
 		return;
 	}
