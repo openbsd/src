@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.32 2011/06/16 10:44:33 mpi Exp $	*/
+/*	$OpenBSD: adb.c,v 1.33 2011/06/16 10:50:16 mpi Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
@@ -218,7 +218,6 @@ int	adbHardware = ADB_HW_UNKNOWN;
 int	adbActionState = ADB_ACTION_NOTREADY;
 int	adbWaiting;		/* waiting for return data from the device */
 int	adbWriteDelay;		/* working on (or waiting to do) a write */
-int	adbSoftPower;		/* machine supports soft power */
 
 int	adbWaitingCmd;		/* ADB command we are waiting for */
 u_char	*adbBuffer;		/* pointer to user data area */
@@ -269,7 +268,6 @@ void	adb_reinit(void);
 int	count_adbs(void);
 int	get_ind_adb_info(ADBDataBlock *, int);
 int	get_adb_info(ADBDataBlock *, int);
-void	adb_setup_hw_type(void);
 int	adb_op(Ptr, Ptr, Ptr, short);
 void	adb_hw_setup(void);
 int	adb_cmd_result(u_char *);
@@ -1004,8 +1002,6 @@ adb_reinit(void)
 	for (i = 0; i < 16; i++)
 		ADBDevTable[i].devType = 0;
 
-	adb_setup_hw_type();	/* setup hardware type */
-
 	adb_hw_setup();		/* init the VIA bits and hard reset ADB */
 
 	delay(1000);
@@ -1297,23 +1293,6 @@ adb_op_comprout(caddr_t buffer, caddr_t compdata, int cmd)
 	*(int *)compdata = 0x01;		/* update flag value */
 }
 
-void
-adb_setup_hw_type(void)
-{
-	switch (adbHardware) {
-	case ADB_HW_CUDA:
-		adbSoftPower = 1;
-		return;
-
-	case ADB_HW_PMU:
-		adbSoftPower = 1;
-		return;
-
-	default:
-		panic("unknown adb hardware");
-	}
-}
-
 int
 count_adbs(void)
 {
@@ -1486,9 +1465,6 @@ adb_poweroff(void)
 {
 	u_char output[ADB_MAX_MSG_LENGTH];
 	int result;
-
-	if (!adbSoftPower)
-		return -1;
 
 	adb_polling = 1;
 
