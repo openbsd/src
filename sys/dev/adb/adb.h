@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.h,v 1.4 2011/06/15 21:32:05 miod Exp $	*/
+/*	$OpenBSD: adb.h,v 1.5 2011/06/16 10:44:33 mpi Exp $	*/
 /*	$NetBSD: adbsys.h,v 1.4 2000/12/19 02:59:24 tsubai Exp $	*/
 
 /*-
@@ -77,9 +77,6 @@ typedef struct adb_event_s {
 #define ADBADDR_MS	ADBADDR_REL
 #define ADBADDR_TABLET	ADBADDR_ABS
 #define ADBADDR_MODEM	ADBADDR_DATATX
-
-#define ADBADDR_APM	0xac0ff		/* A faux-addr for the APM driver to
-					   latch onto */
 
 	/* Interesting keyboard handler IDs */
 #define ADB_STDKBD	1

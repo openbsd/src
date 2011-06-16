@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.15 2011/06/15 21:32:04 miod Exp $	*/
+/*	$OpenBSD: apm.c,v 1.16 2011/06/16 10:44:33 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -49,9 +49,8 @@
 #include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/apmvar.h>
+#include <machine/autoconf.h>
 
-#include <dev/adb/adb.h>
-#include <macppc/dev/adbvar.h>
 #include <macppc/dev/pm_direct.h>
 
 #if defined(APMDEBUG)
@@ -111,20 +110,12 @@ struct filterops apmread_filtops =
 int
 apmmatch(struct device *parent, void *match, void *aux)
 {
-	struct adb_attach_args *aa = (void *)aux;
+	struct confargs *ca = aux;
 
-	if (strcmp(aa->name, adb_device_name) != 0)
-		return 0;
+	if (strcmp(ca->ca_name, "apm") != 0)
+		return (0);
 
-	if (aa->origaddr != ADBADDR_APM ||
-	    aa->handler_id != ADBADDR_APM ||
-	    aa->adbaddr != ADBADDR_APM)
-		return 0;
-
-	if (adbHardware != ADB_HW_PMU)
-		return 0;
-
-	return 1;
+	return (1);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.31 2011/06/15 21:32:04 miod Exp $	*/
+/*	$OpenBSD: adb.c,v 1.32 2011/06/16 10:44:33 mpi Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
@@ -1696,13 +1696,12 @@ adbattach(struct device *parent, struct device *self, void *aux)
 	}
 
 #if NAPM > 0
-	/* Magic for signalling the apm driver to match. */
-	aa_args.name = adb_device_name;
-	aa_args.origaddr = ADBADDR_APM;
-	aa_args.adbaddr = ADBADDR_APM;
-	aa_args.handler_id = ADBADDR_APM;
-
-	(void)config_found(self, &aa_args, NULL);
+	if (adbHardware == ADB_HW_PMU) {
+		/* Magic for signalling the apm driver to match. */
+		nca.ca_name = "apm";
+		nca.ca_node = node;
+		config_found(self, &nca, NULL);
+	}
 #endif
 
 	/* Attach I2C controller. */
