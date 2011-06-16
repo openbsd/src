@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.113 2011/06/01 11:20:04 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.114 2011/06/16 14:48:36 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -53,7 +53,7 @@ sub match
 	if (!defined $f) {
 		return 0;
 	}
-	for my $i (values @{$h->{$f->{dir}}}) {
+	for my $i (@{$h->{$f->{dir}}}) {
 		if ($i->match($f)) {
 			return 1;
 		}
