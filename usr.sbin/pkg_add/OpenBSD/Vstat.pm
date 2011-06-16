@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.64 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.65 2011/06/16 10:58:12 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -473,7 +473,7 @@ sub tally
 	my ($data, $state) = @_;
 
 	return  if $data->{used} == 0;
-	$state->print($data->name, ": ", $data->{used}, " bytes");
+	$state->print("#1: #2 bytes", $data->name, $data->{used});
 	my $avail = $data->avail;
 	if ($avail < 0) {
 		$state->print(" (missing #1 blocks)", int(-$avail+1));
