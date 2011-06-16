@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.25 2011/04/27 20:55:42 jcs Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.26 2011/06/16 23:02:11 pirofti Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -716,5 +716,8 @@ struct acpi_ivrs {
 #define ACPI_DEV_IBM	"IBM0068"	/* IBM ThinkPad support */
 #define ACPI_DEV_LENOVO	"LEN0068"	/* Lenovo ThinkPad support */
 #define ACPI_DEV_ASUSAIBOOSTER	"ATK0110"	/* ASUSTeK AI Booster */
+#define ACPI_DEV_TOSHIBA_LIBRETTO	"TOS6200"	/* Toshiba Libretto support */
+#define ACPI_DEV_TOSHIBA_DYNABOOK	"TOS6207"	/* Toshiba Dynabook support */
+#define ACPI_DEV_TOSHIBA_SPA40	"TOS6208"	/* Toshiba SPA40 support */
 
 #endif	/* !_DEV_ACPI_ACPIREG_H_ */

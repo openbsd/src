@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.25 2011/01/04 21:17:49 kettenis Exp $
+#	$OpenBSD: files.acpi,v 1.26 2011/06/16 23:02:11 pirofti Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -80,6 +80,11 @@ file	dev/acpi/acpiasus.c		acpiasus
 device	acpithinkpad
 attach	acpithinkpad at acpi
 file	dev/acpi/acpithinkpad.c		acpithinkpad
+
+# Toshiba support
+device	acpitoshiba
+attach	acpitoshiba at acpi
+file	dev/acpi/acpitoshiba.c		acpitoshiba
 
 # Sony support
 device	acpisony
