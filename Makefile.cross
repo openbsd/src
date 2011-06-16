@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.41 2010/10/17 08:44:15 djm Exp $
+# $OpenBSD: Makefile.cross,v 1.42 2011/06/16 10:09:51 mpi Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -42,7 +42,7 @@ CROSSCXXFLAGS?=	${CROSSCPPFLAGS}
 # XXX
 BINMODE?=555
 BINOWN?=root
-BINOWN?=bin
+BINGRP?=bin
 
 CROSSDIR=	${DESTDIR}/usr/cross/${TARGET}
 CROSSENV=	AR=${CROSSDIR}/usr/${TARGET_CANON}/bin/ar \
