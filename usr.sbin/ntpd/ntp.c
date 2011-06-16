@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.114 2009/06/11 17:36:53 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.115 2011/06/16 11:46:55 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -637,6 +637,8 @@ priv_adjtime(void)
 
 	conf->status.reftime = gettime();
 	conf->status.stratum++;	/* one more than selected peer */
+	if (conf->status.stratum > NTP_MAXSTRATUM)
+		conf->status.stratum = NTP_MAXSTRATUM;
 	update_scale(offset_median);
 
 	conf->status.refid = offsets[i]->status.send_refid;
