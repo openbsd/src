@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.S,v 1.7 2008/06/27 06:03:08 ray Exp $	*/
+/*	$OpenBSD: spl.S,v 1.8 2011/06/16 19:46:39 kettenis Exp $	*/
 /*	$NetBSD: spl.S,v 1.3 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -122,12 +122,12 @@ IDTVEC(spllower)
 	movl	%edi,%ebx
 	leaq	1f(%rip),%r13		# address to resume loop at
 1:	movl	%ebx,%eax		# get cpl
-	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
+	movq	CPUVAR(IUNMASK)(,%rax,8),%rax
 	cli
-	andl	CPUVAR(IPENDING),%eax		# any non-masked bits left?
+	andq	CPUVAR(IPENDING),%rax		# any non-masked bits left?
 	jz	2f
-	bsrl	%eax,%eax
-	btrl	%eax,CPUVAR(IPENDING)
+	bsrq	%rax,%rax
+	btrq	%rax,CPUVAR(IPENDING)
 	movq	CPUVAR(ISOURCES)(,%rax,8),%rax
 	jmp	*IS_RECURSE(%rax)
 2:
@@ -150,12 +150,12 @@ IDTVEC(doreti)
 	decl	CPUVAR(IDEPTH)
 	leaq	1f(%rip),%r13
 1:	movl	%ebx,%eax
-	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
+	movq	CPUVAR(IUNMASK)(,%rax,8),%rax
 	cli
-	andl	CPUVAR(IPENDING),%eax
+	andq	CPUVAR(IPENDING),%rax
 	jz	2f
-	bsrl    %eax,%eax               # slow, but not worth optimizing
-	btrl    %eax,CPUVAR(IPENDING)
+	bsrq    %rax,%rax               # slow, but not worth optimizing
+	btrq    %rax,CPUVAR(IPENDING)
 	movq	CPUVAR(ISOURCES)(,%rax, 8),%rax
 	jmp	*IS_RESUME(%rax)
 2:	/* Check for ASTs on exit to user mode. */

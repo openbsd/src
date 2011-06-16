@@ -1,4 +1,4 @@
-/*	$OpenBSD: intrdefs.h,v 1.8 2010/11/13 04:16:42 guenther Exp $	*/
+/*	$OpenBSD: intrdefs.h,v 1.9 2011/06/16 19:46:40 kettenis Exp $	*/
 /*	$NetBSD: intrdefs.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 #ifndef _AMD64_INTRDEFS_H
@@ -44,22 +44,22 @@
  * Local APIC masks. Must not conflict with SIR_* above, and must
  * be >= NUM_LEGACY_IRQs. Note that LIR_IPI must be first.
  */
-#define LIR_IPI		31
-#define LIR_TIMER	30
+#define LIR_IPI		63
+#define LIR_TIMER	62
 
 /* Soft interrupt masks. */
-#define	SIR_CLOCK	29
-#define	SIR_NET		28
-#define	SIR_TTY		27
+#define	SIR_CLOCK	61
+#define	SIR_NET		60
+#define	SIR_TTY		59
 
 
 /*
- * Maximum # of interrupt sources per CPU. 32 to fit in one word.
+ * Maximum # of interrupt sources per CPU. 64 to fit in one word.
  * ioapics can theoretically produce more, but it's not likely to
  * happen. For multiple ioapics, things can be routed to different
  * CPUs.
  */
-#define MAX_INTR_SOURCES	32
+#define MAX_INTR_SOURCES	64
 #define NUM_LEGACY_IRQS		16
 
 /*

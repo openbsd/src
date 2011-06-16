@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.28 2011/05/28 21:10:40 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.29 2011/06/16 19:46:39 kettenis Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -119,11 +119,12 @@ x86_nmi(void)
 void
 intr_calculatemasks(struct cpu_info *ci)
 {
-	int irq, level, unusedirqs, intrlevel[MAX_INTR_SOURCES];
+	int irq, level;
+	u_int64_t unusedirqs, intrlevel[MAX_INTR_SOURCES];
 	struct intrhand *q;
 
 	/* First, figure out which levels each IRQ uses. */
-	unusedirqs = 0xffffffff;
+	unusedirqs = 0xffffffffffffffffUL;
 	for (irq = 0; irq < MAX_INTR_SOURCES; irq++) {
 		int levels = 0;
 
@@ -132,23 +133,23 @@ intr_calculatemasks(struct cpu_info *ci)
 			continue;
 		}
 		for (q = ci->ci_isources[irq]->is_handlers; q; q = q->ih_next)
-			levels |= 1 << q->ih_level;
+			levels |= (1 << q->ih_level);
 		intrlevel[irq] = levels;
 		if (levels)
-			unusedirqs &= ~(1 << irq);
+			unusedirqs &= ~(1UL << irq);
 	}
 
 	/* Then figure out which IRQs use each level. */
 	for (level = 0; level < NIPL; level++) {
-		int irqs = 0;
+		u_int64_t irqs = 0;
 		for (irq = 0; irq < MAX_INTR_SOURCES; irq++)
 			if (intrlevel[irq] & (1 << level))
-				irqs |= 1 << irq;
+				irqs |= (1UL << irq);
 		ci->ci_imask[level] = irqs | unusedirqs;
 	}
 
-	for (level = 0; level<(NIPL-1); level++)
-		ci->ci_imask[level+1] |= ci->ci_imask[level];
+	for (level = 0; level< (NIPL - 1); level++)
+		ci->ci_imask[level + 1] |= ci->ci_imask[level];
 
 	for (irq = 0; irq < MAX_INTR_SOURCES; irq++) {
 		int maxlevel = IPL_NONE;
@@ -502,7 +503,7 @@ intr_disestablish(struct intrhand *ih)
 
 	simple_lock(&ci->ci_slock);
 	pic->pic_hwmask(pic, ih->ih_pin);	
-	x86_atomic_clearbits_u32(&ci->ci_ipending, (1 << ih->ih_slot));
+	x86_atomic_clearbits_u64(&ci->ci_ipending, (1UL << ih->ih_slot));
 
 	/*
 	 * Remove the handler from the chain.
@@ -710,7 +711,7 @@ spllower(int nlevel)
 {
 	int olevel;
 	struct cpu_info *ci = curcpu();
-	u_int32_t imask;
+	u_int64_t imask;
 	u_long psl;
 
 	imask = IUNMASK(ci, nlevel);
@@ -740,6 +741,6 @@ softintr(int sir)
 {
 	struct cpu_info *ci = curcpu();
 
-	__asm __volatile("lock ; orl %1, %0" :
-	    "=m"(ci->ci_ipending) : "ir" (1 << sir));
+	__asm __volatile("lock; orq %1, %0" :
+	    "=m"(ci->ci_ipending) : "ir" (1UL << sir));
 }
