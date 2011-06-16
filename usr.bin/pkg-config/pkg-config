@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.65 2011/06/16 08:33:54 jasper Exp $
+# $OpenBSD: pkg-config,v 1.66 2011/06/16 08:38:30 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -27,9 +27,9 @@ use OpenBSD::PkgConfig;
 my @PKGPATH = qw(/usr/lib/pkgconfig /usr/local/lib/pkgconfig /usr/X11R6/lib/pkgconfig);
 
 if (defined($ENV{PKG_CONFIG_LIBDIR}) && $ENV{PKG_CONFIG_LIBDIR}) {
-	@PKGPATH = split /:/, $ENV{PKG_CONFIG_LIBDIR};
+	@PKGPATH = split(/:/, $ENV{PKG_CONFIG_LIBDIR});
 } elsif (defined($ENV{PKG_CONFIG_PATH}) && $ENV{PKG_CONFIG_PATH}) {
-	unshift(@PKGPATH, split /:/, $ENV{PKG_CONFIG_PATH});
+	unshift(@PKGPATH, split(/:/, $ENV{PKG_CONFIG_PATH}));
 }
 
 my $logfile = '';
@@ -124,7 +124,7 @@ my $rc = 0;
 {
 my $p = join(' ', @ARGV);
 $p =~ s/^\s+//;
-@ARGV = split /\,?\s+/, $p;
+@ARGV = split(/\,?\s+/, $p);
 }
 
 if ($mode{myminvers}) {
@@ -211,9 +211,9 @@ if ($mode{variable}) {
 my $dep_cfg_list = simplify_and_reverse($cfg_full_list);
 
 if ($mode{cflags} || $mode{libs} || $mode{variable}) {
-    push @vlist, do_cflags($dep_cfg_list) if $mode{cflags};
-    push @vlist, do_libs($dep_cfg_list) if $mode{libs};
-    print join(' ', @vlist), "\n" if $rc == 0;
+	push @vlist, do_cflags($dep_cfg_list) if $mode{cflags};
+	push @vlist, do_libs($dep_cfg_list) if $mode{libs};
+	print join(' ', @vlist), "\n" if $rc == 0;
 }
 
 exit $rc;
@@ -256,7 +256,9 @@ sub handle_config
 		}
 	};
 
-	if (defined $mode{cflags} or $mode{static} or $mode{printrequiresprivate}) {
+	if (defined $mode{cflags}
+	    or ($mode{static} && $mode{libs})
+	    or $mode{printrequiresprivate}) {
 		&$get_props("Requires.private");
 	}
 	&$get_props("Requires");
@@ -458,7 +460,8 @@ sub do_libs
 		my $l = $configs{$pkg}->get_property('Libs', $variables);
 		push(@$libs, @$l) if defined $l;
 	}
-	
+
+	# Get the linker path directives (-L).
 	my $a = OpenBSD::PkgConfig->compress($libs,
 		sub {
 			local $_ = shift;
@@ -476,7 +479,7 @@ sub do_libs
 
 	if ($mode{libs} & 1) {
 		my $b = OpenBSD::PkgConfig->rcompress($libs,
-			sub { shift =~ m/^-l/; });
+			    sub { shift =~ m/^-l/; });
 		return ($a, $b);
 	} else {
 		return $a;
@@ -533,7 +536,7 @@ Usage: $0 [options]
 --print-provides - print all the modules the given package provides
 --print-requires - print all the modules the given package requires
 --print-requires-private - print all the private modules the given package requires
---silence-errors - don't print error messages in case of error
+--silence-errors - don\'t print error messages in case of error
 --atleast-pkgconfig-version [version] - require a certain version of pkgconfig
 --cflags package [versionspec] [package [versionspec]]
 --cflags-only-I - only output -Iincludepath flags
@@ -560,8 +563,8 @@ sub self_version
 	my ($v) = @_;
 	my (@a, @b);
 
-	@a = split /\./, $v;
-	@b = split /\./, $version;
+	@a = split(/\./, $v);
+	@b = split(/\./, $version);
 
 	if (($b[0] >= $a[0]) && ($b[1] >= $a[1])) {
 		return 0;
@@ -593,8 +596,8 @@ sub compare
 		$suffix_b[1] = $2;
 	}
 
-	my @a = split /\./, $a;
-	my @b = split /\./, $b;
+	my @a = split(/\./, $a);
+	my @b = split(/\./, $b);
 
 	while (@a && @b) { #so long as both lists have something
 		if (!(@suffix_a || @suffix_b)) {
