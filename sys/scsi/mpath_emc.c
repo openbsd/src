@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_emc.c,v 1.5 2011/06/15 01:10:50 dlg Exp $ */
+/*	$OpenBSD: mpath_emc.c,v 1.6 2011/06/16 08:42:30 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -288,7 +288,7 @@ emc_sp_info(struct emc_softc *sc)
 
 	pg = dma_alloc(sizeof(*pg), PR_WAITOK);
 
-	error = scsi_inquire_vpd(sc->sc_path.p_link, &pg, sizeof(pg),
+	error = scsi_inquire_vpd(sc->sc_path.p_link, pg, sizeof(*pg),
 	    EMC_VPD_SP_INFO, scsi_autoconf);
 	if (error != 0)
 		goto done;
