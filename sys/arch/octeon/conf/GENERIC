@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.7 2011/05/08 13:39:30 syuu Exp $
+#	$OpenBSD: GENERIC,v 1.8 2011/06/16 11:22:30 syuu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -38,6 +38,11 @@ com1		at uartbus0
 
 pcibus*		at iobus0
 pci*		at pcibus?
+
+cn30xxgmx*	at iobus?
+cnmac*		at cn30xxgmx?
+
+rgephy*		at mii?
 
 # IDE Controller
 pciide*		at pci? flags 0x0000

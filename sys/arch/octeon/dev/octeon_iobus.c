@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_iobus.c,v 1.1 2011/05/08 13:24:55 syuu Exp $ */
+/*	$OpenBSD: octeon_iobus.c,v 1.2 2011/06/16 11:22:30 syuu Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -44,9 +44,11 @@
 #include <machine/autoconf.h>
 #include <machine/atomic.h>
 #include <machine/intr.h>
+#include <machine/octeonvar.h>
 
 #include <octeon/dev/octeonreg.h>
 #include <octeon/dev/iobusvar.h>
+#include <octeon/dev/cn30xxgmxreg.h>
 
 int	 iobusmatch(struct device *, void *, void *);
 void	 iobusattach(struct device *, struct device *, void *);
@@ -152,12 +154,14 @@ struct machine_bus_dma_tag iobus_bus_dma_tag = {
 #define	IOBUSDEV(name, unitno, unit)	\
 	{ name, unitno, unit, &iobus_tag, &iobus_bus_dma_tag }
 const struct iobus_unit iobus_units[] = {
-	{ OCTEON_CF_BASE, 0 }, /* octcf */
-	{ 0, 0 }, /* pcibus */
+	{ OCTEON_CF_BASE, 0 },			/* octcf */
+	{ 0, 0 },				/* pcibus */
+	{ GMX0_BASE_PORT0, CIU_INT_GMX_DRP0 }	/* cn30xxgmx */
 };
 struct iobus_attach_args iobus_children[] = {
 	IOBUSDEV("octcf", 0, &iobus_units[0]),
 	IOBUSDEV("pcibus", 0, &iobus_units[1]),
+	IOBUSDEV("cn30xxgmx", 0, &iobus_units[2])
 };
 #undef	IOBUSDEV
 
@@ -204,6 +208,7 @@ iobussubmatch(struct device *parent, void *vcf, void *args)
 void
 iobusattach(struct device *parent, struct device *self, void *aux)
 {
+	struct octeon_config oc;
 	uint i;
 
 	/*
@@ -218,6 +223,14 @@ iobusattach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	octeon_intr_init();
+
+	/* XXX */
+	oc.mc_iobus_bust = &iobus_tag;
+	oc.mc_iobus_dmat = &iobus_bus_dma_tag;
+	void	cn30xxfpa_bootstrap(struct octeon_config *);
+	cn30xxfpa_bootstrap(&oc);
+	void	cn30xxpow_bootstrap(struct octeon_config *);
+	cn30xxpow_bootstrap(&oc);
 
 	/*
 	 * Attach subdevices.

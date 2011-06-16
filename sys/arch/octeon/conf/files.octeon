@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.9 2011/05/15 08:52:48 matthieu Exp $
+#	$OpenBSD: files.octeon,v 1.10 2011/06/16 11:22:30 syuu Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -30,6 +30,7 @@ include	"dev/isa/files.isapnp"
 include	"dev/mii/files.mii"
 include	"dev/pci/files.pci"
 include	"dev/pci/files.agp"
+include	"dev/pckbc/files.pckbc"
 include	"dev/usb/files.usb"
 include "dev/bluetooth/files.bluetooth"
 include "dev/rasops/files.rasops"
@@ -53,9 +54,25 @@ device	iobus
 attach	iobus at mainbus
 file	arch/octeon/dev/octeon_iobus.c			iobus
 file	arch/octeon/dev/octeon_intr.c			iobus
+file	arch/octeon/dev/cn30xxfpa.c			iobus
+file	arch/octeon/dev/cn30xxpow.c			iobus
+file	arch/octeon/dev/cn30xxfau.c			iobus
+file	arch/octeon/dev/cn30xxpip.c			iobus
+file	arch/octeon/dev/cn30xxipd.c			iobus
+file	arch/octeon/dev/cn30xxpko.c			iobus
+file	arch/octeon/dev/cn30xxasx.c			iobus
+file	arch/octeon/dev/cn30xxsmi.c			iobus
 
 # On-board CF
 device	octcf: disk
+
+device	cn30xxgmx {}
+attach	cn30xxgmx at iobus
+file	arch/octeon/dev/cn30xxgmx.c			cn30xxgmx
+
+device	cnmac: ether, ifnet, mii, ifmedia
+attach	cnmac at cn30xxgmx
+file	arch/octeon/dev/if_cnmac.c			cnmac
 attach	octcf at iobus
 file	arch/octeon/dev/octcf.c				octcf
 
