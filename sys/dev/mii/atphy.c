@@ -1,4 +1,4 @@
-/*	$OpenBSD: atphy.c,v 1.5 2011/01/21 09:46:13 kevlo Exp $	*/
+/*	$OpenBSD: atphy.c,v 1.6 2011/06/17 09:59:52 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -126,6 +126,7 @@ atphy_attach(struct device *parent, struct device *self, void *aux)
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &atphy_funcs;
+	sc->mii_model = MII_MODEL(ma->mii_id2);
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
@@ -261,7 +262,7 @@ done:
 		 * Only retry autonegotiation every mii_anegticks seconds.
 		 */
 		if (sc->mii_ticks <= sc->mii_anegticks)
-			break;
+			return (0);
 
 		sc->mii_ticks = 0;
 		atphy_mii_phy_auto(sc);
@@ -383,6 +384,18 @@ atphy_mii_phy_auto(struct mii_softc *sc)
 	if (sc->mii_extcapabilities & (EXTSR_1000TFDX | EXTSR_1000THDX))
 		PHY_WRITE(sc, MII_100T2CR, GTCR_ADV_1000TFDX |
 		    GTCR_ADV_1000THDX);
+	else if (sc->mii_model == MII_MODEL_ATHEROS_F1) {
+		/*
+		 * AR8132 has 10/100 PHY and the PHY uses the same
+		 * model number of F1 gigabit PHY.  The PHY has no
+		 * ability to establish gigabit link so explicitly
+		 * disable 1000baseT configuration for the PHY.
+		 * Otherwise, there is a case that atphy(4) could
+		 * not establish a link against gigabit link partner
+		 * unless the link partner supports down-shifting.
+		 */
+		PHY_WRITE(sc, MII_100T2CR, 0);
+	}
 	PHY_WRITE(sc, MII_BMCR, BMCR_RESET | BMCR_AUTOEN | BMCR_STARTNEG);
 
 	return (EJUSTRETURN);
