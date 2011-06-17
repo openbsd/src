@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.14 2011/05/27 07:45:44 kevlo Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.15 2011/06/17 07:16:42 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -653,7 +653,7 @@ alc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (pci_intr_map(pa, &ih) != 0) {
+	if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
 		printf(": can't map interrupt\n");
 		goto fail;
 	}
