@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.45 2011/03/31 18:42:48 jasper Exp $	*/
+/*	$OpenBSD: ch.c,v 1.46 2011/06/17 00:00:51 matthew Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -135,9 +135,7 @@ struct chquirk chquirks[] = {
 };
 
 int
-chmatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+chmatch(struct device *parent, void *match, void *aux)
 {
 	struct scsi_attach_args *sa = aux;
 	int priority;
@@ -150,9 +148,7 @@ chmatch(parent, match, aux)
 }
 
 void
-chattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+chattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ch_softc *sc = (struct ch_softc *)self;
 	struct scsi_attach_args *sa = aux;
@@ -174,10 +170,7 @@ chattach(parent, self, aux)
 }
 
 int
-chopen(dev, flags, fmt, p)
-	dev_t dev;
-	int flags, fmt;
-	struct proc *p;
+chopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	struct ch_softc *sc;
 	int oldcounts[4];
@@ -255,10 +248,7 @@ chopen(dev, flags, fmt, p)
 }
 
 int
-chclose(dev, flags, fmt, p)
-	dev_t dev;
-	int flags, fmt;
-	struct proc *p;
+chclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
 
@@ -267,12 +257,7 @@ chclose(dev, flags, fmt, p)
 }
 
 int
-chioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+chioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
 	int error = 0;
@@ -345,9 +330,7 @@ chioctl(dev, cmd, data, flags, p)
 }
 
 int
-ch_move(sc, cm)
-	struct ch_softc *sc;
-	struct changer_move *cm;
+ch_move(struct ch_softc *sc, struct changer_move *cm)
 {
 	struct scsi_move_medium *cmd;
 	struct scsi_xfer *xs;
@@ -400,9 +383,7 @@ ch_move(sc, cm)
 }
 
 int
-ch_exchange(sc, ce)
-	struct ch_softc *sc;
-	struct changer_exchange *ce;
+ch_exchange(struct ch_softc *sc, struct changer_exchange *ce)
 {
 	struct scsi_exchange_medium *cmd;
 	struct scsi_xfer *xs;
@@ -464,9 +445,7 @@ ch_exchange(sc, ce)
 }
 
 int
-ch_position(sc, cp)
-	struct ch_softc *sc;
-	struct changer_position *cp;
+ch_position(struct ch_softc *sc, struct changer_position *cp)
 {
 	struct scsi_position_to_element *cmd;
 	struct scsi_xfer *xs;
@@ -554,9 +533,8 @@ copy_element_status(int flags,	struct read_element_status_descriptor *desc,
  * changer_element_status structures)
  */
 int
-ch_usergetelemstatus(sc, cesr)
-	struct ch_softc *sc;
-	struct changer_element_status_request *cesr;
+ch_usergetelemstatus(struct ch_softc *sc,
+    struct changer_element_status_request *cesr)
 {
 	struct changer_element_status *user_data = NULL;
 	struct read_element_status_header *st_hdr;
@@ -642,13 +620,8 @@ ch_usergetelemstatus(sc, cesr)
 }
 
 int
-ch_getelemstatus(sc, first, count, data, datalen, voltag)
-	struct ch_softc *sc;
-	int first;
-	int count;
-	caddr_t data;
-	size_t datalen;
-	int voltag;
+ch_getelemstatus(struct ch_softc *sc, int first, int count, caddr_t data,
+    size_t datalen, int voltag)
 {
 	struct scsi_read_element_status *cmd;
 	struct scsi_xfer *xs;
@@ -685,9 +658,7 @@ ch_getelemstatus(sc, first, count, data, datalen, voltag)
  * softc.
  */
 int
-ch_get_params(sc, flags)
-	struct ch_softc *sc;
-	int flags;
+ch_get_params(struct ch_softc *sc, int flags)
 {
 	union scsi_mode_sense_buf *data;
 	struct page_element_address_assignment *ea;
@@ -757,9 +728,7 @@ ch_get_params(sc, flags)
 }
 
 void
-ch_get_quirks(sc, inqbuf)
-	struct ch_softc *sc;
-	struct scsi_inquiry_data *inqbuf;
+ch_get_quirks(struct ch_softc *sc, struct scsi_inquiry_data *inqbuf)
 {
 	const struct chquirk *match;
 	int priority;
@@ -781,8 +750,7 @@ ch_get_quirks(sc, inqbuf)
  *                            (-1 = continue processing)
  */
 int
-ch_interpret_sense(xs)
-	struct scsi_xfer *xs;
+ch_interpret_sense(struct scsi_xfer *xs)
 {
 	struct scsi_sense_data *sense = &xs->sense;
 	struct scsi_link *sc_link = xs->sc_link;
