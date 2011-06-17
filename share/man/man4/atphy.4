@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atphy.4,v 1.3 2009/02/11 17:52:09 jmc Exp $
+.\"	$OpenBSD: atphy.4,v 1.4 2011/06/17 10:02:18 kevlo Exp $
 .\"
 .\" Copyright (c) 2008 Brad Smith <brad@comstyle.com>
 .\"
@@ -14,18 +14,19 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 11 2009 $
+.Dd $Mdocdate: June 17 2011 $
 .Dt ATPHY 4
 .Os
 .Sh NAME
 .Nm atphy
-.Nd Attansic Technology F1 10/100/Gigabit Ethernet PHY
+.Nd Attansic Technology F1/F2 10/100/Gigabit Ethernet PHY
 .Sh SYNOPSIS
 .Cd "atphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports the Attansic Technology F1 10/100/Gigabit Ethernet PHY.
+driver supports the Attansic Technology F1 10/100/Gigabit Ethernet PHY and
+F2 10/100 Ethernet PHY.
 .Sh SEE ALSO
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
