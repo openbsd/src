@@ -1,4 +1,4 @@
-$OpenBSD: acpitoshiba.c,v 1.1 2011/06/16 23:02:11 pirofti Exp $
+/* $OpenBSD: acpitoshiba.c,v 1.2 2011/06/17 01:27:41 krw Exp $ */
 /*-
  * Copyright (c) 2003 Hiroyuki Aizu <aizu@navi.org>
  * All rights reserved.
