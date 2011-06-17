@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.161 2011/04/11 02:04:48 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.162 2011/06/17 07:06:47 mk Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -3242,7 +3242,7 @@ uvideo_queryctrl(void *v, struct v4l2_queryctrl *qctrl)
 		return (EINVAL);
 	}
 
-	ctrl_data = malloc(ctrl_len, M_USBDEV, M_WAITOK);
+	ctrl_data = malloc(ctrl_len, M_USBDEV, M_WAITOK | M_CANFAIL);
 	if (ctrl_data == NULL) {
 		printf("%s: could not allocate control data\n", __func__);
 		return (ENOMEM);
@@ -3357,7 +3357,7 @@ uvideo_g_ctrl(void *v, struct v4l2_control *gctrl)
 		return (EINVAL);
 	}
 
-	ctrl_data = malloc(ctrl_len, M_USBDEV, M_WAITOK);
+	ctrl_data = malloc(ctrl_len, M_USBDEV, M_WAITOK | M_CANFAIL);
 	if (ctrl_data == NULL) {
 		printf("%s: could not allocate control data\n", __func__);
 		return (ENOMEM);
@@ -3405,7 +3405,7 @@ uvideo_s_ctrl(void *v, struct v4l2_control *sctrl)
 		return (EINVAL);
 	}
 
-	ctrl_data = malloc(ctrl_len, M_USBDEV, M_WAITOK);
+	ctrl_data = malloc(ctrl_len, M_USBDEV, M_WAITOK | M_CANFAIL);
 	if (ctrl_data == NULL) {
 		printf("%s: could not allocate control data\n", __func__);
 		return (ENOMEM);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.55 2011/04/22 23:19:54 deraadt Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.56 2011/06/17 07:06:47 mk Exp $	*/
 /* $FreeBSD: src/sys/dev/isp/isp_pci.c,v 1.148 2007/06/26 23:08:57 mjacob Exp $*/
 /*-
  * Copyright (c) 1997-2006 by Matthew Jacob
@@ -1275,13 +1275,15 @@ isp_pci_mbxdma(struct ispsoftc *isp)
 		return (0);
 
 	len = isp->isp_maxcmds * sizeof (XS_T *);
-	isp->isp_xflist = malloc(len, M_DEVBUF, M_WAITOK | M_ZERO);
+	isp->isp_xflist = malloc(len, M_DEVBUF,
+	    M_WAITOK | M_CANFAIL | M_ZERO);
 	if (isp->isp_xflist == NULL) {
 		isp_prt(isp, ISP_LOGERR, "cannot malloc xflist array");
 		return (1);
 	}
 	len = isp->isp_maxcmds * sizeof (bus_dmamap_t);
-	pcs->pci_xfer_dmap = (bus_dmamap_t *) malloc(len, M_DEVBUF, M_WAITOK);
+	pcs->pci_xfer_dmap = (bus_dmamap_t *) malloc(len, M_DEVBUF,
+	    M_WAITOK | M_CANFAIL);
 	if (pcs->pci_xfer_dmap == NULL) {
 		free(isp->isp_xflist, M_DEVBUF);
 		isp->isp_xflist = NULL;

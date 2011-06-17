@@ -1,4 +1,4 @@
-/*	$OpenBSD: bthidev.c,v 1.8 2010/08/05 13:13:17 miod Exp $	*/
+/*	$OpenBSD: bthidev.c,v 1.9 2011/06/17 07:06:46 mk Exp $	*/
 /*	$NetBSD: bthidev.c,v 1.16 2008/08/06 15:01:23 plunky Exp $	*/
 
 /*-
@@ -228,7 +228,8 @@ bthidev_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	sc->sc_dlen = bda->bd_hid.hid_dlen;
-	sc->sc_desc = malloc(bda->bd_hid.hid_dlen, M_BTHIDEV, M_WAITOK);
+	sc->sc_desc = malloc(bda->bd_hid.hid_dlen, M_BTHIDEV,
+	    M_WAITOK | M_CANFAIL);
 	if (sc->sc_desc == NULL) {
 		printf(": no memory\n");
 		return;

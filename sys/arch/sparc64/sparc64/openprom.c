@@ -1,4 +1,4 @@
-/*	$OpenBSD: openprom.c,v 1.16 2011/04/22 12:47:26 marco Exp $	*/
+/*	$OpenBSD: openprom.c,v 1.17 2011/06/17 07:06:46 mk Exp $	*/
 /*	$NetBSD: openprom.c,v 1.4 2002/01/10 06:21:53 briggs Exp $ */
 
 /*
@@ -254,7 +254,8 @@ openpromioctl(dev, cmd, data, flags, p)
 			error = ENAMETOOLONG;
 			break;
 		}
-		value = nextprop = malloc(OPROMMAXPARAM, M_TEMP, M_WAITOK);
+		value = nextprop = malloc(OPROMMAXPARAM, M_TEMP,
+		    M_WAITOK | M_CANFAIL);
 		if (nextprop == NULL) {
 			error = ENOMEM;
 			break;

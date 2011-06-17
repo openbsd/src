@@ -199,12 +199,12 @@ nnpfs_mount_common(struct mount *mp,
     size_t count;
     int error = 0;
 
-    data = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
+    data = malloc(MAXPATHLEN, M_TEMP, M_WAITOK | M_CANFAIL);
     if (data == NULL) {
         error = ENOMEM;
 	goto done;
     }
-    path = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
+    path = malloc(MAXPATHLEN, M_TEMP, M_WAITOK | M_CANFAIL);
     if (path == NULL) {
         error = ENOMEM;
 	goto done;

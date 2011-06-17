@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.171 2011/04/27 06:06:30 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.172 2011/06/17 07:06:46 mk Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -3409,7 +3409,7 @@ mpi_create_sensors(struct mpi_softc *sc)
 		return (0);
 
 	sc->sc_sensors = malloc(sizeof(struct ksensor) * vol,
-	    M_DEVBUF, M_WAITOK|M_ZERO);
+	    M_DEVBUF, M_WAITOK|M_CANFAIL|M_ZERO);
 	if (sc->sc_sensors == NULL)
 		return (1);
 

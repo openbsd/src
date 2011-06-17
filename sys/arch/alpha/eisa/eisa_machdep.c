@@ -1,4 +1,4 @@
-/* $OpenBSD: eisa_machdep.c,v 1.2 2008/07/25 21:11:14 miod Exp $ */
+/* $OpenBSD: eisa_machdep.c,v 1.3 2011/06/17 07:06:46 mk Exp $ */
 /* $NetBSD: eisa_machdep.c,v 1.1 2000/07/29 23:18:47 thorpej Exp $ */
 
 /*-
@@ -176,8 +176,6 @@ eisa_parse_mem(struct ecu_func *ecuf, u_int8_t *dp)
 
 	for (i = 0; i < ECUF_MEM_ENTRY_CNT; i++) {
 		ecum = malloc(sizeof(*ecum), M_DEVBUF, M_ZERO|M_WAITOK);
-		if (ecum == NULL)
-			panic("%s: can't allocate memory for ecum", __func__);
 
 		ecum->ecum_isram = dp[0] & 0x1;
 		ecum->ecum_unitsize = dp[1] & 0x3;
@@ -209,8 +207,6 @@ eisa_parse_irq(struct ecu_func *ecuf, u_int8_t *dp)
 
 	for (i = 0; i < ECUF_IRQ_ENTRY_CNT; i++) {
 		ecui = malloc(sizeof(*ecui), M_DEVBUF, M_ZERO|M_WAITOK);
-		if (ecui == NULL)
-			panic("%s: can't allocate memory for ecui", __func__);
 
 		ecui->ecui_irq = dp[0] & 0xf;
 		ecui->ecui_ist = (dp[0] & 0x20) ? IST_LEVEL : IST_EDGE;
@@ -237,8 +233,6 @@ eisa_parse_dma(struct ecu_func *ecuf, u_int8_t *dp)
 
 	for (i = 0; i < ECUF_DMA_ENTRY_CNT; i++) {
 		ecud = malloc(sizeof(*ecud), M_DEVBUF, M_ZERO|M_WAITOK);
-		if (ecud == NULL)
-			panic("%s: can't allocate memory for ecud", __func__);
 
 		ecud->ecud_drq = dp[0] & 0x7;
 		ecud->ecud_shared = dp[0] & 0x40;
@@ -266,8 +260,6 @@ eisa_parse_io(struct ecu_func *ecuf, u_int8_t *dp)
 
 	for (i = 0; i < ECUF_IO_ENTRY_CNT; i++) {
 		ecuio = malloc(sizeof(*ecuio), M_DEVBUF, M_ZERO|M_WAITOK);
-		if (ecuio == NULL)
-			panic("%s: can't allocate memory for ecuio", __func__);
 
 		ecuio->ecuio_addr = dp[1] | (dp[2] << 8);
 		ecuio->ecuio_size = (dp[0] & 0x1f) + 1;
@@ -396,9 +388,6 @@ eisa_init(eisa_chipset_tag_t ec)
 			    i, offset, eisaid);
 #endif
 			ecud = malloc(sizeof(*ecud), M_DEVBUF, M_ZERO|M_WAITOK);
-			if (ecud == NULL)
-				panic("%s: can't allocate memory for ecud",
-				    __func__);
 
 			SIMPLEQ_INIT(&ecud->ecud_funcs);
 
@@ -414,11 +403,8 @@ eisa_init(eisa_chipset_tag_t ec)
 	 */
 
 	cdata = malloc(CBUFSIZE, M_TEMP, M_ZERO|M_WAITOK);
-	if (cdata == NULL)
-		panic("%s: can't allocate memory for cdata", __func__);
+	
 	data = malloc(CBUFSIZE, M_TEMP, M_ZERO|M_WAITOK);
-	if (data == NULL)
-		panic("%s: can't allocate memory for data", __func__);
 
 	SIMPLEQ_FOREACH(ecud, &ecu_data_list, ecud_list) {
 		cfgaddr = eisa_config_addr + ecud->ecud_offset;
@@ -532,9 +518,7 @@ eisa_init(eisa_chipset_tag_t ec)
 #endif
 
 			ecuf = malloc(sizeof(*ecuf), M_DEVBUF, M_WAITOK);
-			if (ecuf == NULL)
-				panic("%s: can't allocate memory for ecuf",
-				    __func__);
+			
 			ecuf_init(ecuf);
 			ecuf->ecuf_funcno = func;
 			SIMPLEQ_INSERT_TAIL(&ecud->ecud_funcs, ecuf,

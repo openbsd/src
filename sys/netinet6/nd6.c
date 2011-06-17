@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.86 2011/03/09 23:31:24 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.87 2011/06/17 07:06:47 mk Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -2040,7 +2040,7 @@ nd6_sysctl(int name, void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	ol = oldlenp ? *oldlenp : 0;
 
 	if (oldp) {
-		p = malloc(*oldlenp, M_TEMP, M_WAITOK);
+		p = malloc(*oldlenp, M_TEMP, M_WAITOK | M_CANFAIL);
 		if (!p)
 			return ENOMEM;
 	} else

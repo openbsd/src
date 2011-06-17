@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.38 2011/04/03 15:36:02 jasper Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.39 2011/06/17 07:06:47 mk Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -1187,7 +1187,8 @@ emuxki_channel_new(struct emuxki_voice *voice, u_int8_t num)
 {
 	struct emuxki_channel *chan;
 
-	chan = malloc(sizeof(struct emuxki_channel), M_DEVBUF, M_WAITOK);
+	chan = malloc(sizeof(struct emuxki_channel), M_DEVBUF,
+	    M_WAITOK | M_CANFAIL);
 	if (chan == NULL)
 		return (NULL);
 

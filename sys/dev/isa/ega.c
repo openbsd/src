@@ -1,4 +1,4 @@
-/* $OpenBSD: ega.c,v 1.15 2009/09/05 14:09:35 miod Exp $ */
+/* $OpenBSD: ega.c,v 1.16 2011/06/17 07:06:47 mk Exp $ */
 /* $NetBSD: ega.c,v 1.4.4.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -842,7 +842,7 @@ ega_load_font(v, cookie, data)
 
 	if (vc->vc_fonts[slot] != NULL)
 		return (EEXIST);
-	f = malloc(sizeof(struct egafont), M_DEVBUF, M_WAITOK);
+	f = malloc(sizeof(struct egafont), M_DEVBUF, M_WAITOK | M_CANFAIL);
 	if (f == NULL)
 		return (ENOMEM);
 	strlcpy(f->name, data->name, sizeof(f->name));

@@ -931,7 +931,7 @@ nnpfs_symlink_common(struct vnode *dvp,
 
     NNPFSDEB(XDEBVNOPS, ("nnpfs_symlink: %s\n", name));
 
-    msg = malloc(sizeof(*msg), M_TEMP, M_WAITOK | M_ZERO);
+    msg = malloc(sizeof(*msg), M_TEMP, M_WAITOK | M_CANFAIL | M_ZERO);
     if (msg == NULL) {
         error = ENOMEM;
 	goto done;

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.67 2011/06/05 11:09:00 stsp Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.68 2011/06/17 07:06:46 mk Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -590,7 +590,7 @@ sr_crypto_change_maskkey(struct sr_discipline *sd,
 
 	c = (u_char *)sd->mds.mdd_crypto.scr_meta->scm_key;
 	ksz = sizeof(sd->mds.mdd_crypto.scr_key);
-	p = malloc(ksz, M_DEVBUF, M_WAITOK | M_ZERO);
+	p = malloc(ksz, M_DEVBUF, M_WAITOK | M_CANFAIL | M_ZERO);
 	if (p == NULL)
 		goto out;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.42 2011/05/25 00:12:46 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.43 2011/06/17 07:06:47 mk Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -5285,7 +5285,7 @@ mpii_create_sensors(struct mpii_softc *sc)
 	int			i;
 
 	sc->sc_sensors = malloc(sizeof(struct ksensor) * sc->sc_vd_count,
-	    M_DEVBUF, M_WAITOK | M_ZERO);
+	    M_DEVBUF, M_WAITOK | M_CANFAIL | M_ZERO);
 	if (sc->sc_sensors == NULL)
 		return (1);
 	sc->sc_nsensors = sc->sc_vd_count;
