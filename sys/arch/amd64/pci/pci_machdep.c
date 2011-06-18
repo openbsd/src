@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.50 2011/06/16 22:20:39 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.51 2011/06/18 17:28:18 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -312,7 +312,8 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 
 void msi_hwmask(struct pic *, int);
 void msi_hwunmask(struct pic *, int);
-void msi_setup(struct pic *, struct cpu_info *, int, int, int);
+void msi_addroute(struct pic *, struct cpu_info *, int, int, int);
+void msi_delroute(struct pic *, struct cpu_info *, int, int, int);
 
 struct pic msi_pic = {
 	{0, {NULL}, NULL, 0, "msi", NULL, 0, 0},
@@ -322,8 +323,8 @@ struct pic msi_pic = {
 #endif
 	msi_hwmask,
 	msi_hwunmask,
-	msi_setup,
-	msi_setup,
+	msi_addroute,
+	msi_delroute,
 	NULL,
 	ioapic_edge_stubs
 };
@@ -339,8 +340,40 @@ msi_hwunmask(struct pic *pic, int pin)
 }
 
 void
-msi_setup(struct pic *pic, struct cpu_info *ci, int pin, int idtvec, int type)
+msi_addroute(struct pic *pic, struct cpu_info *ci, int pin, int vec, int type)
 {
+	pci_chipset_tag_t pc = NULL; /* XXX */
+	pcitag_t tag = pin;
+	pcireg_t reg, addr;
+	int off;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
+		panic("%s: no msi capability", __func__);
+
+	addr = 0xfee00000UL | (ci->ci_apicid << 12);
+
+	if (reg & PCI_MSI_MC_C64) {
+		pci_conf_write(pc, tag, off + PCI_MSI_MA, addr);
+		pci_conf_write(pc, tag, off + PCI_MSI_MAU32, 0);
+		pci_conf_write(pc, tag, off + PCI_MSI_MD64, vec);
+	} else {
+		pci_conf_write(pc, tag, off + PCI_MSI_MA, addr);
+		pci_conf_write(pc, tag, off + PCI_MSI_MD32, vec);
+	}
+	pci_conf_write(pc, tag, off, reg | PCI_MSI_MC_MSIE);
+}
+
+void
+msi_delroute(struct pic *pic, struct cpu_info *ci, int pin, int vec, int type)
+{
+	pci_chipset_tag_t pc = NULL; /* XXX */
+	pcitag_t tag = pin;
+	pcireg_t reg;
+	int off;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
+		panic("%s: no msi capability", __func__);
+	pci_conf_write(pc, tag, off, reg & ~PCI_MSI_MC_MSIE);
 }
 
 int
@@ -498,33 +531,8 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 	struct pic *pic;
 
 	if (ih.line & APIC_INT_VIA_MSG) {
-		struct intrhand *ih;
-		struct intrsource *source;
-		pcireg_t reg, addr;
-		int off, vec;
-
-		if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
-			panic("%s: no msi capability", __func__);
-
-		ih = intr_establish(-1, &msi_pic, tag, IST_PULSE, level,
+		return intr_establish(-1, &msi_pic, tag, IST_PULSE, level,
 		    func, arg, what);
-		if (ih == NULL)
-			return (NULL);
-
-		source = ih->ih_cpu->ci_isources[ih->ih_slot];
-		addr = 0xfee00000UL | (ih->ih_cpu->ci_apicid << 12);
-		vec = source->is_idtvec;
-
-		if (reg & PCI_MSI_MC_C64) {
-			pci_conf_write(pc, tag, off + PCI_MSI_MA, addr);
-			pci_conf_write(pc, tag, off + PCI_MSI_MAU32, 0);
-			pci_conf_write(pc, tag, off + PCI_MSI_MD64, vec);
-		} else {
-			pci_conf_write(pc, tag, off + PCI_MSI_MA, addr);
-			pci_conf_write(pc, tag, off + PCI_MSI_MD32, vec);
-		}
-		pci_conf_write(pc, tag, off, reg | PCI_MSI_MC_MSIE);
-		return (ih);
 	}
 
 	pci_decompose_tag(pc, ih.tag, &bus, &dev, NULL);
@@ -556,23 +564,6 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 void
 pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
-	struct intrhand *ih = cookie;
-	struct cpu_info *ci;
-	struct pic *pic;
-
-	ci = ih->ih_cpu;
-	pic = ci->ci_isources[ih->ih_slot]->is_pic;
-
-	if (pic == &msi_pic) {
-		pcitag_t tag = ih->ih_pin;
-		pcireg_t reg;
-		int off;
-
-		if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
-			panic("%s: no msi capability", __func__);
-		pci_conf_write(pc, tag, off, reg & ~PCI_MSI_MC_MSIE);
-	}
-
 	intr_disestablish(cookie);
 }
 
