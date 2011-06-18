@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.86 2011/05/04 16:05:49 blambert Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.87 2011/06/18 23:52:49 jsg Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -3344,7 +3344,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 				continue;
 			}
 
-			memset(&suggestaddr, 0, sizeof(&suggestaddr));
+			memset(&suggestaddr, 0, sizeof(suggestaddr));
 			if (collision && nohisaddr) {
 				/* collision, hisaddr unknown - Conf-Rej */
 				type = CONF_REJ;
