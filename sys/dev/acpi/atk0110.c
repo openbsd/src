@@ -1,4 +1,4 @@
-/*	$OpenBSD: atk0110.c,v 1.6 2010/09/21 01:10:24 claudio Exp $	*/
+/*	$OpenBSD: atk0110.c,v 1.7 2011/06/19 17:55:37 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -275,7 +275,7 @@ aibs_add_sensor(struct aibs_softc *sc, char *name)
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, name,
 	    0, NULL, &ri)) {
 		printf("%s: aibs_add_sensor: %s not found\n",
-		    DEVNAME(sc), name, name);
+		    DEVNAME(sc), name);
 		aml_freevalue(&ri);
 		return;
 	}

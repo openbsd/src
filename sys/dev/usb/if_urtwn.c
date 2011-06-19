@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.16 2011/02/10 17:26:40 jakemsr Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.17 2011/06/19 17:55:37 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2222,7 +2222,7 @@ urtwn_load_firmware(struct urtwn_softc *sc)
 		error = urtwn_fw_loadpage(sc, page, ptr, mlen);
 		if (error != 0) {
 			printf("%s: could not load firmware page %d\n",
-			    sc->sc_dev.dv_xname);
+			    sc->sc_dev.dv_xname, page);
 			goto fail;
 		}
 		ptr += mlen;

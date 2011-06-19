@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.38 2010/05/11 09:36:07 claudio Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.39 2011/06/19 17:55:37 jsg Exp $	*/
 /*	$KAME: in_gif.c,v 1.50 2001/01/22 07:27:16 itojun Exp $	*/
 
 /*
@@ -84,7 +84,8 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf **m0)
 	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.rdomain)) {
 		printf("%s: trying to send packet on wrong domain. "
 		    "if %d vs. mbuf %d, AF %d\n", ifp->if_xname,
-		    ifp->if_rdomain, rtable_l2(m->m_pkthdr.rdomain));
+		    ifp->if_rdomain, rtable_l2(m->m_pkthdr.rdomain),
+		    family);
 	}
 #endif
 

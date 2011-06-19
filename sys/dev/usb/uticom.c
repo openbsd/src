@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.15 2011/06/17 07:06:47 mk Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.16 2011/06/19 17:55:37 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -357,7 +357,7 @@ fwload_done:
 	err = usbd_device2interface_handle(sc->sc_udev, UTICOM_IFACE_INDEX,
 	    &sc->sc_iface);
 	if (err) {
-		printf("failed to get interface: %s\n",
+		printf("%s: failed to get interface: %s\n",
 		    sc->sc_dev.dv_xname, usbd_errstr(err));
 		sc->sc_dying = 1;
 		return;
@@ -370,7 +370,7 @@ fwload_done:
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
-			printf("no endpoint descriptor for %d\n",
+			printf("%s: no endpoint descriptor for %d\n",
 			    sc->sc_dev.dv_xname, i);
 			sc->sc_dying = 1;
 			return;
