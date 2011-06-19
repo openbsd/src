@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.128 2011/06/19 04:29:41 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.129 2011/06/19 04:35:03 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -61,7 +61,6 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
-#include <sys/rwlock.h>
 #include <sys/uio.h>
 #include <sys/conf.h>
 #include <sys/dkio.h>
@@ -105,7 +104,6 @@ struct vnd_softc {
 	struct vnode	*sc_vp;			/* vnode */
 	struct ucred	*sc_cred;		/* credentials */
 	blf_ctx		*sc_keyctx;		/* key context */
-	struct rwlock	 sc_rwlock;
 };
 
 /* sc_flags */
@@ -127,9 +125,6 @@ int	vndsetcred(struct vnd_softc *, struct ucred *);
 int	vndgetdisklabel(dev_t, struct vnd_softc *, struct disklabel *, int);
 void	vndencrypt(struct vnd_softc *, caddr_t, size_t, daddr64_t, int);
 size_t	vndbdevsize(struct vnode *, struct proc *);
-
-#define vndlock(sc) rw_enter(&sc->sc_rwlock, RW_WRITE|RW_INTR)
-#define vndunlock(sc) rw_exit_write(&sc->sc_rwlock)
 
 void
 vndencrypt(struct vnd_softc *sc, caddr_t addr, size_t size, daddr64_t off,
@@ -172,10 +167,10 @@ vndattach(int num)
 	for (i = 0; i < num; i++) {
 		struct vnd_softc *sc = &vnd_softc[i];
 
-		rw_init(&sc->sc_rwlock, "vndlock");
 		sc->sc_dev.dv_unit = i;
 		snprintf(sc->sc_dev.dv_xname, sizeof(sc->sc_dev.dv_xname),
 		    "vnd%d", i);
+		disk_construct(&sc->sc_dk);
 		device_ref(&sc->sc_dev);
 	}
 	numvnd = num;
@@ -194,7 +189,7 @@ vndopen(dev_t dev, int flags, int mode, struct proc *p)
 		return (ENXIO);
 	sc = &vnd_softc[unit];
 
-	if ((error = vndlock(sc)) != 0)
+	if ((error = disk_lock(&sc->sc_dk)) != 0)
 		return (error);
 
 	if ((flags & FWRITE) && (sc->sc_flags & VNF_READONLY)) {
@@ -234,7 +229,7 @@ vndopen(dev_t dev, int flags, int mode, struct proc *p)
 	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
 bad:
-	vndunlock(sc);
+	disk_unlock(&sc->sc_dk);
 	return (error);
 }
 
@@ -281,7 +276,7 @@ vndclose(dev_t dev, int flags, int mode, struct proc *p)
 		return (ENXIO);
 	sc = &vnd_softc[unit];
 
-	if ((error = vndlock(sc)) != 0)
+	if ((error = disk_lock(&sc->sc_dk)) != 0)
 		return (error);
 
 	part = DISKPART(dev);
@@ -299,7 +294,7 @@ vndclose(dev_t dev, int flags, int mode, struct proc *p)
 	sc->sc_dk.dk_openmask =
 	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
-	vndunlock(sc);
+	disk_unlock(&sc->sc_dk);
 	return (0);
 }
 
@@ -487,12 +482,12 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		if (sc->sc_flags & VNF_INITED)
 			return (EBUSY);
 
-		if ((error = vndlock(sc)) != 0)
+		if ((error = disk_lock(&sc->sc_dk)) != 0)
 			return (error);
 
 		if ((error = copyinstr(vio->vnd_file, sc->sc_file,
 		    sizeof(sc->sc_file), NULL))) {
-			vndunlock(sc);
+			disk_unlock(&sc->sc_dk);
 			return (error);
 		}
 
@@ -514,7 +509,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			error = vn_open(&nd, FREAD, 0);
 		}
 		if (error) {
-			vndunlock(sc);
+			disk_unlock(&sc->sc_dk);
 			return (error);
 		}
 
@@ -525,7 +520,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			if (error) {
 				VOP_UNLOCK(nd.ni_vp, 0, p);
 				vn_close(nd.ni_vp, VNDRW(sc), p->p_ucred, p);
-				vndunlock(sc);
+				disk_unlock(&sc->sc_dk);
 				return (error);
 			}
 			sc->sc_size = vattr.va_size / sc->sc_secsize;
@@ -534,7 +529,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		sc->sc_vp = nd.ni_vp;
 		if ((error = vndsetcred(sc, p->p_ucred)) != 0) {
 			(void) vn_close(nd.ni_vp, VNDRW(sc), p->p_ucred, p);
-			vndunlock(sc);
+			disk_unlock(&sc->sc_dk);
 			return (error);
 		}
 
@@ -548,7 +543,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			    vio->vnd_keylen)) != 0) {
 				(void) vn_close(nd.ni_vp, VNDRW(sc),
 				    p->p_ucred, p);
-				vndunlock(sc);
+				disk_unlock(&sc->sc_dk);
 				return (error);
 			}
 
@@ -569,7 +564,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
 		disk_attach(&sc->sc_dev, &sc->sc_dk);
 
-		vndunlock(sc);
+		disk_unlock(&sc->sc_dk);
 
 		break;
 
@@ -577,7 +572,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		if ((sc->sc_flags & VNF_INITED) == 0)
 			return (ENXIO);
 
-		if ((error = vndlock(sc)) != 0)
+		if ((error = disk_lock(&sc->sc_dk)) != 0)
 			return (error);
 
 		/*
@@ -590,7 +585,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		if ((sc->sc_dk.dk_openmask & ~pmask) ||
 		    ((sc->sc_dk.dk_bopenmask & pmask) &&
 		    (sc->sc_dk.dk_copenmask & pmask))) {
-			vndunlock(sc);
+			disk_unlock(&sc->sc_dk);
 			return (EBUSY);
 		}
 
@@ -605,7 +600,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 		/* Detach the disk. */
 		disk_detach(&sc->sc_dk);
-		vndunlock(sc);
+		disk_unlock(&sc->sc_dk);
 		break;
 
 	case VNDIOCGET:
@@ -672,7 +667,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 
-		if ((error = vndlock(sc)) != 0)
+		if ((error = disk_lock(&sc->sc_dk)) != 0)
 			return (error);
 
 		error = setdisklabel(sc->sc_dk.dk_label,
@@ -683,7 +678,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 				    vndstrategy, sc->sc_dk.dk_label);
 		}
 
-		vndunlock(sc);
+		disk_unlock(&sc->sc_dk);
 		return (error);
 
 	default:

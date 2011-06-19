@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.103 2011/06/05 18:40:33 matthew Exp $ */
+/*	$OpenBSD: wd.c,v 1.104 2011/06/19 04:35:06 deraadt Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -148,8 +148,6 @@ void  wd_shutdown(void *);
 cdev_decl(wd);
 bdev_decl(wd);
 
-#define wdlock(wd)  disk_lock(&(wd)->sc_dk)
-#define wdunlock(wd)  disk_unlock(&(wd)->sc_dk)
 #define wdlookup(unit) (struct wd_softc *)disk_lookup(&wd_cd, (unit))
 
 
@@ -666,7 +664,7 @@ wdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	 * If this is the first open of this device, add a reference
 	 * to the adapter.
 	 */
-	if ((error = wdlock(wd)) != 0)
+	if ((error = disk_lock(&wd->sc_dk)) != 0)
 		goto bad4;
 
 	if (wd->sc_dk.dk_openmask != 0) {
@@ -716,7 +714,7 @@ wdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	wd->sc_dk.dk_openmask =
 	    wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
 
-	wdunlock(wd);
+	disk_unlock(&wd->sc_dk);
 	device_unref(&wd->sc_dev);
 	return 0;
 
@@ -725,7 +723,7 @@ bad:
 	}
 
 bad3:
-	wdunlock(wd);
+	disk_unlock(&wd->sc_dk);
 bad4:
 	device_unref(&wd->sc_dev);
 	return error;
@@ -743,7 +741,7 @@ wdclose(dev_t dev, int flag, int fmt, struct proc *p)
 		return ENXIO;
 
 	WDCDEBUG_PRINT(("wdclose\n"), DEBUG_FUNCS);
-	if ((error = wdlock(wd)) != 0)
+	if ((error = disk_lock(&wd->sc_dk)) != 0)
 		goto exit;
 
 	switch (fmt) {
@@ -762,7 +760,7 @@ wdclose(dev_t dev, int flag, int fmt, struct proc *p)
 		/* XXXX Must wait for I/O to complete! */
 	}
 
-	wdunlock(wd);
+	disk_unlock(&wd->sc_dk);
 
  exit:
 	device_unref(&wd->sc_dev);
@@ -867,7 +865,7 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 			goto exit;
 		}
 
-		if ((error = wdlock(wd)) != 0)
+		if ((error = disk_lock(&wd->sc_dk)) != 0)
 			goto exit;
 
 		error = setdisklabel(wd->sc_dk.dk_label,
@@ -880,7 +878,7 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 				    wdstrategy, wd->sc_dk.dk_label);
 		}
 
-		wdunlock(wd);
+		disk_unlock(&wd->sc_dk);
 		goto exit;
 
 #ifdef notyet

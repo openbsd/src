@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.21 2011/06/03 21:14:11 matthew Exp $	*/
+/*	$OpenBSD: flash.c,v 1.22 2011/06/19 04:35:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -54,8 +54,6 @@ int	 flash_wait_complete(struct flash_softc *);
 cdev_decl(flash);
 bdev_decl(flash);
 
-#define flashlock(sc) disk_lock(&(sc)->sc_dk)
-#define flashunlock(sc) disk_unlock(&(sc)->sc_dk)
 #define flashlookup(unit) \
 	(struct flash_softc *)device_lookup(&flash_cd, (unit))
 
@@ -678,7 +676,7 @@ flashopen(dev_t dev, int oflags, int devtype, struct proc *p)
 	if (sc == NULL)
 		return ENXIO;
 
-	if ((error = flashlock(sc)) != 0) {
+	if ((error = disk_lock(&sc->sc_dk)) != 0) {
 		device_unref(&sc->sc_dev);
 		return error;
 	}
@@ -698,14 +696,14 @@ flashopen(dev_t dev, int oflags, int devtype, struct proc *p)
 				sc->sc_flags |= FDK_SAFE;
 			if ((error = flashgetdisklabel(dev, sc, 
 			    sc->sc_dk.dk_label, 0)) != 0) {
-				flashunlock(sc);
+				disk_unlock(&sc->sc_dk);
 				device_unref(&sc->sc_dev);
 				return error;
 			}
 		}
 	} else if (((sc->sc_flags & FDK_SAFE) == 0) !=
 	    (flashsafe(dev) == 0)) {
-		flashunlock(sc);
+		disk_unlock(&sc->sc_dk);
 		device_unref(&sc->sc_dev);
 		return EBUSY;
 	}
@@ -715,7 +713,7 @@ flashopen(dev_t dev, int oflags, int devtype, struct proc *p)
 	if (part != RAW_PART &&
 	    (part >= sc->sc_dk.dk_label->d_npartitions ||
 	    sc->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED)) {
-		flashunlock(sc);
+		disk_unlock(&sc->sc_dk);
 		device_unref(&sc->sc_dev);
 		return ENXIO;
 	}
@@ -732,7 +730,7 @@ flashopen(dev_t dev, int oflags, int devtype, struct proc *p)
 	sc->sc_dk.dk_openmask =
 	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
-	flashunlock(sc);
+	disk_unlock(&sc->sc_dk);
 	device_unref(&sc->sc_dev);
 	return 0;
 }
@@ -748,7 +746,7 @@ flashclose(dev_t dev, int fflag, int devtype, struct proc *p)
 	if (sc == NULL)
 		return ENXIO;
 
-	if ((error = flashlock(sc)) != 0) {
+	if ((error = disk_lock(&sc->sc_dk)) != 0) {
 		device_unref(&sc->sc_dev);
 		return error;
 	}
@@ -770,7 +768,7 @@ flashclose(dev_t dev, int fflag, int devtype, struct proc *p)
 		/* XXX wait for I/O to complete? */
 	}
 
-	flashunlock(sc);
+	disk_unlock(&sc->sc_dk);
 	device_unref(&sc->sc_dev);
 	return 0;
 }

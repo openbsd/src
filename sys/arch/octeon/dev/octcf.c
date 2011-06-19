@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.4 2011/06/05 18:40:33 matthew Exp $ */
+/*	$OpenBSD: octcf.c,v 1.5 2011/06/19 04:35:06 deraadt Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -144,9 +144,6 @@ void  octcfdone(void *);
 
 cdev_decl(octcf);
 bdev_decl(octcf);
-
-#define octcflock(wd)  disk_lock(&(wd)->sc_dk)
-#define octcfunlock(wd)  disk_unlock(&(wd)->sc_dk)
 
 #define octcflookup(unit) (struct octcf_softc *)disk_lookup(&octcf_cd, (unit))
 
@@ -443,7 +440,7 @@ octcfopen(dev_t dev, int flag, int fmt, struct proc *p)
 	 * If this is the first open of this device, add a reference
 	 * to the adapter.
 	 */
-	if ((error = octcflock(wd)) != 0) 
+	if ((error = disk_lock(&wd->sc_dk)) != 0) 
 		goto bad4;
 
 	if (wd->sc_dk.dk_openmask != 0) {
@@ -493,7 +490,7 @@ octcfopen(dev_t dev, int flag, int fmt, struct proc *p)
 	wd->sc_dk.dk_openmask =
 	    wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
 
-	octcfunlock(wd);
+	disk_unlock(&wd->sc_dk);
 	device_unref(&wd->sc_dev);
 	return 0;
 
@@ -502,7 +499,7 @@ bad:
 	}
 
 bad3:
-	octcfunlock(wd);
+	disk_unlock(&wd->sc_dk);
 bad4:
 	device_unref(&wd->sc_dev);
 	return error;
@@ -520,7 +517,7 @@ octcfclose(dev_t dev, int flag, int fmt, struct proc *p)
 		return ENXIO;
 
 	OCTCFDEBUG_PRINT(("octcfclose\n"), DEBUG_FUNCS);
-	if ((error = octcflock(wd)) != 0)
+	if ((error = disk_lock(&wd->sc_dk)) != 0)
 		goto exit;
 
 	switch (fmt) {
@@ -534,7 +531,7 @@ octcfclose(dev_t dev, int flag, int fmt, struct proc *p)
 	wd->sc_dk.dk_openmask =
 	    wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
 
-	octcfunlock(wd);
+	disk_unlock(&wd->sc_dk);
 
  exit:
 	device_unref(&wd->sc_dev);
@@ -630,7 +627,7 @@ octcfioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 			goto exit;
 		}
 
-		if ((error = octcflock(wd)) != 0)
+		if ((error = disk_lock(&wd->sc_dk)) != 0)
 			goto exit;
 
 		error = setdisklabel(wd->sc_dk.dk_label,
@@ -641,7 +638,7 @@ octcfioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 				    octcfstrategy, wd->sc_dk.dk_label);
 		}
 
-		octcfunlock(wd);
+		disk_unlock(&wd->sc_dk);
 		goto exit;
 
 #ifdef notyet

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.228 2011/06/05 18:40:33 matthew Exp $	*/
+/*	$OpenBSD: sd.c,v 1.229 2011/06/19 04:35:06 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -127,8 +127,6 @@ const struct scsi_inquiry_pattern sd_patterns[] = {
 	 "",         "",                 ""},
 };
 
-#define sdlock(softc)   disk_lock(&(softc)->sc_dk)
-#define sdunlock(softc) disk_unlock(&(softc)->sc_dk)
 #define sdlookup(unit) (struct sd_softc *)disk_lookup(&sd_cd, (unit))
 
 int
@@ -357,7 +355,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
 	    sd_cd.cd_ndevs, part));
 
-	if ((error = sdlock(sc)) != 0) {
+	if ((error = disk_lock(&sc->sc_dk)) != 0) {
 		device_unref(&sc->sc_dev);
 		return (error);
 	}
@@ -460,7 +458,7 @@ bad:
 		sc_link->flags &= ~(SDEV_OPEN | SDEV_MEDIA_LOADED);
 	}
 
-	sdunlock(sc);
+	disk_unlock(&sc->sc_dk);
 	device_unref(&sc->sc_dev);
 	return (error);
 }
@@ -484,7 +482,7 @@ sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 		return (ENXIO);
 	}
 
-	if ((error = sdlock(sc)) != 0) {
+	if ((error = disk_lock(&sc->sc_dk)) != 0) {
 		device_unref(&sc->sc_dev);
 		return (error);
 	}
@@ -518,7 +516,7 @@ sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 		scsi_xsh_del(&sc->sc_xsh);
 	}
 
-	sdunlock(sc);
+	disk_unlock(&sc->sc_dk);
 	device_unref(&sc->sc_dev);
 	return 0;
 }
@@ -928,7 +926,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			goto exit;
 		}
 
-		if ((error = sdlock(sc)) != 0)
+		if ((error = disk_lock(&sc->sc_dk)) != 0)
 			goto exit;
 
 		error = setdisklabel(sc->sc_dk.dk_label,
@@ -939,7 +937,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 				    sdstrategy, sc->sc_dk.dk_label);
 		}
 
-		sdunlock(sc);
+		disk_unlock(&sc->sc_dk);
 		goto exit;
 
 	case DIOCLOCK:
