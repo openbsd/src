@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.229 2011/06/19 04:35:06 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.230 2011/06/19 04:55:34 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -472,7 +472,6 @@ sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct sd_softc *sc;
 	int part = DISKPART(dev);
-	int error;
 
 	sc = sdlookup(DISKUNIT(dev));
 	if (sc == NULL)
@@ -482,10 +481,7 @@ sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 		return (ENXIO);
 	}
 
-	if ((error = disk_lock(&sc->sc_dk)) != 0) {
-		device_unref(&sc->sc_dev);
-		return (error);
-	}
+	disk_lock_nointr(&sc->sc_dk);
 
 	switch (fmt) {
 	case S_IFCHR:

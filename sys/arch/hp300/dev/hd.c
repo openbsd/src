@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.66 2011/06/19 04:35:06 deraadt Exp $	*/
+/*	$OpenBSD: hd.c,v 1.67 2011/06/19 04:55:34 deraadt Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -602,16 +602,12 @@ hdclose(dev, flag, mode, p)
 	struct hd_softc *rs;
 	struct disk *dk;
 	int mask, s;
-	int error;
 
 	rs = hdlookup(unit);
 	if (rs == NULL)
 		return (ENXIO);
 
-	if ((error = disk_lock(&rs->sc_dkdev)) != 0) {
-		device_unref(&rs->sc_dev);
-		return (error);
-	}
+	disk_lock_nointr(&rs->sc_dkdev);
 
 	mask = 1 << DISKPART(dev);
  	dk = &rs->sc_dkdev;

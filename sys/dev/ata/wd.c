@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.104 2011/06/19 04:35:06 deraadt Exp $ */
+/*	$OpenBSD: wd.c,v 1.105 2011/06/19 04:55:34 deraadt Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -734,15 +734,14 @@ wdclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct wd_softc *wd;
 	int part = DISKPART(dev);
-	int error = 0;
 
 	wd = wdlookup(DISKUNIT(dev));
 	if (wd == NULL)
 		return ENXIO;
 
 	WDCDEBUG_PRINT(("wdclose\n"), DEBUG_FUNCS);
-	if ((error = disk_lock(&wd->sc_dk)) != 0)
-		goto exit;
+
+	disk_lock_nointr(&wd->sc_dk);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -762,9 +761,8 @@ wdclose(dev_t dev, int flag, int fmt, struct proc *p)
 
 	disk_unlock(&wd->sc_dk);
 
- exit:
 	device_unref(&wd->sc_dev);
-	return (error);
+	return (0);
 }
 
 void

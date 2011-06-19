@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.203 2011/06/19 04:35:06 deraadt Exp $	*/
+/*	$OpenBSD: cd.c,v 1.204 2011/06/19 04:55:34 deraadt Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -422,7 +422,6 @@ cdclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct cd_softc *sc;
 	int part = DISKPART(dev);
-	int error;
 
 	sc = cdlookup(DISKUNIT(dev));
 	if (sc == NULL)
@@ -432,10 +431,7 @@ cdclose(dev_t dev, int flag, int fmt, struct proc *p)
 		return (ENXIO);
 	}
 
-	if ((error = disk_lock(&sc->sc_dk)) != 0) {
-		device_unref(&sc->sc_dev);
-		return error;
-	}
+	disk_lock_nointr(&sc->sc_dk);
 
 	switch (fmt) {
 	case S_IFCHR:

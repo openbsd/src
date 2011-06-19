@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.22 2011/06/19 04:35:03 deraadt Exp $	*/
+/*	$OpenBSD: flash.c,v 1.23 2011/06/19 04:55:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -739,17 +739,13 @@ int
 flashclose(dev_t dev, int fflag, int devtype, struct proc *p)
 {
 	struct flash_softc *sc;
-	int error;
 	int part;
 
 	sc = flashlookup(flashunit(dev));
 	if (sc == NULL)
 		return ENXIO;
 
-	if ((error = disk_lock(&sc->sc_dk)) != 0) {
-		device_unref(&sc->sc_dev);
-		return error;
-	}
+	disk_lock_nointr(&sc->sc_dk);
 
 	/* Close one open partition. */
 	part = flashpart(dev);

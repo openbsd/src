@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.129 2011/06/19 04:35:03 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.130 2011/06/19 04:55:33 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -268,7 +268,7 @@ vndclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
-	int error = 0, part;
+	int part;
 
 	DNPRINTF(VDB_FOLLOW, "vndclose(%x, %x, %x, %p)\n", dev, flags, mode, p);
 
@@ -276,8 +276,7 @@ vndclose(dev_t dev, int flags, int mode, struct proc *p)
 		return (ENXIO);
 	sc = &vnd_softc[unit];
 
-	if ((error = disk_lock(&sc->sc_dk)) != 0)
-		return (error);
+	disk_lock_nointr(&sc->sc_dk);
 
 	part = DISKPART(dev);
 
