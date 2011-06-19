@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.67 2011/06/19 04:55:34 deraadt Exp $	*/
+/*	$OpenBSD: hd.c,v 1.68 2011/06/19 21:20:04 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -1162,7 +1162,7 @@ hdioctl(dev, cmd, data, flag, p)
 			goto exit;
 		}
 
-		if ((error = hdlock(sc)) != 0)
+		if ((error = disk_lock(&sc->sc_dkdev)) != 0)
 			goto exit;
 
 		error = setdisklabel(sc->sc_dkdev.dk_label,
@@ -1173,7 +1173,7 @@ hdioctl(dev, cmd, data, flag, p)
 				    hdstrategy, sc->sc_dkdev.dk_label);
 		}
 
-		hdunlock(sc);
+		disk_unlock(&sc->sc_dkdev);
 		goto exit;
 
 	default:
