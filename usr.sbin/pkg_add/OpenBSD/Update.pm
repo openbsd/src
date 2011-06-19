@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.147 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: Update.pm,v 1.148 2011/06/19 01:28:43 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -302,7 +302,7 @@ sub process_set
 	if (@problems > 0) {
 		$state->tracker->cant($set) if !$set->{quirks};
 		if ($set->{updates} != 0) {
-			$state->say("Can't update #1: no update found for ",
+			$state->say("Can't update #1: no update found for #2",
 			    $set->print, join(',', @problems));
 		}
 		return 0;
