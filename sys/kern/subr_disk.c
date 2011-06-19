@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.125 2011/06/19 04:51:06 matthew Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.126 2011/06/19 04:53:17 matthew Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -953,11 +953,7 @@ disk_unbusy(struct disk *diskp, long bcount, int read)
 int
 disk_lock(struct disk *dk)
 {
-	int error;
-
-	error = rw_enter(&dk->dk_lock, RW_WRITE|RW_INTR);
-
-	return (error);
+	return (rw_enter(&dk->dk_lock, RW_WRITE|RW_INTR));
 }
 
 void
@@ -969,7 +965,7 @@ disk_lock_nointr(struct disk *dk)
 void
 disk_unlock(struct disk *dk)
 {
-	rw_exit(&dk->dk_lock);
+	rw_exit_write(&dk->dk_lock);
 }
 
 int
