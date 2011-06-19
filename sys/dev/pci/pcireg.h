@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.41 2011/05/30 19:09:46 kettenis Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.42 2011/06/19 12:02:23 kettenis Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -536,7 +536,7 @@ typedef u_int8_t pci_revision_t;
 #define PCI_HT_MSI_ENABLED	0x00010000
 #define PCI_HT_MSI_FIXED	0x00020000
 
-#define PCI_HT_MSI_FIXED_ADDR	0xffe00000UL
+#define PCI_HT_MSI_FIXED_ADDR	0xfee00000UL
 
 #define PCI_HT_MSI_ADDR		0x04
 #define PCI_HT_MSI_ADDR_HI32	0x08
