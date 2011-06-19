@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.127 2011/06/19 04:28:46 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.128 2011/06/19 04:29:41 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -734,7 +734,7 @@ vndclear(struct vnd_softc *sc)
 	struct vnode *vp = sc->sc_vp;
 	struct proc *p = curproc;		/* XXX */
 
-	DNPRINTF(VDB_FOLLOW, "vndclear(%p): vp %p\n", vnd, vp);
+	DNPRINTF(VDB_FOLLOW, "vndclear(%p): vp %p\n", sc, vp);
 
 	sc->sc_flags = 0;
 	if (vp == NULL)
