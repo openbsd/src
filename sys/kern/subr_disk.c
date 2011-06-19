@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.123 2011/06/03 21:14:11 matthew Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.124 2011/06/19 04:11:48 matthew Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -784,7 +784,7 @@ disk_init(void)
 }
 
 int
-disk_construct(struct disk *diskp, char *lockname)
+disk_construct(struct disk *diskp)
 {
 	rw_init(&diskp->dk_lock, "dklk");
 	mtx_init(&diskp->dk_mtx, IPL_BIO);
@@ -803,7 +803,7 @@ disk_attach(struct device *dv, struct disk *diskp)
 	int majdev;
 
 	if (!ISSET(diskp->dk_flags, DKF_CONSTRUCTED))
-		disk_construct(diskp, diskp->dk_name);
+		disk_construct(diskp);
 
 	/*
 	 * Allocate and initialize the disklabel structures.  Note that
