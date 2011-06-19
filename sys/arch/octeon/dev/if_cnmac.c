@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.2 2011/06/17 03:36:24 yasuoka Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.3 2011/06/19 02:01:23 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -844,21 +844,21 @@ static int
 octeon_eth_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct octeon_eth_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
+
 	switch (cmd) {
 	case SIOCSIFADDR:
-		if (!(ifp->if_flags & IFF_UP)) {
-			ifp->if_flags |= IFF_UP;
+		ifp->if_flags |= IFF_UP;
+		if (!(ifp->if_flags & IFF_RUNNING))
 			octeon_eth_init(ifp);
-		}
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-#endif /* INET */
+#endif
 		break;
 
 	case SIOCSIFFLAGS:
@@ -872,6 +872,7 @@ octeon_eth_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				octeon_eth_stop(ifp, 0);
 		}
 		break;
+
 	case SIOCSIFMEDIA:
 		/* Flow control requires full-duplex mode. */
 		if (IFM_SUBTYPE(ifr->ifr_media) == IFM_AUTO ||
@@ -888,25 +889,22 @@ octeon_eth_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		/* FALLTHROUGH */
 	case SIOCGIFMEDIA:
-		/* XXX: Flow contorol */
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware filter
-			 * accordingly.
-			 */
-			if (ISSET(ifp->if_flags, IFF_RUNNING))
-				cn30xxgmx_set_filter(sc->sc_gmx_port);
-			error = 0;
-		}
-		break;
 	}
-	octeon_eth_start(ifp);
-	splx(s);
 
+	if (error == ENETRESET) {
+		if (ISSET(ifp->if_flags, IFF_RUNNING))
+			cn30xxgmx_set_filter(sc->sc_gmx_port);
+		error = 0;
+	}
+
+	octeon_eth_start(ifp);
+
+	splx(s);
 	return (error);
 }
 
