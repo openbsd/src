@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.19 2011/01/06 07:27:15 damien Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.20 2011/06/19 00:27:34 matthew Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -357,7 +357,7 @@ ar5008_gpio_read(struct athn_softc *sc, int pin)
 {
 	KASSERT(pin < sc->ngpiopins);
 	if ((sc->flags & ATHN_FLAG_USB) && !AR_SREV_9271(sc))
-		return (!(AR_READ(sc, AR7010_GPIO_IN) >> pin) & 1);
+		return (!((AR_READ(sc, AR7010_GPIO_IN) >> pin) & 1));
 	return ((AR_READ(sc, AR_GPIO_IN_OUT) >> (sc->ngpiopins + pin)) & 1);
 }
 
