@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.124 2011/06/19 04:11:48 matthew Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.125 2011/06/19 04:51:06 matthew Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -958,6 +958,12 @@ disk_lock(struct disk *dk)
 	error = rw_enter(&dk->dk_lock, RW_WRITE|RW_INTR);
 
 	return (error);
+}
+
+void
+disk_lock_nointr(struct disk *dk)
+{
+	rw_enter_write(&dk->dk_lock);
 }
 
 void
