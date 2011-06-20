@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.105 2011/03/19 09:32:36 jmc Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.106 2011/06/20 09:51:07 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: March 19 2011 $
+.Dd $Mdocdate: June 20 2011 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -245,6 +245,13 @@ by default, if dependencies are too strict,
 .Nm
 will merge updates together to make sure everything stays in synch.
 .Fl D Ar dontmerge
+disables that behavior.
+.It Ar donttie
+by default,
+.Nm
+will try to find new files in old packages by comparing the stored sha256,
+and tie the entries together to avoid extracting files needlessly.
+.Fl D Ar donttie
 disables that behavior.
 .It Ar downgrade
 don't filter out package versions older than what's currently installed.
