@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.59 2011/06/05 18:40:33 matthew Exp $ */
+/*	$OpenBSD: mcd.c,v 1.60 2011/06/20 08:47:59 matthew Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -121,8 +121,6 @@ struct mcd_softc {
 
 	char	*type;
 	int	flags;
-#define	MCDF_LOCKED	0x01
-#define	MCDF_WANTED	0x02
 #define	MCDF_LOADED	0x10	/* parameters loaded */
 #define	MCDF_EJECTING	0x20	/* please eject at close */
 	short	status;
@@ -221,8 +219,6 @@ int	mcdgetdisklabel(dev_t, struct mcd_softc *, struct disklabel *, int);
 int	mcd_get_parms(struct mcd_softc *);
 void	mcdstrategy(struct buf *);
 void	mcdstart(struct mcd_softc *);
-int	mcdlock(struct mcd_softc *);
-void	mcdunlock(struct mcd_softc *);
 void	mcd_pseudointr(void *);
 
 #define MCD_RETRIES	3
@@ -288,42 +284,6 @@ mcdattach(parent, self, aux)
 	    IPL_BIO, mcdintr, sc, sc->sc_dev.dv_xname);
 }
 
-/*
- * Wait interruptibly for an exclusive lock.
- *
- * XXX
- * Several drivers do this; it should be abstracted and made MP-safe.
- */
-int
-mcdlock(sc)
-	struct mcd_softc *sc;
-{
-	int error;
-
-	while ((sc->flags & MCDF_LOCKED) != 0) {
-		sc->flags |= MCDF_WANTED;
-		if ((error = tsleep(sc, PRIBIO | PCATCH, "mcdlck", 0)) != 0)
-			return error;
-	}
-	sc->flags |= MCDF_LOCKED;
-	return 0;
-}
-
-/*
- * Unlock and wake up any waiters.
- */
-void
-mcdunlock(sc)
-	struct mcd_softc *sc;
-{
-
-	sc->flags &= ~MCDF_LOCKED;
-	if ((sc->flags & MCDF_WANTED) != 0) {
-		sc->flags &= ~MCDF_WANTED;
-		wakeup(sc);
-	}
-}
-
 int
 mcdopen(dev, flag, fmt, p)
 	dev_t dev;
@@ -341,7 +301,7 @@ mcdopen(dev, flag, fmt, p)
 	if (!sc)
 		return ENXIO;
 
-	if ((error = mcdlock(sc)) != 0)
+	if ((error = disk_lock(&sc->sc_dk)) != 0)
 		return error;
 
 	if (sc->sc_dk.dk_openmask != 0) {
@@ -411,7 +371,7 @@ mcdopen(dev, flag, fmt, p)
 	}
 	sc->sc_dk.dk_openmask = sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
-	mcdunlock(sc);
+	disk_unlock(&sc->sc_dk);
 	return 0;
 
 bad2:
@@ -426,7 +386,7 @@ bad:
 	}
 
 bad3:
-	mcdunlock(sc);
+	disk_unlock(&sc->sc_dk);
 	return error;
 }
 
@@ -438,12 +398,10 @@ mcdclose(dev, flag, fmt, p)
 {
 	struct mcd_softc *sc = mcd_cd.cd_devs[DISKUNIT(dev)];
 	int part = DISKPART(dev);
-	int error;
 	
 	MCD_TRACE("close: partition=%d\n", part, 0, 0, 0);
 
-	if ((error = mcdlock(sc)) != 0)
-		return error;
+	disk_lock_nointr(&sc->sc_dk);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -467,7 +425,7 @@ mcdclose(dev, flag, fmt, p)
 			sc->flags &= ~MCDF_EJECTING;
 		}
 	}
-	mcdunlock(sc);
+	disk_unlock(&sc->sc_dk);
 	return 0;
 }
 
@@ -645,7 +603,7 @@ mcdioctl(dev, cmd, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
-		if ((error = mcdlock(sc)) != 0)
+		if ((error = disk_lock(&sc->sc_dk)) != 0)
 			return error;
 
 		error = setdisklabel(sc->sc_dk.dk_label,
@@ -653,7 +611,7 @@ mcdioctl(dev, cmd, addr, flag, p)
 		if (error == 0) {
 		}
 
-		mcdunlock(sc);
+		disk_unlock(&sc->sc_dk);
 		return error;
 
 	case CDIOCPLAYTRACKS:
