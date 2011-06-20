@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.105 2011/06/19 04:55:34 deraadt Exp $ */
+/*	$OpenBSD: wd.c,v 1.106 2011/06/20 06:45:07 matthew Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -370,19 +370,11 @@ int
 wddetach(struct device *self, int flags)
 {
 	struct wd_softc *sc = (struct wd_softc *)self;
-	struct buf *bp;
-	int s, bmaj, cmaj, mn;
+	int bmaj, cmaj, mn;
 
 	timeout_del(&sc->sc_restart_timeout);
 
-	/* Remove unprocessed buffers from queue */
-	s = splbio();
-	while ((bp = bufq_dequeue(&sc->sc_bufq)) != NULL) {
-		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
-		biodone(bp);
-	}
-	splx(s);
+	bufq_drain(&sc->sc_bufq);
 
 	/* Locate the lowest minor number to be detached. */
 	mn = DISKMINOR(self->dv_unit, 0);
