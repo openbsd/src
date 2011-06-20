@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.122 2011/01/25 11:46:57 espie Exp $
+# $OpenBSD: Add.pm,v 1.123 2011/06/20 09:46:22 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -358,7 +358,8 @@ sub prepare_for_addition
 		$state->{problems}++;
 		return;
 	}
-	my $s = $state->vstat->add($fname, $self->{size}, $pkgname);
+	my $s = $state->vstat->add($fname, $self->{tieto} ? 0 : $self->{size}, 
+	    $pkgname);
 	return unless defined $s;
 	if ($s->ro) {
 		$s->report_ro($state, $fname);

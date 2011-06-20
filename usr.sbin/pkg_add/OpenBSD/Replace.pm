@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.80 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: Replace.pm,v 1.81 2011/06/20 09:46:23 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -74,9 +74,22 @@ sub extract
 			File::Path::mkpath($d);
 		}
 		my ($fh, $tempname) = OpenBSD::Temp::permanent_file($d, "pkg");
+		$self->{tempname} = $tempname;
+		if ($self->{tieto}) {
+			my $src = $self->{tieto}->realname($state);
+			unlink($tempname);
+			$state->say("linking #1 to #2", $src, $tempname) 
+			    if $state->verbose >= 3;
+			if (link($src, $tempname) ||
+			    $state->copy_file($src, $tempname)) {
+				$state->{archive}->skip;
+				return;
+			}
+			# okay, it didn't work. recreate tempname.
+			open $fh, ">", $tempname;
+		}
 
 		$state->say("extracting #1", $tempname) if $state->verbose >= 3;
-		$self->{tempname} = $tempname;
 
 		# XXX don't apply destdir twice
 		$file->{destdir} = '';

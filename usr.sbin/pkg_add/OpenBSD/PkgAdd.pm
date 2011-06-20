@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.21 2011/01/03 19:01:04 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.22 2011/06/20 09:46:23 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -60,6 +60,41 @@ sub has_different_sig
 		}
 	}
 	return $plist->{different_sig};
+}
+
+package OpenBSD::PackingElement;
+sub hash_files
+{
+}
+sub tie_files
+{
+}
+
+package OpenBSD::PackingElement::FileBase;
+sub hash_files
+{
+	my ($self, $sha, $state) = @_;
+	return if $self->{link} or $self->{symlink} or $self->{nochecksum};
+	if (defined $self->{d}) {
+		$sha->{${$self->{d}}} = $self;
+	}
+}
+
+sub tie_files
+{
+	my ($self, $sha, $state) = @_;
+	return if $self->{link} or $self->{symlink} or $self->{nochecksum};
+	if (defined $sha->{${$self->{d}}}) {
+		my $tied = $sha->{${$self->{d}}};
+		# don't tie if there's a problem with the file
+		return unless -f $tied->realname($state);
+		# and do a sanity check that this file wasn't altered
+		return unless (stat _)[7] == $self->{size};
+		$self->{tieto} = $tied;
+		$tied->{tied} = 1;
+		$state->say("Tieing #1 to #2", $self->stringize, 
+		    $tied->stringize) if $state->verbose >= 3;
+	}
 }
 
 package OpenBSD::PkgAdd::State;
@@ -936,6 +971,16 @@ sub install_set
 			$set->cleanup(OpenBSD::Handle::CANT_INSTALL, "exec detected");
 			$state->tracker->cant($set);
 			return ();
+		}
+	}
+	if ($set->newer > 0 && $set->older_to_do > 0 && !$state->defines('donttie')) {
+		$set->{sha} = {};
+
+		for my $o ($set->older_to_do) {
+			$o->{plist}->hash_files($set->{sha}, $state);
+		}
+		for my $n ($set->newer) {
+			$n->{plist}->tie_files($set->{sha}, $state);
 		}
 	}
 	if ($set->newer > 0 || $set->older_to_do > 0) {

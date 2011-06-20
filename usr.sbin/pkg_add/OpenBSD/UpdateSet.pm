@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.64 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.65 2011/06/20 09:46:23 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -122,6 +122,7 @@ sub cleanup
 	$self->{errorinfo} //= $errorinfo;
 	delete $self->{solver};
 	delete $self->{conflict_cache};
+	delete $self->{sha};
 	$self->{finished} = 1;
 }
 
