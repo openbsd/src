@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.9 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: sync.c,v 1.10 2011/06/20 17:40:55 miod Exp $	*/
 /*	$NetBSD: sync.c,v 1.9 1998/08/30 09:19:40 veego Exp $	*/
 
 /*
@@ -253,16 +253,18 @@ Sync()
 		if (isstr != 0 && isstr != 1)
 			goto bad;
 		if (isstr) {
+			int ch;
 			char *p;
+
 			for (p = buf;;) {
-				switch (*p++ = getc(sync_fp)) {
+				ch = getc(sync_fp);
+				switch (ch) {
 				case '\n':
-					p--;
 				case EOF:
 					break;
 				default:
-					if (p >= buf + sizeof buf)
-						p--;
+					if (p < buf + sizeof buf)
+						*p++ = ch;
 					continue;
 				}
 				break;
