@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.131 2011/06/20 16:46:06 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.132 2011/06/20 22:14:17 tedu Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -551,7 +551,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			sc->sc_keyctx = malloc(sizeof(*sc->sc_keyctx), M_DEVBUF,
 			    M_WAITOK);
 			blf_key(sc->sc_keyctx, key, vio->vnd_keylen);
-			bzero(key, vio->vnd_keylen);
+			explicit_bzero(key, vio->vnd_keylen);
 		} else
 			sc->sc_keyctx = NULL;
 
@@ -595,7 +595,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 		/* Free crypto key */
 		if (sc->sc_keyctx) {
-			bzero(sc->sc_keyctx, sizeof(*sc->sc_keyctx));
+			explicit_bzero(sc->sc_keyctx, sizeof(*sc->sc_keyctx));
 			free(sc->sc_keyctx, M_DEVBUF);
 		}
 
