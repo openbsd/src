@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.67 2011/06/20 12:10:17 jasper Exp $
+# $OpenBSD: pkg-config,v 1.68 2011/06/20 12:11:27 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -72,36 +72,36 @@ if ($logfile) {
 # without having to go back and reload the files from disk.
 
 Getopt::Long::Configure('no_ignore_case');
-GetOptions(	'debug' => \$mode{debug},
-		'help' => \&help, #does not return
-		'usage' => \&help, #does not return
-		'list-all' => \$mode{list},
-		'version' => sub { print "$version\n" ; exit(0);} ,
-		'errors-to-stdout' => sub { $mode{estdout} = 1},
-		'print-errors' => sub { $mode{printerr} = 1},
-		'silence-errors' => sub { $mode{printerr} = 0},
-		'short-errors' => sub { $mode{printerr} = 0},
+GetOptions(	'debug' 		=> \$mode{debug},
+		'help' 			=> \&help, #does not return
+		'usage' 		=> \&help, #does not return
+		'list-all' 		=> \$mode{list},
+		'version' 		=> sub { print "$version\n" ; exit(0);} ,
+		'errors-to-stdout' 	=> sub { $mode{estdout} = 1},
+		'print-errors' 		=> sub { $mode{printerr} = 1},
+		'silence-errors' 	=> sub { $mode{printerr} = 0},
+		'short-errors' 		=> sub { $mode{printerr} = 0},
 		'atleast-pkgconfig-version=s' => \$mode{myminvers},
-		'print-provides' => \$mode{printprovides},
-		'print-requires' => \$mode{printrequires},
+		'print-provides' 	=> \$mode{printprovides},
+		'print-requires' 	=> \$mode{printrequires},
 		'print-requires-private' => \$mode{printrequiresprivate},
 
-		'cflags' => sub { $mode{cflags} = 3},
-		'cflags-only-I' => sub { $mode{cflags} |= 1},
-		'cflags-only-other' => sub { $mode{cflags} |= 2},
-		'libs' => sub { $mode{libs} = 7},
-		'libs-only-l' => sub { $mode{libs} |= 1},
-		'libs-only-L' => sub { $mode{libs} |= 2},
-		'libs-only-other' => sub { $mode{libs} |= 4},
-		'exists' => sub { $mode{exists} = 1} ,
-		'static' => sub { $mode{static} = 1},
-		'uninstalled' => sub { $mode{uninstalled} = 1},
-		'atleast-version=s' => \$mode{minversion},
-		'exact-version=s' => \$mode{exactversion},
-		'max-version=s' => \$mode{maxversion},
-		'modversion' => \$mode{modversion},
-		'variable=s' => \$mode{variable},
-		'define-variable=s' => $variables,
+		'cflags'		=> sub { $mode{cflags} = 3},
+		'cflags-only-I'		=> sub { $mode{cflags} |= 1},
+		'cflags-only-other'	=> sub { $mode{cflags} |= 2},
+		'libs'			=> sub { $mode{libs} = 7},
+		'libs-only-l'		=> sub { $mode{libs} |= 1},
+		'libs-only-L' 		=> sub { $mode{libs} |= 2},
+		'libs-only-other' 	=> sub { $mode{libs} |= 4},
+		'exists' 		=> sub { $mode{exists} = 1} ,
+		'static' 		=> sub { $mode{static} = 1},
+		'uninstalled' 		=> sub { $mode{uninstalled} = 1},
+		'atleast-version=s' 	=> \$mode{minversion},
+		'exact-version=s' 	=> \$mode{exactversion},
+		'max-version=s' 	=> \$mode{maxversion},
+		'modversion' 		=> \$mode{modversion},
+		'variable=s' 		=> \$mode{variable},
+		'define-variable=s' 	=> $variables,
 	);
 
 # Initial value of printerr depends on the options...
@@ -456,8 +456,10 @@ sub do_libs
 
 	my $libs = [];
 
-	# In static mode, we have to make sure we print the libs in dependency
-	# order, not in search order. Ordering matters for static linking.
+	# In static mode, we have to make sure we discover the libs in dependency
+	# order, not in search order. Ordering matters for static linking:
+	# Start with Libs (first our own, then dependencies), and append
+	# Libs.private (same order as for Libs).
 	foreach my $pkg (@$list) {
 		my $l = $configs{$pkg}->get_property('Libs', $variables);
 		push(@$libs, @$l) if defined $l;
@@ -467,7 +469,8 @@ sub do_libs
 		}
 	}
 
-	# Get the linker path directives (-L).
+	# Get the linker path directives (-L) and store it in $a.
+	# $b will be the actual libraries.
 	my $a = OpenBSD::PkgConfig->compress($libs,
 		sub {
 			local $_ = shift;
