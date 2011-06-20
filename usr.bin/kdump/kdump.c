@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.50 2011/06/02 16:19:13 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.51 2011/06/20 17:54:48 otto Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -35,6 +35,7 @@
 #include <sys/ktrace.h>
 #include <sys/ioctl.h>
 #include <sys/ptrace.h>
+#include <sys/socket.h>
 #include <sys/sysctl.h>
 #define _KERNEL
 #include <sys/errno.h>
@@ -51,6 +52,7 @@
 
 #include "ktrace.h"
 #include "kdump.h"
+#include "kdump_subr.h"
 #include "extern.h"
 
 int timestamp, decimal, iohex, fancy = 1, tail, maxdata;
@@ -311,10 +313,22 @@ ioctldecode(u_long cmd)
 		printf(")");
 }
 
+#define print_number(i, n, c) do {			\
+	if (c)						\
+		(void)putchar(c);			\
+	if (decimal)					\
+		(void)printf("%ld", (long)*i);		\
+	else						\
+		(void)printf("%#lx", (long)*i);		\
+	i++;						\
+	n--; 						\
+	c = ',';					\
+} while (0);
+
 static void
 ktrsyscall(struct ktr_syscall *ktr)
 {
-	int argsize = ktr->ktr_argsize;
+	int narg = ktr->ktr_argsize / sizeof(register_t);
 	register_t *ap;
 
 	if (ktr->ktr_code >= current->nsysnames || ktr->ktr_code < 0)
@@ -323,10 +337,11 @@ ktrsyscall(struct ktr_syscall *ktr)
 		(void)printf("%s", current->sysnames[ktr->ktr_code]);
 	ap = (register_t *)((char *)ktr + sizeof(struct ktr_syscall));
 	(void)putchar('(');
-	if (argsize) {
+	if (narg) {
 		char c = '\0';
 		if (fancy) {
-			if (ktr->ktr_code == SYS_ioctl) {
+			switch (ktr->ktr_code) {
+			case SYS_ioctl: {
 				const char *cp;
 
 				if (decimal)
@@ -334,15 +349,17 @@ ktrsyscall(struct ktr_syscall *ktr)
 				else
 					(void)printf("%#lx", (long)*ap);
 				ap++;
-				argsize -= sizeof(register_t);
+				narg--;
 				if ((cp = ioctlname(*ap)) != NULL)
 					(void)printf(",%s", cp);
 				else
 					ioctldecode(*ap);
 				c = ',';
 				ap++;
-				argsize -= sizeof(register_t);
-			} else if (ktr->ktr_code == SYS___sysctl) {
+				narg--;
+				break;
+			}
+			case SYS___sysctl: {
 				int *np, n;
 
 				n = ap[1];
@@ -358,8 +375,10 @@ ktrsyscall(struct ktr_syscall *ktr)
 
 				c = ',';
 				ap += 2;
-				argsize -= 2 * sizeof(register_t);
-			} else if (ktr->ktr_code == SYS_ptrace) {
+				narg -= 2;
+				break;
+			}
+			case SYS_ptrace: 
 				if (*ap >= 0 && *ap <
 				    sizeof(ptrace_ops) / sizeof(ptrace_ops[0]))
 					(void)printf("%s", ptrace_ops[*ap]);
@@ -396,10 +415,289 @@ ktrsyscall(struct ktr_syscall *ktr)
 				}
 				c = ',';
 				ap++;
-				argsize -= sizeof(register_t);
+				narg--;
+				break;
+			case SYS_access:
+				print_number(ap, narg, c);
+				(void)putchar(',');
+				accessmodename((int)*ap);
+				ap++;
+				narg--;
+				break;
+			case SYS_chmod:
+			case SYS_fchmod: 
+				print_number(ap, narg, c);
+				(void)putchar(',');
+				modename((int)*ap);
+				ap++;
+				narg--;
+				break;
+			case SYS_fcntl: {
+				int cmd;
+				int arg;
+				print_number(ap, narg, c);
+				cmd = *ap;
+				arg = *++ap;
+				(void)putchar(',');
+				fcntlcmdname(cmd, arg, decimal);
+				ap++;
+				narg -= 2;
+				break;
+			}
+			case SYS_flock:
+				print_number(ap, narg, c);
+				(void)putchar(',');
+				flockname((int)*ap);
+				ap++;
+				narg--;
+				break;
+			case SYS_getrlimit:
+			case SYS_setrlimit:
+				rlimitname((int)*ap);
+				ap++;
+				narg--;
+				c = ',';
+				break;
+			case SYS_getsockopt:
+			case SYS_setsockopt:
+				print_number(ap, narg, c);
+				(void)putchar(',');
+				sockoptlevelname((int)*ap, decimal);
+				if ((int)*ap == SOL_SOCKET) {
+					ap++;
+					narg--;
+					(void)putchar(',');
+					sockoptname((int)*ap);
+				}
+				ap++;
+				narg--;
+				break;
+			case SYS_kill:
+				print_number(ap, narg, c);
+				(void)putchar(',');
+				signame((int)*ap);
+				ap++;
+				narg--;
+				break;
+			case SYS_lseek:
+				print_number(ap, narg, c);
+				/* skip padding */
+				ap++;
+				narg--;
+				print_number(ap, narg, c);
+				(void)putchar(',');
+				whencename((int)*ap);
+				ap++;
+				narg--;
+				break;
+			case SYS_madvise:
+				print_number(ap, narg, c);
+				print_number(ap, narg, c);
+				(void)putchar(',');
+				madvisebehavname((int)*ap);
+				ap++;
+				narg--;
+				break;
+			case SYS_minherit:
+				print_number(ap, narg, c);
+				print_number(ap, narg, c);
+				(void)putchar(',');
+				minheritname((int)*ap);
+				ap++;
+				narg--;
+				break;
+			case SYS_mlockall:
+				mlockallname((int)*ap);
+				ap++;
+				narg--;
+				break;
+			case SYS_mmap:
+				print_number(ap, narg, c);
+				print_number(ap, narg, c);
+				(void)putchar(',');
+				mmapprotname((int)*ap);
+				(void)putchar(',');
+				ap++;
+				narg--;
+				mmapflagsname((int)*ap);
+				ap++;
+				narg--;
+				print_number(ap, narg, c);
+				/* skip padding */
+				ap++;
+				narg--;
+				break;
+			case SYS_mprotect:
+				print_number(ap, narg, c);
+				print_number(ap, narg, c);
+				(void)putchar(',');
+				mmapprotname((int)*ap);
+				ap++;
+				narg--;
+				break;
+			case SYS_mquery:
+				print_number(ap, narg, c);
+				print_number(ap, narg, c);
+				(void)putchar(',');
+				mmapprotname((int)*ap);
+				ap++;
+				narg--;
+				(void)putchar(',');
+				mmapflagsname((int)*ap);
+				ap++;
+				narg--;
+				print_number(ap, narg, c);
+				/* skip padding */
+				ap++;
+				narg--;
+				break;
+			case SYS_msync:
+				print_number(ap, narg, c);
+				print_number(ap, narg, c);
+				(void)putchar(',');
+				msyncflagsname((int)*ap);
+				ap++;
+				narg--;
+				break;
+			case SYS_msgctl:
+				print_number(ap, narg, c);
+				(void)putchar(',');
+				shmctlname((int)*ap);
+				ap++;
+				narg--;
+				break;
+			case SYS_open: {
+				int     flags;
+				int     mode;
+				print_number(ap, narg, c);
+				flags = *ap;
+				mode = *++ap;
+				(void)putchar(',');
+				flagsandmodename(flags, mode, decimal);
+				ap++;
+				narg -= 2;
+				break;
+			}
+			case SYS_pread:
+			case SYS_preadv:
+			case SYS_pwrite:
+			case SYS_pwritev:
+				print_number(ap, narg, c);
+				print_number(ap, narg, c);
+				print_number(ap, narg, c);
+				/* skip padding */
+				ap++;
+				narg--;
+				break;
+			case SYS_recvmsg:
+			case SYS_sendmsg:
+				print_number(ap, narg, c);
+				print_number(ap, narg, c);
+				(void)putchar(',');
+				sendrecvflagsname((int)*ap);
+				ap++;
+				narg--;
+				break;
+			case SYS_recvfrom:
+			case SYS_sendto:
+				print_number(ap, narg, c);
+				print_number(ap, narg, c);
+				print_number(ap, narg, c);
+				(void)putchar(',');
+				sendrecvflagsname((int)*ap);
+				ap++;
+				narg--;
+				break;
+			case SYS___semctl:
+				print_number(ap, narg, c);
+				print_number(ap, narg, c);
+				(void)putchar(',');
+				semctlname((int)*ap);
+				ap++;
+				narg--;
+				break;
+			case SYS_semget:
+				print_number(ap, narg, c);
+				print_number(ap, narg, c);
+				(void)putchar(',');
+				semgetname((int)*ap);
+				ap++;
+				narg--;
+				break;
+			case SYS_shmat:
+				print_number(ap, narg, c);
+				print_number(ap, narg, c);
+				(void)putchar(',');
+				shmatname((int)*ap);
+				ap++;
+				narg--;
+				break;
+			case SYS_shmctl:
+				print_number(ap, narg, c);
+				(void)putchar(',');
+				shmctlname((int)*ap);
+				ap++;
+				narg--;
+				break;
+			case SYS_sigaction:
+				signame((int)*ap);
+				ap++;
+				narg--;
+				c = ',';
+				break;
+			case SYS_sigprocmask:
+				sigprocmaskhowname((int)*ap);
+				ap++;
+				narg--;
+				c = ',';
+				break;
+			case SYS_socket: {
+				int sockdomain = (int)*ap;
+				sockdomainname(sockdomain);
+				ap++;
+				narg--;
+				(void)putchar(',');
+				socktypename((int)*ap);
+				ap++;
+				narg--;
+				if (sockdomain == PF_INET ||
+				    sockdomain == PF_INET6) {
+					(void)putchar(',');
+					sockipprotoname((int)*ap);
+					ap++;
+					narg--;
+				}
+				c = ',';
+				break;
+			}
+			case SYS_socketpair:
+				sockdomainname((int)*ap);
+				ap++;
+				narg--;
+				(void)putchar(',');
+				socktypename((int)*ap);
+				ap++;
+				narg--;
+				c = ',';
+				break;
+			case SYS_truncate:
+			case SYS_ftruncate:
+				print_number(ap, narg, c);
+				/* skip padding */
+				ap++;
+				narg--;
+				break;
+			case SYS_wait4:
+				print_number(ap, narg, c);
+				print_number(ap, narg, c);
+				(void)putchar(',');
+				wait4optname((int)*ap);
+				ap++;
+				narg--;
+				break;
 			}
 		}
-		while (argsize) {
+		while (narg) {
 			if (c)
 				putchar(c);
 			if (decimal)
@@ -408,7 +706,7 @@ ktrsyscall(struct ktr_syscall *ktr)
 				(void)printf("%#lx", (long)*ap);
 			c = ',';
 			ap++;
-			argsize -= sizeof(register_t);
+			narg--;
 		}
 	}
 	(void)printf(")\n");
@@ -614,7 +912,7 @@ usage(void)
 	fprintf(stderr, "usage: %s "
 	    "[-dlnRTXx] [-e emulation] [-f file] [-m maxdata] [-p pid]\n"
 	    "%*s[-t [ceinsw]]\n",
-	    __progname, sizeof("usage: ") + strlen(__progname), "");
+	    __progname, (int)(sizeof("usage: ") + strlen(__progname)), "");
 	exit(1);
 }
 
