@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.717 2011/06/16 23:03:25 pirofti Exp $
+#	$OpenBSD: GENERIC,v 1.718 2011/06/20 06:07:26 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -613,6 +613,7 @@ em*	at pci?				# Intel Pro/1000 ethernet
 gcu*	at pci?				# Intel Pro/1000 ethernet GCU
 ixgb*	at pci?				# Intel Pro/10Gb ethernet
 ix*	at pci?				# Intel 82598EB 10Gb ethernet
+myx*	at pci?				# Myricom Myri-10G 10Gb ethernet
 txp*	at pci?				# 3com 3CR990
 nge*	at pci?				# NS DP83820/DP83821 GigE
 bge*	at pci?				# Broadcom BCM57xx (aka Tigon3)
