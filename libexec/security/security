@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.14 2011/05/25 21:16:29 schwarze Exp $
+# $OpenBSD: security,v 1.15 2011/06/20 21:53:53 schwarze Exp $
 #
 # Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -819,20 +819,37 @@ sub check_changelist {
 	-s $filename or return;
 	nag !(open my $fh, '<', $filename), "open: $filename: $!" and return;
 
+	my @relative;
 	while (<$fh>) {
+		next if /^(?:#|\s*$)/;
 		chomp;
-		next if /^(?:#|\/etc\/master.passwd|$)/;
-		next if -d $_;
+		my $plus = s/^\+//;
+		unless (/^\//) {
+			push @relative, $_;
+			next;
+		}
+		my $tilda = /~$/;
 
-		if (s/^\+//) {
-			$check_title = "======\n$_ MD5 checksums\n======";
-			backup_md5 $_;
-		} else {
-			$check_title = "======\n$_ diffs (-OLD  +NEW)\n======";
-			backup_if_changed $_;
+		foreach (glob) {
+			next if $_ eq '/etc/master.passwd';
+			next if /~$/ && !$tilda;
+			next if -d $_;
+
+			if ($plus) {
+				$check_title =
+				    "======\n$_ MD5 checksums\n======";
+				backup_md5 $_;
+			} else {
+				$check_title =
+				    "======\n$_ diffs (-OLD  +NEW)\n======";
+				backup_if_changed $_;
+			}
 		}
 	}
 	close $fh;
+
+	$check_title = "Skipped relative paths in changelist(5):";
+	nag 1, $_ foreach @relative;
 }
 
 # Make backups of the labels for any mounted disks
