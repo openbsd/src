@@ -1,4 +1,4 @@
-/*	$OpenBSD: chk.c,v 1.21 2011/06/18 22:29:59 tedu Exp $	*/
+/*	$OpenBSD: chk.c,v 1.22 2011/06/20 13:27:07 millert Exp $	*/
 /*	$NetBSD: chk.c,v 1.2 1995/07/03 21:24:42 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: chk.c,v 1.21 2011/06/18 22:29:59 tedu Exp $";
+static char rcsid[] = "$OpenBSD: chk.c,v 1.22 2011/06/20 13:27:07 millert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -798,7 +798,7 @@ printflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 		if (sz != NOTSPEC)
 			fc = *fp++;
 
-		if (fc == '%') {
+		if (fc == '%' || fc == 'm') {
 			if (sz != NOTSPEC || left || sign || space ||
 			    alt || zero || prec || fwidth) {
 				badfmt(hte, call);
