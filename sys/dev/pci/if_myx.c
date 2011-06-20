@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.15 2011/06/20 06:56:06 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.16 2011/06/20 13:02:49 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -109,7 +109,7 @@ struct myx_softc {
 	struct myx_dmamem	 sc_paddma;
 
 	struct myx_dmamem	 sc_sts_dma;
-	struct myx_status	*sc_sts;
+	volatile struct myx_status	*sc_sts;
 
 	void			*sc_irqh;
 	u_int32_t		 sc_irqcoaloff;
@@ -1425,12 +1425,11 @@ myx_intr(void *arg)
 {
 	struct myx_softc	*sc = (struct myx_softc *)arg;
 	struct ifnet		*ifp = &sc->sc_ac.ac_if;
-	struct myx_status	*sts = sc->sc_sts;
+	volatile struct myx_status *sts = sc->sc_sts;
 	bus_dmamap_t		 map = sc->sc_sts_dma.mxm_map;
 	u_int32_t		 data;
 	int			 refill = 0;
 	u_int8_t		 valid = 0;
-	int			 ret = 0;
 	int			 i;
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
@@ -1440,48 +1439,59 @@ myx_intr(void *arg)
 	    BUS_DMASYNC_POSTREAD);
 
 	valid = sts->ms_isvalid;
-	if (valid) {
-		data = htobe32(0);
-		myx_write(sc, sc->sc_irqdeassertoff, &data, sizeof(data));
-
-		data = betoh32(sts->ms_txdonecnt);
-		if (data != sc->sc_tx_count) {
-			myx_txeof(sc, data);
-			if (ISSET(ifp->if_flags, IFF_OACTIVE)) {
-				CLR(ifp->if_flags, IFF_OACTIVE);
-				myx_start(ifp);
-			}
-		}
-
-		refill = myx_rxeof(sc);
-		for (i = 0; i < 2; i++) {
-			if (ISSET(refill, 1 << i))
-				myx_rx_fill(sc, i);
-		}
-
-		if (sts->ms_statusupdated)
-			myx_link_state(sc);
-
-		data = htobe32(3);
-		if (valid & 0x1)
-			myx_write(sc, sc->sc_irqclaimoff, &data, sizeof(data));
-		myx_write(sc, sc->sc_irqclaimoff + sizeof(u_int32_t),
-		    &data, sizeof(data));
-
-		ret = 1;
+	if (valid == 0x0) {
+		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+		    BUS_DMASYNC_PREREAD);
+		return (0);
 	}
+	sts->ms_isvalid = 0;
+
+	data = htobe32(0);
+	myx_write(sc, sc->sc_irqdeassertoff, &data, sizeof(data));
 
 	if (!ISSET(ifp->if_flags, IFF_UP) &&
 	    sc->sc_linkdown != sts->ms_linkdown) {
 		/* myx_down is waiting for us */
 		wakeup_one(sc->sc_sts);
-		ret = 1;
 	}
+
+	if (sts->ms_statusupdated)
+		myx_link_state(sc);
+
+	do {
+		data = betoh32(sts->ms_txdonecnt);
+		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+		    BUS_DMASYNC_PREREAD);
+
+		if (data != sc->sc_tx_count)
+			myx_txeof(sc, data);
+
+		refill = myx_rxeof(sc);
+
+		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD);
+	} while (sts->ms_isvalid);
 
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
-	return (ret);
+	data = htobe32(3);
+	if (valid & 0x1)
+		myx_write(sc, sc->sc_irqclaimoff, &data, sizeof(data));
+	myx_write(sc, sc->sc_irqclaimoff + sizeof(u_int32_t),
+	    &data, sizeof(data));
+
+	if (ISSET(ifp->if_flags, IFF_OACTIVE)) {
+		CLR(ifp->if_flags, IFF_OACTIVE);
+		myx_start(ifp);
+	}
+
+	for (i = 0; i < 2; i++) {
+		if (ISSET(refill, 1 << i))
+			myx_rx_fill(sc, i);
+	}
+
+	return (1);
 }
 
 void
