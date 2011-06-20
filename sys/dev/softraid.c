@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.230 2011/05/03 17:08:51 matthew Exp $ */
+/* $OpenBSD: softraid.c,v 1.231 2011/06/20 09:16:05 matthew Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3887,7 +3887,7 @@ sr_rebuild_thread(void *arg)
 	uint64_t		mysize = 0;
 	struct sr_workunit	*wu_r, *wu_w;
 	struct scsi_xfer	xs_r, xs_w;
-	struct scsi_rw_16	cr, cw;
+	struct scsi_rw_16	*cr, *cw;
 	int			c, s, slept, percent = 0, old_percent = -1;
 	u_int8_t		*buf;
 
@@ -3940,16 +3940,16 @@ sr_rebuild_thread(void *arg)
 
 		/* setup read io */
 		bzero(&xs_r, sizeof xs_r);
-		bzero(&cr, sizeof cr);
 		xs_r.error = XS_NOERROR;
 		xs_r.flags = SCSI_DATA_IN;
 		xs_r.datalen = sz << DEV_BSHIFT;
 		xs_r.data = buf;
-		xs_r.cmdlen = 16;
-		cr.opcode = READ_16;
-		_lto4b(sz, cr.length);
-		_lto8b(lba, cr.addr);
-		xs_r.cmd = (struct scsi_generic *)&cr;
+		xs_r.cmdlen = sizeof(*cr);
+		xs_r.cmd = &xs_r.cmdstore;
+		cr = (struct scsi_rw_16 *)xs_r.cmd;
+		cr->opcode = READ_16;
+		_lto4b(sz, cr->length);
+		_lto8b(lba, cr->addr);
 		wu_r->swu_flags |= SR_WUF_REBUILD;
 		wu_r->swu_xs = &xs_r;
 		if (sd->sd_scsi_rw(wu_r)) {
@@ -3960,16 +3960,16 @@ sr_rebuild_thread(void *arg)
 
 		/* setup write io */
 		bzero(&xs_w, sizeof xs_w);
-		bzero(&cw, sizeof cw);
 		xs_w.error = XS_NOERROR;
 		xs_w.flags = SCSI_DATA_OUT;
 		xs_w.datalen = sz << DEV_BSHIFT;
 		xs_w.data = buf;
-		xs_w.cmdlen = 16;
-		cw.opcode = WRITE_16;
-		_lto4b(sz, cw.length);
-		_lto8b(lba, cw.addr);
-		xs_w.cmd = (struct scsi_generic *)&cw;
+		xs_w.cmdlen = sizeof(*cw);
+		xs_w.cmd = &xs_w.cmdstore;
+		cw = (struct scsi_rw_16 *)xs_w.cmd;
+		cw->opcode = WRITE_16;
+		_lto4b(sz, cw->length);
+		_lto8b(lba, cw->addr);
 		wu_w->swu_flags |= SR_WUF_REBUILD;
 		wu_w->swu_xs = &xs_w;
 		if (sd->sd_scsi_rw(wu_w)) {
