@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.748 2011/06/14 10:14:01 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.749 2011/06/20 19:03:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5467,10 +5467,12 @@ pf_get_divert(struct mbuf *m)
 }
 
 int
-pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf *m,
+pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
     u_short *action, u_short *reason, struct pfi_kif *kif, struct pf_rule **a,
     struct pf_rule **r, struct pf_ruleset **ruleset, int *off, int *hdrlen)
 {
+	struct mbuf *m = *m0;
+
 	if (pd->hdr.any == NULL)
 		panic("pf_setup_pdesc: no storage for headers provided");
 
@@ -5480,13 +5482,23 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf *m,
 	case AF_INET: {
 		struct ip	*h;
 
-		h = mtod(m, struct ip *);
-		*off = h->ip_hl << 2;
-		if (*off < (int)sizeof(*h)) {
+		/* Check for illegal packets */
+		if (m->m_pkthdr.len < (int)sizeof(struct ip)) {
 			*action = PF_DROP;
 			REASON_SET(reason, PFRES_SHORT);
 			return (-1);
 		}
+
+		h = mtod(m, struct ip *);
+		*off = h->ip_hl << 2;
+
+		if (*off < (int)sizeof(struct ip) ||
+		    *off > ntohs(h->ip_len)) {
+			*action = PF_DROP;
+			REASON_SET(reason, PFRES_SHORT);
+			return (-1);
+		}
+
 		pd->src = (struct pf_addr *)&h->ip_src;
 		pd->dst = (struct pf_addr *)&h->ip_dst;
 		pd->sport = pd->dport = NULL;
@@ -5501,9 +5513,43 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf *m,
 		pd->tot_len = ntohs(h->ip_len);
 		pd->rdomain = rtable_l2(m->m_pkthdr.rdomain);
 
-		/* fragments not reassembled handled later */
-		if (h->ip_off & htons(IP_MF | IP_OFFMASK))
-			return (0);
+		if (h->ip_off & htons(IP_MF | IP_OFFMASK)) {
+			if (!pf_status.reass) {
+				/*
+				 * handle fragments that aren't reassembled by
+				 * normalization
+				 */
+				if (kif == NULL || r == NULL)	/* pflog */
+					*action = PF_DROP;
+				else
+					*action = pf_test_fragment(r, dir, kif,
+					     m, pd, a, ruleset);
+				if (*action == PF_PASS)
+					/* m is still valid, return success */
+					return (0);
+				REASON_SET(reason, PFRES_FRAG);
+				return (-1);
+			}
+			/* packet reassembly */
+			if (pf_normalize_ip(m0, dir, reason, pd) != PF_PASS) {
+				*action = PF_DROP;
+				return (-1);
+			}
+			m = *m0;
+			if (m == NULL) {
+				/* packet sits in reassembly queue, no error */
+				*action = PF_PASS;
+				return (-1);
+			}
+			/* refetch header, recalc offset and update pd */
+			h = mtod(m, struct ip *);
+			*off = h->ip_hl << 2;
+			pd->src = (struct pf_addr *)&h->ip_src;
+			pd->dst = (struct pf_addr *)&h->ip_dst;
+			pd->ip_sum = &h->ip_sum;
+			pd->tot_len = ntohs(h->ip_len);
+			pd->tos = h->ip_tos;
+		}
 
 		switch (h->ip_p) {
 		case IPPROTO_TCP: {
@@ -5552,7 +5598,39 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf *m,
 		struct ip6_hdr	*h;
 		int		 terminal = 0;
 
+		/* Check for illegal packets */
+		if (m->m_pkthdr.len < (int)sizeof(struct ip6_hdr)) {
+			*action = PF_DROP;
+			REASON_SET(reason, PFRES_SHORT);
+			return (-1);
+		}
+
+		/* packet reassembly */
+		if (pf_status.reass &&
+		    pf_normalize_ip6(m0, dir, reason, pd) != PF_PASS) {
+			*action = PF_DROP;
+			return (-1);
+		}
+		m = *m0;
+		if (m == NULL) {
+			/* packet sits in reassembly queue, no error */
+			*action = PF_PASS;
+			return (-1);
+		}
+
 		h = mtod(m, struct ip6_hdr *);
+#if 1
+		/*
+		 * we do not support jumbogram yet.  if we keep going, zero
+		 * ip6_plen will do something bad, so drop the packet for now.
+		 */
+		if (htons(h->ip6_plen) == 0) {
+			*action = PF_DROP;
+			REASON_SET(reason, PFRES_NORM);
+			return (-1);
+		}
+#endif
+
 		pd->src = (struct pf_addr *)&h->ip6_src;
 		pd->dst = (struct pf_addr *)&h->ip6_dst;
 		pd->sport = pd->dport = NULL;
@@ -5757,7 +5835,6 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 	struct pfi_kif		*kif;
 	u_short			 action, reason = 0;
 	struct mbuf		*m = *m0;
-	struct ip		*h;
 	struct pf_rule		*a = NULL, *r = &pf_default_rule;
 	struct pf_state		*s = NULL;
 	struct pf_ruleset	*ruleset = NULL;
@@ -5789,13 +5866,6 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 		panic("non-M_PKTHDR is passed to pf_test");
 #endif /* DIAGNOSTIC */
 
-	if (m->m_pkthdr.len < (int)sizeof(*h)) {
-		action = PF_DROP;
-		REASON_SET(&reason, PFRES_SHORT);
-		pd.pflog |= PF_LOG_FORCE;
-		goto done;
-	}
-
 	if (m->m_pkthdr.pf.flags & PF_TAG_GENERATED)
 		return (PF_PASS);
 
@@ -5807,40 +5877,23 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 		return (PF_PASS);
 	}
 
-	/* packet reassembly here if 1) enabled 2) we deal with a fragment */
-	h = mtod(m, struct ip *);
-	if (pf_status.reass &&
-	    (h->ip_off & htons(IP_MF | IP_OFFMASK)) &&
-	    pf_normalize_ip(m0, dir, kif, &reason, &pd) != PF_PASS) {
-		action = PF_DROP;
-		goto done;
-	}
-	m = *m0;	/* pf_normalize messes with m0 */
-	if (m == NULL)
-		return (PF_PASS);
-	h = mtod(m, struct ip *);
-
-	if (pf_setup_pdesc(AF_INET, dir, &pd, m, &action, &reason, kif, &a, &r,
+	if (pf_setup_pdesc(AF_INET, dir, &pd, m0, &action, &reason, kif, &a, &r,
 	    &ruleset, &off, &hdrlen) == -1) {
-		if (action != PF_PASS)
-			pd.pflog |= PF_LOG_FORCE;
+		if (action == PF_PASS)
+			return (PF_PASS);
+		m = *m0;
+		pd.pflog |= PF_LOG_FORCE;
 		goto done;
 	}
 	pd.eh = eh;
-
-	/* handle fragments that didn't get reassembled by normalization */
-	if (h->ip_off & htons(IP_MF | IP_OFFMASK)) {
-		action = pf_test_fragment(&r, dir, kif, m,
-		    &pd, &a, &ruleset);
-		goto done;
-	}
+	m = *m0;	/* pf_setup_pdesc -> pf_normalize messes with m0 */
 
 	switch (pd.proto) {
 
 	case IPPROTO_TCP: {
 		if ((pd.hdr.tcp->th_flags & TH_ACK) && pd.p_len == 0)
 			pqid = 1;
-		action = pf_normalize_tcp(dir, kif, m, 0, off, h, &pd);
+		action = pf_normalize_tcp(dir, m, off, &pd);
 		if (action == PF_DROP)
 			goto done;
 		action = pf_test_state_tcp(&s, dir, kif, m, off, &pd,
@@ -5922,6 +5975,7 @@ done:
 	if (action != PF_DROP) {
 		if (s) {
 			/* The non-state case is handled in pf_test_rule() */
+			struct ip	*h = mtod(m, struct ip *);
 			if (action == PF_PASS && h->ip_hl > 5 &&
 			    !(s->state_flags & PFSTATE_ALLOWOPTS)) {
 				action = PF_DROP;
@@ -5954,7 +6008,7 @@ done:
 #ifdef ALTQ
 	if (action == PF_PASS && qid) {
 		m->m_pkthdr.pf.qid = qid;
-		m->m_pkthdr.pf.hdr = h;	/* hints for ecn */
+		m->m_pkthdr.pf.hdr = mtod(m, caddr_t);	/* hints for ecn */
 	}
 #endif /* ALTQ */
 
@@ -6038,7 +6092,6 @@ pf_test6(int fwdir, struct ifnet *ifp, struct mbuf **m0,
 	u_short			 action, reason = 0;
 	struct mbuf		*m = *m0;
 	struct m_tag		*mtag;
-	struct ip6_hdr		*h;
 	struct pf_rule		*a = NULL, *r = &pf_default_rule;
 	struct pf_state		*s = NULL;
 	struct pf_ruleset	*ruleset = NULL;
@@ -6071,13 +6124,6 @@ pf_test6(int fwdir, struct ifnet *ifp, struct mbuf **m0,
 		panic("non-M_PKTHDR is passed to pf_test6");
 #endif /* DIAGNOSTIC */
 
-	if (m->m_pkthdr.len < (int)sizeof(*h)) {
-		action = PF_DROP;
-		REASON_SET(&reason, PFRES_SHORT);
-		pd.pflog |= PF_LOG_FORCE;
-		goto done;
-	}
-
 	if (m->m_pkthdr.pf.flags & PF_TAG_GENERATED)
 		return (PF_PASS);
 
@@ -6089,44 +6135,23 @@ pf_test6(int fwdir, struct ifnet *ifp, struct mbuf **m0,
 		return (PF_PASS);
 	}
 
-	/* packet reassembly */
-	if (pf_status.reass &&
-	    pf_normalize_ip6(m0, fwdir, kif, &reason, &pd) != PF_PASS) {
-		action = PF_DROP;
-		goto done;
-	}
-	m = *m0;	/* pf_normalize messes with m0 */
-	if (m == NULL)
-		return (PF_PASS);
-	h = mtod(m, struct ip6_hdr *);
-
-#if 1
-	/*
-	 * we do not support jumbogram yet.  if we keep going, zero ip6_plen
-	 * will do something bad, so drop the packet for now.
-	 */
-	if (htons(h->ip6_plen) == 0) {
-		action = PF_DROP;
-		REASON_SET(&reason, PFRES_NORM);
+	if (pf_setup_pdesc(AF_INET6, dir, &pd, m0, &action, &reason, kif, &a,
+	    &r, &ruleset, &off, &hdrlen) == -1) {
+		if (action == PF_PASS)
+			return (PF_PASS);
+		m = *m0;
 		pd.pflog |= PF_LOG_FORCE;
 		goto done;
 	}
-#endif
-
-	if (pf_setup_pdesc(AF_INET6, dir, &pd, m, &action, &reason, kif, &a, &r,
-	    &ruleset, &off, &hdrlen) == -1) {
-		if (action != PF_PASS)
-			pd.pflog |= PF_LOG_FORCE;
-		goto done;
-	}
 	pd.eh = eh;
+	m = *m0;	/* pf_setup_pdesc -> pf_normalize messes with m0 */
 
 	switch (pd.proto) {
 
 	case IPPROTO_TCP: {
 		if ((pd.hdr.tcp->th_flags & TH_ACK) && pd.p_len == 0)
 			pqid = 1;
-		action = pf_normalize_tcp(dir, kif, m, 0, off, h, &pd);
+		action = pf_normalize_tcp(dir, m, off, &pd);
 		if (action == PF_DROP)
 			goto done;
 		action = pf_test_state_tcp(&s, dir, kif, m, off, &pd,
@@ -6240,7 +6265,7 @@ done:
 #ifdef ALTQ
 	if (action == PF_PASS && qid) {
 		m->m_pkthdr.pf.qid = qid;
-		m->m_pkthdr.pf.hdr = h; /* add hints for ecn */
+		m->m_pkthdr.pf.hdr = mtod(m, caddr_t); /* add hints for ecn */
 	}
 #endif /* ALTQ */
 

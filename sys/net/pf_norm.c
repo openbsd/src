@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.133 2011/05/24 14:01:52 claudio Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.134 2011/06/20 19:03:41 claudio Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -739,29 +739,21 @@ pf_refragment6(struct mbuf **m0, struct m_tag *mtag, int dir)
 #endif /* INET6 */
 
 int
-pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif,
-    u_short *reason, struct pf_pdesc *pd)
+pf_normalize_ip(struct mbuf **m0, int dir, u_short *reason,
+    struct pf_pdesc *pd)
 {
 	struct mbuf		*m = *m0;
 	struct ip		*h = mtod(m, struct ip *);
-	int			 hlen = h->ip_hl << 2;
 	u_int16_t		 fragoff = (ntohs(h->ip_off) & IP_OFFMASK) << 3;
 	u_int16_t		 mff = (ntohs(h->ip_off) & IP_MF);
-
-	/* Check for illegal packets */
-	if (hlen < (int)sizeof(struct ip))
-		goto drop;
-
-	if (hlen > ntohs(h->ip_len))
-		goto drop;
-
-	/* Clear IP_DF if we're in no-df mode */
-	if (pf_status.reass & PF_REASS_NODF && h->ip_off & htons(IP_DF))
-		h->ip_off &= htons(~IP_DF);
 
 	/* We will need other tests here */
 	if (!fragoff && !mff)
 		goto no_fragment;
+
+	/* Clear IP_DF if we're in no-df mode */
+	if (pf_status.reass & PF_REASS_NODF && h->ip_off & htons(IP_DF))
+		h->ip_off &= htons(~IP_DF);
 
 	/* We're dealing with a fragment now. Don't allow fragments
 	 * with IP_DF to enter the cache. If the flag was cleared by
@@ -789,16 +781,12 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif,
 
 	pd->flags |= PFDESC_IP_REAS;
 	return (PF_PASS);
-
- drop:
-	REASON_SET(reason, PFRES_NORM);
-	return (PF_DROP);
 }
 
 #ifdef INET6
 int
-pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
-    u_short *reason, struct pf_pdesc *pd)
+pf_normalize_ip6(struct mbuf **m0, int dir, u_short *reason,
+    struct pf_pdesc *pd)
 {
 	struct mbuf		*m = *m0;
 	struct ip6_hdr		*h = mtod(m, struct ip6_hdr *);
@@ -826,7 +814,6 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 		switch (proto) {
 		case IPPROTO_FRAGMENT:
 			goto fragment;
-			break;
 		case IPPROTO_AH:
 		case IPPROTO_ROUTING:
 		case IPPROTO_DSTOPTS:
@@ -938,8 +925,7 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 #endif /* INET6 */
 
 int
-pf_normalize_tcp(int dir, struct pfi_kif *kif, struct mbuf *m, int ipoff,
-    int off, void *h, struct pf_pdesc *pd)
+pf_normalize_tcp(int dir, struct mbuf *m, int off, struct pf_pdesc *pd)
 {
 	struct tcphdr	*th = pd->hdr.tcp;
 	u_short		 reason;
