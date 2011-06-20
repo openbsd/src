@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_we.c,v 1.20 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: if_we.c,v 1.21 2011/06/20 01:09:25 matthew Exp $	*/
 /*	$NetBSD: if_we.c,v 1.11 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -110,6 +110,7 @@ struct we_softc {
 };
 
 int	we_probe(struct device *, void *, void *);
+int	we_match(struct device *, void *, void *);
 void	we_attach(struct device *, struct device *, void *);
 
 struct cfattach we_isa_ca = {
@@ -118,7 +119,7 @@ struct cfattach we_isa_ca = {
 
 #if NWE_ISAPNP
 struct cfattach we_isapnp_ca = {
-	sizeof(struct we_softc), we_probe, we_attach
+	sizeof(struct we_softc), we_match, we_attach
 };
 #endif /* NWE_ISAPNP */
 
@@ -185,6 +186,14 @@ do { \
 
 int
 we_probe(struct device *parent, void *match, void *aux)
+{
+	struct cfdata *cf = ((struct device *)match)->dv_cfdata;
+
+	return (we_match(parent, cf, aux));
+}
+
+int
+we_match(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct cfdata *cf = match;

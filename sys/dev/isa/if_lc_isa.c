@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lc_isa.c,v 1.8 2009/08/10 22:08:04 deraadt Exp $ */
+/*	$OpenBSD: if_lc_isa.c,v 1.9 2011/06/20 01:09:25 matthew Exp $ */
 /*	$NetBSD: if_lc_isa.c,v 1.10 2001/06/13 10:46:03 wiz Exp $ */
 
 /*-
@@ -182,7 +182,7 @@ lemac_isa_probe(parent, match, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	struct cfdata *cf = match;
+	struct cfdata *cf = ((struct device *)match)->dv_cfdata;
 	struct lemac_softc sc;
 
 	snprintf(sc.sc_dv.dv_xname, sizeof sc.sc_dv.dv_xname, "%s%d",

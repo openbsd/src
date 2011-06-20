@@ -1,4 +1,4 @@
-/* $OpenBSD: radiotrack2.c,v 1.3 2002/01/07 18:32:19 mickey Exp $ */
+/* $OpenBSD: radiotrack2.c,v 1.4 2011/06/20 01:09:25 matthew Exp $ */
 /* $RuOBSD: radiotrack2.c,v 1.2 2001/10/18 16:51:36 pva Exp $ */
 
 /*
@@ -127,7 +127,7 @@ rtii_probe(struct device *parent, void *match, void *aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-	struct cfdata *cf = match;
+	struct cfdata *cf = ((struct device *)match)->dv_cfdata;
 	int iosize = 1, iobase = ia->ia_iobase;
 
 	if (!RTII_BASE_VALID(iobase)) {

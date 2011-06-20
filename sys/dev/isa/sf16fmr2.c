@@ -1,4 +1,4 @@
-/* $OpenBSD: sf16fmr2.c,v 1.6 2002/10/15 15:00:11 mickey Exp $ */
+/* $OpenBSD: sf16fmr2.c,v 1.7 2011/06/20 01:09:25 matthew Exp $ */
 /* $RuOBSD: sf16fmr2.c,v 1.12 2001/10/18 16:51:36 pva Exp $ */
 
 /*
@@ -140,7 +140,7 @@ sf2r_probe(struct device *parent, void *match, void *aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-	struct cfdata *cf = match;
+	struct cfdata *cf = ((struct device *)match)->dv_cfdata;
 	int iosize = 1, iobase = ia->ia_iobase;
 
 	if (!SF16FMR2_BASE_VALID(iobase)) {

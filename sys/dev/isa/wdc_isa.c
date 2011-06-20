@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc_isa.c,v 1.14 2011/05/09 22:33:54 matthew Exp $     */
+/*      $OpenBSD: wdc_isa.c,v 1.15 2011/06/20 01:09:25 matthew Exp $     */
 /*	$NetBSD: wdc_isa.c,v 1.15 1999/05/19 14:41:25 bouyer Exp $ */
 
 /*-
@@ -83,7 +83,7 @@ wdc_isa_probe(struct device *parent, void *match, void *aux)
 {
 	struct channel_softc ch;
 	struct isa_attach_args *ia = aux;
-	struct cfdata *cf = match;
+	struct cfdata *cf = ((struct device *)match)->dv_cfdata;
 	int result = 0;
 
 	bzero(&ch, sizeof ch);
