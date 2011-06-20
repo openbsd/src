@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.45 2011/06/15 10:12:13 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.46 2011/06/20 09:41:46 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -444,7 +444,7 @@ sub makesum_plist
 	my $tempname = $state->{mandir}."/".$fullname;
 	require File::Path;
 	File::Path::make_path($state->{mandir}."/".$d);
-	open my $fh, ">", $tempname or $state->error("can't create #1: #2",
+	open my $fh, ">", $tempname or $state->error("can't create #1: #2", 
 	    $tempname, $!);
 	chmod 0444, $fh;
 	if (-d $state->{base}.$d) {
@@ -602,10 +602,6 @@ sub solve_from_ports
 	return undef unless defined $portsdir;
 	my $plist = $self->ask_tree($state, $dep, $portsdir,
 	    'print-plist-with-depends');
-	if ($? != 0 || !defined $plist->pkgname) {
-		$plist = $self->ask_tree($state, $dep, $portsdir,
-		    'print-plist');
-	}
 	if ($? != 0 || !defined $plist->pkgname) {
 		$state->error("Can't obtain dependency #1 from ports tree",
 		    $dep->{pattern});
@@ -1067,7 +1063,7 @@ sub finish_manpages
 		require OpenBSD::Makewhatis;
 
 		try {
-			OpenBSD::Makewhatis::scan_manpages($state->{manpages},
+			OpenBSD::Makewhatis::scan_manpages($state->{manpages}, 
 			    $state);
 		} catchall {
 			$state->errsay("Error in makewhatis: #1", $_);
