@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2011/06/16 09:16:18 jasper Exp $
+#	$OpenBSD: Makefile,v 1.21 2011/06/20 14:31:46 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -24,6 +24,8 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers5-5 \
 		cmp-vers5-6 \
 		cmp-vers5-7 \
+		cmp-vers6-1 \
+		cmp-vers6-2 \
 		corrupt1 \
 		corrupt2 \
 		corrupt3 \
@@ -266,6 +268,21 @@ cmp-vers5-10:
 	@touch ${WANT}
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}  \
 		--errors-to-stdout --print-errors "beta <= 0.1.0rc2" > ${GOT}
+	@diff -u ${WANT} ${GOT}
+
+cmp-vers6-1:
+	# Test suffixed versions in Requires
+	@echo " -lalpha2" > ${WANT}
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --errors-to-stdout \
+		--print-errors --libs requires-test2 > ${GOT}
+	@diff -u ${WANT} ${GOT}
+
+cmp-vers6-2:
+	# Test suffixed versions in Requires.private
+	@echo "Requested 'alpha >= 0.1.0alpha3' but version of alpha suffix test is 0.1.0alpha2" > ${WANT}
+	@if PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --errors-to-stdout \
+		--print-errors --libs --static requires-test2 > ${GOT}; then \
+		false; fi
 	@diff -u ${WANT} ${GOT}
 
 # Tests for various environment variables
