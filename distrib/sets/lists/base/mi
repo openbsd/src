@@ -52,6 +52,9 @@
 ./etc/amd
 ./etc/disklabels
 ./etc/firmware
+./etc/firmware/myx-eth_z8e
+./etc/firmware/myx-ethp_z8e
+./etc/firmware/myx-license
 ./etc/iked
 ./etc/iked/ca
 ./etc/iked/certs
