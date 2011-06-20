@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myxreg.h,v 1.3 2008/01/17 18:56:05 thib Exp $	*/
+/*	$OpenBSD: if_myxreg.h,v 1.4 2011/06/20 05:19:20 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -52,8 +52,8 @@
 #define  MYX_HEADER_POS_SIZE	0x00000004	/* Header position size */
 #define  MYX_FW			0x00100000	/* Firmware offset */
 #define   MYX_FW_BOOT		0x00100008	/* Firmware boot offset */
-#define  MYX_EEPROM		0x001dfe00	/* EEPROM offset */
-#define  MYX_EEPROM_SIZE	0x00000100	/* EEPROM size */
+#define  MYX_STRING_SPECS	0x001dfe00	/* STRING_SPECS offset */
+#define  MYX_STRING_SPECS_SIZE	0x00000100	/* STRING_SPECS size */
 #define MYX_BOOT		0x00fc0000	/* Boot handoff */
 #define MYX_RDMA		0x00fc01c0	/* Dummy RDMA */
 #define MYX_CMD			0x00f80000	/* Command offset */
@@ -69,15 +69,15 @@
 
 #define MYXFW_MIN_LEN		(MYX_HEADER_POS + MYX_HEADER_POS_SIZE)
 
-struct myx_firmware_hdr {
+struct myx_gen_hdr {
 	u_int32_t	fw_hdrlength;
 	u_int32_t	fw_type;
 	u_int8_t	fw_version[128];
+	u_int32_t	fw_mcp_globals;
 	u_int32_t	fw_sram_size;
 	u_int32_t	fw_specs;
 	u_int32_t	fw_specs_len;
 } __packed;
-
 
 /*
  * Commands, descriptors, and DMA structures
@@ -132,8 +132,7 @@ struct myx_status {
 	u_int32_t	ms_linkstate;
 #define  MYXSTS_LINKDOWN	0
 #define  MYXSTS_LINKUP		1
-#define  MYXSTS_LINKMYRINET	2
-#define  MYXSTS_LINKUNKNOWN	3
+#define  MYXSTS_LINKUNKNOWN	2
 	u_int32_t	ms_dropped_linkoverflow;
 	u_int32_t	ms_dropped_linkerror;
 	u_int32_t	ms_dropped_runt;
@@ -144,24 +143,22 @@ struct myx_status {
 #define  MYXSTS_RDMAON	1
 #define  MYXSTS_RDMAOFF	0
 	u_int8_t	ms_txstopped;
-	u_int8_t	ms_linkdowncnt;
+	u_int8_t	ms_linkdown;
 	u_int8_t	ms_statusupdated;
 	u_int8_t	ms_isvalid;
 } __packed;
 
-struct myx_rxdesc {
-	u_int16_t	rx_csum;
-	u_int16_t	rx_length;
+struct myx_intrq_desc {
+	u_int16_t	iq_csum;
+	u_int16_t	iq_length;
 } __packed;
 
-struct myx_rxbufdesc {
-	u_int32_t	rb_addr_high;
-	u_int32_t	rb_addr_low;
+struct myx_rx_desc {
+	u_int64_t	rx_addr;
 } __packed;
 
-struct myx_txdesc {
-	u_int32_t	tx_addr_high;
-	u_int32_t	tx_addr_low;
+struct myx_tx_desc {
+	u_int64_t	tx_addr;
 	u_int16_t	tx_hdr_offset;
 	u_int16_t	tx_length;
 	u_int8_t	tx_pad;
