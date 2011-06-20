@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.64 2011/06/01 03:25:01 matthew Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.65 2011/06/20 17:05:46 deraadt Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
 #include <sys/systm.h>
 #include <sys/queue.h>
 #include <sys/proc.h>
+#include <sys/mutex.h>
 
 #include "hotplug.h"
 
@@ -99,6 +100,14 @@ void config_process_deferred_children(struct device *);
 struct devicelist alldevs;		/* list of all devices */
 
 __volatile int config_pending;		/* semaphore for mountroot */
+
+struct mutex autoconf_attdet_mtx = MUTEX_INITIALIZER(IPL_HIGH);
+/*
+ * If > 0, devices are being attached and any thread which tries to
+ * detach will sleep; if < 0 devices are being detached and any
+ * thread which tries to attach will sleep.
+ */
+int	autoconf_attdet;
 
 /*
  * Initialize autoconfiguration data structures.  This occurs before console
@@ -339,6 +348,13 @@ config_attach(struct device *parent, void *match, void *aux, cfprint_t print)
 	struct cfattach *ca;
 	struct cftable *t;
 
+	mtx_enter(&autoconf_attdet_mtx);
+	while (autoconf_attdet < 0)
+		msleep(&autoconf_attdet, &autoconf_attdet_mtx,
+		    PWAIT, "autoconf", 0);
+	autoconf_attdet++;
+	mtx_leave(&autoconf_attdet_mtx);
+
 	if (parent && parent->dv_cfdata->cf_driver->cd_indirect) {
 		dev = match;
 		cf = dev->dv_cfdata;
@@ -398,6 +414,11 @@ config_attach(struct device *parent, void *match, void *aux, cfprint_t print)
 	if (!cold)
 		hotplug_device_attach(cd->cd_class, dev->dv_xname);
 #endif
+
+	mtx_enter(&autoconf_attdet_mtx);
+	if (--autoconf_attdet == 0)
+		wakeup(&autoconf_attdet);
+	mtx_leave(&autoconf_attdet_mtx);
 	return (dev);
 }
 
@@ -495,6 +516,13 @@ config_detach(struct device *dev, int flags)
 	char devname[16];
 #endif
 
+	mtx_enter(&autoconf_attdet_mtx);
+	while (autoconf_attdet > 0)
+		msleep(&autoconf_attdet, &autoconf_attdet_mtx,
+		    PWAIT, "autoconf", 0);
+	autoconf_attdet--;
+	mtx_leave(&autoconf_attdet_mtx);
+
 #if NHOTPLUG > 0
 	strlcpy(devname, dev->dv_xname, sizeof(devname));
 #endif
@@ -529,7 +557,7 @@ config_detach(struct device *dev, int flags)
 	}
 	if (rv != 0) {
 		if ((flags & DETACH_FORCE) == 0)
-			return (rv);
+			goto done;
 		else
 			panic("config_detach: forced detach of %s failed (%d)",
 			    dev->dv_xname, rv);
@@ -611,7 +639,12 @@ config_detach(struct device *dev, int flags)
 	/*
 	 * Return success.
 	 */
-	return (0);
+done:
+	mtx_enter(&autoconf_attdet_mtx);
+	if (++autoconf_attdet == 0)
+		wakeup(&autoconf_attdet);
+	mtx_leave(&autoconf_attdet_mtx);
+	return (rv);
 }
 
 int
