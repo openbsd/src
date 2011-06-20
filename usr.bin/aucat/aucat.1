@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.84 2011/06/03 16:20:10 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.85 2011/06/20 20:18:44 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 3 2011 $
+.Dd $Mdocdate: June 20 2011 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -75,6 +75,7 @@ The options are as follows:
 Control whether
 .Nm
 opens the audio device only when needed or keeps it open all the time.
+This applies to MIDI ports controlling the device as well.
 If the flag is
 .Va on
 then the device is kept open all the time, ensuring no other program can

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: midicat.1,v 1.16 2011/05/03 08:00:54 ratchov Exp $
+.\"	$OpenBSD: midicat.1,v 1.17 2011/06/20 20:18:44 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 3 2011 $
+.Dd $Mdocdate: June 20 2011 $
 .Dt MIDICAT 1
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Sh SYNOPSIS
 .Nm midicat
 .Op Fl dl
+.Op Fl a Ar flag
 .Op Fl i Ar file
 .Op Fl L Ar addr
 .Op Fl o Ar file
@@ -47,6 +48,21 @@ MIDI hardware or to another application in a uniform way.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl a Ar flag
+Control whether
+.Nm
+opens MIDI ports connected to the thru box only when needed
+or keeps them open all the time.
+If the flag is
+.Va on
+then MIDI ports are kept open all the time, ensuring no other program can
+steal any of them.
+If the flag is
+.Va off ,
+then they are automatically closed, allowing other programs to have direct
+access to MIDI ports, or the corresponding hardware to be disconnected.
+The default is
+.Va on .
 .It Fl d
 Increase log verbosity.
 .Nm

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.117 2011/06/03 17:04:47 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.118 2011/06/20 20:18:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -341,7 +341,7 @@ void
 cfmid_add(struct cfmidlist *list, char *path)
 {
 	struct cfmid *cm;
-	
+
 	cm = malloc(sizeof(struct cfmid));
 	if (cm == NULL) {
 		perror("malloc");
@@ -751,8 +751,8 @@ aucat_main(int argc, char **argv)
 		while (!SLIST_EMPTY(&cd->mids)) {
 			cm = SLIST_FIRST(&cd->mids);
 			SLIST_REMOVE_HEAD(&cd->mids, entry);
-			if (!dev_thruadd(d, cm->path, 1, 1))
-				errx(1, "%s: can't open device", cm->path);
+			if (!devctl_add(d, cm->path, MODE_MIDIMASK))
+				errx(1, "%s: can't open port", cm->path);
 			free(cm);
 		}
 
@@ -869,8 +869,9 @@ aucat_main(int argc, char **argv)
 void
 midicat_usage(void)
 {
-	(void)fputs("usage: " PROG_MIDICAT " [-dl] "
-	    "[-i file] [-L addr] [-o file] [-q port] [-s name] [-U unit]\n",
+	(void)fputs("usage: " PROG_MIDICAT " [-dl] [-a flag] "
+	    "[-i file] [-L addr] [-o file] [-q port]\n\t"
+	    "[-s name] [-U unit]\n",
 	    stderr);
 }
 
@@ -908,7 +909,7 @@ midicat_main(int argc, char **argv)
 	cs = cfstr_new(NULL);
 	cd = cfdev_new(NULL);
 
-	while ((c = getopt(argc, argv, "di:o:ls:q:U:L:")) != -1) {
+	while ((c = getopt(argc, argv, "di:o:ls:a:q:U:L:")) != -1) {
 		switch (c) {
 		case 'd':
 #ifdef DEBUG
@@ -924,6 +925,9 @@ midicat_main(int argc, char **argv)
 		case 'o':
 			cfstr_add(&cd->outs, cs, optarg);
 			cs = cfstr_new(cs);
+			break;
+		case 'a':
+			cd->hold = opt_onoff();
 			break;
 		case 'q':
 			cfmid_add(&cd->mids, optarg);
@@ -1001,7 +1005,7 @@ midicat_main(int argc, char **argv)
 		cd = SLIST_FIRST(&cfdevs);
 		SLIST_REMOVE_HEAD(&cfdevs, entry);
 
-		d = dev_new_thru();
+		d = dev_new_thru(cd->hold);
 		if (d == NULL)
 			errx(1, "%s: can't open device", cd->path);
 		if (SLIST_EMPTY(&cd->opts) && APROC_OK(d->midi))
@@ -1013,8 +1017,8 @@ midicat_main(int argc, char **argv)
 		while (!SLIST_EMPTY(&cd->mids)) {
 			cm = SLIST_FIRST(&cd->mids);
 			SLIST_REMOVE_HEAD(&cd->mids, entry);
-			if (!dev_thruadd(d, cm->path, 1, 1))
-				errx(1, "%s: can't open device", cm->path);
+			if (!devctl_add(d, cm->path, MODE_MIDIMASK))
+				errx(1, "%s: can't open port", cm->path);
 			free(cm);
 		}
 

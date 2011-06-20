@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.28 2011/05/26 07:18:40 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.29 2011/06/20 20:18:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -52,6 +52,11 @@ struct dev {
 	struct aproc *mix, *sub, *submon;
 	struct aproc *rec, *play, *mon;
 	struct aproc *midi;
+	struct devctl {
+		struct devctl *next;
+		unsigned mode;
+		char *path;
+	} *ctl_list;
 };
 
 extern struct dev *dev_list;
@@ -62,12 +67,12 @@ void dev_unref(struct dev *);
 void dev_del(struct dev *);
 void dev_wakeup(struct dev *);
 void dev_drain(struct dev *);
-struct dev *dev_new_thru(void);
+struct dev *dev_new_thru(int);
 struct dev *dev_new_loop(struct aparams *, struct aparams *, unsigned);
 struct dev *dev_new_sio(char *, unsigned, 
     struct aparams *, struct aparams *,
     unsigned, unsigned, unsigned, unsigned);
-int  dev_thruadd(struct dev *, char *, int, int);
+int  devctl_add(struct dev *, char *, unsigned);
 void dev_midiattach(struct dev *, struct abuf *, struct abuf *);
 unsigned dev_roundof(struct dev *, unsigned);
 int dev_getpos(struct dev *);
