@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.19 2011/06/21 11:57:20 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.20 2011/06/21 21:56:28 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -129,6 +129,7 @@ struct myx_softc {
 #define  MYX_RXSMALL		 0
 #define  MYX_RXBIG		 1
 
+	bus_size_t		 sc_tx_boundary;
 	u_int			 sc_tx_ring_count;
 	u_int32_t		 sc_tx_ring_offset;
 	u_int			 sc_tx_nsegs;
@@ -154,6 +155,7 @@ int	 myx_query(struct myx_softc *sc, char *, size_t);
 u_int	 myx_ether_aton(char *, u_int8_t *, u_int);
 void	 myx_attachhook(void *);
 int	 myx_loadfirmware(struct myx_softc *, const char *);
+int	 myx_probe_firmware(struct myx_softc *);
 
 void	 myx_read(struct myx_softc *, bus_size_t, void *, bus_size_t);
 void	 myx_rawread(struct myx_softc *, bus_size_t, void *, bus_size_t);
@@ -408,7 +410,6 @@ myx_attachhook(void *arg)
 	struct myx_softc	*sc = (struct myx_softc *)arg;
 	struct ifnet		*ifp = &sc->sc_ac.ac_if;
 	struct myx_cmd		 mc;
-	u_int32_t		 r;
 
 	/* Allocate command DMA memory */
 	if (myx_dmamem_alloc(sc, &sc->sc_cmddma, MYXALIGN_CMD,
@@ -431,11 +432,12 @@ myx_attachhook(void *arg)
 		goto freecmd;
 	}
 
-	if (myx_cmd(sc, MYXCMD_GET_RXRINGSZ, &mc, &r) != 0) {
-		printf("%s: unable to get rx ring size\n", DEVNAME(sc));
+	sc->sc_tx_boundary = 4096;
+
+	if (myx_probe_firmware(sc) != 0) {
+		printf("%s: error while selecting firmware\n", DEVNAME(sc));
 		goto freecmd;
 	}
-	sc->sc_rx_ring_count = r / sizeof(struct myx_rx_desc);
 
 	sc->sc_irqh = pci_intr_establish(sc->sc_pc, sc->sc_ih, IPL_NET,
 	    myx_intr, sc, DEVNAME(sc));
@@ -478,6 +480,87 @@ myx_attachhook(void *arg)
 
 freecmd:
 	myx_dmamem_free(sc, &sc->sc_cmddma);
+}
+
+int
+myx_probe_firmware(struct myx_softc *sc)
+{
+	struct myx_dmamem test;
+	bus_dmamap_t map;
+	struct myx_cmd mc;
+	pcireg_t csr;
+	int offset;
+	int width = 0;
+
+	if (pci_get_capability(sc->sc_pc, sc->sc_tag, PCI_CAP_PCIEXPRESS,
+	    &offset, NULL)) {
+		csr = pci_conf_read(sc->sc_pc, sc->sc_tag,
+		    offset + PCI_PCIE_LCSR);
+		width = (csr >> 20) & 0x3f;
+
+		if (width <= 4) {
+                        /*
+			 * if the link width is 4 or less we can use the
+			 * aligned firmware.
+			 */
+			return (0);
+		}
+	}
+
+	if (myx_dmamem_alloc(sc, &test, 4096, 4096, "test") != 0)
+		return (1);
+	map = test.mxm_map;
+
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	bzero(&mc, sizeof(mc));
+	mc.mc_data0 = htobe32(MYX_ADDRLOW(map->dm_segs[0].ds_addr));
+	mc.mc_data1 = htobe32(MYX_ADDRHIGH(map->dm_segs[0].ds_addr));
+	mc.mc_data2 = htobe32(4096 * 0x10000);
+	if (myx_cmd(sc, MYXCMD_UNALIGNED_DMA_TEST, &mc, NULL) != 0) {
+		printf("%s: DMA read test failed\n", DEVNAME(sc));
+		goto fail;
+	}
+
+	bzero(&mc, sizeof(mc));
+	mc.mc_data0 = htobe32(MYX_ADDRLOW(map->dm_segs[0].ds_addr));
+	mc.mc_data1 = htobe32(MYX_ADDRHIGH(map->dm_segs[0].ds_addr));
+	mc.mc_data2 = htobe32(4096 * 0x1);
+	if (myx_cmd(sc, MYXCMD_UNALIGNED_DMA_TEST, &mc, NULL) != 0) {
+		printf("%s: DMA write test failed\n", DEVNAME(sc));
+		goto fail;
+	}
+
+	bzero(&mc, sizeof(mc));
+	mc.mc_data0 = htobe32(MYX_ADDRLOW(map->dm_segs[0].ds_addr));
+	mc.mc_data1 = htobe32(MYX_ADDRHIGH(map->dm_segs[0].ds_addr));
+	mc.mc_data2 = htobe32(4096 * 0x10001);
+	if (myx_cmd(sc, MYXCMD_UNALIGNED_DMA_TEST, &mc, NULL) != 0) {
+		printf("%s: DMA read/write test failed\n", DEVNAME(sc));
+		goto fail;
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	myx_dmamem_free(sc, &test);
+	return (0);
+
+fail:
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	myx_dmamem_free(sc, &test);
+
+	if (myx_loadfirmware(sc, MYXFW_UNALIGNED) != 0) {
+		printf("%s: unable to load %s\n", DEVNAME(sc),
+		    MYXFW_UNALIGNED);
+		return (1);
+	}
+
+	sc->sc_tx_boundary = 2048;
+
+	printf("%s: using unaligned firmware\n", DEVNAME(sc));
+	return (0);
 }
 
 void
@@ -895,10 +978,16 @@ myx_up(struct myx_softc *sc)
 		goto free_pad;
 	}
 
+	if (myx_cmd(sc, MYXCMD_GET_RXRINGSZ, &mc, &r) != 0) {
+		printf("%s: unable to get rx ring size\n", DEVNAME(sc));
+		goto free_pad;
+	}
+	sc->sc_rx_ring_count = r / sizeof(struct myx_rx_desc);
+
 	bzero(&mc, sizeof(mc));
 	if (myx_cmd(sc, MYXCMD_GET_TXRINGSZ, &mc, &r) != 0) {
 		printf("%s: unable to get tx ring size\n", DEVNAME(sc));
-		return;
+		goto free_pad;
 	}
 	sc->sc_tx_ring_idx = 0;
 	sc->sc_tx_ring_count = r / sizeof(struct myx_tx_desc);
@@ -1036,7 +1125,8 @@ myx_up(struct myx_softc *sc)
 	}
 
 	for (i = 0; i < sc->sc_tx_ring_count; i++) {
-		mb = myx_buf_alloc(sc, maxpkt, sc->sc_tx_nsegs, 4096, 4096);
+		mb = myx_buf_alloc(sc, maxpkt, sc->sc_tx_nsegs,
+		    sc->sc_tx_boundary, sc->sc_tx_boundary);
 		if (mb == NULL)
 			goto free_tx_bufs;
 
