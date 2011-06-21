@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.749 2011/06/20 19:03:41 claudio Exp $ */
+/*	$OpenBSD: pf.c,v 1.750 2011/06/21 08:59:47 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3617,8 +3617,7 @@ pf_tcp_track_full(struct pf_state_peer *src, struct pf_state_peer *dst,
 	    (ackskew <= (MAXACKWINDOW << sws)) &&
 	    /* Acking not more than one window forward */
 	    ((th->th_flags & TH_RST) == 0 || orig_seq == src->seqlo ||
-	    (orig_seq == src->seqlo + 1) || (orig_seq + 1 == src->seqlo) ||
-	    (pd->flags & PFDESC_IP_REAS) == 0)) {
+	    (orig_seq == src->seqlo + 1) || (orig_seq + 1 == src->seqlo))) {
 	    /* Require an exact/+1 sequence match on resets when possible */
 
 		if (dst->scrub || src->scrub) {
@@ -5531,7 +5530,7 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
 				return (-1);
 			}
 			/* packet reassembly */
-			if (pf_normalize_ip(m0, dir, reason, pd) != PF_PASS) {
+			if (pf_normalize_ip(m0, dir, reason) != PF_PASS) {
 				*action = PF_DROP;
 				return (-1);
 			}
@@ -5607,7 +5606,7 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
 
 		/* packet reassembly */
 		if (pf_status.reass &&
-		    pf_normalize_ip6(m0, dir, reason, pd) != PF_PASS) {
+		    pf_normalize_ip6(m0, dir, reason) != PF_PASS) {
 			*action = PF_DROP;
 			return (-1);
 		}

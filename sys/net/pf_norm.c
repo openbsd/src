@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.134 2011/06/20 19:03:41 claudio Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.135 2011/06/21 08:59:47 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -739,8 +739,7 @@ pf_refragment6(struct mbuf **m0, struct m_tag *mtag, int dir)
 #endif /* INET6 */
 
 int
-pf_normalize_ip(struct mbuf **m0, int dir, u_short *reason,
-    struct pf_pdesc *pd)
+pf_normalize_ip(struct mbuf **m0, int dir, u_short *reason)
 {
 	struct mbuf		*m = *m0;
 	struct ip		*h = mtod(m, struct ip *);
@@ -779,14 +778,12 @@ pf_normalize_ip(struct mbuf **m0, int dir, u_short *reason,
 	if (h->ip_off & ~htons(IP_DF))
 		h->ip_off &= htons(IP_DF);
 
-	pd->flags |= PFDESC_IP_REAS;
 	return (PF_PASS);
 }
 
 #ifdef INET6
 int
-pf_normalize_ip6(struct mbuf **m0, int dir, u_short *reason,
-    struct pf_pdesc *pd)
+pf_normalize_ip6(struct mbuf **m0, int dir, u_short *reason)
 {
 	struct mbuf		*m = *m0;
 	struct ip6_hdr		*h = mtod(m, struct ip6_hdr *);
@@ -911,7 +908,6 @@ pf_normalize_ip6(struct mbuf **m0, int dir, u_short *reason,
 	if (m == NULL)
 		return (PF_PASS);
 
-	pd->flags |= PFDESC_IP_REAS;
 	return (PF_PASS);
 
  shortpkt:
