@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.175 2011/05/04 20:49:41 sthen Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.176 2011/06/21 22:36:42 matthew Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -98,9 +98,9 @@ struct cfdriver scsibus_cd = {
 };
 
 #ifdef SCSIDEBUG
-int scsidebug_buses = SCSIDEBUG_BUSES;
-int scsidebug_targets = SCSIDEBUG_TARGETS;
-int scsidebug_luns = SCSIDEBUG_LUNS;
+u_int32_t scsidebug_buses = SCSIDEBUG_BUSES;
+u_int32_t scsidebug_targets = SCSIDEBUG_TARGETS;
+u_int32_t scsidebug_luns = SCSIDEBUG_LUNS;
 int scsidebug_level = SCSIDEBUG_LEVEL;
 #endif
 
@@ -902,9 +902,10 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 	 * Ask the device what it is
 	 */
 #ifdef SCSIDEBUG
-	if (((1 << sc_link->scsibus) & scsidebug_buses) &&
-	    ((target < 32) && ((1 << target) & scsidebug_targets)) &&
-	    ((lun < 32) && ((1 << lun) & scsidebug_luns)))
+	if (((scsi->sc_dev.dv_unit < 32) &&
+	     ((1U << scsi->sc_dev.dv_unit) & scsidebug_buses)) &&
+	    ((target < 32) && ((1U << target) & scsidebug_targets)) &&
+	    ((lun < 32) && ((1U << lun) & scsidebug_luns)))
 		sc_link->flags |= scsidebug_level;
 #endif /* SCSIDEBUG */
 
