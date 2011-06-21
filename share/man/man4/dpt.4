@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpt.4,v 1.18 2007/05/31 19:19:50 jmc Exp $
+.\"	$OpenBSD: dpt.4,v 1.19 2011/06/21 20:25:49 matthew Exp $
 .\"	$NetBSD: dpt.4,v 1.7 2000/01/17 16:34:44 ad Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andy Doran <ad@NetBSD.org>
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 21 2011 $
 .Dt DPT 4
 .Os
 .Sh NAME
@@ -86,15 +86,6 @@ and
 .Nm bha
 drivers, which are the work of others.
 .Sh BUGS
-The first (0th) and subsequent (for multi-channel cards)
-.Xr scsibus 4
-should be attached at the
-.Nm dpt ,
-because of the way the driver is written and
-.Ox
-.Xr scsi 4
-layer design limitations.
-.Pp
 EATA adapters other than listed may function correctly with the
 .Nm
 driver, however a definitive list is not available.
