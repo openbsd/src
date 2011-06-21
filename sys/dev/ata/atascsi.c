@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.106 2011/06/02 00:07:30 matthew Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.107 2011/06/21 06:03:14 matthew Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -339,12 +339,11 @@ atascsi_probe(struct scsi_link *link)
 
 		identify = dma_alloc(sizeof(*identify), PR_WAITOK | PR_ZERO);
 
-		int count = (link->lun > 0) ? 6 : 1;
+		int count = (link->lun > 0) ? 6 : 2;
 		while (count--) {
 			rv = atascsi_port_identify(ap, identify);
 			if (rv == 0) {
-				bcopy(identify, &ap->ap_identify,
-				    sizeof(ap->ap_identify));
+				ap->ap_identify = *identify;
 				break;
 			}
 			if (count > 0)
