@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.101 2011/04/17 20:52:43 stsp Exp $	*/
+/*	$OpenBSD: xl.c,v 1.102 2011/06/21 16:52:45 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -450,7 +450,7 @@ xl_miibus_readreg(struct device *self, int phy, int reg)
 	if (!(sc->xl_flags & XL_FLAG_PHYOK) && phy != 24)
 		return (0);
 
-	bzero((char *)&frame, sizeof(frame));
+	bzero(&frame, sizeof(frame));
 
 	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
@@ -468,7 +468,7 @@ xl_miibus_writereg(struct device *self, int phy, int reg, int data)
 	if (!(sc->xl_flags & XL_FLAG_PHYOK) && phy != 24)
 		return;
 
-	bzero((char *)&frame, sizeof(frame));
+	bzero(&frame, sizeof(frame));
 
 	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
@@ -1049,7 +1049,7 @@ xl_list_tx_init_90xB(struct xl_softc *sc)
 		cd->xl_tx_chain[i].xl_prev = &cd->xl_tx_chain[prev];
 	}
 
-	bzero((char *)ld->xl_tx_list, sizeof(struct xl_list) * XL_TX_LIST_CNT);
+	bzero(ld->xl_tx_list, sizeof(struct xl_list) * XL_TX_LIST_CNT);
 	ld->xl_tx_list[0].xl_status = htole32(XL_TXSTAT_EMPTY);
 
 	cd->xl_tx_prod = 1;
@@ -1533,7 +1533,7 @@ xl_stats_update(void *xsc)
 	int			i;
 	struct mii_data		*mii = NULL;
 
-	bzero((char *)&xl_stats, sizeof(struct xl_stats));
+	bzero(&xl_stats, sizeof(struct xl_stats));
 
 	sc = xsc;
 	ifp = &sc->sc_arpcom.ac_if;
@@ -2308,8 +2308,7 @@ xl_freetxrx(struct xl_softc *sc)
 			sc->xl_cdata.xl_rx_chain[i].xl_mbuf = NULL;
 		}
 	}
-	bzero((char *)&sc->xl_ldata->xl_rx_list,
-		sizeof(sc->xl_ldata->xl_rx_list));
+	bzero(&sc->xl_ldata->xl_rx_list, sizeof(sc->xl_ldata->xl_rx_list));
 	/*
 	 * Free the TX list buffers.
 	 */
@@ -2326,8 +2325,7 @@ xl_freetxrx(struct xl_softc *sc)
 			sc->xl_cdata.xl_tx_chain[i].xl_mbuf = NULL;
 		}
 	}
-	bzero((char *)&sc->xl_ldata->xl_tx_list,
-		sizeof(sc->xl_ldata->xl_tx_list));
+	bzero(&sc->xl_ldata->xl_tx_list, sizeof(sc->xl_ldata->xl_tx_list));
 }
 
 /*
@@ -2400,7 +2398,7 @@ xl_attach(struct xl_softc *sc)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-	bcopy(enaddr, (char *)&sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
+	bcopy(enaddr, &sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(struct xl_list_data),
 	    PAGE_SIZE, 0, sc->sc_listseg, 1, &sc->sc_listnseg,

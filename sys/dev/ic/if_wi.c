@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.149 2010/08/30 20:42:27 deraadt Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.150 2011/06/21 16:52:45 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -226,8 +226,7 @@ wi_attach(struct wi_softc *sc, struct wi_funcs *funcs)
 		printf(": unable to read station address\n");
 		return (error);
 	}
-	bcopy((char *)&mac.wi_mac_addr, (char *)&ic->ic_myaddr,
-	    IEEE80211_ADDR_LEN);
+	bcopy(&mac.wi_mac_addr, &ic->ic_myaddr, IEEE80211_ADDR_LEN);
 
 	wi_get_id(sc);
 	printf("address %s", ether_sprintf(ic->ic_myaddr));
@@ -332,7 +331,7 @@ wi_attach(struct wi_softc *sc, struct wi_funcs *funcs)
 		sc->wi_flags |= WI_FLAGS_HAS_WEP;
 	timeout_set(&sc->sc_timo, funcs->f_inquire, sc);
 
-	bzero((char *)&sc->wi_stats, sizeof(sc->wi_stats));
+	bzero(&sc->wi_stats, sizeof(sc->wi_stats));
 
 	/* Find supported rates. */
 	rates.wi_type = WI_RID_DATA_RATES;
@@ -730,12 +729,12 @@ wi_rxeof(struct wi_softc *sc)
 			m->m_pkthdr.len = m->m_len =
 			    letoh16(rx_frame.wi_dat_len) + WI_SNAPHDR_LEN;
 
-			bcopy((char *)&rx_frame.wi_dst_addr,
-			    (char *)&eh->ether_dhost, ETHER_ADDR_LEN);
-			bcopy((char *)&rx_frame.wi_src_addr,
-			    (char *)&eh->ether_shost, ETHER_ADDR_LEN);
-			bcopy((char *)&rx_frame.wi_type,
-			    (char *)&eh->ether_type, ETHER_TYPE_LEN);
+			bcopy(&rx_frame.wi_dst_addr,
+			    &eh->ether_dhost, ETHER_ADDR_LEN);
+			bcopy(&rx_frame.wi_src_addr,
+			    &eh->ether_shost, ETHER_ADDR_LEN);
+			bcopy(&rx_frame.wi_type,
+			    &eh->ether_type, ETHER_TYPE_LEN);
 
 			if (wi_read_data(sc, id, WI_802_11_OFFSET,
 			    mtod(m, caddr_t) + sizeof(struct ether_header),
@@ -1402,7 +1401,7 @@ wi_setmulti(struct wi_softc *sc)
 
 	ifp = &sc->sc_ic.ic_if;
 
-	bzero((char *)&mcast, sizeof(mcast));
+	bzero(&mcast, sizeof(mcast));
 
 	mcast.wi_type = WI_RID_MCAST_LIST;
 	mcast.wi_len = ((ETHER_ADDR_LEN / 2) * 16) + 1;
@@ -1416,7 +1415,7 @@ allmulti:
 	ETHER_FIRST_MULTI(step, &sc->sc_ic.ic_ac, enm);
 	while (enm != NULL) {
 		if (i >= 16) {
-			bzero((char *)&mcast, sizeof(mcast));
+			bzero(&mcast, sizeof(mcast));
 			break;
 		}
 
@@ -1424,8 +1423,7 @@ allmulti:
 			ifp->if_flags |= IFF_ALLMULTI;
 			goto allmulti;
 		}
-		bcopy(enm->enm_addrlo, (char *)&mcast.wi_mcast[i],
-		    ETHER_ADDR_LEN);
+		bcopy(enm->enm_addrlo, &mcast.wi_mcast[i], ETHER_ADDR_LEN);
 		i++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
@@ -1446,10 +1444,8 @@ wi_setdef(struct wi_softc *sc, struct wi_req *wreq)
 
 	switch(wreq->wi_type) {
 	case WI_RID_MAC_NODE:
-		bcopy((char *)&wreq->wi_val, LLADDR(ifp->if_sadl),
-		    ETHER_ADDR_LEN);
-		bcopy((char *)&wreq->wi_val, (char *)&sc->sc_ic.ic_myaddr,
-		    ETHER_ADDR_LEN);
+		bcopy(&wreq->wi_val, LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
+		bcopy(&wreq->wi_val, &sc->sc_ic.ic_myaddr, ETHER_ADDR_LEN);
 		break;
 	case WI_RID_PORTTYPE:
 		error = wi_sync_media(sc, letoh16(wreq->wi_val[0]),
@@ -1515,8 +1511,7 @@ wi_setdef(struct wi_softc *sc, struct wi_req *wreq)
 		sc->wi_tx_key = letoh16(wreq->wi_val[0]);
 		break;
 	case WI_RID_DEFLT_CRYPT_KEYS:
-		bcopy((char *)wreq, (char *)&sc->wi_keys,
-		    sizeof(struct wi_ltv_keys));
+		bcopy(wreq, &sc->wi_keys, sizeof(struct wi_ltv_keys));
 		break;
 	case WI_FRID_CRYPTO_ALG:
 		switch (letoh16(wreq->wi_val[0])) {
@@ -1628,7 +1623,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		switch (wreq->wi_type) {
 		case WI_RID_IFACE_STATS:
 			/* XXX native byte order */
-			bcopy((char *)&sc->wi_stats, (char *)&wreq->wi_val,
+			bcopy(&sc->wi_stats, &wreq->wi_val,
 			    sizeof(sc->wi_stats));
 			wreq->wi_len = (sizeof(sc->wi_stats) / 2) + 1;
 			break;
@@ -1637,7 +1632,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			if (suser(p, 0))
 				bzero(wreq, sizeof(struct wi_ltv_keys));
 			else
-				bcopy((char *)&sc->wi_keys, wreq,
+				bcopy(&sc->wi_keys, wreq,
 					sizeof(struct wi_ltv_keys));
 			break;
 		case WI_RID_PROCFRAME:
@@ -2161,10 +2156,8 @@ wi_init_io(struct wi_softc *sc)
 	/* Set our MAC address. */
 	mac.wi_len = 4;
 	mac.wi_type = WI_RID_MAC_NODE;
-	bcopy(LLADDR(ifp->if_sadl),
-	    (char *)&sc->sc_ic.ic_myaddr, ETHER_ADDR_LEN);
-	bcopy((char *)&sc->sc_ic.ic_myaddr,
-	    (char *)&mac.wi_mac_addr, ETHER_ADDR_LEN);
+	bcopy(LLADDR(ifp->if_sadl), &sc->sc_ic.ic_myaddr, ETHER_ADDR_LEN);
+	bcopy(&sc->sc_ic.ic_myaddr, &mac.wi_mac_addr, ETHER_ADDR_LEN);
 	wi_write_record(sc, (struct wi_ltv_gen *)&mac);
 
 	/*
@@ -2268,8 +2261,8 @@ wi_do_hostencrypt(struct wi_softc *sc, caddr_t buf, int len)
 	key[2] = sc->wi_icv;
 
 	klen = letoh16(sc->wi_keys.wi_keys[sc->wi_tx_key].wi_keylen);
-	bcopy((char *)&sc->wi_keys.wi_keys[sc->wi_tx_key].wi_keydat,
-	    (char *)key + IEEE80211_WEP_IVLEN, klen);
+	bcopy(&sc->wi_keys.wi_keys[sc->wi_tx_key].wi_keydat,
+	    key + IEEE80211_WEP_IVLEN, klen);
 	klen = (klen > IEEE80211_WEP_KEYLEN) ? RC4KEYLEN : RC4KEYLEN / 2;
 
 	/* rc4 keysetup */
@@ -2320,8 +2313,8 @@ wi_do_hostdecrypt(struct wi_softc *sc, caddr_t buf, int len)
 	dat += 4;
 
 	klen = letoh16(sc->wi_keys.wi_keys[kid].wi_keylen);
-	bcopy((char *)&sc->wi_keys.wi_keys[kid].wi_keydat,
-	    (char *)key + IEEE80211_WEP_IVLEN, klen);
+	bcopy(&sc->wi_keys.wi_keys[kid].wi_keydat,
+	    key + IEEE80211_WEP_IVLEN, klen);
 	klen = (klen > IEEE80211_WEP_KEYLEN) ? RC4KEYLEN : RC4KEYLEN / 2;
 
 	/* rc4 keysetup */
@@ -2371,7 +2364,7 @@ nextpkt:
 	if (m0 == NULL)
 		return;
 
-	bzero((char *)&tx_frame, sizeof(tx_frame));
+	bzero(&tx_frame, sizeof(tx_frame));
 	tx_frame.wi_frame_ctl = htole16(WI_FTYPE_DATA | WI_STYPE_DATA);
 	id = sc->wi_tx_data_id;
 	eh = mtod(m0, struct ether_header *);
@@ -2397,33 +2390,31 @@ nextpkt:
 	    eh->ether_type == htons(ETHERTYPE_ARP) ||
 	    eh->ether_type == htons(ETHERTYPE_REVARP) ||
 	    eh->ether_type == htons(ETHERTYPE_IPV6)) {
-		bcopy((char *)&eh->ether_dhost,
-		    (char *)&tx_frame.wi_addr1, ETHER_ADDR_LEN);
+		bcopy(&eh->ether_dhost,
+		    &tx_frame.wi_addr1, ETHER_ADDR_LEN);
 		if (sc->wi_ptype == WI_PORTTYPE_HOSTAP) {
 			tx_frame.wi_tx_ctl = htole16(WI_ENC_TX_MGMT); /* XXX */
 			tx_frame.wi_frame_ctl |= htole16(WI_FCTL_FROMDS);
-			bcopy((char *)&sc->sc_ic.ic_myaddr,
-			    (char *)&tx_frame.wi_addr2, ETHER_ADDR_LEN);
-			bcopy((char *)&eh->ether_shost,
-			    (char *)&tx_frame.wi_addr3, ETHER_ADDR_LEN);
+			bcopy(&sc->sc_ic.ic_myaddr,
+			    &tx_frame.wi_addr2, ETHER_ADDR_LEN);
+			bcopy(&eh->ether_shost,
+			    &tx_frame.wi_addr3, ETHER_ADDR_LEN);
 			if (sc->wi_use_wep)
 				hostencrypt = 1;
 		} else if (sc->wi_ptype == WI_PORTTYPE_BSS && sc->wi_use_wep &&
 		    sc->wi_crypto_algorithm != WI_CRYPTO_FIRMWARE_WEP) {
 			tx_frame.wi_tx_ctl = htole16(WI_ENC_TX_MGMT); /* XXX */
 			tx_frame.wi_frame_ctl |= htole16(WI_FCTL_TODS);
-			bcopy((char *)&sc->sc_ic.ic_myaddr,
-			    (char *)&tx_frame.wi_addr2, ETHER_ADDR_LEN);
-			bcopy((char *)&eh->ether_dhost,
-			    (char *)&tx_frame.wi_addr3, ETHER_ADDR_LEN);
+			bcopy(&sc->sc_ic.ic_myaddr,
+			    &tx_frame.wi_addr2, ETHER_ADDR_LEN);
+			bcopy(&eh->ether_dhost,
+			    &tx_frame.wi_addr3, ETHER_ADDR_LEN);
 			hostencrypt = 1;
 		} else
-			bcopy((char *)&eh->ether_shost,
-			    (char *)&tx_frame.wi_addr2, ETHER_ADDR_LEN);
-		bcopy((char *)&eh->ether_dhost,
-		    (char *)&tx_frame.wi_dst_addr, ETHER_ADDR_LEN);
-		bcopy((char *)&eh->ether_shost,
-		    (char *)&tx_frame.wi_src_addr, ETHER_ADDR_LEN);
+			bcopy(&eh->ether_shost,
+			    &tx_frame.wi_addr2, ETHER_ADDR_LEN);
+		bcopy(&eh->ether_dhost, &tx_frame.wi_dst_addr, ETHER_ADDR_LEN);
+		bcopy(&eh->ether_shost, &tx_frame.wi_src_addr, ETHER_ADDR_LEN);
 
 		tx_frame.wi_dat_len = m0->m_pkthdr.len - WI_SNAPHDR_LEN;
 		tx_frame.wi_dat[0] = htons(WI_SNAP_WORD0);
@@ -2526,11 +2517,10 @@ wi_mgmt_xmit(struct wi_softc *sc, caddr_t data, int len)
 	hdr = (struct wi_80211_hdr *)data;
 	dptr = data + sizeof(struct wi_80211_hdr);
 
-	bzero((char *)&tx_frame, sizeof(tx_frame));
+	bzero(&tx_frame, sizeof(tx_frame));
 	id = sc->wi_tx_mgmt_id;
 
-	bcopy((char *)hdr, (char *)&tx_frame.wi_frame_ctl,
-	   sizeof(struct wi_80211_hdr));
+	bcopy(hdr, &tx_frame.wi_frame_ctl, sizeof(struct wi_80211_hdr));
 
 	tx_frame.wi_tx_ctl = htole16(WI_ENC_TX_MGMT);
 	tx_frame.wi_dat_len = len - sizeof(struct wi_80211_hdr);

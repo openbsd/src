@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.66 2010/09/20 07:40:41 deraadt Exp $  */
+/*	$OpenBSD: pgt.c,v 1.67 2011/06/21 16:52:45 tedu Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1684,10 +1684,9 @@ pgt_mgmt_request(struct pgt_softc *sc, struct pgt_mgmt_desc *pmd)
 	pmf->pmf_size = htobe32(pmd->pmd_len);
 	/* "set" and "retrieve" operations both send data */
 	if (pmd->pmd_sendbuf != NULL)
-		memcpy((char *)pmf + sizeof(*pmf), pmd->pmd_sendbuf,
-		    pmd->pmd_len);
+		memcpy(pmf + 1, pmd->pmd_sendbuf, pmd->pmd_len);
 	else
-		bzero((char *)pmf + sizeof(*pmf), pmd->pmd_len);
+		bzero(pmf + 1, pmd->pmd_len);
 	pmd->pmd_error = EINPROGRESS;
 	TAILQ_INSERT_TAIL(&sc->sc_mgmtinprog, pmd, pmd_link);
 	if (sc->sc_debug & SC_DEBUG_MGMT)

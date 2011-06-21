@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380sbc.c,v 1.26 2010/06/26 23:24:44 guenther Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.27 2011/06/21 16:52:45 tedu Exp $	*/
 /*	$NetBSD: ncr5380sbc.c,v 1.13 1996/10/13 01:37:25 christos Exp $	*/
 
 /*
@@ -2496,7 +2496,7 @@ void
 ncr5380_clear_trace()
 {
 	ncr5380_traceidx = 0;
-	bzero((char *) ncr5380_tracebuf, sizeof(ncr5380_tracebuf));
+	bzero(ncr5380_tracebuf, sizeof(ncr5380_tracebuf));
 }
 
 void

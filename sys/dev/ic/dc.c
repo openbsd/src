@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.122 2011/03/05 13:39:26 kettenis Exp $	*/
+/*	$OpenBSD: dc.c,v 1.123 2011/06/21 16:52:45 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -749,7 +749,7 @@ dc_miibus_writereg(struct device *self, int phy, int reg, int data)
 	struct dc_mii_frame frame;
 	int i, phy_reg;
 
-	bzero((char *)&frame, sizeof(frame));
+	bzero(&frame, sizeof(frame));
 
 	if (DC_IS_ADMTEK(sc) && phy != DC_ADMTEK_PHYADDR)
 		return;
@@ -903,7 +903,7 @@ dc_setfilt_21143(struct dc_softc *sc)
 	sc->dc_cdata.dc_tx_cnt++;
 	sframe = &sc->dc_ldata->dc_tx_list[i];
 	sp = &sc->dc_ldata->dc_sbuf[0];
-	bzero((char *)sp, DC_SFRAME_LEN);
+	bzero(sp, DC_SFRAME_LEN);
 
 	sframe->dc_data = htole32(sc->sc_listmap->dm_segs[0].ds_addr +
 	    offsetof(struct dc_list_data, dc_sbuf));
@@ -1126,7 +1126,7 @@ dc_setfilt_xircom(struct dc_softc *sc)
 	sc->dc_cdata.dc_tx_cnt++;
 	sframe = &sc->dc_ldata->dc_tx_list[i];
 	sp = &sc->dc_ldata->dc_sbuf[0];
-	bzero((char *)sp, DC_SFRAME_LEN);
+	bzero(sp, DC_SFRAME_LEN);
 
 	sframe->dc_data = htole32(sc->sc_listmap->dm_segs[0].ds_addr +
 	    offsetof(struct dc_list_data, dc_sbuf));
@@ -1934,7 +1934,7 @@ dc_newbuf(struct dc_softc *sc, int i, struct mbuf *m)
 	 * 82c169 chips.
 	 */
 	if (sc->dc_flags & DC_PNIC_RX_BUG_WAR)
-		bzero((char *)mtod(m_new, char *), m_new->m_len);
+		bzero(mtod(m_new, char *), m_new->m_len);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->dc_cdata.dc_rx_chain[i].sd_map, 0,
 	    sc->dc_cdata.dc_rx_chain[i].sd_map->dm_mapsize,
@@ -3112,8 +3112,7 @@ dc_stop(struct dc_softc *sc, int softonly)
 			sc->dc_cdata.dc_rx_chain[i].sd_mbuf = NULL;
 		}
 	}
-	bzero((char *)&sc->dc_ldata->dc_rx_list,
-		sizeof(sc->dc_ldata->dc_rx_list));
+	bzero(&sc->dc_ldata->dc_rx_list, sizeof(sc->dc_ldata->dc_rx_list));
 
 	/*
 	 * Free the TX list buffers.
@@ -3136,8 +3135,7 @@ dc_stop(struct dc_softc *sc, int softonly)
 			sc->dc_cdata.dc_tx_chain[i].sd_mbuf = NULL;
 		}
 	}
-	bzero((char *)&sc->dc_ldata->dc_tx_list,
-		sizeof(sc->dc_ldata->dc_tx_list));
+	bzero(&sc->dc_ldata->dc_tx_list, sizeof(sc->dc_ldata->dc_tx_list));
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
 	    0, sc->sc_listmap->dm_mapsize,

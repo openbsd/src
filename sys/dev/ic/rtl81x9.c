@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.74 2010/09/07 16:21:42 deraadt Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.75 2011/06/21 16:52:45 tedu Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1313,7 +1313,7 @@ rl_miibus_readreg(struct device *self, int phy, int reg)
 		return (CSR_READ_2(sc, rl8139_reg));
 	}
 
-	bzero((char *)&frame, sizeof(frame));
+	bzero(&frame, sizeof(frame));
 
 	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
@@ -1357,7 +1357,7 @@ rl_miibus_writereg(struct device *self, int phy, int reg, int val)
 		return;
 	}
 
-	bzero((char *)&frame, sizeof(frame));
+	bzero(&frame, sizeof(frame));
 	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
 	frame.mii_data = val;

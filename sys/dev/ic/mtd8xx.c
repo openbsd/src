@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.17 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.18 2011/06/21 16:52:45 tedu Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -772,8 +772,7 @@ mtd_stop(struct ifnet *ifp)
 			sc->mtd_cdata.mtd_rx_chain[i].sd_mbuf = NULL;
 		}
 	}
-	bzero((char *)&sc->mtd_ldata->mtd_rx_list,
-		sizeof(sc->mtd_ldata->mtd_rx_list));
+	bzero(&sc->mtd_ldata->mtd_rx_list, sizeof(sc->mtd_ldata->mtd_rx_list));
 
 	/*
 	 * Free the TX list buffers.
@@ -792,8 +791,7 @@ mtd_stop(struct ifnet *ifp)
 		}
 	}
 
-	bzero((char *)&sc->mtd_ldata->mtd_tx_list,
-		sizeof(sc->mtd_ldata->mtd_tx_list));
+	bzero(&sc->mtd_ldata->mtd_tx_list, sizeof(sc->mtd_ldata->mtd_tx_list));
 
 }
 

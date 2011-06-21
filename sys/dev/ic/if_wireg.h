@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.39 2008/02/03 15:04:37 kettenis Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.40 2011/06/21 16:52:45 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -356,7 +356,7 @@ struct wi_ltv_str {
 		int			l;			\
 								\
 		l = (str.i_len + 1) & ~0x1;			\
-		bzero((char *)&s, sizeof(s));			\
+		bzero(&s, sizeof(s));				\
 		s.wi_len = (l / 2) + 2;				\
 		s.wi_type = recno;				\
 		s.wi_str[0] = htole16(str.i_len);		\

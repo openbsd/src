@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti.c,v 1.3 2010/09/20 07:40:41 deraadt Exp $	*/
+/*	$OpenBSD: ti.c,v 1.4 2011/06/21 16:52:45 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -954,7 +954,7 @@ ti_free_rx_ring_std(struct ti_softc *sc)
 					   sc->ti_cdata.ti_rx_std_map[i]);
 			sc->ti_cdata.ti_rx_std_map[i] = 0;
 		}
-		bzero((char *)&sc->ti_rdata->ti_rx_std_ring[i],
+		bzero(&sc->ti_rdata->ti_rx_std_ring[i],
 		    sizeof(struct ti_rx_desc));
 	}
 }
@@ -986,7 +986,7 @@ ti_free_rx_ring_jumbo(struct ti_softc *sc)
 			m_freem(sc->ti_cdata.ti_rx_jumbo_chain[i]);
 			sc->ti_cdata.ti_rx_jumbo_chain[i] = NULL;
 		}
-		bzero((char *)&sc->ti_rdata->ti_rx_jumbo_ring[i],
+		bzero(&sc->ti_rdata->ti_rx_jumbo_ring[i],
 		    sizeof(struct ti_rx_desc));
 	}
 }
@@ -1020,7 +1020,7 @@ ti_free_rx_ring_mini(struct ti_softc *sc)
 					   sc->ti_cdata.ti_rx_mini_map[i]);
 			sc->ti_cdata.ti_rx_mini_map[i] = 0;
 		}
-		bzero((char *)&sc->ti_rdata->ti_rx_mini_ring[i],
+		bzero(&sc->ti_rdata->ti_rx_mini_ring[i],
 		    sizeof(struct ti_rx_desc));
 	}
 }
@@ -1042,7 +1042,7 @@ ti_free_tx_ring(struct ti_softc *sc)
 					    sc->ti_cdata.ti_tx_map[i], link);
 			sc->ti_cdata.ti_tx_map[i] = 0;
 		}
-		bzero((char *)&sc->ti_rdata->ti_tx_ring[i],
+		bzero(&sc->ti_rdata->ti_tx_ring[i],
 		    sizeof(struct ti_tx_desc));
 	}
 
@@ -1199,7 +1199,7 @@ ti_iff(struct ti_softc *sc)
 			if (mc == NULL)
 				panic("ti_iff");
 
-			bcopy(enm->enm_addrlo, (char *)&mc->mc_addr,
+			bcopy(enm->enm_addrlo, &mc->mc_addr,
 			    ETHER_ADDR_LEN);
 			SLIST_INSERT_HEAD(&sc->ti_mc_listhead, mc,
 			    mc_entries);
@@ -1510,7 +1510,7 @@ ti_gibinit(struct ti_softc *sc)
 	 * a Tigon 1 chip.
 	 */
 	CSR_WRITE_4(sc, TI_WINBASE, TI_TX_RING_BASE);
-	bzero((char *)sc->ti_rdata->ti_tx_ring,
+	bzero(sc->ti_rdata->ti_tx_ring,
 	    TI_TX_RING_CNT * sizeof(struct ti_tx_desc));
 	rcb = &sc->ti_rdata->ti_info.ti_tx_rcb;
 	if (sc->ti_hwrev == TI_HWREV_TIGON)
