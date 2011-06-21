@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.16 2011/06/20 13:02:49 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.17 2011/06/21 06:55:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -71,7 +71,7 @@ int myx_debug = MYXDBG_ALL;
 #define DPRINTF(_lvl, arg...)
 #endif
 
-#define DEVNAME(_s)	((_s)->_s##_dev.dv_xname)
+#define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
 
 struct myx_dmamem {
 	bus_dmamap_t		 mxm_map;
@@ -441,7 +441,7 @@ myx_attachhook(void *arg)
 	ifp->if_ioctl = myx_ioctl;
 	ifp->if_start = myx_start;
 	ifp->if_watchdog = myx_watchdog;
-        ifp->if_hardmtu = 9000;
+	ifp->if_hardmtu = 9000;
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 	IFQ_SET_MAXLEN(&ifp->if_snd, 1);
 	IFQ_SET_READY(&ifp->if_snd);
@@ -453,7 +453,7 @@ myx_attachhook(void *arg)
 #if 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
-		    IFCAP_CSUM_UDPv4;
+	    IFCAP_CSUM_UDPv4;
 #endif
 	ifp->if_baudrate = 0;
 
@@ -1156,8 +1156,8 @@ myx_iff(struct myx_softc *sc)
 {
 	struct myx_cmd		mc;
 	struct ifnet		*ifp = &sc->sc_ac.ac_if;
-        struct ether_multi	*enm;
-        struct ether_multistep	step;
+	struct ether_multi	*enm;
+	struct ether_multistep	step;
 
 	if (myx_cmd(sc, ISSET(ifp->if_flags, IFF_PROMISC) ?
 	    MYXCMD_SET_PROMISC : MYXCMD_UNSET_PROMISC, &mc, NULL) != 0) {
@@ -1299,7 +1299,7 @@ myx_start(struct ifnet *ifp)
 	bus_dmamap_t			map;
 	bus_dmamap_t			zmap = sc->sc_zerodma.mxm_map;;
 	struct myx_buf			*mb;
-        struct mbuf			*m;
+	struct mbuf			*m;
 	u_int32_t			offset = sc->sc_tx_ring_offset;
 	u_int				idx;
 	u_int				i;
@@ -1307,7 +1307,7 @@ myx_start(struct ifnet *ifp)
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING) ||
 	    ISSET(ifp->if_flags, IFF_OACTIVE) ||
-	    IFQ_IS_EMPTY(&ifp->if_snd)) 
+	    IFQ_IS_EMPTY(&ifp->if_snd))
 		return;
 
 	idx = sc->sc_tx_ring_idx;
@@ -1518,7 +1518,7 @@ myx_txeof(struct myx_softc *sc, u_int32_t done_count)
 
 		bus_dmamap_sync(sc->sc_dmat, map, 0,
 		    map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-                bus_dmamap_unload(sc->sc_dmat, map);
+		bus_dmamap_unload(sc->sc_dmat, map);
 		m_freem(m);
 
 		myx_buf_put(&sc->sc_tx_buf_free, mb);
@@ -1557,7 +1557,7 @@ myx_rxeof(struct myx_softc *sc)
 
 		bus_dmamap_sync(sc->sc_dmat, mb->mb_map, 0,
 		    mb->mb_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
-                bus_dmamap_unload(sc->sc_dmat, mb->mb_map);
+		bus_dmamap_unload(sc->sc_dmat, mb->mb_map);
 
 		m = mb->mb_m;
 		m->m_data += ETHER_ALIGN;
@@ -1704,4 +1704,3 @@ myx_buf_put(struct myx_buf_list *mbl, struct myx_buf *mb)
 {
 	SIMPLEQ_INSERT_TAIL(mbl, mb, mb_entry);
 }
-
