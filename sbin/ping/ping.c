@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.88 2010/07/03 04:44:51 guenther Exp $	*/
+/*	$OpenBSD: ping.c,v 1.89 2011/06/21 17:31:07 mikeb Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -312,7 +312,7 @@ main(int argc, char *argv[])
 				errx(1, "rtable value is %s: %s",
 				    errstr, optarg);
 
-			if (setsockopt(s, IPPROTO_IP, SO_RTABLE, &rtableid,
+			if (setsockopt(s, SOL_SOCKET, SO_RTABLE, &rtableid,
 			    sizeof(rtableid)) == -1)
 				err(1, "setsockopt SO_RTABLE");
 			break;

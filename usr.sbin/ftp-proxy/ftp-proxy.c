@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.22 2011/04/28 00:17:28 mikeb Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.23 2011/06/21 17:31:07 mikeb Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -428,9 +428,8 @@ handle_connection(const int listen_fd, short event, void *ev)
 		goto fail;
 	}
 	len = sizeof(s->client_rd);
-	if (client_sa->sa_family == AF_INET &&
-	    getsockopt(s->client_fd, IPPROTO_IP, SO_RTABLE, &s->client_rd,
-	    &len)) {
+	if (getsockopt(s->client_fd, SOL_SOCKET, SO_RTABLE, &s->client_rd,
+	    &len) && errno != ENOPROTOOPT) {
 		logmsg(LOG_CRIT, "#%d getsockopt failed: %s", s->id,
 		    strerror(errno));
 		goto fail;

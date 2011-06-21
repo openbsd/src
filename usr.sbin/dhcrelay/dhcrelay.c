@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.34 2010/07/03 04:44:52 guenther Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.35 2011/06/21 17:31:07 mikeb Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -176,7 +176,7 @@ main(int argc, char *argv[])
 		if (setsockopt(sp->fd, SOL_SOCKET, SO_REUSEPORT,
 		    &opt, sizeof(opt)) == -1)
 			error("setsockopt: %m");
-		if (setsockopt(sp->fd, IPPROTO_IP, SO_RTABLE, &rdomain,
+		if (setsockopt(sp->fd, SOL_SOCKET, SO_RTABLE, &rdomain,
 		    sizeof(rdomain)) == -1)
 			error("setsockopt: %m");
 		if (bind(sp->fd, (struct sockaddr *)&laddr, sizeof laddr) == -1)
@@ -197,7 +197,7 @@ main(int argc, char *argv[])
 		if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEPORT,
 		    &opt, sizeof(opt)) == -1)
 			error("setsockopt: %m");
-		if (setsockopt(server_fd, IPPROTO_IP, SO_RTABLE, &rdomain,
+		if (setsockopt(server_fd, SOL_SOCKET, SO_RTABLE, &rdomain,
 		    sizeof(rdomain)) == -1)
 			error("setsockopt: %m");
 		if (bind(server_fd, (struct sockaddr *)&laddr,

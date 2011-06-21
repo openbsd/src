@@ -719,12 +719,15 @@ server_init(struct addrinfo *aitop, struct statctx *udp_sc)
 				warn("socket");
 			continue;
 		}
-		if (ptb->Vflag && ai->ai_family == AF_INET) {
-			if (setsockopt(sock, IPPROTO_IP, SO_RTABLE,
-			    &ptb->Vflag, sizeof(ptb->Vflag)) == -1)
-				err(1, "setsockopt SO_RTABLE");
-		} else if (ptb->Vflag)
-			warnx("rtable only supported on AF_INET");
+		if (ptb->Vflag) {
+			if (setsockopt(sock, SOL_SOCKET, SO_RTABLE,
+			    &ptb->Vflag, sizeof(ptb->Vflag)) == -1) {
+				if (errno == ENOPROTOOPT)
+					warn("set rtable");
+				else
+					err(1, "setsockopt SO_RTABLE");
+			}
+		}
 		if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
 		    &on, sizeof(on)) == -1)
 			warn("reuse port");
@@ -817,12 +820,15 @@ client_init(struct addrinfo *aitop, int nconn, struct statctx *udp_sc)
 					warn("socket");
 				continue;
 			}
-			if (ptb->Vflag && ai->ai_family == AF_INET) {
-				if (setsockopt(sock, IPPROTO_IP, SO_RTABLE,
-				    &ptb->Vflag, sizeof(ptb->Vflag)) == -1)
-					err(1, "setsockopt SO_RTABLE");
-			} else if (ptb->Vflag)
-				warnx("rtable only supported on AF_INET");
+			if (ptb->Vflag) {
+				if (setsockopt(sock, SOL_SOCKET, SO_RTABLE,
+				    &ptb->Vflag, sizeof(ptb->Vflag)) == -1) {
+					if (errno == ENOPROTOOPT)
+						warn("set rtable");
+					else
+						err(1, "setsockopt SO_RTABLE");
+				}
+			}
 			if (ptb->Sflag) {
 				if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF,
 				    &ptb->Sflag, sizeof(ptb->Sflag)) == -1)
