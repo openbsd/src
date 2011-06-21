@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt.c,v 1.32 2011/04/26 22:55:58 matthew Exp $	*/
+/*	$OpenBSD: dpt.c,v 1.33 2011/06/21 20:23:49 matthew Exp $	*/
 /*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
 
 /*-
@@ -357,18 +357,29 @@ dpt_init(sc, intrstr)
 	
 	/* Fill in each link and attach in turn */
 	for (i = 0; i <= ec->ec_maxchannel; i++) {
+		struct scsibus_attach_args saa;
+		struct dpt_channel *ch;
 		struct scsi_link *link;
+
 		sc->sc_hbaid[i] = ec->ec_hba[3 - i];
+
+		ch = &sc->sc_channel[i];
+		ch->ch_sc = sc;
+		ch->ch_index = i;
+
 		link = &sc->sc_link[i];
-		link->scsibus = i;
 		link->adapter_target = sc->sc_hbaid[i];
 		link->luns = ec->ec_maxlun + 1;
 		link->adapter_buswidth = ec->ec_maxtarget + 1;
 		link->adapter = &dpt_switch;
-		link->adapter_softc = sc;
+		link->adapter_softc = ch;
 		link->openings = sc->sc_nccbs;
 		link->pool = &sc->sc_iopool;
-		config_found(&sc->sc_dv, link, scsiprint);
+
+		bzero(&saa, sizeof(saa));
+		saa.saa_sc_link = link;
+
+		config_found(&sc->sc_dv, &saa, scsiprint);
 	}
 }
 
@@ -788,6 +799,7 @@ dpt_scsi_cmd(struct scsi_xfer *xs)
 {
 	int error, i, flags, s;
 	struct scsi_link *sc_link;
+	struct dpt_channel *ch;
 	struct dpt_softc *sc;
 	struct dpt_ccb *ccb;
 	struct eata_sg *sg;
@@ -797,7 +809,8 @@ dpt_scsi_cmd(struct scsi_xfer *xs)
 
 	sc_link = xs->sc_link;
 	flags = xs->flags;
-	sc = sc_link->adapter_softc;
+	ch = sc_link->adapter_softc;
+	sc = ch->ch_sc;
 	dmat = sc->sc_dmat;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("dpt_scsi_cmd\n"));
@@ -827,7 +840,7 @@ dpt_scsi_cmd(struct scsi_xfer *xs)
 	cp->cp_ccbid = ccb->ccb_id;
 	cp->cp_id = sc_link->target;
 	cp->cp_lun = sc_link->lun;
-	cp->cp_channel = sc_link->scsibus;
+	cp->cp_channel = ch->ch_index;
 	cp->cp_senselen = sizeof(ccb->ccb_sense);
 	cp->cp_stataddr = htobe32(sc->sc_sppa);
 	cp->cp_dispri = 1;
@@ -835,7 +848,7 @@ dpt_scsi_cmd(struct scsi_xfer *xs)
 	cp->cp_autosense = 1;
 	cp->cp_datain = ((xs->flags & SCSI_DATA_IN) != 0);
 	cp->cp_dataout = ((xs->flags & SCSI_DATA_OUT) != 0);
-	cp->cp_interpret = (sc->sc_hbaid[sc_link->scsibus] == sc_link->target);
+	cp->cp_interpret = (sc->sc_hbaid[ch->ch_index] == sc_link->target);
 
 	/* Synchronous xfers musn't write-back through the cache */
 	if (xs->bp != NULL && (xs->bp->b_flags & (B_ASYNC | B_READ)) == 0)
@@ -943,6 +956,7 @@ dpt_timeout(arg)
 {
 	struct scsi_link *sc_link;
 	struct scsi_xfer *xs;
+	struct dpt_channel *ch;
 	struct dpt_softc *sc;
  	struct dpt_ccb *ccb;
 	int s;
@@ -950,7 +964,8 @@ dpt_timeout(arg)
 	ccb = arg;
 	xs = ccb->ccb_xs;
 	sc_link = xs->sc_link;
-	sc  = sc_link->adapter_softc;
+	ch = sc_link->adapter_softc;
+	sc = ch->ch_sc;
 
 	sc_print_addr(sc_link);
 	printf("timed out (status:%02x aux status:%02x)", 

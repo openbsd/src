@@ -1,4 +1,4 @@
-/*	$OpenBSD: dptvar.h,v 1.9 2011/04/26 22:55:58 matthew Exp $	*/
+/*	$OpenBSD: dptvar.h,v 1.10 2011/06/21 20:23:49 matthew Exp $	*/
 /*	$NetBSD: dptvar.h,v 1.5 1999/10/23 16:26:32 ad Exp $	*/
 
 /*
@@ -54,10 +54,16 @@ struct dpt_ccb {
 	struct scsi_xfer *ccb_xs;
 };
 
+struct dpt_channel {
+	struct dpt_softc *ch_sc;
+	int ch_index;
+};
+
 struct dpt_softc {
 	struct device sc_dv;		/* generic device data */
 	bus_space_handle_t sc_ioh;	/* bus space handle */
 	struct scsi_link sc_link[3];	/* prototype link for each channel */
+	struct dpt_channel sc_channel[3];
 	struct eata_cfg sc_ec;		/* EATA configuration data */
 	bus_space_tag_t	sc_iot;		/* bus space tag */
 	bus_dma_tag_t	sc_dmat;	/* bus DMA tag */
