@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.18 2011/06/21 10:31:28 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.19 2011/06/21 11:57:20 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -150,7 +150,7 @@ struct myx_softc {
 
 int	 myx_match(struct device *, void *, void *);
 void	 myx_attach(struct device *, struct device *, void *);
-int	 myx_query(struct myx_softc *sc);
+int	 myx_query(struct myx_softc *sc, char *, size_t);
 u_int	 myx_ether_aton(char *, u_int8_t *, u_int);
 void	 myx_attachhook(void *);
 int	 myx_loadfirmware(struct myx_softc *, const char *);
@@ -216,6 +216,7 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct myx_softc	*sc = (struct myx_softc *)self;
 	struct pci_attach_args	*pa = aux;
+	char			 part[32];
 	pcireg_t		 memtype;
 
 	sc->sc_pc = pa->pa_pc;
@@ -239,8 +240,9 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* Get the mac address */
-	if (myx_query(sc) != 0)
+	/* Get board details (mac/part) */
+	bzero(part, sizeof(part));
+	if (myx_query(sc, part, sizeof(part)) != 0)
 		goto unmap;
 
 	/* Map the interrupt */
@@ -249,7 +251,9 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap;
 	}
 
-	printf(": %s, address %s\n", pci_intr_string(pa->pa_pc, sc->sc_ih),
+	printf(": %s, model %s, address %s\n",
+	    pci_intr_string(pa->pa_pc, sc->sc_ih),
+	    part[0] == '\0' ? "(unknown)" : part,
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	/* this is sort of racy */
@@ -302,7 +306,7 @@ myx_ether_aton(char *mac, u_int8_t *lladdr, u_int maxlen)
 }
 
 int
-myx_query(struct myx_softc *sc)
+myx_query(struct myx_softc *sc, char *part, size_t partlen)
 {
 	struct myx_gen_hdr hdr;
 	u_int32_t	offset;
@@ -330,6 +334,9 @@ myx_query(struct myx_softc *sc)
 			i += 4;
 			i += myx_ether_aton(&strings[i],
 			    sc->sc_ac.ac_enaddr, maxlen);
+		} else if (maxlen > 3 && bcmp("PC=", &strings[i], 3) == 0) {
+			i += 3;
+			i += strlcpy(part, &strings[i], min(maxlen, partlen));
 		}
 		for (; i < len; i++) {
 			if (strings[i] == '\0')
