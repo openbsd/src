@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_reconstruct.c,v 1.17 2010/05/23 13:49:35 naddy Exp $	*/
+/*	$OpenBSD: rf_reconstruct.c,v 1.18 2011/06/21 16:46:00 tedu Exp $	*/
 /*	$NetBSD: rf_reconstruct.c,v 1.26 2000/06/04 02:05:13 oster Exp $	*/
 
 /*
@@ -1165,7 +1165,7 @@ rf_IssueNextReadRequest(RF_Raid_t *raidPtr, RF_RowCol_t row, RF_RowCol_t col)
 	 */
 	rbuf->parityStripeID = ctrl->curPSID;
 	rbuf->which_ru = ctrl->ru_count;
-	bzero((char *) &raidPtr->recon_tracerecs[col],
+	bzero(&raidPtr->recon_tracerecs[col],
 	    sizeof(raidPtr->recon_tracerecs[col]));
 	raidPtr->recon_tracerecs[col].reconacc = 1;
 	RF_ETIMER_START(raidPtr->recon_tracerecs[col].recon_timer);

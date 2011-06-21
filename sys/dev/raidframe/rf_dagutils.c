@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_dagutils.c,v 1.4 2002/12/16 07:01:03 tdeval Exp $	*/
+/*	$OpenBSD: rf_dagutils.c,v 1.5 2011/06/21 16:46:00 tedu Exp $	*/
 /*	$NetBSD: rf_dagutils.c,v 1.6 1999/12/09 02:26:09 oster Exp $	*/
 
 /*
@@ -246,7 +246,7 @@ rf_AllocDAGHeader(void)
 
 	RF_FREELIST_GET(rf_dagh_freelist, dh, next, (RF_DagHeader_t *));
 	if (dh) {
-		bzero((char *) dh, sizeof(RF_DagHeader_t));
+		bzero(dh, sizeof(RF_DagHeader_t));
 	}
 	return (dh);
 }

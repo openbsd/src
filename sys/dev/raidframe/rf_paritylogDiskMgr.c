@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_paritylogDiskMgr.c,v 1.6 2002/12/16 07:01:04 tdeval Exp $	*/
+/*	$OpenBSD: rf_paritylogDiskMgr.c,v 1.7 2011/06/21 16:46:00 tedu Exp $	*/
 /*	$NetBSD: rf_paritylogDiskMgr.c,v 1.10 2000/01/15 01:57:57 oster Exp $	*/
 
 /*
@@ -154,7 +154,7 @@ rf_ReadRegionLog(RF_RegionId_t regionID, RF_MCPair_t *rrd_mcpair,
 	}
 	/* Initialize DAG parameters. */
 	RF_Malloc(tracerec, sizeof(RF_AccTraceEntry_t), (RF_AccTraceEntry_t *));
-	bzero((char *) tracerec, sizeof(RF_AccTraceEntry_t));
+	bzero(tracerec, sizeof(RF_AccTraceEntry_t));
 	(*rrd_dag_h)->tracerec = tracerec;
 	rrd_rdNode = (*rrd_dag_h)->succedents[0]->succedents[0];
 	rrd_rdNode->params[0].p = *rrd_pda;
@@ -203,7 +203,7 @@ rf_WriteCoreLog(RF_ParityLog_t *log, RF_MCPair_t *fwr_mcpair,
 
 	/* Initialize DAG parameters. */
 	RF_Malloc(tracerec, sizeof(RF_AccTraceEntry_t), (RF_AccTraceEntry_t *));
-	bzero((char *) tracerec, sizeof(RF_AccTraceEntry_t));
+	bzero(tracerec, sizeof(RF_AccTraceEntry_t));
 	(*fwr_dag_h)->tracerec = tracerec;
 	fwr_wrNode = (*fwr_dag_h)->succedents[0]->succedents[0];
 	fwr_wrNode->params[0].p = *fwr_pda;
@@ -255,7 +255,7 @@ rf_ReadRegionParity(RF_RegionId_t regionID, RF_MCPair_t *prd_mcpair,
 	}
 	/* Initialize DAG parameters. */
 	RF_Malloc(tracerec, sizeof(RF_AccTraceEntry_t), (RF_AccTraceEntry_t *));
-	bzero((char *) tracerec, sizeof(RF_AccTraceEntry_t));
+	bzero(tracerec, sizeof(RF_AccTraceEntry_t));
 	(*prd_dag_h)->tracerec = tracerec;
 	prd_rdNode = (*prd_dag_h)->succedents[0]->succedents[0];
 	prd_rdNode->params[0].p = *prd_pda;
@@ -301,7 +301,7 @@ rf_WriteRegionParity(RF_RegionId_t regionID, RF_MCPair_t *pwr_mcpair,
 
 	/* Initialize DAG parameters. */
 	RF_Malloc(tracerec, sizeof(RF_AccTraceEntry_t), (RF_AccTraceEntry_t *));
-	bzero((char *) tracerec, sizeof(RF_AccTraceEntry_t));
+	bzero(tracerec, sizeof(RF_AccTraceEntry_t));
 	(*pwr_dag_h)->tracerec = tracerec;
 	pwr_wrNode = (*pwr_dag_h)->succedents[0]->succedents[0];
 	pwr_wrNode->params[0].p = *pwr_pda;

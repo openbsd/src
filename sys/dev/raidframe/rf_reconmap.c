@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_reconmap.c,v 1.4 2002/12/16 07:01:05 tdeval Exp $	*/
+/*	$OpenBSD: rf_reconmap.c,v 1.5 2011/06/21 16:46:00 tedu Exp $	*/
 /*	$NetBSD: rf_reconmap.c,v 1.6 1999/08/14 21:44:24 oster Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ rf_MakeReconMap(
 	    (RF_ReconMapListElem_t **));
 	RF_ASSERT(p->status != (RF_ReconMapListElem_t **) NULL);
 
-	(void) bzero((char *) p->status, num_rus *
+	bzero(p->status, num_rus *
 	    sizeof(RF_ReconMapListElem_t *));
 
 	p->size = sizeof(RF_ReconMap_t) + num_rus *

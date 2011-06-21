@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_alloclist.c,v 1.4 2002/12/16 07:01:03 tdeval Exp $	*/
+/*	$OpenBSD: rf_alloclist.c,v 1.5 2011/06/21 16:46:00 tedu Exp $	*/
 /*	$NetBSD: rf_alloclist.c,v 1.4 1999/08/13 03:41:53 oster Exp $	*/
 
 /*
@@ -185,6 +185,6 @@ rf_real_MakeAllocList(int lockflag)
 	if (p == NULL) {
 		return (NULL);
 	}
-	bzero((char *) p, sizeof(RF_AllocListElem_t));
+	bzero(p, sizeof(RF_AllocListElem_t));
 	return (p);
 }

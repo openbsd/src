@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_evenodd_dagfuncs.c,v 1.7 2002/12/16 07:01:04 tdeval Exp $	*/
+/*	$OpenBSD: rf_evenodd_dagfuncs.c,v 1.8 2011/06/21 16:46:00 tedu Exp $	*/
 /*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.6 2000/03/30 12:45:40 augustss Exp $	*/
 
 /*
@@ -454,7 +454,7 @@ rf_RecoveryEFunc(RF_DagNode_t *node)
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
 	RF_Etimer_t timer;
 
-	bzero((char *) node->results[0], rf_RaidAddressToByte(raidPtr, failedPDA->numSector));
+	bzero(node->results[0], rf_RaidAddressToByte(raidPtr, failedPDA->numSector));
 	if (node->dagHdr->status == rf_enable) {
 		RF_ETIMER_START(timer);
 		for (i = 0; i < node->numParams - 2; i += 2)
@@ -538,8 +538,8 @@ rf_doubleEOdecode(RF_Raid_t *raidPtr, char **rrdbuf, char **dest,
 #endif
 	RF_ASSERT(*((long *) dest[0]) == 0);
 	RF_ASSERT(*((long *) dest[1]) == 0);
-	bzero((char *) P, bytesPerEU);
-	bzero((char *) temp, bytesPerEU);
+	bzero(P, bytesPerEU);
+	bzero(temp, bytesPerEU);
 	RF_ASSERT(*P == 0);
 	/*
 	 * Calculate the 'P' parameter, which, not parity, is the Xor of all

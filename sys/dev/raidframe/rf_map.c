@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_map.c,v 1.5 2002/12/16 07:01:04 tdeval Exp $	*/
+/*	$OpenBSD: rf_map.c,v 1.6 2011/06/21 16:46:00 tedu Exp $	*/
 /*	$NetBSD: rf_map.c,v 1.5 2000/06/29 00:22:27 oster Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ rf_MapAccess(
 		RF_ASSERT(asmList);
 		t_asm = asmList;
 		asmList = asmList->next;
-		bzero((char *) t_asm, sizeof(RF_AccessStripeMap_t));
+		bzero(t_asm, sizeof(RF_AccessStripeMap_t));
 		if (!asm_p)
 			asm_list = asm_p = t_asm;
 		else {
@@ -167,7 +167,7 @@ rf_MapAccess(
 			RF_ASSERT(pdaList);
 			t_pda = pdaList;
 			pdaList = pdaList->next;
-			bzero((char *) t_pda, sizeof(RF_PhysDiskAddr_t));
+			bzero(t_pda, sizeof(RF_PhysDiskAddr_t));
 			if (!pda_p)
 				asm_p->physInfo = pda_p = t_pda;
 			else {
@@ -224,7 +224,7 @@ rf_MapAccess(
 			RF_ASSERT(pdaList);
 			t_pda = pdaList;
 			pdaList = pdaList->next;
-			bzero((char *) t_pda, sizeof(RF_PhysDiskAddr_t));
+			bzero(t_pda, sizeof(RF_PhysDiskAddr_t));
 			pda_p = asm_p->parityInfo = t_pda;
 			pda_p->type = RF_PDA_TYPE_PARITY;
 			(layoutPtr->map->MapParity) (raidPtr,
@@ -248,12 +248,12 @@ rf_MapAccess(
 			RF_ASSERT(pdaList && pdaList->next);
 			t_pda = pdaList;
 			pdaList = pdaList->next;
-			bzero((char *) t_pda, sizeof(RF_PhysDiskAddr_t));
+			bzero(t_pda, sizeof(RF_PhysDiskAddr_t));
 			pda_p = asm_p->parityInfo = t_pda;
 			pda_p->type = RF_PDA_TYPE_PARITY;
 			t_pda = pdaList;
 			pdaList = pdaList->next;
-			bzero((char *) t_pda, sizeof(RF_PhysDiskAddr_t));
+			bzero(t_pda, sizeof(RF_PhysDiskAddr_t));
 			pda_q = asm_p->qInfo = t_pda;
 			pda_q->type = RF_PDA_TYPE_Q;
 			(layoutPtr->map->MapParity) (raidPtr,
@@ -316,7 +316,7 @@ rf_MarkFailuresInASMList(RF_Raid_t *raidPtr, RF_AccessStripeMapHeader_t *asm_h)
 		asmap->numDataFailed = asmap->numParityFailed =
 		    asmap->numQFailed = 0;
 		asmap->numFailedPDAs = 0;
-		bzero((char *) asmap->failedPDAs,
+		bzero(asmap->failedPDAs,
 		    RF_MAX_FAILED_PDA * sizeof(RF_PhysDiskAddr_t *));
 		for (pda = asmap->physInfo; pda; pda = pda->next) {
 			if (RF_DEAD_DISK(disks[pda->row][pda->col].status)) {
@@ -497,7 +497,7 @@ rf_AllocAccessStripeMapHeader(void)
 
 	RF_FREELIST_GET(rf_asmhdr_freelist, p, next,
 	    (RF_AccessStripeMapHeader_t *));
-	bzero((char *) p, sizeof(RF_AccessStripeMapHeader_t));
+	bzero(p, sizeof(RF_AccessStripeMapHeader_t));
 
 	return (p);
 }
@@ -514,7 +514,7 @@ rf_AllocPhysDiskAddr(void)
 	RF_PhysDiskAddr_t *p;
 
 	RF_FREELIST_GET(rf_pda_freelist, p, next, (RF_PhysDiskAddr_t *));
-	bzero((char *) p, sizeof(RF_PhysDiskAddr_t));
+	bzero(p, sizeof(RF_PhysDiskAddr_t));
 
 	return (p);
 }
@@ -559,7 +559,7 @@ rf_AllocAccessStripeMapComponent(void)
 	RF_AccessStripeMap_t *p;
 
 	RF_FREELIST_GET(rf_asm_freelist, p, next, (RF_AccessStripeMap_t *));
-	bzero((char *) p, sizeof(RF_AccessStripeMap_t));
+	bzero(p, sizeof(RF_AccessStripeMap_t));
 
 	return (p);
 }

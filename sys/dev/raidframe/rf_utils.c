@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_utils.c,v 1.5 2002/12/16 07:01:05 tdeval Exp $	*/
+/*	$OpenBSD: rf_utils.c,v 1.6 2011/06/21 16:46:00 tedu Exp $	*/
 /*	$NetBSD: rf_utils.c,v 1.5 2000/01/07 03:41:03 oster Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ rf_make_2d_array(int b, int k, RF_AllocListElem_t *allocList)
 	for (i = 0; i < b; i++) {
 		RF_MallocAndAdd(retval[i], k * sizeof(RF_RowCol_t),
 		    (RF_RowCol_t *), allocList);
-		bzero((char *) retval[i], k * sizeof(RF_RowCol_t));
+		bzero(retval[i], k * sizeof(RF_RowCol_t));
 	}
 	return (retval);
 }
@@ -78,7 +78,7 @@ rf_make_1d_array(int c, RF_AllocListElem_t *allocList)
 
 	RF_MallocAndAdd(retval, c * sizeof(RF_RowCol_t), (RF_RowCol_t *),
 	    allocList);
-	bzero((char *) retval, c * sizeof(RF_RowCol_t));
+	bzero(retval, c * sizeof(RF_RowCol_t));
 	return (retval);
 }
 

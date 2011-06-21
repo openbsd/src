@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_evenodd.c,v 1.5 2002/12/16 07:01:03 tdeval Exp $	*/
+/*	$OpenBSD: rf_evenodd.c,v 1.6 2011/06/21 16:46:00 tedu Exp $	*/
 /*	$NetBSD: rf_evenodd.c,v 1.4 2000/01/07 03:40:59 oster Exp $	*/
 
 /*
@@ -529,7 +529,7 @@ rf_VerifyParityEvenOdd(
 	    asmap->qInfo;
 
 	/* Fire off the DAG. */
-	bzero((char *) &tracerec, sizeof(tracerec));
+	bzero(&tracerec, sizeof(tracerec));
 	rd_dag_h->tracerec = &tracerec;
 
 	if (rf_verifyParityDebug) {
@@ -601,7 +601,7 @@ rf_VerifyParityEvenOdd(
 		wrBlock->succedents[0]->params[2].v = psID;
 		wrBlock->succedents[0]->params[3].v =
 		    RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
-		bzero((char *) &tracerec, sizeof(tracerec));
+		bzero(&tracerec, sizeof(tracerec));
 		wr_dag_h->tracerec = &tracerec;
 		if (rf_verifyParityDebug) {
 			printf("Parity verify write dag:\n");
@@ -633,7 +633,7 @@ rf_VerifyParityEvenOdd(
 		wrBlock->succedents[0]->params[2].v = psID;
 		wrBlock->succedents[0]->params[3].v =
 		    RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
-		bzero((char *) &tracerec, sizeof(tracerec));
+		bzero(&tracerec, sizeof(tracerec));
 		wr_dag_h->tracerec = &tracerec;
 		if (rf_verifyParityDebug) {
 			printf("Dag of write new second redundant information"

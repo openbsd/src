@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.63 2011/06/05 18:40:33 matthew Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.64 2011/06/21 16:46:00 tedu Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -961,7 +961,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		 *  there is no stale data left in the case of a
 		 *  reconfiguration.
 		 */
-		bzero((char *) raidPtr, sizeof(RF_Raid_t));
+		bzero(raidPtr, sizeof(RF_Raid_t));
 
 		/* Configure the system. */
 		raidPtr->raidid = unit;
@@ -1042,7 +1042,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (clabel == NULL)
 			return (ENOMEM);
 
-		bzero((char *) clabel, sizeof(RF_ComponentLabel_t));
+		bzero(clabel, sizeof(RF_ComponentLabel_t));
 
 		retcode = copyin( *clabel_ptr, clabel,
 				  sizeof(RF_ComponentLabel_t));
@@ -1241,7 +1241,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			  (RF_DeviceConfig_t *));
 		if (d_cfg == NULL)
 			return (ENOMEM);
-		bzero((char *) d_cfg, sizeof(RF_DeviceConfig_t));
+		bzero(d_cfg, sizeof(RF_DeviceConfig_t));
 		d_cfg->rows = raidPtr->numRow;
 		d_cfg->cols = raidPtr->numCol;
 		d_cfg->ndevs = raidPtr->numRow * raidPtr->numCol;

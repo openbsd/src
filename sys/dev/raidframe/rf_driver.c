@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_driver.c,v 1.12 2008/06/26 05:42:17 ray Exp $	*/
+/*	$OpenBSD: rf_driver.c,v 1.13 2011/06/21 16:46:00 tedu Exp $	*/
 /*	$NetBSD: rf_driver.c,v 1.37 2000/06/04 02:05:13 oster Exp $	*/
 
 /*
@@ -636,7 +636,7 @@ rf_AllocRaidAccDesc(
 	desc->state = 0;
 
 	desc->status = 0;
-	bzero((char *) &desc->tracerec, sizeof(RF_AccTraceEntry_t));
+	bzero(&desc->tracerec, sizeof(RF_AccTraceEntry_t));
 	desc->callbackFunc = (void (*) (RF_CBParam_t)) cbF;	/* XXX */
 	desc->callbackArg = cbA;
 	desc->next = NULL;

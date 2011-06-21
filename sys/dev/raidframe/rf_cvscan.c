@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_cvscan.c,v 1.5 2002/12/16 07:01:03 tdeval Exp $	*/
+/*	$OpenBSD: rf_cvscan.c,v 1.6 2011/06/21 16:46:00 tedu Exp $	*/
 /*	$NetBSD: rf_cvscan.c,v 1.5 1999/08/13 03:41:53 oster Exp $	*/
 
 /*
@@ -352,7 +352,7 @@ rf_CvscanCreate(RF_SectorCount_t sectPerDisk, RF_AllocListElem_t *clList,
 
 	RF_MallocAndAdd(hdr, sizeof(RF_CvscanHeader_t), (RF_CvscanHeader_t *),
 	    clList);
-	bzero((char *) hdr, sizeof(RF_CvscanHeader_t));
+	bzero(hdr, sizeof(RF_CvscanHeader_t));
 	hdr->range_for_avg = RF_MAX(range, 1);
 	hdr->change_penalty = RF_MAX(penalty, 0);
 	hdr->direction = rf_cvscan_RIGHT;
