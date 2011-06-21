@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.17 2011/06/21 06:55:44 deraadt Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.18 2011/06/21 10:31:28 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -184,7 +184,8 @@ int	 myx_intr(void *);
 int	 myx_rxeof(struct myx_softc *);
 void	 myx_txeof(struct myx_softc *, u_int32_t);
 
-struct myx_buf *	myx_buf_alloc(struct myx_softc *, bus_size_t, int);
+struct myx_buf *	myx_buf_alloc(struct myx_softc *, bus_size_t, int,
+			    bus_size_t, bus_size_t);
 void			myx_buf_free(struct myx_softc *, struct myx_buf *);
 struct myx_buf *	myx_buf_get(struct myx_buf_list *);
 void			myx_buf_put(struct myx_buf_list *, struct myx_buf *);
@@ -447,7 +448,7 @@ myx_attachhook(void *arg)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	m_clsetwms(ifp, MCLBYTES, 2, sc->sc_rx_ring_count - 2);
-	m_clsetwms(ifp, 4096, 2, sc->sc_rx_ring_count - 2);
+	m_clsetwms(ifp, 12 * 1024, 2, sc->sc_rx_ring_count - 2);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 #if 0
@@ -852,6 +853,7 @@ myx_up(struct myx_softc *sc)
 	struct myx_cmd		mc;
 	bus_dmamap_t		map;
 	size_t			size;
+	u_int			maxpkt;
 	u_int32_t		r;
 	int			i;
 
@@ -1017,16 +1019,17 @@ myx_up(struct myx_softc *sc)
 		goto free_sts;
 	}
 
+	maxpkt = ifp->if_hardmtu + ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
+
 	bzero(&mc, sizeof(mc));
-	mc.mc_data0 = htobe32(ifp->if_mtu + ETHER_HDR_LEN + 4 + 4);
+	mc.mc_data0 = htobe32(maxpkt);
 	if (myx_cmd(sc, MYXCMD_SET_MTU, &mc, NULL) != 0) {
-		printf("%s: failed to set MTU size %d\n",
-		    DEVNAME(sc), ifp->if_mtu + ETHER_HDR_LEN + 4 + 4);
+		printf("%s: failed to set MTU size %d\n", DEVNAME(sc), maxpkt);
 		goto free_sts;
 	}
 
 	for (i = 0; i < sc->sc_tx_ring_count; i++) {
-		mb = myx_buf_alloc(sc, 4096, sc->sc_tx_nsegs);
+		mb = myx_buf_alloc(sc, maxpkt, sc->sc_tx_nsegs, 4096, 4096);
 		if (mb == NULL)
 			goto free_tx_bufs;
 
@@ -1034,7 +1037,7 @@ myx_up(struct myx_softc *sc)
 	}
 
 	for (i = 0; i < sc->sc_rx_ring_count; i++) {
-		mb = myx_buf_alloc(sc, MCLBYTES, 1);
+		mb = myx_buf_alloc(sc, MCLBYTES, 1, 4096, 4096);
 		if (mb == NULL)
 			goto free_rxsmall_bufs;
 
@@ -1042,7 +1045,7 @@ myx_up(struct myx_softc *sc)
 	}
 
 	for (i = 0; i < sc->sc_rx_ring_count; i++) {
-		mb = myx_buf_alloc(sc, 4096, 1);
+		mb = myx_buf_alloc(sc, 12 * 1024, 1, 12 * 1024, 0);
 		if (mb == NULL)
 			goto free_rxbig_bufs;
 
@@ -1062,14 +1065,14 @@ myx_up(struct myx_softc *sc)
 	}
 
 	bzero(&mc, sizeof(mc));
-	mc.mc_data0 = htobe32(MCLBYTES - 2);
+	mc.mc_data0 = htobe32(MCLBYTES - ETHER_ALIGN);
 	if (myx_cmd(sc, MYXCMD_SET_SMALLBUFSZ, &mc, NULL) != 0) {
 		printf("%s: failed to set small buf size\n", DEVNAME(sc));
 		goto free_rxbig;
 	}
 
 	bzero(&mc, sizeof(mc));
-	mc.mc_data0 = htobe32(4096);
+	mc.mc_data0 = htobe32(16384);
 	if (myx_cmd(sc, MYXCMD_SET_BIGBUFSZ, &mc, NULL) != 0) {
 		printf("%s: failed to set big buf size\n", DEVNAME(sc));
 		goto free_rxbig;
@@ -1547,7 +1550,8 @@ myx_rxeof(struct myx_softc *sc)
 		if (++sc->sc_intrq_idx >= sc->sc_intrq_count)
 			sc->sc_intrq_idx = 0;
 
-		ring = (len <= (MCLBYTES - 2)) ? MYX_RXSMALL : MYX_RXBIG;
+		ring = (len <= (MCLBYTES - ETHER_ALIGN)) ?
+		    MYX_RXSMALL : MYX_RXBIG;
 
 		mb = myx_buf_get(&sc->sc_rx_buf_list[ring]);
 		if (mb == NULL) {
@@ -1629,7 +1633,7 @@ myx_rx_fill(struct myx_softc *sc, int ring)
 struct myx_buf *
 myx_buf_fill(struct myx_softc *sc, int ring)
 {
-	static size_t sizes[2] = { MCLBYTES, 4096 };
+	static size_t sizes[2] = { MCLBYTES, 12 * 1024 };
 	struct myx_buf *mb;
 	struct mbuf *m;
 
@@ -1661,7 +1665,8 @@ put:
 }
 
 struct myx_buf *
-myx_buf_alloc(struct myx_softc *sc, bus_size_t size, int nsegs)
+myx_buf_alloc(struct myx_softc *sc, bus_size_t size, int nsegs,
+    bus_size_t maxsegsz, bus_size_t boundary)
 {
 	struct myx_buf *mb;
 
@@ -1669,7 +1674,7 @@ myx_buf_alloc(struct myx_softc *sc, bus_size_t size, int nsegs)
 	if (mb == NULL)
 		return (NULL);
 
-	if (bus_dmamap_create(sc->sc_dmat, size, nsegs, 4096, 4096,
+	if (bus_dmamap_create(sc->sc_dmat, size, nsegs, maxsegsz, boundary,
 	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &mb->mb_map) != 0) {
 		pool_put(myx_buf_pool, mb);
 		return (NULL);
