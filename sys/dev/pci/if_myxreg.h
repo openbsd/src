@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myxreg.h,v 1.4 2011/06/20 05:19:20 dlg Exp $	*/
+/*	$OpenBSD: if_myxreg.h,v 1.5 2011/06/21 10:23:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -31,7 +31,7 @@
 
 #define MYX_NRXDESC		256
 #define MYX_NTXDESC_MIN		2
-#define MYX_IRQCOALDELAY	30
+#define MYX_IRQCOALDELAY	60
 #define MYX_IRQDEASSERTWAIT	1
 #define MYX_MAX_MTU_SMALL	(ETHERMTU + ETHER_HDR_LEN + 4)
 #define MYX_MAX_MTU_BIG		PAGE_SIZE
