@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1615 2011/06/10 07:55:21 claudio Exp $
+$OpenBSD: pcidevs,v 1.1616 2011/06/22 08:34:05 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -313,6 +313,7 @@ vendor	ASPEED		0x1a03	ASPEED Technology
 vendor	AWT		0x1a3b	AWT
 vendor	FUSIONIO	0x1aed	Fusion-io
 vendor	QUMRANET	0x1af4	Qumranet
+vendor	ASMEDIA		0x1b21	ASMedia
 vendor	MARVELL2	0x1b4b	Marvell
 vendor	SYMPHONY2	0x1c1c	Symphony Labs
 vendor	TEKRAM2		0x1de1	Tekram
@@ -871,6 +872,9 @@ product ARECA ARC1880		0x1880	ARC-1880
 
 /* ASIX Electronics products */
 product ASIX AX88140A		0x1400	AX88140A/88141
+
+/* ASMedia products */
+product ASMEDIA ASM1042		0x1042	ASM1042 XHCI
 
 /* Asustek products */
 product ASUSTEK HFCPCI		0x0675	ISDN
@@ -3708,6 +3712,7 @@ product MYLEX EXTREMERAID	0xba56	eXtremeRAID
 
 /* Myricom */
 product MYRICOM Z8E		0x0008	Z8E
+product MYRICOM Z8E_9		0x0009	Z8E
 product MYRICOM LANAI_92	0x8043	Myrinet LANai 9.2
 
 /* Myson Century products */
@@ -4841,6 +4846,7 @@ product RDC R6060_OHCI		0x6060	R6060 USB
 product RDC R6061_EHCI		0x6061	R6061 USB
 
 /* Realtek products */
+product REALTEK RTS5209		0x5209	RTS5209 Card Reader
 product REALTEK RT8029		0x8029	8029
 product REALTEK RT8139D		0x8039	8139D
 product REALTEK RT8129		0x8129	8129
