@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.197 2011/05/30 10:07:19 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.198 2011/06/22 13:04:39 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -192,14 +192,15 @@ sub cwd
 	return ${$_[0]->{cwd}};
 }
 
+sub absolute_okay() { 0 }
 sub compute_fullname
 {
-	my ($self, $state, $absolute_okay) = @_;
+	my ($self, $state) = @_;
 
 	$self->{cwd} = $state->{cwd};
 	$self->set_name(File::Spec->canonpath($self->name));
 	if ($self->name =~ m|^/|) {
-		unless ($absolute_okay) {
+		unless ($self->absolute_okay) {
 			die "Absolute name forbidden: ", $self->name;
 		}
 	}
@@ -454,12 +455,13 @@ package OpenBSD::PackingElement::Sample;
 our @ISA=qw(OpenBSD::PackingElement::FileObject);
 
 sub keyword() { "sample" }
+sub absolute_okay() { 1 }
 __PACKAGE__->register_with_factory;
 sub destate
 {
 	my ($self, $state) = @_;
 	$self->{copyfrom} = $state->{lastfile};
-	$self->compute_fullname($state, 1);
+	$self->compute_fullname($state);
 	$self->compute_modes($state);
 }
 
@@ -468,10 +470,12 @@ sub dirclass() { "OpenBSD::PackingElement::Sampledir" }
 package OpenBSD::PackingElement::Sampledir;
 our @ISA=qw(OpenBSD::PackingElement::DirBase OpenBSD::PackingElement::Sample);
 
+sub absolute_okay() { 1 }
+
 sub destate
 {
 	my ($self, $state) = @_;
-	$self->compute_fullname($state, 1);
+	$self->compute_fullname($state);
 	$self->compute_modes($state);
 }
 
@@ -480,12 +484,13 @@ use File::Basename;
 our @ISA = qw(OpenBSD::PackingElement::FileBase);
 
 sub keyword() { "rcscript" }
+sub absolute_okay() { 1 }
 __PACKAGE__->register_with_factory;
 
 sub destate
 {
 	my ($self, $state) = @_;
-	$self->compute_fullname($state, 1);
+	$self->compute_fullname($state);
 	if ($self->name =~ m/^\//) {
 		$state->set_cwd(dirname($self->name));
 	}
@@ -1534,12 +1539,13 @@ package OpenBSD::PackingElement::Extra;
 our @ISA=qw(OpenBSD::PackingElement::FileObject);
 
 sub keyword() { 'extra' }
+sub absolute_okay() { 1 }
 __PACKAGE__->register_with_factory;
 
 sub destate
 {
 	my ($self, $state) = @_;
-	$self->compute_fullname($state, 1);
+	$self->compute_fullname($state);
 }
 
 sub dirclass() { "OpenBSD::PackingElement::Extradir" }
