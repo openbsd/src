@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.21 2011/06/22 03:54:31 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.22 2011/06/22 04:03:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1222,8 +1222,9 @@ myx_setlladdr(struct myx_softc *sc, u_int32_t cmd, u_int8_t *addr)
 	struct myx_cmd		 mc;
 
 	bzero(&mc, sizeof(mc));
-	mc.mc_data0 = addr[0] | addr[1] << 8 | addr[2] << 16 | addr[3] << 24;
-	mc.mc_data1 = addr[4] << 16 | addr[5] << 24;
+	mc.mc_data0 = htobe32(addr[0] << 24 | addr[1] << 16 | addr[2] << 8 | addr[3]);
+	mc.mc_data1 = htobe32(addr[4] << 8 | addr[5]);
+
 	if (myx_cmd(sc, cmd, &mc, NULL) != 0) {
 		printf("%s: failed to set the lladdr\n", DEVNAME(sc));
 		return (-1);
