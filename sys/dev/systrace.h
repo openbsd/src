@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.21 2008/11/09 05:13:53 deraadt Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.22 2011/06/22 01:32:16 djm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -184,6 +184,7 @@ struct systrace_inject {
 #define SYSTR_POLICY_ASK	0
 #define SYSTR_POLICY_PERMIT	1
 #define SYSTR_POLICY_NEVER	2
+#define SYSTR_POLICY_KILL	3
 
 #define SYSTR_FLAGS_RESULT	0x001
 #define SYSTR_FLAGS_SETEUID	0x002

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.54 2011/04/02 17:04:35 guenther Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.55 2011/06/22 01:32:16 djm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -261,7 +261,8 @@ systracef_write(fp, poff, uio, cred)
 
 #define POLICY_VALID(x)	((x) == SYSTR_POLICY_PERMIT || \
 			 (x) == SYSTR_POLICY_ASK || \
-			 (x) == SYSTR_POLICY_NEVER)
+			 (x) == SYSTR_POLICY_NEVER || \
+			 (x) == SYSTR_POLICY_KILL)
 
 /* ARGSUSED */
 int
@@ -748,7 +749,8 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 
 	/* Fast-path */
 	if (policy != SYSTR_POLICY_ASK) {
-		if (policy != SYSTR_POLICY_PERMIT) {
+		if (policy != SYSTR_POLICY_PERMIT &&
+		    policy != SYSTR_POLICY_KILL) {
 			if (policy > 0)
 				error = policy;
 			else
@@ -756,7 +758,11 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 		}
 		systrace_replacefree(strp);
 		rw_exit_write(&fst->lock);
-		if (policy == SYSTR_POLICY_PERMIT)
+		if (policy == SYSTR_POLICY_KILL) {
+			error = EPERM;
+			printf("systrace: killed on syscall %d\n", code);
+			psignal(p, SIGKILL);
+		} else if (policy == SYSTR_POLICY_PERMIT)
 			error = (*callp->sy_call)(p, v, retval);
 		return (error);
 	}
