@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.94 2011/04/18 04:27:31 dlg Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.95 2011/06/22 16:44:27 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -3914,7 +3914,7 @@ bnx_free_tx_chain(struct bnx_softc *sc)
 
 	/* Clear each TX chain page. */
 	for (i = 0; i < TX_PAGES; i++)
-		bzero((char *)sc->tx_bd_chain[i], BNX_TX_CHAIN_PAGE_SZ);
+		bzero(sc->tx_bd_chain[i], BNX_TX_CHAIN_PAGE_SZ);
 
 	sc->used_tx_bd = 0;
 
@@ -4130,7 +4130,7 @@ bnx_free_rx_chain(struct bnx_softc *sc)
 
 	/* Clear each RX chain page. */
 	for (i = 0; i < RX_PAGES; i++)
-		bzero((char *)sc->rx_bd_chain[i], BNX_RX_CHAIN_PAGE_SZ);
+		bzero(sc->rx_bd_chain[i], BNX_RX_CHAIN_PAGE_SZ);
 
 	sc->free_rx_bd = sc->max_rx_bd;
 

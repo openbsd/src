@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.50 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.51 2011/06/22 16:44:27 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -741,7 +741,7 @@ int tl_miibus_readreg(dev, phy, reg)
 	struct tl_softc *sc = (struct tl_softc *)dev;
 	struct tl_mii_frame	frame;
 
-	bzero((char *)&frame, sizeof(frame));
+	bzero(&frame, sizeof(frame));
 
 	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
@@ -757,7 +757,7 @@ void tl_miibus_writereg(dev, phy, reg, data)
 	struct tl_softc *sc = (struct tl_softc *)dev;
 	struct tl_mii_frame	frame;
 
-	bzero((char *)&frame, sizeof(frame));
+	bzero(&frame, sizeof(frame));
 
 	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
@@ -1413,7 +1413,7 @@ void tl_stats_update(xsc)
 
 	s = splnet();
 
-	bzero((char *)&tl_stats, sizeof(struct tl_stats));
+	bzero(&tl_stats, sizeof(struct tl_stats));
 
 	sc = xsc;
 	ifp = &sc->arpcom.ac_if;
@@ -1911,8 +1911,7 @@ void tl_stop(sc)
 			sc->tl_cdata.tl_rx_chain[i].tl_mbuf = NULL;
 		}
 	}
-	bzero((char *)&sc->tl_ldata->tl_rx_list,
-		sizeof(sc->tl_ldata->tl_rx_list));
+	bzero(&sc->tl_ldata->tl_rx_list, sizeof(sc->tl_ldata->tl_rx_list));
 
 	/*
 	 * Free the TX list buffers.
@@ -1923,8 +1922,7 @@ void tl_stop(sc)
 			sc->tl_cdata.tl_tx_chain[i].tl_mbuf = NULL;
 		}
 	}
-	bzero((char *)&sc->tl_ldata->tl_tx_list,
-		sizeof(sc->tl_ldata->tl_tx_list));
+	bzero(&sc->tl_ldata->tl_tx_list, sizeof(sc->tl_ldata->tl_tx_list));
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 

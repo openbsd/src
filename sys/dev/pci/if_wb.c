@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.47 2011/04/03 15:36:03 jasper Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.48 2011/06/22 16:44:29 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -482,7 +482,7 @@ wb_miibus_readreg(dev, phy, reg)
 	struct wb_softc *sc = (struct wb_softc *)dev;
 	struct wb_mii_frame frame;
 
-	bzero((char *)&frame, sizeof(frame));
+	bzero(&frame, sizeof(frame));
 
 	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
@@ -499,7 +499,7 @@ wb_miibus_writereg(dev, phy, reg, data)
 	struct wb_softc *sc = (struct wb_softc *)dev;
 	struct wb_mii_frame frame;
 
-	bzero((char *)&frame, sizeof(frame));
+	bzero(&frame, sizeof(frame));
 
 	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
@@ -1668,8 +1668,7 @@ void wb_stop(sc)
 	/*
 	 * Free data in the RX lists.
 	 */
-	bzero((char *)&sc->wb_ldata->wb_rx_list,
-		sizeof(sc->wb_ldata->wb_rx_list));
+	bzero(&sc->wb_ldata->wb_rx_list, sizeof(sc->wb_ldata->wb_rx_list));
 
 	/*
 	 * Free the TX list buffers.
@@ -1681,8 +1680,7 @@ void wb_stop(sc)
 		}
 	}
 
-	bzero((char *)&sc->wb_ldata->wb_tx_list,
-		sizeof(sc->wb_ldata->wb_tx_list));
+	bzero(&sc->wb_ldata->wb_tx_list, sizeof(sc->wb_ldata->wb_tx_list));
 }
 
 struct cfattach wb_ca = {

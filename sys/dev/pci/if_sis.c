@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.104 2011/04/14 06:27:52 dlg Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.105 2011/06/22 16:44:27 tedu Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -607,7 +607,7 @@ sis_miibus_readreg(struct device *self, int phy, int reg)
 
 		return (val);
 	} else {
-		bzero((char *)&frame, sizeof(frame));
+		bzero(&frame, sizeof(frame));
 
 		frame.mii_phyaddr = phy;
 		frame.mii_regaddr = reg;
@@ -655,7 +655,7 @@ sis_miibus_writereg(struct device *self, int phy, int reg, int data)
 			printf("%s: PHY failed to come ready\n",
 			    sc->sc_dev.dv_xname);
 	} else {
-		bzero((char *)&frame, sizeof(frame));
+		bzero(&frame, sizeof(frame));
 
 		frame.mii_phyaddr = phy;
 		frame.mii_regaddr = reg;
@@ -1017,7 +1017,7 @@ sis_attach(struct device *parent, struct device *self, void *aux)
 			tmp[2] = letoh16(sis_reverse(tmp[2]));
 			tmp[1] = letoh16(sis_reverse(tmp[1]));
 
-			bcopy((char *)&tmp[1], sc->arpcom.ac_enaddr,
+			bcopy(&tmp[1], sc->arpcom.ac_enaddr,
 			    ETHER_ADDR_LEN);
 		}
 		break;
@@ -1980,7 +1980,7 @@ sis_stop(struct sis_softc *sc)
 			m_freem(sc->sis_ldata->sis_rx_list[i].sis_mbuf);
 			sc->sis_ldata->sis_rx_list[i].sis_mbuf = NULL;
 		}
-		bzero((char *)&sc->sis_ldata->sis_rx_list[i],
+		bzero(&sc->sis_ldata->sis_rx_list[i],
 		    sizeof(struct sis_desc) - sizeof(bus_dmamap_t));
 	}
 
@@ -1999,7 +1999,7 @@ sis_stop(struct sis_softc *sc)
 			m_freem(sc->sis_ldata->sis_tx_list[i].sis_mbuf);
 			sc->sis_ldata->sis_tx_list[i].sis_mbuf = NULL;
 		}
-		bzero((char *)&sc->sis_ldata->sis_tx_list[i],
+		bzero(&sc->sis_ldata->sis_tx_list[i],
 		    sizeof(struct sis_desc) - sizeof(bus_dmamap_t));
 	}
 }

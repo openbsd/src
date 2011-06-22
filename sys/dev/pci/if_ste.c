@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.46 2011/04/03 15:36:03 jasper Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.47 2011/06/22 16:44:27 tedu Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -338,7 +338,7 @@ ste_miibus_readreg(struct device *self, int phy, int reg)
 	if (sc->ste_one_phy && phy != 0)
 		return (0);
 
-	bzero((char *)&frame, sizeof(frame));
+	bzero(&frame, sizeof(frame));
 
 	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
@@ -353,7 +353,7 @@ ste_miibus_writereg(struct device *self, int phy, int reg, int data)
 	struct ste_softc	*sc = (struct ste_softc *)self;
 	struct ste_mii_frame	frame;
 
-	bzero((char *)&frame, sizeof(frame));
+	bzero(&frame, sizeof(frame));
 
 	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
@@ -1077,8 +1077,7 @@ ste_init_tx_list(struct ste_softc *sc)
 			    &cd->ste_tx_chain[i + 1];
 	}
 
-	bzero((char *)ld->ste_tx_list,
-	    sizeof(struct ste_desc) * STE_TX_LIST_CNT);
+	bzero(ld->ste_tx_list, sizeof(struct ste_desc) * STE_TX_LIST_CNT);
 
 	cd->ste_tx_prod = 0;
 	cd->ste_tx_cons = 0;

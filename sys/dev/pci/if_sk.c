@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.159 2011/04/03 15:36:02 jasper Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.160 2011/06/22 16:44:27 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -558,8 +558,7 @@ sk_init_rx_ring(struct sk_if_softc *sc_if)
 	struct sk_ring_data	*rd = sc_if->sk_rdata;
 	int			i, nexti;
 
-	bzero((char *)rd->sk_rx_ring,
-	    sizeof(struct sk_rx_desc) * SK_RX_RING_CNT);
+	bzero(rd->sk_rx_ring, sizeof(struct sk_rx_desc) * SK_RX_RING_CNT);
 
 	for (i = 0; i < SK_RX_RING_CNT; i++) {
 		cd->sk_rx_chain[i].sk_desc = &rd->sk_rx_ring[i];
@@ -599,7 +598,7 @@ sk_init_tx_ring(struct sk_if_softc *sc_if)
 	struct sk_txmap_entry	*entry;
 	int			i, nexti;
 
-	bzero((char *)sc_if->sk_rdata->sk_tx_ring,
+	bzero(sc_if->sk_rdata->sk_tx_ring,
 	    sizeof(struct sk_tx_desc) * SK_TX_RING_CNT);
 
 	SIMPLEQ_INIT(&sc_if->sk_txmap_head);

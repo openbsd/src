@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.306 2011/04/05 18:01:21 henning Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.307 2011/06/22 16:44:27 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -866,7 +866,7 @@ bge_init_rx_ring_std(struct bge_softc *sc)
 			    sc->bge_dev.dv_xname, i);
 			goto uncreate;
 		}
-		bzero((char *)&sc->bge_rdata->bge_rx_std_ring[i],
+		bzero(&sc->bge_rdata->bge_rx_std_ring[i],
 		    sizeof(struct bge_rx_bd));
 	}
 
@@ -952,7 +952,7 @@ bge_free_rx_ring_std(struct bge_softc *sc)
 		}
 		bus_dmamap_destroy(sc->bge_dmatag, dmap);
 		sc->bge_cdata.bge_rx_std_map[i] = NULL;
-		bzero((char *)&sc->bge_rdata->bge_rx_std_ring[i],
+		bzero(&sc->bge_rdata->bge_rx_std_ring[i],
 		    sizeof(struct bge_rx_bd));
 	}
 
@@ -976,7 +976,7 @@ bge_init_rx_ring_jumbo(struct bge_softc *sc)
 			    sc->bge_dev.dv_xname, i);
 			goto uncreate;
 		}
-		bzero((char *)&sc->bge_rdata->bge_rx_jumbo_ring[i],
+		bzero(&sc->bge_rdata->bge_rx_jumbo_ring[i],
 		    sizeof(struct bge_ext_rx_bd));
 	}
 
@@ -1051,7 +1051,7 @@ bge_free_rx_ring_jumbo(struct bge_softc *sc)
 		}
 		bus_dmamap_destroy(sc->bge_dmatag, dmap);
 		sc->bge_cdata.bge_rx_jumbo_map[i] = NULL;
-		bzero((char *)&sc->bge_rdata->bge_rx_jumbo_ring[i],
+		bzero(&sc->bge_rdata->bge_rx_jumbo_ring[i],
 		    sizeof(struct bge_ext_rx_bd));
 	}
 
@@ -1075,7 +1075,7 @@ bge_free_tx_ring(struct bge_softc *sc)
 					    link);
 			sc->txdma[i] = 0;
 		}
-		bzero((char *)&sc->bge_rdata->bge_tx_ring[i],
+		bzero(&sc->bge_rdata->bge_tx_ring[i],
 		    sizeof(struct bge_tx_bd));
 	}
 
@@ -2907,9 +2907,7 @@ bge_compact_dma_runt(struct mbuf *pkt)
 
 		/* Internal frag. If fits in prev, copy it there. */
 		if (prev && M_TRAILINGSPACE(prev) >= m->m_len) {
-			bcopy(m->m_data,
-			      prev->m_data+prev->m_len,
-			      mlen);
+			bcopy(m->m_data, prev->m_data+prev->m_len, mlen);
 			prev->m_len += mlen;
 			m->m_len = 0;
 			/* XXX stitch chain */
@@ -2921,9 +2919,7 @@ bge_compact_dma_runt(struct mbuf *pkt)
 			   m->m_next->m_len >= (8 + shortfall)) {
 			/* m is writable and have enough data in next, pull up. */
 
-			bcopy(m->m_next->m_data,
-			      m->m_data+m->m_len,
-			      shortfall);
+			bcopy(m->m_next->m_data, m->m_data+m->m_len, shortfall);
 			m->m_len += shortfall;
 			m->m_next->m_len -= shortfall;
 			m->m_next->m_data += shortfall;

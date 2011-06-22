@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.50 2011/04/05 18:01:21 henning Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.51 2011/06/22 16:44:27 tedu Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -771,7 +771,7 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	vge_read_eeprom(sc, eaddr, VGE_EE_EADDR, 3, 1);
 
-	bcopy(eaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
+	bcopy(eaddr, &sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
 	printf(", address %s\n",
 	    ether_sprintf(sc->arpcom.ac_enaddr));
@@ -937,8 +937,8 @@ out:
 int
 vge_tx_list_init(struct vge_softc *sc)
 {
-	bzero ((char *)sc->vge_ldata.vge_tx_list, VGE_TX_LIST_SZ);
-	bzero ((char *)&sc->vge_ldata.vge_tx_mbuf,
+	bzero(sc->vge_ldata.vge_tx_list, VGE_TX_LIST_SZ);
+	bzero(&sc->vge_ldata.vge_tx_mbuf,
 	    (VGE_TX_DESC_CNT * sizeof(struct mbuf *)));
 
 	bus_dmamap_sync(sc->sc_dmat,
@@ -959,8 +959,8 @@ vge_rx_list_init(struct vge_softc *sc)
 {
 	int			i;
 
-	bzero ((char *)sc->vge_ldata.vge_rx_list, VGE_RX_LIST_SZ);
-	bzero ((char *)&sc->vge_ldata.vge_rx_mbuf,
+	bzero(sc->vge_ldata.vge_rx_list, VGE_RX_LIST_SZ);
+	bzero(&sc->vge_ldata.vge_rx_mbuf,
 	    (VGE_RX_DESC_CNT * sizeof(struct mbuf *)));
 
 	sc->vge_rx_consumed = 0;
@@ -1123,8 +1123,7 @@ vge_rxeof(struct vge_softc *sc)
 			    (total_len - ETHER_CRC_LEN);
 
 #ifdef __STRICT_ALIGNMENT
-		bcopy(m->m_data, m->m_data + ETHER_ALIGN,
-		    total_len);
+		bcopy(m->m_data, m->m_data + ETHER_ALIGN, total_len);
 		m->m_data += ETHER_ALIGN;
 #endif
 		ifp->if_ipackets++;

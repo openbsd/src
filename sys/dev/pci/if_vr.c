@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.110 2011/04/20 01:05:28 dlg Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.111 2011/06/22 16:44:27 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -281,7 +281,7 @@ vr_miibus_readreg(struct device *dev, int phy, int reg)
 		break;
 	}
 
-	bzero((char *)&frame, sizeof(frame));
+	bzero(&frame, sizeof(frame));
 
 	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
@@ -305,7 +305,7 @@ vr_miibus_writereg(struct device *dev, int phy, int reg, int data)
 		break;
 	}
 
-	bzero((char *)&frame, sizeof(frame));
+	bzero(&frame, sizeof(frame));
 
 	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
@@ -1509,8 +1509,7 @@ vr_stop(struct vr_softc *sc)
 			sc->vr_cdata.vr_rx_chain[i].vr_map = NULL;
 		}
 	}
-	bzero((char *)&sc->vr_ldata->vr_rx_list,
-		sizeof(sc->vr_ldata->vr_rx_list));
+	bzero(&sc->vr_ldata->vr_rx_list, sizeof(sc->vr_ldata->vr_rx_list));
 
 	/*
 	 * Free the TX list buffers.
@@ -1529,8 +1528,7 @@ vr_stop(struct vr_softc *sc)
 			sc->vr_cdata.vr_tx_chain[i].vr_map = NULL;
 		}
 	}
-	bzero((char *)&sc->vr_ldata->vr_tx_list,
-		sizeof(sc->vr_ldata->vr_tx_list));
+	bzero(&sc->vr_ldata->vr_tx_list, sizeof(sc->vr_ldata->vr_tx_list));
 }
 
 #ifndef SMALL_KERNEL

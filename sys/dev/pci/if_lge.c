@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.54 2011/04/03 15:36:02 jasper Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.55 2011/06/22 16:44:27 tedu Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -499,7 +499,7 @@ lge_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	printf(", address %s\n", ether_sprintf(eaddr));
 
-	bcopy(eaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
+	bcopy(eaddr, &sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
 	sc->sc_dmatag = pa->pa_dmat;
 	DPRINTFN(5, ("bus_dmamem_alloc\n"));
@@ -1480,8 +1480,7 @@ lge_stop(struct lge_softc *sc)
 			sc->lge_ldata->lge_rx_list[i].lge_mbuf = NULL;
 		}
 	}
-	bzero((char *)&sc->lge_ldata->lge_rx_list,
-		sizeof(sc->lge_ldata->lge_rx_list));
+	bzero(&sc->lge_ldata->lge_rx_list, sizeof(sc->lge_ldata->lge_rx_list));
 
 	/*
 	 * Free the TX list buffers.
@@ -1493,6 +1492,5 @@ lge_stop(struct lge_softc *sc)
 		}
 	}
 
-	bzero((char *)&sc->lge_ldata->lge_tx_list,
-		sizeof(sc->lge_ldata->lge_tx_list));
+	bzero(&sc->lge_ldata->lge_tx_list, sizeof(sc->lge_ldata->lge_tx_list));
 }
