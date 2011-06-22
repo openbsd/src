@@ -1,3 +1,4 @@
+/* $OpenBSD: sandbox-systrace.c,v 1.2 2011/06/22 22:14:05 djm Exp $ */
 /*
  * Copyright (c) 2011 Damien Miller <djm@mindrot.org>
  *
