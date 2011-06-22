@@ -1,4 +1,4 @@
-/* $OpenBSD: servconf.c,v 1.221 2011/06/22 21:47:28 djm Exp $ */
+/* $OpenBSD: servconf.c,v 1.222 2011/06/22 21:57:01 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -266,7 +266,7 @@ fill_default_server_options(ServerOptions *options)
 
 	/* Turn privilege separation on by default */
 	if (use_privsep == -1)
-		use_privsep = 1;
+		use_privsep = PRIVSEP_ON;
 }
 
 /* Keyword tokens. */
@@ -662,6 +662,12 @@ static const struct multistate multistate_gatewayports[] = {
 	{ "no",				0 },
 	{ NULL, -1 }
 };
+static const struct multistate multistate_privsep[] = {
+	{ "sandbox",			PRIVSEP_SANDBOX },
+	{ "yes",			PRIVSEP_ON },
+	{ "no",				PRIVSEP_OFF },
+	{ NULL, -1 }
+};
 
 int
 process_server_config_line(ServerOptions *options, char *line,
@@ -1021,7 +1027,8 @@ process_server_config_line(ServerOptions *options, char *line,
 
 	case sUsePrivilegeSeparation:
 		intptr = &use_privsep;
-		goto parse_flag;
+		multistate_ptr = multistate_privsep;
+		goto parse_multistate;
 
 	case sAllowUsers:
 		while ((arg = strdelim(&cp)) && *arg != '\0') {
@@ -1529,6 +1536,8 @@ fmt_intarg(ServerOpCodes code, int val)
 		return fmt_multistate_int(val, multistate_gatewayports);
 	case sCompression:
 		return fmt_multistate_int(val, multistate_compression);
+	case sUsePrivilegeSeparation:
+		return fmt_multistate_int(val, multistate_privsep);
 	case sProtocol:
 		switch (val) {
 		case SSH_PROTO_1:
