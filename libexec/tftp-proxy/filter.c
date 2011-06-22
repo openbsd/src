@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.9 2011/05/05 12:25:51 sthen Exp $ */
+/*	$OpenBSD: filter.c,v 1.10 2011/06/22 08:40:14 sthen Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -117,7 +117,7 @@ do_rollback(void)
 {
 	if (ioctl(dev, DIOCXROLLBACK, &pft) == -1)
 		return (-1);
-	
+
 	return (0);
 }
 
@@ -133,7 +133,7 @@ init_filter(char *opt_qname, int opt_verbose)
 	else if (opt_verbose == 2)
 		rule_log = PF_LOG_ALL;
 
-	dev = open("/dev/pf", O_RDWR);	
+	dev = open("/dev/pf", O_RDWR);
 	if (dev == -1) {
 		syslog(LOG_ERR, "can't open /dev/pf");
 		exit(1);
@@ -169,7 +169,7 @@ prepare_commit(u_int32_t id)
 
 	return (0);
 }
-	
+
 int
 prepare_rule(u_int32_t id, struct sockaddr *src,
     struct sockaddr *dst, u_int16_t d_port, u_int8_t proto)
@@ -178,7 +178,7 @@ prepare_rule(u_int32_t id, struct sockaddr *src,
 
 	if ((src->sa_family != AF_INET && src->sa_family != AF_INET6) ||
 	    (src->sa_family != dst->sa_family)) {
-	    	errno = EPROTONOSUPPORT;
+		errno = EPROTONOSUPPORT;
 		return (-1);
 	}
 
