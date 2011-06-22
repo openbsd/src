@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.32 2011/04/08 00:34:56 deraadt Exp $      */
+/*      $OpenBSD: ata.c,v 1.33 2011/06/22 14:17:01 krw Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	u_int16_t *p;
 	int ret;
 
-	WDCDEBUG_PRINT(("ata_get_parms\n"), DEBUG_FUNCS);
+	WDCDEBUG_PRINT(("ata_get_params\n"), DEBUG_FUNCS);
 
 	bzero(&wdc_c, sizeof(struct wdc_command));
 
@@ -81,7 +81,7 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 		wdc_c.r_st_pmask = 0;
 		wdc_c.timeout = 10000; /* 10s */
 	} else {
-		WDCDEBUG_PRINT(("wdc_ata_get_parms: no disks\n"),
+		WDCDEBUG_PRINT(("ata_get_params: no disks\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
 	}
