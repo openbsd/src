@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.22 2011/06/22 04:03:01 deraadt Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.23 2011/06/22 04:09:54 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1547,7 +1547,7 @@ myx_intr(void *arg)
 		if (data != sc->sc_tx_count)
 			myx_txeof(sc, data);
 
-		refill = myx_rxeof(sc);
+		refill |= myx_rxeof(sc);
 
 		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD);
