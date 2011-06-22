@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.3 2011/06/19 02:01:23 yasuoka Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.4 2011/06/22 07:29:06 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -336,8 +336,6 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 
-	printf("\n");
-
 	sc->sc_regt = ga->ga_regt;
 	sc->sc_dmat = ga->ga_dmat;
 	sc->sc_port = ga->ga_portno;
@@ -354,8 +352,7 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ip_offset = 0/* XXX */;
 
 	octeon_eth_board_mac_addr(enaddr, sizeof(enaddr), sc->sc_port);
-	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(enaddr));
+	printf(": Ethernet address %s\n", ether_sprintf(enaddr));
 
 	/*
 	 * live lock control notifications.
@@ -400,11 +397,10 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = octeon_eth_ioctl;
 	ifp->if_start = octeon_eth_start;
 	ifp->if_watchdog = octeon_eth_watchdog;
-	ifp->if_stop = octeon_eth_stop; /* XXX */
 	IFQ_SET_MAXLEN(&ifp->if_snd, max(GATHER_QUEUE_SIZE, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 
-	ifp->if_capabilities = 0; /* XXX */
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	cn30xxgmx_set_mac_addr(sc->sc_gmx_port, enaddr);
 	cn30xxgmx_set_filter(sc->sc_gmx_port);
@@ -426,14 +422,6 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 	if (octeon_eth_pow_recv_ih == NULL)
 		octeon_eth_pow_recv_ih = cn30xxpow_intr_establish(OCTEON_POW_GROUP_PIP,
 		    IPL_NET, octeon_eth_recv_intr, NULL, NULL, sc->sc_dev.dv_xname);
-
-#if 0
-	/* Make sure the interface is shutdown during reboot. */
-	sc->sc_sdhook = shutdownhook_establish(octeon_eth_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
-#endif
 
 	OCTEON_EVCNT_ATTACH_EVCNTS(sc, octeon_evcnt_entries,
 	    sc->sc_dev.dv_xname);
