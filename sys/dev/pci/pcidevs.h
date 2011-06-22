@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1615 2011/06/10 07:55:21 claudio Exp 
+ *	OpenBSD: pcidevs,v 1.1616 2011/06/22 08:34:05 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -318,6 +318,7 @@
 #define	PCI_VENDOR_AWT	0x1a3b		/* AWT */
 #define	PCI_VENDOR_FUSIONIO	0x1aed		/* Fusion-io */
 #define	PCI_VENDOR_QUMRANET	0x1af4		/* Qumranet */
+#define	PCI_VENDOR_ASMEDIA	0x1b21		/* ASMedia */
 #define	PCI_VENDOR_MARVELL2	0x1b4b		/* Marvell */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram */
@@ -876,6 +877,9 @@
 
 /* ASIX Electronics products */
 #define	PCI_PRODUCT_ASIX_AX88140A	0x1400		/* AX88140A/88141 */
+
+/* ASMedia products */
+#define	PCI_PRODUCT_ASMEDIA_ASM1042	0x1042		/* ASM1042 XHCI */
 
 /* Asustek products */
 #define	PCI_PRODUCT_ASUSTEK_HFCPCI	0x0675		/* ISDN */
@@ -3713,6 +3717,7 @@
 
 /* Myricom */
 #define	PCI_PRODUCT_MYRICOM_Z8E	0x0008		/* Z8E */
+#define	PCI_PRODUCT_MYRICOM_Z8E_9	0x0009		/* Z8E */
 #define	PCI_PRODUCT_MYRICOM_LANAI_92	0x8043		/* Myrinet LANai 9.2 */
 
 /* Myson Century products */
@@ -4846,6 +4851,7 @@
 #define	PCI_PRODUCT_RDC_R6061_EHCI	0x6061		/* R6061 USB */
 
 /* Realtek products */
+#define	PCI_PRODUCT_REALTEK_RTS5209	0x5209		/* RTS5209 Card Reader */
 #define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* 8029 */
 #define	PCI_PRODUCT_REALTEK_RT8139D	0x8039		/* 8139D */
 #define	PCI_PRODUCT_REALTEK_RT8129	0x8129		/* 8129 */

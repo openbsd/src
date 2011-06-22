@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1615 2011/06/10 07:55:21 claudio Exp 
+ *	OpenBSD: pcidevs,v 1.1616 2011/06/22 08:34:05 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1862,6 +1862,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ASIX, PCI_PRODUCT_ASIX_AX88140A,
 	    "AX88140A/88141",
+	},
+	{
+	    PCI_VENDOR_ASMEDIA, PCI_PRODUCT_ASMEDIA_ASM1042,
+	    "ASM1042 XHCI",
 	},
 	{
 	    PCI_VENDOR_ASUSTEK, PCI_PRODUCT_ASUSTEK_HFCPCI,
@@ -12208,6 +12212,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Z8E",
 	},
 	{
+	    PCI_VENDOR_MYRICOM, PCI_PRODUCT_MYRICOM_Z8E_9,
+	    "Z8E",
+	},
+	{
 	    PCI_VENDOR_MYRICOM, PCI_PRODUCT_MYRICOM_LANAI_92,
 	    "Myrinet LANai 9.2",
 	},
@@ -16290,6 +16298,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6061_EHCI,
 	    "R6061 USB",
+	},
+	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTS5209,
+	    "RTS5209 Card Reader",
 	},
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8029,
@@ -20674,6 +20686,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_QUMRANET,
 	    "Qumranet",
+	},
+	{
+	    PCI_VENDOR_ASMEDIA,
+	    "ASMedia",
 	},
 	{
 	    PCI_VENDOR_MARVELL2,
