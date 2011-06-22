@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.25 2011/06/22 10:34:15 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.26 2011/06/22 21:04:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -978,6 +978,7 @@ myx_up(struct myx_softc *sc)
 	sc->sc_tx_ring_count = r / sizeof(struct myx_tx_desc);
 	sc->sc_tx_free = sc->sc_tx_ring_count - 1;
 	sc->sc_tx_nsegs = min(16, sc->sc_tx_ring_count / 4); /* magic */
+	sc->sc_tx_count = 0;
 	IFQ_SET_MAXLEN(&ifp->if_snd, sc->sc_tx_ring_count - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 
