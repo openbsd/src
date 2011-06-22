@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.24 2011/06/22 08:38:45 jsg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.25 2011/06/22 10:34:15 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -111,6 +111,7 @@ struct myx_softc {
 	struct myx_dmamem	 sc_sts_dma;
 	volatile struct myx_status	*sc_sts;
 
+	int			 sc_intx;
 	void			*sc_irqh;
 	u_int32_t		 sc_irqcoaloff;
 	u_int32_t		 sc_irqclaimoff;
@@ -247,9 +248,12 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap;
 
 	/* Map the interrupt */
-	if (pci_intr_map(pa, &sc->sc_ih) != 0) {
-		printf(": unable to map interrupt\n");
-		goto unmap;
+	if (pci_intr_map_msi(pa, &sc->sc_ih) != 0) {
+		if (pci_intr_map(pa, &sc->sc_ih) != 0) {
+			printf(": unable to map interrupt\n");
+			goto unmap;
+		}
+		sc->sc_intx = 1;
 	}
 
 	printf(": %s, model %s, address %s\n",
@@ -1528,8 +1532,10 @@ myx_intr(void *arg)
 	}
 	sts->ms_isvalid = 0;
 
-	data = htobe32(0);
-	myx_write(sc, sc->sc_irqdeassertoff, &data, sizeof(data));
+	if (sc->sc_intx) {
+		data = htobe32(0);
+		myx_write(sc, sc->sc_irqdeassertoff, &data, sizeof(data));
+	}
 
 	if (!ISSET(ifp->if_flags, IFF_UP) &&
 	    sc->sc_linkdown != sts->ms_linkdown) {
