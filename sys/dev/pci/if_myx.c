@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.23 2011/06/22 04:09:54 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.24 2011/06/22 08:38:45 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -202,7 +202,8 @@ struct cfattach myx_ca = {
 };
 
 const struct pci_matchid myx_devices[] = {
-	{ PCI_VENDOR_MYRICOM, PCI_PRODUCT_MYRICOM_Z8E }
+	{ PCI_VENDOR_MYRICOM, PCI_PRODUCT_MYRICOM_Z8E },
+	{ PCI_VENDOR_MYRICOM, PCI_PRODUCT_MYRICOM_Z8E_9 }
 };
 
 int
