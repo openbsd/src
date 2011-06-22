@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.264 2011/05/24 20:27:11 matthew Exp $
+#	$OpenBSD: GENERIC,v 1.265 2011/06/22 04:33:01 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -82,6 +82,7 @@ dc*	at cardbus?		# 21143, "tulip" clone ethernet
 epic*	at pci?			# SMC EPIC/100 ethernet
 em*	at pci?			# Intel Pro/1000 ethernet
 #ixgb*	at pci?			# Intel Pro/10Gb ethernet
+myx*	at pci?			# Myricom Myri-10G 10Gb ethernet
 bge*	at pci?			# Broadcom BCM570x (aka Tigon3)
 bnx*	at pci?			# Broadcom BCM5706/5708 GigE
 stge*	at pci?			# Sundance TC9021 GigE
