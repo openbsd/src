@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.20 2011/06/21 21:56:28 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.21 2011/06/22 03:54:31 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -158,9 +158,7 @@ int	 myx_loadfirmware(struct myx_softc *, const char *);
 int	 myx_probe_firmware(struct myx_softc *);
 
 void	 myx_read(struct myx_softc *, bus_size_t, void *, bus_size_t);
-void	 myx_rawread(struct myx_softc *, bus_size_t, void *, bus_size_t);
 void	 myx_write(struct myx_softc *, bus_size_t, void *, bus_size_t);
-void	 myx_rawwrite(struct myx_softc *, bus_size_t, void *, bus_size_t);
 
 int	 myx_cmd(struct myx_softc *, u_int32_t, struct myx_cmd *, u_int32_t *);
 int	 myx_boot(struct myx_softc *, u_int32_t);
@@ -322,7 +320,7 @@ myx_query(struct myx_softc *sc, char *part, size_t partlen)
 		return (1);
 	}
 
-	myx_rawread(sc, offset, &hdr, sizeof(hdr));
+	myx_read(sc, offset, &hdr, sizeof(hdr));
 	offset = betoh32(hdr.fw_specs);
 	len = min(betoh32(hdr.fw_specs_len), sizeof(strings));
 
@@ -390,7 +388,7 @@ myx_loadfirmware(struct myx_softc *sc, const char *filename)
 
 	/* Write the firmware to the card's SRAM */
 	for (i = 0; i < fwlen; i += 256)
-		myx_rawwrite(sc, i + MYX_FW, fw + i, min(256, fwlen - i));
+		myx_write(sc, i + MYX_FW, fw + i, min(256, fwlen - i));
 
 	if (myx_boot(sc, fwlen) != 0) {
 		printf("%s: failed to boot %s\n", DEVNAME(sc), filename);
@@ -455,9 +453,6 @@ myx_attachhook(void *arg)
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 	IFQ_SET_MAXLEN(&ifp->if_snd, 1);
 	IFQ_SET_READY(&ifp->if_snd);
-
-	m_clsetwms(ifp, MCLBYTES, 2, sc->sc_rx_ring_count - 2);
-	m_clsetwms(ifp, 12 * 1024, 2, sc->sc_rx_ring_count - 2);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 #if 0
@@ -568,29 +563,11 @@ myx_read(struct myx_softc *sc, bus_size_t off, void *ptr, bus_size_t len)
 {
 	bus_space_barrier(sc->sc_memt, sc->sc_memh, off, len,
 	    BUS_SPACE_BARRIER_READ);
-	bus_space_read_region_4(sc->sc_memt, sc->sc_memh, off, ptr, len / 4);
-}
-
-void
-myx_rawread(struct myx_softc *sc, bus_size_t off, void *ptr,
-    bus_size_t len)
-{
-	bus_space_barrier(sc->sc_memt, sc->sc_memh, off, len,
-	    BUS_SPACE_BARRIER_READ);
 	bus_space_read_raw_region_4(sc->sc_memt, sc->sc_memh, off, ptr, len);
 }
 
 void
 myx_write(struct myx_softc *sc, bus_size_t off, void *ptr, bus_size_t len)
-{
-	bus_space_write_region_4(sc->sc_memt, sc->sc_memh, off, ptr, len / 4);
-	bus_space_barrier(sc->sc_memt, sc->sc_memh, off, len,
-	    BUS_SPACE_BARRIER_WRITE);
-}
-
-void
-myx_rawwrite(struct myx_softc *sc, bus_size_t off, void *ptr,
-    bus_size_t len)
 {
 	bus_space_write_raw_region_4(sc->sc_memt, sc->sc_memh, off, ptr, len);
 	bus_space_barrier(sc->sc_memt, sc->sc_memh, off, len,
@@ -983,6 +960,9 @@ myx_up(struct myx_softc *sc)
 		goto free_pad;
 	}
 	sc->sc_rx_ring_count = r / sizeof(struct myx_rx_desc);
+
+	m_clsetwms(ifp, MCLBYTES, 2, sc->sc_rx_ring_count - 2);
+	m_clsetwms(ifp, 12 * 1024, 2, sc->sc_rx_ring_count - 2);
 
 	bzero(&mc, sizeof(mc));
 	if (myx_cmd(sc, MYXCMD_GET_TXRINGSZ, &mc, &r) != 0) {
