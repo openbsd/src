@@ -1,13 +1,16 @@
-#	$OpenBSD: Makefile,v 1.2 2008/10/13 13:27:33 millert Exp $
+#	$OpenBSD: Makefile,v 1.3 2011/06/23 11:53:57 schwarze Exp $
 #	$NetBSD: Makefile,v 1.1 2005/04/04 16:48:45 peter Exp $
 
 SED=	/usr/bin/sed
 
-REGRESS_TARGETS= sedtest hanoi math sierpinski
+REGRESS_TARGETS= sedtest substitute hanoi math sierpinski
 
 sedtest:
 	sh ${.CURDIR}/$@.sh ${SED} $@.out
 	diff ${.CURDIR}/$@.expected $@.out
+
+substitute:
+	sh ${.CURDIR}/$@.sh
 
 hanoi:
 	${SED} -f ${.CURDIR}/$@.sed ${.CURDIR}/$@.in > $@.out
