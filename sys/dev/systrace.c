@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.55 2011/06/22 01:32:16 djm Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.56 2011/06/23 16:02:33 tedu Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -199,11 +199,8 @@ int systrace_debug = 0;
 
 /* ARGSUSED */
 int
-systracef_read(fp, poff, uio, cred)
-	struct file *fp;
-	off_t *poff;
-	struct uio *uio;
-	struct ucred *cred;
+systracef_read(struct file *fp, off_t *poff, struct uio *uio,
+    struct ucred *cred)
 {
 	struct fsystrace *fst = (struct fsystrace *)fp->f_data;
 	struct str_process *process;
@@ -250,11 +247,8 @@ systracef_read(fp, poff, uio, cred)
 
 /* ARGSUSED */
 int
-systracef_write(fp, poff, uio, cred)
-	struct file *fp;
-	off_t *poff;
-	struct uio *uio;
-	struct ucred *cred;
+systracef_write(struct file *fp, off_t *poff, struct uio *uio,
+    struct ucred *cred)
 {
 	return (EIO);
 }
@@ -266,11 +260,7 @@ systracef_write(fp, poff, uio, cred)
 
 /* ARGSUSED */
 int
-systracef_ioctl(fp, cmd, data, p)
-	struct file *fp;
-	u_long cmd;
-	caddr_t data;
-	struct proc *p;
+systracef_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 {
 	int ret = 0;
 	struct fsystrace *fst = (struct fsystrace *)fp->f_data;
@@ -410,10 +400,7 @@ systracef_ioctl(fp, cmd, data, p)
 
 /* ARGSUSED */
 int
-systracef_poll(fp, events, p)
-	struct file *fp;
-	int events;
-	struct proc *p;
+systracef_poll(struct file *fp, int events, struct proc *p)
 {
 	struct fsystrace *fst = (struct fsystrace *)fp->f_data;
 	int revents = 0;
@@ -435,28 +422,21 @@ systracef_poll(fp, events, p)
 
 /* ARGSUSED */
 int
-systracef_kqfilter(fp, kn)
-	struct file *fp;
-	struct knote *kn;
+systracef_kqfilter(struct file *fp, struct knote *kn)
 {
 	return (1);
 }
 
 /* ARGSUSED */
 int
-systracef_stat(fp, sb, p)
-	struct file *fp;
-	struct stat *sb;
-	struct proc *p;
+systracef_stat(struct file *fp, struct stat *sb, struct proc *p)
 {
 	return (EOPNOTSUPP);
 }
 
 /* ARGSUSED */
 int
-systracef_close(fp, p)
-	struct file *fp;
-	struct proc *p;
+systracef_close(struct file *fp, struct proc *p)
 {
 	struct fsystrace *fst = (struct fsystrace *)fp->f_data;
 	struct str_process *strp;
@@ -511,32 +491,19 @@ systraceattach(int n)
 }
 
 int
-systraceopen(dev, flag, mode, p)
-	dev_t	dev;
-	int	flag;
-	int	mode;
-	struct proc *p;
+systraceopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	return (0);
 }
 
 int
-systraceclose(dev, flag, mode, p)
-	dev_t	dev;
-	int	flag;
-	int	mode;
-	struct proc *p;
+systraceclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	return (0);
 }
 
 int
-systraceioctl(dev, cmd, data, flag, p)
-	dev_t	dev;
-	u_long	cmd;
-	caddr_t	data;
-	int	flag;
-	struct proc *p;
+systraceioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct file *f;
 	struct fsystrace *fst = NULL;

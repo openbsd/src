@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.20 2010/12/26 15:41:00 miod Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.21 2011/06/23 16:02:33 tedu Exp $	*/
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
@@ -62,8 +62,7 @@ void	ksymsattach(int);
 
 /*ARGSUSED*/
 void
-ksymsattach(num)
-	int num;
+ksymsattach(int num)
 {
 
 #if defined(__sparc64__) || defined(__mips__)
@@ -152,10 +151,7 @@ ksymsattach(num)
 
 /*ARGSUSED*/
 int
-ksymsopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+ksymsopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 
 	/* There are no non-zero minor devices */
@@ -175,10 +171,7 @@ ksymsopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-ksymsclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+ksymsclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 
 	return (0);
@@ -186,10 +179,7 @@ ksymsclose(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-ksymsread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+ksymsread(dev_t dev, struct uio *uio, int flags)
 {
 	int error;
 	size_t len;
@@ -218,32 +208,3 @@ ksymsread(dev, uio, flags)
 
 	return (0);
 }
-
-/* XXX - not yet */
-#if 0
-paddr_t
-ksymsmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
-{
-	vaddr_t va;
-	paddr_t pa;
-
-	if (off < 0)
-		return (-1);
-	if (off >= ksym_head_size + ksym_syms_size)
-		return (-1);
-
-	if ((vaddr_t)off < ksym_head_size) {
-		va = (vaddr_t)ksym_head + off;
-	} else {
-		va = (vaddr_t)ksym_syms + off;
-	}
-
-	if (pmap_extract(pmap_kernel, va, &pa) == FALSE)
-		panic("ksymsmmap: unmapped page");
-
-	return (pa);
-}
-#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.51 2010/09/24 08:33:59 yuo Exp $ */
+/*	$OpenBSD: ucom.c,v 1.52 2011/06/23 16:02:33 tedu Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -769,9 +769,7 @@ XXX;
 }
 
 void
-ucom_break(sc, onoff)
-	struct ucom_softc *sc;
-	int onoff;
+ucom_break(struct ucom_softc *sc, int onoff)
 {
 	DPRINTF(("ucom_break: onoff=%d\n", onoff));
 
