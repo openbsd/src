@@ -955,7 +955,8 @@ nnpfs_symlink_common(struct vnode *dvp,
 	error = ((struct nnpfs_message_wakeup *) msg)->error;
 
  done:
-    free(msg, M_TEMP);
+    if (msg)
+        free(msg, M_TEMP);
     return error;
 }
 

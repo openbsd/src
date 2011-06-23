@@ -573,7 +573,8 @@ remote_pioctl (d_thread_t *p,
 	error = copyout(msg2->msg, vice_ioctl->out, len);
     }
  done:
-    free(msg, M_TEMP);
+    if (msg != NULL)
+        free(msg, M_TEMP);
     return error;
 }
 
