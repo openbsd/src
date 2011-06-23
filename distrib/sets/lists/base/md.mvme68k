@@ -1378,7 +1378,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/raidframe/rf_threadstuff.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/raidframe/rf_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/raidframe/rf_utils.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ramdisk.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/rasops
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/rasops/rasops.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/rasops/rasops_bitops.ph
