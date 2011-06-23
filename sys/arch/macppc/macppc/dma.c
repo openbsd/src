@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.34 2010/12/26 15:40:59 miod Exp $	*/
+/*	$OpenBSD: dma.c,v 1.35 2011/06/23 20:44:39 ariane Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -483,12 +483,8 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 			    VM_PROT_READ | VM_PROT_WRITE, VM_PROT_READ |
 			    VM_PROT_WRITE | PMAP_WIRED | PMAP_CANFAIL);
 			if (error) {
-				/*
-				 * Clean up after ourselves.
-				 * XXX uvm_wait on WAITOK
-				 */
 				pmap_update(pmap_kernel());
-				uvm_km_free(kernel_map, va, ssize);
+				uvm_km_free(kernel_map, sva, ssize);
 				return (error);
 			}
 		}

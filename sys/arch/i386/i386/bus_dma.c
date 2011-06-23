@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.24 2010/12/26 15:40:59 miod Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.25 2011/06/23 20:44:39 ariane Exp $	*/
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -456,14 +456,8 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			    VM_PROT_READ | VM_PROT_WRITE, VM_PROT_READ |
 			    VM_PROT_WRITE | PMAP_WIRED | PMAP_CANFAIL);
 			if (ret) {
-				/*
-				 * Clean up after ourselves.
-				 * XXX uvm_wait on WAITOK
-				 */
-				pmap_remove(pmap_kernel(), sva, va - PAGE_SIZE);
 				pmap_update(pmap_kernel());
-
-				uvm_km_free(kernel_map, va, ssize);
+				uvm_km_free(kernel_map, sva, ssize);
 				return (ret);
 			}
 
