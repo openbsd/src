@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.10 2010/12/15 06:40:39 tedu Exp $	*/
+/*	$OpenBSD: setup.c,v 1.11 2011/06/23 03:14:32 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.4 1995/04/24 12:24:41 cgd Exp $	*/
 
 /*
@@ -174,42 +174,6 @@ main(argc, argv)
 	    fclose(Monstfp);
 	    }
 	}
-
-#ifdef MAKE_INSTALLS_THIS_AND_DOESNT_WANT_TO_HEAR_ABOUT_IT
-    /* write to motd file */
-    printf("One line 'motd' ? ");
-    if (fgets(Databuf, SZ_DATABUF, stdin) == NULL)
-	Databuf[0] = '\0';
-    snprintf(path, sizeof(path), "%s%s", prefix?prefix:"", _PATH_MOTD);
-    if ((fp = fopen(path, "w")) == NULL)
-	Error("Cannot update %s.\n", path);
-    else
-	{
-	fwrite(Databuf, sizeof(char), strlen(Databuf), fp);
-	fclose(fp);
-	}
-
-    /* report compile-time options */
-    printf("Compiled options:\n\n");
-    printf("Phantasia destination directory:  %s\n", _PATH_PHANTDIR);
-    printf("Wizard: root UID: 0\n");
-
-#ifdef BSD41
-    printf("Compiled for BSD 4.1\n");
-#endif
-
-#ifdef BSD42
-    printf("Compiled for BSD 4.2\n");
-#endif
-
-#ifdef SYS3
-    printf("Compiled for System III\n");
-#endif
-
-#ifdef SYS5
-    printf("Compiled for System V\n");
-#endif
-#endif
 
     exit(0);
     /*NOTREACHED*/
