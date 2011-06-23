@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.109 2011/06/23 21:50:26 oga Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.110 2011/06/23 21:55:58 oga Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -1152,7 +1152,7 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 				uvm_lock_pageq();
 				pmap_page_protect(pg, VM_PROT_NONE);
 				/* XXX won't happen right now */
-				if (pg->pg_flags & PQ_ANON)
+				if (pg->pg_flags & PQ_AOBJ)
 					uao_dropswap(uobj,
 					    pg->offset >> PAGE_SHIFT);
 				uvm_pagefree(pg);
