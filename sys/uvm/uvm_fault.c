@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.60 2011/06/06 17:10:23 ariane Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.61 2011/06/23 21:52:42 oga Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1936,11 +1936,7 @@ uvmfault_lookup(struct uvm_faultinfo *ufi, boolean_t write_lock)
 		 */
 		if (UVM_ET_ISSUBMAP(ufi->entry)) {
 			tmpmap = ufi->entry->object.sub_map;
-			if (write_lock) {
-				vm_map_unlock(ufi->map);
-			} else {
-				vm_map_unlock_read(ufi->map);
-			}
+			uvmfault_unlockmaps(ufi, write_lock);
 			ufi->map = tmpmap;
 			continue;
 		}
