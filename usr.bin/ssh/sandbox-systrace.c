@@ -1,4 +1,4 @@
-/* $OpenBSD: sandbox-systrace.c,v 1.2 2011/06/22 22:14:05 djm Exp $ */
+/* $OpenBSD: sandbox-systrace.c,v 1.3 2011/06/23 09:34:13 djm Exp $ */
 /*
  * Copyright (c) 2011 Damien Miller <djm@mindrot.org>
  *
@@ -34,7 +34,7 @@
 
 #include "atomicio.h"
 #include "log.h"
-#include "sandbox.h"
+#include "ssh-sandbox.h"
 #include "xmalloc.h"
 
 static const int preauth_policy[] = {
