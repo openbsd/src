@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.104 2011/06/23 21:42:05 ariane Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.105 2011/06/23 21:54:56 oga Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -930,8 +930,7 @@ alloc_va:
 		while (uvm_km_pages.free == 0) {
 			if (kd->kd_waitok == 0) {
 				mtx_leave(&uvm_km_pages.mtx);
-				if (!TAILQ_EMPTY(&pgl))
-					uvm_pglistfree(&pgl);
+				uvm_pglistfree(&pgl);
 				return NULL;
 			}
 			msleep(&uvm_km_pages.free, &uvm_km_pages.mtx, PVM,
@@ -964,8 +963,7 @@ try_map:
 				tsleep(map, PVM, "km_allocva", 0);
 				goto try_map;
 			}
-			if (!TAILQ_EMPTY(&pgl))
-				uvm_pglistfree(&pgl);
+			uvm_pglistfree(&pgl);
 			return (NULL);
 		}
 	}
