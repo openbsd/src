@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.30 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: utils.c,v 1.31 2011/06/23 11:43:13 otto Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -178,7 +178,8 @@ copy_file(FTSENT *entp, int dne)
 	 */
 #define	RETAINBITS \
 	(S_ISUID | S_ISGID | S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO)
-	else if (fs->st_mode & (S_ISUID | S_ISGID) && fs->st_uid == myuid) {
+	if (!pflag && dne &&
+	    fs->st_mode & (S_ISUID | S_ISGID) && fs->st_uid == myuid) {
 		if (fstat(to_fd, &to_stat)) {
 			warn("%s", to.p_path);
 			rval = 1;
