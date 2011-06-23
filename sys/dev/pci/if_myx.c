@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.27 2011/06/23 03:36:06 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.28 2011/06/23 04:09:08 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -129,6 +129,7 @@ struct myx_softc {
 	u_int			 sc_rx_ring_idx[2];
 #define  MYX_RXSMALL		 0
 #define  MYX_RXBIG		 1
+	struct timeout		 sc_refill;
 
 	bus_size_t		 sc_tx_boundary;
 	u_int			 sc_tx_ring_count;
@@ -191,6 +192,7 @@ struct myx_buf *	myx_buf_fill(struct myx_softc *, int);
 
 void			myx_rx_zero(struct myx_softc *, int);
 int			myx_rx_fill(struct myx_softc *, int);
+void			myx_refill(void *);
 
 struct cfdriver myx_cd = {
 	NULL, "myx", DV_IFNET
@@ -230,6 +232,8 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 
 	SIMPLEQ_INIT(&sc->sc_tx_buf_free);
 	SIMPLEQ_INIT(&sc->sc_tx_buf_list);
+
+	timeout_set(&sc->sc_refill, myx_refill, sc);
 
 	/* Map the PCI memory space */
 	memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, MYXBAR0);
@@ -1298,6 +1302,8 @@ myx_down(struct myx_softc *sc)
 		    BUS_DMASYNC_POSTREAD);
 	}
 
+	timeout_del(&sc->sc_refill);
+
 	CLR(ifp->if_flags, IFF_RUNNING);
 
 	if (ifp->if_link_state != LINK_STATE_UNKNOWN) {
@@ -1562,11 +1568,30 @@ myx_intr(void *arg)
 	}
 
 	for (i = 0; i < 2; i++) {
-		if (ISSET(refill, 1 << i))
+		if (ISSET(refill, 1 << i)) {
 			myx_rx_fill(sc, i);
+			if (SIMPLEQ_EMPTY(&sc->sc_rx_buf_list[i]))
+				timeout_add(&sc->sc_refill, 0);
+		}
 	}
 
 	return (1);
+}
+
+void
+myx_refill(void *xsc)
+{
+	struct myx_softc *sc = xsc;
+	int i;
+	int s;
+
+	s = splnet();
+	for (i = 0; i < 2; i++) {
+		myx_rx_fill(sc, i);
+		if (SIMPLEQ_EMPTY(&sc->sc_rx_buf_list[i]))
+			timeout_add(&sc->sc_refill, 1);
+	}
+	splx(s);
 }
 
 void
