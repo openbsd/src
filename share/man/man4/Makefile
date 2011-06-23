@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.525 2011/06/17 08:39:38 pirofti Exp $
+#	$OpenBSD: Makefile,v 1.526 2011/06/23 22:46:12 schwarze Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpiasus.4 acpibat.4 acpibtn.4 acpicpu.4 acpidock.4 \
@@ -66,7 +66,7 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	viapm.4 viasio.4 vic.4 video.4 vlan.4 vmt.4 vnd.4 vr.4 \
 	vscsi.4 vte.4 \
 	watchdog.4 wb.4 wbenv.4 wbng.4 wbsd.4 wbsio.4 wd.4 wdc.4 we.4 \
-	wi.4tbl wpi.4 wscons.4 wsdisplay.4 wskbd.4 wsmouse.4 wsmux.4 \
+	wi.4 wpi.4 wscons.4 wsdisplay.4 wskbd.4 wsmouse.4 wsmux.4 \
 	xe.4 xf86.4 xge.4 xl.4 xmphy.4 yds.4 ym.4 zero.4 zyd.4
 
 MLINKS+=adv.4 advansys.4 adv.4 adw.4
@@ -97,5 +97,10 @@ SUBDIR=	man4.alpha man4.amd64 man4.armish man4.aviion man4.hp300 \
 	man4.hppa man4.i386 man4.landisk man4.loongson man4.luna88k \
 	man4.mac68k man4.macppc man4.mvme68k man4.mvme88k \
 	man4.sgi man4.socppc man4.sparc man4.sparc64 man4.vax man4.zaurus
+
+CLEANFILES+= wi.4
+
+wi.4: wi.4tbl
+	cp ${.ALLSRC} ${.TARGET}
 
 .include <bsd.prog.mk>

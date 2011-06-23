@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.60 2010/09/06 17:26:17 nicm Exp $
+#	$OpenBSD: Makefile,v 1.61 2011/06/23 22:46:12 schwarze Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -66,17 +66,17 @@ HOSTLDFLAGS?=	${LDFLAGS}
 HOSTCFLAGS+=	-I. -I${.CURDIR} ${CURSESTRACE}
 CFLAGS+=	-I. -I${.CURDIR} ${CURSESTRACE}
 
-MAN=	curs_addch.3tbl curs_addchstr.3 curs_addstr.3 curs_attr.3tbl \
+MAN=	curs_addch.3 curs_addchstr.3 curs_addstr.3 curs_attr.3 \
 	curs_beep.3 curs_bkgd.3 curs_bkgrnd.3 curs_border.3 curs_border_set.3 \
 	curs_clear.3 curs_color.3 \
 	curs_delch.3 curs_deleteln.3 \
 	curs_extend.3 \
-	curs_getch.3tbl curs_getstr.3 curs_getyx.3 \
-	curs_inch.3tbl curs_inchstr.3 curs_initscr.3 curs_inopts.3 \
+	curs_getch.3 curs_getstr.3 curs_getyx.3 \
+	curs_inch.3 curs_inchstr.3 curs_initscr.3 curs_inopts.3 \
 	curs_insch.3 curs_insstr.3 curs_instr.3 \
 	curs_kernel.3 \
 	curs_legacy.3 \
-	curs_mouse.3tbl curs_move.3 \
+	curs_mouse.3 curs_move.3 \
 	curs_opaque.3 curs_outopts.3 curs_overlay.3 \
 	curs_pad.3 curs_print.3 curs_printw.3 \
 	curs_refresh.3 \
@@ -89,9 +89,9 @@ MAN=	curs_addch.3tbl curs_addchstr.3 curs_addstr.3 curs_attr.3tbl \
 	curs_ins_wstr.3 curs_inwstr.3 \
 	default_colors.3 define_key.3 \
 	key_defined.3 keybound.3 keyok.3 \
-	curses.3tbl \
+	curses.3 \
 	resizeterm.3 \
-	term.5tbl term.7 termcap.3 terminfo.3 terminfo.5tbl \
+	term.5 term.7 termcap.3 terminfo.3 terminfo.5 \
 	wresize.3
 
 MLINKS+= curses.3 ncurses.3
@@ -270,7 +270,8 @@ MLINKS+= curs_inwstr.3 inwstr.3 curs_inwstr.3 innwstr.3 \
 
 GENERATED= init_keytry.h codes.c comp_captab.c expanded.c fallback.c \
 	keys.list lib_gen.c lib_keyname.c names.c unctrl.c make_hash make_keys
-CLEANFILES+= ${GENERATED} stamp_namebuild
+CLEANFILES+= ${GENERATED} stamp_namebuild term.5 terminfo.5 curses.3 \
+	curs_addch.3 curs_attr.3 curs_getch.3 curs_inch.3 curs_mouse.3
 
 .if make(install)
 SUBDIR+= doc
@@ -358,3 +359,12 @@ afterinstall:
 
 init_keytry.o init_keytry.so init_keytry.po init_keytry.ln: init_keytry.h
 lib_options.o lib_options.so lib_options.po lib_options.ln: init_keytry.h
+
+# must be at the end because bsd.lib.mk clears it
+.SUFFIXES: .3 .3tbl .5 .5tbl
+
+.3tbl.3:
+	cp ${.IMPSRC} ${.TARGET}
+
+.5tbl.5:
+	cp ${.IMPSRC} ${.TARGET}

@@ -10,7 +10,7 @@ SRCS=	fld_arg.c fld_attr.c fld_current.c fld_def.c fld_dup.c fld_ftchoice.c \
 	f_trace.c
 HDRS=	form.h
 CFLAGS+=-I${.CURDIR}/../libmenu -I${.CURDIR}/../libcurses
-MAN=	form.3tbl form_cursor.3 form_data.3 form_driver.3 form_field.3 \
+MAN=	form.3 form_cursor.3 form_data.3 form_driver.3 form_field.3 \
 	form_field_attributes.3 form_field_buffer.3 form_field_info.3 \
 	form_field_just.3 form_field_new.3 form_field_opts.3 \
 	form_field_userptr.3 form_field_validation.3 form_fieldtype.3 \
@@ -50,12 +50,16 @@ MLINKS+=form_cursor.3 pos_form_cursor.3 form_data.3 data_ahead.3 \
 	form_request_name.3 form_requestname.3 form_request_by_name.3 \
 	form_userptr.3 set_form_userptr.3 form_win.3 set_form_win.3 form_win.3 \
 	set_form_sub.3 form_win.3 form_sub.3 form_win.3 scale_form.3
+CLEANFILES+= form.3
 
 includes:
 	@cd ${.CURDIR}; for i in ${HDRS}; do \
 	  cmp -s $$i ${DESTDIR}/usr/include/$$i || \
 	  ${INSTALL} ${INSTALL_COPY} -m 444 -o $(BINOWN) -g $(BINGRP) $$i \
 	  ${DESTDIR}/usr/include; done
+
+form.3: form.3tbl
+	cp ${.ALLSRC} ${.TARGET}
 
 .include <bsd.own.mk>
 

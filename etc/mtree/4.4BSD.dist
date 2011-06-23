@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.215 2011/04/19 21:39:18 schwarze Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.216 2011/06/23 22:46:12 schwarze Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1154,358 +1154,6 @@ zh_TW.eucTW
 # ./usr/share/man
 man
 
-# ./usr/share/man/cat1
-cat1
-
-alpha
-..
-amd64
-..
-armish
-..
-aviion
-..
-hp300
-..
-hppa
-..
-hppa64
-..
-i386
-..
-landisk
-..
-loongson
-..
-luna88k
-..
-mac68k
-..
-macppc
-..
-mvme68k
-..
-mvme88k
-..
-mvmeppc
-..
-palm
-..
-sgi
-..
-socppc
-..
-sparc
-..
-sparc64
-..
-vax
-..
-zaurus
-..
-
-# ./usr/share/man/cat1
-..
-
-# ./usr/share/man/cat2
-cat2
-
-alpha
-..
-amd64
-..
-armish
-..
-i386
-..
-palm
-..
-zaurus
-..
-
-# ./usr/share/man/cat2
-..
-
-# ./usr/share/man/cat3
-cat3
-
-alpha
-..
-amd64
-..
-armish
-..
-aviion
-..
-hp300
-..
-hppa
-..
-hppa64
-..
-i386
-..
-landisk
-..
-loongson
-..
-luna88k
-..
-mac68k
-..
-macppc
-..
-mvme68k
-..
-mvme88k
-..
-mvmeppc
-..
-palm
-..
-sgi
-..
-socppc
-..
-sparc
-..
-sparc64
-..
-vax
-..
-zaurus
-..
-
-# ./usr/share/man/cat3
-..
-
-# ./usr/share/man/cat3p
-cat3p
-# ./usr/share/man/cat3p
-..
-
-# ./usr/share/man/cat4
-cat4
-
-alpha
-..
-amd64
-..
-armish
-..
-aviion
-..
-hp300
-..
-hppa
-..
-hppa64
-..
-i386
-..
-landisk
-..
-loongson
-..
-luna88k
-..
-mac68k
-..
-macppc
-..
-mvme68k
-..
-mvme88k
-..
-mvmeppc
-..
-palm
-..
-sgi
-..
-socppc
-..
-sparc
-..
-sparc64
-..
-vax
-..
-zaurus
-..
-
-# ./usr/share/man/cat4
-..
-
-# ./usr/share/man/cat5
-cat5
-
-alpha
-..
-amd64
-..
-armish
-..
-aviion
-..
-hp300
-..
-hppa
-..
-hppa64
-..
-i386
-..
-landisk
-..
-loongson
-..
-luna88k
-..
-mac68k
-..
-macppc
-..
-mvme68k
-..
-mvme88k
-..
-mvmeppc
-..
-palm
-..
-sgi
-..
-socppc
-..
-sparc
-..
-sparc64
-..
-vax
-..
-zaurus
-..
-
-# ./usr/share/man/cat5
-..
-
-# ./usr/share/man/cat6
-cat6
-# ./usr/share/man/cat6
-..
-
-# ./usr/share/man/cat7
-cat7
-# ./usr/share/man/cat7
-..
-
-# ./usr/share/man/cat8
-cat8
-
-alpha
-..
-amd64
-..
-armish
-..
-aviion
-..
-hp300
-..
-hppa
-..
-hppa64
-..
-i386
-..
-landisk
-..
-loongson
-..
-luna88k
-..
-mac68k
-..
-macppc
-..
-mvme68k
-..
-mvme88k
-..
-mvmeppc
-..
-palm
-..
-sgi
-..
-socppc
-..
-sparc
-..
-sparc64
-..
-vax
-..
-zaurus
-..
-
-# ./usr/share/man/cat8
-..
-
-# ./usr/share/man/cat9
-cat9
-
-alpha
-..
-amd64
-..
-armish
-..
-aviion
-..
-hp300
-..
-hppa
-..
-hppa64
-..
-i386
-..
-landisk
-..
-loongson
-..
-luna88k
-..
-mac68k
-..
-macppc
-..
-mvme68k
-..
-mvme88k
-..
-mvmeppc
-..
-palm
-..
-sgi
-..
-socppc
-..
-sparc
-..
-sparc64
-..
-vax
-..
-zaurus
-..
-
-# ./usr/share/man/cat9
-..
-
 # ./usr/share/man/ps1
 ps1
 
@@ -1863,51 +1511,13 @@ zaurus
 # ./usr/share/man/man1
 man1
 
-alpha
-..
 amd64
 ..
-armish
-..
-aviion
-..
-hp300
-..
-hppa
-..
-hppa64
-..
 i386
-..
-landisk
-..
-loongson
-..
-luna88k
-..
-mac68k
-..
-macppc
-..
-mvme68k
-..
-mvme88k
-..
-mvmeppc
-..
-palm
-..
-sgi
-..
-socppc
 ..
 sparc
 ..
 sparc64
-..
-vax
-..
-zaurus
 ..
 
 # ./usr/share/man/man1
@@ -1915,11 +1525,29 @@ zaurus
 
 # ./usr/share/man/man2
 man2
+
+alpha
+..
+amd64
+..
+armish
+..
+i386
+..
+zaurus
+..
+
 # ./usr/share/man/man2
 ..
 
 # ./usr/share/man/man3
 man3
+
+loongson
+..
+sgi
+..
+
 # ./usr/share/man/man3
 ..
 
@@ -1943,8 +1571,6 @@ hp300
 ..
 hppa
 ..
-hppa64
-..
 i386
 ..
 landisk
@@ -1960,10 +1586,6 @@ macppc
 mvme68k
 ..
 mvme88k
-..
-mvmeppc
-..
-palm
 ..
 sgi
 ..
@@ -1983,6 +1605,24 @@ zaurus
 
 # ./usr/share/man/man5
 man5
+
+amd64
+..
+armish
+..
+hppa
+..
+hppa64
+..
+i386
+..
+landisk
+..
+socppc
+..
+zaurus
+..
+
 # ./usr/share/man/man5
 ..
 
@@ -2028,8 +1668,6 @@ macppc
 mvme68k
 ..
 mvme88k
-..
-mvmeppc
 ..
 palm
 ..

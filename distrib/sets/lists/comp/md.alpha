@@ -277,8 +277,8 @@
 ./usr/libdata/ldscripts/elf64alpha_obsd.xu
 ./usr/libdata/ldscripts/elf64alpha_obsd.xz
 ./usr/libdata/lint/llib-lalpha.ln
-./usr/share/man/cat1/addr2line.0
-./usr/share/man/cat1/objcopy.0
-./usr/share/man/cat1/protoize.0
-./usr/share/man/cat1/readelf.0
-./usr/share/man/cat1/unprotoize.0
+./usr/share/man/man1/addr2line.1
+./usr/share/man/man1/objcopy.1
+./usr/share/man/man1/protoize.1
+./usr/share/man/man1/readelf.1
+./usr/share/man/man1/unprotoize.1

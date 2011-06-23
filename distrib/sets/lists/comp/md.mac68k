@@ -255,5 +255,5 @@
 ./usr/lib/libwrap_pic.a
 ./usr/lib/libz_pic.a
 ./usr/lib/scrt0.o
-./usr/share/man/cat1/protoize.0
-./usr/share/man/cat1/unprotoize.0
+./usr/share/man/man1/protoize.1
+./usr/share/man/man1/unprotoize.1

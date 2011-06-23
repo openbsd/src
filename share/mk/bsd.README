@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.44 2011/04/22 21:11:50 jmc Exp $
+#	$OpenBSD: bsd.README,v 1.45 2011/06/23 22:46:12 schwarze Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -165,7 +165,7 @@ NONBINMODE	Mode for non-executable files. [444]
 
 DIRMODE		Mode for new directories. [755]
 
-MANDIR		Base path for manual installation. [/usr/share/man/cat]
+MANDIR		Base path for manual installation. [/usr/share/man/man]
 
 MANGRP		Manual group. [bin]
 
@@ -226,10 +226,6 @@ SKEY		Compile in support for S/key authentication. [yes, set
 		unconditionally]
 
 KERBEROS5	Compile in support for Kerberos 5 authentication.
-
-MANZ		Compress manual pages at installation time.
-
-MANPS		Define to have PostScript manual pages generated.
 
 SYS_INCLUDE	Copy or symlink kernel include files into /usr/include.
 		Possible values are "symlinks" or "copies" (which is

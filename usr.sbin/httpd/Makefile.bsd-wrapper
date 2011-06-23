@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.69 2009/03/10 10:56:40 martynas Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.70 2011/06/23 22:46:12 schwarze Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -711,10 +711,10 @@ install: maninstall htmlinstall
 	rm -rf $$d
 
 .if ${.OBJDIR} == ${.CURDIR}
-clean: cleanman
+clean:
 	-@cd ${.OBJDIR} && rm -f ${MUNGEDFILES} && ${MAKE} clean
 .else
-clean: cleanman
+clean:
 	@cd ${.OBJDIR} && find . \! -type d -print0 | xargs -0r rm
 .endif
 
@@ -737,8 +737,6 @@ tags:
 
 .ifdef NOMAN
 maninstall:
-	@echo NOMAN is set
-cleanman:
 	@echo NOMAN is set
 .endif
 

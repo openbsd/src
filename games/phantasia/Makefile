@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2004/11/11 16:39:00 jolan Exp $
+#	$OpenBSD: Makefile,v 1.17 2011/06/23 22:46:12 schwarze Exp $
 
 PROG=	phantasia
 SRCS=	main.c fight.c io.c interplayer.c gamesupport.c misc.c phantglobs.c
@@ -7,7 +7,7 @@ DPADD=	${LIBM} ${LIBCURSES}
 LDADD=	-lm -lcurses
 BINMODE=2555
 MAN=	phantasia.6
-CLEANFILES+=map setup setup.o phantglobs.o.bld
+CLEANFILES+=map setup setup.o phantglobs.o.bld phantasia.6
 
 all: setup phantasia
 
@@ -20,6 +20,9 @@ phantglobs.o.bld: phantglobs.c
 setup: phantglobs.o.bld setup.o monsters.asc ${DPADD} 
 	${HOSTCC} ${CFLAGS} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} \
 		  phantglobs.o.bld setup.o ${LDADD}
+
+phantasia.6: phantasia.6tbl
+	cp ${.ALLSRC} ${.TARGET}
 
 beforeinstall: 
 	./setup -m ${.CURDIR}/monsters.asc

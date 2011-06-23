@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.68 2010/07/04 18:30:28 espie Exp $
+# $OpenBSD: Makefile,v 1.69 2011/06/23 22:46:12 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -102,17 +102,14 @@ PODS= \
     OpenBSD::Ustar \
     OpenBSD::Vstat
 
+MAN3=
 _quick3p=
 
 .for p in ${PODS}
 .  ifndef NOMAN
-MANALL+= $p.cat3p
-MANSRCALL += $p.3p
+MAN3 += $p.3p
 MANSRC_COOKIE=stamp-mansrc.build
 _quick3p+=$p.pod ${.OBJDIR}/$p.3p
-.    ifdef MANPS
-PSALL+= $p.ps3p
-.    endif
 .  else
 MANSRC_COOKIE=
 .  endif
@@ -120,29 +117,21 @@ MANSRC_COOKIE=
 $p.3p: pod/$p.pod
 	${POD2MAN} --section=3p --official --name=$p ${.ALLSRC} $@
 .endfor
-.ifndef NOMAN
-MANALL+=${MAN1:S/.1$/.cat1/}
-MANALL+=${MAN5:S/.5$/.cat5/}
-MANALL+=${MAN8:S/.8$/.cat8/}
-.  ifdef MANPS
-PSALL+= ${MAN1:S/.1$/.ps1/}
-PSALL+= ${MAN5:S/.5$/.ps5/}
-PSALL+= ${MAN8:S/.8$/.ps8/}
-.  endif
-.endif
 
 mansrc.build:
 .if !empty(_quick3p)
 	cd ${.CURDIR}/pod && ${POD2MAN} --section=3p --official ${_quick3p}
 .endif
 
-all: ${MANSRC_COOKIE} .WAIT ${MANALL} ${PSALL}
+all: ${MANSRC_COOKIE}
 
 stamp-mansrc.build:
 	@cd ${.CURDIR} && exec ${MAKE} mansrc.build
 	@touch $@
 
-CLEANFILES= ${MANSRCALL} ${MANALL} stamp-mansrc.build
+MAN += ${MAN3}
+
+CLEANFILES= ${MAN3} stamp-mansrc.build
 
 realinstall: 
 .for i in ${PACKAGEDIRS}

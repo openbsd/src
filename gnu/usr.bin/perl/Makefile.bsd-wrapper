@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.84 2010/11/30 19:45:02 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.85 2011/06/23 22:46:12 schwarze Exp $
 #
 # Build wrapper for Perl 5.10.0
 #
@@ -66,13 +66,12 @@ GENERATED=	config.sh ${GEN_AFTER}
 
 ${GEN_AFTER}: config.sh
 
-CLEANFILES=	config.sh Policy.sh DynaLoader.c ${MANALL} ${PSALL} ${MANSRCALL} stamp-mansrc.build
+CLEANFILES=	config.sh Policy.sh DynaLoader.c
 
 all:	perl.build man.build
 
-
 man.build: perl.build
-	cd ${.CURDIR} && exec ${MAKE} -f Makefile.bsd-wrapper1 $@
+	cd ${.CURDIR} && exec ${MAKE} -f Makefile.bsd-wrapper1 mansrc.build
 
 beforedepend: config.sh config.h bitcount.h uudmap.h Makefile makedepend x2p/Makefile writemain 
 	cd ${.OBJDIR} && exec ${MAKE} depend
@@ -212,4 +211,4 @@ install.lib:
 	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    lib${LIB}.so.${major}.${minor} ${DESTDIR}${LIBDIR}
 .endif
-.PHONY: perl.lib install.lib perl.build install.perl man.build mansrc.build
+.PHONY: perl.lib install.lib perl.build install.perl man.build

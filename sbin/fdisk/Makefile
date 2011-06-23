@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile,v 1.37 2010/03/22 15:25:47 otto Exp $
+#	$OpenBSD: Makefile,v 1.38 2011/06/23 22:46:12 schwarze Exp $
 #
 # Copyright (c) 1997 Tobias Weingartner
 # All rights reserved.
@@ -39,6 +39,9 @@ manual.c:
 	echo 'no manual' | gzip -9c | hexdump -ve '"0x" 1/1 "%02x,"'; \
 	echo '};'; echo 'const int manpage_sz = sizeof(manpage);') > manual.c
 .else
+fdisk.cat8:	fdisk.8
+	mandoc ${.ALLSRC} > ${.TARGET}
+
 manual.c:	fdisk.cat8
 	(echo 'const unsigned char manpage[] = {'; \
 	cat fdisk.cat8 | gzip -9c | hexdump -ve '"0x" 1/1 "%02x,"'; \

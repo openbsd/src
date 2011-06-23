@@ -187,6 +187,6 @@
 ./usr/lib/gcc-lib/vax-unknown-openbsd4.9/2.95.3/libgcc.a
 ./usr/lib/libstdc++_p.a
 ./usr/lib/scrt0.o
-./usr/share/man/cat1/protoize.0
-./usr/share/man/cat1/unprotoize.0
-./usr/share/man/cat3/infnan.0
+./usr/share/man/man1/protoize.1
+./usr/share/man/man1/unprotoize.1
+./usr/share/man/man3/infnan.3

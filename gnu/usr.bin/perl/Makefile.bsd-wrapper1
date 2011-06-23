@@ -28,10 +28,9 @@ MLINKS=		c2ph.1 pstruct.1 s2p.1 psed.1 perl5121delta.1 perldelta.1 \
 		Pod::Checker.3p podchecker.3p Pod::Select.3p podselect.3p \
 		Pod::Usage.3p pod2usage.3p
 
-MANALL=
+MAN=
 _quick1=
 _quick3p=
-MANSRCALL=
 
 .for page sect file in \
     a2p 1 			x2p/a2p.pod \
@@ -729,13 +728,9 @@ MANSRCALL=
     warnings 3p			lib/warnings.pm \
     warnings::register 3p	lib/warnings/register.pm
 .  ifndef NOMAN
-MANALL+= ${page}.cat${sect}
-MANSRCALL+= ${page}.${sect}
+MAN+= ${page}.${sect}
 MANSRC_COOKIE=stamp-mansrc.build
 _quick${sect}+=${file} ${page}.${sect}
-.    ifdef MANPS
-PSALL+= ${page}.ps${sect}
-.    endif
 .  else
 MANSRC_COOKIE=
 .  endif
@@ -755,9 +750,9 @@ stamp-mansrc.build:
 	@cd ${.CURDIR} && exec ${MAKE} -f Makefile.bsd-wrapper1 mansrc.build
 	@touch $@
 
-man.build: ${MANSRC_COOKIE} .WAIT ${MANALL} ${PSALL}
-.PHONY: man.build mansrc.build
+.PHONY: mansrc.build
 
 cleandir:
-	rm -f ${MANALL} ${MANSRCALL} ${PSALL}
+	rm -f ${MAN} stamp-mansrc.build
+
 .include <bsd.man.mk>
