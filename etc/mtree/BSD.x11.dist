@@ -1,4 +1,4 @@
-#	$OpenBSD: BSD.x11.dist,v 1.18 2011/06/04 15:34:57 matthieu Exp $
+#	$OpenBSD: BSD.x11.dist,v 1.19 2011/06/23 22:55:39 schwarze Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -143,16 +143,6 @@
                 ..
             ..
             man
-                cat1
-                ..
-                cat3
-                ..
-                cat4
-                ..
-                cat5
-                ..
-                cat7
-                ..
                 man1
                 ..
                 man3
