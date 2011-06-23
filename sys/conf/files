@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.512 2011/04/07 13:42:53 thib Exp $
+#	$OpenBSD: files,v 1.513 2011/06/23 17:06:07 matthew Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -493,7 +493,7 @@ pseudo-device vnd: disk
 pseudo-device ccd: disk
 pseudo-device raid: disk
 pseudo-device rd: disk
-file	dev/ramdisk.c			rd needs-flag
+file	dev/rd.c			rd needs-flag
 
 pseudo-device pty: tty
 pseudo-device nmea: tty
@@ -1015,7 +1015,6 @@ file uvm/uvm_swap_encrypt.c		uvm_swap_encrypt
 file uvm/uvm_unix.c
 file uvm/uvm_user.c
 file uvm/uvm_vnode.c
-file dev/rd.c				ramdisk_hooks
 
 # IPv6
 file net/if_faith.c			faith			needs-count
