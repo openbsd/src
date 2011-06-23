@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.23 2010/12/29 17:51:48 deraadt Exp $
+#	$OpenBSD: mkioctls,v 1.24 2011/06/23 20:51:20 matthew Exp $
 
 #
 # Copyright (c) 1994
@@ -76,7 +76,6 @@ BEGIN {
 	print "#include <crypto/cryptodev.h>"
 	print "#include <dev/biovar.h>"
 	print "#include <dev/ccdvar.h>"
-	print "#include <dev/ramdisk.h>"
 	print "#include <dev/systrace.h>"
 	print "#include <dev/wscons/wsconsio.h>"
 	print "#include <dev/vndioctl.h>"
@@ -91,7 +90,7 @@ BEGIN {
 	print ""
 }
 
-/^#[ 	]*define[ 	]*(AGPIOC_|ATAIO|AUDIO_|BIOC|CCDIOC|CDIO|CIOC|CHIO|DIOC|MIDI_|GPIO|SEQUENCER_|TIO|FIO|MTIOC|SIO|OSIO|SESIOC_|SIOC|PCIOC|PPPIOC|PPPOE|RD_|RIOC|RND|STRIOC|SCIOC|OSCIOC|TUN|VNDIOC|WSKBD|WSMOUSE|WSDISPLAY|WSMUX)[A-Z_0-9]*[ 	]*_IO/ {
+/^#[ 	]*define[ 	]*(AGPIOC_|ATAIO|AUDIO_|BIOC|CCDIOC|CDIO|CIOC|CHIO|DIOC|MIDI_|GPIO|SEQUENCER_|TIO|FIO|MTIOC|SIO|OSIO|SESIOC_|SIOC|PCIOC|PPPIOC|PPPOE|RIOC|RND|STRIOC|SCIOC|OSCIOC|TUN|VNDIOC|WSKBD|WSMOUSE|WSDISPLAY|WSMUX)[A-Z_0-9]*[ 	]*_IO/ {
 
 	# find where the name starts
 	for (i = 1; i <= NF; i++)
