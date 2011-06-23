@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.162 2011/06/17 07:06:47 mk Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.163 2011/06/23 22:03:43 oga Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -3227,7 +3227,7 @@ int
 uvideo_queryctrl(void *v, struct v4l2_queryctrl *qctrl)
 {
 	struct uvideo_softc *sc = v;
-	int i;
+	int i, ret = 0;
 	usbd_status error;
 	uint8_t *ctrl_data;
 	uint16_t ctrl_len;
@@ -3258,8 +3258,10 @@ uvideo_queryctrl(void *v, struct v4l2_queryctrl *qctrl)
 	error = uvideo_vc_get_ctrl(sc, ctrl_data, GET_MIN,
 	    sc->sc_desc_vc_pu_cur->bUnitID,
 	    uvideo_ctrls[i].ctrl_selector, uvideo_ctrls[i].ctrl_len);
-	if (error != USBD_NORMAL_COMPLETION)
-		return (EINVAL);
+	if (error != USBD_NORMAL_COMPLETION) {
+		ret = EINVAL;
+		goto out;
+	}
 	switch (ctrl_len) {
 	case 1:
 		qctrl->minimum = uvideo_ctrls[i].sig ?
@@ -3277,8 +3279,10 @@ uvideo_queryctrl(void *v, struct v4l2_queryctrl *qctrl)
 	error = uvideo_vc_get_ctrl(sc, ctrl_data, GET_MAX,
 	    sc->sc_desc_vc_pu_cur->bUnitID,
 	    uvideo_ctrls[i].ctrl_selector, uvideo_ctrls[i].ctrl_len);
-	if (error != USBD_NORMAL_COMPLETION)
-		return (EINVAL);
+	if (error != USBD_NORMAL_COMPLETION) {
+		ret = EINVAL;
+		goto out;
+	}
 	switch(ctrl_len) {
 	case 1:
 		qctrl->maximum = uvideo_ctrls[i].sig ?
@@ -3296,8 +3300,10 @@ uvideo_queryctrl(void *v, struct v4l2_queryctrl *qctrl)
 	error = uvideo_vc_get_ctrl(sc, ctrl_data, GET_RES,
 	    sc->sc_desc_vc_pu_cur->bUnitID,
 	    uvideo_ctrls[i].ctrl_selector, uvideo_ctrls[i].ctrl_len);
-	if (error != USBD_NORMAL_COMPLETION)
-		return (EINVAL);
+	if (error != USBD_NORMAL_COMPLETION) {
+		ret = EINVAL;
+		goto out;
+	}
 	switch(ctrl_len) {
 	case 1:
 		qctrl->step = uvideo_ctrls[i].sig ?
@@ -3315,8 +3321,10 @@ uvideo_queryctrl(void *v, struct v4l2_queryctrl *qctrl)
 	error = uvideo_vc_get_ctrl(sc, ctrl_data, GET_DEF,
 	    sc->sc_desc_vc_pu_cur->bUnitID,
 	    uvideo_ctrls[i].ctrl_selector, uvideo_ctrls[i].ctrl_len);
-	if (error != USBD_NORMAL_COMPLETION)
-		return (EINVAL);
+	if (error != USBD_NORMAL_COMPLETION) {
+		ret = EINVAL;
+		goto out;
+	}
 	switch(ctrl_len) {
 	case 1:
 		qctrl->default_value = uvideo_ctrls[i].sig ?
@@ -3333,16 +3341,17 @@ uvideo_queryctrl(void *v, struct v4l2_queryctrl *qctrl)
 	/* set flags */
 	qctrl->flags = 0;
 
+out:
 	free(ctrl_data, M_USBDEV);
 
-	return (0);
+	return (ret);
 }
 
 int
 uvideo_g_ctrl(void *v, struct v4l2_control *gctrl)
 {
 	struct uvideo_softc *sc = v;
-	int i;
+	int i, ret = 0;
 	usbd_status error;
 	uint8_t *ctrl_data;
 	uint16_t ctrl_len;
@@ -3366,8 +3375,10 @@ uvideo_g_ctrl(void *v, struct v4l2_control *gctrl)
 	error = uvideo_vc_get_ctrl(sc, ctrl_data, GET_CUR,
 	    sc->sc_desc_vc_pu_cur->bUnitID,
 	    uvideo_ctrls[i].ctrl_selector, uvideo_ctrls[i].ctrl_len);
-	if (error != USBD_NORMAL_COMPLETION)
-		return (EINVAL);
+	if (error != USBD_NORMAL_COMPLETION) {
+		ret = EINVAL;
+		goto out;
+	}
 	switch(ctrl_len) {
 	case 1:
 		gctrl->value = uvideo_ctrls[i].sig ?
@@ -3381,6 +3392,7 @@ uvideo_g_ctrl(void *v, struct v4l2_control *gctrl)
 		break;
 	}
 
+out:
 	free(ctrl_data, M_USBDEV);
 
 	return (0);
@@ -3390,7 +3402,7 @@ int
 uvideo_s_ctrl(void *v, struct v4l2_control *sctrl)
 {
 	struct uvideo_softc *sc = v;
-	int i;
+	int i, ret = 0;
 	usbd_status error;
 	uint8_t *ctrl_data;
 	uint16_t ctrl_len;
@@ -3426,11 +3438,11 @@ uvideo_s_ctrl(void *v, struct v4l2_control *sctrl)
 	    sc->sc_desc_vc_pu_cur->bUnitID,
 	    uvideo_ctrls[i].ctrl_selector, uvideo_ctrls[i].ctrl_len);
 	if (error != USBD_NORMAL_COMPLETION)
-		return (EINVAL);
+		ret = EINVAL;
 
 	free(ctrl_data, M_USBDEV);
 
-	return (0);
+	return (ret);
 }
 
 int

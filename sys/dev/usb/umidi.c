@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.29 2011/06/17 07:06:47 mk Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.30 2011/06/23 22:03:43 oga Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,7 +84,6 @@ static usbd_status bind_jacks_to_mididev(struct umidi_softc *,
 					 struct umidi_jack *,
 					 struct umidi_mididev *);
 static void unbind_jacks_from_mididev(struct umidi_mididev *);
-static void unbind_all_jacks(struct umidi_softc *);
 static usbd_status assign_all_jacks_automatically(struct umidi_softc *);
 static usbd_status open_out_jack(struct umidi_jack *, void *,
 				 void (*)(void *));
@@ -194,8 +193,7 @@ umidi_attach(struct device *parent, struct device *self, void *aux)
 	}
 	err = alloc_all_jacks(sc);
 	if (err!=USBD_NORMAL_COMPLETION) {
-		free_all_endpoints(sc);
-		goto error;
+		goto free_ends;
 	}
 	printf("%s: out=%d, in=%d\n",
 	       sc->sc_dev.dv_xname,
@@ -203,15 +201,12 @@ umidi_attach(struct device *parent, struct device *self, void *aux)
 
 	err = assign_all_jacks_automatically(sc);
 	if (err!=USBD_NORMAL_COMPLETION) {
-		unbind_all_jacks(sc);
-		free_all_jacks(sc);
-		free_all_endpoints(sc);
-		goto error;
+		goto free_jacks;
 	}
 	err = attach_all_mididevs(sc);
 	if (err!=USBD_NORMAL_COMPLETION) {
-		free_all_jacks(sc);
-		free_all_endpoints(sc);
+		/* XXX what about the mididevs that attached? */
+		goto free_mididevs;
 	}
 
 #ifdef UMIDI_DEBUG
@@ -223,6 +218,13 @@ umidi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	return;
+
+free_mididevs:
+	free_all_mididevs(sc);
+free_jacks:
+	free_all_jacks(sc);
+free_ends:
+	free_all_endpoints(sc);
 error:
 	printf("%s: disabled.\n", sc->sc_dev.dv_xname);
 	sc->sc_dying = 1;
@@ -408,7 +410,7 @@ alloc_all_endpoints(struct umidi_softc *sc)
 		err = alloc_all_endpoints_genuine(sc);
 	}
 	if (err!=USBD_NORMAL_COMPLETION)
-		return err;
+		free(sc->sc_endpoints, M_USBDEV);
 
 	ep = sc->sc_endpoints;
 	for (i=sc->sc_out_num_endpoints+sc->sc_in_num_endpoints; i>0; i--) {
@@ -842,17 +844,6 @@ unbind_jacks_from_mididev(struct umidi_mididev *mididev)
 	mididev->out_jack = mididev->in_jack = NULL;
 }
 
-static void
-unbind_all_jacks(struct umidi_softc *sc)
-{
-	int i;
-
-	if (sc->sc_mididevs)
-		for (i=0; i<sc->sc_num_mididevs; i++) {
-			unbind_jacks_from_mididev(&sc->sc_mididevs[i]);
-		}
-}
-
 static usbd_status
 assign_all_jacks_automatically(struct umidi_softc *sc)
 {
@@ -994,16 +985,21 @@ static usbd_status
 attach_all_mididevs(struct umidi_softc *sc)
 {
 	usbd_status err;
-	int i;
+	int i, j;
 
 	if (sc->sc_mididevs)
 		for (i=0; i<sc->sc_num_mididevs; i++) {
 			err = attach_mididev(sc, &sc->sc_mididevs[i]);
 			if (err!=USBD_NORMAL_COMPLETION)
-				return err;
+				goto detach;
 		}
 
 	return USBD_NORMAL_COMPLETION;
+detach:
+
+	for (j = 0; j < i; j++)
+		(void)detach_mididev(&sc->sc_mididevs[i], DETACH_QUIET);
+	return err;
 }
 
 static usbd_status
