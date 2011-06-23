@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.108 2011/05/30 22:25:24 oga Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.109 2011/06/23 21:50:26 oga Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -781,6 +781,81 @@ uvm_pagealloc_pg(struct vm_page *pg, struct uvm_object *obj, voff_t off,
 	pg->owner_tag = NULL;
 #endif
 	UVM_PAGE_OWN(pg, "new alloc");
+}
+
+/*
+ * uvm_pglistalloc: allocate a list of pages
+ *
+ * => allocated pages are placed at the tail of rlist.  rlist is
+ *    assumed to be properly initialized by caller.
+ * => returns 0 on success or errno on failure
+ * => doesn't take into account clean non-busy pages on inactive list
+ *	that could be used(?)
+ * => params:
+ *	size		the size of the allocation, rounded to page size.
+ *	low		the low address of the allowed allocation range.
+ *	high		the high address of the allowed allocation range.
+ *	alignment	memory must be aligned to this power-of-two boundary.
+ *	boundary	no segment in the allocation may cross this 
+ *			power-of-two boundary (relative to zero).
+ * => flags:
+ *	UVM_PLA_NOWAIT	fail if allocation fails
+ *	UVM_PLA_WAITOK	wait for memory to become avail
+ *	UVM_PLA_ZERO	return zeroed memory
+ */
+int
+uvm_pglistalloc(psize_t size, paddr_t low, paddr_t high, paddr_t alignment,
+    paddr_t boundary, struct pglist *rlist, int nsegs, int flags)
+{
+	UVMHIST_FUNC("uvm_pglistalloc"); UVMHIST_CALLED(pghist);
+
+	KASSERT((alignment & (alignment - 1)) == 0);
+	KASSERT((boundary & (boundary - 1)) == 0);
+	KASSERT(!(flags & UVM_PLA_WAITOK) ^ !(flags & UVM_PLA_NOWAIT));
+
+	if (size == 0)
+		return (EINVAL);
+
+	if ((high & PAGE_MASK) != PAGE_MASK) {
+		printf("uvm_pglistalloc: Upper boundary 0x%lx "
+		    "not on pagemask.\n", (unsigned long)high);
+	}
+
+	/*
+	 * Our allocations are always page granularity, so our alignment
+	 * must be, too.
+	 */
+	if (alignment < PAGE_SIZE)
+		alignment = PAGE_SIZE;
+
+	low = atop(roundup(low, alignment));
+	/*
+	 * high + 1 may result in overflow, in which case high becomes 0x0,
+	 * which is the 'don't care' value.
+	 * The only requirement in that case is that low is also 0x0, or the
+	 * low<high assert will fail.
+	 */
+	high = atop(high + 1);
+	size = atop(round_page(size));
+	alignment = atop(alignment);
+	if (boundary < PAGE_SIZE && boundary != 0)
+		boundary = PAGE_SIZE;
+	boundary = atop(boundary);
+
+	return uvm_pmr_getpages(size, low, high, alignment, boundary, nsegs,
+	    flags, rlist);
+}
+
+/*
+ * uvm_pglistfree: free a list of pages
+ *
+ * => pages should already be unmapped
+ */
+void
+uvm_pglistfree(struct pglist *list)
+{
+	UVMHIST_FUNC("uvm_pglistfree"); UVMHIST_CALLED(pghist);
+	uvm_pmr_freepageq(list);
 }
 
 /*
