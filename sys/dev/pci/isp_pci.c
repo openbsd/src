@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.56 2011/06/17 07:06:47 mk Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.57 2011/06/23 22:02:26 oga Exp $	*/
 /* $FreeBSD: src/sys/dev/isp/isp_pci.c,v 1.148 2007/06/26 23:08:57 mjacob Exp $*/
 /*-
  * Copyright (c) 1997-2006 by Matthew Jacob
@@ -1275,15 +1275,13 @@ isp_pci_mbxdma(struct ispsoftc *isp)
 		return (0);
 
 	len = isp->isp_maxcmds * sizeof (XS_T *);
-	isp->isp_xflist = malloc(len, M_DEVBUF,
-	    M_WAITOK | M_CANFAIL | M_ZERO);
+	isp->isp_xflist = malloc(len, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (isp->isp_xflist == NULL) {
 		isp_prt(isp, ISP_LOGERR, "cannot malloc xflist array");
 		return (1);
 	}
 	len = isp->isp_maxcmds * sizeof (bus_dmamap_t);
-	pcs->pci_xfer_dmap = (bus_dmamap_t *) malloc(len, M_DEVBUF,
-	    M_WAITOK | M_CANFAIL);
+	pcs->pci_xfer_dmap = (bus_dmamap_t *) malloc(len, M_DEVBUF, M_NOWAIT);
 	if (pcs->pci_xfer_dmap == NULL) {
 		free(isp->isp_xflist, M_DEVBUF);
 		isp->isp_xflist = NULL;
@@ -1320,18 +1318,20 @@ isp_pci_mbxdma(struct ispsoftc *isp)
 	}
 
 	if (bus_dmamem_alloc(dmat, len, PAGE_SIZE, 0, &sg, 1, &rs,
-			     BUS_DMA_NOWAIT) ||
-	    bus_dmamem_map(isp->isp_dmatag, &sg, rs, len,
-	    &base, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
+	    BUS_DMA_NOWAIT))
 		goto dmafail;
-	}
+
+	if (bus_dmamem_map(isp->isp_dmatag, &sg, rs, len, &base,
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT))
+		goto dmafree;
 
 	if (bus_dmamap_create(dmat, len, 1, len, 0, BUS_DMA_NOWAIT,
-	    &isp->isp_cdmap) || bus_dmamap_load(dmat, isp->isp_cdmap,
-	    base, len, NULL,
-	    BUS_DMA_NOWAIT)) {
-		goto dmafail;
-	}
+	    &isp->isp_cdmap))
+		goto dmaunmap;
+
+	if (bus_dmamap_load(dmat, isp->isp_cdmap, base, len, NULL,
+	    BUS_DMA_NOWAIT))
+		goto dmadestroy;
 
 	addr = isp->isp_cdmap->dm_segs[0].ds_addr;
 	isp->isp_rquest_dma = addr;
@@ -1353,6 +1353,12 @@ isp_pci_mbxdma(struct ispsoftc *isp)
 	}
 	return (0);
 
+dmadestroy:
+	bus_dmamap_destroy(dmat, isp->isp_cdmap);
+dmaunmap:
+	bus_dmamem_unmap(dmat, base, len);
+dmafree:
+	bus_dmamem_free(dmat, &sg, rs);
 dmafail:
 	isp_prt(isp, ISP_LOGERR, "mailbox dma setup failure");
 	for (i = 0; i < isp->isp_maxcmds; i++) {
