@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.114 2011/04/30 07:52:33 sthen Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.115 2011/06/23 20:35:22 sthen Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 30 2011 $
+.Dd $Mdocdate: June 23 2011 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -56,9 +56,13 @@ the sections should be grouped and appear in
 .Nm
 in the order shown above.
 .Pp
+The current line can be extended over multiple lines using a backslash
+.Pq Sq \e .
 Comments can be put anywhere in the file using a hash mark
 .Pq Sq # ,
 and extend to the end of the current line.
+Care should be taken when commenting out multi-line text:
+the comment is effective until the end of the entire block.
 .Pp
 Additional configuration files can be included with the
 .Ic include

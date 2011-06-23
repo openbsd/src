@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.494 2011/05/20 22:57:20 sthen Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.495 2011/06/23 20:35:22 sthen Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 20 2011 $
+.Dd $Mdocdate: June 23 2011 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -62,9 +62,14 @@ A method for detecting a host's operating system.
 Some example rulesets.
 .El
 .Pp
+The current line can be extended over multiple lines using a backslash
+.Pq Sq \e .
 Comments can be put anywhere in the file using a hash mark
 .Pq Sq # ,
 and extend to the end of the current line.
+Care should be taken when commenting out multi-line text:
+the comment is effective until the end of the entire block.
+.Pp
 Additional configuration files can be included with the
 .Ic include
 keyword, for example:

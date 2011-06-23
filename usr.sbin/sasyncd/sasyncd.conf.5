@@ -1,4 +1,4 @@
-.\" $OpenBSD: sasyncd.conf.5,v 1.17 2010/06/30 00:44:36 kjell Exp $
+.\" $OpenBSD: sasyncd.conf.5,v 1.18 2011/06/23 20:35:22 sthen Exp $
 .\"
 .\" Copyright (c) 2005 Håkan Olsson.  All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\"
 .\" Manual page for sasyncd.conf
 .\"
-.Dd $Mdocdate: June 30 2010 $
+.Dd $Mdocdate: June 23 2011 $
 .Dt SASYNCD.CONF 5
 .Os
 .Sh NAME
@@ -39,9 +39,13 @@ is the configuration file for the
 .Xr sasyncd 8
 daemon.
 .Pp
+The current line can be extended over multiple lines using a backslash
+.Pq Sq \e .
 Comments can be put anywhere in the file using a hash mark
 .Pq Sq # ,
-and extends to the end of the current line.
+and extend to the end of the current line.
+Care should be taken when commenting out multi-line text:
+the comment is effective until the end of the entire block.
 .Pp
 Since the file contains the shared secret key used to encrypt data
 between this host and the others,

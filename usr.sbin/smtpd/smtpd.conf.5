@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.43 2011/06/10 11:30:35 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.44 2011/06/23 20:35:22 sthen Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: June 10 2011 $
+.Dd $Mdocdate: June 23 2011 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -27,9 +27,14 @@
 is the configuration file for the mail daemon
 .Xr smtpd 8 .
 .Pp
+The current line can be extended over multiple lines using a backslash
+.Pq Sq \e .
 Comments can be put anywhere in the file using a hash mark
-.Pq # ,
+.Pq Sq # ,
 and extend to the end of the current line.
+Care should be taken when commenting out multi-line text:
+the comment is effective until the end of the entire block.
+.Pp
 Arguments containing whitespace should be surrounded by double quotes
 .Pq \&" .
 .Pp

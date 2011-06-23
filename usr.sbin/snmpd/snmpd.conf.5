@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.15 2011/04/21 17:31:12 jmc Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.16 2011/06/23 20:35:22 sthen Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 21 2011 $
+.Dd $Mdocdate: June 23 2011 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -40,9 +40,13 @@ Global runtime settings for
 Custom configuration of SNMP object identifiers and values.
 .El
 .Pp
+The current line can be extended over multiple lines using a backslash
+.Pq Sq \e .
 Comments can be put anywhere in the file using a hash mark
 .Pq Sq # ,
 and extend to the end of the current line.
+Care should be taken when commenting out multi-line text:
+the comment is effective until the end of the entire block.
 .Pp
 Additional configuration files can be included with the
 .Ic include

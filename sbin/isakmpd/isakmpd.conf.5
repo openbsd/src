@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.127 2010/09/22 13:45:16 mikeb Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.128 2011/06/23 20:35:22 sthen Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -28,7 +28,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: September 22 2010 $
+.Dd $Mdocdate: June 23 2011 $
 .Dt ISAKMPD.CONF 5
 .Os
 .Sh NAME
@@ -53,14 +53,13 @@ Inside a section many tag/value pairs can be stored, each one looking like:
 .Bd -unfilled
 .Ar Tag Ns = Ns Ar Value
 .Ed
-If the value needs more space than fits on a single line, it's possible to
-continue it on the next by ending the first with a backslash character
-immediately before the newline character.
-This method can extend a value for an arbitrary number of lines.
-.Pp
-Comments can be put anywhere in the file by using a hash mark
-.Pq Sq \&# .
-The comment extends to the end of the current line.
+The current line can be extended over multiple lines using a backslash
+.Pq Sq \e .
+Comments can be put anywhere in the file using a hash mark
+.Pq Sq # ,
+and extend to the end of the current line.
+Care should be taken when commenting out multi-line text:
+the comment remains in effect until the end of the entire current line.
 .Pp
 Often the right-hand side values consist of other section names.
 This results in a tree structure.
