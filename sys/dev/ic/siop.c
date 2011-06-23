@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.64 2011/04/05 22:37:39 dlg Exp $ */
+/*	$OpenBSD: siop.c,v 1.65 2011/06/23 16:31:16 deraadt Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -2212,7 +2212,7 @@ siop_scsifree(struct scsi_link *link)
 
 #ifdef SIOP_STATS
 void
-siop_printstats()
+siop_printstats(void)
 {
 	printf("siop_stat_intr %d\n", siop_stat_intr);
 	printf("siop_stat_intr_shortxfer %d\n", siop_stat_intr_shortxfer);

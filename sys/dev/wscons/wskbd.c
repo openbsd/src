@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.67 2011/06/06 06:13:46 deraadt Exp $ */
+/* $OpenBSD: wskbd.c,v 1.68 2011/06/23 16:31:16 deraadt Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -478,7 +478,7 @@ wskbd_cnattach(const struct wskbd_consops *consops, void *conscookie,
 }
 
 void    
-wskbd_cndetach()
+wskbd_cndetach(void)
 {
 	KASSERT(wskbd_console_initted);
 
@@ -1138,7 +1138,7 @@ wskbdpoll(dev_t dev, int events, struct proc *p)
 #if NWSDISPLAY > 0
 
 int
-wskbd_pickfree()
+wskbd_pickfree(void)
 {
 	int i;
 	struct wskbd_softc *sc;

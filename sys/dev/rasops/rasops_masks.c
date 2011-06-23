@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops_masks.c,v 1.4 2008/06/26 05:42:18 ray Exp $	*/
+/*	$OpenBSD: rasops_masks.c,v 1.5 2011/06/23 16:31:16 deraadt Exp $	*/
 /*	$NetBSD: rasops_masks.c,v 1.5 2000/06/13 13:37:00 ad Exp $	*/
 
 /*-
@@ -358,7 +358,7 @@ int32_t rasops_pmask[32][32] = {
 
 #if BYTE_ORDER != BIG_ENDIAN
 void
-rasops_masks_init()
+rasops_masks_init(void)
 {
 	static int flipped = 0;
 	u_int i;

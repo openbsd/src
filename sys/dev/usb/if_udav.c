@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.55 2011/03/31 17:06:25 mk Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.56 2011/06/23 16:31:16 deraadt Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -1191,12 +1191,6 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	DPRINTF(("%s: %s: start rx\n", sc->sc_dev.dv_xname, __func__));
 }
-
-#if 0
-void udav_intr()
-{
-}
-#endif
 
 int
 udav_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
