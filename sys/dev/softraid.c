@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.231 2011/06/20 09:16:05 matthew Exp $ */
+/* $OpenBSD: softraid.c,v 1.232 2011/06/23 17:20:16 matthew Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -87,7 +87,8 @@ struct cfdriver softraid_cd = {
 
 /* scsi & discipline */
 void			sr_scsi_cmd(struct scsi_xfer *);
-void			sr_minphys(struct buf *bp, struct scsi_link *sl);
+void			sr_minphys(struct buf *, struct scsi_link *);
+int			sr_scsi_probe(struct scsi_link *);
 void			sr_copy_internal_data(struct scsi_xfer *,
 			    void *, size_t);
 int			sr_scsi_ioctl(struct scsi_link *, u_long,
@@ -167,7 +168,7 @@ extern void		(*softraid_disk_attach)(struct disk *, int);
 
 /* scsi glue */
 struct scsi_adapter sr_switch = {
-	sr_scsi_cmd, sr_minphys, NULL, NULL, sr_scsi_ioctl
+	sr_scsi_cmd, sr_minphys, sr_scsi_probe, NULL, sr_scsi_ioctl
 };
 
 /* native metadata format */
@@ -1632,6 +1633,7 @@ void
 sr_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sr_softc		*sc = (void *)self;
+	struct scsibus_attach_args saa;
 
 	DNPRINTF(SR_D_MISC, "\n%s: sr_attach", DEVNAME(sc));
 
@@ -1655,6 +1657,18 @@ sr_attach(struct device *parent, struct device *self, void *aux)
 #endif /* SMALL_KERNEL */
 
 	printf("\n");
+
+	sc->sc_link.adapter_softc = sc;
+	sc->sc_link.adapter = &sr_switch;
+	sc->sc_link.adapter_target = SR_MAX_LD;
+	sc->sc_link.adapter_buswidth = SR_MAX_LD;
+	sc->sc_link.luns = 1;
+
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = &sc->sc_link;
+
+	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,
+	    &saa, scsiprint);
 
 	softraid_disk_attach = sr_disk_attach;
 
@@ -1910,19 +1924,10 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 	DNPRINTF(SR_D_CMD, "%s: sr_scsi_cmd: scsibus%d xs: %p "
 	    "flags: %#x\n", DEVNAME(sc), link->scsibus, xs, xs->flags);
 
-	sd = sc->sc_dis[link->scsibus];
+	sd = sc->sc_dis[link->target];
 	if (sd == NULL) {
-		s = splhigh();
-		sd = sc->sc_attach_dis;
-		splx(s);
-
-		DNPRINTF(SR_D_CMD, "%s: sr_scsi_cmd: attaching %p\n",
-		    DEVNAME(sc), sd);
-		if (sd == NULL) {
-			printf("%s: sr_scsi_cmd NULL discipline\n",
-			    DEVNAME(sc));
-			goto stuffup;
-		}
+		printf("%s: sr_scsi_cmd NULL discipline\n", DEVNAME(sc));
+		goto stuffup;
 	}
 
 	if (sd->sd_deleted) {
@@ -1947,19 +1952,6 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 	wu->swu_state = SR_WU_INPROGRESS;
 	wu->swu_dis = sd;
 	wu->swu_xs = xs;
-
-	/* the midlayer will query LUNs so report sense to stop scanning */
-	if (link->target != 0 || link->lun != 0) {
-		DNPRINTF(SR_D_CMD, "%s: bad target:lun %d:%d\n",
-		    DEVNAME(sc), link->target, link->lun);
-		sd->sd_scsi_sense.error_code = SSD_ERRCODE_CURRENT |
-		    SSD_ERRCODE_VALID;
-		sd->sd_scsi_sense.flags = SKEY_ILLEGAL_REQUEST;
-		sd->sd_scsi_sense.add_sense_code = 0x25;
-		sd->sd_scsi_sense.add_sense_code_qual = 0x00;
-		sd->sd_scsi_sense.extra_len = 4;
-		goto stuffup;
-	}
 
 	switch (xs->cmd->opcode) {
 	case READ_COMMAND:
@@ -2036,6 +2028,28 @@ stuffup:
 complete:
 	sr_scsi_done(sd, xs);
 }
+
+int
+sr_scsi_probe(struct scsi_link *link)
+{
+	struct sr_softc		*sc = link->adapter_softc;
+	struct sr_discipline	*sd;
+
+	KASSERT(link->target < SR_MAX_LD && link->lun == 0);
+
+	sd = sc->sc_dis[link->target];
+	if (sd == NULL)
+		return (ENODEV);
+
+	link->pool = &sd->sd_iopool;
+	if (sd->sd_openings)
+		link->openings = sd->sd_openings(sd);
+	else
+		link->openings = sd->sd_max_wu;
+
+	return (0);
+}
+
 int
 sr_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 {
@@ -2124,7 +2138,7 @@ sr_ioctl_inq(struct sr_softc *sc, struct bioc_inq *bi)
 {
 	int			i, vol, disk;
 
-	for (i = 0, vol = 0, disk = 0; i < SR_MAXSCSIBUS; i++)
+	for (i = 0, vol = 0, disk = 0; i < SR_MAX_LD; i++)
 		/* XXX this will not work when we stagger disciplines */
 		if (sc->sc_dis[i]) {
 			vol++;
@@ -2146,7 +2160,7 @@ sr_ioctl_vol(struct sr_softc *sc, struct bioc_vol *bv)
 	struct sr_chunk		*hotspare;
 	daddr64_t		rb, sz;
 
-	for (i = 0, vol = -1; i < SR_MAXSCSIBUS; i++) {
+	for (i = 0, vol = -1; i < SR_MAX_LD; i++) {
 		/* XXX this will not work when we stagger disciplines */
 		if (sc->sc_dis[i])
 			vol++;
@@ -2213,7 +2227,7 @@ sr_ioctl_disk(struct sr_softc *sc, struct bioc_disk *bd)
 	int			i, vol, rv = EINVAL, id;
 	struct sr_chunk		*src, *hotspare;
 
-	for (i = 0, vol = -1; i < SR_MAXSCSIBUS; i++) {
+	for (i = 0, vol = -1; i < SR_MAX_LD; i++) {
 		/* XXX this will not work when we stagger disciplines */
 		if (sc->sc_dis[i])
 			vol++;
@@ -2286,7 +2300,7 @@ sr_ioctl_setstate(struct sr_softc *sc, struct bioc_setstate *bs)
 		goto done;
 	}
 
-	for (i = 0, vol = -1; i < SR_MAXSCSIBUS; i++) {
+	for (i = 0, vol = -1; i < SR_MAX_LD; i++) {
 		/* XXX this will not work when we stagger disciplines */
 		if (sc->sc_dis[i])
 			vol++;
@@ -2350,7 +2364,7 @@ sr_chunk_in_use(struct sr_softc *sc, dev_t dev)
 	int			i, c;
 
 	/* See if chunk is already in use. */
-	for (i = 0; i < SR_MAXSCSIBUS; i++) {
+	for (i = 0; i < SR_MAX_LD; i++) {
 		if (sc->sc_dis[i] == NULL)
 			continue;
 		sd = sc->sc_dis[i];
@@ -2825,13 +2839,13 @@ int
 sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 {
 	dev_t			*dt;
-	int			i, s, no_chunk, rv = EINVAL, vol;
+	int			i, no_chunk, rv = EINVAL, target, vol;
 	int			no_meta, updatemeta = 0;
 	struct sr_chunk_head	*cl;
 	struct sr_discipline	*sd = NULL;
 	struct sr_chunk		*ch_entry;
-	struct device		*dev, *dev2;
-	struct scsibus_attach_args saa;
+	struct scsi_link	*link;
+	struct device		*dev;
 	char			devname[32];
 
 	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_createraid(%d)\n",
@@ -3024,52 +3038,52 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			goto unwind;
 		}
 
-		/* setup scsi midlayer */
+		/* setup scsi iopool */
 		mtx_init(&sd->sd_wu_mtx, IPL_BIO);
 		scsi_iopool_init(&sd->sd_iopool, sd, sr_wu_get, sr_wu_put);
-		if (sd->sd_openings)
-			sd->sd_link.openings = sd->sd_openings(sd);
-		else
-			sd->sd_link.openings = sd->sd_max_wu;
-		sd->sd_link.device_softc = sc;
-		sd->sd_link.adapter_softc = sc;
-		sd->sd_link.adapter = &sr_switch;
-		sd->sd_link.adapter_target = SR_MAX_LD;
-		sd->sd_link.adapter_buswidth = 1;
-		sd->sd_link.pool = &sd->sd_iopool;
-		bzero(&saa, sizeof(saa));
-		saa.saa_sc_link = &sd->sd_link;
 
 		/*
 		 * we passed all checks return ENXIO if volume can't be created
 		 */
 		rv = ENXIO;
 
+		/*
+		 * Find a free target.
+		 *
+		 * XXX: We reserve sd_target == 0 to indicate the
+		 * discipline is not linked into sc->sc_dis, so begin
+		 * the search with target = 1.
+		 */
+		for (target = 1; target < SR_MAX_LD; target++)
+			if (sc->sc_dis[target] == NULL)
+				break;
+		if (target == SR_MAX_LD) {
+			printf("%s: no free target for %s\n", DEVNAME(sc),
+			    sd->sd_meta->ssd_devname);
+			goto unwind;
+		}
+
 		/* clear sense data */
 		bzero(&sd->sd_scsi_sense, sizeof(sd->sd_scsi_sense));
 
-		/* use temporary discipline pointer */
-		s = splhigh();
-		sc->sc_attach_dis = sd;
-		splx(s);
-		dev2 = config_found(&sc->sc_dev, &saa, scsiprint);
-		s = splhigh();
-		sc->sc_attach_dis = NULL;
-		splx(s);
-		TAILQ_FOREACH(dev, &alldevs, dv_list)
-			if (dev->dv_parent == dev2)
-				break;
-		if (dev == NULL)
+		/* attach disclipline and kick midlayer to probe it */
+		sd->sd_target = target;
+		sc->sc_dis[target] = sd;
+		if (scsi_probe_lun(sc->sc_scsibus, target, 0) != 0) {
+			printf("%s: scsi_probe_lun failed\n", DEVNAME(sc));
+			sc->sc_dis[target] = NULL;
+			sd->sd_target = 0;
 			goto unwind;
+		}
 
+		link = scsi_get_link(sc->sc_scsibus, target, 0);
+		dev = link->device_softc;
 		DNPRINTF(SR_D_IOCTL, "%s: sr device added: %s on scsibus%d\n",
 		    DEVNAME(sc), dev->dv_xname, sd->sd_link.scsibus);
 
-		sc->sc_dis[sd->sd_link.scsibus] = sd;
-		for (i = 0, vol = -1; i <= sd->sd_link.scsibus; i++)
+		for (i = 0, vol = -1; i <= sd->sd_target; i++)
 			if (sc->sc_dis[i])
 				vol++;
-		sd->sd_scsibus_dev = dev2;
 
 		rv = 0;
 		if (updatemeta) {
@@ -3145,7 +3159,7 @@ sr_ioctl_deleteraid(struct sr_softc *sc, struct bioc_deleteraid *dr)
 	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_deleteraid %s\n", DEVNAME(sc),
 	    dr->bd_dev);
 
-	for (i = 0; i < SR_MAXSCSIBUS; i++)
+	for (i = 0; i < SR_MAX_LD; i++)
 		if (sc->sc_dis[i]) {
 			if (!strncmp(sc->sc_dis[i]->sd_meta->ssd_devname,
 			    dr->bd_dev,
@@ -3178,7 +3192,7 @@ sr_ioctl_discipline(struct sr_softc *sc, struct bioc_discipline *bd)
 	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_discipline %s\n", DEVNAME(sc),
 	    bd->bd_dev);
 
-	for (i = 0; i < SR_MAXSCSIBUS; i++)
+	for (i = 0; i < SR_MAX_LD; i++)
 		if (sc->sc_dis[i]) {
 			if (!strncmp(sc->sc_dis[i]->sd_meta->ssd_devname,
 			    bd->bd_dev,
@@ -3207,7 +3221,7 @@ sr_ioctl_installboot(struct sr_softc *sc, struct bioc_installboot *bb)
 	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_installboot %s\n", DEVNAME(sc),
 	    bb->bb_dev);
 
-	for (i = 0; i < SR_MAXSCSIBUS; i++)
+	for (i = 0; i < SR_MAX_LD; i++)
 		if (sc->sc_dis[i]) {
 			if (!strncmp(sc->sc_dis[i]->sd_meta->ssd_devname,
 			    bb->bb_dev,
@@ -3338,7 +3352,6 @@ sr_discipline_free(struct sr_discipline *sd)
 	struct sr_softc		*sc;
 	struct sr_meta_opt_head *omh;
 	struct sr_meta_opt_item	*omi, *omi_next;
-	int			i;
 
 	if (!sd)
 		return;
@@ -3363,11 +3376,10 @@ sr_discipline_free(struct sr_discipline *sd)
 		free(omi, M_DEVBUF);
 	}
 
-	for (i = 0; i < SR_MAXSCSIBUS; i++)
-		if (sc->sc_dis[i] == sd) {
-			sc->sc_dis[i] = NULL;
-			break;
-		}
+	if (sd->sd_target != 0) {
+		KASSERT(sc->sc_dis[sd->sd_target] == sd);
+		sc->sc_dis[sd->sd_target] = NULL;
+	}
 
 	explicit_bzero(sd, sizeof *sd);
 	free(sd, M_DEVBUF);
@@ -3403,8 +3415,8 @@ sr_discipline_shutdown(struct sr_discipline *sd)
 	sr_sensors_delete(sd);
 #endif /* SMALL_KERNEL */
 
-	if (sd->sd_scsibus_dev)
-		config_detach(sd->sd_scsibus_dev, DETACH_FORCE);
+	if (sd->sd_target != 0)
+		scsi_detach_lun(sc->sc_scsibus, sd->sd_target, 0, DETACH_FORCE);
 
 	sr_chunks_unwind(sc, &sd->sd_vol.sv_chunk_list);
 
@@ -3722,7 +3734,7 @@ sr_already_assembled(struct sr_discipline *sd)
 	struct sr_softc		*sc = sd->sd_sc;
 	int			i;
 
-	for (i = 0; i < SR_MAXSCSIBUS; i++)
+	for (i = 0; i < SR_MAX_LD; i++)
 		if (sc->sc_dis[i])
 			if (!bcmp(&sd->sd_meta->ssdi.ssd_uuid,
 			    &sc->sc_dis[i]->sd_meta->ssdi.ssd_uuid,
@@ -4095,7 +4107,7 @@ sr_sensors_refresh(void *arg)
 
 	DNPRINTF(SR_D_STATE, "%s: sr_sensors_refresh\n", DEVNAME(sc));
 
-	for (i = 0, vol = -1; i < SR_MAXSCSIBUS; i++) {
+	for (i = 0, vol = -1; i < SR_MAX_LD; i++) {
 		/* XXX this will not work when we stagger disciplines */
 		if (!sc->sc_dis[i])
 			continue;
@@ -4150,7 +4162,7 @@ sr_print_stats(void)
 		return;
 	}
 
-	for (i = 0, vol = -1; i < SR_MAXSCSIBUS; i++) {
+	for (i = 0, vol = -1; i < SR_MAX_LD; i++) {
 		/* XXX this will not work when we stagger disciplines */
 		if (!sc->sc_dis[i])
 			continue;

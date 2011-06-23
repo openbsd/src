@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.99 2011/04/05 19:52:02 krw Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.100 2011/06/23 17:20:16 matthew Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -274,7 +274,7 @@ extern u_int32_t		sr_debug;
 #endif
 
 #define	SR_MAXFER		MAXPHYS
-#define	SR_MAX_LD		1
+#define	SR_MAX_LD		256
 #define	SR_MAX_CMDS		16
 #define	SR_MAX_STATES		7
 #define SR_VM_IGNORE_DIRTY	1
@@ -470,8 +470,7 @@ struct sr_discipline {
 #define	SR_MD_RAID4		7
 #define	SR_MD_RAID6		8
 	char			sd_name[10];	/* human readable dis name */
-	u_int8_t		sd_scsibus;	/* scsibus discipline uses */
-	struct scsi_link	sd_link;	/* link to midlayer */
+	u_int16_t		sd_target;	/* scsibus target discipline uses */
 
 	u_int32_t		sd_capabilities;
 #define SR_CAP_SYSTEM_DISK	0x00000001
@@ -578,18 +577,14 @@ struct sr_softc {
 	struct ksensordev	sc_sensordev;
 	int			sc_sensors_running;
 
-	/*
-	 * during scsibus attach this is the discipline that is in use
-	 * this variable is protected by sc_lock and splhigh
-	 */
-	struct sr_discipline	*sc_attach_dis;
+	struct scsi_link	sc_link;	/* scsi prototype link */
+	struct scsibus_softc	*sc_scsibus;
 
 	/*
 	 * XXX expensive, alternative would be nice but has to be cheap
-	 * since the scsibus lookup happens on each IO
+	 * since the target lookup happens on each IO
 	 */
-#define SR_MAXSCSIBUS		256
-	struct sr_discipline	*sc_dis[SR_MAXSCSIBUS]; /* scsibus is u_int8_t */
+	struct sr_discipline	*sc_dis[SR_MAX_LD];
 };
 
 /* hotplug */
