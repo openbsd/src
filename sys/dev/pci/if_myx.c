@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.26 2011/06/22 21:04:31 deraadt Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.27 2011/06/23 03:36:06 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -146,8 +146,6 @@ struct myx_softc {
 	u_int			 sc_hwflags;
 #define  MYXFLAG_FLOW_CONTROL	 (1<<0)		/* Rx/Tx pause is enabled */
 	volatile u_int8_t	 sc_linkdown;
-
-	struct timeout		 sc_tick;
 };
 
 int	 myx_match(struct device *, void *, void *);
@@ -172,7 +170,6 @@ int	 myx_media_change(struct ifnet *);
 void	 myx_media_status(struct ifnet *, struct ifmediareq *);
 void	 myx_link_state(struct myx_softc *);
 void	 myx_watchdog(struct ifnet *);
-void	 myx_tick(void *);
 int	 myx_ioctl(struct ifnet *, u_long, caddr_t);
 void	 myx_up(struct myx_softc *);
 void	 myx_iff(struct myx_softc *);
@@ -473,8 +470,6 @@ myx_attachhook(void *arg)
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-	timeout_set(&sc->sc_tick, myx_tick, sc);
 
 	return;
 
@@ -813,19 +808,20 @@ myx_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	struct myx_softc	*sc = (struct myx_softc *)ifp->if_softc;
 
 	imr->ifm_active = IFM_ETHER | IFM_AUTO;
-	imr->ifm_status = IFM_AVALID;
+	if (!ISSET(ifp->if_flags, IFF_RUNNING)) {
+		imr->ifm_status = 0;
+		return;
+	}
 
 	myx_link_state(sc);
 
+	imr->ifm_status = IFM_AVALID;
 	if (!LINK_STATE_IS_UP(ifp->if_link_state))
 		return;
 
-	imr->ifm_active |= IFM_FDX;
+	imr->ifm_active |= IFM_FDX | IFM_FLOW |
+	    IFM_ETH_RXPAUSE | IFM_ETH_TXPAUSE;
 	imr->ifm_status |= IFM_ACTIVE;
-
-	/* Flow control */
-	if (sc->sc_hwflags & MYXFLAG_FLOW_CONTROL)
-		imr->ifm_active |= IFM_FLOW | IFM_ETH_RXPAUSE | IFM_ETH_TXPAUSE;
 }
 
 void
@@ -833,9 +829,6 @@ myx_link_state(struct myx_softc *sc)
 {
 	struct ifnet		*ifp = &sc->sc_ac.ac_if;
 	int			 link_state = LINK_STATE_DOWN;
-
-	if (!ISSET(ifp->if_flags, IFF_RUNNING))
-		return;
 
 	if (betoh32(sc->sc_sts->ms_linkstate) == MYXSTS_LINKUP)
 		link_state = LINK_STATE_FULL_DUPLEX;
@@ -851,19 +844,6 @@ void
 myx_watchdog(struct ifnet *ifp)
 {
 	return;
-}
-
-void
-myx_tick(void *arg)
-{
-	struct myx_softc	*sc = (struct myx_softc *)arg;
-	struct ifnet		*ifp = &sc->sc_ac.ac_if;
-
-	if (!ISSET(ifp->if_flags, IFF_RUNNING))
-		return;
-
-	myx_link_state(sc);
-	timeout_add_sec(&sc->sc_tick, 1);
 }
 
 int
@@ -1319,6 +1299,12 @@ myx_down(struct myx_softc *sc)
 	}
 
 	CLR(ifp->if_flags, IFF_RUNNING);
+
+	if (ifp->if_link_state != LINK_STATE_UNKNOWN) {
+		ifp->if_link_state = LINK_STATE_UNKNOWN;
+		ifp->if_baudrate = 0;
+		if_link_state_change(ifp);
+	}
 	splx(s);
 
 	bzero(&mc, sizeof(mc));
