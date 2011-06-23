@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.98 2011/06/06 17:10:23 ariane Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.99 2011/06/23 21:42:05 ariane Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -616,6 +616,7 @@ extern const struct kmem_va_mode kv_page;
 extern const struct kmem_pa_mode kp_dirty;
 extern const struct kmem_pa_mode kp_zero;
 extern const struct kmem_pa_mode kp_dma;
+extern const struct kmem_pa_mode kp_dma_contig;
 extern const struct kmem_pa_mode kp_dma_zero;
 extern const struct kmem_pa_mode kp_pageable;
 extern const struct kmem_pa_mode kp_none;

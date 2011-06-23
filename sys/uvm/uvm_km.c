@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.103 2011/06/06 17:10:23 ariane Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.104 2011/06/23 21:42:05 ariane Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -847,6 +847,7 @@ km_alloc(size_t sz, const struct kmem_va_mode *kv,
 	int mapflags = 0;
 	vm_prot_t prot;
 	int pla_flags;
+	int pla_maxseg;
 #ifdef __HAVE_PMAP_DIRECT
 	paddr_t pa;
 #endif
@@ -864,9 +865,13 @@ km_alloc(size_t sz, const struct kmem_va_mode *kv,
 	if (kp->kp_zero)
 		pla_flags |= UVM_PLA_ZERO;
 
+	pla_maxseg = kp->kp_maxseg;
+	if (pla_maxseg == 0)
+		pla_maxseg = sz / PAGE_SIZE;
+
 	if (uvm_pglistalloc(sz, kp->kp_constraint->ucr_low,
 	    kp->kp_constraint->ucr_high, kp->kp_align, kp->kp_boundary,
-	    &pgl, sz / PAGE_SIZE, pla_flags)) {	
+	    &pgl, pla_maxseg, pla_flags)) {	
 		return (NULL);
 	}
 
@@ -1053,6 +1058,11 @@ const struct kmem_pa_mode kp_dirty = {
 
 const struct kmem_pa_mode kp_dma = {
 	.kp_constraint = &dma_constraint
+};
+
+const struct kmem_pa_mode kp_dma_contig = {
+	.kp_constraint = &dma_constraint,
+	.kp_maxseg = 1
 };
 
 const struct kmem_pa_mode kp_dma_zero = {
