@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380sbc.c,v 1.27 2011/06/21 16:52:45 tedu Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.28 2011/06/23 22:59:13 deraadt Exp $	*/
 /*	$NetBSD: ncr5380sbc.c,v 1.13 1996/10/13 01:37:25 christos Exp $	*/
 
 /*
@@ -2493,14 +2493,14 @@ ncr5380_trace(msg, val)
 
 #ifdef	DDB
 void
-ncr5380_clear_trace()
+ncr5380_clear_trace(void)
 {
 	ncr5380_traceidx = 0;
 	bzero(ncr5380_tracebuf, sizeof(ncr5380_tracebuf));
 }
 
 void
-ncr5380_show_trace()
+ncr5380_show_trace(void)
 {
 	struct trace_ent *tr;
 	int idx;
@@ -2543,7 +2543,7 @@ ncr5380_show_req(sr)
 }
 
 void
-ncr5380_show_state()
+ncr5380_show_state(void)
 {
 	struct ncr5380_softc *sc;
 	struct sci_req *sr;
