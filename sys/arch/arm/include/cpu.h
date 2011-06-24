@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.26 2010/11/28 20:44:20 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.27 2011/06/24 19:47:48 naddy Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
 #define	CPU_POWERSAVE		5	/* int: use CPU powersave mode */
 #define	CPU_ALLOWAPERTURE	6	/* int: allow mmap of /dev/xf86 */
 #define CPU_APMWARN		7	/* APM battery warning percentage */
-#define CPU_KBDRESET		8	/* int: console keyboard reset */
+		/*		8	   formerly int: keyboard reset */
 		/*		9	   formerly int: CPU_ZTSRAWMODE */
 		/*		10	   formerly struct: CPU_ZTSSCALE */
 #define	CPU_MAXSPEED		11	/* int: number of valid machdep ids */
@@ -77,7 +77,7 @@
 	{ "powersave", CTLTYPE_INT }, \
 	{ "allowaperture", CTLTYPE_INT }, \
 	{ "apmwarn", CTLTYPE_INT }, \
-	{ "kbdreset", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ "maxspeed", CTLTYPE_INT }, \

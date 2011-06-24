@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.24 2011/05/30 22:25:21 oga Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.25 2011/06/24 19:47:48 naddy Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -110,7 +110,6 @@ __dead void main(void);
 void	cpu_init_kcore_hdr(void);
 void	blink_led(void *);
 
-int	kbd_reset;
 int	led_blink;
 
 extern u_int32_t getramsize(void);
@@ -472,11 +471,6 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 		    sizeof consdev));
 	}
-
-	case CPU_KBDRESET:
-		if (securelevel > 0)
-			return (sysctl_rdint(oldp, oldlenp, newp, kbd_reset));
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &kbd_reset));
 
 	case CPU_LED_BLINK:
 		oldval = led_blink;

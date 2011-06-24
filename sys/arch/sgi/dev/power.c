@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.13 2009/11/25 11:23:29 miod Exp $	*/
+/*	$OpenBSD: power.c,v 1.14 2011/06/24 19:47:49 naddy Exp $	*/
 
 /*
  * Copyright (c) 2007 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -126,7 +126,7 @@ power_mainbus_intr(void *v)
 int
 power_intr(void *unused)
 {
-	extern int kbd_reset;
+	extern int allowpowerdown;
 	int val;
 
 	/* 
@@ -140,8 +140,8 @@ power_intr(void *unused)
 	/* debounce condition */
 	dsrtc_register_write(DS1687_EXT_CTRL, val & ~DS1687_KICKSTART);
 
-	if (kbd_reset == 1) {
-		kbd_reset = 0;
+	if (allowpowerdown == 1) {
+		allowpowerdown = 0;
 		psignal(initproc, SIGUSR2);
 	}
 

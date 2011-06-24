@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.5 2007/04/24 18:30:45 kettenis Exp $	*/
+/*	$OpenBSD: power.c,v 1.6 2011/06/24 19:47:49 naddy Exp $	*/
 
 /*
  * Copyright (c) 2006 Jason L. Wright (jason@thought.net)
@@ -132,10 +132,10 @@ power_attach(parent, self, aux)
 int
 power_intr(void *vsc)
 {
-	extern int kbd_reset;
+	extern int allowpowerdown;
 
-	if (kbd_reset == 1) {
-		kbd_reset = 0;
+	if (allowpowerdown == 1) {
+		allowpowerdown = 0;
 		psignal(initproc, SIGUSR2);
 	}
 	return (1);

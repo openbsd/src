@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.203 2011/06/09 21:10:55 sthen Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.204 2011/06/24 19:47:49 naddy Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -611,6 +611,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
  * hardware related system variables.
  */
 char *hw_vendor, *hw_prod, *hw_uuid, *hw_serial, *hw_ver;
+int allowpowerdown = 1;
 
 int
 hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
@@ -716,6 +717,12 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case HW_USERMEM64:
 		return (sysctl_rdquad(oldp, oldlenp, newp,
 		    ptoa((psize_t)physmem - uvmexp.wired)));
+	case HW_ALLOWPOWERDOWN:
+		if (securelevel > 0)
+			return (sysctl_rdint(oldp, oldlenp, newp,
+			    allowpowerdown));
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &allowpowerdown));
 	default:
 		return (EOPNOTSUPP);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.71 2011/03/31 20:37:44 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.72 2011/06/24 19:47:48 naddy Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -504,13 +504,13 @@ void cpu_startclock(struct cpu_info *);
  * CTL_MACHDEP definitions.
  */
 #define	CPU_ALLOWAPERTURE	1	/* allow mmap of /dev/xf86 */
-#define	CPU_KBDRESET		2	/* keyboard reset */
+		/*		2	   formerly: keyboard reset */
 #define	CPU_MAXID		3	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES {			\
 	{ 0, 0 },				\
 	{ "allowaperture", CTLTYPE_INT },	\
-	{ "kbdreset", CTLTYPE_INT },		\
+	{ 0, 0 },				\
 }
 
 /*

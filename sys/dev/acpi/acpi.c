@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.225 2011/06/16 23:02:11 pirofti Exp $ */
+/* $OpenBSD: acpi.c,v 1.226 2011/06/24 19:47:49 naddy Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1452,8 +1452,12 @@ acpi_sbtn_task(void *arg0, int dummy)
 void
 acpi_powerdown_task(void *arg0, int dummy)
 {
-	/* XXX put a knob in front of this */
-	psignal(initproc, SIGUSR2);
+	extern int allowpowerdown;
+
+	if (allowpowerdown == 1) {
+		allowpowerdown = 0;
+		psignal(initproc, SIGUSR2);
+	}
 }
 
 void

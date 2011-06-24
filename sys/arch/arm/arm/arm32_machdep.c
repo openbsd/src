@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.37 2011/06/05 19:41:09 deraadt Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.38 2011/06/24 19:47:48 naddy Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -102,8 +102,6 @@ int allowaperture = 0;
 #endif
 
 #if defined(__zaurus__)
-/* Permit console keyboard to do a nice halt. */
-int kbd_reset;
 int lid_suspend;
 extern int xscale_maxspeed;
 #endif
@@ -357,12 +355,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &cpu_apmwarn));
 #endif
 #if defined(__zaurus__)
-	case CPU_KBDRESET:
-		if (securelevel > 0)
-			return (sysctl_rdint(oldp, oldlenp, newp,
-			    kbd_reset));
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &kbd_reset));
 	case CPU_LIDSUSPEND:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &lid_suspend));

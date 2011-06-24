@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.68 2011/06/23 16:31:16 deraadt Exp $ */
+/* $OpenBSD: wskbd.c,v 1.69 2011/06/24 19:47:49 naddy Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -244,7 +244,9 @@ struct cfattach wskbd_ca = {
 	wskbd_detach, wskbd_activate
 };
 
+#if defined(__i386__) || defined(__amd64__)
 extern int kbd_reset;
+#endif
 
 #ifndef WSKBD_DEFAULT_BELL_PITCH
 #define	WSKBD_DEFAULT_BELL_PITCH	400	/* 400Hz */

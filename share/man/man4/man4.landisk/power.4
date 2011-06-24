@@ -1,4 +1,4 @@
-.\"     $OpenBSD: power.4,v 1.4 2007/05/31 19:19:55 jmc Exp $
+.\"     $OpenBSD: power.4,v 1.5 2011/06/24 19:47:48 naddy Exp $
 .\"
 .\"
 .\" Copyright (c) 2007 Martin Reindl
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 24 2011 $
 .Dt POWER 4 landisk
 .Os
 .Sh NAME
@@ -30,7 +30,7 @@ The
 .Nm
 driver catches that interrupt.
 If the
-.Va machdep.kbdreset
+.Va hw.allowpowerdown
 .Xr sysctl 8
 is set to 1,
 .Nm power
@@ -39,7 +39,10 @@ will signal
 to do a clean shutdown.
 .Sh SEE ALSO
 .Xr intro 4 ,
-.Xr obio 4
+.Xr obio 4 ,
+.Xr init 8 ,
+.Xr rc.shutdown 8 ,
+.Xr sysctl 8
 .Sh HISTORY
 Support for the
 .Nm

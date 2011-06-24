@@ -1,4 +1,4 @@
-.\" $OpenBSD: zkbd.4,v 1.16 2007/05/31 19:19:57 jmc Exp $
+.\" $OpenBSD: zkbd.4,v 1.17 2011/06/24 19:47:48 naddy Exp $
 .\"
 .\" Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 24 2011 $
 .Dt ZKBD 4 zaurus
 .Os
 .Sh NAME
@@ -77,7 +77,8 @@ End
 On/Off is special: pressing the key will immediately suspend the system.
 Pressing the key while the Zaurus is suspended will cause it to resume.
 Pressing the key longer than 3 seconds will do a nice halt if
-the machdep.kbdreset
+the
+.Va hw.allowpowerdown
 .Xr sysctl 8
 variable is 1.
 .Pp

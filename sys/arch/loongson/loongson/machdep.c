@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.30 2011/06/05 19:41:07 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.31 2011/06/24 19:47:48 naddy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -105,7 +105,6 @@ vaddr_t	uncached_base;
 int	physmem;		/* Max supported memory, changes to actual. */
 int	ncpu = 1;		/* At least one CPU in the system. */
 struct	user *proc0paddr;
-int	kbd_reset;
 
 const struct platform *sys_platform;
 struct cpu_hwinfo bootcpu_hwinfo;
@@ -754,10 +753,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return ENOTDIR;		/* Overloaded */
 
 	switch (name[0]) {
-	case CPU_KBDRESET:
-		if (securelevel > 0)
-			return (sysctl_rdint(oldp, oldlenp, newp, kbd_reset));
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &kbd_reset));
 	default:
 		return EOPNOTSUPP;
 	}

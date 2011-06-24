@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.4 2007/06/15 18:17:25 miod Exp $	*/
+/*	$OpenBSD: power.c,v 1.5 2011/06/24 19:47:48 naddy Exp $	*/
 
 /*
  * Copyright (c) 2007 Martin Reindl.
@@ -90,7 +90,7 @@ power_attach(struct device *parent, struct device *self, void *aux)
 int
 power_intr(void *arg)
 {
-	extern int kbd_reset;
+	extern int allowpowerdown;
 	int status;
 
 	status = (int8_t)_reg_read_1(LANDISK_BTNSTAT);
@@ -105,8 +105,8 @@ power_intr(void *arg)
 		Debugger();
 #endif
 		_reg_write_1(LANDISK_PWRSW_INTCLR, 1);
-		if (kbd_reset == 1) {
-			kbd_reset = 0;
+		if (allowpowerdown == 1) {
+			allowpowerdown = 0;
 			psignal(initproc, SIGUSR1);
 		}
 		return (1);

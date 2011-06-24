@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.31 2010/09/07 16:21:41 deraadt Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.32 2011/06/24 19:47:49 naddy Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -429,7 +429,7 @@ zkbd_poll(void *v)
 }
 
 #if NAPM > 0
-extern	int kbd_reset;
+extern	int allowpowerdown;
 extern	int apm_suspends;
 static	int zkbdondown;				/* on key is pressed */
 static	struct timeval zkbdontv = { 0, 0 };	/* last on key event */
@@ -461,8 +461,8 @@ zkbd_on(void *v)
 		}
 	} else if (zkbdondown) {
 		if (ratecheck(&zkbdontv, &zkbdhalttv)) {
-			if (kbd_reset == 1) {
-				kbd_reset = 0;
+			if (allowpowerdown == 1) {
+				allowpowerdown = 0;
 				psignal(initproc, SIGUSR1);
 			}
 		} else if (ratecheck(&zkbdontv, &zkbdsleeptv)) {
