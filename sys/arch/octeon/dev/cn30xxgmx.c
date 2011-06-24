@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.1 2011/06/16 11:22:30 syuu Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.2 2011/06/24 02:13:23 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -54,12 +54,6 @@
 
 #define	dprintf(...)
 #define	OCTEON_ETH_KASSERT	KASSERT
-
-#ifndef SET
-#define	SET(t, f)	((t) |= (f))
-#define	ISSET(t, f)	((t) & (f))
-#define	CLR(t, f)	((t) &= ~(f))
-#endif
 
 #define	ADDR2UINT64(u, a) \
 	do { \

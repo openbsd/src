@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxasx.c,v 1.1 2011/06/16 11:22:30 syuu Exp $	*/
+/*	$OpenBSD: cn30xxasx.c,v 1.2 2011/06/24 02:13:23 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -36,12 +36,6 @@
 
 #include <octeon/dev/cn30xxasxreg.h>
 #include <octeon/dev/cn30xxasxvar.h>
-
-#ifndef SET
-#define	SET(t, f)	((t) |= (f))
-#define	ISSET(t, f)	((t) & (f))
-#define	CLR(t, f)	((t) &= ~(f))
-#endif
 
 #ifdef OCTEON_ETH_DEBUG
 void			cn30xxasx_intr_evcnt_attach(struct cn30xxasx_softc *);

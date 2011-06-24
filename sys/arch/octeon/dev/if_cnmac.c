@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.4 2011/06/22 07:29:06 yasuoka Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.5 2011/06/24 02:13:23 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -99,12 +99,6 @@
 #include <octeon/dev/cn30xxsmivar.h>
 #include <octeon/dev/iobusvar.h>
 #include <octeon/dev/if_cnmacvar.h>
-
-#ifndef SET
-#define	SET(t, f)	((t) |= (f))
-#define	ISSET(t, f)	((t) & (f))
-#define	CLR(t, f)	((t) &= ~(f))
-#endif
 
 #ifdef OCTEON_ETH_DEBUG
 #define	OCTEON_ETH_KASSERT(x)	KASSERT(x)

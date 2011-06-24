@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpkovar.h,v 1.1 2011/06/16 11:22:30 syuu Exp $	*/
+/*	$OpenBSD: cn30xxpkovar.h,v 1.2 2011/06/24 02:13:23 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -37,12 +37,6 @@
 
 #include <octeon/dev/cn30xxfauvar.h>
 #include <octeon/dev/cn30xxpkoreg.h>
-
-#ifndef SET
-#define	SET(t, f)	((t) |= (f))
-#define	ISSET(t, f)	((t) & (f))
-#define	CLR(t, f)	((t) &= ~(f))
-#endif
 
 #define FAU_OP_SIZE_8	0
 #define FAU_OP_SIZE_16	1

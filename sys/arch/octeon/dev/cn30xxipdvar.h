@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxipdvar.h,v 1.1 2011/06/16 11:22:30 syuu Exp $	*/
+/*	$OpenBSD: cn30xxipdvar.h,v 1.2 2011/06/24 02:13:23 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -28,12 +28,6 @@
 
 #ifndef _CN30XXIPDVAR_H_
 #define _CN30XXIPDVAR_H_
-
-#ifndef SET
-#define	SET(t, f)	((t) |= (f))
-#define	ISSET(t, f)	((t) & (f))
-#define	CLR(t, f)	((t) &= ~(f))
-#endif
 
 /* XXX */
 struct cn30xxipd_softc {
