@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 2010/05/10 18:20:31 drahn Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 2011/06/24 22:47:51 deraadt Exp $
 
 LIB=		objc
 
@@ -109,8 +109,7 @@ tags:
 
 .SUFFIXES:	.m
 
-.PATH.c:	${.CURDIR}/libobjc
-.PATH.m:	${.CURDIR}/libobjc
+.PATH:	${.CURDIR}/libobjc
 
 COMPILE.m=${COMPILE.c} -fgnu-runtime
 
