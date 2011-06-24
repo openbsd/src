@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.man.mk,v 1.33 2011/06/23 22:46:12 schwarze Exp $
+#	$OpenBSD: bsd.man.mk,v 1.34 2011/06/24 14:17:41 naddy Exp $
 #	$NetBSD: bsd.man.mk,v 1.23 1996/02/10 07:49:33 jtc Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
@@ -18,9 +18,14 @@ MANSUBDIR:=${MANSUBDIR:S,^,/,}
 MANSUBDIR=''
 .endif
 
-manlint: ${MAN}
+CLEANFILES+= .man-linted
+
 .if defined(MAN) && !empty(MAN)
+.man-linted: ${MAN}
 	mandoc -Tlint -Wfatal ${.ALLSRC}
+	@touch ${.TARGET}
+
+all: .man-linted
 .endif
 
 .for page in ${MAN}
@@ -46,6 +51,4 @@ maninstall:
 .endif
 
 BEFOREMAN?=
-all: ${BEFOREMAN} ${MAN} manlint
-
-.PHONY: manlint
+all: ${BEFOREMAN} ${MAN}
