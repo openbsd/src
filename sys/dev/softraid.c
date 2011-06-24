@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.232 2011/06/23 17:20:16 matthew Exp $ */
+/* $OpenBSD: softraid.c,v 1.233 2011/06/24 12:45:19 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3388,11 +3388,12 @@ sr_discipline_free(struct sr_discipline *sd)
 void
 sr_discipline_shutdown(struct sr_discipline *sd)
 {
-	struct sr_softc		*sc = sd->sd_sc;
+	struct sr_softc		*sc;
 	int			s;
 
-	if (!sd || !sc)
+	if (!sd)
 		return;
+	sc = sd->sd_sc;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_discipline_shutdown %s\n", DEVNAME(sc),
 	    sd->sd_meta ? sd->sd_meta->ssd_devname : "nodev");
