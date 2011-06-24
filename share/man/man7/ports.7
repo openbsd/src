@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.83 2010/10/23 12:25:21 landry Exp $
+.\" $OpenBSD: ports.7,v 1.84 2011/06/24 08:29:29 jasper Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: October 23 2010 $
+.Dd $Mdocdate: June 24 2011 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -664,9 +664,10 @@ Set
 .Ev WRKOBJDIR ,
 .Ev PACKAGE_REPOSITORY ,
 .Ev BULK_COOKIES_DIR ,
-.Ev UPDATE_COOKIES_DIR
+.Ev UPDATE_COOKIES_DIR ,
+.Ev DISTDIR ,
 and
-.Ev DISTDIR
+.Ev PLIST_DB
 in
 .Pa /etc/mk.conf
 accordingly.
