@@ -1,4 +1,4 @@
-/*	$OpenBSD: swaplist.c,v 1.7 2007/07/26 17:03:05 deraadt Exp $	*/
+/*	$OpenBSD: swaplist.c,v 1.8 2011/06/24 21:02:09 jasper Exp $	*/
 /*	$NetBSD: swaplist.c,v 1.8 1998/10/08 10:00:31 mrg Exp $	*/
 
 /*
@@ -68,13 +68,14 @@ list_swap(int pri, int kflag, int pflag, int dolong)
 		    rnswap, nswap);
 
 	pathmax = 11;
+	if (kflag) {
+		header = "1K-blocks";
+		blocksize = 1024;
+		hlen = strlen(header);
+	} else
+		header = getbsize(&hlen, &blocksize);
+
 	if (dolong) {
-		if (kflag) {
-			header = "1K-blocks";
-			blocksize = 1024;
-			hlen = strlen(header);
-		} else
-			header = getbsize(&hlen, &blocksize);
 		for (i = rnswap; i-- > 0; sep++)
 			if (pathmax < (l = strlen(sep->se_path)))
 				pathmax = l;
@@ -105,11 +106,12 @@ list_swap(int pri, int kflag, int pflag, int dolong)
 		}
 	}
 	if (dolong == 0)
-		printf("total: %ldk bytes allocated = %ldk used, "
-		   "%ldk available\n",
-		    (long)(dbtoqb(totalsize) / 1024),
-		    (long)(dbtoqb(totalinuse) / 1024),
-		    (long)(dbtoqb(totalsize - totalinuse) / 1024));
+		printf("total: %ld %*s allocated, %ld used, "
+		    "%ld available\n",
+		    (long)(dbtoqb(totalsize) / blocksize),
+		    hlen, header,
+		    (long)(dbtoqb(totalinuse) / blocksize),
+		    (long)(dbtoqb(totalsize - totalinuse) / blocksize));
 	else if (ncounted > 1)
 		(void)printf("%-*s %*ld %8ld %8ld %5.0f%%\n", pathmax, "Total",
 		    hlen,
