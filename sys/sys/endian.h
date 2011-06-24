@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.18 2006/03/27 07:09:24 otto Exp $	*/
+/*	$OpenBSD: endian.h,v 1.19 2011/06/24 22:44:59 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -193,12 +193,12 @@ __END_DECLS
 #define betoh32 __swap32
 #define betoh64 __swap64
 
-#define htole16(x) (x)
-#define htole32(x) (x)
-#define htole64(x) (x)
-#define letoh16(x) (x)
-#define letoh32(x) (x)
-#define letoh64(x) (x)
+#define htole16(x) ((__uint16_t)(x))
+#define htole32(x) ((__uint32_t)(x))
+#define htole64(x) ((__uint64_t)(x))
+#define letoh16(x) ((__uint16_t)(x))
+#define letoh32(x) ((__uint32_t)(x))
+#define letoh64(x) ((__uint64_t)(x))
 #endif /* __BSD_VISIBLE */
 
 #define htons(x) __swap16(x)
@@ -226,18 +226,18 @@ __END_DECLS
 #define letoh32 __swap32
 #define letoh64 __swap64
 
-#define htobe16(x) (x)
-#define htobe32(x) (x)
-#define htobe64(x) (x)
-#define betoh16(x) (x)
-#define betoh32(x) (x)
-#define betoh64(x) (x)
+#define htobe16(x) ((__uint16_t)(x))
+#define htobe32(x) ((__uint32_t)(x))
+#define htobe64(x) ((__uint64_t)(x))
+#define betoh16(x) ((__uint16_t)(x))
+#define betoh32(x) ((__uint32_t)(x))
+#define betoh64(x) ((__uint64_t)(x))
 #endif /* __BSD_VISIBLE */
 
-#define htons(x) (x)
-#define htonl(x) (x)
-#define ntohs(x) (x)
-#define ntohl(x) (x)
+#define htons(x) ((__uint16_t)(x))
+#define htonl(x) ((__uint32_t)(x))
+#define ntohs(x) ((__uint16_t)(x))
+#define ntohl(x) ((__uint32_t)(x))
 
 #endif /* _BYTE_ORDER */
 
