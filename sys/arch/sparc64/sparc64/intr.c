@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.39 2010/12/21 14:56:24 claudio Exp $	*/
+/*	$OpenBSD: intr.c,v 1.40 2011/06/24 19:08:46 kettenis Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -225,12 +225,15 @@ intr_establish(int level, struct intrhand *ih)
 			nih->ih_map = q->ih_map;
 			nih->ih_clr = q->ih_clr;
 			nih->ih_ack = q->ih_ack;
+			q->ih_ack = NULL;
 
 			intrlev[ih->ih_number] = q = nih;
 		} else {
 			if (ih->ih_pil < q->ih_pil)
 				q->ih_pil = ih->ih_pil;
 		}
+
+		ih->ih_ack = NULL;
 
 		/* Add the ih to the head of the list */
 		ih->ih_next = q->ih_arg;
