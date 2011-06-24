@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.131 2011/06/24 21:10:16 sthen Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.132 2011/06/24 21:11:27 sthen Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -570,7 +570,8 @@ a relevant NAT rule is required in
 For the example above,
 this would be:
 .Bd -literal -offset indent
-match out on enc0 from 192.168.1.0/24 to 192.168.2.0/24 nat-to 10.10.10.1
+match out on enc0 from 192.168.1.0/24 to 192.168.2.0/24 \e
+	nat-to 10.10.10.1
 .Ed
 .Pp
 From the peer's point of view,
