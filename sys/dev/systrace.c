@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.56 2011/06/23 16:02:33 tedu Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.57 2011/06/24 22:48:36 djm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -727,7 +727,8 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 		rw_exit_write(&fst->lock);
 		if (policy == SYSTR_POLICY_KILL) {
 			error = EPERM;
-			printf("systrace: killed on syscall %d\n", code);
+			DPRINTF(("systrace: pid %u killed on syscall %d\n",
+			    p->p_pid, code));
 			psignal(p, SIGKILL);
 		} else if (policy == SYSTR_POLICY_PERMIT)
 			error = (*callp->sy_call)(p, v, retval);
