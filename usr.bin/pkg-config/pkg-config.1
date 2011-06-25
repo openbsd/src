@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg-config.1,v 1.22 2011/06/06 17:10:43 jasper Exp $
+.\"	$OpenBSD: pkg-config.1,v 1.23 2011/06/25 14:36:19 jasper Exp $
 .\"
 .\"	Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\"	ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"	OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 6 2011 $
+.Dd $Mdocdate: June 25 2011 $
 .Dt PKG-CONFIG 1
 .Os
 .Sh NAME
@@ -193,3 +193,32 @@ version by
 .An Marc Espie Aq espie@openbsd.org
 and
 .An Jasper Lievisse Adriaanse Aq jasper@openbsd.org .
+.Sh CAVEATS
+.Nm
+is a re-implementation of the "original" freedesktop.org program.
+While it tries to be compatible, there are several
+design/functionality differences one should be aware of:
+.Bl -tag -width Ds
+.It Ev Conflicts
+It was decided not to support the Conflicts keyword as there is
+currently too little benefit from it in
+.Ox
+where the ports tree is supposed to prevent conflicts from arising
+in the first place.
+Lines with this keyword are not treated as errors, they are just ignored.
+And they are not taken into account when
+.Cm --print-errors
+is passed.
+.It Ev Cflags and -i
+The
+.Fl i
+flag that can be encountered in Cflags is not treated differently from
+.Fl I
+in this implementation.
+.It Ev Whitespace
+.Nm
+does not go to great lengths to try to fix whitespace abuse.
+Whitespace in Libs and Cflags lines that are escaped using \e are
+treated correctly.
+But strings enclosed in quotation marks that contain whitespaces are not.
+.El
