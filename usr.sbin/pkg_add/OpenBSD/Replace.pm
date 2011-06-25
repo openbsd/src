@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.81 2011/06/20 09:46:23 espie Exp $
+# $OpenBSD: Replace.pm,v 1.82 2011/06/25 11:10:11 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -75,6 +75,11 @@ sub extract
 		}
 		my ($fh, $tempname) = OpenBSD::Temp::permanent_file($d, "pkg");
 		$self->{tempname} = $tempname;
+
+		# XXX don't apply destdir twice
+		$file->{destdir} = '';
+		$file->set_name($tempname);
+
 		if ($self->{tieto}) {
 			my $src = $self->{tieto}->realname($state);
 			unlink($tempname);
@@ -82,6 +87,8 @@ sub extract
 			    if $state->verbose >= 3;
 			if (link($src, $tempname) ||
 			    $state->copy_file($src, $tempname)) {
+				# we still need to adjust properties
+				$file->set_modes;
 				$state->{archive}->skip;
 				return;
 			}
@@ -91,9 +98,6 @@ sub extract
 
 		$state->say("extracting #1", $tempname) if $state->verbose >= 3;
 
-		# XXX don't apply destdir twice
-		$file->{destdir} = '';
-		$file->set_name($tempname);
 		$file->create;
 		$self->may_check_digest($file, $state);
 	}
