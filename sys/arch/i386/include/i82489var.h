@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82489var.h,v 1.12 2011/03/23 16:54:35 pirofti Exp $	*/
+/*	$OpenBSD: i82489var.h,v 1.13 2011/06/25 19:20:41 jsg Exp $	*/
 /*	$NetBSD: i82489var.h,v 1.1.2.2 2000/02/21 18:46:14 sommerfeld Exp $	*/
 
 /*-
@@ -41,17 +41,14 @@ extern volatile u_int32_t local_apic[];
 #endif
 
 static __inline__ u_int32_t
-i82489_readreg(reg)
-	int reg;
+i82489_readreg(int reg)
 {
 	return *((volatile u_int32_t *)(((volatile u_int8_t *)local_apic)
 	    + reg));
 }
 
 static __inline__ void
-i82489_writereg(reg, val)
-	int reg;
-	u_int32_t val;
+i82489_writereg(int reg, u_int32_t val)
 {
 	*((volatile u_int32_t *)(((volatile u_int8_t *)local_apic) + reg)) =
 	    val;

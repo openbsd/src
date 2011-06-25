@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm86.h,v 1.9 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: vm86.h,v 1.10 2011/06/25 19:20:41 jsg Exp $	*/
 /*	$NetBSD: vm86.h,v 1.8 1996/05/03 19:26:32 christos Exp $	*/
 
 #undef	VM86_USE_VIF
@@ -98,8 +98,7 @@ clr_vif(p)
 }
 
 static __inline void
-set_vif(p)
-	struct proc *p;
+set_vif(struct proc *p)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
 
@@ -114,9 +113,7 @@ set_vif(p)
 }
 
 static __inline void
-set_vflags(p, flags)
-	struct proc *p;
-	int flags;
+set_vflags(struct proc *p, int flags)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
@@ -133,8 +130,7 @@ set_vflags(p, flags)
 }
 
 static __inline int
-get_vflags(p)
-	struct proc *p;
+get_vflags(struct proc *p)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
@@ -146,9 +142,7 @@ get_vflags(p)
 }
 
 static __inline void
-set_vflags_short(p, flags)
-	struct proc *p;
-	int flags;
+set_vflags_short(struct proc *p, int flags)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
@@ -163,8 +157,7 @@ set_vflags_short(p, flags)
 }
 
 static __inline int
-get_vflags_short(p)
-	struct proc *p;
+get_vflags_short(struct proc *p)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
