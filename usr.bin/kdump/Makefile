@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2011/06/23 20:51:20 matthew Exp $
+#	$OpenBSD: Makefile,v 1.20 2011/06/25 19:00:41 deraadt Exp $
 
 LDSTATIC=${STATIC}
 PROG=	kdump
@@ -8,39 +8,39 @@ SRCS=	kdump.c ioctl.c kdump_subr.c subr.c
 CLEANFILES+=ioctl.c kdump_subr.c
 
 ioctl.c: ${.CURDIR}/Makefile ${.CURDIR}/mkioctls
-	CC="${CC}" DESTDIR="${DESTDIR}" \
-	/bin/sh ${.CURDIR}/mkioctls ${DESTDIR}/usr/include/sys/ioctl.h \
-	    ${DESTDIR}/usr/include/sys/ioctl_compat.h \
-	    ${DESTDIR}/usr/include/crypto/cryptodev.h \
-	    ${DESTDIR}/usr/include/dev/biovar.h \
-	    ${DESTDIR}/usr/include/dev/ccdvar.h \
-	    ${DESTDIR}/usr/include/dev/systrace.h \
-	    ${DESTDIR}/usr/include/dev/wscons/wsconsio.h \
-	    ${DESTDIR}/usr/include/dev/vndioctl.h \
-	    ${DESTDIR}/usr/include/net/bpf.h \
-	    ${DESTDIR}/usr/include/net/if_ppp.h \
-	    ${DESTDIR}/usr/include/net/if_pppoe.h \
-	    ${DESTDIR}/usr/include/net/if_tun.h \
-	    ${DESTDIR}/usr/include/net/pfvar.h \
-	    ${DESTDIR}/usr/include/net80211/ieee80211_ioctl.h \
-	    ${DESTDIR}/usr/include/netinet6/in6_var.h \
-	    ${DESTDIR}/usr/include/sys/agpio.h \
-	    ${DESTDIR}/usr/include/sys/ataio.h \
-	    ${DESTDIR}/usr/include/sys/audioio.h \
-	    ${DESTDIR}/usr/include/sys/cdio.h \
-	    ${DESTDIR}/usr/include/sys/chio.h \
-	    ${DESTDIR}/usr/include/sys/dkio.h \
-	    ${DESTDIR}/usr/include/sys/filio.h \
-	    ${DESTDIR}/usr/include/sys/gpio.h \
-	    ${DESTDIR}/usr/include/sys/midiio.h \
-	    ${DESTDIR}/usr/include/sys/mtio.h \
-	    ${DESTDIR}/usr/include/sys/pciio.h \
-	    ${DESTDIR}/usr/include/sys/radioio.h \
-	    ${DESTDIR}/usr/include/sys/scanio.h \
-	    ${DESTDIR}/usr/include/sys/scsiio.h \
-	    ${DESTDIR}/usr/include/sys/sockio.h > ioctl.c
+	CC="${CC}" \
+	/bin/sh ${.CURDIR}/mkioctls /usr/include/sys/ioctl.h \
+	    /usr/include/sys/ioctl_compat.h \
+	    /usr/include/crypto/cryptodev.h \
+	    /usr/include/dev/biovar.h \
+	    /usr/include/dev/ccdvar.h \
+	    /usr/include/dev/systrace.h \
+	    /usr/include/dev/wscons/wsconsio.h \
+	    /usr/include/dev/vndioctl.h \
+	    /usr/include/net/bpf.h \
+	    /usr/include/net/if_ppp.h \
+	    /usr/include/net/if_pppoe.h \
+	    /usr/include/net/if_tun.h \
+	    /usr/include/net/pfvar.h \
+	    /usr/include/net80211/ieee80211_ioctl.h \
+	    /usr/include/netinet6/in6_var.h \
+	    /usr/include/sys/agpio.h \
+	    /usr/include/sys/ataio.h \
+	    /usr/include/sys/audioio.h \
+	    /usr/include/sys/cdio.h \
+	    /usr/include/sys/chio.h \
+	    /usr/include/sys/dkio.h \
+	    /usr/include/sys/filio.h \
+	    /usr/include/sys/gpio.h \
+	    /usr/include/sys/midiio.h \
+	    /usr/include/sys/mtio.h \
+	    /usr/include/sys/pciio.h \
+	    /usr/include/sys/radioio.h \
+	    /usr/include/sys/scanio.h \
+	    /usr/include/sys/scsiio.h \
+	    /usr/include/sys/sockio.h > ioctl.c
 
 kdump_subr.c: ${.CURDIR}/mksubr
-	sh ${.CURDIR}/mksubr ${DESTDIR}/usr/include > ${.TARGET}
+	sh ${.CURDIR}/mksubr /usr/include > ${.TARGET}
 
 .include <bsd.prog.mk>
