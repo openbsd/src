@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.1,v 1.19 2007/05/31 19:20:11 jmc Exp $
+.\"	$OpenBSD: ktrace.1,v 1.20 2011/06/25 18:44:43 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)ktrace.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 25 2011 $
 .Dt KTRACE 1
 .Os
 .Sh NAME
@@ -55,8 +55,8 @@ By default, kernel trace data is logged to the file
 unless overridden by the
 .Fl f
 option.
-The kernel operations that are traced include system calls, namei
-translations, signal processing, and I/O.
+The kernel operations traced are system calls, namei translations,
+signal processing, I/O and emulation changes.
 .Pp
 Once tracing is enabled on a process, trace data will be logged until
 either the process exits or the trace point is cleared.
@@ -80,7 +80,8 @@ Append to the trace file instead of recreating it.
 Disable tracing on all user owned processes, and, if executed by root, all
 processes in the system.
 .It Fl c
-Clear the trace points associated with the specified file or processes.
+Clear the trace points associated with the trace file or any specified
+processes.
 .It Fl d
 Descendants; perform the operation for all current children of the
 designated processes.
@@ -124,6 +125,8 @@ trace namei translations
 trace signal processing
 .It Cm w
 trace context switch points
+.It Cm +
+trace the default points
 .El
 .It Ar command
 Execute
