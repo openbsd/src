@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.4 2011/05/08 13:39:30 syuu Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.5 2011/06/25 19:39:32 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -63,6 +63,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	struct cpu_hwinfo hw;
 #endif
 	
+	printf("\n");
+
 	bzero(&caa, sizeof caa);
 	caa.caa_maa.maa_name = "cpu";
 	caa.caa_hw = &bootcpu_hwinfo;
