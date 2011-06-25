@@ -1,4 +1,4 @@
-/*	$OpenBSD: hypervisor.h,v 1.12 2009/12/31 11:50:33 kettenis Exp $	*/
+/*	$OpenBSD: hypervisor.h,v 1.13 2011/06/25 20:45:00 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -170,6 +170,78 @@ int64_t	hv_pci_config_put(uint64_t devhandle, uint64_t pci_device,
 
 #define PCI_MAP_ATTR_READ  0x01		/* From memory */
 #define PCI_MAP_ATTR_WRITE 0x02		/* To memory */
+
+/*
+ * PCI MSI services
+ */
+
+int64_t hv_pci_msiq_conf(uint64_t devhandle, uint64_t msiqid,
+	    uint64_t r_addr, uint64_t nentries);
+int64_t hv_pci_msiq_info(uint64_t devhandle, uint64_t msiqid,
+	    uint64_t *r_addr, uint64_t *nentries);
+
+int64_t hv_pci_msiq_getvalid(uint64_t devhandle, uint64_t msiqid,
+	    uint64_t *msiqvalid);
+int64_t hv_pci_msiq_setvalid(uint64_t devhandle, uint64_t msiqid,
+	    uint64_t msiqvalid);
+
+#define PCI_MSIQ_INVALID	0
+#define PCI_MSIQ_VALID		1
+
+int64_t hv_pci_msiq_getstate(uint64_t devhandle, uint64_t msiqid,
+	    uint64_t *msiqstate);
+int64_t hv_pci_msiq_setstate(uint64_t devhandle, uint64_t msiqid,
+	    uint64_t msiqstate);
+
+#define PCI_MSIQSTATE_IDLE	0
+#define PCI_MSIQSTATE_ERROR	1
+
+int64_t hv_pci_msiq_gethead(uint64_t devhandle, uint64_t msiqid,
+	    uint64_t *msiqhead);
+int64_t hv_pci_msiq_sethead(uint64_t devhandle, uint64_t msiqid,
+	    uint64_t msiqhead);
+int64_t hv_pci_msiq_gettail(uint64_t devhandle, uint64_t msiqid,
+	    uint64_t *msiqtail);
+
+int64_t hv_pci_msi_getvalid(uint64_t devhandle, uint64_t msinum,
+	    uint64_t *msivalidstate);
+int64_t hv_pci_msi_setvalid(uint64_t devhandle, uint64_t msinum,
+	    uint64_t msivalidstate);
+
+#define PCI_MSI_INVALID		0
+#define PCI_MSI_VALID		1
+
+int64_t hv_pci_msi_getmsiq(uint64_t devhandle, uint64_t msinum,
+	    uint64_t *msiqid);
+int64_t hv_pci_msi_setmsiq(uint64_t devhandle, uint64_t msinum,
+	    uint64_t msiqid);
+
+int64_t hv_pci_msi_getstate(uint64_t devhandle, uint64_t msinum,
+	    uint64_t *msistate);
+int64_t hv_pci_msi_setstate(uint64_t devhandle, uint64_t msinum,
+	    uint64_t msistate);
+
+#define PCI_MSISTATE_IDLE	0
+#define PCI_MSISTATE_DELIVERED	1
+
+int64_t hv_pci_msg_getmsiq(uint64_t devhandle, uint64_t msg,
+	    uint64_t *msiqid);
+int64_t hv_pci_msg_setmsiq(uint64_t devhandle, uint64_t msg,
+	    uint64_t msiqid);
+
+int64_t hv_pci_msg_getvalid(uint64_t devhandle, uint64_t msg,
+	    uint64_t *msgvalidstate);
+int64_t hv_pci_msg_setvalid(uint64_t devhandle, uint64_t msg,
+	    uint64_t msgvalidstate);
+
+#define PCIE_MSG_INVALID	0
+#define PCIE_MSG_VALID		1
+
+#define PCIE_PME_MSG		0x18
+#define PCIE_PME_ACK_MSG	0x1b
+#define PCIE_CORR_MSG		0x30
+#define PCIE_NONFATAL_MSG	0x31
+#define PCIE_FATAL_MSG		0x32
 
 /*
  * Logical Domain Channel services

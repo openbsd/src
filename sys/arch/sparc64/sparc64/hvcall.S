@@ -1,4 +1,4 @@
-/*	$OpenBSD: hvcall.S,v 1.9 2009/12/31 11:50:33 kettenis Exp $	*/
+/*	$OpenBSD: hvcall.S,v 1.10 2011/06/25 20:45:00 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -89,6 +89,26 @@
 #define PCI_IOMMU_GETBYPASS	0xb3
 #define PCI_CONFIG_GET		0xb4
 #define PCI_CONFIG_PUT		0xb5
+
+#define PCI_MSIQ_CONF		0xc0
+#define PCI_MSIQ_INFO		0xc1
+#define PCI_MSIQ_GETVALID	0xc2
+#define PCI_MSIQ_SETVALID	0xc3
+#define PCI_MSIQ_GETSTATE	0xc4
+#define PCI_MSIQ_SETSTATE	0xc5
+#define PCI_MSIQ_GETHEAD	0xc6
+#define PCI_MSIQ_SETHEAD	0xc7
+#define PCI_MSIQ_GETTAIL	0xc8
+#define PCI_MSI_GETVALID	0xc9
+#define PCI_MSI_SETVALID	0xca
+#define PCI_MSI_GETMSIQ		0xcb
+#define PCI_MSI_SETMSIQ		0xcc
+#define PCI_MSI_GETSTATE	0xcd
+#define PCI_MSI_SETSTATE	0xce
+#define PCI_MSG_GETMSIQ		0xd0
+#define PCI_MSG_SETMSIQ		0xd1
+#define PCI_MSG_GETSTATE	0xd2
+#define PCI_MSG_SETSTATE	0xd3
 
 #define LDC_TX_QCONF		0xe0
 #define LDC_TX_QINFO		0xe1
@@ -415,6 +435,122 @@ ENTRY(hv_pci_config_put)
 	ta	FAST_TRAP
 	retl
 	 stx	%o1, [%g5]
+
+ENTRY(hv_pci_msiq_conf)
+	mov	PCI_MSIQ_CONF, %o5
+	ta	FAST_TRAP
+	retl
+	 nop
+
+ENTRY(hv_pci_msiq_info)
+	mov	%o2, %o4
+	mov	PCI_MSIQ_INFO, %o5
+	ta	FAST_TRAP
+	stx	%o1, [%o4]
+	retl
+	 stx	%o2, [%o3]
+
+ENTRY(hv_pci_msiq_getvalid)
+	mov	PCI_MSIQ_GETVALID, %o5
+	ta	FAST_TRAP
+	retl
+	 stx	%o1, [%o2]
+
+ENTRY(hv_pci_msiq_setvalid)
+	mov	PCI_MSIQ_SETVALID, %o5
+	ta	FAST_TRAP
+	retl
+	 nop
+
+ENTRY(hv_pci_msiq_getstate)
+	mov	PCI_MSIQ_GETSTATE, %o5
+	ta	FAST_TRAP
+	retl
+	 stx	%o1, [%o2]
+
+ENTRY(hv_pci_msiq_setstate)
+	mov	PCI_MSIQ_SETSTATE, %o5
+	ta	FAST_TRAP
+	retl
+	 nop
+
+ENTRY(hv_pci_msiq_gethead)
+	mov	PCI_MSIQ_GETHEAD, %o5
+	ta	FAST_TRAP
+	retl
+	 stx	%o1, [%o2]
+
+ENTRY(hv_pci_msiq_sethead)
+	mov	PCI_MSIQ_SETHEAD, %o5
+	ta	FAST_TRAP
+	retl
+	 nop
+
+ENTRY(hv_pci_msiq_gettail)
+	mov	PCI_MSIQ_GETTAIL, %o5
+	ta	FAST_TRAP
+	retl
+	 stx	%o1, [%o2]
+
+ENTRY(hv_pci_msi_getvalid)
+	mov	PCI_MSI_GETVALID, %o5
+	ta	FAST_TRAP
+	retl
+	 stx	%o1, [%o2]
+
+ENTRY(hv_pci_msi_setvalid)
+	mov	PCI_MSI_SETVALID, %o5
+	ta	FAST_TRAP
+	retl
+	 nop
+
+ENTRY(hv_pci_msi_getmsiq)
+	mov	PCI_MSI_GETMSIQ, %o5
+	ta	FAST_TRAP
+	retl
+	 stx	%o1, [%o2]
+
+ENTRY(hv_pci_msi_setmsiq)
+	mov	PCI_MSI_SETMSIQ, %o5
+	ta	FAST_TRAP
+	retl
+	 nop
+
+ENTRY(hv_pci_msi_getstate)
+	mov	PCI_MSI_GETSTATE, %o5
+	ta	FAST_TRAP
+	retl
+	 stx	%o1, [%o2]
+
+ENTRY(hv_pci_msi_setstate)
+	mov	PCI_MSI_SETSTATE, %o5
+	ta	FAST_TRAP
+	retl
+	 nop
+
+ENTRY(hv_pci_msg_getmsiq)
+	mov	PCI_MSG_GETMSIQ, %o5
+	ta	FAST_TRAP
+	retl
+	 stx	%o1, [%o2]
+
+ENTRY(hv_pci_msg_setmsiq)
+	mov	PCI_MSG_SETMSIQ, %o5
+	ta	FAST_TRAP
+	retl
+	 nop
+
+ENTRY(hv_pci_msg_getstate)
+	mov	PCI_MSG_GETSTATE, %o5
+	ta	FAST_TRAP
+	retl
+	 stx	%o1, [%o2]
+
+ENTRY(hv_pci_msg_setstate)
+	mov	PCI_MSG_SETSTATE, %o5
+	ta	FAST_TRAP
+	retl
+	 nop
 
 ENTRY(hv_ldc_tx_qconf)
 	mov	LDC_TX_QCONF, %o5
