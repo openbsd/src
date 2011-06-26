@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.107 2010/07/31 08:33:20 ratchov Exp $
+#	$OpenBSD: files.isa,v 1.108 2011/06/26 21:41:05 tedu Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -7,7 +7,7 @@
 
 # ports should specify appropriate major numbers for the following
 # devices:
-#	mcd, scd, wd
+#	mcd, wd
 
 device	isa {[port = -1], [size = 0],
 	     [iomem = -1], [iosiz = 0],
