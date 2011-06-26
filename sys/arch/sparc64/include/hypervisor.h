@@ -1,4 +1,4 @@
-/*	$OpenBSD: hypervisor.h,v 1.13 2011/06/25 20:45:00 kettenis Exp $	*/
+/*	$OpenBSD: hypervisor.h,v 1.14 2011/06/26 17:23:46 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -214,7 +214,7 @@ int64_t hv_pci_msi_setvalid(uint64_t devhandle, uint64_t msinum,
 int64_t hv_pci_msi_getmsiq(uint64_t devhandle, uint64_t msinum,
 	    uint64_t *msiqid);
 int64_t hv_pci_msi_setmsiq(uint64_t devhandle, uint64_t msinum,
-	    uint64_t msiqid);
+	    uint64_t msitype, uint64_t msiqid);
 
 int64_t hv_pci_msi_getstate(uint64_t devhandle, uint64_t msinum,
 	    uint64_t *msistate);
