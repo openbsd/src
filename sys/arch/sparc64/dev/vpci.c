@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.6 2010/12/05 15:15:14 kettenis Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.7 2011/06/26 20:32:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -400,7 +400,7 @@ vpci_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 			continue;
 
 		paddr = pbm->vp_range[i].phys_lo + offset;
-		paddr |= ((bus_addr_t)pbm->vp_range[i].phys_hi<<32);
+		paddr |= ((bus_addr_t)pbm->vp_range[i].phys_hi) << 32;
 		return ((*t->parent->sparc_bus_mmap)
 		    (t, t0, paddr, off, prot, flags));
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.61 2010/12/04 17:06:32 miod Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.62 2011/06/26 20:32:36 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -714,7 +714,7 @@ schizo_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 			continue;
 
 		paddr = pbm->sp_range[i].phys_lo + offset;
-		paddr |= ((bus_addr_t)pbm->sp_range[i].phys_hi<<32);
+		paddr |= ((bus_addr_t)pbm->sp_range[i].phys_hi) << 32;
 		return ((*t->parent->sparc_bus_mmap)
 		    (t, t0, paddr, off, prot, flags));
 	}

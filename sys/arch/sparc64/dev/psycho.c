@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.67 2010/12/04 17:06:32 miod Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.68 2011/06/26 20:32:36 kettenis Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -1027,7 +1027,7 @@ psycho_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
 			continue;
 
 		paddr = pp->pp_range[i].phys_lo + offset;
-		paddr |= ((bus_addr_t)pp->pp_range[i].phys_hi << 32);
+		paddr |= ((bus_addr_t)pp->pp_range[i].phys_hi) << 32;
 		DPRINTF(PDB_BUSMAP,
 		    ("\n_psycho_bus_map: mapping paddr space %lx offset %lx "
 			"paddr %qx",
@@ -1066,7 +1066,7 @@ psycho_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 			continue;
 
 		paddr = pp->pp_range[i].phys_lo + offset;
-		paddr |= ((bus_addr_t)pp->pp_range[i].phys_hi << 32);
+		paddr |= ((bus_addr_t)pp->pp_range[i].phys_hi) << 32;
 		DPRINTF(PDB_BUSMAP, ("\npsycho_bus_mmap: mapping paddr "
 		    "space %lx offset %lx paddr %qx",
 		    (long)ss, (long)offset,
