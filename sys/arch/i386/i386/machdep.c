@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.501 2011/06/26 21:37:52 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.502 2011/06/26 21:46:03 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -83,6 +83,7 @@
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/mount.h>
+#include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/sysctl.h>
@@ -100,7 +101,6 @@
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_swap.h>
-#include <uvm/uvm.h>
 
 #include <machine/bus.h>
 
