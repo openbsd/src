@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.203 2011/05/23 09:54:20 claudio Exp $
+#	$OpenBSD: files.i386,v 1.204 2011/06/26 23:19:10 tedu Exp $
 #
 # new style config file for i386 architecture
 #
@@ -181,7 +181,6 @@ file	dev/pci/if_hme_pci.c		hme_pci
 # ISA and mixed ISA+EISA or ISA+PCI or ISA+PCMCIA drivers
 #
 
-major	{mcd = 7}
 major	{wd = 0}
 
 include "dev/isa/files.isa"

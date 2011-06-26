@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.718 2011/06/20 06:07:26 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.719 2011/06/26 23:19:10 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -527,8 +527,6 @@ uk*	at scsibus?		# unknown SCSI
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 #fdc1	at isa? port 0x370
 fd*	at fdc? flags 0x00
-
-#mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 
 # IDE controllers
 pciide* at pci? flags 0x0000

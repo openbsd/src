@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.108 2011/06/26 21:41:05 tedu Exp $
+#	$OpenBSD: files.isa,v 1.109 2011/06/26 23:19:11 tedu Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -7,7 +7,7 @@
 
 # ports should specify appropriate major numbers for the following
 # devices:
-#	mcd, wd
+#	wd
 
 device	isa {[port = -1], [size = 0],
 	     [iomem = -1], [iosiz = 0],
@@ -126,11 +126,6 @@ file	dev/isa/opti.c			opti
 #
 # Other ISA disk controllers
 #
-
-# Mitsumi CD-ROM controllers
-device	mcd: disk, opti
-attach	mcd at isa
-file	dev/isa/mcd.c			mcd needs-flag
 
 # ISA "wd" (ESDI/IDE/etc.) controllers, ATAPI bus
 attach	wdc at isa with wdc_isa: isa_dma

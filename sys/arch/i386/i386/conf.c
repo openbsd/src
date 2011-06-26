@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.136 2011/01/14 19:04:08 jasper Exp $	*/
+/*	$OpenBSD: conf.c,v 1.137 2011/06/26 23:19:11 tedu Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -52,8 +52,6 @@ bdev_decl(fd);
 #include "st.h"
 #include "cd.h"
 #include "uk.h"
-#include "mcd.h"
-bdev_decl(mcd);
 #include "vnd.h"
 #include "ccd.h"
 #include "raid.h"
@@ -68,7 +66,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
 	bdev_tape_init(NST,st),		/* 5: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 6: SCSI CD-ROM */
-	bdev_disk_init(NMCD,mcd),	/* 7: Mitsumi CD-ROM */
+	bdev_notdef(),			/* 7 */
 	bdev_lkm_dummy(),		/* 8 */
 	bdev_lkm_dummy(),		/* 9 */
 	bdev_lkm_dummy(),		/* 10 */
@@ -142,7 +140,6 @@ cdev_decl(pms);
 #endif
 #include "cy.h"
 cdev_decl(cy);
-cdev_decl(mcd);
 #include "tun.h"
 #include "audio.h"
 #include "video.h"
@@ -241,7 +238,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 36: Logitech mouse */
 	cdev_notdef(),			/* 37: Extended PS/2 mouse */
 	cdev_tty_init(NCY,cy),		/* 38: Cyclom serial port */
-	cdev_disk_init(NMCD,mcd),	/* 39: Mitsumi CD-ROM */
+	cdev_notdef(),			/* 39: Mitsumi CD-ROM */
 	cdev_tun_init(NTUN,tun),	/* 40: network tunnel */
 	cdev_disk_init(NVND,vnd),	/* 41: vnode disk driver */
 	cdev_audio_init(NAUDIO,audio),	/* 42: generic audio I/O */
@@ -392,7 +389,7 @@ int chrtoblktbl[] = {
 	/* 36 */	NODEV,
 	/* 37 */	NODEV,
 	/* 38 */	NODEV,
-	/* 39 */	7,		/* mcd */
+	/* 39 */	NODEV,
 	/* 40 */	NODEV,
 	/* 41 */	14,		/* vnd */
 	/* 42 */	NODEV,

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.187 2011/05/24 20:27:11 matthew Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.188 2011/06/26 23:19:10 tedu Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -278,8 +278,6 @@ cd*	at scsibus?		# SCSI CD-ROM drives
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 #fdc1	at isa? port 0x370
 fd*	at fdc?
-
-#mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 
 # IDE controllers
 pciide* at pci? flags 0x0000
