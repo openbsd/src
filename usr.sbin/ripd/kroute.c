@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.22 2010/07/12 14:35:13 bluhm Exp $ */
+/*	$OpenBSD: kroute.c,v 1.23 2011/06/26 19:19:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -97,9 +97,6 @@ RB_HEAD(kif_tree, kif_node)		kit;
 RB_PROTOTYPE(kif_tree, kif_node, entry, kif_compare)
 RB_GENERATE(kif_tree, kif_node, entry, kif_compare)
 
-struct kroute kr_all_rip_routers;
-int	flag_all_rip_routers = 0;
-
 int
 kif_init(void)
 {
@@ -150,14 +147,6 @@ kr_init(int fs, u_int rdomain)
 
 	if (protect_lo() == -1)
 		return (-1);
-
-	kr_all_rip_routers.prefix.s_addr = inet_addr(ALL_RIP_ROUTERS);
-	kr_all_rip_routers.netmask.s_addr = htonl(INADDR_BROADCAST);
-	kr_all_rip_routers.nexthop.s_addr = htonl(INADDR_LOOPBACK);
-
-	kr_state.fib_sync = 1; /* force addition of multicast route */
-	if (send_rtmsg(kr_state.fd, RTM_ADD, &kr_all_rip_routers) != -1)
-		flag_all_rip_routers = 1;
 
 	kr_state.fib_sync = fs; /* now set correct sync mode */
 	kr_state.rdomain = rdomain;
@@ -243,11 +232,6 @@ void
 kr_shutdown(void)
 {
 	kr_fib_decouple();
-
-	if (flag_all_rip_routers) {
-		kr_state.fib_sync = 1; /* force removal of mulitcast route */
-		(void)send_rtmsg(kr_state.fd, RTM_DELETE, &kr_all_rip_routers);
-	}
 
 	kroute_clear();
 	kif_clear();
