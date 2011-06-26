@@ -31,6 +31,9 @@
 ./etc/firmware/fxp-license
 ./etc/firmware/kue
 ./etc/firmware/kue-license
+./etc/firmware/myx-eth_z8e
+./etc/firmware/myx-ethp_z8e
+./etc/firmware/myx-license
 ./etc/firmware/ral-license
 ./etc/firmware/ral-rt2561
 ./etc/firmware/ral-rt2561s
