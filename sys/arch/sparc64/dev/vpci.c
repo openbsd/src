@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.7 2011/06/26 20:32:36 kettenis Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.8 2011/06/26 21:46:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -36,6 +36,27 @@
 
 extern struct sparc_pci_chipset _sparc_pci_chipset;
 
+struct msi_eq {
+	bus_dmamap_t	meq_map;
+	bus_dma_segment_t meq_seg;
+	caddr_t		meq_va;
+	int		meq_nentries;
+};
+
+struct msi_msg {
+	uint32_t	mm_version;
+	uint8_t		mm_reserved[3];
+	uint8_t		mm_type;
+	uint64_t	mm_sysino;
+	uint64_t	mm_reserved1;
+	uint64_t	mm_stick;
+	uint16_t	mm_reserved2[3];
+	uint16_t	mm_reqid;
+	uint64_t	mm_addr;
+	uint64_t	mm_data;
+	uint64_t	mm_reserved3;
+};
+
 struct vpci_range {
 	u_int32_t	cspace;
 	u_int32_t	child_hi;
@@ -58,17 +79,26 @@ struct vpci_pbm {
 	bus_space_tag_t		vp_iot;
 	bus_dma_tag_t		vp_dmat;
 	struct iommu_state	vp_is;
+
+	struct msi_eq *vp_meq;
+	bus_addr_t vp_msiaddr;
+	int vp_msinum;
+	struct intrhand **vp_msi;
+
+	int vp_flags;
 };
 
 struct vpci_softc {
 	struct device sc_dv;
 	bus_dma_tag_t sc_dmat;
 	bus_space_tag_t sc_bust;
+	int sc_node;
 };
 
 int vpci_match(struct device *, void *, void *);
 void vpci_attach(struct device *, struct device *, void *);
 void vpci_init_iommu(struct vpci_softc *, struct vpci_pbm *);
+void vpci_init_msi(struct vpci_softc *, struct vpci_pbm *);
 int vpci_print(void *, const char *);
 
 pci_chipset_tag_t vpci_alloc_chipset(struct vpci_pbm *, int,
@@ -91,6 +121,13 @@ paddr_t vpci_bus_mmap(bus_space_tag_t, bus_space_tag_t, bus_addr_t, off_t,
 void *vpci_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int, int,
     int (*)(void *), void *, const char *);
 void vpci_intr_ack(struct intrhand *);
+void vpci_msi_ack(struct intrhand *);
+
+int vpci_msi_eq_intr(void *);
+
+struct msi_eq *msi_eq_alloc(bus_dma_tag_t, int);
+void pci_msi_enable(pci_chipset_tag_t, pcitag_t, bus_addr_t, int);
+void msi_eq_free(bus_dma_tag_t t, struct msi_eq *);
 
 int vpci_dmamap_create(bus_dma_tag_t, bus_dma_tag_t, bus_size_t, int,
     bus_size_t, bus_size_t, int, bus_dmamap_t *);
@@ -133,6 +170,7 @@ vpci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = ma->ma_dmatag;
 	sc->sc_bust = ma->ma_bustag;
+	sc->sc_node = ma->ma_node;
 
 	pbm = malloc(sizeof(*pbm), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (pbm == NULL)
@@ -159,12 +197,14 @@ vpci_attach(struct device *parent, struct device *self, void *aux)
 	pbm->vp_pc->bustag = pbm->vp_memt;
 
 	vpci_init_iommu(sc, pbm);
+	vpci_init_msi(sc, pbm);
 
 	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = busranges[0];
 	pba.pba_pc = pbm->vp_pc;
+	pba.pba_flags = pbm->vp_flags;
 	pba.pba_dmat = pbm->vp_dmat;
 	pba.pba_memt = pbm->vp_memt;
 	pba.pba_iot = pbm->vp_iot;
@@ -193,6 +233,64 @@ vpci_init_iommu(struct vpci_softc *sc, struct vpci_pbm *pbm)
 
 	viommu_init(name, is, tsbsize, iobase);
 	is->is_devhandle = pbm->vp_devhandle;
+}
+
+void
+vpci_init_msi(struct vpci_softc *sc, struct vpci_pbm *pbm)
+{
+	u_int32_t msi_addr_range[3];
+	u_int32_t msi_eq_devino[3] = { 0, 36, 24 };
+	uint64_t sysino;
+	int msis, msi_eq_size;
+	int64_t err;
+
+	if (OF_getprop(sc->sc_node, "msi-address-ranges",
+	    msi_addr_range, sizeof(msi_addr_range)) <= 0)
+		return;
+	pbm->vp_msiaddr = msi_addr_range[1];
+	pbm->vp_msiaddr |= ((bus_addr_t)msi_addr_range[0]) << 32;
+
+	msis = getpropint(sc->sc_node, "#msi", 256);
+	pbm->vp_msi = malloc(msis * sizeof(*pbm->vp_msi),
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (pbm->vp_msi == NULL)
+		return;
+
+	msi_eq_size = getpropint(sc->sc_node, "msi-eq-size", 256);
+	pbm->vp_meq = msi_eq_alloc(sc->sc_dmat, msi_eq_size);
+	if (pbm->vp_meq == NULL)
+		goto free_table;
+
+	err = hv_pci_msiq_conf(pbm->vp_devhandle, 0,
+	    pbm->vp_meq->meq_map->dm_segs[0].ds_addr,
+	    pbm->vp_meq->meq_nentries);
+	if (err != H_EOK)
+		goto free_queue;
+
+	OF_getprop(sc->sc_node, "msi-eq-to-devino",
+	    msi_eq_devino, sizeof(msi_eq_devino));
+	err = hv_intr_devino_to_sysino(pbm->vp_devhandle,
+	    msi_eq_devino[2], &sysino);
+	if (err != H_EOK)
+		goto disable_queue;
+
+	if (vpci_intr_establish(sc->sc_bust, sc->sc_bust, sysino,
+	    IPL_HIGH, 0, vpci_msi_eq_intr, pbm, sc->sc_dv.dv_xname) == NULL)
+		goto disable_queue;
+
+	err = hv_pci_msiq_setvalid(pbm->vp_devhandle, 0, PCI_MSIQ_VALID);
+	if (err != H_EOK)
+		panic("vpci: can't enable msi eq");
+
+	pbm->vp_flags |= PCI_FLAGS_MSI_ENABLED;
+	return;
+
+disable_queue:
+	hv_pci_msiq_conf(pbm->vp_devhandle, 0, 0, 0);
+free_queue:
+	msi_eq_free(sc->sc_dmat, pbm->vp_meq);
+free_table:
+	free(pbm->vp_msi, M_DEVBUF);
 }
 
 int
@@ -412,6 +510,7 @@ void *
 vpci_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
     int level, int flags, int (*handler)(void *), void *arg, const char *what)
 {
+	struct vpci_pbm *pbm = t->cookie;
 	uint64_t sysino = INTVEC(ihandle);
 	struct intrhand *ih;
 	int err;
@@ -420,6 +519,38 @@ vpci_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	    NULL, NULL, what);
 	if (ih == NULL)
 		return (NULL);
+
+	if (ihandle & PCI_INTR_MSI) {
+		pci_chipset_tag_t pc = pbm->vp_pc;
+		pcitag_t tag = ihandle & ~PCI_INTR_MSI;
+		int msinum = pbm->vp_msinum++;
+
+		if (ih->ih_name)
+			evcount_attach(&ih->ih_count, ih->ih_name, NULL);
+		else
+			evcount_attach(&ih->ih_count, "unknown", NULL);
+
+		ih->ih_ack = vpci_msi_ack;
+
+		pbm->vp_msi[msinum] = ih;
+		ih->ih_number = msinum;
+
+		pci_msi_enable(pc, tag, pbm->vp_msiaddr, msinum);
+
+		err = hv_pci_msi_setmsiq(pbm->vp_devhandle, msinum, 0, 0);
+		if (err != H_EOK) {
+			printf("pci_msi_setmsiq: err %ld\n", err);
+			return (NULL);
+		}
+
+		err = hv_pci_msi_setvalid(pbm->vp_devhandle, msinum, PCI_MSI_VALID);
+		if (err != H_EOK) {
+			printf("pci_msi_setvalid: err %ld\n", err);
+			return (NULL);
+		}
+
+		return (ih);
+	}
 
 	intr_establish(ih->ih_pil, ih);
 	ih->ih_ack = vpci_intr_ack;
@@ -444,6 +575,131 @@ void
 vpci_intr_ack(struct intrhand *ih)
 {
 	hv_intr_setstate(ih->ih_number, INTR_IDLE);
+}
+
+void
+vpci_msi_ack(struct intrhand *ih)
+{
+}
+
+int
+vpci_msi_eq_intr(void *arg)
+{
+	struct vpci_pbm *pbm = arg;
+	struct msi_eq *meq = pbm->vp_meq;
+	struct msi_msg *msg;
+	uint64_t head, tail;
+	struct intrhand *ih;
+	int err;
+
+	err = hv_pci_msiq_gethead(pbm->vp_devhandle, 0, &head);
+	if (err != H_EOK)
+		printf("%s: hv_pci_msiq_gethead: %d\n", __func__, err);
+
+	err = hv_pci_msiq_gettail(pbm->vp_devhandle, 0, &tail);
+	if (err != H_EOK)
+		printf("%s: hv_pci_msiq_gettail: %d\n", __func__, err);
+
+	if (head == tail)
+		return (0);
+
+	while (head != tail) {
+		msg = (struct msi_msg *)(meq->meq_va + head);
+		ih = pbm->vp_msi[msg->mm_data];
+		err = hv_pci_msi_setstate(pbm->vp_devhandle,
+		    msg->mm_data, PCI_MSISTATE_IDLE);
+		if (err != H_EOK)
+			printf("%s: hv_pci_msiq_setstate: %d\n", __func__, err);
+
+		send_softint(-1, ih->ih_pil, ih);
+
+		head += sizeof(struct msi_msg);
+		head &= ((meq->meq_nentries * sizeof(struct msi_msg)) - 1);
+	}
+
+	err = hv_pci_msiq_sethead(pbm->vp_devhandle, 0, head);
+	if (err != H_EOK)
+		printf("%s: pci_msiq_sethead: %d\n", __func__, err);
+
+	return (1);
+}
+
+void
+pci_msi_enable(pci_chipset_tag_t pc, pcitag_t tag, bus_addr_t addr, int vec)
+{
+	pcireg_t reg;
+	int off;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
+		panic("%s: no msi capability", __func__);
+
+	if (reg & PCI_MSI_MC_C64) {
+		pci_conf_write(pc, tag, off + PCI_MSI_MA, addr);
+		pci_conf_write(pc, tag, off + PCI_MSI_MAU32, 0);
+		pci_conf_write(pc, tag, off + PCI_MSI_MD64, vec);
+	} else {
+		pci_conf_write(pc, tag, off + PCI_MSI_MA, addr);
+		pci_conf_write(pc, tag, off + PCI_MSI_MD32, vec);
+	}
+	pci_conf_write(pc, tag, off, reg | PCI_MSI_MC_MSIE);
+}
+
+struct msi_eq *
+msi_eq_alloc(bus_dma_tag_t t, int msi_eq_size)
+{
+	struct msi_eq *meq;
+	bus_size_t size;
+	caddr_t va;
+	int nsegs;
+
+	meq = malloc(sizeof(struct msi_eq), M_DEVBUF, M_NOWAIT);
+	if (meq == NULL)
+		return NULL;
+
+	size = roundup(msi_eq_size * sizeof(struct msi_msg), PAGE_SIZE);
+
+	if (bus_dmamap_create(t, size, 1, size, 0,
+	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &meq->meq_map) != 0)
+		return (NULL);
+
+	if (bus_dmamem_alloc(t, size, PAGE_SIZE, 0, &meq->meq_seg, 1,
+	    &nsegs, BUS_DMA_NOWAIT) != 0)
+		goto destroy;
+
+	if (bus_dmamem_map(t, &meq->meq_seg, 1, size, &va,
+	    BUS_DMA_NOWAIT) != 0)
+		goto free;
+
+	if (bus_dmamap_load(t, meq->meq_map, va, size, NULL,
+	    BUS_DMA_NOWAIT) != 0)
+		goto unmap;
+
+	meq->meq_va = va;
+	meq->meq_nentries = msi_eq_size;
+	return (meq);
+
+unmap:
+	bus_dmamem_unmap(t, va, size);
+free:
+	bus_dmamem_free(t, &meq->meq_seg, 1);
+destroy:
+	bus_dmamap_destroy(t, meq->meq_map);
+
+	return (NULL);
+}
+
+void
+msi_eq_free(bus_dma_tag_t t, struct msi_eq *meq)
+{
+	bus_size_t size;
+
+	size = roundup(meq->meq_nentries * sizeof(struct msi_msg), PAGE_SIZE);
+
+	bus_dmamap_unload(t, meq->meq_map);
+	bus_dmamem_unmap(t, meq->meq_va, size);
+	bus_dmamem_free(t, &meq->meq_seg, 1);
+	bus_dmamap_destroy(t, meq->meq_map);
+	free(meq, M_DEVBUF);
 }
 
 const struct cfattach vpci_ca = {
