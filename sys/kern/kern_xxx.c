@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_xxx.c,v 1.18 2010/07/28 16:15:25 deraadt Exp $	*/
+/*	$OpenBSD: kern_xxx.c,v 1.19 2011/06/26 22:40:00 deraadt Exp $	*/
 /*	$NetBSD: kern_xxx.c,v 1.32 1996/04/22 01:38:41 christos Exp $	*/
 
 /*
@@ -73,8 +73,6 @@ sys_reboot(struct proc *p, void *v, register_t *retval)
 
 	sched_stop_secondary_cpus();
 #endif
-
-	if_downall();
 
 	boot(SCARG(uap, opt));
 

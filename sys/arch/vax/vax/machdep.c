@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.114 2011/06/05 19:41:08 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.115 2011/06/26 22:40:00 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -74,6 +74,7 @@
 
 #include <dev/cons.h>
 
+#include <net/if.h>
 #include <uvm/uvm.h>
 
 #include <net/if.h>
@@ -540,6 +541,7 @@ boot(howto)
 		 */
 		resettodr();
 	}
+	if_downall();
 
 	uvm_shutdown();
 	splhigh();		/* extreme priority */

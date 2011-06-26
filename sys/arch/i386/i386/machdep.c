@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.502 2011/06/26 21:46:03 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.503 2011/06/26 22:39:59 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -99,6 +99,7 @@
 #include <dev/cons.h>
 #include <stand/boot/bootarg.h>
 
+#include <net/if.h>
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_swap.h>
 
@@ -2434,6 +2435,7 @@ boot(int howto)
 			printf("WARNING: not updating battery clock\n");
 		}
 	}
+	if_downall();
 
 	delay(4*1000000);	/* XXX */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.125 2011/06/05 19:41:07 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.126 2011/06/26 22:40:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -115,6 +115,7 @@
 #include <ddb/db_var.h>
 #endif
 
+#include <net/if.h>
 #include <uvm/uvm.h>
 
 /* the following is used externally (sysctl_hw) */
@@ -480,6 +481,7 @@ boot(howto)
 			printf("WARNING: not updating battery clock\n");
 		}
 	}
+	if_downall();
 
 	uvm_shutdown();
 	splhigh();			/* Disable interrupts. */

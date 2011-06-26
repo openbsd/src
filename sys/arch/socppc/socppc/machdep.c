@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.30 2011/06/05 19:41:08 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.31 2011/06/26 22:40:00 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/tty.h>
 #include <sys/user.h>
 
+#include <net/if.h>
 #include <uvm/uvm.h>
 
 #include <machine/bat.h>
@@ -1062,6 +1063,7 @@ boot(int howto)
 			printf("WARNING: not updating battery clock\n");
 		}
 	}
+	if_downall();
 
 	uvm_shutdown();
 	splhigh();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.127 2011/06/05 19:41:07 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.128 2011/06/26 22:40:00 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -33,25 +33,30 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/signalvar.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/sched.h>
 #include <sys/buf.h>
+#include <sys/reboot.h>
+#include <sys/device.h>
+#include <sys/conf.h>
+#include <sys/file.h>
 #include <sys/timeout.h>
-#include <sys/exec.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/mount.h>
 #include <sys/msgbuf.h>
-#include <sys/proc.h>
-#include <sys/signalvar.h>
-#include <sys/reboot.h>
-#include <sys/syscallargs.h>
-#include <sys/syslog.h>
-#include <sys/extent.h>
-#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
 #include <sys/user.h>
-#include <sys/conf.h>
+#include <sys/exec.h>
+#include <sys/exec_ecoff.h>
+#include <sys/sysctl.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
 
+#include <net/if.h>
 #include <uvm/uvm.h>
 
 #include <dev/cons.h>
@@ -854,6 +859,7 @@ boot(int howto)
 			printf("WARNING: not updating battery clock\n");
 		}
 	}
+	if_downall();
 
 	uvm_shutdown();
 	splhigh();

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.132 2011/06/05 19:41:06 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.133 2011/06/26 22:39:58 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -63,6 +63,7 @@
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/socket.h>
 #include <sys/sched.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
@@ -78,10 +79,13 @@
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/exec_ecoff.h>
-#include <uvm/uvm.h>
 #include <sys/sysctl.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+
+#include <net/if.h>
+#include <uvm/uvm.h>
+
 #include <machine/kcore.h>
 #ifndef NO_IEEE
 #include <machine/fpu.h>
@@ -1013,6 +1017,7 @@ boot(howto)
 			printf("WARNING: not updating battery clock\n");
 		}
 	}
+	if_downall();
 
 	uvm_shutdown();
 	splhigh();		/* Disable interrupts. */

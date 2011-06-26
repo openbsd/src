@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.202 2011/06/05 19:41:06 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.203 2011/06/26 22:39:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -52,6 +52,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
+#include <net/if.h>
 #include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
 #include <uvm/uvm_swap.h>
@@ -899,6 +900,7 @@ boot(int howto)
 			else
 				printf("WARNING: not updating battery clock\n");
 		}
+		if_downall();
 
 		/* XXX probably save howto into stable storage */
 
