@@ -4,8 +4,8 @@
 # generated from:
 #
 #	OpenBSD: etc.sparc/MAKEDEV.md,v 1.46 2010/11/19 20:55:48 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.53 2010/09/30 15:27:54 claudio Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.54 2011/04/18 16:52:10 thib Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
 #

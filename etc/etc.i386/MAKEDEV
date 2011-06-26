@@ -3,9 +3,9 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.i386/MAKEDEV.md,v 1.58 2010/09/30 15:27:54 claudio Exp 
-#	OpenBSD: MAKEDEV.common,v 1.53 2010/09/30 15:27:54 claudio Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
+#	OpenBSD: etc.i386/MAKEDEV.md,v 1.59 2011/06/26 23:28:23 tedu Exp 
+#	OpenBSD: MAKEDEV.common,v 1.55 2011/06/26 23:28:23 tedu Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
 #
@@ -33,7 +33,6 @@
 #	ccd*	Concatenated disk devices
 #	cd*	ATAPI and SCSI CD-ROM drives
 #	fd*	Floppy disk drives (3 1/2", 5 1/4")
-#	mcd*	Mitsumi CD-ROM drives
 #	raid*	RAIDframe disk devices
 #	rd*	"rd" pseudo-disks
 #	sd*	SCSI disks, including flopticals
@@ -559,10 +558,6 @@ rd*)
 	dodisk2 rd $U 17 47 $U 0
 	;;
 
-mcd*)
-	dodisk2 mcd $U 7 39 $U 0
-	;;
-
 fd*)
 	typnam=$U${i#fd[01]*}
 	case $typnam in
@@ -614,7 +609,7 @@ all)
 	R audio2 uk0 random joy0 joy1 lpa0 lpa1 lpa2 lpt0 lpt1 lpt2
 	R lkm tty00 tty01 tty02 tty03 ttyc0 ttyc1 ttyc2 ttyc3 ttyc4
 	R ttyc5 ttyc6 ttyc7 apm crypto pf pctr systrace wd0 wd1 wd2
-	R wd3 raid0 raid1 raid2 raid3 std st0 st1 fd mcd0
+	R wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
 	;;
 
 wd*|sd*|raid*|ccd*)
