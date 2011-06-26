@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.211 2011/04/22 21:49:29 krw Exp $
+.\"	$OpenBSD: options.4,v 1.212 2011/06/26 23:53:06 tedu Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: April 22 2011 $
+.Dd $Mdocdate: June 26 2011 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -540,12 +540,6 @@ in
 See
 .Xr altq 9
 for details on ALTQ.
-.It Cd option ALTQ_NOPCC
-Disables use of processor cycle counter (e.g., Pentium TSC on i386 and
-PCC on alpha) to measure time in ALTQ.
-This option should be defined for a non-Pentium i386 CPU which does not
-have TSC, SMP (per-CPU counters are not in sync), or power management
-which affects processor cycle counter.
 .It Cd option ALTQ_RIO
 Enables ALTQ's RIO (RED with In/Out) module.
 The original RIO has 2 sets of RED parameters; one for in-profile
