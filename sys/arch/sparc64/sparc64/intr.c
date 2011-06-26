@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.40 2011/06/24 19:08:46 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.41 2011/06/26 21:35:12 deraadt Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -131,7 +131,7 @@ intr_list_handler(void *arg)
 {
 	struct cpu_info *ci = curcpu();
 	struct intrhand *ih = arg;
-	int claimed = 0;
+	int claimed = 0, ipl = ci->ci_handled_intr_level;
 
 	while (ih) {
 		sparc_wrpr(pil, ih->ih_pil, 0);
@@ -144,6 +144,8 @@ intr_list_handler(void *arg)
 
 		ih = ih->ih_next;
 	}
+	sparc_wrpr(pil, ipl, 0);
+	ci->ci_handled_intr_level = ipl;
 
 	return (claimed);
 }
