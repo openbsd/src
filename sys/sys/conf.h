@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.110 2011/01/25 20:03:35 jakemsr Exp $	*/
+/*	$OpenBSD: conf.h,v 1.111 2011/06/27 04:57:36 matthew Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -565,8 +565,8 @@ extern int nchrtoblktbl;
 
 struct bdevsw *bdevsw_lookup(dev_t);
 struct cdevsw *cdevsw_lookup(dev_t);
-int	chrtoblk(dev_t);
-int	blktochr(dev_t);
+dev_t	chrtoblk(dev_t);
+dev_t	blktochr(dev_t);
 int	iskmemdev(dev_t);
 int	iszerodev(dev_t);
 dev_t	getnulldev(void);
