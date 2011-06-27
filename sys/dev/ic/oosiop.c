@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.18 2011/04/03 12:42:36 krw Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.19 2011/06/27 21:33:20 miod Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -242,6 +242,9 @@ oosiop_attach(struct oosiop_softc *sc)
 	if (sc->sc_minperiod < 25)
 		sc->sc_minperiod = 25;	/* limit to 10MB/s */
 
+	mtx_init(&sc->sc_cb_mtx, IPL_BIO);
+	scsi_iopool_init(&sc->sc_iopool, sc, oosiop_cb_alloc, oosiop_cb_free);
+
 	printf(": NCR53C700%s rev %d, %dMHz\n",
 	    sc->sc_chip == OOSIOP_700_66 ? "-66" : "",
 	    oosiop_read_1(sc, OOSIOP_CTEST7) >> 4,
@@ -267,6 +270,7 @@ oosiop_attach(struct oosiop_softc *sc)
 	sc->sc_link.openings = 1;	/* XXX */
 	sc->sc_link.adapter_buswidth = OOSIOP_NTGT;
 	sc->sc_link.adapter_target = sc->sc_id;
+	sc->sc_link.pool = &sc->sc_iopool;
 	sc->sc_link.quirks = ADEV_NODOORLOCK;
 
 	bzero(&saa, sizeof(saa));
