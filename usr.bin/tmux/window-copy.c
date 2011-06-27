@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.72 2011/05/18 20:24:29 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.73 2011/06/27 00:04:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -170,7 +170,6 @@ window_copy_init(struct window_pane *wp)
 	data->searchtype = WINDOW_COPY_OFF;
 	data->searchstr = NULL;
 
-	wp->flags |= PANE_FREEZE;
 	if (wp->fd != -1)
 		bufferevent_disable(wp->event, EV_READ|EV_WRITE);
 
@@ -234,7 +233,6 @@ window_copy_free(struct window_pane *wp)
 {
 	struct window_copy_mode_data	*data = wp->modedata;
 
-	wp->flags &= ~PANE_FREEZE;
 	if (wp->fd != -1)
 		bufferevent_enable(wp->event, EV_READ|EV_WRITE);
 
