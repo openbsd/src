@@ -1136,7 +1136,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/isavar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/itvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/madreg.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/mcdreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/opti.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/pasreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/pcdisplayvar.ph

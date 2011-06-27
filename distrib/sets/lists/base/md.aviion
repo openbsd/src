@@ -1094,7 +1094,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/isa/isavar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/isa/itvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/isa/madreg.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/dev/isa/mcdreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/isa/opti.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/isa/pasreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/isa/pcdisplayvar.ph

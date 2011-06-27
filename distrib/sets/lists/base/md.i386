@@ -1121,7 +1121,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/isa/isavar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/isa/itvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/isa/madreg.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/isa/mcdreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/isa/opti.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/isa/pasreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/isa/pcdisplayvar.ph

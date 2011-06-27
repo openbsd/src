@@ -411,7 +411,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/isavar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/itvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/madreg.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/mcdreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/opti.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/pasreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/pcdisplayvar.ph

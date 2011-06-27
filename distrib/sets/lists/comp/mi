@@ -426,7 +426,6 @@
 ./usr/include/dev/isa/isavar.h
 ./usr/include/dev/isa/itvar.h
 ./usr/include/dev/isa/madreg.h
-./usr/include/dev/isa/mcdreg.h
 ./usr/include/dev/isa/opti.h
 ./usr/include/dev/isa/pasreg.h
 ./usr/include/dev/isa/pcdisplayvar.h

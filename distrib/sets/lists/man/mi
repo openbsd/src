@@ -1691,7 +1691,6 @@
 ./usr/share/man/man4/i386/kmem.4
 ./usr/share/man/man4/i386/le.4
 ./usr/share/man/man4/i386/lms.4
-./usr/share/man/man4/i386/mcd.4
 ./usr/share/man/man4/i386/mem.4
 ./usr/share/man/man4/i386/mms.4
 ./usr/share/man/man4/i386/mpbios.4
