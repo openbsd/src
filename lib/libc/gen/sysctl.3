@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.202 2011/03/12 04:54:28 guenther Exp $
+.\"	$OpenBSD: sysctl.3,v 1.203 2011/06/27 17:43:03 naddy Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 12 2011 $
+.Dd $Mdocdate: June 27 2011 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -290,6 +290,7 @@ The changeable column shows whether a process with appropriate
 privileges may change the value.
 .Bl -column "Second level nameXXXXXX" integerXXX -offset indent
 .It Sy Second level name	Type	Changeable
+.It Dv HW_ALLOWPOWERDOWN No "	integer	yes"
 .It Dv HW_BYTEORDER No "	integer	no"
 .It Dv HW_CPUSPEED No "	integer	no"
 .It Dv HW_DISKCOUNT No "	integer	no"
@@ -313,6 +314,14 @@ privileges may change the value.
 .It Dv HW_VERSION No "	string	no"
 .El
 .Bl -tag -width "123456"
+.It Dv HW_ALLOWPOWERDOWN
+Some machines generate an interrupt when the power button is pressed
+and a driver can catch that interrupt.
+When this variable is set, such an event will cause the system to
+perform a regular shutdown and power off the machine.
+When running with a
+.Xr securelevel 7
+greater than 0, this variable may not be changed.
 .It Dv HW_BYTEORDER
 The byteorder (4321 or 1234).
 .It Dv HW_CPUSPEED
