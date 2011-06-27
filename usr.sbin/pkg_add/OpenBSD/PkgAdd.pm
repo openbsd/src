@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.22 2011/06/20 09:46:23 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.23 2011/06/27 12:17:38 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -76,7 +76,7 @@ sub hash_files
 	my ($self, $sha, $state) = @_;
 	return if $self->{link} or $self->{symlink} or $self->{nochecksum};
 	if (defined $self->{d}) {
-		$sha->{${$self->{d}}} = $self;
+		$sha->{$self->{d}->key} = $self;
 	}
 }
 
@@ -84,8 +84,8 @@ sub tie_files
 {
 	my ($self, $sha, $state) = @_;
 	return if $self->{link} or $self->{symlink} or $self->{nochecksum};
-	if (defined $sha->{${$self->{d}}}) {
-		my $tied = $sha->{${$self->{d}}};
+	if (defined $sha->{$self->{d}->key}) {
+		my $tied = $sha->{$self->{d}->key};
 		# don't tie if there's a problem with the file
 		return unless -f $tied->realname($state);
 		# and do a sanity check that this file wasn't altered
