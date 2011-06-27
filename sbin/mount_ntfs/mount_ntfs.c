@@ -1,4 +1,4 @@
-/* $OpenBSD: mount_ntfs.c,v 1.13 2011/06/27 19:47:22 tedu Exp $ */
+/* $OpenBSD: mount_ntfs.c,v 1.14 2011/06/27 23:40:07 tedu Exp $ */
 /* $NetBSD: mount_ntfs.c,v 1.9 2003/05/03 15:37:08 christos Exp $ */
 
 /*
@@ -34,39 +34,26 @@
  * Id: mount_ntfs.c,v 1.1.1.1 1999/02/03 03:51:19 semenu Exp
  */
 
-#include <sys/cdefs.h>
 #include <sys/param.h>
-#define NTFS
 #include <sys/mount.h>
 #include <sys/stat.h>
-#include <ctype.h>
+
 #include <err.h>
-#include <grp.h>
-#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sysexits.h>
 #include <unistd.h>
-#include <util.h>
 
 #include <mntopts.h>
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
-#ifdef MNT_GETARGS
-	MOPT_GETARGS,
-#endif
 	{ NULL }
 };
 
-#ifndef __dead2
-#define __dead2 __attribute__((__noreturn__))
-#endif
-
-static void	usage(void) __dead2;
-mode_t a_mask(char *);
-int main(int, char **);
+static __dead void usage(void);
+static mode_t a_mask(char *);
 
 int
 main(int argc, char *argv[])
@@ -77,7 +64,7 @@ main(int argc, char *argv[])
 	char *dev, dir[MAXPATHLEN];
 
 	mntflags = set_gid = set_uid = set_mask = 0;
-	(void)memset(&args, '\0', sizeof(args));
+	memset(&args, 0, sizeof(args));
 
 	while ((c = getopt(argc, argv, "aiu:g:m:o:")) !=  -1) {
 		switch (c) {
@@ -102,14 +89,11 @@ main(int argc, char *argv[])
 		case 'o':
 			getmntopts(optarg, mopts, &mntflags);
 			break;
-		case '?':
 		default:
 			usage();
 			break;
 		}
 	}
-
-	mntflags |= MNT_RDONLY;
 
 	if (optind + 2 != argc)
 		usage();
@@ -119,7 +103,9 @@ main(int argc, char *argv[])
 		err(1, "realpath %s", argv[optind + 1]);
 
 	args.fspec = dev;
-	args.export_info.ex_root = 65534;	/* unchecked anyway on DOS fs */
+	args.export_info.ex_root = 65534;	/* unchecked anyway on NTFS */
+
+	mntflags |= MNT_RDONLY;
 	if (mntflags & MNT_RDONLY)
 		args.export_info.ex_flags = MNT_EXRDONLY;
 	else
@@ -138,18 +124,10 @@ main(int argc, char *argv[])
 	if (mount(MOUNT_NTFS, dir, mntflags, &args) < 0)
 		err(EX_OSERR, "%s on %s", dev, dir);
 
-#ifdef MNT_GETARGS
-	if (mntflags & MNT_GETARGS) {
-		char buf[1024];
-		(void)snprintb(buf, sizeof(buf), NTFS_MFLAG_BITS, args.flag);
-		printf("uid=%d, gid=%d, mode=0%o, flags=%s\n", args.uid,
-		    args.gid, args.mode, buf);
-	}
-#endif
-	exit (0);
+	exit(0);
 }
 
-mode_t
+static mode_t
 a_mask(char *s)
 {
 	int done, rv;
