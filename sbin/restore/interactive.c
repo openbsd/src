@@ -1,4 +1,4 @@
-/*	$OpenBSD: interactive.c,v 1.26 2009/10/27 23:59:34 deraadt Exp $	*/
+/*	$OpenBSD: interactive.c,v 1.27 2011/06/27 23:40:57 tedu Exp $	*/
 /*	$NetBSD: interactive.c,v 1.10 1997/03/19 08:42:52 lukem Exp $	*/
 
 /*
@@ -527,7 +527,7 @@ printlist(char *name, char *basename)
 		while ((dp = rst_readdir(dirp)))
 			entries++;
 		rst_closedir(dirp);
-		list = (struct afile *)calloc(entries, sizeof(struct afile));
+		list = calloc(entries, sizeof(struct afile));
 		if (list == NULL) {
 			fprintf(stderr, "ls: out of memory\n");
 			return;

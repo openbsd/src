@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.32 2009/10/27 23:59:34 deraadt Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.33 2011/06/27 23:40:57 tedu Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -407,7 +407,7 @@ putent(struct direct *dp)
 		(void)fwrite(dirbuf, 1, DIRBLKSIZ, df);
 		dirloc = 0;
 	}
-	memcpy(dirbuf + dirloc, dp, (long)dp->d_reclen);
+	memcpy(dirbuf + dirloc, dp, dp->d_reclen);
 	prev = dirloc;
 	dirloc += dp->d_reclen;
 }
@@ -428,7 +428,7 @@ static void
 dcvt(struct odirect *odp, struct direct *ndp)
 {
 
-	memset(ndp, 0, (size_t)(sizeof *ndp));
+	memset(ndp, 0, sizeof *ndp);
 	if (Bcvt)
 	    ndp->d_ino = swap16(odp->d_ino);
 	else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.38 2009/10/27 23:59:34 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.39 2011/06/27 23:40:57 tedu Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -253,7 +253,7 @@ setup(void)
 		errx(1, "Cannot find file removal list");
 	maxino = (spcl.c_count * TP_BSIZE * NBBY) + 1;
 	Dprintf(stdout, "maxino = %d\n", maxino);
-	map = calloc((unsigned)1, (unsigned)howmany(maxino, NBBY));
+	map = calloc(1, howmany(maxino, NBBY));
 	if (map == NULL)
 		panic("no memory for active inode map\n");
 	usedinomap = map;
@@ -261,7 +261,7 @@ setup(void)
 	getfile(xtrmap, xtrmapskip);
 	if (spcl.c_type != TS_BITS)
 		errx(1, "Cannot find file dump list");
-	map = calloc((size_t)1, (size_t)howmany(maxino, NBBY));
+	map = calloc(1, howmany(maxino, NBBY));
 	if (map == NULL)
 		panic("no memory for file dump list\n");
 	dumpmap = map;
@@ -819,7 +819,7 @@ readtape(char *buf)
 	int cnt, seek_failed;
 
 	if (blkcnt < numtrec) {
-		memcpy(buf, &tapebuf[(blkcnt++ * TP_BSIZE)], (long)TP_BSIZE);
+		memcpy(buf, &tapebuf[(blkcnt++ * TP_BSIZE)], TP_BSIZE);
 		blksread++;
 		tpblksread++;
 		return;
@@ -919,10 +919,10 @@ getmore:
 			panic("partial block read: %d should be %d\n",
 				rd, ntrec * TP_BSIZE);
 		terminateinput();
-		memcpy(&tapebuf[rd], &endoftapemark, (long)TP_BSIZE);
+		memcpy(&tapebuf[rd], &endoftapemark, TP_BSIZE);
 	}
 	blkcnt = 0;
-	memcpy(buf, &tapebuf[(blkcnt++ * TP_BSIZE)], (long)TP_BSIZE);
+	memcpy(buf, &tapebuf[(blkcnt++ * TP_BSIZE)], TP_BSIZE);
 	blksread++;
 	tpblksread++;
 }
@@ -1011,7 +1011,7 @@ gethead(struct s_spcl *buf)
 		swap_old_header(&u_ospcl.s_ospcl);
 	}
 
-	memset(buf, 0, (long)TP_BSIZE);
+	memset(buf, 0, TP_BSIZE);
 	buf->c_type = u_ospcl.s_ospcl.c_type;
 	buf->c_date = u_ospcl.s_ospcl.c_date;
 	buf->c_ddate = u_ospcl.s_ospcl.c_ddate;
@@ -1027,7 +1027,7 @@ gethead(struct s_spcl *buf)
 	buf->c_atime = u_ospcl.s_ospcl.c_odinode.odi_atime;
 	buf->c_mtime = u_ospcl.s_ospcl.c_odinode.odi_mtime;
 	buf->c_count = u_ospcl.s_ospcl.c_count;
-	memcpy(buf->c_addr, u_ospcl.s_ospcl.c_addr, (long)256);
+	memcpy(buf->c_addr, u_ospcl.s_ospcl.c_addr, 256);
 	buf->c_magic = FS_UFS2_MAGIC;
 good:
 	switch (buf->c_type) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: symtab.c,v 1.18 2009/10/27 23:59:34 deraadt Exp $	*/
+/*	$OpenBSD: symtab.c,v 1.19 2011/06/27 23:40:57 tedu Exp $	*/
 /*	$NetBSD: symtab.c,v 1.10 1997/03/19 08:42:54 lukem Exp $	*/
 
 /*
@@ -190,7 +190,7 @@ myname(struct entry *ep)
 
 	for (cp = &namebuf[MAXPATHLEN - 2]; cp > &namebuf[ep->e_namlen]; ) {
 		cp -= ep->e_namlen;
-		memcpy(cp, ep->e_name, (long)ep->e_namlen);
+		memcpy(cp, ep->e_name, ep->e_namlen);
 		if (ep == lookupino(ROOTINO))
 			return (cp);
 		*(--cp) = '/';
@@ -217,9 +217,9 @@ addentry(char *name, ino_t inum, int type)
 	if (freelist != NULL) {
 		np = freelist;
 		freelist = np->e_next;
-		memset(np, 0, (long)sizeof(struct entry));
+		memset(np, 0, sizeof(struct entry));
 	} else {
-		np = (struct entry *)calloc(1, sizeof(struct entry));
+		np = calloc(1, sizeof(struct entry));
 		if (np == NULL)
 			panic("no memory to extend symbol table\n");
 	}
@@ -388,7 +388,7 @@ savename(char *name)
 		strtblhdr[len / STRTBLINCR].next = np->next;
 		cp = (char *)np;
 	} else {
-		cp = malloc((unsigned)allocsize(len));
+		cp = malloc(allocsize(len));
 		if (cp == NULL)
 			panic("no space for string table\n");
 	}
@@ -464,7 +464,7 @@ dumpsymtable(char *filename, long checkpt)
 	stroff = 0;
 	for (i = ROOTINO; i <= maxino; i++) {
 		for (ep = lookupino(i); ep != NULL; ep = ep->e_links) {
-			memcpy(tep, ep, (long)sizeof(struct entry));
+			memcpy(tep, ep, sizeof(struct entry));
 			tep->e_name = (char *)stroff;
 			stroff += allocsize(ep->e_namlen);
 			tep->e_parent = (struct entry *)ep->e_parent->e_index;
@@ -527,9 +527,8 @@ initsymtable(char *filename)
 	Vprintf(stdout, "Initialize symbol table.\n");
 	if (filename == NULL) {
 		entrytblsize = maxino / HASHFACTOR;
-		entry = (struct entry **)
-			calloc((unsigned)entrytblsize, sizeof(struct entry *));
-		if (entry == (struct entry **)NULL)
+		entry = calloc(entrytblsize, sizeof(struct entry *));
+		if (entry == NULL)
 			panic("no memory for entry table\n");
 		ep = addentry(".", ROOTINO, NODE);
 		ep->e_flags |= NEW;
@@ -544,11 +543,11 @@ initsymtable(char *filename)
 		panic("cannot stat symbol table file %s\n", filename);
 	}
 	tblsize = stbuf.st_size - sizeof(struct symtableheader);
-	base = calloc((unsigned)tblsize, sizeof(char));
+	base = calloc(tblsize, sizeof(char));
 	if (base == NULL)
 		panic("cannot allocate space for symbol table\n");
-	if (read(fd, base, (int)tblsize) < 0 ||
-	    read(fd, (char *)&hdr, sizeof(struct symtableheader)) < 0) {
+	if (read(fd, base, tblsize) < 0 ||
+	    read(fd, &hdr, sizeof(struct symtableheader)) < 0) {
 		warn("read");
 		panic("cannot read symbol table file %s\n", filename);
 	}
