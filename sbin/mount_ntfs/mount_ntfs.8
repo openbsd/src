@@ -1,4 +1,4 @@
-.\" $OpenBSD: mount_ntfs.8,v 1.11 2010/10/13 15:40:31 jmc Exp $
+.\" $OpenBSD: mount_ntfs.8,v 1.12 2011/06/27 19:47:22 tedu Exp $
 .\" $NetBSD: mount_ntfs.8,v 1.13 2003/02/14 16:21:48 grant Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
@@ -32,7 +32,7 @@
 .\"
 .\"	Id: mount_ntfs.8,v 1.3 1999/05/04 11:34:33 jkoshy Exp
 .\"
-.Dd $Mdocdate: October 13 2010 $
+.Dd $Mdocdate: June 27 2011 $
 .Dt MOUNT_NTFS 8
 .Os
 .Sh NAME
@@ -55,12 +55,14 @@ command attaches the NTFS filesystem residing on the device
 to the global filesystem namespace at the location
 indicated by
 .Pa node .
-This command is normally executed by
+This command is invoked by
 .Xr mount 8
-at boot time, but can be used by any user to mount an
-NTFS file system on any directory that they own (provided,
-of course, that they have appropriate access to the device that
-contains the file system).
+when using the syntax
+.Bd -ragged -offset 4h
+.Nm mount Op options
+-t ntfs
+.Ar special Ar node
+.Ed
 .Pp
 The
 .Ar special
@@ -80,6 +82,7 @@ partition.
 .Pp
 The supported NTFS versions include both NTFS4, as used by Microsoft
 Windows NT 4.0, and NTFS5, as used by Microsoft Windows 2000 and XP.
+Only read-only operation is permitted, which is be automatically enforced.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -134,37 +137,12 @@ To read directory raw data:
 .Bd -literal -offset indent
 # cat /mnt/foodir:\e$INDEX_ROOT:\e$I30
 .Ed
-.Ss Limited support for writing
-There is limited writing ability for files.
-Limitations:
-.Pp
-.Bl -bullet -compact
-.It
-file must be non-resident
-.It
-file must
-.Em not
-contain any holes (uninitialized areas)
-.It
-file can't be compressed
-.El
-.Pp
-Note that it's not currently possible to create or remove files
-on NTFS filesystems.
-.Pp
-.Sy Warning :
-do not mount NTFS filesystems read-write.
-The write support is not very useful and is not tested well.
-It's not safe to write to any file on NTFS; you might damage the filesystem.
-Unless you want to debug NTFS filesystem code, mount the NTFS filesystem
-read-only.
 .Sh SEE ALSO
 .Xr mount 2 ,
 .Xr unmount 2 ,
 .Xr disklabel 5 ,
 .Xr fstab 5 ,
 .Xr disklabel 8 ,
-.\" .Xr mbrlabel 8 ,
 .Xr mount 8
 .Sh HISTORY
 Support for NTFS first appeared in
@@ -185,23 +163,7 @@ The
 port was done by
 .An Julien Bordet Aq zejames@greyhats.org .
 .Sh BUGS
-The write support should be enhanced to actually be able to change
-file size, and to create and remove files and directories.
-It's not very useful right now.
-.Pp
-If the attempt to mount NTFS gives you an error like this:
-.Bd -literal -offset indent
-# mount -t ntfs /dev/wd0k /mnt
-mount_ntfs: /dev/wd0k on /mnt: Invalid argument
-.Ed
-.Pp
-make sure that the appropriate partition has the correct entry in the
-disk label, particularly that the partition offset is correct.
-If the NTFS partition is the first partition on the disk, the
-offset should be '63' (see
-.Xr disklabel 8 ) .
-.\" .Xr mbrlabel 8
-.\" could help you to set up the disk label correctly.
+Only read support is enabled.
 .Pp
 If the NTFS partition is marked as
 .Ql dynamic
