@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.41 2011/06/26 21:35:12 deraadt Exp $	*/
+/*	$OpenBSD: intr.c,v 1.42 2011/06/27 17:04:46 jsing Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -205,7 +205,8 @@ intr_establish(int level, struct intrhand *ih)
 		/* No interrupt already there, just put handler in place. */
 		intrlev[ih->ih_number] = ih;
 	} else {
-		struct intrhand *nih;
+		struct intrhand *nih, *pih;
+		int ipl;
 
 		/*
 		 * Interrupt is already there.  We need to create a
@@ -230,16 +231,31 @@ intr_establish(int level, struct intrhand *ih)
 			q->ih_ack = NULL;
 
 			intrlev[ih->ih_number] = q = nih;
-		} else {
-			if (ih->ih_pil < q->ih_pil)
-				q->ih_pil = ih->ih_pil;
-		}
+		} else
+			q->ih_pil = min(q->ih_pil, ih->ih_pil);
 
 		ih->ih_ack = NULL;
 
-		/* Add the ih to the head of the list */
-		ih->ih_next = q->ih_arg;
-		q->ih_arg = ih;
+		/* Add ih to list in priority order. */
+		pih = q;
+		nih = pih->ih_arg;
+		ipl = nih->ih_pil;
+		while (nih && ih->ih_pil <= nih->ih_pil) {
+			ipl = nih->ih_pil;
+			pih = nih;
+			nih = nih->ih_next;
+		}
+#if DEBUG
+		printf("intr_establish: inserting pri %i after %i\n",
+		    ih->ih_pil, ipl);
+#endif
+		if (pih == q) {
+			ih->ih_next = pih->ih_arg;
+			pih->ih_arg = ih;
+		} else {
+			ih->ih_next = pih->ih_next;
+			pih->ih_next = ih;
+		}
 	}
 
 	if (ih->ih_clr != NULL)			/* Set interrupt to idle */
