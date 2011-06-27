@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.214 2011/06/27 03:50:04 tedu Exp $
+.\"	$OpenBSD: options.4,v 1.215 2011/06/27 04:15:14 tedu Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -409,18 +409,6 @@ Adds support for the
 boot option (User Kernel Config).
 Allows modification of kernel settings (e.g., device parameters) before
 booting the system.
-.It Cd option CCDNBUF= Ns Ar integer
-The
-.Xr ccd 4
-device driver uses
-.Dq component buffers
-to distribute I/O requests to the components of a concatenated disk.
-It keeps a freelist of buffer
-headers in order to reduce use of the kernel memory allocator.
-.Em CCDNBUF
-is the number of buffer headers allocated on the freelist for
-each component buffer.
-It defaults to 8.
 .It Cd option CRYPTO
 Enables support for the kernel cryptographic framework.
 See
