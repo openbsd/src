@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.88 2010/07/22 00:41:55 deraadt Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.89 2011/06/27 13:01:51 camield Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -359,6 +359,7 @@ arprequest(ifp, sip, tip, enaddr)
 	bcopy((caddr_t)tip, (caddr_t)ea->arp_tpa, sizeof(ea->arp_tpa));
 	sa.sa_family = pseudo_AF_HDRCMPLT;
 	sa.sa_len = sizeof(sa);
+	m->m_flags |= M_BCAST;
 	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
 }
 
@@ -994,6 +995,7 @@ revarprequest(ifp)
 	   sizeof(ea->arp_tha));
 	sa.sa_family = pseudo_AF_HDRCMPLT;
 	sa.sa_len = sizeof(sa);
+	m->m_flags |= M_BCAST;
 	ifp->if_output(ifp, m, &sa, (struct rtentry *)0);
 }
 
