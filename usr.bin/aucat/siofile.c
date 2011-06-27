@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.6 2010/06/04 06:15:28 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.7 2011/06/27 07:22:00 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -42,6 +42,9 @@ struct siofile {
 	unsigned rtickets, rbpf;
 	unsigned bufsz;
 	int started;
+#ifdef DEBUG
+	long long wtime, utime;
+#endif
 };
 
 void siofile_close(struct file *);
@@ -173,8 +176,14 @@ siofile_cb(void *addr, int delta)
 		file_dbg(&f->file);
 		dbg_puts(": tick, delta = ");
 		dbg_puti(delta);
+		dbg_puts(", load = ");
+		dbg_puti((file_utime - f->utime) / 1000);
+		dbg_puts(" + ");
+		dbg_puti((file_wtime - f->wtime) / 1000);
 		dbg_puts("\n");
 	}
+	f->wtime = file_wtime;
+	f->utime = file_utime;
 #endif
 	if (delta != 0) {
 		p = f->file.wproc;
@@ -308,6 +317,8 @@ siofile_start(struct file *file)
 	f->wtickets = f->bufsz * f->wbpf;
 	f->rtickets = 0;
 #ifdef DEBUG
+	f->wtime = file_wtime;
+	f->utime = file_utime;
 	if (debug_level >= 3) {
 		file_dbg(&f->file);
 		dbg_puts(": started\n");

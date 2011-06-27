@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.26 2011/06/02 19:03:58 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.27 2011/06/27 07:22:00 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -73,6 +73,9 @@ struct timespec file_ts;
 struct filelist file_list;
 struct timo *timo_queue;
 unsigned timo_abstime;
+#ifdef DEBUG
+long long file_wtime, file_utime;
+#endif
 
 /*
  * initialise a timeout structure, arguments are callback and argument
@@ -297,6 +300,9 @@ file_poll(void)
 	struct file *f, *fnext;
 	struct aproc *p;
 	struct timespec ts;
+#ifdef DEBUG
+	struct timespec sleepts;
+#endif
 	long long delta_nsec;
 	int res;
 
@@ -347,21 +353,34 @@ file_poll(void)
 		dbg_puts("\n");
 	}
 #endif
+#ifdef DEBUG
+	clock_gettime(CLOCK_MONOTONIC, &sleepts);
+	file_utime += 1000000000LL * (sleepts.tv_sec - file_ts.tv_sec);
+	file_utime += sleepts.tv_nsec - file_ts.tv_nsec;
+#endif
 	res = poll(pfds, nfds, -1);
 	if (res < 0 && errno != EINTR)
 		err(1, "poll");
 	clock_gettime(CLOCK_MONOTONIC, &ts);
+#ifdef DEBUG
+	file_wtime += 1000000000LL * (ts.tv_sec - sleepts.tv_sec);
+	file_wtime += ts.tv_nsec - sleepts.tv_nsec;
+#endif
 	delta_nsec = 1000000000LL * (ts.tv_sec - file_ts.tv_sec);
 	delta_nsec += ts.tv_nsec - file_ts.tv_nsec;
-	if (delta_nsec > 0) {
-		file_ts = ts;
-		if (delta_nsec < 1000000000LL)
-			timo_update(delta_nsec / 1000);
-		else {
 #ifdef DEBUG
-			dbg_puts("ignored huge clock delta\n");
+	if (delta_nsec < 0) {
+		dbg_puts("file_poll: negative time interval\n");
+		dbg_panic();
+	}
 #endif
-		}
+	file_ts = ts;
+	if (delta_nsec < 1000000000LL)
+		timo_update(delta_nsec / 1000);
+	else {
+#ifdef DEBUG
+		dbg_puts("ignored huge clock delta\n");
+#endif
 	}
 	if (res <= 0)
 		return 1;
