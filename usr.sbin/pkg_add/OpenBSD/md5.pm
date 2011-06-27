@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: md5.pm,v 1.14 2011/05/21 08:33:41 espie Exp $
+# $OpenBSD: md5.pm,v 1.15 2011/06/27 12:14:25 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -26,6 +26,12 @@ sub new
 	$class = ref($class) || $class;
 	my $digest = $class->digest_file($filename);
 	bless \$digest, $class;
+}
+
+sub key
+{
+	my $self = shift;
+	return $$self;
 }
 
 sub write
