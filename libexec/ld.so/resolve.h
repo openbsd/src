@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.63 2011/05/22 22:43:47 drahn Exp $ */
+/*	$OpenBSD: resolve.h,v 1.64 2011/06/27 16:47:50 sthen Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -42,9 +42,6 @@ struct load_list {
 	Elf_Addr	moff;
 	long		foff;
 };
-
-TAILQ_HEAD(dep_node_head, dep_node);
-extern struct dep_node_head _dlsym_search_list;
 
 /*
  *  Structure describing a loaded object.
@@ -118,7 +115,6 @@ struct elf_object {
 #define	OBJTYPE_LIB	3
 #define	OBJTYPE_DLO	4
 	int		obj_flags;
-	int		obj_global;
 
 	Elf_Word	*buckets;
 	u_int32_t	nbuckets;
@@ -126,9 +122,9 @@ struct elf_object {
 	u_int32_t	nchains;
 	Elf_Dyn		*dynamic;
 
-	struct dep_node_head	child_list;	/* direct dep libs of object */
-	struct dep_node_head	grpsym_list;	/* ordered complete dep list */
-	struct dep_node_head	grpref_list;	/* refs to other load groups */
+	TAILQ_HEAD(,dep_node)	child_list;	/* direct dep libs of object */
+	TAILQ_HEAD(,dep_node)	grpsym_list;	/* ordered complete dep list */
+	TAILQ_HEAD(,dep_node)	grpref_list;	/* refs to other load groups */
 
 	int		refcount;	/* dep libs only */
 	int		opencount;	/* # dlopen() & exe */
@@ -237,7 +233,6 @@ extern elf_object_t *_dl_objects;
 extern elf_object_t *_dl_last_object;
 
 extern elf_object_t *_dl_loading_object;
-void _dl_append_search(elf_object_t *object);
 
 extern const char *_dl_progname;
 extern struct r_debug *_dl_debug_map;
@@ -283,7 +278,6 @@ extern int _dl_symcachestat_hits;
 extern int _dl_symcachestat_lookups;
 TAILQ_HEAD(dlochld, dep_node);
 extern struct dlochld _dlopened_child_list;
-extern int _dl_search_list_valid;
 
 /* variables used to avoid duplicate node checking */
 int _dl_searchnum;
