@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.28 2010/12/29 13:03:05 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.29 2011/06/27 12:13:56 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -100,7 +100,11 @@ sub thorough_check
 		$state->log("can't read #1", $name);
 		return;
 	}
-	my $d = $self->compute_digest($name);
+	if (!defined $self->{d}) {
+		$state->log("no checksum for #1", $name);
+		return;
+	}
+	my $d = $self->compute_digest($name, ref($self->{d}));
 	if (!$d->equals($self->{d})) {
 		$state->log("checksum for #1 does not match", $name);
 	}
