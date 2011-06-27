@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.13 2010/04/06 16:01:57 jsg Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.14 2011/06/27 16:54:14 dhill Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -111,7 +111,7 @@ ip6_print(register const u_char *bp, register int length)
 
 	cp = (const u_char *)ip6;
 	nh = ip6->ip6_nxt;
-	while (cp + hlen < snapend) {
+	while (cp + hlen <= snapend) {
 		cp += hlen;
 
 #ifndef IPPROTO_IPV4
@@ -136,7 +136,7 @@ ip6_print(register const u_char *bp, register int length)
 			break;
 		case IPPROTO_FRAGMENT:
 			hlen = frag6_print(cp, (const u_char *)ip6);
-			if (snapend <= cp + hlen)
+			if (snapend < cp + hlen)
 				goto end;
 			nh = *cp;
 			break;
