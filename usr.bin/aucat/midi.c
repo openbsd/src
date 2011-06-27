@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.35 2011/06/27 07:17:44 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.36 2011/06/27 07:57:38 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -588,7 +588,6 @@ ctl_dump(struct aproc *p, struct abuf *obuf)
 	msg[4] = SYSEX_AUCAT_DUMPEND;
 	msg[5] = SYSEX_END;
 	ctl_copymsg(obuf, msg, 6);
-	dbg_puts("end dump\n");
 	abuf_flush(obuf);
 }
 
@@ -1151,7 +1150,6 @@ ctl_ev(struct aproc *p, struct abuf *ibuf)
 			return;
 		if (len != SYSEX_SIZE(dumpreq))
 			return;
-		dbg_puts("dump request\n");
 		if (ibuf->duplex)
 			ctl_dump(p, ibuf->duplex);
 		break;
