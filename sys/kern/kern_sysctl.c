@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.204 2011/06/24 19:47:49 naddy Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.205 2011/06/27 03:40:35 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1043,6 +1043,7 @@ sysctl_file(char *where, size_t *sizep, struct proc *p)
 			cfile.f_offset = (off_t)-1;
 			cfile.f_rxfer = 0;
 			cfile.f_wxfer = 0;
+			cfile.f_seek = 0;
 			cfile.f_rbytes = 0;
 			cfile.f_wbytes = 0;
 		}
@@ -1078,17 +1079,18 @@ fill_file2(struct kinfo_file2 *kf, struct file *fp, struct filedesc *fdp,
 		kf->f_uid = fp->f_cred->cr_uid;
 		kf->f_gid = fp->f_cred->cr_gid;
 		kf->f_ops = PTRTOINT64(fp->f_ops);
-		kf->f_offset = fp->f_offset;
 		kf->f_data = PTRTOINT64(fp->f_data);
 		kf->f_usecount = fp->f_usecount;
 
 		if (suser(p, 0) == 0 || p->p_ucred->cr_uid == fp->f_cred->cr_uid) {
+			kf->f_offset = fp->f_offset;
 			kf->f_rxfer = fp->f_rxfer;
 			kf->f_rwfer = fp->f_wxfer;
 			kf->f_seek = fp->f_seek;
 			kf->f_rbytes = fp->f_rbytes;
 			kf->f_wbytes = fp->f_rbytes;
-		}
+		} else
+			kf->f_offset = -1;
 	} else if (vp != NULL) {
 		/* fake it */
 		kf->f_type = DTYPE_VNODE;
