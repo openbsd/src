@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.53 2010/07/03 03:59:17 krw Exp $
+#	$OpenBSD: GENERIC,v 1.54 2011/06/27 03:27:07 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -32,10 +32,6 @@ option		VAX49		# VS 4000/90
 option		VAX53		# VAX 4000 10X, MicroVAX 3100m9X
 option		VAX60		# VS 3[58][24]0
 option		VXT		# VXT2000 and VXT2000+
-
-# Old compat stuff; needed to run 4.3BSD Reno programs.
-option		COMPAT_VAX1K	# Must be present to run old (< 3.1) binaries.
-option		COMPAT_35	# needed for COMPAT_VAX1K
 
 option		INSN_EMULATE	# CPU lacks some hardware instructions.
 

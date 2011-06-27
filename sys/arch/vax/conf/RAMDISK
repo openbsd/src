@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.33 2010/07/03 03:59:17 krw Exp $
+#	$OpenBSD: RAMDISK,v 1.34 2011/06/27 03:27:07 tedu Exp $
 
 machine		vax			# machine type
 
@@ -41,9 +41,6 @@ option		INET6		# IPv6 (needs INET)
 option		BOOT_CONFIG	# boot-time kernel config
 
 config		bsd	root on rd0a swap on rd0b	# and sd0b
-
-# Old compat stuff; needed to run 4.3BSD Reno programs.
-#option		COMPAT_VAX1K	# Must be present to run pre-1.4 binaries.
 
 option		INSN_EMULATE	# CPU lacks some hardware instructions.
 

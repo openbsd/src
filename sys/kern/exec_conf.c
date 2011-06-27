@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_conf.c,v 1.26 2011/04/05 12:50:15 guenther Exp $	*/
+/*	$OpenBSD: exec_conf.c,v 1.27 2011/06/27 03:27:07 tedu Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
@@ -51,10 +51,6 @@
 #include <compat/linux/linux_exec.h>
 #endif
 
-#ifdef COMPAT_VAX1K
-#include <compat/vax1k/vax1k_exec.h>
-#endif
-
 extern struct emul emul_native, emul_elf32, emul_elf64, emul_aout,
 	emul_freebsd_aout, emul_freebsd_elf,
 	emul_linux_elf, emul_linux_aout, emul_netbsd_elf64,
@@ -81,9 +77,6 @@ struct execsw execsw[] = {
 #ifdef COMPAT_LINUX
 	{ LINUX_AOUT_HDR_SIZE, exec_linux_aout_makecmds, &emul_linux_aout }, /* linux a.out */
 	{ sizeof(Elf32_Ehdr), exec_linux_elf32_makecmds, &emul_linux_elf },
-#endif
-#ifdef COMPAT_VAX1K
-	{ sizeof(struct exec), exec_vax1k_makecmds, &emul_native },	/* vax1k a.out */
 #endif
 #ifdef COMPAT_SVR4
 	{ sizeof(Elf32_Ehdr), exec_elf32_makecmds, &emul_svr4 },	/* elf binaries */
