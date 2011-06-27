@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysex.h,v 1.1 2011/05/09 18:03:08 ratchov Exp $	*/
+/*	$OpenBSD: sysex.h,v 1.2 2011/06/27 07:17:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -29,6 +29,7 @@
  * type/vendor namespace IDs we use
  */
 #define SYSEX_TYPE_RT		0x7f	/* real-time universal */
+#define SYSEX_TYPE_EDU		0x7d	/* non-comercial */
 
 /*
  * realtime messages in the "universal real-time" namespace
@@ -41,6 +42,14 @@
 #define   SYSEX_MMC_LOC		0x44
 #define   SYSEX_MMC_LOC_LEN	0x06
 #define   SYSEX_MMC_LOC_CMD	0x01
+
+/*
+ * aucat-specific messages, in the "edu" namespace
+ */
+#define SYSEX_AUCAT		0x23		/* aucat-specific */
+#define   SYSEX_AUCAT_MIXINFO	0x01		/* mixer info */
+#define   SYSEX_AUCAT_DUMPREQ	0x02		/* dump request */
+#define   SYSEX_AUCAT_DUMPEND	0x03		/* end of dump */
 
 /*
  * minimum size of sysex message we accept
@@ -85,6 +94,19 @@ struct sysex {
 			uint8_t fr;
 			uint8_t end;
 		} full;
+		struct sysex_mixinfo {
+			uint8_t chan;			/* channel */
+			uint8_t vol;			/* current volume */
+#define SYSEX_NAMELEN	10				/* \0 included */
+			uint8_t name[SYSEX_NAMELEN];	/* stream name */
+			uint8_t end;
+		} mixinfo;
+		struct sysex_dumpreq {
+			uint8_t end;
+		} dumpreq;
+		struct sysex_dumpend {
+			uint8_t end;
+		} dumpend;
 	} u;
 };
 

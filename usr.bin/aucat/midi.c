@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.34 2011/06/02 18:50:39 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.35 2011/06/27 07:17:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -538,6 +538,26 @@ ctl_full(struct aproc *p)
 }
 
 void
+ctl_msg_info(struct aproc *p, int slot, char *msg)
+{
+	struct ctl_slot *s;
+	struct sysex *x = (struct sysex *)msg;
+
+	s = p->u.ctl.slot + slot;
+	memset(x, 0, sizeof(struct sysex));
+	x->start = SYSEX_START;
+	x->type = SYSEX_TYPE_EDU;
+	x->id0 = SYSEX_AUCAT;
+	x->id1 = SYSEX_AUCAT_MIXINFO;
+	if (*s->name != '\0') {
+		snprintf(x->u.mixinfo.name,
+		    SYSEX_NAMELEN, "%s%u", s->name, s->unit);
+	}
+	x->u.mixinfo.chan = slot;
+	x->u.mixinfo.end = SYSEX_END;
+}
+
+void
 ctl_msg_vol(struct aproc *p, int slot, char *msg)
 {
 	struct ctl_slot *s;
@@ -546,6 +566,30 @@ ctl_msg_vol(struct aproc *p, int slot, char *msg)
 	msg[0] = MIDI_CTL | slot;
 	msg[1] = MIDI_CTLVOL;
 	msg[2] = s->vol;
+}
+
+void
+ctl_dump(struct aproc *p, struct abuf *obuf)
+{
+	unsigned i;
+	unsigned char msg[sizeof(struct sysex)];
+	struct ctl_slot *s;
+
+	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
+		ctl_msg_info(p, i, msg);
+		ctl_copymsg(obuf, msg, SYSEX_SIZE(mixinfo));
+		ctl_msg_vol(p, i, msg);
+		ctl_copymsg(obuf, msg, 3);
+	}
+	msg[0] = SYSEX_START;
+	msg[1] = SYSEX_TYPE_EDU;
+	msg[2] = 0;
+	msg[3] = SYSEX_AUCAT;
+	msg[4] = SYSEX_AUCAT_DUMPEND;
+	msg[5] = SYSEX_END;
+	ctl_copymsg(obuf, msg, 6);
+	dbg_puts("end dump\n");
+	abuf_flush(obuf);
 }
 
 /*
@@ -765,6 +809,8 @@ ctl_slotnew(struct aproc *p, char *who, struct ctl_ops *ops, void *arg, int tr)
 	s->arg = arg;
 	s->tstate = tr ? CTL_STOP : CTL_OFF;
 	s->ops->vol(s->arg, s->vol);
+	ctl_msg_info(p, idx, msg);
+	ctl_sendmsg(p, NULL, msg, SYSEX_SIZE(mixinfo));
 	ctl_msg_vol(p, idx, msg);
 	ctl_sendmsg(p, NULL, msg, 3);
 	return idx;
@@ -1099,6 +1145,15 @@ ctl_ev(struct aproc *p, struct abuf *ibuf)
 			     x->u.loc.cent * (MTC_SEC / 100 / fps));
 			break;
 		}
+		break;
+	case SYSEX_TYPE_EDU:
+		if (x->id0 != SYSEX_AUCAT || x->id1 != SYSEX_AUCAT_DUMPREQ)
+			return;
+		if (len != SYSEX_SIZE(dumpreq))
+			return;
+		dbg_puts("dump request\n");
+		if (ibuf->duplex)
+			ctl_dump(p, ibuf->duplex);
 		break;
 	}
 }
