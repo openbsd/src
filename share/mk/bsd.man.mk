@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.man.mk,v 1.34 2011/06/24 14:17:41 naddy Exp $
+#	$OpenBSD: bsd.man.mk,v 1.35 2011/06/28 23:50:46 schwarze Exp $
 #	$NetBSD: bsd.man.mk,v 1.23 1996/02/10 07:49:33 jtc Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
@@ -10,12 +10,11 @@
 .MAIN: all
 .endif
 
-.if defined(MANSUBDIR)
-# Add / so that we don't have to specify it. Better arch -> MANSUBDIR mapping
-MANSUBDIR:=${MANSUBDIR:S,^,/,}
+# Add / so that we don't have to specify it.
+.if defined(MANSUBDIR) && !empty(MANSUBDIR)
+MANSUBDIR:=${MANSUBDIR:S,^,/,:S,$,/,}
 .else
-# XXX MANSUBDIR must be non empty for the mlink loops to work
-MANSUBDIR=''
+MANSUBDIR=/
 .endif
 
 CLEANFILES+= .man-linted
@@ -30,11 +29,12 @@ all: .man-linted
 
 .for page in ${MAN}
 .  for sub in ${MANSUBDIR}
-${DESTDIR}${MANDIR}${page:E}${sub}/${page:T}: ${page}
+_MAN_INST=${DESTDIR}${MANDIR}${page:E}${sub}${page:T}
+${_MAN_INST}: ${page}
 	${INSTALL} ${INSTALL_COPY} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
 		${.ALLSRC} ${.TARGET}
 
-maninstall: ${DESTDIR}${MANDIR}${page:E}${sub}/${page:T}
+maninstall: ${_MAN_INST}
 .  endfor
 .endfor
 
@@ -42,8 +42,8 @@ maninstall:
 .if defined(MLINKS) && !empty(MLINKS)
 .  for sub in ${MANSUBDIR}
 .     for lnk file in ${MLINKS}
-	@l=${DESTDIR}${MANDIR}${lnk:E}${sub}/${lnk}; \
-	t=${DESTDIR}${MANDIR}${file:E}${sub}/${file}; \
+	@l=${DESTDIR}${MANDIR}${lnk:E}${sub}${lnk}; \
+	t=${DESTDIR}${MANDIR}${file:E}${sub}${file}; \
 	echo $$t -\> $$l; \
 	rm -f $$t; ln $$l $$t;
 .     endfor
