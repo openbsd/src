@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcntl.h,v 1.11 2007/11/24 12:59:28 jmc Exp $	*/
+/*	$OpenBSD: fcntl.h,v 1.12 2011/06/28 10:15:38 thib Exp $	*/
 /*	$NetBSD: fcntl.h,v 1.8 1995/03/26 20:24:12 jtc Exp $	*/
 
 /*-
@@ -91,9 +91,9 @@
 #define	O_CREAT		0x0200		/* create if nonexistent */
 #define	O_TRUNC		0x0400		/* truncate to zero length */
 #define	O_EXCL		0x0800		/* error if already exists */
+
+/* XXX - FHASLOCK should be FIF_HASLOCK. */
 #ifdef _KERNEL
-#define	FMARK		0x1000		/* mark during gc() */
-#define	FDEFER		0x2000		/* defer for next gc pass */
 #define	FHASLOCK	0x4000		/* descriptor holds advisory lock */
 #endif
 

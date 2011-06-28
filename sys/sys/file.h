@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.27 2010/07/19 23:00:15 guenther Exp $	*/
+/*	$OpenBSD: file.h,v 1.28 2011/06/28 10:15:38 thib Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -88,6 +88,8 @@ struct file {
 
 #define FIF_WANTCLOSE		0x01	/* a close is waiting for usecount */
 #define FIF_LARVAL		0x02	/* not fully constructed, don't use */
+#define FIF_MARK		0x04	/* mark during gc() */
+#define FIF_DEFER		0x08	/* defer for next gc() pass */
 
 #define FILE_IS_USABLE(fp) \
 	(((fp)->f_iflags & (FIF_WANTCLOSE|FIF_LARVAL)) == 0)

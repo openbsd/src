@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.51 2011/05/17 00:17:01 guenther Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.52 2011/06/28 10:15:38 thib Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -818,21 +818,21 @@ unp_gc(void)
 	unp_gcing = 1;
 	unp_defer = 0;
 	LIST_FOREACH(fp, &filehead, f_list)
-		fp->f_flag &= ~(FMARK|FDEFER);
+		fp->f_iflags &= ~(FIF_MARK|FIF_DEFER);
 	do {
 		LIST_FOREACH(fp, &filehead, f_list) {
-			if (fp->f_flag & FDEFER) {
-				fp->f_flag &= ~FDEFER;
+			if (fp->f_iflags & FIF_DEFER) {
+				fp->f_iflags &= ~FIF_DEFER;
 				unp_defer--;
 			} else {
 				if (fp->f_count == 0)
 					continue;
-				if (fp->f_flag & FMARK)
+				if (fp->f_iflags & FIF_MARK)
 					continue;
 				if (fp->f_count == fp->f_msgcount)
 					continue;
 			}
-			fp->f_flag |= FMARK;
+			fp->f_iflags |= FIF_MARK;
 
 			if (fp->f_type != DTYPE_SOCKET ||
 			    (so = (struct socket *)fp->f_data) == NULL)
@@ -904,7 +904,8 @@ unp_gc(void)
 		nextfp = LIST_NEXT(fp, f_list);
 		if (fp->f_count == 0)
 			continue;
-		if (fp->f_count == fp->f_msgcount && !(fp->f_flag & FMARK)) {
+		if (fp->f_count == fp->f_msgcount &&
+		    !(fp->f_iflags & FIF_MARK)) {
 			*fpp++ = fp;
 			nunref++;
 			FREF(fp);
@@ -968,17 +969,14 @@ unp_mark(struct file *fp)
 	if (fp == NULL)
 		return;
 
-	if (fp->f_flag & FMARK)
-		return;
-
-	if (fp->f_flag & FDEFER)
+	if (fp->f_iflags & (FIF_MARK|FIF_DEFER))
 		return;
 
 	if (fp->f_type == DTYPE_SOCKET) {
 		unp_defer++;
-		fp->f_flag |= FDEFER;
+		fp->f_iflags |= FIF_DEFER;
 	} else {
-		fp->f_flag |= FMARK;
+		fp->f_iflags |= FIF_MARK;
 	}
 }
 
