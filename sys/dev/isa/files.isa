@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.109 2011/06/26 23:19:11 tedu Exp $
+#	$OpenBSD: files.isa,v 1.110 2011/06/28 20:19:19 matthieu Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -76,11 +76,6 @@ file	dev/isa/pckbc_isa.c		pckbc_isa	needs-flag
 # Generic ISA VGA
 attach	vga at isa with vga_isa
 file	dev/isa/vga_isa.c		vga_isa
-
-# Generic EGA
-device	ega: wsemuldisplaydev, pcdisplayops
-attach	ega at isa
-file	dev/isa/ega.c			ega	needs-flag
 
 # Generic PC graphics adapter (MGA, CGA, ...)
 device	pcdisplay: wsemuldisplaydev, pcdisplayops

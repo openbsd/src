@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.9 2010/11/23 04:07:55 shadchin Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.10 2011/06/28 20:19:18 matthieu Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell
@@ -38,17 +38,13 @@
 #include <dev/cons.h>
 
 #include "vga.h"
-#include "ega.h"
 #include "pcdisplay.h"
-#if (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0)
+#if (NVGA > 0) || (NPCDISPLAY > 0)
 #include <dev/ic/mc6845reg.h>
 #include <dev/ic/pcdisplayvar.h>
 #if (NVGA > 0)
 #include <dev/ic/vgareg.h>
 #include <dev/ic/vgavar.h>
-#endif
-#if (NEGA > 0)
-#include <dev/isa/egavar.h>
 #endif
 #if (NPCDISPLAY > 0)
 #include <dev/isa/pcdisplayvar.h>
@@ -140,10 +136,6 @@ wscn_video_init()
 {
 #if (NVGA > 0)
 	if (vga_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM, -1, 1) == 0)
-		return;
-#endif
-#if (NEGA > 0)
-	if (ega_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM) == 0)
 		return;
 #endif
 #if (NPCDISPLAY > 0)
