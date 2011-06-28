@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.22 2010/04/25 14:43:07 tedu Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.23 2011/06/28 20:07:18 tedu Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -1055,7 +1055,7 @@ ufsdirhash_recycle(int wanted)
 
 
 void
-ufsdirhash_init()
+ufsdirhash_init(void)
 {
 	pool_init(&ufsdirhash_pool, DH_NBLKOFF * sizeof(doff_t), 0, 0, 0,
 	    "dirhash", &pool_allocator_nointr);
@@ -1072,7 +1072,7 @@ ufsdirhash_init()
 }
 
 void
-ufsdirhash_uninit()
+ufsdirhash_uninit(void)
 {
 	DIRHASH_ASSERT(TAILQ_EMPTY(&ufsdirhash_list), ("ufsdirhash_uninit"));
 	pool_destroy(&ufsdirhash_pool);
