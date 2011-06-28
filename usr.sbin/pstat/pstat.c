@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.77 2009/10/27 23:59:53 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.78 2011/06/28 06:55:30 guenther Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -53,6 +53,7 @@
 
 #include <sys/sysctl.h>
 
+#include <stdint.h>
 #include <err.h>
 #include <kvm.h>
 #include <limits.h>
@@ -103,7 +104,6 @@ kvm_t	*kd = NULL;
 	}
 
 void	filemode(void);
-int	getfiles(char **, size_t *);
 struct mount *
 	getmnt(struct mount *);
 struct e_vnode *
@@ -134,7 +134,7 @@ main(int argc, char *argv[])
 	extern char *optarg;
 	extern int optind;
 	gid_t gid;
-	int i;
+	int i, need_nlist;
 
 	while ((ch = getopt(argc, argv, "d:TM:N:fiknstv")) != -1)
 		switch (ch) {
@@ -181,17 +181,23 @@ main(int argc, char *argv[])
 	if ((dformat == 0 && argc > 0) || (dformat && argc == 0))
 		usage();
 
+	need_nlist = vnodeflag || dformat;
+
 	/*
 	 * Discard setgid privileges if not the running kernel so that bad
 	 * guys can't print interesting stuff from kernel memory.
 	 */
 	gid = getgid();
-	if (nlistf != NULL || memf != NULL)
+	if (nlistf != NULL || memf != NULL) {
 		if (setresgid(gid, gid, gid) == -1)
 			err(1, "setresgid");
+		if (fileflag || totalflag)
+			need_nlist = 1;
+	}
 
-	if (vnodeflag || dformat)
-		if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, buf)) == 0)
+	if (vnodeflag || fileflag || dformat || need_nlist)
+		if ((kd = kvm_openfiles(nlistf, memf, NULL,
+		    O_RDONLY | (need_nlist ? 0 : KVM_NO_FILES), buf)) == 0)
 			errx(1, "kvm_openfiles: %s", buf);
 
 	if (nlistf == NULL && memf == NULL)
@@ -295,7 +301,7 @@ main(int argc, char *argv[])
 		exit(error);
 	}
 
-	if (vnodeflag)
+	if (need_nlist)
 		if (kvm_nlist(kd, vnodenl) == -1)
 			errx(1, "kvm_nlist: %s", kvm_geterr(kd));
 
@@ -975,15 +981,15 @@ ttyprt(struct itty *tp)
 void
 filemode(void)
 {
-	struct file fp, *ffp, *addr;
-	char *buf, flagbuf[16], *fbp;
+	struct kinfo_file2 *kf;
+	char flagbuf[16], *fbp;
 	static char *dtypes[] = { "???", "inode", "socket" };
 	int mib[2], maxfile, nfile;
 	size_t len;
 
 	globalnl = vnodenl;
 
-	if (kd == 0) {
+	if (nlistf == NULL && memf == NULL) {
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_MAXFILES;
 		len = sizeof(maxfile);
@@ -1005,83 +1011,50 @@ filemode(void)
 		}
 	}
 
-	if (getfiles(&buf, &len) == -1)
-		return;
-	/*
-	 * Getfiles returns in malloc'd memory a pointer to the first file
-	 * structure, and then an array of file structs (whose addresses are
-	 * derivable from the previous entry).
-	 */
-	addr = LIST_FIRST((struct filelist *)buf);
-	ffp = (struct file *)(buf + sizeof(struct filelist));
-	nfile = (len - sizeof(struct filelist)) / sizeof(struct file);
+	if (!totalflag) {
+		kf = kvm_getfile2(kd, KERN_FILE_BYFILE, 0, sizeof *kf, &nfile);
+		if (kf == NULL) {
+			warnx("kvm_getfile2: %s", kvm_geterr(kd));
+			return;
+		}
+	}
 
 	(void)printf("%d/%d open files\n", nfile, maxfile);
+	if (totalflag)
+		return;
 
 	(void)printf("%*s TYPE       FLG  CNT  MSG  %*s  OFFSET\n",
 	    2 * (int)sizeof(long), "LOC", 2 * (int)sizeof(long), "DATA");
-	for (; (char *)ffp < buf + len; addr = LIST_NEXT(ffp, f_list), ffp++) {
-		memmove(&fp, ffp, sizeof fp);
-		if ((unsigned)fp.f_type > DTYPE_SOCKET)
+	for (; nfile-- > 0; kf++) {
+		if (kf->f_type > DTYPE_SOCKET)
 			continue;
-		(void)printf("%0*lx ", 2 * (int)sizeof(long), (long)addr);
-		(void)printf("%-8.8s", dtypes[fp.f_type]);
+		(void)printf("%0*llx ", 2 * (int)sizeof(long), kf->f_fileaddr);
+		(void)printf("%-8.8s", dtypes[kf->f_type]);
 		fbp = flagbuf;
-		if (fp.f_flag & FREAD)
+		if (kf->f_flag & FREAD)
 			*fbp++ = 'R';
-		if (fp.f_flag & FWRITE)
+		if (kf->f_flag & FWRITE)
 			*fbp++ = 'W';
-		if (fp.f_flag & FAPPEND)
+		if (kf->f_flag & FAPPEND)
 			*fbp++ = 'A';
-		if (fp.f_flag & FHASLOCK)
+		if (kf->f_flag & FHASLOCK)
 			*fbp++ = 'L';
-		if (fp.f_flag & FASYNC)
+		if (kf->f_flag & FASYNC)
 			*fbp++ = 'I';
 		*fbp = '\0';
-		(void)printf("%6s  %3ld", flagbuf, fp.f_count);
-		(void)printf("  %3ld", fp.f_msgcount);
-		(void)printf("  %0*lx", 2 * (int)sizeof(long), (long)fp.f_data);
+		(void)printf("%6s  %3ld", flagbuf, kf->f_count);
+		(void)printf("  %3ld", kf->f_msgcount);
+		(void)printf("  %0*lx", 2 * (int)sizeof(long),
+		    (long)kf->f_data);
 
-		if (fp.f_offset == (off_t)-1)
+		if (kf->f_offset == (uint64_t)-1)
 			(void)printf("  *\n");
-		else if (fp.f_offset < 0)
-			(void)printf("  %llx\n", (long long)fp.f_offset);
-		else
-			(void)printf("  %lld\n", (long long)fp.f_offset);
+		else if (kf->f_offset > INT64_MAX) {
+			/* would have been negative */
+			(void)printf("  %llx\n", (long long)kf->f_offset);
+		} else
+			(void)printf("  %lld\n", (long long)kf->f_offset);
 	}
-	free(buf);
-}
-
-int
-getfiles(char **abuf, size_t *alen)
-{
-	size_t len;
-	int mib[2];
-	char *buf;
-
-	/*
-	 * XXX
-	 * Add emulation of KINFO_FILE here.
-	 */
-	if (memf != NULL)
-		errx(1, "files on dead kernel, not implemented");
-
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_FILE;
-	if (sysctl(mib, 2, NULL, &len, NULL, 0) == -1) {
-		warn("sysctl: KERN_FILE");
-		return (-1);
-	}
-	if ((buf = malloc(len)) == NULL)
-		err(1, "malloc: KERN_FILE");
-	if (sysctl(mib, 2, buf, &len, NULL, 0) == -1) {
-		warn("sysctl: KERN_FILE");
-		free(buf);
-		return (-1);
-	}
-	*abuf = buf;
-	*alen = len;
-	return (0);
 }
 
 /*
