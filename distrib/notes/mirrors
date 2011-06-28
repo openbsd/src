@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.105 2011/06/16 08:33:33 sthen Exp $
+dnl	$OpenBSD: mirrors,v 1.106 2011/06/28 08:23:05 sthen Exp $
 This is a list of currently known FTP and HTTP servers at the time
 of the OSREV release.  For a more recent list, please refer to
 
@@ -53,8 +53,8 @@ France:
     http://ftp.crans.org/pub/OpenBSD (Paris)
 
 Germany:
-    http://openbsd.informatik.uni-erlangen.de/pub/OpenBSD (Erlangen)
-    ftp://openbsd.informatik.uni-erlangen.de/pub/OpenBSD (Erlangen)
+    http://openbsd.cs.fau.de/pub/OpenBSD (Erlangen)
+    ftp://openbsd.cs.fau.de/pub/OpenBSD (Erlangen)
     http://ftp.spline.de/pub/OpenBSD (Berlin)
     ftp://ftp.spline.de/pub/OpenBSD (Berlin)
     ftp://ftp-stud.fht-esslingen.de/pub/OpenBSD (Esslingen)
