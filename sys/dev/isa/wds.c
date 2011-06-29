@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.38 2011/04/03 12:42:36 krw Exp $	*/
+/*	$OpenBSD: wds.c,v 1.39 2011/06/29 12:17:40 tedu Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -304,9 +304,6 @@ wdsattach(parent, self, aux)
 	/*
 	 * fill in the prototype scsi_link.
 	 */
-#ifdef notyet
-	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
-#endif
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_scsi_dev;
 	sc->sc_link.adapter = &wds_switch;
@@ -375,10 +372,6 @@ AGAIN:
 #endif /* WDSDEBUG */
 
 		timeout_del(&scb->xs->stimeout);
-#ifdef notyet
-		isadma_copyfrombuf((caddr_t)scb, SCB_PHYS_SIZE,
-		    1, scb->scb_phys);
-#endif
 		wds_done(sc, scb, wmbi->stat);
 
 	next:
@@ -641,16 +634,10 @@ wds_start_scbs(sc)
 		timeout_set(&scb->xs->stimeout, wds_timeout, scb);
 
 		/* Link scb to mbo. */
-#ifdef notyet
-		isadma_copytobuf((caddr_t)scb, SCB_PHYS_SIZE,
-		    1, scb->scb_phys);
-		ltophys(scb->scb_phys[0].addr, wmbo->scb_addr);
-#else
 		if (scb->flags & SCB_SENSE)
 			ltophys(KVTOPHYS(&scb->sense), wmbo->scb_addr);
 		else
 			ltophys(KVTOPHYS(&scb->cmd), wmbo->scb_addr);
-#endif
 		/* XXX What about aborts? */
 		wmbo->cmd = WDS_MBO_START;
 
@@ -756,15 +743,6 @@ wds_done(sc, scb, stat)
 		}
 	} /* XS_NOERROR */
 
-#ifdef notyet
-	if (scb->data_nseg) {
-		if (xs->flags & SCSI_DATA_IN)
-			isadma_copyfrombuf(xs->data, xs->datalen,
-			    scb->data_nseg, scb->data_phys);
-		isadma_unmap(xs->data, xs->datalen,
-		    scb->data_nseg, scb->data_phys);
-	}
-#endif
 	scsi_done(xs);
 }
 
@@ -849,9 +827,6 @@ wds_init(sc)
 	struct wds_setup init;
 	u_char c;
 	int i;
-#ifdef notyet
-	struct isadma_seg mbx_phys[1];
-#endif
 
 	/*
 	 * Set up initial mail box for round-robin operation.
@@ -878,14 +853,7 @@ wds_init(sc)
 	init.buson_t = 48;
 	init.busoff_t = 24;
 	init.xx = 0;
-#ifdef notyet
-	if (isadma_map((caddr_t)(wmbx), sizeof(struct wds_mbx),
-	    mbx_phys, ISADMA_MAP_CONTIG) != 1)
-		panic("wds_init: cannot map mail box");
-	ltophys(mbx_phys[0].addr, init.mbaddr);
-#else
 	ltophys(KVTOPHYS(wmbx), init.mbaddr);
-#endif
 	init.nomb = init.nimb = WDS_MBX_SIZE;
 	wds_cmd(sc, (u_char *)&init, sizeof init);
 
@@ -972,9 +940,6 @@ wds_scsi_cmd(xs)
 	u_long thiskv, thisphys, nextphys;
 	int bytes_this_seg, bytes_this_page, datalen, flags;
 	int s;
-#ifdef notyet
-	int mflags;
-#endif
 
 	if (xs->flags & SCSI_RESET) {
 		/* XXX Fix me! */
@@ -985,12 +950,6 @@ wds_scsi_cmd(xs)
 	}
 
 	flags = xs->flags;
-#ifdef notyet
-	if (flags & SCSI_NOSLEEP)
-		mflags = ISADMA_MAP_BOUNCE;
-	else
-		mflags = ISADMA_MAP_BOUNCE | ISADMA_MAP_WAITOK;
-#endif
 	scb = xs->io;
 	scb->xs = xs;
 	scb->timeout = xs->timeout;
@@ -1017,16 +976,6 @@ wds_scsi_cmd(xs)
 		SC_DEBUG(sc_link, SDEV_DB4,
 		    ("%d @0x%x:- ", xs->datalen, xs->data));
 
-#ifdef notyet
-		scb->data_nseg = isadma_map(xs->data, xs->datalen,
-					    scb->data_phys, mflags);
-		for (seg = 0; seg < scb->data_nseg; seg++) {
-			ltophys(scb->data_phys[seg].addr,
-			       sg[seg].seg_addr);
-			ltophys(scb->data_phys[seg].length,
-			       sg[seg].seg_len);
-		}
-#else
 		datalen = xs->datalen;
 		thiskv = (int)xs->data;
 		thisphys = KVTOPHYS(xs->data);
@@ -1076,7 +1025,6 @@ wds_scsi_cmd(xs)
 			ltophys(bytes_this_seg, sg->seg_len);
 			sg++;
 			seg++;
-#endif
 		}
 
 		SC_DEBUGN(sc_link, SDEV_DB4, ("\n"));
@@ -1088,23 +1036,9 @@ wds_scsi_cmd(xs)
 			    sc->sc_dev.dv_xname, WDS_NSEG);
 			goto bad;
 		}
-#ifdef notyet
-		if (scb->data_nseg == 0) {
-			printf("%s: wds_scsi_cmd, cannot map\n",
-			       sc->sc_dev.dv_xname);
-			goto bad;
-		} else if (flags & SCSI_DATA_OUT)
-			isadma_copytobuf(xs->data, xs->datalen,
-					 scb->data_nseg, scb->data_phys);
-		ltophys((unsigned)((struct wds_scb *)(scb->scb_phys[0].addr))->scat_gath,
-			scb->data_addr);
-		ltophys(scb->data_nseg * sizeof(struct wds_scat_gath),
-			scb->data_length);
-#else
 		scb->cmd.opcode = WDSX_SCSISG;
 		ltophys(KVTOPHYS(scb->scat_gath), scb->cmd.data);
 		ltophys(seg * sizeof(struct wds_scat_gath), scb->cmd.len);
-#endif
 	} else if (xs->datalen > 0) {
 		/* The board is an ASC or ASE. Do not use scatter/gather. */
 		if (xs->datalen > BUFLEN) {
@@ -1142,23 +1076,6 @@ wds_scsi_cmd(xs)
 	s = splbio();
 	wds_queue_scb(sc, scb);
 
-#ifdef notyet
-	if (VOLATILE_XS(xs)) {
-		while ((scb->xs->flags & ITSDONE) == 0) {
-			tsleep(scb, PRIBIO, "wdswait", 0);
-		}
-		if (scb->data_nseg) {
-			if (flags & SCSI_DATA_IN)
-				isadma_copyfrombuf(xs->data, xs->datalen,
-				    scb->data_nseg, scb->data_phys);
-			isadma_unmap(xs->data, xs->datalen,
-			    scb->data_nseg, scb->data_phys);
-		}
-		scsi_done(xs);
-		splx(s);
-		return;
-	}
-#endif
 	splx(s);
 
 	if ((flags & SCSI_POLL) == 0)
@@ -1300,9 +1217,6 @@ wds_timeout(arg)
 	int s;
 
 	s = splbio();
-#ifdef notyet
-	isadma_copyfrombuf((caddr_t)scb, SCB_PHYS_SIZE, 1, scb->scb_phys);
-#endif
 	xs = scb->xs;
 	sc_link = xs->sc_link;
 	sc = sc_link->adapter_softc;

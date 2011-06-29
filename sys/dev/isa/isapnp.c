@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.39 2011/04/07 15:30:16 miod Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.40 2011/06/29 12:17:40 tedu Exp $	*/
 /*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
@@ -329,14 +329,6 @@ isapnp_testconfig(iot, memt, ipa, alloc)
 		return error;
 
 bad:
-#ifdef notyet
-	for (ndrq--; ndrq >= 0; ndrq--)
-		isapnp_free_pin(&ipa->ipa_drq[ndrq]);
-
-	for (nirq--; nirq >= 0; nirq--)
-		isapnp_free_pin(&ipa->ipa_irq[nirq]);
-#endif
-
 	for (nmem32--; nmem32 >= 0; nmem32--)
 		isapnp_free_region(memt, &ipa->ipa_mem32[nmem32]);
 
@@ -371,14 +363,6 @@ isapnp_unconfig(iot, memt, ipa)
 	struct isa_attach_args *ipa;
 {
 	int i;
-
-#ifdef notyet
-	for (i = 0; i < ipa->ipa_ndrq; i++)
-		isapnp_free_pin(&ipa->ipa_drq[i]);
-
-	for (i = 0; i < ipa->ipa_nirq; i++)
-		isapnp_free_pin(&ipa->ipa_irq[i]);
-#endif
 
 	for (i = 0; i < ipa->ipa_nmem32; i++)
 		isapnp_free_region(memt, &ipa->ipa_mem32[i]);

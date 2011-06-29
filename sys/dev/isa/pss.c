@@ -1,4 +1,4 @@
-/*	$OpenBSD: pss.c,v 1.24 2010/06/30 11:21:35 jakemsr Exp $ */
+/*	$OpenBSD: pss.c,v 1.25 2011/06/29 12:17:40 tedu Exp $ */
 /*	$NetBSD: pss.c,v 1.38 1998/01/12 09:43:44 thorpej Exp $	*/
 
 /*
@@ -127,24 +127,6 @@ struct pss_softc {
 	int	mic_mute, cd_mute, dac_mute;
 };
 
-#ifdef notyet
-struct mpu_softc {
-	struct	device sc_dev;		/* base device */
-	void	*sc_ih;			/* interrupt vectoring */
-
-	int	sc_iobase;		/* MIDI I/O port base address */
-	int	sc_irq;			/* MIDI interrupt */
-};
-
-struct pcd_softc {
-	struct	device sc_dev;		/* base device */
-	void	*sc_ih;			/* interrupt vectoring */
-
-	int	sc_iobase;		/* CD I/O port base address */
-	int	sc_irq;			/* CD interrupt */
-};
-#endif
-
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (pssdebug) printf x
 int	pssdebug = 0;
@@ -158,18 +140,7 @@ void	pssattach(struct device *, struct device *, void *);
 int	spprobe(struct device *, void *, void *);
 void	spattach(struct device *, struct device *, void *);
 
-#ifdef notyet
-int	mpuprobe(struct device *, void *, void *);
-void	mpuattach(struct device *, struct device *, void *);
-
-int	pcdprobe(struct device *, void *, void *);
-void	pcdattach(struct device *, struct device *, void *);
-#endif
-
 int	pssintr(void *);
-#ifdef notyet
-int	mpuintr(void *);
-#endif
 
 int	pss_speaker_ctl(void *, int);
 
@@ -187,10 +158,6 @@ int	pss_setint(int, int);
 int	pss_setdma(int, int);
 int	pss_testirq(struct pss_softc *, int);
 int	pss_testdma(struct pss_softc *, int);
-#ifdef notyet
-int	pss_reset_dsp(struct pss_softc *);
-int	pss_download_dsp(struct pss_softc *, u_char *, int);
-#endif
 #ifdef AUDIO_DEBUG
 void	pss_dump_regs(struct pss_softc *);
 #endif
@@ -267,24 +234,6 @@ struct cfattach sp_ca = {
 struct cfdriver sp_cd = {
 	NULL, "sp", DV_DULL
 };
-
-#ifdef notyet
-struct cfattach mpu_ca = {
-	sizeof(struct mpu_softc), mpuprobe, mpuattach
-};
-
-struct cfdriver mpu_cd = {
-	NULL, "mpu", DV_DULL
-};
-
-struct cfattach pcd_ca = {
-	sizeof(struct pcd_softc), pcdprobe, pcdattach
-};
-
-struct cfdriver pcd_cd = {
-	NULL, "pcd", DV_DULL
-};
-#endif
 
 struct audio_device pss_device = {
 	"pss,ad1848",
@@ -577,109 +526,6 @@ pss_testdma(sc, dmaNum)
     return(ret);
 }
 
-#ifdef notyet
-int
-pss_reset_dsp(sc)
-	struct pss_softc *sc;
-{
-    u_long i;
-    int pss_base = sc->sc_iobase;
-
-    outw(pss_base+PSS_CONTROL, PSS_RESET);
-
-    for (i = 0; i < 32768; i++)
-	inw(pss_base+PSS_CONTROL);
-
-    outw(pss_base+PSS_CONTROL, 0);
-
-    return 1;
-}
-
-/*
- * This function loads an image into the PSS
- * card.  The function loads the file by
- * resetting the dsp and feeding it the boot bytes.
- * First you feed the ASIC the first byte of
- * the boot sequence. The ASIC waits until it
- * detects a BMS and RD and asserts BR
- * and outputs the byte.  The host must poll for
- * the BG signal. It then feeds the ASIC another
- * byte which removes BR.
- */
-int
-pss_download_dsp(sc, block, size)
-	struct pss_softc *sc;
-	u_char *block;
-	int size;
-{
-    int i, val, count;
-    int pss_base = sc->sc_iobase;
-
-    DPRINTF(("pss: downloading boot code..."));
-
-    /* Warn DSP software that a boot is coming */
-    outw(pss_base+PSS_DATA, 0x00fe);
-
-    for (i = 0; i < 32768; i++)
-	if (inw(pss_base+PSS_DATA) == 0x5500)
-	    break;
-    outw(pss_base+PSS_DATA, *block++);
-
-    pss_reset_dsp(sc);
-
-    DPRINTF(("start "));
-
-    count = 1;
-    while(1) {
-	int j;
-	for (j=0; j<327670; j++) {
-	    /* Wait for BG to appear */
-	    if (inw(pss_base+PSS_STATUS) & PSS_FLAG3)
-		break;
-	}
-
-	if (j==327670) {
-	    /* It's ok we timed out when the file was empty */
-	    if (count >= size)
-		break;
-	    else {
-		printf("\npss: DownLoad timeout problems, byte %d=%d\n",
-		       count, size);
-		return 0;
-	    }
-	}
-	/* Send the next byte */
-	outw(pss_base+PSS_DATA, *block++);
-	count++;
-    }
-
-    outw(pss_base+PSS_DATA, 0);
-    for (i = 0; i < 32768; i++)
-	(void) inw(pss_base+PSS_STATUS);
-
-    DPRINTF(("downloaded\n"));
-
-    for (i = 0; i < 32768; i++) {
-	val = inw(pss_base+PSS_STATUS);
-	if (val & PSS_READ_FULL)
-	    break;
-    }
-
-    /* now read the version */
-    for (i = 0; i < 32000; i++) {
-	val = inw(pss_base+PSS_STATUS);
-	if (val & PSS_READ_FULL)
-	    break;
-    }
-    if (i == 32000)
-	return 0;
-
-    (void) inw(pss_base+PSS_DATA);
-
-    return 1;
-}
-#endif /* notyet */
-
 #ifdef AUDIO_DEBUG
 void
 wss_dump_regs(sc)
@@ -790,19 +636,6 @@ pss_found:
     pss_setint(ia->ia_irq, sc->sc_iobase+PSS_CONFIG);
     pss_setdma(sc->sc_drq, sc->sc_iobase+PSS_CONFIG);
 
-#ifdef notyet
-    /* Setup the Game port */
-#ifdef PSS_GAMEPORT
-    DPRINTF(("Turning Game Port On.\n"));
-    outw(sc->sc_iobase+PSS_STATUS, inw(sc->sc_iobase+PSS_STATUS) | GAME_BIT);
-#else
-    outw(sc->sc_iobase+PSS_STATUS, inw(sc->sc_iobase+PSS_STATUS) & GAME_BIT_MASK);
-#endif
-
-    /* Reset DSP */
-    pss_reset_dsp(sc);
-#endif /* notyet */
-
     return 1;
 }
 
@@ -905,104 +738,6 @@ spprobe(parent, match, aux)
     return 1;
 }
 
-#ifdef notyet
-int
-mpuprobe(parent, match, aux)
-    struct device *parent;
-    void *match, *aux;
-{
-    struct mpu_softc *sc = match;
-    struct pss_softc *pc = (void *) parent;
-    struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
-
-    /* Check if midi is enabled; if it is check the interrupt */
-    sc->sc_iobase = cf->cf_iobase;
-
-    if (cf->cf_irq == IRQUNK) {
-	int i;
-	for (i = 0; i < 16; i++) {
-	    if (pss_testirq(pc, i) != 0)
-		break;
-	}
-	if (i == 16) {
-	    printf("mpu: unable to locate free IRQ channel for MIDI\n");
-	    return 0;
-	}
-	else {
-	    cf->cf_irq = i;
-	    sc->sc_irq = i;
-	    DPRINTF(("mpu: found IRQ %d free\n", i));
-	}
-    }
-    else {
-	sc->sc_irq = cf->cf_irq;
-
-	if (pss_testirq(pc, sc->sc_irq) == 0) {
-	    printf("pss: configured MIDI IRQ unavailable (%d)\n", sc->sc_irq);
-	    return 0;
-	}
-    }
-
-    outw(pc->sc_iobase+MIDI_CONFIG,0);
-    DPRINTF(("pss: mpu port 0x%x irq %d\n", sc->sc_iobase, sc->sc_irq));
-    pss_setaddr(sc->sc_iobase, pc->sc_iobase+MIDI_CONFIG);
-    pss_setint(sc->sc_irq, pc->sc_iobase+MIDI_CONFIG);
-
-    return 1;
-}
-
-int
-pcdprobe(parent, match, aux)
-    struct device *parent;
-    void *match, *aux;
-{
-    struct pcd_softc *sc = match;
-    struct pss_softc *pc = (void *) parent;
-    struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
-    u_short val;
-
-    sc->sc_iobase = cf->cf_iobase;
-
-    pss_setaddr(sc->sc_iobase, pc->sc_iobase+CD_CONFIG);
-
-    /* Set the correct irq polarity. */
-    val = inw(pc->sc_iobase+CD_CONFIG);
-    outw(pc->sc_iobase+CD_CONFIG, 0);
-    val &= CD_POL_MASK;
-    val |= CD_POL_BIT;	/* XXX if (pol) */
-    outw(pc->sc_iobase+CD_CONFIG, val);
-
-    if (cf->cf_irq == IRQUNK) {
-	int i;
-	for (i = 0; i < 16; i++) {
-	    if (pss_testirq(pc, i) != 0)
-		break;
-	}
-	if (i == 16) {
-	    printf("pcd: unable to locate free IRQ channel for CD\n");
-	    return 0;
-	}
-	else {
-	    cf->cf_irq = i;
-	    sc->sc_irq = i;
-	    DPRINTF(("pcd: found IRQ %d free\n", i));
-	}
-    }
-    else {
-	sc->sc_irq = cf->cf_irq;
-
-	if (pss_testirq(pc, sc->sc_irq) == 0) {
-	    printf("pcd: configured CD IRQ unavailable (%d)\n", sc->sc_irq);
-	    return 0;
-	}
-	return 1;
-    }
-    pss_setint(sc->sc_irq, pc->sc_iobase+CD_CONFIG);
-
-    return 1;
-}
-#endif /* notyet */
-
 /*
  * Attach hardware to driver, attach hardware driver to audio
  * pseudo-device driver .
@@ -1062,50 +797,6 @@ spattach(parent, self, aux)
 
     printf("\n");
 }
-
-#ifdef notyet
-void
-mpuattach(parent, self, aux)
-    struct device *parent, *self;
-    void *aux;
-{
-    struct mpu_softc *sc = (struct mpu_softc *)self;
-    struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
-    isa_chipset_tag_t ic = aux;				/* XXX */
-    int iobase = cf->cf_iobase;
-
-    sc->sc_iobase = iobase;
-
-    sc->sc_ih = isa_intr_establish(ic, cf->cf_irq, IST_EDGE, IPL_AUDIO,
-	mpuintr, sc, sc->sc_dev.dv_xname);
-
-    /* XXX might use pssprint func ?? */
-    printf(" port 0x%x/%d irq %d\n",
-	   sc->sc_iobase, MIDI_NPORT, cf->cf_irq);
-}
-
-void
-pcdattach(parent, self, aux)
-    struct device *parent, *self;
-    void *aux;
-{
-    struct pcd_softc *sc = (struct pcd_softc *)self;
-    struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
-    int iobase = cf->cf_iobase;
-
-    /*
-     * The pss driver simply enables the cd interface. The CD
-     * appropriate driver - scsi (aic6360) or Sony needs to be
-     * used after this to handle the device.
-     */
-    sc->sc_iobase = iobase;
-
-    /* XXX might use pssprint func ?? */
-    printf(" port 0x%x/%d irq %d\n",
-	   sc->sc_iobase, 2, cf->cf_irq);
-}
-#endif /* notyet */
-
 
 int
 pss_set_master_gain(sc, gp)
@@ -1272,23 +963,6 @@ pssintr(arg)
 
     return 0;
 }
-
-#ifdef notyet
-int
-mpuintr(arg)
-	void *arg;
-{
-    struct mpu_softc *sc = arg;
-    u_char sr;
-
-    sr = inb(sc->sc_iobase+MIDI_STATUS_REG);
-
-    printf("mpuintr: sc=%p sr=%x\n", sc, sr);
-
-    /* XXX Need to clear intr */
-    return 1;
-}
-#endif
 
 int
 pss_getdev(addr, retp)

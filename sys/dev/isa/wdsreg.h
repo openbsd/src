@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdsreg.h,v 1.4 1997/11/07 08:07:11 niklas Exp $	*/
+/*	$OpenBSD: wdsreg.h,v 1.5 2011/06/29 12:17:40 tedu Exp $	*/
 
 typedef u_int8_t physaddr[3];
 typedef u_int8_t physlen[3];
@@ -89,11 +89,6 @@ struct wds_scb {
 #define	SCB_BUFFER	0x40
 	int timeout;
 
-#ifdef notyet
-	struct isadma_seg scb_phys[1];	/* phys segment of this scb */
-	struct isadma_seg data_phys[WDS_NSEG];	/* phys segments of data */
-	int data_nseg;			/* number of phys segments of data */
-#endif
 	struct wds_buf *buf;
 };
 
