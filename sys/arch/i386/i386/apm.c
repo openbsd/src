@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.96 2011/01/13 23:19:36 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.97 2011/06/29 16:18:04 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -162,7 +162,6 @@ struct apmregs {
 };
 
 int  apmcall(u_int, u_int, struct apmregs *);
-void apm_power_print(struct apm_softc *, struct apmregs *);
 int  apm_handle_event(struct apm_softc *, struct apmregs *);
 void apm_set_ver(struct apm_softc *);
 int  apm_periodic_check(struct apm_softc *);
@@ -237,83 +236,6 @@ apm_perror(const char *str, struct apmregs *regs)
 	delay(1000000);
 
 	apmerrors++;
-}
-
-void
-apm_power_print(struct apm_softc *sc, struct apmregs *regs)
-{
-#if !defined(APM_NOPRINT)
-	sc->batt_life = BATT_LIFE(regs);
-	if (BATT_LIFE(regs) != APM_BATT_LIFE_UNKNOWN) {
-		printf("%s: battery life expectancy %d%%\n",
-		    sc->sc_dev.dv_xname,
-		    BATT_LIFE(regs));
-	}
-	printf("%s: AC ", sc->sc_dev.dv_xname);
-	switch (AC_STATE(regs)) {
-	case APM_AC_OFF:
-		printf("off,");
-		break;
-	case APM_AC_ON:
-		printf("on,");
-		break;
-	case APM_AC_BACKUP:
-		printf("backup power,");
-		break;
-	default:
-	case APM_AC_UNKNOWN:
-		printf("unknown,");
-		break;
-	}
-	if (apm_minver == 0) {
-		printf(" battery is ");
-		switch (BATT_STATE(regs)) {
-		case APM_BATT_HIGH:
-			printf("high");
-			break;
-		case APM_BATT_LOW:
-			printf("low");
-			break;
-		case APM_BATT_CRITICAL:
-			printf("CRITICAL");
-			break;
-		case APM_BATT_CHARGING:
-			printf("charging");
-			break;
-		case APM_BATT_UNKNOWN:
-			printf("unknown");
-			break;
-		default:
-			printf("undecoded (%x)", BATT_STATE(regs));
-			break;
-		}
-	} else if (apm_minver >= 1) {
-		if (BATT_FLAGS(regs) & APM_BATT_FLAG_NOBATTERY)
-			printf(" no battery");
-		else {
-			printf(" battery charge ");
-			if (BATT_FLAGS(regs) & APM_BATT_FLAG_HIGH)
-				printf("high");
-			else if (BATT_FLAGS(regs) & APM_BATT_FLAG_LOW)
-				printf("low");
-			else if (BATT_FLAGS(regs) & APM_BATT_FLAG_CRITICAL)
-				printf("critical");
-			else
-				printf("unknown");
-			if (BATT_FLAGS(regs) & APM_BATT_FLAG_CHARGING)
-				printf(", charging");
-			if (BATT_REM_VALID(regs)) {
-				int life = BATT_REMAINING(regs);
-				if (sc->be_batt)
-					life = swap16(life);
-				printf(", estimated %d:%02d hours",
-				    life / 60, life % 60);
-			}
-		}
-	}
-
-	printf("\n");
-#endif
 }
 
 void
@@ -443,13 +365,7 @@ apm_handle_event(struct apm_softc *sc, struct apmregs *regs)
 		break;
 	case APM_POWER_CHANGE:
 		DPRINTF(("power status change\n"));
-		if (apm_get_powstat(&nregs) == 0 &&
-		    BATT_LIFE(&nregs) != APM_BATT_LIFE_UNKNOWN &&
-		    BATT_LIFE(&nregs) < cpu_apmwarn &&
-		    (sc->sc_flags & SCFLAG_PRINT) != SCFLAG_NOPRINT &&
-		    ((sc->sc_flags & SCFLAG_PRINT) != SCFLAG_PCTPRINT ||
-		     sc->batt_life != BATT_LIFE(&nregs)))
-			apm_power_print(sc, &nregs);
+		apm_get_powstat(&nregs);
 		apm_record_event(sc, regs->bx);
 		break;
 	case APM_NORMAL_RESUME:
@@ -890,9 +806,7 @@ apmattach(struct device *parent, struct device *self, void *aux)
 		apm_powmgt_engage(1, APM_DEV_ALLDEVS);
 
 		bzero(&regs, sizeof(regs));
-		if (apm_get_powstat(&regs) == 0)
-			apm_power_print(sc, &regs);
-		else
+		if (apm_get_powstat(&regs) != 0)
 			apm_perror("get power status", &regs);
 		apm_cpu_busy();
 

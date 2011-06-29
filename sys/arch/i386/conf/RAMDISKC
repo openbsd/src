@@ -1,9 +1,8 @@
-#	$OpenBSD: RAMDISKC,v 1.99 2011/06/26 23:19:10 tedu Exp $
+#	$OpenBSD: RAMDISKC,v 1.100 2011/06/29 16:18:04 tedu Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
 option		SCSITERSE
-option		APM_NOPRINT
 
 option		SMALL_KERNEL
 option		NO_PROPOLICE
