@@ -451,7 +451,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/ad1848var.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/ahareg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/cs4231var.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/egavar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/elink.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/essreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/essvar.ph
