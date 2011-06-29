@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.118 2011/06/20 20:18:44 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.119 2011/06/29 07:39:02 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -251,6 +251,7 @@ struct cfdev {
 	struct aparams opar;		/* output (write) parameters */
 	unsigned hold;			/* open immediately */
 	unsigned autovol;		/* adjust volumes */
+	unsigned autopar;		/* adjust parameters to streams */
 	unsigned bufsz;			/* par.bufsz for sio device */
 	unsigned round;			/* par.round for sio device */
 	unsigned mode;			/* bitmap of MODE_XXX */
@@ -288,6 +289,7 @@ cfdev_new(struct cfdev *templ)
 		cd->round = 0;
 		cd->hold = 1;
 		cd->autovol = 1;
+		cd->autopar = 1;
 	}
 	SLIST_INIT(&cd->ins);
 	SLIST_INIT(&cd->outs);
@@ -460,13 +462,13 @@ privdrop(void)
 void
 aucat_usage(void)
 {
-	(void)fputs("usage: " PROG_AUCAT " [-dlnu] [-a flag] [-b nframes] "
+	(void)fputs("usage: " PROG_AUCAT " [-dln] [-a flag] [-b nframes] "
 	    "[-C min:max] [-c min:max] [-e enc]\n\t"
 	    "[-f device] [-h fmt] [-i file] [-j flag] [-L addr] [-m mode] "
 	    "[-o file]\n\t"
 	    "[-q device] [-r rate] [-s name] [-t mode] [-U unit] "
-	    "[-v volume]\n\t"
-	    "[-w flag] [-x policy] [-z nframes]\n",
+	    "[-u flag]\nt"
+	    "[-v volume] [-w flag] [-x policy] [-z nframes]\n",
 	    stderr);
 }
 
@@ -479,7 +481,7 @@ aucat_main(int argc, char **argv)
 	struct cfstr *cs;
 	struct cfdev *cd;
 	struct cfnet *cn;
-	int c, u_flag, d_flag, l_flag, n_flag, unit;
+	int c, d_flag, l_flag, n_flag, unit;
 	char base[PATH_MAX], path[PATH_MAX];
 	unsigned mode, rate;
 	const char *str;
@@ -492,7 +494,6 @@ aucat_main(int argc, char **argv)
 	 * global options defaults
 	 */
 	unit = -1;
-	u_flag = 0;
 	d_flag = 0;
 	l_flag = 0;
 	n_flag = 0;
@@ -506,7 +507,7 @@ aucat_main(int argc, char **argv)
 	cd = cfdev_new(NULL);
 	cs = cfstr_new(NULL);
 
-	while ((c = getopt(argc, argv, "a:w:dnb:c:C:e:r:h:x:v:i:o:f:m:luq:s:U:L:t:j:z:")) != -1) {
+	while ((c = getopt(argc, argv, "a:w:dnb:c:C:e:r:h:x:v:i:o:f:m:lu:q:s:U:L:t:j:z:")) != -1) {
 		switch (c) {
 		case 'd':
 #ifdef DEBUG
@@ -517,9 +518,6 @@ aucat_main(int argc, char **argv)
 			break;
 		case 'n':
 			n_flag = 1;
-			break;
-		case 'u':
-			u_flag = 1;
 			break;
 		case 'U':
 			unit = strtonum(optarg, 0, MIDI_MAXCTL, &str);
@@ -590,6 +588,9 @@ aucat_main(int argc, char **argv)
 			break;
 		case 'w':
 			cd->autovol = opt_onoff();
+			break;
+		case 'u':
+			cd->autopar = opt_onoff();
 			break;
 		case 'q':
 			cfmid_add(&cd->mids, optarg);
@@ -680,7 +681,7 @@ aucat_main(int argc, char **argv)
 	 */
 	SLIST_FOREACH(cd, &cfdevs, entry) {
 		mode = 0;
-		if (!u_flag) {
+		if (cd->autopar) {
 			aparams_init(&cd->opar, NCHAN_MAX - 1, 0, RATE_MIN);
 			aparams_init(&cd->opar, NCHAN_MAX - 1, 0, RATE_MIN);
 		}
@@ -688,7 +689,7 @@ aucat_main(int argc, char **argv)
 			if (cs->mode == 0)
 				errx(1, "%s: not in play mode", cs->path);
 			mode |= (cs->mode & MODE_PLAY);
-			if (!u_flag)
+			if (cd->autopar)
 				aparams_grow(&cd->opar, &cs->ipar);
 		}
 		SLIST_FOREACH(cs, &cd->outs, entry) {
@@ -697,14 +698,14 @@ aucat_main(int argc, char **argv)
 			if ((cs->mode & MODE_REC) && (cs->mode & MODE_MON))
 				errx(1, "%s: can't rec and mon", cs->path);
 			mode |= (cs->mode & MODE_RECMASK);
-			if (!u_flag)
+			if (cd->autopar)
 				aparams_grow(&cd->ipar, &cs->opar);
 		}
 		SLIST_FOREACH(cs, &cd->opts, entry) {
 			if ((cs->mode & MODE_REC) && (cs->mode & MODE_MON))
 				errx(1, "%s: can't rec and mon", cs->path);
 			mode |= (cs->mode & (MODE_RECMASK | MODE_PLAY));
-			if (!u_flag) {
+			if (cd->autopar) {
 				aparams_grow(&cd->opar, &cs->ipar);
 				aparams_grow(&cd->ipar, &cs->opar);
 			}

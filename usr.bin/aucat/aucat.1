@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.85 2011/06/20 20:18:44 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.86 2011/06/29 07:39:02 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 20 2011 $
+.Dd $Mdocdate: June 29 2011 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm aucat
 .Bk -words
-.Op Fl dlnu
+.Op Fl dln
 .Op Fl a Ar flag
 .Op Fl b Ar nframes
 .Op Fl C Ar min : Ns Ar max
@@ -41,6 +41,7 @@
 .Op Fl s Ar name
 .Op Fl t Ar mode
 .Op Fl U Ar unit
+.Op Fl u Ar flag
 .Op Fl v Ar volume
 .Op Fl w Ar flag
 .Op Fl x Ar policy
@@ -116,7 +117,7 @@ Preceding streams
 control MIDI ports
 .Pq Fl q ,
 and per-device options
-.Pq Fl abwz
+.Pq Fl abuwz
 apply to this device.
 Device mode and parameters are determined from streams
 attached to it.
@@ -238,14 +239,21 @@ used in
 .Xr sndio 7
 device names.
 The default is 0.
-.It Fl u
-Normally
+.It Fl u Ar flag
+Control how parameters of the audio device are chosen.
+If the flag is
+.Va on
+then
 .Nm
-tries to automatically determine the optimal parameters for the audio device;
-if this option is specified,
+tries to automatically determine the optimal parameters to
+match stream parameters and avoid conversions if possible.
+If the flag is
+.Va off
 it will instead use the parameters specified by the
 .Fl Ccer
 options.
+The default is
+.Va on .
 .It Fl v Ar volume
 Software volume attenuation of the playback stream.
 The value must be between 1 and 127,
@@ -318,7 +326,7 @@ to a 400 frame block size.
 .Pp
 On the command line,
 per-device parameters
-.Pq Fl abwz
+.Pq Fl abuwz
 must precede the device definition
 .Pq Fl f ,
 and per-stream parameters
