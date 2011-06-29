@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.100 2011/05/24 20:27:11 matthew Exp $
+#	$OpenBSD: RAMDISK,v 1.101 2011/06/29 20:52:09 matthew Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -132,7 +132,6 @@ vcons0	at vbus?
 vrtc0	at vbus?
 vrng0	at vbus?
 vdsk*	at cbus?
-scsibus* at vdsk?
 vnet*	at cbus?
 
 ## Lance Ethernet - AMD7990
@@ -154,7 +153,6 @@ gem*	at sbus?
 pciide*	at pci? flags 0x0000
 wd*	at pciide? flags 0x0a00
 atapiscsi* at pciide?
-scsibus* at atapiscsi?
 
 #
 # Note the flags on the esp entries below, that work around
@@ -170,9 +168,7 @@ dma*	at sbus?		# SBus
 esp*	at dma?			# SBus
 esp*	at sbus?
 isp*	at sbus?
-scsibus* at esp?
 softraid0	at root		# Software RAID
-scsibus* at softraid?
 
 ahc*	at pci?
 siop*	at pci?
@@ -185,16 +181,10 @@ ahci*	at jmb?
 pciide*	at jmb?
 ahci*	at pci?
 
-scsibus*	at ahc?
-scsibus*	at siop?
-scsibus*	at mpi?
-scsibus*	at sili?
-scsibus*	at arc?
-scsibus*	at ahci?
-scsibus*	at isp?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
+scsibus* at scsi?
 sd*	at scsibus?		# SCSI disks
 cd*	at scsibus?		# SCSI CD-ROMs
 
@@ -244,7 +234,6 @@ uhidev*	at uhub?		# Human Interface Devices
 ukbd*	at uhidev?		# USB keyboard
 wskbd*	at ukbd?
 umass*	at uhub?		# USB Mass Storage devices
-scsibus* at umass?
 aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
 axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
 cue*	at uhub?		# CATC USB-EL1201A based Ethernet

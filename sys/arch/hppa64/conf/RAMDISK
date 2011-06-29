@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.11 2011/05/24 20:27:11 matthew Exp $
+#	$OpenBSD: RAMDISK,v 1.12 2011/06/29 20:52:09 matthew Exp $
 #
 # Diskless kernel config
 #
@@ -88,7 +88,6 @@ pcmcia*		at cardslot?
 #midi*	at umidi?
 #ulpt*	at uhub?		# USB Printers
 #umass*	at uhub?		# USB Mass Storage devices
-#scsibus* at umass?
 #uhidev*	at uhub?	# Human Interface Devices
 #ums*	at uhidev?		# USB mouse
 #wsmouse* at ums? mux 0
@@ -120,15 +119,11 @@ pcmcia*		at cardslot?
 
 #ep*	at pci?			# 3c59x ethernets
 ahc*	at pci?			# Adaptec 2940 SCSI controllers
-scsibus* at ahc?
 #option	BHADEBUG
 #bha*	at pci?
-#scsibus* at bha?
 
 siop*	at pci?			# NCR 538XX SCSI controllers(new)
-scsibus* at siop?
 #ahd*	at pci?			# Adaptec 79?? SCSI controllers
-#scsibus* at ahd?
 
 #em*	at pci?			# Intel Pro/1000 ethernet
 #ti*	at pci?			# Alteon Tigon 1Gb ethernet
@@ -176,10 +171,10 @@ ukphy*		at mii?		# generic unknown PHYs
 #wd*	at wdc? flags 0x0000
 #wd*	at pciide? flags 0x0000
 #atapiscsi* at pciide?
-#scsibus* at atapiscsi?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
+scsibus* at scsi?
 sd*	at scsibus?
 st*	at scsibus?
 cd*	at scsibus?

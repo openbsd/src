@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.100 2010/11/19 20:52:41 miod Exp $
+#	$OpenBSD: GENERIC,v 1.101 2011/06/29 20:52:09 matthew Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -337,13 +337,10 @@ ukphy*	at mii?
 
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
 # to the underlying hardware controller.
-scsibus* at esp?
-scsibus* at si?
-scsibus* at sw?
-scsibus* at isp?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
+scsibus* at scsi?
 sd*	at scsibus?		# SCSI disks
 st*	at scsibus?		# SCSI tapes
 cd*	at scsibus?		# SCSI CD-ROMs

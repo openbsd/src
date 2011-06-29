@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP27,v 1.25 2011/05/24 20:27:11 matthew Exp $
+#	$OpenBSD: RAMDISK-IP27,v 1.26 2011/06/29 20:52:09 matthew Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 
@@ -109,7 +109,6 @@ ubsa*		at uhub?	# Belkin serial adapter
 ucom*		at ubsa?
 #ulpt*		at uhub?	# USB Printers	
 umass*		at uhub?	# USB Mass Storage devices
-scsibus*	at umass?
 uhidev*		at uhub?	# Human Interface Devices
 ums*		at uhidev?	# USB mouse
 wsmouse*	at ums? mux 0
@@ -205,11 +204,8 @@ wskbd*		at pckbd? mux 1
 wsmouse*	at pms? mux 0
 
 #### SCSI Bus devices
-scsibus*	at ahc?
-scsibus*	at isp?
-scsibus*	at mpi?
-scsibus*	at siop?
 
+scsibus*	at scsi?
 sd*		at scsibus?
 st*		at scsibus?
 cd*		at scsibus?

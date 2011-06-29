@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.18 2011/05/24 20:27:11 matthew Exp $ 
+# $OpenBSD: RAMDISK,v 1.19 2011/06/29 20:52:09 matthew Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -63,7 +63,6 @@ pci0		at iopxs? bus ?		# PCI/PCI-X support
 
 
 siop*		at pci? 		# NCR 538XX SCSI controllers(new)
-scsibus*	at siop?
 em*		at pci?
 re*		at pci?
 ral*		at pci?
@@ -73,6 +72,7 @@ pciide*		at pci? flags 0x0000
 wd*		at pciide? flags 0x0000
 
 
+scsibus*	at scsi?
 sd*		at scsibus?		# SCSI disk drives
 #st*		at scsibus?		# SCSI tape drives
 cd*		at scsibus?		# SCSI CD-ROM drives
@@ -116,7 +116,6 @@ ucom*	at umsm?
 #midi*	at umidi?
 #ulpt*	at uhub?		# USB Printers
 umass*	at uhub?		# USB Mass Storage devices
-scsibus* at umass?
 uhidev*	at uhub?		# Human Interface Devices
 ums*	at uhidev?		# USB mouse
 wsmouse* at ums? mux 0

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.14 2010/07/03 03:59:16 krw Exp $
+#	$OpenBSD: GENERIC,v 1.15 2011/06/29 20:52:09 matthew Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -46,9 +46,9 @@ wskbd*		at ws?
 wsmouse*	at ws?
 
 # SCSI bus support
-scsibus*	at spc?
 
 # SCSI devices
+scsibus*	at scsi?
 sd*		at scsibus?
 st*		at scsibus?
 cd*		at scsibus?

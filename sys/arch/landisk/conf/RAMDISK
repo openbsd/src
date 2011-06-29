@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.14 2011/05/24 20:27:11 matthew Exp $
+# $OpenBSD: RAMDISK,v 1.15 2011/06/29 20:52:09 matthew Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -76,7 +76,6 @@ ukphy*	at mii?				# generic unknown PHYs
 pciide*		at pci?
 wd*		at pciide?
 atapiscsi*	at pciide? flags 0x0000
-scsibus*	at atapiscsi?
 
 # USB Controller and Devices
 
@@ -92,7 +91,6 @@ usb*	at ohci?
 uhub*	at usb?
 uhub*	at uhub? port ? configuration ? interface ?
 umass*	at uhub?		# USB Mass Storage devices
-scsibus* at umass?
 aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
 atu*	at uhub?		# Atmel AT76c50x based 802.11b
 axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
@@ -116,6 +114,7 @@ zyd*	at uhub?		# Zydas ZD1211
 #uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 #onewire* at uow?
 
+scsibus* at scsi?
 sd*	at scsibus?			# SCSI disk drives
 cd*	at scsibus?			# SCSI CD-ROM drives
 

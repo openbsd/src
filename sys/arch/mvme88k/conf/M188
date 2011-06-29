@@ -1,4 +1,4 @@
-#	$OpenBSD: M188,v 1.30 2010/07/03 03:59:17 krw Exp $
+#	$OpenBSD: M188,v 1.31 2011/06/29 20:52:09 matthew Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -60,9 +60,8 @@ le0	at vmes0 addr 0xffff1200 ipl 3
 le1	at vmes0 addr 0xffff1400 ipl 3
 le2	at vmes0 addr 0xffff1600 ipl 3
 
-scsibus* at vs?
-scsibus* at vsbic?
 
+scsibus* at scsi?
 sd*	at scsibus?
 st*	at scsibus?
 cd*	at scsibus?

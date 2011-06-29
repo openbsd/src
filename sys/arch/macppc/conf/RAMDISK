@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.90 2010/07/03 03:59:16 krw Exp $
+#	$OpenBSD: RAMDISK,v 1.91 2011/06/29 20:52:09 matthew Exp $
 #
 # PPC GENERIC config file
 #
@@ -142,19 +142,6 @@ wskbd*		at akbd? mux 1
 zsc*		at macobio?
 zstty*		at zsc?
 
-scsibus*	at siop?
-#scsibus*	at adv?
-scsibus*	at ahc?
-#scsibus*	at bha?
-#scsibus*	at esp?
-scsibus*	at mesh?
-scsibus*	at ioprbs?
-scsibus*	at iopsp?
-scsibus*	at pcscp?
-scsibus*	at isp?
-scsibus*	at mpi?
-scsibus*	at arc?
-scsibus*	at softraid?
 
 mediabay*	at macobio?
 wdc*		at mediabay?
@@ -163,7 +150,6 @@ wd*		at wdc? flags 0x0000
 wd*		at pciide?
 atapiscsi*	at wdc? flags 0x0000
 atapiscsi*	at pciide? flags 0x0000
-scsibus*	at atapiscsi?
 
 # USB Controllers
 ohci*		at pci?		# Open Host Controller
@@ -202,7 +188,6 @@ wi*		at uhub?		# WaveLAN IEEE 802.11DS
 #uyap*		at uhub?		# Y@P firmware loader
 #ugen*		at uhub?		# USB Generic driver
 umass*		at uhub?		# USB Mass Storage devices
-scsibus*	at umass?
 
 # CardBus bus support
 cardbus*	at cardslot?
@@ -220,6 +205,7 @@ wdc*		at pcmcia?
 wsdisplay*	at vgafb?
 wskbd*		at ukbd? mux 1
 
+scsibus*	at scsi?
 sd*		at scsibus?
 st*		at scsibus?
 cd*		at scsibus?

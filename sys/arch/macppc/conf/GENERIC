@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.210 2011/05/25 07:42:15 mpi Exp $g
+#	$OpenBSD: GENERIC,v 1.211 2011/06/29 20:52:09 matthew Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -186,19 +186,6 @@ puc*		at pci?		# PCI "universal" comm device
 #puc*		at cardbus?
 com*		at puc?
 
-#scsibus*	at adv?
-scsibus*	at ahc?
-#scsibus*	at ami?
-#scsibus*	at bha?
-#scsibus*	at esp?
-scsibus*	at mesh?
-scsibus*	at ioprbs?
-scsibus*	at iopsp?
-scsibus*	at pcscp?
-scsibus*	at isp?
-scsibus*	at mpi?
-scsibus*	at arc?
-scsibus*	at siop?
 
 mediabay*	at macobio?
 wdc*		at mediabay?
@@ -207,7 +194,6 @@ wd*		at wdc? flags 0x0000
 wd*		at pciide? flags 0x0000
 atapiscsi*	at wdc? flags 0x0000
 atapiscsi*	at pciide? flags 0x0000
-scsibus*	at atapiscsi?
 
 # USB Controllers
 ohci*	at pci?			# Open Host Controller
@@ -256,7 +242,6 @@ umidi*	at uhub?		# USB MIDI
 midi*	at umidi?
 ulpt*	at uhub?		# USB Printers
 umass*	at uhub?		# USB Mass Storage devices
-scsibus* at umass?
 uhidev*	at uhub?		# Human Interface Devices
 tpms*	at uhidev?		# Apple touchpad mouse
 wsmouse* at tpms? mux 0
@@ -388,6 +373,7 @@ audio*		at daca?
 # MIDI support
 midi*		at eap?
 
+scsibus*	at scsi?
 sd*		at scsibus?
 st*		at scsibus?
 cd*		at scsibus?

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.9 2008/06/08 20:37:39 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.10 2011/06/29 20:52:09 matthew Exp $
 
 machine		luna88k m88k
 
@@ -51,9 +51,9 @@ wskbd*		at ws?
 wsmouse*	at ws?
 
 # SCSI bus support
-scsibus*	at spc?
 
 # SCSI devices
+scsibus*	at scsi?
 sd*		at scsibus?			# SCSI disks
 st*		at scsibus?			# SCSI tapes
 cd*		at scsibus?			# SCSI CD-ROM

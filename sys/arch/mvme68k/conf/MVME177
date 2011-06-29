@@ -1,4 +1,4 @@
-#	$OpenBSD: MVME177,v 1.17 2010/07/03 03:59:17 krw Exp $
+#	$OpenBSD: MVME177,v 1.18 2011/06/29 20:52:09 matthew Exp $
 
 machine		mvme68k m68k
 
@@ -47,10 +47,8 @@ le*	at vmes0 addr 0xffff1600 ipl 3 vec 0x76
 
 vmel0	at vme0
 
-scsibus* at osiop?
-scsibus* at vs?
-scsibus* at vsbic?
 
+scsibus* at scsi?
 sd*	at scsibus?
 st*	at scsibus?
 cd*	at scsibus?

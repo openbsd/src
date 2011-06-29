@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.265 2011/06/22 04:33:01 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.266 2011/06/29 20:52:09 matthew Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -111,24 +111,17 @@ malo*	at pcmcia?		# Marvell 88W8385
 
 # PCI SCSI
 ahc*	at pci?			# Adaptec 2940 SCSI controllers
-scsibus* at ahc?
 siop*	at pci?			# NCR 538XX SCSI controllers
-scsibus* at siop?
 isp*	at pci?			# Qlogic ISP [12]0x0 SCSI/FibreChannel
 pcscp*	at pci?			# AMD 53c974 PCscsi-PCI SCSI
-scsibus* at pcscp?
 mpi*	at pci?			# LSI Logic Fusion MPT Message Passing Interface
-scsibus* at mpi?
 arc*	at pci?			# Areca RAID Controllers
-scsibus* at arc?
 jmb*	at pci?			# JMicron JMB36x controllers
 ahci*	at jmb? flags 0x0000	# flags 0x0001 to force SATA 1 (1.5Gb/s)
 pciide*	at jmb?
 ahci*	at pci? flags 0x0000	# AHCI SATA controllers
 				# flags 0x0001 to force SATA 1 (1.5Gb/s)
-scsibus* at ahci?
 sili*	at pci?			# Silicon Image 3124/3132/3531 SATA controllers
-scsibus* at sili?
 
 # PCI crypto
 hifn*	at pci?			# Hifn 7751/7811/7951
@@ -205,7 +198,6 @@ umidi*	at uhub?		# USB MIDI
 midi*	at umidi?
 ulpt*	at uhub?		# USB Printers
 umass*	at uhub?		# USB Mass Storage devices
-scsibus* at umass?
 uhidev*	at uhub?		# Human Interface Devices
 ums*	at uhidev?		# USB mouse
 wsmouse* at ums? mux 0
@@ -317,7 +309,6 @@ pmc*	at ebus?
 ppm*	at ebus?
 wbsd*	at ebus?
 sdmmc*	at wbsd?
-scsibus* at sdmmc?
 
 # performance counters
 uperf*	at ebus?
@@ -346,7 +337,6 @@ vcons0	at vbus?
 vrtc0	at vbus?
 vrng0	at vbus?
 vdsk*	at cbus?
-scsibus* at vdsk?
 vnet*	at cbus?
 vcc*	at cbus?
 vcctty*	at vcc?
@@ -384,7 +374,6 @@ sbpp*		at spif?
 pciide*	at pci? flags 0x0000
 wd*	at pciide? flags 0x0a00
 atapiscsi* at pciide?
-scsibus* at atapiscsi?
 
 wdc*	at pcmcia?
 wd*	at wdc? flags 0x0000
@@ -406,11 +395,10 @@ isp*	at sbus?
 
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
 # to the underlying hardware controller.
-scsibus*	at esp?
-scsibus*	at isp?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
+scsibus*	at scsi?
 sd*		at scsibus?		# SCSI disks
 st*		at scsibus?		# SCSI tapes
 cd*		at scsibus?		# SCSI CD-ROMs

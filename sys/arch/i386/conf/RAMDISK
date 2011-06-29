@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.176 2011/06/29 16:18:04 tedu Exp $
+#	$OpenBSD: RAMDISK,v 1.177 2011/06/29 20:52:09 matthew Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -128,43 +128,30 @@ com*	at isapnp?
 #bha2	at isa? disable
 #bha*	at pci?
 #bha*	at eisa?		# XXX eisa still runs in isa-compat
-#scsibus* at bha?
 #aha0	at isa? port 0x330	# Adaptec 154[02] SCSI controllers
 #aha1	at isa? port 0x334	# Adaptec 154[02] SCSI controllers
 #aha*	at isapnp?
-#scsibus* at aha?
 #ahb*	at eisa?		# Adaptec 174[024] SCSI controllers
-#scsibus* at ahb?
 #ahc0	at isa?			# Adaptec 284x SCSI controllers
 #ahc*	at eisa?		# Adaptec 274x, aic7770 SCSI controllers
 ahc*	at pci?			# Adaptec 2940 SCSI controllers
-scsibus* at ahc?
 #ahd*	at pci?			# Adaptec 79?? SCSI controllers
-#scsibus* at ahd?
 #twe*	at pcu?			# 3ware Escalade RAID controllers
-#scsibus* at twe?
 #isp*	at pci?			# Qlogic ISP [12]0x0 SCSI/FibreChannel
-#scsibus* at isp?
 #aic0	at isa? port 0x340 irq 11 # Adaptec 152[02] SCSI controllers
 #aic*	at isapnp?
 #aic*	at pcmcia?		# PCMCIA based aic SCSI controllers
-#scsibus* at aic?
 siop*	at pci?			# NCR 538XX SCSI controllers(new)
-scsibus* at siop?
 #adv*	at pci?			# AdvanSys 1200A/B and ULTRA SCSI
-#scsibus* at adv?
 #adw*	at pci?			# AdvanSys ULTRA WIDE SCSI
-#scsibus* at adw?
 #sea0	at isa? iomem 0xc8000 irq 5 # Seagate ST0[12] SCSI controllers
-#scsibus* at sea?
 #uha0	at isa? port 0x330	# UltraStor [13]4f SCSI controllers
 #uha1	at isa? port 0x334	# UltraStor [13]4f SCSI controllers
 #uha*	at eisa?		# UltraStor 24f SCSI controllers
-#scsibus* at uha?
 #wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 #wds1	at isa? port 0x358 irq 11 drq 5
-#scsibus* at wds?
 
+scsibus* at scsi?
 sd*	at scsibus?		# SCSI disk drives
 st*	at scsibus?		# SCSI tape drives
 cd*	at scsibus?		# SCSI CD-ROM drives
@@ -190,7 +177,6 @@ wd*	at pciide? flags 0x0000
 # ATAPI<->SCSI
 atapiscsi* at wdc?
 atapiscsi* at pciide?
-scsibus* at atapiscsi?
 
 we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
 we1	at isa? port 0x300 iomem 0xcc000 irq 10	#

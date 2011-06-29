@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.92 2011/05/24 20:27:11 matthew Exp $
+#	$OpenBSD: RAMDISK,v 1.93 2011/06/29 20:52:09 matthew Exp $
 #
 # Diskless kernel config
 #
@@ -114,7 +114,6 @@ uhub*	at uhub?		# USB Hubs
 #uftdi*	at uhub?		# FTDI FT8U100AX serial adapter
 #ucom*	at uftdi?
 umass*	at uhub?		# USB Mass Storage devices
-scsibus* at umass?
 uhidev*	at uhub?		# Human Interface Devices
 ums*	at uhidev?		# USB mouse
 wsmouse* at ums? mux 0
@@ -213,9 +212,7 @@ ie0	at gsc0 irq 8		# 82C596DX/CA ether
 #tms*	at gsc? irq 10		# TMS380C26 Network Controller
 osiop*	at gsc? irq 9		# NCR 53C710 (Narrow SE)
 #osiop* at eisa?
-scsibus* at osiop?
 oosiop*	at gsc? irq 9		# NCR 53C700 (Narrow SE)
-scsibus* at oosiop?
 #harmony* at gsc? irq 13	# Audio Type 2 (CS4215/AD1849)
 #audio*	at harmony?
 gsckbc*	at gsc? irq 26
@@ -224,26 +221,19 @@ pckbd*	at gsckbc?		# PS/2 keyboard
 
 #sh*	at eisa?		# Interphase Seahawk 4811 EISA/FDDI
 #ahb*	at eisa?		# Adaptec 174[024] SCSI controllers
-#scsibus* at aha?
 #ahc*	at eisa?		# Adaptec 274x, aic7770 SCSI controllers
 ahc*	at pci?			# Adaptec 2940 SCSI controllers
-scsibus* at ahc?
 mpi*	at pci?			# LSI Logic Fusion MPT Message Passing Interface
-scsibus* at mpi?
 #option	BHADEBUG
 #bha*	at eisa?
 #bha*	at pci?
-#scsibus* at bha?
 
 siop*	at mainbus? irq 3	# NCR 53C720 (Fast/Wide HVD)
 siop*	at phantomas? irq 3
 siop*	at uturn? irq 3
 siop*	at pci?			# NCR 53C8XX SCSI controllers
-scsibus* at siop?
 #ahd*	at pci?			# Adaptec 79?? SCSI controllers
-#scsibus* at ahd?
 softraid0	at root		# Software RAID
-scsibus* at softraid?
 
 em*	at pci?			# Intel Pro/1000 ethernet
 #ti*	at pci?			# Alteon Tigon 1Gb ethernet
@@ -325,10 +315,10 @@ wdc*	at pcmcia?
 wd*	at wdc? flags 0x0000
 wd*	at pciide? flags 0x0000
 atapiscsi* at pciide?
-scsibus* at atapiscsi?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
+scsibus* at scsi?
 sd*	at scsibus?
 st*	at scsibus?
 cd*	at scsibus?

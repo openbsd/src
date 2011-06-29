@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.23 2008/06/08 20:37:39 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.24 2011/06/29 20:52:09 matthew Exp $
 #
 # RAMDISK - bsd.rd configuration file (non-SBC version)
 
@@ -68,10 +68,8 @@ wskbd*		at akbd?
 ncrscsi0	at obio?		# SCSI NCR 5380
 sbc0		at obio? disable flags 0x1	# MI NCR 5380 SCSI Bus Controller
 
-scsibus*	at esp?
-scsibus*	at ncrscsi?
-scsibus*	at sbc?
 
+scsibus*	at scsi?
 sd*		at scsibus?		# SCSI disk drives
 st*		at scsibus?		# SCSI tape drives
 cd*		at scsibus?		# SCSI CD-ROM drives

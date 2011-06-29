@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP30,v 1.35 2011/05/24 20:27:11 matthew Exp $
+#	$OpenBSD: GENERIC-IP30,v 1.36 2011/06/29 20:52:09 matthew Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 #
@@ -72,10 +72,6 @@ isp*		at pci?
 mpi*		at pci?
 siop*		at pci?
 
-scsibus*	at ahc?
-scsibus*	at isp?
-scsibus*	at mpi?
-scsibus*	at siop?
 
 # CardBus bus support
 cbb*		at pci?
@@ -109,7 +105,6 @@ uaudio*		at uhub?	# USB Audio
 audio*		at uaudio?
 ulpt*		at uhub?	# USB Printers	
 umass*		at uhub?	# USB Mass Storage devices
-scsibus*	at umass?
 urio*		at uhub?	# Diamond Multimedia Rio 500
 uscanner*	at uhub? disable# USB Scanners
 uhidev*		at uhub?	# Human Interface Devices
@@ -244,6 +239,7 @@ wskbd*		at pckbd? mux 1
 wsmouse*	at pms? mux 0
 
 #### SCSI Bus devices
+scsibus*	at scsi?
 sd*		at scsibus?
 st*		at scsibus?
 cd*		at scsibus?

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKU5,v 1.16 2009/06/24 11:38:40 deraadt Exp $
+#	$OpenBSD: RAMDISKU5,v 1.17 2011/06/29 20:52:09 matthew Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -57,15 +57,13 @@ timer*	at mainbus0		# Timer chip (some systems)
 pciide*	at pci? flags 0x0000
 wd*	at pciide? flags 0x0a00
 atapiscsi* at pciide?
-scsibus* at atapiscsi?
 
 siop*	at pci?
-scsibus*	at siop?
 #isp*	at pci?
-#scsibus*	at isp?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
+scsibus* at scsi?
 sd*	at scsibus?		# SCSI disks
 #cd*	at scsibus?		# SCSI CD-ROMs
 

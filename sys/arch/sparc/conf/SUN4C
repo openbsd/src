@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4C,v 1.62 2010/07/03 03:59:17 krw Exp $
+#	$OpenBSD: SUN4C,v 1.63 2011/06/29 20:52:09 matthew Exp $
 #	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -174,11 +174,10 @@ ukphy*	at mii?
 
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
 # to the underlying hardware controller.
-scsibus* at esp?
-scsibus* at isp?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
+scsibus* at scsi?
 sd*	at scsibus?		# SCSI disks
 st*	at scsibus?		# SCSI tapes
 cd*	at scsibus?		# SCSI CD-ROMs

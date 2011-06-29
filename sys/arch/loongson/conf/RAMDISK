@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.18 2011/05/25 21:19:59 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.19 2011/06/29 20:52:09 matthew Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -102,7 +102,6 @@ ucom*		at ubsa?
 uplcom*		at uhub?	# I/O DATA USB-RSAQ2 serial adapter
 ucom*		at uplcom?
 umass*		at uhub?	# USB Mass Storage devices
-scsibus*	at umass?
 uhidev*		at uhub?	# Human Interface Devices
 ukbd*		at uhidev?	# USB keyboard
 wskbd*		at ukbd? mux 1
@@ -143,6 +142,7 @@ rlphy*		at mii?		# RealTek 8139 internal PHYs
 urlphy*		at mii?		# Realtek RTL8150L internal PHY
 ukphy*		at mii?		# "unknown" PHYs
 
+scsibus*	at scsi?
 sd*		at scsibus?
 #st*		at scsibus?
 cd*		at scsibus?

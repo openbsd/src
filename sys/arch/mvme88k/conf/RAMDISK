@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.32 2009/02/14 17:41:40 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.33 2011/06/29 20:52:09 matthew Exp $
 
 machine		mvme88k m88k
 
@@ -75,10 +75,8 @@ le0	at vmes0 addr 0xffff1200 ipl 3
 le1	at vmes0 addr 0xffff1400 ipl 3
 le2	at vmes0 addr 0xffff1600 ipl 3
 
-scsibus* at osiop?
-scsibus* at vs?
-scsibus* at vsbic?
 
+scsibus* at scsi?
 sd*	at scsibus?
 st*	at scsibus?
 cd*	at scsibus?

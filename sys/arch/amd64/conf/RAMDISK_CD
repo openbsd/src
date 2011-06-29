@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.118 2011/05/24 20:27:11 matthew Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.119 2011/06/29 20:52:08 matthew Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -102,7 +102,6 @@ uhidev*	at uhub?
 ukbd*	at uhidev?
 wskbd*	at ukbd? mux 1
 umass*	at uhub?		# USB Mass Storage devices
-scsibus* at umass?
 #ums*	at uhidev?
 #wsmouse* at ums? mux 0
 aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
@@ -155,66 +154,40 @@ com2	at isa? port 0x3e8 irq 5
 #lpt2	at isa? port 0x3bc
 
 #bha*	at pci?
-#scsibus* at bha?
 ahc*	at pci?			# Adaptec 2940 SCSI controllers
-scsibus* at ahc?
 jmb*	at pci?			# JMicron JMB36x controllers
 ahci*	at jmb?
 pciide*	at jmb?
 ahci*	at pci?			# AHCI SATA controllers
-scsibus* at ahci?
 sili*	at pci?			# Silicon Image 3124/3132/3531 SATA controllers
-scsibus* at sili?
 ahd*	at pci?			# Adaptec 79?? SCSI controllers
-scsibus* at ahd?
 arc*	at pci?			# Areca RAID Controller
-scsibus* at arc?
 mpi*	at pci?			# LSI Logic Message Passing Interface
-scsibus* at mpi?
 mpii*	at pci?			# LSI Message Passing Interface II
-scsibus* at mpii?
 gdt*	at pci?			# ICP Vortex GDT RAID controllers
-scsibus* at gdt?
 #aac*	at pci?			# Adaptec FSA RAID controllers
-#scsibus* at aac?
 ami*	at pci?			# AMI MegaRAID controllers
-scsibus* at ami?
 mfi*	at pci?			# LSI MegaRAID SAS controllers
-scsibus* at mfi?
 #cac*	at pci?			# Compaq Smart ARRAY [234]* RAID controllers
-#scsibus* at cac?
 ciss*	at pci?			# Compaq Smart ARRAY [56]* RAID controllers
-scsibus* at ciss?
 twe*	at pci?			# 3ware Escalade RAID controllers
-scsibus* at twe?
 iha*	at pci?			# Initio Ultra/UltraWide SCSI controllers
-scsibus* at iha?
 ips*	at pci?			# IBM ServeRAID controllers
-scsibus* at ips?
 isp*	at pci?			# Qlogic ISP [12]0x0 SCSI/FibreChannel
-scsibus* at isp?
 #aic*	at pcmcia?		# PCMCIA based aic SCSI controllers
-#scsibus* at aic?
 siop*	at pci?			# NCR 538XX SCSI controllers(new)
-scsibus* at siop?
 #adv*	at pci?			# AdvanSys 1200A/B and ULTRA SCSI
-#scsibus* at adv?
 adw*	at pci?			# AdvanSys ULTRA WIDE SCSI
-scsibus* at adw?
 pcscp*	at pci?			# AMD 53c974 PCscsi-PCI SCSI
-scsibus* at pcscp?
 #trm*	at pci?			# Tekram DC-3x5U SCSI Controllers
-#scsibus* at trm?
 softraid0	at root		# Software RAID
-scsibus* at softraid?
 
 # I2O
 iop*	at pci?			# I2O processor
 ioprbs*	at iop?			# I2O arrays
-scsibus* at ioprbs?
 iopsp*	at iop?			# I2O SCSI pass-through
-scsibus* at iopsp?
 
+scsibus* at scsi?
 sd*	at scsibus?		# SCSI disk drives
 st*	at scsibus?		# SCSI tape drives
 cd*	at scsibus?		# SCSI CD-ROM drives
@@ -239,7 +212,6 @@ wd*	at pciide? flags 0x0000
 # ATAPI<->SCSI
 atapiscsi* at wdc?
 atapiscsi* at pciide?
-scsibus* at atapiscsi?
 
 de*	at pci?			# DC21X4X-based ethernet
 fxp*	at pci?			# EtherExpress 10/100B ethernet

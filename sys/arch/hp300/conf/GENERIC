@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.51 2010/11/19 20:52:39 miod Exp $
+#	$OpenBSD: GENERIC,v 1.52 2011/06/29 20:52:09 matthew Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -119,8 +119,8 @@ mt*		at hpibbus?			# HP-IB 9-track tape
 ppi0		at hpibbus0 slave 5 punit 0	# HP-IB plotter
 
 spc*		at dio? flags 0x00		# SCSI controller
-scsibus*	at spc?
 
+scsibus*	at scsi?
 sd*		at scsibus?			# SCSI disks
 st*		at scsibus?			# SCSI tapes
 cd*		at scsibus?			# SCSI CD-ROMs

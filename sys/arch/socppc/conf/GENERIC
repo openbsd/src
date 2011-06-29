@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.21 2011/01/12 22:16:19 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.22 2011/06/29 20:52:09 matthew Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -63,7 +63,6 @@ uhub*	at usb?			# USB Hubs
 uhub*	at uhub?		# USB Hubs
 ulpt*	at uhub?		# USB Printers
 umass*	at uhub?		# USB Mass Storage devices
-scsibus* at umass?
 uhidev*	at uhub?		# Human Interface Devices
 ums*	at uhidev?		# USB mouse
 wsmouse* at ums? mux 0
@@ -89,6 +88,7 @@ utwitch* at uhidev?		# YUREX BBU sensor
 udl*		at uhub?
 wsdisplay*	at udl?
 
+scsibus*	at scsi?
 sd*		at scsibus?
 
 # On-board TSEC

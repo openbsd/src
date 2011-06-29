@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.83 2011/05/24 20:27:11 matthew Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.84 2011/06/29 20:52:08 matthew Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -78,7 +78,6 @@ uhid*	at uhidev?			# USB Generic HID devices
 
 # USB Mass Storage devices
 umass*	at uhub?
-scsibus* at umass?
 
 # USB Modems
 #umodem*	at uhub?
@@ -126,7 +125,6 @@ scc1	at ioasic?
 tcds*	at tc?
 asc*	at tcds?
 asc*	at tc?
-scsibus* at asc?
 #cfb*	at tc?
 #sfb*	at tc?
 le*	at tc?
@@ -159,27 +157,17 @@ cy*	at pci?				# PCI cyclom card
 
 # PCI SCSI devices
 ahc*	at pci?				# Adaptec 2940 SCSI controllers
-scsibus* at ahc?
 isp*	at pci?				# Qlogic ISP [12]0x0 SCSI/FibreChannel
-scsibus* at isp?
 siop*	at pci?				# NCR 53c8xx SCSI
-scsibus* at siop?
 pcscp*	at pci?				# AMD 53c974 PCscsi-PCI SCSI
-scsibus* at pcscp?
 twe*	at pci?				# 3ware Escalade RAID controllers
-scsibus* at twe?
 softraid0	at root			# Software RAID
-scsibus* at softraid?
 
 #UNTESTED: the following drivers are untested.
 adw*	at pci?				# AdvanSys ULTRA WIDE SCSI
-scsibus* at adw?
 ciss*	at pci?				# Compaq Smart ARRAY [56]* RAID controllers
-scsibus* at ciss?
 gdt*	at pci?				# ICP Vortex GDT RAID controllers
-scsibus* at gdt?
 #adv*	at pci?				# AdvanSys 1200A/B and ULTRA SCSI
-#scsibus* at adv?
 
 # PCI Network devices
 pcn*	at pci?				# AMD PCnet-PCI Ethernet
@@ -283,7 +271,6 @@ lc1	at isa? port 0x280		# DEC EtherWorks
 cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom card
 
 #aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI
-#scsibus* at aic?
 
 #ahc0	at isa?				# Adaptec 284x SCSI controllers
 
@@ -292,6 +279,7 @@ fea*	at eisa?			# DEC DEFEA FDDI cards
 ahc*	at eisa?			# Adaptec 274x, aic7770 SCSI
 
 # SCSI devices
+scsibus* at scsi?
 cd*	at scsibus?
 sd*	at scsibus?
 st*	at scsibus?
@@ -308,7 +296,6 @@ wd*	at pciide? flags 0x0000
 # ATAPI<->SCSI
 #atapiscsi* at wdc?
 atapiscsi* at pciide?
-scsibus* at atapiscsi?
 
 # Workstation Console attachments
 #wsdisplay*	at cfb?

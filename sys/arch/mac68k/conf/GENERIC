@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.50 2010/07/03 03:59:16 krw Exp $
+#	$OpenBSD: GENERIC,v 1.51 2011/06/29 20:52:09 matthew Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -62,10 +62,8 @@ wsmouse*	at ams? mux 0
 ncrscsi0	at obio?		# SCSI NCR 5380
 sbc0		at obio? disable flags 0x1	# MI NCR 5380 SCSI Bus Controller
 
-scsibus*	at esp?
-scsibus*	at ncrscsi?
-scsibus*	at sbc?
 
+scsibus*	at scsi?
 sd*		at scsibus?	# SCSI disk drives
 st*		at scsibus?	# SCSI tape drives
 cd*		at scsibus?	# SCSI CD-ROM drives

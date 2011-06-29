@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKU1,v 1.20 2009/07/12 19:17:50 kettenis Exp $
+#	$OpenBSD: RAMDISKU1,v 1.21 2011/06/29 20:52:09 matthew Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -64,10 +64,10 @@ gem*		at sbus?
 dma*	at sbus?		# SBus
 esp*	at dma?			# SBus
 esp*	at sbus?
-scsibus*	at esp?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
+scsibus* at scsi?
 sd*	at scsibus?		# SCSI disks
 #cd*	at scsibus?		# SCSI CD-ROMs
 

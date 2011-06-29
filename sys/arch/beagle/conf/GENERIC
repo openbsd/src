@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.5 2011/02/17 20:14:30 miod Exp $
+# $OpenBSD: GENERIC,v 1.6 2011/06/29 20:52:09 matthew Exp $
 #
 # GENERIC machine description file
 #
@@ -122,7 +122,6 @@ umidi*		at uhub?		# USB MIDI
 midi*		at umidi?
 ulpt*		at uhub?		# USB Printers
 umass*		at uhub?		# USB Mass Storage devices
-scsibus*	at umass?
 uhidev*		at uhub?		# Human Interface Devices
 ums*		at uhidev?		# USB mouse
 wsmouse*	at ums? mux 0
@@ -149,6 +148,7 @@ ugen*		at uhub?		# USB Generic driver
 
 ukphy*	at mii?				# "unknown" PHYs
 
+scsibus*	at scsi?
 sd*		at scsibus?
 st*		at scsibus?
 cd*		at scsibus?
@@ -166,7 +166,6 @@ com0	at ahb?	addr	0x49020000	size 0x400 intr 74 # UART3
 #wsdisplay*	at omdisplay? console ?
 
 sdmmc*	at ommmc?		# SD/MMC bus
-scsibus* at sdmmc?		# SCSI emulation
 
 # Bluetooth controllers
 #sbt*	at sdmmc? disable	# SDIO Bluetooth

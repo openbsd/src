@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.9 2011/02/17 20:14:30 miod Exp $
+# $OpenBSD: RAMDISK,v 1.10 2011/06/29 20:52:09 matthew Exp $
 #
 # GENERIC machine description file
 #
@@ -154,6 +154,7 @@ ommmc0		at ahb? addr 0x4809c000 intr 83
 # 
 # ukphy*	at mii?				# "unknown" PHYs
 # 
+scsibus*	at scsi?
 sd*		at scsibus?
 st*		at scsibus?
 cd*		at scsibus?
@@ -172,7 +173,6 @@ com0	at ahb?	addr	0x49020000	size 0x400 intr 74 # UART3
 #wsdisplay*	at omdisplay? console ?
 
 sdmmc*	at ommmc?		# SD/MMC bus
-scsibus* at sdmmc?		# SCSI emulation
 
 # Bluetooth controllers
 #sbt*	at sdmmc? disable	# SDIO Bluetooth

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.7 2010/07/03 03:59:17 krw Exp $
+#	$OpenBSD: RAMDISK,v 1.8 2011/06/29 20:52:09 matthew Exp $
 
 machine	palm	arm
 
@@ -83,15 +83,13 @@ upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
 #uyap*		at uhub?		# Y@P firmware loader
 ugen*		at uhub?		# USB Generic driver
 umass*		at uhub?		# USB Mass Storage devices
-scsibus*	at umass?
 
 # SD/MMC support
 pxammc0		at pxaip? addr 0x41100000	# MMC/SD/SDIO controller
 sdmmc*		at pxammc?		# SD/MMC bus
-scsibus*	at sdmmc?		# SCSI emulation
 softraid0	at root			# Software RAID
-scsibus*	at softraid?
 
+scsibus*	at scsi?
 sd*		at scsibus?
 #st*		at scsibus?
 cd*		at scsibus?

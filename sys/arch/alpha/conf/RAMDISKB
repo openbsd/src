@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.36 2009/06/25 13:06:16 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.37 2011/06/29 20:52:08 matthew Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -133,15 +133,11 @@ wd*	at pciide? flags 0x0000
 
 #atapiscsi* at wdc?
 #atapiscsi* at pciide?
-#scsibus* at atapiscsi?
 
 # SCSI bus support
-#scsibus* at asc?
-scsibus* at ahc?
-scsibus* at siop?
-scsibus* at isp?
 
 # SCSI devices
+scsibus* at scsi?
 #cd*	at scsibus?			# SCSI CD-ROM drives
 sd*	at scsibus?			# SCSI disk drives
 #st*	at scsibus?			# SCSI tape drives

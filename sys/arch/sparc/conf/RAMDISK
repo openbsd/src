@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.71 2010/07/10 19:32:20 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.72 2011/06/29 20:52:09 matthew Exp $
 #	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -311,12 +311,10 @@ wsdisplay* at rfx?
 
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
 # to the underlying hardware controller.
-scsibus* at esp?
-scsibus* at si?
-scsibus* at sw?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
+scsibus* at scsi?
 sd*	at scsibus?		# SCSI disks
 st*	at scsibus?		# SCSI tapes
 cd*	at scsibus?		# SCSI CD-ROMs
