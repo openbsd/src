@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.87 2011/06/18 23:52:49 jsg Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.88 2011/06/29 12:14:46 tedu Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -3796,8 +3796,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 		/* Compute reply value. */
 		MD5Init(&ctx);
 		MD5Update(&ctx, &h->ident, 1);
-		MD5Update(&ctx, sp->myauth.secret,
-			  strlen(sp->myauth.secret));
+		MD5Update(&ctx, sp->myauth.secret, strlen(sp->myauth.secret));
 		MD5Update(&ctx, value, value_len);
 		MD5Final(digest, &ctx);
 		dsize = sizeof digest;
@@ -3915,8 +3914,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 
 		MD5Init(&ctx);
 		MD5Update(&ctx, &h->ident, 1);
-		MD5Update(&ctx, sp->hisauth.secret,
-			  strlen(sp->hisauth.secret));
+		MD5Update(&ctx, sp->hisauth.secret, strlen(sp->hisauth.secret));
 		MD5Update(&ctx, sp->chap_challenge, AUTHCHALEN);
 		MD5Final(digest, &ctx);
 
@@ -5124,6 +5122,10 @@ sppp_set_params(struct sppp *sp, struct ifreq *ifr)
 				strlcpy(p, spa->secret, len);
 				if (auth->secret != NULL)
 					free(auth->secret, M_DEVBUF);
+				auth->secret = p;
+			} else if (!auth->secret) {
+				p = malloc(1, M_DEVBUF, M_WAITOK);
+				p[0] = '\0';
 				auth->secret = p;
 			}
 		}
