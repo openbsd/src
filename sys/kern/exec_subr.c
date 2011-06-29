@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.28 2006/11/14 18:00:27 jmc Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.29 2011/06/29 12:16:17 tedu Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -54,15 +54,9 @@
  */
 
 void
-new_vmcmd(evsp, proc, len, addr, vp, offset, prot, flags)
-	struct	exec_vmcmd_set *evsp;
-	int	(*proc)(struct proc * p, struct exec_vmcmd *);
-	u_long	len;
-	u_long	addr;
-	struct	vnode *vp;
-	u_long	offset;
-	u_int	prot;
-	int	flags;
+new_vmcmd(struct exec_vmcmd_set *evsp,
+    int (*proc)(struct proc *, struct exec_vmcmd *), u_long len, u_long addr,
+    struct vnode *vp, u_long offset, u_int prot, int flags)
 {
 	struct exec_vmcmd    *vcp;
 
@@ -81,8 +75,7 @@ new_vmcmd(evsp, proc, len, addr, vp, offset, prot, flags)
 #endif /* DEBUG */
 
 void
-vmcmdset_extend(evsp)
-	struct	exec_vmcmd_set *evsp;
+vmcmdset_extend(struct exec_vmcmd_set *evsp)
 {
 	struct exec_vmcmd *nvcp;
 	u_int ocnt;
@@ -165,9 +158,7 @@ exec_process_vmcmds(struct proc *p, struct exec_package *epp)
  */
 
 int
-vmcmd_map_pagedvn(p, cmd)
-	struct proc *p;
-	struct exec_vmcmd *cmd;
+vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
 {
 	/*
 	 * note that if you're going to map part of a process as being
@@ -183,21 +174,21 @@ vmcmd_map_pagedvn(p, cmd)
 	 */
 
 	if (cmd->ev_len == 0)
-		return(0);
+		return (0);
 	if (cmd->ev_offset & PAGE_MASK)
-		return(EINVAL);
+		return (EINVAL);
 	if (cmd->ev_addr & PAGE_MASK)
-		return(EINVAL);
+		return (EINVAL);
 	if (cmd->ev_len & PAGE_MASK)
-		return(EINVAL);
+		return (EINVAL);
 
 	/*
 	 * first, attach to the object
 	 */
 
-	uobj = uvn_attach((void *) cmd->ev_vp, VM_PROT_READ|VM_PROT_EXECUTE);
+	uobj = uvn_attach((void *)cmd->ev_vp, VM_PROT_READ|VM_PROT_EXECUTE);
 	if (uobj == NULL)
-		return(ENOMEM);
+		return (ENOMEM);
 
 	/*
 	 * do the map
@@ -278,9 +269,7 @@ vmcmd_map_readvn(struct proc *p, struct exec_vmcmd *cmd)
  */
 
 int
-vmcmd_map_zero(p, cmd)
-	struct proc *p;
-	struct exec_vmcmd *cmd;
+vmcmd_map_zero(struct proc *p, struct exec_vmcmd *cmd)
 {
 	int error;
 
@@ -313,9 +302,7 @@ vmcmd_map_zero(p, cmd)
  */
 
 int
-exec_setup_stack(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_setup_stack(struct proc *p, struct exec_package *epp)
 {
 
 #ifdef MACHINE_STACK_GROWS_UP
@@ -354,5 +341,5 @@ exec_setup_stack(p, epp)
 	    VM_PROT_READ|VM_PROT_WRITE);
 #endif
 
-	return 0;
+	return (0);
 }
