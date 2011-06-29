@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848var.h,v 1.13 2010/06/30 11:21:35 jakemsr Exp $	*/
+/*	$OpenBSD: ad1848var.h,v 1.14 2011/06/29 17:48:22 tedu Exp $	*/
 /*	$NetBSD: ad1848var.h,v 1.22 1998/01/19 22:18:26 augustss Exp $	*/
 
 /*
@@ -92,7 +92,6 @@ struct ad1848_softc {
 	void	*sc_parg;		/* play arg for sc_intr() */
 	void	*sc_rarg;		/* rec arg for sc_intr() */
 
-	/* Only used by pss XXX */
 	int	sc_iobase;
 };
 

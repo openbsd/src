@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.110 2011/06/28 20:19:19 matthieu Exp $
+#	$OpenBSD: files.isa,v 1.111 2011/06/29 17:48:22 tedu Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -240,15 +240,6 @@ file	dev/isa/ad1848.c		ad1848
 define	ics2101
 file	dev/isa/ics2101.c		ics2101
 
-
-# Audio systems based on Echo Speech Corp. ESC61[45] ASICs
-device	pss {[port = -1], [size = 0],
-	     [iomem = -1], [iosiz = 0],
-	     [irq = -1], [drq = -1]}
-attach	pss at isa
-device	sp: audio, isa_dma, ad1848, auconv
-attach	sp at pss
-file	dev/isa/pss.c			pss needs-flag
 
 # Microsoft Windows Sound System
 device	wss: audio, isa_dma, ad1848, auconv

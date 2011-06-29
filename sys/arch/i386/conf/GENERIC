@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.719 2011/06/26 23:19:10 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.720 2011/06/29 17:48:22 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -706,9 +706,6 @@ ipgphy*	at mii?				# IC Plus IP1000A PHYs
 mlphy*	at mii?				# Micro Linear 6692 PHY
 ukphy*	at mii?				# "unknown" PHYs
 
-pss0	at isa? port 0x220 irq 7 drq 6	# Personal Sound System
-sp0	at pss0 port 0x530 irq 10 drq 0	# sound port driver
-
 eap*	at pci?				# Ensoniq AudioPCI S5016
 eso*	at pci?				# ESS Solo-1 PCI AudioDrive
 sv*	at pci?				# S3 SonicVibes (S3 617)
@@ -754,7 +751,6 @@ spkr0	at pcppi?		# PC speaker
 audio*	at sb?
 audio*	at gus?
 audio*	at pas?
-audio*	at sp?
 audio*	at ess?
 audio*	at wss?
 audio*	at ym?
