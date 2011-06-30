@@ -431,7 +431,6 @@
 ./usr/include/dev/isa/pcppireg.h
 ./usr/include/dev/isa/pcppivar.h
 ./usr/include/dev/isa/pnpdevs.h
-./usr/include/dev/isa/pssreg.h
 ./usr/include/dev/isa/rtreg.h
 ./usr/include/dev/isa/rtvar.h
 ./usr/include/dev/isa/sbdspvar.h

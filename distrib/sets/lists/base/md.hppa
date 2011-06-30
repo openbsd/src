@@ -1119,7 +1119,6 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/isa/pcppireg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/isa/pcppivar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/isa/pnpdevs.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/dev/isa/pssreg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/isa/rtreg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/isa/rtvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/isa/sbdspvar.ph
