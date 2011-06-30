@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendev.c,v 1.14 2010/12/22 17:24:32 millert Exp $	*/
+/*	$OpenBSD: opendev.c,v 1.15 2011/06/30 15:04:58 jsing Exp $	*/
 
 /*
  * Copyright (c) 2000, Todd C. Miller.  All rights reserved.
@@ -81,9 +81,6 @@ opendev(const char *path, int oflags, int dflags, char **realpath)
 				fd = -1;
 				errno = ENOENT;
 			}
-		} else if (errno != ENOENT) {
-			errno = ENXIO;
-			return -1;
 		}
 	}
 	if (!slash && fd == -1 && errno == ENOENT) {
