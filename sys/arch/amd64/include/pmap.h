@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.38 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.39 2011/06/30 22:18:01 jsg Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -463,8 +463,7 @@ pmap_remove_all(struct pmap *pmap)
  */
 
 __inline static void
-pmap_update_pg(va)
-	vaddr_t va;
+pmap_update_pg(vaddr_t va)
 {
 	invlpg(va);
 }
@@ -474,8 +473,7 @@ pmap_update_pg(va)
  */
 
 __inline static void
-pmap_update_2pg(va, vb)
-	vaddr_t va, vb;
+pmap_update_2pg(vaddr_t va, vaddr_t vb)
 {
 	invlpg(va);
 	invlpg(vb);
@@ -511,10 +509,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
  */
 
 __inline static void
-pmap_protect(pmap, sva, eva, prot)
-	struct pmap *pmap;
-	vaddr_t sva, eva;
-	vm_prot_t prot;
+pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
 		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
