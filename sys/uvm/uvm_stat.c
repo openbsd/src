@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_stat.c,v 1.22 2009/06/17 00:13:59 oga Exp $	 */
+/*	$OpenBSD: uvm_stat.c,v 1.23 2011/06/30 15:51:07 tedu Exp $	 */
 /*	$NetBSD: uvm_stat.c,v 1.18 2001/03/09 01:02:13 chs Exp $	 */
 
 /*
@@ -184,7 +184,7 @@ uvm_hist(u_int32_t bitmask)	/* XXX only support 32 hists */
 #endif /* UVMHIST */
 
 void
-uvmcnt_dump()
+uvmcnt_dump(void)
 {
 	struct uvm_cnt *uvc = uvm_cnt_head;
 

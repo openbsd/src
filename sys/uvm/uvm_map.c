@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.141 2011/06/06 17:10:23 ariane Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.142 2011/06/30 15:51:06 tedu Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -3356,8 +3356,7 @@ uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t min, vaddr_t max,
  */
 
 void
-uvmspace_share(p1, p2)
-	struct proc *p1, *p2;
+uvmspace_share(struct proc *p1, struct proc *p2)
 {
 	p2->p_vmspace = p1->p_vmspace;
 	p1->p_vmspace->vm_refcnt++;
@@ -3924,10 +3923,8 @@ uvm_map_printit(struct vm_map *map, boolean_t full,
  */
 
 void
-uvm_object_printit(uobj, full, pr)
-	struct uvm_object *uobj;
-	boolean_t full;
-	int (*pr)(const char *, ...);
+uvm_object_printit(struct uvm_object *uobj, boolean_t full,
+    int (*pr)(const char *, ...))
 {
 	struct vm_page *pg;
 	int cnt = 0;
@@ -3965,10 +3962,8 @@ static const char page_flagbits[] =
 	"\31PMAP1\32PMAP2\33PMAP3";
 
 void
-uvm_page_printit(pg, full, pr)
-	struct vm_page *pg;
-	boolean_t full;
-	int (*pr)(const char *, ...);
+uvm_page_printit(struct vm_page *pg, boolean_t full,
+    int (*pr)(const char *, ...))
 {
 	struct vm_page *tpg;
 	struct uvm_object *uobj;
