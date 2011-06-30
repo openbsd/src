@@ -1,4 +1,4 @@
-/*	$OpenBSD: rd.c,v 1.3 2011/06/23 17:06:07 matthew Exp $	*/
+/*	$OpenBSD: rd.c,v 1.4 2011/06/30 16:28:05 matthew Exp $	*/
 
 /*
  * Copyright (c) 2011 Matthew Dempsky <matthew@dempsky.org>
@@ -136,17 +136,8 @@ int
 rd_detach(struct device *self, int flags)
 {
 	struct rd_softc *sc = (struct rd_softc *)self;
-	int bmaj, cmaj, mn;
 
-	/* Locate the lowest minor number to be detached. */
-	mn = DISKMINOR(self->dv_unit, 0);
-
-	for (bmaj = 0; bmaj < nblkdev; bmaj++)
-		if (bdevsw[bmaj].d_open == rdopen)
-			vdevgone(bmaj, mn, mn + MAXPARTITIONS - 1, VBLK);
-	for (cmaj = 0; cmaj < nchrdev; cmaj++)
-		if (cdevsw[cmaj].d_open == rdopen)
-			vdevgone(cmaj, mn, mn + MAXPARTITIONS - 1, VCHR);
+	disk_gone(rdopen, self->dv_unit);
 
 	/* Detach disk. */
 	disk_detach(&sc->sc_dk);
@@ -178,23 +169,7 @@ rdopen(dev_t dev, int flag, int fmt, struct proc *p)
 			goto unlock;
 	}
 
-	/* Check that the partition exists. */
-	if (part != RAW_PART && (part >= sc->sc_dk.dk_label->d_npartitions ||
-	    sc->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED)) {
-		error = ENXIO;
-		goto unlock;
-	}
-
-	/* Ensure the partition doesn't get changed under our feet. */
-	switch (fmt) {
-	case S_IFCHR:
-		sc->sc_dk.dk_copenmask |= (1 << part);
-		break;
-	case S_IFBLK:
-		sc->sc_dk.dk_bopenmask |= (1 << part);
-		break;
-	}
-	sc->sc_dk.dk_openmask = sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
+	error = disk_openpart(&sc->sc_dk, part, fmt, 1);
 
  unlock:
 	disk_unlock(&sc->sc_dk);
@@ -218,15 +193,7 @@ rdclose(dev_t dev, int flag, int fmt, struct proc *p)
 
 	disk_lock_nointr(&sc->sc_dk);
 
-	switch (fmt) {
-	case S_IFCHR:
-		sc->sc_dk.dk_copenmask &= ~(1 << part);
-		break;
-	case S_IFBLK:
-		sc->sc_dk.dk_bopenmask &= ~(1 << part);
-		break;
-	}
-	sc->sc_dk.dk_openmask = sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
+	disk_closepart(&sc->sc_dk, part, fmt);
 
 	disk_unlock(&sc->sc_dk);
 	device_unref(&sc->sc_dev);

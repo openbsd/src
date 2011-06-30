@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.126 2011/06/19 04:53:17 matthew Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.127 2011/06/30 16:28:05 matthew Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -894,6 +894,63 @@ disk_detach(struct disk *diskp)
 	disk_change = 1;
 	if (--disk_count < 0)
 		panic("disk_detach: disk_count < 0");
+}
+
+int
+disk_openpart(struct disk *dk, int part, int fmt, int haslabel)
+{
+	KASSERT(part >= 0 && part < MAXPARTITIONS);
+
+	/* Unless opening the raw partition, check that the partition exists. */
+	if (part != RAW_PART && (!haslabel ||
+	    part >= dk->dk_label->d_npartitions ||
+	    dk->dk_label->d_partitions[part].p_fstype == FS_UNUSED))
+		return (ENXIO);
+
+	/* Ensure the partition doesn't get changed under our feet. */
+	switch (fmt) {
+	case S_IFCHR:
+		dk->dk_copenmask |= (1 << part);
+		break;
+	case S_IFBLK:
+		dk->dk_bopenmask |= (1 << part);
+		break;
+	}
+	dk->dk_openmask = dk->dk_copenmask | dk->dk_bopenmask;
+
+	return (0);
+}
+
+void
+disk_closepart(struct disk *dk, int part, int fmt)
+{
+	KASSERT(part >= 0 && part < MAXPARTITIONS);
+
+	switch (fmt) {
+	case S_IFCHR:
+		dk->dk_copenmask &= ~(1 << part);
+		break;
+	case S_IFBLK:
+		dk->dk_bopenmask &= ~(1 << part);
+		break;
+	}
+	dk->dk_openmask = dk->dk_copenmask | dk->dk_bopenmask;
+}
+
+void
+disk_gone(int (*open)(dev_t, int, int, struct proc *), int unit)
+{
+	int bmaj, cmaj, mn;
+
+	/* Locate the lowest minor number to be detached. */
+	mn = DISKMINOR(unit, 0);
+
+	for (bmaj = 0; bmaj < nblkdev; bmaj++)
+		if (bdevsw[bmaj].d_open == open)
+			vdevgone(bmaj, mn, mn + MAXPARTITIONS - 1, VBLK);
+	for (cmaj = 0; cmaj < nchrdev; cmaj++)
+		if (cdevsw[cmaj].d_open == open)
+			vdevgone(cmaj, mn, mn + MAXPARTITIONS - 1, VCHR);
 }
 
 /*

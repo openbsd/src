@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.133 2011/06/21 01:47:15 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.134 2011/06/30 16:28:05 matthew Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -181,7 +181,7 @@ vndopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
-	int error = 0, part, pmask;
+	int error = 0, part;
 
 	DNPRINTF(VDB_FOLLOW, "vndopen(%x, %x, %x, %p)\n", dev, flags, mode, p);
 
@@ -204,29 +204,9 @@ vndopen(dev_t dev, int flags, int mode, struct proc *p)
 	}
 
 	part = DISKPART(dev);
-	pmask = 1 << part;
 
-	/* Check that the partition exists. */
-	if (part != RAW_PART &&
-	    ((sc->sc_flags & VNF_HAVELABEL) == 0 ||
-	    part >= sc->sc_dk.dk_label->d_npartitions ||
-	    sc->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED)) {
-		error = ENXIO;
-		goto bad;
-	}
-
-	/* Prevent our unit from being unconfigured while open. */
-	switch (mode) {
-	case S_IFCHR:
-		sc->sc_dk.dk_copenmask |= pmask;
-		break;
-
-	case S_IFBLK:
-		sc->sc_dk.dk_bopenmask |= pmask;
-		break;
-	}
-	sc->sc_dk.dk_openmask =
-	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
+	error = disk_openpart(&sc->sc_dk, part, mode,
+	    (sc->sc_flags & VNF_HAVELABEL) != 0);
 
 bad:
 	disk_unlock(&sc->sc_dk);
@@ -280,18 +260,7 @@ vndclose(dev_t dev, int flags, int mode, struct proc *p)
 
 	part = DISKPART(dev);
 
-	/* ...that much closer to allowing unconfiguration... */
-	switch (mode) {
-	case S_IFCHR:
-		sc->sc_dk.dk_copenmask &= ~(1 << part);
-		break;
-
-	case S_IFBLK:
-		sc->sc_dk.dk_bopenmask &= ~(1 << part);
-		break;
-	}
-	sc->sc_dk.dk_openmask =
-	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
+	disk_closepart(&sc->sc_dk, part, mode);
 
 	disk_unlock(&sc->sc_dk);
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.95 2011/06/05 18:40:33 matthew Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.96 2011/06/30 16:28:05 matthew Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -553,7 +553,7 @@ ccdopen(dev_t dev, int flags, int fmt, struct proc *p)
 	int unit = DISKUNIT(dev);
 	struct ccd_softc *cs;
 	struct disklabel *lp;
-	int error = 0, part, pmask;
+	int error = 0, part;
 
 	CCD_DPRINTF(CCDB_FOLLOW, ("ccdopen(%x, %x)\n", dev, flags));
 
@@ -567,7 +567,6 @@ ccdopen(dev_t dev, int flags, int fmt, struct proc *p)
 	lp = cs->sc_dkdev.dk_label;
 
 	part = DISKPART(dev);
-	pmask = (1 << part);
 
 	/*
 	 * If we're initialized, check to see if there are any other
@@ -577,30 +576,9 @@ ccdopen(dev_t dev, int flags, int fmt, struct proc *p)
 	if ((cs->sc_flags & CCDF_INITED) && (cs->sc_dkdev.dk_openmask == 0))
 		ccdgetdisklabel(dev, cs, lp, 0);
 
-	/* Check that the partition exists. */
-	if (part != RAW_PART) {
-		if (((cs->sc_flags & CCDF_INITED) == 0) ||
-		    ((part >= lp->d_npartitions) ||
-		    (lp->d_partitions[part].p_fstype == FS_UNUSED))) {
-			error = ENXIO;
-			goto done;
-		}
-	}
+	error = disk_openpart(&cs->sc_dkdev, part, fmt,
+	    (cs->sc_flags & CCDF_INITED) != 0);
 
-	/* Prevent our unit from being unconfigured while open. */
-	switch (fmt) {
-	case S_IFCHR:
-		cs->sc_dkdev.dk_copenmask |= pmask;
-		break;
-
-	case S_IFBLK:
-		cs->sc_dkdev.dk_bopenmask |= pmask;
-		break;
-	}
-	cs->sc_dkdev.dk_openmask =
-	    cs->sc_dkdev.dk_copenmask | cs->sc_dkdev.dk_bopenmask;
-
- done:
 	ccdunlock(cs);
 	return (error);
 }
@@ -624,18 +602,7 @@ ccdclose(dev_t dev, int flags, int fmt, struct proc *p)
 
 	part = DISKPART(dev);
 
-	/* ...that much closer to allowing unconfiguration... */
-	switch (fmt) {
-	case S_IFCHR:
-		cs->sc_dkdev.dk_copenmask &= ~(1 << part);
-		break;
-
-	case S_IFBLK:
-		cs->sc_dkdev.dk_bopenmask &= ~(1 << part);
-		break;
-	}
-	cs->sc_dkdev.dk_openmask =
-	    cs->sc_dkdev.dk_copenmask | cs->sc_dkdev.dk_bopenmask;
+	disk_closepart(&cs->sc_dkdev, part, fmt);
 
 	ccdunlock(cs);
 	return (0);
