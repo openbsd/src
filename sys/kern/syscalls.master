@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.107 2011/06/01 06:20:41 guenther Exp $
+;	$OpenBSD: syscalls.master,v 1.108 2011/06/30 13:43:14 tedu Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -359,12 +359,9 @@
 186	UNIMPL
 187	UNIMPL
 #endif
-188	COMPAT_35	{ int sys_stat(const char *path, struct stat35 *ub); } \
-			    stat35
-189	COMPAT_35	{ int sys_fstat(int fd, struct stat35 *sb); } \
-			    fstat35
-190	COMPAT_35	{ int sys_lstat(const char *path, \
-			    struct stat35 *ub); } lstat35
+188	OBSOL		stat35
+189	OBSOL		fstat35
+190	OBSOL		lstat35
 191	STD		{ long sys_pathconf(const char *path, int name); }
 192	STD		{ long sys_fpathconf(int fd, int name); }
 193	STD		{ int sys_swapctl(int cmd, const void *arg, int misc); }
@@ -425,15 +422,12 @@
 #ifdef SYSVSEM
 220	UNIMPL
 221	STD		{ int sys_semget(key_t key, int nsems, int semflg); }
-222	COMPAT_35	{ int sys_semop(int semid, struct sembuf *sops, \
-			    u_int nsops); }
-223	OBSOL		sys_semconfig
 #else
 220	UNIMPL		semctl
 221	UNIMPL		semget
-222	UNIMPL		semop
-223	UNIMPL		semconfig
 #endif
+222	OBSOL		semop35
+223	OBSOL		semconfig35
 #ifdef SYSVMSG
 224	UNIMPL
 225	STD		{ int sys_msgget(key_t key, int msgflg); }
@@ -452,13 +446,12 @@
 			    int shmflg); }
 229	UNIMPL
 230	STD		{ int sys_shmdt(const void *shmaddr); }
-231	COMPAT_35	{ int sys_shmget(key_t key, int size, int shmflg); }
 #else
 228	UNIMPL		shmat
 229	UNIMPL		shmctl
 230	UNIMPL		shmdt
-231	UNIMPL		shmget
 #endif
+231	OBSOL		shmget35
 232	STD NOLOCK	{ int sys_clock_gettime(clockid_t clock_id, \
 			    struct timespec *tp); }
 233	STD		{ int sys_clock_settime(clockid_t clock_id, \
@@ -493,24 +486,9 @@
 254	STD		{ int sys_lchown(const char *path, uid_t uid, gid_t gid); }
 255	STD		{ pid_t sys_getsid(pid_t pid); }
 256	STD		{ int sys_msync(void *addr, size_t len, int flags); }
-#ifdef SYSVSEM
-257	COMPAT_35	{ int sys___semctl(int semid, int semnum, int cmd, \
-			    union semun *arg); } semctl35
-#else
-257	UNIMPL
-#endif
-#ifdef SYSVSHM
-258	COMPAT_35	{ int sys_shmctl(int shmid, int cmd, \
-			    struct shmid_ds35 *buf); } shmctl35
-#else
-258	UNIMPL
-#endif
-#ifdef SYSVMSG
-259	COMPAT_35	{ int sys_msgctl(int msqid, int cmd, \
-			    struct msqid_ds35 *buf); } msgctl35
-#else
-259	UNIMPL
-#endif
+257	OBSOL		semctl35
+258	OBSOL		shmctl35
+259	OBSOL		msgctl35
 260	UNIMPL
 261	UNIMPL
 262	UNIMPL
