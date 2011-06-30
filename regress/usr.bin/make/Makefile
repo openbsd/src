@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.29 2009/11/11 00:16:47 fgsch Exp $
+# $OpenBSD: Makefile,v 1.30 2011/06/30 13:12:45 espie Exp $
 
 # We don't pass t7, t13, t14, t17, t19, t20 t21 t26
 # and t16 yields piss poor performance
@@ -23,12 +23,12 @@ t3:
 t4:
 	cd ${.CURDIR} && cat mk4 mk4a|env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f - |diff - t4.out
 	# Splitting files along conditionals should not work
-	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk4 -f mk4a 2>/dev/null; then false; fi
+	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk4 -f mk4a 2>/dev/null || test $$? -ge 128 ; then false; fi
 
 # Another POSIX test, checking that MAKEFLAGS does work
 t5:
 	# first check that make does fail as expected
-	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mkfail 2>/dev/null; then false; fi
+	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mkfail 2>/dev/null || test $$? -ge 128; then false; fi
 	# first form of MAKEFLAGS
 	cd ${.CURDIR} && env -i PATH=${PATH} MAKEFLAGS=-n MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mkfail
 	# second form of MAKEFLAGS
@@ -39,7 +39,7 @@ t6:
 
 # This test currently fails, and will until the cond parser is rewritten.
 t7:
-	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk7 2>/dev/null; then false; fi
+	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk7 2>/dev/null || test $$? -ge 128; then false; fi
 
 # check for existent/non existent files
 t8:
@@ -67,7 +67,7 @@ t13:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk13 |diff - t13.out
 
 t14:
-	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk14 2>/dev/null; then false; fi
+	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk14 2>/dev/null || test $$? -ge 128; then false; fi
 
 t15:
 	touch t15file
@@ -98,22 +98,22 @@ t23:
 	cd ${.CURDIR} && ulimit -t 60 && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk22 a 2>&1| diff - t23.out
 
 t24:
-	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk23 a 2>/dev/null; then false; fi
+	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk23 a 2>/dev/null || test $$? -ge 128; then false; fi
 
 t25:
 	touch ${.OBJDIR}/t25.1st
 	rm -f ${.OBJDIR}/t25.2nd
-	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk24 t25.2nd 2>/dev/null; then false; fi
+	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk24 t25.2nd 2>/dev/null || test $$? -ge 128; then false; fi
 
 t26:
 	touch ${.OBJDIR}/f26.2nd
 	rm -f ${.OBJDIR}/f26
-	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk24 f26 2>/dev/null; then false; fi
+	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk24 f26 2>/dev/null || test $$? -ge 128; then false; fi
 
 t27:
 	touch ${.OBJDIR}/t27.2nd
 	rm -f ${.OBJDIR}/t27.3rd
-	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk24 t27.3rd 2>/dev/null; then false; fi
+	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk24 t27.3rd 2>/dev/null || test $$? -ge 128; then false; fi
 
 t28:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk25 all >/dev/null
