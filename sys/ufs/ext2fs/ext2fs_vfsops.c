@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.59 2010/12/21 20:14:44 thib Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.60 2011/06/30 15:08:59 jsing Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/device.h>
+#include <sys/disk.h>
 #include <sys/mbuf.h>
 #include <sys/file.h>
 #include <sys/disklabel.h>
@@ -170,10 +171,12 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 	size_t size;
 	int error, flags;
 	mode_t accessmode;
+	char *fspec = NULL;
 
 	error = copyin(data, (caddr_t)&args, sizeof (struct ufs_args));
 	if (error)
 		return (error);
+
 	/*
 	 * If updating, check whether changing from read-only to
 	 * read/write; if there is no device name, that's all we do.
@@ -234,18 +237,24 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, p);
+	fspec = malloc(MNAMELEN, M_MOUNT, M_WAITOK);
+	error = copyinstr(args.fspec, fspec, MNAMELEN - 1, &size);
+	if (error)
+		goto error;
+	disk_map(fspec, fspec, MNAMELEN, DM_OPENBLCK);
+
+	NDINIT(ndp, LOOKUP, FOLLOW, UIO_SYSSPACE, fspec, p);
 	if ((error = namei(ndp)) != 0)
-		return (error);
+		goto error;
 	devvp = ndp->ni_vp;
 
 	if (devvp->v_type != VBLK) {
-		vrele(devvp);
-		return (ENOTBLK);
+		error = ENOTBLK;
+		goto error_devvp;
 	}
 	if (major(devvp->v_rdev) >= nblkdev) {
-		vrele(devvp);
-		return (ENXIO);
+		error = ENXIO;
+		goto error_devvp;
 	}
 	/*
 	 * If mount by non-root, then verify that user has necessary
@@ -257,11 +266,9 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
-		if (error) {
-			vput(devvp);
-			return (error);
-		}
 		VOP_UNLOCK(devvp, 0, p);
+		if (error)
+			goto error_devvp;
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
 		error = ext2fs_mountfs(devvp, mp, p);
@@ -271,10 +278,8 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 		else
 			vrele(devvp);
 	}
-	if (error) {
-		vrele(devvp);
-		return (error);
-	}
+	if (error)
+		goto error_devvp;
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
 	(void)copyinstr(path, fs->e2fs_fsmnt, sizeof(fs->e2fs_fsmnt) - 1,
@@ -286,8 +291,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 		bzero(fs->e2fs.e2fs_fsmnt, sizeof(fs->e2fs.e2fs_fsmnt) - size);
 	}
 	bcopy(fs->e2fs_fsmnt, mp->mnt_stat.f_mntonname, MNAMELEN);
-	(void)copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, 
-		&size);
+	size = strlcpy(mp->mnt_stat.f_mntfromname, fspec, MNAMELEN - 1);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
 	if (fs->e2fs_fmod != 0) {	/* XXX */
 		fs->e2fs_fmod = 0;
@@ -298,7 +302,21 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 				mp->mnt_stat.f_mntfromname);
 		(void)ext2fs_cgupdate(ump, MNT_WAIT);
 	}
-	return (0);
+
+	goto success;
+
+error_devvp:
+	/* Error with devvp held. */
+	vrele(devvp);
+
+error:
+	/* Error with no state to backout. */
+
+success:
+	if (fspec)
+		free(fspec, M_MOUNT);
+
+	return (error);
 }
 
 int ext2fs_reload_vnode(struct vnode *, void *args);
