@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-confirm-before.c,v 1.10 2011/01/04 00:42:46 nicm Exp $ */
+/* $OpenBSD: cmd-confirm-before.c,v 1.11 2011/07/02 21:05:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -87,9 +87,8 @@ cmd_confirm_before_exec(struct cmd *self, struct cmd_ctx *ctx)
 	cdata = xmalloc(sizeof *cdata);
 	cdata->cmd = xstrdup(args->argv[0]);
 	cdata->c = c;
-	status_prompt_set(cdata->c, buf,
-	    cmd_confirm_before_callback, cmd_confirm_before_free, cdata,
-	    PROMPT_SINGLE);
+	status_prompt_set(cdata->c, buf, NULL, cmd_confirm_before_callback,
+	    cmd_confirm_before_free, cdata, PROMPT_SINGLE);
 
 	xfree(buf);
 	return (1);
