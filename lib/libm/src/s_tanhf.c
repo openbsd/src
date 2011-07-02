@@ -35,6 +35,8 @@ tanhf(float x)
 
     /* |x| < 22 */
 	if (ix < 0x41b00000) {		/* |x|<22 */
+	    if (ix == 0)
+		return x;		/* x == +-0 */
 	    if (ix<0x24000000) 		/* |x|<2**-55 */
 		return x*(one+x);    	/* tanh(small) = small */
 	    if (ix>=0x3f800000) {	/* |x|>=1  */
