@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.129 2011/07/02 15:52:25 thib Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.130 2011/07/02 16:23:47 krw Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -534,7 +534,6 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	struct vnode *devvp;
 	caddr_t space;
 	struct fs *fs, *newfs;
-	struct partinfo dpart;
 	int i, blks, size, error;
 	int32_t *lp;
 	struct buf *bp = NULL;
@@ -555,11 +554,6 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	/*
 	 * Step 2: re-read superblock from disk.
 	 */
-	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, NOCRED, p) != 0)
-		size = DEV_BSIZE;
-	else
-		size = dpart.disklab->d_secsize;
-
 	fs = VFSTOUFS(mountp)->um_fs;
 
 	error = bread(devvp, (daddr64_t)(fs->fs_sblockloc / DEV_BSIZE), SBSIZE,
@@ -675,7 +669,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	struct buf *bp;
 	struct fs *fs;
 	dev_t dev;
-	struct partinfo dpart;
 	caddr_t space;
 	daddr64_t sbloc;
 	int error, i, blks, size, ronly;
@@ -706,10 +699,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
 	if (error)
 		return (error);
-	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, cred, p) != 0)
-		size = DEV_BSIZE;
-	else
-		size = dpart.disklab->d_secsize;
 
 	bp = NULL;
 	ump = NULL;
