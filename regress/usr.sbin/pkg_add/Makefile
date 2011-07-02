@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.43 2011/05/27 12:24:45 espie Exp $
+# $OpenBSD: Makefile,v 1.44 2011/07/02 10:31:21 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames \
 	update-check1 \
@@ -6,7 +6,7 @@ REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames \
 	merge-update split-update big-merge family-circus missing \
 	lib-report1 lib-report2 lib-report3 loop1 \
 	lib-report4 lib-report5 lib-report6 lib-report7 \
-	qttest gstest exotest thunarvfstest
+	qttest gstest exotest
 
 
 
@@ -25,7 +25,7 @@ D$i ?= ${.OBJDIR}/dest$i
 DEST$i ?= ${D$i}/usr/local
 .endfor
 
-# current maxes: D29, SRC20, plist17
+# current maxes: D29, SRC20, plist18
 pkgnames:
 	perl ${.CURDIR}/check-name
 
@@ -193,7 +193,7 @@ exotest: rep0/exo-0.tgz rep1/exo-1.tgz
 	@ROOT=${D28} PKG_PATH=${.OBJDIR}/rep0 ${ADD_PKG} exo
 	@ROOT=${D28} PKG_PATH=${.OBJDIR}/rep1 ${ADD_PKG} -u exo
 
-thunarvfstest: rep0/thunar-0.tgz rep0/q-0.tgz rep1/thunar-vfs-1.tgz rep1/q-1.tgz
+thunarvfstest: rep0/thunar-0.tgz rep0/q-0.tgz rep1/thunar-vfs-1.tgz rep1/q-1.tgz rep1/thunar-1.tgz
 	@-rm -rf ${D29}
 	@ROOT=${D29} PKG_PATH=${.OBJDIR}/rep0 ${ADD_PKG} q
 	@ROOT=${D29} PKG_PATH=${.OBJDIR}/rep1 ${ADD_PKG} -u q
@@ -290,6 +290,12 @@ plist17:
 	@echo "@group "`id -gn` >>$@
 	@echo '@lib lib/libthunar-vfs.so.$${LIBthunar-vfs_VERSION}' >>$@
 
+plist18:
+	@echo "@owner "`id -un` >>$@
+	@echo "@group "`id -gn` >>$@
+	@echo "@conflict thunar-<1" >>$@
+	@echo '@lib lib/libthunar-vfs.so.$${LIBthunar-vfs_VERSION}' >>$@
+
 rep0/a-0.tgz:
 	@${CREATE_PKG} -P't/b:b-*:b-0' -f ${.CURDIR}/empty $@
 
@@ -374,10 +380,14 @@ rep0/thunar-0.tgz: plist17
 	@touch ${SRC20}/lib/libthunar-vfs.so.0.0
 	@${CREATE_PKG} -B src20 -DLIBthunar-vfs_VERSION=0.0 -f plist17 $@
 
-rep1/thunar-vfs-1.tgz: plist17
-	@mkdir -p ${SRC21}/lib
-	@touch ${SRC21}/lib/libthunar-vfs.so.0.0
-	@${CREATE_PKG} -B src21 -DLIBthunar-vfs_VERSION=0.0 -f plist17 $@
+rep1/thunar-vfs-1.tgz: plist18
+	@mkdir -p ${SRC20}/lib
+	@touch ${SRC20}/lib/libthunar-vfs.so.0.0
+	@${CREATE_PKG} -B src20 -DLIBthunar-vfs_VERSION=0.0 -f plist18 $@
+
+rep1/thunar-1.tgz:
+	@${CREATE_PKG} -f ${.CURDIR}/empty $@
+
 
 rep0/q-0.tgz:
 	@${CREATE_PKG} -P't/thunar:thunar-*:thunar-0' -f ${.CURDIR}/empty $@
