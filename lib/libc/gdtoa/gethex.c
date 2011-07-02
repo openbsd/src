@@ -56,11 +56,9 @@ gethex( CONST char **sp, FPI *fpi, Long *exp, Bigint **bp, int sign)
 	const unsigned char *decimalpoint;
 	static unsigned char *decimalpoint_cache;
 	if (!(s0 = decimalpoint_cache)) {
-		size_t len;
 		s0 = (unsigned char*)localeconv()->decimal_point;
-		len = strlen(s0) + 1;
-		if ((decimalpoint_cache = (char*)malloc(len))) {
-			strlcpy(decimalpoint_cache, s0, len);
+		if ((decimalpoint_cache = (char*)MALLOC(strlen(s0) + 1))) {
+			strlcpy(decimalpoint_cache, s0, strlen(s0) + 1);
 			s0 = decimalpoint_cache;
 			}
 		}
@@ -194,7 +192,7 @@ gethex( CONST char **sp, FPI *fpi, Long *exp, Bigint **bp, int sign)
 			++n;
 		for(j = n, k = 0; j >>= 1; ++k);
 		*bp = b = Balloc(k);
-		if (b == NULL)
+		if (*bp == NULL)
 			return (STRTOG_NoMemory);
 		b->wds = n;
 		for(j = 0; j < n0; ++j)
@@ -205,7 +203,7 @@ gethex( CONST char **sp, FPI *fpi, Long *exp, Bigint **bp, int sign)
 		return STRTOG_Normal | STRTOG_Inexlo;
 		}
 	n = s1 - s0 - 1;
-	for(k = 0; n > 7; n >>= 1)
+	for(k = 0; n > (1 << (kshift-2)) - 1; n >>= 1)
 		k++;
 	b = Balloc(k);
 	if (b == NULL)
@@ -226,7 +224,7 @@ gethex( CONST char **sp, FPI *fpi, Long *exp, Bigint **bp, int sign)
 		if (*--s1 == '.')
 			continue;
 #endif
-		if (n == 32) {
+		if (n == ULbits) {
 			*x++ = L;
 			L = 0;
 			n = 0;
@@ -236,7 +234,7 @@ gethex( CONST char **sp, FPI *fpi, Long *exp, Bigint **bp, int sign)
 		}
 	*x++ = L;
 	b->wds = n = x - b->x;
-	n = 32*n - hi0bits(L);
+	n = ULbits*n - hi0bits(L);
 	nbits = fpi->nbits;
 	lostbits = 0;
 	x = b->x;
@@ -324,7 +322,7 @@ gethex( CONST char **sp, FPI *fpi, Long *exp, Bigint **bp, int sign)
 			break;
 		  case FPI_Round_near:
 			if (lostbits & 2
-			 && (lostbits & 1) | x[0] & 1)
+			 && (lostbits | x[0]) & 1)
 				up = 1;
 			break;
 		  case FPI_Round_up:
@@ -345,8 +343,8 @@ gethex( CONST char **sp, FPI *fpi, Long *exp, Bigint **bp, int sign)
 					irv =  STRTOG_Normal;
 				}
 			else if (b->wds > k
-			 || (n = nbits & kmask) !=0
-			     && hi0bits(x[k-1]) < 32-n) {
+			 || ((n = nbits & kmask) !=0
+			      && hi0bits(x[k-1]) < 32-n)) {
 				rshift(b,1);
 				if (++e > fpi->emax)
 					goto ovfl;

@@ -53,9 +53,9 @@ rv_alloc(int i)
 	if (r == NULL)
 		return (
 #ifndef MULTIPLE_THREADS
-		    dtoa_result =
+		dtoa_result =
 #endif
-		    NULL);
+			NULL);
 	*r = k;
 	return
 #ifndef MULTIPLE_THREADS
@@ -75,7 +75,7 @@ nrv_alloc(char *s, char **rve, int n)
 
 	t = rv = rv_alloc(n);
 	if (t == NULL)
-		return NULL;
+		return (NULL);
 	while((*t = *s++) !=0)
 		t++;
 	if (rve)

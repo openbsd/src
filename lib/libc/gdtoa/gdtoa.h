@@ -36,7 +36,7 @@ THIS SOFTWARE.
 #include <stddef.h> /* for size_t */
 
 #ifndef Long
-#define Long long
+#define Long int
 #endif
 #ifndef ULong
 typedef unsigned Long ULong;
@@ -71,17 +71,17 @@ typedef unsigned short UShort;
 	STRTOG_NaN	= 0x004,
 	STRTOG_NaNbits	= 0x005,
 	STRTOG_NoNumber	= 0x006,
-	STRTOG_NoMemory	= 0x007,
+	STRTOG_NoMemory = 0x007,
 	STRTOG_Retmask	= 0x00f,
 
 	/* The following may be or-ed into one of the above values. */
-	STRTOG_Inexlo	= 0x010, /* returned result rounded toward zero */
-	STRTOG_Inexhi	= 0x020, /* returned result rounded away from zero */
-	STRTOG_Inexact	= 0x030,
-	STRTOG_Underflow= 0x040,
-	STRTOG_Overflow	= 0x080,
-	STRTOG_Neg	= 0x100  /* does not affect STRTOG_Inexlo or
-				  * STRTOG_Inexhi */
+
+	STRTOG_Neg	= 0x010, /* does not affect STRTOG_Inexlo or STRTOG_Inexhi */
+	STRTOG_Inexlo	= 0x020, /* returned result rounded toward zero */
+	STRTOG_Inexhi	= 0x030, /* returned result rounded away from zero */
+	STRTOG_Inexact	= 0x040,
+	STRTOG_Underflow= 0x080,
+	STRTOG_Overflow	= 0x100
 	};
 
  typedef struct
@@ -109,8 +109,8 @@ extern char* __dtoa  ANSI((double d, int mode, int ndigits, int *decpt,
 extern char* __gdtoa ANSI((FPI *fpi, int be, ULong *bits, int *kindp,
 			int mode, int ndigits, int *decpt, char **rve));
 extern void __freedtoa ANSI((char*));
-extern float  __strtof ANSI((CONST char *, char **));
-extern double __strtod ANSI((CONST char *, char **));
+extern float  strtof ANSI((CONST char *, char **));
+extern double strtod ANSI((CONST char *, char **));
 extern int __strtodg ANSI((CONST char*, char**, FPI*, Long*, ULong*));
 
 extern char*	__g_ddfmt  ANSI((char*, double*, int, size_t));

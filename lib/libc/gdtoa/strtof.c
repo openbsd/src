@@ -58,7 +58,7 @@ strtof(CONST char *s, char **sp)
 
 	  case STRTOG_Normal:
 	  case STRTOG_NaNbits:
-		u.L[0] = bits[0] & 0x7fffff | exp + 0x7f + 23 << 23;
+		u.L[0] = (bits[0] & 0x7fffff) | ((exp + 0x7f + 23) << 23);
 		break;
 
 	  case STRTOG_Denormal:
@@ -67,7 +67,7 @@ strtof(CONST char *s, char **sp)
 
 	  case STRTOG_NoMemory:
 		errno = ERANGE;
-	  	/* FALLTHROUGH */
+		/* FALLTHROUGH */
 	  case STRTOG_Infinite:
 		u.L[0] = 0x7f800000;
 		break;

@@ -89,12 +89,18 @@ THIS SOFTWARE.
  * #define IBM for IBM mainframe-style floating-point arithmetic.
  * #define VAX for VAX-style floating-point arithmetic (D_floating).
  * #define No_leftright to omit left-right logic in fast floating-point
- *	computation of dtoa.
+ *	computation of dtoa and gdtoa.  This will cause modes 4 and 5 to be
+ *	treated the same as modes 2 and 3 for some inputs.
  * #define Check_FLT_ROUNDS if FLT_ROUNDS can assume the values 2 or 3.
  * #define RND_PRODQUOT to use rnd_prod and rnd_quot (assembly routines
  *	that use extended-precision instructions to compute rounded
  *	products and quotients) with IBM.
- * #define ROUND_BIASED for IEEE-format with biased rounding.
+ * #define ROUND_BIASED for IEEE-format with biased rounding and arithmetic
+ *	that rounds toward +Infinity.
+ * #define ROUND_BIASED_without_Round_Up for IEEE-format with biased
+ *	rounding when the underlying floating-point arithmetic uses
+ *	unbiased rounding.  This prevent using ordinary floating-point
+ *	arithmetic when the result could be computed with one rounding error.
  * #define Inaccurate_Divide for IEEE-format with correctly rounded
  *	products but inaccurate quotients, e.g., for Intel i860.
  * #define NO_LONG_LONG on machines that do not have a "long long"
@@ -113,7 +119,12 @@ THIS SOFTWARE.
  * #define MALLOC your_malloc, where your_malloc(n) acts like malloc(n)
  *	if memory is available and otherwise does something you deem
  *	appropriate.  If MALLOC is undefined, malloc will be invoked
- *	directly -- and assumed always to succeed.
+ *	directly -- and assumed always to succeed.  Similarly, if you
+ *	want something other than the system's free() to be called to
+ *	recycle memory acquired from MALLOC, #define FREE to be the
+ *	name of the alternate routine.  (FREE or free is only called in
+ *	pathological cases, e.g., in a gdtoa call after a gdtoa return in
+ *	mode 3 with thousands of digits requested.)
  * #define Omit_Private_Memory to omit logic (added Jan. 1998) for making
  *	memory allocations from a private pool of memory when possible.
  *	When used, the private pool is PRIVATE_MEM bytes long:  2304 bytes,
@@ -126,8 +137,10 @@ THIS SOFTWARE.
  *	conversions of IEEE doubles in single-threaded executions with
  *	8-byte pointers, PRIVATE_MEM >= 7400 appears to suffice; with
  *	4-byte pointers, PRIVATE_MEM >= 7112 appears adequate.
- * #define INFNAN_CHECK on IEEE systems to cause strtod to check for
- *	Infinity and NaN (case insensitively).
+ * #define NO_INFNAN_CHECK if you do not wish to have INFNAN_CHECK
+ *	#defined automatically on IEEE systems.  On such systems,
+ *	when INFNAN_CHECK is #defined, strtod checks
+ *	for Infinity and NaN (case insensitively).
  *	When INFNAN_CHECK is #defined and No_Hex_NaN is not #defined,
  *	strtodg also accepts (case insensitively) strings of the form
  *	NaN(x), where x is a string of hexadecimal digits (optionally
@@ -160,19 +173,11 @@ THIS SOFTWARE.
  * #define NO_STRING_H to use private versions of memcpy.
  *	On some K&R systems, it may also be necessary to
  *	#define DECLARE_SIZE_T in this case.
- * #define YES_ALIAS to permit aliasing certain double values with
- *	arrays of ULongs.  This leads to slightly better code with
- *	some compilers and was always used prior to 19990916, but it
- *	is not strictly legal and can cause trouble with aggressively
- *	optimizing compilers (e.g., gcc 2.95.1 under -O2).
  * #define USE_LOCALE to use the current locale's decimal_point value.
  */
 
 #ifndef GDTOAIMP_H_INCLUDED
 #define GDTOAIMP_H_INCLUDED
-
-#define Long	int
-
 #include "gdtoa.h"
 #include "gd_qnan.h"
 #ifdef Honor_FLT_ROUNDS
@@ -271,25 +276,14 @@ Exactly one of IEEE_8087, IEEE_MC68k, VAX, or IBM should be defined.
 
 typedef union { double d; ULong L[2]; } U;
 
-#ifdef YES_ALIAS
-#define dval(x) x
 #ifdef IEEE_8087
-#define word0(x) ((ULong *)&x)[1]
-#define word1(x) ((ULong *)&x)[0]
+#define word0(x) (x)->L[1]
+#define word1(x) (x)->L[0]
 #else
-#define word0(x) ((ULong *)&x)[0]
-#define word1(x) ((ULong *)&x)[1]
+#define word0(x) (x)->L[0]
+#define word1(x) (x)->L[1]
 #endif
-#else /* !YES_ALIAS */
-#ifdef IEEE_8087
-#define word0(x) ((U*)&x)->L[1]
-#define word1(x) ((U*)&x)->L[0]
-#else
-#define word0(x) ((U*)&x)->L[0]
-#define word1(x) ((U*)&x)->L[1]
-#endif
-#define dval(x) ((U*)&x)->d
-#endif /* YES_ALIAS */
+#define dval(x) (x)->d
 
 /* The following definition of Storeinc is appropriate for MIPS processors.
  * An alternative that might be better on some machines is
@@ -382,6 +376,7 @@ typedef union { double d; ULong L[2]; } U;
 #define Exp_mask  0x7f80
 #define P 56
 #define Bias 129
+#define Emin (-127)
 #define Exp_1  0x40800000
 #define Exp_11 0x4080
 #define Ebits 8
@@ -403,6 +398,11 @@ typedef union { double d; ULong L[2]; } U;
 
 #ifndef IEEE_Arith
 #define ROUND_BIASED
+#else
+#ifdef ROUND_BIASED_without_Round_Up
+#undef  ROUND_BIASED
+#define ROUND_BIASED
+#endif
 #endif
 
 #ifdef RND_PRODQUOT
@@ -468,7 +468,7 @@ extern void *__dtoa_locks[];
 #define FREE_DTOA_LOCK(n)	_MUTEX_UNLOCK(&__dtoa_locks[n])
 #endif
 
-#define Kmax 15
+#define Kmax 9
 
  struct
 Bigint {
@@ -540,8 +540,8 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
 #define gethex __gethex_D2A
 #define hexdig __hexdig_D2A
 #define hexnan __hexnan_D2A
-#define hi0bits __hi0bits_D2A
-#define	hi0bits_D2A __hi0bits_D2A
+#define hi0bits(x) __hi0bits_D2A((ULong)(x))
+#define hi0bits_D2A __hi0bits_D2A
 #define i2b __i2b_D2A
 #define increment __increment_D2A
 #define lo0bits __lo0bits_D2A
@@ -559,6 +559,7 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
 #define set_ones __set_ones_D2A
 #define strcp __strcp_D2A
 #define strtoIg __strtoIg_D2A
+#define sulp __sulp_D2A
 #define sum __sum_D2A
 #define tens __tens_D2A
 #define tinytens __tinytens_D2A
@@ -587,8 +588,6 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
  extern Bigint *diff ANSI((Bigint*, Bigint*));
  extern char *dtoa ANSI((double d, int mode, int ndigits,
 			int *decpt, int *sign, char **rve));
- extern char *gdtoa ANSI((FPI *fpi, int be, ULong *bits, int *kindp,
- 			int mode, int ndigits, int *decpt, char **rve));
  extern char *g__fmt ANSI((char*, char*, char*, int, ULong, size_t));
  extern int gethex ANSI((CONST char**, FPI*, Long*, Bigint**, int));
  extern void hexdig_init_D2A(Void);
@@ -607,14 +606,14 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
  extern double ratio ANSI((Bigint*, Bigint*));
  extern void rshift ANSI((Bigint*, int));
  extern char *rv_alloc ANSI((int));
- extern Bigint *s2b ANSI((CONST char*, int, int, ULong));
+ extern Bigint *s2b ANSI((CONST char*, int, int, ULong, int));
  extern Bigint *set_ones ANSI((Bigint*, int));
  extern char *strcp ANSI((char*, const char*));
  extern int strtoIg ANSI((CONST char*, char**, FPI*, Long*, Bigint**, int*));
  extern double strtod ANSI((const char *s00, char **se));
  extern Bigint *sum ANSI((Bigint*, Bigint*));
  extern int trailz ANSI((Bigint*));
- extern double ulp ANSI((double));
+ extern double ulp ANSI((U*));
 
 #ifdef __cplusplus
 }
@@ -629,6 +628,10 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
  * (On HP Series 700/800 machines, -DNAN_WORD0=0x7ff40000 works.)
  */
 #ifdef IEEE_Arith
+#ifndef NO_INFNAN_CHECK
+#undef INFNAN_CHECK
+#define INFNAN_CHECK
+#endif
 #ifdef IEEE_MC68k
 #define _0 0
 #define _1 1
