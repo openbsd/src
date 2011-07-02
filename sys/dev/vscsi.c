@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.23 2011/04/28 11:24:36 dlg Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.24 2011/07/02 22:20:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -504,7 +504,7 @@ vscsikqfilter(dev_t dev, struct knote *kn)
 		break;
 	default:
 		device_unref(&sc->sc_dev);
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = (caddr_t)sc;

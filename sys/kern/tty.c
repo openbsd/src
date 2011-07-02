@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.91 2011/04/18 21:44:56 guenther Exp $	*/
+/*	$OpenBSD: tty.c,v 1.92 2011/07/02 22:20:08 nicm Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1099,7 +1099,7 @@ ttkqfilter(dev_t dev, struct knote *kn)
 		kn->kn_fop = &ttywrite_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = (caddr_t)((u_long)dev);

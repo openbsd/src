@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.16 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.17 2011/07/02 22:20:08 nicm Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -219,7 +219,7 @@ logkqfilter(dev_t dev, struct knote *kn)
 		kn->kn_fop = &logread_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = (void *)msgbufp;

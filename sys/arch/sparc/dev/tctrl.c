@@ -1,4 +1,4 @@
-/*	$OpenBSD: tctrl.c,v 1.20 2009/02/26 17:19:47 oga Exp $	*/
+/*	$OpenBSD: tctrl.c,v 1.21 2011/07/02 22:20:07 nicm Exp $	*/
 /*	$NetBSD: tctrl.c,v 1.2 1999/08/11 00:46:06 matt Exp $	*/
 
 /*-
@@ -1184,7 +1184,7 @@ apmkqfilter(dev_t dev, struct knote *kn)
 		kn->kn_fop = &apmread_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = (caddr_t)sc;

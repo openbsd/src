@@ -1,4 +1,4 @@
-/*	$OpenBSD: sequencer.c,v 1.21 2011/06/23 16:02:33 tedu Exp $	*/
+/*	$OpenBSD: sequencer.c,v 1.22 2011/07/02 22:20:07 nicm Exp $	*/
 /*	$NetBSD: sequencer.c,v 1.13 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -618,7 +618,7 @@ sequencerpoll(dev_t dev, int events, struct proc *p)
 int
 sequencerkqfilter(dev_t dev, struct knote *kn)
 {
-	return (EPERM);
+	return (ENXIO);
 }
 
 void

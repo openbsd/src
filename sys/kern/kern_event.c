@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.40 2011/05/03 15:59:50 marco Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.41 2011/07/02 22:20:08 nicm Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -164,7 +164,7 @@ kqueue_kqfilter(struct file *fp, struct knote *kn)
 	struct kqueue *kq = (struct kqueue *)kn->kn_fp->f_data;
 
 	if (kn->kn_filter != EVFILT_READ)
-		return (1);
+		return (EINVAL);
 
 	kn->kn_fop = &kqread_filtops;
 	SLIST_INSERT_HEAD(&kq->kq_sel.si_note, kn, kn_selnext);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.44 2011/01/25 20:03:36 jakemsr Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.45 2011/07/02 22:20:08 nicm Exp $ */
 /*	$NetBSD: uscanner.c,v 1.40 2003/01/27 00:32:44 wiz Exp $	*/
 
 /*
@@ -656,7 +656,7 @@ uscannerkqfilter(dev_t dev, struct knote *kn)
 	sc = uscanner_cd.cd_devs[USCANNERUNIT(dev)];
 
 	if (sc->sc_dying)
-		return (1);
+		return (ENXIO);
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -671,7 +671,7 @@ uscannerkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = (void *)sc;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.37 2008/05/03 14:41:29 thib Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.38 2011/07/02 22:20:08 nicm Exp $  */
 
 /*
  * Portions of this code are:
@@ -200,7 +200,7 @@ vop_generic_kqfilter(void *v)
 		kn->kn_fop = &generic_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	return (0);

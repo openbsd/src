@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.55 2011/04/18 21:44:56 guenther Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.56 2011/07/02 22:20:08 nicm Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -741,7 +741,7 @@ ptckqfilter(dev_t dev, struct knote *kn)
 		kn->kn_fop = &ptcwrite_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = (caddr_t)pti;

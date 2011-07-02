@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplug.c,v 1.11 2010/12/15 03:34:33 tedu Exp $	*/
+/*	$OpenBSD: hotplug.c,v 1.12 2011/07/02 22:20:07 nicm Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -204,7 +204,7 @@ hotplugkqfilter(dev_t dev, struct knote *kn)
 		kn->kn_fop = &hotplugread_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	s = splbio();

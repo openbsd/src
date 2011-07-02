@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.21 2011/04/19 21:53:36 chl Exp $	*/
+/*	$OpenBSD: cons.c,v 1.22 2011/07/02 22:20:07 nicm Exp $	*/
 /*	$NetBSD: cons.c,v 1.30 1996/04/08 19:57:30 jonathan Exp $	*/
 
 /*
@@ -214,12 +214,12 @@ cnkqfilter(dev_t dev, struct knote *kn)
 	if (constty != NULL)
 		dev = constty->t_dev;
 	else if (cn_tab == NULL)
-		return (1);
+		return (ENXIO);
 	else
 		dev = cn_tab->cn_dev;
 	if (cdevsw[major(dev)].d_flags & D_KQFILTER)
 		return ((*cdevsw[major(dev)].d_kqfilter)(dev, kn));
-	return (1);
+	return (ENXIO);
 }
 
 int

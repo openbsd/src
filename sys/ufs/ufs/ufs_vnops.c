@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.98 2011/07/02 15:52:25 thib Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.99 2011/07/02 22:20:08 nicm Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1933,7 +1933,7 @@ ufs_kqfilter(void *v)
 		kn->kn_fop = &ufsvnode_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = (caddr_t)vp;

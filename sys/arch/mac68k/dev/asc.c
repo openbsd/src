@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc.c,v 1.28 2010/12/26 15:40:59 miod Exp $	*/
+/*	$OpenBSD: asc.c,v 1.29 2011/07/02 22:20:07 nicm Exp $	*/
 /*	$NetBSD: asc.c,v 1.20 1997/02/24 05:47:33 scottr Exp $	*/
 
 /*
@@ -366,5 +366,5 @@ asckqfilter(dev, kn)
 	dev_t dev;
 	struct knote *kn;
 {
-	return (1);
+	return (ENXIO);
 }

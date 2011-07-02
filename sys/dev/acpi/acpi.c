@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.226 2011/06/24 19:47:49 naddy Exp $ */
+/* $OpenBSD: acpi.c,v 1.227 2011/07/02 22:20:07 nicm Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2632,7 +2632,7 @@ acpikqfilter(dev_t dev, struct knote *kn)
 		kn->kn_fop = &acpiread_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;
@@ -2667,6 +2667,6 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 int
 acpikqfilter(dev_t dev, struct knote *kn)
 {
-	return (1);
+	return (ENXIO);
 }
 #endif /* SMALL_KERNEL */

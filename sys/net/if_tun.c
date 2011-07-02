@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.109 2010/09/23 04:47:02 matthew Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.110 2011/07/02 22:20:08 nicm Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -1051,7 +1051,7 @@ tunkqfilter(dev_t dev, struct knote *kn)
 			kn->kn_fop = &tunwrite_filtops;
 			break;
 		default:
-			return (EPERM);	/* 1 */
+			return (EINVAL);
 	}
 
 	kn->kn_hook = (caddr_t)tp;

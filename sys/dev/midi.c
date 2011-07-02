@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.25 2011/01/27 20:37:19 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.26 2011/07/02 22:20:07 nicm Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -401,7 +401,7 @@ midikqfilter(dev_t dev, struct knote *kn)
 		kn->kn_fop = &midiwrite_filtops;
 		break;
 	default:
-		return (EPERM);
+		return (EINVAL);
 	}
 	kn->kn_hook = (void *)sc;
 

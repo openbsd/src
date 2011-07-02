@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.51 2011/01/25 20:03:36 jakemsr Exp $ */
+/*	$OpenBSD: uhid.c,v 1.52 2011/07/02 22:20:08 nicm Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -564,7 +564,7 @@ uhidkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = (void *)sc;

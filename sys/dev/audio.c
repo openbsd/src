@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.112 2011/06/06 06:13:45 deraadt Exp $	*/
+/*	$OpenBSD: audio.c,v 1.113 2011/07/02 22:20:07 nicm Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -3309,7 +3309,7 @@ audiokqfilter(dev_t dev, struct knote *kn)
 		kn->kn_fop = &audiowrite_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 	kn->kn_hook = (void *)sc;
 
