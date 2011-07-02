@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_subr.c,v 1.23 2010/12/21 20:14:44 thib Exp $	*/
+/*	$OpenBSD: ext2fs_subr.c,v 1.24 2011/07/02 15:52:25 thib Exp $	*/
 /*	$NetBSD: ext2fs_subr.c,v 1.1 1997/06/11 09:34:03 bouyer Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ ext2fs_vinit(struct mount *mp, struct vops *specops,
 			nvp->v_data = vp->v_data;
 			vp->v_data = NULL;
 			vp->v_op = &spec_vops;
-#ifdef VFSDEBUG
+#ifdef VFSLCKDEBUG
 			vp->v_flag &= ~VLOCKSWORK;
 #endif
 			vrele(vp);

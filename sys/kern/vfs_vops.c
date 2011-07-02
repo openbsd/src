@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vops.c,v 1.3 2011/04/05 14:14:07 thib Exp $	*/
+/*	$OpenBSD: vfs_vops.c,v 1.4 2011/07/02 15:52:25 thib Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org> 
  *
@@ -46,7 +46,7 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 
-#ifdef VFSDEBUG
+#ifdef VFSLCKDEBUG
 #define ASSERT_VP_ISLOCKED(vp) do {                             \
         if (((vp)->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))   \
                 VOP_PRINT(vp);                                  \

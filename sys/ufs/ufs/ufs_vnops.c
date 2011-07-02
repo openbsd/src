@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.97 2010/12/21 20:14:44 thib Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.98 2011/07/02 15:52:25 thib Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1782,7 +1782,7 @@ ufs_vinit(struct mount *mntp, struct vops *specops, struct vops *fifoops,
 			nvp->v_data = vp->v_data;
 			vp->v_data = NULL;
 			vp->v_op = &spec_vops;
-#ifdef VFSDEBUG
+#ifdef VFSLCKDEBUG
 			vp->v_flag &= ~VLOCKSWORK;
 #endif
 			vrele(vp);

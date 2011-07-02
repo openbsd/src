@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.193 2010/12/21 20:14:43 thib Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.194 2011/07/02 15:52:25 thib Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -970,7 +970,7 @@ vclean(struct vnode *vp, int flags, struct proc *p)
 	VN_KNOTE(vp, NOTE_REVOKE);
 	vp->v_tag = VT_NON;
 	vp->v_flag &= ~VXLOCK;
-#ifdef VFSDEBUG
+#ifdef VFSLCKDEBUG
 	vp->v_flag &= ~VLOCKSWORK;
 #endif
 	if (vp->v_flag & VXWANT) {
@@ -1818,7 +1818,7 @@ vinvalbuf(struct vnode *vp, int flags, struct ucred *cred, struct proc *p,
 	struct buf *nbp, *blist;
 	int s, error;
 
-#ifdef VFSDEBUG
+#ifdef VFSLCKDEBUG
 	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
 		panic("vinvalbuf(): vp isn't locked");
 #endif

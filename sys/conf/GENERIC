@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.175 2011/04/06 11:17:32 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.176 2011/07/02 15:52:25 thib Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -18,7 +18,7 @@ option		PTRACE		# ptrace(2) system call
 
 #option		KVA_GUARDPAGES	# slow virtual address recycling (+ guarding)
 option		POOL_DEBUG	# pool corruption detection 
-#option		VFSDEBUG	# VFS locking checks
+#option		VFSLCKDEBUG	# VFS locking checks
 
 option		CRYPTO		# Cryptographic framework
 

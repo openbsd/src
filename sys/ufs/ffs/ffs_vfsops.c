@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.128 2010/12/21 20:14:44 thib Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.129 2011/07/02 15:52:25 thib Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1263,7 +1263,8 @@ retry:
 		*vpp = NULL;
 		return (error);
 	}
-#ifdef VFSDEBUG
+
+#ifdef VFSLCKDEBUG
 	vp->v_flag |= VLOCKSWORK;
 #endif
 	ip = pool_get(&ffs_ino_pool, PR_WAITOK|PR_ZERO);

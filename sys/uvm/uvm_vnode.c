@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.72 2011/06/16 23:00:38 oga Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.73 2011/07/02 15:52:25 thib Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -1538,14 +1538,14 @@ uvm_vnp_uncache(struct vnode *vp)
 	uvn->u_obj.uo_refs++;		/* value is now 1 */
 	simple_unlock(&uvn->u_obj.vmobjlock);
 
-#ifdef VFSDEBUG
+#ifdef VFSLCKDEBUG
 	/*
 	 * carry over sanity check from old vnode pager: the vnode should
 	 * be VOP_LOCK'd, and we confirm it here.
 	 */
 	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
 		panic("uvm_vnp_uncache: vnode not locked!");
-#endif	/* VFSDEBUG */
+#endif
 
 	/*
 	 * now drop our reference to the vnode.   if we have the sole
