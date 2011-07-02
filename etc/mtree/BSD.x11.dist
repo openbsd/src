@@ -1,4 +1,4 @@
-#	$OpenBSD: BSD.x11.dist,v 1.19 2011/06/23 22:55:39 schwarze Exp $
+#	$OpenBSD: BSD.x11.dist,v 1.20 2011/07/02 20:31:42 matthieu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -372,6 +372,8 @@
                     ..
                     renderproto
                     ..
+		    resproto
+		    ..
 		    xextproto
 		    ..
 		    xorg-docs
