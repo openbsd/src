@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.35 2011/06/30 12:54:44 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.36 2011/07/02 12:12:58 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -105,6 +105,11 @@ sub new
 }
 
 sub match_ref
+{
+	return ();
+}
+
+sub match_libs_ref
 {
 	return ();
 }
@@ -239,6 +244,7 @@ sub new
 		my $o = bless {
 			exactstem => qr{^$stemspec$},
 			fuzzystem => qr{^$stemspec\-\d.*$},
+			libstem => qr{^\.libs\d*\-$stemspec\-\d.*$},
 			constraints => $constraints,
 		    }, $class;
 		if (defined $r->{e}) {
@@ -271,6 +277,13 @@ LOOP1:
 
 	return @result;
 }
+
+sub match_libs_ref
+{
+	my ($o, $list) = @_;
+	return grep(/$o->{libstem}/, @$list);
+}
+
 
 sub match_locations
 {
@@ -322,6 +335,25 @@ sub match_ref
 	} else {
 		for my $subpattern (@$self) {
 			if ($subpattern->match_ref($r)) {
+				return 1;
+			}
+		}
+		return 0;
+	}
+}
+
+sub match_libs_ref
+{
+	my ($self, $r) = @_;
+	if (wantarray) {
+		my @l = ();
+		for my $subpattern (@$self) {
+			push(@l, $subpattern->match_libs_ref($r));
+		}
+		return @l;
+	} else {
+		for my $subpattern (@$self) {
+			if ($subpattern->match_libs_ref($r)) {
 				return 1;
 			}
 		}

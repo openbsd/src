@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Search.pm,v 1.26 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: Search.pm,v 1.27 2011/07/02 12:12:58 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -35,6 +35,12 @@ sub filter
 {
 	my ($self, @list) = @_;
 	return $self->{spec}->match_ref(\@list);
+}
+
+sub filter_libs
+{
+	my ($self, @list) = @_;
+	return $self->{spec}->match_libs_ref(\@list);
 }
 
 sub match_locations

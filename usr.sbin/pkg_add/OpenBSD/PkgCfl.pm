@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCfl.pm,v 1.36 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: PkgCfl.pm,v 1.37 2011/07/02 12:12:58 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -35,7 +35,6 @@ sub make_conflict_list
 	} else {
 		push(@$l, OpenBSD::Search::Exact->new("$pkgname|partial-$pkgname"));
 	}
-	push(@$l, OpenBSD::Search::PkgSpec->new(".libs-$stem-*"));
 	if (defined $plist->{conflict}) {
 		for my $cfl (@{$plist->{conflict}}) {
 		    push(@$l, $cfl->spec);
@@ -47,15 +46,21 @@ sub make_conflict_list
 sub conflicts_with
 {
 	my ($self, @pkgnames) = @_;
+	my @libs = grep {/^\.libs\d*\-/} @pkgnames;
+	@pkgnames = grep {!/^\.libs\d*\-/} @pkgnames;
 	if (wantarray) {
 		my @l = ();
 		for my $cfl (@$self) {
 			push(@l, $cfl->filter(@pkgnames));
+			push(@l, $cfl->filter_libs(@libs));
 		}
 		return @l;
 	} else {
 		for my $cfl (@$self) {
 			if ($cfl->filter(@pkgnames)) {
+				return 1;
+			}
+			if ($cfl->filter_libs(@libs)) {
 				return 1;
 			}
 		}
