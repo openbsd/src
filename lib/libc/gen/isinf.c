@@ -1,4 +1,4 @@
-/*	$OpenBSD: isinf.c,v 1.5 2011/05/30 17:28:15 martynas Exp $	*/
+/*	$OpenBSD: isinf.c,v 1.6 2011/07/02 19:27:34 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -45,7 +45,7 @@ __isinff(float f)
 int __isinfl(long double);
 #else	/* lint */
 __weak_alias(__isinfl, __isinf);
-#endif	/* __weak_alias */
+#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */
 
 /*

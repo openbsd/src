@@ -1,4 +1,4 @@
-/*	$OpenBSD: frexp.c,v 1.7 2008/12/10 01:15:02 martynas Exp $ */
+/*	$OpenBSD: frexp.c,v 1.8 2011/07/02 19:27:34 martynas Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -27,6 +27,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+/* LINTLIBRARY */
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
@@ -59,8 +61,9 @@ frexp(value, eptr)
 	}
 }
 
-#if LDBL_MANT_DIG == 53
-#ifdef __weak_alias
+#ifdef	lint
+/* PROTOLIB1 */
+long double frexpl(long double, int *);
+#else	/* lint */
 __weak_alias(frexpl, frexp);
-#endif /* __weak_alias */
-#endif /* LDBL_MANT_DIG == 53 */
+#endif	/* lint */

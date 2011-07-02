@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpclassify.c,v 1.3 2008/12/10 01:15:02 martynas Exp $	*/
+/*	$OpenBSD: fpclassify.c,v 1.4 2011/07/02 19:27:34 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+/* LINTLIBRARY */
 
 #include <sys/cdefs.h>
 #include <machine/vaxfp.h>
@@ -43,6 +45,9 @@ __fpclassifyf(float f)
 	return FP_NORMAL;
 }
 
-#ifdef __weak_alias
+#ifdef	lint
+/* PROTOLIB1 */
+int __fpclassifyl(long double);
+#else	/* lint */
 __weak_alias(__fpclassifyl, __fpclassify);
-#endif /* __weak_alias */
+#endif	/* lint */
