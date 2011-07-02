@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.233 2011/06/24 12:45:19 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.234 2011/07/02 17:39:12 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -173,7 +173,7 @@ struct scsi_adapter sr_switch = {
 
 /* native metadata format */
 int			sr_meta_native_bootprobe(struct sr_softc *, dev_t,
-			    struct sr_metadata_list_head *);
+			    struct sr_boot_chunk_head *);
 #define SR_META_NOTCLAIMED	(0)
 #define SR_META_CLAIMED		(1)
 int			sr_meta_native_probe(struct sr_softc *,
@@ -921,13 +921,13 @@ done:
 
 int
 sr_meta_native_bootprobe(struct sr_softc *sc, dev_t devno,
-    struct sr_metadata_list_head *mlh)
+    struct sr_boot_chunk_head *bch)
 {
 	struct vnode		*vn;
 	struct disklabel	label;
 	struct sr_metadata	*md = NULL;
 	struct sr_discipline	*fake_sd = NULL;
-	struct sr_metadata_list *mle;
+	struct sr_boot_chunk	*bc;
 	char			devname[32];
 	dev_t			chrdev, rawdev;
 	int			error, i;
@@ -1037,12 +1037,12 @@ sr_meta_native_bootprobe(struct sr_softc *sc, dev_t devno,
 				    DEVNAME(sc), devname);
 			} else {
 				/* XXX fix M_WAITOK, this is boot time */
-				mle = malloc(sizeof(*mle), M_DEVBUF,
+				bc = malloc(sizeof(*bc), M_DEVBUF,
 				    M_WAITOK | M_ZERO);
-				bcopy(md, &mle->sml_metadata,
-				    SR_META_SIZE * 512);
-				mle->sml_mm = rawdev;
-				SLIST_INSERT_HEAD(mlh, mle, sml_link);
+				bcopy(md, &bc->sbc_metadata,
+				    sizeof(bc->sbc_metadata));
+				bc->sbc_mm = rawdev;
+				SLIST_INSERT_HEAD(bch, bc, sbc_link);
 				rv = SR_META_CLAIMED;
 			}
 		}
@@ -1064,19 +1064,17 @@ done:
 int
 sr_boot_assembly(struct sr_softc *sc)
 {
-	struct disk		*dk;
+	struct sr_boot_volume_head bvh;
+	struct sr_boot_chunk_head bch, kdh;
+	struct sr_boot_volume	*bv, *bv1, *bv2;
+	struct sr_boot_chunk	*bc, *bcnext, *bc1, *bc2;
 	struct sr_disk_head	sdklist;
 	struct sr_disk		*sdk;
-	struct bioc_createraid	bc;
-	struct sr_metadata_list_head mlh, kdh;
-	struct sr_metadata_list *mle, *mlenext, *mle1, *mle2;
-	struct sr_metadata	*metadata;
-	struct sr_boot_volume_head bvh;
-	struct sr_boot_volume	*vol, *vp1, *vp2;
+	struct disk		*dk;
+	struct bioc_createraid	bcr;
 	struct sr_meta_chunk	*hm;
 	struct sr_chunk_head	*cl;
 	struct sr_chunk		*hotspare, *chunk, *last;
-	u_int32_t		chunk_id;
 	u_int64_t		*ondisk = NULL;
 	dev_t			*devs = NULL;
 	char			devname[32];
@@ -1085,8 +1083,8 @@ sr_boot_assembly(struct sr_softc *sc)
 	DNPRINTF(SR_D_META, "%s: sr_boot_assembly\n", DEVNAME(sc));
 
 	SLIST_INIT(&sdklist);
-	SLIST_INIT(&mlh);
 	SLIST_INIT(&bvh);
+	SLIST_INIT(&bch);
 	SLIST_INIT(&kdh);
 
 	dk = TAILQ_FIRST(&disklist);
@@ -1118,7 +1116,7 @@ sr_boot_assembly(struct sr_softc *sc)
 		}
 
 		/* native softraid uses partitions */
-		sr_meta_native_bootprobe(sc, dk->dk_devno, &mlh);
+		sr_meta_native_bootprobe(sc, dk->dk_devno, &bch);
 
 		/* probe non-native disks if native failed. */
 
@@ -1129,82 +1127,80 @@ sr_boot_assembly(struct sr_softc *sc)
 	/*
 	 * Create a list of volumes and associate chunks with each volume.
 	 */
+	for (bc = SLIST_FIRST(&bch); bc != SLIST_END(&bch); bc = bcnext) {
 
-	for (mle = SLIST_FIRST(&mlh); mle != SLIST_END(&mlh); mle = mlenext) {
-
-		mlenext = SLIST_NEXT(mle, sml_link);
-		SLIST_REMOVE(&mlh, mle, sr_metadata_list, sml_link);
-
-		metadata = (struct sr_metadata *)&mle->sml_metadata;
-		mle->sml_chunk_id = metadata->ssdi.ssd_chunk_id;
+		bcnext = SLIST_NEXT(bc, sbc_link);
+		SLIST_REMOVE(&bch, bc, sr_boot_chunk, sbc_link);
+		bc->sbc_chunk_id = bc->sbc_metadata.ssdi.ssd_chunk_id;
 
 		/* Handle key disks separately. */
-		if (metadata->ssdi.ssd_level == SR_KEYDISK_LEVEL) {
-			SLIST_INSERT_HEAD(&kdh, mle, sml_link);
+		if (bc->sbc_metadata.ssdi.ssd_level == SR_KEYDISK_LEVEL) {
+			SLIST_INSERT_HEAD(&kdh, bc, sbc_link);
 			continue;
 		}
 
-		SLIST_FOREACH(vol, &bvh, sbv_link) {
-			if (bcmp(&metadata->ssdi.ssd_uuid, &vol->sbv_uuid,
-			    sizeof(metadata->ssdi.ssd_uuid)) == 0)
+		SLIST_FOREACH(bv, &bvh, sbv_link) {
+			if (bcmp(&bc->sbc_metadata.ssdi.ssd_uuid,
+			    &bv->sbv_uuid,
+			    sizeof(bc->sbc_metadata.ssdi.ssd_uuid)) == 0)
 				break;
 		}
 
-		if (vol == NULL) {
-			vol = malloc(sizeof(struct sr_boot_volume),
+		if (bv == NULL) {
+			bv = malloc(sizeof(struct sr_boot_volume),
 			    M_DEVBUF, M_NOWAIT | M_CANFAIL | M_ZERO);
-			if (vol == NULL) {
+			if (bv == NULL) {
 				printf("%s: failed to allocate boot volume!\n",
 				    DEVNAME(sc));
 				goto unwind;
 			}
 
-			vol->sbv_level = metadata->ssdi.ssd_level;
-			vol->sbv_volid = metadata->ssdi.ssd_volid;
-			vol->sbv_chunk_no = metadata->ssdi.ssd_chunk_no;
-			bcopy(&metadata->ssdi.ssd_uuid, &vol->sbv_uuid,
-			    sizeof(metadata->ssdi.ssd_uuid));
-			SLIST_INIT(&vol->sml);
+			bv->sbv_level = bc->sbc_metadata.ssdi.ssd_level;
+			bv->sbv_volid = bc->sbc_metadata.ssdi.ssd_volid;
+			bv->sbv_chunk_no = bc->sbc_metadata.ssdi.ssd_chunk_no;
+			bcopy(&bc->sbc_metadata.ssdi.ssd_uuid, &bv->sbv_uuid,
+			    sizeof(bc->sbc_metadata.ssdi.ssd_uuid));
+			SLIST_INIT(&bv->sbv_chunks);
 
 			/* Maintain volume order. */
-			vp2 = NULL;
-			SLIST_FOREACH(vp1, &bvh, sbv_link) {
-				if (vp1->sbv_volid > vol->sbv_volid)
+			bv2 = NULL;
+			SLIST_FOREACH(bv1, &bvh, sbv_link) {
+				if (bv1->sbv_volid > bv->sbv_volid)
 					break;
-				vp2 = vp1;
+				bv2 = bv1;
 			}
-			if (vp2 == NULL) {
+			if (bv2 == NULL) {
 				DNPRINTF(SR_D_META, "%s: insert volume %u "
-				    "at head\n", DEVNAME(sc), vol->sbv_volid);
-				SLIST_INSERT_HEAD(&bvh, vol, sbv_link);
+				    "at head\n", DEVNAME(sc), bv->sbv_volid);
+				SLIST_INSERT_HEAD(&bvh, bv, sbv_link);
 			} else {
 				DNPRINTF(SR_D_META, "%s: insert volume %u "
-				    "after %u\n", DEVNAME(sc), vol->sbv_volid,
-				    vp2->sbv_volid);
-				SLIST_INSERT_AFTER(vp2, vol, sbv_link);
+				    "after %u\n", DEVNAME(sc), bv->sbv_volid,
+				    bv2->sbv_volid);
+				SLIST_INSERT_AFTER(bv2, bv, sbv_link);
 			}
 		}
 
 		/* Maintain chunk order. */
-		mle2 = NULL;
-		SLIST_FOREACH(mle1, &vol->sml, sml_link) {
-			if (mle1->sml_chunk_id > mle->sml_chunk_id)
+		bc2 = NULL;
+		SLIST_FOREACH(bc1, &bv->sbv_chunks, sbc_link) {
+			if (bc1->sbc_chunk_id > bc->sbc_chunk_id)
 				break;
-			mle2 = mle1;
+			bc2 = bc1;
 		}
-		if (mle2 == NULL) {
+		if (bc2 == NULL) {
 			DNPRINTF(SR_D_META, "%s: volume %u insert chunk %u "
-			    "at head\n", DEVNAME(sc), vol->sbv_volid,
-			    mle->sml_chunk_id);
-			SLIST_INSERT_HEAD(&vol->sml, mle, sml_link);
+			    "at head\n", DEVNAME(sc), bv->sbv_volid,
+			    bc->sbc_chunk_id);
+			SLIST_INSERT_HEAD(&bv->sbv_chunks, bc, sbc_link);
 		} else {
 			DNPRINTF(SR_D_META, "%s: volume %u insert chunk %u "
-			    "after %u\n", DEVNAME(sc), vol->sbv_volid,
-			    mle->sml_chunk_id, mle2->sml_chunk_id);
-			SLIST_INSERT_AFTER(mle2, mle, sml_link);
+			    "after %u\n", DEVNAME(sc), bv->sbv_volid,
+			    bc->sbc_chunk_id, bc2->sbc_chunk_id);
+			SLIST_INSERT_AFTER(bc2, bc, sbc_link);
 		}
 
-		vol->sbv_dev_no++;
+		bv->sbv_dev_no++;
 	}
 
 	/* Allocate memory for device and ondisk version arrays. */
@@ -1224,20 +1220,20 @@ sr_boot_assembly(struct sr_softc *sc)
 	/*
 	 * Assemble hotspare "volumes".
 	 */
-	SLIST_FOREACH(vol, &bvh, sbv_link) {
+	SLIST_FOREACH(bv, &bvh, sbv_link) {
 
 		/* Check if this is a hotspare "volume". */
-		if (vol->sbv_level != SR_HOTSPARE_LEVEL ||
-		    vol->sbv_chunk_no != 1)
+		if (bv->sbv_level != SR_HOTSPARE_LEVEL ||
+		    bv->sbv_chunk_no != 1)
 			continue;
 
 #ifdef SR_DEBUG
 		DNPRINTF(SR_D_META, "%s: assembling hotspare volume ",
 		    DEVNAME(sc));
 		if (sr_debug & SR_D_META)
-			sr_uuid_print(&vol->sbv_uuid, 0);
+			sr_uuid_print(&bv->sbv_uuid, 0);
 		DNPRINTF(SR_D_META, " volid %u with %u chunks\n",
-		    vol->sbv_volid, vol->sbv_chunk_no);
+		    bv->sbv_volid, bv->sbv_chunk_no);
 #endif
 
 		/* Create hotspare chunk metadata. */
@@ -1249,21 +1245,21 @@ sr_boot_assembly(struct sr_softc *sc)
 			goto unwind;
 		}
 
-		mle = SLIST_FIRST(&vol->sml);
-		sr_meta_getdevname(sc, mle->sml_mm, devname, sizeof(devname));
-		hotspare->src_dev_mm = mle->sml_mm;
+		bc = SLIST_FIRST(&bv->sbv_chunks);
+		sr_meta_getdevname(sc, bc->sbc_mm, devname, sizeof(devname));
+		hotspare->src_dev_mm = bc->sbc_mm;
 		strlcpy(hotspare->src_devname, devname,
 		    sizeof(hotspare->src_devname));
-		hotspare->src_size = metadata->ssdi.ssd_size;
+		hotspare->src_size = bc->sbc_metadata.ssdi.ssd_size;
 
 		hm = &hotspare->src_meta;
 		hm->scmi.scm_volid = SR_HOTSPARE_VOLID;
 		hm->scmi.scm_chunk_id = 0;
-		hm->scmi.scm_size = metadata->ssdi.ssd_size;
-		hm->scmi.scm_coerced_size = metadata->ssdi.ssd_size;
+		hm->scmi.scm_size = bc->sbc_metadata.ssdi.ssd_size;
+		hm->scmi.scm_coerced_size = bc->sbc_metadata.ssdi.ssd_size;
 		strlcpy(hm->scmi.scm_devname, devname,
 		    sizeof(hm->scmi.scm_devname));
-		bcopy(&metadata->ssdi.ssd_uuid, &hm->scmi.scm_uuid,
+		bcopy(&bc->sbc_metadata.ssdi.ssd_uuid, &hm->scmi.scm_uuid,
 		    sizeof(struct sr_uuid));
 
 		sr_checksum(sc, hm, &hm->scm_checksum,
@@ -1289,37 +1285,35 @@ sr_boot_assembly(struct sr_softc *sc)
 	/*
 	 * Assemble RAID volumes.
 	 */
-	SLIST_FOREACH(vol, &bvh, sbv_link) {
+	SLIST_FOREACH(bv, &bvh, sbv_link) {
 
 		bzero(&bc, sizeof(bc));
 
 		/* Check if this is a hotspare "volume". */
-		if (vol->sbv_level == SR_HOTSPARE_LEVEL &&
-		    vol->sbv_chunk_no == 1)
+		if (bv->sbv_level == SR_HOTSPARE_LEVEL &&
+		    bv->sbv_chunk_no == 1)
 			continue;
 
 #ifdef SR_DEBUG
 		DNPRINTF(SR_D_META, "%s: assembling volume ", DEVNAME(sc));
 		if (sr_debug & SR_D_META)
-			sr_uuid_print(&vol->sbv_uuid, 0);
+			sr_uuid_print(&bv->sbv_uuid, 0);
 		DNPRINTF(SR_D_META, " volid %u with %u chunks\n",
-		    vol->sbv_volid, vol->sbv_chunk_no);
+		    bv->sbv_volid, bv->sbv_chunk_no);
 #endif
 
 		/*
 		 * If this is a crypto volume, try to find a matching
 		 * key disk...
 		 */
-		bc.bc_key_disk = NODEV;
-		if (vol->sbv_level == 'C') {
-			SLIST_FOREACH(mle, &kdh, sml_link) {
-				metadata =
-				    (struct sr_metadata *)&mle->sml_metadata;
-				if (bcmp(&metadata->ssdi.ssd_uuid,
-				    &vol->sbv_uuid,
-				    sizeof(metadata->ssdi.ssd_uuid)) == 0) {
-					bc.bc_key_disk = mle->sml_mm;
-				}
+		bcr.bc_key_disk = NODEV;
+		if (bv->sbv_level == 'C') {
+			SLIST_FOREACH(bc, &kdh, sbc_link) {
+				if (bcmp(&bc->sbc_metadata.ssdi.ssd_uuid,
+				    &bv->sbv_uuid,
+				    sizeof(bc->sbc_metadata.ssdi.ssd_uuid))
+				    == 0)
+					bcr.bc_key_disk = bc->sbc_mm;
 			}
 		}
 
@@ -1328,42 +1322,42 @@ sr_boot_assembly(struct sr_softc *sc)
 			ondisk[i] = 0;
 		}
 
-		SLIST_FOREACH(mle, &vol->sml, sml_link) {
-			metadata = (struct sr_metadata *)&mle->sml_metadata;
-			chunk_id = metadata->ssdi.ssd_chunk_id;
-
-			if (devs[chunk_id] != NODEV) {
-				vol->sbv_dev_no--;
-				sr_meta_getdevname(sc, mle->sml_mm, devname,
+		SLIST_FOREACH(bc, &bv->sbv_chunks, sbc_link) {
+			if (devs[bc->sbc_chunk_id] != NODEV) {
+				bv->sbv_dev_no--;
+				sr_meta_getdevname(sc, bc->sbc_mm, devname,
 				    sizeof(devname));
 				printf("%s: found duplicate chunk %u for "
 				    "volume %u on device %s\n", DEVNAME(sc),
-				    chunk_id, vol->sbv_volid, devname);
+				    bc->sbc_chunk_id, bv->sbv_volid, devname);
 			}
 
-			if (devs[chunk_id] == NODEV ||
-			    metadata->ssd_ondisk > ondisk[chunk_id]) {
-				devs[chunk_id] = mle->sml_mm;
-				ondisk[chunk_id] = metadata->ssd_ondisk;
+			if (devs[bc->sbc_chunk_id] == NODEV ||
+			    bc->sbc_metadata.ssd_ondisk >
+			    ondisk[bc->sbc_chunk_id]) {
+				devs[bc->sbc_chunk_id] = bc->sbc_mm;
+				ondisk[bc->sbc_chunk_id] =
+				    bc->sbc_metadata.ssd_ondisk;
 				DNPRINTF(SR_D_META, "%s: using ondisk "
 				    "metadata version %llu for chunk %u\n",
-				    DEVNAME(sc), ondisk[chunk_id], chunk_id);
+				    DEVNAME(sc), ondisk[bc->sbc_chunk_id],
+				    bc->sbc_chunk_id);
 			}
 		}
 
-		if (vol->sbv_chunk_no != vol->sbv_dev_no) {
+		if (bv->sbv_chunk_no != bv->sbv_dev_no) {
 			printf("%s: not all chunks were provided; "
 			    "attempting to bring volume %d online\n",
-			    DEVNAME(sc), vol->sbv_volid);
+			    DEVNAME(sc), bv->sbv_volid);
 		}
 
-		bc.bc_level = vol->sbv_level;
-		bc.bc_dev_list_len = vol->sbv_chunk_no * sizeof(dev_t);
-		bc.bc_dev_list = devs;
-		bc.bc_flags = BIOC_SCDEVT;
+		bcr.bc_level = bv->sbv_level;
+		bcr.bc_dev_list_len = bv->sbv_chunk_no * sizeof(dev_t);
+		bcr.bc_dev_list = devs;
+		bcr.bc_flags = BIOC_SCDEVT;
 
 		rw_enter_write(&sc->sc_lock);
-		sr_ioctl_createraid(sc, &bc, 0);
+		sr_ioctl_createraid(sc, &bcr, 0);
 		rw_exit_write(&sc->sc_lock);
 
 		rv++;
@@ -1371,20 +1365,26 @@ sr_boot_assembly(struct sr_softc *sc)
 
 	/* done with metadata */
 unwind:
-	for (vp1 = SLIST_FIRST(&bvh); vp1 != SLIST_END(&bvh); vp1 = vp2) {
-		vp2 = SLIST_NEXT(vp1, sbv_link);
-		for (mle1 = SLIST_FIRST(&vp1->sml);
-		    mle1 != SLIST_END(&vp1->sml); mle1 = mle2) {
-			mle2 = SLIST_NEXT(mle1, sml_link);
-			free(mle1, M_DEVBUF);
+	/* Free boot volumes and associated chunks. */
+	for (bv1 = SLIST_FIRST(&bvh); bv1 != SLIST_END(&bvh); bv1 = bv2) {
+		bv2 = SLIST_NEXT(bv1, sbv_link);
+		for (bc1 = SLIST_FIRST(&bv1->sbv_chunks);
+		    bc1 != SLIST_END(&bv1->sbv_chunks); bc1 = bc2) {
+			bc2 = SLIST_NEXT(bc1, sbc_link);
+			free(bc1, M_DEVBUF);
 		}
-		free(vp1, M_DEVBUF);
+		free(bv1, M_DEVBUF);
 	}
-	for (mle = SLIST_FIRST(&mlh); mle != SLIST_END(&mlh); mle = mle2) {
-		mle2 = SLIST_NEXT(mle, sml_link);
-		free(mle, M_DEVBUF);
+	/* Free keydisks chunks. */
+	for (bc1 = SLIST_FIRST(&kdh); bc1 != SLIST_END(&kdh); bc1 = bc2) {
+		bc2 = SLIST_NEXT(bc1, sbc_link);
+		free(bc1, M_DEVBUF);
 	}
-	SLIST_INIT(&mlh);
+	/* Free unallocated chunks. */
+	for (bc1 = SLIST_FIRST(&bch); bc1 != SLIST_END(&bch); bc1 = bc2) {
+		bc2 = SLIST_NEXT(bc1, sbc_link);
+		free(bc1, M_DEVBUF);
+	}
 
 	while (!SLIST_EMPTY(&sdklist)) {
 		sdk = SLIST_FIRST(&sdklist);

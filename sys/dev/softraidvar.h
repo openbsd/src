@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.100 2011/06/23 17:20:16 matthew Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.101 2011/07/02 17:39:12 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -404,16 +404,16 @@ struct sr_aoe {
 	char			sra_eaddr[6];
 };
 
-struct sr_metadata_list {
-	u_int8_t		sml_metadata[SR_META_SIZE * 512];
-	dev_t			sml_mm;
-	u_int32_t		sml_chunk_id;
-	int			sml_used;
+struct sr_boot_chunk {
+	struct sr_metadata	sbc_metadata;
+	dev_t			sbc_mm;
+	u_int32_t		sbc_chunk_id;
+	int			sbc_used;
 
-	SLIST_ENTRY(sr_metadata_list) sml_link;
+	SLIST_ENTRY(sr_boot_chunk) sbc_link;
 };
 
-SLIST_HEAD(sr_metadata_list_head, sr_metadata_list);
+SLIST_HEAD(sr_boot_chunk_head, sr_boot_chunk);
 
 struct sr_boot_volume {
 	struct sr_uuid		sbv_uuid;	/* Volume UUID. */
@@ -422,7 +422,7 @@ struct sr_boot_volume {
 	u_int32_t		sbv_chunk_no;	/* Number of chunks. */
 	u_int32_t		sbv_dev_no;	/* Number of devs discovered. */
 
-	struct sr_metadata_list_head	sml;	/* List of metadata. */
+	struct sr_boot_chunk_head sbv_chunks;	/* List of chunks. */
 
 	SLIST_ENTRY(sr_boot_volume)	sbv_link;
 };
