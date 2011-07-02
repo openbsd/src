@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mk.conf.5,v 1.20 2010/10/18 14:44:12 jmc Exp $
+.\"	$OpenBSD: mk.conf.5,v 1.21 2011/07/02 08:03:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 18 2010 $
+.Dd $Mdocdate: July 2 2011 $
 .Dt MK.CONF 5
 .Os
 .Sh NAME
@@ -139,7 +139,7 @@ library installation.
 .Bq Pa /usr/libdata/lint
 .It Ev MANDIR
 Base path for manual installation.
-.Bq Pa /usr/share/man/cat
+.Bq Pa /usr/share/man/man
 .It Ev MANGRP
 Manual group.
 .Bq bin
@@ -199,13 +199,6 @@ Reduces redundant tests.
 Be careful!
 Redundant tests may not be redundant when installing substantially
 updated GNU programs.
-.It Ev MANPS
-Define to have PostScript manual pages generated.
-Use for
-.Dv BSDSRCDIR
-only.
-.It Ev MANZ
-Compress manual pages at installation time.
 .It Ev NOPIC
 Do not build PIC versions of system libraries,
 and do not build shared libraries.
