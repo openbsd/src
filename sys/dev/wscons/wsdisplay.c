@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.104 2011/06/23 16:31:16 deraadt Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.105 2011/07/03 18:11:21 nicm Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1411,15 +1411,15 @@ wsdisplaykqfilter(dev_t dev, struct knote *kn)
 	struct wsscreen *scr;
 
 	if (ISWSDISPLAYCTL(dev))
-		return (1);
+		return (ENXIO);
 
 	if ((scr = sc->sc_scr[WSDISPLAYSCREEN(dev)]) == NULL)
-		return (1);
+		return (ENXIO);
 
-	if (WSSCREEN_HAS_TTY(scr))
-		return (ttkqfilter(dev, kn));
-	else
-		return (1);
+	if (!WSSCREEN_HAS_TTY(scr))
+		return (ENXIO);
+
+	return (ttkqfilter(dev, kn));
 }
 
 void
