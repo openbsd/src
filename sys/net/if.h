@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.122 2011/03/13 15:31:41 stsp Exp $	*/
+/*	$OpenBSD: if.h,v 1.123 2011/07/03 17:41:50 claudio Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -170,7 +170,8 @@ struct	ifqueue {
 #define LINK_STATE_HALF_DUPLEX	5	/* link is up and half duplex */
 #define LINK_STATE_FULL_DUPLEX	6	/* link is up and full duplex */
 
-#define LINK_STATE_IS_UP(_s)	((_s) >= LINK_STATE_UP)
+#define LINK_STATE_IS_UP(_s)	\
+		((_s) >= LINK_STATE_UP || (_s) == LINK_STATE_UNKNOWN)
 
 /*
  * Status bit descriptions for the various interface types.
