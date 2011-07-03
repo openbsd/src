@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.7 2011/07/03 19:59:00 krw Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.8 2011/07/03 20:15:40 krw Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -54,22 +54,20 @@ int	__aout_fdnlist(int, struct nlist *);
 int	__ecoff_fdnlist(int, struct nlist *);
 int	__elf_fdnlist(int, struct nlist *);
 #ifdef _NLIST_DO_ELF
-int	__elf_is_okay__(register Elf_Ehdr *ehdr);
+int	__elf_is_okay__(Elf_Ehdr *ehdr);
 #endif
 
 #define	ISLAST(p)	(p->n_un.n_name == 0 || p->n_un.n_name[0] == 0)
 
 #ifdef _NLIST_DO_AOUT
 int
-__aout_fdnlist(fd, list)
-	register int fd;
-	register struct nlist *list;
+__aout_fdnlist(int fd, struct nlist *list)
 {
-	register struct nlist *p, *s;
-	register char *strtab;
-	register off_t symoff, stroff;
-	register u_long symsize;
-	register int nent, cc;
+	struct nlist *p, *s;
+	char *strtab;
+	off_t symoff, stroff;
+	u_long symsize;
+	int nent, cc;
 	int strsize, usemalloc = 0;
 	struct nlist nbuf[1024];
 	struct exec exec;
@@ -169,9 +167,7 @@ aout_done:
 #define	BADUNMAP		do { rv = -1; goto unmap; } while (0)
 
 int
-__ecoff_fdnlist(fd, list)
-	register int fd;
-	register struct nlist *list;
+__ecoff_fdnlist(int fd, struct nlist *list)
 {
 	struct nlist *p;
 	struct ecoff_exechdr *exechdrp;
@@ -276,10 +272,9 @@ out:
  * as such its use should be restricted.
  */
 int
-__elf_is_okay__(ehdr)
-	register Elf_Ehdr *ehdr;
+__elf_is_okay__(Elf_Ehdr *ehdr)
 {
-	register int retval = 0;
+	int retval = 0;
 	/*
 	 * We need to check magic, class size, endianess,
 	 * and version before we look at the rest of the
@@ -301,15 +296,13 @@ __elf_is_okay__(ehdr)
 }
 
 int
-__elf_fdnlist(fd, list)
-	register int fd;
-	register struct nlist *list;
+__elf_fdnlist(int fd, struct nlist *list)
 {
-	register struct nlist *p;
-	register caddr_t strtab;
-	register Elf_Off symoff = 0, symstroff = 0;
-	register Elf_Word symsize = 0, symstrsize = 0;
-	register Elf_Sword nent, cc, i;
+	struct nlist *p;
+	caddr_t strtab;
+	Elf_Off symoff = 0, symstroff = 0;
+	Elf_Word symsize = 0, symstrsize = 0;
+	Elf_Sword nent, cc, i;
 	Elf_Sym sbuf[1024];
 	Elf_Sym *s;
 	Elf_Ehdr ehdr;
@@ -500,9 +493,7 @@ static struct nlist_handlers {
 };
 
 int
-__fdnlist(fd, list)
-	register int fd;
-	register struct nlist *list;
+__fdnlist(int fd, struct nlist *list)
 {
 	int n = -1, i;
 
@@ -516,9 +507,7 @@ __fdnlist(fd, list)
 
 
 int
-nlist(name, list)
-	const char *name;
-	struct nlist *list;
+nlist(const char *name, struct nlist *list)
 {
 	int fd, n;
 
