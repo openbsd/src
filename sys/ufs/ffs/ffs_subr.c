@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_subr.c,v 1.24 2009/08/14 13:05:08 jasper Exp $	*/
+/*	$OpenBSD: ffs_subr.c,v 1.25 2011/07/03 18:23:10 tedu Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.6 1996/03/17 02:16:23 christos Exp $	*/
 
 /*
@@ -133,7 +133,7 @@ ffs_checkoverlap(struct buf *bp, struct inode *ip)
 		if (ep == bp || (ep->b_flags & B_INVAL) ||
 		    ep->b_vp == NULLVP)
 			continue;
-		if (VOP_BMAP(ep->b_vp, (daddr64_t)0, &vp, (daddr64_t)0, NULL))
+		if (VOP_BMAP(ep->b_vp, (daddr64_t)0, &vp, NULL, NULL))
 			continue;
 		if (vp != ip->i_devvp)
 			continue;

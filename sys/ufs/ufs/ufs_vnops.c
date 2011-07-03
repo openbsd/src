@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.99 2011/07/02 22:20:08 nicm Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.100 2011/07/03 18:23:10 tedu Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -160,7 +160,7 @@ ufs_mknod(void *v)
 	vput(*vpp);
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
-	*vpp = 0;
+	*vpp = NULL;
 	return (0);
 }
 
@@ -1248,7 +1248,7 @@ ufs_rmdir(void *v)
 	/*
 	 * No rmdir "." or of mounted on directories.
 	 */
-	if (dp == ip || vp->v_mountedhere != 0) {
+	if (dp == ip || vp->v_mountedhere != NULL) {
 		if (dp == ip)
 			vrele(dvp);
 		else

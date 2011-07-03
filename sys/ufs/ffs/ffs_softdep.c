@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.104 2011/06/29 12:15:26 tedu Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.105 2011/07/03 18:23:10 tedu Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -734,7 +734,7 @@ process_worklist_item(struct mount *matchmnt, int flags)
 		if (vp == NULL || !VOP_ISLOCKED(vp))
 			break;
 	}
-	if (wk == 0) {
+	if (wk == NULL) {
 		FREE_LOCK(&lk);
 		return (0);
 	}
@@ -826,11 +826,11 @@ softdep_move_dependencies(struct buf *oldbp, struct buf *newbp)
 
 	if (LIST_FIRST(&newbp->b_dep) != NULL)
 		panic("softdep_move_dependencies: need merge code");
-	wktail = 0;
+	wktail = NULL;
 	ACQUIRE_LOCK(&lk);
 	while ((wk = LIST_FIRST(&oldbp->b_dep)) != NULL) {
 		LIST_REMOVE(wk, wk_list);
-		if (wktail == 0)
+		if (wktail == NULL)
 			LIST_INSERT_HEAD(&newbp->b_dep, wk, wk_list);
 		else
 			LIST_INSERT_AFTER(wktail, wk, wk_list);
@@ -1123,7 +1123,7 @@ top:
 		*newblkpp = NULL;
 		return (0);
 	}
-	if (sema_get(&newblk_in_progress, 0) == 0)
+	if (sema_get(&newblk_in_progress, NULL) == 0)
 		goto top;
 	newblk = pool_get(&newblk_pool, PR_WAITOK);
 	newblk->nb_state = 0;
@@ -1167,7 +1167,7 @@ softdep_initialize(void)
 	sema_init(&inodedep_in_progress, "inodedep", PRIBIO, 0);
 	newblk_hashtbl = hashinit(64, M_NEWBLK, M_WAITOK, &newblk_hash);
 	sema_init(&newblk_in_progress, "newblk", PRIBIO, 0);
-	timeout_set(&proc_waiting_timeout, pause_timer, 0);
+	timeout_set(&proc_waiting_timeout, pause_timer, NULL);
 	pool_init(&pagedep_pool, sizeof(struct pagedep), 0, 0, 0,
 	    "pagedeppl", &pool_allocator_nointr);
 	pool_init(&inodedep_pool, sizeof(struct inodedep), 0, 0, 0,
@@ -1959,7 +1959,7 @@ softdep_setup_freeblocks(struct inode *ip, off_t length)
 	 * been written to disk, so we can free any fragments without delay.
 	 */
 	merge_inode_lists(inodedep);
-	while ((adp = TAILQ_FIRST(&inodedep->id_inoupdt)) != 0)
+	while ((adp = TAILQ_FIRST(&inodedep->id_inoupdt)) != NULL)
 		free_allocdirect(&inodedep->id_inoupdt, adp, delay);
 	FREE_LOCK(&lk);
 	bdwrite(bp);
@@ -2050,7 +2050,7 @@ deallocate_dependencies(struct buf *bp, struct inodedep *inodedep)
 				panic("deallocate_dependencies: already gone");
 			}
 			indirdep->ir_state |= GOINGAWAY;
-			while ((aip = LIST_FIRST(&indirdep->ir_deplisthd)) != 0)
+			while ((aip = LIST_FIRST(&indirdep->ir_deplisthd)))
 				free_allocindir(aip, inodedep);
 			if (bp->b_lblkno >= 0 ||
 			    bp->b_blkno != indirdep->ir_savebp->b_lblkno) {
@@ -2073,7 +2073,7 @@ deallocate_dependencies(struct buf *bp, struct inodedep *inodedep)
 				while ((dap =
 				    LIST_FIRST(&pagedep->pd_diraddhd[i])))
 					free_diradd(dap);
-			while ((dap = LIST_FIRST(&pagedep->pd_pendinghd)) != 0)
+			while ((dap = LIST_FIRST(&pagedep->pd_pendinghd)))
 				free_diradd(dap);
 			/*
 			 * Copy any directory remove dependencies to the list
@@ -3831,10 +3831,10 @@ softdep_disk_write_complete(struct buf *bp)
 				panic("disk_write_complete: indirdep gone");
 			bcopy(indirdep->ir_saveddata, bp->b_data, bp->b_bcount);
 			free(indirdep->ir_saveddata, M_INDIRDEP);
-			indirdep->ir_saveddata = 0;
+			indirdep->ir_saveddata = NULL;
 			indirdep->ir_state &= ~UNDONE;
 			indirdep->ir_state |= ATTACHED;
-			while ((aip = LIST_FIRST(&indirdep->ir_donehd)) != 0) {
+			while ((aip = LIST_FIRST(&indirdep->ir_donehd))) {
 				handle_allocindir_partdone(aip);
 				if (aip == LIST_FIRST(&indirdep->ir_donehd))
 					panic("disk_write_complete: not gone");
@@ -4173,7 +4173,8 @@ handle_written_inodeblock(struct inodedep *inodedep, struct buf *bp)
 	/*
 	 * If no outstanding dependencies, free it.
 	 */
-	if (free_inodedep(inodedep) || TAILQ_FIRST(&inodedep->id_inoupdt) == 0)
+	if (free_inodedep(inodedep) ||
+	    TAILQ_FIRST(&inodedep->id_inoupdt) == NULL)
 		return (0);
 	return (hadchanges);
 }
@@ -4799,7 +4800,8 @@ loop:
 			 */
 			pagedep = WK_PAGEDEP(wk);
 			for (i = 0; i < DAHASHSZ; i++) {
-				if (LIST_FIRST(&pagedep->pd_diraddhd[i]) == 0)
+				if (LIST_FIRST(&pagedep->pd_diraddhd[i]) ==
+				    NULL)
 					continue;
 				if ((error =
 				    flush_pagedep_deps(vp, pagedep->pd_mnt,

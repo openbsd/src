@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_subr.c,v 1.24 2011/07/02 15:52:25 thib Exp $	*/
+/*	$OpenBSD: ext2fs_subr.c,v 1.25 2011/07/03 18:23:10 tedu Exp $	*/
 /*	$NetBSD: ext2fs_subr.c,v 1.1 1997/06/11 09:34:03 bouyer Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ ext2fs_checkoverlap(struct buf *bp, struct inode *ip)
 		if (ep == bp || (ep->b_flags & B_INVAL) ||
 			ep->b_vp == NULLVP)
 			continue;
-		if (VOP_BMAP(ep->b_vp, (daddr64_t)0, &vp, (daddr64_t)0, NULL))
+		if (VOP_BMAP(ep->b_vp, (daddr64_t)0, &vp, NULL, NULL))
 			continue;
 		if (vp != ip->i_devvp)
 			continue;

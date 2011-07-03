@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_tables.c,v 1.5 2003/08/26 16:10:57 mickey Exp $	*/
+/*	$OpenBSD: ffs_tables.c,v 1.6 2011/07/03 18:23:10 tedu Exp $	*/
 /*	$NetBSD: ffs_tables.c,v 1.2 1994/06/29 06:46:35 cgd Exp $	*/
 
 /*
@@ -132,5 +132,6 @@ const u_char fragtbl8[256] = {
  * The actual fragtbl array.
  */
 const u_char *fragtbl[MAXFRAG + 1] = {
-	0, fragtbl124, fragtbl124, 0, fragtbl124, 0, 0, 0, fragtbl8,
+	NULL, fragtbl124, fragtbl124, NULL, fragtbl124, NULL, NULL, NULL,
+	fragtbl8,
 };

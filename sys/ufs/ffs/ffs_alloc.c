@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.89 2010/07/13 18:52:25 otto Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.90 2011/07/03 18:23:10 tedu Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -583,7 +583,7 @@ ffs2_reallocblks(void *v)
 	struct inode *ip;
 	struct vnode *vp;
 	struct buf *sbp, *ebp;
-	daddr64_t *bap, *sbap, *ebap = 0;
+	daddr64_t *bap, *sbap, *ebap = NULL;
 	struct cluster_save *buflist;
 	daddr64_t start_lbn, end_lbn;
 	daddr64_t soff, newblk, blkno, pref;
