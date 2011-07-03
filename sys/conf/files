@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.515 2011/06/30 13:43:14 tedu Exp $
+#	$OpenBSD: files,v 1.516 2011/07/03 22:39:12 tedu Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -558,10 +558,8 @@ file altq/altq_subr.c			altq
 file altq/altq_red.c			altq
 file altq/altq_cbq.c			altq
 file altq/altq_rmclass.c		altq
-file altq/altq_cdnr.c			altq_cdnr
 file altq/altq_hfsc.c			altq
 file altq/altq_priq.c			altq
-file altq/altq_rio.c			altq_rio
 file ddb/db_access.c			ddb | kgdb
 file ddb/db_aout.c			ddb
 file ddb/db_break.c			ddb

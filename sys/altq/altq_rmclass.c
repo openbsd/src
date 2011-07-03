@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rmclass.c,v 1.15 2008/05/08 15:22:02 chl Exp $	*/
+/*	$OpenBSD: altq_rmclass.c,v 1.16 2011/07/03 22:39:12 tedu Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.10 2001/02/09 07:20:40 kjc Exp $	*/
 
 /*
@@ -51,7 +51,6 @@
 #include <altq/altq_rmclass.h>
 #include <altq/altq_rmclass_debug.h>
 #include <altq/altq_red.h>
-#include <altq/altq_rio.h>
 
 /*
  * Local Macros

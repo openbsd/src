@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_altq.h,v 1.12 2009/05/31 19:15:59 claudio Exp $	*/
+/*	$OpenBSD: if_altq.h,v 1.13 2011/07/03 22:39:12 tedu Exp $	*/
 /*	$KAME: if_altq.h,v 1.6 2001/01/29 19:59:09 itojun Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
 #ifndef _ALTQ_IF_ALTQ_H_
 #define	_ALTQ_IF_ALTQ_H_
 
-struct altq_pktattr; struct tb_regulator; struct top_cdnr;
+struct altq_pktattr; struct tb_regulator;
 
 /*
  * Structure defining a queue for a network interface.
@@ -60,9 +60,6 @@ struct	ifaltq {
 
 	/* token bucket regulator */
 	struct	tb_regulator *altq_tbr;
-
-	/* input traffic conditioner (doesn't belong to the output queue...) */
-	struct top_cdnr *altq_cdnr;
 };
 
 
