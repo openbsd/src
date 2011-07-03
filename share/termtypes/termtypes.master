@@ -1,6 +1,6 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.41 2010/10/18 18:50:49 nicm Exp $
+# $OpenBSD: termtypes.master,v 1.42 2011/07/03 17:47:43 nicm Exp $
 #
 # This version of terminfo.src is distributed with ncurses and is maintained
 # by Thomas E. Dickey (TD).
@@ -8,8 +8,8 @@
 # Report bugs and new terminal descriptions to
 #	bug-ncurses@gnu.org
 #
-#	$Revision: 1.41 $
-#	$Date: 2010/10/18 18:50:49 $
+#	$Revision: 1.42 $
+#	$Date: 2011/07/03 17:47:43 $
 #
 # The original header is preserved below for reference.  It is noted that there
 # is a "newer" version which differs in some cosmetic details (but actually
@@ -454,8 +454,9 @@ ecma+sgr|attribute capabilities for true ECMA-48 terminals,
 # For more detail on this rather pathetic standard, see the comments
 # near the end of this file.
 ibcs2|Intel Binary Compatibility Standard prescriptions,
-	cbt=\E[Z, clear=\Ec, cub=\E[%p1%dD, cud=\E[%p1%dB,
-	cuf=\E[%p1%dC, cup=\E[%i%p1%d;%p2%dH, cuu=\E[%p1%dA,
+	cbt=\E[Z, clear=\Ec, cub=\E[%p1%dD, cub1=\E[1D,
+	cud=\E[%p1%dB, cud1=\E[1B, cuf=\E[%p1%dC, cuf1=\E[1C,
+	cup=\E[%i%p1%d;%p2%dH, cuu=\E[%p1%dA, cuu1=\E[1A,
 	dch=\E[%p1%dP, dispc=\E=%p1%dg, ech=\E[%p1%dX,
 	hpa=\E[%i%p1%dG, hts=\EH, ich=\E[%p1%d@, il=\E[%p1%dL,
 	indn=\E[%p1%dS, rc=\E7, rin=\E[%p1%dT, rmam=\E[?7l, sc=\E7,
@@ -742,7 +743,7 @@ st52|st52-m|at|at-m|atari|atari-m|atari_st|atarist-m|Atari ST,
 tw100|toswin vt100 window mgr,
 	eo, mir, msgr, xon,
 	colors#8, cols#80, it#8, lines#24, pairs#64, vt#3,
-	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~..--++\,\,hhII00,
+	acsc=++\,\,--..00II``aaffgghhjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
 	bel=^G, blink=\E[5m, bold=\E[1m, civis=\Ef,
 	clear=\E[2J\E[H, cnorm=\Ee, cr=^M, csr=\E[%i%p1%d;%p2%dr,
 	cub=\E[%p1%dD, cub1=^H, cud=\E[%p1%dB, cud1=\EB,
@@ -785,7 +786,7 @@ stv52|MiNT virtual console,
 stv52pc|MiNT virtual console with PC charset,
 	am, msgr,
 	cols#80, it#8, lines#30,
-	acsc=`\177a\260f\370g\361j\331k\277l\332m\300n\305o\377p-q\304r-s_t+u+v+w+x\263y\363z\362{\343|\366}\234~\371.v-\^+\257\,\256h\261I\3740\333,
+	acsc=+\257\,\256-\^.v0\333I\374`\177a\260f\370g\361h\261j\331k\277l\332m\300n\305o\377p-q\304r-s_t+u+v+w+x\263y\363z\362{\343|\366}\234~\371,
 	bel=^G, blink=\Er, bold=\EyA, civis=\Ef, clear=\EE,
 	cnorm=\E. \Ee, cr=^M, cub1=^H, cud1=\EB, cuf1=\EC,
 	cup=\EY%p1%{32}%+%c%p2%{32}%+%c, cuu1=\EA, cvvis=\E.",
@@ -891,13 +892,14 @@ beterm|BeOS Terminal,
 #
 linux-basic|linux console,
 	am, bce, eo, mir, msgr, xenl, xon,
-	it#8, ncv#18,
+	it#8, ncv#18, U8#1,
 	acsc=+\020\,\021-\030.^Y0\333`\004a\261f\370g\361h\260i\316j\331k\277l\332m\300n\305o~p\304q\304r\304s_t\303u\264v\301w\302x\263y\363z\362{\343|\330}\234~\376,
 	bel=^G, clear=\E[H\E[J, cr=^M, csr=\E[%i%p1%d;%p2%dr,
-	cub1=^H, cud1=^J, cuf1=\E[C, cup=\E[%i%p1%d;%p2%dH,
-	cuu1=\E[A, dch=\E[%p1%dP, dch1=\E[P, dim=\E[2m,
-	dl=\E[%p1%dM, dl1=\E[M, ech=\E[%p1%dX, ed=\E[J, el=\E[K,
-	el1=\E[1K, flash=\E[?5h\E[?5l$<200/>, home=\E[H,
+	cub=\E[%p1%dD, cub1=^H, cud=\E[%p1%dB, cud1=^J,
+	cuf=\E[%p1%dC, cuf1=\E[C, cup=\E[%i%p1%d;%p2%dH,
+	cuu=\E[%p1%dA, cuu1=\E[A, dch=\E[%p1%dP, dch1=\E[P,
+	dim=\E[2m, dl=\E[%p1%dM, dl1=\E[M, ech=\E[%p1%dX, ed=\E[J,
+	el=\E[K, el1=\E[1K, flash=\E[?5h\E[?5l$<200/>, home=\E[H,
 	hpa=\E[%i%p1%dG, ht=^I, hts=\EH, ich=\E[%p1%d@, ich1=\E[@,
 	il=\E[%p1%dL, il1=\E[L, ind=^J, kb2=\E[G, kbs=\177,
 	kcbt=\E[Z, kcub1=\E[D, kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A,
@@ -999,8 +1001,8 @@ kon|kon2|jfbterm|Kanji ON Linux console,
 # foreground colors and blink for bright background colors.
 linux-16color|linux console with 16 colors,
 	colors#16, ncv#54, pairs#256,
-	setab=\E[4%p1%{7}%m%d%?%p1%{7}%>%t;5%e;25%;m,
-	setaf=\E[3%p1%{7}%m%d%?%p1%{7}%>%t;1%e;21%;m,
+	setab=\E[4%p1%{8}%m%d%?%p1%{8}%>%t;5%e%p1%{8}%=%t;2%e;25%;m,
+	setaf=\E[3%p1%{8}%m%d%?%p1%{8}%>%t;1%e%p1%{8}%=%t;2%e;21%;m,
 	use=linux,
 
 # bterm (bogl 0.1.18)
@@ -1083,7 +1085,7 @@ mach-color|Mach Console with ANSI color,
 hurd|The GNU Hurd console server,
 	am, bce, bw, eo, km, mir, msgr, xon,
 	colors#8, it#8, ncv#18, pairs#64,
-	acsc=++\,\,--..00ii``aaffgghhjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
+	acsc=++\,\,--..00``aaffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
 	bel=^G, blink=\E[5m, bold=\E[1m, cbt=\E[Z, civis=\E[?25l,
 	clear=\Ec, cnorm=\E[?25h, cr=^M, csr=\E[%i%p1%d;%p2%dr,
 	cub=\E[%p1%dD, cub1=^H, cud=\E[%p1%dB, cud1=\E[B,
@@ -1152,7 +1154,7 @@ pmcons|pmconsole|PMAX console,
 scoansi-old|SCO Extended ANSI standard crt (5.0.5),
 	OTbs, am, bce, eo, xon,
 	colors#8, cols#80, it#8, lines#25, pairs#64,
-	acsc=-\230.\231\,.+/0[5566778899\:\:;;<<==>>FFGGHHIIJJKKLLMMNNOOPPQQRRSSTTUUVVWWXX`\204a0fxgqh2jYk?lZm@nEqDtCu4vAwBx3yszr{c}\034~\207,
+	acsc=+/\,.-\230.\2310[5566778899\:\:;;<<==>>FFGGHHIIJJKKLLMMNNOOPPQQRRSSTTUUVVWWXX`\204a0fxgqh2jYk?lZm@nEqDtCu4vAwBx3yszr{c}\034~\207,
 	bel=^G, blink=\E[5m, bold=\E[1m, cbt=\E[Z,
 	civis=\E[=14;12C, clear=\E[H\E[2J, cnorm=\E[=10;12C,
 	cub=\E[%p1%dD, cub1=^H, cud=\E[%p1%dB, cud1=\E[B,
@@ -1587,7 +1589,7 @@ qnxt2|qnx 2.15 serial terminal,
 qansi-g|QNX ANSI,
 	am, eslok, hs, xon,
 	colors#8, cols#80, it#8, lines#25, ncv#19, pairs#64, wsl#80,
-	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~Oa,
+	acsc=Oa``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
 	bel=^G, blink=\E[5m, bold=\E[1m, cbt=\E[Z, civis=\E[?25l,
 	clear=\E[2J\E[H, cnorm=\E[?25h\E[?12l, cr=^M,
 	csr=\E[%i%p1%d;%p2%dr, cub=\E[%p1%dD, cub1=\E[D,
@@ -1919,6 +1921,8 @@ cons25w|ansiw|ansi80x25-raw|freebsd console (25-line raw mode),
 cons25|ansis|ansi80x25|freebsd console (25-line ansi mode),
 	acsc=-\030.^Y0\333`\004a\260f\370g\361h\261i\025j\331k\277l\332m\300n\305q\304t\303u\264v\301w\302x\263y\363z\362~\371,
 	use=cons25w,
+cons25-debian|freebsd console with debian backspace (25-line ansi mode),
+	kbs=\177, kdch1=\E[3~, use=cons25,
 cons25-m|ansis-mono|ansi80x25-mono|freebsd console (25-line mono ansi mode),
 	colors@, pairs@,
 	bold@, dim@, op@, rmul=\E[m, setab@, setaf@,
@@ -2063,7 +2067,7 @@ bsdos-ppc|PowerPC BSD/OS Console,
 vt52|dec vt52,
 	OTbs,
 	cols#80, it#8, lines#24,
-	acsc=ffgghhompoqqss.k, bel=^G, clear=\EH\EJ, cr=^M,
+	acsc=+h.k0affggolpnqprrss, bel=^G, clear=\EH\EJ, cr=^M,
 	cub1=\ED, cud1=\EB, cuf1=\EC,
 	cup=\EY%p1%{32}%+%c%p2%{32}%+%c, cuu1=\EA, ed=\EJ,
 	el=\EK, home=\EH, ht=^I, ind=^J, kbs=^H, kcub1=\ED, kcud1=\EB,
@@ -2269,7 +2273,7 @@ vt100|vt100-am|dec vt100 (w/advanced video),
 	lf2=pf2, lf3=pf3, lf4=pf4, mc0=\E[0i, mc4=\E[4i, mc5=\E[5i,
 	rc=\E8, rev=\E[7m$<2>, ri=\EM$<5>, rmacs=^O, rmam=\E[?7l,
 	rmkx=\E[?1l\E>, rmso=\E[m$<2>, rmul=\E[m$<2>,
-	rs2=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h^O, sc=\E7,
+	rs2=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h, sc=\E7,
 	sgr=\E[0%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;m%?%p9%t\016%e\017%;$<2>,
 	sgr0=\E[m\017$<2>, smacs=^N, smam=\E[?7h, smkx=\E[?1h\E=,
 	smso=\E[7m$<2>, smul=\E[4m$<2>, tbc=\E[3g,
@@ -2425,7 +2429,7 @@ vt220|vt200|dec vt220,
 	lf1=pf1, lf2=pf2, lf3=pf3, lf4=pf4, mc0=\E[i, mc4=\E[4i,
 	mc5=\E[5i, nel=\EE, rc=\E8, rev=\E[7m, ri=\EM,
 	rmacs=\E(B$<4>, rmam=\E[?7l, rmir=\E[4l, rmso=\E[27m,
-	rmul=\E[24m, rs1=\E[?3l\E(B$<4>, sc=\E7,
+	rmul=\E[24m, rs1=\E[?3l, sc=\E7,
 	sgr=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p4%t;5%;%?%p1%p3%|%t;7%;m%?%p9%t\E(0%e\E(B%;$<2>,
 	sgr0=\E[m\E(B, smacs=\E(0$<2>, smam=\E[?7h, smir=\E[4h,
 	smso=\E[7m, smul=\E[4m, tbc=\E[3g,
@@ -2497,9 +2501,9 @@ vt200-js|vt220-js|dec vt200 series with jump scroll,
 	am,
 	cols#80,
 	bel=^G, clear=\E[H\E[J, cr=^M, csr=\E[%i%p1%d;%p2%dr,
-	cub1=^H, cud1=^J, cup=\E[%i%p1%d;%p2%dH, cuu1=\E[A,
-	dch1=\E[P, dl1=\E[M, ed=\E[J, el=\E[K, home=\E[H, ht=^I,
-	il1=\E[L, ind=\ED,
+	cub1=^H, cud1=^J, cuf1=\E[C, cup=\E[%i%p1%d;%p2%dH,
+	cuu1=\E[A, dch1=\E[P, dl1=\E[M, ed=\E[J, el=\E[K, home=\E[H,
+	ht=^I, il1=\E[L, ind=\ED,
 	is2=\E[61"p\E[H\E[?3l\E[?4l\E[?1l\E[?5l\E[?6l\E[?7h\E[?8h\E[?25h\E>\E[m,
 	kbs=^H, kcub1=\EOD, kcud1=\EOB, kcuf1=\EOC, kcuu1=\EOA,
 	kf1=\EOP, kf2=\EOQ, kf3=\EOR, kf4=\EOS, nel=^M\ED, rc=\E8,
@@ -2885,8 +2889,8 @@ crt|crt-vt220|CRT 2.3 emulating VT220,
 # the default behavior -TD
 
 putty|PuTTY terminal emulator,
-	am, bce, bw, ccc, hs, mir, msgr, xenl, xon,
-	colors#8, it#8, ncv#22, pairs#64,
+	am, bce, bw, ccc, hs, mir, msgr, xenl, xon, XT,
+	colors#8, it#8, ncv#22, pairs#64, U8#1,
 	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
 	bel=^G, blink=\E[5m, bold=\E[1m, cbt=\E[Z, civis=\E[?25l,
 	clear=\E[H\E[J, cnorm=\E[?25h, cr=^M,
@@ -3078,11 +3082,15 @@ ms-vt100+|vt100+|windows XP vt100+ (sic),
 ms-vt-utf8|vt-utf8|UTF-8 flavor of vt100+,
 	use=ms-vt100+,
 
+# expect-5.44.1.15/example/tkterm
 # a minimal subset of a vt100 (compare with "news-unk).
+#
+# The missing "=" in smkx is not a typo (here), but an error in tkterm.
 tt|tkterm|Don Libes' tk text widget terminal emulator,
-	clear=\E[H\E[J, cr=^M, cuf1=\E[C, cup=\E[%p1%d;%p2%dH,
-	cuu1=\E[A, ind=^J, kf1=\EOP, kf2=\EOQ, kf3=\EOR, kf4=\EOS,
-	kf5=\EOT, kf6=\EOU, kf7=\EOV, kf8=\EOW, kf9=\EOX, rmso=\E[m,
+	clear=\E[H\E[J, cr=^M, cub1=^H, cud1=^J, cuf1=\E[C,
+	cup=\E[%p1%d;%p2%dH, cuu1=\E[A, ind=^J, kf1=\EOP, kf2=\EOQ,
+	kf3=\EOR, kf4=\EOS, kf5=\EOT, kf6=\EOU, kf7=\EOV, kf8=\EOW,
+	kf9=\EOX, rmkx=\E[?1l\E>, rmso=\E[m, smkx=\E[?1h\E,
 	smso=\E[7m,
 
 #### X terminal emulators
@@ -3629,6 +3637,11 @@ xterm-24|vs100|xterms|xterm terminal emulator (X Window System),
 xterm|xterm terminal emulator (X Window System),
 	use=xterm-new,
 
+# This entry assumes that xterm's handling of VT100 SI/SO is disabled by
+# setting the vt100Graphics resource to false.
+xterm-utf8|xterm with no VT100 line-drawing in UTF-8 mode,
+	U8#1, use=xterm,
+
 # These entries allow access to the X titlebar and icon name as a status line.
 # Note that twm (and possibly window managers descended from it such as tvtwm,
 # ctwm, and vtwm) track windows by icon-name; thus, you don't want to mess
@@ -3655,7 +3668,7 @@ xterm-bold|xterm terminal emulator (X11R6 Window System) standout w/bold,
 #  -- MATSUMOTO Shoji)
 # kterm implements acsc via built-in table of X Drawable's
 kterm|kterm kanji terminal emulator (X window system),
-	eslok, hs,
+	eslok, hs, XT,
 	ncv@,
 	acsc=``aajjkkllmmnnooppqqrrssttuuvvwwxx~~,
 	csr=\E[%i%p1%d;%p2%dr, dsl=\E[?H, enacs=, fsl=\E[?F,
@@ -3679,7 +3692,7 @@ xterm1|xterm terminal emulator ignoring the alternate screen buffer,
 # The README's with the distribution also say that it supports SGR 21, 24, 25
 # and 27, but they are not present in the terminfo or termcap.
 color_xterm|cx|cx100|color_xterm color terminal emulator for X,
-	OTbs, am, km, mir, msgr, xenl,
+	OTbs, am, km, mir, msgr, xenl, XT,
 	cols#80, it#8, lines#65, ncv@,
 	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
 	bel=^G, bold=\E[1m, clear=\E[H\E[2J, cr=^M,
@@ -3792,8 +3805,10 @@ gnome-fc5|GNOME Terminal,
 # of the keys (which more/less correspond to the termcap values), and will
 # interpret those according to the $TERM value, but others not in the
 # terminfo according to some constantly changing set of hacker guidelines -TD
-gnome-2007|GNOME Terminal snapshot 2.18.1,
+vte-2007|VTE in GNOME Terminal snapshot 2.18.1,
 	use=xterm+pcc2, use=gnome-fc5,
+gnome-2007|GNOME Terminal snapshot 2.18.1,
+	use=vte-2007,
 
 # GNOME Terminal 2.22.3 (2008 snapshot)
 #
@@ -3802,8 +3817,10 @@ gnome-2007|GNOME Terminal snapshot 2.18.1,
 # vt220's behavior, which will make it less usable on a VMS system (unclear
 # what the intent of the developer is, since the NRC feature exposed in vttest
 # by this change does not work).
+vte-2008|VTE in GNOME Terminal snapshot 2.22.3,
+	use=vte+pcfkeys, use=vte-2007,
 gnome-2008|GNOME Terminal snapshot 2.22.3,
-	use=gnome+pcfkeys, use=gnome-2007,
+	use=vte-2008,
 
 # GNOME terminal may automatically use the contents of the "xterm" terminfo to
 # supply key information which is not built into the program.  With 2.22.3,
@@ -3821,7 +3838,7 @@ gnome-2008|GNOME Terminal snapshot 2.22.3,
 #
 # The parameters with \EO (SS3) are technically an error, since SS3 should have
 # no parameters.  This appears to be rote copying based on xterm+pcc0.
-gnome+pcfkeys|gnome variation on xterm+pcfkeys,
+vte+pcfkeys|VTE's variation on xterm+pcfkeys,
 	kf1=\EOP, kf13=\EO1;2P, kf14=\EO1;2Q, kf15=\EO1;2R,
 	kf16=\EO1;2S, kf2=\EOQ, kf25=\EO1;5P, kf26=\EO1;5Q,
 	kf27=\EO1;5R, kf28=\EO1;5S, kf3=\EOR, kf37=\EO1;6P,
@@ -3829,13 +3846,19 @@ gnome+pcfkeys|gnome variation on xterm+pcfkeys,
 	kf49=\EO1;3P, kf50=\EO1;3Q, kf51=\EO1;3R, kf52=\EO1;3S,
 	kf61=\EO1;4P, kf62=\EO1;4Q, kf63=\EO1;4R,
 	use=xterm+pcfkeys,
+gnome+pcfkeys|VTE's variation on xterm+pcfkeys,
+	use=vte+pcfkeys,
 
+vte|VTE aka GNOME Terminal,
+	use=vte-2008,
 gnome|GNOME Terminal,
-	use=gnome-2008,
+	use=vte,
 
 # palette is hardcoded...
+vte-256color|VTE with xterm 256-colors,
+	initc@, use=xterm+256color, use=vte,
 gnome-256color|GNOME Terminal with xterm 256-colors,
-	initc@, use=xterm+256color, use=gnome,
+	use=vte-256color,
 
 # XFCE Terminal 0.2.5.4beta2
 #
@@ -3844,7 +3867,7 @@ gnome-256color|GNOME Terminal with xterm 256-colors,
 # Since most of the terminfo-related behavior is due to the VTE library,
 # the terminfo is the same as gnome-terminal.
 xfce|Xfce Terminal,
-	use=gnome,
+	use=vte,
 
 # Multi-Gnome-Terminal 1.6.2
 #
@@ -3897,7 +3920,8 @@ kvt|KDE terminal,
 # different from xterm (and vt100's).  They have the same behavior in this
 # detail, but it is unclear which copies the other.
 konsole-base|KDE console window,
-	bce, km@, npc,
+	bce, km@, npc, XT,
+	ncv@,
 	bel@, blink=\E[5m, civis=\E[?25l, cnorm=\E[?25h,
 	ech=\E[%p1%dX, flash=\E[?5h$<100/>\E[?5l,
 	hpa=\E[%i%p1%dG, indn=\E[%p1%dS, kbs=\177, kdch1@,
@@ -3970,7 +3994,7 @@ konsole-256color|KDE console window with xterm 256-colors,
 #	control/shift/alt	kf1 to kf12	\E[11;8~ to \E[24;8~
 #
 mlterm|multi lingual terminal emulator,
-	am, eslok, km, mc5i, mir, msgr, npc, xenl,
+	am, eslok, km, mc5i, mir, msgr, npc, xenl, XT,
 	colors#8, cols#80, it#8, lines#24, pairs#64,
 	acsc=00``aaffgghhjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
 	bel=^G, bold=\E[1m, cbt=\E[Z, civis=\E[?25l,
@@ -4037,7 +4061,7 @@ mlterm-256color|mlterm 3.0 with xterm 256-colors,
 # removed dch/dch1 because they are inconsistent with bce/ech -TD
 # remove km as per tack test -TD
 rxvt-basic|rxvt terminal base (X Window System),
-	OTbs, am, bce, eo, mir, msgr, xenl, xon,
+	OTbs, am, bce, eo, mir, msgr, xenl, xon, XT,
 	cols#80, it#8, lines#24,
 	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
 	bel=^G, blink=\E[5m, bold=\E[1m, civis=\E[?25l,
@@ -4175,10 +4199,10 @@ rxvt-88color|rxvt 2.7.9 with xterm 88-colors,
 rxvt-xpm|rxvt terminal emulator (X Window System),
 	use=rxvt,
 rxvt-cygwin|rxvt terminal emulator (X Window System) on cygwin,
-	acsc=0\333+\257\,\256-\^`\004a\261f\370g\361h\260j\331k\277l\332m\300n\305o~p\304q\304r\304s_t\303u\264v\301w\302x\263y\363z\362{\343|\330}\234~\376,
+	acsc=+\257\,\256-\^0\333`\004a\261f\370g\361h\260j\331k\277l\332m\300n\305o~p\304q\304r\304s_t\303u\264v\301w\302x\263y\363z\362{\343|\330}\234~\376,
 	use=rxvt,
 rxvt-cygwin-native|rxvt terminal emulator (native MS Window System port) on cygwin,
-	acsc=0\333+\257\,\256-\^`\004a\261f\370g\361h\260j\331k\277l\332m\300n\305o~p\304q\304r\304s_t\303u\264v\301w\302x\263y\363z\362{\343|\330~\376,
+	acsc=+\257\,\256-\^0\333`\004a\261f\370g\361h\260j\331k\277l\332m\300n\305o~p\304q\304r\304s_t\303u\264v\301w\302x\263y\363z\362{\343|\330~\376,
 	use=rxvt-cygwin,
 
 # This variant is supposed to work with rxvt 2.7.7 when compiled with
@@ -4191,6 +4215,7 @@ rxvt-16color|xterm with 16 colors like aixterm,
 # mrxvt is based on rxvt 2.7.11, but has by default XTERM_FKEYS defined, which
 # makes its function-keys different from other flavors of rxvt -TD
 mrxvt|multitabbed rxvt,
+	XT,
 	kEND=\E[8;2~, kHOM=\E[7;2~, kcub1=\E[D, kcud1=\E[B,
 	kcuf1=\E[C, kcuu1=\E[A, kend=\E[8~, khome=\E[7~,
 	kEND3=\E[8;3~, kEND4=\E[8;4~, kEND5=\E[8;5~,
@@ -4213,7 +4238,7 @@ mrxvt-256color|multitabbed rxvt with 256 colors,
 # remove nonworking flash -TD
 # remove km as per tack test -TD
 Eterm|Eterm-color|Eterm with xterm-style color support (X Window System),
-	am, bce, bw, eo, mc5i, mir, msgr, xenl, xon,
+	am, bce, bw, eo, mc5i, mir, msgr, xenl, xon, XT,
 	btns#5, cols#80, it#8, lines#24, lm#0, ncv@,
 	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
 	bel=^G, blink=\E[5m, bold=\E[1m, civis=\E[?25l,
@@ -4249,6 +4274,7 @@ Eterm-88color|Eterm with 88 colors,
 
 # Based on rxvt 2.4.8, it has a few differences in key bindings
 aterm|AfterStep terminal,
+	XT,
 	kbs=\177, kf1=\EOP, kf2=\EOQ, kf3=\EOR, kf4=\EOS, use=rxvt,
 
 # xiterm  0.5-5.2
@@ -4267,7 +4293,7 @@ xtermm|xterm terminal emulator (monocrome),
 	btns#3, cols#80, it#8, lines#24,
 	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
 	bel=^G, blink@, bold=\E[1m, clear=\E[H\E[2J, cr=^M,
-	csr=\E[%i%p1%d;%p2%dr, cub=\E[%p1%dD, cub1=\E[1D,
+	csr=\E[%i%p1%d;%p2%dr, cub=\E[%p1%dD, cub1=\E[D,
 	cud=\E[%p1%dB, cud1=^J, cuf=\E[%p1%dC, cuf1=\E[C,
 	cup=\E[%i%p1%d;%p2%dH, cuu=\E[%p1%dA, cuu1=\E[A,
 	dch=\E[%p1%dP, dch1=\E[P, dl=\E[%p1%dM, dl1=\E[M, ed=\E[J,
@@ -4370,7 +4396,7 @@ emu|emu native mode,
 	acsc=61a\202f\260g2j\213k\214l\215m\216n\217o\220q\222s\224t\225u\226v\227w\230x\231~\244,
 	bel=^G, blink=\EW, bold=\EU, civis=\EZ, clear=\EP\EE0;0;,
 	cnorm=\Ea, cr=^M, csr=\Ek%p1%d;%p2%d;, cub=\Eq-%p1%d;,
-	cub1=^H, cud=\Ep%p1%d;, cud1=\EB, cuf=\Eq%p1%d;, cuf1=\ED,
+	cub1=^H, cud=\Ep%p1%d;, cud1=\EB, cuf=\Eq%p1%d;, cuf1=\EC,
 	cup=\EE%p1%d;%p2%d;, cuu=\Ep-%p1%d;, cuu1=\EA,
 	dch=\EI%p1%d;, dch1=\EI1;, dl=\ER%p1%d;, dl1=\ER1;,
 	ech=\Ej%p1%d;, ed=\EN, el=\EK, el1=\EL, home=\EE0;0;, ht=^I,
@@ -4524,17 +4550,18 @@ vwmterm|(vwm term),
 	colors#8, pairs#64,
 	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
 	bel=^G, blink=\E[5m, bold=\E[1m, civis=\E[?25l,
-	clear=\E[H\E[J, cnorm=\E[?25h, cr=^M, cub1=^H,
-	cuf=\E[%p1%dC, cuf1=\E[C, cup=\E[%i%p1%d;%p2%dH,
-	cvvis=\E[?25h, dim=\E[2m, ed=\E[J, el=\E[K, home=\E[H,
-	il1=\E[L, ind=^J, invis=\E[8m, kcub1=\E[D, kcud1=\E[B,
-	kcuf1=\E[C, kcuu1=\E[A, kdch1=\E[3~, kend=\E[4~, kf1=\E[[A,
-	kf10=\E[21~, kf11=\E[22~, kf12=\E[23~, kf2=\E[[B,
-	kf3=\E[[C, kf4=\E[[D, kf5=\E[[E, kf6=\E[17~, kf7=\E[18~,
-	kf8=\E[19~, kf9=\E[20~, khome=\E[1~, knp=\E[6~, kpp=\E[5~,
-	rev=\E[7m, rmacs=\E[10m, rmam=\E[?7l, rmcup=\E[?1049l,
-	rs1=\E[H\E[J\E[m\Ec, setab=\E[4%p1%dm,
-	setaf=\E[3%p1%dm,
+	clear=\E[H\E[J, cnorm=\E[?25h, cr=^M, cub=\E[%p1%dD,
+	cub1=^H, cud=\E[%p1%dB, cud1=\E[B, cuf=\E[%p1%dC,
+	cuf1=\E[C, cup=\E[%i%p1%d;%p2%dH, cuu=\E[%p1%dA,
+	cuu1=\E[A, cvvis=\E[?25h, dim=\E[2m, ed=\E[J, el=\E[K,
+	home=\E[H, il1=\E[L, ind=^J, invis=\E[8m, kcub1=\E[D,
+	kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A, kdch1=\E[3~,
+	kend=\E[4~, kf1=\E[[A, kf10=\E[21~, kf11=\E[22~,
+	kf12=\E[23~, kf2=\E[[B, kf3=\E[[C, kf4=\E[[D, kf5=\E[[E,
+	kf6=\E[17~, kf7=\E[18~, kf8=\E[19~, kf9=\E[20~,
+	khome=\E[1~, knp=\E[6~, kpp=\E[5~, rev=\E[7m, rmacs=\E[10m,
+	rmam=\E[?7l, rmcup=\E[?1049l, rs1=\E[H\E[J\E[m\Ec,
+	setab=\E[4%p1%dm, setaf=\E[3%p1%dm,
 	sgr=\E[0;10%?%p1%t;7%;%?%p2%t;4%;%?%p3%t;7%;%?%p4%t;5%;%?%p6%t;1%;%?%p7%t;8%;%?%p9%t;11%;m,
 	sgr0=\E[0;10m, smacs=\E[11m, smam=\E[?7h,
 	smcup=\E[?1049h, smso=\E[3m, smul=\E[4m,
@@ -4648,7 +4675,7 @@ eterm-color|Emacs term.el terminal emulator term-protocol-version 0.96,
 # tested with screen 3.09.08
 screen|VT 100/ANSI X3.64 virtual terminal,
 	OTbs, OTpt, am, km, mir, msgr, xenl, G0,
-	colors#8, cols#80, it#8, lines#24, pairs#64,
+	colors#8, cols#80, it#8, lines#24, ncv@, pairs#64, U8#1,
 	acsc=++\,\,--..00``aaffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
 	bel=^G, blink=\E[5m, bold=\E[1m, cbt=\E[Z, civis=\E[?25l,
 	clear=\E[H\E[J, cnorm=\E[34h\E[?25h, cr=^M,
@@ -4768,7 +4795,7 @@ screen.teraterm|disable ncv in teraterm,
 	use=screen+fkeys, use=screen,
 # Other terminals
 screen.rxvt|screen in rxvt,
-	bw,
+	bw, XT,
 	cvvis@, flash@, kcub1=\EOD, kcud1=\EOB, kcuf1=\EOC,
 	kcuu1=\EOA, use=screen+fkeys, use=vt100+enq,
 	use=rxvt+pcfkeys, use=vt220+keypad, use=screen,
@@ -4776,6 +4803,8 @@ screen.Eterm|screen in Eterm,
 	use=screen+fkeys, use=Eterm,
 screen.mrxvt|screen in mrxvt,
 	use=screen+fkeys, use=mrxvt,
+screen.vte|screen in any VTE-based terminal,
+	use=screen+fkeys, use=vte,
 screen.gnome|screen in GNOME Terminal,
 	use=screen+fkeys, use=gnome,
 screen.konsole|screen in KDE console window,
@@ -5316,7 +5345,7 @@ news29|news28-a|sony vt100 emulator 29 lines,
 nwp511|nwp-511|nwp-511 vt100,
 	OTbs, OTpt, am, xenl,
 	cols#80, lines#24,
-	clear=\E[;H\E[2J$<20/>, cuf1=\E[C,
+	clear=\E[;H\E[2J$<20/>, cub1=\E[D, cud1=\E[B, cuf1=\E[C,
 	cup=\E[%i%p1%d;%p2%dH, cuu1=\E[A$<2/>, dl1=\E[M,
 	ed=\E[J$<30/>, el=\E[K$<3/>,
 	flash=\E[?5h\0\0\0\0\0\0\0\0\0\0\0\0\0\E[?5l,
@@ -5817,7 +5846,7 @@ pcmw|PC running Microsoft Works,
 interix|opennt|opennt-25|ntconsole|ntconsole-25|OpenNT-term compatible with color,
 	am, bw, msgr,
 	colors#8, cols#80, lines#25, ncv#3, pairs#64,
-	acsc=`\004a\261f\370g\361h\260j\331k\277l\332m\300n\305o~q\304r\362s_t\303u\264v\301w\302x\263y\371z\372{\373|\374}\375~\376.\031-\030\,\021+^P0\333p\304r\304y\363z\362{\343|\330}\234,
+	acsc=+\020\,\021-\030.^Y0\333`\004a\261f\370g\361h\260j\331k\277l\332m\300n\305o~p\304q\304r\304s_t\303u\264v\301w\302x\263y\363z\362{\343|\330}\234~\376,
 	bel=^G, bold=\E[1m, cbt=\E[Z, clear=\E[2J, cub=\E[%p1%dD,
 	cub1=\E[D, cud=\E[%p1%dB, cud1=^J, cuf=\E[%p1%dC,
 	cuf1=\E[C, cup=\E[%i%p1%d;%p2%dH, cuu=\E[%p1%dA,
@@ -6515,10 +6544,10 @@ hp9837|hp98720|hp98721|HP 9000/300 workstations,
 hp9845|HP 9845,
 	OTbs, am, da, db, eo, mir, xhp,
 	cols#80, lines#21,
-	OTbc=\ED, clear=\EH\EJ, cuf1=\EC, cup=\E&a%p2%2dc%p1%2dY,
-	cuu1=\EA, dch1=\EP, dl1=\EM, ed=\EJ, el=\EK,
-	if=/usr/share/tabset/std, il1=\EL, rmir=\ER, rmso=\E&d@,
-	smir=\EQ, smso=\E&dB,
+	OTbc=\ED, clear=\EH\EJ, cub1=\ED, cud1=\EB, cuf1=\EC,
+	cup=\E&a%p2%2dc%p1%2dY, cuu1=\EA, dch1=\EP, dl1=\EM,
+	ed=\EJ, el=\EK, if=/usr/share/tabset/std, il1=\EL,
+	rmir=\ER, rmso=\E&d@, smir=\EQ, smso=\E&dB,
 # From: Charles A. Finnell of MITRE <finnell@mitre.org>, developed 07SEP90
 # (hp98550: replaced /usr/share/tabset/9837 with std because <it#8>,<hts=\E1>;
 # added empty <acsc> to avoid warnings re <smacs>/<rmacs> --esr)
@@ -8559,7 +8588,7 @@ wy100|wyse 100,
 wy120|wyse120|wy150|wyse150|Wyse 120/150,
 	am, bw, hs, km, mc5i, mir, msgr, xon,
 	cols#80, it#8, lh#1, lines#24, lw#8, nlab#8, pb#9601, wsl#45,
-	acsc=+/\,.0[iha2fxgqh1jYk?lZm@nEqDtCu4vAwBx3yszr{c~~,
+	acsc=+/\,.0[a2fxgqh1ihjYk?lZm@nEqDtCu4vAwBx3yszr{c~~,
 	bel=^G, blink=\EG2, cbt=\EI, civis=\E`0, clear=\E+$<50>,
 	cnorm=\E`1, cr=^M, cub1=^H, cud1=^J, cuf1=^L,
 	cup=\E=%p1%{32}%+%c%p2%{32}%+%c, cuu1=^K, dch1=\EW$<7>,
@@ -8638,7 +8667,7 @@ wy120-w-vb|wy120-wvb|wyse120-wvb|wy150-w-vb|wyse150-w-vb|Wyse 120/150 132-column
 wy60|wyse60|Wyse 60,
 	am, bw, hs, km, mc5i, mir, msgr,
 	cols#80, lh#1, lines#24, lw#8, nlab#8, wsl#45,
-	acsc=+/\,.0[iha2fxgqh1jYk?lZm@nEqDtCu4vAwBx3yszr{c~~,
+	acsc=+/\,.0[a2fxgqh1ihjYk?lZm@nEqDtCu4vAwBx3yszr{c~~,
 	bel=^G, blink=\EG2, cbt=\EI, civis=\E`0, clear=\E+$<100>,
 	cnorm=\E`1, cr=^M, cub1=^H, cud1=^J, cuf1=^L,
 	cup=\E=%p1%{32}%+%c%p2%{32}%+%c, cuu1=^K,
@@ -8807,7 +8836,7 @@ wy99a-ansi|Wyse WY-99GT in ansi mode (US PC keyboard),
 wy99f|wy99fgt|wy-99fgt|Wyse WY-99GT (int'l PC keyboard),
 	am, bw, hs, km, mc5i, mir, msgr, xon,
 	cols#80, it#8, lines#25, wsl#46,
-	acsc='x+y.wi~_vj(k'l&m%n)o9q*s8t-u.v\,w+x=, bel=^G,
+	acsc='x+y.w_vi~j(k'l&m%n)o9q*s8t-u.v\,w+x=, bel=^G,
 	blink=\EG2, cbt=\EI, civis=\E`0, clear=\E'\E(\032,
 	cnorm=\E`4\E`1, cr=^M, cub1=^H, cud1=\Ej, cuf1=^L,
 	cup=\E=%p1%{32}%+%c%p2%{32}%+%c, cuu1=^K,
@@ -8859,7 +8888,7 @@ wy99fa|wy99fgta|wy-99fgta|Wyse WY-99GT (US PC keyboard),
 wy160|wyse160|Wyse 160,
 	am, bw, hs, km, mc5i, mir, msgr,
 	cols#80, lh#1, lines#24, lw#8, nlab#8, wsl#38,
-	acsc=+/\,.0[iha2fxgqh1jYk?lZm@nEqDtCu4vAwBx3yszr{c~~,
+	acsc=+/\,.0[a2fxgqh1ihjYk?lZm@nEqDtCu4vAwBx3yszr{c~~,
 	bel=^G, blink=\EG2, cbt=\EI, civis=\E`0, clear=\E+$<30>,
 	cnorm=\E`1, cr=^M, cub1=^H, cud1=^J, cuf1=^L,
 	cup=\E=%p1%{32}%+%c%p2%{32}%+%c, cuu1=^K, dch1=\EW$<5>,
@@ -9167,7 +9196,7 @@ wy185-wvb|wyse185-wvb|wyse 185+flash+132 cols,
 wy325|wyse325|Wyse epc,
 	am, bw, hs, mc5i, mir,
 	cols#80, lh#1, lines#24, lw#8, nlab#8, pb#9601, wsl#45,
-	acsc=+/\,.0[iha2fxgqh1jYk?lZm@nEqDtCu4vAwBx3yszr{c~~,
+	acsc=+/\,.0[a2fxgqh1ihjYk?lZm@nEqDtCu4vAwBx3yszr{c~~,
 	bel=^G, blink=\EG2, cbt=\EI, civis=\E`0, clear=\E+$<50>,
 	cnorm=\E`1, cr=^M, cub1=^H, cud1=^J, cuf1=^L,
 	cup=\E=%p1%{32}%+%c%p2%{32}%+%c, cuu1=^K, dch1=\EW$<7>,
@@ -9614,7 +9643,7 @@ wy100q|Wyse 100 for Quotron,
 kermit|standard kermit,
 	OTbs,
 	cols#80, lines#24,
-	clear=\EE, cub1=^H, cuf1=\EC,
+	clear=\EE, cub1=^H, cud1=\EB, cuf1=\EC,
 	cup=\EY%p1%{32}%+%c%p2%{32}%+%c, cuu1=\EA, ed=\EJ,
 	el=\EK, home=\EH, is2=K0 Standard Kermit  9-25-84\n,
 	kcub1=^H, kcud1=^J, kcuf1=^L, kcuu1=^K, khome=^^,
@@ -10099,14 +10128,14 @@ att5420_2|AT&T 5420 model 2 80 cols,
 	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
 	blink=\E[5m, cbt=\E[1Z, clear=\EH\EJ, cnorm=\E[11;0j,
 	cr=\EG, csr=\E[%i%p1%d;%p2%dr, cub=\E[%p1%dD, cub1=^H,
-	cud1=\E[1B, cuf=\E[%p1%dC, cuf1=\E[1C,
-	cup=\E[%i%p1%d;%p2%dH, cuu=\E[%p1%dA, cvvis=\E[11;1j,
-	dch=\E[%p1%dP, dch1=\E[P, dim=\E[2m, dl=\E[%p1%dM,
-	dl1=\E[M, ech=\E[%p1%ds\E[%p1%dD, ed=\E[0J, el=\E[0K,
-	el1=\E[1K, flash=\E[?5h$<200>\E[?5l, fsl=\E8, home=\E[H,
-	hpa=\E[%p1%{1}%+%dG, ht=^I, hts=\EH, ich=\E[%p1%d@,
-	ich1=\E[@, il=\E[%p1%dL, il1=\E[L, ind=^J, indn=\E[%p1%dE,
-	invis=\E[8m,
+	cud=\E[%p1%dB, cud1=\E[1B, cuf=\E[%p1%dC, cuf1=\E[1C,
+	cup=\E[%i%p1%d;%p2%dH, cuu=\E[%p1%dA, cuu1=\E[1A,
+	cvvis=\E[11;1j, dch=\E[%p1%dP, dch1=\E[P, dim=\E[2m,
+	dl=\E[%p1%dM, dl1=\E[M, ech=\E[%p1%ds\E[%p1%dD, ed=\E[0J,
+	el=\E[0K, el1=\E[1K, flash=\E[?5h$<200>\E[?5l, fsl=\E8,
+	home=\E[H, hpa=\E[%p1%{1}%+%dG, ht=^I, hts=\EH,
+	ich=\E[%p1%d@, ich1=\E[@, il=\E[%p1%dL, il1=\E[L, ind=^J,
+	indn=\E[%p1%dE, invis=\E[8m,
 	is1=\E[0;23r\Ex\Ey\E[2;0j\E[3;3j\E[4;0j\E[5;0j\E[6;0j\E[7;0j\E[8;0j\E[9;1j\E[10;0j\E[15;0j\E[16;1j\E[19;0j\E[20;1j\E[29;0j\E[1;24r,
 	kbeg=\Et, kbs=^H, kcbt=\E[Z, kclr=\E[2J, kcub1=\E[D,
 	kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A, kdch1=\E[P, kdl1=\E[M,
@@ -10279,7 +10308,7 @@ att4426|tty4426|teletype 4426S,
 	bel=^G, bold=\E[5m, clear=\E[H\E[2J\E[1U\E[H\E[2J\E[1V,
 	cr=^M, cub=\E[%p1%dD, cub1=\E[D, cud=\E[%p1%dB, cud1=\E[B,
 	cuf=\E[%p1%dC, cuf1=\E[C, cup=\E[%i%p1%d;%p2%dH,
-	cuu=\E[%p1%dA, cuu1=\EA, dch=\E[%p1%dP, dch1=\EP,
+	cuu=\E[%p1%dA, cuu1=\E[A, dch=\E[%p1%dP, dch1=\EP,
 	dl=\E[%p1%dM, dl1=\E[M, ed=\E[J, el=\E[0K, home=\E[H,
 	hpa=\E[%p1%dG, ht=^I, hts=\E1, ich=\E[%p1%d@, ich1=\E\^,
 	il=\E[%p1%dL, il1=\EL, ind=^J, indn=\E[%p1%dS,
@@ -10307,7 +10336,7 @@ att510a|bct510a|AT&T 510A Personal Terminal,
 	acsc=+g\,h-f.e`bhrisjjkkllmmnnqqttuuvvwwxx{{||}}~~,
 	bel=^G, blink=\E[5m, bold=\E[2;7m, cbt=\E[Z,
 	civis=\E[11;0|, clear=\E[H\E[J, cnorm=\E[11;3|, cr=^M,
-	cub=\E[%p1%dD, cub1=^H, cud=\E[%p1%dB, cud1=\E[1B,
+	cub=\E[%p1%dD, cub1=^H, cud=\E[%p1%dB, cud1=\E[B,
 	cuf=\E[%p1%dC, cuf1=\E[C, cup=\E[%i%p1%d;%p2%dH,
 	cuu=\E[%p1%dA, cuu1=\E[A, cvvis=\E[11;2|, dch=\E[%p1%dP,
 	dch1=\E[P, dim=\E[2m, dl=\E[%p1%dM, dl1=\E[M, ed=\E[0J,
@@ -10340,7 +10369,7 @@ att510d|bct510d|AT&T 510D Personal Terminal,
 	acsc=+g\,h-f.e`bhrisjjkkllmmnnqqttuuvvwwxx{{||}}~~,
 	bel=^G, blink=\E[5m, bold=\E[2;7m, cbt=\E[Z,
 	clear=\E[H\E[J, cnorm=\E[11;3|, cr=^M, cub=\E[%p1%dD,
-	cub1=^H, cud=\E[%p1%dB, cud1=\E[1B, cuf=\E[%p1%dC,
+	cub1=^H, cud=\E[%p1%dB, cud1=\E[B, cuf=\E[%p1%dC,
 	cuf1=\E[C, cup=\E[%i%p1%d;%p2%dH, cuu=\E[%p1%dA,
 	cuu1=\E[A, cvvis=\E[11;2|, dch=\E[%p1%dP, dch1=\E[P,
 	dim=\E[2m, dl=\E[%p1%dM, dl1=\E[M, ed=\E[0J, el=\E[0K,
@@ -11737,7 +11766,7 @@ adds980|a980|adds consul 980,
 cit80|cit-80|citoh 80,
 	OTbs, am,
 	cols#80, lines#24,
-	clear=\E[H\EJ, cr=^M, cub1=^H, cuf1=\E[C,
+	clear=\E[H\EJ, cr=^M, cub1=^H, cud1=\E[B, cuf1=\E[C,
 	cup=\E[%i%p1%2d;%p2%2dH, cuu1=\E[A, ed=\EJ, el=\EK, ff=^L,
 	ind=^J, is2=\E>, kcub1=\EOD, kcud1=\EOB, kcuf1=\EOC,
 	kcuu1=\EOA, rmkx=\E[?1l\E>, smkx=\E[?1h\E=,
@@ -11746,9 +11775,9 @@ cit80|cit-80|citoh 80,
 cit101|citc|C.itoh fast vt100,
 	OTbs, am, xenl,
 	cols#80, lines#24,
-	bel=^G, clear=\E[H\E[2J, cnorm=\E[V\E8, cub1=^H, cuf1=\E[C,
-	cup=\E[%i%p1%d;%p2%dH, cuu1=\E[A, cvvis=\E7\E[U,
-	dch1=\E[P, dl1=\E[M, ed=\E[J, el=\E[K,
+	bel=^G, clear=\E[H\E[2J, cnorm=\E[V\E8, cub1=^H, cud1=\E[B,
+	cuf1=\E[C, cup=\E[%i%p1%d;%p2%dH, cuu1=\E[A,
+	cvvis=\E7\E[U, dch1=\E[P, dl1=\E[M, ed=\E[J, el=\E[K,
 	flash=\E[?5h$<200/>\E[?5l, ich1=\E[@, il1=\E[L,
 	is2=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[3g\E[>5g,
 	kcub1=\EOD, kcud1=\EOB, kcuf1=\EOC, kcuu1=\EOA,
@@ -11766,9 +11795,9 @@ cit101e|C. Itoh CIT-101e,
 	OTbs, OTpt, am, mir, msgr,
 	cols#80, it#8, lines#24,
 	acsc=, clear=\E[H\E[J, cnorm=, csr=\E[%i%p1%2d;%p2%2dr,
-	cud1=\E[B, cuf1=\E[C, cup=\E[%i%p1%2d;%p2%2dH, cuu1=\E[A,
-	cvvis=\E[?1l\E[?4l\E[?7h, dch1=\E[P, dl1=\E[M, ed=\E[J,
-	el=\E[K, if=/usr/share/tabset/vt100, il1=\E[L,
+	cub1=\E[D, cud1=\E[B, cuf1=\E[C, cup=\E[%i%p1%2d;%p2%2dH,
+	cuu1=\E[A, cvvis=\E[?1l\E[?4l\E[?7h, dch1=\E[P, dl1=\E[M,
+	ed=\E[J, el=\E[K, if=/usr/share/tabset/vt100, il1=\E[L,
 	kcub1=\E[D, kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A, kf0=\EOT,
 	kf1=\EOP, kf2=\EOQ, kf3=\EOR, kf4=\EOS, kf5=\EOm, kf6=\EOl,
 	kf7=\EOM, kf8=\EOn, rc=\E8, ri=\EM, rmacs=^O, rmir=\E[4l,
@@ -12709,11 +12738,11 @@ dg200|data general dasher 200,
 dg210|dg-ansi|Data General 210/211,
 	am,
 	cols#80, lines#24,
-	OTnl=\E[B, clear=\E[2J, cud1=\E[B, cup=\E[%i%p1%d;%p2%dH,
-	cuu1=\E[A, ed=\E[J, el=\E[K, home=\E[H, kcub1=\E[D,
-	kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A, khome=\E[H,
-	nel=\r\E[H\E[A\n, rmso=\E[0;m, rmul=\E[0;m, smso=\E[7;m,
-	smul=\E[4;m,
+	OTnl=\E[B, clear=\E[2J, cub1=\E[D, cud1=\E[B, cuf1=\E[C,
+	cup=\E[%i%p1%d;%p2%dH, cuu1=\E[A, ed=\E[J, el=\E[K,
+	home=\E[H, kcub1=\E[D, kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A,
+	khome=\E[H, nel=\r\E[H\E[A\n, rmso=\E[0;m, rmul=\E[0;m,
+	smso=\E[7;m, smul=\E[4;m,
 # From: Peter N. Wan <ihnp4!gatech!gacsr!wan>
 # courtesy of Carlos Rucalde of Vantage Software, Inc.
 # (dg211: this had <cup=\020%r%.%>., which was an ancient termcap hangover.
@@ -13585,7 +13614,7 @@ f200vi-w|Liberty Freedom 200 - 132 cols for vi,
 go140|graphon go-140,
 	OTbs,
 	cols#80, it#8, lines#24,
-	clear=\E[H\E[2J$<10/>, cub1=^H, cuf1=\E[C,
+	clear=\E[H\E[2J$<10/>, cub1=^H, cud1=\E[B, cuf1=\E[C,
 	cup=\E[%i%p1%2d;%p2%2dH, cuu1=\E[A, dch1=\E[P, dl1=\E[M,
 	ed=\E[J$<10/>, el=\E[K, ht=^I,
 	if=/usr/share/tabset/vt100, il1=\E[L,
@@ -14581,9 +14610,9 @@ intext|Interactive Systems Corporation modified owl 1200,
 intext2|intextii|INTERACTIVE modified owl 1251,
 	am, bw, ul,
 	cols#80, lines#24, xmc#0,
-	bel=^G, cbt=\E[Z, clear=\E[H\E[2J, cr=^M, cud1=\E[B,
-	cuf1=\E[C, cup=\E[%i%p1%d;%p2%dH, cuu1=\E[A, dch1=\E[P,
-	dl1=\E[M, ed=\E[J, el=\E[K,
+	bel=^G, cbt=\E[Z, clear=\E[H\E[2J, cr=^M, cub1=\E[D,
+	cud1=\E[B, cuf1=\E[C, cup=\E[%i%p1%d;%p2%dH, cuu1=\E[A,
+	dch1=\E[P, dl1=\E[M, ed=\E[J, el=\E[K,
 	flash=\E[;;;;;;;;;2;;u$<200/>\E[;;;;;;;;;1;;u,
 	hpa=\E[%p1%{1}%+%dG, ht=^I, ich1=\E[@, il1=\E[L, ind=\E[S,
 	kbs=^H, kcub1=\ED\r, kcud1=\EB\r, kcuf1=\EC\r, kcuu1=\EA\r,
@@ -15765,7 +15794,7 @@ ncr7901|ncr 7901 model,
 ndr9500|nd9500|Newbury Data 9500,
 	am, bw, hs, mc5i, mir, msgr, ul, xon,
 	cols#80, lines#24, wsl#79,
-	acsc=qKnImAjDwNuLtMvOlBkCxJ, bel=^G, cbt=\EI, civis=\E.0,
+	acsc=jDkClBmAnIqKtMuLvOwNxJ, bel=^G, cbt=\EI, civis=\E.0,
 	clear=\E;, cnorm=\E.1, cr=^M, cub1=^H, cud1=^V, cuf1=^L,
 	cup=\E=%p1%{32}%+%c%p2%{32}%+%c, cuu1=^K, dch1=\EW,
 	dim=\E), dl1=\ER, dsl=\Eh, ed=\EY, el=\ET,
@@ -15885,8 +15914,8 @@ uts30|sperry uts30 with cp/m@1R1,
 	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
 	bel=^G, blink=\E[5m, bold=\E[1m, civis=\ER, clear=^L,
 	cnorm=\ES, cr=^M, csr=\EU%p1%{32}%+%c%p2%{32}%+%c,
-	cub=\E[%p1%dD, cub1=^H, cud=\E[%p1%dB, cud1=\EB,
-	cuf=\E[%p1%dC, cuf1=\EC, cup=\E[%i%p1%d;%p2%dH,
+	cub=\E[%p1%dD, cub1=^H, cud=\E[%p1%dB, cud1=\E[B,
+	cuf=\E[%p1%dC, cuf1=\E[C, cup=\E[%i%p1%d;%p2%dH,
 	cuu=\E[%p1%dA, cuu1=\E[A, dch=\E[%p1%dP, dch1=\EM,
 	dl=\E[%p1%dM, dl1=\EL, ed=\E[J, el=\E[K, fsl=^M, home=\E[H,
 	ht=^I, ich=\E[%p1%d@, ich1=\EO, il=\E[%p1%dL, il1=\EN,
@@ -15961,8 +15990,8 @@ dt110|Tandy DT-110 emulating ansi,
 	cols#80, lines#24,
 	acsc=jjkkllmmnnqqttuuvvwwxx, bel=^G, civis=\E[?25l,
 	clear=\E[H\E[2J, cnorm=\E[?25h, cr=^M,
-	csr=\E[%i%p1%d;%p2%dr, cub1=^H, cud1=\E[0B, cuf1=\E[C,
-	cup=\010\E[%i%p1%d;%p2%dH, cuu1=\E[0A, dch1=\E[0P,
+	csr=\E[%i%p1%d;%p2%dr, cub1=^H, cud1=\E[B, cuf1=\E[C,
+	cup=\010\E[%i%p1%d;%p2%dH, cuu1=\E[A, dch1=\E[0P,
 	dl1=\E[0M, ed=\E[0J, el=\E[0K, enacs=\E(B\E)0, home=\E[H,
 	ht=^I, ich1=\E[0@, il1=\E[0L, ind=^J, is2=\E[?3l\E)0\E(B,
 	kcub1=\E[D, kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A, kend=\E[K,
@@ -16113,7 +16142,7 @@ tek4105|tektronix 4105,
 	OTbs, am, mir, msgr, ul, xenl, xt,
 	cols#79, it#8, lines#29,
 	acsc=, bel=^G, blink=\E[=3;<7m, bold=\E[=7;<4m, cbt=\E[Z,
-	clear=\E[2J\E[H, cr=^M, cud1=\E[1B, cuf1=\E[1C,
+	clear=\E[2J\E[H, cr=^M, cub1=\E[1D, cud1=\E[1B, cuf1=\E[1C,
 	cup=\E[%i%p1%2d;%p2%2dH, cuu1=\E[1A, dch1=\E[1P,
 	dim=\E[=1;<6m, dl1=\E[1M, ed=\E[J, el=\E[K, home=\E[H, ht=^I,
 	il1=\E[1L, ind=\E[S, invis=\E[=6;<5, is1=\E%!1\E[m,
@@ -16232,6 +16261,15 @@ tek4106brl|tek4107brl|tek4109brl|Tektronix 4106 4107 or 4109,
 	sc=\E7, sgr0=\E[m, smacs=^N, smcup=\E[?6l, smir=\E[4h,
 	smkx=\E[?1h\E=, smso=\E[7;42m, smul=\E[4m, tbc=\E[3g,
 
+# Tektronix 4107/4109 interpret 4 modes using "\E%!" followed by a code:
+# 0 selects Tek mode, i.e., \E%!0
+# 1 selects ANSI mode
+# 2 selects ANSI edit-mode
+# 3 selects VT52 mode
+#
+# One odd thing about the description (which has been unchanged since the 90s)
+# is that the cursor addressing is using VT52 mode, and a few others use the
+# VT52's non-CSI versions of ANSI, e.g., \EJ.
 tek4107|tek4109|tektronix terminals 4107 4109,
 	OTbs, am, mir, msgr, ul, xenl, xt,
 	cols#79, it#8, lines#29,
@@ -16241,7 +16279,7 @@ tek4107|tek4109|tektronix terminals 4107 4109,
 	cup=\EY%p1%{32}%+%c%p2%{32}%+%c, cuu1=\EA, cvvis=\E%!3,
 	dim=\E%!1\E[<0m$<2>\E%!0, ed=\EJ, el=\EK, ht=^I, ind=^J,
 	kbs=^H, kcub1=\ED, kcud1=\EB, kcuf1=\EC, kcuu1=\EA,
-	rev=\E%!1\E[7m$<2>\E%0, ri=\EI,
+	rev=\E%!1\E[7m$<2>\E%!0, ri=\EI,
 	rmso=\E%!1\E[m$<2>\E%!0, rmul=\E%!1\E[m$<2>\E%!0,
 	sgr=\E%%!1\E[%?%p1%t;7%;%?%p2%t;4%;%?%p3%t;7%;%?%p4%t;5%;%?%p6%t;1%;m$<2>\E%%!0,
 	sgr0=\E%!1\E[m$<2>\E%!0, smso=\E%!1\E[7;5m$<2>\E%!0,
@@ -16278,9 +16316,9 @@ otek4112|o4112-nd|otek4113|otek4114|old tektronix 4110 series,
 tek4112|tek4114|tektronix 4110 series,
 	OTbs, am, db,
 	cols#80, lines#34,
-	cbt=\E[Z, clear=\E[2J\E[0;0H, cub1=^H, cuf1=\E[C,
-	cup=\E[%i%p1%d;%p2%dH, cuu1=\EM, dch1=\E[P, dl1=\E[M,
-	ed=\E[0J, el=\E[0K, ich1=\E[@, il1=\E[L,
+	cbt=\E[Z, clear=\E[2J\E[0;0H, cub1=^H, cud1=\E[B,
+	cuf1=\E[C, cup=\E[%i%p1%d;%p2%dH, cuu1=\EM, dch1=\E[P,
+	dl1=\E[M, ed=\E[0J, el=\E[0K, ich1=\E[@, il1=\E[L,
 	ind=\E7\E[0;0H\E[M\E8, is2=\E3!1, ri=\E7\E[0;0H\E[L\E8,
 	rmso=\E[m, rmul=\E[m, sgr0=\E[m, smso=\E[7m, smul=\E[4m,
 tek4112-nd|4112 not in dialog area,
@@ -16343,7 +16381,7 @@ tek4115|newer tektronix 4115 entry with more ANSI capabilities,
 	kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A, khome=\E[H,
 	rep=%p1%c\E[%p2%{1}%-%db, rev=\E[7m, rmam=\E[?7l,
 	rmso=\E[m, rmul=\E[m,
-	sgr=\E[%?%p1%t7;%;%?%p2%t4;%;%?%p3%t7;%;%?%p4%t5;%;%?%p6%t1;%;m,
+	sgr=\E[%?%p1%t7;%;%?%p2%t4;%;%?%p3%t7;%;%?%p4%t5;%;%?%p6%t1;%;%?%p7%t8;%;m,
 	sgr0=\E[m, smam=\E[?7h, smso=\E[7m, smul=\E[4m, tbc=\E[3g,
 	vpa=\E[%p1%{1}%+%dd,
 # The tek4125 emulates a vt100 incorrectly - the scrolling region
@@ -16715,7 +16753,7 @@ apple-uterm|Ultraterm for Apple micros,
 # This entry assumes that you are using an apple with the UCSD Pascal
 # language card.  SYSTEM.MISCINFO is assumed to be the same as that
 # supplied with the standard apple except that screenwidth should be set
-# using SETUP to 80 columns.  Note that the right arrow in not mapped in
+# using SETUP to 80 columns.  Note that the right arrow is not mapped in
 # this termcap entry.  This is because that key, on the Apple, transmits
 # a ^U and would thus preempt the more useful "up" function of vi.
 #
@@ -16751,15 +16789,16 @@ apple-videx2|Apple II+ w/ Videx card (similar to Datamedia h1520),
 apple-videx3|vapple|Apple II with 80 col card,
 	OTbs, am,
 	cols#80, lines#24,
-	clear=\Ev, cuf1=\EC, cup=\EY%p1%{32}%+%c%p2%{32}%+%c,
-	cuu1=\EA, el=\Ex, home=\EH, kcub1=\ED, kcud1=\EB, kcuf1=\EC,
-	kcuu1=\EA, kf0=\EP, kf1=\EQ, kf2=\ER, kf3=\E\s, kf4=\E!,
-	kf5=\E", kf6=\E#, kf7=\E$, kf8=\E%%, kf9=\E&, khome=\EH,
+	clear=\Ev, cub1=\ED, cud1=\EB, cuf1=\EC,
+	cup=\EY%p1%{32}%+%c%p2%{32}%+%c, cuu1=\EA, el=\Ex,
+	home=\EH, kcub1=\ED, kcud1=\EB, kcuf1=\EC, kcuu1=\EA,
+	kf0=\EP, kf1=\EQ, kf2=\ER, kf3=\E\s, kf4=\E!, kf5=\E", kf6=\E#,
+	kf7=\E$, kf8=\E%%, kf9=\E&, khome=\EH,
 #From: decvax!cbosgd!cbdkc1!mww Mike Warren via BRL
 aepro|Apple II+ running ASCII Express Pro--vt52,
 	OTbs,
 	cols#80, lines#24,
-	clear=\014$<300/>, cuf1=\EC,
+	clear=\014$<300/>, cub1=\ED, cud1=\EB, cuf1=\EC,
 	cup=\EY%p1%{32}%+%c%p2%{32}%+%c, cuu1=\EA, ed=\EJ,
 	el=\EK, home=\EH,
 # UCSD addition: Yet another termcap from Brian Kantor's Micro Munger Factory
@@ -17049,20 +17088,20 @@ nsterm+7|AppKit Terminal.app v41+ basic capabilities w/ASCII charset,
 	rmam=\E[?7l, rmkx=\E[?1l\E>, rmso=\E[m, rmul=\E[m,
 	rs2=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h, sc=\E7,
 	sgr=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m,
-	sgr0=\E[m\017, smam=\E[?7h, smkx=\E[?1h\E=, smso=\E[7m,
+	sgr0=\E[m, smam=\E[?7h, smkx=\E[?1h\E=, smso=\E[7m,
 	smul=\E[4m, tbc=\E[3g, use=vt100+enq, use=vt100+pfkeys,
 
 nsterm+acs|AppKit Terminal.app v41+ basic capabilities w/VT100 alternate-charset,
 	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
 	enacs=\E(B\E)0, rmacs=^O,
 	sgr=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m%?%p9%t\016%e\017%;,
-	smacs=^N, use=nsterm+7,
+	sgr0=\E[m\017, smacs=^N, use=nsterm+7,
 
 nsterm+mac|AppKit Terminal.app v41+ basic capabilities w/MacRoman alternate-charset,
-	acsc=0#`\327a\:f\241g\261h#i\360jjkkllmmnno\370p\370q\321rrssttuuvvwwxxy\262z\263{\271|\255}\243~\245+\335-\366\,\334.\377,
+	acsc=+\335\,\334-\366.\3770#`\327a\:f\241g\261h#i\360jjkkllmmnno\370p\370q\321rrssttuuvvwwxxy\262z\263{\271|\255}\243~\245,
 	enacs=\E(B\E)0, rmacs=^O,
 	sgr=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m%?%p9%t\016%e\017%;,
-	smacs=^N, use=nsterm+7,
+	sgr0=\E[m\017, smacs=^N, use=nsterm+7,
 
 nsterm+s|AppKit Terminal.app v41+ status-line (window titlebar) support,
 	hs,
@@ -17304,7 +17343,7 @@ xnuppc+basic|Darwin PowerPC Console basic capabilities,
 	rmul=\E[m, rs2=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h,
 	sc=\E7,
 	sgr=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;m,
-	sgr0=\E[m\017, smam=\E[?7h, smkx=\E[?1h\E=, smso=\E[7m,
+	sgr0=\E[m, smam=\E[?7h, smkx=\E[?1h\E=, smso=\E[7m,
 	smul=\E[4m, tbc=\E[3g, use=vt100+keypad,
 
 xnuppc+c|Darwin PowerPC Console ANSI color support,
@@ -17715,6 +17754,23 @@ osexec|Osborne executive,
 # See
 #	http://www.minix3.org/manpages/man4/console.4.html
 minix|minix console (v3),
+	acsc=+\020\,\021-\030.^Y0\333`\004a\261f\370g\361h\260j\331k\277l\332m\300n\305o~p\304q\304r\304s_t\303u\264v\301w\302x\263y\363z\362{\343|\330}\234~\376,
+	kdch1=\177, kend=\E[Y, kf0=\E[21~, kf1=\E[11~, kf10=\E[21~,
+	kf11=\E[11;2~, kf12=\E[12;2~, kf13=\E[13;2~,
+	kf14=\E[14;2~, kf15=\E[15;2~, kf16=\E[17;2~,
+	kf17=\E[18;2~, kf18=\E[19;2~, kf19=\E[20;2~, kf2=\E[12~,
+	kf20=\E[21;2~, kf21=\E[11;5~, kf22=\E[12;5~,
+	kf23=\E[13;5~, kf24=\E[14;5~, kf25=\E[15;5~,
+	kf26=\E[17;5~, kf27=\E[18;5~, kf28=\E[19;5~,
+	kf29=\E[20;5~, kf3=\E[13~, kf30=\E[21;5~, kf31=\E[11;6~,
+	kf32=\E[12;6~, kf33=\E[13;6~, kf34=\E[14;6~,
+	kf35=\E[15;6~, kf36=\E[17;6~, kf37=\E[18;6~,
+	kf38=\E[19;6~, kf39=\E[20;6~, kf4=\E[14~, kf40=\E[21;6~,
+	kf5=\E[15~, kf6=\E[17~, kf7=\E[18~, kf8=\E[19~, kf9=\E[20~,
+	kich1=\E[@, knp=\E[U, kpp=\E[V, lf0@, lf1@, lf2@, lf3@, lf4@, lf5@,
+	use=minix-3.0,
+
+minix-3.0|minix console (v3.0),
 	use=ecma+color, use=minix-1.7,
 
 # See
@@ -17755,7 +17811,7 @@ minix-old-am|minix console with linewrap,
 	am, use=minix-old,
 
 pc-minix|minix console on an Intel box,
-	use=klone+acs, use=minix,
+	use=klone+acs, use=minix-3.0,
 
 # According to the Coherent 2.3 manual, the PC console is similar
 # to a z19. The differences seem to be (1) 25 lines, (2) no status
@@ -18343,8 +18399,9 @@ bq300-8|Bull vt320 full 8 bits 80 columns,
 	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
 	bel=^G, blink=\2335m, bold=\2331m, civis=\233?25l,
 	clear=\233H\233J, cnorm=\233?25h, cr=^M,
-	csr=\233%i%p1%d;%p2%dr, cub=\233%p1%dD, cud=\233%p1%dB,
-	cuf=\233%p1%dC, cup=\233%i%p1%d;%p2%dH, cuu=\233%p1%dA,
+	csr=\233%i%p1%d;%p2%dr, cub=\233%p1%dD, cub1=\2331D,
+	cud=\233%p1%dB, cud1=\2331B, cuf=\233%p1%dC, cuf1=\2331C,
+	cup=\233%i%p1%d;%p2%dH, cuu=\233%p1%dA, cuu1=\2331A,
 	dch=\233%p1%dP, dch1=\233P, dl=\233%p1%dM,
 	dsl=\2331$}\2332$~\n\2330$}, ech=\233%p1%dX, ed=\233J,
 	el=\233K, el1=\2331K, enacs=\E(B\E)0,
@@ -18885,7 +18942,7 @@ h19-us|h19us|h19-smul|heathkit w/keypad shifted/underscore cursor,
 h19|heath|h19-b|heathkit|heath-19|z19|zenith|heathkit h19,
 	OTbs, am, eslok, hs, mir, msgr,
 	cols#80, it#8, lines#24,
-	acsc=~\^x`qanbkcjdmelfgg+hai.kwsutvutvozs{, bel=^G,
+	acsc=+h.kaiggjdkclfmenbozqas{tvutvuwsx`~\^, bel=^G,
 	clear=\EE, cnorm=\Ey4, cr=^M, cub1=^H, cud1=\EB, cuf1=\EC,
 	cup=\EY%p1%{32}%+%c%p2%{32}%+%c, cuu1=\EA, cvvis=\Ex4,
 	dch1=\EN, ed=\EJ, el=\EK, fsl=\Ek\Ey5, home=\EH, ht=^I, ind=^J,
@@ -19023,7 +19080,7 @@ z100|h100|z110|z-100|h-100|heath/zenith z-100 pc with color monitor,
 z100bw|h100bw|z110bw|z-100bw|h-100bw|heath/zenith z-100 pc,
 	OTbs, OTpt, mir, msgr,
 	OTkn#10, cols#80, it#8, lines#24,
-	acsc=~\^x`qanbkcjdmelfgg+hai.kwsutvutvozs{,
+	acsc=+h.kaiggjdkclfmenbozqas{tvutvuwsx`~\^,
 	clear=\EE$<5*/>, cnorm=\Ey4, cub1=^H, cud1=\EB, cuf1=\EC,
 	cup=\EY%p1%{32}%+%c%p2%{32}%+%c$<1*/>, cuu1=\EA,
 	cvvis=\Ex4, dch1=\EN$<1*/>, dl1=\EM$<5*/>, ed=\EJ, el=\EK,
@@ -19071,7 +19128,7 @@ ims950-rv|ims tvi950 rev video,
 ims-ansi|ultima2|ultimaII|IMS Ultima II,
 	OTbs, am,
 	cols#80, it#8, lines#24,
-	clear=\E[H\E[2J, cub1=^H, cud1=\ED,
+	clear=\E[H\E[2J, cub1=^H, cud1=\ED, cuf1=\EC,
 	cup=\E[%i%p1%2d;%p2%2dH, cuu1=\EM, ed=\E[0J, el=\E[0K,
 	ht=^I, if=/usr/share/tabset/vt100,
 	is2=\E[m\E[>14l\E[?1;?5;20l\E>\E[1m\r, kcub1=\E[D,
@@ -19182,9 +19239,9 @@ modgraph|mod24|modgraph terminal emulating vt100,
 modgraph2|modgraph gx-1000 80x24 with keypad not enabled,
 	am, da, db,
 	cols#80, it#8, lines#24,
-	clear=\EH\EJ$<50/>, cub1=^H, cuf1=\EC$<2/>,
-	cup=\EY%p1%{32}%+%c%p2%{32}%+%c$<5/>, cuu1=\EA$<2/>,
-	ed=\EJ$<50/>, el=\EK$<3/>, ht=^I,
+	clear=\EH\EJ$<50/>, cub1=^H, cud1=\EB$<2/>,
+	cuf1=\EC$<2/>, cup=\EY%p1%{32}%+%c%p2%{32}%+%c$<5/>,
+	cuu1=\EA$<2/>, ed=\EJ$<50/>, el=\EK$<3/>, ht=^I,
 	is2=\E<\E\^5;2s\E\^7;1s\E[3g\E\^11;9s\E\^11;17s\E\^11;25s\E\^11;33s\E\^11;41s\E\^11;49s\E\^11;57s\E\^11;65s\E\^11;73s\E\^11;81s\E\^11;89s\E\^12;0s\E\^14;2s\E\^15;9s\E\^25;1s\E\^9;1s\E\^27;1,
 	ri=\EI$<5/>,
 #
@@ -19255,9 +19312,9 @@ mt70|mt-70|Morrow MD-70; native Morrow mode,
 ex155|Motorola Exorterm 155,
 	OTbs, am, bw,
 	OTkn#5, OTug#1, cols#80, lines#24,
-	cbt=\E[, clear=\EX, cud1=\EB, cuf1=\ED,
-	cup=\EE%p1%{32}%+%c%p2%{32}%+%c, ed=\ET, el=\EU,
-	home=\E@, ht=\EZ, kbs=^H, kcbt=\E[, kclr=\EX, kcub1=^H,
+	cbt=\E[, clear=\EX, cub1=\ED, cud1=\EB, cuf1=\EC,
+	cup=\EE%p1%{32}%+%c%p2%{32}%+%c, cuu1=\EA, ed=\ET,
+	el=\EU, home=\E@, ht=\EZ, kbs=^H, kcbt=\E[, kclr=\EX, kcub1=^H,
 	kcud1=^J, kcuf1=^L, kcuu1=^K, ked=\ET, kel=\EU, khome=\E@,
 	rmso=\Ec\ED, rmul=\Eg\ED, smso=\Eb\ED, smul=\Ef\ED,
 
@@ -19553,7 +19610,7 @@ t1061f|teleray 1061 with fast PROMs,
 t10|teleray 10 special,
 	OTbs, km, xhp, xt,
 	cols#80, it#8, lines#24, xmc#2,
-	clear=\Ej$<30/>, cub1=^H, cuf1=\EC,
+	clear=\Ej$<30/>, cub1=^H, cud1=\EB, cuf1=\EC,
 	cup=\EY%p1%{32}%+%c%p2%{32}%+%c, cuu1=\EA, dch1=\EQ,
 	dl1=\EM, ed=\EJ, el=\EK, home=\EH, ht=^I, ich1=\EP, il1=\EL,
 	ind=\Eq, pad=\0, ri=\Ep, rmso=\ER@, rmul=\ER@, smso=\ERD,
@@ -20275,7 +20332,7 @@ teletec|Teletec Datascreen,
 v3220|LANPAR Vision II model 3220/3221/3222,
 	OTbs, am, mir, xenl,
 	cols#80, it#8, lines#24,
-	clear=\E[H\E[J, cub1=^H, cuf1=\E[C,
+	clear=\E[H\E[J, cub1=^H, cud1=\E[B, cuf1=\E[C,
 	cup=\E[%i%p1%d;%p2%dH, cuu1=\E[A, dch1=\E[P, dl1=\E[M,
 	ed=\E[J, el=\E[K, ht=^I, il1=\E[L,
 	is2=\E>\E[?3l\E[?7h\E[?8h\E[p, kcub1=\E[D, kcud1=\E[B,
@@ -21077,7 +21134,7 @@ v3220|LANPAR Vision II model 3220/3221/3222,
 #	* Replaced HP entries up to hpsub with purpose-built ones.
 #	* Blank rmir/smir/rmdc/smdc capabilities removed.
 #	* Small fixes merged in from SCO entries for lpr, fos, tvi910+, tvi924.
-# 9.4.8 (Fri Apr  7 09:36:34 EDT 199):
+# 9.4.8 (Fri Apr  7 09:36:34 EDT 1995):
 #	* Replaced the Ann Arbor entries with SCO's, the init strings are
 #	  more efficient (but the entries otherwise identical).
 #	* Added dg211 from Shuford archive.
@@ -22271,13 +22328,54 @@ v3220|LANPAR Vision II model 3220/3221/3222,
 #	* add hard-reset for rs2 to wsvt25 to help ensure that reset ends
 #	  the alternate character set (patch by Nicholas Marriott)
 #
-# The following sets edit modes for GNU EMACS.
-# Local Variables:
-# fill-prefix:"\t"
-# fill-column:75
-# comment-column:0
-# comment-start-skip:"^#+"
-# comment-start:"# "
-# compile-command:"tic -c terminfo.master"
-# End:
+# 2010-08-28
+#	* improve acsc for vt52 (Benjamin Sittler)
+#	* modify nsterm entries for consistent sgr/sgr0 -TD
+#	* modify xnuppc entries for consistent sgr/sgr0 -TD
+#	* add invis to tek4115 sgr -TD
+#
+# 2010-09-11
+#	* reformat acsc strings to canonical format -TD
+#
+# 2010-09-25
+#	* add "XT" capability to entries for terminals that support both
+#	  xterm-style mouse- and title-controls, for "screen" which
+#	  special-cases TERM beginning with "xterm" or "rxvt" -TD
+#
+# 2010-10-02
+#	* fill in no-parameter forms of cursor-movement where a parameterized
+#	  form is available -TD
+#	* fill in missing cursor controls where the form of the controls is
+#	  ANSI -TD
+#	* add parameterized cursor-controls to linux-basic (report by Dae) -TD
+#
+# 2010-10-09
+#	* correct comparison used for setting 16-colors in linux-16color
+#	  entry (Novell #644831) -TD
+#	* improve linux-16color entry, using "dim" for color-8 which makes it
+#	  gray rather than black like color-0 -TD
+#
+# 2010-11-20
+#	* make "vte" the principal entry defining "gnome", since GNOME terminal
+#	  is merely one of several terminals whose behavior is provided by this
+#	  library -TD
+#
+# 2010-11-27
+#	* fix typo in rmso for tek4106 -Goran Weinholt
+#
+# 2010-12-11
+#	* suppress ncv in screen entry, allowing underline -Alejandro R. Sedeno
+#	* also suppress ncv in konsole-base -TD
+#
+# 2011-02-05
+#	* add U8 feature to denote entries for terminal emulators which do not
+#	  support VT100 SI/SO when processing UTF-8 encoding -TD
+#	* add xterm-utf8 as a demo of the U8 feature -TD
+#
+# 2011-02-20
+#	* add cons25-debian entry (Brian M Carlson, Debina #607662).
+#
+# 2011-06-11
+#	* update minix entry to minix 3.2 (Thomas Cort).
+#
 ######## SHANTIH!  SHANTIH!  SHANTIH!
