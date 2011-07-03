@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.49 2009/03/01 10:28:55 jmc Exp $
+.\"	$OpenBSD: queue.3,v 1.50 2011/07/03 16:08:40 matthew Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd $Mdocdate: March 1 2009 $
+.Dd $Mdocdate: July 3 2011 $
 .Dt QUEUE 3
 .Os
 .Sh NAME
@@ -76,6 +76,7 @@
 .Nm SIMPLEQ_INSERT_TAIL ,
 .Nm SIMPLEQ_INSERT_AFTER ,
 .Nm SIMPLEQ_REMOVE_HEAD ,
+.Nm SIMPLEQ_REMOVE_NEXT ,
 .Nm TAILQ_ENTRY ,
 .Nm TAILQ_HEAD ,
 .Nm TAILQ_HEAD_INITIALIZER ,
@@ -189,6 +190,8 @@
 .Fn SIMPLEQ_INSERT_AFTER "SIMPLEQ_HEAD *head" "struct TYPE *listelm" "struct TYPE *elm" "SIMPLEQ_ENTRY NAME"
 .Ft void
 .Fn SIMPLEQ_REMOVE_HEAD "SIMPLEQ_HEAD *head" "SIMPLEQ_ENTRY NAME"
+.Ft void
+.Fn SIMPLEQ_REMOVE_NEXT "SIMPLEQ_HEAD *head" "struct TYPE *elm" "SIMPLEQ_ENTRY NAME"
 .Pp
 .Fn TAILQ_ENTRY "TYPE"
 .Fn TAILQ_HEAD "HEADNAME" "TYPE"
@@ -732,6 +735,11 @@ The
 .Fn SIMPLEQ_REMOVE_HEAD
 macro removes the first element
 from the queue.
+.Pp
+The
+.Fn SIMPLEQ_REMOVE_NEXT
+macro removes the queue element immediately following
+.Fa elm .
 .Pp
 The
 .Fn SIMPLEQ_FIRST
