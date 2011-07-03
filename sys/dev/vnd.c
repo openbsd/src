@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.135 2011/07/03 17:42:42 matthew Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.136 2011/07/03 18:08:14 matthew Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -72,7 +72,6 @@
 #include <dev/vndioctl.h>
 
 #ifdef VNDDEBUG
-int dovndcluster = 1;
 int vnddebug = 0x00;
 #define	VDB_FOLLOW	0x01
 #define	VDB_INIT	0x02
@@ -81,15 +80,6 @@ int vnddebug = 0x00;
 #else
 #define	DNPRINTF(f, p...)	/* nothing */
 #endif	/* VNDDEBUG */
-
-#define	vndunit(x)	DISKUNIT(makedev(major(x), minor(x)))
-#define	VNDLABELDEV(dev)	\
-	makedev(major(dev), DISKMINOR(vndunit(dev), RAW_PART))
-
-struct vndbuf {
-	struct buf	vb_buf;
-	struct buf	*vb_obp;
-};
 
 struct vnd_softc {
 	struct device	 sc_dev;
@@ -107,7 +97,6 @@ struct vnd_softc {
 };
 
 /* sc_flags */
-#define	VNF_ALIVE	0x0001
 #define	VNF_INITED	0x0002
 #define	VNF_HAVELABEL	0x0400
 #define	VNF_READONLY	0x2000
@@ -136,7 +125,7 @@ vndencrypt(struct vnd_softc *sc, caddr_t addr, size_t size, daddr64_t off,
 	bsize = dbtob(1);
 	for (i = 0; i < size/bsize; i++) {
 		bzero(iv, sizeof(iv));
-		bcopy((u_char *)&off, iv, sizeof(off));
+		bcopy(&off, iv, sizeof(off));
 		blf_ecb_encrypt(sc->sc_keyctx, iv, sizeof(iv));
 		if (encrypt)
 			blf_cbc_encrypt(sc->sc_keyctx, iv, addr, bsize);
@@ -179,7 +168,7 @@ vndattach(int num)
 int
 vndopen(dev_t dev, int flags, int mode, struct proc *p)
 {
-	int unit = vndunit(dev);
+	int unit = DISKUNIT(dev);
 	struct vnd_softc *sc;
 	int error = 0, part;
 
@@ -240,13 +229,13 @@ vndgetdisklabel(dev_t dev, struct vnd_softc *sc, struct disklabel *lp,
 	lp->d_checksum = dkcksum(lp);
 
 	/* Call the generic disklabel extraction routine */
-	return readdisklabel(VNDLABELDEV(dev), vndstrategy, lp, spoofonly);
+	return readdisklabel(DISKLABELDEV(dev), vndstrategy, lp, spoofonly);
 }
 
 int
 vndclose(dev_t dev, int flags, int mode, struct proc *p)
 {
-	int unit = vndunit(dev);
+	int unit = DISKUNIT(dev);
 	struct vnd_softc *sc;
 	int part;
 
@@ -269,7 +258,7 @@ vndclose(dev_t dev, int flags, int mode, struct proc *p)
 void
 vndstrategy(struct buf *bp)
 {
-	int unit = vndunit(bp->b_dev);
+	int unit = DISKUNIT(bp->b_dev);
 	struct vnd_softc *sc = &vnd_softc[unit];
 	off_t bn;
 	int sz, s, part;
@@ -368,7 +357,7 @@ done:
 int
 vndread(dev_t dev, struct uio *uio, int flags)
 {
-	int unit = vndunit(dev);
+	int unit = DISKUNIT(dev);
 	struct vnd_softc *sc;
 
 	DNPRINTF(VDB_FOLLOW, "vndread(%x, %p)\n", dev, uio);
@@ -387,7 +376,7 @@ vndread(dev_t dev, struct uio *uio, int flags)
 int
 vndwrite(dev_t dev, struct uio *uio, int flags)
 {
-	int unit = vndunit(dev);
+	int unit = DISKUNIT(dev);
 	struct vnd_softc *sc;
 
 	DNPRINTF(VDB_FOLLOW, "vndwrite(%x, %p)\n", dev, uio);
@@ -424,7 +413,7 @@ vndbdevsize(struct vnode *vp, struct proc *p)
 int
 vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
-	int unit = vndunit(dev);
+	int unit = DISKUNIT(dev);
 	struct disklabel *lp;
 	struct vnd_softc *sc;
 	struct vnd_ioctl *vio;
@@ -642,7 +631,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		    (struct disklabel *)addr, sc->sc_dk.dk_openmask);
 		if (error == 0) {
 			if (cmd == DIOCWDINFO)
-				error = writedisklabel(VNDLABELDEV(dev),
+				error = writedisklabel(DISKLABELDEV(dev),
 				    vndstrategy, sc->sc_dk.dk_label);
 		}
 
@@ -713,7 +702,7 @@ vndclear(struct vnd_softc *sc)
 daddr64_t
 vndsize(dev_t dev)
 {
-	int unit = vndunit(dev);
+	int unit = DISKUNIT(dev);
 	struct vnd_softc *sc = &vnd_softc[unit];
 
 	if (unit >= numvnd || (sc->sc_flags & VNF_INITED) == 0)
