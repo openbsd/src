@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.184 2011/05/04 16:05:49 blambert Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.185 2011/07/03 17:37:48 claudio Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -906,6 +906,7 @@ carp_clone_create(ifc, unit)
 	/* Hook carp_addr_updated to cope with address and route changes. */
 	sc->ah_cookie = hook_establish(sc->sc_if.if_addrhooks, 0,
 	    carp_addr_updated, sc);
+	carp_set_state_all(sc, INIT);
 
 	return (0);
 }
@@ -2557,7 +2558,7 @@ carp_set_state(struct carp_vhost_entry *vhe, int state)
 		sc->sc_if.if_link_state = LINK_STATE_UP;
 		break;
 	default:
-		sc->sc_if.if_link_state = LINK_STATE_UNKNOWN;
+		sc->sc_if.if_link_state = LINK_STATE_INVALID;
 		break;
 	}
 	if_link_state_change(&sc->sc_if);
