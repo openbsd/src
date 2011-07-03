@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.753 2011/07/03 18:08:02 claudio Exp $ */
+/*	$OpenBSD: pf.c,v 1.754 2011/07/03 18:42:45 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2891,18 +2891,16 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 						goto cleanup;
 					}
 					if (r->log || act.log & PF_LOG_MATCHES)
-						PFLOG_PACKET(kif, h, m,
-						    direction, reason, r,
-						    a, ruleset, pd);
+						PFLOG_PACKET(kif, m, direction,
+						    reason, r, a, ruleset, pd);
 				} else {
 					match = 1;
 					*rm = r;
 					*am = a;
 					*rsm = ruleset;
 					if (act.log & PF_LOG_MATCHES)
-						PFLOG_PACKET(kif, h, m,
-						    direction, reason, r,
-						    a, ruleset, pd);
+						PFLOG_PACKET(kif, m, direction,
+						    reason, r, a, ruleset, pd);
 				}
 
 				if ((*rm)->quick)
@@ -2929,8 +2927,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	REASON_SET(&reason, PFRES_MATCH);
 
 	if (r->log || act.log & PF_LOG_MATCHES)
-		PFLOG_PACKET(kif, h, m, direction, reason,
-		    r, a, ruleset, pd);
+		PFLOG_PACKET(kif, m, direction, reason, r, a, ruleset, pd);
 
 	if ((r->action == PF_DROP) &&
 	    ((r->rule_flag & PFRULE_RETURNRST) ||
@@ -3453,7 +3450,7 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 	REASON_SET(&reason, PFRES_MATCH);
 
 	if (r->log)
-		PFLOG_PACKET(kif, h, m, direction, reason, r, a, ruleset, pd);
+		PFLOG_PACKET(kif, m, direction, reason, r, a, ruleset, pd);
 
 	if (r->action == PF_DROP)
 		return (PF_DROP);
@@ -6041,13 +6038,12 @@ done:
 		struct pf_rule_item	*ri;
 
 		if (pd.pflog & PF_LOG_FORCE || r->log & PF_LOG_ALL)
-			PFLOG_PACKET(kif, h, m, dir, reason, r, a,
-			    ruleset, &pd);
+			PFLOG_PACKET(kif, m, dir, reason, r, a, ruleset, &pd);
 		if (s) {
 			SLIST_FOREACH(ri, &s->match_rules, entry)
 				if (ri->r->log & PF_LOG_ALL)
-					PFLOG_PACKET(kif, h, m, dir,
-					    reason, ri->r, a, ruleset, &pd);
+					PFLOG_PACKET(kif, m, dir, reason,
+					    ri->r, a, ruleset, &pd);
 		}
 	}
 
@@ -6293,13 +6289,12 @@ done:
 		struct pf_rule_item	*ri;
 
 		if (pd.pflog & PF_LOG_FORCE || r->log & PF_LOG_ALL)
-			PFLOG_PACKET(kif, h, m, dir, reason, r, a,
-			    ruleset, &pd);
+			PFLOG_PACKET(kif, m, dir, reason, r, a, ruleset, &pd);
 		if (s) {
 			SLIST_FOREACH(ri, &s->match_rules, entry)
 				if (ri->r->log & PF_LOG_ALL)
-					PFLOG_PACKET(kif, h, m, dir,
-					    reason, ri->r, a, ruleset, &pd);
+					PFLOG_PACKET(kif, m, dir, reason,
+					    ri->r, a, ruleset, &pd);
 		}
 	}
 
