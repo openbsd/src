@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.19 2011/04/24 22:44:22 krw Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.20 2011/07/03 19:21:48 krw Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -411,7 +411,7 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 	int		fd;
 	struct stat	statbuf, sb;
 	struct statfs	statfsbuf;
-	struct partition *pl;
+	struct partition *pp;
 	struct fs	*fs;
 	char		*buf;
 	u_int		blk, *ap;
@@ -473,11 +473,11 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 			errx(1, "cross-device install");
 	}
 
-	pl = &dl->d_partitions[DISKPART(statbuf.st_dev)];
+	pp = &dl->d_partitions[DISKPART(statbuf.st_dev)];
 	close(fd);
 
 	/* Read superblock. */
-	devread(devfd, sblock, pl->p_offset + SBLOCK, SBSIZE, "superblock");
+	devread(devfd, sblock, pp->p_offset + SBLOCK, SBSIZE, "superblock");
 	fs = (struct fs *)sblock;
 
 	/* Sanity-check super-block. */
@@ -492,7 +492,7 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 
 	blk = fsbtodb(fs, ino_to_fsba(fs, statbuf.st_ino));
 
-	devread(devfd, buf, pl->p_offset + blk, fs->fs_bsize, "inode");
+	devread(devfd, buf, pp->p_offset + blk, fs->fs_bsize, "inode");
 	ip = (struct ufs1_dinode *)(buf) + ino_to_fsbo(fs, statbuf.st_ino);
 
 	/*
@@ -510,7 +510,7 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 	sym_set_value(pbr_symbols, "_fs_bsize_p", (fs->fs_bsize / 16));
 	sym_set_value(pbr_symbols, "_fs_bsize_s", (fs->fs_bsize / 512));
 	sym_set_value(pbr_symbols, "_fsbtodb", fs->fs_fsbtodb);
-	sym_set_value(pbr_symbols, "_p_offset", pl->p_offset);
+	sym_set_value(pbr_symbols, "_p_offset", pp->p_offset);
 	sym_set_value(pbr_symbols, "_inodeblk",
 	    ino_to_fsba(fs, statbuf.st_ino));
 	ap = ip->di_db;
@@ -523,7 +523,7 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 		    boot, ndb, fs->fs_bsize);
 		fprintf(stderr, "fs block shift %u; part offset %u; "
 		    "inode block %lld, offset %u\n",
-		    fs->fs_fsbtodb, pl->p_offset,
+		    fs->fs_fsbtodb, pp->p_offset,
 		    ino_to_fsba(fs, statbuf.st_ino),
 		    (unsigned int)((((char *)ap) - buf) + INODEOFF));
 	}
