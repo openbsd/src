@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.185 2011/07/03 17:37:48 claudio Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.186 2011/07/03 17:55:25 dhill Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -596,7 +596,7 @@ carp_proto_input(struct mbuf *m, ...)
 		return;
 	}
 	ip = mtod(m, struct ip *);
-	ch = (void *)ip + iplen;
+	ch = (struct carp_header *)(mtod(m, caddr_t) + iplen);
 
 	/* verify the CARP checksum */
 	m->m_data += iplen;
@@ -1172,7 +1172,7 @@ carp_send_ad(void *v)
 		if (IN_MULTICAST(ip->ip_dst.s_addr))
 			m->m_flags |= M_MCAST;
 
-		ch_ptr = (void *)ip + sizeof(*ip);
+		ch_ptr = (struct carp_header *)(ip + 1);
 		bcopy(&ch, ch_ptr, sizeof(ch));
 		if (carp_prepare_ad(m, vhe, ch_ptr))
 			goto retry_later;
@@ -1261,7 +1261,7 @@ carp_send_ad(void *v)
 		ip6->ip6_dst.s6_addr16[1] = htons(sc->sc_carpdev->if_index);
 		ip6->ip6_dst.s6_addr8[15] = 0x12;
 
-		ch_ptr = (void *)ip6 + sizeof(*ip6);
+		ch_ptr = (struct carp_header *)(ip6 + 1);
 		bcopy(&ch, ch_ptr, sizeof(ch));
 		if (carp_prepare_ad(m, vhe, ch_ptr))
 			goto retry_later;
