@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.8 2011/07/03 20:15:40 krw Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.9 2011/07/03 21:02:10 krw Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -73,7 +73,7 @@ __aout_fdnlist(int fd, struct nlist *list)
 	struct exec exec;
 
 	if (pread(fd, &exec, sizeof(exec), (off_t)0) != sizeof(exec) ||
-	    N_BADMAG(exec) || exec.a_syms == NULL)
+	    N_BADMAG(exec) || exec.a_syms == 0)
 		return (-1);
 
 	stroff = N_STROFF(exec);
@@ -326,7 +326,8 @@ __elf_fdnlist(int fd, struct nlist *list)
 		usemalloc = 1;
 		if ((shdr = malloc(shdr_size)) == NULL)
 			return (-1);
-		if (pread(fd, shdr, shdr_size, ehdr.e_shoff) != shdr_size) {
+
+		if (pread(fd, shdr, shdr_size, (off_t)ehdr.e_shoff) != shdr_size) {
 			free(shdr);
 			return (-1);
 		}
@@ -363,7 +364,7 @@ __elf_fdnlist(int fd, struct nlist *list)
 	if (usemalloc) {
 		if ((strtab = malloc(symstrsize)) == NULL)
 			return (-1);
-		if (pread(fd, strtab, symstrsize, symstroff) != symstrsize) {
+		if (pread(fd, strtab, symstrsize, (off_t)symstroff) != symstrsize) {
 			free(strtab);
 			return (-1);
 		}
@@ -399,7 +400,7 @@ __elf_fdnlist(int fd, struct nlist *list)
 
 	while (symsize > 0) {
 		cc = MIN(symsize, sizeof(sbuf));
-		if (pread(fd, sbuf, cc, symoff) != cc)
+		if (pread(fd, sbuf, cc, (off_t)symoff) != cc)
 			break;
 		symsize -= cc;
 		symoff += cc;
@@ -413,9 +414,9 @@ __elf_fdnlist(int fd, struct nlist *list)
 
 				/*
 				 * First we check for the symbol as it was
-				 * provided by the user. If that fails,
-				 * skip the first char if it's an '_' and
-				 * try again.
+				 * provided by the user. If that fails
+				 * and the first char is an '_', skip over
+				 * the '_' and try again.
 				 * XXX - What do we do when the user really
 				 *       wants '_foo' and the are symbols
 				 *       for both 'foo' and '_foo' in the
