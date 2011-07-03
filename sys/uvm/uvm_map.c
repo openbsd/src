@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.143 2011/07/03 18:34:14 oga Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.144 2011/07/03 18:36:49 oga Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -96,9 +96,6 @@
 static struct timeval uvm_kmapent_last_warn_time;
 static struct timeval uvm_kmapent_warn_rate = { 10, 0 };
 
-struct uvm_cnt uvm_map_call, map_backmerge, map_forwmerge;
-struct uvm_cnt map_nousermerge;
-struct uvm_cnt uvm_mlk_call, uvm_mlk_hint;
 const char vmmapbsy[] = "vmmapbsy";
 
 /*
@@ -527,20 +524,7 @@ uvm_map_init(void)
 	int lcv;
 
 	/*
-	 * first, init logging system.
-	 */
-
-	UVMCNT_INIT(uvm_map_call,  UVMCNT_CNT, 0,
-	    "# uvm_map() successful calls", 0);
-	UVMCNT_INIT(map_backmerge, UVMCNT_CNT, 0, "# uvm_map() back merges", 0);
-	UVMCNT_INIT(map_forwmerge, UVMCNT_CNT, 0, "# uvm_map() missed forward",
-	    0);
-	UVMCNT_INIT(map_nousermerge, UVMCNT_CNT, 0, "# back merges skipped", 0);
-	UVMCNT_INIT(uvm_mlk_call,  UVMCNT_CNT, 0, "# map lookup calls", 0);
-	UVMCNT_INIT(uvm_mlk_hint,  UVMCNT_CNT, 0, "# map lookup hint hits", 0);
-
-	/*
-	 * now set up static pool of kernel map entries ...
+	 * set up static pool of kernel map entries ...
 	 */
 
 	simple_lock_init(&uvm.kentry_lock);
@@ -799,8 +783,6 @@ uvm_map_p(struct vm_map *map, vaddr_t *startp, vsize_t size,
 	}
 #endif
 
-	UVMCNT_INCR(uvm_map_call);
-
 	/*
 	 * if uobj is null, then uoffset is either a VAC hint for PMAP_PREFER
 	 * [typically from uvm_map_reserve] or it is UVM_UNKNOWN_OFFSET.   in 
@@ -872,7 +854,6 @@ uvm_map_p(struct vm_map *map, vaddr_t *startp, vsize_t size,
 		 * of how much we skipped.
 		 */
 		if (map != kernel_map && map != kmem_map) {
-			UVMCNT_INCR(map_nousermerge);
 			goto step3;
 		}
 
@@ -881,8 +862,6 @@ uvm_map_p(struct vm_map *map, vaddr_t *startp, vsize_t size,
 			if (error)
 				goto step3;
 		}
-
-		UVMCNT_INCR(map_backmerge);
 
 		/*
 		 * drop our reference to uobj since we are extending a reference
@@ -905,16 +884,6 @@ uvm_map_p(struct vm_map *map, vaddr_t *startp, vsize_t size,
 
 	}
 step3:
-
-	/*
-	 * check for possible forward merge (which we don't do) and count
-	 * the number of times we missed a *possible* chance to merge more 
-	 */
-
-	if ((flags & UVM_FLAG_NOMERGE) == 0 &&
-	    prev_entry->next != &map->header && 
-	    prev_entry->next->start == (*startp + size))
-		UVMCNT_INCR(map_forwmerge);
 
 	/*
 	 * step 3: allocate new entry and link it in
@@ -1043,7 +1012,6 @@ uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
 	if (cur == &map->header)
 		cur = cur->next;
 
-	UVMCNT_INCR(uvm_mlk_call);
 	if (address >= cur->start) {
 	    	/*
 		 * go from hint to end of list.
@@ -1058,7 +1026,6 @@ uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
 		 */
 		last = &map->header;
 		if ((cur != last) && (cur->end > address)) {
-			UVMCNT_INCR(uvm_mlk_hint);
 			*entry = cur;
 			return (TRUE);
 		}

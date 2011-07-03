@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.44 2011/07/03 18:34:14 oga Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.45 2011/07/03 18:36:49 oga Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -39,8 +39,6 @@
 #define _UVM_UVM_H_
 
 #include <uvm/uvm_extern.h>
-
-#include <uvm/uvm_stat.h>
 
 /*
  * pull in prototypes

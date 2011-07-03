@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_stat.c,v 1.24 2011/07/03 18:34:14 oga Exp $	 */
+/*	$OpenBSD: uvm_stat.c,v 1.25 2011/07/03 18:36:51 oga Exp $	 */
 /*	$NetBSD: uvm_stat.c,v 1.18 2001/03/09 01:02:13 chs Exp $	 */
 
 /*
@@ -45,34 +45,7 @@
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>
 
-/*
- * globals
- */
-
-struct uvm_cnt *uvm_cnt_head = NULL;
-
-
 #ifdef DDB
-
-/*
- * prototypes
- */
-
-void uvmcnt_dump(void);
-
-
-void
-uvmcnt_dump(void)
-{
-	struct uvm_cnt *uvc = uvm_cnt_head;
-
-	while (uvc) {
-		if ((uvc->t & UVMCNT_MASK) != UVMCNT_CNT)
-			continue;
-		printf("%s = %d\n", uvc->name, uvc->c);
-		uvc = uvc->next;
-	}
-}
 
 /*
  * uvmexp_print: ddb hook to print interesting uvm counters
