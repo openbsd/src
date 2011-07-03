@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.123 2011/07/03 17:41:50 claudio Exp $	*/
+/*	$OpenBSD: if.h,v 1.124 2011/07/03 23:05:35 henning Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -683,7 +683,6 @@ do { \
 } while (/* CONSTCOND */0)
 
 #ifdef ALTQ
-#define	ALTQ_DECL(x)		x
 
 #define	IFQ_ENQUEUE(ifq, m, pattr, err)					\
 do {									\
@@ -747,7 +746,6 @@ do {									\
 } while (/* CONSTCOND */0)
 
 #else /* !ALTQ */
-#define	ALTQ_DECL(x)		/* nothing */
 
 #define	IFQ_ENQUEUE(ifq, m, pattr, err)					\
 do {									\
