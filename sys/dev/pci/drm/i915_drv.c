@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.112 2011/07/03 18:34:14 oga Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.113 2011/07/03 20:20:42 deraadt Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -673,20 +673,25 @@ inteldrm_ironlake_intr(void *arg)
 {
 	struct inteldrm_softc	*dev_priv = arg;
 	struct drm_device	*dev = (struct drm_device *)dev_priv->drmdev;
-	u_int32_t		 de_iir, gt_iir, de_ier, pch_iir;
-	int			 ret = 0;
+	u_int32_t		 de_iir, gt_iir, pch_iir = 0;
 
-	de_ier = I915_READ(DEIER);
-	I915_WRITE(DEIER, de_ier & ~DE_MASTER_IRQ_CONTROL);
-	(void)I915_READ(DEIER);
+	/*
+	 * If we're vt switched then no interrupts should be enabled
+	 * Unfortunately we can't keep track of state and quit early
+	 * other times because if we're running commands then error interrupts
+	 * could happen any time
+	 */
+	if (dev_priv->mm.suspended)
+		return (0);
 
 	de_iir = I915_READ(DEIIR);
 	gt_iir = I915_READ(GTIIR);
+#ifdef notyet /* nothing enabled yet, don't read it */
 	pch_iir = I915_READ(SDEIIR);
+#endif
 
 	if (de_iir == 0 && gt_iir == 0 && pch_iir == 0)
-		goto done;
-	ret = 1;
+		return (0);
 
 	if (gt_iir & GT_USER_INTERRUPT) {
 		wakeup(dev_priv);
@@ -702,15 +707,13 @@ inteldrm_ironlake_intr(void *arg)
 		drm_handle_vblank(dev, 1);
 
 	/* should clear PCH hotplug event before clearing CPU irq */
+#ifdef notyet /* nothing enabled yet, don't read it */
 	I915_WRITE(SDEIIR, pch_iir);
+#endif
 	I915_WRITE(GTIIR, gt_iir);
 	I915_WRITE(DEIIR, de_iir);
 
-done:
-	I915_WRITE(DEIER, de_ier);
-	(void)I915_READ(DEIER);
-
-	return (ret);
+	return (1);
 }
 
 int
