@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieetst.c,v 1.1 2011/07/02 18:11:01 martynas Exp $	*/
+/*	$OpenBSD: ieetst.c,v 1.2 2011/07/03 13:39:07 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -28,13 +28,18 @@
  * last revision: 16 May 92
  */
 
+#include <float.h>
 #include <stdio.h>
 
 #include "mconf.h"
 #include "ehead.h"
 
 /* Include tests of 80-bit long double precision: */
+#if	LDBL_MANT_DIG == 64
+#define LDOUBLE 1
+#else	/* LDBL_MANT_DIG == 64 */
 #define LDOUBLE 0
+#endif	/* LDBL_MANT_DIG == 64 */
 /* Abort subtest after getting this many errors: */
 #define MAXERR 5
 /* Number of random arguments to try (set as large as you have
