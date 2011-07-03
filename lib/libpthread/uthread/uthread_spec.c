@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_spec.c,v 1.10 2011/07/02 17:12:02 tedu Exp $	*/
+/*	$OpenBSD: uthread_spec.c,v 1.11 2011/07/03 15:26:44 guenther Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -84,20 +84,20 @@ pthread_key_delete(pthread_key_t key)
 		/* Lock the key table entry: */
 		_SPINLOCK(&key_table[key].lock);
 
-		if (key_table[key].allocated)
+		if (key_table[key].allocated) {
 			key_table[key].allocated = 0;
-		else
-			ret = EINVAL;
 
-		_thread_kern_sig_defer();
-		TAILQ_FOREACH(pthread, &_thread_list, tle) {
-			if (pthread->specific_data[key]) {
-				pthread->specific_data[key] = NULL;
-				pthread->specific_data_count--;
+			_thread_kern_sig_defer();
+			TAILQ_FOREACH(pthread, &_thread_list, tle) {
+				if (pthread->specific_data != NULL &&
+				    pthread->specific_data[key]) {
+					pthread->specific_data[key] = NULL;
+					pthread->specific_data_count--;
+				}
 			}
-
-		}
-		_thread_kern_sig_undefer();
+			_thread_kern_sig_undefer();
+		} else
+			ret = EINVAL;
 
 		/* Unlock the key table entry: */
 		_SPINUNLOCK(&key_table[key].lock);
