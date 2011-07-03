@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.9 2011/07/03 21:02:10 krw Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.10 2011/07/03 21:37:40 krw Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -424,7 +424,7 @@ __elf_fdnlist(int fd, struct nlist *list)
 				 */
 				sym = p->n_un.n_name;
 				if (strcmp(&strtab[soff], sym) != 0 &&
-				    ((sym[0] == '_') &&
+				    (sym[0] != '_' ||
 				     strcmp(&strtab[soff], sym + 1) != 0))
 					continue;
 
