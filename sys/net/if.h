@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.124 2011/07/03 23:05:35 henning Exp $	*/
+/*	$OpenBSD: if.h,v 1.125 2011/07/03 23:12:29 henning Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -734,17 +734,6 @@ do {									\
 	((ifq)->altq_flags |= ALTQF_READY);				\
 } while (/* CONSTCOND */0)
 
-#define	IFQ_CLASSIFY(ifq, m, af, pa)					\
-do {									\
-	if (ALTQ_IS_ENABLED((ifq))) {					\
-		if (ALTQ_NEEDS_CLASSIFY((ifq)))				\
-			(pa)->pattr_class = (*(ifq)->altq_classify)	\
-				((ifq)->altq_clfier, (m), (af));	\
-		(pa)->pattr_af = (af);					\
-		(pa)->pattr_hdr = mtod((m), caddr_t);			\
-	}								\
-} while (/* CONSTCOND */0)
-
 #else /* !ALTQ */
 
 #define	IFQ_ENQUEUE(ifq, m, pattr, err)					\
@@ -767,8 +756,6 @@ do {									\
 #define	IFQ_PURGE(ifq)		IF_PURGE((ifq))
 
 #define	IFQ_SET_READY(ifq)	/* nothing */
-
-#define	IFQ_CLASSIFY(ifq, m, af, pa) /* nothing */
 
 #endif /* ALTQ */
 
