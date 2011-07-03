@@ -1,4 +1,4 @@
-/*	$OpenBSD: chk.c,v 1.24 2011/06/20 13:33:47 martynas Exp $	*/
+/*	$OpenBSD: chk.c,v 1.25 2011/07/03 18:15:10 martynas Exp $	*/
 /*	$NetBSD: chk.c,v 1.2 1995/07/03 21:24:42 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: chk.c,v 1.24 2011/06/20 13:33:47 martynas Exp $";
+static char rcsid[] = "$OpenBSD: chk.c,v 1.25 2011/07/03 18:15:10 martynas Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1034,29 +1034,10 @@ scanflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 			badfmt(hte, call);
 			sz = ULONG;
 			goto conv;
-		} else if (fc == 'E') {
-			/*
-			 * XXX valid in ANSI C, but in NetBSD's libc imple-
-			 * mented as "lf". Thats why it should be avoided.
-			 */
-			badfmt(hte, call);
-			sz = DOUBLE;
-			goto conv;
-		} else if (fc == 'F') {
-			/* XXX only for backward compatibility */
-			badfmt(hte, call);
-			sz = DOUBLE;
-			goto conv;
-		} else if (fc == 'G') {
-			/*
-			 * XXX valid in ANSI C, but in NetBSD's libc not
-			 * implemented
-			 */
-			if (sz != NOTSPEC && sz != LONG && sz != LDOUBLE)
-				badfmt(hte, call);
-			goto fconv;
-		} else if (fc == 'e' || fc == 'f' || fc == 'g') {
-		fconv:
+		} else if (fc == 'e' || fc == 'E' ||
+			   fc == 'f' || fc == 'F' ||
+			   fc == 'g' || fc == 'G' ||
+			   fc == 'a' || fc == 'A') {
 			if (sz == NOTSPEC) {
 				sz = FLOAT;
 			} else if (sz == LONG) {
