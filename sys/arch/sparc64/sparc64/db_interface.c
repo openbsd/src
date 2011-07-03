@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.30 2010/11/27 19:57:23 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.31 2011/07/03 18:34:14 oga Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -1069,23 +1069,6 @@ db_register_xir(void (*fun)(void *, int), void *arg)
 	SIMPLEQ_INSERT_TAIL(&db_xh, xh, xh_list);
 }
 
-
-#ifdef UVMHIST
-void db_uvmhistdump(db_expr_t, int, db_expr_t, char *);
-extern void uvmhist_dump(struct uvm_history *);
-extern struct uvm_history_head uvm_histories;
-
-void
-db_uvmhistdump(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
-{
-
-	uvmhist_dump(LIST_FIRST(&uvm_histories));
-}
-#endif
 
 #if NESP_SBUS
 extern void db_esp(db_expr_t, int, db_expr_t, char *);

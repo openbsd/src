@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.61 2011/06/23 21:52:42 oga Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.62 2011/07/03 18:34:14 oga Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -297,7 +297,6 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 	boolean_t locked;	/* did we relock? */
 	struct vm_page *pg;
 	int result;
-	UVMHIST_FUNC("uvmfault_anonget"); UVMHIST_CALLED(maphist);
 
 	result = 0;		/* XXX shut up gcc */
 	uvmexp.fltanget++;
@@ -339,7 +338,6 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			 */
 
 			if ((pg->pg_flags & (PG_BUSY|PG_RELEASED)) == 0) {
-				UVMHIST_LOG(maphist, "<- OK",0,0,0,0);
 				return (VM_PAGER_OK);
 			}
 			atomic_setbits_int(&pg->pg_flags, PG_WANTED);
@@ -351,16 +349,12 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			 */
 			if (pg->uobject) {	/* owner is uobject ? */
 				uvmfault_unlockall(ufi, amap, NULL, anon);
-				UVMHIST_LOG(maphist, " unlock+wait on uobj",0,
-				    0,0,0);
 				UVM_UNLOCK_AND_WAIT(pg,
 				    &pg->uobject->vmobjlock,
 				    FALSE, "anonget1",0);
 			} else {
 				/* anon owns page */
 				uvmfault_unlockall(ufi, amap, NULL, NULL);
-				UVMHIST_LOG(maphist, " unlock+wait on anon",0,
-				    0,0,0);
 				UVM_UNLOCK_AND_WAIT(pg,&anon->an_lock,0,
 				    "anonget2",0);
 			}
@@ -377,8 +371,6 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 
 				uvmfault_unlockall(ufi, amap, NULL, anon);
 				uvmexp.fltnoram++;
-				UVMHIST_LOG(maphist, "  noram -- UVM_WAIT",0,
-				    0,0,0);
 				uvm_wait("flt_noram1");
 				/* ready to relock and try again */
 
@@ -450,7 +442,6 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 					uvmfault_unlockall(ufi, amap, NULL,
 							   NULL);
 				uvmexp.fltpgrele++;
-				UVMHIST_LOG(maphist, "<- REFAULT", 0,0,0,0);
 				return (VM_PAGER_REFAULT);	/* refault! */
 			}
 
@@ -483,7 +474,6 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 					    anon);
 				else
 					simple_unlock(&anon->an_lock);
-				UVMHIST_LOG(maphist, "<- ERROR", 0,0,0,0);
 				return (VM_PAGER_ERROR);
 			}
 			
@@ -503,10 +493,8 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 		 * we were not able to relock.   restart fault.
 		 */
 
-		if (!locked) {
-			UVMHIST_LOG(maphist, "<- REFAULT", 0,0,0,0);
+		if (!locked)
 			return (VM_PAGER_REFAULT);
-		}
 
 		/*
 		 * verify no one has touched the amap and moved the anon on us.
@@ -517,7 +505,6 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 				ufi->orig_rvaddr - ufi->entry->start) != anon) {
 			
 			uvmfault_unlockall(ufi, amap, NULL, anon);
-			UVMHIST_LOG(maphist, "<- REFAULT", 0,0,0,0);
 			return (VM_PAGER_REFAULT);
 		}
 			
@@ -566,10 +553,6 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 	struct uvm_object *uobj;
 	struct vm_anon *anons_store[UVM_MAXRANGE], **anons, *anon, *oanon;
 	struct vm_page *pages[UVM_MAXRANGE], *pg, *uobjpage;
-	UVMHIST_FUNC("uvm_fault"); UVMHIST_CALLED(maphist);
-
-	UVMHIST_LOG(maphist, "(map=%p, vaddr=0x%lx, ft=%ld, at=%ld)",
-	      orig_map, vaddr, fault_type, access_type);
 
 	anon = NULL;
 	pg = NULL;
@@ -599,7 +582,6 @@ ReFault:
 	 */
 
 	if (uvmfault_lookup(&ufi, FALSE) == FALSE) {
-		UVMHIST_LOG(maphist, "<- no mapping @ 0x%lx", vaddr, 0,0,0);
 		return (EFAULT);
 	}
 	/* locked: maps(read) */
@@ -615,9 +597,6 @@ ReFault:
 	 */
 
 	if ((ufi.entry->protection & access_type) != access_type) {
-		UVMHIST_LOG(maphist,
-		    "<- protection failure (prot=0x%lx, access=0x%lx)",
-		    ufi.entry->protection, access_type, 0, 0);
 		uvmfault_unlockmaps(&ufi, FALSE);
 		return (EACCES);
 	}
@@ -645,8 +624,6 @@ ReFault:
 		if ((access_type & VM_PROT_WRITE) ||
 		    (ufi.entry->object.uvm_obj == NULL)) {
 			/* need to clear */
-			UVMHIST_LOG(maphist,
-			    "  need to clear needs_copy and refault",0,0,0,0);
 			uvmfault_unlockmaps(&ufi, FALSE);
 			uvmfault_amapcopy(&ufi);
 			uvmexp.fltamcopy++;
@@ -677,7 +654,6 @@ ReFault:
 
 	if (amap == NULL && uobj == NULL) {
 		uvmfault_unlockmaps(&ufi, FALSE);
-		UVMHIST_LOG(maphist,"<- no backing store, no overlay",0,0,0,0);
 		return (EFAULT);
 	}
 
@@ -719,10 +695,6 @@ ReFault:
 	}
 
 	/* locked: maps(read) */
-	UVMHIST_LOG(maphist, "  narrow=%ld, back=%ld, forw=%ld, startva=0x%lx",
-		    narrow, nback, nforw, startva);
-	UVMHIST_LOG(maphist, "  entry=%p, amap=%p, obj=%p", ufi.entry,
-		    amap, uobj, 0);
 
 	/*
 	 * if we've got an amap, lock it and extract current anons.
@@ -745,8 +717,6 @@ ReFault:
 
 	if (ufi.entry->advice == MADV_SEQUENTIAL && nback != 0) {
 
-		UVMHIST_LOG(maphist, "  MADV_SEQUENTIAL: flushing backpages",
-		    0,0,0,0);
 		/* flush back-page anons? */
 		if (amap) 
 			uvmfault_anonflush(anons, nback);
@@ -815,9 +785,6 @@ ReFault:
 			uvm_lock_pageq();
 			uvm_pageactivate(anon->an_page);	/* reactivate */
 			uvm_unlock_pageq();
-			UVMHIST_LOG(maphist,
-			    "  MAPPING: n anon: pm=%p, va=0x%lx, pg=%p",
-			    ufi.orig_map->pmap, currva, anon->an_page, 0);
 			uvmexp.fltnamap++;
 
 			/*
@@ -839,8 +806,6 @@ ReFault:
 
 	/* locked: maps(read), amap(if there) */
 	/* (shadowed == TRUE) if there is an anon at the faulting address */
-	UVMHIST_LOG(maphist, "  shadowed=%ld, will_get=%ld", shadowed, 
-	    (uobj && shadowed == FALSE),0,0);
 
 	/*
 	 * note that if we are really short of RAM we could sleep in the above
@@ -929,9 +894,6 @@ ReFault:
 				
 				if (lcv == centeridx) {
 					uobjpage = pages[lcv];
-					UVMHIST_LOG(maphist, "  got uobjpage "
-					    "(%p) with locked get", 
-					    uobjpage, 0,0,0);
 					continue;
 				}
 	
@@ -947,9 +909,6 @@ ReFault:
 				uvm_lock_pageq();
 				uvm_pageactivate(pages[lcv]);	/* reactivate */
 				uvm_unlock_pageq();
-				UVMHIST_LOG(maphist,
-				  "  MAPPING: n obj: pm=%p, va=0x%lx, pg=%p",
-				  ufi.orig_map->pmap, currva, pages[lcv], 0);
 				uvmexp.fltnomap++;
 
 				/*
@@ -1015,7 +974,6 @@ ReFault:
 	 */
 
 	anon = anons[centeridx];
-	UVMHIST_LOG(maphist, "  case 1 fault: anon=%p", anon, 0,0,0);
 	simple_lock(&anon->an_lock);
 
 	/* locked: maps(read), amap, anon */
@@ -1159,8 +1117,6 @@ ReFault:
 	 */
 
 	if ((access_type & VM_PROT_WRITE) != 0 && anon->an_ref > 1) {
-
-		UVMHIST_LOG(maphist, "  case 1B: COW fault",0,0,0,0);
 		uvmexp.flt_acow++;
 		oanon = anon;		/* oanon = old, locked anon */
 		anon = uvm_analloc();
@@ -1175,8 +1131,6 @@ ReFault:
 			uvmfault_unlockall(&ufi, amap, uobj, oanon);
 			KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
 			if (anon == NULL || uvmexp.swpgonly == uvmexp.swpages) {
-				UVMHIST_LOG(maphist,
-				    "<- failed.  out of VM",0,0,0,0);
 				uvmexp.fltnoanon++;
 				return (ENOMEM);
 			}
@@ -1223,8 +1177,6 @@ ReFault:
 	 * under us between the unlock and the pmap_enter.
 	 */
 
-	UVMHIST_LOG(maphist, "  MAPPING: anon: pm=%p, va=0x%lx, pg=%p",
-	    ufi.orig_map->pmap, ufi.orig_rvaddr, pg, 0);
 	if (pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr, VM_PAGE_TO_PHYS(pg),
 	    enter_prot, access_type | PMAP_CANFAIL | (wired ? PMAP_WIRED : 0))
 	    != 0) {
@@ -1238,8 +1190,6 @@ ReFault:
 		uvmfault_unlockall(&ufi, amap, uobj, oanon);
 		KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
 		if (uvmexp.swpgonly == uvmexp.swpages) {
-			UVMHIST_LOG(maphist,
-			    "<- failed.  out of VM",0,0,0,0);
 			/* XXX instrumentation */
 			return (ENOMEM);
 		}
@@ -1306,8 +1256,6 @@ Case2:
 		promote = (access_type & VM_PROT_WRITE) &&
 		     UVM_ET_ISCOPYONWRITE(ufi.entry);
 	}
-	UVMHIST_LOG(maphist, "  case 2 fault: promote=%ld, zfill=%ld",
-	    promote, (uobj == NULL), 0,0);
 
 	/*
 	 * if uobjpage is not null then we do not need to do I/O to get the
@@ -1346,14 +1294,10 @@ Case2:
 			KASSERT(result != VM_PAGER_PEND);
 
 			if (result == VM_PAGER_AGAIN) {
-				UVMHIST_LOG(maphist,
-				    "  pgo_get says TRY AGAIN!",0,0,0,0);
 				tsleep((caddr_t)&lbolt, PVM, "fltagain2", 0);
 				goto ReFault;
 			}
 
-			UVMHIST_LOG(maphist, "<- pgo_get failed (code %ld)",
-			    result, 0,0,0);
 			return (EACCES); /* XXX i/o error */
 		}
 
@@ -1387,10 +1331,6 @@ Case2:
 		 */
 
 		if (locked == FALSE) {
-
-			UVMHIST_LOG(maphist,
-			    "  wasn't able to relock after fault: retry", 
-			    0,0,0,0);
 			if (uobjpage->pg_flags & PG_WANTED)
 				/* still holding object lock */
 				wakeup(uobjpage);
@@ -1480,9 +1420,6 @@ Case2:
 					uvm_unlock_pageq();
 					uvmfault_unlockall(&ufi, amap, uobj,
 					  NULL);
-					UVMHIST_LOG(maphist,
-					  "  out of RAM breaking loan, waiting",
-					  0,0,0,0);
 					uvmexp.fltnoram++;
 					uvm_wait("flt_noram4");
 					goto ReFault;
@@ -1578,14 +1515,10 @@ Case2:
 			uvmfault_unlockall(&ufi, amap, uobj, NULL);
 			KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
 			if (anon == NULL || uvmexp.swpgonly == uvmexp.swpages) {
-				UVMHIST_LOG(maphist, "  promote: out of VM",
-				    0,0,0,0);
 				uvmexp.fltnoanon++;
 				return (ENOMEM);
 			}
 
-			UVMHIST_LOG(maphist, "  out of RAM, waiting for more",
-			    0,0,0,0);
 			uvm_anfree(anon);
 			uvmexp.fltnoram++;
 			uvm_wait("flt_noram5");
@@ -1624,19 +1557,12 @@ Case2:
 			uvm_unlock_pageq();
 			simple_unlock(&uobj->vmobjlock);
 			uobj = NULL;
-
-			UVMHIST_LOG(maphist,
-			    "  promote uobjpage %p to anon/page %p/%p",
-			    uobjpage, anon, pg, 0);
-
 		} else {
 			uvmexp.flt_przero++;
 			/*
 			 * Page is zero'd and marked dirty by uvm_pagealloc()
 			 * above.
 			 */
-			UVMHIST_LOG(maphist,"  zero fill anon/page %p/%p",
-			    anon, pg, 0, 0);
 		}
 
 		amap_add(&ufi.entry->aref, ufi.orig_rvaddr - ufi.entry->start,
@@ -1655,9 +1581,6 @@ Case2:
 	 * resources.
 	 */
 
-	UVMHIST_LOG(maphist,
-	    "  MAPPING: case2: pm=%p, va=0x%lx, pg=%p, promote=%ld",
-	    ufi.orig_map->pmap, ufi.orig_rvaddr, pg, promote);
 	if (pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr, VM_PAGE_TO_PHYS(pg),
 	    enter_prot, access_type | PMAP_CANFAIL | (wired ? PMAP_WIRED : 0))
 	    != 0) {
@@ -1678,8 +1601,6 @@ Case2:
 		uvmfault_unlockall(&ufi, amap, uobj, NULL);
 		KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
 		if (uvmexp.swpgonly == uvmexp.swpages) {
-			UVMHIST_LOG(maphist,
-			    "<- failed.  out of VM",0,0,0,0);
 			/* XXX instrumentation */
 			return (ENOMEM);
 		}
@@ -1717,7 +1638,6 @@ Case2:
 	uvmfault_unlockall(&ufi, amap, uobj, NULL);
 	pmap_update(ufi.orig_map->pmap);
 
-	UVMHIST_LOG(maphist, "<- done (SUCCESS!)",0,0,0,0);
 	return (0);
 }
 

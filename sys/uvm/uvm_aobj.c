@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.53 2011/05/10 21:48:17 oga Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.54 2011/07/03 18:34:14 oga Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -306,9 +306,6 @@ uao_set_swslot(struct uvm_object *uobj, int pageidx, int slot)
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
 	int oldslot;
-	UVMHIST_FUNC("uao_set_swslot"); UVMHIST_CALLED(pdhist);
-	UVMHIST_LOG(pdhist, "aobj %p pageidx %ld slot %ld",
-	    aobj, pageidx, slot, 0);
 
 	/*
 	 * if noswap flag is set, then we can't set a slot
@@ -594,7 +591,6 @@ uao_reference(struct uvm_object *uobj)
 void
 uao_reference_locked(struct uvm_object *uobj)
 {
-	UVMHIST_FUNC("uao_reference"); UVMHIST_CALLED(maphist);
 
 	/*
  	 * kernel_object already has plenty of references, leave it alone.
@@ -604,8 +600,6 @@ uao_reference_locked(struct uvm_object *uobj)
 		return;
 
 	uobj->uo_refs++;		/* bump! */
-	UVMHIST_LOG(maphist, "<- done (uobj=%p, ref = %ld)", 
-		    uobj, uobj->uo_refs,0,0);
 }
 
 
@@ -636,7 +630,6 @@ uao_detach_locked(struct uvm_object *uobj)
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
 	struct vm_page *pg;
-	UVMHIST_FUNC("uao_detach"); UVMHIST_CALLED(maphist);
 
 	/*
  	 * detaching from kernel_object is a noop.
@@ -646,11 +639,9 @@ uao_detach_locked(struct uvm_object *uobj)
 		return;
 	}
 
-	UVMHIST_LOG(maphist,"  (uobj=%p)  ref=%ld", uobj,uobj->uo_refs,0,0);
 	uobj->uo_refs--;				/* drop ref! */
 	if (uobj->uo_refs) {				/* still more refs? */
 		simple_unlock(&uobj->vmobjlock);
-		UVMHIST_LOG(maphist, "<- done (rc>0)", 0,0,0,0);
 		return;
 	}
 
@@ -718,7 +709,6 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	struct uvm_aobj *aobj = (struct uvm_aobj *) uobj;
 	struct vm_page *pp;
 	voff_t curoff;
-	UVMHIST_FUNC("uao_flush"); UVMHIST_CALLED(maphist);
 
 	if (flags & PGO_ALLPAGES) {
 		start = 0;
@@ -733,18 +723,12 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		}
 	}
 
-	UVMHIST_LOG(maphist, " flush start=0x%lx, stop=0x%lx, flags=0x%lx",
-	    (u_long)start, (u_long)stop, flags, 0);
-
 	/*
 	 * Don't need to do any work here if we're not freeing
 	 * or deactivating pages.
 	 */
-	if ((flags & (PGO_DEACTIVATE|PGO_FREE)) == 0) {
-		UVMHIST_LOG(maphist,
-		    "<- done (no work to do)",0,0,0,0);
+	if ((flags & (PGO_DEACTIVATE|PGO_FREE)) == 0)
 		return (TRUE);
-	}
 
 	/* locked: uobj */
 	curoff = start;
@@ -824,8 +808,6 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		}
 	}
 
-	UVMHIST_LOG(maphist,
-	    "<- done, rv=TRUE",0,0,0,0);
 	return (TRUE);
 }
 
@@ -857,10 +839,6 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 	vm_page_t ptmp;
 	int lcv, gotpages, maxpages, swslot, rv, pageidx;
 	boolean_t done;
-	UVMHIST_FUNC("uao_get"); UVMHIST_CALLED(pdhist);
-
-	UVMHIST_LOG(pdhist, "aobj=%p offset=%ld, flags=%ld",
-		    aobj, (u_long)offset, flags,0);
 
 	/*
  	 * get number of pages
@@ -936,8 +914,6 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 		 * to unlock and do some waiting or I/O.
  		 */
 
-		UVMHIST_LOG(pdhist, "<- done (done=%ld)", done, 0,0,0);
-
 		*npagesp = gotpages;
 		if (done)
 			/* bingo! */
@@ -996,8 +972,6 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 				/* out of RAM? */
 				if (ptmp == NULL) {
 					simple_unlock(&uobj->vmobjlock);
-					UVMHIST_LOG(pdhist,
-					    "sleeping, ptmp == NULL\n",0,0,0,0);
 					uvm_wait("uao_getpage");
 					simple_lock(&uobj->vmobjlock);
 					/* goto top of pps while loop */
@@ -1020,9 +994,6 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			/* page is there, see if we need to wait on it */
 			if ((ptmp->pg_flags & PG_BUSY) != 0) {
 				atomic_setbits_int(&ptmp->pg_flags, PG_WANTED);
-				UVMHIST_LOG(pdhist,
-				    "sleeping, ptmp->flags 0x%lx\n",
-				    ptmp->pg_flags,0,0,0);
 				UVM_UNLOCK_AND_WAIT(ptmp, &uobj->vmobjlock,
 				    FALSE, "uao_get", 0);
 				simple_lock(&uobj->vmobjlock);
@@ -1063,9 +1034,6 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			 */
 			uvm_pagezero(ptmp);
 		} else {
-			UVMHIST_LOG(pdhist, "pagein from swslot %ld",
-			     swslot, 0,0,0);
-
 			/*
 			 * page in the swapped-out page.
 			 * unlock object for i/o, relock when done.
@@ -1079,8 +1047,6 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			 */
 			if (rv != VM_PAGER_OK)
 			{
-				UVMHIST_LOG(pdhist, "<- done (error=%ld)",
-				    rv,0,0,0);
 				if (ptmp->pg_flags & PG_WANTED)
 					wakeup(ptmp);
 
@@ -1129,7 +1095,6 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
  	 */
 
 	simple_unlock(&uobj->vmobjlock);
-	UVMHIST_LOG(pdhist, "<- done (OK)",0,0,0,0);
 	return(VM_PAGER_OK);
 }
 

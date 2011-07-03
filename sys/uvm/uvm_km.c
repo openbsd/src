@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.105 2011/06/23 21:54:56 oga Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.106 2011/07/03 18:34:14 oga Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -268,7 +268,6 @@ uvm_km_pgremove(struct uvm_object *uobj, vaddr_t start, vaddr_t end)
 	struct vm_page *pp;
 	voff_t curoff;
 	int slot;
-	UVMHIST_FUNC("uvm_km_pgremove"); UVMHIST_CALLED(maphist);
 
 	KASSERT(uobj->pgops == &aobj_pager);
 
@@ -352,10 +351,7 @@ uvm_km_kmemalloc_pla(struct vm_map *map, struct uvm_object *obj, vsize_t size,
 	struct vm_page *pg;
 	struct pglist pgl;
 	int pla_flags;
-	UVMHIST_FUNC("uvm_km_kmemalloc"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"  (map=%p, obj=%p, size=0x%lx, flags=%d)",
-		    map, obj, size, flags);
 	KASSERT(vm_map_pmap(map) == pmap_kernel());
 	/* UVM_KMF_VALLOC => !UVM_KMF_ZERO */
 	KASSERT(!(flags & UVM_KMF_VALLOC) ||
@@ -377,7 +373,6 @@ uvm_km_kmemalloc_pla(struct vm_map *map, struct uvm_object *obj, vsize_t size,
 	if (__predict_false(uvm_map(map, &kva, size, obj, UVM_UNKNOWN_OFFSET,
 	      valign, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_NONE,
 			  UVM_ADV_RANDOM, (flags & UVM_KMF_TRYLOCK))) != 0)) {
-		UVMHIST_LOG(maphist, "<- done (no VM)",0,0,0,0);
 		return(0);
 	}
 
@@ -386,7 +381,6 @@ uvm_km_kmemalloc_pla(struct vm_map *map, struct uvm_object *obj, vsize_t size,
 	 */
 
 	if (flags & UVM_KMF_VALLOC) {
-		UVMHIST_LOG(maphist,"<- done valloc (kva=0x%lx)", kva,0,0,0);
 		return(kva);
 	}
 
@@ -398,8 +392,6 @@ uvm_km_kmemalloc_pla(struct vm_map *map, struct uvm_object *obj, vsize_t size,
 		offset = kva - vm_map_min(kernel_map);
 	else
 		offset = 0;
-
-	UVMHIST_LOG(maphist, "  kva=0x%lx, offset=0x%lx", kva, offset,0,0);
 
 	/*
 	 * now allocate and map in the memory... note that we are the only ones
@@ -449,7 +441,6 @@ uvm_km_kmemalloc_pla(struct vm_map *map, struct uvm_object *obj, vsize_t size,
 	KASSERT(TAILQ_EMPTY(&pgl));
 	pmap_update(pmap_kernel());
 
-	UVMHIST_LOG(maphist,"<- done (kva=0x%lx)", kva,0,0,0);
 	return(kva);
 }
 
@@ -497,9 +488,7 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 	vaddr_t kva, loopva;
 	voff_t offset;
 	struct vm_page *pg;
-	UVMHIST_FUNC("uvm_km_alloc1"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"(map=%p, size=0x%lx)", map, size,0,0);
 	KASSERT(vm_map_pmap(map) == pmap_kernel());
 
 	size = round_page(size);
@@ -512,7 +501,6 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 	if (__predict_false(uvm_map(map, &kva, size, uvm.kernel_object,
 	    UVM_UNKNOWN_OFFSET, align, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
 	    UVM_INH_NONE, UVM_ADV_RANDOM, 0)) != 0)) {
-		UVMHIST_LOG(maphist,"<- done (no VM)",0,0,0,0);
 		return(0);
 	}
 
@@ -521,7 +509,6 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 	 */
 
 	offset = kva - vm_map_min(kernel_map);
-	UVMHIST_LOG(maphist,"  kva=0x%lx, offset=0x%lx", kva, offset,0,0);
 
 	/*
 	 * now allocate the memory.  we must be careful about released pages.
@@ -573,7 +560,6 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 	if (zeroit)
 		memset((caddr_t)kva, 0, loopva - kva);
 
-	UVMHIST_LOG(maphist,"<- done (kva=0x%lx)", kva,0,0,0);
 	return(kva);
 }
 
@@ -599,9 +585,7 @@ vaddr_t
 uvm_km_valloc_align(struct vm_map *map, vsize_t size, vsize_t align, int flags)
 {
 	vaddr_t kva;
-	UVMHIST_FUNC("uvm_km_valloc"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "(map=%p, size=0x%lx)", map, size, 0,0);
 	KASSERT(vm_map_pmap(map) == pmap_kernel());
 
 	size = round_page(size);
@@ -614,11 +598,9 @@ uvm_km_valloc_align(struct vm_map *map, vsize_t size, vsize_t align, int flags)
 	if (__predict_false(uvm_map(map, &kva, size, uvm.kernel_object,
 	    UVM_UNKNOWN_OFFSET, align, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
 	    UVM_INH_NONE, UVM_ADV_RANDOM, flags)) != 0)) {
-		UVMHIST_LOG(maphist, "<- done (no VM)", 0,0,0,0);
 		return(0);
 	}
 
-	UVMHIST_LOG(maphist, "<- done (kva=0x%lx)", kva,0,0,0);
 	return(kva);
 }
 
@@ -634,9 +616,7 @@ vaddr_t
 uvm_km_valloc_prefer_wait(struct vm_map *map, vsize_t size, voff_t prefer)
 {
 	vaddr_t kva;
-	UVMHIST_FUNC("uvm_km_valloc_prefer_wait"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "(map=%p, size=0x%lx)", map, size, 0,0);
 	KASSERT(vm_map_pmap(map) == pmap_kernel());
 
 	size = round_page(size);
@@ -654,7 +634,6 @@ uvm_km_valloc_prefer_wait(struct vm_map *map, vsize_t size, voff_t prefer)
 		if (__predict_true(uvm_map(map, &kva, size, uvm.kernel_object,
 		    prefer, 0, UVM_MAPFLAG(UVM_PROT_ALL,
 		    UVM_PROT_ALL, UVM_INH_NONE, UVM_ADV_RANDOM, 0)) == 0)) {
-			UVMHIST_LOG(maphist,"<- done (kva=0x%lx)", kva,0,0,0);
 			return(kva);
 		}
 
@@ -662,7 +641,6 @@ uvm_km_valloc_prefer_wait(struct vm_map *map, vsize_t size, voff_t prefer)
 		 * failed.  sleep for a while (on map)
 		 */
 
-		UVMHIST_LOG(maphist,"<<<sleeping>>>",0,0,0,0);
 		tsleep((caddr_t)map, PVM, "vallocwait", 0);
 	}
 	/*NOTREACHED*/

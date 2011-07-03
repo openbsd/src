@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.73 2011/07/02 15:52:25 thib Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.74 2011/07/03 18:34:14 oga Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -154,9 +154,6 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 	int oldflags, result;
 	struct partinfo pi;
 	u_quad_t used_vnode_size;
-	UVMHIST_FUNC("uvn_attach"); UVMHIST_CALLED(maphist);
-
-	UVMHIST_LOG(maphist, "(vn=%p)", arg,0,0,0);
 
 	used_vnode_size = (u_quad_t)0;	/* XXX gcc -Wuninitialized */
 
@@ -166,11 +163,9 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 	simple_lock(&uvn->u_obj.vmobjlock);
 	while (uvn->u_flags & UVM_VNODE_BLOCKED) {
 		uvn->u_flags |= UVM_VNODE_WANTED;
-		UVMHIST_LOG(maphist, "  SLEEPING on blocked vn",0,0,0,0);
 		UVM_UNLOCK_AND_WAIT(uvn, &uvn->u_obj.vmobjlock, FALSE,
 		    "uvn_attach", 0);
 		simple_lock(&uvn->u_obj.vmobjlock);
-		UVMHIST_LOG(maphist,"  WOKE UP",0,0,0,0);
 	}
 
 	/*
@@ -178,7 +173,6 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 	 */
 	if (vp->v_type == VBLK && bdevsw[major(vp->v_rdev)].d_type != D_DISK) {
 		simple_unlock(&uvn->u_obj.vmobjlock); /* drop lock */
-		UVMHIST_LOG(maphist,"<- done (VBLK not D_DISK!)", 0,0,0,0);
 		return(NULL);
 	}
 
@@ -193,8 +187,6 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 		/* regain vref if we were persisting */
 		if (uvn->u_obj.uo_refs == 0) {
 			vref(vp);
-			UVMHIST_LOG(maphist," vref (reclaim persisting vnode)",
-			    0,0,0,0);
 		}
 		uvn->u_obj.uo_refs++;		/* bump uvn ref! */
 
@@ -208,8 +200,6 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 
 		/* unlock and return */
 		simple_unlock(&uvn->u_obj.vmobjlock);
-		UVMHIST_LOG(maphist,"<- done, refcnt=%ld", uvn->u_obj.uo_refs,
-		    0, 0, 0);
 		return (&uvn->u_obj);
 	}
 
@@ -255,7 +245,6 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 			wakeup(uvn);
 		uvn->u_flags = 0;
 		simple_unlock(&uvn->u_obj.vmobjlock); /* drop lock */
-		UVMHIST_LOG(maphist,"<- done (VOP_GETATTR FAILED!)", 0,0,0,0);
 		return(NULL);
 	}
 
@@ -293,7 +282,6 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 	if (oldflags & UVM_VNODE_WANTED)
 		wakeup(uvn);
 
-	UVMHIST_LOG(maphist,"<- done/vref, ret %p", &uvn->u_obj,0,0,0);
 	return(&uvn->u_obj);
 }
 
@@ -316,7 +304,6 @@ uvn_reference(struct uvm_object *uobj)
 #ifdef DEBUG
 	struct uvm_vnode *uvn = (struct uvm_vnode *) uobj;
 #endif
-	UVMHIST_FUNC("uvn_reference"); UVMHIST_CALLED(maphist);
 
 	simple_lock(&uobj->vmobjlock);
 #ifdef DEBUG
@@ -327,8 +314,6 @@ uvn_reference(struct uvm_object *uobj)
 	}
 #endif
 	uobj->uo_refs++;
-	UVMHIST_LOG(maphist, "<- done (uobj=%p, ref = %ld)",
-	    uobj, uobj->uo_refs,0,0);
 	simple_unlock(&uobj->vmobjlock);
 }
 
@@ -347,15 +332,11 @@ uvn_detach(struct uvm_object *uobj)
 	struct uvm_vnode *uvn;
 	struct vnode *vp;
 	int oldflags;
-	UVMHIST_FUNC("uvn_detach"); UVMHIST_CALLED(maphist);
 
 	simple_lock(&uobj->vmobjlock);
 
-	UVMHIST_LOG(maphist,"  (uobj=%p)  ref=%ld", uobj,uobj->uo_refs,0,0);
-	uobj->uo_refs--;			/* drop ref! */
 	if (uobj->uo_refs) {			/* still more refs */
 		simple_unlock(&uobj->vmobjlock);
-		UVMHIST_LOG(maphist, "<- done (rc>0)", 0,0,0,0);
 		return;
 	}
 
@@ -382,15 +363,12 @@ uvn_detach(struct uvm_object *uobj)
 		uvn_flush(uobj, 0, 0, PGO_DEACTIVATE|PGO_ALLPAGES);
 		simple_unlock(&uobj->vmobjlock);
 		vrele(vp);			/* drop vnode reference */
-		UVMHIST_LOG(maphist,"<- done/vrele!  (persist)", 0,0,0,0);
 		return;
 	}
 
 	/*
 	 * its a goner!
 	 */
-
-	UVMHIST_LOG(maphist,"  its a goner (flushing)!", 0,0,0,0);
 
 	uvn->u_flags |= UVM_VNODE_DYING;
 
@@ -405,8 +383,6 @@ uvn_detach(struct uvm_object *uobj)
 	 */
 
 	(void) uvn_flush(uobj, 0, 0, PGO_CLEANIT|PGO_FREE|PGO_ALLPAGES);
-
-	UVMHIST_LOG(maphist,"  its a goner (done flush)!", 0,0,0,0);
 
 	/*
 	 * given the structure of this pager, the above flush request will
@@ -449,7 +425,6 @@ uvn_detach(struct uvm_object *uobj)
 	 * drop our reference to the vnode.
 	 */
 	vrele(vp);
-	UVMHIST_LOG(maphist,"<- done (vrele) final", 0,0,0,0);
 
 	return;
 }
@@ -485,17 +460,13 @@ uvm_vnp_terminate(struct vnode *vp)
 {
 	struct uvm_vnode *uvn = &vp->v_uvm;
 	int oldflags;
-	UVMHIST_FUNC("uvm_vnp_terminate"); UVMHIST_CALLED(maphist);
 
 	/*
 	 * lock object and check if it is valid
 	 */
 	simple_lock(&uvn->u_obj.vmobjlock);
-	UVMHIST_LOG(maphist, "  vp=%p, ref=%ld, flag=0x%lx", vp,
-	    uvn->u_obj.uo_refs, uvn->u_flags, 0);
 	if ((uvn->u_flags & UVM_VNODE_VALID) == 0) {
 		simple_unlock(&uvn->u_obj.vmobjlock);
-		UVMHIST_LOG(maphist, "<- done (not active)", 0, 0, 0, 0);
 		return;
 	}
 
@@ -608,7 +579,6 @@ uvm_vnp_terminate(struct vnode *vp)
 		wakeup(uvn);		/* object lock still held */
 
 	simple_unlock(&uvn->u_obj.vmobjlock);
-	UVMHIST_LOG(maphist, "<- done", 0, 0, 0, 0);
 
 }
 
@@ -694,7 +664,6 @@ uvn_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	int npages, result, lcv;
 	boolean_t retval, need_iosync, needs_clean;
 	voff_t curoff;
-	UVMHIST_FUNC("uvn_flush"); UVMHIST_CALLED(maphist);
 
 	/*
 	 * get init vals and determine how we are going to traverse object
@@ -709,10 +678,6 @@ uvn_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		start = trunc_page(start);
 		stop = MIN(round_page(stop), round_page(uvn->u_size));
 	}
-
-	UVMHIST_LOG(maphist,
-	    " flush start=0x%lx, stop=0x%lx, flags=0x%lx",
-	    (u_long)start, (u_long)stop, flags, 0);
 
 	/*
 	 * PG_CLEANCHK: this bit is used by the pgo_mk_pcluster function as
@@ -957,8 +922,6 @@ ReTry:
 	 * now wait for all I/O if required.
 	 */
 	if (need_iosync) {
-
-		UVMHIST_LOG(maphist,"  <<DOING IOSYNC>>",0,0,0,0);
 		while (uvn->u_nio != 0) {
 			uvn->u_flags |= UVM_VNODE_IOSYNC;
 			UVM_UNLOCK_AND_WAIT(&uvn->u_nio, &uvn->u_obj.vmobjlock,
@@ -971,7 +934,6 @@ ReTry:
 	}
 
 	/* return, with object locked! */
-	UVMHIST_LOG(maphist,"<- done (retval=0x%lx)",retval,0,0,0);
 	return(retval);
 }
 
@@ -1048,8 +1010,6 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 	struct vm_page *ptmp;
 	int lcv, result, gotpages;
 	boolean_t done;
-	UVMHIST_FUNC("uvn_get"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist, "flags=%ld", flags,0,0,0);
 
 	/*
 	 * step 1: handled the case where fault data structures are locked.
@@ -1296,9 +1256,6 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 	off_t file_offset;
 	int waitf, result, mapinflags;
 	size_t got, wanted;
-	UVMHIST_FUNC("uvn_io"); UVMHIST_CALLED(maphist);
-
-	UVMHIST_LOG(maphist, "rw=%ld", rw,0,0,0);
 
 	/*
 	 * init values
@@ -1315,7 +1272,6 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 	while (uvn->u_flags & UVM_VNODE_IOSYNC) {
 		if (waitf == M_NOWAIT) {
 			simple_unlock(&uvn->u_obj.vmobjlock);
-			UVMHIST_LOG(maphist,"<- try again (iosync)",0,0,0,0);
 			return(VM_PAGER_AGAIN);
 		}
 		uvn->u_flags |= UVM_VNODE_IOSYNCWANTED;
@@ -1329,9 +1285,8 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 	 */
 
 	if (file_offset >= uvn->u_size) {
-			simple_unlock(&uvn->u_obj.vmobjlock);
-			UVMHIST_LOG(maphist,"<- BAD (size check)",0,0,0,0);
-			return(VM_PAGER_BAD);
+		simple_unlock(&uvn->u_obj.vmobjlock);
+		return(VM_PAGER_BAD);
 	}
 
 	/*
@@ -1344,7 +1299,6 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 	kva = uvm_pagermapin(pps, npages, mapinflags);
 	if (kva == 0 && waitf == M_NOWAIT) {
 		simple_unlock(&uvn->u_obj.vmobjlock);
-		UVMHIST_LOG(maphist,"<- mapin failed (try again)",0,0,0,0);
 		return(VM_PAGER_AGAIN);
 	}
 
@@ -1388,8 +1342,6 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 	 * do the I/O!  (XXX: curproc?)
 	 */
 
-	UVMHIST_LOG(maphist, "calling VOP",0,0,0,0);
-
 	/*
 	 * This process may already have this vnode locked, if we faulted in
 	 * copyin() or copyout() on a region backed by this vnode
@@ -1416,8 +1368,6 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 	}
 
 	/* NOTE: vnode now unlocked (unless vnislocked) */
-
-	UVMHIST_LOG(maphist, "done calling VOP",0,0,0,0);
 
 	/*
 	 * result == unix style errno (0 == OK!)
@@ -1459,7 +1409,6 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 	 * done!
 	 */
 
-	UVMHIST_LOG(maphist, "<- done (result %ld)", result,0,0,0);
 	if (result == 0)
 		return(VM_PAGER_OK);
 	else

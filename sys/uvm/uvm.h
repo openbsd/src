@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.43 2011/05/30 22:25:24 oga Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.44 2011/07/03 18:34:14 oga Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -153,15 +153,6 @@ struct uvm {
  * holds all the internal UVM data
  */
 extern struct uvm uvm;
-
-/*
- * historys
- */
-#ifdef UVMHIST
-extern UVMHIST_DECL(maphist);
-extern UVMHIST_DECL(pdhist);
-extern UVMHIST_DECL(pghist);
-#endif
 
 /*
  * UVM_UNLOCK_AND_WAIT: atomic unlock+wait... wrapper around the

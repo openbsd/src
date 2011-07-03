@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.111 2011/06/06 17:10:23 ariane Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.112 2011/07/03 18:34:14 oga Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -2545,9 +2545,6 @@ inteldrm_fault(struct drm_obj *obj, struct uvm_faultinfo *ufi, off_t offset,
 
 		paddr = dev->agp->base + obj_priv->gtt_offset + offset;
 
-		UVMHIST_LOG(maphist,
-		    "  MAPPING: device: pm=%p, va=0x%lx, pa=0x%lx, at=%ld",
-		    ufi->orig_map->pmap, vaddr, (u_long)paddr, mapprot);
 		if (pmap_enter(ufi->orig_map->pmap, vaddr, paddr,
 		    mapprot, PMAP_CANFAIL | mapprot) != 0) {
 			drm_unhold_object(obj);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_stat.c,v 1.23 2011/06/30 15:51:07 tedu Exp $	 */
+/*	$OpenBSD: uvm_stat.c,v 1.24 2011/07/03 18:34:14 oga Exp $	 */
 /*	$NetBSD: uvm_stat.c,v 1.18 2001/03/09 01:02:13 chs Exp $	 */
 
 /*
@@ -51,13 +51,6 @@
 
 struct uvm_cnt *uvm_cnt_head = NULL;
 
-#ifdef UVMHIST
-struct uvm_history_head uvm_histories;
-#endif
-
-#ifdef UVMHIST_PRINT
-int uvmhist_print_enabled = 1;
-#endif
 
 #ifdef DDB
 
@@ -65,123 +58,8 @@ int uvmhist_print_enabled = 1;
  * prototypes
  */
 
-#ifdef UVMHIST
-void uvmhist_dump(struct uvm_history *);
-void uvm_hist(u_int32_t);
-static void uvmhist_dump_histories(struct uvm_history *[]);
-#endif
 void uvmcnt_dump(void);
 
-
-#ifdef UVMHIST
-/* call this from ddb */
-void
-uvmhist_dump(struct uvm_history *l)
-{
-	int lcv, s;
-
-	s = splhigh();
-	lcv = l->f;
-	do {
-		if (l->e[lcv].fmt)
-			uvmhist_print(&l->e[lcv]);
-		lcv = (lcv + 1) % l->n;
-	} while (lcv != l->f);
-	splx(s);
-}
-
-/*
- * print a merged list of uvm_history structures
- */
-static void
-uvmhist_dump_histories(struct uvm_history *hists[])
-{
-	struct timeval  tv;
-	int	cur[MAXHISTS];
-	int	s, lcv, hi;
-
-	/* so we don't get corrupted lists! */
-	s = splhigh();
-
-	/* find the first of each list */
-	for (lcv = 0; hists[lcv]; lcv++)
-		 cur[lcv] = hists[lcv]->f;
-
-	/*
-	 * here we loop "forever", finding the next earliest
-	 * history entry and printing it.  cur[X] is the current
-	 * entry to test for the history in hists[X].  if it is
-	 * -1, then this history is finished.
-	 */
-	for (;;) {
-		hi = -1;
-		tv.tv_sec = tv.tv_usec = 0;
-
-		/* loop over each history */
-		for (lcv = 0; hists[lcv]; lcv++) {
-restart:
-			if (cur[lcv] == -1)
-				continue;
-
-			/*
-			 * if the format is empty, go to the next entry
-			 * and retry.
-			 */
-			if (hists[lcv]->e[cur[lcv]].fmt == NULL) {
-				cur[lcv] = (cur[lcv] + 1) % (hists[lcv]->n);
-				if (cur[lcv] == hists[lcv]->f)
-					cur[lcv] = -1;
-				goto restart;
-			}
-				
-			/*
-			 * if the time hasn't been set yet, or this entry is
-			 * earlier than the current tv, set the time and history
-			 * index.
-			 */
-			if (tv.tv_sec == 0 ||
-			    timercmp(&hists[lcv]->e[cur[lcv]].tv, &tv, <)) {
-				tv = hists[lcv]->e[cur[lcv]].tv;
-				hi = lcv;
-			}
-		}
-
-		/* if we didn't find any entries, we must be done */
-		if (hi == -1)
-			break;
-
-		/* print and move to the next entry */
-		uvmhist_print(&hists[hi]->e[cur[hi]]);
-		cur[hi] = (cur[hi] + 1) % (hists[hi]->n);
-		if (cur[hi] == hists[hi]->f)
-			cur[hi] = -1;
-	}
-	
-	/* done! */
-	splx(s);
-}
-
-/*
- * call this from ddb.  `bitmask' is from <uvm/uvm_stat.h>.  it
- * merges the named histories.
- */
-void
-uvm_hist(u_int32_t bitmask)	/* XXX only support 32 hists */
-{
-	struct uvm_history *hists[MAXHISTS + 1];
-	int i = 0;
-
-	if ((bitmask & UVMHIST_MAPHIST) || bitmask == 0)
-		hists[i++] = &maphist;
-
-	if ((bitmask & UVMHIST_PDHIST) || bitmask == 0)
-		hists[i++] = &pdhist;
-
-	hists[i] = NULL;
-
-	uvmhist_dump_histories(hists);
-}
-#endif /* UVMHIST */
 
 void
 uvmcnt_dump(void)
