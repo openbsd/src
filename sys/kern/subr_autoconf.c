@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.65 2011/06/20 17:05:46 deraadt Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.66 2011/07/03 15:47:16 matthew Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -648,24 +648,6 @@ done:
 }
 
 int
-config_activate(struct device *dev)
-{
-	struct cfattach *ca = dev->dv_cfdata->cf_attach;
-	int rv = 0, oflags = dev->dv_flags;
-
-	if (ca->ca_activate == NULL)
-		return (EOPNOTSUPP);
-
-	if ((dev->dv_flags & DVF_ACTIVE) == 0) {
-		dev->dv_flags |= DVF_ACTIVE;
-		rv = (*ca->ca_activate)(dev, DVACT_ACTIVATE);
-		if (rv)
-			dev->dv_flags = oflags;
-	}
-	return (rv);
-}
-
-int
 config_deactivate(struct device *dev)
 {
 	struct cfattach *ca = dev->dv_cfdata->cf_attach;
@@ -817,9 +799,6 @@ config_activate_children(struct device *parent, int act)
 		if (d->dv_parent != parent)
 			continue;
 		switch (act) {
-		case DVACT_ACTIVATE:
-			rv = config_activate(d);
-			break;
 		case DVACT_SUSPEND:
 		case DVACT_RESUME:
 		case DVACT_QUIESCE:

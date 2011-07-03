@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.32 2009/10/13 19:33:16 pirofti Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.33 2011/07/03 15:47:16 matthew Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -1212,9 +1212,6 @@ smc91cxx_activate(self, act)
 
 	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 #if 0
 		if_deactivate(&sc->sc_ic.ic_if);

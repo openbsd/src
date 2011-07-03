@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_pcmcia.c,v 1.31 2011/03/31 13:05:27 jasper Exp $	*/
+/*	$OpenBSD: if_sm_pcmcia.c,v 1.32 2011/07/03 15:47:17 matthew Exp $	*/
 /*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $  */
 
 /*-
@@ -254,12 +254,6 @@ sm_pcmcia_activate(dev, act)
 	struct ifnet *ifp = &sc->sc_smc.sc_arpcom.ac_if;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		pcmcia_function_enable(sc->sc_pf);
-		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET,
-		    smc91cxx_intr, sc, sc->sc_smc.sc_dev.dv_xname);
-		smc91cxx_init(&sc->sc_smc);
-		break;
 	case DVACT_DEACTIVATE:
 		ifp->if_timer = 0;
 		if (ifp->if_flags & IFF_RUNNING)

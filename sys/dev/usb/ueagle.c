@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.33 2011/03/22 16:31:19 deraadt Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.34 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
  * Copyright (c) 2003-2006
@@ -1461,9 +1461,6 @@ ueagle_activate(struct device *self, int act)
 	struct ueagle_softc *sc = (struct ueagle_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		usbd_deactivate(sc->sc_udev);
 		break;

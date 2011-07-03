@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.39 2010/08/30 20:33:18 deraadt Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.40 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -463,13 +463,6 @@ xe_pcmcia_activate(dev, act)
 	struct ifnet *ifp = &sc->sc_xe.sc_arpcom.ac_if;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		if (sc->sc_xe.sc_ih == NULL) {
-			pcmcia_function_enable(sc->sc_pf);
-			sc->sc_xe.sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET,
-			    xe_intr, sc, sc->sc_xe.sc_dev.dv_xname);
-		}
-		break;
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
 			xe_stop(&sc->sc_xe);

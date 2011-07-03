@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewire.c,v 1.11 2009/10/13 19:33:16 pirofti Exp $	*/
+/*	$OpenBSD: onewire.c,v 1.12 2011/07/03 15:47:16 matthew Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -134,8 +134,6 @@ onewire_activate(struct device *self, int act)
 	struct onewire_softc *sc = (struct onewire_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		break;

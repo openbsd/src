@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.94 2011/04/03 15:36:02 jasper Exp $	*/
+/*	$OpenBSD: auich.c,v 1.95 2011/07/03 15:47:16 matthew Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -563,8 +563,6 @@ auich_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_QUIESCE:
 		rv = config_activate_children(self, act);
 		break;

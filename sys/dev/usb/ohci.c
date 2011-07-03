@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.103 2010/12/14 16:13:16 jakemsr Exp $ */
+/*	$OpenBSD: ohci.c,v 1.104 2011/07/03 15:47:17 matthew Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -331,8 +331,6 @@ ohci_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_SUSPEND:
 		sc->sc_bus.use_polling++;
 		reg = OREAD4(sc, OHCI_CONTROL) & ~OHCI_HCFS_MASK;

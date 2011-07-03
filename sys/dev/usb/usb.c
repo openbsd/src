@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.76 2011/04/28 07:35:15 jakemsr Exp $	*/
+/*	$OpenBSD: usb.c,v 1.77 2011/07/03 15:47:17 matthew Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -757,8 +757,6 @@ usb_activate(struct device *self, int act)
 	int i, rv = 0, r;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_DEACTIVATE:
 		sc->sc_bus->dying = 1;
 		if (dev != NULL && dev->cdesc != NULL &&

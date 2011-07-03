@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.197 2011/06/02 18:36:49 kettenis Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.198 2011/07/03 15:47:16 matthew Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -544,8 +544,6 @@ azalia_pci_activate(struct device *self, int act)
 	int rv = 0; 
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_QUIESCE:
 		rv = config_activate_children(self, act);
 		break;

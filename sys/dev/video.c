@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.27 2011/03/26 08:13:05 jakemsr Exp $	*/
+/*	$OpenBSD: video.c,v 1.28 2011/07/03 15:47:16 matthew Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
@@ -452,9 +452,6 @@ videoactivate(struct device *self, int act)
 	struct video_softc *sc = (struct video_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		break;

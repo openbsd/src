@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.52 2011/07/02 22:20:08 nicm Exp $ */
+/*	$OpenBSD: uhid.c,v 1.53 2011/07/03 15:47:17 matthew Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -156,9 +156,6 @@ uhid_activate(struct device *self, int act)
 	struct uhid_softc *sc = (struct uhid_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		break;

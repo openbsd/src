@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.30 2011/05/05 17:00:43 sthen Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -1552,9 +1552,6 @@ urndis_activate(struct device *self, int devact)
 	sc = (struct urndis_softc *)self;
 
 	switch (devact) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		break;

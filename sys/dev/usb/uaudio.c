@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.91 2011/01/25 20:03:36 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.92 2011/07/03 15:47:17 matthew Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -571,8 +571,6 @@ uaudio_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_DEACTIVATE:
 		if (sc->sc_audiodev != NULL)
 			rv = config_deactivate(sc->sc_audiodev);

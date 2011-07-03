@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.38 2011/01/25 20:03:35 jakemsr Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -803,8 +803,6 @@ urtw_activate(struct device *self, int act)
 	struct urtw_softc *sc = (struct urtw_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_DEACTIVATE:
 		usbd_deactivate(sc->sc_udev);
 		break;

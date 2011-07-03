@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.98 2010/12/17 22:38:54 jasper Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.99 2011/07/03 15:47:17 matthew Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1521,8 +1521,6 @@ atu_activate(struct device *self, int act)
 	struct atu_softc *sc = (struct atu_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_DEACTIVATE:
 		usbd_deactivate(sc->atu_udev);
 		break;

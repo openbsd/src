@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.65 2011/07/02 22:20:08 nicm Exp $ */
+/*	$OpenBSD: ugen.c,v 1.66 2011/07/03 15:47:17 matthew Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -746,9 +746,6 @@ ugen_activate(struct device *self, int act)
 	struct ugen_softc *sc = (struct ugen_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		break;

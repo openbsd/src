@@ -1,4 +1,4 @@
-/*	$OpenBSD: umbg.c,v 1.16 2011/01/25 20:03:36 jakemsr Exp $ */
+/*	$OpenBSD: umbg.c,v 1.17 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -453,8 +453,6 @@ umbg_activate(struct device *self, int act)
 	struct umbg_softc *sc = (struct umbg_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_DEACTIVATE:
 		usbd_deactivate(sc->sc_udev);
 		break;

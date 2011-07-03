@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.28 2010/09/21 02:09:15 jakemsr Exp $ */
+/* $OpenBSD: auixp.c,v 1.29 2011/07/03 15:47:16 matthew Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -1243,8 +1243,6 @@ auixp_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_QUIESCE:
 		rv = config_activate_children(self, act);
 		break;

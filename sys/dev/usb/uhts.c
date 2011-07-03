@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhts.c,v 1.3 2011/04/07 15:30:16 miod Exp $ */
+/*	$OpenBSD: uhts.c,v 1.4 2011/07/03 15:47:17 matthew Exp $ */
 /*
  * Copyright (c) 2009 Matthieu Herrb <matthieu@herrb.eu>
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -238,8 +238,6 @@ uhts_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_DEACTIVATE:
 		if (sc->sc_wsmousedev != NULL)
 			rv = config_deactivate(sc->sc_wsmousedev);

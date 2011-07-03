@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipaq.c,v 1.19 2011/01/25 20:03:36 jakemsr Exp $	*/
+/*	$OpenBSD: uipaq.c,v 1.20 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -361,9 +361,6 @@ uipaq_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		if (sc->sc_subdev != NULL)
 			rv = config_deactivate(sc->sc_subdev);

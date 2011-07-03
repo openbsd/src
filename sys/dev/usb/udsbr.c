@@ -1,4 +1,4 @@
-/*	$OpenBSD: udsbr.c,v 1.22 2011/01/25 20:03:36 jakemsr Exp $	*/
+/*	$OpenBSD: udsbr.c,v 1.23 2011/07/03 15:47:17 matthew Exp $	*/
 /*	$NetBSD: udsbr.c,v 1.7 2002/07/11 21:14:27 augustss Exp $	*/
 
 /*
@@ -169,9 +169,6 @@ udsbr_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		if (sc->sc_child != NULL)

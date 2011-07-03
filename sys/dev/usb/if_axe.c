@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.105 2011/01/25 20:03:35 jakemsr Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.106 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -884,9 +884,6 @@ axe_activate(struct device *self, int act)
 	DPRINTFN(2,("%s: %s: enter\n", sc->axe_dev.dv_xname, __func__));
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		usbd_deactivate(sc->axe_udev);
 		break;

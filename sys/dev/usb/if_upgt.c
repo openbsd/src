@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.55 2011/01/25 20:03:35 jakemsr Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.56 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -511,8 +511,6 @@ upgt_activate(struct device *self, int act)
 	struct upgt_softc *sc = (struct upgt_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_DEACTIVATE:
 		usbd_deactivate(sc->sc_udev);
 		break;

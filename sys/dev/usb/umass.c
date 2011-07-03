@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.61 2011/05/24 20:27:11 matthew Exp $ */
+/*	$OpenBSD: umass.c,v 1.62 2011/07/03 15:47:17 matthew Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -679,9 +679,6 @@ umass_activate(struct device *dev, int act)
 	    sc->sc_dev.dv_xname, act));
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		if (scbus == NULL || scbus->sc_child == NULL)

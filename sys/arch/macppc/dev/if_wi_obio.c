@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_obio.c,v 1.16 2009/10/13 19:33:16 pirofti Exp $	*/
+/*	$OpenBSD: if_wi_obio.c,v 1.17 2011/07/03 15:47:16 matthew Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -170,13 +170,6 @@ wi_obio_activate(dev, act)
 
 	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		wi_obio_enable(sc);
-		printf("%s:", WI_PRT_ARG(sc));
-		printf("\n");
-		wi_init(sc);
-		break;
-
 	case DVACT_DEACTIVATE:
 		ifp->if_timer = 0;
 		if (ifp->if_flags & IFF_RUNNING)

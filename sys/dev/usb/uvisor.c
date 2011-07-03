@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.43 2011/01/25 20:03:36 jakemsr Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.44 2011/07/03 15:47:18 matthew Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -382,8 +382,6 @@ uvisor_activate(struct device *self, int act)
 	int i, rv = 0, r;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_DEACTIVATE:
 		for (i = 0; i < sc->sc_numcon; i++)
 			if (sc->sc_subdevs[i] != NULL) {

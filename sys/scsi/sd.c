@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.231 2011/06/30 16:28:05 matthew Exp $	*/
+/*	$OpenBSD: sd.c,v 1.232 2011/07/03 15:47:18 matthew Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -268,8 +268,6 @@ sdactivate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_SUSPEND:
 		/*
 		 * Stop the disk.  Stopping the disk should flush the

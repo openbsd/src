@@ -1,4 +1,4 @@
-/* $OpenBSD: radio.c,v 1.8 2009/10/13 19:33:16 pirofti Exp $ */
+/* $OpenBSD: radio.c,v 1.9 2011/07/03 15:47:16 matthew Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
 /*
@@ -195,9 +195,6 @@ radioactivate(struct device *self, int act)
 	struct radio_softc *sc = (struct radio_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		break;

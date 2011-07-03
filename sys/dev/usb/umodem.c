@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.43 2011/03/22 16:31:19 deraadt Exp $ */
+/*	$OpenBSD: umodem.c,v 1.44 2011/07/03 15:47:17 matthew Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -743,9 +743,6 @@ umodem_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		if (sc->sc_subdev)

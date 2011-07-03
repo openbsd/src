@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pcmcia.c,v 1.21 2010/08/30 20:33:18 deraadt Exp $	*/
+/*	$OpenBSD: if_an_pcmcia.c,v 1.22 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -176,12 +176,6 @@ an_pcmcia_activate(struct device *dev, int act)
 	struct ifnet		*ifp = &ic->ic_if;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		pcmcia_function_enable(psc->sc_pf);
-		sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET,
-		    an_intr, sc, sc->sc_dev.dv_xname);
-		an_init(ifp);
-		break;
 	case DVACT_DEACTIVATE:
 		ifp->if_timer = 0;
 		if (ifp->if_flags & IFF_RUNNING)

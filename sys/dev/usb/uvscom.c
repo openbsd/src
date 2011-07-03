@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.23 2011/01/25 20:03:36 jakemsr Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.24 2011/07/03 15:47:18 matthew Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -394,9 +394,6 @@ uvscom_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		if (sc->sc_subdev != NULL)
 			rv = config_deactivate(sc->sc_subdev);

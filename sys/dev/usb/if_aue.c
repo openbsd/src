@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.84 2011/01/25 20:03:35 jakemsr Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.85 2011/07/03 15:47:17 matthew Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -895,9 +895,6 @@ aue_activate(struct device *self, int act)
 	DPRINTFN(2,("%s: %s: enter\n", sc->aue_dev.dv_xname, __func__));
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		usbd_deactivate(sc->aue_udev);
 		break;

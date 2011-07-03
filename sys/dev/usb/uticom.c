@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.16 2011/06/19 17:55:37 jsg Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.17 2011/07/03 15:47:17 matthew Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -465,9 +465,6 @@ uticom_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		if (sc->sc_subdev != NULL)
 			rv = config_deactivate(sc->sc_subdev);

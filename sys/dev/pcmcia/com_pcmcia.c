@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.52 2011/03/31 13:05:27 jasper Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.53 2011/07/03 15:47:17 matthew Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*
@@ -211,11 +211,6 @@ com_pcmcia_activate(dev, act)
 	struct com_pcmcia_softc *sc = (void *) dev;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		pcmcia_function_enable(sc->sc_pf);
-		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_TTY,
-		    comintr, sc, sc->sc_com.sc_dev.dv_xname);
-		break;
 	case DVACT_SUSPEND:
 		if (sc->sc_ih)
 			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);

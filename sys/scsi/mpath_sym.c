@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_sym.c,v 1.4 2011/06/15 01:51:44 dlg Exp $ */
+/*	$OpenBSD: mpath_sym.c,v 1.5 2011/07/03 15:47:18 matthew Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -140,7 +140,6 @@ sym_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
 	case DVACT_SUSPEND:
 	case DVACT_RESUME:
 		break;

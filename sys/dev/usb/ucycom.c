@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.19 2011/01/25 20:03:36 jakemsr Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.20 2011/07/03 15:47:17 matthew Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -596,9 +596,6 @@ ucycom_activate(struct device *self, int act)
 	DPRINTFN(5,("ucycom_activate: %d\n", act));
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		if (sc->sc_subdev != NULL)
 			rv = config_deactivate(sc->sc_subdev);

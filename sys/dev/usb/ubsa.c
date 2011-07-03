@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.52 2011/01/25 20:03:36 jakemsr Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.53 2011/07/03 15:47:17 matthew Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -405,9 +405,6 @@ ubsa_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		if (sc->sc_subdev != NULL)
 			rv = config_deactivate(sc->sc_subdev);

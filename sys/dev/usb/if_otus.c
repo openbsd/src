@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.30 2011/02/10 17:26:40 jakemsr Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.31 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -274,9 +274,6 @@ otus_activate(struct device *self, int act)
 	struct otus_softc *sc = (struct otus_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		usbd_deactivate(sc->sc_udev);
 		break;

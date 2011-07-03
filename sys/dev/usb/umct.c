@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.32 2011/01/25 20:03:36 jakemsr Exp $	*/
+/*	$OpenBSD: umct.c,v 1.33 2011/07/03 15:47:17 matthew Exp $	*/
 /*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -338,9 +338,6 @@ umct_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		if (sc->sc_subdev != NULL)
 			rv = config_deactivate(sc->sc_subdev);

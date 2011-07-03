@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.16 2011/01/25 20:03:36 jakemsr Exp $   */
+/*	$OpenBSD: uthum.c,v 1.17 2011/07/03 15:47:17 matthew Exp $   */
 
 /*
  * Copyright (c) 2009, 2010 Yojiro UO <yuo@nui.org>
@@ -289,9 +289,6 @@ uthum_activate(struct device *self, int act)
 	struct uthum_softc *sc = (struct uthum_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		break;

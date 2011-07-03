@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.29 2011/03/03 21:48:49 kettenis Exp $ */
+/*	$OpenBSD: uts.c,v 1.30 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -254,9 +254,6 @@ uts_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		if (sc->sc_wsmousedev != NULL)
 			rv = config_deactivate(sc->sc_wsmousedev);

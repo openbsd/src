@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.88 2011/02/10 17:26:40 jakemsr Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.89 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3554,9 +3554,6 @@ run_activate(struct device *self, int act)
 	struct run_softc *sc = (struct run_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		usbd_deactivate(sc->sc_udev);
 		break;

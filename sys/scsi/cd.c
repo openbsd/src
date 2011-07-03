@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.205 2011/06/30 16:28:05 matthew Exp $	*/
+/*	$OpenBSD: cd.c,v 1.206 2011/07/03 15:47:18 matthew Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -240,8 +240,6 @@ cdactivate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_RESUME:
 		/*
 		 * When resuming, hardware may have forgotten we locked it. So if

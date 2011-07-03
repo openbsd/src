@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.26 2011/05/09 22:33:54 matthew Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.27 2011/07/03 15:47:17 matthew Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -431,16 +431,6 @@ wdc_pcmcia_activate(self, act)
 		return (0);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		if (sc->sc_ih == NULL) {
-			/* XXX attach function already did the work */
-			pcmcia_function_enable(sc->sc_pf);
-			sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO, 
-			    wdcintr, &sc->wdc_channel, sc->sc_wdcdev.sc_dev.dv_xname);
-			wdcreset(&sc->wdc_channel, VERBOSE);
-		}
-		rv = config_activate_children(self, act);
-		break;
 	case DVACT_QUIESCE:
 		rv = config_activate_children(self, act);
 		break;

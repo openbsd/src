@@ -1,4 +1,4 @@
-/*	$OpenBSD: udfu.c,v 1.3 2011/01/25 20:03:36 jakemsr Exp $	*/
+/*	$OpenBSD: udfu.c,v 1.4 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*
  * Copyright (c) 2009 Federico G. Schwindt <fgsch@openbsd.org>
@@ -170,9 +170,6 @@ udfu_activate(struct device *self, int act)
 	struct udfu_softc *sc = (struct udfu_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		usbd_deactivate(sc->sc_udev);
 		break;

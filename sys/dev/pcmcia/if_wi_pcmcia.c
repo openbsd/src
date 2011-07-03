@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.69 2010/08/30 20:33:18 deraadt Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.70 2011/07/03 15:47:17 matthew Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -477,13 +477,6 @@ wi_pcmcia_activate(struct device *dev, int act)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		pcmcia_function_enable(psc->sc_pf);
-		sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET,
-		    wi_intr, sc, sc->sc_dev.dv_xname);
-		workq_queue_task(NULL, &psc->sc_resume_wqt, 0,
-		    wi_pcmcia_resume, sc, NULL);
-		break;
 	case DVACT_SUSPEND:
 		ifp->if_timer = 0;
 		if (ifp->if_flags & IFF_RUNNING)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.163 2011/06/23 22:03:43 oga Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.164 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -564,8 +564,6 @@ uvideo_activate(struct device *self, int act)
 	DPRINTF(1, "uvideo_activate: sc=%p\n", sc);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_DEACTIVATE:
 		if (sc->sc_videodev != NULL)
 			config_deactivate(sc->sc_videodev);

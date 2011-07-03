@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.94 2011/06/17 07:06:47 mk Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.95 2011/07/03 15:47:17 matthew Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -257,9 +257,6 @@ int
 drm_activate(struct device *self, int act)
 {
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		/* FIXME */
 		break;

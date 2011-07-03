@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.39 2011/06/17 07:06:47 mk Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.40 2011/07/03 15:47:17 matthew Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -534,8 +534,6 @@ emuxki_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
- 	case DVACT_ACTIVATE:
-		break;
 	case DVACT_QUIESCE:
 		rv = config_activate_children(self, act);
 		break;

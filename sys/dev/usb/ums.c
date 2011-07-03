@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.34 2011/03/04 23:57:52 kettenis Exp $ */
+/*	$OpenBSD: ums.c,v 1.35 2011/07/03 15:47:17 matthew Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -163,9 +163,6 @@ ums_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		if (ms->sc_wsmousedev != NULL)
 			rv = config_deactivate(ms->sc_wsmousedev);

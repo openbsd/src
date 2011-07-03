@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.87 2011/01/25 20:03:36 jakemsr Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.88 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -2585,9 +2585,6 @@ zyd_activate(struct device *self, int act)
 	struct zyd_softc *sc = (struct zyd_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		usbd_deactivate(sc->sc_udev);
 		break;

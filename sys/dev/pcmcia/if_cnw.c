@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.21 2010/08/30 20:33:18 deraadt Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.22 2011/07/03 15:47:17 matthew Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -862,12 +862,6 @@ cnw_activate(dev, act)
         struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		pcmcia_function_enable(sc->sc_pf);
-		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET,
-		    cnw_intr, sc, sc->sc_dev.dv_xname);
-		cnw_init(sc);
-		break;
 	case DVACT_DEACTIVATE:
 		ifp->if_timer = 0;
 		ifp->if_flags &= ~IFF_RUNNING; /* XXX no cnw_stop() ? */

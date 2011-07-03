@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_emc.c,v 1.6 2011/06/16 08:42:30 dlg Exp $ */
+/*	$OpenBSD: mpath_emc.c,v 1.7 2011/07/03 15:47:18 matthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -190,7 +190,6 @@ emc_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
 	case DVACT_SUSPEND:
 	case DVACT_RESUME:
 		break;

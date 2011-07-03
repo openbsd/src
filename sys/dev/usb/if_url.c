@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.62 2011/06/23 16:31:16 deraadt Exp $ */
+/*	$OpenBSD: if_url.c,v 1.63 2011/07/03 15:47:17 matthew Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -587,9 +587,6 @@ url_activate(struct device *self, int act)
 		 __func__, act));
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		usbd_deactivate(sc->sc_udev);
 		break;

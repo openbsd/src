@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.45 2011/07/02 22:20:08 nicm Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.46 2011/07/03 15:47:17 matthew Exp $ */
 /*	$NetBSD: uscanner.c,v 1.40 2003/01/27 00:32:44 wiz Exp $	*/
 
 /*
@@ -559,9 +559,6 @@ uscanner_activate(struct device *self, int act)
 	struct uscanner_softc *sc = (struct uscanner_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		break;

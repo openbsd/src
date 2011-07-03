@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.89 2010/12/14 16:13:16 jakemsr Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.90 2011/07/03 15:47:17 matthew Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -525,8 +525,6 @@ uhci_activate(struct device *self, int act)
 	int cmd, rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_SUSPEND:
 #ifdef UHCI_DEBUG
 		if (uhcidebug > 2)

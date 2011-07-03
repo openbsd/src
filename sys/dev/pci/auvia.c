@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.48 2011/04/03 15:36:02 jasper Exp $ */
+/*	$OpenBSD: auvia.c,v 1.49 2011/07/03 15:47:16 matthew Exp $ */
 /*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
 
 /*-
@@ -243,8 +243,6 @@ auvia_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
- 	case DVACT_ACTIVATE:
-		break;
 	case DVACT_QUIESCE:
 		rv = config_activate_children(self, act);
 		break;

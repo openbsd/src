@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.46 2011/05/02 22:20:20 chl Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.47 2011/07/03 15:47:17 matthew Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -653,12 +653,6 @@ ray_activate(struct device *dev, int act)
 	struct ifnet *ifp = &sc->sc_if;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		pcmcia_function_enable(sc->sc_pf);
-		printf("%s:", sc->sc_dev.dv_xname);
-		ray_enable(sc);
-		printf("\n");
-		break;
 	case DVACT_DEACTIVATE:
 		if (ifp->if_flags & IFF_RUNNING)
 			ray_disable(sc);

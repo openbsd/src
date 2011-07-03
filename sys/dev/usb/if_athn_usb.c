@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.7 2011/01/25 20:03:35 jakemsr Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.8 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -311,8 +311,6 @@ athn_usb_activate(struct device *self, int act)
 	struct athn_usb_softc *usc = (struct athn_usb_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_DEACTIVATE:
 		usbd_deactivate(usc->sc_udev);
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.97 2011/01/25 20:03:35 jakemsr Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.98 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -2306,9 +2306,6 @@ rum_activate(struct device *self, int act)
 	struct rum_softc *sc = (struct rum_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		usbd_deactivate(sc->sc_udev);
 		break;

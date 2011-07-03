@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.59 2011/01/25 20:03:35 jakemsr Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.60 2011/07/03 15:47:17 matthew Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -594,9 +594,6 @@ cue_activate(struct device *self, int act)
 	DPRINTFN(2,("%s: %s: enter\n", sc->cue_dev.dv_xname, __func__));
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		usbd_deactivate(sc->cue_udev);
 		break;

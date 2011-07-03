@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_hds.c,v 1.4 2011/06/15 01:44:14 dlg Exp $ */
+/*	$OpenBSD: mpath_hds.c,v 1.5 2011/07/03 15:47:18 matthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -189,7 +189,6 @@ hds_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
 	case DVACT_SUSPEND:
 	case DVACT_RESUME:
 		break;

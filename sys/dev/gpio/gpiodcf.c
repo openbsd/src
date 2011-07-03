@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpiodcf.c,v 1.3 2009/10/13 19:33:16 pirofti Exp $ */
+/*	$OpenBSD: gpiodcf.c,v 1.4 2011/07/03 15:47:16 matthew Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -598,8 +598,6 @@ gpiodcf_activate(struct device *self, int act)
 	struct gpiodcf_softc *sc = (struct gpiodcf_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		break;

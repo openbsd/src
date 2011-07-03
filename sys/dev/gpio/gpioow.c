@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioow.c,v 1.4 2009/10/13 19:33:16 pirofti Exp $	*/
+/*	$OpenBSD: gpioow.c,v 1.5 2011/07/03 15:47:16 matthew Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -176,8 +176,6 @@ gpioow_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		if (sc->sc_ow_dev != NULL)

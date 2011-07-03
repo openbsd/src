@@ -1,4 +1,4 @@
-/*	$OpenBSD: auacer.c,v 1.11 2011/04/03 15:36:02 jasper Exp $	*/
+/*	$OpenBSD: auacer.c,v 1.12 2011/07/03 15:47:16 matthew Exp $	*/
 /*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
@@ -1082,8 +1082,6 @@ auacer_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_QUIESCE:
 		rv = config_activate_children(self, act);
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.52 2011/06/23 16:02:33 tedu Exp $ */
+/*	$OpenBSD: ucom.c,v 1.53 2011/07/03 15:47:17 matthew Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -271,9 +271,6 @@ ucom_activate(struct device *self, int act)
 	DPRINTFN(5,("ucom_activate: %d\n", act));
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		break;

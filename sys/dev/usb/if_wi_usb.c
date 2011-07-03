@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.52 2011/06/22 16:44:29 tedu Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.53 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -1338,9 +1338,6 @@ wi_usb_activate(struct device *self, int act)
 	DPRINTFN(10,("%s: %s: enter\n", sc->wi_usb_dev.dv_xname, __func__));
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		sc->wi_usb_dying = 1;
 		sc->wi_thread_info->dying = 1;

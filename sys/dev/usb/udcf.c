@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.53 2011/01/25 20:03:36 jakemsr Exp $ */
+/*	$OpenBSD: udcf.c,v 1.54 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -801,8 +801,6 @@ udcf_activate(struct device *self, int act)
 	struct udcf_softc *sc = (struct udcf_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_DEACTIVATE:
 		usbd_deactivate(sc->sc_udev);
 		break;

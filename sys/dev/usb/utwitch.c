@@ -1,4 +1,4 @@
-/*	$OpenBSD: utwitch.c,v 1.4 2011/03/02 07:15:45 jasper Exp $ */
+/*	$OpenBSD: utwitch.c,v 1.5 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
  * Copyright (c) 2010 Yojiro UO <yuo@nui.org>
@@ -215,9 +215,6 @@ utwitch_activate(struct device *self, int act)
 	struct utwitch_softc *sc = (struct utwitch_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubt.c,v 1.20 2011/01/25 20:03:36 jakemsr Exp $	*/
+/*	$OpenBSD: ubt.c,v 1.21 2011/07/03 15:47:17 matthew Exp $	*/
 /*	$NetBSD: ubt.c,v 1.35 2008/07/28 14:19:26 drochner Exp $	*/
 
 /*-
@@ -493,8 +493,6 @@ ubt_activate(struct device *self, int act)
 	struct ubt_softc *sc = (struct ubt_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		break;

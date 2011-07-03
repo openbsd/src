@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.14 2011/02/21 19:48:41 stsp Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.15 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -823,9 +823,6 @@ mos_activate(struct device *self, int act)
 	DPRINTFN(2,("%s: %s: enter\n", sc->mos_dev.dv_xname, __func__));
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		usbd_deactivate(sc->mos_udev);
 		break;

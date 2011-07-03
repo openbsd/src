@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.49 2011/01/25 20:03:35 jakemsr Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.50 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -872,9 +872,6 @@ cdce_activate(struct device *self, int act)
 	struct cdce_softc *sc = (struct cdce_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		sc->cdce_dying = 1;
 		break;

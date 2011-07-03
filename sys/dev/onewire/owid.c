@@ -1,4 +1,4 @@
-/*	$OpenBSD: owid.c,v 1.8 2010/07/08 07:19:54 jasper Exp $	*/
+/*	$OpenBSD: owid.c,v 1.9 2011/07/03 15:47:16 matthew Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -108,8 +108,6 @@ owid_activate(struct device *self, int act)
 	struct owid_softc *sc = (struct owid_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		break;

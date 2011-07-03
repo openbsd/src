@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.42 2011/04/03 15:36:02 jasper Exp $ */
+/*      $OpenBSD: eap.c,v 1.43 2011/07/03 15:47:17 matthew Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -298,8 +298,6 @@ eap_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_QUIESCE:
 		rv = config_activate_children(self, act);
 		break;

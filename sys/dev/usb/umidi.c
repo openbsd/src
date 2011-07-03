@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.31 2011/06/23 23:04:28 oga Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.32 2011/07/03 15:47:17 matthew Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -234,9 +234,6 @@ umidi_activate(struct device *self, int act)
 	struct umidi_softc *sc = (struct umidi_softc *)self;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		DPRINTFN(1,("umidi_activate (activate)\n"));
-		break;
 	case DVACT_DEACTIVATE:
 		DPRINTFN(1,("umidi_activate (deactivate)\n"));
 		sc->sc_dying = 1;
