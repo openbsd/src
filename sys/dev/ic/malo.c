@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.92 2010/08/27 17:08:00 jsg Exp $ */
+/*	$OpenBSD: malo.c,v 1.93 2011/07/03 21:35:38 dhill Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -472,7 +472,7 @@ malo_alloc_cmd(struct malo_softc *sc)
 
 	sc->sc_cookie = sc->sc_cmd_mem;
 	*sc->sc_cookie = htole32(0xaa55aa55);
-	sc->sc_cmd_mem = sc->sc_cmd_mem + sizeof(uint32_t);
+	sc->sc_cmd_mem = (caddr_t)sc->sc_cmd_mem + sizeof(uint32_t);
 	sc->sc_cookie_dmaaddr = sc->sc_cmd_dmam->dm_segs[0].ds_addr;
 	sc->sc_cmd_dmaaddr = sc->sc_cmd_dmam->dm_segs[0].ds_addr +
 	    sizeof(uint32_t);
