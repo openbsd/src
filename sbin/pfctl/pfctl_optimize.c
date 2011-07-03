@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.26 2011/04/06 13:19:55 claudio Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.27 2011/07/03 23:37:55 zinke Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -1305,7 +1305,7 @@ again:
 	}
 	tablenum++;
 
-	if (pfctl_define_table(tbl->pt_name, PFR_TFLAG_CONST, 1,
+	if (pfctl_define_table(tbl->pt_name, PFR_TFLAG_CONST | tbl->pt_flags, 1,
 	    pf->astack[0]->name, tbl->pt_buf, pf->astack[0]->ruleset.tticket)) {
 		warn("failed to create table %s in %s",
 		    tbl->pt_name, pf->astack[0]->name);

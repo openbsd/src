@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.69 2010/01/12 03:20:51 mcbride Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.70 2011/07/03 23:37:55 zinke Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -478,14 +478,16 @@ print_astats(struct pfr_astats *as, int dns)
 	int	dir, op;
 
 	print_addrx(&as->pfras_a, NULL, dns);
-	printf("\tCleared:     %s", ctime(&time));
+	printf("\tCleared:            %s", ctime(&time));
+	if (as->pfras_a.pfra_type == PFRKE_COST)
+		printf("\tActive States:      %d\n", as->pfras_a.pfra_states);
  	if (as->pfras_a.pfra_fback == PFR_FB_NOCOUNT)
 		return;
 	if (as->pfras_a.pfra_ifname[0])
-		printf("\tInterface:   %s\n", as->pfras_a.pfra_ifname);
+		printf("\tInterface:          %s\n", as->pfras_a.pfra_ifname);
 	for (dir = 0; dir < PFR_DIR_MAX; dir++)
 		for (op = 0; op < PFR_OP_ADDR_MAX; op++)
-			printf("\t%-12s [ Packets: %-18llu Bytes: %-18llu ]\n",
+			printf("\t%-19s [ Packets: %-18llu Bytes: %-18llu ]\n",
 			    stats_text[dir][op],
 			    (unsigned long long)as->pfras_packets[dir][op],
 			    (unsigned long long)as->pfras_bytes[dir][op]);

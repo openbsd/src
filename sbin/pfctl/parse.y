@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.599 2011/04/06 13:19:55 claudio Exp $	*/
+/*	$OpenBSD: parse.y,v 1.600 2011/07/03 23:37:55 zinke Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -459,7 +459,7 @@ int	parseport(char *, struct range *r, int);
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY RANDOMID
 %token	REQUIREORDER SYNPROXY FINGERPRINTS NOSYNC DEBUG SKIP HOSTID
 %token	ANTISPOOF FOR INCLUDE MATCHES
-%token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT PROBABILITY
+%token	BITMASK RANDOM SOURCEHASH ROUNDROBIN LEASTSTATES STATICPORT PROBABILITY
 %token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE LINKSHARE REALTIME UPPERLIMIT
 %token	QUEUE PRIORITY QLIMIT RTABLE RDOMAIN
 %token	LOAD RULESET_OPTIMIZATION
@@ -1230,6 +1230,8 @@ table_opt	: STRING		{
 				table_opts.flags |= PFR_TFLAG_PERSIST;
 			else if (!strcmp($1, "counters"))
 				table_opts.flags |= PFR_TFLAG_COUNTERS;
+			else if (!strcmp($1, "cost"))
+				table_opts.flags |= PFR_TFLAG_COST;
 			else {
 				yyerror("invalid table option '%s'", $1);
 				free($1);
@@ -2035,24 +2037,32 @@ pfrule		: action dir logquick interface af proto fromto
 				    $8.route.host->addr.type == PF_ADDR_TABLE ||
 				    DYNIF_MULTIADDR($8.route.host->addr)))
 					r.route.opts |= PF_POOL_ROUNDROBIN;
-				if ((r.route.opts & PF_POOL_TYPEMASK) !=
-				    PF_POOL_ROUNDROBIN &&
+				if (((r.route.opts & PF_POOL_TYPEMASK) !=
+				    PF_POOL_ROUNDROBIN) &&
+				    ((r.route.opts & PF_POOL_TYPEMASK) !=
+				    PF_POOL_LEASTSTATES) &&
 				    disallow_table($8.route.host,
 				    "tables are only "
-				    "supported in round-robin routing pools"))
+				    "supported in round-robin or "
+				    "least-states routing pools"))
 					YYERROR;
-				if ((r.route.opts & PF_POOL_TYPEMASK) !=
-				    PF_POOL_ROUNDROBIN &&
+				if (((r.route.opts & PF_POOL_TYPEMASK) !=
+				    PF_POOL_ROUNDROBIN) &&
+				    ((r.route.opts & PF_POOL_TYPEMASK) !=
+				    PF_POOL_LEASTSTATES) &&
 				    disallow_alias($8.route.host,
 				    "interface (%s) "
-				    "is only supported in round-robin "
-				    "routing pools"))
+				    "is only supported in round-robin or "
+				    "least-states routing pools"))
 					YYERROR;
 				if ($8.route.host->next != NULL) {
-					if ((r.route.opts & PF_POOL_TYPEMASK) !=
-					    PF_POOL_ROUNDROBIN) {
+					if (((r.route.opts & PF_POOL_TYPEMASK) !=
+					    PF_POOL_ROUNDROBIN) &&
+					    ((r.route.opts & PF_POOL_TYPEMASK) !=
+					    PF_POOL_LEASTSTATES)) {
 						yyerror("r.route.opts must "
-						    "be PF_POOL_ROUNDROBIN");
+						    "be PF_POOL_ROUNDROBIN "
+						    "or PF_POOL_LEASTSTATES");
 						YYERROR;
 					}
 				}
@@ -2297,6 +2307,8 @@ filter_opt	: USER uids {
 			filter_opts.route.host = $2;
 			filter_opts.route.rt = PF_ROUTETO;
 			filter_opts.route.pool_opts = $3.type | $3.opts;
+			memcpy(&filter_opts.rroute.pool_opts, &$3,
+			    sizeof(filter_opts.rroute.pool_opts));
 			if ($3.key != NULL)
 				filter_opts.route.key = $3.key;
 		}
@@ -3715,6 +3727,13 @@ pool_opt	: BITMASK	{
 			}
 			pool_opts.type = PF_POOL_ROUNDROBIN;
 		}
+		| LEASTSTATES	{
+			if (pool_opts.type) {
+				yyerror("pool type cannot be redefined");
+				YYERROR;
+			}
+			pool_opts.type = PF_POOL_LEASTSTATES;
+		}
 		| STATICPORT	{
 			if (pool_opts.staticport) {
 				yyerror("static-port cannot be redefined");
@@ -4544,7 +4563,6 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 	struct pf_rule_addr ra;
 	int	i = 0;
 
-
 	if (!rs || !rs->rdr || rs->rdr->host == NULL) {
 		rpool->addr.type = PF_ADDR_NONE;
 		return (0);
@@ -4579,8 +4597,10 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 		return (0);
 	} else {		/* more than one address */
 		if (rs->pool_opts.type &&
-		     rs->pool_opts.type != PF_POOL_ROUNDROBIN) {
-			yyerror("only round-robin valid for multiple "
+		     (rs->pool_opts.type != PF_POOL_ROUNDROBIN) &&
+		     (rs->pool_opts.type != PF_POOL_LEASTSTATES)) {
+			yyerror("only round-robin or "
+			    "least-states valid for multiple "
 			    "translation or routing addresses");
 			return (1);
 		}
@@ -4605,6 +4625,9 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
                 }
 	}
 	if (tbl) {
+		if (rs->pool_opts.type == PF_POOL_LEASTSTATES)
+			tbl->pt_flags |= PFR_TFLAG_COST;
+
 		if ((pf->opts & PF_OPT_NOACTION) == 0 &&
 		     pf_opt_create_table(pf, tbl))
 				return (1);
@@ -4612,7 +4635,8 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 		pf->tdirty = 1;
 
 		if (pf->opts & PF_OPT_VERBOSE)
-			print_tabledef(tbl->pt_name, PFR_TFLAG_CONST,
+			print_tabledef(tbl->pt_name,
+			    PFR_TFLAG_CONST | tbl->pt_flags,
 			    1, &tbl->pt_nodes);
 
 		memset(&rpool->addr, 0, sizeof(rpool->addr));
@@ -5080,6 +5104,7 @@ lookup(char *s)
 		{ "inet6",		INET6},
 		{ "keep",		KEEP},
 		{ "label",		LABEL},
+		{ "least-states",	LEASTSTATES},
 		{ "limit",		LIMIT},
 		{ "linkshare",		LINKSHARE},
 		{ "load",		LOAD},

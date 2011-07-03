@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.755 2011/07/03 23:33:38 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.756 2011/07/03 23:37:55 zinke Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -179,10 +179,10 @@ int			 pf_test_rule(struct pf_rule **, struct pf_state **,
 			    struct pf_pdesc *, struct pf_rule **,
 			    struct pf_ruleset **, int);
 static __inline int	 pf_create_state(struct pf_rule *, struct pf_rule *,
-			    struct pf_pdesc *, struct pf_state_key **,
-			    struct pf_state_key **, struct mbuf *, int,
-			    int *, struct pfi_kif *, struct pf_state **, int,
-			    struct pf_rule_slist *,
+			    struct pf_rule *, struct pf_pdesc *,
+			    struct pf_state_key **, struct pf_state_key **,
+			    struct mbuf *, int, int *, struct pfi_kif *,
+			    struct pf_state **, int, struct pf_rule_slist *,
 			    struct pf_rule_actions *, struct pf_src_node *[]);
 int			 pf_state_key_setup(struct pf_pdesc *, struct
 			    pf_state_key **, struct pf_state_key **, int);
@@ -1122,6 +1122,9 @@ void
 pf_unlink_state(struct pf_state *cur)
 {
 	splsoftassert(IPL_SOFTNET);
+
+	/* handle load balancing related tasks */
+	pf_postprocess_addr(cur);
 
 	if (cur->src.state == PF_TCPS_PROXY_DST) {
 		pf_send_tcp(cur->rule.ptr, cur->key[PF_SK_WIRE]->af,
@@ -2653,6 +2656,7 @@ pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr)
 		pf_map_addr(AF_INET, r, saddr, &s->rt_addr, NULL, &sn,
 		    &r->route, PF_SN_ROUTE);
 		s->rt_kif = r->route.kif;
+		s->natrule.ptr = r;
 		break;
 #endif /* INET */
 #ifdef INET6
@@ -2660,6 +2664,7 @@ pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr)
 		pf_map_addr(AF_INET6, r, saddr, &s->rt_addr, NULL, &sn,
 		    &r->route, PF_SN_ROUTE);
 		s->rt_kif = r->route.kif;
+		s->natrule.ptr = r;
 		break;
 #endif /* INET6 */
 	}
@@ -2722,7 +2727,9 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 {
 	struct pf_rule		*lastr = NULL;
 	sa_family_t		 af = pd->af;
-	struct pf_rule		*r, *a = NULL;
+	struct pf_rule		*r;
+	struct pf_rule		*nr = NULL;
+	struct pf_rule		*a = NULL;
 	struct pf_ruleset	*ruleset = NULL;
 	struct pf_rule_slist	 rules;
 	struct pf_rule_item	*ri;
@@ -2890,6 +2897,12 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 						    PFRES_MEMORY);
 						goto cleanup;
 					}
+					/* 
+					 * We need to save this rule pointer, 
+					 * otherwise the counter decrease
+					 * would not work for SLB.
+					 */
+					nr = r;
 					if (r->log || act.log & PF_LOG_MATCHES)
 						PFLOG_PACKET(kif, m, direction,
 						    reason, r, a, ruleset, pd);
@@ -3006,7 +3019,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 			goto cleanup;
 		}
 
-		action = pf_create_state(r, a, pd, &skw, &sks, m, off,
+		action = pf_create_state(r, a, nr, pd, &skw, &sks, m, off,
 		    &rewrite, kif, sm, tag, &rules, &act, sns);
 
 		if (action != PF_PASS)
@@ -3060,10 +3073,10 @@ cleanup:
 }
 
 static __inline int
-pf_create_state(struct pf_rule *r, struct pf_rule *a, struct pf_pdesc *pd,
-    struct pf_state_key **skw, struct pf_state_key **sks, struct mbuf *m,
-    int off, int *rewrite, struct pfi_kif *kif, struct pf_state **sm,
-    int tag, struct pf_rule_slist *rules,
+pf_create_state(struct pf_rule *r, struct pf_rule *a, struct pf_rule *nr,
+    struct pf_pdesc *pd, struct pf_state_key **skw, struct pf_state_key **sks,
+    struct mbuf *m, int off, int *rewrite, struct pfi_kif *kif,
+    struct pf_state **sm, int tag, struct pf_rule_slist *rules,
     struct pf_rule_actions *act, struct pf_src_node *sns[PF_SN_MAX])
 {
 	struct pf_state		*s = NULL;
@@ -3086,6 +3099,7 @@ pf_create_state(struct pf_rule *r, struct pf_rule *a, struct pf_pdesc *pd,
 	}
 	s->rule.ptr = r;
 	s->anchor.ptr = a;
+	s->natrule.ptr = nr;
 	bcopy(rules, &s->match_rules, sizeof(s->match_rules));
 	STATE_INC_COUNTERS(s);
 	if (r->allow_opts)

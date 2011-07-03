@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.334 2011/06/21 08:59:47 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.335 2011/07/03 23:37:55 zinke Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -110,7 +110,7 @@ enum	{ PF_LIMIT_STATES, PF_LIMIT_SRC_NODES, PF_LIMIT_FRAGS,
 	  PF_LIMIT_TABLES, PF_LIMIT_TABLE_ENTRIES, PF_LIMIT_MAX };
 #define PF_POOL_IDMASK		0x0f
 enum	{ PF_POOL_NONE, PF_POOL_BITMASK, PF_POOL_RANDOM,
-	  PF_POOL_SRCHASH, PF_POOL_ROUNDROBIN };
+	  PF_POOL_SRCHASH, PF_POOL_ROUNDROBIN, PF_POOL_LEASTSTATES };
 enum	{ PF_ADDR_ADDRMASK, PF_ADDR_NOROUTE, PF_ADDR_DYNIFTL,
 	  PF_ADDR_TABLE, PF_ADDR_RTLABEL, PF_ADDR_URPFFAILED,
 	  PF_ADDR_RANGE, PF_ADDR_NONE };
@@ -413,6 +413,7 @@ struct pf_pool {
 	char			 ifname[IFNAMSIZ];
 	struct pfi_kif		*kif;
 	int			 tblidx;
+	u_int32_t		 states;
 	u_int16_t		 proxy_port[2];
 	u_int8_t		 port_op;
 	u_int8_t		 opts;
@@ -804,6 +805,7 @@ struct pf_state {
 	struct pf_rule_slist	 match_rules;
 	union pf_rule_ptr	 rule;
 	union pf_rule_ptr	 anchor;
+	union pf_rule_ptr	 natrule;
 	struct pf_addr		 rt_addr;
 	struct pf_sn_head	 src_nodes;
 	struct pf_state_key	*key[2];	/* addresses stack and wire  */
@@ -1000,10 +1002,11 @@ RB_PROTOTYPE(pf_anchor_node, pf_anchor, entry_node, pf_anchor_compare);
 #define PFR_TFLAG_REFERENCED	0x00000010
 #define PFR_TFLAG_REFDANCHOR	0x00000020
 #define PFR_TFLAG_COUNTERS	0x00000040
+#define PFR_TFLAG_COST		0x00000080
 /* Adjust masks below when adding flags. */
-#define PFR_TFLAG_USRMASK	0x00000043
+#define PFR_TFLAG_USRMASK	0x000000C3
 #define PFR_TFLAG_SETMASK	0x0000003C
-#define PFR_TFLAG_ALLMASK	0x0000007F
+#define PFR_TFLAG_ALLMASK	0x000000FF
 
 struct pfr_table {
 	char			 pfrt_anchor[MAXPATHLEN];
@@ -1022,6 +1025,7 @@ struct pfr_addr {
 		struct in6_addr	 _pfra_ip6addr;
 	}		 pfra_u;
 	char		 pfra_ifname[IFNAMSIZ];
+	u_int32_t	 pfra_states;
 	u_int8_t	 pfra_af;
 	u_int8_t	 pfra_net;
 	u_int8_t	 pfra_not;
@@ -1079,7 +1083,7 @@ struct _pfr_kentry {
 #define PFRKE_FLAG_MARK		0x02
 
 /* pfrke_type */
-enum { PFRKE_PLAIN, PFRKE_ROUTE, PFRKE_MAX };
+enum { PFRKE_PLAIN, PFRKE_ROUTE, PFRKE_COST, PFRKE_MAX };
 
 struct pfr_kentry {
 	union {
@@ -1104,10 +1108,22 @@ struct pfr_kentry_route {
 	struct pfi_kif		*kif;
 };
 
+struct pfr_kentry_cost {
+	union {
+		struct _pfr_kentry	_ke;
+	} u;
+
+	struct pfi_kif		*kif;
+	/* Above overlaps with pfr_kentry route */
+
+	u_int32_t		 states;
+};
+
 struct pfr_kentry_all {
 	union {
 		struct _pfr_kentry		_ke;
 		struct pfr_kentry_route		kr;
+		struct pfr_kentry_cost		kc;
 	} u;
 };
 #define pfrke_rkif	u.kr.kif
@@ -1806,7 +1822,12 @@ void	pfr_update_stats(struct pfr_ktable *, struct pf_addr *, sa_family_t,
 	    u_int64_t, int, int, int);
 int	pfr_pool_get(struct pfr_ktable *, int *, struct pf_addr *,
 	    struct pf_addr **, struct pf_addr **, struct pfi_kif **,
-	    sa_family_t, int (*)(sa_family_t, struct pf_addr *));
+	    u_int32_t *, sa_family_t, int (*)(sa_family_t, struct pf_addr *));
+int	pfr_states_increase(struct pfr_ktable *, struct pf_addr *, int);
+int	pfr_states_decrease(struct pfr_ktable *, struct pf_addr *, int);
+struct pfr_kentry *
+	pfr_kentry_byaddr(struct pfr_ktable *, struct pf_addr *, sa_family_t,
+	    int);
 void	pfr_dynaddr_update(struct pfr_ktable *, struct pfi_dynaddr *);
 struct pfr_ktable *
 	pfr_attach_table(struct pf_ruleset *, char *, int);
@@ -1943,6 +1964,8 @@ int			 pf_map_addr(sa_family_t, struct pf_rule *,
 			    struct pf_addr *, struct pf_addr *,
 			    struct pf_addr *, struct pf_src_node **,
 			    struct pf_pool *, enum pf_sn_types);
+
+int			 pf_postprocess_addr(struct pf_state *);
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.275 2011/04/06 13:19:55 claudio Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.276 2011/07/03 23:37:55 zinke Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -488,6 +488,9 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 		break;
 	case PF_POOL_ROUNDROBIN:
 		printf(" round-robin");
+		break;
+	case PF_POOL_LEASTSTATES:
+		printf(" least-states");
 		break;
 	}
 	if (pool->opts & PF_POOL_STICKYADDR)
@@ -1081,6 +1084,8 @@ print_tabledef(const char *name, int flags, int addrs,
 		printf(" persist");
 	if (flags & PFR_TFLAG_COUNTERS)
 		printf(" counters");
+	if (flags & PFR_TFLAG_COST)
+		printf(" cost");
 	SIMPLEQ_FOREACH(ti, nodes, entries) {
 		if (ti->file) {
 			printf(" file \"%s\"", ti->file);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.495 2011/06/23 20:35:22 sthen Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.496 2011/07/03 23:37:55 zinke Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 23 2011 $
+.Dd $Mdocdate: July 3 2011 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -874,10 +874,11 @@ to be modified (source with
 .Ar nat-to ,
 destination with
 .Ar rdr-to ) .
-.It Ar random Op Ar sticky-address
-The
-.Ar random
-option selects an address at random within the defined block of addresses.
+.It Ar least-states Op Ar sticky-address
+The 
+.Ar least-states
+option selects the address with the least active states from 
+a given address pool.
 .Pp
 .Ar sticky-address
 can be specified to ensure that multiple connections from the
@@ -888,6 +889,12 @@ in order to make the mappings last
 beyond the lifetime of the states,
 increase the global options with
 .Ar set timeout src.track .
+.It Ar random Op Ar sticky-address
+The
+.Ar random
+option selects an address at random within the defined block of addresses.
+.Ar sticky-address
+is as described above.
 .It Ar round-robin Op Ar sticky-address
 The
 .Ar round-robin
@@ -1657,6 +1664,13 @@ can be used to add or remove addresses from the table at any time, even
 when running with
 .Xr securelevel 7
 = 2.
+.It Ar cost
+The
+.Ar cost
+flag adds a state counter to every address of the table. The flag is
+necessary if the table is used with the 
+.Ar least-states
+option.
 .It Ar counters
 The
 .Ar counters
