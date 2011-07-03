@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.752 2011/07/01 21:00:40 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.753 2011/07/03 18:08:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5495,11 +5495,28 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
 		*off = h->ip_hl << 2;
 
 		if (*off < (int)sizeof(struct ip) ||
-		    *off > ntohs(h->ip_len)) {
+		    *off > ntohs(h->ip_len) ||
+		    m->m_pkthdr.len < ntohs(h->ip_len)) {
 			*action = PF_DROP;
 			REASON_SET(reason, PFRES_SHORT);
 			return (-1);
 		}
+
+		/* packet reassembly */
+		if (h->ip_off & htons(IP_MF | IP_OFFMASK) &&
+		    pf_normalize_ip(m0, dir, reason) != PF_PASS) {
+			*action = PF_DROP;
+			return (-1);
+		}
+		m = *m0;
+		if (m == NULL) {
+			/* packet sits in reassembly queue, no error */
+			*action = PF_PASS;
+			return (-1);
+		}
+		/* refetch header, recalc offset and update pd */
+		h = mtod(m, struct ip *);
+		*off = h->ip_hl << 2;
 
 		pd->src = (struct pf_addr *)&h->ip_src;
 		pd->dst = (struct pf_addr *)&h->ip_dst;
@@ -5515,41 +5532,18 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
 		pd->rdomain = rtable_l2(m->m_pkthdr.rdomain);
 
 		if (h->ip_off & htons(IP_MF | IP_OFFMASK)) {
-			if (!pf_status.reass) {
-				/*
-				 * handle fragments that aren't reassembled by
-				 * normalization
-				 */
-				if (kif == NULL || r == NULL)	/* pflog */
-					*action = PF_DROP;
-				else
-					*action = pf_test_fragment(r, dir, kif,
-					     m, pd, a, ruleset);
-				if (*action == PF_PASS)
-					/* m is still valid, return success */
-					return (0);
-				REASON_SET(reason, PFRES_FRAG);
-				return (-1);
-			}
-			/* packet reassembly */
-			if (pf_normalize_ip(m0, dir, reason) != PF_PASS) {
+			/*
+			 * handle fragments that aren't reassembled by
+			 * normalization
+			 */
+			if (kif == NULL || r == NULL)	/* pflog */
 				*action = PF_DROP;
-				return (-1);
-			}
-			m = *m0;
-			if (m == NULL) {
-				/* packet sits in reassembly queue, no error */
-				*action = PF_PASS;
-				return (-1);
-			}
-			/* refetch header, recalc offset and update pd */
-			h = mtod(m, struct ip *);
-			*off = h->ip_hl << 2;
-			pd->src = (struct pf_addr *)&h->ip_src;
-			pd->dst = (struct pf_addr *)&h->ip_dst;
-			pd->ip_sum = &h->ip_sum;
-			pd->tot_len = ntohs(h->ip_len);
-			pd->tos = h->ip_tos;
+			else
+				*action = pf_test_fragment(r, dir, kif,
+				     m, pd, a, ruleset);
+			if (*action != PF_PASS)
+				REASON_SET(reason, PFRES_FRAG);
+			return (-1);
 		}
 
 		switch (h->ip_p) {
@@ -5607,8 +5601,7 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
 		}
 
 		/* packet reassembly */
-		if (pf_status.reass &&
-		    pf_normalize_ip6(m0, dir, reason) != PF_PASS) {
+		if (pf_normalize_ip6(m0, dir, reason) != PF_PASS) {
 			*action = PF_DROP;
 			return (-1);
 		}
@@ -5652,7 +5645,7 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
 				else
 					*action = pf_test_fragment(r, dir, kif,
 					     m, pd, a, ruleset);
-				if (*action == PF_DROP)
+				if (*action != PF_PASS)
 					REASON_SET(reason, PFRES_FRAG);
 				return (-1);
 			case IPPROTO_ROUTING: {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.135 2011/06/21 08:59:47 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.136 2011/07/03 18:08:02 claudio Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -764,6 +764,9 @@ pf_normalize_ip(struct mbuf **m0, int dir, u_short *reason)
 		return (PF_DROP);
 	}
 
+	if (!pf_status.reass)
+		return (PF_PASS);	/* no reassembly */
+
 	/* Returns PF_DROP or *m0 is NULL or completely reassembled mbuf */
 	if (pf_reassemble(m0, h, dir, reason) != PF_PASS)
 		return (PF_DROP);
@@ -895,6 +898,9 @@ pf_normalize_ip6(struct mbuf **m0, int dir, u_short *reason)
 		goto drop;
 	if (sizeof(struct ip6_hdr) + plen > m->m_pkthdr.len)
 		goto shortpkt;
+
+	if (!pf_status.reass)
+		return (PF_PASS);	/* no reassembly */
 
 	if (!pf_pull_hdr(m, off, &frag, sizeof(frag), NULL, NULL, AF_INET6))
 		goto shortpkt;
