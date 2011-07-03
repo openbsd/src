@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.134 2011/06/30 16:28:05 matthew Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.135 2011/07/03 17:42:42 matthew Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -699,11 +699,11 @@ vndclear(struct vnd_softc *sc)
 
 	DNPRINTF(VDB_FOLLOW, "vndclear(%p): vp %p\n", sc, vp);
 
-	sc->sc_flags = 0;
 	if (vp == NULL)
 		panic("vndioctl: null vp");
 	(void) vn_close(vp, VNDRW(sc), sc->sc_cred, p);
 	crfree(sc->sc_cred);
+	sc->sc_flags = 0;
 	sc->sc_vp = NULL;
 	sc->sc_cred = NULL;
 	sc->sc_size = 0;
