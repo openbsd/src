@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.38 2011/06/20 21:26:27 schwarze Exp $
+#	$OpenBSD: rc.subr,v 1.39 2011/07/03 16:09:06 schwarze Exp $
 
 # Default functions and variables used by rc.d(8) scripts.
 
@@ -100,8 +100,9 @@ rc_cmd() {
 		rc_exit ok
 		;;
 	reload)
-		rc_do rc_check || exit 1
+		rc_do rc_check || rc_exit failed
 		rc_do rc_reload || rc_exit failed
+		rc_exit ok
 		;;
 	restart)
 		/etc/rc.d/${_name} stop && /etc/rc.d/${_name} start
