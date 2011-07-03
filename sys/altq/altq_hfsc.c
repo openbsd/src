@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_hfsc.c,v 1.26 2008/05/08 15:22:02 chl Exp $	*/
+/*	$OpenBSD: altq_hfsc.c,v 1.27 2011/07/03 23:48:41 henning Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.17 2002/11/29 07:48:33 kjc Exp $	*/
 
 /*
@@ -369,10 +369,6 @@ hfsc_class_create(struct hfsc_if *hif, struct service_curve *rsc,
 		red_flags = 0;
 		if (flags & HFCF_ECN)
 			red_flags |= REDF_ECN;
-#ifdef ALTQ_RIO
-		if (flags & HFCF_CLEARDSCP)
-			red_flags |= RIOF_CLEARDSCP;
-#endif
 		if (m2 < 8)
 			red_pkttime = 1000 * 1000 * 1000; /* 1 sec */
 		else
@@ -754,9 +750,6 @@ hfsc_addq(struct hfsc_class *cl, struct mbuf *m)
 		m_freem(m);
 		return (-1);
 	}
-
-	if (cl->cl_flags & HFCF_CLEARDSCP)
-		write_dsfield(m, cl->cl_pktattr, 0);
 
 	_addq(cl->cl_q, m);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.h,v 1.11 2011/07/03 22:39:12 tedu Exp $	*/
+/*	$OpenBSD: altq_cbq.h,v 1.12 2011/07/03 23:48:41 henning Exp $	*/
 /*	$KAME: altq_cbq.h,v 1.5 2000/12/02 13:44:40 kjc Exp $	*/
 
 /*
@@ -49,7 +49,6 @@ extern "C" {
 #define	CBQCLF_ECN		0x0002  /* use RED/ECN */
 #define	CBQCLF_RIO		0x0004  /* use RIO */
 #define	CBQCLF_FLOWVALVE	0x0008	/* use flowvalve (aka penalty-box) */
-#define	CBQCLF_CLEARDSCP	0x0010  /* clear diffserv codepoint */
 #define	CBQCLF_BORROW		0x0020  /* borrow from parent */
 
 /* class flags only for root class */

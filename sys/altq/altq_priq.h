@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_priq.h,v 1.7 2011/07/03 22:39:12 tedu Exp $	*/
+/*	$OpenBSD: altq_priq.h,v 1.8 2011/07/03 23:48:41 henning Exp $	*/
 /*	$KAME: altq_priq.h,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000-2002
@@ -43,7 +43,6 @@ extern "C" {
 #define	PRCF_RED		0x0001	/* use RED */
 #define	PRCF_ECN		0x0002  /* use RED/ECN */
 #define	PRCF_RIO		0x0004  /* use RIO */
-#define	PRCF_CLEARDSCP		0x0010  /* clear diffserv codepoint */
 #define	PRCF_DEFAULTCLASS	0x1000	/* default class */
 
 /* special class handles */

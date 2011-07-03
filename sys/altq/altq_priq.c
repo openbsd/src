@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_priq.c,v 1.22 2008/05/08 15:22:02 chl Exp $	*/
+/*	$OpenBSD: altq_priq.c,v 1.23 2011/07/03 23:48:41 henning Exp $	*/
 /*	$KAME: altq_priq.c,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -291,10 +291,6 @@ priq_class_create(struct priq_if *pif, int pri, int qlimit, int flags, int qid)
 		red_flags = 0;
 		if (flags & PRCF_ECN)
 			red_flags |= REDF_ECN;
-#ifdef ALTQ_RIO
-		if (flags & PRCF_CLEARDSCP)
-			red_flags |= RIOF_CLEARDSCP;
-#endif
 		if (pif->pif_bandwidth < 8)
 			red_pkttime = 1000 * 1000 * 1000; /* 1 sec */
 		else
@@ -456,9 +452,6 @@ priq_addq(struct priq_class *cl, struct mbuf *m)
 		m_freem(m);
 		return (-1);
 	}
-
-	if (cl->cl_flags & PRCF_CLEARDSCP)
-		write_dsfield(m, cl->cl_pktattr, 0);
 
 	_addq(cl->cl_q, m);
 

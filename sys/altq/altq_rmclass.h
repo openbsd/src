@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rmclass.h,v 1.11 2008/08/27 01:37:16 deraadt Exp $	*/
+/*	$OpenBSD: altq_rmclass.h,v 1.12 2011/07/03 23:48:41 henning Exp $	*/
 /*	$KAME: altq_rmclass.h,v 1.6 2000/12/09 09:22:44 kjc Exp $	*/
 
 /*
@@ -231,7 +231,6 @@ struct rm_ifdat {
 #define	RMCF_ECN		0x0002
 #define	RMCF_RIO		0x0004
 #define	RMCF_FLOWVALVE		0x0008	/* use flowvalve (aka penalty-box) */
-#define	RMCF_CLEARDSCP		0x0010  /* clear diffserv codepoint */
 
 /* flags for rmc_init */
 #define	RMCF_WRR		0x0100

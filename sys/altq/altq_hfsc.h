@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_hfsc.h,v 1.7 2011/07/03 22:39:12 tedu Exp $	*/
+/*	$OpenBSD: altq_hfsc.h,v 1.8 2011/07/03 23:48:41 henning Exp $	*/
 /*	$KAME: altq_hfsc.h,v 1.8 2002/11/29 04:36:23 kjc Exp $	*/
 
 /*
@@ -55,7 +55,6 @@ struct service_curve {
 #define	HFCF_RED		0x0001	/* use RED */
 #define	HFCF_ECN		0x0002  /* use RED/ECN */
 #define	HFCF_RIO		0x0004  /* use RIO */
-#define	HFCF_CLEARDSCP		0x0010  /* clear diffserv codepoint */
 #define	HFCF_DEFAULTCLASS	0x1000	/* default class */
 
 /* service curve types */

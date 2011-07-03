@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rmclass.c,v 1.16 2011/07/03 22:39:12 tedu Exp $	*/
+/*	$OpenBSD: altq_rmclass.c,v 1.17 2011/07/03 23:48:41 henning Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.10 2001/02/09 07:20:40 kjc Exp $	*/
 
 /*
@@ -252,10 +252,6 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
 			red_flags |= REDF_ECN;
 		if (flags & RMCF_FLOWVALVE)
 			red_flags |= REDF_FLOWVALVE;
-#ifdef ALTQ_RIO
-		if (flags & RMCF_CLEARDSCP)
-			red_flags |= RIOF_CLEARDSCP;
-#endif
 		red_pkttime = nsecPerByte * pktsize  / 1000;
 
 		if (flags & RMCF_RED) {
@@ -1549,9 +1545,6 @@ _rmc_addq(rm_class_t *cl, mbuf_t *m)
 	if (q_is_red(cl->q_))
 		return red_addq(cl->red_, cl->q_, m, cl->pktattr_);
 #endif /* ALTQ_RED */
-
-	if (cl->flags_ & RMCF_CLEARDSCP)
-		write_dsfield(m, cl->pktattr_, 0);
 
 	_addq(cl->q_, m);
 	return (0);
