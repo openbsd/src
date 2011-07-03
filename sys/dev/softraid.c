@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.234 2011/07/02 17:39:12 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.235 2011/07/03 15:41:32 matthew Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1678,9 +1678,17 @@ sr_attach(struct device *parent, struct device *self, void *aux)
 int
 sr_detach(struct device *self, int flags)
 {
-#ifndef SMALL_KERNEL
 	struct sr_softc		*sc = (void *)self;
+	int			rv;
 
+	if (sc->sc_scsibus != NULL) {
+		rv = config_detach((struct device *)sc->sc_scsibus, flags);
+		if (rv != 0)
+			return (rv);
+		sc->sc_scsibus = NULL;
+	}
+
+#ifndef SMALL_KERNEL
 	sensordev_deinstall(&sc->sc_sensordev);
 #endif /* SMALL_KERNEL */
 
