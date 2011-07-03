@@ -1,4 +1,4 @@
-# $OpenBSD: files.i2c,v 1.49 2010/03/22 21:20:58 miod Exp $
+# $OpenBSD: files.i2c,v 1.50 2011/07/03 21:30:20 kettenis Exp $
 #	$NetBSD: files.i2c,v 1.3 2003/10/20 16:24:10 briggs Exp $
 
 define	i2c {[addr = -1], [size = -1]}
@@ -112,6 +112,11 @@ file	dev/i2c/w83l784r.c			wbenv
 device	wbng
 attach	wbng at i2c
 file	dev/i2c/w83793g.c			wbng
+
+# Nuvoton W83795G
+device	nvt
+attach	nvt at i2c
+file	dev/i2c/w83795g.c			nvt
 
 # Genesys Logic GL518SM
 device	glenv
