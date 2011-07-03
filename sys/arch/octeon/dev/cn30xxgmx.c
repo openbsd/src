@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.2 2011/06/24 02:13:23 yasuoka Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.3 2011/07/03 20:31:39 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1042,111 +1042,89 @@ static int
 cn30xxgmx_rgmii_set_filter(struct cn30xxgmx_port_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_port_ac->ac_if;
+	struct arpcom *ac = sc->sc_port_ac;
 #ifdef OCTEON_ETH_USE_GMX_CAM
 	struct ether_multi *enm;
 	struct ether_multistep step;
 #endif
+	uint64_t cam_en = 0x01ULL;
 	uint64_t ctl = 0;
 	int multi = 0;
-	uint64_t cam_en = 0x01ULL; /* XXX */
 
 	cn30xxgmx_link_enable(sc, 0);
 
-	if (ISSET(ifp->if_flags, IFF_BROADCAST)) {
-		dprintf("accept broadcast\n");
-		SET(ctl, RXN_ADR_CTL_BCST);
-	}
-	if (ISSET(ifp->if_flags, IFF_PROMISC)) {
-		dprintf("promiscas(reject cam)\n");
-		CLR(ctl, RXN_ADR_CTL_CAM_MODE);
-	} else {
-		dprintf("not promiscas(accept cam)\n");
-		SET(ctl, RXN_ADR_CTL_CAM_MODE);
-	}
-
-#ifdef OCTEON_ETH_USE_GMX_CAM
-	/*
-	 * Note first entry is self MAC address; other 7 entires are available
-	 * for multicast addresses.
-	 */
-
-	ETHER_FIRST_MULTI(step, sc->sc_port_ac, enm);
-	while (enm != NULL) {
-		int i;
-
-		dprintf("%d: lo(%02x:%02x:%02x:%02x:%02x:%02x) - "
-		    "hi(%02x:%02x:%02x:%02x:%02x:%02x)\n",
-		    multi + 1,
-		    enm->enm_addrlo[0], enm->enm_addrlo[1],
-		    enm->enm_addrlo[2], enm->enm_addrlo[3],
-		    enm->enm_addrlo[4], enm->enm_addrlo[5],
-		    enm->enm_addrhi[0], enm->enm_addrhi[1],
-		    enm->enm_addrhi[2], enm->enm_addrhi[3],
-		    enm->enm_addrhi[4], enm->enm_addrhi[5]);
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			dprintf("all multicast\n");
-			SET(ifp->if_flags, IFF_ALLMULTI);
-			goto setmulti;
-		}
-		multi++;
-
-		/* XXX */
-		if (multi >= 8) {
-			SET(ifp->if_flags, IFF_ALLMULTI);
-			goto setmulti;
-		}
-
-		SET(cam_en, 1ULL << multi); /* XXX */
-
-		for (i = 0; i < 6; i++) {
-			uint64_t tmp;
-
-			/* XXX */
-			tmp = _GMX_PORT_RD8(sc, cn30xxgmx_rx_adr_cam_regs[i]);
-			CLR(tmp, 0xffULL << (8 * multi));
-			SET(tmp, (uint64_t)enm->enm_addrlo[i] << (8 * multi));
-			_GMX_PORT_WR8(sc, cn30xxgmx_rx_adr_cam_regs[i], tmp);
-			    
-		}
-		for (i = 0; i < 6; i++)
-			dprintf("cam%d = %016llx\n", i,
-			    _GMX_PORT_RD8(sc, cn30xxgmx_rx_adr_cam_regs[i]));
-		ETHER_NEXT_MULTI(step, enm);
-	}
+	SET(ctl, RXN_ADR_CTL_CAM_MODE);
+	CLR(ctl, RXN_ADR_CTL_MCST_ACCEPT | RXN_ADR_CTL_MCST_AFCAM | RXN_ADR_CTL_MCST_REJECT);
 	CLR(ifp->if_flags, IFF_ALLMULTI);
 
-	OCTEON_ETH_KASSERT(enm == NULL);
-#else
 	/*
-	 * XXX
-	 * Never use DMAC filter for multicast addresses, but register only
-	 * single entry for self address.  FreeBSD code do so.
+	 * Always accept broadcast frames.
 	 */
-	SET(ifp->if_flags, IFF_ALLMULTI);
-	goto setmulti;
-#endif
+	SET(ctl, RXN_ADR_CTL_BCST);
 
-setmulti:
-	if (ISSET(ifp->if_flags, IFF_ALLMULTI) ||
-	    ISSET(ifp->if_flags, IFF_PROMISC)) {
-		/* XXX */
-		dprintf("accept all multicast\n");
-		SET(ctl, RXN_ADR_CTL_MCST_ACCEPT);
-	} else if (multi) {
-		/* XXX */
-		dprintf("use cam\n");
-		SET(ctl, RXN_ADR_CTL_MCST_AFCAM);
-	} else {
-		/* XXX */
-		dprintf("reject all multicast\n");
-		SET(ctl, RXN_ADR_CTL_MCST_REJECT);
-	}
-
-	/* XXX */
 	if (ISSET(ifp->if_flags, IFF_PROMISC)) {
+		SET(ifp->if_flags, IFF_ALLMULTI);
+		CLR(ctl, RXN_ADR_CTL_CAM_MODE);
+		SET(ctl, RXN_ADR_CTL_MCST_ACCEPT);
 		cam_en = 0x00ULL;
-	} else if (ISSET(ifp->if_flags, IFF_ALLMULTI)) {
-		cam_en = 0x01ULL;
+	} else if (ac->ac_multirangecnt > 0 || ac->ac_multicnt > 7) {
+		SET(ifp->if_flags, IFF_ALLMULTI);
+		SET(ctl, RXN_ADR_CTL_MCST_ACCEPT);
+	} else {
+#ifdef OCTEON_ETH_USE_GMX_CAM
+		/*
+		 * Note first entry is self MAC address; other 7 entires are available
+		 * for multicast addresses.
+		 */
+		ETHER_FIRST_MULTI(step, sc->sc_port_ac, enm);
+		while (enm != NULL) {
+			int i;
+
+			dprintf("%d: lo(%02x:%02x:%02x:%02x:%02x:%02x) - "
+			    "hi(%02x:%02x:%02x:%02x:%02x:%02x)\n",
+			    multi + 1,
+			    enm->enm_addrlo[0], enm->enm_addrlo[1],
+			    enm->enm_addrlo[2], enm->enm_addrlo[3],
+			    enm->enm_addrlo[4], enm->enm_addrlo[5],
+			    enm->enm_addrhi[0], enm->enm_addrhi[1],
+			    enm->enm_addrhi[2], enm->enm_addrhi[3],
+			    enm->enm_addrhi[4], enm->enm_addrhi[5]);
+			multi++;
+
+			SET(cam_en, 1ULL << multi); /* XXX */
+
+			for (i = 0; i < 6; i++) {
+				uint64_t tmp;
+
+				/* XXX */
+				tmp = _GMX_PORT_RD8(sc, cn30xxgmx_rx_adr_cam_regs[i]);
+				CLR(tmp, 0xffULL << (8 * multi));
+				SET(tmp, (uint64_t)enm->enm_addrlo[i] << (8 * multi));
+				_GMX_PORT_WR8(sc, cn30xxgmx_rx_adr_cam_regs[i], tmp);
+			}
+
+			for (i = 0; i < 6; i++)
+				dprintf("cam%d = %016llx\n", i,
+				    _GMX_PORT_RD8(sc, cn30xxgmx_rx_adr_cam_regs[i]));
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
+
+		if (multi)
+			SET(ctl, RXN_ADR_CTL_MCST_AFCAM);
+		else
+			SET(ctl, RXN_ADR_CTL_MCST_REJECT);
+
+		OCTEON_ETH_KASSERT(enm == NULL);
+#else
+		/*
+		 * XXX
+		 * Never use DMAC filter for multicast addresses, but register only
+		 * single entry for self address.  FreeBSD code do so.
+		 */
+		SET(ifp->if_flags, IFF_ALLMULTI);
+		SET(ctl, RXN_ADR_CTL_MCST_ACCEPT);
+#endif
 	}
 
 	dprintf("ctl = %llx, cam_en = %llx\n", ctl, cam_en);
