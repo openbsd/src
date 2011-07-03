@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-command-prompt.c,v 1.17 2011/07/02 21:05:44 nicm Exp $ */
+/* $OpenBSD: cmd-command-prompt.c,v 1.18 2011/07/03 18:18:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -59,8 +59,13 @@ void
 cmd_command_prompt_key_binding(struct cmd *self, int key)
 {
 	switch (key) {
+	case '$':
+		self->args = args_create(1, "rename-session '%%'");
+		args_set(self->args, 'I', "#S");
+		break;
 	case ',':
 		self->args = args_create(1, "rename-window '%%'");
+		args_set(self->args, 'I', "#W");
 		break;
 	case '.':
 		self->args = args_create(1, "move-window -t '%%'");
