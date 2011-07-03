@@ -76,12 +76,12 @@ typedef unsigned short UShort;
 
 	/* The following may be or-ed into one of the above values. */
 
-	STRTOG_Neg	= 0x010, /* does not affect STRTOG_Inexlo or STRTOG_Inexhi */
-	STRTOG_Inexlo	= 0x020, /* returned result rounded toward zero */
-	STRTOG_Inexhi	= 0x030, /* returned result rounded away from zero */
-	STRTOG_Inexact	= 0x040,
-	STRTOG_Underflow= 0x080,
-	STRTOG_Overflow	= 0x100
+	STRTOG_Inexlo	= 0x010, /* returned result rounded toward zero */
+	STRTOG_Inexhi	= 0x020, /* returned result rounded away from zero */
+	STRTOG_Inexact	= 0x030,
+	STRTOG_Underflow= 0x040,
+	STRTOG_Overflow	= 0x080,
+	STRTOG_Neg	= 0x100 /* does not affect STRTOG_Inexlo or STRTOG_Inexhi */
 	};
 
  typedef struct
