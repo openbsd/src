@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfscanf.c,v 1.25 2009/11/09 00:18:27 kurt Exp $ */
+/*	$OpenBSD: vfscanf.c,v 1.26 2011/07/03 05:16:59 martynas Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -49,7 +49,7 @@
  * Flags used during conversion.
  */
 #define	LONG		0x00001	/* l: long or double */
-#define	LONGDBL		0x00002	/* L: long double; unimplemented */
+#define	LONGDBL		0x00002	/* L: long double */
 #define	SHORT		0x00004	/* h: short */
 #define	SHORTSHORT	0x00008	/* hh: 8 bit integer */
 #define LLONG		0x00010	/* ll: long long (+ deprecated q: quad) */
@@ -676,16 +676,18 @@ literal:
 				(void) ungetc(c, fp);
 			}
 			if ((flags & SUPPRESS) == 0) {
-				double res;
-
 				*p = '\0';
-				res = strtod(buf, (char **) NULL);
-				if (flags & LONGDBL)
+				if (flags & LONGDBL) {
+					long double res = strtold(buf,
+					    (char **)NULL);
 					*va_arg(ap, long double *) = res;
-				else if (flags & LONG)
+				} else if (flags & LONG) {
+					double res = strtod(buf, (char **)NULL);
 					*va_arg(ap, double *) = res;
-				else
+				} else {
+					float res = strtof(buf, (char **)NULL);
 					*va_arg(ap, float *) = res;
+				}
 				nassigned++;
 			}
 			nread += p - buf;
