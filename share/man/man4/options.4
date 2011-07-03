@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.216 2011/06/29 16:23:22 tedu Exp $
+.\"	$OpenBSD: options.4,v 1.217 2011/07/03 22:40:06 tedu Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: June 29 2011 $
+.Dd $Mdocdate: July 3 2011 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -526,16 +526,6 @@ in
 See
 .Xr altq 9
 for details on ALTQ.
-.It Cd option ALTQ_RIO
-Enables ALTQ's RIO (RED with In/Out) module.
-The original RIO has 2 sets of RED parameters; one for in-profile
-packets and the other for out-of-profile packets.
-At the ingress of the network, profile meters tag packets as IN or
-OUT based on contracted profiles for customers.
-Inside the network, IN packets receive preferential treatment by
-the RIO dropper.
-ALTQ/RIO has 3 drop precedence levels defined for the Assured Forwarding
-PHB of DiffServ (RFC 2597).
 .It Cd option ENCDEBUG
 This option enables debugging information to be conditionally logged
 in case IPSEC encounters errors.
