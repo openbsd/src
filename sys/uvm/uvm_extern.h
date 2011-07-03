@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.99 2011/06/23 21:42:05 ariane Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.100 2011/07/03 17:42:51 oga Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -207,13 +207,6 @@ typedef int		vm_prot_t;
 #define UVM_KMF_CANFAIL	0x4			/* caller handles failure */
 #define UVM_KMF_ZERO	0x08			/* zero pages */
 #define UVM_KMF_TRYLOCK	UVM_FLAG_TRYLOCK	/* try locking only */
-
-/*
- * the following defines the strategies for uvm_pagealloc()
- */
-#define	UVM_PGA_STRAT_NORMAL	0	/* high -> low free list walk */
-#define	UVM_PGA_STRAT_ONLY	1	/* only specified free list */
-#define	UVM_PGA_STRAT_FALLBACK	2	/* ONLY falls back on NORMAL */
 
 /*
  * flags for uvm_pagealloc()
