@@ -1,4 +1,4 @@
-/*	$OpenBSD $	*/
+/*	$OpenBSD: nlist.c,v 1.7 2011/07/03 19:59:00 krw Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
