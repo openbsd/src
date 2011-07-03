@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.236 2011/07/03 18:18:15 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.237 2011/07/03 19:07:54 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -1779,6 +1779,11 @@ window of that session,
 means all bells are ignored and
 .Ic current
 means only bell in windows other than the current window are ignored.
+.It Xo Ic bell-on-alert
+.Op Ic on | off
+.Xc
+If on, ring the terminal bell when an activity, content or silence alert
+occurs.
 .It Ic default-command Ar shell-command
 Set the command used for new windows (if not specified when the window is
 created) to

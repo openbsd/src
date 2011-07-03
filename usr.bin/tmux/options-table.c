@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.10 2011/05/20 19:17:39 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.11 2011/07/03 19:07:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -96,6 +96,11 @@ const struct options_table_entry session_options_table[] = {
 	  .type = OPTIONS_TABLE_CHOICE,
 	  .choices = options_table_bell_action_list,
 	  .default_num = BELL_ANY
+	},
+
+	{ .name = "bell-on-alert",
+	  .type = OPTIONS_TABLE_FLAG,
+	  .default_num = 0
 	},
 
 	{ .name = "default-command",
