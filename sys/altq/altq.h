@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq.h,v 1.7 2010/11/19 22:36:11 mikeb Exp $	*/
+/*	$OpenBSD: altq.h,v 1.8 2011/07/03 23:47:04 henning Exp $	*/
 /*	$KAME: altq.h,v 1.6 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -33,15 +33,7 @@
 /* altq discipline type */
 #define	ALTQT_NONE		 0	/* reserved */
 #define	ALTQT_CBQ		 1	/* cbq */
-#define	ALTQT_WFQ		 2	/* wfq */
-#define	ALTQT_AFMAP		 3	/* afmap */
-#define	ALTQT_FIFOQ		 4	/* fifoq */
-#define	ALTQT_RED		 5	/* red */
-#define	ALTQT_RIO		 6	/* rio */
-#define	ALTQT_LOCALQ		 7	/* local use */
 #define	ALTQT_HFSC		 8	/* hfsc */
-#define	ALTQT_CDNR		 9	/* traffic conditioner */
-#define	ALTQT_BLUE		10	/* blue */
 #define	ALTQT_PRIQ		11	/* priority queue */
 #define	ALTQT_MAX		12	/* should be max discipline type + 1 */
 
