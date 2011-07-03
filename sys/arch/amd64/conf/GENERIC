@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.322 2011/06/29 20:52:08 matthew Exp $
+#	$OpenBSD: GENERIC,v 1.323 2011/07/03 21:40:24 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -135,6 +135,7 @@ maxtmp*	at iic?			# Maxim MAX6642/MAX6690
 spdmem*	at iic?			# SPD memory eeproms
 sdtemp*	at iic?			# SO-DIMM (JC-42.4) temperature
 wbng*	at iic?			# Winbond W83793G
+nvt*	at iic?			# Novoton W83795G
 
 #option PCMCIAVERBOSE
 
