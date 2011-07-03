@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rmclass.c,v 1.17 2011/07/03 23:48:41 henning Exp $	*/
+/*	$OpenBSD: altq_rmclass.c,v 1.18 2011/07/03 23:59:43 henning Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.10 2001/02/09 07:20:40 kjc Exp $	*/
 
 /*
@@ -190,14 +190,6 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
 		return (NULL);
 	}
 #endif
-#ifndef ALTQ_RIO
-	if (flags & RMCF_RIO) {
-#ifdef ALTQ_DEBUG
-		printf("rmc_newclass: RIO not configured for CBQ!\n");
-#endif
-		return (NULL);
-	}
-#endif
 
 	cl = malloc(sizeof(struct rm_class), M_DEVBUF, M_WAITOK|M_ZERO);
 	CALLOUT_INIT(&cl->callout_);
@@ -244,7 +236,7 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
 	cl->overlimit = action;
 
 #ifdef ALTQ_RED
-	if (flags & (RMCF_RED|RMCF_RIO)) {
+	if (flags & RMCF_RED) {
 		int red_flags, red_pkttime;
 
 		red_flags = 0;
@@ -261,13 +253,6 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
 			    red_flags, red_pkttime);
 			qtype(cl->q_) = Q_RED;
 		}
-#ifdef ALTQ_RIO
-		else {
-			cl->red_ = (red_t *)rio_alloc(0, NULL,
-						      red_flags, red_pkttime);
-			qtype(cl->q_) = Q_RIO;
-		}
-#endif
 	}
 #endif /* ALTQ_RED */
 
@@ -594,10 +579,6 @@ rmc_delete_class(struct rm_ifdat *ifd, struct rm_class *cl)
 	 * Free the class structure.
 	 */
 	if (cl->red_ != NULL) {
-#ifdef ALTQ_RIO
-		if (q_is_rio(cl->q_))
-			rio_destroy((rio_t *)cl->red_);
-#endif
 #ifdef ALTQ_RED
 		if (q_is_red(cl->q_))
 			red_destroy(cl->red_);
@@ -1537,10 +1518,6 @@ rmc_root_overlimit(struct rm_class *cl, struct rm_class *borrow)
 static int
 _rmc_addq(rm_class_t *cl, mbuf_t *m)
 {
-#ifdef ALTQ_RIO
-	if (q_is_rio(cl->q_))
-		return rio_addq((rio_t *)cl->red_, cl->q_, m, cl->pktattr_);
-#endif
 #ifdef ALTQ_RED
 	if (q_is_red(cl->q_))
 		return red_addq(cl->red_, cl->q_, m, cl->pktattr_);
@@ -1563,10 +1540,6 @@ _rmc_dropq(rm_class_t *cl)
 static mbuf_t *
 _rmc_getq(rm_class_t *cl)
 {
-#ifdef ALTQ_RIO
-	if (q_is_rio(cl->q_))
-		return rio_getq((rio_t *)cl->red_, cl->q_);
-#endif
 #ifdef ALTQ_RED
 	if (q_is_red(cl->q_))
 		return red_getq(cl->red_, cl->q_);
@@ -1640,7 +1613,7 @@ void cbqtrace_dump(int counter)
 }
 #endif /* CBQ_TRACE */
 
-#if defined(ALTQ_CBQ) || defined(ALTQ_RED) || defined(ALTQ_RIO) || defined(ALTQ_HFSC) || defined(ALTQ_PRIQ)
+#if defined(ALTQ_CBQ) || defined(ALTQ_RED) || defined(ALTQ_HFSC) || defined(ALTQ_PRIQ)
 #if !defined(__GNUC__) || defined(ALTQ_DEBUG)
 
 void
@@ -1756,4 +1729,4 @@ _flushq(class_queue_t *q)
 }
 
 #endif /* !__GNUC__ || ALTQ_DEBUG */
-#endif /* ALTQ_CBQ || ALTQ_RED || ALTQ_RIO || ALTQ_HFSC || ALTQ_PRIQ */
+#endif /* ALTQ_CBQ || ALTQ_RED || ALTQ_HFSC || ALTQ_PRIQ */

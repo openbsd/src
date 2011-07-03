@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.c,v 1.25 2008/05/09 14:10:05 dlg Exp $	*/
+/*	$OpenBSD: altq_cbq.c,v 1.26 2011/07/03 23:59:43 henning Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -180,10 +180,6 @@ get_class_stats(class_stats_t *statsp, struct rm_class *cl)
 #ifdef ALTQ_RED
 	if (q_is_red(cl->q_))
 		red_getstats(cl->red_, &statsp->red[0]);
-#endif
-#ifdef ALTQ_RIO
-	if (q_is_rio(cl->q_))
-		rio_getstats((rio_t *)cl->red_, &statsp->red[0]);
 #endif
 }
 

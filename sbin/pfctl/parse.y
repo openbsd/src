@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.600 2011/07/03 23:37:55 zinke Exp $	*/
+/*	$OpenBSD: parse.y,v 1.601 2011/07/03 23:59:43 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1514,8 +1514,6 @@ cbqflags_item	: STRING	{
 				$$ = CBQCLF_RED;
 			else if (!strcmp($1, "ecn"))
 				$$ = CBQCLF_RED|CBQCLF_ECN;
-			else if (!strcmp($1, "rio"))
-				$$ = CBQCLF_RIO;
 			else {
 				yyerror("unknown cbq flag \"%s\"", $1);
 				free($1);
@@ -1536,8 +1534,6 @@ priqflags_item	: STRING	{
 				$$ = PRCF_RED;
 			else if (!strcmp($1, "ecn"))
 				$$ = PRCF_RED|PRCF_ECN;
-			else if (!strcmp($1, "rio"))
-				$$ = PRCF_RIO;
 			else {
 				yyerror("unknown priq flag \"%s\"", $1);
 				free($1);
@@ -1636,8 +1632,6 @@ hfscopts_item	: LINKSHARE bandwidth				{
 				hfsc_opts.flags |= HFCF_RED;
 			else if (!strcmp($1, "ecn"))
 				hfsc_opts.flags |= HFCF_RED|HFCF_ECN;
-			else if (!strcmp($1, "rio"))
-				hfsc_opts.flags |= HFCF_RIO;
 			else {
 				yyerror("unknown hfsc flag \"%s\"", $1);
 				free($1);

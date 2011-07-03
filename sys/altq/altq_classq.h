@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_classq.h,v 1.4 2008/04/20 07:05:51 deraadt Exp $	*/
+/*	$OpenBSD: altq_classq.h,v 1.5 2011/07/03 23:59:43 henning Exp $	*/
 /*	$KAME: altq_classq.h,v 1.4 2001/02/09 07:20:40 kjc Exp $	*/
 
 /*
@@ -48,7 +48,6 @@ extern "C" {
  */
 #define	Q_DROPHEAD	0x00
 #define	Q_RED		0x01
-#define	Q_RIO		0x02
 #define	Q_DROPTAIL	0x03
 
 #ifdef _KERNEL
@@ -73,8 +72,6 @@ typedef struct _class_queue_	class_queue_t;
 
 #define	qempty(q)	((q)->qlen_ == 0)	/* Is the queue empty?? */
 #define	q_is_red(q)	((q)->qtype_ == Q_RED)	/* Is the queue a red queue */
-#define	q_is_rio(q)	((q)->qtype_ == Q_RIO)	/* Is the queue a rio queue */
-#define	q_is_red_or_rio(q)	((q)->qtype_ == Q_RED || (q)->qtype_ == Q_RIO)
 
 #if !defined(__GNUC__) || defined(ALTQ_DEBUG)
 

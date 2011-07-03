@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_hfsc.c,v 1.27 2011/07/03 23:48:41 henning Exp $	*/
+/*	$OpenBSD: altq_hfsc.c,v 1.28 2011/07/03 23:59:43 henning Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.17 2002/11/29 07:48:33 kjc Exp $	*/
 
 /*
@@ -354,7 +354,7 @@ hfsc_class_create(struct hfsc_if *hif, struct service_curve *rsc,
 	qlen(cl->cl_q) = 0;
 	cl->cl_flags = flags;
 #ifdef ALTQ_RED
-	if (flags & (HFCF_RED|HFCF_RIO)) {
+	if (flags & HFCF_RED) {
 		int red_flags, red_pkttime;
 		u_int m2;
 
@@ -381,13 +381,6 @@ hfsc_class_create(struct hfsc_if *hif, struct service_curve *rsc,
 			    red_flags, red_pkttime);
 			qtype(cl->cl_q) = Q_RED;
 		}
-#ifdef ALTQ_RIO
-		else {
-			cl->cl_red = (red_t *)rio_alloc(0, NULL,
-			    red_flags, red_pkttime);
-			qtype(cl->cl_q) = Q_RIO;
-		}
-#endif
 	}
 #endif /* ALTQ_RED */
 
@@ -463,10 +456,6 @@ hfsc_class_create(struct hfsc_if *hif, struct service_curve *rsc,
 	if (cl->cl_actc != NULL)
 		actlist_destroy(cl->cl_actc);
 	if (cl->cl_red != NULL) {
-#ifdef ALTQ_RIO
-		if (q_is_rio(cl->cl_q))
-			rio_destroy((rio_t *)cl->cl_red);
-#endif
 #ifdef ALTQ_RED
 		if (q_is_red(cl->cl_q))
 			red_destroy(cl->cl_red);
@@ -528,10 +517,6 @@ hfsc_class_destroy(struct hfsc_class *cl)
 	actlist_destroy(cl->cl_actc);
 
 	if (cl->cl_red != NULL) {
-#ifdef ALTQ_RIO
-		if (q_is_rio(cl->cl_q))
-			rio_destroy((rio_t *)cl->cl_red);
-#endif
 #ifdef ALTQ_RED
 		if (q_is_red(cl->cl_q))
 			red_destroy(cl->cl_red);
@@ -737,11 +722,6 @@ static int
 hfsc_addq(struct hfsc_class *cl, struct mbuf *m)
 {
 
-#ifdef ALTQ_RIO
-	if (q_is_rio(cl->cl_q))
-		return rio_addq((rio_t *)cl->cl_red, cl->cl_q,
-				m, cl->cl_pktattr);
-#endif
 #ifdef ALTQ_RED
 	if (q_is_red(cl->cl_q))
 		return red_addq(cl->cl_red, cl->cl_q, m, cl->cl_pktattr);
@@ -759,10 +739,6 @@ hfsc_addq(struct hfsc_class *cl, struct mbuf *m)
 static struct mbuf *
 hfsc_getq(struct hfsc_class *cl)
 {
-#ifdef ALTQ_RIO
-	if (q_is_rio(cl->cl_q))
-		return rio_getq((rio_t *)cl->cl_red, cl->cl_q);
-#endif
 #ifdef ALTQ_RED
 	if (q_is_red(cl->cl_q))
 		return red_getq(cl->cl_red, cl->cl_q);
@@ -1576,10 +1552,6 @@ get_class_stats(struct hfsc_classstats *sp, struct hfsc_class *cl)
 #ifdef ALTQ_RED
 	if (q_is_red(cl->cl_q))
 		red_getstats(cl->cl_red, &sp->red[0]);
-#endif
-#ifdef ALTQ_RIO
-	if (q_is_rio(cl->cl_q))
-		rio_getstats((rio_t *)cl->cl_red, &sp->red[0]);
 #endif
 }
 
