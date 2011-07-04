@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.21 2011/07/04 03:53:22 tedu Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.22 2011/07/04 04:49:05 tedu Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -151,66 +151,32 @@ int
 sr_aoe_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
     int no_chunk)
 {
-
-	sd->sd_max_ccb_per_wu = sd->sd_meta->ssdi.ssd_chunk_no;
-
-	return 0;
-}
-
-void
-sr_aoe_setup(struct aoe_handler *ah, struct mbuf *m)
-{
-	struct aoe_packet	*ap;
-	int			s;
-
-	ap = mtod(m, struct aoe_packet *);
-	if (ap->command != 1)
-		goto out;
-	if (ap->tag != 0)
-		goto out;
-	s = splnet();
-	ah->fn = (workq_fn)sr_aoe_input;
-	wakeup(ah);
-	splx(s);
-
-out:
-	m_freem(m);
-}
-
-int
-sr_aoe_alloc_resources(struct sr_discipline *sd)
-{
 	struct ifnet		*ifp;
 	struct aoe_handler	*ah;
 	unsigned char		slot;
 	unsigned short		shelf;
 	const char		*nic;
+	const char	 	*dsteaddr;
+	int			s;
 #if 0
 	struct mbuf *m;
 	struct ether_header *eh;
 	struct aoe_packet *ap;
 	int rv;
 #endif
-	int s;
 
-	if (!sd)
-		return (EINVAL);
 
-	DNPRINTF(SR_D_DIS, "%s: sr_aoe_alloc_resources\n",
-	    DEVNAME(sd->sd_sc));
-
-	sr_wu_alloc(sd);
-	sr_ccb_alloc(sd);
+	sd->sd_max_ccb_per_wu = sd->sd_meta->ssdi.ssd_chunk_no;
 
 	/* where do these come from */
 	slot = 3;
 	shelf = 4;
 	nic = "ne0";
+	dsteaddr = dsteaddr;
 
 	ifp = ifunit(nic);
-	if (!ifp) {
+	if (!ifp)
 		return (EINVAL);
-	}
 	shelf = htons(shelf);
 
 	ah = malloc(sizeof(*ah), M_DEVBUF, M_WAITOK | M_ZERO);
@@ -225,12 +191,7 @@ sr_aoe_alloc_resources(struct sr_discipline *sd)
 	splx(s);
 
 	sd->mds.mdd_aoe.sra_ah = ah;
-	sd->mds.mdd_aoe.sra_eaddr[0] = 0xff;
-	sd->mds.mdd_aoe.sra_eaddr[1] = 0xff;
-	sd->mds.mdd_aoe.sra_eaddr[2] = 0xff;
-	sd->mds.mdd_aoe.sra_eaddr[3] = 0xff;
-	sd->mds.mdd_aoe.sra_eaddr[4] = 0xff;
-	sd->mds.mdd_aoe.sra_eaddr[5] = 0xff;
+	memcpy(sd->mds.mdd_aoe.sra_eaddr, dsteaddr, 6);
 
 #if 0
 	MGETHDR(m, M_WAIT, MT_HEADER);
@@ -267,6 +228,41 @@ sr_aoe_alloc_resources(struct sr_discipline *sd)
 		return rv;
 	}
 #endif
+	return 0;
+}
+
+void
+sr_aoe_setup(struct aoe_handler *ah, struct mbuf *m)
+{
+	struct aoe_packet	*ap;
+	int			s;
+
+	ap = mtod(m, struct aoe_packet *);
+	if (ap->command != 1)
+		goto out;
+	if (ap->tag != 0)
+		goto out;
+	s = splnet();
+	ah->fn = (workq_fn)sr_aoe_input;
+	wakeup(ah);
+	splx(s);
+
+out:
+	m_freem(m);
+}
+
+int
+sr_aoe_alloc_resources(struct sr_discipline *sd)
+{
+	if (!sd)
+		return (EINVAL);
+
+	DNPRINTF(SR_D_DIS, "%s: sr_aoe_alloc_resources\n",
+	    DEVNAME(sd->sd_sc));
+
+	sr_wu_alloc(sd);
+	sr_ccb_alloc(sd);
+
 	return 0;
 }
 
