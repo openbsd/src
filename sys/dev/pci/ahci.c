@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.180 2011/06/14 10:40:14 jmatthew Exp $ */
+/*	$OpenBSD: ahci.c,v 1.181 2011/07/04 22:06:07 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -418,6 +418,7 @@ struct ahci_softc {
 #define AHCI_F_NO_NCQ			(1<<0)
 #define AHCI_F_IGN_FR			(1<<1)
 #define AHCI_F_IPMS_PROBE		(1<<2)	/* IPMS on failed PMP probe */
+#define AHCI_F_NO_PMP			(1<<3)	/* ignore PMP capability */
 
 	u_int			sc_ncmds;
 
@@ -456,7 +457,7 @@ int			ahci_ati_sb700_attach(struct ahci_softc *,
 			    struct pci_attach_args *);
 int			ahci_amd_hudson2_attach(struct ahci_softc *,
 			    struct pci_attach_args *);
-int			ahci_intel_3400_1_attach(struct ahci_softc *,
+int			ahci_intel_attach(struct ahci_softc *,
 			    struct pci_attach_args *);
 int			ahci_nvidia_mcp_attach(struct ahci_softc *,
 			    struct pci_attach_args *);
@@ -480,8 +481,42 @@ static const struct ahci_device ahci_devices[] = {
 	{ PCI_VENDOR_ATI,	PCI_PRODUCT_ATI_SBX00_SATA_6,
 	    NULL,		ahci_ati_sb700_attach },
 
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_6SERIES_AHCI_1,
+	    NULL,		ahci_intel_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_6SERIES_AHCI_2,
+	    NULL,		ahci_intel_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_6321ESB_AHCI,
+	    NULL,		ahci_intel_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801GR_AHCI,
+	    NULL,		ahci_intel_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801GBM_AHCI,
+	    NULL,		ahci_intel_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_AHCI_6P,
+	    NULL,		ahci_intel_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_AHCI_4P,
+	    NULL,		ahci_intel_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801HBM_AHCI,
+	    NULL,		ahci_intel_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_AHCI_1,
+	    NULL,		ahci_intel_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_AHCI_2,
+	    NULL,		ahci_intel_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_AHCI_3,
+	    NULL,		ahci_intel_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801JD_AHCI,
+	    NULL,		ahci_intel_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801JI_AHCI,
+	    NULL,		ahci_intel_attach },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_3400_AHCI_1,
-	    NULL,		ahci_intel_3400_1_attach },
+	    NULL,		ahci_intel_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_3400_AHCI_2,
+	    NULL,		ahci_intel_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_3400_AHCI_3,
+	    NULL,		ahci_intel_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_3400_AHCI_4,
+	    NULL,		ahci_intel_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_EP80579_AHCI,
+	    NULL,		ahci_intel_attach },
 
 	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP65_AHCI_2,
 	    NULL,		ahci_nvidia_mcp_attach },
@@ -716,9 +751,9 @@ ahci_amd_hudson2_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 }
 
 int
-ahci_intel_3400_1_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
+ahci_intel_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 {
-	sc->sc_flags |= AHCI_F_IPMS_PROBE;
+	sc->sc_flags |= AHCI_F_NO_PMP;
 	return (0);
 }
 
@@ -2089,6 +2124,7 @@ ahci_port_portreset(struct ahci_port *ap, int pmp)
 	}
 
 	if (pmp == 0 ||
+	    (ap->ap_sc->sc_flags & AHCI_F_NO_PMP) ||
 	    !ISSET(ahci_read(ap->ap_sc, AHCI_REG_CAP), AHCI_REG_CAP_SPM)) {
 		goto err;
 	}
