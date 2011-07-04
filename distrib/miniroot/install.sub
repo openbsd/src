@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.638 2011/04/18 16:52:10 thib Exp $
+#	$OpenBSD: install.sub,v 1.639 2011/07/04 20:59:05 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1925,12 +1925,6 @@ finish_up() {
 			[[ $_fstype == swap ]] && \
 				/mnt/sbin/swapctl -a $_dev >/dev/null 2>&1
 		done </mnt/etc/fstab
-	fi
-
-	if grep -qs '^rtsol' /mnt/etc/hostname.*; then
-		sed -e "/^#\(net\.inet6\.ip6\.accept_rtadv\)/s//\1/" \
-			/mnt/etc/sysctl.conf >/tmp/sysctl.conf
-		cp /tmp/sysctl.conf /mnt/etc/sysctl.conf
 	fi
 
 	# Create or update pkg.conf with the new package path, if any
