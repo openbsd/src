@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.63 2011/07/04 04:30:41 tedu Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.64 2011/07/04 16:52:41 nicm Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -396,7 +396,7 @@ spec_kqfilter(void *v)
 	dev_t dev;
 
 	dev = ap->a_vp->v_rdev;
-	if (cdevsw[major(dev)].d_flags & D_KQFILTER)
+	if (cdevsw[major(dev)].d_kqfilter)
 		return (*cdevsw[major(dev)].d_kqfilter)(dev, ap->a_kn);
 	return (1);
 }
