@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.61 2011/07/03 18:23:10 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.62 2011/07/04 04:15:26 krw Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -392,8 +392,7 @@ ext2fs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	struct buf *bp;
 	struct m_ext2fs *fs;
 	struct ext2fs *newfs;
-	struct partinfo dpart;
-	int i, size, error;
+	int i, error;
 	struct ext2fs_reload_args era;
 
 	if ((mountp->mnt_flag & MNT_RDONLY) == 0)
@@ -408,11 +407,7 @@ ext2fs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	/*
 	 * Step 2: re-read superblock from disk.
 	 */
-	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, NOCRED, p) != 0)
-		size = DEV_BSIZE;
-	else
-		size = dpart.disklab->d_secsize;
-	error = bread(devvp, (int32_t)(SBOFF / size), SBSIZE, NOCRED, &bp);
+	error = bread(devvp, (daddr64_t)(SBOFF / DEV_BSIZE), SBSIZE, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
 		return (error);
@@ -482,8 +477,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	struct ext2fs *fs;
 	struct m_ext2fs *m_fs;
 	dev_t dev;
-	struct partinfo dpart;
-	int error, i, size, ronly;
+	int error, i, ronly;
 	struct ucred *cred;
 
 	dev = devvp->v_rdev;
@@ -505,10 +499,6 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
 	if (error)
 		return (error);
-	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, cred, p) != 0)
-		size = DEV_BSIZE;
-	else
-		size = dpart.disklab->d_secsize;
 
 	bp = NULL;
 	ump = NULL;
@@ -516,7 +506,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 #ifdef DEBUG_EXT2
 	printf("ext2 sb size: %d\n", sizeof(struct ext2fs));
 #endif
-	error = bread(devvp, (SBOFF / DEV_BSIZE), SBSIZE, cred, &bp);
+	error = bread(devvp, (daddr64_t)(SBOFF / DEV_BSIZE), SBSIZE, cred, &bp);
 	if (error)
 		goto out;
 	fs = (struct ext2fs *)bp->b_data;
