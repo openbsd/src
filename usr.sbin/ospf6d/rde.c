@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.52 2011/05/05 15:58:02 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.53 2011/07/04 04:08:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
+#include <net/if_types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <err.h>
@@ -585,11 +586,20 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			iface = if_find(ifp->ifindex);
 			if (iface == NULL)
 				fatalx("interface lost in rde");
-			iface->flags = ifp->flags;
-			iface->linkstate = ifp->linkstate;
 			iface->nh_reachable = ifp->nh_reachable;
-			if (iface->state != ifp->state) {
+
+			/* 
+			 * Resend LSAs if interface flags change -
+			 * carp/passive interfaces can come up and down
+			 * without changing OSPF state.
+			 */
+			if ((iface->state != ifp->state) || 
+			    (iface->linkstate != ifp->linkstate) || 
+			    (iface->flags != ifp->flags)) {
 				iface->state = ifp->state;
+				iface->flags = ifp->flags;
+				iface->linkstate = ifp->linkstate;
+
 				area = area_find(rdeconf, iface->area_id);
 				if (!area)
 					fatalx("interface lost area");
@@ -1457,8 +1467,20 @@ orig_intra_lsa_rtr(struct area *area, struct vertex *old)
 
 	numprefix = 0;
 	LIST_FOREACH(iface, &area->iface_list, entry) {
-		if (iface->state & IF_STA_DOWN)
+		if (!((iface->flags & IFF_UP) &&
+		    (LINK_STATE_IS_UP(iface->linkstate) ||
+		    (iface->linkstate == LINK_STATE_UNKNOWN &&
+		    iface->media_type != IFT_CARP))))
+			/* interface or link state down */
 			continue;
+		if ((iface->state & IF_STA_DOWN) && 
+		    !(iface->cflags & F_IFACE_PASSIVE)) 
+			/* passive interfaces stay in state DOWN */
+			continue;
+
+		log_debug("orig_intra_lsa_rtr: area %s, interface %s: "
+		    "including in intra-area-prefix LSA",
+		    inet_ntoa(area->id), iface->name);
 
 		/* Broadcast links with adjacencies are handled
 		 * by orig_intra_lsa_net(), ignore. */
