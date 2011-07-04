@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.176 2011/07/02 15:52:25 thib Exp $
+#	$OpenBSD: GENERIC,v 1.177 2011/07/04 20:43:46 thib Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -39,7 +39,7 @@ option		UFS_DIRHASH	# hash large directories
 option		QUOTA		# UFS quotas
 option		EXT2FS		# Second Extended Filesystem
 option		MFS		# memory file system
-option		NNPFS		# NNPFS filesystem
+#option		NNPFS		# NNPFS filesystem
 option		NFSCLIENT	# Network File System client
 option		NFSSERVER	# Network File System server
 option		CD9660		# ISO 9660 + Rock Ridge file system
