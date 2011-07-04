@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha.c,v 1.28 2011/04/16 02:44:46 krw Exp $	*/
+/*	$OpenBSD: bha.c,v 1.29 2011/07/04 07:47:42 jsg Exp $	*/
 /*	$NetBSD: bha.c,v 1.27 1998/11/19 21:53:00 thorpej Exp $	*/
 
 #undef BHADEBUG
@@ -1247,8 +1247,6 @@ bha_scsi_cmd(xs)
 	int error, seg, flags, s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("bha_scsi_cmd\n"));
-
-	s = splbio();		/* protect the queue */
 
 	/*
 	 * get a ccb to use. If the transfer

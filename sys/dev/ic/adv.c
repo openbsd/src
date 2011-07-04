@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.34 2011/04/03 12:42:36 krw Exp $	*/
+/*	$OpenBSD: adv.c,v 1.35 2011/07/04 07:47:43 jsg Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -543,9 +543,7 @@ adv_scsi_cmd(xs)
 	ASC_SOFTC      *sc = sc_link->adapter_softc;
 	bus_dma_tag_t   dmat = sc->sc_dmat;
 	ADV_CCB        *ccb;
-	int             s, flags, error, nsegs;
-
-	s = splbio();		/* protect the queue */
+	int             flags, error, nsegs;
 
 	/*
          * get a ccb to use. If the transfer
