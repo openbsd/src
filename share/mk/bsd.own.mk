@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.105 2011/06/23 22:46:12 schwarze Exp $
+#	$OpenBSD: bsd.own.mk,v 1.106 2011/07/04 23:37:32 drahn Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -31,19 +31,20 @@ ELF_TOOLCHAIN?=	no
 ELF_TOOLCHAIN?=	yes
 .endif
 
-# gcc3
-.if ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m88k" || \
-    ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "vax"
+GCC2_ARCH=m68k m88k sparc vax
+GCC4_ARCH=amd64 hppa i386 mips64* powerpc sparc64
+
+.for _arch in ${MACHINE_ARCH}
+.if !empty(GCC2_ARCH:M${_arch})
 USE_GCC3?=no
 COMPILER_VERSION?=gcc2
-.elif ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "hppa" || \
-    ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH:Mmips64*} || \
-    ${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "sparc64"
+.elif !empty(GCC4_ARCH:M${_arch})
 COMPILER_VERSION?=gcc4
 .else
 USE_GCC3?=yes
 COMPILER_VERSION?=gcc3
 .endif
+.endfor
 
 # where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj, for example
