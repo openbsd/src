@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.145 2011/07/03 20:22:07 oga Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.146 2011/07/04 06:05:56 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1370,7 +1370,7 @@ init_x86_64(paddr_t first_avail)
 
 	/*
 	 * Now, load the memory clusters (which have already been
-	 * fleensed) into the VM system.
+	 * flensed) into the VM system.
 	 */
 	for (x = 0; x < mem_cluster_cnt; x++) {
 		paddr_t seg_start = mem_clusters[x].start;
