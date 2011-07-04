@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.91 2011/06/05 18:40:33 matthew Exp $	*/
+/*	$OpenBSD: fd.c,v 1.92 2011/07/04 05:41:48 matthew Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -184,9 +184,7 @@ fdgetdisklabel(dev_t dev, struct fd_softc *fd, struct disklabel *lp,
 }
 
 int
-fdprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+fdprobe(struct device *parent, void *match, void *aux)
 {
 	struct fdc_softc *fdc = (void *)parent;
 	struct cfdata *cf = match;
@@ -246,9 +244,7 @@ fdprobe(parent, match, aux)
  * Controller is working, and drive responded.  Attach it.
  */
 void
-fdattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fdattach(struct device *parent, struct device *self, void *aux)
 {
 	struct fdc_softc *fdc = (void *)parent;
 	struct fd_softc *fd = (void *)self;
@@ -320,9 +316,7 @@ fdattach(parent, self, aux)
  * none/unknown/unusable.
  */
 struct fd_type *
-fd_nvtotype(fdc, nvraminfo, drive)
-	char *fdc;
-	int nvraminfo, drive;
+fd_nvtotype(char *fdc, int nvraminfo, int drive)
 {
 #ifdef __alpha__
 	/* Alpha:  assume 1.44MB, idea from NetBSD sys/dev/isa/fd.c
@@ -356,9 +350,7 @@ fd_nvtotype(fdc, nvraminfo, drive)
 }
 
 static __inline struct fd_type *
-fd_dev_to_type(fd, dev)
-	struct fd_softc *fd;
-	dev_t dev;
+fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 {
 	int type = FDTYPE(dev);
 
@@ -368,8 +360,7 @@ fd_dev_to_type(fd, dev)
 }
 
 void
-fdstrategy(bp)
-	register struct buf *bp;	/* IO operation to perform */
+fdstrategy(struct buf *bp)
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(bp->b_dev)];
 	int sz;
@@ -442,8 +433,7 @@ done:
 }
 
 void
-fdstart(fd)
-	struct fd_softc *fd;
+fdstart(struct fd_softc *fd)
 {
 	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
 	int active = !TAILQ_EMPTY(&fdc->sc_link.fdlink.sc_drives);
@@ -458,9 +448,7 @@ fdstart(fd)
 }
 
 void
-fdfinish(fd, bp)
-	struct fd_softc *fd;
-	struct buf *bp;
+fdfinish(struct fd_softc *fd, struct buf *bp)
 {
 	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
 
@@ -492,29 +480,19 @@ fdfinish(fd, bp)
 }
 
 int
-fdread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+fdread(dev_t dev, struct uio *uio, int flags)
 {
-
 	return (physio(fdstrategy, dev, B_READ, minphys, uio));
 }
 
 int
-fdwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+fdwrite(dev_t dev, struct uio *uio, int flags)
 {
-
 	return (physio(fdstrategy, dev, B_WRITE, minphys, uio));
 }
 
 void
-fd_set_motor(fdc, reset)
-	struct fdc_softc *fdc;
-	int reset;
+fd_set_motor(struct fdc_softc *fdc, int reset)
 {
 	struct fd_softc *fd;
 	u_char status;
@@ -534,8 +512,7 @@ fd_set_motor(fdc, reset)
 }
 
 void
-fd_motor_off(arg)
-	void *arg;
+fd_motor_off(void *arg)
 {
 	struct fd_softc *fd = arg;
 	int s;
@@ -547,8 +524,7 @@ fd_motor_off(arg)
 }
 
 void
-fd_motor_on(arg)
-	void *arg;
+fd_motor_on(void *arg)
 {
 	struct fd_softc *fd = arg;
 	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
@@ -563,11 +539,7 @@ fd_motor_on(arg)
 }
 
 int
-fdopen(dev, flags, fmt, p)
-	dev_t dev;
-	int flags;
-	int fmt;
-	struct proc *p;
+fdopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
  	int unit, pmask;
 	struct fd_softc *fd;
@@ -615,11 +587,7 @@ fdopen(dev, flags, fmt, p)
 }
 
 int
-fdclose(dev, flags, fmt, p)
-	dev_t dev;
-	int flags;
-	int fmt;
-	struct proc *p;
+fdclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	int pmask = (1 << FDPART(dev));
@@ -643,22 +611,15 @@ fdclose(dev, flags, fmt, p)
 }
 
 daddr64_t
-fdsize(dev)
-	dev_t dev;
+fdsize(dev_t dev)
 {
-
 	/* Swapping to floppies would not make sense. */
 	return -1;
 }
 
 int
-fddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr64_t blkno;
-	caddr_t va;
-	size_t size;
+fddump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
 {
-
 	/* Not implemented. */
 	return ENXIO;
 }
@@ -667,8 +628,7 @@ fddump(dev, blkno, va, size)
  * Called from the controller.
  */
 int
-fdintr(fdc)
-	struct fdc_softc *fdc;
+fdintr(struct fdc_softc *fdc)
 {
 #define	st0	fdc->sc_status[0]
 #define	cyl	fdc->sc_status[1]
@@ -945,8 +905,7 @@ loop:
 }
 
 void
-fdtimeout(arg)
-	void *arg;
+fdtimeout(void *arg)
 {
 	struct fd_softc *fd = arg;
 	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
@@ -968,8 +927,7 @@ fdtimeout(arg)
 }
 
 void
-fdretry(fd)
-	struct fd_softc *fd;
+fdretry(struct fd_softc *fd)
 {
 	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
 	struct buf *bp = fd->sc_q.b_actf;
@@ -1010,12 +968,7 @@ fdretry(fd)
 }
 
 int
-fdioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	struct disklabel *lp;
@@ -1094,10 +1047,7 @@ fdioctl(dev, cmd, addr, flag, p)
 }
 
 int
-fdformat(dev, finfo, p)
-        dev_t dev;
-        struct fd_formb *finfo;
-        struct proc *p;
+fdformat(dev_t dev, struct fd_formb *finfo, struct proc *p)
 {
         int rv = 0;
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];

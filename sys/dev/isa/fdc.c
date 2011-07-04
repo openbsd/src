@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdc.c,v 1.18 2010/11/18 21:13:19 miod Exp $	*/
+/*	$OpenBSD: fdc.c,v 1.19 2011/07/04 05:41:48 matthew Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -93,9 +93,7 @@ int fddprint(void *, const char *);
 int fdcintr(void *);
 
 int
-fdcprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+fdcprobe(struct device *parent, void *match, void *aux)
 {
 	register struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot;
@@ -135,9 +133,7 @@ fdcprobe(parent, match, aux)
 }
 
 void
-fdcattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fdcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct fdc_softc *fdc = (void *)self;
 	bus_space_tag_t iot;
@@ -204,9 +200,7 @@ fdcattach(parent, self, aux)
  * avoid printing `fdN not configured' messages.
  */
 int
-fddprint(aux, fdc)
-	void *aux;
-	const char *fdc;
+fddprint(void *aux, const char *fdc)
 {
 	register struct fdc_attach_args *fa = aux;
 
@@ -216,8 +210,7 @@ fddprint(aux, fdc)
 }
 
 int
-fdcresult(fdc)
-	struct fdc_softc *fdc;
+fdcresult(struct fdc_softc *fdc)
 {
 	bus_space_tag_t iot = fdc->sc_iot;
 	bus_space_handle_t ioh = fdc->sc_ioh;
@@ -243,10 +236,7 @@ fdcresult(fdc)
 }
 
 int
-out_fdc(iot, ioh, x)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_char x;
+out_fdc(bus_space_tag_t iot, bus_space_handle_t ioh, u_char x)
 {
 	int i = 100000;
 
@@ -261,8 +251,7 @@ out_fdc(iot, ioh, x)
 }
 
 void
-fdcstart(fdc)
-	struct fdc_softc *fdc;
+fdcstart(struct fdc_softc *fdc)
 {
 
 #ifdef DIAGNOSTIC
@@ -277,10 +266,7 @@ fdcstart(fdc)
 }
 
 void
-fdcstatus(dv, n, s)
-	struct device *dv;
-	int n;
-	char *s;
+fdcstatus(struct device *dv, int n, char *s)
 {
 	struct fdc_softc *fdc = (void *)dv->dv_parent;
 
@@ -317,8 +303,7 @@ fdcstatus(dv, n, s)
 }
 
 void
-fdcpseudointr(arg)
-	void *arg;
+fdcpseudointr(void *arg)
 {
 	int s;
 
@@ -329,8 +314,7 @@ fdcpseudointr(arg)
 }
 
 int
-fdcintr(arg)
-	void *arg;
+fdcintr(void *arg)
 {
 #if NFD > 0
 	struct fdc_softc *fdc = arg;
