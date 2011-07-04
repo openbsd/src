@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.44 2008/05/07 12:58:54 norby Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.45 2011/07/04 19:24:05 sthen Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -423,12 +423,16 @@ loioctl(ifp, cmd, data)
 {
 	struct ifaddr *ifa;
 	struct ifreq *ifr;
-	int error = 0;
+	int s, error = 0;
 
 	switch (cmd) {
 
 	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP | IFF_RUNNING;
+		s = splnet();
+		ifp->if_flags |= IFF_RUNNING;
+		if_up(ifp);		/* send up RTM_IFINFO */
+		splx(s);
+
 		ifa = (struct ifaddr *)data;
 		if (ifa != 0)
 			ifa->ifa_rtrequest = lortrequest;
