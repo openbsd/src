@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.134 2011/04/05 14:14:07 thib Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.135 2011/07/04 21:00:10 deraadt Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -60,10 +60,10 @@
 #include <sys/lockf.h>
 #include <sys/hash.h>
 #include <sys/queue.h>
+#include <sys/specdev.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
 
 #include <nfs/rpcv2.h>
