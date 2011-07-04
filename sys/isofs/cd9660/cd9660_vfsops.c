@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.59 2011/07/04 04:30:41 tedu Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.60 2011/07/04 20:35:35 deraadt Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
-#include <miscfs/specfs/specdev.h>
+#include <sys/specdev.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/file.h>

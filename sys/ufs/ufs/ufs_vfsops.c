@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vfsops.c,v 1.15 2006/04/04 11:21:40 pedro Exp $	*/
+/*	$OpenBSD: ufs_vfsops.c,v 1.16 2011/07/04 20:35:35 deraadt Exp $	*/
 /*	$NetBSD: ufs_vfsops.c,v 1.4 1996/02/09 22:36:12 christos Exp $	*/
 
 /*
@@ -44,8 +44,7 @@
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
-
-#include <miscfs/specfs/specdev.h>
+#include <sys/specdev.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>

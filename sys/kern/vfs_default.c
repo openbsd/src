@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.38 2011/07/02 22:20:08 nicm Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.39 2011/07/04 20:35:35 deraadt Exp $  */
 
 /*
  * Portions of this code are:
@@ -45,7 +45,7 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/event.h>
-#include <miscfs/specfs/specdev.h>
+#include <sys/specdev.h>
 
 int filt_generic_readwrite(struct knote *, long);
 void filt_generic_detach(struct knote *);

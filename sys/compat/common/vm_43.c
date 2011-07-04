@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_43.c,v 1.5 2003/06/02 23:27:59 millert Exp $	*/
+/*	$OpenBSD: vm_43.c,v 1.6 2011/07/04 20:35:35 deraadt Exp $	*/
 /*	$NetBSD: vm_43.c,v 1.1 1996/02/05 01:58:29 christos Exp $	*/
 
 /*
@@ -52,11 +52,10 @@
 #include <sys/file.h>
 #include <sys/mman.h>
 #include <sys/conf.h>
+#include <sys/specdev.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
-#include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm_extern.h>
 

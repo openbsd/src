@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.131 2011/07/04 04:30:41 tedu Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.132 2011/07/04 20:35:35 deraadt Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -56,10 +56,9 @@
 #include <sys/resourcevar.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
+#include <sys/specdev.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <miscfs/specfs/specdev.h>
 
 /*
  * Definitions for the buffer free lists.

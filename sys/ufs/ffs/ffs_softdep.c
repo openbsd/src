@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.106 2011/07/04 04:30:41 tedu Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.107 2011/07/04 20:35:35 deraadt Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -51,7 +51,7 @@
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
-#include <miscfs/specfs/specdev.h>
+#include <sys/specdev.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>

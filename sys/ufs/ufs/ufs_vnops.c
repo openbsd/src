@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.100 2011/07/03 18:23:10 tedu Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.101 2011/07/04 20:35:35 deraadt Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -55,10 +55,10 @@
 #include <sys/lockf.h>
 #include <sys/event.h>
 #include <sys/poll.h>
+#include <sys/specdev.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
 
 #include <ufs/ufs/quota.h>

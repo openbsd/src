@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.56 2010/12/15 04:59:52 tedu Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.57 2011/07/04 20:35:35 deraadt Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -68,11 +68,10 @@
 #include <sys/msg.h>
 #include <sys/ptrace.h>
 #include <sys/signalvar.h>
+#include <sys/specdev.h>
 
 #include <netinet/in.h>
 #include <sys/syscallargs.h>
-
-#include <miscfs/specfs/specdev.h>
 
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_signal.h>

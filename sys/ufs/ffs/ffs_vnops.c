@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.64 2011/07/04 04:30:41 tedu Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.65 2011/07/04 20:35:35 deraadt Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -47,10 +47,10 @@
 #include <sys/signalvar.h>
 #include <sys/pool.h>
 #include <sys/event.h>
+#include <sys/specdev.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
 
 #include <ufs/ufs/quota.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.16 2010/07/17 19:27:07 guenther Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.17 2011/07/04 20:35:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -75,6 +75,7 @@
 #include <sys/pipe.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
+#include <sys/specdev.h>
 
 #define _KERNEL
 #include <ufs/ufs/quota.h>
@@ -92,8 +93,6 @@
 #include <msdosfs/bpb.h>
 #include <msdosfs/denode.h>
 #include <msdosfs/msdosfsmount.h>
-
-#include <miscfs/specfs/specdev.h>
 
 #include <net/route.h>
 #include <netinet/in.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.136 2011/07/03 18:08:14 matthew Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.137 2011/07/04 20:35:34 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -64,10 +64,9 @@
 #include <sys/uio.h>
 #include <sys/conf.h>
 #include <sys/dkio.h>
+#include <sys/specdev.h>
 
 #include <crypto/blf.h>
-
-#include <miscfs/specfs/specdev.h>
 
 #include <dev/vndioctl.h>
 

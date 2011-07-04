@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.24 2011/07/04 04:30:41 tedu Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.25 2011/07/04 20:35:35 deraadt Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -40,8 +40,7 @@
 #include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/rwlock.h>
-
-#include <miscfs/specfs/specdev.h>
+#include <sys/specdev.h>
 
 /* #define NTFS_DEBUG 1 */
 #include <ntfs/ntfs.h>

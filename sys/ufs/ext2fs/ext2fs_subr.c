@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_subr.c,v 1.26 2011/07/04 04:30:41 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_subr.c,v 1.27 2011/07/04 20:35:35 deraadt Exp $	*/
 /*	$NetBSD: ext2fs_subr.c,v 1.1 1997/06/11 09:34:03 bouyer Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
+#include <sys/specdev.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -47,7 +48,6 @@
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 
-#include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
 
 union _qcvt {

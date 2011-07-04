@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.63 2011/07/04 04:30:41 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.64 2011/07/04 20:35:35 deraadt Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -54,8 +54,7 @@
 #include <sys/pool.h>
 #include <sys/lock.h>
 #include <sys/dkio.h>
-
-#include <miscfs/specfs/specdev.h>
+#include <sys/specdev.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufsmount.h>
