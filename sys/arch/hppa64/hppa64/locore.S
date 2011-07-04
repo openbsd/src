@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.27 2011/05/05 20:48:34 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.28 2011/07/04 17:07:27 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -1020,8 +1020,8 @@ EXIT(TLABEL(all))
 	sub,*=	%r16, %r17, %r0			! \
 	std	%r17, 0(%r25)			! \
 	extrd,s	%r16, 63, 37, %r16		! \
-	depd	%r8, 63, 48, %r17		! \
-	depdi	1, 62, 1, %r17
+	depd	%r8, 62, 47, %r17		! \
+	depdi	2, 63, 2, %r17
 
 TLABEL(itlb)
 	PTPULL(0, TLABEL(all))
@@ -1760,6 +1760,8 @@ switch_exited
 	ldd	TF_PIDR2(%r1), %arg3
 	mtctl	%arg2, %cr30
 	mtctl	%arg3, %pidr2
+	ldd	TF_VTOP(%r1), %arg2
+	mtctl	%arg2, %cr25
 	ldo	-(HPPA_FRAME_SIZE+20*8)(%sp), %r3
 	ldo	-(HPPA_FRAME_SIZE)(%sp), ap
 	ldd	0*8(ap), %arg0

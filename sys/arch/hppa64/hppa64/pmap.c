@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.16 2011/05/30 22:25:21 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.17 2011/07/04 17:07:27 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -625,7 +625,7 @@ pmap_create(void)
 {
 	struct pmap *pmap;
 	struct vm_page *pg;
-	pa_space_t space;
+	static pa_space_t space = 0x200;
 	paddr_t pa;
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_create()\n"));
@@ -655,6 +655,7 @@ pmap_create(void)
 /* TODO	for (space = 1 + (arc4random() & HPPA_SID_MAX);
 	    pmap_sdir_get(space); space = (space + 1) % HPPA_SID_MAX); */
 	pmap->pm_space = space;
+	space += 0x200;
 
 	pmap->pm_stats.resident_count = 2;
 	pmap->pm_stats.wired_count = 0;

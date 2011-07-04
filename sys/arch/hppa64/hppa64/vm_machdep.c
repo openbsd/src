@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.12 2011/04/16 22:02:32 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.13 2011/07/04 17:07:27 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -121,6 +121,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	sp += sizeof(struct trapframe);
 	bcopy(p1->p_md.md_regs, tf, sizeof(*tf));
 
+	tf->tf_vtop = (paddr_t)p2->p_vmspace->vm_map.pmap->pm_pdir;
 	tf->tf_cr30 = (paddr_t)pcbp->pcb_fpstate;
 
 	tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr2 = tf->tf_sr3 =
