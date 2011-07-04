@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.78 2010/02/26 14:13:30 sobrado Exp $
+.\"	$OpenBSD: iic.4,v 1.79 2011/07/04 05:38:04 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 26 2010 $
+.Dd $Mdocdate: July 4 2011 $
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -153,6 +153,8 @@ Maxim DS1624/DS1631/DS1721 temperature sensor
 Maxim MAX6642/MAX6690 temperature sensor
 .It Xr mfokclock 4
 M41T8x Real Time Clock
+.It Xr nvt 4
+Nuvoton W83795G/ADG temperature, voltage, and fan sensor
 .It Xr pcagpio 4
 Philips PCA955[4567] GPIO controller
 .It Xr pcaled 4
