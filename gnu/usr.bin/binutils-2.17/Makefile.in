@@ -18833,33 +18833,8 @@ maintainer-clean-libgui:
 
 
 .PHONY: configure-libiberty maybe-configure-libiberty
-maybe-configure-libiberty:
-@if libiberty
 maybe-configure-libiberty: configure-libiberty
 configure-libiberty: 
-@endif libiberty
-@if libiberty-bootstrap
-	@if test -f stage_last; then $(unstage); else $(MAKE) stage1-start; fi
-@endif libiberty-bootstrap
-@if libiberty
-	@r=`${PWD_COMMAND}`; export r; \
-	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
-	test ! -f $(HOST_SUBDIR)/libiberty/Makefile || exit 0; \
-	$(SHELL) $(srcdir)/mkinstalldirs $(HOST_SUBDIR)/libiberty ; \
-	$(HOST_EXPORTS) \
-	echo Configuring in $(HOST_SUBDIR)/libiberty; \
-	cd "$(HOST_SUBDIR)/libiberty" || exit 1; \
-	case $(srcdir) in \
-	  /* | [A-Za-z]:[\\/]*) topdir=$(srcdir) ;; \
-	  *) topdir=`echo $(HOST_SUBDIR)/libiberty/ | \
-		sed -e 's,\./,,g' -e 's,[^/]*/,../,g' `$(srcdir) ;; \
-	esac; \
-	srcdiroption="--srcdir=$${topdir}/libiberty"; \
-	libsrcdir="$$s/libiberty"; \
-	$(SHELL) $${libsrcdir}/configure \
-	  $(HOST_CONFIGARGS) $${srcdiroption}  \
-	  || exit 1
-@endif libiberty
 
 
 

@@ -34,8 +34,8 @@ info_TEXINFOS = binutils.texi
 binutils_TEXINFOS = config.texi
 binutils_TEXI = $(srcdir)/binutils.texi
 
-AM_MAKEINFOFLAGS = -I "$(srcdir)" -I "$(top_srcdir)/../libiberty"
-TEXI2DVI = texi2dvi -I "$(srcdir)" -I "$(top_srcdir)/../libiberty"
+AM_MAKEINFOFLAGS = -I "$(srcdir)" -I "$(top_srcdir)/../../../lib/libiberty/src"
+TEXI2DVI = texi2dvi -I "$(srcdir)" -I "$(top_srcdir)/../../../lib/libiberty/src"
 
 config.texi: $(srcdir)/../../bfd/configure $(binutils_TEXI)
 	rm -f config.texi

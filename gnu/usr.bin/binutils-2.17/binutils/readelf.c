@@ -3792,7 +3792,12 @@ get_elf_section_flags (bfd_vma sh_flags)
 		}
 
 	      size -= flags [index].len;
+#if 0
 	      p = stpcpy (p, flags [index].str);
+#else
+	      strcpy (p, flags [index].str);
+	      p += strlen(p);
+#endif
 	    }
 	  else if (flag & SHF_MASKOS)
 	    os_flags |= flag;

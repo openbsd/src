@@ -42,7 +42,7 @@ OBJDUMP_PROG=objdump
 
 # This is the demangler, as a standalone program.
 # Note: This one is used as the installed name too, unlike the above.
-#DEMANGLER_PROG=cxxfilt
+DEMANGLER_PROG=cxxfilt
 
 ADDR2LINE_PROG=addr2line
 

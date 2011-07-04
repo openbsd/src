@@ -1,12 +1,12 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 2011/04/24 20:19:23 miod Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 2011/07/04 23:58:26 drahn Exp $
 
-NEW_BINUTILS=alpha amd64 arm hppa hppa64 i386 mips64 powerpc sh sparc sparc64
+OLD_TOOLCHAIN=m68k m88k vax
 
 .for _arch in ${MACHINE_CPU}
-.  if !empty(NEW_BINUTILS:M${_arch})
-USING_NEW_BINUTILS?=yes
+.  if !empty(OLD_TOOLCHAIN:M${_arch})
+USING_OLD_TOOLCHAIN?=yes
 .else
-USING_NEW_BINUTILS?=no
+USING_OLD_TOOLCHAIN?=no
 .  endif
 .endfor
 
@@ -22,23 +22,22 @@ MANDIR=${PREFIX}/share/man/cat
 
 MAN=		binutils/doc/objdump.1 c++filt.1
 
-#### cross-compilation
-###.if !defined(TARGET_ARCH)
-###CONF_SUBDIRS+=	gdb
-###SUBDIRS+=	gdb
-###INST_SUBDIRS+=	gdb
-###MAN+=		gdb/gdb.1
-###.endif
+#### gdb comes from other binutils !?!?!
+###CONF_SUBDIRS+=      gdb
+###SUBDIRS+=   gdb
+###INST_SUBDIRS+=      gdb
+###MAN+=               gdb/gdb.1
 
-.if ${USING_NEW_BINUTILS:L} == "yes"
+.if ${USING_OLD_TOOLCHAIN:L} != "yes"
 SUBDIRS+=	binutils ld gas
 CONF_SUBDIRS+=	binutils ld gas
 INST_SUBDIRS+=	binutils ld gas
 MAN+=		binutils/doc/addr2line.1 binutils/doc/ar.1 \
 		binutils/doc/objcopy.1 binutils/doc/ranlib.1 \
 		binutils/doc/readelf.1 binutils/doc/strings.1 \
-		binutils/doc/strip.1 \
-		gas/doc/as.1 ld/ld.1
+		binutils/doc/strip.1
+# no as or ld manual ??? 
+#		gas/doc/as.1	ld/ld.1
 .  else
 CONF_SUBDIRS=${SUBDIRS}
 CONF_SUBDIRS+= binutils
@@ -73,7 +72,7 @@ all:	config.status
 	    ALL_MODULES="${ALL_MODULES}" \
 	    ALL_HOST_MODULES='${ALL_HOST_MODULES}' \
 	    INFO_HOST_MODULES='${INFO_HOST_MODULES}' all info
-.if ${USING_NEW_BINUTILS:L} != "yes"
+.if ${USING_OLD_TOOLCHAIN:L} == "yes"
 	cd ${.OBJDIR}/binutils && \
 	    ${MAKE} CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" \
 	    LDFLAGS=${LDSTATIC} objdump
@@ -99,7 +98,7 @@ do-config: .USE
 	    mv -f Makefile.tmp Makefile
 	cd ${.OBJDIR} && \
 	    ${MAKE} ${CONFIGURE_MODULES}
-.if ${USING_NEW_BINUTILS:L} == "yes"
+.if ${USING_OLD_TOOLCHAIN:L} != "yes"
 	# We need to generate as.1 and ld.1 immediately after config.status
 	# for the manpage machinery to work properly.
 	cd ${.OBJDIR}/gas/doc && ${MAKE} as.1
@@ -124,7 +123,7 @@ install: maninstall
 	    INSTALL_PROGRAM='install -c -S' \
 	    INSTALL_INFO_HOST_MODULES='${INSTALL_INFO_HOST_MODULES}' \
 	      install install-info
-.if ${USING_NEW_BINUTILS:L} != "yes"
+.if ${USING_OLD_TOOLCHAIN:L} == "yes"
 	cd ${.OBJDIR}/binutils && \
 		${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} \
 		    -g ${BINGRP} -m ${BINMODE} objdump ${DESTDIR}${PREFIX}/bin
@@ -133,8 +132,8 @@ install: maninstall
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
 
-c++filt.1: binutils/cxxfilt.man
-	sed -e 's,@PROGRAM@,c++filt,' <${.CURDIR}/binutils/cxxfilt.man >$@
+c++filt.1: binutils/doc/cxxfilt.man
+	sed -e 's,@PROGRAM@,c++filt,' <${.CURDIR}/binutils/doc/cxxfilt.man >$@
 
 depend:
 	# Nothing here so far...

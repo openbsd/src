@@ -41,7 +41,7 @@ bin_PROGRAMS = $(am__EXEEXT_6) $(am__EXEEXT_7) \
 	$(am__EXEEXT_8) $(am__EXEEXT_9) $(am__EXEEXT_10) \
 	@BUILD_NLMCONV@ @BUILD_SRCONV@ @BUILD_DLLTOOL@ @BUILD_WINDRES@ \
 	$(am__EXEEXT_11) $(am__EXEEXT_12) @BUILD_DLLWRAP@ @BUILD_MISC@
-noinst_PROGRAMS = $(am__EXEEXT_14) $(am__EXEEXT_15)
+noinst_PROGRAMS = $(am__EXEEXT_14)
 EXTRA_PROGRAMS = $(am__EXEEXT_1) srconv$(EXEEXT) sysdump$(EXEEXT) \
 	coffdump$(EXEEXT) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 	$(am__EXEEXT_4)
@@ -385,7 +385,7 @@ OBJDUMP_PROG = objdump
 
 # This is the demangler, as a standalone program.
 # Note: This one is used as the installed name too, unlike the above.
-#DEMANGLER_PROG = cxxfilt
+DEMANGLER_PROG = cxxfilt
 ADDR2LINE_PROG = addr2line
 NLMCONV_PROG = nlmconv
 DLLTOOL_PROG = dlltool
@@ -671,6 +671,7 @@ clean-libtool:
 
 distclean-libtool:
 	-rm -f libtool
+install-info-am:
 uninstall-info-am:
 
 # This directory's subdirectories are mostly independent; you can cd

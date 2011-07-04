@@ -696,6 +696,7 @@ clean-libtool:
 
 distclean-libtool:
 	-rm -f libtool
+install-info-am:
 uninstall-info-am:
 
 # This directory's subdirectories are mostly independent; you can cd

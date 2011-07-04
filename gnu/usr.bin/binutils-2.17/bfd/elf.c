@@ -7893,7 +7893,7 @@ elfcore_grok_openbsd_note (bfd *abfd, Elf_Internal_Note *note)
 
       if (sect == NULL)
 	return FALSE;
-      sect->_raw_size = note->descsz;
+      sect->size = note->descsz;
       sect->filepos = note->descpos;
       sect->flags = SEC_HAS_CONTENTS;
       sect->alignment_power = 1 + bfd_get_arch_size (abfd) / 32;
@@ -7907,7 +7907,7 @@ elfcore_grok_openbsd_note (bfd *abfd, Elf_Internal_Note *note)
 
       if (sect == NULL)
 	return FALSE;
-      sect->_raw_size = note->descsz;
+      sect->size = note->descsz;
       sect->filepos = note->descpos;
       sect->flags = SEC_HAS_CONTENTS;
       sect->alignment_power = 1 + bfd_get_arch_size (abfd) / 32;

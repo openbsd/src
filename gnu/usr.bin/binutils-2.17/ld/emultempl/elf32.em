@@ -1521,6 +1521,8 @@ case ${target} in
   string = gld${EMULATION_NAME}_search_dir(search->name, filename, -1, -1);
   if (string == NULL)
     return FALSE;
+
+  arch = arch; /* gcc -Werror */
 EOF
    ;;
   *)

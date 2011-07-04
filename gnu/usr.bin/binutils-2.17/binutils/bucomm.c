@@ -394,7 +394,7 @@ make_tempname (char *filename, int isdir)
   static char template[] = "stXXXXXX";
   char *tmpname;
   char *slash = strrchr (filename, '/');
-  char c;
+  char c = '/';
 
 #ifdef HAVE_DOS_BASED_FILE_SYSTEM
   {

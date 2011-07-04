@@ -17,8 +17,8 @@ man_MANS = as.1
 
 info_TEXINFOS = as.texinfo 
 
-AM_MAKEINFOFLAGS = -I "$(srcdir)" -I "$(top_srcdir)/../libiberty"
-TEXI2DVI = texi2dvi -I "$(srcdir)" -I "$(top_srcdir)/../libiberty"
+AM_MAKEINFOFLAGS = -I "$(srcdir)" -I "$(top_srcdir)/../../../lib/libiberty/src"
+TEXI2DVI = texi2dvi -I "$(srcdir)" -I "$(top_srcdir)/../../../lib/libiberty/src"
 
 asconfig.texi: $(CONFIG).texi
 	rm -f asconfig.texi
