@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.53 2011/07/04 04:08:34 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.54 2011/07/04 04:34:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1468,9 +1468,7 @@ orig_intra_lsa_rtr(struct area *area, struct vertex *old)
 	numprefix = 0;
 	LIST_FOREACH(iface, &area->iface_list, entry) {
 		if (!((iface->flags & IFF_UP) &&
-		    (LINK_STATE_IS_UP(iface->linkstate) ||
-		    (iface->linkstate == LINK_STATE_UNKNOWN &&
-		    iface->media_type != IFT_CARP))))
+		    LINK_STATE_IS_UP(iface->linkstate)))
 			/* interface or link state down */
 			continue;
 		if ((iface->state & IF_STA_DOWN) && 

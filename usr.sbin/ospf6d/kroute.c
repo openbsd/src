@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.30 2011/03/07 07:43:02 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.31 2011/07/04 04:34:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -805,9 +805,7 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 	}
 
 	reachable = (iface->flags & IFF_UP) &&
-	    (LINK_STATE_IS_UP(iface->linkstate) ||
-	    (iface->linkstate == LINK_STATE_UNKNOWN &&
-	    iface->media_type != IFT_CARP));
+	    LINK_STATE_IS_UP(iface->linkstate);
 
 	if (reachable == iface->nh_reachable)
 		return;		/* nothing changed wrt nexthop validity */
@@ -1293,10 +1291,7 @@ fetchifs(u_short ifindex)
 				fatal("fetchifs");
 
 			iface->nh_reachable = (iface->flags & IFF_UP) &&
-			    (LINK_STATE_IS_UP(ifm.ifm_data.ifi_link_state) ||
-			    (ifm.ifm_data.ifi_link_state ==
-			    LINK_STATE_UNKNOWN &&
-			    ifm.ifm_data.ifi_type != IFT_CARP));
+			    LINK_STATE_IS_UP(ifm.ifm_data.ifi_link_state);
 			break;
 		case RTM_NEWADDR:
 			ifam = (struct ifa_msghdr *)rtm;

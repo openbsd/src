@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.44 2011/04/10 03:20:59 guenther Exp $	*/
+/*	$OpenBSD: mib.c,v 1.45 2011/07/04 04:34:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -958,14 +958,14 @@ mib_iftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		break;
 	case 8:
 		/* ifOperStatus */
-		if ((kif->if_flags & IFF_UP) == 0) {
+		if ((kif->if_flags & IFF_UP) == 0)
 			i = 2;	/* down(2) */
-		} else if (LINK_STATE_IS_UP(kif->if_link_state)) {
-			i = 1;	/* up(1) */
-		} else if (kif->if_link_state == LINK_STATE_DOWN) {
-			i = 7;	/* lowerLayerDown(7) or dormant(5)? */
-		} else
+		else if (kif->if_link_state == LINK_STATE_UNKNOWN)
 			i = 4;	/* unknown(4) */
+		else if (LINK_STATE_IS_UP(kif->if_link_state))
+			i = 1;	/* up(1) */
+		else
+			i = 7;	/* lowerLayerDown(7) or dormant(5)? */
 		ber = ber_add_integer(ber, i);
 		break;
 	case 9:

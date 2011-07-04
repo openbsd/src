@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.6 2009/09/22 16:43:42 michele Exp $ */
+/*	$OpenBSD: kroute.c,v 1.7 2011/07/04 04:34:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -241,9 +241,7 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 	kif->k.baudrate = ifd->ifi_baudrate;
 
 	if ((reachable = (flags & IFF_UP) &&
-	    (LINK_STATE_IS_UP(ifd->ifi_link_state) ||
-	    (ifd->ifi_link_state == LINK_STATE_UNKNOWN &&
-	    ifd->ifi_type != IFT_CARP))) == kif->k.nh_reachable)
+	    LINK_STATE_IS_UP(ifd->ifi_link_state)) == kif->k.nh_reachable)
 		return;		/* nothing changed wrt nexthop validity */
 
 	kif->k.nh_reachable = reachable;
@@ -351,9 +349,7 @@ fetchifs(int ifindex)
 		kif->k.baudrate = ifm.ifm_data.ifi_baudrate;
 		kif->k.mtu = ifm.ifm_data.ifi_mtu;
 		kif->k.nh_reachable = (kif->k.flags & IFF_UP) &&
-		    (LINK_STATE_IS_UP(ifm.ifm_data.ifi_link_state) ||
-		    (ifm.ifm_data.ifi_link_state == LINK_STATE_UNKNOWN &&
-		    ifm.ifm_data.ifi_type != IFT_CARP));
+		    LINK_STATE_IS_UP(ifm.ifm_data.ifi_link_state);
 		if ((sa = rti_info[RTAX_IFP]) != NULL)
 			if (sa->sa_family == AF_LINK) {
 				sdl = (struct sockaddr_dl *)sa;

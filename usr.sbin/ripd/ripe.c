@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.c,v 1.13 2010/05/26 13:56:08 nicm Exp $ */
+/*	$OpenBSD: ripe.c,v 1.14 2011/07/04 04:34:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -257,9 +257,7 @@ ripe_dispatch_main(int fd, short event, void *bula)
 				fatalx("IFINFO imsg with wrong len");
 			kif = imsg.data;
 			link_ok = (kif->flags & IFF_UP) &&
-			    (LINK_STATE_IS_UP(kif->link_state) ||
-			    (kif->link_state == LINK_STATE_UNKNOWN &&
-			    kif->media_type != IFT_CARP));
+			    LINK_STATE_IS_UP(kif->link_state);
 
 			LIST_FOREACH(iface, &oeconf->iface_list, entry) {
 				if (kif->ifindex == iface->ifindex) {

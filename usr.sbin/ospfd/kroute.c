@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.89 2011/01/12 15:07:46 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.90 2011/07/04 04:34:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -842,9 +842,7 @@ kif_update(u_short ifindex, int flags, struct if_data *ifd,
 		if ((kif = kif_insert(ifindex)) == NULL)
 			return (NULL);
 		kif->k.nh_reachable = (flags & IFF_UP) &&
-		    (LINK_STATE_IS_UP(ifd->ifi_link_state) ||
-		    (ifd->ifi_link_state == LINK_STATE_UNKNOWN &&
-		    ifd->ifi_type != IFT_CARP));
+		    LINK_STATE_IS_UP(ifd->ifi_link_state);
 	}
 
 	kif->k.flags = flags;
@@ -986,9 +984,7 @@ if_change(u_short ifindex, int flags, struct if_data *ifd,
 	}
 
 	reachable = (kif->flags & IFF_UP) &&
-	    (LINK_STATE_IS_UP(kif->link_state) ||
-	    (kif->link_state == LINK_STATE_UNKNOWN &&
-	    kif->media_type != IFT_CARP));
+	    LINK_STATE_IS_UP(kif->link_state);
 
 	if (reachable == kif->nh_reachable)
 		return;		/* nothing changed wrt nexthop validity */

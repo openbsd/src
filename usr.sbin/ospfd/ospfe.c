@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.82 2011/05/09 12:24:41 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.83 2011/07/04 04:34:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -296,10 +296,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 				fatalx("IFINFO imsg with wrong len");
 			kif = imsg.data;
 			link_ok = (kif->flags & IFF_UP) &&
-			    (LINK_STATE_IS_UP(kif->link_state) ||
-			    (kif->link_state == LINK_STATE_UNKNOWN &&
-			    kif->media_type != IFT_CARP));
-
+			    LINK_STATE_IS_UP(kif->link_state);
 
 			LIST_FOREACH(area, &oeconf->area_list, entry) {
 				LIST_FOREACH(iface, &area->iface_list, entry) {
@@ -860,17 +857,10 @@ orig_rtr_lsa(struct area *area)
 			/*
 			 * do not add a stub net LSA for interfaces that are:
 			 *  - down
-			 *  - have a linkstate which is down and are not carp
-			 *  - have a linkstate unknown and are carp
-			 * carp uses linkstate down for backup and unknown
-			 * in cases where a major fubar happend.
+			 *  - have a linkstate which is down
 			 */
 			if (!(iface->flags & IFF_UP) ||
-			    (iface->media_type != IFT_CARP &&
-			    !(LINK_STATE_IS_UP(iface->linkstate) ||
-			    iface->linkstate == LINK_STATE_UNKNOWN)) ||
-			    (iface->media_type == IFT_CARP &&
-			    iface->linkstate == LINK_STATE_UNKNOWN))
+			    !LINK_STATE_IS_UP(iface->linkstate))
 				continue;
 			log_debug("orig_rtr_lsa: stub net, "
 			    "interface %s", iface->name);
