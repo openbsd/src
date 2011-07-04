@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.26 2010/05/26 17:49:57 deraadt Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.27 2011/07/04 02:31:35 halex Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -61,13 +61,13 @@
 
 #include <sys/param.h>
 #include <sys/queue.h>
+#define _KERNEL
+#include <sys/timeout.h>		/* to get timeout_pending() and such */
+#undef _KERNEL
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #define PRUREQUESTS
 #include <sys/protosw.h>
-#define _KERNEL
-#include <sys/timeout.h>		/* to get timeout_pending() and such */
-#undef _KERNEL
 #include <sys/file.h>
 
 #include <net/route.h>
