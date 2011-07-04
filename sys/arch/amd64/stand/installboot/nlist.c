@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.10 2011/07/03 21:37:40 krw Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.11 2011/07/04 00:59:26 krw Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -281,13 +281,20 @@ __elf_is_okay__(Elf_Ehdr *ehdr)
 	 * Elf_Ehdr structure.  These few elements are
 	 * represented in a machine independent fashion.
 	 */
+
+	/*
+	 * We are constructing a 32-bit executable. So we can't
+	 * use the libc nlist.c, which would be upset. Manually
+	 * check for the i386 values for EI_CLASS and e_machine.
+	 */
+
 	if (IS_ELF(*ehdr) &&
-	    ehdr->e_ident[EI_CLASS] == ELF_TARG_CLASS &&
+	    ehdr->e_ident[EI_CLASS] == ELFCLASS32 &&
 	    ehdr->e_ident[EI_DATA] == ELF_TARG_DATA &&
 	    ehdr->e_ident[EI_VERSION] == ELF_TARG_VER) {
 
 		/* Now check the machine dependant header */
-		if (ehdr->e_machine == ELF_TARG_MACH &&
+		if (ehdr->e_machine == EM_386 &&
 		    ehdr->e_version == ELF_TARG_VER)
 			retval = 1;
 	}
@@ -313,7 +320,7 @@ __elf_fdnlist(int fd, struct nlist *list)
 
 	/* Make sure obj is OK */
 	if (pread(fd, &ehdr, sizeof(Elf_Ehdr), (off_t)0) != sizeof(Elf_Ehdr) ||
-	    /* !__elf_is_okay__(&ehdr) || */ fstat(fd, &st) < 0)
+	    !__elf_is_okay__(&ehdr) || fstat(fd, &st) < 0)
 		return (-1);
 
 	/* calculate section header table size */
