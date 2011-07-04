@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.48 2011/05/08 19:46:10 matthew Exp $ */
+/*	$OpenBSD: sili.c,v 1.49 2011/07/04 04:44:50 dhill Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -72,7 +72,7 @@ struct sili_dmamem {
 };
 #define SILI_DMA_MAP(_sdm)	((_sdm)->sdm_map)
 #define SILI_DMA_DVA(_sdm)	((_sdm)->sdm_map->dm_segs[0].ds_addr)
-#define SILI_DMA_KVA(_sdm)	((void *)(_sdm)->sdm_kva)
+#define SILI_DMA_KVA(_sdm)	((_sdm)->sdm_kva)
 
 struct sili_dmamem	*sili_dmamem_alloc(struct sili_softc *, bus_size_t,
 			    bus_size_t);
