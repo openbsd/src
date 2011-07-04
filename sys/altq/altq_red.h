@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_red.h,v 1.5 2002/12/16 17:27:20 henning Exp $	*/
+/*	$OpenBSD: altq_red.h,v 1.6 2011/07/04 01:07:43 henning Exp $	*/
 /*	$KAME: altq_red.h,v 1.5 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
 #define	REDF_ECN4	0x01	/* use packet marking for IPv4 packets */
 #define	REDF_ECN6	0x02	/* use packet marking for IPv6 packets */
 #define	REDF_ECN	(REDF_ECN4 | REDF_ECN6)
-#define	REDF_FLOWVALVE	0x04	/* use flowvalve (aka penalty-box) */
 
 /*
  * simpler versions of red parameters and statistics used by other

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rmclass.c,v 1.18 2011/07/03 23:59:43 henning Exp $	*/
+/*	$OpenBSD: altq_rmclass.c,v 1.19 2011/07/04 01:07:43 henning Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.10 2001/02/09 07:20:40 kjc Exp $	*/
 
 /*
@@ -242,8 +242,6 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
 		red_flags = 0;
 		if (flags & RMCF_ECN)
 			red_flags |= REDF_ECN;
-		if (flags & RMCF_FLOWVALVE)
-			red_flags |= REDF_FLOWVALVE;
 		red_pkttime = nsecPerByte * pktsize  / 1000;
 
 		if (flags & RMCF_RED) {
@@ -625,7 +623,6 @@ rmc_init(struct ifaltq *ifq, struct rm_ifdat *ifd, u_int nsecPerByte,
 	ifd->ns_per_byte_ = nsecPerByte;
 	ifd->maxpkt_ = mtu;
 	ifd->wrr_ = (flags & RMCF_WRR) ? 1 : 0;
-	ifd->efficient_ = (flags & RMCF_EFFICIENT) ? 1 : 0;
 #if 1
 	ifd->maxiftime_ = mtu * nsecPerByte / 1000 * 16;
 	if (mtu * nsecPerByte > 10 * 1000000)
@@ -909,12 +906,6 @@ _rmc_wrr_dequeue_next(struct rm_ifdat *ifd, int op)
 	if (op == ALTDQ_REMOVE && ifd->pollcache_) {
 		cl = ifd->pollcache_;
 		cpri = cl->pri_;
-		if (ifd->efficient_) {
-			/* check if this class is overlimit */
-			if (cl->undertime_.tv_sec != 0 &&
-			    rmc_under_limit(cl, &now) == 0)
-				first = cl;
-		}
 		ifd->pollcache_ = NULL;
 		goto _wrr_out;
 	}
@@ -991,24 +982,8 @@ _rmc_wrr_dequeue_next(struct rm_ifdat *ifd, int op)
 	 */
 	reset_cutoff(ifd);
 	CBQTRACE(_rmc_wrr_dequeue_next, 'otsr', ifd->cutoff_);
+	return (NULL);
 
-	if (!ifd->efficient_ || first == NULL)
-		return (NULL);
-
-	cl = first;
-	cpri = cl->pri_;
-#if 0	/* too time-consuming for nothing */
-	if (cl->sleeping_)
-		CALLOUT_STOP(&cl->callout_);
-	cl->sleeping_ = 0;
-	cl->undertime_.tv_sec = 0;
-#endif
-	ifd->borrowed_[ifd->qi_] = cl->borrow_;
-	ifd->cutoff_ = cl->borrow_->depth_;
-
-	/*
-	 * Deque the packet and do the book keeping...
-	 */
  _wrr_out:
 	if (op == ALTDQ_REMOVE) {
 		m = _rmc_getq(cl);
@@ -1107,23 +1082,9 @@ _rmc_prr_dequeue_next(struct rm_ifdat *ifd, int op)
 	 * of the link-sharing structure are overlimit.
 	 */
 	reset_cutoff(ifd);
-	if (!ifd->efficient_ || first == NULL)
-		return (NULL);
 
-	cl = first;
-	cpri = cl->pri_;
-#if 0	/* too time-consuming for nothing */
-	if (cl->sleeping_)
-		CALLOUT_STOP(&cl->callout_);
-	cl->sleeping_ = 0;
-	cl->undertime_.tv_sec = 0;
-#endif
-	ifd->borrowed_[ifd->qi_] = cl->borrow_;
-	ifd->cutoff_ = cl->borrow_->depth_;
+	return (NULL);
 
-	/*
-	 * Deque the packet and do the book keeping...
-	 */
  _prr_out:
 	if (op == ALTDQ_REMOVE) {
 		m = _rmc_getq(cl);

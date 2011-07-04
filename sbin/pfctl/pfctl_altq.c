@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.96 2011/07/03 23:59:43 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.97 2011/07/04 01:07:43 henning Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -546,14 +546,10 @@ print_cbq_opts(const struct pf_altq *a)
 			printf(" red");
 		if (opts->flags & CBQCLF_ECN)
 			printf(" ecn");
-		if (opts->flags & CBQCLF_FLOWVALVE)
-			printf(" flowvalve");
 		if (opts->flags & CBQCLF_BORROW)
 			printf(" borrow");
 		if (opts->flags & CBQCLF_WRR)
 			printf(" wrr");
-		if (opts->flags & CBQCLF_EFFICIENT)
-			printf(" efficient");
 		if (opts->flags & CBQCLF_ROOTCLASS)
 			printf(" root");
 		if (opts->flags & CBQCLF_DEFCLASS)

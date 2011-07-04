@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.h,v 1.12 2011/07/03 23:48:41 henning Exp $	*/
+/*	$OpenBSD: altq_cbq.h,v 1.13 2011/07/04 01:07:43 henning Exp $	*/
 /*	$KAME: altq_cbq.h,v 1.5 2000/12/02 13:44:40 kjc Exp $	*/
 
 /*
@@ -48,12 +48,10 @@ extern "C" {
 #define	CBQCLF_RED		0x0001	/* use RED */
 #define	CBQCLF_ECN		0x0002  /* use RED/ECN */
 #define	CBQCLF_RIO		0x0004  /* use RIO */
-#define	CBQCLF_FLOWVALVE	0x0008	/* use flowvalve (aka penalty-box) */
 #define	CBQCLF_BORROW		0x0020  /* borrow from parent */
 
 /* class flags only for root class */
 #define	CBQCLF_WRR		0x0100	/* weighted-round robin */
-#define	CBQCLF_EFFICIENT	0x0200  /* work-conserving */
 
 /* class flags for special classes */
 #define	CBQCLF_ROOTCLASS	0x1000	/* root class */
