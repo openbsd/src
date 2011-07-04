@@ -1,4 +1,4 @@
-/*	$OpenBSD: getinfo.c,v 1.16 2009/11/11 23:49:01 nicm Exp $	*/
+/*	$OpenBSD: getinfo.c,v 1.17 2011/07/04 21:34:54 nicm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
 #include <sys/types.h>
 
 #include <ctype.h>
-#include <errno.h>	
+#include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
@@ -135,7 +135,7 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 	int myfd, eof, foundit;
 	char *record, *s;
 	int tc_not_resolved;
-	
+
 	/*
 	 * Return with ``loop detected'' error if we've recursed more than
 	 * MAX_RECURSION times.
@@ -204,7 +204,7 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 			for (;;) {
 				if (bp >= b_end) {
 					int n;
-		
+
 					n = read(fd, buf, sizeof(buf));
 					if (n <= 0) {
 						if (myfd)
@@ -221,7 +221,7 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 					b_end = buf+n;
 					bp = buf;
 				}
-	
+
 				c = *bp++;
 				if (c == '\n') {
 					if (bp >= b_end) {
@@ -252,7 +252,7 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 					*rp++ = c;
 
 				/*
-				 * Enforce loop invariant: if no room 
+				 * Enforce loop invariant: if no room
 				 * left in record buffer, try to get
 				 * some more.
 				 */
@@ -277,13 +277,13 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 			}
 			/* loop invariant lets us do this */
 			*rp++ = '\0';
-				
+
 			/*
 			 * Toss blank lines and comments.
 			 */
 			if (*record == '\0' || *record == '#')
 				continue;
-	
+
 			/*
 			 * See if this is the record we want ...
 			 */
@@ -361,11 +361,11 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 					tc_not_resolved = 1;
 				/* couldn't resolve tc */
 				if (iret == -1) {
-					*(s - 1) = ',';			
+					*(s - 1) = ',';
 					scan = s - 1;
 					tc_not_resolved = 1;
 					continue;
-					
+
 				}
 			}
 			/* not interested in name field of tc'ed record */
@@ -426,7 +426,7 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 			 */
 			scan = s-1;
 		}
-	
+
 	}
 	/*
 	 * Close file (if we opened it), give back any extra memory, and
@@ -436,7 +436,7 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 		(void)close(fd);
 	*len = rp - record - 1;	/* don't count NUL */
 	if (r_end > rp) {
-		if ((s = 
+		if ((s =
 		     realloc(record, (size_t)(rp - record))) == NULL) {
 			free(record);
 			errno = ENOMEM;
@@ -444,12 +444,12 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 		} else
 			record = s;
 	}
-		
+
 	*cap = record;
 	if (tc_not_resolved)
 		return (1);
 	return (0);
-}	
+}
 
 /*
  * Igetmatch will return 0 if name is one of the names of the capability
@@ -510,7 +510,7 @@ igetclose(void)
 }
 
 /*
- * Igetnext() gets either the first or next entry in the logical database 
+ * Igetnext() gets either the first or next entry in the logical database
  * specified by db_array.  It returns 0 upon completion of the database, 1
  * upon returning an entry with more remaining, and -1 if an error occurs.
  */
@@ -567,7 +567,7 @@ igetnext(char **bp, char **db_array)
 		else
 			slash = 0;
 
-		/* 
+		/*
 		 * Line points to a name line.
 		 */
 		done = 0;
