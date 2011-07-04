@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.498 2011/07/04 05:49:00 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.499 2011/07/04 05:59:38 tedu Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1490,10 +1490,6 @@ ECN implies RED.
 Enables Random Early Detection (RED) on this queue.
 RED drops packets with a probability proportional to the average
 queue length.
-.\" .It Ar rio
-.\" Enables RIO on this queue.
-.\" RIO is RED with IN/OUT, thus running
-.\" RED two times more than RIO would achieve the same effect.
 .El
 .Pp
 The
@@ -2821,9 +2817,9 @@ queue-list     = string [ [ "," ] string ]
 cbq-def        = "cbq" [ "(" cbq-opt [ [ "," ] cbq-opt ] ")" ]
 priq-def       = "priq" [ "(" priq-opt [ [ "," ] priq-opt ] ")" ]
 hfsc-def       = "hfsc" [ "(" hfsc-opt [ [ "," ] hfsc-opt ] ")" ]
-cbq-opt        = ( "default" | "borrow" | "red" | "ecn" | "rio" )
-priq-opt       = ( "default" | "red" | "ecn" | "rio" )
-hfsc-opt       = ( "default" | "red" | "ecn" | "rio" |
+cbq-opt        = ( "default" | "borrow" | "red" | "ecn" )
+priq-opt       = ( "default" | "red" | "ecn" )
+hfsc-opt       = ( "default" | "red" | "ecn" |
                  linkshare-sc | realtime-sc | upperlimit-sc )
 linkshare-sc   = "linkshare" sc-spec
 realtime-sc    = "realtime" sc-spec
