@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.757 2011/07/04 06:54:49 claudio Exp $ */
+/*	$OpenBSD: pf.c,v 1.758 2011/07/04 16:26:23 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2997,16 +2997,12 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	    rtable_l2(act.rtableid) != pd->rdomain)
 		pd->destchg = 1;
 
-	if (r->action == PF_PASS && af == AF_INET && ! r->allow_opts) {
-		struct ip	*h4 = mtod(m, struct ip *);
-
-		if (h4->ip_hl > 5) {
-			REASON_SET(&reason, PFRES_IPOPTIONS);
-			pd->pflog |= PF_LOG_FORCE;
-			DPFPRINTF(LOG_NOTICE, "dropping packet with "
-			    "ip options in pf_test_rule()");
-			goto cleanup;
-		}
+	if (r->action == PF_PASS && pd->rh_cnt && ! r->allow_opts) {
+		REASON_SET(&reason, PFRES_IPOPTIONS);
+		pd->pflog |= PF_LOG_FORCE;
+		DPFPRINTF(LOG_NOTICE, "dropping packet with "
+		    "ip/ipv6 options in pf_test_rule()");
+		goto cleanup;
 	}
 
 	if (!state_icmp && r->keep_state) {
