@@ -1,4 +1,4 @@
-/* $OpenBSD: limits.h,v 1.1 2011/07/04 23:29:08 pirofti Exp $ */
+/* $OpenBSD: limits.h,v 1.2 2011/07/04 23:38:28 pirofti Exp $ */
 /*	$NetBSD: limits.h,v 1.5 2010/06/07 13:52:31 tnozaki Exp $	*/
 
 /*
@@ -55,44 +55,5 @@
 #define	ULONG_MAX	0xffffffffffffffffUL	/* max value for an unsigned long */
 #define	LONG_MAX	0x7fffffffffffffffL	/* max value for a long */
 #define	LONG_MIN	(-0x7fffffffffffffffL-1)	/* min value for a long */
-
-
-#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
-    defined(_NETBSD_SOURCE)
-#define	SSIZE_MAX	LONG_MAX	/* max value for a ssize_t */
-
-#if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
-    defined(_NETBSD_SOURCE)
-#define	ULLONG_MAX	0xffffffffffffffffULL	/* max unsigned long long */
-#define	LLONG_MAX	0x7fffffffffffffffLL	/* max signed long long */
-#define	LLONG_MIN	(-0x7fffffffffffffffLL-1) /* min signed long long */
-#endif
-
-#if defined(_NETBSD_SOURCE)
-#define	SIZE_T_MAX	ULONG_MAX	/* max value for a size_t */
-
-/* GCC requires that quad constants be written as expressions. */
-#define	UQUAD_MAX	((u_quad_t)0-1)	/* max value for a uquad_t */
-					/* max value for a quad_t */
-#define	QUAD_MAX	((quad_t)(UQUAD_MAX >> 1))
-#define	QUAD_MIN	(-QUAD_MAX-1)	/* min value for a quad_t */
-
-#endif /* _NETBSD_SOURCE */
-#endif /* _POSIX_C_SOURCE || _XOPEN_SOURCE || _NETBSD_SOURCE */
-
-#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-#define LONG_BIT	64
-#define WORD_BIT	32
-
-#define DBL_DIG		15
-#define DBL_MAX		1.7976931348623157E+308
-#define DBL_MIN		2.2250738585072014E-308
-
-#define FLT_DIG		6
-#define FLT_MAX		3.40282347E+38F
-#define FLT_MIN		1.17549435E-38F
-#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
-
-
 
 #endif /* _MACHINE_LIMITS_H_ */
