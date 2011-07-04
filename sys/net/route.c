@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.130 2011/04/04 16:06:13 blambert Exp $	*/
+/*	$OpenBSD: route.c,v 1.131 2011/07/04 04:29:17 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -854,9 +854,8 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 				senderr(EEXIST);
 			}
 			/* check the link state since the table supports it */
-			if ((LINK_STATE_IS_UP(ifa->ifa_ifp->if_link_state) ||
-			    ifa->ifa_ifp->if_link_state == LINK_STATE_UNKNOWN)
-			    && ifa->ifa_ifp->if_flags & IFF_UP)
+			if (LINK_STATE_IS_UP(ifa->ifa_ifp->if_link_state) &&
+			    ifa->ifa_ifp->if_flags & IFF_UP)
 				rt->rt_flags |= RTF_UP;
 			else {
 				rt->rt_flags &= ~RTF_UP;
@@ -1528,8 +1527,7 @@ rt_if_linkstate_change(struct radix_node *rn, void *arg, u_int id)
 	struct rtentry *rt = (struct rtentry *)rn;
 
 	if (rt->rt_ifp == ifp) {
-		if ((LINK_STATE_IS_UP(ifp->if_link_state) ||
-		    ifp->if_link_state == LINK_STATE_UNKNOWN) &&
+		if (LINK_STATE_IS_UP(ifp->if_link_state) &&
 		    ifp->if_flags & IFF_UP) {
 			if (!(rt->rt_flags & RTF_UP)) {
 				/* bring route up */
