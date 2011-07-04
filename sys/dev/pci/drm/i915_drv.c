@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.113 2011/07/03 20:20:42 deraadt Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.114 2011/07/04 23:10:07 oga Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -367,8 +367,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	if (IS_I945G(dev_priv) || IS_I945GM(dev_priv))
 		pa->pa_flags &= ~PCI_FLAGS_MSI_ENABLED;
 
-	if (pci_intr_map_msi(pa, &dev_priv->ih) != 0 &&
-	    pci_intr_map(pa, &dev_priv->ih) != 0) {
+	if (pci_intr_map(pa, &dev_priv->ih) != 0) {
 		printf(": couldn't map interrupt\n");
 		return;
 	}
