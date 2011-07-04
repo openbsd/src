@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.758 2011/07/04 16:26:23 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.759 2011/07/04 18:12:51 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2997,7 +2997,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	    rtable_l2(act.rtableid) != pd->rdomain)
 		pd->destchg = 1;
 
-	if (r->action == PF_PASS && pd->rh_cnt && ! r->allow_opts) {
+	if (r->action == PF_PASS && pd->badopts && ! r->allow_opts) {
 		REASON_SET(&reason, PFRES_IPOPTIONS);
 		pd->pflog |= PF_LOG_FORCE;
 		DPFPRINTF(LOG_NOTICE, "dropping packet with "
@@ -5538,7 +5538,7 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
 		pd->tot_len = ntohs(h->ip_len);
 		pd->rdomain = rtable_l2(m->m_pkthdr.rdomain);
 		if (h->ip_hl > 5)	/* has options */
-			pd->rh_cnt++;
+			pd->badopts++;
 
 		if (h->ip_off & htons(IP_MF | IP_OFFMASK)) {
 			/*
@@ -5620,7 +5620,7 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
 			case IPPROTO_ROUTING: {
 				struct ip6_rthdr rthdr;
 
-				if (pd->rh_cnt++) {
+				if (pd->badopts++) {
 					DPFPRINTF(LOG_NOTICE,
 					    "IPv6 more than one rthdr");
 					*action = PF_DROP;
@@ -5963,7 +5963,7 @@ done:
 	if (action != PF_DROP) {
 		if (s) {
 			/* The non-state case is handled in pf_test_rule() */
-			if (action == PF_PASS && pd.rh_cnt &&
+			if (action == PF_PASS && pd.badopts &&
 			    !(s->state_flags & PFSTATE_ALLOWOPTS)) {
 				action = PF_DROP;
 				REASON_SET(&reason, PFRES_IPOPTIONS);

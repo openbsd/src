@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.336 2011/07/04 06:54:49 claudio Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.337 2011/07/04 18:12:51 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1231,7 +1231,7 @@ struct pf_pdesc {
 	u_int16_t	 ndport;	/* dst port after NAT */
 
 	u_int32_t	 p_len;		/* total length of payload */
-	u_int32_t	 rh_cnt;	/* # of routing headers */
+	u_int32_t	 badopts;	/* v4 options or v6 routing headers */
 
 	u_int16_t	*ip_sum;
 	u_int16_t	*proto_sum;
