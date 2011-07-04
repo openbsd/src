@@ -1921,6 +1921,7 @@
 ./usr/share/man/man4/nsphyter.4
 ./usr/share/man/man4/null.4
 ./usr/share/man/man4/nviic.4
+./usr/share/man/man4/nvt.4
 ./usr/share/man/man4/ohci.4
 ./usr/share/man/man4/onewire.4
 ./usr/share/man/man4/oosiop.4

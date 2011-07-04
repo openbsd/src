@@ -724,12 +724,10 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/altq
 ./usr/libdata/perl5/site_perl/i386-openbsd/altq/altq.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/altq/altq_cbq.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/altq/altq_cdnr.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/altq/altq_classq.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/altq/altq_hfsc.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/altq/altq_priq.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/altq/altq_red.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/altq/altq_rio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/altq/altq_rmclass.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/altq/altq_rmclass_debug.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/altq/altq_var.ph
@@ -2557,7 +2555,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/uvm/uvm_param.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/uvm/uvm_pmap.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/uvm/uvm_pmemrange.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/uvm/uvm_stat.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/uvm/uvm_swap.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/uvm/uvm_swap_encrypt.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/uvm/uvm_vnode.ph

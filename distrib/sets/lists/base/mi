@@ -2938,6 +2938,8 @@
 ./usr/share/locale/pt_PT.ISO8859-15/LC_CTYPE
 ./usr/share/locale/pt_PT.UTF-8
 ./usr/share/locale/pt_PT.UTF-8/LC_CTYPE
+./usr/share/locale/ro_RO.UTF-8
+./usr/share/locale/ro_RO.UTF-8/LC_CTYPE
 ./usr/share/locale/ru_RU.CP866
 ./usr/share/locale/ru_RU.CP866/LC_CTYPE
 ./usr/share/locale/ru_RU.ISO8859-5

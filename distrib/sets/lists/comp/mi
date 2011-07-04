@@ -29,12 +29,10 @@
 ./usr/include/altq
 ./usr/include/altq/altq.h
 ./usr/include/altq/altq_cbq.h
-./usr/include/altq/altq_cdnr.h
 ./usr/include/altq/altq_classq.h
 ./usr/include/altq/altq_hfsc.h
 ./usr/include/altq/altq_priq.h
 ./usr/include/altq/altq_red.h
-./usr/include/altq/altq_rio.h
 ./usr/include/altq/altq_rmclass.h
 ./usr/include/altq/altq_rmclass_debug.h
 ./usr/include/altq/altq_var.h
@@ -1651,7 +1649,6 @@
 ./usr/include/uvm/uvm_param.h
 ./usr/include/uvm/uvm_pmap.h
 ./usr/include/uvm/uvm_pmemrange.h
-./usr/include/uvm/uvm_stat.h
 ./usr/include/uvm/uvm_swap.h
 ./usr/include/uvm/uvm_swap_encrypt.h
 ./usr/include/uvm/uvm_vnode.h
@@ -2904,6 +2901,7 @@
 ./usr/share/man/man3/SIMPLEQ_INSERT_TAIL.3
 ./usr/share/man/man3/SIMPLEQ_NEXT.3
 ./usr/share/man/man3/SIMPLEQ_REMOVE_HEAD.3
+./usr/share/man/man3/SIMPLEQ_REMOVE_NEXT.3
 ./usr/share/man/man3/SLIST_EMPTY.3
 ./usr/share/man/man3/SLIST_END.3
 ./usr/share/man/man3/SLIST_ENTRY.3
