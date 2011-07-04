@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.16 2011/04/04 12:44:10 deraadt Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.17 2011/07/04 16:02:07 guenther Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -153,7 +153,7 @@ char *prurequests[] = {
 	"RCVD",		"SEND",		"ABORT",	"CONTROL",
 	"SENSE",	"RCVOOB",	"SENDOOB",	"SOCKADDR",
 	"PEERADDR",	"CONNECT2",	"FASTTIMO",	"SLOWTIMO",
-	"PROTORCV",	"PROTOSEND",	"PEEREID",
+	"PROTORCV",	"PROTOSEND",
 };
 #endif
 
