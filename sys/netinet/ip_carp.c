@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.186 2011/07/03 17:55:25 dhill Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.187 2011/07/04 00:37:00 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -796,7 +796,7 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, int ismulti,
 		 *  treat him as timed out now.
 		 */
 		sc_tv.tv_sec = sc->sc_advbase * 3;
-		if (timercmp(&sc_tv, &ch_tv, <)) {
+		if (sc->sc_advbase && timercmp(&sc_tv, &ch_tv, <)) {
 			carp_master_down(vhe);
 			break;
 		}
@@ -1118,7 +1118,10 @@ carp_send_ad(void *v)
 		advbase = sc->sc_advbase;
 		advskew = vhe->advskew;
 		tv.tv_sec = advbase;
-		tv.tv_usec = advskew * 1000000 / 256;
+		if (advbase == 0 && advskew == 0)
+			tv.tv_usec = 1 * 1000000 / 256;
+		else
+			tv.tv_usec = advskew * 1000000 / 256;
 	}
 
 	ch.carp_version = CARP_VERSION;
@@ -1723,7 +1726,10 @@ carp_setrun(struct carp_vhost_entry *vhe, sa_family_t af)
 	case BACKUP:
 		timeout_del(&vhe->ad_tmo);
 		tv.tv_sec = 3 * sc->sc_advbase;
-		tv.tv_usec = vhe->advskew * 1000000 / 256;
+		if (sc->sc_advbase == 0 && vhe->advskew == 0)
+			tv.tv_usec = 3 * 1000000 / 256;
+		else
+			tv.tv_usec = vhe->advskew * 1000000 / 256;
 		if (vhe->vhe_leader)
 			sc->sc_delayed_arp = -1;
 		switch (af) {
@@ -1747,7 +1753,10 @@ carp_setrun(struct carp_vhost_entry *vhe, sa_family_t af)
 		break;
 	case MASTER:
 		tv.tv_sec = sc->sc_advbase;
-		tv.tv_usec = vhe->advskew * 1000000 / 256;
+		if (sc->sc_advbase == 0 && vhe->advskew == 0)
+			tv.tv_usec = 1 * 1000000 / 256;
+		else
+			tv.tv_usec = vhe->advskew * 1000000 / 256;
 		timeout_add(&vhe->ad_tmo, tvtohz(&tv));
 		break;
 	}
@@ -2287,7 +2296,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		}
 		if ((error = carp_vhids_ioctl(sc, &carpr)))
 			return (error);
-		if (carpr.carpr_advbase > 0) {
+		if (carpr.carpr_advbase >= 0) {
 			if (carpr.carpr_advbase > 255) {
 				error = EINVAL;
 				break;
