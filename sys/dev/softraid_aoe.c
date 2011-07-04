@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.18 2011/04/05 19:52:02 krw Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.19 2011/07/04 03:22:07 tedu Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -401,7 +401,6 @@ sr_aoe_rw(struct sr_workunit *wu)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
-	struct sr_workunit	*wup;
 	struct sr_chunk		*scp;
 	daddr64_t		blk;
 	int			s, ios, rt;
@@ -428,26 +427,7 @@ sr_aoe_rw(struct sr_workunit *wu)
 	if (xs->flags & SCSI_POLL)
 		panic("can't AOE poll");
 
-	/* walk queue backwards and fill in collider if we have one */
 	s = splbio();
-	if (0) /* XXX */ TAILQ_FOREACH_REVERSE(wup, &sd->sd_wu_pendq, sr_wu_list, swu_link) {
-		if (wu->swu_blk_end < wup->swu_blk_start ||
-		    wup->swu_blk_end < wu->swu_blk_start)
-			continue;
-
-		/* we have an LBA collision, defer wu */
-		wu->swu_state = SR_WU_DEFERRED;
-		if (wup->swu_collider)
-			/* wu is on deferred queue, append to last wu */
-			while (wup->swu_collider)
-				wup = wup->swu_collider;
-
-		wup->swu_collider = wu;
-		TAILQ_INSERT_TAIL(&sd->sd_wu_defq, wu, swu_link);
-		sd->sd_wu_collisions++;
-		splx(s);
-		return (0);
-	}
 	for (i = 0; i < ios; i++) {
 		if (xs->flags & SCSI_DATA_IN) {
 			rt = 0;
@@ -509,7 +489,7 @@ sr_aoe_input(struct aoe_handler *ah, struct mbuf *m)
 	struct scsi_xfer	*xs;
 	struct aoe_req *ar;
 	struct aoe_packet *ap;
-	struct sr_workunit *wu, *wup;
+	struct sr_workunit *wu;
 	daddr64_t blk, offset;
 	int len, s;
 	int tag;
@@ -560,22 +540,6 @@ sr_aoe_input(struct aoe_handler *ah, struct mbuf *m)
 
 		xs->resid = 0;
 
-		if (0) /* XXX */ TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link) {
-			if (wu == wup) {
-				/* wu on pendq, remove */
-				TAILQ_REMOVE(&sd->sd_wu_pendq, wu, swu_link);
-
-				if (wu->swu_collider) {
-					/* restart deferred wu */
-					wu->swu_collider->swu_state =
-					    SR_WU_INPROGRESS;
-					TAILQ_REMOVE(&sd->sd_wu_defq,
-					    wu->swu_collider, swu_link);
-					/* sr_raid_startwu(wu->swu_collider); */
-				}
-				break;
-			}
-		}
 		sr_scsi_done(sd, xs);
 	}
 
