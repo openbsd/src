@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.497 2011/07/04 03:36:14 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.498 2011/07/04 05:49:00 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -875,9 +875,9 @@ to be modified (source with
 destination with
 .Ar rdr-to ) .
 .It Ar least-states Op Ar sticky-address
-The 
+The
 .Ar least-states
-option selects the address with the least active states from 
+option selects the address with the least active states from
 a given address pool.
 .Pp
 .Ar sticky-address
@@ -1656,8 +1656,8 @@ when running with
 .It Ar cost
 The
 .Ar cost
-flag adds a state counter to every address of the table. The flag is
-necessary if the table is used with the 
+flag adds a state counter to every address in the table.
+The flag is necessary if the table is used with the
 .Ar least-states
 option.
 .It Ar counters

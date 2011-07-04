@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.33 2011/07/04 00:34:43 mikeb Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.34 2011/07/04 05:52:17 jmc Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -367,7 +367,7 @@ a positive maximum number of bytes or 0 in
 .Va sp_max
 and an idle timeout
 .Va sp_idle
-in a form of a
+in the form of a
 .Vt struct timeval .
 If \-1 is given as drain socket, the source socket
 .Fa s
@@ -387,6 +387,7 @@ is available.
 The error status can be examined with
 .Dv SO_ERROR
 at the source socket.
+The
 .Er ETIMEDOUT
 error is set if there was no data transfered between two sockets
 during the
