@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.93 2011/07/02 22:20:08 nicm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.94 2011/07/04 00:33:36 mikeb Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -51,9 +51,10 @@
 #include <net/route.h>
 #include <sys/pool.h>
 
-int	sosplice(struct socket *, int, off_t);
+int	sosplice(struct socket *, int, off_t, struct timeval *);
 void	sounsplice(struct socket *, struct socket *, int);
 int	somove(struct socket *, int);
+void	soidle(void *);
 
 void	filt_sordetach(struct knote *kn);
 int	filt_soread(struct knote *kn, long hint);
@@ -992,7 +993,7 @@ sorflush(struct socket *so)
 
 #ifdef SOCKET_SPLICE
 int
-sosplice(struct socket *so, int fd, off_t max)
+sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 {
 	struct file	*fp;
 	struct socket	*sosp;
@@ -1015,6 +1016,9 @@ sosplice(struct socket *so, int fd, off_t max)
 	}
 
 	if (max && max < 0)
+		return (EINVAL);
+
+	if (tv && (tv->tv_sec < 0 || tv->tv_usec < 0))
 		return (EINVAL);
 
 	/* Find sosp, the drain socket where data will be spliced into. */
@@ -1057,6 +1061,11 @@ sosplice(struct socket *so, int fd, off_t max)
 	sosp->so_spliceback = so;
 	so->so_splicelen = 0;
 	so->so_splicemax = max;
+	if (tv)
+		so->so_idletv = *tv;
+	else
+		timerclear(&so->so_idletv);
+	timeout_set(&so->so_idleto, soidle, so);
 
 	/*
 	 * To prevent softnet interrupt from calling somove() while
@@ -1080,6 +1089,7 @@ sounsplice(struct socket *so, struct socket *sosp, int wakeup)
 {
 	splsoftassert(IPL_SOFTNET);
 
+	timeout_del(&so->so_idleto);
 	sosp->so_snd.sb_flags &= ~SB_SPLICE;
 	so->so_rcv.sb_flags &= ~SB_SPLICE;
 	so->so_splice = sosp->so_spliceback = NULL;
@@ -1275,6 +1285,8 @@ somove(struct socket *so, int wait)
 		sounsplice(so, sosp, 1);
 		return (0);
 	}
+	if (timerisset(&so->so_idletv))
+		timeout_add_tv(&so->so_idleto, &so->so_idletv);
 	return (1);
 }
 
@@ -1294,6 +1306,18 @@ sowwakeup(struct socket *so)
 	if (so->so_snd.sb_flags & SB_SPLICE)
 		(void) somove(so->so_spliceback, M_DONTWAIT);
 	_sowwakeup(so);
+}
+
+void
+soidle(void *arg)
+{
+	struct socket *so = arg;
+	int s;
+
+	s = splsoftnet();
+	so->so_error = ETIMEDOUT;
+	sounsplice(so, so->so_splice, 1);
+	splx(s);
 }
 #endif /* SOCKET_SPLICE */
 
@@ -1452,16 +1476,17 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 #ifdef SOCKET_SPLICE
 		case SO_SPLICE:
 			if (m == NULL) {
-				error = sosplice(so, -1, 0);
+				error = sosplice(so, -1, 0, NULL);
 			} else if (m->m_len < sizeof(int)) {
 				error = EINVAL;
 				goto bad;
 			} else if (m->m_len < sizeof(struct splice)) {
-				error = sosplice(so, *mtod(m, int *), 0);
+				error = sosplice(so, *mtod(m, int *), 0, NULL);
 			} else {
 				error = sosplice(so,
 				    mtod(m, struct splice *)->sp_fd,
-				    mtod(m, struct splice *)->sp_max);
+				    mtod(m, struct splice *)->sp_max,
+				   &mtod(m, struct splice *)->sp_idle);
 			}
 			break;
 #endif /* SOCKET_SPLICE */

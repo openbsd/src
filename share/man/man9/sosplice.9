@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sosplice.9,v 1.2 2011/03/12 18:31:41 bluhm Exp $
+.\"	$OpenBSD: sosplice.9,v 1.3 2011/07/04 00:34:43 mikeb Exp $
 .\"
 .\" Copyright (c) 2011 Alexander Bluhm <bluhm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 12 2011 $
+.Dd $Mdocdate: July 4 2011 $
 .Dt SOSPLICE 9
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Nd splice two sockets for zero-copy data transfer
 .Sh SYNOPSIS
 .Ft int
-.Fn sosplice "struct socket *so" "int fd" "off_t max"
+.Fn sosplice "struct socket *so" "int fd" "off_t max" "struct timeval *tv"
 .Ft int
 .Fn somove "struct socket *so" "int wait"
 .Sh DESCRIPTION
@@ -41,6 +41,12 @@ is negative, an existing splicing gets dissolved.
 If
 .Fa max
 is positive, at most that many bytes will get transferred.
+If
+.Fa tv
+is not NULL, a
+.Xr timeout 9
+is scheduled to dissolve splicing in the case when no data can be
+transferred for the specified period of time.
 Socket splicing can be invoked from user-land via the
 .Xr setsockopt 2
 system-call at the
@@ -138,6 +144,11 @@ If that fails and the drain socket cannot send anymore, an
 .Er EPIPE
 error is set on the source socket.
 .Pp
+If the idle timeout was specified and no data was transferred
+for that period of time, splicing gets dissolved and an
+.Er ETIMEDOUT
+error is set on the source socket.
+.Pp
 Finally the socket splicing gets dissolved if the source socket
 cannot receive anymore and its receive buffer is empty; or if the
 drain socket cannot send anymore; or if the maximum has been reached;
@@ -200,7 +211,8 @@ locked.
 .El
 .Sh SEE ALSO
 .Xr setsockopt 2 ,
-.Xr options 4
+.Xr options 4 ,
+.Xr timeout 9
 .Sh HISTORY
 Socket splicing first appeared in
 .Ox 4.9 .

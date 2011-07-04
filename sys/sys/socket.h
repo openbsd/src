@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.72 2011/04/05 12:50:15 guenther Exp $	*/
+/*	$OpenBSD: socket.h,v 1.73 2011/07/04 00:33:36 mikeb Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -103,6 +103,7 @@ struct	linger {
 struct	splice {
 	int	sp_fd;			/* drain socket file descriptor */
 	off_t	sp_max;			/* if set, maximum bytes to splice */
+	struct	timeval	sp_idle;	/* idle timeout */
 };
 
 /*

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.32 2011/05/02 20:18:17 jmc Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.33 2011/07/04 00:34:43 mikeb Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: May 2 2011 $
+.Dd $Mdocdate: July 4 2011 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -362,15 +362,19 @@ In the second form,
 is a
 .Vt struct splice
 with the drain socket in
-.Va sp_fd
-and a positive maximum number of bytes or 0 in
-.Va sp_max .
+.Va sp_fd ,
+a positive maximum number of bytes or 0 in
+.Va sp_max
+and an idle timeout
+.Va sp_idle
+in a form of a
+.Vt struct timeval .
 If \-1 is given as drain socket, the source socket
 .Fa s
 gets unspliced.
 Otherwise the spliced data transfer continues within the kernel
 until the optional maximum is reached, one of the connections
-terminates or an error occurs.
+terminates, idle timeout expires or an error occurs.
 A successful
 .Xr select 2 ,
 .Xr poll 2 ,
@@ -383,6 +387,11 @@ is available.
 The error status can be examined with
 .Dv SO_ERROR
 at the source socket.
+.Er ETIMEDOUT
+error is set if there was no data transfered between two sockets
+during the
+.Va sp_idle
+period of time.
 Note that if a maximum is given, it is only guaranteed that no more
 bytes are transferred.
 A short splice can happen but then a second call to splice will
