@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.47 2011/04/13 02:49:12 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.48 2011/07/04 15:54:24 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -637,12 +637,6 @@ longmode_hi:
 
 /*
  * Signal trampoline; copied to top of user stack.
- *
- * Note, the "system call" to sigreturn() needs to be an 'int $0x80' one
- * so that the kernel returns using 'iretq' method.  This way if a process
- * was interrupted (by tick) as opposed to in the kernel when a signal was
- * being delivered, the process will be completely restored, including the
- * userland %rcx register, which the 'sysret' instruction can not restore.
  */
 NENTRY(sigcode)
 	call	*%rax
@@ -650,7 +644,7 @@ NENTRY(sigcode)
 	movq	%rsp,%rdi
 	pushq	%rdi			/* fake return address */
 	movq	$SYS_sigreturn,%rax
-	int	$0x80
+	syscall
 	movq	$SYS_exit,%rax
 	syscall
 	.globl	_C_LABEL(esigcode)
@@ -958,17 +952,28 @@ syscall_return:
 #ifdef DIAGNOSTIC
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
-#endif
-	/*
-	 * XXX interrupts off longer than they should be here.
-	 */
+#endif /* DIAGNOSTIC */
+
+	movq	TF_RDI(%rsp),%rdi
+	movq	TF_RSI(%rsp),%rsi
+	movq	TF_R8(%rsp),%r8
+	movq	TF_R9(%rsp),%r9
+	movq	TF_R10(%rsp),%r10
+	movq	TF_R12(%rsp),%r12
+	movq	TF_R13(%rsp),%r13
+	movq	TF_R14(%rsp),%r14
+	movq	TF_R15(%rsp),%r15
+	movq	TF_RBP(%rsp),%rbp
+	movq	TF_RBX(%rsp),%rbx
+
 	INTR_RESTORE_SELECTORS
-	INTR_RESTORE_GPRS
-	addq	$48,%rsp
-	popq	%rcx	/* return rip */
-	addq	$8,%rsp
-	popq	%r11	/* flags as set by sysret insn */
-	movq	%ss:(%rsp),%rsp
+
+	movq	TF_RDX(%rsp),%rdx
+	movq	TF_RAX(%rsp),%rax
+
+	movq	TF_RIP(%rsp),%rcx
+	movq	TF_RFLAGS(%rsp),%r11
+	movq	TF_RSP(%rsp),%rsp
 	sysretq
 
 #ifdef DIAGNOSTIC
@@ -1007,11 +1012,9 @@ NENTRY(child_trampoline)
 	call	*%r12
 	jmp	syscall_return
 
-	.globl  _C_LABEL(osyscall_return)
-
 
 /*
- * Trap gate entry for int $80 syscall, also used by sigreturn.
+ * Trap gate entry for old int $80 syscall (used to be used by sigreturn)
  */
 IDTVEC(osyscall)
 	pushq	$2		# size of instruction for restart
@@ -1035,6 +1038,9 @@ _C_LABEL(osyscall_return):
 	call	_C_LABEL(trap)
 	jmp	2b
 
+/*
+ * Return via iretq, for real interrupts and signal returns
+ */
 iret_return:
 1:
 #ifdef DIAGNOSTIC
@@ -1043,11 +1049,29 @@ iret_return:
 #endif /* DIAGNOSTIC */
 	.globl	intr_fast_exit
 intr_fast_exit:
+	movq	TF_RDI(%rsp),%rdi
+	movq	TF_RSI(%rsp),%rsi
+	movq	TF_R8(%rsp),%r8
+	movq	TF_R9(%rsp),%r9
+	movq	TF_R10(%rsp),%r10
+	movq	TF_R12(%rsp),%r12
+	movq	TF_R13(%rsp),%r13
+	movq	TF_R14(%rsp),%r14
+	movq	TF_R15(%rsp),%r15
+	movq	TF_RBP(%rsp),%rbp
+	movq	TF_RBX(%rsp),%rbx
+
 	testq	$SEL_UPL,TF_CS(%rsp)
 	je	5f
+
 	INTR_RESTORE_SELECTORS
-5:	INTR_RESTORE_GPRS
-	addq	$48,%rsp
+
+5:	movq	TF_RDX(%rsp),%rdx
+	movq	TF_RCX(%rsp),%rcx
+	movq	TF_R11(%rsp),%r11
+	movq	TF_RAX(%rsp),%rax
+	addq	$TF_RIP,%rsp
+
 	.globl	_C_LABEL(doreti_iret)
 _C_LABEL(doreti_iret):
 	iretq

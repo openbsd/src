@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.146 2011/07/04 06:05:56 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.147 2011/07/04 15:54:24 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -669,6 +669,16 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	else
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = ksc.sc_mask & ~sigcantmask;
+
+	/*
+	 * sigreturn() needs to return to userspace via the 'iretq'
+	 * method, so that if the process was interrupted (by tick,
+	 * an IPI, whatever) as opposed to already being in the kernel
+	 * when a signal was being delivered, the process will be
+	 * completely restored, including the userland %rcx and %r11
+	 * registers which the 'sysretq' instruction cannot restore.
+	 */
+	p->p_md.md_flags |= MDP_IRET;
 
 	return (EJUSTRETURN);
 }

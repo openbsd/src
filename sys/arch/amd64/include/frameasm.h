@@ -1,4 +1,4 @@
-/*	$OpenBSD: frameasm.h,v 1.5 2011/04/13 02:49:12 guenther Exp $	*/
+/*	$OpenBSD: frameasm.h,v 1.6 2011/07/04 15:54:24 guenther Exp $	*/
 /*	$NetBSD: frameasm.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
@@ -29,24 +29,6 @@
 	movq	%rdx,TF_RDX(%rsp)	; \
 	movq	%rcx,TF_RCX(%rsp)	; \
 	movq	%rax,TF_RAX(%rsp)
-
-#define	INTR_RESTORE_GPRS \
-	movq	TF_R15(%rsp),%r15	; \
-	movq	TF_R14(%rsp),%r14	; \
-	movq	TF_R13(%rsp),%r13	; \
-	movq	TF_R12(%rsp),%r12	; \
-	movq	TF_R11(%rsp),%r11	; \
-	movq	TF_R10(%rsp),%r10	; \
-	movq	TF_R9(%rsp),%r9		; \
-	movq	TF_R8(%rsp),%r8		; \
-	movq	TF_RDI(%rsp),%rdi	; \
-	movq	TF_RSI(%rsp),%rsi	; \
-	movq	TF_RBP(%rsp),%rbp	; \
-	movq	TF_RBX(%rsp),%rbx	; \
-	movq	TF_RDX(%rsp),%rdx	; \
-	movq	TF_RCX(%rsp),%rcx	; \
-	movq	TF_RAX(%rsp),%rax	; \
-	addq	$120,%rsp
 
 #define	INTRENTRY \
 	subq	$32,%rsp		; \
