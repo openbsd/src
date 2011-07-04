@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.163 2011/05/10 01:10:08 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.164 2011/07/04 20:40:58 dhill Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1551,7 +1551,7 @@ pfsync_sendout(void)
 	m->m_len = m->m_pkthdr.len = sc->sc_len;
 
 	/* build the ip header */
-	ip = (struct ip *)m->m_data;
+	ip = mtod(m, struct ip *);
 	bcopy(&sc->sc_template, ip, sizeof(*ip));
 	offset = sizeof(*ip);
 

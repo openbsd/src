@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.58 2010/05/02 22:34:31 stsp Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.59 2011/07/04 20:40:58 dhill Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -1584,7 +1584,7 @@ pppdumpm(m0)
 
     for (m = m0; m; m = m->m_next) {
 	int l = m->m_len;
-	u_char *rptr = (u_char *)m->m_data;
+	u_char *rptr = mtod(m, u_char *);
 
 	while (l--) {
 	    if (bp > buf + sizeof(buf) - 4)

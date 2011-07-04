@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.54 2011/04/29 15:14:10 claudio Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.55 2011/07/04 20:40:58 dhill Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -725,7 +725,7 @@ gre_send_keepalive(void *arg)
 	MH_ALIGN(m, m->m_len);
 
 	/* build the ip header */
-	ip = (struct ip *)m->m_data;
+	ip = mtod(m, struct ip *);
 
 	ip->ip_v = IPVERSION;
 	ip->ip_hl = sizeof(*ip) >> 2;
