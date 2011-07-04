@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.99 2011/04/04 15:22:31 jcs Exp $       */
+/* $OpenBSD: bioctl.c,v 1.100 2011/07/04 04:52:34 tedu Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -124,9 +124,11 @@ main(int argc, char *argv[])
 			break;
 		case 'c': /* create */
 			func |= BIOC_CREATERAID;
-			if (isdigit(*optarg))
-				cr_level = atoi(optarg);
-			else
+			if (isdigit(*optarg)) {
+				cr_level = strtonum(optarg, 0, 10, &errstr);
+				if (errstr != NULL)
+					errx(1, "Invalid RAID level");
+			} else
 				cr_level = *optarg;
 			break;
 		case 'd':
