@@ -1,7 +1,7 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.31 2007/10/15 02:16:35 deraadt Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.32 2011/07/04 22:49:03 henning Exp $ */
 
 /*
- * Copyright (c) Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
