@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.7 2011/06/09 17:41:52 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.8 2011/07/04 19:44:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -557,7 +557,7 @@ lka_session_expand_format(char *buf, size_t len, struct envelope *ep)
 				string = dlv->agent.mda.as_user;
 				break;
 			case 'u':
-				string = dlv->rcpt.domain;
+				string = dlv->rcpt.user;
 				break;
 			case 'd':
 				string = dlv->rcpt.domain;
