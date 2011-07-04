@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.20 2011/07/04 03:24:51 tedu Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.21 2011/07/04 03:53:22 tedu Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -72,6 +72,7 @@ int	sr_aoe_server_alloc_resources(struct sr_discipline *);
 int	sr_aoe_server_free_resources(struct sr_discipline *);
 int	sr_aoe_server_start(struct sr_discipline *);
 
+void	sr_aoe_request_done(struct aoe_req *, struct aoe_packet *);
 void	sr_aoe_input(struct aoe_handler *, struct mbuf *);
 void	sr_aoe_setup(struct aoe_handler *, struct mbuf *);
 void	sr_aoe_timeout(void *);
@@ -483,40 +484,20 @@ bad:
 }
 
 void
-sr_aoe_input(struct aoe_handler *ah, struct mbuf *m)
+sr_aoe_request_done(struct aoe_req *ar, struct aoe_packet *ap)
 {
 	struct sr_discipline	*sd;
 	struct scsi_xfer	*xs;
-	struct aoe_req		*ar;
-	struct aoe_packet	*ap;
 	struct sr_workunit	*wu;
 	daddr64_t		blk, offset;
 	int			len, s;
-	int			tag;
 
-	ap = mtod(m, struct aoe_packet *);
-	tag = ap->tag;
-
-	s = splnet();
-	TAILQ_FOREACH(ar, &ah->reqs, next) {
-		if (ar->tag == tag) {
-			TAILQ_REMOVE(&ah->reqs, ar, next);
-			break;
-		}
-	}
-	splx(s);
-	if (!ar) {
-		goto out;
-	}
-	timeout_del(&ar->to);
 	wu = ar->v;
 	sd = wu->swu_dis;
 	xs = wu->swu_xs;
 
-
-	if (ap->flags & AOE_F_ERROR) {
+	if (!ap || ap->flags & AOE_F_ERROR) {
 		wu->swu_ios_failed++;
-		goto out;
 	} else {
 		wu->swu_ios_succeeded++;
 		len = ar->len; /* XXX check against sector count */
@@ -531,7 +512,6 @@ sr_aoe_input(struct aoe_handler *ah, struct mbuf *m)
 	wu->swu_ios_complete++;
 
 	s = splbio();
-
 	if (wu->swu_ios_complete == wu->swu_io_count) {
 		if (wu->swu_ios_failed == wu->swu_ios_complete)
 			xs->error = XS_DRIVER_STUFFUP;
@@ -542,7 +522,36 @@ sr_aoe_input(struct aoe_handler *ah, struct mbuf *m)
 
 		sr_scsi_done(sd, xs);
 	}
+	splx(s);
 
+	free(ar, M_DEVBUF);
+}
+
+void
+sr_aoe_input(struct aoe_handler *ah, struct mbuf *m)
+{
+	struct aoe_packet	*ap;
+	struct aoe_req		*ar;
+	int			tag;
+	int			s;
+
+	ap = mtod(m, struct aoe_packet *);
+	tag = ap->tag;
+
+	s = splnet();
+	TAILQ_FOREACH(ar, &ah->reqs, next) {
+		if (ar->tag == tag) {
+			timeout_del(&ar->to);
+			TAILQ_REMOVE(&ah->reqs, ar, next);
+			break;
+		}
+	}
+	splx(s);
+	if (!ar)
+		goto out;
+
+	ap = mtod(m, struct aoe_packet *);
+	sr_aoe_request_done(ar, ap);
 out:
 	m_freem(m);
 }
@@ -554,7 +563,6 @@ sr_aoe_timeout(void *v)
 	struct sr_discipline	*sd;
 	struct scsi_xfer	*xs;
 	struct aoe_handler	*ah;
-	struct aoe_req		*ar2;
 	struct sr_workunit	*wu;
 	int			s;
 
@@ -564,19 +572,10 @@ sr_aoe_timeout(void *v)
 	ah = sd->mds.mdd_aoe.sra_ah;
 
 	s = splnet();
-	TAILQ_FOREACH(ar2, &ah->reqs, next) {
-		if (ar2->tag == ar->tag) {
-			TAILQ_REMOVE(&ah->reqs, ar, next);
-			break;
-		}
-	}
+	TAILQ_REMOVE(&ah->reqs, ar, next);
 	splx(s);
-	if (!ar2)
-		return;
-	free(ar, M_DEVBUF);
-	/* give it another go */
-	/* XXX this is going to repeat the whole workunit */
-	sr_aoe_rw(wu);
+
+	sr_aoe_request_done(ar, NULL);
 }
 
 /* AOE target */
