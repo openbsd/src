@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# test EINVAL for splicing with negative maximum
+# test EINVAL for splicing with negative idle timeout
 
 use Errno;
 use IO::Socket;
@@ -26,9 +26,9 @@ my $ss = IO::Socket::INET->new(
 
 my $packed;
 if ($Config{longsize} == 8) {
-    $packed = pack('iiiiiiii', $ss->fileno(),0,-1,-1,0,0,0,0);
+    $packed = pack('iiiiiiii', $ss->fileno(),0,0,0,-1,-1,-1,-1);
 } else {
-    $packed = pack('iiiii', $ss->fileno(),-1,-1,0,0);
+    $packed = pack('iiiii', $ss->fileno(),0,0,-1,-1);
 }
 $s->setsockopt(SOL_SOCKET, SO_SPLICE, $packed)
     and die "splice to unconnected socket succeeded";

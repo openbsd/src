@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: relay.pl,v 1.2 2011/03/13 03:15:41 bluhm Exp $
+#	$OpenBSD: relay.pl,v 1.3 2011/07/04 05:43:02 bluhm Exp $
 
 # Copyright (c) 2010 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -76,6 +76,11 @@ $s->down;
 
 exit if $args{nocheck};
 
+$r->loggrep(qr/^Timeout$/) or die "no relay timeout"
+    if $args{relay}{idle};
+$r->loggrep(qr/^Max$/) or die "no relay max"
+    if $args{relay}{max} && $args{len};
+
 my $clen = $c->loggrep(qr/^LEN: /) // die "no client len"
     unless $args{client}{nocheck};
 my $rlen = $r->loggrep(qr/^LEN: /) // die "no relay len"
@@ -104,8 +109,8 @@ my $smd5 = $s->loggrep(qr/^MD5: /) unless $args{server}{nocheck};
 !defined($args{md5}) || !$smd5 || $smd5 eq "MD5: $args{md5}\n"
     or die "server: $smd5", "md5 $args{md5} expected";
 
-$args{relay}{errorin} = 0 unless $args{relay}{nocheck};
-$args{relay}{errorout} = 0 unless $args{relay}{nocheck};
+$args{relay}{errorin} //= 0 unless $args{relay}{nocheck};
+$args{relay}{errorout} //= 0 unless $args{relay}{nocheck};
 my %name2proc = (client => $c, relay => $r, server => $s);
 foreach my $name (qw(client relay server)) {
 	$args{$name}{errorin} //= $args{$name}{error};

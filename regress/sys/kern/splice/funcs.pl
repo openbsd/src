@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.5 2011/04/22 02:06:00 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.6 2011/07/04 05:43:02 bluhm Exp $
 
 # Copyright (c) 2010,2011 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -53,6 +53,7 @@ sub write_char {
 		    or die ref($self), " print failed: $!";
 		print STDERR ".\n";
 	}
+	IO::Handle::flush(\*STDOUT);
 
 	print STDERR "LEN: ", $len, "\n";
 	print STDERR "MD5: ", $ctx->hexdigest, "\n";
@@ -99,6 +100,7 @@ sub write_oob {
 		    or die ref($self), " send failed: $!";
 		print STDERR ".\n";
 	}
+	IO::Handle::flush(\*STDOUT);
 
 	print STDERR "LEN: ", $len, "\n";
 	print STDERR "MD5: ", $ctx->hexdigest, "\n";
@@ -110,7 +112,8 @@ sub write_oob {
 
 sub relay_copy {
 	my $self = shift;
-	my $max = shift // $self->{max};
+	my $max = $self->{max};
+	my $idle = $self->{idle};
 	my $size = $self->{size} || 8093;
 
 	my $len = 0;
@@ -118,8 +121,13 @@ sub relay_copy {
 		my $rin = my $win = my $ein = '';
 		vec($rin, fileno(STDIN), 1) = 1;
 		vec($ein, fileno(STDIN), 1) = 1 unless $self->{oobinline};
-		select($rin, undef, $ein, undef)
+		defined(my $n = select($rin, undef, $ein, $idle))
 		    or die ref($self), " select failed: $!";
+		if ($idle && $n == 0) {
+			print STDERR "\n";
+			print STDERR "Timeout\n";
+			last;
+		}
 		my $buf;
 		my $atmark = sockatmark(\*STDIN)
 		    or die ref($self), " sockatmark failed: $!";
@@ -182,14 +190,16 @@ sub relay_copy {
 
 sub relay_splice {
 	my $self = shift;
-	my $max = shift // $self->{max};
+	my $max = $self->{max};
+	my $idle = $self->{idle};
 
 	my $len = 0;
 	my $splicelen;
 	my $shortsplice = 0;
+	my $error;
 	do {
 		my $splicemax = $max ? $max - $len : 0;
-		setsplice(\*STDIN, \*STDOUT, $splicemax)
+		setsplice(\*STDIN, \*STDOUT, $splicemax, $idle)
 		    or die ref($self), " splice stdin to stdout failed: $!";
 
 		if ($self->{readblocking}) {
@@ -212,9 +222,9 @@ sub relay_splice {
 			    or die ref($self), " select failed: $!";
 		}
 
-		defined(my $error = geterror(\*STDIN))
+		defined($error = geterror(\*STDIN))
 		    or die ref($self), " get error from stdin failed: $!";
-		$! = $error
+		($! = $error) && ! $!{ETIMEDOUT}
 		    and die ref($self), " splice failed: $!";
 
 		defined($splicelen = getsplice(\*STDIN))
@@ -226,13 +236,16 @@ sub relay_splice {
 		$len += $splicelen;
 	} while ($max && $max > $len && !$shortsplice++);
 
+	if ($idle && $error == Errno::ETIMEDOUT) {
+		print STDERR "Timeout\n";
+	}
 	if ($max && $max == $len) {
 		print STDERR "Max\n";
 	} elsif ($max && $max < $len) {
 		die ref($self), " max $max less than len $len";
 	} elsif ($max && $max > $len && $splicelen) {
 		die ref($self), " max $max greater than len $len";
-	} else {
+	} elsif (!$error) {
 		defined(my $read = sysread(STDIN, my $buf, 2**16))
 		    or die ref($self), " sysread stdin failed: $!";
 		$read > 0
@@ -291,16 +304,16 @@ sub errignore {
 
 sub shutin {
 	my $self = shift;
-        shutdown(\*STDIN, SHUT_RD)
-            or die ref($self), " shutdown read failed: $!";
+	shutdown(\*STDIN, SHUT_RD)
+	    or die ref($self), " shutdown read failed: $!";
 }
 
 sub shutout {
 	my $self = shift;
 	IO::Handle::flush(\*STDOUT)
-            or die ref($self), " flush stdout failed: $!";
-        shutdown(\*STDOUT, SHUT_WR)
-            or die ref($self), " shutdown write failed: $!";
+	    or die ref($self), " flush stdout failed: $!";
+	shutdown(\*STDOUT, SHUT_WR)
+	    or die ref($self), " shutdown write failed: $!";
 }
 
 ########################################################################
@@ -309,7 +322,7 @@ sub shutout {
 
 sub read_char {
 	my $self = shift;
-	my $max = shift // $self->{max};
+	my $max = $self->{max};
 
 	my $ctx = Digest::MD5->new();
 	my $len = 0;
