@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: mksubr,v 1.3 2011/06/20 17:54:48 otto Exp $
+# $OpenBSD: mksubr,v 1.4 2011/07/04 06:44:52 otto Exp $
 #
 # Copyright (c) 2006 David Kirchner <dpk@dpk.net>
 #
@@ -295,7 +295,7 @@ semgetname (int flag) {
  * mode argument is unused (and often bogus and misleading).
  */
 void
-flagsandmodename (int flags, int mode, int decimal) {
+flagsandmodename (int flags, int mode) {
 	flagsname (flags);
 	(void)putchar(',');
 	if ((flags & O_CREAT) == O_CREAT) {
@@ -317,7 +317,7 @@ flagsandmodename (int flags, int mode, int decimal) {
  * to use getprotoent(3) here.
  */
 void
-sockoptlevelname (int level, int decimal)
+sockoptlevelname (int level)
 {
 	if (level == SOL_SOCKET) {
 		(void)printf("SOL_SOCKET");
@@ -378,7 +378,7 @@ cat <<_EOF_
  * grouped in fcntl.h, and this awk script grabs the first group.
  */
 void
-fcntlcmdname (int cmd, int arg, int decimal)
+fcntlcmdname (int cmd, int arg)
 {
 	switch (cmd) {
 _EOF_

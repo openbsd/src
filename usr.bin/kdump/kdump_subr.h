@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump_subr.h,v 1.1 2011/06/16 17:14:53 otto Exp $	*/
+/*	$OpenBSD: kdump_subr.h,v 1.2 2011/07/04 06:44:52 otto Exp $	*/
 /*
  * Copyright(c) 2006 2006 David Kirchner <dpk@dpk.net>
  *
@@ -21,11 +21,11 @@ void signame(int);
 void semctlname(int);
 void shmctlname(int);
 void semgetname(int);
-void fcntlcmdname(int, int, int);
+void fcntlcmdname(int, int);
 void rtprioname(int);
 void modename(int);
 void flagsname(int);
-void flagsandmodename(int, int, int);
+void flagsandmodename(int, int);
 void accessmodename(int);
 void mmapprotname(int);
 void mmapflagsname(int);
@@ -36,7 +36,7 @@ void mountflagsname(int);
 void rebootoptname(int);
 void flockname(int);
 void sockoptname(int);
-void sockoptlevelname(int, int);
+void sockoptlevelname(int);
 void sockdomainname(int);
 void sockipprotoname(int);
 void socktypename(int);
@@ -63,3 +63,5 @@ void lio_listioname(int);
 void minheritname(int);
 void quotactlname(int);
 void ptraceopname(int);
+
+extern int decimal;

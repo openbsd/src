@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.51 2011/06/20 17:54:48 otto Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.52 2011/07/04 06:44:52 otto Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -109,6 +109,10 @@ static char *ptrace_ops[] = {
 	"PT_WRITE_I",	"PT_WRITE_D",	"PT_WRITE_U",	"PT_CONTINUE",
 	"PT_KILL",	"PT_ATTACH",	"PT_DETACH",	"PT_IO",
 };
+
+static int narg;
+static register_t *ap;
+static char sep;
 
 static int fread_tail(void *, size_t, size_t);
 static void dumpheader(struct ktr_header *);
@@ -313,23 +317,107 @@ ioctldecode(u_long cmd)
 		printf(")");
 }
 
-#define print_number(i, n, c) do {			\
-	if (c)						\
-		(void)putchar(c);			\
-	if (decimal)					\
-		(void)printf("%ld", (long)*i);		\
-	else						\
-		(void)printf("%#lx", (long)*i);		\
-	i++;						\
-	n--; 						\
-	c = ',';					\
-} while (0);
+static void
+ptracedecode(void)
+{
+	if (*ap >= 0 && *ap <
+	    sizeof(ptrace_ops) / sizeof(ptrace_ops[0]))
+		(void)printf("%s", ptrace_ops[*ap]);
+	else switch(*ap) {
+#ifdef PT_GETFPREGS
+	case PT_GETFPREGS:
+		(void)printf("PT_GETFPREGS");
+		break;
+#endif
+	case PT_GETREGS:
+		(void)printf("PT_GETREGS");
+		break;
+#ifdef PT_SETFPREGS
+	case PT_SETFPREGS:
+		(void)printf("PT_SETFPREGS");
+		break;
+#endif
+	case PT_SETREGS:
+		(void)printf("PT_SETREGS");
+		break;
+#ifdef PT_STEP
+	case PT_STEP:
+		(void)printf("PT_STEP");
+		break;
+#endif
+#ifdef PT_WCOOKIE
+	case PT_WCOOKIE:
+		(void)printf("PT_WCOOKIE");
+		break;
+#endif
+	default:
+		(void)printf("%ld", (long)*ap);
+		break;
+	}
+	sep = ',';
+	ap++;
+	narg--;
+}
+
+static void
+pn(void (*f)(int))
+{
+	if (sep)
+		(void)putchar(sep);
+	if (fancy && f != NULL)
+		f((int)*ap);
+	else if (decimal)
+		(void)printf("%ld", (long)*ap);
+	else
+		(void)printf("%#lx", (long)*ap);
+	ap++;
+	narg--;
+	sep = ',';
+}
+
+#ifdef __LP64__
+#define plln()	pn(NULL)
+#elif _BYTE_ORDER == _LITTLE_ENDIAN
+static void
+plln(void)
+{
+	long long val = ((long long)*ap) & 0xffffffff;
+	ap++;
+	val |= ((long long)*ap) << 32;
+	ap++;
+	narg -= 2;
+	if (sep)
+		(void)putchar(sep);
+	if (decimal)
+		(void)printf("%lld", val);
+	else
+		(void)printf("%#llx", val);
+	sep = ',';
+}
+#else
+static void
+plln(void)
+{
+	long long val = ((long long)*ap) << 32;
+	ap++;
+	val |= ((long long)*ap) & 0xffffffff;
+	ap++;
+	narg -= 2;
+	if (sep)
+		(void)putchar(sep);
+	if (decimal)
+		(void)printf("%lld", val);
+	else
+		(void)printf("%#llx", val);
+	sep = ',';
+}
+#endif
 
 static void
 ktrsyscall(struct ktr_syscall *ktr)
 {
-	int narg = ktr->ktr_argsize / sizeof(register_t);
-	register_t *ap;
+	narg = ktr->ktr_argsize / sizeof(register_t);
+	sep = '\0';
 
 	if (ktr->ktr_code >= current->nsysnames || ktr->ktr_code < 0)
 		(void)printf("[%d]", ktr->ktr_code);
@@ -337,377 +425,254 @@ ktrsyscall(struct ktr_syscall *ktr)
 		(void)printf("%s", current->sysnames[ktr->ktr_code]);
 	ap = (register_t *)((char *)ktr + sizeof(struct ktr_syscall));
 	(void)putchar('(');
-	if (narg) {
-		char c = '\0';
-		if (fancy) {
-			switch (ktr->ktr_code) {
-			case SYS_ioctl: {
-				const char *cp;
 
-				if (decimal)
-					(void)printf("%ld", (long)*ap);
-				else
-					(void)printf("%#lx", (long)*ap);
-				ap++;
-				narg--;
-				if ((cp = ioctlname(*ap)) != NULL)
-					(void)printf(",%s", cp);
-				else
-					ioctldecode(*ap);
-				c = ',';
-				ap++;
-				narg--;
-				break;
-			}
-			case SYS___sysctl: {
-				int *np, n;
+	switch (ktr->ktr_code) {
+	case SYS_ioctl: {
+		const char *cp;
 
-				n = ap[1];
-				if (n > CTL_MAXNAME)
-					n = CTL_MAXNAME;
-				np = (int *)(ap + 6);
-				for (; n--; np++) {
-					if (c)
-						putchar(c);
-					printf("%d", *np);
-					c = '.';
-				}
+		pn(NULL);
+		if (!fancy)
+			break;
+		if ((cp = ioctlname(*ap)) != NULL)
+			(void)printf(",%s", cp);
+		else
+			ioctldecode(*ap);
+		ap++;
+		narg--;
+		break;
+	}
+	case SYS___sysctl: {
+		int *np, n;
 
-				c = ',';
-				ap += 2;
-				narg -= 2;
-				break;
-			}
-			case SYS_ptrace: 
-				if (*ap >= 0 && *ap <
-				    sizeof(ptrace_ops) / sizeof(ptrace_ops[0]))
-					(void)printf("%s", ptrace_ops[*ap]);
-				else switch(*ap) {
-#ifdef PT_GETFPREGS
-				case PT_GETFPREGS:
-					(void)printf("PT_GETFPREGS");
-					break;
-#endif
-				case PT_GETREGS:
-					(void)printf("PT_GETREGS");
-					break;
-#ifdef PT_SETFPREGS
-				case PT_SETFPREGS:
-					(void)printf("PT_SETFPREGS");
-					break;
-#endif
-				case PT_SETREGS:
-					(void)printf("PT_SETREGS");
-					break;
-#ifdef PT_STEP
-				case PT_STEP:
-					(void)printf("PT_STEP");
-					break;
-#endif
-#ifdef PT_WCOOKIE
-				case PT_WCOOKIE:
-					(void)printf("PT_WCOOKIE");
-					break;
-#endif
-				default:
-					(void)printf("%ld", (long)*ap);
-					break;
-				}
-				c = ',';
-				ap++;
-				narg--;
-				break;
-			case SYS_access:
-				print_number(ap, narg, c);
-				(void)putchar(',');
-				accessmodename((int)*ap);
-				ap++;
-				narg--;
-				break;
-			case SYS_chmod:
-			case SYS_fchmod: 
-				print_number(ap, narg, c);
-				(void)putchar(',');
-				modename((int)*ap);
-				ap++;
-				narg--;
-				break;
-			case SYS_fcntl: {
-				int cmd;
-				int arg;
-				print_number(ap, narg, c);
-				cmd = *ap;
-				arg = *++ap;
-				(void)putchar(',');
-				fcntlcmdname(cmd, arg, decimal);
-				ap++;
-				narg -= 2;
-				break;
-			}
-			case SYS_flock:
-				print_number(ap, narg, c);
-				(void)putchar(',');
-				flockname((int)*ap);
-				ap++;
-				narg--;
-				break;
-			case SYS_getrlimit:
-			case SYS_setrlimit:
-				rlimitname((int)*ap);
-				ap++;
-				narg--;
-				c = ',';
-				break;
-			case SYS_getsockopt:
-			case SYS_setsockopt:
-				print_number(ap, narg, c);
-				(void)putchar(',');
-				sockoptlevelname((int)*ap, decimal);
-				if ((int)*ap == SOL_SOCKET) {
-					ap++;
-					narg--;
-					(void)putchar(',');
-					sockoptname((int)*ap);
-				}
-				ap++;
-				narg--;
-				break;
-			case SYS_kill:
-				print_number(ap, narg, c);
-				(void)putchar(',');
-				signame((int)*ap);
-				ap++;
-				narg--;
-				break;
-			case SYS_lseek:
-				print_number(ap, narg, c);
-				/* skip padding */
-				ap++;
-				narg--;
-				print_number(ap, narg, c);
-				(void)putchar(',');
-				whencename((int)*ap);
-				ap++;
-				narg--;
-				break;
-			case SYS_madvise:
-				print_number(ap, narg, c);
-				print_number(ap, narg, c);
-				(void)putchar(',');
-				madvisebehavname((int)*ap);
-				ap++;
-				narg--;
-				break;
-			case SYS_minherit:
-				print_number(ap, narg, c);
-				print_number(ap, narg, c);
-				(void)putchar(',');
-				minheritname((int)*ap);
-				ap++;
-				narg--;
-				break;
-			case SYS_mlockall:
-				mlockallname((int)*ap);
-				ap++;
-				narg--;
-				break;
-			case SYS_mmap:
-				print_number(ap, narg, c);
-				print_number(ap, narg, c);
-				(void)putchar(',');
-				mmapprotname((int)*ap);
-				(void)putchar(',');
-				ap++;
-				narg--;
-				mmapflagsname((int)*ap);
-				ap++;
-				narg--;
-				print_number(ap, narg, c);
-				/* skip padding */
-				ap++;
-				narg--;
-				break;
-			case SYS_mprotect:
-				print_number(ap, narg, c);
-				print_number(ap, narg, c);
-				(void)putchar(',');
-				mmapprotname((int)*ap);
-				ap++;
-				narg--;
-				break;
-			case SYS_mquery:
-				print_number(ap, narg, c);
-				print_number(ap, narg, c);
-				(void)putchar(',');
-				mmapprotname((int)*ap);
-				ap++;
-				narg--;
-				(void)putchar(',');
-				mmapflagsname((int)*ap);
-				ap++;
-				narg--;
-				print_number(ap, narg, c);
-				/* skip padding */
-				ap++;
-				narg--;
-				break;
-			case SYS_msync:
-				print_number(ap, narg, c);
-				print_number(ap, narg, c);
-				(void)putchar(',');
-				msyncflagsname((int)*ap);
-				ap++;
-				narg--;
-				break;
-			case SYS_msgctl:
-				print_number(ap, narg, c);
-				(void)putchar(',');
-				shmctlname((int)*ap);
-				ap++;
-				narg--;
-				break;
-			case SYS_open: {
-				int     flags;
-				int     mode;
-				print_number(ap, narg, c);
-				flags = *ap;
-				mode = *++ap;
-				(void)putchar(',');
-				flagsandmodename(flags, mode, decimal);
-				ap++;
-				narg -= 2;
-				break;
-			}
-			case SYS_pread:
-			case SYS_preadv:
-			case SYS_pwrite:
-			case SYS_pwritev:
-				print_number(ap, narg, c);
-				print_number(ap, narg, c);
-				print_number(ap, narg, c);
-				/* skip padding */
-				ap++;
-				narg--;
-				break;
-			case SYS_recvmsg:
-			case SYS_sendmsg:
-				print_number(ap, narg, c);
-				print_number(ap, narg, c);
-				(void)putchar(',');
-				sendrecvflagsname((int)*ap);
-				ap++;
-				narg--;
-				break;
-			case SYS_recvfrom:
-			case SYS_sendto:
-				print_number(ap, narg, c);
-				print_number(ap, narg, c);
-				print_number(ap, narg, c);
-				(void)putchar(',');
-				sendrecvflagsname((int)*ap);
-				ap++;
-				narg--;
-				break;
-			case SYS___semctl:
-				print_number(ap, narg, c);
-				print_number(ap, narg, c);
-				(void)putchar(',');
-				semctlname((int)*ap);
-				ap++;
-				narg--;
-				break;
-			case SYS_semget:
-				print_number(ap, narg, c);
-				print_number(ap, narg, c);
-				(void)putchar(',');
-				semgetname((int)*ap);
-				ap++;
-				narg--;
-				break;
-			case SYS_shmat:
-				print_number(ap, narg, c);
-				print_number(ap, narg, c);
-				(void)putchar(',');
-				shmatname((int)*ap);
-				ap++;
-				narg--;
-				break;
-			case SYS_shmctl:
-				print_number(ap, narg, c);
-				(void)putchar(',');
-				shmctlname((int)*ap);
-				ap++;
-				narg--;
-				break;
-			case SYS_sigaction:
-				signame((int)*ap);
-				ap++;
-				narg--;
-				c = ',';
-				break;
-			case SYS_sigprocmask:
-				sigprocmaskhowname((int)*ap);
-				ap++;
-				narg--;
-				c = ',';
-				break;
-			case SYS_socket: {
-				int sockdomain = (int)*ap;
-				sockdomainname(sockdomain);
-				ap++;
-				narg--;
-				(void)putchar(',');
-				socktypename((int)*ap);
-				ap++;
-				narg--;
-				if (sockdomain == PF_INET ||
-				    sockdomain == PF_INET6) {
-					(void)putchar(',');
-					sockipprotoname((int)*ap);
-					ap++;
-					narg--;
-				}
-				c = ',';
-				break;
-			}
-			case SYS_socketpair:
-				sockdomainname((int)*ap);
-				ap++;
-				narg--;
-				(void)putchar(',');
-				socktypename((int)*ap);
-				ap++;
-				narg--;
-				c = ',';
-				break;
-			case SYS_truncate:
-			case SYS_ftruncate:
-				print_number(ap, narg, c);
-				/* skip padding */
-				ap++;
-				narg--;
-				break;
-			case SYS_wait4:
-				print_number(ap, narg, c);
-				print_number(ap, narg, c);
-				(void)putchar(',');
-				wait4optname((int)*ap);
-				ap++;
-				narg--;
-				break;
-			}
+		if (!fancy)
+			break;
+		n = ap[1];
+		if (n > CTL_MAXNAME)
+			n = CTL_MAXNAME;
+		np = (int *)(ap + 6);
+		for (; n--; np++) {
+			if (sep)
+				putchar(sep);
+			printf("%d", *np);
+			sep = '.';
 		}
-		while (narg) {
-			if (c)
-				putchar(c);
-			if (decimal)
-				(void)printf("%ld", (long)*ap);
-			else
-				(void)printf("%#lx", (long)*ap);
-			c = ',';
-			ap++;
-			narg--;
-		}
+
+		sep = ',';
+		ap += 2;
+		narg -= 2;
+		break;
+	}
+	case SYS_ptrace: 
+		if (!fancy)
+			break;
+		ptracedecode();
+		break;
+	case SYS_access:
+		pn(NULL);
+		pn(accessmodename);
+		break;
+	case SYS_chmod:
+	case SYS_fchmod: 
+		pn( NULL);
+		pn(modename);
+		break;
+	case SYS_fcntl: {
+		int cmd;
+		int arg;
+		pn(NULL);
+		if (!fancy)
+			break;
+		cmd = ap[0];
+		arg = ap[1];
+		(void)putchar(',');
+		fcntlcmdname(cmd, arg);
+		ap += 2;
+		narg -= 2;
+		break;
+	}
+	case SYS_flock:
+		pn(NULL);
+		pn(flockname);
+		break;
+	case SYS_getrlimit:
+	case SYS_setrlimit:
+		pn(rlimitname);
+		break;
+	case SYS_getsockopt:
+	case SYS_setsockopt: {
+		int level;
+
+		pn(NULL);
+		level = *ap;
+		pn(sockoptlevelname);
+		if (level == SOL_SOCKET)
+			pn(sockoptname);
+		break;
+	}
+	case SYS_kill:
+		pn(NULL);
+		pn(signame);
+		break;
+	case SYS_lseek:
+		pn(NULL);
+		/* skip padding */
+		ap++;
+		narg--;
+		plln();
+		pn(whencename);
+		break;
+	case SYS_madvise:
+		pn(NULL);
+		pn(NULL);
+		pn(madvisebehavname);
+		break;
+	case SYS_minherit:
+		pn(NULL);
+		pn(NULL);
+		pn(minheritname);
+		break;
+	case SYS_mlockall:
+		pn(mlockallname);
+		break;
+	case SYS_mmap:
+		pn(NULL);
+		pn(NULL);
+		pn(mmapprotname);
+		pn(mmapflagsname);
+		pn(NULL);
+		/* skip padding */
+		ap++;
+		narg--;
+		plln();
+		break;
+	case SYS_mprotect:
+		pn(NULL);
+		pn(NULL);
+		pn(mmapprotname);
+		break;
+	case SYS_mquery:
+		pn(NULL);
+		pn(NULL);
+		pn(mmapprotname);
+		pn(mmapflagsname);
+		pn(NULL);
+		/* skip padding */
+		ap++;
+		narg--;
+		plln();
+		break;
+	case SYS_msync:
+		pn(NULL);
+		pn(NULL);
+		pn(msyncflagsname);
+		break;
+	case SYS_msgctl:
+		pn(NULL);
+		pn(shmctlname);
+		break;
+	case SYS_open: {
+		int     flags;
+		int     mode;
+
+		pn(NULL);
+		if (!fancy)
+			break;
+		flags = ap[0];
+		mode = ap[1];
+		(void)putchar(',');
+		flagsandmodename(flags, mode);
+		ap += 2;
+		narg -= 2;
+		break;
+	}
+	case SYS_pread:
+	case SYS_preadv:
+	case SYS_pwrite:
+	case SYS_pwritev:
+		pn(NULL);
+		pn(NULL);
+		pn(NULL);
+		/* skip padding */
+		ap++;
+		narg--;
+		plln();
+		break;
+	case SYS_recvmsg:
+	case SYS_sendmsg:
+		pn(NULL);
+		pn(NULL);
+		pn(sendrecvflagsname);
+		break;
+	case SYS_recvfrom:
+	case SYS_sendto:
+		pn(NULL);
+		pn(NULL);
+		pn(NULL);
+		pn(sendrecvflagsname);
+		break;
+	case SYS___semctl:
+		pn(NULL);
+		pn(NULL);
+		pn(semctlname);
+		break;
+	case SYS_semget:
+		pn(NULL);
+		pn(NULL);
+		pn(semgetname);
+		break;
+	case SYS_shmat:
+		pn(NULL);
+		pn(NULL);
+		pn(shmatname);
+		break;
+	case SYS_shmctl:
+		pn(NULL);
+		pn(shmctlname);
+		break;
+	case SYS_sigaction:
+		pn(signame);
+		break;
+	case SYS_sigprocmask:
+		pn(sigprocmaskhowname);
+		break;
+	case SYS_socket: {
+		int sockdomain = *ap;
+
+		pn(sockdomainname);
+		pn(socktypename);
+		if (sockdomain == PF_INET || sockdomain == PF_INET6)
+			pn(sockipprotoname);
+		break;
+	}
+	case SYS_socketpair:
+		pn(sockdomainname);
+		pn(socktypename);
+		break;
+	case SYS_truncate:
+	case SYS_ftruncate:
+		pn(NULL);
+		/* skip padding */
+		ap++;
+		narg--;
+		plln();
+		break;
+	case SYS_wait4:
+		pn(NULL);
+		pn(NULL);
+		pn(wait4optname);
+		break;
+	}
+
+	while (narg) {
+		if (sep)
+			putchar(sep);
+		if (decimal)
+			(void)printf("%ld", (long)*ap);
+		else
+			(void)printf("%#lx", (long)*ap);
+		sep = ',';
+		ap++;
+		narg--;
 	}
 	(void)printf(")\n");
 }
