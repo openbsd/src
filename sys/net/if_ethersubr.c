@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.148 2011/01/28 13:19:44 reyk Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.149 2011/07/04 23:58:26 claudio Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -822,9 +822,7 @@ decapsulate:
 				/* SNAP */
 				if (m->m_pkthdr.len > etype)
 					m_adj(m, etype - m->m_pkthdr.len);
-				m->m_data += 6;		/* XXX */
-				m->m_len -= 6;		/* XXX */
-				m->m_pkthdr.len -= 6;	/* XXX */
+				m_adj(m, 6);
 				M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
 				if (m == 0)
 					goto done;
