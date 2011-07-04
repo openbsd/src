@@ -214,7 +214,7 @@ struct getargs args[] = {
 static void
 usage(void)
 {
-    arg_printusage(args, NULL, "[sysname]", 0);
+    arg_printusage(args, sizeof(args)/sizeof(args[0]), "[sysname]", 0);
     exit(1);
     
 }
