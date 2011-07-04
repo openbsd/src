@@ -6003,6 +6003,7 @@
 ./usr/share/man/man3/wcscmp.3
 ./usr/share/man/man3/wcscpy.3
 ./usr/share/man/man3/wcscspn.3
+./usr/share/man/man3/wcsdup.3
 ./usr/share/man/man3/wcslcat.3
 ./usr/share/man/man3/wcslcpy.3
 ./usr/share/man/man3/wcslen.3
