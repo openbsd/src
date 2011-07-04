@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.52 2011/07/04 06:44:52 otto Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.53 2011/07/04 22:59:43 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -65,7 +65,6 @@ pid_t pid = -1;
 #include <sys/syscall.h>
 
 #include <compat/linux/linux_syscall.h>
-#include <compat/svr4/svr4_syscall.h>
 
 #define KTRACE
 #define PTRACE
@@ -78,7 +77,6 @@ pid_t pid = -1;
 #include <kern/syscalls.c>
 
 #include <compat/linux/linux_syscalls.c>
-#include <compat/svr4/svr4_syscalls.c>
 #undef KTRACE
 #undef PTRACE
 #undef NFSCLIENT
@@ -97,7 +95,6 @@ struct emulation {
 static struct emulation emulations[] = {
 	{ "native",	syscallnames,		SYS_MAXSYSCALL },
 	{ "linux",	linux_syscallnames,	LINUX_SYS_MAXSYSCALL },
-	{ "svr4",	svr4_syscallnames,	SVR4_SYS_MAXSYSCALL },
 	{ NULL,		NULL,			0 }
 };
 

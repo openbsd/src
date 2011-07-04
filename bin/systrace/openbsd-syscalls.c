@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.39 2011/04/05 15:22:51 guenther Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.40 2011/07/04 22:59:42 tedu Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -34,7 +34,6 @@
 #include <sys/syscall.h>
 
 #include <compat/linux/linux_syscall.h>
-#include <compat/svr4/svr4_syscall.h>
 
 #define KTRACE
 #define PTRACE
@@ -47,7 +46,6 @@
 #include <kern/syscalls.c>
 
 #include <compat/linux/linux_syscalls.c>
-#include <compat/svr4/svr4_syscalls.c>
 #undef KTRACE
 #undef PTRACE
 #undef NFSCLIENT
@@ -81,7 +79,6 @@ static struct emulation emulations[] = {
 	{ "native",	syscallnames,		SYS_MAXSYSCALL },
 	{ "aout",	syscallnames,		SYS_MAXSYSCALL },
 	{ "linux",	linux_syscallnames,	LINUX_SYS_MAXSYSCALL },
-	{ "svr4",	svr4_syscallnames,	SVR4_SYS_MAXSYSCALL },
 	{ NULL,		NULL,			0 }
 };
 

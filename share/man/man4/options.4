@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.217 2011/07/03 22:40:06 tedu Exp $
+.\"	$OpenBSD: options.4,v 1.218 2011/07/04 22:59:43 tedu Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: July 3 2011 $
+.Dd $Mdocdate: July 4 2011 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -99,16 +99,6 @@ applications built for the same architecture.
 This option is supported on the i386 architecture.
 See
 .Xr compat_linux 8 .
-.It Cd option COMPAT_SVR4
-On those architectures that support it, this enables binary
-compatibility with
-.At V.4
-binaries built for the same architecture.
-This currently includes the sparc and i386.
-Possibly the most widely known operating system
-based on this binary architecture is Sun's Solaris 2.x.
-See
-.Xr compat_svr4 8 .
 .El
 .Sh DEBUGGING OPTIONS
 .Bl -ohang
