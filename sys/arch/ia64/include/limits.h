@@ -1,5 +1,4 @@
-/* $OpenBSD: limits.h,v 1.2 2011/07/04 23:38:28 pirofti Exp $ */
-/*	$NetBSD: limits.h,v 1.5 2010/06/07 13:52:31 tnozaki Exp $	*/
+/*	$OpenBSD: limits.h,v 1.3 2011/07/04 23:41:10 pirofti Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,25 +34,22 @@
 #ifndef	_MACHINE_LIMITS_H_
 #define	_MACHINE_LIMITS_H_
 
-#define	CHAR_BIT	8		/* number of bits in a char */
+#include <sys/cdefs.h>
 
-#define	SCHAR_MIN	(-0x7f-1)	/* max value for a signed char */
-#define	SCHAR_MAX	0x7f		/* min value for a signed char */
+#if __POSIX_VISIBLE || __XPG_VISIBLE
+#ifndef	SIZE_MAX
+#define SIZE_MAX	ULONG_MAX	/* max value for a size_t */
+#endif
+#define SSIZE_MAX	LONG_MAX	/* max value for a ssize_t */
+#endif
 
-#define	UCHAR_MAX	0xff		/* max value for an unsigned char */
-#define	CHAR_MAX	0x7f		/* max value for a char */
-#define	CHAR_MIN	(-0x7f-1)	/* min value for a char */
+#if __BSD_VISIBLE
+#define	SIZE_T_MAX	ULONG_MAX	/* max value for a size_t (historic) */
 
-#define	USHRT_MAX	0xffff		/* max value for an unsigned short */
-#define	SHRT_MAX	0x7fff		/* max value for a short */
-#define	SHRT_MIN	(-0x7fff-1)	/* min value for a short */
+#define	UQUAD_MAX	0xffffffffffffffffULL		/* max unsigned quad */
+#define	QUAD_MAX	0x7fffffffffffffffLL		/* max signed quad */
+#define	QUAD_MIN	(-0x7fffffffffffffffLL-1)	/* min signed quad */
 
-#define	UINT_MAX	0xffffffffU	/* max value for an unsigned int */
-#define	INT_MAX		0x7fffffff	/* max value for an int */
-#define	INT_MIN	        (-0x7fffffff-1)	/* min value for an int */
-
-#define	ULONG_MAX	0xffffffffffffffffUL	/* max value for an unsigned long */
-#define	LONG_MAX	0x7fffffffffffffffL	/* max value for a long */
-#define	LONG_MIN	(-0x7fffffffffffffffL-1)	/* min value for a long */
+#endif /* __BSD_VISIBLE */
 
 #endif /* _MACHINE_LIMITS_H_ */
