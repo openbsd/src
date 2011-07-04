@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.74 2011/07/03 18:34:14 oga Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.75 2011/07/04 00:15:47 oga Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -335,6 +335,7 @@ uvn_detach(struct uvm_object *uobj)
 
 	simple_lock(&uobj->vmobjlock);
 
+	uobj->uo_refs--;			/* drop ref! */
 	if (uobj->uo_refs) {			/* still more refs */
 		simple_unlock(&uobj->vmobjlock);
 		return;
