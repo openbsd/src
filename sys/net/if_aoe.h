@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aoe.h,v 1.2 2010/08/21 06:50:42 blambert Exp $ */
+/* $OpenBSD: if_aoe.h,v 1.3 2011/07/04 03:18:01 tedu Exp $ */
 /*
  * Copyright (c) 2007 Ted Unangst <tedu@openbsd.org>
  *
@@ -104,7 +104,6 @@ struct aoe_handler {
 	unsigned char minor;
 	struct ifnet *ifp;
 	workq_fn fn;
-	struct workq_task task;
 	TAILQ_HEAD(, aoe_req) reqs;
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aoe.c,v 1.2 2010/08/21 06:50:42 blambert Exp $ */
+/* $OpenBSD: if_aoe.c,v 1.3 2011/07/04 03:18:01 tedu Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  *
@@ -54,5 +54,6 @@ aoe_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
-	workq_queue_task(NULL, &q->task, 0, q->fn, q, m);
+	if (workq_add_task(NULL, 0, q->fn, q, m) != 0)
+		m_freem(m);
 }
