@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.235 2011/07/03 15:41:32 matthew Exp $ */
+/* $OpenBSD: softraid.c,v 1.236 2011/07/04 22:55:11 matthew Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1929,8 +1929,8 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 	struct sr_discipline	*sd;
 	struct sr_ccb		*ccb;
 
-	DNPRINTF(SR_D_CMD, "%s: sr_scsi_cmd: scsibus%d xs: %p "
-	    "flags: %#x\n", DEVNAME(sc), link->scsibus, xs, xs->flags);
+	DNPRINTF(SR_D_CMD, "%s: sr_scsi_cmd: target %d xs: %p "
+	    "flags: %#x\n", DEVNAME(sc), link->target, xs, xs->flags);
 
 	sd = sc->sc_dis[link->target];
 	if (sd == NULL) {
@@ -3086,8 +3086,8 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 
 		link = scsi_get_link(sc->sc_scsibus, target, 0);
 		dev = link->device_softc;
-		DNPRINTF(SR_D_IOCTL, "%s: sr device added: %s on scsibus%d\n",
-		    DEVNAME(sc), dev->dv_xname, sd->sd_link.scsibus);
+		DNPRINTF(SR_D_IOCTL, "%s: sr device added: %s at target %d\n",
+		    DEVNAME(sc), dev->dv_xname, sd->sd_target);
 
 		for (i = 0, vol = -1; i <= sd->sd_target; i++)
 			if (sc->sc_dis[i])
@@ -3601,7 +3601,7 @@ sr_raid_start_stop(struct sr_workunit *wu)
 	struct scsi_start_stop	*ss = (struct scsi_start_stop *)xs->cmd;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_raid_start_stop\n",
-	    DEVNAME(sd->sd_sc));
+	    DEVNAME(wu->swu_dis->sd_sc));
 
 	if (!ss)
 		return (1);
