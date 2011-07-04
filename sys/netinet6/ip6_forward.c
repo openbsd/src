@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.52 2011/03/24 20:09:45 bluhm Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.53 2011/07/04 06:54:49 claudio Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -351,7 +351,7 @@ reroute:
 #if NPF > 0
 		if ((encif = enc_getif(tdb->tdb_rdomain,
 		    tdb->tdb_tap)) == NULL ||
-		    pf_test6(PF_FWD, encif, &m, NULL) != PF_PASS) {
+		    pf_test(AF_INET6, PF_FWD, encif, &m, NULL) != PF_PASS) {
 			splx(s);
 			error = EHOSTUNREACH;
 			m_freem(m);
@@ -464,7 +464,7 @@ reroute:
 		ip6->ip6_dst.s6_addr16[1] = 0;
 
 #if NPF > 0 
-	if (pf_test6(PF_FWD, rt->rt_ifp, &m, NULL) != PF_PASS) {
+	if (pf_test(AF_INET6, PF_FWD, rt->rt_ifp, &m, NULL) != PF_PASS) {
 		m_freem(m);
 		goto senderr;
 	}
@@ -484,7 +484,7 @@ reroute:
 	}
 #endif 
 
-	/* Check the size after pf_test6 to give pf a chance to refragment. */
+	/* Check the size after pf_test to give pf a chance to refragment. */
 	if (m->m_pkthdr.len > IN6_LINKMTU(rt->rt_ifp)) {
 		in6_ifstat_inc(rt->rt_ifp, ifs6_in_toobig);
 		if (mcopy) {

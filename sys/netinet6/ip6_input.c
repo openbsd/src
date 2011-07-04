@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.99 2011/04/03 13:56:05 stsp Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.100 2011/07/04 06:54:49 claudio Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -332,7 +332,7 @@ ip6_input(struct mbuf *m)
          * Packet filter
          */
 	odst = ip6->ip6_dst;
-	if (pf_test6(PF_IN, m->m_pkthdr.rcvif, &m, NULL) != PF_PASS)
+	if (pf_test(AF_INET6, PF_IN, m->m_pkthdr.rcvif, &m, NULL) != PF_PASS)
 		goto bad;
 	if (m == NULL)
 		return;
@@ -729,7 +729,7 @@ ip6_input(struct mbuf *m)
 	m_freem(m);
 }
 
-/* scan packet for RH0 routing header. Mostly stolen from pf.c:pf_test6() */
+/* scan packet for RH0 routing header. Mostly stolen from pf.c:pf_test() */
 int
 ip6_check_rh0hdr(struct mbuf *m)
 {

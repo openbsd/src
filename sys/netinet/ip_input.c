@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.192 2011/06/15 09:11:01 mikeb Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.193 2011/07/04 06:54:49 claudio Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -367,7 +367,7 @@ ipv4_input(m)
 	 * Packet filter
 	 */
 	pfrdr = ip->ip_dst.s_addr;
-	if (pf_test(PF_IN, m->m_pkthdr.rcvif, &m, NULL) != PF_PASS)
+	if (pf_test(AF_INET, PF_IN, m->m_pkthdr.rcvif, &m, NULL) != PF_PASS)
 		goto bad;
 	if (m == NULL)
 		return;

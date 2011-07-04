@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.335 2011/07/03 23:37:55 zinke Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.336 2011/07/04 06:54:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1451,10 +1451,7 @@ struct pf_tagname {
 };
 
 struct pf_divert {
-	union {
-		struct in_addr	ipv4;
-		struct in6_addr	ipv6;
-	}		addr;
+	struct pf_addr	addr;
 	u_int16_t	port;
 	u_int16_t	rdomain;
 };
@@ -1762,12 +1759,10 @@ int				 pf_setup_pdesc(sa_family_t, int,
 				    struct pf_rule **, struct pf_rule **,
 				    struct pf_ruleset **, int *, int *);
 
-#ifdef INET
-int	pf_test(int, struct ifnet *, struct mbuf **, struct ether_header *);
-#endif /* INET */
+int	pf_test(sa_family_t, int, struct ifnet *, struct mbuf **,
+	    struct ether_header *);
 
 #ifdef INET6
-int	pf_test6(int, struct ifnet *, struct mbuf **, struct ether_header *);
 void	pf_poolmask(struct pf_addr *, struct pf_addr*,
 	    struct pf_addr *, struct pf_addr *, u_int8_t);
 void	pf_addr_inc(struct pf_addr *, sa_family_t);

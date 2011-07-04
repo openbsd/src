@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.121 2011/05/29 13:22:53 claudio Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.122 2011/07/04 06:54:49 claudio Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -1025,10 +1025,10 @@ in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
 #if NPF > 0
 	if (m && m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
 		struct pf_divert *divert;
-		/* XXX rdomain */
+
 		if ((divert = pf_find_divert(m)) == NULL)
 			return (NULL);
-		key1 = key2 = &divert->addr.ipv4;
+		key1 = key2 = &divert->addr.v4;
 		lport = divert->port;
 	} else
 #endif
@@ -1100,7 +1100,7 @@ in6_pcblookup_listen(struct inpcbtable *table, struct in6_addr *laddr,
 
 		if ((divert = pf_find_divert(m)) == NULL)
 			return (NULL);
-		key1 = key2 = &divert->addr.ipv6;
+		key1 = key2 = &divert->addr.v6;
 		lport = divert->port;
 	} else
 #endif

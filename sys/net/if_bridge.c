@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.192 2011/05/16 20:06:28 henning Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.193 2011/07/04 06:54:49 claudio Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2449,29 +2449,12 @@ bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
 			 * bridge will do that for us.
 			 */
 #if NPF > 0
-			switch (af) {
-#ifdef INET
-			case AF_INET:
-				if ((encif = enc_getif(tdb->tdb_rdomain,
-				    tdb->tdb_tap)) == NULL ||
-				    pf_test(dir, encif,
-				    &m, NULL) != PF_PASS) {
-					m_freem(m);
-					return (1);
-				}
-				break;
-#endif /* INET */
-#ifdef INET6
-			case AF_INET6:
-				if ((encif = enc_getif(tdb->tdb_rdomain,
-				    tdb->tdb_tap)) == NULL ||
-				    pf_test6(dir, encif,
-				    &m, NULL) != PF_PASS) {
-					m_freem(m);
-					return (1);
-				}
-				break;
-#endif /* INET6 */
+			if ((encif = enc_getif(tdb->tdb_rdomain,
+			    tdb->tdb_tap)) == NULL ||
+			    pf_test(af, dir, encif,
+			    &m, NULL) != PF_PASS) {
+				m_freem(m);
+				return (1);
 			}
 			if (m == NULL)
 				return (1);
@@ -2616,7 +2599,7 @@ bridge_ip(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 #endif /* IPSEC */
 #if NPF > 0
 		/* Finally, we get to filter the packet! */
-		if (pf_test(dir, ifp, &m, eh) != PF_PASS)
+		if (pf_test(AF_INET, dir, ifp, &m, eh) != PF_PASS)
 			goto dropit;
 		if (m == NULL)
 			goto dropit;
@@ -2667,7 +2650,7 @@ bridge_ip(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 #endif /* IPSEC */
 
 #if NPF > 0
-		if (pf_test6(dir, ifp, &m, eh) != PF_PASS)
+		if (pf_test(AF_INET6, dir, ifp, &m, eh) != PF_PASS)
 			goto dropit;
 		if (m == NULL)
 			return (NULL);
