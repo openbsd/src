@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.88 2010/12/06 20:10:18 jasper Exp $
+#	$OpenBSD: files.sparc,v 1.89 2011/07/04 22:53:53 tedu Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -309,10 +309,6 @@ file	arch/sparc/sparc/db_disasm.c	ddb
 #
 # Compatibility modules
 #
-
-# SVR4 Binary Compatibility (COMPAT_SVR4)
-include	"compat/svr4/files.svr4"
-file	arch/sparc/sparc/svr4_machdep.c	compat_svr4
 
 # Magma Serial/Parallel boards
 device	magma {}

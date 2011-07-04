@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.83 2011/06/06 17:10:23 ariane Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.84 2011/07/04 22:53:53 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -96,10 +96,6 @@
 #include <compat/linux/linux_exec.h>
 #endif
 
-#ifdef COMPAT_SVR4
-#include <compat/svr4/svr4_exec.h>
-#endif
-
 struct ELFNAME(probe_entry) {
 	int (*func)(struct proc *, struct exec_package *, char *,
 	    u_long *, u_int8_t *);
@@ -107,9 +103,6 @@ struct ELFNAME(probe_entry) {
 	/* XXX - bogus, shouldn't be size independent.. */
 #ifdef COMPAT_LINUX
 	{ linux_elf_probe },
-#endif
-#ifdef COMPAT_SVR4
-	{ svr4_elf_probe },
 #endif
 	{ NULL }
 };

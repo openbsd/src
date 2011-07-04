@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.68 2011/06/06 13:19:29 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.69 2011/07/04 22:53:53 tedu Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -80,12 +80,6 @@
 #include <machine/db_machdep.h>
 #else
 #include <machine/frame.h>
-#endif
-#ifdef COMPAT_SVR4
-#include <machine/svr4_machdep.h>
-#endif
-#ifdef COMPAT_SVR4_32
-#include <machine/svr4_32_machdep.h>
 #endif
 
 #include <sparc64/fpu/fpu_extern.h>
@@ -472,32 +466,10 @@ dopanic:
 			    pc, (long)tf->tf_npc, pstate, PSTATE_BITS);
 			/* NOTREACHED */
 		}
-#if defined(COMPAT_SVR4) || defined(COMPAT_SVR4_32)
-badtrap:
-#endif
 		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGILL, type, ILL_ILLOPC, sv);
 		KERNEL_PROC_UNLOCK(p);
 		break;
-
-#if defined(COMPAT_SVR4) || defined(COMPAT_SVR4_32)
-	case T_SVR4_GETCC:
-	case T_SVR4_SETCC:
-	case T_SVR4_GETPSR:
-	case T_SVR4_SETPSR:
-	case T_SVR4_GETHRTIME:
-	case T_SVR4_GETHRVTIME:
-	case T_SVR4_GETHRESTIME:
-#if defined(COMPAT_SVR4_32)
-		if (svr4_32_trap(type, p))
-			break;
-#endif
-#if defined(COMPAT_SVR4)
-		if (svr4_trap(type, p))
-			break;
-#endif
-		goto badtrap;
-#endif
 
 	case T_AST:
 		p->p_md.md_astpending = 0;

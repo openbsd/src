@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.137 2011/06/26 23:19:11 tedu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.138 2011/07/04 22:53:53 tedu Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -242,11 +242,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tun_init(NTUN,tun),	/* 40: network tunnel */
 	cdev_disk_init(NVND,vnd),	/* 41: vnode disk driver */
 	cdev_audio_init(NAUDIO,audio),	/* 42: generic audio I/O */
-#ifdef COMPAT_SVR4
-	cdev_svr4_net_init(1,svr4_net),	/* 43: svr4 net pseudo-device */
-#else
 	cdev_notdef(),			/* 43 */
-#endif
 	cdev_video_init(NVIDEO,video),	/* 44: generic video I/O */
 	cdev_random_init(1,random),	/* 45: random data source */
 	cdev_ocis_init(NPCTR,pctr),	/* 46: pentium performance counters */

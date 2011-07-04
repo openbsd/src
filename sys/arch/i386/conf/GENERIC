@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.722 2011/07/03 21:40:24 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.723 2011/07/04 22:53:53 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -23,7 +23,6 @@ option		APERTURE	# in-kernel aperture driver for XFree86
 #option		KGDB		# Remote debugger support; exclusive of DDB
 #option		"KGDB_DEVNAME=\"com\"",KGDBADDR=0x2f8,KGDBRATE=9600
 
-option		COMPAT_SVR4	# binary compatibility with SVR4
 option		COMPAT_LINUX	# binary compatibility with Linux
 option		COMPAT_AOUT	# a.out binaries are emulated
 

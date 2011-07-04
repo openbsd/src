@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.204 2011/06/26 23:19:10 tedu Exp $
+#	$OpenBSD: files.i386,v 1.205 2011/07/04 22:53:53 tedu Exp $
 #
 # new style config file for i386 architecture
 #
@@ -270,10 +270,6 @@ file	arch/i386/i386/kvm86call.S		kvm86
 
 # a.out binary compatibility (COMPAT_AOUT)
 include "compat/aout/files.aout"
-
-# SVR4 binary compatibility (COMPAT_SVR4)
-include "compat/svr4/files.svr4"
-file	arch/i386/i386/svr4_machdep.c		compat_svr4
 
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"

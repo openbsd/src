@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.135 2011/05/10 11:11:56 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.136 2011/07/04 22:53:53 tedu Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -47,9 +47,6 @@
 
 #include <sys/errno.h>
 #include <sys/syscall.h>
-#ifdef COMPAT_SVR4
-#include <compat/svr4/svr4_syscall.h>
-#endif
 #ifdef COMPAT_LINUX
 #include <compat/linux/linux_syscall.h>
 #endif
@@ -645,22 +642,6 @@ NENTRY(sigcode)
 _C_LABEL(esigcode):
 
 /*****************************************************************************/
-
-#ifdef COMPAT_SVR4
-NENTRY(svr4_sigcode)
-	call	*SVR4_SIGF_HANDLER(%esp)
-	leal	SVR4_SIGF_UC(%esp),%eax	# ucp (the call may have clobbered the
-					# copy at SIGF_UCP(%esp))
-	pushl	%eax
-	pushl	$1			# setcontext(p) == syscontext(1, p)
-	pushl	%eax			# junk to fake return address
-	movl	$SVR4_SYS_context,%eax
-	int	$0x80			# enter kernel with args on stack
-	movl	$SVR4_SYS_exit,%eax
-	int	$0x80			# exit if sigreturn fails
-	.globl	_C_LABEL(svr4_esigcode)
-_C_LABEL(svr4_esigcode):
-#endif
 
 /*****************************************************************************/
 

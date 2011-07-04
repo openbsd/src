@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4,v 1.40 2011/06/29 20:52:09 matthew Exp $
+#	$OpenBSD: SUN4,v 1.41 2011/07/04 22:53:53 tedu Exp $
 #	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -11,7 +11,6 @@ option		SUN4		# sun4/100, sun4/200, sun4/300
 #option		MMU_3L		# 3-level MMU on sun4/400
 
 # Options for SPARCstation hardware
-option		COMPAT_SVR4	# compatibility with SVR4 binaries
 option		PROCFS		# /proc
 
 option		WSEMUL_SUN	# provide sun terminal emulation; required

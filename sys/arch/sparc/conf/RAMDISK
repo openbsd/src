@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.72 2011/06/29 20:52:09 matthew Exp $
+#	$OpenBSD: RAMDISK,v 1.73 2011/07/04 22:53:53 tedu Exp $
 #	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -38,8 +38,6 @@ option		SUN4M		# sun4m - SS10, SS20, Classic, etc.
 #option		KGDB		# support for kernel gdb
 #option		KGDBDEV=0xc01	# kgdb device number (dev_t)
 #option		KGDBRATE=38400	# baud rate
-
-#option		COMPAT_SVR4	# compatibility with SVR4 binaries
 
 option		WSEMUL_SUN	# provide sun terminal emulation; required
 option		WSEMUL_NO_VT100	# do not provide vt100 terminal emulation

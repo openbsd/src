@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.49 2011/07/04 00:33:36 mikeb Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.50 2011/07/04 22:53:53 tedu Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -114,7 +114,6 @@ struct socket {
 #define	SB_KNOTE	0x80		/* kernel note attached */
 #define	SB_SPLICE	0x0100		/* buffer is splice source or drain */
 
-	void	*so_internal;		/* Space for svr4 stream data */
 	void	(*so_upcall)(struct socket *so, caddr_t arg, int waitf);
 	caddr_t	so_upcallarg;		/* Arg for above */
 	uid_t	so_euid, so_ruid;	/* who opened the socket */
