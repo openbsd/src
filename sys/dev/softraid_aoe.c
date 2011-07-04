@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.19 2011/07/04 03:22:07 tedu Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.20 2011/07/04 03:24:51 tedu Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -159,8 +159,8 @@ sr_aoe_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
 void
 sr_aoe_setup(struct aoe_handler *ah, struct mbuf *m)
 {
-	struct aoe_packet *ap;
-	int s;
+	struct aoe_packet	*ap;
+	int			s;
 
 	ap = mtod(m, struct aoe_packet *);
 	if (ap->command != 1)
@@ -179,11 +179,11 @@ out:
 int
 sr_aoe_alloc_resources(struct sr_discipline *sd)
 {
-	struct ifnet *ifp;
-	struct aoe_handler *ah;
-	unsigned char slot;
-	unsigned short shelf;
-	const char *nic;
+	struct ifnet		*ifp;
+	struct aoe_handler	*ah;
+	unsigned char		slot;
+	unsigned short		shelf;
+	const char		*nic;
 #if 0
 	struct mbuf *m;
 	struct ether_header *eh;
@@ -487,12 +487,12 @@ sr_aoe_input(struct aoe_handler *ah, struct mbuf *m)
 {
 	struct sr_discipline	*sd;
 	struct scsi_xfer	*xs;
-	struct aoe_req *ar;
-	struct aoe_packet *ap;
-	struct sr_workunit *wu;
-	daddr64_t blk, offset;
-	int len, s;
-	int tag;
+	struct aoe_req		*ar;
+	struct aoe_packet	*ap;
+	struct sr_workunit	*wu;
+	daddr64_t		blk, offset;
+	int			len, s;
+	int			tag;
 
 	ap = mtod(m, struct aoe_packet *);
 	tag = ap->tag;
@@ -550,13 +550,13 @@ out:
 void
 sr_aoe_timeout(void *v)
 {
-	struct aoe_req *ar = v;
+	struct aoe_req		*ar = v;
 	struct sr_discipline	*sd;
 	struct scsi_xfer	*xs;
-	struct aoe_handler *ah;
-	struct aoe_req *ar2;
-	struct sr_workunit *wu;
-	int s;
+	struct aoe_handler	*ah;
+	struct aoe_req		*ar2;
+	struct sr_workunit	*wu;
+	int			s;
 
 	wu = ar->v;
 	sd = wu->swu_dis;
@@ -720,18 +720,17 @@ sr_aoe_server_create_thread(void *arg)
 void
 sr_aoe_server_thread(void *arg)
 {
-	struct mbuf *m, *m2;
-	struct ether_header *eh;
-	struct aoe_packet *rp, *ap;
-	struct aoe_req *ar;
-	int len;
-	struct buf buf;
-	daddr64_t blk;
-
+	struct sr_discipline	*sd = arg;
 	struct ifnet		*ifp;
 	struct aoe_handler	*ah;
+	struct aoe_req		*ar;
+	struct aoe_packet	*rp, *ap;
+	struct mbuf		*m, *m2;
+	struct ether_header	*eh;
+	struct buf		buf;
+	daddr64_t		blk;
+	int			len;
 	int			rv, s;
-	struct sr_discipline	*sd = arg;
 
 	/* sanity */
 	if (!sd)
