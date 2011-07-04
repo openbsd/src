@@ -249,6 +249,7 @@ wrap_unparse_rcs_options (line, first_call_p)
  * Remove fmt str specifier other than %% or %s. And allow
  * only max_s %s specifiers
  */
+void
 wrap_clean_fmt_str(char *fmt, int max_s)
 {
     while (*fmt) {
@@ -266,7 +267,6 @@ wrap_clean_fmt_str(char *fmt, int max_s)
 	}
 	fmt++;
     }
-    return;
 }
 
 /*
