@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_rrip.c,v 1.9 2007/02/14 00:53:48 jsg Exp $	*/
+/*	$OpenBSD: cd9660_rrip.c,v 1.10 2011/07/04 04:30:41 tedu Exp $	*/
 /*	$NetBSD: cd9660_rrip.c,v 1.17 1997/01/24 00:27:32 cgd Exp $	*/
 
 /*-
@@ -590,7 +590,7 @@ cd9660_rrip_loop(isodir, ana, table)
 			    ana->imp->logical_block_size ||
 			    bread(ana->imp->im_devvp, ana->iso_ce_blk <<
 			    (ana->imp->im_bshift - DEV_BSHIFT),
-			    ana->imp->logical_block_size, NOCRED, &bp))
+			    ana->imp->logical_block_size, &bp))
 				/* what to do now? */
 				break;
 			phead =

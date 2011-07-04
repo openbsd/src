@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.62 2011/04/05 14:14:07 thib Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.63 2011/07/04 04:30:41 tedu Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -240,9 +240,9 @@ spec_read(void *v)
 			if (vp->v_lastr + bscale == bn) {
 				nextbn = bn + bscale;
 				error = breadn(vp, bn, bsize, &nextbn, &bsize,
-				    1, NOCRED, &bp);
+				    1, &bp);
 			} else
-				error = bread(vp, bn, bsize, NOCRED, &bp);
+				error = bread(vp, bn, bsize, &bp);
 			vp->v_lastr = bn;
 			n = min(n, bsize - bp->b_resid);
 			if (error) {
@@ -325,7 +325,7 @@ spec_write(void *v)
 			bn = btodb(uio->uio_offset) & ~(bscale - 1);
 			on = uio->uio_offset % bsize;
 			n = min((bsize - on), uio->uio_resid);
-			error = bread(vp, bn, bsize, NOCRED, &bp);
+			error = bread(vp, bn, bsize, &bp);
 			n = min(n, bsize - bp->b_resid);
 			if (error) {
 				brelse(bp);

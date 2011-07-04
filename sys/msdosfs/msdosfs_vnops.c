@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.77 2011/04/05 14:14:07 thib Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.78 2011/07/04 04:30:41 tedu Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -471,7 +471,7 @@ msdosfs_read(void *v)
 		 * vnode for the directory.
 		 */
 		if (isadir) {
-			error = bread(pmp->pm_devvp, lbn, blsize, NOCRED, &bp);
+			error = bread(pmp->pm_devvp, lbn, blsize, &bp);
 		} else {
 			rablock = lbn + 1;
 			rablkno = de_cn2bn(pmp, rablock);
@@ -479,10 +479,10 @@ msdosfs_read(void *v)
 			    de_cn2off(pmp, rablock) < dep->de_FileSize)
 				error = breadn(vp, de_cn2bn(pmp, lbn),
 				    pmp->pm_bpcluster, &rablkno,
-				    &pmp->pm_bpcluster, 1, NOCRED, &bp);
+				    &pmp->pm_bpcluster, 1, &bp);
 			else
 				error = bread(vp, de_cn2bn(pmp, lbn),
-				    pmp->pm_bpcluster, NOCRED, &bp);
+				    pmp->pm_bpcluster, &bp);
 			dep->de_lastr = lbn;
 		}
 		n = min(n, pmp->pm_bpcluster - bp->b_resid);
@@ -630,8 +630,7 @@ msdosfs_write(void *v)
 			/*
 			 * The block we need to write into exists, so read it in.
 			 */
-			error = bread(thisvp, bn, pmp->pm_bpcluster,
-				      NOCRED, &bp);
+			error = bread(thisvp, bn, pmp->pm_bpcluster, &bp);
 			if (error) {
 				brelse(bp);
 				break;
@@ -1101,8 +1100,7 @@ abortit:
 			panic("msdosfs_rename: updating .. in root directory?");
 		} else
 			bn = cntobn(pmp, cn);
-		error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster,
-			      NOCRED, &bp);
+		error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster, &bp);
 		if (error) {
 			/* XXX should really panic here, fs is corrupt */
 			brelse(bp);
@@ -1479,7 +1477,7 @@ msdosfs_readdir(void *v)
 		n = min(n, diff);
 		if ((error = pcbmap(dep, lbn, &bn, &cn, &blsize)) != 0)
 			break;
-		error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp);
+		error = bread(pmp->pm_devvp, bn, blsize, &bp);
 		if (error) {
 			brelse(bp);
 			return (error);

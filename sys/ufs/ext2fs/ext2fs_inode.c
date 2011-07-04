@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.43 2008/11/23 23:52:35 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.44 2011/07/04 04:30:41 tedu Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -180,7 +180,7 @@ ext2fs_update(struct inode *ip, struct timespec *atime, struct timespec *mtime,
 	fs = ip->i_e2fs;
 	error = bread(ip->i_devvp,
 			  fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
-			  (int)fs->e2fs_bsize, NOCRED, &bp);
+			  (int)fs->e2fs_bsize, &bp);
 	if (error) {
 		brelse(bp);
 		return (error);

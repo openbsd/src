@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.63 2011/06/09 23:31:32 deraadt Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.64 2011/07/04 04:30:41 tedu Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -245,11 +245,11 @@ ffs_read(void *v)
 			xfersize = bytesinfile;
 
 		if (lblktosize(fs, nextlbn) >= DIP(ip, size))
-			error = bread(vp, lbn, size, NOCRED, &bp);
+			error = bread(vp, lbn, size, &bp);
 		else if (lbn - 1 == ip->i_ci.ci_lastr) {
 			error = bread_cluster(vp, lbn, size, &bp);
 		} else
-			error = bread(vp, lbn, size, NOCRED, &bp);
+			error = bread(vp, lbn, size, &bp);
 
 		if (error)
 			break;

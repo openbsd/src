@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.58 2011/04/16 03:21:15 krw Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.59 2011/07/04 04:30:41 tedu Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -283,7 +283,7 @@ iso_mountfs(devvp, mp, p, argp)
 	for (iso_blknum = 16; iso_blknum < 100; iso_blknum++) {
 		if ((error = bread(devvp,
 		    (iso_blknum + sess) * btodb(iso_bsize),
-		    iso_bsize, NOCRED, &bp)) != 0)
+		    iso_bsize, &bp)) != 0)
 			goto out;
 		
 		vdp = (struct iso_volume_descriptor *)bp->b_data;
@@ -386,7 +386,7 @@ iso_mountfs(devvp, mp, p, argp)
 		if ((error = bread(isomp->im_devvp, (isomp->root_extent +
 		    isonum_711(rootp->ext_attr_length)) <<
 		    (isomp->im_bshift - DEV_BSHIFT),
-		    isomp->logical_block_size, NOCRED, &bp)) != 0)
+		    isomp->logical_block_size, &bp)) != 0)
 			goto out;
 		
 		rootp = (struct iso_directory_record *)bp->b_data;
@@ -815,7 +815,7 @@ retry:
 	
 		error = bread(imp->im_devvp,
 			      lbn << (imp->im_bshift - DEV_BSHIFT),
-			      imp->logical_block_size, NOCRED, &bp);
+			      imp->logical_block_size, &bp);
 		if (error) {
 			vput(vp);
 			brelse(bp);

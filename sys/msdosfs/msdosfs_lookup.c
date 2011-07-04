@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.23 2010/01/17 20:23:58 chl Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.24 2011/07/04 04:30:41 tedu Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.34 1997/10/18 22:12:27 ws Exp $	*/
 
 /*-
@@ -231,7 +231,7 @@ msdosfs_lookup(void *v)
 				break;
 			return (error);
 		}
-		error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp);
+		error = bread(pmp->pm_devvp, bn, blsize, &bp);
 		if (error) {
 			brelse(bp);
 			return (error);
@@ -643,7 +643,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp,
 	diroffset = ddep->de_fndoffset;
 	if (dirclust != MSDOSFSROOT)
 		diroffset &= pmp->pm_crbomask;
-	if ((error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp)) != 0) {
+	if ((error = bread(pmp->pm_devvp, bn, blsize, &bp)) != 0) {
 		brelse(bp);
 		return error;
 	}
@@ -673,8 +673,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp,
 				if (error)
 					return error;
 
-				error = bread(pmp->pm_devvp, bn, blsize,
-					      NOCRED, &bp);
+				error = bread(pmp->pm_devvp, bn, blsize, &bp);
 				if (error) {
 					brelse(bp);
 					return error;
@@ -737,7 +736,7 @@ dosdirempty(struct denode *dep)
 				return (1);	/* it's empty */
 			return (0);
 		}
-		error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp);
+		error = bread(pmp->pm_devvp, bn, blsize, &bp);
 		if (error) {
 			brelse(bp);
 			return (0);
@@ -828,7 +827,7 @@ doscheckpath(struct denode *source, struct denode *target)
 		}
 		scn = dep->de_StartCluster;
 		error = bread(pmp->pm_devvp, cntobn(pmp, scn),
-			      pmp->pm_bpcluster, NOCRED, &bp);
+			      pmp->pm_bpcluster, &bp);
 		if (error)
 			break;
 
@@ -891,7 +890,7 @@ readep(struct msdosfsmount *pmp, uint32_t dirclust, uint32_t diroffset,
 	    && de_blk(pmp, diroffset + blsize) > pmp->pm_rootdirsize)
 		blsize = de_bn2off(pmp, pmp->pm_rootdirsize) & pmp->pm_crbomask;
 	bn = detobn(pmp, dirclust, diroffset);
-	if ((error = bread(pmp->pm_devvp, bn, blsize, NOCRED, bpp)) != 0) {
+	if ((error = bread(pmp->pm_devvp, bn, blsize, bpp)) != 0) {
 		brelse(*bpp);
 		*bpp = NULL;
 		return (error);
@@ -948,7 +947,7 @@ removede(struct denode *pdep, struct denode *dep)
 		error = pcbmap(pdep, de_cluster(pmp, offset), &bn, 0, &blsize);
 		if (error)
 			return error;
-		error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp);
+		error = bread(pmp->pm_devvp, bn, blsize, &bp);
 		if (error) {
 			brelse(bp);
 			return error;
@@ -1018,7 +1017,7 @@ uniqdosname(struct denode *dep, struct componentname *cnp, u_char *cp)
 					return 0;
 				return error;
 			}
-			error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp);
+			error = bread(pmp->pm_devvp, bn, blsize, &bp);
 			if (error) {
 				brelse(bp);
 				return error;
@@ -1070,7 +1069,7 @@ findwin95(struct denode *dep)
 	for (cn = 0;; cn++) {
 		if (pcbmap(dep, cn, &bn, 0, &blsize))
 			return 0;
-		if (bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp)) {
+		if (bread(pmp->pm_devvp, bn, blsize, &bp)) {
 			brelse(bp);
 			return 0;
 		}

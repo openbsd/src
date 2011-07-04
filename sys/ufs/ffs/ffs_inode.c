@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.57 2011/04/12 19:45:43 beck Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.58 2011/07/04 04:30:41 tedu Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ ffs_update(struct inode *ip, struct timespec *atime,
 	}
 
 	error = bread(ip->i_devvp, fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
-		(int)fs->fs_bsize, NOCRED, &bp);
+	    (int)fs->fs_bsize, &bp);
 	if (error) {
 		brelse(bp);
 		return (error);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_alloc.c,v 1.25 2008/01/05 19:49:26 otto Exp $	*/
+/*	$OpenBSD: ext2fs_alloc.c,v 1.26 2011/07/04 04:30:41 tedu Exp $	*/
 /*	$NetBSD: ext2fs_alloc.c,v 1.10 2001/07/05 08:38:27 toshii Exp $	*/
 
 /*
@@ -324,7 +324,7 @@ ext2fs_alloccg(struct inode *ip, int cg, int32_t bpref, int size)
 		return (0);
 	error = bread(ip->i_devvp, fsbtodb(fs,
 		fs->e2fs_gd[cg].ext2bgd_b_bitmap),
-		(int)fs->e2fs_bsize, NOCRED, &bp);
+		(int)fs->e2fs_bsize, &bp);
 	if (error || fs->e2fs_gd[cg].ext2bgd_nbfree == 0) {
 		brelse(bp);
 		return (0);
@@ -409,7 +409,7 @@ ext2fs_nodealloccg(struct inode *ip, int cg, int32_t ipref, int mode)
 		return (0);
 	error = bread(ip->i_devvp, fsbtodb(fs,
 		fs->e2fs_gd[cg].ext2bgd_i_bitmap),
-		(int)fs->e2fs_bsize, NOCRED, &bp);
+		(int)fs->e2fs_bsize, &bp);
 	if (error) {
 		brelse(bp);
 		return (0);
@@ -480,7 +480,7 @@ ext2fs_blkfree(struct inode *ip, int32_t bno)
 	}
 	error = bread(ip->i_devvp,
 		fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_b_bitmap),
-		(int)fs->e2fs_bsize, NOCRED, &bp);
+		(int)fs->e2fs_bsize, &bp);
 	if (error) {
 		brelse(bp);
 		return;
@@ -520,7 +520,7 @@ ext2fs_inode_free(struct inode *pip, ino_t ino, mode_t mode)
 	cg = ino_to_cg(fs, ino);
 	error = bread(pip->i_devvp, 
 	        fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_i_bitmap),
-		(int)fs->e2fs_bsize, NOCRED, &bp);
+		(int)fs->e2fs_bsize, &bp);
 	if (error) {
 		brelse(bp);
 		return (0);

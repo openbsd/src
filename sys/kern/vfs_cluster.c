@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.37 2007/05/26 20:26:51 pedro Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.38 2011/07/04 04:30:41 tedu Exp $	*/
 /*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
 /*
@@ -235,7 +235,7 @@ cluster_collectbufs(struct vnode *vp, struct cluster_info *ci,
 	buflist->bs_nchildren = 0;
 	buflist->bs_children = (struct buf **)(buflist + 1);
 	for (lbn = ci->ci_cstart, i = 0; i < len; lbn++, i++)
-		(void)bread(vp, lbn, last_bp->b_bcount, NOCRED,
+		(void)bread(vp, lbn, last_bp->b_bcount,
 		    &buflist->bs_children[i]);
 	buflist->bs_children[i] = last_bp;
 	buflist->bs_nchildren = i + 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_subr.c,v 1.25 2011/07/03 18:23:10 tedu Exp $	*/
+/*	$OpenBSD: ffs_subr.c,v 1.26 2011/07/04 04:30:41 tedu Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.6 1996/03/17 02:16:23 christos Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ ffs_bufatoff(struct inode *ip, off_t offset, char **res, struct buf **bpp)
 	bsize = blksize(fs, ip, lbn);
 
 	*bpp = NULL;
-	if ((error = bread(vp, lbn, fs->fs_bsize, NOCRED, &bp)) != 0) {
+	if ((error = bread(vp, lbn, fs->fs_bsize, &bp)) != 0) {
 		brelse(bp);
 		return (error);
 	}

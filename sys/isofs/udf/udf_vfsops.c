@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.36 2010/12/21 20:14:43 thib Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.37 2011/07/04 04:30:41 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -270,8 +270,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, uint32_t lb, struct proc *p)
 	 * Should also check sector n - 256, n, and 512.
 	 */
 	sector = 256;
-	if ((error = bread(devvp, sector * btodb(bsize), bsize, NOCRED,
-			   &bp)) != 0)
+	if ((error = bread(devvp, sector * btodb(bsize), bsize, &bp)) != 0)
 		goto bail;
 	if ((error = udf_checktag((struct desc_tag *)bp->b_data, TAGID_ANCHOR)))
 		goto bail;
@@ -290,7 +289,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, uint32_t lb, struct proc *p)
 	mvds_end = mvds_start + (letoh32(avdp.main_vds_ex.len) - 1) / bsize;
 	for (sector = mvds_start; sector < mvds_end; sector++) {
 		if ((error = bread(devvp, sector * btodb(bsize), bsize, 
-				   NOCRED, &bp)) != 0) {
+				   &bp)) != 0) {
 			printf("Can't read sector %d of VDS\n", sector);
 			goto bail;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.131 2011/07/03 18:23:10 tedu Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.132 2011/07/04 04:30:41 tedu Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -501,7 +501,7 @@ ffs_reload_vnode(struct vnode *vp, void *args)
 
 	error = bread(fra->devvp, 
 	    fsbtodb(fra->fs, ino_to_fsba(fra->fs, ip->i_number)),
-	    (int)fra->fs->fs_bsize, NOCRED, &bp);
+	    (int)fra->fs->fs_bsize, &bp);
 	if (error) {
 		brelse(bp);
 		vput(vp);
@@ -557,8 +557,7 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	 */
 	fs = VFSTOUFS(mountp)->um_fs;
 
-	error = bread(devvp, (daddr64_t)(fs->fs_sblockloc / DEV_BSIZE), SBSIZE,
-	    NOCRED, &bp);
+	error = bread(devvp, fs->fs_sblockloc / DEV_BSIZE, SBSIZE, &bp);
 	if (error) {
 		brelse(bp);
 		return (error);
@@ -595,8 +594,7 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 		size = fs->fs_bsize;
 		if (i + fs->fs_frag > blks)
 			size = (blks - i) * fs->fs_fsize;
-		error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), size,
-			      NOCRED, &bp);
+		error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), size, &bp);
 		if (error) {
 			brelse(bp);
 			return (error);
@@ -714,7 +712,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 			bp = NULL;
 		}
 
-		error = bread(devvp, sbtry[i] / DEV_BSIZE, SBSIZE, cred, &bp);
+		error = bread(devvp, sbtry[i] / DEV_BSIZE, SBSIZE, &bp);
 		if (error)
 			goto out;
 
@@ -817,8 +815,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		size = fs->fs_bsize;
 		if (i + fs->fs_frag > blks)
 			size = (blks - i) * fs->fs_fsize;
-		error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), size,
-			      cred, &bp);
+		error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), size, &bp);
 		if (error) {
 			free(fs->fs_csp, M_UFSMNT);
 			goto out;
@@ -1292,7 +1289,7 @@ retry:
 
 	/* Read in the disk contents for the inode, copy into the inode. */
 	error = bread(ump->um_devvp, fsbtodb(fs, ino_to_fsba(fs, ino)),
-		      (int)fs->fs_bsize, NOCRED, &bp);
+	    (int)fs->fs_bsize, &bp);
 	if (error) {
 		/*
 		 * The inode does not contain anything useful, so it would

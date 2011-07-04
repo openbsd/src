@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.25 2011/04/03 17:17:41 jsing Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.26 2011/07/04 04:30:41 tedu Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -359,7 +359,7 @@ ntfs_mountfs(devvp, mp, argsp, p)
 
 	bp = NULL;
 
-	error = bread(devvp, BBLOCK, BBSIZE, NOCRED, &bp);
+	error = bread(devvp, BBLOCK, BBSIZE, &bp);
 	if (error)
 		goto out;
 	ntmp = malloc(sizeof *ntmp, M_NTFSMNT, M_WAITOK | M_ZERO);

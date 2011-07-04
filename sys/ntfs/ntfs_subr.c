@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.23 2010/09/09 11:31:40 miod Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.24 2011/07/04 04:30:41 tedu Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -292,9 +292,8 @@ ntfs_loadntnode(
 		bn = ntfs_cntobn(ntmp->ntm_mftcn) +
 			ntmp->ntm_bpmftrec * ip->i_number;
 
-		error = bread(ntmp->ntm_devvp,
-			      bn, ntfs_bntob(ntmp->ntm_bpmftrec),
-			      NOCRED, &bp);
+		error = bread(ntmp->ntm_devvp, bn,
+		    ntfs_bntob(ntmp->ntm_bpmftrec), &bp);
 		if (error) {
 			printf("ntfs_loadntnode: BREAD FAILED\n");
 			brelse(bp);
@@ -1509,7 +1508,7 @@ ntfs_writentvattr_plain(
 				clrbuf(bp);
 			} else {
 				error = bread(ntmp->ntm_devvp, ntfs_cntobn(cn),
-					      ntfs_cntob(cl), NOCRED, &bp);
+					      ntfs_cntob(cl), &bp);
 				if (error) {
 					brelse(bp);
 					return (error);
@@ -1618,7 +1617,7 @@ ntfs_readntvattr_plain(
 					error = bread(ntmp->ntm_devvp,
 						      ntfs_cntobn(cn),
 						      ntfs_cntob(cl),
-						      NOCRED, &bp);
+						      &bp);
 					if (error) {
 						brelse(bp);
 						return (error);

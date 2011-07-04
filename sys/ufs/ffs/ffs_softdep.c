@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.105 2011/07/03 18:23:10 tedu Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.106 2011/07/04 04:30:41 tedu Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -1221,7 +1221,7 @@ softdep_mount(struct vnode *devvp, struct mount *mp, struct fs *fs,
 	bzero(&cstotal, sizeof cstotal);
 	for (cyl = 0; cyl < fs->fs_ncg; cyl++) {
 		if ((error = bread(devvp, fsbtodb(fs, cgtod(fs, cyl)),
-		    fs->fs_cgsize, cred, &bp)) != 0) {
+		    fs->fs_cgsize, &bp)) != 0) {
 			brelse(bp);
 			return (error);
 		}
@@ -1920,7 +1920,7 @@ softdep_setup_freeblocks(struct inode *ip, off_t length)
 	 */
 	if ((error = bread(ip->i_devvp,
 	    fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
-	    (int)fs->fs_bsize, NOCRED, &bp)) != 0)
+	    (int)fs->fs_bsize, &bp)) != 0)
 		softdep_error("softdep_setup_freeblocks", error);
 
 	if (ip->i_ump->um_fstype == UM_UFS1)
@@ -2454,7 +2454,7 @@ indir_trunc(struct inode *ip, daddr64_t dbn, int level, daddr64_t lbn,
 		FREE_LOCK(&lk);
 	} else {
 		FREE_LOCK(&lk);
-		error = bread(ip->i_devvp, dbn, (int)fs->fs_bsize, NOCRED, &bp);
+		error = bread(ip->i_devvp, dbn, (int)fs->fs_bsize, &bp);
 		if (error)
 			return (error);
 	}
@@ -4587,7 +4587,7 @@ softdep_fsync(struct vnode *vp)
 		/*
 		 * Flush directory page containing the inode's name.
 		 */
-		error = bread(pvp, lbn, fs->fs_bsize, p->p_ucred, &bp);
+		error = bread(pvp, lbn, fs->fs_bsize, &bp);
 		if (error == 0) {
 			bp->b_bcount = blksize(fs, pip, lbn);
 			error = bwrite(bp);
@@ -5139,7 +5139,7 @@ flush_pagedep_deps(struct vnode *pvp, struct mount *mp,
 		FREE_LOCK(&lk);
 		if ((error = bread(ump->um_devvp,
 		    fsbtodb(ump->um_fs, ino_to_fsba(ump->um_fs, inum)),
-		    (int)ump->um_fs->fs_bsize, NOCRED, &bp)) != 0) {
+		    (int)ump->um_fs->fs_bsize, &bp)) != 0) {
 		    	brelse(bp);
 			break;
 		}

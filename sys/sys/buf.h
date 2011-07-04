@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.77 2011/06/05 19:41:08 deraadt Exp $	*/
+/*	$OpenBSD: buf.h,v 1.78 2011/07/04 04:30:41 tedu Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -268,9 +268,9 @@ void	bawrite(struct buf *);
 void	bdwrite(struct buf *);
 void	biodone(struct buf *);
 int	biowait(struct buf *);
-int bread(struct vnode *, daddr64_t, int, struct ucred *, struct buf **);
+int bread(struct vnode *, daddr64_t, int, struct buf **);
 int breadn(struct vnode *, daddr64_t, int, daddr64_t *, int *, int,
-    struct ucred *, struct buf **);
+    struct buf **);
 void	brelse(struct buf *);
 void	bremfree(struct buf *);
 void	bufinit(void);

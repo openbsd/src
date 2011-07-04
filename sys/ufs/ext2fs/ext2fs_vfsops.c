@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.62 2011/07/04 04:15:26 krw Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.63 2011/07/04 04:30:41 tedu Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -359,7 +359,7 @@ ext2fs_reload_vnode(struct vnode *vp, void *args)
 	ip = VTOI(vp);
 	error = bread(era->devvp, 
 	    fsbtodb(era->fs, ino_to_fsba(era->fs, ip->i_number)),
-	    (int)era->fs->e2fs_bsize, NOCRED, &bp);
+	    (int)era->fs->e2fs_bsize, &bp);
 	if (error) {
 		vput(vp);
 		return (error);
@@ -407,7 +407,7 @@ ext2fs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	/*
 	 * Step 2: re-read superblock from disk.
 	 */
-	error = bread(devvp, (daddr64_t)(SBOFF / DEV_BSIZE), SBSIZE, NOCRED, &bp);
+	error = bread(devvp, (daddr64_t)(SBOFF / DEV_BSIZE), SBSIZE, &bp);
 	if (error) {
 		brelse(bp);
 		return (error);
@@ -445,7 +445,7 @@ ext2fs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	for (i=0; i < fs->e2fs_ngdb; i++) {
 		error = bread(devvp ,
 		    fsbtodb(fs, ((fs->e2fs_bsize>1024)? 0 : 1) + i + 1),
-		    fs->e2fs_bsize, NOCRED, &bp);
+		    fs->e2fs_bsize, &bp);
 		if (error) {
 			brelse(bp);
 			return (error);
@@ -506,7 +506,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 #ifdef DEBUG_EXT2
 	printf("ext2 sb size: %d\n", sizeof(struct ext2fs));
 #endif
-	error = bread(devvp, (daddr64_t)(SBOFF / DEV_BSIZE), SBSIZE, cred, &bp);
+	error = bread(devvp, (daddr64_t)(SBOFF / DEV_BSIZE), SBSIZE, &bp);
 	if (error)
 		goto out;
 	fs = (struct ext2fs *)bp->b_data;
@@ -554,7 +554,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	for (i=0; i < m_fs->e2fs_ngdb; i++) {
 		error = bread(devvp ,
 		    fsbtodb(m_fs, ((m_fs->e2fs_bsize>1024)? 0 : 1) + i + 1),
-		    m_fs->e2fs_bsize, NOCRED, &bp);
+		    m_fs->e2fs_bsize, &bp);
 		if (error) {
 			free(m_fs->e2fs_gd, M_UFSMNT);
 			goto out;
@@ -852,7 +852,7 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 
 	/* Read in the disk contents for the inode, copy into the inode. */
 	error = bread(ump->um_devvp, fsbtodb(fs, ino_to_fsba(fs, ino)),
-	    (int)fs->e2fs_bsize, NOCRED, &bp);
+	    (int)fs->e2fs_bsize, &bp);
 	if (error) {
 		/*
 		 * The inode does not contain anything useful, so it would

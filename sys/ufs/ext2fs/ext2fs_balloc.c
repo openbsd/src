@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_balloc.c,v 1.17 2009/09/05 17:23:43 jasper Exp $	*/
+/*	$OpenBSD: ext2fs_balloc.c,v 1.18 2011/07/04 04:30:41 tedu Exp $	*/
 /*	$NetBSD: ext2fs_balloc.c,v 1.10 2001/07/04 21:16:01 chs Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ ext2fs_buf_alloc(struct inode *ip, daddr64_t bn, int size, struct ucred *cred,
 	if (bn < NDADDR) {
 		nb = fs2h32(ip->i_e2fs_blocks[bn]);
 		if (nb != 0) {
-			error = bread(vp, bn, fs->e2fs_bsize, NOCRED, &bp);
+			error = bread(vp, bn, fs->e2fs_bsize, &bp);
 			if (error) {
 				brelse(bp);
 				return (error);
@@ -153,8 +153,7 @@ ext2fs_buf_alloc(struct inode *ip, daddr64_t bn, int size, struct ucred *cred,
 	 * Fetch through the indirect blocks, allocating as necessary.
 	 */
 	for (i = 1;;) {
-		error = bread(vp,
-		    indirs[i].in_lbn, (int)fs->e2fs_bsize, NOCRED, &bp);
+		error = bread(vp, indirs[i].in_lbn, (int)fs->e2fs_bsize, &bp);
 		if (error) {
 			brelse(bp);
 			goto fail;
@@ -234,7 +233,7 @@ ext2fs_buf_alloc(struct inode *ip, daddr64_t bn, int size, struct ucred *cred,
 	}
 	brelse(bp);
 	if (flags & B_CLRBUF) {
-		error = bread(vp, lbn, (int)fs->e2fs_bsize, NOCRED, &nbp);
+		error = bread(vp, lbn, (int)fs->e2fs_bsize, &nbp);
 		if (error) {
 			brelse(nbp);
 			goto fail;
@@ -262,7 +261,7 @@ fail:
 			int r;
 	
 			r = bread(vp, indirs[unwindidx].in_lbn, 
-			    (int)fs->e2fs_bsize, NOCRED, &bp);
+			    (int)fs->e2fs_bsize, &bp);
 			if (r) {
 				panic("Could not unwind indirect block, error %d", r);
 			} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_subr.c,v 1.25 2011/07/03 18:23:10 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_subr.c,v 1.26 2011/07/04 04:30:41 tedu Exp $	*/
 /*	$NetBSD: ext2fs_subr.c,v 1.1 1997/06/11 09:34:03 bouyer Exp $	*/
 
 /*
@@ -90,7 +90,7 @@ ext2fs_bufatoff(struct inode *ip, off_t offset, char **res, struct buf **bpp)
 	lbn = lblkno(fs, offset);
 
 	*bpp = NULL;
-	if ((error = bread(vp, lbn, fs->e2fs_bsize, NOCRED, &bp)) != 0) {
+	if ((error = bread(vp, lbn, fs->e2fs_bsize, &bp)) != 0) {
 		brelse(bp);
 		return (error);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.36 2008/01/05 19:49:26 otto Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.37 2011/07/04 04:30:41 tedu Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
 
 /*
@@ -141,8 +141,7 @@ ffs1_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 			 */
 
 			if (bpp != NULL) {
-				error = bread(vp, lbn, fs->fs_bsize, NOCRED,
-				    bpp);
+				error = bread(vp, lbn, fs->fs_bsize, bpp);
 				if (error) {
 					brelse(*bpp);
 					return (error);
@@ -164,7 +163,7 @@ ffs1_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 				 */
 				if (bpp != NULL) {
 					error = bread(vp, lbn, fs->fs_bsize,
-					    NOCRED, bpp);
+					    bpp);
 					if (error) {
 						brelse(*bpp);
 						return (error);
@@ -272,8 +271,7 @@ ffs1_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 	 * Fetch through the indirect blocks, allocating as necessary.
 	 */
 	for (i = 1;;) {
-		error = bread(vp,
-		    indirs[i].in_lbn, (int)fs->fs_bsize, NOCRED, &bp);
+		error = bread(vp, indirs[i].in_lbn, (int)fs->fs_bsize, &bp);
 		if (error) {
 			brelse(bp);
 			goto fail;
@@ -366,7 +364,7 @@ ffs1_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 	brelse(bp);
 	if (bpp != NULL) {
 		if (flags & B_CLRBUF) {
-			error = bread(vp, lbn, (int)fs->fs_bsize, NOCRED, &nbp);
+			error = bread(vp, lbn, (int)fs->fs_bsize, &nbp);
 			if (error) {
 				brelse(nbp);
 				goto fail;
@@ -406,8 +404,7 @@ fail:
 	} else if (unwindidx >= 0) {
 		int r;
 
-		r = bread(vp, indirs[unwindidx].in_lbn, 
-		    (int)fs->fs_bsize, NOCRED, &bp);
+		r = bread(vp, indirs[unwindidx].in_lbn, (int)fs->fs_bsize, &bp);
 		if (r)
 			panic("Could not unwind indirect block, error %d", r);
 		bap = (int32_t *)bp->b_data;
@@ -512,8 +509,7 @@ ffs2_balloc(struct inode *ip, off_t off, int size, struct ucred *cred,
 			 * block. Just read it, if requested.
 			 */
 			if (bpp != NULL) {
-				error = bread(vp, lbn, fs->fs_bsize, NOCRED,
-				    bpp);
+				error = bread(vp, lbn, fs->fs_bsize, bpp);
 				if (error) {
 					brelse(*bpp);
 					return (error);
@@ -537,7 +533,7 @@ ffs2_balloc(struct inode *ip, off_t off, int size, struct ucred *cred,
 				 */
 				if (bpp != NULL) {
 					error = bread(vp, lbn, fs->fs_bsize,
-					    NOCRED, bpp);
+					    bpp);
 					if (error) {
 						brelse(*bpp);
 						return (error);
@@ -657,8 +653,7 @@ ffs2_balloc(struct inode *ip, off_t off, int size, struct ucred *cred,
 	 * Fetch through the indirect blocks, allocating as necessary.
 	 */
 	for (i = 1;;) {
-		error = bread(vp, indirs[i].in_lbn, (int) fs->fs_bsize,
-		    NOCRED, &bp);
+		error = bread(vp, indirs[i].in_lbn, (int)fs->fs_bsize, &bp);
 		if (error) {
 			brelse(bp);
 			goto fail;
@@ -773,7 +768,7 @@ ffs2_balloc(struct inode *ip, off_t off, int size, struct ucred *cred,
 
 	if (bpp != NULL) {
 		if (flags & B_CLRBUF) {
-			error = bread(vp, lbn, (int)fs->fs_bsize, NOCRED, &nbp);
+			error = bread(vp, lbn, (int)fs->fs_bsize, &nbp);
 			if (error) {
 				brelse(nbp);
 				goto fail;
@@ -854,7 +849,7 @@ fail:
 				ffs_update(ip, NULL, NULL, MNT_WAIT);
 		} else {
 			r = bread(vp, indirs[unwindidx].in_lbn,
-			    (int) fs->fs_bsize, NOCRED, &bp);
+			    (int)fs->fs_bsize, &bp);
 			if (r)
 				panic("ffs2_balloc: unwind failed");
 

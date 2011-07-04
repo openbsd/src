@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.90 2011/07/03 18:23:10 tedu Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.91 2011/07/04 04:30:41 tedu Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -222,8 +222,7 @@ ffs_realloccg(struct inode *ip, daddr64_t lbprev, daddr64_t bpref, int osize,
 	 * Allocate the extra space in the buffer.
 	 */
 	if (bpp != NULL) {
-		if ((error = bread(ITOV(ip), lbprev, fs->fs_bsize,
-		    NOCRED, &bp)) != 0)
+		if ((error = bread(ITOV(ip), lbprev, fs->fs_bsize, &bp)) != 0)
 			goto error;
 		bp->b_bcount = osize;
 	}
@@ -431,7 +430,7 @@ ffs1_reallocblks(void *v)
 		soff = start_lbn;
 	} else {
 		idp = &start_ap[start_lvl - 1];
-		if (bread(vp, idp->in_lbn, (int)fs->fs_bsize, NOCRED, &sbp)) {
+		if (bread(vp, idp->in_lbn, (int)fs->fs_bsize, &sbp)) {
 			brelse(sbp);
 			return (ENOSPC);
 		}
@@ -454,7 +453,7 @@ ffs1_reallocblks(void *v)
 			panic("ffs1_reallocblk: start == end");
 #endif
 		ssize = len - (idp->in_off + 1);
-		if (bread(vp, idp->in_lbn, (int)fs->fs_bsize, NOCRED, &ebp))
+		if (bread(vp, idp->in_lbn, (int)fs->fs_bsize, &ebp))
 			goto fail;
 		ebap = (int32_t *)ebp->b_data;
 	}
@@ -640,7 +639,7 @@ ffs2_reallocblks(void *v)
 		soff = start_lbn;
 	} else {
 		idp = &start_ap[start_lvl - 1];
-		if (bread(vp, idp->in_lbn, (int)fs->fs_bsize, NOCRED, &sbp)) {
+		if (bread(vp, idp->in_lbn, (int)fs->fs_bsize, &sbp)) {
 			brelse(sbp);
 			return (ENOSPC);
 		}
@@ -659,7 +658,7 @@ ffs2_reallocblks(void *v)
 			panic("ffs2_reallocblk: start == end");
 #endif
 		ssize = len - (idp->in_off + 1);
-		if (bread(vp, idp->in_lbn, (int)fs->fs_bsize, NOCRED, &ebp))
+		if (bread(vp, idp->in_lbn, (int)fs->fs_bsize, &ebp))
 			goto fail;
 		ebap = (daddr64_t *)ebp->b_data;
 	}
@@ -1190,7 +1189,7 @@ ffs_cgread(struct fs *fs, struct inode *ip, int cg)
 	struct buf *bp;
 
 	if (bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
-		(int)fs->fs_cgsize, NOCRED, &bp)) {
+	    (int)fs->fs_cgsize, &bp)) {
 		brelse(bp);
 		return (NULL);
 	}

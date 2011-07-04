@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.21 2009/08/13 22:34:29 jasper Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.22 2011/07/04 04:30:41 tedu Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -215,7 +215,7 @@ pcbmap(struct denode *dep, uint32_t findcn, daddr64_t *bnp, uint32_t *cnp,
 		if (bn != bp_bn) {
 			if (bp)
 				brelse(bp);
-			error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
+			error = bread(pmp->pm_devvp, bn, bsize, &bp);
 			if (error) {
 				brelse(bp);
 				return (error);
@@ -331,7 +331,7 @@ updatefats(struct msdosfsmount *pmp, struct buf *bp, uint32_t fatbn)
 	 * If we have an FSInfo block, update it.
 	 */
 	if (pmp->pm_fsinfo) {
-		if (bread(pmp->pm_devvp, pmp->pm_fsinfo, fsi_size(pmp), NOCRED,
+		if (bread(pmp->pm_devvp, pmp->pm_fsinfo, fsi_size(pmp),
 		    &bpn) != 0) {
 			/*
 			 * Ignore the error, but turn off FSInfo update for the future.
@@ -501,7 +501,7 @@ fatentry(int function, struct msdosfsmount *pmp, uint32_t cn, uint32_t *oldconte
 
 	byteoffset = FATOFS(pmp, cn);
 	fatblock(pmp, byteoffset, &bn, &bsize, &bo);
-	if ((error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp)) != 0) {
+	if ((error = bread(pmp->pm_devvp, bn, bsize, &bp)) != 0) {
 		brelse(bp);
 		return (error);
 	}
@@ -583,7 +583,7 @@ fatchain(struct msdosfsmount *pmp, uint32_t start, uint32_t count, uint32_t fill
 	while (count > 0) {
 		byteoffset = FATOFS(pmp, start);
 		fatblock(pmp, byteoffset, &bn, &bsize, &bo);
-		error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
+		error = bread(pmp->pm_devvp, bn, bsize, &bp);
 		if (error) {
 			brelse(bp);
 			return (error);
@@ -809,7 +809,7 @@ freeclusterchain(struct msdosfsmount *pmp, uint32_t cluster)
 		if (lbn != bn) {
 			if (bp)
 				updatefats(pmp, bp, lbn);
-			error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
+			error = bread(pmp->pm_devvp, bn, bsize, &bp);
 			if (error) {
 				brelse(bp);
 				return (error);
@@ -883,7 +883,7 @@ fillinusemap(struct msdosfsmount *pmp)
 			if (bp)
 				brelse(bp);
 			fatblock(pmp, byteoffset, &bn, &bsize, NULL);
-			error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
+			error = bread(pmp->pm_devvp, bn, bsize, &bp);
 			if (error) {
 				brelse(bp);
 				return (error);

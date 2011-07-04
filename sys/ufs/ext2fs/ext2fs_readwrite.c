@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.22 2007/06/17 20:15:25 jasper Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.23 2011/07/04 04:30:41 tedu Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.16 2001/02/27 04:37:47 chs Exp $	*/
 
 /*-
@@ -112,13 +112,13 @@ ext2fs_read(void *v)
 			xfersize = bytesinfile;
 
 		if (lblktosize(fs, nextlbn) >= ext2fs_size(ip))
-			error = bread(vp, lbn, size, NOCRED, &bp);
+			error = bread(vp, lbn, size, &bp);
 		else if (lbn - 1 == ip->i_ci.ci_lastr) {
 			int nextsize = fs->e2fs_bsize;
-			error = breadn(vp, lbn,
-				size, &nextlbn, &nextsize, 1, NOCRED, &bp);
+			error = breadn(vp, lbn, size, &nextlbn, &nextsize,
+			    1, &bp);
 		} else
-			error = bread(vp, lbn, size, NOCRED, &bp);
+			error = bread(vp, lbn, size, &bp);
 		if (error)
 			break;
 		ip->i_ci.ci_lastr = lbn;
