@@ -1064,8 +1064,7 @@
 ./usr/include/miscfs/fifofs/fifo.h
 ./usr/include/miscfs/procfs
 ./usr/include/miscfs/procfs/procfs.h
-./usr/include/miscfs/specfs
-./usr/include/miscfs/specfs/specdev.h
+./usr/include/sys/specdev.h
 ./usr/include/mpool.h
 ./usr/include/msdosfs
 ./usr/include/msdosfs/bootsect.h

@@ -1831,8 +1831,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/miscfs/fifofs/fifo.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/miscfs/procfs
 ./usr/libdata/perl5/site_perl/sh-openbsd/miscfs/procfs/procfs.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/miscfs/specfs
-./usr/libdata/perl5/site_perl/sh-openbsd/miscfs/specfs/specdev.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/sys/specdev.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/mpool.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/msdosfs
 ./usr/libdata/perl5/site_perl/sh-openbsd/msdosfs/bootsect.ph

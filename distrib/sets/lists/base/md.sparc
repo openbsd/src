@@ -1174,8 +1174,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/miscfs/fifofs/fifo.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/miscfs/procfs
 ./usr/libdata/perl5/site_perl/sparc-openbsd/miscfs/procfs/procfs.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/miscfs/specfs
-./usr/libdata/perl5/site_perl/sparc-openbsd/miscfs/specfs/specdev.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/sys/specdev.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/mpool.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/msdosfs
 ./usr/libdata/perl5/site_perl/sparc-openbsd/msdosfs/bootsect.ph

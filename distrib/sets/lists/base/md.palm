@@ -1847,8 +1847,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/fifofs/fifo.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/procfs
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/procfs/procfs.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/specfs
-./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/specfs/specdev.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/sys/specdev.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/mpool.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/msdosfs
 ./usr/libdata/perl5/site_perl/arm-openbsd/msdosfs/bootsect.ph

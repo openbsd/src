@@ -1106,8 +1106,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/miscfs/fifofs/fifo.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/miscfs/procfs
 ./usr/libdata/perl5/site_perl/vax-openbsd/miscfs/procfs/procfs.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/miscfs/specfs
-./usr/libdata/perl5/site_perl/vax-openbsd/miscfs/specfs/specdev.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/sys/specdev.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/mpool.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/msdosfs
 ./usr/libdata/perl5/site_perl/vax-openbsd/msdosfs/bootsect.ph

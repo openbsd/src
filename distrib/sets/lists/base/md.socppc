@@ -1887,8 +1887,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/fifofs/fifo.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/procfs
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/procfs/procfs.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/specfs
-./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/specfs/specdev.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/specdev.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/mpool.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/msdosfs
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/msdosfs/bootsect.ph

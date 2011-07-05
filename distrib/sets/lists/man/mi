@@ -2628,7 +2628,6 @@
 ./usr/share/man/man8/clri.8
 ./usr/share/man/man8/compat_aout.8
 ./usr/share/man/man8/compat_linux.8
-./usr/share/man/man8/compat_svr4.8
 ./usr/share/man/man8/comsat.8
 ./usr/share/man/man8/config.8
 ./usr/share/man/man8/crash.8
