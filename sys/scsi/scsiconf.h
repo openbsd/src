@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.145 2011/06/15 01:10:05 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.146 2011/07/05 21:39:56 matthew Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -353,10 +353,8 @@ struct scsi_link {
 	SLIST_ENTRY(scsi_link)	bus_list;
 
 	u_int		state;
-#define SDEV_S_WAITING		(1<<0)
 #define SDEV_S_DYING		(1<<1)
 
-	u_int8_t scsibus;		/* the Nth scsibus */
 	u_int8_t luns;
 	u_int16_t target;		/* targ of this dev */
 	u_int16_t lun;			/* lun of this dev */
