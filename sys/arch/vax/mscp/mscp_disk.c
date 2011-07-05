@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.35 2011/06/05 18:40:33 matthew Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.36 2011/07/05 21:39:08 krw Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -689,6 +689,7 @@ rxioctl(dev, cmd, data, flag, p)
 	switch (cmd) {
 
 	case DIOCGDINFO:
+	case DIOCGPDINFO:	/* no separate 'physical' info available. */
 		bcopy(lp, data, sizeof (struct disklabel));
 		break;
 

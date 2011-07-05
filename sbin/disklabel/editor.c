@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.257 2011/07/05 17:38:54 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.258 2011/07/05 21:39:08 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -2183,9 +2183,8 @@ get_geometry(int f, struct disklabel **dgpp)
 	/* Get disk geometry */
 	if ((disk_geop = calloc(1, sizeof(struct disklabel))) == NULL)
 		errx(4, "out of memory");
-	if (ioctl(f, DIOCGPDINFO, disk_geop) < 0 &&
-	    ioctl(f, DIOCGDINFO, disk_geop) < 0)
-		err(4, "ioctl DIOCGDINFO");
+	if (ioctl(f, DIOCGPDINFO, disk_geop) < 0)
+		err(4, "ioctl DIOCGPDINFO");
 	*dgpp = disk_geop;
 }
 
