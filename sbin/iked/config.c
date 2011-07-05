@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.12 2011/05/09 11:15:18 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.13 2011/07/05 19:59:00 tedu Exp $	*/
 /*	$vantronix: config.c,v 1.30 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -366,7 +366,7 @@ config_new_user(struct iked *env, struct iked_user *new)
 
 	if ((old = RB_INSERT(iked_users, &env->sc_users, usr)) != NULL) {
 		/* Update the password of an existing user*/
-		memcpy(old, new, sizeof(old));
+		memcpy(old, new, sizeof(*old));
 
 		log_debug("%s: updating user %s", __func__, usr->usr_name);
 		free(usr);
