@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.90 2011/07/05 21:40:38 dhill Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.91 2011/07/05 23:15:15 henning Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ struct llinfo_arp *arplookup(u_int32_t, int, int, u_int);
 void in_arpinput(struct mbuf *);
 
 LIST_HEAD(, llinfo_arp) llinfo_arp;
-struct	ifqueue arpintrq = {0, 0, 0, 50};
+struct	ifqueue arpintrq;
 int	arp_inuse, arp_allocated;
 int	arp_maxtries = 5;
 int	useloopback = 1;	/* use loopback interface for local traffic */
@@ -149,6 +149,7 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		static struct timeout arptimer_to;
 
 		arpinit_done = 1;
+		arpintrq.ifq_maxlen = 50;	/* XXX hate magic numbers */
 		/*
 		 * We generate expiration times from time.tv_sec
 		 * so avoid accidently creating permanent routes.
