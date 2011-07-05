@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.41 2011/04/06 18:03:03 miod Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.42 2011/07/05 20:34:45 matthew Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -409,7 +409,7 @@ ncr5380_show_scsi_cmd(struct scsi_xfer *xs)
 	int	i  = 0;
 
 	if (!(xs->flags & SCSI_RESET)) {
-		printf("(%d:%d:%d,0x%x)-", xs->sc_link->scsibus,
+		printf("(%d:%d:%d,0x%x)-", xs->sc_link->bus->sc_dev.dv_unit,
 		    xs->sc_link->target, xs->sc_link->lun, xs->sc_link->flags);
 		while (i < xs->cmdlen) {
 			if (i)
@@ -419,8 +419,8 @@ ncr5380_show_scsi_cmd(struct scsi_xfer *xs)
 		printf("-\n");
 	}
 	else {
-		printf("(%d:%d:%d)-RESET-\n",
-		    xs->sc_link->scsibus,xs->sc_link->target, xs->sc_link->lun);
+		printf("(%d:%d:%d)-RESET-\n", xs->sc_link->bus->sc_dev.dv_unit,
+		    xs->sc_link->target, xs->sc_link->lun);
 	}
 }
 
