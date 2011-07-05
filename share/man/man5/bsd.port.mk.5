@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.281 2011/06/04 08:26:55 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.282 2011/07/05 15:16:10 sthen Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 4 2011 $
+.Dd $Mdocdate: July 5 2011 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1430,6 +1430,13 @@ Do not use instead of
 without very good reasons.
 .It Ev NO_BUILD
 Port does not need any build stage.
+.It Ev NO_CCACHE
+Set to
+.Sq Yes
+to prevent ccache from being used when building a certain port,
+even when
+.Ev USE_CCACHE
+is set.
 .It Ev NO_CHECKSUM
 Set to
 .Sq Yes
@@ -2012,6 +2019,13 @@ Used to store cookies for package updates and defaults to
 .Pa ${PORTSDIR}/update/${MACHINE_ARCH} .
 If set to empty, will revert to a file under
 .Pa ${WRKDIR} .
+.It Ev USE_CCACHE
+User settings.
+Set to
+.Sq Yes
+to use ccache when building ports.
+Adds a build dependency on devel/ccache, and sets up the build
+environment so that it is used.
 .It Ev USE_GMAKE
 Set to
 .Sq Yes
