@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.137 2011/07/05 19:53:43 mikeb Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.138 2011/07/05 22:00:04 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -125,12 +125,10 @@ struct pf_fragment	*pf_fillup_fragment(struct pf_fragment_cmp *,
 			    struct pf_frent *, u_short *);
 int			 pf_isfull_fragment(struct pf_fragment *);
 struct mbuf		*pf_join_fragment(struct pf_fragment *);
-int			 pf_reassemble(struct mbuf **, struct ip *, int,
-			    u_short *);
+int			 pf_reassemble(struct mbuf **, int, u_short *);
 #ifdef INET6
-int			 pf_reassemble6(struct mbuf **, struct ip6_hdr *,
-			    struct ip6_frag *, u_int16_t, u_int16_t, int,
-			    u_short *);
+int			 pf_reassemble6(struct mbuf **, struct ip6_frag *,
+			    u_int16_t, u_int16_t, int, u_short *);
 #endif
 
 /* Globals */
@@ -487,9 +485,10 @@ pf_join_fragment(struct pf_fragment *frag)
 }
 
 int
-pf_reassemble(struct mbuf **m0, struct ip *ip, int dir, u_short *reason)
+pf_reassemble(struct mbuf **m0, int dir, u_short *reason)
 {
 	struct mbuf		*m = *m0;
+	struct ip		*ip = mtod(m, struct ip *);
 	struct pf_frent		*frent;
 	struct pf_fragment	*frag;
 	struct pf_fragment_cmp	 key;
@@ -558,10 +557,11 @@ pf_reassemble(struct mbuf **m0, struct ip *ip, int dir, u_short *reason)
 
 #ifdef INET6
 int
-pf_reassemble6(struct mbuf **m0, struct ip6_hdr *ip6, struct ip6_frag *fraghdr,
+pf_reassemble6(struct mbuf **m0, struct ip6_frag *fraghdr,
     u_int16_t hdrlen, u_int16_t extoff, int dir, u_short *reason)
 {
 	struct mbuf		*m = *m0;
+	struct ip6_hdr		*ip6 = mtod(m, struct ip6_hdr *);
 	struct m_tag		*mtag;
 	struct pf_fragment_tag	*ftag;
 	struct pf_frent		*frent;
@@ -770,7 +770,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, u_short *reason)
 		return (PF_PASS);	/* no reassembly */
 
 	/* Returns PF_DROP or *m0 is NULL or completely reassembled mbuf */
-	if (pf_reassemble(m0, h, dir, reason) != PF_PASS)
+	if (pf_reassemble(m0, dir, reason) != PF_PASS)
 		return (PF_DROP);
 	m = *m0;
 	if (m == NULL)
@@ -910,7 +910,7 @@ pf_normalize_ip6(struct mbuf **m0, int dir, u_short *reason)
 	off += sizeof(frag);
 
 	/* Returns PF_DROP or *m0 is NULL or completely reassembled mbuf */
-	if (pf_reassemble6(m0, h, &frag, off, extoff, dir, reason) != PF_PASS)
+	if (pf_reassemble6(m0, &frag, off, extoff, dir, reason) != PF_PASS)
 		return (PF_DROP);
 	m = *m0;
 	if (m == NULL)
