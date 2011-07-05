@@ -1,4 +1,4 @@
-/* $OpenBSD: privsep.c,v 1.1 2010/01/31 05:49:51 yasuoka Exp $ */
+/* $OpenBSD: privsep.c,v 1.2 2011/07/05 01:33:40 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -23,6 +23,7 @@
 
 #include <netinet/in.h>
 
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -238,17 +239,20 @@ priv_sendto(int s, const void *msg, int len, int flags,
 	memset(&m, 0, sizeof(m));
 
 	iov[0].iov_base = &a;
-	iov[0].iov_len = sizeof(a);
+	/*
+	 * Don't assume sizeof(struct PRIVSEP_SENDTO_ARG) equals
+	 * offsetof(struct PRIVSEP_SENDTO_ARG, msg).
+	 */
+	iov[0].iov_len = offsetof(struct PRIVSEP_SENDTO_ARG, msg);
 	iov[1].iov_base = (void *)msg;
 	iov[1].iov_len = len;
 
 	a.cmd = PRIVSEP_SENDTO;
 	a.len = len;
 	a.flags = flags;
-	if (tolen > 0) {
+	a.tolen = tolen;
+	if (tolen > 0)
 		memcpy(&a.to, to, tolen);
-		a.tolen = tolen;
-	}
 
 	cm = (struct cmsghdr *)cm_space;
 	cm->cmsg_len = sizeof(cm_space);
@@ -488,6 +492,7 @@ privsep_sendfd(int sock, int fdesc, int rerrno)
 	cm = (struct cmsghdr *)cm_space;
 	iov[0].iov_base = &r;
 	iov[0].iov_len = sizeof(r);
+	r.rerrno = 0;
 	r.retval = fdesc;
 
 	if (fdesc < 0) {
@@ -560,7 +565,7 @@ static int
 privsep_npppd_check_sendto(struct PRIVSEP_SENDTO_ARG *arg)
 {
 	/* for reply npppdctl's request */
-	if (arg->flags == 0 && arg->tolen >= 0 &&
+	if (arg->flags == 0 && arg->tolen > 0 &&
 	    arg->to.ss_family == AF_UNIX)
 		return 0;
 
