@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.33 2011/05/08 09:07:06 dlg Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.34 2011/07/05 09:46:11 matthew Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -68,6 +68,9 @@ physio(void (*strategy)(struct buf *), dev_t dev, int flags,
 	struct proc *p = curproc;
 	int error, done, i, s, todo;
 	struct buf *bp;
+
+	if ((uio->uio_offset % DEV_BSIZE) != 0)
+		return (EINVAL);
 
 	error = 0;
 	flags &= B_READ | B_WRITE;
@@ -199,6 +202,8 @@ after_unlock:
 				panic("done < 0; strategy broken");
 			if (done > todo)
 				panic("done > todo; strategy broken");
+			if ((done % DEV_BSIZE) != 0)
+				panic("(done % DEV_BSIZE) != 0; strategy broken");
 #endif
 			iovp->iov_len -= done;
 			iovp->iov_base = (caddr_t)iovp->iov_base + done;
