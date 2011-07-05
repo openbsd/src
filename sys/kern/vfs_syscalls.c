@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.165 2010/10/28 15:02:41 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.166 2011/07/05 21:38:58 matthew Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1389,7 +1389,7 @@ sys_lseek(struct proc *p, void *v, register_t *retval)
 
 	switch (SCARG(uap, whence)) {
 	case SEEK_CUR:
-		newoff = fp->f_offset + offarg;;
+		newoff = fp->f_offset + offarg;
 		break;
 	case SEEK_END:
 		error = VOP_GETATTR((struct vnode *)fp->f_data, &vattr,
@@ -1407,18 +1407,6 @@ sys_lseek(struct proc *p, void *v, register_t *retval)
 	if (!special) {
 		if (newoff < 0)
 			return (EINVAL);
-	} else {
-		/*
-		 * Make sure the user don't seek beyond the end of the
-		 * partition.
-		 */
-		struct partinfo dpart;
-		error = vn_ioctl(fp, DIOCGPART, (void *)&dpart, p);
-		if (!error) {
-			if (newoff >= DL_GETPSIZE(dpart.part) *
-			    dpart.disklab->d_secsize)
-					return (EINVAL);
-		}
 	}
 	*(off_t *)retval = fp->f_offset = newoff;
 	fp->f_seek++;
