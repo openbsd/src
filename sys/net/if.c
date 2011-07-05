@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.235 2011/07/04 22:53:53 tedu Exp $	*/
+/*	$OpenBSD: if.c,v 1.236 2011/07/05 00:58:27 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1165,24 +1165,6 @@ if_link_state_change(struct ifnet *ifp)
 	rt_if_track(ifp);
 #endif
 	dohooks(ifp->if_linkstatehooks, 0);
-}
-
-/*
- * Flush an interface queue.
- */
-void
-if_qflush(struct ifqueue *ifq)
-{
-	struct mbuf *m, *n;
-
-	n = ifq->ifq_head;
-	while ((m = n) != NULL) {
-		n = m->m_act;
-		m_freem(m);
-	}
-	ifq->ifq_head = 0;
-	ifq->ifq_tail = 0;
-	ifq->ifq_len = 0;
 }
 
 /*
