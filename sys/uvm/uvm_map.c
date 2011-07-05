@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.144 2011/07/03 18:36:49 oga Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.145 2011/07/05 03:10:29 dhill Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -958,7 +958,7 @@ step3:
 	 */
 	if (map == kernel_map && !(flags & UVM_FLAG_FIXED)) {
 		guard_entry = uvm_mapent_alloc(map, flags);
-		if (guard_entry != NULL {
+		if (guard_entry != NULL) {
 			guard_entry->start = new_entry->end;
 			guard_entry->end = guard_entry->start + PAGE_SIZE;
 			guard_entry->object.uvm_obj = uobj;
