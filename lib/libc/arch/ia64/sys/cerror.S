@@ -1,3 +1,4 @@
+/* $OpenBSD: cerror.S,v 1.2 2011/07/05 03:26:18 pirofti Exp $ */
 /* $NetBSD: cerror.S,v 1.2 2006/09/22 17:59:47 cherry Exp $ */
 	
 /*-
@@ -27,7 +28,7 @@
  */
 
 #include <machine/asm.h>
-/* __FBSDID("$FreeBSD: src/lib/libc/ia64/sys/cerror.S,v 1.2 2003/03/03 01:09:46 obrien Exp $"); */
+/* $FreeBSD: cerror.S,v 1.2 2003/03/03 01:09:46 obrien Exp $ */
 
 
 ENTRY(__cerror, 0)

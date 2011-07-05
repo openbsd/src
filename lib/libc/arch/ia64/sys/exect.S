@@ -1,3 +1,1 @@
-/* $NetBSD: exect.S,v 1.1 2006/09/10 21:22:34 cherry Exp $ */
-	
-/* XXX:	 Stub */
+/* $OpenBSD: exect.S,v 1.2 2011/07/05 03:26:18 pirofti Exp $ */

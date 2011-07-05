@@ -1,3 +1,4 @@
+/* $OpenBSD: pipe.S,v 1.2 2011/07/05 03:26:18 pirofti Exp $ */
 /*	$NetBSD: pipe.S,v 1.2 2006/09/23 17:39:34 cherry Exp $	*/
 
 /*
@@ -28,7 +29,7 @@
  */
 
 #include <machine/asm.h>
-/* __FBSDID("$FreeBSD: src/lib/libc/ia64/sys/pipe.S,v 1.4 2003/05/16 21:26:39 marcel Exp $"); */
+/* $FreeBSD: pipe.S,v 1.4 2003/05/16 21:26:39 marcel Exp $ */
 
 #include "SYS.h"
 
