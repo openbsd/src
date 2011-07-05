@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.38 2011/05/29 21:22:18 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.39 2011/07/05 04:12:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -17,7 +17,6 @@
 #include <sys/types.h>
 
 #include <assert.h>
-#include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -43,19 +42,21 @@ enum	argvflag {
 	ARGV_OPT_SINGLE /* optional arg (e.g., -offset [xxx]) */
 };
 
-static	enum mdocargt	 argv_a2arg(enum mdoct, const char *);
+struct	mdocarg {
+	enum argsflag	 flags;
+	const enum mdocargt *argvs;
+};
+
+static	void		 argn_free(struct mdoc_arg *, int);
 static	enum margserr	 args(struct mdoc *, int, int *, 
 				char *, enum argsflag, char **);
 static	int		 args_checkpunct(const char *, int);
-static	int		 argv(struct mdoc *, int, 
-				struct mdoc_argv *, int *, char *);
-static	int		 argv_single(struct mdoc *, int, 
+static	int		 argv_multi(struct mdoc *, int, 
 				struct mdoc_argv *, int *, char *);
 static	int		 argv_opt_single(struct mdoc *, int, 
 				struct mdoc_argv *, int *, char *);
-static	int		 argv_multi(struct mdoc *, int, 
+static	int		 argv_single(struct mdoc *, int, 
 				struct mdoc_argv *, int *, char *);
-static	void		 argn_free(struct mdoc_arg *, int);
 
 static	const enum argvflag argvflags[MDOC_ARG_MAX] = {
 	ARGV_NONE,	/* MDOC_Split */
@@ -84,131 +85,6 @@ static	const enum argvflag argvflags[MDOC_ARG_MAX] = {
 	ARGV_NONE,	/* MDOC_Emphasis */
 	ARGV_NONE,	/* MDOC_Symbolic */
 	ARGV_NONE	/* MDOC_Symbolic */
-};
-
-static	const enum argsflag argflags[MDOC_MAX] = {
-	ARGSFL_NONE, /* Ap */
-	ARGSFL_NONE, /* Dd */
-	ARGSFL_NONE, /* Dt */
-	ARGSFL_NONE, /* Os */
-	ARGSFL_NONE, /* Sh */
-	ARGSFL_NONE, /* Ss */ 
-	ARGSFL_NONE, /* Pp */ 
-	ARGSFL_DELIM, /* D1 */
-	ARGSFL_DELIM, /* Dl */
-	ARGSFL_NONE, /* Bd */
-	ARGSFL_NONE, /* Ed */
-	ARGSFL_NONE, /* Bl */
-	ARGSFL_NONE, /* El */
-	ARGSFL_NONE, /* It */
-	ARGSFL_DELIM, /* Ad */ 
-	ARGSFL_DELIM, /* An */
-	ARGSFL_DELIM, /* Ar */
-	ARGSFL_NONE, /* Cd */
-	ARGSFL_DELIM, /* Cm */
-	ARGSFL_DELIM, /* Dv */ 
-	ARGSFL_DELIM, /* Er */ 
-	ARGSFL_DELIM, /* Ev */ 
-	ARGSFL_NONE, /* Ex */
-	ARGSFL_DELIM, /* Fa */ 
-	ARGSFL_NONE, /* Fd */ 
-	ARGSFL_DELIM, /* Fl */
-	ARGSFL_DELIM, /* Fn */ 
-	ARGSFL_DELIM, /* Ft */ 
-	ARGSFL_DELIM, /* Ic */ 
-	ARGSFL_NONE, /* In */ 
-	ARGSFL_DELIM, /* Li */
-	ARGSFL_NONE, /* Nd */ 
-	ARGSFL_DELIM, /* Nm */ 
-	ARGSFL_DELIM, /* Op */
-	ARGSFL_NONE, /* Ot */
-	ARGSFL_DELIM, /* Pa */
-	ARGSFL_NONE, /* Rv */
-	ARGSFL_DELIM, /* St */ 
-	ARGSFL_DELIM, /* Va */
-	ARGSFL_DELIM, /* Vt */ 
-	ARGSFL_DELIM, /* Xr */
-	ARGSFL_NONE, /* %A */
-	ARGSFL_NONE, /* %B */
-	ARGSFL_NONE, /* %D */
-	ARGSFL_NONE, /* %I */
-	ARGSFL_NONE, /* %J */
-	ARGSFL_NONE, /* %N */
-	ARGSFL_NONE, /* %O */
-	ARGSFL_NONE, /* %P */
-	ARGSFL_NONE, /* %R */
-	ARGSFL_NONE, /* %T */
-	ARGSFL_NONE, /* %V */
-	ARGSFL_DELIM, /* Ac */
-	ARGSFL_NONE, /* Ao */
-	ARGSFL_DELIM, /* Aq */
-	ARGSFL_DELIM, /* At */
-	ARGSFL_DELIM, /* Bc */
-	ARGSFL_NONE, /* Bf */ 
-	ARGSFL_NONE, /* Bo */
-	ARGSFL_DELIM, /* Bq */
-	ARGSFL_DELIM, /* Bsx */
-	ARGSFL_DELIM, /* Bx */
-	ARGSFL_NONE, /* Db */
-	ARGSFL_DELIM, /* Dc */
-	ARGSFL_NONE, /* Do */
-	ARGSFL_DELIM, /* Dq */
-	ARGSFL_DELIM, /* Ec */
-	ARGSFL_NONE, /* Ef */
-	ARGSFL_DELIM, /* Em */ 
-	ARGSFL_NONE, /* Eo */
-	ARGSFL_DELIM, /* Fx */
-	ARGSFL_DELIM, /* Ms */
-	ARGSFL_DELIM, /* No */
-	ARGSFL_DELIM, /* Ns */
-	ARGSFL_DELIM, /* Nx */
-	ARGSFL_DELIM, /* Ox */
-	ARGSFL_DELIM, /* Pc */
-	ARGSFL_DELIM, /* Pf */
-	ARGSFL_NONE, /* Po */
-	ARGSFL_DELIM, /* Pq */
-	ARGSFL_DELIM, /* Qc */
-	ARGSFL_DELIM, /* Ql */
-	ARGSFL_NONE, /* Qo */
-	ARGSFL_DELIM, /* Qq */
-	ARGSFL_NONE, /* Re */
-	ARGSFL_NONE, /* Rs */
-	ARGSFL_DELIM, /* Sc */
-	ARGSFL_NONE, /* So */
-	ARGSFL_DELIM, /* Sq */
-	ARGSFL_NONE, /* Sm */
-	ARGSFL_DELIM, /* Sx */
-	ARGSFL_DELIM, /* Sy */
-	ARGSFL_DELIM, /* Tn */
-	ARGSFL_DELIM, /* Ux */
-	ARGSFL_DELIM, /* Xc */
-	ARGSFL_NONE, /* Xo */
-	ARGSFL_NONE, /* Fo */ 
-	ARGSFL_NONE, /* Fc */ 
-	ARGSFL_NONE, /* Oo */
-	ARGSFL_DELIM, /* Oc */
-	ARGSFL_NONE, /* Bk */
-	ARGSFL_NONE, /* Ek */
-	ARGSFL_NONE, /* Bt */
-	ARGSFL_NONE, /* Hf */
-	ARGSFL_NONE, /* Fr */
-	ARGSFL_NONE, /* Ud */
-	ARGSFL_NONE, /* Lb */
-	ARGSFL_NONE, /* Lp */
-	ARGSFL_DELIM, /* Lk */
-	ARGSFL_DELIM, /* Mt */
-	ARGSFL_DELIM, /* Brq */
-	ARGSFL_NONE, /* Bro */
-	ARGSFL_DELIM, /* Brc */
-	ARGSFL_NONE, /* %C */
-	ARGSFL_NONE, /* Es */
-	ARGSFL_NONE, /* En */
-	ARGSFL_NONE, /* Dx */
-	ARGSFL_NONE, /* %Q */
-	ARGSFL_NONE, /* br */
-	ARGSFL_NONE, /* sp */
-	ARGSFL_NONE, /* %U */
-	ARGSFL_NONE, /* Ta */
 };
 
 static	const enum mdocargt args_Ex[] = {
@@ -265,6 +141,132 @@ static	const enum mdocargt args_Bl[] = {
 	MDOC_ARG_MAX
 };
 
+static	const struct mdocarg mdocargs[MDOC_MAX] = {
+	{ ARGSFL_NONE, NULL }, /* Ap */
+	{ ARGSFL_NONE, NULL }, /* Dd */
+	{ ARGSFL_NONE, NULL }, /* Dt */
+	{ ARGSFL_NONE, NULL }, /* Os */
+	{ ARGSFL_NONE, NULL }, /* Sh */
+	{ ARGSFL_NONE, NULL }, /* Ss */ 
+	{ ARGSFL_NONE, NULL }, /* Pp */ 
+	{ ARGSFL_DELIM, NULL }, /* D1 */
+	{ ARGSFL_DELIM, NULL }, /* Dl */
+	{ ARGSFL_NONE, args_Bd }, /* Bd */
+	{ ARGSFL_NONE, NULL }, /* Ed */
+	{ ARGSFL_NONE, args_Bl }, /* Bl */
+	{ ARGSFL_NONE, NULL }, /* El */
+	{ ARGSFL_NONE, NULL }, /* It */
+	{ ARGSFL_DELIM, NULL }, /* Ad */ 
+	{ ARGSFL_DELIM, args_An }, /* An */
+	{ ARGSFL_DELIM, NULL }, /* Ar */
+	{ ARGSFL_NONE, NULL }, /* Cd */
+	{ ARGSFL_DELIM, NULL }, /* Cm */
+	{ ARGSFL_DELIM, NULL }, /* Dv */ 
+	{ ARGSFL_DELIM, NULL }, /* Er */ 
+	{ ARGSFL_DELIM, NULL }, /* Ev */ 
+	{ ARGSFL_NONE, args_Ex }, /* Ex */
+	{ ARGSFL_DELIM, NULL }, /* Fa */ 
+	{ ARGSFL_NONE, NULL }, /* Fd */ 
+	{ ARGSFL_DELIM, NULL }, /* Fl */
+	{ ARGSFL_DELIM, NULL }, /* Fn */ 
+	{ ARGSFL_DELIM, NULL }, /* Ft */ 
+	{ ARGSFL_DELIM, NULL }, /* Ic */ 
+	{ ARGSFL_NONE, NULL }, /* In */ 
+	{ ARGSFL_DELIM, NULL }, /* Li */
+	{ ARGSFL_NONE, NULL }, /* Nd */ 
+	{ ARGSFL_DELIM, NULL }, /* Nm */ 
+	{ ARGSFL_DELIM, NULL }, /* Op */
+	{ ARGSFL_NONE, NULL }, /* Ot */
+	{ ARGSFL_DELIM, NULL }, /* Pa */
+	{ ARGSFL_NONE, args_Ex }, /* Rv */
+	{ ARGSFL_DELIM, NULL }, /* St */ 
+	{ ARGSFL_DELIM, NULL }, /* Va */
+	{ ARGSFL_DELIM, NULL }, /* Vt */ 
+	{ ARGSFL_DELIM, NULL }, /* Xr */
+	{ ARGSFL_NONE, NULL }, /* %A */
+	{ ARGSFL_NONE, NULL }, /* %B */
+	{ ARGSFL_NONE, NULL }, /* %D */
+	{ ARGSFL_NONE, NULL }, /* %I */
+	{ ARGSFL_NONE, NULL }, /* %J */
+	{ ARGSFL_NONE, NULL }, /* %N */
+	{ ARGSFL_NONE, NULL }, /* %O */
+	{ ARGSFL_NONE, NULL }, /* %P */
+	{ ARGSFL_NONE, NULL }, /* %R */
+	{ ARGSFL_NONE, NULL }, /* %T */
+	{ ARGSFL_NONE, NULL }, /* %V */
+	{ ARGSFL_DELIM, NULL }, /* Ac */
+	{ ARGSFL_NONE, NULL }, /* Ao */
+	{ ARGSFL_DELIM, NULL }, /* Aq */
+	{ ARGSFL_DELIM, NULL }, /* At */
+	{ ARGSFL_DELIM, NULL }, /* Bc */
+	{ ARGSFL_NONE, args_Bf }, /* Bf */ 
+	{ ARGSFL_NONE, NULL }, /* Bo */
+	{ ARGSFL_DELIM, NULL }, /* Bq */
+	{ ARGSFL_DELIM, NULL }, /* Bsx */
+	{ ARGSFL_DELIM, NULL }, /* Bx */
+	{ ARGSFL_NONE, NULL }, /* Db */
+	{ ARGSFL_DELIM, NULL }, /* Dc */
+	{ ARGSFL_NONE, NULL }, /* Do */
+	{ ARGSFL_DELIM, NULL }, /* Dq */
+	{ ARGSFL_DELIM, NULL }, /* Ec */
+	{ ARGSFL_NONE, NULL }, /* Ef */
+	{ ARGSFL_DELIM, NULL }, /* Em */ 
+	{ ARGSFL_NONE, NULL }, /* Eo */
+	{ ARGSFL_DELIM, NULL }, /* Fx */
+	{ ARGSFL_DELIM, NULL }, /* Ms */
+	{ ARGSFL_DELIM, NULL }, /* No */
+	{ ARGSFL_DELIM, NULL }, /* Ns */
+	{ ARGSFL_DELIM, NULL }, /* Nx */
+	{ ARGSFL_DELIM, NULL }, /* Ox */
+	{ ARGSFL_DELIM, NULL }, /* Pc */
+	{ ARGSFL_DELIM, NULL }, /* Pf */
+	{ ARGSFL_NONE, NULL }, /* Po */
+	{ ARGSFL_DELIM, NULL }, /* Pq */
+	{ ARGSFL_DELIM, NULL }, /* Qc */
+	{ ARGSFL_DELIM, NULL }, /* Ql */
+	{ ARGSFL_NONE, NULL }, /* Qo */
+	{ ARGSFL_DELIM, NULL }, /* Qq */
+	{ ARGSFL_NONE, NULL }, /* Re */
+	{ ARGSFL_NONE, NULL }, /* Rs */
+	{ ARGSFL_DELIM, NULL }, /* Sc */
+	{ ARGSFL_NONE, NULL }, /* So */
+	{ ARGSFL_DELIM, NULL }, /* Sq */
+	{ ARGSFL_NONE, NULL }, /* Sm */
+	{ ARGSFL_DELIM, NULL }, /* Sx */
+	{ ARGSFL_DELIM, NULL }, /* Sy */
+	{ ARGSFL_DELIM, NULL }, /* Tn */
+	{ ARGSFL_DELIM, NULL }, /* Ux */
+	{ ARGSFL_DELIM, NULL }, /* Xc */
+	{ ARGSFL_NONE, NULL }, /* Xo */
+	{ ARGSFL_NONE, NULL }, /* Fo */ 
+	{ ARGSFL_NONE, NULL }, /* Fc */ 
+	{ ARGSFL_NONE, NULL }, /* Oo */
+	{ ARGSFL_DELIM, NULL }, /* Oc */
+	{ ARGSFL_NONE, args_Bk }, /* Bk */
+	{ ARGSFL_NONE, NULL }, /* Ek */
+	{ ARGSFL_NONE, NULL }, /* Bt */
+	{ ARGSFL_NONE, NULL }, /* Hf */
+	{ ARGSFL_NONE, NULL }, /* Fr */
+	{ ARGSFL_NONE, NULL }, /* Ud */
+	{ ARGSFL_NONE, NULL }, /* Lb */
+	{ ARGSFL_NONE, NULL }, /* Lp */
+	{ ARGSFL_DELIM, NULL }, /* Lk */
+	{ ARGSFL_DELIM, NULL }, /* Mt */
+	{ ARGSFL_DELIM, NULL }, /* Brq */
+	{ ARGSFL_NONE, NULL }, /* Bro */
+	{ ARGSFL_DELIM, NULL }, /* Brc */
+	{ ARGSFL_NONE, NULL }, /* %C */
+	{ ARGSFL_NONE, NULL }, /* Es */
+	{ ARGSFL_NONE, NULL }, /* En */
+	{ ARGSFL_NONE, NULL }, /* Dx */
+	{ ARGSFL_NONE, NULL }, /* %Q */
+	{ ARGSFL_NONE, NULL }, /* br */
+	{ ARGSFL_NONE, NULL }, /* sp */
+	{ ARGSFL_NONE, NULL }, /* %U */
+	{ ARGSFL_NONE, NULL }, /* Ta */
+};
+
+
 /*
  * Parse an argument from line text.  This comes in the form of -key
  * [value0...], which may either have a single mandatory value, at least
@@ -277,52 +279,81 @@ mdoc_argv(struct mdoc *m, int line, enum mdoct tok,
 	char		 *p, sv;
 	struct mdoc_argv tmp;
 	struct mdoc_arg	 *arg;
+	const enum mdocargt *ap;
 
 	if ('\0' == buf[*pos])
 		return(ARGV_EOLN);
+	else if (NULL == (ap = mdocargs[tok].argvs))
+		return(ARGV_WORD);
+	else if ('-' != buf[*pos])
+		return(ARGV_WORD);
 
-	assert(' ' != buf[*pos]);
-
-	/* Parse through to the first unescaped space. */
+	/* Seek to the first unescaped space. */
 
 	p = &buf[++(*pos)];
 
 	assert(*pos > 0);
 
-	/* LINTED */
-	while (buf[*pos]) {
-		if (' ' == buf[*pos])
-			if ('\\' != buf[*pos - 1])
-				break;
-		(*pos)++;
-	}
+	for ( ; buf[*pos] ; (*pos)++)
+		if (' ' == buf[*pos] && '\\' != buf[*pos - 1])
+			break;
 
-	/* XXX - save zeroed byte, if not an argument. */
+	/* 
+	 * We want to nil-terminate the word to look it up (it's easier
+	 * that way).  But we may not have a flag, in which case we need
+	 * to restore the line as-is.  So keep around the stray byte,
+	 * which we'll reset upon exiting (if necessary).
+	 */
 
-	sv = '\0';
-	if (buf[*pos]) {
-		sv = buf[*pos];
+	if ('\0' != (sv = buf[*pos])) 
 		buf[(*pos)++] = '\0';
-	}
+
+	/*
+	 * Now look up the word as a flag.  Use temporary storage that
+	 * we'll copy into the node's flags, if necessary.
+	 */
 
 	memset(&tmp, 0, sizeof(struct mdoc_argv));
+
 	tmp.line = line;
 	tmp.pos = *pos;
+	tmp.arg = MDOC_ARG_MAX;
 
-	/* See if our token accepts the argument. */
+	while (MDOC_ARG_MAX != (tmp.arg = *ap++))
+		if (0 == strcmp(p, mdoc_argnames[tmp.arg]))
+			break;
 
-	if (MDOC_ARG_MAX == (tmp.arg = argv_a2arg(tok, p))) {
-		/* XXX - restore saved zeroed byte. */
+	if (MDOC_ARG_MAX == tmp.arg) {
+		/* 
+		 * The flag was not found.
+		 * Restore saved zeroed byte and return as a word.
+		 */
 		if (sv)
 			buf[*pos - 1] = sv;
 		return(ARGV_WORD);
 	}
 
+	/* Read to the next word (the argument). */
+
 	while (buf[*pos] && ' ' == buf[*pos])
 		(*pos)++;
 
-	if ( ! argv(m, line, &tmp, pos, buf))
-		return(ARGV_ERROR);
+	switch (argvflags[tmp.arg]) {
+	case (ARGV_SINGLE):
+		if ( ! argv_single(m, line, &tmp, pos, buf))
+			return(ARGV_ERROR);
+		break;
+	case (ARGV_MULTI):
+		if ( ! argv_multi(m, line, &tmp, pos, buf))
+			return(ARGV_ERROR);
+		break;
+	case (ARGV_OPT_SINGLE):
+		if ( ! argv_opt_single(m, line, &tmp, pos, buf))
+			return(ARGV_ERROR);
+		break;
+	case (ARGV_NONE):
+		break;
+	}
 
 	if (NULL == (arg = *v))
 		arg = *v = mandoc_calloc(1, sizeof(struct mdoc_arg));
@@ -391,7 +422,7 @@ mdoc_args(struct mdoc *m, int line, int *pos,
 	enum argsflag	  fl;
 	struct mdoc_node *n;
 
-	fl = argflags[tok];
+	fl = mdocargs[tok].flags;
 
 	if (MDOC_It != tok)
 		return(args(m, line, pos, buf, fl, v));
@@ -419,8 +450,6 @@ args(struct mdoc *m, int line, int *pos,
 {
 	char		*p, *pp;
 	enum margserr	 rc;
-
-	assert(' ' != buf[*pos]);
 
 	if ('\0' == buf[*pos]) {
 		if (MDOC_PPHRASE & m->flags)
@@ -609,52 +638,6 @@ args_checkpunct(const char *buf, int i)
 	return('\0' == buf[i]);
 }
 
-/*
- * Match up an argument string (e.g., `-foo bar' having "foo") with the
- * correct identifier.  It must apply to the given macro.  If none was
- * found (including bad matches), return MDOC_ARG_MAX.
- */
-static enum mdocargt
-argv_a2arg(enum mdoct tok, const char *p)
-{
-	const enum mdocargt *argsp;
-
-	argsp = NULL;
-
-	switch (tok) {
-	case (MDOC_An):
-		argsp = args_An;
-		break;
-	case (MDOC_Bd):
-		argsp = args_Bd;
-		break;
-	case (MDOC_Bf):
-		argsp = args_Bf;
-		break;
-	case (MDOC_Bk):
-		argsp = args_Bk;
-		break;
-	case (MDOC_Bl):
-		argsp = args_Bl;
-		break;
-	case (MDOC_Rv):
-		/* FALLTHROUGH */
-	case (MDOC_Ex):
-		argsp = args_Ex;
-		break;
-	default:
-		return(MDOC_ARG_MAX);
-	}
-
-	assert(argsp);
-
-	for ( ; MDOC_ARG_MAX != *argsp ; argsp++)
-		if (0 == strcmp(p, mdoc_argnames[*argsp]))
-			return(*argsp);
-
-	return(MDOC_ARG_MAX);
-}
-
 static int
 argv_multi(struct mdoc *m, int line, 
 		struct mdoc_argv *v, int *pos, char *buf)
@@ -704,9 +687,6 @@ argv_opt_single(struct mdoc *m, int line,
 	return(1);
 }
 
-/*
- * Parse a single, mandatory value from the stream.
- */
 static int
 argv_single(struct mdoc *m, int line, 
 		struct mdoc_argv *v, int *pos, char *buf)
@@ -727,36 +707,6 @@ argv_single(struct mdoc *m, int line,
 	v->sz = 1;
 	v->value = mandoc_malloc(sizeof(char *));
 	v->value[0] = mandoc_strdup(p);
-
-	return(1);
-}
-
-/*
- * Determine rules for parsing arguments.  Arguments can either accept
- * no parameters, an optional single parameter, one parameter, or
- * multiple parameters.
- */
-static int
-argv(struct mdoc *mdoc, int line, 
-		struct mdoc_argv *v, int *pos, char *buf)
-{
-
-	v->sz = 0;
-	v->value = NULL;
-
-	switch (argvflags[v->arg]) {
-	case (ARGV_SINGLE):
-		return(argv_single(mdoc, line, v, pos, buf));
-	case (ARGV_MULTI):
-		return(argv_multi(mdoc, line, v, pos, buf));
-	case (ARGV_OPT_SINGLE):
-		return(argv_opt_single(mdoc, line, v, pos, buf));
-	case (ARGV_NONE):
-		break;
-	default:
-		abort();
-		/* NOTREACHED */
-	}
 
 	return(1);
 }

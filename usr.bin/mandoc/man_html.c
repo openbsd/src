@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.38 2011/05/29 21:22:18 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.39 2011/07/05 04:12:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -49,6 +49,8 @@ struct	htmlman {
 	int		(*post)(MAN_ARGS);
 };
 
+static	void		  print_bvspace(struct html *, 
+				const struct man_node *);
 static	void		  print_man(MAN_ARGS);
 static	void		  print_man_head(MAN_ARGS);
 static	void		  print_man_nodelist(MAN_ARGS);
@@ -110,6 +112,28 @@ static	const struct htmlman mans[MAN_MAX] = {
 	{ man_ign_pre, NULL }, /* ft */
 };
 
+/*
+ * Printing leading vertical space before a block.
+ * This is used for the paragraph macros.
+ * The rules are pretty simple, since there's very little nesting going
+ * on here.  Basically, if we're the first within another block (SS/SH),
+ * then don't emit vertical space.  If we are (RS), then do.  If not the
+ * first, print it.
+ */
+static void
+print_bvspace(struct html *h, const struct man_node *n)
+{
+
+	if (n->body && n->body->child)
+		if (MAN_TBL == n->body->child->type)
+			return;
+
+	if (MAN_ROOT == n->parent->type || MAN_RS != n->parent->tok)
+		if (NULL == n->prev)
+			return;
+
+	print_otag(h, TAG_P, 0, NULL);
+}
 
 void
 html_man(void *arg, const struct man *m)
@@ -130,7 +154,6 @@ html_man(void *arg, const struct man *m)
 
 	printf("\n");
 }
-
 
 static void
 print_man(MAN_ARGS) 
@@ -387,8 +410,9 @@ man_br_pre(MAN_ARGS)
 	SCALE_VS_INIT(&su, 1);
 
 	if (MAN_sp == n->tok) {
-		if (n->child)
-			a2roffsu(n->child->string, &su, SCALE_VS);
+		if (NULL != (n = n->child))
+			if ( ! a2roffsu(n->string, &su, SCALE_VS))
+				SCALE_VS_INIT(&su, atoi(n->string));
 	} else
 		su.scale = 0;
 
@@ -411,6 +435,7 @@ man_SH_pre(MAN_ARGS)
 	struct htmlpair	 tag;
 
 	if (MAN_BLOCK == n->type) {
+		mh->fl &= ~MANH_LITERAL;
 		PAIR_CLASS_INIT(&tag, "section");
 		print_otag(h, TAG_DIV, 1, &tag);
 		return(1);
@@ -492,6 +517,7 @@ man_SS_pre(MAN_ARGS)
 	struct htmlpair	 tag;
 
 	if (MAN_BLOCK == n->type) {
+		mh->fl &= ~MANH_LITERAL;
 		PAIR_CLASS_INIT(&tag, "subsection");
 		print_otag(h, TAG_DIV, 1, &tag);
 		return(1);
@@ -510,8 +536,8 @@ man_PP_pre(MAN_ARGS)
 
 	if (MAN_HEAD == n->type)
 		return(0);
-	else if (MAN_BODY == n->type && n->prev)
-		print_otag(h, TAG_P, 0, NULL);
+	else if (MAN_BLOCK == n->type)
+		print_bvspace(h, n);
 
 	return(1);
 }
@@ -559,7 +585,7 @@ man_IP_pre(MAN_ARGS)
 	}
 
 	if (MAN_BLOCK == n->type) {
-		print_otag(h, TAG_P, 0, NULL);
+		print_bvspace(h, n);
 		print_otag(h, TAG_TABLE, 0, NULL);
 		bufinit(h);
 		bufcat_su(h, "width", &su);
@@ -610,7 +636,7 @@ man_HP_pre(MAN_ARGS)
 		print_otag(h, TAG_TD, 0, NULL);
 		return(0);
 	} else if (MAN_BLOCK == n->type) {
-		print_otag(h, TAG_P, 0, NULL);
+		print_bvspace(h, n);
 		print_otag(h, TAG_TABLE, 0, NULL);
 		bufcat_su(h, "width", &su);
 		PAIR_STYLE_INIT(&tag, h);

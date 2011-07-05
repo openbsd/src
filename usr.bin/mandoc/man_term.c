@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.68 2011/05/29 21:22:18 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.69 2011/07/05 04:12:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -177,7 +177,7 @@ a2height(const struct termp *p, const char *cp)
 	struct roffsu	 su;
 
 	if ( ! a2roffsu(cp, &su, SCALE_VS))
-		SCALE_VS_INIT(&su, term_strlen(p, cp));
+		SCALE_VS_INIT(&su, atoi(cp));
 
 	return(term_vspan(p, &su));
 }
@@ -194,26 +194,30 @@ a2width(const struct termp *p, const char *cp)
 	return((int)term_hspan(p, &su));
 }
 
-
+/*
+ * Printing leading vertical space before a block.
+ * This is used for the paragraph macros.
+ * The rules are pretty simple, since there's very little nesting going
+ * on here.  Basically, if we're the first within another block (SS/SH),
+ * then don't emit vertical space.  If we are (RS), then do.  If not the
+ * first, print it.
+ */
 static void
 print_bvspace(struct termp *p, const struct man_node *n)
 {
+
 	term_newln(p);
 
-	if (n->body && n->body->child && MAN_TBL == n->body->child->type)
-		return;
+	if (n->body && n->body->child)
+		if (MAN_TBL == n->body->child->type)
+			return;
 
-	if (NULL == n->prev)
-		return;
-
-	if (MAN_SS == n->prev->tok)
-		return;
-	if (MAN_SH == n->prev->tok)
-		return;
+	if (MAN_ROOT == n->parent->type || MAN_RS != n->parent->tok)
+		if (NULL == n->prev)
+			return;
 
 	term_vspace(p);
 }
-
 
 /* ARGSUSED */
 static int
@@ -402,6 +406,13 @@ static int
 pre_sp(DECL_ARGS)
 {
 	size_t		 i, len;
+
+	if ((NULL == n->prev && n->parent)) {
+		if (MAN_SS == n->parent->tok)
+			return(0);
+		if (MAN_SH == n->parent->tok)
+			return(0);
+	}
 
 	switch (n->tok) {
 	case (MAN_br):
@@ -694,6 +705,7 @@ pre_SS(DECL_ARGS)
 
 	switch (n->type) {
 	case (MAN_BLOCK):
+		mt->fl &= ~MANT_LITERAL;
 		mt->lmargin = term_len(p, INDENT);
 		mt->offset = term_len(p, INDENT);
 		/* If following a prior empty `SS', no vspace. */
@@ -744,6 +756,7 @@ pre_SH(DECL_ARGS)
 
 	switch (n->type) {
 	case (MAN_BLOCK):
+		mt->fl &= ~MANT_LITERAL;
 		mt->lmargin = term_len(p, INDENT);
 		mt->offset = term_len(p, INDENT);
 		/* If following a prior empty `SH', no vspace. */
@@ -787,13 +800,12 @@ post_SH(DECL_ARGS)
 	}
 }
 
-
 /* ARGSUSED */
 static int
 pre_RS(DECL_ARGS)
 {
-	const struct man_node	*nn;
-	int			 ival;
+	int		 ival;
+	size_t		 sz;
 
 	switch (n->type) {
 	case (MAN_BLOCK):
@@ -805,40 +817,44 @@ pre_RS(DECL_ARGS)
 		break;
 	}
 
-	if (NULL == (nn = n->parent->head->child)) {
-		mt->offset = mt->lmargin + term_len(p, INDENT);
-		p->offset = mt->offset;
-		return(1);
-	}
+	sz = term_len(p, INDENT);
 
-	if ((ival = a2width(p, nn->string)) < 0)
-		return(1);
+	if (NULL != (n = n->parent->head->child))
+		if ((ival = a2width(p, n->string)) >= 0) 
+			sz = (size_t)ival;
 
-	mt->offset = term_len(p, INDENT) + (size_t)ival;
+	mt->offset += sz;
 	p->offset = mt->offset;
 
 	return(1);
 }
 
-
 /* ARGSUSED */
 static void
 post_RS(DECL_ARGS)
 {
+	int		 ival;
+	size_t		 sz;
 
 	switch (n->type) {
 	case (MAN_BLOCK):
-		mt->offset = mt->lmargin = term_len(p, INDENT);
-		break;
+		return;
 	case (MAN_HEAD):
-		break;
+		return;
 	default:
 		term_newln(p);
-		p->offset = term_len(p, INDENT);
 		break;
 	}
-}
 
+	sz = term_len(p, INDENT);
+
+	if (NULL != (n = n->parent->head->child)) 
+		if ((ival = a2width(p, n->string)) >= 0) 
+			sz = (size_t)ival;
+
+	mt->offset = mt->offset < sz ?  0 : mt->offset - sz;
+	p->offset = mt->offset;
+}
 
 static void
 print_man_node(DECL_ARGS)

@@ -1,4 +1,4 @@
-/*	$Id: man_macro.c,v 1.29 2011/04/24 16:22:02 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.30 2011/07/05 04:12:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -302,11 +302,6 @@ blk_exp(MACRO_PROT_ARGS)
 	 * nested, but we allow roff macros to be placed just about
 	 * anywhere.
 	 */
-
-	if ( ! rew_scope(MAN_BODY, m, tok))
-		return(0);
-	if ( ! rew_scope(MAN_BLOCK, m, tok))
-		return(0);
 
 	if ( ! man_block_alloc(m, line, ppos, tok))
 		return(0);
