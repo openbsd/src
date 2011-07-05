@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.135 2011/07/04 21:00:10 deraadt Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.136 2011/07/05 00:37:59 guenther Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -997,7 +997,7 @@ nfs_readlinkrpc(struct vnode *vp, struct uio *uiop, struct ucred *cred)
 	info.nmi_mb = info.nmi_mreq = nfsm_reqhead(NFSX_FH(info.nmi_v3));
 	nfsm_fhtom(&info, vp, info.nmi_v3);
 
-	info.nmi_procp = uiop->uio_procp;
+	info.nmi_procp = curproc;
 	info.nmi_cred = cred;
 	error = nfs_request(vp, NFSPROC_READLINK, &info);
 
@@ -1052,7 +1052,7 @@ nfs_readrpc(struct vnode *vp, struct uio *uiop)
 			*tl = 0;
 		}
 
-		info.nmi_procp = uiop->uio_procp;
+		info.nmi_procp = curproc;
 		info.nmi_cred = VTONFS(vp)->n_rcred;
 		error = nfs_request(vp, NFSPROC_READ, &info);
 		if (info.nmi_v3)
@@ -1136,7 +1136,7 @@ nfs_writerpc(struct vnode *vp, struct uio *uiop, int *iomode, int *must_commit)
 		}
 		nfsm_uiotombuf(&info.nmi_mb, uiop, len);
 
-		info.nmi_procp = uiop->uio_procp;
+		info.nmi_procp = curproc;
 		info.nmi_cred = VTONFS(vp)->n_wcred;
 		error = nfs_request(vp, NFSPROC_WRITE, &info);
 		if (info.nmi_v3) {
@@ -1259,6 +1259,7 @@ nfs_mknodrpc(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp,
 		txdr_nfsv2time(&vap->va_mtime, &sp->sa_mtime);
 	}
 
+	KASSERT(cnp->cn_proc == curproc);
 	info.nmi_procp = cnp->cn_proc;
 	info.nmi_cred = cnp->cn_cred;
 	error = nfs_request(dvp, NFSPROC_MKNOD, &info);
@@ -1371,6 +1372,7 @@ again:
 		txdr_nfsv2time(&vap->va_mtime, &sp->sa_mtime);
 	}
 
+	KASSERT(cnp->cn_proc == curproc);
 	info.nmi_procp = cnp->cn_proc;
 	info.nmi_cred = cnp->cn_cred;
 	error = nfs_request(dvp, NFSPROC_CREATE, &info);
@@ -1616,7 +1618,7 @@ nfs_renameit(struct vnode *sdvp, struct componentname *scnp,
     struct sillyrename *sp)
 {
 	return (nfs_renamerpc(sdvp, scnp->cn_nameptr, scnp->cn_namelen,
-		sdvp, sp->s_name, sp->s_namlen, scnp->cn_cred, scnp->cn_proc));
+		sdvp, sp->s_name, sp->s_namlen, scnp->cn_cred, curproc));
 }
 
 /*
@@ -3050,7 +3052,7 @@ nfs_writebp(struct buf *bp, int force)
 			}
 
 			bp->b_flags |= B_WRITEINPROG;
-			retv = nfs_commit(bp->b_vp, off, cnt, bp->b_proc);
+			retv = nfs_commit(bp->b_vp, off, cnt, curproc);
 			bp->b_flags &= ~B_WRITEINPROG;
 
 			if (retv == 0) {
