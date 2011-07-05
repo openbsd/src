@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.20 2003/12/10 07:22:42 itojun Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.21 2011/07/05 20:03:23 henning Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -311,7 +311,7 @@ pppread(tp, uio, flag)
 	    splx(s);
 	    return 0;
 	}
-	if (sc->sc_inq.ifq_head != NULL)
+	if (!IFQ_IS_EMPTY(sc->sc_inq))
 	    break;
 	if ((tp->t_state & TS_CARR_ON) == 0 && (tp->t_cflag & CLOCAL) == 0
 	    && (tp->t_state & TS_ISOPEN)) {
