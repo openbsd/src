@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.127 2011/06/30 16:28:05 matthew Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.128 2011/07/05 04:05:04 matthew Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -687,25 +687,30 @@ int
 bounds_check_with_label(struct buf *bp, struct disklabel *lp)
 {
 	struct partition *p = &lp->d_partitions[DISKPART(bp->b_dev)];
-	daddr64_t sz = howmany(bp->b_bcount, DEV_BSIZE);
+	daddr64_t partblocks, sz;
 
-	/* Avoid division by zero, negative offsets and negative sizes. */
-	if (lp->d_secpercyl == 0 || bp->b_blkno < 0 || sz < 0)
+	/* Avoid division by zero, negative offsets, and negative sizes. */
+	if (lp->d_secpercyl == 0 || bp->b_blkno < 0 || bp->b_bcount < 0)
 		goto bad;
 
-	/* beyond partition? */
-	if (bp->b_blkno + sz > DL_SECTOBLK(lp, DL_GETPSIZE(p))) {
-		sz = DL_SECTOBLK(lp, DL_GETPSIZE(p)) - bp->b_blkno;
-		if (sz == 0) {
-			/* If exactly at end of disk, return EOF. */
-			bp->b_resid = bp->b_bcount;
-			return (-1);
-		}
-		if (sz < 0)
-			/* If past end of disk, return EINVAL. */
-			goto bad;
+	/* Ensure transfer is a whole number of aligned sectors. */
+	if ((bp->b_blkno % DL_BLKSPERSEC(lp)) != 0 ||
+	    (bp->b_bcount % lp->d_secsize) != 0)
+		goto bad;
 
-		/* Otherwise, truncate request. */
+	/* Ensure transfer starts within partition boundary. */
+	partblocks = DL_SECTOBLK(lp, DL_GETPSIZE(p));
+	if (bp->b_blkno > partblocks)
+		goto bad;
+
+	/* If exactly at end of partition or null transfer, return EOF. */
+	if (bp->b_blkno == partblocks || bp->b_bcount == 0)
+		goto done;
+
+	/* Truncate request if it exceeds past the end of the partition. */
+	sz = bp->b_bcount >> DEV_BSHIFT;
+	if (sz > partblocks - bp->b_blkno) {
+		sz = partblocks - bp->b_blkno;
 		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 
@@ -714,9 +719,11 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp)
 	    DL_SECTOBLK(lp, lp->d_secpercyl);
 	return (1);
 
-bad:
+ bad:
 	bp->b_error = EINVAL;
 	bp->b_flags |= B_ERROR;
+ done:
+	bp->b_resid = bp->b_bcount;
 	return (-1);
 }
 
