@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.85 2011/07/04 20:35:35 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.86 2011/07/05 09:15:57 oga Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -636,7 +636,7 @@ sys_msync(struct proc *p, void *v, register_t *retval)
 	vaddr_t addr;
 	vsize_t size, pageoff;
 	vm_map_t map;
-	int rv, flags, uvmflags;
+	int flags, uvmflags;
 
 	/*
 	 * extract syscall args from the uap
@@ -666,30 +666,6 @@ sys_msync(struct proc *p, void *v, register_t *retval)
 	 */
 
 	map = &p->p_vmspace->vm_map;
-
-	/*
-	 * XXXCDC: do we really need this semantic?
-	 *
-	 * XXX Gak!  If size is zero we are supposed to sync "all modified
-	 * pages with the region containing addr".  Unfortunately, we
-	 * don't really keep track of individual mmaps so we approximate
-	 * by flushing the range of the map entry containing addr.
-	 * This can be incorrect if the region splits or is coalesced
-	 * with a neighbor.
-	 */
-	if (size == 0) {
-		vm_map_entry_t entry;
-		
-		vm_map_lock_read(map);
-		rv = uvm_map_lookup_entry(map, addr, &entry);
-		if (rv == TRUE) {
-			addr = entry->start;
-			size = entry->end - entry->start;
-		}
-		vm_map_unlock_read(map);
-		if (rv == FALSE)
-			return (EINVAL);
-	}
 
 	/*
 	 * translate MS_ flags into PGO_ flags
