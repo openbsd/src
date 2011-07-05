@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.218 2011/07/04 22:59:43 tedu Exp $
+.\"	$OpenBSD: options.4,v 1.219 2011/07/05 15:36:13 jmc Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: July 4 2011 $
+.Dd $Mdocdate: July 5 2011 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -204,7 +204,7 @@ Removes some features and some optimizations from the kernel to reduce the
 size of the resulting kernel binary.
 This option is used on some installation media and should not be used
 for general purpose kernels.
-.It Cd option VFSDEBUG
+.It Cd option VFSLCKDEBUG
 Turns on debugging for the Virtual File System interface.
 See
 .Xr vfs 9
