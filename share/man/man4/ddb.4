@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.71 2010/11/27 19:59:10 miod Exp $
+.\"	$OpenBSD: ddb.4,v 1.72 2011/07/05 07:08:25 tedu Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: November 27 2010 $
+.Dd $Mdocdate: July 5 2011 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -747,7 +747,7 @@ Prints the panic string.
 .\" --------------------
 .It Xo
 .Ic show pool
-.Op Cm /clp
+.Op Cm /p
 .Ar addr
 .Xc
 Prints the
@@ -756,10 +756,6 @@ at
 .Ar addr .
 Valid modifiers:
 .Bl -tag -width xxx -compact
-.It Cm /c
-Print the cachelist and its statistics for this pool.
-.It Cm /l
-Print the log entries for this pool.
 .It Cm /p
 Print the pagelist for this pool.
 .El
