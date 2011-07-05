@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.63 2011/07/03 19:21:48 krw Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.64 2011/07/05 17:38:54 krw Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -211,6 +211,7 @@ void
 write_bootblocks(int devfd, struct disklabel *dl)
 {
 	struct stat	sb;
+	u_int8_t	*secbuf;
 	u_int		start = 0;
 
 	/* Write patched proto bootblock(s) into the superblock. */
@@ -236,7 +237,7 @@ write_bootblocks(int devfd, struct disklabel *dl)
  			errx(1, "no OpenBSD partition");
 	}
 
-	if (start + (protosize / DEV_BSIZE) > BOOTBIOS_MAXSEC)
+	if (start + (protosize / dl->d_secsize) > BOOTBIOS_MAXSEC)
 		errx(1, "invalid location: all of /boot must be < sector %u.",
 		    BOOTBIOS_MAXSEC);
 
@@ -244,9 +245,13 @@ write_bootblocks(int devfd, struct disklabel *dl)
 		fprintf(stderr, "/boot will be written at sector %u\n", start);
 
 	if (!nowrite) {
-		if (lseek(devfd, (off_t)start * dl->d_secsize, SEEK_SET) < 0 ||
-		    write(devfd, protostore, protosize) != protosize)
+		if (lseek(devfd, (off_t)start * dl->d_secsize, SEEK_SET) < 0)
+			err(1, "seek bootstrap");
+		secbuf = calloc(1, dl->d_secsize);
+		bcopy(protostore, secbuf, protosize);
+		if (write(devfd, secbuf, dl->d_secsize) != dl->d_secsize)
 			err(1, "write bootstrap");
+		free(secbuf);
 	}
 }
 
@@ -257,6 +262,7 @@ findopenbsd(int devfd, struct disklabel *dl)
 	u_int		mbroff = DOSBBSECTOR;
 	u_int		mbr_eoff = DOSBBSECTOR; /* Offset of extended part. */
 	struct		dos_partition *dp;
+	u_int8_t	*secbuf;
 	int		i, maxebr = DOS_MAXEBR, nextebr;
 
 again:
@@ -273,9 +279,12 @@ again:
 		    (mbroff == DOSBBSECTOR) ? "master" : "extended",
 		    (mbroff == DOSBBSECTOR) ? 'M' : 'E', mbroff);
 
+	secbuf = malloc(dl->d_secsize); 
 	if (lseek(devfd, (off_t)mbroff * dl->d_secsize, SEEK_SET) < 0 ||
-	    read(devfd, &mbr, sizeof(mbr)) != sizeof(mbr))
+	    read(devfd, secbuf, dl->d_secsize) < sizeof(mbr))
 		err(4, "can't read boot record");
+	bcopy(secbuf, &mbr, sizeof(mbr));
+	free(secbuf);
 
 	if (mbr.dmbr_sign != DOSMBR_SIGNATURE)
 		errx(1, "invalid boot record signature (0x%04X) @ sector %u",
@@ -473,7 +482,8 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 	close(fd);
 
 	/* Read superblock. */
-	devread(devfd, sblock, pp->p_offset + SBLOCK, SBSIZE, "superblock");
+	devread(devfd, sblock, DL_SECTOBLK(dl, pp->p_offset) + SBLOCK,
+	    SBSIZE, "superblock");
 	fs = (struct fs *)sblock;
 
 	/* Sanity-check super-block. */
@@ -488,7 +498,8 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 
 	blk = fsbtodb(fs, ino_to_fsba(fs, statbuf.st_ino));
 
-	devread(devfd, buf, pp->p_offset + blk, fs->fs_bsize, "inode");
+	devread(devfd, buf, DL_SECTOBLK(dl, pp->p_offset) + blk,
+	    fs->fs_bsize, "inode");
 	ip = (struct ufs1_dinode *)(buf) + ino_to_fsbo(fs, statbuf.st_ino);
 
 	/*
@@ -504,8 +515,21 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 	 * (the partition boot record, a.k.a. the PBR).
 	 */
 	sym_set_value(pbr_symbols, "_fs_bsize_p", (fs->fs_bsize / 16));
-	sym_set_value(pbr_symbols, "_fs_bsize_s", (fs->fs_bsize / 512));
-	sym_set_value(pbr_symbols, "_fsbtodb", fs->fs_fsbtodb);
+	sym_set_value(pbr_symbols, "_fs_bsize_s", (fs->fs_bsize / 
+	    dl->d_secsize));
+
+	/*
+	 * fs_fsbtodb is the shift to convert fs_fsize to DEV_BSIZE. The
+	 * ino_to_fsba() return value is the number of fs_fsize units.
+	 * Calculate the shift to convert fs_fsize into physical sectors,
+	 * which are added to p_offset to get the sector address BIOS
+	 * will use.
+	 *
+	 * N.B.: ASSUMES fs_fsize is a power of 2 of d_secsize.
+	 */
+	sym_set_value(pbr_symbols, "_fsbtodb",
+	    ffs(fs->fs_fsize / dl->d_secsize) - 1);
+
 	sym_set_value(pbr_symbols, "_p_offset", pp->p_offset);
 	sym_set_value(pbr_symbols, "_inodeblk",
 	    ino_to_fsba(fs, statbuf.st_ino));
@@ -518,10 +542,11 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 		fprintf(stderr, "%s is %d blocks x %d bytes\n",
 		    boot, ndb, fs->fs_bsize);
 		fprintf(stderr, "fs block shift %u; part offset %u; "
-		    "inode block %lld, offset %ld\n",
-		    fs->fs_fsbtodb, pp->p_offset,
+		    "inode block %lld, offset %u\n",
+		    ffs(fs->fs_fsize / dl->d_secsize) - 1,
+		    pp->p_offset,
 		    ino_to_fsba(fs, statbuf.st_ino),
-		    ((((char *)ap) - buf) + INODEOFF));
+		    (unsigned int)((((char *)ap) - buf) + INODEOFF));
 	}
 
 	return 0;

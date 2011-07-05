@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.40 2009/09/30 19:03:17 weingart Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.41 2011/07/05 17:38:54 krw Exp $	*/
 
 /*
  * Copyright (c) 2003 Tobias Weingartner
@@ -91,8 +91,8 @@
  *			where we load the block to.)
  * fs_bsize_p	uint16	the filesystem block size _in paragraphs_
  *			(i.e. fs_bsize / 16)
- * fs_bsize_s	uint16	the number of 512-byte sectors in a filesystem
- *			block (i.e. fs_bsize / 512).  Directly written
+ * fs_bsize_s	uint16	the number of disk sectors in a filesystem
+ *			block (i.e. fs_bsize / d_secsize). Directly written
  *			into the LBA command block, at lba_count.
  *			XXX LIMITED TO 127 BY PHOENIX EDD SPEC.
  * fsbtodb	uint8	shift count to convert filesystem blocks to

@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.256 2011/05/24 15:27:56 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.257 2011/07/05 17:38:54 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -667,7 +667,8 @@ cylinderalign:
 		/* Everything seems ok so configure the partition. */
 		DL_SETPSIZE(pp, secs);
 		DL_SETPOFFSET(pp, chunkstart);
-		fragsize = 2048;
+		fragsize = (lp->d_secsize == DEV_BSIZE) ? 2048 :
+		    lp->d_secsize;
 		if (secs * lp->d_secsize > 128ULL * 1024 * 1024 * 1024)
 			fragsize *= 2;
 		if (secs * lp->d_secsize > 512ULL * 1024 * 1024 * 1024)
