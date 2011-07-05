@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.105 2011/07/05 16:36:15 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.106 2011/07/05 20:00:18 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -783,10 +783,7 @@ pool_do_put(struct pool *pp, void *v)
 
 	if (pp->pr_flags & PR_WANTED) {
 		pp->pr_flags &= ~PR_WANTED;
-		if (ph->ph_nmissing == 0)
-			pp->pr_nidle++;
 		wakeup(pp);
-		return;
 	}
 
 	/*
