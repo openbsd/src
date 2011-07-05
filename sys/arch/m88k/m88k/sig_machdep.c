@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.12 2011/04/18 21:44:55 guenther Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.13 2011/07/05 04:48:01 guenther Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -95,7 +95,7 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 	vaddr_t addr;
 
 	tf = p->p_md.md_tf;
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	oonstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in data space, the
@@ -104,12 +104,12 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 	 * the space with a `brk'.
 	 */
 	fsize = sizeof(struct sigframe);
-	if ((psp->ps_flags & SAS_ALTSTACK) &&
-	    (psp->ps_sigstk.ss_flags & SS_ONSTACK) == 0 &&
+	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
+	    (p->p_sigstk.ss_flags & SS_ONSTACK) == 0 &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp +
-					 psp->ps_sigstk.ss_size - fsize);
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		fp = (struct sigframe *)(p->p_sigstk.ss_sp +
+					 p->p_sigstk.ss_size - fsize);
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)(tf->tf_r[31] - fsize);
 
@@ -222,9 +222,9 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	 * Restore the user supplied information
 	 */
 	if (scp->sc_onstack & SS_ONSTACK)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = scp->sc_mask & ~sigcantmask;
 
 	/*

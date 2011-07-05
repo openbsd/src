@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ps.1,v 1.74 2011/04/18 21:44:55 guenther Exp $
+.\"	$OpenBSD: ps.1,v 1.75 2011/07/05 04:48:01 guenther Exp $
 .\"	$NetBSD: ps.1,v 1.16 1996/03/21 01:36:28 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ps.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: April 18 2011 $
+.Dd $Mdocdate: July 5 2011 $
 .Dt PS 1
 .Os
 .Sh NAME
@@ -219,7 +219,7 @@ and the thread as in the include file
 .Aq Pa sys/proc.h :
 .Bd -literal
 PS_CONTROLT       0x2 process has a controlling terminal
-P_NOCLDSTOP       0x8 no SIGCHLD when children stop
+P_SIGSUSPEND      0x8 need to restore before-suspend mask
 PS_PPWAIT        0x10 parent is waiting for child to
 		      exec/exit
 P_PROFIL         0x20 process has started profiling
@@ -234,14 +234,13 @@ P_TRACED        0x800 process is being traced
 P_WAITED       0x1000 debugging process has waited for
 		      child
 P_WEXIT        0x2000 working on exiting
-P_EXEC         0x4000 process called exec(3)
+PS_EXEC        0x4000 process called exec(3)
 P_OWEUPC       0x8000 owe process an addupc() call at next
 		      ast
 .\" the routine addupc is not documented in the man pages
 PS_ISPWAIT    0x10000 is parent of PPWAIT child
 P_SSTEP       0x20000 process needs single-step fixup
 PS_SUGIDEXEC  0x40000 last exec(3) was set[ug]id
-P_NOCLDWAIT   0x80000 let pid 1 wait for my children
 P_NOZOMBIE   0x100000 pid 1 waits for me instead of dad
 P_INEXEC     0x200000 process is doing an exec right now
 P_SYSTRACE   0x400000 process system call tracing is active

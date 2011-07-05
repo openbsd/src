@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.39 2011/04/18 21:44:55 guenther Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.40 2011/07/05 04:48:01 guenther Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -114,16 +114,16 @@ linux_sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	int oonstack;
 
 	tf = p->p_md.md_regs;
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	oonstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 
 	/*
 	 * Allocate space for the signal handler context.
 	 */
-	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
+	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct linux_sigframe *)((char *)psp->ps_sigstk.ss_sp +
-		    psp->ps_sigstk.ss_size - sizeof(struct linux_sigframe));
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		fp = (struct linux_sigframe *)((char *)p->p_sigstk.ss_sp +
+		    p->p_sigstk.ss_size - sizeof(struct linux_sigframe));
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	} else {
 		fp = (struct linux_sigframe *)tf->tf_esp - 1;
 	}
@@ -257,7 +257,7 @@ linux_sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	tf->tf_esp = context.sc_esp_at_signal;
 	tf->tf_ss = context.sc_ss;
 
-	p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = context.sc_mask & ~sigcantmask;
 
 	return (EJUSTRETURN);

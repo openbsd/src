@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.30 2011/06/05 19:41:10 deraadt Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.31 2011/07/05 04:48:01 guenther Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -460,16 +460,16 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	struct proc *p = curproc;
 	struct sigframe *fp, frame;
 	struct trapframe *tf = p->p_md.md_regs;
-	struct sigacts *ps = p->p_sigacts;
+	struct sigacts *psp = p->p_sigacts;
 	siginfo_t *sip;
 	int onstack;
 
-	onstack = ps->ps_sigstk.ss_flags & SS_ONSTACK;
-	if ((ps->ps_flags & SAS_ALTSTACK) && onstack == 0 &&
-	    (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)((vaddr_t)ps->ps_sigstk.ss_sp +
-		    ps->ps_sigstk.ss_size);
-		ps->ps_sigstk.ss_flags |= SS_ONSTACK;
+	onstack = p->p_sigstk.ss_flags & SS_ONSTACK;
+	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 && onstack == 0 &&
+	    (psp->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sigframe *)((vaddr_t)p->p_sigstk.ss_sp +
+		    p->p_sigstk.ss_size);
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (void *)p->p_md.md_regs->tf_r15;
 	--fp;
@@ -477,7 +477,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 
 	bzero(&frame, sizeof(frame));
 
-	if (ps->ps_siginfo & sigmask(sig)) {
+	if (psp->ps_siginfo & sigmask(sig)) {
 		initsiginfo(&frame.sf_si, sig, code, type, val);
 		sip = &fp->sf_si;
 	} else
@@ -597,9 +597,9 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 
 	/* Restore signal stack. */
 	if (context.sc_onstack)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
 	p->p_sigmask = context.sc_mask & ~sigcantmask;
 

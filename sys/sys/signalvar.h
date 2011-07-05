@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.21 2011/04/18 21:44:56 guenther Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.22 2011/07/05 04:48:02 guenther Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -51,20 +51,15 @@ struct	sigacts {
 	sigset_t ps_sigintr;		/* signals that interrupt syscalls */
 	sigset_t ps_sigreset;		/* signals that reset when caught */
 	sigset_t ps_siginfo;		/* signals that provide siginfo */
-	sigset_t ps_oldmask;		/* saved mask from before sigpause */
+	sigset_t ps_sigignore;		/* signals being ignored */
+	sigset_t ps_sigcatch;		/* signals being caught by user */
 	int	ps_flags;		/* signal flags, below */
-	struct	sigaltstack ps_sigstk;	/* sp & on stack state variable */
-	int	ps_sig;			/* for core dump/debugger XXX */
-	long	ps_code;		/* for core dump/debugger XXX */
-	int	ps_type;		/* for core dump/debugger XXX */
-	union sigval ps_sigval;		/* for core dump/debugger XXX */
-	sigset_t ps_usertramp;		/* SunOS compat; libc sigtramp XXX */
 	int	ps_refcnt;		/* reference count */
 };
 
 /* signal flags */
-#define	SAS_OLDMASK	0x01		/* need to restore mask before pause */
-#define	SAS_ALTSTACK	0x02		/* have alternate signal stack */
+#define	SAS_NOCLDSTOP	0x01	/* No SIGCHLD when children stop. */
+#define	SAS_NOCLDWAIT	0x02	/* No zombies if child dies */
 
 /* additional signal action values, used only temporarily/internally */
 #define	SIG_CATCH	(void (*)(int))2

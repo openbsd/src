@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc2.c,v 1.7 2011/04/18 21:44:55 guenther Exp $	*/
+/*	$OpenBSD: kvm_proc2.c,v 1.8 2011/07/05 04:48:01 guenther Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
+#include <sys/signalvar.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -113,6 +114,7 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 	struct process process, process2;
 	struct pgrp pgrp;
 	struct tty tty;
+	struct sigacts sa, *sap;
 	struct vmspace vm, *vmp;
 	struct plimit limits, *limp;
 	struct pstats pstats, *ps;
@@ -188,6 +190,16 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 		}
 		else
 			leader_pid = 0;
+		if (proc.p_sigacts) {
+			if (KREAD(kd, (u_long)proc.p_sigacts, &sa)) {
+				_kvm_err(kd, kd->program, "can't read sigacts at %x",
+				    proc.p_sigacts);
+				return (-1);
+			}
+			sap = &sa;
+		}
+		else
+			sap = NULL;
 
 		switch (op) {
 		case KERN_PROC_PID:
@@ -266,7 +278,7 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 
 #define do_copy_str(_d, _s, _l)	kvm_read(kd, (u_long)(_s), (_d), (_l)-1)
 		FILL_KPROC(&kp, do_copy_str, &proc, &process, &pcred, &ucred,
-		    &pgrp, p, proc.p_p, &sess, vmp, limp, ps);
+		    &pgrp, p, proc.p_p, &sess, vmp, limp, ps, sap);
 #undef do_copy_str
 
 		/* stuff that's too painful to generalize into the macros */

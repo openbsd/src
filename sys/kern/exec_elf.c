@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.84 2011/07/04 22:53:53 tedu Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.85 2011/07/05 04:48:02 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -1140,13 +1140,13 @@ ELFNAMEEND(coredump_notes)(struct proc *p, void *iocookie, size_t *sizep)
 
 		cpi.cpi_version = ELFCORE_PROCINFO_VERSION;
 		cpi.cpi_cpisize = sizeof(cpi);
-		cpi.cpi_signo = p->p_sigacts->ps_sig;
-		cpi.cpi_sigcode = p->p_sigacts->ps_code;
+		cpi.cpi_signo = p->p_sisig;
+		cpi.cpi_sigcode = p->p_sicode;
 
 		cpi.cpi_sigpend = p->p_siglist;
 		cpi.cpi_sigmask = p->p_sigmask;
-		cpi.cpi_sigignore = p->p_sigignore;
-		cpi.cpi_sigcatch = p->p_sigcatch;
+		cpi.cpi_sigignore = p->p_sigacts->ps_sigignore;
+		cpi.cpi_sigcatch = p->p_sigacts->ps_sigcatch;
 
 		cpi.cpi_pid = pr->ps_pid;
 		cpi.cpi_ppid = pr->ps_pptr->ps_pid;

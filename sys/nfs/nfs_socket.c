@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.100 2011/04/18 21:44:56 guenther Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.101 2011/07/05 04:48:02 guenther Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/vnode.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
+#include <sys/signalvar.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/syslog.h>
@@ -1233,7 +1234,7 @@ nfs_sigintr(struct nfsmount *nmp, struct nfsreq *rep, struct proc *p)
 	if (!(nmp->nm_flag & NFSMNT_INT))
 		return (0);
 	if (p && p->p_siglist &&
-	    (((p->p_siglist & ~p->p_sigmask) & ~p->p_sigignore) &
+	    (((p->p_siglist & ~p->p_sigmask) & ~p->p_sigacts->ps_sigignore) &
 	    NFSINT_SIGMASK))
 		return (EINTR);
 	return (0);

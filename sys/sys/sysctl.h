@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.114 2011/06/24 19:47:49 naddy Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.115 2011/07/05 04:48:02 guenther Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -464,6 +464,7 @@ struct kinfo_proc {
  *	vm - source struct vmspace
  *	lim - source struct plimits
  *	ps - source struct pstats
+ *	sa - source struct sigacts
  * There are some members that are not handled by these macros
  * because they're too painful to generalize: p_ppid, p_sid, p_tdev,
  * p_tpgid, p_tsess, p_vm_rssize, p_u[us]time_{sec,usec}, p_cpuid
@@ -471,7 +472,7 @@ struct kinfo_proc {
 
 #define PTRTOINT64(_x)	((u_int64_t)(u_long)(_x))
 
-#define FILL_KPROC(kp, copy_str, p, pr, pc, uc, pg, paddr, praddr, sess, vm, lim, ps) \
+#define FILL_KPROC(kp, copy_str, p, pr, pc, uc, pg, paddr, praddr, sess, vm, lim, ps, sa) \
 do {									\
 	memset((kp), 0, sizeof(*(kp)));					\
 									\
@@ -518,8 +519,8 @@ do {									\
 									\
 	(kp)->p_siglist = (p)->p_siglist;				\
 	(kp)->p_sigmask = (p)->p_sigmask;				\
-	(kp)->p_sigignore = (p)->p_sigignore;				\
-	(kp)->p_sigcatch = (p)->p_sigcatch;				\
+	(kp)->p_sigignore = (sa) ? (sa)->ps_sigignore : 0;		\
+	(kp)->p_sigcatch = (sa) ? (sa)->ps_sigcatch : 0;		\
 									\
 	(kp)->p_stat = (p)->p_stat;					\
 	(kp)->p_nice = (pr)->ps_nice;					\
