@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.23 2010/05/21 13:41:23 chl Exp $	*/
+/*	$OpenBSD: if.c,v 1.24 2011/07/05 05:13:04 claudio Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -269,9 +269,11 @@ get_next_msg(char *buf, char *lim, int ifindex, size_t *lenp, int filter)
 		case RTM_NEWADDR:
 		case RTM_DELADDR:
 			ifam = (struct ifa_msghdr *)rtm;
+			if (ifindex && ifam->ifam_index != ifindex)
+				continue;
 
 			/* address related checks */
-			sa = (struct sockaddr *)(ifam + 1);
+			sa = (struct sockaddr *)((char *)rtm + rtm->rtm_hdrlen);
 			get_rtaddrs(ifam->ifam_addrs, sa, rti_info);
 			if ((ifa = rti_info[RTAX_IFA]) == NULL ||
 			    (ifa->sa_family != AF_INET &&
@@ -283,11 +285,8 @@ get_next_msg(char *buf, char *lim, int ifindex, size_t *lenp, int filter)
 			     IN6_IS_ADDR_MULTICAST(&SIN6(ifa)->sin6_addr)))
 				continue;
 
-			if (ifindex && ifam->ifam_index != ifindex)
-				continue;
-
 			/* found */
-			*lenp = ifam->ifam_msglen;
+			*lenp = rtm->rtm_msglen;
 			return (char *)rtm;
 			/* NOTREACHED */
 		case RTM_IFINFO:
