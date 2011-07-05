@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.25 2011/06/22 00:16:47 ariane Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.26 2011/07/05 19:48:02 ariane Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -686,10 +686,10 @@ uvm_pmr_extract_range(struct uvm_pmemrange *pmr, struct vm_page *pg,
 	uvm_pmr_remove_size(pmr, pg);
 	if (before_sz == 0)
 		uvm_pmr_remove_addr(pmr, pg);
+	after = pg + before_sz + (end - start);
 
 	/* Add selected pages to result. */
-	for (pg_i = pg + before_sz; atop(VM_PAGE_TO_PHYS(pg_i)) < end;
-	    pg_i++) {
+	for (pg_i = pg + before_sz; pg_i != after; pg_i++) {
 		KDASSERT(pg_i->pg_flags & PQ_FREE);
 		pg_i->fpgsz = 0;
 		TAILQ_INSERT_TAIL(result, pg_i, pageq);
@@ -702,9 +702,7 @@ uvm_pmr_extract_range(struct uvm_pmemrange *pmr, struct vm_page *pg,
 	}
 
 	/* After handling. */
-	after = NULL;
 	if (after_sz > 0) {
-		after = pg + before_sz + (end - start);
 #ifdef DEBUG
 		for (i = 0; i < after_sz; i++) {
 			KASSERT(!uvm_pmr_isfree(after + i));
@@ -717,7 +715,7 @@ uvm_pmr_extract_range(struct uvm_pmemrange *pmr, struct vm_page *pg,
 	}
 
 	uvm_pmr_assertvalid(pmr);
-	return after;
+	return (after_sz > 0 ? after : NULL);
 }
 
 /*
