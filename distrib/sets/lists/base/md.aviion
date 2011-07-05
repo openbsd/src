@@ -1834,7 +1834,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/fifofs/fifo.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/procfs
 ./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/procfs/procfs.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/sys/specdev.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mpool.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/msdosfs
 ./usr/libdata/perl5/site_perl/m88k-openbsd/msdosfs/bootsect.ph
@@ -2309,6 +2308,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/socket.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/socketvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/sockio.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sys/specdev.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/stat.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/statvfs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/stdarg.ph

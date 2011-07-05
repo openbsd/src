@@ -1064,7 +1064,6 @@
 ./usr/include/miscfs/fifofs/fifo.h
 ./usr/include/miscfs/procfs
 ./usr/include/miscfs/procfs/procfs.h
-./usr/include/sys/specdev.h
 ./usr/include/mpool.h
 ./usr/include/msdosfs
 ./usr/include/msdosfs/bootsect.h
@@ -1554,6 +1553,7 @@
 ./usr/include/sys/socket.h
 ./usr/include/sys/socketvar.h
 ./usr/include/sys/sockio.h
+./usr/include/sys/specdev.h
 ./usr/include/sys/stat.h
 ./usr/include/sys/statvfs.h
 ./usr/include/sys/stdarg.h
