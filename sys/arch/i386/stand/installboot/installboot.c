@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.64 2011/07/05 17:38:54 krw Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.65 2011/07/05 18:34:10 krw Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -229,9 +229,11 @@ write_bootblocks(int devfd, struct disklabel *dl)
 		sync(); sleep(1);
 	}
 
-	if (dl->d_type != 0 && dl->d_type != DTYPE_FLOPPY &&
-	    dl->d_type != DTYPE_VND) {
-		/* Find OpenBSD partition. */
+	/*
+	 * Find OpenBSD partition. Floppies are special, getting an
+	 * everything-in-one /boot starting at sector 0.
+	 */
+	if (dl->d_type != DTYPE_FLOPPY) {
 		start = findopenbsd(devfd, dl);
 		if (start == (u_int)-1)
  			errx(1, "no OpenBSD partition");
