@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wcsdup.3,v 1.1 2011/07/04 04:37:34 nicm Exp $
+.\"	$OpenBSD: wcsdup.3,v 1.2 2011/07/05 19:01:31 nicm Exp $
 .\"	$NetBSD: wcsdup.3,v 1.3 2010/12/16 17:42:28 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     from: @(#)strdup.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: July 4 2011 $
+.Dd $Mdocdate: July 5 2011 $
 .Dt WCSDUP 3
 .Os
 .Sh NAME
@@ -63,7 +63,7 @@ to an allocated area of memory containing the nul-terminated string
 .Bd -literal -offset indent
 wchar_t *p;
 
-if (p = wcsdup(L"foobar"), p == NULL) {
+if ((p = wcsdup(L"foobar")) == NULL) {
 	fprintf(stderr, "Out of memory.\en");
 	exit(1);
 }
