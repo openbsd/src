@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.47 2010/10/18 17:11:27 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.48 2011/07/05 00:15:03 drahn Exp $
 #	$NetBSD: Makefile,v 1.35 1996/04/03 21:20:52 chuck Exp $
 
 .include <bsd.own.mk>
@@ -15,7 +15,12 @@ SUBDIR+=	../egcs/gcc
 .  endif
 .endif
 
-SUBDIR+=	cxxfilt cvs lynx binutils
+SUBDIR+=	cxxfilt cvs lynx
+.if make(obj)
+SUBDIR+=	binutils binutils-2.17
+.else
+SUBDIR+=	${BINUTILS_VERSION}
+.endif
 
 # most ports use binutils gas and ld, some do not (yet).
 .if ${ELF_TOOLCHAIN:L} == "no"

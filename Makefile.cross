@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.42 2011/06/16 10:09:51 mpi Exp $
+# $OpenBSD: Makefile.cross,v 1.43 2011/07/05 00:15:03 drahn Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -73,20 +73,40 @@ CROSSBINUTILS=	${CROSSDIR}/.binutils_done
 CROSSGCC=	${CROSSDIR}/.gcc_done
 #NO_CROSS=	isakmpd keynote ssh
 
-# bsd.own.mk can't do it for us
-.if ${TARGET_ARCH} == "m68k" || ${TARGET_ARCH} == "m88k" || \
-    ${TARGET_ARCH} == "sparc" || ${TARGET_ARCH} == "vax"
+GCC2_ARCH=m68k m88k sparc vax
+GCC4_ARCH=amd64 hppa i386 mips64* powerpc sparc64
+BINUTILS217_ARCH=ia64
+OLD_BINUTILS_ARCH=m68k m88k vax
+
+.for _arch in ${TARGET_ARCH}
+.if !empty(GCC2_ARCH:M${_arch})
+USE_GCC3?=no
 TARGET_USE_GCC3=No
-COMPILER_VERSION=gcc2
-.elif ${TARGET_ARCH} == "amd64" || ${TARGET_ARCH} == "hppa" || \
-    ${TARGET_ARCH} == "i386" || ${TARGET_ARCH:Mmips64*} || \
-    ${TARGET_ARCH} == "powerpc" || ${TARGET_ARCH} == "sparc64"
+COMPILER_VERSION?=gcc2
+.elif !empty(GCC4_ARCH:M${_arch})
 TARGET_USE_GCC4=Yes
-COMPILER_VERSION=gcc4
+COMPILER_VERSION?=gcc4
 .else
 TARGET_USE_GCC3=Yes
-COMPILER_VERSION=gcc3
+COMPILER_VERSION?=gcc3
 .endif
+
+.if !empty(BINUTILS217_ARCH:M${_arch})
+BINUTILS_VERSION=binutils-2.17
+.else
+BINUTILS_VERSION=binutils
+.endif
+
+.if !empty(OLD_BINUTILS_ARCH:M${_arch})
+NEW_BINUTILS?=	No
+BINUTILS=	ar as ld nm ranlib objcopy objdump strings strip
+.else
+NEW_BINUTILS?=	Yes
+BINUTILS=	ar as gasp ld nm objcopy objdump ranlib readelf size \
+		strings strip
+.endif
+BINUTILS_DIR=gnu/usr.bin/${BINUTILS_VERSION}
+.endfor
 
 # no libcrypto.... these won't build
 #NO_CROSS+=	dc login_krb5 login_krb5-or-pwd passwd ppp tcpdump telnet \
@@ -98,7 +118,7 @@ NO_CROSS+=afs
 NO_CROSS+=bind
 NO_CROSS+=httpd
 NO_CROSS+=microcode
-NO_CROSS+=groff lynx binutils perl texinfo gcc cvs
+NO_CROSS+=groff lynx binutils binutils-2.17 perl texinfo gcc cvs
 NO_CROSS+=nsd
 
 cross-dirs:	${CROSSDIRS}
@@ -161,18 +181,8 @@ ${CROSSINCLUDES}:	${CROSSOBJ}
 	    ${MAKE} DESTDIR=${CROSSDIR} includes)
 	@touch ${CROSSINCLUDES}
 
-.if (${TARGET_ARCH} == "m68k" || ${TARGET_ARCH} == "m88k" || \
-     ${TARGET_ARCH} == "vax")
-BINUTILS=	ar as ld nm ranlib objcopy objdump strings strip
-NEW_BINUTILS?=	No
-.else
-BINUTILS=	ar as gasp ld nm objcopy objdump ranlib readelf size \
-		strings strip
-NEW_BINUTILS?=	Yes
-.endif
-
 ${CROSSBINUTILS}:	${CROSSINCLUDES}
-	(cd ${.CURDIR}/gnu/usr.bin/binutils; \
+	(cd ${.CURDIR}/${BINUTILS_DIR}; \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    USING_NEW_BINUTILS=${NEW_BINUTILS} \
 	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \

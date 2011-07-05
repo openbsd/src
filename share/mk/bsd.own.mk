@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.106 2011/07/04 23:37:32 drahn Exp $
+#	$OpenBSD: bsd.own.mk,v 1.107 2011/07/05 00:15:03 drahn Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -33,6 +33,7 @@ ELF_TOOLCHAIN?=	yes
 
 GCC2_ARCH=m68k m88k sparc vax
 GCC4_ARCH=amd64 hppa i386 mips64* powerpc sparc64
+BINUTILS217_ARCH=ia64
 
 .for _arch in ${MACHINE_ARCH}
 .if !empty(GCC2_ARCH:M${_arch})
@@ -43,6 +44,12 @@ COMPILER_VERSION?=gcc4
 .else
 USE_GCC3?=yes
 COMPILER_VERSION?=gcc3
+.endif
+
+.if !empty(BINUTILS217_ARCH:M${_arch})
+BINUTILS_VERSION=binutils-2.17
+.else
+BINUTILS_VERSION=binutils
 .endif
 .endfor
 
