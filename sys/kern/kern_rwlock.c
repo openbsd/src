@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.16 2010/09/24 13:21:30 matthew Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.17 2011/07/05 03:58:22 weingart Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -265,7 +265,7 @@ rw_assert_wrlock(struct rwlock *rwl)
 	if (!(rwl->rwl_owner & RWLOCK_WRLOCK))
 		panic("%s: lock not held", rwl->rwl_name);
 
-	if (RWLOCK_OWNER(rwl) != (struct proc *)((long)curproc & ~RWLOCK_MASK))
+	if (RWLOCK_OWNER(rwl) != (struct proc *)RW_PROC(curproc))
 		panic("%s: lock not held by this process", rwl->rwl_name);
 }
 
