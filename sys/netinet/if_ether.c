@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.89 2011/06/27 13:01:51 camield Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.90 2011/07/05 21:40:38 dhill Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -113,8 +113,7 @@ int	db_show_radix_node(struct radix_node *, void *, u_int);
  */
 /* ARGSUSED */
 void
-arptimer(arg)
-	void *arg;
+arptimer(void *arg)
 {
 	struct timeout *to = (struct timeout *)arg;
 	int s;
@@ -137,10 +136,7 @@ arptimer(arg)
  * Parallel to llc_rtrequest.
  */
 void
-arp_rtrequest(req, rt, info)
-	int req;
-	struct rtentry *rt;
-	struct rt_addrinfo *info;
+arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
@@ -325,10 +321,7 @@ arp_rtrequest(req, rt, info)
  *	- arp header source ethernet address
  */
 void
-arprequest(ifp, sip, tip, enaddr)
-	struct ifnet *ifp;
-	u_int32_t *sip, *tip;
-	u_int8_t *enaddr;
+arprequest(struct ifnet *ifp, u_int32_t *sip, u_int32_t *tip, u_int8_t *enaddr)
 {
 	struct mbuf *m;
 	struct ether_header *eh;
@@ -374,12 +367,8 @@ arprequest(ifp, sip, tip, enaddr)
  * taken over here, either now or for later transmission.
  */
 int
-arpresolve(ac, rt, m, dst, desten)
-	struct arpcom *ac;
-	struct rtentry *rt;
-	struct mbuf *m;
-	struct sockaddr *dst;
-	u_char *desten;
+arpresolve(struct arpcom *ac, struct rtentry *rt, struct mbuf *m,
+    struct sockaddr *dst, u_char *desten)
 {
 	struct llinfo_arp *la;
 	struct sockaddr_dl *sdl;
@@ -509,7 +498,7 @@ arpresolve(ac, rt, m, dst, desten)
  * then the protocol-specific routine is called.
  */
 void
-arpintr()
+arpintr(void)
 {
 	struct mbuf *m;
 	struct arphdr *ar;
@@ -565,8 +554,7 @@ arpintr()
  * but formerly didn't normally send requests.
  */
 void
-in_arpinput(m)
-	struct mbuf *m;
+in_arpinput(struct mbuf *m)
 {
 	struct ether_arp *ea;
 	struct arpcom *ac = (struct arpcom *)m->m_pkthdr.rcvif;
@@ -789,8 +777,7 @@ out:
  * Free an arp entry.
  */
 void
-arptfree(la)
-	struct llinfo_arp *la;
+arptfree(struct llinfo_arp *la)
 {
 	struct rtentry *rt = la->la_rt;
 	struct sockaddr_dl *sdl;
@@ -820,10 +807,7 @@ arptfree(la)
  * Lookup or enter a new address in arptab.
  */
 struct llinfo_arp *
-arplookup(addr, create, proxy, tableid)
-	u_int32_t addr;
-	int create, proxy;
-	u_int tableid;
+arplookup(u_int32_t addr, int create, int proxy, u_int tableid)
 {
 	struct rtentry *rt;
 	static struct sockaddr_inarp sin;
@@ -858,9 +842,7 @@ arplookup(addr, create, proxy, tableid)
 }
 
 void
-arp_ifinit(ac, ifa)
-	struct arpcom *ac;
-	struct ifaddr *ifa;
+arp_ifinit(struct arpcom *ac, struct ifaddr *ifa)
 {
 
 	/* Warn the user if another station has this IP address. */
@@ -879,8 +861,7 @@ arp_ifinit(ac, ifa)
  * then the protocol-specific routine is called.
  */
 void
-revarpinput(m)
-	struct mbuf *m;
+revarpinput(struct mbuf *m)
 {
 	struct arphdr *ar;
 
@@ -917,8 +898,7 @@ out:
  * Note: also supports ARP via RARP packets, per the RFC.
  */
 void
-in_revarpinput(m)
-	struct mbuf *m;
+in_revarpinput(struct mbuf *m)
 {
 	struct ifnet *ifp;
 	struct ether_arp *ar;
@@ -962,8 +942,7 @@ out:
  * The request should be RFC 903-compliant.
  */
 void
-revarprequest(ifp)
-	struct ifnet *ifp;
+revarprequest(struct ifnet *ifp)
 {
 	struct sockaddr sa;
 	struct mbuf *m;
@@ -1005,10 +984,8 @@ revarprequest(ifp)
  * Timeout if no response is received.
  */
 int
-revarpwhoarewe(ifp, serv_in, clnt_in)
-	struct ifnet *ifp;
-	struct in_addr *serv_in;
-	struct in_addr *clnt_in;
+revarpwhoarewe(struct ifnet *ifp, struct in_addr *serv_in,
+    struct in_addr *clnt_in)
 {
 	int result, count = 20;
 
@@ -1034,9 +1011,7 @@ revarpwhoarewe(ifp, serv_in, clnt_in)
 
 /* For compatibility: only saves interface address. */
 int
-revarpwhoami(in, ifp)
-	struct in_addr *in;
-	struct ifnet *ifp;
+revarpwhoami(struct in_addr *in, struct ifnet *ifp)
 {
 	struct in_addr server;
 	return (revarpwhoarewe(ifp, &server, in));
@@ -1050,8 +1025,7 @@ revarpwhoami(in, ifp)
 #include <ddb/db_output.h>
 
 void
-db_print_sa(sa)
-	struct sockaddr *sa;
+db_print_sa(struct sockaddr *sa)
 {
 	int len;
 	u_char *p;
@@ -1075,8 +1049,7 @@ db_print_sa(sa)
 }
 
 void
-db_print_ifa(ifa)
-	struct ifaddr *ifa;
+db_print_ifa(struct ifaddr *ifa)
 {
 	if (ifa == 0)
 		return;
@@ -1091,8 +1064,7 @@ db_print_ifa(ifa)
 }
 
 void
-db_print_llinfo(li)
-	caddr_t li;
+db_print_llinfo(caddr_t li)
 {
 	struct llinfo_arp *la;
 

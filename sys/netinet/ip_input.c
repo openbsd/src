@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.193 2011/07/04 06:54:49 claudio Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.194 2011/07/05 21:40:38 dhill Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -182,7 +182,7 @@ int ip_weadvertise(u_int32_t, u_int);
  * All protocols not implemented in kernel go to raw IP protocol handler.
  */
 void
-ip_init()
+ip_init(void)
 {
 	struct protosw *pr;
 	int i;
@@ -228,7 +228,7 @@ struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
 struct	route ipforward_rt;
 
 void
-ipintr()
+ipintr(void)
 {
 	struct mbuf *m;
 	int s;
@@ -256,8 +256,7 @@ ipintr()
  * try to reassemble.  Process options.  Pass to next level.
  */
 void
-ipv4_input(m)
-	struct mbuf *m;
+ipv4_input(struct mbuf *m)
 {
 	struct ip *ip;
 	struct ipq *fp;
@@ -761,9 +760,7 @@ in_iawithaddr(struct in_addr ina, u_int rdomain)
  * is given as fp; otherwise have to make a chain.
  */
 struct mbuf *
-ip_reass(ipqe, fp)
-	struct ipqent *ipqe;
-	struct ipq *fp;
+ip_reass(struct ipqent *ipqe, struct ipq *fp)
 {
 	struct mbuf *m = ipqe->ipqe_m;
 	struct ipqent *nq, *p, *q;
@@ -946,8 +943,7 @@ dropfrag:
  * associated datagrams.
  */
 void
-ip_freef(fp)
-	struct ipq *fp;
+ip_freef(struct ipq *fp)
 {
 	struct ipqent *q, *p;
 
@@ -969,7 +965,7 @@ ip_freef(fp)
  * clear the forwarding cache, there might be a better route.
  */
 void
-ip_slowtimo()
+ip_slowtimo(void)
 {
 	struct ipq *fp, *nfp;
 	int s = splsoftnet();
@@ -992,9 +988,8 @@ ip_slowtimo()
  * Drain off all datagram fragments.
  */
 void
-ip_drain()
+ip_drain(void)
 {
-
 	while (!LIST_EMPTY(&ipq)) {
 		ipstat.ips_fragdropped++;
 		ip_freef(LIST_FIRST(&ipq));
@@ -1005,7 +1000,7 @@ ip_drain()
  * Flush a bunch of datagram fragments, till we are down to 75%.
  */
 void
-ip_flush()
+ip_flush(void)
 {
 	int max = 50;
 
@@ -1024,8 +1019,7 @@ ip_flush()
  * 0 if the packet should be processed further.
  */
 int
-ip_dooptions(m)
-	struct mbuf *m;
+ip_dooptions(struct mbuf *m)
 {
 	struct ip *ip = mtod(m, struct ip *);
 	u_char *cp;
@@ -1273,9 +1267,7 @@ ip_rtaddr(struct in_addr dst, u_int rtableid)
  * to be picked up later by ip_srcroute if the receiver is interested.
  */
 void
-save_rte(option, dst)
-	u_char *option;
-	struct in_addr dst;
+save_rte(u_char *option, struct in_addr dst)
 {
 	unsigned olen;
 
@@ -1344,7 +1336,7 @@ ip_weadvertise(u_int32_t addr, u_int rtableid)
  * The first hop is placed before the options, will be removed later.
  */
 struct mbuf *
-ip_srcroute()
+ip_srcroute(void)
 {
 	struct in_addr *p, *q;
 	struct mbuf *m;
@@ -1415,9 +1407,7 @@ ip_srcroute()
  * XXX should be deleted; last arg currently ignored.
  */
 void
-ip_stripoptions(m, mopt)
-	struct mbuf *m;
-	struct mbuf *mopt;
+ip_stripoptions(struct mbuf *m, struct mbuf *mopt)
 {
 	int i;
 	struct ip *ip = mtod(m, struct ip *);
@@ -1458,9 +1448,7 @@ int inetctlerrmap[PRC_NCMDS] = {
  * via a source route.
  */
 void
-ip_forward(m, srcrt)
-	struct mbuf *m;
-	int srcrt;
+ip_forward(struct mbuf *m, int srcrt)
 {
 	struct ip *ip = mtod(m, struct ip *);
 	struct sockaddr_in *sin;
@@ -1634,13 +1622,8 @@ ip_forward(m, srcrt)
 }
 
 int
-ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen) 
 {
 	int error;
 #ifdef MROUTING

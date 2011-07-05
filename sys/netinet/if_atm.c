@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atm.c,v 1.16 2010/05/07 13:33:16 claudio Exp $       */
+/*      $OpenBSD: if_atm.c,v 1.17 2011/07/05 21:40:38 dhill Exp $       */
 
 /*
  *
@@ -76,10 +76,7 @@
  */
 
 void
-atm_rtrequest(req, rt, info)
-	int req;
-	struct rtentry *rt;
-	struct rt_addrinfo *info;
+atm_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct atm_pseudoioctl api;
@@ -226,11 +223,8 @@ failed:
  */
 
 int
-atmresolve(rt, m, dst, desten)
-	struct rtentry *rt;
-	struct mbuf *m;
-	struct sockaddr *dst;
-	struct atm_pseudohdr *desten;	/* OUT */
+atmresolve(struct rtentry *rt, struct mbuf *m, struct sockaddr *dst,
+    struct atm_pseudohdr *desten)
 {
 	struct sockaddr_dl *sdl;
 
