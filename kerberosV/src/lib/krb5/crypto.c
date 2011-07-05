@@ -505,7 +505,7 @@ DES3_random_to_key(krb5_context context,
     DES_cblock *k;
     int i, j;
 
-    memset(x, 0, sizeof(x));
+    memset(key->keyvalue.data, 0, key->keyvalue.length);
     for (i = 0; i < 3; ++i) {
 	unsigned char foo;
 	for (j = 0; j < 7; ++j) {
