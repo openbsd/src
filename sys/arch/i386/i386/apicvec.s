@@ -1,4 +1,4 @@
-/* $OpenBSD: apicvec.s,v 1.23 2011/04/16 00:40:58 deraadt Exp $ */
+/* $OpenBSD: apicvec.s,v 1.24 2011/07/05 17:11:07 oga Exp $ */
 /* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */
 
 /*-
@@ -170,16 +170,10 @@ XINTR(ltimer):
 	ioapic_asm_ack()
 	sti
 	incl	CPUVAR(IDEPTH)
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(i386_softintlock)
-#endif
 	movl	%esp,%eax
 	pushl	%eax
 	call	_C_LABEL(lapic_clockintr)
 	addl	$4,%esp
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(i386_softintunlock)
-#endif
 	decl	CPUVAR(IDEPTH)
 	jmp	_C_LABEL(Xdoreti)
 

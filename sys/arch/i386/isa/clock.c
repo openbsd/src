@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.45 2010/08/11 21:22:44 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.46 2011/07/05 17:11:07 oga Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -390,7 +390,7 @@ i8254_initclocks(void)
 	/* When using i8254 for clock, we also use the rtc for profclock */
 	(void)isa_intr_establish(NULL, 0, IST_PULSE, IPL_CLOCK,
 	    clockintr, 0, "clock");
-	(void)isa_intr_establish(NULL, 8, IST_PULSE, IPL_CLOCK,
+	(void)isa_intr_establish(NULL, 8, IST_PULSE, IPL_STATCLOCK,
 	    rtcintr, 0, "rtc");
 
 	rtcstart();			/* start the mc146818 clock */

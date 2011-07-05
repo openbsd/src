@@ -1,4 +1,4 @@
-/*	$OpenBSD: intrdefs.h,v 1.12 2010/05/22 21:29:55 deraadt Exp $	*/
+/*	$OpenBSD: intrdefs.h,v 1.13 2011/07/05 17:11:07 oga Exp $	*/
 /*	$NetBSD: intrdefs.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 #ifndef _I386_INTRDEFS_H
@@ -65,10 +65,10 @@
 #define	IPL_VM		MAKEIPL(7)	/* memory allocation */
 #define	IPL_AUDIO	MAKEIPL(8)	/* audio */
 #define	IPL_CLOCK	MAKEIPL(9)	/* clock */
-#define	IPL_STATCLOCK	MAKEIPL(10)	/* statclock */
-#define	IPL_SCHED	IPL_STATCLOCK
-#define	IPL_HIGH	MAKEIPL(11)	/* everything */
-#define	IPL_IPI		MAKEIPL(12)	/* interprocessor interrupt */
+#define	IPL_STATCLOCK	IPL_CLOCK	/* statclock */
+#define	IPL_SCHED	IPL_CLOCK
+#define	IPL_HIGH	MAKEIPL(10)	/* everything */
+#define	IPL_IPI		MAKEIPL(11)	/* interprocessor interrupt */
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.18 2011/04/08 08:55:01 jsg Exp $	*/
+/*	$OpenBSD: clock.c,v 1.19 2011/07/05 17:11:07 oga Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -315,7 +315,7 @@ i8254_initclocks(void)
 
 	isa_intr_establish(NULL, 0, IST_PULSE, IPL_CLOCK, clockintr,
 	    0, "clock");
-	isa_intr_establish(NULL, 8, IST_PULSE, IPL_CLOCK, rtcintr,
+	isa_intr_establish(NULL, 8, IST_PULSE, IPL_STATCLOCK, rtcintr,
 	    0, "rtc");
 
 	rtcstart();			/* start the mc146818 clock */
