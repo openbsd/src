@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.52 2011/06/28 10:15:38 thib Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.53 2011/07/05 23:06:43 claudio Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -389,16 +389,26 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct proc *p)
 	struct vattr vattr;
 	int error, namelen;
 	struct nameidata nd;
-	char buf[MLEN];
 
 	if (unp->unp_vnode != NULL)
 		return (EINVAL);
 	namelen = soun->sun_len - offsetof(struct sockaddr_un, sun_path);
-	if (namelen <= 0 || namelen >= MLEN)
+	if (namelen <= 0 || namelen > sizeof(soun->sun_path))
 		return EINVAL;
-	strncpy(buf, soun->sun_path, namelen);
-	buf[namelen] = 0;       /* null-terminate the string */
-	NDINIT(&nd, CREATE, NOFOLLOW | LOCKPARENT, UIO_SYSSPACE, buf, p);
+	if (namelen == sizeof(soun->sun_path) &&
+	    soun->sun_path[namelen - 1] != '\0')
+		return EINVAL;
+
+	unp->unp_addr = m_getclr(M_WAITOK, MT_SONAME);
+	unp->unp_addr->m_len = soun->sun_len;
+	memcpy(mtod(unp->unp_addr, caddr_t *), soun,
+	    offsetof(struct sockaddr_un, sun_path));
+	strncpy(mtod(unp->unp_addr, caddr_t) +
+	    offsetof(struct sockaddr_un, sun_path), soun->sun_path, namelen);
+
+	soun = mtod(unp->unp_addr, struct sockaddr_un *);
+	NDINIT(&nd, CREATE, NOFOLLOW | LOCKPARENT, UIO_SYSSPACE,
+	    soun->sun_path, p);
 /* SHOULD BE ABLE TO ADOPT EXISTING AND wakeup() ALA FIFO's */
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -421,7 +431,6 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct proc *p)
 	vp = nd.ni_vp;
 	vp->v_socket = unp->unp_socket;
 	unp->unp_vnode = vp;
-	unp->unp_addr = m_copy(nam, 0, (int)M_COPYALL);
 	unp->unp_connid.uid = p->p_ucred->cr_uid;
 	unp->unp_connid.gid = p->p_ucred->cr_gid;
 	unp->unp_connid.pid = p->p_p->ps_mainproc->p_pid;
@@ -440,12 +449,13 @@ unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, soun->sun_path, p);
-	if (nam->m_data + nam->m_len == &nam->m_dat[MLEN]) {	/* XXX */
-		if (*(mtod(nam, caddr_t) + nam->m_len - 1) != 0)
+	if (nam->m_len >= sizeof(struct sockaddr_un)) {
+		if (nam->m_len > sizeof(struct sockaddr_un) ||
+		    *(mtod(nam, caddr_t) + nam->m_len - 1) != 0)
 			return (EMSGSIZE);
 	} else
 		*(mtod(nam, caddr_t) + nam->m_len) = 0;
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, soun->sun_path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
