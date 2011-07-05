@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.136 2011/07/04 22:53:53 tedu Exp $	*/
+/*	$OpenBSD: locore.s,v 1.137 2011/07/05 00:30:10 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1506,26 +1506,10 @@ calltrap:
 #endif /* DIAGNOSTIC */
 
 /*
- * Old call gate entry for syscall
- */
-IDTVEC(osyscall)
-	/* Set eflags in trap frame. */
-	pushfl
-	popl	8(%esp)
-	/* Turn off trace flag and nested task. */
-	pushfl
-	andb	$~((PSL_T|PSL_NT)>>8),1(%esp)
-	popfl
-	pushl	$7		# size of instruction for restart
-	jmp	syscall1
-IDTVEC(osyscall_end)
-
-/*
  * Trap gate entry for syscall
  */
 IDTVEC(syscall)
 	pushl	$2		# size of instruction for restart
-syscall1:
 	pushl	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
 	pushl	%esp

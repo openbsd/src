@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.96 2011/04/05 12:50:15 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.97 2011/07/05 00:30:10 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -184,24 +184,11 @@ trap(struct trapframe *frame)
 	switch (type) {
 
 	/* trace trap */
-	case T_TRCTRAP: {
-#if defined(DDB) || defined(KGDB)
-		/* Make sure nobody is single stepping into kernel land.
-		 * The syscall has to turn off the trace bit itself.  The
-		 * easiest way, is to simply not call the debugger, until
-		 * we are through the problematic "osyscall" stub.  This
-		 * is a hack, but it does seem to work.
-		 */
-		extern int Xosyscall, Xosyscall_end;
-
-		if (frame->tf_eip >= (int)&Xosyscall &&
-		    frame->tf_eip <= (int)&Xosyscall_end)
-			return;
-#else
-		return; /* Just return if no DDB */
+	case T_TRCTRAP:
+#if !(defined(DDB) || defined(KGDB))
+		return;	/* Just return if no kernel debugger */
 #endif
-	}
-	/* FALLTHROUGH */
+		/* FALLTHROUGH */
 
 	default:
 	we_re_toast:

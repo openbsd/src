@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.503 2011/06/26 22:39:59 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.504 2011/07/05 00:30:10 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2816,7 +2816,7 @@ extern int IDTVEC(div), IDTVEC(dbg), IDTVEC(nmi), IDTVEC(bpt), IDTVEC(ofl),
     IDTVEC(bnd), IDTVEC(ill), IDTVEC(dna), IDTVEC(dble), IDTVEC(fpusegm),
     IDTVEC(tss), IDTVEC(missing), IDTVEC(stk), IDTVEC(prot), IDTVEC(page),
     IDTVEC(rsvd), IDTVEC(fpu), IDTVEC(align), IDTVEC(syscall), IDTVEC(mchk),
-    IDTVEC(osyscall), IDTVEC(simd);
+    IDTVEC(simd);
 
 extern int IDTVEC(f00f_redirect);
 
