@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.105 2011/04/06 15:33:15 dlg Exp $	*/
+/*	$OpenBSD: ips.c,v 1.106 2011/07/05 22:40:57 matthew Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -743,7 +743,6 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	    scsiprint);
 
 	/* For each channel attach SCSI pass-through bus */
-	bzero(&saa, sizeof(saa));
 	for (i = 0; i < IPS_MAXCHANS; i++) {
 		struct ips_pt *pt;
 		struct scsi_link *link;
@@ -781,6 +780,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 		link->adapter_softc = pt;
 		link->pool = &sc->sc_iopool;
 
+		bzero(&saa, sizeof(saa));
 		saa.saa_sc_link = link;
 		config_found(self, &saa, scsiprint);
 	}
