@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fseek.3,v 1.11 2007/05/31 19:19:31 jmc Exp $
+.\"	$OpenBSD: fseek.3,v 1.12 2011/07/05 15:30:10 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 5 2011 $
 .Dt FSEEK 3
 .Os
 .Sh NAME
@@ -148,6 +148,7 @@ Upon successful completion,
 .Fn fgetpos ,
 .Fn fseek ,
 .Fn fseeko ,
+and
 .Fn fsetpos
 return 0 and
 .Fn ftell
@@ -155,10 +156,16 @@ and
 .Fn ftello
 return the current offset.
 Otherwise,
-.Fn fseek
+.Fn fseek ,
+.Fn fseeko ,
+.Fn ftell ,
 and
-.Fn fseeko
-return \-1 and the others return a non-zero value and the global variable
+.Fn ftello
+return \-1 and
+.Fn fgetpos
+and
+.Fn fsetpos
+return a non-zero value and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
