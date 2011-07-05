@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.107 2011/06/21 06:03:14 matthew Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.108 2011/07/05 03:47:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -886,6 +886,12 @@ atascsi_disk_write_same_16(struct scsi_xfer *xs)
 		return;
 	}
 
+	if (xs->datalen < 512) {
+		/* generate sense data */
+		atascsi_done(xs, XS_DRIVER_STUFFUP);
+		return;
+	}
+
 	lba = _8btol(cdb->lba);
 	length = _4btol(cdb->length);
 
@@ -896,7 +902,7 @@ atascsi_disk_write_same_16(struct scsi_xfer *xs)
 	}
 
 	xa->data = xs->data;
-	xa->datalen = xs->datalen;
+	xa->datalen = 512;
 	xa->flags = ATA_F_WRITE;
 	xa->pmp_port = ap->ap_pmp_port;
 	if (xs->flags & SCSI_POLL)
@@ -914,6 +920,7 @@ atascsi_disk_write_same_16(struct scsi_xfer *xs)
 	fis->flags = ATA_H2D_FLAGS_CMD | ap->ap_pmp_port;
 	fis->command = ATA_C_DSM;
 	fis->features = ATA_DSM_TRIM;
+	fis->sector_count = 1;
 
 	ata_exec(as, xa);
 }
