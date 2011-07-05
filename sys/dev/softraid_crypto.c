@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.69 2011/06/18 23:35:21 matthew Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.70 2011/07/05 19:02:47 oga Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -56,9 +56,26 @@
 #include <dev/softraidvar.h>
 #include <dev/rndvar.h>
 
-struct cryptop	*sr_crypto_getcryptop(struct sr_workunit *, int);
+/*
+ * the per-io data that we need to preallocate. We can't afford to allow io
+ * to start failing when memory pressure kicks in.
+ * We can store this in the WU because we assert that only one
+ * ccb per WU will ever be active.
+ */
+struct sr_crypto_wu {
+	TAILQ_ENTRY(sr_crypto_wu)	 cr_link;
+	struct uio			 cr_uio;
+	struct iovec			 cr_iov;
+	struct cryptop	 		*cr_crp;
+	struct cryptodesc		*cr_descs;
+	struct sr_workunit		*cr_wu;
+	void				*cr_dmabuf;
+};
+
+
+struct sr_crypto_wu *sr_crypto_wu_get(struct sr_workunit *, int);
+void		sr_crypto_wu_put(struct sr_crypto_wu *);
 int		sr_crypto_create_keys(struct sr_discipline *);
-void		*sr_crypto_putcryptop(struct cryptop *);
 int		sr_crypto_get_kdf(struct bioc_createraid *,
 		    struct sr_discipline *);
 int		sr_crypto_decrypt(u_char *, u_char *, u_char *, size_t, int);
@@ -78,7 +95,7 @@ int		sr_crypto_meta_opt_load(struct sr_discipline *,
 		    struct sr_meta_opt *);
 int		sr_crypto_write(struct cryptop *);
 int		sr_crypto_rw(struct sr_workunit *);
-int		sr_crypto_rw2(struct sr_workunit *, struct cryptop *);
+int		sr_crypto_rw2(struct sr_workunit *, struct sr_crypto_wu *);
 void		sr_crypto_intr(struct buf *);
 int		sr_crypto_read(struct cryptop *);
 void		sr_crypto_finish_io(struct sr_workunit *);
@@ -230,40 +247,35 @@ done:
 	return (rv);
 }
 
-struct cryptop *
-sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
+
+struct sr_crypto_wu *
+sr_crypto_wu_get(struct sr_workunit *wu, int encrypt)
 {
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_discipline	*sd = wu->swu_dis;
-	struct cryptop		*crp = NULL;
+	struct sr_crypto_wu	*crwu;
 	struct cryptodesc	*crd;
-	struct uio		*uio = NULL;
-	int			flags, i, n, s;
+	int			flags, i, n;
 	daddr64_t		blk = 0;
 	u_int			keyndx;
 
-	DNPRINTF(SR_D_DIS, "%s: sr_crypto_getcryptop wu: %p encrypt: %d\n",
+	DNPRINTF(SR_D_DIS, "%s: sr_crypto_wu_get wu: %p encrypt: %d\n",
 	    DEVNAME(sd->sd_sc), wu, encrypt);
 
-	s = splbio();
-	uio = pool_get(&sd->mds.mdd_crypto.sr_uiopl, PR_ZERO | PR_NOWAIT);
-	if (uio == NULL)
-		goto poolunwind;
-	uio->uio_iov = pool_get(&sd->mds.mdd_crypto.sr_iovpl,
-	    PR_ZERO | PR_NOWAIT);
-	if (uio->uio_iov == NULL)
-		goto poolunwind;
-	splx(s);
+	mtx_enter(&sd->mds.mdd_crypto.scr_mutex);
+	if ((crwu = TAILQ_FIRST(&sd->mds.mdd_crypto.scr_wus)) != NULL)
+		TAILQ_REMOVE(&sd->mds.mdd_crypto.scr_wus, crwu, cr_link);
+	mtx_leave(&sd->mds.mdd_crypto.scr_mutex);
+	if (crwu == NULL)
+		panic("sr_crypto_wu_get: out of wus");
 
-	uio->uio_iovcnt = 1;
-	uio->uio_iov->iov_len = xs->datalen;
+	crwu->cr_uio.uio_iovcnt = 1;
+	crwu->cr_uio.uio_iov->iov_len = xs->datalen;
 	if (xs->flags & SCSI_DATA_OUT) {
-		uio->uio_iov->iov_base = dma_alloc(xs->datalen, PR_NOWAIT);
-		if (uio->uio_iov->iov_base == NULL)
-			goto unwind;
-		bcopy(xs->data, uio->uio_iov->iov_base, xs->datalen);
+		crwu->cr_uio.uio_iov->iov_base = crwu->cr_dmabuf;
+		bcopy(xs->data, crwu->cr_uio.uio_iov->iov_base, xs->datalen);
 	} else
-		uio->uio_iov->iov_base = xs->data;
+		crwu->cr_uio.uio_iov->iov_base = xs->data;
 
 	if (xs->cmdlen == 10)
 		blk = _4btol(((struct scsi_rw_big *)xs->cmd)->addr);
@@ -273,25 +285,40 @@ sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
 		blk = _3btol(((struct scsi_rw *)xs->cmd)->addr);
 
 	n = xs->datalen >> DEV_BSHIFT;
+
+	/*
+	 * we preallocated enough crypto descs for up to MAXPHYS of io.
+	 * since ios may be less than that we need to tweak the linked list
+	 * of crypto desc structures to be just long enough for our needs.
+	 * Otherwise crypto will get upset with us. So put n descs on the crp
+	 * and keep the rest.
+	 */
+	crd = crwu->cr_descs;
+	i = 0;
+	while (++i < n) {
+		crd = crd->crd_next;
+		KASSERT(crd);
+	}
+	crwu->cr_crp->crp_desc = crwu->cr_descs;
+	crwu->cr_descs = crd->crd_next;
+	crd->crd_next = NULL;
+
 	flags = (encrypt ? CRD_F_ENCRYPT : 0) |
 	    CRD_F_IV_PRESENT | CRD_F_IV_EXPLICIT;
-
-	crp = crypto_getreq(n);
-	if (crp == NULL)
-		goto unwind;
 
 	/* Select crypto session based on block number */
 	keyndx = blk >> SR_CRYPTO_KEY_BLKSHIFT;
 	if (keyndx >= SR_CRYPTO_MAXKEYS)
 		goto unwind;
-	crp->crp_sid = sd->mds.mdd_crypto.scr_sid[keyndx];
-	if (crp->crp_sid == (u_int64_t)-1)
+	crwu->cr_crp->crp_sid = sd->mds.mdd_crypto.scr_sid[keyndx];
+	if (crwu->cr_crp->crp_sid == (u_int64_t)-1)
 		goto unwind;
 
-	crp->crp_ilen = xs->datalen;
-	crp->crp_alloctype = M_DEVBUF;
-	crp->crp_buf = uio;
-	for (i = 0, crd = crp->crp_desc; crd; i++, blk++, crd = crd->crd_next) {
+	crwu->cr_crp->crp_ilen = xs->datalen;
+	crwu->cr_crp->crp_alloctype = M_DEVBUF;
+	crwu->cr_crp->crp_buf = &crwu->cr_uio;
+	for (i = 0, crd = crwu->cr_crp->crp_desc; crd;
+	    i++, blk++, crd = crd->crd_next) {
 		crd->crd_skip = i << DEV_BSHIFT;
 		crd->crd_len = DEV_BSIZE;
 		crd->crd_inject = 0;
@@ -311,48 +338,48 @@ sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
 		crd->crd_key = sd->mds.mdd_crypto.scr_key[0];
 		bcopy(&blk, crd->crd_iv, sizeof(blk));
 	}
+	crwu->cr_wu = wu;
+	crwu->cr_crp->crp_opaque = crwu;
 
-	return (crp);
-poolunwind:
-	splx(s);
+	return (crwu);
 unwind:
-	if (crp)
-		crypto_freereq(crp);
-	if (uio && uio->uio_iov)
-		if ((wu->swu_xs->flags & SCSI_DATA_OUT) &&
-		    uio->uio_iov->iov_base)
-			dma_free(uio->uio_iov->iov_base, uio->uio_iov->iov_len);
+	/* steal the descriptors back from the cryptop */
+	crd = crwu->cr_crp->crp_desc;
+	while (crd->crd_next != NULL)
+		crd = crd->crd_next;
 
-	s = splbio();
-	if (uio && uio->uio_iov)
-		pool_put(&sd->mds.mdd_crypto.sr_iovpl, uio->uio_iov);
-	if (uio)
-		pool_put(&sd->mds.mdd_crypto.sr_uiopl, uio);
-	splx(s);
-
+	/* join the lists back again */
+	crd->crd_next = crwu->cr_descs;
+	crwu->cr_descs = crwu->cr_crp->crp_desc;
+	crwu->cr_crp->crp_desc = NULL;
 	return (NULL);
 }
 
-void *
-sr_crypto_putcryptop(struct cryptop *crp)
+void
+sr_crypto_wu_put(struct sr_crypto_wu *crwu)
 {
-	struct uio		*uio = crp->crp_buf;
-	struct sr_workunit	*wu = crp->crp_opaque;
+	struct cryptop		*crp = crwu->cr_crp;
+	struct sr_workunit	*wu = crwu->cr_wu;
 	struct sr_discipline	*sd = wu->swu_dis;
-	int			s;
+	struct cryptodesc	*crd;
 
-	DNPRINTF(SR_D_DIS, "%s: sr_crypto_putcryptop crp: %p\n",
-	    DEVNAME(wu->swu_dis->sd_sc), crp);
+	DNPRINTF(SR_D_DIS, "%s: sr_crypto_wu_put crwu: %p\n",
+	    DEVNAME(wu->swu_dis->sd_sc), crwu);
 
-	if ((wu->swu_xs->flags & SCSI_DATA_OUT) && uio->uio_iov->iov_base)
-		dma_free(uio->uio_iov->iov_base, uio->uio_iov->iov_len);
-	s = splbio();
-	pool_put(&sd->mds.mdd_crypto.sr_iovpl, uio->uio_iov);
-	pool_put(&sd->mds.mdd_crypto.sr_uiopl, uio);
-	splx(s);
-	crypto_freereq(crp);
+	/* steal the descrptions back from the cryptop */
+	crd = crp->crp_desc;
+	KASSERT(crd);
+	while (crd->crd_next != NULL)
+		crd = crd->crd_next;
 
-	return (wu);
+	/* join the lists back again */
+	crd->crd_next = crwu->cr_descs;
+	crwu->cr_descs = crp->crp_desc;
+	crp->crp_desc = NULL;
+
+	mtx_enter(&sd->mds.mdd_crypto.scr_mutex);
+	TAILQ_INSERT_TAIL(&sd->mds.mdd_crypto.scr_wus, crwu, cr_link);
+	mtx_leave(&sd->mds.mdd_crypto.scr_mutex);
 }
 
 int
@@ -928,6 +955,7 @@ int
 sr_crypto_alloc_resources(struct sr_discipline *sd)
 {
 	struct cryptoini	cri;
+	struct sr_crypto_wu	*crwu;
 	u_int			num_keys, i;
 
 	if (!sd)
@@ -935,11 +963,6 @@ sr_crypto_alloc_resources(struct sr_discipline *sd)
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_alloc_resources\n",
 	    DEVNAME(sd->sd_sc));
-
-	pool_init(&sd->mds.mdd_crypto.sr_uiopl, sizeof(struct uio), 0, 0, 0,
-	    "sr_uiopl", NULL);
-	pool_init(&sd->mds.mdd_crypto.sr_iovpl, sizeof(struct iovec), 0, 0, 0,
-	    "sr_iovpl", NULL);
 
 	for (i = 0; i < SR_CRYPTO_MAXKEYS; i++)
 		sd->mds.mdd_crypto.scr_sid[i] = (u_int64_t)-1;
@@ -950,6 +973,33 @@ sr_crypto_alloc_resources(struct sr_discipline *sd)
 		return (ENOMEM);
 	if (sr_crypto_decrypt_key(sd))
 		return (EPERM);
+	/*
+	 * For each wu allocate the uio, iovec and crypto structures.
+	 * these have to be allocated now because during runtime we can't
+	 * fail an allocation without failing the io (which can cause real
+	 * problems).
+	 */
+	mtx_init(&sd->mds.mdd_crypto.scr_mutex, IPL_BIO);
+	TAILQ_INIT(&sd->mds.mdd_crypto.scr_wus);
+	for (i = 0; i < sd->sd_max_wu; i++) {
+		crwu = malloc(sizeof(*crwu), M_DEVBUF,
+		    M_WAITOK | M_ZERO | M_CANFAIL);
+		if (crwu == NULL)
+		    return (ENOMEM);
+		/* put it on the list now so if we fail it'll be freed */
+		mtx_enter(&sd->mds.mdd_crypto.scr_mutex);
+		TAILQ_INSERT_TAIL(&sd->mds.mdd_crypto.scr_wus, crwu, cr_link);
+		mtx_leave(&sd->mds.mdd_crypto.scr_mutex);
+
+		crwu->cr_uio.uio_iov = &crwu->cr_iov;
+		crwu->cr_dmabuf = dma_alloc(MAXPHYS, PR_WAITOK);
+		crwu->cr_crp = crypto_getreq(MAXPHYS >> DEV_BSHIFT);
+		if (crwu->cr_crp == NULL)
+			return (ENOMEM);
+		/* steal the list of cryptodescs */
+		crwu->cr_descs = crwu->cr_crp->crp_desc;
+		crwu->cr_crp->crp_desc = NULL;
+	}
 
 	bzero(&cri, sizeof(cri));
 	cri.cri_alg = CRYPTO_AES_XTS;
@@ -992,6 +1042,7 @@ int
 sr_crypto_free_resources(struct sr_discipline *sd)
 {
 	int			rv = EINVAL;
+	struct sr_crypto_wu	*crwu;
 	u_int			i;
 
 	if (!sd)
@@ -1013,13 +1064,23 @@ sr_crypto_free_resources(struct sr_discipline *sd)
 		sd->mds.mdd_crypto.scr_sid[i] = (u_int64_t)-1;
 	}
 
+	mtx_enter(&sd->mds.mdd_crypto.scr_mutex);
+	while ((crwu = TAILQ_FIRST(&sd->mds.mdd_crypto.scr_wus)) != NULL) {
+		TAILQ_REMOVE(&sd->mds.mdd_crypto.scr_wus, crwu, cr_link);
+
+		if (crwu->cr_dmabuf != NULL)
+			dma_free(crwu->cr_dmabuf, MAXPHYS);
+		/* twiddle cryptoreq back */
+		if (crwu->cr_crp) {
+			crwu->cr_crp->crp_desc = crwu->cr_descs;
+			crypto_freereq(crwu->cr_crp);
+		}
+		free(crwu, M_DEVBUF);
+	}
+	mtx_leave(&sd->mds.mdd_crypto.scr_mutex);
+
 	sr_wu_free(sd);
 	sr_ccb_free(sd);
-
-	if (sd->mds.mdd_crypto.sr_uiopl.pr_serial != 0)
-		pool_destroy(&sd->mds.mdd_crypto.sr_uiopl);
-	if (sd->mds.mdd_crypto.sr_iovpl.pr_serial != 0)
-		pool_destroy(&sd->mds.mdd_crypto.sr_iovpl);
 
 	rv = 0;
 	return (rv);
@@ -1104,23 +1165,22 @@ sr_crypto_meta_opt_load(struct sr_discipline *sd, struct sr_meta_opt *om)
 int
 sr_crypto_rw(struct sr_workunit *wu)
 {
-	struct cryptop		*crp;
+	struct sr_crypto_wu	*crwu;
 	int			s, rv = 0;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_rw wu: %p\n",
 	    DEVNAME(wu->swu_dis->sd_sc), wu);
 
 	if (wu->swu_xs->flags & SCSI_DATA_OUT) {
-		crp = sr_crypto_getcryptop(wu, 1);
-		if (crp == NULL)
+		crwu = sr_crypto_wu_get(wu, 1);
+		if (crwu == NULL)
 			return (1);
-		crp->crp_callback = sr_crypto_write;
-		crp->crp_opaque = wu;
+		crwu->cr_crp->crp_callback = sr_crypto_write;
 		s = splvm();
-		if (crypto_invoke(crp))
+		if (crypto_invoke(crwu->cr_crp))
 			rv = 1;
 		else
-			rv = crp->crp_etype;
+			rv = crwu->cr_crp->crp_etype;
 		splx(s);
 	} else
 		rv = sr_crypto_rw2(wu, NULL);
@@ -1131,26 +1191,26 @@ sr_crypto_rw(struct sr_workunit *wu)
 int
 sr_crypto_write(struct cryptop *crp)
 {
+	struct sr_crypto_wu	*crwu = crp->crp_opaque;
+	struct sr_workunit	*wu = crwu->cr_wu;
 	int			s;
-	struct sr_workunit	*wu = crp->crp_opaque;
 
 	DNPRINTF(SR_D_INTR, "%s: sr_crypto_write: wu %x xs: %x\n",
 	    DEVNAME(wu->swu_dis->sd_sc), wu, wu->swu_xs);
 
 	if (crp->crp_etype) {
 		/* fail io */
-		((struct sr_workunit *)(crp->crp_opaque))->swu_xs->error =
-		    XS_DRIVER_STUFFUP;
+		wu->swu_xs->error = XS_DRIVER_STUFFUP;
 		s = splbio();
-		sr_crypto_finish_io(crp->crp_opaque);
+		sr_crypto_finish_io(wu);
 		splx(s);
 	}
 
-	return (sr_crypto_rw2(wu, crp));
+	return (sr_crypto_rw2(wu, crwu));
 }
 
 int
-sr_crypto_rw2(struct sr_workunit *wu, struct cryptop *crp)
+sr_crypto_rw2(struct sr_workunit *wu, struct sr_crypto_wu *crwu)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
@@ -1185,10 +1245,10 @@ sr_crypto_rw2(struct sr_workunit *wu, struct cryptop *crp)
 		ccb->ccb_buf.b_flags |= B_READ;
 		ccb->ccb_buf.b_data = xs->data;
 	} else {
-		uio = crp->crp_buf;
+		uio = crwu->cr_crp->crp_buf;
 		ccb->ccb_buf.b_flags |= B_WRITE;
 		ccb->ccb_buf.b_data = uio->uio_iov->iov_base;
-		ccb->ccb_opaque = crp;
+		ccb->ccb_opaque = crwu;
 	}
 
 	ccb->ccb_buf.b_error = 0;
@@ -1224,8 +1284,8 @@ queued:
 	return (0);
 bad:
 	/* wu is unwound by sr_wu_put */
-	if (crp)
-		crp->crp_etype = EINVAL;
+	if (crwu)
+		crwu->cr_crp->crp_etype = EINVAL;
 	return (1);
 }
 
@@ -1237,7 +1297,7 @@ sr_crypto_intr(struct buf *bp)
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_softc		*sc = sd->sd_sc;
-	struct cryptop		*crp;
+	struct sr_crypto_wu	*crwu;
 	int			s, s2, pend;
 
 	DNPRINTF(SR_D_INTR, "%s: sr_crypto_intr bp: %x xs: %x\n",
@@ -1296,16 +1356,16 @@ sr_crypto_intr(struct buf *bp)
 			    DEVNAME(sc), wu);
 
 		if ((xs->flags & SCSI_DATA_IN) && (xs->error == XS_NOERROR)) {
-			crp = sr_crypto_getcryptop(wu, 0);
-			if (crp == NULL)
-				panic("sr_crypto_intr: no crypto op");
-			ccb->ccb_opaque = crp;
-			crp->crp_callback = sr_crypto_read;
-			crp->crp_opaque = wu;
+			/* only fails on implementation error */
+			crwu = sr_crypto_wu_get(wu, 0);
+			if (crwu == NULL)
+				panic("sr_crypto_intr: no wu");
+			crwu->cr_crp->crp_callback = sr_crypto_read;
+			ccb->ccb_opaque = crwu;
 			DNPRINTF(SR_D_INTR, "%s: sr_crypto_intr: crypto_invoke "
-			    "%p\n", DEVNAME(sc), crp);
+			    "%p\n", DEVNAME(sc), crwu->cr_crp);
 			s2 = splvm();
-			crypto_invoke(crp);
+			crypto_invoke(crwu->cr_crp);
 			splx(s2);
 			goto done;
 		}
@@ -1339,7 +1399,7 @@ sr_crypto_finish_io(struct sr_workunit *wu)
 	TAILQ_FOREACH(ccb, &wu->swu_ccb, ccb_link) {
 		if (ccb->ccb_opaque == NULL)
 			continue;
-		sr_crypto_putcryptop(ccb->ccb_opaque);
+		sr_crypto_wu_put(ccb->ccb_opaque);
 	}
 
 	sr_scsi_done(sd, xs);
@@ -1351,8 +1411,9 @@ sr_crypto_finish_io(struct sr_workunit *wu)
 int
 sr_crypto_read(struct cryptop *crp)
 {
+	struct sr_crypto_wu	*crwu = crp->crp_opaque;
+	struct sr_workunit	*wu = crwu->cr_wu;
 	int			s;
-	struct sr_workunit	*wu = crp->crp_opaque;
 
 	DNPRINTF(SR_D_INTR, "%s: sr_crypto_read: wu %x xs: %x\n",
 	    DEVNAME(wu->swu_dis->sd_sc), wu, wu->swu_xs);
