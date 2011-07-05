@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.117 2011/03/18 22:34:58 sthen Exp $	*/
+/*	$OpenBSD: inet.c,v 1.118 2011/07/05 05:14:41 bluhm Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -1193,7 +1193,9 @@ socket_dump(u_long off)
 	p("%p", so_splice, ", ");
 	p("%p", so_spliceback, "\n ");
 	p("%lld", so_splicelen, ", ");
-	p("%lld", so_splicemax, "\n ");
+	p("%lld", so_splicemax, ", ");
+	p("%ld", so_idletv.tv_sec, ", ");
+	p("%ld", so_idletv.tv_usec, "\n ");
 	sockbuf_dump(&so.so_rcv, "so_rcv");
 	sockbuf_dump(&so.so_snd, "so_snd");
 	p("%u", so_euid, ", ");
