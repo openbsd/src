@@ -1,8 +1,8 @@
-/*	$OpenBSD: man.c,v 1.41 2011/05/25 14:36:04 deraadt Exp $	*/
+/*	$OpenBSD: man.c,v 1.42 2011/07/05 05:47:20 schwarze Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
- * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -46,8 +46,10 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -81,6 +83,7 @@ static int	 cleanup(int);
 static void	 how(char *);
 static void	 jump(char **, char *, char *);
 static int	 manual(char *, TAG *, glob_t *);
+static void	 check_companion(char **);
 static void	 onsig(int);
 static void	 usage(void);
 
@@ -455,6 +458,9 @@ manual(char *page, TAG *tag, glob_t *pg)
 		for (cnt = pg->gl_pathc - pg->gl_matchc;
 		    cnt < pg->gl_pathc; ++cnt) {
 
+			if (!f_all)
+				check_companion(pg->gl_pathv + cnt);
+
 			/*
 			 * Try the _suffix key words first.
 			 *
@@ -541,6 +547,78 @@ next:				anyfound = 1;
 		sigprocmask(SIG_SETMASK, &osigs, NULL);
 	}
 	return (anyfound);
+}
+
+/*
+ * check_companion --
+ *	Check for a companion [un]formatted page
+ *	and use the newer one of the two.
+ */
+static void
+check_companion(char **orig) {
+	struct stat sb_orig, sb_comp;
+	char *p, *pext, comp[MAXPATHLEN];
+	size_t len;
+	int found;
+
+	len = strlcpy(comp, *orig, sizeof(comp));
+	/* The minus 2 avoids a buffer overrun in case of a trailing dot. */
+	p = comp + len - 2;
+
+	/* Locate the file name extension. */
+	while (p > comp && *p != '.' && *p != '/')
+		p--;
+	if (*p != '.')
+		return;
+	pext = p + 1;
+
+	/* Search for slashes. */
+	for (found = 0; 1; p--) {
+
+		/* Did not find /{cat,man}. */
+		if (p == comp)
+			return;
+
+		/* Pass over one slash, the one before "page". */
+		if (*p != '/' || !found++)
+			continue;
+
+		/* Rewrite manN/page.N <-> catN/page.0. */
+		if (!strncmp(p+1, "man", 3)) {
+			memcpy(++p, "cat", 3);
+			*pext++ = '0';
+			break;
+		} else if (!strncmp(p+1, "cat", 3)) {
+			memcpy(++p, "man", 3);
+			p += 3;
+			while (*p != '/' && pext < comp + sizeof(comp) - 1)
+				*pext++ = *p++;
+			break;
+
+		/* Accept one architecture subdir, but not more. */
+		} else if (found > 2)
+			return;
+	}
+	*pext = '\0';
+
+	/* Check whether both files exist. */
+	if (stat(*orig, &sb_orig) || stat(comp, &sb_comp))
+		return;
+
+	/* No action if the companion file is older. */
+	if (sb_orig.st_mtim.tv_sec  > sb_comp.st_mtim.tv_sec || (
+	    sb_orig.st_mtim.tv_sec == sb_comp.st_mtim.tv_sec &&
+	    sb_orig.st_mtim.tv_nsec > sb_comp.st_mtim.tv_nsec))
+		return;
+
+	/* The companion file is newer, use it. */
+	free(*orig);
+	if ((p = strdup(comp)) == NULL) {
+		warn(NULL);
+		(void)cleanup(0);
+		exit(1);
+	}
+	*orig = p;
 }
 
 /*
