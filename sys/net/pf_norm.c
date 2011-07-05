@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.136 2011/07/03 18:08:02 claudio Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.137 2011/07/05 19:53:43 mikeb Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -127,9 +127,11 @@ int			 pf_isfull_fragment(struct pf_fragment *);
 struct mbuf		*pf_join_fragment(struct pf_fragment *);
 int			 pf_reassemble(struct mbuf **, struct ip *, int,
 			    u_short *);
+#ifdef INET6
 int			 pf_reassemble6(struct mbuf **, struct ip6_hdr *,
 			    struct ip6_frag *, u_int16_t, u_int16_t, int,
 			    u_short *);
+#endif
 
 /* Globals */
 struct pool		 pf_frent_pl, pf_frag_pl;

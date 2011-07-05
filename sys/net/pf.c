@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.759 2011/07/04 18:12:51 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.760 2011/07/05 19:53:43 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2755,8 +2755,10 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	act.rtableid = pd->rdomain;
 	SLIST_INIT(&rules);
 
+#ifdef INET6
 	if (af == AF_INET6)
 		ifq = &ip6intrq;
+#endif
 
 	if (direction == PF_IN && pf_check_congestion(ifq)) {
 		REASON_SET(&reason, PFRES_CONGEST);
@@ -5714,6 +5716,7 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
 		*hdrlen = ICMP_MINLEN;
 		break;
 	}
+#ifdef INET6
 	case IPPROTO_ICMPV6: {
 		size_t	icmp_hlen = sizeof(struct icmp6_hdr);
 
@@ -5738,6 +5741,7 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
 		*hdrlen = icmp_hlen;
 		break;
 	}
+#endif	/* INET6 */
 	}
 	return (0);
 }
@@ -6058,8 +6062,10 @@ done:
 	case PF_DIVERT:
 		if (af == AF_INET)
 			divert_packet(m, dir);
+#ifdef INET6
 		if (af == AF_INET6)
 			divert6_packet(m, dir);
+#endif
 		*m0 = NULL;
 		action = PF_PASS;
 		break;
@@ -6068,18 +6074,22 @@ done:
 		if (r->rt) {
 			if (af == AF_INET)
 				pf_route(m0, r, dir, kif->pfik_ifp, s);
+#ifdef INET6
 			if (af == AF_INET6)
 				pf_route6(m0, r, dir, kif->pfik_ifp, s);
+#endif
 		}
 		break;
 	}
 
+#ifdef INET6
 	/* if reassembled packet passed, create new fragments */
 	if (pf_status.reass && action == PF_PASS && *m0 && fwdir == PF_FWD) {
 		struct m_tag	*mtag;
 		if ((mtag = m_tag_find(m, PACKET_TAG_PF_REASSEMBLED, NULL)))
 			action = pf_refragment6(m0, mtag, fwdir);
 	}
+#endif
 
 	return (action);
 }
