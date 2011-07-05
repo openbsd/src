@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.56 2011/05/27 12:01:02 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.57 2011/07/05 01:28:06 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -2228,6 +2228,8 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 	struct ikev2_payload		*pld;
 	struct ibuf			*buf = NULL, *e = NULL, *nonce = NULL;
 	struct group			*group;
+	u_int64_t			 spi64;
+	u_int32_t			 spi32;
 	ssize_t				 len = 0;
 	int				 initiator, protoid, rekeying = 1;
 	int				 ret = -1;
@@ -2294,8 +2296,18 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 				return (-1);
 			}
 			n->n_protoid = protoid;
-			n->n_spisize = 0;
+			n->n_spisize = rekey->spi_size;
 			n->n_type = htobe16(IKEV2_N_NO_ADDITIONAL_SAS);
+			switch (rekey->spi_size) {
+			case 4:
+				spi32 = htobe32(rekey->spi);
+				ibuf_add(buf, &spi32, rekey->spi_size);
+				break;
+			case 8:
+				spi64 = htobe64(rekey->spi);
+				ibuf_add(buf, &spi64, rekey->spi_size);
+				break;
+			}
 			ikev2_send_ike_e(env, sa, buf, IKEV2_PAYLOAD_NOTIFY,
 			    IKEV2_EXCHANGE_CREATE_CHILD_SA, 1);
 			ibuf_release(buf);
