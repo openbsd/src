@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.61 2009/10/15 17:54:54 deraadt Exp $	*/
+/*	$OpenBSD: hme.c,v 1.62 2011/07/05 05:25:09 bluhm Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -361,6 +361,13 @@ hme_tick(arg)
 	bus_space_write_4(t, mac, HME_MACI_FCCNT, 0);
 	bus_space_write_4(t, mac, HME_MACI_EXCNT, 0);
 	bus_space_write_4(t, mac, HME_MACI_LTCNT, 0);
+
+	/*
+	 * If buffer allocation fails, the receive ring may become
+	 * empty. There is no receive interrupt to recover from that.
+	 */
+	if (sc->sc_rx_cnt == 0)
+		hme_fill_rx_ring(sc);
 
 	mii_tick(&sc->sc_mii);
 	splx(s);
