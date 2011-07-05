@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.258 2011/06/16 13:21:00 kettenis Exp $ */
+/* $OpenBSD: if_em.c,v 1.259 2011/07/05 16:51:34 kettenis Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -329,9 +329,9 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	/* Determine hardware revision */
 	em_identify_hardware(sc);
 
-	/* Only use MSIe on the newer PCIe parts */
+	/* Only use MSI on the newer PCIe parts */
 	if (sc->hw.mac_type < em_82571)
-		pa->pa_flags &= ~PCI_FLAGS_MSI_ENABLED;
+		sc->osdep.em_pa.pa_flags &= ~PCI_FLAGS_MSI_ENABLED;
 
 	/* Parameters (to be read from user) */
 	if (sc->hw.mac_type >= em_82544) {
