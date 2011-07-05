@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.74 2011/05/09 14:18:34 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.75 2011/07/05 21:43:45 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -665,7 +665,7 @@ while getopts bds:x: arg; do
 			tar tzf ${OPTARG} ./var/db/sysmerge/etcsum > /dev/null 2>&1 ; then
 			TGZ=${OPTARG}
 		elif echo ${OPTARG} | \
-		    grep -qE '^(http|ftp)://.*/etc[0-9][0-9]\.tgz$'; then
+		    grep -qE '^(file|ftp|http|https)://.*/etc[0-9][0-9]\.tgz$'; then
 			TGZ=${WRKDIR}/etc.tgz
 			TGZURL=${OPTARG}
 			if ! ${FETCH_CMD} -o ${TGZ} ${TGZURL}; then
@@ -682,7 +682,7 @@ while getopts bds:x: arg; do
 			tar tzf ${OPTARG} ./var/db/sysmerge/xetcsum > /dev/null 2>&1 ; then \
 			XTGZ=${OPTARG}
 		elif echo ${OPTARG} | \
-		    grep -qE '^(http|ftp)://.*/xetc[0-9][0-9]\.tgz$'; then
+		    grep -qE '^(file|ftp|http|https)://.*/xetc[0-9][0-9]\.tgz$'; then
 			XTGZ=${WRKDIR}/xetc.tgz
 			XTGZURL=${OPTARG}
 			if ! ${FETCH_CMD} -o ${XTGZ} ${XTGZURL}; then
