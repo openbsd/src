@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.34 2011/07/05 09:46:11 matthew Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.35 2011/07/05 10:04:27 matthew Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -144,11 +144,8 @@ physio(void (*strategy)(struct buf *), dev_t dev, int flags,
 			error = uvm_vslock_device(p, iovp->iov_base, todo,
 			    (flags & B_READ) ?
 			    VM_PROT_READ | VM_PROT_WRITE : VM_PROT_READ, &map);
-			if (error) {
-				bp->b_flags |= B_ERROR;
-				bp->b_error = error;
-				goto after_unlock;
-			}
+			if (error)
+				goto done;
 			if (map) {
 				bp->b_data = map;
 			} else {
@@ -186,7 +183,6 @@ physio(void (*strategy)(struct buf *), dev_t dev, int flags,
 			if (!map)
 				vunmapbuf(bp, todo);
 			uvm_vsunlock_device(p, iovp->iov_base, todo, map);
-after_unlock:
 
 			/* remember error value (save a splbio/splx pair) */
 			if (bp->b_flags & B_ERROR)
