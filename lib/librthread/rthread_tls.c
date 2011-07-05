@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_tls.c,v 1.11 2008/10/13 05:42:46 kevlo Exp $ */
+/*	$OpenBSD: rthread_tls.c,v 1.12 2011/07/05 00:23:40 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -71,16 +71,33 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void*))
 int
 pthread_key_delete(pthread_key_t key)
 {
+	pthread_t thread;
+	struct rthread_storage *rs;
+	int rv = 0;
 
-	if (!rkeys[key].used)
+	if (key < 0 || key >= PTHREAD_KEYS_MAX)
 		return (EINVAL);
 
 	_spinlock(&rkeyslock);
+	if (!rkeys[key].used) {
+		rv = EINVAL;
+		goto out;
+	}
+
 	rkeys[key].used = 0;
 	rkeys[key].destructor = NULL;
-	_spinunlock(&rkeyslock);
+	_spinlock(&_thread_lock);
+	LIST_FOREACH(thread, &_thread_list, threads) {
+		for (rs = thread->local_storage; rs; rs = rs->next) {
+			if (rs->keyid == key)
+				rs->data = NULL;
+		}
+	}
+	_spinunlock(&_thread_lock);
 
-	return (0);
+out:
+	_spinunlock(&rkeyslock);
+	return (rv);
 }
 
 static struct rthread_storage *
@@ -88,6 +105,12 @@ _rthread_findstorage(pthread_key_t key)
 {
 	struct rthread_storage *rs;
 	pthread_t self;
+
+	_spinlock(&rkeyslock);
+	if (!rkeys[key].used) {
+		rs = NULL;
+		goto out;
+	}
 
 	self = pthread_self();
 
@@ -98,13 +121,15 @@ _rthread_findstorage(pthread_key_t key)
 	if (!rs) {
 		rs = calloc(1, sizeof(*rs));
 		if (!rs)
-			return (NULL);
+			goto out;
 		rs->keyid = key;
 		rs->data = NULL;
 		rs->next = self->local_storage;
 		self->local_storage = rs;
 	}
 
+out:
+	_spinunlock(&rkeyslock);
 	return (rs);
 }
 
@@ -112,6 +137,9 @@ void *
 pthread_getspecific(pthread_key_t key)
 {
 	struct rthread_storage *rs;
+
+	if (key < 0 || key >= PTHREAD_KEYS_MAX)
+		return (NULL);
 
 	rs = _rthread_findstorage(key);
 	if (!rs)
@@ -124,6 +152,9 @@ int
 pthread_setspecific(pthread_key_t key, const void *data)
 {
 	struct rthread_storage *rs;
+
+	if (key < 0 || key >= PTHREAD_KEYS_MAX)
+		return (EINVAL);
 
 	rs = _rthread_findstorage(key);
 	if (!rs)
