@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.31 2009/07/13 16:23:28 claudio Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.32 2011/07/05 20:00:14 henning Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -148,8 +148,8 @@ struct pppoe_softc {
 };
 
 /* incoming traffic will be queued here */
-struct ifqueue pppoediscinq = { NULL };
-struct ifqueue pppoeinq = { NULL };
+struct ifqueue pppoediscinq;
+struct ifqueue pppoeinq;
 
 extern int sppp_ioctl(struct ifnet *, unsigned long, void *);
 
