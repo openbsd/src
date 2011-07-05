@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.66 2010/09/21 14:46:40 jmc Exp $
+.\"	$OpenBSD: route.8,v 1.67 2011/07/05 05:06:25 claudio Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: September 21 2010 $
+.Dd $Mdocdate: July 5 2011 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -271,7 +271,7 @@ or alternately
 If the destination is directly reachable
 via an interface requiring
 no intermediary system to act as a gateway, the
-.Fl interface
+.Fl iface
 modifier should be specified;
 the gateway given is the address of this host on the common network,
 indicating the interface to be used for transmission.
