@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.282 2011/07/05 15:16:10 sthen Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.283 2011/07/05 15:29:32 sthen Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -821,6 +821,20 @@ Flags appended to
 if
 .Ev WARNINGS
 is set.
+.It Ev CCACHE_DIR
+Sets the cache directory used when
+.Ev USE_CCACHE
+is set to yes.
+Defaults to ${WRKOBJDIR}/.ccache.
+Can be set on a per-${PKGPATH} basis.
+For instance, setting CCACHE_DIR_www/mozilla=/tmp/ccache
+will affect only the mozilla port.
+.It Ev CCACHE_ENV
+Sets additional environment variables when
+.Ev USE_CCACHE
+is set to yes.
+For instance, to enable verbose logging, set
+CCACHE_ENV="CCACHE_LOGFILE=/tmp/ccache.log"
 .It Ev CDROM_SITE
 Path to a local database that holds distribution files (usually a CD-ROM
 or other similar media), used to retrieve distribution files before going
