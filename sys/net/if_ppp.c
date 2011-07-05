@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.59 2011/07/04 20:40:58 dhill Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.60 2011/07/05 19:59:18 henning Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -1120,13 +1120,14 @@ pppintr()
     s = splsoftnet();	/* XXX - what's the point of this? see comment above */
     LIST_FOREACH(sc, &ppp_softc_list, sc_list) {
 	if (!(sc->sc_flags & SC_TBUSY)
-	    && (IFQ_IS_EMPTY(&sc->sc_if.if_snd) == 0 || sc->sc_fastq.ifq_head)) {
+	    && (!IFQ_IS_EMPTY(&sc->sc_if.if_snd) ||
+	    !IFQ_IS_EMPTY(&sc->sc_fastq))) {
 	    s2 = splnet();
 	    sc->sc_flags |= SC_TBUSY;
 	    splx(s2);
 	    (*sc->sc_start)(sc);
 	}
-	while (sc->sc_rawq.ifq_head) {
+	while (!IFQ_IS_EMPTY(&sc->sc_rawq)) {
 	    s2 = splnet();
 	    IF_DEQUEUE(&sc->sc_rawq, m);
 	    splx(s2);
