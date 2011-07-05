@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.158 2011/06/23 21:42:05 ariane Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.159 2011/07/05 05:53:17 claudio Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -868,9 +868,8 @@ m_adj(struct mbuf *mp, int req_len)
 				len = 0;
 			}
 		}
-		m = mp;
 		if (mp->m_flags & M_PKTHDR)
-			m->m_pkthdr.len -= (req_len - len);
+			mp->m_pkthdr.len -= (req_len - len);
 	} else {
 		/*
 		 * Trim from tail.  Scan the mbuf chain,
