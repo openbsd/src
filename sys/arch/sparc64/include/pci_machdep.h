@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.28 2011/06/26 18:20:36 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.29 2011/07/06 05:08:50 kettenis Exp $	*/
 /* $NetBSD: pci_machdep.h,v 1.7 2001/07/20 00:07:14 eeh Exp $ */
 
 /*
@@ -93,6 +93,8 @@ const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 				 int, int (*)(void *), void *, const char *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
+
+void		pci_msi_enable(pci_chipset_tag_t, pcitag_t, bus_addr_t, int);
 
 int		sparc64_pci_enumerate_bus(struct pci_softc *,
 		    int (*match)(struct pci_attach_args *),

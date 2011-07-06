@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.41 2011/06/26 18:20:36 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.42 2011/07/06 05:08:50 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -469,4 +469,24 @@ pci_intr_disestablish(pc, cookie)
 
 	/* XXX */
 	printf("can't disestablish PCI interrupts yet\n");
+}
+
+void
+pci_msi_enable(pci_chipset_tag_t pc, pcitag_t tag, bus_addr_t addr, int vec)
+{
+	pcireg_t reg;
+	int off;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
+		panic("%s: no msi capability", __func__);
+
+	if (reg & PCI_MSI_MC_C64) {
+		pci_conf_write(pc, tag, off + PCI_MSI_MA, addr);
+		pci_conf_write(pc, tag, off + PCI_MSI_MAU32, 0);
+		pci_conf_write(pc, tag, off + PCI_MSI_MD64, vec);
+	} else {
+		pci_conf_write(pc, tag, off + PCI_MSI_MA, addr);
+		pci_conf_write(pc, tag, off + PCI_MSI_MD32, vec);
+	}
+	pci_conf_write(pc, tag, off, reg | PCI_MSI_MC_MSIE);
 }

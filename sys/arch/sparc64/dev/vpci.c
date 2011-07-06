@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.8 2011/06/26 21:46:23 kettenis Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.9 2011/07/06 05:08:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -126,7 +126,6 @@ void vpci_msi_ack(struct intrhand *);
 int vpci_msi_eq_intr(void *);
 
 struct msi_eq *msi_eq_alloc(bus_dma_tag_t, int);
-void pci_msi_enable(pci_chipset_tag_t, pcitag_t, bus_addr_t, int);
 void msi_eq_free(bus_dma_tag_t t, struct msi_eq *);
 
 int vpci_dmamap_create(bus_dma_tag_t, bus_dma_tag_t, bus_size_t, int,
@@ -622,26 +621,6 @@ vpci_msi_eq_intr(void *arg)
 		printf("%s: pci_msiq_sethead: %d\n", __func__, err);
 
 	return (1);
-}
-
-void
-pci_msi_enable(pci_chipset_tag_t pc, pcitag_t tag, bus_addr_t addr, int vec)
-{
-	pcireg_t reg;
-	int off;
-
-	if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
-		panic("%s: no msi capability", __func__);
-
-	if (reg & PCI_MSI_MC_C64) {
-		pci_conf_write(pc, tag, off + PCI_MSI_MA, addr);
-		pci_conf_write(pc, tag, off + PCI_MSI_MAU32, 0);
-		pci_conf_write(pc, tag, off + PCI_MSI_MD64, vec);
-	} else {
-		pci_conf_write(pc, tag, off + PCI_MSI_MA, addr);
-		pci_conf_write(pc, tag, off + PCI_MSI_MD32, vec);
-	}
-	pci_conf_write(pc, tag, off, reg | PCI_MSI_MC_MSIE);
 }
 
 struct msi_eq *
