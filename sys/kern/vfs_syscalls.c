@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.167 2011/07/06 04:41:16 matthew Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.168 2011/07/06 04:49:13 guenther Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -676,16 +676,14 @@ sys_fchdir(struct proc *p, void *v, register_t *retval)
 	struct file *fp;
 	int error;
 
-	if ((error = getvnode(fdp, SCARG(uap, fd), &fp)) != 0)
-		return (error);
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
+		return (EBADF);
 	vp = (struct vnode *)fp->f_data;
+	if (fp->f_type != DTYPE_VNODE || vp->v_type != VDIR)
+		return (ENOTDIR);
 	vref(vp);
-	FRELE(fp);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
-	if (vp->v_type != VDIR)
-		error = ENOTDIR;
-	else
-		error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
+	error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
 
 	while (!error && (mp = vp->v_mountedhere) != NULL) {
 		if (vfs_busy(mp, VB_READ|VB_WAIT))
