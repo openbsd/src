@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd.h,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: npppd.h,v 1.6 2011/07/06 20:52:28 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -35,10 +35,11 @@
 #endif
 
 
-#define	DEFAULT_RADIUS_AUTH_IPADDR	"127.0.0.1"
 #define	DEFAULT_RADIUS_AUTH_PORT	1812
-#define	DEFAULT_RADIUS_AUTH_TIMEOUT	9
-
+#define	DEFAULT_RADIUS_ACCT_PORT	1813
+#define	DEFAULT_RADIUS_TIMEOUT		9
+#define	DEFAULT_RADIUS_MAX_TRIES	3
+#define	DEFAULT_RADIUS_MAX_FAILOVERS	1
 #define	DEFAULT_AUTH_TIMEOUT		30
 
 /** assign fixed IP address */
@@ -117,8 +118,8 @@ const char *npppd_ppp_get_realm_name(npppd *, npppd_ppp *);
 int        npppd_ppp_bind_iface(npppd *, npppd_ppp *);
 void       npppd_ppp_unbind_iface(npppd *, npppd_ppp *);
 const char *npppd_ppp_get_iface_name(npppd *, npppd_ppp *);
-void *     npppd_get_radius_req_setting(npppd *, npppd_ppp *);
-void       npppd_radius_server_failure_notify(npppd *, npppd_ppp *, void *, const char *);
+void *     npppd_get_radius_auth_setting(npppd *, npppd_ppp *);
+void       npppd_radius_auth_server_failure_notify(npppd *, npppd_ppp *, void *, const char *);
 int        npppd_ppp_pipex_enable(npppd *, npppd_ppp *);
 int        npppd_ppp_pipex_disable(npppd *, npppd_ppp *);
 const char *npppd_ppp_get_username_for_auth(npppd *, npppd_ppp *, const char *, char *);

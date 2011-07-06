@@ -1,4 +1,4 @@
-/* $OpenBSD: ppp.h,v 1.5 2010/09/24 02:57:43 yasuoka Exp $ */
+/* $OpenBSD: ppp.h,v 1.6 2011/07/06 20:52:28 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -520,6 +520,9 @@ struct _npppd_ppp {
 	/** Address pool used by IP asssignment */
 	void		*assigned_pool;
 
+	/** Framed-IP-Address for Accounting */
+	struct in_addr	acct_framed_ip_address;
+
 	struct in_addr	realm_framed_ip_address;
 	struct in_addr	realm_framed_ip_netmask;
 
@@ -580,6 +583,9 @@ struct _npppd_ppp {
 	uint64_t	ibytes;
 	/** Number of output packet bytes */
 	uint64_t	obytes;
+
+	/** RADIUS Accouting (RFC2866) Terminate Cause */
+	int				terminate_cause;
 
 	/*
 	 * Disconnect cause information for RFC3145
@@ -746,7 +752,8 @@ int          ppp_init (npppd *, npppd_ppp *);
 void         ppp_start (npppd_ppp *);
 int          ppp_dialin_proxy_prepare (npppd_ppp *, dialin_proxy_info *);
 void         ppp_stop (npppd_ppp *, const char *);
-void         ppp_stop_ex (npppd_ppp *, const char *, npppd_ppp_disconnect_code, int, int, const char *);
+void         ppp_set_disconnect_cause (npppd_ppp *, npppd_ppp_disconnect_code, int, int, const char *);
+void         ppp_set_radius_terminate_cause(npppd_ppp *, int);
 
 void         ppp_destroy (void *);
 void         ppp_lcp_up (npppd_ppp *);

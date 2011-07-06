@@ -1,4 +1,4 @@
-/* $OpenBSD: radius+.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: radius+.h,v 1.4 2011/07/06 20:52:28 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -55,11 +55,14 @@ int radius_delete_packet(RADIUS_PACKET* packet);
 
 /* accessors - header values */
 u_int8_t radius_get_id(const RADIUS_PACKET* packet);
+void radius_update_id(RADIUS_PACKET* packet);
 u_int8_t radius_get_code(const RADIUS_PACKET* packet);
 void radius_get_authenticator(const RADIUS_PACKET* packet, char* authenticator);
 void radius_set_request_packet(RADIUS_PACKET* packet, const RADIUS_PACKET* response);
 int radius_check_response_authenticator(const RADIUS_PACKET* packet, const char *secret);
 const char* radius_get_authenticator_retval(const RADIUS_PACKET* packet);
+void radius_set_request_authenticator(RADIUS_PACKET* packet,
+                                       const char* secret);
 void radius_set_response_authenticator(RADIUS_PACKET* packet,
                                        const char* secret);
 u_int16_t radius_get_length(const RADIUS_PACKET* packet);
@@ -93,6 +96,8 @@ u_int32_t radius_get_uint32_attr_retval(const RADIUS_PACKET* packet,
                                         u_int8_t type);
 int radius_put_uint32_attr(RADIUS_PACKET* packet, u_int8_t type, u_int32_t val);
 
+int radius_set_uint32_attr(RADIUS_PACKET* packet, u_int8_t type, u_int32_t val);
+
 int radius_get_string_attr(const RADIUS_PACKET* packet, u_int8_t type,
                            char* str);
 int radius_put_string_attr(RADIUS_PACKET* packet, u_int8_t type,
@@ -107,6 +112,8 @@ int radius_get_ipv4_attr(const RADIUS_PACKET* packet, u_int8_t type,
 struct in_addr radius_get_ipv4_attr_retval(const RADIUS_PACKET* packet, u_int8_t type);
 int radius_put_ipv4_attr(RADIUS_PACKET* packet, u_int8_t type,
                          struct in_addr addr);
+int radius_set_ipv4_attr(RADIUS_PACKET* packet, u_int8_t type,
+                         struct in_addr addr);
 int radius_put_message_authenticator(RADIUS_PACKET *packet, const char *secret);
 int radius_check_message_authenticator(RADIUS_PACKET *packet,
                                        const char *secret);
@@ -116,6 +123,8 @@ RADIUS_PACKET* radius_recvfrom(int s, int flags,
                     struct sockaddr* saddr, socklen_t* slen);
 int radius_sendto(int s, const RADIUS_PACKET* packet, int flags,
                   const struct sockaddr* saddr, socklen_t slen);
+RADIUS_PACKET* radius_recv(int s, int flags);
+int radius_send(int s, const RADIUS_PACKET* packet, int flags);
 
 
 /******* client support (sending request / receiving response) *******/

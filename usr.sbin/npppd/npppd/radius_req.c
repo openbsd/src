@@ -1,4 +1,4 @@
-/* $OpenBSD: radius_req.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: radius_req.c,v 1.4 2011/07/06 20:52:28 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides functions for RADIUS request using radius+.c and event(3).
  * @author	Yasuoka Masahiko
- * $Id: radius_req.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $
+ * $Id: radius_req.c,v 1.4 2011/07/06 20:52:28 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,26 +45,40 @@
 #include <time.h>
 #include <event.h>
 #include <string.h>
+#include <errno.h>
 
 #include "radius_req.h"
+
+#ifndef nitems
+#define	nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
+#endif
 
 struct overlapped {
 	struct event ev_sock;
 	int socket;
 	int ntry;
-	int timeout;
+	int max_tries;
+	int failovers;
 	struct sockaddr_storage ss;
+	struct timespec req_time;
 	void *context;
 	radius_response *response_fn;
 	char secret[MAX_RADIUS_SECRET];
 	RADIUS_PACKET *pkt;
+	radius_req_setting *setting;
+	int acct_delay_time;
 };
 
-static int   radius_request0 (struct overlapped *);
+static int   radius_request0 (struct overlapped *, int);
+static int   radius_prepare_socket(struct overlapped *);
 static void  radius_request_io_event (int, short, void *);
-static int select_srcaddr(struct sockaddr const *, struct sockaddr *, socklen_t *);
+static void  radius_on_response(RADIUS_REQUEST_CTX, RADIUS_PACKET *, int, int);
+static int   select_srcaddr(struct sockaddr const *, struct sockaddr *, socklen_t *);
+static void  radius_req_setting_ref(radius_req_setting *);
+static void  radius_req_setting_unref(radius_req_setting *);
 
 #ifdef	RADIUS_REQ_DEBUG
+#define RADIUS_REQ_DBG(x)	log_printf x
 #define	RADIUS_REQ_ASSERT(cond)					\
 	if (!(cond)) {						\
 	    fprintf(stderr,					\
@@ -74,6 +88,7 @@ static int select_srcaddr(struct sockaddr const *, struct sockaddr *, socklen_t 
 	}
 #else
 #define	RADIUS_REQ_ASSERT(cond)
+#define RADIUS_REQ_DBG(x)
 #endif
 
 /**
@@ -83,17 +98,17 @@ static int select_srcaddr(struct sockaddr const *, struct sockaddr *, socklen_t 
 void
 radius_request(RADIUS_REQUEST_CTX ctx, RADIUS_PACKET *pkt)
 {
+	uint32_t ival;
 	struct overlapped *lap;
 
 	RADIUS_REQ_ASSERT(pkt != NULL);
 	RADIUS_REQ_ASSERT(ctx != NULL);
 	lap = ctx;
 	lap->pkt = pkt;
-	if (radius_request0(lap) != 0) {
-		if (lap->response_fn != NULL)
-			lap->response_fn(lap->context, NULL,
-			    RADIUS_REQUST_ERROR);
-	}
+	if (radius_get_uint32_attr(pkt, RADIUS_TYPE_ACCT_DELAY_TIME, &ival)
+	    == 0)
+		lap->acct_delay_time = 1;
+	radius_request0(lap, 0);
 }
 
 /**
@@ -156,6 +171,83 @@ fail:
 	return 1;
 }
 
+
+/** Checks whether the request can fail over to another server */
+int
+radius_request_can_failover(RADIUS_REQUEST_CTX ctx)
+{
+	struct overlapped *lap;
+	radius_req_setting *setting;
+
+	lap = ctx;
+	setting = lap->setting;
+
+	if (lap->failovers >= setting->max_failovers)
+		return 0;
+	if (memcmp(&lap->ss, &setting->server[setting->curr_server].peer,
+	    setting->server[setting->curr_server].peer.sin6.sin6_len) == 0)
+		/* flagged server doesn't differ from the last server. */
+		return 0;
+
+	return 1;
+}
+
+/** Send RADIUS request failing over to another server. */
+int
+radius_request_failover(RADIUS_REQUEST_CTX ctx)
+{
+	struct overlapped *lap;
+
+	lap = ctx;
+	RADIUS_REQ_ASSERT(lap != NULL);
+	RADIUS_REQ_ASSERT(lap->socket >= 0)
+
+	if (!radius_request_can_failover(lap))
+		return -1;
+
+	if (radius_prepare_socket(lap) != 0)
+		return -1;
+
+	if (radius_request0(lap, 1) != 0)
+		return -1;
+
+	lap->failovers++;
+
+	return 0;
+}
+
+static int
+radius_prepare_socket(struct overlapped *lap)
+{
+	int sock;
+	radius_req_setting *setting;
+	struct sockaddr *sa;
+
+	setting = lap->setting;
+	if (lap->socket >= 0)
+		close(lap->socket);
+	lap->socket = -1;
+
+	sa = (struct sockaddr *)&setting->server[setting->curr_server].peer;
+
+	if ((sock = socket(sa->sa_family, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+		log_printf(LOG_ERR, "socket() failed in %s: %m", __func__);
+		return -1;
+	}
+	if (connect(sock, sa, sa->sa_len) != 0) {
+		log_printf(LOG_ERR, "connect() failed in %s: %m", __func__);
+		close(sock);
+		return -1;
+	}
+	memcpy(&lap->ss, sa, sa->sa_len);
+	lap->socket = sock;
+	memcpy(lap->secret, setting->server[setting->curr_server].secret,
+	    sizeof(lap->secret));
+	lap->ntry = lap->max_tries;
+
+	return 0;
+}
+
 /**
  * Prepare sending RADIUS request.  This implementation will call back to
  * notice that it receives the response or it fails for timeouts to the
@@ -175,9 +267,7 @@ int
 radius_prepare(radius_req_setting *setting, void *context,
     RADIUS_REQUEST_CTX *pctx, radius_response response_fn, int timeout)
 {
-	int sock;
 	struct overlapped *lap;
-	struct sockaddr_in6 *sin6;
 
 	RADIUS_REQ_ASSERT(setting != NULL);
 	lap = NULL;
@@ -188,24 +278,29 @@ radius_prepare(radius_req_setting *setting, void *context,
 		log_printf(LOG_ERR, "malloc() failed in %s: %m", __func__);
 		goto fail;
 	}
-	sin6 = &setting->server[setting->curr_server].peer.sin6;
-	if ((sock = socket(sin6->sin6_family, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-		log_printf(LOG_ERR, "socket() failed in %s: %m", __func__);
-		goto fail;
-	}
 	memset(lap, 0, sizeof(struct overlapped));
-	memcpy(&lap->ss, &setting->server[setting->curr_server].peer,
-	    setting->server[setting->curr_server].peer.sin6.sin6_len);
-
-	lap->socket = sock;
-	lap->timeout = MIN(setting->timeout, timeout);
-	lap->ntry = timeout / lap->timeout;
 	lap->context = context;
 	lap->response_fn = response_fn;
-	memcpy(lap->secret, setting->server[setting->curr_server].secret,
-	    sizeof(lap->secret));
+	lap->socket = -1;
+	lap->setting = setting;
+
+	if (timeout != 0 &&
+	    (setting->max_tries == 0 ||
+		    timeout < setting->max_tries * setting->timeout))
+		lap->max_tries = timeout / setting->timeout;
+	else
+		lap->max_tries = setting->max_tries;
+
+	if (lap->max_tries <= 0)
+		lap->max_tries = 3;	/* default max tries */
+
+	if (radius_prepare_socket(lap) != 0)
+		goto fail;
+
 	if (pctx != NULL)
 		*pctx = lap;
+
+	radius_req_setting_ref(setting);	
 
 	return 0;
 fail:
@@ -234,6 +329,8 @@ radius_cancel_request(RADIUS_REQUEST_CTX ctx)
 		radius_delete_packet(lap->pkt);
 		lap->pkt = NULL;
 	}
+	radius_req_setting_unref(lap->setting);
+
 	memset(lap->secret, 0x41, sizeof(lap->secret));
 
 	free(lap);
@@ -264,20 +361,47 @@ radius_get_server_address(RADIUS_REQUEST_CTX ctx)
 }
 
 static int
-radius_request0(struct overlapped *lap)
+radius_request0(struct overlapped *lap, int new_message)
 {
 	struct timeval tv0;
 
 	RADIUS_REQ_ASSERT(lap->ntry > 0);
 
-	lap->ntry--;
-	if (radius_sendto(lap->socket, lap->pkt, 0, (struct sockaddr *)
-	    &lap->ss, lap->ss.ss_len) != 0)
-		return 1;
-	tv0.tv_usec = 0;
-	tv0.tv_sec = lap->timeout;
+	if (lap->acct_delay_time != 0) {
+		struct timespec curr, delta;
 
-	event_set(&lap->ev_sock, lap->socket, EV_READ,
+		if (clock_gettime(CLOCK_MONOTONIC, &curr) != 0) {
+			log_printf(LOG_CRIT,
+			    "clock_gettime(CLOCK_MONOTONIC,) failed: %m");
+			RADIUS_REQ_ASSERT(0);
+		}
+		if (!timespecisset(&lap->req_time))
+			lap->req_time = curr;
+		else {
+			timespecsub(&curr, &lap->req_time, &delta);
+			if (radius_set_uint32_attr(lap->pkt,
+			    RADIUS_TYPE_ACCT_DELAY_TIME, delta.tv_sec) == 0) {
+				radius_update_id(lap->pkt);
+				new_message = 1;
+			}
+		}
+	}
+	if (new_message) {
+		radius_set_request_authenticator(lap->pkt,
+		    radius_get_server_secret(lap));
+	}
+
+	lap->ntry--;
+	if (radius_send(lap->socket, lap->pkt, 0) != 0) {
+		log_printf(LOG_ERR, "sendto() failed in %s: %m",
+		    __func__);
+		radius_on_response(lap, NULL, RADIUS_REQUEST_ERROR, 1);
+		return 1;
+	}
+	tv0.tv_usec = 0;
+	tv0.tv_sec = lap->setting->timeout;
+
+	event_set(&lap->ev_sock, lap->socket, EV_READ | EV_PERSIST,
 	    radius_request_io_event, lap);
 	event_add(&lap->ev_sock, &tv0);
 
@@ -295,53 +419,87 @@ radius_request_io_event(int fd, short evmask, void *context)
 
 	RADIUS_REQ_ASSERT(context != NULL);
 
+	lap = context;
+	respkt = NULL;
+	flags = 0;
 	if ((evmask & EV_READ) != 0) {
-		lap = context;
-		flags = 0;
-
 		RADIUS_REQ_ASSERT(lap->socket >= 0);
 		if (lap->socket < 0)
 			return;
 		RADIUS_REQ_ASSERT(lap->pkt != NULL);
-
 		memset(&ss, 0, sizeof(ss));
 		len = sizeof(ss);
-		if ((respkt = radius_recvfrom(lap->socket, 0,
-		    (struct sockaddr *)&ss, &len)) == NULL) {
-			log_printf(LOG_ERR, "recvfrom() failed in %s: %m",
-			    __func__);
-			flags |= RADIUS_REQUST_ERROR;
+		if ((respkt = radius_recv(lap->socket, 0)) == NULL) {
+			RADIUS_REQ_DBG((LOG_DEBUG,
+			    "radius_recv() on %s(): %m", __func__));
+			/*
+			 * Ignore error by icmp.  Wait a response from the
+			 * server anyway, it may eventually become ready.
+			 */
+			switch (errno) {
+			case EHOSTDOWN: case EHOSTUNREACH: case ECONNREFUSED:
+				return;	/* sleep the rest of timeout time */
+			}
+			flags |= RADIUS_REQUEST_ERROR;
 		} else if (lap->secret[0] == '\0') {
-			flags |= RADIUS_REQUST_CHECK_AUTHENTICTOR_NO_CHECK;
+			flags |= RADIUS_REQUEST_CHECK_AUTHENTICATOR_NO_CHECK;
 		} else {
 			radius_set_request_packet(respkt, lap->pkt);
 			if (!radius_check_response_authenticator(respkt,
 			    lap->secret))
-				flags |= RADIUS_REQUST_CHECK_AUTHENTICTOR_OK;
+				flags |= RADIUS_REQUEST_CHECK_AUTHENTICATOR_OK;
 		}
-
-		if (lap->response_fn != NULL)
-			lap->response_fn(lap->context, respkt, flags);
-
-		if (respkt != NULL)
-			radius_delete_packet(respkt);
-		radius_cancel_request(lap);
+		radius_on_response(lap, respkt, flags, 0);
+		radius_delete_packet(respkt);
 	} else if ((evmask & EV_TIMEOUT) != 0) {
-		lap = context;
 		if (lap->ntry > 0) {
-			if (radius_request0(lap) != 0) {
-				if (lap->response_fn != NULL)
-					lap->response_fn(lap->context, NULL,
-					    RADIUS_REQUST_ERROR);
-				radius_cancel_request(lap);
-			}
+			RADIUS_REQ_DBG((LOG_DEBUG,
+			    "%s() timed out retry", __func__));
+			radius_request0(lap, 0);
 			return;
 		}
-		if (lap->response_fn != NULL)
-			lap->response_fn(lap->context, NULL,
-			    RADIUS_REQUST_TIMEOUT);
-		radius_cancel_request(lap);
+		RADIUS_REQ_DBG((LOG_DEBUG, "%s() timed out", __func__));
+		flags |= RADIUS_REQUEST_TIMEOUT;
+		radius_on_response(lap, NULL, flags, 1);
 	}
+}
+
+static void
+radius_on_response(RADIUS_REQUEST_CTX ctx, RADIUS_PACKET *pkt, int flags,
+    int server_failure)
+{
+	struct overlapped *lap;
+	int failovers;
+
+	lap = ctx;
+	if (server_failure) {
+		int i, n;
+		struct sockaddr *sa_curr;
+
+		sa_curr = (struct sockaddr *)&lap->setting->server[
+		    lap->setting->curr_server].peer;
+		if (sa_curr->sa_len == lap->ss.ss_len &&
+		    memcmp(sa_curr, &lap->ss, sa_curr->sa_len) == 0) {
+			/*
+			 * The server on failure is flagged as the current.
+			 * change the current
+			 */
+			for (i = 1; i < nitems(lap->setting->server); i++) {
+				n = (lap->setting->curr_server + i) %
+				    nitems(lap->setting->server);
+				if (lap->setting->server[n].enabled) {
+					lap->setting->curr_server = n;
+					break;
+				}
+			}
+		}
+	}
+
+	failovers = lap->failovers;
+	if (lap->response_fn != NULL)
+		lap->response_fn(lap->context, pkt, flags, ctx);
+	if (failovers == lap->failovers)
+		radius_cancel_request(lap);
 }
 
 static int
@@ -366,4 +524,45 @@ fail:
 		close(sock);
 
 	return 1;
+}
+
+radius_req_setting *
+radius_req_setting_create(void)
+{
+	radius_req_setting *setting;
+
+	if ((setting = malloc(sizeof(radius_req_setting))) == NULL)
+		return NULL;
+	memset(setting, 0, sizeof(radius_req_setting));
+
+	return setting;
+}
+
+int
+radius_req_setting_has_server(radius_req_setting *setting)
+{
+	return setting->server[setting->curr_server].enabled;
+}
+
+void
+radius_req_setting_destroy(radius_req_setting *setting)
+{
+	setting->destroyed = 1;
+
+	if (setting->refcnt == 0)
+		free(setting);
+}
+
+static void
+radius_req_setting_ref(radius_req_setting *setting)
+{
+	setting->refcnt++;
+}
+
+static void
+radius_req_setting_unref(radius_req_setting *setting)
+{
+	setting->refcnt--;
+	if (setting->destroyed)
+		radius_req_setting_destroy(setting);
 }

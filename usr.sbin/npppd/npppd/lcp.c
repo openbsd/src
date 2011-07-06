@@ -1,4 +1,4 @@
-/* $OpenBSD: lcp.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: lcp.c,v 1.4 2011/07/06 20:52:28 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: lcp.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: lcp.c,v 1.4 2011/07/06 20:52:28 yasuoka Exp $ */
 /**@file
  * This file provides LCP related functions.
  *<pre>
@@ -204,6 +204,10 @@ lcp_open(fsm *f)
 			fsm_log(f, LOG_INFO,
 			    "failed to negotiate a auth protocol.");
 			fsm_close(f, "Authentication is required");
+			ppp_set_disconnect_cause(f->ppp,
+			    PPP_DISCON_AUTH_PROTOCOL_UNACCEPTABLE, 
+			    _this->auth_order[0] /* first one */,
+			    1 /* peer refused */, NULL);
 			ppp_stop(f->ppp, "Authentication is required");
 			return;
 		}
@@ -232,6 +236,20 @@ static void
 lcp_down(fsm *f)
 {
 	lcp *_this;
+
+	if (f->ppp->disconnect_code == PPP_DISCON_NO_INFORMATION) {
+		/*
+		 * disconnect code is set when we are closing the lcp, so
+		 * 'no info' means the lcp is going down by peer's termreq.
+		 */
+		ppp_set_disconnect_cause(f->ppp, PPP_DISCON_NORMAL, 0,
+		    1 /* peer */, NULL);
+#ifdef USE_NPPPD_RADIUS
+		ppp_set_radius_terminate_cause(f->ppp,
+		    RADIUS_TERMNATE_CAUSE_USER_REQUEST);
+#endif
+	}
+
 	_this = &f->ppp->lcp;
 	UNTIMEOUT(lcp_timeout, _this);
 }
@@ -707,6 +725,10 @@ lcp_nakci(fsm *f, u_char *inp, int inlen)
 				    "protocols are agreeable.  peer's "
 				    "auth proto=%s",
 				    peer_auth);
+				ppp_set_disconnect_cause(f->ppp,
+				    PPP_DISCON_AUTH_PROTOCOL_UNACCEPTABLE, 
+				    authproto, 2 /* couldn't accept peer's */,
+				    NULL);
 				ppp_stop(f->ppp, "Authentication is required");
 				return 1;
 			}
@@ -811,6 +833,9 @@ lcp_rejci(fsm *f, u_char *inp, int inlen)
 			if (NO_AUTH_AGREEABLE(_this)) {
 				fsm_log(f, LOG_INFO, "No authentication "
 				    "protocols are agreeable.");
+				ppp_set_disconnect_cause(f->ppp,
+				    PPP_DISCON_AUTH_PROTOCOL_UNACCEPTABLE,
+				    authproto, 1 /* rejected by peer */, NULL);
 				ppp_stop(f->ppp, "Authentication is required");
 				return 1;
 			}
@@ -911,8 +936,13 @@ lcp_timeout(void *ctx)
 	_this = ctx;
 	if (_this->echo_failures >= _this->echo_max_retries) {
 		fsm_log(&_this->fsm, LOG_NOTICE, "keepalive failure.");
-		if (_this->fsm.ppp != NULL)
+		if (_this->fsm.ppp != NULL) {
+#ifdef USE_NPPPD_RADIUS
+			ppp_set_radius_terminate_cause(_this->fsm.ppp,
+			    RADIUS_TERMNATE_CAUSE_IDLE_TIMEOUT);
+#endif
 			ppp_stop(_this->fsm.ppp, NULL);
+		}
 		return;
 	}
 	cp = buf;
@@ -976,11 +1006,11 @@ lcp_ext(fsm *f, int code, int id, u_char *inp, int inlen)
 		return 1;
 	case ECHOREP:
 		if (f->state == OPENED) {
-				if (inlen >= 4) {
-					GETLONG(magic, inp);
-					if (_this->peer_magic_number == magic) {
-						_this->echo_failures = 0;
-						lcp_reset_timeout(_this);
+			if (inlen >= 4) {
+				GETLONG(magic, inp);
+				if (_this->peer_magic_number == magic) {
+					_this->echo_failures = 0;
+					lcp_reset_timeout(_this);
 				}
 			}
 		}

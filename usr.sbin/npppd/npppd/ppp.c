@@ -1,4 +1,4 @@
-/* $OpenBSD: ppp.c,v 1.7 2010/09/24 14:50:30 yasuoka Exp $ */
+/* $OpenBSD: ppp.c,v 1.8 2011/07/06 20:52:28 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.7 2010/09/24 14:50:30 yasuoka Exp $ */
+/* $Id: ppp.c,v 1.8 2011/07/06 20:52:28 yasuoka Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -54,6 +54,10 @@
 #include "time_utils.h"
 #include "ppp.h"
 #include "psm-opt.h"
+#ifdef USE_NPPPD_RADIUS
+#include <radius+.h>
+#include "npppd_radius.h"
+#endif
 
 #include "debugutil.h"
 
@@ -281,37 +285,54 @@ ppp_down_others(npppd_ppp *_this)
 	evtimer_del(&_this->idle_event);
 }
 
-void
-ppp_stop(npppd_ppp *_this, const char *reason)
-{
-	ppp_stop_ex(_this, reason, PPP_DISCON_NO_INFORMATION, 0, 0, NULL);
-}
-
 /**
  * Stop the PPP and destroy the npppd_ppp instance
  * @param reason	Reason of stopping the PPP.  Specify NULL if there is
  *			no special reason.  This reason will be used as a
  *			reason field of LCP Terminate-Request message and
  *			notified to the peer.
+ */
+void
+ppp_stop(npppd_ppp *_this, const char *reason)
+{
+
+	PPP_ASSERT(_this != NULL);
+
+#ifdef USE_NPPPD_RADIUS
+	ppp_set_radius_terminate_cause(_this,
+	    RADIUS_TERMNATE_CAUSE_ADMIN_RESET);
+#endif
+	ppp_set_disconnect_cause(_this, PPP_DISCON_NORMAL, 0, 2 /* by local */,
+	    NULL);
+
+	ppp_down_others(_this);
+	fsm_close(&_this->lcp.fsm, reason);
+}
+
+/**
+ * Set disconnect cause
  * @param code		disconnect code in {@link ::npppd_ppp_disconnect_code}.
  * @param proto		control protocol number.  see RFC3145.
  * @param direction	disconnect direction.  see RFC 3145
  */
 void
-ppp_stop_ex(npppd_ppp *_this, const char *reason,
-    npppd_ppp_disconnect_code code, int proto, int direction,
-    const char *message)
+ppp_set_disconnect_cause(npppd_ppp *_this, npppd_ppp_disconnect_code code,
+    int proto, int direction, const char *message)
 {
-	PPP_ASSERT(_this != NULL);
-
 	if (_this->disconnect_code == PPP_DISCON_NO_INFORMATION) {
 		_this->disconnect_code = code;
 		_this->disconnect_proto = proto;
 		_this->disconnect_direction = direction;
 		_this->disconnect_message = message;
 	}
-	ppp_down_others(_this);
-	fsm_close(&_this->lcp.fsm, reason);
+}
+
+/** Set RADIUS Acct-Terminate-Cause code */
+void
+ppp_set_radius_terminate_cause(npppd_ppp *_this, int cause)
+{
+	if (_this->terminate_cause == 0)
+		_this->terminate_cause = cause;
 }
 
 static void
@@ -319,6 +340,12 @@ ppp_stop0(npppd_ppp *_this)
 {
 	char mppe_str[BUFSIZ];
 	char label[512];
+
+#ifdef USE_NPPPD_RADIUS
+	ppp_set_radius_terminate_cause(_this, RADIUS_TERMNATE_CAUSE_NAS_ERROR);
+#endif
+	ppp_set_disconnect_cause(_this, PPP_DISCON_NORMAL, 0, 1 /* by local */,
+	    NULL);
 
 	_this->end_monotime = get_monosec();
 
@@ -372,6 +399,9 @@ ppp_stop0(npppd_ppp *_this)
 		_this->ierrors, _this->oerrors, mppe_str,
 		npppd_ppp_get_iface_name(_this->pppd, _this));
 
+#ifdef USE_NPPPD_RADIUS
+	npppd_ppp_radius_acct_stop(_this->pppd, _this);
+#endif
 	npppd_ppp_unbind_iface(_this->pppd, _this);
 #ifdef	USE_NPPPD_MPPE
 	mppe_fini(&_this->mppe);
@@ -500,6 +530,10 @@ ppp_phy_downed(npppd_ppp *_this)
 	fsm_lowerdown(&_this->lcp.fsm);
 	fsm_close(&_this->lcp.fsm, NULL);
 
+#ifdef USE_NPPPD_RADIUS
+	ppp_set_radius_terminate_cause(_this,
+	    RADIUS_TERMNATE_CAUSE_LOST_CARRIER);
+#endif
 	ppp_stop0(_this);
 }
 
@@ -592,6 +626,10 @@ ppp_idle_timeout(int fd, short evtype, void *context)
 	_this = context;
 
 	ppp_log(_this, LOG_NOTICE, "Idle timeout(%d sec)", _this->timeout_sec);
+#ifdef USE_NPPPD_RADIUS
+	ppp_set_radius_terminate_cause(_this,
+	    RADIUS_TERMNATE_CAUSE_IDLE_TIMEOUT);
+#endif
 	ppp_stop(_this, NULL);
 }
 
@@ -643,6 +681,10 @@ ppp_ipcp_opened(npppd_ppp *_this)
  		    ipstr, npppd_ppp_get_iface_name(_this->pppd, _this),
 		    (_this->lcp.dialin_proxy != 0)? " dialin_proxy=yes" : ""
 		    );
+#ifdef USE_NPPPD_RADIUS
+		npppd_ppp_radius_acct_start(_this->pppd, _this);
+#endif
+
 		_this->logged_acct_start = 1;
 		ppp_reset_idle_timeout(_this);
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: radius_req.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: radius_req.h,v 1.4 2011/07/06 20:52:28 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -35,22 +35,22 @@
 #define MAX_RADIUS_SERVERS				16
 
 /** RADIUS request failed */
-#define	RADIUS_REQUST_ERROR				0x0001
+#define	RADIUS_REQUEST_ERROR				0x0001
 
 /** RADIUS request timed out */
-#define	RADIUS_REQUST_TIMEOUT				0x0002
+#define	RADIUS_REQUEST_TIMEOUT				0x0002
 
 /** response has valid authenticator */
-#define	RADIUS_REQUST_CHECK_AUTHENTICTOR_OK		0x0010
+#define	RADIUS_REQUEST_CHECK_AUTHENTICATOR_OK		0x0010
 
 /** authenticator is not checked */
-#define	RADIUS_REQUST_CHECK_AUTHENTICTOR_NO_CHECK	0x0020
-
-/** type for callback function to receive the RADIUS response */
-typedef void (radius_response)(void *context, RADIUS_PACKET *pkt, int flags);
+#define	RADIUS_REQUEST_CHECK_AUTHENTICATOR_NO_CHECK	0x0020
 
 /** type for context to handle RADIUS request / response */
 typedef void * RADIUS_REQUEST_CTX;
+
+/** type for callback function to receive the RADIUS response */
+typedef void (radius_response)(void *context, RADIUS_PACKET *pkt, int flags, RADIUS_REQUEST_CTX reqctx);
 
 /** type for setting of RADIUS request */
 typedef struct _radius_req_setting
@@ -74,18 +74,33 @@ typedef struct _radius_req_setting
 	int curr_server;
 	/** request timeout(in second) */
 	int timeout;
+	/** The maximum number of RADIUS request transmission */
+	int max_tries;
+	/** The maximum number of RADIUS request failover */
+	int max_failovers;
+
+	/** references by radius request */
+	int refcnt;
+	/** destroy is requested */
+	int destroyed;
+
 } radius_req_setting;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int   radius_prepare (radius_req_setting *, void *, RADIUS_REQUEST_CTX *, radius_response *, int);
-void  radius_request (RADIUS_REQUEST_CTX, RADIUS_PACKET *);
-void  radius_cancel_request (RADIUS_REQUEST_CTX);
-const char *radius_get_server_secret(RADIUS_REQUEST_CTX);
-struct sockaddr *radius_get_server_address(RADIUS_REQUEST_CTX);
-int radius_prepare_nas_address(radius_req_setting *, RADIUS_PACKET *);
+void                radius_request (RADIUS_REQUEST_CTX, RADIUS_PACKET *);
+int                 radius_prepare_nas_address (radius_req_setting *, RADIUS_PACKET *);
+int                 radius_request_can_failover (RADIUS_REQUEST_CTX);
+int                 radius_request_failover (RADIUS_REQUEST_CTX);
+int                 radius_prepare (radius_req_setting *, void *, RADIUS_REQUEST_CTX *, radius_response, int);
+void                radius_cancel_request (RADIUS_REQUEST_CTX);
+const char          *radius_get_server_secret (RADIUS_REQUEST_CTX);
+struct sockaddr     *radius_get_server_address (RADIUS_REQUEST_CTX);
+radius_req_setting  *radius_req_setting_create (void);
+int                 radius_req_setting_has_server(radius_req_setting *);
+void                radius_req_setting_destroy (radius_req_setting *);
 
 #ifdef __cplusplus
 }

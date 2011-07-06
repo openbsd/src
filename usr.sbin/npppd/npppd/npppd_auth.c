@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_auth.c,v 1.6 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: npppd_auth.c,v 1.7 2011/07/06 20:52:28 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file authentication realm */
-/* $Id: npppd_auth.c,v 1.6 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: npppd_auth.c,v 1.7 2011/07/06 20:52:28 yasuoka Exp $ */
 /* I hope to write the source code in npppd-independent as possible. */
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -93,14 +93,31 @@ npppd_auth_create(int auth_type, const char *label, void *_npppd)
 #ifdef USE_NPPPD_RADIUS
 	case NPPPD_AUTH_TYPE_RADIUS:
 		if ((base = malloc(sizeof(npppd_auth_radius))) != NULL) {
+			npppd_auth_radius *_this = (npppd_auth_radius *)base;
 			memset(base, 0, sizeof(npppd_auth_radius));
 			base->type = NPPPD_AUTH_TYPE_RADIUS;
 			base->strip_nt_domain = 0;
 			strlcpy(base->label, label, sizeof(base->label));
 			base->npppd = _npppd;
+			if ((_this->rad_auth_setting =
+			    radius_req_setting_create()) == NULL)
+				goto radius_reigai;
+			if ((_this->rad_acct_setting =
+			    radius_req_setting_create()) == NULL)
+				goto radius_reigai;
 
 			return base;
+radius_reigai:
+			if (_this->rad_auth_setting != NULL)
+				radius_req_setting_destroy(
+				    _this->rad_auth_setting);
+			if (_this->rad_acct_setting != NULL)
+				radius_req_setting_destroy(
+				    _this->rad_acct_setting);
+			free(base);
+			return NULL;
 		}
+
 		break;
 #endif
 
@@ -153,8 +170,17 @@ npppd_auth_destroy(npppd_auth_base *base)
 		break;
 
 	case NPPPD_AUTH_TYPE_RADIUS:
+	    {
+		npppd_auth_radius *_this = (npppd_auth_radius *)base;
+		if (_this->rad_auth_setting != NULL)
+			radius_req_setting_destroy(_this->rad_auth_setting);
+		_this->rad_auth_setting = NULL;
+		if (_this->rad_acct_setting != NULL)
+			radius_req_setting_destroy(_this->rad_acct_setting);
+		_this->rad_acct_setting = NULL;
 		memset(base, 0, sizeof(npppd_auth_local));
 		break;
+	    }
 	}
 	free(base);
 
@@ -432,6 +458,12 @@ npppd_auth_get_suffix(npppd_auth_base *base)
 }
 
 const char *
+npppd_auth_get_prefix(npppd_auth_base *base)
+{
+	return base->pppprefix;
+}
+
+const char *
 npppd_auth_username_for_auth(npppd_auth_base *base, const char *username,
     char *username_buffer)
 {
@@ -690,10 +722,10 @@ npppd_auth_find_user(npppd_auth_base *base, const char *username)
 
 static int
 radius_server_address_load(radius_req_setting *radius, int idx,
-    const char *address)
+    const char *address, enum RADIUS_SERVER_TYPE type)
 {
 	struct addrinfo *ai;
-	struct sockaddr_in *sin;
+	struct sockaddr_in *sin4;
 
 	memset(&radius->server[idx], 0, sizeof(radius->server[0]));
 
@@ -709,9 +741,11 @@ radius_server_address_load(radius_req_setting *radius, int idx,
 		break;
 	}
 
-	sin = (struct sockaddr_in *)(ai->ai_addr);
-	if (sin->sin_port == 0)
-		sin->sin_port = htons(DEFAULT_RADIUS_AUTH_PORT);
+	sin4 = (struct sockaddr_in *)(ai->ai_addr);
+	if (sin4->sin_port == 0)
+		sin4->sin_port = htons((type == RADIUS_SERVER_TYPE_AUTH)
+		    ? DEFAULT_RADIUS_AUTH_PORT : DEFAULT_RADIUS_ACCT_PORT);
+
 	memcpy(&radius->server[idx].peer, ai->ai_addr,
 	    MIN(sizeof(radius->server[idx].peer), ai->ai_addrlen));
 
@@ -721,131 +755,161 @@ radius_server_address_load(radius_req_setting *radius, int idx,
 	return 0;
 }
 
+#define	VAL_SEP		" \t\r\n"
 /** reload the configuration of RADIUS authentication realm */
 static int
 npppd_auth_radius_reload(npppd_auth_base *base)
 {
 	npppd_auth_radius *_this = (npppd_auth_radius *)base;
-	int i, n;
-	const char *val;
-	char *tok, *buf0, buf[NPPPD_CONFIG_BUFSIZ], logbuf[BUFSIZ];
-	char label[256];
+	int i, nauth, nacct;
 
-#define	VAL_SEP		" \t\r\n"
-	n = 0;
-	_this->rad_setting.timeout =
-	    npppd_auth_config_int(base, "timeout", DEFAULT_RADIUS_AUTH_TIMEOUT);
-	_this->rad_setting.curr_server = 0;
+	_this->rad_acct_setting->timeout = _this->rad_auth_setting->timeout =
+	    npppd_auth_config_int(base, "timeout", DEFAULT_RADIUS_TIMEOUT);
 
-	if ((val = npppd_auth_config_str(base, "server_list")) != NULL) {
-		strlcpy(buf, val, sizeof(buf));
-		buf0 = buf;
-		while ((tok = strsep(&buf0, VAL_SEP)) != NULL) {
-			if (tok[0] == '\0')
-				continue;
-			snprintf(label, sizeof(label), "server.%s.address",tok);
-			if ((val = npppd_auth_config_str(base, label)) == NULL)
-				goto fail;
-			if (radius_server_address_load(&_this->rad_setting, n,
-			    val) != 0) {
-				npppd_auth_base_log(base, LOG_INFO,
-				    "parse error at %s", label);
-				goto fail;
-			}
-			snprintf(label, sizeof(label), "server.%s.secret",
-			    tok);
-			if ((val = npppd_auth_config_str(base, label)) != NULL)
-				strlcpy(_this->rad_setting.server[n].secret,
-				    val, sizeof(_this->rad_setting
-					.server[n].secret));
-			else
-				_this->rad_setting.server[n].secret[0] = '\0';
-			if (n != 0)
-				strlcat(logbuf, " ", sizeof(logbuf));
-			n++;
-		}
-	} else if ((val = npppd_auth_config_str(base, "server.address"))
-	    != NULL) {
-		if (radius_server_address_load(&_this->rad_setting, n, val)
-		    != 0) {
-			npppd_auth_base_log(base, LOG_INFO,
-			    "parse error at %s", label);
-			goto fail;
-		}
-		if ((val = npppd_auth_config_str(base, "server.secret"))!= NULL)
-			strlcpy(_this->rad_setting.server[n].secret, val,
-			    sizeof(_this->rad_setting.server[n].secret));
-		else
-			_this->rad_setting.server[n].secret[0] = '\0';
-		n++;
-	}
-	for (i = n; i < countof(_this->rad_setting.server); i++) {
-		memset(&_this->rad_setting.server[i], 0,
-		    sizeof(_this->rad_setting.server[0]));
-	}
-	for (i = 0; i < countof(_this->rad_setting.server); i++) {
-		if (_this->rad_setting.server[i].enabled)
+	_this->rad_acct_setting->max_tries =
+	_this->rad_auth_setting->max_tries = 
+		npppd_auth_config_int(base, "max_tries",
+		    DEFAULT_RADIUS_MAX_TRIES);
+
+	_this->rad_acct_setting->max_failovers =
+	_this->rad_auth_setting->max_failovers = 
+		npppd_auth_config_int(base, "max_failovers",
+		    DEFAULT_RADIUS_MAX_FAILOVERS);
+
+	_this->rad_acct_setting->curr_server = 
+	_this->rad_auth_setting->curr_server = 0;
+	if ((nauth = radius_loadconfig(base, _this->rad_auth_setting,
+	    RADIUS_SERVER_TYPE_AUTH)) < 0)
+		goto reigai;
+	if ((nacct = radius_loadconfig(base, _this->rad_acct_setting,
+	    RADIUS_SERVER_TYPE_ACCT)) < 0)
+		goto reigai;
+
+	for (i = 0; i < countof(_this->rad_auth_setting->server); i++) {
+		if (_this->rad_auth_setting->server[i].enabled)
 			base->radius_ready = 1;
 	}
 
-	npppd_auth_base_log(base, LOG_INFO,
-	    "Loaded configuration timeout=%d nserver=%d",
-	    _this->rad_setting.timeout, n);
+	npppd_auth_base_log(&_this->nar_base, LOG_INFO,
+	    "Loaded configuration.  %d authentication server%s, %d accounting "
+	    "server%s.  timeout=%dsec",
+	    nauth, (nauth > 1)? "s" : "", nacct, (nacct > 1)? "s" : "",
+	    _this->rad_auth_setting->timeout);
 
 	return 0;
-fail:
+reigai:
 	npppd_auth_destroy(base);
 
 	return 1;
 }
 
+static int
+radius_loadconfig(npppd_auth_base *base, radius_req_setting *radius,
+    enum RADIUS_SERVER_TYPE srvtype)
+{
+	npppd_auth_radius *_this = (npppd_auth_radius *)base;
+	int i, n;
+	const char *val;
+	char *tok, *buf0, buf[NPPPD_CONFIG_BUFSIZ];
+	char label[256];
+	struct rad_cfglabel  {
+		const char *list;
+		const char *address;
+		const char *secret;
+		const char *addressL;
+		const char *secretL;
+	} const rad_auth_cfglabel = {
+		.list = "server_list",
+		.address = "server.address",
+		.secret = "server.secret",
+		.addressL = "server.%s.address",
+		.secretL = "server.%s.secret"
+	}, rad_acct_cfglabel = {
+		.list = "acct_server_list",
+		.address = "acct_server.address",
+		.secret = "acct_server.secret",
+		.addressL = "acct_server.%s.address",
+		.secretL = "acct_server.%s.secret"
+	}, *cfglabel;
+
+	if (srvtype == RADIUS_SERVER_TYPE_AUTH)
+		cfglabel = &rad_auth_cfglabel;
+	else
+		cfglabel = &rad_acct_cfglabel;
+
+	for (i = 0; i < countof(radius->server); i++)
+	radius->server[i].enabled = 0;
+
+	n = 0;
+	if ((val = npppd_auth_config_str(base, cfglabel->list)) != NULL) {
+		strlcpy(buf, val, sizeof(buf));
+		buf0 = buf;
+		while ((tok = strsep(&buf0, VAL_SEP)) != NULL) {
+			if (tok[0] == '\0')
+				continue;
+			snprintf(label, sizeof(label), cfglabel->addressL,tok);
+			if ((val = npppd_auth_config_str(base, label)) == NULL){
+				npppd_auth_base_log(&_this->nar_base, LOG_INFO,
+				    "property %s is not found", label);
+				goto fail;
+			}
+			if (radius_server_address_load(radius, n, val, srvtype)
+			    != 0) {
+				npppd_auth_base_log(base, LOG_INFO,
+				    "parse error at %s", label);
+				goto fail;
+			}
+			snprintf(label, sizeof(label), cfglabel->secretL, tok);
+			if ((val = npppd_auth_config_str(base, label)) != NULL)
+				strlcpy(radius->server[n].secret, val,
+				    sizeof(radius->server[n].secret));
+			else
+				radius->server[n].secret[0] = '\0';
+			n++;
+		}
+	} else if ((val = npppd_auth_config_str(base, cfglabel->address))
+	    != NULL) {
+		if (radius_server_address_load(radius, n, val, srvtype) != 0) {
+			npppd_auth_base_log(base, LOG_INFO,
+			    "parse error at %s", label);
+			goto fail;
+		}
+		if ((val = npppd_auth_config_str(base, cfglabel->secret))
+		    != NULL) 
+			strlcpy(radius->server[n].secret, val,
+			    sizeof(radius->server[n].secret));
+		else
+			radius->server[n].secret[0] = '\0';
+		n++;
+	}
+	for (i = n; i < countof(radius->server); i++)
+		memset(&radius->server[i], 0, sizeof(radius->server[0]));
+
+	return n;
+fail:
+	return -1;
+}
+
 /**
- * Get {@link ::radius_req_setting} of specified {@link ::npppd_auth_base}
- * object.
+ * Get {@link ::radius_req_setting} for RADIUS authentication of specified
+ * {@link ::npppd_auth_base} object.
  */
 void *
-npppd_auth_radius_get_radius_req_setting(npppd_auth_radius *_this)
+npppd_auth_radius_get_radius_auth_setting(npppd_auth_radius *_this)
 {
-	return &_this->rad_setting;
+	return _this->rad_auth_setting;
 }
 
-/** This function notifies that RADIUS server failed the request. */
-void
-npppd_auth_radius_server_failure_notify(npppd_auth_radius *_this,
-    struct sockaddr *server, const char *reason)
+/**
+ * Get {@link ::radius_req_setting} for RADIUS accounting of specified
+ * {@link ::npppd_auth_base} object.
+ */
+void *
+npppd_auth_radius_get_radius_acct_setting(npppd_auth_radius *_this)
 {
-	int i, n;
-	radius_req_setting *rad_setting;
-	char buf0[BUFSIZ];
-
-	NPPPD_AUTH_ASSERT(_this != NULL);
-	NPPPD_AUTH_ASSERT(server != NULL);
-
-	if (reason == NULL)
-		reason = "failure";
-
-	rad_setting = &_this->rad_setting;
-	if (memcmp(&rad_setting->server[rad_setting->curr_server].peer,
-	    server, server->sa_len) == 0) {
-		/*
-		 * The RADIUS server which request was failed is currently selected,
-		 * so next RADIUS server will be selected.
-		 */
-		for (i = 1; i < countof(rad_setting->server); i++) {
-			n = (rad_setting->curr_server + i) %
-			    countof(rad_setting->server);
-			if (rad_setting->server[n].enabled == 0)
-				continue;
-			rad_setting->curr_server = n;
-			break;
-		}
-	}
-
-	npppd_auth_base_log(&_this->nar_base, LOG_NOTICE,
-	    "server=%s request failure: %s",
-		addrport_tostring(server, server->sa_len, buf0, sizeof(buf0)),
-		reason);
+	return _this->rad_acct_setting;
 }
+
 #endif
 
 /***********************************************************************

@@ -1,4 +1,4 @@
-/* $OpenBSD: chap.c,v 1.4 2010/09/22 11:48:38 yasuoka Exp $ */
+/* $OpenBSD: chap.c,v 1.5 2011/07/06 20:52:28 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -36,7 +36,7 @@
  * </ul></p>
  */
 /* RFC 1994, 2433 */
-/* $Id: chap.c,v 1.4 2010/09/22 11:48:38 yasuoka Exp $ */
+/* $Id: chap.c,v 1.5 2011/07/06 20:52:28 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -49,6 +49,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <errno.h>
 #include <time.h>
 #include <event.h>
 #include <md5.h>
@@ -59,6 +60,7 @@
 
 #ifdef USE_NPPPD_RADIUS
 #include "radius_chap_const.h"
+#include "npppd_radius.h"
 #endif
 #include "npppd_defs.h"
 
@@ -118,7 +120,7 @@ static void        mschapv2_send_error (chap *, int, int);
 static void        mschapv2_authenticate (chap *, int, char *, u_char *, int, u_char *);
 #ifdef USE_NPPPD_RADIUS
 static void        chap_radius_authenticate (chap *, int, char *, u_char *, int, u_char *);
-static void        chap_radius_response (void *, RADIUS_PACKET *, int);
+static void        chap_radius_response (void *, RADIUS_PACKET *, int, RADIUS_REQUEST_CTX);
 #endif
 static char       *strip_nt_domain (char *);
 static void        chap_log (chap *, uint32_t, const char *, ...) __printflike(3,4);
@@ -176,10 +178,10 @@ chap_start(chap *_this)
 				chap_log(_this, LOG_ALERT,
 				    "Requested authentication type(0x%x) "
 				    "is not supported.", _this->type);
-				ppp_stop_ex(_this->ppp,
-				    "Authentication Required",
+				ppp_set_disconnect_cause(_this->ppp, 
 				    PPP_DISCON_AUTH_PROTOCOL_UNACCEPTABLE,
 				    PPP_PROTO_CHAP, 2 /* local */, NULL);
+				ppp_stop(_this->ppp, "Authentication Required");
 				return;
 			}
 
@@ -191,10 +193,10 @@ chap_start(chap *_this)
 				chap_log(_this, LOG_ALERT,
 				    "mppe is required but try to start chap "
 				    "type=0x%02x", _this->type);
-				ppp_stop_ex(_this->ppp,
-				    "Authentication Required",
+				ppp_set_disconnect_cause(_this->ppp,
 				    PPP_DISCON_AUTH_PROTOCOL_UNACCEPTABLE,
 				    PPP_PROTO_CHAP, 2 /* local */, NULL);
+				ppp_stop(_this->ppp, "Authentication Required");
 				return;
 			}
 #endif
@@ -226,9 +228,10 @@ chap_start(chap *_this)
 		} else {
 			chap_log(_this, LOG_INFO,
 			    "Client did't respond our challenage.");
-			ppp_stop_ex(_this->ppp, "Authentication Required",
+			ppp_set_disconnect_cause(_this->ppp, 
 			    PPP_DISCON_AUTH_FSM_TIMEOUT,
 			    PPP_PROTO_CHAP, 0, NULL);
+			ppp_stop(_this->ppp, "Authentication Required");
 		}
 	}
 }
@@ -440,8 +443,9 @@ chap_response(chap *_this, int authok, u_char *pktp, int lpktp)
 		    realm_name);
 		chap_stop(_this);
 		/* Stop the PPP if the authentication is failed. */
-		ppp_stop_ex(_this->ppp, "Authentication Required",
+		ppp_set_disconnect_cause(_this->ppp,
 		    PPP_DISCON_AUTH_FAILED, PPP_PROTO_CHAP, 1 /* peer */, NULL);
+		ppp_stop(_this->ppp, "Authentication Required");
 	} else {
 		strlcpy(_this->ppp->username, _this->name,
 		    sizeof(_this->ppp->username));
@@ -746,7 +750,7 @@ chap_radius_authenticate(chap *_this, int id, char *username,
 	radpkt = NULL;
 	radctx = NULL;
 
-	if ((rad_setting = npppd_get_radius_req_setting(_this->ppp->pppd,
+	if ((rad_setting = npppd_get_radius_auth_setting(_this->ppp->pppd,
 	    _this->ppp)) == NULL) {
 		goto fail;	/* no radius server */
 	}
@@ -835,7 +839,8 @@ fail:
 }
 
 static void
-chap_radius_response(void *context, RADIUS_PACKET *pkt, int flags)
+chap_radius_response(void *context, RADIUS_PACKET *pkt, int flags,
+    RADIUS_REQUEST_CTX reqctx)
 {
 	int code, lrespkt;
 	const char *secret, *reason = "";
@@ -857,15 +862,12 @@ chap_radius_response(void *context, RADIUS_PACKET *pkt, int flags)
 	    + HEADERLEN;
 	lrespkt = _this->ppp->mru - HEADERLEN;
 	if (pkt == NULL) {
-		if (flags & RADIUS_REQUST_TIMEOUT) {
+		if (flags & RADIUS_REQUEST_TIMEOUT)
 			reason = "timeout";
-			npppd_radius_server_failure_notify(_this->ppp->pppd,
-			    _this->ppp, radctx, "request timeout");
-		} else {
+		else if (flags & RADIUS_REQUEST_ERROR)
+			reason = strerror(errno);
+		else
 			reason = "error";
-			npppd_radius_server_failure_notify(_this->ppp->pppd,
-			    _this->ppp, radctx, "unknown error");
-		}
 		goto auth_failed;
 	}
 
@@ -879,11 +881,9 @@ chap_radius_response(void *context, RADIUS_PACKET *pkt, int flags)
 		reason="error";
 		goto auth_failed;
 	}
-	if ((flags & RADIUS_REQUST_CHECK_AUTHENTICTOR_OK) == 0 &&
-	    (flags & RADIUS_REQUST_CHECK_AUTHENTICTOR_NO_CHECK) == 0) {
+	if ((flags & RADIUS_REQUEST_CHECK_AUTHENTICATOR_OK) == 0 &&
+	    (flags & RADIUS_REQUEST_CHECK_AUTHENTICATOR_NO_CHECK) == 0) {
 		reason="bad_authenticator";
-		npppd_radius_server_failure_notify(_this->ppp->pppd, _this->ppp,
-		    radctx, "bad authenticator");
 		goto auth_failed;
 	}
 	/*

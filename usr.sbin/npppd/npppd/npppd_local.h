@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_local.h,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: npppd_local.h,v 1.6 2011/07/06 20:52:28 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -202,6 +202,9 @@ struct _npppd {
 
 	/** process id */
 	pid_t	pid;
+
+	/** boot identifier */
+	uint32_t boot_id;
 
 #ifdef	USE_NPPPD_L2TP
 	/** structure of L2TP daemon */

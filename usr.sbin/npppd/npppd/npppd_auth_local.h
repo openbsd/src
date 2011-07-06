@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_auth_local.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: npppd_auth_local.h,v 1.4 2011/07/06 20:52:28 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -73,12 +73,11 @@ struct _npppd_auth_radius {
 	/** parent of npppd_auth_base */
 	npppd_auth_base nar_base;
 
-	/** server currently in use */
-	int curr_server;
+	/** RADIUS authentication server setting */
+	radius_req_setting *rad_auth_setting;
 
-	/** RADIUS server */
-	radius_req_setting rad_setting;
-
+	/** RADIUS accounting server setting */
+	radius_req_setting *rad_acct_setting;
 };
 #endif
 
@@ -106,8 +105,6 @@ typedef struct _npppd_auth_user {
 
 static int                npppd_auth_reload_acctlist (npppd_auth_base *);
 static npppd_auth_user    *npppd_auth_find_user (npppd_auth_base *, const char *);
-static int                radius_server_address_load (radius_req_setting *, int, const char *);
-static int                npppd_auth_radius_reload (npppd_auth_base *);
 static int                npppd_auth_base_log (npppd_auth_base *, int, const char *, ...);
 static uint32_t           str_hash (const void *, int);
 static const char *       npppd_auth_default_label(npppd_auth_base *);
@@ -115,6 +112,17 @@ static inline const char  *npppd_auth_config_prefix (npppd_auth_base *);
 static const char         *npppd_auth_config_str (npppd_auth_base *, const char *);
 static int                npppd_auth_config_int (npppd_auth_base *, const char *, int);
 static int                npppd_auth_config_str_equal (npppd_auth_base *, const char *, const char *, int);
+
+#ifdef USE_NPPPD_RADIUS
+enum RADIUS_SERVER_TYPE {
+	RADIUS_SERVER_TYPE_AUTH,
+	RADIUS_SERVER_TYPE_ACCT
+};
+
+static int                npppd_auth_radius_reload (npppd_auth_base *);
+static int                radius_server_address_load (radius_req_setting *, int, const char *, enum RADIUS_SERVER_TYPE);
+static int                radius_loadconfig(npppd_auth_base *, radius_req_setting *, enum RADIUS_SERVER_TYPE);
+#endif
 
 #ifdef NPPPD_AUTH_DEBUG
 #define NPPPD_AUTH_DBG(x) 	npppd_auth_base_log x

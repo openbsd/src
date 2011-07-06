@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_auth.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: npppd_auth.h,v 1.4 2011/07/06 20:52:28 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -64,9 +64,10 @@ int                 npppd_auth_is_eap_capable (npppd_auth_base *);
 const char          *npppd_auth_get_label (npppd_auth_base *);
 const char          *npppd_auth_get_name (npppd_auth_base *);
 const char          *npppd_auth_get_suffix (npppd_auth_base *);
+const char          *npppd_auth_get_prefix (npppd_auth_base *);
 const char          *npppd_auth_username_for_auth (npppd_auth_base *, const char *, char *);
-void                *npppd_auth_radius_get_radius_req_setting (npppd_auth_radius *);
-void                npppd_auth_radius_server_failure_notify (npppd_auth_radius *, struct sockaddr *, const char *);
+void                *npppd_auth_radius_get_radius_auth_setting (npppd_auth_radius *);
+void                *npppd_auth_radius_get_radius_acct_setting (npppd_auth_radius *);
 
 #ifdef __cplusplus
 }

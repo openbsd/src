@@ -1,4 +1,4 @@
-/* $OpenBSD: pap.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: pap.c,v 1.4 2011/07/06 20:52:28 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pap.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: pap.c,v 1.4 2011/07/06 20:52:28 yasuoka Exp $ */
 /**@file
  * This file provides Password Authentication Protocol (PAP) handlers.
  * @author Yasuoka Masahiko
@@ -44,14 +44,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <errno.h>
 
 #include "slist.h"
 #include "npppd.h"
 #include "ppp.h"
 
 #ifdef USE_NPPPD_RADIUS
+#include <radius+.h>
 #include "radius_chap_const.h"
+#include "npppd_radius.h"
 #endif
+
 #include "debugutil.h"
 
 #define	AUTHREQ				0x01
@@ -89,7 +93,7 @@ static void  pap_authenticate(pap *, const char *);
 static void  pap_local_authenticate (pap *, const char *, const char *);
 #ifdef USE_NPPPD_RADIUS
 static void  pap_radius_authenticate (pap *, const char *, const char *);
-static void  pap_radius_response (void *, RADIUS_PACKET *, int);
+static void  pap_radius_response (void *, RADIUS_PACKET *, int, RADIUS_REQUEST_CTX);
 #endif
 
 #ifdef __cplusplus
@@ -307,8 +311,9 @@ pap_response(pap *_this, int authok, const char *mes)
 		    "logtype=Failure username=\"%s\" realm=%s", _this->name,
 		    realm);
 		pap_stop(_this);
-		ppp_stop_ex(_this->ppp, "Authentication Required",
+		ppp_set_disconnect_cause(_this->ppp, 
 		    PPP_DISCON_AUTH_FAILED, PPP_PROTO_PAP, 1 /* peer */, NULL);
+		ppp_stop(_this->ppp, "Authentication Required");
 	} else {
 		strlcpy(_this->ppp->username, _this->name,
 		    sizeof(_this->ppp->username));
@@ -388,7 +393,7 @@ pap_radius_authenticate(pap *_this, const char *username, const char *password)
 	radius_req_setting *rad_setting = NULL;
 	char buf0[MAX_USERNAME_LENGTH];
 
-	if ((rad_setting = npppd_get_radius_req_setting(_this->ppp->pppd,
+	if ((rad_setting = npppd_get_radius_auth_setting(_this->ppp->pppd,
 	    _this->ppp)) == NULL)
 		goto fail;
 
@@ -463,7 +468,8 @@ fail:
 }
 
 static void
-pap_radius_response(void *context, RADIUS_PACKET *pkt, int flags)
+pap_radius_response(void *context, RADIUS_PACKET *pkt, int flags,
+    RADIUS_REQUEST_CTX reqctx)
 {
 	int code = -1;
 	const char *reason = NULL;
@@ -475,15 +481,12 @@ pap_radius_response(void *context, RADIUS_PACKET *pkt, int flags)
 	_this->radctx = NULL;	/* important */
 
 	if (pkt == NULL) {
-		if (flags & RADIUS_REQUST_TIMEOUT) {
+		if (flags & RADIUS_REQUEST_TIMEOUT)
 			reason = "timeout";
-			npppd_radius_server_failure_notify(_this->ppp->pppd,
-			    _this->ppp, radctx, "request timeout");
-		} else {
+		else if (flags & RADIUS_REQUEST_ERROR)
+			reason = strerror(errno);
+		else
 			reason = "error";
-			npppd_radius_server_failure_notify(_this->ppp->pppd,
-			    _this->ppp, radctx, "unknown error");
-		}
 		goto auth_failed;
 	}
 	code = radius_get_code(pkt);
@@ -494,11 +497,9 @@ pap_radius_response(void *context, RADIUS_PACKET *pkt, int flags)
 		reason="error";
 		goto auth_failed;
 	}
-	if ((flags & RADIUS_REQUST_CHECK_AUTHENTICTOR_OK) == 0 &&
-	    (flags & RADIUS_REQUST_CHECK_AUTHENTICTOR_NO_CHECK) == 0) {
+	if ((flags & RADIUS_REQUEST_CHECK_AUTHENTICATOR_OK) == 0 &&
+	    (flags & RADIUS_REQUEST_CHECK_AUTHENTICATOR_NO_CHECK) == 0) {
 		reason="bad_authenticator";
-		npppd_radius_server_failure_notify(_this->ppp->pppd, _this->ppp,
-		    radctx, "bad authenticator");
 		goto auth_failed;
 	}
 	/* Autentication succeeded */

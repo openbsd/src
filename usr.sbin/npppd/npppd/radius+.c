@@ -1,4 +1,4 @@
-/* $OpenBSD: radius+.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: radius+.c,v 1.4 2011/07/06 20:52:28 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -33,10 +33,10 @@
 #include <mpatrol.h>
 #endif
 
+#include <sys/param.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <md5.h>
 #include "radius+.h"
 #include "radiusconst.h"
@@ -185,6 +185,11 @@ u_int8_t radius_get_id(const RADIUS_PACKET* packet)
 	return packet->pdata->id;
 }
 
+void radius_update_id(RADIUS_PACKET* packet)
+{
+	packet->pdata->id = radius_id_counter++;
+}
+
 void radius_get_authenticator(const RADIUS_PACKET* packet, char* authenticator)
 {
 	memcpy(authenticator, packet->pdata->authenticator, 16);
@@ -233,6 +238,23 @@ void radius_set_response_authenticator(RADIUS_PACKET* packet,
 	MD5Update(&ctx, (unsigned char*)packet->pdata, 4);
 	MD5Update(&ctx,
 		  (unsigned char*)packet->request->pdata->authenticator, 16);
+	MD5Update(&ctx,
+		  (unsigned char*)packet->pdata->attributes,
+		  radius_get_length(packet) - 20);
+	MD5Update(&ctx, (unsigned char*)secret, strlen(secret));
+	MD5Final((unsigned char*)packet->pdata->authenticator ,&ctx);
+}
+
+void radius_set_request_authenticator(RADIUS_PACKET* packet,
+                                       const char* secret)
+{
+	MD5_CTX ctx;
+	u_char zero[16];
+
+	memset(zero, 0, sizeof(zero));
+	MD5Init(&ctx);
+	MD5Update(&ctx, (unsigned char*)packet->pdata, 4);
+	MD5Update(&ctx, zero, 16);
 	MD5Update(&ctx,
 		  (unsigned char*)packet->pdata->attributes,
 		  radius_get_length(packet) - 20);
@@ -346,6 +368,31 @@ int radius_put_raw_attr_all(RADIUS_PACKET* packet, u_int8_t type,
 	}
 
 	return 0;
+}
+
+static int radius_set_raw_attr(RADIUS_PACKET* packet, u_int8_t type,
+                               const void* buf, u_int8_t length)
+{
+	RADIUS_ATTRIBUTE* attr;
+	const RADIUS_ATTRIBUTE* end;
+
+	if(length > 255-2)
+		return 1;
+
+	attr = ATTRS_BEGIN(packet->pdata);
+	end  = ATTRS_END(packet->pdata);
+
+	for(; attr<end; ADVANCE(attr))
+	{
+		if(attr->type != type)
+			continue;
+		if(attr->length != length + 2)
+			return 1;	/* XXX */
+		memcpy(attr->data, buf, length);
+		return 0;
+	}
+
+	return 1;
 }
 
 int radius_get_vs_raw_attr(const RADIUS_PACKET* packet, u_int32_t vendor,
@@ -524,6 +571,14 @@ int radius_put_uint32_attr(RADIUS_PACKET* packet, u_int8_t type, u_int32_t val)
 	return radius_put_raw_attr(packet, type, &nval, sizeof(u_int32_t));
 }
 
+int radius_set_uint32_attr(RADIUS_PACKET* packet, u_int8_t type, u_int32_t val)
+{
+	u_int32_t nval;
+
+	nval = htonl(val);
+	return radius_set_raw_attr(packet, type, &nval, sizeof(u_int32_t));
+}
+
 int radius_get_string_attr(const RADIUS_PACKET* packet, u_int8_t type,
                            char* str)
 {
@@ -590,6 +645,11 @@ int radius_put_ipv4_attr(RADIUS_PACKET* packet, u_int8_t type, struct in_addr ad
 	return radius_put_raw_attr(packet, type, &addr, sizeof(struct in_addr));
 }
 
+int radius_set_ipv4_attr(RADIUS_PACKET* packet, u_int8_t type, struct in_addr addr)
+{
+	return radius_set_raw_attr(packet, type, &addr, sizeof(struct in_addr));
+}
+
 RADIUS_PACKET* radius_recvfrom(int s, int flags, struct sockaddr* addr, socklen_t* len)
 {
 	char buf[0x10000];
@@ -608,6 +668,28 @@ int radius_sendto(int s, const RADIUS_PACKET* packet,
 	ssize_t n;
 
 	n = sendto(s, packet->pdata, radius_get_length(packet), flags, addr, len);
+	if(n != radius_get_length(packet))
+		return 1;
+	return 0;
+}
+
+RADIUS_PACKET* radius_recv(int s, int flags)
+{
+	char buf[0x10000];
+	ssize_t n;
+
+	n = recv(s, buf, sizeof(buf), flags);
+	if(n <= 0)
+		return NULL;
+
+	return radius_convert_packet(buf, (size_t)n);
+}
+
+int radius_send(int s, const RADIUS_PACKET* packet, int flags)
+{
+	ssize_t n;
+
+	n = send(s, packet->pdata, radius_get_length(packet), flags);
 	if(n != radius_get_length(packet))
 		return 1;
 	return 0;

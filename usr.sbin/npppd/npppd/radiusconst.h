@@ -1,4 +1,4 @@
-/* $OpenBSD: radiusconst.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: radiusconst.h,v 1.4 2011/07/06 20:52:28 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -138,18 +138,18 @@
 #define RADIUS_TYPE_TUNNEL_CLIENT_AUTH_ID     90
 #define RADIUS_TYPE_TUNNEL_SERVER_AUTH_ID     91
 
-/* RFC 3162 "RADIUS and IPv6" */
-#define RADIUS_TYPE_NAS_IPV6_ADDRESS          95
-#define RADIUS_TYPE_FRAMED_INTERFACE_ID       96
-#define RADIUS_TYPE_FRAMED_IPV6_PREFIX        97
-#define RADIUS_TYPE_LOGIN_IPV6_HOST           98
-#define RADIUS_TYPE_FRAMED_IPV6_ROUTE         99
-#define RADIUS_TYPE_FRAMED_IPV6_POOL          100
 
 /* RFC 2865 "5.6. Service-Type" */
-#define	RADIUS_FRAMED_PROTOCOL_PPP		1
+#define RADIUS_FRAMED_PROTOCOL_PPP	1  /* PPP */
+#define RADIUS_FRAMED_PROTOCOL_SLIP 	2  /* SLIP */
+#define RADIUS_FRAMED_PROTOCOL_ARAP	3  /* AppleTalk Remote Access Protocol
+					      (ARAP) */
+#define RADIUS_FRAMED_PROTOCOL_GANDALF	4  /* Gandalf proprietary
+					      SingleLink/MultiLink protocol */
+#define RADIUS_FRAMED_PROTOCOL_XYLOGICS	5  /* Xylogics proprietary IPX/SLIP */
+#define RADIUS_FRAMED_PROTOCOL_X75	6  /* X.75 Synchronous */
 
-/* RFC 2865 "5.7. Framed-Protocol" */
+/* RFC 2865 "5.7. Service-Type" */
 #define RADIUS_SERVICE_TYPE_LOGIN             1
 #define RADIUS_SERVICE_TYPE_FRAMED            2
 #define RADIUS_SERVICE_TYPE_CB_LOGIN          3
@@ -196,6 +196,113 @@
 #define RADIUS_VTYPE_MS_SECONDARY_NBNS_SERVER 31
 /*      unassigned?                           32 */
 #define RADIUS_VTYPE_MS_ARAP_CHALLENGE        33
+
+/* NAS-Port-Type: see RFC2865 */
+#define RADIUS_NAS_PORT_TYPE_ASYNC		0  /* Async */
+#define RADIUS_NAS_PORT_TYPE_SYNC		1  /* Sync */
+#define RADIUS_NAS_PORT_TYPE_ISDN_SYNC		2  /* ISDN Sync */
+#define RADIUS_NAS_PORT_TYPE_ISDN_ASYNC_V120	3  /* ISDN Async V.120 */
+#define RADIUS_NAS_PORT_TYPE_ISDN_ASYNC_V110	4  /* ISDN Async V.110 */
+#define RADIUS_NAS_PORT_TYPE_VIRTUAL	 	5  /* Virtual */
+#define RADIUS_NAS_PORT_TYPE_PIAFS	 	6  /* PIAFS */
+#define RADIUS_NAS_PORT_TYPE_HDLC_CLEAR_CHANNEL	7  /* HDLC Clear Channel */
+#define RADIUS_NAS_PORT_TYPE_X_25		8  /* X.25 */
+#define RADIUS_NAS_PORT_TYPE_X_75		9  /* X.75 */
+#define RADIUS_NAS_PORT_TYPE_G3_FAX		10 /* G.3 Fax */
+#define RADIUS_NAS_PORT_TYPE_SDSL	 	11 /* SDSL - Symmetric DSL */
+#define RADIUS_NAS_PORT_TYPE_ADSL_CAP	 	12 /* ADSL-CAP - Asymmetric DSL,
+						      Carrierless Amplitude
+						      Phase Modulation */
+#define RADIUS_NAS_PORT_TYPE_ADSL_DMT		13 /* ADSL-DMT - Asymmetric DSL,
+						      Discrete Multi-Tone */
+#define RADIUS_NAS_PORT_TYPE_IDSL		14 /* IDSL - ISDN Digital
+						      Subscriber Line */
+#define RADIUS_NAS_PORT_TYPE_ETHERNET		15 /* Ethernet */
+#define RADIUS_NAS_PORT_TYPE_XDSL		16 /* xDSL - Digital Subscriber
+						      Line of unknown type */
+#define RADIUS_NAS_PORT_TYPE_CABLE		17 /* Cable */
+#define RADIUS_NAS_PORT_TYPE_WIRELESS		18 /* Wireless - Other */
+#define RADIUS_NAS_PORT_TYPE_WIRELESS_802_11	19 /* Wireless - IEEE 802.11 */
+
+
+/* RFC 2866 5.1.  Acct-Status-Type */
+#define RADIUS_ACCT_STATUS_TYPE_START		1  /* Start */
+#define RADIUS_ACCT_STATUS_TYPE_STOP		2  /* Stop */
+#define RADIUS_ACCT_STATUS_TYPE_INTERIM_UPDATE	3  /* Interim-Update */
+#define RADIUS_ACCT_STATUS_TYPE_ACCT_ON		7  /* Accounting-On */
+#define RADIUS_ACCT_STATUS_TYPE_ACCT_OFF	8  /* Accounting-Off */
+
+
+/* RFC 2866 5.6.  Acct-Authentic */
+#define RADIUS_ACCT_AUTHENTIC_RADIUS		1  /* RADIUS */
+#define RADIUS_ACCT_AUTHENTIC_LOCAL		2  /* Local */
+#define RADIUS_ACCT_AUTHENTIC_REMOTE		3  /* Remote */
+
+
+/* RFC 2866 5.10.  Acct-Terminate-Cause */
+#define RADIUS_TERMNATE_CAUSE_USER_REQUEST	1  /* User Request */
+#define RADIUS_TERMNATE_CAUSE_LOST_CARRIER	2  /* Lost Carrier */
+#define RADIUS_TERMNATE_CAUSE_LOST_SERVICE	3  /* Lost Service */
+#define RADIUS_TERMNATE_CAUSE_IDLE_TIMEOUT	4  /* Idle Timeout */
+#define RADIUS_TERMNATE_CAUSE_SESSION_TIMEOUT	5  /* Session Timeout */
+#define RADIUS_TERMNATE_CAUSE_ADMIN_RESET	6  /* Admin Reset */
+#define RADIUS_TERMNATE_CAUSE_ADMIN_REBOOT	7  /* Admin Reboot */
+#define RADIUS_TERMNATE_CAUSE_PORT_ERROR	8  /* Port Error */
+#define RADIUS_TERMNATE_CAUSE_NAS_ERROR		9  /* NAS Error */
+#define RADIUS_TERMNATE_CAUSE_NAS_RESET		10 /* NAS Request */
+#define RADIUS_TERMNATE_CAUSE_NAS_REBOOT	11 /* NAS Reboot */
+#define RADIUS_TERMNATE_CAUSE_PORT_UNNEEDED	12 /* Port Unneeded */
+#define RADIUS_TERMNATE_CAUSE_PORT_PREEMPTED	13 /* Port Preempted */
+#define RADIUS_TERMNATE_CAUSE_PORT_SUSPENDED	14 /* Port Suspended */
+#define RADIUS_TERMNATE_CAUSE_SERVICE_UNAVAIL	15 /* Service Unavailable */
+#define RADIUS_TERMNATE_CAUSE_CALLBACK		16 /* Callback */
+#define RADIUS_TERMNATE_CAUSE_USER_ERROR	17 /* User Error */
+#define RADIUS_TERMNATE_CAUSE_HOST_REQUEST	18 /* Host Request */
+
+
+/* RFC 2868 3.1. Tunnel-Type */
+#define RADIUS_TUNNEL_TYPE_PPTP		1  /* Point-to-Point Tunneling Protocol
+					      (PPTP) */
+#define RADIUS_TUNNEL_TYPE_L2F		2  /* Layer Two Forwarding (L2F) */
+#define RADIUS_TUNNEL_TYPE_L2TP		3  /* Layer Two Tunneling Protocol
+					      (L2TP) */
+#define RADIUS_TUNNEL_TYPE_ATMP		4  /* Ascend Tunnel Management Protocol
+					      (ATMP) */
+#define RADIUS_TUNNEL_TYPE_VTP		5  /* Virtual Tunneling Protocol (VTP)*/
+#define RADIUS_TUNNEL_TYPE_AH		6  /* IP Authentication Header in the
+					      Tunnel-mode (AH) */
+#define RADIUS_TUNNEL_TYPE_IP		7  /* IP-in-IP Encapsulation (IP-IP) */
+#define RADIUS_TUNNEL_TYPE_MOBILE	8  /* Minimal IP-in-IP Encapsulation
+					      (MIN-IP-IP) */
+#define RADIUS_TUNNEL_TYPE_ESP		9  /* IP Encapsulating Security Payload
+					      in the Tunnel-mode (ESP) */
+#define RADIUS_TUNNEL_TYPE_GRE		10 /* Generic Route Encapsulation
+					      (GRE) */
+#define RADIUS_TUNNEL_TYPE_VDS		11 /* Bay Dial Virtual Services (DVS) */
+#define RADIUS_TUNNEL_TYPE_IPIP		12 /* IP-in-IP Tunneling */
+
+/* RFC 2868 3.2. Tunnel-Medium-Type */
+#define RADIUS_TUNNEL_MEDIUM_TYPE_IPV4		1  /* IPv4 (IP version 4) */
+#define RADIUS_TUNNEL_MEDIUM_TYPE_IPV6		2  /* IPv6 (IP version 6) */
+#define RADIUS_TUNNEL_MEDIUM_TYPE_NSAP		3  /* NSAP */
+#define RADIUS_TUNNEL_MEDIUM_TYPE_HDLC		4  /* HDLC (8-bit multidrop) */
+#define RADIUS_TUNNEL_MEDIUM_TYPE_BBN1822	5  /* BBN 1822 */
+#define RADIUS_TUNNEL_MEDIUM_TYPE_802		6  /* 802 (includes all 802
+						      media plus Ethernet
+						      "canonical format") */
+#define RADIUS_TUNNEL_MEDIUM_TYPE_E163		7  /* E.163 (POTS) */
+#define RADIUS_TUNNEL_MEDIUM_TYPE_E164		8  /* E.164 (SMDS, Frame Relay,
+						      ATM) */
+
+
+/* RFC 3162 "RADIUS and IPv6" */
+#define RADIUS_TYPE_NAS_IPV6_ADDRESS          95
+#define RADIUS_TYPE_FRAMED_INTERFACE_ID       96
+#define RADIUS_TYPE_FRAMED_IPV6_PREFIX        97
+#define RADIUS_TYPE_LOGIN_IPV6_HOST           98
+#define RADIUS_TYPE_FRAMED_IPV6_ROUTE         99
+#define RADIUS_TYPE_FRAMED_IPV6_POOL          100
+
 
 
 /* IIJ vendor specific attributes */

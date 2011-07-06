@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd.c,v 1.10 2011/05/15 15:47:52 markus Exp $ */
+/* $OpenBSD: npppd.c,v 1.11 2011/07/06 20:52:28 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.10 2011/05/15 15:47:52 markus Exp $
+ * $Id: npppd.c,v 1.11 2011/07/06 20:52:28 yasuoka Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"
@@ -286,6 +286,8 @@ npppd_init(npppd *_this, const char *config_file)
 	/* initialize random seeds */
 	seed_random(&seed);
 	srandom(seed);
+
+	_this->boot_id = (uint32_t)random();
 
 	/* load configuration */
 	if ((status = npppd_reload_config(_this)) != 0)
@@ -1284,6 +1286,11 @@ pipex_periodic(npppd *_this)
 			continue;
 		}
 		ppp_log(ppp, LOG_INFO, "Stop requested by the kernel");
+		/* TODO: PIPEX doesn't return the disconect reason */
+#ifdef USE_NPPPD_RADIUS
+		ppp_set_radius_terminate_cause(ppp,
+		    RADIUS_TERMNATE_CAUSE_IDLE_TIMEOUT);
+#endif
 		ppp_stop(ppp, NULL);
 	}
 pipex_done:
@@ -2020,10 +2027,10 @@ npppd_ppp_bind_realm(npppd *_this, npppd_ppp *ppp, const char *username, int
 			    strcmp(username + lusername - lsuffix,
 				npppd_auth_get_suffix(realm0)) == 0))) {
 				/* check prefix */
-				lprefix = strlen(npppd_auth_get_suffix(realm0));
+				lprefix = strlen(npppd_auth_get_prefix(realm0));
 				if (lprefix > 0 &&
 				    strncmp(username,
-					    npppd_auth_get_suffix(realm0),
+					    npppd_auth_get_prefix(realm0),
 					    lprefix) != 0)
 					continue;
 
@@ -2218,7 +2225,7 @@ npppd_rd_walktree_delete(struct radish_head *rh)
  * @return return NULL if no usable RADIUS setting.
  */
 void *
-npppd_get_radius_req_setting(npppd *_this, npppd_ppp *ppp)
+npppd_get_radius_auth_setting(npppd *_this, npppd_ppp *ppp)
 {
 	NPPPD_ASSERT(_this != NULL);
 	NPPPD_ASSERT(ppp != NULL);
@@ -2228,21 +2235,7 @@ npppd_get_radius_req_setting(npppd *_this, npppd_ppp *ppp)
 	if (!npppd_ppp_is_realm_radius(_this, ppp))
 		return NULL;
 
-	return npppd_auth_radius_get_radius_req_setting(
-	    (npppd_auth_radius *)ppp->realm);
-}
-
-/** Notice a failure on RAIDUS request/response */
-void
-npppd_radius_server_failure_notify(npppd *_this, npppd_ppp *ppp, void *rad_ctx,
-    const char *reason)
-{
-	NPPPD_ASSERT(rad_ctx != NULL);
-	NPPPD_ASSERT(ppp != NULL);
-
-	npppd_auth_radius_server_failure_notify(
-	    (npppd_auth_radius *)ppp->realm, radius_get_server_address(rad_ctx),
-	    reason);
+	return npppd_auth_radius_get_radius_auth_setting(ppp->realm);
 }
 #endif
 
@@ -2288,8 +2281,10 @@ npppd_auth_finalizer_periodic(npppd *_this)
 				slist_itr_remove(&users);
 			}
 		}
-		if (refcnt == 0)
+		if (refcnt == 0) {
 			npppd_auth_destroy(auth_base);
+			slist_itr_remove(&_this->realms);
+		}
 	}
 	if (ndisposing > 0)
 		slist_fini(&users);
