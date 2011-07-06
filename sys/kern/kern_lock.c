@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.35 2010/04/26 05:48:17 deraadt Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.36 2011/07/06 01:49:42 art Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -378,13 +378,11 @@ _kernel_proc_lock(struct proc *p)
 {
 	SCHED_ASSERT_UNLOCKED();
 	__mp_lock(&kernel_lock);
-	atomic_setbits_int(&p->p_flag, P_BIGLOCK);
 }
 
 void
 _kernel_proc_unlock(struct proc *p)
 {
-	atomic_clearbits_int(&p->p_flag, P_BIGLOCK);
 	__mp_unlock(&kernel_lock);
 }
 
