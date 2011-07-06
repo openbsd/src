@@ -1,4 +1,4 @@
-/*	$OpenBSD: emul.c,v 1.19 2010/11/27 19:41:48 miod Exp $	*/
+/*	$OpenBSD: emul.c,v 1.20 2011/07/06 21:41:37 art Exp $	*/
 /*	$NetBSD: emul.c,v 1.8 2001/06/29 23:58:40 eeh Exp $	*/
 
 /*-
@@ -333,9 +333,9 @@ emul_qf(int32_t insv, struct proc *p, union sigval sv, struct trapframe *tf)
 
 	if (asi < ASI_PRIMARY) {
 		/* privileged asi */
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_PRVOPC, sv);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 		return (0);
 	}
 	if (asi > ASI_SECONDARY_NOFAULT_LITTLE ||
@@ -346,29 +346,29 @@ emul_qf(int32_t insv, struct proc *p, union sigval sv, struct trapframe *tf)
 
 	if ((freg & 3) != 0) {
 		/* only valid for %fN where N % 4 = 0 */
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_ILLOPN, sv);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 		return (0);
 	}
 
 	if ((addr & 3) != 0) {
 		/* request is not aligned */
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 		return (0);
 	}
 
 	fs = p->p_md.md_fpstate;
 	if (fs == NULL) {
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		/* don't currently have an fpu context, get one */
 		fs = malloc(sizeof(*fs), M_SUBPROC, M_WAITOK);
 		*fs = initfpstate;
 		fs->fs_qsize = 0;
 		p->p_md.md_fpstate = fs;
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 	} else
 		fpusave_proc(p, 1);
 
@@ -393,10 +393,10 @@ emul_qf(int32_t insv, struct proc *p, union sigval sv, struct trapframe *tf)
 	return (1);
 
 segv:
-	KERNEL_PROC_LOCK(p);
+	KERNEL_LOCK();
 	trapsignal(p, SIGSEGV, isload ? VM_PROT_READ : VM_PROT_WRITE,
 	    SEGV_MAPERR, sv);
-	KERNEL_PROC_UNLOCK(p);
+	KERNEL_UNLOCK();
 	return (0);
 }
 

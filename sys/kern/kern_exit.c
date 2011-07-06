@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.101 2011/07/05 04:48:02 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.102 2011/07/06 21:41:37 art Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -393,7 +393,7 @@ reaper(void)
 {
 	struct proc *p;
 
-	KERNEL_PROC_UNLOCK(curproc);
+	KERNEL_UNLOCK();
 
 	SCHED_ASSERT_UNLOCKED();
 
@@ -406,7 +406,7 @@ reaper(void)
 		LIST_REMOVE(p, p_hash);
 		mtx_leave(&deadproc_mutex);
 
-		KERNEL_PROC_LOCK(curproc);
+		KERNEL_LOCK();
 
 		/*
 		 * Free the VM resources we're still holding on to.
@@ -428,7 +428,7 @@ reaper(void)
 			proc_zap(p);
 		}
 
-		KERNEL_PROC_UNLOCK(curproc);
+		KERNEL_UNLOCK();
 	}
 }
 

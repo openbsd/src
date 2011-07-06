@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.22 2010/05/28 14:23:37 guenther Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.23 2011/07/06 21:41:37 art Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -109,7 +109,7 @@ sched_idle(void *v)
 	struct cpu_info *ci = v;
 	int s;
 
-	KERNEL_PROC_UNLOCK(p);
+	KERNEL_UNLOCK();
 
 	spc = &ci->ci_schedstate;
 
@@ -191,7 +191,7 @@ sched_exit(struct proc *p)
 	LIST_INSERT_HEAD(&spc->spc_deadproc, p, p_hash);
 
 	/* This process no longer needs to hold the kernel lock. */
-	KERNEL_PROC_UNLOCK(p);
+	KERNEL_UNLOCK();
 
 	SCHED_LOCK(s);
 	idle = spc->spc_idleproc;

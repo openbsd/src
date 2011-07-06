@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.84 2011/04/03 14:56:28 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.85 2011/07/06 21:41:37 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -275,9 +275,9 @@ trap(struct trapframe *frame)
 	case EXC_TRC|EXC_USER:		
 		{
 			sv.sival_int = frame->srr0;
-			KERNEL_PROC_LOCK(p);
+			KERNEL_LOCK();
 			trapsignal(p, SIGTRAP, type, TRAP_TRACE, sv);
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_UNLOCK();
 		}
 		break;
 
@@ -351,7 +351,7 @@ printf("kern dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 			    frame->dar, frame->dsisr, 0))
 				break;
 
-			KERNEL_PROC_LOCK(p);
+			KERNEL_LOCK();
 			if (frame->dsisr & DSISR_STORE) {
 				ftype = VM_PROT_READ | VM_PROT_WRITE;
 				vftype = VM_PROT_WRITE;
@@ -360,7 +360,7 @@ printf("kern dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 			if (uvm_fault(&p->p_vmspace->vm_map,
 				     trunc_page(frame->dar), 0, ftype) == 0) {
 				uvm_grow(p, trunc_page(frame->dar));
-				KERNEL_PROC_UNLOCK(p);
+				KERNEL_UNLOCK();
 				break;
 			}
 
@@ -372,7 +372,7 @@ printf("dsi on addr %x iar %x lr %x\n", frame->dar, frame->srr0,frame->lr);
 */
 			sv.sival_int = frame->dar;
 			trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_UNLOCK();
 		}
 		break;
 	case EXC_ISI|EXC_USER:
@@ -384,15 +384,15 @@ printf("dsi on addr %x iar %x lr %x\n", frame->dar, frame->srr0,frame->lr);
 			    frame->srr0, 0, 1))
 				break;
 
-			KERNEL_PROC_LOCK(p);
+			KERNEL_LOCK();
 			ftype = VM_PROT_READ | VM_PROT_EXECUTE;
 			if (uvm_fault(&p->p_vmspace->vm_map,
 			    trunc_page(frame->srr0), 0, ftype) == 0) {
 				uvm_grow(p, trunc_page(frame->srr0));
-				KERNEL_PROC_UNLOCK(p);
+				KERNEL_UNLOCK();
 				break;
 			}
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_UNLOCK();
 		}
 #if 0
 printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
@@ -402,9 +402,9 @@ printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 /* XXX Likely that returning from this trap is bogus... */
 /* XXX Have to make sure that sigreturn does the right thing. */
 		sv.sival_int = frame->srr0;
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		trapsignal(p, SIGSEGV, VM_PROT_EXECUTE, SEGV_MAPERR, sv);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 		break;
 	case EXC_SC|EXC_USER:
 		{
@@ -470,36 +470,36 @@ printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 
 #ifdef	KTRACE
 			if (KTRPOINT(p, KTR_SYSCALL)) {
-				KERNEL_PROC_LOCK(p);
+				KERNEL_LOCK();
 				ktrsyscall(p, code, argsize, params);
-				KERNEL_PROC_UNLOCK(p);
+				KERNEL_UNLOCK();
 			}
 #endif
 			rval[0] = 0;
 			rval[1] = frame->fixreg[FIRSTARG + 1];
 
 #ifdef SYSCALL_DEBUG
-			KERNEL_PROC_LOCK(p);
+			KERNEL_LOCK();
 			scdebug_call(p, code, params);
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_UNLOCK();
 #endif
 
 			
 #if NSYSTRACE > 0
 			if (ISSET(p->p_flag, P_SYSTRACE)) {
-				KERNEL_PROC_LOCK(p);
+				KERNEL_LOCK();
 				error = systrace_redirect(code, p, params,
 				    rval);
-				KERNEL_PROC_UNLOCK(p);
+				KERNEL_UNLOCK();
 			} else
 #endif
 			{
 				nolock = (callp->sy_flags & SY_NOLOCK);
 				if (!nolock)
-					KERNEL_PROC_LOCK(p);
+					KERNEL_LOCK();
 				error = (*callp->sy_call)(p, params, rval);
 				if (!nolock)
-					KERNEL_PROC_UNLOCK(p);
+					KERNEL_UNLOCK();
 			}
 			switch (error) {
 			case 0:
@@ -528,15 +528,15 @@ syscall_bad:
 				break;
 			}
 #ifdef SYSCALL_DEBUG
-			KERNEL_PROC_LOCK(p);
+			KERNEL_LOCK();
 			scdebug_ret(p, code, error, rval); 
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_UNLOCK();
 #endif  
 #ifdef	KTRACE
 			if (KTRPOINT(p, KTR_SYSRET)) {
-				KERNEL_PROC_LOCK(p);
+				KERNEL_LOCK();
 				ktrsysret(p, code, error, rval[0]);
-				KERNEL_PROC_UNLOCK(p);
+				KERNEL_UNLOCK();
 			}
 #endif
 		}
@@ -559,10 +559,10 @@ syscall_bad:
 			frame->srr0 += 4;
 		else {
 			sv.sival_int = frame->srr0;
-			KERNEL_PROC_LOCK(p);
+			KERNEL_LOCK();
 			trapsignal(p, SIGSEGV, VM_PROT_EXECUTE, SEGV_MAPERR,
 				sv);
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_UNLOCK();
 		}
 		break;
 
@@ -616,9 +616,9 @@ mpc_print_pci_stat();
 			errnum++;
 #endif
 			sv.sival_int = frame->srr0;
-			KERNEL_PROC_LOCK(p);
+			KERNEL_LOCK();
 			trapsignal(p, SIGTRAP, type, TRAP_BRKPT, sv);
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_UNLOCK();
 			break;
 		}
 #if 0
@@ -637,9 +637,9 @@ for (i = 0; i < errnum; i++) {
 }
 #endif
 		sv.sival_int = frame->srr0;
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 		break;
 	}
 	case EXC_PGM:
@@ -667,25 +667,25 @@ for (i = 0; i < errnum; i++) {
 		break;
 #else  /* ALTIVEC */
 		sv.sival_int = frame->srr0;
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 		break;
 #endif
 
 	case EXC_VECAST|EXC_USER:
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, 0, FPE_FLTRES, sv);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 		break;
 
 	case EXC_AST|EXC_USER:
 		uvmexp.softs++;
 		p->p_md.md_astpending = 0;	/* we are about to do it */
 		if (p->p_flag & P_OWEUPC) {
-			KERNEL_PROC_LOCK(p);
+			KERNEL_LOCK();
 			ADDUPROF(p);
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_UNLOCK();
 		}
 		if (ci->ci_want_resched)
 			preempt(NULL);
@@ -726,18 +726,18 @@ child_return(void *arg)
 	/* Disable FPU, VECT, as we can't be fpuproc */
 	tf->srr1 &= ~(PSL_FP|PSL_VEC);
 
-	KERNEL_PROC_UNLOCK(p);
+	KERNEL_UNLOCK();
 
 	userret(p);
 
 #ifdef	KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		ktrsysret(p,
 		    (p->p_flag & P_THREAD) ? SYS_rfork :
 		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
 		    0, 0);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 	}
 #endif
 }

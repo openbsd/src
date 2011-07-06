@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.22 2010/11/01 15:41:01 phessler Exp $	*/
+/*	$OpenBSD: trap.c,v 1.23 2011/07/06 21:41:37 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -250,22 +250,22 @@ copyfault:
 		frame_dump(frame);
 #endif
 		sv.sival_ptr = (void *)frame->tf_rip;
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		trapsignal(p, SIGBUS, type & ~T_USER, BUS_OBJERR, sv);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 		goto out;
 	case T_ALIGNFLT|T_USER:
 		sv.sival_ptr = (void *)frame->tf_rip;
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		trapsignal(p, SIGBUS, type & ~T_USER, BUS_ADRALN, sv);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 		goto out;
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 		sv.sival_ptr = (void *)frame->tf_rip;
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		trapsignal(p, SIGILL, type & ~T_USER, ILL_PRVOPC, sv);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 		goto out;
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
 #ifdef TRAP_SIGDEBUG
@@ -274,17 +274,17 @@ copyfault:
 		frame_dump(frame);
 #endif
 		sv.sival_ptr = (void *)frame->tf_rip;
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		trapsignal(p, SIGILL, type & ~T_USER, ILL_COPROC, sv);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 		goto out;
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
 		uvmexp.softs++;
 		if (p->p_flag & P_OWEUPC) {
-			KERNEL_PROC_LOCK(p);
+			KERNEL_LOCK();
 			ADDUPROF(p);
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_UNLOCK();
 		}
 		/* Allow a forced task switch. */
 		if (curcpu()->ci_want_resched)
@@ -293,21 +293,21 @@ copyfault:
 
 	case T_BOUND|T_USER:
 		sv.sival_ptr = (void *)frame->tf_rip;
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, type &~ T_USER, FPE_FLTSUB, sv);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 		goto out;
 	case T_OFLOW|T_USER:
 		sv.sival_ptr = (void *)frame->tf_rip;
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, type &~ T_USER, FPE_INTOVF, sv);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 		goto out;
 	case T_DIVIDE|T_USER:
 		sv.sival_ptr = (void *)frame->tf_rip;
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, type &~ T_USER, FPE_INTDIV, sv);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 		goto out;
 
 	case T_ARITHTRAP|T_USER:
@@ -330,7 +330,7 @@ copyfault:
 		extern struct vm_map *kernel_map;
 
 		cr2 = rcr2();
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 faultcommon:
 		vm = p->p_vmspace;
 		if (vm == NULL)
@@ -377,7 +377,7 @@ faultcommon:
 				KERNEL_UNLOCK();
 				return;
 			}
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_UNLOCK();
 			goto out;
 		}
 		if (error == EACCES) {
@@ -409,10 +409,7 @@ faultcommon:
 			sv.sival_ptr = (void *)fa;
 			trapsignal(p, SIGSEGV, T_PAGEFLT, SEGV_MAPERR, sv);
 		}
-		if (type == T_PAGEFLT)
-			KERNEL_UNLOCK();
-		else
-			KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 		break;
 	}
 
@@ -424,9 +421,9 @@ faultcommon:
 #ifdef MATH_EMULATE
 	trace:
 #endif
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		trapsignal(p, SIGTRAP, type &~ T_USER, TRAP_BRKPT, sv);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 		break;
 
 #if	NISA > 0

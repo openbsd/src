@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.139 2011/07/05 04:48:02 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.140 2011/07/06 21:41:37 art Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -347,7 +347,6 @@ struct proc {
 #define P_INEXEC	0x200000	/* Process is doing an exec right now */
 #define P_SYSTRACE	0x400000	/* Process system call tracing active*/
 #define P_CONTINUED	0x800000	/* Proc has continued from a stopped state. */
-#define P_BIGLOCK	0x2000000	/* Process needs kernel "big lock" to run */
 #define	P_THREAD	0x4000000	/* Only a thread, not a real process */
 #define	P_IGNEXITRV	0x8000000	/* For thread kills */
 #define	P_SOFTDEP	0x10000000	/* Stuck processing softdep worklist */

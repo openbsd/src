@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.75 2011/04/06 18:01:50 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.76 2011/07/06 21:41:37 art Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -223,9 +223,9 @@ ast(struct trapframe *frame)
 	uvmexp.softs++;
 	p->p_md.md_astpending = 0;
 	if (p->p_flag & P_OWEUPC) {
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		ADDUPROF(p);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 	}
 	if (ci->ci_want_resched)
 		preempt(NULL);
@@ -395,7 +395,7 @@ lose:
 		/* User mode instruction access fault */
 		/* FALLTHROUGH */
 	case T_DATAFLT+T_USER:
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 user_fault:
 		if (type == T_INSTFLT + T_USER) {
 			pbus_type = CMMU_PFSR_FAULT(frame->tf_ipfsr);
@@ -492,10 +492,7 @@ user_fault:
 			fault_type = result == EACCES ?
 			    BUS_ADRERR : SEGV_MAPERR;
 		}
-		if (type == T_DATAFLT)
-			KERNEL_UNLOCK();
-		else
-			KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 		break;
 	case T_MISALGNFLT+T_USER:
 		/* Fix any misaligned ld.d or st.d instructions */
@@ -605,9 +602,9 @@ user_fault:
 
 	if (sig) {
 		sv.sival_ptr = (void *)fault_addr;
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		trapsignal(p, sig, fault_code, fault_type, sv);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 		/*
 		 * don't want multiple faults - we are going to
 		 * deliver signal.
@@ -876,7 +873,7 @@ lose:
 		/* User mode instruction access fault */
 		/* FALLTHROUGH */
 	case T_DATAFLT+T_USER:
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 m88110_user_fault:
 		if (type == T_INSTFLT+T_USER) {
 			ftype = VM_PROT_READ;
@@ -926,10 +923,7 @@ m88110_user_fault:
 				printf("Unexpected Instruction fault isr %x\n",
 				    frame->tf_isr);
 #endif
-				if (type == T_DATAFLT)
-					KERNEL_UNLOCK();
-				else
-					KERNEL_PROC_UNLOCK(p);
+				KERNEL_UNLOCK();
 				goto lose;
 			}
 		} else {
@@ -977,10 +971,7 @@ m88110_user_fault:
 				printf("Unexpected Data access fault dsr %x\n",
 				    frame->tf_dsr);
 #endif
-				if (type == T_DATAFLT)
-					KERNEL_UNLOCK();
-				else
-					KERNEL_PROC_UNLOCK(p);
+				KERNEL_UNLOCK();
 				goto lose;
 			}
 		}
@@ -992,10 +983,7 @@ m88110_user_fault:
 			else if (result == EACCES)
 				result = EFAULT;
 		}
-		if (type == T_DATAFLT)
-			KERNEL_UNLOCK();
-		else
-			KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 
 		/*
 		 * This could be a fault caused in copyin*()
@@ -1129,9 +1117,9 @@ m88110_user_fault:
 	if (sig) {
 deliver:
 		sv.sival_ptr = (void *)fault_addr;
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		trapsignal(p, sig, fault_code, fault_type, sv);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 	}
 
 userexit:
@@ -1216,33 +1204,33 @@ m88100_syscall(register_t code, struct trapframe *tf)
 		goto bad;
 
 #ifdef SYSCALL_DEBUG
-	KERNEL_PROC_LOCK(p);
+	KERNEL_LOCK();
 	scdebug_call(p, code, args);
-	KERNEL_PROC_UNLOCK(p);
+	KERNEL_UNLOCK();
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL)) {
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		ktrsyscall(p, code, callp->sy_argsize, args);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 	}
 #endif
 	rval[0] = 0;
 	rval[1] = tf->tf_r[3];
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		error = systrace_redirect(code, p, args, rval);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 	} else
 #endif
 	{
 		nolock = (callp->sy_flags & SY_NOLOCK);
 		if (!nolock)
-			KERNEL_PROC_LOCK(p);
+			KERNEL_LOCK();
 		error = (*callp->sy_call)(p, args, rval);
 		if (!nolock)
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_UNLOCK();
 	}
 
 	/*
@@ -1301,16 +1289,16 @@ bad:
 		break;
 	}
 #ifdef SYSCALL_DEBUG
-	KERNEL_PROC_LOCK(p);
+	KERNEL_LOCK();
 	scdebug_ret(p, code, error, rval);
-	KERNEL_PROC_UNLOCK(p);
+	KERNEL_UNLOCK();
 #endif
 	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		ktrsysret(p, code, error, rval[0]);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 	}
 #endif
 }
@@ -1380,33 +1368,33 @@ m88110_syscall(register_t code, struct trapframe *tf)
 		goto bad;
 
 #ifdef SYSCALL_DEBUG
-	KERNEL_PROC_LOCK(p);
+	KERNEL_LOCK();
 	scdebug_call(p, code, args);
-	KERNEL_PROC_UNLOCK(p);
+	KERNEL_UNLOCK();
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL)) {
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		ktrsyscall(p, code, callp->sy_argsize, args);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 	}
 #endif
 	rval[0] = 0;
 	rval[1] = tf->tf_r[3];
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		error = systrace_redirect(code, p, args, rval);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 	} else
 #endif
 	{
 		nolock = (callp->sy_flags & SY_NOLOCK);
 		if (!nolock)
-			KERNEL_PROC_LOCK(p);
+			KERNEL_LOCK();
 		error = (*callp->sy_call)(p, args, rval);
 		if (!nolock)
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_UNLOCK();
 	}
 
 	/*
@@ -1468,16 +1456,16 @@ bad:
 	}
 
 #ifdef SYSCALL_DEBUG
-	KERNEL_PROC_LOCK(p);
+	KERNEL_LOCK();
 	scdebug_ret(p, code, error, rval);
-	KERNEL_PROC_UNLOCK(p);
+	KERNEL_UNLOCK();
 #endif
 	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		ktrsysret(p, code, error, rval[0]);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 	}
 #endif
 }
@@ -1513,17 +1501,17 @@ child_return(arg)
 	}
 #endif
 
-	KERNEL_PROC_UNLOCK(p);
+	KERNEL_UNLOCK();
 	userret(p);
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(p);
+		KERNEL_LOCK();
 		ktrsysret(p,
 		    (p->p_flag & P_THREAD) ? SYS_rfork :
 		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
 		    0, 0);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_UNLOCK();
 	}
 #endif
 }

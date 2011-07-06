@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.122 2011/07/05 04:48:02 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.123 2011/07/06 21:41:37 art Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1249,7 +1249,7 @@ postsig(int signum)
 		panic("postsig");
 #endif
 
-	KERNEL_PROC_LOCK(p);
+	KERNEL_LOCK();
 
 	mask = sigmask(signum);
 	atomic_clearbits_int(&p->p_siglist, mask);
@@ -1330,7 +1330,7 @@ postsig(int signum)
 		    type, sigval);
 	}
 
-	KERNEL_PROC_UNLOCK(p);
+	KERNEL_UNLOCK();
 }
 
 /*
