@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.61 2011/07/06 02:42:28 henning Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.62 2011/07/06 22:08:50 henning Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -163,9 +163,7 @@ static void	ppp_ccp(struct ppp_softc *, struct mbuf *m, int rcvd);
 static void	ppp_ccp_closed(struct ppp_softc *);
 static void	ppp_inproc(struct ppp_softc *, struct mbuf *);
 static void	pppdumpm(struct mbuf *m0);
-#ifdef ALTQ
 static void	ppp_ifstart(struct ifnet *ifp);
-#endif
 int		ppp_clone_create(struct if_clone *, int);
 int		ppp_clone_destroy(struct ifnet *);
 
@@ -247,9 +245,7 @@ ppp_clone_create(ifc, unit)
     sc->sc_if.if_hdrlen = PPP_HDRLEN;
     sc->sc_if.if_ioctl = pppsioctl;
     sc->sc_if.if_output = pppoutput;
-#ifdef ALTQ
     sc->sc_if.if_start = ppp_ifstart;
-#endif
     IFQ_SET_MAXLEN(&sc->sc_if.if_snd, ifqmaxlen);
     IFQ_SET_MAXLEN(&sc->sc_inq, ifqmaxlen);
     IFQ_SET_MAXLEN(&sc->sc_fastq, ifqmaxlen);
@@ -1608,11 +1604,6 @@ done:
     printf("%s\n", buf);
 }
 
-#ifdef ALTQ
-/*
- * a wrapper to transmit a packet from if_start since ALTQ uses
- * if_start to send a packet.
- */
 static void
 ppp_ifstart(ifp)
 	struct ifnet *ifp;
@@ -1622,6 +1613,4 @@ ppp_ifstart(ifp)
 	sc = ifp->if_softc;
 	(*sc->sc_start)(sc);
 }
-#endif
-
 #endif	/* NPPP > 0 */
