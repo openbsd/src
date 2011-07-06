@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.640 2011/07/06 15:35:15 ajacoutot Exp $
+#	$OpenBSD: install.sub,v 1.641 2011/07/06 20:02:16 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -69,6 +69,7 @@
 #	MDCDDEVS    - '/^cd[0-9][0-9]* /s/ .*//p'    assumed if not provided
 #	MDMTDEVS    - '/^[cms]t[0-9][0-9]* /s/ .*//p'
 #	MDXAPERTURE - set machdep.allowaperture=value in sysctl.conf
+#	NCPU	    - the number of cpus for mp capable arches
 . install.md
 
 set_term() {
@@ -1966,6 +1967,12 @@ finish_up() {
 	[ -x /mnt/$MODE.site ] && /mnt/usr/sbin/chroot /mnt /$MODE.site
 
 	md_installboot $ROOTDISK
+
+	if [[ -f /mnt/bsd.mp ]] && ((NCPU > 1)); then
+		echo "Multiprocessor machine; using bsd.mp instead of bsd."
+		mv /mnt/bsd /mnt/bsd.sp 2>/dev/null
+		mv /mnt/bsd.mp /mnt/bsd
+	fi
 
 	[[ "$MODE" == upgrade ]] && run_sysmerge
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.28 2011/04/17 20:57:10 krw Exp $
+#	$OpenBSD: install.md,v 1.29 2011/07/06 20:02:16 halex Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,12 +39,6 @@ NCPU=$(sysctl -n hw.ncpufound)
 ((NCPU > 1)) && { DEFAULTSETS="bsd bsd.rd bsd.mp" ; SANESETS="bsd bsd.mp" ; }
 
 md_installboot() {
-	if [[ -f /mnt/bsd.mp ]] && ((NCPU > 1)); then
-		echo "Multiprocessor machine; using bsd.mp instead of bsd."
-		mv /mnt/bsd /mnt/bsd.sp 2>/dev/null
-		mv /mnt/bsd.mp /mnt/bsd
-	fi
-
 	cp /usr/mdec/boot /mnt/boot
 	if ! /usr/mdec/installboot /mnt/boot /usr/mdec/biosboot ${1} ; then
 		echo "\nFailed to install bootblocks."

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.49 2011/04/17 20:57:10 krw Exp $
+#	$OpenBSD: install.md,v 1.50 2011/07/06 20:02:16 halex Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,12 +39,6 @@ NCPU=$(sysctl -n hw.ncpufound)
 
 md_installboot() {
 	local _disk=$1
-
-	if [[ -f /mnt/bsd.mp ]] && ((NCPU > 1)); then
-		echo "Multiprocessor machine; using bsd.mp instead of bsd."
-		mv /mnt/bsd /mnt/bsd.sp 2>/dev/null
-		mv /mnt/bsd.mp /mnt/bsd
-	fi
 
 	# If there is an MSDOS partition on the boot disk, copy ofwboot
 	# into it.
