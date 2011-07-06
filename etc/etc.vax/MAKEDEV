@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.vax/MAKEDEV.md,v 1.43 2010/09/30 15:27:54 claudio Exp 
-#	OpenBSD: MAKEDEV.common,v 1.54 2011/04/18 16:52:10 thib Exp 
+#	OpenBSD: etc.vax/MAKEDEV.md,v 1.44 2011/07/06 18:32:58 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.56 2011/07/06 18:34:20 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -32,27 +32,17 @@
 # Disks:
 #	ccd*	Concatenated disk devices
 #	cd*	ATAPI and SCSI CD-ROM drives
-#	fd*	Floppy disk drives (3 1/2", 5 1/4")
 #	hd*	HDC9224 disks
-#	hk*	UNIBUS RK06 and RK07 disks
-#	hp*	MASSBUS disks
 #	ra*	MSCP disks
 #	raid*	RAIDframe disk devices
-#	rb*	730 IDC w/ RB80 and/or RB02
 #	rd*	"rd" pseudo-disks
-#	rl*	UNIBUS RL02
 #	rx*	RX02 floppy disks
 #	sd*	SCSI disks, including flopticals
-#	up*	Other UNIBUS devices
 #	vnd*	"file" pseudo-disk devices
 # Tapes:
 #	ch*	SCSI media changers
-#	ht*	MASSBUS TM03 and TU?? devices
 #	mt*	(Magnetic) 9-track reel tape drives
 #	st*	SCSI tape drives
-#	tm*	UNIBUS TM11 and TE10 emulations (e.g. Emulex TC-11)
-#	ts*	UNIBUS TS11
-#	ut*	UNIBUS TU45 emulations (e.g. 9700)
 # Terminal ports:
 #	dhu*	UNIBUS DHU11
 #	dl*	UNIBUS DL11
@@ -228,45 +218,27 @@ std)
 	M ttyg1		c 25 1 600
 	M ttyg2		c 25 2 600
 	M ttyg3		c 25 3 600
-	M crl		c 35 0 600
-	M csa1		c 51 0 600
-	M csa2		c 51 1 600
-	M tu0		b 8 0 600
-	M tu1		b 8 1 600
-	M floppy	c 8 0 600
 	;;
 
-ht*|tm*|mt*|ts*|ut*)
-	case $i in
-	ht*) n=ht b=1 c=5;;
-	mt*) n=mt b=15 c=38;;
-	tm*) n=tm b=5 c=14;;
-	ts*) n=ts b=6 c=16;;
-	ut*) n=ut b=10 c=17;;
-	esac
+mt*)
 	case $U in
 	[0-7])
 		four=$(($U+4))
 		eight=$(($U+8))
 		twelve=$(($U+12))
 		twenty=$(($U+20))
-		M $n$U		b $b $U	660 operator
-		M $n$four	b $b $four	660 operator
-		M $n$eight	b $b $eight	660 operator
-		M $n$twelve	b $b $twelve	660 operator
-		M n$n$U		b $b $four	660 operator;: sanity w/pdp11 v7
-		M n$n$eight	b $b $twelve	660 operator;: ditto
-		M nr$n$U	c $c $four	660 operator;: ditto
-		M nr$n$eight	c $c $twelve	660 operator;: ditto
-		M r$n$U		c $c $U		660 operator
-		M r$n$four	c $c $four	660 operator
-		M r$n$eight	c $c $eight	660 operator
-		M r$n$twelve	c $c $twelve	660 operator
-		if [ "$i" = "ut" ];
-		then
-			M $n$twenty	b $b $twenty 660 operator
-			M r$n$twenty	c $b $twenty 660 operator
-		fi
+		M mt$U		b 15 $U	660 operator
+		M mt$four	b 15 $four	660 operator
+		M mt$eight	b 15 $eight	660 operator
+		M mt$twelve	b 15 $twelve	660 operator
+		M nmt$U		b 15 $four	660 operator;: sanity w/pdp11 v7
+		M nmt$eight	b 15 $twelve	660 operator;: ditto
+		M nrmt$U	c 38 $four	660 operator;: ditto
+		M nrmt$eight	c 38 $twelve	660 operator;: ditto
+		M rmt$U		c 38 $U		660 operator
+		M rmt$four	c 38 $four	660 operator
+		M rmt$eight	c 38 $eight	660 operator
+		M rmt$twelve	c 38 $twelve	660 operator
 		;;
 	*)
 		echo bad unit for tape in: $i
@@ -479,36 +451,6 @@ rd*)
 	dodisk2 rd $U 23 62 $U 0
 	;;
 
-fd*)
-	typnam=$U${i#fd[01]*}
-	case $typnam in
-	0|1)	typnum=0;; # no type specified, assume A
-	*A)	typnum=0; typnam=0;;
-	*B)	typnum=1;;
-	*C)	typnum=2;;
-	*D)	typnum=3;;
-	*E)	typnum=4;;
-	*F)	typnum=5;;
-	*G)	typnum=6;;
-	*H)	typnum=7;;
-	*)	echo bad type $typnam for $i; exit 1;;
-	esac
-	case $U in
-	0|1)	blk=16; chr=54;;
-	*)	echo bad unit $U for $i; exit 1;;
-	esac
-	nam=fd${typnam}
-	n=$(($(($U*128))+$(($typnum*16))))
-	M ${nam}a	b $blk $n 640 operator
-	M ${nam}b	b $blk $(($n+1)) 640 operator
-	M ${nam}c	b $blk $(($n+2)) 640 operator
-	M ${nam}i	b $blk $(($n+8)) 640 operator
-	M r${nam}a	c $chr $n 640 operator
-	M r${nam}b	c $chr $(($n+1)) 640 operator
-	M r${nam}c	c $chr $(($n+2)) 640 operator
-	M r${nam}i	c $chr $(($n+8)) 640 operator
-	;;
-
 cd*)
 	dodisk2 cd $U 22 61 $U 0
 	;;
@@ -518,24 +460,19 @@ local)
 	;;
 
 all)
-	R dl0 dz0 dhu0 ts0 ts1 mt0 mt1 hd0 hd1 hd2 ccd0 vnd0 sd0 sd1
-	R sd2 sd3 cd0 tun0 tun1 bio bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6
-	R bpf7 pty0 diskmap vscsi0 nnpfs0 ptm local wscons uk0 random
-	R lkm pf systrace rx0 rx1 ra0 ra1 ra2 ra3 hp0 hp1 hp2 hp3
-	R raid0 raid1 raid2 raid3 std st0 st1 fd
+	R qsc0 dl0 dz0 dhu0 mt0 mt1 hd0 hd1 hd2 ccd0 vnd0 sd0 sd1 sd2
+	R sd3 cd0 tun0 tun1 bio bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6
+	R bpf7 pty0 diskmap vscsi0 nnpfs0 ch0 ptm local wscons uk0
+	R random lkm pf systrace rx0 rx1 ra0 ra1 ra2 ra3 raid0 raid1
+	R raid2 raid3 std st0 st1 fd
 	;;
 
-up*|sd*|rx*|rl*|rb*|raid*|ra*|hp*|hk*|hd*|ccd*)
+sd*|rx*|raid*|ra*|hd*|ccd*)
 	case $i in
-	up*) dodisk up $U 2 13 $U 0;;
 	sd*) dodisk sd $U 20 59 $U 0;;
 	rx*) dodisk rx $U 12 30 $U 0;;
-	rl*) dodisk rl $U 14 32 $U 0;;
-	rb*) dodisk rb $U 11 23 $U 0;;
 	raid*) dodisk raid $U 25 73 $U 0;;
 	ra*) dodisk ra $U 9 9 $U 0;;
-	hp*) dodisk hp $U 0 4 $U 0;;
-	hk*) dodisk hk $U 3 11 $U 0;;
 	hd*) dodisk hd $U 19 58 $U 0;;
 	ccd*) dodisk ccd $U 17 54 $U 0;;
 	esac

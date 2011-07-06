@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.57 2011/06/26 23:47:07 deraadt Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.58 2011/07/06 18:34:34 miod Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.vax/MAKEDEV.md,v 1.43 2010/09/30 15:27:54 claudio Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.55 2011/06/26 23:28:23 tedu Exp 
+.\"	OpenBSD: etc.vax/MAKEDEV.md,v 1.44 2011/07/06 18:32:58 miod Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.56 2011/07/06 18:34:20 miod Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.7 2009/03/18 17:34:25 sobrado Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2011 $
+.Dd $Mdocdate: July 6 2011 $
 .Dt MAKEDEV 8 vax
 .Os
 .Sh NAME
@@ -80,43 +80,25 @@ Concatenated disk devices, see
 .It Ar cd*
 ATAPI and SCSI CD-ROM drives, see
 .Xr cd 4 .
-.It Ar fd*
-Floppy disk drives (3 1/2", 5 1/4"), see
-.Xr fd 4 .
 .It Ar hd*
 HDC9224 disks, see
 .Xr hd 4 .
-.It Ar hk*
-UNIBUS RK06 and RK07 disks, see
-.Xr hk 4 .
-.It Ar hp*
-MASSBUS disks, see
-.Xr hp 4 .
 .It Ar ra*
 MSCP disks, see
 .Xr ra 4 .
 .It Ar raid*
 RAIDframe disk devices, see
 .Xr raid 4 .
-.It Ar rb*
-730 IDC w/ RB80 and/or RB02, see
-.Xr rb 4 .
 .It Ar rd*
 .Dq rd
 pseudo-disks, see
 .Xr rd 4 .
-.It Ar rl*
-UNIBUS RL02, see
-.Xr rl 4 .
 .It Ar rx*
 RX02 floppy disks, see
 .Xr rx 4 .
 .It Ar sd*
 SCSI disks, including flopticals, see
 .Xr sd 4 .
-.It Ar up*
-Other UNIBUS devices, see
-.Xr up 4 .
 .It Ar vnd*
 .Dq file
 pseudo-disk devices, see
@@ -128,24 +110,12 @@ pseudo-disk devices, see
 .It Ar ch*
 SCSI media changers, see
 .Xr ch 4 .
-.It Ar ht*
-MASSBUS TM03 and TU?? devices, see
-.Xr ht 4 .
 .It Ar mt*
 (Magnetic) 9-track reel tape drives, see
 .Xr mt 4 .
 .It Ar st*
 SCSI tape drives, see
 .Xr st 4 .
-.It Ar tm*
-UNIBUS TM11 and TE10 emulations (e.g. Emulex TC-11), see
-.Xr tm 4 .
-.It Ar ts*
-UNIBUS TS11, see
-.Xr ts 4 .
-.It Ar ut*
-UNIBUS TU45 emulations (e.g. 9700), see
-.Xr ut 4 .
 .El
 .Pp
 .Sy Terminal ports
