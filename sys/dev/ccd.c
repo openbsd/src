@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.96 2011/06/30 16:28:05 matthew Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.97 2011/07/06 04:49:36 matthew Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -614,28 +614,18 @@ ccdstrategy(struct buf *bp)
 	int unit = DISKUNIT(bp->b_dev);
 	struct ccd_softc *cs = &ccd_softc[unit];
 	int s;
-	struct disklabel *lp;
 
 	CCD_DPRINTF(CCDB_FOLLOW, ("ccdstrategy(%p): unit %d\n", bp, unit));
 
 	if ((cs->sc_flags & CCDF_INITED) == 0) {
 		bp->b_error = ENXIO;
-		bp->b_resid = bp->b_bcount;
 		bp->b_flags |= B_ERROR;
+		bp->b_resid = bp->b_bcount;
 		goto done;
 	}
 
-	/* If it's a nil transfer, wake up the top half now. */
-	if (bp->b_bcount == 0)
-		goto done;
-
-	lp = cs->sc_dkdev.dk_label;
-
-	/*
-	 * Do bounds checking and adjust transfer.  If there's an
-	 * error, the bounds check will flag that for us.
-	 */
-	if (bounds_check_with_label(bp, lp) <= 0)
+	/* Validate the request. */
+	if (bounds_check_with_label(bp, cs->sc_dkdev.dk_label) == -1)
 		goto done;
 
 	bp->b_resid = bp->b_bcount;
@@ -647,7 +637,8 @@ ccdstrategy(struct buf *bp)
 	ccdstart(cs, bp);
 	splx(s);
 	return;
-done:
+
+ done:
 	s = splbio();
 	biodone(bp);
 	splx(s);

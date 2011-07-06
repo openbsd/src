@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.36 2011/07/05 21:39:08 krw Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.37 2011/07/06 04:49:36 matthew Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -286,8 +286,7 @@ rastrategy(bp)
 	unit = DISKUNIT(bp->b_dev);
 	if (unit >= ra_cd.cd_ndevs || (ra = ra_cd.cd_devs[unit]) == NULL) {
 		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
-		goto done;
+		goto bad;
 	}
 	/*
 	 * If drive is open `raw' or reading label, let it at it.
@@ -303,16 +302,12 @@ rastrategy(bp)
 	/* If disk is not online, try to put it online */
 	if (ra->ra_state == DK_CLOSED)
 		if (ra_putonline(ra) == MSCP_FAILED) {
-			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
-			goto done;
+			goto bad;
 		}
 
-	/*
-	 * Determine the size of the transfer, and make sure it is
-	 * within the boundaries of the partition.
-	 */
-	if (bounds_check_with_label(bp, ra->ra_disk.dk_label) <= 0)
+	/* Validate the request. */
+	if (bounds_check_with_label(bp, ra->ra_disk.dk_label) == -1)
 		goto done;
 
 	/* Make some statistics... /bqt */
@@ -322,7 +317,10 @@ rastrategy(bp)
 	mscp_strategy(bp, ra->ra_dev.dv_parent);
 	return;
 
-done:
+ bad:
+	bp->b_flags |= B_ERROR;
+	bp->b_resid = bp->b_bcount;
+ done:
 	s = splbio();
 	biodone(bp);
 	splx(s);

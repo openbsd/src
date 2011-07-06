@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.128 2011/07/05 04:05:04 matthew Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.129 2011/07/06 04:49:36 matthew Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -717,7 +717,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp)
 	/* calculate cylinder for disksort to order transfers with */
 	bp->b_cylinder = (bp->b_blkno + DL_SECTOBLK(lp, DL_GETPOFFSET(p))) /
 	    DL_SECTOBLK(lp, lp->d_secpercyl);
-	return (1);
+	return (0);
 
  bad:
 	bp->b_error = EINVAL;

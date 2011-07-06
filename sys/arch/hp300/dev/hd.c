@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.68 2011/06/19 21:20:04 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.69 2011/07/06 04:49:35 matthew Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -650,7 +650,6 @@ hdstrategy(bp)
 	int unit = DISKUNIT(bp->b_dev);
 	struct hd_softc *rs;
 	struct buf *dp;
-	struct disklabel *lp;
 	int s;
 
 	rs = hdlookup(unit);
@@ -666,27 +665,8 @@ hdstrategy(bp)
 		       (bp->b_flags & B_READ) ? 'R' : 'W');
 #endif
 
-	lp = rs->sc_dkdev.dk_label;
-
-	/*
-	 * If it's a null transfer, return immediately
-	 */
-	if (bp->b_bcount == 0)
-		goto done;
-
-	/*
-	 * The transfer must be a whole number of blocks.
-	 */
-	if ((bp->b_bcount % lp->d_secsize) != 0) {
-		bp->b_error = EINVAL;
-		goto bad;
-	}
-
-	/*
-	 * Do bounds checking, adjust transfer. if error, process;
-	 * If end of partition, just return.
-	 */
-	if (bounds_check_with_label(bp, lp) <= 0)
+	/* Validate the request. */
+	if (bounds_check_with_label(bp, rs->sc_dkdev.dk_label) == -1)
 		goto done;
 
 	s = splbio();
@@ -700,13 +680,11 @@ hdstrategy(bp)
 
 	device_unref(&rs->sc_dev);
 	return;
-bad:
+
+ bad:
 	bp->b_flags |= B_ERROR;
-done:
-	/*
-	 * Correctly set the buf to indicate a completed xfer
-	 */
 	bp->b_resid = bp->b_bcount;
+ done:
 	s = splbio();
 	biodone(bp);
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: presto.c,v 1.21 2011/06/03 21:14:11 matthew Exp $	*/
+/*	$OpenBSD: presto.c,v 1.22 2011/07/06 04:49:35 matthew Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -280,15 +280,14 @@ prestostrategy(struct buf *bp)
 	sc = (struct presto_softc *)device_lookup(&presto_cd, unit);
 
 	/* Sort rogue requests out */
-	if (sc == NULL || bp->b_blkno < 0 ||
-	    (bp->b_bcount % sc->sc_dk.dk_label->d_secsize) != 0) {
+	if (sc == NULL) {
 		bp->b_error = EINVAL;
 		goto bad;
 	}
 
-	/* Do not write on "no trespassing" areas... */
-	if (bounds_check_with_label(bp, sc->sc_dk.dk_label) <= 0)
-		goto bad;
+	/* Validate the request. */
+	if (bounds_check_with_label(bp, sc->sc_dk.dk_label) == -1)
+		goto done;
 
 	/* Bound the request size, then move data between buf and nvram */
 	bp->b_resid = bp->b_bcount;
@@ -303,11 +302,10 @@ prestostrategy(struct buf *bp)
 	bp->b_resid -= count;
 	goto done;
 
-bad:
+ bad:
 	bp->b_flags |= B_ERROR;
 	bp->b_resid = bp->b_bcount;
-
-done:
+ done:
 	s = splbio();
 	biodone(bp);
 	splx(s);

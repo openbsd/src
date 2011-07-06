@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.107 2011/06/30 16:28:05 matthew Exp $ */
+/*	$OpenBSD: wd.c,v 1.108 2011/07/06 04:49:36 matthew Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -407,30 +407,22 @@ wdstrategy(struct buf *bp)
 	WDCDEBUG_PRINT(("wdstrategy (%s)\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
 
-	/* Valid request?  */
-	if (bp->b_blkno < 0 ||
-	    (bp->b_bcount % wd->sc_dk.dk_label->d_secsize) != 0 ||
-	    (bp->b_bcount / wd->sc_dk.dk_label->d_secsize) >= (1 << NBBY)) {
-		bp->b_error = EINVAL;
-		goto bad;
-	}
-
 	/* If device invalidated (e.g. media change, door open), error. */
 	if ((wd->sc_flags & WDF_LOADED) == 0) {
 		bp->b_error = EIO;
 		goto bad;
 	}
 
-	/* If it's a null transfer, return immediately. */
-	if (bp->b_bcount == 0)
+	/* Validate the request. */
+	if (bounds_check_with_label(bp, wd->sc_dk.dk_label) == -1)
 		goto done;
 
-	/*
-	 * Do bounds checking, adjust transfer. if error, process.
-	 * If end of partition, just return.
-	 */
-	if (bounds_check_with_label(bp, wd->sc_dk.dk_label) <= 0)
-		goto done;
+	/* Check that the number of sectors can fit in a byte. */
+	if ((bp->b_bcount / wd->sc_dk.dk_label->d_secsize) >= (1 << NBBY)) {
+		bp->b_error = EINVAL;
+		goto bad;
+	}
+
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	bufq_queue(&wd->sc_bufq, bp);
 	s = splbio();
@@ -438,11 +430,11 @@ wdstrategy(struct buf *bp)
 	splx(s);
 	device_unref(&wd->sc_dev);
 	return;
-bad:
+
+ bad:
 	bp->b_flags |= B_ERROR;
-done:
-	/* Toss transfer; we're done early. */
 	bp->b_resid = bp->b_bcount;
+ done:
 	s = splbio();
 	biodone(bp);
 	splx(s);

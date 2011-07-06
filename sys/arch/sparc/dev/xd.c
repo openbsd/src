@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.55 2011/06/05 18:40:33 matthew Exp $	*/
+/*	$OpenBSD: xd.c,v 1.56 2011/07/06 04:49:35 matthew Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -1011,9 +1011,7 @@ xdstrategy(bp)
 
 	/* check for live device */
 
-	if (unit >= xd_cd.cd_ndevs || (xd = xd_cd.cd_devs[unit]) == 0 ||
-	    bp->b_blkno < 0 ||
-	    (bp->b_bcount % xd->sc_dk.dk_label->d_secsize) != 0) {
+	if (unit >= xd_cd.cd_ndevs || (xd = xd_cd.cd_devs[unit]) == 0) {
 		bp->b_error = EINVAL;
 		goto bad;
 	}
@@ -1036,17 +1034,9 @@ xdstrategy(bp)
 		bp->b_error = EIO;
 		goto bad;
 	}
-	/* short circuit zero length request */
 
-	if (bp->b_bcount == 0)
-		goto done;
-
-	/* check bounds with label (disksubr.c).  Determine the size of the
-	 * transfer, and make sure it is within the boundaries of the
-	 * partition. Adjust transfer if needed, and signal errors or early
-	 * completion. */
-
-	if (bounds_check_with_label(bp, xd->sc_dk.dk_label) <= 0)
+	/* Validate the request. */
+	if (bounds_check_with_label(bp, xd->sc_dk.dk_label) == -1)
 		goto done;
 
 	/*
@@ -1090,11 +1080,11 @@ xdstrategy(bp)
 	splx(s);
 	return;
 
-bad:				/* tells upper layers we have an error */
+ bad:				/* tells upper layers we have an error */
 	bp->b_flags |= B_ERROR;
-done:				/* tells upper layers we are done with this
-				 * buf */
 	bp->b_resid = bp->b_bcount;
+ done:				/* tells upper layers we are done with this
+				 * buf */
 	s = splbio();
 	biodone(bp);
 	splx(s);

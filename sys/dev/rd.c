@@ -1,4 +1,4 @@
-/*	$OpenBSD: rd.c,v 1.4 2011/06/30 16:28:05 matthew Exp $	*/
+/*	$OpenBSD: rd.c,v 1.5 2011/07/06 04:49:36 matthew Exp $	*/
 
 /*
  * Copyright (c) 2011 Matthew Dempsky <matthew@dempsky.org>
@@ -215,18 +215,8 @@ rdstrategy(struct buf *bp)
 		goto bad;
 	}
 
-	/* If it's a null transfer, return immediately. */
-	if (bp->b_bcount == 0)
-		goto done;
-
-	/* The transfer must be a whole number of sectors. */
-	if ((bp->b_bcount % sc->sc_dk.dk_label->d_secsize) != 0) {
-		bp->b_error = EINVAL;
-		goto bad;
-	}
-
-	/* Check that the request is within the partition boundaries. */
-	if (bounds_check_with_label(bp, sc->sc_dk.dk_label) <= 0)
+	/* Validate the request. */
+	if (bounds_check_with_label(bp, sc->sc_dk.dk_label) == -1)
 		goto done;
 
 	/* Do the transfer. */
@@ -250,11 +240,13 @@ rdstrategy(struct buf *bp)
 
  bad:
 	bp->b_flags |= B_ERROR;
+	bp->b_resid = bp->b_bcount;
  done:
 	s = splbio();
 	biodone(bp);
 	splx(s);
-	device_unref(&sc->sc_dev);
+	if (sc != NULL)
+		device_unref(&sc->sc_dev);
 }
 
 int

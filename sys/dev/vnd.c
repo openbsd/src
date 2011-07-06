@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.137 2011/07/04 20:35:34 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.138 2011/07/06 04:49:36 matthew Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -292,7 +292,7 @@ vndstrategy(struct buf *bp)
 
 	/* If we have a label, do a boundary check. */
 	if (sc->sc_flags & VNF_HAVELABEL) {
-		if (bounds_check_with_label(bp, sc->sc_dk.dk_label) <= 0)
+		if (bounds_check_with_label(bp, sc->sc_dk.dk_label) == -1)
 			goto done;
 
 		/*

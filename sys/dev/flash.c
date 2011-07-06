@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.23 2011/06/19 04:55:33 deraadt Exp $	*/
+/*	$OpenBSD: flash.c,v 1.24 2011/07/06 04:49:36 matthew Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -784,12 +784,6 @@ flashstrategy(struct buf *bp)
 		goto bad;
 	}
 
-	/* Transfer only a multiple of the flash page size. */
-	if ((bp->b_bcount % sc->sc_flashdev->pagesize) != 0) {
-		bp->b_error = EINVAL;
-		goto bad;
-	}
-
 	/* If the device has been invalidated, error out. */
 	if ((sc->sc_flags & FDK_LOADED) == 0) {
 		bp->b_error = EIO;
@@ -797,15 +791,14 @@ flashstrategy(struct buf *bp)
 	}
 
 	/* Translate logical block numbers to physical. */
-	if (flashsafe(bp->b_dev) && flashsafestrategy(sc, bp) <= 0)
+	if (flashsafe(bp->b_dev) && flashsafestrategy(sc, bp) <= 0) {
+		if (bp->b_flags & B_ERROR)
+			bp->b_resid = bp->b_bcount;
 		goto done;
+	}
 
-	/* Return immediately if it is a null transfer. */
-	if (bp->b_bcount == 0)
-		goto done;
-
-	/* Do bounds checking on partitions. */
-	if (bounds_check_with_label(bp, sc->sc_dk.dk_label) <= 0)
+	/* Validate the request. */
+	if (bounds_check_with_label(bp, sc->sc_dk.dk_label) == -1)
 		goto done;
 
 	/* Queue the transfer. */
@@ -816,11 +809,10 @@ flashstrategy(struct buf *bp)
 	device_unref(&sc->sc_dev);
 	return;
 
-bad:
+ bad:
 	bp->b_flags |= B_ERROR;
-done:
-	if ((bp->b_flags & B_ERROR) != 0)
-		bp->b_resid = bp->b_bcount;
+	bp->b_resid = bp->b_bcount;
+ done:
 	s = splbio();
 	biodone(bp);
 	splx(s);

@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.64 2011/06/21 16:46:00 tedu Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.65 2011/07/06 04:49:36 matthew Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -758,7 +758,7 @@ raidstrategy(struct buf *bp)
 	 * Do bounds checking and adjust transfer.  If there's an
 	 * error, the bounds check will flag that for us.
 	 */
-	if (bounds_check_with_label(bp, lp) <= 0) {
+	if (bounds_check_with_label(bp, lp) == -1) {
 		db1_printf(("Bounds check failed!!: %d\n",
 		    (int)bp->b_blkno));
 		biodone(bp);
