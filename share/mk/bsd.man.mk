@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.man.mk,v 1.37 2011/07/06 04:10:27 schwarze Exp $
+#	$OpenBSD: bsd.man.mk,v 1.38 2011/07/06 20:40:32 schwarze Exp $
 #	$NetBSD: bsd.man.mk,v 1.23 1996/02/10 07:49:33 jtc Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
@@ -54,6 +54,8 @@ ${_MAN_INST}: ${page}
 		${.ALLSRC} ${.TARGET}
 
 maninstall: ${_MAN_INST}
+
+.PHONY: ${_MAN_INST}
 .  endfor
 .endfor
 
