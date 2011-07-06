@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.166 2011/07/05 21:38:58 matthew Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.167 2011/07/06 04:41:16 matthew Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1381,6 +1381,7 @@ sys_lseek(struct proc *p, void *v, register_t *retval)
 	vp = (struct vnode *)fp->f_data;
 	if (vp->v_type == VFIFO)
 		return (ESPIPE);
+	FREF(fp);
 	if (vp->v_type == VCHR)
 		special = 1;
 	else
@@ -1392,25 +1393,30 @@ sys_lseek(struct proc *p, void *v, register_t *retval)
 		newoff = fp->f_offset + offarg;
 		break;
 	case SEEK_END:
-		error = VOP_GETATTR((struct vnode *)fp->f_data, &vattr,
-				    cred, p);
+		error = VOP_GETATTR(vp, &vattr, cred, p);
 		if (error)
-			return (error);
+			goto bad;
 		newoff = offarg + (off_t)vattr.va_size;
 		break;
 	case SEEK_SET:
 		newoff = offarg;
 		break;
 	default:
-		return (EINVAL);
+		error = EINVAL;
+		goto bad;
 	}
 	if (!special) {
-		if (newoff < 0)
-			return (EINVAL);
+		if (newoff < 0) {
+			error = EINVAL;
+			goto bad;
+		}
 	}
 	*(off_t *)retval = fp->f_offset = newoff;
 	fp->f_seek++;
-	return (0);
+	error = 0;
+ bad:
+	FRELE(fp);
+	return (error);
 }
 
 /*
