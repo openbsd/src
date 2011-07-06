@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.55 2011/06/26 23:28:23 tedu Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.56 2011/07/06 18:34:20 miod Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -126,8 +126,6 @@ twrget(all, fdesc, fd)dnl
 target(all, st, 0, 1)dnl
 target(all, std)dnl
 target(all, raid, 0, 1, 2, 3)dnl
-target(all, rz, 0, 1, 2, 3, 4)dnl
-target(all, hp, 0, 1, 2, 3)dnl
 target(all, ra, 0, 1, 2, 3)dnl
 target(all, rx, 0, 1)dnl
 target(all, wd, 0, 1, 2, 3)dnl
@@ -164,17 +162,12 @@ target(all, radio, 0)dnl
 target(all, tuner, 0)dnl
 target(all, rmidi, 0, 1, 2, 3, 4, 5, 6, 7)dnl
 target(all, uall)dnl
-target(all, adb)dnl
 target(all, iop, 0, 1)dnl
 target(all, pci, 0, 1, 2, 3)dnl
 twrget(all, wsmouse, wscons)dnl
-twrget(all, grf_mac, grf, 0, 1, 2, 3)dnl
 target(all, par, 0)dnl
-twrget(all, amouse, mouse, 0, 1)dnl
-twrget(all, akbd, kbd)dnl
 target(all, apci, 0)dnl
 target(all, ppi, 0)dnl
-target(all, view0, 0, 1, 2, 3, 4, 5)dnl
 target(all, local)dnl
 target(all, gpr, 0)dnl
 target(all, ptm)dnl
@@ -210,10 +203,6 @@ _mkdev(st, st*, {-n=Mult($U, 16)
 		n=Add($n, 1)
 	done-})dnl
 __devitem(mt, mt*, (Magnetic) 9-track reel tape drives)dnl
-__devitem(ht, ht*, MASSBUS TM03 and TU?? devices)dnl
-__devitem(tm, tm*, UNIBUS TM11 and TE10 emulations (e.g. Emulex TC-11))dnl
-__devitem(ts, ts*, UNIBUS TS11)dnl
-__devitem(ut, ut*, UNIBUS TU45 emulations (e.g. 9700))dnl
 __devtitle(dis, Disks)dnl
 __devitem(sd, {-sd*-}, {-SCSI disks{-,-} including flopticals-})dnl
 __devitem(cd, {-cd*-}, ATAPI and SCSI CD-ROM drives)dnl
@@ -281,31 +270,20 @@ __devitem(raid, raid*, RAIDframe disk devices)dnl
 __devitem(vnd, vnd*, quote(file)pseudo-disk devices)dnl
 _mkdev(vnd, vnd*, {-dodisk vnd $U major_vnd_b major_vnd_c $U 0{--}ifstep(vnd)-})dnl
 __devitem(ra, ra*, {-MSCP disks-})dnl
-__devitem(hp, hp*, {-MASSBUS disks-})dnl
-__devitem(hk, hk*, {-UNIBUS RK06 and RK07 disks-})dnl
-__devitem(up, up*, {-Other UNIBUS devices-})dnl
-__devitem(rb, rb*, {-730 IDC w/ RB80 and/or RB02-})dnl
 __devitem(rx, rx*, {-RX02 floppy disks-})dnl
-__devitem(rl, rl*, {-UNIBUS RL02-})dnl
 dnl
 dnl For normal disk devices, add a disk_q entry; anything else define like
 dnl the rest (such as vnd above).
 dnl
 disk_q({-ccd-})dnl
 disk_q({-hd-})dnl
-disk_q({-hk-})dnl
-disk_q({-hp-})dnl
 disk_q({-ra-})dnl
 disk_q({-raid-})dnl
-disk_q({-rb-})dnl
-disk_q({-rl-})dnl
 disk_q({-rx-})dnl
 disk_q({-sd-})dnl
 disk_q({-xy-})dnl
 disk_q({-xd-})dnl
-disk_q({-up-})dnl
 disk_q({-wd-})dnl
-disk_q({-rz-})dnl
 _mkdev({-disks-}, {-undefine({-C_ase-})show_disks()undefine({-C_ase-})-},
 {-case $i in
 show_disks2()dnl
@@ -486,7 +464,6 @@ __devitem(fdesc, fd, fd/* nodes, fd)dnl
 _mkdev(fdesc, fd, {-RMlist[${#RMlist[*]}]=";mkdir -p fd;rm -f" n=0
 	while [ $n -lt 64 ];do M fd/$n c major_fdesc_c $n;n=Add($n, 1);done
 	MKlist[${#MKlist[*]}]=";chmod 555 fd"-})dnl
-__devitem(grf_mac, grf*, Raw interface to the mac68k graphics devices,grf)dnl
 __devitem(oppr, openprom,PROM settings,openprom)dnl
 _cdev(oppr, openprom, 70, 0)dnl
 __devitem(cry, crypto, Hardware crypto access driver,crypto)dnl
@@ -565,8 +542,6 @@ _mkdev(tuner, tuner*, {-M tuner$U c major_bktr_c Add(Mult($U, 2), 16) 644-}, 644
 __devitem(pci, pci*, PCI bus devices)dnl
 _mkdev(pci, pci*, {-M pci$U	c major_pci_c $U 600
 	MKlist[${#MKlist[*]}]=";[ -h pci ] || ln -sf pci0 pci"-})dnl
-__devitem(adb, adb, Apple Desktop bus event interface)dnl
-_mkdev(adb, adb, {-M adb c major_adb_c 0-})dnl
 __devitem(pdc, pdc, PDC device)dnl
 __devitem(gpr, gpr*, GPR400 smartcard reader)dnl
 _mcdev(gpr, gpr*, gpr, {-major_gpr_c-})dnl
