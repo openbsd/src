@@ -1,4 +1,4 @@
-/*	$OpenBSD $	*/
+/*	$OpenBSD: subr_hiballoc.c,v 1.4 2011/07/06 19:42:49 ariane Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
