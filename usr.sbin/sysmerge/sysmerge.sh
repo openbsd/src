@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.77 2011/07/06 17:38:15 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.78 2011/07/06 23:35:07 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -660,11 +660,8 @@ while getopts bds:x: arg; do
 		DIFFMODE=1
 		;;
 	s)
-		if [ -f "${OPTARG}/etc/Makefile" ]; then
+		if [ -d "${OPTARG}" ]; then
 			SRCDIR=${OPTARG}
-		elif [ -f "${OPTARG}" ] && \
-			tar tzf ${OPTARG} ./var/db/sysmerge/etcsum >/dev/null 2>&1 ; then
-			TGZ=${OPTARG}
 		elif echo ${OPTARG} | \
 		    grep -qE '^(file|ftp|http|https)://.*/etc[0-9][0-9]\.tgz$'; then
 			TGZ=${WRKDIR}/etc.tgz
@@ -674,15 +671,11 @@ while getopts bds:x: arg; do
 				error_rm_wrkdir
 			fi
 		else
-			echo "\t*** ERROR: ${OPTARG} is not a path to src nor etcXX.tgz"
-			error_rm_wrkdir
+			TGZ=${OPTARG}
 		fi
 		;;
 	x)
-		if [ -f "${OPTARG}" ] && \
-			tar tzf ${OPTARG} ./var/db/sysmerge/xetcsum >/dev/null 2>&1 ; then \
-			XTGZ=${OPTARG}
-		elif echo ${OPTARG} | \
+		if echo ${OPTARG} | \
 		    grep -qE '^(file|ftp|http|https)://.*/xetc[0-9][0-9]\.tgz$'; then
 			XTGZ=${WRKDIR}/xetc.tgz
 			XTGZURL=${OPTARG}
@@ -691,8 +684,7 @@ while getopts bds:x: arg; do
 				error_rm_wrkdir
 			fi
 		else
-			echo "\t*** ERROR: ${OPTARG} is not a path to xetcXX.tgz"
-			error_rm_wrkdir
+			XTGZ=${OPTARG}
 		fi
 		;;
 	*)
@@ -718,6 +710,21 @@ if [ -z "${SRCDIR}" -a -z "${TGZ}" -a -z "${XTGZ}" ]; then
 	fi
 fi
 
+if [ -n "${SRCDIR}" -a ! -f "${SRCDIR}/etc/Makefile" ]; then
+	echo "\t*** ERROR: ${SRCDIR} is not a valid path to src"
+	error_rm_wrkdir
+fi
+
+if [ -n "${TGZ}" ] && ! tar tzf ${TGZ} ./var/db/sysmerge/etcsum >/dev/null 2>&1; then
+	echo "\t*** ERROR: ${TGZ} is not a valid etcXX.tgz set"
+	error_rm_wrkdir
+fi
+
+if [ -n "${XTGZ}" ] && ! tar tzf ${XTGZ} ./var/db/sysmerge/xetcsum >/dev/null 2>&1; then
+	echo "\t*** ERROR: ${XTGZ} is not a valid xetcXX.tgz set"
+	error_rm_wrkdir
+fi
+	
 TEMPROOT="${WRKDIR}/temproot"
 BKPDIR="${WRKDIR}/backups"
 
