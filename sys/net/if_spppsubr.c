@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.92 2011/07/06 02:49:36 henning Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.93 2011/07/06 02:54:31 henning Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -4534,16 +4534,7 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 HIDE void
 sppp_qflush(struct ifqueue *ifq)
 {
-	struct mbuf *m, *n;
-
-	n = ifq->ifq_head;
-	while ((m = n)) {
-		n = m->m_act;
-		m_freem (m);
-	}
-	ifq->ifq_head = 0;
-	ifq->ifq_tail = 0;
-	ifq->ifq_len = 0;
+	IF_PURGE(ifq);
 }
 
 /*
