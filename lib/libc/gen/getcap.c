@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcap.c,v 1.27 2006/05/15 04:18:19 hugh Exp $ */
+/*	$OpenBSD: getcap.c,v 1.28 2011/07/06 18:51:09 millert Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -657,123 +657,141 @@ cgetclose(void)
  * upon returning an entry with more remaining, and -1 if an error occurs.
  */
 int
-cgetnext(char **bp, char **db_array)
+cgetnext(char **cap, char **db_array)
 {
 	size_t len;
-	int status, done;
-	char *line, *np, buf[BSIZE], nbuf[BSIZE];
+	int serrno, status = -1;
+	char nbuf[BSIZE];
+	char *record = NULL, *r_end, *rp;
+	char buf[BUFSIZ];
+	char *b_end, *bp;
+	int c;
 	u_int dummy;
 
 	if (dbp == NULL)
 		dbp = db_array;
 
-	if (pfp == NULL && (pfp = fopen(*dbp, "r")) == NULL) {
-		(void)cgetclose();
-		return (-1);
+	if (pfp == NULL && (pfp = fopen(*dbp, "r")) == NULL)
+		goto done;
+
+	/*
+	 * Check if we have an unused top record from cgetset().
+	 */
+	if (toprec && !gottoprec) {
+		gottoprec = 1;
+		goto lookup;
 	}
+
+	/*
+	 * Allocate first chunk of memory.
+	 */
+	if ((record = malloc(BFRAG)) == NULL)
+		goto done;
+	r_end = record + BFRAG;
+
+	/*
+	 * Find the next capability record
+	 */
+	/*
+	 * Loop invariants:
+	 *	There is always room for one more character in record.
+	 *	R_end always points just past end of record.
+	 *	Rp always points just past last character in record.
+	 *	B_end always points just past last character in buf.
+	 *	Bp always points at next character in buf.
+	 */
+	b_end = buf;
+	bp = buf;
 	for (;;) {
-		if (toprec && !gottoprec) {
-			gottoprec = 1;
-			line = toprec;
-		} else {
-			line = fgetln(pfp, &len);
-			if (line == NULL) {
-				if (ferror(pfp)) {
-					(void)cgetclose();
-					return (-1);
-				} else {
+		/*
+		 * Read in a line implementing (\, newline)
+		 * line continuation.
+		 */
+		rp = record;
+		for (;;) {
+			if (bp >= b_end) {
+				size_t n;
+
+				n = fread(buf, 1, sizeof(buf), pfp);
+				if (n == 0) {
+					if (ferror(pfp))
+						goto done;
 					(void)fclose(pfp);
 					pfp = NULL;
 					if (*++dbp == NULL) {
-						(void)cgetclose();
-						return (0);
+						status = 0;
+						goto done;
 					} else if ((pfp =
 					    fopen(*dbp, "r")) == NULL) {
-						(void)cgetclose();
-						return (-1);
+						goto done;
 					} else
 						continue;
 				}
-			} else
-				line[len - 1] = '\0';/* XXX - assumes newline */
-			if (len == 1) {
-				slash = 0;
-				continue;
+				b_end = buf + n;
+				bp = buf;
 			}
-			if (isspace(*line) ||
-			    *line == ':' || *line == '#' || slash) {
-				if (line[len - 2] == '\\')
-					slash = 1;
-				else
-					slash = 0;
-				continue;
-			}
-			if (line[len - 2] == '\\')
-				slash = 1;
-			else
-				slash = 0;
-		}
 
-
-		/*
-		 * Line points to a name line.
-		 */
-		done = 0;
-		np = nbuf;
-		for (;;) {
-			len = strcspn(line, ":\\");
-			if (line[len] == ':') {
-				done = 1;
-				++len;
-			}
-			/* copy substring */
-			if (len >= sizeof(nbuf) - (np - nbuf)) {
-				(void)cgetclose();
-				return (-1);
-			}
-			memcpy(np, line, len);
-			np += len;
-
-			if (done) {
-				*np = '\0';
-				break;
-			} else { /* name field extends beyond the line */
-				line = fgetln(pfp, &len);
-				if (line == NULL) {
-					if (ferror(pfp)) {
-						(void)cgetclose();
-						return (-1);
-					}
-					/* Move on to next file. */
-					(void)fclose(pfp);
-					pfp = NULL;
-					++dbp;
-					/* NUL terminate nbuf. */
-					*np = '\0';
-					break;
+			c = *bp++;
+			if (c == '\n') {
+				if (rp > record && *(rp-1) == '\\') {
+					rp--;
+					continue;
 				} else
-					/* XXX - assumes newline */
-					line[len - 1] = '\0';
+					break;
+			}
+			*rp++ = c;
+
+			/*
+			 * Enforce loop invariant: if no room
+			 * left in record buffer, try to get
+			 * some more.
+			 */
+			if (rp >= r_end) {
+				size_t newsize, pos;
+				char *nrecord;
+
+				pos = rp - record;
+				newsize = r_end - record + BFRAG;
+				nrecord = realloc(record, newsize);
+				if (nrecord == NULL)
+					goto done;
+				record = nrecord;
+				r_end = record + newsize;
+				rp = record + pos;
 			}
 		}
-		len = strcspn(nbuf, "|:");
-		memcpy(buf, nbuf, len);
-		buf[len] = '\0';
-		/*
-		 * XXX
-		 * Last argument of getent here should be nbuf if we want true
-		 * sequential access in the case of duplicates.
-		 * With NULL, getent will return the first entry found
-		 * rather than the duplicate entry record.  This is a
-		 * matter of semantics that should be resolved.
-		 */
-		status = getent(bp, &dummy, db_array, -1, buf, 0, NULL);
-		if (status == -2 || status == -3)
-			(void)cgetclose();
+		/* loop invariant lets us do this */
+		*rp++ = '\0';
 
-		return (status + 1);
+		/*
+		 * If not blank or comment, set toprec and topreclen so
+		 * getent() doesn't have to re-parse the file to find it.
+		 */
+		if (*record != '\0' && *record != '#') {
+			/* Rewind to end of record */
+			fseeko(pfp, (off_t)(bp - b_end), SEEK_CUR);
+			toprec = record;
+			topreclen = rp - record;
+			gottoprec = 1;
+			break;
+		}
 	}
-	/* NOTREACHED */
+lookup:
+	/* extract name from record */
+	len = strcspn(record, "|:");
+	memcpy(nbuf, record, len);
+	nbuf[len] = '\0';
+
+	/* return value of getent() is one less than cgetnext() */
+	status = getent(cap, &dummy, db_array, -1, nbuf, 0, NULL) + 1;
+done:
+	serrno = errno;
+	free(record);
+	if (status <= 0)
+		(void)cgetclose();
+	errno = serrno;
+
+	return (status);
 }
 
 /*
