@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.76 2011/07/06 17:19:06 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.77 2011/07/06 17:38:15 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -35,7 +35,7 @@ PAGER="${PAGER:=/usr/bin/more}"
 # clean leftovers created by make in src
 clean_src() {
 	if [ "${SRCDIR}" ]; then
-		cd ${SRCDIR}/gnu/usr.sbin/sendmail/cf/cf && make cleandir > /dev/null
+		cd ${SRCDIR}/gnu/usr.sbin/sendmail/cf/cf && make cleandir >/dev/null
 	fi
 }
 
@@ -54,7 +54,7 @@ restore_bak() {
 
 # remove newly created work directory and exit with status 1
 error_rm_wrkdir() {
-	rmdir ${WRKDIR} 2> /dev/null
+	rmdir ${WRKDIR} 2>/dev/null
 	exit 1
 }
 
@@ -84,7 +84,7 @@ do_populate() {
 	if [ "${SRCDIR}" ]; then
 		SRCSUM=srcsum
 		cd ${SRCDIR}/etc
-		make DESTDIR=${TEMPROOT} distribution-etc-root-var > /dev/null 2>&1
+		make DESTDIR=${TEMPROOT} distribution-etc-root-var >/dev/null 2>&1
 		(cd ${TEMPROOT} && find . -type f | xargs cksum > ${WRKDIR}/${SRCSUM})
 	fi
 
@@ -110,7 +110,7 @@ do_populate() {
 			# and is present in current installation
 			if [ -z "${DIFFMODE}" ]; then
 				_R=$(cd ${TEMPROOT} && \
-					cksum -c ${DESTDIR}/${DBDIR}/${i} 2> /dev/null | grep OK | awk '{ print $2 }' | sed 's/[:]//')
+					cksum -c ${DESTDIR}/${DBDIR}/${i} 2>/dev/null | grep OK | awk '{ print $2 }' | sed 's/[:]//')
 				for _r in ${_R}; do
 					if [ -f ${DESTDIR}/${_r} -a -f ${TEMPROOT}/${_r} ]; then
 						rm -f ${TEMPROOT}/${_r}
@@ -121,7 +121,7 @@ do_populate() {
 			# set auto-upgradable files
 			_D=`diff -u ${WRKDIR}/${i} ${DESTDIR}/${DBDIR}/${i} | grep -E '^\+' | sed '1d' | awk '{print $3}'`
 			for _d in ${_D}; do
-				CURSUM=$(cd ${DESTDIR:=/} && cksum ${_d} 2> /dev/null)
+				CURSUM=$(cd ${DESTDIR:=/} && cksum ${_d} 2>/dev/null)
 				if [ -n "`grep "${CURSUM}" ${DESTDIR}/${DBDIR}/${i}`" -a -z "`grep "${CURSUM}" ${WRKDIR}/${i}`" ]; then
 					local _array="${_array} ${_d}"
 				fi
@@ -157,7 +157,7 @@ do_populate() {
 		      /var/mail/root"
 	CF_FILES="/etc/mail/localhost.cf /etc/mail/sendmail.cf /etc/mail/submit.cf"
 	for cf in ${CF_FILES}; do
-		CF_DIFF=`diff -q -I "##### " ${TEMPROOT}/${cf} ${DESTDIR}/${cf} 2> /dev/null`
+		CF_DIFF=`diff -q -I "##### " ${TEMPROOT}/${cf} ${DESTDIR}/${cf} 2>/dev/null`
 		if [ -z "${CF_DIFF}" ]; then
 			IGNORE_FILES="${IGNORE_FILES} ${cf}"
 		fi
@@ -178,7 +178,7 @@ do_install_and_rm() {
 		cp ${5}/${4##*/} ${BKPDIR}/${4%/*}
 	fi
 
-	if ! install -m "${1}" -o "${2}" -g "${3}" "${4}" "${5}" 2> /dev/null; then
+	if ! install -m "${1}" -o "${2}" -g "${3}" "${4}" "${5}" 2>/dev/null; then
 		rm -f ${BKPDIR}/${4%/*}/${4##*/}
 		return 1
 	fi
@@ -279,7 +279,7 @@ merge_loop() {
 				else
 					EDIT="${VISUAL}"
 				fi
-				if which ${EDIT} > /dev/null 2>&1; then
+				if which ${EDIT} >/dev/null 2>&1; then
 					${EDIT} ${COMPFILE}.merged
 				else
 					echo "\t*** ERROR: ${EDIT} can not be found or is not executable"
@@ -556,17 +556,17 @@ do_compare() {
 		    -a "${COMPFILE}" != "./etc/login.conf" \
 		    -a "${COMPFILE}" != "./etc/sysctl.conf" \
 		    -a "${COMPFILE}" != "./etc/ttys" -a -z "${IS_LINK}" ]; then
-			CVSID1=`grep "[$]OpenBSD:" ${DESTDIR}${COMPFILE#.} 2> /dev/null`
-			CVSID2=`grep "[$]OpenBSD:" ${COMPFILE} 2> /dev/null` || CVSID2=none
+			CVSID1=`grep "[$]OpenBSD:" ${DESTDIR}${COMPFILE#.} 2>/dev/null`
+			CVSID2=`grep "[$]OpenBSD:" ${COMPFILE} 2>/dev/null` || CVSID2=none
 			if [ "${CVSID2}" = "${CVSID1}" ]; then rm "${COMPFILE}"; fi
 		fi
 
 		if [ -f "${COMPFILE}" -a -z "${IS_LINK}" ]; then
 			# make sure files are different; if not, delete the one in temproot
-			if diff -q "${DESTDIR}${COMPFILE#.}" "${COMPFILE}" > /dev/null 2>&1; then
+			if diff -q "${DESTDIR}${COMPFILE#.}" "${COMPFILE}" >/dev/null 2>&1; then
 				rm "${COMPFILE}"
 			# xetcXX.tgz contains binary files; set IS_BINFILE to disable sdiff
-			elif diff -q "${DESTDIR}${COMPFILE#.}" "${COMPFILE}" | grep "Binary" > /dev/null 2>&1; then
+			elif diff -q "${DESTDIR}${COMPFILE#.}" "${COMPFILE}" | grep "Binary" >/dev/null 2>&1; then
 				IS_BINFILE=1
 				diff_loop
 			else
@@ -580,9 +580,9 @@ do_compare() {
 
 do_post() {
 	echo "===> Checking directory hierarchy permissions (running mtree(8))"
-	mtree -qdef ${DESTDIR}/etc/mtree/4.4BSD.dist -p ${DESTDIR:=/} -U > /dev/null
+	mtree -qdef ${DESTDIR}/etc/mtree/4.4BSD.dist -p ${DESTDIR:=/} -U >/dev/null
 	if [ -n "${XTGZ}" ]; then
-		mtree -qdef ${DESTDIR}/etc/mtree/BSD.x11.dist -p ${DESTDIR:=/} -U > /dev/null
+		mtree -qdef ${DESTDIR}/etc/mtree/BSD.x11.dist -p ${DESTDIR:=/} -U >/dev/null
 	fi
 
 	if [ "${NEED_NEWALIASES}" ]; then
@@ -592,8 +592,8 @@ do_post() {
 		unset NEED_NEWALIASES
 	fi
 
-	FILES_IN_TEMPROOT=`find ${TEMPROOT} -type f ! -name \*.merged -size +0 2> /dev/null`
-	FILES_IN_BKPDIR=`find ${BKPDIR} -type f -size +0 2> /dev/null`
+	FILES_IN_TEMPROOT=`find ${TEMPROOT} -type f ! -name \*.merged -size +0 2>/dev/null`
+	FILES_IN_BKPDIR=`find ${BKPDIR} -type f -size +0 2>/dev/null`
 	if [ "${AUTO_INSTALLED_FILES}" ]; then
 		echo "===> Automatically installed file(s)" >> ${REPORT}
 		echo "${AUTO_INSTALLED_FILES}" >> ${REPORT}
@@ -663,7 +663,7 @@ while getopts bds:x: arg; do
 		if [ -f "${OPTARG}/etc/Makefile" ]; then
 			SRCDIR=${OPTARG}
 		elif [ -f "${OPTARG}" ] && \
-			tar tzf ${OPTARG} ./var/db/sysmerge/etcsum > /dev/null 2>&1 ; then
+			tar tzf ${OPTARG} ./var/db/sysmerge/etcsum >/dev/null 2>&1 ; then
 			TGZ=${OPTARG}
 		elif echo ${OPTARG} | \
 		    grep -qE '^(file|ftp|http|https)://.*/etc[0-9][0-9]\.tgz$'; then
@@ -680,7 +680,7 @@ while getopts bds:x: arg; do
 		;;
 	x)
 		if [ -f "${OPTARG}" ] && \
-			tar tzf ${OPTARG} ./var/db/sysmerge/xetcsum > /dev/null 2>&1 ; then \
+			tar tzf ${OPTARG} ./var/db/sysmerge/xetcsum >/dev/null 2>&1 ; then \
 			XTGZ=${OPTARG}
 		elif echo ${OPTARG} | \
 		    grep -qE '^(file|ftp|http|https)://.*/xetc[0-9][0-9]\.tgz$'; then
@@ -707,7 +707,6 @@ if [ $# -ne 0 ]; then
 	usage
 	error_rm_wrkdir
 fi
-
 
 if [ -z "${SRCDIR}" -a -z "${TGZ}" -a -z "${XTGZ}" ]; then
 	if [ -f "/usr/src/etc/Makefile" ]; then
