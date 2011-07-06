@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.22 2011/07/06 05:48:57 kettenis Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.23 2011/07/06 22:26:44 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -371,8 +371,22 @@ pyro_conf_size(pci_chipset_tag_t pc, pcitag_t tag)
 pcireg_t
 pyro_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
-	return (bus_space_read_4(pc->bustag, pc->bushandle,
-	    (PCITAG_OFFSET(tag) << 4) + reg));
+	struct cpu_info *ci = curcpu();
+	pcireg_t val;
+	int s;
+
+	s = splhigh();
+	membar(Sync);
+	ci->ci_pci_probe = 1;
+	val = bus_space_read_4(pc->bustag, pc->bushandle,
+	    (PCITAG_OFFSET(tag) << 4) + reg);
+	membar(Sync);
+	if (ci->ci_pci_fault)
+		val = 0xffffffff;
+	ci->ci_pci_probe = ci->ci_pci_fault = 0;
+	splx(s);
+
+	return (val);
 }
 
 void

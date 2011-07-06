@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.70 2011/07/06 21:41:37 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.71 2011/07/06 22:26:44 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -952,6 +952,14 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 	uvmexp.traps++;
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
+
+	/*
+	 * Catch PCI config space reads.
+	 */
+	if (curcpu()->ci_pci_probe) {
+		curcpu()->ci_pci_fault = 1;
+		goto out;
+	}
 
 	pc = tf->tf_pc;
 	tstate = tf->tf_tstate;
