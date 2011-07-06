@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.58 2011/07/03 18:34:14 oga Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.59 2011/07/06 19:50:38 beck Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -147,7 +147,6 @@ uvm_wait(const char *wmsg)
 	msleep(&uvmexp.free, &uvm.fpageqlock, PVM | PNORELOCK, wmsg, timo);
 }
 
-
 /*
  * uvmpd_tune: tune paging parameters
  *
@@ -188,6 +187,9 @@ uvmpd_tune(void)
 void
 uvm_pageout(void *arg)
 {
+	struct uvm_constraint_range constraint;
+	struct uvm_pmalloc *pma;
+	int work_done;
 	int npages = 0;
 
 	/*
@@ -206,10 +208,23 @@ uvm_pageout(void *arg)
 	 */
 
 	for (;;) {
+	  	work_done = 0; /* No work done this iteration. */
+
 		uvm_lock_fpageq();
-		msleep(&uvm.pagedaemon, &uvm.fpageqlock, PVM | PNORELOCK,
-		    "pgdaemon", 0);
-		uvmexp.pdwoke++;
+
+		if (TAILQ_EMPTY(&uvm.pmr_control.allocs)) {
+			msleep(&uvm.pagedaemon, &uvm.fpageqlock, PVM,
+			    "pgdaemon", 0);
+			uvmexp.pdwoke++;
+		}
+
+		if ((pma = TAILQ_FIRST(&uvm.pmr_control.allocs)) != NULL) {
+			pma->pm_flags |= UVM_PMA_BUSY;
+			constraint = pma->pm_constraint;
+		} else
+			constraint = no_constraint;
+
+		uvm_unlock_fpageq();
 
 		/*
 		 * now lock page queues and recompute inactive count
@@ -229,10 +244,16 @@ uvm_pageout(void *arg)
 		/*
 		 * get pages from the buffer cache, or scan if needed
 		 */
-		if (((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freetarg) ||
+		if (pma != NULL ||
+		    ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freetarg) ||
 		    ((uvmexp.inactive + BUFPAGES_INACT) < uvmexp.inactarg)) {
-			if (bufbackoff() == -1)
+			if (bufbackoff(&constraint,
+			    (pma ? pma->pm_size : -1)) == 0)
+				work_done = 1;
+			else {
 				uvmpd_scan();
+				work_done = 1; /* we hope... */
+			}
 		}
 
 		/*
@@ -243,6 +264,18 @@ uvm_pageout(void *arg)
 		if (uvmexp.free > uvmexp.reserve_kernel ||
 		    uvmexp.paging == 0) {
 			wakeup(&uvmexp.free);
+		}
+
+		if (pma != NULL) {
+			pma->pm_flags &= ~UVM_PMA_BUSY;
+			if (!work_done)
+				pma->pm_flags |= UVM_PMA_FAIL;
+			if (pma->pm_flags & (UVM_PMA_FAIL | UVM_PMA_FREED)) {
+				pma->pm_flags &= ~UVM_PMA_LINKED;
+				TAILQ_REMOVE(&uvm.pmr_control.allocs, pma,
+				    pmq);
+			}
+			wakeup(pma);
 		}
 		uvm_unlock_fpageq();
 

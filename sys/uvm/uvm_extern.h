@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.100 2011/07/03 17:42:51 oga Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.101 2011/07/06 19:50:38 beck Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -221,6 +221,7 @@ typedef int		vm_prot_t;
 #define UVM_PLA_NOWAIT		0x0002	/* can't sleep (need one of the two) */
 #define UVM_PLA_ZERO		0x0004	/* zero all pages before returning */
 #define UVM_PLA_TRYCONTIG	0x0008	/* try to allocate contig physmem */
+#define UVM_PLA_FAILOK		0x0010	/* caller can handle failure */
 
 /*
  * lockflags that control the locking behavior of various functions.
@@ -253,6 +254,24 @@ struct pmap;
 struct vnode;
 struct pool;
 struct simplelock;
+
+/*
+ * uvm_constraint_range's:
+ * MD code is allowed to setup constraint ranges for memory allocators, the
+ * primary use for this is to keep allocation for certain memory consumers
+ * such as mbuf pools withing address ranges that are reachable by devices
+ * that perform DMA.
+ *
+ * It is also to discourge memory allocations from being satisfied from ranges
+ * such as the ISA memory range, if they can be satisfied with allocation
+ * from other ranges.
+ *
+ * the MD ranges are defined in arch/ARCH/ARCH/machdep.c
+ */
+struct uvm_constraint_range {
+	paddr_t	ucr_low;
+	paddr_t ucr_high;
+};
 
 extern struct pool *uvm_aiobuf_pool;
 
@@ -666,6 +685,8 @@ void			uvm_pagealloc_multi(struct uvm_object *, voff_t,
     			    vsize_t, int);
 void			uvm_pagerealloc(struct vm_page *, 
 					     struct uvm_object *, voff_t);
+void			uvm_pagerealloc_multi(struct uvm_object *, voff_t,
+			    vsize_t, int, struct uvm_constraint_range *);
 /* Actually, uvm_page_physload takes PF#s which need their own type */
 void			uvm_page_physload(paddr_t, paddr_t, paddr_t,
 			    paddr_t, int);

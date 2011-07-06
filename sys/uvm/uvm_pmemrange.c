@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.26 2011/07/05 19:48:02 ariane Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.27 2011/07/06 19:50:38 beck Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -17,9 +17,11 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <uvm/uvm.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>		/* XXX for atomic */
+#include <sys/kernel.h>
 
 /*
  * 2 trees: addr tree and size tree.
@@ -828,11 +830,11 @@ uvm_pmr_getpages(psize_t count, paddr_t start, paddr_t end, paddr_t align,
 	 */
 	desperate = 0;
 
+	uvm_lock_fpageq();
+
 retry:		/* Return point after sleeping. */
 	fcount = 0;
 	fnsegs = 0;
-
-	uvm_lock_fpageq();
 
 retry_desperate:
 	/*
@@ -1029,13 +1031,15 @@ fail:
 
 	while (!TAILQ_EMPTY(result))
 		uvm_pmr_remove_1strange(result, 0, NULL, 0);
-	uvm_unlock_fpageq();
 
 	if (flags & UVM_PLA_WAITOK) {
-		uvm_wait("uvm_pmr_getpages");
-		goto retry;
+		if (uvm_wait_pla(ptoa(start), ptoa(end) - 1, ptoa(count),
+		    flags & UVM_PLA_FAILOK) == 0)
+			goto retry;
+		KASSERT(flags & UVM_PLA_FAILOK);
 	} else
 		wakeup(&uvm.pagedaemon);
+	uvm_unlock_fpageq();
 
 	return ENOMEM;
 
@@ -1156,6 +1160,8 @@ uvm_pmr_freepages(struct vm_page *pg, psize_t count)
 	}
 	wakeup(&uvmexp.free);
 
+	uvm_wakeup_pla(VM_PAGE_TO_PHYS(pg), ptoa(count));
+
 	uvm_unlock_fpageq();
 }
 
@@ -1166,6 +1172,8 @@ void
 uvm_pmr_freepageq(struct pglist *pgl)
 {
 	struct vm_page *pg;
+	paddr_t pstart;
+	psize_t plen;
 
 	TAILQ_FOREACH(pg, pgl, pageq) {
 		if (!((pg->pg_flags & PQ_FREE) == 0 &&
@@ -1180,8 +1188,13 @@ uvm_pmr_freepageq(struct pglist *pgl)
 	}
 
 	uvm_lock_fpageq();
-	while (!TAILQ_EMPTY(pgl))
-		uvmexp.free += uvm_pmr_remove_1strange(pgl, 0, NULL, 0);
+	while (!TAILQ_EMPTY(pgl)) {
+		pstart = VM_PAGE_TO_PHYS(TAILQ_FIRST(pgl));
+		plen = uvm_pmr_remove_1strange(pgl, 0, NULL, 0);
+		uvmexp.free += plen;
+
+		uvm_wakeup_pla(pstart, ptoa(plen));
+	}
 	wakeup(&uvmexp.free);
 	uvm_unlock_fpageq();
 
@@ -1509,6 +1522,7 @@ uvm_pmr_init(void)
 
 	TAILQ_INIT(&uvm.pmr_control.use);
 	RB_INIT(&uvm.pmr_control.addr);
+	TAILQ_INIT(&uvm.pmr_control.allocs);
 
 	/* By default, one range for the entire address space. */
 	new_pmr = uvm_pmr_allocpmr();
@@ -1870,6 +1884,83 @@ uvm_pmr_print(void)
 	printf("#ranges = %d\n", useq_len);
 }
 #endif
+
+/*
+ * uvm_wait_pla: wait (sleep) for the page daemon to free some pages
+ * in a specific physmem area.
+ *
+ * Returns ENOMEM if the pagedaemon failed to free any pages.
+ * If not failok, failure will lead to panic.
+ *
+ * Must be called with fpageq locked.
+ */
+int
+uvm_wait_pla(paddr_t low, paddr_t high, paddr_t size, int failok)
+{
+	struct uvm_pmalloc pma;
+	const char *wmsg = "pmrwait";
+
+	/*
+	 * Prevent deadlock.
+	 */
+	if (curproc == uvm.pagedaemon_proc) {
+		msleep(&uvmexp.free, &uvm.fpageqlock, PVM, wmsg, hz >> 3);
+		return 0;
+	}
+
+	for (;;) {
+		pma.pm_constraint.ucr_low = low;
+		pma.pm_constraint.ucr_high = high;
+		pma.pm_size = size;
+		pma.pm_flags = UVM_PMA_LINKED;
+		TAILQ_INSERT_TAIL(&uvm.pmr_control.allocs, &pma, pmq);
+
+		wakeup(&uvm.pagedaemon);		/* wake the daemon! */
+		while (pma.pm_flags & (UVM_PMA_LINKED | UVM_PMA_BUSY))
+			msleep(&pma, &uvm.fpageqlock, PVM, wmsg, 0);
+
+		if (!(pma.pm_flags & UVM_PMA_FREED) &&
+		    pma.pm_flags & UVM_PMA_FAIL) {
+			if (failok)
+				return ENOMEM;
+			printf("uvm_wait: failed to free %ld pages between "
+			    "0x%lx-0x%lx\n", atop(size), low, high);
+		} else
+			return 0;
+	}
+	/* UNREACHABLE */
+}
+
+/*
+ * Wake up uvm_pmalloc sleepers.
+ */
+void
+uvm_wakeup_pla(paddr_t low, psize_t len)
+{
+	struct uvm_pmalloc *pma, *pma_next;
+	paddr_t high;
+
+	high = low + len;
+
+	/*
+	 * Wake specific allocations waiting for this memory.
+	 */
+	for (pma = TAILQ_FIRST(&uvm.pmr_control.allocs); pma != NULL;
+	    pma = pma_next) {
+		pma_next = TAILQ_NEXT(pma, pmq);
+
+		if (low < pma->pm_constraint.ucr_high &&
+		    high > pma->pm_constraint.ucr_low) {
+			pma->pm_flags |= UVM_PMA_FREED;
+			if (!(pma->pm_flags & UVM_PMA_BUSY)) {
+				pma->pm_flags &= ~UVM_PMA_LINKED;
+				TAILQ_REMOVE(&uvm.pmr_control.allocs, pma,
+				    pmq);
+				wakeup(pma);
+			}
+		}
+	}
+}
 
 #ifndef SMALL_KERNEL
 /*

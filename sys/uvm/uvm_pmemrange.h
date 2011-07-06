@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.h,v 1.7 2011/04/03 22:07:37 ariane Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.h,v 1.8 2011/07/06 19:50:38 beck Exp $	*/
 
 /*
  * Copyright (c) 2009 Ariane van der Steldt <ariane@stack.nl>
@@ -59,6 +59,44 @@ struct uvm_pmemrange {
 					/* pmr, sorted by address */
 };
 
+/*
+ * Description of failing memory allocation.
+ *
+ * Two ways new pages can become available:
+ * [1] page daemon drops them (we notice because they are freed)
+ * [2] a process calls free
+ *
+ * The buffer cache and page daemon can decide that they don't have the
+ * ability to make pages available in the requested range. In that case,
+ * the FAIL bit will be set.
+ * XXX There's a possibility that a page is no longer on the queues but
+ * XXX has not yet been freed, or that a page was busy.
+ * XXX Also, wired pages are not considered for paging, so they could
+ * XXX cause a failure that may be recoverable.
+ */
+struct uvm_pmalloc {
+	TAILQ_ENTRY(uvm_pmalloc) pmq;
+
+	/*
+	 * Allocation request parameters.
+	 */
+	struct uvm_constraint_range pm_constraint;
+	psize_t	pm_size;
+
+	/*
+	 * State flags.
+	 */
+	int	pm_flags;
+};
+
+/*
+ * uvm_pmalloc flags.
+ */
+#define UVM_PMA_LINKED	0x01	/* uvm_pmalloc is on list */
+#define UVM_PMA_BUSY	0x02	/* entry is busy with fpageq unlocked */
+#define UVM_PMA_FAIL	0x10	/* page daemon cannot free pages */
+#define UVM_PMA_FREED	0x20	/* at least one page in the range was freed */
+
 RB_HEAD(uvm_pmemrange_addr, uvm_pmemrange);
 TAILQ_HEAD(uvm_pmemrange_use, uvm_pmemrange);
 
@@ -68,13 +106,18 @@ TAILQ_HEAD(uvm_pmemrange_use, uvm_pmemrange);
 struct uvm_pmr_control {
 	struct	uvm_pmemrange_addr addr;
 	struct	uvm_pmemrange_use use;
+
+	/* Only changed while fpageq is locked. */
+	TAILQ_HEAD(, uvm_pmalloc) allocs;
 };
 
 void	uvm_pmr_freepages(struct vm_page *, psize_t);
-void	uvm_pmr_freepageq(struct pglist *pgl);
+void	uvm_pmr_freepageq(struct pglist *);
 int	uvm_pmr_getpages(psize_t, paddr_t, paddr_t, paddr_t, paddr_t,
 	    int, int, struct pglist *);
 void	uvm_pmr_init(void);
+int	uvm_wait_pla(paddr_t, paddr_t, paddr_t, int);
+void	uvm_wakeup_pla(paddr_t, psize_t);
 
 #if defined(DDB) || defined(DEBUG)
 int	uvm_pmr_isfree(struct vm_page *pg);
