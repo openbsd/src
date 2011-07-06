@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.102 2011/07/05 19:02:47 oga Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.103 2011/07/06 15:44:11 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -576,7 +576,7 @@ struct sr_softc {
 	int			sc_hotspare_no; /* Number of hotspares. */
 
 	struct ksensordev	sc_sensordev;
-	int			sc_sensors_running;
+	struct sensor_task	*sc_sensor_task;
 
 	struct scsi_link	sc_link;	/* scsi prototype link */
 	struct scsibus_softc	*sc_scsibus;
