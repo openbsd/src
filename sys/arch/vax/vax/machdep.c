@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.117 2011/07/06 18:33:00 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.118 2011/07/06 20:42:52 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -94,7 +94,6 @@
 #endif
 
 #include <machine/sid.h>
-#include <machine/nexus.h>
 #include <machine/db_machdep.h>
 #include <machine/kcore.h>
 #include <vax/vax/gencons.h>
