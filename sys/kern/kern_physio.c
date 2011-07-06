@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.35 2011/07/05 10:04:27 matthew Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.36 2011/07/06 21:06:14 beck Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -105,7 +105,7 @@ physio(void (*strategy)(struct buf *), dev_t dev, int flags,
 			 * "Set by physio for raw transfers.", in addition
 			 * to the "busy" and read/write flag.)
 			 */
-			bp->b_flags = B_BUSY | B_PHYS | B_RAW | flags;
+			bp->b_flags |= (B_BUSY | B_PHYS | B_RAW | flags);
 
 			/* [set up the buffer for a maximum-sized transfer] */
 			bp->b_blkno = btodb(uio->uio_offset);
