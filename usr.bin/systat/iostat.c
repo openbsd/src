@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.38 2011/03/02 06:48:17 jasper Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.39 2011/07/06 00:11:57 beck Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -218,51 +218,27 @@ showdrive(int dn)
 void
 showbcache(void)
 {
-	print_fld_str(FLD_IO_SSTR, "numbufs");
-	print_fld_ssize(FLD_IO_SVAL, bccur.numbufs);
-	end_line();
-
-	print_fld_str(FLD_IO_SSTR, "freebufs");
-	print_fld_ssize(FLD_IO_SVAL, bccur.freebufs);
-	end_line();
-
-	print_fld_str(FLD_IO_SSTR, "numbufpages");
+	print_fld_str(FLD_IO_SSTR, "total pages");
 	print_fld_ssize(FLD_IO_SVAL, bccur.numbufpages);
 	end_line();
 
-	print_fld_str(FLD_IO_SSTR, "numfreepages");
-	print_fld_ssize(FLD_IO_SVAL, bccur.numfreepages);
+	print_fld_str(FLD_IO_SSTR, "dma pages");
+	print_fld_ssize(FLD_IO_SVAL, bccur.dmapages);
 	end_line();
 
-	print_fld_str(FLD_IO_SSTR, "numdirtypages");
+	print_fld_str(FLD_IO_SSTR, "dirty pages");
 	print_fld_ssize(FLD_IO_SVAL, bccur.numdirtypages);
 	end_line();
 
-	print_fld_str(FLD_IO_SSTR, "numcleanpages");
-	print_fld_ssize(FLD_IO_SVAL, bccur.numcleanpages);
-	end_line();
-
-	print_fld_str(FLD_IO_SSTR, "pendingwrites");
+	print_fld_str(FLD_IO_SSTR, "pending writes");
 	print_fld_ssize(FLD_IO_SVAL, bccur.pendingwrites);
 	end_line();
 
-	print_fld_str(FLD_IO_SSTR, "pendingreads");
+	print_fld_str(FLD_IO_SSTR, "pending reads");
 	print_fld_ssize(FLD_IO_SVAL, bccur.pendingreads);
 	end_line();
 
-	print_fld_str(FLD_IO_SSTR, "numwrites");
-	print_fld_ssize(FLD_IO_SVAL, bccur.numwrites - bclast.numwrites);
-	end_line();
-
-	print_fld_str(FLD_IO_SSTR, "numreads");
-	print_fld_ssize(FLD_IO_SVAL, bccur.numreads - bclast.numreads);
-	end_line();
-
-	print_fld_str(FLD_IO_SSTR, "cachehits");
+	print_fld_str(FLD_IO_SSTR, "cache hits");
 	print_fld_ssize(FLD_IO_SVAL, bccur.cachehits - bclast.cachehits);
-	end_line();
-
-	print_fld_str(FLD_IO_SSTR, "busymapped");
-	print_fld_ssize(FLD_IO_SVAL, bccur.busymapped);
 	end_line();
 }
