@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.150 2010/10/06 22:19:20 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.151 2011/07/06 22:03:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -578,7 +578,7 @@ ids		: /* empty */			{
 		;
 
 type		: /* empty */			{
-			$$ = TYPE_REQUIRE;
+			$$ = TYPE_UNKNOWN;
 		}
 		| TYPE USE			{
 			$$ = TYPE_USE;
@@ -2424,6 +2424,18 @@ create_flow(u_int8_t dir, u_int8_t proto, struct ipsec_hosts *hosts,
 		yyerror("no protocol supplied with source/destination ports");
 		goto errout;
 	}
+
+	switch (satype) {
+	case IPSEC_IPCOMP:
+	case IPSEC_IPIP:
+		if (type == TYPE_UNKNOWN)
+			type = TYPE_USE;
+		break;
+	default:
+		if (type == TYPE_UNKNOWN)
+			type = TYPE_REQUIRE;
+		break;
+	}		
 
 	r->flowtype = type;
 	if (type == TYPE_DENY || type == TYPE_BYPASS)
