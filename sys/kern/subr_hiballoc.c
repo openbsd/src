@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hiballoc.c,v 1.4 2011/07/06 19:42:49 ariane Exp $	*/
+/*	$OpenBSD: subr_hiballoc.c,v 1.5 2011/07/06 20:47:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -90,7 +90,7 @@ RB_GENERATE(hiballoc_addr, hiballoc_entry, hibe_entry, hibe_cmp)
 void*
 hib_alloc(struct hiballoc_arena *arena, size_t alloc_sz)
 {
-	struct hiballoc_entry *entry;
+	struct hiballoc_entry *entry, *new_entry;
 	size_t find_sz;
 
 	/*
@@ -127,7 +127,7 @@ hib_alloc(struct hiballoc_arena *arena, size_t alloc_sz)
 	/*
 	 * Create new entry in allocated space.
 	 */
-	struct hiballoc_entry *new_entry = (struct hiballoc_entry*)(
+	new_entry = (struct hiballoc_entry*)(
 	    (caddr_t)hib_entry_to_addr(entry) + entry->hibe_use);
 	new_entry->hibe_space = entry->hibe_space - find_sz;
 	new_entry->hibe_use = alloc_sz;
