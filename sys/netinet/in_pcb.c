@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.123 2011/07/05 21:40:38 dhill Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.124 2011/07/06 01:57:37 dlg Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -402,8 +402,10 @@ in_pcbconnect(void *v, struct mbuf *nam)
 		if (sin->sin_addr.s_addr == INADDR_ANY)
 			sin->sin_addr = TAILQ_FIRST(&in_ifaddr)->ia_addr.sin_addr;
 		else if (sin->sin_addr.s_addr == INADDR_BROADCAST &&
-		  (TAILQ_FIRST(&in_ifaddr)->ia_ifp->if_flags & IFF_BROADCAST))
-			sin->sin_addr = TAILQ_FIRST(&in_ifaddr)->ia_broadaddr.sin_addr;
+		  (TAILQ_FIRST(&in_ifaddr)->ia_ifp->if_flags & IFF_BROADCAST) &&
+		  TAILQ_FIRST(&in_ifaddr)->ia_broadaddr.sin_addr.s_addr)
+			sin->sin_addr =
+			    TAILQ_FIRST(&in_ifaddr)->ia_broadaddr.sin_addr;
 	}
 	if (inp->inp_laddr.s_addr == INADDR_ANY) {
 		int error;

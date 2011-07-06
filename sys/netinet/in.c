@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.67 2011/07/03 06:24:13 dlg Exp $	*/
+/*	$OpenBSD: in.c,v 1.68 2011/07/06 01:57:37 dlg Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -700,8 +700,12 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 	 */
 	ia->ia_ifa.ifa_metric = ifp->if_metric;
 	if (ifp->if_flags & IFF_BROADCAST) {
-		ia->ia_broadaddr.sin_addr.s_addr =
-			ia->ia_net | ~ia->ia_netmask;
+		if (IN_RFC3021_SUBNET(ia->ia_netmask))
+			ia->ia_broadaddr.sin_addr.s_addr = 0;
+		else {
+			ia->ia_broadaddr.sin_addr.s_addr =
+			    ia->ia_net | ~ia->ia_netmask;
+		}
 	} else if (ifp->if_flags & IFF_LOOPBACK) {
 		ia->ia_dstaddr = ia->ia_addr;
 		flags |= RTF_HOST;

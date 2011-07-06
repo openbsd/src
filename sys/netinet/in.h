@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.89 2011/06/15 09:11:01 mikeb Exp $	*/
+/*	$OpenBSD: in.h,v 1.90 2011/07/06 01:57:37 dlg Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -186,6 +186,12 @@ struct in_addr {
 #define	IN_CLASSD_NSHIFT	28
 #define	IN_CLASSD_HOST		__IPADDR(0x0fffffff)
 #define	IN_MULTICAST(i)		IN_CLASSD(i)
+
+#define	IN_RFC3021_NET		__IPADDR(0xfffffffe)
+#define	IN_RFC3021_NSHIFT	31
+#define	IN_RFC3021_HOST		__IPADDR(0x00000001)
+#define	IN_RFC3021_SUBNET(n)	(((u_int32_t)(n) & IN_RFC3021_NET) == \
+				 IN_RFC3021_NET)
 
 #define	IN_EXPERIMENTAL(i)	(((u_int32_t)(i) & __IPADDR(0xf0000000)) == \
 				 __IPADDR(0xf0000000))
