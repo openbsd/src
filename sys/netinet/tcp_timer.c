@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.45 2010/07/03 04:44:51 guenther Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.46 2011/07/06 23:44:20 sthen Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/tcp_seq.h>
 
+int	tcp_always_keepalive;
 int	tcp_keepidle;
 int	tcp_keepintvl;
 int	tcp_maxpersistidle;	/* max idle time in persist */
@@ -435,7 +436,8 @@ tcp_timer_keep(void *arg)
 	tcpstat.tcps_keeptimeo++;
 	if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
 		goto dropit;
-	if (tp->t_inpcb->inp_socket->so_options & SO_KEEPALIVE &&
+	if ((tcp_always_keepalive ||
+	    tp->t_inpcb->inp_socket->so_options & SO_KEEPALIVE) &&
 	    tp->t_state <= TCPS_CLOSING) {
 		if ((tcp_maxidle > 0) &&
 		    ((tcp_now - tp->t_rcvtime) >= tcp_keepidle + tcp_maxidle))

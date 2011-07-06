@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.159 2011/06/24 19:47:48 naddy Exp $
+.\"	$OpenBSD: sysctl.8,v 1.160 2011/07/06 23:44:20 sthen Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: June 24 2011 $
+.Dd $Mdocdate: July 6 2011 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -257,6 +257,7 @@ and a few require a kernel compiled with non-standard
 .It net.inet.tcp.keepinittime	integer	yes
 .It net.inet.tcp.keepidle	integer	yes
 .It net.inet.tcp.keepintvl	integer	yes
+.It net.inet.tcp.always_keepalive	integer	yes
 .It net.inet.tcp.slowhz	integer	no
 .It net.inet.tcp.baddynamic	array	yes
 .It net.inet.tcp.sack	integer	yes

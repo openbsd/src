@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.h,v 1.12 2008/11/08 12:54:58 dlg Exp $	*/
+/*	$OpenBSD: tcp_timer.h,v 1.13 2011/07/06 23:44:20 sthen Exp $	*/
 /*	$NetBSD: tcp_timer.h,v 1.6 1995/03/26 20:32:37 jtc Exp $	*/
 
 /*
@@ -145,6 +145,7 @@ typedef void (*tcp_timer_func_t)(void *);
 extern const tcp_timer_func_t tcp_timer_funcs[TCPT_NTIMERS];
 
 extern int tcptv_keep_init;
+extern int tcp_always_keepalive;	/* assume SO_KEEPALIVE is always set */
 extern int tcp_keepidle;		/* time before keepalive probes begin */
 extern int tcp_keepintvl;		/* time between keepalive probes */
 extern int tcp_maxidle;			/* time to drop after starting probes */

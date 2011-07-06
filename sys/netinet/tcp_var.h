@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.98 2011/01/07 17:50:42 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.99 2011/07/06 23:44:20 sthen Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -473,7 +473,8 @@ struct	tcpstat {
 #define	TCPCTL_DROP	       19 /* drop tcp connection */
 #define	TCPCTL_SACKHOLE_LIMIT  20 /* max entries for tcp sack queues */
 #define	TCPCTL_STATS	       21 /* TCP statistics */
-#define	TCPCTL_MAXID	       22
+#define	TCPCTL_ALWAYS_KEEPALIVE 22 /* assume SO_KEEPALIVE is always set */
+#define	TCPCTL_MAXID	       23
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -497,7 +498,8 @@ struct	tcpstat {
 	{ "reasslimit", 	CTLTYPE_INT }, \
 	{ "drop", 	CTLTYPE_STRUCT }, \
 	{ "sackholelimit", 	CTLTYPE_INT }, \
-	{ "stats",	CTLTYPE_STRUCT } \
+	{ "stats",	CTLTYPE_STRUCT }, \
+	{ "always_keepalive",	CTLTYPE_INT } \
 }
 
 #define	TCPCTL_VARS { \

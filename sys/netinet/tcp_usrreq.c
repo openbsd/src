@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.107 2011/04/28 09:56:27 claudio Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.108 2011/07/06 23:44:20 sthen Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -908,6 +908,10 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 
 	case TCPCTL_DROP:
 		return (tcp_ident(oldp, oldlenp, newp, newlen, 1));
+
+	case TCPCTL_ALWAYS_KEEPALIVE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &tcp_always_keepalive));
 
 #ifdef TCP_ECN
 	case TCPCTL_ECN:
