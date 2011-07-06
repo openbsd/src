@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.639 2011/07/04 20:59:05 halex Exp $
+#	$OpenBSD: install.sub,v 1.640 2011/07/06 15:35:15 ajacoutot Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1167,6 +1167,15 @@ install_files() {
 			GOTSETS="$GOTSETS $_f"
 		fi
 	done
+
+	# save arguments from the first installation source for sysmerge(8)
+	if [[ -z "$FETCH_CMD" ]]; then
+		FETCH_CMD="ftp $FTPOPTS -m"
+		isin base$VERSION.tgz $GOTSETS && \
+			_sm_args="-s $_src/etc$VERSION.tgz"
+		isin xbase$VERSION.tgz $GOTSETS && \
+			_sm_argx="-x $_src/xetc$VERSION.tgz"
+	fi
 }
 
 # Encode $1 as specified for usercodes and passwords in RFC 1738
@@ -1623,6 +1632,14 @@ install_sets() {
 	done
 }
 
+run_sysmerge() {
+	if [[ -n "$_sm_args" || -n "$_sm_argx" ]]; then
+		ask_yn "Merge the new etc/xetc install sets using sysmerge(8)?" no
+		[[ $resp == y ]] && \
+			/mnt/usr/sbin/chroot /mnt /usr/sbin/sysmerge $_sm_args $_sm_argx
+	fi
+}
+
 # Create a skeletal but useful /etc/fstab from /tmp/fstab by stripping all
 # comment lines and dropping all filesystems which
 #
@@ -1949,6 +1966,8 @@ finish_up() {
 	[ -x /mnt/$MODE.site ] && /mnt/usr/sbin/chroot /mnt /$MODE.site
 
 	md_installboot $ROOTDISK
+
+	[[ "$MODE" == upgrade ]] && run_sysmerge
 
 	# Pat on the back.
 	cat <<__EOT
