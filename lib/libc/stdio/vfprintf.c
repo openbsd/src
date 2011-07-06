@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.60 2010/12/22 14:54:44 millert Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.61 2011/07/06 19:53:52 stsp Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -49,6 +49,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <wchar.h>
 
 #include "local.h"
 #include "fvwrite.h"
@@ -78,6 +79,10 @@ union arg {
 #ifdef FLOATING_POINT
 	double			doublearg;
 	long double		longdoublearg;
+#endif
+#ifdef PRINTF_WIDE_CHAR
+	wint_t			wintarg;
+	wchar_t			*pwchararg;
 #endif
 };
 
@@ -138,6 +143,72 @@ __sbprintf(FILE *fp, const char *fmt, va_list ap)
 	return (ret);
 }
 
+#ifdef PRINTF_WIDE_CHAR
+/*
+ * Convert a wide character string argument for the %ls format to a multibyte
+ * string representation. If not -1, prec specifies the maximum number of
+ * bytes to output, and also means that we can't assume that the wide char
+ * string is null-terminated.
+ */
+static char *
+__wcsconv(wchar_t *wcsarg, int prec)
+{
+	mbstate_t mbs;
+	char buf[MB_LEN_MAX];
+	wchar_t *p;
+	char *convbuf;
+	size_t clen, nbytes;
+
+	/* Allocate space for the maximum number of bytes we could output. */
+	if (prec < 0) {
+		memset(&mbs, 0, sizeof(mbs));
+		p = wcsarg;
+		nbytes = wcsrtombs(NULL, (const wchar_t **)&p, 0, &mbs);
+		if (nbytes == (size_t)-1) {
+			errno = EILSEQ;
+			return (NULL);
+		}
+	} else {
+		/*
+		 * Optimisation: if the output precision is small enough,
+		 * just allocate enough memory for the maximum instead of
+		 * scanning the string.
+		 */
+		if (prec < 128)
+			nbytes = prec;
+		else {
+			nbytes = 0;
+			p = wcsarg;
+			memset(&mbs, 0, sizeof(mbs));
+			for (;;) {
+				clen = wcrtomb(buf, *p++, &mbs);
+				if (clen == 0 || clen == (size_t)-1 ||
+				    nbytes + clen > (size_t)prec)
+					break;
+				nbytes += clen;
+			}
+			if (clen == (size_t)-1) {
+				errno = EILSEQ;
+				return (NULL);
+			}
+		}
+	}
+	if ((convbuf = malloc(nbytes + 1)) == NULL)
+		return (NULL);
+
+	/* Fill the output buffer. */
+	p = wcsarg;
+	memset(&mbs, 0, sizeof(mbs));
+	if ((nbytes = wcsrtombs(convbuf, (const wchar_t **)&p,
+	    nbytes, &mbs)) == (size_t)-1) {
+		free(convbuf);
+		errno = EILSEQ;
+		return (NULL);
+	}
+	convbuf[nbytes] = '\0';
+	return (convbuf);
+}
+#endif
 
 #ifdef FLOATING_POINT
 #include <float.h>
@@ -260,6 +331,9 @@ __vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 	size_t argtablesiz;
 	int nextarg;		/* 1-based argument index */
 	va_list orgap;		/* original argument pointer */
+#ifdef PRINTF_WIDE_CHAR
+	char *convbuf;		/* buffer for wide to multi-byte conversion */
+#endif
 
 	/*
 	 * Choose PADSIZE to trade efficiency vs. size.  If larger printf
@@ -402,6 +476,9 @@ __vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 	uio.uio_resid = 0;
 	uio.uio_iovcnt = 0;
 	ret = 0;
+#ifdef PRINTF_WIDE_CHAR
+	convbuf = NULL;
+#endif
 
 	memset(&ps, 0, sizeof(ps));
 	/*
@@ -553,8 +630,28 @@ reswitch:	switch (ch) {
 			flags |= SIZEINT;
 			goto rflag;
 		case 'c':
-			*(cp = buf) = GETARG(int);
-			size = 1;
+#ifdef PRINTF_WIDE_CHAR
+			if (flags & LONGINT) {
+				mbstate_t mbs;
+				size_t mbseqlen;
+
+				memset(&mbs, 0, sizeof(mbs));
+				mbseqlen = wcrtomb(buf,
+				    (wchar_t)GETARG(wint_t), &mbs);
+				if (mbseqlen == (size_t)-1) {
+					fp->_flags |= __SERR;
+					errno = EILSEQ;
+					goto error;
+				}
+				cp = buf;
+				size = (int)mbseqlen;
+			} else {
+#endif
+				*(cp = buf) = GETARG(int);
+				size = 1;
+#ifdef PRINTF_WIDE_CHAR
+			}
+#endif
 			sign = '\0';
 			break;
 		case 'D':
@@ -744,6 +841,26 @@ fp_common:
 			ox[1] = 'x';
 			goto nosign;
 		case 's':
+#ifdef PRINTF_WIDE_CHAR
+			if (flags & LONGINT) {
+				wchar_t *wcp;
+
+				if (convbuf != NULL) {
+					free(convbuf);
+					convbuf = NULL;
+				}
+				if ((wcp = GETARG(wchar_t *)) == NULL) {
+					cp = "(null)";
+				} else {
+					convbuf = __wcsconv(wcp, prec);
+					if (convbuf == NULL) {
+						fp->_flags = __SERR;
+						goto error;
+					}
+					cp = convbuf;
+				}
+			} else
+#endif /* PRINTF_WIDE_CHAR */
 			if ((cp = GETARG(char *)) == NULL)
 				cp = "(null)";
 			if (prec >= 0) {
@@ -954,6 +1071,10 @@ overflow:
 	ret = -1;
 
 finish:
+#ifdef PRINTF_WIDE_CHAR
+	if (convbuf)
+		free(convbuf);
+#endif
 #ifdef FLOATING_POINT
 	if (dtoaresult)
 		__freedtoa(dtoaresult);
@@ -995,6 +1116,8 @@ finish:
 #define TP_MAXINT	24
 #define T_CHAR		25
 #define T_U_CHAR	26
+#define T_WINT		27
+#define TP_WCHAR	28
 
 /*
  * Find all arguments when a positional parameter is encountered.  Returns a
@@ -1160,7 +1283,12 @@ reswitch:	switch (ch) {
 			flags |= SIZEINT;
 			goto rflag;
 		case 'c':
-			ADDTYPE(T_INT);
+#ifdef PRINTF_WIDE_CHAR
+			if (flags & LONGINT)
+				ADDTYPE(T_WINT);
+			else
+#endif
+				ADDTYPE(T_INT);
 			break;
 		case 'D':
 			flags |= LONGINT;
@@ -1210,7 +1338,12 @@ reswitch:	switch (ch) {
 			ADDTYPE(TP_VOID);
 			break;
 		case 's':
-			ADDTYPE(TP_CHAR);
+#ifdef PRINTF_WIDE_CHAR
+			if (flags & LONGINT)
+				ADDTYPE(TP_WCHAR);
+			else
+#endif
+				ADDTYPE(TP_CHAR);
 			break;
 		case 'U':
 			flags |= LONGINT;
@@ -1311,6 +1444,14 @@ done:
 		case TP_MAXINT:
 			(*argtable)[n].intmaxarg = va_arg(ap, intmax_t);
 			break;
+#ifdef PRINTF_WIDE_CHAR
+		case T_WINT:
+			(*argtable)[n].wintarg = va_arg(ap, wint_t);
+			break;
+		case TP_WCHAR:
+			(*argtable)[n].pwchararg = va_arg(ap, wchar_t *);
+			break;
+#endif
 		}
 	}
 	goto finish;
