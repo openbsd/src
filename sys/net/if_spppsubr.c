@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.91 2011/07/06 02:42:28 henning Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.92 2011/07/06 02:49:36 henning Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -1011,7 +1011,7 @@ sppp_isempty(struct ifnet *ifp)
 	int empty, s;
 
 	s = splnet();
-	empty = !sp->pp_fastq.ifq_head && !sp->pp_cpq.ifq_head &&
+	empty = IF_IS_EMPTY(&sp->pp_fastq) && IF_IS_EMPTY(&sp->pp_cpq) &&
 		IFQ_IS_EMPTY(&sp->pp_if.if_snd);
 	splx(s);
 	return (empty);
