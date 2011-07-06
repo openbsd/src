@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.75 2011/07/05 21:43:45 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.76 2011/07/06 17:19:06 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -109,7 +109,8 @@ do_populate() {
 			# delete file in temproot if it has not changed since last release
 			# and is present in current installation
 			if [ -z "${DIFFMODE}" ]; then
-				_R=$(cd ${TEMPROOT} && cksum -c ${DESTDIR}/${DBDIR}/${i} 2> /dev/null | grep OK | awk '{ print $2 }' | sed 's/[:]//')
+				_R=$(cd ${TEMPROOT} && \
+					cksum -c ${DESTDIR}/${DBDIR}/${i} 2> /dev/null | grep OK | awk '{ print $2 }' | sed 's/[:]//')
 				for _r in ${_R}; do
 					if [ -f ${DESTDIR}/${_r} -a -f ${TEMPROOT}/${_r} ]; then
 						rm -f ${TEMPROOT}/${_r}
