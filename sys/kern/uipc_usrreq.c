@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.54 2011/07/06 06:26:14 guenther Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.55 2011/07/06 06:31:38 matthew Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  * Unix communications domain.
  *
  * TODO:
- *	SEQPACKET, RDM
+ *	RDM
  *	rethink name space problems
  *	need a proper out-of-band
  */
@@ -142,6 +142,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			/*NOTREACHED*/
 
 		case SOCK_STREAM:
+		case SOCK_SEQPACKET:
 #define	rcv (&so->so_rcv)
 #define snd (&so2->so_snd)
 			if (unp->unp_conn == NULL)
@@ -204,6 +205,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		}
 
 		case SOCK_STREAM:
+		case SOCK_SEQPACKET:
 #define	rcv (&so2->so_rcv)
 #define	snd (&so->so_snd)
 			if (so->so_state & SS_CANTSENDMORE) {
@@ -223,7 +225,9 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			if (control) {
 				if (sbappendcontrol(rcv, m, control))
 					control = NULL;
-			} else
+			} else if (so->so_type == SOCK_SEQPACKET)
+				sbappendrecord(rcv, m);
+			else
 				sbappend(rcv, m);
 			snd->sb_mbmax -=
 			    rcv->sb_mbcnt - unp->unp_conn->unp_mbcnt;
@@ -250,9 +254,17 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	case PRU_SENSE:
 		((struct stat *) m)->st_blksize = so->so_snd.sb_hiwat;
-		if (so->so_type == SOCK_STREAM && unp->unp_conn != NULL) {
-			so2 = unp->unp_conn->unp_socket;
-			((struct stat *) m)->st_blksize += so2->so_rcv.sb_cc;
+		switch (so->so_type) {
+		case SOCK_STREAM:
+		case SOCK_SEQPACKET:
+			if (unp->unp_conn != NULL) {
+				so2 = unp->unp_conn->unp_socket;
+				((struct stat *) m)->st_blksize +=
+				    so2->so_rcv.sb_cc;
+			}
+			break;
+		default:
+			break;
 		}
 		((struct stat *) m)->st_dev = NODEV;
 		if (unp->unp_ino == 0)
@@ -328,6 +340,7 @@ unp_attach(struct socket *so)
 		switch (so->so_type) {
 
 		case SOCK_STREAM:
+		case SOCK_SEQPACKET:
 			error = soreserve(so, unpst_sendspace, unpst_recvspace);
 			break;
 
@@ -526,6 +539,7 @@ unp_connect2(struct socket *so, struct socket *so2)
 		break;
 
 	case SOCK_STREAM:
+	case SOCK_SEQPACKET:
 		unp2->unp_conn = unp;
 		soisconnected(so);
 		soisconnected(so2);
@@ -566,6 +580,7 @@ unp_disconnect(struct unpcb *unp)
 		break;
 
 	case SOCK_STREAM:
+	case SOCK_SEQPACKET:
 		soisdisconnected(unp->unp_socket);
 		unp2->unp_conn = NULL;
 		soisdisconnected(unp2->unp_socket);
@@ -585,9 +600,15 @@ unp_shutdown(struct unpcb *unp)
 {
 	struct socket *so;
 
-	if (unp->unp_socket->so_type == SOCK_STREAM && unp->unp_conn &&
-	    (so = unp->unp_conn->unp_socket))
-		socantrcvmore(so);
+	switch (unp->unp_socket->so_type) {
+	case SOCK_STREAM:
+	case SOCK_SEQPACKET:
+		if (unp->unp_conn && (so = unp->unp_conn->unp_socket))
+			socantrcvmore(so);
+		break;
+	default:
+		break;
+	}
 }
 
 void

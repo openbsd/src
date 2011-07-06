@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_proto.c,v 1.5 2011/04/05 19:54:36 jasper Exp $	*/
+/*	$OpenBSD: uipc_proto.c,v 1.6 2011/07/06 06:31:38 matthew Exp $	*/
 /*	$NetBSD: uipc_proto.c,v 1.8 1996/02/13 21:10:47 christos Exp $	*/
 
 /*-
@@ -51,6 +51,11 @@ extern	struct domain unixdomain;		/* or at least forward */
 
 struct protosw unixsw[] = {
 { SOCK_STREAM,	&unixdomain,	PF_LOCAL,	PR_CONNREQUIRED|PR_WANTRCVD|PR_RIGHTS,
+  0,		0,		0,		0,
+  uipc_usrreq,
+  0,		0,		0,		0,
+},
+{ SOCK_SEQPACKET,&unixdomain,	PF_LOCAL,	PR_ATOMIC|PR_CONNREQUIRED|PR_WANTRCVD|PR_RIGHTS,
   0,		0,		0,		0,
   uipc_usrreq,
   0,		0,		0,		0,
