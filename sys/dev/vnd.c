@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.138 2011/07/06 04:49:36 matthew Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.139 2011/07/06 05:09:01 matthew Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -52,13 +52,11 @@
 #include <sys/errno.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
-#include <sys/pool.h>
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/stat.h>
-#include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/uio.h>
@@ -186,13 +184,13 @@ vndopen(dev_t dev, int flags, int mode, struct proc *p)
 	}
 
 	if ((sc->sc_flags & VNF_INITED) &&
-	    (sc->sc_flags & VNF_HAVELABEL) == 0) {
+	    (sc->sc_flags & VNF_HAVELABEL) == 0 &&
+	    sc->sc_dk.dk_openmask == 0) {
 		sc->sc_flags |= VNF_HAVELABEL;
 		vndgetdisklabel(dev, sc, sc->sc_dk.dk_label, 0);
 	}
 
 	part = DISKPART(dev);
-
 	error = disk_openpart(&sc->sc_dk, part, mode,
 	    (sc->sc_flags & VNF_HAVELABEL) != 0);
 
@@ -250,6 +248,9 @@ vndclose(dev_t dev, int flags, int mode, struct proc *p)
 
 	disk_closepart(&sc->sc_dk, part, mode);
 
+	if (sc->sc_dk.dk_openmask == 0)
+		sc->sc_flags &= ~VNF_HAVELABEL;
+
 	disk_unlock(&sc->sc_dk);
 	return (0);
 }
@@ -268,7 +269,7 @@ vndstrategy(struct buf *bp)
 
 	DNPRINTF(VDB_FOLLOW, "vndstrategy(%p): unit %d\n", bp, unit);
 
-	if ((sc->sc_flags & VNF_INITED) == 0) {
+	if ((sc->sc_flags & VNF_HAVELABEL) == 0) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
 		goto done;
@@ -290,21 +291,15 @@ vndstrategy(struct buf *bp)
 		goto done;
 	}
 
-	/* If we have a label, do a boundary check. */
-	if (sc->sc_flags & VNF_HAVELABEL) {
-		if (bounds_check_with_label(bp, sc->sc_dk.dk_label) == -1)
-			goto done;
+	if (bounds_check_with_label(bp, sc->sc_dk.dk_label) == -1)
+		goto done;
 
-		/*
-		 * bounds_check_with_label() changes bp->b_resid, reset it
-		 */
-		bp->b_resid = bp->b_bcount;
-	}
+	/*
+	 * bounds_check_with_label() changes bp->b_resid, reset it
+	 */
+	bp->b_resid = bp->b_bcount;
 
-	if (sc->sc_flags & VNF_HAVELABEL)
-		sz = howmany(bp->b_bcount, sc->sc_dk.dk_label->d_secsize);
-	else
-		sz = howmany(bp->b_bcount, DEV_BSIZE);
+	sz = howmany(bp->b_bcount, sc->sc_dk.dk_label->d_secsize);
 
 	part = DISKPART(bp->b_dev);
 	off = DL_SECTOBLK(sc->sc_dk.dk_label,
