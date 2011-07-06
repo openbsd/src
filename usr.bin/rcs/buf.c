@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.21 2011/04/20 19:34:16 nicm Exp $	*/
+/*	$OpenBSD: buf.c,v 1.22 2011/07/06 15:36:52 nicm Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -185,6 +185,15 @@ buf_putc(BUF *b, int c)
 	bp = b->cb_buf + b->cb_len;
 	*bp = (u_char)c;
 	b->cb_len++;
+}
+
+/*
+ * Append a string <s> to the end of buffer <b>.
+ */
+void
+buf_puts(BUF *b, const char *str)
+{
+	buf_append(b, str, strlen(str));
 }
 
 /*
