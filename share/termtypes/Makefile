@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2011/07/05 03:34:30 nicm Exp $
+#	$OpenBSD: Makefile,v 1.20 2011/07/06 18:49:08 millert Exp $
 #
 # Take termcap/terminfo master file and generate termcap/terminfo .db files
 
@@ -9,11 +9,7 @@ TIC=	/usr/bin/tic
 all: terminfo.db termcap.db termcap
 
 terminfo.src: termtypes.master
-	${TIC} -I -x ${.ALLSRC} | sed \
-	    -e 's,/usr/share/lib/tabset,/usr/share/tabset,g' \
-	    -e 's,/usr/lib/tabset,/usr/share/tabset,g' \
-	    -e '/^#/d' \
-	    > ${.TARGET}
+	${TIC} -I -x ${.ALLSRC} | sed -e '/^#/d' -e '/^$$/d' > ${.TARGET}
 	@if [ ! -s ${.TARGET} ]; then \
 	    echo ${.TARGET} is zero length!  You need to update ${TIC} ;\
 	    rm -f ${.TARGET} ;\
@@ -24,11 +20,7 @@ terminfo.db: terminfo.src
 	cap_mkdb -i -f terminfo terminfo.src
 
 termcap.src: termtypes.master
-	${TIC} -C -x ${.ALLSRC} | sed \
-	    -e 's,/usr/share/lib/tabset,/usr/share/tabset,g' \
-	    -e 's,/usr/lib/tabset,/usr/share/tabset,g' \
-	    -e '/^#/d' \
-	    > ${.TARGET}
+	${TIC} -C -x ${.ALLSRC} | sed -e '/^#/d' -e '/^$$/d' > ${.TARGET}
 	@if [ ! -s ${.TARGET} ]; then \
 	    echo ${.TARGET} is zero length!  You need to update ${TIC} ;\
 	    rm -f ${.TARGET} ;\
@@ -39,10 +31,7 @@ termcap.db: termcap.src
 	cap_mkdb -f termcap termcap.src
 
 termcap: termtypes.master
-	${TIC} -C -x ${.ALLSRC} | sed \
-	    -e 's,/usr/share/lib/tabset,/usr/share/tabset,g' \
-	    -e 's,/usr/lib/tabset,/usr/share/tabset,g' \
-	    > ${.TARGET}
+	${TIC} -C -x ${.ALLSRC} > ${.TARGET}
 
 realinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 terminfo.db \

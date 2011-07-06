@@ -1,6 +1,6 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.43 2011/07/06 16:20:29 nicm Exp $
+# $OpenBSD: termtypes.master,v 1.44 2011/07/06 18:49:08 millert Exp $
 #
 # This version of terminfo.src is distributed with ncurses and is maintained
 # by Thomas E. Dickey (TD).
@@ -8,8 +8,8 @@
 # Report bugs and new terminal descriptions to
 #	bug-ncurses@gnu.org
 #
-#	$Revision: 1.43 $
-#	$Date: 2011/07/06 16:20:29 $
+#	$Revision: 1.44 $
+#	$Date: 2011/07/06 18:49:08 $
 #
 # The original header is preserved below for reference.  It is noted that there
 # is a "newer" version which differs in some cosmetic details (but actually
@@ -5827,7 +5827,7 @@ pcmw|PC running Microsoft Works,
 	ht=^I, hts=\EH$<2/>, ind=\ED$<5/>, is2=\E[1;24r\E[24;1H,
 	kbs=^H, kcub1=\EOD, kcud1=\EOB, kcuf1=\EOC, kcuu1=\EOA,
 	kf1=\EOP, kf2=\EOQ, kf3=\EOR, kf4=\EOS, nel=\r\ED$<5/>,
-	rc=\E8, rev=\E[7m$<2/>, rf=/usr/share/lib/tabset/vt100,
+	rc=\E8, rev=\E[7m$<2/>, rf=/usr/share/tabset/vt100,
 	ri=\EM$<5/>, rmso=\E[m$<2/>, rmul=\E[m$<2/>,
 	rs2=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h, sc=\E7,
 	sgr0=\E[m$<2/>, smso=\E[7m$<2/>, smul=\E[4m$<2/>,
