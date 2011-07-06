@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.139 2011/01/11 06:15:03 djm Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.140 2011/07/06 14:49:30 nicm Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -112,6 +112,7 @@
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/disk.h>
+#include <sys/event.h>
 #include <sys/limits.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
@@ -224,9 +225,18 @@ u_int32_t entropy_pool[POOLWORDS];
 u_int	entropy_add_ptr;
 u_char	entropy_input_rotate;
 
-void dequeue_randomness(void *);
-void add_entropy_words(const u_int32_t *, u_int);
-void extract_entropy(u_int8_t *buf, int nbytes);
+void	dequeue_randomness(void *);
+void	add_entropy_words(const u_int32_t *, u_int);
+void	extract_entropy(u_int8_t *, int);
+
+int	filt_randomread(struct knote *, long);
+void	filt_randomdetach(struct knote *);
+int	filt_randomwrite(struct knote *, long);
+
+struct filterops randomread_filtops =
+	{ 1, NULL, filt_randomdetach, filt_randomread };
+struct filterops randomwrite_filtops =
+	{ 1, NULL, filt_randomdetach, filt_randomwrite };
 
 static __inline struct rand_event *
 rnd_get(void)
@@ -780,6 +790,42 @@ randomwrite(dev_t dev, struct uio *uio, int flags)
 	explicit_bzero(buf, POOLBYTES);
 	free(buf, M_TEMP);
 	return ret;
+}
+
+int
+randomkqfilter(dev_t dev, struct knote *kn)
+{
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		kn->kn_fop = &randomread_filtops;
+		break;
+	case EVFILT_WRITE:
+		kn->kn_fop = &randomwrite_filtops;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	return (0);
+}
+
+void
+filt_randomdetach(struct knote *kn)
+{
+}
+
+int
+filt_randomread(struct knote *kn, long hint)
+{
+	kn->kn_data = ARC4_MAIN_MAX_BYTES;
+	return (1);
+}
+
+int
+filt_randomwrite(struct knote *kn, long hint)
+{
+	kn->kn_data = POOLBYTES;
+	return (1);
 }
 
 int
