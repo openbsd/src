@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.140 2011/07/06 05:12:46 matthew Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.141 2011/07/06 17:26:33 matthew Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -94,9 +94,9 @@ struct vnd_softc {
 };
 
 /* sc_flags */
-#define	VNF_INITED	0x0002
-#define	VNF_HAVELABEL	0x0400
-#define	VNF_READONLY	0x2000
+#define	VNF_INITED	0x0001
+#define	VNF_HAVELABEL	0x0002
+#define	VNF_READONLY	0x0004
 
 #define	VNDRW(v)	((v)->sc_flags & VNF_READONLY ? FREAD : FREAD|FWRITE)
 
