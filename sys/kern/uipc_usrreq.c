@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.53 2011/07/05 23:06:43 claudio Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.54 2011/07/06 06:26:14 guenther Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -396,8 +396,12 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct proc *p)
 	if (namelen <= 0 || namelen > sizeof(soun->sun_path))
 		return EINVAL;
 	if (namelen == sizeof(soun->sun_path) &&
-	    soun->sun_path[namelen - 1] != '\0')
+	    memchr(soun->sun_path, '\0', namelen) == NULL)
 		return EINVAL;
+	/*
+	 * if namelen < sizeof(sun_path) then the strncpy below
+	 * will NUL terminate it
+	 */
 
 	unp->unp_addr = m_getclr(M_WAITOK, MT_SONAME);
 	unp->unp_addr->m_len = soun->sun_len;
@@ -449,12 +453,13 @@ unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 	int error;
 	struct nameidata nd;
 
-	if (nam->m_len >= sizeof(struct sockaddr_un)) {
-		if (nam->m_len > sizeof(struct sockaddr_un) ||
-		    *(mtod(nam, caddr_t) + nam->m_len - 1) != 0)
-			return (EMSGSIZE);
-	} else
+	if (nam->m_len < sizeof(struct sockaddr_un))
 		*(mtod(nam, caddr_t) + nam->m_len) = 0;
+	else if (nam->m_len > sizeof(struct sockaddr_un))
+		return (EINVAL);
+	else if (memchr(soun->sun_path, '\0', sizeof(soun->sun_path)) == NULL)
+		return (EINVAL);
+
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, soun->sun_path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
