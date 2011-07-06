@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.236 2011/07/04 22:55:11 matthew Exp $ */
+/* $OpenBSD: softraid.c,v 1.237 2011/07/06 15:29:17 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -110,7 +110,7 @@ int			sr_ioctl_installboot(struct sr_softc *,
 void			sr_chunks_unwind(struct sr_softc *,
 			    struct sr_chunk_head *);
 void			sr_discipline_free(struct sr_discipline *);
-void			sr_discipline_shutdown(struct sr_discipline *);
+void			sr_discipline_shutdown(struct sr_discipline *, int);
 int			sr_discipline_init(struct sr_discipline *, int);
 
 /* utility functions */
@@ -3148,7 +3148,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 
 	return (rv);
 unwind:
-	sr_discipline_shutdown(sd);
+	sr_discipline_shutdown(sd, 0);
 
 	/* XXX - use internal status values! */
 	if (rv == EAGAIN)
@@ -3182,7 +3182,7 @@ sr_ioctl_deleteraid(struct sr_softc *sc, struct bioc_deleteraid *dr)
 
 	sd->sd_deleted = 1;
 	sd->sd_meta->ssdi.ssd_vol_flags = BIOC_SCNOAUTOASSEMBLE;
-	sr_shutdown(sd);
+	sr_discipline_shutdown(sd, 1);
 
 	rv = 0;
 bad:
@@ -3394,7 +3394,7 @@ sr_discipline_free(struct sr_discipline *sd)
 }
 
 void
-sr_discipline_shutdown(struct sr_discipline *sd)
+sr_discipline_shutdown(struct sr_discipline *sd, int meta_save)
 {
 	struct sr_softc		*sc;
 	int			s;
@@ -3405,6 +3405,16 @@ sr_discipline_shutdown(struct sr_discipline *sd)
 
 	DNPRINTF(SR_D_DIS, "%s: sr_discipline_shutdown %s\n", DEVNAME(sc),
 	    sd->sd_meta ? sd->sd_meta->ssd_devname : "nodev");
+
+	/* If rebuilding, abort rebuild and drain I/O. */
+	if (sd->sd_reb_active) {
+		sd->sd_reb_abort = 1;
+		while (sd->sd_reb_active)
+			tsleep(sd, PWAIT, "sr_shutdown", 1);
+	}
+
+	if (meta_save)
+		sr_meta_save(sd, 0);
 
 	s = splbio();
 
@@ -3784,14 +3794,7 @@ sr_shutdown(void *arg)
 	DNPRINTF(SR_D_DIS, "%s: sr_shutdown %s\n",
 	    DEVNAME(sc), sd->sd_meta->ssd_devname);
 
-	/* abort rebuild and drain io */
-	sd->sd_reb_abort = 1;
-	while (sd->sd_reb_active)
-		tsleep(sd, PWAIT, "sr_shutdown", 1);
-
-	sr_meta_save(sd, 0);
-
-	sr_discipline_shutdown(sd);
+	sr_discipline_shutdown(sd, 1);
 }
 
 int
