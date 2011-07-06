@@ -1,4 +1,4 @@
-/* $OpenBSD: unixsock_test.c,v 1.1 2011/07/05 23:09:16 claudio Exp $ */
+/* $OpenBSD: unixsock_test.c,v 1.2 2011/07/06 06:22:59 guenther Exp $ */
 /* Written by Claudio Jeker in 2011 */
 /* Public domain */
 #include <sys/types.h>
@@ -28,6 +28,7 @@ test_bind(struct sockaddr_un *sun, socklen_t slen)
 	r = bind(s, (struct sockaddr *)sun, slen);
 	e = errno;
 	close(s);
+	sun->sun_path[slen - 2] = '\0';
 	unlink(sun->sun_path);
 	errno = e;
 	return r;
@@ -66,8 +67,10 @@ struct test {
 	{30, 0},
 	{50, 0},
 	{100, 0},
+	{102, 0},
 	{103, 0},
 	{104, -1},
+	{105, -1},
 	{110, -1},
 	{200, -1},
 	{0, 0}
@@ -93,7 +96,7 @@ main()
 
 	for (i = 0; t[i].len != 0; i++) {
 		socklen_t slen = t[i].len;
-		memset(&ss, 0, sizeof(ss));
+		memset(&ss, 0xfe, sizeof(ss));
 		sun = (struct sockaddr_un *)&ss;
 		sun->sun_family = AF_UNIX;
 
@@ -121,6 +124,13 @@ main()
 			    sizeof(*sun));
 			fail = 1;
 		}
+		sun->sun_path[slen] = 'a';
+		if (test_bind(sun, slen + 2) != t[i].r) {
+			warn("FAIL4: bind(\"%.*s\") len %d no-NUL",
+			     slen + 2, sun->sun_path, slen + 2);
+			fail = 1;
+		}
+		sun->sun_path[slen] = '\0';
 
 		if (test_connect(sun, slen + 2, &sun2) != t[i].r) {
 			warn("FAIL: connect(\"%s\") len %d", sun->sun_path,
@@ -128,7 +138,7 @@ main()
 			fail = 1;
 		}
 		if (test_connect(sun, slen + 3, &sun2) != t[i].r) {
-			warn("FAIL: connect(\"%s\") len %d", sun->sun_path,
+			warn("FAIL2: connect(\"%s\") len %d", sun->sun_path,
 			    slen + 3);
 			fail = 1;
 		}
@@ -136,6 +146,12 @@ main()
 		    test_connect(sun, sizeof(*sun), &sun2) != t[i].r) {
 			warn("FAIL3: connect(\"%s\") len %d", sun->sun_path,
 			    sizeof(*sun));
+			fail = 1;
+		}
+		sun->sun_path[slen] = 'a';
+		if (test_connect(sun, slen + 2, &sun2) != t[i].r) {
+			warn("FAIL4: connect(\"%.*s\") len %d no-NUL",
+			    slen + 2, sun->sun_path, slen + 2);
 			fail = 1;
 		}
 	}
