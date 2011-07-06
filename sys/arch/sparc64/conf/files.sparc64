@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.132 2011/01/14 20:12:39 matthieu Exp $
+#	$OpenBSD: files.sparc64,v 1.133 2011/07/06 05:35:53 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -91,6 +91,9 @@ define	viommu
 file	arch/sparc64/dev/iommu.c		iommu | viommu | sbus
 file	arch/sparc64/dev/viommu.c		viommu
 
+define msi
+file	arch/sparc64/dev/msi.c			msi
+
 attach	sbus at mainbus with sbus_mb
 attach	sbus at xbox with sbus_xbox
 file	arch/sparc64/dev/sbus.c			sbus
@@ -120,7 +123,7 @@ device	pyro: pcibus, iommu
 attach	pyro at mainbus
 file	arch/sparc64/dev/pyro.c			pyro
 
-device	vpci: pcibus, viommu
+device	vpci: pcibus, viommu, msi
 attach	vpci at mainbus
 file	arch/sparc64/dev/vpci.c			vpci
 

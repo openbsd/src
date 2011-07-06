@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.9 2011/07/06 05:08:50 kettenis Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.10 2011/07/06 05:35:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -33,17 +33,11 @@
 #include <dev/pci/pcireg.h>
 
 #include <sparc64/dev/viommuvar.h>
+#include <sparc64/dev/msivar.h>
 
 extern struct sparc_pci_chipset _sparc_pci_chipset;
 
-struct msi_eq {
-	bus_dmamap_t	meq_map;
-	bus_dma_segment_t meq_seg;
-	caddr_t		meq_va;
-	int		meq_nentries;
-};
-
-struct msi_msg {
+struct vpci_msi_msg {
 	uint32_t	mm_version;
 	uint8_t		mm_reserved[3];
 	uint8_t		mm_type;
@@ -124,9 +118,6 @@ void vpci_intr_ack(struct intrhand *);
 void vpci_msi_ack(struct intrhand *);
 
 int vpci_msi_eq_intr(void *);
-
-struct msi_eq *msi_eq_alloc(bus_dma_tag_t, int);
-void msi_eq_free(bus_dma_tag_t t, struct msi_eq *);
 
 int vpci_dmamap_create(bus_dma_tag_t, bus_dma_tag_t, bus_size_t, int,
     bus_size_t, bus_size_t, int, bus_dmamap_t *);
@@ -586,7 +577,7 @@ vpci_msi_eq_intr(void *arg)
 {
 	struct vpci_pbm *pbm = arg;
 	struct msi_eq *meq = pbm->vp_meq;
-	struct msi_msg *msg;
+	struct vpci_msi_msg *msg;
 	uint64_t head, tail;
 	struct intrhand *ih;
 	int err;
@@ -603,7 +594,7 @@ vpci_msi_eq_intr(void *arg)
 		return (0);
 
 	while (head != tail) {
-		msg = (struct msi_msg *)(meq->meq_va + head);
+		msg = (struct vpci_msi_msg *)(meq->meq_va + head);
 		ih = pbm->vp_msi[msg->mm_data];
 		err = hv_pci_msi_setstate(pbm->vp_devhandle,
 		    msg->mm_data, PCI_MSISTATE_IDLE);
@@ -612,8 +603,8 @@ vpci_msi_eq_intr(void *arg)
 
 		send_softint(-1, ih->ih_pil, ih);
 
-		head += sizeof(struct msi_msg);
-		head &= ((meq->meq_nentries * sizeof(struct msi_msg)) - 1);
+		head += sizeof(struct vpci_msi_msg);
+		head &= ((meq->meq_nentries * sizeof(struct vpci_msi_msg)) - 1);
 	}
 
 	err = hv_pci_msiq_sethead(pbm->vp_devhandle, 0, head);
@@ -621,64 +612,6 @@ vpci_msi_eq_intr(void *arg)
 		printf("%s: pci_msiq_sethead: %d\n", __func__, err);
 
 	return (1);
-}
-
-struct msi_eq *
-msi_eq_alloc(bus_dma_tag_t t, int msi_eq_size)
-{
-	struct msi_eq *meq;
-	bus_size_t size;
-	caddr_t va;
-	int nsegs;
-
-	meq = malloc(sizeof(struct msi_eq), M_DEVBUF, M_NOWAIT);
-	if (meq == NULL)
-		return NULL;
-
-	size = roundup(msi_eq_size * sizeof(struct msi_msg), PAGE_SIZE);
-
-	if (bus_dmamap_create(t, size, 1, size, 0,
-	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &meq->meq_map) != 0)
-		return (NULL);
-
-	if (bus_dmamem_alloc(t, size, PAGE_SIZE, 0, &meq->meq_seg, 1,
-	    &nsegs, BUS_DMA_NOWAIT) != 0)
-		goto destroy;
-
-	if (bus_dmamem_map(t, &meq->meq_seg, 1, size, &va,
-	    BUS_DMA_NOWAIT) != 0)
-		goto free;
-
-	if (bus_dmamap_load(t, meq->meq_map, va, size, NULL,
-	    BUS_DMA_NOWAIT) != 0)
-		goto unmap;
-
-	meq->meq_va = va;
-	meq->meq_nentries = msi_eq_size;
-	return (meq);
-
-unmap:
-	bus_dmamem_unmap(t, va, size);
-free:
-	bus_dmamem_free(t, &meq->meq_seg, 1);
-destroy:
-	bus_dmamap_destroy(t, meq->meq_map);
-
-	return (NULL);
-}
-
-void
-msi_eq_free(bus_dma_tag_t t, struct msi_eq *meq)
-{
-	bus_size_t size;
-
-	size = roundup(meq->meq_nentries * sizeof(struct msi_msg), PAGE_SIZE);
-
-	bus_dmamap_unload(t, meq->meq_map);
-	bus_dmamem_unmap(t, meq->meq_va, size);
-	bus_dmamem_free(t, &meq->meq_seg, 1);
-	bus_dmamap_destroy(t, meq->meq_map);
-	free(meq, M_DEVBUF);
 }
 
 const struct cfattach vpci_ca = {
