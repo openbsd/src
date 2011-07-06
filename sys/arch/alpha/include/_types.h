@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.12 2011/03/23 16:54:33 pirofti Exp $	*/
+/*	$OpenBSD: _types.h,v 1.13 2011/07/06 00:37:13 matthew Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -95,7 +95,7 @@ typedef int			__clock_t;
 typedef int			__clockid_t;
 typedef double			__double_t;
 typedef float			__float_t;
-typedef long			__off_t;
+typedef long long		__off_t;
 typedef long			__ptrdiff_t;
 typedef	unsigned long		__size_t;
 typedef	long			__ssize_t;
