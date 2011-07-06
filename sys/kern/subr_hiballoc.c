@@ -1,3 +1,5 @@
+/*	$OpenBSD $	*/
+
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
  *
