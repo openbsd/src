@@ -1,4 +1,4 @@
-/*	$OpenBSD: nexus.h,v 1.16 2011/07/06 18:32:59 miod Exp $	*/
+/*	$OpenBSD: nexus.h,v 1.17 2011/07/06 20:44:11 miod Exp $	*/
 /*	$NetBSD: nexus.h,v 1.17 2000/06/04 17:58:19 ragge Exp $	*/
 
 /*-
@@ -44,18 +44,17 @@ struct	mainbus_attach_args {
 /*
  * Values for bus (or pseudo-bus) types
  */
-#define	VAX_VSBUS	7	/* Virtual vaxstation bus */
-#define	VAX_IBUS	8	/* Internal Microvax bus */
-#define	VAX_VXTBUS	10	/* Pseudo VXT2000 bus */
-#define	VAX_MBUS	11	/* M-bus (KA60) */
+#define	VAX_VSBUS	0	/* Virtual vaxstation bus */
+#define	VAX_IBUS	1	/* Internal Microvax bus */
+#define	VAX_VXTBUS	2	/* Pseudo VXT2000 bus */
+#define	VAX_MBUS	3	/* M-bus (KA60) */
 
-#define	VAX_LEDS	0x42	/* pseudo value to attach led0 */
+#define	VAX_LEDS	4	/* pseudo value to attach led0 */
 
 #ifdef _KERNEL
 
 struct bp_conf {
-	char *type;
-	int bp_addr;
+	const char *type;
 };
 
 #endif
