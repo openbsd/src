@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.83 2011/07/06 00:02:42 martynas Exp $
+#  $OpenBSD: Makefile,v 1.84 2011/07/06 03:50:23 martynas Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -11,9 +11,6 @@
 #  software is freely granted, provided that this notice 
 #  is preserved.
 #  ====================================================
-
-# For NOPROFILE and NOPIC
-.include <bsd.own.mk>
 
 .if (${MACHINE_ARCH} == "sparc")
 CFLAGS+= -O0
@@ -322,21 +319,5 @@ MLINKS+=scalbn.3 scalbnl.3
 MLINKS+=sin.3 sinl.3
 MLINKS+=sqrt.3 sqrtl.3
 MLINKS+=tan.3 tanl.3
-
-#.if (${MACHINE_ARCH} == "i386")
-#LINKS=	${LIBDIR}/libm.a ${LIBDIR}/libm_i387.a
-#.if !defined(NOPROFILE)
-#LINKS+=	${LIBDIR}/libm_p.a ${LIBDIR}/libm_i387_p.a
-#.endif
-#.if !defined(NOPIC)
-#LINKS+= ${LIBDIR}/libm.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-#	${LIBDIR}/libm_i387.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
-#LINKS+= ${LIBDIR}/libm_pic.a ${LIBDIR}/libm_i387_pic.a
-#.endif
-#.endif
-
-#e_acos.o: 
-#	cpp \
-#	/usr/src/lib/libm/arch/mc68881/e_acos.S |  as -o e_acos.o
 
 .include <bsd.lib.mk>
