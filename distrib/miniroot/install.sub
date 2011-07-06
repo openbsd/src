@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.641 2011/07/06 20:02:16 halex Exp $
+#	$OpenBSD: install.sub,v 1.642 2011/07/06 23:38:41 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1167,16 +1167,13 @@ install_files() {
 			DEFAULTSETS=$(rmel $_f $DEFAULTSETS)
 			GOTSETS="$GOTSETS $_f"
 		fi
-	done
 
-	# save arguments from the first installation source for sysmerge(8)
-	if [[ -z "$FETCH_CMD" ]]; then
-		FETCH_CMD="ftp $FTPOPTS -m"
-		isin base$VERSION.tgz $GOTSETS && \
-			_sm_args="-s $_src/etc$VERSION.tgz"
-		isin xbase$VERSION.tgz $GOTSETS && \
-			_sm_argx="-x $_src/xetc$VERSION.tgz"
-	fi
+		# save arguments for sysmerge(8)
+		[[ $_f == base$VERSION.tgz ]] && \
+			SM_ARGS="-s $_src/etc$VERSION.tgz"
+		[[ $_f == xbase$VERSION.tgz ]] && \
+			SM_ARGSX="-x $_src/xetc$VERSION.tgz"
+	done
 }
 
 # Encode $1 as specified for usercodes and passwords in RFC 1738
@@ -1634,10 +1631,10 @@ install_sets() {
 }
 
 run_sysmerge() {
-	if [[ -n "$_sm_args" || -n "$_sm_argx" ]]; then
+	if [[ -n "$SM_ARGS" || -n "$SM_ARGSX" ]]; then
 		ask_yn "Merge the new etc/xetc install sets using sysmerge(8)?" no
 		[[ $resp == y ]] && \
-			/mnt/usr/sbin/chroot /mnt /usr/sbin/sysmerge $_sm_args $_sm_argx
+			/mnt/usr/sbin/chroot /mnt /usr/sbin/sysmerge $SM_ARGS $SM_ARGSX
 	fi
 }
 
@@ -2003,6 +2000,8 @@ __EOT
 ROOTDISK=
 ROOTDEV=
 package_path=
+SM_ARGS=
+SM_ARGSX=
 
 SETDIR="$VNAME/$ARCH"
 FTPDIR="pub/OpenBSD/$VNAME"
