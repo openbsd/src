@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.238 2011/07/06 15:44:11 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.239 2011/07/06 15:55:25 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1679,7 +1679,20 @@ int
 sr_detach(struct device *self, int flags)
 {
 	struct sr_softc		*sc = (void *)self;
-	int			rv;
+	int			i, rv;
+
+	DNPRINTF(SR_D_MISC, "%s: sr_detach\n", DEVNAME(sc));
+
+	/* XXX this will not work when we stagger disciplines */
+	for (i = 0; i < SR_MAX_LD; i++)
+		if (sc->sc_dis[i])
+			sr_discipline_shutdown(sc->sc_dis[i], 1);
+
+#ifndef SMALL_KERNEL
+	if (sc->sc_sensor_task != NULL)
+		sensor_task_unregister(sc->sc_sensor_task);
+	sensordev_deinstall(&sc->sc_sensordev);
+#endif /* SMALL_KERNEL */
 
 	if (sc->sc_scsibus != NULL) {
 		rv = config_detach((struct device *)sc->sc_scsibus, flags);
@@ -1688,11 +1701,7 @@ sr_detach(struct device *self, int flags)
 		sc->sc_scsibus = NULL;
 	}
 
-#ifndef SMALL_KERNEL
-	sensordev_deinstall(&sc->sc_sensordev);
-#endif /* SMALL_KERNEL */
-
-	return (0);
+	return (rv);
 }
 
 void
