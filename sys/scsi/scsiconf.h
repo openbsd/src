@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.146 2011/07/05 21:39:56 matthew Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.147 2011/07/06 00:45:52 matthew Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -417,6 +417,8 @@ struct scsi_inquiry_pattern {
 
 struct scsibus_attach_args {
 	struct scsi_link *saa_sc_link;
+	u_int16_t saa_targets;
+	u_int16_t saa_luns;
 };
 
 /*
@@ -431,7 +433,8 @@ struct scsibus_softc {
 	struct device sc_dev;
 	struct scsi_link *adapter_link;	/* prototype supplied by adapter */
 	SLIST_HEAD(, scsi_link) sc_link;
-	u_int16_t sc_buswidth;
+	u_int16_t sc_targets;
+	u_int16_t sc_luns;
 };
 
 /*
