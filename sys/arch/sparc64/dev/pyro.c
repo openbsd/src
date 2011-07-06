@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.21 2011/06/26 20:32:36 kettenis Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.22 2011/07/06 05:48:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -37,6 +37,7 @@
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/autoconf.h>
+#include <machine/openfirm.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -47,6 +48,7 @@
 
 #include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/iommuvar.h>
+#include <sparc64/dev/msivar.h>
 #include <sparc64/dev/pyrovar.h>
 
 #ifdef DEBUG
@@ -60,9 +62,27 @@ int pyro_debug = ~0;
 #define DPRINTF(l, s)
 #endif
 
+#define FIRE_EQ_BASE_ADDR		0x10000
+#define FIRE_EQ_CNTRL_SET		0x11000
+#define  FIRE_EQ_CTRL_SET_EN		0x0000100000000000UL
+#define FIRE_EQ_CNTRL_CLEAR		0x11200
+#define FIRE_EQ_STATE			0x11400
+#define FIRE_EQ_TAIL			0x11600
+#define FIRE_EQ_HEAD			0x11800
+#define FIRE_MSI_MAP			0x20000
+#define  FIRE_MSI_MAP_V			0x8000000000000000UL
+#define  FIRE_MSI_MAP_EQWR_N		0x4000000000000000UL
+#define  FIRE_MSI_MAP_EQNUM		0x000000000000003fUL
+#define FIRE_MSI_CLEAR			0x28000
+#define  FIRE_MSI_CLEAR_EQWR_N		0x4000000000000000UL
+#define FIRE_INTRMONDO_DATA0		0x2c000
+#define FIRE_INTRMONDO_DATA1		0x2c008
+#define FIRE_MSI32_ADDR			0x34000
+#define FIRE_MSI64_ADDR			0x34008
+
 #define FIRE_RESET_GEN			0x7010
 
-#define FIRE_RESET_GEN_XIR		0x0000000000000002L
+#define FIRE_RESET_GEN_XIR		0x0000000000000002UL
 
 #define FIRE_INTRMAP_INT_CNTRL_NUM_MASK	0x000003c0
 #define FIRE_INTRMAP_INT_CNTRL_NUM0	0x00000040
@@ -81,6 +101,7 @@ int pyro_match(struct device *, void *, void *);
 void pyro_attach(struct device *, struct device *, void *);
 void pyro_init(struct pyro_softc *, int);
 void pyro_init_iommu(struct pyro_softc *, struct pyro_pbm *);
+void pyro_init_msi(struct pyro_softc *, struct pyro_pbm *);
 int pyro_print(void *, const char *);
 
 pci_chipset_tag_t pyro_alloc_chipset(struct pyro_pbm *, int,
@@ -103,6 +124,9 @@ paddr_t _pyro_bus_mmap(bus_space_tag_t, bus_space_tag_t, bus_addr_t, off_t,
     int, int);
 void *_pyro_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int, int,
     int (*)(void *), void *, const char *);
+void pyro_msi_ack(struct intrhand *);
+
+int pyro_msi_eq_intr(void *);
 
 int pyro_dmamap_create(bus_dma_tag_t, bus_dma_tag_t, bus_size_t, int,
     bus_size_t, bus_size_t, int, bus_dmamap_t *);
@@ -202,6 +226,8 @@ pyro_init(struct pyro_softc *sc, int busa)
 	pbm->pp_cfgt = pyro_alloc_config_tag(pbm);
 	pbm->pp_dmat = pyro_alloc_dma_tag(pbm);
 
+	pyro_init_msi(sc, pbm);
+
 	if (bus_space_map(pbm->pp_cfgt, 0, 0x10000000, 0, &pbm->pp_cfgh))
 		panic("pyro: can't map config space");
 
@@ -215,9 +241,7 @@ pyro_init(struct pyro_softc *sc, int busa)
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = busranges[0];
 	pba.pba_pc = pbm->pp_pc;
-#if 0
 	pba.pba_flags = pbm->pp_flags;
-#endif
 	pba.pba_dmat = pbm->pp_dmat;
 	pba.pba_memt = pbm->pp_memt;
 	pba.pba_iot = pbm->pp_iot;
@@ -263,6 +287,71 @@ pyro_init_iommu(struct pyro_softc *sc, struct pyro_pbm *pbm)
 		is->is_flags |= IOMMU_FLUSH_CACHE;
 
 	iommu_init(name, is, tsbsize, iobase);
+}
+
+void
+pyro_init_msi(struct pyro_softc *sc, struct pyro_pbm *pbm)
+{
+	u_int32_t msi_addr_range[3];
+	u_int32_t msi_eq_devino[3] = { 0, 36, 24 };
+	int ihandle;
+	int msis, msi_eq_size;
+
+	/* Don't do MSI on Oberon for now. */
+	if (sc->sc_oberon)
+		return;
+
+	if (OF_getprop(sc->sc_node, "msi-address-ranges",
+	    msi_addr_range, sizeof(msi_addr_range)) <= 0)
+		return;
+	pbm->pp_msiaddr = msi_addr_range[1];
+	pbm->pp_msiaddr |= ((bus_addr_t)msi_addr_range[0]) << 32;
+
+	msis = getpropint(sc->sc_node, "#msi", 256);
+	pbm->pp_msi = malloc(msis * sizeof(*pbm->pp_msi),
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (pbm->pp_msi == NULL)
+		return;
+
+	msi_eq_size = getpropint(sc->sc_node, "msi-eq-size", 256);
+	pbm->pp_meq = msi_eq_alloc(pbm->pp_dmat, msi_eq_size);
+	if (pbm->pp_meq == NULL)
+		goto free_table;
+
+	bzero(pbm->pp_meq->meq_va,
+	    pbm->pp_meq->meq_nentries * sizeof(struct pyro_msi_msg));
+
+	bus_space_write_8(sc->sc_bust, sc->sc_csrh, FIRE_EQ_BASE_ADDR,
+	    pbm->pp_meq->meq_map->dm_segs[0].ds_addr);
+
+	bus_space_write_8(sc->sc_bust, sc->sc_csrh,
+	    FIRE_INTRMONDO_DATA0, sc->sc_ign);
+	bus_space_write_8(sc->sc_bust, sc->sc_csrh,
+	    FIRE_INTRMONDO_DATA1, 0);
+
+	bus_space_write_8(sc->sc_bust, sc->sc_csrh, FIRE_MSI32_ADDR,
+	    pbm->pp_msiaddr);
+
+	bus_space_write_8(sc->sc_bust, sc->sc_csrh, FIRE_EQ_HEAD, 0);
+	bus_space_write_8(sc->sc_bust, sc->sc_csrh, FIRE_EQ_TAIL, 0);
+
+	OF_getprop(sc->sc_node, "msi-eq-to-devino",
+	    msi_eq_devino, sizeof(msi_eq_devino));
+
+	ihandle = msi_eq_devino[2] | sc->sc_ign;
+	if (_pyro_intr_establish(pbm->pp_memt, sc->sc_bust, ihandle,
+	    IPL_HIGH, 0, pyro_msi_eq_intr, pbm, sc->sc_dv.dv_xname) == NULL)
+		goto free_table;
+
+	/* Enable EQ. */
+	bus_space_write_8(sc->sc_bust, sc->sc_csrh, FIRE_EQ_CNTRL_SET,
+	    FIRE_EQ_CTRL_SET_EN);
+
+	pbm->pp_flags |= PCI_FLAGS_MSI_ENABLED;
+	return;
+
+free_table:
+	free(pbm->pp_msi, M_DEVBUF);
 }
 
 int
@@ -512,6 +601,48 @@ _pyro_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	volatile u_int64_t *intrmapptr = NULL, *intrclrptr = NULL;
 	int ino;
 
+	if (ihandle & PCI_INTR_MSI) {
+		pci_chipset_tag_t pc = pbm->pp_pc;
+		pcitag_t tag = ihandle & ~PCI_INTR_MSI;
+		int msinum = pbm->pp_msinum++;
+		u_int64_t reg;
+
+		ih = bus_intr_allocate(t0, handler, arg, ihandle, level,
+		     NULL, NULL, what);
+		if (ih == NULL)
+			return (NULL);
+
+		if (ih->ih_name)
+			evcount_attach(&ih->ih_count, ih->ih_name, NULL);
+		else
+			evcount_attach(&ih->ih_count, "unknown", NULL);
+
+		ih->ih_ack = pyro_msi_ack;
+
+		pbm->pp_msi[msinum] = ih;
+		ih->ih_number = msinum;
+
+		pci_msi_enable(pc, tag, pbm->pp_msiaddr, msinum);
+
+		/* Map MSI to the right EQ and mark it as valid. */
+		reg = bus_space_read_8(sc->sc_bust, sc->sc_csrh,
+		    FIRE_MSI_MAP + msinum * 8);
+		reg &= ~FIRE_MSI_MAP_EQNUM;
+		bus_space_write_8(sc->sc_bust, sc->sc_csrh,
+		    FIRE_MSI_MAP + msinum * 8, reg);
+
+		bus_space_write_8(sc->sc_bust, sc->sc_csrh,
+		    FIRE_MSI_CLEAR + msinum * 8, FIRE_MSI_CLEAR_EQWR_N);
+
+		reg = bus_space_read_8(sc->sc_bust, sc->sc_csrh,
+		    FIRE_MSI_MAP + msinum * 8);
+		reg |= FIRE_MSI_MAP_V;
+		bus_space_write_8(sc->sc_bust, sc->sc_csrh,
+		    FIRE_MSI_MAP + msinum * 8, reg);
+
+		return (ih);
+	}
+
 	ino = INTINO(ihandle);
 
 	if (level == IPL_NONE)
@@ -559,6 +690,51 @@ _pyro_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	}
 
 	return (ih);
+}
+
+void
+pyro_msi_ack(struct intrhand *ih)
+{
+}
+
+int
+pyro_msi_eq_intr(void *arg)
+{
+	struct pyro_pbm *pbm = arg;
+	struct pyro_softc *sc = pbm->pp_sc;
+	struct msi_eq *meq = pbm->pp_meq;
+	struct pyro_msi_msg *msg;
+	uint64_t head, tail;
+	struct intrhand *ih;
+	int msinum;
+
+	head = bus_space_read_8(sc->sc_bust, sc->sc_csrh, FIRE_EQ_HEAD);
+	tail = bus_space_read_8(sc->sc_bust, sc->sc_csrh, FIRE_EQ_TAIL);
+
+	if (head == tail)
+		return (0);
+
+	while (head != tail) {
+		msg = (struct pyro_msi_msg *)meq->meq_va;
+
+		if (msg[head].mm_type == 0)
+			break;
+		msg[head].mm_type = 0;
+
+		msinum = msg[head].mm_data;
+		ih = pbm->pp_msi[msinum];
+		bus_space_write_8(sc->sc_bust, sc->sc_csrh,
+		    FIRE_MSI_CLEAR + msinum * 8, FIRE_MSI_CLEAR_EQWR_N);
+
+		send_softint(-1, ih->ih_pil, ih);
+
+		head += 1;
+		head &= (meq->meq_nentries - 1);
+	}
+
+	bus_space_write_8(sc->sc_bust, sc->sc_csrh, FIRE_EQ_HEAD, head);
+
+	return (1);
 }
 
 #ifdef DDB

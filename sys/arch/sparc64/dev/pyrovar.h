@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyrovar.h,v 1.3 2007/04/03 19:59:01 kettenis Exp $	*/
+/*	$OpenBSD: pyrovar.h,v 1.4 2011/07/06 05:48:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -26,6 +26,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+struct pyro_msi_msg {
+	uint8_t		mm_type;
+	uint8_t		mm_reserved[3];
+	uint16_t	mm_reqid;
+	uint16_t	mm_data;
+	uint64_t	mm_reserved2[7];
+};
+
 struct pyro_range {
 	u_int32_t	cspace;
 	u_int32_t	child_hi;
@@ -51,6 +59,13 @@ struct pyro_pbm {
 	int			pp_bus_a;
 	struct iommu_state	pp_is;
 	struct strbuf_ctl	pp_sb;
+
+	struct msi_eq *pp_meq;
+	bus_addr_t pp_msiaddr;
+	int pp_msinum;
+	struct intrhand **pp_msi;
+
+	int pp_flags;
 };
 
 struct pyro_softc {

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.133 2011/07/06 05:35:53 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.134 2011/07/06 05:48:57 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -119,7 +119,7 @@ device	schizo: pcibus, iommu
 attach	schizo at mainbus
 file	arch/sparc64/dev/schizo.c		schizo
 
-device	pyro: pcibus, iommu
+device	pyro: pcibus, iommu, msi
 attach	pyro at mainbus
 file	arch/sparc64/dev/pyro.c			pyro
 
