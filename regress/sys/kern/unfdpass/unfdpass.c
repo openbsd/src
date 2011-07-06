@@ -1,4 +1,4 @@
-/*	$OpenBSD: unfdpass.c,v 1.16 2008/06/26 05:42:06 ray Exp $	*/
+/*	$OpenBSD: unfdpass.c,v 1.17 2011/07/06 19:48:10 matthew Exp $	*/
 /*	$NetBSD: unfdpass.c,v 1.3 1998/06/24 23:51:30 thorpej Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@
 #define	SOCK_NAME	"test-sock"
 
 int	main(int, char *[]);
-void	child(int);
+void	child(int, int);
 void	catch_sigchld(int);
 
 /* ARGSUSED */
@@ -72,13 +72,17 @@ main(int argc, char *argv[])
 		char buf[CMSG_SPACE(sizeof(int) * 3)];
 	} cmsgbuf;
 	int pflag;
+	int type = SOCK_STREAM;
 	extern char *__progname;
 
 	pflag = 0;
-	while ((i = getopt(argc, argv, "p")) != -1) {
+	while ((i = getopt(argc, argv, "pq")) != -1) {
 		switch (i) {
 		case 'p':
 			pflag = 1;
+			break;
+		case 'q':
+			type = SOCK_SEQPACKET;
 			break;
 		default:
 			fprintf(stderr, "usage: %s [-p]\n", __progname);
@@ -103,13 +107,13 @@ main(int argc, char *argv[])
 		/*
 		 * Create the socketpair
 		 */
-		if (socketpair(PF_LOCAL, SOCK_STREAM, 0, pfd) == -1)
+		if (socketpair(PF_LOCAL, type, 0, pfd) == -1)
 			err(1, "socketpair");
 	} else {
 		/*
 		 * Create the listen socket.
 		 */
-		if ((listensock = socket(PF_LOCAL, SOCK_STREAM, 0)) == -1)
+		if ((listensock = socket(PF_LOCAL, type, 0)) == -1)
 			err(1, "socket");
 
 		(void) unlink(SOCK_NAME);
@@ -139,7 +143,7 @@ main(int argc, char *argv[])
 	case 0:
 		if (pfd[0] != -1)
 			close(pfd[0]);
-		child(pfd[1]);
+		child(pfd[1], type);
 		/* NOTREACHED */
 	}
 
@@ -232,7 +236,7 @@ catch_sigchld(sig)
 }
 
 void
-child(int sock)
+child(int sock, int type)
 {
 	struct msghdr msg;
 	char fname[16];
@@ -249,7 +253,7 @@ child(int sock)
 	 * Create socket if needed and connect to the receiver.
 	 */
 	if (sock == -1) {
-		if ((sock = socket(PF_LOCAL, SOCK_STREAM, 0)) == -1)
+		if ((sock = socket(PF_LOCAL, type, 0)) == -1)
 			err(1, "child socket");
 
 		(void) memset(&sun, 0, sizeof(sun));
