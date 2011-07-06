@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# $OpenBSD: sendmail,v 1.1 2011/07/06 18:55:36 robert Exp $
+
+daemon="/usr/sbin/sendmail"
+
+. /etc/rc.d/rc.subr
+
+pexp="sendmail: accepting.*"
+
+rc_cmd $1

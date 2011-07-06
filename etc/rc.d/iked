@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# $OpenBSD: iked,v 1.1 2011/07/06 18:55:36 robert Exp $
+
+daemon="/sbin/iked"
+
+. /etc/rc.d/rc.subr
+
+pexp="iked:.*parent.*"
+
+rc_pre() {
+	[ X"${sasyncd_flags}" != X"NO" ] && \
+		daemon_flags="-S ${daemon_flags}"
+	return 0
+}
+
+rc_cmd $1

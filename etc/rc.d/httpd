@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# $OpenBSD: httpd,v 1.1 2011/07/06 18:55:36 robert Exp $
+
+daemon="/usr/sbin/httpd"
+
+. /etc/rc.d/rc.subr
+
+pexp="httpd: parent.*"
+
+rc_pre() {
+	rm -f /var/www/logs/{ssl_mutex,httpd.lock,accept.lock}.*
+}
+
+rc_cmd $1

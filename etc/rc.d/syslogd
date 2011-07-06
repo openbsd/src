@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# $OpenBSD: syslogd,v 1.1 2011/07/06 18:55:36 robert Exp $
+
+daemon="/usr/sbin/syslogd"
+
+. /etc/rc.d/rc.subr
+
+pexp="syslogd: \[priv\]"
+
+rc_pre() {
+	[ X"${httpd_flags}" != X"-u" ] && rm -f /var/www/dev/log && \
+		daemon_flags="${daemon_flags} -a /var/www/dev/log"
+	[ X"${named_flags}" != X"NO" ] && rm -f /var/named/dev/log && \
+		daemon_flags="${daemon_flags} -a /var/named/dev/log"
+	[ X"${nsd_flags}" != X"NO" ] && rm -f /var/nsd/dev/log && \
+		daemon_flags="${daemon_flags} -a /var/nsd/dev/log"
+	[ -d /var/empty ] && rm -f /var/empty/dev/log && \
+		mkdir -p -m 0555 /var/empty/dev && \
+		daemon_flags="${daemon_flags} -a /var/empty/dev/log"
+	rm -f /dev/log
+}
+
+rc_cmd $1

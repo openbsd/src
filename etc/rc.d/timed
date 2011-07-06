@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# $OpenBSD: timed,v 1.1 2011/07/06 18:55:36 robert Exp $
+
+daemon="/usr/sbin/timed"
+
+. /etc/rc.d/rc.subr
+
+rc_reload=NO
+
+rc_cmd $1

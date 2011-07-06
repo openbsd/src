@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# $OpenBSD: mopd,v 1.1 2011/07/06 18:55:36 robert Exp $
+
+daemon="/usr/sbin/mopd"
+
+. /etc/rc.d/rc.subr
+
+rc_reload=NO
+
+rc_pre() {
+	[ -d /tftpboot/mop ] || return 1
+}
+
+rc_cmd $1

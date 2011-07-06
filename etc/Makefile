@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.296 2011/07/06 18:32:58 miod Exp $
+#	$OpenBSD: Makefile,v 1.297 2011/07/06 18:55:36 robert Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -29,6 +29,13 @@ BIN1+=	wsconsctl.conf
 
 # -rw-rw-r--
 BIN2=	motd
+
+# -r-xr-xr-x
+RCDAEMONS=	apmd bgpd bootparamd cron dhcpd dhcrelay dvmrpd ftpd ftpproxy \
+		hostapd hotplugd httpd identd ifstated iked inetd isakmpd ldapd \
+		ldattach ldpd lpd mopd mrouted named nsd ntpd rarpd rbootd relayd \
+		ripd route6d rtadvd rtsold rwhod sasyncd sendmail sensorsd smtpd \
+		snmpd sshd syslogd timed watchdogd
 
 MISETS=	base${OSrev}.tgz comp${OSrev}.tgz \
 	man${OSrev}.tgz game${OSrev}.tgz etc${OSrev}.tgz
@@ -249,6 +256,8 @@ distribution-etc-root-var: distrib-dirs
 	    ${DESTDIR}/etc/sudoers
 	cd rc.d; \
 		${INSTALL} -c -o root -g wheel -m 644 rc.subr \
+		    ${DESTDIR}/etc/rc.d && \
+		${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 555 ${RCDAEMONS} \
 		    ${DESTDIR}/etc/rc.d
 
 distribution:

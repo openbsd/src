@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# $OpenBSD: cron,v 1.1 2011/07/06 18:55:36 robert Exp $
+
+daemon="/usr/sbin/cron"
+
+. /etc/rc.d/rc.subr
+
+rc_cmd $1

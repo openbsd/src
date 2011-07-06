@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# $OpenBSD: ripd,v 1.1 2011/07/06 18:55:36 robert Exp $
+
+daemon="/usr/sbin/ripd"
+
+. /etc/rc.d/rc.subr
+
+pexp="ripd: parent.*"
+
+rc_cmd $1

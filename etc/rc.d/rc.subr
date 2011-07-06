@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.39 2011/07/03 16:09:06 schwarze Exp $
+#	$OpenBSD: rc.subr,v 1.40 2011/07/06 18:55:36 robert Exp $
 
 # Default functions and variables used by rc.d(8) scripts.
 
@@ -74,7 +74,7 @@ rc_cmd() {
 		rc_do rc_check
 		;;
 	start)
-		rc_do rc_check && exit 0
+		[ -z "${INRC}" ] && rc_do rc_check && exit 0
 		while true; do  # no real loop, only needed to break
 			if type rc_pre >/dev/null; then
 				rc_do rc_pre || break

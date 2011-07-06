@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.352 2011/04/22 06:08:14 ajacoutot Exp $
+#	$OpenBSD: rc,v 1.353 2011/07/06 18:55:36 robert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -140,6 +140,17 @@ fill_baddynamic()
 			sysctl ${_sysctl}=${_ban} >/dev/null
 		fi
 	}
+}
+
+start_daemon()
+{
+	local _n;
+	for _n; do
+		eval _do=\${${_n}_flags}
+		if [ X"${_do}" != X"NO" ]; then
+			/etc/rc.d/${_n} start
+		fi
+	done
 }
 
 # End subroutines
@@ -340,26 +351,9 @@ rm -f /var/spool/uucp/STST/*
 # save a copy of the boot messages
 dmesg >/var/run/dmesg.boot
 
-echo 'starting system logger'
-rm -f /dev/log
-if [ X"${httpd_flags}" != X"-u" ]; then
-	rm -f /var/www/dev/log
-	syslogd_flags="${syslogd_flags} -a /var/www/dev/log"
-fi
-if [ X"${named_flags}" != X"NO" ]; then
-	rm -f /var/named/dev/log
-	syslogd_flags="${syslogd_flags} -a /var/named/dev/log"
-fi
-if [ X"${nsd_flags}" != X"NO" ]; then
-	rm -f /var/nsd/dev/log
-	syslogd_flags="${syslogd_flags} -a /var/nsd/dev/log"
-fi
-if [ -d /var/empty ]; then
-	rm -f /var/empty/dev/log
-	mkdir -p -m 0555 /var/empty/dev
-	syslogd_flags="${syslogd_flags} -a /var/empty/dev/log"
-fi
-syslogd ${syslogd_flags}
+echo -n 'starting system logger: '
+start_daemon syslogd
+echo '.'
 
 if [ X"${pf}" != X"NO" ]; then
 	ifconfig pflog0 create >/dev/null 2>&1
@@ -381,13 +375,11 @@ if [ X"${named_flags}" != X"NO" ]; then
 			echo failed.
 		fi
 	fi
-
-	echo 'starting named';		named $named_flags
 fi
 
-if [ X"${nsd_flags}" != X"NO" ]; then
-	echo 'starting nsd';		nsd $nsd_flags
-fi
+echo -n 'starting name service daemons:'
+start_daemon named nsd
+echo '.'
 
 if [ ! -f /etc/isakmpd/private/local.key ]; then
 	echo -n "openssl: generating new isakmpd/iked RSA key... "
@@ -409,23 +401,9 @@ if [ ! -f /etc/iked/private/local.key ]; then
 	cp /etc/isakmpd/local.pub /etc/iked/local.pub
 fi
 
-if [ X"${isakmpd_flags}" != X"NO" ]; then
-	if [ X"${sasyncd_flags}" != X"NO" ]; then
-		isakmpd_flags="-S ${isakmpd_flags}"
-	fi
-	echo 'starting isakmpd';	isakmpd ${isakmpd_flags}
-fi
-
-if [ X"${iked_flags}" != X"NO" ]; then
-	if [ X"${sasyncd_flags}" != X"NO" ]; then
-		iked_flags="-S ${iked_flags}"
-	fi
-	echo 'starting iked';		iked ${iked_flags}
-fi
-
-if [ X"${sasyncd_flags}" != X"NO" ]; then
-	echo 'starting sasyncd';	sasyncd ${sasyncd_flags}
-fi
+echo -n 'starting IPsec daemons:'
+start_daemon isakmpd iked sasyncd
+echo '.'
 
 if [ X"${ipsec}" != X"NO" ]; then
 	if [ -f ${ipsec_rules} ]; then
@@ -493,17 +471,8 @@ if [ X"${rdate_flags}" != X"NO" ]; then
 	echo -n ' rdate';	rdate -s ${rdate_flags}
 fi
 
-if [ X"${timed_flags}" != X"NO" ]; then
-	echo -n ' timed'; timed $timed_flags
-fi
+start_daemon timed ldattach ntpd
 
-if [ X"${ldattach_flags}" != X"NO" -a -n "${ldattach_flags}" ]; then
-	echo -n ' ldattach'; ldattach ${ldattach_flags}
-fi
-
-if [ X"${ntpd_flags}" != X"NO" ]; then
-	echo -n ' ntpd'; ntpd $ntpd_flags
-fi
 echo '.'
 
 mount -a
@@ -619,135 +588,29 @@ fi
 
 /usr/bin/ssh-keygen -A
 
-echo -n starting network daemons:
+echo -n 'starting network daemons:'
 
-if [ X"${sshd_flags}" != X"NO" ]; then
-	echo -n ' sshd';		/usr/sbin/sshd ${sshd_flags}
-fi
-
-if [ X"${snmpd_flags}" != X"NO" ]; then
-	echo -n ' snmpd';		/usr/sbin/snmpd $snmpd_flags
-fi
-
-if [ X"${ldpd_flags}" != X"NO" ]; then
-	echo -n ' ldpd';		/usr/sbin/ldpd $ldpd_flags
-fi
-
-if [ X"${ripd_flags}" != X"NO" ]; then
-	echo -n ' ripd';		/usr/sbin/ripd $ripd_flags
-fi
-
-if [ X"${mrouted_flags}" != X"NO" ]; then
-	echo -n ' mrouted';		mrouted $mrouted_flags
-fi
-
-if [ X"${dvmrpd_flags}" != X"NO" ]; then
-	echo -n ' dvmrpd';		/usr/sbin/dvmrpd $dvmrpd_flags
-fi
-
-if [ X"${ospfd_flags}" != X"NO" ]; then
-	echo -n ' ospfd';		/usr/sbin/ospfd $ospfd_flags
-fi
-
-if [ X"${ospf6d_flags}" != X"NO" ]; then
-	echo -n ' ospf6d';		/usr/sbin/ospf6d $ospf6d_flags
-fi
-
-if [ X"${bgpd_flags}" != X"NO" ]; then
-	echo -n ' bgpd';		/usr/sbin/bgpd $bgpd_flags
-fi
-
-if [ X"${ifstated_flags}" != X"NO" ]; then
-	echo -n ' ifstated';		ifstated $ifstated_flags
-fi
-
-if [ X"${relayd_flags}" != X"NO" ]; then
-	echo -n ' relayd';		/usr/sbin/relayd $relayd_flags
-fi
-
-if [ X"${dhcpd_flags}" != X"NO" -a -f /etc/dhcpd.conf ]; then
-	touch /var/db/dhcpd.leases
-	echo -n ' dhcpd';	/usr/sbin/dhcpd ${dhcpd_flags}
-fi
-
-if [ X"${dhcrelay_flags}" != X"NO" ]; then
-	echo -n ' dhcrelay';		/usr/sbin/dhcrelay $dhcrelay_flags
-fi
+start_daemon sshd snmpd ldpd ripd bgpd ifstated relayd dhcpd \
+	dhcrelay mrouted dvmrpd
 
 if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	fw=`sysctl -n net.inet6.ip6.forwarding`
 	if [ X"${fw}" = X"0" ]; then
-		if [ X"${rtsold_flags}" != X"NO" ]; then
-			echo -n ' rtsold'
-			/usr/sbin/rtsold ${rtsold_flags}
-		fi
+		start_daemon rtsold
 	else
-		if [ X"${route6d_flags}" != X"NO" ]; then
-			echo -n ' route6d'
-			/usr/sbin/route6d ${route6d_flags}
-		fi
-		if [ X"${rtadvd_flags}" != X"NO" ]; then
-			echo -n ' rtadvd'
-			/usr/sbin/rtadvd ${rtadvd_flags}
-		fi
+		start_daemon route6d
+		start_daemon rtadvd
 	fi
 fi
 
-if [ X"${hostapd_flags}" != X"NO" ]; then
-	echo -n ' hostapd';		/usr/sbin/hostapd ${hostapd_flags}
-fi
+start_daemon hostapd rwhod lpd ldapd sendmail smtpd httpd ftpd \
+	ftpproxy identd inetd rarpd bootparamd rbootd mopd
 
 if [ X"${bt}" != X"NO" ]; then
 	echo -n ' btd';			/usr/sbin/btd
 	if [ -f ${bt_rules} ]; then
 		btctl -f ${bt_rules}
 	fi
-fi
-
-if [ X"${rwhod}" = X"YES" ]; then
-	echo -n ' rwhod';		rwhod
-fi
-
-
-if [ X"${lpd_flags}" != X"NO" ]; then
-	echo -n ' lpd';			lpd ${lpd_flags}
-fi
-
-if [ X"${ldapd_flags}" != X"NO" ]; then
-	echo -n ' ldapd';		/usr/sbin/ldapd ${ldapd_flags}
-fi
-
-# We call sendmail with a full path so that SIGHUP works.
-# Note that /usr/sbin/sendmail may actually call a
-# mailer other than sendmail, depending on /etc/mailer.conf.
-if [ X"${sendmail_flags}" != X"NO" -a -s /etc/mailer.conf ]; then
-	echo -n ' sendmail';		( /usr/sbin/sendmail ${sendmail_flags} >/dev/null 2>&1 & )
-fi
-
-if [ X"${smtpd_flags}" != X"NO" ]; then
-	echo -n ' smtpd'; smtpd $smtpd_flags
-fi
-
-if [ X"${httpd_flags}" != X"NO" ]; then
-	# Clean up left-over httpd locks
-	rm -f /var/www/logs/{ssl_mutex,httpd.lock,accept.lock}.*
-	echo -n ' httpd';		/usr/sbin/httpd ${httpd_flags}
-fi
-
-if [ X"${ftpd_flags}" != X"NO" ]; then
-	echo -n ' ftpd';		/usr/libexec/ftpd ${ftpd_flags}
-fi
-
-if [ X"${ftpproxy_flags}" != X"NO" ]; then
-	echo -n ' ftp-proxy';		/usr/sbin/ftp-proxy ${ftpproxy_flags}
-fi
-
-if [ X"${identd_flags}" != X"NO" ]; then
-	echo -n ' identd';		/usr/libexec/identd ${identd_flags}
-fi
-
-if [ X"${inetd}" = X"YES" -a -e /etc/inetd.conf ]; then
-	echo -n ' inetd';		inetd
 fi
 
 if [ X"${spamd_flags}" != X"NO" ]; then
@@ -760,22 +623,6 @@ if [ X"${spamd_flags}" != X"NO" ]; then
 		echo -n ' spamlogd'
 		/usr/libexec/spamlogd ${spamlogd_flags}
 	fi
-fi
-
-if [ X"${rarpd_flags}" != X"NO" -a -s /etc/ethers ]; then
-	echo -n ' rarpd';		rarpd ${rarpd_flags}
-fi
-
-if [ X"${bootparamd_flags}" != X"NO" -a -s /etc/bootparams ]; then
-	echo -n ' rpc.bootparamd';	rpc.bootparamd ${bootparamd_flags}
-fi
-
-if [ X"${rbootd_flags}" != X"NO" -a -s /etc/rbootd.conf ]; then
-	echo -n ' rbootd';		rbootd ${rbootd_flags}
-fi
-
-if [ X"${mopd_flags}" != X"NO" -a -d /tftpboot/mop ]; then
-	echo -n ' mopd';		mopd ${mopd_flags}
 fi
 
 echo '.'
@@ -819,25 +666,9 @@ fi
 
 [ -f /etc/rc.local ] && . /etc/rc.local
 
-echo -n starting standard daemons:
+echo -n 'starting standard daemons:'
 
-if [ X"${apmd_flags}" != X"NO" -a -x /usr/sbin/apmd ]; then
-	echo -n ' apmd';	/usr/sbin/apmd ${apmd_flags}
-fi
-
-if [ X"${sensorsd_flags}" != X"NO" ]; then
-	echo -n ' sensorsd';	/usr/sbin/sensorsd ${sensorsd_flags}
-fi
-
-if [ X"${hotplugd_flags}" != X"NO" -a -x /usr/sbin/hotplugd ]; then
-	echo -n ' hotplugd';	/usr/sbin/hotplugd ${hotplugd_flags}
-fi
-
-if [ X"${watchdogd_flags}" != X"NO" -a -x /usr/sbin/watchdogd ]; then
-	echo -n ' watchdogd';	/usr/sbin/watchdogd ${watchdogd_flags}
-fi
-
-echo -n ' cron';		cron
+start_daemon apmd sensorsd hotplugd watchdogd cron
 
 # disable carp interlock
 ifconfig -g carp -carpdemote 128
