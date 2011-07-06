@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.141 2011/07/06 17:26:33 matthew Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.142 2011/07/06 17:28:00 matthew Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -673,18 +673,13 @@ vndclear(struct vnd_softc *sc)
 daddr64_t
 vndsize(dev_t dev)
 {
-	int unit = DISKUNIT(dev);
-	struct vnd_softc *sc = &vnd_softc[unit];
-
-	if (unit >= numvnd || (sc->sc_flags & VNF_INITED) == 0)
-		return (-1);
-	return (sc->sc_size * (sc->sc_secsize / DEV_BSIZE));
+	/* We don't support swapping to vnd anymore. */
+	return (-1);
 }
 
 int
 vnddump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
 {
-
 	/* Not implemented. */
 	return (ENXIO);
 }
