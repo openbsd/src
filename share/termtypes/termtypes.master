@@ -1,6 +1,6 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.42 2011/07/03 17:47:43 nicm Exp $
+# $OpenBSD: termtypes.master,v 1.43 2011/07/06 16:20:29 nicm Exp $
 #
 # This version of terminfo.src is distributed with ncurses and is maintained
 # by Thomas E. Dickey (TD).
@@ -8,8 +8,8 @@
 # Report bugs and new terminal descriptions to
 #	bug-ncurses@gnu.org
 #
-#	$Revision: 1.42 $
-#	$Date: 2011/07/03 17:47:43 $
+#	$Revision: 1.43 $
+#	$Date: 2011/07/06 16:20:29 $
 #
 # The original header is preserved below for reference.  It is noted that there
 # is a "newer" version which differs in some cosmetic details (but actually
@@ -5970,7 +5970,7 @@ altos2|alt2|altos-2|altos II,
 #	:cC=^Al\r:cD=^Am\r:cE=^An\r:cF=^Ao\r:
 #	:XU=^Aq\r:XD=^Ar\r:XR=^As\r:XL=^At\r:\
 #	:HL=^AP\r:SP=\E[i:\
-#	:IS=\E[@:DE=\E[P:IL=\E[L:NS=\E[S:PS=\E[T:\
+#	:IS=\E[@:DE=\E[P:IL=\E[L:NS=\E[S:PS=\E[T:
 altos3|altos5|alt3|alt5|altos-3|altos-5|altos III or V,
 	blink=\E[5p, ri=\EM, sgr0=\E[p, use=altos2,
 altos4|alt4|altos-4|altos IV,
