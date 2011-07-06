@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.52 2011/05/30 22:25:23 oga Exp $ */
+/*	$OpenBSD: pmap.c,v 1.53 2011/07/06 18:33:00 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -56,10 +56,6 @@
 #include <machine/cpu.h>
 #include <machine/scb.h>
 #include <machine/rpb.h>
-
-/* QDSS console mapping hack */
-#include "qd.h"
-void	qdearly(void);
 
 #define ISTACK_SIZE (NBPG * 2)
 vaddr_t	istack;
@@ -194,11 +190,6 @@ pmap_bootstrap()
 	/* Set logical page size */
 	uvmexp.pagesize = NBPG;
 	uvm_setpagesize();
-
-        /* QDSS console mapping hack */
-#if NQD > 0
-	qdearly();
-#endif
 
 	/* User page table map. This is big. */
 	MAPVIRT(ptemapstart, USRPTSIZE);

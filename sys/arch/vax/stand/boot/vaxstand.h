@@ -1,4 +1,4 @@
-/*	$OpenBSD: vaxstand.h,v 1.2 2011/03/13 00:13:53 deraadt Exp $ */
+/*	$OpenBSD: vaxstand.h,v 1.3 2011/07/06 18:32:59 miod Exp $ */
 /*	$NetBSD: vaxstand.h,v 1.5 2000/06/15 19:53:23 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -59,12 +59,6 @@ int net_devinit(struct open_file *f, struct netif_driver *drv, u_char *eaddr);
 /* device calls */
 int	raopen(struct open_file *, int, int, int, int),
 	    rastrategy(void *, int, daddr32_t, size_t, void *, size_t *);
-int	hpopen(struct open_file *, int, int, int, int),
-	    hpstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
-int	ctuopen(struct open_file *, int, int, int, int),
-	    ctustrategy(void *, int, daddr32_t, size_t, void *, size_t *);
-int	tmscpopen(struct open_file *, int, int, int, int),
-	    tmscpstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
 int	romopen(struct open_file *, int, int, int, int),
 	    romstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
 int	mfmopen(struct open_file *, int, int, int, int),
@@ -79,7 +73,5 @@ int	zeopen(struct open_file *, int, int, int, int),
 	    zeclose(struct open_file *);
 int	deopen(struct open_file *, int, int, int, int),
 	    declose(struct open_file *);
-int	niopen(struct open_file *, int, int, int, int),
-	    niclose(struct open_file *);
 int	netopen(struct open_file *), netclose(struct open_file *);
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.35 2011/06/29 20:52:09 matthew Exp $
+#	$OpenBSD: RAMDISK,v 1.36 2011/07/06 18:32:59 miod Exp $
 
 machine		vax			# machine type
 
@@ -7,10 +7,6 @@ option		MINIROOTSIZE=3072
 
 # Here are all different supported CPU types listed.
 # One of these is required.
-#option		VAX8600
-#option		VAX8200
-#option		VAX780		# 11/780
-#option		VAX750		# 11/750
 option		VAX630		# MV II
 option		VAX650		# MV III, 3300, 3600, 3800, 3900
 option		VAX660		# VAX 4000 200
@@ -47,14 +43,8 @@ option		INSN_EMULATE	# CPU lacks some hardware instructions.
 mainbus0	at root
 
 # All buses; from the beginning attached to mainbus.
-#abus0		at mainbus0		# Master bus on VAX 8600
-#sbi0		at mainbus0		# SBI, master bus on 11/780.
-#cmi0		at mainbus0		# 11/750 internal bus.
-#bi0		at mainbus0		# VAX 8200
 vsbus0		at mainbus0		# All VAXstations
 ibus0		at mainbus0		# All Microvax
-#nbi0		at mainbus0		# VAX 8800
-#xmi0		at mainbus0		# VAX 6000
 mbus0		at mainbus0		# VS 3[58][24]0
 vxtbus0		at mainbus0		# VXT2000
 
@@ -98,36 +88,10 @@ ze0		at vxtbus0		# SGEC on-board ethernet
 qsc0		at vxtbus0		# serial ports
 lcspx0		at vxtbus0		# color frame buffer
 
-# Devices connected at VAXBI
-#cpu*		at bi? node?		# KA820/KA825 cpu
-#mem*		at bi? node?		# Memory subsystems
-#uba*		at bi? node?		# DWBUA BI-Unibus adapter
-#ni*		at bi? node?		# DEBNA/DEBNT ethernet adapter
-#kdb*		at bi? node?		# KDB50 MSCP disk ctlr
-#mscpbus*	at kdb?
-
-# CMI (VAX 11/750)
-#mem*		at cmi? tr?		# Memory subsystems
-#uba*		at cmi? tr?		# Unibus adapters
-#mba*		at cmi? tr?		# Massbus adapters
-
-# SBI (VAX 11/780, VAX 8600)
-#sbi*		at abus0		# VAX 8600 can have up to 4 SBI's.
-
-#mem*		at sbi? tr?		# Memory subsystems
-#uba*		at sbi? tr?		# Unibus adapters
-#mba*		at sbi? tr?		# Massbus adapters
-
-# Devices on Massbus adapters
-#hp*		at mba? drive?		# RM/RP disk drives
-
 # Devices on Unibus/Qbus adapters
 uda0		at uba?	csr 0172150	# UDA50/RQDX?
 uda1		at uba?	csr 0160334
 mtc0		at uba? csr 0174500	# Tape MSCP ctlr
-#ts0		at uba? csr 0172520	# TS11/TSV05 tape.
-#qd0		at uba? csr 0177400	# 4- or 8-bitplans color graphics
-#qv0		at uba? csr 0177400	# Monochrome graphics
 #de0		at uba? csr 0174510	# DELUA/DEUNA
 qe0		at uba? csr 0174440	# DEQNA/DELQA
 #dhu0		at uba? csr 0160440	# DHU-11
@@ -137,7 +101,6 @@ dz0		at uba? csr 0160100	# DZ-11
 # MSCP devices
 mscpbus*	at uda?
 mscpbus*	at mtc?
-#mscpbus*	at kdb?
 
 ra*		at mscpbus? drive?	# MSCP disk
 rx*		at mscpbus? drive?	# MSCP floppy
@@ -160,9 +123,6 @@ wsdisplay*	at lcg?
 wsdisplay*	at lcspx?
 wsdisplay*	at legss?
 wsdisplay*	at smg?
-
-#wsdisplay*	at qd0
-#wsdisplay*	at qv0
 
 lkkbd0		at dz0 line 0
 lkkbd0		at qsc0 line 2

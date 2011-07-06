@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.65 2011/04/16 03:21:15 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.66 2011/07/06 18:32:59 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -47,8 +47,6 @@
 #include <machine/cpu.h>
 
 #include <vax/mscp/mscp.h> /* For disk encoding scheme */
-
-#include "mba.h"
 
 /*
  * Attempt to read a disk label from a device
@@ -162,50 +160,3 @@ disk_printtype(int unit, int type)
 		printf("%c", (int)MSCP_MID_CHAR(0, type));
 	printf("%d\n", MSCP_MID_NUM(type));
 }
-
-#if NMBA > 0
-/*
- * Be sure that the pages we want to do DMA to is actually there
- * by faking page-faults if necessary. If given a map-register address,
- * also map it in.
- */
-void
-disk_reallymapin(struct buf *bp, pt_entry_t *map, int reg, int flag)
-{
-	struct proc *p;
-	volatile pt_entry_t *io;
-	pt_entry_t *pte;
-	struct pcb *pcb;
-	int pfnum, npf, o;
-	caddr_t addr;
-
-	o = (int)bp->b_data & VAX_PGOFSET;
-	npf = vax_atop(bp->b_bcount + o) + 1;
-	addr = bp->b_data;
-	p = bp->b_proc;
-
-	/*
-	 * Get a pointer to the pte pointing out the first virtual address.
-	 * Use different ways in kernel and user space.
-	 */
-	if ((bp->b_flags & B_PHYS) == 0) {
-		pte = kvtopte(addr);
-		p = &proc0;
-	} else {
-		pcb = &p->p_addr->u_pcb;
-		pte = uvtopte(addr, pcb);
-	}
-
-	if (map) {
-		io = &map[reg];
-		while (--npf > 0) {
-			pfnum = (*pte & PG_FRAME);
-			if (pfnum == 0)
-				panic("mapin zero entry");
-			pte++;
-			*(int *)io++ = pfnum | flag;
-		}
-		*(int *)io = 0;
-	}
-}
-#endif

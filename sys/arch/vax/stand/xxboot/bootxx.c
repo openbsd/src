@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.11 2011/03/13 00:13:53 deraadt Exp $ */
+/*	$OpenBSD: bootxx.c,v 1.12 2011/07/06 18:32:59 miod Exp $ */
 /* $NetBSD: bootxx.c,v 1.16 2002/03/29 05:45:08 matt Exp $ */
 
 /*-
@@ -49,9 +49,6 @@
 #include "machine/rpb.h"
 #include "../vax/gencons.h"
 
-#include "../mba/mbareg.h"
-#include "../mba/hpreg.h"
-
 #define NRSP 1 /* Kludge */
 #define NCMD 1 /* Kludge */
 #define LIBSA_TOO_OLD
@@ -66,8 +63,6 @@
 void	Xmain(void);
 void	hoppabort(int);
 void	romread_uvax(int lbn, int size, void *buf, struct rpb *rpb);
-void	hpread(int block);
-int	read750(int block, int *regs);
 int	unit_init(int, struct rpb *, int);
 
 struct open_file file;
@@ -82,13 +77,12 @@ volatile struct udadevice *csr;
 static int moved;
 
 extern int from;
-#define	FROM750	1
 #define	FROMMV	2
 #define	FROMVMB	4
 
 /*
- * The boot block are used by 11/750, 8200, MicroVAX II/III, VS2000,
- * VS3100/??, VS4000 and VAX6000/???, and only when booting from disk.
+ * The boot blocks are used by MicroVAX II/III, VS2000,
+ * VS3100, VS4000, and only when booting from disk.
  */
 void
 Xmain(void)
@@ -123,9 +117,6 @@ Xmain(void)
 		rpb->rpb_bootr5 = bootregs[5];
 		rpb->csrphy = bootregs[2];
 		rpb->adpphy = bootregs[1];	/* BI node on 8200 */
-		if (rpb->devtyp != BDEV_HP && vax_cputype == VAX_TYP_750)
-			rpb->adpphy =
-			    (bootregs[1] == 0xffe000 ? 0xf30000 : 0xf32000);
         }
 	rpb->rpb_base = rpb;
 	rpb->iovec = (int)bqo;
@@ -233,14 +224,10 @@ devopen(struct open_file *f, const char *fname, char **file)
 {
 
 #ifdef LIBSA_TOO_OLD
-	int i;
-	struct devsw	*dp;
 	f->f_dev = &devsw[0];
 #endif
 	*file = (char *)fname;
 
-	if (from == FROM750)
-		return 0;
 	/*
 	 * Reinit the VMB boot device.
 	 */
@@ -290,82 +277,11 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 		}
 	}
 
-	if (from == FROMMV) {
-		romread_uvax(block, size, buf, rpb);
-	} else /* if (from == FROM750) */ {
-		while (size > 0) {
-			if (rpb->devtyp == BDEV_HP)
-				hpread(block);
-			else
-				read750(block, bootregs);
-			bcopy(0, buf, 512);
-			size -= 512;
-			(char *)buf += 512;
-			block++;
-		}
-	}
+	romread_uvax(block, size, buf, rpb);
 
 	if (rsize)
 		*rsize = nsize;
 	return 0;
-}
-
-/*
- * The 11/750 boot ROM for Massbus disks doesn't seen to have layout info
- * for all RP disks (not RP07 at least) so therefore a very small and dumb
- * device driver is used. It assumes that there is a label on the disk
- * already that has valid layout info. If there is no label, we can't boot
- * anyway.
- */
-
-#define MBA_WCSR(reg, val) \
-	((void)(*(volatile u_int32_t *)((adpadr) + (reg)) = (val)));
-#define MBA_RCSR(reg) \
-	(*(volatile u_int32_t *)((adpadr) + (reg)))
-#define HP_WCSR(reg, val) \
-	((void)(*(volatile u_int32_t *)((unitadr) + (reg)) = (val)));
-#define HP_RCSR(reg) \
-	(*(volatile u_int32_t *)((unitadr) + (reg)))
-
-void
-hpread(int bn)
-{
-	int adpadr = bootregs[1];
-	int unitadr = adpadr + MUREG(bootregs[3], 0);
-	u_int cn, sn, tn;
-	struct disklabel *dp;
-	extern char start;
-
-	dp = (struct disklabel *)(LABELOFFSET + &start);
-	MBA_WCSR(MAPREG(0), PG_V);
-
-	MBA_WCSR(MBA_VAR, 0);
-	MBA_WCSR(MBA_BC, (~512) + 1);
-#ifdef __GNUC__
-	/*
-	 * Avoid four subroutine calls by using hardware division.
-	 */
-	asm("clrl %r1;"
-	    "movl %3,%r0;"
-	    "ediv %4,%r0,%0,%1;"
-	    "movl %1,%r0;"
-	    "ediv %5,%r0,%2,%1"
-	    : "=g"(cn),"=g"(sn),"=g"(tn)
-	    : "g"(bn),"g"(dp->d_secpercyl),"g"(dp->d_nsectors)
-	    : "r0","r1","cc");
-#else
-	cn = bn / dp->d_secpercyl;
-	sn = bn % dp->d_secpercyl;
-	tn = sn / dp->d_nsectors;
-	sn = sn % dp->d_nsectors;
-#endif
-	HP_WCSR(HP_DC, cn);
-	HP_WCSR(HP_DA, (tn << 8) | sn);
-	HP_WCSR(HP_CS1, HPCS_READ);
-
-	while (MBA_RCSR(MBA_SR) & MBASR_DTBUSY)
-		;
-	return;
 }
 
 extern char end[];

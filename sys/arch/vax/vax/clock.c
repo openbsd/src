@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.22 2010/09/20 06:33:48 matthew Exp $	 */
+/*	$OpenBSD: clock.c,v 1.23 2011/07/06 18:32:59 miod Exp $	 */
 /*	$NetBSD: clock.c,v 1.35 2000/06/04 06:16:58 matt Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -216,8 +216,7 @@ numtoyear(num)
 	return y;
 }
 
-#if VAX750 || VAX780 || VAX8600 || VAX650 || \
-    VAX660 || VAX670 || VAX680 || VAX53
+#if VAX650 || VAX660 || VAX670 || VAX680 || VAX53
 /*
  * Reads the TODR register; returns a (probably) true tick value,
  * or CLKREAD_BAD if failed. The year is based on the argument
@@ -257,7 +256,7 @@ generic_clkwrite()
 }
 #endif
 
-#if VAX630 || VAX410 || VAX43 || VAX8200 || VAX46 || VAX48 || VAX49
+#if VAX630 || VAX410 || VAX43 || VAX46 || VAX48 || VAX49
 
 volatile short *clk_page;	/* where the chip is mapped in virtual memory */
 int	clk_adrshift;	/* how much to multiply the in-page address with */

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.uba,v 1.3 2005/03/08 20:00:24 tdeval Exp $
+#	$OpenBSD: files.uba,v 1.4 2011/07/06 18:32:59 miod Exp $
 #	$NetBSD: files.uba,v 1.6 1999/06/20 18:09:22 ragge Exp $
 #
 # Config file and device description for machine-independent
@@ -42,11 +42,3 @@ file	arch/vax/if/if_qe.c				qe
 device	de: ifnet, ether
 attach	de at uba
 file	arch/vax/if/if_de.c				de
-
-# QDSS at UBA
-device	qd: qfont
-attach	qd at uba
-file	arch/vax/qbus/qd.c				qd needs-count
-
-# Fontfile for DEC framebuffers, soon to die in favour for MI fontfiles.
-file	arch/vax/qbus/qfont.c				qfont

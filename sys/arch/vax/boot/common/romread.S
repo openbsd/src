@@ -1,4 +1,4 @@
-/*	$OpenBSD: romread.S,v 1.1 2002/06/11 09:36:23 hugh Exp $ */
+/*	$OpenBSD: romread.S,v 1.2 2011/07/06 18:32:59 miod Exp $ */
 /*	$NetBSD: romread.S,v 1.1 2002/02/24 01:04:25 matt Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -39,24 +39,6 @@
 
 
 #include "../include/asm.h"
-
-/*
- * read750 (int block, int *regs)
- */
-ENTRY(read750, 0xFFE)
-	movl	8(ap), r8
-	movl	4(r8), r1
-	movl	8(r8), r2
-	movl	12(r8), r3
-	movl	24(r8), r6
-	clrl	r5
-	movl	4(ap), r8
-	pushl	$0
-	movl	$0, 4(sp)
-	movl    fp, 0xf0000	# ragge ???
-	jsb	(r6)
-	movl    0xf0000, fp	
-	ret
 
 /*
  * romread_uvax (int lbn, int size, void *buf, struct rpb *rpb)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ra.c,v 1.4 2011/03/13 00:13:53 deraadt Exp $ */
+/*	$OpenBSD: ra.c,v 1.5 2011/07/06 18:32:59 miod Exp $ */
 /*	$NetBSD: ra.c,v 1.11 2002/06/04 15:13:55 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -46,9 +46,6 @@
 #include "arch/vax/mscp/mscp.h"
 #include "arch/vax/mscp/mscpreg.h"
 
-#include "arch/vax/bi/bireg.h"
-#include "arch/vax/bi/kdbreg.h"
-
 #include "vaxstand.h"
 
 static void command(int, int);
@@ -69,7 +66,7 @@ static volatile struct uda {
 
 static struct disklabel ralabel;
 static char io_buf[DEV_BSIZE];
-static int dpart, dunit, remap, is_tmscp, curblock;
+static int dpart, dunit, is_tmscp, curblock;
 static volatile u_short *ra_ip, *ra_sa, *ra_sw;
 static volatile u_int *mapregs;
 
@@ -95,56 +92,28 @@ raopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 	dpart = part;
 	if (ctlr < 0)
 		ctlr = 0;
-	remap = csrbase && nexaddr;
 	curblock = 0;
-	if (csrbase) { /* On a uda-alike adapter */
-		if (askname == 0) {
-			csrbase = bootrpb.csrphy;
-			dunit = bootrpb.unit;
-			nexaddr = bootrpb.adpphy;
-		} else
-			csrbase += (ctlr ? 000334 : 012150);
-		ra_ip = (short *)csrbase;
-		ra_sa = ra_sw = (short *)csrbase + 1;
-		if (nexaddr) { /* have map registers */
-			mapregs = (int *)nexaddr + 512;
-			mapregs[494] = PG_V | (((u_int)&uda) >> 9);
-			mapregs[495] = mapregs[494] + 1;
-			(char *)ubauda = (char *)0x3dc00 +
-			    (((u_int)(&uda))&0x1ff);
-		} else
-			ubauda = &uda;
-		johan = (((u_int)ubauda) & 0xffff) + 8;
-		johan2 = (((u_int)ubauda) >> 16) & 077;
-		*ra_ip = 0; /* Start init */
-		bootrpb.csrphy = csrbase;
-	} else {
-		paddr_t kdaddr;
-		volatile int *w;
-		volatile int i = 10000;
-
-		if (askname == 0) {
-			nexaddr = bootrpb.csrphy;
-			dunit = bootrpb.unit;
-		} else {
-			nexaddr = (bootrpb.csrphy & ~(BI_NODESIZE - 1)) + KDB_IP;
-			bootrpb.csrphy = nexaddr;
-		}
-
-		kdaddr = nexaddr & ~(BI_NODESIZE - 1);
-		ra_ip = (short *)(kdaddr + KDB_IP);
-		ra_sa = (short *)(kdaddr + KDB_SA);
-		ra_sw = (short *)(kdaddr + KDB_SW);
-		johan = ((u_int)&uda.uda_ca.ca_rspdsc) & 0xffff;
-		johan2 = (((u_int)&uda.uda_ca.ca_rspdsc) & 0xffff0000) >> 16;
-		w = (int *)(kdaddr + BIREG_VAXBICSR);
-		*w = *w | BICSR_NRST;
-		while (i--) /* Need delay??? */
-			;
-		w = (int *)(kdaddr + BIREG_BER);
-		*w = ~(BIBER_MBZ|BIBER_NMR|BIBER_UPEN);/* ??? */
+	/* Assume uda-alike adapter */
+	if (askname == 0) {
+		csrbase = bootrpb.csrphy;
+		dunit = bootrpb.unit;
+		nexaddr = bootrpb.adpphy;
+	} else
+		csrbase += (ctlr ? 000334 : 012150);
+	ra_ip = (short *)csrbase;
+	ra_sa = ra_sw = (short *)csrbase + 1;
+	if (nexaddr) { /* have map registers */
+		mapregs = (int *)nexaddr + 512;
+		mapregs[494] = PG_V | (((u_int)&uda) >> 9);
+		mapregs[495] = mapregs[494] + 1;
+		(char *)ubauda = (char *)0x3dc00 +
+		    (((u_int)(&uda))&0x1ff);
+	} else
 		ubauda = &uda;
-	}
+	johan = (((u_int)ubauda) & 0xffff) + 8;
+	johan2 = (((u_int)ubauda) >> 16) & 077;
+	*ra_ip = 0; /* Start init */
+	bootrpb.csrphy = csrbase;
 
 #ifdef DEV_DEBUG
 	printf("start init\n");
@@ -264,18 +233,14 @@ rastrategy(void *f, int func, daddr32_t dblk,
 	u_int	pfnum, mapnr, nsize;
 
 #ifdef DEV_DEBUG
-	printf("rastrategy: buf %p remap %d is_tmscp %d\n",
-	    buf, remap, is_tmscp);
+	printf("rastrategy: buf %p is_tmscp %d\n",
+	    buf, is_tmscp);
 #endif
-	if (remap) {
-		pfnum = (u_int)buf >> VAX_PGSHIFT;
+	pfnum = (u_int)buf >> VAX_PGSHIFT;
 
-		for(mapnr = 0, nsize = size; (nsize + VAX_NBPG) > 0;
-		    nsize -= VAX_NBPG)
-			mapregs[mapnr++] = PG_V | pfnum++;
-		uda.uda_cmd.mscp_seq.seq_buffer = ((u_int)buf) & 0x1ff;
-	} else
-		uda.uda_cmd.mscp_seq.seq_buffer = ((u_int)buf);
+	for(mapnr = 0, nsize = size; (nsize + VAX_NBPG) > 0; nsize -= VAX_NBPG)
+		mapregs[mapnr++] = PG_V | pfnum++;
+	uda.uda_cmd.mscp_seq.seq_buffer = ((u_int)buf) & 0x1ff;
 
 	if (is_tmscp) {
 		int i;

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2007/11/25 18:25:33 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 2011/07/06 18:32:59 miod Exp $
 #	$NetBSD: Makefile,v 1.12 2002/02/24 01:04:25 matt Exp $
 
 S=	${.CURDIR}/../../../../
@@ -7,7 +7,6 @@ PROG=	xxboot
 LINKS=	${BINDIR}/xxboot ${BINDIR}/raboot 
 LINKS+=	${BINDIR}/xxboot ${BINDIR}/hdboot
 LINKS+=	${BINDIR}/xxboot ${BINDIR}/sdboot
-LINKS+=	${BINDIR}/xxboot ${BINDIR}/hpboot
 WARNS?=	1
 
 SRCS=	start.S bootxx.c romread.S str.S urem.s udiv.s

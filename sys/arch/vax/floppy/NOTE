@@ -1,5 +1,0 @@
-This are the boot files needed to boot up a 11/780 system.
-BUT; both arff and flcopy are missing from the distribution;
-neither is there a driver for the LSI11 RX01 in the kernel.
-Anyway, these files must be installed on the console RX01
-to be able to boot up a 11/780 system.

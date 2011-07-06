@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.5 2011/03/13 00:13:53 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.6 2011/07/06 18:32:59 miod Exp $ */
 /*	$NetBSD: conf.c,v 1.10 2000/06/15 19:53:23 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -50,9 +50,7 @@
 static int nostrategy(void *, int, daddr32_t, size_t, void *, size_t *);
 
 struct	devsw devsw[]={
-	SADEV("hp",hpstrategy, hpopen, nullsys, noioctl),
 	SADEV("qe",nostrategy, qeopen, qeclose, noioctl), /* DEQNA */
-	SADEV("ctu",ctustrategy, ctuopen, nullsys, noioctl),
 	SADEV("ra",rastrategy, raopen, nullsys, noioctl),
 	SADEV("mt",rastrategy, raopen, nullsys, noioctl),
         SADEV("rom",romstrategy, romopen, nullsys, noioctl),
@@ -63,15 +61,11 @@ struct	devsw devsw[]={
 	SADEV("st",nullsys, nullsys, nullsys, noioctl),
 	SADEV("le",nostrategy, leopen, leclose, noioctl), /* LANCE */
 	SADEV("ze",nostrategy, zeopen, zeclose, noioctl), /* SGEC */
-	SADEV("rl",romstrategy, romopen, nullsys, noioctl),
 	SADEV("de",nostrategy, deopen, declose, noioctl), /* DEUNA */
-	SADEV("ni",nostrategy, niopen, nullsys, noioctl), /* DEBNA */
 };
 
 int	cnvtab[] = {
-	BDEV_HP,
 	BDEV_QE,
-	BDEV_CNSL,
 	BDEV_UDA,
 	BDEV_TK,
 	-1,
@@ -82,9 +76,7 @@ int	cnvtab[] = {
 	BDEV_ST,
 	BDEV_LE,
 	BDEV_ZE,
-	BDEV_RL,
 	BDEV_DE,
-	BDEV_NI,
 };
 
 int     ndevs = (sizeof(devsw)/sizeof(devsw[0]));

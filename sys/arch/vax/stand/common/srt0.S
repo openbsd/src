@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.1 2002/06/11 09:36:24 hugh Exp $ */
+/*	$OpenBSD: srt0.S,v 1.2 2011/07/06 18:32:59 miod Exp $ */
 /*	$NetBSD: srt0.S,v 1.2 2002/03/31 00:11:14 matt Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -68,7 +68,6 @@ relocated:	                # now relocation is done !!!
 	halt			# no return
 
 ENTRY(machdep_start, 0)
-	calls	$0,_C_LABEL(niclose)	# Evil hack to shutdown DEBNA.
 	mtpr	$0x1f,$0x12	# Block all interrupts
 	mtpr	$0,$0x18	# stop real time interrupt clock
 	movl	4(ap), r6

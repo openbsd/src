@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencons.c,v 1.23 2010/06/28 14:13:31 deraadt Exp $	*/
+/*	$OpenBSD: gencons.c,v 1.24 2011/07/06 18:32:59 miod Exp $	*/
 /*	$NetBSD: gencons.c,v 1.22 2000/01/24 02:40:33 matt Exp $	*/
 
 /*
@@ -291,30 +291,6 @@ gencninit(struct consdev *cndev)
 void
 gencnputc(dev_t dev, int ch)
 {
-#ifdef VAX8800
-	/*
-	 * On KA88 we may get C-S/C-Q from the console.
-	 * XXX - this will cause a loop at spltty() in kernel and will
-	 * interfere with other console communication. Fortunately
-	 * kernel printf's are uncommon.
-	 */
-	if (vax_cputype == VAX_TYP_8NN) {
-		int s = spltty();
-
-		while (mfpr(PR_RXCS) & GC_DON) {
-			if ((mfpr(PR_RXDB) & 0x7f) == 19) {
-				while (1) {
-					while ((mfpr(PR_RXCS) & GC_DON) == 0)
-						;
-					if ((mfpr(PR_RXDB) & 0x7f) == 17)
-						break;
-				}
-			}
-		}
-		splx(s);
-	}
-#endif
-
 	while ((mfpr(PR_TXCS) & GC_RDY) == 0) /* Wait until xmit ready */
 		;
 	mtpr(ch, PR_TXDB);	/* xmit character */

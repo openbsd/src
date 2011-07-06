@@ -1,4 +1,4 @@
-/*	$OpenBSD: findcpu.c,v 1.14 2008/08/20 19:00:01 miod Exp $	*/
+/*	$OpenBSD: findcpu.c,v 1.15 2011/07/06 18:32:59 miod Exp $	*/
 /*	$NetBSD: findcpu.c,v 1.5 1999/08/23 19:10:43 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -67,16 +67,6 @@ findcpu(void)
 	vax_boardtype = vax_cputype << 24;
 
 	switch (vax_cputype) {
-	case VAX_TYP_780:
-		vax_bustype = VAX_SBIBUS;
-		break;
-	case VAX_TYP_750:
-		vax_bustype = VAX_CMIBUS;
-		break;
-	case VAX_TYP_790:
-		vax_bustype = VAX_ABUS;
-		break;
-
 	case VAX_TYP_UV2:
 	case VAX_TYP_CVAX:
 	case VAX_TYP_RIGEL:
@@ -105,13 +95,6 @@ findcpu(void)
 			vax_bustype = VAX_VXTBUS;
 			break;
 
-		case VAX_BTYP_9CC:
-		case VAX_BTYP_9RR:
-		case VAX_BTYP_1202:
-		case VAX_BTYP_1302:
-			vax_bustype = VAX_XMIBUS;
-			break;
-
 		case VAX_BTYP_60:
 			vax_confdata =
 			    ((struct cvax_ssc *)CVAX_SSC)->ssc_terminfo;
@@ -127,18 +110,11 @@ findcpu(void)
 		case VAX_BTYP_1305:
 			vax_bustype = VAX_IBUS;
 			break;
+
+		default:
+			/* CPU not supported, just give up */
+			asm("halt");
 		}
-		break;
-
-	case VAX_TYP_8SS:
-		vax_boardtype = VAX_BTYP_8000;
-		vax_bustype = VAX_BIBUS;
-		break;
-
-	case VAX_TYP_8NN:
-	case VAX_TYP_8PS:
-		vax_boardtype = VAX_BTYP_8800;
-		vax_bustype = VAX_NBIBUS;
 		break;
 
 	default:

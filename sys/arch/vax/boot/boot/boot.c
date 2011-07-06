@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.19 2008/08/26 18:36:21 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.20 2011/07/06 18:32:59 miod Exp $ */
 /*	$NetBSD: boot.c,v 1.18 2002/05/31 15:58:26 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -38,8 +38,6 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
 
-#define V750UCODE(x)    ((x>>8)&255)
-
 #include "machine/rpb.h"
 #include "machine/sid.h"
 
@@ -61,9 +59,6 @@ void	autoconf(void);
 int	getsecs(void);
 int	setjmp(int *);
 int	testkey(void);
-#if 0
-void	loadpcs(void);
-#endif
 
 const struct vals {
 	char	*namn;
@@ -109,7 +104,7 @@ Xmain(void)
 		transition = ' ';
 
 	askname = bootrpb.rpb_bootr5 & RB_ASKNAME;
-	printf("\n\r>> OpenBSD/vax boot [%s] <<\n", "1.15");
+	printf("\n\r>> OpenBSD/vax boot [%s] <<\n", "1.16");
 	printf(">> Press enter to autoboot now, or any other key to abort:  ");
 	sluttid = getsecs() + 5;
 	senast = 0;
@@ -196,7 +191,7 @@ void
 boot(char *arg)
 {
 	char *fn = "bsd";
-	int howto, fl, err;
+	int howto, err;
 	u_long marks[MARK_MAX];
 
 	if (arg) {
@@ -245,104 +240,6 @@ load:
 	}
 	printf("Boot failed: %s\n", strerror(errno));
 }
-
-#if 0
-
-/* 750 Patchable Control Store magic */
-
-#include "../include/mtpr.h"
-#include "../include/cpu.h"
-#include "../include/sid.h"
-#define	PCS_BITCNT	0x2000		/* number of patchbits */
-#define	PCS_MICRONUM	0x400		/* number of ucode locs */
-#define	PCS_PATCHADDR	0xf00000	/* start addr of patchbits */
-#define	PCS_PCSADDR	(PCS_PATCHADDR+0x8000)	/* start addr of pcs */
-#define	PCS_PATCHBIT	(PCS_PATCHADDR+0xc000)	/* patchbits enable reg */
-#define	PCS_ENABLE	0xfff00000	/* enable bits for pcs */
-
-#define	extzv(one, two, three,four)	\
-({			\
-	asm __volatile (" extzv %0,%3,(%1),(%2)+"	\
-			:			\
-			: "g"(one),"g"(two),"g"(three),"g"(four));	\
-})
-
-
-void
-loadpcs(void)
-{
-	static int pcsdone = 0;
-	int mid = mfpr(PR_SID);
-	int i, j, *ip, *jp;
-	char pcs[100];
-	char *cp;
-
-	if ((mid >> 24) != VAX_750 || ((mid >> 8) & 255) < 95 || pcsdone)
-		return;
-	printf("Updating 11/750 microcode: ");
-	for (cp = line; *cp; cp++)
-		if (*cp == ')' || *cp == ':')
-			break;
-	if (*cp) {
-		bcopy(line, pcs, 99);
-		pcs[99] = 0;
-		i = cp - line + 1;
-	} else
-		i = 0;
-	strncpy(pcs + i, "pcs750.bin", sizeof(pcs) - i - 1);
-	pcs[sizeof(pcs)-1] = '\0';
-	i = open(pcs, 0);
-	if (i < 0) {
-		printf("bad luck - missing pcs750.bin :-(\n");
-		return;
-	}
-	/*
-	 * We ask for more than we need to be sure we get only what we expect.
-	 * After read:
-	 *	locs 0 - 1023	packed patchbits
-	 *	 1024 - 11264	packed microcode
-	 */
-	if (read(i, (char *)0, 23*512) != 22*512) {
-		printf("Error reading %s\n", pcs);
-		close(i);
-		return;
-	}
-	close(i);
-
-	/*
-	 * Enable patchbit loading and load the bits one at a time.
-	 */
-	*((int *)PCS_PATCHBIT) = 1;
-	ip = (int *)PCS_PATCHADDR;
-	jp = (int *)0;
-	for (i=0; i < PCS_BITCNT; i++) {
-		extzv(i,jp,ip,1);
-	}
-	*((int *)PCS_PATCHBIT) = 0;
-
-	/*
-	 * Load PCS microcode 20 bits at a time.
-	 */
-	ip = (int *)PCS_PCSADDR;
-	jp = (int *)1024;
-	for (i=j=0; j < PCS_MICRONUM * 4; i+=20, j++) {
-		extzv(i,jp,ip,20);
-	}
-
-	/*
-	 * Enable PCS.
-	 */
-	i = *jp;		/* get 1st 20 bits of microcode again */
-	i &= 0xfffff;
-	i |= PCS_ENABLE;	/* reload these bits with PCS enable set */
-	*((int *)PCS_PCSADDR) = i;
-
-	mid = mfpr(PR_SID);
-	printf("new rev level=%d\n", V750UCODE(mid));
-	pcsdone = 1;
-}
-
-#endif
 
 void
 usage(char *hej)

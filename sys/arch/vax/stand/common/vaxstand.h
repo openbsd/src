@@ -1,4 +1,4 @@
-/*	$OpenBSD: vaxstand.h,v 1.2 2011/03/13 00:13:53 deraadt Exp $ */
+/*	$OpenBSD: vaxstand.h,v 1.3 2011/07/06 18:32:59 miod Exp $ */
 /*	$NetBSD: vaxstand.h,v 1.1 1999/03/06 16:36:05 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,13 +33,10 @@
  /* All bugs are subject to removal without further notice */
 		
 
-#define MAXNMBA 8 /* Massbussadapters */
 #define MAXNUBA 8 /* Unibusadapters */
-#define	MAXMBAU	8 /* Units on an mba */
 
 /* Variables used in autoconf */
-extern int nmba, nuba, nbi, nsbi, nuda;
-extern int *ubaaddr, *mbaaddr, *udaaddr, *uioaddr, *biaddr;
+extern int *ubaaddr, *mbaaddr, *udaaddr;
 extern int cpunumber, howto;
 extern dev_t bootdev;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.2 2005/12/10 11:45:43 miod Exp $ */
+/*	$OpenBSD: if_de.c,v 1.3 2011/07/06 18:32:59 miod Exp $ */
 /*	$NetBSD: if_de.c,v 1.2 2002/05/24 21:41:40 ragge Exp $	*/
 
 /*
@@ -47,7 +47,12 @@
 #include <lib/libsa/netif.h>
 #include <lib/libsa/stand.h>
 
-#include <arch/vax/qbus/if_dereg.h>
+#include <arch/vax/if/if_dereg.h>
+
+#define	DE_PCSR0	0
+#define	DE_PCSR1	2
+#define	DE_PCSR2	4
+#define	DE_PCSR3	6
 
 #include "arch/vax/include/sid.h"
 #include "arch/vax/include/rpb.h"

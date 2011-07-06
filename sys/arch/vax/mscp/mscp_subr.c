@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_subr.c,v 1.10 2009/06/02 20:58:39 miod Exp $	*/
+/*	$OpenBSD: mscp_subr.c,v 1.11 2011/07/06 18:32:59 miod Exp $	*/
 /*	$NetBSD: mscp_subr.c,v 1.18 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -332,9 +332,8 @@ mscp_init(mi)
 	}
 
 	/* step2 */
-	WRITE_SW(((mi->mi_dmam->dm_segs[0].ds_addr & 0xffff) + 
-	    offsetof(struct mscp_pack, mp_ca.ca_rspdsc[0])) |
-	    (vax_cputype == VAX_780 || vax_cputype == VAX_8600 ? MP_PI : 0));
+	WRITE_SW((mi->mi_dmam->dm_segs[0].ds_addr & 0xffff) + 
+	    offsetof(struct mscp_pack, mp_ca.ca_rspdsc[0]));
 	status = mscp_waitstep(mi, STEP2MASK, STEP2GOOD(mi->mi_ivec >> 2));
 	if (status == 0) {
 		(*mi->mi_mc->mc_saerror)(mi->mi_dev.dv_parent, 0);

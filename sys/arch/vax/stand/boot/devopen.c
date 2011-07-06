@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.4 2008/08/26 18:36:21 miod Exp $ */
+/*	$OpenBSD: devopen.c,v 1.5 2011/07/06 18:32:59 miod Exp $ */
 /*	$NetBSD: devopen.c,v 1.10 2002/05/24 21:40:59 ragge Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
@@ -36,10 +36,6 @@
 #include "machine/rpb.h"
 #include "machine/sid.h"
 #include "machine/pte.h"
-#define	VAX780 1
-#include "machine/ka750.h"
-
-#include <arch/vax/bi/bireg.h>
 
 #include "vaxstand.h"
 
@@ -151,44 +147,6 @@ devopen(f, fname, file)
 
 	nexaddr = bootrpb.adpphy;
 	switch (vax_boardtype) {
-	case VAX_BTYP_750:
-		csrbase = (nexaddr == 0xf30000 ? 0xffe000 : 0xfbe000);
-		if (adapt < 0)
-			break;
-		nexaddr = (NEX750 + NEXSIZE * adapt);
-		csrbase = (adapt == 8 ? 0xffe000 : 0xfbe000);
-		break;
-	case VAX_BTYP_780:
-	case VAX_BTYP_790:
-		csrbase = 0x2007e000 + 0x40000 * ((nexaddr & 0x1e000) >> 13);
-		if (adapt < 0)
-			break;
-		nexaddr = ((int)NEX780 + NEXSIZE * adapt);
-		csrbase = 0x2007e000 + 0x40000 * adapt;
-		break;
-	case VAX_BTYP_9CC: /* 6000/200 */
-	case VAX_BTYP_9RR: /* 6000/400 */
-	case VAX_BTYP_1202: /* 6000/500 */
-		csrbase = 0;
-		if (ctlr < 0)
-			ctlr = bootrpb.adpphy & 15;
-		if (adapt < 0)
-			adapt = (bootrpb.adpphy >> 4) & 15;
-		nexaddr = BI_BASE(adapt, ctlr);
-		break;
-
-	case VAX_BTYP_8000:
-	case VAX_BTYP_8800:
-	case VAX_BTYP_8PS:
-		csrbase = 0; /* _may_ be a KDB */
-		nexaddr = bootrpb.csrphy;
-		if (ctlr < 0)
-			break;
-		if (adapt < 0)
-			nexaddr = (nexaddr & 0xff000000) + BI_NODE(ctlr);
-		else
-			nexaddr = BI_BASE(adapt, ctlr);
-		break;
 	case VAX_BTYP_610:
 		nexaddr = 0; /* No map regs */
 		csrbase = 0x20000000;

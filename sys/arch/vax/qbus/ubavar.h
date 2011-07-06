@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubavar.h,v 1.7 2006/07/19 20:22:37 miod Exp $	*/
+/*	$OpenBSD: ubavar.h,v 1.8 2011/07/06 18:32:59 miod Exp $	*/
 /*	$NetBSD: ubavar.h,v 1.31 2001/04/26 19:16:07 ragge Exp $	*/
 
 /*
@@ -94,7 +94,6 @@ struct	uba_unit {
 	int    (*uu_ready)(struct uba_unit *);
 	void	*uu_ref;	/* Buffer this is related to */
 	short   uu_xclu;        /* want exclusive use of bdp's */
-	short   uu_keepbdp;     /* hang on to bdp's once allocated */
 };
 
 /*

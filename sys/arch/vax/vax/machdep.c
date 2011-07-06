@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.116 2011/07/05 04:48:02 guenther Exp $ */
+/* $OpenBSD: machdep.c,v 1.117 2011/07/06 18:33:00 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -1073,10 +1073,6 @@ char	cpu_model[100];
  * The strict cpu-dependent information is set up here, in
  * form of a pointer to a struct that is specific for each cpu.
  */
-extern struct cpu_dep ka780_calls;
-extern struct cpu_dep ka750_calls;
-extern struct cpu_dep ka860_calls;
-extern struct cpu_dep ka820_calls;
 extern struct cpu_dep ka43_calls;
 extern struct cpu_dep ka46_calls;
 extern struct cpu_dep ka48_calls;
@@ -1113,28 +1109,6 @@ start(struct rpb *prpb)
 		strlcpy(cpu_model, "VAXstation ", sizeof cpu_model);
 
 	switch (vax_boardtype) {
-#if VAX780
-	case VAX_BTYP_780:
-		dep_call = &ka780_calls;
-		strlcpy(cpu_model,"VAX 11/780", sizeof cpu_model);
-		if (vax_cpudata & 0x100)
-			cpu_model[9] = '5';
-		break;
-#endif
-#if VAX750
-	case VAX_BTYP_750:
-		dep_call = &ka750_calls;
-		strlcpy(cpu_model, "VAX 11/750", sizeof cpu_model);
-		break;
-#endif
-#if VAX8600
-	case VAX_BTYP_790:
-		dep_call = &ka860_calls;
-		strlcpy(cpu_model,"VAX 8600", sizeof cpu_model);
-		if (vax_cpudata & 0x100)
-			cpu_model[6] = '5';
-		break;
-#endif
 #if VAX410
 	case VAX_BTYP_420: /* They are very similar */
 		dep_call = &ka410_calls;
@@ -1304,13 +1278,6 @@ start(struct rpb *prpb)
 		default:
 			strlcat(cpu_model,"- Unknown Legacy Class", sizeof cpu_model);
 		}
-		break;
-#endif
-#if VAX8200
-	case VAX_BTYP_8000:
-		mastercpu = mfpr(PR_BINID);
-		dep_call = &ka820_calls;
-		strlcpy(cpu_model, "VAX 8200", sizeof cpu_model);
 		break;
 #endif
 #ifdef VAX60

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uda.c,v 1.8 2010/09/20 06:33:48 matthew Exp $	*/
+/*	$OpenBSD: uda.c,v 1.9 2011/07/06 18:32:59 miod Exp $	*/
 /*	$NetBSD: uda.c,v 1.36 2000/06/04 06:17:05 matt Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -213,7 +213,6 @@ udaattach(parent, self, aux)
 	 */
 	sc->sc_unit.uu_softc = sc;	/* Backpointer to softc */
 	sc->sc_unit.uu_ready = udaready;/* go routine called from adapter */
-	sc->sc_unit.uu_keepbdp = vax_cputype == VAX_750 ? 1 : 0;
 
 	/*
 	 * Map the communication area and command and

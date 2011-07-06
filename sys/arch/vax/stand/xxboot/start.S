@@ -1,4 +1,4 @@
-/*	$OpenBSD: start.S,v 1.2 2003/11/07 10:16:45 jmc Exp $ */
+/*	$OpenBSD: start.S,v 1.3 2011/07/06 18:32:59 miod Exp $ */
 /*	$NetBSD: start.S,v 1.1 2002/02/24 01:04:26 matt Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -64,8 +64,7 @@ _C_LABEL(start):
 	brb	from_0x08	# skip ...
 
 .org	0x0C			# 11/750  & 8200 starts here
-	movzbl	$1,_C_LABEL(from)# We booted from "old" rom.
-	brw	cont_750
+	halt			# not supported
 
 
 from_0x00:			# uVAX from TK50 
@@ -131,45 +130,6 @@ start_vmb:
 	.globl	_C_LABEL(from)
 _C_LABEL(from):
 	.long	0
-
-/*
- * After bootblock (LBN0) has been loaded into the first page 
- * of good memory by 11/750's ROM-code (transfer address
- * of bootblock-code is: base of good memory + 0x0C) registers
- * are initialized as:
- *	R0:	type of boot-device
- *			0:	Massbus device
- *			1:	RK06/RK07
- *			2:	RL02
- *			17:	UDA50
- *			35:	TK50
- *			64:	TU58
- *	R1:	(UBA) address of UNIBUS I/O-page
- *		(MBA) address of boot device's adapter
- *	R2:	(UBA) address of the boot device's CSR
- *		(MBA) controller number of boot device
- *	R6:	address of driver subroutine in ROM
- *
- * cont_750 reads in LBN1-15 for further execution.
- */
-cont_750:
-	movl	$_C_LABEL(start), sp	# move stack to avoid clobbering the code
-	pushr	$0x131		# save clobbered registers
-	clrl	r4		# %r4 == # of blocks transferred
-	movab	_C_LABEL(start),r5	# %r5 have base address for next transfer
-	pushl	r5		# ...on stack also (Why?)
-1:	incl	r4		# increment block count
-	movl	r4,r8		# LBN is in %r8 for rom routine
-	addl2	$0x200,r5	# Increase address for next read
-	cmpl	$16,r4		# read 15 blocks?
-	beql	2f		# Yep
-	movl	r5,(sp)		# move address to stack also
-	jsb	(r6)		# read 512 bytes
-	blbs	r0,1b		# jump if read succeeded
-	halt			# otherwise die...
-2:	tstl	(sp)+		# remove boring arg from stack
-	popr	$0x131		# restore clobbered registers
-	brw	start_all	# Ok, continue...
 
 /* uVAX main entry is at the start of the second disk block.  This is
  * needed for multi-arch CD booting where multiple architecture need

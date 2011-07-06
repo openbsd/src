@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.53 2011/06/27 03:27:07 tedu Exp $
+#	$OpenBSD: files.vax,v 1.54 2011/07/06 18:32:59 miod Exp $
 #	$NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -14,35 +14,8 @@ attach	mainbus at root
 
 # Define a bunch of devices, needed in more than one place.
 device	cpu
-device	mem
-device	mba {drive = -1}
 
 define	dzcons
-
-# SBI and related devices
-device	sbi {tr = -1}
-attach	sbi at mainbus with sbi_mainbus
-file	arch/vax/vax/sbi.c			sbi
-
-attach	mem at sbi with mem_sbi
-file	arch/vax/vax/ka780.c			vax780 | mem_sbi
-file	arch/vax/vax/cfl.c			vax780 | mem_sbi
-
-# Abus and related devices
-device	abus {}
-attach	abus at mainbus
-attach	sbi at abus with sbi_abus
-file	arch/vax/vax/ka860.c			abus
-file	arch/vax/vax/crl.c			abus
-
-# CMI and related devices
-device	cmi {tr = -1}
-attach	cmi at mainbus
-file	arch/vax/vax/cmi.c			cmi
-
-attach	mem at cmi with mem_cmi
-file	arch/vax/vax/ka750.c			vax750 | mem_cmi
-file	arch/vax/vax/ctu.c			vax750 | mem_cmi
 
 device	vsbus {csr}
 attach	vsbus at mainbus
@@ -72,23 +45,6 @@ file	arch/vax/vxt/if_ze_vxtbus.c		ze_vxtbus
 attach	le at ibus with le_ibus
 file	arch/vax/if/if_le.c			le_ibus
 
-attach	mba at sbi with mba_sbi
-attach	mba at cmi with mba_cmi
-file	arch/vax/mba/mba.c			mba needs-flag
-
-device	hp: disk
-attach	hp at mba
-file	arch/vax/mba/hp.c			hp needs-flag
-major	{hp = 0}
-
-device	ht: tape
-attach	ht at mba
-file	arch/vax/mba/ht.c			ht needs-flag
-
-# Memory Disk for install floppy
-#file	arch/vax/vax/md_root.c			memory_disk_hooks
-#major	{md = 23}
-
 # MSCP device drivers
 include	"arch/vax/mscp/files.mscp"
 major	{ra = 9}
@@ -98,25 +54,6 @@ include	"arch/vax/qbus/files.uba"
 
 attach	uba at ibus with uba_ibus
 file	arch/vax/uba/uba_ibus.c			uba_ibus
-attach	uba at sbi with uba_sbi
-file	arch/vax/uba/uba_sbi.c			uba_sbi
-attach	uba at cmi with uba_cmi
-file	arch/vax/uba/uba_cmi.c			uba_cmi
-
-# BI bus definitions
-#include "arch/vax/bi/files.bi"
-
-#attach	bi at mainbus with bi_mainbus
-#file	arch/vax/bi/bi_mainbus.c		bi_mainbus
-
-# VAX CPUs at BI, do not belong in MI code.
-#attach	cpu at bi with cpu_bi
-#attach	mem at bi with mem_bi
-
-# TS11 at UBA
-device	ts: tape
-attach	ts at uba
-file	arch/vax/uba/ts.c			ts needs-flag
 
 attach	dz at vsbus with dz_vsbus: dzcons
 file	arch/vax/vsa/dz_ibus.c			dz_vsbus
@@ -210,141 +147,6 @@ file	arch/vax/vxt/qscms.c			qscms needs-flag
 
 file	arch/vax/dec/dzinput.c			dzkbd | dzms
 
-# These devices aren't tested (or even compiled!)
-# They are just included here to make some files happy ;)
-#
-
-# Ikonas framebuffer
-device	ik
-attach	ik at uba
-file	arch/vax/uba/ik.c			ik needs-flag
-
-device	vs
-attach	vs at uba
-file	arch/vax/uba/vs.c			vs needs-flag
-
-# RK06/07 on UBA
-device	rk: disk
-attach	rk at uba
-file	arch/vax/uba/rk.c			rk needs-flag
-
-# TM11/TE10 at UBA
-device	te: tape
-attach	te at uba
-file	arch/vax/uba/tm.c			te needs-flag
-
-# TU78 at MBA
-device	mu: tape
-attach	mu at mba
-file	arch/vax/mba/mt.c			mu needs-flag
-
-# DMF32 on UBA
-device	dmf # XXX?
-attach	dmf at uba
-file	arch/vax/uba/dmf.c			dmf needs-flag
-file	arch/vax/uba/dmz.c			dmf needs-flag
-
-# DMZ32 on UBA
-device	dmz # XXX?
-attach	dmz at uba
-file	arch/vax/uba/dmx.c			dmz needs-flag
-
-# DN-11 on UBA
-device	dn # XXX?
-attach	dn at uba
-file	arch/vax/uba/dn.c			dn needs-flag
-
-# IDC (RB730) on UBA (VAX 11/730)
-device	idc {drive = -1}
-attach	idc at uba
-device	rb: disk
-attach	rb at idc
-file	arch/vax/uba/idc.c			rb needs-flag
-
-# LP-11 at UBA
-device	lp
-attach	lp at uba
-file	arch/vax/uba/lp.c			lp needs-flag
-
-# ???? at UBA
-device	lpa
-attach	lpa at uba
-file	arch/vax/uba/lpa.c			lpa needs-flag
-
-# PS2 at UBA
-device	ps
-attach	ps at uba
-file	arch/vax/uba/ps.c			ps needs-flag
-
-# RL02/RL11 at UBA
-#device	hl {drive = -1}
-#attach	hl at uba
-#device	rl: disk
-#attach	rl at hl
-#file	arch/vax/uba/rl.c			rl needs-flag
-
-# SC-21/SC-31 at UBA
-device	sc {drive = -1}
-attach	sc at uba
-device	up: disk
-attach	up at sc
-file	arch/vax/uba/up.c			up needs-flag
-
-# TU45 at UBA
-device	ut {drive = -1}
-attach	ut at uba
-device	tj: tape
-attach	tj at ut
-file	arch/vax/uba/ut.c			tj needs-flag
-
-# TU58/DECtape II
-device	uu: tape
-attach	uu at uba
-file	arch/vax/uba/uu.c			uu needs-flag
-
-# Benson-Varian plotter at UBA
-device	va {drive = -1}
-attach	va at uba
-device	vz
-attach	vz at va
-file	arch/vax/uba/va.c			va needs-flag
-
-# Versatec plotter at UBA
-device	vp
-attach	vp at uba
-file	arch/vax/uba/vp.c			vp needs-flag
-
-# QVSS at UBA
-device	qv
-attach	qv at uba
-file	arch/vax/uba/qv.c			qv needs-flag
-
-# Interlan NP100 at UBA
-device	np: ifnet
-attach	np at uba
-file	arch/vax/if/if_ix.c			np needs-flag
-file	arch/vax/uba/np.c			np needs-flag
-
-# ACC LH/DH IMP on UBA
-device	acc: ifnet
-attach	acc at uba
-file	arch/vax/if/if_acc.c			acc needs-flag
-
-# DR11C at UBA
-device	ct # XXX
-attach	ct at uba
-file	arch/vax/uba/ct.c			ct needs-flag
-
-# A/D-converter on UBA
-device	ad
-attach	ad at uba
-file	arch/vax/uba/ad.c			ad needs-flag
-
-# DH-11/DM-11 on UBA
-device	dh # XXX?
-attach	dh at uba
-file	arch/vax/uba/dh.c			dh needs-flag
-
 # M-bus on VS 3[58][24]0
 include "arch/vax/mbus/files.mbus"
 
@@ -360,14 +162,14 @@ file	arch/vax/vax/bus_dma.c
 file	arch/vax/vax/bus_mem.c
 file	arch/vax/vax/clock.c
 file	arch/vax/vax/conf.c
-file	arch/vax/vax/crx.c			vax8200
 file	arch/vax/vax/cvax.c			vax60 | vax650
 file	arch/vax/vax/db_disasm.c		ddb
 file	arch/vax/vax/db_machdep.c		ddb
 file	arch/vax/vax/disksubr.c			disk | tape
 file	arch/vax/vax/emulate.s			insn_emulate
 file	arch/vax/vax/findcpu.c
-file	arch/vax/vax/gencons.c	vax8600|vax8200|vax780|vax750|vax630|vax650|vax660|vax670|vax680
+file	arch/vax/vax/gencons.c			vax630 | vax650 | vax660 |
+						vax670 | vax680
 file	arch/vax/vax/in_cksum.c			inet
 file	arch/vax/vax/in4_cksum.c		inet
 file	arch/vax/vax/ka410.c			vax410
@@ -382,7 +184,6 @@ file	arch/vax/vax/ka650.c			vax650
 file	arch/vax/vax/ka660.c			vax660
 file	arch/vax/vax/ka670.c			vax670
 file	arch/vax/vax/ka680.c			vax680
-file	arch/vax/vax/ka820.c			vax8200
 file	arch/vax/vax/machdep.c
 file	arch/vax/vax/mem.c
 file	arch/vax/vax/mutex.c
@@ -399,27 +200,6 @@ file	arch/vax/vax/vm_machdep.c
 file	arch/vax/vax/vxt.c			vxt
 file	arch/vax/vax/wscons_machdep.c		wsdisplay | wskbd
 file	arch/vax/uba/uba_dma.c			uba
-
-# Keep these for now. Time will tell which we will need... 
-#arch/vax/vax/dkbad.c		standard
-#arch/vax/vax/ka730.c		standard
-#arch/vax/vax/iidr.o		optional ii
-#arch/vax/vax/iidrsys.o		optional ii
-#arch/vax/vax/iidr_glob.o	optional ii
-#arch/vax/if/if_css.c		optional css imp device-driver
-#arch/vax/if/if_dp.c		optional dp device-driver
-#arch/vax/if/if_ddn.c		optional ddn device-driver
-#arch/vax/if/if_dmc.c		optional dmc device-driver
-#arch/vax/if/if_dmv.c		optional dmv device-driver
-#arch/vax/if/if_ec.c		optional ec device-driver
-#arch/vax/if/if_en.c		optional en device-driver
-#arch/vax/if/if_ex.c		optional ex device-driver
-#arch/vax/if/if_hdh.c		optional hdh device-driver
-#arch/vax/if/if_hy.c		optional hy device-driver
-#arch/vax/if/if_il.c		optional il device-driver
-#arch/vax/if/if_pcl.c		optional pcl device-driver
-#arch/vax/if/if_vv.c		optional vv device-driver
-#arch/vax/if/raw_hy.c		optional hy device-driver
 
 # quad support is necessary for 32 bit architectures
 file	lib/libkern/adddi3.c

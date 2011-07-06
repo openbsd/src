@@ -1,4 +1,4 @@
-$OpenBSD: version,v 1.8 2008/08/26 18:36:21 miod Exp $
+$OpenBSD: version,v 1.9 2011/07/06 18:32:59 miod Exp $
 $NetBSD: version,v 1.4 2001/11/09 19:53:15 scw Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
@@ -37,3 +37,4 @@ is taken as the current.
 1.14:	Support for VaxStation 3[58][24]0.
 1.15:	Restore boot sd()... functionality on machines with asc(4) or sii(4)
 	controllers.
+1.16:	Remove support for VAX 11/7x0, VAX6000 and VAX8000

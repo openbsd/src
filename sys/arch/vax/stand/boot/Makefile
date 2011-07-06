@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2008/03/30 19:54:05 miod Exp $
+#	$OpenBSD: Makefile,v 1.9 2011/07/06 18:32:59 miod Exp $
 #	$NetBSD: Makefile,v 1.27 2002/04/07 07:00:25 matt Exp $
 
 S!=	cd ${.CURDIR}/../../../../; pwd
@@ -7,7 +7,7 @@ NOMAN=	# defined
 .include <bsd.own.mk>
 
 PROG=	boot
-DEVS=	hp.c ctu.c ra.c mfm.c if_qe.c if_le.c if_ze.c if_de.c if_ni.c
+DEVS=	ra.c mfm.c if_qe.c if_le.c if_ze.c if_de.c
 SRCS=	srt0.S boot.c devopen.c conf.c autoconf.c netio.c rom.c romread.S \
 	urem.s udiv.s consio.c consio2.S str.S ${DEVS} findcpu.c
 

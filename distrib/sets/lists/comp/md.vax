@@ -129,7 +129,6 @@
 ./usr/include/vax/frame.h
 ./usr/include/vax/internal_types.h
 ./usr/include/vax/intr.h
-./usr/include/vax/ioa.h
 ./usr/include/vax/ka410.h
 ./usr/include/vax/ka420.h
 ./usr/include/vax/ka43.h
@@ -139,8 +138,6 @@
 ./usr/include/vax/ka650.h
 ./usr/include/vax/ka670.h
 ./usr/include/vax/ka680.h
-./usr/include/vax/ka750.h
-./usr/include/vax/ka820.h
 ./usr/include/vax/kcore.h
 ./usr/include/vax/limits.h
 ./usr/include/vax/loadfile_machdep.h
@@ -159,7 +156,6 @@
 ./usr/include/vax/ptrace.h
 ./usr/include/vax/reg.h
 ./usr/include/vax/rpb.h
-./usr/include/vax/rsp.h
 ./usr/include/vax/scb.h
 ./usr/include/vax/setjmp.h
 ./usr/include/vax/sgmap.h

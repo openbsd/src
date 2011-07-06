@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencons.h,v 1.5 2002/03/14 01:26:48 millert Exp $ */
+/*	$OpenBSD: gencons.h,v 1.6 2011/07/06 18:32:59 miod Exp $ */
 /*	$NetBSD: gencons.h,v 1.9 2000/01/20 00:07:49 matt Exp $ */
 
 /*
@@ -41,8 +41,6 @@
 /* PR_TXCS */
 #define	GC_RDY	0x80	/* Console ready to xmit chr */
 #define	GC_TIE	0x40	/* xmit interrupt enable */
-#define	GC_LT	0x80000	/* VAX8600: Enable logical terminal */
-#define	GC_WRT	0x8000	/* VAX8600: Allow mtpr's to console */
 
 /* PR_RXCS */
 #define	GC_DON	0x80	/* character received */

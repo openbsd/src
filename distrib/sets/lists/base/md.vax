@@ -1,4 +1,3 @@
-./pcs750.bin
 ./sbin/kbd
 ./sbin/wsconsctl
 ./usr/lib/gcc-lib/vax-unknown-openbsd4.9
@@ -1698,7 +1697,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/frame.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/internal_types.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/intr.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/vax/ioa.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/ka410.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/ka420.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/ka43.ph
@@ -1708,8 +1706,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/ka650.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/ka670.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/ka680.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/vax/ka750.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/vax/ka820.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/kcore.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/limits.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/loadfile_machdep.ph
@@ -1728,7 +1724,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/ptrace.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/rpb.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/vax/rsp.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/scb.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/setjmp.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/sgmap.ph
@@ -2382,7 +2377,6 @@
 ./usr/local/libdata/perl5/site_perl/vax-openbsd
 ./usr/mdec/boot
 ./usr/mdec/hdboot
-./usr/mdec/hpboot
 ./usr/mdec/raboot
 ./usr/mdec/sdboot
 ./usr/mdec/xxboot

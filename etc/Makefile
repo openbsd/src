@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.295 2011/04/17 21:26:38 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.296 2011/07/06 18:32:58 miod Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -32,8 +32,6 @@ BIN2=	motd
 
 MISETS=	base${OSrev}.tgz comp${OSrev}.tgz \
 	man${OSrev}.tgz game${OSrev}.tgz etc${OSrev}.tgz
-
-PCS=	pcs750.bin
 
 # Use NOGZIP on architectures where the gzip'ing would take too much time
 # (pmax or slower :-)).  This way you get only tar'ed snap files and you can
@@ -235,12 +233,6 @@ distribution-etc-root-var: distrib-dirs
 	    ${DESTDIR}/var/log/xferlog
 	${INSTALL} -c -o ${BINOWN} -g utmp -m 664 /dev/null \
 	    ${DESTDIR}/var/run/utmp
-.if ${MACHINE} == "vax"
-	uudecode -p etc.vax/${PCS}.uu > ${DESTDIR}/${PCS} && \
-	    chown ${BINOWN} ${DESTDIR}/${PCS} && \
-	    chgrp ${BINGRP} ${DESTDIR}/${PCS} && \
-	    chmod 644 ${DESTDIR}/${PCS}
-.endif
 	cd ../gnu/usr.sbin/sendmail/cf/cf && exec ${MAKE} distribution
 	cd ../usr.sbin/ypserv/ypinit && exec ${MAKE} distribution
 	cd ../usr.bin/ssh && exec ${MAKE} distribution
