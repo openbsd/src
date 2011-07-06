@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mac68k,v 1.71 2011/04/15 02:41:28 guenther Exp $
+#	$OpenBSD: Makefile.mac68k,v 1.72 2011/07/06 02:08:05 tedu Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -121,7 +121,7 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 clean::
-	rm -f eddep *bsd *bsd.gdb tags *.[io] [a-z]*.s \
+	rm -f eddep *bsd *bsd.gdb tags *.[dio] [a-z]*.s \
 	    [Ee]rrs linterrs assym.h ${DB_STRUCTINFO}
 
 lint:
