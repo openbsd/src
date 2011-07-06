@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.129 2011/07/06 04:49:36 matthew Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.130 2011/07/06 16:36:52 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -412,7 +412,8 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 		bp->b_blkno = DL_BLKTOSEC(lp, part_blkno) * DL_BLKSPERSEC(lp);
 		offset = DL_BLKOFFSET(lp, part_blkno) + DOSPARTOFF;
 		bp->b_bcount = lp->d_secsize;
-		CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
+		bp->b_error = 0; /* B_ERROR and b_error may have stale data. */
+		CLR(bp->b_flags, B_READ | B_WRITE | B_DONE | B_ERROR);
 		SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
 		(*strat)(bp);
 		error = biowait(bp);
