@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.107 2011/07/06 02:56:53 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.108 2011/07/06 06:00:20 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -532,10 +532,10 @@ startover:
 	 * the pool.
 	 */
 #ifdef DIAGNOSTIC
-	if (__predict_false(pp->pr_nout > pp->pr_hardlimit))
+	if (pp->pr_nout > pp->pr_hardlimit)
 		panic("pool_do_get: %s: crossed hard limit", pp->pr_wchan);
 #endif
-	if (__predict_false(pp->pr_nout == pp->pr_hardlimit)) {
+	if (pp->pr_nout == pp->pr_hardlimit) {
 		if ((flags & PR_WAITOK) && !(flags & PR_LIMITFAIL)) {
 			/*
 			 * XXX: A warning isn't logged in this case.  Should
@@ -577,10 +577,10 @@ startover:
 		 * Call the back-end page allocator for more memory.
 		 */
 		v = pool_allocator_alloc(pp, flags, &slowdown);
-		if (__predict_true(v != NULL))
+		if (v != NULL)
 			ph = pool_alloc_item_header(pp, v, flags);
 
-		if (__predict_false(v == NULL || ph == NULL)) {
+		if (v == NULL || ph == NULL) {
 			if (v != NULL)
 				pool_allocator_free(pp, v);
 
@@ -613,11 +613,11 @@ startover:
 		/* Start the allocation process over. */
 		goto startover;
 	}
-	if (__predict_false((v = pi = TAILQ_FIRST(&ph->ph_itemlist)) == NULL)) {
+	if ((v = pi = TAILQ_FIRST(&ph->ph_itemlist)) == NULL) {
 		panic("pool_do_get: %s: page empty", pp->pr_wchan);
 	}
 #ifdef DIAGNOSTIC
-	if (__predict_false(pp->pr_nitems == 0)) {
+	if (pp->pr_nitems == 0) {
 		printf("pool_do_get: %s: items on itemlist, nitems %u\n",
 		    pp->pr_wchan, pp->pr_nitems);
 		panic("pool_do_get: nitems inconsistent");
@@ -625,7 +625,7 @@ startover:
 #endif
 
 #ifdef DIAGNOSTIC
-	if (__predict_false(pi->pi_magic != PI_MAGIC))
+	if (pi->pi_magic != PI_MAGIC)
 		panic("pool_do_get(%s): free list modified: "
 		    "page %p; item addr %p; offset 0x%x=0x%x",
 		    pp->pr_wchan, ph->ph_page, pi, 0, pi->pi_magic);
@@ -652,7 +652,7 @@ startover:
 	pp->pr_nout++;
 	if (ph->ph_nmissing == 0) {
 #ifdef DIAGNOSTIC
-		if (__predict_false(pp->pr_nidle == 0))
+		if (pp->pr_nidle == 0)
 			panic("pool_do_get: nidle inconsistent");
 #endif
 		pp->pr_nidle--;
@@ -667,7 +667,7 @@ startover:
 	ph->ph_nmissing++;
 	if (TAILQ_EMPTY(&ph->ph_itemlist)) {
 #ifdef DIAGNOSTIC
-		if (__predict_false(ph->ph_nmissing != pp->pr_itemsperpage)) {
+		if (ph->ph_nmissing != pp->pr_itemsperpage) {
 			panic("pool_do_get: %s: nmissing inconsistent",
 			    pp->pr_wchan);
 		}
@@ -747,14 +747,14 @@ pool_do_put(struct pool *pp, void *v)
 	if (pp->pr_ipl != -1)
 		splassert(pp->pr_ipl);
 
-	if (__predict_false(pp->pr_nout == 0)) {
+	if (pp->pr_nout == 0) {
 		printf("pool %s: putting with none out\n",
 		    pp->pr_wchan);
 		panic("pool_do_put");
 	}
 #endif
 
-	if (__predict_false((ph = pr_find_pagehead(pp, v)) == NULL)) {
+	if ((ph = pr_find_pagehead(pp, v)) == NULL) {
 		panic("pool_do_put: %s: page header missing", pp->pr_wchan);
 	}
 
@@ -837,9 +837,9 @@ pool_prime(struct pool *pp, int n)
 
 	while (newpages-- > 0) {
 		cp = pool_allocator_alloc(pp, PR_NOWAIT, &slowdown);
-		if (__predict_true(cp != NULL))
+		if (cp != NULL)
 			ph = pool_alloc_item_header(pp, cp, PR_NOWAIT);
-		if (__predict_false(cp == NULL || ph == NULL)) {
+		if (cp == NULL || ph == NULL) {
 			if (cp != NULL)
 				pool_allocator_free(pp, cp);
 			break;
@@ -957,9 +957,9 @@ pool_catchup(struct pool *pp)
 		 * Call the page back-end allocator for more memory.
 		 */
 		cp = pool_allocator_alloc(pp, PR_NOWAIT, &slowdown);
-		if (__predict_true(cp != NULL))
+		if (cp != NULL)
 			ph = pool_alloc_item_header(pp, cp, PR_NOWAIT);
-		if (__predict_false(cp == NULL || ph == NULL)) {
+		if (cp == NULL || ph == NULL) {
 			if (cp != NULL)
 				pool_allocator_free(pp, cp);
 			error = ENOMEM;
