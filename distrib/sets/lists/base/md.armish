@@ -78,7 +78,7 @@
 ./usr/lib/libkafs.so.18.0
 ./usr/lib/libkrb5.so.18.0
 ./usr/lib/libkvm.so.11.0
-./usr/lib/libm.so.5.3
+./usr/lib/libm.so.5.4
 ./usr/lib/libmenu.so.5.0
 ./usr/lib/libmenuw.so.5.0
 ./usr/lib/libmilter.so.2.1
