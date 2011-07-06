@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.239 2011/07/06 15:55:25 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.240 2011/07/06 17:32:47 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1672,6 +1672,8 @@ sr_attach(struct device *parent, struct device *self, void *aux)
 
 	softraid_disk_attach = sr_disk_attach;
 
+	sc->sc_shutdownhook = shutdownhook_establish(sr_shutdown, sc);
+
 	sr_boot_assembly(sc);
 }
 
@@ -1682,6 +1684,9 @@ sr_detach(struct device *self, int flags)
 	int			i, rv;
 
 	DNPRINTF(SR_D_MISC, "%s: sr_detach\n", DEVNAME(sc));
+
+	if (sc->sc_shutdownhook)
+		shutdownhook_disestablish(sc->sc_shutdownhook);
 
 	/* XXX this will not work when we stagger disciplines */
 	for (i = 0; i < SR_MAX_LD; i++)
@@ -3148,7 +3153,6 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 
 	/* save metadata to disk */
 	rv = sr_meta_save(sd, SR_META_DIRTY);
-	sd->sd_shutdownhook = shutdownhook_establish(sr_shutdown, sd);
 
 	if (sd->sd_vol_status == BIOC_SVREBUILD)
 		kthread_create_deferred(sr_rebuild, sd);
@@ -3428,9 +3432,6 @@ sr_discipline_shutdown(struct sr_discipline *sd, int meta_save)
 	s = splbio();
 
 	sd->sd_ready = 0;
-
-	if (sd->sd_shutdownhook)
-		shutdownhook_disestablish(sd->sd_shutdownhook);
 
 	/* make sure there isn't a sync pending and yield */
 	wakeup(sd);
@@ -3796,14 +3797,15 @@ sr_validate_stripsize(u_int32_t b)
 void
 sr_shutdown(void *arg)
 {
-	struct sr_discipline	*sd = arg;
-#ifdef SR_DEBUG
-	struct sr_softc		*sc = sd->sd_sc;
-#endif
-	DNPRINTF(SR_D_DIS, "%s: sr_shutdown %s\n",
-	    DEVNAME(sc), sd->sd_meta->ssd_devname);
+	struct sr_softc		*sc = arg;
+	int			i;
 
-	sr_discipline_shutdown(sd, 1);
+	DNPRINTF(SR_D_MISC, "%s: sr_shutdown\n", DEVNAME(sc));
+
+	/* XXX this will not work when we stagger disciplines */
+	for (i = 0; i < SR_MAX_LD; i++)
+		if (sc->sc_dis[i])
+			sr_discipline_shutdown(sc->sc_dis[i], 1);
 }
 
 int
