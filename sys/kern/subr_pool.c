@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.106 2011/07/05 20:00:18 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.107 2011/07/06 02:56:53 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -226,6 +226,10 @@ pr_rmpage(struct pool *pp, struct pool_item_header *ph,
 	LIST_REMOVE(ph, ph_pagelist);
 	if ((pp->pr_roflags & PR_PHINPAGE) == 0)
 		RB_REMOVE(phtree, &pp->pr_phtree, ph);
+	pp->pr_npages--;
+	pp->pr_npagefree++;
+	pool_update_curpage(pp);
+
 	if (pq) {
 		LIST_INSERT_HEAD(pq, ph, ph_pagelist);
 	} else {
@@ -233,10 +237,6 @@ pr_rmpage(struct pool *pp, struct pool_item_header *ph,
 		if ((pp->pr_roflags & PR_PHINPAGE) == 0)
 			pool_put(&phpool, ph);
 	}
-	pp->pr_npages--;
-	pp->pr_npagefree++;
-
-	pool_update_curpage(pp);
 }
 
 /*
@@ -804,8 +804,8 @@ pool_do_put(struct pool *pp, void *v)
 		} else {
 			LIST_REMOVE(ph, ph_pagelist);
 			LIST_INSERT_HEAD(&pp->pr_emptypages, ph, ph_pagelist);
+			pool_update_curpage(pp);
 		}
-		pool_update_curpage(pp);
 	}
 
 	/*
