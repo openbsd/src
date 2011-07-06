@@ -1,4 +1,4 @@
-/*	$OpenBSD: presto.c,v 1.22 2011/07/06 04:49:35 matthew Exp $	*/
+/*	$OpenBSD: presto.c,v 1.23 2011/07/06 19:14:54 matthew Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -81,6 +81,8 @@ struct cfattach presto_ca = {
 struct cfdriver presto_cd = {
 	NULL, "presto", DV_DULL
 };
+
+#define prestolookup(unit) (struct presto_softc *)device_lookup(&presto_cd, (unit))
 
 int
 presto_match(struct device *parent, void *vcf, void *aux)
@@ -182,29 +184,31 @@ daddr64_t
 prestosize(dev_t dev)
 {
 	struct presto_softc *sc;
-	int unit, part;
+	daddr64_t size;
+	int part;
 
-	unit = DISKUNIT(dev);
-	sc = (struct presto_softc *)device_lookup(&presto_cd, unit);
+	sc = prestolookup(DISKUNIT(dev));
 	if (sc == NULL)
-		return (0);
+		return (-1);
 
 	part = DISKPART(dev);
 	if (part >= sc->sc_dk.dk_label->d_npartitions)
-		return (0);
+		size = -1;
 	else
-		return (DL_GETPSIZE(&sc->sc_dk.dk_label->d_partitions[part]) *
-		    (sc->sc_dk.dk_label->d_secsize / DEV_BSIZE));
+		size = DL_SECTOBLK(sc->sc_dk.dk_label,
+		    DL_GETPSIZE(&sc->sc_dk.dk_label->d_partitions[part]));
+
+	device_unref(&sc->sc_dev);
+	return (size);
 }
 
 int
 prestoopen(dev_t dev, int flag, int fmt, struct proc *proc)
 {
-	int unit, part;
 	struct presto_softc *sc;
+	int error;
 
-	unit = DISKUNIT(dev);
-	sc = (struct presto_softc *)device_lookup(&presto_cd, unit);
+	sc = prestolookup(DISKUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -212,47 +216,24 @@ prestoopen(dev_t dev, int flag, int fmt, struct proc *proc)
 	presto_getdisklabel(dev, sc, sc->sc_dk.dk_label, 0);
 
 	/* only allow valid partitions */
-	part = DISKPART(dev);
-	if (part != RAW_PART &&
-	    (part >= sc->sc_dk.dk_label->d_npartitions ||
-	    sc->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED))
-		return (ENXIO);
+	error = disk_openpart(&sc->sc_dk, DISKPART(dev), fmt, 1);
 
-	/* update open masks */
-	switch (fmt) {
-	case S_IFCHR:
-		sc->sc_dk.dk_copenmask |= (1 << part);
-		break;
-	case S_IFBLK:
-		sc->sc_dk.dk_bopenmask |= (1 << part);
-		break;
-	}
-	sc->sc_dk.dk_openmask = sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
-
-	return (0);
+	device_unref(&sc->sc_dev);
+	return (error);
 }
 
 int
 prestoclose(dev_t dev, int flag, int fmt, struct proc *proc)
 {
-	int unit, part;
 	struct presto_softc *sc;
 
-	unit = DISKUNIT(dev);
-	sc = (struct presto_softc *)device_lookup(&presto_cd, unit);
+	sc = prestolookup(DISKUNIT(dev));
+	if (sc == NULL)
+		return (ENXIO);
 
-	/* update open masks */
-	part = DISKPART(dev);
-	switch (fmt) {
-	case S_IFCHR:
-		sc->sc_dk.dk_copenmask &= ~(1 << part);
-		break;
-	case S_IFBLK:
-		sc->sc_dk.dk_bopenmask &= ~(1 << part);
-		break;
-	}
-	sc->sc_dk.dk_openmask = sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
+	disk_closepart(&sc->sc_dk, DISKPART(dev), fmt);
 
+	device_unref(&sc->sc_dev);
 	return (0);
 }
 
@@ -271,13 +252,11 @@ prestowrite(dev_t dev, struct uio *uio, int flags)
 void
 prestostrategy(struct buf *bp)
 {
-	int unit;
 	struct presto_softc *sc;
 	size_t offset, count;
 	int s;
 
-	unit = DISKUNIT(bp->b_dev);
-	sc = (struct presto_softc *)device_lookup(&presto_cd, unit);
+	sc = prestolookup(DISKUNIT(bp->b_dev));
 
 	/* Sort rogue requests out */
 	if (sc == NULL) {
@@ -290,7 +269,6 @@ prestostrategy(struct buf *bp)
 		goto done;
 
 	/* Bound the request size, then move data between buf and nvram */
-	bp->b_resid = bp->b_bcount;
 	offset = (bp->b_blkno << DEV_BSHIFT) + PSERVE_OFFSET;
 	count = bp->b_bcount;
 	if (count > (sc->sc_memsize - offset))
@@ -299,7 +277,7 @@ prestostrategy(struct buf *bp)
 		bcopy(sc->sc_mem + offset, bp->b_data, count);
 	else
 		bcopy(bp->b_data, sc->sc_mem + offset, count);
-	bp->b_resid -= count;
+	bp->b_resid = bp->b_bcount - count;
 	goto done;
 
  bad:
@@ -309,17 +287,17 @@ prestostrategy(struct buf *bp)
 	s = splbio();
 	biodone(bp);
 	splx(s);
+	if (sc != NULL)
+		device_unref(&sc->sc_dev);
 }
 
 int
 prestoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *proc)
 {
 	struct presto_softc *sc;
-	int unit;
-	int error;
+	int error = 0;
 
-	unit = DISKUNIT(dev);
-	sc = (struct presto_softc *)device_lookup(&presto_cd, unit);
+	sc = prestolookup(DISKUNIT(dev));
 
 	switch (cmd) {
 	case DIOCGPDINFO:
@@ -327,26 +305,32 @@ prestoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *proc)
 		break;
 
 	case DIOCGDINFO:
-		bcopy(sc->sc_dk.dk_label, data, sizeof(struct disklabel));
-		return (0);
+		*(struct disklabel *)data = *sc->sc_dk.dk_label;
+		break;
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
+		if ((flag & FWRITE) == 0) {
+			error = EBADF;
+			break;
+		}
 
 		error = setdisklabel(sc->sc_dk.dk_label,
-		    (struct disklabel *)data, /*sd->sc_dk.dk_openmask : */0);
+		    (struct disklabel *)data, sc->sc_dk.dk_openmask);
 		if (error == 0) {
 			if (cmd == DIOCWDINFO)
 				error = writedisklabel(DISKLABELDEV(dev),
 				    prestostrategy, sc->sc_dk.dk_label);
 		}
-		return (error);
+		break;
 
 	default:
-		return (EINVAL);
+		error = EINVAL;
+		break;
 	}
+
+	device_unref(&sc->sc_dev);
+	return (error);
 }
 
 /*
