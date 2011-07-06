@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.62 2011/07/05 17:38:54 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.63 2011/07/06 00:48:55 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -136,6 +136,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 	/* Read it in, slap the new label in, and write it back out */
 	bp->b_blkno = DL_BLKTOSEC(lp, partoff+LABELSECTOR) * DL_BLKSPERSEC(lp);
 	offset = DL_BLKOFFSET(lp, partoff + LABELSECTOR) + LABELOFFSET;
+	bp->b_bcount = lp->d_secsize;
 	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
 	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
 	(*strat)(bp);
