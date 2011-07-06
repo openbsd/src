@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.139 2011/07/06 05:09:01 matthew Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.140 2011/07/06 05:12:46 matthew Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -260,8 +260,7 @@ vndstrategy(struct buf *bp)
 {
 	int unit = DISKUNIT(bp->b_dev);
 	struct vnd_softc *sc = &vnd_softc[unit];
-	off_t bn;
-	int sz, s, part;
+	int s, part;
 	struct iovec aiov;
 	struct uio auio;
 	struct proc *p = curproc;
@@ -272,34 +271,12 @@ vndstrategy(struct buf *bp)
 	if ((sc->sc_flags & VNF_HAVELABEL) == 0) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
-		goto done;
-	}
-
-	/* Ensure that the requested block is sector aligned. */
-	if (bp->b_blkno % DL_BLKSPERSEC(sc->sc_dk.dk_label) != 0) {
-		bp->b_error = EINVAL;
-		bp->b_flags |= B_ERROR;
-		goto done;
-	}
-
-	bn = bp->b_blkno;
-	bp->b_resid = bp->b_bcount;
-
-	if (bn < 0) {
-		bp->b_error = EINVAL;
-		bp->b_flags |= B_ERROR;
+		bp->b_resid = bp->b_bcount;
 		goto done;
 	}
 
 	if (bounds_check_with_label(bp, sc->sc_dk.dk_label) == -1)
 		goto done;
-
-	/*
-	 * bounds_check_with_label() changes bp->b_resid, reset it
-	 */
-	bp->b_resid = bp->b_bcount;
-
-	sz = howmany(bp->b_bcount, sc->sc_dk.dk_label->d_secsize);
 
 	part = DISKPART(bp->b_dev);
 	off = DL_SECTOBLK(sc->sc_dk.dk_label,
