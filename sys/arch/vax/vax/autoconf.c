@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.33 2011/07/06 18:32:59 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.34 2011/07/06 20:42:05 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/10/23 14:56:05 ragge Exp $	*/
 
 /*
@@ -148,9 +148,6 @@ mainbus_attach(parent, self, hej)
 		config_found(self, &maa, mainbus_print);
 	}
 #endif
-
-	if (dep_call->cpu_subconf)
-		(*dep_call->cpu_subconf)(self);
 
 #if NLED > 0
 	maa.maa_bustype = VAX_LEDS;

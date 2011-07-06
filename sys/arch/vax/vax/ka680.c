@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka680.c,v 1.12 2008/08/18 23:05:38 miod Exp $	*/
+/*	$OpenBSD: ka680.c,v 1.13 2011/07/06 20:42:05 miod Exp $	*/
 /*	$NetBSD: ka680.c,v 1.3 2001/01/28 21:01:53 ragge Exp $	*/
 /*
  * Copyright (c) 2002 Hugh Graham.
@@ -45,7 +45,6 @@
 #include <machine/cpu.h>
 #include <machine/mtpr.h>
 #include <machine/sid.h>
-#include <machine/nexus.h>
 #include <machine/uvax.h>
 #include <machine/ka680.h>
 #include <machine/clock.h>
@@ -97,7 +96,6 @@ struct cpu_dep ka680_calls = {
 	2,	/* SCB pages */
 	generic_halt,
 	generic_reboot,
-	NULL,
 	NULL,
 	hardclock
 };

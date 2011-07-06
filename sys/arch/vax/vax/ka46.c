@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka46.c,v 1.9 2008/08/18 23:05:38 miod Exp $	*/
+/*	$OpenBSD: ka46.c,v 1.10 2011/07/06 20:42:05 miod Exp $	*/
 /*	$NetBSD: ka46.c,v 1.12 2000/03/04 07:27:49 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -46,7 +46,6 @@
 #include <machine/mtpr.h>
 #include <machine/sid.h>
 #include <machine/pmap.h>
-#include <machine/nexus.h>
 #include <machine/uvax.h>
 #include <machine/ka410.h>
 #include <machine/ka420.h>
@@ -79,7 +78,6 @@ struct	cpu_dep ka46_calls = {
 	2,	/* SCB pages */
 	ka46_halt,
 	ka46_reboot,
-	NULL,
 	NULL,
 	ka46_hardclock
 };

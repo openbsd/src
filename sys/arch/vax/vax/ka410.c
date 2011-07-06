@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka410.c,v 1.11 2008/08/18 23:07:26 miod Exp $ */
+/*	$OpenBSD: ka410.c,v 1.12 2011/07/06 20:42:05 miod Exp $ */
 /*	$NetBSD: ka410.c,v 1.21 1999/09/06 19:52:53 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -46,7 +46,6 @@
 #include <machine/mtpr.h>
 #include <machine/sid.h>
 #include <machine/pmap.h>
-#include <machine/nexus.h>
 #include <machine/uvax.h>
 #include <machine/ka410.h>
 #include <machine/ka420.h>
@@ -80,7 +79,6 @@ struct	cpu_dep ka410_calls = {
 	ka410_halt,
 	ka410_reboot,
 	ka410_clrf,
-	NULL,
 	hardclock
 };
 

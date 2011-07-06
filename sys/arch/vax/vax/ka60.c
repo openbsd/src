@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka60.c,v 1.1 2008/08/18 23:19:29 miod Exp $	*/
+/*	$OpenBSD: ka60.c,v 1.2 2011/07/06 20:42:05 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -104,7 +104,6 @@ struct	cpu_dep	ka60_calls = {
 	ka60_reboot,
 #endif
 	ka60_clrf,
-	NULL,
 	ka60_hardclock
 };
 

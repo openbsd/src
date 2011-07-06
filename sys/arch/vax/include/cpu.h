@@ -1,4 +1,4 @@
-/*      $OpenBSD: cpu.h,v 1.38 2011/07/06 18:32:59 miod Exp $      */
+/*      $OpenBSD: cpu.h,v 1.39 2011/07/06 20:42:05 miod Exp $      */
 /*      $NetBSD: cpu.h,v 1.41 1999/10/21 20:01:36 ragge Exp $      */
 
 /*
@@ -91,7 +91,6 @@ struct	cpu_dep {
 	void	(*cpu_halt)(void); /* Cpu dependent halt call */
 	void	(*cpu_reboot)(int); /* Cpu dependent reboot call */
 	void	(*cpu_clrf)(void); /* Clear cold/warm start flags */
-	void	(*cpu_subconf)(struct device *);/*config cpu dep. devs */
 	void	(*cpu_hardclock)(struct clockframe *);	/* hardclock handler */
 };
 

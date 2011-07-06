@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka670.c,v 1.9 2008/08/18 23:05:38 miod Exp $	*/
+/*	$OpenBSD: ka670.c,v 1.10 2011/07/06 20:42:05 miod Exp $	*/
 /*	$NetBSD: ka670.c,v 1.4 2000/03/13 23:52:35 soren Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
@@ -46,7 +46,6 @@
 #include <machine/mtpr.h>
 #include <machine/sid.h>
 #include <machine/pmap.h>
-#include <machine/nexus.h>
 #include <machine/uvax.h>
 #include <machine/vsbus.h>
 #include <machine/ka670.h>
@@ -69,7 +68,6 @@ struct	cpu_dep ka670_calls = {
 	2,	/* SCB pages */
 	generic_halt,
 	generic_reboot,
-	NULL,
 	NULL,
 	hardclock
 };

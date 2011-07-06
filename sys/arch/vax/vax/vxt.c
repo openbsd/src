@@ -1,4 +1,4 @@
-/*	$OpenBSD: vxt.c,v 1.5 2009/06/20 20:58:07 miod Exp $	*/
+/*	$OpenBSD: vxt.c,v 1.6 2011/07/06 20:42:05 miod Exp $	*/
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -70,7 +70,6 @@ struct	cpu_dep vxt_calls = {
 	2,	/* SCB pages */
 	vxt_halt,
 	vxt_reboot,
-	NULL,
 	NULL,
 	hardclock
 };
