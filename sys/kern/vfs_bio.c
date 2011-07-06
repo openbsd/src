@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.132 2011/07/04 20:35:35 deraadt Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.133 2011/07/06 20:50:05 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -327,7 +327,7 @@ bufadjust(int newbufpages)
  * Make the buffer cache back off from cachepct.
  */
 int
-bufbackoff()
+bufbackoff(struct uvm_constraint_range *range, long size)
 {
 	/*
 	 * Back off the amount of buffer cache pages. Called by the page
