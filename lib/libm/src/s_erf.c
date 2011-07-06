@@ -10,6 +10,8 @@
  * ====================================================
  */
 
+/* LINTLIBRARY */
+
 /* double erf(double x)
  * double erfc(double x)
  *			     x
@@ -104,8 +106,10 @@
  *	   	erfc/erf(NaN) is NaN
  */
 
+#include <sys/cdefs.h>
+#include <float.h>
+#include <math.h>
 
-#include "math.h"
 #include "math_private.h"
 
 static const double
@@ -295,3 +299,14 @@ erfc(double x)
 	    if(hx>0) return tiny*tiny; else return two-tiny;
 	}
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double erfl(long double);
+long double erfcl(long double);
+#else	/* lint */
+__weak_alias(erfl, erf);
+__weak_alias(erfcl, erf);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

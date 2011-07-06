@@ -10,9 +10,12 @@
  * ====================================================
  */
 
-#include <float.h>
+/* LINTLIBRARY */
 
-#include "math.h"
+#include <sys/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 static const double Zero[] = {0.0, -0.0,};
@@ -149,3 +152,12 @@ fixup:
 	*quo = (sxy ? -q : q);
 	return x;
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double remquol(long double, long double, int *);
+#else	/* lint */
+__weak_alias(remquol, remquo);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

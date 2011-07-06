@@ -10,6 +10,8 @@
  * ====================================================
  */
 
+/* LINTLIBRARY */
+
 /* hypot(x,y)
  *
  * Method :                  
@@ -42,7 +44,10 @@
  * 	than 1 ulps (units in the last place) 
  */
 
-#include "math.h"
+#include <sys/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 double
@@ -118,3 +123,12 @@ hypot(double x, double y)
 	    return t1*w;
 	} else return w;
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double hypotl(long double, long double);
+#else	/* lint */
+__weak_alias(hypotl, hypot);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

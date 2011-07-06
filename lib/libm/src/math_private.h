@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_private.h,v 1.12 2011/07/04 15:00:56 martynas Exp $	*/
+/*	$OpenBSD: math_private.h,v 1.13 2011/07/06 00:02:42 martynas Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -160,21 +160,21 @@ typedef union
 
 /* Get three 32 bit ints from a double.  */
 
-#define GET_LDOUBLE_WORDS(exp,ix0,ix1,d)			\
+#define GET_LDOUBLE_WORDS(se,ix0,ix1,d)				\
 do {								\
   ieee_extended_shape_type ew_u;				\
   ew_u.value = (d);						\
-  (exp) = ew_u.parts.exp;					\
+  (se) = ew_u.parts.exp;					\
   (ix0) = ew_u.parts.msw;					\
   (ix1) = ew_u.parts.lsw;					\
 } while (0)
 
 /* Set a double from two 32 bit ints.  */
 
-#define SET_LDOUBLE_WORDS(d,exp,ix0,ix1)			\
+#define SET_LDOUBLE_WORDS(d,se,ix0,ix1)				\
 do {								\
   ieee_extended_shape_type iw_u;				\
-  iw_u.parts.exp = (exp);					\
+  iw_u.parts.exp = (se);					\
   iw_u.parts.msw = (ix0);					\
   iw_u.parts.lsw = (ix1);					\
   (d) = iw_u.value;						\
@@ -201,20 +201,20 @@ do {								\
 
 /* Get int from the exponent of a long double.  */
 
-#define GET_LDOUBLE_EXP(exp,d)					\
+#define GET_LDOUBLE_EXP(se,d)					\
 do {								\
   ieee_extended_shape_type ge_u;				\
   ge_u.value = (d);						\
-  (exp) = ge_u.parts.exp;					\
+  (se) = ge_u.parts.exp;					\
 } while (0)
 
 /* Set exponent of a long double from an int.  */
 
-#define SET_LDOUBLE_EXP(d,exp)					\
+#define SET_LDOUBLE_EXP(d,se)					\
 do {								\
   ieee_extended_shape_type se_u;				\
   se_u.value = (d);						\
-  se_u.parts.exp = (exp);					\
+  se_u.parts.exp = (se);					\
   (d) = se_u.value;						\
 } while (0)
 

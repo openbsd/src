@@ -10,6 +10,8 @@
  * ====================================================
  */
 
+/* LINTLIBRARY */
+
 /* sinh(x)
  * Method : 
  * mathematically sinh(x) if defined to be (exp(x)-exp(-x))/2
@@ -28,7 +30,10 @@
  *	only sinh(0)=0 is exact for finite x.
  */
 
-#include "math.h"
+#include <sys/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 static const double one = 1.0, shuge = 1.0e307;
@@ -72,3 +77,12 @@ sinh(double x)
     /* |x| > overflowthresold, sinh(x) overflow */
 	return x*shuge;
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double sinhl(long double);
+#else	/* lint */
+__weak_alias(sinhl, sinh);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

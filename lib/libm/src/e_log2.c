@@ -10,7 +10,12 @@
  * ====================================================
  */
 
-#include "math.h"
+/* LINTLIBRARY */
+
+#include <sys/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 static const double
@@ -72,3 +77,12 @@ log2(double x)
 	} else
 		return (dk-((s*(f-R))-f)/ln2);
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double log2l(long double);
+#else	/* lint */
+__weak_alias(log2l, log2);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

@@ -10,6 +10,8 @@
  * ====================================================
  */
 
+/* LINTLIBRARY */
+
 /* acosh(x)
  * Method :
  *	Based on 
@@ -24,7 +26,10 @@
  *	acosh(NaN) is NaN without signal.
  */
 
-#include "math.h"
+#include <sys/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 static const double 
@@ -55,3 +60,12 @@ acosh(double x)
 	    return log1p(t+sqrt(2.0*t+t*t));
 	}
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double acoshl(long double);
+#else	/* lint */
+__weak_alias(acoshl, acosh);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

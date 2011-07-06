@@ -1,4 +1,4 @@
-/*	$OpenBSD: b_tgamma.c,v 1.3 2009/10/27 23:59:29 deraadt Exp $	*/
+/*	$OpenBSD: b_tgamma.c,v 1.4 2011/07/06 00:02:42 martynas Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,6 +28,8 @@
  * SUCH DAMAGE.
  */
 
+/* LINTLIBRARY */
+
 /*
  * This code by P. McIlroy, Oct 1992;
  *
@@ -35,7 +37,10 @@
  * acknowledged.
  */
 
-#include "math.h"
+#include <sys/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 /* METHOD:
@@ -330,3 +335,12 @@ neg_gam(double x)
 	if (sgn < 0) y = -y;
 	return (M_PI / (y*z));
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double tgammal(long double);
+#else	/* lint */
+__weak_alias(tgammal, tgamma);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

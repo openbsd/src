@@ -1,4 +1,4 @@
-/*	$OpenBSD: math.h,v 1.29 2011/05/25 21:46:49 martynas Exp $	*/
+/*	$OpenBSD: math.h,v 1.30 2011/07/06 00:02:42 martynas Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -216,17 +216,13 @@ double remquo(double, double, int *);
 double copysign(double, double);
 double nan(const char *);
 double nextafter(double, double);
-#if 0
 double nexttoward(double, long double);
-#endif
 
 double fdim(double, double);
 double fmax(double, double);
 double fmin(double, double);
 
-#if 0
 double fma(double, double, double);
-#endif
 #endif /* __BSD_VISIBLE || __ISO_C_VISIBLE >= 1999 || __XPG_VISIBLE */
 
 #if __BSD_VISIBLE || __XPG_VISIBLE
@@ -326,17 +322,13 @@ float remquof(float, float, int *);
 float copysignf(float, float);
 float nanf(const char *);
 float nextafterf(float, float);
-#if 0
 float nexttowardf(float, long double);
-#endif
 
 float fdimf(float, float);
 float fmaxf(float, float);
 float fminf(float, float);
 
-#if 0
 float fmaf(float, float, float);
-#endif
 #endif /* __ISO_C_VISIBLE >= 1999 */
 
 #if __BSD_VISIBLE || __XPG_VISIBLE
@@ -388,90 +380,64 @@ long double cosl(long double);
 long double sinl(long double);
 long double tanl(long double);
 
-#if 0
 long double acoshl(long double);
 long double asinhl(long double);
 long double atanhl(long double);
 long double coshl(long double);
 long double sinhl(long double);
 long double tanhl(long double);
-#endif
 
-#if 0
 long double expl(long double);
-#endif
 long double exp2l(long double);
-#if 0
 long double expm1l(long double);
-#endif
 long double frexpl(long double, int *);
 int ilogbl(long double);
 long double ldexpl(long double, int);
-#if 0
 long double logl(long double);
 long double log10l(long double);
 long double log1pl(long double);
 long double log2l(long double);
-#endif
 long double logbl(long double);
-#if 0
 long double modfl(long double, long double *);
-#endif
 long double scalbnl(long double, int);
 long double scalblnl(long double, long int);
 
-#if 0
 long double cbrtl(long double);
-#endif
 long double fabsl(long double);
-#if 0
 long double hypotl(long double, long double);
 long double powl(long double, long double);
-#endif
 long double sqrtl(long double);
 
-#if 0
 long double erfl(long double);
 long double erfcl(long double);
 long double lgammal(long double);
 long double tgammal(long double);
-#endif
 
-#if 0
 long double ceill(long double);
 long double floorl(long double);
-#endif
 long double nearbyintl(long double);
 long double rintl(long double);
-#if 0
 long int lrintl(long double);
 long long int llrintl(long double);
 long double roundl(long double);
 long int lroundl(long double);
 long long int llroundl(long double);
 long double truncl(long double);
-#endif
 
-#if 0
 long double fmodl(long double, long double);
 long double remainderl(long double, long double);
 long double remquol(long double, long double, int *);
-#endif
 
 long double copysignl(long double, long double);
 long double nanl(const char *);
-#if 0
 long double nextafterl(long double, long double);
 long double nexttowardl(long double, long double);
-#endif
 
 long double fdiml(long double, long double);
 long double fmaxl(long double, long double);
 long double fminl(long double, long double);
 
-#if 0
 long double fmal(long double, long double, long double);
-#endif
 #endif /* __ISO_C_VISIBLE >= 1999 */
 
 /*

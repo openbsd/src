@@ -10,6 +10,8 @@
  * ====================================================
  */
 
+/* LINTLIBRARY */
+
 /* log(x)
  * Return the logrithm of x
  *
@@ -61,7 +63,10 @@
  * to produce the hexadecimal values shown.
  */
 
-#include "math.h"
+#include <sys/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 static const double
@@ -128,3 +133,12 @@ log(double x)
 		     return dk*ln2_hi-((s*(f-R)-dk*ln2_lo)-f);
 	}
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double logl(long double);
+#else	/* lint */
+__weak_alias(logl, log);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

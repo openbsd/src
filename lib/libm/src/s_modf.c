@@ -10,6 +10,8 @@
  * ====================================================
  */
 
+/* LINTLIBRARY */
+
 /*
  * modf(double x, double *iptr) 
  * return fraction part of x, and return x's integral part in *iptr.
@@ -20,7 +22,10 @@
  *	No exception.
  */
 
-#include "math.h"
+#include <sys/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 static const double one = 1.0;
@@ -69,3 +74,12 @@ modf(double x, double *iptr)
 	    }
 	}
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double modfl(long double, long double *);
+#else	/* lint */
+__weak_alias(modfl, modf);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

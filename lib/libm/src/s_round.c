@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_round.c,v 1.1 2006/07/12 07:26:08 brad Exp $	*/
+/*	$OpenBSD: s_round.c,v 1.2 2011/07/06 00:02:42 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2003, Steven G. Kargl
@@ -26,7 +26,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "math.h"
+/* LINTLIBRARY */
+
+#include <sys/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 double
@@ -49,3 +54,12 @@ round(double x)
 		return (-t);
 	}
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double roundl(long double);
+#else	/* lint */
+__weak_alias(roundl, round);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

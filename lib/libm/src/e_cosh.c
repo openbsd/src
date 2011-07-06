@@ -10,6 +10,8 @@
  * ====================================================
  */
 
+/* LINTLIBRARY */
+
 /* cosh(x)
  * Method : 
  * mathematically cosh(x) if defined to be (exp(x)+exp(-x))/2
@@ -31,7 +33,10 @@
  *	only cosh(0)=1 is exact for finite x.
  */
 
-#include "math.h"
+#include <sys/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 static const double one = 1.0, half=0.5, huge = 1.0e300;
@@ -79,3 +84,12 @@ cosh(double x)
     /* |x| > overflowthresold, cosh(x) overflow */
 	return huge*huge;
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double coshl(long double);
+#else	/* lint */
+__weak_alias(coshl, cosh);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

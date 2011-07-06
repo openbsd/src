@@ -10,6 +10,8 @@
  * ====================================================
  */
 
+/* LINTLIBRARY */
+
 /* exp(x)
  * Returns the exponential of x.
  *
@@ -73,7 +75,10 @@
  * to produce the hexadecimal values shown.
  */
 
-#include "math.h"
+#include <sys/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 static const double
@@ -153,3 +158,12 @@ exp(double x)	/* default IEEE double exp */
 	    return y*twom1000;
 	}
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double expl(long double);
+#else	/* lint */
+__weak_alias(expl, exp);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

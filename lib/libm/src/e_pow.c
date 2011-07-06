@@ -10,6 +10,8 @@
  * ====================================================
  */
 
+/* LINTLIBRARY */
+
 /* pow(x,y) return x**y
  *
  *		      n
@@ -55,7 +57,10 @@
  * to produce the hexadecimal values shown.
  */
 
-#include "math.h"
+#include <sys/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 static const double
@@ -295,3 +300,12 @@ pow(double x, double y)
 	else SET_HIGH_WORD(z,j);
 	return s*z;
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double powl(long double, long double);
+#else	/* lint */
+__weak_alias(powl, pow);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

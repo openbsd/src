@@ -10,6 +10,8 @@
  * ====================================================
  */
 
+/* LINTLIBRARY */
+
 #if 0
 #include <sys/cdefs.h>
 __FBSDID("$FreeBSD: src/lib/msun/src/s_trunc.c,v 1.1 2004/06/20 09:25:43 das Exp $");
@@ -24,7 +26,10 @@ __FBSDID("$FreeBSD: src/lib/msun/src/s_trunc.c,v 1.1 2004/06/20 09:25:43 das Exp
  *	Inexact flag raised if x not equal to trunc(x).
  */
 
-#include "math.h"
+#include <sys/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 static const double huge = 1.0e300;
@@ -61,3 +66,12 @@ trunc(double x)
 	INSERT_WORDS(x,i0,i1);
 	return x;
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double truncl(long double);
+#else	/* lint */
+__weak_alias(truncl, trunc);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

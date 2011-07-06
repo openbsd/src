@@ -10,6 +10,8 @@
  * ====================================================
  */
 
+/* LINTLIBRARY */
+
 /*
  * ceil(x)
  * Return x rounded toward -inf to integral value
@@ -19,7 +21,10 @@
  *	Inexact flag raised if x not equal to ceil(x).
  */
 
-#include "math.h"
+#include <sys/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 static const double huge = 1.0e300;
@@ -66,3 +71,12 @@ ceil(double x)
 	INSERT_WORDS(x,i0,i1);
 	return x;
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double ceill(long double);
+#else	/* lint */
+__weak_alias(ceill, ceil);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

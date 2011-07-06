@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_lrint.c,v 1.6 2011/04/20 21:32:59 martynas Exp $	*/
+/*	$OpenBSD: s_lrint.c,v 1.7 2011/07/06 00:02:42 martynas Exp $	*/
 /* $NetBSD: lrint.c,v 1.3 2004/10/13 15:18:32 drochner Exp $ */
 
 /*-
@@ -27,11 +27,15 @@
  * SUCH DAMAGE.
  */
 
+/* LINTLIBRARY */
+
 #include <sys/types.h>
 #include <sys/limits.h>
+#include <float.h>
 #include <math.h>
 #include <ieeefp.h>
 #include <machine/ieee.h>
+
 #include "math_private.h"
 
 #ifndef LRINTNAME
@@ -95,3 +99,12 @@ LRINTNAME(double x)
 
 	return (s ? -res : res);
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long int lrintl(long double);
+#else	/* lint */
+__weak_alias(lrintl, lrint);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

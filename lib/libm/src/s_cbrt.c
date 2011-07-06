@@ -10,7 +10,12 @@
  * ====================================================
  */
 
-#include "math.h"
+/* LINTLIBRARY */
+
+#include <sys/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 /* cbrt(x)
@@ -75,3 +80,12 @@ cbrt(double x)
 	SET_HIGH_WORD(t,high|sign);
 	return(t);
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double cbrtl(long double);
+#else	/* lint */
+__weak_alias(cbrtl, cbrt);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

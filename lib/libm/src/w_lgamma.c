@@ -10,13 +10,18 @@
  * ====================================================
  */
 
+/* LINTLIBRARY */
+
 /* double lgamma(double x)
  * Return the logarithm of the Gamma function of x.
  *
  * Method: call lgamma_r
  */
 
-#include "math.h"
+#include <sys/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 extern int signgam;
@@ -26,3 +31,12 @@ lgamma(double x)
 {
 	return lgamma_r(x,&signgam);
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double lgammal(long double);
+#else	/* lint */
+__weak_alias(lgammal, lgamma);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

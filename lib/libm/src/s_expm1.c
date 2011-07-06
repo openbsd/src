@@ -10,6 +10,8 @@
  * ====================================================
  */
 
+/* LINTLIBRARY */
+
 /* expm1(x)
  * Returns exp(x)-1, the exponential of x minus 1.
  *
@@ -105,7 +107,10 @@
  * to produce the hexadecimal values shown.
  */
 
-#include "math.h"
+#include <sys/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 static const double
@@ -214,3 +219,12 @@ expm1(double x)
 	}
 	return y;
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double expm1l(long double);
+#else	/* lint */
+__weak_alias(expm1l, expm1);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

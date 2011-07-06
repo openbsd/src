@@ -10,6 +10,8 @@
  * ====================================================
  */
 
+/* LINTLIBRARY */
+
 /* asinh(x)
  * Method :
  *	Based on 
@@ -21,7 +23,10 @@
  *		 := sign(x)*log1p(|x| + x^2/(1 + sqrt(1+x^2)))  
  */
 
-#include "math.h"
+#include <sys/cdefs.h>
+#include <float.h>
+#include <math.h>
+
 #include "math_private.h"
 
 static const double 
@@ -51,3 +56,12 @@ asinh(double x)
 	}
 	if(hx>0) return w; else return -w;
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double asinhl(long double);
+#else	/* lint */
+__weak_alias(asinhl, asinh);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */
