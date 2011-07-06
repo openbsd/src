@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.240 2011/07/06 17:32:47 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.241 2011/07/06 17:37:22 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2384,6 +2384,11 @@ sr_chunk_in_use(struct sr_softc *sc, dev_t dev)
 	struct sr_discipline	*sd;
 	struct sr_chunk		*chunk;
 	int			i, c;
+
+	DNPRINTF(SR_D_MISC, "%s: sr_chunk_in_use(%d)\n", DEVNAME(sc), dev);
+
+	if (dev == NODEV)
+		return BIOC_SDINVALID;
 
 	/* See if chunk is already in use. */
 	for (i = 0; i < SR_MAX_LD; i++) {
