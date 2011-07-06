@@ -2108,6 +2108,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/gmon.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/gpio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/hash.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sys/hiballoc.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/hotplug.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/ioccom.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/ioctl.ph

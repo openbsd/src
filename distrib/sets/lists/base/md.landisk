@@ -2307,6 +2307,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/gmon.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/gpio.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/hash.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/sys/hiballoc.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/hotplug.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/ioccom.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/ioctl.ph

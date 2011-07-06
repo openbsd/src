@@ -1,3 +1,5 @@
+./usr/libdata/perl5/OpenBSD/PackageRepository/HTTP.pm
+./usr/libdata/perl5/OpenBSD/PackageRepository/Persistant.pm
 ./usr/share/doc/html
 ./usr/share/doc/html/bind
 ./usr/share/doc/html/bind/Bv9ARM.ch01.html
@@ -2300,7 +2302,6 @@
 ./usr/share/man/man4/vax/dz.4
 ./usr/share/man/man4/vax/fwio.4
 ./usr/share/man/man4/vax/gpx.4
-./usr/share/man/man4/vax/hp.4
 ./usr/share/man/man4/vax/ibus.4
 ./usr/share/man/man4/vax/intro.4
 ./usr/share/man/man4/vax/kmem.4
@@ -2323,7 +2324,6 @@
 ./usr/share/man/man4/vax/rx.4
 ./usr/share/man/man4/vax/sii.4
 ./usr/share/man/man4/vax/smg.4
-./usr/share/man/man4/vax/ts.4
 ./usr/share/man/man4/vax/uba.4
 ./usr/share/man/man4/vax/uda.4
 ./usr/share/man/man4/vax/vsbus.4

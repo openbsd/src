@@ -1498,6 +1498,7 @@
 ./usr/include/sys/gmon.h
 ./usr/include/sys/gpio.h
 ./usr/include/sys/hash.h
+./usr/include/sys/hiballoc.h
 ./usr/include/sys/hotplug.h
 ./usr/include/sys/ioccom.h
 ./usr/include/sys/ioctl.h
