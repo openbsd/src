@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ps.1,v 1.75 2011/07/05 04:48:01 guenther Exp $
+.\"	$OpenBSD: ps.1,v 1.76 2011/07/06 21:42:11 art Exp $
 .\"	$NetBSD: ps.1,v 1.16 1996/03/21 01:36:28 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ps.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: July 5 2011 $
+.Dd $Mdocdate: July 6 2011 $
 .Dt PS 1
 .Os
 .Sh NAME
@@ -244,8 +244,6 @@ PS_SUGIDEXEC  0x40000 last exec(3) was set[ug]id
 P_NOZOMBIE   0x100000 pid 1 waits for me instead of dad
 P_INEXEC     0x200000 process is doing an exec right now
 P_SYSTRACE   0x400000 process system call tracing is active
-P_BIGLOCK   0x2000000 process needs kernel "big lock" to
-		      run
 P_THREAD    0x4000000 only a thread, not a real process
 P_IGNEXITRV 0x8000000 for thread kills
 P_SOFTDEP  0x10000000 stuck processing softdep worklist
