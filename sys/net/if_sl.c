@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.43 2011/01/06 11:52:41 claudio Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.44 2011/07/06 02:42:28 henning Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -221,7 +221,7 @@ sl_clone_create(ifc, unit)
 	sc->sc_if.if_ioctl = slioctl;
 	sc->sc_if.if_output = sloutput;
 	IFQ_SET_MAXLEN(&sc->sc_if.if_snd, 50);
-	sc->sc_fastq.ifq_maxlen = 32;
+	IFQ_SET_MAXLEN(&sc->sc_fastq, 32);
 	IFQ_SET_READY(&sc->sc_if.if_snd);
 	if_attach(&sc->sc_if);
 	if_alloc_sadl(&sc->sc_if);

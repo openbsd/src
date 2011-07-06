@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.90 2011/07/05 21:11:36 guenther Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.91 2011/07/06 02:42:28 henning Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -933,8 +933,8 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_if.if_type = IFT_PPP;
 	sp->pp_if.if_output = sppp_output;
 	IFQ_SET_MAXLEN(&sp->pp_if.if_snd, 50);
-	sp->pp_fastq.ifq_maxlen = 50;
-	sp->pp_cpq.ifq_maxlen = 50;
+	IFQ_SET_MAXLEN(&sp->pp_fastq, 50);
+	IFQ_SET_MAXLEN(&sp->pp_cpq, 50);
 	sp->pp_loopcnt = 0;
 	sp->pp_alivecnt = 0;
 	sp->pp_last_activity = 0;
@@ -944,7 +944,6 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_phase = PHASE_DEAD;
 	sp->pp_up = lcp.Up;
 	sp->pp_down = lcp.Down;
-
 
 	for (i = 0; i < IDX_COUNT; i++)
 		timeout_set(&sp->ch[i], (cps[i])->TO, (void *)sp);

@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.32 2011/07/05 20:00:14 henning Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.33 2011/07/06 02:42:28 henning Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -205,8 +205,8 @@ pppoeattach(int count)
 	LIST_INIT(&pppoe_softc_list);
 	if_clone_attach(&pppoe_cloner);
 
-	pppoediscinq.ifq_maxlen = IFQ_MAXLEN;
-	pppoeinq.ifq_maxlen = IFQ_MAXLEN;
+	IFQ_SET_MAXLEN(&pppoediscinq, IFQ_MAXLEN);
+	IFQ_SET_MAXLEN(&pppoeinq, IFQ_MAXLEN);
 }
 
 /* Create a new interface. */

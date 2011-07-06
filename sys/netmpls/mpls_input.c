@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.31 2011/01/21 17:42:57 mikeb Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.32 2011/07/06 02:42:28 henning Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -65,7 +65,7 @@ struct mbuf	*mpls_do_error(struct mbuf *, int, int, int);
 void
 mpls_init(void)
 {
-	mplsintrq.ifq_maxlen = mplsqmaxlen;
+	IFQ_SET_MAXLEN(&mplsintrq, mplsqmaxlen);
 }
 
 void

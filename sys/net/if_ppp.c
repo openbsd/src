@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.60 2011/07/05 19:59:18 henning Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.61 2011/07/06 02:42:28 henning Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -251,9 +251,9 @@ ppp_clone_create(ifc, unit)
     sc->sc_if.if_start = ppp_ifstart;
 #endif
     IFQ_SET_MAXLEN(&sc->sc_if.if_snd, ifqmaxlen);
-    sc->sc_inq.ifq_maxlen = ifqmaxlen;
-    sc->sc_fastq.ifq_maxlen = ifqmaxlen;
-    sc->sc_rawq.ifq_maxlen = ifqmaxlen;
+    IFQ_SET_MAXLEN(&sc->sc_inq, ifqmaxlen);
+    IFQ_SET_MAXLEN(&sc->sc_fastq, ifqmaxlen);
+    IFQ_SET_MAXLEN(&sc->sc_rawq, ifqmaxlen);
     IFQ_SET_READY(&sc->sc_if.if_snd);
     if_attach(&sc->sc_if);
     if_alloc_sadl(&sc->sc_if);

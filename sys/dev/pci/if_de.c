@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.107 2011/04/03 15:36:02 jasper Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.108 2011/07/06 02:42:27 henning Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -3061,7 +3061,7 @@ tulip_reset(tulip_softc_t * const sc)
 		      TULIP_BUSMODE_DESC_BIGENDIAN : 0));
 
     sc->tulip_txtimer = 0;
-    sc->tulip_txq.ifq_maxlen = TULIP_TXDESCS;
+    IFQ_SET_MAXLEN(&sc->tulip_txq, TULIP_TXDESCS);
     /*
      * Free all the mbufs that were on the transmit ring.
      */

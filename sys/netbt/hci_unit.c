@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_unit.c,v 1.11 2010/07/02 02:40:16 blambert Exp $	*/
+/*	$OpenBSD: hci_unit.c,v 1.12 2011/07/06 02:42:28 henning Exp $	*/
 /*	$NetBSD: hci_unit.c,v 1.12 2008/06/26 14:17:27 plunky Exp $	*/
 
 /*-
@@ -100,11 +100,11 @@ hci_attach(const struct hci_if *hci_if, struct device *dev, uint16_t flags)
 	mtx_init(&unit->hci_devlock, hci_if->ipl);
 	unit->hci_init = 0;	/* kcondvar_t in NetBSD */
 
-	unit->hci_eventq.ifq_maxlen = hci_eventq_max;
-	unit->hci_aclrxq.ifq_maxlen = hci_aclrxq_max;
-	unit->hci_scorxq.ifq_maxlen = hci_scorxq_max;
-	unit->hci_cmdwait.ifq_maxlen = hci_cmdwait_max;
-	unit->hci_scodone.ifq_maxlen = hci_scodone_max;
+	IFQ_SET_MAXLEN(&unit->hci_eventq, hci_eventq_max);
+	IFQ_SET_MAXLEN(&unit->hci_aclrxq, hci_aclrxq_max);
+	IFQ_SET_MAXLEN(&unit->hci_scorxq, hci_scorxq_max);
+	IFQ_SET_MAXLEN(&unit->hci_cmdwait, hci_cmdwait_max);
+	IFQ_SET_MAXLEN(&unit->hci_scodone, hci_scodone_max);
 
 	TAILQ_INIT(&unit->hci_links);
 	LIST_INIT(&unit->hci_memos);

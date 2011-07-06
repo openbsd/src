@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.194 2011/07/05 21:40:38 dhill Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.195 2011/07/06 02:42:28 henning Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -206,7 +206,7 @@ ip_init(void)
 		    pr->pr_protocol < IPPROTO_MAX)
 			ip_protox[pr->pr_protocol] = pr - inetsw;
 	LIST_INIT(&ipq);
-	ipintrq.ifq_maxlen = ipqmaxlen;
+	IFQ_SET_MAXLEN(&ipintrq, ipqmaxlen);
 	TAILQ_INIT(&in_ifaddr);
 	if (ip_mtudisc != 0)
 		ip_mtudisc_timeout_q =

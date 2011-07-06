@@ -1,4 +1,4 @@
-/*	$OpenBSD: natm_proto.c,v 1.5 2011/03/31 10:36:42 jasper Exp $	*/
+/*	$OpenBSD: natm_proto.c,v 1.6 2011/07/06 02:42:28 henning Exp $	*/
 
 /*
  *
@@ -105,7 +105,7 @@ void natm_init()
 {
   LIST_INIT(&natm_pcbs);
   bzero(&natmintrq, sizeof(natmintrq));
-  natmintrq.ifq_maxlen = natmqmaxlen;
+  IFQ_SET_MAXLEN(&natmintrq, natmqmaxlen);
 }
 
 #if defined(__FreeBSD__)

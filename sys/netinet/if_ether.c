@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.91 2011/07/05 23:15:15 henning Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.92 2011/07/06 02:42:28 henning Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -149,7 +149,7 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		static struct timeout arptimer_to;
 
 		arpinit_done = 1;
-		arpintrq.ifq_maxlen = 50;	/* XXX hate magic numbers */
+		IFQ_SET_MAXLEN(&arpintrq, 50);	/* XXX hate magic numbers */
 		/*
 		 * We generate expiration times from time.tv_sec
 		 * so avoid accidently creating permanent routes.
