@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.123 2011/07/06 21:41:37 art Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.124 2011/07/07 18:11:24 art Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -726,9 +726,11 @@ void
 trapsignal(struct proc *p, int signum, u_long code, int type,
     union sigval sigval)
 {
-	struct sigacts *ps = p->p_sigacts;
+	struct sigacts *ps;
 	int mask;
 
+	KERNEL_LOCK();
+	ps = p->p_sigacts;
 	mask = sigmask(signum);
 	if ((p->p_flag & P_TRACED) == 0 && (ps->ps_sigcatch & mask) != 0 &&
 	    (p->p_sigmask & mask) == 0) {
@@ -758,6 +760,7 @@ trapsignal(struct proc *p, int signum, u_long code, int type,
 		p->p_sigval = sigval;
 		ptsignal(p, signum, STHREAD);
 	}
+	KERNEL_UNLOCK();
 }
 
 /*

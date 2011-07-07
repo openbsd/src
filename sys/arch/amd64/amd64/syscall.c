@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.17 2011/07/06 21:41:37 art Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.18 2011/07/07 18:11:23 art Exp $	*/
 /*	$NetBSD: syscall.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -127,24 +127,18 @@ syscall(struct trapframe *frame)
 	lock = !(callp->sy_flags & SY_NOLOCK);
 
 #ifdef SYSCALL_DEBUG
-	KERNEL_LOCK();
 	scdebug_call(p, code, argp);
-	KERNEL_UNLOCK();
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL)) {
-		KERNEL_LOCK();
 		ktrsyscall(p, code, callp->sy_argsize, argp);
-		KERNEL_UNLOCK();
 	}
 #endif
 	rval[0] = 0;
 	rval[1] = frame->tf_rdx;
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		KERNEL_LOCK();
 		error = systrace_redirect(code, p, argp, rval);
-		KERNEL_UNLOCK();
 	} else
 #endif
 	{
@@ -179,16 +173,12 @@ syscall(struct trapframe *frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	KERNEL_LOCK();
 	scdebug_ret(p, code, error, rval);
-	KERNEL_UNLOCK();
 #endif
 	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK();
 		ktrsysret(p, code, error, rval[0]);
-		KERNEL_UNLOCK();
 	}
 #endif
 }
@@ -208,12 +198,10 @@ child_return(void *arg)
 	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK();
 		ktrsysret(p,
 		    (p->p_flag & P_THREAD) ? SYS_rfork :
 		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
 		    0, 0);
-		KERNEL_UNLOCK();
 	}
 #endif
 }

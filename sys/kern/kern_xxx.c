@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_xxx.c,v 1.19 2011/06/26 22:40:00 deraadt Exp $	*/
+/*	$OpenBSD: kern_xxx.c,v 1.20 2011/07/07 18:11:24 art Exp $	*/
 /*	$NetBSD: kern_xxx.c,v 1.32 1996/04/22 01:38:41 christos Exp $	*/
 
 /*
@@ -109,11 +109,12 @@ scdebug_call(struct proc *p, register_t code, register_t args[])
 	if (!(scdebug & SCDEBUG_CALLS))
 		return;
 
+	KERNEL_LOCK();
 	em = p->p_emul;
 	sy = &em->e_sysent[code];
 	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= em->e_nsysent ||
 	     sy->sy_call == sys_nosys))
-		return;
+		goto out;
 		
 	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
 	if (code < 0 || code >= em->e_nsysent)
@@ -130,6 +131,8 @@ scdebug_call(struct proc *p, register_t code, register_t args[])
 		}
 	}
 	printf("\n");
+out:
+	KERNEL_UNLOCK();
 }
 
 void
@@ -141,11 +144,12 @@ scdebug_ret(struct proc *p, register_t code, int error, register_t retval[])
 	if (!(scdebug & SCDEBUG_RETURNS))
 		return;
 
+	KERNEL_LOCK();
 	em = p->p_emul;
 	sy = &em->e_sysent[code];
 	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= em->e_nsysent ||
 	    sy->sy_call == sys_nosys))
-		return;
+		goto out;
 		
 	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
 	if (code < 0 || code >= em->e_nsysent)
@@ -154,5 +158,7 @@ scdebug_ret(struct proc *p, register_t code, int error, register_t retval[])
 		printf("%d ret: err = %d, rv = 0x%lx,0x%lx", code,
 		    error, (long)retval[0], (long)retval[1]);
 	printf("\n");
+out:
+	KERNEL_UNLOCK();
 }
 #endif /* SYSCALL_DEBUG */

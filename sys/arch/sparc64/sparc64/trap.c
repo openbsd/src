@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.71 2011/07/06 22:26:44 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.72 2011/07/07 18:11:24 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -466,17 +466,13 @@ dopanic:
 			    pc, (long)tf->tf_npc, pstate, PSTATE_BITS);
 			/* NOTREACHED */
 		}
-		KERNEL_LOCK();
 		trapsignal(p, SIGILL, type, ILL_ILLOPC, sv);
-		KERNEL_UNLOCK();
 		break;
 
 	case T_AST:
 		p->p_md.md_astpending = 0;
 		if (p->p_flag & P_OWEUPC) {
-			KERNEL_LOCK();
 			ADDUPROF(p);
-			KERNEL_UNLOCK();
 		}
 		if (curcpu()->ci_want_resched)
 			preempt(NULL);
@@ -493,9 +489,7 @@ dopanic:
 		 */
 		write_user_windows();
 		if (rwindow_save(p) == -1) {
-			KERNEL_LOCK();
 			trapsignal(p, SIGILL, 0, ILL_BADSTK, sv);
-			KERNEL_UNLOCK();
 		}
 		break;
 
@@ -505,9 +499,7 @@ dopanic:
 
 		if (copyin((caddr_t)pc, &ins, sizeof(ins)) != 0) {
 			/* XXX Can this happen? */
-			KERNEL_LOCK();
 			trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
-			KERNEL_UNLOCK();
 			break;
 		}
 		if (ins.i_any.i_op == IOP_mem &&
@@ -526,9 +518,7 @@ dopanic:
 				ADVANCE;
 			break;
 		}
-		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);	/* XXX code? */
-		KERNEL_UNLOCK();
 		break;
 	}
 
@@ -536,9 +526,7 @@ dopanic:
 	case T_TEXTFAULT:
 	case T_PRIVINST:
 	case T_PRIVACT:
-		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);	/* XXX code? */
-		KERNEL_UNLOCK();
 		break;
 
 	case T_FPDISABLED: {
@@ -589,9 +577,7 @@ dopanic:
 
 		if (copyin((caddr_t)pc, &ins, sizeof(ins)) != 0) {
 			/* XXX Can this happen? */
-			KERNEL_LOCK();
 			trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
-			KERNEL_UNLOCK();
 			break;
 		}
 		if (ins.i_any.i_op == IOP_mem &&
@@ -602,9 +588,7 @@ dopanic:
 			if (emul_qf(ins.i_int, p, sv, tf))
 				ADVANCE;
 		} else {
-			KERNEL_LOCK();
 			trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
-			KERNEL_UNLOCK();
 		}
 		break;
 	}
@@ -647,9 +631,7 @@ dopanic:
 		}
 		
 		/* XXX sv.sival_ptr should be the fault address! */
-		KERNEL_LOCK();
 		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);	/* XXX code? */
-		KERNEL_UNLOCK();
 		break;
 
 	case T_FP_IEEE_754:
@@ -684,22 +666,16 @@ dopanic:
 		break;
 
 	case T_TAGOF:
-		KERNEL_LOCK();
 		trapsignal(p, SIGEMT, 0, EMT_TAGOVF, sv);	/* XXX code? */
-		KERNEL_UNLOCK();
 		break;
 
 	case T_BREAKPOINT:
-		KERNEL_LOCK();
 		trapsignal(p, SIGTRAP, 0, TRAP_BRKPT, sv);
-		KERNEL_UNLOCK();
 		break;
 
 	case T_DIV0:
 		ADVANCE;
-		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, 0, FPE_INTDIV, sv);
-		KERNEL_UNLOCK();
 		break;
 
 	case T_CLEANWIN:
@@ -715,25 +691,19 @@ dopanic:
 
 	case T_RANGECHECK:
 		ADVANCE;
-		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_ILLOPN, sv);	/* XXX code? */
-		KERNEL_UNLOCK();
 		break;
 
 	case T_FIXALIGN:
 		uprintf("T_FIXALIGN\n");
 		ADVANCE;
-		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_ILLOPN, sv);	/* XXX code? */
-		KERNEL_UNLOCK();
 		break;
 
 	case T_INTOF:
 		uprintf("T_INTOF\n");		/* XXX */
 		ADVANCE;
-		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, FPE_INTOVF_TRAP, FPE_INTOVF, sv);
-		KERNEL_UNLOCK();
 		break;
 	}
 	userret(p);
@@ -1001,9 +971,7 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 		return;
 	}
 
-	KERNEL_LOCK();
 	trapsignal(p, SIGSEGV, VM_PROT_READ|VM_PROT_WRITE, SEGV_MAPERR, sv);
-	KERNEL_UNLOCK();
 out:
 
 	if ((tstate & TSTATE_PRIV) == 0) {
@@ -1140,9 +1108,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 			panic("text_access_error: kernel memory error");
 
 		/* User fault -- Berr */
-		KERNEL_LOCK();
 		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
-		KERNEL_UNLOCK();
 	}
 
 	if ((sfsr & SFSR_FV) == 0 || (sfsr & SFSR_FT) == 0)
@@ -1326,9 +1292,7 @@ syscall(tf, code, pc)
 		
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL)) {
-			KERNEL_LOCK();
 			ktrsyscall(p, code, callp->sy_argsize, args);
-			KERNEL_UNLOCK();
 		}
 #endif
 		if (error)
@@ -1339,17 +1303,13 @@ syscall(tf, code, pc)
 	}
 
 #ifdef SYSCALL_DEBUG
-	KERNEL_LOCK();
 	scdebug_call(p, code, args);
-	KERNEL_UNLOCK();
 #endif
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		KERNEL_LOCK();
 		error = systrace_redirect(code, p, args, rval);
-		KERNEL_UNLOCK();
 	} else
 #endif
 	{
@@ -1399,16 +1359,12 @@ syscall(tf, code, pc)
 	}
 
 #ifdef SYSCALL_DEBUG
-	KERNEL_LOCK();
 	scdebug_ret(p, code, error, rval);
-	KERNEL_UNLOCK();
 #endif
 	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK();
 		ktrsysret(p, code, error, rval[0]);
-		KERNEL_UNLOCK();
 	}
 #endif
 	share_fpu(p, tf);
@@ -1436,12 +1392,10 @@ child_return(arg)
 	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK();
 		ktrsysret(p,
 		    (p->p_flag & P_THREAD) ? SYS_rfork :
 		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
 		    0, 0);
-		KERNEL_UNLOCK();
 	}
 #endif
 }

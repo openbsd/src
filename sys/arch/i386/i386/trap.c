@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.98 2011/07/06 21:41:37 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.99 2011/07/07 18:11:23 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -322,46 +322,34 @@ trap(struct trapframe *frame)
 
 	case T_TSSFLT|T_USER:
 		sv.sival_int = frame->tf_eip;
-		KERNEL_LOCK();
 		trapsignal(p, SIGBUS, vftype, BUS_OBJERR, sv);
-		KERNEL_UNLOCK();
 		goto out;
 
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
 		sv.sival_int = frame->tf_eip;
-		KERNEL_LOCK();
 		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
-		KERNEL_UNLOCK();
 		goto out;
 
 	case T_ALIGNFLT|T_USER:
 		sv.sival_int = frame->tf_eip;
-		KERNEL_LOCK();
 		trapsignal(p, SIGBUS, vftype, BUS_ADRALN, sv);
-		KERNEL_UNLOCK();
 		goto out;
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 		sv.sival_int = frame->tf_eip;
-		KERNEL_LOCK();
 		trapsignal(p, SIGILL, type &~ T_USER, ILL_PRVOPC, sv);
-		KERNEL_UNLOCK();
 		goto out;
 
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
 		sv.sival_int = frame->tf_eip;
-		KERNEL_LOCK();
 		trapsignal(p, SIGILL, type &~ T_USER, ILL_COPROC, sv);
-		KERNEL_UNLOCK();
 		goto out;
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
 		uvmexp.softs++;
 		if (p->p_flag & P_OWEUPC) {
-			KERNEL_LOCK();
 			ADDUPROF(p);
-			KERNEL_UNLOCK();
 		}
 		if (want_resched)
 			preempt(NULL);
@@ -371,36 +359,26 @@ trap(struct trapframe *frame)
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
 		sv.sival_int = frame->tf_eip;
-		KERNEL_LOCK();
 		trapsignal(p, SIGKILL, type &~ T_USER, FPE_FLTINV, sv);
-		KERNEL_UNLOCK();
 		goto out;
 	}
 
 	case T_BOUND|T_USER:
 		sv.sival_int = frame->tf_eip;
-		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, type &~ T_USER, FPE_FLTSUB, sv);
-		KERNEL_UNLOCK();
 		goto out;
 	case T_OFLOW|T_USER:
 		sv.sival_int = frame->tf_eip;
-		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, type &~ T_USER, FPE_INTOVF, sv);
-		KERNEL_UNLOCK();
 		goto out;
 	case T_DIVIDE|T_USER:
 		sv.sival_int = frame->tf_eip;
-		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, type &~ T_USER, FPE_INTDIV, sv);
-		KERNEL_UNLOCK();
 		goto out;
 
 	case T_ARITHTRAP|T_USER:
 		sv.sival_int = frame->tf_eip;
-		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, frame->tf_err, FPE_INTOVF, sv);
-		KERNEL_UNLOCK();
 		goto out;
 
 	case T_XFTRAP|T_USER:
@@ -506,15 +484,11 @@ trap(struct trapframe *frame)
 
 	case T_BPTFLT|T_USER:		/* bpt instruction fault */
 		sv.sival_int = rcr2();
-		KERNEL_LOCK();
 		trapsignal(p, SIGTRAP, type &~ T_USER, TRAP_BRKPT, sv);
-		KERNEL_UNLOCK();
 		break;
 	case T_TRCTRAP|T_USER:		/* trace trap */
 		sv.sival_int = rcr2();
-		KERNEL_LOCK();
 		trapsignal(p, SIGTRAP, type &~ T_USER, TRAP_TRACE, sv);
-		KERNEL_UNLOCK();
 		break;
 
 #if	NISA > 0
@@ -667,16 +641,12 @@ syscall(struct trapframe *frame)
 	lock = !(callp->sy_flags & SY_NOLOCK);	
 
 #ifdef SYSCALL_DEBUG
-	KERNEL_LOCK();
 	scdebug_call(p, code, args);
-	KERNEL_UNLOCK();
 #endif
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL)) {
-		KERNEL_LOCK();
 		ktrsyscall(p, code, argsize, args);
-		KERNEL_UNLOCK();
 	}
 #endif
 
@@ -688,15 +658,13 @@ syscall(struct trapframe *frame)
 
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		KERNEL_LOCK();
 		orig_error = error = systrace_redirect(code, p, args, rval);
-		KERNEL_UNLOCK();
 	} else
 #endif
 	{
 		if (lock)
 			KERNEL_LOCK();
-			orig_error = error = (*callp->sy_call)(p, args, rval);
+		orig_error = error = (*callp->sy_call)(p, args, rval);
 		if (lock)
 			KERNEL_UNLOCK();
 	}
@@ -728,16 +696,12 @@ syscall(struct trapframe *frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	KERNEL_LOCK();
 	scdebug_ret(p, code, orig_error, rval);
-	KERNEL_UNLOCK();
 #endif
 	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK();
 		ktrsysret(p, code, orig_error, rval[0]);
-		KERNEL_UNLOCK();
 	}
 #endif
 #ifdef DIAGNOSTIC
@@ -764,12 +728,10 @@ child_return(void *arg)
 	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK();
 		ktrsysret(p,
 		    (p->p_flag & P_THREAD) ? SYS_rfork :
 		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
 		    0, 0);
-		KERNEL_UNLOCK();
 	}
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.76 2011/07/06 21:41:37 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.77 2011/07/07 18:11:24 art Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -223,9 +223,7 @@ ast(struct trapframe *frame)
 	uvmexp.softs++;
 	p->p_md.md_astpending = 0;
 	if (p->p_flag & P_OWEUPC) {
-		KERNEL_LOCK();
 		ADDUPROF(p);
-		KERNEL_UNLOCK();
 	}
 	if (ci->ci_want_resched)
 		preempt(NULL);
@@ -602,9 +600,7 @@ user_fault:
 
 	if (sig) {
 		sv.sival_ptr = (void *)fault_addr;
-		KERNEL_LOCK();
 		trapsignal(p, sig, fault_code, fault_type, sv);
-		KERNEL_UNLOCK();
 		/*
 		 * don't want multiple faults - we are going to
 		 * deliver signal.
@@ -1117,9 +1113,7 @@ m88110_user_fault:
 	if (sig) {
 deliver:
 		sv.sival_ptr = (void *)fault_addr;
-		KERNEL_LOCK();
 		trapsignal(p, sig, fault_code, fault_type, sv);
-		KERNEL_UNLOCK();
 	}
 
 userexit:
@@ -1204,24 +1198,18 @@ m88100_syscall(register_t code, struct trapframe *tf)
 		goto bad;
 
 #ifdef SYSCALL_DEBUG
-	KERNEL_LOCK();
 	scdebug_call(p, code, args);
-	KERNEL_UNLOCK();
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL)) {
-		KERNEL_LOCK();
 		ktrsyscall(p, code, callp->sy_argsize, args);
-		KERNEL_UNLOCK();
 	}
 #endif
 	rval[0] = 0;
 	rval[1] = tf->tf_r[3];
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		KERNEL_LOCK();
 		error = systrace_redirect(code, p, args, rval);
-		KERNEL_UNLOCK();
 	} else
 #endif
 	{
@@ -1289,16 +1277,12 @@ bad:
 		break;
 	}
 #ifdef SYSCALL_DEBUG
-	KERNEL_LOCK();
 	scdebug_ret(p, code, error, rval);
-	KERNEL_UNLOCK();
 #endif
 	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK();
 		ktrsysret(p, code, error, rval[0]);
-		KERNEL_UNLOCK();
 	}
 #endif
 }
@@ -1368,24 +1352,18 @@ m88110_syscall(register_t code, struct trapframe *tf)
 		goto bad;
 
 #ifdef SYSCALL_DEBUG
-	KERNEL_LOCK();
 	scdebug_call(p, code, args);
-	KERNEL_UNLOCK();
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL)) {
-		KERNEL_LOCK();
 		ktrsyscall(p, code, callp->sy_argsize, args);
-		KERNEL_UNLOCK();
 	}
 #endif
 	rval[0] = 0;
 	rval[1] = tf->tf_r[3];
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		KERNEL_LOCK();
 		error = systrace_redirect(code, p, args, rval);
-		KERNEL_UNLOCK();
 	} else
 #endif
 	{
@@ -1456,16 +1434,12 @@ bad:
 	}
 
 #ifdef SYSCALL_DEBUG
-	KERNEL_LOCK();
 	scdebug_ret(p, code, error, rval);
-	KERNEL_UNLOCK();
 #endif
 	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK();
 		ktrsysret(p, code, error, rval[0]);
-		KERNEL_UNLOCK();
 	}
 #endif
 }
@@ -1506,12 +1480,10 @@ child_return(arg)
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK();
 		ktrsysret(p,
 		    (p->p_flag & P_THREAD) ? SYS_rfork :
 		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
 		    0, 0);
-		KERNEL_UNLOCK();
 	}
 #endif
 }
