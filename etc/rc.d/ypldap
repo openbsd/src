@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# $OpenBSD: ypldap,v 1.1 2011/07/07 01:52:58 robert Exp $
+
+daemon="/usr/sbin/ypldap"
+
+. /etc/rc.d/rc.subr
+
+rc_cmd $1

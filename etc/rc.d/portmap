@@ -1,0 +1,12 @@
+#!/bin/sh
+#
+# $OpenBSD: portmap,v 1.1 2011/07/07 01:52:58 robert Exp $
+
+daemon="/usr/sbin/portmap"
+
+. /etc/rc.d/rc.subr
+
+rc_reload=NO
+rc_restart=NO
+
+rc_cmd $1
