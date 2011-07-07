@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.25 2011/04/21 12:42:59 jsing Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.26 2011/07/07 18:44:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -134,9 +134,9 @@ extern int cpu_hvers;
  * Exported definitions unique to hp700/PA-RISC cpu support.
  */
 
-#define	HPPA_PGALIAS	0x0000000000100000UL
-#define	HPPA_PGAMASK	0xfffffffffff00000UL
-#define	HPPA_PGAOFF	0x00000000000fffffUL
+#define	HPPA_PGALIAS	0x0000000000400000UL
+#define	HPPA_PGAMASK	0xffffffffffc00000UL
+#define	HPPA_PGAOFF	0x00000000003fffffUL
 
 #define	HPPA_PHYSMAP	0x000001ffffffffffUL
 #define	HPPA_IOBEGIN	0xfffffff000000000UL
