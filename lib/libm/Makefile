@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.85 2011/07/07 00:54:15 martynas Exp $
+#  $OpenBSD: Makefile,v 1.86 2011/07/07 01:20:24 martynas Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -193,7 +193,7 @@ MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 	cimag.3 conj.3 copysign.3 cos.3 cosh.3 cproj.3 erf.3 exp.3 \
 	fabs.3 fdim.3 feclearexcept.3 feenableexcept.3 fegetenv.3 \
 	fegetround.3 floor.3 fmax.3 fmod.3 hypot.3 ilogb.3 j0.3 \
-	lgamma.3 logb.3 lrint.3 lround.3 math.3 nan.3 nextafter.3 \
+	lgamma.3 logb.3 lrint.3 lround.3 nan.3 nextafter.3 \
 	remainder.3 rint.3 round.3 scalbn.3 sin.3 sinh.3 sqrt.3 \
 	tan.3 tanh.3 trunc.3
 
@@ -278,7 +278,6 @@ MLINKS+=lrint.3 llrintf.3
 MLINKS+=lrint.3 lrintf.3
 MLINKS+=lround.3 llroundf.3
 MLINKS+=lround.3 lroundf.3
-MLINKS+=math.3 mathf.3
 MLINKS+=nan.3 nanf.3
 MLINKS+=nearbyint.3 nearbyintf.3
 MLINKS+=nextafter.3 nextafterf.3
