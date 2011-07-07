@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.216 2011/06/23 22:46:12 schwarze Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.217 2011/07/07 19:42:55 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1187,8 +1187,6 @@ mvme68k
 ..
 mvme88k
 ..
-mvmeppc
-..
 palm
 ..
 sgi
@@ -1261,8 +1259,6 @@ mvme68k
 ..
 mvme88k
 ..
-mvmeppc
-..
 palm
 ..
 sgi
@@ -1319,8 +1315,6 @@ mvme68k
 ..
 mvme88k
 ..
-mvmeppc
-..
 palm
 ..
 sgi
@@ -1371,8 +1365,6 @@ macppc
 mvme68k
 ..
 mvme88k
-..
-mvmeppc
 ..
 palm
 ..
@@ -1435,8 +1427,6 @@ mvme68k
 ..
 mvme88k
 ..
-mvmeppc
-..
 palm
 ..
 sgi
@@ -1487,8 +1477,6 @@ macppc
 mvme68k
 ..
 mvme88k
-..
-mvmeppc
 ..
 palm
 ..
