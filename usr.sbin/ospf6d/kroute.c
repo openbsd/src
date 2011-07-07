@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.32 2011/07/07 00:36:13 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.33 2011/07/07 03:56:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -645,7 +645,7 @@ kif_validate(u_short ifindex)
 
 	if ((iface = if_find(ifindex)) == NULL) {
 		log_warnx("interface with index %u not found", ifindex);
-		return (1);
+		return (-1);
 	}
 
 	return ((iface->flags & IFF_UP) && LINK_STATE_IS_UP(iface->linkstate));
@@ -1265,7 +1265,7 @@ fetchifs(u_short ifindex)
 		return (-1);
 	}
 	if ((buf = malloc(len)) == NULL) {
-		log_warn("fetchif");
+		log_warn("fetchifs");
 		return (-1);
 	}
 	if (sysctl(mib, 6, buf, &len, NULL, 0) == -1) {
