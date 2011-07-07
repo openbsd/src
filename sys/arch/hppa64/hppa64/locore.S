@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.28 2011/07/04 17:07:27 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.29 2011/07/07 22:30:28 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -426,13 +426,13 @@ $syscall_return
 	mfctl	%cr24, %r1
 	ldo	CI_TRAP_SAVE(%r1), %r1
 
-	ldd	TF_ARGS+4*8(%arg0), %arg2	/* arg3 */
-	ldd	TF_ARGS+5*8(%arg0), %arg3	/* arg2 */
+	ldd	TF_ARGS+3*8(%arg0), %arg2	/* arg3 */
+	ldd	TF_ARGS+2*8(%arg0), %arg3	/* arg2 */
 	std	%arg2, 0*8(%r1)
 	std	%arg3, 1*8(%r1)
 
-	ldd	TF_ARGS+6*8(%arg0), %arg2	/* arg1 */
-	ldd	TF_ARGS+7*8(%arg0), %arg3	/* arg0 */
+	ldd	TF_ARGS+1*8(%arg0), %arg2	/* arg1 */
+	ldd	TF_ARGS+0*8(%arg0), %arg3	/* arg0 */
 	std	%arg2, 2*8(%r1)
 	std	%arg3, 3*8(%r1)
 
@@ -485,11 +485,11 @@ $syscall_return
 	ldd	TF_R16(%arg0), %r16
 	ldd	TF_R17(%arg0), %r17
 	ldd	TF_R18(%arg0), %r18
-	ldd	TF_ARGS+0*8(%arg0), %r19
-	ldd	TF_ARGS+1*8(%arg0), %r20
-	ldd	TF_ARGS+2*8(%arg0), %r21
-	ldd	TF_ARGS+3*8(%arg0), %r22
-	/* Restore arg3, arg2, arg1 and arg0 later. */
+	ldd	TF_ARGS+4*8(%arg0), arg4
+	ldd	TF_ARGS+5*8(%arg0), arg5
+	ldd	TF_ARGS+6*8(%arg0), arg6
+	ldd	TF_ARGS+7*8(%arg0), arg7
+	/* Restore arg0, arg1, arg2 and arg3 later. */
 	ldd	TF_DP(%arg0), %r27
 	ldd	TF_RET0(%arg0), %r28
 	ldd	TF_RET1(%arg0), %r29
@@ -865,14 +865,14 @@ TLABEL(all_virt)
 	std,ma	%r16, 8(%sr3,%sp)
 	std,ma	%r17, 8(%sr3,%sp)
 	std,ma	%r18, 8(%sr3,%sp)
-	std,ma	%r19, 8(%sr3,%sp)
-	std,ma	%r20, 8(%sr3,%sp)
-	std,ma	%r21, 8(%sr3,%sp)
-	std,ma	%r22, 8(%sr3,%sp)
-	std,ma	%r23, 8(%sr3,%sp)
-	std,ma	%r24, 8(%sr3,%sp)
-	std,ma	%r25, 8(%sr3,%sp)
-	std,ma	%r26, 8(%sr3,%sp)
+	std,ma	%arg0, 8(%sr3,%sp)
+	std,ma	%arg1, 8(%sr3,%sp)
+	std,ma	%arg2, 8(%sr3,%sp)
+	std,ma	%arg3, 8(%sr3,%sp)
+	std,ma	arg4, 8(%sr3,%sp)
+	std,ma	arg5, 8(%sr3,%sp)
+	std,ma	arg6, 8(%sr3,%sp)
+	std,ma	arg7, 8(%sr3,%sp)
 	std,ma	%r27, 8(%sr3,%sp)
 	std,ma	%r28, 8(%sr3,%sp)
 	std,ma	%r29, 8(%sr3,%sp)
