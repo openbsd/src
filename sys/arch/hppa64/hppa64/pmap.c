@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.17 2011/07/04 17:07:27 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.18 2011/07/07 18:40:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -229,6 +229,7 @@ pmap_pde_release(struct pmap *pmap, vaddr_t va, struct vm_page *ptp)
 			panic("pmap_pde_release: busy page table page");
 #endif
 		pdcache(HPPA_SID_KERNEL, (vaddr_t)ptp, PAGE_SIZE);
+		pdtlb(HPPA_SID_KERNEL, (vaddr_t)ptp);
 		uvm_pagefree(ptp);
 	}
 }
@@ -254,12 +255,13 @@ pmap_pte_set(volatile pt_entry_t *pde, vaddr_t va, pt_entry_t pte)
 void
 pmap_pte_flush(struct pmap *pmap, vaddr_t va, pt_entry_t pte)
 {
+	fdcache(pmap->pm_space, va, PAGE_SIZE);
 	if (pte & PTE_EXEC) {
 		ficache(pmap->pm_space, va, PAGE_SIZE);
+		pdtlb(pmap->pm_space, va);
 		pitlb(pmap->pm_space, va);
-	}
-	fdcache(pmap->pm_space, va, PAGE_SIZE);
-	pdtlb(pmap->pm_space, va);
+	} else
+		pdtlb(pmap->pm_space, va);
 }
 
 static __inline pt_entry_t
@@ -1078,11 +1080,15 @@ pmap_flush_page(struct vm_page *pg, int purge)
 
 	/* purge cache for all possible mappings for the pa */
 	simple_lock(&pg->mdpage.pvh_lock);
-	for(pve = pg->mdpage.pvh_list; pve; pve = pve->pv_next)
+	for (pve = pg->mdpage.pvh_list; pve; pve = pve->pv_next) {
 		if (purge)
 			pdcache(pve->pv_pmap->pm_space, pve->pv_va, PAGE_SIZE);
 		else
 			fdcache(pve->pv_pmap->pm_space, pve->pv_va, PAGE_SIZE);
+		ficache(pve->pv_pmap->pm_space, pve->pv_va, PAGE_SIZE);
+		pdtlb(pve->pv_pmap->pm_space, pve->pv_va);
+		pitlb(pve->pv_pmap->pm_space, pve->pv_va);
+}
 	simple_unlock(&pg->mdpage.pvh_lock);
 }
 
@@ -1096,6 +1102,7 @@ pmap_zero_page(struct vm_page *pg)
 	pmap_flush_page(pg, 1);
 	bzero((void *)pa, PAGE_SIZE);
 	fdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
+	pdtlb(HPPA_SID_KERNEL, pa);
 }
 
 void
@@ -1110,6 +1117,8 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	bcopy((void *)spa, (void *)dpa, PAGE_SIZE);
 	pdcache(HPPA_SID_KERNEL, spa, PAGE_SIZE);
 	fdcache(HPPA_SID_KERNEL, dpa, PAGE_SIZE);
+	pdtlb(HPPA_SID_KERNEL, spa);
+	pdtlb(HPPA_SID_KERNEL, dpa);
 }
 
 void
@@ -1208,4 +1217,23 @@ pmap_kremove(vaddr_t va, vsize_t size)
 	simple_unlock(&pmap->pm_lock);
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE, ("pmap_kremove: leaving\n"));
+}
+
+void
+pmap_proc_iflush(struct proc *p, vaddr_t va, vsize_t len)
+{
+	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
+
+	fdcache(pmap->pm_space, va, len);
+	sync_caches();
+	ficache(pmap->pm_space, va, len);
+	sync_caches();
+}
+
+struct vm_page *
+pmap_unmap_direct(vaddr_t va)
+{
+	fdcache(HPPA_SID_KERNEL, va, PAGE_SIZE);
+	pdtlb(HPPA_SID_KERNEL, va);
+	return (PHYS_TO_VM_PAGE(va));
 }
