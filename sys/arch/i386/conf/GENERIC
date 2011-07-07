@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.724 2011/07/05 00:33:22 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.725 2011/07/07 22:45:08 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -423,14 +423,6 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc
 lpt*	at puc?
-
-lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
-lms1	at isa? port 0x238 irq 5
-mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
-mms1	at isa? port 0x238 irq 5
-
-wsmouse*	at lms? mux 0
-wsmouse*	at mms? mux 0
 
 bha0	at isa? port 0x330		# BusLogic [57]4X SCSI controllers
 bha1	at isa? disable port 0x334	# BusLogic [57]4X SCSI controllers
