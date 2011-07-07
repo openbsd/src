@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.109 2011/07/07 01:19:40 tedu Exp $
+;	$OpenBSD: syscalls.master,v 1.110 2011/07/07 18:30:50 tedu Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -75,7 +75,7 @@
 18	COMPAT_25	{ int sys_getfsstat(struct statfs *buf, long bufsize, \
 			    int flags); } ogetfsstat
 19	OBSOL		olseek
-20	STD		{ pid_t sys_getpid(void); }
+20	STD NOLOCK	{ pid_t sys_getpid(void); }
 21	STD		{ int sys_mount(const char *type, const char *path, \
 			    int flags, void *data); }
 22	STD		{ int sys_unmount(const char *path, int flags); }
