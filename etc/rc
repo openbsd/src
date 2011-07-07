@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.358 2011/07/07 21:00:59 deraadt Exp $
+#	$OpenBSD: rc,v 1.359 2011/07/07 22:23:56 robert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -638,14 +638,7 @@ if [ X"${aucat_flags}" != X"NO" ]; then
 	echo -n ' aucat';		aucat -l ${aucat_flags}
 fi
 
-if [ X"${wsmoused_flags}" != X"NO" -a -x /usr/sbin/wsmoused ]; then
-	echo -n ' wsmoused';		wsmoused ${wsmoused_flags}
-fi
-
-# Alternatively, on some architectures, xdm may be started in /etc/ttys.
-if [ X"${xdm_flags}" != X"NO" -a -x /usr/X11R6/bin/xdm ]; then
-	echo -n ' xdm';			/usr/X11R6/bin/xdm ${xdm_flags}
-fi
+start_daemon wsmoused xdm
 echo '.'
 
 exit 0

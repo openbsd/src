@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# $OpenBSD: wsmoused,v 1.1 2011/07/07 22:23:56 robert Exp $
+
+daemon="/usr/sbin/wsmoused"
+
+. /etc/rc.d/rc.subr
+
+rc_reload=NO
+
+rc_cmd $1
