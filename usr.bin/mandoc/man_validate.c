@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.45 2011/05/29 21:22:18 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.46 2011/07/07 20:07:38 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -53,27 +53,28 @@ static	int	  check_sec(CHKARGS);
 static	void	  check_text(CHKARGS);
 
 static	int	  post_AT(CHKARGS);
+static	int	  post_vs(CHKARGS);
 static	int	  post_fi(CHKARGS);
 static	int	  post_nf(CHKARGS);
 static	int	  post_TH(CHKARGS);
 static	int	  post_UC(CHKARGS);
 
 static	v_check	  posts_at[] = { post_AT, NULL };
+static	v_check	  posts_br[] = { post_vs, check_eq0, NULL };
 static	v_check	  posts_eq0[] = { check_eq0, NULL };
 static	v_check	  posts_fi[] = { check_eq0, post_fi, NULL };
-static	v_check	  posts_le1[] = { check_le1, NULL };
 static	v_check	  posts_ft[] = { check_ft, NULL };
 static	v_check	  posts_nf[] = { check_eq0, post_nf, NULL };
 static	v_check	  posts_par[] = { check_par, NULL };
 static	v_check	  posts_part[] = { check_part, NULL };
 static	v_check	  posts_sec[] = { check_sec, NULL };
+static	v_check	  posts_sp[] = { post_vs, check_le1, NULL };
 static	v_check	  posts_th[] = { check_ge2, check_le5, post_TH, NULL };
 static	v_check	  posts_uc[] = { post_UC, NULL };
 static	v_check	  pres_bline[] = { check_bline, NULL };
 
-
 static	const struct man_valid man_valids[MAN_MAX] = {
-	{ NULL, posts_eq0 }, /* br */
+	{ NULL, posts_br }, /* br */
 	{ pres_bline, posts_th }, /* TH */
 	{ pres_bline, posts_sec }, /* SH */
 	{ pres_bline, posts_sec }, /* SS */
@@ -95,7 +96,7 @@ static	const struct man_valid man_valids[MAN_MAX] = {
 	{ NULL, NULL }, /* IR */
 	{ NULL, NULL }, /* RI */
 	{ NULL, posts_eq0 }, /* na */ /* FIXME: should warn only. */
-	{ NULL, posts_le1 }, /* sp */ /* FIXME: should warn only. */
+	{ NULL, posts_sp }, /* sp */ /* FIXME: should warn only. */
 	{ pres_bline, posts_nf }, /* nf */
 	{ pres_bline, posts_fi }, /* fi */
 	{ NULL, NULL }, /* RE */
@@ -552,5 +553,19 @@ post_AT(CHKARGS)
 		free(m->meta.source);
 
 	m->meta.source = mandoc_strdup(p);
+	return(1);
+}
+
+static int
+post_vs(CHKARGS)
+{
+
+	/* 
+	 * Don't warn about this because it occurs in pod2man and would
+	 * cause considerable (unfixable) warnage.
+	 */
+	if (NULL == n->prev && MAN_ROOT == n->parent->type)
+		man_node_delete(m, n);
+
 	return(1);
 }

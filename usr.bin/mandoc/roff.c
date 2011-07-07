@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.38 2011/07/05 04:12:41 schwarze Exp $ */
+/*	$Id: roff.c,v 1.39 2011/07/07 20:07:38 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -592,11 +592,18 @@ roff_parse(struct roff *r, const char *buf, int *pos)
 	size_t		 maclen;
 	enum rofft	 t;
 
-	if ('\0' == buf[*pos] || '"' == buf[*pos])
+	if ('\0' == buf[*pos] || '"' == buf[*pos] || 
+			'\t' == buf[*pos] || ' ' == buf[*pos])
 		return(ROFF_MAX);
 
+	/*
+	 * We stop the macro parse at an escape, tab, space, or nil.
+	 * However, `\}' is also a valid macro, so make sure we don't
+	 * clobber it by seeing the `\' as the end of token.
+	 */
+
 	mac = buf + *pos;
-	maclen = strcspn(mac, " \\\t\0");
+	maclen = strcspn(mac + 1, " \\\t\0") + 1;
 
 	t = (r->current_string = roff_getstrn(r, mac, maclen))
 	    ? ROFF_USERDEF : roff_hash_find(mac, maclen);
@@ -878,7 +885,22 @@ roff_cond_sub(ROFF_ARGS)
 			ep++;
 			if ('}' != *ep)
 				continue;
-			*ep = '&';
+
+			/*
+			 * Make the \} go away.
+			 * This is a little haphazard, as it's not quite
+			 * clear how nroff does this.
+			 * If we're at the end of line, then just chop
+			 * off the \} and resize the buffer.
+			 * If we aren't, then conver it to spaces.
+			 */
+
+			if ('\0' == *(ep + 1)) {
+				*--ep = '\0';
+				*szp -= 2;
+			} else
+				*(ep - 1) = *ep = ' ';
+
 			roff_ccond(r, ROFF_ccond, bufp, szp, 
 					ln, pos, pos + 2, offs);
 			break;
