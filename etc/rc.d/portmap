@@ -1,12 +1,11 @@
 #!/bin/sh
 #
-# $OpenBSD: portmap,v 1.1 2011/07/07 01:52:58 robert Exp $
+# $OpenBSD: portmap,v 1.2 2011/07/07 05:20:38 ajacoutot Exp $
 
 daemon="/usr/sbin/portmap"
 
 . /etc/rc.d/rc.subr
 
 rc_reload=NO
-rc_restart=NO
 
 rc_cmd $1
