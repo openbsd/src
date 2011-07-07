@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.132 2011/06/24 21:11:27 sthen Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.133 2011/07/07 04:17:53 deraadt Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 24 2011 $
+.Dd $Mdocdate: July 7 2011 $
 .Dt IPSEC.CONF 5
 .Os
 .Sh NAME
@@ -818,8 +818,8 @@ The following rules enter SAs in the SADB:
 Enter an ESP SA.
 .It Ic ah
 Enter an AH SA.
-.\".It Ic ipcomp
-.\"Enter an IPCOMP SA.
+.It Ic ipcomp
+Enter an IPCOMP SA.
 .It Ic ipip
 Enter an IPIP pseudo SA.
 .It Ic tcpmd5
@@ -942,7 +942,7 @@ and
 .Sh SEE ALSO
 .Xr openssl 1 ,
 .Xr enc 4 ,
-.\".Xr ipcomp 4 ,
+.Xr ipcomp 4 ,
 .Xr ipsec 4 ,
 .Xr tcp 4 ,
 .Xr pf.conf 5 ,
