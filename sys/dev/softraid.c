@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.242 2011/07/07 15:24:59 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.243 2011/07/07 18:04:25 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3927,7 +3927,6 @@ sr_rebuild_thread(void *arg)
 	struct sr_softc		*sc = sd->sd_sc;
 	daddr64_t		whole_blk, partial_blk, blk, sz, lba;
 	daddr64_t		psz, rb, restart;
-	uint64_t		mysize = 0;
 	struct sr_workunit	*wu_r, *wu_w;
 	struct scsi_xfer	xs_r, xs_w;
 	struct scsi_rw_16	*cr, *cw;
@@ -3968,12 +3967,13 @@ sr_rebuild_thread(void *arg)
 	/* currently this is 64k therefore we can use dma_alloc */
 	buf = dma_alloc(SR_REBUILD_IO_SIZE << DEV_BSHIFT, PR_WAITOK);
 	for (blk = restart; blk <= whole_blk; blk++) {
-		if (blk == whole_blk)
+		lba = blk * SR_REBUILD_IO_SIZE;
+		sz = SR_REBUILD_IO_SIZE;
+		if (blk == whole_blk) {
+			if (partial_blk == 0)
+				break;
 			sz = partial_blk;
-		else
-			sz = SR_REBUILD_IO_SIZE;
-		mysize += sz;
-		lba = blk * sz;
+		}
 
 		/* get some wu */
 		if ((wu_r = scsi_io_get(&sd->sd_iopool, 0)) == NULL)
