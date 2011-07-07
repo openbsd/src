@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.365 2011/07/07 23:29:45 robert Exp $
+#	$OpenBSD: rc,v 1.366 2011/07/07 23:47:22 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -450,14 +450,6 @@ swapctl -A -t noblk
 # to the crash directory if core dumps are to be saved.
 if [ -d /var/crash ]; then
 	savecore ${savecore_flags} /var/crash
-fi
-
-if [ X"${afs}" = X"YES" -a -c /dev/nnpfs0 ]; then
-	echo -n 'mounting afs:'
-	mkdir -p -m 0755 /afs
-	mount -t nnpfs /dev/nnpfs0 /afs
-	/usr/libexec/afsd ${afsd_flags}
-	echo ' done.'
 fi
 
 if [ X"${check_quotas}" = X"YES" ]; then
