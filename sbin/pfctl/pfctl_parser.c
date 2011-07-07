@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.276 2011/07/03 23:37:55 zinke Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.277 2011/07/07 02:00:25 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -838,9 +838,27 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 	}
 	if (r->tos)
 		printf(" tos 0x%2.2x", r->tos);
+
+	opts = 0;
+	if (r->max_states || r->max_src_nodes || r->max_src_states)
+		opts = 1;
+	if (r->rule_flag & PFRULE_NOSYNC)
+		opts = 1;
+	if (r->rule_flag & PFRULE_SRCTRACK)
+		opts = 1;
+	if (r->rule_flag & PFRULE_IFBOUND)
+		opts = 1;
+	if (r->rule_flag & PFRULE_STATESLOPPY)
+		opts = 1;
+	if (r->rule_flag & PFRULE_PFLOW)
+		opts = 1;
+	for (i = 0; !opts && i < PFTM_MAX; ++i)
+		if (r->timeout[i])
+			opts = 1;
+
 	if (!r->keep_state && r->action == PF_PASS && !anchor_call[0])
 		printf(" no state");
-	else if (r->keep_state == PF_STATE_NORMAL)
+	else if (r->keep_state == PF_STATE_NORMAL && opts)
 		printf(" keep state");
 	else if (r->keep_state == PF_STATE_MODULATE)
 		printf(" modulate state");
@@ -861,22 +879,6 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 		}
 		printf(" probability %s%%", buf);
 	}
-	opts = 0;
-	if (r->max_states || r->max_src_nodes || r->max_src_states)
-		opts = 1;
-	if (r->rule_flag & PFRULE_NOSYNC)
-		opts = 1;
-	if (r->rule_flag & PFRULE_SRCTRACK)
-		opts = 1;
-	if (r->rule_flag & PFRULE_IFBOUND)
-		opts = 1;
-	if (r->rule_flag & PFRULE_STATESLOPPY)
-		opts = 1;
-	if (r->rule_flag & PFRULE_PFLOW)
-		opts = 1;
-	for (i = 0; !opts && i < PFTM_MAX; ++i)
-		if (r->timeout[i])
-			opts = 1;
 	if (opts) {
 		printf(" (");
 		if (r->max_states) {
