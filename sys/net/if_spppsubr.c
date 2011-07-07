@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.93 2011/07/06 02:54:31 henning Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.94 2011/07/07 00:08:04 henning Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -1056,12 +1056,14 @@ sppp_pick(struct ifnet *ifp)
 	int s;
 
 	s = splnet();
-	m = sp->pp_cpq.ifq_head;
+	IF_POLL(&sp->pp_cpq, m);
 	if (m == NULL &&
 	    (sp->pp_phase == PHASE_NETWORK ||
-	     (sp->pp_flags & PP_CISCO) != 0))
-		if ((m = sp->pp_fastq.ifq_head) == NULL)
+	     (sp->pp_flags & PP_CISCO) != 0)) {
+		IF_POLL(&sp->pp_fastq, m);
+		if ((m) == NULL)
 			IFQ_POLL(&sp->pp_if.if_snd, m);
+	}
 	splx (s);
 	return (m);
 }
