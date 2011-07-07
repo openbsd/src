@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.56 2011/07/07 04:35:47 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.57 2011/07/07 04:37:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1029,11 +1029,7 @@ rde_nbr_new(u_int32_t peerid, struct rde_nbr *new)
 	if ((area = area_find(rdeconf, new->area_id)) == NULL)
 		fatalx("rde_nbr_new: unknown area");
 
-	LIST_FOREACH(iface, &area->iface_list, entry) {
-		if (iface->ifindex == new->ifindex)
-			break;
-	}
-	if (iface == NULL)
+	if ((iface = if_find(new->ifindex)) == NULL)
 		fatalx("rde_nbr_new: unknown interface");
 
 	if ((nbr = calloc(1, sizeof(*nbr))) == NULL)
