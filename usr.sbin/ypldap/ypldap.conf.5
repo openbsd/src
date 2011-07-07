@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypldap.conf.5,v 1.16 2010/06/03 16:10:21 ajacoutot Exp $
+.\"	$OpenBSD: ypldap.conf.5,v 1.17 2011/07/07 02:22:11 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 3 2010 $
+.Dd $Mdocdate: July 7 2011 $
 .Dt YPLDAP.CONF 5
 .Os
 .Sh NAME
@@ -145,44 +145,6 @@ Valid attributes are:
 .It Ic passwd filter Ar string
 Use the supplied LDAP filter to retrieve password entries.
 .El
-.Sh DIRECTORY EXAMPLE
-This configuration searches the LDAP directory 127.0.0.1 for users and groups.
-On the LDAP side the RFC 2307 object classes posixAccount and posixGroup
-are used.
-In this example the attributes are either mapped to
-their corresponding LDAP attributes or a fixed value.
-A list directive is used for the groupmembers attribute
-because the ldap memberUid returns multiple group members.
-.Bd -literal -offset indent
-directory "127.0.0.1" {
-        # directory options
-        binddn "cn=Manager,dc=openbsd,dc=org"
-        bindcred "secret"
-        basedn "ou=Users,dc=openbsd,dc=org"
-
-	# passwd maps configuration
-        passwd filter "(objectClass=posixAccount)"
-
-        attribute name maps to "uid"
-        fixed attribute passwd "*"
-        attribute uid maps to "uidNumber"
-        attribute gid maps to "gidNumber"
-        attribute gecos maps to "cn"
-        attribute home maps to "homeDirectory"
-        attribute shell maps to "loginShell"
-        fixed attribute change "0"
-        fixed attribute expire "0"
-        fixed attribute class "ldap"
-
-        # group maps configuration
-        group filter "(objectClass=posixGroup)"
-
-        attribute groupname maps to "cn"
-        fixed attribute grouppasswd "*"
-        attribute groupgid maps to "gidNumber"
-        list groupmembers maps to "memberUid"
-}
-.Ed
 .Sh FILES
 .Bl -tag -width "/etc/ypldap.conf" -compact
 .It Pa /etc/ypldap.conf
