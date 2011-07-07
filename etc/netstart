@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.132 2011/05/26 15:22:53 mpf Exp $
+#	$OpenBSD: netstart,v 1.133 2011/07/07 23:09:46 guenther Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -47,11 +47,9 @@ ifstart() {
 		chmod -LR o-rwx $file
 		chown -LR root.wheel $file
 	fi
-	ifconfig $if > /dev/null 2>&1
-	if [ "$?" != "0" ]; then
+	if ! ifconfig $if > /dev/null 2>&1; then
 		# Try to create interface if it does not exist
-		ifconfig $if create > /dev/null 2>&1
-		if [ "$?" != "0" ]; then
+		if ! ifconfig $if create > /dev/null 2>&1; then
 			return
 		fi
 	fi

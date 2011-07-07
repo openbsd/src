@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: weekly,v 1.24 2011/01/19 06:18:05 david Exp $
+#	$OpenBSD: weekly,v 1.25 2011/07/07 23:09:46 guenther Exp $
 #
 # For local additions, create the file /etc/weekly.local.
 # To get section headers, use the function next_part in weekly.local.
@@ -45,8 +45,7 @@ run_script "weekly.local"
 
 next_part "Rebuilding locate database:"
 if [ -f /var/db/locate.database ]; then
-	TMP=`mktemp /var/db/locate.database.XXXXXXXXXX`
-	if [ $? -eq 0 ]; then
+	if TMP=`mktemp /var/db/locate.database.XXXXXXXXXX`; then
 		trap 'rm -f $TMP; exit 1' 0 1 15
 		UPDATEDB="/usr/libexec/locate.updatedb"
 		echo "${UPDATEDB} --fcodes=- --tmpdir=${TMPDIR:-/var/tmp}" | \
