@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.54 2011/07/04 04:34:14 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.55 2011/07/07 00:36:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -586,7 +586,6 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			iface = if_find(ifp->ifindex);
 			if (iface == NULL)
 				fatalx("interface lost in rde");
-			iface->nh_reachable = ifp->nh_reachable;
 
 			/* 
 			 * Resend LSAs if interface flags change -
