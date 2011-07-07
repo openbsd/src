@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.364 2011/07/07 23:09:46 guenther Exp $
+#	$OpenBSD: rc,v 1.365 2011/07/07 23:29:45 robert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -571,16 +571,14 @@ start_daemon hostapd rwhod lpd ldapd sendmail smtpd httpd ftpd \
 [ X"${bt}" != X"NO" -a -f ${bt_rules} ] && \
 	btctl -f ${bt_rules}
 
-if [ X"${spamd_flags}" != X"NO" ]; then
-	if [ X"${spamd_black}" != X"NO" ]; then
-		spamd_flags="${spamd_flags} -b"
-	fi
-	echo -n ' spamd';		eval /usr/libexec/spamd ${spamd_flags}
+start_daemon spamd
+
+[ X"${spamd_flags}" != X"NO" ] && \
 	/usr/libexec/spamd-setup -D
-	if [ X"${spamd_black}" = X"NO" ]; then
-		echo -n ' spamlogd'
-		/usr/libexec/spamlogd ${spamlogd_flags}
-	fi
+
+if [ X"${spamd_black}" = X"NO" ]; then
+	echo -n ' spamlogd'
+	/usr/libexec/spamlogd ${spamlogd_flags}
 fi
 
 echo '.'
@@ -621,13 +619,9 @@ echo '.'
 date
 
 mixerctl_conf
+
 echo -n 'starting console services:'
-
-if [ X"${aucat_flags}" != X"NO" ]; then
-	echo -n ' aucat';		aucat -l ${aucat_flags}
-fi
-
-start_daemon wsmoused xdm
+start_daemon aucat wsmoused xdm
 echo '.'
 
 exit 0

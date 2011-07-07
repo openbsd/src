@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# $OpenBSD: aucat,v 1.1 2011/07/07 23:29:45 robert Exp $
+
+daemon="/usr/bin/aucat"
+
+. /etc/rc.d/rc.subr
+
+rc_reload=NO
+
+rc_pre() {
+	daemon_flags="-l ${daemon_flags}"
+}
+
+rc_cmd $1
