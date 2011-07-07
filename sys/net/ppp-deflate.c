@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp-deflate.c,v 1.8 2007/09/15 16:43:51 henning Exp $	*/
+/*	$OpenBSD: ppp-deflate.c,v 1.9 2011/07/07 02:57:25 deraadt Exp $	*/
 /*	$NetBSD: ppp-deflate.c,v 1.1 1996/03/15 02:28:09 paulus Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <net/ppp_defs.h>
-#include <net/zlib.h>
+#include <lib/libz/zlib.h>
 
 #define PACKETPTR	struct mbuf *
 #include <net/ppp-comp.h>
@@ -66,8 +66,8 @@ struct deflate_state {
 
 #define DEFLATE_OVHD	2		/* Deflate overhead/packet */
 
-static void	*zalloc(void *, u_int items, u_int size);
-static void	zfree(void *, void *ptr, u_int nb);
+static void	*zcalloc(void *, u_int items, u_int size);
+static void	zcfree(void *, void *ptr);
 static void	*z_comp_alloc(u_char *options, int opt_len);
 static void	*z_decomp_alloc(u_char *options, int opt_len);
 static void	z_comp_free(void *state);
@@ -125,7 +125,7 @@ struct compressor ppp_deflate_draft = {
  * Space allocation and freeing routines for use by zlib routines.
  */
 void *
-zalloc(notused, items, size)
+zcalloc(notused, items, size)
     void *notused;
     u_int items, size;
 {
@@ -136,10 +136,9 @@ zalloc(notused, items, size)
 }
 
 void
-zfree(notused, ptr, nbytes)
+zcfree(notused, ptr)
     void *notused;
     void *ptr;
-    u_int nbytes;
 {
     free(ptr, M_DEVBUF);
 }
@@ -170,10 +169,10 @@ z_comp_alloc(options, opt_len)
 	return NULL;
 
     state->strm.next_in = NULL;
-    state->strm.zalloc = zalloc;
-    state->strm.zfree = zfree;
+    state->strm.zalloc = zcalloc;
+    state->strm.zfree = zcfree;
     if (deflateInit2(&state->strm, Z_DEFAULT_COMPRESSION, DEFLATE_METHOD_VAL,
-		     -w_size, 8, Z_DEFAULT_STRATEGY, DEFLATE_OVHD+2) != Z_OK) {
+		     -w_size, 8, Z_DEFAULT_STRATEGY) != Z_OK) {
 	free(state, M_DEVBUF);
 	return NULL;
     }
@@ -292,7 +291,7 @@ z_compress(arg, mret, mp, orig_len, maxolen)
     state->strm.next_in = rptr;
     state->strm.avail_in = mtod(mp, u_char *) + mp->m_len - rptr;
     mp = mp->m_next;
-    flush = (mp == NULL)? Z_PACKET_FLUSH: Z_NO_FLUSH;
+    flush = (mp == NULL)? Z_SYNC_FLUSH: Z_NO_FLUSH;
     olen = 0;
     for (;;) {
 	r = deflate(&state->strm, flush);
@@ -308,7 +307,7 @@ z_compress(arg, mret, mp, orig_len, maxolen)
 	    state->strm.avail_in = mp->m_len;
 	    mp = mp->m_next;
 	    if (mp == NULL)
-		flush = Z_PACKET_FLUSH;
+		flush = Z_SYNC_FLUSH;
 	}
 	if (state->strm.avail_out == 0) {
 	    if (m != NULL) {
@@ -402,8 +401,8 @@ z_decomp_alloc(options, opt_len)
 	return NULL;
 
     state->strm.next_out = NULL;
-    state->strm.zalloc = zalloc;
-    state->strm.zfree = zfree;
+    state->strm.zalloc = zcalloc;
+    state->strm.zfree = zcfree;
     if (inflateInit2(&state->strm, -w_size) != Z_OK) {
 	free(state, M_DEVBUF);
 	return NULL;
@@ -545,7 +544,7 @@ z_decompress(arg, mi, mop)
     state->strm.next_in = rptr;
     state->strm.avail_in = rlen;
     mi = mi->m_next;
-    flush = (mi == NULL)? Z_PACKET_FLUSH: Z_NO_FLUSH;
+    flush = (mi == NULL)? Z_SYNC_FLUSH: Z_NO_FLUSH;
     rlen += PPP_HDRLEN + DEFLATE_OVHD;
     state->strm.next_out = wptr + 3;
     state->strm.avail_out = 1;
@@ -574,7 +573,7 @@ z_decompress(arg, mi, mop)
 	    rlen += mi->m_len;
 	    mi = mi->m_next;
 	    if (mi == NULL)
-		flush = Z_PACKET_FLUSH;
+		flush = Z_SYNC_FLUSH;
 	}
 	if (state->strm.avail_out == 0) {
 	    if (decode_proto) {
@@ -658,7 +657,7 @@ z_incomp(arg, mi)
 	++state->strm.avail_in;
     }
     for (;;) {
-	r = inflateIncomp(&state->strm);
+	r = inflateInit(&state->strm);
 	if (r != Z_OK) {
 	    /* gak! */
 #ifndef DEFLATE_DEBUG

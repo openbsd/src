@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.27 2010/07/09 16:58:06 reyk Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.28 2011/07/07 02:57:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -58,8 +58,9 @@
 #include <net/if_enc.h>
 
 #include <crypto/cryptodev.h>
-#include <crypto/deflate.h>
 #include <crypto/xform.h>
+
+#include <lib/libz/zlib.h>
 
 #include "bpfilter.h"
 

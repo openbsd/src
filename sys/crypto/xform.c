@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.42 2011/01/12 16:58:23 mikeb Exp $	*/
+/*	$OpenBSD: xform.c,v 1.43 2011/07/07 02:57:24 deraadt Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -58,7 +58,7 @@
 #include <crypto/rijndael.h>
 #include <crypto/cryptodev.h>
 #include <crypto/xform.h>
-#include <crypto/deflate.h>
+#include <lib/libz/zlib.h>
 #include <crypto/gmac.h>
 
 extern void des_ecb3_encrypt(caddr_t, caddr_t, caddr_t, caddr_t, caddr_t, int);
@@ -767,6 +767,14 @@ SHA512Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
 	return 0;
 }
 
+
+u_int32_t deflate_global(u_int8_t *, u_int32_t, int, u_int8_t **);
+
+struct deflate_buf {
+        u_int8_t *out;
+        u_int32_t size;
+        int flag;
+};
 
 /*
  * And compression

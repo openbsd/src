@@ -1,4 +1,4 @@
-/*	$OpenBSD: adler32.c,v 1.9 2006/07/20 11:14:10 mickey Exp $	*/
+/*	$OpenBSD: adler32.c,v 1.10 2011/07/07 02:57:24 deraadt Exp $	*/
 /* adler32.c -- compute the Adler-32 checksum of a data stream
  * Copyright (C) 1995-2004 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -123,7 +123,6 @@ uLong ZEXPORT adler32(adler, buf, len)
     return adler | (sum2 << 16);
 }
 
-#ifdef ADLER32_COMBINE
 /* ========================================================================= */
 uLong ZEXPORT adler32_combine(adler1, adler2, len2)
     uLong adler1;
@@ -147,4 +146,3 @@ uLong ZEXPORT adler32_combine(adler1, adler2, len2)
     if (sum2 > BASE) sum2 -= BASE;
     return sum1 | (sum2 << 16);
 }
-#endif /* ADLER32_COMBINE */

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.519 2011/07/07 01:19:39 tedu Exp $
+#	$OpenBSD: files,v 1.520 2011/07/07 02:57:24 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -806,7 +806,6 @@ file net/netisr.c
 file net/ppp_tty.c			ppp
 file net/bsd-comp.c			ppp_bsdcomp
 file net/ppp-deflate.c			ppp_deflate
-file net/zlib.c				ppp_deflate | ipsec | crypto
 file net/if_tun.c			tun			needs-count
 file net/if_bridge.c			bridge			needs-count
 file net/bridgestp.c			bridge
@@ -889,7 +888,7 @@ file crypto/cryptodev.c			((inet & ipsec) | crypto)	needs-flag
 file crypto/criov.c			(inet & ipsec) | crypto
 file crypto/cryptosoft.c		(inet & ipsec) | crypto
 file crypto/xform.c			(inet & ipsec) | crypto
-file crypto/deflate.c			(inet & ipsec) | crypto
+file crypto/xform_ipcomp.c		(inet & ipsec) | crypto
 file crypto/arc4.c			
 file crypto/michael.c			wlan
 file crypto/cmac.c			wlan
@@ -1098,3 +1097,16 @@ file lib/libkern/arch/${MACHINE_ARCH}/skpc.S | lib/libkern/skpc.c
 file lib/libkern/arch/${MACHINE_ARCH}/htonl.S | lib/libkern/htonl.c
 file lib/libkern/arch/${MACHINE_ARCH}/htons.S | lib/libkern/htons.c
 file lib/libkern/arch/${MACHINE_ARCH}/strncasecmp.S | lib/libkern/strncasecmp.c
+
+file lib/libz/adler32.c			ppp_deflate | ipsec | crypto | bios
+file lib/libz/crc32.c			ppp_deflate | ipsec | crypto
+file lib/libz/infback.c			ppp_deflate | ipsec | crypto
+file lib/libz/inffast.c			ppp_deflate | ipsec | crypto
+file lib/libz/inflate.c			ppp_deflate | ipsec | crypto
+file lib/libz/inftrees.c		ppp_deflate | ipsec | crypto
+file lib/libz/deflate.c			ppp_deflate | ipsec | crypto
+file lib/libz/zutil.c			ppp_deflate | ipsec | crypto
+file lib/libz/zopenbsd.c		ppp_deflate | ipsec | crypto
+file lib/libz/trees.c			ppp_deflate | ipsec | crypto
+file lib/libz/compress.c		ppp_deflate | ipsec | crypto
+

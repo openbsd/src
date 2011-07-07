@@ -1,4 +1,4 @@
-/*	$OpenBSD: crc32.c,v 1.11 2005/07/20 15:56:45 millert Exp $	*/
+/*	$OpenBSD: crc32.c,v 1.12 2011/07/07 02:57:24 deraadt Exp $	*/
 /* crc32.c -- compute the CRC-32 of a data stream
  * Copyright (C) 1995-2005 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -29,6 +29,7 @@
 
 #define local static
 
+#ifndef _KERNEL
 /* Find a four-byte integer type for crc32_little() and crc32_big(). */
 #ifndef NOBYFOUR
 #  ifdef STDC           /* need ANSI C limits.h to determine sizes */
@@ -49,6 +50,7 @@
 #    endif
 #  endif /* STDC */
 #endif /* !NOBYFOUR */
+#endif
 
 /* Definitions for doing the crc four data bytes at a time. */
 #ifdef BYFOUR
