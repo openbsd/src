@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.35 2011/07/07 00:36:13 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.36 2011/07/07 04:13:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -516,13 +516,13 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 				 * virtual links
 				 */
 				LIST_FOREACH(area, &oeconf->area_list, entry) {
-				    if (area->stub)
-					    continue;
-				    LIST_FOREACH(iface, &area->iface_list,
-					entry) {
-					    noack += lsa_flood(iface, nbr,
-						&lsa_hdr, imsg.data);
-				    }
+					if (area->stub)
+						continue;
+					LIST_FOREACH(iface, &area->iface_list,
+					    entry) {
+						noack += lsa_flood(iface, nbr,
+						    &lsa_hdr, imsg.data);
+					}
 				}
 			} else if (lsa_hdr.type == htons(LSA_TYPE_LINK)) {
 				/*
