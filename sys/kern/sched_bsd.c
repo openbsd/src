@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.26 2011/07/06 01:49:42 art Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.27 2011/07/07 18:00:33 guenther Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -61,12 +61,7 @@ int	rrticks_init;		/* # of hardclock ticks per roundrobin() */
 struct __mp_lock sched_lock;
 #endif
 
-void scheduler_start(void);
-
-void roundrobin(struct cpu_info *);
 void schedcpu(void *);
-void updatepri(struct proc *);
-void endtsleep(void *);
 
 void
 scheduler_start(void)

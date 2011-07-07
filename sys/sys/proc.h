@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.140 2011/07/06 21:41:37 art Exp $	*/
+/*	$OpenBSD: proc.h,v 1.141 2011/07/07 18:00:33 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -477,6 +477,7 @@ void	pgdelete(struct pgrp *);
 void	procinit(void);
 void	resetpriority(struct proc *);
 void	setrunnable(struct proc *);
+void	endtsleep(void *);
 void	unsleep(struct proc *);
 void	reaper(void);
 void	exit1(struct proc *, int, int);

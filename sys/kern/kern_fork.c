@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.127 2011/07/06 21:41:37 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.128 2011/07/07 18:00:33 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -206,8 +206,6 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	int count;
 	vaddr_t uaddr;
 	int s;
-	extern void endtsleep(void *);
-	extern void realitexpire(void *);
 	struct  ptrace_state *newptstat = NULL;
 #if NSYSTRACE > 0
 	void *newstrp = NULL;

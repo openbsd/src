@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.179 2011/07/06 21:41:37 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.180 2011/07/07 18:00:33 guenther Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -191,10 +191,7 @@ main(void *framep)
 	quad_t lim;
 	int s, i;
 	extern struct pdevinit pdevinit[];
-	extern void scheduler_start(void);
 	extern void disk_init(void);
-	extern void endtsleep(void *);
-	extern void realitexpire(void *);
 
 	/*
 	 * Initialize the current process pointer (curproc) before
