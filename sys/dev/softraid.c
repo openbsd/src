@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.241 2011/07/06 17:37:22 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.242 2011/07/07 15:24:59 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -114,7 +114,8 @@ void			sr_discipline_shutdown(struct sr_discipline *, int);
 int			sr_discipline_init(struct sr_discipline *, int);
 
 /* utility functions */
-void			sr_shutdown(void *);
+void			sr_shutdown(struct sr_softc *);
+void			sr_shutdownhook(void *);
 void			sr_uuid_get(struct sr_uuid *);
 void			sr_uuid_print(struct sr_uuid *, int);
 void			sr_checksum_print(u_int8_t *);
@@ -1672,7 +1673,7 @@ sr_attach(struct device *parent, struct device *self, void *aux)
 
 	softraid_disk_attach = sr_disk_attach;
 
-	sc->sc_shutdownhook = shutdownhook_establish(sr_shutdown, sc);
+	sc->sc_shutdownhook = shutdownhook_establish(sr_shutdownhook, sc);
 
 	sr_boot_assembly(sc);
 }
@@ -1681,17 +1682,14 @@ int
 sr_detach(struct device *self, int flags)
 {
 	struct sr_softc		*sc = (void *)self;
-	int			i, rv;
+	int			rv;
 
 	DNPRINTF(SR_D_MISC, "%s: sr_detach\n", DEVNAME(sc));
 
 	if (sc->sc_shutdownhook)
 		shutdownhook_disestablish(sc->sc_shutdownhook);
 
-	/* XXX this will not work when we stagger disciplines */
-	for (i = 0; i < SR_MAX_LD; i++)
-		if (sc->sc_dis[i])
-			sr_discipline_shutdown(sc->sc_dis[i], 1);
+	sr_shutdown(sc);
 
 #ifndef SMALL_KERNEL
 	if (sc->sc_sensor_task != NULL)
@@ -3800,9 +3798,14 @@ sr_validate_stripsize(u_int32_t b)
 }
 
 void
-sr_shutdown(void *arg)
+sr_shutdownhook(void *arg)
 {
-	struct sr_softc		*sc = arg;
+	sr_shutdown((struct sr_softc *)arg);
+}
+
+void
+sr_shutdown(struct sr_softc *sc)
+{
 	int			i;
 
 	DNPRINTF(SR_D_MISC, "%s: sr_shutdown\n", DEVNAME(sc));
