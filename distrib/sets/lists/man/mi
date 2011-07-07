@@ -3091,7 +3091,6 @@
 ./usr/share/man/ps1/macppc
 ./usr/share/man/ps1/mvme68k
 ./usr/share/man/ps1/mvme88k
-./usr/share/man/ps1/mvmeppc
 ./usr/share/man/ps1/palm
 ./usr/share/man/ps1/sgi
 ./usr/share/man/ps1/socppc
@@ -3123,7 +3122,6 @@
 ./usr/share/man/ps3/macppc
 ./usr/share/man/ps3/mvme68k
 ./usr/share/man/ps3/mvme88k
-./usr/share/man/ps3/mvmeppc
 ./usr/share/man/ps3/palm
 ./usr/share/man/ps3/sgi
 ./usr/share/man/ps3/socppc
@@ -3148,7 +3146,6 @@
 ./usr/share/man/ps4/macppc
 ./usr/share/man/ps4/mvme68k
 ./usr/share/man/ps4/mvme88k
-./usr/share/man/ps4/mvmeppc
 ./usr/share/man/ps4/palm
 ./usr/share/man/ps4/sgi
 ./usr/share/man/ps4/socppc
@@ -3172,7 +3169,6 @@
 ./usr/share/man/ps5/macppc
 ./usr/share/man/ps5/mvme68k
 ./usr/share/man/ps5/mvme88k
-./usr/share/man/ps5/mvmeppc
 ./usr/share/man/ps5/palm
 ./usr/share/man/ps5/sgi
 ./usr/share/man/ps5/socppc
@@ -3198,7 +3194,6 @@
 ./usr/share/man/ps8/macppc
 ./usr/share/man/ps8/mvme68k
 ./usr/share/man/ps8/mvme88k
-./usr/share/man/ps8/mvmeppc
 ./usr/share/man/ps8/palm
 ./usr/share/man/ps8/sgi
 ./usr/share/man/ps8/socppc
@@ -3222,7 +3217,6 @@
 ./usr/share/man/ps9/macppc
 ./usr/share/man/ps9/mvme68k
 ./usr/share/man/ps9/mvme88k
-./usr/share/man/ps9/mvmeppc
 ./usr/share/man/ps9/palm
 ./usr/share/man/ps9/sgi
 ./usr/share/man/ps9/socppc
