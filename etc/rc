@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.360 2011/07/07 22:30:37 robert Exp $
+#	$OpenBSD: rc,v 1.361 2011/07/07 22:47:30 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -323,9 +323,7 @@ if [ X"${pf}" != X"NO" ]; then
 		pfctl -f ${pf_rules}
 	fi
 	# bring up pfsync after the working ruleset has been loaded
-	if [ -f /etc/hostname.pfsync0 ]; then
-		. /etc/netstart pfsync0
-	fi
+	. /etc/netstart pfsync0
 fi
 
 mount -s /usr >/dev/null 2>&1
