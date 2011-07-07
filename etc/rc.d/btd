@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+# $OpenBSD: btd,v 1.1 2011/07/07 22:30:37 robert Exp $
+
+daemon="/usr/sbin/btd"
+
+. /etc/rc.d/rc.subr
+
+pexp="btd: \[priv\]"
+
+no_reload=YES
+
+rc_cmd $1
