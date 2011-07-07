@@ -1,11 +1,13 @@
 #!/bin/sh
 #
-# $OpenBSD: sendmail,v 1.1 2011/07/06 18:55:36 robert Exp $
+# $OpenBSD: sendmail,v 1.2 2011/07/07 05:00:19 robert Exp $
 
 daemon="/usr/sbin/sendmail"
 
 . /etc/rc.d/rc.subr
 
-pexp="sendmail: accepting.*"
+pexp="(sendmail: accepting.*|${daemon} ${daemon_flags})"
+
+rc_bg=YES
 
 rc_cmd $1
