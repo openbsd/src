@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.18 2011/07/07 18:40:12 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.19 2011/07/07 22:50:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -545,6 +545,28 @@ pmap_init(void)
 	pool_sethiwat(&pmap_pv_pool, pmap_pvlowat * 32);
 
 	pmap_initialized = 1;
+
+	/*
+	 * map SysCall gateways page once for everybody
+	 * NB: we'll have to remap the phys memory
+	 *     if we have any at SYSCALLGATE address (;
+	 */
+	{
+		extern void gateway_page(void);
+		volatile pt_entry_t *pde;
+
+		if (!(pde = pmap_pde_get(pmap_kernel()->pm_pdir, SYSCALLGATE)) &&
+		    !(pde = pmap_pde_alloc(pmap_kernel(), SYSCALLGATE, NULL)))
+			panic("pmap_init: cannot allocate pde");
+
+#if 0
+		pmap_pte_set(pde, SYSCALLGATE,
+		    TLB_PAGE((paddr_t)gateway_page) | PTE_GATEWAY);
+#else
+		pmap_pte_set(pde, SYSCALLGATE,
+		    TLB_PAGE((paddr_t)0x81000) | PTE_GATEWAY);
+#endif
+	}
 
 	DPRINTF(PDB_FOLLOW|PDB_INIT, ("pmap_init(): done\n"));
 }
