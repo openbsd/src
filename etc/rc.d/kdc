@@ -1,0 +1,12 @@
+#!/bin/sh
+#
+# $OpenBSD: kdc,v 1.1 2011/07/07 18:17:50 ajacoutot Exp $
+
+daemon="/usr/libexec/kdc"
+
+. /etc/rc.d/rc.subr
+
+rc_bg=YES
+rc_reload=NO
+
+rc_cmd $1
