@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.40 2011/07/06 18:55:36 robert Exp $
+#	$OpenBSD: rc.subr,v 1.41 2011/07/07 17:37:30 ajacoutot Exp $
 
 # Default functions and variables used by rc.d(8) scripts.
 
@@ -100,8 +100,9 @@ rc_cmd() {
 		rc_exit ok
 		;;
 	reload)
-		rc_do rc_check || rc_exit failed
+		rc_do rc_check || exit 0
 		rc_do rc_reload || rc_exit failed
+		rc_do rc_check || rc_exit failed
 		rc_exit ok
 		;;
 	restart)
