@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.725 2011/07/07 22:45:08 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.726 2011/07/07 23:36:41 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -317,17 +317,17 @@ sdhc*	at pci?			# SD Host Controller
 sdmmc*	at sdhc?		# SD/MMC bus
 
 # Bluetooth controllers
-sbt*	at sdmmc? disable	# SDIO Bluetooth
-bthub*	at sbt?
-ubt*	at uhub? disable	# USB Bluetooth
-bthub*	at ubt?
-bthidev* at bthub?		# Bluetooth HID support
-btkbd*	at bthidev?
-btms*	at bthidev?
-wskbd*	at btkbd? mux 1
-wsmouse* at btms? mux 0
-btsco*	at bthub?		# Bluetooth audio support
-audio*	at btsco?
+#sbt*	at sdmmc? disable	# SDIO Bluetooth
+#bthub*	at sbt?
+#ubt*	at uhub? disable	# USB Bluetooth
+#bthub*	at ubt?
+#bthidev* at bthub?		# Bluetooth HID support
+#btkbd*	at bthidev?
+#btms*	at bthidev?
+#wskbd*	at btkbd? mux 1
+#wsmouse* at btms? mux 0
+#btsco*	at bthub?		# Bluetooth audio support
+#audio*	at btsco?
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
