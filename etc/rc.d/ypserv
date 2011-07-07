@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: ypserv,v 1.1 2011/07/07 01:52:58 robert Exp $
+# $OpenBSD: ypserv,v 1.2 2011/07/07 18:23:17 robert Exp $
 
 daemon="/usr/sbin/ypserv"
 
@@ -9,7 +9,7 @@ daemon="/usr/sbin/ypserv"
 rc_reload=NO
 
 rc_pre() {
-	[ X`domainname` != X"" -a -d /var/yp/`domainname` ] || \
+	[ X"`domainname`" != X"" -a -d /var/yp/`domainname` ] || \
 		return 1
 }
 
