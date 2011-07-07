@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trunc.3,v 1.4 2009/07/06 00:09:48 martynas Exp $
+.\"	$OpenBSD: trunc.3,v 1.5 2011/07/07 00:54:16 martynas Exp $
 .\"
 .\" Copyright (c) 2004, 2005 David Schultz <das@FreeBSD.org>
 .\" All rights reserved.
@@ -26,13 +26,13 @@
 .\"
 .\" $FreeBSD: src/lib/msun/man/trunc.3,v 1.3 2005/06/15 19:04:04 ru Exp $
 .\"
-.Dd $Mdocdate: July 6 2009 $
+.Dd $Mdocdate: July 7 2011 $
 .Dt TRUNC 3
 .Os
 .Sh NAME
 .Nm trunc ,
-.Nm truncf
-.\" .Nm truncl
+.Nm truncf ,
+.Nm truncl
 .Nd "nearest integral value with magnitude less than or equal to |x|"
 .Sh SYNOPSIS
 .In math.h
@@ -40,26 +40,26 @@
 .Fn trunc "double x"
 .Ft float
 .Fn truncf "float x"
-.\" .Ft "long double"
-.\" .Fn truncl "long double x"
+.Ft long double
+.Fn truncl "long double x"
 .Sh DESCRIPTION
 The
-.Fn trunc
-and
+.Fn trunc ,
 .Fn truncf
-.\" .Fn truncl
+and
+.Fn truncl
 functions return the nearest integral value with magnitude less than
 or equal to
 .Pf | Fa x Ns | .
 They are equivalent to
-.Fn rint
-and
+.Fn rint ,
 .Fn rintf
-.\" .Fn rintl
+and
+.Fn rintl
 respectively, in the rounding towards zero mode.
 .Sh SEE ALSO
 .Xr ceil 3 ,
-.\" .Xr fesetround 3
+.Xr fesetround 3
 .Xr floor 3 ,
 .Xr math 3 ,
 .Xr nextafter 3 ,
@@ -67,9 +67,9 @@ respectively, in the rounding towards zero mode.
 .Xr round 3
 .Sh STANDARDS
 The
-.Fn trunc
-and
+.Fn trunc ,
 .Fn truncf
-.\" .Fn truncl
+and
+.Fn truncl
 functions conform to
 .St -isoC-99 .

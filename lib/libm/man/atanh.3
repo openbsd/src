@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atanh.3,v 1.11 2007/05/31 19:19:35 jmc Exp $
+.\"	$OpenBSD: atanh.3,v 1.12 2011/07/07 00:54:16 martynas Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,12 +28,13 @@
 .\"
 .\"     from: @(#)atanh.3	5.2 (Berkeley) 5/6/91
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 7 2011 $
 .Dt ATANH 3
 .Os
 .Sh NAME
 .Nm atanh ,
-.Nm atanhf
+.Nm atanhf ,
+.Nm atanhl
 .Nd inverse hyperbolic tangent functions
 .Sh SYNOPSIS
 .Fd #include <math.h>
@@ -41,6 +42,8 @@
 .Fn atanh "double x"
 .Ft float
 .Fn atanhf "float x"
+.Ft long double
+.Fn atanhl "long double x"
 .Sh DESCRIPTION
 The
 .Fn atanh
@@ -52,11 +55,16 @@ The
 .Fn atanhf
 function is a single precision version of
 .Fn atanh .
+The
+.Fn atanhl
+function is an extended precision version of
+.Fn atanh .
 .Sh RETURN VALUES
 If |x|>=1,
-.Fn atanh "x"
-and
+.Fn atanh "x" ,
 .Fn atanhf "x"
+and
+.Fn atanhl "x"
 return +inf, -inf or NaN, and set the global variable
 .Va errno
 to EDOM.

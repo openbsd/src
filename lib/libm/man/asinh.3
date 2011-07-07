@@ -1,4 +1,4 @@
-.\"	$OpenBSD: asinh.3,v 1.11 2007/05/31 19:19:35 jmc Exp $
+.\"	$OpenBSD: asinh.3,v 1.12 2011/07/07 00:54:16 martynas Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,12 +28,13 @@
 .\"
 .\"     from: @(#)asinh.3	6.4 (Berkeley) 5/6/91
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 7 2011 $
 .Dt ASINH 3
 .Os
 .Sh NAME
 .Nm asinh ,
-.Nm asinhf
+.Nm asinhf ,
+.Nm asinhl
 .Nd inverse hyperbolic sine functions
 .Sh SYNOPSIS
 .Fd #include <math.h>
@@ -41,6 +42,8 @@
 .Fn asinh "double x"
 .Ft float
 .Fn asinhf "float x"
+.Ft long double
+.Fn asinhl "long double x"
 .Sh DESCRIPTION
 The
 .Fn asinh
@@ -50,11 +53,16 @@ The
 .Fn asinhf
 function is a single precision version of
 .Fn asinh .
+The
+.Fn asinhl
+function is an extended precision version of
+.Fn asinh .
 .Sh RETURN VALUES
 The
-.Fn asinh
-and
+.Fn asinh ,
 .Fn asinhf
+and
+.Fn asinhl
 functions return the inverse hyperbolic sine of
 .Ar x .
 .Sh SEE ALSO

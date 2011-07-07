@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fmod.3,v 1.8 2007/05/31 19:19:35 jmc Exp $
+.\"	$OpenBSD: fmod.3,v 1.9 2011/07/07 00:54:16 martynas Exp $
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,12 +28,13 @@
 .\"
 .\"     from: @(#)fmod.3	5.1 (Berkeley) 5/2/91
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 7 2011 $
 .Dt FMOD 3
 .Os
 .Sh NAME
 .Nm fmod ,
-.Nm fmodf
+.Nm fmodf ,
+.Nm fmodl
 .Nd floating-point remainder functions
 .Sh SYNOPSIS
 .Fd #include <math.h>
@@ -41,6 +42,8 @@
 .Fn fmod "double x" "double y"
 .Ft float
 .Fn fmodf "float x" "float y"
+.Ft long double
+.Fn fmodl "long double x" "long double y"
 .Sh DESCRIPTION
 The
 .Fn fmod
@@ -50,11 +53,16 @@ The
 .Fn fmodf
 function is a single precision version of
 .Fn fmod .
+The
+.Fn fmodl
+function is an extended precision version of
+.Fn fmod .
 .Sh RETURN VALUES
 The
-.Fn fmod
-and
+.Fn fmod ,
 .Fn fmodf
+and
+.Fn fmodl
 functions return the value
 .Sm off
 .Fa x - Em i * Fa y ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exp.3,v 1.22 2009/10/27 19:26:14 jmc Exp $
+.\"	$OpenBSD: exp.3,v 1.23 2011/07/07 00:54:16 martynas Exp $
 .\"
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -29,27 +29,34 @@
 .\"
 .\"     from: @(#)exp.3	6.12 (Berkeley) 7/31/91
 .\"
-.Dd $Mdocdate: October 27 2009 $
+.Dd $Mdocdate: July 7 2011 $
 .Dt EXP 3
 .Os
 .Sh NAME
 .Nm exp ,
 .Nm expf ,
+.Nm expl ,
 .Nm exp2 ,
 .Nm exp2f ,
 .Nm exp2l ,
 .Nm expm1 ,
 .Nm expm1f ,
+.Nm expm1l ,
 .Nm log ,
 .Nm logf ,
+.Nm logl ,
 .Nm log2 ,
 .Nm log2f ,
+.Nm log2l ,
 .Nm log10 ,
 .Nm log10f ,
+.Nm log10l ,
 .Nm log1p ,
 .Nm log1pf ,
+.Nm log1pl ,
 .Nm pow ,
-.Nm powf
+.Nm powf ,
+.Nm powl
 .Nd exponential, logarithm, power functions
 .Sh SYNOPSIS
 .Fd #include <math.h>
@@ -57,6 +64,8 @@
 .Fn exp "double x"
 .Ft float
 .Fn expf "float x"
+.Ft long double
+.Fn expl "long double x"
 .Ft double
 .Fn exp2 "double x"
 .Ft float
@@ -67,26 +76,38 @@
 .Fn expm1 "double x"
 .Ft float
 .Fn expm1f "float x"
+.Ft long double
+.Fn expm1l "long double x"
 .Ft double
 .Fn log "double x"
 .Ft float
 .Fn logf "float x"
+.Ft long double
+.Fn logl "long double x"
 .Ft double
 .Fn log2 "double x"
 .Ft float
 .Fn log2f "float x"
+.Ft long double
+.Fn log2l "long double x"
 .Ft double
 .Fn log10 "double x"
 .Ft float
 .Fn log10f "float x"
+.Ft long double
+.Fn log10l "long double x"
 .Ft double
 .Fn log1p "double x"
 .Ft float
 .Fn log1pf "float x"
+.Ft long double
+.Fn log1pl "long double x"
 .Ft double
 .Fn pow "double x" "double y"
 .Ft float
 .Fn powf "float x" "float y"
+.Ft long double
+.Fn powl "long double x" "long double y"
 .Sh DESCRIPTION
 The
 .Fn exp
@@ -97,6 +118,10 @@ exponential value of the given argument
 The
 .Fn expf
 function is a single precision version of
+.Fn exp .
+The
+.Fn expl
+function is an extended precision version of
 .Fn exp .
 .Pp
 The
@@ -120,6 +145,10 @@ The
 .Fn expm1f
 function is a single precision version of
 .Fn expm1 .
+The
+.Fn expm1l
+function is an extended precision version of
+.Fn expm1 .
 .Pp
 The
 .Fn log
@@ -128,6 +157,10 @@ function computes the value of the natural logarithm of argument
 The
 .Fn logf
 function is a single precision version of
+.Fn log .
+The
+.Fn logl
+function is an extended precision version of
 .Fn log .
 .Pp
 The
@@ -139,6 +172,10 @@ The
 .Fn log2f
 function is a single precision version of
 .Fn log2 .
+The
+.Fn log2l
+function is an extended precision version of
+.Fn log2 .
 .Pp
 The
 .Fn log10
@@ -148,6 +185,10 @@ to base 10.
 The
 .Fn log10f
 function is a single precision version of
+.Fn log10 .
+The
+.Fn log10l
+function is an extended precision version of
 .Fn log10 .
 .Pp
 The
@@ -159,6 +200,10 @@ The
 .Fn log1pf
 function is a single precision version of
 .Fn log1p .
+The
+.Fn log1pl
+function is an extended precision version of
+.Fn log1p .
 .Pp
 The
 .Fn pow
@@ -169,6 +214,10 @@ to the exponent
 The
 .Fn powf
 function is a single precision version of
+.Fn pow .
+The
+.Fn powl
+function is an extended precision version of
 .Fn pow .
 .Sh RETURN VALUES
 These functions will return the appropriate computation unless an error

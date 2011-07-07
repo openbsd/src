@@ -1,4 +1,4 @@
-.\"	$OpenBSD: floor.3,v 1.10 2009/08/03 21:26:07 martynas Exp $
+.\"	$OpenBSD: floor.3,v 1.11 2011/07/07 00:54:16 martynas Exp $
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,12 +28,13 @@
 .\"
 .\"     from: @(#)floor.3	6.5 (Berkeley) 4/19/91
 .\"
-.Dd $Mdocdate: August 3 2009 $
+.Dd $Mdocdate: July 7 2011 $
 .Dt FLOOR 3
 .Os
 .Sh NAME
 .Nm floor ,
-.Nm floorf
+.Nm floorf ,
+.Nm floorl
 .Nd round to largest integral value not greater than x
 .Sh SYNOPSIS
 .Fd #include <math.h>
@@ -41,6 +42,8 @@
 .Fn floor "double x"
 .Ft float
 .Fn floorf "float x"
+.Ft long double
+.Fn floorl "long double x"
 .Sh DESCRIPTION
 The
 .Fn floor
@@ -50,6 +53,10 @@ less than or equal to
 The
 .Fn floorf
 function is a single precision version of
+.Fn floor .
+The
+.Fn floorl
+function is an extended precision version of
 .Fn floor .
 .Sh SEE ALSO
 .Xr abs 3 ,

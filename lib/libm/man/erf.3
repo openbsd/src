@@ -1,4 +1,4 @@
-.\"	$OpenBSD: erf.3,v 1.11 2007/05/31 19:19:35 jmc Exp $
+.\"	$OpenBSD: erf.3,v 1.12 2011/07/07 00:54:16 martynas Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,14 +28,16 @@
 .\"
 .\"     from: @(#)erf.3	6.4 (Berkeley) 4/20/91
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 7 2011 $
 .Dt ERFC 3
 .Os
 .Sh NAME
 .Nm erf ,
 .Nm erff ,
+.Nm erfl ,
 .Nm erfc ,
-.Nm erfcf
+.Nm erfcf ,
+.Nm erfcl
 .Nd error function operators
 .Sh SYNOPSIS
 .Fd #include <math.h>
@@ -43,10 +45,14 @@
 .Fn erf "double x"
 .Ft float
 .Fn erff "float x"
+.Ft long double
+.Fn erfl "long double x"
 .Ft double
 .Fn erfc "double x"
 .Ft float
 .Fn erfcf "float x"
+.Ft long double
+.Fn erfcl "long double x"
 .Sh DESCRIPTION
 These functions calculate the error function of
 .Fa x .
@@ -56,7 +62,9 @@ The
 calculates the error function of x, and
 the
 .Fn erff
-function is a single precision version of
+and
+.Fn erfl
+functions are single and double precision versions of
 .Fn erf .
 The error function is defined as:
 .Bd -filled -offset indent
@@ -81,7 +89,9 @@ This is useful, since for large
 places disappear.
 The
 .Fn erfcf
-function is a single precision version of
+and
+.Fn erfcl
+functions are single and double precision version of
 .Fn erfc .
 .Sh SEE ALSO
 .Xr math 3

@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: lround.3,v 1.2 2007/05/31 19:19:36 jmc Exp $
+.\" 	$OpenBSD: lround.3,v 1.3 2011/07/07 00:54:16 martynas Exp $
 .\"
 .\" Copyright (c) 2005 David Schultz <das@FreeBSD.org>
 .\" All rights reserved.
@@ -26,16 +26,16 @@
 .\"
 .\" $FreeBSD: /repoman/r/ncvs/src/lib/msun/man/lround.3,v 1.4 2005/06/15 19:04:04 ru Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 7 2011 $
 .Dt LROUND 3
 .Os
 .Sh NAME
 .Nm llround ,
 .Nm llroundf ,
-.\" .Nm llroundl ,
+.Nm llroundl ,
 .Nm lround ,
-.Nm lroundf
-.\" .Nm lroundl
+.Nm lroundf ,
+.Nm lroundl
 .Nd "convert to nearest integral value"
 .Sh SYNOPSIS
 .In math.h
@@ -43,14 +43,14 @@
 .Fn llround "double x"
 .Ft "long long"
 .Fn llroundf "float x"
-.\" .Ft "long long"
-.\" .Fn llroundl "long double x"
+.Ft "long long"
+.Fn llroundl "long double x"
 .Ft long
 .Fn lround "double x"
 .Ft long
 .Fn lroundf "float x"
-.\" .Ft long
-.\" .Fn lroundl "long double x"
+.Ft long
+.Fn lroundl "long double x"
 .Sh DESCRIPTION
 The
 .Fn lround
@@ -76,10 +76,10 @@ is equivalent to
 The
 .Fn llround ,
 .Fn llroundf ,
-.\" .Fn llroundl ,
-.\" .Fn lroundl
-and
+.Fn llroundl ,
 .Fn lroundf
+and
+.Fn lroundl
 functions differ from
 .Fn lround
 only in their input and output types.
@@ -91,10 +91,10 @@ only in their input and output types.
 The
 .Fn llround ,
 .Fn llroundf ,
-.\" .Fn lroundl
-.\" .Fn llroundl ,
+.Fn llroundl ,
 .Fn lround ,
+.Fn lroundf ,
 and
-.Fn lroundf
+.Fn lroundl
 functions conform to
 .St -isoC-99 .

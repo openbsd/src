@@ -1,4 +1,4 @@
-.\"	$OpenBSD: logb.3,v 1.6 2009/08/03 21:26:07 martynas Exp $
+.\"	$OpenBSD: logb.3,v 1.7 2011/07/07 00:54:16 martynas Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
 .\"
-.Dd $Mdocdate: August 3 2009 $
+.Dd $Mdocdate: July 7 2011 $
 .Dt LOGB 3
 .Os
 .Sh NAME
@@ -37,6 +37,7 @@
 .Nm logbl ,
 .Nm scalb ,
 .Nm scalbf ,
+.Nm scalbl ,
 .Nm significand ,
 .Nm significandf
 .Nd IEEE test functions
@@ -52,6 +53,8 @@
 .Fn scalb "double x" "double n"
 .Ft float
 .Fn scalbf "float x" "float n"
+.Ft long double
+.Fn scalbl "long double x" "long double n"
 .Ft double
 .Fn significand "double x"
 .Ft float
@@ -83,6 +86,9 @@ returns
 computed by exponent manipulation.
 .Fn scalbf
 is the single precision form of
+.Fn scalb .
+.Fn scalbl
+is the extended precision form of
 .Fn scalb .
 .Pp
 .Fn significand x

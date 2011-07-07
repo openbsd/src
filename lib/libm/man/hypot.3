@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hypot.3,v 1.15 2007/05/31 19:19:35 jmc Exp $
+.\"	$OpenBSD: hypot.3,v 1.16 2011/07/07 00:54:16 martynas Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,12 +28,13 @@
 .\"
 .\"     from: @(#)hypot.3	6.7 (Berkeley) 5/6/91
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 7 2011 $
 .Dt HYPOT 3
 .Os
 .Sh NAME
 .Nm hypot ,
 .Nm hypotf ,
+.Nm hypotl ,
 .Nm cabs ,
 .Nm cabsf
 .Nd Euclidean distance and complex absolute value functions
@@ -43,6 +44,8 @@
 .Fn hypot "double x" "double y"
 .Ft float
 .Fn hypotf "float x" "float y"
+.Ft long double
+.Fn hypotl "long double x" "long double y"
 .Ft double
 .Fn cabs "struct complex { double x; double y; } z"
 .Ft float
@@ -66,6 +69,10 @@ functions are single precision versions of
 and
 .Fn cabs ,
 respectively.
+The
+.Fn hypotl
+function is an extended precision version of
+.Fn hypot .
 .Pp
 .Fn hypot "\*(If" "v"
 =

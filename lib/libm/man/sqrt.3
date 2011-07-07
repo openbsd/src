@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sqrt.3,v 1.11 2008/12/12 00:10:26 martynas Exp $
+.\"	$OpenBSD: sqrt.3,v 1.12 2011/07/07 00:54:16 martynas Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,12 +28,13 @@
 .\"
 .\"     from: @(#)sqrt.3	6.4 (Berkeley) 5/6/91
 .\"
-.Dd $Mdocdate: December 12 2008 $
+.Dd $Mdocdate: July 7 2011 $
 .Dt SQRT 3
 .Os
 .Sh NAME
 .Nm cbrt ,
 .Nm cbrtf ,
+.Nm cbrtl ,
 .Nm sqrt ,
 .Nm sqrtf ,
 .Nm sqrtl
@@ -44,6 +45,8 @@
 .Fn cbrt "double x"
 .Ft float
 .Fn cbrtf "float x"
+.Ft long double
+.Fn cbrtl "long double x"
 .Ft double
 .Fn sqrt "double x"
 .Ft float
@@ -58,6 +61,10 @@ function computes the cube root of
 The
 .Fn cbrtf
 function is a single precision version of
+.Fn cbrt .
+The
+.Fn cbrtl
+function is an extended precision version of
 .Fn cbrt .
 .Pp
 The

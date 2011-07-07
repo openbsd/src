@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.84 2011/07/06 03:50:23 martynas Exp $
+#  $OpenBSD: Makefile,v 1.85 2011/07/07 00:54:15 martynas Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -299,25 +299,57 @@ MLINKS+=trunc.3 truncf.3
 
 # long double versions
 MLINKS+=acos.3 acosl.3
+MLINKS+=acosh.3 acoshl.3
 MLINKS+=asin.3 asinl.3
+MLINKS+=asinh.3 asinhl.3
 MLINKS+=atan.3 atanl.3
 MLINKS+=atan2.3 atan2l.3
+MLINKS+=atanh.3 atanhl.3
+MLINKS+=ceil.3 ceill.3
 MLINKS+=copysign.3 copysignl.3
 MLINKS+=cos.3 cosl.3
+MLINKS+=cosh.3 coshl.3
+MLINKS+=erf.3 erfcl.3
+MLINKS+=erf.3 erfl.3
 MLINKS+=exp.3 exp2l.3
+MLINKS+=exp.3 expl.3
+MLINKS+=exp.3 expm1l.3
+MLINKS+=exp.3 log10l.3
+MLINKS+=exp.3 log1pl.3
+MLINKS+=exp.3 log2l.3
+MLINKS+=exp.3 logl.3
+MLINKS+=exp.3 powl.3
 MLINKS+=fabs.3 fabsl.3
 MLINKS+=fdim.3 fdiml.3
+MLINKS+=floor.3 floorl.3
 MLINKS+=fmax.3 fmaxl.3
 MLINKS+=fmax.3 fminl.3
+MLINKS+=fmod.3 fmodl.3
+MLINKS+=hypot.3 hypotl.3
 MLINKS+=ilogb.3 ilogbl.3
+MLINKS+=lgamma.3 lgammal.3
+MLINKS+=lgamma.3 tgammal.3
 MLINKS+=logb.3 logbl.3
+MLINKS+=logb.3 scalbl.3
+MLINKS+=lrint.3 llrintl.3
+MLINKS+=lrint.3 lrintl.3
+MLINKS+=lround.3 llroundl.3
+MLINKS+=lround.3 lroundl.3
 MLINKS+=nan.3 nanl.3
 MLINKS+=nearbyint.3 nearbyintl.3
+MLINKS+=nextafter.3 nextafterl.3
+MLINKS+=remainder.3 remainderl.3
+MLINKS+=remainder.3 remquol.3
 MLINKS+=rint.3 rintl.3
+MLINKS+=round.3 roundl.3
 MLINKS+=scalbln.3 scalblnl.3
 MLINKS+=scalbn.3 scalbnl.3
 MLINKS+=sin.3 sinl.3
+MLINKS+=sinh.3 sinhl.3
+MLINKS+=sqrt.3 cbrtl.3
 MLINKS+=sqrt.3 sqrtl.3
 MLINKS+=tan.3 tanl.3
+MLINKS+=tanh.3 tanhl.3
+MLINKS+=trunc.3 truncl.3
 
 .include <bsd.lib.mk>
