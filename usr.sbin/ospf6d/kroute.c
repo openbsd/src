@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.35 2011/07/07 17:10:48 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.36 2011/07/07 18:39:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1074,6 +1074,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 		 */
 		bzero(&ifp, sizeof(ifp));
 		ifp.addr.sdl_len = sizeof(struct sockaddr_dl);
+		ifp.addr.sdl_family = AF_LINK;
 		
 		ifp.addr.sdl_index  = kroute->ifindex;
 		/* adjust header */
