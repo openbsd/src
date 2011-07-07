@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.36 2011/07/07 04:13:23 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.37 2011/07/07 17:10:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -286,9 +286,10 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 			iface = if_find(ifp->ifindex);
 			if (iface == NULL)
 				fatalx("interface lost in ospfe");
-			iface->flags = ifp->flags;
-			iface->linkstate = ifp->linkstate;
 
+			if_update(iface, ifp->mtu, ifp->flags, ifp->media_type,
+			    ifp->linkstate, ifp->baudrate);
+			    
 			if ((iface->flags & IFF_UP) &&
 			    LINK_STATE_IS_UP(iface->linkstate)) {
 				if_fsm(iface, IF_EVT_UP);
