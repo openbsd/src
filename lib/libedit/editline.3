@@ -1,4 +1,4 @@
-.\"	$OpenBSD: editline.3,v 1.31 2011/03/02 07:46:15 jmc Exp $
+.\"	$OpenBSD: editline.3,v 1.32 2011/07/07 16:15:47 nicm Exp $
 .\"	$NetBSD: editline.3,v 1.73 2010/01/03 19:05:26 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 2 2011 $
+.Dd $Mdocdate: July 7 2011 $
 .Dt EDITLINE 3
 .Os
 .Sh NAME
@@ -36,24 +36,41 @@
 .Nm el_end ,
 .Nm el_reset ,
 .Nm el_gets ,
+.Nm el_wgets ,
 .Nm el_getc ,
+.Nm el_wgetc ,
 .Nm el_push ,
+.Nm el_wpush ,
 .Nm el_parse ,
+.Nm el_wparse ,
 .Nm el_set ,
+.Nm el_wset ,
 .Nm el_get ,
+.Nm el_wget ,
 .Nm el_source ,
 .Nm el_resize ,
 .Nm el_line ,
+.Nm el_wline ,
 .Nm el_insertstr ,
+.Nm el_winsertstr ,
 .Nm el_deletestr ,
+.Nm el_wdeletestr ,
 .Nm history_init ,
+.Nm history_winit ,
 .Nm history_end ,
+.Nm history_wend ,
 .Nm history ,
+.Nm history_w ,
 .Nm tok_init ,
+.Nm tok_winit ,
 .Nm tok_end ,
+.Nm tok_wend ,
 .Nm tok_reset ,
+.Nm tok_wreset ,
 .Nm tok_line ,
+.Nm tok_wline ,
 .Nm tok_str
+.Nm tok_wstr
 .Nd line editor, history and tokenization functions
 .Sh SYNOPSIS
 .Fd #include <histedit.h>
@@ -65,16 +82,28 @@
 .Fn el_reset "EditLine *e"
 .Ft const char *
 .Fn el_gets "EditLine *e" "int *count"
+.Ft const wchar_t *
+.Fn el_wgets "EditLine *e" "int *count"
 .Ft int
 .Fn el_getc "EditLine *e" "char *ch"
+.Ft int
+.Fn el_wgetc "EditLine *e" "wchar_t *ch"
 .Ft void
 .Fn el_push "EditLine *e" "const char *str"
+.Ft void
+.Fn el_wpush "EditLine *e" "const wchar_t *str"
 .Ft int
 .Fn el_parse "EditLine *e" "int argc" "const char *argv[]"
 .Ft int
+.Fn el_wparse "EditLine *e" "int argc" "const wchar_t *argv[]"
+.Ft int
 .Fn el_set "EditLine *e" "int op" "..."
 .Ft int
+.Fn el_wset "EditLine *e" "int op" "..."
+.Ft int
 .Fn el_get "EditLine *e" "int op" "..."
+.Ft int
+.Fn el_wget "EditLine *e" "int op" "..."
 .Ft int
 .Fn el_source "EditLine *e" "const char *file"
 .Ft void
@@ -83,24 +112,44 @@
 .Fn el_line "EditLine *e"
 .Ft int
 .Fn el_insertstr "EditLine *e" "const char *str"
+.Ft int
+.Fn el_winsertstr "EditLine *e" "const wchar_t *str"
 .Ft void
 .Fn el_deletestr "EditLine *e" "int count"
+.Ft void
+.Fn el_wdeletestr "EditLine *e" "int count"
 .Ft History *
 .Fn history_init
+.Ft HistoryW *
+.Fn history_winit
 .Ft void
 .Fn history_end "History *h"
+.Ft void
+.Fn history_wend "HistoryW *h"
 .Ft int
 .Fn history "History *h" "HistEvent *ev" "int op" "..."
+.Ft int
+.Fn history_w "HistoryW *h" "HistEventW *ev" "int op" "..."
 .Ft Tokenizer *
 .Fn tok_init "const char *IFS"
+.Ft TokenizerW *
+.Fn tok_winit "const wchar_t *IFS"
 .Ft void
 .Fn tok_end "Tokenizer *t"
 .Ft void
+.Fn tok_wend "TokenizerW *t"
+.Ft void
 .Fn tok_reset "Tokenizer *t"
+.Ft void
+.Fn tok_wreset "TokenizerW *t"
 .Ft int
 .Fn tok_line "Tokenizer *t" "const LineInfo *li" "int *argc" "const char **argv[]" "int *cursorc" "int *cursoro"
 .Ft int
+.Fn tok_wline "TokenizerW *t" "const LineInfoW *li" "int *argc" "const wchar_t **argv[]" "int *cursorc" "int *cursoro"
+.Ft int
 .Fn tok_str "Tokenizer *t" "const char *str" "int *argc" "const char **argv[]"
+.Ft int
+.Fn tok_wstr "TokenizerW *t" "const wchar_t *str" "int *argc" "const wchar_t **argv[]"
 .Sh DESCRIPTION
 The
 .Nm
@@ -122,6 +171,9 @@ which is created by
 .Fn el_init
 and freed by
 .Fn el_end .
+.Pp
+The wide-character functions behave the same way as their narrow
+counterparts.
 .Pp
 The following functions are available:
 .Bl -tag -width 4n
