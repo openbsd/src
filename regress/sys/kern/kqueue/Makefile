@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.14 2010/08/04 05:57:21 guenther Exp $
+#	$OpenBSD: Makefile,v 1.15 2011/07/07 02:00:51 guenther Exp $
 
 PROG=	kqueue-test
 CFLAGS+=-Wall
 SRCS=	kqueue-pipe.c kqueue-fork.c main.c kqueue-process.c kqueue-random.c \
-	kqueue-pty.c kqueue-tun.c
+	kqueue-pty.c kqueue-tun.c kqueue-signal.c kqueue-fdpass.c
 LDADD=	-levent -lutil
 DPADD=	${LIBEVENT} ${LIBUTIL}
 
@@ -23,8 +23,13 @@ kq-tun: ${PROG}
 	@-${SUDO} rm -f /dev/tun98 /dev/tun99
 kq-pty: ${PROG}
 	${SUDO} ./${PROG} -T
+kq-signal: ${PROG}
+	./${PROG} -s
+kq-fdpass: ${PROG}
+	./${PROG} -F
 
-REGRESS_TARGETS=kq-pipe kq-fork kq-process kq-random kq-tun kq-pty
+REGRESS_TARGETS=kq-pipe kq-fork kq-process kq-random kq-tun kq-pty kq-signal \
+	kq-fdpass
 REGRESS_ROOT_TARGETS=${REGRESS_TARGETS}
 .PHONY: ${REGRESS_TARGETS}
 

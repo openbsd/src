@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 2003/12/02 05:48:48 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 2011/07/07 02:00:51 guenther Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain
  */
@@ -10,9 +10,11 @@
 int do_pipe(void);
 int check_inheritance(void);
 int do_process(void);
+int do_signal(void);
 int do_random(void);
 int do_pty(void);
 int do_tun(void);
+int do_fdpass(void);
 
 int
 main(int argc, char **argv)
@@ -21,19 +23,25 @@ main(int argc, char **argv)
 	int ret, c;
 
 	ret = 0;
-	while ((c = getopt(argc, argv, "fPprTt")) != -1) {
+	while ((c = getopt(argc, argv, "fFpPrstT")) != -1) {
 		switch (c) {
-		case 'p':
-			ret |= do_pipe();
-			break;
 		case 'f':
 			ret |= check_inheritance();
+			break;
+		case 'F':
+			ret |= do_fdpass();
+			break;
+		case 'p':
+			ret |= do_pipe();
 			break;
 		case 'P':
 			ret |= do_process();
 			break;
 		case 'r':
 			ret |= do_random();
+			break;
+		case 's':
+			ret |= do_signal();
 			break;
 		case 't':
 			ret |= do_tun();
