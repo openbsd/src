@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.94 2011/04/23 13:52:53 schwarze Exp $
+#	$OpenBSD: special,v 1.95 2011/07/07 02:28:39 ajacoutot Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -111,7 +111,7 @@ syslog.conf	type=file mode=0644 uname=root gname=wheel
 ttys		type=file mode=0644 uname=root gname=wheel
 weekly		type=file mode=0644 uname=root gname=wheel
 weekly.local	type=file mode=0644 uname=root gname=wheel optional
-ypldap.conf	type=file mode=0600 uname=root gname=wheel optional
+ypldap.conf	type=file mode=0600 uname=root gname=wheel
 uucp		type=dir mode=0755 uname=root gname=wheel optional ignore
 ..	#uucp
 ..	#etc
