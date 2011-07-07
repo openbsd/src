@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.23 2010/05/31 20:56:42 nicm Exp $	*/
+/*	$OpenBSD: event.h,v 1.24 2011/07/07 14:25:15 sobrado Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -50,7 +50,7 @@
   to redesign the applications. As a result, Libevent allows for portable
   application development and provides the most scalable event notification
   mechanism available on an operating system. Libevent can also be used for
-  multi-threaded aplications; see Steven Grimm's explanation. Libevent should
+  multi-threaded applications; see Steven Grimm's explanation. Libevent should
   compile on Linux, *BSD, Mac OS X, Solaris and Windows.
 
   @section usage Standard usage
@@ -185,7 +185,7 @@ extern "C" {
 #define EV_READ		0x02
 #define EV_WRITE	0x04
 #define EV_SIGNAL	0x08
-#define EV_PERSIST	0x10	/* Persistant event */
+#define EV_PERSIST	0x10	/* Persistent event */
 
 struct event_base;
 #ifndef EVENT_NO_STRUCT

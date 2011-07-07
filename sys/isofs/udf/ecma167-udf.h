@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecma167-udf.h,v 1.8 2009/12/23 02:24:39 krw Exp $	*/
+/*	$OpenBSD: ecma167-udf.h,v 1.9 2011/07/07 14:25:15 sobrado Exp $	*/
 /* $NetBSD: ecma167-udf.h,v 1.10 2008/06/24 15:30:33 reinoud Exp $ */
 
 /*-
@@ -29,9 +29,9 @@
  *
  * 
  * Extended and adapted for UDFv2.50+ bij Reinoud Zandijk based on the
- * origional by Scott Long.
+ * original by Scott Long.
  * 
- * 20030508 Made some small typo and explainatory comments
+ * 20030508 Made some small typo and explanatory comments
  * 20030510 Added UDF 2.01 structures
  * 20030519 Added/correct comments on multi-partitioned logical volume space
  * 20050616 Added pseudo overwrite
@@ -103,11 +103,11 @@ enum {
 
 enum {
 	UDF_ACCESSTYPE_NOT_SPECIFIED   = 0,	/* unknown				*/
-	UDF_ACCESSTYPE_PSEUDO_OVERWITE = 0,	/* Pseudo overwritable, f.e. BD-R's LOW */
+	UDF_ACCESSTYPE_PSEUDO_OVERWITE = 0,	/* pseudo overwritable, e.g. BD-R's LOW */
 	UDF_ACCESSTYPE_READ_ONLY       = 1,	/* really only readable			*/
 	UDF_ACCESSTYPE_WRITE_ONCE      = 2,	/* write once and you're done		*/
 	UDF_ACCESSTYPE_REWRITEABLE     = 3,	/* may need extra work to rewrite	*/
-	UDF_ACCESSTYPE_OVERWRITABLE    = 4	/* no limits on rewriting; harddisc f.e.*/
+	UDF_ACCESSTYPE_OVERWRITABLE    = 4	/* no limits on rewriting; e.g. harddisc*/
 };
 
 
@@ -307,7 +307,7 @@ struct vol_desc_ptr {
 struct pri_vol_desc {
 	struct desc_tag		tag;
 	uint32_t		seq_num;		/* MAX prevail */
-	uint32_t		pvd_num;		/* assigned by author; 0 is special as in it may only occure once */
+	uint32_t		pvd_num;		/* assigned by author; 0 is special as in it may only occur once */
 	char			vol_id[32];		/* KEY ; main identifier of this disc */
 	uint16_t		vds_num;		/* volume descriptor number; i.e. what volume number is it */
 	uint16_t		max_vol_seq;		/* maximum volume descriptor number known */
@@ -325,7 +325,7 @@ struct pri_vol_desc {
 	struct regid		imp_id;
 	uint8_t			imp_use[64];
 	uint32_t		prev_vds_loc;		/* location of predecessor _lov ? */
-	uint16_t		flags;			/* bit 0 : if set indicates volume set name is meaningfull */
+	uint16_t		flags;			/* bit 0 : if set indicates volume set name is meaningful */
 	uint8_t			reserved[22];
 } __packed;
 
@@ -444,7 +444,7 @@ struct part_map_meta {
 	uint32_t		meta_mirror_file_lbn;
 	uint32_t		meta_bitmap_file_lbn;
 	uint32_t		alloc_unit_size;	/* allocation unit size in blocks */
-	uint16_t		alignment_unit_size;	/* alignment nessisary in blocks  */
+	uint16_t		alignment_unit_size;	/* alignment necessary in blocks  */
 	uint8_t			flags;
 	uint8_t			reserved1[5];
 } __packed;
@@ -680,7 +680,7 @@ struct filetimes_extattr_entry {
 	struct extattr_entry    hdr;
 	uint32_t		d_l;		/* length of times[] data following */
 	uint32_t		existence;	/* bitmask */
-	struct timestamp	times[1];	/* in order of assending bits */
+	struct timestamp	times[1];	/* in order of ascending bits */
 } __packed;
 #define UDF_FILETIMES_ATTR_NO	5
 #define UDF_FILETIMES_FILE_CREATION	1
