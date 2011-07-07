@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.53 2011/07/04 22:59:43 tedu Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.54 2011/07/07 06:39:48 otto Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -423,6 +423,9 @@ ktrsyscall(struct ktr_syscall *ktr)
 	ap = (register_t *)((char *)ktr + sizeof(struct ktr_syscall));
 	(void)putchar('(');
 
+	if (current != &emulations[0])
+		goto nonnative;
+
 	switch (ktr->ktr_code) {
 	case SYS_ioctl: {
 		const char *cp;
@@ -660,6 +663,7 @@ ktrsyscall(struct ktr_syscall *ktr)
 		break;
 	}
 
+nonnative:
 	while (narg) {
 		if (sep)
 			putchar(sep);
