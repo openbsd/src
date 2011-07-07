@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme88k,v 1.72 2011/07/06 02:08:05 tedu Exp $
+#	$OpenBSD: Makefile.mvme88k,v 1.73 2011/07/07 22:28:18 guenther Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -159,9 +159,11 @@ install-kernel-${MACHINE_NAME}:
  ${SYSTEM_OBJ}: ${DB_STRUCTINFO}
 .endif
 .ifnmake clean
-. for o in ${SYSTEM_OBJ:.o=.d} assym.d ${DB_STRUCTINFO:.h=.d}
-.  if exists($o)
-.   include "$o"
+. for o in ${SYSTEM_OBJ} assym.h ${DB_STRUCTINFO}
+.  if exists(${o:R}.d)
+.   include "${o:R}.d"
+.  elif exists($o)
+    .PHONY: $o
 .  endif
 . endfor
 .endif
