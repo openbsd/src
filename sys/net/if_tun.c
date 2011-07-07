@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.110 2011/07/02 22:20:08 nicm Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.111 2011/07/07 20:42:56 henning Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -1002,7 +1002,7 @@ tunpoll(dev_t dev, int events, struct proc *p)
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m != NULL) {
 			TUNDEBUG(("%s: tunselect q=%d\n", ifp->if_xname,
-			    ifp->if_snd.ifq_len));
+			    IFQ_LEN(ifp->if_snd)));
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
 			TUNDEBUG(("%s: tunpoll waiting\n", ifp->if_xname));
@@ -1096,10 +1096,10 @@ filt_tunread(struct knote *kn, long hint)
 	IFQ_POLL(&ifp->if_snd, m);
 	if (m != NULL) {
 		splx(s);
-		kn->kn_data = ifp->if_snd.ifq_len;
+		kn->kn_data = IFQ_LEN(&ifp->if_snd);
 
 		TUNDEBUG(("%s: tunkqread q=%d\n", ifp->if_xname,
-		    ifp->if_snd.ifq_len));
+		    IFQ_LEN(&ifp->if_snd)));
 		return (1);
 	}
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc.c,v 1.24 2010/01/04 18:34:19 chl Exp $ */
+/*	$OpenBSD: if_lmc.c,v 1.25 2011/07/07 20:42:56 henning Exp $ */
 /*	$NetBSD: if_lmc.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -507,7 +507,7 @@ lmc_rx_intr(lmc_softc_t * const sc)
 		bus_dmamap_t map;
 		int error;
 
-		if (fillok && sc->lmc_rxq.ifq_len < LMC_RXQ_TARGET)
+		if (fillok && IF_LEN(&sc->lmc_rxq) < LMC_RXQ_TARGET)
 			goto queue_mbuf;
 
 		/*
@@ -737,7 +737,7 @@ lmc_rx_intr(lmc_softc_t * const sc)
 			IF_ENQUEUE(&sc->lmc_rxq, ms);
 		} while ((ms = me) != NULL);
 
-		if (sc->lmc_rxq.ifq_len >= LMC_RXQ_TARGET)
+		if (IF_LEN(&sc->lmc_rxq) >= LMC_RXQ_TARGET)
 			sc->lmc_flags &= ~LMC_RXBUFSLOW;
 	}
 }

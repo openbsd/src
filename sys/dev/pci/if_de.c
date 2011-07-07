@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.108 2011/07/06 02:42:27 henning Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.109 2011/07/07 20:42:56 henning Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -3205,7 +3205,7 @@ tulip_rx_intr(tulip_softc_t * const sc)
 	bus_dmamap_t map;
 	int error;
 
-	if (fillok && sc->tulip_rxq.ifq_len < TULIP_RXQ_TARGET)
+	if (fillok && IF_LEN(&sc->tulip_rxq) < TULIP_RXQ_TARGET)
 	    goto queue_mbuf;
 
 #if defined(TULIP_DEBUG)
@@ -3458,7 +3458,7 @@ tulip_rx_intr(tulip_softc_t * const sc)
 	    IF_ENQUEUE(&sc->tulip_rxq, ms);
 	} while ((ms = me) != NULL);
 
-	if (sc->tulip_rxq.ifq_len >= TULIP_RXQ_TARGET)
+	if (IF_LEN(&sc->tulip_rxq) >= TULIP_RXQ_TARGET)
 	    sc->tulip_flags &= ~TULIP_RXBUFSLOW;
 	TULIP_PERFEND(rxget);
     }
