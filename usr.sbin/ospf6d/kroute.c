@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.33 2011/07/07 03:56:59 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.34 2011/07/07 17:06:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -899,12 +899,15 @@ if_newaddr(u_short ifindex, struct sockaddr_in6 *ifa, struct sockaddr_in6 *mask,
 	}
 
 	TAILQ_INSERT_TAIL(&iface->ifa_list, ia, entry);
-	ifc.addr = ia->addr;
-	ifc.dstbrd = ia->dstbrd;
-	ifc.prefixlen = ia->prefixlen;
-	ifc.ifindex = ifindex;
-	main_imsg_compose_ospfe(IMSG_IFADDRNEW, 0, &ifc, sizeof(ifc));
-	main_imsg_compose_rde(IMSG_IFADDRNEW, 0, &ifc, sizeof(ifc));
+	/* inform engine and rde if interface is used */
+	if (iface->cflags & F_IFACE_CONFIGURED) {
+		ifc.addr = ia->addr;
+		ifc.dstbrd = ia->dstbrd;
+		ifc.prefixlen = ia->prefixlen;
+		ifc.ifindex = ifindex;
+		main_imsg_compose_ospfe(IMSG_IFADDRNEW, 0, &ifc, sizeof(ifc));
+		main_imsg_compose_rde(IMSG_IFADDRNEW, 0, &ifc, sizeof(ifc));
+	}
 }
 
 void
@@ -944,14 +947,17 @@ if_deladdr(u_short ifindex, struct sockaddr_in6 *ifa, struct sockaddr_in6 *mask,
 			log_debug("if_deladdr: ifindex %u, addr %s/%d",
 			    ifindex, log_in6addr(&ia->addr), ia->prefixlen);
 			TAILQ_REMOVE(&iface->ifa_list, ia, entry);
-			ifc.addr = ia->addr;
-			ifc.dstbrd = ia->dstbrd;
-			ifc.prefixlen = ia->prefixlen;
-			ifc.ifindex = ifindex;
-			main_imsg_compose_ospfe(IMSG_IFADDRDEL, 0, &ifc,
-			    sizeof(ifc));
-			main_imsg_compose_rde(IMSG_IFADDRDEL, 0, &ifc,
-			    sizeof(ifc));
+			/* inform engine and rde if interface is used */
+			if (iface->cflags & F_IFACE_CONFIGURED) {
+				ifc.addr = ia->addr;
+				ifc.dstbrd = ia->dstbrd;
+				ifc.prefixlen = ia->prefixlen;
+				ifc.ifindex = ifindex;
+				main_imsg_compose_ospfe(IMSG_IFADDRDEL, 0, &ifc,
+				    sizeof(ifc));
+				main_imsg_compose_rde(IMSG_IFADDRDEL, 0, &ifc,
+				    sizeof(ifc));
+			}
 			free(ia);
 			return;
 		}
