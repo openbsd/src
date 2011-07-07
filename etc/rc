@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.353 2011/07/06 18:55:36 robert Exp $
+#	$OpenBSD: rc,v 1.354 2011/07/07 02:16:58 robert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -144,7 +144,7 @@ fill_baddynamic()
 
 start_daemon()
 {
-	local _n;
+	local _n
 	for _n; do
 		eval _do=\${${_n}_flags}
 		if [ X"${_do}" != X"NO" ]; then
