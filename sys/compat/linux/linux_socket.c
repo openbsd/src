@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.39 2009/09/05 10:28:43 miod Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.40 2011/07/07 01:19:39 tedu Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -356,6 +356,34 @@ linux_listen(p, v, retval)
 	return sys_listen(p, &bla, retval);
 }
 
+int compat_sys_accept(struct proc *p, void *v, register_t *retval);
+int
+compat_sys_accept(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_accept_args /* {
+		syscallarg(int) s;
+		syscallarg(caddr_t) name;
+		syscallarg(int *) anamelen;
+	} */ *uap = v;
+	int error;
+
+	if ((error = sys_accept(p, uap, retval)) != 0)
+		return error;
+
+	if (SCARG(uap, name)) {
+		struct sockaddr sa;
+
+		if ((error = copyin(SCARG(uap, name), &sa, sizeof(sa))) != 0)
+			return error;
+
+		((struct osockaddr*) &sa)->sa_family = sa.sa_family;
+
+		if ((error = copyout(&sa, SCARG(uap, name), sizeof(sa))) != 0)
+			return error;
+	}
+	return 0;
+}
+
 int
 linux_accept(p, v, retval)
 	struct proc *p;
@@ -368,7 +396,7 @@ linux_accept(p, v, retval)
 		syscallarg(int *) namelen;
 	} */ *uap = v;
 	struct linux_accept_args laa;
-	struct compat_43_sys_accept_args baa;
+	struct sys_accept_args baa;
 	struct sys_fcntl_args fca;
 	int error;
 
@@ -376,10 +404,10 @@ linux_accept(p, v, retval)
 		return error;
 
 	SCARG(&baa, s) = laa.s;
-	SCARG(&baa, name) = (caddr_t) laa.addr;
+	SCARG(&baa, name) = laa.addr;
 	SCARG(&baa, anamelen) = laa.namelen;
 
-	error = compat_43_sys_accept(p, &baa, retval);
+	error = compat_sys_accept(p, &baa, retval);
 	if (error)
 		return (error);
 
@@ -489,6 +517,34 @@ linux_socketpair(p, v, retval)
 	return sys_socketpair(p, &bsa, retval);
 }
 
+int compat_sys_send(struct proc *, void *, register_t *);
+struct compat_sys_send_args {
+	syscallarg(int) s;
+	syscallarg(caddr_t) buf;
+	syscallarg(int) len;
+	syscallarg(int) flags;
+};
+int
+compat_sys_send(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sys_send_args *uap = v;
+	struct msghdr msg;
+	struct iovec aiov;
+
+	msg.msg_name = 0;
+	msg.msg_namelen = 0;
+	msg.msg_iov = &aiov;
+	msg.msg_iovlen = 1;
+	aiov.iov_base = SCARG(uap, buf);
+	aiov.iov_len = SCARG(uap, len);
+	msg.msg_control = 0;
+	msg.msg_flags = 0;
+	return (sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval));
+}
+
 int
 linux_send(p, v, retval)
 	struct proc *p;
@@ -501,8 +557,8 @@ linux_send(p, v, retval)
 		syscallarg(int) len;
 		syscallarg(int) flags;
 	} */ *uap = v;
+	struct compat_sys_send_args bsa;
 	struct linux_send_args lsa;
-	struct compat_43_sys_send_args bsa;
 	int error;
 
 	if ((error = copyin((caddr_t) uap, (caddr_t) &lsa, sizeof lsa)))
@@ -513,7 +569,35 @@ linux_send(p, v, retval)
 	SCARG(&bsa, len) = lsa.len;
 	SCARG(&bsa, flags) = lsa.flags;
 
-	return compat_43_sys_send(p, &bsa, retval);
+	return compat_sys_send(p, &bsa, retval);
+}
+
+struct compat_sys_recv_args {
+	syscallarg(int) s;
+	syscallarg(caddr_t) buf;
+	syscallarg(int) len;
+	syscallarg(int) flags;
+};
+int compat_sys_recv(struct proc *p, void *v, register_t *retval);
+int
+compat_sys_recv(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sys_recv_args *uap = v;
+	struct msghdr msg;
+	struct iovec aiov;
+
+	msg.msg_name = 0;
+	msg.msg_namelen = 0;
+	msg.msg_iov = &aiov;
+	msg.msg_iovlen = 1;
+	aiov.iov_base = SCARG(uap, buf);
+	aiov.iov_len = SCARG(uap, len);
+	msg.msg_control = 0;
+	msg.msg_flags = SCARG(uap, flags);
+	return (recvit(p, SCARG(uap, s), &msg, (caddr_t)0, retval));
 }
 
 int
@@ -529,7 +613,7 @@ linux_recv(p, v, retval)
 		syscallarg(int) flags;
 	} */ *uap = v;
 	struct linux_recv_args lra;
-	struct compat_43_sys_recv_args bra;
+	struct compat_sys_recv_args bra;
 	int error;
 
 	if ((error = copyin((caddr_t) uap, (caddr_t) &lra, sizeof lra)))
@@ -540,7 +624,7 @@ linux_recv(p, v, retval)
 	SCARG(&bra, len) = lra.len;
 	SCARG(&bra, flags) = lra.flags;
 
-	return compat_43_sys_recv(p, &bra, retval);
+	return compat_sys_recv(p, &bra, retval);
 }
 
 int

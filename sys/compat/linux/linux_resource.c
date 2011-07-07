@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_resource.c,v 1.4 2003/06/03 20:49:28 deraadt Exp $	*/
+/*	$OpenBSD: linux_resource.c,v 1.5 2011/07/07 01:19:39 tedu Exp $	*/
 
 /*
  * Copyright (c) 2000 Niklas Hallqvist
@@ -68,6 +68,29 @@ linux_to_bsd_rlimit(which)
 	return (linux_to_bsd_rlimit_map[which]);
 }
 
+
+struct compat_sys_setrlimit_args {
+	syscallarg(int) which;
+	syscallarg(struct olimit *) rlp;
+};
+int compat_sys_setrlimit(struct proc *p, void *v, register_t *retval);
+int
+compat_sys_setrlimit(struct proc *p, void *v, register_t *retval)
+{
+	struct compat_sys_setrlimit_args *uap = v;
+	struct orlimit olim;
+	struct rlimit lim;
+	int error;
+
+	error = copyin((caddr_t)SCARG(uap, rlp), (caddr_t)&olim,
+	    sizeof (struct orlimit));
+	if (error)
+		return (error);
+	lim.rlim_cur = olim.rlim_cur;
+	lim.rlim_max = olim.rlim_max;
+	return (dosetrlimit(p, SCARG(uap, which), &lim));
+}
+
 int
 linux_sys_setrlimit(p, v, retval)
 	struct proc *p;
@@ -82,7 +105,7 @@ linux_sys_setrlimit(p, v, retval)
 	SCARG(uap, which) = linux_to_bsd_rlimit(SCARG(uap, which));
 	if (SCARG(uap, which) == RLIM_NLIMITS)
 		return (EINVAL);
-	return (compat_43_sys_setrlimit(p, v, retval));
+	return (compat_sys_setrlimit(p, v, retval));
 }
 
 int

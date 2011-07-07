@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.68 2011/06/05 19:41:09 deraadt Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.69 2011/07/07 01:19:39 tedu Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -55,6 +55,7 @@
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/socket.h>
+#include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/times.h>
 #include <sys/vnode.h>
@@ -564,6 +565,20 @@ linux_sys_oldolduname(p, v, retval)
 			*cp = (len > 1) ? ' ' : '\0';
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));
+}
+
+int
+linux_sys_sethostname(struct proc *p, void *v, register_t *retval)
+{
+	struct linux_sys_sethostname_args *uap = v;
+	int name;
+	int error;
+
+	if ((error = suser(p, 0)) != 0)
+		return (error);
+	name = KERN_HOSTNAME;
+	return (kern_sysctl(&name, 1, 0, 0, SCARG(uap, hostname),
+			    SCARG(uap, len), p));
 }
 
 /*

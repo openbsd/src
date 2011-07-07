@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file.c,v 1.24 2010/07/26 01:56:27 guenther Exp $	*/
+/*	$OpenBSD: linux_file.c,v 1.25 2011/07/07 01:19:39 tedu Exp $	*/
 /*	$NetBSD: linux_file.c,v 1.15 1996/05/20 01:59:09 fvdl Exp $	*/
 
 /*
@@ -203,6 +203,26 @@ linux_sys_open(p, v, retval)
 		FRELE(fp);
         }
 	return 0;
+}
+
+int
+linux_sys_lseek(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_lseek_args /* {
+		syscallarg(int) fd;
+		syscallarg(long) offset;
+		syscallarg(int) whence;
+	} */ *uap = v;
+	struct sys_lseek_args bla;
+
+	SCARG(&bla, fd) = SCARG(uap, fd);
+	SCARG(&bla, offset) = SCARG(uap, offset);
+	SCARG(&bla, whence) = SCARG(uap, whence);
+
+	return sys_lseek(p, &bla, retval);
 }
 
 /*
@@ -828,6 +848,24 @@ linux_sys_readlink(p, v, retval)
 }
 
 int
+linux_sys_ftruncate(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_ftruncate_args /* {
+		syscallarg(int)  fd;
+		syscallarg(long) length;
+	} */ *uap = v;
+	struct sys_ftruncate_args sta;
+
+	SCARG(&sta, fd) = SCARG(uap, fd);
+	SCARG(&sta, length) = SCARG(uap, length);
+
+	return sys_ftruncate(p, uap, retval);
+}
+
+int
 linux_sys_truncate(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -838,10 +876,14 @@ linux_sys_truncate(p, v, retval)
 		syscallarg(long) length;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
+	struct sys_truncate_args sta;
 
 	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return compat_43_sys_truncate(p, uap, retval);
+	SCARG(&sta, path) = SCARG(uap, path);
+	SCARG(&sta, length) = SCARG(uap, length);
+
+	return sys_truncate(p, &sta, retval);
 }
 
 /*

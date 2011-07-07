@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.55 2011/04/05 15:44:40 pirofti Exp $
+	$OpenBSD: syscalls.master,v 1.56 2011/07/07 01:19:39 tedu Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -67,7 +67,7 @@
 			    int gid); }
 17	STD		{ int linux_sys_break(char *nsize); }
 18	STD		{ int linux_sys_ostat(void); }
-19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
+19	STD		{ long linux_sys_lseek(int fd, long offset, \
 			    int whence); }
 20	STD		{ pid_t linux_sys_getpid(void); }
 21	STD		{ int linux_sys_mount(char *specialfile, char *dir, \
@@ -138,8 +138,7 @@
 72	STD		{ int linux_sys_sigsuspend(caddr_t restart, \
 			    int oldmask, int mask); }
 73	STD		{ int linux_sys_sigpending(linux_old_sigset_t *mask); }
-74	NOARGS		{ int compat_43_sys_sethostname(char *hostname, \
-			    u_int len);}
+74	STD		{ int linux_sys_sethostname(char *hostname, u_int len);}
 75	STD		{ int linux_sys_setrlimit(u_int which, \
 			    struct linux_rlimit *rlp); }
 76	STD		{ int linux_sys_getrlimit(u_int which, \
@@ -155,7 +154,7 @@
 			    gid_t *gidset); }
 82	STD		{ int linux_sys_oldselect(struct linux_select *lsp); }
 83	STD		{ int linux_sys_symlink(char *path, char *to); }
-84	NOARGS		{ int compat_43_sys_lstat(char *path, \
+84	NOARGS		{ int linux_sys_lstat(char *path, \
 			    struct stat43 *up); } olstat
 85	STD		{ int linux_sys_readlink(char *name, char *buf, \
 			    int count); }
@@ -167,7 +166,7 @@
 90	STD		{ int linux_sys_mmap(struct linux_mmap *lmp); }
 91	NOARGS		{ int sys_munmap(caddr_t addr, int len); }
 92	STD		{ int linux_sys_truncate(char *path, long length); }
-93	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); }
+93	STD		{ int linux_sys_ftruncate(int fd, long length); }
 94	NOARGS		{ int sys_fchmod(int fd, int mode); }
 95	STD		{ int linux_sys_fchown16(int fd, int uid, int gid); }
 96	NOARGS		{ int sys_getpriority(int which, int who); }
