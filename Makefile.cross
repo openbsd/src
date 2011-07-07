@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.43 2011/07/05 00:15:03 drahn Exp $
+# $OpenBSD: Makefile.cross,v 1.44 2011/07/07 19:27:15 deraadt Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -23,8 +23,7 @@ TARGET_ARCH=	mips64el
 TARGET_CPU=	mips64
 .elif	(${TARGET} == "solbourne")
 TARGET_ARCH=	sparc
-.elif	(${TARGET} == "macppc" || ${TARGET} == "mvmeppc" || \
-	 ${TARGET} == "socppc")
+.elif	(${TARGET} == "macppc" || ${TARGET} == "socppc")
 TARGET_ARCH=	powerpc
 .elif	(${TARGET} == "landisk")
 TARGET_ARCH=	sh
