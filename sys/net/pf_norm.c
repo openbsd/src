@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.138 2011/07/05 22:00:04 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.139 2011/07/07 20:46:36 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -788,143 +788,22 @@ pf_normalize_ip(struct mbuf **m0, int dir, u_short *reason)
 
 #ifdef INET6
 int
-pf_normalize_ip6(struct mbuf **m0, int dir, u_short *reason)
+pf_normalize_ip6(struct mbuf **m0, int dir, int off, int extoff,
+    u_short *reason)
 {
 	struct mbuf		*m = *m0;
-	struct ip6_hdr		*h = mtod(m, struct ip6_hdr *);
-	struct ip6_ext		 ext;
-	struct ip6_opt		 opt;
-	struct ip6_opt_jumbo	 jumbo;
 	struct ip6_frag		 frag;
-	u_int32_t		 jumbolen = 0, plen;
-	int			 extoff;
-	int			 off;
-	int			 optend;
-	int			 ooff;
-	u_int8_t		 proto;
-	int			 terminal;
 
-	/* Check for illegal packets */
-	if (sizeof(struct ip6_hdr) + IPV6_MAXPACKET < m->m_pkthdr.len)
-		goto drop;
-
-	extoff = 0;
-	off = sizeof(struct ip6_hdr);
-	proto = h->ip6_nxt;
-	terminal = 0;
-	do {
-		switch (proto) {
-		case IPPROTO_FRAGMENT:
-			goto fragment;
-		case IPPROTO_AH:
-		case IPPROTO_ROUTING:
-		case IPPROTO_DSTOPTS:
-			if (!pf_pull_hdr(m, off, &ext, sizeof(ext), NULL,
-			    NULL, AF_INET6))
-				goto shortpkt;
-			extoff = off;
-			if (proto == IPPROTO_AH)
-				off += (ext.ip6e_len + 2) * 4;
-			else
-				off += (ext.ip6e_len + 1) * 8;
-			proto = ext.ip6e_nxt;
-			break;
-		case IPPROTO_HOPOPTS:
-			if (!pf_pull_hdr(m, off, &ext, sizeof(ext), NULL,
-			    NULL, AF_INET6))
-				goto shortpkt;
-			extoff = off;
-			optend = off + (ext.ip6e_len + 1) * 8;
-			ooff = off + sizeof(ext);
-			do {
-				if (!pf_pull_hdr(m, ooff, &opt.ip6o_type,
-				    sizeof(opt.ip6o_type), NULL, NULL,
-				    AF_INET6))
-					goto shortpkt;
-				if (opt.ip6o_type == IP6OPT_PAD1) {
-					ooff++;
-					continue;
-				}
-				if (!pf_pull_hdr(m, ooff, &opt, sizeof(opt),
-				    NULL, NULL, AF_INET6))
-					goto shortpkt;
-				if (ooff + sizeof(opt) + opt.ip6o_len > optend)
-					goto drop;
-				switch (opt.ip6o_type) {
-				case IP6OPT_JUMBO:
-					if (h->ip6_plen != 0)
-						goto drop;
-					if (!pf_pull_hdr(m, ooff, &jumbo,
-					    sizeof(jumbo), NULL, NULL,
-					    AF_INET6))
-						goto shortpkt;
-					memcpy(&jumbolen, jumbo.ip6oj_jumbo_len,
-					    sizeof(jumbolen));
-					jumbolen = ntohl(jumbolen);
-					if (jumbolen <= IPV6_MAXPACKET)
-						goto drop;
-					if (sizeof(struct ip6_hdr) + jumbolen !=
-					    m->m_pkthdr.len)
-						goto drop;
-					break;
-				default:
-					break;
-				}
-				ooff += sizeof(opt) + opt.ip6o_len;
-			} while (ooff < optend);
-
-			off = optend;
-			proto = ext.ip6e_nxt;
-			break;
-		default:
-			terminal = 1;
-			break;
-		}
-	} while (!terminal);
-
-	/* jumbo payload option must be present, or plen > 0 */
-	plen = ntohs(h->ip6_plen);
-	if (plen == 0)
-		plen = jumbolen;
-	if (plen == 0)
-		goto drop;
-	if (sizeof(struct ip6_hdr) + plen > m->m_pkthdr.len)
-		goto shortpkt;
-
-	return (PF_PASS);
-
- fragment:
-	/* jumbo payload packets cannot be fragmented */
-	plen = ntohs(h->ip6_plen);
-	if (plen == 0 || jumbolen)
-		goto drop;
-	if (sizeof(struct ip6_hdr) + plen > m->m_pkthdr.len)
-		goto shortpkt;
-
-	if (!pf_status.reass)
-		return (PF_PASS);	/* no reassembly */
-
-	if (!pf_pull_hdr(m, off, &frag, sizeof(frag), NULL, NULL, AF_INET6))
-		goto shortpkt;
+	if (!pf_pull_hdr(m, off, &frag, sizeof(frag), NULL, reason, AF_INET6))
+		return (PF_DROP);
 	/* offset now points to data portion */
 	off += sizeof(frag);
 
 	/* Returns PF_DROP or *m0 is NULL or completely reassembled mbuf */
 	if (pf_reassemble6(m0, &frag, off, extoff, dir, reason) != PF_PASS)
 		return (PF_DROP);
-	m = *m0;
-	if (m == NULL)
-		return (PF_PASS);
 
 	return (PF_PASS);
-
- shortpkt:
-	REASON_SET(reason, PFRES_SHORT);
-	return (PF_DROP);
-
- drop:
-	REASON_SET(reason, PFRES_NORM);
-	return (PF_DROP);
 }
 #endif /* INET6 */
 
