@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.70 2011/07/05 19:02:47 oga Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.71 2011/07/07 00:17:14 tedu Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -392,7 +392,7 @@ sr_crypto_get_kdf(struct bioc_createraid *bc, struct sr_discipline *sd)
 		return (rv);
 	if (bc->bc_opaque == NULL)
 		return (rv);
-	if (bc->bc_opaque_size < sizeof(*kdfinfo))
+	if (bc->bc_opaque_size != sizeof(*kdfinfo))
 		return (rv);
 
 	kdfinfo = malloc(bc->bc_opaque_size, M_DEVBUF, M_WAITOK | M_ZERO);
