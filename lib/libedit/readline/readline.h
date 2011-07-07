@@ -1,5 +1,5 @@
-/*     $OpenBSD: readline.h,v 1.4 2010/06/30 00:05:35 nicm Exp $        */
-/*	$NetBSD: readline.h,v 1.30 2009/09/07 21:24:34 christos Exp $	*/
+/*	$OpenBSD: readline.h,v 1.5 2011/07/07 05:40:42 okan Exp $	*/
+/*	$NetBSD: readline.h,v 1.31 2010/08/04 20:29:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -152,7 +152,6 @@ int		 where_history(void);
 HIST_ENTRY	*current_history(void);
 HIST_ENTRY	*history_get(int);
 HIST_ENTRY	*remove_history(int);
-/*###152 [lint] syntax error 'histdata_t' [249]%%%*/
 HIST_ENTRY	*replace_history_entry(int, const char *, histdata_t);
 int		 history_total_bytes(void);
 int		 history_set_pos(int);
@@ -203,6 +202,7 @@ int		 _rl_qsort_string_compare(char **, char **);
 char 	       **rl_completion_matches(const char *, rl_compentry_func_t *);
 void		 rl_forced_update_display(void);
 int		 rl_set_prompt(const char *);
+int		 rl_on_new_line(void);
 
 /*
  * The following are not implemented

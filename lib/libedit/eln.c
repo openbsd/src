@@ -1,5 +1,5 @@
-/*	$OpenBSD: eln.c,v 1.1 2010/06/30 00:05:35 nicm Exp $	*/
-/*	$NetBSD: eln.c,v 1.7 2010/04/15 00:52:48 christos Exp $	*/
+/*	$OpenBSD: eln.c,v 1.2 2011/07/07 05:40:42 okan Exp $	*/
+/*	$NetBSD: eln.c,v 1.9 2010/11/04 13:53:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -33,7 +33,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
 #include "config.h"
 
 #include "histedit.h"
@@ -114,6 +113,13 @@ el_set(EditLine *el, int op, ...)
 	case EL_RPROMPT: {
 		el_pfunc_t p = va_arg(ap, el_pfunc_t);
 		ret = prompt_set(el, p, 0, op, 0);
+		break;
+	}
+
+	case EL_RESIZE: {
+		el_zfunc_t p = va_arg(ap, el_zfunc_t);
+		void *arg = va_arg(ap, void *);
+		ret = ch_resizefun(el, p, arg);
 		break;
 	}
 
@@ -209,8 +215,7 @@ el_set(EditLine *el, int op, ...)
 		hist_fun_t fun = va_arg(ap, hist_fun_t);
 		ptr_t ptr = va_arg(ap, ptr_t);
 		ret = hist_set(el, fun, ptr);
-		if (!(el->el_flags & CHARSET_IS_UTF8))
-			el->el_flags |= NARROW_HISTORY;
+		el->el_flags |= NARROW_HISTORY;
 		break;
 	}
 	/* XXX: do we need to change el_rfunc_t? */
@@ -268,7 +273,7 @@ el_get(EditLine *el, int op, ...)
 	case EL_RPROMPT_ESC: {
 		el_pfunc_t *p = va_arg(ap, el_pfunc_t *);
 		char *c = va_arg(ap, char *);
-		wchar_t wc;
+		wchar_t wc = 0;
 		ret = prompt_get(el, p, &wc, op);
 		*c = (unsigned char)wc;
 		break;

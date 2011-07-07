@@ -1,4 +1,4 @@
-/*	$OpenBSD: histedit.h,v 1.10 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$OpenBSD: histedit.h,v 1.11 2011/07/07 05:40:42 okan Exp $	*/
 /*	$NetBSD: histedit.h,v 1.46 2010/04/15 00:50:03 christos Exp $	*/
 
 /*-
@@ -156,6 +156,7 @@ unsigned char	_el_fn_complete(EditLine *, int);
 #define	EL_REFRESH	20	/* , void);			      set     */
 #define	EL_PROMPT_ESC	21	/* , prompt_func, Char);	      set/get */
 #define	EL_RPROMPT_ESC	22	/* , prompt_func, Char);	      set/get */
+#define	EL_RESIZE	23	/* , el_zfunc_t, void *);	      set     */
 
 #define	EL_BUILTIN_GETCFN	(NULL)
 

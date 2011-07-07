@@ -1,5 +1,5 @@
-/*	$OpenBSD: el.c,v 1.16 2010/06/30 00:05:35 nicm Exp $	*/
-/*	$NetBSD: el.c,v 1.59 2010/04/15 00:56:40 christos Exp $	*/
+/*	$OpenBSD: el.c,v 1.17 2011/07/07 05:40:42 okan Exp $	*/
+/*	$NetBSD: el.c,v 1.61 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -66,6 +66,8 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 	el->el_errfile = ferr;
 
 	el->el_infd = fileno(fin);
+	el->el_outfd = fileno(fout);
+	el->el_errfd = fileno(ferr);
 
 	el->el_prog = Strdup(ct_decode_string(prog, &el->el_scratch));
 	if (el->el_prog == NULL) {
@@ -127,13 +129,13 @@ el_end(EditLine *el)
 	sig_end(el);
 
 	el_free((ptr_t) el->el_prog);
-	el_free((ptr_t) el);
 #ifdef WIDECHAR
 	el_free((ptr_t) el->el_scratch.cbuff);
 	el_free((ptr_t) el->el_scratch.wbuff);
 	el_free((ptr_t) el->el_lgcyconv.cbuff);
 	el_free((ptr_t) el->el_lgcyconv.wbuff);
 #endif
+	el_free((ptr_t) el);
 }
 
 
@@ -168,6 +170,13 @@ FUN(el,set)(EditLine *el, int op, ...)
 		el_pfunc_t p = va_arg(ap, el_pfunc_t);
 
 		rv = prompt_set(el, p, 0, op, 1);
+		break;
+	}
+
+	case EL_RESIZE: {
+		el_zfunc_t p = va_arg(ap, el_zfunc_t);
+		void *arg = va_arg(ap, void *);
+		rv = ch_resizefun(el, p, arg);
 		break;
 	}
 
@@ -320,9 +329,11 @@ FUN(el,set)(EditLine *el, int op, ...)
 			break;
 		case 1:
 			el->el_outfile = fp;
+			el->el_outfd = fileno(fp);
 			break;
 		case 2:
 			el->el_errfile = fp;
+			el->el_errfd = fileno(fp);
 			break;
 		default:
 			rv = -1;
@@ -488,7 +499,7 @@ el_source(EditLine *el, const char *fname)
 {
 	FILE *fp;
 	size_t len;
-	char *ptr, *lptr = NULL;
+	char *ptr;
 #ifdef HAVE_ISSETUGID
 	char path[MAXPATHLEN];
 #endif
@@ -523,21 +534,11 @@ el_source(EditLine *el, const char *fname)
 		return (-1);
 
 	while ((ptr = fgetln(fp, &len)) != NULL) {
-		if (ptr[len - 1] == '\n')
-			ptr[len - 1] = '\0';
-		else {
-			if ((lptr = (char *)malloc(len + 1)) == NULL) {
-				(void) fclose(fp);
-				return (-1);
-			}
-			memcpy(lptr, ptr, len);
-			lptr[len] = '\0';
-			ptr = lptr;
-		}
-
 		dptr = ct_decode_string(ptr, &el->el_scratch);
 		if (!dptr)
 			continue;
+		if (len > 0 && dptr[len - 1] == '\n')
+			--len;
 
 		/* loop until first non-space char or EOL */
 		while (*dptr != '\0' && Isspace(*dptr))
@@ -545,13 +546,11 @@ el_source(EditLine *el, const char *fname)
 		if (*dptr == '#')
 			continue;   /* ignore, this is a comment line */
 		if (parse_line(el, dptr) == -1) {
-			free(lptr);
 			(void) fclose(fp);
 			return (-1);
 		}
 	}
 
-	free(lptr);
 	(void) fclose(fp);
 	return (0);
 }

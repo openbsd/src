@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.14 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$OpenBSD: term.c,v 1.15 2011/07/07 05:40:42 okan Exp $	*/
 /*	$NetBSD: term.c,v 1.57 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -333,39 +333,25 @@ term_init(EditLine *el)
 
 	el->el_term.t_buf = (char *) el_malloc(TC_BUFSIZE);
 	if (el->el_term.t_buf == NULL)
-		goto fail;
+		return (-1);
 	el->el_term.t_cap = (char *) el_malloc(TC_BUFSIZE);
 	if (el->el_term.t_cap == NULL)
-		goto fail2;
+		return (-1);
 	el->el_term.t_fkey = (fkey_t *) el_malloc(A_K_NKEYS * sizeof(fkey_t));
 	if (el->el_term.t_fkey == NULL)
-		goto fail3;
+		return (-1);
 	el->el_term.t_loc = 0;
 	el->el_term.t_str = (char **) el_malloc(T_str * sizeof(char *));
 	if (el->el_term.t_str == NULL)
-		goto fail4;
+		return (-1);
 	(void) memset(el->el_term.t_str, 0, T_str * sizeof(char *));
 	el->el_term.t_val = (int *) el_malloc(T_val * sizeof(int));
 	if (el->el_term.t_val == NULL)
-		goto fail5;
+		return (-1);
 	(void) memset(el->el_term.t_val, 0, T_val * sizeof(int));
 	(void) term_set(el, NULL);
 	term_init_arrow(el);
 	return (0);
-fail5:
-	el_free(el->el_term.t_str);
-	el->el_term.t_str = NULL;
-fail4:
-	el_free(el->el_term.t_fkey);
-	el->el_term.t_fkey = NULL;
-fail3:
-	el_free(el->el_term.t_cap);
-	el->el_term.t_cap = NULL;
-fail2:
-	el_free(el->el_term.t_buf);
-	el->el_term.t_buf = NULL;
-fail:
-	return (-1);
 }
 
 /* term_end():

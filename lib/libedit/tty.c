@@ -1,5 +1,5 @@
-/*	$OpenBSD: tty.c,v 1.12 2010/06/30 00:05:35 nicm Exp $	*/
-/*	$NetBSD: tty.c,v 1.33 2010/04/18 21:17:22 christos Exp $	*/
+/*	$OpenBSD: tty.c,v 1.13 2011/07/07 05:40:42 okan Exp $	*/
+/*	$NetBSD: tty.c,v 1.34 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,6 +40,7 @@
  */
 #include <assert.h>
 #include <errno.h>
+#include <unistd.h>	/* for isatty */
 #include <strings.h>	/* for ffs */
 #include "el.h"
 #include "tty.h"
@@ -490,6 +491,13 @@ tty_setup(EditLine *el)
 	if (el->el_flags & EDIT_DISABLED)
 		return (0);
 
+	if (!isatty(el->el_outfd)) {
+#ifdef DEBUG_TTY
+		(void) fprintf(el->el_errfile,
+		    "tty_setup: isatty: %s\n", strerror(errno));
+#endif /* DEBUG_TTY */
+		return (-1);
+	}
 	if (tty_getty(el, &el->el_tty.t_ed) == -1) {
 #ifdef DEBUG_TTY
 		(void) fprintf(el->el_errfile,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: chared.c,v 1.10 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$OpenBSD: chared.c,v 1.11 2011/07/07 05:40:42 okan Exp $	*/
 /*	$NetBSD: chared.c,v 1.28 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -483,6 +483,8 @@ ch_init(EditLine *el)
 	    sizeof(*el->el_chared.c_kill.buf));
 	el->el_chared.c_kill.mark	= el->el_line.buffer;
 	el->el_chared.c_kill.last	= el->el_chared.c_kill.buf;
+	el->el_chared.c_resizefun	= NULL;
+	el->el_chared.c_resizearg	= NULL;
 
 	el->el_map.current		= el->el_map.key;
 
@@ -623,6 +625,8 @@ ch_enlargebufs(EditLine *el, size_t addlen)
 
 	/* Safe to set enlarged buffer size */
 	el->el_line.limit  = &el->el_line.buffer[newsz - EL_LEAVE];
+	if (el->el_chared.c_resizefun)
+		(*el->el_chared.c_resizefun)(el, el->el_chared.c_resizearg);
 	return 1;
 }
 
@@ -775,4 +779,12 @@ c_hpos(EditLine *el)
 			continue;
 		return (int)(el->el_line.cursor - ptr - 1);
 	}
+}
+
+protected int
+ch_resizefun(EditLine *el, el_zfunc_t f, void *a)
+{
+	el->el_chared.c_resizefun = f;
+	el->el_chared.c_resizearg = a;
+	return 0;
 }
