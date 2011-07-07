@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.35 2011/03/11 18:22:49 deraadt Exp $	*/
+/*	$OpenBSD: date.c,v 1.36 2011/07/07 21:00:59 deraadt Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 extern	char *__progname;
 
 time_t tval;
-int retval, jflag, nflag;
+int retval, jflag;
 int slidetime;
 
 static void setthetime(char *);
@@ -69,7 +69,7 @@ main(int argc, char *argv[])
 
 	tz.tz_dsttime = tz.tz_minuteswest = 0;
 	rflag = 0;
-	while ((ch = getopt(argc, argv, "ad:jnr:ut:z:")) != -1)
+	while ((ch = getopt(argc, argv, "ad:jr:ut:z:")) != -1)
 		switch((char)ch) {
 		case 'd':		/* daylight saving time */
 			tz.tz_dsttime = atoi(optarg) ? 1 : 0;
@@ -79,9 +79,6 @@ main(int argc, char *argv[])
 			break;
 		case 'j':		/* don't set */
 			jflag = 1;
-			break;
-		case 'n':		/* don't set network */
-			nflag = 1;
 			break;
 		case 'r':		/* user specified seconds */
 			rflag = 1;
@@ -227,43 +224,33 @@ setthetime(char *p)
 		return;
 
 	/* set the time */
-	if (nflag || netsettime(tval)) {
-		if (slidetime) {
-			struct timeval tv_current;
+	if (slidetime) {
+		struct timeval tv_current;
 
-			if (gettimeofday(&tv_current, NULL) == -1)
-				err(1, "Could not get local time of day");
+		if (gettimeofday(&tv_current, NULL) == -1)
+			err(1, "Could not get local time of day");
 
-			tv.tv_sec = tval - tv_current.tv_sec;
-			tv.tv_usec = 0;
-			if (adjtime(&tv, NULL) == -1)
-				errx(1, "adjtime");
-		} else {
+		tv.tv_sec = tval - tv_current.tv_sec;
+		tv.tv_usec = 0;
+		if (adjtime(&tv, NULL) == -1)
+			errx(1, "adjtime");
+	} else {
 #ifndef SMALL
-			logwtmp("|", "date", "");
+		logwtmp("|", "date", "");
 #endif
-			tv.tv_sec = tval;
-			tv.tv_usec = 0;
-			if (settimeofday(&tv, NULL))
-				err(1, "settimeofday");
+		tv.tv_sec = tval;
+		tv.tv_usec = 0;
+		if (settimeofday(&tv, NULL))
+			err(1, "settimeofday");
 #ifndef SMALL
-			logwtmp("{", "date", "");
+		logwtmp("{", "date", "");
 #endif
-		}
 	}
 
 	if ((p = getlogin()) == NULL)
 		p = "???";
 	syslog(LOG_AUTH | LOG_NOTICE, "date set by %s", p);
 }
-
-#ifdef SMALL
-int
-netsettime(tval)
-{
-	return (2);
-}
-#endif
 
 static void
 badformat(void)
@@ -276,7 +263,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-ajnu] [-d dst] [-r seconds] [-t minutes_west] [-z output_zone]\n",
+	    "usage: %s [-aju] [-d dst] [-r seconds] [-t minutes_west] [-z output_zone]\n",
 	     __progname);
 	(void)fprintf(stderr,
 	    "%-*s[+format] [[[[[[cc]yy]mm]dd]HH]MM[.SS]]\n", (int)strlen(__progname) + 8, "");

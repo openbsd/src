@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.357 2011/07/07 20:54:05 deraadt Exp $
+#	$OpenBSD: rc,v 1.358 2011/07/07 21:00:59 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -435,12 +435,12 @@ if [ X"${amd}" = X"YES" -a -e ${amd_master} ]; then
 	(cd /etc/amd; amd `cat ${amd_master}`)
 fi
 
-# run rdate before timed/ntpd
+# run rdate before ntpd
 if [ X"${rdate_flags}" != X"NO" ]; then
 	echo -n ' rdate';	rdate -s ${rdate_flags}
 fi
 
-start_daemon timed ldattach ntpd
+start_daemon ldattach ntpd
 
 echo '.'
 

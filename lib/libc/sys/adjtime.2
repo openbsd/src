@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adjtime.2,v 1.18 2009/06/05 15:17:02 ckuethe Exp $
+.\"	$OpenBSD: adjtime.2,v 1.19 2011/07/07 21:00:59 deraadt Exp $
 .\"	$NetBSD: adjtime.2,v 1.5 1995/10/12 15:40:44 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)adjtime.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: June 5 2009 $
+.Dd $Mdocdate: July 7 2011 $
 .Dt ADJTIME 2
 .Os
 .Sh NAME
@@ -100,14 +100,7 @@ of the superuser.
 .Xr date 1 ,
 .Xr adjfreq 2 ,
 .Xr gettimeofday 2 ,
-.Xr ntpd 8 ,
-.Xr timed 8 ,
-.Xr timedc 8
-.Rs
-.%T "TSP: The Time Synchronization Protocol for UNIX 4.3BSD"
-.%A R. Gusella
-.%A S. Zatti
-.Re
+.Xr ntpd 8
 .Sh HISTORY
 The
 .Fn adjtime

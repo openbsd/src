@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.299 2011/07/07 02:22:11 ajacoutot Exp $
+#	$OpenBSD: Makefile,v 1.300 2011/07/07 21:00:59 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -32,11 +32,11 @@ BIN2=	motd
 
 # -r-xr-xr-x
 RCDAEMONS=	apmd bgpd bootparamd cron dhcpd dhcrelay dvmrpd ftpd ftpproxy \
-		hostapd hotplugd httpd identd ifstated iked inetd isakmpd ldapd \
-		ldattach ldpd lpd mopd mrouted named nsd ntpd portmap rarpd \
-		rbootd relayd  ripd route6d rtadvd rtsold rwhod sasyncd sendmail \
-		sensorsd smtpd snmpd sshd syslogd timed watchdogd ypbind ypldap \
-		yppasswdd ypserv
+		hostapd hotplugd httpd identd ifstated iked inetd isakmpd \
+		ldapd ldattach ldpd lpd mopd mrouted named nsd ntpd portmap \
+		rarpd rbootd relayd ripd route6d rtadvd rtsold rwhod sasyncd \
+		sendmail sensorsd smtpd snmpd sshd syslogd watchdogd ypbind \
+		ypldap yppasswdd ypserv
 
 MISETS=	base${OSrev}.tgz comp${OSrev}.tgz \
 	man${OSrev}.tgz game${OSrev}.tgz etc${OSrev}.tgz

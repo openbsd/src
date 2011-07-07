@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.8,v 1.17 2010/02/18 13:39:21 schwarze Exp $
+.\"	$OpenBSD: intro.8,v 1.18 2011/07/07 21:00:59 deraadt Exp $
 .\"	$NetBSD: intro.8,v 1.3 1994/11/30 19:36:24 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)intro.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: February 18 2010 $
+.Dd $Mdocdate: July 7 2011 $
 .Dt INTRO 8
 .Os
 .Sh NAME
@@ -165,18 +165,16 @@ variables:
 In order to make sure the system clock is correct,
 it may be synchronised with a number of external sources.
 The utilities available are:
-.Xr ntpd 8 ,
-.Xr rdate 8 ,
+.Xr ntpd 8
 and
-.Xr timed 8 .
+.Xr rdate 8 .
 .Pp
 Relevant
 .Xr rc.conf 8
 variables:
-.Va ntpd_flags ,
-.Va rdate_flags ,
+.Va ntpd_flags
 and
-.Va timed_flags .
+.Va rdate_flags .
 .Ss Concatenated disks (ccd)
 If you are using
 .Xr ccd 4

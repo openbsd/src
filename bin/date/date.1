@@ -1,4 +1,4 @@
-.\"	$OpenBSD: date.1,v 1.56 2011/03/11 21:36:09 jmc Exp $
+.\"	$OpenBSD: date.1,v 1.57 2011/07/07 21:00:59 deraadt Exp $
 .\"	$NetBSD: date.1,v 1.12 1996/03/12 04:32:37 phil Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)date.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: March 11 2011 $
+.Dd $Mdocdate: July 7 2011 $
 .Dt DATE 1
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Nd display or set date and time
 .Sh SYNOPSIS
 .Nm date
-.Op Fl ajnu
+.Op Fl aju
 .Op Fl d Ar dst
 .Op Fl r Ar seconds
 .Op Fl t Ar minutes_west
@@ -88,17 +88,6 @@ will return a non-zero value for
 .It Fl j
 Parse the provided date and time and display the result without changing
 the clock.
-.It Fl n
-By default,
-if the
-.Xr timed 8
-daemon is running,
-.Nm
-sets the time on all of the machines in the local group.
-The
-.Fl n
-option suppresses this behavior and causes the time to be set only on the
-current machine.
 .It Fl r Ar seconds
 Print out (in specified format) the date and time represented by
 .Ar seconds
@@ -210,35 +199,13 @@ Set the time to
 without modifying the date:
 .Pp
 .Dl # date 1432
-.Sh DIAGNOSTICS
-Occasionally, when
-.Xr timed 8
-synchronizes the time on many hosts, the setting of a new time value may
-require more than a few seconds.
-On these occasions,
-.Nm
-prints:
-.Dq Network time being set .
-The message
-.Dq Communication error with timed
-occurs when the communication
-between
-.Nm
-and
-.Xr timed 8
-fails.
 .Sh SEE ALSO
 .Xr adjtime 2 ,
 .Xr gettimeofday 2 ,
 .Xr strftime 3 ,
 .Xr utmp 5 ,
 .Xr ntpd 8 ,
-.Xr rdate 8 ,
-.Xr timed 8
-.Rs
-.%T "TSP: The Time Synchronization Protocol for UNIX 4.3BSD"
-.%A R. Gusella
-.%A S. Zatti
+.Xr rdate 8
 .Re
 .Sh STANDARDS
 The
@@ -248,7 +215,7 @@ utility is compliant with the
 specification.
 .Pp
 The flags
-.Op Fl adjnrtz
+.Op Fl adjrtz
 are extensions to that specification.
 .Sh HISTORY
 A

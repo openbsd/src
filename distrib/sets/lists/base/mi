@@ -132,7 +132,6 @@
 ./etc/rc.d/snmpd
 ./etc/rc.d/sshd
 ./etc/rc.d/syslogd
-./etc/rc.d/timed
 ./etc/rc.d/watchdogd
 ./etc/rc.d/ypbind
 ./etc/rc.d/ypldap
@@ -2739,8 +2738,6 @@
 ./usr/sbin/tcpdmatch
 ./usr/sbin/tcpdrop
 ./usr/sbin/tcpdump
-./usr/sbin/timed
-./usr/sbin/timedc
 ./usr/sbin/tokenadm
 ./usr/sbin/tokeninit
 ./usr/sbin/traceroute
