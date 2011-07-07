@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.126 2011/07/05 00:58:27 henning Exp $	*/
+/*	$OpenBSD: if.h,v 1.127 2011/07/07 20:41:36 henning Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -418,6 +418,7 @@ do {									\
 			m_freem(__m0);					\
 	}								\
 } while (/* CONSTCOND */0)
+#define	IF_LEN(ifq)		((ifq)->ifq_len)
 #define	IF_IS_EMPTY(ifq)	((ifq)->ifq_len == 0)
 
 #define	IFQ_MAXLEN	256
@@ -759,6 +760,7 @@ do {									\
 
 #endif /* ALTQ */
 
+#define	IFQ_LEN(ifq)			IF_LEN(ifq)
 #define	IFQ_IS_EMPTY(ifq)		((ifq)->ifq_len == 0)
 #define	IFQ_INC_LEN(ifq)		((ifq)->ifq_len++)
 #define	IFQ_DEC_LEN(ifq)		(--(ifq)->ifq_len)
