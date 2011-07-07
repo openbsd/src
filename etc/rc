@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.361 2011/07/07 22:47:30 deraadt Exp $
+#	$OpenBSD: rc,v 1.362 2011/07/07 22:53:39 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -467,13 +467,9 @@ if [ X"${check_quotas}" = X"YES" ]; then
 	quotaon -a
 fi
 
-# build ps databases
-echo -n 'building ps databases:'
-echo -n " kvm"
+# build kvm(3) databases
 kvm_mkdb
-echo -n " dev"
 dev_mkdb
-echo "."
 
 chmod 666 /dev/tty[pqrstuvwxyzPQRST]*
 chown root:wheel /dev/tty[pqrstuvwxyzPQRST]*
