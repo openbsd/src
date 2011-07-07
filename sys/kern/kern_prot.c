@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.48 2011/04/04 13:00:13 guenther Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.49 2011/07/07 18:08:36 tedu Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -59,8 +59,7 @@ int
 sys_getpid(struct proc *p, void *v, register_t *retval)
 {
 
-	retval[0] = p->p_p->ps_pid;
-	retval[1] = p->p_p->ps_pptr->ps_pid;
+	*retval = p->p_p->ps_pid;
 	return (0);
 }
 
@@ -142,8 +141,7 @@ int
 sys_getuid(struct proc *p, void *v, register_t *retval)
 {
 
-	retval[0] = p->p_cred->p_ruid;
-	retval[1] = p->p_ucred->cr_uid;
+	*retval = p->p_cred->p_ruid;
 	return (0);
 }
 
@@ -172,8 +170,7 @@ int
 sys_getgid(struct proc *p, void *v, register_t *retval)
 {
 
-	retval[0] = p->p_cred->p_rgid;
-	retval[1] = p->p_ucred->cr_gid;
+	*retval = p->p_cred->p_rgid;
 	return (0);
 }
 
