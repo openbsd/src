@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# $OpenBSD: xdm,v 1.1 2011/07/07 18:42:17 robert Exp $
+
+daemon="/usr/X11R6/bin/xdm"
+
+. /etc/rc.d/rc.subr
+
+rc_cmd $1
