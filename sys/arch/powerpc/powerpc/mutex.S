@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.12 2011/01/08 18:10:22 deraadt Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.13 2011/07/07 05:43:48 drahn Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn
@@ -119,7 +119,7 @@ ENTRY(mtx_enter_try)
 	lwz	%r0,36(%r1)			# load return address
 	mtlr	%r0
 	addi	%r1,%r1,32			# restore stack
-	li	%r2,0				# return zero
+	li	%r3,0				# return zero
 	blr
 
 .L_mutex_try_free:
@@ -134,7 +134,7 @@ ENTRY(mtx_enter_try)
 	lwz	%r0,36(%r1)			# load return address
 	mtlr	%r0
 	addi	%r1,%r1,32			# restore stack
-	li	%r2,1				# return nonzero
+	li	%r3,1				# return nonzero
 	blr
 
 #ifdef DIAGNOSTIC
