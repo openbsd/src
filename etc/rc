@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.355 2011/07/07 18:36:03 robert Exp $
+#	$OpenBSD: rc,v 1.356 2011/07/07 18:40:00 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -94,7 +94,7 @@ wsconsctl_conf()
 	set -- `stripcom /etc/wsconsctl.conf`
 	IFS="$save_IFS"
 	while [ $# -ge 1 ] ; do
-		eval /sbin/wsconsctl $1
+		eval wsconsctl $1
 		shift
 	done
 }
@@ -368,7 +368,7 @@ fi
 if [ X"${named_flags}" != X"NO" ]; then
 	if ! cmp -s /etc/rndc.key /var/named/etc/rndc.key ; then
 		echo -n "rndc-confgen: generating new shared secret... "
-		if /usr/sbin/rndc-confgen -a -t /var/named >/dev/null 2>&1; then
+		if rndc-confgen -a -t /var/named >/dev/null 2>&1; then
 			chmod 0640 /var/named/etc/rndc.key >/dev/null 2>&1
 			echo done.
 		else
@@ -383,7 +383,7 @@ echo '.'
 
 if [ ! -f /etc/isakmpd/private/local.key ]; then
 	echo -n "openssl: generating new isakmpd/iked RSA key... "
-	if /usr/sbin/openssl genrsa -out /etc/isakmpd/private/local.key 2048 \
+	if openssl genrsa -out /etc/isakmpd/private/local.key 2048 \
 	    > /dev/null 2>&1; then
 		chmod 600 /etc/isakmpd/private/local.key
 		openssl rsa -out /etc/isakmpd/local.pub \
@@ -540,7 +540,7 @@ if [ X"${accounting}" = X"YES" ]; then
 	echo 'turning on accounting';	accton /var/account/acct
 fi
 
-if [ -f /sbin/ldconfig ]; then
+if [ -f ldconfig ]; then
 	echo 'creating runtime link editor directory cache.'
 	if [ -d /usr/local/lib ]; then
 		shlib_dirs="/usr/local/lib $shlib_dirs"
@@ -555,7 +555,7 @@ if [ -x /usr/libexec/vi.recover ]; then
 	echo 'preserving editor files.';	/usr/libexec/vi.recover
 fi
 
-/usr/bin/ssh-keygen -A
+ssh-keygen -A
 
 echo -n 'starting network daemons:'
 
@@ -576,7 +576,7 @@ start_daemon hostapd rwhod lpd ldapd sendmail smtpd httpd ftpd \
 	ftpproxy identd inetd rarpd bootparamd rbootd mopd
 
 if [ X"${bt}" != X"NO" ]; then
-	echo -n ' btd';			/usr/sbin/btd
+	echo -n ' btd';			btd
 	if [ -f ${bt_rules} ]; then
 		btctl -f ${bt_rules}
 	fi
@@ -638,7 +638,7 @@ echo '.'
 date
 
 if [ X"${wsmoused_flags}" != X"NO" -a -x /usr/sbin/wsmoused ]; then
-	echo 'starting wsmoused...';	/usr/sbin/wsmoused ${wsmoused_flags}
+	echo 'starting wsmoused...';	wsmoused ${wsmoused_flags}
 fi
 
 # Alternatively, on some architectures, xdm may be started in /etc/ttys.
