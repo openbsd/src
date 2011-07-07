@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.43 2010/09/09 10:37:03 thib Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.44 2011/07/07 23:45:00 matthew Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -50,6 +50,8 @@
 #include <sys/filedesc.h>
 #include <sys/proc.h>
 #include <sys/hash.h>
+#include <sys/file.h>
+#include <sys/fcntl.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -167,8 +169,16 @@ namei(struct nameidata *ndp)
 	if (cnp->cn_pnbuf[0] == '/') {
 		dp = ndp->ni_rootdir;
 		vref(dp);
-	} else {
+	} else if (ndp->ni_dirfd == AT_FDCWD) {
 		dp = fdp->fd_cdir;
+		vref(dp);
+	} else {
+		struct file *fp = fd_getfile(fdp, ndp->ni_dirfd);
+		if (fp == NULL || fp->f_type != DTYPE_VNODE)
+			return (EBADF);
+		dp = (struct vnode *)fp->f_data;
+		if (dp->v_type != VDIR)
+			return (EBADF);
 		vref(dp);
 	}
 	for (;;) {

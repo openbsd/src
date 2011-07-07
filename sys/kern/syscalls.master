@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.110 2011/07/07 18:30:50 tedu Exp $
+;	$OpenBSD: syscalls.master,v 1.111 2011/07/07 23:45:00 matthew Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -565,3 +565,31 @@
 311	STD		{ int sys_getrtable(void); }
 312	STD		{ int sys_getdirentries(int fd, char *buf, \
 			    int count, off_t *basep); }
+313	STD		{ int sys_faccessat(int fd, const char *path, \
+			    int amode, int flag); }
+314	STD		{ int sys_fchmodat(int fd, const char *path, \
+			    mode_t mode, int flag); }
+315	STD		{ int sys_fchownat(int fd, const char *path, \
+			    uid_t uid, gid_t gid, int flag); }
+316	STD		{ int sys_fstatat(int fd, const char *path, \
+			    struct stat *buf, int flag); }
+317	STD		{ int sys_linkat(int fd1, const char *path1, int fd2, \
+			    const char *path2, int flag); }
+318	STD		{ int sys_mkdirat(int fd, const char *path, \
+			    mode_t mode); }
+319	STD		{ int sys_mkfifoat(int fd, const char *path, \
+			    mode_t mode); }
+320	STD		{ int sys_mknodat(int fd, const char *path, \
+			    mode_t mode, dev_t dev); }
+321	STD		{ int sys_openat(int fd, const char *path, int flags, \
+			    ... mode_t mode); }
+322	STD		{ ssize_t sys_readlinkat(int fd, const char *path, \
+			    char *buf, size_t count); }
+323	STD		{ int sys_renameat(int fromfd, const char *from, \
+			    int tofd, const char *to); }
+324	STD		{ int sys_symlinkat(const char *path, int fd, \
+			    const char *link); }
+325	STD		{ int sys_unlinkat(int fd, const char *path, \
+			    int flag); }
+326	STD		{ int sys_utimensat(int fd, const char *path, \
+			    const struct timespec *times, int flag); }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.25 2007/10/29 14:12:19 chl Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.26 2011/07/07 23:45:00 matthew Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -200,6 +200,7 @@ check_shell:
 #endif
 
 	/* set up the parameters for the recursive check_exec() call */
+	epp->ep_ndp->ni_dirfd = AT_FDCWD;
 	epp->ep_ndp->ni_dirp = shellname;
 	epp->ep_ndp->ni_segflg = UIO_SYSSPACE;
 	epp->ep_flags |= EXEC_INDIR;

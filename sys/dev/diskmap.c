@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskmap.c,v 1.5 2011/07/02 16:53:17 jsing Exp $	*/
+/*	$OpenBSD: diskmap.c,v 1.6 2011/07/07 23:45:00 matthew Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
@@ -85,6 +85,7 @@ diskmapioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		goto bad;
 
 	ndp.ni_segflg = UIO_SYSSPACE;
+	ndp.ni_dirfd = AT_FDCWD;
 	ndp.ni_dirp = devname;
 	ndp.ni_cnd.cn_proc = p;
 	if ((error = vn_open(&ndp, fp->f_flag, 0)) != 0)
