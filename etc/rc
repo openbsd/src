@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.362 2011/07/07 22:53:39 deraadt Exp $
+#	$OpenBSD: rc,v 1.363 2011/07/07 22:57:29 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -534,7 +534,7 @@ if [ X"${accounting}" = X"YES" ]; then
 	echo 'turning on accounting';	accton /var/account/acct
 fi
 
-if [ -f ldconfig ]; then
+if [ -f /sbin/ldconfig ]; then
 	echo 'creating runtime link editor directory cache.'
 	if [ -d /usr/local/lib ]; then
 		shlib_dirs="/usr/local/lib $shlib_dirs"
