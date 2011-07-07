@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.56 2011/07/07 01:19:39 tedu Exp $
+	$OpenBSD: syscalls.master,v 1.57 2011/07/07 06:15:47 pirofti Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -412,3 +412,48 @@
 266	STD		{ int linux_sys_clock_getres(clockid_t which, \
 			    struct l_timespec *tp); }
 267	UNIMPL		linux_sys_clock_nanosleep
+268	UNIMPL		linux_sys_statfs64
+269	UNIMPL		linux_sys_fstatfs64
+270	UNIMPL		linux_sys_tgkill
+271	UNIMPL		linux_sys_utimes
+272	UNIMPL		linux_sys_fadvise64_64
+273	UNIMPL		linux_sys_vserver
+274	UNIMPL		linux_sys_mbind
+275	UNIMPL		linux_sys_get_mempolicy
+276	UNIMPL		linux_sys_set_mempolicy
+277	UNIMPL		linux_sys_mq_open
+278	UNIMPL		linux_sys_mq_unlink
+279	UNIMPL		linux_sys_mq_timedsend
+280	UNIMPL		linux_sys_mq_timedreceive
+281	UNIMPL		linux_sys_mq_notify
+282	UNIMPL		linux_sys_mq_getsetattr
+283	UNIMPL		linux_sys_sys_kexec_load
+284	UNIMPL		linux_sys_waitid
+285	UNIMPL		/* unused */
+286	UNIMPL		linux_sys_add_key
+287	UNIMPL		linux_sys_request_key
+288	UNIMPL		linux_sys_keyctl
+289	UNIMPL		linux_sys_ioprio_set
+290	UNIMPL		linux_sys_ioprio_get
+291	UNIMPL		linux_sys_inotify_init
+292	UNIMPL		linux_sys_inotify_add_watch
+293	UNIMPL		linux_sys_inotify_rm_watch
+294	UNIMPL		linux_sys_migrate_pages
+295	UNIMPL		linux_sys_openalinux_sys_t
+296	UNIMPL		linux_sys_mkdirat
+297	UNIMPL		linux_sys_mknodat
+298	UNIMPL		linux_sys_fchownat
+299	UNIMPL		linux_sys_futimesat
+300	UNIMPL		linux_sys_fstatat64
+301	UNIMPL		linux_sys_unlinkat
+302	UNIMPL		linux_sys_renameat
+303	UNIMPL		linux_sys_linkat
+304	UNIMPL		linux_sys_symlinkat
+305	UNIMPL		linux_sys_readlinkat
+306	UNIMPL		linux_sys_fchmodat
+307	UNIMPL		linux_sys_faccessat
+308	UNIMPL		linux_sys_pselect6
+309	UNIMPL		linux_sys_ppoll
+310	UNIMPL		linux_sys_unshare
+311	UNIMPL		linux_sys_set_robust_list
+312	UNIMPL		linux_sys_get_robust_list
