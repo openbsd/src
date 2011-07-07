@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.37 2011/01/25 22:55:14 stsp Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.38 2011/07/07 09:25:16 guenther Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -467,6 +467,13 @@ _thread_kern_sched(struct sigcontext * scp)
 				curthread->slice_usec = 0;
 			}
 
+			/*
+			 * If we're 'switching' to the current thread,
+			 * then don't bother with the save/restore
+			 */
+			if (curthread == old_thread_run)
+				goto after_switch;
+
 			/* Restore errno. */
 			errno = curthread->error;
 
@@ -486,6 +493,8 @@ _thread_kern_sched(struct sigcontext * scp)
 			 * before use.
 			 */
 			curthread = _get_curthread();
+
+		  after_switch:
 
 			/* Allow signals again. */
 			_queue_signals = 0;
