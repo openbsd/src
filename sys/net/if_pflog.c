@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.37 2011/07/06 02:42:28 henning Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.38 2011/07/07 00:47:18 mcbride Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -273,6 +273,7 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 {
 	const struct mbuf	*m;
 	struct pfloghdr		*pfloghdr;
+	struct pf_state		*s = NULL;
 	u_int			 count;
 	u_char			*dst;
 	u_short			 action, reason;
@@ -337,7 +338,7 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	memset(&pd, 0, sizeof(pd));
 	pd.hdr.any = &pf_hdrs;
 	if (pf_setup_pdesc(pfloghdr->af, pfloghdr->dir, &pd, &mfake, &action,
-	    &reason, NULL, NULL, NULL, NULL, &off, &hdrlen) == -1)
+	    &reason, NULL, NULL, NULL, &s, NULL, &off, &hdrlen) == -1)
 		return;
 
 	PF_ACPY(&osaddr, pd.src, pd.af);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.337 2011/07/04 18:12:51 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.338 2011/07/07 00:47:19 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -548,8 +548,8 @@ struct pf_rule {
 #define PF_SKIP_AF		3
 #define PF_SKIP_PROTO		4
 #define PF_SKIP_SRC_ADDR	5
-#define PF_SKIP_SRC_PORT	6
-#define PF_SKIP_DST_ADDR	7
+#define PF_SKIP_DST_ADDR	6
+#define PF_SKIP_SRC_PORT	7
 #define PF_SKIP_DST_PORT	8
 #define PF_SKIP_COUNT		9
 	union pf_rule_ptr	 skip[PF_SKIP_COUNT];
@@ -1237,6 +1237,8 @@ struct pf_pdesc {
 	u_int16_t	*proto_sum;
 
 	u_int16_t	 rdomain;	/* original routing domain */
+	u_int16_t	 virtual_proto;
+#define PF_VPROTO_FRAGMENT	256
 	sa_family_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 tos;
@@ -1757,7 +1759,8 @@ int				 pf_setup_pdesc(sa_family_t, int,
 				    struct pf_pdesc *, struct mbuf **,
 				    u_short *, u_short *, struct pfi_kif *,
 				    struct pf_rule **, struct pf_rule **,
-				    struct pf_ruleset **, int *, int *);
+				    struct pf_state **, struct pf_ruleset **,
+				    int *, int *);
 
 int	pf_test(sa_family_t, int, struct ifnet *, struct mbuf **,
 	    struct ether_header *);
