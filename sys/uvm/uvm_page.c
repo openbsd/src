@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.112 2011/07/06 19:50:38 beck Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.113 2011/07/07 20:52:50 oga Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -76,7 +76,6 @@
 #include <sys/sched.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
-#include <sys/mount.h>
 #include <sys/proc.h>
 
 #include <uvm/uvm.h>
@@ -920,43 +919,19 @@ uvm_pagealloc(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	struct vm_page *pg;
 	struct pglist pgl;
 	int pmr_flags;
-	boolean_t use_reserve;
 
 	KASSERT(obj == NULL || anon == NULL);
 	KASSERT(off == trunc_page(off));
 
-	/*
-	 * check to see if we need to generate some free pages waking
-	 * the pagedaemon.
-	 */
-	if ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freemin ||
-	    ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freetarg &&
-	    (uvmexp.inactive + BUFPAGES_INACT) < uvmexp.inactarg))
-		wakeup(&uvm.pagedaemon);
-
-	/*
-	 * fail if any of these conditions is true:
-	 * [1]  there really are no free pages, or
-	 * [2]  only kernel "reserved" pages remain and
-	 *        the page isn't being allocated to a kernel object.
-	 * [3]  only pagedaemon "reserved" pages remain and
-	 *        the requestor isn't the pagedaemon.
-	 */
-
-	use_reserve = (flags & UVM_PGA_USERESERVE) ||
-		(obj && UVM_OBJ_IS_KERN_OBJECT(obj));
-	if ((uvmexp.free <= uvmexp.reserve_kernel && !use_reserve) ||
-	    (uvmexp.free <= uvmexp.reserve_pagedaemon &&
-	     !((curproc == uvm.pagedaemon_proc) ||
-	      (curproc == syncerproc))))
-		goto fail;
-
+	/* XXX these functions should share flags */
 	pmr_flags = UVM_PLA_NOWAIT;
 	if (flags & UVM_PGA_ZERO)
 		pmr_flags |= UVM_PLA_ZERO;
+	if (flags & UVM_PGA_USERESERVE)
+		pmr_flags |= UVM_PLA_USERESERVE;
 	TAILQ_INIT(&pgl);
 	if (uvm_pmr_getpages(1, 0, 0, 1, 0, 1, pmr_flags, &pgl) != 0)
-		goto fail;
+		return (NULL);
 
 	pg = TAILQ_FIRST(&pgl);
 	KASSERT(pg != NULL && TAILQ_NEXT(pg, pageq) == NULL);
@@ -967,10 +942,7 @@ uvm_pagealloc(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	if (flags & UVM_PGA_ZERO)
 		atomic_clearbits_int(&pg->pg_flags, PG_CLEAN);
 
-	return(pg);
-
- fail:
-	return (NULL);
+	return (pg);
 }
 
 /*
