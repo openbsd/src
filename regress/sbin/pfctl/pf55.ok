@@ -22,7 +22,6 @@ set loginterface lo0
 set hostid 0x00000001
 set optimization normal
 set block-policy drop
-set require-order yes
 set limit states 43254
 set limit frags 34557
 set timeout interval 344

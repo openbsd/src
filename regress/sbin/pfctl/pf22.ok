@@ -8,5 +8,3 @@ set limit frags 1000
 set loginterface lo0
 set loginterface none
 set hostid 0x00000001
-set require-order no
-set require-order yes

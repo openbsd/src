@@ -1,4 +1,4 @@
-set require-order no
 
-include "pf95.include"
+include "./pf95.include"
 
+block out proto tcp

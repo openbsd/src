@@ -11,7 +11,6 @@ set loginterface lo0
 set hostid 1
 set optimization normal
 set block-policy drop
-set require-order yes
 
 set limit states 43254
 set limit frags 34557

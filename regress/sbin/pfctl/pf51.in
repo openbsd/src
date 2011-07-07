@@ -1,9 +1,0 @@
-# test require-order
-
-pass in on lo0 all
-set require-order no
-match out on lo0 from any to any nat-to 127.0.0.1
-altq on lo0 tbrsize 1824 cbq bandwidth 10Mb queue { toad, frog }
-queue toad bandwidth 1Mb
-queue frog bandwidth 90% cbq(default)
-

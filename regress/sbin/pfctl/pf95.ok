@@ -1,2 +1,2 @@
-set require-order no
-set require-order yes
+block drop in proto udp all
+block drop out proto tcp all

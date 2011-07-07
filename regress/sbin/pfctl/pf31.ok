@@ -1,5 +1,4 @@
 set block-policy drop
-set require-order no
 set block-policy return
 block return in on lo0 all
 block return in on lo0 inet all

@@ -1,6 +1,0 @@
-set require-order no
-altq on lo0 cbq bandwidth 10Mb tbrsize 1824 queue { toad frog }
-queue toad bandwidth 1Mb 
-queue frog bandwidth 90% cbq( default ) 
-pass in on lo0 all flags S/SA keep state
-match out on lo0 inet all nat-to 127.0.0.1
