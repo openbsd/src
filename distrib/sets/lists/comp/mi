@@ -3677,6 +3677,15 @@
 ./usr/share/man/man3/el_resize.3
 ./usr/share/man/man3/el_set.3
 ./usr/share/man/man3/el_source.3
+./usr/share/man/man3/el_wdeletestr.3
+./usr/share/man/man3/el_wget.3
+./usr/share/man/man3/el_wgetc.3
+./usr/share/man/man3/el_wgets.3
+./usr/share/man/man3/el_winsertstr.3
+./usr/share/man/man3/el_wline.3
+./usr/share/man/man3/el_wparse.3
+./usr/share/man/man3/el_wpush.3
+./usr/share/man/man3/el_wset.3
 ./usr/share/man/man3/encrypt.3
 ./usr/share/man/man3/end.3
 ./usr/share/man/man3/endfsent.3
@@ -4131,6 +4140,9 @@
 ./usr/share/man/man3/history.3
 ./usr/share/man/man3/history_end.3
 ./usr/share/man/man3/history_init.3
+./usr/share/man/man3/history_w.3
+./usr/share/man/man3/history_wend.3
+./usr/share/man/man3/history_winit.3
 ./usr/share/man/man3/hline.3
 ./usr/share/man/man3/hline_set.3
 ./usr/share/man/man3/hosts_access.3
@@ -5907,6 +5919,11 @@
 ./usr/share/man/man3/tok_line.3
 ./usr/share/man/man3/tok_reset.3
 ./usr/share/man/man3/tok_str.3
+./usr/share/man/man3/tok_wend.3
+./usr/share/man/man3/tok_winit.3
+./usr/share/man/man3/tok_wline.3
+./usr/share/man/man3/tok_wreset.3
+./usr/share/man/man3/tok_wstr.3
 ./usr/share/man/man3/tolower.3
 ./usr/share/man/man3/top_panel.3
 ./usr/share/man/man3/top_row.3
