@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.144 2011/06/29 20:52:09 matthew Exp $
+#	$OpenBSD: GENERIC,v 1.145 2011/07/07 23:41:09 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -169,16 +169,15 @@ udl*	at uhub?		# DisplayLink USB displays
 wsdisplay* at udl?
 
 # Bluetooth controllers
-ubt*	at uhub? disable	# USB Bluetooth
-bthub*	at ubt?
-
-bthidev* at bthub?		# Bluetooth HID support
-btkbd*	at bthidev?
-btms*	at bthidev?
-wskbd*	at btkbd? mux 1
-wsmouse* at btms? mux 0
-btsco*	at bthub?		# Bluetooth audio support
-audio*	at btsco?
+#ubt*	at uhub? disable	# USB Bluetooth
+#bthub*	at ubt?
+#bthidev* at bthub?		# Bluetooth HID support
+#btkbd*	at bthidev?
+#btms*	at bthidev?
+#wskbd*	at btkbd? mux 1
+#wsmouse* at btms? mux 0
+#btsco*	at bthub?		# Bluetooth audio support
+#audio*	at btsco?
 
 sti0	at mainbus0 irq 11	# [H]CRX-{8,24,48}[Z] graphics
 sti0	at phantomas0 irq 11	# builtin graphics on BC*

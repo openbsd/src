@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.41 2011/06/29 20:52:08 matthew Exp $ 
+# $OpenBSD: GENERIC,v 1.42 2011/07/07 23:41:09 tedu Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -160,16 +160,15 @@ uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 onewire* at uow?
 
 # Bluetooth controllers
-ubt*	at uhub? disable	# USB Bluetooth
-bthub*	at ubt?
-
-bthidev* at bthub?		# Bluetooth HID support
-btkbd*	at bthidev?
-btms*	at bthidev?
-wskbd*	at btkbd? mux 1
-wsmouse* at btms? mux 0
-btsco*	at bthub?		# Bluetooth audio support
-audio*	at btsco?
+#ubt*	at uhub? disable	# USB Bluetooth
+#bthub*	at ubt?
+#bthidev* at bthub?		# Bluetooth HID support
+#btkbd*	at bthidev?
+#btms*	at bthidev?
+#wskbd*	at btkbd? mux 1
+#wsmouse* at btms? mux 0
+#btsco*	at bthub?		# Bluetooth audio support
+#audio*	at btsco?
 
 amphy*		at mii?		# AMD 79C873 PHYs
 dcphy*		at mii?		# Digital Clone PHYs

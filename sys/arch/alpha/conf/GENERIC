@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.223 2011/06/29 20:52:08 matthew Exp $
+#	$OpenBSD: GENERIC,v 1.224 2011/07/07 23:41:09 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -129,16 +129,15 @@ uvideo* at uhub?
 video*  at uvideo?
 
 # Bluetooth controllers
-ubt*	at uhub? disable		# USB Bluetooth
-bthub*	at ubt?
-
-bthidev* at bthub?			# Bluetooth HID support
-btkbd*	at bthidev?
-btms*	at bthidev?
-wskbd*	at btkbd? mux 1
-wsmouse* at btms? mux 0
-btsco*	at bthub?			# Bluetooth audio support
-audio*	at btsco?
+#ubt*	at uhub? disable		# USB Bluetooth
+#bthub*	at ubt?
+#bthidev* at bthub?			# Bluetooth HID support
+#btkbd*	at bthidev?
+#btms*	at bthidev?
+#wskbd*	at btkbd? mux 1
+#wsmouse* at btms? mux 0
+#btsco*	at bthub?			# Bluetooth audio support
+#audio*	at btsco?
 
 # EV6 Tsunami Core Logic
 tsc*	at	mainbus0
