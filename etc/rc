@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.354 2011/07/07 02:16:58 robert Exp $
+#	$OpenBSD: rc,v 1.355 2011/07/07 18:36:03 robert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -413,41 +413,10 @@ fi
 
 echo -n 'starting initial daemons:'
 
-if [ X"${portmap}" = X"YES" ]; then
-	echo -n ' portmap';		portmap
-fi
+start_daemon portmap
 
-if [ X`domainname` != X ]; then
-	if [ -d /var/yp/`domainname` ]; then
-		# YP server capabilities needed...
-		echo -n ' ypserv';		ypserv ${ypserv_flags}
-		#echo -n ' ypxfrd';		ypxfrd
-	fi
-
-	if [ -d /var/yp/binding ]; then
-		# YP client capabilities needed...
-		echo -n ' ypbind';		ypbind
-	fi
-
-	if [ X"${yppasswdd_flags}" != X"NO" -a -d /var/yp/`domainname` ]; then
-		# if we are the master server, run rpc.yppasswdd
-		_host1=`ypwhich -m passwd 2> /dev/null`
-		_host2=`hostname`
-		if [ `grep '^lookup' /etc/resolv.conf | grep yp | wc -c` -ne 0 ]; then
-			_host1=`ypmatch $_host1 hosts | cut -d'	' -f2`
-			_host2=`ypmatch $_host2 hosts | cut -d'	' -f2 | head -1`
-		else
-			_host1=`echo $_host1 | nslookup | grep '^Name: ' | \
-			    sed -e 's/^Name:    //'`
-			_host2=`echo $_host2 | nslookup | grep '^Name: ' | \
-			    sed -e 's/^Name:    //'`
-		fi
-		if [ "$_host2" = "$_host1" ]; then
-			echo -n ' rpc.yppasswdd'
-			rpc.yppasswdd ${yppasswdd_flags}
-		fi
-	fi
-fi
+[ X"`domainname`" != X"" ] && \
+	start_daemon ypserv ypldap ypbind yppasswdd
 
 if [ X"${nfs_server}" = X"YES" -a -s /etc/exports -a \
     `sed -e '/^#/d' < /etc/exports | wc -l` -ne 0 ]; then
@@ -633,19 +602,10 @@ if [ X"${aucat_flags}" != X"NO" ]; then
 	aucat -l ${aucat_flags}
 fi
 
-# KerberosV master KDC
-if [ X"${krb5_master_kdc}" = X"YES" ]; then
-	echo 'KerberosV master KDC'
-	/usr/libexec/kdc &
-	/usr/libexec/kadmind &
-	/usr/libexec/kpasswdd &
-fi
-
-# KerberosV slave KDC
-if [ X"${krb5_slave_kdc}" = X"YES" ]; then
-	echo 'KerberosV slave KDC'
-	/usr/libexec/kdc &
-	# Remember to enable hpropd in inetd.conf
+if [ X"${kdc_flags}" != X"NO" ]; then
+	echo -n 'starting KerberosV daemons:'
+	start_daemon kdc kadmind kpasswdd
+	echo '.'
 fi
 
 # If rc.firstime exists, run it just once, and make sure it is deleted
