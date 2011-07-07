@@ -536,7 +536,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/cmac.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/cryptodev.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/cryptosoft.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/deflate.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/des_locl.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/gmac.ph
@@ -1741,7 +1740,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/slcompress.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/slip.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/trunklacp.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/net/zlib.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net80211
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net80211/ieee80211.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net80211/ieee80211_amrr.ph

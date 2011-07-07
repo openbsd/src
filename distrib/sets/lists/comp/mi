@@ -60,7 +60,6 @@
 ./usr/include/crypto/cmac.h
 ./usr/include/crypto/cryptodev.h
 ./usr/include/crypto/cryptosoft.h
-./usr/include/crypto/deflate.h
 ./usr/include/crypto/des.h
 ./usr/include/crypto/des_locl.h
 ./usr/include/crypto/gmac.h
@@ -1116,7 +1115,6 @@
 ./usr/include/net/slcompress.h
 ./usr/include/net/slip.h
 ./usr/include/net/trunklacp.h
-./usr/include/net/zlib.h
 ./usr/include/net80211
 ./usr/include/net80211/ieee80211.h
 ./usr/include/net80211/ieee80211_amrr.h
@@ -3213,6 +3211,7 @@
 ./usr/share/man/man3/acosf.3
 ./usr/share/man/man3/acosh.3
 ./usr/share/man/man3/acoshf.3
+./usr/share/man/man3/acoshl.3
 ./usr/share/man/man3/acosl.3
 ./usr/share/man/man3/acss.3
 ./usr/share/man/man3/acss_setkey.3
@@ -3244,6 +3243,7 @@
 ./usr/share/man/man3/asinf.3
 ./usr/share/man/man3/asinh.3
 ./usr/share/man/man3/asinhf.3
+./usr/share/man/man3/asinhl.3
 ./usr/share/man/man3/asinl.3
 ./usr/share/man/man3/asprintf.3
 ./usr/share/man/man3/assert.3
@@ -3255,6 +3255,7 @@
 ./usr/share/man/man3/atanf.3
 ./usr/share/man/man3/atanh.3
 ./usr/share/man/man3/atanhf.3
+./usr/share/man/man3/atanhl.3
 ./usr/share/man/man3/atanl.3
 ./usr/share/man/man3/atexit.3
 ./usr/share/man/man3/atob8.3
@@ -3411,8 +3412,10 @@
 ./usr/share/man/man3/cbreak.3
 ./usr/share/man/man3/cbrt.3
 ./usr/share/man/man3/cbrtf.3
+./usr/share/man/man3/cbrtl.3
 ./usr/share/man/man3/ceil.3
 ./usr/share/man/man3/ceilf.3
+./usr/share/man/man3/ceill.3
 ./usr/share/man/man3/cfgetispeed.3
 ./usr/share/man/man3/cfgetospeed.3
 ./usr/share/man/man3/cfmakeraw.3
@@ -3478,6 +3481,7 @@
 ./usr/share/man/man3/cosf.3
 ./usr/share/man/man3/cosh.3
 ./usr/share/man/man3/coshf.3
+./usr/share/man/man3/coshl.3
 ./usr/share/man/man3/cosl.3
 ./usr/share/man/man3/cproj.3
 ./usr/share/man/man3/cprojf.3
@@ -3696,7 +3700,9 @@
 ./usr/share/man/man3/erf.3
 ./usr/share/man/man3/erfc.3
 ./usr/share/man/man3/erfcf.3
+./usr/share/man/man3/erfcl.3
 ./usr/share/man/man3/erff.3
+./usr/share/man/man3/erfl.3
 ./usr/share/man/man3/err.3
 ./usr/share/man/man3/errx.3
 ./usr/share/man/man3/etext.3
@@ -3757,8 +3763,10 @@
 ./usr/share/man/man3/exp2f.3
 ./usr/share/man/man3/exp2l.3
 ./usr/share/man/man3/expf.3
+./usr/share/man/man3/expl.3
 ./usr/share/man/man3/expm1.3
 ./usr/share/man/man3/expm1f.3
+./usr/share/man/man3/expm1l.3
 ./usr/share/man/man3/f.3
 ./usr/share/man/man3/fabs.3
 ./usr/share/man/man3/fabsf.3
@@ -3821,6 +3829,7 @@
 ./usr/share/man/man3/flockfile.3
 ./usr/share/man/man3/floor.3
 ./usr/share/man/man3/floorf.3
+./usr/share/man/man3/floorl.3
 ./usr/share/man/man3/flushinp.3
 ./usr/share/man/man3/fmax.3
 ./usr/share/man/man3/fmaxf.3
@@ -3830,6 +3839,7 @@
 ./usr/share/man/man3/fminl.3
 ./usr/share/man/man3/fmod.3
 ./usr/share/man/man3/fmodf.3
+./usr/share/man/man3/fmodl.3
 ./usr/share/man/man3/fmt_scaled.3
 ./usr/share/man/man3/fnmatch.3
 ./usr/share/man/man3/fopen.3
@@ -4138,6 +4148,7 @@
 ./usr/share/man/man3/htons.3
 ./usr/share/man/man3/hypot.3
 ./usr/share/man/man3/hypotf.3
+./usr/share/man/man3/hypotl.3
 ./usr/share/man/man3/i2d_ASN1_OBJECT.3
 ./usr/share/man/man3/i2d_DHparams.3
 ./usr/share/man/man3/i2d_DSAPrivateKey.3
@@ -4914,6 +4925,7 @@
 ./usr/share/man/man3/lfind.3
 ./usr/share/man/man3/lgamma.3
 ./usr/share/man/man3/lgammaf.3
+./usr/share/man/man3/lgammal.3
 ./usr/share/man/man3/lh_delete.3
 ./usr/share/man/man3/lh_doall.3
 ./usr/share/man/man3/lh_doall_arg.3
@@ -4937,8 +4949,10 @@
 ./usr/share/man/man3/lldiv.3
 ./usr/share/man/man3/llrint.3
 ./usr/share/man/man3/llrintf.3
+./usr/share/man/man3/llrintl.3
 ./usr/share/man/man3/llround.3
 ./usr/share/man/man3/llroundf.3
+./usr/share/man/man3/llroundl.3
 ./usr/share/man/man3/localeconv.3
 ./usr/share/man/man3/localtime.3
 ./usr/share/man/man3/localtime_r.3
@@ -4946,10 +4960,13 @@
 ./usr/share/man/man3/log.3
 ./usr/share/man/man3/log10.3
 ./usr/share/man/man3/log10f.3
+./usr/share/man/man3/log10l.3
 ./usr/share/man/man3/log1p.3
 ./usr/share/man/man3/log1pf.3
+./usr/share/man/man3/log1pl.3
 ./usr/share/man/man3/log2.3
 ./usr/share/man/man3/log2f.3
+./usr/share/man/man3/log2l.3
 ./usr/share/man/man3/logb.3
 ./usr/share/man/man3/logbf.3
 ./usr/share/man/man3/logbl.3
@@ -4967,6 +4984,7 @@
 ./usr/share/man/man3/login_getclass.3
 ./usr/share/man/man3/login_getstyle.3
 ./usr/share/man/man3/login_tty.3
+./usr/share/man/man3/logl.3
 ./usr/share/man/man3/logout.3
 ./usr/share/man/man3/logwtmp.3
 ./usr/share/man/man3/longjmp.3
@@ -4976,12 +4994,12 @@
 ./usr/share/man/man3/lrand48.3
 ./usr/share/man/man3/lrint.3
 ./usr/share/man/man3/lrintf.3
+./usr/share/man/man3/lrintl.3
 ./usr/share/man/man3/lround.3
 ./usr/share/man/man3/lroundf.3
+./usr/share/man/man3/lroundl.3
 ./usr/share/man/man3/lsearch.3
 ./usr/share/man/man3/malloc.3
-./usr/share/man/man3/math.3
-./usr/share/man/man3/mathf.3
 ./usr/share/man/man3/mblen.3
 ./usr/share/man/man3/mbrlen.3
 ./usr/share/man/man3/mbrtowc.3
@@ -5181,6 +5199,7 @@
 ./usr/share/man/man3/newwin.3
 ./usr/share/man/man3/nextafter.3
 ./usr/share/man/man3/nextafterf.3
+./usr/share/man/man3/nextafterl.3
 ./usr/share/man/man3/nextkey.3
 ./usr/share/man/man3/nftw.3
 ./usr/share/man/man3/nice.3
@@ -5301,6 +5320,7 @@
 ./usr/share/man/man3/post_menu.3
 ./usr/share/man/man3/pow.3
 ./usr/share/man/man3/powf.3
+./usr/share/man/man3/powl.3
 ./usr/share/man/man3/prefresh.3
 ./usr/share/man/man3/print_time_table.3
 ./usr/share/man/man3/printf.3
@@ -5450,10 +5470,12 @@
 ./usr/share/man/man3/registerrpc.3
 ./usr/share/man/man3/remainder.3
 ./usr/share/man/man3/remainderf.3
+./usr/share/man/man3/remainderl.3
 ./usr/share/man/man3/remove.3
 ./usr/share/man/man3/remque.3
 ./usr/share/man/man3/remquo.3
 ./usr/share/man/man3/remquof.3
+./usr/share/man/man3/remquol.3
 ./usr/share/man/man3/replace_panel.3
 ./usr/share/man/man3/request_init.3
 ./usr/share/man/man3/request_set.3
@@ -5482,6 +5504,7 @@
 ./usr/share/man/man3/rmd160.3
 ./usr/share/man/man3/round.3
 ./usr/share/man/man3/roundf.3
+./usr/share/man/man3/roundl.3
 ./usr/share/man/man3/rpc.3
 ./usr/share/man/man3/rpc_createerr.3
 ./usr/share/man/man3/rpcauth.3
@@ -5507,6 +5530,7 @@
 ./usr/share/man/man3/savetty.3
 ./usr/share/man/man3/scalb.3
 ./usr/share/man/man3/scalbf.3
+./usr/share/man/man3/scalbl.3
 ./usr/share/man/man3/scalbln.3
 ./usr/share/man/man3/scalblnf.3
 ./usr/share/man/man3/scalblnl.3
@@ -5663,6 +5687,7 @@
 ./usr/share/man/man3/sinf.3
 ./usr/share/man/man3/sinh.3
 ./usr/share/man/man3/sinhf.3
+./usr/share/man/man3/sinhl.3
 ./usr/share/man/man3/sinl.3
 ./usr/share/man/man3/sio_close.3
 ./usr/share/man/man3/sio_eof.3
@@ -5833,6 +5858,7 @@
 ./usr/share/man/man3/tanf.3
 ./usr/share/man/man3/tanh.3
 ./usr/share/man/man3/tanhf.3
+./usr/share/man/man3/tanhl.3
 ./usr/share/man/man3/tanl.3
 ./usr/share/man/man3/tcdrain.3
 ./usr/share/man/man3/tcflow.3
@@ -5852,6 +5878,7 @@
 ./usr/share/man/man3/tfind.3
 ./usr/share/man/man3/tgamma.3
 ./usr/share/man/man3/tgammaf.3
+./usr/share/man/man3/tgammal.3
 ./usr/share/man/man3/tgetent.3
 ./usr/share/man/man3/tgetflag.3
 ./usr/share/man/man3/tgetnum.3
@@ -5895,6 +5922,7 @@
 ./usr/share/man/man3/tree.3
 ./usr/share/man/man3/trunc.3
 ./usr/share/man/man3/truncf.3
+./usr/share/man/man3/truncl.3
 ./usr/share/man/man3/tsearch.3
 ./usr/share/man/man3/ttyname.3
 ./usr/share/man/man3/ttyname_r.3

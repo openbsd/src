@@ -115,6 +115,7 @@
 ./etc/rc.d/named
 ./etc/rc.d/nsd
 ./etc/rc.d/ntpd
+./etc/rc.d/portmap
 ./etc/rc.d/rarpd
 ./etc/rc.d/rbootd
 ./etc/rc.d/rc.subr
@@ -133,6 +134,10 @@
 ./etc/rc.d/syslogd
 ./etc/rc.d/timed
 ./etc/rc.d/watchdogd
+./etc/rc.d/ypbind
+./etc/rc.d/ypldap
+./etc/rc.d/yppasswdd
+./etc/rc.d/ypserv
 ./etc/skel
 ./etc/sliphome
 ./etc/ssl

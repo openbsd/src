@@ -133,6 +133,7 @@
 ./etc/systrace/usr_sbin_named
 ./etc/ttys
 ./etc/weekly
+./etc/ypldap.conf
 ./root/.Xdefaults
 ./root/.cshrc
 ./root/.klogin
