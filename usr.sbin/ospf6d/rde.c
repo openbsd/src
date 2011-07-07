@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.55 2011/07/07 00:36:13 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.56 2011/07/07 04:35:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -738,7 +738,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			memcpy(&ifindex, imsg.data, sizeof(ifindex));
 			iface = if_find(ifindex);
 			if (iface == NULL)
-				fatalx("interface lost in ospfe");
+				fatalx("interface lost in rde");
 
 			LIST_REMOVE(iface, entry);
 			if_del(iface);
@@ -1462,8 +1462,6 @@ orig_intra_lsa_rtr(struct area *area, struct vertex *old)
 	lsa->data.pref_intra.ref_ls_id = 0;
 	lsa->data.pref_intra.ref_adv_rtr = rde_router_id();
 
-	log_debug("orig_intra_lsa_rtr: area %s", inet_ntoa(area->id));
-
 	numprefix = 0;
 	LIST_FOREACH(iface, &area->iface_list, entry) {
 		if (!((iface->flags & IFF_UP) &&
@@ -1474,10 +1472,6 @@ orig_intra_lsa_rtr(struct area *area, struct vertex *old)
 		    !(iface->cflags & F_IFACE_PASSIVE)) 
 			/* passive interfaces stay in state DOWN */
 			continue;
-
-		log_debug("orig_intra_lsa_rtr: area %s, interface %s: "
-		    "including in intra-area-prefix LSA",
-		    inet_ntoa(area->id), iface->name);
 
 		/* Broadcast links with adjacencies are handled
 		 * by orig_intra_lsa_net(), ignore. */
@@ -1515,6 +1509,11 @@ orig_intra_lsa_rtr(struct area *area, struct vertex *old)
 
 			if (lsa_prefix->prefixlen == 128)
 				lsa_prefix->options |= OSPF_PREFIX_LA;
+
+			log_debug("orig_intra_lsa_rtr: area %s, interface %s: "
+			    "%s/%d", inet_ntoa(area->id),
+			    iface->name, log_in6addr(&ia->addr),
+			    lsa_prefix->prefixlen);
 
 			prefix = (struct in6_addr *)(lsa_prefix + 1);
 			inet6applymask(prefix, &ia->addr,
