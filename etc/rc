@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.356 2011/07/07 18:40:00 deraadt Exp $
+#	$OpenBSD: rc,v 1.357 2011/07/07 20:54:05 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -596,12 +596,6 @@ fi
 
 echo '.'
 
-mixerctl_conf
-
-if [ X"${aucat_flags}" != X"NO" ]; then
-	aucat -l ${aucat_flags}
-fi
-
 if [ X"${kdc_flags}" != X"NO" ]; then
 	echo -n 'starting KerberosV daemons:'
 	start_daemon kdc kadmind kpasswdd
@@ -637,13 +631,21 @@ echo '.'
 
 date
 
+mixerctl_conf
+echo -n 'starting console services:'
+
+if [ X"${aucat_flags}" != X"NO" ]; then
+	echo -n ' aucat';		aucat -l ${aucat_flags}
+fi
+
 if [ X"${wsmoused_flags}" != X"NO" -a -x /usr/sbin/wsmoused ]; then
-	echo 'starting wsmoused...';	wsmoused ${wsmoused_flags}
+	echo -n ' wsmoused';		wsmoused ${wsmoused_flags}
 fi
 
 # Alternatively, on some architectures, xdm may be started in /etc/ttys.
 if [ X"${xdm_flags}" != X"NO" -a -x /usr/X11R6/bin/xdm ]; then
-	echo 'starting xdm...';		/usr/X11R6/bin/xdm ${xdm_flags}
+	echo -n ' xdm';			/usr/X11R6/bin/xdm ${xdm_flags}
 fi
+echo '.'
 
 exit 0
