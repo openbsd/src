@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.19 2011/04/16 22:02:32 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.20 2011/07/07 18:37:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -471,9 +471,10 @@ printf("here\n");
 					frame->tf_iir = 0;
 #endif
 				} else {
-					panic("trap: "
-					    "uvm_fault(%p, %lx, %d, %d): %d",
+					printf("trap: "
+					    "uvm_fault(%p, %lx, %d, %d): %d\n",
 					    map, va, fault, vftype, ret);
+					goto dead_end;
 				}
 			}
 		}
