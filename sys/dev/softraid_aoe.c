@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.22 2011/07/04 04:49:05 tedu Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.23 2011/07/07 00:18:06 tedu Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -153,11 +153,8 @@ sr_aoe_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
 {
 	struct ifnet		*ifp;
 	struct aoe_handler	*ah;
-	unsigned char		slot;
-	unsigned short		shelf;
-	const char		*nic;
-	const char	 	*dsteaddr;
-	int			s;
+	struct sr_aoe_config	sri;
+	int			rv, s;
 #if 0
 	struct mbuf *m;
 	struct ether_header *eh;
@@ -165,24 +162,24 @@ sr_aoe_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
 	int rv;
 #endif
 
+	if (!(bc->bc_opaque_flags & BIOC_SOIN))
+		return (EINVAL);
+	if (bc->bc_opaque_size != sizeof(sri))
+		return (EINVAL);
+	if ((rv = copyin(bc->bc_opaque, &sri, sizeof(sri))))
+	    return (rv);
+	sri.nic[sizeof(sri.nic) - 1] = 0;
 
 	sd->sd_max_ccb_per_wu = sd->sd_meta->ssdi.ssd_chunk_no;
 
-	/* where do these come from */
-	slot = 3;
-	shelf = 4;
-	nic = "ne0";
-	dsteaddr = dsteaddr;
-
-	ifp = ifunit(nic);
+	ifp = ifunit(sri.nic);
 	if (!ifp)
 		return (EINVAL);
-	shelf = htons(shelf);
 
 	ah = malloc(sizeof(*ah), M_DEVBUF, M_WAITOK | M_ZERO);
 	ah->ifp = ifp;
-	ah->major = shelf;
-	ah->minor = slot;
+	ah->major = sri.shelf;
+	ah->minor = sri.slot;
 	ah->fn = (workq_fn)sr_aoe_input;
 	TAILQ_INIT(&ah->reqs);
 
@@ -191,7 +188,7 @@ sr_aoe_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
 	splx(s);
 
 	sd->mds.mdd_aoe.sra_ah = ah;
-	memcpy(sd->mds.mdd_aoe.sra_eaddr, dsteaddr, 6);
+	sd->mds.mdd_aoe.sra_eaddr = sri.dsteaddr;
 
 #if 0
 	MGETHDR(m, M_WAIT, MT_HEADER);
@@ -203,8 +200,8 @@ sr_aoe_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
 	ap->vers = 1;
 	ap->flags = 0;
 	ap->error = 0;
-	ap->major = shelf;
-	ap->minor = slot;
+	ap->major = sri.shelf;
+	ap->minor = sri.slot;
 	ap->command = 1;
 	ap->tag = 0;
 	ap->buffercnt = 0;
@@ -351,8 +348,9 @@ sr_send_aoe_chunk(struct sr_workunit *wu, daddr64_t blk, int i)
 	}
 
 	eh = mtod(m, struct ether_header *);
-	memcpy(eh->ether_dhost, sd->mds.mdd_aoe.sra_eaddr, 6);
-	memcpy(eh->ether_shost, ((struct arpcom *)ifp)->ac_enaddr, 6);
+	memcpy(eh->ether_dhost, &sd->mds.mdd_aoe.sra_eaddr, ETHER_ADDR_LEN);
+	memcpy(eh->ether_shost, ((struct arpcom *)ifp)->ac_enaddr,
+	    ETHER_ADDR_LEN);
 	eh->ether_type = htons(ETHERTYPE_AOE);
 	ap = (struct aoe_packet *)&eh[1];
 	ap->vers = 1;
@@ -648,12 +646,8 @@ sr_aoe_server_alloc_resources(struct sr_discipline *sd)
 	splx(s);
 
 	sd->mds.mdd_aoe.sra_ah = ah;
-	sd->mds.mdd_aoe.sra_eaddr[0] = 0xff;
-	sd->mds.mdd_aoe.sra_eaddr[1] = 0xff;
-	sd->mds.mdd_aoe.sra_eaddr[2] = 0xff;
-	sd->mds.mdd_aoe.sra_eaddr[3] = 0xff;
-	sd->mds.mdd_aoe.sra_eaddr[4] = 0xff;
-	sd->mds.mdd_aoe.sra_eaddr[5] = 0xff;
+	memset(&sd->mds.mdd_aoe.sra_eaddr, 0xff,
+	    sizeof(sd->mds.mdd_aoe.sra_eaddr));
 	sd->mds.mdd_aoe.sra_ifp = ifp;
 
 	if (sr_wu_alloc(sd))
@@ -766,9 +760,10 @@ resleep:
 			len = rp->sectorcnt * 512;
 
 			eh = mtod(m, struct ether_header *);
-			memcpy(eh->ether_dhost, sd->mds.mdd_aoe.sra_eaddr, 6);
+			memcpy(eh->ether_dhost, &sd->mds.mdd_aoe.sra_eaddr,
+			    ETHER_ADDR_LEN);
 			memcpy(eh->ether_shost,
-			    ((struct arpcom *)ifp)->ac_enaddr, 6);
+			    ((struct arpcom *)ifp)->ac_enaddr, ETHER_ADDR_LEN);
 			eh->ether_type = htons(ETHERTYPE_AOE);
 			ap = (struct aoe_packet *)&eh[1];
 			AOE_HDR2BLK(ap, blk);
@@ -832,9 +827,10 @@ resleep:
 			len = rp->sectorcnt * 512;
 
 			eh = mtod(m, struct ether_header *);
-			memcpy(eh->ether_dhost, sd->mds.mdd_aoe.sra_eaddr, 6);
+			memcpy(eh->ether_dhost, &sd->mds.mdd_aoe.sra_eaddr,
+			    ETHER_ADDR_LEN);
 			memcpy(eh->ether_shost,
-			    ((struct arpcom *)ifp)->ac_enaddr, 6);
+			    ((struct arpcom *)ifp)->ac_enaddr, ETHER_ADDR_LEN);
 			eh->ether_type = htons(ETHERTYPE_AOE);
 			ap = (struct aoe_packet *)&eh[1];
 			AOE_HDR2BLK(ap, blk);

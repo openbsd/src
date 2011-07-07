@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.104 2011/07/06 17:32:47 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.105 2011/07/07 00:18:06 tedu Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -19,8 +19,14 @@
 #ifndef SOFTRAIDVAR_H
 #define SOFTRAIDVAR_H
 
-#include <crypto/md5.h>
+#include <sys/socket.h>
 #include <sys/vnode.h>
+
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+
+#include <crypto/md5.h>
 
 #define SR_META_VERSION		4	/* bump when sr_metadata changes */
 #define SR_META_SIZE		64	/* save space at chunk beginning */
@@ -240,6 +246,14 @@ struct sr_crypto_kdfpair {
 	u_int32_t	kdfsize2;
 };
 
+struct sr_aoe_config {
+	char		nic[IFNAMSIZ];
+	struct ether_addr dsteaddr;
+	unsigned char	slot;
+	unsigned short	shelf;
+};
+
+
 #ifdef _KERNEL
 #include <dev/biovar.h>
 
@@ -402,7 +416,7 @@ struct sr_aoe {
 	struct aoe_handler	*sra_ah;
 	int			sra_tag;
 	struct ifnet		*sra_ifp;
-	char			sra_eaddr[6];
+	struct ether_addr	sra_eaddr;
 };
 
 struct sr_boot_chunk {
