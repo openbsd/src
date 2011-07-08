@@ -1,4 +1,4 @@
-/*	$OpenBSD: monotl.c,v 1.1 2011/05/30 20:23:35 martynas Exp $	*/
+/*	$OpenBSD: monotl.c,v 1.2 2011/07/08 16:49:05 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -65,16 +65,8 @@ long double tanhl (long double);
 long double asinhl (long double);
 long double acoshl (long double);
 long double atanhl (long double);
-#if 1
-long double lgaml (long double);
-long double gammal (long double);
-#define lgammal lgaml
-#else
 long double lgammal (long double);
 long double tgammal (long double);
-#define lgammal lgaml
-#define gammal tgammal
-#endif
 long double fabsl (long double);
 long double floorl (long double);
 long double j0l (long double);
@@ -101,7 +93,6 @@ struct oneargument
 
 static struct oneargument test1[] =
 {
-#if 0
   {"exp", expl, 1.0L, 2.7182769775390625L,
    4.85091998273536028747e-6L, 2.71828182845904523536L, TOL},
   {"exp", expl, -1.0L, 3.678741455078125e-1L,
@@ -118,7 +109,6 @@ static struct oneargument test1[] =
    7.1430341006605745676897e-7L, 7.0710678118654758708668e-1L, TOL},
   {"log", logl, 7.07106781186547461715e-1L, -3.46588134765625e-1L,
    1.45444856522566402246e-5L, 1.41421356237309517417L, TOL},
-#endif
   {"sin", sinl, 7.85398163397448278999e-1L, 7.0709228515625e-1L,
    1.4496030297502751942956e-5L, 7.071067811865475460497e-1L, TOL},
   {"sin", sinl, -7.85398163397448501044e-1L, -7.071075439453125e-1L,
@@ -202,7 +192,6 @@ static struct oneargument test1[] =
    1.47019821746724723933E-5L, -5.12583089548300990774E0L, TOL},
   {"acos", acosl, -0.5L, 2.09439086914062500000E0L,
    4.23325257049230842892E-6L, -1.15470053837925152902E0L, TOL},
-#if 0
   {"sinh", sinhl, 1.0L, 1.17518615722656250000E0L,
    1.50364172389568823819E-5L, 1.54308063481524377848E0L, TOL},
   {"sinh", sinhl, 7.09089565712818057364E2L, 4.49423283712885057274E307L,
@@ -241,7 +230,6 @@ static struct oneargument test1[] =
    9.62177257298785143908E-6L, 3.96911150685467059809E0L, TOL},
   {"atanh", atanhl, 0.5L, 5.49301147460937500000E-1L,
    4.99687311734569762262E-6L, 1.33333333333333333333E0L, TOL},
-#endif
 
 #if 0
   {"j0", j0l, 8.0L, 1.71646118164062500000E-1L,
@@ -292,18 +280,15 @@ static struct oneargument test1[] =
    3.88547280871200700671E-1L, 4.69742480525120196168E19L, -4},
 #endif
 
-#if 0
-  {"gamma", gammal, 1.0L, 1.0L,
+  {"tgamma", tgammal, 1.0L, 1.0L,
    0.0L, -5.772156649015328606e-1L, TOL},
-  {"gamma", gammal, 2.0L, 1.0L,
+  {"tgamma", tgammal, 2.0L, 1.0L,
    0.0L, 4.2278433509846713939e-1L, TOL},
-  {"gamma", gammal, 3.0L, 2.0L,
+  {"tgamma", tgammal, 3.0L, 2.0L,
    0.0L, 1.845568670196934279L, TOL},
-  {"gamma", gammal, 4.0L, 6.0L,
+  {"tgamma", tgammal, 4.0L, 6.0L,
    0.0L, 7.536706010590802836L, TOL},
-#endif
 
-#if 0
   {"lgamma", lgammal, 8.0L, 8.525146484375L,
    1.48766904143001655310E-5, 2.01564147795560999654E0L, TOL},
   {"lgamma", lgammal, 8.99993896484375e-1L, 6.6375732421875e-2L,
@@ -332,7 +317,6 @@ static struct oneargument test1[] =
     1.79986700949327405470E-7, 1.10315664064524318723E0L, -TOL},
   {"lgamma", lgammal, -3.5L,  -1.30902099609375L,
     1.43111007079536392848E-5L, 1.38887092635952890151E0L, TOL},
-#endif
 
   {"null", NULL, 0.0L, 0.0L, 0.0L, 1},
 };

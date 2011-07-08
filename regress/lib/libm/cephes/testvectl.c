@@ -1,4 +1,4 @@
-/*	$OpenBSD: testvectl.c,v 1.1 2011/05/30 20:23:35 martynas Exp $	*/
+/*	$OpenBSD: testvectl.c,v 1.2 2011/07/08 16:49:05 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -80,8 +80,8 @@ long double log2l (long double);
 long double fabsl (long double);
 long double erfl (long double);
 long double erfcl (long double);
-long double gammal (long double);
-long double lgaml (long double);
+long double tgammal (long double);
+long double lgammal (long double);
 long double floorl (long double);
 long double ceill (long double);
 long double cbrtl (long double);
@@ -143,7 +143,6 @@ static struct oneargument test1[] =
   {"tanl", tanl, &NEGZEROL, &NEGZEROL, 0},
   {"tanl", tanl, &INFINITYL, &NANL, 0},
   {"tanl", tanl, &MINFL, &NANL, 0},
-#if 0
   {"acoshl", acoshl, &NANL, &NANL, 0},
   {"acoshl", acoshl, &ONEL, &ZEROL, 0},
   {"acoshl", acoshl, &INFINITYL, &INFINITYL, 0},
@@ -181,13 +180,11 @@ static struct oneargument test1[] =
   {"expl", expl, &NEGZEROL, &ONEL, 0},
   {"expl", expl, &INFINITYL, &INFINITYL, 0},
   {"expl", expl, &MINFL, &ZEROL, 0},
-#endif
   {"exp2l", exp2l, &NANL, &NANL, 0},
   {"exp2l", exp2l, &ZEROL, &ONEL, 0},
   {"exp2l", exp2l, &NEGZEROL, &ONEL, 0},
   {"exp2l", exp2l, &INFINITYL, &INFINITYL, 0},
   {"exp2l", exp2l, &MINFL, &ZEROL, 0},
-#if 0
   {"expm1l", expm1l, &NANL, &NANL, 0},
   {"expm1l", expm1l, &ZEROL, &ZEROL, 0},
   {"expm1l", expm1l, &NEGZEROL, &NEGZEROL, 0},
@@ -216,7 +213,6 @@ static struct oneargument test1[] =
   {"log2l", log2l, &NEGZEROL, &MINFL, 0},
   {"log2l", log2l, &MONEL, &NANL, 0},
   {"log2l", log2l, &INFINITYL, &INFINITYL, 0},
-#endif
   /*  {"fabsl", fabsl, &NANL, &NANL, 0}, */
   {"fabsl", fabsl, &ONEL, &ONEL, 0},
   {"fabsl", fabsl, &MONEL, &ONEL, 0},
@@ -224,7 +220,6 @@ static struct oneargument test1[] =
   {"fabsl", fabsl, &NEGZEROL, &ZEROL, 0},
   {"fabsl", fabsl, &INFINITYL, &INFINITYL, 0},
   {"fabsl", fabsl, &MINFL, &INFINITYL, 0},
-#if 0
   {"cbrtl", cbrtl, &NANL, &NANL, 0},
   {"cbrtl", cbrtl, &ZEROL, &ZEROL, 0},
   {"cbrtl", cbrtl, &NEGZEROL, &NEGZEROL, 0},
@@ -238,16 +233,16 @@ static struct oneargument test1[] =
   {"erfcl", erfcl, &NANL, &NANL, 0},
   {"erfcl", erfcl, &INFINITYL, &ZEROL, 0},
   {"erfcl", erfcl, &MINFL, &TWOL, 0},
-  {"gammal", gammal, &NANL, &NANL, 0},
-  {"gammal", gammal, &INFINITYL, &INFINITYL, 0},
-  {"gammal", gammal, &MONEL, &NANL, 0},
-  {"gammal", gammal, &ZEROL, &NANL, 0},
-  {"gammal", gammal, &MINFL, &NANL, 0},
-  {"lgaml", lgaml, &NANL, &NANL, 0},
-  {"lgaml", lgaml, &INFINITYL, &INFINITYL, 0},
-  {"lgaml", lgaml, &MONEL, &INFINITYL, 0},
-  {"lgaml", lgaml, &ZEROL, &INFINITYL, 0},
-  {"lgaml", lgaml, &MINFL, &INFINITYL, 0},
+  {"tgammal", tgammal, &NANL, &NANL, 0},
+  {"tgammal", tgammal, &INFINITYL, &INFINITYL, 0},
+  {"tgammal", tgammal, &MONEL, &NANL, 0},
+  {"tgammal", tgammal, &ZEROL, &NANL, 0},
+  {"tgammal", tgammal, &MINFL, &NANL, 0},
+  {"lgammal", lgammal, &NANL, &NANL, 0},
+  {"lgammal", lgammal, &INFINITYL, &INFINITYL, 0},
+  {"lgammal", lgammal, &MONEL, &INFINITYL, 0},
+  {"lgammal", lgammal, &ZEROL, &INFINITYL, 0},
+  {"lgammal", lgammal, &MINFL, &INFINITYL, 0},
   {"ceill", ceill, &NANL, &NANL, 0},
   {"ceill", ceill, &ZEROL, &ZEROL, 0},
   {"ceill", ceill, &NEGZEROL, &NEGZEROL, 0},
@@ -258,7 +253,6 @@ static struct oneargument test1[] =
   {"floorl", floorl, &NEGZEROL, &NEGZEROL, 0},
   {"floorl", floorl, &INFINITYL, &INFINITYL, 0},
   {"floorl", floorl, &MINFL, &MINFL, 0},
-#endif
   {"null", NULL, &ZEROL, &ZEROL, 0},
 };
 
@@ -306,7 +300,6 @@ static struct twoarguments test2[] =
   {"atan2l", atan2l, &NANL, &ONEL, &NANL, 0},
   {"atan2l", atan2l, &ONEL, &NANL, &NANL, 0},
   {"atan2l", atan2l, &NANL, &NANL, &NANL, 0},
-#if 0
   {"powl", powl, &ONEL, &ZEROL, &ONEL, 0},
   {"powl", powl, &ONEL, &NEGZEROL, &ONEL, 0},
   {"powl", powl, &MONEL, &ZEROL, &ONEL, 0},
@@ -347,7 +340,6 @@ static struct twoarguments test2[] =
   {"powl", powl, &NEGZEROL, &THREEL, &NEGZEROL, 0},
   {"powl", powl, &ZEROL, &HALFL, &ZEROL, 0},
   {"powl", powl, &NEGZEROL, &HALFL, &ZEROL, 0},
-#endif
   {"null", NULL, &ZEROL, &ZEROL, &ZEROL, 0},
 };
 

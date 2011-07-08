@@ -1,4 +1,4 @@
-/*	$OpenBSD: monotll.c,v 1.1 2011/05/30 20:23:35 martynas Exp $	*/
+/*	$OpenBSD: monotll.c,v 1.2 2011/07/08 16:49:05 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -67,7 +67,6 @@ long double tanhl (long double);
 long double asinhl (long double);
 long double acoshl (long double);
 long double atanhl (long double);
-long double gammal (long double);
 long double lgammal (long double);
 long double tgammal (long double);
 long double fabsl (long double);
@@ -98,7 +97,6 @@ struct oneargument
 
 static struct oneargument test1[] =
 {
-#if 0
   {"exp", expl, 1.0L, 2.7182769775390625L,
    4.85091998273536028747135266249775725E-6L,
    2.71828182845904523536028747135266250E0L, TOL},
@@ -138,7 +136,6 @@ static struct oneargument test1[] =
    3.465728759765625E-1L,
    7.14303410154708616060729088217412434E-7L,
    7.07106781186547524400844362104849086E-1L, TOL},
-#endif
   {"sin", sinl, 7.85398163397448309615660845819875699E-1L,
    7.0709228515625E-1L,
    1.44960302975244008443621048490239551E-5L,
@@ -295,7 +292,6 @@ static struct oneargument test1[] =
    2.094390869140625L,
    4.23325257049230842892218633525613145E-6L,
    -1.15470053837925152901829756100391491E0L, TOL},
-#if 0
   {"sinh", sinhl, 1.0L,
    1.1751861572265625L,
    1.50364172389568823818505956008151557E-5L,
@@ -420,6 +416,7 @@ static struct oneargument test1[] =
   {"atanh", atanhl, 6.938893903907228377647697925567626953125E-18,
    6.938893903907228377647697925567626953125E-18, /* 2^-57 */
    1.1136519625384148525585568613131174816786E-52, 1.0, TOL},
+#if 0
   {"j0", j0l, 16.0L, -1.749114990234375e-1L,
     1.24250398083151715974822741805925455E-5L,
    -9.03971756613041862386833024580760244E-2L, -2},
@@ -549,7 +546,6 @@ static struct oneargument test1[] =
    2.6551531852207537950481339962774251294400E-59L,
    3.0092655e-36L, -2},
 #endif
-#if 0
   {"lgamma", lgammal, 8.0L, 8.525146484375L,
    1.4876690414300165531036347125050759667737E-5L,
    2.0156414779556099965363450527747404656959E0L, 4},
@@ -633,18 +629,14 @@ static struct oneargument test1[] =
   {"lgamma", lgammal, 1.0e18L, 4.0446531673037733888E19L,
    8.5508840451951888057681732252156677289759E8L,
    4.1446531673892822311823846184318555736736E1, 4},
-#endif /* 0 */
-#if 0
-#define gammal tgammal  /* Yuck.  */
-  {"gamma", gammal, 1.0L, 1.0L,
+  {"tgamma", tgammal, 1.0L, 1.0L,
    0.0L, -5.772156649015328606e-1L, 4},
-  {"gamma", gammal, 2.0L, 1.0L,
+  {"tgamma", tgammal, 2.0L, 1.0L,
    0.0L, 4.2278433509846713939e-1L, 4},
-  {"gamma", gammal, 3.0L, 2.0L,
+  {"tgamma", tgammal, 3.0L, 2.0L,
    0.0L, 1.845568670196934279L, 4},
-  {"gamma", gammal, 4.0L, 6.0L,
+  {"tgamma", tgammal, 4.0L, 6.0L,
    0.0L, 7.536706010590802836L, 4},
-#endif
   {NULL, NULL, 0.0L, 0.0L, 0.0L, 1},
 };
 
