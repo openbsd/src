@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.375 2011/07/08 01:43:59 deraadt Exp $
+#	$OpenBSD: rc,v 1.376 2011/07/08 02:02:02 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -405,9 +405,7 @@ else
 fi
 
 # clean up left-over files
-rm -f /etc/nologin
-rm -f /var/spool/lock/LCK.*
-rm -f /var/spool/uucp/STST/*
+rm -f /etc/nologin /var/spool/lock/LCK.* /var/spool/uucp/STST/*
 (cd /var/run && { rm -rf -- *; install -c -m 664 -g utmp /dev/null utmp; })
 (cd /var/authpf && rm -rf -- *)
 
@@ -445,10 +443,9 @@ fi
 echo -n 'starting initial daemons:'
 
 start_daemon portmap
-
-[ X"`domainname`" != X"" ] && \
+if [ X"`domainname`" != X"" ]; then
 	start_daemon ypserv ypldap ypbind yppasswdd
-
+fi
 start_daemon mountd nfsd lockd statd
 
 if [ X"${amd}" = X"YES" -a -e ${amd_master} ]; then
@@ -466,7 +463,6 @@ start_daemon ldattach ntpd
 echo '.'
 
 mount -a
-
 swapctl -A -t noblk
 
 # /var/crash should be a directory or a symbolic link
@@ -482,17 +478,15 @@ if [ X"${check_quotas}" = X"YES" ]; then
 	quotaon -a
 fi
 
-# build kvm(3) databases
-kvm_mkdb
+kvm_mkdb			# build kvm(3) databases
 dev_mkdb
-
 chmod 666 /dev/tty[pqrstuvwxyzPQRST]*
 chown root:wheel /dev/tty[pqrstuvwxyzPQRST]*
 
 # check the password temp/lock file
 if [ -f /etc/ptmp ]; then
 	logger -s -p auth.err \
-	'password file may be incorrect -- /etc/ptmp exists'
+	    'password file may be incorrect -- /etc/ptmp exists'
 fi
 
 echo clearing /tmp
@@ -542,9 +536,7 @@ if [ -f /sbin/ldconfig ]; then
 	ldconfig $shlib_dirs
 fi
 
-if [ -x /usr/libexec/vi.recover ]; then
-	echo 'preserving editor files.';	/usr/libexec/vi.recover
-fi
+echo 'preserving editor files.';	/usr/libexec/vi.recover
 
 echo -n 'starting network daemons:'
 
@@ -556,8 +548,7 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	if [ X"${fw}" = X"0" ]; then
 		start_daemon rtsold
 	else
-		start_daemon route6d
-		start_daemon rtadvd
+		start_daemon route6d rtadvd
 	fi
 fi
 
@@ -583,7 +574,8 @@ fi
 # If rc.firstime exists, run it just once, and make sure it is deleted
 if [ -f /etc/rc.firsttime ]; then
 	mv /etc/rc.firsttime /etc/rc.firsttime.run
-	. /etc/rc.firsttime.run 2>&1 | mail -s 'rc.firsttime output' root >/dev/null
+	. /etc/rc.firsttime.run 2>&1 | mail -s 'rc.firsttime output' \
+	    root >/dev/null
 fi
 rm -f /etc/rc.firsttime.run
 
