@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.546 2011/06/15 13:56:47 jsg Exp $
+$OpenBSD: usbdevs,v 1.547 2011/07/08 23:02:21 yuo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -457,6 +457,7 @@ vendor MOTOROLA4	0x100d	Motorola
 vendor HP3		0x103c	Hewlett Packard
 vendor THURLBY		0x103e	Thurlby Thandar Instruments
 vendor GIGABYTE		0x1044	GIGABYTE
+vendor YUBICO		0x1050	Yubico.com
 vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
 vendor HYUNDAI		0x106c	Hyundai
@@ -3892,6 +3893,9 @@ product YAMAHA RTA55I		0x4004	NetVolante RTA55i
 
 /* Yano products */
 product YANO U640MO		0x0101	U640MO-03
+
+/* Yubico products */
+product YUBICO YUBIKEY		0x0010	Yubikey
 
 /* Z-Com products */
 product ZCOM M4Y750		0x0001	M4Y-750
