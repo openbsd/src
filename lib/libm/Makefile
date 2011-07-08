@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.89 2011/07/08 22:28:33 martynas Exp $
+#  $OpenBSD: Makefile,v 1.90 2011/07/08 22:52:56 martynas Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -157,9 +157,6 @@ NOIEEE_SRCS = n_acosh.c n_argred.c n_asincos.c n_asinh.c n_atan.c \
 	n_log1p.c n_log__L.c n_nan.c n_pow.c n_round.c n_scalbln.c \
 	n_sincos.c n_sinh.c n_sqrt.c n_support.c n_tan.c n_tanh.c \
 	n_tgamma.c
-
-# OpenBSD's C library supplies these functions:
-#COMMON_SRCS+=	s_fabs.c s_frexp.c s_modf.c
 
 .if (${MACHINE_ARCH} == "vax")
 SRCS=	${NOIEEE_SRCS} ${NOIEEE_ARCH}
