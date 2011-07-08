@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.137 2011/07/05 00:30:10 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.138 2011/07/08 21:11:20 pirofti Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -836,7 +836,7 @@ ENTRY(copyout)
 	cmpl	$VM_MAXUSER_ADDRESS,%edx
 	ja	_C_LABEL(copy_fault)
 
-3:	GET_CURPCB(%edx)
+	GET_CURPCB(%edx)
 	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%edx)
 
 	/* bcopy(%esi, %edi, %eax); */
@@ -889,7 +889,7 @@ ENTRY(copyin)
 	cmpl	$VM_MAXUSER_ADDRESS,%edx
 	ja	_C_LABEL(copy_fault)
 
-3:	/* bcopy(%esi, %edi, %eax); */
+	/* bcopy(%esi, %edi, %eax); */
 	cld
 	movl	%eax,%ecx
 	shrl	$2,%ecx
