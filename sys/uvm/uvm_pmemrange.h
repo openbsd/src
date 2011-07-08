@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.h,v 1.8 2011/07/06 19:50:38 beck Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.h,v 1.9 2011/07/08 18:15:44 ariane Exp $	*/
 
 /*
  * Copyright (c) 2009 Ariane van der Steldt <ariane@stack.nl>
@@ -127,5 +127,33 @@ int	uvm_pmr_isfree(struct vm_page *pg);
 void	uvm_pmr_zero_everything(void);
 int	uvm_pmr_alloc_pig(paddr_t*, psize_t*);
 #endif /* SMALL_KERNEL */
+
+/*
+ * Internal tree logic.
+ */
+
+int	uvm_pmr_addr_cmp(struct vm_page *, struct vm_page *);
+int	uvm_pmr_size_cmp(struct vm_page *, struct vm_page *);
+
+RB_PROTOTYPE(uvm_pmr_addr, vm_page, objt, uvm_pmr_addr_cmp);
+RB_PROTOTYPE(uvm_pmr_size, vm_page, objt, uvm_pmr_size_cmp);
+RB_PROTOTYPE(uvm_pmemrange_addr, uvm_pmemrange, pmr_addr,
+    uvm_pmemrange_addr_cmp);
+
+struct vm_page		*uvm_pmr_insert_addr(struct uvm_pmemrange *,
+			    struct vm_page *, int);
+void			 uvm_pmr_insert_size(struct uvm_pmemrange *,
+			    struct vm_page *);
+struct vm_page		*uvm_pmr_insert(struct uvm_pmemrange *,
+			    struct vm_page *, int);
+void			 uvm_pmr_remove_addr(struct uvm_pmemrange *,
+			    struct vm_page *);
+void			 uvm_pmr_remove_size(struct uvm_pmemrange *,
+			    struct vm_page *);
+void			 uvm_pmr_remove(struct uvm_pmemrange *,
+			    struct vm_page *);
+struct vm_page		*uvm_pmr_extract_range(struct uvm_pmemrange *,
+			    struct vm_page *, paddr_t, paddr_t,
+			    struct pglist *);
 
 #endif /* _UVM_UVM_PMEMRANGE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.29 2011/07/08 00:10:59 tedu Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.30 2011/07/08 18:15:44 ariane Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -95,10 +95,6 @@ uvm_pmr_pg_to_memtype(struct vm_page *pg)
 }
 
 /* Trees. */
-RB_PROTOTYPE(uvm_pmr_addr, vm_page, objt, uvm_pmr_addr_cmp);
-RB_PROTOTYPE(uvm_pmr_size, vm_page, objt, uvm_pmr_size_cmp);
-RB_PROTOTYPE(uvm_pmemrange_addr, uvm_pmemrange, pmr_addr,
-    uvm_pmemrange_addr_cmp);
 RB_GENERATE(uvm_pmr_addr, vm_page, objt, uvm_pmr_addr_cmp);
 RB_GENERATE(uvm_pmr_size, vm_page, objt, uvm_pmr_size_cmp);
 RB_GENERATE(uvm_pmemrange_addr, uvm_pmemrange, pmr_addr,
@@ -121,18 +117,6 @@ struct vm_page		*uvm_pmr_nextsz(struct uvm_pmemrange *,
 void			 uvm_pmr_pnaddr(struct uvm_pmemrange *pmr,
 			    struct vm_page *pg, struct vm_page **pg_prev,
 			    struct vm_page **pg_next);
-struct vm_page		*uvm_pmr_insert_addr(struct uvm_pmemrange *,
-			    struct vm_page *, int);
-void			 uvm_pmr_insert_size(struct uvm_pmemrange *,
-			    struct vm_page *);
-struct vm_page		*uvm_pmr_insert(struct uvm_pmemrange *,
-			    struct vm_page *, int);
-void			 uvm_pmr_remove_size(struct uvm_pmemrange *,
-			    struct vm_page *);
-void			 uvm_pmr_remove_addr(struct uvm_pmemrange *,
-			    struct vm_page *);
-void			 uvm_pmr_remove(struct uvm_pmemrange *,
-			    struct vm_page *);
 struct vm_page		*uvm_pmr_findnextsegment(struct uvm_pmemrange *,
 			    struct vm_page *, paddr_t);
 psize_t			 uvm_pmr_remove_1strange(struct pglist *, paddr_t,
@@ -141,9 +125,6 @@ void			 uvm_pmr_split(paddr_t);
 struct uvm_pmemrange	*uvm_pmemrange_find(paddr_t);
 struct uvm_pmemrange	*uvm_pmemrange_use_insert(struct uvm_pmemrange_use *,
 			    struct uvm_pmemrange *);
-struct vm_page		*uvm_pmr_extract_range(struct uvm_pmemrange *,
-			    struct vm_page *, paddr_t, paddr_t,
-			    struct pglist *);
 psize_t			 pow2divide(psize_t, psize_t);
 struct vm_page		*uvm_pmr_rootupdate(struct uvm_pmemrange *,
 			    struct vm_page *, paddr_t, paddr_t, int);
