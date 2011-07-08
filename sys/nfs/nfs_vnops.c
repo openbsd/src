@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.136 2011/07/05 00:37:59 guenther Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.137 2011/07/08 23:06:54 beck Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2827,6 +2827,8 @@ again:
 		/*
 		 * Commit data on the server, as required.
 		 */
+		bcstats.pendingwrites++;
+		bcstats.numwrites++;
 		retv = nfs_commit(vp, off, (int)(endoff - off), p);
 		if (retv == NFSERR_STALEWRITEVERF)
 			nfs_clearcommit(vp->v_mount);
@@ -2838,9 +2840,13 @@ again:
 		for (i = 0; i < bvecpos; i++) {
 			bp = bvec[i];
 			bp->b_flags &= ~(B_NEEDCOMMIT | B_WRITEINPROG);
-			if (retv)
+			if (retv) {
+			    if (i == 0)
+			        bcstats.pendingwrites--;
 			    brelse(bp);
-			else {
+			} else {
+			    if (i > 0)
+			        bcstats.pendingwrites++;
 			    s = splbio();
 			    buf_undirty(bp);
 			    vp->v_numoutput++;
@@ -3052,15 +3058,18 @@ nfs_writebp(struct buf *bp, int force)
 			}
 
 			bp->b_flags |= B_WRITEINPROG;
+			bcstats.pendingwrites++;
+			bcstats.numwrites++;
 			retv = nfs_commit(bp->b_vp, off, cnt, curproc);
 			bp->b_flags &= ~B_WRITEINPROG;
 
 			if (retv == 0) {
 				if (pushedrange)
 					nfs_merge_commit_ranges(vp);
-				else 
+				else
 					nfs_add_committed_range(vp, bp);
-			}
+			} else
+				bcstats.pendingwrites--;
 		} else
 			retv = 0; /* It has already been commited. */
 
