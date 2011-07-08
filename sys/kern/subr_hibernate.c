@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.3 2011/07/08 18:25:56 ariane Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.4 2011/07/08 18:31:16 ariane Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -264,45 +264,190 @@ uvm_pmr_zero_everything(void)
 }
 
 /*
- * Allocate the biggest contig chunk of memory.
+ * Allocate the highest address that can hold sz.
+ *
+ * sz in bytes.
  */
 int
-uvm_pmr_alloc_pig(paddr_t *addr, psize_t *sz)
+uvm_pmr_alloc_pig(paddr_t *addr, psize_t sz)
 {
-	struct uvm_pmemrange	*pig_pmr, *pmr;
+	struct uvm_pmemrange	*pmr;
 	struct vm_page		*pig_pg, *pg;
-	int			 memtype;
+
+	/*
+	 * Convert sz to pages, since that is what pmemrange uses internally.
+	 */
+	sz = atop(round_page(sz));
 
 	uvm_lock_fpageq();
-	pig_pg = NULL;
-	TAILQ_FOREACH(pmr, &uvm.pmr_control.use, pmr_use) {
-		for (memtype = 0; memtype < UVM_PMR_MEMTYPE_MAX; memtype++) {
-			/* Find biggest page in this memtype pmr. */
-			pg = RB_MAX(uvm_pmr_size, &pmr->size[memtype]);
-			if (pg == NULL)
-				pg = TAILQ_FIRST(&pmr->single[memtype]);
-			else
-				pg--;
 
-			if (pig_pg == NULL || (pg != NULL && pig_pg != NULL &&
-			    pig_pg->fpgsz < pg->fpgsz)) {
-				pig_pmr = pmr;
-				pig_pg = pg;
+	TAILQ_FOREACH(pmr, &uvm.pmr_control.use, pmr_use) {
+		RB_FOREACH_REVERSE(pig_pg, uvm_pmr_addr, &pmr->addr) {
+			if (pig_pg->fpgsz >= sz) {
+				goto found;
 			}
 		}
 	}
 
+	/*
+	 * Allocation failure.
+	 */
+	uvm_unlock_pageq();
+	return ENOMEM;
+
+found:
 	/* Remove page from freelist. */
-	if (pig_pg != NULL) {
-		uvm_pmr_remove(pig_pmr, pig_pg);
-		uvmexp.free -= pig_pg->fpgsz;
-		if (pig_pg->pg_flags & PG_ZERO)
-			uvmexp.zeropages -= pig_pg->fpgsz;
-		*addr = VM_PAGE_TO_PHYS(pig_pg);
-		*sz = pig_pg->fpgsz;
+	uvm_pmr_remove_size(pmr, pig_pg);
+	pig_pg->fpgsz -= sz;
+	pg = pig_pg + pig_pg->fpgsz;
+	if (pig_pg->fpgsz == 0)
+		uvm_pmr_remove_addr(pmr, pig_pg);
+	else
+		uvm_pmr_insert_size(pmr, pig_pg);
+
+	uvmexp.free -= sz;
+	*addr = VM_PAGE_TO_PHYS(pg);
+
+	/*
+	 * Update pg flags.
+	 *
+	 * Note that we trash the sz argument now.
+	 */
+	while (sz > 0) {
+		KASSERT(pg->pg_flags & PQ_FREE);
+
+		atomic_clearbits_int(&pg->pg_flags,
+		    PG_PMAP0|PG_PMAP1|PG_PMAP2|PG_PMAP3);
+
+		if (pg->pg_flags & PG_ZERO)
+			uvmexp.zeropages -= sz;
+		atomic_clearbits_int(&pg->pg_flags,
+		    PG_ZERO|PQ_FREE);
+
+		pg->uobject = NULL;
+		pg->uanon = NULL;
+		pg->pg_version++;
+
+		/*
+		 * Next.
+		 */
+		pg++;
+		sz--;
 	}
-	uvm_unlock_fpageq();
 
 	/* Return. */
-	return (pig_pg != NULL ? 0 : ENOMEM);
+	uvm_unlock_fpageq();
+	return 0;
+}
+
+/*
+ * Allocate a piglet area.
+ *
+ * This is as low as possible.
+ * Piglets are aligned.
+ *
+ * sz and align in bytes.
+ *
+ * The call will sleep for the pagedaemon to attempt to free memory.
+ * The pagedaemon may decide its not possible to free enough memory, causing
+ * the allocation to fail.
+ */
+int
+uvm_pmr_alloc_piglet(paddr_t *addr, psize_t sz, paddr_t align)
+{
+	vaddr_t			 pg_addr, piglet_addr;
+	struct uvm_pmemrange	*pmr;
+	struct vm_page		*pig_pg, *pg;
+	struct pglist		 pageq;
+	int			 pdaemon_woken;
+
+	KASSERT((align & (align - 1)) == 0);
+	pdaemon_woken = 0; /* Didn't wake the pagedaemon. */
+
+	/*
+	 * Fixup arguments: align must be at least PAGE_SIZE,
+	 * sz will be converted to pagecount, since that is what
+	 * pmemrange uses internally.
+	 */
+	if (align < PAGE_SIZE)
+		align = PAGE_SIZE;
+	sz = atop(round_page(sz));
+
+	uvm_lock_fpageq();
+
+	TAILQ_FOREACH_REVERSE(pmr, &uvm.pmr_control.use, uvm_pmemrange_use,
+	    pmr_use) {
+retry:
+		/*
+		 * Search for a range with enough space.
+		 * Use the address tree, to ensure the range is as low as
+		 * possible.
+		 */
+		RB_FOREACH(pig_pg, uvm_pmr_addr, &pmr->addr) {
+			pg_addr = VM_PAGE_TO_PHYS(pig_pg);
+			piglet_addr = (pg_addr + (align - 1)) & ~(align - 1);
+
+			if (pig_pg->fpgsz >= sz) {
+				goto found;
+			}
+
+			if (atop(pg_addr) + pig_pg->fpgsz >
+			    atop(piglet_addr) + sz) {
+				goto found;
+			}
+		}
+
+		/*
+		 * Try to coerse the pagedaemon into freeing memory
+		 * for the piglet.
+		 *
+		 * pdaemon_woken is set to prevent the code from
+		 * falling into an endless loop.
+		 */
+		if (!pdaemon_woken) {
+			pdaemon_woken = 1;
+			if (uvm_wait_pla(ptoa(pmr->low), ptoa(pmr->high) - 1,
+			    ptoa(sz), UVM_PLA_FAILOK) == 0)
+				goto retry;
+		}
+	}
+
+	/* Return failure. */
+	uvm_unlock_fpageq();
+	return ENOMEM;
+
+found:
+	/*
+	 * Extract piglet from pigpen.
+	 */
+	TAILQ_INIT(&pageq);
+	uvm_pmr_extract_range(pmr, pig_pg,
+	    atop(piglet_addr), atop(piglet_addr) + sz, &pageq);
+
+	*addr = piglet_addr;
+	uvmexp.free -= sz;
+
+	/*
+	 * Update pg flags.
+	 *
+	 * Note that we trash the sz argument now.
+	 */
+	TAILQ_FOREACH(pg, &pageq, pageq) {
+		KASSERT(pg->pg_flags & PQ_FREE);
+
+		atomic_clearbits_int(&pg->pg_flags,
+		    PG_PMAP0|PG_PMAP1|PG_PMAP2|PG_PMAP3);
+
+		if (pg->pg_flags & PG_ZERO)
+			uvmexp.zeropages--;
+		atomic_clearbits_int(&pg->pg_flags,
+		    PG_ZERO|PQ_FREE);
+
+		pg->uobject = NULL;
+		pg->uanon = NULL;
+		pg->pg_version++;
+	}
+
+	uvm_unlock_fpageq();
+	return 0;
 }
