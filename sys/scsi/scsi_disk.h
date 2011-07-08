@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.30 2011/07/08 06:48:15 dlg Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.31 2011/07/08 07:20:39 dlg Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -14,7 +14,7 @@
  * Grenoble, FRANCE
  *
  * 		All Rights Reserved
- * 
+ *
  *   Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby granted,
  * provided that the above copyright notice appears in all copies and
@@ -23,7 +23,7 @@
  * Foundation not be used in advertising or publicity pertaining to
  * distribution of the software without specific, written prior
  * permission.
- * 
+ *
  *   OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
  * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS,
  * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
@@ -39,7 +39,7 @@
  *
  * TRW Financial Systems, in accordance with their agreement with Carnegie
  * Mellon University, makes this software available to CMU to distribute
- * or use in any manner that they see fit as long as this message is kept with 
+ * or use in any manner that they see fit as long as this message is kept with
  * the software. For this reason TFS also grants any other persons or
  * organisations permission to use or modify this software.
  *
@@ -448,9 +448,10 @@ struct page_caching_mode {
 
 #define SI_PG_DISK_LIMITS	0xb0 /* block limits */
 #define SI_PG_DISK_INFO		0xb1 /* device charateristics */
+#define SI_PG_DISK_THIN		0xb2 /* thing provisioning */
 
 struct scsi_vpd_disk_limits {
-        struct scsi_vpd_hdr hdr;
+	struct scsi_vpd_hdr hdr;
 #define SI_PG_DISK_LIMITS_LEN		0x10
 #define SI_PG_DISK_LIMITS_LEN_THIN	0x3c
 
@@ -474,10 +475,10 @@ struct scsi_vpd_disk_limits {
 #define SI_PG_DISK_LIMITS_UGAVALID	(1 << 31)
 
 	u_int8_t		_reserved2[28];
-}; 
+};
 
 struct scsi_vpd_disk_info {
-        struct scsi_vpd_hdr	hdr;
+	struct scsi_vpd_hdr	hdr;
 	u_int8_t		rpm[2];
 #define VPD_DISK_INFO_RPM_UNDEF		0x0000
 #define VPD_DISK_INFO_RPM_NONE		0x0001
@@ -491,6 +492,6 @@ struct scsi_vpd_disk_info {
 #define VPD_DISK_INFO_FORM_1_8		0x4
 #define VPD_DISK_INFO_FORM_LT_1_8	0x5
 	u_int8_t		_reserved2[56];
-}; 
+};
 
 #endif /* _SCSI_SCSI_DISK_H */
