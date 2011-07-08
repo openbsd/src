@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.109 2011/07/08 07:15:31 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.110 2011/07/08 07:45:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -117,6 +117,7 @@ void		atascsi_disk_vpd_serial(struct scsi_xfer *);
 void		atascsi_disk_vpd_ident(struct scsi_xfer *);
 void		atascsi_disk_vpd_limits(struct scsi_xfer *);
 void		atascsi_disk_vpd_info(struct scsi_xfer *);
+void		atascsi_disk_vpd_thin(struct scsi_xfer *);
 void		atascsi_disk_write_same_16(struct scsi_xfer *);
 void		atascsi_disk_write_same_16_done(struct ata_xfer *);
 void		atascsi_disk_capacity(struct scsi_xfer *);
@@ -685,6 +686,9 @@ atascsi_disk_inq(struct scsi_xfer *xs)
 		case SI_PG_DISK_INFO:
 			atascsi_disk_vpd_info(xs);
 			break;
+		case SI_PG_DISK_THIN:
+			atascsi_disk_vpd_thin(xs);
+			break;
 		default:
 			atascsi_done(xs, XS_DRIVER_STUFFUP);
 			break;
@@ -725,21 +729,28 @@ atascsi_disk_vpd_supported(struct scsi_xfer *xs)
 {
 	struct {
 		struct scsi_vpd_hdr	hdr;
-		u_int8_t		list[5];
+		u_int8_t		list[6];
 	}			pg;
+	struct scsi_link        *link = xs->sc_link;
+	struct atascsi_port	*ap;
+	int			fat;
+
+	ap = atascsi_lookup_port(link);
+	fat = ISSET(ap->ap_features, ATA_PORT_F_TRIM) ? 0 : 1;
 
 	bzero(&pg, sizeof(pg));
 
 	pg.hdr.device = T_DIRECT;
 	pg.hdr.page_code = SI_PG_SUPPORTED;
-	_lto2b(sizeof(pg.list), pg.hdr.page_length);
+	_lto2b(sizeof(pg.list) - fat, pg.hdr.page_length);
 	pg.list[0] = SI_PG_SUPPORTED;
 	pg.list[1] = SI_PG_SERIAL;
 	pg.list[2] = SI_PG_DEVID;
 	pg.list[3] = SI_PG_DISK_LIMITS;
 	pg.list[4] = SI_PG_DISK_INFO;
+	pg.list[5] = SI_PG_DISK_THIN; /* "trimmed" if fat. get it? tehe. */
 
-	bcopy(&pg, xs->data, MIN(sizeof(pg), xs->datalen));
+	bcopy(&pg, xs->data, MIN(sizeof(pg) - fat, xs->datalen));
 
 	atascsi_done(xs, XS_NOERROR);
 }
@@ -862,6 +873,31 @@ atascsi_disk_vpd_info(struct scsi_xfer *xs)
 
 	_lto2b(letoh16(ap->ap_identify.rpm), pg.rpm);
 	pg.form_factor = letoh16(ap->ap_identify.form) & ATA_ID_FORM_MASK;
+
+	bcopy(&pg, xs->data, MIN(sizeof(pg), xs->datalen));
+
+	atascsi_done(xs, XS_NOERROR);
+}
+
+void
+atascsi_disk_vpd_thin(struct scsi_xfer *xs)
+{
+	struct scsi_link        *link = xs->sc_link;
+	struct atascsi_port	*ap;
+	struct scsi_vpd_disk_thin pg;
+
+	ap = atascsi_lookup_port(link);
+	if (!ISSET(ap->ap_features, ATA_PORT_F_TRIM)) {
+		atascsi_done(xs, XS_DRIVER_STUFFUP);
+		return;
+	}
+
+	bzero(&pg, sizeof(pg));
+	pg.hdr.device = T_DIRECT;
+	pg.hdr.page_code = SI_PG_DISK_THIN;
+	_lto2b(sizeof(pg) - sizeof(pg.hdr), pg.hdr.page_length);
+
+	pg.flags = VPD_DISK_THIN_TPWS;
 
 	bcopy(&pg, xs->data, MIN(sizeof(pg), xs->datalen));
 
