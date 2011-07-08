@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.108 2011/07/05 03:47:55 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.109 2011/07/08 07:15:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -832,6 +832,16 @@ atascsi_disk_vpd_limits(struct scsi_xfer *xs)
 	_lto2b(1 << ata_identify_block_l2p_exp(&ap->ap_identify),
 	    pg.optimal_xfer_granularity);
 
+	if (ISSET(ap->ap_features, ATA_PORT_F_TRIM)) {
+		/*
+		 * ATA only supports 65535 blocks per TRIM descriptor, so
+		 * avoid having to split UNMAP descriptors and overflow the page
+		 * limit by using that as a max.
+		 */
+		_lto4b(ATA_DSM_TRIM_MAX_LEN, pg.max_unmap_lba_count);
+		_lto4b(512 / 8, pg.max_unmap_desc_count);
+        }
+
 	bcopy(&pg, xs->data, MIN(sizeof(pg), xs->datalen));
 
 	atascsi_done(xs, XS_NOERROR);
@@ -879,7 +889,7 @@ atascsi_disk_write_same_16(struct scsi_xfer *xs)
 	ap = atascsi_lookup_port(link);
 	cdb = (struct scsi_write_same_16 *)xs->cmd;
 
-	if (cdb->flags != WRITE_SAME_F_UNMAP ||
+	if (!ISSET(cdb->flags, WRITE_SAME_F_UNMAP) ||
 	   !ISSET(ap->ap_features, ATA_PORT_F_TRIM)) {
 		/* generate sense data */
 		atascsi_done(xs, XS_DRIVER_STUFFUP);
@@ -895,7 +905,7 @@ atascsi_disk_write_same_16(struct scsi_xfer *xs)
 	lba = _8btol(cdb->lba);
 	length = _4btol(cdb->length);
 
-	if (length > 0xffff) {
+	if (length > ATA_DSM_TRIM_MAX_LEN) {
 		/* XXX we dont support requests over 65535 blocks */
 		atascsi_done(xs, XS_DRIVER_STUFFUP);
 		return;
@@ -913,7 +923,7 @@ atascsi_disk_write_same_16(struct scsi_xfer *xs)
 
 	/* TRIM sends a list of blocks to discard in the databuf. */
 	memset(xa->data, 0, xa->datalen);
-	desc = htole64(((u_int64_t)length << 48) | lba);
+	desc = htole64(ATA_DSM_TRIM_DESC(lba, length));
 	memcpy(xa->data, &desc, sizeof(desc));
 
 	fis = xa->fis;
@@ -934,13 +944,11 @@ atascsi_disk_write_same_16_done(struct ata_xfer *xa)
 	case ATA_S_COMPLETE:
 		xs->error = XS_NOERROR;
 		break;
-
 	case ATA_S_ERROR:
+		xs->error = XS_DRIVER_STUFFUP;
+		break;
 	case ATA_S_TIMEOUT:
-		printf("atascsi_disk_write_same_16_done: %s\n",
-		    xa->state == ATA_S_TIMEOUT ? "timeout" : "error");
-		xs->error = (xa->state == ATA_S_TIMEOUT ? XS_TIMEOUT :
-		    XS_DRIVER_STUFFUP);
+		xs->error = XS_TIMEOUT;
 		break;
 
 	default:
