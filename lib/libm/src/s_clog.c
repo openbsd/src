@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_clog.c,v 1.1 2008/09/07 20:36:09 martynas Exp $	*/
+/*	$OpenBSD: s_clog.c,v 1.2 2011/07/08 19:25:31 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+/* LINTLIBRARY */
 
 /*							clog.c
  *
@@ -54,7 +56,9 @@
  * absolute error 1.0e-16.
  */
 
+#include <sys/cdefs.h>
 #include <complex.h>
+#include <float.h>
 #include <math.h>
 
 double complex
@@ -70,3 +74,12 @@ clog(double complex z)
 	w = p + rr * I;
 	return (w);
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double complex clogl(long double complex);
+#else	/* lint */
+__weak_alias(clogl, clog);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

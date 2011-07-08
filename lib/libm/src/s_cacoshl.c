@@ -1,6 +1,7 @@
-/*	$OpenBSD: s_carg.c,v 1.2 2011/07/08 19:25:31 martynas Exp $	*/
+/*	$OpenBSD: s_cacoshl.c,v 1.1 2011/07/08 19:25:31 martynas Exp $	*/
+
 /*
- * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
+ * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,24 +16,41 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* LINTLIBRARY */
+/*							cacoshl
+ *
+ *	Complex inverse hyperbolic cosine
+ *
+ *
+ *
+ * SYNOPSIS:
+ *
+ * long double complex cacoshl();
+ * long double complex z, w;
+ *
+ * w = cacoshl (z);
+ *
+ *
+ *
+ * DESCRIPTION:
+ *
+ * acosh z = i acos z .
+ *
+ * ACCURACY:
+ *
+ *                      Relative error:
+ * arithmetic   domain     # trials      peak         rms
+ *    IEEE      -10,+10     30000       1.6e-14     2.1e-15
+ *
+ */
 
-#include <sys/cdefs.h>
 #include <complex.h>
-#include <float.h>
 #include <math.h>
 
-double
-carg(double complex z)
+long double complex
+cacoshl(long double complex z)
 {
-	return atan2 (__imag__ z, __real__ z);
-}
+	long double complex w;
 
-#if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double cargl(long double complex);
-#else	/* lint */
-__weak_alias(cargl, carg);
-#endif	/* lint */
-#endif	/* LDBL_MANT_DIG == 53 */
+	w = I * cacosl(z);
+	return (w);
+}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_creal.c,v 1.1 2008/09/07 20:36:09 martynas Exp $	*/
+/*	$OpenBSD: s_creal.c,v 1.2 2011/07/08 19:25:31 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -15,7 +15,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/* LINTLIBRARY */
+
+#include <sys/cdefs.h>
 #include <complex.h>
+#include <float.h>
 #include <math.h>
 
 double
@@ -23,3 +27,12 @@ creal(double complex z)
 {
 	return __real__ z;
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double creall(long double complex);
+#else	/* lint */
+__weak_alias(creall, creal);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

@@ -1,6 +1,7 @@
-/*	$OpenBSD: s_carg.c,v 1.2 2011/07/08 19:25:31 martynas Exp $	*/
+/*	$OpenBSD: s_ccoshl.c,v 1.1 2011/07/08 19:25:31 martynas Exp $	*/
+
 /*
- * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
+ * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,24 +16,44 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* LINTLIBRARY */
+/*							ccoshl
+ *
+ *	Complex hyperbolic cosine
+ *
+ *
+ *
+ * SYNOPSIS:
+ *
+ * long double complex ccoshl();
+ * long double complex z, w;
+ *
+ * w = ccoshl (z);
+ *
+ *
+ *
+ * DESCRIPTION:
+ *
+ * ccosh(z) = cosh x  cos y + i sinh x sin y .
+ *
+ * ACCURACY:
+ *
+ *                      Relative error:
+ * arithmetic   domain     # trials      peak         rms
+ *    IEEE      -10,+10     30000       2.9e-16     8.1e-17
+ *
+ */
 
-#include <sys/cdefs.h>
 #include <complex.h>
-#include <float.h>
 #include <math.h>
 
-double
-carg(double complex z)
+long double complex
+ccoshl(long double complex z)
 {
-	return atan2 (__imag__ z, __real__ z);
-}
+	long double complex w;
+	long double x, y;
 
-#if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double cargl(long double complex);
-#else	/* lint */
-__weak_alias(cargl, carg);
-#endif	/* lint */
-#endif	/* LDBL_MANT_DIG == 53 */
+	x = creal(z);
+	y = cimag(z);
+	w = coshl(x) * cosl(y) + (sinhl(x) * sinl(y)) * I;
+	return (w);
+}

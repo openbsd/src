@@ -1,4 +1,5 @@
-/*	$OpenBSD: s_ctanh.c,v 1.2 2011/07/08 19:25:31 martynas Exp $	*/
+/*	$OpenBSD: s_cexpl.c,v 1.1 2011/07/08 19:25:31 martynas Exp $	*/
+
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -15,58 +16,55 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* LINTLIBRARY */
-
-/*							ctanh
+/*							cexpl()
  *
- *	Complex hyperbolic tangent
+ *	Complex exponential function
  *
  *
  *
  * SYNOPSIS:
  *
- * double complex ctanh();
- * double complex z, w;
+ * long double complex cexpl();
+ * long double complex z, w;
  *
- * w = ctanh (z);
+ * w = cexpl( z );
  *
  *
  *
  * DESCRIPTION:
  *
- * tanh z = (sinh 2x  +  i sin 2y) / (cosh 2x + cos 2y) .
+ * Returns the exponential of the complex argument z
+ * into the complex result w.
+ *
+ * If
+ *     z = x + iy,
+ *     r = exp(x),
+ *
+ * then
+ *
+ *     w = r cos y + i r sin y.
+ *
  *
  * ACCURACY:
  *
  *                      Relative error:
  * arithmetic   domain     # trials      peak         rms
- *    IEEE      -10,+10     30000       1.7e-14     2.4e-16
+ *    DEC       -10,+10      8700       3.7e-17     1.1e-17
+ *    IEEE      -10,+10     30000       3.0e-16     8.7e-17
  *
  */
 
-#include <sys/cdefs.h>
 #include <complex.h>
-#include <float.h>
 #include <math.h>
 
-double complex
-ctanh(double complex z)
+long double complex
+cexpl(long double complex z)
 {
-	double complex w;
-	double x, y, d;
+	long double complex w;
+	long double r;
 
-	x = creal(z);
-	y = cimag(z);
-	d = cosh (2.0 * x) + cos (2.0 * y);
-	w = sinh (2.0 * x) / d  +  (sin (2.0 * y) / d) * I;
+	r = expl(creal(z));
+	w = r * cosl((long double)cimag(z)) +
+	    (r * sinl((long double)cimag(z))) * I;
 	return (w);
 }
-
-#if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double complex ctanhl(long double complex);
-#else	/* lint */
-__weak_alias(ctanhl, ctanh);
-#endif	/* lint */
-#endif	/* LDBL_MANT_DIG == 53 */

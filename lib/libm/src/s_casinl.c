@@ -1,4 +1,5 @@
-/*	$OpenBSD: s_casin.c,v 1.2 2011/07/08 19:25:31 martynas Exp $	*/
+/*	$OpenBSD: s_casinl.c,v 1.1 2011/07/08 19:25:31 martynas Exp $	*/
+
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -15,9 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* LINTLIBRARY */
-
-/*							casin()
+/*							casinl()
  *
  *	Complex circular arc sine
  *
@@ -25,10 +24,10 @@
  *
  * SYNOPSIS:
  *
- * double complex casin();
- * double complex z, w;
+ * long double complex casinl();
+ * long double complex z, w;
  *
- * w = casin (z);
+ * w = casinl( z );
  *
  *
  *
@@ -39,7 +38,6 @@
  *                               2
  * w = -i clog( iz + csqrt( 1 - z ) ).
  *
- * casin(z) = -i casinh(iz)
  *
  * ACCURACY:
  *
@@ -51,92 +49,82 @@
  * Also tested by csin(casin(z)) = z.
  */
 
-#include <sys/cdefs.h>
 #include <complex.h>
 #include <float.h>
 #include <math.h>
 
-double complex
-casin(double complex z)
+#if	LDBL_MANT_DIG == 64
+static long double MACHEPL= 5.42101086242752217003726400434970855712890625E-20L;
+#elif	LDBL_MANT_DIG == 113
+static long double MACHEPL = 9.629649721936179265279889712924636592690508e-35L;
+#endif
+
+static long double PIO2L = 1.570796326794896619231321691639751442098585L;
+
+long double complex
+casinl(long double complex z)
 {
-	double complex w;
-	static double complex ca, ct, zz, z2;
-	double x, y;
+	long double complex w;
+	long double x, y, b;
+	static long double complex ca, ct, zz, z2;
 
-	x = creal (z);
-	y = cimag (z);
+	x = creal(z);
+	y = cimag(z);
 
-	if (y == 0.0) {
-		if (fabs(x) > 1.0) {
-			w = M_PI_2 + 0.0 * I;
-			/*mtherr ("casin", DOMAIN);*/
+	if (y == 0.0L) {
+		if (fabsl(x) > 1.0L) {
+			w = PIO2L + 0.0L * I;
+			/*mtherr( "casinl", DOMAIN );*/
 		}
 		else {
-			w = asin (x) + 0.0 * I;
+			w = asinl(x) + 0.0L * I;
 		}
 		return (w);
 	}
 
 	/* Power series expansion */
-	/*
-	b = cabs(z);
-	if( b < 0.125 ) {
-		z2.r = (x - y) * (x + y);
-		z2.i = 2.0 * x * y;
+	b = cabsl(z);
+	if (b < 0.125L) {
+		long double complex sum;
+		long double n, cn;
 
-		cn = 1.0;
-		n = 1.0;
-		ca.r = x;
-		ca.i = y;
-		sum.r = x;
-		sum.i = y;
+		z2 = (x - y) * (x + y) + (2.0L * x * y) * I;
+		cn = 1.0L;
+		n = 1.0L;
+		ca = x + y * I;
+		sum = x + y * I;
 		do {
-			ct.r = z2.r * ca.r  -  z2.i * ca.i;
-			ct.i = z2.r * ca.i  +  z2.i * ca.r;
-			ca.r = ct.r;
-			ca.i = ct.i;
+			ct = z2 * ca;
+			ca = ct;
 
 			cn *= n;
-			n += 1.0;
+			n += 1.0L;
 			cn /= n;
-			n += 1.0;
+			n += 1.0L;
 			b = cn/n;
 
-			ct.r *= b;
-			ct.i *= b;
-			sum.r += ct.r;
-			sum.i += ct.i;
-			b = fabs(ct.r) + fabs(ct.i);
+			ct *= b;
+			sum += ct;
+			b = cabsl(ct);
 		}
-		while( b > MACHEP );
-		w->r = sum.r;
-		w->i = sum.i;
-		return;
+
+		while (b > MACHEPL);
+		w = sum;
+		return w;
 	}
-	*/
 
 	ca = x + y * I;
-	ct = ca * I;
-	/* sqrt( 1 - z*z) */
-	/* cmul( &ca, &ca, &zz ) */
-	/*x * x  -  y * y */
-	zz = (x - y) * (x + y) + (2.0 * x * y) * I;
-
-	zz = 1.0 - creal(zz) - cimag(zz) * I;
-	z2 = csqrt (zz);
+	ct = ca * I;	/* iz */
+	/* sqrt(1 - z*z) */
+	/* cmul(&ca, &ca, &zz) */
+	/* x * x  -  y * y */
+	zz = (x - y) * (x + y) + (2.0L * x * y) * I;
+	zz = 1.0L - creal(zz) - cimag(zz) * I;
+	z2 = csqrtl(zz);
 
 	zz = ct + z2;
-	zz = clog (zz);
+	zz = clogl(zz);
 	/* multiply by 1/i = -i */
-	w = zz * (-1.0 * I);
+	w = zz * (-1.0L * I);
 	return (w);
 }
-
-#if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double complex casinl(long double complex);
-#else	/* lint */
-__weak_alias(casinl, casin);
-#endif	/* lint */
-#endif	/* LDBL_MANT_DIG == 53 */

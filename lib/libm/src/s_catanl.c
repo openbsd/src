@@ -1,4 +1,5 @@
-/*	$OpenBSD: s_catan.c,v 1.2 2011/07/08 19:25:31 martynas Exp $	*/
+/*	$OpenBSD: s_catanl.c,v 1.1 2011/07/08 19:25:31 martynas Exp $	*/
+
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -15,9 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* LINTLIBRARY */
-
-/*							catan()
+/*							catanl()
  *
  *	Complex circular arc tangent
  *
@@ -25,10 +24,10 @@
  *
  * SYNOPSIS:
  *
- * double complex catan();
- * double complex z, w;
+ * long double complex catanl();
+ * long double complex z, w;
  *
- * w = catan (z);
+ * w = catanl( z );
  *
  *
  *
@@ -51,7 +50,7 @@
  *
  * Where k is an arbitrary integer.
  *
- * catan(z) = -i catanh(iz).
+ *
  *
  * ACCURACY:
  *
@@ -64,28 +63,26 @@
  * 2.9e-17.  See also clog().
  */
 
-#include <sys/cdefs.h>
 #include <complex.h>
 #include <float.h>
 #include <math.h>
 
-#define MAXNUM 1.0e308
+static long double PIL = 3.141592653589793238462643383279502884197169L;
+static long double DP1 = 3.14159265358979323829596852490908531763125L;
+static long double DP2 = 1.6667485837041756656403424829301998703007e-19L;
+static long double DP3 = 1.8830410776607851167459095484560349402753e-39L;
 
-static const double DP1 = 3.14159265160560607910E0;
-static const double DP2 = 1.98418714791870343106E-9;
-static const double DP3 = 1.14423774522196636802E-17;
-
-static double
-_redupi(double x)
+static long double
+redupil(long double x)
 {
-	double t;
+	long double t;
 	long i;
 
-	t = x/M_PI;
-	if(t >= 0.0)
-		t += 0.5;
+	t = x / PIL;
+	if (t >= 0.0L)
+		t += 0.5L;
 	else
-		t -= 0.5;
+		t -= 0.5L;
 
 	i = t;	/* the multiple */
 	t = i;
@@ -93,47 +90,38 @@ _redupi(double x)
 	return (t);
 }
 
-double complex
-catan(double complex z)
+long double complex
+catanl(long double complex z)
 {
-	double complex w;
-	double a, t, x, x2, y;
+	long double complex w;
+	long double a, t, x, x2, y;
 
-	x = creal (z);
-	y = cimag (z);
+	x = creal(z);
+	y = cimag(z);
 
-	if ((x == 0.0) && (y > 1.0))
+	if ((x == 0.0L) && (y > 1.0L))
 		goto ovrf;
 
 	x2 = x * x;
-	a = 1.0 - x2 - (y * y);
-	if (a == 0.0)
+	a = 1.0L - x2 - (y * y);
+	if (a == 0.0L)
 		goto ovrf;
 
-	t = 0.5 * atan2 (2.0 * x, a);
-	w = _redupi (t);
+	t = atan2l(2.0L * x, a) * 0.5L;
+	w = redupil(t);
 
-	t = y - 1.0;
+	t = y - 1.0L;
 	a = x2 + (t * t);
-	if (a == 0.0)
-	goto ovrf;
+	if (a == 0.0L)
+		goto ovrf;
 
-	t = y + 1.0;
-	a = (x2 + (t * t))/a;
-	w = w + (0.25 * log (a)) * I;
+	t = y + 1.0L;
+	a = (x2 + (t * t)) / a;
+	w = w + (0.25L * logl(a)) * I;
 	return (w);
 
 ovrf:
-	/*mtherr ("catan", OVERFLOW);*/
-	w = MAXNUM + MAXNUM * I;
+	/*mtherr( "catanl", OVERFLOW );*/
+	w = LDBL_MAX + LDBL_MAX * I;
 	return (w);
 }
-
-#if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double complex catanl(long double complex);
-#else	/* lint */
-__weak_alias(catanl, catan);
-#endif	/* lint */
-#endif	/* LDBL_MANT_DIG == 53 */

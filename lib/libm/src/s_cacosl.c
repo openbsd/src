@@ -1,4 +1,5 @@
-/*	$OpenBSD: s_ctanh.c,v 1.2 2011/07/08 19:25:31 martynas Exp $	*/
+/*	$OpenBSD: s_cacosl.c,v 1.1 2011/07/08 19:25:31 martynas Exp $	*/
+
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -15,58 +16,48 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* LINTLIBRARY */
-
-/*							ctanh
+/*							cacosl()
  *
- *	Complex hyperbolic tangent
+ *	Complex circular arc cosine
  *
  *
  *
  * SYNOPSIS:
  *
- * double complex ctanh();
- * double complex z, w;
+ * long double complex cacosl();
+ * long double complex z, w;
  *
- * w = ctanh (z);
+ * w = cacosl( z );
  *
  *
  *
  * DESCRIPTION:
  *
- * tanh z = (sinh 2x  +  i sin 2y) / (cosh 2x + cos 2y) .
+ *
+ * w = arccos z  =  PI/2 - arcsin z.
+ *
+ *
+ *
  *
  * ACCURACY:
  *
  *                      Relative error:
  * arithmetic   domain     # trials      peak         rms
- *    IEEE      -10,+10     30000       1.7e-14     2.4e-16
- *
+ *    DEC       -10,+10      5200      1.6e-15      2.8e-16
+ *    IEEE      -10,+10     30000      1.8e-14      2.2e-15
  */
 
-#include <sys/cdefs.h>
 #include <complex.h>
-#include <float.h>
 #include <math.h>
 
-double complex
-ctanh(double complex z)
-{
-	double complex w;
-	double x, y, d;
+static long double PIO2L = 1.570796326794896619231321691639751442098585L;
 
-	x = creal(z);
-	y = cimag(z);
-	d = cosh (2.0 * x) + cos (2.0 * y);
-	w = sinh (2.0 * x) / d  +  (sin (2.0 * y) / d) * I;
+long double complex
+cacosl(long double complex z)
+{
+	long double complex w;
+
+	w = casinl(z);
+	w = (PIO2L - creal(w)) - cimag(w) * I;
 	return (w);
 }
-
-#if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double complex ctanhl(long double complex);
-#else	/* lint */
-__weak_alias(ctanhl, ctanh);
-#endif	/* lint */
-#endif	/* LDBL_MANT_DIG == 53 */

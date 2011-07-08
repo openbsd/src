@@ -1,4 +1,5 @@
-/*	$OpenBSD: s_ctan.c,v 1.2 2011/07/08 19:25:31 martynas Exp $	*/
+/*	$OpenBSD: s_ctanl.c,v 1.1 2011/07/08 19:25:31 martynas Exp $	*/
+
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -15,9 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* LINTLIBRARY */
-
-/*							ctan()
+/*							ctanl()
  *
  *	Complex circular tangent
  *
@@ -25,10 +24,10 @@
  *
  * SYNOPSIS:
  *
- * double complex ctan();
- * double complex z, w;
+ * long double complex ctanl();
+ * long double complex z, w;
  *
- * w = ctan (z);
+ * w = ctanl( z );
  *
  *
  *
@@ -47,7 +46,6 @@
  * of PI/2.  The denominator is evaluated by its Taylor
  * series near these points.
  *
- * ctan(z) = -i ctanh(iz).
  *
  * ACCURACY:
  *
@@ -58,29 +56,32 @@
  * Also tested by ctan * ccot = 1 and catan(ctan(z))  =  z.
  */
 
-#include <sys/cdefs.h>
 #include <complex.h>
 #include <float.h>
 #include <math.h>
 
-#define MACHEP 1.1e-16
-#define MAXNUM 1.0e308
+#if	LDBL_MANT_DIG == 64
+static long double MACHEPL= 5.42101086242752217003726400434970855712890625E-20L;
+#elif	LDBL_MANT_DIG == 113
+static long double MACHEPL = 9.629649721936179265279889712924636592690508e-35L;
+#endif
 
-static const double DP1 = 3.14159265160560607910E0;
-static const double DP2 = 1.98418714791870343106E-9;
-static const double DP3 = 1.14423774522196636802E-17;
+static long double PIL = 3.141592653589793238462643383279502884197169L;
+static long double DP1 = 3.14159265358979323829596852490908531763125L;
+static long double DP2 = 1.6667485837041756656403424829301998703007e-19L;
+static long double DP3 = 1.8830410776607851167459095484560349402753e-39L;
 
-static double
-_redupi(double x)
+static long double
+redupil(long double x)
 {
-	double t;
+	long double t;
 	long i;
 
-	t = x/M_PI;
-	if (t >= 0.0)
-		t += 0.5;
+	t = x / PIL;
+	if (t >= 0.0L)
+		t += 0.5L;
 	else
-		t -= 0.5;
+		t -= 0.5L;
 
 	i = t;	/* the multiple */
 	t = i;
@@ -88,30 +89,28 @@ _redupi(double x)
 	return (t);
 }
 
-/*  Taylor series expansion for cosh(2y) - cos(2x)	*/
-
-static double
-_ctans(double complex z)
+static long double
+ctansl(long double complex z)
 {
-	double f, x, x2, y, y2, rn, t;
-	double d;
+	long double f, x, x2, y, y2, rn, t;
+	long double d;
 
-	x = fabs (2.0 * creal (z));
-	y = fabs (2.0 * cimag(z));
+	x = fabsl(2.0L * creal(z));
+	y = fabsl(2.0L * cimag(z));
 
-	x = _redupi(x);
+	x = redupil(x);
 
 	x = x * x;
 	y = y * y;
-	x2 = 1.0;
-	y2 = 1.0;
-	f = 1.0;
-	rn = 0.0;
-	d = 0.0;
+	x2 = 1.0L;
+	y2 = 1.0L;
+	f = 1.0L;
+	rn = 0.0L;
+	d = 0.0L;
 	do {
-		rn += 1.0;
+		rn += 1.0L;
 		f *= rn;
-		rn += 1.0;
+		rn += 1.0L;
 		f *= rn;
 		x2 *= x;
 		y2 *= y;
@@ -119,9 +118,9 @@ _ctans(double complex z)
 		t /= f;
 		d += t;
 
-		rn += 1.0;
+		rn += 1.0L;
 		f *= rn;
-		rn += 1.0;
+		rn += 1.0L;
 		f *= rn;
 		x2 *= x;
 		y2 *= y;
@@ -129,37 +128,30 @@ _ctans(double complex z)
 		t /= f;
 		d += t;
 	}
-	while (fabs(t/d) > MACHEP)
-		;
-	return (d);
+	while (fabsl(t/d) > MACHEPL);
+	return(d);
 }
 
-double complex
-ctan(double complex z)
+long double complex
+ctanl(long double complex z)
 {
-	double complex w;
-	double d;
+	long double complex w;
+	long double d, x, y;
 
-	d = cos (2.0 * creal (z)) + cosh (2.0 * cimag (z));
+	x = creal(z);
+	y = cimag(z);
+	d = cosl(2.0L * x) + coshl(2.0L * y);
 
-	if (fabs(d) < 0.25)
-		d = _ctans (z);
-
-	if (d == 0.0) {
-		/*mtherr ("ctan", OVERFLOW);*/
-		w = MAXNUM + MAXNUM * I;
+	if (fabsl(d) < 0.25L) {
+		d = fabsl(d);
+		d = ctansl(z);
+	}
+	if (d == 0.0L) {
+		/*mtherr( "ctan", OVERFLOW );*/
+		w = LDBL_MAX + LDBL_MAX * I;
 		return (w);
 	}
 
-	w = sin (2.0 * creal(z)) / d + (sinh (2.0 * cimag(z)) / d) * I;
+	w = sinl(2.0L * x) / d + (sinhl(2.0L * y) / d) * I;
 	return (w);
 }
-
-#if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double complex ctanl(long double complex);
-#else	/* lint */
-__weak_alias(ctanl, ctan);
-#endif	/* lint */
-#endif	/* LDBL_MANT_DIG == 53 */

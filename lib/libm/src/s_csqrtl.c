@@ -1,4 +1,5 @@
-/*	$OpenBSD: s_csqrt.c,v 1.2 2011/07/08 19:25:31 martynas Exp $	*/
+/*	$OpenBSD: s_csqrtl.c,v 1.1 2011/07/08 19:25:31 martynas Exp $	*/
+
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -15,9 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* LINTLIBRARY */
-
-/*							csqrt()
+/*							csqrtl()
  *
  *	Complex square root
  *
@@ -25,10 +24,10 @@
  *
  * SYNOPSIS:
  *
- * double complex csqrt();
- * double complex z, w;
+ * long double complex csqrtl();
+ * long double complex z, w;
  *
- * w = csqrt (z);
+ * w = csqrtl( z );
  *
  *
  *
@@ -55,76 +54,70 @@
  *
  *                      Relative error:
  * arithmetic   domain     # trials      peak         rms
- *    DEC       -10,+10     25000       3.2e-17     9.6e-18
- *    IEEE      -10,+10   1,000,000     2.9e-16     6.1e-17
+ *    IEEE      -10,+10     500000      1.1e-19     3.0e-20
  *
  */
 
-#include <sys/cdefs.h>
 #include <complex.h>
-#include <float.h>
 #include <math.h>
 
-double complex
-csqrt(double complex z)
+long double complex
+csqrtl(long double complex z)
 {
-	double complex w;
-	double x, y, r, t, scale;
+	long double complex w;
+	long double x, y, r, t, scale;
 
-	x = creal (z);
-	y = cimag (z);
+	x = creal(z);
+	y = cimag(z);
 
-	if (y == 0.0) {
-		if (x == 0.0) {
-			w = 0.0 + y * I;
+	if (y == 0.0L) {
+		if (x < 0.0L) {
+			w = 0.0L + sqrtl(-x) * I;
+			return (w);
 		}
 		else {
-			r = fabs (x);
-			r = sqrt (r);
-			if (x < 0.0) {
-				w = 0.0 + r * I;
-			}
-			else {
-				w = r + y * I;
-			}
+			w = sqrtl(x) + 0.0L * I;
+			return (w);
 		}
-		return (w);
 	}
-	if (x == 0.0) {
-		r = fabs (y);
-		r = sqrt (0.5*r);
-		if (y > 0)
+
+	if (x == 0.0L) {
+		r = fabsl(y);
+		r = sqrtl(0.5L * r);
+		if (y > 0.0L)
 			w = r + r * I;
 		else
 			w = r - r * I;
 		return (w);
 	}
+
 	/* Rescale to avoid internal overflow or underflow.  */
-	if ((fabs(x) > 4.0) || (fabs(y) > 4.0)) {
-		x *= 0.25;
-		y *= 0.25;
-		scale = 2.0;
+	if ((fabsl(x) > 4.0L) || (fabsl(y) > 4.0L)) {
+		x *= 0.25L;
+		y *= 0.25L;
+		scale = 2.0L;
 	}
 	else {
-		x *= 1.8014398509481984e16;  /* 2^54 */
-		y *= 1.8014398509481984e16;
-		scale = 7.450580596923828125e-9; /* 2^-27 */
-#if 0
-		x *= 4.0;
-		y *= 4.0;
-		scale = 0.5;
+#if 1
+		x *= 7.3786976294838206464e19;  /* 2^66 */
+		y *= 7.3786976294838206464e19;
+		scale = 1.16415321826934814453125e-10;  /* 2^-33 */
+#else
+		x *= 4.0L;
+		y *= 4.0L;
+		scale = 0.5L;
 #endif
 	}
 	w = x + y * I;
-	r = cabs(w);
+	r = cabsl(w);
 	if (x > 0) {
-		t = sqrt(0.5 * r + 0.5 * x);
-		r = scale * fabs((0.5 * y) / t);
+		t = sqrtl(0.5L * r + 0.5L * x);
+		r = scale * fabsl((0.5L * y) / t);
 		t *= scale;
 	}
 	else {
-		r = sqrt( 0.5 * r - 0.5 * x );
-		t = scale * fabs( (0.5 * y) / r );
+		r = sqrtl(0.5L * r - 0.5L * x);
+		t = scale * fabsl((0.5L * y) / r);
 		r *= scale;
 	}
 	if (y < 0)
@@ -133,12 +126,3 @@ csqrt(double complex z)
 		w = t + r * I;
 	return (w);
 }
-
-#if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double complex csqrtl(long double complex);
-#else	/* lint */
-__weak_alias(csqrtl, csqrt);
-#endif	/* lint */
-#endif	/* LDBL_MANT_DIG == 53 */

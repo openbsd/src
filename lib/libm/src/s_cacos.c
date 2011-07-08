@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_cacos.c,v 1.1 2008/09/07 20:36:09 martynas Exp $	*/
+/*	$OpenBSD: s_cacos.c,v 1.2 2011/07/08 19:25:31 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+/* LINTLIBRARY */
 
 /*							cacos()
  *
@@ -46,7 +48,9 @@
  *    IEEE      -10,+10     30000      1.8e-14      2.2e-15
  */
 
+#include <sys/cdefs.h>
 #include <complex.h>
+#include <float.h>
 #include <math.h>
 
 double complex
@@ -58,3 +62,12 @@ cacos(double complex z)
 	w = (M_PI_2 - creal (w)) - cimag (w) * I;
 	return (w);
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double complex cacosl(long double complex);
+#else	/* lint */
+__weak_alias(cacosl, cacos);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

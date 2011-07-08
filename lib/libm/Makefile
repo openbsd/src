@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.87 2011/07/08 19:21:42 martynas Exp $
+#  $OpenBSD: Makefile,v 1.88 2011/07/08 19:25:31 martynas Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -138,16 +138,20 @@ COMMON_SRCS = b_exp__D.c b_log__D.c b_tgamma.c \
 	w_gammaf_r.c w_lgamma.c w_lgammaf.c
 
 LONG_SRCS = e_acoshl.c e_acosl.c e_asinl.c e_atan2l.c e_atanhl.c \
-	e_coshl.c e_expl.c e_fmodl.c e_hypotl.c e_lgammal.c e_log10l.c \
-	e_log2l.c e_logl.c e_powl.c e_remainderl.c e_sinhl.c e_sqrtl.c \
-	e_tgammal.c invtrig.c k_cosl.c k_sinl.c k_tanl.c polevll.c \
-	s_asinhl.c s_atanl.c s_cbrtl.c s_ceill.c s_copysignl.c \
-	s_cosl.c s_erfl.c s_exp2l.c s_expm1l.c s_fabsl.c s_floorl.c \
-	s_fmal.c s_fmaxl.c s_fminl.c s_frexpl.c s_ilogbl.c s_llrintl.c \
-	s_llroundl.c s_log1pl.c s_logbl.c s_lrintl.c s_lroundl.c \
-	s_modfl.c s_nanl.c s_nextafterl.c s_nexttoward.c s_remquol.c \
-	s_rintl.c s_roundl.c s_scalbnl.c s_sinl.c s_tanhl.c s_tanl.c \
-	s_truncl.c
+	e_coshl.c s_cabsl.c s_cacoshl.c s_cacosl.c s_cargl.c \
+	s_casinhl.c s_casinl.c s_catanhl.c s_catanl.c s_ccoshl.c \
+	s_ccosl.c s_cexpl.c s_cimagl.c s_clogl.c s_conjl.c s_cpowl.c \
+	s_cprojl.c s_creall.c s_csinhl.c s_csinl.c s_csqrtl.c \
+	s_ctanhl.c s_ctanl.c e_expl.c e_fmodl.c e_hypotl.c e_lgammal.c \
+	e_log10l.c e_log2l.c e_logl.c e_powl.c e_remainderl.c \
+	e_sinhl.c e_sqrtl.c e_tgammal.c invtrig.c k_cosl.c k_sinl.c \
+	k_tanl.c polevll.c s_asinhl.c s_atanl.c s_cbrtl.c s_ceill.c \
+	s_copysignl.c s_cosl.c s_erfl.c s_exp2l.c s_expm1l.c s_fabsl.c \
+	s_floorl.c s_fmal.c s_fmaxl.c s_fminl.c s_frexpl.c s_ilogbl.c \
+	s_llrintl.c s_llroundl.c s_log1pl.c s_logbl.c s_lrintl.c \
+	s_lroundl.c s_modfl.c s_nanl.c s_nextafterl.c s_nexttoward.c \
+	s_remquol.c s_rintl.c s_roundl.c s_scalbnl.c s_sinl.c \
+	s_tanhl.c s_tanl.c s_truncl.c
 
 # math routines for non-IEEE architectures.
 NOIEEE_SRCS = n_acosh.c n_argred.c n_asincos.c n_asinh.c n_atan.c \

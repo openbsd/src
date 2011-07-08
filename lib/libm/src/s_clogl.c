@@ -1,4 +1,5 @@
-/*	$OpenBSD: s_ctanh.c,v 1.2 2011/07/08 19:25:31 martynas Exp $	*/
+/*	$OpenBSD: s_clogl.c,v 1.1 2011/07/08 19:25:31 martynas Exp $	*/
+
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -15,58 +16,58 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* LINTLIBRARY */
-
-/*							ctanh
+/*							clogl.c
  *
- *	Complex hyperbolic tangent
+ *	Complex natural logarithm
  *
  *
  *
  * SYNOPSIS:
  *
- * double complex ctanh();
- * double complex z, w;
+ * long double complex clogl();
+ * long double complex z, w;
  *
- * w = ctanh (z);
+ * w = clogl( z );
  *
  *
  *
  * DESCRIPTION:
  *
- * tanh z = (sinh 2x  +  i sin 2y) / (cosh 2x + cos 2y) .
+ * Returns complex logarithm to the base e (2.718...) of
+ * the complex argument x.
+ *
+ * If z = x + iy, r = sqrt( x**2 + y**2 ),
+ * then
+ *       w = log(r) + i arctan(y/x).
+ *
+ * The arctangent ranges from -PI to +PI.
+ *
  *
  * ACCURACY:
  *
  *                      Relative error:
  * arithmetic   domain     # trials      peak         rms
- *    IEEE      -10,+10     30000       1.7e-14     2.4e-16
+ *    DEC       -10,+10      7000       8.5e-17     1.9e-17
+ *    IEEE      -10,+10     30000       5.0e-15     1.1e-16
  *
+ * Larger relative error can be observed for z near 1 +i0.
+ * In IEEE arithmetic the peak absolute error is 5.2e-16, rms
+ * absolute error 1.0e-16.
  */
 
-#include <sys/cdefs.h>
 #include <complex.h>
-#include <float.h>
 #include <math.h>
 
-double complex
-ctanh(double complex z)
+long double complex
+clogl(long double complex z)
 {
-	double complex w;
-	double x, y, d;
+	long double complex w;
+	long double p, rr;
 
-	x = creal(z);
-	y = cimag(z);
-	d = cosh (2.0 * x) + cos (2.0 * y);
-	w = sinh (2.0 * x) / d  +  (sin (2.0 * y) / d) * I;
+	/*rr = sqrt(z->r * z->r  +  z->i * z->i);*/
+	p = cabsl(z);
+	p = logl(p);
+	rr = atan2l(cimag(z), creal(z));
+	w = p + rr * I;
 	return (w);
 }
-
-#if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double complex ctanhl(long double complex);
-#else	/* lint */
-__weak_alias(ctanhl, ctanh);
-#endif	/* lint */
-#endif	/* LDBL_MANT_DIG == 53 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_csin.c,v 1.1 2008/09/07 20:36:09 martynas Exp $	*/
+/*	$OpenBSD: s_csin.c,v 1.2 2011/07/08 19:25:31 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+/* LINTLIBRARY */
 
 /*							csin()
  *
@@ -51,7 +53,9 @@
  *
  */
 
+#include <sys/cdefs.h>
 #include <complex.h>
+#include <float.h>
 #include <math.h>
 
 /* calculate cosh and sinh */
@@ -84,3 +88,12 @@ csin(double complex z)
 	w = sin (creal(z)) * ch + (cos (creal(z)) * sh) * I;
 	return (w);
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double complex csinl(long double complex);
+#else	/* lint */
+__weak_alias(csinl, csin);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */
