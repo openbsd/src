@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rc.conf.8,v 1.18 2011/07/08 02:14:13 ajacoutot Exp $
+.\"	$OpenBSD: rc.conf.8,v 1.19 2011/07/08 17:43:58 sthen Exp $
 .\"
 .\" Copyright (c) 1997 Ian F. Darwin
 .\" All rights reserved.
@@ -105,7 +105,7 @@ The fourth section contains the
 .Va pkg_scripts
 variable, responsible for starting and stopping
 .Xr rc.d 8
-scripts in the specified order.
+scripts installed by packages in the specified order.
 For example, the following line
 .Bd -literal -offset indent
 pkg_scripts="dbus_daemon cupsd"

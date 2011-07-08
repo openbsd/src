@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.d.8,v 1.15 2011/07/08 02:14:13 ajacoutot Exp $
+.\" 	$OpenBSD: rc.d.8,v 1.16 2011/07/08 17:43:58 sthen Exp $
 .\"
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
@@ -39,11 +39,17 @@ directory contains shell scripts to start, stop, and reconfigure daemon
 programs
 .Pq Dq services .
 .Pp
-Those services may be started at boot time in the order specified by the
+Services installed from
+.Xr packages 7
+may be started at boot time in the order specified by the
 .Va pkg_scripts
 variable from
-.Xr rc.conf 8 ,
+.Xr rc.conf 8 ;
 the order will be reversed during shutdown.
+Services comprising
+.Ox
+base are started by
+.Xr rc 8 .
 .Pp
 Each such script responds to the following
 .Ar actions :
