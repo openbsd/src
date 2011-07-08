@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.2,v 1.19 2007/07/17 16:30:10 jmc Exp $
+.\"	$OpenBSD: ktrace.2,v 1.20 2011/07/08 19:30:32 otto Exp $
 .\"	$NetBSD: ktrace.2,v 1.2 1995/02/27 12:33:58 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ktrace.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 17 2007 $
+.Dd $Mdocdate: July 8 2011 $
 .Dt KTRACE 2
 .Os
 .Sh NAME
@@ -93,6 +93,7 @@ generate much output).
 .It Dv KTRFAC_PSIG	Trace posted signals.
 .It Dv KTRFAC_EMUL	Trace emulation changes.
 .It Dv KTRFAC_CSW	Trace context switch points.
+.It Dv KTRFAC_STRUCT	Trace various structs
 .It Dv KTRFAC_INHERIT	Inherit tracing to future children.
 .El
 .Pp

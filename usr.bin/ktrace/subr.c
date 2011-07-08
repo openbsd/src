@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.6 2009/10/27 23:59:39 deraadt Exp $	*/
+/*	$OpenBSD: subr.c,v 1.7 2011/07/08 19:29:44 otto Exp $	*/
 /*	$NetBSD: subr.c,v 1.6 1995/08/31 23:01:45 jtc Exp $	*/
 
 /*-
@@ -67,6 +67,9 @@ getpoints(s)
 			break;
 		case 'w':
 			facs |= KTRFAC_CSW;
+			break;
+		case 't':
+			facs |= KTRFAC_STRUCT;
 			break;
 		case '+':
 			facs |= DEF_POINTS;

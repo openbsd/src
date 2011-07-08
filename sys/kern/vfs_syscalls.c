@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.170 2011/07/08 04:23:24 matthew Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.171 2011/07/08 19:28:38 otto Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <sys/dirent.h>
 #include <sys/dkio.h>
 #include <sys/disklabel.h>
+#include <sys/ktrace.h>
 
 #include <sys/syscallargs.h>
 
@@ -1710,6 +1711,10 @@ dofstatat(struct proc *p, int fd, const char *path, struct stat *buf,
 	if (suser(p, 0))
 		sb.st_gen = 0;
 	error = copyout(&sb, buf, sizeof(sb));
+#ifdef KTRACE
+	if (error == 0 && KTRPOINT(p, KTR_STRUCT))
+		ktrstat(p, &sb);
+#endif
 	return (error);
 }
 

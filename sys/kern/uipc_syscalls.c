@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.80 2011/07/08 05:01:27 matthew Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.81 2011/07/08 19:28:38 otto Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -114,6 +114,10 @@ sys_bind(struct proc *p, void *v, register_t *retval)
 	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
 			 MT_SONAME);
 	if (error == 0) {
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_STRUCT))
+		ktrsockaddr(p, mtod(nam, caddr_t), SCARG(uap, namelen));
+#endif
 		error = sobind(fp->f_data, nam, p);
 		m_freem(nam);
 	}
@@ -231,9 +235,14 @@ sys_accept(struct proc *p, void *v, register_t *retval)
 			namelen = nam->m_len;
 		/* SHOULD COPY OUT A CHAIN HERE */
 		if ((error = copyout(mtod(nam, caddr_t),
-		    SCARG(uap, name), namelen)) == 0)
+		    SCARG(uap, name), namelen)) == 0) {
+#ifdef KTRACE
+			if (KTRPOINT(p, KTR_STRUCT))
+				ktrsockaddr(p, mtod(nam, caddr_t), namelen);
+#endif
 			error = copyout(&namelen, SCARG(uap, anamelen),
 			    sizeof (*SCARG(uap, anamelen)));
+		}
 	}
 	/* if an error occurred, free the file descriptor */
 	if (error) {
@@ -276,6 +285,10 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 			 MT_SONAME);
 	if (error)
 		goto bad;
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_STRUCT))
+		ktrsockaddr(p, mtod(nam, caddr_t), SCARG(uap, namelen));
+#endif
 	error = soconnect(so, nam);
 	if (error)
 		goto bad;
@@ -481,6 +494,10 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 				 MT_SONAME);
 		if (error)
 			goto bad;
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+		 	ktrsockaddr(p, mtod(to, caddr_t), mp->msg_namelen);
+#endif
 	}
 	if (mp->msg_control) {
 		if (mp->msg_controllen < CMSG_ALIGN(sizeof(struct cmsghdr))
@@ -703,6 +720,11 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 			error = copyout(mtod(from, caddr_t), mp->msg_name, alen);
 			if (error)
 				goto out;
+#ifdef KTRACE
+			if (KTRPOINT(p, KTR_STRUCT))
+				ktrsockaddr(p, mtod(from, caddr_t), alen);
+#endif
+
 		}
 		mp->msg_namelen = alen;
 		if (namelenp &&
@@ -917,8 +939,13 @@ sys_getsockname(struct proc *p, void *v, register_t *retval)
 	if (len > m->m_len)
 		len = m->m_len;
 	error = copyout(mtod(m, caddr_t), SCARG(uap, asa), len);
-	if (error == 0)
+	if (error == 0) {
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrsockaddr(p, mtod(m, caddr_t), len);
+#endif
 		error = copyout(&len, SCARG(uap, alen), sizeof (len));
+	}
 bad:
 	FRELE(fp);
 	if (m)
@@ -961,8 +988,13 @@ sys_getpeername(struct proc *p, void *v, register_t *retval)
 	if (len > m->m_len)
 		len = m->m_len;
 	error = copyout(mtod(m, caddr_t), SCARG(uap, asa), len);
-	if (error == 0)
+	if (error == 0) {
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrsockaddr(p, mtod(m, caddr_t), len);
+#endif
 		error = copyout(&len, SCARG(uap, alen), sizeof (len));
+	}
 bad:
 	FRELE(fp);
 	m_freem(m);

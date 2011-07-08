@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kdump.1,v 1.17 2007/05/31 19:20:11 jmc Exp $
+.\"	$OpenBSD: kdump.1,v 1.18 2011/07/08 19:29:44 otto Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)kdump.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 8 2011 $
 .Dt KDUMP 1
 .Os
 .Sh NAME
@@ -96,6 +96,9 @@ Show output only for the
 specified.
 .It Fl R
 Display relative timestamps (time since previous entry).
+.It Fl r
+When decoding STRU records, display structure members such as UIDs,
+GIDs, dates etc. symbolically instead of numerically.
 .It Fl T
 Display absolute timestamps for each entry (seconds since the Epoch).
 .It Fl t Op ceinsw

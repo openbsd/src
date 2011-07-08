@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.86 2011/04/02 17:04:35 guenther Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.87 2011/07/08 19:28:36 otto Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -59,6 +59,7 @@
 #include <sys/syscallargs.h>
 #include <sys/event.h>
 #include <sys/pool.h>
+#include <sys/ktrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -632,6 +633,10 @@ sys_fstat(struct proc *p, void *v, register_t *retval)
 		error = copyout((caddr_t)&ub, (caddr_t)SCARG(uap, sb),
 		    sizeof (ub));
 	}
+#ifdef KTRACE
+	if (error == 0 && KTRPOINT(p, KTR_STRUCT))
+		ktrstat(p, &ub);
+#endif
 	return (error);
 }
 

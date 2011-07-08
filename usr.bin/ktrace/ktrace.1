@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.1,v 1.20 2011/06/25 18:44:43 jmc Exp $
+.\"	$OpenBSD: ktrace.1,v 1.21 2011/07/08 19:29:44 otto Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)ktrace.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: June 25 2011 $
+.Dd $Mdocdate: July 8 2011 $
 .Dt KTRACE 1
 .Os
 .Sh NAME
@@ -108,8 +108,9 @@ The default flags are
 .Cm e ,
 .Cm i ,
 .Cm n ,
-and
-.Cm s .
+.Cm s ,
+and 
+.Cm t .
 The following table equates the letters with the tracepoints:
 .Pp
 .Bl -tag -width flag -offset indent -compact
@@ -123,6 +124,8 @@ trace I/O
 trace namei translations
 .It Cm s
 trace signal processing
+.It Cm t
+trace various structures
 .It Cm w
 trace context switch points
 .It Cm +

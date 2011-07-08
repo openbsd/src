@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.52 2011/07/07 18:11:24 art Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.53 2011/07/08 19:28:36 otto Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -275,6 +275,30 @@ ktrcsw(struct proc *p, int out, int user)
 	kth.ktr_len = sizeof(struct ktr_csw);
 
 	ktrwrite(p, &kth);
+	p->p_traceflag &= ~KTRFAC_ACTIVE;
+}
+
+void
+ktrstruct(struct proc *p, const char *name, const void *data, size_t datalen)
+{
+	struct ktr_header kth;
+	void *buf;
+	size_t buflen;
+
+	p->p_traceflag |= KTRFAC_ACTIVE;
+	ktrinitheader(&kth, p, KTR_STRUCT);
+	
+	if (data == NULL)
+		datalen = 0;
+	buflen = strlen(name) + 1 + datalen;
+	buf = malloc(buflen, M_TEMP, M_WAITOK);
+	strlcpy(buf, name, buflen);
+	bcopy(data, buf + strlen(name) + 1, datalen);
+	kth.ktr_buf = buf;
+	kth.ktr_len = buflen;
+
+	ktrwrite(p, &kth);
+	free(buf, M_TEMP);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 }
 
