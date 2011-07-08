@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.31 2011/07/08 07:20:39 dlg Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.32 2011/07/08 07:28:45 dlg Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -492,6 +492,22 @@ struct scsi_vpd_disk_info {
 #define VPD_DISK_INFO_FORM_1_8		0x4
 #define VPD_DISK_INFO_FORM_LT_1_8	0x5
 	u_int8_t		_reserved2[56];
+};
+
+struct scsi_vpd_disk_thin {
+	struct scsi_vpd_hdr	hdr;
+
+	u_int8_t		threshold_exponent;
+	u_int8_t		flags;
+#define VPD_DISK_THIN_DP		(1 << 0) /* descriptor present */
+#define VPD_DISK_THIN_ANC_SUP		(0x7 << 1)
+#define VPD_DISK_THIN_ANC_SUP_NO	(0x0 << 1)
+#define VPD_DISK_THIN_ANC_SUP_YES	(0x1 << 1)
+#define VPD_DISK_THIN_TPWS		(1 << 6) /* WRITE SAME 16 */
+#define VPD_DISK_THIN_TPU		(1 << 7) /* UNMAP */
+	u_int8_t		_reserved1[2];
+
+	/* followed by a designation descriptor if DP is set */
 };
 
 #endif /* _SCSI_SCSI_DISK_H */
