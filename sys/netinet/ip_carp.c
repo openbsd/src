@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.188 2011/07/04 03:13:53 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.189 2011/07/08 19:07:18 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -254,6 +254,7 @@ struct if_clone carp_cloner =
     IF_CLONE_INITIALIZER("carp", carp_clone_create, carp_clone_destroy);
 
 #define carp_cksum(_m, _l)	((u_int16_t)in_cksum((_m), (_l)))
+#define CARP_IFQ_PRIO	6
 
 void
 carp_hmac_prepare(struct carp_softc *sc)
@@ -1150,6 +1151,7 @@ carp_send_ad(void *v)
 		m->m_pkthdr.len = len;
 		m->m_pkthdr.rcvif = NULL;
 		m->m_pkthdr.rdomain = sc->sc_if.if_rdomain;
+		m->m_pkthdr.pf.prio = CARP_IFQ_PRIO;
 		m->m_len = len;
 		MH_ALIGN(m, m->m_len);
 		ip = mtod(m, struct ip *);
@@ -1239,6 +1241,7 @@ carp_send_ad(void *v)
 		len = sizeof(*ip6) + sizeof(ch);
 		m->m_pkthdr.len = len;
 		m->m_pkthdr.rcvif = NULL;
+		m->m_pkthdr.pf.prio = CARP_IFQ_PRIO;
 		/* XXX m->m_pkthdr.rdomain = sc->sc_if.if_rdomain; */
 		m->m_len = len;
 		MH_ALIGN(m, m->m_len);
