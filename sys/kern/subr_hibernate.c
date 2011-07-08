@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.5 2011/07/08 18:34:46 ariane Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.6 2011/07/08 21:00:53 ariane Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -260,6 +260,47 @@ uvm_pmr_zero_everything(void)
 			uvm_pmr_insert(pmr, pg, 0);
 		}
 	}
+	uvm_unlock_fpageq();
+}
+
+/*
+ * Mark all memory as dirty.
+ *
+ * Used to inform the system that the clean memory isn't clean for some
+ * reason, for example because we just came back from hibernate.
+ */
+void
+uvm_pmr_dirty_everything(void)
+{
+	struct uvm_pmemrange	*pmr;
+	struct vm_page		*pg;
+	int			 i;
+
+	uvm_lock_fpageq();
+	TAILQ_FOREACH(pmr, &uvm.pmr_control.use, pmr_use) {
+		/* Dirty single pages. */
+		while ((pg = TAILQ_FIRST(&pmr->single[UVM_PMR_MEMTYPE_ZERO]))
+		    != NULL) {
+			uvm_pmr_remove(pmr, pg);
+			uvm_pagezero(pg);
+			atomic_clearbits_int(&pg->pg_flags, PG_ZERO);
+			uvm_pmr_insert(pmr, pg, 0);
+		}
+
+		/* Dirty multi page ranges. */
+		while ((pg = RB_ROOT(&pmr->size[UVM_PMR_MEMTYPE_ZEOR]))
+		    != NULL) {
+			pg--; /* Size tree always has second page. */
+			uvm_pmr_remove(pmr, pg);
+			for (i = 0; i < pg->fpgsz; i++) {
+				uvm_pagezero(&pg[i]);
+				atomic_clearbits_int(&pg[i].pg_flags, PG_ZERO);
+			}
+			uvm_pmr_insert(pmr, pg, 0);
+		}
+	}
+
+	uvmexp.zeropages = 0;
 	uvm_unlock_fpageq();
 }
 

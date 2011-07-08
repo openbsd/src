@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.5 2011/07/08 18:34:46 ariane Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.6 2011/07/08 21:00:53 ariane Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -39,6 +39,7 @@ void	*hib_alloc(struct hiballoc_arena*, size_t);
 void	 hib_free(struct hiballoc_arena*, void*);
 int	 hiballoc_init(struct hiballoc_arena*, void*, size_t len);
 void	 uvm_pmr_zero_everything(void);
+void	 uvm_pmr_dirty_everything(void);
 int	 uvm_pmr_alloc_pig(paddr_t*, psize_t);
 int	 uvm_pmr_alloc_piglet(paddr_t*, psize_t, paddr_t);
 psize_t	 uvm_page_rle(paddr_t);
