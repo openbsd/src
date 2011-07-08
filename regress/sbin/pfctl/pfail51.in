@@ -1,0 +1,6 @@
+# test prio edge conditions
+
+pass on lo10000000 from any to any port 22 prio 8
+pass on lo10000000 from any to any port 22 prio -1
+pass on lo10000000 from any to any port 22 prio high
+pass on lo10000000 from any to any port 22 prio
