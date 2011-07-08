@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: mopd,v 1.1 2011/07/06 18:55:36 robert Exp $
+# $OpenBSD: mopd,v 1.2 2011/07/08 02:15:34 robert Exp $
 
 daemon="/usr/sbin/mopd"
 
@@ -9,7 +9,7 @@ daemon="/usr/sbin/mopd"
 rc_reload=NO
 
 rc_pre() {
-	[ -d /tftpboot/mop ] || return 1
+	[ -d /tftpboot/mop ]
 }
 
 rc_cmd $1

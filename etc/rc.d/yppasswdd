@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: yppasswdd,v 1.2 2011/07/07 18:23:17 robert Exp $
+# $OpenBSD: yppasswdd,v 1.3 2011/07/08 02:15:34 robert Exp $
 
 daemon="/usr/sbin/rpc.yppasswdd"
 
@@ -23,6 +23,7 @@ rc_pre() {
 			sed -e 's/^Name:    //'`
 	fi
 	[ "$_host2" != "$_host1" ] && return 1
+	return 0
 }
 
 rc_cmd $1

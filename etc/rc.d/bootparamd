@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: bootparamd,v 1.1 2011/07/06 18:55:36 robert Exp $
+# $OpenBSD: bootparamd,v 1.2 2011/07/08 02:15:34 robert Exp $
 
 daemon="/usr/sbin/rpc.bootparamd"
 
@@ -9,7 +9,7 @@ daemon="/usr/sbin/rpc.bootparamd"
 rc_reload=NO
 
 rc_pre() {
-	[ -s /etc/bootparams ] || return 1
+	[ -s /etc/bootparams ]
 }
 
 rc_cmd $1

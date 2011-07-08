@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.376 2011/07/08 02:02:02 deraadt Exp $
+#	$OpenBSD: rc,v 1.377 2011/07/08 02:15:34 robert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -446,12 +446,7 @@ start_daemon portmap
 if [ X"`domainname`" != X"" ]; then
 	start_daemon ypserv ypldap ypbind yppasswdd
 fi
-start_daemon mountd nfsd lockd statd
-
-if [ X"${amd}" = X"YES" -a -e ${amd_master} ]; then
-	echo -n ' amd'
-	(cd /etc/amd; amd `cat ${amd_master}`)
-fi
+start_daemon mountd nfsd lockd statd amd
 
 # run rdate before ntpd
 if [ X"${rdate_flags}" != X"NO" ]; then
@@ -553,17 +548,13 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 fi
 
 start_daemon hostapd rwhod lpd ldapd sendmail smtpd httpd ftpd
-start_daemon ftpproxy identd inetd rarpd bootparamd rbootd mopd spamd
+start_daemon ftpproxy identd inetd rarpd bootparamd rbootd mopd
+start_daemon spamd spamlogd
+
+echo '.'
 
 [ X"${spamd_flags}" != X"NO" ] && \
 	/usr/libexec/spamd-setup -D
-
-if [ X"${spamd_flags}" != X"NO" -a X"${spamd_black}" = X"NO" ]; then
-	echo -n ' spamlogd'
-	/usr/libexec/spamlogd ${spamlogd_flags}
-fi
-
-echo '.'
 
 if [ X"${kdc_flags}" != X"NO" ]; then
 	echo -n 'starting KerberosV daemons:'

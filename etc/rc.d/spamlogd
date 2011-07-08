@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# $OpenBSD: spamlogd,v 1.1 2011/07/08 02:15:34 robert Exp $
+
+daemon="/usr/libexec/spamlogd"
+
+. /etc/rc.d/rc.subr
+
+rc_reload=NO
+
+rc_pre() {
+	[  X"${spamd_flags}" != X"NO" -a X"${spamd_black}" = X"NO" ]
+}
+
+rc_cmd $1

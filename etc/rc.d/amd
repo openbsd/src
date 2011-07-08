@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+# $OpenBSD: amd,v 1.1 2011/07/08 02:15:34 robert Exp $
+
+daemon="/usr/sbin/amd"
+
+. /etc/rc.d/rc.subr
+
+rc_reload=NO
+rc_restart=NO
+rc_stop=NO
+
+rc_pre() {
+	[ -e ${amd_master} ]
+	daemon_flags=$(cat ${amd_master})
+	return 0
+}
+
+rc_cmd $1
