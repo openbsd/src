@@ -1,4 +1,4 @@
-/*	$OpenBSD: modf.c,v 1.3 2011/07/08 22:28:33 martynas Exp $	*/
+/*	$OpenBSD: modf.c,v 1.4 2011/07/08 22:48:19 martynas Exp $	*/
 /*	$NetBSD: modf.c,v 1.1 1995/02/10 17:50:25 cgd Exp $	*/
 
 /*
@@ -28,9 +28,12 @@
  * rights to redistribute these changes.
  */
 
+/* LINTLIBRARY */
+
 #include <sys/types.h>
 #include <machine/ieee.h>
 #include <errno.h>
+#include <float.h>
 #include <math.h>
 
 /*
@@ -102,3 +105,12 @@ modf(double val, double *iptr)
 	u.s.dbl_sign = v.s.dbl_sign;
 	return (u.v);
 }
+
+#if	LDBL_MANT_DIG == 53
+#ifdef	lint
+/* PROTOLIB1 */
+long double frexpl(long double, int *);
+#else	/* lint */
+__weak_alias(modfl, modf);
+#endif	/* lint */
+#endif	/* LDBL_MANT_DIG == 53 */

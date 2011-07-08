@@ -1,4 +1,4 @@
-.\"	$OpenBSD: modf.3,v 1.10 2011/07/08 22:28:33 martynas Exp $
+.\"	$OpenBSD: modf.3,v 1.11 2011/07/08 22:48:19 martynas Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,8 @@
 .Os
 .Sh NAME
 .Nm modf ,
-.Nm modff
+.Nm modff ,
+.Nm modfl
 .Nd extract signed integral and fractional values from floating-point number
 .Sh SYNOPSIS
 .Fd #include <math.h>
@@ -44,6 +45,8 @@
 .Fn modf "double value" "double *iptr"
 .Ft float
 .Fn modff "float value" "float *iptr"
+.Ft long double
+.Fn modfl "long double value" "long double *iptr"
 .Sh DESCRIPTION
 The
 .Fn modf
@@ -59,11 +62,16 @@ The
 .Fn modff
 function is a single precision version of
 .Fn modf .
+The
+.Fn modfl
+function is an extended precision version of
+.Fn modf .
 .Sh RETURN VALUES
 The
-.Fn modf
-and
+.Fn modf ,
 .Fn modff
+and
+.Fn modfl
 functions return the signed fractional part of
 .Fa value .
 .Sh SEE ALSO
