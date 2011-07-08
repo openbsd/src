@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_local.h,v 1.6 2011/07/06 20:52:28 yasuoka Exp $ */
+/* $OpenBSD: npppd_local.h,v 1.7 2011/07/08 06:14:54 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -169,7 +169,7 @@ typedef struct _npppd_iface_binding {
  */
 struct _npppd {
 	/** event handler */
-	struct event ev_sigterm, ev_sigint, ev_sighup, ev_timer;
+	struct event ev_sigterm, ev_sigint, ev_sighup, ev_sigchld, ev_timer;
 
 	/** interface which concentrates PPP  */
 	npppd_iface		iface[NPPPD_MAX_IFACE];
@@ -241,10 +241,12 @@ struct _npppd {
 	/** maximum PPP sessions */
 	int		max_session;
 
-	int /** whether finalizing or not */
+	u_int /** whether finalizing or not */
 	    finalizing:1,
 	    /** whether finalize completed or not */
-	    finalized:1;
+	    finalized:1,
+	    /** npppd stopped itself because of an error. */
+	    stop_by_error:1;
 };
 
 #ifndef	NPPPD_CONFIG_BUFSIZ

@@ -1,4 +1,4 @@
-/* $OpenBSD: privsep.c,v 1.2 2011/07/05 01:33:40 yasuoka Exp $ */
+/* $OpenBSD: privsep.c,v 1.3 2011/07/08 06:14:54 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/un.h>
 
 #include <netinet/in.h>
+#include <net/pfkeyv2.h>
 
 #include <stddef.h>
 #include <stdio.h>
@@ -30,16 +31,17 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <err.h>
+#include <event.h>
 
+#include "pathnames.h"
 #include "privsep.h"
 
-#undef nitems
 #ifndef nitems
 #define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
 enum PRIVSEP_CMD {
-	PRIVSEP_FINI,
 	PRIVSEP_OPEN,
 	PRIVSEP_SOCKET,
 	PRIVSEP_BIND,
@@ -86,7 +88,9 @@ struct PRIVSEP_COMMON_RESP {
 	int rerrno;
 };
 
-static void  privsep_priv_main (int);
+static void  privsep_priv_main (int, int);
+static void  privsep_priv_on_sockio (int, short, void *);
+static void  privsep_priv_on_monpipeio (int, short, void *);
 static int   privsep_recvfd (void);
 static int   privsep_common_resp (void);
 static void  privsep_sendfd(int, int, int);
@@ -96,46 +100,81 @@ static int   privsep_npppd_check_bind (struct PRIVSEP_BIND_ARG *);
 static int   privsep_npppd_check_sendto (struct PRIVSEP_SENDTO_ARG *);
 static int   privsep_npppd_check_unlink (struct PRIVSEP_UNLINK_ARG *);
 
-static int privsep_sock = -1;
+static int privsep_sock = -1, privsep_monpipe = -1;;
+static pid_t privsep_pid;
 
 int
 privsep_init(void)
 {
 	pid_t pid;
-	int pairsock[2];
+	int pairsock[] = { -1, -1 }, monpipe[] = { -1, -1 }, ival;
 
 	if (socketpair(AF_UNIX, SOCK_DGRAM, PF_UNSPEC, pairsock) == -1)
 		return -1;
-	if ((pid = fork()) < 0)
-		return -1;
 
+	ival = PRIVSEP_BUFSIZE;
+	if (setsockopt(pairsock[1], SOL_SOCKET, SO_SNDBUF, &ival, sizeof(ival))
+	    != 0)
+		goto fail;
+	if (setsockopt(pairsock[0], SOL_SOCKET, SO_RCVBUF, &ival, sizeof(ival))
+	    != 0)
+		goto fail;
+
+	/* pipe for monitoring */
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, monpipe) == -1)
+		goto fail;
+
+	if ((pid = fork()) < 0)
+		goto fail;
 	else if (pid == 0) {
 		setsid();
 		/* privileged process */
 		setproctitle("[priv]");
 		close(pairsock[1]);
-		privsep_priv_main(pairsock[0]);
+		close(monpipe[1]);
+		privsep_priv_main(pairsock[0], monpipe[0]);
 		_exit(0);
 		/* NOTREACHED */
 	}
 	close(pairsock[0]);
+	close(monpipe[0]);
 	privsep_sock = pairsock[1];
+	privsep_monpipe = monpipe[1];
+	privsep_pid = pid;
 
 	return 0;
+	/* NOTREACHED */
+fail:
+	if (pairsock[0] >= 0) {
+		close(pairsock[0]);
+		close(pairsock[1]);
+	}
+	if (monpipe[0] >= 0) {
+		close(monpipe[0]);
+		close(monpipe[1]);
+	}
+
+	return -1;
 }
 
 void
 privsep_fini(void)
 {
-	enum PRIVSEP_CMD cmd = PRIVSEP_FINI;
-
 	if (privsep_sock >= 0) {
-		send(privsep_sock, &cmd, sizeof(cmd), 0);
 		close(privsep_sock);
 		privsep_sock = -1;
 	}
+	if (privsep_monpipe >= 0) {
+		close(privsep_monpipe);
+		privsep_monpipe = -1;
+	}
 }
 
+pid_t
+privsep_priv_pid (void)
+{
+	return privsep_pid;
+}
 /***********************************************************************
  * Functions for from jail
  ***********************************************************************/
@@ -281,7 +320,7 @@ int
 priv_unlink(const char *path)
 {
 	int retval;
-	struct PRIVSEP_OPEN_ARG a;
+	struct PRIVSEP_UNLINK_ARG a;
 
 	a.cmd = PRIVSEP_UNLINK;
 	strlcpy(a.path, path, sizeof(a.path));
@@ -350,15 +389,39 @@ privsep_common_resp(void)
  * privileged process
  ***********************************************************************/
 static void
-privsep_priv_main(int sock)
+privsep_priv_main(int sock, int monpipe)
+{
+	struct event ev_sock, ev_monpipe;
+
+	event_init();
+
+	event_set(&ev_sock, sock, EV_READ | EV_PERSIST, privsep_priv_on_sockio,
+	    NULL);
+	event_set(&ev_monpipe, monpipe, EV_READ, privsep_priv_on_monpipeio,
+	    NULL);
+
+	if (event_add(&ev_sock, NULL) != 0)
+		err(1, "event_add() failed on %s()", __func__);
+	if (event_add(&ev_monpipe, NULL) != 0)
+		err(1, "event_add() failed on %s()", __func__);
+
+	event_loop(0);
+	close(sock);
+	close(monpipe);
+
+	exit(EXIT_SUCCESS);
+}
+
+static void
+privsep_priv_on_sockio(int sock, short evmask, void *ctx)
 {
 	int retval, fdesc;
-	u_char rbuf[2048], rcmsgbuf[128];
+	u_char rbuf[PRIVSEP_BUFSIZE], rcmsgbuf[128];
 	struct iovec riov[1];
 	struct msghdr rmsg;
 	struct cmsghdr *cm;
 
-	for (;;) {
+	if (evmask & EV_READ) {
 		fdesc = -1;
 
 		memset(&rmsg, 0, sizeof(rmsg));
@@ -369,9 +432,10 @@ privsep_priv_main(int sock)
 		rmsg.msg_control = rcmsgbuf;
 		rmsg.msg_controllen = sizeof(rcmsgbuf);
 
-		if ((retval = recvmsg(sock, &rmsg, 0)) <
-		    sizeof(enum PRIVSEP_CMD))
-			break;
+		if ((retval = recvmsg(sock, &rmsg, 0)) < 0) {
+			event_loopexit(NULL);
+			return;
+		}
 
 		for (cm = CMSG_FIRSTHDR(&rmsg); rmsg.msg_controllen != 0 && cm;
 		    cm = CMSG_NXTHDR(&rmsg, cm)) {
@@ -383,9 +447,6 @@ privsep_priv_main(int sock)
 		}
 
 		switch (*(enum PRIVSEP_CMD *)rbuf) {
-		case PRIVSEP_FINI:
-			goto loop_exit;
-			/* NOTREACHED */
 		case PRIVSEP_OPEN: {
 			struct PRIVSEP_OPEN_ARG	*a;
 
@@ -438,7 +499,7 @@ privsep_priv_main(int sock)
 				if ((r.retval = bind(fdesc,
 				    (struct sockaddr *)&a->name, a->namelen))
 				    != 0)
-				r.rerrno = errno;
+					r.rerrno = errno;
 				close(fdesc);
 				fdesc = -1;
 			}
@@ -450,7 +511,12 @@ privsep_priv_main(int sock)
 			struct PRIVSEP_COMMON_RESP r;
 
 			a = (struct PRIVSEP_SENDTO_ARG *)rbuf;
-			if (fdesc < 0) {
+			if (retval < sizeof(struct PRIVSEP_SENDTO_ARG) ||
+			    retval < offsetof(struct PRIVSEP_SENDTO_ARG,
+				    msg[a->len])) {
+				r.rerrno = EMSGSIZE;
+				r.retval = -1;
+			} else if (fdesc < 0) {
 				r.rerrno = EINVAL;
 				r.retval = -1;
 			} else if (privsep_npppd_check_sendto(a)) {
@@ -474,9 +540,13 @@ privsep_priv_main(int sock)
 			break;
 		}
 	}
-loop_exit:
+}
 
-	close(sock);
+static void
+privsep_priv_on_monpipeio(int sock, short evmask, void *ctx)
+{
+	/* called when the monitoring pipe is closed or broken */
+	event_loopexit(NULL);
 }
 
 static void
@@ -498,7 +568,7 @@ privsep_sendfd(int sock, int fdesc, int rerrno)
 	if (fdesc < 0) {
 		msg.msg_control = NULL;
 		msg.msg_controllen = 0;
-		r.rerrno = rerrno;
+		r.rerrno = (rerrno == 0)? errno : rerrno;
 	} else {
 		cm->cmsg_len = sizeof(cm_space);
 		cm->cmsg_level = SOL_SOCKET;
@@ -523,13 +593,29 @@ startswith(const char *str, const char *prefix)
 static int
 privsep_npppd_check_open(struct PRIVSEP_OPEN_ARG *arg)
 {
-	/* BPF, configuration file or /etc/resolv.conf */
-	if (startswith(arg->path, "/dev/bpf") ||
-	    (startswith(arg->path, "/etc/npppd/") && arg->flags == O_RDONLY) ||
-	    (strcmp(arg->path, "/etc/resolv.conf") == 0 &&
-		    arg->flags == O_RDONLY))
-		return 0;
+	int i;
+	struct _allow_paths {
+		const char *path;
+		int path_is_prefix;
+		int readonly;
+	} const allow_paths[] = {
+		{ NPPPD_DIR "/",	1,	1 },
+		{ "/dev/bpf",		1,	0 },
+		{ "/etc/resolv.conf",	0,	1 }
+	};
 
+	for (i = 0; i < nitems(allow_paths); i++) {
+		if (allow_paths[i].path_is_prefix) {
+			if (!startswith(arg->path, allow_paths[i].path))
+				continue;
+		} else if (strcmp(arg->path, allow_paths[i].path) != 0)
+			continue;
+		if (allow_paths[i].readonly) {
+		    	if ((arg->flags & O_ACCMODE) != O_RDONLY)
+				continue;
+		}
+ 		return 0;
+	}
 	return 1;
 }
 
@@ -543,7 +629,12 @@ privsep_npppd_check_socket(struct PRIVSEP_SOCKET_ARG *arg)
 
 	/* npppd uses raw ip socket for GRE */
 	if (arg->domain == AF_INET && arg->type == SOCK_RAW &&
-	    arg->protocol  == IPPROTO_GRE)
+	    arg->protocol == IPPROTO_GRE)
+		return 0;
+
+	/* L2TP uses PF_KEY socket to delete IPsec-SA */
+	if (arg->domain == PF_KEY && arg->type == SOCK_RAW &&
+	    arg->protocol == PF_KEY_V2)
 		return 0;
 
 	return 1;

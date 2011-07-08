@@ -56,4 +56,10 @@ static int         sockaddr_is_valid (struct sockaddr *);
 #define	countof(x)	(sizeof((x)) / sizeof((x)[0]))
 #endif
 
+#ifdef USE_IPSEC_UTIL_PRIVSEP
+#include <stdio.h>
+#include "privsep.h"
+#define	socket	priv_socket
+#endif
+
 struct timeval const KEYSOCK_RCVTIMEO = { .tv_sec = 0, .tv_usec = 500000L };

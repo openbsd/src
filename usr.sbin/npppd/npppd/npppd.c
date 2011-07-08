@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd.c,v 1.11 2011/07/06 20:52:28 yasuoka Exp $ */
+/* $OpenBSD: npppd.c,v 1.12 2011/07/08 06:14:54 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.11 2011/07/06 20:52:28 yasuoka Exp $
+ * $Id: npppd.c,v 1.12 2011/07/08 06:14:54 yasuoka Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"
@@ -49,6 +49,7 @@ __COPYRIGHT(
 #include <sys/socket.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <sys/wait.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -113,9 +114,10 @@ static uint32_t        str_hash(const void *, int);
 static void            npppd_on_sighup (int, short, void *);
 static void            npppd_on_sigterm (int, short, void *);
 static void            npppd_on_sigint (int, short, void *);
+static void            npppd_on_sigchld (int, short, void *);
 static void            npppd_reset_timer(npppd *);
 static void            npppd_timer(int, short, void *);
-static void	       npppd_auth_finalizer_periodic(npppd *);
+static void            npppd_auth_finalizer_periodic(npppd *);
 static int  rd2slist_walk (struct radish *, void *);
 static int  rd2slist (struct radish_head *, slist *);
 static inline void     seed_random(long *);
@@ -146,11 +148,12 @@ int        main (int, char *[]);
 int
 main(int argc, char *argv[])
 {
-	int ch, retval = 0, ll_adjust = 0, runasdaemon = 0;
+	int ch, retstatus, ll_adjust = 0, runasdaemon = 0;
 	extern char *optarg;
 	const char *npppd_conf0 = DEFAULT_NPPPD_CONF;
 	struct passwd *pw;
 
+	retstatus = EXIT_SUCCESS;
 	while ((ch = getopt(argc, argv, "Dc:dhs")) != -1) {
 		switch (ch) {
 		case 's':
@@ -192,7 +195,7 @@ main(int argc, char *argv[])
 		err(1, "cannot drop privileges");
 
 	if (npppd_init(&s_npppd, npppd_conf0) != 0) {
-		retval = 1;
+		retstatus = EXIT_FAILURE;
 		goto fail;
 	}
 
@@ -209,13 +212,15 @@ main(int argc, char *argv[])
 	/* privileges is dropped */
 
 	npppd_start(&s_npppd);
+	if (s_npppd.stop_by_error != 0)
+		retstatus = EXIT_FAILURE;
 	npppd_fini(&s_npppd);
 	/* FALLTHROUGH */
 fail:
 	privsep_fini();
 	log_printf(LOG_NOTICE, "Terminate npppd.");
 
-	return retval;
+	exit(retstatus);
 }
 
 static void
@@ -346,9 +351,11 @@ npppd_init(npppd *_this, const char *config_file)
 	signal_set(&_this->ev_sigterm, SIGTERM, npppd_on_sigterm, _this);
 	signal_set(&_this->ev_sigint, SIGINT, npppd_on_sigint, _this);
 	signal_set(&_this->ev_sighup, SIGHUP, npppd_on_sighup, _this);
+	signal_set(&_this->ev_sigchld, SIGCHLD, npppd_on_sigchld, _this);
 	signal_add(&_this->ev_sigterm, NULL);
 	signal_add(&_this->ev_sigint, NULL);
 	signal_add(&_this->ev_sighup, NULL);
+	signal_add(&_this->ev_sigchld, NULL);
 
 	evtimer_set(&_this->ev_timer, npppd_timer, _this);
 
@@ -493,6 +500,7 @@ npppd_fini(npppd *_this)
 	signal_del(&_this->ev_sigterm);
 	signal_del(&_this->ev_sigint);
 	signal_del(&_this->ev_sighup);
+	signal_del(&_this->ev_sigchld);
 
 	if (_this->properties != NULL)
 		properties_destroy(_this->properties);
@@ -1923,6 +1931,28 @@ npppd_on_sigint(int fd, short ev_type, void *ctx)
 	npppd_stop(_this);
 }
 
+static void
+npppd_on_sigchld(int fd, short ev_type, void *ctx)
+{
+	int status;
+	pid_t wpid;
+	npppd *_this;
+
+	_this = ctx;
+	wpid = privsep_priv_pid();
+	if (wait4(wpid, &status, WNOHANG, NULL) == wpid) {
+		if (WIFSIGNALED(status))
+			log_printf(LOG_WARNING,
+			    "priviledged process exits abnormaly.  signal=%d",
+			    WTERMSIG(status));
+		else
+			log_printf(LOG_WARNING,
+			    "priviledged process exits abnormaly.  status=%d",
+			    WEXITSTATUS(status));
+		_this->stop_by_error = 1;
+		npppd_stop(_this);
+	}
+}
 /***********************************************************************
  * Miscellaneous functions
  ***********************************************************************/
