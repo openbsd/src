@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.378 2011/07/08 04:54:12 robert Exp $
+#	$OpenBSD: rc,v 1.379 2011/07/08 09:48:18 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -414,8 +414,8 @@ dmesg >/var/run/dmesg.boot
 
 make_keys
 
-echo -n 'starting system logger:'
-start_daemon syslogd
+echo -n 'starting early daemons:'
+start_daemon syslogd ldattach
 
 if [ X"${pf}" != X"NO" ]; then
 	ifconfig pflog0 create >/dev/null 2>&1
@@ -425,14 +425,7 @@ if [ X"${pf}" != X"NO" ]; then
 	fi
 fi
 
-echo '.'
-
-echo -n 'starting name service daemons:'
-start_daemon named nsd
-echo '.'
-
-echo -n 'starting IPsec daemons:'
-start_daemon isakmpd iked sasyncd
+start_daemon named nsd ntpd isakmpd iked sasyncd
 echo '.'
 
 if [ X"${ipsec}" != X"NO" ]; then
@@ -441,21 +434,12 @@ if [ X"${ipsec}" != X"NO" ]; then
 	fi
 fi
 
-echo -n 'starting initial daemons:'
-
+echo -n 'starting RPC daemons:'
 start_daemon portmap
 if [ X"`domainname`" != X"" ]; then
 	start_daemon ypserv ypldap ypbind yppasswdd
 fi
 start_daemon mountd nfsd lockd statd amd
-
-# run rdate before ntpd
-if [ X"${rdate_flags}" != X"NO" ]; then
-	echo -n ' rdate';	rdate -s ${rdate_flags}
-fi
-
-start_daemon ldattach ntpd
-
 echo '.'
 
 mount -a
@@ -535,9 +519,8 @@ fi
 echo 'preserving editor files.';	/usr/libexec/vi.recover
 
 echo -n 'starting network daemons:'
-
-start_daemon sshd snmpd ldpd ripd bgpd ifstated relayd dhcpd \
-	dhcrelay mrouted dvmrpd
+start_daemon sshd snmpd ldpd ripd bgpd ifstated relayd dhcpd
+start_daemon dhcrelay mrouted dvmrpd
 
 if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	fw=`sysctl -n net.inet6.ip6.forwarding`
@@ -550,17 +533,11 @@ fi
 
 start_daemon hostapd rwhod lpd ldapd sendmail smtpd httpd ftpd
 start_daemon ftpproxy identd inetd rarpd bootparamd rbootd mopd
-start_daemon spamd spamlogd
-
+start_daemon spamd spamlogd kdc kadmind kpasswdd
 echo '.'
 
-[ X"${spamd_flags}" != X"NO" ] && \
+if [ X"${spamd_flags}" != X"NO" ]; then
 	/usr/libexec/spamd-setup -D
-
-if [ X"${kdc_flags}" != X"NO" ]; then
-	echo -n 'starting KerberosV daemons:'
-	start_daemon kdc kadmind kpasswdd
-	echo '.'
 fi
 
 # If rc.firstime exists, run it just once, and make sure it is deleted
@@ -582,21 +559,12 @@ fi
 
 [ -f /etc/rc.local ] && . /etc/rc.local
 
-echo -n 'starting standard daemons:'
+ifconfig -g carp -carpdemote 128	# disable carp interlock
 
-start_daemon apmd sensorsd hotplugd watchdogd cron
-
-# disable carp interlock
-ifconfig -g carp -carpdemote 128
-
+mixerctl_conf
+echo -n 'starting local daemons:'
+start_daemon apmd sensorsd hotplugd watchdogd cron aucat wsmoused xdm
 echo '.'
 
 date
-
-mixerctl_conf
-
-echo -n 'starting console services:'
-start_daemon aucat wsmoused xdm
-echo '.'
-
 exit 0
