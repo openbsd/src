@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.521 2011/07/08 17:58:16 ariane Exp $
+#	$OpenBSD: files,v 1.522 2011/07/08 18:38:53 ariane Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -721,7 +721,7 @@ file kern/subr_autoconf.c
 file kern/subr_disk.c
 file kern/subr_evcount.c
 file kern/subr_extent.c
-file kern/subr_hibernate.c		!small_kernel
+file kern/subr_hibernate.c		hibernate
 file kern/subr_log.c
 file kern/subr_pool.c
 file kern/dma_alloc.c
