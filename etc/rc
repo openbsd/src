@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.382 2011/07/08 22:03:56 deraadt Exp $
+#	$OpenBSD: rc,v 1.383 2011/07/08 22:20:05 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -509,8 +509,8 @@ fi
 echo 'preserving editor files.';	/usr/libexec/vi.recover
 
 echo -n 'starting network daemons:'
-start_daemon sshd snmpd ldpd ripd bgpd ifstated relayd dhcpd
-start_daemon dhcrelay mrouted dvmrpd
+start_daemon sshd snmpd ldpd ripd ospfd ospf6d bgpd ifstated
+start_daemon relayd dhcpd dhcrelay mrouted dvmrpd
 
 if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	fw=`sysctl -n net.inet6.ip6.forwarding`
