@@ -1,4 +1,4 @@
-/*	$OpenBSD: clit.c,v 1.6 2007/09/02 15:19:33 deraadt Exp $	*/
+/*	$OpenBSD: clit.c,v 1.7 2011/07/08 23:42:27 nicm Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -153,7 +153,7 @@ cmdinit(struct clit *cmds, int ncmds)
 	el_set(env->el, EL_PROMPT, prompt);
 	el_set(env->el, EL_HIST, history, env->hist);
 	el_set(env->el, EL_ADDFN, "complt", "complete", complt);
-	el_set(env->el, EL_BIND, "\t", "complt");
+	el_set(env->el, EL_BIND, "\t", "complt", NULL);
 	el_source(env->el, NULL);
 
 	/* XXX - EL_SIGNAL ? */
