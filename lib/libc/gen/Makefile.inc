@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.52 2011/07/08 22:28:33 martynas Exp $
+#	$OpenBSD: Makefile.inc,v 1.53 2011/07/08 22:58:54 martynas Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
@@ -49,8 +49,8 @@ errlst.o errlst.po:
 
 MAN+=	alarm.3 auth_subr.3 authenticate.3 basename.3 clock.3 confstr.3 \
 	ctermid.3 ctype.3 daemon.3 devname.3 directory.3 dirname.3 err.3 \
-	exec.3 fnmatch.3 fpclassify.3 fpgetmask.3 frexp.3 ftok.3 fts.3 ftw.3 \
-	getbsize.3 getcap.3 getcwd.3 getdomainname.3 getdiskbyname.3 \
+	exec.3 fabs.3 fnmatch.3 fpclassify.3 fpgetmask.3 frexp.3 ftok.3 fts.3 \
+	ftw.3 getbsize.3 getcap.3 getcwd.3 getdomainname.3 getdiskbyname.3 \
 	getfsent.3 getgrent.3 getgrouplist.3 gethostname.3 getloadavg.3 \
 	getmntinfo.3 getnetgrent.3 getpagesize.3 getpass.3 getpwent.3 \
 	getpwnam.3 \
@@ -86,6 +86,7 @@ MLINKS+=err.3 verr.3 err.3 errx.3 err.3 verrx.3 err.3 warn.3 err.3 vwarn.3 \
 	err.3 warnx.3 err.3 vwarnx.3
 MLINKS+=exec.3 execl.3 exec.3 execle.3 exec.3 execlp.3 exec.3 execv.3 \
 	exec.3 execvp.3
+MLINKS+=fabs.3 fabsf.3 fabs.3 fabsl.3
 MLINKS+=fpclassify.3 finite.3 fpclassify.3 finitef.3 fpclassify.3 isfinite.3 \
 	fpclassify.3 isinf.3 fpclassify.3 isinff.3 fpclassify.3 isnan.3 \
 	fpclassify.3 isnanf.3 fpclassify.3 isnormal.3 fpclassify.3 signbit.3
@@ -124,7 +125,7 @@ MLINKS+=login_cap.3 login_getclass.3 login_cap.3 login_getstyle.3 login_cap.3 \
 	login_getcapsize.3 login_cap.3 login_getcapstr.3 login_cap.3 \
 	login_getcaptime.3 login_cap.3 login_close.3 login_cap.3 \
 	secure_path.3 login_cap.3 setclasscontext.3 login_cap.3 setusercontext.3
-MLINKS+=modf.3 modff.3
+MLINKS+=modf.3 modff.3 modf.3 modfl.3
 MLINKS+=popen.3 pclose.3
 MLINKS+=psignal.3 sys_siglist.3 psignal.3 sys_signame.3
 MLINKS+=pwcache.3 user_from_uid.3 pwcache.3 group_from_gid.3
