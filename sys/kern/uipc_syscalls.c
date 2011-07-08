@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.81 2011/07/08 19:28:38 otto Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.82 2011/07/08 20:54:03 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -410,9 +410,7 @@ sys_sendto(struct proc *p, void *v, register_t *retval)
 	msg.msg_iov = &aiov;
 	msg.msg_iovlen = 1;
 	msg.msg_control = 0;
-#ifdef COMPAT_OLDSOCK
 	msg.msg_flags = 0;
-#endif
 	aiov.iov_base = (char *)SCARG(uap, buf);
 	aiov.iov_len = SCARG(uap, len);
 	return (sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval));
@@ -445,9 +443,7 @@ sys_sendmsg(struct proc *p, void *v, register_t *retval)
 		    (unsigned)(msg.msg_iovlen * sizeof (struct iovec)))))
 		goto done;
 	msg.msg_iov = iov;
-#ifdef COMPAT_OLDSOCK
 	msg.msg_flags = 0;
-#endif
 	error = sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
 done:
 	if (iov != aiov)
@@ -500,11 +496,7 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 #endif
 	}
 	if (mp->msg_control) {
-		if (mp->msg_controllen < CMSG_ALIGN(sizeof(struct cmsghdr))
-#ifdef COMPAT_OLDSOCK
-		    && mp->msg_flags != MSG_COMPAT
-#endif
-		) {
+		if (mp->msg_controllen < CMSG_ALIGN(sizeof(struct cmsghdr))) {
 			error = EINVAL;
 			goto bad;
 		}
@@ -512,17 +504,6 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 				 mp->msg_controllen, MT_CONTROL);
 		if (error)
 			goto bad;
-#ifdef COMPAT_OLDSOCK
-		if (mp->msg_flags == MSG_COMPAT) {
-			struct cmsghdr *cm;
-
-			M_PREPEND(control, sizeof(*cm), M_WAIT);
-			cm = mtod(control, struct cmsghdr *);
-			cm->cmsg_len = control->m_len;
-			cm->cmsg_level = SOL_SOCKET;
-			cm->cmsg_type = SCM_RIGHTS;
-		}
-#endif
 	} else
 		control = 0;
 #ifdef KTRACE
@@ -616,11 +597,7 @@ sys_recvmsg(struct proc *p, void *v, register_t *retval)
 		    M_IOV, M_WAITOK);
 	else
 		iov = aiov;
-#ifdef COMPAT_OLDSOCK
-	msg.msg_flags = SCARG(uap, flags) &~ MSG_COMPAT;
-#else
 	msg.msg_flags = SCARG(uap, flags);
-#endif
 	if (msg.msg_iovlen > 0) {
 		error = copyin(msg.msg_iov, iov,
 		    (unsigned)(msg.msg_iovlen * sizeof (struct iovec)));
@@ -707,17 +684,9 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 		if (from == NULL)
 			alen = 0;
 		else {
-			/* save sa_len before it is destroyed by MSG_COMPAT */
-			alen = mp->msg_namelen;
-			if (alen > from->m_len)
-				alen = from->m_len;
-			/* else if alen < from->m_len ??? */
-#ifdef COMPAT_OLDSOCK
-			if (mp->msg_flags & MSG_COMPAT)
-				mtod(from, struct osockaddr *)->sa_family =
-				    mtod(from, struct sockaddr *)->sa_family;
-#endif
-			error = copyout(mtod(from, caddr_t), mp->msg_name, alen);
+			alen = MIN(from->m_len, mp->msg_namelen);
+			error = copyout(mtod(from, caddr_t), mp->msg_name,
+			    alen);
 			if (error)
 				goto out;
 #ifdef KTRACE
@@ -729,35 +698,10 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 		mp->msg_namelen = alen;
 		if (namelenp &&
 		    (error = copyout(&alen, namelenp, sizeof(alen)))) {
-#ifdef COMPAT_OLDSOCK
-			if (mp->msg_flags & MSG_COMPAT)
-				error = 0;	/* old recvfrom didn't check */
-			else
-#endif
 			goto out;
 		}
 	}
 	if (mp->msg_control) {
-#ifdef COMPAT_OLDSOCK
-		/*
-		 * We assume that old recvmsg calls won't receive access
-		 * rights and other control info, esp. as control info
-		 * is always optional and those options didn't exist in 4.3.
-		 * If we receive rights, trim the cmsghdr; anything else
-		 * is tossed.
-		 */
-		if (control && mp->msg_flags & MSG_COMPAT) {
-			if (mtod(control, struct cmsghdr *)->cmsg_level !=
-			    SOL_SOCKET ||
-			    mtod(control, struct cmsghdr *)->cmsg_type !=
-			    SCM_RIGHTS) {
-				mp->msg_controllen = 0;
-				goto out;
-			}
-			control->m_len -= sizeof (struct cmsghdr);
-			control->m_data += sizeof (struct cmsghdr);
-		}
-#endif
 		len = mp->msg_controllen;
 		if (len <= 0 || control == NULL)
 			len = 0;
@@ -1034,7 +978,7 @@ sockargs(struct mbuf **mp, const void *buf, size_t buflen, int type)
 	*mp = m;
 	if (type == MT_SONAME) {
 		sa = mtod(m, struct sockaddr *);
-#if defined(COMPAT_OLDSOCK) && BYTE_ORDER != BIG_ENDIAN
+#if BYTE_ORDER != BIG_ENDIAN
 		if (sa->sa_family == 0 && sa->sa_len < AF_MAX)
 			sa->sa_family = sa->sa_len;
 #endif

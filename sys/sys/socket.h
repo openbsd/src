@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.75 2011/07/08 20:09:38 mikeb Exp $	*/
+/*	$OpenBSD: socket.h,v 1.76 2011/07/08 20:53:59 deraadt Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -516,12 +516,8 @@ int	socketpair(int, int, int, int *);
 int	getrtable(void);
 int	setrtable(int);
 __END_DECLS
-#else
-# if defined(COMPAT_43) || defined(COMPAT_LINUX)
-#  define COMPAT_OLDSOCK
-#  define MSG_COMPAT	0x8000
-# endif
 
+#else
 void	pfctlinput(int, struct sockaddr *);
 #endif /* !_KERNEL */
 
