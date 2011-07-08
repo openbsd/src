@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.31 2011/07/08 18:20:10 ariane Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.32 2011/07/08 18:25:56 ariane Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -1942,49 +1942,3 @@ uvm_wakeup_pla(paddr_t low, psize_t len)
 		}
 	}
 }
-
-#ifndef SMALL_KERNEL
-/*
- * Allocate the biggest contig chunk of memory.
- */
-int
-uvm_pmr_alloc_pig(paddr_t *addr, psize_t *sz)
-{
-	struct uvm_pmemrange	*pig_pmr, *pmr;
-	struct vm_page		*pig_pg, *pg;
-	int			 memtype;
-
-	uvm_lock_fpageq();
-	pig_pg = NULL;
-	TAILQ_FOREACH(pmr, &uvm.pmr_control.use, pmr_use) {
-		for (memtype = 0; memtype < UVM_PMR_MEMTYPE_MAX; memtype++) {
-			/* Find biggest page in this memtype pmr. */
-			pg = RB_MAX(uvm_pmr_size, &pmr->size[memtype]);
-			if (pg == NULL)
-				pg = TAILQ_FIRST(&pmr->single[memtype]);
-			else
-				pg--;
-
-			if (pig_pg == NULL || (pg != NULL && pig_pg != NULL &&
-			    pig_pg->fpgsz < pg->fpgsz)) {
-				pig_pmr = pmr;
-				pig_pg = pg;
-			}
-		}
-	}
-
-	/* Remove page from freelist. */
-	if (pig_pg != NULL) {
-		uvm_pmr_remove(pig_pmr, pig_pg);
-		uvmexp.free -= pig_pg->fpgsz;
-		if (pig_pg->pg_flags & PG_ZERO)
-			uvmexp.zeropages -= pig_pg->fpgsz;
-		*addr = VM_PAGE_TO_PHYS(pig_pg);
-		*sz = pig_pg->fpgsz;
-	}
-	uvm_unlock_fpageq();
-
-	/* Return. */
-	return (pig_pg != NULL ? 0 : ENOMEM);
-}
-#endif /* SMALL_KERNEL */
