@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.1 2007/05/31 18:27:59 reyk Exp $	*/
+/*	$OpenBSD: build.c,v 1.2 2011/07/08 03:58:27 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -27,45 +27,71 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
+#include <zlib.h>
 
-#include "myxfw.h"
+#include "eth_z8e.h"
+#include "ethp_z8e.h"
+
+#define CHUNK 8192
 
 void
-myx_build_firmware(u_int32_t *fw, size_t len, const char *file)
+myx_build_firmware(u_int8_t *fw, size_t len, size_t ulen, const char *file)
 {
-	int		fd, rlen;
-	size_t		i, total = 0;
-	u_int32_t	data;
+	z_stream zs;
 
-	printf("creating %s", file);
-	fd = open(file, O_WRONLY|O_CREAT|O_TRUNC, 0644);
-	if (fd == -1)
+	FILE *f;
+	size_t rlen, total = 0;
+	u_int8_t *ufw;
+	int rv;
+
+	f = fopen(file, "w");
+	if (f == NULL)
 		err(1, file);
 
-	for (i = 0; i < len; i++) {
-		data = letoh32(fw[i]);
-		rlen = write(fd, &data, sizeof(u_int32_t));
-		if (rlen == -1) {
-			printf("\n");
+	ufw = malloc(ulen);
+	if (ufw == NULL)
+		err(1, "ufw malloc");
+
+	bzero(&zs, sizeof (zs));
+	rv = inflateInit(&zs);
+	if (rv != Z_OK)
+		errx(1, "uncompress init failure");
+
+	zs.avail_in = len;
+	zs.next_in = fw;
+	zs.avail_out = ulen;
+	zs.next_out = ufw;
+	rv = inflate(&zs, Z_FINISH);
+        if (rv != Z_STREAM_END)
+		errx(1, "zlib %d", rv);
+
+	inflateEnd(&zs);
+
+	do {
+		rlen = ulen - total;
+		if (rlen > CHUNK)
+			rlen = CHUNK;
+
+		if (fwrite(&ufw[total], rlen, 1, f) < 1) {
+			if (!ferror(f))
+				errx(1, "unexpected short write");
 			err(1, "%s", file);
 		}
-		if (rlen != sizeof(u_int32_t)) {
-			printf("\n");
-			errx(1, "%s: short write", file);
-		}
-		total += rlen;
-	}
 
-	printf(" total %d\n", total);
-	close(fd);
+		total += rlen;
+	} while (total < ulen);
+
+	printf("%s: len %zu -> %zu\n", file, len, ulen);
+	free(ufw);
+	fclose(f);
 }
 
 int
 main(int argc, char *argv[])
 {
-	myx_build_firmware(myxfw_eth_z8e,
-	    MYXFW_ETH_Z8E_SIZE, MYXFW_ALIGNED);
-	myx_build_firmware(myxfw_ethp_z8e,
-	    MYXFW_ETHP_Z8E_SIZE, MYXFW_UNALIGNED);
+	myx_build_firmware(eth_z8e, eth_z8e_length,
+	    eth_z8e_uncompressed_length, MYXFW_ALIGNED);
+	myx_build_firmware(ethp_z8e, ethp_z8e_length,
+	    ethp_z8e_uncompressed_length, MYXFW_UNALIGNED);
 	return (0);
 }
