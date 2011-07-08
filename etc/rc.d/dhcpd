@@ -1,15 +1,15 @@
 #!/bin/sh
 #
-# $OpenBSD: dhcpd,v 1.1 2011/07/06 18:55:36 robert Exp $
+# $OpenBSD: dhcpd,v 1.2 2011/07/08 04:29:54 ajacoutot Exp $
 
 daemon="/usr/sbin/dhcpd"
 
 . /etc/rc.d/rc.subr
 
+rc_reload=NO
+
 rc_pre() {
 	touch /var/db/dhcpd.leases
 }
-
-rc_reload=NO
 
 rc_cmd $1
