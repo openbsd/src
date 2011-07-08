@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.30 2011/07/07 22:50:42 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.31 2011/07/08 22:26:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -1079,7 +1079,7 @@ TLABEL(all_virt)
 	ldo	R%__gp(%dp), %dp
 	copy	%arg1, %r5
 
-	depd	%r0, T_USER_POS+1, T_USER_POS, %arg0
+	depd	%r0, T_USER_POS-1, T_USER_POS, %arg0
 	.import trap, code
 	b,l	trap, %rp
 	copy	%arg0, %r4
