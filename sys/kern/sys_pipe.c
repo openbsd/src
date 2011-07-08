@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.60 2011/07/08 05:01:27 matthew Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.61 2011/07/08 19:00:09 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -144,15 +144,12 @@ sys_pipe(struct proc *p, void *v, register_t *retval)
 	FILE_SET_MATURE(rf);
 	FILE_SET_MATURE(wf);
 
-	fdpunlock(fdp);
-
 	error = copyout(fds, SCARG(uap, fdp), sizeof(fds));
 	if (error != 0) {
-		fdplock(fdp);
 		fdrelease(p, fds[0]);
 		fdrelease(p, fds[1]);
-		fdpunlock(fdp);
 	}
+	fdpunlock(fdp);
 	return (error);
 
 free3:
