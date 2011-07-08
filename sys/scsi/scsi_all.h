@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.52 2010/12/24 02:45:33 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.53 2011/07/08 08:13:19 dlg Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -307,6 +307,21 @@ struct scsi_vpd_devid_hdr {
 #define VPD_DEVID_TYPE_NAME		0x8
 	u_int8_t reserved;
 	u_int8_t len;
+};
+
+struct scsi_vpd_ata {
+	struct scsi_vpd_hdr hdr;
+
+	u_int8_t _reserved1[4];
+	u_int8_t sat_vendor[8];
+	u_int8_t sat_product[16];
+	u_int8_t sat_revision[4];
+	u_int8_t device_signature[20];
+	u_int8_t command_code;
+#define VPD_ATA_COMMAND_CODE_ATA	0xec
+#define VPD_ATA_COMMAND_CODE_ATAPI	0xa1
+	u_int8_t _reserved2[3];
+	u_int8_t identify[512];
 };
 
 struct scsi_sense_data_unextended {
