@@ -2298,7 +2298,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/gmon.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/gpio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/hash.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/sys/hiballoc.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/sys/hibernate.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/hotplug.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/ioccom.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/ioctl.ph

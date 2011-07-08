@@ -2409,7 +2409,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/gmon.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/gpio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/hash.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/hiballoc.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/hibernate.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/hotplug.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/ioccom.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/ioctl.ph

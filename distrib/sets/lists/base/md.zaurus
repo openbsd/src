@@ -2265,7 +2265,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/gmon.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/gpio.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/hash.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/sys/hiballoc.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/sys/hibernate.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/hotplug.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/ioccom.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/ioctl.ph
