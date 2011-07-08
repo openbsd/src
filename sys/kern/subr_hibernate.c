@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.4 2011/07/08 18:31:16 ariane Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.5 2011/07/08 18:34:46 ariane Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -450,4 +450,37 @@ found:
 
 	uvm_unlock_fpageq();
 	return 0;
+}
+
+/*
+ * Physmem RLE compression support.
+ *
+ * Given a physical page address, it will return the number of pages 
+ * starting at the address, that are free.
+ * Returns 0 if the page at addr is not free.
+ */
+psize_t
+uvm_page_rle(paddr_t addr)
+{
+	struct vm_page		*pg, *pg_end;
+	struct vm_physseg	*vmp;
+	int			 pseg_idx, off_idx;
+
+	pseg_idx = vm_physseg_find(atop(addr), &off_idx);
+	if (pseg_idx == -1)
+		return 0;
+
+	vmp = &vm_physmem[pseg_idx];
+	pg = &vmp->pgs[off_idx];
+	if (!(pg->pg_flags & PQ_FREE))
+		return 0;
+
+	/*
+	 * Search for the first non-free page after pg.
+	 * Note that the page may not be the first page in a free pmemrange,
+	 * therefore pg->fpgsz cannot be used.
+	 */
+	for (pg_end = pg; pg_end <= vmp->lastpg &&
+	    (pg_end->pg_flags & PQ_FREE) == PQ_FREE; pg_end++);
+	return pg_end - pg;
 }
