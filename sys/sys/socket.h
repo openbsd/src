@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.73 2011/07/04 00:33:36 mikeb Exp $	*/
+/*	$OpenBSD: socket.h,v 1.74 2011/07/08 18:38:55 yasuoka Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -153,7 +153,8 @@ struct	splice {
 #define	AF_BLUETOOTH	32		/* Bluetooth */
 #define AF_MPLS         33              /* MPLS */
 #define pseudo_AF_PFLOW 34		/* pflow */
-#define AF_MAX          35
+#define pseudo_AF_PIPEX 35		/* PIPEX */
+#define AF_MAX          36
 
 /*
  * Structure used by kernel to store most
@@ -234,6 +235,7 @@ struct sockproto {
 #define	PF_BLUETOOTH	AF_BLUETOOTH
 #define PF_MPLS		AF_MPLS
 #define PF_PFLOW	pseudo_AF_PFLOW
+#define PF_PIPEX	pseudo_AF_PIPEX
 #define	PF_MAX		AF_MAX
 
 /*
@@ -316,6 +318,7 @@ struct sockpeercred {
 	{ "bluetooth", CTLTYPE_NODE }, \
 	{ "mpls", CTLTYPE_NODE }, \
 	{ "pflow", CTLTYPE_NODE }, \
+	{ "pipex", CTLTYPE_NODE }, \
 }
 
 /*
