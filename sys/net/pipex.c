@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.19 2011/07/08 18:30:17 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.20 2011/07/08 19:34:04 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1252,6 +1252,64 @@ drop:
 	return;
 }
 
+Static struct mbuf *
+pipex_common_input(struct pipex_session *session, struct mbuf *m0, int hlen,
+    int plen)
+{
+	int proto, ppphlen;
+	u_char code;
+
+	if (m0->m_pkthdr.len < hlen + PIPEX_PPPMINLEN)
+		goto drop;
+
+	proto = pipex_ppp_proto(m0, session, hlen, &ppphlen);
+	switch (proto) {
+#ifdef PIPEX_MPPE
+	case PPP_CCP:
+		code = 0;
+		KASSERT(m0->m_pkthdr.len >= hlen + ppphlen + 1);
+		m_copydata(m0, hlen + ppphlen, 1, (caddr_t)&code);
+		if (code != CCP_RESETREQ && code != CCP_RESETACK)
+			goto not_ours;
+		break;
+
+	case PPP_COMP:
+#endif
+	case PPP_IP:
+#ifdef INET6
+	case PPP_IPV6:
+#endif
+		break;
+	default:
+		goto not_ours;
+	}
+
+	/* ok,  The packet is for PIPEX */
+	m_adj(m0, hlen);/* cut off the tunnle protocol header */
+
+	/* ensure the mbuf length equals the PPP frame length */
+	if (m0->m_pkthdr.len < plen)
+		goto drop;
+	if (m0->m_pkthdr.len > plen) {
+		if (m0->m_len == m0->m_pkthdr.len) {
+			m0->m_len = plen;
+			m0->m_pkthdr.len = plen;
+		} else
+			m_adj(m0, plen - m0->m_pkthdr.len);
+	}
+
+	/* input ppp packets to kernel session */
+	if (pipex_ppp_enqueue(m0, session, &pipexinq) == 0)
+		return (NULL);
+drop:
+	m_freem(m0);
+	session->stat.ierrors++;
+	return (NULL);
+
+not_ours:
+	return (m0);	/* Not to be handled by PIPEX */
+}
+
 /*
  * pipex_ppp_proto
  */
@@ -1327,6 +1385,7 @@ pipex_pppoe_lookup_session(struct mbuf *m0)
 struct mbuf *
 pipex_pppoe_input(struct mbuf *m0, struct pipex_session *session)
 {
+	int hlen;
 	struct pipex_pppoe_header pppoe;
 
 	/* already checked at pipex_pppoe_lookup_session */
@@ -1336,33 +1395,11 @@ pipex_pppoe_input(struct mbuf *m0, struct pipex_session *session)
 	m_copydata(m0, sizeof(struct ether_header),
 	    sizeof(struct pipex_pppoe_header), (caddr_t)&pppoe);
 
-	/* cut off PPPoE Header */
-	m_adj(m0, sizeof(struct ether_header) +
-	    sizeof(struct pipex_pppoe_header));
-
-	/* ensure the mbuf length equals the PPP frame length */
-	pppoe.length = ntohs(pppoe.length);
-	if (pppoe.length < PIPEX_PPPMINLEN)
-		goto drop;
-	if (m0->m_pkthdr.len < pppoe.length)
-		goto drop;
-	if (m0->m_pkthdr.len > pppoe.length) {
-		if (m0->m_len == m0->m_pkthdr.len) {
-			m0->m_len = pppoe.length;
-			m0->m_pkthdr.len = pppoe.length;
-		} else
-			m_adj(m0, pppoe.length - m0->m_pkthdr.len);
-	}
-
-	/* input ppp packets to kernel session */
-	if (pipex_ppp_enqueue(m0, session, &pipexinq))
-		goto drop;
-	
-	return (NULL);
-
-drop:
-	if (m0 != NULL)
-		m_freem(m0);
+	hlen = sizeof(struct ether_header) + sizeof(struct pipex_pppoe_header);
+	if ((m0 = pipex_common_input(session, m0, hlen, ntohs(pppoe.length)))
+	    == NULL)
+		return (NULL);
+	m_freem(m0);
 	session->stat.ierrors++;
 	return (NULL);
 }
@@ -1420,7 +1457,6 @@ pipex_pppoe_output(struct mbuf *m0, struct pipex_session *session)
 /***********************************************************************
  * PPTP
  ***********************************************************************/
-
 Static void
 pipex_pptp_output(struct mbuf *m0, struct pipex_session *session,
     int has_seq, int has_ack)
@@ -1568,9 +1604,9 @@ not_ours:
 struct mbuf *
 pipex_pptp_input(struct mbuf *m0, struct pipex_session *session)
 {
-	int hlen, plen, ppphlen, has_seq, has_ack, nseq, proto;
+	int hlen, has_seq, has_ack, nseq;
 	const char *reason = "";
-	u_char *cp, *seqp = NULL, *ackp = NULL, code;
+	u_char *cp, *seqp = NULL, *ackp = NULL;
 	uint32_t flags, seq = 0, ack = 0;
 	struct ip *ip;
 	struct pipex_gre_header *gre;
@@ -1645,50 +1681,12 @@ pipex_pptp_input(struct mbuf *m0, struct pipex_session *session)
 	    roundup(pptp_session->winsz, 2) / 2) /* Send ack only packet. */
 		pipex_pptp_output(NULL, session, 0, 1);
 
-	if (m0->m_pkthdr.len < hlen + PIPEX_PPPMINLEN)
-		goto drop;
-
-	proto = pipex_ppp_proto(m0, session, hlen, &ppphlen);
-	switch (proto) {
-#ifdef PIPEX_MPPE
-	case PPP_CCP:
-		code = 0;
-		KASSERT(m0->m_pkthdr.len >= hlen + ppphlen + 1);
-		m_copydata(m0, hlen + ppphlen, 1, (caddr_t)&code);
-		if (code != CCP_RESETREQ && code != CCP_RESETACK)
-			goto not_ours;
-		break;
-
-	case PPP_COMP:
-#endif
-	case PPP_IP:
-		break;
-
-	default:
-		goto not_ours;
+	if ((m0 = pipex_common_input(session, m0, hlen, (int)ntohs(gre->len)))
+	    == NULL) {
+		/* ok,  The packet is for PIPEX */
+		session->proto.pptp.rcv_gap += nseq;
+		return (m0);
 	}
-
-	/* ok,  The packet is for PIPEX */
-	session->proto.pptp.rcv_gap += nseq;
-	plen = ntohs(gre->len);			/* payload length */
-	m_adj(m0, hlen);			/* cut off the IP/GRE header */
-
-	/* ensure the mbuf length equals the PPP frame length */
-	if (m0->m_pkthdr.len < plen)
-		goto drop;
-	if (m0->m_pkthdr.len > plen) {
-		if (m0->m_len == m0->m_pkthdr.len) {
-			m0->m_len = plen;
-			m0->m_pkthdr.len = plen;
-		} else
-			m_adj(m0, plen - m0->m_pkthdr.len);
-	}
-
-	/* input ppp packets to kernel session */
-	if (pipex_ppp_enqueue(m0, session, &pipexinq))
-		goto drop;
-
-	return (NULL);
 not_ours:
 	/* revert original seq/ack values */
 	seq--;
@@ -2047,8 +2045,8 @@ struct mbuf *
 pipex_l2tp_input(struct mbuf *m0, int off0, struct pipex_session *session)
 {
 	struct pipex_l2tp_session *l2tp_session;
-	int length, offset, hlen, nseq, proto, ppphlen;
-	u_char *cp, *nsp, *nrp, code;
+	int length, offset, hlen, nseq;
+	u_char *cp, *nsp, *nrp;
 	uint16_t flags, ns = 0, nr = 0;
 
 	length = offset = ns = nr = 0;
@@ -2098,64 +2096,21 @@ pipex_l2tp_input(struct mbuf *m0, int off0, struct pipex_session *session)
 		if (SEQ16_LT(ns, l2tp_session->nr_nxt))
 			goto out_seq;
 
-	ns++;
-	nseq = SEQ16_SUB(ns, l2tp_session->nr_nxt);
-	l2tp_session->nr_nxt = ns;
+		ns++;
+		nseq = SEQ16_SUB(ns, l2tp_session->nr_nxt);
+		l2tp_session->nr_nxt = ns;
 	}
 	if (flags & PIPEX_L2TP_FLAG_OFFSET)
 		GETSHORT(offset, cp);
 
-	if (m0->m_pkthdr.len < off0 + hlen + offset + PIPEX_PPPMINLEN)
-		goto drop;
-
-	proto = pipex_ppp_proto(m0, session, off0 + hlen + offset, &ppphlen);
-	switch (proto) {
-#ifdef	PIPEX_MPPE
-	case PPP_CCP:
-		code = 0;
-		m_copydata(m0, hlen + ppphlen, 1, &code);
-		if (code != CCP_RESETREQ && code != CCP_RESETACK)
-			goto not_ours;
-		break;
-
-	case PPP_COMP:
-#endif
-	case PPP_IP:
-#if 0 /* NOT YET */
-#ifdef INET6
-	case PPP_IPV6:
-#endif
-#endif
-		break;
-
-	default:
-		goto not_ours;
-	}
-
-	/* ok,  The packet is for PIPEX */
-	session->proto.l2tp.nr_gap += nseq;
-
-	/* cut off the header and offset */
-	m_adj(m0, off0 + hlen + offset);
 	length -= hlen + offset;
-
-	/* ensure the mbuf length equals the PPP frame length */
-	if (m0->m_pkthdr.len < length)
-		goto drop;
-	if (m0->m_pkthdr.len > length) {
-		if (m0->m_len == m0->m_pkthdr.len) {
-			m0->m_len = length;
-			m0->m_pkthdr.len = length;
-		} else
-			m_adj(m0, length - m0->m_pkthdr.len);
+	hlen += off0 + offset;
+	if ((m0 = pipex_common_input(session, m0, hlen, length)) == NULL) {
+		/* ok,  The packet is for PIPEX */
+		session->proto.l2tp.nr_gap += nseq;
+		return (NULL);
 	}
 
-	/* input ppp packets to kernel session */
-	if (pipex_ppp_enqueue(m0, session, &pipexinq))
-		goto drop;
-
-	return (NULL);
-not_ours:
 	/*
 	 * overwrite sequence numbers to adjust a gap between pipex and
 	 * userland.
