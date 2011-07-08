@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcntl.h,v 1.13 2011/07/07 23:45:00 matthew Exp $	*/
+/*	$OpenBSD: fcntl.h,v 1.14 2011/07/08 04:23:24 matthew Exp $	*/
 /*	$NetBSD: fcntl.h,v 1.8 1995/03/26 20:24:12 jtc Exp $	*/
 
 /*-
@@ -190,6 +190,10 @@ struct flock {
 
 #if __BSD_VISIBLE || __POSIX_VISIBLE >= 200809
 #define	AT_FDCWD	-100
+
+#define	AT_EACCESS		0x01
+#define	AT_SYMLINK_NOFOLLOW	0x02
+#define	AT_SYMLINK_FOLLOW	0x04
 #endif
 
 #ifndef _KERNEL

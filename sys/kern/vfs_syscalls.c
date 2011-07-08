@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.169 2011/07/07 23:45:00 matthew Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.170 2011/07/08 04:23:24 matthew Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1326,7 +1326,7 @@ sys_link(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 
 	return (dolinkat(p, AT_FDCWD, SCARG(uap, path), AT_FDCWD,
-	    SCARG(uap, link), 0, retval));
+	    SCARG(uap, link), AT_SYMLINK_FOLLOW, retval));
 }
 
 int
@@ -1350,14 +1350,14 @@ dolinkat(struct proc *p, int fd1, const char *path1, int fd2,
 {
 	struct vnode *vp;
 	struct nameidata nd;
-	int error;
+	int error, follow;
 	int flags;
 
-	/* XXX: Support AT_SYMLINK_FOLLOW. */
-	if (flag != 0)
-		return (ENOTSUP);
+	if (flag & ~AT_SYMLINK_FOLLOW)
+		return (EINVAL);
 
-	NDINITAT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fd1, path1, p);
+	follow = (flag & AT_SYMLINK_FOLLOW) ? FOLLOW : NOFOLLOW;
+	NDINITAT(&nd, LOOKUP, follow, UIO_USERSPACE, fd1, path1, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -1613,43 +1613,47 @@ int
 dofaccessat(struct proc *p, int fd, const char *path, int amode, int flag,
     register_t *retval)
 {
-	struct ucred *cred = p->p_ucred;
 	struct vnode *vp;
-	int error, flags, t_gid, t_uid;
+	int error;
 	struct nameidata nd;
 
 	if (amode & ~(R_OK | W_OK | X_OK))
 		return (EINVAL);
-	/* XXX: Support AT_EACCESS. */
-	if (flag != 0)
-		return (ENOTSUP);
-	t_uid = cred->cr_uid;
-	t_gid = cred->cr_gid;
-	cred->cr_uid = p->p_cred->p_ruid;
-	cred->cr_gid = p->p_cred->p_rgid;
+	if (flag & ~AT_EACCESS)
+		return (EINVAL);
+
 	NDINITAT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, fd, path, p);
 	if ((error = namei(&nd)) != 0)
-		goto out1;
+		return (error);
 	vp = nd.ni_vp;
 
 	/* Flags == 0 means only check for existence. */
 	if (amode) {
-		flags = 0;
-		if (amode & R_OK)
-			flags |= VREAD;
-		if (amode & W_OK)
-			flags |= VWRITE;
-		if (amode & X_OK)
-			flags |= VEXEC;
+		struct ucred *cred = p->p_ucred;
+		int vflags = 0;
 
-		error = VOP_ACCESS(vp, flags, cred, p);
-		if (!error && (flags & VWRITE))
+		crhold(cred);
+
+		if (!(flag & AT_EACCESS)) {
+			cred = crcopy(cred);
+			cred->cr_uid = p->p_cred->p_ruid;
+			cred->cr_gid = p->p_cred->p_rgid;
+		}
+
+		if (amode & R_OK)
+			vflags |= VREAD;
+		if (amode & W_OK)
+			vflags |= VWRITE;
+		if (amode & X_OK)
+			vflags |= VEXEC;
+
+		error = VOP_ACCESS(vp, vflags, cred, p);
+		if (!error && (vflags & VWRITE))
 			error = vn_writechk(vp);
+
+		crfree(cred);
 	}
 	vput(vp);
-out1:
-	cred->cr_uid = t_uid;
-	cred->cr_gid = t_gid;
 	return (error);
 }
 
@@ -1688,14 +1692,14 @@ dofstatat(struct proc *p, int fd, const char *path, struct stat *buf,
     int flag, register_t *retval)
 {
 	struct stat sb;
-	int error;
+	int error, follow;
 	struct nameidata nd;
 
-	/* XXX: Support AT_SYMLINK_NOFOLLOW (and make lstat use this??) */
-	if (flag != 0)
-		return (ENOTSUP);
+	if (flag & ~AT_SYMLINK_NOFOLLOW)
+		return (EINVAL);
 
-	NDINITAT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, fd, path, p);
+	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
+	NDINITAT(&nd, LOOKUP, follow | LOCKLEAF, UIO_USERSPACE, fd, path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	error = vn_stat(nd.ni_vp, &sb, p);
@@ -1720,23 +1724,9 @@ sys_lstat(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) path;
 		syscallarg(struct stat *) ub;
 	} */ *uap = v;
-	struct stat sb;
-	int error;
-	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), p);
-	if ((error = namei(&nd)) != 0)
-		return (error);
-	error = vn_stat(nd.ni_vp, &sb, p);
-	vput(nd.ni_vp);
-	if (error)
-		return (error);
-	/* Don't let non-root see generation numbers (for NFS security) */
-	if (suser(p, 0))
-		sb.st_gen = 0;
-	error = copyout(&sb, SCARG(uap, ub), sizeof(sb));
-	return (error);
+	return (dofstatat(p, AT_FDCWD, SCARG(uap, path), SCARG(uap, ub),
+	    AT_SYMLINK_NOFOLLOW, retval));
 }
 
 /*
@@ -1951,15 +1941,15 @@ dofchmodat(struct proc *p, int fd, const char *path, mode_t mode, int flag,
 {
 	struct vnode *vp;
 	struct vattr vattr;
-	int error;
+	int error, follow;
 	struct nameidata nd;
 
 	if (mode & ~(S_IFMT | ALLPERMS))
 		return (EINVAL);
-	/* XXX: Support AT_SYMLINK_NOFOLLOW. */
-	if (flag != 0)
-		return (ENOTSUP);
+	if (flag & ~AT_SYMLINK_NOFOLLOW)
+		return (EINVAL);
 
+	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
 	NDINITAT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fd, path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -2049,14 +2039,14 @@ dofchownat(struct proc *p, int fd, const char *path, uid_t uid, gid_t gid,
 {
 	struct vnode *vp;
 	struct vattr vattr;
-	int error;
+	int error, follow;
 	struct nameidata nd;
 	mode_t mode;
 
-	/* XXX: Support AT_SYMLINK_NOFOLLOW. */
-	if (flag != 0)
-		return (ENOTSUP);
+	if (flag & ~AT_SYMLINK_NOFOLLOW)
+		return (EINVAL);
 
+	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
 	NDINITAT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fd, path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -2252,12 +2242,11 @@ doutimensat(struct proc *p, int fd, const char *path,
 	struct vnode *vp;
 	struct timeval tv[2];
 	struct vattr vattr;
-	int error;
+	int error, follow;
 	struct nameidata nd;
 
-	/* XXX: Support AT_SYMLINK_NOFOLLOW. */
-	if (flag != 0)
-		return (ENOTSUP);
+	if (flag & ~AT_SYMLINK_NOFOLLOW)
+		return (EINVAL);
 
 	VATTR_NULL(&vattr);
 	if (tvp == NULL) {
@@ -2272,7 +2261,8 @@ doutimensat(struct proc *p, int fd, const char *path,
 		if (tv[1].tv_sec == VNOVAL)
 			tv[1].tv_sec = VNOVAL - 1;
 	}
-	NDINITAT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fd, path, p);
+	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
+	NDINITAT(&nd, LOOKUP, follow, UIO_USERSPACE, fd, path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
