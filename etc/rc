@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.370 2011/07/08 00:50:09 robert Exp $
+#	$OpenBSD: rc,v 1.371 2011/07/08 00:51:52 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -557,13 +557,8 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	fi
 fi
 
-start_daemon hostapd rwhod lpd ldapd sendmail smtpd httpd ftpd \
-	ftpproxy identd inetd rarpd bootparamd rbootd mopd btd
-
-[ X"${bt}" != X"NO" -a -f ${bt_rules} ] && \
-	btctl -f ${bt_rules}
-
-start_daemon spamd
+start_daemon hostapd rwhod lpd ldapd sendmail smtpd httpd ftpd
+start_daemon ftpproxy identd inetd rarpd bootparamd rbootd mopd spamd
 
 [ X"${spamd_flags}" != X"NO" ] && \
 	/usr/libexec/spamd-setup -D
