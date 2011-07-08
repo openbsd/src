@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.23 2011/04/16 03:21:15 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.24 2011/07/08 00:08:00 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -229,8 +229,9 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 		goto done;
 
 	/* Read it in, slap the new label in, and write it back out */
-	bp->b_blkno = DL_BLKTOSEC(lp, partoff+LABELSECTOR) * DL_BLKSPERSEC(lp);
-	offset = DL_BLKOFFSET(lp, partoff + LABELSECTOR) + LABELOFFSET;
+	bp->b_blkno = DL_BLKTOSEC(lp, partoff + DOS_LABELSECTOR) *
+	    DL_BLKSPERSEC(lp);
+	offset = DL_BLKOFFSET(lp, partoff + DOS_LABELSECTOR);
 	bp->b_bcount = lp->d_secsize;
 	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
 	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
