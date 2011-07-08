@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.74 2011/07/08 18:38:55 yasuoka Exp $	*/
+/*	$OpenBSD: socket.h,v 1.75 2011/07/08 20:09:38 mikeb Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -97,6 +97,7 @@ struct	linger {
 	int	l_linger;		/* linger time */
 };
 
+#if __BSD_VISIBLE
 /*
  * Structure used for manipulating splice option.
  */
@@ -105,6 +106,7 @@ struct	splice {
 	off_t	sp_max;			/* if set, maximum bytes to splice */
 	struct	timeval	sp_idle;	/* idle timeout */
 };
+#endif /* __BSD_VISIBLE */
 
 /*
  * Level number for (get/set)sockopt() to apply to socket itself.
