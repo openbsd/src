@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.37 2011/06/03 06:52:37 deraadt Exp $	*/
+/*	$OpenBSD: bc.y,v 1.38 2011/07/08 23:29:46 tedu Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -1147,7 +1147,7 @@ main(int argc, char *argv[])
 				el_set(el, EL_SIGNAL, 0);
 				el_set(el, EL_PROMPT, dummy_prompt);
 				el_set(el, EL_ADDFN, "bc_eof", "", bc_eof);
-				el_set(el, EL_BIND, "^D", "bc_eof");
+				el_set(el, EL_BIND, "^D", "bc_eof", NULL);
 				el_source(el, NULL);
 			}
 		} else {
