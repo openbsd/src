@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.5 2011/04/05 16:58:47 guenther Exp $ */
+/*	$OpenBSD: cerror.S,v 1.6 2011/07/08 19:31:41 miod Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,6 @@
 FRAMESZ= MKFSIZ(1,1)
 GPOFF= FRAMESZ-2*REGSZ
 
-WEAK_ALIAS(cerror, _CERROR)
 WEAK_ALIAS(CERROR, _CERROR)
 
 	.globl	_C_LABEL(errno)
