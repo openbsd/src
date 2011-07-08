@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.154 2011/06/06 17:10:23 ariane Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.155 2011/07/08 03:35:39 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -337,8 +337,6 @@ void		 pmap_sync_flags_pte(struct vm_page *, u_long);
 pt_entry_t	*pmap_map_ptes(struct pmap *);
 struct pv_entry	*pmap_remove_pv(struct vm_page *, struct pmap *, vaddr_t);
 void		 pmap_do_remove(struct pmap *, vaddr_t, vaddr_t, int);
-boolean_t	 pmap_remove_pte(struct pmap *, struct vm_page *, pt_entry_t *,
-    vaddr_t, int);
 void		 pmap_remove_ptes(struct pmap *, struct vm_page *, vaddr_t,
     vaddr_t, vaddr_t, int);
 
