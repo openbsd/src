@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.143 2011/07/08 05:07:05 matthew Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.144 2011/07/08 05:11:21 matthew Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -266,7 +266,7 @@ void
 vndstrategy(struct buf *bp)
 {
 	int unit = DISKUNIT(bp->b_dev);
-	struct vnd_softc *sc = &vnd_softc[unit];
+	struct vnd_softc *sc;
 	int s, part;
 	struct iovec aiov;
 	struct uio auio;
@@ -275,11 +275,15 @@ vndstrategy(struct buf *bp)
 
 	DNPRINTF(VDB_FOLLOW, "vndstrategy(%p): unit %d\n", bp, unit);
 
+	if (unit >= numvnd) {
+		bp->b_error = ENXIO;
+		goto bad;
+	}
+	sc = &vnd_softc[unit];
+
 	if ((sc->sc_flags & VNF_HAVELABEL) == 0) {
 		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		goto done;
+		goto bad;
 	}
 
 	if (bounds_check_with_label(bp, sc->sc_dk.dk_label) == -1)
@@ -321,29 +325,21 @@ vndstrategy(struct buf *bp)
 	if (bp->b_error)
 		bp->b_flags |= B_ERROR;
 	bp->b_resid = auio.uio_resid;
-done:
+	goto done;
+
+ bad:
+	bp->b_flags |= B_ERROR;
+	bp->b_resid = bp->b_bcount;
+ done:
 	s = splbio();
 	biodone(bp);
 	splx(s);
 }
 
-
 /* ARGSUSED */
 int
 vndread(dev_t dev, struct uio *uio, int flags)
 {
-	int unit = DISKUNIT(dev);
-	struct vnd_softc *sc;
-
-	DNPRINTF(VDB_FOLLOW, "vndread(%x, %p)\n", dev, uio);
-
-	if (unit >= numvnd)
-		return (ENXIO);
-	sc = &vnd_softc[unit];
-
-	if ((sc->sc_flags & VNF_INITED) == 0)
-		return (ENXIO);
-
 	return (physio(vndstrategy, dev, B_READ, minphys, uio));
 }
 
@@ -351,18 +347,6 @@ vndread(dev_t dev, struct uio *uio, int flags)
 int
 vndwrite(dev_t dev, struct uio *uio, int flags)
 {
-	int unit = DISKUNIT(dev);
-	struct vnd_softc *sc;
-
-	DNPRINTF(VDB_FOLLOW, "vndwrite(%x, %p)\n", dev, uio);
-
-	if (unit >= numvnd)
-		return (ENXIO);
-	sc = &vnd_softc[unit];
-
-	if ((sc->sc_flags & VNF_INITED) == 0)
-		return (ENXIO);
-
 	return (physio(vndstrategy, dev, B_WRITE, minphys, uio));
 }
 
