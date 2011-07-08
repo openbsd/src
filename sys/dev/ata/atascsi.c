@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.110 2011/07/08 07:45:36 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.111 2011/07/08 08:16:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -115,6 +115,7 @@ void		atascsi_disk_inquiry(struct scsi_xfer *);
 void		atascsi_disk_vpd_supported(struct scsi_xfer *);
 void		atascsi_disk_vpd_serial(struct scsi_xfer *);
 void		atascsi_disk_vpd_ident(struct scsi_xfer *);
+void		atascsi_disk_vpd_ata(struct scsi_xfer *);
 void		atascsi_disk_vpd_limits(struct scsi_xfer *);
 void		atascsi_disk_vpd_info(struct scsi_xfer *);
 void		atascsi_disk_vpd_thin(struct scsi_xfer *);
@@ -680,6 +681,9 @@ atascsi_disk_inq(struct scsi_xfer *xs)
 		case SI_PG_DEVID:
 			atascsi_disk_vpd_ident(xs);
 			break;
+		case SI_PG_ATA:
+			atascsi_disk_vpd_ata(xs);
+			break;
 		case SI_PG_DISK_LIMITS:
 			atascsi_disk_vpd_limits(xs);
 			break;
@@ -729,7 +733,7 @@ atascsi_disk_vpd_supported(struct scsi_xfer *xs)
 {
 	struct {
 		struct scsi_vpd_hdr	hdr;
-		u_int8_t		list[6];
+		u_int8_t		list[7];
 	}			pg;
 	struct scsi_link        *link = xs->sc_link;
 	struct atascsi_port	*ap;
@@ -746,9 +750,10 @@ atascsi_disk_vpd_supported(struct scsi_xfer *xs)
 	pg.list[0] = SI_PG_SUPPORTED;
 	pg.list[1] = SI_PG_SERIAL;
 	pg.list[2] = SI_PG_DEVID;
-	pg.list[3] = SI_PG_DISK_LIMITS;
-	pg.list[4] = SI_PG_DISK_INFO;
-	pg.list[5] = SI_PG_DISK_THIN; /* "trimmed" if fat. get it? tehe. */
+	pg.list[3] = SI_PG_ATA;
+	pg.list[4] = SI_PG_DISK_LIMITS;
+	pg.list[5] = SI_PG_DISK_INFO;
+	pg.list[6] = SI_PG_DISK_THIN; /* "trimmed" if fat. get it? tehe. */
 
 	bcopy(&pg, xs->data, MIN(sizeof(pg) - fat, xs->datalen));
 
@@ -823,6 +828,48 @@ atascsi_disk_vpd_ident(struct scsi_xfer *xs)
 	pg_len += sizeof(pg.hdr);
 
 	bcopy(&pg, xs->data, MIN(pg_len, xs->datalen));
+
+	atascsi_done(xs, XS_NOERROR);
+}
+
+void
+atascsi_disk_vpd_ata(struct scsi_xfer *xs)
+{
+	struct scsi_link        *link = xs->sc_link;
+	struct atascsi_port	*ap;
+	struct scsi_vpd_ata	pg;
+
+	ap = atascsi_lookup_port(link);
+	bzero(&pg, sizeof(pg));
+
+	pg.hdr.device = T_DIRECT;
+	pg.hdr.page_code = SI_PG_ATA;
+	_lto2b(sizeof(pg) - sizeof(pg.hdr), pg.hdr.page_length);
+
+	memset(pg.sat_vendor, ' ', sizeof(pg.sat_vendor));
+	memcpy(pg.sat_vendor, "OpenBSD",
+	    MIN(strlen("OpenBSD"), sizeof(pg.sat_vendor)));
+	memset(pg.sat_product, ' ', sizeof(pg.sat_product));
+	memcpy(pg.sat_product, "atascsi",
+	    MIN(strlen("atascsi"), sizeof(pg.sat_product)));
+	memset(pg.sat_revision, ' ', sizeof(pg.sat_revision));
+	memcpy(pg.sat_revision, osrelease,
+	    MIN(strlen(osrelease), sizeof(pg.sat_product)));
+
+	/* XXX device signature */
+
+	switch (ap->ap_type) {
+	case ATA_PORT_T_DISK:
+		pg.command_code = VPD_ATA_COMMAND_CODE_ATA;
+		break;
+	case ATA_PORT_T_ATAPI:
+		pg.command_code = VPD_ATA_COMMAND_CODE_ATAPI;
+		break;
+	}
+
+	memcpy(pg.identify, &ap->ap_identify, sizeof(pg.identify));
+
+	bcopy(&pg, xs->data, MIN(sizeof(pg), xs->datalen));
 
 	atascsi_done(xs, XS_NOERROR);
 }
