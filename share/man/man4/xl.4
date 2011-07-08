@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xl.4,v 1.42 2008/09/07 06:55:34 jmc Exp $
+.\"	$OpenBSD: xl.4,v 1.43 2011/07/08 19:00:08 stsp Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"     Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     $FreeBSD: xl.4,v 1.1 1998/08/16 17:19:58 wpaul Exp $
 .\"
-.Dd $Mdocdate: September 7 2008 $
+.Dd $Mdocdate: July 8 2011 $
 .Dt XL 4
 .Os
 .Sh NAME
@@ -99,6 +99,15 @@ Some 3Com NICs also support MII connectors (switchable 10/100Mbps UTP).
 The 3C905B-FX and other similar cards are capable of 100Mbps over fiber.
 .Pp
 Hardware receive IP/TCP/UDP checksum offload for IPv4 is supported on the 3C905B.
+.Pp
+The
+.Nm
+driver additionally supports Wake on LAN (WoL).
+See
+.Xr arp 8
+and
+.Xr ifconfig 8
+for more details.
 .Pp
 The following media types and options (as given to
 .Xr ifconfig 8 )
