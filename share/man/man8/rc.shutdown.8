@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rc.shutdown.8,v 1.12 2011/05/22 06:27:27 jmc Exp $
+.\"	$OpenBSD: rc.shutdown.8,v 1.13 2011/07/08 02:14:13 ajacoutot Exp $
 .\"
 .\" Copyright (c) 1999 Aaron Campbell
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 22 2011 $
+.Dd $Mdocdate: July 8 2011 $
 .Dt RC.SHUTDOWN 8
 .Os
 .Sh NAME
@@ -53,7 +53,7 @@ Firstly it saves random data for reseeding the kernel random number
 generator during the next boot.
 It then stops any daemons
 defined in the
-.Va rc_scripts
+.Va pkg_scripts
 variable in
 .Xr rc.conf.local 8 ,
 by passing them the

@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.d.8,v 1.14 2011/07/06 23:46:10 ajacoutot Exp $
+.\" 	$OpenBSD: rc.d.8,v 1.15 2011/07/08 02:14:13 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 6 2011 $
+.Dd $Mdocdate: July 8 2011 $
 .Dt RC.D 8
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@ programs
 .Pq Dq services .
 .Pp
 Those services may be started at boot time in the order specified by the
-.Va rc_scripts
+.Va pkg_scripts
 variable from
 .Xr rc.conf 8 ,
 the order will be reversed during shutdown.
@@ -73,7 +73,7 @@ Arguments to call the daemon with.
 If set to
 .Dq NO ,
 it will prevent the daemon from starting even when listed in
-.Va rc_scripts .
+.Va pkg_scripts .
 .It Ar daemon Ns _user
 User to run the daemon as, using
 .Xr su 1 .
