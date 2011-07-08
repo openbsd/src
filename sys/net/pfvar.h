@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.339 2011/07/07 20:46:37 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.340 2011/07/08 18:50:52 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -525,11 +525,12 @@ struct pf_rule_actions {
 	u_int16_t	qid;
 	u_int16_t	pqid;
 	u_int16_t	max_mss;
+	u_int16_t	flags;
 	u_int8_t	log;
 	u_int8_t	set_tos;
 	u_int8_t	min_ttl;
-	u_int8_t	pad[1];
-	u_int16_t	flags;
+	u_int8_t	prio[2];
+	u_int8_t	pad[3];
 };
 
 union pf_rule_ptr {
@@ -645,7 +646,9 @@ struct pf_rule {
 #define PF_FLUSH		0x01
 #define PF_FLUSH_GLOBAL		0x02
 	u_int8_t		 flush;
-	u_int8_t		 pad2[3];
+#define PF_PRIO_NOTSET		0xff
+	u_int8_t		 prio[2];
+	u_int8_t		 pad;
 
 	struct {
 		struct pf_addr		addr;
@@ -840,6 +843,8 @@ struct pf_state {
 	u_int8_t		 min_ttl;
 	u_int8_t		 set_tos;
 	u_int16_t		 max_mss;
+	u_int8_t		 prio[2];
+	u_int8_t		 pad2[2];
 };
 
 /*

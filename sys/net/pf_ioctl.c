@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.240 2011/06/02 22:03:30 sthen Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.241 2011/07/08 18:50:51 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1066,6 +1066,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		if (pf_anchor_setup(rule, ruleset, pr->anchor_call))
 			error = EINVAL;
 		if (rule->rt && !rule->direction)
+			error = EINVAL;
+		if ((rule->prio[0] != PF_PRIO_NOTSET && rule->prio[0] >
+		    IFQ_MAXPRIO) || (rule->prio[1] != PF_PRIO_NOTSET &&
+                    rule->prio[1] > IFQ_MAXPRIO))
 			error = EINVAL;
 
 		if (error) {
@@ -2595,6 +2599,8 @@ pf_rule_copyin(struct pf_rule *from, struct pf_rule *to,
 	to->divert.port = from->divert.port;
 	to->divert_packet.addr = from->divert_packet.addr;
 	to->divert_packet.port = from->divert_packet.port;
+	to->prio[0] = from->prio[0];
+	to->prio[1] = from->prio[1];
 
 	return (0);
 }
