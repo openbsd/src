@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.h,v 1.9 2011/07/08 18:15:44 ariane Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.h,v 1.10 2011/07/08 18:20:10 ariane Exp $	*/
 
 /*
  * Copyright (c) 2009 Ariane van der Steldt <ariane@stack.nl>
@@ -124,7 +124,6 @@ int	uvm_pmr_isfree(struct vm_page *pg);
 #endif
 
 #ifndef SMALL_KERNEL
-void	uvm_pmr_zero_everything(void);
 int	uvm_pmr_alloc_pig(paddr_t*, psize_t*);
 #endif /* SMALL_KERNEL */
 
