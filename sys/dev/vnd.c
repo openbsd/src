@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.145 2011/07/08 05:27:46 matthew Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.146 2011/07/08 20:10:34 matthew Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -268,7 +268,7 @@ vndstrategy(struct buf *bp)
 	int unit = DISKUNIT(bp->b_dev);
 	struct vnd_softc *sc;
 	struct partition *p;
-	size_t off;
+	off_t off;
 	int s;
 
 	DNPRINTF(VDB_FOLLOW, "vndstrategy(%p): unit %d\n", bp, unit);
