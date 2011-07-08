@@ -8,8 +8,8 @@ queue mail bandwidth 10%
 queue ssh bandwidth 200Kb priority 7 cbq( borrow ) 
 queue rsets bandwidth 150Kb priority 0 cbq( red ) 
 block return in on lo0 inet all queue rsets
-pass in on lo0 inet proto tcp from any to any port = www flags S/SA keep state queue http
-pass out on lo0 inet proto tcp from any to any port = ssh flags S/SA keep state queue ssh
-pass in on lo0 inet proto tcp from any to any port = ssh flags S/SA keep state queue ssh
-pass out on lo0 inet proto tcp from any to any port = smtp flags S/SA keep state queue mail
-pass out on lo0 inet all flags S/SA keep state
+pass in on lo0 inet proto tcp from any to any port = www flags S/SA queue http
+pass out on lo0 inet proto tcp from any to any port = ssh flags S/SA queue ssh
+pass in on lo0 inet proto tcp from any to any port = ssh flags S/SA queue ssh
+pass out on lo0 inet proto tcp from any to any port = smtp flags S/SA queue mail
+pass out on lo0 inet all flags S/SA

@@ -1,6 +1,6 @@
 # test nat pools syntax
 
-match out on lo0 from any to 127.0.0.1 nat-to { 127.0.0.1, 127.0.0.2 }
+#match out on lo0 from any to 127.0.0.1 nat-to { 127.0.0.1, 127.0.0.2 }
 match out on lo0 from any to 127.0.0.1 nat-to { 127.0.0.1, 127.0.0.2 } round-robin
 match out on lo0 from any to 127.0.0.1 nat-to lo0/24 bitmask static-port
 match out on lo0 from any to 127.0.0.1 nat-to lo0/24 random

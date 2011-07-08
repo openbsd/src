@@ -1,5 +1,5 @@
-pass in inet proto icmp all keep state
-pass in inet6 proto ipv6-icmp all keep state
+pass in inet proto icmp all
+pass in inet6 proto ipv6-icmp all
 block drop in inet proto icmp all
 block drop in inet6 proto ipv6-icmp all
 block return-rst in inet proto tcp all

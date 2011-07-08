@@ -1,6 +1,6 @@
-pass in quick on enc0 from any to any fastroute
-pass in quick on enc0 inet from any to any fastroute
-pass in quick on enc0 inet6 from any to any fastroute
+pass in quick on enc0 from any to any
+pass in quick on enc0 inet from any to any
+pass in quick on enc0 inet6 from any to any
 
 pass out quick on tun1000000 inet from any to any route-to tun1000001
 pass out quick on tun1000000 from any to 192.168.1.1 route-to tun1000001

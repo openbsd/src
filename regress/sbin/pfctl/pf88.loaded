@@ -1,88 +1,88 @@
-@0 pass in on lo1000000 inet from any to 10.0.0.1 flags S/SA keep state
-  [ Skip steps: i=2 d=2 f=2 p=14 sa=10 sp=end da=2 dp=15 ]
+@0 pass in on lo1000000 inet from any to 10.0.0.1 flags S/SA
+  [ Skip steps: i=2 r=2 d=end f=2 p=14 sa=10 da=2 sp=end dp=15 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@1 pass in on lo1000000 inet from any to 10.0.0.1 flags S/SA keep state
-  [ Skip steps: p=14 sa=10 sp=end dp=15 ]
+@1 pass in on lo1000000 inet from any to 10.0.0.1 flags S/SA
+  [ Skip steps: d=end p=14 sa=10 sp=end dp=15 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@2 pass all flags S/SA keep state
-  [ Skip steps: i=6 f=6 p=14 sa=10 sp=end da=6 dp=15 ]
+@2 pass all flags S/SA
+  [ Skip steps: i=6 d=end f=6 p=14 sa=10 da=6 sp=end dp=15 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@3 pass out all flags S/SA keep state
-  [ Skip steps: i=6 d=6 f=6 p=14 sa=10 sp=end da=6 dp=15 ]
+@3 pass out all flags S/SA
+  [ Skip steps: i=6 r=6 d=end f=6 p=14 sa=10 da=6 sp=end dp=15 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@4 pass out all flags S/SA keep state
-  [ Skip steps: i=6 d=6 f=6 p=14 sa=10 sp=end da=6 dp=15 ]
+@4 pass out all flags S/SA
+  [ Skip steps: i=6 r=6 d=end f=6 p=14 sa=10 da=6 sp=end dp=15 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@5 pass out quick all flags S/SA keep state
-  [ Skip steps: p=14 sa=10 sp=end dp=15 ]
+@5 pass out quick all flags S/SA
+  [ Skip steps: d=end p=14 sa=10 sp=end dp=15 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@6 pass on lo1000001 inet from any to 10.0.0.1 flags S/SA keep state
-  [ Skip steps: d=14 f=16 p=14 sa=10 sp=end da=8 dp=15 ]
+@6 pass on lo1000001 inet from any to 10.0.0.1 flags S/SA
+  [ Skip steps: r=14 d=end f=16 p=14 sa=10 da=8 sp=end dp=15 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@7 pass on lo1000000 inet from any to 10.0.0.1 flags S/SA keep state
-  [ Skip steps: d=14 f=16 p=14 sa=10 sp=end dp=15 ]
+@7 pass on lo1000000 inet from any to 10.0.0.1 flags S/SA
+  [ Skip steps: r=14 d=end f=16 p=14 sa=10 sp=end dp=15 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @8 pass inet from any to 10.0.0.2 flags S/SA modulate state
-  [ Skip steps: i=18 d=14 f=16 p=14 sa=10 sp=end da=14 dp=15 ]
+  [ Skip steps: i=18 r=14 d=end f=16 p=14 sa=10 da=14 sp=end dp=15 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@9 pass inet from any to 10.0.0.2 flags S/SA keep state
-  [ Skip steps: i=18 d=14 f=16 p=14 sp=end da=14 dp=15 ]
+@9 pass inet from any to 10.0.0.2 flags S/SA
+  [ Skip steps: i=18 r=14 d=end f=16 p=14 da=14 sp=end dp=15 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @10 block drop inet from 10.0.0.3 to 10.0.0.2
-  [ Skip steps: i=18 d=14 f=16 p=14 sp=end da=14 dp=15 ]
+  [ Skip steps: i=18 r=14 d=end f=16 p=14 da=14 sp=end dp=15 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @11 pass inet from any to 10.0.0.2 flags S/SA modulate state
-  [ Skip steps: i=18 d=14 f=16 p=14 sp=end da=14 dp=15 ]
+  [ Skip steps: i=18 r=14 d=end f=16 p=14 da=14 sp=end dp=15 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @12 block drop inet from 10.0.0.3 to 10.0.0.2
-  [ Skip steps: i=18 d=14 f=16 p=14 sp=end da=14 dp=15 ]
+  [ Skip steps: i=18 r=14 d=end f=16 p=14 da=14 sp=end dp=15 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @13 pass inet from any to 10.0.0.2 flags S/SA synproxy state
-  [ Skip steps: i=18 f=16 sp=end dp=15 ]
+  [ Skip steps: i=18 d=end f=16 sp=end dp=15 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@14 pass out inet proto tcp from 10.0.0.4 to 10.0.0.5 flags S/SA keep state
-  [ Skip steps: i=18 d=17 f=16 p=16 sa=16 sp=end da=16 ]
+@14 pass out inet proto tcp from 10.0.0.4 to 10.0.0.5 flags S/SA
+  [ Skip steps: i=18 r=17 d=end f=16 p=16 sa=16 da=16 sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@15 pass out inet proto tcp from 10.0.0.4 to 10.0.0.5 port = www flags S/SA keep state
-  [ Skip steps: i=18 d=17 sp=end ]
+@15 pass out inet proto tcp from 10.0.0.4 to 10.0.0.5 port = www flags S/SA
+  [ Skip steps: i=18 r=17 d=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@16 pass out all flags S/SA keep state
-  [ Skip steps: i=18 f=end p=end sa=end sp=end da=end dp=end ]
+@16 pass out all flags S/SA
+  [ Skip steps: i=18 d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@17 pass in all flags S/SA keep state
-  [ Skip steps: d=21 f=end p=end sa=end sp=end da=end dp=end ]
+@17 pass in all flags S/SA
+  [ Skip steps: r=21 d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@18 pass in on lo1000001 all flags S/SA keep state
-  [ Skip steps: i=21 d=21 f=end p=end sa=end sp=end da=end dp=end ]
+@18 pass in on lo1000001 all flags S/SA
+  [ Skip steps: i=21 r=21 d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@19 pass in on lo1000001 all flags S/SA keep state
-  [ Skip steps: i=21 d=21 f=end p=end sa=end sp=end da=end dp=end ]
+@19 pass in on lo1000001 all flags S/SA
+  [ Skip steps: i=21 r=21 d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@20 pass in on lo1000001 all flags S/SA keep state
-  [ Skip steps: f=end p=end sa=end sp=end da=end dp=end ]
+@20 pass in on lo1000001 all flags S/SA
+  [ Skip steps: d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @21 block drop all
-  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

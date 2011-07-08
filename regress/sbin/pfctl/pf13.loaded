@@ -1,64 +1,64 @@
-@0 pass in quick on enc0 all flags S/SA keep state fastroute
-  [ Skip steps: i=3 d=3 p=6 sa=8 sp=end da=4 dp=6 ]
+@0 pass in quick on enc0 all flags S/SA
+  [ Skip steps: i=3 r=3 d=end p=6 sa=8 da=4 sp=end dp=6 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@1 pass in quick on enc0 inet all flags S/SA keep state fastroute
-  [ Skip steps: i=3 d=3 p=6 sa=8 sp=end da=4 dp=6 ]
+@1 pass in quick on enc0 inet all flags S/SA
+  [ Skip steps: i=3 r=3 d=end p=6 sa=8 da=4 sp=end dp=6 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@2 pass in quick on enc0 inet6 all flags S/SA keep state fastroute
-  [ Skip steps: p=6 sa=8 sp=end da=4 dp=6 ]
+@2 pass in quick on enc0 inet6 all flags S/SA
+  [ Skip steps: d=end p=6 sa=8 da=4 sp=end dp=6 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@3 pass out quick on tun1000000 inet all flags S/SA keep state route-to tun1000001
-  [ Skip steps: i=end d=6 f=5 p=6 sa=8 sp=end dp=6 ]
+@3 pass out quick on tun1000000 inet all flags S/SA route-to tun1000001
+  [ Skip steps: i=end r=6 d=end f=5 p=6 sa=8 sp=end dp=6 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@4 pass out quick on tun1000000 inet from any to 192.168.1.1 flags S/SA keep state route-to tun1000001
-  [ Skip steps: i=end d=6 p=6 sa=8 sp=end dp=6 ]
+@4 pass out quick on tun1000000 inet from any to 192.168.1.1 flags S/SA route-to tun1000001
+  [ Skip steps: i=end r=6 d=end p=6 sa=8 sp=end dp=6 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@5 pass out quick on tun1000000 inet6 from any to fec0::1 flags S/SA keep state route-to tun1000001
-  [ Skip steps: i=end sa=8 sp=end ]
+@5 pass out quick on tun1000000 inet6 from any to fec0::1 flags S/SA route-to tun1000001
+  [ Skip steps: i=end d=end sa=8 sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @6 block drop in on tun1000000 inet proto tcp from any to any port = ftp dup-to 192.168.1.1@tun1000001
-  [ Skip steps: i=end d=end p=8 sa=8 sp=end da=8 dp=8 ]
+  [ Skip steps: i=end r=end d=end p=8 sa=8 da=8 sp=end dp=8 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @7 block drop in on tun1000000 inet6 proto tcp from any to any port = ftp dup-to fec0::1@tun1000001
-  [ Skip steps: i=end d=end sp=end ]
+  [ Skip steps: i=end r=end d=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@8 pass in quick on tun1000000 inet from 192.168.1.1 to 10.1.1.1 flags S/SA keep state route-to tun1000001
-  [ Skip steps: i=end d=end p=10 sp=end dp=10 ]
+@8 pass in quick on tun1000000 inet from 192.168.1.1 to 10.1.1.1 flags S/SA route-to tun1000001
+  [ Skip steps: i=end r=end d=end p=10 sp=end dp=10 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@9 pass in quick on tun1000000 inet6 from fec0::/64 to fec1::2 flags S/SA keep state route-to tun1000001
-  [ Skip steps: i=end d=end sp=end ]
+@9 pass in quick on tun1000000 inet6 from fec0::/64 to fec1::2 flags S/SA route-to tun1000001
+  [ Skip steps: i=end r=end d=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @10 block drop in on tun1000000 inet proto tcp from any to any port = ftp reply-to 192.168.1.1@tun1000001
-  [ Skip steps: i=end d=end p=12 sa=12 sp=end da=12 dp=12 ]
+  [ Skip steps: i=end r=end d=end p=12 sa=12 da=12 sp=end dp=12 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @11 block drop in on tun1000000 inet6 proto tcp from any to any port = ftp reply-to fec0::1@tun1000001
-  [ Skip steps: i=end d=end sp=end ]
+  [ Skip steps: i=end r=end d=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@12 pass in quick on tun1000000 inet from 192.168.1.1 to 10.1.1.1 flags S/SA keep state reply-to tun1000001
-  [ Skip steps: i=end d=end p=end sp=end dp=end ]
+@12 pass in quick on tun1000000 inet from 192.168.1.1 to 10.1.1.1 flags S/SA reply-to tun1000001
+  [ Skip steps: i=end r=end d=end p=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@13 pass in quick on tun1000000 inet6 from fec0::/64 to fec1::2 flags S/SA keep state reply-to tun1000001
-  [ Skip steps: i=end d=end p=end sp=end dp=end ]
+@13 pass in quick on tun1000000 inet6 from fec0::/64 to fec1::2 flags S/SA reply-to tun1000001
+  [ Skip steps: i=end r=end d=end p=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@14 pass in quick on tun1000000 inet from 192.168.1.1 to 10.1.1.1 flags S/SA keep state dup-to 192.168.1.100@tun1000001
-  [ Skip steps: i=end d=end p=end sp=end dp=end ]
+@14 pass in quick on tun1000000 inet from 192.168.1.1 to 10.1.1.1 flags S/SA dup-to 192.168.1.100@tun1000001
+  [ Skip steps: i=end r=end d=end p=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@15 pass in quick on tun1000000 inet6 from fec0::/64 to fec1::2 flags S/SA keep state dup-to fec1::2@tun1000001
-  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+@15 pass in quick on tun1000000 inet6 from fec0::/64 to fec1::2 flags S/SA dup-to fec1::2@tun1000001
+  [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

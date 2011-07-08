@@ -1,71 +1,71 @@
-@0 pass all flags S/SA keep state
-  [ Skip steps: i=6 d=6 f=end p=end sa=end sp=end da=end dp=end ]
+@0 pass all flags S/SA
+  [ Skip steps: i=6 r=6 d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @1 anchor "a/b" all {
-  [ Skip steps: i=6 d=6 f=end p=end sa=end sp=end da=end dp=end ]
+  [ Skip steps: i=6 r=6 d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 }
 @2 anchor "1/2/3" all {
-  [ Skip steps: i=6 d=6 f=end p=end sa=end sp=end da=end dp=end ]
+  [ Skip steps: i=6 r=6 d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 }
 @3 anchor "relative" all {
-  [ Skip steps: i=6 d=6 f=end p=end sa=end sp=end da=end dp=end ]
+  [ Skip steps: i=6 r=6 d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@0 pass in on lo0 all flags S/SA keep state label "TEST1"
-  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+@0 pass in on lo0 all flags S/SA label "TEST1"
+  [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 }
 @4 anchor "camield/*" all {
-  [ Skip steps: i=6 d=6 f=end p=end sa=end sp=end da=end dp=end ]
+  [ Skip steps: i=6 r=6 d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-  [ Skip steps: i=0 d=0 f=0 p=0 sa=0 sp=0 da=0 dp=0 ]
+  [ Skip steps: i=0 r=0 d=0 f=0 p=0 sa=0 da=0 sp=0 dp=0 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 }
 @5 anchor "relayd/*" all {
-  [ Skip steps: f=end p=end sa=end sp=end da=end dp=end ]
+  [ Skip steps: d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-  [ Skip steps: i=0 d=0 f=0 p=0 sa=0 sp=0 da=0 dp=0 ]
+  [ Skip steps: i=0 r=0 d=0 f=0 p=0 sa=0 da=0 sp=0 dp=0 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 }
 @6 anchor "foo" in on lo0 all {
-  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @0 anchor "bar" in all {
-  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @0 anchor "/1/2/3" all {
-  [ Skip steps: i=2 d=2 f=end p=end sa=end sp=end da=end dp=end ]
+  [ Skip steps: i=2 r=2 d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 }
 @1 anchor "/relative" all {
-  [ Skip steps: f=end p=end sa=end sp=end da=end dp=end ]
+  [ Skip steps: d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 }
-@2 pass in on lo0 all flags S/SA keep state label "FOO"
-  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+@2 pass in on lo0 all flags S/SA label "FOO"
+  [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 }
 @1 anchor in all {
-  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@0 pass in on lo0 all flags S/SA keep state label "BAR"
-  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+@0 pass in on lo0 all flags S/SA label "BAR"
+  [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 }

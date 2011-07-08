@@ -1,6 +1,6 @@
 anchor all {
   anchor in all {
-    pass quick all flags S/SA keep state
+    pass quick all flags S/SA
   }
   anchor out all {
     anchor in all {
@@ -10,7 +10,7 @@ anchor all {
             anchor in all {
               anchor out all {
                 anchor in all {
-                  pass all flags S/SA keep state
+                  pass all flags S/SA
                 }
               }
             }
@@ -19,8 +19,8 @@ anchor all {
       }
     }
   }
-  pass in on tun1000000 all flags S/SA keep state
+  pass in on tun1000000 all flags S/SA
   anchor "foo" on tun1000000 all {
-    pass all flags S/SA keep state
+    pass all flags S/SA
   }
 }

@@ -11,12 +11,12 @@ block drop in log quick on tun1000000 inet from 172.16.0.0/12 to any
 block drop in log quick on tun1000000 inet from 192.168.0.0/16 to any
 block drop in log quick on tun1000000 inet from 255.255.255.255 to any
 block drop in log quick from no-route to any
-pass out on tun1000000 inet proto icmp all icmp-type echoreq code 0 keep state
-pass in on tun1000000 inet proto icmp all icmp-type echoreq code 0 keep state
-pass out on tun1000000 proto udp all keep state
-pass in on tun1000000 proto udp from any to any port = domain keep state
-pass out on tun1000000 proto tcp all flags S/SA keep state
-pass in on tun1000000 proto tcp from any to any port = ssh flags S/SA keep state
-pass in on tun1000000 proto tcp from any to any port = smtp flags S/SA keep state
-pass in on tun1000000 proto tcp from any to any port = domain flags S/SA keep state
-pass in on tun1000000 proto tcp from any to any port = auth flags S/SA keep state
+pass out on tun1000000 inet proto icmp all icmp-type echoreq code 0
+pass in on tun1000000 inet proto icmp all icmp-type echoreq code 0
+pass out on tun1000000 proto udp all
+pass in on tun1000000 proto udp from any to any port = domain
+pass out on tun1000000 proto tcp all flags S/SA
+pass in on tun1000000 proto tcp from any to any port = ssh flags S/SA
+pass in on tun1000000 proto tcp from any to any port = smtp flags S/SA
+pass in on tun1000000 proto tcp from any to any port = domain flags S/SA
+pass in on tun1000000 proto tcp from any to any port = auth flags S/SA

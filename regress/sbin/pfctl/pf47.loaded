@@ -1,244 +1,244 @@
-@0 pass in on lo0 all flags S/SA keep state
-  [ Skip steps: d=end f=5 p=35 sa=6 sp=35 da=22 dp=47 ]
+@0 pass in on lo0 all flags S/SA
+  [ Skip steps: r=end d=end f=5 p=35 sa=6 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@1 pass in all flags S/SA keep state label "any"
-  [ Skip steps: d=end f=5 p=35 sa=6 sp=35 da=22 dp=47 ]
+@1 pass in all flags S/SA label "any"
+  [ Skip steps: r=end d=end f=5 p=35 sa=6 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@2 pass in on lo0 all flags S/SA keep state label "lo0"
-  [ Skip steps: i=end d=end f=5 p=35 sa=6 sp=35 da=22 dp=47 ]
+@2 pass in on lo0 all flags S/SA label "lo0"
+  [ Skip steps: i=end r=end d=end f=5 p=35 sa=6 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@3 pass in on lo0 all flags S/SA keep state label "lo0lo0"
-  [ Skip steps: i=end d=end f=5 p=35 sa=6 sp=35 da=22 dp=47 ]
+@3 pass in on lo0 all flags S/SA label "lo0lo0"
+  [ Skip steps: i=end r=end d=end f=5 p=35 sa=6 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@4 pass in on lo0 all flags S/SA keep state label "any"
-  [ Skip steps: i=end d=end p=35 sa=6 sp=35 da=22 dp=47 ]
+@4 pass in on lo0 all flags S/SA label "any"
+  [ Skip steps: i=end r=end d=end p=35 sa=6 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@5 pass in on lo0 inet all flags S/SA keep state label "any"
-  [ Skip steps: i=end d=end f=12 p=35 sp=35 da=22 dp=47 ]
+@5 pass in on lo0 inet all flags S/SA label "any"
+  [ Skip steps: i=end r=end d=end f=12 p=35 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@6 pass in on lo0 inet from 127.0.0.1 to any flags S/SA keep state label "127.0.0.1"
-  [ Skip steps: i=end d=end f=12 p=35 sa=9 sp=35 da=22 dp=47 ]
+@6 pass in on lo0 inet from 127.0.0.1 to any flags S/SA label "127.0.0.1"
+  [ Skip steps: i=end r=end d=end f=12 p=35 sa=9 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@7 pass in on lo0 inet from 127.0.0.1 to any flags S/SA keep state label "127.0.0.1127.0.0.1"
-  [ Skip steps: i=end d=end f=12 p=35 sa=9 sp=35 da=22 dp=47 ]
+@7 pass in on lo0 inet from 127.0.0.1 to any flags S/SA label "127.0.0.1127.0.0.1"
+  [ Skip steps: i=end r=end d=end f=12 p=35 sa=9 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@8 pass in on lo0 inet from 127.0.0.1 to any flags S/SA keep state label ":127.0.0.1:127.0.0.1:"
-  [ Skip steps: i=end d=end f=12 p=35 sp=35 da=22 dp=47 ]
+@8 pass in on lo0 inet from 127.0.0.1 to any flags S/SA label ":127.0.0.1:127.0.0.1:"
+  [ Skip steps: i=end r=end d=end f=12 p=35 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@9 pass in on lo0 inet from 127.0.0.0/8 to any flags S/SA keep state label "127.0.0.0/8"
-  [ Skip steps: i=end d=end f=12 p=35 sp=35 da=22 dp=47 ]
+@9 pass in on lo0 inet from 127.0.0.0/8 to any flags S/SA label "127.0.0.0/8"
+  [ Skip steps: i=end r=end d=end f=12 p=35 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@10 pass in on lo0 inet from 127.0.0.0/16 to any flags S/SA keep state label "127.0.0.0/16127.0.0.0/16"
-  [ Skip steps: i=end d=end f=12 p=35 sp=35 da=22 dp=47 ]
+@10 pass in on lo0 inet from 127.0.0.0/16 to any flags S/SA label "127.0.0.0/16127.0.0.0/16"
+  [ Skip steps: i=end r=end d=end f=12 p=35 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@11 pass in on lo0 inet from 127.0.0.0/31 to any flags S/SA keep state label ":127.0.0.0/31:127.0.0.0/31:"
-  [ Skip steps: i=end d=end p=35 sp=35 da=22 dp=47 ]
+@11 pass in on lo0 inet from 127.0.0.0/31 to any flags S/SA label ":127.0.0.0/31:127.0.0.0/31:"
+  [ Skip steps: i=end r=end d=end p=35 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@12 pass in on lo0 inet6 from fe80::1 to any flags S/SA keep state label "fe80::1"
-  [ Skip steps: i=end d=end f=21 p=35 sa=15 sp=35 da=22 dp=47 ]
+@12 pass in on lo0 inet6 from fe80::1 to any flags S/SA label "fe80::1"
+  [ Skip steps: i=end r=end d=end f=21 p=35 sa=15 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@13 pass in on lo0 inet6 from fe80::1 to any flags S/SA keep state label "fe80::1fe80::1"
-  [ Skip steps: i=end d=end f=21 p=35 sa=15 sp=35 da=22 dp=47 ]
+@13 pass in on lo0 inet6 from fe80::1 to any flags S/SA label "fe80::1fe80::1"
+  [ Skip steps: i=end r=end d=end f=21 p=35 sa=15 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@14 pass in on lo0 inet6 from fe80::1 to any flags S/SA keep state label ":fe80::1:fe80::1:"
-  [ Skip steps: i=end d=end f=21 p=35 sp=35 da=22 dp=47 ]
+@14 pass in on lo0 inet6 from fe80::1 to any flags S/SA label ":fe80::1:fe80::1:"
+  [ Skip steps: i=end r=end d=end f=21 p=35 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@15 pass in on lo0 inet6 from ::/8 to any flags S/SA keep state label "::/8"
-  [ Skip steps: i=end d=end f=21 p=35 sp=35 da=22 dp=47 ]
+@15 pass in on lo0 inet6 from ::/8 to any flags S/SA label "::/8"
+  [ Skip steps: i=end r=end d=end f=21 p=35 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@16 pass in on lo0 inet6 from fe00::/8 to any flags S/SA keep state label "fe00::/8"
-  [ Skip steps: i=end d=end f=21 p=35 sp=35 da=22 dp=47 ]
+@16 pass in on lo0 inet6 from fe00::/8 to any flags S/SA label "fe00::/8"
+  [ Skip steps: i=end r=end d=end f=21 p=35 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@17 pass in on lo0 inet6 from ::/64 to any flags S/SA keep state label "::/64::/64"
-  [ Skip steps: i=end d=end f=21 p=35 sp=35 da=22 dp=47 ]
+@17 pass in on lo0 inet6 from ::/64 to any flags S/SA label "::/64::/64"
+  [ Skip steps: i=end r=end d=end f=21 p=35 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@18 pass in on lo0 inet6 from fe80::/64 to any flags S/SA keep state label "fe80::/64fe80::/64"
-  [ Skip steps: i=end d=end f=21 p=35 sp=35 da=22 dp=47 ]
+@18 pass in on lo0 inet6 from fe80::/64 to any flags S/SA label "fe80::/64fe80::/64"
+  [ Skip steps: i=end r=end d=end f=21 p=35 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@19 pass in on lo0 inet6 from ::/127 to any flags S/SA keep state label ":::/127:::/127:"
-  [ Skip steps: i=end d=end f=21 p=35 sp=35 da=22 dp=47 ]
+@19 pass in on lo0 inet6 from ::/127 to any flags S/SA label ":::/127:::/127:"
+  [ Skip steps: i=end r=end d=end f=21 p=35 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@20 pass in on lo0 inet6 from fe80::/127 to any flags S/SA keep state label ":fe80::/127:fe80::/127:"
-  [ Skip steps: i=end d=end p=35 sp=35 da=22 dp=47 ]
+@20 pass in on lo0 inet6 from fe80::/127 to any flags S/SA label ":fe80::/127:fe80::/127:"
+  [ Skip steps: i=end r=end d=end p=35 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@21 pass in on lo0 all flags S/SA keep state label "!any!"
-  [ Skip steps: i=end d=end p=35 sa=60 sp=35 dp=47 ]
+@21 pass in on lo0 all flags S/SA label "!any!"
+  [ Skip steps: i=end r=end d=end p=35 sa=60 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@22 pass in on lo0 inet from any to (lo0:1) flags S/SA keep state label "(lo0)"
-  [ Skip steps: i=end d=end f=28 p=35 sa=60 sp=35 da=25 dp=47 ]
+@22 pass in on lo0 inet from any to (lo0:1) flags S/SA label "(lo0)"
+  [ Skip steps: i=end r=end d=end f=28 p=35 sa=60 da=25 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@23 pass in on lo0 inet from any to (lo0:1) flags S/SA keep state label "(lo0)(lo0)"
-  [ Skip steps: i=end d=end f=28 p=35 sa=60 sp=35 da=25 dp=47 ]
+@23 pass in on lo0 inet from any to (lo0:1) flags S/SA label "(lo0)(lo0)"
+  [ Skip steps: i=end r=end d=end f=28 p=35 sa=60 da=25 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@24 pass in on lo0 inet from any to (lo0:1) flags S/SA keep state label " (lo0) (lo0) "
-  [ Skip steps: i=end d=end f=28 p=35 sa=60 sp=35 dp=47 ]
+@24 pass in on lo0 inet from any to (lo0:1) flags S/SA label " (lo0) (lo0) "
+  [ Skip steps: i=end r=end d=end f=28 p=35 sa=60 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@25 pass in on lo0 inet from any to ! 127.0.0.0/8 flags S/SA keep state label "! 127.0.0.0/8"
-  [ Skip steps: i=end d=end f=28 p=35 sa=60 sp=35 dp=47 ]
+@25 pass in on lo0 inet from any to ! 127.0.0.0/8 flags S/SA label "! 127.0.0.0/8"
+  [ Skip steps: i=end r=end d=end f=28 p=35 sa=60 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@26 pass in on lo0 inet from any to ! 127.0.0.0/16 flags S/SA keep state label "! 127.0.0.0/16! 127.0.0.0/16"
-  [ Skip steps: i=end d=end f=28 p=35 sa=60 sp=35 dp=47 ]
+@26 pass in on lo0 inet from any to ! 127.0.0.0/16 flags S/SA label "! 127.0.0.0/16! 127.0.0.0/16"
+  [ Skip steps: i=end r=end d=end f=28 p=35 sa=60 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@27 pass in on lo0 inet from any to ! 127.0.0.0/31 flags S/SA keep state label " ! 127.0.0.0/31 ! 127.0.0.0/31 "
-  [ Skip steps: i=end d=end p=35 sa=60 sp=35 dp=47 ]
+@27 pass in on lo0 inet from any to ! 127.0.0.0/31 flags S/SA label " ! 127.0.0.0/31 ! 127.0.0.0/31 "
+  [ Skip steps: i=end r=end d=end p=35 sa=60 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@28 pass in on lo0 inet6 from any to ! (lo0:2) flags S/SA keep state label "! (lo0)"
-  [ Skip steps: i=end d=end f=34 p=35 sa=60 sp=35 da=31 dp=47 ]
+@28 pass in on lo0 inet6 from any to ! (lo0:2) flags S/SA label "! (lo0)"
+  [ Skip steps: i=end r=end d=end f=34 p=35 sa=60 da=31 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@29 pass in on lo0 inet6 from any to ! (lo0:2) flags S/SA keep state label "! (lo0)! (lo0)"
-  [ Skip steps: i=end d=end f=34 p=35 sa=60 sp=35 da=31 dp=47 ]
+@29 pass in on lo0 inet6 from any to ! (lo0:2) flags S/SA label "! (lo0)! (lo0)"
+  [ Skip steps: i=end r=end d=end f=34 p=35 sa=60 da=31 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@30 pass in on lo0 inet6 from any to ! (lo0:2) flags S/SA keep state label " ! (lo0) ! (lo0) "
-  [ Skip steps: i=end d=end f=34 p=35 sa=60 sp=35 dp=47 ]
+@30 pass in on lo0 inet6 from any to ! (lo0:2) flags S/SA label " ! (lo0) ! (lo0) "
+  [ Skip steps: i=end r=end d=end f=34 p=35 sa=60 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@31 pass in on lo0 inet6 from any to ! ::/8 flags S/SA keep state label "! ::/8"
-  [ Skip steps: i=end d=end f=34 p=35 sa=60 sp=35 dp=47 ]
+@31 pass in on lo0 inet6 from any to ! ::/8 flags S/SA label "! ::/8"
+  [ Skip steps: i=end r=end d=end f=34 p=35 sa=60 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@32 pass in on lo0 inet6 from any to ! ::/64 flags S/SA keep state label "! ::/64! ::/64"
-  [ Skip steps: i=end d=end f=34 p=35 sa=60 sp=35 dp=47 ]
+@32 pass in on lo0 inet6 from any to ! ::/64 flags S/SA label "! ::/64! ::/64"
+  [ Skip steps: i=end r=end d=end f=34 p=35 sa=60 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@33 pass in on lo0 inet6 from any to ! ::/127 flags S/SA keep state label " ! ::/127 ! ::/127 "
-  [ Skip steps: i=end d=end p=35 sa=60 sp=35 dp=47 ]
+@33 pass in on lo0 inet6 from any to ! ::/127 flags S/SA label " ! ::/127 ! ::/127 "
+  [ Skip steps: i=end r=end d=end p=35 sa=60 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@34 pass in on lo0 all flags S/SA keep state label "xx"
-  [ Skip steps: i=end d=end f=60 sa=60 da=60 dp=47 ]
+@34 pass in on lo0 all flags S/SA label "xx"
+  [ Skip steps: i=end r=end d=end f=60 sa=60 da=60 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@35 pass in on lo0 proto tcp from any port = 28 to any flags S/SA keep state label "28"
-  [ Skip steps: i=end d=end f=60 p=46 sa=60 da=60 dp=47 ]
+@35 pass in on lo0 proto tcp from any port = 28 to any flags S/SA label "28"
+  [ Skip steps: i=end r=end d=end f=60 p=46 sa=60 da=60 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@36 pass in on lo0 proto tcp from any port 28 >< 29 to any flags S/SA keep state label "28><29"
-  [ Skip steps: i=end d=end f=60 p=46 sa=60 da=60 dp=47 ]
+@36 pass in on lo0 proto tcp from any port 28 >< 29 to any flags S/SA label "28><29"
+  [ Skip steps: i=end r=end d=end f=60 p=46 sa=60 da=60 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@37 pass in on lo0 proto tcp from any port 28 <> 29 to any flags S/SA keep state label "28<>29"
-  [ Skip steps: i=end d=end f=60 p=46 sa=60 da=60 dp=47 ]
+@37 pass in on lo0 proto tcp from any port 28 <> 29 to any flags S/SA label "28<>29"
+  [ Skip steps: i=end r=end d=end f=60 p=46 sa=60 da=60 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@38 pass in on lo0 proto tcp from any port 28:29 to any flags S/SA keep state
-  [ Skip steps: i=end d=end f=60 p=46 sa=60 da=60 dp=47 ]
+@38 pass in on lo0 proto tcp from any port 28:29 to any flags S/SA
+  [ Skip steps: i=end r=end d=end f=60 p=46 sa=60 da=60 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@39 pass in on lo0 proto tcp from any port != 28 to any flags S/SA keep state label "!=28"
-  [ Skip steps: i=end d=end f=60 p=46 sa=60 da=60 dp=47 ]
+@39 pass in on lo0 proto tcp from any port != 28 to any flags S/SA label "!=28"
+  [ Skip steps: i=end r=end d=end f=60 p=46 sa=60 da=60 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@40 pass in on lo0 proto tcp from any port < 28 to any flags S/SA keep state label "<28"
-  [ Skip steps: i=end d=end f=60 p=46 sa=60 da=60 dp=47 ]
+@40 pass in on lo0 proto tcp from any port < 28 to any flags S/SA label "<28"
+  [ Skip steps: i=end r=end d=end f=60 p=46 sa=60 da=60 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@41 pass in on lo0 proto tcp from any port <= 28 to any flags S/SA keep state label "<=28"
-  [ Skip steps: i=end d=end f=60 p=46 sa=60 da=60 dp=47 ]
+@41 pass in on lo0 proto tcp from any port <= 28 to any flags S/SA label "<=28"
+  [ Skip steps: i=end r=end d=end f=60 p=46 sa=60 da=60 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@42 pass in on lo0 proto tcp from any port > 28 to any flags S/SA keep state label ">28"
-  [ Skip steps: i=end d=end f=60 p=46 sa=60 da=60 dp=47 ]
+@42 pass in on lo0 proto tcp from any port > 28 to any flags S/SA label ">28"
+  [ Skip steps: i=end r=end d=end f=60 p=46 sa=60 da=60 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@43 pass in on lo0 proto tcp from any port >= 28 to any flags S/SA keep state label ">=28"
-  [ Skip steps: i=end d=end f=60 p=46 sa=60 da=60 dp=47 ]
+@43 pass in on lo0 proto tcp from any port >= 28 to any flags S/SA label ">=28"
+  [ Skip steps: i=end r=end d=end f=60 p=46 sa=60 da=60 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@44 pass in on lo0 proto tcp from any port = 28 to any flags S/SA keep state label "2828"
-  [ Skip steps: i=end d=end f=60 p=46 sa=60 sp=46 da=60 dp=47 ]
+@44 pass in on lo0 proto tcp from any port = 28 to any flags S/SA label "2828"
+  [ Skip steps: i=end r=end d=end f=60 p=46 sa=60 da=60 sp=46 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@45 pass in on lo0 proto tcp from any port = 28 to any flags S/SA keep state label "$28$28$"
-  [ Skip steps: i=end d=end f=60 sa=60 da=60 dp=47 ]
+@45 pass in on lo0 proto tcp from any port = 28 to any flags S/SA label "$28$28$"
+  [ Skip steps: i=end r=end d=end f=60 sa=60 da=60 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@46 pass in on lo0 all flags S/SA keep state
-  [ Skip steps: i=end d=end f=60 sa=60 sp=60 da=60 ]
+@46 pass in on lo0 all flags S/SA
+  [ Skip steps: i=end r=end d=end f=60 sa=60 da=60 sp=60 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@47 pass in on lo0 proto udp from any to any port = 29 keep state label "29"
-  [ Skip steps: i=end d=end f=60 p=50 sa=60 sp=60 da=60 ]
+@47 pass in on lo0 proto udp from any to any port = 29 label "29"
+  [ Skip steps: i=end r=end d=end f=60 p=50 sa=60 da=60 sp=60 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@48 pass in on lo0 proto udp from any to any port != 29 keep state label "!=29!=29"
-  [ Skip steps: i=end d=end f=60 p=50 sa=60 sp=60 da=60 ]
+@48 pass in on lo0 proto udp from any to any port != 29 label "!=29!=29"
+  [ Skip steps: i=end r=end d=end f=60 p=50 sa=60 da=60 sp=60 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@49 pass in on lo0 proto udp from any to any port > 29 keep state label "x>29x>29x"
-  [ Skip steps: i=end d=end f=60 sa=60 sp=60 da=60 ]
+@49 pass in on lo0 proto udp from any to any port > 29 label "x>29x>29x"
+  [ Skip steps: i=end r=end d=end f=60 sa=60 da=60 sp=60 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@50 pass in on lo0 all flags S/SA keep state label "ip"
-  [ Skip steps: i=end d=end f=60 sa=60 sp=60 da=60 dp=60 ]
+@50 pass in on lo0 all flags S/SA label "ip"
+  [ Skip steps: i=end r=end d=end f=60 sa=60 da=60 sp=60 dp=60 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@51 pass in on lo0 proto esp all keep state label "esp"
-  [ Skip steps: i=end d=end f=60 p=54 sa=60 sp=60 da=60 dp=60 ]
+@51 pass in on lo0 proto esp all label "esp"
+  [ Skip steps: i=end r=end d=end f=60 p=54 sa=60 da=60 sp=60 dp=60 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@52 pass in on lo0 proto esp all keep state label "espesp"
-  [ Skip steps: i=end d=end f=60 p=54 sa=60 sp=60 da=60 dp=60 ]
+@52 pass in on lo0 proto esp all label "espesp"
+  [ Skip steps: i=end r=end d=end f=60 p=54 sa=60 da=60 sp=60 dp=60 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@53 pass in on lo0 proto esp all keep state label "-esp-esp-"
-  [ Skip steps: i=end d=end f=60 sa=60 sp=60 da=60 dp=60 ]
+@53 pass in on lo0 proto esp all label "-esp-esp-"
+  [ Skip steps: i=end r=end d=end f=60 sa=60 da=60 sp=60 dp=60 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@54 pass in on lo0 proto 166 all keep state label "166"
-  [ Skip steps: i=end d=end f=60 p=57 sa=60 sp=60 da=60 dp=60 ]
+@54 pass in on lo0 proto 166 all label "166"
+  [ Skip steps: i=end r=end d=end f=60 p=57 sa=60 da=60 sp=60 dp=60 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@55 pass in on lo0 proto 166 all keep state label "166166"
-  [ Skip steps: i=end d=end f=60 p=57 sa=60 sp=60 da=60 dp=60 ]
+@55 pass in on lo0 proto 166 all label "166166"
+  [ Skip steps: i=end r=end d=end f=60 p=57 sa=60 da=60 sp=60 dp=60 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@56 pass in on lo0 proto 166 all keep state label "_166_166_"
-  [ Skip steps: i=end d=end f=60 sa=60 sp=60 da=60 dp=60 ]
+@56 pass in on lo0 proto 166 all label "_166_166_"
+  [ Skip steps: i=end r=end d=end f=60 sa=60 da=60 sp=60 dp=60 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@57 pass in on lo0 all flags S/SA keep state label "57"
-  [ Skip steps: i=end d=end f=60 p=60 sa=60 sp=60 da=60 dp=60 ]
+@57 pass in on lo0 all flags S/SA label "57"
+  [ Skip steps: i=end r=end d=end f=60 p=60 sa=60 da=60 sp=60 dp=60 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@58 pass in on lo0 all flags S/SA keep state label "5858"
-  [ Skip steps: i=end d=end f=60 p=60 sa=60 sp=60 da=60 dp=60 ]
+@58 pass in on lo0 all flags S/SA label "5858"
+  [ Skip steps: i=end r=end d=end f=60 p=60 sa=60 da=60 sp=60 dp=60 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@59 pass in on lo0 all flags S/SA keep state label "%59%59%"
-  [ Skip steps: i=end d=end ]
+@59 pass in on lo0 all flags S/SA label "%59%59%"
+  [ Skip steps: i=end r=end d=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@60 pass in on lo0 inet proto tcp from 127.0.0.1 port = 30 to 127.0.0.2 port = 44 flags S/SA keep state label "if lo0 proto tcp 127.0.0.1 30 127.0.0.2 44"
-  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+@60 pass in on lo0 inet proto tcp from 127.0.0.1 port = 30 to 127.0.0.2 port = 44 flags S/SA label "if lo0 proto tcp 127.0.0.1 30 127.0.0.2 44"
+  [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
