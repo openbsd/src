@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.58 2010/10/07 10:49:39 djm Exp $
+# $OpenBSD: Makefile,v 1.59 2011/07/08 01:37:54 mpf Exp $
 
 LIB=	crypto
 WANTLINT=
@@ -500,13 +500,13 @@ GENERATED+=${f}.S
 ${f}.S: ${LCRYPTO_SRC}/${dir}/asm/${f}.pl ${LCRYPTO_SRC}/perlasm/x86gas.pl
 	/usr/bin/perl -I${LCRYPTO_SRC}/perlasm -I${LCRYPTO_SRC}/${dir}/asm \
 		${LCRYPTO_SRC}/${dir}/asm/${f}.pl \
-		    openbsd-elf 386 ${PICFLAG} > ${.TARGET}
+		    openbsd-elf ${CFLAGS} 386 ${PICFLAG} > ${.TARGET}
 .endfor
 SRCS+=	x86cpuid.S
 GENERATED+=x86cpuid.S
 x86cpuid.S: ${LCRYPTO_SRC}/x86cpuid.pl ${LCRYPTO_SRC}/perlasm/x86gas.pl
 	/usr/bin/perl -I${LCRYPTO_SRC}/perlasm ${LCRYPTO_SRC}/x86cpuid.pl \
-		openbsd-elf 386 ${PICFLAG} > ${.TARGET}
+		openbsd-elf ${CFLAGS} 386 ${PICFLAG} > ${.TARGET}
 SRCS+= bf_cbc.c	
 .elif (${MACHINE_ARCH} == "amd64")
 SRCS+= bf_enc.c des_enc.c 
