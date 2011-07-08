@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.46 2011/05/08 19:46:10 matthew Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.47 2011/07/08 07:43:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -174,6 +174,9 @@ struct ata_identify {
  * ATA DSM (Data Set Management) subcommands
  */
 #define ATA_DSM_TRIM		0x01
+
+#define ATA_DSM_TRIM_DESC(_lba, _len)	((_lba) | ((u_int64_t)(_len) << 48))
+#define ATA_DSM_TRIM_MAX_LEN		0xffff
 
 /*
  * Frame Information Structures
