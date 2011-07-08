@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.373 2011/07/08 01:41:25 deraadt Exp $
+#	$OpenBSD: rc,v 1.374 2011/07/08 01:43:09 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -428,41 +428,9 @@ if [ X"${pf}" != X"NO" ]; then
 	fi
 fi
 
-if [ X"${named_flags}" != X"NO" ]; then
-	if ! cmp -s /etc/rndc.key /var/named/etc/rndc.key ; then
-		echo -n "rndc-confgen: generating new shared secret... "
-		if rndc-confgen -a -t /var/named >/dev/null 2>&1; then
-			chmod 0640 /var/named/etc/rndc.key >/dev/null 2>&1
-			echo done.
-		else
-			echo failed.
-		fi
-	fi
-fi
-
 echo -n 'starting name service daemons:'
 start_daemon named nsd
 echo '.'
-
-if [ ! -f /etc/isakmpd/private/local.key ]; then
-	echo -n "openssl: generating new isakmpd/iked RSA key... "
-	if openssl genrsa -out /etc/isakmpd/private/local.key 2048 \
-	    > /dev/null 2>&1; then
-		chmod 600 /etc/isakmpd/private/local.key
-		openssl rsa -out /etc/isakmpd/local.pub \
-		    -in /etc/isakmpd/private/local.key -pubout > /dev/null 2>&1
-		echo done.
-	else
-		echo failed.
-	fi
-fi
-
-if [ ! -f /etc/iked/private/local.key ]; then
-	# Just copy the generated isakmpd key
-	cp /etc/isakmpd/private/local.key /etc/iked/private/local.key
-	chmod 600 /etc/iked/private/local.key
-	cp /etc/isakmpd/local.pub /etc/iked/local.pub
-fi
 
 echo -n 'starting IPsec daemons:'
 start_daemon isakmpd iked sasyncd
@@ -596,8 +564,6 @@ fi
 if [ -x /usr/libexec/vi.recover ]; then
 	echo 'preserving editor files.';	/usr/libexec/vi.recover
 fi
-
-ssh-keygen -A
 
 echo -n 'starting network daemons:'
 
