@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.70 2011/07/08 05:01:27 matthew Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.71 2011/07/08 19:19:20 tedu Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -1452,4 +1452,17 @@ linux_sys_mprotect(struct proc *p, void *v, register_t *retval)
 	if (SCARG(uap, prot) & (PROT_WRITE | PROT_EXEC))
 		SCARG(uap, prot) |= PROT_READ;
 	return (sys_mprotect(p, uap, retval));
+}
+
+int
+linux_sys_setdomainname(struct proc *p, void *v, register_t *retval)
+{
+	struct linux_sys_setdomainname_args *uap = v;
+	int error, mib[1];
+	
+	if ((error = suser(p, 0)))
+		return (error);
+	mib[0] = KERN_DOMAINNAME;
+	return (kern_sysctl(mib, 1, NULL, NULL, SCARG(uap, name),
+	    SCARG(uap, len), p));
 }

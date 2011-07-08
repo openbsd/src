@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.112 2011/07/08 05:01:27 matthew Exp $
+;	$OpenBSD: syscalls.master,v 1.113 2011/07/08 19:19:20 tedu Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -281,33 +281,16 @@
 159	UNIMPL
 160	UNIMPL
 161	STD		{ int sys_getfh(const char *fname, fhandle_t *fhp); }
-162	COMPAT_09	{ int sys_getdomainname(char *domainname, int len); } \
-			    ogetdomainname
-163	COMPAT_09	{ int sys_setdomainname(char *domainname, int len); } \
-			    osetdomainname
+162	OBSOL		ogetdomainname
+163	OBSOL		osetdomainname
 164	UNIMPL		ouname
 165	STD		{ int sys_sysarch(int op, void *parms); }
 166	UNIMPL
 167	UNIMPL
 168	UNIMPL
-#if defined(SYSVSEM) && !defined(__LP64__)
-169	COMPAT_10	{ int sys_semsys(int which, int a2, int a3, int a4, \
-			    int a5); } osemsys
-#else
-169	UNIMPL		1.0 semsys
-#endif
-#if defined(SYSVMSG) && !defined(__LP64__)
-170	COMPAT_10	{ int sys_msgsys(int which, int a2, int a3, int a4, \
-			    int a5, int a6); } omsgsys
-#else
-170	UNIMPL		1.0 msgsys
-#endif
-#if defined(SYSVSHM) && !defined(__LP64__)
-171	COMPAT_10	{ int sys_shmsys(int which, int a2, int a3, int a4); } \
-			    oshmsys
-#else
-171	UNIMPL		1.0 shmsys
-#endif
+169	OBSOL		semsys10
+170	OBSOL		msgsys10
+171	OBSOL		shmsys10
 172	UNIMPL
 173	STD		{ ssize_t sys_pread(int fd, void *buf, \
 			  size_t nbyte, int pad, off_t offset); }
