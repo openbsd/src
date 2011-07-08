@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcntl.h,v 1.14 2011/07/08 04:23:24 matthew Exp $	*/
+/*	$OpenBSD: fcntl.h,v 1.15 2011/07/08 21:26:27 matthew Exp $	*/
 /*	$NetBSD: fcntl.h,v 1.8 1995/03/26 20:24:12 jtc Exp $	*/
 
 /*-
@@ -153,6 +153,9 @@
 #define	F_GETLK		7		/* get record locking information */
 #define	F_SETLK		8		/* set record locking information */
 #define	F_SETLKW	9		/* F_SETLK; wait if blocked */
+#if __BSD_VISIBLE || __POSIX_VISIBLE >= 200809
+#define	F_DUPFD_CLOEXEC	10		/* duplicate with FD_CLOEXEC set */
+#endif
 
 /* file descriptor flags (F_GETFD, F_SETFD) */
 #define	FD_CLOEXEC	1		/* close-on-exec flag */

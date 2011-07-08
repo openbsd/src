@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.87 2011/07/08 19:28:36 otto Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.88 2011/07/08 21:26:27 matthew Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -313,6 +313,7 @@ restart:
 	switch (SCARG(uap, cmd)) {
 
 	case F_DUPFD:
+	case F_DUPFD_CLOEXEC:
 		newmin = (long)SCARG(uap, arg);
 		if ((u_int)newmin >= p->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
 		    (u_int)newmin >= maxfiles) {
@@ -333,6 +334,9 @@ restart:
 			error = finishdup(p, fp, fd, i, retval);
 		else
 			FRELE(fp);
+
+		if (!error && SCARG(uap, cmd) == F_DUPFD_CLOEXEC)
+			fdp->fd_ofileflags[i] |= UF_EXCLOSE;
 
 		fdpunlock(fdp);
 		return (error);
