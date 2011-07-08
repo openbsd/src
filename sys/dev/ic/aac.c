@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.52 2011/04/04 20:29:45 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.53 2011/07/08 22:09:27 matthew Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -263,11 +263,11 @@ aac_attach(struct aac_softc *sc)
 	sc->aac_link.adapter = &aac_switch;
 	sc->aac_link.openings = (sc->total_fibs - 8) / 
 	    (sc->aac_container_count ? sc->aac_container_count : 1);
-	sc->aac_link.adapter_buswidth = AAC_MAX_CONTAINERS;
 	sc->aac_link.adapter_target = AAC_MAX_CONTAINERS;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->aac_link;
+	saa.saa_targets = AAC_MAX_CONTAINERS;
 
 	config_found(&sc->aac_dev, &saa, scsiprint);
 

@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.97 2011/04/15 20:53:28 miod Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.98 2011/07/08 22:09:27 matthew Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -232,9 +232,7 @@ atapiscsi_attach(parent, self, aux)
 	as->drive = drvp->drive;
 	as->sc_adapterlink.adapter_softc = as;
 	as->sc_adapterlink.adapter_target = 7;
-	as->sc_adapterlink.adapter_buswidth = 2;
 	as->sc_adapterlink.adapter = &atapiscsi_switch;
-	as->sc_adapterlink.luns = 1;
 	as->sc_adapterlink.openings = 1;
 	as->sc_adapterlink.flags = SDEV_ATAPI;
 
@@ -272,6 +270,8 @@ atapiscsi_attach(parent, self, aux)
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &as->sc_adapterlink;
+	saa.saa_targets = 2;
+	saa.saa_luns = 1;
 
 	child = config_found((struct device *)as, &saa, scsiprint);
 

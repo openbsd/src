@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.35 2011/05/24 20:27:11 matthew Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.36 2011/07/08 22:09:27 matthew Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -92,12 +92,13 @@ umass_scsi_attach(struct umass_softc *sc)
 
 	scbus = umass_scsi_setup(sc);
 	scbus->sc_link.adapter_target = UMASS_SCSIID_HOST;
-	scbus->sc_link.luns = sc->maxlun + 1;
 	scbus->sc_link.flags &= ~SDEV_ATAPI;
 	scbus->sc_link.flags |= SDEV_UMASS;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &scbus->sc_link;
+	saa.saa_targets = 2;
+	saa.saa_luns = sc->maxlun + 1;
 
 	DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: SCSI\n"
 			     "sc = 0x%x, scbus = 0x%x\n",
@@ -120,12 +121,13 @@ umass_atapi_attach(struct umass_softc *sc)
 
 	scbus = umass_scsi_setup(sc);
 	scbus->sc_link.adapter_target = UMASS_SCSIID_HOST;
-	scbus->sc_link.luns = 1;
 	scbus->sc_link.openings = 1;
 	scbus->sc_link.flags |= SDEV_ATAPI;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &scbus->sc_link;
+	saa.saa_targets = 2;
+	saa.saa_luns = 1;
 
 	DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: ATAPI\n"
 			     "sc = 0x%x, scbus = 0x%x\n",
@@ -152,7 +154,6 @@ umass_scsi_setup(struct umass_softc *sc)
 	scsi_iopool_init(&scbus->sc_iopool, scbus, umass_io_get, umass_io_put);
 
 	/* Fill in the link. */
-	scbus->sc_link.adapter_buswidth = 2;
 	scbus->sc_link.adapter = &umass_scsi_switch;
 	scbus->sc_link.adapter_softc = sc;
 	scbus->sc_link.openings = 1;

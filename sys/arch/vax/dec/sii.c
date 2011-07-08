@@ -1,4 +1,4 @@
-/*	$OpenBSD: sii.c,v 1.11 2010/06/28 18:31:01 krw Exp $	*/
+/*	$OpenBSD: sii.c,v 1.12 2011/07/08 22:09:27 matthew Exp $	*/
 /*	$NetBSD: sii.c,v 1.42 2000/06/02 20:20:29 mhitch Exp $	*/
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -198,7 +198,6 @@ sii_attach(sc)
 	 * fill in the prototype scsi_link.
 	 */
 	sc->sc_link.adapter = &sii_scsiswitch;
-	sc->sc_link.adapter_buswidth = 8;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_regs->id & SII_IDMSK;
 	sc->sc_link.openings = 1;	/* driver can't queue requests yet */
@@ -208,6 +207,7 @@ sii_attach(sc)
 	 */
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
+	saa.saa_targets = 8;
 	config_found(&sc->sc_dev, &saa, scsiprint);
 }
 

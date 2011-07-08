@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.111 2011/07/08 08:16:50 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.112 2011/07/08 22:09:27 matthew Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -186,8 +186,6 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 	/* fill in our scsi_link */
 	as->as_link.adapter = &as->as_switch;
 	as->as_link.adapter_softc = as;
-	as->as_link.adapter_buswidth = aaa->aaa_nports;
-	as->as_link.luns = SATA_PMP_MAX_PORTS;
 	as->as_link.adapter_target = aaa->aaa_nports;
 	as->as_link.openings = 1;
 
@@ -196,6 +194,8 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &as->as_link;
+	saa.saa_targets = aaa->aaa_nports;
+	saa.saa_luns = SATA_PMP_MAX_PORTS;
 
 	/* stash the scsibus so we can do hotplug on it */
 	as->as_scsibus = (struct scsibus_softc *)config_found(self, &saa,

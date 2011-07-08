@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.243 2011/07/07 18:04:25 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.244 2011/07/08 22:09:27 matthew Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1662,11 +1662,11 @@ sr_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &sr_switch;
 	sc->sc_link.adapter_target = SR_MAX_LD;
-	sc->sc_link.adapter_buswidth = SR_MAX_LD;
-	sc->sc_link.luns = 1;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
+	saa.saa_targets = SR_MAX_LD;
+	saa.saa_luns = 1;
 
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,
 	    &saa, scsiprint);

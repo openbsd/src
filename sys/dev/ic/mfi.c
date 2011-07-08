@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.119 2011/04/09 20:23:31 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.120 2011/07/08 22:09:27 matthew Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -746,11 +746,11 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &mfi_switch;
 	sc->sc_link.adapter_target = MFI_MAX_LD;
-	sc->sc_link.adapter_buswidth = sc->sc_max_ld;
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
+	saa.saa_targets = sc->sc_max_ld;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);
 

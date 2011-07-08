@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.46 2011/05/23 07:25:19 otto Exp $	*/
+/*	$OpenBSD: cac.c,v 1.47 2011/07/08 22:09:27 matthew Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -245,7 +245,6 @@ cac_init(struct cac_softc *sc, int startfw)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &cac_switch;
 	sc->sc_link.adapter_target = cinfo.num_drvs;
-	sc->sc_link.adapter_buswidth = cinfo.num_drvs;
 	sc->sc_link.openings = CAC_MAX_CCBS / sc->sc_nunits;
 	if (sc->sc_link.openings < 4 )
 		sc->sc_link.openings = 4;
@@ -253,6 +252,7 @@ cac_init(struct cac_softc *sc, int startfw)
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
+	saa.saa_targets = cinfo.num_drvs;
 
 	config_found(&sc->sc_dv, &saa, scsiprint);
 

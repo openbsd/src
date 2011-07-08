@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.172 2011/06/17 07:06:46 mk Exp $ */
+/*	$OpenBSD: mpi.c,v 1.173 2011/07/08 22:09:27 matthew Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -344,12 +344,12 @@ mpi_attach(struct mpi_softc *sc)
 	sc->sc_link.adapter = &mpi_switch;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_target;
-	sc->sc_link.adapter_buswidth = sc->sc_buswidth;
 	sc->sc_link.openings = sc->sc_maxcmds / sc->sc_buswidth;
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
+	saa.saa_targets = sc->sc_buswidth;
 
 	/* config_found() returns the scsibus attached to us */
 	sc->sc_scsibus = (struct scsibus_softc *) config_found(&sc->sc_dev,
