@@ -1,10 +1,7 @@
-#	$OpenBSD: Makefile,v 1.3 2011/07/08 19:53:22 martynas Exp $
+#	$OpenBSD: Makefile,v 1.4 2011/07/08 22:34:05 martynas Exp $
 
 .if ${MACHINE} == "zaurus"
 SRCS=	ztsscale.c
-
-LDADD=	-lm
-DPADD=	${LIBM}
 
 PROG=	ztsscale
 .else
