@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.74 2011/07/08 00:08:00 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.75 2011/07/08 23:26:40 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 	struct part_map_entry *part;
 
 	/* First check for a DPME (HFS) disklabel */
-	bp->b_blkno = 1;
+	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
 	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
@@ -125,7 +125,7 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 		struct partition *pp;
 		char *s;
 
-		bp->b_blkno = 1+i;
+		bp->b_blkno = LABELSECTOR + i;
 		bp->b_bcount = lp->d_secsize;
 		CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
 		SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
@@ -140,7 +140,7 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 				*s = (*s - 'a' + 'A');
 
 		if (strcmp(part->pmPartType, PART_TYPE_OPENBSD) == 0) {
-			hfspartoff = part->pmPyPartStart - LABELSECTOR;
+			hfspartoff = part->pmPyPartStart;
 			hfspartend = hfspartoff + part->pmPartBlkCnt;
 			if (partoffp) {
 				*partoffp = hfspartoff;
@@ -175,7 +175,7 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 		return (0);
 
 	/* next, dig out disk label */
-	bp->b_blkno = hfspartoff + LABELSECTOR;
+	bp->b_blkno = hfspartoff;
 	bp->b_bcount = lp->d_secsize;
 	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
 	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
@@ -203,8 +203,8 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 	bp->b_dev = dev;
 
 	if (readdpmelabel(bp, strat, lp, &partoff, 1) == 0) {
-		bp->b_blkno = partoff + LABELSECTOR;
-		offset = LABELOFFSET;
+		bp->b_blkno = partoff;
+		offset = 0;
 	} else if (readdoslabel(bp, strat, lp, &partoff, 1) == 0) {
 		bp->b_blkno = DL_BLKTOSEC(lp, partoff + DOS_LABELSECTOR) *
 		    DL_BLKSPERSEC(lp);
