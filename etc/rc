@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.377 2011/07/08 02:15:34 robert Exp $
+#	$OpenBSD: rc,v 1.378 2011/07/08 04:54:12 robert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -414,9 +414,8 @@ dmesg >/var/run/dmesg.boot
 
 make_keys
 
-echo -n 'starting system logger: '
+echo -n 'starting system logger:'
 start_daemon syslogd
-echo '.'
 
 if [ X"${pf}" != X"NO" ]; then
 	ifconfig pflog0 create >/dev/null 2>&1
@@ -425,6 +424,8 @@ if [ X"${pf}" != X"NO" ]; then
 		start_daemon pflogd
 	fi
 fi
+
+echo '.'
 
 echo -n 'starting name service daemons:'
 start_daemon named nsd
