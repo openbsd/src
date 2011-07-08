@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.142 2011/07/06 17:28:00 matthew Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.143 2011/07/08 05:07:05 matthew Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -110,6 +110,7 @@ void	vndclear(struct vnd_softc *);
 int	vndsetcred(struct vnd_softc *, struct ucred *);
 int	vndgetdisklabel(dev_t, struct vnd_softc *, struct disklabel *, int);
 void	vndencrypt(struct vnd_softc *, caddr_t, size_t, daddr64_t, int);
+void	vndencryptbuf(struct vnd_softc *, struct buf *, int);
 size_t	vndbdevsize(struct vnode *, struct proc *);
 
 void
@@ -132,6 +133,12 @@ vndencrypt(struct vnd_softc *sc, caddr_t addr, size_t size, daddr64_t off,
 		addr += bsize;
 		off++;
 	}
+}
+
+void
+vndencryptbuf(struct vnd_softc *sc, struct buf *bp, int encrypt)
+{
+	vndencrypt(sc, bp->b_data, bp->b_bcount, bp->b_blkno, encrypt);
 }
 
 void
@@ -295,12 +302,10 @@ vndstrategy(struct buf *bp)
 		bp->b_error = VOP_READ(sc->sc_vp, &auio, 0,
 		    sc->sc_cred);
 		if (sc->sc_keyctx)
-			vndencrypt(sc,	bp->b_data,
-			   bp->b_bcount, bp->b_blkno, 0);
+			vndencryptbuf(sc, bp, 0);
 	} else {
 		if (sc->sc_keyctx)
-			vndencrypt(sc, bp->b_data,
-			   bp->b_bcount, bp->b_blkno, 1);
+			vndencryptbuf(sc, bp, 1);
 		auio.uio_rw = UIO_WRITE;
 		/*
 		 * Upper layer has already checked I/O for
@@ -310,8 +315,7 @@ vndstrategy(struct buf *bp)
 		    IO_NOLIMIT, sc->sc_cred);
 		/* Data in buffer cache needs to be in clear */
 		if (sc->sc_keyctx)
-			vndencrypt(sc, bp->b_data,
-			   bp->b_bcount, bp->b_blkno, 0);
+			vndencryptbuf(sc, bp, 0);
 	}
 	VOP_UNLOCK(sc->sc_vp, 0, p);
 	if (bp->b_error)
