@@ -1,6 +1,4 @@
-/*	$OpenBSD: s_modf.S,v 1.1 2011/07/08 19:21:42 martynas Exp $	*/
-/*	$NetBSD: modf.S,v 1.3 2000/11/01 23:32:41 eeh Exp $	*/
-
+/* $OpenBSD: modf.S,v 1.7 2011/07/08 22:28:33 martynas Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +32,7 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
-
+#include "DEFS.h"
 #include <machine/fsr.h>
 
 /*
@@ -63,17 +60,16 @@
  * various aspects.
  *
  * Stack usage:
- *	4@[%fp + BIAS - 4]	saved %fsr
- *	4@[%fp + BIAS - 8]	new %fsr with rounding set to `towards 0'
- *	8@[%fp + BIAS - 16]	space for moving between %i and %f registers
+ *	4@[%fp - 4]	saved %fsr
+ *	4@[%fp - 8]	new %fsr with rounding set to `towards 0'
+ *	8@[%fp - 16]	space for moving between %i and %f registers
  * Register usage:
- *	%f0:f1		double val;
+ *	%i0%i1		double val;
  *	%l0		scratch
  *	%l1		sign bit (0x80000000)
- *	%i1		double *iptr;
+ *	%i2		double *iptr;
  *	%f2:f3		`magic number' 2^52, in fpu registers
  *	%f4:f5		double v, in fpu registers
- *	%f6:f7		double temp.
  */
 
 	.align	8
@@ -86,13 +82,16 @@ L0:
 	.word	0
 
 ENTRY(modf)
-	save	%sp, -CC64FSZ-16, %sp
+	save	%sp, -64-16, %sp
 
 	/*
-	 * First, compute v = abs(val)
+	 * First, compute v = abs(val) by clearing sign bit,
+	 * and then set up the fpu registers.  This would be
+	 * much easier if we could do alu operations on fpu registers!
 	 */
-	fabsd	%f0, %f4		! %f4:f5 = v
-	fcmped	%fcc1, %f0, %f4		! %fcc1 = (val == abs(val))
+	sethi	%hi(0x80000000), %l1	! sign bit
+	andn	%i0, %l1, %l0
+	st	%l0, [%fp - 16]
 #ifdef PIC
 	PICCY_SET(Lmagic, %l0, %o7)
 	ldd	[%l0], %f2
@@ -100,12 +99,15 @@ ENTRY(modf)
 	sethi	%hi(Lmagic), %l0
 	ldd	[%l0 + %lo(Lmagic)], %f2
 #endif
+	st	%i1, [%fp - 12]
+	ldd	[%fp - 16], %f4		! %f4:f5 = v
 
 	/*
 	 * Is %f4:f5 >= %f2:f3 ?  If so, it is all integer bits.
 	 * It is probably less, though.
 	 */
 	fcmped	%f4, %f2
+	nop				! fpop2 delay
 	fbuge	Lbig			! if >= (or unordered), go out
 	nop
 
@@ -115,15 +117,15 @@ ENTRY(modf)
 	 * traps enabled, but change the rounding mode.  This might
 	 * not be so good.  Oh well....
 	 */
-	st	%fsr, [%fp + BIAS - 4]	! %l5 = current FSR mode
+	st	%fsr, [%fp - 4]		! %l5 = current FSR mode
 	set	FSR_RD, %l3		! %l3 = rounding direction mask
-	ld	[%fp + BIAS - 4], %l5
+	ld	[%fp - 4], %l5
 	set	FSR_RD_RZ << FSR_RD_SHIFT, %l4
 	andn	%l5, %l3, %l6
 	or	%l6, %l4, %l6		! round towards zero, please
 	and	%l5, %l3, %l5		! save original rounding mode
-	st	%l6, [%fp + BIAS - 8]
-	ld	[%fp + BIAS - 8], %fsr
+	st	%l6, [%fp - 8]
+	ld	[%fp - 8], %fsr
 
 	faddd	%f4, %f2, %f4		! %f4:f5 += 2^52
 	fsubd	%f4, %f2, %f4		! %f4:f5 -= 2^52
@@ -131,34 +133,38 @@ ENTRY(modf)
 	/*
 	 * Restore %fsr, but leave exceptions accrued.
 	 */
-	st	%fsr, [%fp + BIAS - 4]
-	ld	[%fp + BIAS - 4], %l6
+	st	%fsr, [%fp - 4]
+	ld	[%fp - 4], %l6
 	andn	%l6, %l3, %l6		! %l6 = %fsr & ~FSR_RD;
 	or	%l5, %l6, %l5		! %l5 |= %l6;
-	st	%l5, [%fp + BIAS - 4]
-	ld	[%fp + BIAS - 4], %fsr	! restore %fsr, leaving accrued stuff
+	st	%l5, [%fp - 4]
+	ld	[%fp - 4], %fsr		! restore %fsr, leaving accrued stuff
 
 	/*
 	 * Now insert the original sign in %f4:f5.
-	 * %fcc1 should still have the reults of (val == abs(val))
-	 * from above, so we use a conditional move on %fcc1 to: 
-	 *
-	 *	%f4 = (val == abs(val)) ? %f4 : -%f4
-	 *
+	 * This is a lot of work, so it is conditional here.
 	 */
-	fnegd	%f4, %f6
-	fmovdnz	%fcc1, %f6, %f4
+	btst	%l1, %i0
+	be	1f
+	nop
+	st	%f4, [%fp - 16]
+	ld	[%fp - 16], %g1
+	or	%l1, %g1, %g1
+	st	%g1, [%fp - 16]
+	ld	[%fp - 16], %f4
 1:
 
 	/*
 	 * The value in %f4:f5 is now the integer portion of the original
-	 * argument.  We need to store this in *ival (%i1), subtract it
-	 * from the original value argument (%d0), and return the result.
+	 * argument.  We need to store this in *ival (%i2), subtract it
+	 * from the original value argument (%i0:i1), and return the result.
 	 */
-	std	%f4, [%i1]		! *ival = %f4:f5;
+	std	%f4, [%i2]		! *ival = %f4:f5;
+	std	%i0, [%fp - 16]
+	ldd	[%fp - 16], %f0		! %f0:f1 = val;
 	fsubd	%f0, %f4, %f0		! %f0:f1 -= %f4:f5;
 	ret
-	restore
+	 restore
 
 Lbig:
 	/*
@@ -169,13 +175,12 @@ Lbig:
 	 */
 #ifdef PIC
 	PICCY_SET(L0, %l0, %o7)
-	std	%f0, [%i1]		! *ival = val;
+	std	%f0, [%i2]		! *ival = val;
 	ldd	[%l0], %f0		! return 0.0;
 #else
 	sethi	%hi(L0), %l0
-	std	%f0, [%i1]		! *ival = val;
+	std	%f0, [%i2]		! *ival = val;
 	ldd	[%l0 + %lo(L0)], %f0	! return 0.0;
 #endif
 	ret
 	 restore
-

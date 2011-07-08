@@ -1,10 +1,10 @@
-/* $OpenBSD: s_fabs.S,v 1.1 2011/07/08 19:21:42 martynas Exp $ */
+/* $OpenBSD: modf.S,v 1.7 2011/07/08 22:28:33 martynas Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
- * William Jolitz.
+ * Sean Eric Fagan.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,7 +33,36 @@
 
 #include <machine/asm.h>
 
-ENTRY(fabs)
-	fldl	4(%esp)
-	fabs
+/*
+ * modf(value, iptr): return fractional part of value, and stores the
+ * integral part into iptr (a pointer to double).
+ *
+ * Written by Sean Eric Fagan (sef@kithrup.COM)
+ * Sun Mar 11 20:27:30 PST 1990
+ */
+
+/* With CHOP mode on, frndint behaves as TRUNC does.  Useful. */
+ENTRY(modf)
+	pushl	%ebp
+	movl	%esp,%ebp
+	subl	$16,%esp
+	fnstcw	-12(%ebp)
+	movw	-12(%ebp),%dx
+	orw	$3072,%dx
+	movw	%dx,-16(%ebp)
+	fldcw	-16(%ebp)
+	fldl	8(%ebp)
+	frndint
+	fstpl	-8(%ebp)
+	fldcw	-12(%ebp)
+	movl	16(%ebp),%eax
+	movl	-8(%ebp),%edx
+	movl	-4(%ebp),%ecx
+	movl	%edx,(%eax)
+	movl	%ecx,4(%eax)
+	fldl	8(%ebp)
+	fsubl	-8(%ebp)
+	jmp	L1
+L1:
+	leave
 	ret

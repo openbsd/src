@@ -1,7 +1,12 @@
-/* $OpenBSD: n_fabs.S,v 1.1 2011/07/08 19:21:42 martynas Exp $ */
+/*	$OpenBSD: fabs.S,v 1.7 2011/07/08 22:28:33 martynas Exp $	*/
+/*	$NetBSD: fabs.S,v 1.2 2000/07/23 07:12:22 eeh Exp $	*/
 /*
- * Copyright (c) 1983, 1993
+ * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,14 +33,10 @@
  * SUCH DAMAGE.
  */
 
+#include <machine/asm.h>
+
 /* fabs - floating absolute value */
 
-#include "DEFS.h"
-
-WEAK_ALIAS(fabsl,fabs)
-ENTRY(fabs, 0)
-	movd	4(ap),r0
-	bgeq	1f
-	mnegd	r0,r0
-1:
-	ret
+ENTRY(fabs)
+	retl
+	 fabsd	%f0, %f0		! return absolute value

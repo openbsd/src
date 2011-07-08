@@ -1,4 +1,4 @@
-.\"	$OpenBSD: modf.3,v 1.1 2011/07/08 19:21:42 martynas Exp $
+.\"	$OpenBSD: frexp.3,v 1.12 2011/07/08 22:28:33 martynas Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,53 +32,64 @@
 .\" SUCH DAMAGE.
 .\"
 .Dd $Mdocdate: July 8 2011 $
-.Dt MODF 3
+.Dt FREXP 3
 .Os
 .Sh NAME
-.Nm modf ,
-.Nm modff ,
-.Nm modfl
-.Nd extract signed integral and fractional values from floating-point number
+.Nm frexp ,
+.Nm frexpf ,
+.Nm frexpl
+.Nd convert floating-point number to fractional and integral components
 .Sh SYNOPSIS
 .Fd #include <math.h>
 .Ft double
-.Fn modf "double value" "double *iptr"
+.Fn frexp "double value" "int *exp"
 .Ft float
-.Fn modff "float value" "float *iptr"
+.Fn frexpf "float value" "int *exp"
 .Ft long double
-.Fn modfl "long double value" "long double *iptr"
+.Fn frexpl "long double value" "int *exp"
 .Sh DESCRIPTION
 The
-.Fn modf
-function breaks the argument
-.Fa value
-into integral and fractional parts, each of which has the
-same sign as the argument.
-It stores the integral part as a
-.Li double
-in the object pointed to by
-.Fa iptr .
+.Fn frexp
+function breaks a floating-point number into a normalized
+fraction and an integral power of 2.
+It stores the integer in the
+.Li int
+object pointed to by
+.Fa exp .
 The
-.Fn modff
+.Fn frexpf
 function is a single precision version of
-.Fn modf .
+.Fn frexp .
 The
-.Fn modfl
+.Fn frexpl
 function is an extended precision version of
-.Fn modf .
+.Fn frexp .
 .Sh RETURN VALUES
 The
-.Fn modf ,
-.Fn modff
+.Fn frexp ,
+.Fn frexpf
 and
-.Fn modfl
-functions return the signed fractional part of
-.Fa value .
+.Fn frexpl
+functions return the value
+.Li x ,
+such that
+.Li x
+is a
+.Li double
+with magnitude in the interval [1/2,\ 1) or zero, and
+.Fa value
+equals
+.Li x
+times 2 raised to the power
+.Fa *exp .
+If
+.Fa value
+is zero, both parts of the result are zero.
 .Sh SEE ALSO
-.Xr frexp 3 ,
-.Xr ldexp 3
+.Xr ldexp 3 ,
+.Xr modf 3
 .Sh STANDARDS
 The
-.Fn modf
+.Fn frexp
 function conforms to
 .St -ansiC .

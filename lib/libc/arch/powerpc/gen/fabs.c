@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_fabs.c,v 1.1 2011/07/08 19:21:42 martynas Exp $	*/
+/*	$OpenBSD: fabs.c,v 1.6 2011/07/08 22:28:33 martynas Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt

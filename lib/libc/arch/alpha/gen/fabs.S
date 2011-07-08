@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_fabs.S,v 1.1 2011/07/08 19:21:42 martynas Exp $	*/
+/*	$OpenBSD: fabs.S,v 1.7 2011/07/08 22:28:32 martynas Exp $	*/
 /*	$NetBSD: fabs.S,v 1.2 1996/10/17 03:08:05 cgd Exp $	*/
 
 /*

@@ -1,12 +1,10 @@
-/*	$OpenBSD: s_fabs.S,v 1.1 2011/07/08 19:21:42 martynas Exp $	*/
-/*	$NetBSD: fabs.S,v 1.2 2000/07/23 07:12:22 eeh Exp $	*/
-/*
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
+/* $OpenBSD: fabs.S,v 1.9 2011/07/08 22:28:33 martynas Exp $ */
+/*-
+ * Copyright (c) 1990 The Regents of the University of California.
+ * All rights reserved.
  *
- * This software was developed by the Computer Systems Engineering group
- * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
- * contributed to Berkeley.
+ * This code is derived from software contributed to Berkeley by
+ * William Jolitz.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,8 +33,7 @@
 
 #include <machine/asm.h>
 
-/* fabs - floating absolute value */
-
 ENTRY(fabs)
-	retl
-	 fabsd	%f0, %f0		! return absolute value
+	fldl	4(%esp)
+	fabs
+	ret

@@ -1,4 +1,6 @@
-/* $OpenBSD: s_modf.S,v 1.1 2011/07/08 19:21:42 martynas Exp $ */
+/*	$OpenBSD: modf.S,v 1.4 2011/07/08 22:28:32 martynas Exp $	*/
+/*	$NetBSD: modf.S,v 1.1 2001/06/19 00:25:03 fvdl Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -14,7 +16,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -29,6 +35,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)modf.s	5.5 (Berkeley) 3/18/91
  */
 
 #include <machine/asm.h>
@@ -43,26 +51,41 @@
 
 /* With CHOP mode on, frndint behaves as TRUNC does.  Useful. */
 ENTRY(modf)
-	pushl	%ebp
-	movl	%esp,%ebp
-	subl	$16,%esp
-	fnstcw	-12(%ebp)
-	movw	-12(%ebp),%dx
+
+	/*
+	 * Set chop mode.
+	 */
+	fnstcw	-12(%rsp)
+	movw	-12(%rsp),%dx
 	orw	$3072,%dx
-	movw	%dx,-16(%ebp)
-	fldcw	-16(%ebp)
-	fldl	8(%ebp)
+	movw	%dx,-16(%rsp)
+	fldcw	-16(%rsp)
+
+	/*
+	 * Get integral part.
+	 */
+	movsd	%xmm0,-24(%rsp)
+	fldl	-24(%rsp)
 	frndint
-	fstpl	-8(%ebp)
-	fldcw	-12(%ebp)
-	movl	16(%ebp),%eax
-	movl	-8(%ebp),%edx
-	movl	-4(%ebp),%ecx
-	movl	%edx,(%eax)
-	movl	%ecx,4(%eax)
-	fldl	8(%ebp)
-	fsubl	-8(%ebp)
-	jmp	L1
-L1:
-	leave
+	fstpl	-8(%rsp)
+
+	/*
+	 * Restore control word.
+	 */
+	fldcw	-12(%rsp)
+
+	/*
+	 * Store integral part.
+	 */
+	movsd	-8(%rsp),%xmm0
+	movsd	%xmm0,(%rdi)
+
+	/*
+	 * Get fractional part and return it.
+	 */
+	fldl	-24(%rsp)
+	fsubl	-8(%rsp)
+	fstpl	-8(%rsp)
+	movsd   -8(%rsp),%xmm0
+
 	ret

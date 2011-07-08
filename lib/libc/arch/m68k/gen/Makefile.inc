@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.9 2011/07/08 19:21:41 martynas Exp $
+#	$OpenBSD: Makefile.inc,v 1.10 2011/07/08 22:28:33 martynas Exp $
 
-SRCS+=	_setjmp.S infinity.c ldexp.S \
-	nan.c setjmp.S sigsetjmp.S
+SRCS+=	_setjmp.S fabs.S infinity.c ldexp.S \
+	modf.S nan.c setjmp.S sigsetjmp.S
 SRCS+=	flt_rounds.S fpgetmask.S fpgetround.S fpgetsticky.S fpsetmask.S \
 	fpsetround.S fpsetsticky.S
 SRCS+=	fpclassifyl.c isfinitel.c isinfl.c isnanl.c isnormall.c signbitl.c
