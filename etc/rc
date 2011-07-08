@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.379 2011/07/08 09:48:18 deraadt Exp $
+#	$OpenBSD: rc,v 1.380 2011/07/08 16:20:13 ajacoutot Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -237,11 +237,11 @@ if [ X"$1" = X"shutdown" ]; then
 	dd if=/dev/arandom of=/var/db/host.random bs=65536 count=1 >/dev/null 2>&1
 	chmod 600 /var/db/host.random >/dev/null 2>&1
 	local _c=$?
-	if [ ${_c} -eq 0 -a -n "${rc_scripts}" ]; then
+	if [ ${_c} -eq 0 -a -n "${pkg_scripts}" ]; then
 		echo -n 'stopping package daemons:'
-		while [ -n "${rc_scripts}" ]; do
-			_r=${rc_scripts##* }
-			rc_scripts=${rc_scripts%%*( )${_r}}
+		while [ -n "${pkg_scripts}" ]; do
+			_r=${pkg_scripts##* }
+			pkg_scripts=${pkg_scripts%%*( )${_r}}
 			[ -x /etc/rc.d/${_r} ] && /etc/rc.d/${_r} stop
 		done
 		echo '.'
@@ -549,9 +549,9 @@ fi
 rm -f /etc/rc.firsttime.run
 
 # Run rc.d(8) scripts from packages
-if [ -n "${rc_scripts}" ]; then
+if [ -n "${pkg_scripts}" ]; then
 	echo -n 'starting package daemons:'
-	for _r in $rc_scripts; do
+	for _r in $pkg_scripts; do
 		[ -x /etc/rc.d/${_r} ] && start_daemon ${_r}
 	done
 	echo '.'
