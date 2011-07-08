@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-keys.c,v 1.14 2011/07/04 00:31:57 nicm Exp $ */
+/* $OpenBSD: cmd-list-keys.c,v 1.15 2011/07/08 15:18:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -54,6 +54,8 @@ cmd_list_keys_exec(struct cmd *self, struct cmd_ctx *ctx)
 		return (cmd_list_keys_table(self, ctx));
 
 	width = 0;
+	*flags = '\0';
+
 	SPLAY_FOREACH(bd, key_bindings, &key_bindings) {
 		key = key_string_lookup_key(bd->key & ~KEYC_PREFIX);
 		if (key == NULL)
