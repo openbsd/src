@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.6 2011/07/08 21:00:53 ariane Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.7 2011/07/08 21:02:49 ariane Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -282,7 +282,6 @@ uvm_pmr_dirty_everything(void)
 		while ((pg = TAILQ_FIRST(&pmr->single[UVM_PMR_MEMTYPE_ZERO]))
 		    != NULL) {
 			uvm_pmr_remove(pmr, pg);
-			uvm_pagezero(pg);
 			atomic_clearbits_int(&pg->pg_flags, PG_ZERO);
 			uvm_pmr_insert(pmr, pg, 0);
 		}
@@ -292,10 +291,8 @@ uvm_pmr_dirty_everything(void)
 		    != NULL) {
 			pg--; /* Size tree always has second page. */
 			uvm_pmr_remove(pmr, pg);
-			for (i = 0; i < pg->fpgsz; i++) {
-				uvm_pagezero(&pg[i]);
+			for (i = 0; i < pg->fpgsz; i++)
 				atomic_clearbits_int(&pg[i].pg_flags, PG_ZERO);
-			}
 			uvm_pmr_insert(pmr, pg, 0);
 		}
 	}
