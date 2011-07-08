@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.178 2011/07/08 15:09:32 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.179 2011/07/08 18:45:47 yasuoka Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -61,7 +61,7 @@ option		IPSEC		# IPsec
 #option		NETATALK	# AppleTalk
 option		PPP_BSDCOMP	# PPP BSD compression
 option		PPP_DEFLATE
-#option		PIPEX		# Pppac IP EXtension, for npppd
+option		PIPEX		# Pppac IP EXtension, for npppd
 option		MROUTING	# Multicast router
 #option		PIM		# Protocol Independent Multicast
 option		MPLS		# Multi-Protocol Label Switching
@@ -100,7 +100,7 @@ pseudo-device	loop		# network loopback
 pseudo-device	mpe		# MPLS PE interface
 pseudo-device	ppp		# PPP
 pseudo-device	pppoe		# PPP over Ethernet (RFC 2516)
-#pseudo-device	pppx 		# PPP multiplexer
+pseudo-device	pppx 		# PPP multiplexer
 pseudo-device	sl		# CSLIP
 pseudo-device	sppp	1	# Sync PPP/HDLC
 pseudo-device	trunk		# Trunking support
