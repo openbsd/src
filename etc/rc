@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.372 2011/07/08 00:54:04 ajacoutot Exp $
+#	$OpenBSD: rc,v 1.373 2011/07/08 01:41:25 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -151,6 +151,69 @@ start_daemon()
 			/etc/rc.d/${_n} start
 		fi
 	done
+}
+
+make_keys()
+{
+	if [ X"${named_flags}" != X"NO" ]; then
+		if ! cmp -s /etc/rndc.key /var/named/etc/rndc.key ; then
+			echo -n "rndc-confgen: generating shared secret... "
+			if rndc-confgen -a -t /var/named >/dev/null 2>&1; then
+				chmod 0640 /var/named/etc/rndc.key \
+				    >/dev/null 2>&1
+				echo done.
+			else
+				echo failed.
+			fi
+		fi
+	fi
+
+	if [ ! -f /etc/isakmpd/private/local.key ]; then
+		echo -n "openssl: generating isakmpd/iked RSA key... "
+		if openssl genrsa -out /etc/isakmpd/private/local.key 2048 \
+		    >/dev/null 2>&1; then
+			chmod 600 /etc/isakmpd/private/local.key
+			openssl rsa -out /etc/isakmpd/local.pub -in \
+			    /etc/isakmpd/private/local.key -pubout \
+			    >/dev/null 2>&1
+			echo done.
+		else
+			echo failed.
+		fi
+	fi
+
+	if [ ! -f /etc/iked/private/local.key ]; then
+		# Just copy the generated isakmpd key
+		cp /etc/isakmpd/private/local.key /etc/iked/private/local.key
+		chmod 600 /etc/iked/private/local.key
+		cp /etc/isakmpd/local.pub /etc/iked/local.pub
+	fi
+
+	ssh-keygen -A
+}
+
+# create Unix sockets directories for X if needed and make sure they have
+# correct permissions
+setup_X_sockets()
+{
+	if [ -d /usr/X11R6/lib ]; then
+		for d in /tmp/.X11-unix /tmp/.ICE-unix ; do
+			if [ -d $d ]; then
+				if [ `ls -ld $d | cut -d' ' -f4` \
+				    != root ]; then
+					chown root $d
+				fi
+				if [ `ls -ld $d | cut -d' ' -f1` \
+				    != drwxrwxrwt ]; then
+					chmod 1777 $d
+				fi
+			elif [ -e $d ]; then
+				echo "Error: $d exists and isn't a directory."
+			else
+				mkdir -m 1777 $d
+			fi
+		done
+	fi
 }
 
 # End subroutines
@@ -351,6 +414,8 @@ rm -f /var/spool/uucp/STST/*
 # save a copy of the boot messages
 dmesg >/var/run/dmesg.boot
 
+make_keys
+
 echo -n 'starting system logger: '
 start_daemon syslogd
 echo '.'
@@ -489,6 +554,8 @@ if [ -d /usr/X11R6/lib ]; then
 		fi
 	done
 fi
+
+setup_X_sockets
 
 [ -f /etc/rc.securelevel ] && . /etc/rc.securelevel
 if [ X"${securelevel}" != X"" ]; then
