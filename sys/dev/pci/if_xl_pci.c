@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.36 2011/04/17 20:52:43 stsp Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.37 2011/07/08 18:56:47 stsp Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -273,7 +273,7 @@ xl_pci_attach(struct device *parent, struct device *self, void *aux)
 		 * PCI power state for WOL. It will be invoked when the
 		 * interface stops and WOL was enabled. */
 		command = pci_conf_read(pc, pa->pa_tag, XL_PCI_PWRMGMTCAP);
-		if (command & XL_PME_CAP_D3_HOT) {
+		if ((command >> 16) & XL_PME_CAP_D3_HOT) {
 			sc->wol_power = xl_pci_wol_power;
 			sc->wol_power_arg = psc; 
 		}
@@ -365,13 +365,8 @@ xl_pci_intr_ack(struct xl_softc *sc)
 void
 xl_pci_wol_power(void *ppsc)
 {
-	u_int32_t	command;
 	struct xl_pci_softc *psc = (struct xl_pci_softc*)ppsc;
 
-	/* Make sure power management is enabled, and set the card into
-	 * D3hot power state so it stays active after system shutdown. */
-	command = pci_conf_read(psc->psc_pc, psc->psc_tag, XL_PCI_PWRMGMTCTRL);
-	command |= XL_PME_EN | XL_PSTATE_D3;
-	pci_conf_write(psc->psc_pc, psc->psc_tag, XL_PCI_PWRMGMTCTRL, command);
+	pci_set_powerstate(psc->psc_pc, psc->psc_tag, PCI_PMCSR_STATE_D3);
 }
 #endif

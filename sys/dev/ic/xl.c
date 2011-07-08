@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.102 2011/06/21 16:52:45 tedu Exp $	*/
+/*	$OpenBSD: xl.c,v 1.103 2011/07/08 18:56:47 stsp Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -193,6 +193,7 @@ void xl_miibus_writereg(struct device *, int, int, int);
 void xl_miibus_statchg(struct device *);
 #ifndef SMALL_KERNEL
 int xl_wol(struct ifnet *, int);
+void xl_wol_power(struct xl_softc *);
 #endif
 
 int
@@ -204,6 +205,9 @@ xl_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_QUIESCE:
+#ifndef SMALL_KERNEL
+		xl_wol_power(sc);
+#endif
 		rv = config_activate_children(self, act);
 		break;
 	case DVACT_SUSPEND:
@@ -2371,11 +2375,22 @@ xl_stop(struct xl_softc *sc)
 	xl_freetxrx(sc);
 
 #ifndef SMALL_KERNEL
-	/* Call upper layer WOL power routine if WOL is enabled. */
-	if ((sc->xl_flags & XL_FLAG_WOL) && sc->wol_power)
-		sc->wol_power(sc->wol_power_arg);
+	xl_wol_power(sc);
 #endif
 }
+
+#ifndef SMALL_KERNEL
+void
+xl_wol_power(struct xl_softc *sc)
+{
+	/* Re-enable RX and call upper layer WOL power routine
+	 * if WOL is enabled. */
+	if ((sc->xl_flags & XL_FLAG_WOL) && sc->wol_power) {
+		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_ENABLE);
+		sc->wol_power(sc->wol_power_arg);
+	}
+}
+#endif
 
 void
 xl_attach(struct xl_softc *sc)
