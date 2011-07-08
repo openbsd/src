@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.374 2011/07/08 01:43:09 deraadt Exp $
+#	$OpenBSD: rc,v 1.375 2011/07/08 01:43:59 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -503,25 +503,6 @@ echo clearing /tmp
 (cd /tmp &&
     find . ! -name . ! -name lost+found ! -name quota.user \
 	! -name quota.group -execdir rm -rf -- {} \; -type d -prune)
-
-# create Unix sockets directories for X if needed and make sure they have
-# correct permissions
-if [ -d /usr/X11R6/lib ]; then
-	for d in /tmp/.X11-unix /tmp/.ICE-unix ; do
-		if [ -d $d ]; then
-			if [ `ls -ld $d | cut -d' ' -f4` != root ]; then
-				chown root $d
-			fi
-			if [ `ls -ld $d | cut -d' ' -f1` != drwxrwxrwt ]; then
-				chmod 1777 $d
-			fi
-		elif [ -e $d ]; then
-			echo "Error: $d exists and isn't a directory."
-		else
-			mkdir -m 1777 $d
-		fi
-	done
-fi
 
 setup_X_sockets
 
