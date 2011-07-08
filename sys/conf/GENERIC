@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.177 2011/07/04 20:43:46 thib Exp $
+#	$OpenBSD: GENERIC,v 1.178 2011/07/08 15:09:32 jsg Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -46,7 +46,6 @@ option		CD9660		# ISO 9660 + Rock Ridge file system
 option		UDF		# UDF (DVD) file system
 option		MSDOSFS		# MS-DOS file system
 option		FIFO		# FIFOs; RECOMMENDED
-#option		PORTAL		# dynamically created filesystem objects
 
 option		SOCKET_SPLICE	# Socket Splicing for TCP
 option		TCP_SACK	# Selective Acknowledgements for TCP
