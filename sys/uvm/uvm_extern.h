@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.102 2011/07/07 20:52:50 oga Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.103 2011/07/08 00:10:59 tedu Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -222,7 +222,6 @@ typedef int		vm_prot_t;
 #define UVM_PLA_ZERO		0x0004	/* zero all pages before returning */
 #define UVM_PLA_TRYCONTIG	0x0008	/* try to allocate contig physmem */
 #define UVM_PLA_FAILOK		0x0010	/* caller can handle failure */
-#define UVM_PLA_USERESERVE	0x0020	/* ok to use reserve pages */
 
 /*
  * lockflags that control the locking behavior of various functions.
