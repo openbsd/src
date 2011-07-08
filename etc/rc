@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.371 2011/07/08 00:51:52 deraadt Exp $
+#	$OpenBSD: rc,v 1.372 2011/07/08 00:54:04 ajacoutot Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -416,17 +416,7 @@ start_daemon portmap
 [ X"`domainname`" != X"" ] && \
 	start_daemon ypserv ypldap ypbind yppasswdd
 
-if [ X"${nfs_server}" = X"YES" -a -s /etc/exports -a \
-    `sed -e '/^#/d' < /etc/exports | wc -l` -ne 0 ]; then
-	rm -f /var/db/mountdtab
-	echo -n > /var/db/mountdtab
-	echo -n ' mountd';		mountd
-	echo -n ' nfsd';		nfsd ${nfsd_flags}
-	if [ X"${lockd}" = X"YES" ]; then
-		echo -n ' rpc.lockd';	rpc.lockd
-		echo -n ' rpc.statd';	rpc.statd
-	fi
-fi
+start_daemon mountd nfsd lockd statd
 
 if [ X"${amd}" = X"YES" -a -e ${amd_master} ]; then
 	echo -n ' amd'

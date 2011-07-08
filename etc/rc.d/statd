@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# $OpenBSD: statd,v 1.1 2011/07/08 00:54:04 ajacoutot Exp $
+
+daemon="/usr/sbin/rpc.statd"
+
+. /etc/rc.d/rc.subr
+
+rc_reload=NO
+
+rc_cmd $1

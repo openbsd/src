@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# $OpenBSD: mountd,v 1.1 2011/07/08 00:54:04 ajacoutot Exp $
+
+daemon="/sbin/mountd"
+
+. /etc/rc.d/rc.subr
+
+rc_cmd $1
