@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.127 2011/07/07 20:41:36 henning Exp $	*/
+/*	$OpenBSD: if.h,v 1.128 2011/07/08 18:48:51 henning Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -80,6 +80,7 @@ struct socket;
 struct ether_header;
 struct arpcom;
 struct rt_addrinfo;
+struct ifnet;
 
 /*
  * Structure describing a `cloning' interface.
@@ -146,13 +147,19 @@ struct	if_data {
 	struct mclpool	ifi_mclpool[MCLPOOLS];
 };
 
+#define IFQ_NQUEUES	ALTQ_IFQ_NQUEUES
+#define IFQ_MAXPRIO	IFQ_NQUEUES - 1
+#define IFQ_DEFPRIO	3
+
 /*
  * Structure defining a queue for a network interface.
  * XXX keep in sync with struct ifaltq.
  */
 struct	ifqueue {
-	struct	mbuf *ifq_head;
-	struct	mbuf *ifq_tail;
+	struct {
+		struct	mbuf *head;
+		struct	mbuf *tail;
+	}	ifq_q[IFQ_NQUEUES];
 	int	ifq_len;
 	int	ifq_maxlen;
 	int	ifq_drops;
@@ -367,31 +374,44 @@ struct ifnet {				/* and the entries */
 #define	IF_DROP(ifq)		((ifq)->ifq_drops++)
 #define	IF_ENQUEUE(ifq, m)						\
 do {									\
-	(m)->m_nextpkt = 0;						\
-	if ((ifq)->ifq_tail == 0)					\
-		(ifq)->ifq_head = m;					\
+	(m)->m_nextpkt = NULL;						\
+	if ((ifq)->ifq_q[(m)->m_pkthdr.pf.prio].tail == NULL)		\
+		(ifq)->ifq_q[(m)->m_pkthdr.pf.prio].head = m;		\
 	else								\
-		(ifq)->ifq_tail->m_nextpkt = m;				\
-	(ifq)->ifq_tail = m;						\
+		(ifq)->ifq_q[(m)->m_pkthdr.pf.prio].tail->m_nextpkt = m; \
+	(ifq)->ifq_q[(m)->m_pkthdr.pf.prio].tail = m;			\
 	(ifq)->ifq_len++;						\
 } while (/* CONSTCOND */0)
 #define	IF_PREPEND(ifq, m)						\
 do {									\
-	(m)->m_nextpkt = (ifq)->ifq_head;				\
-	if ((ifq)->ifq_tail == 0)					\
-		(ifq)->ifq_tail = (m);					\
-	(ifq)->ifq_head = (m);						\
+	(m)->m_nextpkt = (ifq)->ifq_q[(m)->m_pkthdr.pf.prio].head;	\
+	if ((ifq)->ifq_q[(m)->m_pkthdr.pf.prio].tail == NULL)		\
+		(ifq)->ifq_q[(m)->m_pkthdr.pf.prio].tail = (m);		\
+	(ifq)->ifq_q[(m)->m_pkthdr.pf.prio].head = (m);			\
 	(ifq)->ifq_len++;						\
 } while (/* CONSTCOND */0)
+
+#define	IF_POLL(ifq, m)							\
+do {									\
+	int	if_dequeue_prio = IFQ_MAXPRIO;				\
+	do {								\
+		(m) = (ifq)->ifq_q[if_dequeue_prio].head;		\
+	} while (!(m) && --if_dequeue_prio >= 0); 			\
+} while (/* CONSTCOND */0)
+
 #define	IF_DEQUEUE(ifq, m)						\
 do {									\
-	(m) = (ifq)->ifq_head;						\
-	if (m) {							\
-		if (((ifq)->ifq_head = (m)->m_nextpkt) == 0)		\
-			(ifq)->ifq_tail = 0;				\
-		(m)->m_nextpkt = 0;					\
-		(ifq)->ifq_len--;					\
-	}								\
+	int	if_dequeue_prio = IFQ_MAXPRIO;				\
+	do {								\
+		(m) = (ifq)->ifq_q[if_dequeue_prio].head;		\
+		if (m) {						\
+			if (((ifq)->ifq_q[if_dequeue_prio].head =	\
+			    (m)->m_nextpkt) == NULL)			\
+				(ifq)->ifq_q[if_dequeue_prio].tail = NULL; \
+			(m)->m_nextpkt = NULL;				\
+			(ifq)->ifq_len--;				\
+		}							\
+	} while (!(m) && --if_dequeue_prio >= 0);			\
 } while (/* CONSTCOND */0)
 
 #define	IF_INPUT_ENQUEUE(ifq, m)					\
@@ -405,7 +425,6 @@ do {									\
 		IF_ENQUEUE(ifq, m);					\
 } while (/* CONSTCOND */0)
 
-#define	IF_POLL(ifq, m)		((m) = (ifq)->ifq_head)
 #define	IF_PURGE(ifq)							\
 do {									\
 	struct mbuf *__m0;						\
@@ -687,9 +706,10 @@ do { \
 
 #define	IFQ_ENQUEUE(ifq, m, pattr, err)					\
 do {									\
-	if (ALTQ_IS_ENABLED((ifq)))					\
+	if (ALTQ_IS_ENABLED((ifq))) {					\
+		m->m_pkthdr.pf.prio = IFQ_MAXPRIO;			\
 		ALTQ_ENQUEUE((ifq), (m), (pattr), (err));		\
-	else {								\
+	} else {							\
 		if (IF_QFULL((ifq))) {					\
 			m_freem((m));					\
 			(err) = ENOBUFS;				\

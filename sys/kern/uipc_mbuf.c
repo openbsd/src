@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.159 2011/07/05 05:53:17 claudio Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.160 2011/07/08 18:48:50 henning Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -246,6 +246,7 @@ m_gethdr(int nowait, int type)
 		m->m_data = m->m_pktdat;
 		m->m_flags = M_PKTHDR;
 		bzero(&m->m_pkthdr, sizeof(m->m_pkthdr));
+		m->m_pkthdr.pf.prio = IFQ_DEFPRIO;
 	}
 	return (m);
 }
@@ -259,6 +260,7 @@ m_inithdr(struct mbuf *m)
 	m->m_data = m->m_pktdat;
 	m->m_flags = M_PKTHDR;
 	bzero(&m->m_pkthdr, sizeof(m->m_pkthdr));
+	m->m_pkthdr.pf.prio = IFQ_DEFPRIO;
 
 	return (m);
 }
@@ -1352,6 +1354,8 @@ m_print(void *v, int (*pr)(const char *, ...))
 		    m->m_pkthdr.pf.hdr, m->m_pkthdr.pf.statekey);
 		(*pr)("m_pkthdr.pf.qid:\t%u m_pkthdr.pf.tag: %hu\n",
 		    m->m_pkthdr.pf.qid, m->m_pkthdr.pf.tag);
+		(*pr)("m_pkthdr.pf.prio:\t%u m_pkthdr.pf.tag: %hu\n",
+		    m->m_pkthdr.pf.prio, m->m_pkthdr.pf.tag);
 		(*pr)("m_pkthdr.pf.routed: %hhx\n", m->m_pkthdr.pf.routed);
 	}
 	if (m->m_flags & M_EXT) {

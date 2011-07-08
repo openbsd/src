@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.237 2011/07/06 02:42:28 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.238 2011/07/08 18:48:51 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -652,33 +652,35 @@ do { \
 void
 if_detach_queues(struct ifnet *ifp, struct ifqueue *q)
 {
-	struct mbuf *m, *prev, *next;
+	struct mbuf *m, *prev = NULL, *next;
+	int prio;
 
-	prev = NULL;
-	for (m = q->ifq_head; m; m = next) {
-		next = m->m_nextpkt;
+	for (prio = 0; prio <= IFQ_MAXPRIO; prio++) {
+		for (m = q->ifq_q[prio].head; m; m = next) {
+			next = m->m_nextpkt;
 #ifdef DIAGNOSTIC
-		if ((m->m_flags & M_PKTHDR) == 0) {
-			prev = m;
-			continue;
-		}
+			if ((m->m_flags & M_PKTHDR) == 0) {
+				prev = m;
+				continue;
+			}
 #endif
-		if (m->m_pkthdr.rcvif != ifp) {
-			prev = m;
-			continue;
+			if (m->m_pkthdr.rcvif != ifp) {
+				prev = m;
+				continue;
+			}
+
+			if (prev)
+				prev->m_nextpkt = m->m_nextpkt;
+			else
+				q->ifq_q[prio].head = m->m_nextpkt;
+			if (q->ifq_q[prio].tail == m)
+				q->ifq_q[prio].tail = prev;
+			q->ifq_len--;
+
+			m->m_nextpkt = NULL;
+			m_freem(m);
+			IF_DROP(q);
 		}
-
-		if (prev)
-			prev->m_nextpkt = m->m_nextpkt;
-		else
-			q->ifq_head = m->m_nextpkt;
-		if (q->ifq_tail == m)
-			q->ifq_tail = prev;
-		q->ifq_len--;
-
-		m->m_nextpkt = NULL;
-		m_freem(m);
-		IF_DROP(q);
 	}
 }
 
