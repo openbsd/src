@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hiballoc.c,v 1.5 2011/07/06 20:47:07 miod Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.1 2011/07/08 17:58:16 ariane Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/hiballoc.h>
+#include <sys/hibernate.h>
 #include <sys/param.h>
 #include <sys/tree.h>
 #include <sys/types.h>
