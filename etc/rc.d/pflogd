@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# $OpenBSD: pflogd,v 1.1 2011/07/08 00:50:09 robert Exp $
+
+daemon="/sbin/pflogd"
+
+. /etc/rc.d/rc.subr
+
+pexp="pflogd: \[priv\]"
+
+rc_cmd $1
