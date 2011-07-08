@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.16 2011/04/18 16:52:09 thib Exp $
+#	$OpenBSD: Makefile.inc,v 1.17 2011/07/08 21:39:32 drahn Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -66,7 +66,8 @@ bsd.rd:	${IMAGE} bsd rdsetroot
 bsd:
 	cd ${.CURDIR}/../../../sys/arch/amd64/conf && config ${RAMDISK}
 	cd ${.CURDIR}/../../../sys/arch/amd64/compile/${RAMDISK} && \
-	    ${MAKE} clean && COPTS=-Os exec ${MAKE}
+	    COPTS=-Os exec ${MAKE}
+#	    ${MAKE} clean && COPTS=-Os exec ${MAKE}
 	cp ${.CURDIR}/../../../sys/arch/amd64/compile/${RAMDISK}/bsd bsd
 
 ${IMAGE}: ${CBIN} rd_setup do_files rd_teardown
@@ -87,7 +88,9 @@ rd_teardown:
 	rm ${REALIMAGE}
 
 rdsetroot:	${TOP}/../common/elfrdsetroot.c
-	${HOSTCC} -o rdsetroot ${TOP}/../common/elfrdsetroot.c
+	${HOSTCC} ${HOSTCFLAGS} -o elfrdsetroot \
+	    ${TOP}/../common/elfrdsetroot.c ${TOP}/../common/elf32.c \
+	    ${TOP}/../common/elf64.c
 
 unconfig:
 	-umount -f ${MOUNT_POINT}

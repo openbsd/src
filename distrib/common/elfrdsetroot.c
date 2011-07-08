@@ -1,4 +1,4 @@
-/*	$OpenBSD: elfrdsetroot.c,v 1.21 2009/04/17 07:23:26 deraadt Exp $	*/
+/*	$OpenBSD: elfrdsetroot.c,v 1.22 2011/07/08 21:39:32 drahn Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -44,19 +44,10 @@
 #include <unistd.h>
 #include <nlist.h>
 
-#ifdef __LP64__
-#define ELFSIZE 64
-#else
-#define ELFSIZE 32
-#endif
 #include <sys/exec_elf.h>
-Elf_Ehdr head;
-Elf_Phdr *ph;
+#include "elfrdsetroot.h"
 
-char	*file;
-
-/* Virtual addresses of the symbols we frob. */
-long	rd_root_image_va, rd_root_size_va;
+struct elfhdr head;
 
 /* Offsets relative to start of data segment. */
 long	rd_root_image_off, rd_root_size_off;
@@ -71,10 +62,11 @@ char	*dataseg;
 off_t	mmap_off;
 size_t	mmap_size;
 
-int	find_rd_root_image(char *, Elf_Phdr *, int);
 __dead void usage(void);
 
 int	debug;
+
+struct elf_fn *elf_fn;
 
 int
 main(int argc, char *argv[])
@@ -82,6 +74,7 @@ main(int argc, char *argv[])
 	int ch, fd, n, xflag = 0, fsd;
 	int found = 0, phsize;
 	char *fs = NULL;
+	char *file;
 	u_int32_t *ip;
 
 	while ((ch = getopt(argc, argv, "dx")) != -1) {
@@ -140,23 +133,17 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	phsize = head.e_phnum * sizeof(Elf_Phdr);
-	ph = (Elf_Phdr *)malloc(phsize);
-	lseek(fd, head.e_phoff, SEEK_SET);
-	if (read(fd, (char *)ph, phsize) != phsize) {
-		fprintf(stderr, "%s: can't read phdr area\n", file);
+	if (head.e_ident[EI_CLASS] == ELFCLASS32) {
+		elf_fn = &ELF32_fn;
+	} else if (head.e_ident[EI_CLASS] == ELFCLASS64) {
+		elf_fn = &ELF64_fn;
+	} else {
+		fprintf(stderr, "%s: invalid elf, not 32 or 64 bit", file);
 		exit(1);
 	}
 
-	for (n = 0; n < head.e_phnum && !found; n++) {
-		if (ph[n].p_type == PT_LOAD)
-			found = find_rd_root_image(file, &ph[n], n);
-	}
-	if (!found) {
-		fprintf(stderr, "%s: can't locate space for rd_root_image!\n",
-		    file);
-		exit(1);
-	}
+	elf_fn->locate_image(fd, &head, file, &rd_root_size_off,
+	    &rd_root_image_off, &mmap_off, &mmap_size);
 
 	/*
 	 * Map in the whole data segment.
@@ -221,59 +208,6 @@ main(int argc, char *argv[])
 	if (debug)
 		fprintf(stderr, "...copied %d bytes\n", n);
 	exit(0);
-}
-
-
-/*
- * Find locations of the symbols to patch.
- */
-struct nlist wantsyms[] = {
-	{ "_rd_root_size", 0 },
-	{ "_rd_root_image", 0 },
-	{ NULL, 0 }
-};
-
-int
-find_rd_root_image(char *file, Elf_Phdr *ph, int segment)
-{
-	unsigned long kernel_start, kernel_size;
-
-	if (nlist(file, wantsyms)) {
-		fprintf(stderr, "%s: no rd_root_image symbols?\n", file);
-		exit(1);
-	}
-	kernel_start = ph->p_paddr;
-	kernel_size = ph->p_filesz;
-
-	rd_root_size_off = wantsyms[0].n_value - kernel_start;
-	rd_root_size_off -= (ph->p_vaddr - ph->p_paddr);
-	rd_root_image_off = wantsyms[1].n_value - kernel_start;
-	rd_root_image_off -= (ph->p_vaddr - ph->p_paddr);
-
-	if (debug) {
-		fprintf(stderr, "segment %d rd_root_size_off = 0x%x\n", segment,
-		    rd_root_size_off);
-		if ((ph->p_vaddr - ph->p_paddr) != 0)
-			fprintf(stderr, "root_off v %x p %x, diff %x altered %x\n",
-			    ph->p_vaddr, ph->p_paddr,
-			    (ph->p_vaddr - ph->p_paddr),
-			    rd_root_size_off - (ph->p_vaddr - ph->p_paddr));
-		fprintf(stderr, "rd_root_image_off = 0x%x\n", rd_root_image_off);
-	}
-
-	/*
-	 * Sanity check locations of db_* symbols
-	 */
-	if (rd_root_image_off < 0 || rd_root_image_off >= kernel_size)
-		return (0);
-	if (rd_root_size_off < 0 || rd_root_size_off >= kernel_size) {
-		fprintf(stderr, "%s: rd_root_size not in data segment?\n",
-		    file);
-		return (0);
-	}
-	mmap_off = ph->p_offset;
-	mmap_size = kernel_size;
-	return (1);
 }
 
 __dead void
