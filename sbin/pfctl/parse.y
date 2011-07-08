@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.603 2011/07/07 00:47:19 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.604 2011/07/08 18:52:47 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -230,6 +230,7 @@ struct filter_opts {
 #define FOM_MAXMSS	0x0040
 #define FOM_SETTOS	0x0100
 #define FOM_SCRUB_TCP	0x0200
+#define FOM_PRIO	0x0400
 	struct node_uid		*uid;
 	struct node_gid		*gid;
 	struct node_if		*rcv;
@@ -254,6 +255,7 @@ struct filter_opts {
 	char			*match_tag;
 	u_int8_t		 match_tag_not;
 	u_int			 rtableid;
+	u_int8_t		 prio[2];
 	struct {
 		struct node_host	*addr;
 		u_int16_t		port;
@@ -451,7 +453,7 @@ int	parseport(char *, struct range *r, int);
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN LEASTSTATES STATICPORT PROBABILITY
 %token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE LINKSHARE REALTIME UPPERLIMIT
 %token	QUEUE PRIORITY QLIMIT RTABLE RDOMAIN
-%token	LOAD RULESET_OPTIMIZATION
+%token	LOAD RULESET_OPTIMIZATION RTABLE RDOMAIN PRIO
 %token	STICKYADDRESS MAXSRCSTATES MAXSRCNODES SOURCETRACK GLOBAL RULE
 %token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH SLOPPY PFLOW
 %token	TAGGED TAG IFBOUND FLOATING STATEPOLICY STATEDEFAULTS ROUTE SETTOS
@@ -466,7 +468,7 @@ int	parseport(char *, struct range *r, int);
 %type	<v.i>			dir af optimizer
 %type	<v.i>			sourcetrack flush unaryop statelock
 %type	<v.b>			action
-%type	<v.b>			flags flag blockspec
+%type	<v.b>			flags flag blockspec prio
 %type	<v.range>		portplain portstar portrange
 %type	<v.hashkey>		hashkey
 %type	<v.proto>		proto proto_list proto_item
@@ -870,6 +872,11 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 					YYERROR;
 				}
 			r.match_tag_not = $9.match_tag_not;
+			if ($9.marker & FOM_PRIO) {
+				r.prio[0] = $9.prio[0];
+				r.prio[1] = $9.prio[1];
+			} else
+				r.prio[0] = r.prio[1] = PF_PRIO_NOTSET;
 
 			decide_address_family($8.src.host, &r.af);
 			decide_address_family($8.dst.host, &r.af);
@@ -1001,6 +1008,7 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 				r.logif = $2.logif;
 				r.quick = $2.quick;
 				r.af = $4;
+				r.prio[0] = r.prio[1] = PF_PRIO_NOTSET;
 				if (rule_label(&r, $5.label))
 					YYERROR;
 				r.rtableid = $5.rtableid;
@@ -1665,6 +1673,11 @@ pfrule		: action dir logquick interface af proto fromto
 			}
 			if ($8.marker & FOM_SCRUB_TCP)
 				r.scrub_flags |= PFSTATE_SCRUB_TCP;
+			if ($8.marker & FOM_PRIO) {
+				r.prio[0] = $8.prio[0];
+				r.prio[1] = $8.prio[1];
+			} else
+				r.prio[0] = r.prio[1] = PF_PRIO_NOTSET;
 
 			r.af = $5;
 			if ($8.tag)
@@ -2265,6 +2278,33 @@ filter_opt	: USER uids {
 				YYERROR;
 			}
 			filter_opts.rcv = $2;
+		}
+		| prio {
+			if (filter_opts.marker & FOM_PRIO) {
+				yyerror("prio cannot be redefined");
+				YYERROR;
+			}
+			filter_opts.marker |= FOM_PRIO;
+			filter_opts.prio[0] = $1.b1;
+			filter_opts.prio[1] = $1.b2;
+		}
+		;
+
+prio		: PRIO NUMBER {
+			if ($2 < 0 || $2 > IFQ_MAXPRIO) {
+				yyerror("prio must be 0 - %u", IFQ_MAXPRIO);
+				YYERROR;
+			}
+			$$.b1 = $$.b2 = $2;
+		}
+		| PRIO '(' NUMBER comma NUMBER ')' {
+			if ($3 < 0 || $3 > IFQ_MAXPRIO ||
+			    $5 < 0 || $5 > IFQ_MAXPRIO) {
+				yyerror("prio must be 0 - %u", IFQ_MAXPRIO);
+				YYERROR;
+			}
+			$$.b1 = $3;
+			$$.b2 = $5;
 		}
 		;
 
@@ -5046,6 +5086,7 @@ lookup(char *s)
 		{ "pass",		PASS},
 		{ "pflow",		PFLOW},
 		{ "port",		PORT},
+		{ "prio",		PRIO},
 		{ "priority",		PRIORITY},
 		{ "priq",		PRIQ},
 		{ "probability",	PROBABILITY},
