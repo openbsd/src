@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.59 2011/05/27 08:53:15 nicm Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.60 2011/07/08 05:01:27 matthew Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -101,12 +101,15 @@ int	pipespace(struct pipe *, u_int);
 
 /* ARGSUSED */
 int
-sys_opipe(struct proc *p, void *v, register_t *retval)
+sys_pipe(struct proc *p, void *v, register_t *retval)
 {
+	struct sys_pipe_args /* {
+		syscallarg(int *) fdp;
+	} */ *uap = v;
 	struct filedesc *fdp = p->p_fd;
 	struct file *rf, *wf;
 	struct pipe *rpipe, *wpipe;
-	int fd, error;
+	int fds[2], error;
 
 	fdplock(fdp);
 
@@ -119,23 +122,21 @@ sys_opipe(struct proc *p, void *v, register_t *retval)
 	if (error != 0)
 		goto free2;
 
-	error = falloc(p, &rf, &fd);
+	error = falloc(p, &rf, &fds[0]);
 	if (error != 0)
 		goto free2;
 	rf->f_flag = FREAD | FWRITE;
 	rf->f_type = DTYPE_PIPE;
 	rf->f_data = rpipe;
 	rf->f_ops = &pipeops;
-	retval[0] = fd;
 
-	error = falloc(p, &wf, &fd);
+	error = falloc(p, &wf, &fds[1]);
 	if (error != 0)
 		goto free3;
 	wf->f_flag = FREAD | FWRITE;
 	wf->f_type = DTYPE_PIPE;
 	wf->f_data = wpipe;
 	wf->f_ops = &pipeops;
-	retval[1] = fd;
 
 	rpipe->pipe_peer = wpipe;
 	wpipe->pipe_peer = rpipe;
@@ -144,10 +145,18 @@ sys_opipe(struct proc *p, void *v, register_t *retval)
 	FILE_SET_MATURE(wf);
 
 	fdpunlock(fdp);
-	return (0);
+
+	error = copyout(fds, SCARG(uap, fdp), sizeof(fds));
+	if (error != 0) {
+		fdplock(fdp);
+		fdrelease(p, fds[0]);
+		fdrelease(p, fds[1]);
+		fdpunlock(fdp);
+	}
+	return (error);
 
 free3:
-	fdremove(fdp, retval[0]);
+	fdremove(fdp, fds[0]);
 	closef(rf, p);
 	rpipe = NULL;
 free2:

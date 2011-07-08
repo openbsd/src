@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.57 2011/07/07 06:15:47 pirofti Exp $
+	$OpenBSD: syscalls.master,v 1.58 2011/07/08 05:01:27 matthew Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -97,7 +97,7 @@
 39	STD		{ int linux_sys_mkdir(char *path, int mode); }
 40	STD		{ int linux_sys_rmdir(char *path); }
 41	NOARGS		{ int sys_dup(u_int fd); }
-42	STD		{ int linux_sys_pipe(int *pfds); }
+42	NOARGS		{ int sys_pipe(int *fdp); }
 43	STD		{ int linux_sys_times(struct times *tms); }
 44	STD		{ int linux_sys_prof(void); }
 45	STD		{ int linux_sys_brk(char *nsize); }

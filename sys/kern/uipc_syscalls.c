@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.79 2011/04/04 12:44:10 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.80 2011/07/08 05:01:27 matthew Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -883,30 +883,6 @@ out:
 	FRELE(fp);
 	if (m != NULL)
 		(void)m_free(m);
-	return (error);
-}
-
-int
-sys_pipe(struct proc *p, void *v, register_t *retval)
-{
-	struct sys_pipe_args /* {
-		syscallarg(int *) fdp;
-	} */ *uap = v;
-	int error, fds[2];
-	register_t rval[2];
-
-	if ((error = sys_opipe(p, v, rval)) != 0)
-		return (error);
-
-	fds[0] = rval[0];
-	fds[1] = rval[1];
-	error = copyout(fds, SCARG(uap, fdp), 2 * sizeof (int));
-	if (error) {
-		fdplock(p->p_fd);
-		fdrelease(p, fds[0]);
-		fdrelease(p, fds[1]);
-		fdpunlock(p->p_fd);
-	}
 	return (error);
 }
 

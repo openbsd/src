@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.111 2011/07/07 23:45:00 matthew Exp $
+;	$OpenBSD: syscalls.master,v 1.112 2011/07/08 05:01:27 matthew Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -110,7 +110,7 @@
 39	STD		{ pid_t sys_getppid(void); }
 40	OBSOL		lstat43
 41	STD		{ int sys_dup(int fd); }
-42	STD		{ int sys_opipe(void); }
+42	OBSOL		opipe
 43	STD		{ gid_t sys_getegid(void); }
 44	STD		{ int sys_profil(caddr_t samples, size_t size, \
 			    u_long offset, u_int scale); }

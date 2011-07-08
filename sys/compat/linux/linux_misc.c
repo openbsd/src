@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.69 2011/07/07 01:19:39 tedu Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.70 2011/07/08 05:01:27 matthew Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -761,52 +761,6 @@ linux_sys_times(p, v, retval)
 	microuptime(&t);
 
 	retval[0] = ((linux_clock_t)(CONVTCK(t)));
-	return 0;
-}
-
-/*
- * OpenBSD passes fd[0] in retval[0], and fd[1] in retval[1].
- * Linux directly passes the pointer.
- */
-int
-linux_sys_pipe(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_pipe_args /* {
-		syscallarg(int *) pfds;
-	} */ *uap = v;
-	int error;
-	int pfds[2];
-#ifdef __i386__
-	int reg_edx = retval[1];
-#endif /* __i386__ */
-
-	if ((error = sys_opipe(p, 0, retval))) {
-#ifdef __i386__
-		retval[1] = reg_edx;
-#endif /* __i386__ */
-		return error;
-	}
-
-	/* Assumes register_t is an int */
-
-	pfds[0] = retval[0];
-	pfds[1] = retval[1];
-	if ((error = copyout(pfds, SCARG(uap, pfds), 2 * sizeof (int)))) {
-#ifdef __i386__
-		retval[1] = reg_edx;
-#endif /* __i386__ */
-		fdrelease(p, retval[0]);
-		fdrelease(p, retval[1]);
-		return error;
-	}
-
-	retval[0] = 0;
-#ifdef __i386__
-	retval[1] = reg_edx;
-#endif /* __i386__ */
 	return 0;
 }
 
