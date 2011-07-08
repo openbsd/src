@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.91 2011/07/03 23:37:55 zinke Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.92 2011/07/08 22:11:17 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -2148,7 +2148,7 @@ pfr_pool_get(struct pfr_ktable *kt, int *pidx, struct pf_addr *counter,
 	struct pfr_kentry	*ke, *ke2;
 	struct pf_addr		*addr;
 	union sockaddr_union	 mask;
-	int			 idx = -1, use_counter = 0;
+	int			 startidx, idx = -1, loop = 0, use_counter = 0;
 
 	if (af == AF_INET)
 		addr = (struct pf_addr *)&pfr_sin.sin_addr;
@@ -2165,23 +2165,29 @@ pfr_pool_get(struct pfr_ktable *kt, int *pidx, struct pf_addr *counter,
 		use_counter = 1;
 	if (idx < 0)
 		idx = 0;
+	startidx = idx;
 
 _next_block:
+	if (loop && startidx == idx) {
+		kt->pfrkt_nomatch++;
+		return (1);
+	}
+
 	ke = pfr_kentry_byidx(kt, idx, af);
 	if (ke == NULL) {
 		/* we don't have this idx, try looping */
-		idx = 0;
-		ke = pfr_kentry_byidx(kt, idx, af);
-		if (ke == NULL) {
+		if (loop || (ke = pfr_kentry_byidx(kt, 0, af)) == NULL) {
 			kt->pfrkt_nomatch++;
 			return (1);
 		}
+		idx = 0;
+		loop++;
 	}
 	pfr_prepare_network(&pfr_mask, af, ke->pfrke_net);
 	*raddr = SUNION2PF(&ke->pfrke_sa, af);
 	*rmask = SUNION2PF(&pfr_mask, af);
 
-	if (use_counter) {
+	if (use_counter && !PF_AZERO(counter, af)) {
 		/* is supplied address within block? */
 		if (!PF_MATCHA(0, *raddr, *rmask, counter, af)) {
 			/* no, go to next block in table */
