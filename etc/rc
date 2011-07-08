@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.381 2011/07/08 21:42:52 robert Exp $
+#	$OpenBSD: rc,v 1.382 2011/07/08 22:03:56 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -415,8 +415,7 @@ dmesg >/var/run/dmesg.boot
 make_keys
 
 echo -n 'starting early daemons:'
-start_daemon syslogd ldattach pflogd
-start_daemon named nsd ntpd isakmpd iked sasyncd
+start_daemon syslogd ldattach pflogd named nsd ntpd isakmpd iked sasyncd
 echo '.'
 
 if [ X"${ipsec}" != X"NO" ]; then
