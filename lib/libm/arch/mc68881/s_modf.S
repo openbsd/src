@@ -1,12 +1,11 @@
-/*	$OpenBSD: fabs.S,v 1.5 2008/12/09 20:54:02 martynas Exp $	*/
-/*	$NetBSD: fabs.S,v 1.2 2000/07/23 07:12:22 eeh Exp $	*/
-/*
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
+/* $OpenBSD: s_modf.S,v 1.1 2011/07/08 19:21:42 martynas Exp $ */
+/*-
+ * Copyright (c) 1990 The Regents of the University of California.
+ * All rights reserved.
  *
- * This software was developed by the Computer Systems Engineering group
- * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
- * contributed to Berkeley.
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,10 +32,19 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "DEFS.h"
 
-/* fabs - floating absolute value */
-
-ENTRY(fabs)
-	retl
-	 fabsd	%f0, %f0		! return absolute value
+/*
+ * double modf(val, iptr)
+ * returns: xxx and n (in *iptr) where val == n.xxx
+ */
+ENTRY(modf)
+	fmoved	sp@(4),fp0
+	movel	sp@(12),a0
+	fintrzx	fp0,fp1
+	fmoved	fp1,a0@
+	fsubx	fp1,fp0
+	fmoved	fp0,sp@-
+	movel	sp@+,d0
+	movel	sp@+,d1
+	rts

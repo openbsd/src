@@ -1,11 +1,12 @@
-/* $OpenBSD: fabs.S,v 1.6 2008/12/09 20:54:02 martynas Exp $ */
-/*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+/*	$OpenBSD: s_fabs.S,v 1.1 2011/07/08 19:21:42 martynas Exp $	*/
+/*	$NetBSD: fabs.S,v 1.2 2000/07/23 07:12:22 eeh Exp $	*/
+/*
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,16 +33,10 @@
  * SUCH DAMAGE.
  */
 
+#include <machine/asm.h>
+
 /* fabs - floating absolute value */
 
-#include "DEFS.h"
-
 ENTRY(fabs)
-	fmoved	sp@(4),fp0
-	fjnlt	L1
-	fnegx	fp0
-L1:
-	fmoved	fp0,sp@-
-	movel	sp@+,d0
-	movel	sp@+,d1
-	rts
+	retl
+	 fabsd	%f0, %f0		! return absolute value

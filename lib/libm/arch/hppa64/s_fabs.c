@@ -1,4 +1,4 @@
-/*	$OpenBSD: fabs.c,v 1.1 2005/04/01 10:54:27 mickey Exp $	*/
+/*	$OpenBSD: s_fabs.c,v 1.1 2011/07/08 19:21:42 martynas Exp $	*/
 
 /*
  * Written by Miodrag Vallat.  Public domain

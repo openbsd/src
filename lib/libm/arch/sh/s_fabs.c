@@ -1,10 +1,11 @@
-/*	$OpenBSD: fabs.c,v 1.5 2008/12/10 01:15:02 martynas Exp $	*/
+/*	$OpenBSD: s_fabs.c,v 1.1 2011/07/08 19:21:42 martynas Exp $	*/
 /*
- * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
+ * Copyright (c) 2006 Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * copyright notice, this permission notice, and the disclaimer below
+ * appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -16,20 +17,24 @@
  */
 
 #include <sys/cdefs.h>
+#if !defined(__SH4__) || defined(__SH4_NOFPU__)
 #include <sys/types.h>
 #include <machine/ieee.h>
+#endif /* !defined(__SH4__) || defined(__SH4_NOFPU__) */
 
-/*
- * fabs(d) returns the absolute value of d.
- */
+#include <math.h>
+
 double
 fabs(double d)
 {
+#if defined(__SH4__) && !defined(__SH4_NOFPU__)
+	__asm__ __volatile__("fabs %0" : "+f" (d));
+#else
 	struct ieee_double *p = (struct ieee_double *)&d;
 
 	p->dbl_sign = 0;
-
-	return(d);
+#endif
+	return (d);
 }
 
 __weak_alias(fabsl, fabs);

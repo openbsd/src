@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.86 2011/07/07 01:20:24 martynas Exp $
+#  $OpenBSD: Makefile,v 1.87 2011/07/08 19:21:42 martynas Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -18,7 +18,7 @@ CFLAGS+= -O0
 
 .if (${MACHINE_ARCH} == "alpha")
 .PATH:	${.CURDIR}/arch/alpha
-ARCH_SRCS = s_copysign.S s_copysignf.S
+ARCH_SRCS = s_copysign.S s_copysignf.S s_fabs.S
 .elif (${MACHINE_ARCH} == "i386")
 .PATH:	${.CURDIR}/arch/i387
 ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_fmod.S e_log.S e_log10.S \
@@ -26,10 +26,10 @@ ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_fmod.S e_log.S e_log10.S \
 	    e_sqrtl.S \
 	    invtrig.c \
 	    s_atan.S s_atanf.S s_ceil.S s_ceilf.S s_copysign.S s_copysignf.S \
-	    s_cos.S s_cosf.S s_floor.S s_floorf.S \
+	    s_cos.S s_cosf.S s_fabs.S s_floor.S s_floorf.S \
 	    s_ilogb.S s_ilogbf.S s_log1p.S s_log1pf.S s_logb.S s_logbf.S \
-	    s_llrint.S s_llrintf.S s_lrint.S s_lrintf.S s_rint.S s_rintf.S\
-	    s_scalbn.S s_scalbnf.S s_significand.S s_significandf.S \
+	    s_llrint.S s_llrintf.S s_lrint.S s_lrintf.S s_modf.S s_rint.S \
+	    s_rintf.S s_scalbn.S s_scalbnf.S s_significand.S s_significandf.S \
 	    s_sin.S s_sinf.S s_tan.S s_tanf.S
 .elif (${MACHINE_ARCH} == "amd64")
 .PATH:	${.CURDIR}/arch/amd64
@@ -39,9 +39,9 @@ ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_fmod.S e_log.S e_log10.S \
 	    e_sqrtl.S \
 	    invtrig.c \
 	    s_atan.S s_atanf.S s_ceil.S s_ceilf.S s_copysign.S s_copysignf.S \
-	    s_cos.S s_cosf.S s_floor.S s_floorf.S \
+	    s_cos.S s_cosf.S s_fabs.S s_floor.S s_floorf.S \
 	    s_ilogb.S s_ilogbf.S s_log1p.S s_log1pf.S s_logb.S s_logbf.S \
-	    s_llrint.S s_llrintf.S s_lrint.S s_lrintf.S \
+	    s_llrint.S s_llrintf.S s_lrint.S s_lrintf.S s_modf.S \
 	    s_rint.S s_rintf.S s_scalbn.S s_scalbnf.S s_significand.S \
 	    s_significandf.S s_sin.S s_sinf.S s_tan.S s_tanf.S
 .elif (${MACHINE_ARCH} == "m68k")
@@ -52,38 +52,46 @@ ARCH_SRCS = e_acos.S e_acosf.S e_acosl.S e_asin.S e_asinf.S e_asinl.S \
 	    e_scalb.S e_scalbf.S e_sinh.S e_sinhf.S e_sqrt.S e_sqrtf.S \
 	    e_sqrtl.S s_atan.S s_atanf.S s_atanl.S s_ceil.S s_ceilf.S \
 	    s_copysign.S s_copysignf.S s_copysignl.S s_cos.S s_cosf.S s_cosl.S \
-	    s_expm1.S s_expm1f.S s_floor.S s_floorf.S s_log1p.S s_log1pf.S \
-	    s_logb.S s_logbf.S s_logbl.S s_rint.S s_rintf.S s_rintl.S \
-	    s_scalbn.S s_scalbnf.S s_scalbnl.S s_sin.S s_sinf.S s_sinl.S \
-	    s_tan.S s_tanf.S s_tanl.S s_tanh.S s_tanhf.S
+	    s_expm1.S s_expm1f.S s_fabs.S s_floor.S s_floorf.S s_log1p.S \
+	    s_log1pf.S s_logb.S s_logbf.S s_logbl.S s_modf.S s_rint.S \
+	    s_rintf.S s_rintl.S s_scalbn.S s_scalbnf.S s_scalbnl.S s_sin.S \
+	    s_sinf.S s_sinl.S s_tan.S s_tanf.S s_tanl.S s_tanh.S s_tanhf.S
 .elif (${MACHINE_ARCH} == "hppa")
 .PATH:	${.CURDIR}/arch/hppa
 ARCH_SRCS = e_sqrt.c e_sqrtf.c e_remainder.c e_remainderf.c \
-	    s_ceil.c s_ceilf.c s_floor.c s_floorf.c s_rint.c s_rintf.c \
-	    s_round.c s_roundf.c s_trunc.c s_truncf.c
+	    s_ceil.c s_ceilf.c s_fabs.c s_floor.c s_floorf.c s_rint.c \
+	    s_rintf.c s_round.c s_roundf.c s_trunc.c s_truncf.c
 .elif (${MACHINE_ARCH} == "sh")
 .PATH:	${.CURDIR}/arch/sh
-ARCH_SRCS = e_sqrt.c e_sqrtf.c s_fabsf.c
+ARCH_SRCS = e_sqrt.c e_sqrtf.c s_fabs.c s_fabsf.c
 .elif (${MACHINE_ARCH} == "arm")
 .PATH:	${.CURDIR}/arch/arm
 .elif (${MACHINE_ARCH} == "hppa64")
 .PATH:	${.CURDIR}/arch/hppa64
+ARCH_SRCS = s_fabs.c
 .elif (${MACHINE_ARCH} == "m88k")
 .PATH:	${.CURDIR}/arch/m88k
+ARCH_SRCS = s_fabs.S
 .elif (${MACHINE_ARCH} == "mips64")
 .PATH:	${.CURDIR}/arch/mips64
+ARCH_SRCS = s_fabs.S s_modf.S
 .elif (${MACHINE_ARCH} == "mips64el")
 .PATH:	${.CURDIR}/arch/mips64
+ARCH_SRCS = s_fabs.S s_modf.S
 .elif (${MACHINE_ARCH} == "powerpc")
 .PATH:	${.CURDIR}/arch/powerpc
+ARCH_SRCS = s_fabs.c
 .elif (${MACHINE_ARCH} == "sparc")
 .PATH:	${.CURDIR}/arch/sparc
+ARCH_SRCS = s_fabs.S s_modf.S
 .elif (${MACHINE_ARCH} == "sparc64")
 .PATH:	${.CURDIR}/arch/sparc64
+ARCH_SRCS = s_fabs.S s_modf.S
 .elif (${MACHINE_ARCH} == "vax")
 .PATH:	${.CURDIR}/arch/vax
-NOIEEE_ARCH = n_argred.S n_infnan.S n_sqrt.S
-ARCH_SRCS = n_atan2.S n_cbrt.S n_hypot.S n_sincos.S n_support.S n_tan.S
+NOIEEE_ARCH = n_argred.S n_fabs.S n_infnan.S n_modf.S n_sqrt.S
+ARCH_SRCS = n_atan2.S n_cbrt.S n_fabs.S n_hypot.S n_modf.S n_sincos.S \
+	    n_support.S n_tan.S
 .endif
 
 .PATH:	${.CURDIR}/man
@@ -115,11 +123,12 @@ COMMON_SRCS = b_exp__D.c b_log__D.c b_tgamma.c \
 	s_cproj.c s_cprojf.c s_creal.c s_crealf.c s_csin.c s_csinf.c s_csinh.c \
 	s_csinhf.c s_csqrt.c s_csqrtf.c s_ctan.c s_ctanf.c s_ctanh.c \
 	s_ctanhf.c s_erf.c s_erff.c s_exp2.c s_exp2f.c s_expm1.c s_expm1f.c \
-	s_fabsf.c s_fdim.c s_fma.c s_fmaf.c s_fmax.c s_fmaxf.c s_fmin.c \
-	s_fminf.c s_floor.c s_floorf.c s_frexpf.c s_ilogb.c s_ilogbf.c \
+	s_fabs.c s_fabsf.c s_fdim.c s_fma.c s_fmaf.c s_fmax.c s_fmaxf.c \
+	s_fmin.c s_fminf.c s_floor.c s_floorf.c s_frexp.c s_frexpf.c s_ilogb.c \
+	s_ilogbf.c \
 	s_log1p.c \
 	s_log1pf.c s_logb.c s_logbf.c s_llrint.c s_llrintf.c s_lrint.c \
-	s_lrintf.c s_modff.c s_nan.c s_nearbyint.c s_nextafter.c \
+	s_lrintf.c s_modf.c s_modff.c s_nan.c s_nearbyint.c s_nextafter.c \
 	s_nextafterf.c s_nexttowardf.c s_remquo.c s_remquof.c s_rint.c \
 	s_rintf.c s_round.c s_roundf.c \
 	s_scalbln.c s_scalbn.c s_scalbnf.c s_signgam.c s_significand.c \
@@ -148,14 +157,11 @@ NOIEEE_SRCS = n_acosh.c n_argred.c n_asincos.c n_asinh.c n_atan.c \
 	n_conjf.c n_cosh.c n_cpow.c n_cproj.c n_cprojf.c n_creal.c \
 	n_crealf.c n_csin.c n_csinh.c n_csqrt.c n_ctan.c n_ctanh.c \
 	n_erf.c n_exp.c n_exp__E.c n_expm1.c n_fdim.c n_floor.c \
-	n_fmax.c n_fmaxf.c n_fmin.c n_fminf.c n_fmod.c n_hypot.c \
+	n_fmax.c n_fmaxf.c n_fmin.c n_fminf.c n_fmod.c n_frexp.c n_hypot.c \
 	n_infnan.c n_j0.c n_j1.c n_jn.c n_lgamma.c n_log.c n_log10.c \
 	n_log1p.c n_log__L.c n_nan.c n_pow.c n_round.c n_scalbln.c \
 	n_sincos.c n_sinh.c n_sqrt.c n_support.c n_tan.c n_tanh.c \
 	n_tgamma.c
-
-# OpenBSD's C library supplies these functions:
-#COMMON_SRCS+=	s_fabs.c s_frexp.c s_modf.c
 
 .if (${MACHINE_ARCH} == "vax")
 SRCS=	${NOIEEE_SRCS} ${NOIEEE_ARCH}
@@ -192,8 +198,8 @@ SRCS+=		${LONG_SRCS}
 MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 	cimag.3 conj.3 copysign.3 cos.3 cosh.3 cproj.3 erf.3 exp.3 \
 	fabs.3 fdim.3 feclearexcept.3 feenableexcept.3 fegetenv.3 \
-	fegetround.3 floor.3 fmax.3 fmod.3 hypot.3 ilogb.3 j0.3 \
-	lgamma.3 logb.3 lrint.3 lround.3 nan.3 nextafter.3 \
+	fegetround.3 floor.3 fmax.3 fmod.3 frexp.3 hypot.3 ilogb.3 j0.3 \
+	lgamma.3 logb.3 lrint.3 lround.3 modf.3 nan.3 nextafter.3 \
 	remainder.3 rint.3 round.3 scalbn.3 sin.3 sinh.3 sqrt.3 \
 	tan.3 tanh.3 trunc.3
 
@@ -259,6 +265,7 @@ MLINKS+=floor.3 floorf.3
 MLINKS+=fmax.3 fmaxf.3
 MLINKS+=fmax.3 fminf.3
 MLINKS+=fmod.3 fmodf.3
+MLINKS+=frexp.3 frexpf.3
 MLINKS+=hypot.3 cabsf.3
 MLINKS+=hypot.3 hypotf.3
 MLINKS+=ilogb.3 ilogbf.3
@@ -278,6 +285,7 @@ MLINKS+=lrint.3 llrintf.3
 MLINKS+=lrint.3 lrintf.3
 MLINKS+=lround.3 llroundf.3
 MLINKS+=lround.3 lroundf.3
+MLINKS+=modf.3 modff.3
 MLINKS+=nan.3 nanf.3
 MLINKS+=nearbyint.3 nearbyintf.3
 MLINKS+=nextafter.3 nextafterf.3
@@ -324,6 +332,7 @@ MLINKS+=floor.3 floorl.3
 MLINKS+=fmax.3 fmaxl.3
 MLINKS+=fmax.3 fminl.3
 MLINKS+=fmod.3 fmodl.3
+MLINKS+=frexp.3 frexpl.3
 MLINKS+=hypot.3 hypotl.3
 MLINKS+=ilogb.3 ilogbl.3
 MLINKS+=lgamma.3 lgammal.3
@@ -334,6 +343,7 @@ MLINKS+=lrint.3 llrintl.3
 MLINKS+=lrint.3 lrintl.3
 MLINKS+=lround.3 llroundl.3
 MLINKS+=lround.3 lroundl.3
+MLINKS+=modf.3 modfl.3
 MLINKS+=nan.3 nanl.3
 MLINKS+=nearbyint.3 nearbyintl.3
 MLINKS+=nextafter.3 nextafterl.3
