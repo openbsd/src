@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.36 2011/07/07 21:00:59 deraadt Exp $	*/
+/*	$OpenBSD: date.c,v 1.37 2011/07/08 18:07:16 deraadt Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -45,8 +45,6 @@
 #include <tzfile.h>
 #include <unistd.h>
 #include <util.h>
-
-#include "extern.h"
 
 extern	char *__progname;
 
