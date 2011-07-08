@@ -3034,7 +3034,6 @@
 ./usr/share/man/man8/vax
 ./usr/share/man/man8/vax/MAKEDEV.8
 ./usr/share/man/man8/vax/boot_vax.8
-./usr/share/man/man8/vax/format.8
 ./usr/share/man/man8/vax/kbd.8
 ./usr/share/man/man8/verify_krb5_conf.8
 ./usr/share/man/man8/vipw.8
