@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.39 2011/07/05 04:12:41 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.40 2011/07/08 17:47:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -215,22 +215,14 @@ print_man_node(MAN_ARGS)
 		if ('\0' == *n->string) {
 			print_otag(h, TAG_P, 0, NULL);
 			return;
-		} else if (' ' == *n->string && MAN_LINE & n->flags)
+		}
+
+		if (' ' == *n->string && MAN_LINE & n->flags)
+			print_otag(h, TAG_BR, 0, NULL);
+		else if (MANH_LITERAL & mh->fl && n->prev)
 			print_otag(h, TAG_BR, 0, NULL);
 
 		print_text(h, n->string);
-
-		/*
-		 * If we're in a literal context, make sure that words
-		 * togehter on the same line stay together.  This is a
-		 * POST-printing call, so we check the NEXT word.  Since
-		 * -man doesn't have nested macros, we don't need to be
-		 * more specific than this.
-		 */
-		if (MANH_LITERAL & mh->fl &&
-				(NULL == n->next ||
-				 n->next->line > n->line))
-			print_otag(h, TAG_BR, 0, NULL);
 		return;
 	case (MAN_EQN):
 		PAIR_CLASS_INIT(&tag, "eqn");
@@ -399,7 +391,6 @@ man_root_post(MAN_ARGS)
 }
 
 
-
 /* ARGSUSED */
 static int
 man_br_pre(MAN_ARGS)
@@ -427,7 +418,6 @@ man_br_pre(MAN_ARGS)
 	return(0);
 }
 
-
 /* ARGSUSED */
 static int
 man_SH_pre(MAN_ARGS)
@@ -446,15 +436,19 @@ man_SH_pre(MAN_ARGS)
 	return(1);
 }
 
-
 /* ARGSUSED */
 static int
 man_alt_pre(MAN_ARGS)
 {
 	const struct man_node	*nn;
-	int		 i;
+	int		 i, savelit;
 	enum htmltag	 fp;
 	struct tag	*t;
+
+	if ((savelit = mh->fl & MANH_LITERAL)) 
+		print_otag(h, TAG_BR, 0, NULL);
+
+	mh->fl &= ~MANH_LITERAL;
 
 	for (i = 0, nn = n->child; nn; nn = nn->next, i++) {
 		t = NULL;
@@ -494,9 +488,11 @@ man_alt_pre(MAN_ARGS)
 			print_tagq(h, t);
 	}
 
+	if (savelit)
+		mh->fl |= MANH_LITERAL;
+
 	return(0);
 }
-
 
 /* ARGSUSED */
 static int
@@ -508,7 +504,6 @@ man_SM_pre(MAN_ARGS)
 		print_otag(h, TAG_B, 0, NULL);
 	return(1);
 }
-
 
 /* ARGSUSED */
 static int
@@ -528,7 +523,6 @@ man_SS_pre(MAN_ARGS)
 	return(1);
 }
 
-
 /* ARGSUSED */
 static int
 man_PP_pre(MAN_ARGS)
@@ -542,62 +536,23 @@ man_PP_pre(MAN_ARGS)
 	return(1);
 }
 
-
 /* ARGSUSED */
 static int
 man_IP_pre(MAN_ARGS)
 {
-	struct roffsu		 su;
-	struct htmlpair	 	 tag;
 	const struct man_node	*nn;
 
-	/*
-	 * This scattering of 1-BU margins and pads is to make sure that
-	 * when text overruns its box, the subsequent text isn't flush
-	 * up against it.  However, the rest of the right-hand box must
-	 * also be adjusted in consideration of this 1-BU space.
-	 */
-
 	if (MAN_BODY == n->type) { 
-		print_otag(h, TAG_TD, 0, NULL);
+		print_otag(h, TAG_DD, 0, NULL);
+		return(1);
+	} else if (MAN_HEAD != n->type) {
+		print_otag(h, TAG_DL, 0, NULL);
 		return(1);
 	}
 
-	nn = MAN_BLOCK == n->type ? 
-		n->head->child : n->parent->head->child;
+	/* FIXME: width specification. */
 
-	SCALE_HS_INIT(&su, INDENT);
-
-	/* Width is the second token. */
-
-	if (MAN_IP == n->tok && NULL != nn)
-		if (NULL != (nn = nn->next))
-			a2width(nn, &su);
-
-	/* Width is the first token. */
-
-	if (MAN_TP == n->tok && NULL != nn) {
-		/* Skip past non-text children. */
-		while (nn && MAN_TEXT != nn->type)
-			nn = nn->next;
-		if (nn)
-			a2width(nn, &su);
-	}
-
-	if (MAN_BLOCK == n->type) {
-		print_bvspace(h, n);
-		print_otag(h, TAG_TABLE, 0, NULL);
-		bufinit(h);
-		bufcat_su(h, "width", &su);
-		PAIR_STYLE_INIT(&tag, h);
-		print_otag(h, TAG_COL, 1, &tag);
-		print_otag(h, TAG_COL, 0, NULL);
-		print_otag(h, TAG_TBODY, 0, NULL);
-		print_otag(h, TAG_TR, 0, NULL);
-		return(1);
-	} 
-
-	print_otag(h, TAG_TD, 0, NULL);
+	print_otag(h, TAG_DT, 0, NULL);
 
 	/* For IP, only print the first header element. */
 
@@ -614,7 +569,6 @@ man_IP_pre(MAN_ARGS)
 	return(0);
 }
 
-
 /* ARGSUSED */
 static int
 man_HP_pre(MAN_ARGS)
@@ -623,37 +577,26 @@ man_HP_pre(MAN_ARGS)
 	struct roffsu	 su;
 	const struct man_node *np;
 
-	bufinit(h);
+	if (MAN_HEAD == n->type)
+		return(0);
+	else if (MAN_BLOCK != n->type)
+		return(1);
 
-	np = MAN_BLOCK == n->type ? 
-		n->head->child : 
-		n->parent->head->child;
+	np = n->head->child;
 
 	if (NULL == np || ! a2width(np, &su))
 		SCALE_HS_INIT(&su, INDENT);
 
-	if (MAN_HEAD == n->type) {
-		print_otag(h, TAG_TD, 0, NULL);
-		return(0);
-	} else if (MAN_BLOCK == n->type) {
-		print_bvspace(h, n);
-		print_otag(h, TAG_TABLE, 0, NULL);
-		bufcat_su(h, "width", &su);
-		PAIR_STYLE_INIT(&tag, h);
-		print_otag(h, TAG_COL, 1, &tag);
-		print_otag(h, TAG_COL, 0, NULL);
-		print_otag(h, TAG_TBODY, 0, NULL);
-		print_otag(h, TAG_TR, 0, NULL);
-		return(1);
-	}
+	bufinit(h);
 
+	print_bvspace(h, n);
+	bufcat_su(h, "margin-left", &su);
 	su.scale = -su.scale;
 	bufcat_su(h, "text-indent", &su);
 	PAIR_STYLE_INIT(&tag, h);
-	print_otag(h, TAG_TD, 1, &tag);
+	print_otag(h, TAG_P, 1, &tag);
 	return(1);
 }
-
 
 /* ARGSUSED */
 static int
@@ -664,7 +607,6 @@ man_B_pre(MAN_ARGS)
 	return(1);
 }
 
-
 /* ARGSUSED */
 static int
 man_I_pre(MAN_ARGS)
@@ -674,21 +616,19 @@ man_I_pre(MAN_ARGS)
 	return(1);
 }
 
-
 /* ARGSUSED */
 static int
 man_literal_pre(MAN_ARGS)
 {
 
-	if (MAN_nf == n->tok) {
+	if (MAN_nf != n->tok) {
 		print_otag(h, TAG_BR, 0, NULL);
-		mh->fl |= MANH_LITERAL;
-	} else
 		mh->fl &= ~MANH_LITERAL;
+	} else
+		mh->fl |= MANH_LITERAL;
 
 	return(0);
 }
-
 
 /* ARGSUSED */
 static int
@@ -699,7 +639,6 @@ man_in_pre(MAN_ARGS)
 	return(0);
 }
 
-
 /* ARGSUSED */
 static int
 man_ign_pre(MAN_ARGS)
@@ -707,7 +646,6 @@ man_ign_pre(MAN_ARGS)
 
 	return(0);
 }
-
 
 /* ARGSUSED */
 static int
