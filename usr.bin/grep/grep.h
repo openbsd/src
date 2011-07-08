@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.h,v 1.16 2011/03/04 03:11:23 tedu Exp $	*/
+/*	$OpenBSD: grep.h,v 1.17 2011/07/08 01:20:24 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -65,7 +65,7 @@ extern int	 cflags, eflags;
 /* Command line flags */
 extern int	 Aflag, Bflag, Eflag, Fflag, Gflag, Hflag, Lflag,
 		 Rflag, Zflag,
-		 bflag, cflag, hflag, iflag, lflag, nflag, qflag, sflag,
+		 bflag, cflag, hflag, iflag, lflag, nflag, oflag, qflag, sflag,
 		 vflag, wflag, xflag;
 extern int	 binbehave;
 
@@ -84,7 +84,7 @@ int		 grep_tree(char **argv);
 void		*grep_malloc(size_t size);
 void		*grep_calloc(size_t nmemb, size_t size);
 void		*grep_realloc(void *ptr, size_t size);
-void		 printline(str_t *line, int sep);
+void		 printline(str_t *line, int sep, regmatch_t *pmatch);
 int		 fastcomp(fastgrep_t *, const char *);
 void		 fgrepcomp(fastgrep_t *, const char *);
 

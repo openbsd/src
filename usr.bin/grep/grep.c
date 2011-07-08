@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.43 2011/03/04 03:11:23 tedu Exp $	*/
+/*	$OpenBSD: grep.c,v 1.44 2011/07/08 01:20:24 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -74,6 +74,7 @@ int	 hflag;		/* -h: don't print filename headers */
 int	 iflag;		/* -i: ignore case */
 int	 lflag;		/* -l: only show names of files with matches */
 int	 nflag;		/* -n: show line numbers in front of matching lines */
+int	 oflag;		/* -o: print each match */
 int	 qflag;		/* -q: quiet mode (don't output anything) */
 int	 sflag;		/* -s: silent mode (ignore errors) */
 int	 vflag;		/* -v: only show non-matching lines */
@@ -107,9 +108,9 @@ usage(void)
 {
 	fprintf(stderr,
 #ifdef NOZ
-	    "usage: %s [-abcEFGHhIiLlnqRsUVvwx] [-A num] [-B num] [-C[num]]\n"
+	    "usage: %s [-abcEFGHhIiLlnoqRsUVvwx] [-A num] [-B num] [-C[num]]\n"
 #else
-	    "usage: %s [-abcEFGHhIiLlnqRsUVvwxZ] [-A num] [-B num] [-C[num]]\n"
+	    "usage: %s [-abcEFGHhIiLlnoqRsUVvwxZ] [-A num] [-B num] [-C[num]]\n"
 #endif
 	    "\t[-e pattern] [-f file] [--binary-files=value] [--context[=num]]\n"
 	    "\t[--line-buffered] [pattern] [file ...]\n", __progname);
@@ -117,9 +118,9 @@ usage(void)
 }
 
 #ifdef NOZ
-static char *optstr = "0123456789A:B:CEFGHILRUVabce:f:hilnqrsuvwxy";
+static char *optstr = "0123456789A:B:CEFGHILRUVabce:f:hilnoqrsuvwxy";
 #else
-static char *optstr = "0123456789A:B:CEFGHILRUVZabce:f:hilnqrsuvwxy";
+static char *optstr = "0123456789A:B:CEFGHILRUVZabce:f:hilnoqrsuvwxy";
 #endif
 
 struct option long_options[] =
@@ -382,6 +383,9 @@ main(int argc, char *argv[])
 			break;
 		case 'n':
 			nflag = 1;
+			break;
+		case 'o':
+			oflag = 1;
 			break;
 		case 'q':
 			qflag = 1;
