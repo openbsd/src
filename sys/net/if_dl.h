@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dl.h,v 1.6 2003/06/02 23:28:12 millert Exp $	*/
+/*	$OpenBSD: if_dl.h,v 1.7 2011/07/08 01:09:52 claudio Exp $	*/
 /*	$NetBSD: if_dl.h,v 1.8 1995/03/26 20:30:13 jtc Exp $	*/
 
 /*
@@ -63,9 +63,10 @@ struct sockaddr_dl {
 	u_char	  sdl_type;	/* interface type */
 	u_char	  sdl_nlen;	/* interface name length, no trailing 0 reqd. */
 	u_char	  sdl_alen;	/* link level address length */
-	u_char	  sdl_slen;	/* link layer selector length */
-	char	  sdl_data[12];	/* minimum work area, can be larger;
-				   contains both if name and ll address */
+	u_char	  sdl_slen;	/* link layer selector length, mostly 0 */
+	char	  sdl_data[24];	/* minimum work area, can be larger;
+				   contains both if name and ll address;
+				   big enough for IFNAMSIZ plus 8byte ll addr */
 };
 
 #define LLADDR(s) ((caddr_t)((s)->sdl_data + (s)->sdl_nlen))
