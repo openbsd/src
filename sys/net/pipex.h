@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.8 2011/04/02 11:52:44 dlg Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.9 2011/07/08 18:30:17 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,6 +28,23 @@
 
 #ifndef NET_PIPEX_H
 #define NET_PIPEX_H 1
+
+/*
+ * Names for pipex sysctl objects
+ */
+#define PIPEXCTL_ENABLE		1
+#define PIPEXCTL_MAXID		2
+
+#define PIPEXCTL_NAMES { \
+        { 0, 0 }, \
+        { "enable", CTLTYPE_INT }, \
+}
+
+#define PIPEXCTL_VARS { \
+	NULL, \
+	&pipex_enable \
+	NULL \
+}
 
 #define PIPEX_ENABLE			1
 #define PIPEX_DISABLE			0
@@ -163,6 +180,7 @@ struct pipex_session_descr_req {
 #define PIPEXSIFDESCR	_IOW ('p',  8, struct pipex_session_descr_req)
 
 #ifdef _KERNEL
+extern int	pipex_enable;
 
 struct pipex_session;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.149 2011/07/04 23:58:26 claudio Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.150 2011/07/08 18:30:16 yasuoka Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -750,14 +750,14 @@ decapsulate:
 		eh_tmp = mtod(m, struct ether_header *);
 		bcopy(eh, eh_tmp, sizeof(struct ether_header));
 #ifdef PIPEX
-	{
-		struct pipex_session *session;
+		if (pipex_enable) {
+			struct pipex_session *session;
 
-		if ((session = pipex_pppoe_lookup_session(m)) != NULL) {
-			pipex_pppoe_input(m, session);
-			goto done;
+			if ((session = pipex_pppoe_lookup_session(m)) != NULL) {
+				pipex_pppoe_input(m, session);
+				goto done;
+			}
 		}
-	}
 #endif
 		if (etype == ETHERTYPE_PPPOEDISC)
 			inq = &pppoediscinq;

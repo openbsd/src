@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.18 2011/07/07 22:32:51 mcbride Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.19 2011/07/08 18:30:17 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -36,6 +36,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
+#include <sys/sysctl.h>
 #include <sys/syslog.h>
 #include <sys/conf.h>
 #include <sys/time.h>
@@ -84,6 +85,7 @@
 /*
  * static/global variables
  */
+int	pipex_enable = 0;
 struct pipex_hash_head
     pipex_session_list,				/* master session list */
     pipex_close_wait_list,			/* expired session list */
@@ -2977,4 +2979,22 @@ pipex_sockaddr_compar_addr(struct sockaddr *a, struct sockaddr *b)
 	}
 	panic("pipex_sockaddr_compar_addr: unknown address family");
 	return -1;
+}
+
+int
+pipex_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen)
+{
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case PIPEXCTL_ENABLE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &pipex_enable));
+	default:
+		return (ENOPROTOOPT);
+	}
+	/* NOTREACHED */
 }

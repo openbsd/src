@@ -1,4 +1,4 @@
-$Id: HOWTO_PIPEX_NPPPD.txt,v 1.4 2011/07/06 20:52:28 yasuoka Exp $
+$Id: HOWTO_PIPEX_NPPPD.txt,v 1.5 2011/07/08 18:30:17 yasuoka Exp $
 
 How to test npppd and pipex
 ---------------------------
@@ -10,36 +10,33 @@ on server
 
   1. update your source tree
 
-  2. enable PIPEX on your kernel and reboot with the kernel
-     Add bellow line to your kernel configuration file
+  2. build and update kernel
 
-	option          PIPEX           # Pppac IP EXtension, for npppd
-
-  3. build and update kernel
-
-  4. build npppd
+  3. build npppd
 
 	% cd /usr/src/usr.sbin/npppd
 	% make
 	% sudo make install
 
-  5. install npppd.conf and npppd-users.csv to /etc/npppd/
-
+  4. install npppd.conf and npppd-users.csv to /etc/npppd/
      sample npppd.conf and npppd-user.csv attached below on this file.
 
 	% sudo mkdir 0755 /etc/npppd
 	% sudo cp npppd.conf /etc/npppd/
 	% sudo cp npppd-users.csv /etc/npppd/
 
-  6. create user '_npppd'
+  5. create user '_npppd'
 
-     	% sudo groupadd _npppd
-     	% sudo useradd -d /var/empty -s /sbin/nologin -g _npppd _npppd
+	% sudo groupadd _npppd
+	% sudo useradd -d /var/empty -s /sbin/nologin -g _npppd _npppd
 
-  6. set net.inet.gre.allow=1
-	% sudo sysctl net.inet.gre.allow=1
+  6. enable PIPEX and GRE by sysctl
+
+	% sudo sysctl net.inet.gre.allow=1  (for PPTP)
+	% sudo sysctl net.pipex.enable=1    (for PIPEX)
 
   7. run npppd
+
 	% sudo /usr/sbin/npppd -d
 
 on client
@@ -88,7 +85,7 @@ How to test L2TP/IPsec
 #
 # Simplest npppd.conf sample
 #
-# $Id: HOWTO_PIPEX_NPPPD.txt,v 1.4 2011/07/06 20:52:28 yasuoka Exp $
+# $Id: HOWTO_PIPEX_NPPPD.txt,v 1.5 2011/07/08 18:30:17 yasuoka Exp $
 
 interface_list:                         tun0
 interface.tun0.ip4addr:                 10.0.0.1
@@ -134,6 +131,8 @@ l2tpd.require_ipsec:                    false
 # PPPoE daemon
 #pppoed.enabled:                                true
 #pppoed.interface:                      PPPoE vic0
+
+#pipex.enabled:				false
 -------------------------------------------------------------------------------
 
 [npppd-users.csv]

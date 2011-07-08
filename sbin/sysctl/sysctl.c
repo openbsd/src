@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.176 2011/05/23 01:33:20 djm Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.177 2011/07/08 18:30:17 yasuoka Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 
 #include <net/pfvar.h>
 #include <net/if_pfsync.h>
+#include <net/pipex.h>
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -587,6 +588,12 @@ parse(char *string, int flags)
 		}
 		if (mib[1] == PF_MPLS) {
 			len = sysctl_mpls(string, &bufp, mib, flags, &type);
+			if (len < 0)
+				return;
+			break;
+		}
+		if (mib[1] == PF_PIPEX) {
+			len = sysctl_pipex(string, &bufp, mib, flags, &type);
 			if (len < 0)
 				return;
 			break;
@@ -1346,6 +1353,7 @@ struct ctlname pfsyncname[] = PFSYNCCTL_NAMES;
 struct ctlname divertname[] = DIVERTCTL_NAMES;
 struct ctlname bpfname[] = CTL_NET_BPF_NAMES;
 struct ctlname ifqname[] = CTL_IFQ_NAMES;
+struct ctlname pipexname[] = PIPEXCTL_NAMES;
 struct list inetlist = { inetname, IPPROTO_MAXID };
 struct list inetvars[] = {
 	{ ipname, IPCTL_MAXID },	/* ip */
@@ -1610,6 +1618,7 @@ struct list inetvars[] = {
 };
 struct list bpflist = { bpfname, NET_BPF_MAXID };
 struct list ifqlist = { ifqname, IFQCTL_MAXID };
+struct list pipexlist = { pipexname, PIPEXCTL_MAXID };
 
 struct list kernmalloclist = { kernmallocname, KERN_MALLOC_MAXID };
 struct list forkstatlist = { forkstatname, KERN_FORKSTAT_MAXID };
@@ -2168,6 +2177,24 @@ sysctl_mpls(char *string, char **bufpp, int mib[], int flags, int *typep)
 		*typep = lp->list[tindx].ctl_type;
 		return(4);
 	}
+	return (3);
+}
+
+/* handle PIPEX requests */
+int
+sysctl_pipex(char *string, char **bufpp, int mib[], int flags, int *typep)
+{
+	struct list *lp;
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, &pipexlist);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &pipexlist)) == -1)
+		return (-1);
+	mib[2] = indx;
+	*typep = pipexlist.list[indx].ctl_type;
 	return (3);
 }
 

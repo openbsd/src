@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.160 2011/07/06 23:44:20 sthen Exp $
+.\"	$OpenBSD: sysctl.8,v 1.161 2011/07/08 18:30:17 yasuoka Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: July 6 2011 $
+.Dd $Mdocdate: July 8 2011 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -317,6 +317,7 @@ and a few require a kernel compiled with non-standard
 .It net.inet6.icmp6.mtudisc_hiwat	integer	yes
 .It net.inet6.icmp6.mtudisc_lowat	integer	yes
 .It net.inet6.icmp6.nd6_debug	integer	yes
+.It net.pipex.enable	integer	yes
 .It debug.syncprt	integer	yes
 .It debug.busyprt	integer	yes
 .It debug.doclusterread	integer	yes
