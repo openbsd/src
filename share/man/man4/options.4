@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.220 2011/07/08 18:30:17 yasuoka Exp $
+.\"	$OpenBSD: options.4,v 1.221 2011/07/08 19:24:31 tedu Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -57,19 +57,10 @@ flags to the C compiler.
 .It Cd option COMPAT_43
 This option enables compatibility with
 .Bx 4.3 .
-It adds an old syscall for
-.Fn lseek
-as well as ioctls for
+It adds ioctls for
 .Dv TIOCGETP
 and
 .Dv TIOCSETP .
-The return values for the
-.Xr getpid 2 ,
-.Xr getgid 2 ,
-and
-.Xr getuid 2
-system calls are modified as well, to return the parent's PID and UID as well
-as the current process's.
 It also enables the deprecated
 .Dv NTTYDISC
 terminal line discipline.
@@ -79,17 +70,6 @@ SIOC[GS]IF{ADDR,DSTADDR,BRDADDR,NETMASK} interface ioctls, including
 binary compatibility for code written before the introduction of the
 .Li sa_len
 field in sockaddrs.
-It also enables support for some older pre
-.Bx 4.4
-socket calls.
-.It Cd option COMPAT_AOUT
-On those ELF architectures that require it, this enables
-full compatibility with old a.out binaries, by allowing the
-a.out dynamic linking system to reside under
-.Pa /emul/a.out .
-This option is available on the i386 architecture.
-See
-.Xr compat_aout 8 .
 .It Cd option COMPAT_LINUX
 On those architectures that support it, this enables binary
 compatibility with
