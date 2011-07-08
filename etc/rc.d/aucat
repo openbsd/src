@@ -1,11 +1,12 @@
 #!/bin/sh
 #
-# $OpenBSD: aucat,v 1.1 2011/07/07 23:29:45 robert Exp $
+# $OpenBSD: aucat,v 1.2 2011/07/08 05:16:08 ajacoutot Exp $
 
 daemon="/usr/bin/aucat"
 
 . /etc/rc.d/rc.subr
 
+pexp="${daemon} -l${daemon_flags:+ ${daemon_flags}}"
 rc_reload=NO
 
 rc_pre() {
