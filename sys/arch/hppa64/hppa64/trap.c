@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.20 2011/07/07 18:37:48 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.21 2011/07/09 02:12:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -585,13 +585,11 @@ syscall(struct trapframe *frame)
 {
 	register struct proc *p = curproc;
 	register const struct sysent *callp;
-	int retq, nsys, code, argsize, argoff, oerror, error;
+	int nsys, code, oerror, error;
 	register_t args[8], rval[2];
 #ifdef DIAGNOSTIC
 	long oldcpl = curcpu()->ci_cpl;
 #endif
-
-	/* TODO syscall */
 
 	uvmexp.syscalls++;
 
@@ -602,34 +600,27 @@ syscall(struct trapframe *frame)
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
 
-	argoff = 4; retq = 0;
 	switch (code = frame->tf_r1) {
 	case SYS_syscall:
+	case SYS___syscall:
 		code = frame->tf_args[0];
 		args[0] = frame->tf_args[1];
 		args[1] = frame->tf_args[2];
 		args[2] = frame->tf_args[3];
-		argoff = 3;
-		break;
-	case SYS___syscall:
-		if (callp != sysent)
-			break;
-		/*
-		 * this works, because quads get magically swapped
-		 * due to the args being laid backwards on the stack
-		 * and then copied in words
-		 */
-		code = frame->tf_args[0];
-		args[0] = frame->tf_args[2];
-		args[1] = frame->tf_args[3];
-		argoff = 2;
-		retq = 1;
+		args[3] = frame->tf_args[4];
+		args[4] = frame->tf_args[5];
+		args[5] = frame->tf_args[6];
+		args[6] = frame->tf_args[7];
 		break;
 	default:
 		args[0] = frame->tf_args[0];
 		args[1] = frame->tf_args[1];
 		args[2] = frame->tf_args[2];
 		args[3] = frame->tf_args[3];
+		args[4] = frame->tf_args[4];
+		args[5] = frame->tf_args[5];
+		args[6] = frame->tf_args[6];
+		args[7] = frame->tf_args[7];
 		break;
 	}
 
@@ -639,43 +630,6 @@ syscall(struct trapframe *frame)
 		callp += code;
 
 	oerror = error = 0;
-	if ((argsize = callp->sy_argsize)) {
-		int i;
-
-/* TODO syscallargs */
-
-		/*
-		 * coming from syscall() or __syscall we must be
-		 * having one of those w/ a 64 bit arguments,
-		 * which needs a word swap due to the order
-		 * of the arguments on the stack.
-		 * this assumes that none of 'em are called
-		 * by their normal syscall number, maybe a regress
-		 * test should be used, to watch the behaviour.
-		 */
-		if (!error && argoff < 4) {
-			int t;
-
-			i = 0;
-			switch (code) {
-			case SYS_lseek:		retq = 0;
-			case SYS_truncate:
-			case SYS_ftruncate:	i = 2;	break;
-			case SYS_preadv:
-			case SYS_pwritev:
-			case SYS_pread:
-			case SYS_pwrite:	i = 4;	break;
-			case SYS_mquery:
-			case SYS_mmap:		i = 6;	break;
-			}
-
-			if (i) {
-				t = args[i];
-				args[i] = args[i + 1];
-				args[i + 1] = t;
-			}
-		}
-	}
 
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args);
@@ -684,9 +638,6 @@ syscall(struct trapframe *frame)
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p, code, callp->sy_argsize, args);
 #endif
-	if (error)
-		goto bad;
-
 	rval[0] = 0;
 	rval[1] = frame->tf_ret1;
 #if NSYSTRACE > 0
@@ -698,7 +649,7 @@ syscall(struct trapframe *frame)
 	switch (error) {
 	case 0:
 		frame->tf_ret0 = rval[0];
-		frame->tf_ret1 = rval[!retq];
+		frame->tf_ret1 = rval[1];
 		frame->tf_r1 = 0;
 		break;
 	case ERESTART:
@@ -707,7 +658,6 @@ syscall(struct trapframe *frame)
 	case EJUSTRETURN:
 		break;
 	default:
-	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		frame->tf_r1 = error;
