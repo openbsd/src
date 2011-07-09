@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.643 2011/07/09 01:20:37 halex Exp $
+#	$OpenBSD: install.sub,v 1.644 2011/07/09 03:12:24 ajacoutot Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1170,9 +1170,9 @@ install_files() {
 
 		# save arguments for sysmerge(8)
 		[[ $_f == base$VERSION.tgz ]] && \
-			SM_ARGS="-s $_src/etc$VERSION.tgz"
+			SM_ETC="$_src/etc$VERSION.tgz"
 		[[ $_f == xbase$VERSION.tgz ]] && \
-			SM_ARGSX="-x $_src/xetc$VERSION.tgz"
+			SM_XETC="$_src/xetc$VERSION.tgz"
 	done
 }
 
@@ -1631,10 +1631,17 @@ install_sets() {
 }
 
 run_sysmerge() {
-	if [[ -n "$SM_ARGS" || -n "$SM_ARGSX" ]]; then
+	if [[ -n "$SM_ETC" || -n "$SM_XETC" ]]; then
 		ask_yn "Merge the new etc/xetc install sets using sysmerge(8)?" no
-		[[ $resp == y ]] && \
+		if [[ $resp == y ]]; then \
+			[[ X"$SM_ETC" != X"" ]] && \
+				ftp $FTPOPTS -o /mnt/tmp/etc$VERSION.tgz -m "$SM_ETC" && \
+				SM_ARGS="-s /tmp/etc$VERSION.tgz"
+			[[ X"$SM_XETC" != X"" ]] && \
+				ftp $FTPOPTS -o /mnt/tmp/xetc$VERSION.tgz -m "$SM_XETC" && \
+				SM_ARGSX="-x /tmp/xetc$VERSION.tgz"
 			/mnt/usr/sbin/chroot /mnt /usr/sbin/sysmerge $SM_ARGS $SM_ARGSX
+		fi
 	fi
 }
 
