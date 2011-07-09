@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.20 2011/07/08 19:34:04 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.21 2011/07/09 04:11:15 dhill Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -108,6 +108,9 @@ struct pipex_tag {
 };
 void *pipex_softintr = NULL;
 Static void pipex_softintr_handler(void *);
+
+/* from udp_usrreq.c */
+extern int udpcksum;
 
 #ifdef PIPEX_DEBUG
 int pipex_debug = 0;		/* systcl net.inet.ip.pipex_debug */
@@ -1944,9 +1947,12 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 		ip->ip_ttl = MAXTTL;
 		ip->ip_tos = 0;
 
-		udp->uh_sum = in_cksum_phdr(ip->ip_src.s_addr,
-		    ip->ip_dst.s_addr, htons(plen  + IPPROTO_UDP));
-		m0->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
+		if (udpcksum) {
+			udp->uh_sum = in_cksum_phdr(ip->ip_src.s_addr,
+			   ip->ip_dst.s_addr, htons(plen  + IPPROTO_UDP));
+			m0->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
+		} else
+			udp->uh_sum = 0;
 
 		if (ip_output(m0, NULL, NULL, 0, NULL, NULL) != 0) {
 			PIPEX_DBG((session, LOG_DEBUG, "ip_output failed."));
