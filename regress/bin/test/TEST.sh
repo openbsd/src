@@ -26,7 +26,7 @@
 #
 # TEST.sh - check if test(1) or builtin test works
 #
-# $OpenBSD: TEST.sh,v 1.1 1997/01/23 17:42:53 millert Exp $
+# $OpenBSD: TEST.sh,v 1.1 2011/07/09 03:58:12 nicm Exp $
 
 # force a specified test program, e.g. `env test=/bin/test sh TEST.sh'
 : ${test=test}		
@@ -134,3 +134,6 @@ t 0 '! ""'
 
 echo ""
 echo "Syntax errors: $ERROR Failed: $FAILED"
+[ $ERROR -gt 0 ] && exit 1
+[ $FAILED -gt 0 ] && exit 1
+exit 0
