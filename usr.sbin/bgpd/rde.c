@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.307 2011/02/15 12:26:37 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.308 2011/07/09 02:51:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -23,7 +23,6 @@
 
 #include <errno.h>
 #include <ifaddrs.h>
-#include <limits.h>
 #include <pwd.h>
 #include <poll.h>
 #include <signal.h>
@@ -158,7 +157,6 @@ pid_t
 rde_main(int pipe_m2r[2], int pipe_s2r[2], int pipe_m2s[2], int pipe_s2rctl[2],
     int debug)
 {
-	struct rlimit		 rl;
 	pid_t			 pid;
 	struct passwd		*pw;
 	struct pollfd		*pfd = NULL;
@@ -187,12 +185,6 @@ rde_main(int pipe_m2r[2], int pipe_s2r[2], int pipe_m2s[2], int pipe_s2rctl[2],
 
 	setproctitle("route decision engine");
 	bgpd_process = PROC_RDE;
-
-	if (getrlimit(RLIMIT_DATA, &rl) == -1)
-		fatal("getrlimit");
-	rl.rlim_cur = rl.rlim_max;
-	if (setrlimit(RLIMIT_DATA, &rl) == -1)
-		fatal("setrlimit");
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||

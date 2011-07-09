@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.318 2011/07/04 04:34:14 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.319 2011/07/09 02:51:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -34,7 +34,6 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <limits.h>
 #include <poll.h>
 #include <pwd.h>
 #include <signal.h>
@@ -180,7 +179,6 @@ pid_t
 session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
     int pipe_s2rctl[2])
 {
-	struct rlimit		 rl;
 	int			 nfds, timeout, pfkeysock;
 	unsigned int		 i, j, idx_peers, idx_listeners, idx_mrts;
 	pid_t			 pid;
@@ -216,13 +214,6 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 
 	setproctitle("session engine");
 	bgpd_process = PROC_SE;
-
-	if (getrlimit(RLIMIT_NOFILE, &rl) == -1)
-		fatal("getrlimit");
-	rl.rlim_cur = rl.rlim_max;
-	if (setrlimit(RLIMIT_NOFILE, &rl) == -1)
-		fatal("setrlimit");
-
 	pfkeysock = pfkey_init(&sysdep);
 
 	if (setgroups(1, &pw->pw_gid) ||
