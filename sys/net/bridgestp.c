@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.39 2010/11/20 14:23:09 fgsch Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.40 2011/07/09 04:53:33 henning Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -177,6 +177,8 @@ __FBSDID("$FreeBSD: /repoman/r/ncvs/src/sys/net/bridgestp.c,v 1.25 2006/11/03 03
 #define	INFO_BETTER	1
 #define	INFO_SAME	0
 #define	INFO_WORSE	-1
+
+#define	BSTP_IFQ_PRIO	6
 
 /*
  * Because BPDU's do not make nicely aligned structures, two different
@@ -375,6 +377,7 @@ bstp_transmit_tcn(struct bstp_state *bs, struct bstp_port *bp)
 		return;
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = sizeof(*eh) + sizeof(bpdu);
+	m->m_pkthdr.pf.prio = BSTP_IFQ_PRIO;
 	m->m_len = m->m_pkthdr.len;
 
 	eh = mtod(m, struct ether_header *);
@@ -526,6 +529,7 @@ bstp_send_bpdu(struct bstp_state *bs, struct bstp_port *bp,
 	}
 	m->m_pkthdr.rcvif = ifp;
 	m->m_len = m->m_pkthdr.len;
+	m->m_pkthdr.pf.prio = BSTP_IFQ_PRIO;
 
 	bp->bp_txcount++;
 	len = m->m_pkthdr.len;
