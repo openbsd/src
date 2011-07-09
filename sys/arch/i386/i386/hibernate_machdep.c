@@ -182,8 +182,7 @@ hibernate_enter_resume_mapping(vaddr_t va, paddr_t pa, int hint)
 }
 
 /*
- * Enter a 4MB PDE mapping for the supplied VA/PA
- * into the resume-time pmap
+ * Enter a 4MB PDE mapping for the supplied VA/PA into the resume-time pmap
  */
 void
 hibernate_enter_resume_4m_pde(vaddr_t va, paddr_t pa)
@@ -196,10 +195,7 @@ hibernate_enter_resume_4m_pde(vaddr_t va, paddr_t pa)
 }
 
 /*
- * Enter a 4KB PTE mapping for the supplied VA/PA
- * into the resume-time pmap. This should only be
- * used to map the special pages and tramps below
- * 1MB phys
+ * Enter a 4KB PTE mapping for the supplied VA/PA into the resume-time pmap.
  */
 void
 hibernate_enter_resume_4k_pte(vaddr_t va, paddr_t pa)
@@ -212,10 +208,7 @@ hibernate_enter_resume_4k_pte(vaddr_t va, paddr_t pa)
 }
 
 /*
- * Enter a 4KB PDE mapping for the supplied VA
- * into the resume-time pmap. This should only be
- * used to map the special pages and tramps below
- * 1MB phys
+ * Enter a 4KB PDE mapping for the supplied VA into the resume-time pmap.
  */
 void
 hibernate_enter_resume_4k_pde(vaddr_t va)
@@ -231,7 +224,7 @@ hibernate_enter_resume_4k_pde(vaddr_t va)
  * Create the resume-time page table. This table maps the image(pig) area,
  * the kernel text area, and various utility pages located in low memory for
  * use during resume, since we cannot overwrite the resuming kernel's 
- * page table and expect things to work properly.
+ * page table during inflate and expect things to work properly.
  */
 void
 hibernate_populate_resume_pt(paddr_t image_start, paddr_t image_end)
@@ -287,44 +280,190 @@ hibernate_populate_resume_pt(paddr_t image_start, paddr_t image_end)
 		hibernate_enter_resume_mapping(page, pa, 1);
 	}
 }
-	
+
+/*
+ * hibernate_write_image
+ *
+ * Write a compressed version of this machine's memory to disk, at the
+ * precalculated swap offset:
+ *
+ * end of swap - signature block size - chunk table size - memory size
+ *
+ * The function begins by mapping various pages into the suspending
+ * kernel's pmap, then loops through each phys mem range, cutting each
+ * one into 4MB chunks. These chunks are then compressed individually
+ * and written out to disk, in phys mem order. Some chunks might compress
+ * more than others, and for this reason, each chunk's size is recorded
+ * in the chunk table, which is written to disk after the image has
+ * properly been compressed and written.
+ *
+ * When this function is called, the machine is nearly suspended - most
+ * devices are quiesced/suspended, interrupts are off, and cold has
+ * been set. This means that there can be no side effects once the
+ * write has started, and the write function itself can also have no
+ * side effects.
 int
 hibernate_write_image()
 {
 	union hibernate_info hiber_info;
-	int i, j;
-	paddr_t range_base, range_end, addr;
+	paddr_t range_base, range_end, inaddr, temp_inaddr;
+	vaddr_t zlib_range;
 	daddr_t blkctr;
+	int i;
+	size_t nblocks, out_remaining, used, offset;
+	struct hibernate_disk_chunk *chunks;
 
 	/* Get current running machine's hibernate info */
+	bzero(&hiber_info, sizeof(hiber_info));
 	if (get_hibernate_info(&hiber_info))
 		return (1);
 
-	pmap_kenter_pa(HIBERNATE_TEMP_PAGE, HIBERNATE_TEMP_PAGE, VM_PROT_ALL);	
-	pmap_kenter_pa(HIBERNATE_ALLOC_PAGE, HIBERNATE_ALLOC_PAGE, VM_PROT_ALL);
+	zlib_range = HIBERNATE_ZLIB_START;
+
+	/* Map utility pages */
+	pmap_kenter_pa(HIBERNATE_ALLOC_PAGE, HIBERNATE_ALLOC_PAGE,
+		VM_PROT_ALL);
 	pmap_kenter_pa(HIBERNATE_IO_PAGE, HIBERNATE_IO_PAGE, VM_PROT_ALL);
+	pmap_kenter_pa(HIBERNATE_TEMP_PAGE, HIBERNATE_TEMP_PAGE,
+		VM_PROT_ALL);
+	pmap_kenter_pa(HIBERNATE_ZLIB_SCRATCH, HIBERNATE_ZLIB_SCRATCH, VM_PROT_ALL);
+	
+	/* Map the zlib allocation ranges */
+	for(zlib_range = HIBERNATE_ZLIB_START; zlib < HIBERNATE_ZLIB_END;
+		zlib_range += PAGE_SIZE) {
+		pmap_kenter_pa((vaddr_t)(zlib_range+i),
+			(paddr_t)(zlib_range+i),
+			VM_PROT_ALL);
+	}
+
+	/* Identity map the chunktable */
+	for(i=0; i < HIBERNATE_CHUNK_TABLE_SIZE; i += PAGE_SIZE) {
+		pmap_kenter_pa((vaddr_t)(HIBERNATE_CHUNK_TABLE+i),
+			(paddr_t)(HIBERNATE_CHUNK_TABLE+i),
+			VM_PROT_ALL);
+	}
+
+	pmap_activate(curproc);
 
 	blkctr = hiber_info.image_offset;
+	hiber_info.chunk_ctr = 0;
+	offset = 0;
+	chunks = (struct hibernate_disk_chunk *)HIBERNATE_CHUNK_TABLE;
 
+	/* Calculate the chunk regions */
 	for (i=0; i < hiber_info.nranges; i++) {
-		range_base = hiber_info.ranges[i].base;
-		range_end = hiber_info.ranges[i].end;
+                range_base = hiber_info.ranges[i].base;
+                range_end = hiber_info.ranges[i].end;
 
-		for (j=0; j < (range_end - range_base);
-		    blkctr += (NBPG/512), j += NBPG) {
-			addr = range_base + j;
-			pmap_kenter_pa(HIBERNATE_TEMP_PAGE, addr,
-				VM_PROT_ALL);
-			bcopy((caddr_t)HIBERNATE_TEMP_PAGE,
-				(caddr_t)HIBERNATE_IO_PAGE,
-				NBPG);
-			hiber_info.io_func(hiber_info.device, blkctr,
-				(vaddr_t)HIBERNATE_IO_PAGE, NBPG, 1,
-				(void *)HIBERNATE_ALLOC_PAGE);
+		inaddr = range_base;
+
+		while (inaddr < range_end) {
+			chunks[hiber_info.chunk_ctr].base = inaddr;
+			if (inaddr + HIBERNATE_CHUNK_SIZE < range_end)
+				chunks[hiber_info.chunk_ctr].end = inaddr +
+					HIBERNATE_CHUNK_SIZE;
+			else
+				chunks[hiber_info.chunk_ctr].end = range_end;
+
+			inaddr += HIBERNATE_CHUNK_SIZE;
+			hiber_info.chunk_ctr ++;
 		}
+	} 
+
+	/* Compress and write the chunks in the chunktable */
+	for (i=0; i < hiber_info.chunk_ctr; i++) {
+		range_base = chunks[i].base;
+		range_end = chunks[i].end;
+
+		chunks[i].offset = blkctr; 
+
+		/* Reset zlib for deflate */
+		if (hibernate_zlib_reset(1) != Z_OK)
+			return (1);
+
+		inaddr = range_base;
+
+		/*
+		 * For each range, loop through its phys mem region
+		 * and write out 4MB chunks (the last chunk might be
+		 * smaller than 4MB).
+		 */
+		while (inaddr < range_end) {
+			out_remaining = PAGE_SIZE;
+			while (out_remaining > 0 && inaddr < range_end) {
+				pmap_kenter_pa(HIBERNATE_TEMP_PAGE2,
+					inaddr & PMAP_PA_MASK, VM_PROT_ALL);
+				pmap_activate(curproc);
+				bcopy((caddr_t)HIBERNATE_TEMP_PAGE2,
+					(caddr_t)HIBERNATE_TEMP_PAGE, PAGE_SIZE);
+
+				/* Adjust for non page-sized regions */
+				temp_inaddr = (inaddr & PAGE_MASK) +
+					HIBERNATE_TEMP_PAGE;
+
+				/* Deflate from temp_inaddr to IO page */
+				inaddr += hibernate_deflate(temp_inaddr,
+					&out_remaining);
+			}
+
+			if (out_remaining == 0) {
+				/* Filled up the page */
+				nblocks = PAGE_SIZE / hiber_info.secsize;
+
+				if(hiber_info.io_func(hiber_info.device, blkctr,
+					(vaddr_t)HIBERNATE_IO_PAGE, PAGE_SIZE,
+					1, (void *)HIBERNATE_ALLOC_PAGE))
+						return (1);
+
+				blkctr += nblocks;
+			}
+			
+		}
+
+		if (inaddr != range_end)
+			return (1);
+
+		/*
+		 * End of range. Round up to next secsize bytes
+		 * after finishing compress
+		 */
+		if (out_remaining == 0)
+			out_remaining = PAGE_SIZE;
+
+		/* Finish compress */
+		hibernate_state->hib_stream.avail_in = 0;
+		hibernate_state->hib_stream.avail_out = out_remaining;
+		hibernate_state->hib_stream.next_in = (caddr_t)inaddr;
+		hibernate_state->hib_stream.next_out = 
+			(caddr_t)HIBERNATE_IO_PAGE + (PAGE_SIZE - out_remaining);
+
+		if (deflate(&hibernate_state->hib_stream, Z_FINISH) !=
+			Z_STREAM_END)
+				return (1);
+
+		out_remaining = hibernate_state->hib_stream.avail_out;
+
+		used = PAGE_SIZE - out_remaining;
+		nblocks = used / hiber_info.secsize;
+
+		/* Round up to next block if needed */
+		if (used % hiber_info.secsize != 0)
+			nblocks ++;
+
+		/* Write final block(s) for this chunk */
+		if( hiber_info.io_func(hiber_info.device, blkctr,
+			(vaddr_t)HIBERNATE_IO_PAGE, nblocks*hiber_info.secsize,
+			1, (void *)HIBERNATE_ALLOC_PAGE))
+				return (1);
+
+		blkctr += nblocks;
+
+		offset = blkctr;
+		chunks[i].compressed_size=
+			(offset-chunks[i].offset)*hiber_info.secsize;
 	}
-	
-	/* Image write complete, write the signature and return */	
+
+	/* Image write complete, write the signature+chunk table and return */
 	return hibernate_write_signature(&hiber_info);
 }
 
