@@ -2616,6 +2616,7 @@
 ./usr/sbin/faithd
 ./usr/sbin/fs
 ./usr/sbin/ftp-proxy
+./usr/sbin/fw_update
 ./usr/sbin/group
 ./usr/sbin/groupadd
 ./usr/sbin/groupdel

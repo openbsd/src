@@ -1911,15 +1911,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_regdomain.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_rssadapt.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_var.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/netatalk
-./usr/libdata/perl5/site_perl/arm-openbsd/netatalk/aarp.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/netatalk/at.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/netatalk/at_extern.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/netatalk/at_var.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/netatalk/ddp.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/netatalk/ddp_var.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/netatalk/endian.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/netatalk/phase2.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/netbt
 ./usr/libdata/perl5/site_perl/arm-openbsd/netbt/bluetooth.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/netbt/bt_var.ph

@@ -1168,15 +1168,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/net80211/ieee80211_regdomain.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net80211/ieee80211_rssadapt.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net80211/ieee80211_var.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netatalk
-./usr/libdata/perl5/site_perl/vax-openbsd/netatalk/aarp.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netatalk/at.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netatalk/at_extern.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netatalk/at_var.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netatalk/ddp.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netatalk/ddp_var.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netatalk/endian.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netatalk/phase2.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netbt
 ./usr/libdata/perl5/site_perl/vax-openbsd/netbt/bluetooth.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netbt/bt_var.ph

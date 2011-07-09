@@ -1127,15 +1127,6 @@
 ./usr/include/net80211/ieee80211_regdomain.h
 ./usr/include/net80211/ieee80211_rssadapt.h
 ./usr/include/net80211/ieee80211_var.h
-./usr/include/netatalk
-./usr/include/netatalk/aarp.h
-./usr/include/netatalk/at.h
-./usr/include/netatalk/at_extern.h
-./usr/include/netatalk/at_var.h
-./usr/include/netatalk/ddp.h
-./usr/include/netatalk/ddp_var.h
-./usr/include/netatalk/endian.h
-./usr/include/netatalk/phase2.h
 ./usr/include/netbt
 ./usr/include/netbt/bluetooth.h
 ./usr/include/netbt/bt_var.h

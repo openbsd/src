@@ -1317,15 +1317,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net80211/ieee80211_regdomain.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net80211/ieee80211_rssadapt.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net80211/ieee80211_var.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netatalk
-./usr/libdata/perl5/site_perl/sparc-openbsd/netatalk/aarp.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netatalk/at.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netatalk/at_extern.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netatalk/at_var.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netatalk/ddp.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netatalk/ddp_var.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netatalk/endian.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netatalk/phase2.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netbt
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netbt/bluetooth.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netbt/bt_var.ph

@@ -1894,15 +1894,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net80211/ieee80211_regdomain.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net80211/ieee80211_rssadapt.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net80211/ieee80211_var.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/netatalk
-./usr/libdata/perl5/site_perl/m68k-openbsd/netatalk/aarp.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/netatalk/at.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/netatalk/at_extern.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/netatalk/at_var.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/netatalk/ddp.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/netatalk/ddp_var.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/netatalk/endian.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/netatalk/phase2.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netbt
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netbt/bluetooth.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netbt/bt_var.ph
