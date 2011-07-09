@@ -52,7 +52,7 @@ void	hibernate_unpack_image(void);
 void    hibernate_enter_resume_4k_pte(vaddr_t, paddr_t);
 void    hibernate_enter_resume_4k_pde(vaddr_t);
 void    hibernate_enter_resume_4m_pde(vaddr_t, paddr_t);
-void	hibernate_populate_resume_pt(paddr_t *, paddr_t *);
+void	hibernate_populate_resume_pt(paddr_t, paddr_t);
 int	get_hibernate_info_md(union hibernate_info *);
 
 union 	hibernate_info *global_hiber_info;
@@ -234,27 +234,31 @@ hibernate_enter_resume_4k_pde(vaddr_t va)
  * page table and expect things to work properly.
  */
 void
-hibernate_populate_resume_pt(paddr_t *image_start, paddr_t *image_end)
+hibernate_populate_resume_pt(paddr_t image_start, paddr_t image_end)
 {
-	int phys_page_number;
-	paddr_t pa, pig_start, pig_end;
-	psize_t pig_sz;
+	int phys_page_number, i;
+	paddr_t pa;
 	vaddr_t kern_start_4m_va, kern_end_4m_va, page;
 
-	/* Get the pig (largest contiguous physical range) from uvm */
-	if (uvm_pmr_alloc_pig(&pig_start, pig_sz) == ENOMEM)
-		panic("Insufficient memory for resume");
-
-	*image_start = pig_start;
-	*image_end = pig_end;
-
 	bzero((caddr_t)HIBERNATE_PT_PAGE, PAGE_SIZE);
+	bzero((caddr_t)HIBERNATE_PD_PAGE, PAGE_SIZE);
 
 	/*
-	 * Identity map first 4M physical for tramps and special utility 
-	 * pages
+	 * Identity map first 640KB physical for tramps and special utility 
+	 * pages using 4KB mappings
 	 */
-	hibernate_enter_resume_mapping(0, 0, 1);
+	for (i=0; i < 160; i ++) {
+		hibernate_enter_resume_mapping(i*PAGE_SIZE, i*PAGE_SIZE, 0);
+	}
+
+	/*
+	 * Identity map chunk table
+	 */
+	for (i=0; i < HIBERNATE_CHUNK_TABLE_SIZE/PAGE_SIZE; i ++) {
+		hibernate_enter_resume_mapping(
+			(vaddr_t)HIBERNATE_CHUNK_TABLE_START + (i*PAGE_SIZE),
+			HIBERNATE_CHUNK_TABLE_START + (i*PAGE_SIZE), 0);
+	}
 	
 	/*
 	 * Map current kernel VA range using 4M pages
@@ -273,10 +277,10 @@ hibernate_populate_resume_pt(paddr_t *image_start, paddr_t *image_end)
 	/*
 	 * Identity map the image (pig) area
 	 */
-	phys_page_number = pig_start / NBPD;
-	pig_start &= ~(PAGE_MASK_4M);
-	pig_end &= ~(PAGE_MASK_4M);
-	for (page = pig_start; page <= pig_end ;
+	phys_page_number = image_start / NBPD;
+	image_start &= ~(PAGE_MASK_4M);
+	image_end &= ~(PAGE_MASK_4M);
+	for (page = image_start; page <= image_end ;
 	    page += NBPD, phys_page_number++) {
 
 		pa = (paddr_t)(phys_page_number * NBPD);
@@ -329,7 +333,7 @@ hibernate_read_image()
 {
 	union hibernate_info hiber_info;
 	int i, j;
-	paddr_t range_base, range_end, addr, image_start, image_end;
+	paddr_t range_base, range_end, addr;
 	daddr_t blkctr;
 
 	/* Get current running machine's hibernate info */
@@ -340,9 +344,6 @@ hibernate_read_image()
 	pmap_kenter_pa(HIBERNATE_ALLOC_PAGE, HIBERNATE_ALLOC_PAGE, VM_PROT_ALL);
 
 	blkctr = hiber_info.image_offset;
-
-	/* Prepare the resume-time pagetable */
-	hibernate_populate_resume_pt(&image_start, &image_end);
 
 	for (i=0; i < hiber_info.nranges; i++) {
 		range_base = hiber_info.ranges[i].base;
@@ -408,7 +409,7 @@ hibernate_resume()
 	union hibernate_info hiber_info, disk_hiber_info;
 	u_int8_t *io_page;
 	int s;
-	paddr_t image_start, image_end;
+	paddr_t image_start;
 
 	/* Get current running machine's hibernate info */
 	if (get_hibernate_info(&hiber_info))
@@ -450,13 +451,6 @@ hibernate_resume()
 	pmap_kenter_pa((vaddr_t)HIBERNATE_PT_PAGE,
 		(paddr_t)HIBERNATE_PT_PAGE,
 		VM_PROT_ALL);
-
-	/*
-	 * Create the resume-time page table (ahead of when we actually
-	 * need it)
-	 */
-	hibernate_populate_resume_pt(&image_start, &image_end);
-	
 
 	/* 
 	 * We can't access any of this function's local variables (via 
