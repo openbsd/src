@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.645 2011/07/09 03:14:53 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.646 2011/07/09 17:53:58 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1650,7 +1650,8 @@ update_firmwares() {
 	[[ $MODE == upgrade ]] && _get=Update
 	ask_yn "$_get non-free firmwares on first boot?" no
 	[[ $resp == y ]] && \
-		echo '/usr/sbin/fw_update -v' >> /mnt/etc/rc.firsttime
+		echo "echo 'updating firmwares'; /usr/sbin/fw_update -v" \
+			>> /mnt/etc/rc.firsttime
 }
 
 # Create a skeletal but useful /etc/fstab from /tmp/fstab by stripping all
