@@ -2353,6 +2353,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/term.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/termcap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/termios.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/tgmath.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/time.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ttyent.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/tzfile.ph

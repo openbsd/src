@@ -1624,6 +1624,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/term.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/termcap.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/termios.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/tgmath.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/time.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ttyent.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/tzfile.ph

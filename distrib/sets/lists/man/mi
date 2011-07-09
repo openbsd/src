@@ -807,12 +807,7 @@
 ./usr/share/man/man2
 ./usr/share/man/man3
 ./usr/share/man/man3/loongson
-./usr/share/man/man3/loongson/get_fpc_csr.3
-./usr/share/man/man3/loongson/set_fpc_csr.3
 ./usr/share/man/man3/sgi
-./usr/share/man/man3/sgi/get_fpc_csr.3
-./usr/share/man/man3/sgi/set_fpc_csr.3
-./usr/share/man/man3/timingsafe_bcmp.3
 ./usr/share/man/man3p
 ./usr/share/man/man3p/AnyDBM_File.3p
 ./usr/share/man/man3p/App::Cpan.3p
@@ -2626,7 +2621,6 @@
 ./usr/share/man/man8/chown.8
 ./usr/share/man/man8/chroot.8
 ./usr/share/man/man8/clri.8
-./usr/share/man/man8/compat_aout.8
 ./usr/share/man/man8/compat_linux.8
 ./usr/share/man/man8/comsat.8
 ./usr/share/man/man8/config.8

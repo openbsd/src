@@ -61,7 +61,7 @@
 ./usr/lib/gcc-lib/arm-unknown-openbsd4.9/3.3.5/collect2
 ./usr/lib/gcc-lib/arm-unknown-openbsd4.9/3.3.5/specs
 ./usr/lib/libasn1.so.18.0
-./usr/lib/libc.so.58.4
+./usr/lib/libc.so.60.0
 ./usr/lib/libcom_err.so.18.0
 ./usr/lib/libcrypto.so.19.0
 ./usr/lib/libcurses.so.12.0
@@ -75,7 +75,7 @@
 ./usr/lib/libkafs.so.18.0
 ./usr/lib/libkrb5.so.18.0
 ./usr/lib/libkvm.so.11.0
-./usr/lib/libm.so.5.4
+./usr/lib/libm.so.7.0
 ./usr/lib/libmenu.so.5.0
 ./usr/lib/libmenuw.so.5.0
 ./usr/lib/libmilter.so.2.1
@@ -2411,6 +2411,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/term.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/termcap.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/termios.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/tgmath.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/time.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ttyent.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/tzfile.ph

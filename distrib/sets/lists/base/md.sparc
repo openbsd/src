@@ -32,7 +32,7 @@
 ./usr/lib/gcc-lib/sparc-unknown-openbsd4.9/4.2.1/collect2
 ./usr/lib/gcc-lib/sparc-unknown-openbsd4.9/4.2.1/specs
 ./usr/lib/libasn1.so.18.0
-./usr/lib/libc.so.58.4
+./usr/lib/libc.so.60.0
 ./usr/lib/libcom_err.so.18.0
 ./usr/lib/libcrypto.so.19.0
 ./usr/lib/libcurses.so.12.0
@@ -46,7 +46,7 @@
 ./usr/lib/libkafs.so.18.0
 ./usr/lib/libkrb5.so.18.0
 ./usr/lib/libkvm.so.11.0
-./usr/lib/libm.so.5.4
+./usr/lib/libm.so.7.0
 ./usr/lib/libmenu.so.5.0
 ./usr/lib/libmenuw.so.5.0
 ./usr/lib/libmilter.so.2.1
@@ -1241,8 +1241,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/link_elf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/login_cap.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/objc/objc-decls.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/objc/runtime.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/machine
 ./usr/libdata/perl5/site_perl/sparc-openbsd/malloc.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/math.ph
@@ -1447,8 +1445,10 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/objc/encoding.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/objc/hash.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/objc/objc-api.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/objc/objc-decls.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/objc/objc-list.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/objc/objc.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/objc/runtime.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/objc/sarray.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/objc/thr.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/objc/typedstream.ph
@@ -1834,6 +1834,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/term.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/termcap.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/termios.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/tgmath.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/time.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ttyent.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/tzfile.ph

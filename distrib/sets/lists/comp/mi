@@ -1598,6 +1598,7 @@
 ./usr/include/term.h
 ./usr/include/termcap.h
 ./usr/include/termios.h
+./usr/include/tgmath.h
 ./usr/include/time.h
 ./usr/include/ttyent.h
 ./usr/include/tzfile.h
@@ -5003,6 +5004,8 @@
 ./usr/share/man/man3/longjmperror.3
 ./usr/share/man/man3/longname.3
 ./usr/share/man/man3/loongson/cacheflush.3
+./usr/share/man/man3/loongson/get_fpc_csr.3
+./usr/share/man/man3/loongson/set_fpc_csr.3
 ./usr/share/man/man3/lrand48.3
 ./usr/share/man/man3/lrint.3
 ./usr/share/man/man3/lrintf.3
@@ -5081,6 +5084,7 @@
 ./usr/share/man/man3/mktime.3
 ./usr/share/man/man3/modf.3
 ./usr/share/man/man3/modff.3
+./usr/share/man/man3/modfl.3
 ./usr/share/man/man3/moncontrol.3
 ./usr/share/man/man3/monstartup.3
 ./usr/share/man/man3/mouse_trafo.3
@@ -5668,6 +5672,8 @@
 ./usr/share/man/man3/setvbuf.3
 ./usr/share/man/man3/sevenbit.3
 ./usr/share/man/man3/sgi/cacheflush.3
+./usr/share/man/man3/sgi/get_fpc_csr.3
+./usr/share/man/man3/sgi/set_fpc_csr.3
 ./usr/share/man/man3/sha1.3
 ./usr/share/man/man3/sha2.3
 ./usr/share/man/man3/show_panel.3
@@ -5911,6 +5917,7 @@
 ./usr/share/man/man3/timersub.3
 ./usr/share/man/man3/times.3
 ./usr/share/man/man3/timezone.3
+./usr/share/man/man3/timingsafe_bcmp.3
 ./usr/share/man/man3/tmpfile.3
 ./usr/share/man/man3/tmpnam.3
 ./usr/share/man/man3/toascii.3
