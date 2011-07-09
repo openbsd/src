@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.114 2011/07/09 00:10:51 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.115 2011/07/09 00:18:06 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -274,7 +274,7 @@
 #endif
 156	OBSOL		ogetdirentries
 157	OBSOL		statfs25
-158	OBSOL		fstatfs
+158	OBSOL		fstatfs25
 159	UNIMPL
 160	UNIMPL
 161	STD		{ int sys_getfh(const char *fname, fhandle_t *fhp); }
