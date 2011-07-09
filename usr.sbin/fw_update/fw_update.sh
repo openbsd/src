@@ -14,10 +14,10 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-[ 0 = $(id -u) ] || { echo "${0##*/} must be run as root"; exit 1; }
+[ 0 = $(id -u) ] || { echo "${0##*/} must be run as root" >&2; exit 1; }
 
 usage() {
-	echo "usage: ${0##*/} [-v]"
+	echo "usage: ${0##*/} [-v]" >&2
 	exit 1
 }
 
