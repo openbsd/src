@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.642 2011/07/06 23:38:41 halex Exp $
+#	$OpenBSD: install.sub,v 1.643 2011/07/09 01:20:37 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1638,6 +1638,14 @@ run_sysmerge() {
 	fi
 }
 
+update_firmwares() {
+	local _get=Install
+	[[ $MODE == upgrade ]] && _get=Update
+	ask_yn "$_get non-free firmwares on first boot?" no
+	[[ $resp == y ]] && \
+		echo '/usr/sbin/fw_update -v' >> /mnt/etc/rc.firsttime
+}
+
 # Create a skeletal but useful /etc/fstab from /tmp/fstab by stripping all
 # comment lines and dropping all filesystems which
 #
@@ -1972,6 +1980,8 @@ finish_up() {
 	fi
 
 	[[ "$MODE" == upgrade ]] && run_sysmerge
+
+	update_firmwares
 
 	# Pat on the back.
 	cat <<__EOT
