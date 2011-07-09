@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 2011/07/09 01:16:57 halex Exp $
+#	$OpenBSD: Makefile,v 1.2 2011/07/09 04:54:19 halex Exp $
 
-#MAN=	fw_update.1
+MAN=	fw_update.1
 
 beforeinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
