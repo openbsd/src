@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.71 2011/07/08 19:19:20 tedu Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.72 2011/07/09 00:10:52 deraadt Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -51,6 +51,7 @@
 #include <sys/mount.h>
 #include <sys/ptrace.h>
 #include <sys/resource.h>
+#include <sys/swap.h>
 #include <sys/resourcevar.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
@@ -1465,4 +1466,18 @@ linux_sys_setdomainname(struct proc *p, void *v, register_t *retval)
 	mib[0] = KERN_DOMAINNAME;
 	return (kern_sysctl(mib, 1, NULL, NULL, SCARG(uap, name),
 	    SCARG(uap, len), p));
+}
+
+int
+linux_sys_swapon(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_swapctl_args ua;
+	struct linux_sys_swapon_args /* {
+		syscallarg(const char *) name;
+	} */ *uap = v;
+
+	SCARG(&ua, cmd) = SWAP_ON;
+	SCARG(&ua, arg) = (void *)SCARG(uap, name);
+	SCARG(&ua, misc) = 0;	/* priority */
+	return (sys_swapctl(p, &ua, retval));
 }

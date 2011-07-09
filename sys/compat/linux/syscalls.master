@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.59 2011/07/08 19:19:20 tedu Exp $
+	$OpenBSD: syscalls.master,v 1.60 2011/07/09 00:10:52 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -159,7 +159,7 @@
 85	STD		{ int linux_sys_readlink(char *name, char *buf, \
 			    int count); }
 86	STD		{ int linux_sys_uselib(char *path); }
-87	NOARGS		{ int compat_25_sys_swapon(char *name); }
+87	STD		{ int linux_sys_swapon(char *name); }
 88	NOARGS		{ int sys_reboot(int opt); }
 89	STD		{ int linux_sys_readdir(int fd, caddr_t dent, \
 			    unsigned int count); }

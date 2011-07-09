@@ -1,4 +1,4 @@
-#	$OpenBSD: files.linux,v 1.15 2011/02/10 11:58:43 pirofti Exp $
+#	$OpenBSD: files.linux,v 1.16 2011/07/09 00:10:52 deraadt Exp $
 #	$NetBSD: files.linux,v 1.4 1996/03/08 04:55:59 mycroft Exp $
 #
 # Config.new file description for machine-independent Linux compat code.
@@ -28,3 +28,4 @@ file	compat/linux/linux_sysent.c		compat_linux
 file	compat/linux/linux_termios.c		compat_linux
 file	compat/linux/linux_time.c		compat_linux
 file	compat/linux/linux_dummy.c		compat_linux
+
