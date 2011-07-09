@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.763 2011/07/08 18:50:51 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.764 2011/07/09 17:42:19 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4561,6 +4561,11 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 		case IPPROTO_ICMP: {
 			struct icmp		iih;
 
+			if (pd2.af != AF_INET) {
+				REASON_SET(reason, PFRES_NORM);
+				return (PF_DROP);
+			}
+
 			if (!pf_pull_hdr(m, off2, &iih, ICMP_MINLEN,
 			    NULL, reason, pd2.af)) {
 				DPFPRINTF(LOG_NOTICE,
@@ -4621,6 +4626,11 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 #ifdef INET6
 		case IPPROTO_ICMPV6: {
 			struct icmp6_hdr	iih;
+
+			if (pd2.af != AF_INET6) {
+				REASON_SET(reason, PFRES_NORM);
+				return (PF_DROP);
+			}
 
 			if (!pf_pull_hdr(m, off2, &iih,
 			    sizeof(struct icmp6_hdr), NULL, reason, pd2.af)) {
@@ -5988,8 +5998,9 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0,
 	}
 
 	case IPPROTO_ICMP: {
-		if (af == AF_INET6) {
+		if (af != AF_INET) {
 			action = PF_DROP;
+			REASON_SET(&reason, PFRES_NORM);
 			DPFPRINTF(LOG_NOTICE,
 			    "dropping IPv6 packet with ICMPv4 payload");
 			goto done;
@@ -6010,8 +6021,9 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0,
 	}
 
 	case IPPROTO_ICMPV6: {
-		if (af == AF_INET) {
+		if (af != AF_INET6) {
 			action = PF_DROP;
+			REASON_SET(&reason, PFRES_NORM);
 			DPFPRINTF(LOG_NOTICE,
 			    "dropping IPv4 packet with ICMPv6 payload");
 			goto done;
