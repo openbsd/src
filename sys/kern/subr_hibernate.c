@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.9 2011/07/09 00:27:31 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.10 2011/07/09 00:55:00 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -610,14 +610,90 @@ void
 }
 
 /*
- * hibernate_zlib_free
+ * hibernate_inflate
  *
- * Free the memory pointed to by addr in the hiballoc area presently in
- * use
- * 
+ * Inflate size bytes from src into dest, skipping any pages in
+ * [src..dest] that are special (see hibernate_inflate_skip)
+ *
+ * For each page of output data, we map HIBERNATE_TEMP_PAGE
+ * to the current output page, and tell inflate() to inflate
+ * its data there, resulting in the inflated data being placed
+ * at the proper paddr.
+ *
+ * This function executes while using the resume-time stack
+ * and pmap, and therefore cannot use ddb/printf/etc. Doing so
+ * will likely hang or reset the machine.
+ *
  */
 void
-hibernate_zlib_free(void *unused, void *addr)
+hibernate_inflate(paddr_t dest, paddr_t src, size_t size)
 {
-	hib_free(&hibernate_state->hiballoc_arena, addr);
+	int i;
+
+	hibernate_state->hib_stream.avail_in = size;
+	hibernate_state->hib_stream.next_in = (char *)src;
+
+	do {
+		/* Flush cache and TLB */
+		hibernate_flush();
+
+		/*
+		 * Is this a special page? If yes, redirect the
+		 * inflate output to a scratch page (eg, discard it)
+		 */
+		if (hibernate_inflate_skip(dest))
+			hibernate_enter_resume_mapping(HIBERNATE_TEMP_PAGE,
+				HIBERNATE_TEMP_PAGE, 0);
+		else
+			hibernate_enter_resume_mapping(HIBERNATE_TEMP_PAGE,
+				dest, 0);
+
+		/* Set up the stream for inflate */
+		hibernate_state->hib_stream.avail_out = PAGE_SIZE;
+		hibernate_state->hib_stream.next_out =
+			(char *)HIBERNATE_TEMP_PAGE;
+
+		/* Process next block of data */
+		i = inflate(&hibernate_state->hib_stream, Z_PARTIAL_FLUSH);
+		if (i != Z_OK && i != Z_STREAM_END) {
+			/*
+			 * XXX - this will likely reboot/hang most machines,
+			 *       but there's not much else we can do here.
+			 */
+			panic("inflate error");
+		}
+
+		dest += PAGE_SIZE - hibernate_state->hib_stream.avail_out;
+	} while (i != Z_STREAM_END);
+}
+
+/*
+ * hibernate_deflate
+ *
+ * deflate from src into the I/O page, up to 'remaining' bytes
+ *
+ * Returns number of input bytes consumed, and may reset
+ * the 'remaining' parameter if not all the output space was consumed
+ * (this information is needed to know how much to write to disk
+ *
+ */
+size_t
+hibernate_deflate(paddr_t src, size_t *remaining)
+{
+	/* Set up the stream for deflate */
+	hibernate_state->hib_stream.avail_in = PAGE_SIZE -
+		(src & PAGE_MASK);
+	hibernate_state->hib_stream.avail_out = *remaining;
+	hibernate_state->hib_stream.next_in = (caddr_t)src;
+	hibernate_state->hib_stream.next_out = (caddr_t)HIBERNATE_IO_PAGE +
+		(PAGE_SIZE - *remaining);
+
+	/* Process next block of data */
+	if (deflate(&hibernate_state->hib_stream, Z_PARTIAL_FLUSH) != Z_OK)
+		panic("hibernate zlib deflate error\n");
+
+	/* Update pointers and return number of bytes consumed */
+	*remaining = hibernate_state->hib_stream.avail_out;
+	return (PAGE_SIZE - (src & PAGE_MASK)) -
+		hibernate_state->hib_stream.avail_in;
 }

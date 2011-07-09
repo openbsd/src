@@ -49,11 +49,14 @@
 int	hibernate_write_image(void);
 int	hibernate_read_image(void);
 void	hibernate_unpack_image(void);
-void	hibernate_enter_resume_pte(vaddr_t, paddr_t);
+void    hibernate_enter_resume_4k_pte(vaddr_t, paddr_t);
+void    hibernate_enter_resume_4k_pde(vaddr_t);
+void    hibernate_enter_resume_4m_pde(vaddr_t, paddr_t);
 void	hibernate_populate_resume_pt(paddr_t *, paddr_t *);
 int	get_hibernate_info_md(union hibernate_info *);
 int	hibernate_write_signature(void);
 int	hibernate_clear_signature(void);
+int	hibernate_inflate_skip(paddr_t);
 
 union 	hibernate_info *global_hiber_info;
 paddr_t global_image_start;
@@ -61,6 +64,7 @@ paddr_t global_image_start;
 extern	void hibernate_resume_machine(void);
 extern	void hibernate_activate_resume_pt(void);
 extern	void hibernate_switch_stack(void);
+extern	void hibernate_flush(void);
 extern	char *disk_readlabel(struct disklabel *, dev_t, char *, size_t);
 extern	caddr_t start, end;
 extern	int ndumpmem;
@@ -163,17 +167,67 @@ get_hibernate_info_md(union hibernate_info *hiber_info)
 }
 
 /*
- * Enter a 4MB PTE mapping for the supplied VA/PA
- * into the resume-time page table.
+ * Enter a mapping for va->pa in the resume pagetable, using
+ * the specified size hint.
+ *
+ * hint : 0 if a 4KB mapping is desired
+ *        1 if a 4MB mapping is desired
  */
 void
-hibernate_enter_resume_pte(vaddr_t va, paddr_t pa)
+hibernate_enter_resume_mapping(vaddr_t va, paddr_t pa, int hint)
+{
+	if (hint)
+		return hibernate_enter_resume_4m_pde(va, pa);
+	else {
+		hibernate_enter_resume_4k_pde(va);
+		return hibernate_enter_resume_4k_pte(va, pa);			
+	}		
+}
+
+/*
+ * Enter a 4MB PDE mapping for the supplied VA/PA
+ * into the resume-time pmap
+ */
+void
+hibernate_enter_resume_4m_pde(vaddr_t va, paddr_t pa)
+{
+	pt_entry_t *pde, npde;
+
+	pde = s4pde_4m(va);
+	npde = (pa & PMAP_PA_MASK_4M) | PG_RW | PG_V | PG_u | PG_M | PG_PS;
+	*pde = npde;
+}
+
+/*
+ * Enter a 4KB PTE mapping for the supplied VA/PA
+ * into the resume-time pmap. This should only be
+ * used to map the special pages and tramps below
+ * 1MB phys
+ */
+void
+hibernate_enter_resume_4k_pte(vaddr_t va, paddr_t pa)
 {
 	pt_entry_t *pte, npte;
 
-	pte = s4pde_4m(va);
-	npte = (pa & PMAP_PA_MASK_4M) | PG_RW | PG_V | PG_U | PG_M | PG_PS;
+	pte = s4pte_4k(va);
+	npte = (pa & PMAP_PA_MASK) | PG_RW | PG_V | PG_u | PG_M;
 	*pte = npte;
+}
+
+/*
+ * Enter a 4KB PDE mapping for the supplied VA
+ * into the resume-time pmap. This should only be
+ * used to map the special pages and tramps below
+ * 1MB phys
+ */
+void
+hibernate_enter_resume_4k_pde(vaddr_t va)
+{
+	pt_entry_t *pde, npde;
+
+	pde = s4pde_4k(va);
+	npde = (HIBERNATE_PT_PAGE & PMAP_PA_MASK) | PG_RW | PG_V | PG_u | PG_M;
+	*pde = npde;
 }
 
 /*
@@ -203,7 +257,7 @@ hibernate_populate_resume_pt(paddr_t *image_start, paddr_t *image_end)
 	 * Identity map first 4M physical for tramps and special utility 
 	 * pages
 	 */
-	hibernate_enter_resume_pte(0, 0);	
+	hibernate_enter_resume_mapping(0, 0, 1);
 	
 	/*
 	 * Map current kernel VA range using 4M pages
@@ -216,7 +270,7 @@ hibernate_populate_resume_pt(paddr_t *image_start, paddr_t *image_end)
 	    page += NBPD, phys_page_number++) {
 
 		pa = (paddr_t)(phys_page_number * NBPD);
-		hibernate_enter_resume_pte(page, pa);
+		hibernate_enter_resume_mapping(page, pa, 1);
 	}
 
 	/*
@@ -229,7 +283,7 @@ hibernate_populate_resume_pt(paddr_t *image_start, paddr_t *image_end)
 	    page += NBPD, phys_page_number++) {
 
 		pa = (paddr_t)(phys_page_number * NBPD);
-		hibernate_enter_resume_pte(page, pa);
+		hibernate_enter_resume_mapping(page, pa, 1);
 	}
 }
 	
@@ -343,7 +397,7 @@ hibernate_unpack_image()
 		pig_base = base + global_image_start;
 
 		for (j=base; j< (end - base)/NBPD; j++) {
-			hibernate_enter_resume_pte(base, base);
+			hibernate_enter_resume_mapping(base, base, 0);
 			bcopy((caddr_t)pig_base, (caddr_t)base, NBPD);
 		}
 	}
@@ -479,4 +533,34 @@ hibernate_clear_signature()
 
 	return (0);
 }
+
+/*
+ * hibernate_inflate_skip
+ *
+ * During inflate, certain pages that contain our bookkeeping information
+ * (eg, the chunk table, scratch pages, etc) need to be skipped over and
+ * not inflated into.
+ *
+ * Returns 1 if the physical page at dest should be skipped, 0 otherwise
+ */
+int
+hibernate_inflate_skip(paddr_t dest)
+{
+	/* Chunk Table */
+	if (dest >= HIBERNATE_CHUNK_TABLE_START && 
+	    dest <= HIBERNATE_CHUNK_TABLE_END)
+		return (1);
+
+	/* Contiguous utility pages */
+	if (dest >= HIBERNATE_STACK_PAGE &&
+	    dest <= HIBERNATE_CHUNKS_PAGE)
+		return (1);
+
+	/* libz hiballoc arena */
+	if (dest >= HIBERNATE_ZLIB_SCRATCH &&
+	    dest <= HIBERNATE_ZLIB_END)
+		return (1);
+
+	return (0);
+} 
 #endif /* !SMALL_KERNEL */

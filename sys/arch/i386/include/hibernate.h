@@ -19,6 +19,9 @@
 /* i386 hibernate support structures and functions */
 
 int	get_hibernate_info_md(union hibernate_info *);
+void	hibernate_flush(void);
+void	hibernate_enter_resume_mapping(vaddr_t, paddr_t, int);
 int	hibernate_zlib_reset(int);
+int	hibernate_inflate_skip(paddr_t);
 int	hibernate_suspend(void);
 void	hibernate_resume(void);

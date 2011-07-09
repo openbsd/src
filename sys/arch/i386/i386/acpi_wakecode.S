@@ -385,6 +385,11 @@ NENTRY(hibernate_switch_stack)
 	/* On our own stack from here onward */
 	ret
 
+NENTRY(hibernate_flush)
+	wbinvd
+	invlpg  HIBERNATE_TEMP_PAGE
+	ret
+
 	.code16
 	.align 8
 _ACPI_TRMP_OFFSET(tmp_gdt)
