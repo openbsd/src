@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.88 2011/03/15 13:10:31 jsing Exp $	*/
+/*	$OpenBSD: main.c,v 1.89 2011/07/09 00:45:40 henning Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -132,13 +132,8 @@ struct protox ip6protox[] = {
 	{ -1,		NULL,		NULL,		NULL }
 };
 
-struct protox atalkprotox[] = {
-	{ N_DDPCB,	atalkprotopr,	ddp_stats,	"ddp" },
-	{ -1,		NULL,		NULL,		NULL }
-};
-
 struct protox *protoprotox[] = {
-	protox, ip6protox, atalkprotox, NULL
+	protox, ip6protox, NULL
 };
 
 static void printproto(struct protox *, char *, int, u_long);
@@ -204,8 +199,6 @@ main(int argc, char *argv[])
 				af = AF_UNIX;
 			else if (strcmp(optarg, "encap") == 0)
 				af = PF_KEY;
-			else if (strcmp(optarg, "atalk") == 0)
-				af = AF_APPLETALK;
 			else if (strcmp(optarg, "mpls") == 0)
 				af = AF_MPLS;
 			else if (strcmp(optarg, "pflow") == 0)
@@ -429,9 +422,6 @@ main(int argc, char *argv[])
 			printproto(tp, tp->pr_name, AF_INET6, pcbaddr);
 	if ((af == AF_UNIX || af == AF_UNSPEC) && !sflag)
 		unixpr(nl[N_UNIXSW].n_value, pcbaddr);
-	if (af == AF_APPLETALK || af == AF_UNSPEC)
-		for (tp = atalkprotox; tp->pr_name; tp++)
-			printproto(tp, tp->pr_name, af, pcbaddr);
 	exit(0);
 }
 

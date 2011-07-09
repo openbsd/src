@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.217 2011/06/27 12:55:21 camield Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.218 2011/07/09 00:45:40 henning Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: June 27 2011 $
+.Dd $Mdocdate: July 9 2011 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -113,9 +113,8 @@ with different naming schemes, specifying the address family is recommended.
 The address or protocol families currently
 supported are
 .Dq inet ,
-.Dq inet6 ,
 and
-.Dq atalk .
+.Dq inet6 .
 .It Ar address
 Internet version 4 and 6 addresses
 take the form of
@@ -125,16 +124,6 @@ a host name present in the host name database,
 notation (IPv4);
 colon separated (IPv6);
 or CIDR notation.
-.Pp
-AppleTalk (LLAP) addresses are specified as
-.Dq nn.na
-.Pq Dq Network Number.Node Address .
-Node addresses are divided into two classes: User Node IDs and Server Node IDs.
-1\(en127($01\(en$7F) are for User Node IDs while 128\(en254($80\(en$FE)
-are used for Server Node IDs.
-Node 0($00) is not allowed (unknown)
-while Node 255($FF) is reserved for the AppleTalk broadcast hardware
-address (broadcast ID).
 .It Ar dest_address
 Specify the address of the correspondent on the other end
 of a point-to-point link.
@@ -271,15 +260,6 @@ This is useful for devices which have multiple physical layer interfaces
 Setting the instance on such devices may not be strictly required
 by the network interface driver as the driver may take care of this
 automatically; see the driver's manual page for more information.
-.It Cm ipdst Ar addr
-This is used to specify an Internet host which is willing to receive
-IP packets encapsulating AppleTalk packets bound for a remote network.
-An apparent point-to-point link is constructed, and
-the address specified will be taken as the address and network
-of the destination.
-IP encapsulation of Connectionless Network Protocol
-(``CLNP'')
-packets is done differently.
 .It Cm link[0-2]
 Enable special processing of the link level of the interface.
 These three options are interface specific in actual effect; however,
@@ -378,12 +358,6 @@ and the subnet field should be contiguous with the network
 portion.
 .\" see
 .\" Xr eon 5 .
-.It Cm phase Ar n
-The argument
-.Ar n
-specifies the version (phase) of the
-AppleTalk network attached to the interface.
-Values of 1 or 2 are permitted.
 .It Cm prefixlen Ar n
 (inet and inet6 only)
 Effect is similar to
@@ -396,15 +370,6 @@ This will influence the default routing priority of new static routes added to
 the kernel.
 .Ar n
 is in the range of 0 to 16 with smaller numbers being better.
-.It Cm range Ar netrange
-Under AppleTalk, set the interface to respond to a
-.Ar netrange
-of the form
-.Dq startnet-endnet .
-AppleTalk uses this scheme instead of
-netmasks though
-.Ox
-implements it internally as a set of netmasks.
 .It Cm rdomain Ar route-id
 Attach the interface to the routing table with the specified
 .Ar route-id .

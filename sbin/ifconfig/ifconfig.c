@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.247 2011/05/26 13:10:11 sthen Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.248 2011/07/09 00:45:40 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -85,8 +85,6 @@
 #include <net/if_sppp.h>
 #include <net/ppp_defs.h>
 
-#include <netatalk/at.h>
-
 #include <netinet/ip_carp.h>
 
 #include <netdb.h>
@@ -118,7 +116,6 @@ struct	sockaddr_in	netmask;
 
 #ifndef SMALL
 struct	ifaliasreq	addreq;
-struct  netrange	at_nr;		/* AppleTalk net range */
 #endif /* SMALL */
 
 char	name[IFNAMSIZ];
@@ -162,8 +159,6 @@ void	setifnwflag(const char *, int);
 void	unsetifnwflag(const char *, int);
 void	setifnetmask(const char *, int);
 void	setifprefixlen(const char *, int);
-void	setatrange(const char *, int);
-void	setatphase(const char *, int);
 void	settunnel(const char *, const char *);
 void	deletetunnel(const char *, int);
 void	settunnelinst(const char *, int);
@@ -176,7 +171,6 @@ void	setia6eui64(const char *, int);
 void	setkeepalive(const char *, const char *);
 void	unsetkeepalive(const char *, int);
 #endif /* INET6 */
-void	checkatrange(struct sockaddr_at *);
 void	setmedia(const char *, int);
 void	setmediaopt(const char *, int);
 void	setmediamode(const char *, int);
@@ -354,8 +348,6 @@ const struct	cmd {
 	{ "rtlabel",	NEXTARG,	0,		setifrtlabel },
 	{ "-rtlabel",	-1,		0,		setifrtlabel },
 	{ "rdomain",	NEXTARG,	0,		setinstance },
-	{ "range",	NEXTARG,	0,		setatrange },
-	{ "phase",	NEXTARG,	0,		setatphase },
 	{ "mpls",	IFXF_MPLS,	0,		setifxflags },
 	{ "-mpls",	-IFXF_MPLS,	0,		setifxflags },
 	{ "mplslabel",	NEXTARG,	0,		setmpelabel },
@@ -563,10 +555,6 @@ const struct afswtch {
 	{ "inet6", AF_INET6, in6_status, in6_getaddr, in6_getprefix,
 	    SIOCDIFADDR_IN6, SIOCAIFADDR_IN6, C(in6_ridreq), C(in6_addreq) },
 #endif /* INET6 */
-#ifndef SMALL
-	{ "atalk", AF_APPLETALK, at_status, at_getaddr, NULL,
-	    SIOCDIFADDR, SIOCAIFADDR, C(addreq), C(addreq) },
-#endif
 	{ 0,	0,	    0,		0 }
 };
 
@@ -761,11 +749,6 @@ nextarg:
 		setifprefixlen("64", 0);
 		/* in6_getprefix("64", MASK) if MASK is available here... */
 	}
-
-#ifndef SMALL
-	if (af == AF_APPLETALK)
-		checkatrange((struct sockaddr_at *) &addreq.ifra_addr);
-#endif /* SMALL */
 
 	if (clearaddr) {
 		(void) strlcpy(rafp->af_ridreq, name, sizeof(ifr.ifr_name));
@@ -3208,123 +3191,6 @@ settunnelinst(const char *id, int param)
 	ifr.ifr_rdomainid = rdomainid;
 	if (ioctl(s, SIOCSLIFPHYRTABLE, (caddr_t)&ifr) < 0)
 		warn("SIOCSLIFPHYRTABLE");
-}
-
-void
-at_status(int force)
-{
-	struct sockaddr_at *sat, null_sat;
-	struct netrange *nr;
-
-	getsock(AF_APPLETALK);
-	if (s < 0) {
-		if (errno == EPROTONOSUPPORT)
-			return;
-		err(1, "socket");
-	}
-	(void) memset(&ifr, 0, sizeof(ifr));
-	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCGIFADDR, (caddr_t)&ifr) < 0) {
-		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
-			if (!force)
-				return;
-			(void) memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
-		} else
-			warn("SIOCGIFADDR");
-	}
-	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	sat = (struct sockaddr_at *)&ifr.ifr_addr;
-
-	(void) memset(&null_sat, 0, sizeof(null_sat));
-
-	nr = (struct netrange *) &sat->sat_zero;
-	printf("\tAppleTalk %d.%d range %d-%d phase %d",
-	    ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node,
-	    ntohs(nr->nr_firstnet), ntohs(nr->nr_lastnet), nr->nr_phase);
-	if (flags & IFF_POINTOPOINT) {
-		if (ioctl(s, SIOCGIFDSTADDR, (caddr_t)&ifr) < 0) {
-			if (errno == EADDRNOTAVAIL)
-			    (void) memset(&ifr.ifr_addr, 0,
-				sizeof(ifr.ifr_addr));
-			else
-			    warn("SIOCGIFDSTADDR");
-		}
-		(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-		sat = (struct sockaddr_at *)&ifr.ifr_dstaddr;
-		if (!sat)
-			sat = &null_sat;
-		printf("--> %d.%d",
-		    ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node);
-	}
-	if (flags & IFF_BROADCAST) {
-		/* note RTAX_BRD overlap with IFF_POINTOPOINT */
-		sat = (struct sockaddr_at *)&ifr.ifr_broadaddr;
-		if (sat)
-			printf(" broadcast %d.%d", ntohs(sat->sat_addr.s_net),
-			    sat->sat_addr.s_node);
-	}
-	putchar('\n');
-}
-
-void
-at_getaddr(const char *addr, int which)
-{
-	struct sockaddr_at *sat = (struct sockaddr_at *) &addreq.ifra_addr;
-	u_int net, node;
-
-	sat->sat_family = AF_APPLETALK;
-	sat->sat_len = sizeof(*sat);
-	if (which == MASK)
-		errx(1, "AppleTalk does not use netmasks");
-	if (sscanf(addr, "%u.%u", &net, &node) != 2 ||
-	    net == 0 || net > 0xffff || node == 0 || node > 0xfe)
-		errx(1, "%s: illegal address", addr);
-	sat->sat_addr.s_net = htons(net);
-	sat->sat_addr.s_node = node;
-}
-
-/* ARGSUSED */
-void
-setatrange(const char *range, int d)
-{
-	u_int first = 123, last = 123;
-
-	if (sscanf(range, "%u-%u", &first, &last) != 2 ||
-	    first == 0 || first > 0xffff ||
-	    last == 0 || last > 0xffff || first > last)
-		errx(1, "%s: illegal net range: %u-%u", range, first, last);
-	at_nr.nr_firstnet = htons(first);
-	at_nr.nr_lastnet = htons(last);
-}
-
-/* ARGSUSED */
-void
-setatphase(const char *phase, int d)
-{
-	if (!strcmp(phase, "1"))
-		at_nr.nr_phase = 1;
-	else if (!strcmp(phase, "2"))
-		at_nr.nr_phase = 2;
-	else
-		errx(1, "%s: illegal phase", phase);
-}
-
-void
-checkatrange(struct sockaddr_at *sat)
-{
-	if (at_nr.nr_phase == 0)
-		at_nr.nr_phase = 2;	/* Default phase 2 */
-	if (at_nr.nr_firstnet == 0)	/* Default range of one */
-		at_nr.nr_firstnet = at_nr.nr_lastnet = sat->sat_addr.s_net;
-	printf("\tatalk %d.%d range %d-%d phase %d\n",
-	ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node,
-	ntohs(at_nr.nr_firstnet), ntohs(at_nr.nr_lastnet), at_nr.nr_phase);
-	if ((u_short) ntohs(at_nr.nr_firstnet) >
-	    (u_short) ntohs(sat->sat_addr.s_net) ||
-	    (u_short) ntohs(at_nr.nr_lastnet) <
-	    (u_short) ntohs(sat->sat_addr.s_net))
-		errx(1, "AppleTalk address is not in range");
-	*((struct netrange *) &sat->sat_zero) = at_nr;
 }
 
 void

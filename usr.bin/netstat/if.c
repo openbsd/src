@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.63 2011/01/09 19:12:19 tedu Exp $	*/
+/*	$OpenBSD: if.c,v 1.64 2011/07/09 00:45:40 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -280,10 +280,6 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd)
 			}
 		}
 #endif
-		break;
-	case AF_APPLETALK:
-		printf("atlk:%-12s",atalk_print(sa,0x10) );
-		printf("%-12s ",atalk_print(sa,0x0b) );
 		break;
 	case AF_LINK:
 		sdl = (struct sockaddr_dl *)sa;

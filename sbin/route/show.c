@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.89 2010/10/11 11:45:00 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.90 2011/07/09 00:45:40 henning Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -410,9 +410,6 @@ pr_family(int af)
 		break;
 	case AF_MPLS:
 		afname = "MPLS";
-		break;
-	case AF_APPLETALK:
-		afname = "AppleTalk";
 		break;
 	default:
 		afname = NULL;

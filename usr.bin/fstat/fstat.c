@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.70 2009/10/27 23:59:38 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.71 2011/07/09 00:45:40 henning Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -693,12 +693,6 @@ socktrans(struct kinfo_file2 *kf)
 	case AF_NATM:
 		/* print protocol number and socket address */
 		printf("* natm %s", stype);
-		printf(" %d %p", kf->so_protocol,
-		    (void *)(uintptr_t)kf->f_data);
-		break;
-	case AF_APPLETALK:
-		/* print protocol number and socket address */
-		printf("* appletalk %s", stype);
 		printf(" %d %p", kf->so_protocol,
 		    (void *)(uintptr_t)kf->f_data);
 		break;
