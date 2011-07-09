@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.2 2011/01/30 12:09:30 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.3 2011/07/09 01:36:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -40,7 +40,7 @@ args_create(int argc, ...)
 	if (argc == 0)
 		args->argv = NULL;
 	else
-		args->argv = xcalloc(argc, sizeof **args->argv);
+		args->argv = xcalloc(argc, sizeof *args->argv);
 
 	va_start(ap, argc);
 	for (i = 0; i < argc; i++)
