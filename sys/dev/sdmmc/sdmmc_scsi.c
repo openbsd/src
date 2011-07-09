@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.27 2011/06/16 01:09:16 dlg Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.28 2011/07/09 00:39:29 matthew Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -139,9 +139,9 @@ sdmmc_scsi_attach(struct sdmmc_softc *sc)
 	scbus->sc_link.pool = &scbus->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
-	saa.scsi_link = &scbus->sc_link;
+	saa.saa.saa_sc_link = &scbus->sc_link;
 
-	scbus->sc_child = config_found(&sc->sc_dev, &saa, scsiprint);
+	scbus->sc_child = config_found(&sc->sc_dev, &saa.saa, scsiprint);
 	if (scbus->sc_child == NULL) {
 		printf("%s: can't attach scsibus\n", sc->sc_dev.dv_xname);
 		goto free_ccbs;
