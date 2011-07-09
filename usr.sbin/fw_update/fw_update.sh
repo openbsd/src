@@ -52,7 +52,7 @@ install=
 update=
 
 for driver in $DRIVERS; do
-	if print -r -- "$installed" | grep -q "^${driver}-firmware-*"; then
+	if print -r -- "$installed" | grep -q "^${driver}-firmware-"; then
 		update="$update ${driver}-firmware"
 	elif grep -q "^${driver}[0-9][0-9]* at " /var/run/dmesg.boot; then
 		install="$install ${driver}-firmware"
