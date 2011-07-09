@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.101 2011/07/08 01:17:58 tedu Exp $       */
+/* $OpenBSD: bioctl.c,v 1.102 2011/07/09 16:53:37 nicm Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -71,6 +71,7 @@ int			bio_getvolbyname(char *);
 void			bio_setstate(char *, int, char *);
 void			bio_setblink(char *, char *, int);
 void			bio_blink(char *, int, int);
+struct sr_aoe_config 	*create_aoe(u_int16_t, char *);
 void			bio_createraid(u_int16_t, char *, char *);
 void			bio_deleteraid(char *);
 void			bio_changepass(char *);
