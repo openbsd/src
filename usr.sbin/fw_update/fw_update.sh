@@ -14,6 +14,12 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+# This is the list of drivers we should look for
+DRIVERS="acx athn bwi ipw iwi iwn malo otus pgt rsu uath ueagle upgt urtwn
+	uvideo wpi"
+
+PKG_ADD="pkg_add -D repair"
+
 [ 0 = $(id -u) ] || { echo "${0##*/} must be run as root" >&2; exit 1; }
 
 usage() {
@@ -38,16 +44,15 @@ version=$1
 tag=$2
 
 [ -n "$tag" -a X"$tag" != X"-stable" ] && version=snapshots
-
 export PKG_PATH=http://firmware.openbsd.org/firmware/$version/
 
-DRIVERS="acx athn bwi ipw iwi iwn malo otus pgt rsu uath ueagle upgt urtwn uvideo wpi"
+installed=$(pkg_info -q)
 
 install=
 update=
 
 for driver in $DRIVERS; do
-	if test -d /var/db/pkg/${driver}-firmware-*; then
+	if print -r -- "$installed" | grep -q "^${driver}-firmware-*"; then
 		update="$update ${driver}-firmware"
 	elif grep -q "^${driver}[0-9][0-9]* at " /var/run/dmesg.boot; then
 		install="$install ${driver}-firmware"
@@ -56,10 +61,8 @@ done
 
 [ "$install$update" ] || exit 0
 
-echo 'updating firmwares'
-
 # Install missing firmwares
-[ "$install" ] && pkg_add $verbose $install
+[ "$install" ] && $PKG_ADD $verbose $install
 
 # Update installed firmwares
-[ "$update" ] && pkg_add $verbose -u $update
+[ "$update" ] && $PKG_ADD $verbose -u $update
