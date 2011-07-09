@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.172 2011/07/09 01:28:48 matthew Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.173 2011/07/09 05:31:26 matthew Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2731,7 +2731,7 @@ sys_getdirentries(struct proc *p, void *v, register_t *retval)
 }
 
 int
-sys_ogetdirentries(struct proc *p, void *v, register_t *retval)
+compat_48_sys_getdirentries(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_getdirentries_args /* {
 		syscallarg(int) fd;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.86 2011/07/05 09:15:57 oga Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.87 2011/07/09 05:31:26 matthew Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -89,44 +89,6 @@
 			return (EINVAL);	/* wraparound */	\
 	}								\
 } while (0)
-
-/*
- * unimplemented VM system calls:
- */
-
-/*
- * sys_sbrk: sbrk system call.
- */
-
-/* ARGSUSED */
-int
-sys_sbrk(struct proc *p, void *v, register_t *retval)
-{
-#if 0
-	struct sys_sbrk_args /* {
-		syscallarg(int) incr;
-	} */ *uap = v;
-#endif
-
-	return (ENOSYS);
-}
-
-/*
- * sys_sstk: sstk system call.
- */
-
-/* ARGSUSED */
-int
-sys_sstk(struct proc *p, void *v, register_t *retval)
-{
-#if 0
-	struct sys_sstk_args /* {
-		syscallarg(int) incr;
-	} */ *uap = v;
-#endif
-
-	return (ENOSYS);
-}
 
 /*
  * sys_mquery: provide mapping hints to applications that do fixed mappings
