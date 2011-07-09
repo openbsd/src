@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.7 2011/07/09 00:08:04 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.8 2011/07/09 00:27:31 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -113,5 +113,8 @@ psize_t	 uvm_page_rle(paddr_t);
 
 void	*get_hibernate_io_function(void);
 int	get_hibernate_info(union hibernate_info *);
+
+void	*hibernate_zlib_alloc(void *, int, int);
+void	hibernate_zlib_free(void *, void *);
 
 #endif /* _SYS_HIBERNATE_H_ */

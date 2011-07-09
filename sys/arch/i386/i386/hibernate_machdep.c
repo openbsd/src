@@ -54,6 +54,7 @@ void	hibernate_populate_resume_pt(paddr_t *, paddr_t *);
 int	get_hibernate_info_md(union hibernate_info *);
 int	hibernate_write_signature(void);
 int	hibernate_clear_signature(void);
+
 union 	hibernate_info *global_hiber_info;
 paddr_t global_image_start;
 
@@ -64,11 +65,44 @@ extern	char *disk_readlabel(struct disklabel *, dev_t, char *, size_t);
 extern	caddr_t start, end;
 extern	int ndumpmem;
 extern  struct dumpmem dumpmem[];
-
+extern	struct hibernate_state *hibernate_state;
 
 /*
  * i386 MD Hibernate functions
  */
+
+/*
+ * hibernate_zlib_reset
+ *
+ * Reset the zlib stream state and allocate a new hiballoc area for either
+ * inflate or deflate. This function is called once for each hibernate chunk
+ * Calling hiballoc_init multiple times is acceptable since the memory it is
+ * provided is unmanaged memory (stolen).
+ *
+ */
+int
+hibernate_zlib_reset(int deflate)
+{
+	hibernate_state = (struct hibernate_state *)HIBERNATE_ZLIB_SCRATCH;
+
+	bzero((caddr_t)HIBERNATE_ZLIB_START, HIBERNATE_ZLIB_SIZE);
+	bzero((caddr_t)HIBERNATE_ZLIB_SCRATCH, PAGE_SIZE);
+
+	/* Set up stream structure */
+	hibernate_state->hib_stream.zalloc = (alloc_func)hibernate_zlib_alloc;
+	hibernate_state->hib_stream.zfree = (free_func)hibernate_zlib_free;
+
+	/* Initialize the hiballoc arena for zlib allocs/frees */
+	hiballoc_init(&hibernate_state->hiballoc_arena,
+		(caddr_t)HIBERNATE_ZLIB_START, HIBERNATE_ZLIB_SIZE);
+
+	if (deflate) {
+		return deflateInit(&hibernate_state->hib_stream,
+			Z_DEFAULT_COMPRESSION);
+	}
+	else
+		return inflateInit(&hibernate_state->hib_stream);
+}
 
 /*
  * get_hibernate_io_function

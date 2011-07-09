@@ -19,5 +19,6 @@
 /* i386 hibernate support structures and functions */
 
 int	get_hibernate_info_md(union hibernate_info *);
+int	hibernate_zlib_reset(int);
 int	hibernate_suspend(void);
 void	hibernate_resume(void);

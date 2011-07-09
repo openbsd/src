@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.8 2011/07/09 00:08:04 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.9 2011/07/09 00:27:31 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -27,6 +27,8 @@
 #include <machine/hibernate.h>
 
 extern char *disk_readlabel(struct disklabel *, dev_t, char *, size_t);
+
+struct hibernate_state *hibernate_state;
 
 /*
  * Hib alloc enforced alignment.
@@ -593,4 +595,29 @@ get_hibernate_info(union hibernate_info *hiber_info)
 	}
 
 	return get_hibernate_info_md(hiber_info);
+}
+
+/*
+ * hibernate_zlib_alloc
+ *
+ * Allocate nitems*size bytes from the hiballoc area presently in use
+ *
+ */ 
+void
+*hibernate_zlib_alloc(void *unused, int nitems, int size)
+{
+	return hib_alloc(&hibernate_state->hiballoc_arena, nitems*size);
+}
+
+/*
+ * hibernate_zlib_free
+ *
+ * Free the memory pointed to by addr in the hiballoc area presently in
+ * use
+ * 
+ */
+void
+hibernate_zlib_free(void *unused, void *addr)
+{
+	hib_free(&hibernate_state->hiballoc_arena, addr);
 }
