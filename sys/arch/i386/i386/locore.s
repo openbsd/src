@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.138 2011/07/08 21:11:20 pirofti Exp $	*/
+/*	$OpenBSD: locore.s,v 1.139 2011/07/09 01:49:16 pirofti Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1694,6 +1694,40 @@ ENTRY(acpi_release_global_lock)
 	andl	$1, %eax
 	ret
 #endif
+
+/*
+ * ucas_32(volatile int32_t *uptr, int32_t old, int32_t new);
+ */
+ENTRY(ucas_32)
+#ifdef DDB
+	pushl	%ebp
+	movl	%esp,%ebp
+#endif
+	pushl	%esi
+	pushl	%edi
+	pushl	$0	
+	
+	movl	16+FPADD(%esp),%esi
+	movl	20+FPADD(%esp),%eax
+	movl	24+FPADD(%esp),%edi
+
+	cmpl    $VM_MAXUSER_ADDRESS-4, %esi
+	ja      _C_LABEL(copy_fault)
+
+	GET_CURPCB(%edx)
+	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%edx)
+
+	lock
+	cmpxchgl %edi, (%esi)
+
+	popl	PCB_ONFAULT(%edx)
+	popl	%edi
+	popl	%esi
+	xorl	%eax,%eax
+#ifdef DDB
+	leave
+#endif
+	ret
 
 #if NLAPIC > 0
 #include <i386/i386/apicvec.s>

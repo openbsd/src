@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.8 2011/03/23 16:54:35 pirofti Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.9 2011/07/09 01:49:16 pirofti Exp $	*/
 /* $NetBSD: atomic.h,v 1.1.2.2 2000/02/21 18:54:07 sommerfeld Exp $ */
 
 /*-
@@ -98,6 +98,9 @@ i486_atomic_cas_int(volatile u_int *ptr, u_int expect, u_int set)
 
 	return (res);
 }
+
+int ucas_32(volatile int32_t *, int32_t, int32_t);
+#define atomic_ucas_32 ucas_32
 
 #define atomic_setbits_int i386_atomic_setbits_l
 #define atomic_clearbits_int i386_atomic_clearbits_l
