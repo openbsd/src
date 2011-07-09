@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.7 2011/07/08 21:02:49 ariane Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.8 2011/07/09 00:08:04 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -21,8 +21,12 @@
 #include <sys/tree.h>
 #include <sys/types.h>
 #include <sys/systm.h>
+#include <sys/disklabel.h>
+#include <sys/conf.h>
 #include <uvm/uvm.h>
+#include <machine/hibernate.h>
 
+extern char *disk_readlabel(struct disklabel *, dev_t, char *, size_t);
 
 /*
  * Hib alloc enforced alignment.
@@ -287,7 +291,7 @@ uvm_pmr_dirty_everything(void)
 		}
 
 		/* Dirty multi page ranges. */
-		while ((pg = RB_ROOT(&pmr->size[UVM_PMR_MEMTYPE_ZEOR]))
+		while ((pg = RB_ROOT(&pmr->size[UVM_PMR_MEMTYPE_ZERO]))
 		    != NULL) {
 			pg--; /* Size tree always has second page. */
 			uvm_pmr_remove(pmr, pg);
@@ -521,4 +525,72 @@ uvm_page_rle(paddr_t addr)
 	for (pg_end = pg; pg_end <= vmp->lastpg &&
 	    (pg_end->pg_flags & PQ_FREE) == PQ_FREE; pg_end++);
 	return pg_end - pg;
+}
+
+/*
+ * get_hibernate_info
+ *
+ * Fills out the hibernate_info union pointed to by hiber_info
+ * with information about this machine (swap signature block
+ * offsets, number of memory ranges, kernel in use, etc)
+ *
+ */
+int
+get_hibernate_info(union hibernate_info *hiber_info)
+{
+	int chunktable_size;
+	struct disklabel dl;
+	char err_string[128], *dl_ret;
+
+	/* Determine I/O function to use */
+	hiber_info->io_func = get_hibernate_io_function();
+	if (hiber_info->io_func == NULL)
+		return (1);
+
+	/* Calculate hibernate device */
+	hiber_info->device = swdevt[0].sw_dev;
+
+	/* Read disklabel (used to calculate signature and image offsets) */
+	dl_ret = disk_readlabel(&dl, hiber_info->device, err_string, 128);
+
+	if (dl_ret) {
+		printf("Hibernate error reading disklabel: %s\n", dl_ret);
+		return (1);
+	}
+
+	hiber_info->secsize = dl.d_secsize;
+
+	/* Make sure the signature can fit in one block */
+	KASSERT(sizeof(union hibernate_info)/hiber_info->secsize == 1);
+
+	/* Calculate swap offset from start of disk */
+	hiber_info->swap_offset = dl.d_partitions[1].p_offset;
+
+	/* Calculate signature block location */
+	hiber_info->sig_offset = dl.d_partitions[1].p_offset +
+		dl.d_partitions[1].p_size -
+		sizeof(union hibernate_info)/hiber_info->secsize;
+
+	chunktable_size = HIBERNATE_CHUNK_TABLE_SIZE / hiber_info->secsize;
+
+	/* Calculate memory image location */
+	hiber_info->image_offset = dl.d_partitions[1].p_offset +
+		dl.d_partitions[1].p_size -
+		(hiber_info->image_size / hiber_info->secsize) -
+		sizeof(union hibernate_info)/hiber_info->secsize -
+		chunktable_size;
+
+	/* Stash kernel version information */
+	bzero(&hiber_info->kernel_version, 128);
+	bcopy(version, &hiber_info->kernel_version, 
+		min(strlen(version), sizeof(hiber_info->kernel_version)-1));
+
+	/* Allocate piglet region */
+	if (uvm_pmr_alloc_piglet(&hiber_info->piglet_base, HIBERNATE_CHUNK_SIZE,
+		HIBERNATE_CHUNK_SIZE)) {
+		printf("Hibernate failed to allocate the piglet\n");
+		return (1);
+	}
+
+	return get_hibernate_info_md(hiber_info);
 }

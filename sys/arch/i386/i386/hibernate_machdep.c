@@ -20,13 +20,17 @@
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
+#include <sys/hibernate.h>
 #include <sys/timeout.h>
 #include <sys/malloc.h>
+
+#include <dev/acpi/acpivar.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pmemrange.h>
 
 #include <machine/hibernate.h>
+#include <machine/hibernate_var.h>
 #include <machine/kcore.h>
 #include <machine/pmap.h>
 
@@ -37,6 +41,7 @@
 #include <machine/mpbiosvar.h>
 #endif /* MULTIPROCESSOR */
 
+#include "acpi.h"
 #include "wd.h"
 
 #ifndef SMALL_KERNEL
@@ -44,13 +49,12 @@
 int	hibernate_write_image(void);
 int	hibernate_read_image(void);
 void	hibernate_unpack_image(void);
-void	*get_hibernate_io_function(void);
-int	get_hibernate_info(struct hibernate_info *);
 void	hibernate_enter_resume_pte(vaddr_t, paddr_t);
 void	hibernate_populate_resume_pt(paddr_t *, paddr_t *);
+int	get_hibernate_info_md(union hibernate_info *);
 int	hibernate_write_signature(void);
 int	hibernate_clear_signature(void);
-struct 	hibernate_info *global_hiber_info;
+union 	hibernate_info *global_hiber_info;
 paddr_t global_image_start;
 
 extern	void hibernate_resume_machine(void);
@@ -66,11 +70,16 @@ extern  struct dumpmem dumpmem[];
  * i386 MD Hibernate functions
  */
 
+/*
+ * get_hibernate_io_function
+ *
+ * Returns the hibernate write I/O function to use on this machine
+ *
+ */
 void *
 get_hibernate_io_function()
 {
-
-#if NWD > 0 
+#if NWD > 0
 	/* XXX - Only support wd hibernate presently */
 	if (strcmp(findblkname(major(swdevt[0].sw_dev)), "wd") == 0)
 		return wd_hibernate_io;
@@ -81,20 +90,15 @@ get_hibernate_io_function()
 #endif
 }
 
+/*
+ * get_hibernate_info_md
+ *
+ * Gather MD-specific data and store into hiber_info
+ */
 int
-get_hibernate_info(struct hibernate_info *hiber_info)
+get_hibernate_info_md(union hibernate_info *hiber_info)
 {
 	int i;
-	struct disklabel dl;
-	char err_string[128], *dl_ret;
-
-	/* Determine I/O function to use */
-	hiber_info->io_func = get_hibernate_io_function();
-	if (hiber_info->io_func == NULL)
-		return (0);
-
-	/* Calculate hibernate device */
-	hiber_info->device = swdevt[0].sw_dev;
 
 	/* Calculate memory ranges */
 	hiber_info->nranges = ndumpmem;
@@ -102,10 +106,9 @@ get_hibernate_info(struct hibernate_info *hiber_info)
 
 	for(i=0; i<ndumpmem; i++) {
 		hiber_info->ranges[i].base = dumpmem[i].start * PAGE_SIZE;
-		hiber_info->ranges[i].end = 
-			(dumpmem[i].end * PAGE_SIZE);
-		hiber_info->image_size +=
-			hiber_info->ranges[i].end - hiber_info->ranges[i].base;
+		hiber_info->ranges[i].end = dumpmem[i].end * PAGE_SIZE;
+		hiber_info->image_size += hiber_info->ranges[i].end -
+			hiber_info->ranges[i].base;
 	}
 
 #if NACPI > 0
@@ -122,29 +125,7 @@ get_hibernate_info(struct hibernate_info *hiber_info)
 	hiber_info->image_size += PAGE_SIZE;
 #endif	
 
-	/* Read disklabel (used to calculate signature and image offsets */
-	dl_ret = disk_readlabel(&dl, hiber_info->device, err_string, 128);
-
-	if (dl_ret) {
-		printf("Hibernate error: %s\n", dl_ret);
-		return (0);
-	}
-
-	/* Calculate signature block offset in swap */
-	hiber_info->sig_offset = DL_BLKTOSEC(&dl, 
-					(dl.d_partitions[1].p_size - 1)) * 
-					DL_BLKSPERSEC(&dl);
-
-	/* Calculate memory image offset in swap */
-	hiber_info->image_offset = dl.d_partitions[1].p_offset +
-				   dl.d_partitions[1].p_size -
-				   (hiber_info->image_size / 512) -1;
-
-	/* Stash kernel version information */
-	bcopy(version, &hiber_info->kernel_version, 
-		min(strlen(version), sizeof(hiber_info->kernel_version)));
-
-	return (1);
+	return (0);
 }
 
 /*
@@ -156,7 +137,7 @@ hibernate_enter_resume_pte(vaddr_t va, paddr_t pa)
 {
 	pt_entry_t *pte, npte;
 
-	pte = s4pte_4m(va);
+	pte = s4pde_4m(va);
 	npte = (pa & PMAP_PA_MASK_4M) | PG_RW | PG_V | PG_U | PG_M | PG_PS;
 	*pte = npte;
 }
@@ -176,7 +157,7 @@ hibernate_populate_resume_pt(paddr_t *image_start, paddr_t *image_end)
 	vaddr_t kern_start_4m_va, kern_end_4m_va, page;
 
 	/* Get the pig (largest contiguous physical range) from uvm */
-	if (uvm_pmr_alloc_pig(&pig_start, &pig_sz) == ENOMEM)
+	if (uvm_pmr_alloc_pig(&pig_start, pig_sz) == ENOMEM)
 		panic("Insufficient memory for resume");
 
 	*image_start = pig_start;
@@ -221,14 +202,14 @@ hibernate_populate_resume_pt(paddr_t *image_start, paddr_t *image_end)
 int
 hibernate_write_image()
 {
-	struct hibernate_info hiber_info;
+	union hibernate_info hiber_info;
 	int i, j;
 	paddr_t range_base, range_end, addr;
 	daddr_t blkctr;
 
 	/* Get current running machine's hibernate info */
-	if (!get_hibernate_info(&hiber_info))
-		return (0);
+	if (get_hibernate_info(&hiber_info))
+		return (1);
 
 	pmap_kenter_pa(HIBERNATE_TEMP_PAGE, HIBERNATE_TEMP_PAGE, VM_PROT_ALL);	
 	pmap_kenter_pa(HIBERNATE_ALLOC_PAGE, HIBERNATE_ALLOC_PAGE, VM_PROT_ALL);
@@ -261,14 +242,14 @@ hibernate_write_image()
 int
 hibernate_read_image()
 {
-	struct hibernate_info hiber_info;
+	union hibernate_info hiber_info;
 	int i, j;
 	paddr_t range_base, range_end, addr, image_start, image_end;
 	daddr_t blkctr;
 
 	/* Get current running machine's hibernate info */
-	if (!get_hibernate_info(&hiber_info))
-		return (0);
+	if (get_hibernate_info(&hiber_info))
+		return (1);
 
 	pmap_kenter_pa(HIBERNATE_TEMP_PAGE, HIBERNATE_TEMP_PAGE, VM_PROT_ALL);	
 	pmap_kenter_pa(HIBERNATE_ALLOC_PAGE, HIBERNATE_ALLOC_PAGE, VM_PROT_ALL);
@@ -316,7 +297,7 @@ hibernate_suspend()
 void
 hibernate_unpack_image()
 {
-	struct hibernate_info *hiber_info = global_hiber_info;
+	union hibernate_info *hiber_info = global_hiber_info;
 	int i, j;
 	paddr_t base, end, pig_base;
 
@@ -337,13 +318,13 @@ hibernate_unpack_image()
 void
 hibernate_resume()
 {
-	struct hibernate_info hiber_info, disk_hiber_info;
+	union hibernate_info hiber_info, disk_hiber_info;
 	u_int8_t *io_page;
 	int s;
 	paddr_t image_start, image_end;
 
 	/* Get current running machine's hibernate info */
-	if (!get_hibernate_info(&hiber_info))
+	if (get_hibernate_info(&hiber_info))
 		return;
 
 	io_page = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT);
@@ -358,7 +339,7 @@ hibernate_resume()
 	free(io_page, M_DEVBUF);
 
 	if (memcmp(&hiber_info, &disk_hiber_info,
-	    sizeof(struct hibernate_info)) !=0) {
+	    sizeof(union hibernate_info)) !=0) {
 		return;
 	}
 
@@ -402,7 +383,7 @@ hibernate_resume()
 	hibernate_switch_stack();
 
 	/* Read the image from disk into the image (pig) area */
-	if (!hibernate_read_image())
+	if (hibernate_read_image())
 		panic("Failed to restore the hibernate image");
 
 	/*
@@ -423,16 +404,16 @@ hibernate_resume()
 int
 hibernate_write_signature()
 {
-	struct hibernate_info hiber_info;
+	union hibernate_info hiber_info;
 	u_int8_t *io_page;
 
 	/* Get current running machine's hibernate info */
-	if (!get_hibernate_info(&hiber_info))
-		return (0);
+	if (get_hibernate_info(&hiber_info))
+		return (1);
 
 	io_page = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT);
 	if (!io_page)
-		return (0);
+		return (1);
 	
 	/* Write hibernate info to disk */
 	hiber_info.io_func(hiber_info.device, hiber_info.sig_offset,
@@ -440,13 +421,13 @@ hibernate_write_signature()
 
 	free(io_page, M_DEVBUF);
 
-	return (1);
+	return (0);
 }
 
 int
 hibernate_clear_signature()
 {
-	struct hibernate_info hiber_info;
+	union hibernate_info hiber_info;
 	u_int8_t *io_page;
 
 	/* Zero out a blank hiber_info */
@@ -454,7 +435,7 @@ hibernate_clear_signature()
 
 	io_page = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT);
 	if (!io_page)
-		return (0);
+		return (1);
 	
 	/* Write (zeroed) hibernate info to disk */
 	hiber_info.io_func(hiber_info.device, hiber_info.sig_offset,
@@ -462,6 +443,6 @@ hibernate_clear_signature()
 
 	free(io_page, M_DEVBUF);
 
-	return (1);
+	return (0);
 }
 #endif /* !SMALL_KERNEL */

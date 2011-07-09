@@ -23,9 +23,32 @@
 #define HIBERNATE_STACK_PAGE	(PAGE_SIZE * 5)
 #define HIBERNATE_IO_PAGE	(PAGE_SIZE * 6)
 #define HIBERNATE_TEMP_PAGE	(PAGE_SIZE * 10)
-#define HIBERNATE_PT_PAGE	(PAGE_SIZE * 11)
-#define HIBERNATE_ALLOC_PAGE	(PAGE_SIZE * 12)
+#define HIBERNATE_TEMP_PAGE2	(PAGE_SIZE * 11)
+#define HIBERNATE_PD_PAGE	(PAGE_SIZE * 12)
+#define HIBERNATE_PT_PAGE	(PAGE_SIZE * 13)
+#define HIBERNATE_ALLOC_PAGE	(PAGE_SIZE * 14)
+
+#define HIBERNATE_CHUNKS_PAGE	(PAGE_SIZE * 15)
+
+/* Use 4MB hibernation chunks */
+#define HIBERNATE_CHUNK_SIZE		0x400000
+
+/* 1MB of chunk table from 1MB-2MB phys */
+#define HIBERNATE_CHUNK_TABLE_START		0x100000
+#define HIBERNATE_CHUNK_TABLE_END		0x200000
+#define HIBERNATE_CHUNK_TABLE_SIZE		(HIBERNATE_CHUNK_TABLE_END - \
+						 HIBERNATE_CHUNK_TABLE_START)
+
+/* 320KB (80 pages) for gzip allocator */
+#define HIBERNATE_ZLIB_SCRATCH	(PAGE_SIZE * 20)
+#define HIBERNATE_ZLIB_START	(PAGE_SIZE * 21)
+#define HIBERNATE_ZLIB_END	(PAGE_SIZE * (21 + 80))
+#define HIBERNATE_ZLIB_SIZE	(HIBERNATE_ZLIB_END - HIBERNATE_ZLIB_START)
+
 #define HIBERNATE_STACK_OFFSET	0x0F00
 
 #define atop_4m(x) ((x) >> PAGE_SHIFT_4M)
-#define s4pte_4m(va) ((pt_entry_t *)HIBERNATE_PT_PAGE + atop_4m(va))
+#define atop_4k(x) ((x) >> PAGE_SHIFT)
+#define s4pde_4m(va) ((pt_entry_t *)HIBERNATE_PD_PAGE + atop_4m(va))
+#define s4pde_4k(va) ((pt_entry_t *)HIBERNATE_PD_PAGE + atop_4k(va))
+#define s4pte_4k(va) ((pt_entry_t *)HIBERNATE_PT_PAGE + atop_4k(va))
