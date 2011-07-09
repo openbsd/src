@@ -372,8 +372,10 @@ hibernate_suspend()
 {
 	/*
 	 * On i386, the only thing to do on hibernate suspend is
-	 * to write the image.
+	 * to zero all the unused pages and write the image.
 	 */
+
+	uvm_pmr_zero_everything();
 
 	return hibernate_write_image();
 }

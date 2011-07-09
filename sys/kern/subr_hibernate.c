@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.11 2011/07/09 01:30:39 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.12 2011/07/09 03:10:27 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -819,3 +819,34 @@ hibernate_check_overlap(paddr_t r1s, paddr_t r1e, paddr_t r2s, paddr_t r2e)
 
 	return (0);
 }
+
+/*
+ * hibernate_compare_signature
+ *
+ * Compare two hibernate_infos to determine if they are the same (eg,
+ * we should be performing a hibernate resume on this machine.
+ * Not all fields are checked - just enough to verify that the machine
+ * has the same memory configuration and kernel as the one that
+ * wrote the signature previously.
+ */
+int
+hibernate_compare_signature(union hibernate_info *mine,
+	union hibernate_info *disk)
+{
+	u_int i;
+
+	if (mine->nranges != disk->nranges)
+		return (1);
+
+	if (strcmp(mine->kernel_version, disk->kernel_version) != 0)
+		return (1);
+
+	for (i=0; i< mine->nranges; i++) {
+		if ((mine->ranges[i].base != disk->ranges[i].base) ||
+			(mine->ranges[i].end != disk->ranges[i].end) )
+		return (1);
+	}
+
+	return (0);
+}
+
