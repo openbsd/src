@@ -1,4 +1,4 @@
-.\" $OpenBSD: fw_update.1,v 1.3 2011/07/09 08:53:15 jmc Exp $
+.\" $OpenBSD: fw_update.1,v 1.4 2011/07/09 16:12:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 .\"
@@ -19,23 +19,23 @@
 .Os
 .Sh NAME
 .Nm fw_update
-.Nd install and update tool for non-free firmware packages
+.Nd install and update non-free firmware packages
 .Sh SYNOPSIS
-.Nm fw_update
+.Nm
 .Op Fl v
 .Sh DESCRIPTION
+The
 .Nm
-is a utility that installs and updates device firmwares with non-free licenses
+utility installs and updates device firmwares with non-free licenses
 that may not be shipped with
 .Ox .
-It will automatically detect such devices and locate and install the proper
+It automatically detects such devices and downloads and installs the proper
 firmware packages for the currently running kernel.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl v
-Verbose output.
-Passes the
+Turn on verbose output by passing the
 .Fl v
 flag to
 .Xr pkg_add 1 .
