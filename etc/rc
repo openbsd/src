@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.383 2011/07/08 22:20:05 deraadt Exp $
+#	$OpenBSD: rc,v 1.384 2011/07/09 01:30:27 halex Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -533,8 +533,8 @@ fi
 # If rc.firstime exists, run it just once, and make sure it is deleted
 if [ -f /etc/rc.firsttime ]; then
 	mv /etc/rc.firsttime /etc/rc.firsttime.run
-	. /etc/rc.firsttime.run 2>&1 | mail -s 'rc.firsttime output' \
-	    root >/dev/null
+	. /etc/rc.firsttime.run 2>&1 | tee /dev/tty |
+		mail -s 'rc.firsttime output' root >/dev/null
 fi
 rm -f /etc/rc.firsttime.run
 
