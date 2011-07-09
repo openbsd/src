@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.h,v 1.12 2009/03/02 09:42:55 mikeb Exp $	*/
+/*	$OpenBSD: tree.h,v 1.13 2011/07/09 00:19:45 pirofti Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -730,9 +730,19 @@ name##_RB_MINMAX(struct name *head, int val)				\
 	     (x) != NULL;						\
 	     (x) = name##_RB_NEXT(x))
 
+#define RB_FOREACH_SAFE(x, name, head, y)				\
+	for ((x) = RB_MIN(name, head);					\
+	    ((x) != NULL) && ((y) = name##_RB_NEXT(x), 1);		\
+	     (x) = (y))
+
 #define RB_FOREACH_REVERSE(x, name, head)				\
 	for ((x) = RB_MAX(name, head);					\
 	     (x) != NULL;						\
 	     (x) = name##_RB_PREV(x))
+
+#define RB_FOREACH_REVERSE_SAFE(x, name, head, y)			\
+	for ((x) = RB_MAX(name, head);					\
+	    ((x) != NULL) && ((y) = name##_RB_PREV(x), 1);		\
+	     (x) = (y))
 
 #endif	/* _SYS_TREE_H_ */
