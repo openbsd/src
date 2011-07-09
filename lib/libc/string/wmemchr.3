@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: wmemchr.3,v 1.7 2011/07/09 16:32:11 nicm Exp $
+.\"	$OpenBSD: wmemchr.3,v 1.8 2011/07/09 16:46:58 nicm Exp $
 .\"
 .Dd $Mdocdate: July 9 2011 $
 .Dt WMEMCHR 3
@@ -40,7 +40,7 @@
 .Sh SYNOPSIS
 .Fd #include <wchar.h>
 .Ft wchar_t *
-.Fn memchr "const wchar_t *b" "wchar_t c" "size_t len"
+.Fn wmemchr "const wchar_t *b" "wchar_t c" "size_t len"
 .Sh DESCRIPTION
 The
 .Fn wmemchr
@@ -66,7 +66,7 @@ wide characters.
 .Xr wcstok 3
 .Sh STANDARDS
 The
-.Fn memchr
+.Fn wmemchr
 function conforms to
 .St -isoC-99
 and was first introduced in
