@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.113 2011/07/09 01:50:41 matthew Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.114 2011/07/09 06:24:41 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -122,6 +122,9 @@ void		atascsi_disk_vpd_info(struct scsi_xfer *);
 void		atascsi_disk_vpd_thin(struct scsi_xfer *);
 void		atascsi_disk_write_same_16(struct scsi_xfer *);
 void		atascsi_disk_write_same_16_done(struct ata_xfer *);
+void		atascsi_disk_unmap(struct scsi_xfer *);
+void		atascsi_disk_unmap_task(void *, void *);
+void		atascsi_disk_unmap_done(struct ata_xfer *);
 void		atascsi_disk_capacity(struct scsi_xfer *);
 void		atascsi_disk_capacity16(struct scsi_xfer *);
 void		atascsi_disk_sync(struct scsi_xfer *);
@@ -540,6 +543,9 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 	case WRITE_SAME_16:
 		atascsi_disk_write_same_16(xs);
 		return;
+	case UNMAP:
+		atascsi_disk_unmap(xs);
+		return;
 
 	case SYNCHRONIZE_CACHE:
 		atascsi_disk_sync(xs);
@@ -946,7 +952,7 @@ atascsi_disk_vpd_thin(struct scsi_xfer *xs)
 	pg.hdr.page_code = SI_PG_DISK_THIN;
 	_lto2b(sizeof(pg) - sizeof(pg.hdr), pg.hdr.page_length);
 
-	pg.flags = VPD_DISK_THIN_TPWS;
+	pg.flags = VPD_DISK_THIN_TPU | VPD_DISK_THIN_TPWS;
 
 	bcopy(&pg, xs->data, MIN(sizeof(pg), xs->datalen));
 
@@ -1038,6 +1044,124 @@ atascsi_disk_write_same_16_done(struct ata_xfer *xa)
 
 	default:
 		panic("atascsi_disk_write_same_16_done: "
+		    "unexpected ata_xfer state (%d)", xa->state);
+	}
+
+	scsi_done(xs);
+}
+
+void
+atascsi_disk_unmap(struct scsi_xfer *xs)
+{
+	struct scsi_unmap	*cdb;
+	struct scsi_unmap_data	*unmap;
+	u_int			len;
+
+	if (ISSET(xs->flags, SCSI_POLL) || xs->cmdlen != sizeof(*cdb))
+		atascsi_done(xs, XS_DRIVER_STUFFUP);
+
+	cdb = (struct scsi_unmap *)xs->cmd;
+	len = _2btol(cdb->list_len);
+	if (xs->datalen != len || len < sizeof(*unmap))
+		atascsi_done(xs, XS_DRIVER_STUFFUP);
+
+	unmap = (struct scsi_unmap_data *)xs->data;
+	if (_2btol(unmap->data_length) != len)
+		atascsi_done(xs, XS_DRIVER_STUFFUP);
+
+	len = _2btol(unmap->desc_length);
+	if (len != xs->datalen - sizeof(*unmap))
+		atascsi_done(xs, XS_DRIVER_STUFFUP);
+
+	if (len < sizeof(struct scsi_unmap_desc)) {
+		/* no work, no error according to sbc3 */
+		atascsi_done(xs, XS_NOERROR);
+	}
+
+	if (len > sizeof(struct scsi_unmap_desc) * 64) {
+		/* more work than we advertised */
+		atascsi_done(xs, XS_DRIVER_STUFFUP);
+	}
+
+	/* let's go */
+	if (!ISSET(xs->flags, SCSI_NOSLEEP))
+		atascsi_disk_unmap_task(xs, NULL);
+	else if (workq_add_task(NULL, 0, atascsi_disk_unmap_task,
+	    xs, NULL) != 0)
+		atascsi_done(xs, XS_DRIVER_STUFFUP);
+}
+
+void
+atascsi_disk_unmap_task(void *xxs, void *a)
+{
+	struct scsi_xfer	*xs = xxs;
+	struct scsi_link	*link = xs->sc_link;
+	struct atascsi		*as = link->adapter_softc;
+	struct atascsi_port	*ap;
+	struct ata_xfer		*xa = xs->io;
+	struct ata_fis_h2d	*fis;
+	struct scsi_unmap_data	*unmap;
+	struct scsi_unmap_desc	*descs, *d;
+	u_int64_t		*trims;
+	u_int			len, i;
+
+	trims = dma_alloc(512, PR_WAITOK | PR_ZERO);
+
+	unmap = (struct scsi_unmap_data *)xs->data;
+	descs = (struct scsi_unmap_desc *)(unmap + 1);
+
+	len = _2btol(unmap->desc_length) / sizeof(*d);
+	for (i = 0; i < len; i++) {
+		d = &descs[i];
+		if (_4btol(d->logical_blocks) > ATA_DSM_TRIM_MAX_LEN)
+			goto fail;
+
+		trims[i] = htole64(ATA_DSM_TRIM_DESC(_8btol(d->logical_addr),
+		    _4btol(d->logical_blocks)));
+	}
+
+	xa->data = trims;
+	xa->datalen = 512;
+	xa->flags = ATA_F_WRITE;
+	xa->pmp_port = ap->ap_pmp_port;
+	xa->complete = atascsi_disk_unmap_done;
+	xa->atascsi_private = xs;
+	xa->timeout = (xs->timeout < 45000) ? 45000 : xs->timeout;
+
+	fis = xa->fis;
+	fis->flags = ATA_H2D_FLAGS_CMD | ap->ap_pmp_port;
+	fis->command = ATA_C_DSM;
+	fis->features = ATA_DSM_TRIM;
+	fis->sector_count = 1;
+
+	ata_exec(as, xa);
+	return;
+
+ fail:
+	dma_free(xa->data, 512);
+	atascsi_done(xs, XS_DRIVER_STUFFUP);
+}
+
+void
+atascsi_disk_unmap_done(struct ata_xfer *xa)
+{
+	struct scsi_xfer	*xs = xa->atascsi_private;
+
+	dma_free(xa->data, 512);
+
+	switch (xa->state) {
+	case ATA_S_COMPLETE:
+		xs->error = XS_NOERROR;
+		break;
+	case ATA_S_ERROR:
+		xs->error = XS_DRIVER_STUFFUP;
+		break;
+	case ATA_S_TIMEOUT:
+		xs->error = XS_TIMEOUT;
+		break;
+
+	default:
+		panic("atascsi_disk_unmap_done: "
 		    "unexpected ata_xfer state (%d)", xa->state);
 	}
 
