@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.171 2011/07/08 19:28:38 otto Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.172 2011/07/09 01:28:48 matthew Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -928,6 +928,8 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 		}
 	}
 	VOP_UNLOCK(vp, 0, p);
+	if (flags & O_CLOEXEC)
+		fdp->fd_ofileflags[indx] |= UF_EXCLOSE;
 	*retval = indx;
 	FILE_SET_MATURE(fp);
 out:
