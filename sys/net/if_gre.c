@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.55 2011/07/04 20:40:58 dhill Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.56 2011/07/09 00:47:18 henning Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -66,12 +66,6 @@
 #include <netinet/if_ether.h>
 #else
 #error "if_gre used without inet"
-#endif
-
-#ifdef NETATALK
-#include <netatalk/at.h>
-#include <netatalk/at_var.h>
-#include <netatalk/at_extern.h>
 #endif
 
 #if NBPFILTER > 0
@@ -375,11 +369,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			ip_tos = inp->ip_tos;
 			etype = ETHERTYPE_IP;
 			break;
-#ifdef NETATALK
-		case AF_APPLETALK:
-			etype = ETHERTYPE_AT;
-			break;
-#endif
 #ifdef INET6
 		case AF_INET6:
 			etype = ETHERTYPE_IPV6;

@@ -55,10 +55,6 @@ netintr(void *unused) /* ARGSUSED */
 		if (n & (1 << NETISR_MPLS))
 			mplsintr();
 #endif
-#ifdef NETATALK
-		if (n & (1 << NETISR_ATALK))
-			atintr();
-#endif
 #if NATM > 0
 		if (n & (1 << NETISR_NATM))
 			natmintr();

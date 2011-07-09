@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.118 2011/07/06 20:42:52 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.119 2011/07/09 00:47:18 henning Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -82,9 +82,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/ip_var.h>
-#endif
-#ifdef NETATALK
-#include <netatalk/at_extern.h>
 #endif
 #include "ppp.h"	/* For NPPP */
 #include "bridge.h"	/* For NBRIDGE */

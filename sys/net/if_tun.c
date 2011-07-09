@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.111 2011/07/07 20:42:56 henning Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.112 2011/07/09 00:47:18 henning Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -73,11 +73,6 @@
 
 #ifdef PIPEX
 #include <net/pipex.h>
-#endif
-
-#ifdef NETATALK
-#include <netatalk/at.h>
-#include <netatalk/at_var.h>
 #endif
 
 #include "bpfilter.h"
@@ -946,12 +941,6 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	case AF_INET6:
 		ifq = &ip6intrq;
 		isr = NETISR_IPV6;
-		break;
-#endif
-#ifdef NETATALK
-	case AF_APPLETALK:
-		ifq = &atintrq2;
-		isr = NETISR_ATALK;
 		break;
 #endif
 	default:

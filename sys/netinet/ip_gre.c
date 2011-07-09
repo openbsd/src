@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.43 2011/07/08 18:30:17 yasuoka Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.44 2011/07/09 00:47:18 henning Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -64,12 +64,6 @@
 #include <netinet/in_pcb.h>
 #else
 #error "ip_gre used without inet"
-#endif
-
-#ifdef NETATALK
-#include <netatalk/at.h>
-#include <netatalk/at_var.h>
-#include <netatalk/at_extern.h>
 #endif
 
 #ifdef MPLS
@@ -170,13 +164,6 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 			ifq = &ipintrq;          /* we are in ip_input */
 			af = AF_INET;
 			break;
-#ifdef NETATALK
-		case ETHERTYPE_AT:
-			ifq = &atintrq1;
-			schednetisr(NETISR_ATALK);
-			af = AF_APPLETALK;
-			break;
-#endif
 #ifdef INET6
 		case ETHERTYPE_IPV6:
 		        ifq = &ip6intrq;

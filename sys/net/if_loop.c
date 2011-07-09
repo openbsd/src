@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.45 2011/07/04 19:24:05 sthen Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.46 2011/07/09 00:47:18 henning Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -136,12 +136,6 @@
 #endif
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
-#endif
-
-#ifdef NETATALK
-#include <netinet/if_ether.h>
-#include <netatalk/at.h>
-#include <netatalk/at_var.h>
 #endif
 
 #ifdef MPLS
@@ -297,12 +291,6 @@ looutput(ifp, m, dst, rt)
 		isr = NETISR_IPV6;
 		break;
 #endif /* INET6 */
-#ifdef NETATALK
-	case AF_APPLETALK:
-		ifq = &atintrq2;
-		isr = NETISR_ATALK;
-		break;
-#endif /* NETATALK */
 #ifdef MPLS
 	case AF_MPLS:
 		ifq = &mplsintrq;
@@ -371,12 +359,6 @@ lo_altqstart(ifp)
 			isr = NETISR_MPLS;
 			break;
 #endif
-#ifdef NETATALK
-		case AF_APPLETALK:
-			ifq = &atintrq2;
-			isr = NETISR_ATALK;
-			break;
-#endif /* NETATALK */
 		default:
 			printf("lo_altqstart: can't handle af%d\n", af);
 			m_freem(m);

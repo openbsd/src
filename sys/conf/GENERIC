@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.179 2011/07/08 18:45:47 yasuoka Exp $
+#	$OpenBSD: GENERIC,v 1.180 2011/07/09 00:47:18 henning Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -58,7 +58,6 @@ option		ALTQ		# ALTQ base
 option		INET6		# IPv6 (needs INET)
 option		IPSEC		# IPsec
 #option		KEY		# PF_KEY (implied by IPSEC)
-#option		NETATALK	# AppleTalk
 option		PPP_BSDCOMP	# PPP BSD compression
 option		PPP_DEFLATE
 option		PIPEX		# Pppac IP EXtension, for npppd

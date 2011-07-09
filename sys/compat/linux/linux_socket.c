@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.40 2011/07/07 01:19:39 tedu Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.41 2011/07/09 00:47:18 henning Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ static const int linux_to_bsd_domain_[LINUX_AF_MAX] = {
 	AF_INET,
 	-1,		/* LINUX_AF_AX25 */
 	-1,		/* IPX */
-	AF_APPLETALK,
+	-1		/* APPLETALK */
 	-1,		/* LINUX_AF_NETROM */
 	-1,		/* LINUX_AF_BRIDGE */
 	-1,		/* LINUX_AF_ATMPVC */
