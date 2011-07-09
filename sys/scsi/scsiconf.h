@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.147 2011/07/06 00:45:52 matthew Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.148 2011/07/09 00:34:59 matthew Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -400,6 +400,8 @@ struct scsi_link {
 
 	struct	scsi_iopool *pool;
 };
+
+#define	SCSI_NO_ADAPTER_TARGET	((u_int16_t) -1)
 
 int	scsiprint(void *, const char *);
 
