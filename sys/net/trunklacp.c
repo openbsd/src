@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.12 2009/09/17 13:17:55 claudio Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.13 2011/07/09 04:38:03 henning Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -62,6 +62,7 @@
  */
 #define	LACP_SYSTEM_PRIO	0x8000
 #define	LACP_PORT_PRIO		0x8000
+#define	LACP_IFQ_PRIO		6
 
 const u_int8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN] =
     { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x02 };
@@ -355,6 +356,7 @@ lacp_xmit_lacpdu(struct lacp_port *lp)
 	if (m == NULL)
 		return (ENOMEM);
 	m->m_len = m->m_pkthdr.len = sizeof(*eh) + sizeof(*du);
+	m->m_pkthdr.pf.prio = LACP_IFQ_PRIO;
 
 	eh = mtod(m, struct ether_header *);
 	memcpy(&eh->ether_dhost, ethermulticastaddr_slowprotocols,
@@ -412,6 +414,7 @@ lacp_xmit_marker(struct lacp_port *lp)
 	if (m == NULL)
 		return (ENOMEM);
 	m->m_len = m->m_pkthdr.len = sizeof(*eh) + sizeof(*mdu);
+	m->m_pkthdr.pf.prio = LACP_IFQ_PRIO;
 
 	eh = mtod(m, struct ether_header *);
 	memcpy(&eh->ether_dhost, ethermulticastaddr_slowprotocols,
