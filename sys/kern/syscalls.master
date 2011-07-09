@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.116 2011/07/09 05:31:26 matthew Exp $
+;	$OpenBSD: syscalls.master,v 1.117 2011/07/09 05:46:26 matthew Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -326,7 +326,7 @@
 			    struct rlimit *rlp); }
 195	STD		{ int sys_setrlimit(int which, \
 			    const struct rlimit *rlp); }
-196	COMPAT_48	{ int sys_getdirentries(int fd, char *buf, \
+196	COMPAT_O48	{ int sys_getdirentries(int fd, char *buf, \
 			    int count, long *basep); }
 197	STD		{ void *sys_mmap(void *addr, size_t len, int prot, \
 			    int flags, int fd, long pad, off_t pos); }

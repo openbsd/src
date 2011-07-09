@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.180 2011/07/09 00:47:18 henning Exp $
+#	$OpenBSD: GENERIC,v 1.181 2011/07/09 05:46:26 matthew Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -29,6 +29,7 @@ option		SYSVSHM		# System V-like memory sharing
 option		UVM_SWAP_ENCRYPT# support encryption of pages going to swap
 
 option		COMPAT_43	# Kernel compatibility with 4.3BSD
+option		COMPAT_O48	# Kernel compatibility with OpenBSD 4.8
 
 option		LKM		# loadable kernel modules
 

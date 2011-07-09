@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.173 2011/07/09 05:31:26 matthew Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.174 2011/07/09 05:46:26 matthew Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2730,10 +2730,11 @@ sys_getdirentries(struct proc *p, void *v, register_t *retval)
 	return error;
 }
 
+#ifdef COMPAT_O48
 int
-compat_48_sys_getdirentries(struct proc *p, void *v, register_t *retval)
+compat_o48_sys_getdirentries(struct proc *p, void *v, register_t *retval)
 {
-	struct sys_getdirentries_args /* {
+	struct compat_o48_sys_getdirentries_args /* {
 		syscallarg(int) fd;
 		syscallarg(char *) buf;
 		syscallarg(int) count;
@@ -2750,6 +2751,7 @@ compat_48_sys_getdirentries(struct proc *p, void *v, register_t *retval)
 	}
 	return error;
 }
+#endif
 
 /*
  * Set the mode mask for creation of filesystem nodes.
