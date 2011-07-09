@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.56 2011/07/09 04:01:30 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.57 2011/07/09 07:22:05 otto Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -1073,7 +1073,7 @@ ktrstruct(char *buf, size_t buflen)
 			goto invalid;
 		ktrsockaddr((struct sockaddr *)&ss);
 	} else {
-		printf("unknown structure\n");
+		printf("unknown structure %s\n", name);
 	}
 	return;
 invalid:
