@@ -1,0 +1,50 @@
+.\" $OpenBSD: fw_update.1,v 1.1 2011/07/09 04:53:41 halex Exp $
+.\"
+.\" Copyright (c) 2011 Alexander Hall <alexander@beard.se>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: July 9 2011 $
+.Dt FW_UPDATE 1
+.Os
+.Sh NAME
+.Nm fw_update
+.Nd install and update tool for non-free firmware packages
+.Sh SYNOPSIS
+.Nm fw_update
+.Op Fl v
+.Sh DESCRIPTION
+.Nm
+is a utility that installs and updates device firmwares with non-free licenses
+that may not be shipped with OpenBSD.
+It will automatically detect such devices and locate and install the proper
+firmware packages for the currently running kernel.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl v
+Verbose output.
+Passes the
+.Fl v
+flag to
+.Xr ssh_add 1 .
+.El
+.Sh SEE ALSO
+.Xr dmesg 8
+.Xr pkg_add 1
+.Sh AUTHORS
+.An -nosplit
+The 
+.Nm
+program was written by
+.An Alexander Hall Aq alexander@beard.se .
