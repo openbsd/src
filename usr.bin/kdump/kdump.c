@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.55 2011/07/08 19:29:44 otto Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.56 2011/07/09 04:01:30 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -928,20 +928,6 @@ ktrsockaddr(struct sockaddr *sa)
 		printf("%s:%u", addr, ntohs(sa_in->sin_port));
 		break;
 	}
-#ifdef NETATALK
-	case AF_APPLETALK: {
-		struct sockaddr_at	*sa_at;
-		struct netrange		*nr;
-
-		sa_at = (struct sockaddr_at *)sa;
-		check_sockaddr_len(at);
-		nr = &sa_at->sat_range.r_netrange;
-		printf("%d.%d, %d-%d, %d", ntohs(sa_at->sat_addr.s_net),
-			sa_at->sat_addr.s_node, ntohs(nr->nr_firstnet),
-			ntohs(nr->nr_lastnet), nr->nr_phase);
-		break;
-	}
-#endif
 	case AF_INET6: {
 		struct sockaddr_in6	*sa_in6;
 

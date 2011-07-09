@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.35 2010/12/21 14:56:24 claudio Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.36 2011/07/09 04:01:30 deraadt Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -54,7 +54,6 @@
 #define	NETISR_TX	3		/* for if_snd processing */
 #define	NETISR_MPLS	4		/* AF_MPLS would overflow */
 #define	NETISR_PFSYNC	5		/* for pfsync "immediate" tx */
-#define	NETISR_ATALK	16		/* same as AF_APPLETALK */
 #define	NETISR_ARP	18		/* same as AF_LINK */
 #define	NETISR_IPV6	24		/* same as AF_INET6 */
 #define	NETISR_ISDN	26		/* same as AF_E164 */
