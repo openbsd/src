@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.112 2011/07/08 22:09:27 matthew Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.113 2011/07/09 01:50:41 matthew Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -50,6 +50,7 @@ struct atascsi {
 	struct scsi_link	as_link;
 	struct scsibus_softc	*as_scsibus;
 
+	int			as_nports;
 	int			as_capability;
 	int			as_ncqdepth;
 };
@@ -176,6 +177,7 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 	as->as_cookie = aaa->aaa_cookie;
 	as->as_methods = aaa->aaa_methods;
 	as->as_capability = aaa->aaa_capability;
+	as->as_nports = aaa->aaa_nports;
 	as->as_ncqdepth = aaa->aaa_ncmds;
 
 	/* copy from template and modify for ourselves */
@@ -186,15 +188,15 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 	/* fill in our scsi_link */
 	as->as_link.adapter = &as->as_switch;
 	as->as_link.adapter_softc = as;
-	as->as_link.adapter_target = aaa->aaa_nports;
+	as->as_link.adapter_target = SCSI_NO_ADAPTER_TARGET;
 	as->as_link.openings = 1;
 
 	as->as_host_ports = malloc(sizeof(struct atascsi_host_port *) *
-	    aaa->aaa_nports, M_DEVBUF, M_WAITOK | M_ZERO);
+	    as->as_nports, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &as->as_link;
-	saa.saa_targets = aaa->aaa_nports;
+	saa.saa_targets = as->as_nports;
 	saa.saa_luns = SATA_PMP_MAX_PORTS;
 
 	/* stash the scsibus so we can do hotplug on it */
@@ -245,7 +247,7 @@ atascsi_lookup_port(struct scsi_link *link)
 	struct atascsi 			*as = link->adapter_softc;
 	struct atascsi_host_port 	*ahp;
 
-	if (link->target >= as->as_link.adapter_buswidth)
+	if (link->target >= as->as_nports)
 		return (NULL);
 
 	ahp = as->as_host_ports[link->target];
@@ -268,7 +270,7 @@ atascsi_probe(struct scsi_link *link)
 	u_int16_t			cmdset;
 
 	port = link->target;
-	if (port >= as->as_link.adapter_buswidth)
+	if (port >= as->as_nports)
 		return (ENXIO);
 
 	/* if this is a PMP port, check it's valid */
@@ -450,7 +452,7 @@ atascsi_free(struct scsi_link *link)
 	int				port;
 
 	port = link->target;
-	if (port >= as->as_link.adapter_buswidth)
+	if (port >= as->as_nports)
 		return;
 
 	ahp = as->as_host_ports[port];
