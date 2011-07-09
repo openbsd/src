@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.55 2011/07/04 20:35:35 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.56 2011/07/09 16:51:08 matthew Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -146,8 +146,7 @@ cd9660_mknod(ndp, vap, cred, p)
  * Setattr call. Only allowed for block and character special devices.
  */
 int
-cd9660_setattr(v)
-	void *v;
+cd9660_setattr(void *v)
 {
 	struct vop_setattr_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -184,8 +183,7 @@ cd9660_setattr(v)
  */
 /* ARGSUSED */
 int
-cd9660_open(v)
-	void *v;
+cd9660_open(void *v)
 {
 	return (0);
 }
@@ -197,8 +195,7 @@ cd9660_open(v)
  */
 /* ARGSUSED */
 int
-cd9660_close(v)
-	void *v;
+cd9660_close(void *v)
 {
 	return (0);
 }
@@ -209,8 +206,7 @@ cd9660_close(v)
  * super user is granted all permissions.
  */
 int
-cd9660_access(v)
-	void *v;
+cd9660_access(void *v)
 {
 	struct vop_access_args *ap = v;
 	struct iso_node *ip = VTOI(ap->a_vp);
@@ -220,8 +216,7 @@ cd9660_access(v)
 }
 
 int
-cd9660_getattr(v)
-	void *v;
+cd9660_getattr(void *v)
 {
 	struct vop_getattr_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -276,8 +271,7 @@ cd9660_getattr(v)
  * Vnode op for reading.
  */
 int
-cd9660_read(v)
-	void *v;
+cd9660_read(void *v)
 {
 	struct vop_read_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -349,16 +343,14 @@ cd9660_read(v)
 
 /* ARGSUSED */
 int
-cd9660_ioctl(v)
-	void *v;
+cd9660_ioctl(void *v)
 {
 	return (ENOTTY);
 }
 
 /* ARGSUSED */
 int
-cd9660_poll(v)
-	void *v;
+cd9660_poll(void *v)
 {
 	struct vop_poll_args *ap = v;
 
@@ -375,8 +367,7 @@ cd9660_poll(v)
  */
 /* ARGSUSED */
 int
-cd9660_mmap(v)
-	void *v;
+cd9660_mmap(void *v)
 {
 
 	return (EINVAL);
@@ -389,8 +380,7 @@ cd9660_mmap(v)
  */
 /* ARGSUSED */
 int
-cd9660_seek(v)
-	void *v;
+cd9660_seek(void *v)
 {
 	return (0);
 }
@@ -485,8 +475,7 @@ iso_shipdir(idp)
  * Vnode op for readdir
  */
 int
-cd9660_readdir(v)
-	void *v;
+cd9660_readdir(void *v)
 {
 	struct vop_readdir_args *ap = v;
 	register struct uio *uio = ap->a_uio;
@@ -674,8 +663,7 @@ typedef struct iso_directory_record ISODIR;
 typedef struct iso_node             ISONODE;
 typedef struct iso_mnt              ISOMNT;
 int
-cd9660_readlink(v)
-	void *v;
+cd9660_readlink(void *v)
 {
 	struct vop_readlink_args *ap = v;
 	ISONODE	*ip;
@@ -762,8 +750,7 @@ cd9660_readlink(v)
 }
 
 int
-cd9660_link(v)
-	void *v;
+cd9660_link(void *v)
 {
 	struct vop_link_args *ap = v;
 
@@ -773,8 +760,7 @@ cd9660_link(v)
 }
 
 int
-cd9660_symlink(v)
-	void *v;
+cd9660_symlink(void *v)
 {
 	struct vop_symlink_args *ap = v;
 
@@ -787,8 +773,7 @@ cd9660_symlink(v)
  * Lock an inode.
  */
 int
-cd9660_lock(v)
-	void *v;
+cd9660_lock(void *v)
 {
 	struct vop_lock_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -800,8 +785,7 @@ cd9660_lock(v)
  * Unlock an inode.
  */
 int
-cd9660_unlock(v)
-	void *v;
+cd9660_unlock(void *v)
 {
 	struct vop_unlock_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -814,8 +798,7 @@ cd9660_unlock(v)
  * then call the device strategy routine.
  */
 int
-cd9660_strategy(v)
-	void *v;
+cd9660_strategy(void *v)
 {
 	struct vop_strategy_args *ap = v;
 	struct buf *bp = ap->a_bp;
@@ -857,8 +840,7 @@ cd9660_strategy(v)
  */
 /*ARGSUSED*/
 int
-cd9660_print(v)
-	void *v;
+cd9660_print(void *v)
 {
 	printf("tag VT_ISOFS, isofs vnode\n");
 	return (0);
@@ -868,8 +850,7 @@ cd9660_print(v)
  * Check for a locked inode.
  */
 int
-cd9660_islocked(v)
-	void *v;
+cd9660_islocked(void *v)
 {
 	struct vop_islocked_args *ap = v;
 
@@ -880,8 +861,7 @@ cd9660_islocked(v)
  * Return POSIX pathconf information applicable to cd9660 filesystems.
  */
 int
-cd9660_pathconf(v)
-	void *v;
+cd9660_pathconf(void *v)
 {
 	struct vop_pathconf_args *ap = v;
 	switch (ap->a_name) {
