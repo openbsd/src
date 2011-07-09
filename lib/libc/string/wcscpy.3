@@ -29,45 +29,69 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: wmemchr.3,v 1.7 2011/07/09 16:32:11 nicm Exp $
+.\"	$OpenBSD: wcscpy.3,v 1.1 2011/07/09 16:32:11 nicm Exp $
 .\"
 .Dd $Mdocdate: July 9 2011 $
-.Dt WMEMCHR 3
+.Dt WCSCPY 3
 .Os
 .Sh NAME
-.Nm wmemchr
-.Nd locate wide character in wide string
+.Nm wcscpy ,
+.Nm wcsncpy
+.Nd copy wide strings
 .Sh SYNOPSIS
 .Fd #include <wchar.h>
 .Ft wchar_t *
-.Fn memchr "const wchar_t *b" "wchar_t c" "size_t len"
+.Fn wcscpy "wchar_t * restrict dst" "const wchar_t * restrict src"
+.Ft wchar_t *
+.Fo wcsncpy
+.Fa "wchar_t * restrict dst"
+.Fa "const wchar_t * restrict src"
+.Fa "size_t len"
+.Fc
 .Sh DESCRIPTION
 The
-.Fn wmemchr
-function locates the first occurrence of
-.Fa c
-in wide string
-.Fa b .
+.Fn wcscpy
+function copies the wide string
+.Fa src
+to
+.Fa dst
+(including the terminating null wide character).
+.Pp
+The
+.Fn wcsncpy
+function copies not more than
+.Fa len
+wide characters to
+.Fa dst ,
+appending null wide characters if the length of
+.Fa src
+is less than
+.Fa len ,
+and
+.Em not
+terminating
+.Fa dst
+if the length of
+.Fa src
+is greater than or equal to
+.Fa len .
 .Sh RETURN VALUES
 The
-.Fn wmemchr
-function returns a pointer to the wide character located, or
-.Dv NULL
-if no such wide character exists within
-.Fa len
-wide characters.
+.Fn wcscpy
+and
+.Fn wcsncpy
+functions return
+.Fa dst .
 .Sh SEE ALSO
-.Xr wcschr 3 ,
-.Xr wcscspn 3 ,
-.Xr wcspbrk 3 ,
-.Xr wcsrchr 3 ,
-.Xr wcsspn 3 ,
-.Xr wcsstr 3 ,
-.Xr wcstok 3
+.Xr wcslcpy 3 ,
+.Xr wmemcpy 3 ,
+.Xr wmemmove 3
 .Sh STANDARDS
 The
-.Fn memchr
-function conforms to
+.Fn wcscpy
+and
+.Fn wcsncpy
+functions conform to
 .St -isoC-99
-and was first introduced in
+and were first introduced in
 .St -isoC-amd1 .

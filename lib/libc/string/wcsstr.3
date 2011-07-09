@@ -29,44 +29,51 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: wmemchr.3,v 1.7 2011/07/09 16:32:11 nicm Exp $
+.\"	$OpenBSD: wcsstr.3,v 1.1 2011/07/09 16:32:11 nicm Exp $
 .\"
 .Dd $Mdocdate: July 9 2011 $
-.Dt WMEMCHR 3
+.Dt WCSSTR 3
 .Os
 .Sh NAME
-.Nm wmemchr
-.Nd locate wide character in wide string
+.Nm wcsstr
+.Nd locate a wide substring in a wide string
 .Sh SYNOPSIS
 .Fd #include <wchar.h>
 .Ft wchar_t *
-.Fn memchr "const wchar_t *b" "wchar_t c" "size_t len"
+.Fn wcsstr "const wchar_t *big" "const wchar_t *little"
 .Sh DESCRIPTION
 The
-.Fn wmemchr
-function locates the first occurrence of
-.Fa c
-in wide string
-.Fa b .
-.Sh RETURN VALUES
-The
-.Fn wmemchr
-function returns a pointer to the wide character located, or
+.Fn wcsstr
+function locates the first occurrence of the wide string
+.Fa little
+in the wide string
+.Fa big .
+.Pp
+If
+.Fa little
+is an empty wide string,
+.Fa big
+is returned;
+if
+.Fa little
+occurs nowhere in
+.Fa big ,
 .Dv NULL
-if no such wide character exists within
-.Fa len
-wide characters.
+is returned;
+otherwise a pointer to the first wide character of the first occurrence of
+.Fa little
+is returned.
 .Sh SEE ALSO
 .Xr wcschr 3 ,
 .Xr wcscspn 3 ,
 .Xr wcspbrk 3 ,
 .Xr wcsrchr 3 ,
 .Xr wcsspn 3 ,
-.Xr wcsstr 3 ,
-.Xr wcstok 3
+.Xr wcstok 3 ,
+.Xr wmemchr 3 ,
 .Sh STANDARDS
 The
-.Fn memchr
+.Fn wcsstr
 function conforms to
 .St -isoC-99
 and was first introduced in

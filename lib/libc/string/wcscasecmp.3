@@ -1,10 +1,10 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" $OpenBSD: wcscasecmp.3,v 1.1 2011/07/09 16:32:11 nicm Exp $
+.\"
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
-.\" Chris Torek and the American National Standards Committee X3,
-.\" on Information Processing Systems.
-.\"
+.\" Chris Torek.
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -29,45 +29,49 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: wmemchr.3,v 1.7 2011/07/09 16:32:11 nicm Exp $
+.\"     @(#)strcasecmp.3	8.1 (Berkeley) 6/9/93
 .\"
 .Dd $Mdocdate: July 9 2011 $
-.Dt WMEMCHR 3
+.Dt WCSCASECMP 3
 .Os
 .Sh NAME
-.Nm wmemchr
-.Nd locate wide character in wide string
+.Nm wcscasecmp ,
+.Nm wcsncasecmp
+.Nd compare wide strings, ignoring case
 .Sh SYNOPSIS
 .Fd #include <wchar.h>
-.Ft wchar_t *
-.Fn memchr "const wchar_t *b" "wchar_t c" "size_t len"
+.Ft int
+.Fn wcscasecmp "const wchar_t *s1" "const wchar_t *s2"
+.Ft int
+.Fn wcsncasecmp "const wchar_t *s1" "const wchar_t *s2" "size_t len"
 .Sh DESCRIPTION
 The
-.Fn wmemchr
-function locates the first occurrence of
-.Fa c
-in wide string
-.Fa b .
-.Sh RETURN VALUES
-The
-.Fn wmemchr
-function returns a pointer to the wide character located, or
-.Dv NULL
-if no such wide character exists within
+.Fn wcscasecmp
+and
+.Fn wcsncasecmp
+functions compare the wide strings
+.Fa s1
+and
+.Fa s2
+and return an integer greater than, equal to, or less than 0,
+according to whether
+.Fa s1
+is lexicographically greater than, equal to, or less than
+.Fa s2
+after translation of each corresponding wide character to lower case.
+The wide strings themselves are not modified.
+.Pp
+.Fn wcsncasecmp
+compares at most
 .Fa len
 wide characters.
 .Sh SEE ALSO
-.Xr wcschr 3 ,
-.Xr wcscspn 3 ,
-.Xr wcspbrk 3 ,
-.Xr wcsrchr 3 ,
-.Xr wcsspn 3 ,
-.Xr wcsstr 3 ,
-.Xr wcstok 3
+.Xr wcscmp 3 ,
+.Xr wmemcmp 3
 .Sh STANDARDS
 The
-.Fn memchr
-function conforms to
-.St -isoC-99
-and was first introduced in
-.St -isoC-amd1 .
+.Fn wcscasecmp
+and
+.Fn wcsncasecmp
+functions conform to
+.St -p1003.1-2008 .

@@ -29,44 +29,41 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: wmemchr.3,v 1.7 2011/07/09 16:32:11 nicm Exp $
+.\"	$OpenBSD: wmemcmp.3,v 1.1 2011/07/09 16:32:11 nicm Exp $
 .\"
 .Dd $Mdocdate: July 9 2011 $
-.Dt WMEMCHR 3
+.Dt WMEMCMP 3
 .Os
 .Sh NAME
-.Nm wmemchr
-.Nd locate wide character in wide string
+.Nm wmemcmp
+.Nd compare wide strings
 .Sh SYNOPSIS
 .Fd #include <wchar.h>
-.Ft wchar_t *
-.Fn memchr "const wchar_t *b" "wchar_t c" "size_t len"
+.Ft int
+.Fn wmemcmp "const wchar_t *s1" "const wchar_t *s2" "size_t len"
 .Sh DESCRIPTION
 The
-.Fn wmemchr
-function locates the first occurrence of
-.Fa c
-in wide string
-.Fa b .
+.Fn wmemcmp
+function compares the wide string
+.Fa s1
+against the wide string
+.Fa s2 .
+Both wide strings are assumed to be
+.Fa len
+wide characters long.
 .Sh RETURN VALUES
 The
-.Fn wmemchr
-function returns a pointer to the wide character located, or
-.Dv NULL
-if no such wide character exists within
-.Fa len
-wide characters.
+.Fn wmemcmp
+function returns zero if the two wide strings are identical,
+otherwise the difference between the first two differing wide characters is
+returned.
+Zero-length wide strings are always identical.
 .Sh SEE ALSO
-.Xr wcschr 3 ,
-.Xr wcscspn 3 ,
-.Xr wcspbrk 3 ,
-.Xr wcsrchr 3 ,
-.Xr wcsspn 3 ,
-.Xr wcsstr 3 ,
-.Xr wcstok 3
+.Xr wcscasecmp 3 ,
+.Xr wcscmp 3 ,
 .Sh STANDARDS
 The
-.Fn memchr
+.Fn wmemcmp
 function conforms to
 .St -isoC-99
 and was first introduced in

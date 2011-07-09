@@ -29,45 +29,49 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: wmemchr.3,v 1.7 2011/07/09 16:32:11 nicm Exp $
+.\"	$OpenBSD: wmemcpy.3,v 1.1 2011/07/09 16:32:11 nicm Exp $
 .\"
 .Dd $Mdocdate: July 9 2011 $
-.Dt WMEMCHR 3
+.Dt MEMCPY 3
 .Os
 .Sh NAME
-.Nm wmemchr
-.Nd locate wide character in wide string
+.Nm wmemcpy
+.Nd copy wide characters
 .Sh SYNOPSIS
 .Fd #include <wchar.h>
 .Ft wchar_t *
-.Fn memchr "const wchar_t *b" "wchar_t c" "size_t len"
+.Fn memcpy "wchar_t * restrict dst" "const wchar_t * restrict src" "size_t len"
 .Sh DESCRIPTION
 The
-.Fn wmemchr
-function locates the first occurrence of
-.Fa c
-in wide string
-.Fa b .
+.Fn wmemcpy
+function copies
+.Fa len
+wide characters from buffer
+.Fa src
+to buffer
+.Fa dst .
 .Sh RETURN VALUES
 The
-.Fn wmemchr
-function returns a pointer to the wide character located, or
-.Dv NULL
-if no such wide character exists within
-.Fa len
-wide characters.
+.Fn wmemcpy
+function returns the original value of
+.Fa dst .
 .Sh SEE ALSO
-.Xr wcschr 3 ,
-.Xr wcscspn 3 ,
-.Xr wcspbrk 3 ,
-.Xr wcsrchr 3 ,
-.Xr wcsspn 3 ,
-.Xr wcsstr 3 ,
-.Xr wcstok 3
+.Xr wcscpy 3 ,
+.Xr wcslcpy 3 ,
+.Xr wmemmove 3
 .Sh STANDARDS
 The
-.Fn memchr
+.Fn wmemcpy
 function conforms to
 .St -isoC-99
 and was first introduced in
 .St -isoC-amd1 .
+.Sh BUGS
+In this implementation
+.Fn wmemcpy
+is implemented using
+.Xr bcopy 3 ,
+and therefore the buffers may overlap.
+On other systems, copying overlapping buffers may produce surprises.
+A simpler solution is to not use
+.Fn wmemcpy .
