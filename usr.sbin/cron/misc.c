@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.42 2010/04/10 16:43:18 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.43 2011/07/09 14:49:14 dhill Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -291,7 +291,7 @@ acquire_daemonlock(int closeflag) {
 			close(fd);
 			fd = STDERR + 1;
 		}
-		(void) fcntl(fd, F_SETFD, 1);
+		(void) fcntl(fd, F_SETFD, FD_CLOEXEC);
 	}
 
 	snprintf(buf, sizeof(buf), "%ld\n", (long)getpid());
@@ -466,7 +466,7 @@ log_it(const char *username, PID_T xpid, const char *event, const char *detail) 
 				ProgramName);
 			perror(LOG_FILE);
 		} else {
-			(void) fcntl(LogFD, F_SETFD, 1);
+			(void) fcntl(LogFD, F_SETFD, FD_CLOEXEC);
 		}
 	}
 
