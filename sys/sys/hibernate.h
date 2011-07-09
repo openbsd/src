@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.9 2011/07/09 00:55:00 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.10 2011/07/09 01:30:39 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -118,5 +118,10 @@ void	*hibernate_zlib_alloc(void *, int, int);
 void	hibernate_zlib_free(void *, void *);
 void	hibernate_inflate(paddr_t, paddr_t, size_t);
 size_t	hibernate_deflate(paddr_t, size_t *);
+
+int	hibernate_write_signature(union hibernate_info *);
+int	hibernate_clear_signature(void);
+
+int	hibernate_check_overlap(paddr_t, paddr_t, paddr_t, paddr_t);
 
 #endif /* _SYS_HIBERNATE_H_ */

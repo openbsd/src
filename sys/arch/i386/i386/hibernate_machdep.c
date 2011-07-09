@@ -54,9 +54,6 @@ void    hibernate_enter_resume_4k_pde(vaddr_t);
 void    hibernate_enter_resume_4m_pde(vaddr_t, paddr_t);
 void	hibernate_populate_resume_pt(paddr_t *, paddr_t *);
 int	get_hibernate_info_md(union hibernate_info *);
-int	hibernate_write_signature(void);
-int	hibernate_clear_signature(void);
-int	hibernate_inflate_skip(paddr_t);
 
 union 	hibernate_info *global_hiber_info;
 paddr_t global_image_start;
@@ -324,7 +321,7 @@ hibernate_write_image()
 	}
 	
 	/* Image write complete, write the signature and return */	
-	return hibernate_write_signature();
+	return hibernate_write_signature(&hiber_info);
 }
 
 int
@@ -487,51 +484,6 @@ hibernate_resume()
 	 * Resume the loaded kernel by jumping to the S3 resume vector
 	 */
 	hibernate_resume_machine();
-}
-
-int
-hibernate_write_signature()
-{
-	union hibernate_info hiber_info;
-	u_int8_t *io_page;
-
-	/* Get current running machine's hibernate info */
-	if (get_hibernate_info(&hiber_info))
-		return (1);
-
-	io_page = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT);
-	if (!io_page)
-		return (1);
-	
-	/* Write hibernate info to disk */
-	hiber_info.io_func(hiber_info.device, hiber_info.sig_offset,
-		(vaddr_t)&hiber_info, 512, 1, io_page);
-
-	free(io_page, M_DEVBUF);
-
-	return (0);
-}
-
-int
-hibernate_clear_signature()
-{
-	union hibernate_info hiber_info;
-	u_int8_t *io_page;
-
-	/* Zero out a blank hiber_info */
-	bzero(&hiber_info, sizeof(hiber_info));
-
-	io_page = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT);
-	if (!io_page)
-		return (1);
-	
-	/* Write (zeroed) hibernate info to disk */
-	hiber_info.io_func(hiber_info.device, hiber_info.sig_offset,
-		(vaddr_t)&hiber_info, 512, 1, io_page);
-
-	free(io_page, M_DEVBUF);
-
-	return (0);
 }
 
 /*

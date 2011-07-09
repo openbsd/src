@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.10 2011/07/09 00:55:00 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.11 2011/07/09 01:30:39 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -17,6 +17,7 @@
  */
 
 #include <sys/hibernate.h>
+#include <sys/malloc.h>
 #include <sys/param.h>
 #include <sys/tree.h>
 #include <sys/types.h>
@@ -610,6 +611,19 @@ void
 }
 
 /*
+ * hibernate_zlib_free
+ *
+ * Free the memory pointed to by addr in the hiballoc area presently in
+ * use
+ *
+ */
+void
+hibernate_zlib_free(void *unused, void *addr)
+{
+	hib_free(&hibernate_state->hiballoc_arena, addr);
+}
+
+/*
  * hibernate_inflate
  *
  * Inflate size bytes from src into dest, skipping any pages in
@@ -696,4 +710,112 @@ hibernate_deflate(paddr_t src, size_t *remaining)
 	*remaining = hibernate_state->hib_stream.avail_out;
 	return (PAGE_SIZE - (src & PAGE_MASK)) -
 		hibernate_state->hib_stream.avail_in;
+}
+
+/*
+ * hibernate_write_signature
+ *
+ * Write the hibernation information specified in hiber_info
+ * to the location in swap previously calculated (last block of
+ * swap), called the "signature block".
+ *
+ * Write the memory chunk table to the area in swap immediately
+ * preceding the signature block.
+ */
+int
+hibernate_write_signature(union hibernate_info *hiber_info)
+{
+	u_int8_t *io_page;
+	daddr_t chunkbase;
+	size_t i;
+
+	io_page = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT);
+	if (!io_page)
+		return (1);
+
+	/* Write hibernate info to disk */
+	if( hiber_info->io_func(hiber_info->device, hiber_info->sig_offset,
+		(vaddr_t)hiber_info, hiber_info->secsize, 1, io_page))
+			panic("error in hibernate write sig\n");
+
+	chunkbase = hiber_info->sig_offset -
+		    (HIBERNATE_CHUNK_TABLE_SIZE / hiber_info->secsize);
+
+	/* Write chunk table */
+	for(i=0; i < HIBERNATE_CHUNK_TABLE_SIZE; i += NBPG) {
+		if(hiber_info->io_func(hiber_info->device,
+			chunkbase + (i/hiber_info->secsize),
+			(vaddr_t)(HIBERNATE_CHUNK_TABLE_START + i),
+			NBPG,
+			1,
+			io_page))
+				panic("error in hibernate write chunks\n");
+	}
+
+	free(io_page, M_DEVBUF);
+
+	return (0);
+}
+
+/*
+ * hibernate_clear_signature
+ *
+ * Write an empty hiber_info to the swap signature block, which is
+ * guaranteed to not match any valid hiber_info.
+ */
+int
+hibernate_clear_signature()
+{
+	union hibernate_info blank_hiber_info;
+	union hibernate_info hiber_info;
+	u_int8_t *io_page;
+
+	/* Zero out a blank hiber_info */
+	bzero(&blank_hiber_info, sizeof(hiber_info));
+
+	if (get_hibernate_info(&hiber_info))
+		return (1);
+
+	io_page = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT);
+	if (!io_page)
+		return (1);
+
+	/* Write (zeroed) hibernate info to disk */
+	if(hiber_info.io_func(hiber_info.device, hiber_info.sig_offset,
+		(vaddr_t)&blank_hiber_info, hiber_info.secsize, 1, io_page))
+			panic("error hibernate write 6\n");
+
+	free(io_page, M_DEVBUF);
+	
+	return (0);
+}
+
+/*
+ * hibernate_check_overlap
+ *
+ * Check chunk range overlap when calculating whether or not to copy a
+ * compressed chunk to the piglet area before decompressing.
+ *
+ * returns zero if the ranges do not overlap, non-zero otherwise.
+ */
+int
+hibernate_check_overlap(paddr_t r1s, paddr_t r1e, paddr_t r2s, paddr_t r2e)
+{
+	/* case A : end of r1 overlaps start of r2 */
+	if (r1s < r2s && r1e > r2s) 
+		return (1);
+
+	/* case B : r1 entirely inside r2 */
+	if (r1s >= r2s && r1e <= r2e)
+		return (1);
+
+	/* case C : r2 entirely inside r1 */
+	if (r2s >= r1s && r2e <= r1e)
+		return (1);
+
+	/* case D : end of r2 overlaps start of r1 */
+	if (r2s < r1s && r2e > r1s)
+		return (1);
+
+	return (0);
 }
