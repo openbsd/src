@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.92 2009/10/19 22:24:18 jsg Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.93 2011/07/09 00:24:44 beck Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -257,7 +257,7 @@ nfs_mountroot(void)
 
 	/*
 	 * Call nfs_boot_init() to fill in the nfs_diskless struct.
-	 * Side effect:  Finds and configures a network interface.
+	 * Side effect:	 Finds and configures a network interface.
 	 */
 	bzero((caddr_t) &nd, sizeof(nd));
 	nfs_boot_init(&nd, procp);
@@ -311,7 +311,7 @@ nfs_mountroot(void)
 	}
 
 	/*
-	 * If swapping to an nfs node:  (swdevt[0].sw_dev == NODEV)
+	 * If swapping to an nfs node:	(swdevt[0].sw_dev == NODEV)
 	 * Create a fake mount point just for the swap vnode so that the
 	 * swap file can be on a different server from the rootfs.
 	 *
@@ -330,10 +330,11 @@ nfs_mountroot(void)
 		vp->v_type = VREG;
 		vp->v_flag = 0;
 
-		/* 
-		 * Next line is a hack to make swapmount() work on NFS swap files. 
-		 * XXX-smurph 
-		 */ 
+		/*
+		 * Next line is a hack to make swapmount() work on NFS
+		 * swap files.
+		 * XXX-smurph
+		 */
 		swdevt[0].sw_dev = NETDEV;
 		/* end hack */
 		swdevt[0].sw_vp = vp;
@@ -380,7 +381,7 @@ nfs_mount_diskless(struct nfs_dlmount *ndmntp, char *mntname, int mntflag)
 	args.addr     = (struct sockaddr *)&ndmntp->ndm_saddr;
 	args.addrlen  = args.addr->sa_len;
 	args.sotype   = SOCK_DGRAM;
-	args.fh       = ndmntp->ndm_fh;
+	args.fh	      = ndmntp->ndm_fh;
 	args.fhsize   = NFSX_V2FH;
 	args.hostname = ndmntp->ndm_host;
 
@@ -390,7 +391,7 @@ nfs_mount_diskless(struct nfs_dlmount *ndmntp, char *mntname, int mntflag)
 #ifdef	NFS_BOOT_RWSIZE
 	/*
 	 * Reduce rsize,wsize for interfaces that consistently
-	 * drop fragments of long UDP messages.  (i.e. wd8003).
+	 * drop fragments of long UDP messages.	 (i.e. wd8003).
 	 * You can always change these later via remount.
 	 */
 	args.flags   |= NFSMNT_WSIZE | NFSMNT_RSIZE;
@@ -865,7 +866,6 @@ nfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 int
 nfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
-
 	return (EINVAL);
 }
 
@@ -876,7 +876,6 @@ nfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 int
 nfs_vptofh(struct vnode *vp, struct fid *fhp)
 {
-
 	return (EINVAL);
 }
 
@@ -887,7 +886,6 @@ nfs_vptofh(struct vnode *vp, struct fid *fhp)
 int
 nfs_start(struct mount *mp, int flags, struct proc *p)
 {
-
 	return (0);
 }
 
@@ -898,7 +896,6 @@ nfs_start(struct mount *mp, int flags, struct proc *p)
 int
 nfs_quotactl(struct mount *mp, int cmd, uid_t uid, caddr_t arg, struct proc *p)
 {
-
 	return (EOPNOTSUPP);
 }
 
