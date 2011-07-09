@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.28 2011/07/09 00:39:29 matthew Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.29 2011/07/09 02:11:29 matthew Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -33,8 +33,7 @@
 #include <dev/sdmmc/sdmmc_scsi.h>
 #include <dev/sdmmc/sdmmcvar.h>
 
-#define SDMMC_SCSIID_HOST	0x00
-#define SDMMC_SCSIID_MAX	0x0f
+#define SDMMC_SCSIID_MAX	0x10
 
 #define SDMMC_SCSI_MAXCMDS	8
 
@@ -105,15 +104,15 @@ sdmmc_scsi_attach(struct sdmmc_softc *sc)
 	scbus = malloc(sizeof *scbus, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	scbus->sc_tgt = malloc(sizeof(*scbus->sc_tgt) *
-	    (SDMMC_SCSIID_MAX+1), M_DEVBUF, M_WAITOK | M_ZERO);
+	    SDMMC_SCSIID_MAX, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/*
 	 * Each card that sent us a CID in the identification stage
-	 * gets a SCSI ID > 0, whether it is a memory card or not.
+	 * gets a SCSI ID, whether it is a memory card or not.
 	 */
-	scbus->sc_ntargets = 1;
+	scbus->sc_ntargets = 0;
 	SIMPLEQ_FOREACH(sf, &sc->sf_head, sf_list) {
-		if (scbus->sc_ntargets >= SDMMC_SCSIID_MAX+1)
+		if (scbus->sc_ntargets >= SDMMC_SCSIID_MAX)
 			break;
 		scbus->sc_tgt[scbus->sc_ntargets].card = sf;
 		scbus->sc_ntargets++;
@@ -130,16 +129,16 @@ sdmmc_scsi_attach(struct sdmmc_softc *sc)
 	scbus->sc_adapter.scsi_cmd = sdmmc_scsi_cmd;
 	scbus->sc_adapter.scsi_minphys = sdmmc_scsi_minphys;
 
-	scbus->sc_link.adapter_target = SDMMC_SCSIID_HOST;
-	scbus->sc_link.adapter_buswidth = scbus->sc_ntargets;
+	scbus->sc_link.adapter_target = SCSI_NO_ADAPTER_TARGET;
 	scbus->sc_link.adapter_softc = sc;
-	scbus->sc_link.luns = 1;
 	scbus->sc_link.openings = 1;
 	scbus->sc_link.adapter = &scbus->sc_adapter;
 	scbus->sc_link.pool = &scbus->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa.saa_sc_link = &scbus->sc_link;
+	saa.saa.saa_targets = scbus->sc_ntargets;
+	saa.saa.saa_luns = 1;
 
 	scbus->sc_child = config_found(&sc->sc_dev, &saa.saa, scsiprint);
 	if (scbus->sc_child == NULL) {
