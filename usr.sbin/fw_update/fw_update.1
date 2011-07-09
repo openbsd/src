@@ -1,4 +1,4 @@
-.\" $OpenBSD: fw_update.1,v 1.2 2011/07/09 05:12:10 halex Exp $
+.\" $OpenBSD: fw_update.1,v 1.3 2011/07/09 08:53:15 jmc Exp $
 .\"
 .\" Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 .\"
@@ -26,7 +26,8 @@
 .Sh DESCRIPTION
 .Nm
 is a utility that installs and updates device firmwares with non-free licenses
-that may not be shipped with OpenBSD.
+that may not be shipped with
+.Ox .
 It will automatically detect such devices and locate and install the proper
 firmware packages for the currently running kernel.
 .Pp
@@ -40,11 +41,11 @@ flag to
 .Xr pkg_add 1 .
 .El
 .Sh SEE ALSO
+.Xr pkg_add 1 ,
 .Xr dmesg 8
-.Xr pkg_add 1
 .Sh AUTHORS
 .An -nosplit
-The 
+The
 .Nm
 program was written by
 .An Alexander Hall Aq alexander@beard.se .
