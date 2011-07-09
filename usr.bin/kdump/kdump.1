@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kdump.1,v 1.19 2011/07/08 20:36:22 jmc Exp $
+.\"	$OpenBSD: kdump.1,v 1.20 2011/07/09 15:43:38 otto Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)kdump.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: July 8 2011 $
+.Dd $Mdocdate: July 9 2011 $
 .Dt KDUMP 1
 .Os
 .Sh NAME
@@ -101,7 +101,7 @@ When decoding STRU records, display structure members such as UIDs,
 GIDs, dates etc. symbolically instead of numerically.
 .It Fl T
 Display absolute timestamps for each entry (seconds since the Epoch).
-.It Fl t Op ceinsw
+.It Fl t Op ceinstw
 Selects which tracepoints to display.
 See the
 .Fl t
