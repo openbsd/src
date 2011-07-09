@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_lgammal.c,v 1.2 2011/07/08 17:22:17 martynas Exp $	*/
+/*	$OpenBSD: e_lgammal.c,v 1.3 2011/07/09 05:29:06 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -771,6 +771,7 @@ lgammal(long double x)
     {
       if (signbit (x))
 	signgam = -1;
+      return one / fabsl (x);
     }
 
   if (x < 0.0L)
