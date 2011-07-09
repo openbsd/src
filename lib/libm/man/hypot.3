@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hypot.3,v 1.17 2011/07/07 01:34:52 martynas Exp $
+.\"	$OpenBSD: hypot.3,v 1.18 2011/07/09 22:17:22 martynas Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)hypot.3	6.7 (Berkeley) 5/6/91
 .\"
-.Dd $Mdocdate: July 7 2011 $
+.Dd $Mdocdate: July 9 2011 $
 .Dt HYPOT 3
 .Os
 .Sh NAME
@@ -36,7 +36,8 @@
 .Nm hypotf ,
 .Nm hypotl ,
 .Nm cabs ,
-.Nm cabsf
+.Nm cabsf ,
+.Nm cabsl
 .Nd Euclidean distance and complex absolute value functions
 .Sh SYNOPSIS
 .Fd #include <math.h>
@@ -46,33 +47,24 @@
 .Fn hypotf "float x" "float y"
 .Ft long double
 .Fn hypotl "long double x" "long double y"
+.Fd #include <complex.h>
 .Ft double
-.Fn cabs "struct complex { double x; double y; } z"
+.Fn cabs "double complex z"
 .Ft float
-.Fn cabsf "struct complex { float x; float y; } z"
+.Fn cabsf "float complex z"
+.Ft long double
+.Fn cabsl "long double complex z"
 .Sh DESCRIPTION
 The
-.Fn hypot
+.Fn hypot ,
+.Fn hypotf
 and
-.Fn cabs
+.Fn hypotl
 functions
 compute the
 sqrt(x*x+y*y)
 in such a way that underflow will not happen, and overflow
 occurs only if the final result deserves it.
-The
-.Fn hypotf
-and
-.Fn cabsf
-functions are single precision versions of
-.Fn hypot
-and
-.Fn cabs ,
-respectively.
-The
-.Fn hypotl
-function is an extended precision version of
-.Fn hypot .
 .Pp
 .Fn hypot "\*(If" "v"
 =
@@ -80,6 +72,14 @@ function is an extended precision version of
 = +\*(If for all
 .Ar v ,
 including \*(Na.
+.Pp
+The
+.Fn cabs ,
+.Fn cabsf
+and
+.Fn cabsl
+functions return the absolute value of the complex number
+.Fa z .
 .Sh ERRORS (due to Roundoff, etc.)
 Below 0.97
 .Em ulps .
@@ -89,11 +89,6 @@ Consequently
 exactly;
 in general, hypot and cabs return an integer whenever an
 integer might be expected.
-.Pp
-The same cannot be said for the shorter and faster version of hypot
-and cabs that is provided in the comments in cabs.c; its error can
-exceed 1.2
-.Em ulps .
 .Sh NOTES
 As might be expected,
 .Fn hypot "v" "\*(Na"
@@ -139,11 +134,3 @@ function and a
 function
 appeared in
 .At v7 .
-.Sh BUGS
-The
-.Fn cabs
-and
-.Fn cabsf
-functions use structures that are not defined in any header and need to
-be defined by the user.
-As such they cannot be prototyped properly.

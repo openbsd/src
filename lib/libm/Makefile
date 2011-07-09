@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.92 2011/07/09 02:13:52 martynas Exp $
+#  $OpenBSD: Makefile,v 1.93 2011/07/09 22:17:22 martynas Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -323,6 +323,7 @@ MLINKS+=floor.3 floorl.3
 MLINKS+=fmax.3 fmaxl.3
 MLINKS+=fmax.3 fminl.3
 MLINKS+=fmod.3 fmodl.3
+MLINKS+=hypot.3 cabsl.3
 MLINKS+=hypot.3 hypotl.3
 MLINKS+=ilogb.3 ilogbl.3
 MLINKS+=lgamma.3 lgammal.3
