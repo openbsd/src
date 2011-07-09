@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.50 2011/07/03 16:08:40 matthew Exp $
+.\"	$OpenBSD: queue.3,v 1.51 2011/07/09 00:20:36 pirofti Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd $Mdocdate: July 3 2011 $
+.Dd $Mdocdate: July 9 2011 $
 .Dt QUEUE 3
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .Nm SLIST_END ,
 .Nm SLIST_EMPTY ,
 .Nm SLIST_FOREACH ,
+.Nm SLIST_FOREACH_SAFE ,
 .Nm SLIST_FOREACH_PREVPTR ,
 .Nm SLIST_INIT ,
 .Nm SLIST_INSERT_AFTER ,
@@ -57,6 +58,7 @@
 .Nm LIST_END ,
 .Nm LIST_EMPTY ,
 .Nm LIST_FOREACH ,
+.Nm LIST_FOREACH_SAFE ,
 .Nm LIST_INIT ,
 .Nm LIST_INSERT_AFTER ,
 .Nm LIST_INSERT_BEFORE ,
@@ -71,6 +73,7 @@
 .Nm SIMPLEQ_END ,
 .Nm SIMPLEQ_EMPTY ,
 .Nm SIMPLEQ_FOREACH ,
+.Nm SIMPLEQ_FOREACH_SAFE ,
 .Nm SIMPLEQ_INIT ,
 .Nm SIMPLEQ_INSERT_HEAD ,
 .Nm SIMPLEQ_INSERT_TAIL ,
@@ -87,7 +90,9 @@
 .Nm TAILQ_PREV ,
 .Nm TAILQ_EMPTY ,
 .Nm TAILQ_FOREACH ,
+.Nm TAILQ_FOREACH_SAFE ,
 .Nm TAILQ_FOREACH_REVERSE ,
+.Nm TAILQ_FOREACH_REVERSE_SAFE ,
 .Nm TAILQ_INIT ,
 .Nm TAILQ_INSERT_AFTER ,
 .Nm TAILQ_INSERT_BEFORE ,
@@ -105,7 +110,8 @@
 .Nm CIRCLEQ_PREV ,
 .Nm CIRCLEQ_EMPTY ,
 .Nm CIRCLEQ_FOREACH ,
-.Nm CIRCLEQ_FOREACH_REVERSE ,
+.Nm CIRCLEQ_FOREACH_SAFE ,
+.Nm CIRCLEQ_FOREACH_REVERSE_SAFE ,
 .Nm CIRCLEQ_INIT ,
 .Nm CIRCLEQ_INSERT_AFTER ,
 .Nm CIRCLEQ_INSERT_BEFORE ,
@@ -129,6 +135,7 @@
 .Ft int
 .Fn SLIST_EMPTY "SLIST_HEAD *head"
 .Fn SLIST_FOREACH "VARNAME" "SLIST_HEAD *head" "SLIST_ENTRY NAME"
+.Fn SLIST_FOREACH_SAFE "VARNAME" "SLIST_HEAD *head" "SLIST_ENTRY NAME" "TEMP_VARNAME"
 .Fn SLIST_FOREACH_PREVPTR "VARNAME" "VARNAMEP" "SLIST_HEAD *head" "SLIST_ENTRY NAME"
 .Ft void
 .Fn SLIST_INIT "SLIST_HEAD *head"
@@ -155,6 +162,7 @@
 .Ft int
 .Fn LIST_EMPTY "LIST_HEAD *head"
 .Fn LIST_FOREACH "VARNAME" "LIST_HEAD *head" "LIST_ENTRY NAME"
+.Fn LIST_FOREACH_SAFE "VARNAME" "LIST_HEAD *head" "LIST_ENTRY NAME" "TEMP_VARNAME"
 .Ft void
 .Fn LIST_INIT "LIST_HEAD *head"
 .Ft void
@@ -180,6 +188,7 @@
 .Ft int
 .Fn SIMPLEQ_EMPTY "SIMPLEQ_HEAD *head"
 .Fn SIMPLEQ_FOREACH "VARNAME" "SIMPLEQ_HEAD *head" "SIMPLEQ_ENTRY NAME"
+.Fn SIMPLEQ_FOREACH_SAFE "VARNAME" "SIMPLEQ_HEAD *head" "SIMPLEQ_ENTRY NAME" "TEMP_VARNAME"
 .Ft void
 .Fn SIMPLEQ_INIT "SIMPLEQ_HEAD *head"
 .Ft void
@@ -209,7 +218,9 @@
 .Ft int
 .Fn TAILQ_EMPTY "TAILQ_HEAD *head"
 .Fn TAILQ_FOREACH "VARNAME" "TAILQ_HEAD *head" "TAILQ_ENTRY NAME"
+.Fn TAILQ_FOREACH_SAFE "VARNAME" "TAILQ_HEAD *head" "TAILQ_ENTRY NAME" "TEMP_VARNAME"
 .Fn TAILQ_FOREACH_REVERSE "VARNAME" "TAILQ_HEAD *head" "HEADNAME" "TAILQ_ENTRY NAME"
+.Fn TAILQ_FOREACH_REVERSE_SAFE "VARNAME" "TAILQ_HEAD *head" "HEADNAME" "TAILQ_ENTRY NAME" "TEMP_VARNAME"
 .Ft void
 .Fn TAILQ_INIT "TAILQ_HEAD *head"
 .Ft void
@@ -241,7 +252,9 @@
 .Ft int
 .Fn CIRCLEQ_EMPTY "CIRCLEQ_HEAD *head"
 .Fn CIRCLEQ_FOREACH "VARNAME" "CIRCLEQ_HEAD *head" "CIRCLEQ_ENTRY NAME"
+.Fn CIRCLEQ_FOREACH_SAFE "VARNAME" "CIRCLEQ_HEAD *head" "CIRCLEQ_ENTRY NAME" "TEMP_VARNAME"
 .Fn CIRCLEQ_FOREACH_REVERSE "VARNAME" "CIRCLEQ_HEAD *head" "CIRCLEQ_ENTRY NAME"
+.Fn CIRCLEQ_FOREACH_REVERSE_SAFE "VARNAME" "CIRCLEQ_HEAD *head" "CIRCLEQ_ENTRY NAME" "TEMP_VARNAME"
 .Ft void
 .Fn CIRCLEQ_INIT "CIRCLEQ_HEAD *head"
 .Ft void
@@ -488,6 +501,11 @@ macro:
 SLIST_FOREACH(np, head, NAME)
 .Ed
 .Pp
+The macro SLIST_FOREACH_SAFE traverses the list referenced by head in the
+forward direction, assigning each element in turn to var. However,
+unlike SLIST_FOREACH() here it is permitted to both remove var as well
+as free it from within the loop safely without interfering with the traversal.
+.Pp
 The
 .Fn SLIST_FOREACH_PREVPTR
 macro is similar to
@@ -631,6 +649,11 @@ macro:
 LIST_FOREACH(np, head, NAME)
 .Ed
 .Pp
+The macro LIST_FOREACH_SAFE traverses the list referenced by head in the
+forward direction, assigning each element in turn to var. However,
+unlike LIST_FOREACH() here it is permitted to both remove var as well
+as free it from within the loop safely without interfering with the traversal.
+.Pp
 The
 .Fn LIST_EMPTY
 macro should be used to check whether a list is empty.
@@ -752,6 +775,11 @@ is used for queue traversal:
 .Bd -literal -offset indent
 SIMPLEQ_FOREACH(np, head, NAME)
 .Ed
+.Pp
+The macro SIMPLEQ_FOREACH_SAFE traverses the queue referenced by head in the
+forward direction, assigning each element in turn to var. However,
+unlike SIMPLEQ_FOREACH() here it is permitted to both remove var as well
+as free it from within the loop safely without interfering with the traversal.
 .Pp
 The
 .Fn SIMPLEQ_EMPTY
@@ -883,6 +911,13 @@ starts at the last element and proceeds towards the first.
 TAILQ_FOREACH(np, &head, NAME)
 TAILQ_FOREACH_REVERSE(np, &head, HEADNAME, NAME)
 .Ed
+.Pp
+The macros TAILQ_FOREACH_SAFE and TAILQ_FOREACH_REVERSE_SAFE traverse the
+list referenced by head in the forward or reverse direction respectively,
+assigning each element in turn to var.  However, unlike their unsafe
+counterparts, TAILQ_FOREACH and TAILQ_FOREACH_REVERSE permit to both
+remove var as well as free it from within the loop safely without interfering
+with the traversal.
 .Pp
 The
 .Fn TAILQ_FIRST ,
@@ -1039,6 +1074,13 @@ macro acts like
 .Fn CIRCLEQ_FOREACH
 but traverses the circular queue backwards.
 .Pp
+The macros CIRCLEQ_FOREACH_SAFE and CIRCLEQ_FOREACH_REVERSE_SAFE traverse the
+list referenced by head in the forward or reverse direction respectively,
+assigning each element in turn to var.  However, unlike their unsafe
+counterparts, CIRCLEQ_FOREACH and CIRCLEQ_FOREACH_REVERSE permit to both
+remove var as well as free it from within the loop safely without interfering
+with the traversal.
+.Pp
 The
 .Fn CIRCLEQ_EMPTY
 macro should be used to check whether a circular queue is empty.
@@ -1108,27 +1150,12 @@ Since
 is free'd, the
 .Fn FOREACH
 macro refers to a pointer that may have been reallocated already.
-Proper code needs a second variable.
-.Bd -literal -offset indent
-for (var = LIST_FIRST(head); var != LIST_END(head); var = nxt) {
-	nxt = LIST_NEXT(var, entry);
-	free(var);
-}
-LIST_INIT(head);	/* to put the list back in order */
-.Ed
 .Pp
 A similar situation occurs when the current element is deleted
 from the list.
-Correct code saves a pointer to the next element in the list before
-removing the element:
-.Bd -literal -offset indent
-for (var = LIST_FIRST(head); var != LIST_END(head); var = nxt) {
-	nxt = LIST_NEXT(var, entry);
-	if (some_condition) {
-		LIST_REMOVE(var, entry);
-		some_function(var);
-	}
-}
+.Pp
+In cases like these the data structure's FOREACH_SAFE macros should be used
+instead.
 .Ed
 .Sh HISTORY
 The

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tree.3,v 1.21 2010/05/05 18:17:41 nicm Exp $
+.\"	$OpenBSD: tree.3,v 1.22 2011/07/09 00:20:36 pirofti Exp $
 .\"/*
 .\" * Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" * All rights reserved.
@@ -23,7 +23,7 @@
 .\" * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\" */
-.Dd $Mdocdate: May 5 2010 $
+.Dd $Mdocdate: July 9 2011 $
 .Dt TREE 3
 .Os
 .Sh NAME
@@ -63,7 +63,9 @@
 .Nm RB_RIGHT ,
 .Nm RB_PARENT ,
 .Nm RB_FOREACH ,
+.Nm RB_FOREACH_SAFE ,
 .Nm RB_FOREACH_REVERSE ,
+.Nm RB_FOREACH_REVERSE_SAFE ,
 .Nm RB_INIT ,
 .Nm RB_INSERT ,
 .Nm RB_REMOVE
@@ -130,7 +132,9 @@
 .Ft "struct TYPE *"
 .Fn RB_PARENT "struct TYPE *elm" "RB_ENTRY NAME"
 .Fn RB_FOREACH "VARNAME" "NAME" "RB_HEAD *head"
+.Fn RB_FOREACH_SAFE "VARNAME" "NAME" "RB_HEAD *head" "TEMP_VARNAME"
 .Fn RB_FOREACH_REVERSE "VARNAME" "NAME" "RB_HEAD *head"
+.Fn RB_FOREACH_REVERSE_SAFE "VARNAME" "NAME" "RB_HEAD *head" "TEMP_VARNAME"
 .Ft void
 .Fn RB_INIT "RB_HEAD *head"
 .Ft "struct TYPE *"
@@ -455,6 +459,13 @@ macros:
 .Bd -literal -offset indent
 RB_FOREACH(np, NAME, &head)
 .Ed
+.Pp
+The macros RB_FOREACH_SAFE and RB_FOREACH_REVERSE_SAFE traverse the
+tree referenced by head in the forward or reverse direction respectively,
+assigning each element in turn to np.  However, unlike their unsafe
+counterparts, RB_FOREACH and RB_FOREACH_REVERSE permit to both
+remove np as well as free it from within the loop safely without interfering
+with the traversal.
 .Pp
 The
 .Fn RB_EMPTY
