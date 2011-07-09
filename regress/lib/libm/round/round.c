@@ -1,4 +1,4 @@
-/*	$OpenBSD: round.c,v 1.1 2011/04/17 10:33:09 martynas Exp $	*/
+/*	$OpenBSD: round.c,v 1.2 2011/07/09 03:33:07 martynas Exp $	*/
 
 /*	Written by Michael Shalayeff, 2003,  Public domain.	*/
 
@@ -36,25 +36,34 @@ main(int argc, char *argv[])
 
 	assert(round(8.6) == 9.);
 	assert(roundf(8.6F) == 9);
+	assert(roundl(8.6L) == 9);
  	assert(lround(8.6) == 9L);
  	assert(lroundf(8.6F) == 9L);
+ 	assert(lroundl(8.6L) == 9L);
  	assert(llround(8.6) == 9LL);
  	assert(llroundf(8.6F) == 9LL);
+ 	assert(llroundl(8.6L) == 9LL);
 
 	assert(lround(0.0) == 0L);
-	assert(lroundf(0.0) == 0L);
+	assert(lroundf(0.0F) == 0L);
+	assert(lroundl(0.0L) == 0L);
 	assert(lround(-0.0) == 0L);
-	assert(lroundf(-0.0) == 0L);
+	assert(lroundf(-0.0F) == 0L);
+	assert(lroundl(-0.0L) == 0L);
 
 	assert(llround(4503599627370496.0) == 4503599627370496LL);
 	assert(llroundf(4503599627370496.0F) == 4503599627370496LL);
+	assert(llroundl(4503599627370496.0L) == 4503599627370496LL);
 	assert(llround(-4503599627370496.0) == -4503599627370496LL);
 	assert(llroundf(-4503599627370496.0F) == -4503599627370496LL);
+	assert(llroundl(-4503599627370496.0L) == -4503599627370496LL);
 
 	assert(llround(0x7ffffffffffffc00.0p0) == 0x7ffffffffffffc00LL);
 	assert(llroundf(0x7fffff8000000000.0p0F) == 0x7fffff8000000000LL);
+	assert(llroundl(0x7fffff8000000000.0p0L) == 0x7fffff8000000000LL);
 	assert(llround(-0x8000000000000000.0p0) == -0x8000000000000000LL);
 	assert(llroundf(-0x8000000000000000.0p0F) == -0x8000000000000000LL);
+	assert(llroundl(-0x8000000000000000.0p0L) == -0x8000000000000000LL);
 
 	exit(0);
 }

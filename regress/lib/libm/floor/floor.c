@@ -1,4 +1,4 @@
-/*	$OpenBSD: floor.c,v 1.1 2003/11/01 00:50:44 mickey Exp $	*/
+/*	$OpenBSD: floor.c,v 1.2 2011/07/09 03:33:07 martynas Exp $	*/
 
 /*	Written by Michael Shalayeff, 2003,  Public domain.	*/
 
@@ -33,6 +33,8 @@ main(int argc, char *argv[])
 	sigaction(SIGFPE, &sa, NULL);
 
 	if (floor(4294967295.7) != 4294967295.)
+		exit(1);
+	if (floorl(4294967295.7L) != 4294967295.L)
 		exit(1);
 
 	exit(0);
