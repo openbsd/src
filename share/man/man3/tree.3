@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tree.3,v 1.22 2011/07/09 00:20:36 pirofti Exp $
+.\"	$OpenBSD: tree.3,v 1.23 2011/07/09 08:43:01 jmc Exp $
 .\"/*
 .\" * Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" * All rights reserved.
@@ -460,12 +460,17 @@ macros:
 RB_FOREACH(np, NAME, &head)
 .Ed
 .Pp
-The macros RB_FOREACH_SAFE and RB_FOREACH_REVERSE_SAFE traverse the
-tree referenced by head in the forward or reverse direction respectively,
-assigning each element in turn to np.  However, unlike their unsafe
-counterparts, RB_FOREACH and RB_FOREACH_REVERSE permit to both
-remove np as well as free it from within the loop safely without interfering
-with the traversal.
+The macros
+.Fn RB_FOREACH_SAFE
+and
+.Fn RB_FOREACH_REVERSE_SAFE
+traverse the tree referenced by head
+in a forward or reverse direction respectively,
+assigning each element in turn to np.
+However, unlike their unsafe counterparts,
+they permit both the removal of np
+as well as freeing it from within the loop safely
+without interfering with the traversal.
 .Pp
 The
 .Fn RB_EMPTY

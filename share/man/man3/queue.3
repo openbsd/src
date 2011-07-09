@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.51 2011/07/09 00:20:36 pirofti Exp $
+.\"	$OpenBSD: queue.3,v 1.52 2011/07/09 08:43:01 jmc Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -501,9 +501,11 @@ macro:
 SLIST_FOREACH(np, head, NAME)
 .Ed
 .Pp
-The macro SLIST_FOREACH_SAFE traverses the list referenced by head in the
-forward direction, assigning each element in turn to var. However,
-unlike SLIST_FOREACH() here it is permitted to both remove var as well
+The macro SLIST_FOREACH_SAFE traverses the list referenced by head in a
+forward direction, assigning each element in turn to var.
+However, unlike
+.Fn SLIST_FOREACH
+it is permitted to remove var as well
 as free it from within the loop safely without interfering with the traversal.
 .Pp
 The
@@ -649,9 +651,11 @@ macro:
 LIST_FOREACH(np, head, NAME)
 .Ed
 .Pp
-The macro LIST_FOREACH_SAFE traverses the list referenced by head in the
-forward direction, assigning each element in turn to var. However,
-unlike LIST_FOREACH() here it is permitted to both remove var as well
+The macro LIST_FOREACH_SAFE traverses the list referenced by head in a
+forward direction, assigning each element in turn to var.
+However, unlike
+.Fn LIST_FOREACH
+it is permitted to remove var as well
 as free it from within the loop safely without interfering with the traversal.
 .Pp
 The
@@ -776,9 +780,11 @@ is used for queue traversal:
 SIMPLEQ_FOREACH(np, head, NAME)
 .Ed
 .Pp
-The macro SIMPLEQ_FOREACH_SAFE traverses the queue referenced by head in the
-forward direction, assigning each element in turn to var. However,
-unlike SIMPLEQ_FOREACH() here it is permitted to both remove var as well
+The macro SIMPLEQ_FOREACH_SAFE traverses the queue referenced by head in a
+forward direction, assigning each element in turn to var.
+However, unlike
+.Fn SIMPLEQ_FOREACH
+it is permitted to remove var as well
 as free it from within the loop safely without interfering with the traversal.
 .Pp
 The
@@ -912,12 +918,17 @@ TAILQ_FOREACH(np, &head, NAME)
 TAILQ_FOREACH_REVERSE(np, &head, HEADNAME, NAME)
 .Ed
 .Pp
-The macros TAILQ_FOREACH_SAFE and TAILQ_FOREACH_REVERSE_SAFE traverse the
-list referenced by head in the forward or reverse direction respectively,
-assigning each element in turn to var.  However, unlike their unsafe
-counterparts, TAILQ_FOREACH and TAILQ_FOREACH_REVERSE permit to both
-remove var as well as free it from within the loop safely without interfering
-with the traversal.
+The macros
+.Fn TAILQ_FOREACH_SAFE
+and
+.Fn TAILQ_FOREACH_REVERSE_SAFE
+traverse the list referenced by head
+in a forward or reverse direction respectively,
+assigning each element in turn to var.
+However, unlike their unsafe counterparts,
+they permit both the removal of var
+as well as freeing it from within the loop safely
+without interfering with the traversal.
 .Pp
 The
 .Fn TAILQ_FIRST ,
@@ -1074,12 +1085,17 @@ macro acts like
 .Fn CIRCLEQ_FOREACH
 but traverses the circular queue backwards.
 .Pp
-The macros CIRCLEQ_FOREACH_SAFE and CIRCLEQ_FOREACH_REVERSE_SAFE traverse the
-list referenced by head in the forward or reverse direction respectively,
-assigning each element in turn to var.  However, unlike their unsafe
-counterparts, CIRCLEQ_FOREACH and CIRCLEQ_FOREACH_REVERSE permit to both
-remove var as well as free it from within the loop safely without interfering
-with the traversal.
+The macros
+.Fn CIRCLEQ_FOREACH_SAFE
+and
+.Fn CIRCLEQ_FOREACH_REVERSE_SAFE
+traverse the list referenced by head
+in a forward or reverse direction respectively,
+assigning each element in turn to var.
+However, unlike their unsafe counterparts,
+they permit both the removal of var
+as well as freeing it from within the loop safely
+without interfering with the traversal.
 .Pp
 The
 .Fn CIRCLEQ_EMPTY
@@ -1156,7 +1172,6 @@ from the list.
 .Pp
 In cases like these the data structure's FOREACH_SAFE macros should be used
 instead.
-.Ed
 .Sh HISTORY
 The
 .Nm queue
