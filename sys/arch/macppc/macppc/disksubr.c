@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.76 2011/07/10 04:49:39 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.77 2011/07/10 16:16:08 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -190,8 +190,7 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 	 * disklabel for this dpme disk. DO NOT proceed to readdoslabel(),
 	 * iso_spooflabel(), * etc.
 	 */
-	checkdisklabel(bp->b_data + LABELOFFSET, lp, openbsdstart,
-	    DL_GETDSIZE(lp));
+	checkdisklabel(bp->b_data + LABELOFFSET, lp, hfspartoff, hfspartend);
 	return (0);
 }
 
