@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.117 2011/07/03 15:47:17 matthew Exp $ */
+/*	$OpenBSD: ehci.c,v 1.118 2011/07/10 17:34:53 eric Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -2148,11 +2148,10 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		}
 		hubd = ehci_hubd;
 		hubd.bNbrPorts = sc->sc_noport;
-		v = EOREAD4(sc, EHCI_HCSPARAMS);
+		v = EREAD4(sc, EHCI_HCSPARAMS);
 		USETW(hubd.wHubCharacteristics,
-		    EHCI_HCS_PPC(v) ? UHD_PWR_INDIVIDUAL : UHD_PWR_NO_SWITCH |
-		    EHCI_HCS_P_INDICATOR(EREAD4(sc, EHCI_HCSPARAMS))
-		        ? UHD_PORT_IND : 0);
+		    (EHCI_HCS_PPC(v) ? UHD_PWR_INDIVIDUAL : UHD_PWR_NO_SWITCH) |
+		    (EHCI_HCS_P_INDICATOR(v) ? UHD_PORT_IND : 0));
 		hubd.bPwrOn2PwrGood = 200; /* XXX can't find out? */
 		for (i = 0, l = sc->sc_noport; l > 0; i++, l -= 8, v >>= 8)
 			hubd.DeviceRemovable[i++] = 0; /* XXX can't find out? */
