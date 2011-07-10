@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2011/04/18 16:52:09 thib Exp $
+#	$OpenBSD: Makefile,v 1.24 2011/07/10 04:03:23 deraadt Exp $
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/..
@@ -21,6 +21,7 @@ IMAGE?=		ramdisk${REV}.fs
 IMAGESIZE?=	4608 # 2.25MB in 512 byte blocks
 NEWFS_WILL_FAIL?=false
 RDSETROOT?=	elfrdsetroot
+RDSETROOT_EXT_SRC=${.CURDIR}/../../common/elf32.c ${.CURDIR}/../../common/elf64.c
 CRUNCHGENOPTS?=-E
 KERNEL?=	RAMDISK
 UTILS?=		${.CURDIR}/../../miniroot
@@ -73,8 +74,9 @@ bsd.rd:	obsd ${IMAGE} ${RDSETROOT}
 bsd:	bsd.rd
 	${GZIPCMD} ${GZIPFLAGS} < bsd.rd > bsd
 
-${RDSETROOT}: ${.CURDIR}/../../common/${RDSETROOT}.c
-	${HOSTCC} ${HOSTCCFLAGS} -o ${RDSETROOT} $<
+${RDSETROOT}: ${.CURDIR}/../../common/${RDSETROOT}.c ${RDSETROOT_EXT_SRC}
+	${HOSTCC} ${HOSTCCFLAGS} -o ${RDSETROOT} ${RDSETROOT_EXT_SRC} \
+	    ${.CURDIR}/../../common/${RDSETROOT}.c
 
 ${IMAGE}: ${CBIN}
 	dd if=/dev/zero of=${REALIMAGE} count=${IMAGESIZE}
