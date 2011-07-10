@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.34 2011/07/06 20:42:05 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.35 2011/07/10 17:31:40 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/10/23 14:56:05 ragge Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ struct device *bootdv;
 int booted_partition;	/* defaults to 0 (aka 'a' partition) */
 
 void
-cpu_configure()
+cpu_configure(void)
 {
 	softintr_init();
 
@@ -101,9 +101,7 @@ int	mainbus_match(struct device *, struct cfdata *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
 
 int
-mainbus_print(aux, hej)
-	void *aux;
-	const char *hej;
+mainbus_print(void *aux, const char *hej)
 {
 	struct mainbus_attach_args *maa = aux;
 
@@ -117,10 +115,7 @@ mainbus_print(aux, hej)
 }
 
 int
-mainbus_match(parent, cf, aux)
-	struct	device	*parent;
-	struct cfdata *cf;
-	void	*aux;
+mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	if (cf->cf_unit == 0 &&
 	    strcmp(cf->cf_driver->cd_name, "mainbus") == 0)
@@ -130,9 +125,7 @@ mainbus_match(parent, cf, aux)
 }
 
 void
-mainbus_attach(parent, self, hej)
-	struct	device	*parent, *self;
-	void	*hej;
+mainbus_attach(struct device *parent, struct device *self, void *hej)
 {
 	struct mainbus_attach_args maa;
 
