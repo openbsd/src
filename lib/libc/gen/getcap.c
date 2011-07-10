@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcap.c,v 1.28 2011/07/06 18:51:09 millert Exp $ */
+/*	$OpenBSD: getcap.c,v 1.29 2011/07/10 13:31:02 millert Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -58,7 +58,7 @@ static char	*toprec;	/* Additional record specified by cgetset() */
 static int	 gottoprec;	/* Flag indicating retrieval of toprecord */
 
 static int	cdbget(DB *, char **, const char *);
-static int 	getent(char **, u_int *, char **, int, const char *, int, char *);
+static int 	getent(char **, u_int *, char **, FILE *, const char *, int, char *);
 static int	nfcmp(const char *, char *);
 
 static int	usedb = 1;
@@ -168,12 +168,12 @@ cgetent(char **buf, char **db_array, const char *name)
 {
 	u_int dummy;
 
-	return (getent(buf, &dummy, db_array, -1, name, 0, NULL));
+	return (getent(buf, &dummy, db_array, NULL, name, 0, NULL));
 }
 
 /*
- * Getent implements the functions of cgetent.  If fd is non-negative,
- * *db_array has already been opened and fd is the open file descriptor.  We
+ * Getent implements the functions of cgetent.  If fp is non-NULL,
+ * *db_array has already been opened and fp is the open file descriptor.  We
  * do this to save time and avoid using up file descriptors for tc=
  * recursions.
  *
@@ -190,7 +190,7 @@ cgetent(char **buf, char **db_array, const char *name)
  *	  MAX_RECURSION.
  */
 static int
-getent(char **cap, u_int *len, char **db_array, int fd,
+getent(char **cap, u_int *len, char **db_array, FILE *fp,
 	const char *name, int depth, char *nfield)
 {
 	DB *capdbp;
@@ -240,8 +240,8 @@ getent(char **cap, u_int *len, char **db_array, int fd,
 		/*
 		 * Open database if not already open.
 		 */
-		if (fd >= 0) {
-			(void)lseek(fd, (off_t)0, SEEK_SET);
+		if (fp != NULL) {
+			(void)fseek(fp, 0L, SEEK_SET);
 			myfd = 0;
 			opened++;
 		} else {
@@ -272,8 +272,8 @@ getent(char **cap, u_int *len, char **db_array, int fd,
 				*cap = cbuf;
 				return (retval);
 			} else {
-				fd = open(*db_p, O_RDONLY, 0);
-				if (fd < 0) {
+				fp = fopen(*db_p, "r");
+				if (fp == NULL) {
 					/* No error on unfound file. */
 					continue;
 				}
@@ -308,20 +308,19 @@ getent(char **cap, u_int *len, char **db_array, int fd,
 			rp = record;
 			for (;;) {
 				if (bp >= b_end) {
-					int n;
+					size_t n;
 
-					n = read(fd, buf, sizeof(buf));
-					if (n <= 0) {
+					n = fread(buf, 1, sizeof(buf), fp);
+					if (n == 0) {
+						eof = feof(fp);
 						if (myfd)
-							(void)close(fd);
-						if (n < 0) {
-							free(record);
-							return (-2);
-						} else {
-							fd = -1;
-							eof = 1;
+							(void)fclose(fp);
+						if (eof) {
+							fp = NULL;
 							break;
 						}
+						free(record);
+						return (-2);
 					}
 					b_end = buf+n;
 					bp = buf;
@@ -343,7 +342,7 @@ getent(char **cap, u_int *len, char **db_array, int fd,
 				 * some more.
 				 */
 				if (rp >= r_end) {
-					u_int pos;
+					size_t pos;
 					size_t newsize;
 					char *nrecord;
 
@@ -354,7 +353,7 @@ getent(char **cap, u_int *len, char **db_array, int fd,
 						if (record)
 							free(record);
 						if (myfd)
-							(void)close(fd);
+							(void)fclose(fp);
 						errno = ENOMEM;
 						return (-2);
 					}
@@ -440,13 +439,13 @@ tc_exp:	{
 			tclen = s - tcstart;
 			tcend = s;
 
-			iret = getent(&icap, &ilen, db_p, fd, tc, depth+1,
+			iret = getent(&icap, &ilen, db_p, fp, tc, depth+1,
 				      NULL);
 			if (iret != 0) {
 				/* an error */
 				if (iret < -1) {
 					if (myfd)
-						(void)close(fd);
+						(void)fclose(fp);
 					free(record);
 					return (iret);
 				}
@@ -498,7 +497,7 @@ tc_exp:	{
 					if (record)
 						free(record);
 					if (myfd)
-						(void)close(fd);
+						(void)fclose(fp);
 					free(ibuf);
 					errno = ENOMEM;
 					return (-2);
@@ -532,7 +531,7 @@ tc_exp:	{
 	 * return capability, length and success.
 	 */
 	if (myfd)
-		(void)close(fd);
+		(void)fclose(fp);
 	*len = rp - record - 1;	/* don't count NUL */
 	if (r_end > rp) {
 		char *nrecord;
@@ -660,13 +659,12 @@ int
 cgetnext(char **cap, char **db_array)
 {
 	size_t len;
-	int serrno, status = -1;
-	char nbuf[BSIZE];
-	char *record = NULL, *r_end, *rp;
-	char buf[BUFSIZ];
-	char *b_end, *bp;
-	int c;
+	int c, serrno, status = -1;
+	char buf[BUFSIZ], nbuf[BSIZE];
+	char *b_end, *bp, *r_end, *rp;
+	char *record = NULL;
 	u_int dummy;
+	off_t pos;
 
 	if (dbp == NULL)
 		dbp = db_array;
@@ -747,17 +745,17 @@ cgetnext(char **cap, char **db_array)
 			 * some more.
 			 */
 			if (rp >= r_end) {
-				size_t newsize, pos;
+				size_t newsize, off;
 				char *nrecord;
 
-				pos = rp - record;
+				off = rp - record;
 				newsize = r_end - record + BFRAG;
 				nrecord = realloc(record, newsize);
 				if (nrecord == NULL)
 					goto done;
 				record = nrecord;
 				r_end = record + newsize;
-				rp = record + pos;
+				rp = record + off;
 			}
 		}
 		/* loop invariant lets us do this */
@@ -783,7 +781,10 @@ lookup:
 	nbuf[len] = '\0';
 
 	/* return value of getent() is one less than cgetnext() */
-	status = getent(cap, &dummy, db_array, -1, nbuf, 0, NULL) + 1;
+	pos = ftello(pfp);
+	status = getent(cap, &dummy, dbp, pfp, nbuf, 0, NULL) + 1;
+	if (status > 0)
+		fseeko(pfp, pos, SEEK_SET);
 done:
 	serrno = errno;
 	free(record);
