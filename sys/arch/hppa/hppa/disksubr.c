@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.82 2011/07/08 00:08:00 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.83 2011/07/10 04:49:38 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -234,8 +234,15 @@ finished:
 		goto done;
 	}
 
-	error = checkdisklabel(bp->b_data + LABELOFFSET, lp, openbsdstart,
-	    DL_GETDSIZE(lp));	/* XXX */
+	/*
+	 * Do OpenBSD disklabel validation/adjustment.
+	 *
+	 * N.B: No matter what the bits are on the disk, we now have the
+	 * OpenBSD disklabel for this lif disk. DO NOT proceed to
+	 * readdoslabel(), iso_spooflabel(), etc.
+	 */
+	checkdisklabel(bp->b_data, lp, openbsdstart, DL_GETDSIZE(lp));
+	error = 0;
 
 done:
 	if (dbp) {
