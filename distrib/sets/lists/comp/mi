@@ -2371,6 +2371,8 @@
 ./usr/share/man/man3/CIRCLEQ_FIRST.3
 ./usr/share/man/man3/CIRCLEQ_FOREACH.3
 ./usr/share/man/man3/CIRCLEQ_FOREACH_REVERSE.3
+./usr/share/man/man3/CIRCLEQ_FOREACH_REVERSE_SAFE.3
+./usr/share/man/man3/CIRCLEQ_FOREACH_SAFE.3
 ./usr/share/man/man3/CIRCLEQ_HEAD.3
 ./usr/share/man/man3/CIRCLEQ_HEAD_INITIALIZER.3
 ./usr/share/man/man3/CIRCLEQ_INIT.3
@@ -2609,6 +2611,7 @@
 ./usr/share/man/man3/LIST_ENTRY.3
 ./usr/share/man/man3/LIST_FIRST.3
 ./usr/share/man/man3/LIST_FOREACH.3
+./usr/share/man/man3/LIST_FOREACH_SAFE.3
 ./usr/share/man/man3/LIST_HEAD.3
 ./usr/share/man/man3/LIST_HEAD_INITIALIZER.3
 ./usr/share/man/man3/LIST_INIT.3
@@ -2764,6 +2767,8 @@
 ./usr/share/man/man3/RB_FIND.3
 ./usr/share/man/man3/RB_FOREACH.3
 ./usr/share/man/man3/RB_FOREACH_REVERSE.3
+./usr/share/man/man3/RB_FOREACH_REVERSE_SAFE.3
+./usr/share/man/man3/RB_FOREACH_SAFE.3
 ./usr/share/man/man3/RB_GENERATE.3
 ./usr/share/man/man3/RB_GENERATE_STATIC.3
 ./usr/share/man/man3/RB_HEAD.3
@@ -2883,6 +2888,7 @@
 ./usr/share/man/man3/SIMPLEQ_ENTRY.3
 ./usr/share/man/man3/SIMPLEQ_FIRST.3
 ./usr/share/man/man3/SIMPLEQ_FOREACH.3
+./usr/share/man/man3/SIMPLEQ_FOREACH_SAFE.3
 ./usr/share/man/man3/SIMPLEQ_HEAD.3
 ./usr/share/man/man3/SIMPLEQ_HEAD_INITIALIZER.3
 ./usr/share/man/man3/SIMPLEQ_INIT.3
@@ -2898,6 +2904,7 @@
 ./usr/share/man/man3/SLIST_FIRST.3
 ./usr/share/man/man3/SLIST_FOREACH.3
 ./usr/share/man/man3/SLIST_FOREACH_PREVPTR.3
+./usr/share/man/man3/SLIST_FOREACH_SAFE.3
 ./usr/share/man/man3/SLIST_HEAD.3
 ./usr/share/man/man3/SLIST_HEAD_INITIALIZER.3
 ./usr/share/man/man3/SLIST_INIT.3
@@ -3139,6 +3146,8 @@
 ./usr/share/man/man3/TAILQ_FIRST.3
 ./usr/share/man/man3/TAILQ_FOREACH.3
 ./usr/share/man/man3/TAILQ_FOREACH_REVERSE.3
+./usr/share/man/man3/TAILQ_FOREACH_REVERSE_SAFE.3
+./usr/share/man/man3/TAILQ_FOREACH_SAFE.3
 ./usr/share/man/man3/TAILQ_HEAD.3
 ./usr/share/man/man3/TAILQ_HEAD_INITIALIZER.3
 ./usr/share/man/man3/TAILQ_INIT.3
