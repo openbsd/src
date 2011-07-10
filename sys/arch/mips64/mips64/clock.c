@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.35 2011/05/10 07:42:16 syuu Exp $ */
+/*	$OpenBSD: clock.c,v 1.36 2011/07/10 17:47:41 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -55,6 +55,7 @@ struct cfattach clock_ca = {
 void	clock_calibrate(struct cpu_info *);
 uint32_t clock_int5(uint32_t, struct trap_frame *);
 
+#ifndef MULTIPROCESSOR
 u_int cp0_get_timecount(struct timecounter *);
 
 struct timecounter cp0_timecounter = {
@@ -65,6 +66,7 @@ struct timecounter cp0_timecounter = {
 	"CP0",			/* name */
 	0			/* quality */
 };
+#endif
 
 #define	SECMIN	(60)		/* seconds per minute */
 #define	SECHOUR	(60*SECMIN)	/* seconds per hour */
@@ -266,12 +268,14 @@ cpu_initclocks()
 	tick = 1000000 / hz;	/* number of micro-seconds between interrupts */
 	tickadj = 240000 / (60 * hz);		/* can adjust 240ms in 60s */
 
+#ifndef MULTIPROCESSOR
 #ifdef CPU_OCTEON
 	cp0_timecounter.tc_frequency = (uint64_t)ci->ci_hw.clock;
 #else
 	cp0_timecounter.tc_frequency = (uint64_t)ci->ci_hw.clock / 2;
 #endif
 	tc_init(&cp0_timecounter);
+#endif
 	cpu_startclock(ci);
 }
 
@@ -440,9 +444,10 @@ resettodr()
 		(*cd->tod_set)(cd->tod_cookie, &c);
 }
 
+#ifndef MULTIPROCESSOR
 u_int
 cp0_get_timecount(struct timecounter *tc)
 {
-	/* XXX SMP */
 	return (cp0_get_count());
 }
+#endif
