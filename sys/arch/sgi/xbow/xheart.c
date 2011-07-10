@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheart.c,v 1.22 2011/04/17 17:44:24 miod Exp $	*/
+/*	$OpenBSD: xheart.c,v 1.23 2011/07/10 17:48:25 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -26,7 +26,7 @@
 #include <sys/device.h>
 #include <sys/evcount.h>
 #include <sys/malloc.h>
-#include <sys/queue.h>
+#include <sys/timetc.h>
 
 #include <machine/atomic.h>
 #include <machine/autoconf.h>
@@ -73,6 +73,17 @@ uint32_t xheart_intr_handler(uint32_t, struct trap_frame *);
 void	xheart_intr_makemasks(void);
 void	xheart_setintrmask(int);
 void	xheart_splx(int);
+
+u_int	xheart_get_timecount(struct timecounter *);
+
+struct timecounter xheart_timecounter = {
+	.tc_get_timecount = xheart_get_timecount,
+	.tc_poll_pps = NULL,
+	.tc_counter_mask = 0xffffffff,	/* truncate 52-bit counter to 32-bit */
+	.tc_frequency = 12500000,
+	.tc_name = "heart",
+	.tc_quality = 100
+};
 
 extern uint32_t ip30_lights_frob(uint32_t, struct trap_frame *);
 
@@ -145,7 +156,7 @@ xheart_attach(struct device *parent, struct device *self, void *aux)
 	 * Acknowledge and disable all interrupts.
 	 */
 	heart = PHYS_TO_XKPHYS(HEART_PIU_BASE, CCA_NC);
-	*(volatile uint64_t*)(heart + HEART_ISR_CLR) = 0xffffffffffffffff;
+	*(volatile uint64_t*)(heart + HEART_ISR_CLR) = 0xffffffffffffffffUL;
 	*(volatile uint64_t*)(heart + HEART_IMR(0)) = 0UL;
 	*(volatile uint64_t*)(heart + HEART_IMR(1)) = 0UL;
 	*(volatile uint64_t*)(heart + HEART_IMR(2)) = 0UL;
@@ -164,6 +175,8 @@ xheart_attach(struct device *parent, struct device *self, void *aux)
 	set_intr(INTPRI_HEART_LEDS, CR_INT_5, ip30_lights_frob);
 
 	register_splx_handler(xheart_splx);
+
+	tc_init(&xheart_timecounter);
 }
 
 /*
@@ -457,4 +470,16 @@ xheart_setintrmask(int level)
 
 	*(volatile uint64_t *)(heart + HEART_IMR(cpuid)) =
 		xheart_intem[cpuid] & ~xheart_imask[cpuid][level];
+}
+
+/*
+ * Timecounter interface.
+ */
+
+uint
+xheart_get_timecount(struct timecounter *tc)
+{
+	paddr_t heart = PHYS_TO_XKPHYS(HEART_PIU_BASE, CCA_NC);
+
+	return (u_int)*(volatile uint64_t *)(heart + HEART_CTR_VALUE);
 }

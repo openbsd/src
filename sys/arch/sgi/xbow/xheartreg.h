@@ -1,7 +1,7 @@
-/*	$OpenBSD: xheartreg.h,v 1.3 2009/10/22 22:08:54 miod Exp $	*/
+/*	$OpenBSD: xheartreg.h,v 1.4 2011/07/10 17:48:25 miod Exp $	*/
 
 /*
- * Copyright (c) 2008 Miodrag Vallat.
+ * Copyright (c) 2008, 2011 Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -102,3 +102,13 @@
 #define	HEART_INTR_WIDGET_MIN		3
 
 #define	HEART_NINTS			64
+
+/*
+ * Crossbow clock, as a free-running counter.
+ * The clock rate is 400 MHz, with the counter running at 1/32 of the clock,
+ * i.e. 12.5 MHz (80 nS period)
+ */
+
+#define	HEART_CTR_VALUE		0x00020000	/* 52-bit counter value, r/o */
+#define	HEART_CTR_LIMIT		0x00030000	/* 24-bit limit value */
+#define	HEART_CTR_TRIGGER	0x00040000
