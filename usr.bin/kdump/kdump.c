@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.57 2011/07/09 07:22:05 otto Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.58 2011/07/10 06:13:55 otto Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -63,7 +63,7 @@
 #include "kdump_subr.h"
 #include "extern.h"
 
-int timestamp, decimal, iohex, fancy = 1, tail, maxdata, resolv;
+int timestamp, decimal, iohex, fancy = 1, tail, maxdata = INT_MAX, resolv;
 char *tracefile = DEF_TRACEFILE;
 struct ktr_header ktr_header;
 pid_t pid = -1;
@@ -774,7 +774,9 @@ ktrgenio(struct ktr_genio *ktr, size_t len)
 	}
 	printf("fd %d %s %zu bytes\n", ktr->ktr_fd,
 		ktr->ktr_rw == UIO_READ ? "read" : "wrote", datalen);
-	if (maxdata && datalen > maxdata)
+	if (maxdata == 0)
+		return;
+	if (datalen > maxdata)
 		datalen = maxdata;
 	if (iohex && !datalen)
 		return;
