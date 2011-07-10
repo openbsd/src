@@ -1,4 +1,4 @@
-/*	$OpenBSD: options_def.h,v 1.4 2001/01/29 01:58:47 niklas Exp $	*/
+/*	$OpenBSD: options_def.h,v 1.5 2011/07/10 13:20:25 millert Exp $	*/
 
 #define O_ALTWERASE 0
 #define O_AUTOINDENT 1
@@ -10,7 +10,7 @@
 #define O_CEDIT 7
 #define O_COLUMNS 8
 #define O_COMMENT 9
-#define O_DIRECTORY 10
+#define O_TMP_DIRECTORY 10
 #define O_EDCOMPATIBLE 11
 #define O_ESCAPETIME 12
 #define O_ERRORBELLS 13

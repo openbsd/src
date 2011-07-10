@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_filter.c,v 1.10 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_filter.c,v 1.11 2011/07/10 13:20:25 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -84,10 +84,10 @@ ex_filter(sp, cmdp, fm, tm, rp, cmd, ftype)
 	input[0] = input[1] = output[0] = output[1] = -1;
 
 	if (ftype == FILTER_BANG) {
-		if (opts_empty(sp, O_DIRECTORY, 0))
+		if (opts_empty(sp, O_TMP_DIRECTORY, 0))
 			goto err;
 		(void)snprintf(tname, sizeof(tname),
-		    "%s/vi.XXXXXXXXXX", O_STR(sp, O_DIRECTORY));
+		    "%s/vi.XXXXXXXXXX", O_STR(sp, O_TMP_DIRECTORY));
 		fd = mkstemp(tname);
 		if (fd == -1) {
 			msgq(sp, M_SYSERR,

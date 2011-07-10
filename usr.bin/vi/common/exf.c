@@ -1,4 +1,4 @@
-/*	$OpenBSD: exf.c,v 1.25 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: exf.c,v 1.26 2011/07/10 13:20:25 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -188,10 +188,10 @@ file_init(sp, frp, rcv_name, flags)
 		 */
 		if (frp->tname != NULL)
 			goto err;
-		if (opts_empty(sp, O_DIRECTORY, 0))
+		if (opts_empty(sp, O_TMP_DIRECTORY, 0))
 			goto err;
 		(void)snprintf(tname, sizeof(tname),
-		    "%s/vi.XXXXXXXXXX", O_STR(sp, O_DIRECTORY));
+		    "%s/vi.XXXXXXXXXX", O_STR(sp, O_TMP_DIRECTORY));
 		fd = mkstemp(tname);
 		if (fd == -1 || fchmod(fd, S_IRUSR | S_IWUSR) == -1) {
 			msgq(sp, M_SYSERR,

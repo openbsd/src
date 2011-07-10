@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.15 2009/11/22 17:12:40 nicm Exp $	*/
+/*	$OpenBSD: options.c,v 1.16 2011/07/10 13:20:25 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -62,7 +62,7 @@ OPTLIST const optlist[] = {
 	{"columns",	f_columns,	OPT_NUM,	OPT_NOSAVE},
 /* O_COMMENT	  4.4BSD */
 	{"comment",	NULL,		OPT_0BOOL,	0},
-/* O_DIRECTORY	    4BSD */
+/* O_TMP_DIRECTORY	    4BSD */
 	{"directory",	NULL,		OPT_STR,	0},
 /* O_EDCOMPATIBLE   4BSD */
 	{"edcompatible",NULL,		OPT_0BOOL,	0},
@@ -238,7 +238,7 @@ static OABBREV const abbrev[] = {
 	{"aw",		O_AUTOWRITE},		/*     4BSD */
 	{"bf",		O_BEAUTIFY},		/*     4BSD */
 	{"co",		O_COLUMNS},		/*   4.4BSD */
-	{"dir",		O_DIRECTORY},		/*     4BSD */
+	{"dir",		O_TMP_DIRECTORY},	/*     4BSD */
 	{"eb",		O_ERRORBELLS},		/*     4BSD */
 	{"ed",		O_EDCOMPATIBLE},	/*     4BSD */
 	{"ex",		O_EXRC},		/* System V (undocumented) */
@@ -346,7 +346,7 @@ opts_init(sp, oargs)
 	 */
 	(void)snprintf(b1, sizeof(b1),
 	    "directory=%s", (s = getenv("TMPDIR")) == NULL ? _PATH_TMP : s);
-	OI(O_DIRECTORY, b1);
+	OI(O_TMP_DIRECTORY, b1);
 	OI(O_ESCAPETIME, "escapetime=1");
 	OI(O_KEYTIME, "keytime=6");
 	OI(O_MATCHTIME, "matchtime=7");
