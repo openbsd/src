@@ -615,7 +615,6 @@
 ./usr/include/i386/specialreg.h
 ./usr/include/i386/spinlock.h
 ./usr/include/i386/stdarg.h
-./usr/include/i386/svr4_machdep.h
 ./usr/include/i386/sysarch.h
 ./usr/include/i386/trap.h
 ./usr/include/i386/tss.h

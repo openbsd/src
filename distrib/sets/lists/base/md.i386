@@ -1900,7 +1900,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/specialreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/spinlock.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/stdarg.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/i386/svr4_machdep.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/sysarch.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/trap.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/tss.ph
