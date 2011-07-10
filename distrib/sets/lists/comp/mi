@@ -3404,6 +3404,7 @@
 ./usr/share/man/man3/bzero.3
 ./usr/share/man/man3/cabs.3
 ./usr/share/man/man3/cabsf.3
+./usr/share/man/man3/cabsl.3
 ./usr/share/man/man3/calloc.3
 ./usr/share/man/man3/callrpc.3
 ./usr/share/man/man3/can_change_color.3
