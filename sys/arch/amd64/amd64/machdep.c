@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.148 2011/07/05 04:48:01 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.149 2011/07/10 18:11:49 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -784,10 +784,6 @@ haltsys:
 }
 
 /*
- * XXXfvdl share dumpcode.
- */
-
-/*
  * These variables are needed by /sbin/savecore
  */
 u_long	dumpmag = 0x8fca0101;	/* magic number */
@@ -1483,9 +1479,6 @@ init_x86_64(paddr_t first_avail)
 				vm_physmem[x] = vm_physmem[x + 1];
 		}
 	}
-	/*
-	 * XXXfvdl todo: acpi wakeup code.
-	 */
 
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 

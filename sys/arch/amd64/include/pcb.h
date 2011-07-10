@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.11 2011/04/13 02:49:12 guenther Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.12 2011/07/10 18:12:03 deraadt Exp $	*/
 /*	$NetBSD: pcb.h,v 1.1 2003/04/26 18:39:45 fvdl Exp $	*/
 
 /*-
@@ -62,10 +62,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)pcb.h	5.10 (Berkeley) 5/12/91
- */
-
-/*
- * XXXfvdl these copyrights don't really match anymore
  */
 
 #ifndef _MACHINE_PCB_H_
