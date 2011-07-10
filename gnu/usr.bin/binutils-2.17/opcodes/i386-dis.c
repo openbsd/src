@@ -5424,11 +5424,3 @@ OP_0f3a (bytemode, sizeflag)
    used_prefixes |= (prefixes & PREFIX_DATA);
    USED_REX(rex);
 }
-
-static void
-BadOp (void)
-{
-  /* Throw away prefixes and 1st. opcode byte.  */
-  codep = insn_codep + 1;
-  oappend ("(bad)");
-}
