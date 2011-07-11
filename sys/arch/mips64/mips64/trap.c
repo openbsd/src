@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.75 2011/07/07 18:11:24 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.76 2011/07/11 15:40:47 guenther Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -166,7 +166,9 @@ ast()
 
 	p->p_md.md_astpending = 0;
 	if (p->p_flag & P_OWEUPC) {
+		KERNEL_LOCK();
 		ADDUPROF(p);
+		KERNEL_UNLOCK();
 	}
 	if (ci->ci_want_resched)
 		preempt(NULL);
@@ -496,11 +498,15 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 			}
 		}
 #ifdef SYSCALL_DEBUG
+		KERNEL_LOCK();
 		scdebug_call(p, code, args.i);
+		KERNEL_UNLOCK();
 #endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL)) {
+			KERNEL_LOCK();
 			ktrsyscall(p, code, callp->sy_argsize, args.i);
+			KERNEL_UNLOCK();
 		}
 #endif
 		rval[0] = 0;
@@ -512,7 +518,9 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 
 #if NSYSTRACE > 0
 		if (ISSET(p->p_flag, P_SYSTRACE)) {
+			KERNEL_LOCK();
 			i = systrace_redirect(code, p, args.i, rval);
+			KERNEL_UNLOCK();
 		} else
 #endif
 		{
@@ -542,11 +550,15 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 			locr0->a3 = 1;
 		}
 #ifdef SYSCALL_DEBUG
+		KERNEL_LOCK();
 		scdebug_ret(p, code, i, rval);
+		KERNEL_UNLOCK();
 #endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSRET)) {
+			KERNEL_LOCK();
 			ktrsysret(p, code, i, rval[0]);
+			KERNEL_UNLOCK();
 		}
 #endif
 		goto out;
@@ -792,7 +804,9 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 	p->p_md.md_regs->cause = trapframe->cause;
 	p->p_md.md_regs->badvaddr = trapframe->badvaddr;
 	sv.sival_ptr = (void *)trapframe->badvaddr;
+	KERNEL_LOCK();
 	trapsignal(p, i, ucode, typ, sv);
+	KERNEL_UNLOCK();
 out:
 	/*
 	 * Note: we should only get here if returning to user mode.
@@ -818,10 +832,12 @@ child_return(arg)
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_LOCK();
 		ktrsysret(p,
 		    (p->p_flag & P_THREAD) ? SYS_rfork :
 		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
 		    0, 0);
+		KERNEL_UNLOCK();
 	}
 #endif
 }

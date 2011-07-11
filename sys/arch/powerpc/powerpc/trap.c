@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.86 2011/07/07 18:11:24 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.87 2011/07/11 15:40:47 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -275,7 +275,9 @@ trap(struct trapframe *frame)
 	case EXC_TRC|EXC_USER:		
 		{
 			sv.sival_int = frame->srr0;
+			KERNEL_LOCK();
 			trapsignal(p, SIGTRAP, type, TRAP_TRACE, sv);
+			KERNEL_UNLOCK();
 		}
 		break;
 
@@ -400,7 +402,9 @@ printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 /* XXX Likely that returning from this trap is bogus... */
 /* XXX Have to make sure that sigreturn does the right thing. */
 		sv.sival_int = frame->srr0;
+		KERNEL_LOCK();
 		trapsignal(p, SIGSEGV, VM_PROT_EXECUTE, SEGV_MAPERR, sv);
+		KERNEL_UNLOCK();
 		break;
 	case EXC_SC|EXC_USER:
 		{
@@ -466,21 +470,27 @@ printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 
 #ifdef	KTRACE
 			if (KTRPOINT(p, KTR_SYSCALL)) {
+				KERNEL_LOCK();
 				ktrsyscall(p, code, argsize, params);
+				KERNEL_UNLOCK();
 			}
 #endif
 			rval[0] = 0;
 			rval[1] = frame->fixreg[FIRSTARG + 1];
 
 #ifdef SYSCALL_DEBUG
+			KERNEL_LOCK();
 			scdebug_call(p, code, params);
+			KERNEL_UNLOCK();
 #endif
 
 			
 #if NSYSTRACE > 0
 			if (ISSET(p->p_flag, P_SYSTRACE)) {
+				KERNEL_LOCK();
 				error = systrace_redirect(code, p, params,
 				    rval);
+				KERNEL_UNLOCK();
 			} else
 #endif
 			{
@@ -518,11 +528,15 @@ syscall_bad:
 				break;
 			}
 #ifdef SYSCALL_DEBUG
+			KERNEL_LOCK();
 			scdebug_ret(p, code, error, rval); 
+			KERNEL_UNLOCK();
 #endif  
 #ifdef	KTRACE
 			if (KTRPOINT(p, KTR_SYSRET)) {
+				KERNEL_LOCK();
 				ktrsysret(p, code, error, rval[0]);
+				KERNEL_UNLOCK();
 			}
 #endif
 		}
@@ -545,8 +559,10 @@ syscall_bad:
 			frame->srr0 += 4;
 		else {
 			sv.sival_int = frame->srr0;
+			KERNEL_LOCK();
 			trapsignal(p, SIGSEGV, VM_PROT_EXECUTE, SEGV_MAPERR,
 				sv);
+			KERNEL_UNLOCK();
 		}
 		break;
 
@@ -600,7 +616,9 @@ mpc_print_pci_stat();
 			errnum++;
 #endif
 			sv.sival_int = frame->srr0;
+			KERNEL_LOCK();
 			trapsignal(p, SIGTRAP, type, TRAP_BRKPT, sv);
+			KERNEL_UNLOCK();
 			break;
 		}
 #if 0
@@ -619,7 +637,9 @@ for (i = 0; i < errnum; i++) {
 }
 #endif
 		sv.sival_int = frame->srr0;
+		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
+		KERNEL_UNLOCK();
 		break;
 	}
 	case EXC_PGM:
@@ -647,19 +667,25 @@ for (i = 0; i < errnum; i++) {
 		break;
 #else  /* ALTIVEC */
 		sv.sival_int = frame->srr0;
+		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
+		KERNEL_UNLOCK();
 		break;
 #endif
 
 	case EXC_VECAST|EXC_USER:
+		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, 0, FPE_FLTRES, sv);
+		KERNEL_UNLOCK();
 		break;
 
 	case EXC_AST|EXC_USER:
 		uvmexp.softs++;
 		p->p_md.md_astpending = 0;	/* we are about to do it */
 		if (p->p_flag & P_OWEUPC) {
+			KERNEL_LOCK();
 			ADDUPROF(p);
+			KERNEL_UNLOCK();
 		}
 		if (ci->ci_want_resched)
 			preempt(NULL);
@@ -706,10 +732,12 @@ child_return(void *arg)
 
 #ifdef	KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_LOCK();
 		ktrsysret(p,
 		    (p->p_flag & P_THREAD) ? SYS_rfork :
 		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
 		    0, 0);
+		KERNEL_UNLOCK();
 	}
 #endif
 }

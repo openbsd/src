@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.25 2011/07/10 18:09:27 deraadt Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.26 2011/07/11 15:40:47 guenther Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -160,7 +160,9 @@ fputrap(struct trapframe *frame)
 	sfp->fp_ex_sw = sfp->fp_fxsave.fx_fsw;
 	code = x86fpflags_to_siginfo (statbits);
 	sv.sival_ptr = (void *)frame->tf_rip;	/* XXX - ? */
+	KERNEL_LOCK();
 	trapsignal(p, SIGFPE, frame->tf_err, code, sv);
+	KERNEL_UNLOCK();
 }
 
 static int

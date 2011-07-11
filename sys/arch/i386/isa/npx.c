@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.56 2011/07/07 18:11:24 art Exp $	*/
+/*	$OpenBSD: npx.c,v 1.57 2011/07/11 15:40:47 guenther Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -578,7 +578,9 @@ npxtrap(struct trapframe *frame)
 	addr->sv_xmm.sv_ex_tw = addr->sv_xmm.sv_env.en_tw;
 	code = x86fpflags_to_siginfo (statbits);
 	sv.sival_int = frame->tf_eip;
+	KERNEL_LOCK();
 	trapsignal(p, SIGFPE, frame->tf_err, code, sv);
+	KERNEL_UNLOCK();
 }
 
 static int

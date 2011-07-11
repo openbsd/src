@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.58 2011/07/07 18:11:24 art Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.59 2011/07/11 15:40:47 guenther Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -664,18 +664,15 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 	gid_t oldgid;
 	int policy, error = 0, report = 0, maycontrol = 0, issuser = 0;
 
-	KERNEL_LOCK();
 	systrace_lock();
 	strp = p->p_systrace;
 	if (strp == NULL) {
 		systrace_unlock();
-		KERNEL_UNLOCK();
 		return (EINVAL);
 	}
 
 	if (code < 0 || code >= p->p_emul->e_nsysent) {
 		systrace_unlock();
-		KERNEL_UNLOCK();
 		return (EINVAL);
 	}
 
@@ -735,7 +732,6 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 			psignal(p, SIGKILL);
 		} else if (policy == SYSTR_POLICY_PERMIT)
 			error = (*callp->sy_call)(p, v, retval);
-		KERNEL_UNLOCK();
 		return (error);
 	}
 
@@ -751,16 +747,13 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 	error = systrace_msg_ask(fst, strp, code, callp->sy_argsize, v);
 	/* lock has been released in systrace_msg_ask() */
 
-	if (error) {
-		KERNEL_UNLOCK();
+	if (error)
 		return (error);
-	}
 
 	/* We might have detached by now for some reason */
 	systrace_lock();
 	if ((strp = p->p_systrace) == NULL) {
 		systrace_unlock();
-		KERNEL_UNLOCK();
 		return (error);
 	}
 
@@ -808,7 +801,6 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 	systrace_lock();
 	if ((strp = p->p_systrace) == NULL) {
 		systrace_unlock();
-		KERNEL_UNLOCK();
 		return (error);
 	}
 
@@ -830,7 +822,6 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 	if (ISSET(p->p_p->ps_flags, PS_SUGID | PS_SUGIDEXEC)) {
 		if ((fst = strp->parent) == NULL || !fst->issuser) {
 			systrace_unlock();
-			KERNEL_UNLOCK();
 			return (error);
 		}
 	}
@@ -879,7 +870,6 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 out_unlock:
 	rw_exit_write(&fst->lock);
 out:
-	KERNEL_UNLOCK();
 	return (error);
 }
 

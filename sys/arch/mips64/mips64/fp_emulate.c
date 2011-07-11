@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_emulate.c,v 1.5 2011/07/07 18:11:24 art Exp $	*/
+/*	$OpenBSD: fp_emulate.c,v 1.6 2011/07/11 15:40:47 guenther Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -385,7 +385,9 @@ deliver:
 		if (sig != SIGBUS && sig != SIGSEGV)
 #endif
 			sv.sival_ptr = (void *)pc;
+		KERNEL_LOCK();
 		trapsignal(p, sig, 0, fault_type, sv);
+		KERNEL_UNLOCK();
 	}
 }
 
