@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_sym.c,v 1.5 2011/07/03 15:47:18 matthew Exp $ */
+/*	$OpenBSD: mpath_sym.c,v 1.6 2011/07/11 01:02:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -65,11 +65,20 @@ int		sym_mpath_checksense(struct scsi_xfer *);
 int		sym_mpath_online(struct scsi_link *);
 int		sym_mpath_offline(struct scsi_link *);
 
-struct mpath_ops sym_mpath_ops = {
+const struct mpath_ops sym_mpath_sym_ops = {
 	"sym",
 	sym_mpath_checksense,
 	sym_mpath_online,
-	sym_mpath_offline
+	sym_mpath_offline,
+	MPATH_ROUNDROBIN
+};
+
+const struct mpath_ops sym_mpath_asym_ops = {
+	"sym",
+	sym_mpath_checksense,
+	sym_mpath_online,
+	sym_mpath_offline,
+	MPATH_MRU
 };
 
 struct sym_device {
@@ -82,6 +91,13 @@ struct sym_device sym_devices[] = {
 /*	  "01234567"  "0123456789012345" */
 	{ "SEAGATE ", "ST" },
 	{ "FUJITSU ", "MBD" }
+};
+
+struct sym_device asym_devices[] = {
+/*	  " vendor "  "     device     " */
+/*	  "01234567"  "0123456789012345" */
+	{ "DELL    ", "MD1220          " },
+	{ "Transtec", "PROVIGO1100" }
 };
 
 int
@@ -102,6 +118,13 @@ sym_match(struct device *parent, void *match, void *aux)
 		    bcmp(s->product, inq->product, strlen(s->product)) == 0)
 			return (3);
 	}
+	for (i = 0; i < nitems(asym_devices); i++) {
+		s = &asym_devices[i];
+
+		if (bcmp(s->vendor, inq->vendor, strlen(s->vendor)) == 0 &&
+		    bcmp(s->product, inq->product, strlen(s->product)) == 0)
+			return (3);
+	}
 
 	return (0);
 }
@@ -112,8 +135,23 @@ sym_attach(struct device *parent, struct device *self, void *aux)
 	struct sym_softc *sc = (struct sym_softc *)self;
 	struct scsi_attach_args *sa = aux;
 	struct scsi_link *link = sa->sa_sc_link;
+	struct scsi_inquiry_data *inq = sa->sa_inqbuf;
+	const struct mpath_ops *ops = &sym_mpath_sym_ops;
+	struct sym_device *s;
+	int i;
 
 	printf("\n");
+
+	/* check if we're an assymetric access device */
+	for (i = 0; i < nitems(asym_devices); i++) {
+		s = &asym_devices[i];
+
+		if (bcmp(s->vendor, inq->vendor, strlen(s->vendor)) == 0 &&
+		    bcmp(s->product, inq->product, strlen(s->product)) == 0) {
+			ops = &sym_mpath_asym_ops;
+			break;
+		}
+	}
 
 	/* init link */
 	link->device_softc = sc;
@@ -121,9 +159,8 @@ sym_attach(struct device *parent, struct device *self, void *aux)
 	/* init path */
 	scsi_xsh_set(&sc->sc_path.p_xsh, link, sym_mpath_start);
 	sc->sc_path.p_link = link;
-	sc->sc_path.p_ops = &sym_mpath_ops;
 
-	if (mpath_path_attach(&sc->sc_path) != 0)
+	if (mpath_path_attach(&sc->sc_path, ops) != 0)
 		printf("%s: unable to attach path\n", DEVNAME(sc));
 }
 

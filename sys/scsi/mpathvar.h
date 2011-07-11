@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpathvar.h,v 1.2 2011/04/28 10:43:36 dlg Exp $ */
+/*	$OpenBSD: mpathvar.h,v 1.3 2011/07/11 01:02:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -27,13 +27,17 @@ struct mpath_ops {
 	int	(*op_checksense)(struct scsi_xfer *);
 	int	(*op_online)(struct scsi_link *);
 	int	(*op_offline)(struct scsi_link *);
+	int	op_schedule;
 };
+
+#define MPATH_ROUNDROBIN	0 /* use all active paths */
+#define MPATH_NEXT		MPATH_ROUNDROBIN
+#define MPATH_MRU		1 /* use most recently used path */
 
 struct mpath_path {
 	/* the path driver must set these */
 	struct scsi_xshandler	 p_xsh;
 	struct scsi_link	*p_link;
-	struct mpath_ops	*p_ops;
 	int			 p_gid;
 
 	/* the follwoing are private to mpath.c */
@@ -43,7 +47,8 @@ struct mpath_path {
 };
 
 int			 mpath_path_probe(struct scsi_link *);
-int			 mpath_path_attach(struct mpath_path *);
+int			 mpath_path_attach(struct mpath_path *,
+			    const struct mpath_ops *);
 void			 mpath_path_state(struct mpath_path *, int);
 int			 mpath_path_detach(struct mpath_path *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_rdac.c,v 1.6 2011/07/03 15:47:18 matthew Exp $ */
+/*	$OpenBSD: mpath_rdac.c,v 1.7 2011/07/11 01:02:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -146,11 +146,12 @@ int		rdac_mpath_checksense(struct scsi_xfer *);
 int		rdac_mpath_online(struct scsi_link *);
 int		rdac_mpath_offline(struct scsi_link *);
 
-struct mpath_ops rdac_mpath_ops = {
+const struct mpath_ops rdac_mpath_ops = {
 	"rdac",
 	rdac_mpath_checksense,
 	rdac_mpath_online,
 	rdac_mpath_offline,
+	MPATH_ROUNDROBIN
 };
 
 int		rdac_c8(struct rdac_softc *);
@@ -208,7 +209,6 @@ rdac_attach(struct device *parent, struct device *self, void *aux)
 	/* init path */
 	scsi_xsh_set(&sc->sc_path.p_xsh, link, rdac_mpath_start);
 	sc->sc_path.p_link = link;
-	sc->sc_path.p_ops = &rdac_mpath_ops;
 
 	if (rdac_c8(sc) != 0)
 		return;
@@ -216,7 +216,7 @@ rdac_attach(struct device *parent, struct device *self, void *aux)
 	if (rdac_c9(sc) != 0)
 		return;
 
-	if (mpath_path_attach(&sc->sc_path) != 0)
+	if (mpath_path_attach(&sc->sc_path, &rdac_mpath_ops) != 0)
 		printf("%s: unable to attach path\n", DEVNAME(sc));
 }
 

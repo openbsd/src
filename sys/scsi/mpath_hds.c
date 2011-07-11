@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_hds.c,v 1.5 2011/07/03 15:47:18 matthew Exp $ */
+/*	$OpenBSD: mpath_hds.c,v 1.6 2011/07/11 01:02:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -89,11 +89,12 @@ int		hds_mpath_checksense(struct scsi_xfer *);
 int		hds_mpath_online(struct scsi_link *);
 int		hds_mpath_offline(struct scsi_link *);
 
-struct mpath_ops hds_mpath_ops = {
+const struct mpath_ops hds_mpath_ops = {
 	"hds",
 	hds_mpath_checksense,
 	hds_mpath_online,
-	hds_mpath_offline
+	hds_mpath_offline,
+	MPATH_ROUNDROBIN
 };
 
 struct hds_device {
@@ -152,7 +153,6 @@ hds_attach(struct device *parent, struct device *self, void *aux)
 	/* init path */
 	scsi_xsh_set(&sc->sc_path.p_xsh, link, hds_mpath_start);
 	sc->sc_path.p_link = link;
-	sc->sc_path.p_ops = &hds_mpath_ops;
 
 	if (hds_inquiry(link, &sc->sc_mode) != 0) {
 		printf("%s: unable to query controller mode\n");
@@ -172,7 +172,7 @@ hds_attach(struct device *parent, struct device *self, void *aux)
 	if (!preferred)
 		return;
 
-	if (mpath_path_attach(&sc->sc_path) != 0)
+	if (mpath_path_attach(&sc->sc_path, &hds_mpath_ops) != 0)
 		printf("%s: unable to attach path\n", DEVNAME(sc));
 }
 

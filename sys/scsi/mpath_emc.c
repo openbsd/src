@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_emc.c,v 1.7 2011/07/03 15:47:18 matthew Exp $ */
+/*	$OpenBSD: mpath_emc.c,v 1.8 2011/07/11 01:02:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -94,11 +94,12 @@ int		emc_mpath_checksense(struct scsi_xfer *);
 int		emc_mpath_online(struct scsi_link *);
 int		emc_mpath_offline(struct scsi_link *);
 
-struct mpath_ops emc_mpath_ops = {
+const struct mpath_ops emc_mpath_ops = {
 	"emc",
 	emc_mpath_checksense,
 	emc_mpath_online,
 	emc_mpath_offline,
+	MPATH_ROUNDROBIN
 };
 
 struct emc_device {
@@ -156,7 +157,6 @@ emc_attach(struct device *parent, struct device *self, void *aux)
 	/* init path */
 	scsi_xsh_set(&sc->sc_path.p_xsh, link, emc_mpath_start);
 	sc->sc_path.p_link = link;
-	sc->sc_path.p_ops = &emc_mpath_ops;
 
 	if (emc_sp_info(sc)) {
 		printf("%s: unable to get sp info\n", DEVNAME(sc));
@@ -172,7 +172,7 @@ emc_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_sp + 'A', sc->sc_port);
 
 	if (sc->sc_lun_state == EMC_SP_INFO_LUN_STATE_OWNED) {
-		if (mpath_path_attach(&sc->sc_path) != 0)
+		if (mpath_path_attach(&sc->sc_path, &emc_mpath_ops) != 0)
 			printf("%s: unable to attach path\n", DEVNAME(sc));
 	}
 }
