@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.79 2011/07/11 04:10:47 deraadt Exp $
+# $OpenBSD: sysmerge.sh,v 1.80 2011/07/11 04:37:21 deraadt Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -279,11 +279,7 @@ merge_loop() {
 				else
 					EDIT="${VISUAL}"
 				fi
-				if which ${EDIT} >/dev/null 2>&1; then
-					${EDIT} ${COMPFILE}.merged
-				else
-					echo "\t*** ERROR: ${EDIT} can not be found or is not executable"
-				fi
+				${EDIT} ${COMPFILE}.merged
 				INSTALL_MERGED=v
 				;;
 			[iI])
