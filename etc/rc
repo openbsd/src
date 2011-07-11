@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.384 2011/07/09 01:30:27 halex Exp $
+#	$OpenBSD: rc,v 1.385 2011/07/11 17:20:09 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -427,9 +427,9 @@ fi
 echo -n 'starting RPC daemons:'
 start_daemon portmap
 if [ X"`domainname`" != X"" ]; then
-	start_daemon ypserv ypldap ypbind yppasswdd
+	start_daemon ypserv ypbind yppasswdd
 fi
-start_daemon mountd nfsd lockd statd amd
+start_daemon ypldap mountd nfsd lockd statd amd
 echo '.'
 
 mount -a
