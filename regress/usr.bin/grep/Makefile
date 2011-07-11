@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2011/07/11 20:35:41 tedu Exp $
+# $OpenBSD: Makefile,v 1.15 2011/07/11 22:01:28 okan Exp $
 
 REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 \
 	t18 t19 t20 t21 t22 t23 t24
@@ -92,9 +92,9 @@ t23:
 	egrep -w 'word1|word2|word3' ${.CURDIR}/t23.in
 
 t24:
-	grep -e '' < in | diff - in
-	grep -x -e '' < in | diff - /dev/null
-	grep -f /dev/null < in | diff - /dev/null
+	grep -e '' < ${.CURDIR}/in | diff - ${.CURDIR}/in
+	grep -x -e '' < ${.CURDIR}/in | diff - /dev/null
+	grep -f /dev/null < ${.CURDIR}/in | diff - /dev/null
 
 
 .PHONY: t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20
