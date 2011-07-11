@@ -1,4 +1,4 @@
-/*	$OpenBSD: decl.c,v 1.28 2011/05/31 22:27:54 martynas Exp $	*/
+/*	$OpenBSD: decl.c,v 1.29 2011/07/11 17:30:10 martynas Exp $	*/
 /*	$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: decl.c,v 1.28 2011/05/31 22:27:54 martynas Exp $";
+static char rcsid[] = "$OpenBSD: decl.c,v 1.29 2011/07/11 17:30:10 martynas Exp $";
 #endif
 
 #include <sys/param.h>
@@ -1782,8 +1782,10 @@ compltag(type_t *tp, sym_t *fmem)
 		sp->size = dcs->d_offset;
 		sp->memb = fmem;
 		if (sp->size == 0) {
-			/* zero sized %s */
-			(void)gnuism(47, ttab[t].tt_name);
+			if (sflag) {
+				/* zero sized %s */
+				warning(47, ttab[t].tt_name);
+			}
 		} else {
 			n = 0;
 			for (mem = fmem; mem != NULL; mem = mem->s_nxt) {
