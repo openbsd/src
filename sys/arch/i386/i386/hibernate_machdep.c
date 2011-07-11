@@ -302,6 +302,7 @@ hibernate_populate_resume_pt(paddr_t image_start, paddr_t image_end)
  * been set. This means that there can be no side effects once the
  * write has started, and the write function itself can also have no
  * side effects.
+ */
 int
 hibernate_write_image()
 {
@@ -326,10 +327,11 @@ hibernate_write_image()
 	pmap_kenter_pa(HIBERNATE_IO_PAGE, HIBERNATE_IO_PAGE, VM_PROT_ALL);
 	pmap_kenter_pa(HIBERNATE_TEMP_PAGE, HIBERNATE_TEMP_PAGE,
 		VM_PROT_ALL);
-	pmap_kenter_pa(HIBERNATE_ZLIB_SCRATCH, HIBERNATE_ZLIB_SCRATCH, VM_PROT_ALL);
+	pmap_kenter_pa(HIBERNATE_ZLIB_SCRATCH, HIBERNATE_ZLIB_SCRATCH,
+		VM_PROT_ALL);
 	
 	/* Map the zlib allocation ranges */
-	for(zlib_range = HIBERNATE_ZLIB_START; zlib < HIBERNATE_ZLIB_END;
+	for(zlib_range = HIBERNATE_ZLIB_START; zlib_range < HIBERNATE_ZLIB_END;
 		zlib_range += PAGE_SIZE) {
 		pmap_kenter_pa((vaddr_t)(zlib_range+i),
 			(paddr_t)(zlib_range+i),
@@ -338,8 +340,8 @@ hibernate_write_image()
 
 	/* Identity map the chunktable */
 	for(i=0; i < HIBERNATE_CHUNK_TABLE_SIZE; i += PAGE_SIZE) {
-		pmap_kenter_pa((vaddr_t)(HIBERNATE_CHUNK_TABLE+i),
-			(paddr_t)(HIBERNATE_CHUNK_TABLE+i),
+		pmap_kenter_pa((vaddr_t)(HIBERNATE_CHUNK_TABLE_START+i),
+			(paddr_t)(HIBERNATE_CHUNK_TABLE_START+i),
 			VM_PROT_ALL);
 	}
 
@@ -348,7 +350,7 @@ hibernate_write_image()
 	blkctr = hiber_info.image_offset;
 	hiber_info.chunk_ctr = 0;
 	offset = 0;
-	chunks = (struct hibernate_disk_chunk *)HIBERNATE_CHUNK_TABLE;
+	chunks = (struct hibernate_disk_chunk *)HIBERNATE_CHUNK_TABLE_START;
 
 	/* Calculate the chunk regions */
 	for (i=0; i < hiber_info.nranges; i++) {

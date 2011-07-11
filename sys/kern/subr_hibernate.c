@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.12 2011/07/09 03:10:27 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.13 2011/07/11 03:30:32 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -24,6 +24,9 @@
 #include <sys/systm.h>
 #include <sys/disklabel.h>
 #include <sys/conf.h>
+#include <sys/buf.h>
+#include <sys/fcntl.h>
+#include <sys/stat.h>
 #include <uvm/uvm.h>
 #include <machine/hibernate.h>
 
@@ -846,6 +849,69 @@ hibernate_compare_signature(union hibernate_info *mine,
 			(mine->ranges[i].end != disk->ranges[i].end) )
 		return (1);
 	}
+
+	return (0);
+}
+
+/*
+ * hibernate_read_block
+ *
+ * Reads read_size blocks from the hibernate device specified in
+ * hib_info at offset blkctr. Output is placed into the vaddr specified
+ * at dest.
+ *
+ * Separate offsets and pages are used to handle misaligned reads (reads
+ * that span a page boundary).
+ *
+ * blkctr specifies a relative offset (relative to the start of swap),
+ * not an absolute disk offset
+ *
+ */
+int
+hibernate_read_block(union hibernate_info *hib_info, daddr_t blkctr,
+	size_t read_size, vaddr_t dest)
+{
+	struct buf *bp;
+	struct bdevsw *bdsw;
+	int error;
+
+	bp = geteblk(read_size);
+	bdsw = &bdevsw[major(hib_info->device)];
+
+	error = (*bdsw->d_open)(hib_info->device, FREAD, S_IFCHR, curproc);
+	if (error) {
+		printf("hibernate_read_block open failed\n");
+		return (1);
+	}
+
+	bp->b_bcount = read_size;
+	bp->b_blkno = blkctr;
+	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
+	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
+	bp->b_dev = hib_info->device;
+	bp->b_cylinder = 0;
+	(*bdsw->d_strategy)(bp);
+
+	error = biowait(bp);
+	if (error) {
+		printf("hibernate_read_block biowait failed %d\n", error);
+		error = (*bdsw->d_close)(hib_info->device, 0, S_IFCHR,
+				curproc);
+		if (error) 
+			printf("hibernate_read_block error close failed\n");
+		return (1);
+	}
+
+	error = (*bdsw->d_close)(hib_info->device, FREAD, S_IFCHR, curproc);
+	if (error) {
+		printf("hibernate_read_block close failed\n");
+		return (1);
+	}
+
+	bcopy(bp->b_data, (caddr_t)dest, read_size);
+
+	bp->b_flags |= B_INVAL;
+	brelse(bp);
 
 	return (0);
 }
