@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.40 2011/07/08 01:20:24 tedu Exp $	*/
+/*	$OpenBSD: util.c,v 1.41 2011/07/11 20:43:21 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -174,6 +174,7 @@ procline(str_t *l, int nottext)
 	c = 0;
 	i = 0;
 	if (matchall) {
+		c = 1;
 		goto print;
 	}
 
