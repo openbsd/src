@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.233 2011/07/06 04:49:36 matthew Exp $	*/
+/*	$OpenBSD: sd.c,v 1.234 2011/07/11 00:22:15 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -88,6 +88,9 @@ int	sdgetdisklabel(dev_t, struct sd_softc *, struct disklabel *, int);
 void	sdstart(struct scsi_xfer *);
 void	sd_shutdown(void *);
 int	sd_interpret_sense(struct scsi_xfer *);
+int	sd_read_cap_10(struct sd_softc *, int);
+int	sd_read_cap_16(struct sd_softc *, int);
+int	sd_size(struct sd_softc *, int);
 int	sd_get_parms(struct sd_softc *, struct disk_parms *, int);
 void	sd_flush(struct sd_softc *, int);
 
@@ -222,10 +225,13 @@ sdattach(struct device *parent, struct device *self, void *aux)
 
 	switch (result) {
 	case SDGP_RESULT_OK:
-		printf("%s: %lldMB, %lu bytes/sec, %lld sec total\n",
+		printf("%s: %lldMB, %lu bytes/sector, %lld sectors",
 		    sc->sc_dev.dv_xname,
 		    dp->disksize / (1048576 / dp->secsize), dp->secsize,
 		    dp->disksize);
+		if (ISSET(sc->flags, SDF_THIN))
+			printf(", thin");
+		printf("\n");
 		break;
 
 	case SDGP_RESULT_OFFLINE:
@@ -1327,6 +1333,113 @@ viscpy(u_char *dst, u_char *src, int len)
 	*dst = '\0';
 }
 
+int
+sd_read_cap_10(struct sd_softc *sc, int flags)
+{
+	struct scsi_read_capacity cdb;
+	struct scsi_read_cap_data *rdcap;
+	struct scsi_xfer *xs;
+	int rv = ENOMEM;
+
+	CLR(flags, SCSI_IGNORE_ILLEGAL_REQUEST);
+
+	rdcap = dma_alloc(sizeof(*rdcap), (ISSET(flags, SCSI_NOSLEEP) ?
+	    PR_NOWAIT : PR_WAITOK) | PR_ZERO);
+	if (rdcap == NULL)
+		return (ENOMEM);
+
+	xs = scsi_xs_get(sc->sc_link, flags | SCSI_DATA_IN | SCSI_SILENT);
+	if (xs == NULL)
+		goto done;
+
+	bzero(&cdb, sizeof(cdb));
+	cdb.opcode = READ_CAPACITY;
+
+	memcpy(xs->cmd, &cdb, sizeof(cdb));
+	xs->cmdlen = sizeof(cdb);
+	xs->data = (void *)rdcap;
+	xs->datalen = sizeof(*rdcap);
+	xs->timeout = 20000;
+
+	rv = scsi_xs_sync(xs);
+	scsi_xs_put(xs);
+
+	if (rv == 0) {
+		sc->params.disksize = _4btol(rdcap->addr) + 1;
+		sc->params.secsize = _4btol(rdcap->length);
+		CLR(sc->flags, SDF_THIN);
+	}
+
+ done:
+	dma_free(rdcap, sizeof(*rdcap));
+	return (rv);
+}
+
+int
+sd_read_cap_16(struct sd_softc *sc, int flags)
+{
+	struct scsi_read_capacity_16 cdb;
+	struct scsi_read_cap_data_16 *rdcap;
+	struct scsi_xfer *xs;
+	int rv = ENOMEM;
+
+	CLR(flags, SCSI_IGNORE_ILLEGAL_REQUEST);
+
+	rdcap = dma_alloc(sizeof(*rdcap), (ISSET(flags, SCSI_NOSLEEP) ?
+	    PR_NOWAIT : PR_WAITOK) | PR_ZERO);
+	if (rdcap == NULL)
+		return (ENOMEM);
+
+	xs = scsi_xs_get(sc->sc_link, flags | SCSI_DATA_IN | SCSI_SILENT);
+	if (xs == NULL)
+		goto done;
+
+	bzero(&cdb, sizeof(cdb));
+	cdb.opcode = READ_CAPACITY_16;
+	cdb.byte2 = SRC16_SERVICE_ACTION;
+	_lto4b(sizeof(*rdcap), cdb.length);
+
+	memcpy(xs->cmd, &cdb, sizeof(cdb));
+	xs->cmdlen = sizeof(cdb);
+	xs->data = (void *)rdcap;
+	xs->datalen = sizeof(*rdcap);
+	xs->timeout = 20000;
+
+	rv = scsi_xs_sync(xs);
+	scsi_xs_put(xs);
+
+	if (rv == 0) {
+		sc->params.disksize = _8btol(rdcap->addr) + 1;
+		sc->params.secsize = _4btol(rdcap->length);
+		if (ISSET(_2btol(rdcap->lowest_aligned), READ_CAP_16_TPE))
+			SET(sc->flags, SDF_THIN);
+		else
+			CLR(sc->flags, SDF_THIN);
+	}
+
+ done:
+	dma_free(rdcap, sizeof(*rdcap));
+	return (rv);
+}
+
+int
+sd_size(struct sd_softc *sc, int flags)
+{
+	int rv;
+
+	if (SCSISPC(sc->sc_link->inqdata.version) >= 3) {
+		rv = sd_read_cap_16(sc, flags);
+		if (rv != 0)
+			rv = sd_read_cap_10(sc, flags);
+	} else {
+		rv = sd_read_cap_10(sc, flags);
+		if (rv == 0 && sc->params.disksize == 0xffffffff)
+			rv = sd_read_cap_16(sc, flags);
+	}
+
+	return (rv);
+}
+
 /*
  * Fill out the disk parameter structure. Return SDGP_RESULT_OK if the
  * structure is correctly filled in, SDGP_RESULT_OFFLINE otherwise. The caller
@@ -1341,10 +1454,12 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 	struct page_flex_geometry *flex = NULL;
 	struct page_reduced_geometry *reduced = NULL;
 	u_char *page0 = NULL;
-	u_int32_t heads = 0, sectors = 0, cyls = 0, secsize = 0, sssecsize;
+	u_int32_t heads = 0, sectors = 0, cyls = 0, secsize = 0;
 	int err = 0, big;
 
-	dp->disksize = scsi_size(sc->sc_link, flags, &sssecsize);
+	err = sd_size(sc, flags);
+	if (err != 0)
+		return (SDGP_RESULT_OFFLINE);
 
 	buf = dma_alloc(sizeof(*buf), PR_NOWAIT);
 	if (buf == NULL)
@@ -1437,9 +1552,7 @@ validate:
 	if (dp->disksize == 0)
 		return (SDGP_RESULT_OFFLINE);
 
-	if (sssecsize > 0)
-		dp->secsize = sssecsize;
-	else
+	if (dp->secsize == 0)
 		dp->secsize = (secsize == 0) ? 512 : secsize;
 
 	/*

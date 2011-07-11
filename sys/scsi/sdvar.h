@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.36 2011/06/06 01:59:49 matthew Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.37 2011/07/11 00:22:15 dlg Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -58,6 +58,7 @@ struct sd_softc {
 #define	SDF_DIRTY	0x20		/* disk is dirty; needs cache flush */
 #define	SDF_DYING	0x40		/* dying, when deactivated */
 #define	SDF_WAITING	0x80
+#define	SDF_THIN	0x01		/* disk is thin provisioned */
 	struct scsi_link	*sc_link; /* contains our targ, lun, etc. */
 	struct disk_parms {
 		u_long	heads;		/* number of heads */
