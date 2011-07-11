@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.37 2011/07/11 00:22:15 dlg Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.38 2011/07/11 06:26:09 dlg Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -66,6 +66,8 @@ struct sd_softc {
 		u_long	sectors;	/* number of sectors/track */
 		u_long	secsize;	/* number of bytes/sector */
 		daddr64_t	disksize;	/* total number sectors */
+		u_int32_t	unmap_sectors;	/* maximum sectors/unmap */
+		u_int32_t	unmap_descs;	/* maximum descriptors/unmap */
 	} params;
 	void *sc_sdhook;		/* our shutdown hook */
 	struct timeout sc_timeout;

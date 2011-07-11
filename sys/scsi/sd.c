@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.234 2011/07/11 00:22:15 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.235 2011/07/11 06:26:09 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -91,6 +91,10 @@ int	sd_interpret_sense(struct scsi_xfer *);
 int	sd_read_cap_10(struct sd_softc *, int);
 int	sd_read_cap_16(struct sd_softc *, int);
 int	sd_size(struct sd_softc *, int);
+int	sd_thin_pages(struct sd_softc *, int);
+int	sd_vpd_block_limits(struct sd_softc *, int);
+int	sd_vpd_thin(struct sd_softc *, int);
+int	sd_thin_params(struct sd_softc *, int);
 int	sd_get_parms(struct sd_softc *, struct disk_parms *, int);
 void	sd_flush(struct sd_softc *, int);
 
@@ -1440,6 +1444,139 @@ sd_size(struct sd_softc *sc, int flags)
 	return (rv);
 }
 
+int
+sd_thin_pages(struct sd_softc *sc, int flags)
+{
+	struct scsi_vpd_hdr *pg;
+	size_t len = 0;
+	u_int8_t *pages;
+	int i, score = 0;
+	int rv;
+
+	pg = dma_alloc(sizeof(*pg), (ISSET(flags, SCSI_NOSLEEP) ?
+	    PR_NOWAIT : PR_WAITOK) | PR_ZERO);
+	if (pg == NULL)
+		return (ENOMEM);
+
+	rv = scsi_inquire_vpd(sc->sc_link, pg, sizeof(*pg),
+	    SI_PG_SUPPORTED, flags);
+	if (rv != 0)
+		goto done;
+
+	len = _2btol(pg->page_length);
+
+	dma_free(pg, sizeof(*pg));
+	pg = dma_alloc(sizeof(*pg) + len, (ISSET(flags, SCSI_NOSLEEP) ?
+	    PR_NOWAIT : PR_WAITOK) | PR_ZERO);
+	if (pg == NULL)
+		return (ENOMEM);
+
+	rv = scsi_inquire_vpd(sc->sc_link, pg, sizeof(*pg) + len,
+	    SI_PG_SUPPORTED, flags);
+	if (rv != 0)
+		goto done;
+
+	pages = (u_int8_t *)(pg + 1);
+	if (pages[0] != SI_PG_SUPPORTED) {
+		rv = EIO;
+		goto done;
+	}
+
+	for (i = 1; i < len; i++) {
+		switch (pages[i]) {
+		case SI_PG_DISK_LIMITS:
+		case SI_PG_DISK_THIN:
+			score++;
+			break;
+		}
+	}
+
+	if (score < 2)
+		rv = EOPNOTSUPP;
+
+ done:
+	dma_free(pg, sizeof(*pg) + len);
+	return (rv);
+}
+
+int
+sd_vpd_block_limits(struct sd_softc *sc, int flags)
+{
+	struct scsi_vpd_disk_limits *pg;
+	int rv;
+
+	pg = dma_alloc(sizeof(*pg), (ISSET(flags, SCSI_NOSLEEP) ?
+	    PR_NOWAIT : PR_WAITOK) | PR_ZERO);
+	if (pg == NULL)
+		return (ENOMEM);
+
+	rv = scsi_inquire_vpd(sc->sc_link, pg, sizeof(*pg),
+	    SI_PG_DISK_LIMITS, flags);
+	if (rv != 0)
+		goto done;
+
+	if (_2btol(pg->hdr.page_length) == SI_PG_DISK_LIMITS_LEN_THIN) {
+		sc->params.unmap_sectors = _4btol(pg->max_unmap_lba_count);
+		sc->params.unmap_descs = _4btol(pg->max_unmap_desc_count);
+	} else
+		rv = EOPNOTSUPP;
+
+ done:
+	dma_free(pg, sizeof(*pg));
+	return (rv);
+}
+
+int
+sd_vpd_thin(struct sd_softc *sc, int flags)
+{
+	struct scsi_vpd_disk_thin *pg;
+	int rv;
+
+	pg = dma_alloc(sizeof(*pg), (ISSET(flags, SCSI_NOSLEEP) ?
+	    PR_NOWAIT : PR_WAITOK) | PR_ZERO);
+	if (pg == NULL)
+		return (ENOMEM);
+
+	rv = scsi_inquire_vpd(sc->sc_link, pg, sizeof(*pg),
+	    SI_PG_DISK_THIN, flags);
+	if (rv != 0)
+		goto done;
+
+#ifdef notyet
+	if (ISSET(pg->flags, VPD_DISK_THIN_TPU)
+		sc->sc_delete = sd_unmap;
+	else if (ISSET(pg->flags, VPD_DISK_THIN_TPWS) {
+		sc->sc_delete = sd_write_same_16;
+		sc->params.unmap_descs = 1; /* WRITE SAME 16 only does one */
+	} else
+		rv = EOPNOTSUPP;
+#endif
+
+ done:
+	dma_free(pg, sizeof(*pg));
+	return (rv);
+}
+
+int
+sd_thin_params(struct sd_softc *sc, int flags)
+{
+	int rv;
+
+	rv = sd_thin_pages(sc, flags);
+	if (rv != 0)
+		return (rv);
+
+	rv = sd_vpd_block_limits(sc, flags);
+	if (rv != 0)
+		return (rv);
+
+	rv = sd_vpd_thin(sc, flags);
+	if (rv != 0)
+		return (rv);
+
+	return (0);
+}
+
 /*
  * Fill out the disk parameter structure. Return SDGP_RESULT_OK if the
  * structure is correctly filled in, SDGP_RESULT_OFFLINE otherwise. The caller
@@ -1457,9 +1594,13 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 	u_int32_t heads = 0, sectors = 0, cyls = 0, secsize = 0;
 	int err = 0, big;
 
-	err = sd_size(sc, flags);
-	if (err != 0)
+	if (sd_size(sc, flags) != 0)
 		return (SDGP_RESULT_OFFLINE);
+
+	if (ISSET(sc->flags, SDF_THIN) && sd_thin_params(sc, flags) != 0) {
+		/* we dont know the unmap limits, so we cant use thin shizz */
+		CLR(sc->flags, SDF_THIN);
+	}
 
 	buf = dma_alloc(sizeof(*buf), PR_NOWAIT);
 	if (buf == NULL)
