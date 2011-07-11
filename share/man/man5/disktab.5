@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disktab.5,v 1.12 2007/05/31 19:19:58 jmc Exp $
+.\"	$OpenBSD: disktab.5,v 1.13 2011/07/11 09:37:51 jmc Exp $
 .\"	$NetBSD: disktab.5,v 1.4 1994/11/30 19:31:15 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)disktab.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 11 2011 $
 .Dt DISKTAB 5
 .Os
 .Sh NAME
@@ -43,9 +43,6 @@
 is a simple database which describes disk geometries and
 disk partition characteristics.
 It is used
-.\"by the formatter(\c
-.\"IR.Xr format 8 )
-.\"to determine how to format the disk, and
 to initialize the disk label on the disk.
 The format is patterned after the
 .Xr termcap 5
