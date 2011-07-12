@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.106 2011/06/20 09:51:07 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.107 2011/07/12 10:19:54 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: June 20 2011 $
+.Dd $Mdocdate: July 12 2011 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -438,6 +438,39 @@ This is very rare since
 .Nm
 will try active mode FTP if the server refuses a passive mode
 connection.
+.Ss Manual installation
+.Nm
+differentiates between packages specified on the command line, and packages
+installed automatically because of inter-dependencies:
+such packages will be tagged as
+.Sq installed manually .
+The
+.Fl a
+option is used internally by the
+.Xr ports 7
+infrastructure
+and
+.Xr dpb 1
+to handle dependencies.
+.Pp
+It is also possible to tweak the
+.Sq installed manually
+status of a package after the fact.
+Running
+.Nm
+on an already installed package will tag it as
+.Sq installed manually ,
+even if it was already there as a dependency of something else,
+and doubling the
+.Fl a
+option will remove the
+.Sq installed manually
+tag from installed packages.
+.Pp
+.Xr pkg_info 1
+can be used to show only manually-installed packages, and
+.Xr pkg_delete 1
+can be used to remove dependencies no longer needed.
 .Ss Technical details
 .Nm
 deals with
