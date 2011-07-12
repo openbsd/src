@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.235 2011/07/11 06:26:09 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.236 2011/07/12 00:41:43 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -163,7 +163,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	int sd_autoconf = scsi_autoconf | SCSI_SILENT |
 	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE;
 	struct dk_cache dkc;
-	int error, result;
+	int error, result, sortby = BUFQ_DEFAULT;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("sdattach:\n"));
 
@@ -173,12 +173,6 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link = sc_link;
 	sc_link->interpret_sense = sd_interpret_sense;
 	sc_link->device_softc = sc;
-
-	/*
-	 * Initialize disk structures.
-	 */
-	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
-	bufq_init(&sc->sc_bufq, BUFQ_DEFAULT);
 
 	if ((sc_link->flags & SDEV_ATAPI) && (sc_link->flags & SDEV_REMOVABLE))
 		sc_link->quirks |= SDEV_NOSYNCCACHE;
@@ -233,8 +227,10 @@ sdattach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname,
 		    dp->disksize / (1048576 / dp->secsize), dp->secsize,
 		    dp->disksize);
-		if (ISSET(sc->flags, SDF_THIN))
+		if (ISSET(sc->flags, SDF_THIN)) {
+			sortby = BUFQ_FIFO;
 			printf(", thin");
+		}
 		printf("\n");
 		break;
 
@@ -248,6 +244,15 @@ sdattach(struct device *parent, struct device *self, void *aux)
 #endif
 	}
 
+	/*
+	 * Initialize disk structures.
+	 */
+	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
+	bufq_init(&sc->sc_bufq, sortby);
+
+	/*
+	 * Enable write cache by default.
+	 */
 	memset(&dkc, 0, sizeof(dkc));
 	if (sd_ioctl_cache(sc, DIOCGCACHE, &dkc) == 0 && dkc.wrcache == 0) {
 		dkc.wrcache = 1;
