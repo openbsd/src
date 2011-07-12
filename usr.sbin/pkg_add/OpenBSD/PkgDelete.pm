@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.12 2011/07/12 10:30:29 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.13 2011/07/12 10:51:28 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -221,6 +221,32 @@ sub really_remove
 	$state->progress->next($state->ntogo);
 }
 
+sub delete_dependencies
+{
+	my $state = shift;
+
+	if ($state->defines("dependencies")) {
+		return 1;
+	}
+	if ($state->{interactive}) {
+		return $state->confirm("Delete them as well", 0);
+	}
+	return 0;
+}
+
+sub fix_bad_dependencies
+{
+	my $state = shift;
+
+	if ($state->defines("baddepend")) {
+		return 1;
+	}
+	if ($state->{interactive}) {
+		return $state->confirm("Delete anyways", 0);
+	}
+	return 0;
+}
+
 sub remove_set
 {
 	my ($set, $state) = @_;
@@ -251,12 +277,27 @@ sub remove_set
 		}
 	}
 	if (keys %$bad > 0) {
+		my $bad2 = {};
+		for my $pkg (keys %$bad) {
+			if (!is_installed($pkg)) {
+				$bad2->{$pkg} = 1;
+			}
+		}
+		if (keys %$bad2 > 0) {
+			$state->errsay("#1 depends on non-existant #2",
+			    $set->delete_print, join(' ', sort keys %$bad2));
+			if (fix_bad_dependencies($state)) {
+				for my $pkg (keys %$bad2) {
+					delete $bad->{$pkg};
+				}
+			}
+		}
+	}
+	if (keys %$bad > 0) {
 		if (!$state->{automatic}) {
 			$state->errsay("can't delete #1 without deleting #2",
-			    join(' ', $set->older_names), 
-			    join(' ', sort keys %$bad));
-			if ($state->{interactive} && 
-			    $state->confirm("Delete them as well", 0)) {
+			    $set->delete_print, join(' ', sort keys %$bad));
+			if (delete_dependencies($state)) {
 			    	my $l = create_locations($state, keys %$bad);
 				$state->tracker->todo($l);
 				return (@$l, $set);

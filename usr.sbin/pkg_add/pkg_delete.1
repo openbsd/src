@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.38 2011/07/12 10:34:09 espie Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.39 2011/07/12 10:51:28 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -75,8 +75,6 @@ is a keyword that states what failsafe
 should be waived.
 Recognized keywords include:
 .Bl -tag -width "dependenciesXX"
-.It Ar ambiguous
-delete all packages matching ambiguous package specifications.
 .It Ar baddepend
 force the deletion of packages even if they reference inexistent dependencies.
 .It Ar dependencies
@@ -85,10 +83,6 @@ also delete the whole set of packages that depends upon the requested packages.
 uninstall even if not running as root.
 .It Ar scripts
 external scripts may fail.
-.It Ar uninstalled
-proceed even if some package names don't resolve to installed package names.
-.It Ar verbosedeps
-show detailed dependency information.
 .El
 .It Fl I
 If scripts exist for a given package, do not execute them.
