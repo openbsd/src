@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.174 2011/07/09 05:46:26 matthew Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.175 2011/07/12 23:36:40 matthew Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1957,7 +1957,7 @@ dofchmodat(struct proc *p, int fd, const char *path, mode_t mode, int flag,
 		return (EINVAL);
 
 	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
-	NDINITAT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fd, path, p);
+	NDINITAT(&nd, LOOKUP, follow, UIO_USERSPACE, fd, path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -2054,7 +2054,7 @@ dofchownat(struct proc *p, int fd, const char *path, uid_t uid, gid_t gid,
 		return (EINVAL);
 
 	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
-	NDINITAT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fd, path, p);
+	NDINITAT(&nd, LOOKUP, follow, UIO_USERSPACE, fd, path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
