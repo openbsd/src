@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.236 2011/07/12 00:41:43 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.237 2011/07/12 04:25:49 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1548,9 +1548,9 @@ sd_vpd_thin(struct sd_softc *sc, int flags)
 		goto done;
 
 #ifdef notyet
-	if (ISSET(pg->flags, VPD_DISK_THIN_TPU)
+	if (ISSET(pg->flags, VPD_DISK_THIN_TPU))
 		sc->sc_delete = sd_unmap;
-	else if (ISSET(pg->flags, VPD_DISK_THIN_TPWS) {
+	else if (ISSET(pg->flags, VPD_DISK_THIN_TPWS)) {
 		sc->sc_delete = sd_write_same_16;
 		sc->params.unmap_descs = 1; /* WRITE SAME 16 only does one */
 	} else
