@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.36 2011/07/02 12:12:58 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.37 2011/07/12 10:22:29 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -22,8 +22,6 @@ package OpenBSD::PkgSpec::flavorspec;
 sub new
 {
 	my ($class, $spec) = @_;
-
-	$spec =~ s/^-//o;
 
 	bless \$spec, $class;
 }
@@ -62,7 +60,6 @@ our @ISA = qw(OpenBSD::PkgSpec::flavorspec);
 sub new
 {
 	my ($class, $value) = @_;
-	$value =~ s/^\-//;
 	bless {map{($_, 1)} split(/\-/, $value)}, $class;
 }
 
@@ -194,6 +191,7 @@ sub parse
 		return undef;
 	}
 	($r->{stemspec}, $r->{vspec}, $r->{flavorspec}) = ($1, $2, $3);
+	$r->{flavorspec} =~ s/^\-//;
 
 	$r->{stemspec} =~ s/\./\\\./go;
 	$r->{stemspec} =~ s/\+/\\\+/go;
