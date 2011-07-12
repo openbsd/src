@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.65 2011/06/20 09:46:23 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.66 2011/07/12 10:30:29 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -260,7 +260,7 @@ sub print
 		$result = "[".join('+', sort $self->kept_names)."]";
 	}
 	if ($self->older > 0) {
-		$result .= join('+',sort $self->older_names)."->";
+		$result .= $self->delete_print."->";
 	}
 	if ($self->newer > 0) {
 		$result .= join('+', sort $self->newer_names);
@@ -268,6 +268,12 @@ sub print
 		$result .= join('+', sort $self->hint_names);
 	}
 	return $result;
+}
+
+sub delete_print
+{
+	my $self = shift;
+	return join('+', sort $self->older_names);
 }
 
 sub short_print

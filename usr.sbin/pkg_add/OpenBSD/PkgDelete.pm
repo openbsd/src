@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.11 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.12 2011/07/12 10:30:29 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -21,14 +21,82 @@ use warnings;
 
 use OpenBSD::AddDelete;
 
+package OpenBSD::PkgDelete::Tracker;
+
+sub new
+{
+	my $class = shift;
+	bless {}, $class;
+}
+
+sub sets_todo
+{
+	my ($self, $offset) = @_;
+	return sprintf("%u/%u", (scalar keys %{$self->{done}})-$offset,
+		scalar keys %{$self->{total}});
+}
+
+sub handle_set
+{
+	my ($self, $set) = @_;
+	$self->{total}{$set} = 1;
+	if ($set->{finished}) {
+		$self->{done}{$set} = 1;
+	}
+}
+
+sub todo
+{
+	my ($self, $list) = @_;
+	for my $set (@$list) {
+		for my $pkgname ($set->older_names) {
+			$self->{todo}{$pkgname} = $set;
+		}
+		$self->handle_set($set);
+	}
+}
+
+
+sub done
+{
+	my ($self, $set) = @_;
+	$set->{finished} = 1;
+	for my $pkgname ($set->older_names) {
+		delete $self->{todo}{$pkgname};
+	}
+	$self->handle_set($set);
+}
+
+sub find
+{
+	my ($self, $pkgname) = @_;
+	return $self->{todo}{$pkgname};
+}
+
+	
+
 package OpenBSD::PkgDelete::State;
 our @ISA = qw(OpenBSD::AddDelete::State);
+
+sub new
+{
+	my $class = shift;
+	my $self = $class->SUPER::new(@_);
+	$self->{tracker} = OpenBSD::PkgDelete::Tracker->new;
+	return $self;
+}
+
+sub tracker
+{
+	my $self = shift;
+	return $self->{tracker};
+}
 
 sub handle_options
 {
 	my $state = shift;
 	$state->SUPER::handle_options('',
-	    '[-cIinqsvx] [-B pkg-destdir] [-D name[=value]] pkg-name [...]');
+	    '[-acIinqsvx] [-B pkg-destdir] [-D name[=value]] pkg-name [...]');
 
 	my $base = $state->opt('B') // $ENV{'PKG_DESTDIR'} // '';
 	if ($base ne '') {
@@ -47,7 +115,18 @@ sub handle_options
 sub todo
 {
 	my ($state, $offset) = @_;
-	return sprintf("%u/%u", $state->{done} - $offset, $state->{total});
+	return $state->tracker->sets_todo($offset);
+}
+
+sub stem2location
+{
+	my ($self, $locator, $name, $state) = @_;
+	require OpenBSD::Search;
+	my $l = $locator->match_locations(OpenBSD::Search::Stem->new($name));
+	if (@$l > 1 && !$state->defines('allversions')) {
+		$l = OpenBSD::Search::FilterLocation->keep_most_recent->filter_locations($l);
+	}
+	return $state->choose_location($name, $l);
 }
 
 package OpenBSD::PkgDelete;
@@ -58,61 +137,163 @@ use OpenBSD::RequiredBy;
 use OpenBSD::Delete;
 use OpenBSD::PackageInfo;
 use OpenBSD::UpdateSet;
+use OpenBSD::Handle;
 
+
+sub add_location
+{
+	my ($self, $state, $l) = @_;
+	push(@{$state->{setlist}}, 
+	    $state->updateset->add_older(OpenBSD::Handle->from_location($l)));
+}
+
+sub create_locations
+{
+	my ($state, @l) = @_;
+	my $inst = $state->repo->installed;
+	my $result = [];
+	for my $name (@l) {
+		my $l = $inst->find($name, $state->{arch});
+		if (!defined $l) {
+			$state->errsay("Can't find #1 in installed packages", 
+			    $name);
+			$state->{bad}++;
+		} else {
+			push(@$result, $state->updateset->add_older(OpenBSD::Handle->from_location($l)));
+		}
+	}
+	return $result;
+}
 
 sub process_parameters
 {
 	my ($self, $state) = @_;
 
-	my @realnames;
-	my @toremove;
+	my $inst = $state->repo->installed;
 
-	OpenBSD::PackageInfo::solve_installed_names(\@ARGV, \@realnames,
-	    "(removing them all)", $state);
-
-	@toremove = OpenBSD::RequiredBy->compute_closure(@realnames);
-
-	if (@toremove > @realnames) {
-		my $details = $state->verbose >= 2 ||
-		    $state->defines('verbosedeps');
-		my $show = sub {
-			my ($p, $d) = @_;
-			$state->say("Can't remove #1".
-			    " without also removing:\n#2",
-			    join(' ', @$p), join(' ', @$d));
-		};
-		if ($state->{interactive} || !$details) {
-			my %deps = map {($_, 1)} @toremove;
-			for my $p (@realnames) {
-				delete $deps{$p};
-			}
-			&$show([@realnames], [keys %deps]);
-			if (@realnames > 1 && (keys %deps) > 1 &&
-			    $state->confirm("Do you want details", 1)) {
-				$details = 1;
-			}
+	if (@ARGV == 0 && $state->{automatic}) {
+		for my $l (@{$inst->locations_list}) {
+			$self->add_location($state, $l);
 		}
-		if ($details) {
-			for my $pkg (@realnames) {
-				my @deps = OpenBSD::RequiredBy->compute_closure($pkg);
-				next unless @deps > 1;
-				@deps = grep {$_ ne $pkg} @deps;
-				&$show([$pkg], [@deps]);
+	} else {
+		for my $pkgname (@ARGV) {
+			my $l;
+
+			if (OpenBSD::PackageName::is_stem($pkgname)) {
+				$l = $state->stem2location($inst, $pkgname, $state);
+			} else {
+				$l = $inst->find($pkgname, $state->{arch});
 			}
-		}
-		my $them = @toremove > 1 ? 'them' : 'it';
-		if ($state->defines('dependencies') or
-		    $state->confirm("Do you want to remove $them as well", 0)) {
-			$state->say("(removing #1 as well)", $them);
-		} else {
-			$state->{bad}++;
+			if (!defined $l) {
+				$state->say("Problem finding #1", $pkgname);
+				$state->{bad}++;
+			} else {
+				$self->add_location($state, $l);
+			}
 		}
 	}
-	$state->{toremove} = \@toremove;
 }
 
 sub finish_display
 {
+}
+
+sub really_remove
+{
+	my ($set, $state) = @_;
+	if ($state->{not}) {
+		$state->status->what("Pretending to delete");
+	} else {
+		$state->status->what("Deleting");
+	}
+	if (!$state->progress->set_header($set->delete_print)) {
+		$state->say($state->{not} ?
+		    "Pretending to delete #1" :
+		    "Deleting #1",
+		    $set->delete_print) if $state->verbose;
+	}
+	for my $pkgname ($set->older_names) {
+		$state->log->set_context('-'.$pkgname);
+		OpenBSD::Delete::delete_package($pkgname, $state);
+	}
+	$set->cleanup;
+	$state->tracker->done($set);
+	$state->progress->next($state->ntogo);
+}
+
+sub remove_set
+{
+	my ($set, $state) = @_;
+
+	my $todo = {};
+	my $bad = {};
+	$set = $set->real_set;
+	if ($set->{finished}) {
+		return ();
+	}
+    	for my $pkgname ($set->older_names) {
+		unless (is_installed($pkgname)) {
+			$state->errsay("#1 was not installed", $pkgname);
+			$set->{finished} = 1;
+			$set->cleanup(OpenBSD::Handle::NOT_FOUND);
+			$state->{bad}++;
+			return ();
+		}
+		my $r = OpenBSD::RequiredBy->new($pkgname);
+		for my $pkg ($r->list) {
+			next if $set->{older}->{$pkg};
+			my $f = $state->tracker->find($pkg);
+			if (defined $f) {
+				$todo->{$pkg} = $f;
+			} else {
+				$bad->{$pkg} = 1;
+			}
+		}
+	}
+	if (keys %$bad > 0) {
+		if (!$state->{automatic}) {
+			$state->errsay("can't delete #1 without deleting #2",
+			    join(' ', $set->older_names), 
+			    join(' ', sort keys %$bad));
+			if ($state->{interactive} && 
+			    $state->confirm("Delete them as well", 0)) {
+			    	my $l = create_locations($state, keys %$bad);
+				$state->tracker->todo($l);
+				return (@$l, $set);
+			}
+			$state->{bad}++;
+	    	}
+		$set->cleanup(OpenBSD::Handle::CANT_DELETE);
+		$state->tracker->done($set);
+		return ();
+	}
+	# XXX this si where we should detect loops
+	if (keys %$todo > 0) {
+		if ($set->{once}) {
+			for my $set2 (values %$todo) {
+				# XXX merge all ?
+				$set->add_older($set2->older);
+				$set2->{merged} = $set;
+				$set2->{finished} = 1;
+			}
+			delete $set->{once};
+			return ($set);
+		}
+		$set->{once} = 1;
+		return (values %$todo, $set);
+	}
+	if ($state->{automatic}) {
+		for my $pkg  ($set->older) {
+			$pkg->complete_old;
+			if ($pkg->plist->has('manual-installation')) {
+				$set->cleanup(OpenBSD::Handle::CANT_DELETE);
+				$state->tracker->done($set);
+				return ();
+			}
+		}
+	}
+	really_remove($set, $state);
+	return ();
 }
 
 sub main
@@ -122,55 +303,12 @@ sub main
 	my %done;
 	my $removed;
 
+	$state->tracker->todo($state->{setlist});
 	# and finally, handle the removal
-	do {
-		$removed = 0;
-		if ($state->{not}) {
-			$state->status->what("Pretending to delete");
-		} else {
-			$state->status->what("Deleting");
-		}
-		$state->{total} = scalar @{$state->{toremove}};
-		DELETE: for my $pkgname (@{$state->{toremove}}) {
-			if ($done{$pkgname}) {
-				next;
-			}
-			unless (is_installed($pkgname)) {
-				$state->errsay("#1 was not installed", $pkgname);
-				$done{$pkgname} = 1;
-				$removed++;
-				next;
-			}
-			my $r = OpenBSD::RequiredBy->new($pkgname);
-			if ($r->list > 0) {
-				if ($state->defines('baddepend')) {
-					for my $p ($r->list) {
-						if ($done{$p}) {
-							$r->delete($p);
-						} else {
-							next DELETE;
-						}
-					}
-				} else {
-					next;
-				}
-			}
-			my $info = sub {
-			};
-
-			$state->status->object($pkgname);
-			if (!$state->progress->set_header($pkgname)) {
-				$state->say($state->{not} ?
-				    "Pretending to delete #1" :
-				    "Deleting #1",
-				    $pkgname) if $state->verbose;
-			}
-			$state->log->set_context('-'.$pkgname);
-			OpenBSD::Delete::delete_package($pkgname, $state);
-			$done{$pkgname} = 1;
-			$removed++;
-		}
-	} while ($removed);
+	while (my $set = shift @{$state->{setlist}}) {
+		$state->status->what->set($set);
+		unshift(@{$state->{setlist}}, remove_set($set, $state));
+	}
 }
 
 sub new_state

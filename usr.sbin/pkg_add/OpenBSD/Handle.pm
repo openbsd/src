@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.27 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: Handle.pm,v 1.28 2011/07/12 10:30:29 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -29,7 +29,8 @@ use constant {
 	BAD_PACKAGE => 1,
 	CANT_INSTALL => 2,
 	ALREADY_INSTALLED => 3,
-	NOT_FOUND => 4
+	NOT_FOUND => 4,
+	CANT_DELETE => 5,
 };
 
 sub cleanup
