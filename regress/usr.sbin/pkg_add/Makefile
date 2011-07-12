@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.44 2011/07/02 10:31:21 espie Exp $
+# $OpenBSD: Makefile,v 1.45 2011/07/12 23:17:21 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames \
 	update-check1 \
@@ -198,6 +198,18 @@ thunarvfstest: rep0/thunar-0.tgz rep0/q-0.tgz rep1/thunar-vfs-1.tgz rep1/q-1.tgz
 	@ROOT=${D29} PKG_PATH=${.OBJDIR}/rep0 ${ADD_PKG} q
 	@ROOT=${D29} PKG_PATH=${.OBJDIR}/rep1 ${ADD_PKG} -u q
 
+# test for manual install
+manual1: rep0/ma-0.tgz rep0/mb-0.tgz rep0/mc-0.tgz rep0/md-0.tgz \
+	rep1/ma-1.tgz rep1/mb-1.tgz rep1/me-1.tgz rep1/md-1.tgz
+	@-rm -rf ${D30}
+	@ROOT=${D30} PKG_PATH=${.OBJDIR}/rep0 ${ADD_PKG} md mb
+	PKG_DBDIR=${D30}/pkgdb pkg_info -m
+	@ROOT=${D30} PKG_PATH=${.OBJDIR}/rep1 ${ADD_PKG} -u
+	@PKG_DBDIR=${D30}/pkgdb pkg_info -m
+	PKG_DBDIR=${D30}/pkgdb pkg_delete -Dnonroot -B ${D30} -a
+	@PKG_DBDIR=${D30}/pkgdb pkg_info
+
+
 plist1:
 	@echo "@owner "`id -un` >$@
 	@echo "@group "`id -gn` >>$@
@@ -306,9 +318,19 @@ rep0/o1-0.tgz rep0/o2-0.tgz rep0/ga-0.tgz \
 rep0/gb-0.tgz rep1/gb-0p0.tgz rep1/gd-1.tgz rep0/ge-0.tgz \
 rep0/gf-1.tgz rep1/gf-0.tgz \
 rep1/missc-0.tgz rep0/q5-0.tgz rep1/q5-1.tgz \
+rep0/ma-0.tgz rep1/ma-1.tgz rep0/mc-0.tgz rep1/me-1.tgz \
 rep0/tcl-8.5.7.tgz:
 	@${CREATE_PKG} -f ${.CURDIR}/empty $@
 
+rep0/md-0.tgz:
+	${CREATE_PKG} -P't/ma:ma-*:ma-0' -P't/mb:mb-*:mb-0' -P't/mc:mc-*:mc-0' -f ${.CURDIR}/empty $@
+rep1/md-1.tgz:
+	${CREATE_PKG} -P't/ma:ma-*:ma-1' -P't/mb:mb-*:mb-1' -P't/me:me-*:me-1' -f ${.CURDIR}/empty $@
+rep0/mb-0.tgz:
+	${CREATE_PKG} -P't/ma:ma-*:ma-0' -f ${.CURDIR}/empty $@
+rep1/mb-1.tgz:
+	${CREATE_PKG} -P't/ma:ma-*:ma-1' -f ${.CURDIR}/empty $@
+ 
 rep1/o-1.tgz:
 	@${CREATE_PKG} -DREGRESSION_TESTING -P't/p:p-*:p-0' -W'coincoin.0.0' -f ${.CURDIR}/empty $@
 
