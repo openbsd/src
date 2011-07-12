@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.68 2011/04/10 03:20:59 guenther Exp $	 */
+/* $OpenBSD: machine.c,v 1.69 2011/07/12 14:57:53 tedu Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -41,6 +41,7 @@
 #include <unistd.h>
 #include <sys/sysctl.h>
 #include <sys/dkstat.h>
+#include <sys/mount.h>
 #include <sys/swap.h>
 #include <err.h>
 #include <errno.h>
@@ -107,10 +108,11 @@ char *cpustatenames[] = {
 };
 
 /* these are for detailing the memory statistics */
-int memory_stats[8];
+int memory_stats[10];
 char *memorynames[] = {
-	"Real: ", "K/", "K act/tot  ", "Free: ", "K  ",
-	"Swap: ", "K/", "K used/tot",
+	"Real: ", "K/", "K act/tot ", "Free: ", "K ",
+	"Cache: ", "K ",
+	"Swap: ", "K/", "K",
 	NULL
 };
 
@@ -206,8 +208,10 @@ get_system_info(struct system_info *si)
 {
 	static int sysload_mib[] = {CTL_VM, VM_LOADAVG};
 	static int vmtotal_mib[] = {CTL_VM, VM_METER};
+	static int bcstats_mib[] = {CTL_VFS, VFS_GENERIC, VFS_BCACHESTAT};
 	struct loadavg sysload;
 	struct vmtotal vmtotal;
+	struct bcachestats bcstats;
 	double *infoloadp;
 	size_t size;
 	int i;
@@ -254,6 +258,11 @@ get_system_info(struct system_info *si)
 		warn("sysctl failed");
 		bzero(&vmtotal, sizeof(vmtotal));
 	}
+	size = sizeof(bcstats);
+	if (sysctl(bcstats_mib, 3, &bcstats, &size, NULL, 0) < 0) {
+		warn("sysctl failed");
+		bzero(&bcstats, sizeof(bcstats));
+	}
 	/* convert memory stats to Kbytes */
 	memory_stats[0] = -1;
 	memory_stats[1] = pagetok(vmtotal.t_arm);
@@ -261,10 +270,12 @@ get_system_info(struct system_info *si)
 	memory_stats[3] = -1;
 	memory_stats[4] = pagetok(vmtotal.t_free);
 	memory_stats[5] = -1;
+	memory_stats[6] = pagetok(bcstats.numbufpages);
+	memory_stats[7] = -1;
 
-	if (!swapmode(&memory_stats[6], &memory_stats[7])) {
-		memory_stats[6] = 0;
-		memory_stats[7] = 0;
+	if (!swapmode(&memory_stats[8], &memory_stats[9])) {
+		memory_stats[8] = 0;
+		memory_stats[9] = 0;
 	}
 
 	/* set arrays and strings */
