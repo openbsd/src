@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.45 2011/07/12 23:17:21 espie Exp $
+# $OpenBSD: Makefile,v 1.46 2011/07/12 23:33:42 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames \
 	update-check1 \
@@ -6,7 +6,7 @@ REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames \
 	merge-update split-update big-merge family-circus missing \
 	lib-report1 lib-report2 lib-report3 loop1 \
 	lib-report4 lib-report5 lib-report6 lib-report7 \
-	qttest gstest exotest
+	qttest gstest exotest inter1
 
 
 
@@ -25,7 +25,7 @@ D$i ?= ${.OBJDIR}/dest$i
 DEST$i ?= ${D$i}/usr/local
 .endfor
 
-# current maxes: D29, SRC20, plist18
+# current maxes: D31, SRC20, plist18
 pkgnames:
 	perl ${.CURDIR}/check-name
 
@@ -209,6 +209,11 @@ manual1: rep0/ma-0.tgz rep0/mb-0.tgz rep0/mc-0.tgz rep0/md-0.tgz \
 	PKG_DBDIR=${D30}/pkgdb pkg_delete -Dnonroot -B ${D30} -a
 	@PKG_DBDIR=${D30}/pkgdb pkg_info
 
+inter1: rep0/inta-0.tgz rep0/intb-0.tgz
+	-rm -rf ${D31}
+	@ROOT=${D31} PKG_PATH=${.OBJDIR}/rep0 ${ADD_PKG} inta intb
+	@PKG_DBDIR=${D31}/pkgdb pkg_delete -Dnonroot -B ${D30} inta intb
+
 
 plist1:
 	@echo "@owner "`id -un` >$@
@@ -330,6 +335,11 @@ rep0/mb-0.tgz:
 	${CREATE_PKG} -P't/ma:ma-*:ma-0' -f ${.CURDIR}/empty $@
 rep1/mb-1.tgz:
 	${CREATE_PKG} -P't/ma:ma-*:ma-1' -f ${.CURDIR}/empty $@
+
+rep0/inta-0.tgz:
+	${CREATE_PKG} -P't/intb:intb-*:intb-0' -f ${.CURDIR}/empty $@
+rep0/intb-0.tgz:
+	${CREATE_PKG} -P't/inta:inta-*:inta-0' -f ${.CURDIR}/empty $@
  
 rep1/o-1.tgz:
 	@${CREATE_PKG} -DREGRESSION_TESTING -P't/p:p-*:p-0' -W'coincoin.0.0' -f ${.CURDIR}/empty $@
