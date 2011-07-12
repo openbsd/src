@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.46 2011/03/07 09:26:47 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.47 2011/07/12 10:06:57 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -144,7 +144,7 @@ sub handle_options
 		}
 	};
 	$state->{no_exports} = 1;
-	$state->SUPER::handle_options($opt_string.'ciInqsB:F:', @usage);
+	$state->SUPER::handle_options($opt_string.'aciInqsB:F:', @usage);
 
 	if ($state->opt('s')) {
 		$state->{not} = 1;
@@ -157,6 +157,7 @@ sub handle_options
 	$state->{quick} = $state->opt('q') || $state->config->istrue("nochecksum");
 	$state->{extra} = $state->opt('c');
 	$state->{dont_run_scripts} = $state->opt('I');
+	$state->{automatic} = $state->opt('a') // 0;
 	$ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
 }
 
