@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.13 2011/07/12 10:51:28 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.14 2011/07/12 10:56:03 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -294,9 +294,11 @@ sub remove_set
 		}
 	}
 	if (keys %$bad > 0) {
-		if (!$state->{automatic}) {
+		if (!$state->{automatic} || $state->verbose) {
 			$state->errsay("can't delete #1 without deleting #2",
 			    $set->delete_print, join(' ', sort keys %$bad));
+		}
+		if (!$state->{automatic}) {
 			if (delete_dependencies($state)) {
 			    	my $l = create_locations($state, keys %$bad);
 				$state->tracker->todo($l);
@@ -327,6 +329,8 @@ sub remove_set
 		for my $pkg  ($set->older) {
 			$pkg->complete_old;
 			if ($pkg->plist->has('manual-installation')) {
+				$state->say("Won't delete manually installed #1",
+				    $set->delete_print) if $state->verbose;
 				$set->cleanup(OpenBSD::Handle::CANT_DELETE);
 				$state->tracker->done($set);
 				return ();
