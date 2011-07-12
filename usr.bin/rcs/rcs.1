@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.55 2010/09/03 11:09:29 jmc Exp $
+.\"	$OpenBSD: rcs.1,v 1.56 2011/07/12 21:00:32 sobrado Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -24,7 +24,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: July 12 2011 $
 .Dt RCS 1
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@
 .Oo Fl m Ns Ar rev :
 .Ar msg Oc
 .Op Fl o Ns Ar rev
-.Op Fl t Ns Ar str
+.Op Fl t Ns Op Ar str
 .Op Fl u Ns Op Ar rev
 .Op Fl x Ns Ar suffixes
 .Ar
@@ -153,7 +153,7 @@ until the last revision of the branch.
 Be quiet about reporting.
 .It Fl T
 Preserve the modification time of RCS files.
-.It Fl t Ns Ar str
+.It Fl t Ns Op Ar str
 Change the descriptive text.
 The argument
 .Ar str
