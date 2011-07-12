@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.56 2011/07/09 00:47:18 henning Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.57 2011/07/12 15:23:50 jsg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -764,7 +764,8 @@ gre_recv_keepalive(struct gre_softc *sc)
 		}
 		break;
 	case GRE_STATE_UP:
-		sc->sc_ka_holdmax = MAX(sc->sc_ka_holdmax--, sc->sc_ka_cnt);
+		sc->sc_ka_holdmax--;
+		sc->sc_ka_holdmax = MAX(sc->sc_ka_holdmax, sc->sc_ka_cnt);
 		break;
 	}
 
