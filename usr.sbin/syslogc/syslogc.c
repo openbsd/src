@@ -1,4 +1,4 @@
-/* $OpenBSD: syslogc.c,v 1.15 2011/07/04 20:23:09 mpf Exp $ */
+/* $OpenBSD: syslogc.c,v 1.16 2011/07/12 11:28:31 sthen Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller
@@ -22,6 +22,7 @@
 
 #include <err.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -33,7 +34,7 @@
 /*
  * Client protocol NB. all numeric fields in network byte order
  */
-#define CTL_VERSION		1
+#define CTL_VERSION		2
 
 /* Request */
 struct ctl_cmd {
@@ -45,6 +46,7 @@ struct ctl_cmd {
 #define CMD_FLAGS	5	/* Query flags only */
 #define CMD_READ_CONT	6	/* Read out log continuously */
 	u_int32_t	cmd;
+	u_int32_t	lines;
 	char		logname[MAX_MEMBUF_NAME];
 };
 
@@ -61,7 +63,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-Ccfo] [-s reporting_socket] logname\n"
+	fprintf(stderr,
+	    "usage: %s [-Ccfo] [-n lines] [-s reporting_socket] logname\n"
 	    "       %s -q\n", __progname, __progname);
 	exit(1);
 }
@@ -78,12 +81,13 @@ main(int argc, char **argv)
 	extern int optind;
 	struct ctl_cmd cc;
 	struct ctl_reply_hdr rr;
+	const char *errstr;
 
 	memset(&cc, '\0', sizeof(cc));
 
 	ctlsock_path = DEFAULT_CTLSOCK;
 	rval = oflag = 0;
-	while ((ch = getopt(argc, argv, "Ccfhoqs:")) != -1) {
+	while ((ch = getopt(argc, argv, "Ccfhon:qs:")) != -1) {
 		switch (ch) {
 		case 'C':
 			cc.cmd = CMD_CLEAR;
@@ -96,6 +100,12 @@ main(int argc, char **argv)
 			break;
 		case 'f':
 			cc.cmd = CMD_READ_CONT;
+			break;
+		case 'n':
+			cc.lines = strtonum(optarg, 1, UINT32_MAX, &errstr);
+			if (errstr)
+				errx(1, "number of lines is %s: %s",
+				    errstr, optarg);
 			break;
 		case 'o':
 			cc.cmd = CMD_FLAGS;
