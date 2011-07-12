@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.146 2011/07/08 20:10:34 matthew Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.147 2011/07/12 22:51:21 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
+#include <sys/limits.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
@@ -381,6 +382,12 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		if (sc->sc_flags & VNF_INITED)
 			return (EBUSY);
 
+		/* Geometry eventually has to fit into label fields */
+		if (vio->vnd_secsize > UINT_MAX ||
+		    vio->vnd_ntracks > UINT_MAX ||
+		    vio->vnd_nsectors > UINT_MAX)
+			return (EINVAL);
+
 		if ((error = disk_lock(&sc->sc_dk)) != 0)
 			return (error);
 
@@ -401,7 +408,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		 * them.
 		 */
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vnd_file, p);
-		sc->sc_flags &= ~VNF_READONLY; 
+		sc->sc_flags &= ~VNF_READONLY;
 		error = vn_open(&nd, FREAD|FWRITE, 0);
 		if (error == EROFS) {
 			sc->sc_flags |= VNF_READONLY;
