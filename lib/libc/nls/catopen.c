@@ -1,4 +1,4 @@
-/*	$OpenBSD: catopen.c,v 1.13 2008/06/26 05:42:05 ray Exp $ */
+/*	$OpenBSD: catopen.c,v 1.14 2011/07/12 21:31:20 matthew Exp $ */
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -133,7 +133,6 @@ load_msgcat(const char *path)
 	close (fd);
 
 	if (data == MAP_FAILED) {
-		munmap(data, (size_t) st.st_size);
 		return (nl_catd) -1;
 	}
 
