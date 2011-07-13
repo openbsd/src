@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.33 2010/11/16 18:59:00 drahn Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.34 2011/07/13 20:49:44 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -486,9 +486,11 @@ _dl_notify_unload_shlib(elf_object_t *object)
 			_dl_child_refcnt_decrement(n->data);
 
 	if (OBJECT_DLREF_CNT(object) == 0) {
-		TAILQ_FOREACH(n, &object->grpref_list, next_sib) {
+		while ((n = TAILQ_FIRST(&object->grpref_list)) != NULL) {
+			TAILQ_REMOVE(&object->grpref_list, n, next_sib);
 			n->data->grprefcount--;
 			_dl_notify_unload_shlib(n->data);
+			_dl_free(n);
 		}
 	}
 }
