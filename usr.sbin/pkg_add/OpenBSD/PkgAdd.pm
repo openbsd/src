@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.25 2011/07/13 11:58:41 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.26 2011/07/13 12:32:15 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -196,6 +196,30 @@ sub set_name_from_handle
 	my ($state, $h, $extra) = @_;
 	$extra //= '';
 	$state->log->set_context($extra.$h->pkgname);
+}
+
+sub updateset
+{
+	my $self = shift;
+	require OpenBSD::UpdateSet;
+
+	return OpenBSD::UpdateSet->new($self);
+}
+
+sub updateset_with_new
+{
+	my ($self, $pkgname) = @_;
+
+	return $self->updateset->add_newer(
+	    OpenBSD::Handle->create_new($pkgname));
+}
+
+sub updateset_from_location
+{
+	my ($self, $location) = @_;
+
+	return $self->updateset->add_newer(
+	    OpenBSD::Handle->from_location($location));
 }
 
 OpenBSD::Auto::cache(updater,

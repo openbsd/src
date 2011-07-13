@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.14 2011/07/12 10:56:03 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.15 2011/07/13 12:32:15 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -129,6 +129,20 @@ sub stem2location
 	return $state->choose_location($name, $l);
 }
 
+sub deleteset
+{
+	my $self = shift;
+	require OpenBSD::UpdateSet;
+
+	return OpenBSD::DeleteSet->new($self);
+}
+
+sub deleteset_from_location
+{
+	my ($self, $location) = @_;
+	return $self->deleteset->add_older(OpenBSD::Handle->from_location($location));
+}
+
 package OpenBSD::PkgDelete;
 our @ISA = qw(OpenBSD::AddDelete);
 
@@ -144,7 +158,7 @@ sub add_location
 {
 	my ($self, $state, $l) = @_;
 	push(@{$state->{setlist}}, 
-	    $state->updateset->add_older(OpenBSD::Handle->from_location($l)));
+	    $state->deleteset_from_location($l));
 }
 
 sub create_locations
@@ -159,7 +173,7 @@ sub create_locations
 			    $name);
 			$state->{bad}++;
 		} else {
-			push(@$result, $state->updateset->add_older(OpenBSD::Handle->from_location($l)));
+			push(@$result, $state->deleteset_from_location($l));
 		}
 	}
 	return $result;
@@ -206,11 +220,11 @@ sub really_remove
 	} else {
 		$state->status->what("Deleting");
 	}
-	if (!$state->progress->set_header($set->delete_print)) {
+	if (!$state->progress->set_header($set->print)) {
 		$state->say($state->{not} ?
 		    "Pretending to delete #1" :
 		    "Deleting #1",
-		    $set->delete_print) if $state->verbose;
+		    $set->print) if $state->verbose;
 	}
 	for my $pkgname ($set->older_names) {
 		$state->log->set_context('-'.$pkgname);
@@ -285,7 +299,7 @@ sub remove_set
 		}
 		if (keys %$bad2 > 0) {
 			$state->errsay("#1 depends on non-existant #2",
-			    $set->delete_print, join(' ', sort keys %$bad2));
+			    $set->print, join(' ', sort keys %$bad2));
 			if (fix_bad_dependencies($state)) {
 				for my $pkg (keys %$bad2) {
 					delete $bad->{$pkg};
@@ -296,7 +310,7 @@ sub remove_set
 	if (keys %$bad > 0) {
 		if (!$state->{automatic} || $state->verbose) {
 			$state->errsay("can't delete #1 without deleting #2",
-			    $set->delete_print, join(' ', sort keys %$bad));
+			    $set->print, join(' ', sort keys %$bad));
 		}
 		if (!$state->{automatic}) {
 			if (delete_dependencies($state)) {
@@ -330,7 +344,7 @@ sub remove_set
 			$pkg->complete_old;
 			if ($pkg->plist->has('manual-installation')) {
 				$state->say("Won't delete manually installed #1",
-				    $set->delete_print) if $state->verbose;
+				    $set->print) if $state->verbose;
 				$set->cleanup(OpenBSD::Handle::CANT_DELETE);
 				$state->tracker->done($set);
 				return ();

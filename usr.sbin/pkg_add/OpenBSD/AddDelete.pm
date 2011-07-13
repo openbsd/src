@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.47 2011/07/12 10:06:57 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.48 2011/07/13 12:32:15 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -284,30 +284,6 @@ sub status
 	my $self = shift;
 
 	return $self->{status};
-}
-
-sub updateset
-{
-	my $self = shift;
-	require OpenBSD::UpdateSet;
-
-	return OpenBSD::UpdateSet->new($self);
-}
-
-sub updateset_with_new
-{
-	my ($self, $pkgname) = @_;
-
-	return $self->updateset->add_newer(
-	    OpenBSD::Handle->create_new($pkgname));
-}
-
-sub updateset_from_location
-{
-	my ($self, $location) = @_;
-
-	return $self->updateset->add_newer(
-	    OpenBSD::Handle->from_location($location));
 }
 
 OpenBSD::Auto::cache(ldconfig,
