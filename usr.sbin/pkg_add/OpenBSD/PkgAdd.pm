@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.26 2011/07/13 12:32:15 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.27 2011/07/13 13:01:13 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -169,12 +169,6 @@ sub build_deptree
 		$state->{deptree}->{$dep} = $set unless
 		    defined $state->{deptree}->{$dep};
 	}
-}
-
-sub todo
-{
-	my ($state, $offset) = @_;
-	return $state->tracker->sets_todo($offset);
 }
 
 sub deptree_header

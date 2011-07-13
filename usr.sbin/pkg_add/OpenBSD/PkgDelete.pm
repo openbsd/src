@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.15 2011/07/13 12:32:15 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.16 2011/07/13 13:01:13 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -73,7 +73,7 @@ sub find
 	return $self->{todo}{$pkgname};
 }
 
-	
+
 
 package OpenBSD::PkgDelete::State;
 our @ISA = qw(OpenBSD::AddDelete::State);
@@ -110,12 +110,6 @@ sub handle_options
 	} else {
 	    $state->{destdirname} = '${PKG_DESTDIR}';
 	}
-}
-
-sub todo
-{
-	my ($state, $offset) = @_;
-	return $state->tracker->sets_todo($offset);
 }
 
 sub stem2location
@@ -157,7 +151,7 @@ use OpenBSD::Handle;
 sub add_location
 {
 	my ($self, $state, $l) = @_;
-	push(@{$state->{setlist}}, 
+	push(@{$state->{setlist}},
 	    $state->deleteset_from_location($l));
 }
 
@@ -169,7 +163,7 @@ sub create_locations
 	for my $name (@l) {
 		my $l = $inst->find($name, $state->{arch});
 		if (!defined $l) {
-			$state->errsay("Can't find #1 in installed packages", 
+			$state->errsay("Can't find #1 in installed packages",
 			    $name);
 			$state->{bad}++;
 		} else {
