@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.24 2011/07/12 10:06:57 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.25 2011/07/13 11:58:41 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -899,6 +899,7 @@ sub install_set
 	for my $handle ($set->newer) {
 		if ($state->tracker->is_installed($handle->pkgname)) {
 			$set->move_kept($handle);
+			$handle->{tweaked} = OpenBSD::Add::tweak_package_status($handle->pkgname, $state);
 		}
 	}
 
