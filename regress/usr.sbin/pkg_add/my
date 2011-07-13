@@ -1,9 +1,9 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: myadd,v 1.4 2011/07/12 23:17:21 espie Exp $
+# $OpenBSD: my,v 1.1 2011/07/13 11:57:10 espie Exp $
 #
-# Copyright (c) 2009 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2011 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -25,17 +25,21 @@ my $root = $ENV{'ROOT'};
 File::Path::make_path("$root/pkgdb");
 
 $ENV{'PKG_DBDIR'} = "$root/pkgdb";
+my $prog = "pkg_".(shift @ARGV);
+my $run;
 
-my @args = ('-D', 'nonroot', '-B', $root, @ARGV);
-my $prog;
-if ($ENV{'DEBUG'}) {
-	unshift(@args, 'perl', '-d', '/usr/sbin/pkg_add', '-D', 'debug');
-	$prog = 'perl';
-} else {
-	unshift(@args, 'pkg_add');
-	$prog = 'pkg_add';
+my @args = ('-D', 'nonroot', @ARGV);
+if ($prog ne 'pkg_info') {
+	unshift(@args, '-B', $root);
 }
-print join(' ', "pkg_add", @ARGV), "\n" unless $ENV{'SILENT'} || $ENV{'VERBOSE'};
-print join(' ', @args), "\n" if $ENV{'VERBOSE'};
+if ($ENV{'DEBUG'}) {
+	unshift(@args, 'perl', '-d', "/usr/sbin/$prog", '-D', 'debug');
+	$run = 'perl';
+} else {
+	unshift(@args, $prog);
+	$run = $prog;
+}
+print STDERR join(' ', $prog, @ARGV), "\n" unless $ENV{'SILENT'} || $ENV{'VERBOSE'};
+print join(' ', $run, @args), "\n" if $ENV{'VERBOSE'};
 
-exec {$prog} @args;
+exec {$run} @args;

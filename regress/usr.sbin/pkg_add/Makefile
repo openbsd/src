@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.46 2011/07/12 23:33:42 espie Exp $
+# $OpenBSD: Makefile,v 1.47 2011/07/13 11:57:10 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames \
 	update-check1 \
@@ -6,11 +6,13 @@ REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames \
 	merge-update split-update big-merge family-circus missing \
 	lib-report1 lib-report2 lib-report3 loop1 \
 	lib-report4 lib-report5 lib-report6 lib-report7 \
-	qttest gstest exotest inter1
+	qttest gstest exotest inter1 manual1
 
 
 
-ADD_PKG=perl ${.CURDIR}/myadd
+ADD_PKG=perl ${.CURDIR}/my add
+DELETE_PKG=perl ${.CURDIR}/my delete
+INFO_PKG=perl ${.CURDIR}/my info
 CREATE_PKG=perl ${.CURDIR}/mycreate
 LONG1=iamareallongfilenamethatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
 LONG2=iamanotherreallygfilenamethatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
@@ -203,17 +205,16 @@ manual1: rep0/ma-0.tgz rep0/mb-0.tgz rep0/mc-0.tgz rep0/md-0.tgz \
 	rep1/ma-1.tgz rep1/mb-1.tgz rep1/me-1.tgz rep1/md-1.tgz
 	@-rm -rf ${D30}
 	@ROOT=${D30} PKG_PATH=${.OBJDIR}/rep0 ${ADD_PKG} md mb
-	PKG_DBDIR=${D30}/pkgdb pkg_info -m
+	@ROOT=${D30} ${INFO_PKG} -mq|diff -u - ${.CURDIR}/list9.out
 	@ROOT=${D30} PKG_PATH=${.OBJDIR}/rep1 ${ADD_PKG} -u
-	@PKG_DBDIR=${D30}/pkgdb pkg_info -m
-	PKG_DBDIR=${D30}/pkgdb pkg_delete -Dnonroot -B ${D30} -a
-	@PKG_DBDIR=${D30}/pkgdb pkg_info
+	@ROOT=${D30} ${INFO_PKG} -mq|diff -u - ${.CURDIR}/list10.out
+	@ROOT=${D30} ${DELETE_PKG} -a
+	@ROOT=${D30} ${INFO_PKG} -q|diff -u - ${.CURDIR}/list11.out
 
 inter1: rep0/inta-0.tgz rep0/intb-0.tgz
 	-rm -rf ${D31}
 	@ROOT=${D31} PKG_PATH=${.OBJDIR}/rep0 ${ADD_PKG} inta intb
-	@PKG_DBDIR=${D31}/pkgdb pkg_delete -Dnonroot -B ${D30} inta intb
-
+	@ROOT=${D31} ${DELETE_PKG} inta intb
 
 plist1:
 	@echo "@owner "`id -un` >$@
