@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.67 2011/07/13 12:32:15 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.68 2011/07/13 12:57:27 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -276,10 +276,15 @@ sub old_print
 	return join('+', sort $self->older_names);
 }
 
+sub todo_names
+{
+	&OpenBSD::UpdateSet::newer_names;
+}
+
 sub short_print
 {
 	my $self = shift;
-	my $result = join('+', sort $self->newer_names);
+	my $result = join('+', sort $self->todo_names);
 	if (length $result > 30) {
 		return substr($result, 0, 27)."...";
 	} else {
@@ -414,6 +419,11 @@ our @ISA = qw(OpenBSD::UpdateSet);
 sub print
 {
 	&OpenBSD::UpdateSet::old_print;
+}
+
+sub todo_names
+{
+	&OpenBSD::UpdateSet::older_names;
 }
 
 1;
