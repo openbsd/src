@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.9 2011/07/13 15:08:24 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.10 2011/07/13 16:14:43 eric Exp $	*/
 /*
  * Copyright (c) 2010,2011 Eric Faurot <eric@openbsd.org>
  *
@@ -328,18 +328,45 @@ struct kv kv_transition[] = {
 void
 asr_dump_query(struct asr_query *aq)
 {
-	printf("%-25s fqdn=%s dom %-2i fam %-2i famidx %-2i db %-2i ns %-2i ns_cycles %-2i fd %-2i %ims",
+	char	buf[64];
+
+	printf("state=%s flags=%i fd=%i timeout=%i\n"
+		"   dom_idx=%i family_idx=%i db_idx=%i ns_idx=%i ns_cycles=%i\n"
+		"   fqdn=\"%s\" reqid=%u buf=%p buflen=%zu bufsize=%zu bufoffset=%zu datalen=%u nanswer=%i\n"
+		"   host=\"%s\" family=%i count=%i file=%p\n"
+		"   sa=\"%s\"\n"
+		"   hostname=\"%s\" servname=\"%s\" subq=%p\n",
+
 		kvlookup(kv_state, aq->aq_state),
-		aq->aq_fqdn,
+		aq->aq_flags,
+		aq->aq_fd,
+		aq->aq_timeout,
+
 		aq->aq_dom_idx,
-		aq->aq_family,
 		aq->aq_family_idx,
 		aq->aq_db_idx,
 		aq->aq_ns_idx,
 		aq->aq_ns_cycles,
-		aq->aq_fd,
-		aq->aq_timeout);
-	printf("\n");
+
+		aq->aq_fqdn,
+		(unsigned int)aq->aq_reqid,
+		aq->aq_buf,
+		aq->aq_buflen,
+		aq->aq_bufsize,
+		aq->aq_bufoffset,
+		(unsigned int)aq->aq_datalen,
+		aq->aq_nanswer,
+
+		aq->aq_host,
+		aq->aq_family,
+		aq->aq_count,
+		aq->aq_file,
+
+		print_addr(&aq->aq_sa.sa, buf, sizeof(buf)),
+
+		aq->aq_hostname,
+		aq->aq_servname,
+		aq->aq_subq);
 }
 
 #endif /* ASR_DEBUG */
@@ -437,7 +464,7 @@ asr_run(struct asr_query *aq, struct asr_result *ar)
 	if (asr_debug) {
 		printf("<- ");
 		asr_dump_query(aq);
-		printf("   = %s\n", kvlookup(kv_transition, r));
+		printf(" = %s\n", kvlookup(kv_transition, r));
 	}
 #endif
 	if (r == ASR_DONE)
@@ -1373,7 +1400,7 @@ asr_run_dns(struct asr_query *aq, struct asr_result *ar)
 	for(;;) { /* block not indented on purpose */
 #ifdef ASR_DEBUG
 	if (asr_debug) {
-		printf("   ");
+		printf(" - ");
 		asr_dump_query(aq);
 	}
 #endif
@@ -1573,7 +1600,7 @@ asr_run_host(struct asr_query *aq, struct asr_result *ar)
 	for(;;) { /* block not indented on purpose */
 #ifdef ASR_DEBUG
 	if (asr_debug) {
-		printf("   ");
+		printf(" - ");
 		asr_dump_query(aq);
 	}
 #endif
@@ -2070,7 +2097,7 @@ asr_run_addrinfo(struct asr_query *aq, struct asr_result *ar)
 	for(;;) { /* block not indented on purpose */
 #ifdef ASR_DEBUG
 	if (asr_debug) {
-		printf("   ");
+		printf(" - ");
 		asr_dump_query(aq);
 	}
 #endif
@@ -2274,7 +2301,7 @@ asr_run_cname(struct asr_query *aq, struct asr_result *ar)
 	for(;;) { /* block not indented on purpose */
 #ifdef ASR_DEBUG
 	if (asr_debug) {
-		printf("   ");
+		printf(" - ");
 		asr_dump_query(aq);
 	}
 #endif
