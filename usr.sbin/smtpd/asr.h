@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.h,v 1.4 2011/03/27 17:39:17 eric Exp $	*/
+/*	$OpenBSD: asr.h,v 1.5 2011/07/13 14:52:21 eric Exp $	*/
 /*
  * Copyright (c) 2010,2011 Eric Faurot <eric@openbsd.org>
  *
@@ -27,8 +27,8 @@ enum {
 	ASR_DONE
 };
 
-#define ASR_READ	0x01
-#define ASR_WRITE	0x02
+#define ASR_READ	1
+#define ASR_WRITE	2
 
 #define ASR_NOREC	0x01
 
