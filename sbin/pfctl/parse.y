@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.604 2011/07/08 18:52:47 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.605 2011/07/13 20:57:10 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3941,9 +3941,23 @@ rule_consistent(struct pf_rule *r, int anchor_call)
 {
 	int	problems = 0;
 
+	if (r->proto != IPPROTO_TCP && r->os_fingerprint != PF_OSFP_ANY) {
+		yyerror("os only applies to tcp");
+		problems++;
+	}
 	if (r->proto != IPPROTO_TCP && r->proto != IPPROTO_UDP &&
 	    (r->src.port_op || r->dst.port_op)) {
 		yyerror("port only applies to tcp/udp");
+		problems++;
+	}
+	if (r->proto != IPPROTO_TCP && r->proto != IPPROTO_UDP &&
+	    r->uid.op) {
+		yyerror("user only applies to tcp/udp");
+		problems++;
+	}
+	if (r->proto != IPPROTO_TCP && r->proto != IPPROTO_UDP &&
+	    r->gid.op) {
+		yyerror("group only applies to tcp/udp");
 		problems++;
 	}
 	if (r->proto != IPPROTO_ICMP && r->proto != IPPROTO_ICMPV6 &&
