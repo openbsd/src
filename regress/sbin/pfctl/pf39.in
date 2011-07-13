@@ -16,8 +16,9 @@ o_label="label blah"
 o_qname="queue blah"
 
 $body2 $o_fragment $o_keep $o_label $o_tos
-$body1 $o_user $o_qname $o_tos $o_keep $o_group $o_label $o_allowopts \
-$o_user2 $o_icmpspec $o_group2
+$body2 $o_user $o_qname $o_tos $o_keep $o_group $o_label $o_allowopts \
+$o_user2 $o_group2
+$body1 $o_icmpspec $o_keep $o_label $o_qname
 $body2 $o_keep
 $body2 $o_label $o_keep $o_qname $o_tos
 $body1 $o_icmpspec $o_tos
