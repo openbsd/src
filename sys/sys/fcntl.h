@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcntl.h,v 1.16 2011/07/09 01:28:48 matthew Exp $	*/
+/*	$OpenBSD: fcntl.h,v 1.17 2011/07/13 23:19:57 matthew Exp $	*/
 /*	$NetBSD: fcntl.h,v 1.8 1995/03/26 20:24:12 jtc Exp $	*/
 
 /*-
@@ -195,12 +195,14 @@ struct flock {
 #define	LOCK_UN		0x08		/* unlock file */
 #endif
 
+#ifdef _KERNEL
 #if __BSD_VISIBLE || __POSIX_VISIBLE >= 200809
 #define	AT_FDCWD	-100
 
 #define	AT_EACCESS		0x01
 #define	AT_SYMLINK_NOFOLLOW	0x02
 #define	AT_SYMLINK_FOLLOW	0x04
+#endif
 #endif
 
 #ifndef _KERNEL
