@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chmod.1,v 1.35 2010/09/03 09:53:20 jmc Exp $
+.\"	$OpenBSD: chmod.1,v 1.36 2011/07/13 08:12:10 sobrado Exp $
 .\"	$NetBSD: chmod.1,v 1.8 1995/03/21 09:02:07 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)chmod.1	8.4 (Berkeley) 3/31/94
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: July 13 2011 $
 .Dt CHMOD 1
 .Os
 .Sh NAME
@@ -102,8 +102,7 @@ Absolute modes are specified according to the following format:
 .Bd -filled -offset indent
 .Nm chmod
 .Ar nnnn
-.Ar file
-.Op Ar ...
+.Ar
 .Ed
 .Pp
 An absolute mode is an octal number (specified as
@@ -173,18 +172,11 @@ Symbolic modes are specified according to the following format:
 .Bd -filled -offset indent
 .Nm chmod
 .Sm off
-.Ao
 .Op Ar who
 .Ar op
-.Op Ar perm
-.Ac Ns Li , Oo
-.Op Ar who
-.Ar op
-.Op Ar perm
-.Oc Ns Li , Op Ar ...
+.Oo Ar perm Oc , Ar ...
 .Sm on
-.Ar file
-.Op Ar ...
+.Ar
 .Ed
 .Pp
 The
