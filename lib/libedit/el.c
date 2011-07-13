@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.c,v 1.17 2011/07/07 05:40:42 okan Exp $	*/
+/*	$OpenBSD: el.c,v 1.18 2011/07/13 11:05:17 otto Exp $	*/
 /*	$NetBSD: el.c,v 1.61 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -499,7 +499,7 @@ el_source(EditLine *el, const char *fname)
 {
 	FILE *fp;
 	size_t len;
-	char *ptr;
+	char *ptr, *lptr = NULL;
 #ifdef HAVE_ISSETUGID
 	char path[MAXPATHLEN];
 #endif
@@ -534,11 +534,21 @@ el_source(EditLine *el, const char *fname)
 		return (-1);
 
 	while ((ptr = fgetln(fp, &len)) != NULL) {
+		if (ptr[len - 1] == '\n')
+			ptr[len - 1] = '\0';
+		else {
+			if ((lptr = (char *)malloc(len + 1)) == NULL) {
+				(void) fclose(fp);
+				return (-1);
+			}
+			memcpy(lptr, ptr, len);
+			lptr[len] = '\0';
+			ptr = lptr;
+		}
+
 		dptr = ct_decode_string(ptr, &el->el_scratch);
 		if (!dptr)
 			continue;
-		if (len > 0 && dptr[len - 1] == '\n')
-			--len;
 
 		/* loop until first non-space char or EOL */
 		while (*dptr != '\0' && Isspace(*dptr))
@@ -546,11 +556,12 @@ el_source(EditLine *el, const char *fname)
 		if (*dptr == '#')
 			continue;   /* ignore, this is a comment line */
 		if (parse_line(el, dptr) == -1) {
+			free(lptr);
 			(void) fclose(fp);
 			return (-1);
 		}
 	}
-
+	free(lptr);
 	(void) fclose(fp);
 	return (0);
 }
