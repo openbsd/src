@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.2 2011/03/27 17:39:17 eric Exp $	*/
+/*	$OpenBSD: print.c,v 1.3 2011/07/13 15:08:24 eric Exp $	*/
 /*
  * Copyright (c) 2009,2010	Eric Faurot	<eric@faurot.net>
  *
@@ -182,45 +182,45 @@ print_rr(struct rr *rr, char *buf, size_t max)
 	buf += r;
 
 	switch(rr->rr_type) {
-		case T_CNAME:
-			print_dname(rr->rr.cname.cname, buf, max);
-			break;
-		case T_MX:
-			snprintf(buf, max, "%"PRIu32" %s",
-			    rr->rr.mx.preference,
-			    print_dname(rr->rr.mx.exchange, tmp, sizeof tmp));
-			break;
-		case T_NS:
-			print_dname(rr->rr.ns.nsname, buf, max);
-			break;
-		case T_PTR:
-			print_dname(rr->rr.ptr.ptrname, buf, max);
-			break;
-		case T_SOA:
-			snprintf(buf, max,
-			    "%s %s %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32,
-			    print_dname(rr->rr.soa.rname, tmp, sizeof tmp),
-			    print_dname(rr->rr.soa.mname, tmp2, sizeof tmp2),
-			    rr->rr.soa.serial,
-			    rr->rr.soa.refresh,
-			    rr->rr.soa.retry,
-			    rr->rr.soa.expire,
-			    rr->rr.soa.minimum);
-			break;
-		case T_A:
-			if (rr->rr_class != C_IN)
-				goto other;
-			snprintf(buf, max, "%s", inet_ntoa(rr->rr.in_a.addr));
-			break;
-		case T_AAAA:
-			if (rr->rr_class != C_IN)
-				goto other;
-			snprintf(buf, max, inet6_ntoa(rr->rr.in_aaaa.addr6));
-			break;
-		default:
-		other:
-			snprintf(buf, max, "(rdlen=%"PRIu16 ")", rr->rr.other.rdlen);
-			break;
+	case T_CNAME:
+		print_dname(rr->rr.cname.cname, buf, max);
+		break;
+	case T_MX:
+		snprintf(buf, max, "%"PRIu32" %s",
+		    rr->rr.mx.preference,
+		    print_dname(rr->rr.mx.exchange, tmp, sizeof tmp));
+		break;
+	case T_NS:
+		print_dname(rr->rr.ns.nsname, buf, max);
+		break;
+	case T_PTR:
+		print_dname(rr->rr.ptr.ptrname, buf, max);
+		break;
+	case T_SOA:
+		snprintf(buf, max,
+		    "%s %s %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32,
+		    print_dname(rr->rr.soa.rname, tmp, sizeof tmp),
+		    print_dname(rr->rr.soa.mname, tmp2, sizeof tmp2),
+		    rr->rr.soa.serial,
+		    rr->rr.soa.refresh,
+		    rr->rr.soa.retry,
+		    rr->rr.soa.expire,
+		    rr->rr.soa.minimum);
+		break;
+	case T_A:
+		if (rr->rr_class != C_IN)
+			goto other;
+		snprintf(buf, max, "%s", inet_ntoa(rr->rr.in_a.addr));
+		break;
+	case T_AAAA:
+		if (rr->rr_class != C_IN)
+			goto other;
+		snprintf(buf, max, inet6_ntoa(rr->rr.in_aaaa.addr6));
+		break;
+	default:
+	other:
+		snprintf(buf, max, "(rdlen=%"PRIu16 ")", rr->rr.other.rdlen);
+		break;
 	}
 
 	return (res);
@@ -253,45 +253,45 @@ print_rrdynamic(struct rr_dynamic *rd, char *buf, size_t max)
 	buf += r;
 
 	switch(rd->rd_type) {
-		case T_CNAME:
-			print_dname(rd->rd.cname.cname, buf, max);
-			break;
-		case T_MX:
-			snprintf(buf, max, "%"PRIu32" %s",
-			    rd->rd.mx.preference,
-			    print_dname(rd->rd.mx.exchange, tmp, sizeof tmp));
-			break;
-		case T_NS:
-			print_dname(rd->rd.ns.nsname, buf, max);
-			break;
-		case T_PTR:
-			print_dname(rd->rd.ptr.ptrname, buf, max);
-			break;
-		case T_SOA:
-			snprintf(buf, max,
-			    "%s %s %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32,
-			    print_dname(rd->rd.soa.rname, tmp, sizeof tmp),
-			    print_dname(rd->rd.soa.mname, tmp2, sizeof tmp2),
-			    rd->rd.soa.serial,
-			    rd->rd.soa.refresh,
-			    rd->rd.soa.retry,
-			    rd->rd.soa.expire,
-			    rd->rd.soa.minimum);
-			break;
-		case T_A:
-			if (rd->rd_class != C_IN)
-				goto other;
-			snprintf(buf, max, "%s", inet_ntoa(rd->rd.in_a.addr));
-			break;
-		case T_AAAA:
-			if (rd->rd_class != C_IN)
-				goto other;
-			snprintf(buf, max, inet6_ntoa(rd->rd.in_aaaa.addr6));
-			break;
-		default:
-		other:
-			snprintf(buf, max, "(rdlen=%"PRIu16 ")", rd->rd.other.rdlen);
-			break;
+	case T_CNAME:
+		print_dname(rd->rd.cname.cname, buf, max);
+		break;
+	case T_MX:
+		snprintf(buf, max, "%"PRIu32" %s",
+		    rd->rd.mx.preference,
+		    print_dname(rd->rd.mx.exchange, tmp, sizeof tmp));
+		break;
+	case T_NS:
+		print_dname(rd->rd.ns.nsname, buf, max);
+		break;
+	case T_PTR:
+		print_dname(rd->rd.ptr.ptrname, buf, max);
+		break;
+	case T_SOA:
+		snprintf(buf, max,
+		    "%s %s %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32,
+		    print_dname(rd->rd.soa.rname, tmp, sizeof tmp),
+		    print_dname(rd->rd.soa.mname, tmp2, sizeof tmp2),
+		    rd->rd.soa.serial,
+		    rd->rd.soa.refresh,
+		    rd->rd.soa.retry,
+		    rd->rd.soa.expire,
+		    rd->rd.soa.minimum);
+		break;
+	case T_A:
+		if (rd->rd_class != C_IN)
+			goto other;
+		snprintf(buf, max, "%s", inet_ntoa(rd->rd.in_a.addr));
+		break;
+	case T_AAAA:
+		if (rd->rd_class != C_IN)
+			goto other;
+		snprintf(buf, max, inet6_ntoa(rd->rd.in_aaaa.addr6));
+		break;
+	default:
+	other:
+		snprintf(buf, max, "(rdlen=%"PRIu16 ")", rd->rd.other.rdlen);
+		break;
 	}
 
 	return (res);
@@ -379,17 +379,17 @@ print_addr(struct sockaddr *sa, char *buf, size_t len)
 	print_host(sa, h, sizeof h);
 
 	switch (sa->sa_family) {
-		case AF_INET:
-			snprintf(buf, len, "%s:%i", h,
-			    ntohs(((struct sockaddr_in*)(sa))->sin_port));
-			break;
-		case AF_INET6:
-			snprintf(buf, len, "[%s]:%i", h,
-			    ntohs(((struct sockaddr_in6*)(sa))->sin6_port));
-			break;
-		default:
-			snprintf(buf, len, "?");
-			break;
+	case AF_INET:
+		snprintf(buf, len, "%s:%i", h,
+		    ntohs(((struct sockaddr_in*)(sa))->sin_port));
+		break;
+	case AF_INET6:
+		snprintf(buf, len, "[%s]:%i", h,
+		    ntohs(((struct sockaddr_in6*)(sa))->sin6_port));
+		break;
+	default:
+		snprintf(buf, len, "?");
+		break;
 	}
 
 	return (buf);

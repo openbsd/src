@@ -1,4 +1,4 @@
-/*	$OpenBSD: pack.c,v 1.2 2011/03/27 17:39:17 eric Exp $	*/
+/*	$OpenBSD: pack.c,v 1.3 2011/07/13 15:08:24 eric Exp $	*/
 /*
  * Copyright (c) 2009,2010	Eric Faurot	<eric@faurot.net>
  *
@@ -260,55 +260,49 @@ unpack_rr(struct packed *p, struct rr *rr)
 
 	switch(rr->rr_type) {
 
-		case T_CNAME:
-			unpack_dname(p, rr->rr.cname.cname,
-			    sizeof(rr->rr.cname.cname));
-			break;
+	case T_CNAME:
+		unpack_dname(p, rr->rr.cname.cname, sizeof(rr->rr.cname.cname));
+		break;
 
-		case T_MX:
-			unpack_u16(p, &rr->rr.mx.preference);
-			unpack_dname(p, rr->rr.mx.exchange,
-			    sizeof(rr->rr.mx.exchange));
-			break;
+	case T_MX:
+		unpack_u16(p, &rr->rr.mx.preference);
+		unpack_dname(p, rr->rr.mx.exchange, sizeof(rr->rr.mx.exchange));
+		break;
 
-		case T_NS:
-			unpack_dname(p, rr->rr.ns.nsname,
-			    sizeof(rr->rr.ns.nsname));
-			break;
+	case T_NS:
+		unpack_dname(p, rr->rr.ns.nsname, sizeof(rr->rr.ns.nsname));
+		break;
 
-		case T_PTR:
-			unpack_dname(p, rr->rr.ptr.ptrname,
-			    sizeof(rr->rr.ptr.ptrname));
-			break;
+	case T_PTR:
+		unpack_dname(p, rr->rr.ptr.ptrname, sizeof(rr->rr.ptr.ptrname));
+		break;
 
-		case T_SOA:
-			unpack_dname(p, rr->rr.soa.mname,
-			    sizeof(rr->rr.soa.mname));
-			unpack_dname(p, rr->rr.soa.rname,
-			    sizeof(rr->rr.soa.rname));
-			unpack_u32(p, &rr->rr.soa.serial);
-			unpack_u32(p, &rr->rr.soa.refresh);
-			unpack_u32(p, &rr->rr.soa.retry);
-			unpack_u32(p, &rr->rr.soa.expire);
-			unpack_u32(p, &rr->rr.soa.minimum);
-			break;
+	case T_SOA:
+		unpack_dname(p, rr->rr.soa.mname, sizeof(rr->rr.soa.mname));
+		unpack_dname(p, rr->rr.soa.rname, sizeof(rr->rr.soa.rname));
+		unpack_u32(p, &rr->rr.soa.serial);
+		unpack_u32(p, &rr->rr.soa.refresh);
+		unpack_u32(p, &rr->rr.soa.retry);
+		unpack_u32(p, &rr->rr.soa.expire);
+		unpack_u32(p, &rr->rr.soa.minimum);
+		break;
 
-		case T_A:
-			if (rr->rr_class != C_IN)
-				goto other;
-			unpack_inaddr(p, &rr->rr.in_a.addr);
-			break;
+	case T_A:
+		if (rr->rr_class != C_IN)
+			goto other;
+		unpack_inaddr(p, &rr->rr.in_a.addr);
+		break;
 
-		case T_AAAA:
-			if (rr->rr_class != C_IN)
-				goto other;
-			unpack_in6addr(p, &rr->rr.in_aaaa.addr6);
-			break;
-		default:
-		    other:
-			rr->rr.other.rdata = p->data + p->offset;
-			rr->rr.other.rdlen = rdlen;
-			p->offset += rdlen;
+	case T_AAAA:
+		if (rr->rr_class != C_IN)
+			goto other;
+		unpack_in6addr(p, &rr->rr.in_aaaa.addr6);
+		break;
+	default:
+	other:
+		rr->rr.other.rdata = p->data + p->offset;
+		rr->rr.other.rdlen = rdlen;
+		p->offset += rdlen;
 	}
 
 	if (p->err)
@@ -416,47 +410,47 @@ pack_rrdynamic(struct packed *p, const struct rr_dynamic *rd)
 
 	rr = &rd->rd;
 	switch(rd->rd_type) {
-		case T_CNAME:
-			pack_dname(p, rr->cname.cname);
-			break;
+	case T_CNAME:
+		pack_dname(p, rr->cname.cname);
+		break;
 
-		case T_MX:
-			pack_u16(p, rr->mx.preference);
-			pack_dname(p, rr->mx.exchange);
-			break;
+	case T_MX:
+		pack_u16(p, rr->mx.preference);
+		pack_dname(p, rr->mx.exchange);
+		break;
 
-		case T_NS:
-			pack_dname(p, rr->ns.nsname);
-			break;
+	case T_NS:
+		pack_dname(p, rr->ns.nsname);
+		break;
 
-		case T_PTR:
-			pack_dname(p, rr->ptr.ptrname);
-			break;
+	case T_PTR:
+		pack_dname(p, rr->ptr.ptrname);
+		break;
 
-		case T_SOA:
-			pack_dname(p, rr->soa.mname);
-			pack_dname(p, rr->soa.rname);
-			pack_u32(p, rr->soa.serial);
-			pack_u32(p, rr->soa.refresh);
-			pack_u32(p, rr->soa.retry);
-			pack_u32(p, rr->soa.expire);
-			pack_u32(p, rr->soa.minimum);
-			break;
+	case T_SOA:
+		pack_dname(p, rr->soa.mname);
+		pack_dname(p, rr->soa.rname);
+		pack_u32(p, rr->soa.serial);
+		pack_u32(p, rr->soa.refresh);
+		pack_u32(p, rr->soa.retry);
+		pack_u32(p, rr->soa.expire);
+		pack_u32(p, rr->soa.minimum);
+		break;
 
-		case T_A:
-			if (rd->rd_class != C_IN)
-				goto other;
-			pack_inaddr(p, rr->in_a.addr);
-			break;
+	case T_A:
+		if (rd->rd_class != C_IN)
+			goto other;
+		pack_inaddr(p, rr->in_a.addr);
+		break;
 
-		case T_AAAA:
-			if (rd->rd_class != C_IN)
-				goto other;
-			pack_in6addr(p, rr->in_aaaa.addr6);
-			break;
-		default:
-		    other:
-			pack_data(p, rr->other.rdata, rr->other.rdlen);
+	case T_AAAA:
+		if (rd->rd_class != C_IN)
+			goto other;
+		pack_in6addr(p, rr->in_aaaa.addr6);
+		break;
+	default:
+	other:
+		pack_data(p, rr->other.rdata, rr->other.rdlen);
 	}
 
         if (p->err)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.8 2011/05/07 13:16:17 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.9 2011/07/13 15:08:24 eric Exp $	*/
 /*
  * Copyright (c) 2010,2011 Eric Faurot <eric@openbsd.org>
  *
@@ -1946,14 +1946,14 @@ asr_add_sockaddr2(struct asr_query *aq,
 	int			 port;
 
 	switch (protocol) {
-		case IPPROTO_TCP:
-			proto = "tcp";
-			break;
-		case IPPROTO_UDP:
-			proto = "udp";
-			break;
-		default:
-			proto = NULL;
+	case IPPROTO_TCP:
+		proto = "tcp";
+		break;
+	case IPPROTO_UDP:
+		proto = "udp";
+		break;
+	default:
+		proto = NULL;
 	}
 
 	port = -1;
