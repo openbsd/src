@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.h,v 1.17 2009/01/29 22:08:45 guenther Exp $	*/
+/*	$OpenBSD: stat.h,v 1.18 2011/07/14 23:34:37 matthew Exp $	*/
 /*	$NetBSD: stat.h,v 1.20 1996/05/16 22:17:49 cgd Exp $	*/
 
 /*-
@@ -42,46 +42,6 @@
 
 #include <sys/cdefs.h>
 #include <sys/time.h>
-
-#ifdef _KERNEL
-struct stat43 {
-	u_int16_t st_dev;		/* inode's device */
-	ino_t	  st_ino;		/* inode's number */
-	u_int16_t st_mode;		/* inode protection mode */
-	u_int16_t st_nlink;		/* number of hard links */
-	u_int16_t st_uid;		/* user ID of the file's owner */
-	u_int16_t st_gid;		/* group ID of the file's group */
-	u_int16_t st_rdev;		/* device type */
-	int32_t	  st_size;		/* file size, in bytes */
-	struct	timespec st_atim;	/* time of last access */
-	struct	timespec st_mtim;	/* time of last data modification */
-	struct	timespec st_ctim;	/* time of last file status change */
-	int32_t	  st_blksize;		/* optimal blocksize for I/O */
-	int32_t	  st_blocks;		/* blocks allocated for file */
-	u_int32_t st_flags;		/* user defined flags for file */
-	u_int32_t st_gen;		/* file generation number */
-};
-
-struct stat35 {
-	dev_t	  st_dev;		/* inode's device */
-	ino_t	  st_ino;		/* inode's number */
-	u_int16_t  st_mode;		/* inode protection mode */
-	u_int16_t  st_nlink;		/* number of hard links */
-	uid_t	  st_uid;		/* user ID of the file's owner */
-	gid_t	  st_gid;		/* group ID of the file's group */
-	dev_t	  st_rdev;		/* device type */
-	struct	timespec st_atim;	/* time of last access */
-	struct	timespec st_mtim;	/* time of last data modification */
-	struct	timespec st_ctim;	/* time of last file status change */
-	off_t	  st_size;		/* file size, in bytes */
-	int64_t	  st_blocks;		/* blocks allocated for file */
-	u_int32_t st_blksize;		/* optimal blocksize for I/O */
-	u_int32_t st_flags;		/* user defined flags for file */
-	u_int32_t st_gen;		/* file generation number */
-	int32_t	  st_lspare;
-	int64_t	  st_qspare[2];
-};
-#endif /* !_KERNEL */
 
 struct stat {
 	dev_t	  st_dev;		/* inode's device */
