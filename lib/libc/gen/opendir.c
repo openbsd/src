@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendir.c,v 1.20 2010/01/19 17:12:43 millert Exp $ */
+/*	$OpenBSD: opendir.c,v 1.21 2011/07/14 02:16:00 deraadt Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -48,13 +48,6 @@
 DIR *
 opendir(const char *name)
 {
-
-	return (__opendir2(name, DTF_NODUP));
-}
-
-DIR *
-__opendir2(const char *name, int flags)
-{
 	DIR *dirp;
 	int fd;
 	struct stat sb;
@@ -100,7 +93,7 @@ __opendir2(const char *name, int flags)
 	dirp->dd_seek = 0;
 	dirp->dd_loc = 0;
 	dirp->dd_fd = fd;
-	dirp->dd_flags = flags;
+	dirp->dd_unused = 0;
 	dirp->dd_lock = NULL;
 
 	/*

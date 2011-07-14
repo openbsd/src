@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.14 2009/10/27 23:59:31 deraadt Exp $	*/
+/*	$OpenBSD: dir.c,v 1.15 2011/07/14 02:16:00 deraadt Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -78,7 +78,6 @@ _dl_opendir(const char *name)
 	dirp->dd_seek = 0;
 	dirp->dd_loc = 0;
 	dirp->dd_fd = fd;
-	dirp->dd_flags = DTF_NODUP;
 
 	return (dirp);
 }

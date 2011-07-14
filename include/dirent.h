@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirent.h,v 1.22 2011/07/03 18:51:01 jsg Exp $	*/
+/*	$OpenBSD: dirent.h,v 1.23 2011/07/14 02:16:00 deraadt Exp $	*/
 /*	$NetBSD: dirent.h,v 1.9 1995/03/26 20:13:37 jtc Exp $	*/
 
 /*-
@@ -73,13 +73,10 @@ typedef struct _dirdesc {
 	int	dd_len;		/* size of data buffer */
 	off_t	dd_seek;	/* magic cookie returned by getdirentries */
 	off_t	dd_rewind;	/* magic cookie for rewinding */
-	int	dd_flags;	/* flags for readdir */
+	int	dd_unused;	/* was flags for readdir */
 	struct _telldir *dd_td; /* telldir position recording */
 	void	*dd_lock;	/* mutex to protect struct */
 } DIR;
-
-/* flags for opendir2 */
-#define DTF_NODUP	0x0002	/* don't return duplicate names */
 
 #ifndef NULL
 #ifdef 	__GNUG__
@@ -104,7 +101,6 @@ struct dirent *readdir(DIR *);
 void rewinddir(DIR *);
 int closedir(DIR *);
 #if __BSD_VISIBLE
-DIR *__opendir2(const char *, int);
 int getdirentries(int, char *, int, off_t *)
 		__attribute__ ((__bounded__(__string__,2,3)));
 #endif /* __BSD_VISIBLE */
