@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.27 2011/07/13 13:01:13 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.28 2011/07/14 11:31:20 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -155,34 +155,6 @@ sub handle_options
 	if (@ARGV == 0 && !$state->{update} && !$state->{pkglist}) {
 		$state->usage("Missing pkgname");
 	}
-}
-
-# one-level dependencies tree, for nicer printouts
-sub build_deptree
-{
-	my ($state, $set, @deps) = @_;
-
-	if (defined $state->{deptree}->{$set}) {
-		$set = $state->{deptree}->{$set};
-	}
-	for my $dep (@deps) {
-		$state->{deptree}->{$dep} = $set unless
-		    defined $state->{deptree}->{$dep};
-	}
-}
-
-sub deptree_header
-{
-	my ($state, $pkg) = @_;
-	if (defined $state->{deptree}->{$pkg}) {
-		my $s = $state->{deptree}->{$pkg}->real_set;
-		if ($s eq $pkg) {
-			delete $state->{deptree}->{$pkg};
-		} else {
-			return $s->short_print.':';
-		}
-	}
-	return '';
 }
 
 sub set_name_from_handle

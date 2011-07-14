@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.16 2011/07/13 13:01:13 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.17 2011/07/14 11:31:20 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -137,6 +137,33 @@ sub deleteset_from_location
 	return $self->deleteset->add_older(OpenBSD::Handle->from_location($location));
 }
 
+package OpenBSD::DeleteSet;
+sub setup_header
+{
+	my ($set, $state, $handle) = @_;
+	my $header = $state->deptree_header($set);
+	if (defined $handle) {
+		$header .= $handle->pkgname;
+	} else {
+		$header .= $set->print;
+	}
+	if (!$state->progress->set_header($header)) {
+		return unless $state->verbose;
+		$header = "Deleting $header";
+		if (defined $state->{lastheader} &&
+		    $header eq $state->{lastheader}) {
+			return;
+		}
+		$state->{lastheader} = $header;
+		$state->print("#1", $header);
+		$state->print("(pretending) ") if $state->{not};
+		if ($state->{do_faked}) {
+			$state->print(" under #1", $state->{destdir});
+		}
+		$state->print("\n");
+	}
+}
+	
 package OpenBSD::PkgDelete;
 our @ISA = qw(OpenBSD::AddDelete);
 
@@ -214,13 +241,9 @@ sub really_remove
 	} else {
 		$state->status->what("Deleting");
 	}
-	if (!$state->progress->set_header($set->print)) {
-		$state->say($state->{not} ?
-		    "Pretending to delete #1" :
-		    "Deleting #1",
-		    $set->print) if $state->verbose;
-	}
+	$set->setup_header($state);
 	for my $pkgname ($set->older_names) {
+		$set->setup_header($state, $set->{older}{$pkgname});
 		$state->log->set_context('-'.$pkgname);
 		OpenBSD::Delete::delete_package($pkgname, $state);
 	}
@@ -331,6 +354,7 @@ sub remove_set
 			return ($set);
 		}
 		$set->{once} = 1;
+		$state->build_deptree($set, values %$todo);
 		return (values %$todo, $set);
 	}
 	if ($state->{automatic}) {

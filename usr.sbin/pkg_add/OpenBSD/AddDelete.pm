@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.49 2011/07/13 13:01:13 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.50 2011/07/14 11:31:20 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -194,6 +194,34 @@ sub ntogo_string
 	my ($self, $offset) = @_;
 
 	return $self->todo($offset // 0);
+}
+
+# one-level dependencies tree, for nicer printouts
+sub build_deptree
+{
+	my ($state, $set, @deps) = @_;
+
+	if (defined $state->{deptree}->{$set}) {
+		$set = $state->{deptree}->{$set};
+	}
+	for my $dep (@deps) {
+		$state->{deptree}->{$dep} = $set unless
+		    defined $state->{deptree}->{$dep};
+	}
+}
+
+sub deptree_header
+{
+	my ($state, $pkg) = @_;
+	if (defined $state->{deptree}->{$pkg}) {
+		my $s = $state->{deptree}->{$pkg}->real_set;
+		if ($s eq $pkg) {
+			delete $state->{deptree}->{$pkg};
+		} else {
+			return $s->short_print.':';
+		}
+	}
+	return '';
 }
 
 sub vstat
