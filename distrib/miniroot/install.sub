@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.646 2011/07/09 17:53:58 halex Exp $
+#	$OpenBSD: install.sub,v 1.647 2011/07/14 14:54:57 ajacoutot Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1168,11 +1168,15 @@ install_files() {
 			GOTSETS="$GOTSETS $_f"
 		fi
 
-		# save arguments for sysmerge(8)
+		# get sets and save arguments for sysmerge(8)
 		[[ $_f == base$VERSION.tgz ]] && \
-			SM_ETC="$_src/etc$VERSION.tgz"
+			ftp $FTPOPTS -o /mnt/tmp/etc$VERSION.tgz \
+				-m "$_src/etc$VERSION.tgz" >/dev/null 2>&1 && \
+			SM_ARGS="-s /tmp/etc$VERSION.tgz"
 		[[ $_f == xbase$VERSION.tgz ]] && \
-			SM_XETC="$_src/xetc$VERSION.tgz"
+			ftp $FTPOPTS -o /mnt/tmp/xetc$VERSION.tgz \
+				-m "$_src/xetc$VERSION.tgz" >/dev/null 2>&1  && \
+			SM_ARGSX="-x /tmp/xetc$VERSION.tgz"
 	done
 }
 
@@ -1631,15 +1635,9 @@ install_sets() {
 }
 
 run_sysmerge() {
-	if [[ -n "$SM_ETC" || -n "$SM_XETC" ]]; then
+	if [[ -n "$SM_ARGS" || -n "$SM_ARGSX" ]]; then
 		ask_yn "Merge the new etc/xetc install sets using sysmerge(8)?" no
 		if [[ $resp == y ]]; then \
-			[[ X"$SM_ETC" != X"" ]] && \
-				ftp $FTPOPTS -o /mnt/tmp/etc$VERSION.tgz -m "$SM_ETC" && \
-				SM_ARGS="-s /tmp/etc$VERSION.tgz"
-			[[ X"$SM_XETC" != X"" ]] && \
-				ftp $FTPOPTS -o /mnt/tmp/xetc$VERSION.tgz -m "$SM_XETC" && \
-				SM_ARGSX="-x /tmp/xetc$VERSION.tgz"
 			/mnt/usr/sbin/chroot /mnt /usr/sbin/sysmerge $SM_ARGS $SM_ARGSX
 		fi
 	fi
