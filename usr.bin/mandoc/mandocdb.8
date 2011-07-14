@@ -1,0 +1,191 @@
+.\"	$Id: mandocdb.8,v 1.1 2011/07/14 15:10:54 schwarze Exp $
+.\"
+.\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: July 14 2011 $
+.Dt MANDOCDB 8
+.Os
+.Sh NAME
+.Nm mandocdb
+.Nd index UNIX manuals
+.Sh SYNOPSIS
+.Nm
+.Op Fl ruv
+.Op Fl d Ar dir
+.Ar
+.Sh DESCRIPTION
+The
+.Nm
+utility extracts keywords from
+.Ux
+manuals and indexes them for fast retrieval.
+The arguments are as follows:
+.Bl -tag -width Ds
+.It Fl d Ar dir
+The directory into which to write the keyword and index databases.
+.It Ar
+Read input from zero or more files in
+.Xr mdoc 7
+or
+.Xr man 7
+.Ux
+manual format.
+.It Fl r
+Remove entries.
+This will remove the index and keyword references.
+If the record is not found, it is ignored.
+.It Fl u
+Update the record.
+This will first remove the record (as in
+.Fl r )
+then re-add it.
+.It Fl v
+Verbose output.
+If specified once, prints the name of each indexed file.
+If twice, prints keywords for each file.
+.El
+.Pp
+By default,
+.Nm
+constructs a new
+.Sx Index Database
+and
+.Sx Keyword Database
+in the current working directory.
+Existing databases are truncated.
+.Pp
+If fatal parse errors are encountered, the offending file is printed to
+stderr, omitted from the index, and the parse continues with the next
+input file.
+.Ss Index Database
+The index database,
+.Pa mandoc.index ,
+is a
+.Xr recno 3
+database with record values consisting of
+.Pp
+.Bl -enum -compact
+.It
+a nil-terminated filename,
+.It
+a nil-terminated manual section,
+.It
+a nil-terminated manual title,
+.It
+a nil-terminated architecture
+.Pq this is not often available
+.It
+and a nil-terminated description.
+.El
+.Pp
+Both the manual section and description may be zero-length.
+Entries are sequentially-numbered, but the filenames are unordered.
+.Ss Keyword Database
+The keyword database,
+.Pa mandoc.db ,
+is a
+.Xr btree 3
+database of nil-terminated keywords (record length is non-zero string
+length plus one) mapping to a 8-byte binary field consisting of the
+keyword type and source
+.Sx Index Database
+record number.
+The type, a 32-bit bit-mask in host order, consists of the following
+fields:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Li 0x01
+The name of a manual page as given in the NAME section.
+.It Li 0x02
+A function prototype name as given in the SYNOPSIS section.
+.It Li 0x04
+A utility name as given in the SYNOPSIS section.
+.It Li 0x08
+An include file as given in the SYNOPSIS section.
+.It Li 0x10
+A variable name as given in the SYNOPSIS section.
+.It Li 0x20
+A standard as given in the STANDARDS section.
+.It Li 0x40
+An author as given in the AUTHORS section.
+.It Li 0x80
+A configuration as given in the SYNOPSIS section.
+.It Li 0x100
+Free-form descriptive text as given in the NAME section.
+.It Li 0x200
+Cross-links between manuals.
+Listed as the link name, then a period, then the link section.
+If the link has no section, the period terminates the string.
+.It Li 0x400
+Path reference as given in the FILES section.
+.It Li 0x800
+Environment variable as given in the ENVIRONMENT section.
+.It Li 0x1000
+Error codes as given in the ERRORS section.
+.El
+.Pp
+The last four bytes are a host-ordered record number within the
+.Sx Index Database .
+.Pp
+The
+.Nm
+utility is
+.Ud
+.Sh IMPLEMENTATION NOTES
+The time to construct a new database pair grows linearly with the
+number of keywords in the input.
+However, removing or updating entries with
+.Fl r
+or
+.Fl u ,
+respectively, grows as a multiple of the index length and input size.
+.Sh FILES
+.Bl -tag -width Ds
+.It Pa mandoc.db
+A
+.Xr btree 3
+keyword database mapping keywords to a type and file reference in
+.Pa mandoc.index .
+.It Pa mandoc.index
+A
+.Xr recno 3
+database of indexed file-names.
+.El
+.Sh EXIT STATUS
+The
+.Nm
+utility exits with one of the following values:
+.Pp
+.Bl -tag -width Ds -compact
+.It 0
+No errors occurred.
+.It 5
+Invalid command line arguments were specified.
+No input files have been read.
+.It 6
+An operating system error occurred, for example memory exhaustion or an
+error accessing input files.
+Such errors cause
+.Nm
+to exit at once, possibly in the middle of parsing or formatting a file.
+The output databases are corrupt and should be removed .
+.El
+.Sh SEE ALSO
+.Xr mandoc 1
+.Sh AUTHORS
+The
+.Nm
+utility was written by
+.An Kristaps Dzonsons Aq kristaps@bsd.lv .
