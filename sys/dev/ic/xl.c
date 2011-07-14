@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.103 2011/07/08 18:56:47 stsp Exp $	*/
+/*	$OpenBSD: xl.c,v 1.104 2011/07/14 16:38:27 stsp Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -215,6 +215,9 @@ xl_activate(struct device *self, int act)
 			xl_reset(sc);
 			xl_stop(sc);
 		}
+#ifndef SMALL_KERNEL
+		xl_wol_power(sc);
+#endif
 		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
@@ -2373,10 +2376,6 @@ xl_stop(struct xl_softc *sc)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	xl_freetxrx(sc);
-
-#ifndef SMALL_KERNEL
-	xl_wol_power(sc);
-#endif
 }
 
 #ifndef SMALL_KERNEL
@@ -2708,6 +2707,8 @@ xl_wol(struct ifnet *ifp, int enable)
 
 	XL_SEL_WIN(7);
 	if (enable) {
+		if (!(ifp->if_flags & IFF_RUNNING))
+			xl_init(sc);
 		CSR_WRITE_2(sc, XL_W7_BM_PME, XL_BM_PME_MAGIC);
 		sc->xl_flags |= XL_FLAG_WOL;
 	} else {
