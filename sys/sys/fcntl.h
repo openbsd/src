@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcntl.h,v 1.17 2011/07/13 23:19:57 matthew Exp $	*/
+/*	$OpenBSD: fcntl.h,v 1.18 2011/07/14 18:03:06 matthew Exp $	*/
 /*	$NetBSD: fcntl.h,v 1.8 1995/03/26 20:24:12 jtc Exp $	*/
 
 /*-
@@ -202,6 +202,7 @@ struct flock {
 #define	AT_EACCESS		0x01
 #define	AT_SYMLINK_NOFOLLOW	0x02
 #define	AT_SYMLINK_FOLLOW	0x04
+#define	AT_REMOVEDIR		0x08
 #endif
 #endif
 

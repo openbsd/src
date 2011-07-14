@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.175 2011/07/12 23:36:40 matthew Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.176 2011/07/14 18:03:06 matthew Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1487,9 +1487,8 @@ dounlinkat(struct proc *p, int fd, const char *path, int flag,
 	int error;
 	struct nameidata nd;
 
-	/* XXX: Support AT_REMOVEDIR. */
-	if (flag != 0)
-		return (ENOTSUP);
+	if (flag & ~AT_REMOVEDIR)
+		return (EINVAL);
 
 	NDINITAT(&nd, DELETE, LOCKPARENT | LOCKLEAF, UIO_USERSPACE,
 	    fd, path, p);
@@ -1497,24 +1496,41 @@ dounlinkat(struct proc *p, int fd, const char *path, int flag,
 		return (error);
 	vp = nd.ni_vp;
 
+	if (flag & AT_REMOVEDIR) {
+		if (vp->v_type != VDIR) {
+			error = ENOTDIR;
+			goto out;
+		}
+		/*
+		 * No rmdir "." please.
+		 */
+		if (nd.ni_dvp == vp) {
+			error = EBUSY;
+			goto out;
+		}
+	}
+
 	/*
 	 * The root of a mounted filesystem cannot be deleted.
 	 */
-	if (vp->v_flag & VROOT) {
+	if (vp->v_flag & VROOT)
+		error = EBUSY;
+out:
+	if (!error) {
+		if (flag & AT_REMOVEDIR) {
+			error = VOP_RMDIR(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
+		} else {
+			(void)uvm_vnp_uncache(vp);
+			error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
+		}
+	} else {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == vp)
 			vrele(nd.ni_dvp);
 		else
 			vput(nd.ni_dvp);
 		vput(vp);
-		error = EBUSY;
-		goto out;
 	}
-
-	(void)uvm_vnp_uncache(vp);
-
-	error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
-out:
 	return (error);
 }
 
@@ -2621,43 +2637,9 @@ sys_rmdir(struct proc *p, void *v, register_t *retval)
 	struct sys_rmdir_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
-	struct vnode *vp;
-	int error;
-	struct nameidata nd;
 
-	NDINIT(&nd, DELETE, LOCKPARENT | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), p);
-	if ((error = namei(&nd)) != 0)
-		return (error);
-	vp = nd.ni_vp;
-	if (vp->v_type != VDIR) {
-		error = ENOTDIR;
-		goto out;
-	}
-	/*
-	 * No rmdir "." please.
-	 */
-	if (nd.ni_dvp == vp) {
-		error = EBUSY;
-		goto out;
-	}
-	/*
-	 * The root of a mounted filesystem cannot be deleted.
-	 */
-	if (vp->v_flag & VROOT)
-		error = EBUSY;
-out:
-	if (!error) {
-		error = VOP_RMDIR(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
-	} else {
-		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-		if (nd.ni_dvp == vp)
-			vrele(nd.ni_dvp);
-		else
-			vput(nd.ni_dvp);
-		vput(vp);
-	}
-	return (error);
+	return (dounlinkat(p, AT_FDCWD, SCARG(uap, path), AT_REMOVEDIR,
+	    retval));
 }
 
 /*
