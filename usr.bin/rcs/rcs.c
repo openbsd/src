@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.77 2011/07/06 15:36:52 nicm Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.78 2011/07/14 16:38:39 sobrado Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1083,7 +1083,6 @@ rcs_delta_stats(struct rcs_delta *rdp, int *ladded, int *lremoved)
 	*ladded = added;
 	*lremoved = removed;
 }
- 	 
 
 /*
  * rcs_rev_add()

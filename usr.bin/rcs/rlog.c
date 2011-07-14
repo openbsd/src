@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.64 2010/07/30 21:47:18 ray Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.65 2011/07/14 16:38:39 sobrado Exp $	*/
 /*
  * Copyright (c) 2005, 2009 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -531,7 +531,7 @@ rlog_rev_print(struct rcs_delta *rdp)
 		nrdp = rdp;
 	else
 		nrdp = TAILQ_NEXT(rdp, rd_list);
- 	 
+
 	/*
 	 * We do not write diff stats for the first revision of the default
 	 * branch, since it was not a diff but a full text.
@@ -546,7 +546,7 @@ rlog_rev_print(struct rcs_delta *rdp)
 			printf("  lines: +%d -%d", removed, added);
 	}
 	printf("\n");
- 
+
 	if (!TAILQ_EMPTY(&(rdp->rd_branches))) {
 		printf("branches:");
 		TAILQ_FOREACH(rb, &(rdp->rd_branches), rb_list) {
