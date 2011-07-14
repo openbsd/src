@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ci.1,v 1.36 2010/09/03 11:09:29 jmc Exp $
+.\"	$OpenBSD: ci.1,v 1.37 2011/07/14 16:31:34 sobrado Exp $
 .\"
 .\" Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
 .\" All rights reserved.
@@ -14,7 +14,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: July 14 2011 $
 .Dt CI 1
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Op Fl n Ns Ar symbol
 .Op Fl r Ns Op Ar rev
 .Op Fl s Ns Ar state
-.Op Fl t Ns Ar str
+.Op Fl t Ns Op Ar str
 .Op Fl u Ns Op Ar rev
 .Op Fl w Ns Ar username
 .Op Fl x Ns Ar suffixes
@@ -143,7 +143,7 @@ working file.
 Sets the state of the deposited revision to the identifier
 .Ar state .
 The specified value may not contain a space character.
-.It Fl t Ns Ar str
+.It Fl t Ns Op Ar str
 Change the descriptive text.
 The argument
 .Ar str
