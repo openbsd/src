@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.72 2011/07/15 10:28:35 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.73 2011/07/15 20:34:34 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -761,6 +761,21 @@ in a
 .Em SYNOPSIS
 section line, else it is
 .Sx In-line .
+.Ss Special block macro
+The
+.Sx \&Ta
+macro can only be used below
+.Sx \&It
+in
+.Sx \&Bl Fl column
+lists.
+It delimits blocks representing table cells;
+these blocks have bodies, but no heads.
+.Pp
+.Bl -column "MacroX" "CallableX" "ParsedX" "closed by XXXX" -compact -offset indent
+.It Em Macro Ta Em Callable Ta Em Parsed Ta Em Scope
+.It Sx \&Ta  Ta    Yes      Ta    Yes    Ta closed by Sx \&Ta , Sx \&It
+.El
 .Ss In-line
 Closed by
 .Sx Reserved Characters ,
@@ -1942,6 +1957,8 @@ See also
 .Sx \&Fc ,
 and
 .Sx \&Ft .
+.Ss \&Fr
+This macro is obsolete and not implemented.
 .Ss \&Ft
 A function type.
 Its syntax is as follows:
@@ -2064,31 +2081,27 @@ The
 list is the most complicated.
 Its syntax is as follows:
 .Pp
-.D1 Pf \. Sx \&It Op Cm args
+.D1 Pf \. Sx \&It Ar cell Op <TAB> Ar cell ...
+.D1 Pf \. Sx \&It Ar cell Op Sx \&Ta Ar cell ...
 .Pp
-The
-.Cm args
-are phrases, a mix of macros and text corresponding to a line column,
-delimited by tabs or the special
-.Sq \&Ta
-pseudo-macro.
-Lines subsequent the
+The arguments consist of one or more lines of text and macros
+representing a complete table line.
+Cells within the line are delimited by tabs or by the special
+.Sx \&Ta
+block macro.
+The tab cell delimiter may only be used within the
 .Sx \&It
-are interpreted within the scope of the last phrase.
-Calling the pseudo-macro
-.Sq \&Ta
-will open a new phrase scope (this must occur on a macro line to be
-interpreted as a macro).
-Note that the tab phrase delimiter may only be used within the
+line itself; on following lines, only the
+.Sx \&Ta
+macro can be used to delimit cells, and
+.Sx \&Ta
+is only recognized as a macro when called by other macros,
+not as the first macro on a line.
+.Pp
+Note that quoted strings may span tab-delimited cells on an
 .Sx \&It
-line itself.
-Subsequent this, only the
-.Sq \&Ta
-pseudo-macro may be used to delimit phrases.
-Furthermore, note that quoted sections propagate over tab-delimited
-phrases on an
-.Sx \&It ,
-for example,
+line.
+For example,
 .Pp
 .Dl .It \(dqcol1 ; <TAB> col2 ;\(dq \&;
 .Pp
@@ -2643,6 +2656,11 @@ See also
 .Sx \&Li ,
 and
 .Sx \&Em .
+.Ss \&Ta
+Table cell separator in
+.Sx \&Bl Fl column
+lists; can only be used below
+.Sx \&It .
 .Ss \&Tn
 Format a tradename.
 .Pp
@@ -2792,7 +2810,7 @@ Newer groff and mandoc print
 .Qq AT&T UNIX
 and the arguments.
 .It
-.Sx \&Bd Fl column
+.Sx \&Bl Fl column
 does not recognize trailing punctuation characters when they immediately
 precede tabulator characters, but treats them as normal text and
 outputs a space before them.
