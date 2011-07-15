@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.331 2011/07/11 17:10:37 jcs Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.332 2011/07/15 16:44:18 deraadt Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -7637,6 +7637,16 @@ svwsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 	}
 
+	switch (sc->sc_pp->ide_product) {
+	case PCI_PRODUCT_RCC_K2_SATA:
+		bus_space_write_4(ss->ba5_st, ss->ba5_sh, SVWSATA_SICR1,
+		    bus_space_read_4(ss->ba5_st, ss->ba5_sh, SVWSATA_SICR1)
+		    & ~0x00040000);
+		bus_space_write_4(ss->ba5_st, ss->ba5_sh,
+		    SVWSATA_SIM, 0);
+		break;
+	}
+
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, 0) == 0)
@@ -7732,6 +7742,7 @@ svwsata_mapchan(struct pciide_channel *cp)
 	}
 	wdc_cp->cmd_iot = wdc_cp->ctl_iot = ss->ba5_st;
 	wdc_cp->_vtbl = &wdc_svwsata_vtbl;
+	wdc_cp->ch_flags |= WDCF_DMA_BEFORE_CMD;
 	wdcattach(wdc_cp);
 }
 

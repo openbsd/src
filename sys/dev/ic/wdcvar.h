@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.51 2011/05/09 22:33:54 matthew Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.52 2011/07/15 16:44:17 deraadt Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -68,6 +68,7 @@ struct channel_softc { /* Per channel data */
 #define WDCF_IRQ_WAIT		0x10 /* controller is waiting for irq */
 #define WDCF_DMA_WAIT		0x20 /* controller is waiting for DMA */
 #define WDCF_VERBOSE_PROBE	0x40 /* verbose probe */
+#define WDCF_DMA_BEFORE_CMD	0x80 /* start dma before a command */
 	u_int8_t ch_status;         /* copy of status register */
 	u_int8_t ch_prev_log_status; /* previous logged value of status reg */
 	u_int8_t ch_log_idx;

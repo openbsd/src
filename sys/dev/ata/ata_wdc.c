@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.39 2011/05/24 23:18:47 matthew Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.40 2011/07/15 16:44:18 deraadt Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -325,6 +325,12 @@ again:
 			wdc_set_drive(chp, xfer->drive);
 			if (wait_for_ready(chp, ata_delay) < 0)
 				goto timeout;
+
+			/* start the DMA channel (before) */
+			if (chp->ch_flags & WDCF_DMA_BEFORE_CMD)
+				(*chp->wdc->dma_start)(chp->wdc->dma_arg,
+				    chp->channel, xfer->drive);
+
 			if (ata_bio->flags & ATA_LBA48) {
 				wdccommandext(chp, xfer->drive, cmd,
 				    (u_int64_t)ata_bio->blkno, nblks);
@@ -332,9 +338,12 @@ again:
 				wdccommand(chp, xfer->drive, cmd, cyl,
 				    head, sect, nblks, 0);
 			}
-			/* start the DMA channel */
-			(*chp->wdc->dma_start)(chp->wdc->dma_arg,
-			    chp->channel, xfer->drive);
+
+			/* start the DMA channel (after) */
+			if ((chp->ch_flags & WDCF_DMA_BEFORE_CMD) == 0)
+				(*chp->wdc->dma_start)(chp->wdc->dma_arg,
+				    chp->channel, xfer->drive);
+
 			chp->ch_flags |= WDCF_DMA_WAIT;
 			/* wait for irq */
 			goto intr;
