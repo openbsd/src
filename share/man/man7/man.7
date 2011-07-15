@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.18 2011/06/07 23:40:10 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.19 2011/07/15 10:14:17 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 7 2011 $
+.Dd $Mdocdate: July 15 2011 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -706,6 +706,9 @@ and
 .Ss \&RE
 Explicitly close out the scope of a prior
 .Sx \&RS .
+The default left margin is restored to the state of the original
+.Sx \&RS
+invocation.
 .Ss \&RI
 Text is rendered alternately in roman (the default font) and italics.
 Whitespace between arguments is omitted in output.
@@ -722,13 +725,10 @@ See also
 and
 .Sx \&IR .
 .Ss \&RS
-Begin a part setting the left margin.
-The left margin controls the offset, following an initial indentation,
-to un-indented text such as that of
-.Sx \&PP .
+Temporarily reset the default left margin.
 This has the following syntax:
 .Bd -filled -offset indent
-.Pf \. Sx \&Rs
+.Pf \. Sx \&RS
 .Op Cm width
 .Ed
 .Pp
@@ -737,6 +737,9 @@ The
 argument must conform to
 .Sx Scaling Widths .
 If not specified, the saved or default width is used.
+.Pp
+See also
+.Sx \&RE .
 .Ss \&SB
 Text is rendered in small size (one point smaller than the default font)
 bold face.
