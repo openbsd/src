@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.283 2011/07/05 15:29:32 sthen Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.284 2011/07/15 23:11:59 fgsch Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 5 2011 $
+.Dd $Mdocdate: July 15 2011 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -85,9 +85,10 @@ for
 .It Ar full-{build,run,all}-depends
 Print all dependencies a package depends upon for building, running,
 or both, as a list of package names.
-.It Ar {build,lib,run}-depends-list
+.It Ar {build,lib,regress,run}-depends-list
 Print a list of first level package specifications a port depends as
-build dependencies, library dependencies, or run dependencies.
+build dependencies, library dependencies, regress dependencies or
+run dependencies.
 .It Ar print-{build,run}-depends
 User convenience target that displays the result of
 .Ar full-{build,run}-depends
