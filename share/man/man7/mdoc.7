@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.71 2011/07/07 20:24:12 jmc Exp $
+.\"	$OpenBSD: mdoc.7,v 1.72 2011/07/15 10:28:35 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2011 $
+.Dd $Mdocdate: July 15 2011 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1691,14 +1691,21 @@ See also
 and
 .Sx \&Os .
 .Ss \&Dv
-Defined variables such as preprocessor constants.
+Defined variables such as preprocessor constants, constant symbols,
+enumeration values, and so on.
 .Pp
 Examples:
+.Dl \&.Dv NULL
 .Dl \&.Dv BUFSIZ
 .Dl \&.Dv STDOUT_FILENO
 .Pp
 See also
-.Sx \&Er .
+.Sx \&Er
+and
+.Sx \&Ev
+for special-purpose constants and
+.Sx \&Va
+for variable symbols.
 .Ss \&Dx
 Format the DragonFly BSD version provided as an argument, or a default
 value if no argument is provided.
@@ -1774,14 +1781,17 @@ argument is used as the enclosure head, for example, specifying \e(lq
 will emulate
 .Sx \&Do .
 .Ss \&Er
-Display error constants.
+Error constants for definitions of the
+.Va errno
+libc global variable.
 .Pp
 Examples:
 .Dl \&.Er EPERM
 .Dl \&.Er ENOENT
 .Pp
 See also
-.Sx \&Dv .
+.Sx \&Dv
+for general constants.
 .Ss \&Es
 This macro is obsolete and not implemented.
 .Ss \&Ev
@@ -1791,6 +1801,10 @@ Environmental variables such as those specified in
 Examples:
 .Dl \&.Ev DISPLAY
 .Dl \&.Ev PATH
+.Pp
+See also
+.Sx \&Dv
+for general constants.
 .Ss \&Ex
 Insert a standard sentence regarding exit values.
 Its syntax is as follows:
