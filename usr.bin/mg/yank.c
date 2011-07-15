@@ -1,4 +1,4 @@
-/*	$OpenBSD: yank.c,v 1.9 2009/06/05 18:02:06 kjell Exp $	*/
+/*	$OpenBSD: yank.c,v 1.10 2011/07/15 16:50:52 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -169,14 +169,20 @@ killline(int f, int n)
 				chunk = 1;
 		}
 	} else if (n > 0) {
-		chunk = llength(curwp->w_dotp) - curwp->w_doto + 1;
+		chunk = llength(curwp->w_dotp) - curwp->w_doto;
 		nextp = lforw(curwp->w_dotp);
+		if (nextp != curbp->b_headp)
+			chunk++;		/* newline */
+		if (nextp == curbp->b_headp)
+			goto done;		/* EOL */
 		i = n;
 		while (--i) {
-			if (nextp == curbp->b_headp)
-				break;
-			chunk += llength(nextp) + 1;
+			chunk += llength(nextp);
 			nextp = lforw(nextp);
+			if (nextp != curbp->b_headp)
+				chunk++;	/* newline */
+			if (nextp == curbp->b_headp)
+				break;		/* EOL */
 		}
 	} else {
 		/* n <= 0 */
@@ -184,18 +190,21 @@ killline(int f, int n)
 		curwp->w_doto = 0;
 		i = n;
 		while (i++) {
-			if (lback(curwp->w_dotp) == curbp->b_headp)
-				break;
+			if (lforw(curwp->w_dotp))
+				chunk++;
 			curwp->w_dotp = lback(curwp->w_dotp);
 			curwp->w_rflag |= WFMOVE;
-			chunk += llength(curwp->w_dotp) + 1;
+			chunk += llength(curwp->w_dotp);
 		}
 	}
 	/*
 	 * KFORW here is a bug.  Should be KBACK/KFORW, but we need to
 	 * rewrite the ldelete code (later)?
 	 */
-	return (ldelete(chunk, KFORW));
+done:
+	if (chunk)
+		return (ldelete(chunk, KFORW));
+	return (TRUE);
 }
 
 /*
