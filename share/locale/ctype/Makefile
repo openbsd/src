@@ -5,6 +5,12 @@ NOMAN=	# defined
 # pull LOCALEDIR and other declarations
 .include <bsd.own.mk>
 
+LOCALES += ar_SD.UTF-8
+ LOCALESRC_ar_SD.UTF-8 = en_US.UTF-8
+
+LOCALES += ar_SY.UTF-8
+ LOCALESRC_ar_SY.UTF-8 = en_US.UTF-8
+
 LOCALES += bg_BG.CP1251
  LOCALESRC_bg_BG.CP1251 = bg_BG.CP1251
 
@@ -82,6 +88,9 @@ LOCALES += es_ES.ISO8859-15
 
 LOCALES += es_ES.UTF-8
  LOCALESRC_es_ES.UTF-8 = en_US.UTF-8
+
+LOCALES += fa_IR.UTF-8
+ LOCALESRC_fa_IR.UTF-8 = en_US.UTF-8
 
 LOCALES += fi_FI.ISO8859-1
  LOCALESRC_fi_FI.ISO8859-1 = en_US.ISO_8859-1
