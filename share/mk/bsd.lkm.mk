@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lkm.mk,v 1.21 2007/11/04 00:06:19 mikeb Exp $
+#	$OpenBSD: bsd.lkm.mk,v 1.22 2011/07/16 23:34:21 guenther Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -28,7 +28,7 @@ LDFLAGS+= -r
 .if defined(LKM)
 SRCS?=	${LKM}.c
 .if !empty(SRCS:N*.h:N*.sh)
-OBJS+=	${SRCS:N*.h:N*.sh:R:S/$/.o/g}
+OBJS+=	${SRCS:N*.h:N*.sh:R:S/$/.o/}
 LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .endif
 COMBINED?=combined.o

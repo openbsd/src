@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.50 2010/11/18 21:16:57 miod Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.51 2011/07/16 23:34:21 guenther Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -75,7 +75,7 @@ LIBARCH?=
 .if defined(PROG)
 SRCS?=	${PROG}.c
 .  if !empty(SRCS:N*.h:N*.sh)
-OBJS+=	${SRCS:N*.h:N*.sh:R:S/$/.o/g}
+OBJS+=	${SRCS:N*.h:N*.sh:R:S/$/.o/}
 _LEXINTM+=${SRCS:M*.l:.l=.c}
 _YACCINTM+=${SRCS:M*.y:.y=.c}
 LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln} ${SRCS:M*.y:.y=.ln} ${SRCS:M*.l:.l=.ln}
