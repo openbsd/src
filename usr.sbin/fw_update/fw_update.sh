@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# $OpenBSD: fw_update.sh,v 1.6 2011/07/16 22:27:09 espie Exp $
 # Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 #
 # Permission to use, copy, modify, and distribute this software for any
