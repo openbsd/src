@@ -1,4 +1,4 @@
-/*	$OpenBSD: deflate.h,v 1.1 2011/07/07 02:57:24 deraadt Exp $	*/
+/*	$OpenBSD: deflate.h,v 1.2 2011/07/16 07:25:29 jsing Exp $	*/
 /* deflate.h -- internal compression state
  * Copyright (C) 1995-2004 Jean-loup Gailly
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -246,7 +246,7 @@ typedef struct internal_state {
     uInt matches;       /* number of string matches in current block */
     int last_eob_len;   /* bit length of EOB code for last block */
 
-#ifdef DEBUG
+#ifdef DEBUG_LIBZ
     ulg compressed_len; /* total bit length of compressed file mod 2^32 */
     ulg bits_sent;      /* bit length of compressed data sent mod 2^32 */
 #endif
@@ -294,7 +294,7 @@ void _tr_stored_block OF((deflate_state *s, charf *buf, ulg stored_len,
  * used.
  */
 
-#ifndef DEBUG
+#ifndef DEBUG_LIBZ
 /* Inline versions of _tr_tally for speed: */
 
 #if defined(GEN_TREES_H) || !defined(STDC)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zutil.c,v 1.1 2011/07/07 02:57:24 deraadt Exp $	*/
+/*	$OpenBSD: zutil.c,v 1.2 2011/07/16 07:25:29 jsing Exp $	*/
 /* zutil.c -- target dependent utility functions for the compression library
  * Copyright (C) 1995-2005 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -58,7 +58,7 @@ uLong ZEXPORT zlibCompileFlags()
     case 8:     flags += 2 << 6;        break;
     default:    flags += 3 << 6;
     }
-#ifdef DEBUG
+#ifdef DEBUG_LIBZ
     flags += 1 << 8;
 #endif
 #if defined(ASMV) || defined(ASMINF)
@@ -112,7 +112,7 @@ uLong ZEXPORT zlibCompileFlags()
     return flags;
 }
 
-#ifdef DEBUG
+#ifdef DEBUG_LIBZ
 
 #  ifndef verbose
 #    define verbose 0
