@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.59 2011/07/17 06:55:25 otto Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.60 2011/07/17 07:49:34 otto Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -108,6 +108,7 @@ static struct emulation emulations[] = {
 };
 
 static struct emulation *current;
+static struct emulation *def_emul;
 
 struct pid_emul {
 	struct emulation *e;	
@@ -151,12 +152,13 @@ main(int argc, char *argv[])
 	int trpoints = ALL_POINTS;
 	void *m;
 
-	current = &emulations[0];	/* native */
+	def_emul = current = &emulations[0];	/* native */
 
 	while ((ch = getopt(argc, argv, "e:f:dlm:nrRp:Tt:xX")) != -1)
 		switch (ch) {
 		case 'e':
 			setemul(optarg);
+			def_emul = current;
 			break;
 		case 'f':
 			tracefile = optarg;
@@ -294,7 +296,7 @@ findemul(pid_t pid)
 	for (i = 0; i < pe_size; i++)
 		if (pe_table[i].p == pid)
 			return pe_table[i].e;
-	return current;
+	return def_emul;
 }
 
 static int
