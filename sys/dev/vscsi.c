@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.25 2011/07/08 22:09:27 matthew Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.26 2011/07/17 22:46:48 matthew Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -150,12 +150,12 @@ vscsi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.adapter = &vscsi_switch;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 256;
+	sc->sc_link.adapter_buswidth = 256;
 	sc->sc_link.openings = 1;
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
-	saa.saa_targets = 256;
 
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,
 	    &saa, scsiprint);

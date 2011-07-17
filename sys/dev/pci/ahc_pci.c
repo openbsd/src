@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.54 2011/07/04 22:17:23 matthew Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.55 2011/07/17 22:46:48 matthew Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.43 2003/08/18 09:16:22 taca Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.54 2011/07/04 22:17:23 matthew Exp $
+ * $Id: ahc_pci.c,v 1.55 2011/07/17 22:46:48 matthew Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -736,6 +736,12 @@ ahc_pci_attach(parent, self, aux)
 	ahc->seqctl = FASTMODE;
 	for (i = 0; i < AHC_NUM_TARGETS; i++)
 		TAILQ_INIT(&ahc->untagged_queues[i]);
+
+	/*
+	 * SCSI_IS_SCSIBUS_B() must returns false until sc_channel_b
+	 * has been properly initialized. XXX Breaks if >254 scsi buses.
+	 */
+	ahc->sc_channel_b.scsibus = 0xff;
 
 	ahc->dev_softc = pa;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.28 2011/07/08 22:09:27 matthew Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.29 2011/07/17 22:46:47 matthew Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -342,13 +342,13 @@ vdsk_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_link.adapter = &sc->sc_switch;
 	sc->sc_link.adapter_softc = self;
+	sc->sc_link.adapter_buswidth = 2;
+	sc->sc_link.luns = 1; /* XXX slices should be presented as luns? */
 	sc->sc_link.adapter_target = 2;
 	sc->sc_link.openings = sc->sc_vd->vd_nentries - 1;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
-	saa.saa_targets = 2;
-	saa.saa_luns = 1; /* XXX slices should be presented as luns? */
 	config_found(self, &saa, scsiprint);
 
 	return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbic.c,v 1.8 2011/07/08 22:09:27 matthew Exp $	*/
+/*	$OpenBSD: vsbic.c,v 1.9 2011/07/17 22:46:47 matthew Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -537,13 +537,13 @@ vsbic_attach(struct device *parent, struct device *self, void *args)
 	vmeintr_establish(sc->sc_vec, &sc->sc_ih, DEVNAME(sc));
 
 	sc->sc_link.adapter = &vsbic_swtch;
+	sc->sc_link.adapter_buswidth = 8;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_id;
 	sc->sc_link.openings = VSBIC_NUMOPENINGS;
 
 	bzero(&saa, sizeof saa);
 	saa.saa_sc_link = &sc->sc_link;
-	saa.saa_targets = 8;
 
 	tmp = bootpart;
 	if (ca->ca_paddr != bootaddr)

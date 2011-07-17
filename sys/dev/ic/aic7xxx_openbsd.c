@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.50 2011/07/05 22:40:57 matthew Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.51 2011/07/17 22:46:48 matthew Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -94,7 +94,6 @@ ahc_attach(struct ahc_softc *ahc)
 		/* Configure the second scsi bus */
 		ahc->sc_channel_b = ahc->sc_channel;
 		ahc->sc_channel_b.adapter_target = ahc->our_id_b;
-		ahc->sc_channel_b.flags |= SDEV_2NDBUS;
 	}
 
 #ifndef DEBUG		
@@ -112,25 +111,22 @@ ahc_attach(struct ahc_softc *ahc)
 	if ((ahc->features & AHC_TWIN) && ahc->flags & AHC_RESET_BUS_B)
 		ahc_reset_channel(ahc, 'B', TRUE);
 
+	bzero(&saa, sizeof(saa));
 	if ((ahc->flags & AHC_PRIMARY_CHANNEL) == 0) {
-		bzero(&saa, sizeof(saa));
 		saa.saa_sc_link = &ahc->sc_channel;
 		ahc->sc_child = config_found((void *)&ahc->sc_dev,
 		    &saa, scsiprint);
 		if (ahc->features & AHC_TWIN) {
-			bzero(&saa, sizeof(saa));
 			saa.saa_sc_link = &ahc->sc_channel_b;
 			ahc->sc_child_b = config_found((void *)&ahc->sc_dev,
 			    &saa, scsiprint);
 		}
 	} else {
 		if (ahc->features & AHC_TWIN) {
-			bzero(&saa, sizeof(saa));
 			saa.saa_sc_link = &ahc->sc_channel_b;
 			ahc->sc_child = config_found((void *)&ahc->sc_dev,
 			    &saa, scsiprint);
 		}
-		bzero(&saa, sizeof(saa));
 		saa.saa_sc_link = &ahc->sc_channel;
 		ahc->sc_child_b = config_found((void *)&ahc->sc_dev,
 		    &saa, scsiprint);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.148 2011/07/09 00:34:59 matthew Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.149 2011/07/17 22:46:48 matthew Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -353,8 +353,10 @@ struct scsi_link {
 	SLIST_ENTRY(scsi_link)	bus_list;
 
 	u_int		state;
+#define SDEV_S_WAITING		(1<<0)
 #define SDEV_S_DYING		(1<<1)
 
+	u_int8_t scsibus;		/* the Nth scsibus */
 	u_int8_t luns;
 	u_int16_t target;		/* targ of this dev */
 	u_int16_t lun;			/* lun of this dev */
@@ -401,8 +403,6 @@ struct scsi_link {
 	struct	scsi_iopool *pool;
 };
 
-#define	SCSI_NO_ADAPTER_TARGET	((u_int16_t) -1)
-
 int	scsiprint(void *, const char *);
 
 /*
@@ -419,8 +419,6 @@ struct scsi_inquiry_pattern {
 
 struct scsibus_attach_args {
 	struct scsi_link *saa_sc_link;
-	u_int16_t saa_targets;
-	u_int16_t saa_luns;
 };
 
 /*
@@ -435,8 +433,7 @@ struct scsibus_softc {
 	struct device sc_dev;
 	struct scsi_link *adapter_link;	/* prototype supplied by adapter */
 	SLIST_HEAD(, scsi_link) sc_link;
-	u_int16_t sc_targets;
-	u_int16_t sc_luns;
+	u_int16_t sc_buswidth;
 };
 
 /*

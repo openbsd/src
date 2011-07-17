@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.179 2011/07/06 00:45:52 matthew Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.180 2011/07/17 22:46:48 matthew Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -155,20 +155,16 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 		scsi_autoconf = 0;
 
 	sc_link_proto->bus = sb;
+	sc_link_proto->scsibus = sb->sc_dev.dv_unit;
 	sb->adapter_link = sc_link_proto;
 	if (sb->adapter_link->adapter_buswidth == 0)
 		sb->adapter_link->adapter_buswidth = 8;
-	if (saa->saa_targets == 0)
-		saa->saa_targets = sb->adapter_link->adapter_buswidth;
-	sb->sc_targets = saa->saa_targets;
+	sb->sc_buswidth = sb->adapter_link->adapter_buswidth;
 	if (sb->adapter_link->luns == 0)
 		sb->adapter_link->luns = 8;
-	if (saa->saa_luns == 0)
-		saa->saa_luns = sb->adapter_link->luns;
-	sb->sc_luns = saa->saa_luns;
 
-	printf(": %d targets", sb->sc_targets);
-	if (sb->adapter_link->adapter_target < sb->sc_targets)
+	printf(": %d targets", sb->sc_buswidth);
+	if (sb->adapter_link->adapter_target < sb->sc_buswidth)
 		printf(", initiator %d", sb->adapter_link->adapter_target);
 	if (sb->adapter_link->port_wwn != 0x0 &&
 	    sb->adapter_link->node_wwn != 0x0) {
@@ -218,7 +214,7 @@ scsi_activate_bus(struct scsibus_softc *sc, int act)
 {
 	int target, rv = 0, r;
 
-	for (target = 0; target < sc->sc_targets; target++) {
+	for (target = 0; target < sc->sc_buswidth; target++) {
 		r = scsi_activate_target(sc, target, act);
 		if (r)
 			rv = r;
@@ -231,7 +227,7 @@ scsi_activate_target(struct scsibus_softc *sc, int target, int act)
 {
 	int lun, rv = 0, r;
 
-	for (lun = 0; lun < sc->sc_luns; lun++) {
+	for (lun = 0; lun < sc->adapter_link->luns; lun++) {
 		r = scsi_activate_lun(sc, target, lun, act);
 		if (r)
 			rv = r;
@@ -347,9 +343,10 @@ scsibus_bioctl(struct device *dev, u_long cmd, caddr_t addr)
 int
 scsi_probe_bus(struct scsibus_softc *sc)
 {
+	struct scsi_link *alink = sc->adapter_link;
 	int i;
 
-	for (i = 0; i < sc->sc_targets; i++)
+	for (i = 0; i < alink->adapter_buswidth; i++)
 		scsi_probe_target(sc, i);
 
 	return (0);
@@ -358,6 +355,7 @@ scsi_probe_bus(struct scsibus_softc *sc)
 int
 scsi_probe_target(struct scsibus_softc *sc, int target)
 {
+	struct scsi_link *alink = sc->adapter_link;
 	struct scsi_link *link;
 	struct scsi_report_luns_data *report;
 	int i, nluns, lun;
@@ -408,7 +406,7 @@ scsi_probe_target(struct scsibus_softc *sc, int target)
 	}
 
 dumbscan:
-	for (i = 1; i < sc->sc_luns; i++) {
+	for (i = 1; i < alink->luns; i++) {
 		if (scsi_probe_lun(sc, target, i) == EINVAL)
 			break;
 	}
@@ -421,9 +419,9 @@ scsi_probe_lun(struct scsibus_softc *sc, int target, int lun)
 {
 	struct scsi_link *alink = sc->adapter_link;
 
-	if (target < 0 || target >= sc->sc_targets ||
+	if (target < 0 || target >= alink->adapter_buswidth ||
 	    target == alink->adapter_target ||
-	    lun < 0 || lun >= sc->sc_luns)
+	    lun < 0 || lun >= alink->luns)
 		return (ENXIO);
 
 	return (scsi_probedev(sc, target, lun));
@@ -432,9 +430,10 @@ scsi_probe_lun(struct scsibus_softc *sc, int target, int lun)
 int
 scsi_detach_bus(struct scsibus_softc *sc, int flags)
 {
+	struct scsi_link *alink = sc->adapter_link;
 	int i, err, rv = 0;
 
-	for (i = 0; i < sc->sc_targets; i++) {
+	for (i = 0; i < alink->adapter_buswidth; i++) {
 		err = scsi_detach_target(sc, i, flags);
 		if (err != 0 && err != ENXIO)
 			rv = err;
@@ -449,11 +448,11 @@ scsi_detach_target(struct scsibus_softc *sc, int target, int flags)
 	struct scsi_link *alink = sc->adapter_link;
 	int i, err, rv = 0;
 
-	if (target < 0 || target >= sc->sc_targets ||
+	if (target < 0 || target >= alink->adapter_buswidth ||
 	    target == alink->adapter_target)
 		return (ENXIO);
 
-	for (i = 0; i < sc->sc_luns; i++) { /* nicer backwards? */
+	for (i = 0; i < alink->luns; i++) { /* nicer backwards? */
 		if (scsi_get_link(sc, target, i) == NULL)
 			continue;
 
@@ -472,9 +471,9 @@ scsi_detach_lun(struct scsibus_softc *sc, int target, int lun, int flags)
 	struct scsi_link *link;
 	int rv;
 
-	if (target < 0 || target >= sc->sc_targets ||
+	if (target < 0 || target >= alink->adapter_buswidth ||
 	    target == alink->adapter_target ||
-	    lun < 0 || lun >= sc->sc_luns)
+	    lun < 0 || lun >= alink->luns)
 		return (ENXIO);
 
 	link = scsi_get_link(sc, target, lun);
@@ -1023,7 +1022,7 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 	 * point to prevent such helpfulness before it causes confusion.
 	 */
 	if (lun == 0 && (sc_link->flags & SDEV_UMASS) &&
-	    scsi_get_link(scsi, target, 1) == NULL && scsi->sc_luns > 1 &&
+	    scsi_get_link(scsi, target, 1) == NULL && sc_link->luns > 1 &&
 	    (usbinqbuf = dma_alloc(sizeof(*usbinqbuf), M_NOWAIT)) != NULL) {
 
 		sc_link->lun = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.114 2011/07/09 06:24:41 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.115 2011/07/17 22:46:48 matthew Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -50,7 +50,6 @@ struct atascsi {
 	struct scsi_link	as_link;
 	struct scsibus_softc	*as_scsibus;
 
-	int			as_nports;
 	int			as_capability;
 	int			as_ncqdepth;
 };
@@ -180,7 +179,6 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 	as->as_cookie = aaa->aaa_cookie;
 	as->as_methods = aaa->aaa_methods;
 	as->as_capability = aaa->aaa_capability;
-	as->as_nports = aaa->aaa_nports;
 	as->as_ncqdepth = aaa->aaa_ncmds;
 
 	/* copy from template and modify for ourselves */
@@ -191,16 +189,16 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 	/* fill in our scsi_link */
 	as->as_link.adapter = &as->as_switch;
 	as->as_link.adapter_softc = as;
-	as->as_link.adapter_target = SCSI_NO_ADAPTER_TARGET;
+	as->as_link.adapter_buswidth = aaa->aaa_nports;
+	as->as_link.luns = SATA_PMP_MAX_PORTS;
+	as->as_link.adapter_target = aaa->aaa_nports;
 	as->as_link.openings = 1;
 
 	as->as_host_ports = malloc(sizeof(struct atascsi_host_port *) *
-	    as->as_nports, M_DEVBUF, M_WAITOK | M_ZERO);
+	    aaa->aaa_nports, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &as->as_link;
-	saa.saa_targets = as->as_nports;
-	saa.saa_luns = SATA_PMP_MAX_PORTS;
 
 	/* stash the scsibus so we can do hotplug on it */
 	as->as_scsibus = (struct scsibus_softc *)config_found(self, &saa,
@@ -250,7 +248,7 @@ atascsi_lookup_port(struct scsi_link *link)
 	struct atascsi 			*as = link->adapter_softc;
 	struct atascsi_host_port 	*ahp;
 
-	if (link->target >= as->as_nports)
+	if (link->target >= as->as_link.adapter_buswidth)
 		return (NULL);
 
 	ahp = as->as_host_ports[link->target];
@@ -273,7 +271,7 @@ atascsi_probe(struct scsi_link *link)
 	u_int16_t			cmdset;
 
 	port = link->target;
-	if (port >= as->as_nports)
+	if (port >= as->as_link.adapter_buswidth)
 		return (ENXIO);
 
 	/* if this is a PMP port, check it's valid */
@@ -455,7 +453,7 @@ atascsi_free(struct scsi_link *link)
 	int				port;
 
 	port = link->target;
-	if (port >= as->as_nports)
+	if (port >= as->as_link.adapter_buswidth)
 		return;
 
 	ahp = as->as_host_ports[port];

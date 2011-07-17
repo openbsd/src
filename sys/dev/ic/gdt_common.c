@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.59 2011/07/09 01:50:41 matthew Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.60 2011/07/17 22:46:48 matthew Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -156,7 +156,9 @@ gdt_attach(struct gdt_softc *sc)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &gdt_switch;
 	/* openings will be filled in later. */
-	sc->sc_link.adapter_target = SCSI_NO_ADAPTER_TARGET;
+	sc->sc_link.adapter_buswidth =
+	    (sc->sc_class & GDT_FC) ? GDT_MAXID : GDT_MAX_HDRIVES;
+	sc->sc_link.adapter_target = sc->sc_link.adapter_buswidth;
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	if (!gdt_internal_cmd(sc, GDT_SCREENSERVICE, GDT_INIT, 0, 0, 0)) {
@@ -478,7 +480,6 @@ gdt_attach(struct gdt_softc *sc)
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
-	saa.saa_targets = (sc->sc_class & GDT_FC) ? GDT_MAXID : GDT_MAX_HDRIVES;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);
 

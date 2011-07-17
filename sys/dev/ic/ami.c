@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.219 2011/07/08 22:09:27 matthew Exp $	*/
+/*	$OpenBSD: ami.c,v 1.220 2011/07/17 22:46:48 matthew Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -520,6 +520,7 @@ ami_attach(struct ami_softc *sc)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &ami_switch;
 	sc->sc_link.adapter_target = sc->sc_maxunits;
+	sc->sc_link.adapter_buswidth = sc->sc_maxunits;
 	sc->sc_link.pool = &sc->sc_iopool;
 
 #ifdef AMI_DEBUG
@@ -545,7 +546,6 @@ ami_attach(struct ami_softc *sc)
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
-	saa.saa_targets = sc->sc_maxunits;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);
 
@@ -587,11 +587,11 @@ ami_attach(struct ami_softc *sc)
 		rsc->sc_proctarget = -1;
 		/* TODO fetch it from the controller */
 		rsc->sc_link.adapter_target = 16;
+		rsc->sc_link.adapter_buswidth = 16;
 		rsc->sc_link.pool = &sc->sc_iopool;
 
 		bzero(&saa, sizeof(saa));
 		saa.saa_sc_link = &rsc->sc_link;
-		saa.saa_targets = 16;
 
 		ptbus = (struct scsibus_softc *)config_found(&sc->sc_dev,
 		    &saa, scsiprint);
