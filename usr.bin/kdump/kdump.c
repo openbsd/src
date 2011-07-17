@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.58 2011/07/10 06:13:55 otto Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.59 2011/07/17 06:55:25 otto Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -107,7 +107,15 @@ static struct emulation emulations[] = {
 	{ NULL,		NULL,			0 }
 };
 
-struct emulation *current;
+static struct emulation *current;
+
+struct pid_emul {
+	struct emulation *e;	
+	pid_t p;
+};
+
+static struct pid_emul *pe_table;
+static size_t pe_size;
 
 
 static char *ptrace_ops[] = {
@@ -120,6 +128,8 @@ static int narg;
 static register_t *ap;
 static char sep;
 
+static void mappidtoemul(pid_t, struct emulation *);
+static struct emulation * findemul(pid_t);
 static int fread_tail(void *, size_t, size_t);
 static void dumpheader(struct ktr_header *);
 static void ktrcsw(struct ktr_csw *);
@@ -199,6 +209,8 @@ main(int argc, char *argv[])
 		err(1, "%s", tracefile);
 	while (fread_tail(&ktr_header, sizeof(struct ktr_header), 1)) {
 		silent = 0;
+		if (pe_size == 0)
+			mappidtoemul(ktr_header.ktr_pid, current);
 		if (pid != -1 && pid != ktr_header.ktr_pid)
 			silent = 1;
 		if (silent == 0 && trpoints & (1<<ktr_header.ktr_type))
@@ -219,6 +231,7 @@ main(int argc, char *argv[])
 			continue;
 		if ((trpoints & (1<<ktr_header.ktr_type)) == 0)
 			continue;
+		current = findemul(ktr_header.ktr_pid);
 		switch (ktr_header.ktr_type) {
 		case KTR_SYSCALL:
 			ktrsyscall((struct ktr_syscall *)m);
@@ -240,6 +253,7 @@ main(int argc, char *argv[])
 			break;
 		case KTR_EMUL:
 			ktremul(m, ktrlen);
+			mappidtoemul(ktr_header.ktr_pid, current);
 			break;
 		case KTR_STRUCT:
 			ktrstruct(m, ktrlen);
@@ -249,6 +263,38 @@ main(int argc, char *argv[])
 			(void)fflush(stdout);
 	}
 	exit(0);
+}
+
+static void
+mappidtoemul(pid_t pid, struct emulation *emul)
+{
+	size_t i;
+	struct pid_emul *tmp;
+
+	for (i = 0; i < pe_size; i++) {
+		if (pe_table[i].p == pid) {
+			pe_table[i].e = emul;
+			return;
+		}
+	}
+	tmp = realloc(pe_table, (pe_size + 1) * sizeof(*pe_table));
+	if (tmp == NULL)
+		err(1, NULL);
+	pe_table = tmp;
+	pe_table[pe_size].p = pid;
+	pe_table[pe_size].e = emul;
+	pe_size++;
+}
+
+static struct emulation*
+findemul(pid_t pid)
+{
+	size_t i;
+
+	for (i = 0; i < pe_size; i++)
+		if (pe_table[i].p == pid)
+			return pe_table[i].e;
+	return current;
 }
 
 static int
@@ -706,8 +752,14 @@ ktrsysret(struct ktr_sysret *ktr)
 
 	if (code >= current->nsysnames || code < 0)
 		(void)printf("[%d] ", code);
-	else
+	else {
 		(void)printf("%s ", current->sysnames[code]);
+		if (ret > 0 && (strcmp(current->sysnames[code], "fork") == 0 ||
+		    strcmp(current->sysnames[code], "vfork") == 0 ||
+		    strcmp(current->sysnames[code], "rfork") == 0 ||
+		    strcmp(current->sysnames[code], "clone") == 0))
+			mappidtoemul(ret, current);
+	}
 
 	if (error == 0) {
 		if (fancy) {
