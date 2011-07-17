@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.28 2011/07/14 11:31:20 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.29 2011/07/17 13:16:15 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -870,17 +870,9 @@ sub newer_has_errors
 	return 0;
 }
 
-sub install_set
+sub process_set
 {
-	my ($set, $state) = @_;
-
-	$set = $set->real_set;
-
-	$state->progress->set_header('Checking packages');
-
-	if ($set->{finished}) {
-		return ();
-	}
+	my ($self, $set, $state) = @_;
 
 	if (!$state->updater->process_set($set, $state)) {
 		return ();
@@ -1025,9 +1017,9 @@ sub quirk_set
 
 sub do_quirks
 {
-	my $state = shift;
+	my ($self, $state) = @_;
 
-	install_set(quirk_set($state), $state);
+	$self->process_set(quirk_set($state), $state);
 	eval {
 		require OpenBSD::Quirks;
 		# interface version number.
@@ -1114,25 +1106,25 @@ sub finish_display
 	inform_user_of_problems($state);
 }
 
+sub tweak_list
+{
+	my ($self, $state) = @_;
+
+	eval {
+		$state->quirks->tweak_list($state->{setlist}, $state);
+	}
+}
+
 sub main
 {
 	my ($self, $state) = @_;
 
 	$state->progress->set_header('');
 	if ($state->{allow_replacing}) {
-		do_quirks($state);
+		$self->do_quirks($state);
 	}
 
-	$state->tracker->todo(@{$state->{setlist}});
-	# This is the actual very small loop that adds all packages
-	while (my $set = shift @{$state->{setlist}}) {
-
-		$state->status->what->set($set);
-		unshift(@{$state->{setlist}}, install_set($set, $state));
-		eval {
-			$state->quirks->tweak_list($state->{setlist}, $state);
-		};
-	}
+	$self->process_setlist($state);
 }
 
 

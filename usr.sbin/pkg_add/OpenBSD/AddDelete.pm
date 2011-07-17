@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.50 2011/07/14 11:31:20 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.51 2011/07/17 13:16:15 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -103,6 +103,26 @@ sub parse_and_run
 
 	$self->framework($state);
 	return $state->{bad} != 0;
+}
+
+# nothing to do
+sub tweak_list
+{
+}
+
+sub process_setlist
+{
+	my ($self, $state) = @_;
+	$state->tracker->todo(@{$state->{setlist}});
+	# this is the actual very small loop that processes all sets
+	while (my $set = shift @{$state->{setlist}}) {
+		$state->status->what->set($set);
+		$set = $set->real_set;
+		next if $set->{finished};
+		$state->progress->set_header('Checking packages');
+		unshift(@{$state->{setlist}}, $self->process_set($set, $state));
+		$self->tweak_list($state);
+	}
 }
 
 package OpenBSD::SharedItemsRecorder;
