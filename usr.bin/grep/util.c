@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.41 2011/07/11 20:43:21 tedu Exp $	*/
+/*	$OpenBSD: util.c,v 1.42 2011/07/17 19:39:21 aschrijver Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -169,7 +169,13 @@ procline(str_t *l, int nottext)
 {
 	regmatch_t	pmatch;
 	int		c, i, r;
-	int		offset;
+	regoff_t	offset;
+
+	/* size_t will be converted to regoff_t. ssize_t is guaranteed to fit
+	 * into regoff_t */
+	if (l->len > SSIZE_MAX) {
+		errx(2, "Line is too big to process");
+	}
 
 	c = 0;
 	i = 0;
@@ -444,7 +450,7 @@ grep_search(fastgrep_t *fg, char *data, size_t dataLen, regmatch_t *pmatch)
 #ifdef SMALL
 	return 0;
 #else
-	int j;
+	regoff_t j;
 	int rtrnVal = REG_NOMATCH;
 
 	pmatch->rm_so = -1;
