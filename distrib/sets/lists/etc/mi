@@ -134,6 +134,8 @@
 ./etc/rc.d/nfsd
 ./etc/rc.d/nsd
 ./etc/rc.d/ntpd
+./etc/rc.d/ospf6d
+./etc/rc.d/ospfd
 ./etc/rc.d/pflogd
 ./etc/rc.d/portmap
 ./etc/rc.d/rarpd

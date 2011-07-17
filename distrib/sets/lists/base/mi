@@ -2794,6 +2794,10 @@
 ./usr/share/lkm/syscall/module
 ./usr/share/lkm/syscall/test
 ./usr/share/locale
+./usr/share/locale/ar_SD.UTF-8
+./usr/share/locale/ar_SD.UTF-8/LC_CTYPE
+./usr/share/locale/ar_SY.UTF-8
+./usr/share/locale/ar_SY.UTF-8/LC_CTYPE
 ./usr/share/locale/bg_BG.CP1251
 ./usr/share/locale/bg_BG.CP1251/LC_CTYPE
 ./usr/share/locale/ca_ES.ISO8859-1
@@ -2847,6 +2851,8 @@
 ./usr/share/locale/es_ES.ISO8859-15/LC_CTYPE
 ./usr/share/locale/es_ES.UTF-8
 ./usr/share/locale/es_ES.UTF-8/LC_CTYPE
+./usr/share/locale/fa_IR.UTF-8
+./usr/share/locale/fa_IR.UTF-8/LC_CTYPE
 ./usr/share/locale/fi_FI.ISO8859-1
 ./usr/share/locale/fi_FI.ISO8859-1/LC_CTYPE
 ./usr/share/locale/fi_FI.ISO8859-15
