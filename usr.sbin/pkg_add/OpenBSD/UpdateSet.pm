@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.68 2011/07/13 12:57:27 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.69 2011/07/17 13:18:07 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -60,13 +60,130 @@ sub pkgname
 package OpenBSD::hint2;
 our @ISA = qw(OpenBSD::hint);
 
+package OpenBSD::DeleteSet;
+sub new
+{
+	my ($class, $state) = @_;
+	return bless {older => {}}, $class;
+}
+
+sub add_older
+{
+	my $self = shift;
+	for my $h (@_) {
+		$self->{older}->{$h->pkgname} = $h;
+	}
+	return $self;
+}
+
+sub older
+{
+	my $self = shift;
+	return values %{$self->{older}};
+}
+
+sub older_names
+{
+	my $self = shift;
+	return keys %{$self->{older}};
+}
+
+sub all_handles
+{
+	&older;
+}
+
+sub mark_as_finished
+{
+	my $self = shift;
+	$self->{finished} = 1;
+}
+
+sub cleanup
+{
+	my ($self, $error, $errorinfo) = @_;
+	for my $h ($self->all_handles) {
+		$h->cleanup($error, $errorinfo);
+	}
+	$self->{error} //= $error;
+	$self->{errorinfo} //= $errorinfo;
+	$self->mark_as_finished;
+}
+
+sub has_error
+{
+	&OpenBSD::Handle::has_error;
+}
+
+sub print
+{
+	my $self = shift;
+	return join('+', sort $self->older_names);
+}
+
+sub todo_names
+{
+	&older_names;
+}
+
+sub short_print
+{
+	my $self = shift;
+	my $result = join('+', sort $self->todo_names);
+	if (length $result > 30) {
+		return substr($result, 0, 27)."...";
+	} else {
+		return $result;
+	}
+}
+
+sub real_set
+{
+	my $set = shift;
+	while (defined $set->{merged}) {
+		$set = $set->{merged};
+	}
+	return $set;
+}
+
+sub merge_set
+{
+	my ($self, $set) = @_;
+	$self->add_older($set->older);
+	$set->mark_as_finished;
+	# XXX and mark it as merged, for eventual updates
+	$set->{merged} = $self;
+}
+
+# Merge several deletesets together
+sub merge
+{
+	my ($self, $tracker, @sets) = @_;
+
+	# Apparently simple, just add the missing parts
+	for my $set (@sets) {
+		next if $set eq $self;
+		$self->merge_set($set);
+		$tracker->handle_set($set);
+	}
+	# then regen tracker info for $self
+	$tracker->todo($self);
+	return $self;
+}
+
 package OpenBSD::UpdateSet;
+our @ISA = qw(OpenBSD::DeleteSet);
 
 sub new
 {
 	my ($class, $state) = @_;
-	return bless {newer => {}, older => {}, kept => {},
-	    hints => [], updates => 0, repo => $state->repo}, $class;
+	my $o = $class->SUPER::new($state);
+	$o->{newer} = {};
+	$o->{kept} = {};
+	$o->{repo} = $state->repo;
+	$o->{hints} = [];
+	$o->{updates} = 0;
+	return $o;
 }
 
 sub path
@@ -112,40 +229,12 @@ sub match_locations
 	return $r;
 }
 
-sub cleanup
-{
-	my ($self, $error, $errorinfo) = @_;
-	for my $h ($self->older, $self->newer) {
-		$h->cleanup($error, $errorinfo);
-	}
-	$self->{error} //= $error;
-	$self->{errorinfo} //= $errorinfo;
-	delete $self->{solver};
-	delete $self->{conflict_cache};
-	delete $self->{sha};
-	$self->{finished} = 1;
-}
-
-sub has_error
-{
-	&OpenBSD::Handle::has_error;
-}
-
 sub add_newer
 {
 	my $self = shift;
 	for my $h (@_) {
 		$self->{newer}->{$h->pkgname} = $h;
 		$self->{updates}++;
-	}
-	return $self;
-}
-
-sub add_older
-{
-	my $self = shift;
-	for my $h (@_) {
-		$self->{older}->{$h->pkgname} = $h;
 	}
 	return $self;
 }
@@ -194,12 +283,6 @@ sub newer
 	return values %{$self->{newer}};
 }
 
-sub older
-{
-	my $self = shift;
-	return values %{$self->{older}};
-}
-
 sub kept
 {
 	my $self = shift;
@@ -212,12 +295,6 @@ sub hints
 	return @{$self->{hints}};
 }
 
-sub older_names
-{
-	my $self = shift;
-	return keys %{$self->{older}};
-}
-
 sub newer_names
 {
 	my $self = shift;
@@ -228,6 +305,12 @@ sub kept_names
 {
 	my $self = shift;
 	return keys %{$self->{kept}};
+}
+
+sub all_handles
+{
+	my $self = shift;
+	return ($self->older, $self->newer, $self->kept);
 }
 
 sub hint_names
@@ -260,7 +343,7 @@ sub print
 		$result = "[".join('+', sort $self->kept_names)."]";
 	}
 	if ($self->older > 0) {
-		$result .= $self->old_print."->";
+		$result .= $self->SUPER::print."->";
 	}
 	if ($self->newer > 0) {
 		$result .= join('+', sort $self->newer_names);
@@ -270,26 +353,9 @@ sub print
 	return $result;
 }
 
-sub old_print
-{
-	my $self = shift;
-	return join('+', sort $self->older_names);
-}
-
 sub todo_names
 {
-	&OpenBSD::UpdateSet::newer_names;
-}
-
-sub short_print
-{
-	my $self = shift;
-	my $result = join('+', sort $self->todo_names);
-	if (length $result > 30) {
-		return substr($result, 0, 27)."...";
-	} else {
-		return $result;
-	}
+	&newer_names;
 }
 
 sub validate_plists
@@ -363,6 +429,16 @@ sub from_location
 	return $set;
 }
 
+my @extra = qw(solver conflict_cache);
+sub mark_as_finished
+{
+	my $self = shift;
+	for my $i (@extra, 'sha') {
+		delete $self->{$i};
+	}
+	$self->SUPER::mark_as_finished;
+}
+
 sub merge_if_exists
 {
 	my ($self, $k, @extra) = @_;
@@ -376,54 +452,26 @@ sub merge_if_exists
 	$self->$k->merge(@list);
 }
 
+sub merge_set
+{
+	my ($self, $set) = @_;
+	$self->SUPER::merge_set($set);
+	$self->add_newer($set->newer);
+	$self->add_kept($set->kept);
+	$self->merge_paths($set);
+	$self->{updates} += $set->{updates};
+	$set->{updates} = 0;
+}
+
 # Merge several updatesets together
 sub merge
 {
 	my ($self, $tracker, @sets) = @_;
 
-	$self->merge_if_exists('solver', @sets);
-	$self->merge_if_exists('conflict_cache', @sets);
-	# Apparently simple, just add the missing parts
-	for my $set (@sets) {
-		next if $set eq $self;
-		$self->add_newer($set->newer);
-		$self->add_older($set->older);
-		$self->add_kept($set->kept);
-		$self->merge_paths($set);
-		# ... and mark it as already done
-		$set->{finished} = 1;
-		$tracker->handle_set($set);
-		$self->{updates} += $set->{updates};
-		$set->{updates} = 0;
-		# XXX and mark it as merged, for eventual updates
-		$set->{merged} = $self;
-		delete $set->{solver};
-		delete $set->{conflict_cache};
+	for my $i (@extra) {
+		$self->merge_if_exists($i, @sets);
 	}
-	# then regen tracker info for $self
-	$tracker->todo($self);
-	return $self;
-}
-
-sub real_set
-{
-	my $set = shift;
-	while (defined $set->{merged}) {
-		$set = $set->{merged};
-	}
-	return $set;
-}
-
-package OpenBSD::DeleteSet;
-our @ISA = qw(OpenBSD::UpdateSet);
-sub print
-{
-	&OpenBSD::UpdateSet::old_print;
-}
-
-sub todo_names
-{
-	&OpenBSD::UpdateSet::older_names;
+	return $self->SUPER::merge($tracker, @sets);
 }
 
 1;
