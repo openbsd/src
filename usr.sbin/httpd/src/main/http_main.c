@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.54 2010/02/25 07:49:53 pyr Exp $ */
+/* $OpenBSD: http_main.c,v 1.55 2011/07/17 17:32:35 jcs Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -701,7 +701,7 @@ static void usage(char *bin)
     fprintf(stderr, "  -c directive     : process directive after  reading config files\n");
     fprintf(stderr, "  -D parameter     : define a parameter for use in <IfDefine name> directives\n");
     fprintf(stderr, "  -d serverroot    : specify an alternate initial ServerRoot\n");
-    fprintf(stderr, "  -4               : assume IPv4 for ambiguous directirves (default)\n");
+    fprintf(stderr, "  -4               : assume IPv4 for ambiguous directives (default)\n");
     fprintf(stderr, "  -6               : assume IPv6 for ambiguous directives\n");
     fprintf(stderr, "  -F               : run main process in foreground, for process supervisors\n");
     fprintf(stderr, "  -f config        : specify an alternate ServerConfigFile\n");
