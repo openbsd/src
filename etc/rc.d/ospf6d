@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# $OpenBSD: ospf6d,v 1.1 2011/07/17 00:25:58 david Exp $
+
+daemon="/usr/sbin/ospf6d"
+
+. /etc/rc.d/rc.subr
+
+pexp="ospf6d: parent.*"
+
+rc_cmd $1
