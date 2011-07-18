@@ -1,4 +1,4 @@
-.\" $OpenBSD: usermod.8,v 1.25 2011/04/08 18:13:54 jmc Exp $
+.\" $OpenBSD: usermod.8,v 1.26 2011/07/18 23:01:10 schwarze Exp $
 .\" $NetBSD: usermod.8,v 1.17 2003/02/14 16:11:37 grant Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: April 8 2011 $
+.Dd $Mdocdate: July 18 2011 $
 .Dt USERMOD 8
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@
 .Op Fl d Ar home-directory
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-time
-.Op Fl G Ar secondary-group[,group,...]
+.Op Fl G Ar secondary-group Ns Op , Ns Ar group , Ns ...
 .Op Fl g Ar gid | name | Li =uid
 .Op Fl L Ar login-class
 .Op Fl l Ar new-login
@@ -100,7 +100,7 @@ Sets the time at which the password expires.
 See the
 .Fl e
 option.
-.It Fl G Ar secondary-group[,group,...]
+.It Fl G Ar secondary-group Ns Op , Ns Ar group , Ns ...
 Sets the secondary groups the user will be a member of in the
 .Pa /etc/group
 file.

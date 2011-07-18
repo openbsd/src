@@ -1,4 +1,4 @@
-.\" $OpenBSD: useradd.8,v 1.29 2011/04/17 20:32:33 sobrado Exp $
+.\" $OpenBSD: useradd.8,v 1.30 2011/07/18 23:01:10 schwarze Exp $
 .\" $NetBSD: useradd.8,v 1.26 2003/02/25 10:36:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: April 17 2011 $
+.Dd $Mdocdate: July 18 2011 $
 .Dt USERADD 8
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@
 .Op Fl g Ar gid | name | Li =uid
 .Op Fl k Ar skel-directory
 .Op Fl L Ar login-class
-.Op Fl r Ar low Ns Li .. Ns Ar high
+.Op Fl r Ar low Ns .. Ns Ar high
 .Op Fl s Ar shell
 .Ek
 .Nm useradd
@@ -58,12 +58,12 @@
 .Op Fl d Ar home-directory
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-time
-.Op Fl G Ar secondary-group[,group,...]
+.Op Fl G Ar secondary-group Ns Op , Ns Ar group , Ns ...
 .Op Fl g Ar gid | name | Li =uid
 .Op Fl k Ar skel-directory
 .Op Fl L Ar login-class
 .Op Fl p Ar password
-.Op Fl r Ar low Ns Li .. Ns Ar high
+.Op Fl r Ar low Ns .. Ns Ar high
 .Op Fl s Ar shell
 .Op Fl u Ar uid
 .Ar user
@@ -145,7 +145,7 @@ See
 .Xr login.conf 5
 for more information on user login classes.
 .It Xo
-.Fl r Ar low Ns Li .. Ns Ar high
+.Fl r Ar low Ns .. Ns Ar high
 .Xc
 Sets the low and high bounds of UID ranges for new users.
 A new user can only be created if there are UIDs which can be assigned
@@ -189,7 +189,7 @@ Sets the time at which the current password will expire.
 Also see the
 .Fl e
 option above.
-.It Fl G Ar secondary-group[,group,...]
+.It Fl G Ar secondary-group Ns Op , Ns Ar group , Ns ...
 Sets the secondary groups to which the user will be added in the
 .Pa /etc/group
 file.
