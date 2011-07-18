@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: HTTP.pm,v 1.4 2011/07/18 20:03:12 espie Exp $
+# $OpenBSD: HTTP.pm,v 1.5 2011/07/18 20:09:29 espie Exp $
 #
 # Copyright (c) 2011 Marc Espie <espie@openbsd.org>
 #
@@ -99,6 +99,19 @@ sub retrieve_chunked
 	return $result;
 }
 
+sub retrieve_response
+{
+	my ($self, $h) = @_;
+
+	if ($h->{'Transfer-Encoding'} eq 'chunked') {
+		return $self->retrieve_chunked;
+	}
+	if (defined $h->{'Content-Length'}) {
+		return $self->retrieve($h->{'Content-Length'});
+	}
+	return undef;
+}
+
 sub print
 {
 	my ($self, @l) = @_;
@@ -162,25 +175,23 @@ sub get_directory
 			print STDERR "unknown line: $_\n";
 		}
 	}
-	if ($h->{'Transfer-Encoding'} eq 'chunked') {
-		my $buffer = $o->retrieve_chunked;
-		if ($code == 200) {
-			print "SUCCESS: directory $dname\n";
-			for my $pkg ($buffer =~ m/\<A\s+HREF=\"(.+?)\.tgz\"\>/gio) {
-				$pkg = $1 if $pkg =~ m|^.*/(.*)$|;
-				# decode uri-encoding; from URI::Escape
-				$pkg =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;
-				print $pkg, "\n";
-			}
-			print "\n";
-			return;
-		} else {
+	my $r = $o->retrieve_response($h);
+	if (!defined $r) {
+		print "ERROR: can't decode response\n";
+	}
+	if ($code != 200) {
 			print "ERROR: code was $code\n";
 			return;
-		}
-	} else {
-		print "ERROR: can't decode non-chunked\n";
 	}
+	print "SUCCESS: directory $dname\n";
+	for my $pkg ($r =~ m/\<A\s+HREF=\"(.+?)\.tgz\"\>/gio) {
+		$pkg = $1 if $pkg =~ m|^.*/(.*)$|;
+		# decode uri-encoding; from URI::Escape
+		$pkg =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;
+		print $pkg, "\n";
+	}
+	print "\n";
+	return;
 }
 
 
