@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.117 2011/07/09 05:46:26 matthew Exp $
+;	$OpenBSD: syscalls.master,v 1.118 2011/07/18 00:16:54 matthew Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -572,3 +572,5 @@
 			    int flag); }
 326	STD		{ int sys_utimensat(int fd, const char *path, \
 			    const struct timespec *times, int flag); }
+327	STD		{ int sys_futimens(int fd, \
+			    const struct timespec *times); }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.h,v 1.18 2011/07/14 23:34:37 matthew Exp $	*/
+/*	$OpenBSD: stat.h,v 1.19 2011/07/18 00:16:54 matthew Exp $	*/
 /*	$NetBSD: stat.h,v 1.20 1996/05/16 22:17:49 cgd Exp $	*/
 
 /*-
@@ -180,6 +180,13 @@ struct stat {
 #define	IMMUTABLE	(UF_IMMUTABLE | SF_IMMUTABLE)
 #endif /* _KERNEL */
 #endif /* __BSD_VISIBLE */
+
+#ifdef _KERNEL /* XXX */
+#if __POSIX_VISIBLE >= 200809
+#define	UTIME_NOW	-2L
+#define	UTIME_OMIT	-1L
+#endif /* __POSIX_VISIBLE */
+#endif
 
 #ifndef _KERNEL
 __BEGIN_DECLS

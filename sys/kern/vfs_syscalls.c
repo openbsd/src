@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.176 2011/07/14 18:03:06 matthew Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.177 2011/07/18 00:16:54 matthew Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -90,8 +90,11 @@ int dofchownat(struct proc *, int, const char *, uid_t, gid_t, int,
 int dorenameat(struct proc *, int, const char *, int, const char *,
     register_t *);
 int domkdirat(struct proc *, int, const char *, mode_t, register_t *);
-int doutimensat(struct proc *, int, const char *, const struct timeval *,
+int doutimensat(struct proc *, int, const char *, struct timespec [2],
     int, register_t *);
+int dovutimens(struct proc *, struct vnode *, struct timespec [2],
+    register_t *);
+int dofutimens(struct proc *, int, struct timespec [2], register_t *);
 
 /*
  * Virtual File System System Calls
@@ -2211,6 +2214,7 @@ sys_utimes(struct proc *p, void *v, register_t *retval)
 		syscallarg(const struct timeval *) tptr;
 	} */ *uap = v;
 
+	struct timespec ts[2];
 	struct timeval tv[2];
 	const struct timeval *tvp;
 	int error;
@@ -2220,10 +2224,12 @@ sys_utimes(struct proc *p, void *v, register_t *retval)
 		error = copyin(tvp, tv, sizeof(tv));
 		if (error)
 			return (error);
-		tvp = tv;
-	}
+		TIMEVAL_TO_TIMESPEC(&tv[0], &ts[0]);
+		TIMEVAL_TO_TIMESPEC(&tv[1], &ts[1]);
+	} else
+		ts[0].tv_nsec = ts[1].tv_nsec = UTIME_NOW;
 
-	return (doutimensat(p, AT_FDCWD, SCARG(uap, path), tvp, 0, retval));
+	return (doutimensat(p, AT_FDCWD, SCARG(uap, path), ts, 0, retval));
 }
 
 int
@@ -2236,9 +2242,7 @@ sys_utimensat(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) flag;
 	} */ *uap = v;
 
-	struct timeval tv[2];
 	struct timespec ts[2];
-	const struct timeval *tvp = NULL;
 	const struct timespec *tsp;
 	int error;
 
@@ -2247,56 +2251,74 @@ sys_utimensat(struct proc *p, void *v, register_t *retval)
 		error = copyin(tsp, ts, sizeof(ts));
 		if (error)
 			return (error);
-		tv[0].tv_sec = ts[0].tv_sec;
-		tv[0].tv_usec = ts[0].tv_nsec / 1000;
-		tv[1].tv_sec = ts[1].tv_sec;
-		tv[1].tv_usec = ts[1].tv_nsec / 1000;
-		tvp = tv;
-	}
+	} else
+		ts[0].tv_nsec = ts[1].tv_nsec = UTIME_NOW;
 
-	return (doutimensat(p, SCARG(uap, fd), SCARG(uap, path), tvp,
+	return (doutimensat(p, SCARG(uap, fd), SCARG(uap, path), ts,
 	    SCARG(uap, flag), retval));
 }
 
 int
 doutimensat(struct proc *p, int fd, const char *path,
-    const struct timeval *tvp, int flag, register_t *retval)
+    struct timespec ts[2], int flag, register_t *retval)
 {
 	struct vnode *vp;
-	struct timeval tv[2];
-	struct vattr vattr;
 	int error, follow;
 	struct nameidata nd;
 
 	if (flag & ~AT_SYMLINK_NOFOLLOW)
 		return (EINVAL);
 
-	VATTR_NULL(&vattr);
-	if (tvp == NULL) {
-		getmicrotime(&tv[0]);
-		tv[1] = tv[0];
-		vattr.va_vaflags |= VA_UTIMES_NULL;
-	} else {
-		bcopy(tvp, tv, sizeof(tv));
-		/* XXX workaround timeval matching the VFS constant VNOVAL */
-		if (tv[0].tv_sec == VNOVAL)
-			tv[0].tv_sec = VNOVAL - 1;
-		if (tv[1].tv_sec == VNOVAL)
-			tv[1].tv_sec = VNOVAL - 1;
-	}
 	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
 	NDINITAT(&nd, LOOKUP, follow, UIO_USERSPACE, fd, path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
+
+	return (dovutimens(p, vp, ts, retval));
+}
+
+int
+dovutimens(struct proc *p, struct vnode *vp, struct timespec ts[2],
+    register_t *retval)
+{
+	struct vattr vattr;
+	struct timespec now;
+	int error;
+
+	VATTR_NULL(&vattr);
+	if (ts[0].tv_nsec == UTIME_NOW || ts[1].tv_nsec == UTIME_NOW) {
+		if (ts[0].tv_nsec == UTIME_NOW && ts[1].tv_nsec == UTIME_NOW)
+			vattr.va_vaflags |= VA_UTIMES_NULL;
+
+		getnanotime(&now);
+		if (ts[0].tv_nsec == UTIME_NOW)
+			ts[0] = now;
+		if (ts[1].tv_nsec == UTIME_NOW)
+			ts[1] = now;
+	}
+
+	/*
+	 * XXX: Ideally the filesystem code would check tv_nsec ==
+	 * UTIME_OMIT instead of tv_sec == VNOVAL, but until then we
+	 * need to fudge tv_sec if it happens to equal VNOVAL.
+	 */
+	if (ts[0].tv_nsec == UTIME_OMIT)
+		ts[0].tv_sec = VNOVAL;
+	else if (ts[0].tv_sec == VNOVAL)
+		ts[0].tv_sec = VNOVAL - 1;
+
+	if (ts[1].tv_nsec == UTIME_OMIT)
+		ts[1].tv_sec = VNOVAL;
+	else if (ts[1].tv_sec == VNOVAL)
+		ts[1].tv_sec = VNOVAL - 1;
+
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else {
-		vattr.va_atime.tv_sec = tv[0].tv_sec;
-		vattr.va_atime.tv_nsec = tv[0].tv_usec * 1000;
-		vattr.va_mtime.tv_sec = tv[1].tv_sec;
-		vattr.va_mtime.tv_nsec = tv[1].tv_usec * 1000;
+		vattr.va_atime = ts[0];
+		vattr.va_mtime = ts[1];
 		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 	}
 	vput(vp);
@@ -2314,44 +2336,60 @@ sys_futimes(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) fd;
 		syscallarg(const struct timeval *) tptr;
 	} */ *uap = v;
-	struct vnode *vp;
 	struct timeval tv[2];
-	struct vattr vattr;
+	struct timespec ts[2];
+	const struct timeval *tvp;
 	int error;
-	struct file *fp;
 
-	VATTR_NULL(&vattr);
-	if (SCARG(uap, tptr) == NULL) {
-		getmicrotime(&tv[0]);
-		tv[1] = tv[0];
-		vattr.va_vaflags |= VA_UTIMES_NULL;
-	} else {
-		error = copyin(SCARG(uap, tptr), tv,
-		    sizeof(tv));
+	tvp = SCARG(uap, tptr);
+	if (tvp != NULL) {
+		error = copyin(tvp, tv, sizeof(tv));
 		if (error)
 			return (error);
-		/* XXX workaround timeval matching the VFS constant VNOVAL */
-		if (tv[0].tv_sec == VNOVAL)
-			tv[0].tv_sec = VNOVAL - 1;
-		if (tv[1].tv_sec == VNOVAL)
-			tv[1].tv_sec = VNOVAL - 1;
-	}
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+		TIMEVAL_TO_TIMESPEC(&tv[0], &ts[0]);
+		TIMEVAL_TO_TIMESPEC(&tv[1], &ts[1]);
+	} else
+		ts[0].tv_nsec = ts[1].tv_nsec = UTIME_NOW;
+
+	return (dofutimens(p, SCARG(uap, fd), ts, retval));
+}
+
+int
+sys_futimens(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_futimens_args /* {
+		syscallarg(int) fd;
+		syscallarg(const struct timespec *) times;
+	} */ *uap = v;
+	struct timespec ts[2];
+	const struct timespec *tsp;
+	int error;
+
+	tsp = SCARG(uap, times);
+	if (tsp != NULL) {
+		error = copyin(tsp, ts, sizeof(ts));
+		if (error)
+			return (error);
+	} else
+		ts[0].tv_nsec = ts[1].tv_nsec = UTIME_NOW;
+
+	return (dofutimens(p, SCARG(uap, fd), ts, retval));
+}
+
+int
+dofutimens(struct proc *p, int fd, struct timespec ts[2], register_t *retval)
+{
+	struct file *fp;
+	struct vnode *vp;
+	int error;
+
+	if ((error = getvnode(p->p_fd, fd, &fp)) != 0)
 		return (error);
 	vp = (struct vnode *)fp->f_data;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
-	if (vp->v_mount && vp->v_mount->mnt_flag & MNT_RDONLY)
-		error = EROFS;
-	else {
-		vattr.va_atime.tv_sec = tv[0].tv_sec;
-		vattr.va_atime.tv_nsec = tv[0].tv_usec * 1000;
-		vattr.va_mtime.tv_sec = tv[1].tv_sec;
-		vattr.va_mtime.tv_nsec = tv[1].tv_usec * 1000;
-		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
-	}
-	VOP_UNLOCK(vp, 0, p);
+	vref(vp);
 	FRELE(fp);
-	return (error);
+
+	return (dovutimens(p, vp, ts, retval));
 }
 
 /*
