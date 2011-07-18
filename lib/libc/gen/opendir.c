@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendir.c,v 1.21 2011/07/14 02:16:00 deraadt Exp $ */
+/*	$OpenBSD: opendir.c,v 1.22 2011/07/18 00:27:15 matthew Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,53 +28,82 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/mount.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <limits.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 #include "telldir.h"
 
+static DIR *__fdopendir(int fd, off_t offset);
+
 /*
- * Open a directory.
+ * Open a directory specified by name.
  */
 DIR *
 opendir(const char *name)
 {
 	DIR *dirp;
 	int fd;
+
+	if ((fd = open(name, O_RDONLY | O_DIRECTORY | O_CLOEXEC)) == -1)
+		return (NULL);
+	dirp = __fdopendir(fd, 0);
+	if (dirp == NULL)
+		close(fd);
+	return (dirp);
+}
+
+#if 0
+/*
+ * Open a directory specified by file descriptor.
+ */
+DIR *
+fdopendir(int fd)
+{
+	DIR *dirp;
+	int flags;
+	off_t offset;
+
+	if ((flags = fcntl(fd, F_GETFL)) == -1)
+		return (NULL);
+	if ((flags & O_ACCMODE) != O_RDONLY && (flags & O_ACCMODE) != O_RDWR) {
+		errno = EBADF;
+		return (NULL);
+	}
+	if ((offset = lseek(fd, 0, SEEK_CUR)) == -1)
+		return (NULL);
+	dirp = __fdopendir(fd, offset);
+	if (dirp != NULL) {
+		/*
+		 * POSIX doesn't require fdopendir() to set
+		 * FD_CLOEXEC, so it's okay for this to fail.
+		 */
+		(void)fcntl(fd, F_SETFD, FD_CLOEXEC);
+	}
+	return (dirp);
+}
+#endif
+
+static DIR *
+__fdopendir(int fd, off_t offset)
+{
+	DIR *dirp;
 	struct stat sb;
 	int pageoffset;
 
-	if ((fd = open(name, O_RDONLY | O_NONBLOCK)) == -1)
+	if (fstat(fd, &sb))
 		return (NULL);
-	if (fstat(fd, &sb)) {
-		close(fd);
-		return (NULL);
-	}
 	if (!S_ISDIR(sb.st_mode)) {
-		close(fd);
 		errno = ENOTDIR;
 		return (NULL);
 	}
-	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1 ||
-	    (dirp = malloc(sizeof(DIR) + sizeof(struct _telldir))) == NULL) {
-		close(fd);
+	if ((dirp = malloc(sizeof(DIR) + sizeof(struct _telldir))) == NULL)
 		return (NULL);
-	}
-
-	dirp->dd_td = (struct _telldir *)((char *)dirp + sizeof(DIR));
-	dirp->dd_td->td_locs = NULL;
-	dirp->dd_td->td_sz = 0;
-	dirp->dd_td->td_loccnt = 0;
-	dirp->dd_td->td_last = 0;
 
 	/*
 	 * Use a buffer that is page aligned.
@@ -86,9 +115,14 @@ opendir(const char *name)
 	dirp->dd_buf = malloc((size_t)dirp->dd_len);
 	if (dirp->dd_buf == NULL) {
 		free(dirp);
-		close(fd);
 		return (NULL);
 	}
+
+	dirp->dd_td = (struct _telldir *)((char *)dirp + sizeof(DIR));
+	dirp->dd_td->td_locs = NULL;
+	dirp->dd_td->td_sz = 0;
+	dirp->dd_td->td_loccnt = 0;
+	dirp->dd_td->td_last = 0;
 
 	dirp->dd_seek = 0;
 	dirp->dd_loc = 0;
@@ -100,6 +134,12 @@ opendir(const char *name)
 	 * Set up seek point for rewinddir.
 	 */
 	dirp->dd_rewind = telldir(dirp);
+
+	/*
+	 * Store our actual seek offset.  Must do this *after* setting
+	 * dd_rewind = telldir() so that rewinddir() works correctly.
+	 */
+	dirp->dd_seek = offset;
 
 	return (dirp);
 }
