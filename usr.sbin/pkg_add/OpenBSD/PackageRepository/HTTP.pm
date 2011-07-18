@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: HTTP.pm,v 1.6 2011/07/18 20:21:40 espie Exp $
+# $OpenBSD: HTTP.pm,v 1.7 2011/07/18 20:47:28 espie Exp $
 #
 # Copyright (c) 2011 Marc Espie <espie@openbsd.org>
 #
@@ -103,11 +103,11 @@ sub retrieve_response
 {
 	my ($self, $h) = @_;
 
-	if ($h->{'Transfer-Encoding'} eq 'chunked') {
-		return $self->retrieve_chunked;
-	}
 	if (defined $h->{'Content-Length'}) {
 		return $self->retrieve($h->{'Content-Length'});
+	}
+	if (($h->{'Transfer-Encoding'}//'') eq 'chunked') {
+		return $self->retrieve_chunked;
 	}
 	return undef;
 }
@@ -197,35 +197,55 @@ sub get_directory
 sub get_file
 {
 	my ($o, $fname) = @_;
-	my $crlf="\015\012";
-	$o->print("GET $fname HTTP/1.1", $crlf,
-	    "Host: ", $o->{host}, $crlf, $crlf);
-	# get header
 
-	my $_ = $o->getline;
-	if (!m,^HTTP/1\.1\s+(\d\d\d),) {
-		print "ERROR\n";
-		return;
-	}
-	my $code = $1;
-	my $h = {};
-	while ($_ = $o->getline) {
-		last if m/^$/;
-		if (m/^([\w\-]+)\:\s*(.*)$/) {
-			print STDERR "$1 => $2\n";
-			$h->{$1} = $2;
-		} else {
-			print STDERR "unknown line: $_\n";
+	my $crlf="\015\012";
+	my $first = 1;
+	my $start = 0;
+	my $end = 4000;
+	my $total_size = 0;
+
+	do {
+		$o->print("GET $fname HTTP/1.1", $crlf,
+		    "Host: ", $o->{host}, $crlf,
+		    "Range: bytes=",$start, "-", $end-1, $crlf, $crlf);
+		# get header
+
+		my $_ = $o->getline;
+		if (!m,^HTTP/1\.1\s+(\d\d\d),) {
+			print "ERROR\n";
+			return;
 		}
-	}
-	my $r = $o->retrieve_response($h);
-	if (!defined $r) {
-		print "ERROR: can't decode response\n";
-	}
-	if ($code != 200) {
-		print "ERROR: code was $code\n";
-		return;
-	}
+		$end *= 2;
+		my $code = $1;
+		my $h = {};
+		while ($_ = $o->getline) {
+			last if m/^$/;
+			if (m/^([\w\-]+)\:\s*(.*)$/) {
+				print STDERR "$1 => $2\n";
+				$h->{$1} = $2;
+			} else {
+				print STDERR "unknown line: $_\n";
+			}
+		}
+		if (defined $h->{'Content-Range'} && $h->{'Content-Range'} =~ 
+			m/^bytes\s+\d+\-\d+\/(\d+)/) {
+				$total_size = $1;
+		}
+		if ($first) {
+			print "TRANSFER: $total_size\n";
+			$first = 0;
+		}
+		my $r = $o->retrieve_response($h);
+		if (!defined $r) {
+			print "ERROR: can't decode response\n";
+		}
+		if ($code != 200 && $code != 206) {
+			print "ERROR: code was $code\n";
+			return;
+		}
+		print $r;
+		$start = $end;
+	} while ($end < $total_size);
 }
 
 sub main
