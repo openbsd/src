@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: HTTP.pm,v 1.5 2011/07/18 20:09:29 espie Exp $
+# $OpenBSD: HTTP.pm,v 1.6 2011/07/18 20:21:40 espie Exp $
 #
 # Copyright (c) 2011 Marc Espie <espie@openbsd.org>
 #
@@ -194,6 +194,39 @@ sub get_directory
 	return;
 }
 
+sub get_file
+{
+	my ($o, $fname) = @_;
+	my $crlf="\015\012";
+	$o->print("GET $fname HTTP/1.1", $crlf,
+	    "Host: ", $o->{host}, $crlf, $crlf);
+	# get header
+
+	my $_ = $o->getline;
+	if (!m,^HTTP/1\.1\s+(\d\d\d),) {
+		print "ERROR\n";
+		return;
+	}
+	my $code = $1;
+	my $h = {};
+	while ($_ = $o->getline) {
+		last if m/^$/;
+		if (m/^([\w\-]+)\:\s*(.*)$/) {
+			print STDERR "$1 => $2\n";
+			$h->{$1} = $2;
+		} else {
+			print STDERR "unknown line: $_\n";
+		}
+	}
+	my $r = $o->retrieve_response($h);
+	if (!defined $r) {
+		print "ERROR: can't decode response\n";
+	}
+	if ($code != 200) {
+		print "ERROR: code was $code\n";
+		return;
+	}
+}
 
 sub main
 {
@@ -206,19 +239,7 @@ sub main
 			batch(sub {get_directory($o, $dname);});
 		} elsif (m/^GET\s+(.*)$/o) {
 			my $fname = $1;
-			batch(sub {
-				if (open(my $fh, '<', $fname)) {
-					my $size = (stat $fh)[7];
-					print "TRANSFER: $size\n";
-					my $buffer = '';
-					while (read($fh, $buffer, 1024 * 1024) > 0) {
-						print $buffer;
-					}
-					close($fh);
-				} else {
-					print "ERROR: bad file $fname $!\n";
-				}
-			});
+			batch(sub { get_file($o, $fname);});
 		} elsif (m/^BYE$/o) {
 			exit(0);
 		} elsif (m/^ABORT$/o) {
@@ -230,7 +251,7 @@ sub main
 }
 
 
-sub get_file
+sub todo
 {
 	my ($o, $file) = @_;
 	my $crlf="\015\012";
