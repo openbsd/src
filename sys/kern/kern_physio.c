@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.38 2011/07/07 16:50:15 beck Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.39 2011/07/18 02:49:20 matthew Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -199,8 +199,6 @@ physio(void (*strategy)(struct buf *), dev_t dev, int flags,
 				panic("done < 0; strategy broken");
 			if (done > todo)
 				panic("done > todo; strategy broken");
-			if ((done % DEV_BSIZE) != 0)
-				panic("(done % DEV_BSIZE) != 0; strategy broken");
 #endif
 			iovp->iov_len -= done;
 			iovp->iov_base = (caddr_t)iovp->iov_base + done;

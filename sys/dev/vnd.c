@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.147 2011/07/12 22:51:21 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.148 2011/07/18 02:49:20 matthew Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -256,8 +256,10 @@ vndclose(dev_t dev, int flags, int mode, struct proc *p)
 
 	disk_closepart(&sc->sc_dk, part, mode);
 
+#if 0
 	if (sc->sc_dk.dk_openmask == 0)
 		sc->sc_flags &= ~VNF_HAVELABEL;
+#endif
 
 	disk_unlock(&sc->sc_dk);
 	return (0);
@@ -270,6 +272,7 @@ vndstrategy(struct buf *bp)
 	struct vnd_softc *sc;
 	struct partition *p;
 	off_t off;
+	long origbcount;
 	int s;
 
 	DNPRINTF(VDB_FOLLOW, "vndstrategy(%p): unit %d\n", bp, unit);
@@ -285,8 +288,31 @@ vndstrategy(struct buf *bp)
 		goto bad;
 	}
 
-	if (bounds_check_with_label(bp, sc->sc_dk.dk_label) == -1)
+	/*
+	 * Many of the distrib scripts assume they can issue arbitrary
+	 * sized requests to raw vnd devices irrespective of the
+	 * emulated disk geometry.
+	 *
+	 * To continue supporting this, round the block count up to a
+	 * multiple of d_secsize for bounds_check_with_label(), and
+	 * then restore afterwards.
+	 *
+	 * We only do this for non-encrypted vnd, because encryption
+	 * requires operating on blocks at a time.
+	 */
+	origbcount = bp->b_bcount;
+	if (sc->sc_keyctx == NULL) {
+		u_int32_t secsize = sc->sc_dk.dk_label->d_secsize;
+		bp->b_bcount = ((origbcount + secsize - 1) & ~(secsize - 1));
+	}
+
+	if (bounds_check_with_label(bp, sc->sc_dk.dk_label) == -1) {
+		bp->b_resid = bp->b_bcount = origbcount;
 		goto done;
+	}
+
+	if (origbcount < bp->b_bcount)
+		bp->b_bcount = origbcount;
 
 	p = &sc->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)];
 	off = DL_GETPOFFSET(p) * sc->sc_dk.dk_label->d_secsize +
@@ -577,7 +603,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			return (error);
 
 		error = setdisklabel(sc->sc_dk.dk_label,
-		    (struct disklabel *)addr, sc->sc_dk.dk_openmask);
+		    (struct disklabel *)addr, /* sc->sc_dk.dk_openmask */ 0);
 		if (error == 0) {
 			if (cmd == DIOCWDINFO)
 				error = writedisklabel(DISKLABELDEV(dev),
