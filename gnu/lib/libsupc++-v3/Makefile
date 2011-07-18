@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2010/05/15 17:07:57 matthieu Exp $
+# $OpenBSD: Makefile,v 1.3 2011/07/18 18:32:47 matthieu Exp $
 
 .include "${.CURDIR}/../libstdc++-v3/Makefile.common" 
 
@@ -7,6 +7,10 @@ LIB=	supc++
 
 # Pulled from Makefile.common
 SRCS=	${SUPSRCS}
+
+.if ${MACHINE_ARCH} == "arm"
+CFLAGS+=	-D_GLIBCXX_SJLJ_EXCEPTIONS=1
+.endif
 
 # Build a standard .a lib with PIC objects
 NOPIC=
