@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.18 2011/07/17 13:16:15 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.19 2011/07/18 19:19:08 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -210,16 +210,17 @@ sub process_parameters
 
 	my $inst = $state->repo->installed;
 
-	if (@ARGV == 0 && $state->{automatic}) {
-		for my $l (@{$inst->locations_list}) {
-			$self->add_location($state, $l);
+	if (@ARGV == 0) {
+		if (!$state->{automatic}) {
+			$state->fatal("No packages to delete");
 		}
 	} else {
 		for my $pkgname (@ARGV) {
 			my $l;
 
 			if (OpenBSD::PackageName::is_stem($pkgname)) {
-				$l = $state->stem2location($inst, $pkgname, $state);
+				$l = $state->stem2location($inst, $pkgname, 
+				    $state);
 			} else {
 				$l = $inst->find($pkgname, $state->{arch});
 			}
@@ -323,11 +324,11 @@ sub process_set
 		}
 	}
 	if (keys %$bad > 0) {
-		if (!$state->{automatic} || $state->verbose) {
+		if (!$state->{do_automatic} || $state->verbose) {
 			$state->errsay("can't delete #1 without deleting #2",
 			    $set->print, join(' ', sort keys %$bad));
 		}
-		if (!$state->{automatic}) {
+		if (!$state->{do_automatic}) {
 			if (delete_dependencies($state)) {
 			    	my $l = create_locations($state, keys %$bad);
 				$state->tracker->todo($l);
@@ -355,7 +356,7 @@ sub process_set
 		$state->build_deptree($set, values %$todo);
 		return (values %$todo, $set);
 	}
-	if ($state->{automatic}) {
+	if ($state->{do_automatic}) {
 		for my $pkg  ($set->older) {
 			$pkg->complete_old;
 			if ($pkg->plist->has('manual-installation')) {
@@ -378,6 +379,15 @@ sub main
 	my ($self, $state) = @_;
 
 	$self->process_setlist($state);
+	if ($state->{automatic}) {
+		my $inst = $state->repo->installed;
+		delete $state->{setlist};
+		for my $l (@{$inst->locations_list}) {
+			$self->add_location($state, $l);
+		}
+		$state->{do_automatic} = 1;
+		$self->process_setlist($state);
+	}
 }
 
 sub new_state
