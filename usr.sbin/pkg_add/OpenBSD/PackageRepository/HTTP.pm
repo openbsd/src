@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: HTTP.pm,v 1.7 2011/07/18 20:47:28 espie Exp $
+# $OpenBSD: HTTP.pm,v 1.8 2011/07/18 21:09:17 espie Exp $
 #
 # Copyright (c) 2011 Marc Espie <espie@openbsd.org>
 #
@@ -55,6 +55,9 @@ sub new
 	my $o = IO::Socket::INET->new(
 		PeerHost => $host,
 		PeerPort => $port);
+	my $old = select($o);
+	$| = 1;
+	select($old);
 	bless {fh => $o, host => $host, buffer => ''}, $class;
 }
 
@@ -154,6 +157,7 @@ sub abort_batch()
 sub get_directory
 {
 	my ($o, $dname) = @_;
+	local $SIG{'HUP'} = 'IGNORE';
 	my $crlf="\015\012";
 	$o->print("GET $dname/ HTTP/1.1", $crlf,
 	    "Host: ", $o->{host}, $crlf, $crlf);
@@ -181,7 +185,7 @@ sub get_directory
 	}
 	if ($code != 200) {
 			print "ERROR: code was $code\n";
-			return;
+			exit 1;
 	}
 	print "SUCCESS: directory $dname\n";
 	for my $pkg ($r =~ m/\<A\s+HREF=\"(.+?)\.tgz\"\>/gio) {
@@ -194,17 +198,25 @@ sub get_directory
 	return;
 }
 
+use File::Basename;
+
 sub get_file
 {
 	my ($o, $fname) = @_;
 
 	my $crlf="\015\012";
+	my $bailout = 0;
+	$SIG{'HUP'} = sub {
+		$bailout++;
+	};
 	my $first = 1;
 	my $start = 0;
-	my $end = 4000;
+	my $end = 2000;
 	my $total_size = 0;
+	open my $fh, ">", basename($fname);
 
 	do {
+		$end *= 2;
 		$o->print("GET $fname HTTP/1.1", $crlf,
 		    "Host: ", $o->{host}, $crlf,
 		    "Range: bytes=",$start, "-", $end-1, $crlf, $crlf);
@@ -213,9 +225,8 @@ sub get_file
 		my $_ = $o->getline;
 		if (!m,^HTTP/1\.1\s+(\d\d\d),) {
 			print "ERROR\n";
-			return;
+			exit 1;
 		}
-		$end *= 2;
 		my $code = $1;
 		my $h = {};
 		while ($_ = $o->getline) {
@@ -241,10 +252,13 @@ sub get_file
 		}
 		if ($code != 200 && $code != 206) {
 			print "ERROR: code was $code\n";
-			return;
+			exit 1;
 		}
-		print $r;
+		print $fh $r;
 		$start = $end;
+		if ($bailout) {
+			exit 0;
+		}
 	} while ($end < $total_size);
 }
 
@@ -268,57 +282,6 @@ sub main
 			print "ERROR: Unknown command\n";
 		}
 	}
-}
-
-
-sub todo
-{
-	my ($o, $file) = @_;
-	my $crlf="\015\012";
-	open my $fh, '>', $file;
-
-	my $start = 0;
-	my $end = 4000;
-	my $total_size = 0;
-
-	do {
-		$end *= 2;
-		$o->print("GET /pub/OpenBSD/snapshots/packages/amd64/$file HTTP/1.1$crlf",
-    "Host: www.w3.org$crlf",
-		"Range: bytes=",$start, "-", $end-1, $crlf, $crlf);
-
-		# get header
-
-		my $_ = $o->getline;
-		if (m,^HTTP/1\.1\s+(\d\d\d),) {
-			my $code = $1;
-			print "Code: $code\n";
-		} else {
-			print $_, "\n";
-		}
-		my $h = {};
-		while ($_ = $o->getline) {
-			last if m/^$/;
-			if (m/^([\w\-]+)\:\s*(.*)$/) {
-				print "$1 => $2\n";
-				$h->{$1} = $2;
-			} else {
-				print "unknown line: $_\n";
-			}
-		}
-
-		if (defined $h->{'Content-Range'} && $h->{'Content-Range'} =~ 
-			m/^bytes\s+\d+\-\d+\/(\d+)/) {
-				$total_size = $1;
-		}
-		print "END OF HEADER\n";
-
-		if (defined $h->{'Content-Length'}) {
-			my $v = $o->retrieve($h->{'Content-Length'});
-			print $fh $v;
-		}
-		$start = $end;
-	} while ($end < $total_size);
 }
 
 1;
