@@ -1,4 +1,4 @@
-.\"	$OpenBSD: directory.3,v 1.20 2010/01/19 17:43:39 millert Exp $
+.\"	$OpenBSD: directory.3,v 1.21 2011/07/18 23:04:40 matthew Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,11 +27,12 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 19 2010 $
+.Dd $Mdocdate: July 18 2011 $
 .Dt DIRECTORY 3
 .Os
 .Sh NAME
 .Nm opendir ,
+.Nm fdopendir ,
 .Nm readdir ,
 .Nm readdir_r ,
 .Nm telldir ,
@@ -45,6 +46,8 @@
 .Fd #include <dirent.h>
 .Ft DIR *
 .Fn opendir "const char *filename"
+.Ft DIR *
+.Fn fdopendir "int fd"
 .Ft struct dirent *
 .Fn readdir "DIR *dirp"
 .Ft int
@@ -71,6 +74,30 @@ On failure,
 is returned and
 .Va errno
 is set to indicate the error.
+.Pp
+The
+.Fn fdopendir
+function is equivalent to
+.Fn opendir
+except that the directory is specified by file descriptor rather than by name.
+The file offset associated with the file descriptor at the time of the call
+determines which entries are returned.
+.Pp
+Upon successful return from
+.Fn fdopendir ,
+the file descriptor is under the control of the system,
+and if any attempt is made to close the file descriptor
+or to modify the state of the associated directory,
+other than by means of
+.Fn closedir ,
+.Fn readdir ,
+.Fn readdir_r ,
+or
+.Fn rewinddir ,
+the behavior is undefined.
+Upon calling
+.Fn closedir
+the file descriptor shall be closed.
 .Pp
 The
 .Fn readdir
@@ -203,6 +230,20 @@ and
 .Xr malloc 3 .
 .Pp
 The
+.Fn fdopendir
+function will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+The
+.Fa fd
+argument is not a valid file descriptor open for reading.
+.It Bq Er ENOTDIR
+The descriptor
+.Fa fd
+is not associated with a directory.
+.El
+.Pp
+The
 .Fn readdir
 and
 .Fn readdir_r
@@ -230,6 +271,20 @@ for any of the errors specified for the routine
 .Xr lseek 2 ,
 .Xr open 2 ,
 .Xr dir 5
+.Sh STANDARDS
+The
+.Fn opendir ,
+.Fn fdopendir ,
+.Fn readdir ,
+.Fn readdir_r ,
+.Fn telldir ,
+.Fn seekdir ,
+.Fn rewinddir ,
+.Fn closedir ,
+and
+.Fn dirfd
+functions conform to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn opendir ,
@@ -242,3 +297,7 @@ and
 .Fn dirfd
 functions appeared in
 .Bx 4.2 .
+The
+.Fn fdopendir
+function appeared in
+.Ox 5.0 .

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.93 2011/07/18 17:29:49 matthew Exp $
+#	$OpenBSD: Makefile.inc,v 1.94 2011/07/18 23:04:40 matthew Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -241,13 +241,13 @@ MAN+=	accept.2 access.2 acct.2 adjfreq.2 adjtime.2 bind.2 brk.2 chdir.2 \
 MAN+=	msgctl.2 shmctl.2 shmat.2 semop.2 semget.2 semctl.2 msgsnd.2 msgrcv.2 \
 	msgget.2 shmget.2
 
+MLINKS+=access.2 faccessat.2
 MLINKS+=brk.2 sbrk.2
 MLINKS+=dup.2 dup2.2
 MLINKS+=chdir.2 fchdir.2
 MLINKS+=chflags.2 fchflags.2
-MLINKS+=chmod.2 fchmod.2
-MLINKS+=chown.2 fchown.2
-MLINKS+=chown.2 lchown.2
+MLINKS+=chmod.2 fchmod.2 chmod.2 fchmodat.2
+MLINKS+=chown.2 fchown.2 chown.2 fchownat.2 chown.2 lchown.2
 MLINKS+=clock_gettime.2 clock_settime.2
 MLINKS+=clock_gettime.2 clock_getres.2
 MLINKS+=execve.2 exect.2
@@ -269,13 +269,20 @@ MLINKS+=getrtable.2 setrtable.2
 MLINKS+=gettimeofday.2 settimeofday.2
 MLINKS+=getuid.2 geteuid.2
 MLINKS+=kqueue.2 kevent.2 kqueue.2 EV_SET.2
+MLINKS+=link.2 linkat.2
 MLINKS+=intro.2 errno.2
 MLINKS+=madvise.2 posix_madvise.2
+MLINKS+=mkdir.2 mkdirat.2
+MLINKS+=mkfifo.2 mkfifoat.2
+MLINKS+=mknod.2 mknodat.2
 MLINKS+=mlock.2 munlock.2
 MLINKS+=mlockall.2 munlockall.2
 MLINKS+=mount.2 unmount.2
+MLINKS+=open.2 openat.2
 MLINKS+=pathconf.2 fpathconf.2
 MLINKS+=read.2 readv.2 read.2 pread.2 read.2 preadv.2
+MLINKS+=readlink.2 readlinkat.2
+MLINKS+=rename.2 renameat.2
 MLINKS+=recv.2 recvfrom.2 recv.2 recvmsg.2
 MLINKS+=send.2 sendmsg.2 send.2 sendto.2
 MLINKS+=setpgid.2 setpgrp.2
@@ -283,13 +290,15 @@ MLINKS+=setuid.2 setegid.2 setuid.2 seteuid.2 setuid.2 setgid.2
 MLINKS+=setresuid.2 getresgid.2 setresuid.2 getresuid.2
 MLINKS+=setresuid.2 setresgid.2
 MLINKS+=shmat.2 shmdt.2
-MLINKS+=stat.2 fstat.2 stat.2 lstat.2
+MLINKS+=stat.2 fstat.2 stat.2 fstatat.2 stat.2 lstat.2
 MLINKS+=stat.2 S_ISBLK.2 stat.2 S_ISCHR.2 stat.2 S_ISDIR.2
 MLINKS+=stat.2 S_ISFIFO.2 stat.2 S_ISLNK.2 stat.2 S_ISREG.2 stat.2 S_ISSOCK.2
 MLINKS+=statfs.2 fstatfs.2
+MLINKS+=symlink.2 symlinkat.2
 MLINKS+=syscall.2 __syscall.2
 MLINKS+=truncate.2 ftruncate.2
-MLINKS+=utimes.2 futimes.2
+MLINKS+=unlink.2 unlinkat.2
+MLINKS+=utimes.2 futimens.2 utimes.2 futimes.2 utimes.2 utimensat.2
 MLINKS+=wait.2 wait3.2 wait.2 wait4.2 wait.2 waitpid.2
 MLINKS+=write.2 writev.2 write.2 pwrite.2 write.2 pwritev.2
 MLINKS+=select.2 FD_SET.3 select.2 FD_CLR.3

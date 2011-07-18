@@ -1,4 +1,4 @@
-.\"	$OpenBSD: symlink.2,v 1.12 2007/05/31 19:19:34 jmc Exp $
+.\"	$OpenBSD: symlink.2,v 1.13 2011/07/18 23:04:40 matthew Exp $
 .\"	$NetBSD: symlink.2,v 1.7 1995/02/27 12:38:34 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,16 +30,19 @@
 .\"
 .\"     @(#)symlink.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 18 2011 $
 .Dt SYMLINK 2
 .Os
 .Sh NAME
 .Nm symlink
 .Nd make symbolic link to a file
 .Sh SYNOPSIS
+.Fd #include <fcntl.h>
 .Fd #include <unistd.h>
 .Ft int
 .Fn symlink "const char *name1" "const char *name2"
+.Ft int
+.Fn symlinkat "const char *name1" "int fd" "const char *name2"
 .Sh DESCRIPTION
 A symbolic link
 .Fa name2
@@ -55,6 +58,30 @@ Either name may be an arbitrary path name; the files need not
 be on the same file system, and the file specified by
 .Fa name1
 need not exist at all.
+.Pp
+The
+.Fn symlinkat
+function is equivalent to
+.Fn symlink
+except that where
+.Fa name2
+specifies a relative path,
+the newly created symbolic link is created relative to
+the directory associated with file descriptor
+.Fa fd
+instead of the current working directory.
+.Pp
+If
+.Fn symlinkat
+is passed the special value
+.Dv AT_FDCWD
+(defined in
+.In fcntl.h )
+in the
+.Fa fd
+parameter, the current working directory is used
+and the behavior is identical to a call to
+.Fn symlink .
 .Sh RETURN VALUES
 Upon successful completion, a zero value is returned.
 If an error occurs, the error code is stored in
@@ -126,14 +153,39 @@ or
 .Fa name2
 points outside the process's allocated address space.
 .El
+.Pp
+Additionally,
+.Fn symlinkat
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+The
+.Fa name2
+argument does not specify an absolute path and the
+.Fa fd
+argument is neither
+.Dv AT_FDCWD
+nor a valid file descriptor open for reading.
+.El
 .Sh SEE ALSO
 .Xr ln 1 ,
 .Xr link 2 ,
 .Xr readlink 2 ,
 .Xr unlink 2 ,
 .Xr symlink 7
+.Sh STANDARDS
+The
+.Fn symlink
+and
+.Fn symlinkat
+functions conform to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn symlink
 function call appeared in
 .Bx 4.2 .
+The
+.Fn symlinkat
+function call appeared in
+.Ox 5.0 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chmod.2,v 1.14 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: chmod.2,v 1.15 2011/07/18 23:04:40 matthew Exp $
 .\"	$NetBSD: chmod.2,v 1.7 1995/02/27 12:32:06 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,40 +30,41 @@
 .\"
 .\"     @(#)chmod.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 18 2011 $
 .Dt CHMOD 2
 .Os
 .Sh NAME
 .Nm chmod ,
+.Nm fchmodat ,
 .Nm fchmod
 .Nd change mode of file
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/stat.h>
+.Fd #include <fcntl.h>
 .Ft int
 .Fn chmod "const char *path" "mode_t mode"
 .Ft int
+.Fn fchmodat "int fd" "const char *path" "mode_t mode" "int flag"
+.Ft int
 .Fn fchmod "int fd" "mode_t mode"
 .Sh DESCRIPTION
-The function
+The
 .Fn chmod
-sets the file permission bits of the file specified by the pathname
+function sets the file permission bits of the file specified by the pathname
 .Fa path
 to
 .Fa mode .
-.Fn fchmod
-sets the permission bits of the specified file descriptor
-.Fa fd .
 .Fn chmod
-verifies that the process owner (user) either owns the file specified by
-.Fa path
-(or
-.Fa fd ) ,
+verifies that the process owner (user) either owns the specified file
 or is the superuser.
-A mode is created from
-.Em or'd
-permission bit masks defined in
-.Aq Pa sys/stat.h :
+.Pp
+Values for
+.Fa mode
+are constructed by bitwise-inclusive
+.Tn OR Ns 'ing
+of permission bit masks from the following list defined in
+.In sys/stat.h :
 .Bd -literal -offset indent
 #define S_IRWXU 0000700    /* RWX mask for owner */
 #define S_IRUSR 0000400    /* R for owner */
@@ -107,14 +108,65 @@ set-group-ID bits unless the user is the superuser.
 This makes the system somewhat more secure by protecting
 set-user-ID (set-group-ID) files from remaining set-user-ID (set-group-ID)
 if they are modified, at the expense of a degree of compatibility.
+.Pp
+The
+.Fn fchmodat
+function is equivalent to
+.Fn chmod
+except in the case where
+.Fa path
+specifies a relative path.
+In this case the file to be changed is determined relative to the directory
+associated with the file descriptor
+.Fa fd
+instead of the current working directory.
+.Pp
+If
+.Fn fchmodat
+is passed the special value
+.Dv AT_FDCWD
+(defined in
+.In fcntl.h )
+in the
+.Fa fd
+parameter, the current working directory is used.
+If also
+.Fa flag
+is zero, the behavior is identical to a call to
+.Fn chmod .
+.Pp
+Values for
+.Fa flag
+are constructed by bitwise-inclusive
+.Tn OR Ns 'ing
+of flags from the following list defined in
+.In fcntl.h :
+.Pp
+.Bl -tag -width AT_SYMLINK_NOFOLLOW -offset indent -compact
+.It Dv AT_SYMLINK_NOFOLLOW
+If
+.Fa path
+names a symbolic link, then the mode of the symbolic link is changed.
+.El
+.Pp
+The
+.Fn fchmod
+function is equivalent to
+.Fn chmod
+except that the file whose permissions are changed is specified
+by the file descriptor
+.Fa fd .
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.
 Otherwise, a value of \-1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
+The
 .Fn chmod
-will fail and the file mode will be unchanged if:
+and
+.Fn fchmodat
+functions will fail and the file mode will be unchanged if:
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
@@ -143,6 +195,20 @@ The named file resides on a read-only file system.
 points outside the process's allocated address space.
 .It Bq Er EIO
 An I/O error occurred while reading from or writing to the file system.
+.El
+.Pp
+Additionally, the
+.Fn fchmodat
+function will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+The
+.Fa path
+argument does not specify an absolute path and the
+.Fa fd
+argument is neither
+.Dv AT_FDCWD
+nor a valid file descriptor open for reading.
 .El
 .Pp
 .Fn fchmod

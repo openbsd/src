@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rename.2,v 1.14 2008/10/24 14:34:39 jmc Exp $
+.\"	$OpenBSD: rename.2,v 1.15 2011/07/18 23:04:40 matthew Exp $
 .\"	$NetBSD: rename.2,v 1.7 1995/02/27 12:36:15 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,19 +30,24 @@
 .\"
 .\"     @(#)rename.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: October 24 2008 $
+.Dd $Mdocdate: July 18 2011 $
 .Dt RENAME 2
 .Os
 .Sh NAME
-.Nm rename
+.Nm rename ,
+.Nm renameat
 .Nd change the name of a file
 .Sh SYNOPSIS
+.Fd #include <fcntl.h>
 .Fd #include <stdio.h>
 .Ft int
 .Fn rename "const char *from" "const char *to"
+.Ft int
+.Fn renameat "int fromfd" "const char *from" "int tofd" "const char *to"
 .Sh DESCRIPTION
+The
 .Fn rename
-causes the link named
+function causes the link named
 .Fa from
 to be renamed as
 .Fa to .
@@ -69,6 +74,38 @@ If the final component of
 is a symbolic link,
 the symbolic link is renamed,
 not the file or directory to which it points.
+.Pp
+The
+.Fn renameat
+function is equivalent to
+.Fn rename
+except that where
+.Fa from
+or
+.Fa to
+specifies a relative path,
+the directory entry names used are resolved relative to
+the directories associated with file descriptors
+.Fa fromfd
+or
+.Fa tofd
+(respectively) instead of the current working directory.
+.Pp
+If
+.Fn renameat
+is passed the special value
+.Dv AT_FDCWD
+(defined in
+.In fcntl.h )
+in the
+.Fa fromfd
+or
+.Fa tofd
+parameter, the current working directory is used for resolving the respective
+.Fa from
+or
+.Fa to
+argument.
 .Sh RETURN VALUES
 A 0 value is returned if the operation succeeds, otherwise
 .Fn rename
@@ -77,6 +114,8 @@ returns \-1 and the global variable
 indicates the reason for the failure.
 .Sh ERRORS
 .Fn rename
+and
+.Fn renameat
 will fail and neither of the argument files will be
 affected if:
 .Bl -tag -width Er
@@ -171,6 +210,25 @@ or
 .Fa to
 is a directory and is not empty.
 .El
+.Pp
+Additionally,
+.Fn renameat
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+The
+.Fa from
+or
+.Fa to
+argument does not specify an absolute path and
+.Fa fromfd
+or
+.Fa tofd ,
+respectively, is neither
+.Dv AT_FDCWD
+nor a valid file descriptor open for reading.
+.El
+.Pp
 .Sh SEE ALSO
 .Xr mv 1 ,
 .Xr open 2 ,
@@ -178,8 +236,15 @@ is a directory and is not empty.
 .Sh STANDARDS
 The
 .Fn rename
-function conforms to
-.St -p1003.1-88 .
+and
+.Fn renameat
+functions conform to
+.St -p1003.1-2008 .
+.Sh HISTORY
+The
+.Fn renameat
+function appeared in
+.Ox 5.0 .
 .Sh CAVEATS
 The system can deadlock if a loop in the file system graph is present.
 This loop takes the form of an entry in directory

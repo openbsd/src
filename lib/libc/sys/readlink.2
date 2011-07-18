@@ -1,4 +1,4 @@
-.\"	$OpenBSD: readlink.2,v 1.12 2007/05/31 19:19:33 jmc Exp $
+.\"	$OpenBSD: readlink.2,v 1.13 2011/07/18 23:04:40 matthew Exp $
 .\"	$NetBSD: readlink.2,v 1.7 1995/02/27 12:35:54 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,19 +30,24 @@
 .\"
 .\"     @(#)readlink.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 18 2011 $
 .Dt READLINK 2
 .Os
 .Sh NAME
-.Nm readlink
+.Nm readlink ,
+.Nm readlinkat
 .Nd read value of a symbolic link
 .Sh SYNOPSIS
+.Fd #include <fcntl.h>
 .Fd #include <unistd.h>
 .Ft int
 .Fn readlink "const char *path" "char *buf" "size_t bufsiz"
+.Ft ssize_t
+.Fn readlinkat "int fd" "const char *path" "char *buf" "size_t bufsiz"
 .Sh DESCRIPTION
+The
 .Fn readlink
-places the contents of the symbolic link
+function places the contents of the symbolic link
 .Fa path
 in the buffer
 .Fa buf ,
@@ -53,6 +58,30 @@ does not append a
 .Dv NUL
 character to
 .Fa buf .
+.Pp
+The
+.Fn readlinkat
+function is equivalent to
+.Fn readlink
+except that where
+.Fa path
+specifies a relative path,
+the symbolic link whose contents are read is determined relative to
+the directory associated with file descriptor
+.Fa fd
+instead of the current working directory.
+.Pp
+If
+.Fn readlinkat
+is passed the special value
+.Dv AT_FDCWD
+(defined in
+.In fcntl.h )
+in the
+.Fa fd
+parameter, the current working directory is used
+and the behavior is identical to a call to
+.Fn readlink .
 .Sh RETURN VALUES
 The call returns the count of characters placed in the buffer
 if it succeeds, or a \-1 if an error occurs, placing the error
@@ -60,6 +89,8 @@ code in the global variable
 .Va errno .
 .Sh ERRORS
 .Fn readlink
+and
+.Fn readlinkat
 will fail if:
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
@@ -86,13 +117,38 @@ or
 .Fa path
 extends outside the process's allocated address space.
 .El
+.Pp
+Additionally,
+.Fn readlinkat
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+The
+.Fa path
+argument does not specify an absolute path and the
+.Fa fd
+argument is neither
+.Dv AT_FDCWD
+nor a valid file descriptor open for reading.
+.El
 .Sh SEE ALSO
 .Xr lstat 2 ,
 .Xr stat 2 ,
 .Xr symlink 2 ,
 .Xr symlink 7
+.Sh STANDARDS
+The
+.Fn readlink
+and
+.Fn readlinkat
+functions conform to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn readlink
 function call appeared in
 .Bx 4.2 .
+The
+.Fn readlinkat
+function call appeared in
+.Ox 5.0 .

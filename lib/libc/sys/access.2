@@ -1,4 +1,4 @@
-.\"	$OpenBSD: access.2,v 1.15 2008/06/10 16:37:57 otto Exp $
+.\"	$OpenBSD: access.2,v 1.16 2011/07/18 23:04:40 matthew Exp $
 .\"	$NetBSD: access.2,v 1.7 1995/02/27 12:31:44 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,25 +30,29 @@
 .\"
 .\"     @(#)access.2	8.2 (Berkeley) 4/1/94
 .\"
-.Dd $Mdocdate: June 10 2008 $
+.Dd $Mdocdate: July 18 2011 $
 .Dt ACCESS 2
 .Os
 .Sh NAME
-.Nm access
+.Nm access ,
+.Nm faccessat
 .Nd check access permissions of a file or pathname
 .Sh SYNOPSIS
+.Fd #include <fcntl.h>
 .Fd #include <unistd.h>
 .Ft int
-.Fn access "const char *path" "int mode"
+.Fn access "const char *path" "int amode"
+.Ft int
+.Fn faccessat "int fd" "const char *path" "int amode" "int flag"
 .Sh DESCRIPTION
 The
 .Fn access
 function checks the accessibility of the file named by
 .Fa path
 for the access permissions indicated by
-.Fa mode .
+.Fa amode .
 The value of
-.Fa mode
+.Fa amode
 is the bitwise inclusive
 .Tn OR
 of the access permissions to be checked
@@ -83,6 +87,45 @@ if the file has any of the execute bits set and
 is not a directory,
 .Fn access
 will indicate success.
+.Pp
+The
+.Fn faccessat
+function is equivalent to
+.Fn access
+except that where
+.Fa path
+specifies a relative path,
+the file whose accessibility is checked is determined relative to
+the directory associated with file descriptor
+.Fa fd
+instead of the current working directory.
+.Pp
+If
+.Fn faccessat
+is passed the special value
+.Dv AT_FDCWD
+(defined in
+.In fcntl.h )
+in the
+.Fa fd
+parameter, the current working directory is used.
+If also
+.Fa flag
+is zero, the behavior is identical to a call to
+.Fn access .
+.Pp
+Values for
+.Fa flag
+are constructed by bitwise-inclusive
+.Tn OR Ns 'ing
+of flags from the following list defined in
+.In fcntl.h :
+.Pp
+.Bl -tag -width AT_EACCESS -offset indent -compact
+.It Dv AT_EACCESS
+The checks for accessibility are performed using the effective user
+and group IDs instead of the real user and group IDs.
+.El
 .Sh RETURN VALUES
 If
 .Fa path
@@ -130,7 +173,21 @@ points outside the process's allocated address space.
 An I/O error occurred while reading from or writing to the file system.
 .It Bq Er EINVAL
 An invalid value was specified for
-.Ar mode .
+.Ar amode .
+.El
+.Pp
+Additionally,
+.Fn faccessat
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+The
+.Fa path
+argument does not specify an absolute path and the
+.Fa fd
+argument is neither
+.Dv AT_FDCWD
+nor a valid file descriptor open for reading.
 .El
 .Sh SEE ALSO
 .Xr chmod 2 ,
@@ -138,9 +195,18 @@ An invalid value was specified for
 .Sh STANDARDS
 The
 .Fn access
-function conforms to
-.St -p1003.1-90 .
+and
+.Fn faccessat
+functions conform to
+.St -p1003.1-2008 .
+.Sh HISTORY
+The
+.Fn faccessat
+function appeared in
+.Ox 5.0 .
 .Sh CAVEATS
 .Fn access
+and
+.Fn faccessat
 should never be used for actual access control.
 Doing so can result in a time of check vs. time of use security hole.

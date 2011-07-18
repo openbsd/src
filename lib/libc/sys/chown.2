@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chown.2,v 1.15 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: chown.2,v 1.16 2011/07/18 23:04:40 matthew Exp $
 .\"	$NetBSD: chown.2,v 1.10 1995/10/12 15:40:47 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
@@ -30,21 +30,25 @@
 .\"
 .\"     @(#)chown.2	8.4 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 18 2011 $
 .Dt CHOWN 2
 .Os
 .Sh NAME
 .Nm chown ,
 .Nm lchown ,
+.Nm fchownat ,
 .Nm fchown
 .Nd change owner and group of a file or link
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
+.Fd #include <fcntl.h>
 .Fd #include <unistd.h>
 .Ft int
 .Fn chown "const char *path" "uid_t owner" "gid_t group"
 .Ft int
 .Fn lchown "const char *path" "uid_t owner" "gid_t group"
+.Ft int
+.Fn fchownat "int fd" "const char *path" "uid_t owner" "gid_t group" "int flag"
 .Ft int
 .Fn fchown "int fd" "uid_t owner" "gid_t group"
 .Sh DESCRIPTION
@@ -79,6 +83,54 @@ operates similarly to how
 operated on older systems, and does not follow symbolic links.
 It allows the owner and group of a symbolic link to be set.
 .Pp
+The
+.Fn fchownat
+function is equivalent to either the
+.Fn chown
+or
+.Fn lchown
+function depending on the value of
+.Fa flag
+(see below), except that where
+.Fa path
+specifies a relative path,
+the file whose ownership is changed is determined relative to
+the directory associated with file descriptor
+.Fa fd
+instead of the current working directory.
+.Pp
+If
+.Fn fchownat
+is passed the special value
+.Dv AT_FDCWD
+(defined in
+.In fcntl.h )
+in the
+.Fa fd
+parameter, the current working directory is used
+and the behavior is identical to a call to
+.Fn chown
+or
+.Fn lchown ,
+depending on whether or not the
+.Dv AT_SYMLINK_NOFOLLOW
+bit is set in
+.Fa flag .
+.Pp
+Values for
+.Fa flag
+are constructed by bitwise-inclusive
+.Tn OR Ns 'ing
+of flags from the following list defined in
+.In fcntl.h :
+.Pp
+.Bl -tag -width AT_SYMLINK_NOFOLLOW -offset indent -compact
+.It Dv AT_SYMLINK_NOFOLLOW
+If
+.Fa path
+names a symbolic link, then the ownership of the symbolic link is changed.
+.El
+.Pp
 .Fn fchown
 is particularly useful when used in conjunction
 with the file locking primitives (see
@@ -92,9 +144,10 @@ Zero is returned if the operation was successful;
 error code being placed in the global variable
 .Va errno .
 .Sh ERRORS
-.Fn chown
-or
-.Fn lchown
+.Fn chown ,
+.Fn lchown ,
+and
+.Fn fchownat
 will fail and the file or link will be unchanged if:
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
@@ -122,6 +175,20 @@ points outside the process's allocated address space.
 An I/O error occurred while reading from or writing to the file system.
 .El
 .Pp
+Additionally,
+.Fn fchownat
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+The
+.Fa path
+argument does not specify an absolute path and the
+.Fa fd
+argument is neither
+.Dv AT_FDCWD
+nor a valid file descriptor open for reading.
+.El
+.Pp
 .Fn fchown
 will fail if:
 .Bl -tag -width Er
@@ -146,8 +213,10 @@ An I/O error occurred while reading from or writing to the file system.
 .Sh STANDARDS
 The
 .Fn chown
-function is expected to conform to
-.St -p1003.1-88 .
+and
+.Fn fchownat
+functions are expected to conform to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn fchown
@@ -166,3 +235,7 @@ The
 function was added to
 .Ox
 due to the above.
+The
+.Fn fchownat
+function appeared in
+.Ox 5.0 .

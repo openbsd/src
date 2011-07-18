@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkfifo.2,v 1.8 2007/05/31 19:19:33 jmc Exp $
+.\"	$OpenBSD: mkfifo.2,v 1.9 2011/07/18 23:04:40 matthew Exp $
 .\"	$NetBSD: mkfifo.2,v 1.8 1995/02/27 12:34:27 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -30,17 +30,21 @@
 .\"
 .\"	@(#)mkfifo.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 18 2011 $
 .Dt MKFIFO 2
 .Os
 .Sh NAME
-.Nm mkfifo
+.Nm mkfifo ,
+.Nm mkfifoat
 .Nd make a FIFO file
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/stat.h>
+.Fd #include <fcntl.h>
 .Ft int
 .Fn mkfifo "const char *path" "mode_t mode"
+.Ft int
+.Fn mkfifoat "int fd" "const char *path" "mode_t mode"
 .Sh DESCRIPTION
 .Fn mkfifo
 creates a new FIFO file with name
@@ -55,12 +59,38 @@ of the calling process.
 The FIFO's owner ID is set to the process's effective user ID.
 The FIFO's group ID is set to that of the parent directory in
 which it is created.
+.Pp
+The
+.Fn mkfifoat
+function is equivalent to
+.Fn mkfifo
+except that where
+.Fa path
+specifies a relative path,
+the newly created FIFO is created relative to
+the directory associated with file descriptor
+.Fa fd
+instead of the current working directory.
+.Pp
+If
+.Fn mkfifoat
+is passed the special value
+.Dv AT_FDCWD
+(defined in
+.In fcntl.h )
+in the
+.Fa fd
+parameter, the current working directory is used
+and the behavior is identical to a call to
+.Fn mkfifo .
 .Sh RETURN VALUES
 A 0 return value indicates success.
 A \-1 return value indicates an error, and an error code is stored in
 .Va errno .
 .Sh ERRORS
 .Fn mkfifo
+and
+.Fn mkfifoat
 will fail and no FIFO will be created if:
 .Bl -tag -width Er
 .It Bq Er EOPNOTSUPP
@@ -110,6 +140,20 @@ error occurred while reading from or writing to the file system.
 .Fa path
 points outside the process's allocated address space.
 .El
+.Pp
+Additionally,
+.Fn mkfifoat
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+The
+.Fa path
+argument does not specify an absolute path and the
+.Fa fd
+argument is neither
+.Dv AT_FDCWD
+nor a valid file descriptor open for reading.
+.El
 .Sh SEE ALSO
 .Xr chmod 2 ,
 .Xr stat 2 ,
@@ -117,5 +161,12 @@ points outside the process's allocated address space.
 .Sh STANDARDS
 The
 .Nm mkfifo
-function call conforms to
-.St -p1003.1-88 .
+and
+.Nm mkfifoat
+functions conform to
+.St -p1003.1-2008 .
+.Sh HISTORY
+The
+.Nm mkfifoat
+function appeared in
+.Ox 5.0 .

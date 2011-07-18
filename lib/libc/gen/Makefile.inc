@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.53 2011/07/08 22:58:54 martynas Exp $
+#	$OpenBSD: Makefile.inc,v 1.54 2011/07/18 23:04:40 matthew Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
@@ -81,7 +81,7 @@ MLINKS+=authenticate.3 auth_approval.3 authenticate.3 auth_cat.3 \
 	authenticate.3 auth_verify.3
 MLINKS+=directory.3 closedir.3 directory.3 dirfd.3 directory.3 opendir.3 \
 	directory.3 readdir.3 directory.3 rewinddir.3 directory.3 seekdir.3 \
-	directory.3 telldir.3 directory.3 readdir_r.3
+	directory.3 telldir.3 directory.3 readdir_r.3 directory.3 fdopendir.3
 MLINKS+=err.3 verr.3 err.3 errx.3 err.3 verrx.3 err.3 warn.3 err.3 vwarn.3 \
 	err.3 warnx.3 err.3 vwarnx.3
 MLINKS+=exec.3 execl.3 exec.3 execle.3 exec.3 execlp.3 exec.3 execv.3 \

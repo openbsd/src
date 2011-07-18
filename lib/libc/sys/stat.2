@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stat.2,v 1.28 2009/11/10 07:25:32 jmc Exp $
+.\"	$OpenBSD: stat.2,v 1.29 2011/07/18 23:04:40 matthew Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,21 +29,25 @@
 .\"
 .\"     @(#)stat.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: November 10 2009 $
+.Dd $Mdocdate: July 18 2011 $
 .Dt STAT 2
 .Os
 .Sh NAME
 .Nm stat ,
 .Nm lstat ,
+.Nm fstatat ,
 .Nm fstat
 .Nd get file status
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/stat.h>
+.Fd #include <fcntl.h>
 .Ft int
 .Fn stat "const char *path" "struct stat *sb"
 .Ft int
 .Fn lstat "const char *path" "struct stat *sb"
+.Ft int
+.Fn fstatat "int fd" "const char *path" "struct stat *sb" "int flag"
 .Ft int
 .Fn fstat "int fd" "struct stat *sb"
 .Sh DESCRIPTION
@@ -71,7 +75,55 @@ The only attributes returned from an
 .Fn lstat
 that refer to the symbolic link itself are the file type
 .Pq Dv S_IFLNK ,
-size, blocks, and link count (always 1).
+size, blocks, and link count.
+.Pp
+The
+.Fn fstatat
+function is equivalent to either the
+.Fn stat
+or
+.Fn lstat
+function depending on the value of
+.Fa flag
+(see below), except that where
+.Fa path
+specifies a relative path,
+the file whose information is returned is determined relative to
+the directory associated with file descriptor
+.Fa fd
+instead of the current working directory.
+.Pp
+If
+.Fn fstatat
+is passed the special value
+.Dv AT_FDCWD
+(defined in
+.In fcntl.h )
+in the
+.Fa fd
+parameter, the current working directory is used
+and the behavior is identical to a call to
+.Fn stat
+or
+.Fn lstat ,
+depending on whether or not the
+.Dv AT_SYMLINK_NOFOLLOW
+bit is set in
+.Fa flag .
+.Pp
+Values for
+.Fa flag
+are constructed by bitwise-inclusive
+.Tn OR Ns 'ing
+of flags from the following list defined in
+.In fcntl.h :
+.Pp
+.Bl -tag -width AT_SYMLINK_NOFOLLOW -offset indent -compact
+.It Dv AT_SYMLINK_NOFOLLOW
+If
+.Fa path
+names a symbolic link, then the status of the symbolic link is returned.
+.El
 .Pp
 The
 .Fn fstat
@@ -85,7 +137,7 @@ argument is a pointer to a
 .Fn stat
 structure
 as defined by
-.Aq Pa sys/stat.h
+.In sys/stat.h
 (shown below)
 and into which information is placed concerning the file.
 .Bd -literal
@@ -238,7 +290,7 @@ S_ISSOCK(st_mode m) /* socket */
 .Ed
 .Pp
 For a list of access modes, see
-.Aq Pa sys/stat.h ,
+.In sys/stat.h ,
 .Xr access 2 ,
 and
 .Xr chmod 2 .
@@ -248,9 +300,10 @@ Otherwise, a value of \-1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Fn stat
+.Fn stat ,
+.Fn lstat ,
 and
-.Fn lstat
+.Fn fstatat
 will fail if:
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
@@ -274,6 +327,20 @@ or
 points to an invalid address.
 .It Bq Er EIO
 An I/O error occurred while reading from or writing to the file system.
+.El
+.Pp
+Additionally,
+.Fn fstatat
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+The
+.Fa path
+argument does not specify an absolute path and the
+.Fa fd
+argument is neither
+.Dv AT_FDCWD
+nor a valid file descriptor open for reading.
 .El
 .Pp
 .Fn fstat
@@ -306,7 +373,9 @@ and
 fields.
 .Pp
 The
-.Fn stat
+.Fn stat ,
+.Fn lstat ,
+.Fn fstatat ,
 and
 .Fn fstat
 function calls are expected to conform to
@@ -320,6 +389,10 @@ An
 .Fn lstat
 function call appeared in
 .Bx 4.2 .
+The
+.Fn fstatat
+function appeared in
+.Ox 5.0 .
 .Sh CAVEATS
 The file generation number,
 .Fa st_gen ,
