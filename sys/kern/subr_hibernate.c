@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.14 2011/07/18 16:48:26 ariane Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.15 2011/07/18 16:50:56 ariane Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -435,7 +435,7 @@ retry:
 			pg_addr = VM_PAGE_TO_PHYS(pig_pg);
 			piglet_addr = (pg_addr + (align - 1)) & ~(align - 1);
 
-			if (atop(pg_addr) + pig_pg->fpgsz >
+			if (atop(pg_addr) + pig_pg->fpgsz >=
 			    atop(piglet_addr) + sz) {
 				goto found;
 			}
