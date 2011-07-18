@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: HTTP.pm,v 1.2 2011/07/12 10:29:20 espie Exp $
+# $OpenBSD: HTTP.pm,v 1.3 2011/07/18 19:42:32 espie Exp $
 #
 # Copyright (c) 2011 Marc Espie <espie@openbsd.org>
 #
@@ -29,8 +29,8 @@ sub initiate
 {
 	my $self = shift;
 	my ($rdfh, $wrfh);
-	pipe($self->{getfh}, $h1);
-	pipe($h2, $self->{cmdfh});
+	pipe($self->{getfh}, $rdfh);
+	pipe($wrfh, $self->{cmdfh});
 	my $pid = fork();
 	if ($pid == 0) {
 		close($self->{getfh});
@@ -47,7 +47,7 @@ sub initiate
 	}
 }
 
-package _Proxy::connection;
+package _Proxy::Connection;
 sub new
 {
 	my ($class, $host, $port) = @_;
@@ -55,7 +55,7 @@ sub new
 	my $o = IO::Socket::INET->new(
 		PeerHost => $host,
 		PeerPort => $port);
-	bless {fh => $o, buffer => ''}, $class;
+	bless {fh => $o, host => $host, buffer => ''}, $class;
 }
 
 sub getline
@@ -123,6 +123,36 @@ sub abort_batch()
 	print "\nABORTED $token\n";
 }
 
+sub get_directory
+{
+	my ($o, $dname) = @_;
+	my $crlf="\015\012";
+	$o->print("GET $dname/ HTTP/1.1", $crlf,
+	    "Host: ", $o->{host}, $crlf, $crlf);
+	# get header
+
+	my $_ = $o->getline;
+	if (!m,^HTTP/1\.1\s+(\d\d\d),) {
+		print "ABORTED\n";
+		return;
+	}
+	my $code = $1;
+	if ($code != 200) {
+		print "ABORTED";
+		return;
+	}
+	my $h = {};
+	while ($_ = $o->getline) {
+		last if m/^$/;
+		if (m/^([\w\-]+)\:\s*(.*)$/) {
+			print "$1 => $2\n";
+			$h->{$1} = $2;
+		} else {
+			print "unknown line: $_\n";
+		}
+	}
+}
+
 sub main
 {
 	my $self = shift;
@@ -131,22 +161,7 @@ sub main
 		chomp;
 		if (m/^LIST\s+(.*)$/o) {
 			my $dname = $1;
-			batch(sub {
-				my $d;
-				if (opendir($d, $dname)) {
-					print "SUCCESS: directory $dname\n";
-				} else {
-					print "ERROR: bad directory $dname $!\n";
-				}
-				while (my $e = readdir($d)) {
-					next if $e eq '.' or $e eq '..';
-					next unless $e =~ m/(.+)\.tgz$/;
-					next unless -f "$dname/$e";
-					print "$1\n";
-				}
-				print "\n";
-				closedir($d);
-			});
+			batch(sub {get_directory($o, $dname);});
 		} elsif (m/^GET\s+(.*)$/o) {
 			my $fname = $1;
 			batch(sub {
@@ -222,3 +237,5 @@ sub get_file
 		$start = $end;
 	} while ($end < $total_size);
 }
+
+1;
