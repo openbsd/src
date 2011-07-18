@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.386 2011/07/18 17:05:29 deraadt Exp $
+#	$OpenBSD: rc,v 1.387 2011/07/18 21:01:23 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -415,7 +415,7 @@ dmesg >/var/run/dmesg.boot
 make_keys
 
 echo -n 'starting early daemons:'
-start_daemon syslogd ldattach pflogd named nsd ntpd isakmpd iked sasyncd aucat
+start_daemon syslogd ldattach pflogd named nsd ntpd isakmpd iked sasyncd
 echo '.'
 
 if [ X"${ipsec}" != X"NO" ]; then
@@ -523,7 +523,7 @@ fi
 
 start_daemon hostapd rwhod lpd ldapd sendmail smtpd httpd ftpd
 start_daemon ftpproxy identd inetd rarpd bootparamd rbootd mopd
-start_daemon spamd spamlogd kdc kadmind kpasswdd
+start_daemon spamd spamlogd kdc kadmind kpasswdd aucat
 echo '.'
 
 if [ X"${spamd_flags}" != X"NO" ]; then
