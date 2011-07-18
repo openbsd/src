@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.385 2011/07/11 17:20:09 deraadt Exp $
+#	$OpenBSD: rc,v 1.386 2011/07/18 17:05:29 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -415,7 +415,7 @@ dmesg >/var/run/dmesg.boot
 make_keys
 
 echo -n 'starting early daemons:'
-start_daemon syslogd ldattach pflogd named nsd ntpd isakmpd iked sasyncd
+start_daemon syslogd ldattach pflogd named nsd ntpd isakmpd iked sasyncd aucat
 echo '.'
 
 if [ X"${ipsec}" != X"NO" ]; then
@@ -553,7 +553,7 @@ ifconfig -g carp -carpdemote 128	# disable carp interlock
 
 mixerctl_conf
 echo -n 'starting local daemons:'
-start_daemon apmd sensorsd hotplugd watchdogd cron aucat wsmoused xdm
+start_daemon apmd sensorsd hotplugd watchdogd cron wsmoused xdm
 echo '.'
 
 date
