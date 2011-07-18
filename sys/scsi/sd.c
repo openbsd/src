@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.237 2011/07/12 04:25:49 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.238 2011/07/18 00:13:16 matthew Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1374,7 +1374,7 @@ sd_read_cap_10(struct sd_softc *sc, int flags)
 	scsi_xs_put(xs);
 
 	if (rv == 0) {
-		sc->params.disksize = _4btol(rdcap->addr) + 1;
+		sc->params.disksize = _4btol(rdcap->addr) + 1ll;
 		sc->params.secsize = _4btol(rdcap->length);
 		CLR(sc->flags, SDF_THIN);
 	}
@@ -1442,7 +1442,7 @@ sd_size(struct sd_softc *sc, int flags)
 			rv = sd_read_cap_10(sc, flags);
 	} else {
 		rv = sd_read_cap_10(sc, flags);
-		if (rv == 0 && sc->params.disksize == 0xffffffff)
+		if (rv == 0 && sc->params.disksize == 0x100000000ll)
 			rv = sd_read_cap_16(sc, flags);
 	}
 
