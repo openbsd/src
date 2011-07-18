@@ -1,5 +1,3 @@
-./usr/libdata/perl5/OpenBSD/PackageRepository/HTTP.pm
-./usr/libdata/perl5/OpenBSD/PackageRepository/Persistant.pm
 ./usr/share/doc/html
 ./usr/share/doc/html/bind
 ./usr/share/doc/html/bind/Bv9ARM.ch01.html

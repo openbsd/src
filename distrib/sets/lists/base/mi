@@ -952,7 +952,9 @@
 ./usr/libdata/perl5/OpenBSD/PackageName.pm
 ./usr/libdata/perl5/OpenBSD/PackageRepository
 ./usr/libdata/perl5/OpenBSD/PackageRepository.pm
+./usr/libdata/perl5/OpenBSD/PackageRepository/HTTP.pm
 ./usr/libdata/perl5/OpenBSD/PackageRepository/Installed.pm
+./usr/libdata/perl5/OpenBSD/PackageRepository/Persistant.pm
 ./usr/libdata/perl5/OpenBSD/PackageRepository/SCP.pm
 ./usr/libdata/perl5/OpenBSD/PackageRepository/Source.pm
 ./usr/libdata/perl5/OpenBSD/PackageRepositoryList.pm
