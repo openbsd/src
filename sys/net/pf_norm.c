@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.139 2011/07/07 20:46:36 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.140 2011/07/18 21:03:10 mikeb Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1444,7 +1444,7 @@ pf_scrub(struct mbuf *m, u_int16_t flags, sa_family_t af, u_int8_t min_ttl,
 #ifdef INET6
 		if (af == AF_INET6) {
 			/* drugs are unable to explain such idiocy */
-			h6->ip6_flow &= htonl(0x0ff00000);
+			h6->ip6_flow &= ~htonl(0x0ff00000);
 			h6->ip6_flow |= htonl(((u_int32_t)tos) << 20);
 		}
 #endif
