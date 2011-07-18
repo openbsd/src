@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcntl.h,v 1.18 2011/07/14 18:03:06 matthew Exp $	*/
+/*	$OpenBSD: fcntl.h,v 1.19 2011/07/18 17:29:49 matthew Exp $	*/
 /*	$NetBSD: fcntl.h,v 1.8 1995/03/26 20:24:12 jtc Exp $	*/
 
 /*-
@@ -157,7 +157,7 @@
 #define	F_GETLK		7		/* get record locking information */
 #define	F_SETLK		8		/* set record locking information */
 #define	F_SETLKW	9		/* F_SETLK; wait if blocked */
-#if __BSD_VISIBLE || __POSIX_VISIBLE >= 200809
+#if __POSIX_VISIBLE >= 200809
 #define	F_DUPFD_CLOEXEC	10		/* duplicate with FD_CLOEXEC set */
 #endif
 
@@ -195,15 +195,13 @@ struct flock {
 #define	LOCK_UN		0x08		/* unlock file */
 #endif
 
-#ifdef _KERNEL
-#if __BSD_VISIBLE || __POSIX_VISIBLE >= 200809
+#if __POSIX_VISIBLE >= 200809
 #define	AT_FDCWD	-100
 
 #define	AT_EACCESS		0x01
 #define	AT_SYMLINK_NOFOLLOW	0x02
 #define	AT_SYMLINK_FOLLOW	0x04
 #define	AT_REMOVEDIR		0x08
-#endif
 #endif
 
 #ifndef _KERNEL
@@ -213,6 +211,9 @@ int	creat(const char *, mode_t);
 int	fcntl(int, int, ...);
 #if __BSD_VISIBLE
 int	flock(int, int);
+#endif
+#if __POSIX_VISIBLE >= 200809
+int	openat(int, const char *, int, ...);
 #endif
 __END_DECLS
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.40 2011/07/03 18:51:01 jsg Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.41 2011/07/18 17:29:49 matthew Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -251,6 +251,9 @@ int	 putchar(int);
 int	 puts(const char *);
 int	 remove(const char *);
 int	 rename(const char *, const char *);
+#if __POSIX_VISIBLE >= 200809
+int	 renameat(int, const char *, int, const char *);
+#endif
 void	 rewind(FILE *);
 int	 scanf(const char *, ...);
 void	 setbuf(FILE *, char *);

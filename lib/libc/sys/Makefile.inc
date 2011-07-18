@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.92 2010/07/03 04:44:51 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.93 2011/07/18 17:29:49 matthew Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -67,7 +67,10 @@ ASM=	accept.o access.o acct.o adjfreq.o adjtime.o bind.o chdir.o chflags.o \
 	utimes.o wait4.o write.o writev.o nnpfspioctl.o __semctl.o \
 	__syscall.o __sysctl.o __getcwd.o sched_yield.o getthrid.o \
 	thrsleep.o thrwakeup.o threxit.o thrsigdivert.o \
-	setrtable.o getrtable.o
+	setrtable.o getrtable.o \
+	openat.o fchmodat.o fstatat.o mkdirat.o mkfifoat.o mknodat.o \
+	faccessat.o fchownat.o linkat.o readlinkat.o renameat.o symlinkat.o \
+	unlinkat.o utimensat.o futimens.o
 
 GASM=	${ASM:.o=.go}
 PASM=	${ASM:.o=.po}

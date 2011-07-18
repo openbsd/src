@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.64 2011/07/03 18:51:01 jsg Exp $ */
+/*	$OpenBSD: unistd.h,v 1.65 2011/07/18 17:29:49 matthew Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -201,6 +201,15 @@ int	 gethostname(char *, size_t)
 		__attribute__ ((__bounded__(__string__,1,2)));
 int	 setegid(gid_t);
 int	 seteuid(uid_t);
+#endif
+
+#if __POSIX_VISIBLE >= 200809
+int	faccessat(int, const char *, int, int);
+int	fchownat(int, const char *, uid_t, gid_t, int);
+int	linkat(int, const char *, int, const char *, int);
+ssize_t	readlinkat(int, const char *, char *, size_t);
+int	symlinkat(const char *, int, const char *);
+int	unlinkat(int, const char *, int);
 #endif
 
 #if __BSD_VISIBLE
