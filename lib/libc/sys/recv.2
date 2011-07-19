@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.36 2008/07/29 20:15:53 gilles Exp $
+.\"	$OpenBSD: recv.2,v 1.37 2011/07/19 18:24:40 mikeb Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)recv.2	8.3 (Berkeley) 2/21/94
 .\"
-.Dd $Mdocdate: July 29 2008 $
+.Dd $Mdocdate: July 19 2011 $
 .Dt RECV 2
 .Os
 .Sh NAME
@@ -206,9 +206,6 @@ struct cmsghdr {
 See
 .Xr CMSG_DATA 3
 for how these messages are constructed and decomposed.
-.Pp
-As an example, one could use this to learn of changes in the data-stream
-in XNS/SPP.
 .Pp
 Open file descriptors are now passed as ancillary data for
 .Dv AF_UNIX
