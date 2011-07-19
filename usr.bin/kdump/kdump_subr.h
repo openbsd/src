@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump_subr.h,v 1.3 2011/07/08 19:29:44 otto Exp $	*/
+/*	$OpenBSD: kdump_subr.h,v 1.4 2011/07/19 18:20:12 matthew Exp $	*/
 /*
  * Copyright(c) 2006 2006 David Kirchner <dpk@dpk.net>
  *
@@ -25,6 +25,7 @@ void fcntlcmdname(int, int);
 void rtprioname(int);
 void modename(int);
 void flagsname(int);
+void atflagsname(int);
 void flagsandmodename(int, int);
 void accessmodename(int);
 void mmapprotname(int);

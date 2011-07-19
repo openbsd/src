@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: mksubr,v 1.5 2011/07/08 19:29:44 otto Exp $
+# $OpenBSD: mksubr,v 1.6 2011/07/19 18:20:12 matthew Exp $
 #
 # Copyright (c) 2006 David Kirchner <dpk@dpk.net>
 #
@@ -334,6 +334,7 @@ _EOF_
 
 auto_or_type "modename" "S_[A-Z]+[[:space:]]+[0-6]{7}" "sys/stat.h"
 auto_or_type "flagsname" "O_[A-Z]+[[:space:]]+0x[0-9A-Fa-f]+" "sys/fcntl.h"
+auto_or_type "atflagsname" "AT_[A-Z_]+[[:space:]]+0x[0-9A-Fa-f]+" "sys/fcntl.h"
 auto_or_type "accessmodename" "[A-Z]_OK[[:space:]]+0?x?[0-9A-Fa-f]+" "sys/unistd.h"
 auto_or_type "mmapprotname" "PROT_[A-Z]+[[:space:]]+0x[0-9A-Fa-f]+" "sys/mman.h"
 auto_or_type "mmapflagsname" "MAP_[A-Z]+[[:space:]]+0x[0-9A-Fa-f]+" "sys/mman.h"
@@ -382,7 +383,7 @@ fcntlcmdname (int cmd, int arg)
 {
 	switch (cmd) {
 _EOF_
-egrep "^#[[:space:]]*define[[:space:]]+F_[A-Z]+[[:space:]]+[0-9]+[[:space:]]*" \
+egrep "^#[[:space:]]*define[[:space:]]+F_[A-Z_]+[[:space:]]+[0-9]+[[:space:]]*" \
 	$include_dir/sys/fcntl.h | \
 	awk 'BEGIN { o=0 } { for (i = 1; i <= NF; i++) \
 		if ($i ~ /define/) \

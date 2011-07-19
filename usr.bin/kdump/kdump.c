@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.60 2011/07/17 07:49:34 otto Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.61 2011/07/19 18:20:11 matthew Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -48,6 +48,7 @@
 
 #include <ctype.h>
 #include <err.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -143,6 +144,7 @@ static void ktrsysret(struct ktr_sysret *);
 static void ktrstruct(char *, size_t);
 static void setemul(const char *);
 static void usage(void);
+static void atfd(int);
 
 int
 main(int argc, char *argv[])
@@ -540,7 +542,7 @@ ktrsyscall(struct ktr_syscall *ktr)
 		break;
 	case SYS_chmod:
 	case SYS_fchmod: 
-		pn( NULL);
+		pn(NULL);
 		pn(modename);
 		break;
 	case SYS_fcntl: {
@@ -727,6 +729,84 @@ ktrsyscall(struct ktr_syscall *ktr)
 		pn(NULL);
 		pn(NULL);
 		pn(wait4optname);
+		break;
+	case SYS_faccessat:
+		pn(atfd);
+		pn(NULL);
+		pn(accessmodename);
+		pn(atflagsname);
+		break;
+	case SYS_fchmodat:
+		pn(atfd);
+		pn(NULL);
+		pn(modename);
+		pn(atflagsname);
+		break;
+	case SYS_fchownat:
+		pn(atfd);
+		pn(NULL);
+		pn(NULL);
+		pn(NULL);
+		pn(atflagsname);
+		break;
+	case SYS_fstatat:
+		pn(atfd);
+		pn(NULL);
+		pn(NULL);
+		pn(atflagsname);
+		break;
+	case SYS_linkat:
+		pn(atfd);
+		pn(NULL);
+		pn(atfd);
+		pn(NULL);
+		pn(atflagsname);
+		break;
+	case SYS_mkdirat:
+	case SYS_mkfifoat:
+	case SYS_mknodat:
+		pn(atfd);
+		pn(NULL);
+		pn(modename);
+		break;
+	case SYS_openat: {
+		int     flags;
+		int     mode;
+
+		pn(atfd);
+		pn(NULL);
+		if (!fancy)
+			break;
+		flags = ap[0];
+		mode = ap[1];
+		(void)putchar(',');
+		flagsandmodename(flags, mode);
+		ap += 2;
+		narg -= 2;
+		break;
+	}
+	case SYS_readlinkat:
+		pn(atfd);
+		break;
+	case SYS_renameat:
+		pn(atfd);
+		pn(NULL);
+		pn(atfd);
+		break;
+	case SYS_symlinkat:
+		pn(NULL);
+		pn(atfd);
+		break;
+	case SYS_unlinkat:
+		pn(atfd);
+		pn(NULL);
+		pn(atflagsname);
+		break;
+	case SYS_utimensat:
+		pn(atfd);
+		pn(NULL);
+		pn(NULL);
+		pn(atflagsname);
 		break;
 	}
 
@@ -1159,4 +1239,15 @@ setemul(const char *name)
 			return;
 		}
 	warnx("Emulation `%s' unknown", name);
+}
+
+static void
+atfd(int fd)
+{
+	if (fd == AT_FDCWD)
+		(void)printf("AT_FDCWD");
+	else if (decimal)
+		(void)printf("%d", fd);
+	else
+		(void)printf("%#x", fd);
 }
