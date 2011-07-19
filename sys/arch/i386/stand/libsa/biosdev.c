@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.83 2011/03/17 12:53:44 krw Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.84 2011/07/19 01:08:35 krw Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -216,10 +216,6 @@ EDD_rw(int rw, int dev, u_int32_t daddr, u_int32_t nblk, void *buf)
 {
 	int rv;
 	volatile static struct EDD_CB cb;
-
-	/* Some (most?) BIOSen get confused by i/o above 2 ^ 28 - 1 sector. */
-	if ((daddr + nblk) > BOOTBIOS_MAXSEC)
-		return (1); /* Invalid function/parameter. */
 
 	/* Zero out reserved stuff */
 	cb.edd_res1 = 0;
