@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.387 2011/07/18 21:01:23 deraadt Exp $
+#	$OpenBSD: rc,v 1.388 2011/07/19 13:49:07 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -120,26 +120,27 @@ fill_baddynamic()
 	local _sysctl="net.inet.${_service}.baddynamic"
 	local _name _port _srv _junk _ban
 	local _i=0
-	grep "/${_service}" /etc/services | {
-		IFS=" 	/"
-		while read _name _port _srv _junk; do
-			[ "x${_srv}" = "x${_service}" ] || continue;
-			if [ "x${_ban}" = "x" ]; then
-				_ban="+${_port}"
-			else
-				_ban="${_ban},+${_port}"
-			fi
-			# Flush before argv gets too long
-			if [ $((++_i)) -gt 128 ]; then
-				sysctl ${_sysctl}=${_ban} >/dev/null
-				_ban=""
-				_i=0
-			fi
-		done;
-		if [ "x${_ban}" != "x" ]; then
-			sysctl ${_sysctl}=${_ban} >/dev/null
+	local _ifs="${IFS}"
+	IFS=" 	/"
+	while read _name _port _srv _junk; do
+		[ "x${_srv}" = "x${_service}" ] && \
+		    [ "x${_name}" = "x${_name#\#}" ] || continue;
+		if [ "x${_ban}" = "x" ]; then
+			_ban="+${_port}"
+		else
+			_ban="${_ban},+${_port}"
 		fi
-	}
+		# Flush before argv gets too long
+		if [ $((++_i)) -gt 128 ]; then
+			sysctl ${_sysctl}=${_ban} >/dev/null
+			_ban=""
+			_i=0
+		fi
+	done < /etc/services;
+	if [ "x${_ban}" != "x" ]; then
+		sysctl ${_sysctl}=${_ban} >/dev/null
+	fi
+	IFS="${_ifs}"
 }
 
 start_daemon()
