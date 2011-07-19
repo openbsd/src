@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: HTTP.pm,v 1.9 2011/07/19 17:27:43 espie Exp $
+# $OpenBSD: HTTP.pm,v 1.10 2011/07/19 18:09:41 espie Exp $
 #
 # Copyright (c) 2011 Marc Espie <espie@openbsd.org>
 #
@@ -19,7 +19,10 @@
 use strict;
 use warnings;
 
-package OpenBSD::Repository::HTTP;
+use OpenBSD::PackageRepository::Persistant;
+
+package OpenBSD::PackageRepository::HTTP1;
+our @ISA = qw(OpenBSD::PackageRepository::Persistant);
 sub urlscheme
 {
 	return 'http';
@@ -29,14 +32,24 @@ sub initiate
 {
 	my $self = shift;
 	my ($rdfh, $wrfh);
-	pipe($self->{getfh}, $rdfh);
-	pipe($wrfh, $self->{cmdfh});
+	pipe($self->{getfh}, $wrfh) or die;
+	pipe($rdfh, $self->{cmdfh}) or die;
+
+	my $old =select $self->{getfh};
+	$| = 1;
+	select $self->{cmdfh};
+	$| = 1;
+	select $rdfh;
+	$| = 1;
+	select $wrfh;
+	$| = 1;
+	select $old;
 	my $pid = fork();
 	if ($pid == 0) {
 		close($self->{getfh});
 		close($self->{cmdfh});
-		close(STDOUT);
-		close(STDIN);
+#		close(STDOUT);
+#		close(STDIN);
 		open(STDOUT, '>&', $wrfh);
 		open(STDIN, '<&', $rdfh);
 		_Proxy::main($self);
@@ -145,6 +158,25 @@ sub retrieve
 	return $result;
 }
 
+sub retrieve_and_print
+{
+	my ($self, $sz, $fh) = @_;
+	my $result = substr($self->{buffer}, 0, $sz);
+	print $fh $result;
+	my $retrieved = length($result);
+	if ($retrieved == $sz) {
+		$self->{buffer} = substr($self->{buffer}, $sz);
+		return;
+	} else {
+		$self->{buffer} = '';
+	}
+	while ($retrieved < $sz) {
+		$self->{fh}->recv($result, $sz - $retrieved);
+		print $fh $result;
+		$retrieved += length($result);
+	}
+}
+
 sub retrieve_chunked
 {
 	my $self = shift;
@@ -171,6 +203,18 @@ sub retrieve_response
 		return $self->retrieve($h->{length});
 	}
 	return undef;
+}
+
+sub retrieve_response_and_print
+{
+	my ($self, $h, $fh) = @_;
+
+	if ($h->{chunked}) {
+		print $fh $self->retrieve_chunked;
+	}
+	if ($h->{length}) {
+		$self->retrieve_and_print($h->{length}, $fh);
+	}
 }
 
 sub print
@@ -209,7 +253,7 @@ sub batch(&)
 sub abort_batch()
 {
 	if (defined $pid) {
-		kill 1, $pid;
+		kill HUP => $pid;
 		waitpid($pid, 0);
 		undef $pid;
 	}
@@ -260,7 +304,6 @@ sub get_file
 	my $start = 0;
 	my $end = 2000;
 	my $total_size = 0;
-	open my $fh, ">", basename($fname);
 
 	do {
 		$end *= 2;
@@ -282,11 +325,7 @@ sub get_file
 			print "TRANSFER: $total_size\n";
 			$first = 0;
 		}
-		my $r = $o->retrieve_response($h);
-		if (!defined $r) {
-			print "ERROR: can't decode response\n";
-		}
-		print $fh $r;
+		$o->retrieve_response_and_print($h, \*STDOUT);
 		$start = $end;
 		if ($bailout) {
 			exit 0;
@@ -297,6 +336,7 @@ sub get_file
 sub main
 {
 	my $self = shift;
+	my $_;
 	my $o = _Proxy::Connection->new($self->{host}, "www");
 	while (<STDIN>) {
 		chomp;
