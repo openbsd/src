@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2011/07/06 18:53:13 nicm Exp $
+#	$OpenBSD: Makefile,v 1.22 2011/07/19 10:20:20 millert Exp $
 #
 # Take termcap/terminfo master file and generate termcap/terminfo .db files
 
@@ -13,14 +13,14 @@ terminfo.src: termtypes.master
 	@[ -s ${.TARGET} ] || exit 1
 
 terminfo.db: terminfo.src
-	cap_mkdb -i -f terminfo terminfo.src
+	cap_mkdb -i -f terminfo ${.ALLSRC}
 
-termcap.src: termtypes.master
-	${TIC} -C -x ${.ALLSRC} | sed -e '/^#/d' -e '/^$$/d' > ${.TARGET}
+termcap.src: termcap
+	sed -e '/^#/d' -e '/^$$/d' ${.ALLSRC} > ${.TARGET}
 	@[ -s ${.TARGET} ] || exit 1
 
 termcap.db: termcap.src
-	cap_mkdb -f termcap termcap.src
+	cap_mkdb -f termcap ${.ALLSRC}
 
 termcap: termtypes.master
 	${TIC} -C -x ${.ALLSRC} > ${.TARGET}
