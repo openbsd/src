@@ -1,4 +1,4 @@
-.\"	$OpenBSD: utimes.2,v 1.14 2011/07/19 06:48:20 matthew Exp $
+.\"	$OpenBSD: utimes.2,v 1.15 2011/07/19 07:10:38 jmc Exp $
 .\"	$NetBSD: utimes.2,v 1.9 1996/04/23 10:34:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -266,10 +266,10 @@ specifies that
 .Fn utimensat
 and
 .Fn futimens
-shall mark the last file status change timestamp (i.e.,
+shall mark the last file status change timestamp (i.e.\&
 .Fa st_ctim )
 for update upon successful completion.
-However, currently some filesystems (e.g., UFS)
+However, currently some filesystems (e.g. UFS)
 will not do so if
 .Dv UTIME_OMIT
-specified for the modification timestamp argument.
+is specified for the modification timestamp argument.
