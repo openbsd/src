@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.107 2011/07/12 10:19:54 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.108 2011/07/19 22:25:12 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: July 12 2011 $
+.Dd $Mdocdate: July 19 2011 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -442,7 +442,7 @@ connection.
 .Nm
 differentiates between packages specified on the command line, and packages
 installed automatically because of inter-dependencies:
-such packages will be tagged as
+the first kind will be tagged as
 .Sq installed manually .
 The
 .Fl a
@@ -470,7 +470,7 @@ tag from installed packages.
 .Xr pkg_info 1
 can be used to show only manually-installed packages, and
 .Xr pkg_delete 1
-can be used to remove dependencies no longer needed.
+can be used to remove dependencies when they are no longer needed.
 .Ss Technical details
 .Nm
 deals with
