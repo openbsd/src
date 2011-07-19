@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: HTTP.pm,v 1.8 2011/07/18 21:09:17 espie Exp $
+# $OpenBSD: HTTP.pm,v 1.9 2011/07/19 17:27:43 espie Exp $
 #
 # Copyright (c) 2011 Marc Espie <espie@openbsd.org>
 #
@@ -47,6 +47,20 @@ sub initiate
 	}
 }
 
+package _Proxy::Header;
+
+sub new
+{
+	my $class = shift;
+	bless {}, $class;
+}
+
+sub code
+{
+	my $self = shift;
+	return $self->{code};
+}
+
 package _Proxy::Connection;
 sub new
 {
@@ -59,6 +73,50 @@ sub new
 	$| = 1;
 	select($old);
 	bless {fh => $o, host => $host, buffer => ''}, $class;
+}
+
+sub send_header
+{
+	my ($o, $document, %extra) = @_;
+	my $crlf="\015\012";
+	$o->print("GET $document HTTP/1.1", $crlf,
+	    "Host: ", $o->{host}, $crlf);
+	if (defined $extra{range}) {
+		my ($a, $b) = @{$extra{range}};
+	    	$o->print("Range: bytes=$a-$b", $crlf);
+	}
+	$o->print($crlf);
+}
+
+sub get_header
+{
+	my $o = shift;
+	my $_ = $o->getline;
+	if (!m,^HTTP/1\.1\s+(\d\d\d),) {
+		return undef;
+	}
+	my $h = _Proxy::Header->new;
+	$h->{code} = $1;
+	while ($_ = $o->getline) {
+		last if m/^$/;
+		if (m/^([\w\-]+)\:\s*(.*)$/) {
+			$h->{$1} = $2;
+		} else {
+			print STDERR "unknown line: $_\n";
+		}
+	}
+	if (defined $h->{'Content-Length'}) {
+		$h->{length} = $h->{'Content-Length'}
+	} elsif (defined $h->{'Transfer-Encoding'} && 
+	    $h->{'Transfer-Encoding'} eq 'chunked') {
+		$h->{chunked} = 1;
+	}
+	if (defined $h->{'Content-Range'} && 
+	    $h->{'Content-Range'} =~ m/^bytes\s+(\d+)\-(\d+)\/(\d+)/) {
+		($h->{start}, $h->{end}, $h->{size}) = ($1, $2, $3);
+	}
+	$o->{header} = $h;
+	return $h;
 }
 
 sub getline
@@ -106,11 +164,11 @@ sub retrieve_response
 {
 	my ($self, $h) = @_;
 
-	if (defined $h->{'Content-Length'}) {
-		return $self->retrieve($h->{'Content-Length'});
-	}
-	if (($h->{'Transfer-Encoding'}//'') eq 'chunked') {
+	if ($h->{chunked}) {
 		return $self->retrieve_chunked;
+	}
+	if ($h->{length}) {
+		return $self->retrieve($h->{length});
 	}
 	return undef;
 }
@@ -118,7 +176,11 @@ sub retrieve_response
 sub print
 {
 	my ($self, @l) = @_;
-	print {$self->{fh}} @l;
+#	print STDERR "Before print\n";
+	if (!print {$self->{fh}} @l) {
+		print STDERR "network print failed with $!\n";
+	}
+#	print STDERR "After print\n";
 }
 
 package _Proxy;
@@ -158,33 +220,19 @@ sub get_directory
 {
 	my ($o, $dname) = @_;
 	local $SIG{'HUP'} = 'IGNORE';
-	my $crlf="\015\012";
-	$o->print("GET $dname/ HTTP/1.1", $crlf,
-	    "Host: ", $o->{host}, $crlf, $crlf);
-	# get header
+	$o->send_header("$dname/");
+	my $h = $o->get_header;
+	if (!defined $h) {
+		print "ERROR: can't decode header\n";
+		exit 1;
+	}
 
-	my $_ = $o->getline;
-	if (!m,^HTTP/1\.1\s+(\d\d\d),) {
-		print "ERROR\n";
-		return;
-	}
-	my $code = $1;
-	my $h = {};
-	while ($_ = $o->getline) {
-		last if m/^$/;
-		if (m/^([\w\-]+)\:\s*(.*)$/) {
-			print STDERR "$1 => $2\n";
-			$h->{$1} = $2;
-		} else {
-			print STDERR "unknown line: $_\n";
-		}
-	}
 	my $r = $o->retrieve_response($h);
 	if (!defined $r) {
 		print "ERROR: can't decode response\n";
 	}
-	if ($code != 200) {
-			print "ERROR: code was $code\n";
+	if ($h->code != 200) {
+			print "ERROR: code was ", $h->code, "\n";
 			exit 1;
 	}
 	print "SUCCESS: directory $dname\n";
@@ -204,7 +252,6 @@ sub get_file
 {
 	my ($o, $fname) = @_;
 
-	my $crlf="\015\012";
 	my $bailout = 0;
 	$SIG{'HUP'} = sub {
 		$bailout++;
@@ -217,30 +264,19 @@ sub get_file
 
 	do {
 		$end *= 2;
-		$o->print("GET $fname HTTP/1.1", $crlf,
-		    "Host: ", $o->{host}, $crlf,
-		    "Range: bytes=",$start, "-", $end-1, $crlf, $crlf);
-		# get header
-
-		my $_ = $o->getline;
-		if (!m,^HTTP/1\.1\s+(\d\d\d),) {
+		$o->send_header($fname, range => [$start, $end-1]);
+		my $h = $o->get_header;
+		if (!defined $h) {
 			print "ERROR\n";
 			exit 1;
 		}
-		my $code = $1;
-		my $h = {};
-		while ($_ = $o->getline) {
-			last if m/^$/;
-			if (m/^([\w\-]+)\:\s*(.*)$/) {
-				print STDERR "$1 => $2\n";
-				$h->{$1} = $2;
-			} else {
-				print STDERR "unknown line: $_\n";
-			}
+		if (defined $h->{size}) {
+			$total_size = $h->{size};
 		}
-		if (defined $h->{'Content-Range'} && $h->{'Content-Range'} =~ 
-			m/^bytes\s+\d+\-\d+\/(\d+)/) {
-				$total_size = $1;
+		if ($h->code != 200 && $h->code != 206) {
+			print "ERROR: code was ", $h->code, "\n";
+			my $r = $o->retrieve_response($h);
+			exit 1;
 		}
 		if ($first) {
 			print "TRANSFER: $total_size\n";
@@ -249,10 +285,6 @@ sub get_file
 		my $r = $o->retrieve_response($h);
 		if (!defined $r) {
 			print "ERROR: can't decode response\n";
-		}
-		if ($code != 200 && $code != 206) {
-			print "ERROR: code was $code\n";
-			exit 1;
 		}
 		print $fh $r;
 		$start = $end;
