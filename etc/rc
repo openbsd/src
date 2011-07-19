@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.388 2011/07/19 13:49:07 deraadt Exp $
+#	$OpenBSD: rc,v 1.389 2011/07/19 13:50:49 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -101,16 +101,15 @@ wsconsctl_conf()
 
 random_seed()
 {
-	if [ -f /var/db/host.random -a "X$random_seed_done" = "X" ]; then
+	if [ -f /var/db/host.random ]; then
 		dd if=/var/db/host.random of=/dev/arandom bs=65536 count=1 \
 		    > /dev/null 2>&1
+		chmod 600 /var/db/host.random >/dev/null 2>&1
 
 		# reset seed file, so that if a shutdown-less reboot occurs,
 		# the next seed is not a repeat
 		dd if=/dev/arandom of=/var/db/host.random bs=65536 count=1 \
 		    > /dev/null 2>&1
-
-		random_seed_done=1
 	fi
 }
 
@@ -329,8 +328,6 @@ mount -a -t nonfs,vnd
 mount -uw /		# root on nfs requires this, others aren't hurt
 rm -f /fastboot		# XXX (root now writeable)
 
-random_seed
-
 # set flags on ttys.  (do early, in case they use tty for SLIP in netstart)
 echo 'setting tty flags'
 ttyflags -a
@@ -395,15 +392,7 @@ fi
 mount -s /usr >/dev/null 2>&1
 mount -s /var >/dev/null 2>&1
 
-# if there's no /var/db/host.random, use /dev/arandom to create one
-if [ ! -f /var/db/host.random ]; then
-	dd if=/dev/arandom of=/var/db/host.random bs=65536 count=1 \
-		>/dev/null 2>&1
-	chmod 600 /var/db/host.random >/dev/null 2>&1
-else
-	# Try to read seed if it was not initially present (e.g. /var on NFS)
-	random_seed
-fi
+random_seed
 
 # clean up left-over files
 rm -f /etc/nologin /var/spool/lock/LCK.* /var/spool/uucp/STST/*
