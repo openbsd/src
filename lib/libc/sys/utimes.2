@@ -1,4 +1,4 @@
-.\"	$OpenBSD: utimes.2,v 1.12 2011/07/18 23:21:19 matthew Exp $
+.\"	$OpenBSD: utimes.2,v 1.13 2011/07/19 03:37:40 matthew Exp $
 .\"	$NetBSD: utimes.2,v 1.9 1996/04/23 10:34:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)utimes.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 18 2011 $
+.Dd $Mdocdate: July 19 2011 $
 .Dt UTIMES 2
 .Os
 .Sh NAME
@@ -260,3 +260,16 @@ and
 .Fn futimens
 function calls appeared in
 .Ox 5.0 .
+.Sh CAVEATS
+.St -p1003.1-2008
+specifies that
+.Fn utimensat
+and
+.Fn futimens
+shall mark the last file status change timestamp (i.e.,
+.Fa st_ctim )
+for update upon successful completion.
+However, currently some filesystems (e.g., UFS)
+will not do so if
+.Dv UTIME_OMIT
+specified for the modification timestamp argument.
