@@ -70,5 +70,5 @@ even_loop:
 
 
 /* gcc4 uses movmem, older versions use movstr */
-_C_LABEL(__movmem_i4_odd) = _C_LABEL(__movstr_i4_odd)
-_C_LABEL(__movmem_i4_even) = _C_LABEL(__movstr_i4_even)
+STRONG_ALIAS(__movmem_i4_odd, __movstr_i4_odd)
+STRONG_ALIAS(__movmem_i4_even, __movstr_i4_even)
