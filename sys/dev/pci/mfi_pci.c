@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi_pci.c,v 1.24 2011/07/01 21:51:12 deraadt Exp $ */
+/* $OpenBSD: mfi_pci.c,v 1.25 2011/07/20 20:15:23 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -167,7 +167,7 @@ mfi_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
-	if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
+	if (pci_intr_map(pa, &ih) != 0) {
 		printf(": can't map interrupt\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
 		return;
