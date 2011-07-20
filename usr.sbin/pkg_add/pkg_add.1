@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.108 2011/07/19 22:25:12 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.109 2011/07/20 14:30:45 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: July 19 2011 $
+.Dd $Mdocdate: July 20 2011 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -50,7 +50,7 @@ FTP site or on the official
 CD.
 .Bd -filled -offset indent
 .Em Note :
-System distribution files, e.g., base28.tgz, comp28.tgz, are
+System distribution files, e.g., base50.tgz, comp50.tgz, are
 .Em not
 packages and may not be installed using
 .Nm .
@@ -162,8 +162,8 @@ or
 .Pp
 If the environment variable
 .Ev PKG_CACHE
-is set, every package retrieved from a distant location will also be
-copied here.
+is set to a directory name, every package retrieved from a distant location
+will also be copied here.
 .Pp
 Some packages may depend on other packages.
 When resolving dependencies
@@ -305,7 +305,7 @@ Installs packages from the raw output of
 as saved in
 .Ar file .
 Generally, use with
-.Li pkg_info \*(Gtfile ,
+.Li pkg_info -m \*(Gtfile ,
 to reproduce an installation from machine to machine.
 With
 .Fl z
@@ -322,6 +322,9 @@ to always display the progress meter in cases it would not do so by default.
 .It Fl n
 Don't actually install a package, just report the steps that
 would be taken if it was.
+Will still copy packages to
+.Ev PKG_CACHE
+if applicable.
 .It Fl P Ar type
 Check permissions for distribution, where
 .Ar type
