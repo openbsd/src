@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.548 2011/07/08 23:09:06 yuo Exp $
+$OpenBSD: usbdevs,v 1.549 2011/07/20 13:10:32 jasper Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3273,6 +3273,7 @@ product SANYO SCP4900 		0x0701	Sanyo SCP-4900 Phone
 /* Samsung products */
 product SAMSUNG2 RT2870_1	0x2018	RT2870
 product SAMSUNG2 ANDROID	0x6881	Android
+product SAMSUNG2 ANDROID2	0x6863	Android v2
 product SAMSUNG2 I330		0x8001	I330
 product SAMSUNG SWL2100W	0xa000	SWL-2100U
 
