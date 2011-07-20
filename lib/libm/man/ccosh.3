@@ -1,6 +1,6 @@
-.\"	$OpenBSD: cproj.3,v 1.2 2011/07/20 17:50:43 martynas Exp $
+.\"	$OpenBSD: ccosh.3,v 1.1 2011/07/20 17:50:43 martynas Exp $
 .\"
-.\" Copyright (c) 2010 Todd C. Miller <Todd.Miller@courtesan.com>
+.\" Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,53 +15,52 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: July 20 2011 $
-.Dt CPROJ 3
+.Dt CCOSH 3
 .Os
 .Sh NAME
-.Nm cproj ,
-.Nm cprojf ,
-.Nm cprojl
-.Nd compute projection onto Riemann sphere
+.Nm ccosh ,
+.Nm ccoshf ,
+.Nm ccoshl
+.Nd complex hyperbolic cosine
 .Sh SYNOPSIS
 .Fd #include <complex.h>
 .Ft double complex
-.Fn cproj "double complex z"
+.Fn ccosh "double complex z"
 .Ft float complex
-.Fn cprojf "float complex z"
+.Fn ccoshf "float complex z"
 .Ft long double complex
-.Fn cprojl "long double complex z"
+.Fn ccoshl "long double complex z"
 .Sh DESCRIPTION
 The
-.Fn cproj ,
-.Fn cprojf
+.Fn ccosh ,
+.Fn ccoshf
 and
-.Fn cprojl
-functions compute a projection of
-.Fa z
-onto the Riemann sphere.
-.Sh RETURN VALUES
-The
-.Fn cproj ,
-.Fn cprojf
-and
-.Fn cprojl
-functions return
-.Fa z
-for all finite complex numbers.
+.Fn ccoshl
+functions compute the complex hyperbolic cosine of
+.Fa z .
+.Pp
 If
 .Fa z
-has an infinite part (even if the other part is NaN),
-they return the equivalent of:
+= x + iy, then
 .Bd -literal -offset indent
-INFINITY + I * copysign(0.0, cimag(z))
+ccosh(z) = cosh(x) cos(y) + i sinh(x) sin(y).
 .Ed
+.Sh RETURN VALUES
+The
+.Fn ccosh ,
+.Fn ccoshf
+and
+.Fn ccoshl
+functions return the complex hyperbolic cosine of
+.Fa z .
 .Sh SEE ALSO
-.Xr cimag 3
+.Xr csinh 3 ,
+.Xr ctanh 3
 .Sh STANDARDS
 The
-.Fn cproj ,
-.Fn cprojf
+.Fn ccosh ,
+.Fn ccoshf
 and
-.Fn cprojl
+.Fn ccoshl
 functions conform to
 .St -isoC-99 .

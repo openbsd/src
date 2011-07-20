@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cimag.3,v 1.1 2010/07/19 12:48:23 millert Exp $
+.\"	$OpenBSD: cimag.3,v 1.2 2011/07/20 17:50:43 martynas Exp $
 .\"
 .\" Copyright (c) 2010 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,12 +14,13 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 19 2010 $
+.Dd $Mdocdate: July 20 2011 $
 .Dt CIMAG 3
 .Os
 .Sh NAME
 .Nm cimag ,
-.Nm cimagf
+.Nm cimagf ,
+.Nm cimagl
 .Nd compute the imaginary part of a complex number
 .Sh SYNOPSIS
 .Fd #include <complex.h>
@@ -27,25 +28,32 @@
 .Fn cimag "double complex z"
 .Ft float
 .Fn cimagf "float complex z"
+.Ft long double
+.Fn cimagl "long double complex z"
 .Sh DESCRIPTION
 The
-.Fn cimag
-and
+.Fn cimag ,
 .Fn cimagf
+and
+.Fn cimagl
 functions compute the imaginary part of
 .Fa z .
 .Sh RETURN VALUES
 The
-.Fn cimag
-and
+.Fn cimag ,
 .Fn cimagf
+and
+.Fn cimagl
 functions return the imaginary part of the complex number
 .Fa z
 as a real number.
+.Sh SEE ALSO
+.Xr carg 3
 .Sh STANDARDS
 The
-.Fn cimag
-and
+.Fn cimag ,
 .Fn cimagf
+and
+.Fn cimagl
 functions conform to
 .St -isoC-99 .

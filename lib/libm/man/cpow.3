@@ -1,6 +1,6 @@
-.\"	$OpenBSD: cproj.3,v 1.2 2011/07/20 17:50:43 martynas Exp $
+.\"	$OpenBSD: cpow.3,v 1.1 2011/07/20 17:50:43 martynas Exp $
 .\"
-.\" Copyright (c) 2010 Todd C. Miller <Todd.Miller@courtesan.com>
+.\" Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,53 +15,50 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: July 20 2011 $
-.Dt CPROJ 3
+.Dt CPOW 3
 .Os
 .Sh NAME
-.Nm cproj ,
-.Nm cprojf ,
-.Nm cprojl
-.Nd compute projection onto Riemann sphere
+.Nm cpow ,
+.Nm cpowf ,
+.Nm cpowl
+.Nd complex power functions
 .Sh SYNOPSIS
 .Fd #include <complex.h>
 .Ft double complex
-.Fn cproj "double complex z"
+.Fn cpow "double complex x" "double complex z"
 .Ft float complex
-.Fn cprojf "float complex z"
+.Fn cpowf "float complex x" "float complex z"
 .Ft long double complex
-.Fn cprojl "long double complex z"
+.Fn cpowl "long double complex x" "long double complex z"
 .Sh DESCRIPTION
 The
-.Fn cproj ,
-.Fn cprojf
+.Fn cpow ,
+.Fn cpowf
 and
-.Fn cprojl
-functions compute a projection of
-.Fa z
-onto the Riemann sphere.
+.Fn cpowl
+functions compute the complex number
+.Fa x
+raised to the complex power
+.Fa z ,
+with a branch cut along the negative real axis for the first argument.
 .Sh RETURN VALUES
 The
-.Fn cproj ,
-.Fn cprojf
+.Fn cpow ,
+.Fn cpowf
 and
-.Fn cprojl
-functions return
-.Fa z
-for all finite complex numbers.
-If
-.Fa z
-has an infinite part (even if the other part is NaN),
-they return the equivalent of:
-.Bd -literal -offset indent
-INFINITY + I * copysign(0.0, cimag(z))
-.Ed
+.Fn cpowl
+functions return the complex complex number
+.Fa x
+raised to the complex power
+.Fa z .
 .Sh SEE ALSO
-.Xr cimag 3
+.Xr cexp 3 ,
+.Xr clog 3
 .Sh STANDARDS
 The
-.Fn cproj ,
-.Fn cprojf
+.Fn cpow ,
+.Fn cpowf
 and
-.Fn cprojl
+.Fn cpowl
 functions conform to
 .St -isoC-99 .

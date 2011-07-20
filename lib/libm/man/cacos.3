@@ -1,6 +1,6 @@
-.\"	$OpenBSD: cproj.3,v 1.2 2011/07/20 17:50:43 martynas Exp $
+.\"	$OpenBSD: cacos.3,v 1.1 2011/07/20 17:50:43 martynas Exp $
 .\"
-.\" Copyright (c) 2010 Todd C. Miller <Todd.Miller@courtesan.com>
+.\" Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,53 +15,53 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: July 20 2011 $
-.Dt CPROJ 3
+.Dt CACOS 3
 .Os
 .Sh NAME
-.Nm cproj ,
-.Nm cprojf ,
-.Nm cprojl
-.Nd compute projection onto Riemann sphere
+.Nm cacos ,
+.Nm cacosf ,
+.Nm cacosl
+.Nd complex circular arc cosine
 .Sh SYNOPSIS
 .Fd #include <complex.h>
 .Ft double complex
-.Fn cproj "double complex z"
+.Fn cacos "double complex z"
 .Ft float complex
-.Fn cprojf "float complex z"
+.Fn cacosf "float complex z"
 .Ft long double complex
-.Fn cprojl "long double complex z"
+.Fn cacosl "long double complex z"
 .Sh DESCRIPTION
 The
-.Fn cproj ,
-.Fn cprojf
+.Fn cacos ,
+.Fn cacosf
 and
-.Fn cprojl
-functions compute a projection of
-.Fa z
-onto the Riemann sphere.
+.Fn cacosl
+functions compute the complex circular arc cosine of
+.Fa z .
+.Pp
+For all complex floating-point numbers
+.Fa z ,
+.Bd -literal -offset indent
+cacos(z) = Pi/2 - casin(z).
+.Ed
 .Sh RETURN VALUES
 The
-.Fn cproj ,
-.Fn cprojf
+.Fn cacos ,
+.Fn cacosf
 and
-.Fn cprojl
-functions return
+.Fn cacosl
+functions return the complex circular arc cosine of
 .Fa z
-for all finite complex numbers.
-If
-.Fa z
-has an infinite part (even if the other part is NaN),
-they return the equivalent of:
-.Bd -literal -offset indent
-INFINITY + I * copysign(0.0, cimag(z))
-.Ed
+with unbounded imaginary part, and real part in the interval
+.Bq 0, Pi .
 .Sh SEE ALSO
-.Xr cimag 3
+.Xr casin 3 ,
+.Xr catan 3
 .Sh STANDARDS
 The
-.Fn cproj ,
-.Fn cprojf
+.Fn cacos ,
+.Fn cacosf
 and
-.Fn cprojl
+.Fn cacosl
 functions conform to
 .St -isoC-99 .

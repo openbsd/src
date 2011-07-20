@@ -1,6 +1,6 @@
-.\"	$OpenBSD: cproj.3,v 1.2 2011/07/20 17:50:43 martynas Exp $
+.\"	$OpenBSD: cacosh.3,v 1.1 2011/07/20 17:50:43 martynas Exp $
 .\"
-.\" Copyright (c) 2010 Todd C. Miller <Todd.Miller@courtesan.com>
+.\" Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,53 +15,54 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: July 20 2011 $
-.Dt CPROJ 3
+.Dt CACOSH 3
 .Os
 .Sh NAME
-.Nm cproj ,
-.Nm cprojf ,
-.Nm cprojl
-.Nd compute projection onto Riemann sphere
+.Nm cacosh ,
+.Nm cacoshf ,
+.Nm cacoshl
+.Nd complex inverse hyperbolic cosine
 .Sh SYNOPSIS
 .Fd #include <complex.h>
 .Ft double complex
-.Fn cproj "double complex z"
+.Fn cacosh "double complex z"
 .Ft float complex
-.Fn cprojf "float complex z"
+.Fn cacoshf "float complex z"
 .Ft long double complex
-.Fn cprojl "long double complex z"
+.Fn cacoshl "long double complex z"
 .Sh DESCRIPTION
 The
-.Fn cproj ,
-.Fn cprojf
+.Fn cacosh ,
+.Fn cacoshf
 and
-.Fn cprojl
-functions compute a projection of
-.Fa z
-onto the Riemann sphere.
+.Fn cacoshl
+functions compute the complex inverse hyperbolic cosine of
+.Fa z .
+.Pp
+For all complex floating-point numbers
+.Fa z ,
+.Bd -literal -offset indent
+cacosh(z) = i acos(z).
+.Ed
 .Sh RETURN VALUES
 The
-.Fn cproj ,
-.Fn cprojf
+.Fn cacosh ,
+.Fn cacoshf
 and
-.Fn cprojl
-functions return
+.Fn cacoshl
+functions return the complex inverse hyperbolic cosine of
 .Fa z
-for all finite complex numbers.
-If
-.Fa z
-has an infinite part (even if the other part is NaN),
-they return the equivalent of:
-.Bd -literal -offset indent
-INFINITY + I * copysign(0.0, cimag(z))
-.Ed
+with imaginary part in the interval
+.Bq -Pi, Pi ,
+and non-negative real part.
 .Sh SEE ALSO
-.Xr cimag 3
+.Xr casinh 3 ,
+.Xr catanh 3
 .Sh STANDARDS
 The
-.Fn cproj ,
-.Fn cprojf
+.Fn cacosh ,
+.Fn cacoshf
 and
-.Fn cprojl
+.Fn cacoshl
 functions conform to
 .St -isoC-99 .
