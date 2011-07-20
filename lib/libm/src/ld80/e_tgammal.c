@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_tgammal.c,v 1.1 2011/07/06 00:02:42 martynas Exp $	*/
+/*	$OpenBSD: e_tgammal.c,v 1.2 2011/07/20 21:02:51 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -115,7 +115,7 @@ static long double Q[] = {
 };
 */
 #define MAXGAML 1755.455L
-/*static long double LOGPI = 1.14472988584940017414L;*/
+/*static const long double LOGPI = 1.14472988584940017414L;*/
 
 /* Stirling's formula for the gamma function
 tgamma(x) = sqrt(2 pi) x^(x-.5) exp(-x) (1 + 1/x P(1/x))
@@ -140,7 +140,7 @@ static long double STIR[9] = {
 };
 
 #define MAXSTIR 1024.0L
-static long double SQTPI = 2.50662827463100050242E0L;
+static const long double SQTPI = 2.50662827463100050242E0L;
 
 /* 1/tgamma(x) = z P(z)
  * z(x) = 1/x
@@ -179,7 +179,7 @@ static long double SN[9] = {
 -1.000000000000000000000E0L,
 };
 
-static long double PIL = 3.1415926535897932384626L;
+static const long double PIL = 3.1415926535897932384626L;
 
 extern long double __polevll(long double, void *, int);
 static long double stirf ( long double );

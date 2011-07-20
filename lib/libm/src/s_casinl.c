@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_casinl.c,v 1.2 2011/07/20 19:28:33 martynas Exp $	*/
+/*	$OpenBSD: s_casinl.c,v 1.3 2011/07/20 21:02:51 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -54,12 +54,12 @@
 #include <math.h>
 
 #if	LDBL_MANT_DIG == 64
-static long double MACHEPL= 5.42101086242752217003726400434970855712890625E-20L;
+static const long double MACHEPL= 5.42101086242752217003726400434970855712890625E-20L;
 #elif	LDBL_MANT_DIG == 113
-static long double MACHEPL = 9.629649721936179265279889712924636592690508e-35L;
+static const long double MACHEPL = 9.629649721936179265279889712924636592690508e-35L;
 #endif
 
-static long double PIO2L = 1.570796326794896619231321691639751442098585L;
+static const long double PIO2L = 1.570796326794896619231321691639751442098585L;
 
 long double complex
 casinl(long double complex z)

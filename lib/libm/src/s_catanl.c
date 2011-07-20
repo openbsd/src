@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_catanl.c,v 1.2 2011/07/20 19:28:33 martynas Exp $	*/
+/*	$OpenBSD: s_catanl.c,v 1.3 2011/07/20 21:02:51 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -67,10 +67,10 @@
 #include <float.h>
 #include <math.h>
 
-static long double PIL = 3.141592653589793238462643383279502884197169L;
-static long double DP1 = 3.14159265358979323829596852490908531763125L;
-static long double DP2 = 1.6667485837041756656403424829301998703007e-19L;
-static long double DP3 = 1.8830410776607851167459095484560349402753e-39L;
+static const long double PIL = 3.141592653589793238462643383279502884197169L;
+static const long double DP1 = 3.14159265358979323829596852490908531763125L;
+static const long double DP2 = 1.6667485837041756656403424829301998703007e-19L;
+static const long double DP3 = 1.8830410776607851167459095484560349402753e-39L;
 
 static long double
 redupil(long double x)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_powl.c,v 1.2 2011/07/08 17:22:17 martynas Exp $	*/
+/*	$OpenBSD: e_powl.c,v 1.3 2011/07/20 21:02:51 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -184,9 +184,9 @@ static long double R[] = {
 #define Ha Wb
 #define Hb Wb
 
-static long double MAXLOGL = 1.1356523406294143949492E4L;
-static long double MINLOGL = -1.13994985314888605586758E4L;
-static long double LOGE2L = 6.9314718055994530941723E-1L;
+static const long double MAXLOGL = 1.1356523406294143949492E4L;
+static const long double MINLOGL = -1.13994985314888605586758E4L;
+static const long double LOGE2L = 6.9314718055994530941723E-1L;
 static volatile long double z;
 static long double w, W, Wa, Wb, ya, yb, u;
 static const long double huge = 0x1p10000L;

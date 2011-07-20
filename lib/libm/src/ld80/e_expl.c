@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_expl.c,v 1.1 2011/07/06 00:02:42 martynas Exp $	*/
+/*	$OpenBSD: e_expl.c,v 1.2 2011/07/20 21:02:51 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -85,11 +85,11 @@ static long double Q[4] = {
  2.2726554820815502876593E-1L,
  2.0000000000000000000897E0L,
 };
-static long double C1 = 6.9314575195312500000000E-1L;
-static long double C2 = 1.4286068203094172321215E-6L;
-static long double MAXLOGL = 1.1356523406294143949492E4L;
-static long double MINLOGL = -1.13994985314888605586758E4L;
-static long double LOG2EL = 1.4426950408889634073599E0L;
+static const long double C1 = 6.9314575195312500000000E-1L;
+static const long double C2 = 1.4286068203094172321215E-6L;
+static const long double MAXLOGL = 1.1356523406294143949492E4L;
+static const long double MINLOGL = -1.13994985314888605586758E4L;
+static const long double LOG2EL = 1.4426950408889634073599E0L;
 
 extern long double __polevll(long double, void *, int);
 

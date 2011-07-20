@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_expm1l.c,v 1.1 2011/07/06 00:02:42 martynas Exp $	*/
+/*	$OpenBSD: s_expm1l.c,v 1.2 2011/07/20 21:02:51 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -59,13 +59,13 @@
 
 #include <math.h>
 
-static long double MAXLOGL = 1.1356523406294143949492E4L;
+static const long double MAXLOGL = 1.1356523406294143949492E4L;
 
 /* exp(x) - 1 = x + 0.5 x^2 + x^3 P(x)/Q(x)
    -.5 ln 2  <  x  <  .5 ln 2
    Theoretical peak relative error = 3.4e-22  */
 
-static long double
+static const long double
   P0 = -1.586135578666346600772998894928250240826E4L,
   P1 =  2.642771505685952966904660652518429479531E3L,
   P2 = -3.423199068835684263987132888286791620673E2L,

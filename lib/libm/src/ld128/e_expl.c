@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_expl.c,v 1.1 2011/07/06 00:02:42 martynas Exp $	*/
+/*	$OpenBSD: e_expl.c,v 1.2 2011/07/20 21:02:51 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -95,12 +95,12 @@ static long double Q[6] = {
  2.000000000000000000000000000000000000150E0L
 };
 /* C1 + C2 = ln 2 */
-static long double C1 = -6.93145751953125E-1L;
-static long double C2 = -1.428606820309417232121458176568075500134E-6L;
+static const long double C1 = -6.93145751953125E-1L;
+static const long double C2 = -1.428606820309417232121458176568075500134E-6L;
 
-static long double LOG2EL = 1.442695040888963407359924681001892137426646L;
-static long double MAXLOGL = 1.1356523406294143949491931077970764891253E4L;
-static long double MINLOGL = -1.143276959615573793352782661133116431383730e4L;
+static const long double LOG2EL = 1.442695040888963407359924681001892137426646L;
+static const long double MAXLOGL = 1.1356523406294143949491931077970764891253E4L;
+static const long double MINLOGL = -1.143276959615573793352782661133116431383730e4L;
 static const long double huge = 0x1p10000L;
 #if 0 /* XXX Prevent gcc from erroneously constant folding this. */
 static const long double twom10000 = 0x1p-10000L;

@@ -26,7 +26,7 @@
 double
 scalbn (double x, int n)
 {
-	ldexp(x, n);
+	return ldexp(x, n);
 }
 
 #if	LDBL_MANT_DIG == 53

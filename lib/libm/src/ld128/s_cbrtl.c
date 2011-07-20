@@ -81,7 +81,7 @@ cbrtl(long double x)
 		break;
 	}
 	GET_LDOUBLE_MSW64(hx,x);
-	expsign = (expsign & 0x8000) | (BIAS + k / 3);
+	expsign = ((hx>>48) & 0x8000) | (BIAS + k / 3);
 	hx = (hx&0x8000ffffffffffffLL)|((uint64_t)expsign<<48);
 	SET_LDOUBLE_MSW64(x,hx);
 

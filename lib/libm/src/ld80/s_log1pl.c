@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_log1pl.c,v 1.1 2011/07/06 00:02:42 martynas Exp $	*/
+/*	$OpenBSD: s_log1pl.c,v 1.2 2011/07/20 21:02:51 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -103,8 +103,8 @@ static long double S[4] = {
  1.9361891836232102174846E2L,
 -4.2861221385716144629696E2L,
 };
-static long double C1 = 6.9314575195312500000000E-1L;
-static long double C2 = 1.4286068203094172321215E-6L;
+static const long double C1 = 6.9314575195312500000000E-1L;
+static const long double C2 = 1.4286068203094172321215E-6L;
 
 #define SQRTH 0.70710678118654752440L
 extern long double __polevll(long double, void *, int);
