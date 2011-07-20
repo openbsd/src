@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.390 2011/07/20 09:56:00 halex Exp $
+#	$OpenBSD: rc,v 1.391 2011/07/20 10:00:13 halex Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -121,7 +121,7 @@ fill_baddynamic()
 	{
 		# Variables are local
 		while IFS=" 	/" read _name _port _srv _junk; do
-			[ "x${_srv}" = "x${_service}" ] || continue;
+			[ "x${_srv}" = "x${_service}" ] || continue
 			_ban="${_ban:+${_ban},}+${_port}"
 			# Flush before argv gets too long
 			if [ ${#_ban} -gt 1024 ]; then
