@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.45 2011/07/17 22:46:48 matthew Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.46 2011/07/20 19:00:35 sthen Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -5353,7 +5353,7 @@ mpii_refresh_sensors(void *arg)
 			sc->sc_sensors[i].status = SENSOR_S_OK;
 			break;
 		case BIOC_SVINVALID:
-			/* FALLTRHOUGH */
+			/* FALLTHROUGH */
 		default:
 			sc->sc_sensors[i].value = 0; /* unknown */
 			sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
