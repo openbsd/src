@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.43 2011/07/03 17:48:40 nicm Exp $	*/
+/*	$OpenBSD: dns.c,v 1.44 2011/07/20 10:22:54 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -72,6 +72,7 @@ static void dns_asr_handler(int, short, void *);
 static void dns_asr_dispatch_host(struct dnssession *);
 static void dns_asr_dispatch_mx(struct dnssession *);
 static void dns_asr_dispatch_cname(struct dnssession *);
+static void dns_reply(struct dns *, int);
 
 struct asr *asr = NULL;
 
@@ -168,10 +169,14 @@ dns_async(struct imsgev *asker, int type, struct dns *query)
 	env->stats->lka.queries_failure++;
 	dnssession_destroy(dnssession);
 noasr:
-	query->error = EAI_AGAIN;
-	if (type != IMSG_DNS_PTR)
-		type = IMSG_DNS_HOST_END;
-	imsg_compose_event(asker, type, 0, 0, -1, query, sizeof(*query));
+	query->error = DNS_RETRY;
+	dns_reply(query, type != IMSG_DNS_PTR ? IMSG_DNS_HOST_END : type);
+}
+
+static void
+dns_reply(struct dns *query, int type)
+{
+	imsg_compose_event(query->asker, type, 0, 0, -1, query, sizeof(*query));
 }
 
 static void
@@ -222,12 +227,26 @@ dns_asr_dispatch_mx(struct dnssession *dnssession)
 		return;
 	}
 
-	if (ar.ar_err)
-		goto hosts;  /* empty list */
+	if (ar.ar_err) {
+		/* temporary internal error, except for invalid name */
+		query->error = (ar.ar_err == EASR_NAME) ? DNS_EINVAL : DNS_RETRY;
+		dns_reply(query, IMSG_DNS_HOST_END);
+		dnssession_destroy(dnssession);
+		return;
+	}
 
 	packed_init(&pack, ar.ar_data, ar.ar_datalen);
 	unpack_header(&pack, &h);
 	unpack_query(&pack, &q);
+
+	/* check if the domain name exists */
+	/* XXX what about other DNS error codes? */
+	if (RCODE(h.flags) == ERR_NAME) {
+		query->error = DNS_ENONAME;
+		dns_reply(query, IMSG_DNS_HOST_END);
+		dnssession_destroy(dnssession);
+		return;
+	}
 
 	if (h.ancount == 0)
 		/* fallback to host if no MX is found. */
@@ -243,7 +262,6 @@ dns_asr_dispatch_mx(struct dnssession *dnssession)
 	free(ar.ar_data);
 	ar.ar_data = NULL;
 
-hosts:
 	/* Now we have a sorted list of MX to resolve. Simply "turn" this
 	 * MX session into a regular host session.
 	 */
@@ -264,11 +282,11 @@ next:
 	/* query all listed hosts in turn */
 	while (dnssession->aq == NULL) {
 		if (dnssession->mxcurrent == dnssession->mxarraysz) {
-			query->error = (dnssession->mxfound) ? 0 : EAI_NONAME;
+			/* XXX although not likely, this can still be temporary */
+			query->error = (dnssession->mxfound) ? DNS_OK : DNS_ENOTFOUND;
 			if (query->error)
 				env->stats->lka.queries_failure++;
-			imsg_compose_event(query->asker, IMSG_DNS_HOST_END, 0,
-			    0, -1, query, sizeof(*query));
+			dns_reply(query, IMSG_DNS_HOST_END);
 			dnssession_destroy(dnssession);
 			return;
 		}
@@ -280,8 +298,7 @@ next:
 		free(ar.ar_cname);
 		memcpy(&query->ss, &ar.ar_sa.sa, ar.ar_sa.sa.sa_len);
 		query->error = 0;
-		imsg_compose_event(query->asker, IMSG_DNS_HOST, 0, 0, -1, query,
-		    sizeof(*query));
+		dns_reply(query, IMSG_DNS_HOST);
 		dnssession->mxfound++;
 	}
 
@@ -317,8 +334,7 @@ dns_asr_dispatch_cname(struct dnssession *dnssession)
 		query->error = ar.ar_err;
 		break;
 	}
-	imsg_compose_event(query->asker, IMSG_DNS_PTR, 0, 0, -1, query,
-	    sizeof(*query));
+	dns_reply(query, IMSG_DNS_PTR);
 	dnssession_destroy(dnssession);
 }
 

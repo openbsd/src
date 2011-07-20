@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.227 2011/06/09 17:41:52 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.228 2011/07/20 10:22:54 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -743,6 +743,14 @@ struct forward_req {
 	u_int8_t			 status;
 	char				 as_user[MAXLOGNAME];
 	struct envelope			 envelope;
+};
+
+enum dns_status {
+	DNS_OK = 0,
+	DNS_RETRY,
+	DNS_EINVAL,
+	DNS_ENONAME,
+	DNS_ENOTFOUND,
 };
 
 struct dns {
