@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_csinhl.c,v 1.1 2011/07/08 19:25:31 martynas Exp $	*/
+/*	$OpenBSD: s_csinhl.c,v 1.2 2011/07/20 19:28:33 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -51,8 +51,8 @@ csinhl(long double complex z)
 	long double complex w;
 	long double x, y;
 
-	x = creal(z);
-	y = cimag(z);
+	x = creall(z);
+	y = cimagl(z);
 	w = sinhl(x) * cosl(y) + (coshl(x) * sinl(y)) * I;
 	return (w);
 }

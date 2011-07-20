@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_ctanl.c,v 1.1 2011/07/08 19:25:31 martynas Exp $	*/
+/*	$OpenBSD: s_ctanl.c,v 1.2 2011/07/20 19:28:33 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -95,8 +95,8 @@ ctansl(long double complex z)
 	long double f, x, x2, y, y2, rn, t;
 	long double d;
 
-	x = fabsl(2.0L * creal(z));
-	y = fabsl(2.0L * cimag(z));
+	x = fabsl(2.0L * creall(z));
+	y = fabsl(2.0L * cimagl(z));
 
 	x = redupil(x);
 
@@ -138,8 +138,8 @@ ctanl(long double complex z)
 	long double complex w;
 	long double d, x, y;
 
-	x = creal(z);
-	y = cimag(z);
+	x = creall(z);
+	y = cimagl(z);
 	d = cosl(2.0L * x) + coshl(2.0L * y);
 
 	if (fabsl(d) < 0.25L) {

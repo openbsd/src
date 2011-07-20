@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_catanl.c,v 1.1 2011/07/08 19:25:31 martynas Exp $	*/
+/*	$OpenBSD: s_catanl.c,v 1.2 2011/07/20 19:28:33 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -96,8 +96,8 @@ catanl(long double complex z)
 	long double complex w;
 	long double a, t, x, x2, y;
 
-	x = creal(z);
-	y = cimag(z);
+	x = creall(z);
+	y = cimagl(z);
 
 	if ((x == 0.0L) && (y > 1.0L))
 		goto ovrf;

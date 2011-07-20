@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_casinf.c,v 1.2 2010/07/18 18:42:26 guenther Exp $	*/
+/*	$OpenBSD: s_casinf.c,v 1.3 2011/07/20 19:28:33 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -67,7 +67,7 @@ casinf(float complex z)
 
 	if(y == 0.0f) {
 		if(fabsf(x) > 1.0f) {
-			w = M_PI_2 + 0.0f * I;
+			w = (float)M_PI_2 + 0.0f * I;
 			/*mtherr( "casinf", DOMAIN );*/
 		}
 		else {

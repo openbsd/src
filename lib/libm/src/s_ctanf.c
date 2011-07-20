@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_ctanf.c,v 1.1 2008/09/07 20:36:09 martynas Exp $	*/
+/*	$OpenBSD: s_ctanf.c,v 1.2 2011/07/20 19:28:33 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -89,8 +89,8 @@ _ctansf(float complex z)
 {
 	float f, x, x2, y, y2, rn, t, d;
 
-	x = fabsf(2.0f * creal(z));
-	y = fabsf(2.0f * cimag(z));
+	x = fabsf(2.0f * crealf(z));
+	y = fabsf(2.0f * cimagf(z));
 
 	x = _redupif(x);
 
@@ -133,7 +133,7 @@ ctanf(float complex z)
 	float complex w;
 	float d;
 
-	d = cosf( 2.0f * creal(z) ) + coshf( 2.0f * cimag(z) );
+	d = cosf( 2.0f * crealf(z) ) + coshf( 2.0f * cimagf(z) );
 
 	if(fabsf(d) < 0.25f)
 		d = _ctansf(z);
@@ -143,6 +143,6 @@ ctanf(float complex z)
 		w = MAXNUMF + MAXNUMF * I;
 		return (w);
 	}
-	w = sinf (2.0f * creal(z)) / d + (sinhf (2.0f * cimag(z)) / d) * I;
+	w = sinf (2.0f * crealf(z)) / d + (sinhf (2.0f * cimagf(z)) / d) * I;
 	return (w);
 }

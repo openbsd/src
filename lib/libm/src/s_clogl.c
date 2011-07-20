@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_clogl.c,v 1.1 2011/07/08 19:25:31 martynas Exp $	*/
+/*	$OpenBSD: s_clogl.c,v 1.2 2011/07/20 19:28:33 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -67,7 +67,7 @@ clogl(long double complex z)
 	/*rr = sqrt(z->r * z->r  +  z->i * z->i);*/
 	p = cabsl(z);
 	p = logl(p);
-	rr = atan2l(cimag(z), creal(z));
+	rr = atan2l(cimagl(z), creall(z));
 	w = p + rr * I;
 	return (w);
 }

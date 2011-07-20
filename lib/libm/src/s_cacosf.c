@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_cacosf.c,v 1.1 2008/09/07 20:36:09 martynas Exp $	*/
+/*	$OpenBSD: s_cacosf.c,v 1.2 2011/07/20 19:28:33 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -55,6 +55,6 @@ cacosf(float complex z)
 	float complex w;
 
 	w = casinf( z );
-	w = (M_PI_2 - creal (w)) - cimag (w) * I;
+	w = ((float)M_PI_2 - crealf (w)) - cimagf (w) * I;
 	return (w);
 }

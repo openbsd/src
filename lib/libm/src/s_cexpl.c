@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_cexpl.c,v 1.1 2011/07/08 19:25:31 martynas Exp $	*/
+/*	$OpenBSD: s_cexpl.c,v 1.2 2011/07/20 19:28:33 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -63,8 +63,7 @@ cexpl(long double complex z)
 	long double complex w;
 	long double r;
 
-	r = expl(creal(z));
-	w = r * cosl((long double)cimag(z)) +
-	    (r * sinl((long double)cimag(z))) * I;
+	r = expl(creall(z));
+	w = r * cosl(cimagl(z)) + (r * sinl(cimagl(z))) * I;
 	return (w);
 }

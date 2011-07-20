@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_casinl.c,v 1.1 2011/07/08 19:25:31 martynas Exp $	*/
+/*	$OpenBSD: s_casinl.c,v 1.2 2011/07/20 19:28:33 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -68,8 +68,8 @@ casinl(long double complex z)
 	long double x, y, b;
 	static long double complex ca, ct, zz, z2;
 
-	x = creal(z);
-	y = cimag(z);
+	x = creall(z);
+	y = cimagl(z);
 
 	if (y == 0.0L) {
 		if (fabsl(x) > 1.0L) {
@@ -119,7 +119,7 @@ casinl(long double complex z)
 	/* cmul(&ca, &ca, &zz) */
 	/* x * x  -  y * y */
 	zz = (x - y) * (x + y) + (2.0L * x * y) * I;
-	zz = 1.0L - creal(zz) - cimag(zz) * I;
+	zz = 1.0L - creall(zz) - cimagl(zz) * I;
 	z2 = csqrtl(zz);
 
 	zz = ct + z2;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_ctanhl.c,v 1.1 2011/07/08 19:25:31 martynas Exp $	*/
+/*	$OpenBSD: s_ctanhl.c,v 1.2 2011/07/20 19:28:33 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -52,8 +52,8 @@ ctanhl(long double complex z)
 	long double complex w;
 	long double x, y, d;
 
-	x = creal(z);
-	y = cimag(z);
+	x = creall(z);
+	y = cimagl(z);
 	d = coshl(2.0L * x) + cosl(2.0L * y);
 	w = sinhl(2.0L * x) / d + (sinl(2.0L * y) / d) * I;
 	return (w);
