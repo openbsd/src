@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.46 2011/07/20 19:00:35 sthen Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.47 2011/07/21 01:03:30 sthen Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -5293,9 +5293,8 @@ mpii_create_sensors(struct mpii_softc *sc)
 	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensordev.xname));
 
-	for (i = sc->sc_vd_id_low; i < sc->sc_vd_id_low + sc->sc_vd_count;
-	     i++) {
-		link = scsi_get_link(ssc, i, 0);
+	for (i = 0; i < sc->sc_vd_count; i++) {
+		link = scsi_get_link(ssc, i + sc->sc_vd_id_low, 0);
 		if (link == NULL)
 			goto bad;
 
