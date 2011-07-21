@@ -1,4 +1,4 @@
-/*	$OpenBSD: smfb.c,v 1.12 2011/05/25 21:15:46 miod Exp $	*/
+/*	$OpenBSD: smfb.c,v 1.13 2011/07/21 20:36:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -20,13 +20,16 @@
  * SiliconMotion SM502 and SM712 frame buffer driver.
  *
  * Assumes its video output is an LCD panel, in 5:6:5 mode, and fixed
- * 1024x600 resolution.
+ * 1024x600 or 800x480 resolution, depending on the system model.
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <mips64/include/archtype.h>
+
+#include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/cpu.h>
 
@@ -364,8 +367,19 @@ smfb_setup(struct smfb *fb, bus_space_tag_t memt, bus_space_handle_t memh,
 	int rc;
 
 	ri = &fb->ri;
-	ri->ri_width = 1024;
-	ri->ri_height = 600;
+	switch (sys_platform->system_type) {
+	case LOONGSON_EBT700:
+		ri->ri_width = 800;
+		ri->ri_height = 480;
+		break;
+	default:
+	case LOONGSON_GDIUM:
+	case LOONGSON_LYNLOONG:
+	case LOONGSON_YEELOONG:
+		ri->ri_width = 1024;
+		ri->ri_height = 600;
+		break;
+	}
 	ri->ri_depth = 16;
 	ri->ri_stride = (ri->ri_width * ri->ri_depth) / 8;
 	ri->ri_flg = RI_CENTER | RI_CLEAR | RI_FULLCLEAR;

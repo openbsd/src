@@ -1,4 +1,4 @@
-/*	$OpenBSD: kb3310.c,v 1.16 2010/10/14 21:23:04 pirofti Exp $	*/
+/*	$OpenBSD: kb3310.c,v 1.17 2011/07/21 20:36:12 miod Exp $	*/
 /*
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
  *
@@ -132,6 +132,7 @@ ykbec_match(struct device *parent, void *match, void *aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;
 
+	/* XXX maybe allow LOONGSON_EBT700 ??? */
 	if (sys_platform->system_type != LOONGSON_YEELOONG)
 		return (0);
 

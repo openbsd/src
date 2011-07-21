@@ -1,4 +1,4 @@
-/*	$OpenBSD: yeeloong_machdep.c,v 1.16 2011/04/15 20:40:06 deraadt Exp $	*/
+/*	$OpenBSD: yeeloong_machdep.c,v 1.17 2011/07/21 20:36:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -17,8 +17,9 @@
  */
 
 /*
- * Lemote {Fu,Lyn,Yee}loong specific code and configuration data.
- * (this file really ought to be named lemote_machdep.c by now)
+ * eBenton EBT700 and Lemote {Fu,Lyn,Yee}loong specific code and
+ * configuration data.
+ * (this file probably ought to be named lemote_machdep.c by now)
  */
 
 #include <sys/param.h>
@@ -200,6 +201,29 @@ const struct platform yeeloong_platform = {
 #if NYKBEC > 0
 	.suspend = ykbec_suspend,
 	.resume = ykbec_resume
+#endif
+};
+
+/* eBenton EBT700 is similar to Lemote Yeeloong, except for a smaller screen */
+const struct platform ebenton_platform = {
+	.system_type = LOONGSON_EBT700,
+	.vendor = "eBenton",
+	.product = "EBT700",
+
+	.bonito_config = &lemote_bonito,
+	.isa_chipset = &lemote_isa_chipset,
+	.legacy_io_ranges = yeeloong_legacy_ranges,
+
+	.setup = NULL,
+	.device_register = lemote_device_register,
+
+	.powerdown = yeeloong_powerdown,
+	.reset = lemote_reset,
+#ifdef notyet
+#if NYKBEC > 0
+	.suspend = ykbec_suspend,
+	.resume = ykbec_resume
+#endif
 #endif
 };
 
