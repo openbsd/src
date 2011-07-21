@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.68 2010/05/26 08:22:11 jmc Exp $
+.\"	$OpenBSD: malloc.3,v 1.69 2011/07/21 20:34:32 jasper Exp $
 .\"
-.Dd $Mdocdate: May 26 2010 $
+.Dd $Mdocdate: July 21 2011 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -202,7 +202,7 @@ i.e. avoid allocations like the following:
 if ((newp = realloc(p, num * size)) == NULL) {
 	...
 .Ed
-.Pp
+.Sh MALLOC_OPTIONS
 Malloc will first look for a symbolic link called
 .Pa /etc/malloc.conf
 and next check the environment for a variable called
