@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.107 2011/05/16 21:05:52 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.108 2011/07/21 23:29:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -155,6 +155,32 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 	case IMSG_CTL_VERBOSE:
 		log_verbose(*(int *)imsg->data);
 		return;
+
+	case IMSG_RUNNER_SCHEDULE:
+		ramqueue_reschedule(&env->sc_rqueue,
+		    *(u_int64_t *)imsg->data);
+		runner_reset_events();		
+		return;
+
+	case IMSG_RUNNER_REMOVE: {
+		u_int64_t ullval = *(u_int64_t *)imsg->data;
+		struct envelope	 envelope;
+		struct ramqueue_envelope *rq_evp;
+		
+		if (! queue_envelope_load(Q_QUEUE, ullval, &envelope))
+			return;
+		
+		rq_evp = ramqueue_envelope_by_id(&env->sc_rqueue, ullval);
+		if (rq_evp == NULL)
+			return;
+
+		ramqueue_remove(&env->sc_rqueue, rq_evp);
+
+		queue_envelope_delete(Q_QUEUE, &envelope);
+
+		runner_reset_events();
+		return;
+	}
 	}
 
 	fatalx("runner_imsg: unexpected imsg");
@@ -217,6 +243,7 @@ runner(void)
 	struct event	 ev_sigterm;
 
 	struct peer peers[] = {
+		{ PROC_CONTROL,	imsg_dispatch },
 		{ PROC_QUEUE,	imsg_dispatch }
 	};
 

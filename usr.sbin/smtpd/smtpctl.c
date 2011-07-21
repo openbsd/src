@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.60 2011/05/01 12:57:11 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.61 2011/07/21 23:29:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -27,6 +27,7 @@
 #include <sys/param.h>
 
 #include <err.h>
+#include <errno.h>
 #include <event.h>
 #include <imsg.h>
 #include <stdio.h>
@@ -128,6 +129,28 @@ connected:
 	case NONE:
 		usage();
 		/* not reached */
+
+	case SCHEDULE:
+	case REMOVE: {
+		u_int64_t ulval;
+		char *ep;
+
+		errno = 0;
+		ulval = strtoul(res->data, &ep, 16);
+		if (res->data[0] == '\0' || *ep != '\0')
+			errx(1, "invalid msgid/evpid");
+		if (errno == ERANGE && ulval == ULLONG_MAX)
+			errx(1, "invalid msgid/evpid");
+
+		if (res->action == SCHEDULE)
+			imsg_compose(ibuf, IMSG_RUNNER_SCHEDULE, 0, 0, -1, &ulval,
+			    sizeof(ulval));
+		if (res->action == REMOVE)
+			imsg_compose(ibuf, IMSG_RUNNER_REMOVE, 0, 0, -1, &ulval,
+			    sizeof(ulval));
+		break;
+	}
+
 	case SHUTDOWN:
 		imsg_compose(ibuf, IMSG_CTL_SHUTDOWN, 0, 0, -1, NULL, 0);
 		break;
@@ -185,6 +208,8 @@ connected:
 				break;
 			switch(res->action) {
 			/* case RELOAD: */
+			case REMOVE:
+			case SCHEDULE:
 			case SHUTDOWN:
 			case PAUSE_MDA:
 			case PAUSE_MTA:

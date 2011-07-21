@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.228 2011/07/20 10:22:54 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.229 2011/07/21 23:29:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -157,6 +157,9 @@ enum imsg_type {
 	IMSG_QUEUE_MESSAGE_FILE,
 	IMSG_QUEUE_SCHEDULE,
 	IMSG_QUEUE_REMOVE,
+
+	IMSG_RUNNER_REMOVE,
+	IMSG_RUNNER_SCHEDULE,
 
 	IMSG_BATCH_CREATE,
 	IMSG_BATCH_APPEND,
@@ -1089,6 +1092,8 @@ int ramqueue_batch_is_empty(struct ramqueue_batch *);
 int ramqueue_host_is_empty(struct ramqueue_host *);
 void ramqueue_remove_batch(struct ramqueue_host *, struct ramqueue_batch *);
 void ramqueue_remove_host(struct ramqueue *, struct ramqueue_host *);
+void ramqueue_reschedule(struct ramqueue *, u_int64_t);
+struct ramqueue_envelope *ramqueue_envelope_by_id(struct ramqueue *, u_int64_t);
 struct ramqueue_envelope *ramqueue_first_envelope(struct ramqueue *);
 struct ramqueue_envelope *ramqueue_next_envelope(struct ramqueue *);
 struct ramqueue_envelope *ramqueue_batch_first_envelope(struct ramqueue_batch *);
