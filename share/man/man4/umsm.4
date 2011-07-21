@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umsm.4,v 1.68 2011/07/08 23:11:57 yuo Exp $
+.\"	$OpenBSD: umsm.4,v 1.69 2011/07/21 08:25:05 dcoppa Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 8 2011 $
+.Dd $Mdocdate: July 21 2011 $
 .Dt UMSM 4
 .Os
 .Sh NAME
@@ -61,6 +61,7 @@ driver:
 .It Li "Huawei Mobile E182" Ta Ta USB
 .It Li "Huawei Mobile E220" Ta Ta USB
 .It Li "Huawei Mobile E510" Ta Ta USB
+.It Li "Huawei Mobile E1750" Ta Ta USB
 .It Li "Huawei Mobile E1752" Ta Ta USB
 .It Li "Huawei Mobile Connect E169g" Ta Ta USB
 .It Li "Huawei Mobile Connect E618" Ta Ta USB
@@ -72,6 +73,7 @@ driver:
 .It Li "Novatel Wireless U760" Ta Ta USB
 .It Li "NTT DoCoMo A2502" Ta Ta USB
 .It Li "ONDA Communication H600" Ta Ta CardBus
+.It Li "ONDA Communication MSA110UP" Ta Ta USB
 .It Li "Option GlobeSurfer ICON7.2" Ta Ta USB
 .It Li "Option GlobeTrotter 3G+" Ta Ta CardBus
 .It Li "Option GlobeTrotter 3G Quad" Ta Ta CardBus
@@ -90,6 +92,7 @@ driver:
 .It Li "Sierra Wireless AirCard 881U" Ta Ta USB
 .It Li "Sierra Wireless Inc. USB 305" Ta Ta USB
 .It Li "Softbank C01SW (Sierra OEM)" Ta Ta USB
+.It Li "Toshiba 3G HSDPA MiniCard" Ta Ta PCI Express Mini Card
 .It Li "Vodafone Mobile Connect 3G" Ta Ta CardBus
 .It Li "Vodafone Mobile Broadband K3765" Ta Ta USB
 .It Li "ZTE AC2746" Ta Ta USB
@@ -106,7 +109,6 @@ Devices suspected of being compatible are:
 .It Li "Huawei E270+" Ta Ta USB
 .It Li "Huawei E1550" Ta Ta USB
 .It Li "Huawei E1690" Ta Ta USB
-.It Li "Huawei E1750" Ta Ta USB
 .It Li "Huawei E1762" Ta Ta USB
 .It Li "Huawei E1820" Ta Ta USB
 .It Li "Novatel Wireless ExpressCard" Ta ExpressCard
