@@ -1,19 +1,8 @@
-#	$OpenBSD: Makefile.inc,v 1.7 2011/04/15 03:11:38 deraadt Exp $
-
-kernels: bsd bootblocks
-	cp ${.CURDIR}/../sys/arch/landisk/compile/GENERIC/bsd \
-	    ${RELEASEDIR}/bsd
-
-bsd:
-	cd ${.CURDIR}/../sys/arch/landisk/conf && config GENERIC
-	cd ${.CURDIR}/../sys/arch/landisk/compile/GENERIC && \
-	    ${MAKE} clean && exec ${MAKE}
+#	$OpenBSD: Makefile.inc,v 1.8 2011/07/22 09:30:54 espie Exp $
 
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/mbr ${RELEASEDIR}
 	cp ${DESTDIR}/usr/mdec/xxboot ${RELEASEDIR}
 	cp ${DESTDIR}/usr/mdec/boot ${RELEASEDIR}
 
-MDEXT=	bsd mbr bsd.rd xxboot boot miniroot${OSrev}.fs
-
-.PHONY: bsd bootblocks
+MDEXT=	mbr bsd.rd xxboot boot miniroot${OSrev}.fs

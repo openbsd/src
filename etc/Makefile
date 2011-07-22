@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.308 2011/07/17 00:28:04 david Exp $
+#	$OpenBSD: Makefile,v 1.309 2011/07/22 09:30:54 espie Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -6,10 +6,27 @@ MTREEDIR=	/etc/mtree
 
 NOOBJ=
 
+KERNELS = GENERIC bsd
+
 .if exists(etc.${MACHINE}/Makefile.inc)
 .include "etc.${MACHINE}/Makefile.inc"
 .endif
 
+.for CONF K in ${KERNELS}
+.  if !target($K)
+$K:
+	cd ../sys/arch/${MACHINE}/conf && config ${CONF}
+	cd ../sys/arch/${MACHINE}/compile/${CONF} && \
+	    ${MAKE} clean && exec ${MAKE}
+.  endif
+ALL_KERNELS += $K
+.endfor
+
+kernels: bootblocks ${ALL_KERNELS}
+.for CONF K in ${KERNELS}
+	cp ../sys/arch/${MACHINE}/compile/${CONF}/bsd ${RELEASEDIR}/$K
+.endfor
+	
 # -rw-r--r--
 BINOWN= root
 BINGRP= wheel
@@ -295,7 +312,7 @@ release-sets:
 
 sha:
 	-cd ${RELEASEDIR}; \
-	    sum -a sha256 INSTALL.`arch -ks` ${MDEXT} ${MISETS} > SHA256
+	    sum -a sha256 INSTALL.`arch -ks` ${ALL_KERNELS} ${MDEXT} ${MISETS} > SHA256
 
 release: distribution kernels release-sets distrib sha
 
@@ -319,7 +336,9 @@ update-moduli:
 	) > moduli
 
 .PHONY: distribution-etc-root-var distribution distrib-dirs \
-	release allarchs kernels release-sets m4 install-mtree
+	release allarchs kernels release-sets m4 install-mtree \
+	bootblocks ${ALL_KERNELS}
+	
 
 SUBDIR+= etc.alpha etc.amd64 etc.armish etc.aviion etc.hp300 etc.hppa
 SUBDIR+= etc.hppa64 etc.i386 etc.landisk etc.loongson etc.luna88k 

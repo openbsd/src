@@ -1,35 +1,11 @@
-#	$OpenBSD: Makefile.inc,v 1.13 2011/04/15 03:11:38 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.14 2011/07/22 09:30:54 espie Exp $
 
-kernels: bsd bootblocks
-	cp ${.CURDIR}/../sys/arch/sgi/compile/GENERIC-IP27/bsd \
-	    ${RELEASEDIR}/bsd.IP27
-	cp ${.CURDIR}/../sys/arch/sgi/compile/GENERIC-IP30/bsd \
-	    ${RELEASEDIR}/bsd.IP30
-	cp ${.CURDIR}/../sys/arch/sgi/compile/GENERIC-IP30.MP/bsd \
-	    ${RELEASEDIR}/bsd.mp.IP30
-	cp ${.CURDIR}/../sys/arch/sgi/compile/GENERIC-IP32/bsd \
-	    ${RELEASEDIR}/bsd.IP32
-
-bsd:
-	cd ${.CURDIR}/../sys/arch/sgi/conf && config GENERIC-IP27
-	cd ${.CURDIR}/../sys/arch/sgi/compile/GENERIC-IP27 && \
-	    ${MAKE} clean && exec ${MAKE}
-	cd ${.CURDIR}/../sys/arch/sgi/conf && config GENERIC-IP30
-	cd ${.CURDIR}/../sys/arch/sgi/compile/GENERIC-IP30 && \
-	    ${MAKE} clean && exec ${MAKE}
-	cd ${.CURDIR}/../sys/arch/sgi/conf && config GENERIC-IP30.MP
-	cd ${.CURDIR}/../sys/arch/sgi/compile/GENERIC-IP30.MP && \
-	    ${MAKE} clean && exec ${MAKE}
-	cd ${.CURDIR}/../sys/arch/sgi/conf && config GENERIC-IP32
-	cd ${.CURDIR}/../sys/arch/sgi/compile/GENERIC-IP32 && \
-	    ${MAKE} clean && exec ${MAKE}
+KERNELS = GENERIC-IP27 bsd.IP27 GENERIC-IP30 bsd.IP30 \
+	GENERIC-IP30.MP bsd.mp.IP30 GENERIC-IP32 bsd.IP32
 
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/boot32 ${RELEASEDIR}
 	cp ${DESTDIR}/usr/mdec/boot64 ${RELEASEDIR}
 
-MDEXT=	bsd.IP27 bsd.rd.IP27 bsd.IP30 bsd.mp.IP30 bsd.rd.IP30 \
-	bsd.IP32 bsd.rd.IP32 \
+MDEXT=	bsd.rd.IP27 bsd.rd.IP30 bsd.rd.IP32 \
 	boot32 boot64 cd${OSrev}.iso
-
-.PHONY: bsd bootblocks
