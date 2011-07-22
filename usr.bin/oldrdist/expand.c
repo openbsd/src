@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.13 2011/04/06 11:36:26 miod Exp $	*/
+/*	$OpenBSD: expand.c,v 1.14 2011/07/22 18:26:18 matthew Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -300,7 +300,7 @@ matchdir(pattern)
 			return;
 		goto patherr2;
 	}
-	if (fstat(dirp->dd_fd, &stb) < 0)
+	if (fstat(dirfd(dirp), &stb) < 0)
 		goto patherr1;
 	if (!ISDIR(stb.st_mode)) {
 		errno = ENOTDIR;
