@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.550 2011/07/21 08:16:35 dcoppa Exp $
+$OpenBSD: usbdevs,v 1.551 2011/07/22 11:34:17 dcoppa Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1964,6 +1964,7 @@ product HUAWEI Mobile		0x1008	HUAWEI Mobile Modem
 product HUAWEI E1750		0x1406	HUAWEI Mobile Modem
 product HUAWEI E180		0x140c	HUAWEI Mobile E180
 product HUAWEI E510		0x1411	HUAWEI Mobile E510
+product HUAWEI E181		0x1414	HUAWEI Mobile E181
 product HUAWEI E1752		0x1417	HUAWEI Mobile Modem
 product HUAWEI E182		0x1429	HUAWEI Mobile Modem
 product HUAWEI E161		0x1446	HUAWEI Mobile Modem
