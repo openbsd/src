@@ -1,5 +1,7 @@
-
-/* MODULE							HTAABrow.c
+/*
+ * $LynxId: HTAABrow.c,v 1.29 2009/01/03 00:55:16 tom Exp $
+ *
+ * MODULE							HTAABrow.c
  *		BROWSER SIDE ACCESS AUTHORIZATION MODULE
  *
  *	Contains the code for keeping track on server hostnames,
@@ -140,8 +142,9 @@ static int proxy_portnumber = 80;
 void HTAAForwardAuth_set(const char *scheme_name,
 			 const char *scheme_specifics)
 {
-    int len = 20 + (scheme_name ? strlen(scheme_name) : 0)
-    + (scheme_specifics ? strlen(scheme_specifics) : 0);
+    unsigned len = (20
+		    + (scheme_name ? strlen(scheme_name) : 0)
+		    + (scheme_specifics ? strlen(scheme_specifics) : 0));
 
     FREE(HTAAForwardAuth);
     if ((HTAAForwardAuth = typecallocn(char, len)) == 0)
@@ -556,7 +559,7 @@ static char *compose_auth_string(HTAAScheme scheme, HTAASetup * setup, BOOL IsPr
 {
     char *cleartext = NULL;	/* Cleartext presentation */
     char *ciphertext = NULL;	/* Encrypted presentation */
-    int len;
+    unsigned len;
     char *msg = NULL;
     char *username = NULL;
     char *password = NULL;
@@ -620,9 +623,9 @@ static char *compose_auth_string(HTAAScheme scheme, HTAASetup * setup, BOOL IsPr
 	 * prompting function, but the password is NULL-ed and always replaced. 
 	 * - FM
 	 */
-	len = strlen(realm->realmname) +
-	    strlen(theHost ?
-		   theHost : "??") + 50;
+	len = (strlen(realm->realmname) +
+	       strlen(theHost ?
+		      theHost : "??") + 50);
 	HTSprintf0(&msg, gettext("Username for '%s' at %s '%s%s':"),
 		   realm->realmname,
 		   (IsProxy ? "proxy" : "server"),
@@ -654,8 +657,8 @@ static char *compose_auth_string(HTAAScheme scheme, HTAASetup * setup, BOOL IsPr
 	}
     }
 
-    len = strlen(NonNull(realm->username)) +
-	strlen(NonNull(realm->password)) + 3;
+    len = (strlen(NonNull(realm->username)) +
+	   strlen(NonNull(realm->password)) + 3);
 
     if (scheme == HTAA_PUBKEY) {
 #ifdef PUBKEY
@@ -738,6 +741,7 @@ static HTAAScheme HTAA_selectScheme(HTAASetup * setup)
     if (setup && setup->valid_schemes) {
 	for (scheme = HTAA_BASIC; scheme < HTAA_MAX_SCHEMES; scheme++) {
 	    void *object = (void *) scheme;
+
 	    if (-1 < HTList_indexOf(setup->valid_schemes, object))
 		return (HTAAScheme) scheme;
 	}
@@ -810,7 +814,7 @@ char *HTAA_composeAuth(const char *hostname,
     char *auth_string;
     BOOL retry;
     HTAAScheme scheme;
-    int len;
+    unsigned len;
 
     /*
      * Setup atexit() freeing if not done already.  - FM

@@ -163,7 +163,7 @@ The HTPresentation and HTConverter types
 	float quality;		/* Between 0 (bad) and 1 (good) */
 	float secs;
 	float secs_per_byte;
-	long int maxbytes;
+	off_t maxbytes;
 	BOOL get_accept;	/* list in "Accept:" for GET */
 	int accept_opt;		/* matches against LYAcceptMedia */
     };

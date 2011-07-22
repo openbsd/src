@@ -208,6 +208,7 @@ extern "C" {
 
     extern HTStyle *LYstyles(int style_number);
     extern BOOL LYBadHTML(HTStructured * me);
+    extern void LYShowBadHTML(const char *s);
 
 /*
  *	Semi-Private functions. - FM

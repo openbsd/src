@@ -1,3 +1,4 @@
+/* $LynxId: LYUtils.h,v 1.80 2009/02/01 23:28:26 tom Exp $ */
 #ifndef LYUTILS_H
 #define LYUTILS_H
 
@@ -96,6 +97,7 @@ extern "C" {
 #define LYIsListpageTitle(name) \
     (!strcmp((name), LIST_PAGE_TITLE))
 #endif
+#define LYIsTilde(ch)     ((ch) == '~')
 #define LYIsHtmlSep(ch) ((ch) == '/')
 #define findPoundSelector(address) strchr(address, '#')
 #define restorePoundSelector(pound) if ((pound) != NULL) *(pound) = '#'
@@ -107,8 +109,8 @@ extern "C" {
     extern BOOLEAN LYCanWriteFile(const char *name);
     extern BOOLEAN LYCloseInput(FILE *fp);
     extern BOOLEAN LYCloseOutput(FILE *fp);
-    extern BOOLEAN LYExpandHostForURL(char **AllocatedString, char
-				      *prefix_list, char *suffix_list);
+    extern BOOLEAN LYExpandHostForURL(char **AllocatedString,
+				      char *prefix_list, char *suffix_list);
     extern BOOLEAN LYFixCursesOnForAccess(const char *addr, const char *physical);
     extern BOOLEAN LYPathOffHomeOK(char *fbuffer, size_t fbuffer_size);
     extern BOOLEAN LYValidateFilename(char *result, char *given);
@@ -127,17 +129,19 @@ extern "C" {
     extern FILE *LYOpenTempRewrite(char *result, const char *suffix, const char *mode);
     extern FILE *LYReopenTemp(char *name);
     extern char *Current_Dir(char *pathname);
+    extern char *LYAbsOrHomePath(char **fname);
     extern char *LYAddPathToSave(char *fname);
     extern char *LYGetEnv(const char *name);
     extern char *LYLastPathSep(const char *path);
     extern char *LYPathLeaf(char *pathname);
+    extern char *LYTildeExpand(char **pathname, BOOL embedded);
     extern char *LYgetXDisplay(void);
     extern char *strip_trailing_slash(char *my_dirname);
     extern char *trimPoundSelector(char *address);
     extern const char *Home_Dir(void);
     extern const char *LYGetHiliteStr(int cur, int count);
     extern const char *LYSysShell(void);
-    extern const char *index_to_restriction(int inx);
+    extern const char *index_to_restriction(unsigned inx);
     extern const char *wwwName(const char *pathname);
     extern int HTCheckForInterrupt(void);
     extern int LYConsoleInputFD(BOOLEAN need_selectable);
@@ -212,8 +216,9 @@ extern "C" {
     extern int Cygwin_Shell(void);
 #endif
 
-#ifdef _WIN_CC
+#if defined(_WIN_CC) || defined(WIN_EX)
     extern int exec_command(char *cmd, int wait_flag);	/* xsystem.c */
+    extern char *quote_pathname(char *pathname);
     extern int xsystem(char *cmd);
 #endif
 
@@ -283,6 +288,10 @@ extern "C" {
 #define LYRelaxFilePermissions(name)	/* nothing */
 #endif
 
+#if defined(_WINDOWS)
+    extern int win32_check_interrupt(void);
+#endif
+
 /*
  *  Whether or not the status line must be shown.
  */
@@ -324,26 +333,27 @@ extern "C" {
 
 	DATA_URL_TYPE,
 
+	LYNXCGI_URL_TYPE,
 	LYNXEXEC_URL_TYPE,
 	LYNXPROG_URL_TYPE,
-	LYNXCGI_URL_TYPE,
 
 	NEWSPOST_URL_TYPE,
 	NEWSREPLY_URL_TYPE,
 	SNEWSPOST_URL_TYPE,
 	SNEWSREPLY_URL_TYPE,
 
-	LYNXPRINT_URL_TYPE,
-	LYNXHIST_URL_TYPE,
-	LYNXDOWNLOAD_URL_TYPE,
-	LYNXKEYMAP_URL_TYPE,
-	LYNXIMGMAP_URL_TYPE,
-	LYNXCOOKIE_URL_TYPE,
-	LYNXDIRED_URL_TYPE,
-	LYNXOPTIONS_URL_TYPE,
+	LYNXCACHE_URL_TYPE,
 	LYNXCFG_URL_TYPE,
 	LYNXCOMPILE_OPTS_URL_TYPE,
+	LYNXCOOKIE_URL_TYPE,
+	LYNXDIRED_URL_TYPE,
+	LYNXDOWNLOAD_URL_TYPE,
+	LYNXHIST_URL_TYPE,
+	LYNXIMGMAP_URL_TYPE,
+	LYNXKEYMAP_URL_TYPE,
 	LYNXMESSAGES_URL_TYPE,
+	LYNXOPTIONS_URL_TYPE,
+	LYNXPRINT_URL_TYPE,
 
 	PROXY_URL_TYPE
 
@@ -419,6 +429,10 @@ extern "C" {
 #define isWAIS_URL(addr)     !strncasecomp(addr, STR_WAIS_URL, LEN_WAIS_URL)
 
 /* internal URLs */
+#define STR_LYNXCACHE        "LYNXCACHE:"
+#define LEN_LYNXCACHE        10
+#define isLYNXCACHE(addr)    !strncasecomp(addr, STR_LYNXCACHE, LEN_LYNXCACHE)
+
 #define STR_LYNXCFG          "LYNXCFG:"
 #define LEN_LYNXCFG          8
 #define isLYNXCFG(addr)      !strncasecomp(addr, STR_LYNXCFG, LEN_LYNXCFG)

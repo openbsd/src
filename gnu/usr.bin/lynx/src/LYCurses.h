@@ -1,3 +1,4 @@
+/* $LynxId: LYCurses.h,v 1.80 2009/04/07 00:03:47 tom Exp $ */
 #ifndef LYCURSES_H
 #define LYCURSES_H
 
@@ -49,6 +50,7 @@
 
 #ifdef USE_SLANG
 #include <slang.h>
+typedef unsigned long chtype;
 
 #undef WINDOW
 typedef struct {
@@ -115,7 +117,22 @@ typedef struct {
 
 #ifdef VMS
 #define FANCY_CURSES
+
 #endif /* VMS */
+
+#ifndef HAVE_TYPE_CHTYPE
+
+#ifdef __PDCURSES__
+#define HAVE_TYPE_CHTYPE 1
+#endif
+
+#if defined(_VMS_CURSES) || defined(VMS)
+typedef char chtype;
+
+#define HAVE_TYPE_CHTYPE 1
+#endif
+
+#endif /* ! HAVE_TYPE_CHTYPE */
 
 /*
  *	CR may be defined before the curses.h include occurs.
@@ -264,7 +281,7 @@ typedef struct {
 #if defined(NCURSES_VERSION)
 #define USE_CURSES_NODELAY 1
 #endif
-#endif	/* _WINDOWS || __MINGW32__ */
+#endif /* _WINDOWS || __MINGW32__ */
 
 #if defined(NCURSES_VERSION) && defined(__BEOS__)
 #define USE_CURSES_NODELAY 1
@@ -363,6 +380,11 @@ extern "C" {
 #define SECS_FMT "%.0f"
 #endif
 
+#ifdef NCURSES_VERSION
+    extern void _nc_freeall(void);	/* HAVE__NC_FREEALL */
+    extern void _nc_free_and_exit(int);		/* HAVE__NC_FREE_AND_EXIT */
+#endif
+
 /* Both slang and curses: */
 #ifndef TRUE
 #define TRUE  1
@@ -416,30 +438,12 @@ extern "C" {
 #define LYcolLimit (LYcols - 1)
 #endif
 
-/*
- * The scrollbar, if used, occupies the rightmost column.
- */
-#ifdef USE_SCROLLBAR
-#define LYbarWidth (LYShowScrollbar ? 1 : 0)
-#else
-#define LYbarWidth 0
-#endif
-
-/*
- * Usable limits for display:
- */
-#if defined(FANCY_CURSES) || defined(USE_SLANG)
-#define LYcolLimit (LYcols - LYbarWidth)
-#else
-#define LYcolLimit (LYcols - 1)
-#endif
-
 #ifdef USE_CURSES_PADS
     extern WINDOW *LYwin;
     extern int LYshiftWin;
     extern int LYwideLines;
     extern int LYtableCols;
-    extern BOOL LYuseCursesPads;
+    extern BOOLEAN LYuseCursesPads;
 
 #else
 #define LYwin stdscr
@@ -818,6 +822,7 @@ FANCY_CURSES.  Check your config.log to see why the FANCY_CURSES test failed.
 #endif
 
     extern void LYstowCursor(WINDOW * win, int row, int col);
+    extern void LYSetDisplayLines(void);
 
 #ifdef __cplusplus
 }

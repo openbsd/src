@@ -1,4 +1,7 @@
-/*		Manage different file formats			HTFormat.c
+/*
+ * $LynxId: HTFormat.c,v 1.68 2009/05/10 23:07:26 tom Exp $
+ *
+ *		Manage different file formats			HTFormat.c
  *		=============================
  *
  * Bugs:
@@ -98,6 +101,14 @@ void HTSetPresentation(const char *representation,
     if (pres == NULL)
 	outofmem(__FILE__, "HTSetPresentation");
 
+    CTRACE2(TRACE_CFG,
+	    (tfp,
+	     "HTSetPresentation rep=%s, command=%s, test=%s, qual=%f\n",
+	     NonNull(representation),
+	     NonNull(command),
+	     NonNull(testcommand),
+	     quality));
+
     pres->rep = HTAtom_for(representation);
     pres->rep_out = WWW_PRESENT;	/* Fixed for now ... :-) */
     pres->converter = HTSaveAndExecute;		/* Fixed for now ...     */
@@ -149,6 +160,13 @@ void HTSetConversion(const char *representation_in,
 
     if (pres == NULL)
 	outofmem(__FILE__, "HTSetConversion");
+
+    CTRACE2(TRACE_CFG,
+	    (tfp,
+	     "HTSetConversion rep_in=%s, rep_out=%s, qual=%f\n",
+	     NonNull(representation_in),
+	     NonNull(representation_out),
+	     quality));
 
     pres->rep = HTAtom_for(representation_in);
     pres->rep_out = HTAtom_for(representation_out);
@@ -270,7 +288,7 @@ int HTGetCharacter(void)
 }
 
 #ifdef USE_SSL
-char HTGetSSLCharacter(void *handle)
+int HTGetSSLCharacter(void *handle)
 {
     char ch;
 
@@ -378,8 +396,9 @@ static HTPresentation *HTFindPresentation(HTFormat rep_in,
 	    if (pres->rep_out == rep_out) {
 		if (failsMailcap(pres, anchor))
 		    continue;
-		CTRACE((tfp, "FindPresentation: found exact match: %s\n",
-			HTAtom_name(pres->rep)));
+		CTRACE((tfp, "FindPresentation: found exact match: %s -> %s\n",
+			HTAtom_name(pres->rep),
+			HTAtom_name(pres->rep_out)));
 		return pres;
 
 	    } else if (!fill_in) {
@@ -394,8 +413,9 @@ static HTPresentation *HTFindPresentation(HTFormat rep_in,
 			strong_wildcard_match = pres;
 		    /* otherwise use the first one */
 		    CTRACE((tfp,
-			    "StreamStack: found strong wildcard match: %s\n",
-			    HTAtom_name(pres->rep)));
+			    "StreamStack: found strong wildcard match: %s -> %s\n",
+			    HTAtom_name(pres->rep),
+			    HTAtom_name(pres->rep_out)));
 		}
 	    }
 
@@ -411,8 +431,9 @@ static HTPresentation *HTFindPresentation(HTFormat rep_in,
 		    strong_subtype_wildcard_match = pres;
 		/* otherwise use the first one */
 		CTRACE((tfp,
-			"StreamStack: found strong subtype wildcard match: %s\n",
-			HTAtom_name(pres->rep)));
+			"StreamStack: found strong subtype wildcard match: %s -> %s\n",
+			HTAtom_name(pres->rep),
+			HTAtom_name(pres->rep_out)));
 	    }
 	}
 
@@ -497,8 +518,9 @@ HTStream *HTStreamStack(HTFormat rep_in,
 	if (match == &temp) {
 	    CTRACE((tfp, "StreamStack: Using %s\n", HTAtom_name(temp.rep_out)));
 	} else {
-	    CTRACE((tfp, "StreamStack: found exact match: %s\n",
-		    HTAtom_name(match->rep)));
+	    CTRACE((tfp, "StreamStack: found exact match: %s -> %s\n",
+		    HTAtom_name(match->rep),
+		    HTAtom_name(match->rep_out)));
 	}
 	result = (*match->converter) (match, anchor, sink);
     } else {
@@ -606,7 +628,7 @@ float HTStackValue(HTFormat rep_in,
 		(pres->rep_out == rep_out || pres->rep_out == wildcard)) {
 		float value = initial_value * pres->quality;
 
-		if (HTMaxSecs != 0.0)
+		if (HTMaxSecs > 0.0)
 		    value = value - (length * pres->secs_per_byte + pres->secs)
 			/ HTMaxSecs;
 		return value;
@@ -799,7 +821,6 @@ int HTCopy(HTParentAnchor *anchor,
 		    CTRACE((tfp,
 			    "HTCopy: Unexpected server disconnect. Treating as completed.\n"));
 		    status = 0;
-		    break;
 #else /* !UNIX */
 		    /*
 		     * Treat what we've gotten already as the complete
@@ -808,7 +829,6 @@ int HTCopy(HTParentAnchor *anchor,
 		    CTRACE((tfp,
 			    "HTCopy: Unexpected server disconnect.  Treating as completed.\n"));
 		    status = 0;
-		    break;
 #endif /* UNIX */
 		}
 #ifdef UNIX
@@ -841,9 +861,9 @@ int HTCopy(HTParentAnchor *anchor,
 	 * put up by the HTTP module or elsewhere can linger in the statusline
 	 * for a while.  - kw
 	 */
-	suppress_readprogress = (anchor && anchor->content_type &&
-				 !strcmp(anchor->content_type,
-					 "message/x-http-redirection"));
+	suppress_readprogress = (BOOL) (anchor && anchor->content_type &&
+					!strcmp(anchor->content_type,
+						"message/x-http-redirection"));
 #ifdef NOT_ASCII
 	{
 	    char *p;
@@ -1082,6 +1102,7 @@ static int HTGzFileCopy(gzFile gzfp, HTStream *sink)
 static const char *zError(int status)
 {
     static char result[80];
+
     sprintf(result, "zlib error %d", status);
     return result;
 }
@@ -1136,7 +1157,7 @@ static int HTZzFileCopy(FILE *zzfp, HTStream *sink)
     status = inflateInit(&s);
     if (status != Z_OK) {
 	CTRACE((tfp, "HTZzFileCopy inflateInit() %s\n", zError(status)));
-	exit_immediately(1);
+	exit_immediately(EXIT_FAILURE);
     }
     s.avail_in = 0;
     s.next_out = (Bytef *) output_buffer;
@@ -1420,10 +1441,8 @@ int HTParseFile(HTFormat rep_in,
     HTStreamClass targetClass;
     int rv;
 
-#ifdef SH_EX			/* 1998/01/04 (Sun) 16:04:09 */
     if (fp == NULL)
 	return HT_LOADED;
-#endif
 
     stream = HTStreamStack(rep_in, format_out, sink, anchor);
 

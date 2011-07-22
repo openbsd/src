@@ -1,11 +1,11 @@
-	Lynx SSL support for certificates - README.sslcerts file
+        Lynx SSL support for certificates - README.sslcerts file
 
 BACKGROUND:
 
 The original README.ssl document for lynx stated:
 
-	Note that the server... may not have a valid certificate. Lynx will not
-	complain, as it does not yet support certificates...
+        Note that the server... may not have a valid certificate. Lynx will not
+        complain, as it does not yet support certificates...
 
 Such lack of support is no longer the case.  Lynx now features excellent
 certificate management through the openssl project.  There is almost no
@@ -17,8 +17,8 @@ Lynx relies on openssl to not only encrypt connections over https, but also to
 determine whether it should even accept a certificate and establish a secure
 connection with a remote host. Because of this reliance upon openssl by lynx,
 most of this tutorial deals with how to use openssl to "install" both
-vendor-provided CA cert bundles as well as self-signed certs from trusted
-sources and, most importantly, how to get them recognized by lynx.
+vendor-provided CA cert bundles as well as self-signed certs from trusted sources
+and, most importantly, how to get them recognized by lynx.
 
 While lynx on many systems will transparently accept valid certificates, not
 all systems enjoy such functionality. Further, as noted above, older versions
@@ -29,7 +29,7 @@ self-signed certificate from a known server source and have it be trusted by
 client programs.
 
 Briefly, the procedure will involve confirming the default system location for
-certificates, possibly setting values for SSL_CERT_DIR and SSL_CERT_FILE in
+certificates, setting values for SSL_CERT_DIR and SSL_CERT_FILE in
 the environment, and converting and hashing the certificates using openssl
 utilities to enable recognition.
 
@@ -51,8 +51,8 @@ The ability to turn off reporting of this error to the user was added to
 lynx2.8.5dev16 as the FORCE_SSL_PROMPT setting in lynx.cfg as noted in the
 CHANGELOG:
 
-	This lets the user decide whether to ignore prompting for questionable
-	aspects of an SSL connection.
+        This lets the user decide whether to ignore prompting for questionable
+        aspects of an SSL connection.
 
 While this is a convenient setting to employ when using lynx to script
 https -dumps, it by definition ignores the issue of certificate validity
@@ -70,10 +70,9 @@ cert directory is /usr/local/ssl/certs, (it's often /etc/ssl/certs, but we
 need a point of departure for the discussion) and that lynx has been compiled
 --with-ssl.
 
-The default location for certs on your system may be different, or there may
-not be one.  You will have to substitute that location for
-	/usr/local/ssl/certs
-in the following instructions, and/or set environment variables.
+The default location for certs on your system may be different, or there may not
+be one. You will have to substitute that location for /usr/local/ssl/certs in
+the following instructions, and/or set environment variables.
 
 To determine the default location for certs on your system you may run the
 following command:
@@ -115,22 +114,32 @@ Note also that there is no CA cert bundle distributed with OpenSSL. The
 OpenSSL team specifically decided NOT to do that. Getting a set of trusted
 certificates is left up to the installer.
 
-It is a fairly trivial procedure to pull the bundle of trusted root certs out
-of a recent version of Internet Explorer. The MirOS BSD project also provides
-them. The procedure to convert and install them is detailed later in this
-document, and if you simply need to have commercially provided certificates
-trusted by lynx, you can skip down a few lines to the INSTALLING OR UPDATING
+It is no longer a fairly trivial procedure to pull the bundle of trusted root certs out
+of a recent version of Internet Explorer. Multiple certificates are no longer 
+exportable as a DER formatted file; extraction of a single certificate is the only
+export for DER, and DER is what converts to PEM.
+
+Users with access to Apple OS X can export all certificates from Keychain Access System Roots as
+a .pem file. Place this in SSL_CERT_DIR and hash it and you're done.
+
+The MirOS BSD project also provides them. The procedure to convert and install them 
+is detailed later in this document, and if you simply need to have commercially provided 
+certificates trusted by lynx, you can skip down a few lines to the INSTALLING OR UPDATING
 THE CA BUNDLE section.
+
+Extracted Mozilla cert bundles are available for download from the curl project,
+http://curl.haxx.se/docs/caextract.html along with a script to extract from Mozilla
+source.
+
 
 INSTALLING A SELF-SIGNED CERTIFICATE:
 
-When you would like to trust a self-signed (non-commercial) certificate you
-will need to get hold of the actual file.  If it's a cert local to your
-network you can ask the sysadmin to make it available for download as a link
-on a webpage.
+When you would like to trust a self-signed (non-commercial) certificate you will
+need to get hold of the actual file. If it's a cert local to your network you
+can ask the sysadmin to make it available for download as a link on a webpage.
 
-If such file is not human-readable it's probably DER formatted and will need
-to be converted to PEM format to allow openssl to use it.
+If such file is not human-readable it's probably DER formatted and will need to
+be converted to PEM format to allow openssl to use it.
 
 To convert DER formatted certificates into something openssl can deal with:
 
@@ -155,22 +164,23 @@ INSTALLING OR UPDATING THE CA BUNDLE:
 Now would be a good time to check to see if you have the bundle of CA certs
 /usr/local/ssl/cert.pem, or to update them.
 
-CA bundles are available in various places, such as the MirBSD distribution,
+CA bundles are available in various places, such as the MirOS BSD distribution,
 for those who want to take that route, or you can extract the current bundle
 from a current version of Internet Explorer (export them all from IE and
 transfer it onto your system).
 
-From MirOS, this cert bundle
+From MirOS, a cert bundle is available at
 
-http://cvs.mirbsd.de/src/etc/ssl.certs.shar
+http://caunter.ca/ssl.certs.shar
 
-includes the cacert.org certificate.  Download the latest revision; read the
+It includes the cacert.org certificate. Download the latest revision; read the
 file to see how to get the certs out.
 
 No hashing is necessary with this set of certs; it is already done; ignore
-the c_rehash usage below for this bundle.
+the c_rehash usage below for this bundle. Simply run `sh ssl.certs.shar` 
+in SSL_CERT_DIR.
 
-From IE certs extract as a PKCS7 file and need to be converted with something
+From IE 5.x certs extract as a PKCS7 file and need to be converted with something
 like:
 
 openssl pkcs7 -inform DER -in bundle.crt -outform PEM -out cert.pem \
@@ -185,8 +195,8 @@ Individual certs can also process if added and hashed in /usr/local/ssl/certs.
 We now have all of the individual certs we wish to trust in our certs
 directory, and the most recent bundle of CA certs as well.
 
-Confirm that you have the script c_rehash (See PRELIMINARY PROCEDURES; if it
-is not found, a copy is usually located in the tools directory of the openssl
+Confirm that you have the script c_rehash (See PRELIMINARY PROCEDURES; if it is
+not found, a copy is usually located in the tools directory of the openssl
 source tree. If you use this copy, it needs the execute bit set or it will not
 run).
 
@@ -210,10 +220,10 @@ All pem encoded certs in /usr/local/ssl/certs will now be recognized.
 
 SETTING AND EXPORTING ENVIRONMENT VARIABLES:
 
-If lynx is still not recognizing certs, environment variables may need
+If lynx is still not recognizing certs, environment variables need
 to be set; if on a sh type shell, the variables also need to be exported.
 
-The environment variables SSL_CERT_DIR and SSL_CERT_FILE only need to be set
+The environment variables SSL_CERT_DIR and SSL_CERT_FILE need to be set
 if a non-default location is used for certificates, or if certs just can't be
 found by lynx. They may be set as follows in /etc/profile, or a shell
 initialization .profile or .*shrc, if we run a non csh type shell, according
@@ -228,14 +238,14 @@ On csh type shells, you can use:
 setenv SSL_CERT_DIR "/usr/local/ssl/certs"
 setenv SSL_CERT_FILE "/usr/local/ssl/cert.pem"
 
-On many systems setting and exporting them makes all the difference. 
-Apparently this is not an issue on other systems, but this might help someone
-somewhere.
-
 Note that the environment variable SSL_CERT_FILE applies to the cert-bundle
 if used outside of the default location (/usr/local/ssl/cert.pem) compiled
-into OpenSSL.  There are issues with SSL_CERT_FILE in 0.9.6x versions of
-openssl.
+into OpenSSL. There are issues with SSL_CERT_FILE in 0.9.6x versions of openssl.
+
+The configuration file lynx.cfg allows a system SSL_CERT_FILE variable to be set
+which can simplify matters. 
+
+SSL_CERT_FILE:/etc/ssl/certs/ca-certificates.crt
 
 Make sure you have FORCE_SSL_PROMPT set to PROMPT in lynx.cfg like so:
 
@@ -249,6 +259,7 @@ SSL error:self signed certificate-Continue? (y)
 A quick check confirms that these procedures have the same effect with ssl
 errors in the pine program.
 
-Stef Caunter <stefan.caunter@mohawkcollege.ca>
+2003 updated 2009
+Stefan Caunter <stefan.caunter@mohawkcollege.ca>
 Mohawk College Department of Computer Science
 Hamilton Ontario Canada

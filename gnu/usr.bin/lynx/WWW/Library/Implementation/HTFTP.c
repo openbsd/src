@@ -1,4 +1,7 @@
-/*			File Transfer Protocol (FTP) Client
+/*
+ * $LynxId: HTFTP.c,v 1.89 2009/02/01 12:49:00 tom Exp $
+ *
+ *			File Transfer Protocol (FTP) Client
  *			for a WorldWideWeb browser
  *			===================================
  *
@@ -145,12 +148,12 @@ typedef struct _connection {
 #  define LY_SOCKLEN socklen_t
 #endif
 
-#define PUTC(c)      (*targetClass.put_character) (target, c)
-#define PUTS(s)      (*targetClass.put_string)    (target, s)
-#define START(e)     (*targetClass.start_element) (target, e, 0, 0, -1, 0)
-#define END(e)       (*targetClass.end_element)   (target, e, 0)
-#define FREE_TARGET  (*targetClass._free)         (target)
-#define ABORT_TARGET (*targetClass._free)         (target)
+#define PUTC(c)      (*target->isa->put_character) (target, c)
+#define PUTS(s)      (*target->isa->put_string)    (target, s)
+#define START(e)     (*target->isa->start_element) (target, e, 0, 0, -1, 0)
+#define END(e)       (*target->isa->end_element)   (target, e, 0)
+#define FREE_TARGET  (*target->isa->_free)         (target)
+#define ABORT_TARGET (*target->isa->_free)         (target)
 
 struct _HTStructured {
     const HTStructuredClass *isa;
@@ -179,21 +182,20 @@ static char *user_entered_password = NULL;
 static char *last_username_and_host = NULL;
 
 /*
- * ProFTPD 1.2.5rc1 is known to have a broken implementation of RETR.  If asked
- * to retrieve a directory, it gets confused and fails subsequent commands such
- * as CWD and LIST.  Since this is an unusual bug, we should remove this ifdef
- * at some point - TD 2004/1/1.
+ * Some ftp servers are known to have a broken implementation of RETR.  If
+ * asked to retrieve a directory, they get confused and fail subsequent
+ * commands such as CWD and LIST.
  */
-#define BROKEN_PROFTPD 1
-static int ProFTPD_bugs = FALSE;
+static int Broken_RETR = FALSE;
 
 /*
- * wu-ftpd 2.6.2(12) is known to have a broken implementation of EPSV.  The
+ * Some ftp servers are known to have a broken implementation of EPSV.  The
  * server will hang for a long time when we attempt to connect after issuing
- * this command - TD 2004/12/28
+ * this command.
  */
-#define BROKEN_WUFTPD 1
-static int WU_FTPD_bugs = FALSE;
+#ifdef INET6
+static int Broken_EPSV = FALSE;
+#endif
 
 typedef enum {
     GENERIC_SERVER
@@ -224,10 +226,12 @@ static int interrupted_in_next_data_char = FALSE;
 static PortNumber port_number = FIRST_TCP_PORT;
 #endif /* POLL_PORTS */
 
-static int master_socket = -1;	/* Listening socket = invalid   */
+static BOOL have_socket = FALSE;	/* true if master_socket is valid */
+static unsigned master_socket;	/* Listening socket = invalid */
+
 static char port_command[255];	/* Command for setting the port */
 static fd_set open_sockets;	/* Mask of active channels */
-static int num_sockets;		/* Number of sockets to scan */
+static unsigned num_sockets;	/* Number of sockets to scan */
 static PortNumber passive_port;	/* Port server specified for data */
 
 #define NEXT_CHAR HTGetCharacter()	/* Use function in HTFormat.c */
@@ -345,7 +349,7 @@ static int next_data_char(void)
 	if (status == HT_INTERRUPTED)
 	    interrupted_in_next_data_char = 1;
 	if (status <= 0)
-	    return -1;
+	    return EOF;
 	data_write_pointer = data_buffer + status;
 	data_read_pointer = data_buffer;
     }
@@ -458,7 +462,7 @@ static int write_cmd(const char *cmd)
 	    }
 	}
 #endif /* NOT_ASCII */
-	status = NETWRITE(control->socket, cmd, (int) strlen(cmd));
+	status = NETWRITE(control->socket, cmd, (unsigned) strlen(cmd));
 	if (status < 0) {
 	    CTRACE((tfp,
 		    "HTFTP: Error %d sending command: closing socket %d\n",
@@ -468,6 +472,25 @@ static int write_cmd(const char *cmd)
 	}
     }
     return 1;
+}
+
+/*
+ * For each string in the list, check if it is found in the response text.
+ * If so, return TRUE.
+ */
+static BOOL find_response(HTList *list)
+{
+    BOOL result = FALSE;
+    HTList *p = list;
+    char *value;
+
+    while ((value = (char *) HTList_nextObject(p)) != NULL) {
+	if (LYstrstr(response_text, value)) {
+	    result = TRUE;
+	    break;
+	}
+    }
+    return result;
 }
 
 /*	Execute Command and get Response
@@ -537,16 +560,13 @@ static int response(const char *cmd)
 			continuation == ' ')
 			continuation_response = -1;	/* ended */
 		}
-#ifdef BROKEN_PROFTPD
-		if (result == 220 && LYstrstr(response_text, "ProFTPD 1.2.5")) {
-		    ProFTPD_bugs = TRUE;
+		if (result == 220 && find_response(broken_ftp_retr)) {
+		    Broken_RETR = TRUE;
 		    CTRACE((tfp, "This server is broken (RETR)\n"));
 		}
-#endif
-#ifdef BROKEN_WUFTPD
-		if (result == 220 && LYstrstr(response_text,
-					      "(Version wu-2.6.2-12)")) {
-		    WU_FTPD_bugs = TRUE;
+#ifdef INET6
+		if (result == 220 && find_response(broken_ftp_epsv)) {
+		    Broken_EPSV = TRUE;
 		    CTRACE((tfp, "This server is broken (EPSV)\n"));
 		}
 #endif
@@ -862,7 +882,7 @@ static int get_connection(const char *arg,
     }
 
     CTRACE((tfp, "FTP connected, socket %d  control %p\n",
-	    con->socket, con));
+	    con->socket, (void *) con));
     control = con;		/* Current control connection */
 
     /* Initialise buffering for control connection */
@@ -1099,6 +1119,18 @@ static int get_connection(const char *arg,
     return con->socket;		/* Good return */
 }
 
+static void reset_master_socket(void)
+{
+    have_socket = FALSE;
+}
+
+static void set_master_socket(int value)
+{
+    have_socket = (BOOLEAN) (value >= 0);
+    if (have_socket)
+	master_socket = (unsigned) value;
+}
+
 /*	Close Master (listening) socket
  *	-------------------------------
  *
@@ -1108,11 +1140,14 @@ static int close_master_socket(void)
 {
     int status;
 
-    if (master_socket != -1)
+    if (have_socket)
 	FD_CLR(master_socket, &open_sockets);
-    status = NETCLOSE(master_socket);
-    CTRACE((tfp, "HTFTP: Closed master socket %d\n", master_socket));
-    master_socket = -1;
+
+    status = NETCLOSE((int) master_socket);
+    CTRACE((tfp, "HTFTP: Closed master socket %u\n", master_socket));
+
+    reset_master_socket();
+
     if (status < 0)
 	return HTInetStatus(gettext("close master socket"));
     else
@@ -1126,6 +1161,7 @@ static int close_master_socket(void)
  *	connect with the data.
  *
  * On entry,
+ *	have_socket	Must be false, if master_socket is not setup already
  *	master_socket	Must be negative if not set up already.
  * On exit,
  *	Returns		socket number if good
@@ -1151,7 +1187,7 @@ static int get_listen_socket(void)
     num_sockets = 0;
 
 #ifndef REPEAT_LISTEN
-    if (master_socket >= 0)
+    if (have_socket)
 	return master_socket;	/* Done already */
 #endif /* !REPEAT_LISTEN */
 
@@ -1318,11 +1354,11 @@ static int get_listen_socket(void)
 #endif /* INET6 */
 
 #ifdef REPEAT_LISTEN
-    if (master_socket >= 0)
+    if (have_socket)
 	(void) close_master_socket();
 #endif /* REPEAT_LISTEN */
 
-    master_socket = new_socket;
+    set_master_socket(new_socket);
 
 /*	Now we must find out who we are to tell the other guy
 */
@@ -1369,12 +1405,12 @@ static int get_listen_socket(void)
 
 #ifdef SOCKS
 	if (socks_flag)
-	    status = Rlisten(master_socket, 1);
+	    status = Rlisten((int) master_socket, 1);
 	else
 #endif /* SOCKS */
-	    status = listen(master_socket, 1);
+	    status = listen((int) master_socket, 1);
 	if (status < 0) {
-	    master_socket = -1;
+	    reset_master_socket();
 	    return HTInetStatus("listen");
 	}
     }
@@ -1383,7 +1419,7 @@ static int get_listen_socket(void)
     if ((master_socket + 1) > num_sockets)
 	num_sockets = master_socket + 1;
 
-    return master_socket;	/* Good */
+    return (int) master_socket;	/* Good */
 
 }				/* get_listen_socket */
 
@@ -1433,11 +1469,17 @@ static void set_years_and_date(void)
 
 typedef struct _EntryInfo {
     char *filename;
-    char *linkname;
+    char *linkname;		/* symbolic link, if any */
     char *type;
     char *date;
-    unsigned int size;
+    unsigned long size;
     BOOLEAN display;		/* show this entry? */
+#ifdef LONG_LIST
+    unsigned long file_links;
+    char *file_mode;
+    char *file_user;
+    char *file_group;
+#endif
 } EntryInfo;
 
 static void free_entryinfo_struct_contents(EntryInfo *entry_info)
@@ -1558,7 +1600,7 @@ static void parse_eplf_line(char *line,
 	case 's':
 	    size = 0;
 	    while (*(++cp) && (*cp != ','))
-		size = (size * 10) + (*cp - '0');
+		size = (size * 10) + (unsigned long) (*cp - '0');
 	    info->size = size;
 	    break;
 	case 'm':
@@ -1587,37 +1629,88 @@ static void parse_eplf_line(char *line,
  * Extract the name, size, and date from an ls -l line.
  */
 static void parse_ls_line(char *line,
-			  EntryInfo *entry_info)
+			  EntryInfo *entry)
 {
+    char *next;
+    char *cp;
     int i, j;
-    int base = 1;
-    int size_num = 0;
+    unsigned long base = 1;
+    unsigned long size_num = 0;
 
-    for (i = strlen(line) - 1;
+    for (i = (int) strlen(line) - 1;
 	 (i > 13) && (!isspace(UCH(line[i])) || !is_ls_date(&line[i - 12]));
-	 i--) ;			/* null body */
+	 i--) {
+	;			/* null body */
+    }
     line[i] = '\0';
     if (i > 13) {
-	StrAllocCopy(entry_info->date, &line[i - 12]);
+	StrAllocCopy(entry->date, &line[i - 12]);
 	/* replace the 4th location with nbsp if it is a space or zero */
-	if (entry_info->date[4] == ' ' || entry_info->date[4] == '0')
-	    entry_info->date[4] = HT_NON_BREAK_SPACE;
+	if (entry->date[4] == ' ' || entry->date[4] == '0')
+	    entry->date[4] = HT_NON_BREAK_SPACE;
 	/* make sure year or time is flush right */
-	if (entry_info->date[11] == ' ') {
+	if (entry->date[11] == ' ') {
 	    for (j = 11; j > 6; j--) {
-		entry_info->date[j] = entry_info->date[j - 1];
+		entry->date[j] = entry->date[j - 1];
 	    }
 	}
     }
     j = i - 14;
     while (isdigit(UCH(line[j]))) {
-	size_num += (line[j] - '0') * base;
+	size_num += ((unsigned long) (line[j] - '0') * base);
 	base *= 10;
 	j--;
     }
-    entry_info->size = size_num;
-    StrAllocCopy(entry_info->filename, &line[i + 1]);
-}				/* parse_ls_line() */
+    entry->size = size_num;
+    StrAllocCopy(entry->filename, &line[i + 1]);
+
+#ifdef LONG_LIST
+    line[j] = '\0';
+
+    /*
+     * Extract the file-permissions, as a string.
+     */
+    if ((cp = strchr(line, ' ')) != 0
+	&& (cp - line) == 10) {
+	*cp = '\0';
+	StrAllocCopy(entry->file_mode, line);
+	*cp = ' ';
+    }
+
+    /*
+     * Next is the link-count.
+     */
+    next = 0;
+    entry->file_links = (unsigned long) strtol(cp, &next, 10);
+    if (next == 0 || *next != ' ') {
+	entry->file_links = 0;
+	next = cp;
+    } else {
+	cp = next;
+    }
+    /*
+     * Next is the user-name.
+     */
+    while (isspace(UCH(*cp)))
+	++cp;
+    if ((next = strchr(cp, ' ')) != 0)
+	*next = '\0';
+    if (*cp != '\0')
+	StrAllocCopy(entry->file_user, cp);
+    /*
+     * Next is the group-name (perhaps).
+     */
+    if (next != NULL) {
+	cp = (next + 1);
+	while (isspace(UCH(*cp)))
+	    ++cp;
+	if ((next = strchr(cp, ' ')) != 0)
+	    *next = '\0';
+	if (*cp != '\0')
+	    StrAllocCopy(entry->file_group, cp);
+    }
+#endif
+}
 
 /*
  * Extract the name and size info and whether it refers to a directory from a
@@ -1645,7 +1738,7 @@ static void parse_dls_line(char *line,
        79215    \0
      */
 
-    len = strlen(line);
+    len = (int) strlen(line);
     if (len == 0) {
 	FREE(*pspilledname);
 	entry_info->display = FALSE;
@@ -1690,11 +1783,11 @@ static void parse_dls_line(char *line,
 	    j--;
 	}
     }
-    entry_info->size = size_num;
+    entry_info->size = (unsigned long) size_num;
 
     cps = LYSkipBlanks(&line[23]);
     if (!strncmp(cps, "-> ", 3) && cps[3] != '\0' && cps[3] != ' ') {
-	StrAllocCopy(entry_info->type, gettext("Symbolic Link"));
+	StrAllocCopy(entry_info->type, ENTRY_IS_SYMBOLIC_LINK);
 	StrAllocCopy(entry_info->linkname, LYSkipBlanks(cps + 3));
 	entry_info->size = 0;	/* don't display size */
     }
@@ -1704,10 +1797,10 @@ static void parse_dls_line(char *line,
 
     LYTrimTrailing(line);
 
-    len = strlen(line);
+    len = (int) strlen(line);
     if (len == 0 && *pspilledname && **pspilledname) {
 	line = *pspilledname;
-	len = strlen(*pspilledname);
+	len = (int) strlen(*pspilledname);
     }
     if (len > 0 && line[len - 1] == '/') {
 	/*
@@ -1751,7 +1844,7 @@ static void parse_vms_dir_entry(char *line,
     /* Cast VMS non-README file and directory names to lowercase. */
     if (strstr(entry_info->filename, "READ") == NULL) {
 	LYLowerCase(entry_info->filename);
-	i = strlen(entry_info->filename);
+	i = (int) strlen(entry_info->filename);
     } else {
 	i = ((strstr(entry_info->filename, "READ") - entry_info->filename) + 4);
 	if (!strncmp(&entry_info->filename[i], "ME", 2)) {
@@ -1760,7 +1853,7 @@ static void parse_vms_dir_entry(char *line,
 		i++;
 	    }
 	} else if (!strncmp(&entry_info->filename[i], ".ME", 3)) {
-	    i = strlen(entry_info->filename);
+	    i = (int) strlen(entry_info->filename);
 	} else {
 	    i = 0;
 	}
@@ -1831,12 +1924,12 @@ static void parse_vms_dir_entry(char *line,
 	    cps--;
 	if (cps < cpd)
 	    *cpd = '\0';
-	entry_info->size = atoi(cps);
+	entry_info->size = (unsigned long) atol(cps);
 	cps = cpd + 1;
 	while (isdigit(UCH(*cps)))
 	    cps++;
 	*cps = '\0';
-	ialloc = atoi(cpd + 1);
+	ialloc = (unsigned) atoi(cpd + 1);
 	/* Check if used is in blocks or bytes */
 	if (entry_info->size <= ialloc)
 	    entry_info->size *= 512;
@@ -1850,14 +1943,14 @@ static void parse_vms_dir_entry(char *line,
 		cpd++;
 	    if (*cpd == '\0') {
 		/* Assume it's blocks */
-		entry_info->size = atoi(cps) * 512;
+		entry_info->size = ((unsigned long) atol(cps) * 512);
 		break;
 	    }
 	}
     }
 
     /* Wrap it up */
-    CTRACE((tfp, "HTFTP: VMS filename: %s  date: %s  size: %u\n",
+    CTRACE((tfp, "HTFTP: VMS filename: %s  date: %s  size: %lu\n",
 	    entry_info->filename,
 	    NonNull(entry_info->date),
 	    entry_info->size));
@@ -1895,7 +1988,7 @@ static void parse_ms_windows_dir_entry(char *line,
 	cpd = LYSkipNonBlanks(cps);
 	*cpd++ = '\0';
 	if (isdigit(UCH(*cps))) {
-	    entry_info->size = atoi(cps);
+	    entry_info->size = (unsigned long) atol(cps);
 	} else {
 	    StrAllocCopy(entry_info->type, ENTRY_IS_DIRECTORY);
 	}
@@ -1929,7 +2022,7 @@ static void parse_ms_windows_dir_entry(char *line,
     }
 
     /* Wrap it up */
-    CTRACE((tfp, "HTFTP: MS Windows filename: %s  date: %s  size: %u\n",
+    CTRACE((tfp, "HTFTP: MS Windows filename: %s  date: %s  size: %lu\n",
 	    entry_info->filename,
 	    NonNull(entry_info->date),
 	    entry_info->size));
@@ -2028,7 +2121,7 @@ static void parse_windows_nt_dir_entry(char *line,
 	cpd = LYSkipNonBlanks(cps);
 	*cpd = '\0';
 	if (isdigit(*cps)) {
-	    entry_info->size = atoi(cps);
+	    entry_info->size = atol(cps);
 	} else {
 	    StrAllocCopy(entry_info->type, ENTRY_IS_DIRECTORY);
 	}
@@ -2126,7 +2219,7 @@ static void parse_cms_dir_entry(char *line,
 	}
 	if (Records > 0 && RecordLength > 0) {
 	    /* Compute an approximate size. */
-	    entry_info->size = (Records * RecordLength);
+	    entry_info->size = ((unsigned long) Records * (unsigned long) RecordLength);
 	}
     }
 
@@ -2177,7 +2270,7 @@ static void parse_cms_dir_entry(char *line,
     }
 
     /* Wrap it up. */
-    CTRACE((tfp, "HTFTP: VM/CMS filename: %s  date: %s  size: %u\n",
+    CTRACE((tfp, "HTFTP: VM/CMS filename: %s  date: %s  size: %lu\n",
 	    entry_info->filename,
 	    NonNull(entry_info->date),
 	    entry_info->size));
@@ -2200,15 +2293,10 @@ static EntryInfo *parse_dir_entry(char *entry,
     BOOLEAN remove_size = FALSE;
     char *cp;
 
-    entry_info = (EntryInfo *) malloc(sizeof(EntryInfo));
+    entry_info = typecalloc(EntryInfo);
 
     if (entry_info == NULL)
 	outofmem(__FILE__, "parse_dir_entry");
-    entry_info->filename = NULL;
-    entry_info->linkname = NULL;
-    entry_info->type = NULL;
-    entry_info->date = NULL;
-    entry_info->size = 0;
     entry_info->display = TRUE;
 
     switch (server_type) {
@@ -2222,7 +2310,7 @@ static EntryInfo *parse_dir_entry(char *entry,
 	 */
 
 	if (*first) {
-	    len = strlen(entry);
+	    len = (int) strlen(entry);
 	    if (!len || entry[0] == ' ' ||
 		(len >= 24 && entry[23] != ' ') ||
 		(len < 24 && strchr(entry, ' '))) {
@@ -2274,7 +2362,7 @@ static EntryInfo *parse_dir_entry(char *entry,
 	/*
 	 * Interpret and edit LIST output from Unix server.
 	 */
-	len = strlen(entry);
+	len = (int) strlen(entry);
 	if (*first) {
 	    /* don't gettext() this -- incoming text: */
 	    if (!strcmp(entry, "can not access directory .")) {
@@ -2311,7 +2399,7 @@ static EntryInfo *parse_dir_entry(char *entry,
 	     * It's a symbolic link, does the user care about knowing if it is
 	     * symbolic?  I think so since it might be a directory.
 	     */
-	    StrAllocCopy(entry_info->type, gettext("Symbolic Link"));
+	    StrAllocCopy(entry_info->type, ENTRY_IS_SYMBOLIC_LINK);
 	    remove_size = TRUE;	/* size is not useful */
 
 	    /*
@@ -2355,7 +2443,7 @@ static EntryInfo *parse_dir_entry(char *entry,
 	/*
 	 * Trim off VMS directory extensions.
 	 */
-	len = strlen(entry_info->filename);
+	len = (int) strlen(entry_info->filename);
 	if ((len > 4) && !strcmp(&entry_info->filename[len - 4], ".dir")) {
 	    entry_info->filename[len - 4] = '\0';
 	    StrAllocCopy(entry_info->type, ENTRY_IS_DIRECTORY);
@@ -2439,7 +2527,7 @@ static EntryInfo *parse_dir_entry(char *entry,
 	 * Directories identified by trailing "/" characters.
 	 */
 	StrAllocCopy(entry_info->filename, entry);
-	len = strlen(entry);
+	len = (int) strlen(entry);
 	if (entry[len - 1] == '/') {
 	    /*
 	     * It's a dir, remove / and mark it as such.
@@ -2463,9 +2551,13 @@ static EntryInfo *parse_dir_entry(char *entry,
 
     }				/* switch (server_type) */
 
+#ifdef LONG_LIST
+    (void) remove_size;
+#else
     if (remove_size && entry_info->size) {
 	entry_info->size = 0;
     }
+#endif
 
     if (entry_info->filename && strlen(entry_info->filename) > 3) {
 	if (((cp = strrchr(entry_info->filename, '.')) != NULL &&
@@ -2508,7 +2600,7 @@ static EntryInfo *parse_dir_entry(char *entry,
     }
 
     return (entry_info);
-}				/* parse_dir_entry */
+}
 
 static int compare_EntryInfo_structs(EntryInfo *entry1, EntryInfo *entry2)
 {
@@ -2639,6 +2731,219 @@ static int compare_EntryInfo_structs(EntryInfo *entry1, EntryInfo *entry2)
     }
 }
 
+#ifdef LONG_LIST
+static char *FormatStr(char **bufp,
+		       char *start,
+		       const char *value)
+{
+    char fmt[512];
+
+    if (*start) {
+	sprintf(fmt, "%%%.*ss", (int) sizeof(fmt) - 3, start);
+	HTSprintf(bufp, fmt, value);
+    } else if (*bufp && !(value && *value)) {
+	;
+    } else if (value) {
+	StrAllocCat(*bufp, value);
+    }
+    return *bufp;
+}
+
+static char *FormatNum(char **bufp,
+		       char *start,
+		       unsigned long value)
+{
+    char fmt[512];
+
+    if (*start) {
+	sprintf(fmt, "%%%.*sld", (int) sizeof(fmt) - 3, start);
+	HTSprintf(bufp, fmt, value);
+    } else {
+	sprintf(fmt, "%lu", value);
+	StrAllocCat(*bufp, fmt);
+    }
+    return *bufp;
+}
+
+static void FlushParse(HTStructured * target, char **buf)
+{
+    if (*buf && **buf) {
+	PUTS(*buf);
+	**buf = '\0';
+    }
+}
+
+static void LYListFmtParse(const char *fmtstr,
+			   EntryInfo *data,
+			   HTStructured * target,
+			   char *tail)
+{
+    char c;
+    char *s;
+    char *end;
+    char *start;
+    char *str = NULL;
+    char *buf = NULL;
+    BOOL is_directory = (BOOL) (data->file_mode != 0 &&
+				(TOUPPER(data->file_mode[0]) == 'D'));
+    BOOL is_symlinked = (BOOL) (data->file_mode != 0 &&
+				(TOUPPER(data->file_mode[0]) == 'L'));
+    BOOL remove_size = (BOOL) (is_directory || is_symlinked);
+
+    StrAllocCopy(str, fmtstr);
+    s = str;
+    end = str + strlen(str);
+    while (*s) {
+	start = s;
+	while (*s) {
+	    if (*s == '%') {
+		if (*(s + 1) == '%')	/* literal % */
+		    s++;
+		else
+		    break;
+	    }
+	    s++;
+	}
+	/* s is positioned either at a % or at \0 */
+	*s = '\0';
+	if (s > start) {	/* some literal chars. */
+	    StrAllocCat(buf, start);
+	}
+	if (s == end)
+	    break;
+	start = ++s;
+	while (isdigit(UCH(*s)) || *s == '.' || *s == '-' || *s == ' ' ||
+	       *s == '#' || *s == '+' || *s == '\'')
+	    s++;
+	c = *s;			/* the format char. or \0 */
+	*s = '\0';
+
+	switch (c) {
+	case '\0':
+	    StrAllocCat(buf, start);
+	    continue;
+
+	case 'A':
+	case 'a':		/* anchor */
+	    FlushParse(target, &buf);
+	    HTDirEntry(target, tail, data->filename);
+	    FormatStr(&buf, start, data->filename);
+	    PUTS(buf);
+	    END(HTML_A);
+	    *buf = '\0';
+	    if (c != 'A' && data->linkname != 0) {
+		PUTS(" -> ");
+		PUTS(data->linkname);
+	    }
+	    break;
+
+	case 'T':		/* MIME type */
+	case 't':		/* MIME type description */
+	    if (is_directory) {
+		if (c != 'T') {
+		    FormatStr(&buf, start, ENTRY_IS_DIRECTORY);
+		} else {
+		    FormatStr(&buf, start, "");
+		}
+	    } else if (is_symlinked) {
+		if (c != 'T') {
+		    FormatStr(&buf, start, ENTRY_IS_SYMBOLIC_LINK);
+		} else {
+		    FormatStr(&buf, start, "");
+		}
+	    } else {
+		const char *cp2;
+		HTFormat format;
+
+		format = HTFileFormat(data->filename, NULL, &cp2);
+
+		if (c != 'T') {
+		    if (cp2 == NULL) {
+			if (!strncmp(HTAtom_name(format),
+				     "application", 11)) {
+			    cp2 = HTAtom_name(format) + 12;
+			    if (!strncmp(cp2, "x-", 2))
+				cp2 += 2;
+			} else {
+			    cp2 = HTAtom_name(format);
+			}
+		    }
+		    FormatStr(&buf, start, cp2);
+		} else {
+		    FormatStr(&buf, start, HTAtom_name(format));
+		}
+	    }
+	    break;
+
+	case 'd':		/* date */
+	    if (data->date) {
+		FormatStr(&buf, start, data->date);
+	    } else {
+		FormatStr(&buf, start, " * ");
+	    }
+	    break;
+
+	case 's':		/* size in bytes */
+	    FormatNum(&buf, start, data->size);
+	    break;
+
+	case 'K':		/* size in Kilobytes but not for directories */
+	    if (remove_size) {
+		FormatStr(&buf, start, "");
+		StrAllocCat(buf, " ");
+		break;
+	    }
+	    /* FALL THROUGH */
+	case 'k':		/* size in Kilobytes */
+	    /* FIXME - this is inconsistent with HTFile.c, but historical */
+	    if (data->size < 1024) {
+		FormatNum(&buf, start, data->size);
+		StrAllocCat(buf, " bytes");
+	    } else {
+		FormatNum(&buf, start, data->size / 1024);
+		StrAllocCat(buf, "Kb");
+	    }
+	    break;
+
+#ifdef LONG_LIST
+	case 'p':		/* unix-style permission bits */
+	    FormatStr(&buf, start, NonNull(data->file_mode));
+	    break;
+
+	case 'o':		/* owner */
+	    FormatStr(&buf, start, NonNull(data->file_user));
+	    break;
+
+	case 'g':		/* group */
+	    FormatStr(&buf, start, NonNull(data->file_group));
+	    break;
+
+	case 'l':		/* link count */
+	    FormatNum(&buf, start, data->file_links);
+	    break;
+#endif
+
+	case '%':		/* literal % with flags/width */
+	    FormatStr(&buf, start, "%");
+	    break;
+
+	default:
+	    fprintf(stderr,
+		    "Unknown format character `%c' in list format\n", c);
+	    break;
+	}
+
+	s++;
+    }
+    if (buf) {
+	LYTrimTrailing(buf);
+	FlushParse(target, &buf);
+	FREE(buf);
+    }
+    PUTC('\n');
+    FREE(str);
+}
+#endif /* LONG_LIST */
 /*	Read a directory into an hypertext object from the data socket
  *	--------------------------------------------------------------
  *
@@ -2657,16 +2962,16 @@ static int read_directory(HTParentAnchor *parent,
     int status;
     BOOLEAN WasInterrupted = FALSE;
     HTStructured *target = HTML_new(parent, format_out, sink);
-    HTStructuredClass targetClass;
     char *filename = HTParse(address, "", PARSE_PATH + PARSE_PUNCTUATION);
     EntryInfo *entry_info;
     BOOLEAN first = TRUE;
-    char string_buffer[64];
     char *lastpath = NULL;	/* prefix for link, either "" (for root) or xxx  */
     BOOL need_parent_link = FALSE;
     BOOL tildeIsTop = FALSE;
 
-    targetClass = *(target->isa);
+#ifndef LONG_LIST
+    char string_buffer[64];
+#endif
 
     _HTProgress(gettext("Receiving FTP directory."));
 
@@ -2851,14 +3156,10 @@ static int read_directory(HTParentAnchor *parent,
 	    PUTC('\n');
 	}
 
-	/* Put up header
-	 */
-	/* PUTS("    Date        Type             Size     Filename\n");
-	 */
-
 	/* Run through tree printing out in order
 	 */
 	{
+#ifndef LONG_LIST
 #ifdef SH_EX			/* 1997/10/18 (Sat) 14:14:28 */
 	    char *p, name_buff[256];
 	    int name_len, dot_len;
@@ -2867,14 +3168,21 @@ static int read_directory(HTParentAnchor *parent,
 #define	FILE_GAP	1
 
 #endif
-	    HTBTElement *ele;
 	    int i;
+#endif
+	    HTBTElement *ele;
 
 	    for (ele = HTBTree_next(bt, NULL);
 		 ele != NULL;
 		 ele = HTBTree_next(bt, ele)) {
 		entry_info = (EntryInfo *) HTBTree_object(ele);
 
+#ifdef LONG_LIST
+		LYListFmtParse(ftp_format,
+			       entry_info,
+			       target,
+			       lastpath);
+#else
 		if (entry_info->date) {
 		    PUTS(entry_info->date);
 		    PUTS("  ");
@@ -2888,7 +3196,6 @@ static int read_directory(HTParentAnchor *parent,
 		    for (; i < 17; i++)
 			PUTC(' ');
 		}
-
 		/* start the anchor */
 		HTDirEntry(target, lastpath, entry_info->filename);
 #ifdef SH_EX			/* 1997/10/18 (Sat) 16:00 */
@@ -2916,17 +3223,17 @@ static int read_directory(HTParentAnchor *parent,
 		if (entry_info->size) {
 #ifdef SH_EX			/* 1998/02/02 (Mon) 16:34:52 */
 		    if (entry_info->size < 1024)
-			sprintf(string_buffer, "%6d bytes",
+			sprintf(string_buffer, "%6ld bytes",
 				entry_info->size);
 		    else
-			sprintf(string_buffer, "%6d Kb",
+			sprintf(string_buffer, "%6ld Kb",
 				entry_info->size / 1024);
 #else
 		    if (entry_info->size < 1024)
-			sprintf(string_buffer, "  %u bytes",
+			sprintf(string_buffer, "  %lu bytes",
 				entry_info->size);
 		    else
-			sprintf(string_buffer, "  %uKb",
+			sprintf(string_buffer, "  %luKb",
 				entry_info->size / 1024);
 #endif
 		    PUTS(string_buffer);
@@ -2936,6 +3243,7 @@ static int read_directory(HTParentAnchor *parent,
 		}
 
 		PUTC('\n');	/* end of this entry */
+#endif
 
 		free_entryinfo_struct_contents(entry_info);
 	    }
@@ -2984,8 +3292,11 @@ static int setup_connection(const char *name,
      */
     use_list = FALSE;
     server_type = GENERIC_SERVER;
-    ProFTPD_bugs = FALSE;
-    WU_FTPD_bugs = FALSE;
+    Broken_RETR = FALSE;
+
+#ifdef INET6
+    Broken_EPSV = FALSE;
+#endif
 
     for (retry = 0; retry < 2; retry++) {	/* For timed out/broken connections */
 	status = get_connection(name, anchor);
@@ -2999,7 +3310,7 @@ static int setup_connection(const char *name,
 		NETCLOSE(control->socket);
 		control->socket = -1;
 #ifdef INET6
-		if (master_socket >= 0)
+		if (have_socket)
 		    (void) close_master_socket();
 #else
 		close_master_socket();
@@ -3042,7 +3353,7 @@ static int setup_connection(const char *name,
 
 #ifdef INET6
 	    /* see RFC 2428 */
-	    if (WU_FTPD_bugs)
+	    if (Broken_EPSV)
 		status = 1;
 	    else
 		status = send_cmd_1(p = "EPSV");
@@ -3073,7 +3384,7 @@ static int setup_connection(const char *name,
 		    status = HT_NO_CONNECTION;
 		    break;
 		}
-		passive_port = (p0 << 8) + p1;
+		passive_port = (PortNumber) ((p0 << 8) + p1);
 		sprintf(dst, "%d.%d.%d.%d", h0, h1, h2, h3);
 	    } else if (strcmp(p, "EPSV") == 0) {
 		char c0, c1, c2, c3;
@@ -3088,15 +3399,16 @@ static int setup_connection(const char *name,
 		}
 		for ( /*nothing */ ;
 		     *p && *p && *p != '(';
-		     p++)	/*) */
+		     p++) {	/*) */
 		    ;		/* null body */
+		}
 		status = sscanf(p, "(%c%c%c%d%c)", &c0, &c1, &c2, &p0, &c3);
 		if (status != 5) {
 		    fprintf(tfp, "HTFTP: EPSV reply has invalid format!\n");
 		    status = HT_NO_CONNECTION;
 		    break;
 		}
-		passive_port = p0;
+		passive_port = (PortNumber) p0;
 
 		sslen = sizeof(ss);
 		if (getpeername(control->socket, (struct sockaddr *) &ss,
@@ -3658,14 +3970,10 @@ int HTFTPLoad(const char *name,
 	 */
 	if (!(type) || (type && *type != 'D')) {
 	    status = send_cmd_2("RETR", filename);
-#ifdef BROKEN_PROFTPD
-	    /*
-	     * ProFTPD 1.2.5rc1 gets confused when asked to RETR a directory.
-	     */
 	    if (status >= 5) {
 		int check;
 
-		if (ProFTPD_bugs) {
+		if (Broken_RETR) {
 		    CTRACE((tfp, "{{reconnecting...\n"));
 		    close_connection(control);
 		    check = setup_connection(name, anchor);
@@ -3674,7 +3982,6 @@ int HTFTPLoad(const char *name,
 			return check;
 		}
 	    }
-#endif
 	} else {
 	    status = 5;		/* Failed status set as flag. - FM */
 	}
@@ -3718,12 +4025,12 @@ int HTFTPLoad(const char *name,
 
 #ifdef SOCKS
 	if (socks_flag)
-	    status = Raccept(master_socket,
+	    status = Raccept((int) master_socket,
 			     (struct sockaddr *) &soc_address,
 			     &soc_addrlen);
 	else
 #endif /* SOCKS */
-	    status = accept(master_socket,
+	    status = accept((int) master_socket,
 			    (struct sockaddr *) &soc_address,
 			    &soc_addrlen);
 	if (status < 0) {

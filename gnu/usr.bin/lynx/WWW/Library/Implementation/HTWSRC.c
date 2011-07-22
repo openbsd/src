@@ -1,4 +1,7 @@
-/*			Parse WAIS Source file			HTWSRC.c
+/*
+ * $LynxId: HTWSRC.c,v 1.24 2009/01/03 02:01:01 tom Exp $
+ *
+ *			Parse WAIS Source file			HTWSRC.c
  *			======================
  *
  *	This module parses a stream with WAIS source file
@@ -307,7 +310,7 @@ static void WSRC_gen_html(HTStream *me, BOOL source_file)
 	int l;
 
 	StrAllocCopy(shortname, me->par_value[PAR_DATABASE_NAME]);
-	l = strlen(shortname);
+	l = (int) strlen(shortname);
 	if (l > 4 && !strcasecomp(shortname + l - 4, ".src")) {
 	    shortname[l - 4] = 0;	/* Chop of .src -- boring! */
 	}

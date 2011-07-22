@@ -1,3 +1,6 @@
+/*
+ * $LynxId: UCAux.h,v 1.16 2009/03/10 21:17:21 tom Exp $
+ */
 #ifndef UCAUX_H
 #define UCAUX_H
 
@@ -39,6 +42,7 @@ extern "C" {
 	BOOL trans_C0_to_uni;
 	BOOL repl_translated_C0;
 	BOOL trans_from_uni;
+	int ucs_mode;
     };
     typedef struct _UCTransParams UCTransParams;
 

@@ -1,6 +1,7 @@
+.\" $LynxId: lynx.man,v 1.86 2009/07/05 20:59:11 tom Exp $
 .nr N -1
 .nr D 5
-.TH LYNX 1 Local
+.TH LYNX 1
 .SH NAME
 lynx \- a general purpose distributed information browser for the World Wide Web
 .SH SYNOPSIS
@@ -86,12 +87,12 @@ e.g.,
 Other option-values are ignored.
 .PP
 The default boolean, number and string option values that are compiled
-into lynx are displayed in the help-message provided by \fBlynx -help\fP.
-Some of those may differ according to how lynx was built;
+into \fILynx\fP are displayed in the help-message provided by \fBlynx -help\fP.
+Some of those may differ according to how \fILynx\fP was built;
 see the help message itself for these values.
-The \fB-help\fP option is processed before any option, including those
-that control reading from the lynx.cfg file.
-Therefore runtime configuration values are not reflected in the help-message.
+The \fB-help\fP option is processed in the third pass of options-processing,
+so any option which sets a value,
+as well as runtime configuration values are reflected in the help-message.
 .TP
 .B \-
 If the argument is only '-', then Lynx expects to receive
@@ -114,7 +115,7 @@ charset for documents that don't specify it.
 .TP
 .B \-assume_local_charset\fR=\fIMIMEname
 charset assumed for local files,
-i.e., files which lynx creates such as internal pages for the options menu.
+i.e., files which \fILynx\fP creates such as internal pages for the options menu.
 .TP
 .B \-assume_unrec_charset\fR=\fIMIMEname
 use this instead of unrecognized charsets.
@@ -163,7 +164,12 @@ specifies a Lynx configuration file other than the default
 lynx.cfg.
 .TP
 .B \-child
-exit on left-arrow in startfile, and disable save to disk.
+exit on left-arrow in startfile, and disable save to disk and associated
+print/mail options.
+.TP
+.B \-child_relaxed
+exit on left-arrow in startfile, but allow save to disk and associated
+print/mail options.
 .TP
 .B \-cmd_log\fR=\fIFILENAME
 write keystroke commands and related information to the specified file.
@@ -311,7 +317,7 @@ Input is terminated by a line that starts with '---'.
 send a HEAD request for the mime headers.
 .TP
 .B \-help
-print the Lynx command syntax usage message.
+print the Lynx command syntax usage message, and exit.
 .TP
 .B \-hiddenlinks=[option]
 control the display of hidden links.
@@ -352,7 +358,7 @@ do justification of text.
 .B \-link\fR=\fINUMBER
 starting count for lnk#.dat files produced by \fB\-crawl\fR.
 .TP
-.B -listonly
+.B \-listonly
 for \fB-dump\fR, show only the list of links.
 .TP
 .B \-localhost
@@ -365,6 +371,8 @@ Lynx was compiled with local execution enabled).
 .B \-lss\fR=\fIFILENAME
 specify filename containing color-style information.
 The default is lynx.lss.
+If you give an empty filename, \fBlynx\fP uses a built-in monochrome
+scheme which imitates the non-color-style configuration.
 .TP
 .B \-mime_header
 prints the MIME header of a fetched document along with its
@@ -411,6 +419,9 @@ disable mailing of error messages to document owners.
 .TP
 .B \-nomargins
 disable left/right margins in the default style sheet.
+.TP
+.B \-nomore
+disable -more- string in statusline messages.
 .TP
 .B \-nonrestarting_sigwinch
 This flag is not available on all systems,
@@ -464,6 +475,9 @@ toggles display partial pages while loading.
 number of lines to render before repainting display
 with partial-display logic
 .TP
+.B \-passive-ftp
+toggles passive ftp connections.
+.TP
 .B \-pauth\fR=\fIID\fR:\fIPASSWD
 set authorization ID and password for a protected proxy
 server at startup.  Be sure to protect any script files
@@ -497,6 +511,9 @@ or CJK mode for the startup character set.
 .TP
 .B \-realm
 restricts access to URLs in the starting realm.
+.TP
+.B \-read_timeout\fR=\fIN
+Sets the read-timeout, where N is given in seconds.
 .TP
 .B \-reload
 flushes the cache on a proxy server
@@ -656,10 +673,22 @@ toggles showing arrows at ends of the scrollbar.
 .B \-selective
 require .www_browsable files to browse directories.
 .TP
+.B \-session\fR=\fIFILENAME
+resumes from specified file on startup and saves session to that file on exit.
+.TP
+.B \-sessionin\fR=\fIFILENAME
+resumes session from specified file.
+.TP
+.B \-sessionout\fR=\fIFILENAME
+saves session to specified file.
+.TP
 .B \-short_url
 show very long URLs in the status line with "..." to represent the
 portion which cannot be displayed.
 The beginning and end of the URL are displayed, rather than suppressing the end.
+.TP
+.B \-show_cfg
+Print the configuration settings, e.g., as read from "lynx.cfg", and exit.
 .TP
 .B \-show_cursor
 If enabled the cursor will not be hidden in the right hand
@@ -754,9 +783,17 @@ Logically OR the values to combine options:
 .br
 4=TRST (table layout)
 .br
-8=config (lynx.cfg and .lynxrc contents)
+8=config (lynx.cfg, .lynxrc, .lynx-keymaps, mime.types and mailcap contents)
 .br
 16=binary string copy/append, used in form data construction.
+.br
+32=cookies
+.br
+64=character sets
+.br
+128=GridText parsing
+.br
+256=timing
 .TP
 .B \-traversal
 traverse all http links derived from startfile.  When used with
@@ -764,7 +801,7 @@ traverse all http links derived from startfile.  When used with
 is output to a file, intended for indexing.  See CRAWL.announce
 for more information.
 .TP
-.B trim_input_fields
+.B \-trim_input_fields
 trim input text/textarea fields in forms.
 .TP
 .B \-underline_links
@@ -797,7 +834,7 @@ restrictions also are implemented.
 toggle [LINK], [IMAGE] and [INLINE] comments with filenames of these images.
 .TP
 .B \-version
-print version information.
+print version information, and exit.
 .TP
 .B \-vikeys
 enable vi-like key movement.
@@ -808,9 +845,16 @@ This applies only to DOS versions compiled with WATTCP or WATT-32.
 .TP
 .B \-width\fR=\fINUMBER
 number of columns for formatting of dumps, default is 80.
+This is limited by the number of columns that \fILynx\fP could display,
+typically 1024 (the \fIMAX_LINE\fP symbol).
 .TP
 .B \-with_backspaces
 emit backspaces in output if \fB\-dump\fR'ing or \fB\-crawl\fR'ing (like 'man' does)
+.TP
+.B \-xhtml_parsing
+tells \fILynx\fP that it can ignore certain tags which have no content
+in an XHTML 1.0 document.
+For example "<p/>" will be discarded.
 .SH COMMANDS
 .TP 3
 .B o
@@ -858,6 +902,10 @@ This variable, if set, will override the default location and name of
 the global configuration file (normally, \fBlynx.cfg\fR) that was defined
 by the LYNX_CFG_FILE constant in the userdefs.h file, during installation.
 See the userdefs.h file for more information.
+.TP
+.B LYNX_HELPFILE
+If set, this variable overrides the compiled-in URL and configuration
+file URL for the \fILynx\fP help file.
 .TP
 .B LYNX_LOCALEDIR
 If set, this variable overrides the compiled-in location of the
@@ -1064,7 +1112,7 @@ codes.  Currently, it is hard-coded to a wish list.
 .B NLSPATH
 This variable, if set, is used as the path prefix for message catalogs.
 .SH NOTES
-This is the Lynx v2.8.6 Release; development is in progress for 2.8.7.
+This is the Lynx v2.8.7 Release; development is in progress for 2.8.8.
 .PP
 If you wish to contribute to the further development
 of \fILynx\fR, subscribe to our mailing list.  Send email to

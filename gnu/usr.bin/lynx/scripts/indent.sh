@@ -1,4 +1,5 @@
 #!/bin/sh
+# $LynxId: indent.sh,v 1.3 2007/05/13 16:26:51 tom Exp $
 # Indent LYNX files.
 NOOP=no
 OPTS='
@@ -112,12 +113,14 @@ do
 			-e '/MODULE_ID(/s/)$/);/' \
 			-e 's,)[ 	]*\<GCC_PRINTFLIKE,);//GCC_PRINTFLIKE,' \
 			-e 's,[ 	]*\<GCC_NORETURN;,;//GCC_NORETURN;,' \
+			-e 's,[ 	]*\<GCC_UNUSED;,;//GCC_UNUSED;,' \
 			"$save" >"$test"
 		cp "$test" "$name"
 		chmod u+w "$name"
 		${INDENT_PROG-indent} -npro $OPTS "$name"
 		sed \
 			-e '/MODULE_ID(/s/);$/)/' \
+			-e 's,;[ 	]*//GCC_UNUSED;, GCC_UNUSED;,' \
 			-e 's,;[ 	]*//GCC_NORETURN;, GCC_NORETURN;,' \
 			-e 's,);[ 	]*//GCC_PRINTFLIKE,) GCC_PRINTFLIKE,' \
 			"$name" >"$test"

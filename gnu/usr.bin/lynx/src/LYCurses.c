@@ -1,3 +1,4 @@
+/* $LynxId: LYCurses.c,v 1.141 2009/04/07 00:00:40 tom Exp $ */
 #include <HTUtils.h>
 #include <HTAlert.h>
 
@@ -6,6 +7,10 @@
 #undef UNIX
 #endif /* UNIX */
 #endif /* __MINGW32__ */
+
+#ifdef __DJGPP__
+#include <pc.h>
+#endif /* __DJGPP__ */
 
 #include <LYCurses.h>
 #include <LYStyle.h>
@@ -64,7 +69,7 @@ WINDOW *LYwin = 0;
 int LYshiftWin = 0;
 int LYwideLines = FALSE;
 int LYtableCols = 0;		/* in 1/12 of screen width */
-BOOL LYuseCursesPads = TRUE;	/* use pads for left/right shifting */
+BOOLEAN LYuseCursesPads = TRUE;	/* use pads for left/right shifting */
 #endif
 
 /*
@@ -259,7 +264,7 @@ static char *attr_to_string(int code)
     int bold = (pair != 0 && (code & A_BOLD) != 0);
 
     if (bold)
-	code &= ~A_BOLD;
+	code &= (int) ~A_BOLD;
 
     *result = 0;
     for (i = 0; i < TABLESIZE(Mono_Attrs); i++) {
@@ -336,12 +341,25 @@ void LYbox(WINDOW * win, BOOLEAN formfield GCC_UNUSED)
      */
     LynxWChangeStyle(win, s_menu_frame, STACK_ON);
 #ifdef HAVE_WBORDER
-    if (!boxvert || !boxhori)
-	box(win, boxvert, boxhori);
-    else if (boxvert == '*' || boxhori == '*')
-	wborder(win, boxvert, boxvert, boxhori, boxhori, '*', '*', '*', '*');
-    else
-	wborder(win, boxvert, boxvert, boxhori, boxhori, '/', '\\', '\\', '/');
+    if (!boxvert || !boxhori) {
+	box(win,
+	    (chtype) boxvert,
+	    (chtype) boxhori);
+    } else if (boxvert == '*' || boxhori == '*') {
+	wborder(win,
+		(chtype) boxvert,
+		(chtype) boxvert,
+		(chtype) boxhori,
+		(chtype) boxhori,
+		'*', '*', '*', '*');
+    } else {
+	wborder(win,
+		(chtype) boxvert,
+		(chtype) boxvert,
+		(chtype) boxhori,
+		(chtype) boxhori,
+		'/', '\\', '\\', '/');
+    }
 #else
     box(win, boxvert, boxhori);
 #endif
@@ -451,8 +469,8 @@ void curses_w_style(WINDOW * win, int style,
 
     if (style == s_normal && dir) {
 	LYAttrset(win, ds->color, ds->mono);
-	if (win == LYwin && CACHE_VALIDATE_YX(YP, XP))
-	    cached_styles[YP][XP] = s_normal;
+	if (win == LYwin)
+	    SetCachedStyle(YP, XP, s_normal);
 	return;
     }
 
@@ -497,8 +515,8 @@ void curses_w_style(WINDOW * win, int style,
 	    && style != s_aedit_arr) {
 	    CTRACE2(TRACE_STYLE, (tfp, "CACHED: <%s> @(%d,%d)\n",
 				  ds->name, YP, XP));
-	    if (win == LYwin && CACHE_VALIDATE_YX(YP, XP))
-		cached_styles[YP][XP] = style;
+	    if (win == LYwin)
+		SetCachedStyle(YP, XP, style);
 	}
 	LYAttrset(win, ds->color, ds->mono);
 	break;
@@ -564,14 +582,14 @@ static BOOL lynx_called_initscr = FALSE;
 static struct {
     int fg, dft_fg, bg, dft_bg;
 } lynx_color_cfg[] = {
-    /*0*/ { COLOR_CFG(DEFAULT_FG),     COLOR_CFG(DEFAULT_BG)},
-    /*1*/ { COLOR_CFG(COLOR_BLUE),     COLOR_CFG(DEFAULT_BG)},
-    /*2*/ { COLOR_CFG(COLOR_YELLOW+8), COLOR_CFG(COLOR_BLUE)},
-    /*3*/ { COLOR_CFG(COLOR_GREEN),    COLOR_CFG(DEFAULT_BG)},
-    /*4*/ { COLOR_CFG(COLOR_MAGENTA),  COLOR_CFG(DEFAULT_BG)},
-    /*5*/ { COLOR_CFG(COLOR_BLUE),     COLOR_CFG(DEFAULT_BG)},
-    /*6*/ { COLOR_CFG(COLOR_RED),      COLOR_CFG(DEFAULT_BG)},
-    /*7*/ { COLOR_CFG(COLOR_MAGENTA),  COLOR_CFG(COLOR_CYAN)}
+    /*0*/ { COLOR_CFG(DEFAULT_FG),       COLOR_CFG(DEFAULT_BG)},
+    /*1*/ { COLOR_CFG(COLOR_BLUE),       COLOR_CFG(DEFAULT_BG)},
+    /*2*/ { COLOR_CFG((COLOR_YELLOW)+8), COLOR_CFG(COLOR_BLUE)},
+    /*3*/ { COLOR_CFG(COLOR_GREEN),      COLOR_CFG(DEFAULT_BG)},
+    /*4*/ { COLOR_CFG(COLOR_MAGENTA),    COLOR_CFG(DEFAULT_BG)},
+    /*5*/ { COLOR_CFG(COLOR_BLUE),       COLOR_CFG(DEFAULT_BG)},
+    /*6*/ { COLOR_CFG(COLOR_RED),        COLOR_CFG(DEFAULT_BG)},
+    /*7*/ { COLOR_CFG(COLOR_MAGENTA),    COLOR_CFG(COLOR_CYAN)}
 };
 /* *INDENT-ON* */
 
@@ -651,7 +669,7 @@ static int encode_color_attr(int color_attr)
 
 static int decode_mono_code(int mono_code)
 {
-    int result = 0;
+    unsigned result = 0;
 
     if (mono_code & 1)
 	result |= A_BOLD;
@@ -660,7 +678,7 @@ static int decode_mono_code(int mono_code)
     if (mono_code & 4)
 	result |= A_UNDERLINE;
 
-    return result;
+    return (int) result;
 }
 
 /*
@@ -689,7 +707,7 @@ char *LYgetTableString(int code)
     int mask = decode_mono_code(code);
     int second = encode_color_attr(mask);
     int pair = PAIR_NUMBER(second);
-    int mono = mask & A_ATTRIBUTES;
+    int mono = (int) (mask & A_ATTRIBUTES);
     int fg = lynx_color_pairs[pair].fg;
     int bg = lynx_color_pairs[pair].bg;
     unsigned n;
@@ -819,7 +837,7 @@ static void lynx_init_colors(void)
 	lynx_color_cfg[0].bg = default_bg;
 
 	for (n = 0; n < TABLESIZE(lynx_color_cfg); n++) {
-	    lynx_init_color_pair(n);
+	    lynx_init_color_pair((int) n);
 	}
     } else if (LYShowColor != SHOW_COLOR_NEVER) {
 	LYShowColor = SHOW_COLOR_OFF;
@@ -1340,8 +1358,16 @@ void lynx_enable_mouse(int state)
 		  | BUTTON2_CLICKED
 		  | BUTTON3_PRESSED | BUTTON3_RELEASED
 		  | BUTTON3_CLICKED
-		  | BUTTON3_DOUBLE_CLICKED | BUTTON3_TRIPLE_CLICKED,
-		  NULL);
+		  | BUTTON3_DOUBLE_CLICKED | BUTTON3_TRIPLE_CLICKED
+#if NCURSES_MOUSE_VERSION >= 2
+		  | BUTTON4_PRESSED | BUTTON4_RELEASED
+		  | BUTTON4_CLICKED
+		  | BUTTON4_DOUBLE_CLICKED | BUTTON4_TRIPLE_CLICKED
+		  | BUTTON5_PRESSED | BUTTON5_RELEASED
+		  | BUTTON5_CLICKED
+		  | BUTTON5_DOUBLE_CLICKED | BUTTON5_TRIPLE_CLICKED
+#endif
+		  ,NULL);
     } else
 	mousemask(0, NULL);
 #endif /* NCURSES */
@@ -1389,14 +1415,18 @@ void lynx_nl2crlf(int normal GCC_UNUSED)
     static int can_fix = TRUE;
 
     if (!did_save) {
-	saved_tty = cur_term->Nttyb;
-	did_save = TRUE;
-#if NCURSES_VERSION_PATCH < 20010529
-	/* workaround for optimizer bug with nonl() */
-	if ((tigetstr("cud1") != 0 && *tigetstr("cud1") == '\n')
-	    || (tigetstr("ind") != 0 && *tigetstr("ind") == '\n'))
+	if (cur_term == 0) {
 	    can_fix = FALSE;
+	} else {
+	    saved_tty = cur_term->Nttyb;
+	    did_save = TRUE;
+#if NCURSES_VERSION_PATCH < 20010529
+	    /* workaround for optimizer bug with nonl() */
+	    if ((tigetstr("cud1") != 0 && *tigetstr("cud1") == '\n')
+		|| (tigetstr("ind") != 0 && *tigetstr("ind") == '\n'))
+		can_fix = FALSE;
 #endif
+	}
     }
     if (can_fix) {
 	if (normal) {
@@ -1421,6 +1451,9 @@ void lynx_nl2crlf(int normal GCC_UNUSED)
 void stop_curses(void)
 {
     if (LYCursesON) {
+#ifdef USE_COLOR_STYLE
+	FreeCachedStyles();
+#endif
 	echo();
     }
 #if defined(PDCURSES) && defined(PDC_BUILD) && PDC_BUILD >= 2401
@@ -1431,21 +1464,32 @@ void stop_curses(void)
     _eth_release();
 #endif /* __DJGPP__ */
 
-#if defined(DOSPATH) && !(defined(USE_SLANG) || defined(_WIN_CC))
+/* ifdef's for non-Unix curses or slang */
+#if defined(__MINGW32__)
+    chtype bb;
+
+    bb = getbkgd(stdscr);
+    bkgdset(0);
+    clear();
+    refresh();
+    bkgdset(bb);
 #if defined(PDCURSES)
     endwin();
-#else /* !PDCURSES */
+#endif /* PDCURSES */
+
+#elif defined(DOSPATH) && !(defined(USE_SLANG) || defined(_WIN_CC))
+
+#if defined(PDCURSES)
+    endwin();
+#endif /* PDCURSES */
+
 #ifdef __DJGPP__
     ScreenClear();
 #else /* some flavor of win32?  */
-#ifdef __MINGW32__
-    clear();
-#else
     clrscr();
-#endif
 #endif /* win32 */
-#endif /* PDCURSES */
-#else
+
+#else /* Unix, etc */
 
     if (LYCursesON == TRUE) {
 	lynx_nl2crlf(TRUE);
@@ -1465,7 +1509,7 @@ void stop_curses(void)
     }
 
     fflush(stdout);
-#endif /* defined(DOSPATH) && !(defined(USE_SLANG) || defined(_WIN_CC)) */
+#endif /* ifdef's for non-Unix curses or slang */
     fflush(stderr);
 
     LYCursesON = FALSE;
@@ -1683,19 +1727,27 @@ void LYsubAttr(int a)
  * color to a uniform width in the popup-menu.
  */
 #ifndef USE_SLANG
-void LYpaddstr(WINDOW * the_window, int width,
-	       const char *the_string)
+void LYpaddstr(WINDOW * the_window, int width, const char *the_string)
 {
-    int y, x;
-    int actual = strlen(the_string);
+    int y, x1, x2;
+    int actual = (int) LYstrCells(the_string);
+    int length = (int) strlen(the_string);
 
-    getyx(the_window, y, x);
-    if (width + x > LYcolLimit)
-	width = LYcolLimit - x;
-    if (actual > width)
+    getyx(the_window, y, x1);
+    if (width + x1 > LYcolLimit)
+	width = LYcolLimit - x1;
+    if (actual > width) {
 	actual = width;
-    LYwaddnstr(the_window, the_string, actual);
-    width -= actual;
+#ifdef WIDEC_CURSES
+	/* FIXME: a binary search might be faster */
+	while (LYstrExtent(the_string, length, length) > actual) {
+	    --length;
+	}
+#endif
+    }
+    LYwaddnstr(the_window, the_string, (size_t) length);
+    getyx(the_window, y, x2);
+    width -= (x2 - x1);
     while (width-- > 0)
 	waddstr(the_window, " ");
 }
@@ -1720,7 +1772,7 @@ void LYsubwindow(WINDOW * param)
 	{
 	    long b = LYgetattrs(my_subwindow);
 
-	    wbkgd(my_subwindow, b | ' ');
+	    wbkgd(my_subwindow, (chtype) (b | ' '));
 	}
 	LynxWChangeStyle(my_subwindow, s_menu_bg, STACK_OFF);
 #elif defined(HAVE_GETBKGD)	/* not defined in ncurses 1.8.7 */
@@ -1771,6 +1823,8 @@ WINDOW *LYstartPopup(int *top_y,
 	    *left_x = 1;
 	} else {
 	    *left_x = LYcolLimit - 4 - *width;
+	    if (*left_x <= 0)
+		*left_x = 1;
 	}
 	form_window = newwin(*height, *width + 4, *top_y, *left_x - 1);
     }
@@ -1848,6 +1902,10 @@ void LYwaddnstr(WINDOW * w GCC_UNUSED,
 		const char *src,
 		size_t len)
 {
+    int y0, x0;
+    int y, x;
+    size_t inx;
+
 #ifdef USE_CURSES_PADS
     /*
      * If we've configured to use pads for left/right scrolling, that can
@@ -1861,13 +1919,11 @@ void LYwaddnstr(WINDOW * w GCC_UNUSED,
      * simplify things, e.g., in case the string contains multibyte or
      * multicolumn characters.
      */
-    int y0, x0;
-
     getyx(LYwin, y0, x0);
 
     if (LYuseCursesPads
-	&& (LYwin == w)		/* popups do not wrap */
-	&&LYshiftWin == 0
+	&& (LYwin == w)
+	&& (LYshiftWin == 0)
 	&& LYwideLines == FALSE
 	&& ((int) len > (LYcolLimit - x0))
 	&& (x0 < LYcolLimit)) {
@@ -1892,25 +1948,26 @@ void LYwaddnstr(WINDOW * w GCC_UNUSED,
      */
 #ifdef USE_COLOR_STYLE
     if (TRACE) {
-	int y, x;
-
 	LYGetYX(y, x);
 	CTRACE2(TRACE_STYLE, (tfp, "[%2d,%2d] LYwaddnstr(%.*s, %u)\n",
 			      y, x, (int) len, src, (unsigned) len));
     }
 #endif
-    /*
-     * There's no guarantee that a library won't temporarily write on its input.
-     * Be safe and copy it when we have const-data.
-     */
-    while ((int) len > 0) {
-	char temp[MAX_LINE];
-	size_t use = (len >= MAX_LINE) ? MAX_LINE - 1 : len;
+    LYGetYX(y0, x0);
 
-	memcpy(temp, src, use);
-	temp[use] = 0;
-	waddstr(w, temp);
-	len -= use;
+    for (inx = 0; inx < len; ++inx) {
+	/*
+	 * Do tab-expansion relative to the base of the string (rather than
+	 * the screen) so that tabs in a TEXTAREA will look right.
+	 */
+	if (src[inx] == '\t') {
+	    LYGetYX(y, x);
+	    while ((++x - x0) % 8)
+		waddch(w, ' ');
+	    waddch(w, ' ');
+	} else {
+	    waddch(w, UCH(src[inx]));
+	}
     }
 }
 
@@ -1928,7 +1985,7 @@ int LYstrExtent(const char *string, int len, int maxCells)
     int used;
 
     if (len < 0)
-	used = strlen(string);
+	used = (int) strlen(string);
     else
 	used = len;
 
@@ -1973,12 +2030,15 @@ int LYstrExtent(const char *string, int len, int maxCells)
 }
 
 /*
- * A simple call that relies upon the coincidence that multicell characters
- * use at least as many bytes as cells.
+ * Return the number of cells in the first 'len' bytes of the string.
+ *
+ * This relies upon the coincidence that multicell characters use at least as
+ * many bytes as cells.  But we have to account for tab, which can use 8, and
+ * control characters which use 2.
  */
 int LYstrExtent2(const char *string, int len)
 {
-    return LYstrExtent(string, len, len);
+    return LYstrExtent(string, len, 8 * len);
 }
 
 /*
@@ -1986,7 +2046,7 @@ int LYstrExtent2(const char *string, int len)
  */
 int LYstrCells(const char *string)
 {
-    return LYstrExtent2(string, strlen(string));
+    return LYstrExtent2(string, (int) strlen(string));
 }
 
 #ifdef VMS
@@ -2501,7 +2561,7 @@ void LYnormalColor(void)
 	int color = displayStyles[DSTYLE_NORMAL].color;
 
 	if (color >= 0) {
-	    wbkgd(LYwin, color | ' ');
+	    wbkgd(LYwin, (chtype) (color | ' '));
 	    LYrefresh();
 	}
     }
@@ -2776,6 +2836,20 @@ void lynx_stop_underline(void)
     stop_underline();
 }
 
+void LYSetDisplayLines(void)
+{
+    if (!no_title) {
+	if (user_mode == NOVICE_MODE)
+	    display_lines = LYlines - 4;
+	else
+	    display_lines = LYlines - 2;
+    } else if (user_mode == NOVICE_MODE) {
+	display_lines = LYlines - 3;
+    } else {
+	display_lines = LYlines - 1;
+    }
+}
+
 /*
  * If LYShowCursor is ON, move the cursor to the left of the current option, so
  * that blind users, who are most likely to have LYShowCursor ON, will have
@@ -2821,19 +2895,21 @@ static void make_blink_boldbg(void)
  */
 long LYgetattrs(WINDOW * win)
 {
+    long result;
+
 #if ( defined(HAVE_GETATTRS) && ( !defined(NCURSES_VERSION_MAJOR) || NCURSES_VERSION_MAJOR < 5 ) )
-    long result = 0;
 
     result = getattrs(win);
 #else
-    attr_t result = 0;
+    attr_t attrs = 0;
     short pair = 0;
 
     /*
      * FIXME: this ignores the color-pair, which for most implementations is
      * not stored in the attribute value.
      */
-    wattr_get(win, &result, &pair, NULL);
+    wattr_get(win, &attrs, &pair, NULL);
+    result = (long) attrs;
 #endif
     return result;
 }

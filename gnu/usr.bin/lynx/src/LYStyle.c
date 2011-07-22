@@ -1,6 +1,6 @@
 /* character level styles for Lynx
  * (c) 1996 Rob Partington -- donated to the Lyncei (if they want it :-)
- * $Id: LYStyle.c,v 1.5 2009/05/31 09:16:52 avsm Exp $
+ * $Id: LYStyle.c,v 1.6 2011/07/22 14:10:39 avsm Exp $
  */
 #include <HTUtils.h>
 #include <HTML.h>
@@ -22,6 +22,9 @@
 #include <LYexit.h>
 #include <LYLeaks.h>
 #include <LYStrings.h>
+#include <LYHash.h>
+
+#define CTRACE1(p) CTRACE2(TRACE_CFG || TRACE_STYLE, p)
 
 #ifdef USE_COLOR_STYLE
 
@@ -33,8 +36,15 @@ static void style_initialiseHashTable(void);
  */
 static HTList *lss_styles = NULL;
 
+#define CACHEW 128
+#define CACHEH 64
+
+static unsigned *cached_styles_ptr = NULL;
+static int cached_styles_rows = 0;
+static int cached_styles_cols = 0;
+
 /* stack of attributes during page rendering */
-int last_styles[MAX_LAST_STYLES] =
+int last_styles[MAX_LAST_STYLES + 1] =
 {0};
 int last_colorattr_ptr = 0;
 
@@ -126,7 +136,7 @@ static void parse_either(char *attrs,
 
     while (*attrs != '\0') {
 	char *next = strchr(attrs, '+');
-	char save = (next != NULL) ? *next : '\0';
+	char save = (char) ((next != NULL) ? *next : '\0');
 
 	if (next == NULL)
 	    next = attrs + strlen(attrs);
@@ -220,7 +230,7 @@ static void parse_attributes(char *mono,
 	    } else {
 		curPair = ++colorPairs;
 		init_pair((short) curPair, (short) fA, (short) bA);
-		our_pairs[iBold][iBlink][iFg][iBg] = curPair;
+		our_pairs[iBold][iBlink][iFg][iBg] = UCH(curPair);
 	    }
 	}
 	CTRACE2(TRACE_STYLE, (tfp, "CSS(CURPAIR):%d\n", curPair));
@@ -380,6 +390,7 @@ static void free_colorstylestuff(void)
     style_initialiseHashTable();
     style_deleteStyleList();
     memset(our_pairs, 0, sizeof(our_pairs));
+    FreeCachedStyles();
 }
 
 /*
@@ -451,7 +462,7 @@ static void initialise_default_stylesheet(void)
     char *normal = LYgetTableString(0);
     char *strong = LYgetTableString(4);
 
-    CTRACE((tfp, "initialise_default_stylesheet\n"));
+    CTRACE1((tfp, "initialise_default_stylesheet\n"));
 
     /*
      * For debugging this function, create hash codes for all of the tags.
@@ -575,7 +586,7 @@ static void HStyle_addStyle(char *buffer)
 {
     char *name = NULL;
 
-    CTRACE((tfp, "HStyle_addStyle(%s)\n", buffer));
+    CTRACE1((tfp, "HStyle_addStyle(%s)\n", buffer));
 
     StrAllocCopy(name, buffer);
     TrimLowercase(name);
@@ -624,7 +635,7 @@ static int style_readFromFileREC(char *lss_filename,
 	LYTrimHead(buffer);
 	if (!strncasecomp(buffer, "include:", 8))
 	    style_readFromFileREC(LYSkipBlanks(buffer + 8), lss_filename);
-	else if (buffer[0] != '#' && (len = strlen(buffer)) > 0)
+	else if (buffer[0] != '#' && (len = (int) strlen(buffer)) > 0)
 	    HStyle_addStyle(buffer);
     }
 
@@ -672,7 +683,7 @@ void TrimColorClass(const char *tagname,
  * It assumes that tag_name is present in stylename! -HV
  */
 void FastTrimColorClass(const char *tag_name,
-			int name_len,
+			unsigned name_len,
 			char *stylename,
 			char **pstylename_end,	/*will be modified */
 			int *phcode)	/*will be modified */
@@ -685,7 +696,7 @@ void FastTrimColorClass(const char *tag_name,
 	     tag_name, stylename));
     while (tag_start >= stylename) {
 	for (; (tag_start >= stylename) && (*tag_start != ';'); --tag_start) ;
-	if (!strncasecomp(tag_start + 1, tag_name, name_len)) {
+	if (!strncasecomp(tag_start + 1, tag_name, (int) name_len)) {
 	    found = TRUE;
 	    break;
 	}
@@ -699,9 +710,9 @@ void FastTrimColorClass(const char *tag_name,
     *phcode = hash_code(tag_start + 1);
 }
 
- /* This is called each time lss styles are read. It will fill
-  * each elt of 'cached_tag_styles' -HV
-  */
+/* This is called each time lss styles are read. It will fill
+ * each element of 'cached_tag_styles' -HV
+ */
 void cache_tag_styles(void)
 {
     char buf[200];
@@ -711,6 +722,67 @@ void cache_tag_styles(void)
 	LYstrncpy(buf, HTML_dtd.tags[i].name, sizeof(buf) - 1);
 	LYLowerCase(buf);
 	cached_tag_styles[i] = hash_code(buf);
+    }
+}
+
+#define SIZEOF_CACHED_STYLES (unsigned) (cached_styles_rows * cached_styles_cols)
+
+static unsigned *RefCachedStyle(int y, int x)
+{
+    unsigned *result = 0;
+
+    if (cached_styles_ptr == 0) {
+	cached_styles_rows = display_lines;
+	cached_styles_cols = LYcols;
+	cached_styles_ptr = typecallocn(unsigned, SIZEOF_CACHED_STYLES);
+    }
+    if (y >= 0 &&
+	x >= 0 &&
+	y < cached_styles_rows &&
+	x < cached_styles_cols) {
+	result = cached_styles_ptr + (y * cached_styles_cols) + x;
+    }
+    return result;
+}
+
+BOOL ValidCachedStyle(int y, int x)
+{
+    return (BOOL) (RefCachedStyle(y, x) != 0);
+}
+
+unsigned GetCachedStyle(int y, int x)
+{
+    unsigned value = 0;
+    unsigned *cache = RefCachedStyle(y, x);
+
+    if (cache != 0) {
+	value = *cache;
+    }
+    return value;
+}
+
+void SetCachedStyle(int y, int x, unsigned value)
+{
+    unsigned *cache = RefCachedStyle(y, x);
+
+    if (cache != 0) {
+	*cache = value;
+    }
+}
+
+void ResetCachedStyles(void)
+{
+    if (cached_styles_ptr != NULL) {
+	memset(cached_styles_ptr, 0, sizeof(unsigned) * SIZEOF_CACHED_STYLES);
+    }
+}
+
+void FreeCachedStyles(void)
+{
+    if (cached_styles_ptr != NULL) {
+	FREE(cached_styles_ptr);
+	cached_styles_rows = 0;
+	cached_styles_cols = 0;
     }
 }
 

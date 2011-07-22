@@ -1,23 +1,570 @@
+-- $LynxId: CHANGES,v 1.422 2009/07/05 23:24:39 tom Exp $
+===============================================================================
 Changes since Lynx 2.8 release
 ===============================================================================
 
-2007-05-09 (2.8.6rel.5 fix from 2.8.7dev.5)
+2010-06-21 (2.8.7rel.2)
+* add limit-check for too-long URIs in href's (RedHat #605286) -TD
+* fix a few places still referring to "2-8-6" -TD 
+
+2009-07-05 (2.8.7rel.1)
+* update metrics for 2.8.7 release.
+* fix ifdef'ing for cfg_bad_html (report by Gabor Z Papp) -TD
+
+2009-06-23 (2.8.7pre.6)
+* update lynx.pot file -TD
+* add "Bad HTML messages" to Options menu, letting the user disable the
+  warning message, write the detailed messages to the LYNXMESSAGES: status
+  buffer (suggested by BL) -TD
+* finish checkbox for send-useragent from pre.3 changes -TD
+* make the size of LYNXMESSAGES configurable in lynx.cfg with
+  STATUS_BUFFER_SIZE -TD
+
+2009-06-06 (2.8.7pre.5)
+* add missing ctrl_chars_on_previous_line when computing 'spare' value in
+  split_line() for the wide-curses configuration.  The justified line was
+  shorter than expected when justifying text -TD
+* fix a special case of trailing whitespace not shown in pretty source, at the
+  end of a closing tag -TD
+* remove "Bad HTML" warning for buttons outside a form, since those can be
+  inline, according to the HTML 4 DTD -TD
+* provide navigation to script-buttons, to make them more visible, showing
+  their name -TD
+* change default for send_useragent option to true (prompted by discussion on
+  lynx-dev) -TD
+* correct check for default type of HTML BUTTON, which is "submit".  The code
+  treated this as "button" (prompted by discussion on lynx-dev) -TD
+
+2009-05-25 (2.8.7pre.4)
+* update lynx.pot file -TD
+* fix a typo in change for Debian #388622 -TD
+
+2009-05-25 (2.8.7pre.3)
+* suppress check for "disabled" attribute in a select, as a workaround
+  (Debian #525934) -TD
+* accommodate (in)compatibility "feature" in HTML5 draft which replaces
+  ISO-8859-1 with Windows-1252, as indicated here:
+    http://www.whatwg.org/specs/web-apps/current-work/multipage/infrastructure.html#character-encodings-0
+  (Debian #514897) -TD
+* remove check for -dump option from HTHandleAuthInfo(), allowing Lynx to -dump
+  or -source NNTP urls (report by Dallas E Legan II) -TD
+* amend fix for Debian #388622 to allow the user to save names to the home
+  directory, e.g., ~/foo -TD
+* add an Options menu checkbox to tell if Lynx should send a user-agent string.
+  Unless the useragent restriction is set, the default for this checkbox is
+  off, so that Lynx will not send the string.  The corresponding setting,
+  send_useragent, may be saved to ~/.lynxrc, but normally is not -TD
+* correct type for HTNewsGetCharacter() in HTNews.c, which could return a
+  sign-extended character mistaken for EOF (report by Dallas E Legan II) -TD
+
+2009-04-26 (2.8.7pre.2)
+* update it.po from
+    http://translationproject.org/latest/lynx/
+* update lynx user's guide section on Options Menu -TD
+* modify prompt in LYLoadCGI() from 2.8.6dev.15 to always prompt user (from
+  FEDORA-2008-9597), and modify compiled-in configuration default for
+  consistency with other lynx.cfg settings to require that lynx.cfg be set to
+  permit use of lynxcgi scripts -TD
+* correct parsing of "--" command-line parameter (Redhat #311031)
+* check for malformed select before adding last-option (Redhat #152146)
+* change default for --enable-ascii-ctypes to true -TD
+* modify Lynx's DTD information to allow it to display form-related tags that
+  are inline, even without being in a form as indicated in
+    http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd
+  for %inline.forms and %misc.inline (Debian #398986) -TD
+* finish dtd_util, making it able to load and save data from a flat file that
+  can be edited -TD
+* correct length of padding with underscores in LYhighlight, which used the
+  wrong variable based on glyph count rather than cells (Debian #519199) -TD
+* fix a few cases where PUTC's intended for pretty-src would display in the
+  HTML view (Debian #521489) -TD
+* fix some mismatched BOOL vs BOOLEAN from compiler warnings due to dev.13
+  change to LYStructs.h -TD
+* add TNS SNI support for the OpenSSL configuration -Phil Pennock
+* add docs/README.cookies and docs/README.options -Stefan Caunter
+* update docs/README.sslcerts -Stefan Caunter
+* add NO_PAUSE setting to lynx.cfg, .lynxrc and Options menu (request by
+  Stefan Caunter) -TD
+
+2009-03-17 (2.8.7pre.1)
+2009-03-17 (2.8.7dev.14)
+* modify command-passing for Win32/DOS to use double-quotes -TD
+* adapt features from vile's install-script to set registry variables, etc. -TD
+* modify LYgetenv() for Win32 platforms to check also in the system registry
+  for settings, adapted from vile -TD
+* modify SGML_write() to check for UCS-2 BOMs, to provide support for UCS-2
+  pages (prompted by comment by TG) -TD
+* modify SGML_write() to check for UTF-8 BOM, using that as a hint to set the
+  default document charset to UTF-8 (prompted by mailing list comments) -TD
+* modify stop_curses() function to fix missing DJGPP and MinGW code -DK, TD
+* modify config.hin to fix prototype for getttimeofday() with MinGW -DK
+* ifdef to avoid conflicting definition of set_timeout() in DJGPP -DK
+* modify ifdef in LYMain.c to avoid possible conflict between libintl.h and
+  locale.h -DK
+* modify configure script to avoid using symbolic links for MinGW, in case
+  the script is run in Cygwin -DK
+* modify makefile.msc to add LYIcon object -TD
+* modify configure script to add LYIcon object for MinGW -DK
+* add sample scripts for configuring MinGW version using Cygwin -DK
+
+2009-02-01 (2.8.7dev.13)
+* modify definitions in LYStructs.h for union to cast to a void* rather than
+  a long, to help with 64-bit ports -TD
+* modify CF_SSL configure macro to check for -ldl needed for recent OpenSSL
+  versions -TD
+* modify CF_SSL configure macro to build with MSYS for MinGW configuration -TD
+* modify scanning of floats from lynx.cfg to allow Lynx to read POSIX values
+  in non-POSIX locales -TD
+* modify configure script to check for msginit, needed to generate "en" po
+  file, and omit that target if msginit is not available, letting lynx build
+  with older gettext versions -TD
+* improve drawing of menus for multibyte characters by changing the way the
+  number of fill-characters is computed in LYpaddstr -TD
+* fix some uses of gettext in options menu and info page where a translated
+  string might contain angle-brackets or ampersand -TD
+* modify AM_WITH_NLS configure macro to add the iconv library dependency for
+  intl library when checking for the latter -DK
+* fix breakage of display of UTF-8 in UCTransUniChar() from cleanup in dev.12
+  (report by TG) -TD
+* rename variable defined by CF_PATHSP to PATH_SEPARATOR, use this consistently
+  to ease use in later autoconf versions (prompted by patch by DK) -TD
+* fix a typo in CF_ADD_LIBDIR which broke check for libintl (report by
+  Jose H Espinosa) -TD
+* modify configure script to append to CFLAGS or CPPFLAGS rather than prepend,
+  to better match the user's intent -DK, TD
+* modify UCSetBoxChars() to let line-drawing work with PDCurses, as well as
+  any fancy-curses implementation that is running in ASCII or Latin-1 -TD
+* add a configure check for curses type "chtype" -TD
+* fix for an ASCII dependency in LYKeymap.c -PG
+* update fr.po, id.po, nl.pl, sv.po, tr.po, vi.po from
+    http://translationproject.org/latest/lynx/
+* change configure script to check for "ar" archiver options, from tin bug
+  report for FreeBSD 8.0 which requires a "-" before the options -TD
+* update config.guess (2008-12-19), config.sub (2008-12-11)
+* use putenv() in preference to unsetenv() in LYReadCFG.c, noting that it is
+  a deprecated BSD interface -TD
+* miscellaneous fixes for gcc type-conversion warnings -TD
+* remove trailing comma from enumeration UCStatus which causes strict-compiler
+  warning -TD
+
+2008-12-31 (2.8.7dev.12)
+* add configure option --enable-ascii-ctypes to enable EXP_ASCII_CTYPES -TD
+* move EBCDIC tables to separate file LYebcdic.c to simplify building test
+  driver for parsdate.c on z/OS -PG
+* fix an off-by-one difference between UTF-8/non-UTF-8 comparisons in
+  HText_appendCharacter() which would leave an extra character wrapped in some
+  cases, e.g., in the options menu when field-numbering was turned on -TD
+* remove logic in GridText.c for ignoring "excess" characters in a field when
+  fields are numbered, since highlighting of wrapped multiline links works,
+  and this feature is incompatible with it -TD
+* remove obsolete CF_VARARGS configure check -TD
+* modify configure script to build with MinGW and MSYS -TD
+* modify configure macro CF_XOPEN_SOURCE to define _ALL_SOURCE for AIX 6.x -TD
+* implement a LONG_LIST equivalent for ftp, configurable as FTP_FORMAT -TD
+* adapt some of the SH_EX ifdef'd features (TD):
+  + extra keypad conversions in LYgetch_for() are for PDCurses.
+  + add -show_cfg option.
+  + entify embedded blanks in HTDOS_wwwName().
+  + treat null file-pointer in HTParseFile(HTFormat() as end-of-file.
+* change the phase during which "-help" option is processed, to allow it to
+  reflect the configured values of the options in the help-message (prompted
+  by discussion with Dan Jacobson regarding Debian #507083) -TD
+* modify havevisible() and UCTransToUni() functions to process UTF-8 input,
+  fixing a problem saving bookmarks whose title is UTF-8 (prompted by patch by
+  Takao Fujiwara) -TD
+* restore logic in HTLoadHTTP() to strip matching square brackets from host
+  name and certificate host (comments by TG) -TD
+* modify UCdomap.c to work with Solaris iconv and handle additional encodings:
+  + if "TRANSLIT" feature (an extension of glibc) does not succeed, retry
+    the call to iconv_open without "TRANSLIT"
+  + add check for any MIME name beginning "iso8859", mapping to "iso-8859"
+  + recognize "eucjp" MIME name as alias for "euc-jp"
+  + recognize "pck" MIME name as alias for "shift_jis"
+  + recognize "ansi-1251" MIME name as alias for "windows-1251"
+  (patch by Takao Fujiwara)
+* add "*.dbg" to suffixes to ignore in autoconf script when checking for
+  executables and objects produced by C compile (report by PG, for z/OS) -TD
+* modify parsdate.y to convert between EBCDIC/ASCII to work on z/OS -PG, -TD
+* modify src/makefile.in to make it simple for a build script running in a
+  separate directory to regenerate parsdate.c (prompted by discussion with PG
+  regarding building on z/OS which uses EBCDIC) -TD
+* add configure check for yacc (report by PG) -TD
+* fixes to make configure --help agree with INSTALLATION (report by PW) -TD
+* add id.po from
+    http://translationproject.org/latest/lynx/
+* add a null-pointer check for content type, fix for dev.11 changes (Debian
+  #509321) -TD
+* improve configurability with regard to pkg-config by adding --with-pkg-config
+  option, which can be used to enable/disable use of the program as well as
+  specify the pathname used (prompted by comments by TG) -TD
+* correct handling of --with-ssl option when pkg-config is not found -TD
+
+2008-12-14 (2.8.7dev.11)
+* add support for HTML5 rel=author in link (mailing list comments) -TD
+* modify cookie-writing to not write if no cookies were read from the file
+  and none are available (Debian #354282) -TD
+* fix src/tidy_tls.c X509_get_issuer_name to actually take the issuer DN of the
+  present certificate and not hope that it is the same as taking the subject DN
+  of the "next" certificate which may or may not exist (Debian #499945, patch
+  by Thomas Viehmann)
+* modify exit code when doing a "-dump" to exit with error if the server
+  returned an error status for the page (Debian #299711) -TD
+* fix ipv6 literal command-line parsing (Debian #180654, analysis by Fabio
+  Massimo Di Nitto) -TD
+* extend configure macros CF_SSL and CF_GNUTLS to check for pkg-config, using
+  that for the default if the corresponding openssl or gnutls packages are
+  installed (suggested by PGNet) -TD
+* add fi.po from
+    http://translationproject.org/latest/lynx/
+* update fr.po from
+    http://translationproject.org/latest/lynx/
+* correct handling of the option value from configure "--with-ssl", which was
+  not being used in the search-list (report by PGNet) -TD
+* update configure script macros -TD
+  CF_CURSES_LIBS - add "pdcurses", e.g., to link with MinGW
+  CF_UTF8_LIB - use CF_FIND_LINKAGE to better work with BSD ports.
+  CF_XOPEN_SOURCE - add case for dragonfly
+* document width-limitation in manpage, fix a few stray 1024's still in the
+  source (report by Barry Haddow) -TD
+* add "read_timeout" to lynx.cfg, and -read_timeout option to command-line
+  (prompted by Dries De Moor report on mailing list) -TD
+* modify to handle a special case where the content-type is given as one of the
+  compressed types, to check if the address (after stripping the file suffix
+  for that compression) has a suffix that lynx could present -TD
+  For example:
+	http://foo/bar.html.gz
+  would display the uncompressed "bar.html" rather than offering to download
+  the file.  This also allows one to add SUFFIX commands to lynx.cfg to display
+  the corresponding plain files.
+  For example:
+	SUFFIX:CHANGES.*:text/plain:8bit
+	SUFFIX:CHANGES:text/plain:8bit
+  for
+	http://foo/CHANGES.tmp.gz
+	http://foo/CHANGES.gz
+* workaround for STRING redefinition in parsdate.c on DJGPP -GV
+* improve configure-check to determine proper fallback when no long-long
+  printing format is available -TD
+* update win32 makefiles/build scripts to add LYmktime, parsdate modules -TD
+* update config.guess (2008-04-14), config.sub (2008-06-16)
+
+2008-09-21 (2.8.7dev.10)
+* remove rw.po, since the translation project no longer supplies it -TD
+* implement "readonly" attribute for TEXTAREA and TEXT fields -TD
+* update Lynx's tables of HTML attributes to cover (except for events) the
+  keywords from HTML 4.01 -TD
+* modify initial active link in download-page to be the first download
+  action rather than the "help" link which is provided in Novice mode
+  (Debian #376259) -PBM, TD
+* implement "chunked" transfer-encoding to work with servers that ignore the
+  version number in HTTP get's -TD
+* change initialization of trace file, handing this during the first part of
+  argument parsing along with -help and -version, to show steps done for
+  initialization of presentors, etc -TD
+* minor fix to LYstartPopup() to handle a case where the popup menu was too
+  large for the screen -TD
+* fixes for srcdir!=objdir (report by FLWM) -TD
+* modify man2hlp.sh to work from subdirectory, e.g., its parameter would be
+  "../lynx.man" -TD
+* set POSIX locale for install-cfg.sh and man2hlp.sh since they use character
+  ranges -TD
+* add switch -xhtml-parsing and lynx.cfg XHTML_PARSING setting to control
+  whether the extensions for XHTML 1.0 are used (prompted by bug report by
+  FLWM, as well as discussion on lynx-dev) -TD
+* modify external editing of TEXTAREA to not do tab-conversion -TD
+* modify LYhighlight() to limit display of multicolumn characters -TD
+* rewrite LYRefreshEdit(), to display multibyte/multicolumn characters properly
+  when using wide-character curses -TD
+* revise introductory comment written to ".lynxrc" (Debian #461158) -TD
+* discard anchor's post_data field in HTLoadDocument() if Lynx is about to
+  reload a document.  That would happen if the result of the form includes a
+  link back to the form.  Removing the data causes Lynx to prompt the user,
+  e.g.,
+    Resubmit POST content to http://localhost/cgi-bin/lynxtest.pl ? (y/n)
+  to offer the user the choice between revisiting form or re-POST'ing the
+  data that was on the form (report by Andreas K Foerster) -TD
+* fixes for LYHighlight() when the highlighted text is empty -TD
+* translate named entities, etc., for "content" field of refresh-URL, cf:
+  2.8.5dev.13 (report by Ivan Shmakov) -TD
+* suppress computation in TrimmedLength() for source-view, which is not needed
+  for Debian #204515 (patch by Mike Knight)
+* add check-po rule to po/makefile -TD
+* modify top-level makefile to work with configure --srcdir -TD
+* add update-po rule to top-level makefile -TD
+* update fr.po, nl.po, tr.po, vi.po, zh_TW.po,sv.po from
+    http://translationproject.org/latest/lynx/
+* parse doctype for xhtml, to tell when empty tags such as "<textarea />" can
+  be discarded (report by Nils Dagsson Moskopp) -TD
+* parse xml processing-instruction to turn on UTF-8 decoding, as well as
+  disable upper/lower case transforming in source view (discussion on
+  lynx-dev) -TD
+* fix typo in Lynx_users_guide.html (report by Kristof Zelechovski)
+* minor fix to documentation in lynx.cfg -PW
+* use off_t rather than long for representing file sizes, e.g., when used to
+  print progress messages (reports by LP, Tomas Liska, TG, PG) -TD
+* use dtd_util to replace most of HTMLDTD.h and HTMLDTD.c with source generated
+  from the existing tables in those files -TD
+* add program dtd_util which can be used to dump the SGML tables in readable
+  form -TD
+* change calls to LYhandlePopupList() to turn on (or off) numbering when
+  keypad_mode is not NUMBERS_AS_ARROWS -PBM
+* move close of session-file outside ifdef for VLINK_IN_SESSION, closing
+  session file properly if that ifdef is disabled.  Add a null-pointer check
+  for visited links that are saved -PBM
+* make auto_session and session_file configurable with ENABLE_LYNXRC -PBM
+* separate configure "--enable-sessions" option from "--enable-session-cache"
+  option -PBM
+* add ncurses scroll-wheel support, which requires the extended-mouse configure
+  option of ncurses (Debian #476394) -TD
+  Caveat:  if running on a local terminal, setting the ESCDELAY environment
+  variable to 0 (zero) helps, since the event rate is rather high.  That would
+  not help on a network with delays (this is true of all text applications that
+  use xterm's mouse protocol, such as gpm and ncurses).
+* adapt/extend parsdate.y from tin to improve parsing of cookie expiration
+  times (Debian #480144) -TD
+* update de.po (patch by Fabian Fingerle)
+
+2008-04-27 (2.8.7dev.9)
+* update nl.po, vi.po from
+    http://translationproject.org/latest/lynx/
+* additional def7_uni.tbl conversions (patch by Tim Larson).
+* update config.guess (2008-03-12), config.sub (2008-03-08)
+* add --enable-gnutls-compat option and associated files to configure with
+  GNU TLS without its gnutls-openssl library, whose newer versions are
+  available only under a restrictive license (reports by Andreas Metzler,
+  Atsuhito Kohda) -TD
+* update README.sslcerts -SC
+* add POSITIONAL_EDITOR setting to configure editors which accept a "+line"
+  parameter -PBM
+* pass a newline after the start of PRE-section in HTGopher.c to force the
+  first newline between records to be seen and cause the lines to split
+  (report by Ciprian Dorin Craciun) -TD
+* use TRST_MAXROWSPAN and TRST_MAXCOLSPAN limits in Stbl_reserveCellsInTable(),
+  to help the non-color-style version work with table using rowspan/colspan
+  set to "0", as well as correcting limits from original 2.8.3dev.14 changes
+  (report by George Sigletos) -TD, PBM
+* modify behavior of "-nonumbers" option for -dump so it can be combined with
+  -listonly to obtain a list of the URLs without reference numbers (Debian
+  #398283) -TD
+* typo in description of SESSION_FILE in lynx.cfg -PBM
+* build-fix for WWW version on Windows -TD
+
+2008-02-17 (2.8.7dev.8)
+* add "nano" to list of editors accepting +number option (patch by Tim Chase)
+* add configure --with-nss-compat option, for building with NSS library's
+  OpenSSL-compatible interface (patch by Zdenek Prikryl)
+* minor fix for version message to ensure WWW version shows when not building
+  with OpenSSL -GV
+* make "--more--" message configuable -PBM
+* improve multibyte editing (patch by Sergej Kvachonok)
+* add XWINDOWS / NON_XWINDOWS environment-variable field to DOWNLOAD, etc., in
+  lynx.cfg to specify whether a downloader (printer, etc) is enabled when
+  the X display variable is set -PBM
+* add configure script options --enable-session-cache and --enable-progressbar
+  for PBM's experimental session and progressbar features -TD
+* add session save/restore feature -PBM
+  + bind ^X to toggle view of page showing session information
+  + add binding for ^U to previous-document (outside of line-editing).
+  + documented command-line options and configuration data for this feature.
+  + document -child_relaxed option in Lynx users's guide.
+* use vasprintf() if available, fixes Fedora #462449 -TD
+* several small changes to configure script to work with MirBSD build
+  environment -TG
+* show progress message in X509 callback -TG
+* modify definition of lynxrc and cookies files in LYMain.c and LYrcFile.c to
+  make it simpler for build script to override -TD
+* reviewed patches at
+    http://www.mirbsd.org/cvs.cgi/ports/www/lynx/patches/
+  improved buffer allocation limits in makeuctb.c -TD
+* add support for the X.509 extension subjectAltName using GNUTLS -Joey Schulze
+* add SSL_CERT_FILE to lynx.cfg -Joey Schulze
+* fix spelling error in HTAccess.h comment (report by Paul de Weerd) -TD
+* add null-pointer checks to cover a special case of exit on error while
+  reading from the standard input (report by Pascal Terjan) -TD
+
+2007-08-02 (2.8.7dev.7)
+* restore top-level descrip.mms due to error in patch -TD
+
+2007-08-02 (2.8.7dev.6)
+* update cs.po from
+    http://translationproject.org/latest/lynx/
+* add a script for Inno Setup, incorporate/adapt configuration files from
+  an installer created by Claudio Santambrogio -TD
+* use struct dirent64 when it is declared via configure script -TD
+* additional def7_uni.tbl conversions (patch by Tim Larson).
+* quiet a message in HTFWriter.c -RS
+* improve IsOurSymlink() from 2.8.7dev.5 changes, allowing the symbolic link
+  to be relative to the directory -RS, TD
+* rewrote several autoconf macros to use extended searches in non-system
+  locations, i.e., AM_ICONV, AM_WITH_NLS, CF_GNUTLS, CF_SSL, CF_WITH_BZLIB
+  and CF_WITH_ZLIB (prompted by LV comments) -TD
+* modify popup for externals added in 2.8.4dev.20 to number the entries if
+  keypad mode is set to one of the numbered forms -PBM
+* free leaks of LYLeaks.c, to make it simpler to check it with a second
+  tool such as valgrind -TD
+* rewrote cached_styles[][] to use memory allocated to match screen size
+  (report by RS) -TD
+* fix typo in SGML.C -RS
+* correct display_lines when -notitle is used while in novice mode -PBM, TD
+* add -child_relaxed option (patch by Andrew Belov).
+* minor typos from OpenBSD (patch by Daniel Dickman).
+* modify VMS build-scripts to accept "TCPIP" parameter, for TCPIP Services
+  (discussion with Dominic Stephens) -TD
+* add IDE-files for building with Visual Studio 6, 2003 and 2005 Express.
+  These are respectively the files in BUILD-VS6, BUILD-VS2003 and
+  BUILD-VS2005X -TD
+* modify def7_uni.tbl to display U+2212 without a leading blank
+  (Debian #428536) -TD
+* add definition for _FILE_OFFSET_BITS in CF_LARGEFILE, needed for Solaris
+  64-bit compiles (from ncurses) -TD
+* change order of includes (-I options) in makefiles so build-tree is found
+  first (report by PBM) -TD
+* ensure MIME_LIBDIR has a trailing "/" -TD
+* add new -trace-mask codes to cleanup the trace file a little -TD
+* remove redundant call to show_cert_issuer() -TG
+* correct typo in Lynx_users_guide.html (prompted by TG's patch) -TD
+* modify HTDoRead() to add elapsed time to its debug trace -TD
+* fix a case in LYGetfile.c which was broken by 2.8.7dev.3 changes to use
+  LYTildeExpand() to expand embedded "~" -TG
+* update config.guess (2007-05-17), config.sub (2007-06-28)
+
+2007-05-17 (2.8.7dev.5)
+* build/install "en" po file so that GNU gettext LANGUAGE environment variable
+  can find the corresponding English message file (request by Chuck Houpt) -TD
+* add LYNX_HELPFILE environment variable to allow override of location of the
+  help-file -Chuck Houpt
+* make install-bin and install-lss makefile rules a little quieter (prompted
+  by discussion by Chuck Houpt and TG) -TD
+* fix an off-by-one in HText_canScrollDown() and total_pages in GridText.c -TH
+* rewrite strcasecomp_asterisk() to support wildcards as in RFC 2818 (prompted
+  by less-complete Debian patch for #401447, see also #268102) -TD
+* improve X.509 certificate validation -TG
+  This is tested for OpenSSL, ifdef'd to not break gnutls.  Changes:
+  + peer certificate is cached, no need to call SSL_get_peer_certificate()
+    twice
+  + support foo.domain:port and [ip.add.re.ss] and [ip.add.re.ss]:port and
+    [i:p:v:6:ad:dr:es:s] and [i:p:v:6:ad:dr:es:s]:port
+  + add support for checking X.509v3 SubjectAltName extensions (of type DNS -
+    tested - and IP - untested) when the X.509 commonName check fails.
+  + when displaying a list of failed CNs, change format from foo:bar:baz to
+    CN<foo>:CN<bar>:CN<baz>:SAN<DNS=foo>:SAN<IP=1.2.3.4> so that we know where
+    what comes from (in "Your recent statusline messages")
+  + if the peer certificate can *NOT* be verified, output a message to the log
+    as well
+  + fix a possible use of an uninitialised value ssl_all_cns
+  + output certificate issuer to the logs as well (so that you can, before
+    entering your online banking PIN, see if the certificate has been issued
+    not only _to_ your bank but also _from_ a place you trust, in case
+    /etc/ssl/certs/ contains a lot of Root CA certs)
+* quiet a gcc warning regarding do_system() -TG
+* if iconv_open() using transliteration fails, retry without the
+  transliteration feature -TG
+* change keymap for "CHANGE_KCODE" from CTRL-L to "J" -TG
+* remove "local" section from lynx manpage -TG
+* log SSL/TLS (HTTPS connection) X.509 certificate issuer information into the
+  "recent statusline messages" (accessible via the backspace key) -TG
+* modify po/makefile.inn to use DESTDIR -Thomas Klausner, TD
+* add --with-destdir configure option to set a default value for the DESTDIR
+  variable in makefiles, and modified makefiles to ensure that setting
+  DESTDIR in the top-level makefile propagates to lower levels (prompted by
+  NetBSD patch for port) -TD
+* correct two places in HTML.c which compared element_number to HTML_H6
+  twice rather also to HTML_H5 (report by hsv@tbbs.net) -TD
+* improve change for UCSetBoxChars() from 2.8.6dev.16 for
+  EXP_CHARTRANS_AUTOSWITCH which assumed that the line-drawing character set
+  was always different from the display character set.  If both are US_ASCII
+  for example, ASCII lines would be drawn, which is not good -TD
+* change exit's in configure script test-programs to return's to reduce
+  problems with declaration of exit() -TD
+* use "install-sh" rather than "install.sh" to reduce problems with Sun make
+  program -TD
+* add configure-check for ncurses functions _nc_freeall() and
+  _nc_free_and_exit(), to help with memory-leak checking -TD
+* change a few options such as --enable-locale-charset option to
+  non-experimental -TD
+* correct lynx.cfg parsing of SYSLOG_TEXT which is miscoded as a boolean -TD
+* add --enable-local-docs option to link doc-directory from help-page
+  (request by PW) -TD
+* change default for MIME_LIBDIR from /usr/local/lib/mosaic to /etc -TD
+* add --with-mime-libdir option to set MIME_LIBDIR in userdefs.h file -TD
+* remove "lynxstuff" from help-page, it no longer exists (report by PW) -TD
 * correct loop-limit in print_crawl_to_fd(), which broke
   "lynx -crawl -dump" from 2.8.6dev.9 changes (Mandriva #29785) -TD
+* replace BROKEN_PROFTPD and BROKEN_WU_FTPD logic with configurable list of
+  strings in lynx.cfg, i.e., BROKEN_FTP_RETR and BROKEN_FTP_EPSV, and add
+  "spftp/" to the predefined values for the former.  Prompted by report by
+  Fred Kasner for
+	ftp.symantec.com/AVDEFS/norton_antivirus
+  which has a broken RETR command -TD
+* add -passive-ftp option -TD
+* ifdef'd -ftp option in case ftp is disabled, for consistency -TD
+* ifdef'd options menu so that if ftp is disabled, the corresponding options
+  are not shown -TD
+* improve pretty-src in a few places by passing-through whitespace as
+  demonstrated by
+	http://www.w3.org/TR/html401/index/elements.html
+  (report by Rado Smiljanic) -TD
+* change user-messages in HTFWriter.c to info-messages, which are generally
+  faster (prompted by patch by Rado Smiljanic) -TD
+* fix pretty-src for "attribute without value" case (patch by Rado Smiljanic)
+* correct tab "abbr", was "abbrev" (patch by Rado Smiljanic)
+* modify ifdef's in HTTCP.c to allow building Cygwin configuration without
+  NSL_FORK, broken in 2.8.5dev.5 (report by Holger Lange) -TD
+* modify IsOurFile() to allow its parameter to be a symbolic link to one of
+  the user's files (report by Rado Smiljanic) -TD
+* check if there is piped-in data when starting without "-" or "-stdin"
+  options, warn about the ignored input data in that case (prompted by report
+  by Toralf Foerster) -TD
+* use POSIX macros for decoding system() return value in UCAuto.c -TD
+* use POSIX macros for decoding system() return value in LYEdit.c
+  (adapted from an incomplete change in OpenBSD CVS) -TD
+* modify CF_SRAND to recognize the asymmetric variant of arc4random() -TD
+* updated configure script macros CF_SUBDIR_PATH, CF_XOPEN_SOURCE,
+  CF_X_ATHENA_LIBS, CF_X_TOOLKIT -TD
+* update config.guess (2006-12-22), config.sub (2006-12-08)
 
-2006-11-15 (2.8.6rel.4 diverges from 2.8.7dev.4)
-* limit files set via PERSONAL_EXTENSION_MAP and PERSONAL_MAILCAP to be found
-  relative to the user's home directory.  This change is less flexible than the
-  development version, but simpler to implement.  The check to ensure that
-  the files are controlled by the user is retained (Redhat #214205) -TD
+2006-11-14 (2.8.7dev.4)
+* use RFC-822 encoding for filenames passed via file-upload forms (Debian
+  #181165) -TD
+* correct check of return-value from FindLeadingTilde() in dev.3 cleanup of
+  "~" parsing -TD
 
-2006-11-06 (2.8.6rel.3 from 2.8.7dev.2)
+2006-11-12 (2.8.7dev.3)
+* change the default HELPFILE to the 2.8.6 release directory since the
+  page on subir.com contains obsolete information -TD
+* eliminate references to obsolete url
+	http://www.hippo.ru/%7Ehvv/
+  using the 2.8.6 release directory instead, e.g.,
+	http://lynx.isc.org/release/lynx2-8-6/lynx_help/
+  This is useful mainly for platforms which do not use the configure script -TD
+* update et.po from
+    http://www.iro.umontreal.ca/translation/maint/lynx/
+* modify CF_PDCURSES_X11 to use xcurses-config script if available -TD
+* improve parsing for embedded "~", ensuring that it is interpreted as a
+  user's home directory only if it follows a pathname separator (Debian
+  #388622) -TD
+* ensure that PERSONAL_EXTENSION_MAP and PERSONAL_MAILCAP are absolute
+  pathnames, performing tilde expansion as needed.  Pathnames that are not
+  given in absolute form will be sought under the user's home directory as if
+  they began with "~/" -TD
+
+2006-11-06 (2.8.7dev.2)
 * ensure that the configured values for GLOBAL_EXTENSION_MAP and GLOBAL_MAILCAP
   are absolute pathnames -TD
 * modify logic for reading PERSONAL_EXTENSION_MAP and PERSONAL_MAILCAP to
   ensure that they are files that are controlled only by the user.  The
   default values for these allow lynx to read configuration information
   from the user's current directory at lynx's startup (Debian #396949) -TD
+* use CF_NCURSES_CONFIG to simplify linking against rpath'd library -TD
+* fix CF_LARGEFILE so --disable-largefile works (from ncurses) -TD
+
+2006-10-12 (2.8.7dev.1)
+* update embedded version numbers for starting 2.8.7 development -TD
+* setup locale before writing version-message -TD
+* update version message to reflect the fact that most of Lynx is copyright
+  the Lynx Developers Group (this would have altered message files) -TD
+* update the ".po" files line-numbers (not done during the release cycle since
+  no new messages were added) -TD
 
 2006-10-12 (2.8.6rel.2)
 * update version numbers in documentation -TD
@@ -71,13 +618,13 @@ Changes since Lynx 2.8 release
   of getfile() is unneeded, we restore the link number as well as the line
   number (Debian #386561) -TD
 * modify makefile.msc to allow building with slang configuration -TD
-* fixes for keyboard input of slang configuration in win32 (not mingw) which
+* fixes for keyboard input of slang configuration in win32 (not MinGW) which
   was broken in 2.8.3dev.5 -TD
 * fix LYgetTableString(), making the monochome appearance with an empty ".lss"
   file for color-style look like the non-color-style (Debian #386216) -TD
 * fix change made to LYwaddnstr() which did not update the position in LYwin
   after writing text to a subwindow.  This caused some cases where the status
-  line would be cleared by the filler color -TD 
+  line would be cleared by the filler color -TD
 * modify noviceline() function to account for trailing newlines in the message
   text which caused the message to be displayed on the wrong lines (report
   by Atsuhito Kohda) -TD
@@ -119,7 +666,7 @@ Changes since Lynx 2.8 release
 * fixes for GNU TLS configuration (also addresses Debian #231609) -TG, TH
 * add check for failure to write to disk, e.g., on disk full, and report
   error condition via HTAlert() -PG
-* updated README.sslcerts -Stef Caunter
+* updated README.sslcerts -SC
 * add example of -source in manpage to explain how HREF's are constructed
   (Debian #347989) -TD
 * fixes to make redraw_part_of_line() to work with double-width characters.
@@ -167,8 +714,8 @@ Changes since Lynx 2.8 release
   which leaves SIGWINCH undefined -TD
 * add configure options --with-cfg-file and --with-lss-file to allow one to
   specify the names and paths of the default configuration and color-style
-  files -TD   
-* change configure script --enable-color-style so it is enabled by default 
+  files -TD
+* change configure script --enable-color-style so it is enabled by default
   (prompted by request by Jason Spiro) -TD
 * add COLOR_STYLE setting to lynx.cfg -TD
 * change default initialization of color-style code when no lss file is given
@@ -188,16 +735,16 @@ Changes since Lynx 2.8 release
 
 2006-05-29 (2.8.6dev.18)
 * suppress OpenSSL URL from version message if it happens to be built using
-  GNU TLS -TD  
+  GNU TLS -TD
 * change default for DEFAULT_INDEX_FILE in lynx.cfg to http://lynx.isc.org/
-  since the Mosaic MetaIndex file is defunct (suggested by Stef Caunter)
+  since the Mosaic MetaIndex file is defunct (suggested by SC)
 * update makelynx.bat (report by FLWM) -TD
-* add presentation for text/css, to allow browsing ".css" files -Stef Caunter
+* add presentation for text/css, to allow browsing ".css" files -SC
 * modify LYPrint.c suggested_filename() to strip bzip2's ".bz2" suffixes as
   well as ".zz" suffixes -TD
 * modify configure script macro AM_PATH_PROG_WITH_TEST to allow for DOS device
   letter, and to override $PATHSEP with $PATH_SEPARATOR if the latter is
-  set -DK 
+  set -DK
 * modify ifdef in LYCurses.c to avoid using nonfunctional PDCurses 2.7
   newterm() -DK
 * update config.guess (2006-04-26) and config.sub (2006-05-13)
@@ -221,7 +768,7 @@ Changes since Lynx 2.8 release
   using CVS (report by Atsuhito Kohda) -TD
 * add a null-pointer check in handle_LYK_HEAD() to cover a case where doing
   a HEAD on a link failed because there was no submit action associated with
-  the link (report by Walter Ian Kaye, Stef Caunter) -TD
+  the link (report by Walter Ian Kaye, SC) -TD
 * improve tbl2html.pl script to cover the ranges and approximations used in
   def7_uni.tbl -TD
 * additional def7_uni.tbl conversions (patch by Tim Larson).
@@ -236,7 +783,7 @@ Changes since Lynx 2.8 release
 * remove redundant size-check in change for HText_trimHightext() in 2.8.5dev.8
   to fix highlighting for this case:
     <a href>Line 1<p>Line 2<p>Line 3</a>
-  (report by Andrew Belov).
+  (report by Andrew Belov) -TD
 * add U+213B FAX to def7_uni.tbl (Debian #344275) -TD
 * adjust anchor extent to discount trailing blank which is trimmed when
   rendering.  If the blank is not trimmed, link highlighting in color-style
@@ -266,7 +813,7 @@ Changes since Lynx 2.8 release
 * fix some ifdef's that did not work when disabling all features -TD
 * fix a typo in LYMap.c from Debian #335593 changes (report by Jens
   Schleusener) -TD
-* really remove pointer to moxienet (report by Stef Caunter) -TD
+* really remove pointer to moxienet (report by SC) -TD
 
 2005-12-18 (2.8.6dev.16)
 * change configure option default for --enable-justify-elts to true -TD
@@ -401,7 +948,7 @@ Changes since Lynx 2.8 release
 * modify initialization so that
 	cat options.txt | lynx -
   will allow interactive use (report by Arne Kowallik) -TD
-* add NO_MARGINS and NO_TITLE to lynx.cfg (request by Stef Caunter) -TD
+* add NO_MARGINS and NO_TITLE to lynx.cfg (request by SC) -TD
 * adjust line-position for form fields when -notitle option is used (report by
   Arne Kowallik) -TD
 
@@ -437,7 +984,7 @@ Changes since Lynx 2.8 release
   made in NetBSD "make" late in 2003, incorporated into the 2.0 release.
   The CVS change notes:
 	  Trim .SUFFIXES to only contain those used in this file.
-  (reported by Stef Caunter, comments by Klaus Klein and Martin Husemann) -TD
+  (reported by SC, comments by Klaus Klein and Martin Husemann) -TD
 * modify LYhighlight() to allow for the case where a form link extends for
   several lines.  It was not providing enough padding to fill in the "_"
   characters past the first line of the link -TD
@@ -514,14 +1061,14 @@ Changes since Lynx 2.8 release
 * correct leak-checking for result of LYcommandList(), which was not freeing
   the associated strings -TD
 * correct pointer initialization in LYCheckForProxyURL() broken by fix for
-  Debian #240237 (reported by GV, Stef Caunter) -TD
+  Debian #240237 (reported by GV, SC) -TD
 
 2004-12-30 (2.8.6dev.9)
 * remove fixed limit on history[] array (report by Richard Eyre) -TD
 * improve logic for highlighting links which extend to multiple lines by
   ensuring that if they cover a blank line that the following lines of the
   link will be highlighted rather than the blank line (report by Hataguchi
-  Takeshi).
+  Takeshi) -TD
 * replace most instances of exit() by exit_immediately(), except those needed
   for the leak-checking code, to add an ifdef'd call to _nc_freeall() which
   simplifies testing with valgrind -TD
@@ -867,7 +1414,7 @@ Changes since Lynx 2.8 release
 * remove intl subdirectory (gettext-0.10.35), since some of the ".po" files
   have been modified to rely upon newer features of gettext.  Modified
   configure script macro to report this properly -TD
-* add SSL_CERT_DIR, SSL_CERT_FILE to lynx.man (suggested by Stef Caunter) -TD
+* add SSL_CERT_DIR, SSL_CERT_FILE to lynx.man (suggested by SC) -TD
 * documentation updates for DJGPP -DK, LP, FLWM
 * update address for Free Software Foundation in COPYHEADER and COPYING
   (Atsuhito Kohda).
@@ -891,7 +1438,7 @@ Changes since Lynx 2.8 release
   Frederic L W Meunier) -TD
 
 2004-01-19 (2.8.5pre.2)
-* update URLs in docs/README.ssl (Stef Caunter, DK).
+* update URLs in docs/README.ssl (SC, DK).
 * use http://search.lycos.com rather than the messy http://www.lycos.com -DK
 * update some URLs in lynx_help -FLWM (Frederic L W Meunier)
 * remove a few unnecessary #include's (reported by Frederic L W Meunier) -TD
@@ -941,12 +1488,12 @@ FreeBSD 4.1, 4.8, NetBSD 1.5, 1.6 and OpenBSD 2.8 (curses/ncurses).
 * fix ifdef's for alloca(), e.g., on AIX 4 -TD
 * fix misspelled LYGetEnv/LYgetenv in DJGPP configuration -DK
 * a few portability fixes to allow building on OS/2, AIX, Tru64 and HPUX -TD
-* add docs/README.rootcerts -IZ, Stef Caunter, Johannes Hromadka
+* add docs/README.rootcerts -IZ, SC, Johannes Hromadka
 * update po files (ca.po, da.po, de.po, et.po, hu.po, ru.po, sv.po, tr.po and
   zh_CN.po) from
   http://www.iro.umontreal.ca/contrib/po/maint/lynx/
 * correct some mismatches between INSTALLATION and "configure --help" (prompted
-  by discussion with Stef Caunter) -TD
+  by discussion with SC) -TD
 * undef conflicting symbols "small" and FILE_DOES_NOT_EXIST which are
   misdefined in Cygwin's w32api headers (report by Frederic L W Meunier) -TD
 * amend check for refresh-URL to ensure it only prepends a link for text/html
@@ -1057,7 +1604,7 @@ FreeBSD 4.1, 4.8, NetBSD 1.5, 1.6 and OpenBSD 2.8 (curses/ncurses).
   platforms when POSIXLY_CORRECT (sic) is set -TD
 * fix configure script check for term.h, which may be <ncursesw/term.h> -TD
 * modify an ifdef in HTCheckForInterrupt() to allow compile with DJGPP -GV
-* add docs/README.sslcerts (Stef Caunter <cauntes@mail.mohawkc.on.ca>).
+* add docs/README.sslcerts (Stefan Caunter <cauntes@mail.mohawkc.on.ca>).
 * modify LYLocalFileToURL() to allow for CurrentDir() returning a value that
   does not begin with a slash, e.g., with DJGPP which returns a drive-letter
   first -DK
@@ -1479,7 +2026,7 @@ FreeBSD 4.1, 4.8, NetBSD 1.5, 1.6 and OpenBSD 2.8 (curses/ncurses).
   it (reported by Michel SUCH and Karl-Heinz Weirich <weirich@de.ibm.com>) -TD
 * strip parameters from refresh-URL -TD
 * correct misspelled $LYNX_LOCALEDIR variable in LYMain.c (reported by Michel
-  Such)
+  Such) -TD
 * change the install procedure for lynx.cfg to attempt to update the file with
   the user's customizations if any, and to save the old configuration
   information in a series, e.g., lynx.cfg-1, lynx.cfg-2, etc. -TD
@@ -2025,8 +2572,7 @@ FreeBSD 4.1, 4.8, NetBSD 1.5, 1.6 and OpenBSD 2.8 (curses/ncurses).
 
 2001-07-17 (2.8.4rel.1)
 * remove comment in README.ssl directing people to
-  http://www.moxienet.com/lynx/, since that page is moot with 2.8.4 (report by
-  DK)
+  http://www.moxienet.com/lynx/, since that page is moot with 2.8.4 -DK
 * add an ifdef in CF_CURSES_FUNCS configure macro to avoid confusing ncurses'
   term.h with other versions -TD
 * update URL for zlib -Frederic L W Meunier
@@ -2047,8 +2593,8 @@ FreeBSD 4.1, 4.8, NetBSD 1.5, 1.6 and OpenBSD 2.8 (curses/ncurses).
 * correct order of checks for wrapping in www_search_forward() and
   www_search_backward(), which would allow an infinite loop if there were no
   anchors on the current page (report by Frederic L W Meunier) -TD
-* add a missing chunk to reverted change of SGML_character()
-  -NSH <nsh@horae.dti.ne.jp>
+* add a missing chunk to reverted change of SGML_character() -NSH
+  <nsh@horae.dti.ne.jp>
 
 2001-07-07 (2.8.4pre.3)
 * review/add descriptions of new command-line options in lynx.man, lynx.hlp and
@@ -2106,9 +2652,9 @@ FreeBSD 4.1, 4.8, NetBSD 1.5, 1.6 and OpenBSD 2.8 (curses/ncurses).
   scan_cookie_sublist() function, broken in dev.21 changes (report by Ken Scott
   <admin@shellworld.net>) -TD
 * add a fallback definition for SA_LEN(), to build with glibc 2.2 (report by
-  Mark Sutton <mes@lazo.ca>,
-  from http://cvs.pld.org.pl/SOURCES/lynx-SA_LEN.patch?rev=1.1,
-  patch by Arkadiusz Miskiewicz).
+  Mark Sutton <mes@lazo.ca>, from
+  http://cvs.pld.org.pl/SOURCES/lynx-SA_LEN.patch?rev=1.1) -Arkadiusz
+  Miskiewicz
 * modify ifdef in HTCheckForInterrupt() to build with DJGPP -DK
 * remove include for <pdcurses.h>, use <curses.h> which is the default for
   PDCurses - DK
@@ -2407,7 +2953,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
 * fix a few warnings from antic (unreached statements due to quirks of ifdef's,
   incorrectly-indented code) -TD
 * eliminate a few references to USE_HASH and LINKEDSTYLES in documentation -TD
-* fix a couple of compiler warnings for SCO (report by BL)
+* fix a couple of compiler warnings for SCO -BL
 * fix a comparison in HTChunkPutUtf8Char() to work with EBCDIC -PG
 * fix a typo in LYCharUtils.c CTRACE macro, amend tracing to avoid suppressing
   a related user message -PG
@@ -2619,8 +3165,8 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
   <martin@dc.cis.okstate.edu>, IZ) -TD
 
 2001-01-01 (2.8.4dev.16)
-* add ja.po message file (overlooked in dev.15, reported by Atsuhito Kohda
-  <kohda@nsx.pm.tokushima-u.ac.jp>)
+* add ja.po message file (overlooked in dev.15) -Atsuhito Kohda
+  <kohda@nsx.pm.tokushima-u.ac.jp>
 * use C preprocessor at build-time to replace CF_EBCDIC configure macro -PG
 * integrated SSL patch from http://www.moxienet.com/lynx/ as a configure
   option, --with-ssl -TD
@@ -2987,7 +3533,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
   ttyname(), and adding fallback definitions for Win32 and VMS -TD
 * for slang configurations past 1.3.6, call SLsmg_touch_screen() in
   start_curses to ensure that the screen is properly initialized for non-bce
-  terminals -JED (John Davis)
+  terminals -JED (John E Davis)
 * move call on lynx_initialize_keymaps() for slang configuration into the
   start_curses() function, avoiding premature reference to $TERM, especially
   when Lynx is running in dump mode, e.g., via cron (report by Hamish Moffatt
@@ -3066,7 +3612,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
   and LYVersionStatus() in LYShowInfo.c -TD
 * remove symbol LYNX_RELEASE_DATE, use same format for both development and
   release dates -LP
-* remove po/ChangeLog (noted by LP)
+* remove po/ChangeLog -LP
 
 2000-04-22 (2.8.3pre.8)
 * update option_help.html to describe the Visited Pages settings -TD
@@ -3418,7 +3964,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
 * fixes to compile on VMS with UCX -TD
 * change LYRemoveTemp() to return a value, needed for VMS -TD
 * rename intl/po2tbl.sed.in to intl/po2tbl.sed_in, to allow unzip on VMS -TD
-* correct HTSetSuffix/HTSetSuffix5 for VMS build (reported by Dan W. Olds
+* correct HTSetSuffix/HTSetSuffix5 for VMS build (reported by Dan W Olds
   <oldsdw@wofford.edu>) -TD
 * resync autoconf macros, from tin -TD
 
@@ -3633,7 +4179,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
     currently not done) -KW
 * HTErrorStream(), similar to W3C libwww, used in some cases for the above -KW
 * remove check in HTParse() dated 98/09/08 which prevented unescaping of 8-bit
-  data (reported by KW)
+  data (reported by KW) -TD
 * refresh screen for TRST changes in partial display mode as early as possible.
   This fixes a problem when the table finished below the screen bottom -LP
 * remove global Newline_partial, use LYGetNewline() instead -LP
@@ -3765,7 +4311,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
   next THEAD/TFOOT/TBODY), respectively; or until the end of the row or table,
   respectively, if there is no containing group (thus acting as per HTML 4.0).
   Also cancel effect of all ROWSPANs at a THEAD/TFOOT/TBODY boundary (problem
-  with other browser described and behavior proposed by G.  James Berigan in
+  with other browser described and behavior proposed by G James Berigan in
   <http://www.war-of-the-worlds.org/html/span-vs-group.html>) -KW
 * 'prev_target' is now PRIVATE to LYMainLoop.c [defined outside of mainloop()];
   this undoes some dev.15 changes.  -LP, KW
@@ -4844,7 +5390,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
 * change ifndef's for NO_JUSTIFY to ifdef EXP_JUSTIFY_ELTS since something in
   VH's recent code causes core dumps, by crosslinking the state of two parts of
   the parser -TD
-* modify slang code to recognize F1 from terminfo/termcap on Unix (John Davis)
+* modify slang code to recognize F1 from terminfo/termcap on Unix (John E Davis)
 * changes to use the WATT-32 tcp library, making a DOS port that does http,
   ftp, news, mailto, and telnet -DK
   Remaining work includes:
@@ -6148,7 +6694,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
 * move commands in top-level makefile.in which clean *.rej and *.orig from
   'distclean' rule to 'maintainer-clean', make distinct from the @SRCDIR_CLEAN@
   substitution which is intended for use with the configure --srcdir option
-  (from reports by Glenn E.  Thobe <thobe@lafn.org> and BL) - TD
+  (from reports by Glenn E Thobe <thobe@lafn.org> and BL) - TD
 * correct LYRemoveTemp() to close file before attempting to remove it; else
   the remove fails on some platforms, e.g., DOS/Windows (report by KW) - TD
 * improved documentation for the new cookie options, e.g,.
@@ -6629,9 +7175,9 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
 * modify print_help_and_exit() to print values for the simple options, i.e.,
   toggle, integer and string, as part of "lynx -help" (request by
   mattack@area.com) - TD
-* correct sense shown for Old_DTD variable in LYOptions.c (reported by DK).
+* correct sense shown for Old_DTD variable in LYOptions.c (reported by DK) -TD
 * correct order of params for non-Unix use of HTAddParam in LYBookmark.c
-  (reported by DK)
+  (reported by DK) -TD
 
 1998-12-31
 * delete unused 'PREVAIL' color-style code from HTML.c, merge a couple of
@@ -6683,7 +7229,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
   combination, strip trailing blanks from makefile.sla, change optimization
   level to -O2) - DK
 * rename New_DTD variable to Old_DTD, change logic for -tagsoup option to be
-  consistent with sense in lynx.cfg (reported by LP)
+  consistent with sense in lynx.cfg (reported by LP) -TD
 
 1998-12-26 (2.8.2dev.12)
 * use HTSprintf0 in LYCgi.c - TD
@@ -6695,7 +7241,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
   so they allocate space for the result rather than using a static buffer - TD
 * modify LYEdit.c to use HTAddParam - TD
 * make HREF/NAME for "Environment" consistent in Lynx_users_guide.html
-  (reported by LP)
+  (reported by LP) -TD
 * correct DOS/EMX logic in LYEdit.c which incremented 'filename' pointer when
   its length was greater than 1 rather than recopying the string, causing a
   core dump when 'filename' was freed (reported by LP, this applies to
@@ -6795,7 +7341,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
   with a single read() - KW
 * add a missing FREE() in HTTP.c - KW
 * use case mapping from ftp.unicode.org /Public/UNIDATA for case-insensitive
-  user search (thanks "Kari E.  Hurtta" <Kari.Hurtta@ozone.FMI.FI>), new file
+  user search (thanks "Kari E Hurtta" <Kari.Hurtta@ozone.FMI.FI>), new file
   src/chrtrans/caselower.h added.  This is used instead of UPPER8 assumption
   introduced in 2.8 release (see 1998-02-27).  There is no difference in speed
   though - LP
@@ -7118,7 +7664,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
   mode.  Also fixes one small typo in LYMainLoop.c.  (suggested by
   <erisson@sw-tech.com>) - BJP
 * modify HTParseInet() so that it works if stdin has been redirected to
-  /dev/null, e.g., when running a cron job (reported by John H.  DuBois III
+  /dev/null, e.g., when running a cron job (reported by John H DuBois III
   <spcecdt@armory.com>) - BL
 * minor documentation updates to lynx.cfg (Larry Virden).
 * change some character constants from '\hex' and '\octal' form to decimal,
@@ -7215,7 +7761,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
   to use it in FD_CLR (patch by Karl-Andre Skevik <karls@kosmo.inet.no>)
 * minor documentation fixes - DK
 * use $(LIBS) symbol in src/chrtrans/makefile.in (reported by Alois Maier
-  <m9235159@grz08u.unileoben.ac.at>)
+  <m9235159@grz08u.unileoben.ac.at>) -TD
 * Fix core dump which may happen after printing-to-email - LP
 * Move read_rc() before parsing any command-line arguments (except -help)
   so the latter will override any .lynxrc settings.  In particular, the problem
@@ -7552,7 +8098,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
     does.
 * change default for NO_ANONYMOUS_EMAIL to TRUE (patch by HN)
 * use url for "W3C HTML Validation Service" rather than "A Kinder, Gentler HTML
-  Validator"
+  Validator" -TD
 * update url for HTML Quick Reference Guide (report by LE) - TD
 * modify verbose images to show ISMAPs and USEMAPs (patch by LE).
 * fix typos in AttrList.h, LYStrings.h (reported by LV & HN) - TD
@@ -7681,7 +8227,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
   read comments inside the functions if change something!  - LP
 * add new functions BeginInternalPage and EndInternalPage to reduce clutter in
   code that sets up internal pages (email from LP).
-* change version in makefile.in to 2-8-1 (reported by DK).
+* change version in makefile.in to 2-8-1 -DK
 * the code in GridText that adds control characters to the current line
   does not test for buffer overflow.  Normally Lynx gets away with this because
   it will wrap the current line as soon as the line exceeds the display width,
@@ -7922,7 +8468,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
   (Reported by Bela Lubkin, Mon, 27 Jul 1998 16:51:14 -0700 on the mailing
   list.) Bela's modification to make some character arrays static is also
   included -TD
-* nits/spelling in LYPrint.c, LYUtils.c (reported by Mike Castle).
+* nits/spelling in LYPrint.c, LYUtils.c (reported by Mike Castle) -TD
 * changed LYGetFile.c to build lynx2.8.1dev.18 with SLANG and the
   DJGPP_KEYHANDLER for DOS - DK
 * fix a couple of places where the return-value of calloc was not checked
@@ -8064,7 +8610,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
 1998-05-10 (2.8.1dev.10)
 * eliminate assignment to stderr for trace-file by making tfp a function - TD
 * added keymaps/keysym patch (it really should be integrated with the normal
-  lynx.cfg file (John Davis).
+  lynx.cfg file (John E Davis).
 * tweak chartrans, "Convert the octet to Unicode":  incoming symbols >127 but <
   LYlowest_eightbit[IN-charset] now ignored, previously displayed as UFFFD.
   (SGML.c, HTPlain.c, LYCharUtils.c) - LP
@@ -8125,9 +8671,9 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
   collapse_spaces), LYTrimLeading, LYTrimTrailing (incidentally fixes core-dump
   in LYCookie.c) - TD
 * rewrite read_cfg function to make it more table-driven (reworked from a
-  patch by John Davis) - TD
+  patch by John E Davis) - TD
 * rewrite parse_arg function to make it more table-driven (reworked from a
-  patch by John Davis) - TD
+  patch by John E Davis) - TD
 * omit -Olimit compiler option on Digital UNIX 4.0 (patch by Tomas Vanhala).
 * modify configure test for acs_map[] array to work on Digital UNIX 4.0
   (reported by Jim Spath and Tomas Vanhala <vanhala@ling.helsinki.fi>).  - TD
@@ -8217,7 +8763,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
 
 1998-03-18 (2.8.1dev.1)
 * correct an ifdef that caused inconsistent pathname separators on Windows
-  (reported by afn, patch by DK).
+  (reported by afn) -DK
 * correct a missing AC_MSG_RESULT in configure.in (also MM) - TD
 * guard against illegal (e.g., zero) value for DEFAULT_CACHE_SIZE, when it is
   read from lynx.cfg (reported by Martin Mokrejs

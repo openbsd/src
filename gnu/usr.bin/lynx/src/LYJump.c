@@ -1,3 +1,6 @@
+/*
+ * $LynxId: LYJump.c,v 1.34 2009/01/01 22:41:04 tom Exp $
+ */
 #include <HTUtils.h>
 #include <HTAlert.h>
 #include <LYUtils.h>
@@ -363,6 +366,7 @@ static unsigned LYRead_Jumpfile(struct JumpTable *jtp)
     int fd;
 
 #ifdef VMS
+    int blocksize = 1024;
     FILE *fp;
     BOOL IsStream_LF = TRUE;
 #endif /* VMS */
@@ -379,7 +383,7 @@ static unsigned LYRead_Jumpfile(struct JumpTable *jtp)
     }
 
     /* allocate storage to read entire file */
-    if ((mp = typecallocn(char, st.st_size + 1)) == NULL) {
+    if ((mp = typecallocn(char, (size_t) st.st_size + 1)) == NULL) {
 	HTAlert(OUTOF_MEM_FOR_JUMP_FILE);
 	return 0;
     }
@@ -405,7 +409,7 @@ static unsigned LYRead_Jumpfile(struct JumpTable *jtp)
     if (IsStream_LF) {
     /** Handle as a stream. **/
 #endif /* VMS */
-	if (read(fd, mp, st.st_size) != st.st_size) {
+	if (read(fd, mp, (size_t) st.st_size) != st.st_size) {
 	    HTAlert(ERROR_READING_JUMP_FILE);
 	    FREE(mp);
 	    return 0;
@@ -415,12 +419,12 @@ static unsigned LYRead_Jumpfile(struct JumpTable *jtp)
 #ifdef VMS
     } else {
 	/** Handle as a series of records. **/
-	if (fgets(mp, 1024, fp) == NULL) {
+	if (fgets(mp, blocksize, fp) == NULL) {
 	    HTAlert(ERROR_READING_JUMP_FILE);
 	    FREE(mp);
 	    return 0;
 	} else
-	    while (fgets(mp + strlen(mp), 1024, fp) != NULL) {
+	    while (fgets(mp + strlen(mp), blocksize, fp) != NULL) {
 		;
 	    }
 	LYCloseInput(fp);

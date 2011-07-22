@@ -264,6 +264,12 @@ extern "C" {
 #define LYK_NESTED_TABLES  LYK_UNKNOWN
 #endif
 
+#ifdef USE_CACHEJAR
+	,LYK_CACHE_JAR
+#else
+#define LYK_CACHE_JAR LYK_UNKNOWN
+#endif
+
     } LYKeymapCode;
 
 /*

@@ -1,3 +1,6 @@
+/*
+ * $LynxId: LYMail.c,v 1.71 2009/01/03 00:39:50 tom Exp $
+ */
 #include <HTUtils.h>
 #include <HTParse.h>
 #include <LYGlobalDefs.h>
@@ -83,7 +86,7 @@ static void extract_field(char **dst,
 			  char *src,
 			  const char *keyword)
 {
-    int len = strlen(keyword);
+    int len = (int) strlen(keyword);
     char *cp, *cp1;
 
     cp = (src + 1);
@@ -115,7 +118,7 @@ static void extract_subject(char *dst,
 			    char *src)
 {
     const char *keyword = "subject=";
-    int len = strlen(keyword);
+    int len = (int) strlen(keyword);
     char *cp, *cp1;
 
     cp = (src + 1);
@@ -150,7 +153,7 @@ static void extract_body(char **dst,
 			 char *src)
 {
     const char *keyword = "body=";
-    int len = strlen(keyword);
+    int len = (int) strlen(keyword);
     int i;
     char *cp, *cp0, *cp1, *temp = 0;
 
@@ -178,21 +181,21 @@ static void extract_body(char **dst,
 			}
 		    }
 		    i = 0;
-		    len = strlen(cp0);
+		    len = (int) strlen(cp0);
 		    while (len > 78) {
 			HTSprintf(dst, "%.78s\n", &cp0[i]);
 			i += 78;
-			len = strlen(&cp0[i]);
+			len = (int) strlen(&cp0[i]);
 		    }
 		    HTSprintf(dst, "%s\n", &cp0[i]);
 		    cp0 = (cp + 1);
 		}
 		i = 0;
-		len = strlen(cp0);
+		len = (int) strlen(cp0);
 		while (len > 78) {
 		    HTSprintf(dst, "%.78s\n", &cp0[i]);
 		    i += 78;
-		    len = strlen(&cp0[i]);
+		    len = (int) strlen(&cp0[i]);
 		}
 		if (len) {
 		    HTSprintf(dst, "%s\n", &cp0[i]);
@@ -643,7 +646,7 @@ void mailform(const char *mailto_address,
     /*
      * Allow user to edit the default Subject - FM
      */
-    if (isEmpty(subject)) {
+    if (subject[0] == '\0') {
 	if (!isEmpty(mailto_subject)) {
 	    LYstrncpy(subject, mailto_subject, MAX_SUBJECT);
 	} else {
@@ -767,25 +770,25 @@ void mailform(const char *mailto_address,
     while ((cp = strchr(mailto_content, '\n')) != NULL) {
 	*cp = '\0';
 	i = 0;
-	len = strlen(mailto_content);
+	len = (int) strlen(mailto_content);
 	while (len > 78) {
 	    strncpy(buf, &mailto_content[i], 78);
 	    buf[78] = '\0';
 	    fprintf(fd, "%s\n", buf);
 	    i += 78;
-	    len = strlen(&mailto_content[i]);
+	    len = (int) strlen(&mailto_content[i]);
 	}
 	fprintf(fd, "%s\n", &mailto_content[i]);
 	mailto_content = (cp + 1);
     }
     i = 0;
-    len = strlen(mailto_content);
+    len = (int) strlen(mailto_content);
     while (len > 78) {
 	strncpy(buf, &mailto_content[i], 78);
 	buf[78] = '\0';
 	fprintf(fd, "%s\n", buf);
 	i += 78;
-	len = strlen(&mailto_content[i]);
+	len = (int) strlen(&mailto_content[i]);
     }
     if (len)
 	fprintf(fd, "%s\n", &mailto_content[i]);
@@ -1227,7 +1230,7 @@ void reply_by_mail(char *mail_address,
     /*
      * Set the default subject.  - FM
      */
-    if (isEmpty(default_subject) && !isEmpty(title)) {
+    if ((default_subject[0] == '\0') && !isEmpty(title)) {
 	strncpy(default_subject, title, MAX_SUBJECT);
 	default_subject[MAX_SUBJECT] = '\0';
     }
@@ -1668,8 +1671,8 @@ void reply_by_mail(char *mail_address,
 #else
 	    fputs(header, fp);
 #endif
-	    while ((n = fread(buf, 1, sizeof(buf), fd)) != 0) {
-		fwrite(buf, 1, n, fp);
+	    while ((n = (int) fread(buf, 1, sizeof(buf), fd)) != 0) {
+		fwrite(buf, 1, (size_t) n, fp);
 	    }
 #if CAN_PIPE_TO_MAILER
 	    pclose(fp);

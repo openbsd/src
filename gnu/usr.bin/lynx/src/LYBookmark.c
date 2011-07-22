@@ -1,3 +1,6 @@
+/*
+ * $LynxId: LYBookmark.c,v 1.62 2009/01/02 00:01:00 tom Exp $
+ */
 #include <HTUtils.h>
 #include <HTAlert.h>
 #include <HTFile.h>
@@ -492,7 +495,7 @@ void remove_bookmark_link(int cur,
      * Explicitly preserve bookmark file mode on Unix.  - DSL
      */
     if (stat(filename_buffer, &stat_buf) == 0) {
-	regular = (S_ISREG(stat_buf.st_mode) && stat_buf.st_nlink == 1);
+	regular = (BOOLEAN) (S_ISREG(stat_buf.st_mode) && stat_buf.st_nlink == 1);
 	mode = ((stat_buf.st_mode & 0777) | 0600);	/* make it writable */
 	(void) chmod(newfile, mode);
 	if ((nfp = LYReopenTemp(newfile)) == NULL) {
@@ -845,7 +848,7 @@ int select_menu_multi_bookmarks(void)
 	MBM_tmp_count = 0;
 	for (c = MBM_from; c <= MBM_to; c++) {
 	    LYmove(3 + MBM_tmp_count, 5);
-	    LYaddch(LYindex2MBM(c));
+	    LYaddch((chtype) LYindex2MBM(c));
 	    LYaddstr(" : ");
 	    if (MBM_A_subdescript[c])
 		LYaddstr(MBM_A_subdescript[c]);
@@ -975,28 +978,38 @@ void LYMBM_statusline(const char *text)
  */
 static BOOLEAN havevisible(const char *Title)
 {
+    BOOLEAN result = FALSE;
     const char *p = Title;
     unsigned char c;
     long unicode;
 
     for (; *p; p++) {
 	c = UCH(TOASCII(*p));
-	if (c > 32 && c < 127)
-	    return (TRUE);
+	if (c > 32 && c < 127) {
+	    result = TRUE;
+	    break;
+	}
 	if (c <= 32 || c == 127)
 	    continue;
-	if (LYHaveCJKCharacterSet || !UCCanUniTranslateFrom(current_char_set))
-	    return (TRUE);
+	if (LYHaveCJKCharacterSet || !UCCanUniTranslateFrom(current_char_set)) {
+	    result = TRUE;
+	    break;
+	}
 	unicode = UCTransToUni(*p, current_char_set);
-	if (unicode > 32 && unicode < 127)
-	    return (TRUE);
+	if (unicode == ucNeedMore)
+	    continue;
+	if (unicode > 32 && unicode < 127) {
+	    result = TRUE;
+	    break;
+	}
 	if (unicode <= 32 || unicode == 0xa0 || unicode == 0xad)
 	    continue;
-	if (unicode >= 0x2000 && unicode < 0x200f)
-	    continue;
-	return (TRUE);
+	if (unicode < 0x2000 || unicode >= 0x200f) {
+	    result = TRUE;
+	    break;
+	}
     }
-    return (FALSE);		/* if we came here */
+    return (result);
 }
 
 /*

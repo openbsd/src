@@ -1,3 +1,4 @@
+/* $LynxId: LYKeymap.c,v 1.68 2009/01/25 18:34:57 tom Exp $ */
 #include <HTUtils.h>
 #include <LYUtils.h>
 #include <LYGlobalDefs.h>
@@ -16,7 +17,7 @@
 #include <rot13_kb.h>
 #endif
 
-#define PUTS(buf)    (*target->isa->put_block)(target, buf, strlen(buf))
+#define PUTS(buf)    (*target->isa->put_block)(target, buf, (int) strlen(buf))
 
 #ifdef EXP_KEYBOARD_LAYOUT
 int current_layout = 0;		/* Index into LYKbLayouts[]   */
@@ -72,23 +73,22 @@ LYK_ABORT,          LYK_END,        LYK_NEXT_PAGE,     0,
 LYK_HISTORY,    LYK_FASTFORW_LINK,  LYK_ACTIVATE,  LYK_COOKIE_JAR,
 /* bs */            /* ht */        /* nl */       /* ^K */
 
-#ifdef KANJI_CODE_OVERRIDE
-LYK_CHG_KCODE,    LYK_ACTIVATE,     LYK_DOWN_TWO,      0,
-/* ^L */            /* cr */        /* ^N */       /* ^O */
-
-#else
 LYK_REFRESH,      LYK_ACTIVATE,     LYK_DOWN_TWO,      0,
 /* ^L */            /* cr */        /* ^N */       /* ^O */
-#endif
 
 LYK_UP_TWO,       LYK_CHG_CENTER,   LYK_RELOAD,    LYK_TO_CLIPBOARD,
 /* ^P */            /* XON */       /* ^R */       /* ^S */
 
-LYK_TRACE_TOGGLE,       0,        LYK_SWITCH_DTD,  LYK_REFRESH,
+LYK_TRACE_TOGGLE,  LYK_NEXT_DOC,  LYK_SWITCH_DTD,  LYK_REFRESH,
 /* ^T */            /* ^U */        /* ^V */       /* ^W */
 
+#ifdef USE_CACHEJAR
+LYK_CACHE_JAR,          0,              0,             0,
+/* ^X */            /* ^Y */        /* ^Z */       /* ESC */
+#else
 0,                      0,              0,             0,
 /* ^X */            /* ^Y */        /* ^Z */       /* ESC */
+#endif
 
 0,                      0,              0,             0,
 /* ^\ */            /* ^] */        /* ^^ */       /* ^_ */
@@ -128,8 +128,14 @@ LYK_RAW_TOGGLE,      LYK_ADDRLIST, LYK_PREV_PAGE,   LYK_CHDIR,
 LYK_DOWNLOAD,        LYK_ELGOTO,  LYK_DIRED_MENU,   LYK_ECGOTO,
 /* D */              /* E */         /* F */        /* G */
 
+#ifdef KANJI_CODE_OVERRIDE
+LYK_HELP,            LYK_INDEX,      LYK_CHG_KCODE, LYK_KEYMAP,
+/* H */              /* I */         /* J */        /* K */
+
+#else
 LYK_HELP,            LYK_INDEX,      LYK_JUMP,      LYK_KEYMAP,
 /* H */              /* I */         /* J */        /* K */
+#endif
 
 LYK_LIST,          LYK_MAIN_MENU,    LYK_PREV,      LYK_OPTIONS,
 /* L */              /* M */         /* N */        /* O */
@@ -381,7 +387,7 @@ LYKeymap_t key_override[KEYMAP_SIZE] = {
     0,                  0,              0,            0,
 /* ^P */            /* XON */       /* ^R */      /* XOFF */
 
-    0,            LYK_PREV_DOC,         0,            0,
+    0,            LYK_NEXT_DOC,         0,            0,
 /* ^T */            /* ^U */        /* ^V */      /* ^W */
 
     0,                  0,              0,            0,
@@ -971,6 +977,11 @@ static Kcmd revmap[] = {
 	LYK_NESTED_TABLES, "NESTED_TABLES",
 	"toggle nested-table parsing on/off" ),
 #endif
+#ifdef USE_CACHEJAR
+    DATA(
+	LYK_CACHE_JAR, "CACHE_JAR",
+	"examine list of cached documents" ),
+#endif
     DATA(
 	LYK_UNKNOWN, NULL,
 	"" )
@@ -1128,7 +1139,7 @@ Kcmd *LYStringToKcmd(const char *name)
 		result = revmap + j;
 		break;
 	    } else if (!exact
-		       && !strncasecomp(revmap[j].name, name, need)) {
+		       && !strncasecomp(revmap[j].name, name, (int) need)) {
 		if (maybe == 0) {
 		    maybe = revmap + j;
 		} else {
@@ -1160,16 +1171,17 @@ char *LYKeycodeToString(int c,
     }
 
     if (!named) {
-	if (c > ' '
-	    && c < 0177)
+	if (c <= 0377
+	    && TOASCII(c) > TOASCII(' ')
+	    && TOASCII(c) < 0177)
 	    sprintf(buf, "%c", c);
 	else if (upper8
-		 && c > ' '
+		 && TOASCII(c) > TOASCII(' ')
 		 && c <= 0377
 		 && c <= LYlowest_eightbit[current_char_set])
 	    sprintf(buf, "%c", c);
-	else if (c < ' ')
-	    sprintf(buf, "^%c", c | 0100);
+	else if (TOASCII(c) < TOASCII(' '))
+	    sprintf(buf, "^%c", FROMASCII(TOASCII(c) | 0100));
 	else if (c >= 0400)
 	    sprintf(buf, "key-0x%x", c);
 	else
@@ -1182,7 +1194,7 @@ int LYStringToKeycode(char *src)
 {
     unsigned n;
     int key = -1;
-    int len = strlen(src);
+    int len = (int) strlen(src);
 
     if (len == 1) {
 	key = *src;
@@ -1243,8 +1255,8 @@ static char *pretty_html(int c)
 		if (c == table[n].code) {
 		    found = TRUE;
 		    strcpy(dst, table[n].name);
-		    adj += strlen(dst) - 1;
-		    dst += strlen(dst);
+		    adj += (int) strlen(dst) - 1;
+		    dst += (int) strlen(dst);
 		    break;
 		}
 	    }
@@ -1370,7 +1382,7 @@ int lkcstring_to_lkc(const char *src)
     else if (strlen(src) == 2 && *src == '^')
 	c = src[1] & 037;
     else if (strlen(src) >= 2 && isdigit(UCH(*src))) {
-	if (sscanf(src, "%i", &c) != 1)
+	if (sscanf(src, "%d", &c) != 1)
 	    return (-1);
 #ifdef USE_KEYMAPS
     } else {

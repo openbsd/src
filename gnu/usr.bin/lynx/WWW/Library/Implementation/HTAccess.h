@@ -1,12 +1,15 @@
-/*                                                      HTAccess:  Access manager  for libwww
-                                      ACCESS MANAGER
-
-   This module keeps a list of valid protocol (naming scheme) specifiers with associated
-   access code.  It allows documents to be loaded given various combinations of
-   parameters.  New access protocols may be registered at any time.
-
-   Part of the libwww library .
-
+/*
+ * $LynxId: HTAccess.h,v 1.20 2008/01/03 00:24:16 tom Exp $
+ *					HTAccess:  Access manager for libwww
+ *			ACCESS MANAGER
+ *
+ * This module keeps a list of valid protocol (naming scheme) specifiers with
+ * associated access code.  It allows documents to be loaded given various
+ * combinations of parameters.  New access protocols may be registered at any
+ * time.
+ *
+ * Part of the libwww library .
+ *
  */
 #ifndef HTACCESS_H
 #define HTACCESS_H
@@ -154,7 +157,7 @@ Load a document from absolute name to a stream
 Load if necessary, and select an anchor
 
   ON ENTRY,
-  destination                The child or parenet anchor to be loaded.
+  destination                The child or parent anchor to be loaded.
 
   ON EXIT,
   returns YES             Success
@@ -168,7 +171,7 @@ Load if necessary, and select an anchor
 Make a stream for Saving object back
 
   ON ENTRY,
-  anchor                  is valid anchor which has previously beeing loaded
+  anchor                  is valid anchor which has previously been loaded
 
   ON EXIT,
   returns                 0 if error else a stream to save the object to.

@@ -1,3 +1,4 @@
+/* $LynxId: LYHash.h,v 1.23 2007/07/22 23:08:36 tom Exp $ */
 #ifndef _LYHASH_H_
 #define _LYHASH_H_ 1
 
@@ -75,12 +76,6 @@ extern "C" {
 #if OMIT_SCN_KEEPING
     extern bucket special_bucket;
 #endif
-
-#define CACHEW 128
-#define CACHEH 64
-
-    extern unsigned cached_styles[CACHEH][CACHEW];
-#define CACHE_VALIDATE_YX(y, x) ((y) >= 0 && (x) >= 0 && (y) < CACHEH && (x) < CACHEW)
 
 #ifdef __cplusplus
 }

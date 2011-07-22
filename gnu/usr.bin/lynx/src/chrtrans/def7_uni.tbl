@@ -1,3 +1,4 @@
+# $LynxId: def7_uni.tbl,v 1.28 2008/04/15 19:38:41 Tim.Larson Exp $
 # Default 7bit replacements.
 #
 # This table is very important and should not be excluded from the distribution
@@ -1344,7 +1345,7 @@ U+1fed:!:
 U+1fef:!*
 U+1ffe:;;
 # General punctuation:
-0x20	U+2000 U+2002	U+2004-U+2009	# spaces
+0x20	U+2000 U+2002	U+2004-U+2009	U+205F	# spaces
 U+2001 "  "
 U+2003 "  "
 U+200e:(->)
@@ -1360,6 +1361,7 @@ U+2017:=2
 U+2020:/-
 U+2021:/=
 U+2022 " o "
+U+2023 " > "
 0x2e	U+2024
 U+2025:..
 U+2026:...
@@ -1382,7 +1384,7 @@ U+2034:'''
 U+2035:`
 U+2036:``
 U+2037:```
-U+2038:Ca
+U+2038:^
 U+2039:<
 U+203a:>
 U+203b::X
@@ -1390,11 +1392,25 @@ U+203c:!!
 U+203d:?!
 U+203e:'-
 U+2042:***
+U+2043 " - "
+U+2044:/
+U+2045:[-
+U+2046:-]
+U+2047:??
+U+2048:?!
+U+2049:!?
+U+204b:|P
+U+204e:*
 U+2051:**
 U+2052:./.
+U+2053:~
+U+2056 " .: "
 U+2057:''''
+U+2058 " .:. "
+U+2059 " :.: "
 U+205a " : "
-0x2d   U+2043  # HYPHEN BULLET ?
+U+205b " .:. "
+U+205c ":+:"
 U+2044:/
 U+2047:??
 U+2048:?!
@@ -1430,12 +1446,26 @@ U+208d:(
 U+208e:)
 # Old euro currency sign glyph:
 #U+20A0:CE
+U+20a1:C//
+U+20a2:Cr
 U+20a3:Ff
 U+20a4:Li
+U+20a5:m/
+U+20a6:N=
 U+20a7:Pt
+U+20a8:Rs
 U+20a9:W=
+U+20aa:rJ
+U+20ab:d_
 # New euro currency sign glyph:
 U+20AC:EUR
+U+20ad:K-
+U+20ae:T//
+U+20af:Dp
+U+20b1:P=
+U+20b2:G|
+U+20b3:A=
+U+20b5:C|
 U+2100:a/c
 U+2101:a/s
 U+2103:oC
@@ -1516,24 +1546,109 @@ U+217f:m
 U+2180:1000RCD
 U+2181:5000R
 U+2182:10000R
+# Arrows
 U+2190:<-
-U+2191:-^
+U+2191 "^|"	# upwards arrow "-^"
 U+2192:->
-U+2193:-v
+U+2193 "|v"	# downwards arrow "-v"
 U+2194:<->
-U+2195:UD
-U+2196:<!!
-U+2197://>
-U+2198:!!>
-U+2199:<//
-U+21a8:UD-
+U+2195 "^|v"	# up down arrow "UD"
+U+2196:^\
+U+2197:/^
+U+2198:\v
+U+2199:v/
+U+219a:</-
+U+219b:-/>
+U+219c:<~
+U+219d:~>
+U+219e:<<-
+U+219f:^^|
+U+21a0:->>
+U+21a1:|vv
+U+21a2:<-<
+U+21a3:>->
+U+21a4:<-|
+U+21a5:^|_
+U+21a6:|->
+U+21a8 "^|v_"	# up down arrow with base "UD-"
+U+21ad:<~>
+U+21ae:<-/->
+U+21af:Nv
+U+21b0:<^|
+U+21b1:|^>
+U+21b2:<v|
+U+21b3:|v>
+U+21b4:-v
 U+21B5:RET
-U+21c0:>V
+U+21ba:u<
+U+21bb:>u
+U+21bc:<-
+U+21bd:<-
+U+21be:^|
+U+21bf:^|
+U+21c0:->
+U+21c1:->
+U+21c2:|v
+U+21c3:|v
+U+21c4:<=>
+U+21c5:^||v
+U+21c6:<=>
+U+21c7:<<=
+U+21c8:^|^|
+U+21c9:=>>
+U+21ca:|v|v
+U+21cb:<=>
+U+21cc:<=>
+U+21cd:<=/=
+U+21ce:<=/=>
+U+21cf:=/=>
 U+21d0:<=
-U+21d1:^^
+U+21d1 "^||"	# upwards double arrow "^^"
 U+21d2:=>
-U+21d3:vv
+U+21d3 "||v"	# downwards double arrow "vv"
 U+21d4:<=>
+U+21d5:^||v
+U+21d6:^\\
+U+21d7://^
+U+21d8:\\v
+U+21d9:v//
+U+21da:<-=
+U+21db:=->
+U+21dc:<~
+U+21dd:~>
+U+21de:^|=|
+U+21df:|=|v
+U+21e0:<-
+U+21e1:^:
+U+21e2:->
+U+21e3::v
+U+21e4:|<-
+U+21e5:->|
+U+21e6:<-
+U+21e7:^|
+U+21e8:->
+U+21e9:|v
+U+21ea:^!
+U+21eb:^I
+U+21ec:^-I
+U+21ed:^|I
+U+21ee:^^|
+U+21ef:^^I
+U+21f0:|->
+U+21f2:\v_|
+U+21f3:^|v
+U+21f4:-o>
+U+21f5:|v^|
+U+21f6:=->>>
+U+21f7:<-|-
+U+21f8:-|->
+U+21f9:<-|->
+U+21fa:<-||-
+U+21fb:-||->
+U+21fc:<-||->
+U+21fd:<-
+U+21fe:->
+U+21ff:<->
 U+2200:FA
 U+2201:C
 U+2202:\partial
@@ -1551,7 +1666,7 @@ U+220d:-)
 U+220e " qed"
 U+220f:\prod
 U+2211:\sum
-U+2212: -
+U+2212:-
 U+2213:-/+
 U+2214:.+
 0x2f	U+2215
@@ -1925,29 +2040,54 @@ U+25d9:Ic
 U+25e2:Fd
 U+25e3:Bd
 U+25ef:Ci
+# Miscellaneous Symbols
 U+2600 "SU"	# cf. U+263c
-U+2605:*2
-U+2606:*1
-U+2609 "Sol"	# cf. astronomical symbols U+263d - U+2647 vs star-like depictions U+2600 and U+263c
+U+2601:cOo
+U+2602:J
+U+2603:"8"
+U+2605:*
+U+2606:*
+U+2607:<v
+U+2608:Rv
+U+2609 "Sol"	# cf. astrological symbols U+263c - U+2647, star-like U+2600 
+U+260a:Asc.
+U+260b:Desc.
 U+260c:Conj.
 U+260d:Opp.
 U+260e:TEL
 U+260f:tel
 0x58    U+2611  U+2612  # checked ballot boxes -> x
 U+2613:X
+U+2614 "\"J\""	# umbrella with rain drops, quote marks are part of the symbol
+U+2615:Joe
 U+261a:<==
 U+261b:==>
 U+261c:<--
+U+261d:||^
 U+261e:-->
+U+261f:||v
 U+2620 "!X!"	# or "POISON ", cf. U+2621
-U+2621 "!C!"	# previously "CAUTION " - or is it better to leave it spelled out in English?
+U+2621 "!Z!"	# previously "CAUTION " - or is it better to leave it spelled out in English?
 U+2622 "!R!"	# or "RADIOACTIVE ", cf. U+2621
 U+2623 "!B!"	# or "BIOHAZARD ", cf. U+2621
 U+2624 "2TS"	# cf. U+2695
+U+2626:t
 U+2627:XP
+U+2628:t
+U+2629:+
 U+262a:(*
+U+262d:'\,)
 U+262e:(PEACE)
 U+262f:Pd
+U+2630:-HVN-
+U+2631:-LAK-
+U+2632:-FIR-
+U+2633:-THR-
+U+2634:-WND-
+U+2635:-WTR-
+U+2636:-MTN-
+U+2637:-RTH-
+U+2638:*
 U+2639::-(
 U+263a::-)
 U+263b:(-:
@@ -1964,56 +2104,61 @@ U+2645:Ura
 U+2646:Nep
 U+2647:Plu
 U+2648 "Ari"	# Standard astronomical abbreviation
-U+2649 "Tau"	# Standard astronomical abbreviation
-U+264a "Gem"	# Standard astronomical abbreviation
-U+264b "Cnc"	# Standard astronomical abbreviation
-U+264c "Leo"	# Standard astronomical abbreviation
-U+264d "Vir"	# Standard astronomical abbreviation
-U+264e "Lib"	# Standard astronomical abbreviation
-U+264f "Sco"	# Standard astronomical abbreviation
-U+2650 "Sgr"	# Standard astronomical abbreviation
-U+2651 "Cap"	# Standard astronomical abbreviation
-U+2652 "Aqr"	# Standard astronomical abbreviation
-U+2653 "Psc"	# Standard astronomical abbreviation
-U+2654 "k"	# white pieces lowercase
+U+2649 "Tau"
+U+264a "Gem"
+U+264b "Cnc"
+U+264c "Leo"
+U+264d "Vir"
+U+264e "Lib"
+U+264f "Sco"
+U+2650 "Sgr"
+U+2651 "Cap"
+U+2652 "Aqr"
+U+2653 "Psc"
+U+2654 "k"	# white chess king
 U+2655:q
 U+2656:r
 U+2657:b
 U+2658:n
 U+2659:p
-U+265a "K"	# black pieces uppercase
+U+265a "K"	# black chess king
 U+265b:Q
 U+265c:R
 U+265d:B
 U+265e:N
 U+265f:P
-U+2660:cS
-U+2661:cH
-U+2662:cD
+U+2660 "cS"	# black spade suit
+U+2661:ch
+U+2662:cd
 U+2663:cC
-U+2664:cS-
-U+2665:cH-
-U+2666:cD-
-U+2667:cC-
-U+2669:Md
-U+266a:M8
-U+266b:M2
-U+266c:M16
+U+2664:cs
+U+2665:cH
+U+2666:cD
+U+2667:cc
+#Musical symbols
+U+2669:d
+U+266a:d`
+U+266b:d-d
+U+266c:d=d
 U+266d:b
-U+266e:Mx
+U+266e:N
 U+266f:#
-U+2672:recyc
-U+2673:Recy1
-U+2674:Recy2
-U+2675:Recy3
-U+2676:Recy4
-U+2677:Recy5
-U+2678:Recy6
-U+2679:Recy7
-U+267a:Recy
-U+267b:Recyc
-U+267c:oRecy
-U+267d:orecy
+U+2670:t
+U+2671:t
+#Recycling symbols
+U+2672:/_\
+U+2673:/1\
+U+2674:/2\
+U+2675:/3\
+U+2676:/4\
+U+2677:/5\
+U+2678:/6\
+U+2679:/7\
+U+267a:/_\
+U+267b:/_\
+U+267c:/P\
+U+267d:/p\
+U+267e:(oo)
 U+267f "oL"	# wheelchair symbol
 U+2680:d1
 U+2681:d2
@@ -2021,11 +2166,21 @@ U+2682:d3
 U+2683:d4
 U+2684:d5
 U+2685:d6
+U+2686:(.)
+U+2687:(:)
+U+2688:((.))
+U+2689:((:))
+U+2690 " f "
+U+2691 " F "
+U+2692:'X`
+U+2693 "+-)"	# anchor (sideways)
+U+2694:,X,
 U+2695 "$"	# cf. U+2624
 U+2696 "^T^"	# scales of justice
 U+269a "}T{"	# staff of Hermes
+U+269b ":*:"	# atom symbol
 U+269c "}|{"	# fleur-de-lis
-U+26a0 "!W!"	# or "WARNING ", cf. U+2621
+U+26a0 "!!!"	# or "WARNING ", cf. U+2621
 U+26a1 "!V!"	# or "VOLTAGE ", cf. U+2621
 U+26a2 "f.f."	# two females, lesbian
 U+26a3 "m.m."	# two males, homosexual
@@ -2033,15 +2188,227 @@ U+26a4 "m.f."	# male and female, bisexual
 U+26a5 "mf."	# cf. U+26A4
 U+26a6 "xm."	# transgendered male
 U+26a7 "xmf."	# transgendered male/female
-U+26ac "  o  "	# engaged, betrothed
-U+26ad "oMARo"	# marriage
-U+26ae " D|V "	# divorce
+U+26aa:o
+U+26ab:O
+U+26ac:o
+U+26ad:oo
+U+26ae:o|o
+U+26af:o-o
 U+26b0 "/b/"	# buried/coffin
 U+26b1 "/c/"	# cremated/urn
+U+26b2 "n."	# cf. U+26a2 - U+26a7
+# Dingbats
+U+2702:8<
+U+2704:>8
 U+2706:(TEL)
+U+2708:+->-
 U+2709 "[v]"	# envelope
-0x58	U+2713	U+2717	# check marks -> x
+U+270c:mV,
+0x58	U+2713	U+2714	U+2717	U+2718	# check marks -> x
+U+2715: x
+U+2716: X
+U+2719:+
+U+271a:+
+U+271b:+
+U+271c:+
+U+271d:t
+U+271e:t
+U+271f:t
 U+2720:-X
+0x2a	U+2721	U+272a	U+272b	U+272c	U+272d	U+272e	U+272f	U+2730	U+2731	U+2732	U+2733	U+2734	U+2735	U+2736	U+2737	U+2738	U+2739	U+273a	U+273b	U+273c	U+273d
+0x2a	U+2742	U+2743	U+2744	U+2745	U+2746	U+2747	U+2748	U+2749	U+274a	U+274b
+U+2756:<x>
+U+2758:|
+U+2759:|
+U+275a:|
+U+275b:'
+U+275c:'
+U+275d:"
+U+275e:"
+U+2762:!
+U+2763:!
+U+2765:<3
+U+2768:(
+U+2769:)
+U+276a:(
+U+276b:)
+U+276c:<
+U+276d:>
+U+276e:<
+U+276f:>
+U+2770:<
+U+2771:>
+U+2772:[
+U+2773:]
+U+2774:{
+U+2775:}
+U+2776:((1))
+U+2777:((2))
+U+2778:((3))
+U+2779:((4))
+U+277a:((5))
+U+277b:((6))
+U+277c:((7))
+U+277d:((8))
+U+277e:((9))
+U+277f:((10))
+U+2780:(1)
+U+2781:(2)
+U+2782:(3)
+U+2783:(4)
+U+2784:(5)
+U+2785:(6)
+U+2786:(7)
+U+2787:(8)
+U+2788:(9)
+U+2789:(10)
+U+278a:((1))
+U+278b:((2))
+U+278c:((3))
+U+278d:((4))
+U+278e:((5))
+U+278f:((6))
+U+2790:((7))
+U+2791:((8))
+U+2792:((9))
+U+2793:((10))
+U+2794:->
+U+2798:\v
+U+2799:->
+U+279a:/^
+U+279b:->
+U+279c:->
+U+279d:->
+U+279e:->
+U+279f:->
+U+27a0:->
+U+27a1:->
+U+27a2:>
+U+27a3:>
+U+27a4:>
+U+27a5:->
+U+27a6:->
+U+27a7:->
+U+27a8:->
+U+27a9:->
+U+27aa:->
+U+27ab:->
+U+27ac:->
+U+27ad:->
+U+27ae:->
+U+27af:->
+U+27b0:->
+U+27b2:(->)
+U+27b3:>>->
+U+27b4:vv\v
+U+27b5:>>->
+U+27b6:^^/^
+U+27b7:vv\v
+U+27b8:>>->
+U+27b9:^^/^
+U+27ba:->
+U+27bb:->
+U+27bc:->
+U+27bd:->
+U+27be:->
+# Supplemental Arrows A
+U+27f0:^||||
+U+27f1:||||v
+U+27f2:vO
+U+27f3:Ov
+U+27f4:(+)>
+U+27f5:<---
+U+27f6:--->
+U+27f7:<--->
+U+27f8:<===
+U+27f9:===>
+U+27fa:<===>
+U+27fb:<---|
+U+27fc:|--->
+U+27fd:<===|
+U+27fe:|===>
+U+27ff:~~~>
+# Supplemental Arrows B
+U+2900:-|->>
+U+2901:-||->>
+U+2902:<=|=
+U+2903:=|=>
+U+2904:<=|=>
+U+2905:|->>
+U+2906:<=|
+U+2907:|=>
+U+2908:|-|v
+U+2909:^|-|
+U+290a:^|||
+U+290b:|||v
+U+290c:<- -
+U+290d:- ->
+U+290e:<- - -
+U+290f:- - ->
+U+2910:>- - ->
+U+2911:->
+U+2913:|v_
+U+2914:>-|->
+U+2915:>-||->
+U+2916:>->>
+U+2917:>-|->>
+U+2918:>-||->>
+U+2919:-<
+U+291a:>-
+U+291b:-<<
+U+291c:>>-
+U+291d:<><-
+U+291e:-><>
+U+291f:<><-|
+U+2920:|-><>
+U+2921:^\v
+U+2922:v/^
+U+2923:^\,
+U+2924:,/^
+U+2927:^X^
+U+292b:X
+U+292c:X
+U+292d:Xv^
+U+292e:X^v
+U+292f:X ^
+U+2930:X v
+U+2931:^X^
+U+2932:^X^
+U+2933:~>
+U+2934:-^
+U+2935:-v
+U+2938:)v
+U+2939:(v
+U+2945:->+
+U+2946:<-+
+U+2947:-x->
+U+2948:<-o->
+U+2949:^^|o
+U+294a:<->
+U+294b:<->
+U+294c:^|v
+U+294d:^|v
+U+294e:<->
+U+294f:^|v
+U+2950:<->
+U+2951:^|v
+U+2952:|<-
+U+2953:->|
+U+2955:|v_
+U+2956:|<-
+U+2957:->|
+U+2959:|v_
+U+295a:<-|
+U+295b:|->
+U+295c:^|_
+U+295e:<-|
+U+295f:|->
+U+2960:^|_
+U+2962:<=
+U+2963:^||
+U+2964:=>
+U+2965:||v
+U+2970:=)
 U+2a00 "(.)"
 U+2a01 "(+)"
 U+2a02 "(x)"
@@ -2062,6 +2429,35 @@ U+2a74:::=
 U+2a75:==
 U+2a76:===
 U+2a77::=:
+#Miscellaneous Symbols and Arrows
+U+2b00:/^
+U+2b01:^\
+U+2b02:\v
+U+2b03:v/
+U+2b04:<->
+U+2b05:<-
+U+2b06:^|
+U+2b07:|v
+U+2b08:/^
+U+2b09:^\
+U+2b0a:\v
+U+2b0b:v/
+U+2b0c:<->
+U+2b0d:^|v
+U+2b0e:-v
+U+2b0f:-^
+U+2b10:v-
+U+2b11:^-
+# Supplemental punctuation
+U+2e0f:__
+U+2e1e:.~
+U+2e1f:~.
+U+2e28:((
+U+2e29:))
+U+2e2a ":."
+U+2e2b ".:"
+U+2e2c "::"
+U+2e2f:~
 #  CJK area:
 0x20	U+3000	# ideographic space
 U+3001:,_

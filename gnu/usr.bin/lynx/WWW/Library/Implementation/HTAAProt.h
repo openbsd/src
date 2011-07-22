@@ -156,7 +156,7 @@ Get User and Group IDs to Which Set to
 
  */
 
-#ifndef VMS
+#ifndef NOUSERS
 /* PUBLIC                                                       HTAA_getUid()
  *              GET THE USER ID TO CHANGE THE PROCESS UID TO
  * ON ENTRY:
@@ -178,35 +178,7 @@ Get User and Group IDs to Which Set to
  *              Default is 65534 (nogroup).
  */
     extern int HTAA_getGid(void);
-#endif				/* not VMS */
-/*
-
-   For VMS:
-
- */
-
-#ifdef VMS
-/* PUBLIC                                                       HTAA_getUidName()
- *              GET THE USER ID NAME (VMS ONLY)
- * ON ENTRY:
- *      No arguments.
- *
- * ON EXIT:
- *      returns the user name
- *              Default is "" (nobody).
- */
-    extern const char *HTAA_getUidName(void);
-
-/* PUBLIC                                                       HTAA_getFileName
- *              GET THE FILENAME (VMS ONLY)
- * ON ENTRY:
- *      No arguments.
- *
- * ON EXIT:
- *      returns the filename
- */
-    extern const char *HTAA_getFileName(void);
-#endif				/* VMS */
+#endif				/* !NOUSERS */
 
 /* PUBLIC                                                       HTAA_UidToName
  *              GET THE USER NAME

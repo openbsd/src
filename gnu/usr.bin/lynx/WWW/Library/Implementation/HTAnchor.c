@@ -1,4 +1,7 @@
-/*	Hypertext "Anchor" Object				HTAnchor.c
+/*
+ * $LynxId: HTAnchor.c,v 1.63 2009/04/08 19:55:12 tom Exp $
+ *
+ *	Hypertext "Anchor" Object				HTAnchor.c
  *	==========================
  *
  * An anchor represents a region of a hypertext document which is linked to
@@ -25,7 +28,10 @@
 #include <GridText.h>
 #include <LYUtils.h>
 #include <LYCharSets.h>
+#include <LYUtils.h>
 #include <LYLeaks.h>
+
+#define HASH_TYPE unsigned short
 
 #ifdef NOT_DEFINED
 /*
@@ -33,15 +39,17 @@
  *		adult_table a parent anchor should be put in.  This is a
  *		much simpler function than the original used.
  */
-#define HASH_FUNCTION(cp_address) ((unsigned short int)strlen(cp_address) *\
-	(unsigned short int)TOUPPER(*cp_address) % HASH_SIZE)
+#define HASH_FUNCTION(cp_address) \
+	( (HASH_TYPE)strlen(cp_address) *\
+	  (HASH_TYPE)TOUPPER(*cp_address) % HASH_SIZE )
 #endif /* NOT_DEFINED */
+
 /*
  *	This is the original function.	We'll use it again. - FM
  */
-static int HASH_FUNCTION(const char *cp_address)
+static HASH_TYPE HASH_FUNCTION(const char *cp_address)
 {
-    int hash;
+    HASH_TYPE hash;
     const unsigned char *p;
 
     for (p = (const unsigned char *) cp_address, hash = 0; *p; p++)
@@ -71,7 +79,7 @@ static HTList adult_table[HASH_SIZE] =
  *	anchor you are creating : use newWithParent or newWithAddress.
  */
 static HTParentAnchor0 *HTParentAnchor0_new(const char *address,
-					    short hash)
+					    HASH_TYPE hash)
 {
     HTParentAnchor0 *newAnchor = typecalloc(HTParentAnchor0);
 
@@ -156,7 +164,7 @@ static BOOL HTSEquivalent(const char *s,
 	}
 	return (HT_EQUIV(*s, *t));
     } else {
-	return (s == t);	/* Two NULLs are equivalent, aren't they ? */
+	return (BOOL) (s == t);	/* Two NULLs are equivalent, aren't they ? */
     }
 }
 
@@ -183,7 +191,7 @@ static BOOL HTBEquivalent(const bstring *s,
 	}
 	return (YES);
     } else {
-	return (s == t);	/* Two NULLs are equivalent, aren't they ? */
+	return (BOOL) (s == t);	/* Two NULLs are equivalent, aren't they ? */
     }
 }
 
@@ -355,11 +363,11 @@ HTChildAnchor *HTAnchor_findChildAndLink(HTParentAnchor *parent,	/* May not be 0
 	    if (child->dest) {	/* DUPLICATE_ANCHOR_NAME_WORKAROUND  - kw */
 		CTRACE((tfp,
 			"*** Duplicate ChildAnchor %p named `%s'",
-			child, tag));
+			(void *) child, tag));
 		if ((HTAnchor *) dest != child->dest || ltype != child->type) {
 		    CTRACE((tfp,
 			    ", different dest %p or type, creating unnamed child\n",
-			    child->dest));
+			    (void *) child->dest));
 		    child = HTAnchor_addChild(parent);
 		}
 	    }
@@ -416,12 +424,15 @@ static HTParentAnchor0 *HTAnchor_findAddress_in_adult_table(const DocAddress *ne
     /*
      * Check whether we have this node.
      */
-    int hash;
+    HASH_TYPE hash;
     HTList *adults;
     HTList *grownups;
     HTParentAnchor0 *foundAnchor;
-    BOOL need_extra_info = (newdoc->post_data || newdoc->post_content_type ||
-			    newdoc->bookmark || newdoc->isHEAD || newdoc->safe);
+    BOOL need_extra_info = (BOOL) (newdoc->post_data ||
+				   newdoc->post_content_type ||
+				   newdoc->bookmark ||
+				   newdoc->isHEAD ||
+				   newdoc->safe);
 
     /*
      * We need not free adult_table[] atexit - it should be perfectly empty
@@ -508,7 +519,7 @@ static BOOL HTAnchor_link(HTChildAnchor *child,
     if (!(child && destination))
 	return (NO);		/* Can't link to/from non-existing anchor */
 
-    CTRACE((tfp, "Linking child %p to anchor %p\n", child, destination));
+    CTRACE((tfp, "Linking child %p to anchor %p\n", (void *) child, (void *) destination));
     if (child->dest) {
 	CTRACE((tfp, "*** child anchor already has destination, exiting!\n"));
 	return (NO);
@@ -890,7 +901,9 @@ void HTAnchor_setPrompt(HTParentAnchor *me,
 
 BOOL HTAnchor_isIndex(HTParentAnchor *me)
 {
-    return (me ? me->isIndex : NO);
+    return (me
+	    ? (BOOL) me->isIndex
+	    : NO);
 }
 
 /*	Whether Anchor has been designated as an ISMAP link
@@ -898,7 +911,9 @@ BOOL HTAnchor_isIndex(HTParentAnchor *me)
  */
 BOOL HTAnchor_isISMAPScript(HTAnchor * me)
 {
-    return ((me && me->parent->info) ? me->parent->info->isISMAPScript : NO);
+    return ((me && me->parent->info)
+	    ? (BOOL) me->parent->info->isISMAPScript
+	    : NO);
 }
 
 #if defined(USE_COLOR_STYLE)
@@ -1357,6 +1372,8 @@ LYUCcharset *HTAnchor_resetUCInfoStage(HTParentAnchor *me,
     /* Allow a switch to a more suitable display charset */
     if (LYhndl >= 0 && LYhndl != ohandle && which_stage == UCT_STAGE_PARSER)
 	setup_switch_display_charset(me, LYhndl);
+#else
+    (void) ohandle;
 #endif
     return (&me->UCStages->s[which_stage].C);
 }

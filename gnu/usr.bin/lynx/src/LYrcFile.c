@@ -1,3 +1,4 @@
+/* $LynxId: LYrcFile.c,v 1.81 2009/06/07 17:11:00 tom Exp $ */
 #include <HTUtils.h>
 #include <HTFTP.h>
 #include <LYUtils.h>
@@ -12,12 +13,6 @@
 
 #include <LYLeaks.h>
 
-#ifdef FNAMES_8_3
-#define FNAME_LYNXRC "lynx.rc"
-#else
-#define FNAME_LYNXRC ".lynxrc"
-#endif /* FNAMES_8_3 */
-
 #define MSG_ENABLE_LYNXRC N_("Normally disabled.  See ENABLE_LYNXRC in lynx.cfg\n")
 #define putBool(value) ((value) ? "on" : "off")
 /* *INDENT-OFF* */
@@ -29,6 +24,14 @@ static Config_Enum tbl_DTD_recovery[] = {
     { "sortasgml",	TRUE },
     { "tagsoup",	FALSE },
     { NULL,		-1 },
+};
+
+static Config_Enum tbl_bad_html[] = {
+    { "ignore",		BAD_HTML_IGNORE	 },
+    { "trace",		BAD_HTML_TRACE	 },
+    { "message",	BAD_HTML_MESSAGE },
+    { "warn",		BAD_HTML_WARN	 },
+    { NULL,		-1		 }
 };
 
 #ifdef DIRED_SUPPORT
@@ -128,6 +131,10 @@ Config_Enum tbl_transfer_rate[] = {
     { "KB,ETA",		rateEtaKB },
     { "BYTES,ETA",	rateEtaBYTES },
 #endif
+#ifdef USE_PROGRESSBAR
+    { "METER",		rateBAR },
+    { "FALSE",		rateBAR },
+#endif
     { NULL,		-1 },
 };
 
@@ -180,7 +187,7 @@ BOOL LYgetEnum(Config_Enum * table, char *name,
 
     if (len != 0) {
 	while (table->name != 0) {
-	    if (!strncasecomp(table->name, name, len)) {
+	    if (!strncasecomp(table->name, name, (int) len)) {
 		found = table;
 		if (!strcasecomp(table->name, name)) {
 		    match = 1;
@@ -322,12 +329,16 @@ prompt for each cookie.  Set accept_all_cookies to \"TRUE\" to accept\n\
 all cookies.\n\
 ")),
     MAYBE_FUN(RC_ASSUME_CHARSET,        get_assume_charset, put_assume_charset, MSG_ENABLE_LYNXRC),
+#ifndef DISABLE_FTP
     PARSE_STR(RC_ANONFTP_PASSWORD,      anonftp_password, N_("\
 anonftp_password allows the user to tell Lynx to use the personal\n\
 email address as the password for anonymous ftp.  If no value is given,\n\
 Lynx will use the personal email address.  Set anonftp_password\n\
 to a different value if you choose.\n\
 ")),
+#endif
+    MAYBE_ENU(RC_BAD_HTML,              cfg_bad_html,      tbl_bad_html,
+	      MSG_ENABLE_LYNXRC),
     PARSE_STR(RC_BOOKMARK_FILE,         bookmark_page,     N_("\
 bookmark_file specifies the name and location of the default bookmark\n\
 file into which the user can paste links for easy access at a later\n\
@@ -355,7 +366,7 @@ settings made here.\n\
 #ifdef USE_PERSISTENT_COOKIES
     PARSE_STR(RC_COOKIE_FILE,	        LYCookieFile, N_("\
 cookie_file specifies the file from which to read persistent cookies.\n\
-The default is ~/.lynx_cookies.\n\
+The default is ~/" FNAME_LYNX_COOKIES ".\n\
 ")),
 #endif
     PARSE_STR(RC_COOKIE_LOOSE_INVALID_DOMAINS, LYCookieLooseCheckDomains, N_("\
@@ -397,6 +408,7 @@ or sending mail.  If no editor is specified, then file editing is disabled\n\
 unless it is activated from the command line, and the built-in line editor\n\
 will be used for sending mail.\n\
 ")),
+#ifndef DISABLE_FTP
     PARSE_ENU(RC_FILE_SORTING_METHOD,   HTfileSortMethod,   tbl_file_sort, N_("\
 The file_sorting_method specifies which value to sort on when viewing\n\
 file lists such as FTP directories.  The options are:\n\
@@ -405,11 +417,15 @@ file lists such as FTP directories.  The options are:\n\
    BY_SIZE     -- sorts on the size of the file\n\
    BY_DATE     -- sorts on the date of the file\n\
 ")),
+#endif
     MAYBE_ENU(RC_FORCE_COOKIE_PROMPT,   cookie_noprompt,    tbl_force_prompt,
 	      MSG_ENABLE_LYNXRC),
 #ifdef USE_SSL
     MAYBE_ENU(RC_FORCE_SSL_PROMPT,      ssl_noprompt,       tbl_force_prompt,
 	      MSG_ENABLE_LYNXRC),
+#endif
+#ifndef DISABLE_FTP
+    MAYBE_SET(RC_FTP_PASSIVE,           ftp_passive,        MSG_ENABLE_LYNXRC),
 #endif
 #ifdef EXP_KEYBOARD_LAYOUT
     PARSE_ARY(RC_KBLAYOUT,              current_layout,     LYKbLayoutNames, NULL),
@@ -428,7 +444,7 @@ the following control characters are used for moving and deleting:\n\
 \n\
 Current lineedit modes are:\n\
 ")),
-#ifdef EXP_LOCALE_CHARSET
+#ifdef USE_LOCALE_CHARSET
     MAYBE_SET(RC_LOCALE_CHARSET,      LYLocaleCharset,        MSG_ENABLE_LYNXRC),
 #endif
     MAYBE_SET(RC_MAKE_PSEUDO_ALTS_FOR_INLINES, pseudo_inline_alts, MSG_ENABLE_LYNXRC),
@@ -513,6 +529,7 @@ of checkboxes for the OPTIONs.  A value of \"on\" will set popup menus\n\
 as the default while a value of \"off\" will set use of radio boxes.\n\
 The default can be overridden via the -popup command line toggle.\n\
 ")),
+    MAYBE_SET(RC_SEND_USERAGENT,        LYSendUserAgent,   MSG_ENABLE_LYNXRC),
     MAYBE_SET(RC_SET_COOKIES,           LYSetCookies,      MSG_ENABLE_LYNXRC),
     PARSE_ENU(RC_SHOW_COLOR,            LYrcShowColor,     tbl_show_colors, N_("\
 show_color specifies how to set the color mode at startup.  A value of\n\
@@ -593,6 +610,11 @@ and the keymap display, respectively.\n\
 The visited_links setting controls how Lynx organizes the information\n\
 in the Visited Links Page.\n\
 ")),
+#ifdef USE_SESSIONS
+    MAYBE_SET(RC_AUTO_SESSION,		LYAutoSession,	MSG_ENABLE_LYNXRC),
+    MAYBE_STR(RC_SESSION_FILE,		LYSessionFile,	MSG_ENABLE_LYNXRC),
+#endif
+    MAYBE_SET(RC_NO_PAUSE,		no_pause,	MSG_ENABLE_LYNXRC),
 
     PARSE_NIL
 };
@@ -673,7 +695,7 @@ void read_rc(FILE *fp)
 	if (tbl->name == 0) {
 	    const char *special = RC_MULTI_BOOKMARK;
 
-	    if (!strncasecomp(name, special, strlen(special))) {
+	    if (!strncasecomp(name, special, (int) strlen(special))) {
 		tbl = lookup_config(special);
 	    }
 	    /* lynx ignores unknown keywords */
@@ -790,13 +812,12 @@ static void write_list(FILE *fp, const char *list)
     while (*list != 0) {
 	int ch = *list++;
 
+	if (first) {
+	    fputs("# ", fp);
+	    first = FALSE;
+	}
 	if (ch == '\n') {
 	    first = TRUE;
-	} else {
-	    if (first) {
-		fputs("# ", fp);
-		first = FALSE;
-	    }
 	}
 	fputc(ch, fp);
     }
@@ -864,13 +885,48 @@ int save_rc(FILE *fp)
     write_list(fp, gettext("\
 Lynx User Defaults File\n\
 \n\
+"));
+
+    /*
+     * We have either the HTML options form, or the older menu, or both.
+     */
+#ifndef NO_OPTION_FORMS
+    write_list(fp, gettext("\
 This file contains options saved from the Lynx Options Screen (normally\n\
-with the '>' key).  There is normally no need to edit this file manually,\n\
-since the defaults here can be controlled from the Options Screen, and the\n\
-next time options are saved from the Options Screen this file will be\n\
-completely rewritten.  You have been warned...\n\
+with the 'o' key).  To save options with that screen, you must select the\n\
+checkbox:\n\
+"));
+    fprintf(fp, "#\t%s\n", SAVE_OPTIONS);
+    fprintf(fp, "#\n");
+    write_list(fp, gettext("\
+You must then save the settings using the link on the line above the\n\
+checkbox:\n\
+"));
+    fprintf(fp, "#\t%s\n", ACCEPT_CHANGES);
+    fprintf(fp, "#\n");
+#ifndef NO_OPTION_MENU
+    write_list(fp, gettext("\
+You may also use the command-line option \"-forms_options\", which displays\n\
+the simpler Options Menu instead.  Save options with that using the '>' key.\n\
+\n\
+"));
+#endif
+#else /* we only have old options-menu */
+    write_list(fp, gettext("\
+This file contains options saved from the Lynx Options Screen (normally\n\
+with the '>' key).\n\
+\n\
+"));
+#endif
+
+    write_list(fp, gettext("\
+There is normally no need to edit this file manually, since the defaults\n\
+here can be controlled from the Options Screen, and the next time options\n\
+are saved from the Options Screen this file will be completely rewritten.\n\
+You have been warned...\n\
+\n\
 If you are looking for the general configuration file - it is normally\n\
-called lynx.cfg, and it has different content and a different format.\n\
+called \"lynx.cfg\".  It has different content and a different format.\n\
 It is not this file.\n\
 "));
     fprintf(fp, "\n");
@@ -962,7 +1018,7 @@ BOOL will_save_rc(const char *name)
 {
     Config_Type *tbl = lookup_config(name);
 
-    return tbl->name != 0;
+    return (BOOL) (tbl->name != 0);
 }
 
 int enable_lynxrc(char *value)
@@ -978,7 +1034,6 @@ int enable_lynxrc(char *value)
 	for (tbl = Config_Table; tbl->name != 0; tbl++) {
 	    if (!strcasecomp(value, tbl->name)) {
 		tbl->enabled = getBool(colon);
-		CTRACE((tfp, "enable_lynxrc(%s) %s\n", value, putBool(tbl->enabled)));
 		break;
 	    }
 	}

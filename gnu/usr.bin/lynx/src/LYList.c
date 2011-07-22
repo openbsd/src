@@ -273,7 +273,9 @@ static void print_refs(FILE *fp, BOOLEAN titles, int refs)
 	parent = HTAnchor_parent(dest);
 	title = titles ? HTAnchor_title(parent) : NULL;
 	address = HTAnchor_address(dest);
-	fprintf(fp, "%4d. %s%s\n", cnt,
+	if (links_are_numbered())
+	    fprintf(fp, "%4d. ", cnt);
+	fprintf(fp, "%s%s\n",
 		((HTAnchor *) parent != dest) && title ? "in " : "",
 		(title ? title : address));
 	FREE(address);
@@ -297,7 +299,10 @@ static void print_hidden_refs(FILE *fp, int refs, int hidden_links)
 	    FREE(address);
 	    continue;
 	}
-	fprintf(fp, "%4d. %s\n", ((cnt + 1) + refs), address);
+
+	if (links_are_numbered())
+	    fprintf(fp, "%4d. ", ((cnt + 1) + refs));
+	fprintf(fp, "%s\n", address);
 	FREE(address);
 #ifdef VMS
 	if (HadVMSInterrupt)
@@ -323,7 +328,8 @@ void printlist(FILE *fp, BOOLEAN titles)
     if (refs > 0 || LYHiddenLinks == HIDDENLINKS_SEPARATE) {
 	hidden_links = HText_HiddenLinkCount(HTMainText);
 	if (refs > 0 || hidden_links > 0) {
-	    fprintf(fp, "\n%s\n\n", gettext("References"));
+	    if (links_are_numbered() || fields_are_numbered())
+		fprintf(fp, "\n%s\n\n", gettext("References"));
 	    if (LYHiddenLinks == HIDDENLINKS_IGNORE)
 		hidden_links = 0;
 	    if (hidden_links > 0) {

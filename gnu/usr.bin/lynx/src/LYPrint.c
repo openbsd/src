@@ -1,3 +1,6 @@
+/*
+ * $LynxId: LYPrint.c,v 1.85 2009/05/24 22:28:27 tom Exp $
+ */
 #include <HTUtils.h>
 #include <HTAccess.h>
 #include <HTList.h>
@@ -287,7 +290,8 @@ static BOOLEAN confirm_by_pages(const char *prompt,
     return TRUE;
 }
 
-static void send_file_to_file(DocInfo *newdoc, char *content_base,
+static void send_file_to_file(DocInfo *newdoc,
+			      char *content_base,
 			      char *sug_filename)
 {
     BOOLEAN FirstRecall = TRUE;
@@ -457,7 +461,8 @@ static void send_file_to_file(DocInfo *newdoc, char *content_base,
     return;
 }
 
-static void send_file_to_mail(DocInfo *newdoc, char *content_base,
+static void send_file_to_mail(DocInfo *newdoc,
+			      char *content_base,
 			      char *content_location)
 {
     static BOOLEAN first_mail_preparsed = TRUE;
@@ -782,7 +787,8 @@ static void send_file_to_mail(DocInfo *newdoc, char *content_base,
     return;
 }
 
-static void send_file_to_printer(DocInfo *newdoc, char *content_base,
+static void send_file_to_printer(DocInfo *newdoc,
+				 char *content_base,
 				 char *sug_filename,
 				 int printer_number)
 {
@@ -944,7 +950,8 @@ static void send_file_to_printer(DocInfo *newdoc, char *content_base,
     return;
 }
 
-static void send_file_to_screen(DocInfo *newdoc, char *content_base,
+static void send_file_to_screen(DocInfo *newdoc,
+				char *content_base,
 				BOOLEAN Lpansi)
 {
     FILE *outfile_fp;
@@ -1182,7 +1189,7 @@ static int remove_quotes(char *string)
 #endif /* USE_VMS_MAILER */
 
 /*
- * Mail subject may have 8-bit characters and they are in display charset. 
+ * Mail subject may have 8-bit characters and they are in display charset.
  * There is no stable practice for 8-bit subject encodings:  MIME defines
  * "quoted-printable" which holds charset info but most mailers still don't
  * support it.  On the other hand many mailers send open 8-bit subjects without
@@ -1266,7 +1273,7 @@ int print_options(char **newfile,
     fputs(buffer, fp0);
     FREE(buffer);
 
-    if (no_print || no_disk_save || child_lynx || no_mail)
+    if (no_print || no_disk_save || no_mail)
 	fprintf(fp0,
 		"   <em>%s</em>\n",
 		gettext("Some print functions have been disabled!"));
@@ -1276,7 +1283,7 @@ int print_options(char **newfile,
 	    ? gettext("Standard print options:")
 	    : gettext("Print options:"));
 
-    if (child_lynx == FALSE && no_disk_save == FALSE && no_print == FALSE) {
+    if (no_disk_save == FALSE && no_print == FALSE) {
 	fprintf(fp0,
 		"   <a href=\"%s//LOCAL_FILE/lines=%d\">%s</a>\n",
 		STR_LYNXPRINT,
@@ -1285,7 +1292,7 @@ int print_options(char **newfile,
     } else {
 	fprintf(fp0, "   <em>%s</em>\n", gettext("Save to disk disabled"));
     }
-    if (child_lynx == FALSE && no_mail == FALSE && local_host_only == FALSE)
+    if (no_mail == FALSE && local_host_only == FALSE)
 	fprintf(fp0,
 		"   <a href=\"%s//MAIL_FILE/lines=%d\">%s</a>\n",
 		STR_LYNXPRINT,

@@ -1,6 +1,8 @@
-/*                     /Net/dxcern/userd/timbl/hypertext/WWW/Library/Implementation/HTTP.html
-                                HYPERTEXT TRANFER PROTOCOL
-
+/*
+ * $LynxId: HTTP.h,v 1.10 2009/04/07 22:44:50 tom Exp $
+ *
+ * /Net/dxcern/userd/timbl/hypertext/WWW/Library/Implementation/HTTP.html
+ *                                HYPERTEXT TRANFER PROTOCOL
  */
 #ifndef HTTP_H
 #define HTTP_H
@@ -24,7 +26,7 @@ extern "C" {
 #define URL_MAIL_METHOD 3
 
     extern int ws_read_per_sec;
-    extern BOOL reloading;
+    extern BOOLEAN reloading;
     extern char *redirecting_url;
     extern BOOL permanent_redirection;
     extern BOOL redirect_post_content;

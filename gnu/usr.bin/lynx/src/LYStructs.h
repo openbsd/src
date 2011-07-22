@@ -1,3 +1,6 @@
+/*
+ * $LynxId: LYStructs.h,v 1.29 2009/02/02 19:56:38 tom Exp $
+ */
 #ifndef LYSTRUCTS_H
 #define LYSTRUCTS_H
 
@@ -140,34 +143,46 @@ extern "C" {
 	int *     int_value; \
 	char **   str_value; \
 	ParseFunc fun_value; \
-	long	  def_value
+	long	  def_value; \
+	HTList**  lst_value
 
     typedef union {
 	ParseUnionMembers;
     } ParseUnion;
 
+#define	PARSE_DEBUG 1
 #ifdef	PARSE_DEBUG
-#define ParseUnionPtr Config_Type *
-#define ParseUnionOf(tbl) tbl
-#define ParseData ParseUnionMembers
-#define UNION_ADD(v) &v,  0,  0,  0,  0,  0
-#define UNION_SET(v)  0, &v,  0,  0,  0,  0
-#define UNION_INT(v)  0,  0, &v,  0,  0,  0
-#define UNION_STR(v)  0,  0,  0, &v,  0,  0
-#define UNION_ENV(v)  0,  0,  0,  v,  0,  0
-#define UNION_FUN(v)  0,  0,  0,  0,  v,  0
-#define UNION_DEF(v)  0,  0,  0,  0,  0,  v
+
+#define ParseUnionPtr      Config_Type *
+#define ParseUnionOf(tbl)  tbl
+#define ParseData          ParseUnionMembers
+
+#define UNION_ADD(v) &v,  0,  0,  0,  0,  0,  0
+#define UNION_SET(v)  0, &v,  0,  0,  0,  0,  0
+#define UNION_INT(v)  0,  0, &v,  0,  0,  0,  0
+#define UNION_STR(v)  0,  0,  0, &v,  0,  0,  0
+#define UNION_ENV(v)  0,  0,  0,  v,  0,  0,  0
+#define UNION_FUN(v)  0,  0,  0,  0,  v,  0,  0
+#define UNION_DEF(v)  0,  0,  0,  0,  0,  v,  0
+#define UNION_LST(v)  0,  0,  0,  0,  0,  0, &v
+
 #else
-#define ParseUnionPtr ParseUnion *
+
+    typedef void *ParseType;
+
+#define ParseUnionPtr      ParseUnion *
 #define ParseUnionOf(tbl) (ParseUnionPtr)(&(tbl->value))
-#define ParseData long value
-#define UNION_ADD(v) (long)&(v)
-#define UNION_SET(v) (long)&(v)
-#define UNION_INT(v) (long)&(v)
-#define UNION_STR(v) (long)&(v)
-#define UNION_ENV(v) (long) (v)
-#define UNION_FUN(v) (long) (v)
-#define UNION_DEF(v) (long) (v)
+#define ParseData          ParseType value
+
+#define UNION_ADD(v) (ParseType)&(v)
+#define UNION_SET(v) (ParseType)&(v)
+#define UNION_INT(v) (ParseType)&(v)
+#define UNION_STR(v) (ParseType)&(v)
+#define UNION_ENV(v) (ParseType) (v)
+#define UNION_FUN(v) (ParseType) (v)
+#define UNION_DEF(v) (ParseType) (v)
+#define UNION_LST(v) (ParseType)&(v)
+
 #endif
 
 #ifdef __cplusplus

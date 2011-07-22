@@ -1,4 +1,7 @@
-/*		Parse HyperText Document Address		HTParse.c
+/*
+ * $LynxId: HTParse.c,v 1.51 2009/01/03 01:11:14 tom Exp $
+ *
+ *		Parse HyperText Document Address		HTParse.c
  *		================================
  */
 
@@ -17,6 +20,8 @@
 #include <malloc.h>
 #endif /* __MINGW32__ */
 #endif
+
+#define MAX_URI_SIZE 8192
 
 #define HEX_ESCAPE '%'
 
@@ -191,6 +196,46 @@ static char *strchr_or_end(char *string, int ch)
     return result;
 }
 
+/*
+ * Given a host specification that may end with a port number, e.g.,
+ *	foobar:123
+ * point to the ':' which begins the ":port" to make it simple to handle the
+ * substring.
+ *
+ * If no port is found (or a syntax error), return null.
+ */
+char *HTParsePort(char *host, int *portp)
+{
+    int brackets = 0;
+    char *result = NULL;
+
+    *portp = 0;
+    if (host != NULL) {
+	while (*host != '\0' && result == 0) {
+	    switch (*host++) {
+	    case ':':
+		if (brackets == 0 && isdigit(UCH(*host))) {
+		    char *next = NULL;
+
+		    *portp = strtol(host, &next, 10);
+		    if (next != 0 && next != host && *next == '\0') {
+			result = (host - 1);
+			CTRACE((tfp, "HTParsePort %d\n", *portp));
+		    }
+		}
+		break;
+	    case '[':		/* for ipv6 */
+		++brackets;
+		break;
+	    case ']':		/* for ipv6 */
+		--brackets;
+		break;
+	    }
+	}
+    }
+    return result;
+}
+
 /*	Parse a Name relative to another name.			HTParse()
  *	--------------------------------------
  *
@@ -212,7 +257,8 @@ char *HTParse(const char *aName,
     char *result = NULL;
     char *tail = NULL;		/* a pointer to the end of the 'result' string */
     char *return_value = NULL;
-    int len, len1, len2;
+    size_t len, len1, len2;
+    size_t need;
     char *name = NULL;
     char *rel = NULL;
     char *p, *q;
@@ -247,7 +293,13 @@ char *HTParse(const char *aName,
     len2 = strlen(relatedName) + 1;
     len = len1 + len2 + 8;	/* Lots of space: more than enough */
 
-    result = tail = (char *) LYalloca(len * 2 + len1 + len2);
+    need = (len * 2 + len1 + len2);
+    if (need > MAX_URI_SIZE ||
+	len1 > MAX_URI_SIZE ||
+	len2 > MAX_URI_SIZE)
+	return StrAllocCopy(return_value, "");
+
+    result = tail = (char *) LYalloca(need);
     if (result == NULL) {
 	outofmem(__FILE__, "HTParse");
     }
@@ -291,11 +343,14 @@ char *HTParse(const char *aName,
     if (given.access && given.host && !given.relative && !given.absolute) {
 	if (!strcmp(given.access, "http") ||
 	    !strcmp(given.access, "https") ||
-	    !strcmp(given.access, "ftp"))
+	    !strcmp(given.access, "ftp")) {
+	    static char empty_string[] = "";
+
 	    /*
 	     * Assume root.
 	     */
-	    given.absolute = "";
+	    given.absolute = empty_string;
+	}
     }
     acc_method = given.access ? given.access : related.access;
     if (wanted & PARSE_ACCESS) {
@@ -350,41 +405,37 @@ char *HTParse(const char *aName,
 	     */
 	    {
 		char *p2, *h;
+		int portnumber;
 
 		if ((p2 = strchr(result, '@')) != NULL)
 		    tail = (p2 + 1);
-		p2 = strchr(tail, ':');
-		if (p2 != NULL && !isdigit(UCH(p2[1])))
-		    /*
-		     * Colon not followed by a port number.
-		     */
-		    *p2 = '\0';
-		if (p2 != NULL && *p2 != '\0' && acc_method != NULL) {
+		p2 = HTParsePort(result, &portnumber);
+		if (p2 != NULL && acc_method != NULL) {
 		    /*
 		     * Port specified.
 		     */
-#define ACC_METHOD(a,b) (!strcmp(acc_method, a) && !strcmp(p2, b))
-		    if (ACC_METHOD("http", ":80") ||
-			ACC_METHOD("https", ":443") ||
-			ACC_METHOD("gopher", ":70") ||
-			ACC_METHOD("ftp", ":21") ||
-			ACC_METHOD("wais", ":210") ||
-			ACC_METHOD("nntp", ":119") ||
-			ACC_METHOD("news", ":119") ||
-			ACC_METHOD("newspost", ":119") ||
-			ACC_METHOD("newsreply", ":119") ||
-			ACC_METHOD("snews", ":563") ||
-			ACC_METHOD("snewspost", ":563") ||
-			ACC_METHOD("snewsreply", ":563") ||
-			ACC_METHOD("finger", ":79") ||
-			ACC_METHOD("telnet", ":23") ||
-			ACC_METHOD("tn3270", ":23") ||
-			ACC_METHOD("rlogin", ":513") ||
-			ACC_METHOD("cso", ":105"))
+#define ACC_METHOD(a,b) (!strcmp(acc_method, a) && (portnumber == b))
+		    if (ACC_METHOD("http", 80) ||
+			ACC_METHOD("https", 443) ||
+			ACC_METHOD("gopher", 70) ||
+			ACC_METHOD("ftp", 21) ||
+			ACC_METHOD("wais", 210) ||
+			ACC_METHOD("nntp", 119) ||
+			ACC_METHOD("news", 119) ||
+			ACC_METHOD("newspost", 119) ||
+			ACC_METHOD("newsreply", 119) ||
+			ACC_METHOD("snews", 563) ||
+			ACC_METHOD("snewspost", 563) ||
+			ACC_METHOD("snewsreply", 563) ||
+			ACC_METHOD("finger", 79) ||
+			ACC_METHOD("telnet", 23) ||
+			ACC_METHOD("tn3270", 23) ||
+			ACC_METHOD("rlogin", 513) ||
+			ACC_METHOD("cso", 105))
 			*p2 = '\0';	/* It is the default: ignore it */
 		}
 		if (p2 == NULL) {
-		    int len3 = strlen(tail);
+		    int len3 = (int) strlen(tail);
 
 		    if (len3 > 0) {
 			h = tail + len3 - 1;	/* last char of hostname */
@@ -571,6 +622,7 @@ char *HTParse(const char *aName,
 	case LYNXKEYMAP_URL_TYPE:
 	case LYNXIMGMAP_URL_TYPE:
 	case LYNXCOOKIE_URL_TYPE:
+	case LYNXCACHE_URL_TYPE:
 	case LYNXDIRED_URL_TYPE:
 	case LYNXOPTIONS_URL_TYPE:
 	case LYNXCFG_URL_TYPE:
@@ -623,26 +675,34 @@ const char *HTParseAnchor(const char *aName)
 {
     const char *p = aName;
 
-    for (; *p && *p != '#'; p++) ;
+    for (; *p && *p != '#'; p++) {
+	;
+    }
     if (*p == '#') {
 	/* the safe way based on HTParse() -
 	 * keeping in mind scan() peculiarities on schemes:
 	 */
 	struct struct_parts given;
+	size_t need = ((unsigned) ((p - aName) + (int) strlen(p) + 1));
+	char *name;
 
-	char *name = (char *) LYalloca((p - aName) + strlen(p) + 1);
+	if (strlen(aName) > MAX_URI_SIZE) {
+	    p += strlen(p);
+	} else {
+	    name = (char *) LYalloca(need);
 
-	if (name == NULL) {
-	    outofmem(__FILE__, "HTParseAnchor");
-	}
-	strcpy(name, aName);
-	scan(name, &given);
-	LYalloca_free(name);
+	    if (name == NULL) {
+		outofmem(__FILE__, "HTParseAnchor");
+	    }
+	    strcpy(name, aName);
+	    scan(name, &given);
+	    LYalloca_free(name);
 
-	p++;			/*next to '#' */
-	if (given.anchor == NULL) {
-	    for (; *p; p++)	/*scroll to end '\0' */
-		;
+	    p++;		/*next to '#' */
+	    if (given.anchor == NULL) {
+		for (; *p; p++)	/*scroll to end '\0' */
+		    ;
+	    }
 	}
     }
     return p;
@@ -844,7 +904,7 @@ char *HTRelative(const char *aName,
     } else if (slashes == 3) {	/* Same node, different path */
 	StrAllocCopy(result, path);
     } else {			/* Some path in common */
-	int levels = 0;
+	unsigned levels = 0;
 
 	for (; *q && (*q != '#'); q++)
 	    if (*q == '/')
@@ -863,6 +923,9 @@ char *HTRelative(const char *aName,
 	    aName, relatedName, result));
     return result;
 }
+
+#define AlloCopy(next,base,extra) \
+	typecallocn(char, (unsigned) ((next - base) + ((int) extra)))
 
 /*	Escape undesirable characters using %			HTEscape()
  *	-------------------------------------
@@ -900,17 +963,17 @@ char *HTEscape(const char *str,
     const char *p;
     char *q;
     char *result;
-    int unacceptable = 0;
+    unsigned unacceptable = 0;
 
     for (p = str; *p; p++)
 	if (!ACCEPTABLE(UCH(TOASCII(*p))))
 	    unacceptable++;
-    result = typecallocn(char, p - str + unacceptable + unacceptable + 1);
+    result = AlloCopy(p, str, (unacceptable * 2) + 1);
 
     if (result == NULL)
 	outofmem(__FILE__, "HTEscape");
     for (q = result, p = str; *p; p++) {
-	unsigned char a = TOASCII(*p);
+	unsigned char a = UCH(TOASCII(*p));
 
 	if (!ACCEPTABLE(a)) {
 	    *q++ = HEX_ESCAPE;	/* Means hex coming */
@@ -940,17 +1003,17 @@ char *HTEscapeUnsafe(const char *str)
     const char *p;
     char *q;
     char *result;
-    int unacceptable = 0;
+    unsigned unacceptable = 0;
 
     for (p = str; *p; p++)
 	if (UNSAFE(UCH(TOASCII(*p))))
 	    unacceptable++;
-    result = typecallocn(char, p - str + unacceptable + unacceptable + 1);
+    result = AlloCopy(p, str, (unacceptable * 2) + 1);
 
     if (result == NULL)
 	outofmem(__FILE__, "HTEscapeUnsafe");
     for (q = result, p = str; *p; p++) {
-	unsigned char a = TOASCII(*p);
+	unsigned char a = UCH(TOASCII(*p));
 
 	if (UNSAFE(a)) {
 	    *q++ = HEX_ESCAPE;	/* Means hex coming */
@@ -980,17 +1043,17 @@ char *HTEscapeSP(const char *str,
     const char *p;
     char *q;
     char *result;
-    int unacceptable = 0;
+    unsigned unacceptable = 0;
 
     for (p = str; *p; p++)
 	if (!(*p == ' ' || ACCEPTABLE(UCH(TOASCII(*p)))))
 	    unacceptable++;
-    result = typecallocn(char, p - str + unacceptable + unacceptable + 1);
+    result = AlloCopy(p, str, (unacceptable * 2) + 1);
 
     if (result == NULL)
 	outofmem(__FILE__, "HTEscape");
     for (q = result, p = str; *p; p++) {
-	unsigned char a = TOASCII(*p);
+	unsigned char a = UCH(TOASCII(*p));
 
 	if (a == 32) {
 	    *q++ = '+';
@@ -1131,14 +1194,14 @@ void HTMake822Word(char **str,
     char *q;
     char *result;
     unsigned char a;
-    int added = 0;
+    unsigned added = 0;
 
     if (isEmpty(*str)) {
 	StrAllocCopy(*str, quoted ? "\"\"" : "");
 	return;
     }
     for (p = *str; *p; p++) {
-	a = TOASCII(*p);	/* S/390 -- gil -- 0240 */
+	a = UCH(TOASCII(*p));	/* S/390 -- gil -- 0240 */
 	if (a < 32 || a >= 128 ||
 	    ((crfc[a - 32]) & 1)) {
 	    if (!added)
@@ -1153,7 +1216,7 @@ void HTMake822Word(char **str,
     }
     if (!added)
 	return;
-    result = typecallocn(char, p - (*str) + added + 1);
+    result = AlloCopy(p, *str, added + 1);
     if (result == NULL)
 	outofmem(__FILE__, "HTMake822Word");
 
@@ -1168,7 +1231,7 @@ void HTMake822Word(char **str,
      */
     /* S/390 -- gil -- 0268 */
     for (p = *str; *p; p++) {
-	a = TOASCII(*p);
+	a = UCH(TOASCII(*p));
 	if ((a != ASCII_TAB) &&
 	    ((a & 127) < ASCII_SPC ||
 	     (a < 128 && ((crfc[a - 32]) & 2))))

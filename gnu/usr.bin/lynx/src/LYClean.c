@@ -1,3 +1,4 @@
+/* $LynxId: LYClean.c,v 1.38 2008/02/11 00:50:19 Paul.B.Mahol Exp $ */
 #include <HTUtils.h>
 #include <LYCurses.h>
 #include <LYUtils.h>
@@ -8,6 +9,7 @@
 #include <LYTraversal.h>
 #include <LYHistory.h>
 #include <LYCookie.h>
+#include <LYSession.h>
 #include <UCAuto.h>
 #include <HTAlert.h>
 
@@ -123,10 +125,18 @@ void cleanup_sig(int sig)
 	}
 #ifndef NOSIGHUP
     } else {
+#ifdef USE_SESSIONS
+	/*
+	 * Wondering is this right place and time to do it.
+	 * We need this, for example it is usefull to save session
+	 * if user closed lynx in non standard way, like closing
+	 * xterm window or in worst one like crash.
+	 */
+	SaveSession();
+#endif /* USE_SESSIONS */
 	cleanup_files();
     }
 #endif /* NOSIGHUP */
-
     if (sig != 0) {
 	exit_immediately(EXIT_SUCCESS);
     } else {
@@ -141,8 +151,6 @@ void cleanup_sig(int sig)
 void cleanup_files(void)
 {
     LYCleanupTemp();
-    if (lynx_temp_space != NULL && rmdir(lynx_temp_space))
-	perror("Could not remove the temp-directory");
     FREE(lynx_temp_space);
 }
 
@@ -192,6 +200,12 @@ void cleanup(void)
     if (persistent_cookies)
 	LYStoreCookies(LYCookieSaveFile);
 #endif
+#ifdef USE_SESSIONS
+    /*
+     * Wondering is this right place and time to do it.
+     */
+    SaveSession();
+#endif /* USE_SESSIONS */
 
     cleanup_files();
 #ifdef VMS

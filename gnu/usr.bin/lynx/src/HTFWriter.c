@@ -1,4 +1,7 @@
-/*		FILE WRITER				HTFWrite.h
+/*
+ * $LynxId: HTFWriter.c,v 1.91 2009/01/01 22:58:59 tom Exp $
+ *
+ *		FILE WRITER				HTFWrite.h
  *		===========
  *
  *	This version of the stream object just writes to a C file.
@@ -34,6 +37,7 @@
 #include <LYLeaks.h>
 #include <LYKeymap.h>
 #include <LYGetFile.h>
+#include <LYHistory.h>		/* store statusline messages */
 
 #ifdef USE_PERSISTENT_COOKIES
 #include <LYCookie.h>
@@ -130,7 +134,7 @@ static void HTFWriter_write(HTStream *me, const char *s, int l)
     size_t result;
 
     if (me->fp) {
-	result = fwrite(s, 1, l, me->fp);
+	result = fwrite(s, 1, (unsigned) l, me->fp);
 	if (result != (size_t) l) {
 	    HTFWriter_error(me, "HTFWriter_write");
 	}
@@ -195,7 +199,7 @@ static void HTFWriter_free(HTStream *me)
 		 * and remove any previous uncompressed copy.  - FM
 		 */
 		StrAllocCopy(path, me->anchor->FileCache);
-		if ((len = strlen(path)) > 3 &&
+		if ((len = (int) strlen(path)) > 3 &&
 		    (!strcasecomp(&path[len - 2], "gz") ||
 		     !strcasecomp(&path[len - 2], "zz"))) {
 #ifdef USE_ZLIB
@@ -314,8 +318,10 @@ static void HTFWriter_free(HTStream *me)
 		    if (!dump_output_immediately) {
 			/*
 			 * Tell user what's happening.  - FM
+			 * HTInfoMsg2(WWW_USING_MESSAGE, addr);
+			 * but only in the history, not on screen -RS
 			 */
-			HTUserMsg2(WWW_USING_MESSAGE, addr);
+			LYstore_message2(WWW_USING_MESSAGE, addr);
 		    }
 
 		    if (skip_loadfile) {
@@ -589,7 +595,7 @@ HTStream *HTSaveAndExecute(HTPresentation *pres,
 	return (NULL);
     }
 #if defined(EXEC_LINKS) || defined(EXEC_SCRIPTS)
-    if (pres->quality == 999.0) {	/* exec link */
+    if (pres->quality >= 999.0) {	/* exec link */
 	if (dump_output_immediately) {
 	    LYCancelledFetch = TRUE;
 	    return (NULL);
@@ -873,7 +879,7 @@ HTStream *HTSaveToFile(HTPresentation *pres,
      * to help sort that out later.  Unix folks don't need to know this, but
      * we'll show it to them, too.  - FM
      */
-    HTUserMsg2(CONTENT_TYPE_MSG, pres->rep->name);
+    HTInfoMsg2(CONTENT_TYPE_MSG, pres->rep->name);
 
     StrAllocCopy(WWW_Download_File, fnam);
 
@@ -1184,7 +1190,7 @@ HTStream *HTCompressed(HTPresentation *pres,
      */
     if (!dump_output_immediately && !traversal
 #if defined(EXEC_LINKS) || defined(EXEC_SCRIPTS)
-	&& (Pres->quality != 999.0 ||
+	&& (Pres->quality < 999.0 ||
 	    (!no_exec &&	/* allowed exec link or script ? */
 	     (local_exec ||
 	      (local_exec_on_local_files &&

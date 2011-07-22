@@ -1,3 +1,4 @@
+/* $LynxId: LYDownload.c,v 1.59 2008/12/14 18:26:03 tom Exp $ */
 #include <HTUtils.h>
 #include <HTParse.h>
 #include <HTList.h>
@@ -155,7 +156,7 @@ void LYDownload(char *line)
 		}
 		if (FnameNum >= FnameTotal) {
 		    /*
-		     * Reset the FirstRecall flag, and use sug_file or a blank. 
+		     * Reset the FirstRecall flag, and use sug_file or a blank.
 		     * - FM
 		     */
 		    FirstRecall = TRUE;
@@ -187,7 +188,7 @@ void LYDownload(char *line)
 		}
 		if (FnameNum < 0) {
 		    /*
-		     * Set the FirstRecall flag, and use sug_file or a blank. 
+		     * Set the FirstRecall flag, and use sug_file or a blank.
 		     * - FM
 		     */
 		    FirstRecall = TRUE;
@@ -298,10 +299,12 @@ void LYDownload(char *line)
 	     */
 	    if (HTCountCommandArgs(download_command->command) >= 2) {
 		_statusline(FILENAME_PROMPT);
-	      again:if (sug_file)
+	      again:
+		if (sug_file) {
 		    strncpy(buffer, sug_file, (sizeof(buffer) / 2) - 1);
-		else
+		} else {
 		    *buffer = '\0';
+		}
 	      check_again:
 		if ((ch = LYgetstr(buffer, VISIBLE,
 				   sizeof(buffer), recall)) < 0 ||
@@ -467,7 +470,7 @@ static int SuffixIs(char *filename, const char *suffix)
 /*
  * LYdownload_options writes out the current download choices to a file so that
  * the user can select downloaders in the same way that they select all other
- * links.  Download links look like: 
+ * links.  Download links look like:
  * LYNXDOWNLOAD://Method=<#>/File=<STRING>/SugFile=<STRING>
  */
 int LYdownload_options(char **newfile, char *data_file)
@@ -513,7 +516,7 @@ int LYdownload_options(char **newfile, char *data_file)
 	    ? gettext("Standard download options:")
 	    : gettext("Download options:"));
 
-    if (!no_disk_save && !child_lynx) {
+    if (!no_disk_save) {
 #if defined(DIRED_SUPPORT)
 	/*
 	 * Disable save to disk option for local files.

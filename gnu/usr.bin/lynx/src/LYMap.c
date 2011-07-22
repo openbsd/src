@@ -1,4 +1,6 @@
-/*			Lynx Client-side Image MAP Support	       LYMap.c
+/*
+ * $LynxId: LYMap.c,v 1.37 2009/01/01 22:30:15 tom Exp $
+ *			Lynx Client-side Image MAP Support	       LYMap.c
  *			==================================
  *
  *	Author: FM	Foteos Macrides (macrides@sci.wfbr.edu)
@@ -326,14 +328,17 @@ BOOL LYHaveImageMap(char *address)
  * anAnchor is the LYNXIMGMAP: anchor; if it is associated with POST
  *	    data, we want the specific list, otherwise the global list.
  */
-static void fill_DocAddress(DocAddress *wwwdoc, char *address,
+static void fill_DocAddress(DocAddress *wwwdoc,
+			    const char *address,
 			    HTParentAnchor *anAnchor,
 			    HTParentAnchor **punderlying)
 {
+    char *doc_address = NULL;
     HTParentAnchor *underlying;
 
+    StrAllocCopy(doc_address, address);
     if (anAnchor && anAnchor->post_data) {
-	wwwdoc->address = address;
+	wwwdoc->address = doc_address;
 	wwwdoc->post_data = anAnchor->post_data;
 	wwwdoc->post_content_type = anAnchor->post_content_type;
 	wwwdoc->bookmark = NULL;
@@ -345,7 +350,7 @@ static void fill_DocAddress(DocAddress *wwwdoc, char *address,
 	if (punderlying)
 	    *punderlying = underlying;
     } else {
-	wwwdoc->address = address;
+	wwwdoc->address = doc_address;
 	wwwdoc->post_data = NULL;
 	wwwdoc->post_content_type = NULL;
 	wwwdoc->bookmark = NULL;
@@ -373,7 +378,8 @@ static void fill_DocAddress(DocAddress *wwwdoc, char *address,
  * LYLoadIMGmap() will never have post_data, so that the global list
  * will be used. - kw
  */
-static HTList *get_the_list(DocAddress *wwwdoc, char *address,
+static HTList *get_the_list(DocAddress *wwwdoc,
+			    const char *address,
 			    HTParentAnchor *anchor,
 			    HTParentAnchor **punderlying)
 {
@@ -408,7 +414,7 @@ static int LYLoadIMGmap(const char *arg,
     char *MapAddress = NULL;
     HTList *theList;
     HTList *cur = NULL;
-    char *address = NULL;
+    const char *address = NULL;
     char *cp = NULL;
     DocAddress WWWDoc;
     HTParentAnchor *underlying;
@@ -417,7 +423,7 @@ static int LYLoadIMGmap(const char *arg,
     HTFormat old_format_out = HTOutputFormat;
 
     if (isLYNXIMGMAP(arg)) {
-	address = (char *) (arg + LEN_LYNXIMGMAP);
+	address = (arg + LEN_LYNXIMGMAP);
     }
     if (!(address && strchr(address, ':'))) {
 	HTAlert(MISDIRECTED_MAP_REQUEST);
@@ -549,7 +555,7 @@ static int LYLoadIMGmap(const char *arg,
 	LYEntify(&MapTitle, TRUE);
     }
 
-#define PUTS(buf)    (*target->isa->put_block)(target, buf, strlen(buf))
+#define PUTS(buf)    (*target->isa->put_block)(target, buf, (int) strlen(buf))
 
     HTSprintf0(&buf, "<html>\n<head>\n");
     PUTS(buf);
@@ -611,7 +617,7 @@ static int LYLoadIMGmap(const char *arg,
 void LYPrintImgMaps(FILE *fp)
 {
     const char *only = HTLoadedDocumentURL();
-    int only_len = strlen(only);
+    unsigned only_len = strlen(only);
     HTList *outer = LynxMaps;
     HTList *inner;
     LYImageMap *map;

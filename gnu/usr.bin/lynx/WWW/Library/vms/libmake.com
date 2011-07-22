@@ -1,9 +1,12 @@
 $ v0 = 0
 $ v = f$verify(v0)
+$! $LynxId: libmake.com,v 1.12 2007/07/01 16:02:59 tom Exp $
 $!			LIBMAKE.COM
 $!
 $!   Command file to build the WWWLibrary on VMS systems.
 $!
+$!   01-Jul-2007	T.Dickey
+$!	add support for "TCPIP" (TCPIP Services)
 $!   23-Oct-2004	T.Dickey
 $!	cleanup, remove duplication, etc.
 $!   08-Oct-1997	F.Macrides		macrides@sci.wfeb.edu
@@ -63,19 +66,22 @@ $	write sys$output " [4] CMU_TCP"
 $	write sys$output " [5] SOCKETSHR_TCP"
 $	write sys$output " [6] TCPWARE"
 $ 	write sys$output " [7] DECNET"
-$ 	read sys$command/prompt="Agent [1,2,3,4,5,6,7] (RETURN = [1]) " agent
+$ 	write sys$output " [8] TCPIP"
+$ 	read sys$command/prompt="Agent [1,2,3,4,5,6,7,8] (RETURN = [1]) " agent
 $ ENDIF
 $ if agent .eq. 1 .or. agent .eqs. "" .or. p1 .eqs. "MULTINET" then -
     transport = "MULTINET"
-$ if agent .eq. 2 .or. p1 .eqs. "UCX" then transport = "UCX"
-$ if agent .eq. 3 .or. p1 .eqs. "WIN_TCP" then transport = "WIN_TCP"
-$ if agent .eq. 4 .or. p1 .eqs. "CMU_TCP" then transport = "CMU_TCP"
+$ if agent .eq. 2 .or. p1 .eqs. "UCX"           then transport = "UCX"
+$ if agent .eq. 3 .or. p1 .eqs. "WIN_TCP"       then transport = "WIN_TCP"
+$ if agent .eq. 4 .or. p1 .eqs. "CMU_TCP"       then transport = "CMU_TCP"
 $ if agent .eq. 5 .or. p1 .eqs. "SOCKETSHR_TCP" then transport = "SOCKETSHR_TCP"
-$ if agent .eq. 6 .or. p1 .eqs. "TCPWARE" then transport = "TCPWARE"
-$ if agent .eq. 7 .or. p1 .eqs. "DECNET" then transport = "DECNET"
+$ if agent .eq. 6 .or. p1 .eqs. "TCPWARE"       then transport = "TCPWARE"
+$ if agent .eq. 7 .or. p1 .eqs. "DECNET"        then transport = "DECNET"
+$ if agent .eq. 8 .or. p1 .eqs. "TCPIP"         then transport = "TCPIP"
 $!
 $ if transport .eqs. "SOCKETSHR_TCP" then extra_defs = extra_defs + ",_DECC_V4_SOURCE"
-$ if transport .eqs. "TCPWARE" then extra_defs = extra_defs + ",UCX"
+$ if transport .eqs. "TCPIP"         then extra_defs = extra_defs + ",_DECC_V4_SOURCE,TCPIP_SERVICES"
+$ if transport .eqs. "TCPWARE"       then extra_defs = extra_defs + ",UCX"
 $!
 $ if P2 .nes. ""
 $ then

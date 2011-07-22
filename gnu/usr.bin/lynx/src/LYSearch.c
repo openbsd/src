@@ -1,3 +1,6 @@
+/*
+ * $LynxId: LYSearch.c,v 1.23 2009/01/01 23:28:39 tom Exp $
+ */
 #include <HTUtils.h>
 #include <HTAlert.h>
 #include <LYUtils.h>
@@ -191,7 +194,8 @@ BOOL textsearch(DocInfo *cur_doc, char *prev_target,
 	 */
 	_statusline(ENTER_WHEREIS_QUERY);
 
-	if ((ch = LYgetstr(prev_target, VISIBLE, target_size, recall)) < 0) {
+	ch = LYgetstr(prev_target, VISIBLE, (unsigned) target_size, recall);
+	if (ch < 0) {
 	    /*
 	     * User cancelled the search via ^G.  Restore prev_target and
 	     * return.  - FM
@@ -255,7 +259,8 @@ BOOL textsearch(DocInfo *cur_doc, char *prev_target,
 	    } else {
 		_statusline(EDIT_A_PREV_QUERY);
 	    }
-	    if ((ch = LYgetstr(prev_target, VISIBLE, target_size, recall)) < 0) {
+	    ch = LYgetstr(prev_target, VISIBLE, (unsigned) target_size, recall);
+	    if (ch < 0) {
 		/*
 		 * User canceled the search via ^G.  Restore prev_target and
 		 * return.  - FM
@@ -306,7 +311,8 @@ BOOL textsearch(DocInfo *cur_doc, char *prev_target,
 	    } else {
 		_statusline(EDIT_A_PREV_QUERY);
 	    }
-	    if ((ch = LYgetstr(prev_target, VISIBLE, target_size, recall)) < 0) {
+	    ch = LYgetstr(prev_target, VISIBLE, (unsigned) target_size, recall);
+	    if (ch < 0) {
 		/*
 		 * User cancelled the search via ^G.  Restore prev_target and
 		 * return.  - FM

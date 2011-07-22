@@ -1,4 +1,7 @@
-/*			NEWS ACCESS				HTNews.c
+/*
+ * $LynxId: HTNews.c,v 1.60 2009/05/24 23:11:26 tom Exp $
+ *
+ *			NEWS ACCESS				HTNews.c
  *			===========
  *
  * History:
@@ -48,7 +51,7 @@ static int channel_s = 1;
 	(Handle ? SSL_write(Handle, buff, size) : NETWRITE(sock, buff, size))
 #define NEWS_NETCLOSE(sock) \
 	{ (void)NETCLOSE(sock); if (Handle) { SSL_free(Handle); Handle = NULL; } }
-static char HTNewsGetCharacter(void);
+static int HTNewsGetCharacter(void);
 
 #define NEXT_CHAR HTNewsGetCharacter()
 #else
@@ -96,7 +99,6 @@ static HTStructured *target;	/* The output sink */
 static HTStructuredClass targetClass;	/* Copy of fn addresses */
 static HTStream *rawtarget = NULL;	/* The output sink for rawtext */
 static HTStreamClass rawtargetClass;	/* Copy of fn addresses */
-static HTParentAnchor *node_anchor;	/* Its anchor */
 static int diagnostic;		/* level: 0=none 2=source */
 static BOOL rawtext = NO;	/* Flag: HEAD or -mime_headers */
 static HTList *NNTP_AuthInfo = NULL;	/* AUTHINFO database */
@@ -171,7 +173,7 @@ static void load_NNTP_AuthInfo(void)
     LYAddPathToHome(fname, sizeof(fname), NEWS_AUTH_FILE);
 
     if ((fp = fopen(fname, "r")) != 0) {
-	while (fgets(buffer, sizeof(buffer), fp) != 0) {
+	while (fgets(buffer, sizeof(buffer), fp) != NULL) {
 	    char the_host[LINE_LENGTH + 1];
 	    char the_pass[LINE_LENGTH + 1];
 	    char the_user[LINE_LENGTH + 1];
@@ -387,9 +389,9 @@ static NNTPAuthResult HTHandleAuthInfo(char *host)
     int status, tries;
 
     /*
-     * Make sure we have an interactive user and a host.  - FM
+     * Make sure we have a host.  - FM
      */
-    if (dump_output_immediately || !(host && *host))
+    if (isEmpty(host))
 	return NNTPAUTH_ERROR;
 
     /*
@@ -1003,12 +1005,14 @@ void debug_print(unsigned char *p)
 
 static char *decode_mime(char **str)
 {
+    static char empty[] = "";
+
 #ifdef SH_EX
     if (HTCJK != JAPANESE)
 	return *str;
 #endif
     HTmmdecode(str, *str);
-    return HTrjis(str, *str) ? *str : "";
+    return HTrjis(str, *str) ? *str : empty;
 }
 
 /*	Read in an Article					read_article
@@ -2532,7 +2536,6 @@ static int HTLoadNews(const char *arg,
 	rawtext = (BOOL) (head_wanted || keep_mime_headers);
     }
     if (rawtext) {
-	node_anchor = anAnchor;
 	rawtarget = HTStreamStack(WWW_PLAINTEXT,
 				  format_out,
 				  stream, anAnchor);
@@ -2551,7 +2554,6 @@ static int HTLoadNews(const char *arg,
 	 * Make a hypertext object with an anchor list.
 	 */
     if (!(post_wanted || reply_wanted || spost_wanted || sreply_wanted)) {
-	node_anchor = anAnchor;
 	target = HTML_new(anAnchor, format_out, stream);
 	targetClass = *target->isa;	/* Copy routine entry points */
     }
@@ -3042,7 +3044,7 @@ void HTClearNNTPAuthInfo(void)
 }
 
 #ifdef USE_SSL
-static char HTNewsGetCharacter(void)
+static int HTNewsGetCharacter(void)
 {
     if (!Handle)
 	return HTGetCharacter();

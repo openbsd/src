@@ -1,3 +1,6 @@
+/*
+ * $LynxId: LYCharSets.h,v 1.31 2009/05/25 13:48:24 tom Exp $
+ */
 #ifndef LYCHARSETS_H
 #define LYCHARSETS_H
 
@@ -55,6 +58,8 @@ extern "C" {
     extern void Set_HTCJK(const char *inMIMEname, const char *outMIMEname);
 
     extern const char *HTMLGetEntityName(UCode_t code);
+
+    UCode_t LYcp1252ToUnicode(UCode_t code);
 
 /*
  * HTMLGetEntityName calls LYEntityNames for iso-8859-1 entity names only. 

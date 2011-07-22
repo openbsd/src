@@ -1,4 +1,7 @@
-/* MODULE							HTAAUtil.c
+/*
+ * $LynxId: HTAAUtil.c,v 1.27 2008/12/31 22:04:39 tom Exp $
+ *
+ * MODULE							HTAAUtil.c
  *		COMMON PARTS OF ACCESS AUTHORIZATION MODULE
  *			FOR BOTH SERVER AND BROWSER
  *
@@ -51,6 +54,7 @@
 #include <HTTP.h>
 
 #include <LYStrings.h>
+#include <LYUtils.h>
 #include <LYLeaks.h>
 
 /* PUBLIC						HTAAScheme_enum()

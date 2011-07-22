@@ -1,5 +1,6 @@
-#  Make WWW under unix for a.n.other unix system (bsd)
-#   Use this as a template
+# $LynxId: makefile.in,v 1.25 2009/04/15 23:24:33 tom Exp $
+# Make WWW under unix for a.n.other unix system (bsd)
+# Use this as a template
 
 # For W3 distribution, machine type for subdirectories
 WWW_MACH	= Implementation
@@ -21,17 +22,23 @@ DEFS		= @DEFS@
 EXTRA_CPPFLAGS	= @EXTRA_CPPFLAGS@
 CPPFLAGS	= @CPPFLAGS@
 
+AR		= @AR@
+ARFLAGS		= @ARFLAGS@
+
+RANLIB		= @RANLIB@
+
 o		= .@OBJEXT@
+x		= @EXEEXT@
 
 INTLDIR_CPPFLAGS= @INTLDIR_CPPFLAGS@ -I$(top_srcdir)/intl
 
 CPP		= @CPP@
-CPPOPTS		= $(DEFS) $(EXTRA_CPPFLAGS) $(CPPFLAGS) $(LYFLAGS) \
+CPPOPTS		= $(DEFS) $(LYFLAGS) \
 		-I../../.. \
 		-I../../../src \
 		-I$(top_srcdir) \
 		-I$(top_srcdir)/src \
-		$(INTLDIR_CPPFLAGS) -I$(WWWINC)
+		$(INTLDIR_CPPFLAGS) -I$(WWWINC) $(EXTRA_CPPFLAGS) $(CPPFLAGS)
 
 LY_CFLAGS	= @CFLAGS@
 CFLAGS		= $(CPPOPTS) $(LY_CFLAGS)
@@ -55,8 +62,6 @@ VC = 2.14
 
 #  If this env var is set to something else Some makes will use that instead
 SHELL = @CONFIG_SHELL@
-
-RANLIB	= @RANLIB@
 
 #	.h files are distributed but originally are made from the
 #	self-documenting hypertext files.
@@ -168,13 +173,17 @@ depend :
 #  On SGI, ranlib is unnecessary and does not exist so we ignore errors
 # for that step
 $(LOB)/libwww.a : $(COMMON)
-	@AR@ @AR_OPTS@ $(LOB)/libwww.a $(COMMON)
+	$(AR) $(ARFLAGS) $(LOB)/libwww.a $(COMMON)
 	-$(RANLIB) $(LOB)/libwww.a
 
 #	Clean up everything generatable except final products
 clean :
 	rm -f core *.core *.leaks *.[oi] *.bak tags TAGS
+	rm -f dtd_util$x
 	rm -f $(LOB)/*$o
+
+distclean : clean
+	@echo made $@
 
 tags:
 	ctags *.[ch]
@@ -182,130 +191,182 @@ tags:
 #			Common code
 #			-----------
 
-$(LOB)/HTList$o : $(OE) $(CMN)HTList.c $(CMN)HTUtils.h $(CMN)HTList.h
+$(LOB)/HTList$o : $(CMN)HTList.c $(CMN)HTUtils.h $(CMN)HTList.h
 	$(COMPILE) $(CMN)HTList.c
 
-$(LOB)/HTAnchor$o : $(OE) $(CMN)HTAnchor.c $(CMN)HTUtils.h $(CMN)HTList.h
+$(LOB)/HTAnchor$o : $(CMN)HTAnchor.c $(CMN)HTUtils.h $(CMN)HTList.h
 	$(COMPILE) $(CMN)HTAnchor.c
 
-$(LOB)/HTFormat$o : $(OE) $(CMN)HTFormat.c $(CMN)HTUtils.h $(CMN)HTList.h
+$(LOB)/HTFormat$o : $(CMN)HTFormat.c $(CMN)HTUtils.h $(CMN)HTList.h
 	$(COMPILE) $(CMN)HTFormat.c
 
-$(LOB)/HTMIME$o : $(OE) $(CMN)HTMIME.c $(CMN)HTUtils.h $(CMN)HTList.h
+$(LOB)/HTMIME$o : $(CMN)HTMIME.c $(CMN)HTUtils.h $(CMN)HTList.h
 	$(COMPILE) $(CMN)HTMIME.c
 
-$(LOB)/HTNews$o : $(OE) $(CMN)HTNews.c $(CMN)HTUtils.h $(CMN)HTList.h\
+$(LOB)/HTNews$o : $(CMN)HTNews.c $(CMN)HTUtils.h $(CMN)HTList.h\
 	 $(CMN)HTMLDTD.h
 	$(COMPILE) $(CMN)HTNews.c
 
-$(LOB)/HTGopher$o : $(OE) $(CMN)HTGopher.c $(CMN)HTUtils.h $(CMN)HTList.h \
+$(LOB)/HTGopher$o : $(CMN)HTGopher.c $(CMN)HTUtils.h $(CMN)HTList.h \
 	 $(CMN)HTMLDTD.h
 	$(COMPILE) $(CMN)HTGopher.c
 
-$(LOB)/HTTelnet$o : $(OE) $(CMN)HTTelnet.c $(CMN)HTUtils.h $(CMN)HTTelnet.h $(CMN)../../../userdefs.h
+$(LOB)/HTTelnet$o : $(CMN)HTTelnet.c $(CMN)HTUtils.h $(CMN)HTTelnet.h $(CMN)../../../userdefs.h
 	$(COMPILE) $(CMN)HTTelnet.c
 
-$(LOB)/HTFinger$o : $(OE) $(CMN)HTFinger.c $(CMN)HTUtils.h $(CMN)HTList.h \
+$(LOB)/HTFinger$o : $(CMN)HTFinger.c $(CMN)HTUtils.h $(CMN)HTList.h \
 	$(CMN)HTMLDTD.h
 	$(COMPILE) $(CMN)HTFinger.c
 
-$(LOB)/HTStyle$o : $(OE) $(CMN)HTStyle.c $(CMN)HTUtils.h
+$(LOB)/HTStyle$o : $(CMN)HTStyle.c $(CMN)HTUtils.h
 	$(COMPILE) $(CMN)HTStyle.c
 
-$(LOB)/HTAtom$o : $(OE) $(CMN)HTAtom.c $(CMN)HTUtils.h $(CMN)HTList.h
+$(LOB)/HTAtom$o : $(CMN)HTAtom.c $(CMN)HTUtils.h $(CMN)HTList.h
 	$(COMPILE) $(CMN)HTAtom.c
 
-$(LOB)/HTChunk$o : $(OE) $(CMN)HTChunk.c $(CMN)HTUtils.h
+$(LOB)/HTChunk$o : $(CMN)HTChunk.c $(CMN)HTUtils.h
 	$(COMPILE) $(CMN)HTChunk.c
 
-$(LOB)/HTString$o : $(OE) $(CMN)HTString.c $(CMN)HTUtils.h $(CMN)Version.make
+$(LOB)/HTString$o : $(CMN)HTString.c $(CMN)HTUtils.h $(CMN)Version.make
 	$(COMPILE) -DVC=\"$(VC)\" $(CMN)HTString.c
 
-$(LOB)/HTRules$o : $(OE) $(CMN)HTRules.c $(CMN)HTUtils.h $(CMN)Version.make \
+$(LOB)/HTRules$o : $(CMN)HTRules.c $(CMN)HTUtils.h $(CMN)Version.make \
 	 $(CMN)HTAAProt.h
 	$(COMPILE) -DVC=\"$(VC)\" $(CMN)HTRules.c
 
-$(LOB)/SGML$o : $(OE) $(CMN)SGML.c $(CMN)HTUtils.h $(CMN)UCAux.h
+$(LOB)/SGML$o : $(CMN)SGML.c $(CMN)HTUtils.h $(CMN)UCAux.h
 	$(COMPILE) $(CMN)SGML.c
 
-$(LOB)/HTMLGen$o : $(OE) $(CMN)HTMLGen.c $(CMN)HTUtils.h $(CMN)HTMLDTD.h
+$(LOB)/HTMLGen$o : $(CMN)HTMLGen.c $(CMN)HTUtils.h $(CMN)HTMLDTD.h
 	$(COMPILE) $(CMN)HTMLGen.c
 
-$(LOB)/HTMLDTD$o : $(OE) $(CMN)HTMLDTD.c $(CMN)SGML.h
+$(LOB)/HTMLDTD$o : $(CMN)HTMLDTD.c $(CMN)SGML.h
 	$(COMPILE) $(CMN)HTMLDTD.c
 
-$(LOB)/HTPlain$o : $(OE) $(CMN)HTPlain.c $(CMN)HTPlain.h $(CMN)HTStream.h \
+$(LOB)/HTPlain$o : $(CMN)HTPlain.c $(CMN)HTPlain.h $(CMN)HTStream.h \
 	 $(CMN)UCAux.h
 	$(COMPILE) $(CMN)HTPlain.c
 
-$(LOB)/HTWAIS$o : $(OE) $(CMN)HTWAIS.c $(CMN)HTUtils.h $(CMN)HTList.h
+$(LOB)/HTWAIS$o : $(CMN)HTWAIS.c $(CMN)HTUtils.h $(CMN)HTList.h
 	$(COMPILE) $(WAISINC) $(CMN)HTWAIS.c
 
-$(LOB)/HTWSRC$o : $(OE) $(CMN)HTWSRC.c $(CMN)HTUtils.h $(CMN)HTList.h
+$(LOB)/HTWSRC$o : $(CMN)HTWSRC.c $(CMN)HTUtils.h $(CMN)HTList.h
 	$(COMPILE) $(CMN)HTWSRC.c
 
 #	Access Authorization
 
-$(LOB)/HTAAUtil$o : $(OE) $(CMN)HTAAUtil.c $(CMN)HTAAUtil.h \
+$(LOB)/HTAAUtil$o : $(CMN)HTAAUtil.c $(CMN)HTAAUtil.h \
 	 $(CMN)HTUtils.h $(CMN)HTString.h
 	$(COMPILE) $(CMN)HTAAUtil.c
 
-$(LOB)/HTGroup$o : $(OE) $(CMN)HTGroup.c $(CMN)HTGroup.h \
+$(LOB)/HTGroup$o : $(CMN)HTGroup.c $(CMN)HTGroup.h \
 	 $(CMN)HTAAUtil.h \
 	 $(CMN)HTAssoc.h $(CMN)HTLex.h
 	$(COMPILE) $(CMN)HTGroup.c
 
-$(LOB)/HTAABrow$o : $(OE) $(CMN)HTAABrow.c $(CMN)HTAABrow.h \
+$(LOB)/HTAABrow$o : $(CMN)HTAABrow.c $(CMN)HTAABrow.h \
 	 $(CMN)HTAAUtil.h $(CMN)HTUU.h \
 	 $(CMN)HTUtils.h $(CMN)HTString.h \
 	 $(CMN)HTParse.h $(CMN)HTList.h \
 	 $(CMN)HTAssoc.h
 	$(COMPILE) $(CMN)HTAABrow.c
 
-$(LOB)/HTAAProt$o : $(OE) $(CMN)HTAAProt.c $(CMN)HTAAProt.h \
+$(LOB)/HTAAProt$o : $(CMN)HTAAProt.c $(CMN)HTAAProt.h \
 	 $(CMN)HTUtils.h $(CMN)HTAAUtil.h \
 	 $(CMN)HTAssoc.h $(CMN)HTLex.h
 	$(COMPILE) $(CMN)HTAAProt.c
 
-$(LOB)/HTAssoc$o : $(OE) $(CMN)HTAssoc.c $(CMN)HTAssoc.h \
+$(LOB)/HTAssoc$o : $(CMN)HTAssoc.c $(CMN)HTAssoc.h \
 	$(CMN)HTUtils.h $(CMN)HTString.h $(CMN)HTList.h
 	$(COMPILE) $(CMN)HTAssoc.c
 
-$(LOB)/HTLex$o : $(OE) $(CMN)HTLex.c $(CMN)HTLex.h $(CMN)HTUtils.h
+$(LOB)/HTLex$o : $(CMN)HTLex.c $(CMN)HTLex.h $(CMN)HTUtils.h
 	$(COMPILE) $(CMN)HTLex.c
 
-$(LOB)/HTUU$o : $(OE) $(CMN)HTUU.c $(CMN)HTUU.h $(CMN)HTUtils.h
+$(LOB)/HTUU$o : $(CMN)HTUU.c $(CMN)HTUU.h $(CMN)HTUtils.h
 	$(COMPILE) $(CMN)HTUU.c
 
 
 #	Communications & Files
 
-$(LOB)/HTTP$o : $(OE) $(CMN)HTTP.c $(CMN)HTUtils.h $(CMN)HTAABrow.h
+$(LOB)/HTTP$o : $(CMN)HTTP.c $(CMN)HTUtils.h $(CMN)HTAABrow.h
 	$(COMPILE) $(CMN)HTTP.c
 
-$(LOB)/HTTCP$o : $(OE) $(CMN)HTTCP.c $(CMN)HTUtils.h
+$(LOB)/HTTCP$o : $(CMN)HTTCP.c $(CMN)HTUtils.h
 	$(COMPILE) $(CMN)HTTCP.c
 
-$(LOB)/HTFile$o : $(OE) $(CMN)HTFile.c $(CMN)HTUtils.h \
+$(LOB)/HTFile$o : $(CMN)HTFile.c $(CMN)HTUtils.h \
 	 $(CMN)HTMLDTD.h
 	$(COMPILE) $(CMN)HTFile.c
 
-$(LOB)/HTBTree$o : $(OE) $(CMN)HTBTree.c $(CMN)HTUtils.h
+$(LOB)/HTBTree$o : $(CMN)HTBTree.c $(CMN)HTUtils.h
 	$(COMPILE) $(CMN)HTBTree.c
 
-$(LOB)/HTFTP$o : $(OE) $(CMN)HTFTP.c $(CMN)HTUtils.h
+$(LOB)/HTFTP$o : $(CMN)HTFTP.c $(CMN)HTUtils.h
 	$(COMPILE) $(CMN)HTFTP.c
 
-$(LOB)/HTAccess$o : $(OE)  $(CMN)HTAccess.c $(CMN)HTUtils.h
+$(LOB)/HTAccess$o : $(CMN)HTAccess.c $(CMN)HTUtils.h
 	$(COMPILE) $(CMN)HTAccess.c
 
-$(LOB)/HTParse$o : $(OE) $(CMN)HTParse.c $(CMN)HTUtils.h
+$(LOB)/HTParse$o : $(CMN)HTParse.c $(CMN)HTUtils.h
 	$(COMPILE) $(CMN)HTParse.c
 
-$(LOB)/HTVMS_WaisUI$o : $(OE) $(CMN)HTVMS_WaisUI.c $(CMN)HTUtils.h
+$(LOB)/HTVMS_WaisUI$o : $(CMN)HTVMS_WaisUI.c $(CMN)HTUtils.h
 	$(COMPILE) $(CMN)HTVMS_WaisUI.c
 
-$(LOB)/HTDOS$o : $(OE) $(CMN)HTDOS.c $(CMN)HTUtils.h
+$(LOB)/HTDOS$o : $(CMN)HTDOS.c $(CMN)HTUtils.h
 	$(COMPILE) $(CMN)HTDOS.c
+
+# Utilities
+$(LOB)/dtd_util$o : $(CMN)dtd_util.c $(CMN)HTUtils.h
+	$(COMPILE) $(CMN)dtd_util.c
+
+DTD_UTIL = $(LOB)/dtd_util$o $(LOB)/HTMLDTD$o
+
+sources: dtd_util$x src0_HTMLDTD.txt src1_HTMLDTD.txt
+	-rm -f *_HTMLDTD.h
+	./dtd_util$x -l src0_HTMLDTD.txt -s -c -o src0_HTMLDTD.h
+	./dtd_util$x -l src1_HTMLDTD.txt -t -c -o src1_HTMLDTD.h
+	./dtd_util$x -l src0_HTMLDTD.txt -s -h -o hdr_HTMLDTD.h
+
+dtd_util$x: $(DTD_UTIL)
+	$(CC) $(CC_OPTS) $(LDFLAGS) -o $@  $(DTD_UTIL) $(LIBS)
+
+check: dtd_util$x
+	@echo "** comparing builtin src0_HTMLDTD.txt"
+	./dtd_util$x >HTMLDTD.log
+	-diff -u src0_HTMLDTD.txt HTMLDTD.log
+
+	@echo "** comparing reloaded src0_HTMLDTD.txt"
+	./dtd_util$x -l src0_HTMLDTD.txt >HTMLDTD.log
+	-diff -u src0_HTMLDTD.txt HTMLDTD.log
+
+	@echo "** comparing header generated from builtin"
+	./dtd_util$x -s -h -o HTMLDTD.log
+	-diff -u hdr_HTMLDTD.h HTMLDTD.log
+	./dtd_util$x -t -h -o HTMLDTD.log
+	-diff -u hdr_HTMLDTD.h HTMLDTD.log
+
+	@echo "** comparing header generated by load"
+	./dtd_util$x -s -h -o HTMLDTD.log -l src0_HTMLDTD.txt
+	-diff -u hdr_HTMLDTD.h HTMLDTD.log
+	./dtd_util$x -t -h -o HTMLDTD.log -l src1_HTMLDTD.txt
+	-diff -u hdr_HTMLDTD.h HTMLDTD.log
+
+	@echo "** comparing strict source generated from builtin"
+	./dtd_util$x -s -c -o HTMLDTD.log
+	-diff -u src0_HTMLDTD.h HTMLDTD.log
+
+	@echo "** comparing strict source generated by load"
+	./dtd_util$x -s -c -o HTMLDTD.log -l src0_HTMLDTD.txt
+	-diff -u src0_HTMLDTD.h HTMLDTD.log
+
+	@echo "** comparing tagsoup source generated from builtin"
+	./dtd_util$x -t -c -o HTMLDTD.log
+	-diff -u src1_HTMLDTD.h HTMLDTD.log
+
+	@echo "** comparing tagsoup source generated by load"
+	./dtd_util$x -t -c -o HTMLDTD.log -l src1_HTMLDTD.txt
+	-diff -u src1_HTMLDTD.h HTMLDTD.log
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

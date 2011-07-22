@@ -1,4 +1,8 @@
-/* Definitions for Unicode character-translations */
+/*
+ * $LynxId: UCDefs.h,v 1.17 2009/03/10 20:02:44 tom Exp $
+ *
+ * Definitions for Unicode character-translations
+ */
 
 #ifndef UCDEFS_H
 #define UCDEFS_H
@@ -27,14 +31,16 @@ typedef struct _LYUCcharset {
 				   "for which ranges is it like 8859-1" */
 } LYUCcharset;
 
-#define UCT_ENC_7BIT 0
-#define UCT_ENC_8BIT 1
-#define UCT_ENC_8859 2		/* no displayable chars in 0x80-0x9F */
-#define UCT_ENC_8BIT_C0 3	/* 8-bit + some chars in C0 control area */
-#define UCT_ENC_MAYBE2022 4
-#define UCT_ENC_CJK 5
-#define UCT_ENC_16BIT 6
-#define UCT_ENC_UTF8 7
+typedef enum {
+    UCT_ENC_7BIT,
+    UCT_ENC_8BIT,
+    UCT_ENC_8859,		/* no displayable chars in 0x80-0x9F */
+    UCT_ENC_8BIT_C0,		/* 8-bit + some chars in C0 control area */
+    UCT_ENC_MAYBE2022,
+    UCT_ENC_CJK,
+    UCT_ENC_16BIT,
+    UCT_ENC_UTF8
+} eUCT_ENC;
 
 #define UCT_REP_SUBSETOF_LAT1 0x01
 #define UCT_REP_SUPERSETOF_LAT1 0x02
@@ -64,24 +70,28 @@ typedef struct _LYUCcharset {
 #define UCT_R_HIGH8BIT 0x100	/* rest of 0xA0-0xFF range */
 
 #define UCT_R_ASCII UCT_R_7BITINV | UCT_R_7BITNAT	/* displayable US-ASCII */
-#define UCT_R_LAT1 UCT_R_ASCII | UCT_R_8859SPECL | UCT_R_HIGH8BIT
-#define UCT_R_8BIT UCT_R_LAT1 | UCT_R_HIGHCTRL	/* full 8bit range */
+#define UCT_R_LAT1  UCT_R_ASCII   | UCT_R_8859SPECL | UCT_R_HIGH8BIT
+#define UCT_R_8BIT  UCT_R_LAT1    | UCT_R_HIGHCTRL	/* full 8bit range */
 
 /*
  *  For the following some comments are in HTAnchor.c.
  */
-#define UCT_STAGE_MIME 0
-#define UCT_STAGE_PARSER 1	/* What the parser (SGML.c) gets to see */
-#define UCT_STAGE_STRUCTURED 2	/* What the structured stream (HTML) gets fed */
-#define UCT_STAGE_HTEXT 3	/* What gets fed to the HText_* functions */
-#define UCT_STAGEMAX 4
+typedef enum {
+    UCT_STAGE_MIME,
+    UCT_STAGE_PARSER,		/* What the parser (SGML.c) gets to see */
+    UCT_STAGE_STRUCTURED,	/* What the structured stream (HTML) gets fed */
+    UCT_STAGE_HTEXT,		/* What gets fed to the HText_* functions */
+    UCT_STAGEMAX
+} eUCT_STAGE;
 
-#define UCT_SETBY_NONE 0
-#define UCT_SETBY_DEFAULT 1
-#define UCT_SETBY_LINK 2	/* set by A or LINK CHARSET= hint */
-#define UCT_SETBY_STRUCTURED 3	/* structured stream stage (HTML.c) */
-#define UCT_SETBY_PARSER 4	/* set by SGML parser or similar */
-#define UCT_SETBY_MIME 5	/* set explicitly by MIME charset parameter */
+typedef enum {
+    UCT_SETBY_NONE,
+    UCT_SETBY_DEFAULT,
+    UCT_SETBY_LINK,		/* set by A or LINK CHARSET= hint */
+    UCT_SETBY_STRUCTURED,	/* structured stream stage (HTML.c) */
+    UCT_SETBY_PARSER,		/* set by SGML parser or similar */
+    UCT_SETBY_MIME		/* set explicitly by MIME charset parameter */
+} eUCT_SETBY;
 
 typedef struct _UCStageInfo {
     int lock;			/* by what it has been set */

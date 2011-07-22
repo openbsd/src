@@ -1,8 +1,9 @@
-/*                                                   String handling for libwww
-                                         STRINGS
-                                             
-   Case-independent string comparison and allocations with copies etc
-   
+/*
+ * $LynxId: HTString.h,v 1.31 2009/03/17 22:25:50 tom Exp $
+ *						String handling for libwww
+ *                                         STRINGS
+ *                                            
+ * Case-independent string comparison and allocations with copies etc
  */
 #ifndef HTSTRING_H
 #define HTSTRING_H
@@ -17,8 +18,8 @@ extern "C" {
     extern const char *HTLibraryVersion;	/* String for help screen etc */
 
 /*
-    EBCDIC string comparison using ASCII collating sequence
-*/
+ * EBCDIC string comparison using ASCII collating sequence
+ */
 #ifdef    NOT_ASCII
     extern int AS_casecomp(const char *a, const char *b);
     extern int AS_ncmp(const char *a, const char *b, unsigned int n);
@@ -32,13 +33,11 @@ extern "C" {
 
 #endif				/* NOT_ASCII */
 
-/*
-
-Case-insensitive string comparison
-
-   The usual routines (comp instead of cmp) had some problem.
-   
- */
+    /*
+     * Case-insensitive string comparison
+     *
+     * The usual routines (comp instead of cmp) had some problem.
+     */
     extern int strcasecomp(const char *a, const char *b);
     extern int strncasecomp(const char *a, const char *b, int n);
 
@@ -53,33 +52,29 @@ Case-insensitive string comparison
      * current display charset
      */
 
-/*
-
-Malloced string manipulation
-
- */
+    /*
+     * Malloced string manipulation
+     */
 #define StrAllocCopy(dest, src) HTSACopy (&(dest), src)
 #define StrAllocCat(dest, src)  HTSACat  (&(dest), src)
     extern char *HTSACopy(char **dest, const char *src);
     extern char *HTSACat(char **dest, const char *src);
 
-/*
-optimized for heavily realloc'd strings in temp objects
-*/
+    /*
+     * optimized for heavily realloc'd strings in temp objects
+     */
 #define StrAllocCopy_extra(dest, src) HTSACopy_extra (&(dest), src)
 #define FREE_extra(x)   {if (x != NULL) {HTSAFree_extra(x); x = NULL;}}
 #define Clear_extra(x)  {if (x != NULL) {*x = '\0';}}
     extern char *HTSACopy_extra(char **dest, const char *src);
     extern void HTSAFree_extra(char *s);
 
-/*
-
-Next word or quoted string
-
- */
+    /*
+     * Next word or quoted string
+     */
     extern char *HTNextField(char **pstr);
 
-/* A more general parser - kw */
+    /* A more general parser - kw */
     extern char *HTNextTok(char **pstr,
 			   const char *delims, const char *bracks, char *found);
 
@@ -93,10 +88,14 @@ Next word or quoted string
 				  va_list * ap);
 #endif
 
-#if (defined(VMS) || defined(DOSPATH) || defined(__EMX__)) && !defined(__CYGWIN__)
-#define USE_QUOTED_PARAMETER 0
+#if defined(__CYGWIN__)
+#define USE_QUOTED_PARAMETER 2	/* single and double-quoting */
+#elif defined(DOSPATH)
+#define USE_QUOTED_PARAMETER 1	/* double-quoting only */
+#elif (defined(VMS) || defined(__EMX__))
+#define USE_QUOTED_PARAMETER 0	/* no quoting */
 #else
-#define USE_QUOTED_PARAMETER 1
+#define USE_QUOTED_PARAMETER 2	/* single and double-quoting */
 #endif
 
 #if USE_QUOTED_PARAMETER

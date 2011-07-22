@@ -1,4 +1,6 @@
-/*							HTVMS_WAISUI.c
+/*
+ * $LynxId: HTVMS_WaisUI.c,v 1.15 2008/12/14 18:06:19 tom Exp $
+ *								HTVMS_WAISUI.c
  *
  *	Adaptation for Lynx by F.Macrides (macrides@sci.wfeb.edu)
  *
@@ -2119,10 +2121,7 @@ static void exitAction(long error);
 
 static void exitAction(long error GCC_UNUSED)
 {
-    long i;
-
-    for (i = 0; i < 100000; i++) ;
-    exit_immediately(0);
+    exit_immediately(EXIT_SUCCESS);
 }
 
 /*----------------------------------------------------------------------*/

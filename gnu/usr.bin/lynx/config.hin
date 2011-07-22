@@ -1,10 +1,14 @@
-/* The configure script translates "config.hin" into "lynx_cfg.h" */
+/*
+ * $LynxId: config.hin,v 1.112 2009/03/09 22:43:29 Doug.Kaufman Exp $
+ * vile:cmode
+ *
+ * The configure script translates "config.hin" into "lynx_cfg.h"
+ */
 #ifndef LYNX_CFG_H
 #define LYNX_CFG_H 1
 
 #undef ALL_CHARSETS		/* AC_ARG_WITH(charsets) */
 #undef ALT_CHAR_SET		/* CF_ALT_CHAR_SET */
-#undef ANSI_VARARGS		/* CF_VARARGS */
 #undef ARCHIVE_ONLY		/* CF_ARG_DISABLE(dired-archive) */
 #undef BZIP2_PATH		/* CF_PATH_PROG(bzip2) */
 #undef CAN_SET_ERRNO		/* CF_SET_ERRNO */
@@ -27,6 +31,7 @@
 #undef DISABLE_GOPHER		/* CF_ARG_DISABLE(gopher) */
 #undef DISABLE_NEWS		/* CF_ARG_DISABLE(news) */
 #undef DISP_PARTIAL		/* CF_ARG_ENABLE(partial) */
+#undef DONT_HAVE_TM_GMTOFF	/* CF_TM_GMTOFF */
 #undef DONT_TRACK_INTERNAL_LINKS /* CF_ARG_DISABLE(internal-links) */
 #undef ENABLE_IPV6		/* CF_CHECK_IPV6 */
 #undef ENABLE_NLS		/* defined if NLS is requested */
@@ -35,12 +40,12 @@
 #undef EXEC_SCRIPTS		/* CF_ARG_ENABLE(exec-scripts) */
 #undef EXP_ADDRLIST_PAGE	/* CF_ARG_ENABLE(addrlist-page) */
 #undef EXP_ALT_BINDINGS		/* CF_ARG_ENABLE(alt-bindings) */
+#undef EXP_ASCII_CTYPES		/* CF_ARG_ENABLE(ascii-ctypes) */
 #undef EXP_CHARSET_CHOICE	/* CF_ARG_ENABLE(charset-choice) */
 #undef EXP_CHARTRANS_AUTOSWITCH	/* CF_ARG_ENABLE(font-switch) */
 #undef EXP_JAPANESEUTF8_SUPPORT	/* CF_ARG_ENABLE(japanese-utf8) */
 #undef EXP_JUSTIFY_ELTS		/* CF_ARG_ENABLE(justify-elts) */
 #undef EXP_KEYBOARD_LAYOUT	/* CF_ARG_ENABLE(kbd-layout) */
-#undef EXP_LOCALE_CHARSET	/* CF_ARG_ENABLE(locale-charset) */
 #undef EXP_LIBJS		/* CF_ARG_ENABLE(libjs) */
 #undef EXP_NESTED_TABLES	/* CF_ARG_ENABLE(nested-tables) */
 #undef FANCY_CURSES		/* CF_FANCY_CURSES */
@@ -79,7 +84,9 @@
 #undef HAVE_GETTIMEOFDAY
 #undef HAVE_GETUID
 #undef HAVE_H_ERRNO
+#undef HAVE_ICONV		/* AM_ICONV */
 #undef HAVE_INET_ATON		/* CF_INET_ADDR */
+#undef HAVE_INTTYPES_H
 #undef HAVE_JCURSES_H
 #undef HAVE_KEYPAD
 #undef HAVE_LANGINFO_CODESET	/* AM_LANGINFO_CODESET */
@@ -125,6 +132,7 @@
 #undef HAVE_STRCHR		/* AM_GNU_GETTEXT */
 #undef HAVE_STRERROR
 #undef HAVE_STRING_H
+#undef HAVE_STRUCT_DIRENT64	/* CF_LARGEFILE */
 #undef HAVE_SYSLOG_H
 #undef HAVE_SYSV_TOUCHLINE	/* CF_CURS_TOUCHLINE */
 #undef HAVE_SYS_DIR_H		/* AC_HEADER_DIRENT */
@@ -133,6 +141,7 @@
 #undef HAVE_SYS_IOCTL_H		/* have <sys/ioctl.h> */
 #undef HAVE_SYS_NDIR_H		/* AC_HEADER_DIRENT */
 #undef HAVE_SYS_PARAM_H		/* AM_GNU_GETTEXT */
+#undef HAVE_SYS_TIME_H		/* have <sys/time.h> */
 #undef HAVE_SYS_TIMEB_H		/* have <sys/timeb.h> */
 #undef HAVE_SYS_WAIT_H		/* have <sys/wait.h> */
 #undef HAVE_TERMIOS_H		/* have <termios.h> */
@@ -143,6 +152,7 @@
 #undef HAVE_TRUNCATE
 #undef HAVE_TTYNAME
 #undef HAVE_TTYTYPE
+#undef HAVE_TYPE_CHTYPE		/* CF_CURSES_CHTYPE */
 #undef HAVE_TYPE_UNIONWAIT	/* CF_UNION_WAIT */
 #undef HAVE_UNISTD_H		/* have <unistd.h> */
 #undef HAVE_UNSETENV
@@ -161,13 +171,19 @@
 #undef HAVE_WAITPID
 #undef HAVE_WATTR_GET
 #undef HAVE_WBORDER
+#undef HAVE_WINDOWS_H		/* CF_NETLIBS */
+#undef HAVE_WINSOCK2_H		/* CF_NETLIBS */
+#undef HAVE_WINSOCK_H		/* CF_NETLIBS */
 #undef HAVE_WREDRAWLN
 #undef HAVE_WRESIZE
 #undef HAVE_XCURSES		/* CF_PDCURSES_X11 */
 #undef HAVE_ZERROR
+#undef HAVE__NC_FREEALL		/* ncurses debugging extension */
+#undef HAVE__NC_FREE_AND_EXIT	/* ncurses debugging extension */
 #undef HAVE___ARGZ_COUNT	/* AM_GNU_GETTEXT */
 #undef HAVE___ARGZ_NEXT		/* AM_GNU_GETTEXT */
 #undef HAVE___ARGZ_STRINGIFY	/* AM_GNU_GETTEXT */
+#undef ICONV_CONST
 #undef IGNORE_CTRL_C		/* FIXME: make tests? */
 #undef INCLUDE_PROTOTYPES	/* CF_SOCKS5 */
 #undef INSTALL_ARGS		/* CF_PATH_PROG(install) */
@@ -181,6 +197,7 @@
 #undef LYNX_RAND_MAX		/* CF_SRAND */
 #undef LY_FIND_LEAKS		/* CF_ARG_ENABLE(find-leaks) */
 #undef LY_TRACELINE		/* CF_ARG_ENABLE(vertrace) */
+#undef MIME_LIBDIR		/* CF_WITH_PATH(mime-libdir */
 #undef MKDIR_PATH		/* CF_PATH_PROG(mkdir) */
 #undef MV_PATH			/* CF_PATH_PROG(mv) */
 #undef NCURSES			/* defined for ncurses support */
@@ -204,6 +221,10 @@
 #undef RLOGIN_PATH		/* CF_PATH_PROG(rlogin) */
 #undef RM_PATH			/* CF_PATH_PROG(rm) */
 #undef SETFONT_PATH		/* CF_PATH_PROG(setfont) */
+#undef SIZEOF_INT		/* AC_CHECK_SIZEOF(int) */
+#undef SIZEOF_LONG		/* AC_CHECK_SIZEOF(long) */
+#undef SIZEOF_OFF_T		/* AC_CHECK_SIZEOF(off_t) */
+#undef SIZEOF_TIME_T		/* AC_CHECK_SIZEOF(time_t) */
 #undef SOCKS			/* CF_SOCKS, CF_SOCKS5 */
 #undef STDC_HEADERS
 #undef SYSTEM_MAIL		/* CF_DEFINE_PROG */
@@ -217,6 +238,7 @@
 #undef TELNET_PATH		/* CF_PATH_PROG(telnet) */
 #undef TERMIO_AND_CURSES	/* CF_TERMIO_AND_CURSES workaround */
 #undef TERMIO_AND_TERMIOS	/* CF_TERMIO_AND_TERMIOS workaround */
+#undef TIME_WITH_SYS_TIME	/* AC_HEADER_TIME */
 #undef TN3270_PATH		/* CF_PATH_PROG(tn3270) */
 #undef TOUCH_PATH		/* CF_PATH_PROG(touch) */
 #undef ULTRIX			/* config.sub */
@@ -225,18 +247,23 @@
 #undef UNIX
 #undef UNZIP_PATH		/* CF_PATH_PROG(unzip) */
 #undef USE_BZLIB		/* AC_ARG_WITH(bzlib) */
+#undef USE_CACHEJAR		/* CF_ARG_ENABLE(session-cache) */
 #undef USE_COLOR_STYLE		/* CF_ARG_ENABLE(color-style) */
 #undef USE_DEFAULT_COLORS	/* CF_ARG_ENABLE(default-colors) */
 #undef USE_EXECVP		/* CF_ARG_DISABLE(full-paths) */
 #undef USE_EXTERNALS		/* CF_ARG_ENABLE(externs) */
 #undef USE_FCNTL		/* CF_FIONBIO */
 #undef USE_FILE_UPLOAD		/* CF_ARG_ENABLE(file-upload) */
+#undef USE_GNUTLS_FUNCS		/* CF_GNUTLS */
 #undef USE_GNUTLS_INCL		/* CF_GNUTLS */
+#undef USE_LOCALE_CHARSET	/* CF_ARG_ENABLE(locale-charset) */
 #undef USE_OPENSSL_INCL		/* CF_SSL */
 #undef USE_PERSISTENT_COOKIES	/* CF_ARG_ENABLE(persistent-cookies) */
 #undef USE_PRETTYSRC		/* CF_ARG_ENABLE(prettysrc) */
+#undef USE_PROGRESSBAR		/* CF_ARG_ENABLE(progressbar) */
 #undef USE_READPROGRESS		/* CF_ARG_ENABLE(read-eta) */
 #undef USE_SCROLLBAR		/* CF_ARG_ENABLE(scrollbar) */
+#undef USE_SESSIONS		/* CF_ARG_ENABLE(sessions) */
 #undef USE_SLANG		/* AC_ARG_WITH(screen=slang) */
 #undef USE_SOCKS4_PREFIX	/* CF_SOCKS5 */
 #undef USE_SOCKS5		/* CF_SOCKS5 */
@@ -254,7 +281,7 @@
 #undef XCURSES			/* CF_PDCURSES_X11 */
 #undef ZCAT_PATH		/* CF_PATH_PROG(zcat) */
 #undef ZIP_PATH			/* CF_PATH_PROG(zip) */
-#undef _ALL_SOURCE		/* AC_AIX */
+#undef _WINDOWS_NSL		/* CF_ARG_ENABLE(nsl-fork) */
 #undef inline			/* AC_C_INLINE */
 #undef lynx_rand		/* CF_SRAND */
 #undef lynx_srand		/* CF_SRAND */

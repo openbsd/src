@@ -1,4 +1,6 @@
 /*
+ * $LynxId: makeuctb.c,v 1.39 2009/01/01 17:01:15 tom Exp $
+ *
  *  makeuctb.c, derived from conmakehash.c   - kw
  *
  *    Original comments from conmakehash.c:
@@ -28,6 +30,7 @@
 #define DONT_USE_SOCKS5
 #include <UCDefs.h>
 #include <UCkd.h>
+#include <LYUtils.h>
 
 /*
  *  Don't try to use LYexit() since this is a standalone file.
@@ -150,9 +153,8 @@ static const char *hdrname;
 static int RawOrEnc = 0;
 static int Raw_found = 0;	/* whether explicit R directive found */
 static int CodePage = 0;
-static int CodePage_found = 0;	/* whether explicit C directive found */
 
-#define MAX_UNIPAIRS 2500
+#define MAX_UNIPAIRS 4500
 
 static void addpair_str(char *str, int un)
 {
@@ -292,7 +294,7 @@ int main(int argc, char **argv)
 
     FILE *ctbl;
     char buffer[65536];
-    char outname[256];
+    char *outname = 0;
     unsigned n;
     int fontlen;
     int i, nuni, nent;
@@ -325,12 +327,15 @@ int main(int argc, char **argv)
     } else if (ctbl == stdin) {
 	chdr = stdout;
 	hdrname = "stdout";
-    } else {
+    } else if ((outname = (char *) malloc(strlen(tblname) + 3)) != 0) {
 	strcpy(outname, tblname);
 	hdrname = outname;
 	if ((p = strrchr(outname, '.')) == 0)
 	    p = outname + strlen(outname);
 	strcpy(p, ".h");
+    } else {
+	perror("malloc");
+	done(EX_NOINPUT);
     }
 
     if (chdr == 0) {
@@ -497,7 +502,6 @@ int main(int argc, char **argv)
 		p++;
 	    }
 	    CodePage = strtol(p, 0, 10);
-	    CodePage_found = 1;
 	    continue;
 	}
 
@@ -539,7 +543,11 @@ int main(int argc, char **argv)
 		continue;
 	    }
 
-	    tbuf = (char *) malloc(4 * strlen(p));
+	    /*
+	     * Allocate a string large enough for the worst-case use in the
+	     * loop using sprintf.
+	     */
+	    tbuf = (char *) malloc(5 * strlen(p));
 
 	    if (!(p1 = tbuf)) {
 		fprintf(stderr, "%s: Out of memory\n", tblname);

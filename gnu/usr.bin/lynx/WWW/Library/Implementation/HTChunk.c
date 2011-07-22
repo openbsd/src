@@ -1,4 +1,7 @@
-/*		Chunk handling:	Flexible arrays
+/*
+ * $LynxId: HTChunk.c,v 1.21 2009/02/01 12:49:24 tom Exp $
+ *
+ *		Chunk handling:	Flexible arrays
  *		===============================
  *
  */
@@ -61,11 +64,12 @@ HTChunk *HTChunkCreate2(int grow, size_t needed)
 
     HTChunkInit(ch, grow);
     if (needed > 0) {
-	ch->allocated = needed - 1 - ((needed - 1) % ch->growby)
-	    + ch->growby;	/* Round up */
-	CTRACE((tfp, "HTChunkCreate2: requested %d, allocate %d\n",
-		(int) needed, ch->allocated));
-	ch->data = typecallocn(char, ch->allocated);
+	/* Round up */
+	ch->allocated = (int) (needed - 1 - ((needed - 1) % ch->growby)
+			       + (unsigned) ch->growby);
+	CTRACE((tfp, "HTChunkCreate2: requested %d, allocate %u\n",
+		(int) needed, (unsigned) ch->allocated));
+	ch->data = typecallocn(char, (unsigned) ch->allocated);
 
 	if (!ch->data)
 	    outofmem(__FILE__, "HTChunkCreate2 data");
@@ -108,8 +112,8 @@ BOOL HTChunkRealloc(HTChunk *ch, int growby)
     ch->allocated = ch->allocated + growby;
 
     data = (ch->data
-	    ? (char *) realloc(ch->data, ch->allocated)
-	    : typecallocn(char, ch->allocated));
+	    ? (char *) realloc(ch->data, (unsigned) ch->allocated)
+	    : typecallocn(char, (unsigned) ch->allocated));
 
     if (data) {
 	ch->data = data;
@@ -158,8 +162,8 @@ void HTChunkEnsure(HTChunk *ch, int needed)
     ch->allocated = needed - 1 - ((needed - 1) % ch->growby)
 	+ ch->growby;		/* Round up */
     ch->data = (ch->data
-		? (char *) realloc(ch->data, ch->allocated)
-		: typecallocn(char, ch->allocated));
+		? (char *) realloc(ch->data, (unsigned) ch->allocated)
+		: typecallocn(char, (unsigned) ch->allocated));
 
     if (ch->data == NULL)
 	outofmem(__FILE__, "HTChunkEnsure");
@@ -178,7 +182,7 @@ void HTChunkPutb(HTChunk *ch, const char *b, int l)
 	if (!HTChunkRealloc(ch, growby))
 	    return;
     }
-    memcpy(ch->data + ch->size, b, l);
+    memcpy(ch->data + ch->size, b, (unsigned) l);
     ch->size += l;
 }
 
@@ -191,7 +195,7 @@ HTChunk *HTChunkPutb2(HTChunk *ch, const char *b, int l)
 	HTChunk *chunk;
 	int m = ch->allocated - ch->size;
 
-	memcpy(ch->data + ch->size, b, m);
+	memcpy(ch->data + ch->size, b, (unsigned) m);
 	ch->size += m;
 
 	chunk = HTChunkCreateMayFail(ch->growby, ch->failok);
@@ -199,7 +203,7 @@ HTChunk *HTChunkPutb2(HTChunk *ch, const char *b, int l)
 	HTChunkPutb(chunk, b + m, l - m);
 	return chunk;
     }
-    memcpy(ch->data + ch->size, b, l);
+    memcpy(ch->data + ch->size, b, (unsigned) l);
     ch->size += l;
     return ch;
 }

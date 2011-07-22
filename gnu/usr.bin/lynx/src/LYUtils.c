@@ -1,3 +1,6 @@
+/*
+ * $LynxId: LYUtils.c,v 1.187 2009/05/25 21:46:24 tom Exp $
+ */
 #include <HTUtils.h>
 #include <HTTCP.h>
 #include <HTParse.h>
@@ -5,12 +8,28 @@
 #include <HTCJK.h>
 #include <HTAlert.h>
 
-#ifdef __MINGW32__
-int kbhit(void);		/* FIXME: use conio.h */
+#if defined(__MINGW32__)
 
-#ifdef UNIX
+extern int kbhit(void);		/* FIXME: use conio.h */
+
 #undef UNIX
-#endif /* UNIX */
+
+#elif defined(_WINDOWS)
+
+#ifdef DONT_USE_GETTEXT
+#undef gettext
+#endif
+
+#include <conio.h>
+
+#ifdef DONT_USE_GETTEXT
+#define gettext(s) s
+#endif
+
+#if !defined(kbhit) && defined(_WCONIO_DEFINED)
+#define kbhit() _kbhit()	/* reasonably recent conio.h */
+#endif
+
 #endif /* __MINGW32__ */
 
 #include <LYCurses.h>
@@ -37,10 +56,16 @@ int kbhit(void);		/* FIXME: use conio.h */
 #endif
 
 #ifdef _WINDOWS			/* 1998/04/30 (Thu) 19:04:25 */
-#define GETPID()	(getpid() & 0xffff)
+#define GETPID()	(unsigned) (getpid() & 0xffff)
 #else
-#define GETPID()	getpid()
+#define GETPID()	(unsigned) getpid()
 #endif /* _WINDOWS */
+
+#ifdef FNAMES_8_3
+#define PID_FMT "%04x"
+#else
+#define PID_FMT "%u"
+#endif
 
 #ifdef DJGPP_KEYHANDLER
 #include <bios.h>
@@ -75,7 +100,9 @@ int kbhit(void);		/* FIXME: use conio.h */
 #ifdef __UTMPX_FILE
 #define UTMP_FILE __UTMPX_FILE	/* at least in OS/390  S/390 -- gil -- 2100 */
 #else
+#ifndef UTMP_FILE
 #define UTMP_FILE "/var/adm/utmpx"	/* Digital Unix 4.0 */
+#endif
 #endif
 #endif /* UTMPX_FILE */
 #else
@@ -187,6 +214,31 @@ static LY_TEMP *FindTempfileByFP(FILE *fp)
     return p;
 }
 
+#if defined(_WIN32)
+/*
+ * Use RegQueryValueExA() rather than RegQueryValueEx() for compatibility
+ * with non-Unicode winvile
+ */
+int w32_get_reg_sz(HKEY hkey, const char *name, char *value, unsigned length)
+{
+    int result;
+    DWORD dwSzBuffer = length;
+
+    CTRACE((tfp, "w32_get_reg_sz(%s)\n", name));
+    result = RegQueryValueExA(hkey,
+			      name,
+			      NULL,
+			      NULL,
+			      (LPBYTE) value,
+			      &dwSzBuffer);
+    if (result == ERROR_SUCCESS) {
+	value[dwSzBuffer] = 0;
+	CTRACE((tfp, "->%s\n", value));
+    }
+    return result;
+}
+#endif
+
 /*
  * Get an environment variable, rejecting empty strings
  */
@@ -194,6 +246,33 @@ char *LYGetEnv(const char *name)
 {
     char *result = getenv(name);
 
+#if defined(_WIN32)
+    if (result == 0) {
+	static HKEY rootkeys[] =
+	{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE};
+
+	int j;
+	HKEY hkey;
+	char buffer[256];
+
+	for (j = 0; j < TABLESIZE(rootkeys); ++j) {
+	    if (RegOpenKeyEx(rootkeys[j],
+			     LYNX_SUBKEY W32_STRING("\\Environment"),
+			     0,
+			     KEY_READ,
+			     &hkey) == ERROR_SUCCESS) {
+		if (w32_get_reg_sz(hkey, name, buffer, sizeof(buffer)) == ERROR_SUCCESS) {
+
+		    result = strdup(buffer);
+		    (void) RegCloseKey(hkey);
+		    break;
+		}
+
+		(void) RegCloseKey(hkey);
+	    }
+	}
+    }
+#endif
     return non_empty(result) ? result : 0;
 }
 
@@ -287,7 +366,7 @@ void LYSetHilite(int cur,
 		 const char *text)
 {
     links[cur].list.hl_base.hl_text = (char *) text;
-    links[cur].list.hl_len = (text != NULL) ? 1 : 0;
+    links[cur].list.hl_len = (short) ((text != NULL) ? 1 : 0);
     FREE(links[cur].list.hl_info);
 }
 
@@ -300,8 +379,8 @@ void LYAddHilite(int cur,
 {
     HiliteList *list = &(links[cur].list);
     HiliteInfo *have = list->hl_info;
-    unsigned need = (list->hl_len - 1);
-    unsigned want = (list->hl_len += 1);
+    unsigned need = (unsigned) (list->hl_len - 1);
+    unsigned want = (unsigned) (list->hl_len += 1);
 
     if (have != NULL) {
 	have = typeRealloc(HiliteInfo, have, want);
@@ -310,7 +389,7 @@ void LYAddHilite(int cur,
     }
     list->hl_info = have;
     have[need].hl_text = text;
-    have[need].hl_x = x;
+    have[need].hl_x = (short) x;
 }
 
 /*
@@ -398,7 +477,7 @@ static BOOL show_whereis_targets(int flag,
 				      target)) {
 	int itmp, written, len, y, offset;
 	const char *data;
-	int tlen = strlen(target);
+	int tlen = (int) strlen(target);
 	int hlen, hLen;
 	int hLine = LYP + count;
 	int hoffset = LYGetHilitePos(cur, count);
@@ -413,8 +492,8 @@ static BOOL show_whereis_targets(int flag,
 		      (sizeof(buffer) - 1),
 		      (LYcolLimit - LYGetHilitePos(cur, count)),
 		      utf_flag);
-	hlen = strlen(buffer);
-	hLen = ((HTCJK != NOCJK || utf_flag) ?
+	hlen = (int) strlen(buffer);
+	hLen = ((IS_CJK_TTY || utf_flag) ?
 		LYmbcsstrlen(buffer, utf_flag, YES) : hlen);
 
 	/*
@@ -465,8 +544,8 @@ static BOOL show_whereis_targets(int flag,
 		tmp[0] = data[itmp];
 		utf_extra = utf8_length(utf_flag, data + itmp);
 		if (utf_extra) {
-		    LYstrncpy(&tmp[1], &data[itmp + 1], utf_extra);
-		    itmp += utf_extra;
+		    LYstrncpy(&tmp[1], &data[itmp + 1], (int) utf_extra);
+		    itmp += (int) utf_extra;
 		    /*
 		     * Start emphasis immediately if we are making the link
 		     * non-current.  -FM
@@ -479,9 +558,9 @@ static BOOL show_whereis_targets(int flag,
 			LYmove(hLine, (offset + 1));
 		    }
 		    tmp[1] = '\0';
-		    written += (utf_extra + 1);
+		    written += (int) (utf_extra + 1);
 		    utf_extra = 0;
-		} else if (HTCJK != NOCJK && is8bits(tmp[0])) {
+		} else if (IS_CJK_TTY && is8bits(tmp[0])) {
 		    /*
 		     * For CJK strings, by Masanobu Kimura.
 		     */
@@ -537,8 +616,8 @@ static BOOL show_whereis_targets(int flag,
 		     */
 		    utf_extra = utf8_length(utf_flag, data + itmp);
 		    if (utf_extra) {
-			LYstrncpy(&tmp[1], &data[itmp + 1], utf_extra);
-			itmp += utf_extra;
+			LYstrncpy(&tmp[1], &data[itmp + 1], (int) utf_extra);
+			itmp += (int) utf_extra;
 			/*
 			 * Make sure we don't restore emphasis to the last
 			 * character of hightext if we are making the link
@@ -553,9 +632,9 @@ static BOOL show_whereis_targets(int flag,
 			    LYaddstr(tmp);
 			}
 			tmp[1] = '\0';
-			written += (utf_extra + 1);
+			written += (int) (utf_extra + 1);
 			utf_extra = 0;
-		    } else if (HTCJK != NOCJK && is8bits(tmp[0])) {
+		    } else if (IS_CJK_TTY && is8bits(tmp[0])) {
 			/*
 			 * For CJK strings, by Masanobu Kimura.
 			 */
@@ -664,8 +743,8 @@ static BOOL show_whereis_targets(int flag,
 		tmp[0] = data[itmp];
 		utf_extra = utf8_length(utf_flag, data + itmp);
 		if (utf_extra) {
-		    LYstrncpy(&tmp[1], &data[itmp + 1], utf_extra);
-		    itmp += utf_extra;
+		    LYstrncpy(&tmp[1], &data[itmp + 1], (int) utf_extra);
+		    itmp += (int) utf_extra;
 		    /*
 		     * Start emphasis immediately if we are making the link
 		     * non-current, or we are making it current but this is not
@@ -680,9 +759,9 @@ static BOOL show_whereis_targets(int flag,
 			LYmove(hLine, (offset + 1));
 		    }
 		    tmp[1] = '\0';
-		    written += (utf_extra + 1);
+		    written += (int) (utf_extra + 1);
 		    utf_extra = 0;
-		} else if (HTCJK != NOCJK && is8bits(tmp[0])) {
+		} else if (IS_CJK_TTY && is8bits(tmp[0])) {
 		    /*
 		     * For CJK strings, by Masanobu Kimura.
 		     */
@@ -739,8 +818,8 @@ static BOOL show_whereis_targets(int flag,
 		     */
 		    utf_extra = utf8_length(utf_flag, data + itmp);
 		    if (utf_extra) {
-			LYstrncpy(&tmp[1], &data[itmp + 1], utf_extra);
-			itmp += utf_extra;
+			LYstrncpy(&tmp[1], &data[itmp + 1], (int) utf_extra);
+			itmp += (int) utf_extra;
 			/*
 			 * Make sure we don't restore emphasis to the last
 			 * character of hightext if we are making the link
@@ -755,9 +834,9 @@ static BOOL show_whereis_targets(int flag,
 			    LYaddstr(tmp);
 			}
 			tmp[1] = '\0';
-			written += (utf_extra + 1);
+			written += (int) (utf_extra + 1);
 			utf_extra = 0;
-		    } else if (HTCJK != NOCJK && is8bits(tmp[0])) {
+		    } else if (IS_CJK_TTY && is8bits(tmp[0])) {
 			/*
 			 * For CJK strings, by Masanobu Kimura.
 			 */
@@ -842,7 +921,7 @@ static BOOL show_whereis_targets(int flag,
 			LYmove(hLine, offset);
 			itmp = 0;
 			written = 0;
-			len = strlen(data);
+			len = (int) strlen(data);
 
 			/*
 			 * Turn the emphasis back on.  -FM
@@ -860,8 +939,8 @@ static BOOL show_whereis_targets(int flag,
 			     */
 			    utf_extra = utf8_length(utf_flag, data + itmp);
 			    if (utf_extra) {
-				LYstrncpy(&tmp[1], &data[itmp + 1], utf_extra);
-				itmp += utf_extra;
+				LYstrncpy(&tmp[1], &data[itmp + 1], (int) utf_extra);
+				itmp += (int) utf_extra;
 				/*
 				 * Make sure we don't restore emphasis to the
 				 * last character of hightext if we are making
@@ -876,9 +955,9 @@ static BOOL show_whereis_targets(int flag,
 				    LYaddstr(tmp);
 				}
 				tmp[1] = '\0';
-				written += (utf_extra + 1);
+				written += (int) (utf_extra + 1);
 				utf_extra = 0;
-			    } else if (HTCJK != NOCJK && is8bits(tmp[0])) {
+			    } else if (IS_CJK_TTY && is8bits(tmp[0])) {
 				/*
 				 * For CJK strings, by Masanobu Kimura.
 				 */
@@ -953,34 +1032,32 @@ static int find_cached_style(int cur,
 
 	/*
 	 * This is where we try to restore the original style when a link is
-	 * unhighlighted.  The purpose of cached_styles[][] is to save the
-	 * original style just for this case.  If it doesn't have a color
-	 * change saved at just the right position, we look at preceding
-	 * positions in the same line until we find one.
+	 * unhighlighted.  The cached styles array saves the original style
+	 * just for this case.  If it doesn't have a color change saved at just
+	 * the right position, we look at preceding positions in the same line
+	 * until we find one.
 	 */
-	if (CACHE_VALIDATE_YX(LYP, LXP)) {
+	if (ValidCachedStyle(LYP, LXP)) {
 	    CTRACE2(TRACE_STYLE,
 		    (tfp, "STYLE.highlight.off: cached style @(%d,%d): ",
 		     LYP, LXP));
-	    s = cached_styles[LYP][LXP];
+	    s = (int) GetCachedStyle(LYP, LXP);
 	    if (s == 0) {
 		for (x = LXP - 1; x >= 0; x--) {
-		    if (cached_styles[LYP][x]) {
-			if (cached_styles[LYP][x] > 0) {
-			    s = cached_styles[LYP][x];
-			    cached_styles[LYP][LXP] = s;
-			}
-			CTRACE((tfp, "found %u, x_offset=%d.\n",
-				cached_styles[LYP][x], (int) x - LXP));
+		    s = (int) GetCachedStyle(LYP, x);
+		    if (s != 0) {
+			SetCachedStyle(LYP, LXP, (unsigned) s);
+			CTRACE2(TRACE_STYLE,
+				(tfp, "found %d, x_offset=%d.\n", s, x - LXP));
 			break;
 		    }
 		}
 		if (s == 0) {
-		    CTRACE((tfp, "not found, assume <a>.\n"));
+		    CTRACE2(TRACE_STYLE, (tfp, "not found, assume <a>.\n"));
 		    s = s_a;
 		}
 	    } else {
-		CTRACE((tfp, "found %d.\n", s));
+		CTRACE2(TRACE_STYLE, (tfp, "found %d.\n", s));
 	    }
 	} else {
 	    CTRACE2(TRACE_STYLE,
@@ -1013,7 +1090,7 @@ void LYhighlight(int flag,
     BOOL TargetEmphasisON = FALSE;
     BOOL target1_drawn = NO;
 #endif
-    BOOL utf_flag = (BOOL) (LYCharSet_UC[current_char_set].enc == UCT_ENC_UTF8);
+    BOOL utf_flag = (BOOL) IS_UTF8_TTY;
     BOOL hl1_drawn = NO;
 
 #ifdef USE_COLOR_STYLE
@@ -1034,7 +1111,8 @@ void LYhighlight(int flag,
 	cur = 0;
     }
 
-    CTRACE((tfp, "LYhighlight %s %d [%d]:%s\n",
+    CTRACE((tfp, "LYhighlight at(%2d,%2d) %s %d [%d]:%s\n",
+	    links[cur].ly, links[cur].lx,
 	    (flag
 	     ? "on"
 	     : "off"),
@@ -1070,22 +1148,21 @@ void LYhighlight(int flag,
 #endif
 
 	if (links[cur].type == WWW_FORM_LINK_TYPE) {
-	    int len;
+	    int len, gllen;
 	    int avail_space = (LYcolLimit - LXP) + (LYcolLimit * (LYlines - LYP));
 	    const char *text = LYGetHiliteStr(cur, 0);
 
+	    if (text == 0)
+		text = "";
+
 	    if (avail_space > links[cur].l_form->size)
 		avail_space = links[cur].l_form->size;
-	    if (avail_space > (int) sizeof(buffer) - 1)
-		avail_space = (int) sizeof(buffer) - 1;
 
-	    LYstrncpy(buffer, NonNull(text), avail_space);
-	    len = strlen(buffer);
-	    while (len < avail_space) {
-		buffer[len++] = '_';
-	    }
-	    buffer[len] = 0;
-	    LYaddstr(buffer);
+	    gllen = LYmbcsstrlen(text, utf_flag, YES);
+	    len = LYmbcs_skip_cells(text, avail_space, utf_flag) - text;
+	    LYwaddnstr(LYwin, text, (unsigned) len);
+	    while (len++ < avail_space)
+		LYaddch('_');
 
 #ifdef USE_COLOR_STYLE
 	} else if (flag == OFF) {
@@ -1141,7 +1218,7 @@ void LYhighlight(int flag,
 			/*
 			 * For CJK strings, by Masanobu Kimura.
 			 */
-			if (HTCJK != NOCJK && is8bits(tmp[0])) {
+			if (IS_CJK_TTY && is8bits(tmp[0])) {
 			    tmp[1] = hi_string[++i];
 			    LYaddstr(tmp);
 			    tmp[1] = '\0';
@@ -1213,7 +1290,7 @@ void convert_to_spaces(char *string,
     if (!s)
 	return;
 
-    for (; (*s && !isspace(*s)); s++) ;
+    s = LYSkipNonBlanks(s);
     ns = s;
 
     while (*s) {
@@ -1251,7 +1328,7 @@ char *strip_trailing_slash(char *dirname)
 {
     int i;
 
-    i = strlen(dirname) - 1;
+    i = (int) strlen(dirname) - 1;
     while (i >= 0 && dirname[i] == '/')
 	dirname[i--] = '\0';
     return (dirname);
@@ -1262,8 +1339,8 @@ char *strip_trailing_slash(char *dirname)
  */
 static void remove_most_blanks(char *buffer)
 {
-    int length = strlen(buffer);
-    BOOL trailing = (length != 0) && (buffer[length - 1] == ' ');
+    int length = (int) strlen(buffer);
+    BOOL trailing = (BOOL) ((length != 0) && (buffer[length - 1] == ' '));
 
     LYReduceBlanks(buffer);
     if (trailing)
@@ -1340,7 +1417,7 @@ void statusline(const char *text)
 	} else {
 	    for (i = 0, j = 0; text_buff[i]; i++) {
 		if (text_buff[i] != CH_ESC) {	/* S/390 -- gil -- 2119 */
-		    temp[j++] = text_buff[i];
+		    temp[j++] = UCH(text_buff[i]);
 		}
 	    }
 	    temp[j] = '\0';
@@ -1358,14 +1435,14 @@ void statusline(const char *text)
 	for (i = 0, j = 0, len = 0, k = '\0';
 	     temp[i] != '\0' && len < max_length; i++) {
 	    if (k != '\0') {
-		buffer[j++] = k;
-		buffer[j++] = temp[i];
+		buffer[j++] = (char) k;
+		buffer[j++] = (char) temp[i];
 		k = '\0';
 		len += 2;
 	    } else if ((temp[i] & 0200) != 0) {
 		k = temp[i];
 	    } else {
-		buffer[j++] = temp[i];
+		buffer[j++] = (char) temp[i];
 		len++;
 	    }
 	}
@@ -1420,10 +1497,10 @@ void statusline(const char *text)
     LYmove(at_lineno, 0);
     LYclrtoeol();
 
-    if (non_empty(buffer)) {
+    if (buffer[0] != '\0') {
 	BOOLEAN has_CJK = FALSE;
 
-	if (HTCJK != NOCJK) {
+	if (IS_CJK_TTY) {
 	    for (i = 0; buffer[i] != '\0'; i++) {
 		if (buffer[i] & 0x80) {
 		    has_CJK = TRUE;
@@ -1434,7 +1511,7 @@ void statusline(const char *text)
 
 	if (has_CJK
 #ifdef HAVE_UTF8_STATUSLINES
-	    || (LYCharSet_UC[current_char_set].enc == UCT_ENC_UTF8)
+	    || IS_UTF8_TTY
 #endif
 	    ) {
 	    LYrefresh();
@@ -1465,9 +1542,9 @@ void statusline(const char *text)
 	    if (!(lynx_has_color && LYShowColor >= SHOW_COLOR_ON))
 		wbkgdset(LYwin, A_NORMAL | ' ');
 	    else if (s_normal != NOSTYLE)
-		wbkgdset(LYwin, hashStyles[s_normal].color | ' ');
+		wbkgdset(LYwin, (chtype) (hashStyles[s_normal].color | ' '));
 	    else
-		wbkgdset(LYwin, displayStyles[DSTYLE_NORMAL].color | ' ');
+		wbkgdset(LYwin, (chtype) (displayStyles[DSTYLE_NORMAL].color | ' '));
 	    LynxChangeStyle(a, STACK_OFF);
 	}
 #endif
@@ -1580,7 +1657,7 @@ int LYReopenInput(void)
 	    frp = freopen(term_name, "r", stdin);
 	    CTRACE((tfp,
 		    "LYReopenInput freopen(%s,\"r\",stdin) returned %p, stdin is now %p with fd %d.\n",
-		    term_name, frp, stdin, fileno(stdin)));
+		    term_name, (void *) frp, (void *) stdin, fileno(stdin)));
 	    result = 1;
 	} else {
 	    result = -1;
@@ -1915,11 +1992,11 @@ BOOLEAN LYisAbsPath(const char *path)
 	result = TRUE;
 #else
 #if defined(USE_DOS_DRIVES)
-	result = (BOOL) (LYIsPathSep(path[0])
-			 || (LYIsDosDrive(path)
-			     && LYIsPathSep(path[2])));
+	result = (BOOLEAN) (LYIsPathSep(path[0])
+			    || (LYIsDosDrive(path)
+				&& LYIsPathSep(path[2])));
 #else
-	result = (LYIsPathSep(path[0]));
+	result = (BOOLEAN) (LYIsPathSep(path[0]));
 #endif /* USE_DOS_DRIVES */
 #endif
     }
@@ -2162,7 +2239,7 @@ static BOOLEAN compare_type(char *tst,
 			    const char *cmp,
 			    size_t len)
 {
-    if (!strncasecomp(tst, cmp, len)) {
+    if (!strncasecomp(tst, cmp, (int) len)) {
 	if (strncmp(tst, cmp, len)) {
 	    size_t i;
 
@@ -2197,7 +2274,6 @@ UrlTypes is_url(char *filename)
     char *cp = filename;
     char *cp1;
     UrlTypes result = NOT_A_URL_TYPE;
-    int len;
     int limit;
 
     /*
@@ -2227,7 +2303,7 @@ UrlTypes is_url(char *filename)
 	result = NOT_A_URL_TYPE;
 
     } else {
-	limit = strlen(cp);
+	limit = (int) strlen(cp);
 	switch (*cp) {
 	case 'L':
 	case 'l':
@@ -2304,6 +2380,14 @@ UrlTypes is_url(char *filename)
 		 * Special Internal Lynx type.
 		 */
 		result = LYNXHIST_URL_TYPE;
+
+#ifdef USE_CACHEJAR
+	    } else if (compare_type(cp, STR_LYNXCACHE, LEN_LYNXCACHE)) {
+		/* 
+		 * Special Internal Lynx type.
+		 */
+		result = LYNXCACHE_URL_TYPE;
+#endif
 
 	    } else if (compare_type(cp, STR_LYNXKEYMAP, LEN_LYNXKEYMAP)) {
 		/*
@@ -2383,10 +2467,10 @@ UrlTypes is_url(char *filename)
 
 	case 'F':
 	case 'f':
-	    if (compare_type(cp, STR_FILE_URL, len = LEN_FILE_URL)) {
+	    if (compare_type(cp, STR_FILE_URL, LEN_FILE_URL)) {
 		if (LYisLocalFile(cp)) {
 		    result = FILE_URL_TYPE;
-		} else if (DoubleHtmlSep(cp + len)) {
+		} else if (DoubleHtmlSep(cp + LEN_FILE_URL)) {
 		    result = FTP_URL_TYPE;
 		}
 	    }
@@ -2755,6 +2839,8 @@ void remove_backslashes(char *buf)
  */
 BOOLEAN inlocaldomain(void)
 {
+    BOOLEAN result = TRUE;
+
 #ifdef HAVE_UTMP
     int n;
     FILE *fp;
@@ -2762,37 +2848,39 @@ BOOLEAN inlocaldomain(void)
     char *cp, *mytty = NULL;
 
     if ((cp = ttyname(0)))
-	mytty = strrchr(cp, '/');
+	mytty = LYLastPathSep(cp);
 
+    result = FALSE;
     if (mytty && (fp = fopen(UTMP_FILE, "r")) != NULL) {
 	mytty++;
 	do {
-	    n = fread((char *) &me, sizeof(struct utmp), 1, fp);
+	    n = (int) fread((char *) &me, sizeof(struct utmp), 1, fp);
 	} while (n > 0 && !STREQ(me.ut_line, mytty));
 	(void) LYCloseInput(fp);
 
-	if (n > 0 &&
-	    strlen(me.ut_host) > strlen(LYLocalDomain) &&
-	    STREQ(LYLocalDomain,
-		  me.ut_host + strlen(me.ut_host) - strlen(LYLocalDomain)))
-	    return (TRUE);
+	if (n > 0) {
+	    if (strlen(me.ut_host) > strlen(LYLocalDomain) &&
+		STREQ(LYLocalDomain,
+		      me.ut_host + strlen(me.ut_host) - strlen(LYLocalDomain))) {
+		result = TRUE;
+	    }
 #ifdef LINUX
-/* Linux fix to check for local user. J.Cullen 11Jul94		*/
-	if ((n > 0) && (strlen(me.ut_host) == 0))
-	    return (TRUE);
+	    /* Linux fix to check for local user. J.Cullen 11Jul94              */
+	    else if (strlen(me.ut_host) == 0) {
+		result = TRUE;
+	    }
 #endif /* LINUX */
+	}
 
     } else {
 	CTRACE((tfp,
 		"Could not get ttyname (returned %s) or open UTMP file %s\n",
 		NONNULL(cp), UTMP_FILE));
     }
-
-    return (FALSE);
 #else
-    CTRACE((tfp, "LYUtils: inlocaldomain() not support.\n"));
-    return (TRUE);
+    CTRACE((tfp, "LYUtils: inlocaldomain() not supported.\n"));
 #endif /* HAVE_UTMP */
+    return (result);
 }
 
 #ifdef HAVE_SIGACTION
@@ -3065,19 +3153,11 @@ void change_sug_filename(char *fname)
      * Rename any temporary files.
      */
     cp2 = wwwName(lynx_temp_space);
-#ifdef FNAMES_8_3
     if (LYIsHtmlSep(*cp2)) {
-	HTSprintf0(&temp, "file://localhost%s%04x", cp2, GETPID());
+	HTSprintf0(&temp, "file://localhost%s" PID_FMT, cp2, GETPID());
     } else {
-	HTSprintf0(&temp, "file://localhost/%s%04x", cp2, GETPID());
+	HTSprintf0(&temp, "file://localhost/%s" PID_FMT, cp2, GETPID());
     }
-#else
-    if (LYIsHtmlSep(*cp2)) {
-	HTSprintf0(&temp, "file://localhost%s%d", cp2, (int) getpid());
-    } else {
-	HTSprintf0(&temp, "file://localhost/%s%d", cp2, (int) getpid());
-    }
-#endif
     if (!strncmp(fname, temp, strlen(temp))) {
 	cp = strrchr(fname, '.');
 	if (strlen(cp) > (strlen(temp) - 4))
@@ -3361,9 +3441,7 @@ static int fmt_tempname(char *result,
      */
 #ifdef USE_RAND_TEMPNAME
     if (first) {
-#if !defined(__OpenBSD__)
-	lynx_srand((unsigned)((long)time((time_t *)0) + (long)result));
-#endif
+	lynx_srand((unsigned) ((long) time((time_t *) 0) + (long) result));
 	first = FALSE;
     }
 
@@ -3384,10 +3462,10 @@ static int fmt_tempname(char *result,
 	do {
 	    counter %= MAX_TEMPNAME;
 	    offset = counter / BITS_PER_CHAR;
-	    mask = 1 << (counter % BITS_PER_CHAR);
+	    mask = (unsigned) (1 << (counter % BITS_PER_CHAR));
 	    if ((used_tempname[offset] & mask) == 0) {
 		names_used++;
-		used_tempname[offset] |= mask;
+		used_tempname[offset] |= UCH(mask);
 		break;
 	    }
 	} while ((used_tempname[offset] & mask) == 0);
@@ -3405,11 +3483,7 @@ static int fmt_tempname(char *result,
      * the suffix may contain more than a ".htm", e.g., "-txt.gz", so we trim
      * off from the filename portion to make room.
      */
-#ifdef _WINDOWS
-    sprintf(leaf, "%04x%04x", counter, (unsigned) GETPID());
-#else
-    sprintf(leaf, "%u%u", counter, (unsigned) getpid());
-#endif
+    sprintf(leaf, PID_FMT PID_FMT, counter, GETPID());
     if (strlen(leaf) > 8)
 	leaf[8] = 0;
     if (strlen(suffix) > 4 || *suffix != '.') {
@@ -3422,7 +3496,7 @@ static int fmt_tempname(char *result,
     }
     strcat(leaf, suffix);
 #else
-    sprintf(leaf, "L%u-%uTMP%s", (unsigned) getpid(), counter, suffix);
+    sprintf(leaf, "L" PID_FMT "-%uTMP%s", GETPID(), counter, suffix);
 #endif
     /*
      * Someone could have configured the temporary pathname to be too long.
@@ -3632,9 +3706,9 @@ BOOL strn_dash_equ(const char *p1,
  * Returns the inx'th name from the restrictions table, or null if inx is
  * out of range.
  */
-const char *index_to_restriction(int inx)
+const char *index_to_restriction(unsigned inx)
 {
-    if (inx >= 0 && inx < (int) TABLESIZE(restrictions))
+    if (inx < TABLESIZE(restrictions))
 	return restrictions[inx].name;
     return NULL;
 }
@@ -3649,7 +3723,7 @@ int find_restriction(const char *name,
     unsigned i;
 
     if (len < 0)
-	len = strlen(name);
+	len = (int) strlen(name);
     for (i = 0; i < TABLESIZE(restrictions); i++) {
 	if (RESTRICT_NM_EQU(name, restrictions[i].name, len)) {
 	    return (*restrictions[i].flag);
@@ -3686,7 +3760,7 @@ void parse_restrictions(const char *s)
 	    for (i = N_SPECIAL_RESTRICT_OPTIONS;
 		 i < TABLESIZE(restrictions);
 		 i++)
-		*(restrictions[i].flag) = !restrictions[i].can;
+		*(restrictions[i].flag) = (BOOLEAN) !restrictions[i].can;
 	} else {
 	    for (i = 0; i < TABLESIZE(restrictions); i++) {
 		if (RESTRICT_NM_EQU(word, restrictions[i].name, p - word)) {
@@ -3872,7 +3946,7 @@ void LYCheckMail(void)
 	else if (lastsize == 0)
 	    HTUserMsg(HAVE_MAIL_MSG);
     }
-    lastsize = st.st_size;
+    lastsize = (long) st.st_size;
     lasttime = st.st_mtime;
     return;
 }
@@ -3976,7 +4050,7 @@ void LYConvertToURL(char **AllocatedString,
 
 	$DESCRIPTOR(url_file_dsc, url_file);
 	$DESCRIPTOR(file_name_dsc, file_name);
-	if (*old_string == '~') {
+	if (LYIsTilde(*old_string)) {
 	    /*
 	     * On VMS, we'll accept '~' on the command line as Home_Dir(), and
 	     * assume the rest of the path, if any, has SHELL syntax.
@@ -4144,7 +4218,7 @@ void LYConvertToURL(char **AllocatedString,
 #endif
 	else
 #endif /* USE_DOS_DRIVES */
-	if (*old_string == '~') {
+	if (LYIsTilde(*old_string)) {
 	    /*
 	     * On Unix, convert '~' to Home_Dir().
 	     */
@@ -4373,7 +4447,7 @@ void LYConvertToURL(char **AllocatedString,
 	    CTRACE((tfp, "Converted '%s' to '%s'\n",
 		    old_string, *AllocatedString));
 #endif /* VMS */
-	} else if (old_string[1] == '~') {
+	} else if (LYIsTilde(old_string[1])) {
 	    /*
 	     * Has a Home_Dir() reference.  Handle it as if there weren't a
 	     * lead slash.  - FM
@@ -5199,9 +5273,9 @@ BOOLEAN LYPathOffHomeOK(char *fbuffer,
 	}
     }
 #endif /* VMS */
-    if (*cp == '~') {
-	if (*(cp + 1) == '/') {
-	    if (*(cp + 2) != '\0') {
+    if (LYIsTilde(cp[0])) {
+	if (LYIsPathSep(cp[1])) {
+	    if (cp[2] != '\0') {
 		if ((cp1 = strchr((cp + 2), '/')) != NULL) {
 		    /*
 		     * Convert "~/subdir(s)/file" to "./subdir(s)/file".  - FM
@@ -5319,6 +5393,87 @@ BOOLEAN LYPathOffHomeOK(char *fbuffer,
 }
 
 /*
+ * Search for a leading tilde, optionally embedded.  If found, return a pointer
+ * to the tilde.  If not found, return the original parameter.
+ */
+static char *FindLeadingTilde(char *pathname, BOOL embedded)
+{
+    char *result = pathname;
+
+    if (pathname != NULL) {
+	if (embedded) {
+	    while (pathname[0] != '\0') {
+		if (LYIsPathSep(pathname[0])) {
+		    if (LYIsTilde(pathname[1])) {
+			++pathname;
+			break;
+		    }
+		}
+		++pathname;
+	    }
+	}
+	if (LYIsTilde(*pathname))
+	    result = pathname;
+    }
+    return result;
+}
+
+/*
+ * Convert a non-absolute path to one which is off the home directory.  Expand
+ * tildes as a side-effect.  Return a pointer to the converted result.
+ */
+char *LYAbsOrHomePath(char **fname)
+{
+    if (!LYisAbsPath(*fname)) {
+	if (LYIsTilde((*fname)[0])) {
+	    LYTildeExpand(fname, FALSE);
+	} else {
+	    char temp[LY_MAXPATH];
+
+	    LYAddPathToHome(temp, sizeof(temp), *fname);
+	    StrAllocCopy(*fname, temp);
+	}
+    }
+    return *fname;
+}
+
+/*
+ * Expand a "leading" tilde into the user's home directory in WWW format.  If
+ * "embedded" is true, allow that "leading" tilde to follow a path separator.
+ */
+char *LYTildeExpand(char **pathname,
+		    BOOL embedded)
+{
+    char *temp = FindLeadingTilde(*pathname, embedded);
+
+    if (LYIsTilde(temp[0])) {
+
+	CTRACE((tfp, "LYTildeExpand %s\n", *pathname));
+	if (LYIsPathSep(temp[1])) {
+	    char *first = NULL;
+	    char *second = NULL;
+
+	    StrAllocCopy(first, *pathname);
+	    first[temp - *pathname] = '\0';
+
+	    StrAllocCopy(second, temp + 2);
+
+	    StrAllocCopy(*pathname, first);
+	    StrAllocCat(*pathname, wwwName(Home_Dir()));
+	    LYAddPathSep(pathname);
+	    StrAllocCat(*pathname, second);
+
+	    FREE(first);
+	    FREE(second);
+	} else if (temp[1] == '\0') {
+	    StrAllocCopy(*pathname, wwwName(Home_Dir()));
+	}
+	CTRACE((tfp, "expanded path %s\n", *pathname));
+    }
+    return *pathname;
+}
+
+/*
  * This function appends fname to the home path and returns the full path and
  * filename.  The fname string can be just a filename (e.g.,
  * "lynx_bookmarks.html"), or include a subdirectory off the home directory, in
@@ -5368,14 +5523,14 @@ void LYAddPathToHome(char *fbuffer,
 	 */
 	StrAllocCopy(home, NO_HOMEPATH);
 
-    len = fbuffer_size - (strlen(home) + 1);
+    len = (int) fbuffer_size - ((int) strlen(home) + 1);
     if (len <= 0) {
 	/*
 	 * Buffer is smaller than or only big enough for the home path.  Load
 	 * what fits of the home path and return.  This will fail, but we need
 	 * something in the buffer.  - FM
 	 */
-	LYstrncpy(fbuffer, home, (fbuffer_size - 1));
+	LYstrncpy(fbuffer, home, (int) (fbuffer_size - 1));
 	FREE(home);
 	return;
     }
@@ -5442,259 +5597,6 @@ char *LYAddPathToSave(char *fname)
 	}
     }
     return result;
-}
-
-/*
- * This function takes a string in the format
- *	"Mon, 01-Jan-96 13:45:35 GMT" or
- *	"Mon,  1 Jan 1996 13:45:35 GMT"" or
- *	"dd-mm-yyyy"
- * as an argument, and returns its conversion to clock format (seconds since
- * 00:00:00 Jan 1 1970), or 0 if the string doesn't match the expected pattern. 
- * It also returns 0 if the time is in the past and the "absolute" argument is
- * FALSE.  It is intended for handling 'expires' strings in Version 0 cookies
- * homologously to 'max-age' strings in Version 1 cookies, for which 0 is the
- * minimum, and greater values are handled as '[max-age seconds] + time(NULL)'. 
- * If "absolute" if TRUE, we return the clock format value itself, but if
- * anything goes wrong when parsing the expected patterns, we still return 0. 
- * - FM
- */
-time_t LYmktime(char *string,
-		BOOL absolute)
-{
-    char *s;
-    time_t now, clock2;
-    int day, month, year, hour, minutes, seconds;
-    char *start;
-    char temp[8];
-
-    /*
-     * Make sure we have a string to parse.  - FM
-     */
-    if (!non_empty(string))
-	return (0);
-    s = string;
-    CTRACE((tfp, "LYmktime: Parsing '%s'\n", s));
-
-    /*
-     * Skip any lead alphabetic "Day, " field and seek a numeric day field.  -
-     * FM
-     */
-    while (*s != '\0' && !isdigit(UCH(*s)))
-	s++;
-    if (*s == '\0')
-	return (0);
-
-    /*
-     * Get the numeric day and convert to an integer.  - FM
-     */
-    start = s;
-    while (*s != '\0' && isdigit(UCH(*s)))
-	s++;
-    if (*s == '\0' || (s - start) > 2)
-	return (0);
-    LYstrncpy(temp, start, (int) (s - start));
-    day = atoi(temp);
-    if (day < 1 || day > 31)
-	return (0);
-
-    /*
-     * Get the month string and convert to an integer.  - FM
-     */
-    while (*s != '\0' && !isalnum(UCH(*s)))
-	s++;
-    if (*s == '\0')
-	return (0);
-    start = s;
-    while (*s != '\0' && isalnum(UCH(*s)))
-	s++;
-    if ((*s == '\0') ||
-	(s - start) < (isdigit(UCH(*(s - 1))) ? 2 : 3) ||
-	(s - start) > (isdigit(UCH(*(s - 1))) ? 2 : 9))
-	return (0);
-    LYstrncpy(temp, start, (isdigit(UCH(*(s - 1))) ? 2 : 3));
-    switch (TOUPPER(temp[0])) {
-    case '0':
-    case '1':
-	month = atoi(temp);
-	if (month < 1 || month > 12) {
-	    return (0);
-	}
-	break;
-    case 'A':
-	if (!strcasecomp(temp, "Apr")) {
-	    month = 4;
-	} else if (!strcasecomp(temp, "Aug")) {
-	    month = 8;
-	} else {
-	    return (0);
-	}
-	break;
-    case 'D':
-	if (!strcasecomp(temp, "Dec")) {
-	    month = 12;
-	} else {
-	    return (0);
-	}
-	break;
-    case 'F':
-	if (!strcasecomp(temp, "Feb")) {
-	    month = 2;
-	} else {
-	    return (0);
-	}
-	break;
-    case 'J':
-	if (!strcasecomp(temp, "Jan")) {
-	    month = 1;
-	} else if (!strcasecomp(temp, "Jun")) {
-	    month = 6;
-	} else if (!strcasecomp(temp, "Jul")) {
-	    month = 7;
-	} else {
-	    return (0);
-	}
-	break;
-    case 'M':
-	if (!strcasecomp(temp, "Mar")) {
-	    month = 3;
-	} else if (!strcasecomp(temp, "May")) {
-	    month = 5;
-	} else {
-	    return (0);
-	}
-	break;
-    case 'N':
-	if (!strcasecomp(temp, "Nov")) {
-	    month = 11;
-	} else {
-	    return (0);
-	}
-	break;
-    case 'O':
-	if (!strcasecomp(temp, "Oct")) {
-	    month = 10;
-	} else {
-	    return (0);
-	}
-	break;
-    case 'S':
-	if (!strcasecomp(temp, "Sep")) {
-	    month = 9;
-	} else {
-	    return (0);
-	}
-	break;
-    default:
-	return (0);
-    }
-
-    /*
-     * Get the numeric year string and convert to an integer.  - FM
-     */
-    while (*s != '\0' && !isdigit(UCH(*s)))
-	s++;
-    if (*s == '\0')
-	return (0);
-    start = s;
-    while (*s != '\0' && isdigit(UCH(*s)))
-	s++;
-    if ((s - start) == 4) {
-	LYstrncpy(temp, start, 4);
-    } else if ((s - start) == 2) {
-	now = time(NULL);
-	/*
-	 * Assume that received 2-digit dates >= 70 are 19xx; others
-	 * are 20xx.  Only matters when dealing with broken software
-	 * (HTTP server or web page) which is not Y2K compliant.  The
-	 * line is drawn on a best-guess basis; it is impossible for
-	 * this to be completely accurate because it depends on what
-	 * the broken sender software intends.  (This totally breaks
-	 * in 2100 -- setting up the next crisis...) - BL
-	 */
-	if (atoi(start) >= 70)
-	    LYstrncpy(temp, "19", 2);
-	else
-	    LYstrncpy(temp, "20", 2);
-	strncat(temp, start, 2);
-	temp[4] = '\0';
-    } else {
-	return (0);
-    }
-    year = atoi(temp);
-
-    /*
-     * Get the numeric hour string and convert to an integer.  - FM
-     */
-    while (*s != '\0' && !isdigit(UCH(*s)))
-	s++;
-    if (*s == '\0') {
-	hour = 0;
-	minutes = 0;
-	seconds = 0;
-    } else {
-	start = s;
-	while (*s != '\0' && isdigit(UCH(*s)))
-	    s++;
-	if (*s != ':' || (s - start) > 2)
-	    return (0);
-	LYstrncpy(temp, start, (int) (s - start));
-	hour = atoi(temp);
-
-	/*
-	 * Get the numeric minutes string and convert to an integer.  - FM
-	 */
-	while (*s != '\0' && !isdigit(UCH(*s)))
-	    s++;
-	if (*s == '\0')
-	    return (0);
-	start = s;
-	while (*s != '\0' && isdigit(UCH(*s)))
-	    s++;
-	if (*s != ':' || (s - start) > 2)
-	    return (0);
-	LYstrncpy(temp, start, (int) (s - start));
-	minutes = atoi(temp);
-
-	/*
-	 * Get the numeric seconds string and convert to an integer.  - FM
-	 */
-	while (*s != '\0' && !isdigit(UCH(*s)))
-	    s++;
-	if (*s == '\0')
-	    return (0);
-	start = s;
-	while (*s != '\0' && isdigit(UCH(*s)))
-	    s++;
-	if (*s == '\0' || (s - start) > 2)
-	    return (0);
-	LYstrncpy(temp, start, (int) (s - start));
-	seconds = atoi(temp);
-    }
-
-    /*
-     * Convert to clock format (seconds since 00:00:00 Jan 1 1970), but then
-     * zero it if it's in the past and "absolute" is not TRUE.  - FM
-     */
-    month -= 3;
-    if (month < 0) {
-	month += 12;
-	year--;
-    }
-    day += (year - 1968) * 1461 / 4;
-    day += ((((month * 153) + 2) / 5) - 672);
-    clock2 = (time_t) ((day * 60 * 60 * 24) +
-		       (hour * 60 * 60) +
-		       (minutes * 60) +
-		       seconds);
-    if (absolute == FALSE && (long) (time((time_t *) 0) - clock2) >= 0)
-	clock2 = (time_t) 0;
-    if (clock2 > 0)
-	CTRACE((tfp, "LYmktime: clock=%ld, ctime=%s",
-		(long) clock2,
-		ctime(&clock2)));
-
-    return (clock2);
 }
 
 #if !defined(HAVE_PUTENV) && !defined(_WINDOWS)
@@ -5792,6 +5694,54 @@ int remove(char *name)
 #endif
 
 #if defined(MULTI_USER_UNIX)
+
+#if defined(HAVE_LSTAT) && defined(S_IFLNK)
+/*
+ * If IsOurFile() is checking a symbolic link, ensure that the target
+ * points to the user's file as well.
+ */
+static BOOL IsOurSymlink(const char *name)
+{
+    BOOL result = FALSE;
+    int size = LY_MAXPATH;
+    int used;
+    char *buffer = typeMallocn(char, (unsigned) size);
+
+    if (buffer != 0) {
+	while ((used = readlink(name, buffer, (unsigned) (size - 1))) == size
+	       - 1) {
+	    buffer = typeRealloc(char, buffer, (unsigned) (size *= 2));
+
+	    if (buffer == 0)
+		break;
+	}
+	if (used > 0) {
+	    buffer[used] = '\0';
+	} else {
+	    FREE(buffer);
+	}
+    }
+    if (buffer != 0) {
+	if (!LYisAbsPath(buffer)) {
+	    char *cutoff = LYLastPathSep(name);
+	    char *clone = NULL;
+
+	    if (cutoff != 0) {
+		HTSprintf0(&clone, "%.*s%s%s",
+			   (int) (cutoff - name),
+			   name, PATHSEP_STR, buffer);
+		FREE(buffer);
+		buffer = clone;
+	    }
+	}
+	CTRACE2(TRACE_CFG, (tfp, "IsOurSymlink(%s -> %s)\n", name, buffer));
+	result = IsOurFile(buffer);
+	FREE(buffer);
+    }
+    return result;
+}
+#endif
+
 /*
  * Verify if this is really a file, not accessed by a link, except for the
  * special case of its directory being pointed to by a link from a directory
@@ -5802,11 +5752,16 @@ BOOL IsOurFile(const char *name)
     BOOL result = FALSE;
     struct stat data;
 
-    if (lstat(name, &data) == 0
-	&& S_ISREG(data.st_mode)
-	&& (data.st_mode & (S_IWOTH | S_IWGRP)) == 0
-	&& data.st_nlink == 1
-	&& data.st_uid == getuid()) {
+    if (!LYIsTilde(name[0])
+	&& lstat(name, &data) == 0
+	&& ((S_ISREG(data.st_mode)
+	     && (data.st_mode & (S_IWOTH | S_IWGRP)) == 0
+	     && data.st_nlink == 1
+	     && data.st_uid == getuid())
+#if defined(HAVE_LSTAT) && defined(S_IFLNK)
+	    || (S_ISLNK(data.st_mode) && IsOurSymlink(name))
+#endif
+	)) {
 	int linked = FALSE;
 
 	/*
@@ -5854,7 +5809,7 @@ BOOL IsOurFile(const char *name)
 	} while (leaf != path);
 	FREE(path);
 #endif
-	result = !linked;
+	result = (BOOLEAN) !linked;
     }
     CTRACE2(TRACE_CFG, (tfp, "IsOurFile(%s) %d\n", name, result));
     return result;
@@ -5867,7 +5822,7 @@ static FILE *OpenHiddenFile(const char *name, const char *mode)
 {
     FILE *fp = 0;
     struct stat data;
-    BOOLEAN binary = strchr(mode, 'b') != 0;
+    BOOLEAN binary = (BOOLEAN) (strchr(mode, 'b') != 0);
 
 #if defined(O_CREAT) && defined(O_EXCL)		/* we have fcntl.h or kindred? */
     /*
@@ -6076,7 +6031,7 @@ FILE *LYOpenTemp(char *result,
 	    CTRACE((tfp, "lynx_temp_space is not a directory %s\n", lynx_temp_space));
 	}
 	if (make_it) {
-	    int old_mask = umask(HIDE_UMASK);
+	    mode_t old_mask = umask(HIDE_UMASK);
 
 	    StrAllocCat(lynx_temp_space, "lynxXXXXXXXXXX");
 	    if (mkdtemp(lynx_temp_space) == 0) {
@@ -6126,7 +6081,7 @@ FILE *LYOpenTemp(char *result,
 	p->next = ly_temp;
 	StrAllocCopy((p->name), result);
 	p->file = fp;
-	p->outs = (wrt != 'r');
+	p->outs = (BOOLEAN) (wrt != 'r');
 	ly_temp = p;
     } else {
 	outofmem(__FILE__, "LYOpenTemp");
@@ -6465,7 +6420,7 @@ void LYCheckBibHost(void)
     bibhostIcon.safe = FALSE;
     saveFlag = traversal;
     traversal = TRUE;		/* Hack to force error response. */
-    BibP_bibhost_available = HTLoadAbsolute(&bibhostIcon) == YES;
+    BibP_bibhost_available = (BOOLEAN) (HTLoadAbsolute(&bibhostIcon) == YES);
     traversal = saveFlag;
     BibP_bibhost_checked = TRUE;
 }
@@ -6647,8 +6602,9 @@ const char *wwwName(const char *pathname)
 BOOLEAN LYValidateFilename(char *result,
 			   char *given)
 {
-    char *cp;
-    const char *cp2;
+    BOOLEAN code = TRUE;
+    char *cp = NULL;
+    const char *cp2 = NULL;
 
     /*
      * Cancel if the user entered "/dev/null" on Unix, or an "nl:" path on VMS. 
@@ -6656,78 +6612,86 @@ BOOLEAN LYValidateFilename(char *result,
      */
     if (LYIsNullDevice(given)) {
 	/* just ignore it */
-	return FALSE;
-    }
+	code = FALSE;
 #ifdef HAVE_POPEN
-    if (LYIsPipeCommand(given)) {
+    } else if (LYIsPipeCommand(given)) {
 	if (no_shell) {
 	    HTUserMsg(SPAWNING_DISABLED);
-	    return FALSE;
+	    code = FALSE;
+	} else {
+	    LYstrncpy(result, given, LY_MAXPATH);
 	}
-	LYstrncpy(result, given, LY_MAXPATH);
-	return TRUE;
-    }
 #endif
-    if ((cp = strchr(given, '~')) != 0
-	&& (cp2 = wwwName(Home_Dir())) != 0
-	&& strlen(cp2) + strlen(given) < LY_MAXPATH) {
-	*(cp++) = '\0';
-	strcpy(result, given);
-	LYTrimPathSep(result);
-	strcat(result, cp2);
-	strcat(result, cp);
-	strcpy(given, result);
-    }
-#ifdef VMS
-    if (strchr(given, '/') != NULL) {
-	strcpy(result, HTVMS_name("", given));
-	strcpy(given, result);
-    }
-    if (given[0] != '/'
-	&& strchr(given, ':') == NULL
-	&& strlen(given) < LY_MAXPATH - 13) {
-	strcpy(result, "sys$disk:");
-	if (strchr(given, ']') == NULL)
-	    strcat(result, "[]");
-	strcat(result, given);
     } else {
-	strcpy(result, given);
-    }
+	if ((cp = FindLeadingTilde(given, TRUE)) != 0
+	    && (cp2 = wwwName(Home_Dir())) != 0
+	    && strlen(cp2) + strlen(given) < LY_MAXPATH) {
+	    if (LYIsTilde(cp[0]) && LYIsPathSep(cp[1])) {
+		*(cp++) = '\0';
+		strcpy(result, given);
+		LYTrimPathSep(result);
+		strcat(result, cp2);
+		strcat(result, cp);
+		strcpy(given, result);
+	    }
+	}
+#ifdef VMS
+	if (strchr(given, '/') != NULL) {
+	    strcpy(result, HTVMS_name("", given));
+	    strcpy(given, result);
+	}
+	if (given[0] != '/'
+	    && strchr(given, ':') == NULL
+	    && strlen(given) < LY_MAXPATH - 13) {
+	    strcpy(result, "sys$disk:");
+	    if (strchr(given, ']') == NULL)
+		strcat(result, "[]");
+	    strcat(result, given);
+	} else {
+	    strcpy(result, given);
+	}
 #else
 
 #ifndef __EMX__
-    if (!LYisAbsPath(given)) {
+	if (!LYisAbsPath(given)) {
 #if defined(__DJGPP__) || defined(_WINDOWS)
-	if (strchr(result, ':') != NULL)
-	    cp = NULL;
-	else
+	    if (strchr(result, ':') != NULL)
+		cp = NULL;
+	    else
 #endif /*  __DJGPP__ || _WINDOWS */
-	{
+	    {
 #ifdef SUPPORT_CHDIR
-	    static char buf[LY_MAXPATH];
+		static char buf[LY_MAXPATH];
 
-	    cp = Current_Dir(buf);
+		cp = Current_Dir(buf);
 #else
-	    cp = original_dir;
+		cp = original_dir;
 #endif
-	}
-    } else
+	    }
+	} else
 #endif /* __EMX__ */
-	cp = NULL;
+	    cp = NULL;
 
-    *result = 0;
-    if (cp) {
-	LYTrimPathSep(cp);
-	if (strlen(cp) >= LY_MAXPATH - 2)
-	    return FALSE;
-	sprintf(result, "%s/", cp);
-    }
-    cp = HTSYS_name(given);
-    if (strlen(result) + strlen(cp) >= LY_MAXPATH - 1)
-	return FALSE;
-    strcat(result, cp);
+	*result = 0;
+	if (cp) {
+	    LYTrimPathSep(cp);
+	    if (strlen(cp) >= LY_MAXPATH - 2) {
+		code = FALSE;
+	    } else {
+		sprintf(result, "%s/", cp);
+	    }
+	}
+	if (code) {
+	    cp = HTSYS_name(given);
+	    if (strlen(result) + strlen(cp) >= LY_MAXPATH - 1) {
+		code = FALSE;
+	    } else {
+		strcat(result, cp);
+	    }
+	}
 #endif /* VMS */
-    return TRUE;
+    }
+    return code;
 }
 
 /*
@@ -7022,13 +6986,13 @@ int LYCopyFile(char *src,
     } else {
 	FILE *fin, *fout;
 	unsigned char buff[BUFSIZ];
-	int len;
+	unsigned len;
 
 	code = EOF;
 	if ((fin = fopen(src, BIN_R)) != 0) {
 	    if ((fout = fopen(dst, BIN_W)) != 0) {
 		code = 0;
-		while ((len = fread(buff, 1, sizeof(buff), fin)) > 0) {
+		while ((len = fread(buff, 1, sizeof(buff), fin)) != 0) {
 		    fwrite(buff, 1, len, fout);
 		    if (ferror(fout)) {
 			code = EOF;
@@ -7288,6 +7252,21 @@ int Cygwin_Shell(void)
 }
 #endif
 
+#ifdef WIN_EX
+/*
+ * Quote the path to make it safe for shell command processing.
+ *  We always quote it not only includes spaces in it.
+ *  At least we should quote paths which include "&".
+ */
+char *quote_pathname(char *pathname)
+{
+    char *result = NULL;
+
+    HTSprintf0(&result, "\"%s\"", pathname);
+    return result;
+}
+#endif
+
 const char *LYSysShell(void)
 {
     const char *shell = 0;
@@ -7530,7 +7509,7 @@ static int clip_grab(void)
 char *get_clip_grab(void)
 {
     int len;
-    int size = PASTE_BUFFER;
+    unsigned size = PASTE_BUFFER;
     int off = 0;
 
     if (!clip_grab())
@@ -7541,7 +7520,7 @@ char *get_clip_grab(void)
 	FREE(paste_buf);
     paste_buf = (char *) malloc(PASTE_BUFFER);
     while (1) {
-	len = fread(paste_buf + off, 1, PASTE_BUFFER - 1, paste_handle);
+	len = (int) fread(paste_buf + off, 1, PASTE_BUFFER - 1, paste_handle);
 	paste_buf[off + len] = '\0';
 	if (len < PASTE_BUFFER - 1)
 	    break;
@@ -7559,7 +7538,7 @@ int put_clip(const char *s)
 {
     char *cmd = LYGetEnv("RL_CLCOPY_CMD");
     FILE *fh;
-    int l = strlen(s), res;
+    unsigned l = strlen(s), res;
 
     if (!cmd)
 	return -1;
@@ -7586,7 +7565,7 @@ void LYmsec_delay(unsigned msec)
     Sleep(msec);
 
 #elif defined(HAVE_NAPMS)
-    napms(msec);
+    napms((int) msec);
 
 #elif defined(DJGPP) || defined(HAVE_USLEEP)
     usleep(1000 * msec);

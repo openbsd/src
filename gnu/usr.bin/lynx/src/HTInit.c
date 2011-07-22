@@ -1,4 +1,7 @@
-/*		Configuration-specific Initialization		HTInit.c
+/*
+ * $LynxId: HTInit.c,v 1.70 2009/01/01 22:58:06 tom Exp $
+ *
+ *		Configuration-specific Initialization		HTInit.c
  *		----------------------------------------
  */
 
@@ -28,6 +31,8 @@
 #include <LYexit.h>
 #include <LYLeaks.h>
 
+#define CTrace(p) CTRACE2(TRACE_CFG, p)
+
 static int HTLoadTypesConfigFile(char *fn, AcceptMedia media);
 static int HTLoadExtensionsConfigFile(char *fn);
 
@@ -50,6 +55,7 @@ void HTFormatInit(void)
 {
     AcceptMedia media = mediaEXT;
 
+    CTrace((tfp, "HTFormatInit\n"));
 #ifdef NeXT
     SET_PRESENT("application/postscript", "open %s", 1.0, 2.0);
     SET_PRESENT("image/x-tiff", "open %s", 2.0, 2.0);
@@ -161,13 +167,10 @@ void HTFormatInit(void)
     /*
      * Load the local maps.
      */
-    {
-	char buffer[LY_MAXPATH];
-
-	LYAddPathToHome(buffer, sizeof(buffer), personal_type_map);
-	if (IsOurFile(buffer)
-	    && LYCanReadFile(buffer))
-	    HTLoadTypesConfigFile(buffer, mediaUSR);
+    if (IsOurFile(LYAbsOrHomePath(&personal_type_map))
+	&& LYCanReadFile(personal_type_map)) {
+	/* These should override everything else. */
+	HTLoadTypesConfigFile(personal_type_map, mediaUSR);
     }
 
     /*
@@ -185,6 +188,7 @@ void HTFormatInit(void)
 
 void HTPreparsedFormatInit(void)
 {
+    CTrace((tfp, "HTPreparsedFormatInit\n"));
     if (LYPreparsedSource) {
 	SET_INTERNL("text/html", "www/source", HTMLParsedPresent, 1.0);
 	SET_INTERNL("text/html", "www/dump", HTMLParsedPresent, 1.0);
@@ -323,7 +327,7 @@ static void TrimCommand(char *command)
 			continue;
 		}
 	    }
-	    *d++ = ch;
+	    *d++ = (char) ch;
 	    c0 = ch;
 	}
 	*d = '\0';
@@ -372,7 +376,7 @@ static int ProcessMailcapEntry(FILE *fp, struct MailcapEntry *mc, AcceptMedia me
     }
     s = strchr(rawentry, ';');
     if (s == NULL) {
-	CTRACE((tfp,
+	CTrace((tfp,
 		"ProcessMailcapEntry: Ignoring invalid mailcap entry: %s\n",
 		rawentry));
 	FREE(rawentry);
@@ -383,7 +387,7 @@ static int ProcessMailcapEntry(FILE *fp, struct MailcapEntry *mc, AcceptMedia me
 	!strncasecomp(t, "text/plain", 10)) {
 	--s;
 	*s = ';';
-	CTRACE((tfp, "ProcessMailcapEntry: Ignoring mailcap entry: %s\n",
+	CTrace((tfp, "ProcessMailcapEntry: Ignoring mailcap entry: %s\n",
 		rawentry));
 	FREE(rawentry);
 	return (0);
@@ -426,7 +430,7 @@ static int ProcessMailcapEntry(FILE *fp, struct MailcapEntry *mc, AcceptMedia me
 		mc->testcommand = NULL;
 		StrAllocCopy(mc->testcommand, eq);
 		TrimCommand(mc->testcommand);
-		CTRACE((tfp, "ProcessMailcapEntry: Found testcommand:%s\n",
+		CTrace((tfp, "ProcessMailcapEntry: Found testcommand:%s\n",
 			mc->testcommand));
 	    } else if (eq && !strcmp(arg, "description")) {
 		mc->label = eq;	/* ignored */
@@ -447,7 +451,7 @@ static int ProcessMailcapEntry(FILE *fp, struct MailcapEntry *mc, AcceptMedia me
 		    mc->maxbytes = 0;
 	    } else if (strcmp(arg, "notes")) {	/* IGNORE notes field */
 		if (*arg)
-		    CTRACE((tfp,
+		    CTrace((tfp,
 			    "ProcessMailcapEntry: Ignoring mailcap flag '%s'.\n",
 			    arg));
 	    }
@@ -461,7 +465,7 @@ static int ProcessMailcapEntry(FILE *fp, struct MailcapEntry *mc, AcceptMedia me
     FREE(rawentry);
 
     if (PassesTest(mc)) {
-	CTRACE((tfp, "ProcessMailcapEntry Setting up conversion %s : %s\n",
+	CTrace((tfp, "ProcessMailcapEntry Setting up conversion %s : %s\n",
 		mc->contenttype, mc->command));
 	HTSetPresentation(mc->contenttype,
 			  mc->command,
@@ -604,7 +608,7 @@ static char *LYGetContentType(const char *name,
  */
 BOOL LYMailcapUsesPctS(const char *controlstring)
 {
-    int result = FALSE;
+    BOOL result = FALSE;
     const char *from;
     const char *next;
     int prefixed = 0;
@@ -678,7 +682,7 @@ static int BuildCommand(HTChunk *cmd,
 	    case 'n':
 		/* FALLTHRU */
 	    case 'F':
-		CTRACE((tfp, "BuildCommand: Bad mailcap \"test\" clause: %s\n",
+		CTrace((tfp, "BuildCommand: Bad mailcap \"test\" clause: %s\n",
 			controlstring));
 		break;
 	    case 't':
@@ -706,7 +710,7 @@ static int BuildCommand(HTChunk *cmd,
 			    if (!strcmp(name, "charset")) {
 				HTChunkPuts(cmd, "ISO-8859-1");
 			    } else {
-				CTRACE((tfp, "BuildCommand no value for %s\n", name));
+				CTrace((tfp, "BuildCommand no value for %s\n", name));
 			    }
 			}
 			FREE(name);
@@ -718,7 +722,7 @@ static int BuildCommand(HTChunk *cmd,
 		}
 		/* FALLTHRU */
 	    default:
-		CTRACE((tfp,
+		CTrace((tfp,
 			"BuildCommand: Ignoring unrecognized format code in mailcap file '%%%c'.\n",
 			*from));
 		break;
@@ -757,14 +761,14 @@ int LYTestMailcapCommand(const char *testcommand,
     expanded = HTChunkCreate(1024);
     if ((result = BuildCommand(expanded, testcommand, TmpFileName, params)) != 0) {
 	result = 1;
-	CTRACE((tfp, "PassesTest: Deferring test command: %s\n", expanded->data));
+	CTrace((tfp, "PassesTest: Deferring test command: %s\n", expanded->data));
     } else {
-	CTRACE((tfp, "PassesTest: Executing test command: %s\n", expanded->data));
+	CTrace((tfp, "PassesTest: Executing test command: %s\n", expanded->data));
 	if ((result = LYSystem(expanded->data)) != 0) {
 	    result = -1;
-	    CTRACE((tfp, "PassesTest: Test failed!\n"));
+	    CTrace((tfp, "PassesTest: Test failed!\n"));
 	} else {
-	    CTRACE((tfp, "PassesTest: Test passed!\n"));
+	    CTrace((tfp, "PassesTest: Test passed!\n"));
 	}
     }
 
@@ -850,23 +854,23 @@ static int PassesTest(struct MailcapEntry *mc)
 	SameCommand(mc->testcommand, "test \"$DISPLAY\" != \"\"") ||
 	SameCommand(mc->testcommand, "test -n \"$DISPLAY\"")) {
 	FREE(mc->testcommand);
-	CTRACE((tfp, "PassesTest: Testing for XWINDOWS environment.\n"));
+	CTrace((tfp, "PassesTest: Testing for XWINDOWS environment.\n"));
 	if (LYgetXDisplay() != NULL) {
-	    CTRACE((tfp, "PassesTest: Test passed!\n"));
+	    CTrace((tfp, "PassesTest: Test passed!\n"));
 	    return (0 == 0);
 	} else {
-	    CTRACE((tfp, "PassesTest: Test failed!\n"));
+	    CTrace((tfp, "PassesTest: Test failed!\n"));
 	    return (-1 == 0);
 	}
     }
     if (SameCommand(mc->testcommand, "test -z \"$DISPLAY\"")) {
 	FREE(mc->testcommand);
-	CTRACE((tfp, "PassesTest: Testing for NON_XWINDOWS environment.\n"));
+	CTrace((tfp, "PassesTest: Testing for NON_XWINDOWS environment.\n"));
 	if (LYgetXDisplay() == NULL) {
-	    CTRACE((tfp, "PassesTest: Test passed!\n"));
+	    CTrace((tfp, "PassesTest: Test passed!\n"));
 	    return (0 == 0);
 	} else {
-	    CTRACE((tfp, "PassesTest: Test failed!\n"));
+	    CTrace((tfp, "PassesTest: Test failed!\n"));
 	    return (-1 == 0);
 	}
     }
@@ -876,8 +880,8 @@ static int PassesTest(struct MailcapEntry *mc)
      */
     if (SameCommand(mc->testcommand, "test -n \"$LYNX_VERSION\"")) {
 	FREE(mc->testcommand);
-	CTRACE((tfp, "PassesTest: Testing for LYNX environment.\n"));
-	CTRACE((tfp, "PassesTest: Test passed!\n"));
+	CTrace((tfp, "PassesTest: Testing for LYNX environment.\n"));
+	CTrace((tfp, "PassesTest: Test passed!\n"));
 	return (0 == 0);
     } else
 	/*
@@ -885,8 +889,8 @@ static int PassesTest(struct MailcapEntry *mc)
 	 */
     if (SameCommand(mc->testcommand, "test -z \"$LYNX_VERSION\"")) {
 	FREE(mc->testcommand);
-	CTRACE((tfp, "PassesTest: Testing for non-LYNX environment.\n"));
-	CTRACE((tfp, "PassesTest: Test failed!\n"));
+	CTrace((tfp, "PassesTest: Testing for non-LYNX environment.\n"));
+	CTrace((tfp, "PassesTest: Test failed!\n"));
 	return (-1 == 0);
     }
 
@@ -904,9 +908,9 @@ static int PassesTest(struct MailcapEntry *mc)
 	FREE(mc->testcommand);
 
     if (result < 0) {
-	CTRACE((tfp, "PassesTest: Test failed!\n"));
+	CTrace((tfp, "PassesTest: Test failed!\n"));
     } else if (result == 0) {
-	CTRACE((tfp, "PassesTest: Test passed!\n"));
+	CTrace((tfp, "PassesTest: Test passed!\n"));
     }
 
     return (result >= 0);
@@ -917,10 +921,10 @@ static int ProcessMailcapFile(char *file, AcceptMedia media)
     struct MailcapEntry mc;
     FILE *fp;
 
-    CTRACE((tfp, "ProcessMailcapFile: Loading file '%s'.\n",
+    CTrace((tfp, "ProcessMailcapFile: Loading file '%s'.\n",
 	    file));
     if ((fp = fopen(file, TXT_R)) == NULL) {
-	CTRACE((tfp, "ProcessMailcapFile: Could not open '%s'.\n",
+	CTrace((tfp, "ProcessMailcapFile: Could not open '%s'.\n",
 		file));
 	return (-1 == 0);
     }
@@ -1014,7 +1018,7 @@ void HTFileInit(void)
 {
 #ifdef BUILTIN_SUFFIX_MAPS
     if (LYUseBuiltinSuffixes) {
-	CTRACE((tfp, "HTFileInit: Loading default (HTInit) extension maps.\n"));
+	CTrace((tfp, "HTFileInit: Loading default (HTInit) extension maps.\n"));
 
 	/* default suffix interpretation */
 	SET_SUFFIX1("*", "text/plain", "8bit");
@@ -1313,13 +1317,13 @@ void HTFileInit(void)
 	 * configuration file directive.  Whoever changes the config file in
 	 * this way can easily also add the SUFFIX rules there.  - kw
 	 */
-	CTRACE((tfp,
+	CTrace((tfp,
 		"HTFileInit: Skipping all default (HTInit) extension maps!\n"));
     }				/* LYSuffixRules */
 
 #else /* BUILTIN_SUFFIX_MAPS */
 
-    CTRACE((tfp,
+    CTrace((tfp,
 	    "HTFileInit: Default (HTInit) extension maps not compiled in.\n"));
     /*
      * The following two are still used if BUILTIN_SUFFIX_MAPS was undefined. 
@@ -1339,13 +1343,10 @@ void HTFileInit(void)
     /*
      * Load the local maps.
      */
-    {
-	char buffer[LY_MAXPATH];
-
-	LYAddPathToHome(buffer, sizeof(buffer), personal_extension_map);
-	if (IsOurFile(buffer)
-	    && LYCanReadFile(buffer))
-	    HTLoadExtensionsConfigFile(buffer);
+    if (IsOurFile(LYAbsOrHomePath(&personal_extension_map))
+	&& LYCanReadFile(personal_extension_map)) {
+	/* These should override everything else. */
+	HTLoadExtensionsConfigFile(personal_extension_map);
     }
 }
 
@@ -1413,10 +1414,10 @@ static int HTLoadExtensionsConfigFile(char *fn)
     FILE *f;
     int count = 0;
 
-    CTRACE((tfp, "HTLoadExtensionsConfigFile: Loading file '%s'.\n", fn));
+    CTrace((tfp, "HTLoadExtensionsConfigFile: Loading file '%s'.\n", fn));
 
     if ((f = fopen(fn, TXT_R)) == NULL) {
-	CTRACE((tfp, "HTLoadExtensionsConfigFile: Could not open '%s'.\n", fn));
+	CTrace((tfp, "HTLoadExtensionsConfigFile: Could not open '%s'.\n", fn));
 	return count;
     }
 
@@ -1436,7 +1437,7 @@ static int HTLoadExtensionsConfigFile(char *fn)
 		HTSprintf0(&ext, ".%s", word);
 		LYLowerCase(ext);
 
-		CTRACE((tfp, "SETTING SUFFIX '%s' to '%s'.\n", ext, ct));
+		CTrace((tfp, "setting suffix '%s' to '%s'.\n", ext, ct));
 
 		if (strstr(ct, "tex") != NULL ||
 		    strstr(ct, "postscript") != NULL ||

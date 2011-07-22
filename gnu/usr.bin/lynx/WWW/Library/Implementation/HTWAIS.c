@@ -1,4 +1,7 @@
-/*	WorldWideWeb - Wide Area Informaion Server Access	HTWAIS.c
+/*
+ * $LynxId: HTWAIS.c,v 1.31 2008/09/06 15:47:08 tom Exp $
+ *
+ *	WorldWideWeb - Wide Area Informaion Server Access	HTWAIS.c
  *	==================================================
  *
  *	This module allows a WWW server or client to read data from a
@@ -436,7 +439,7 @@ static void output_text_record(HTStream *target,
 		count += 4;	/* it is a paragraph marker */
 	} else if (ch == '\n' || ch == '\r') {
 	    PUTC('\n');
-	} else if (HTCJK != NOCJK || ch == '\t' || isprint(ch)) {
+	} else if (IS_CJK_TTY || ch == '\t' || isprint(ch)) {
 	    PUTC(ch);
 	}
     }

@@ -1,8 +1,10 @@
-/*                                       Utility macros for the W3 code library
-                                  MACROS FOR GENERAL USE
-
-   See also: the system dependent file "www_tcp.h", which is included here.
-
+/*
+ * $LynxId: HTUtils.h,v 1.94 2009/05/10 23:06:31 tom Exp $
+ *
+ * Utility macros for the W3 code library
+ * MACROS FOR GENERAL USE
+ * 
+ * See also:  the system dependent file "www_tcp.h", which is included here.
  */
 
 #ifndef NO_LYNX_TRACE
@@ -57,20 +59,20 @@ char *alloca();
 /* Explicit system-configure */
 #ifdef VMS
 #define NO_SIZECHANGE
+
 #if defined(VAXC) && !defined(__DECC)
 #define NO_UNISTD_H		/* DEC C has unistd.h, but not VAX C */
 #endif
+
 #define NO_KEYPAD
 #define NO_UTMP
+
+#undef NO_FILIO_H
 #define NO_FILIO_H
+
 #define NOUSERS
 #define DISP_PARTIAL		/* experimental */
 #endif
-
-/* since 2.8.6dev.1, Lynx requires an ANSI C (c89) compiler */
-#define ANSI_VARARGS 1
-#undef HAVE_STDARG_H
-#define HAVE_STDARG_H 1
 
 #if defined(VMS) || defined(_WINDOWS)
 #define HAVE_STDLIB_H 1
@@ -419,20 +421,10 @@ are generally not the response status from any specific protocol.
 #define HT_NOT_LOADED         -29999
 
 #ifndef va_arg
-# if defined(HAVE_STDARG_H) && defined(ANSI_VARARGS)
 #  include <stdarg.h>
-# else
-#  if HAVE_VARARGS_H
-#   include <varargs.h>
-#  endif
-# endif
 #endif
 
-#if defined(ANSI_VARARGS)
 #define LYva_start(ap,format) va_start(ap,format)
-#else
-#define LYva_start(ap,format) va_start(ap)
-#endif
 
 /*
  * GCC can be told that some functions are like printf (and do type-checking on
@@ -523,7 +515,102 @@ extern int WWW_TraceMask;
 #define TRACE_TRST      (TRACE_bit(2))
 #define TRACE_CFG       (TRACE_bit(3))
 #define TRACE_BSTRING   (TRACE_bit(4))
+#define TRACE_COOKIES   (TRACE_bit(5))
+#define TRACE_CHARSETS  (TRACE_bit(6))
+#define TRACE_GRIDTEXT  (TRACE_bit(7))
+#define TRACE_TIMING    (TRACE_bit(8))
 
+/*
+ * Get printing/scanning formats.
+ */
+#if defined(HAVE_INTTYPES_H)
+#include <inttypes.h>
+#endif
+
+/*
+ * Printing/scanning-formats for "off_t", as well as cast needed to fit.
+ */
+#if defined(HAVE_INTTYPES_H) && defined(SIZEOF_OFF_T)
+#if (SIZEOF_OFF_T == 8) && defined(PRId64)
+
+#define PRI_off_t	PRId64
+#define SCN_off_t	SCNd64
+#define CAST_off_t(n)	(int64_t)(n)
+
+#elif (SIZEOF_OFF_T == 4) && defined(PRId32)
+
+#define PRI_off_t	PRId32
+#define SCN_off_t	SCNd32
+
+#if (SIZEOF_INT == 4)
+#define CAST_off_t(n)	(int)(n)
+#elif (SIZEOF_LONG == 4)
+#define CAST_off_t(n)	(long)(n)
+#else
+#define CAST_off_t(n)	(int32_t)(n)
+#endif
+
+#endif
+#endif
+
+#ifndef PRI_off_t
+#if (SIZEOF_OFF_T > SIZEOF_LONG)
+#define PRI_off_t	"lld"
+#define SCN_off_t	"lld"
+#define CAST_off_t(n)	(long long)(n)
+#else
+#define PRI_off_t	"ld"
+#define SCN_off_t	"ld"
+#define CAST_off_t(n)	(long)(n)
+#endif
+#endif
+
+/*
+ * Printing-format for "time_t", as well as cast needed to fit.
+ */
+#if defined(HAVE_INTTYPES_H) && defined(SIZEOF_TIME_T)
+#if (SIZEOF_TIME_T == 8) && defined(PRId64)
+
+#define PRI_time_t	PRId64
+#define SCN_time_t	SCNd64
+#define CAST_time_t(n)	(int64_t)(n)
+
+#elif (SIZEOF_TIME_T == 4) && defined(PRId32)
+
+#define PRI_time_t	PRId32
+#define SCN_time_t	SCNd32
+
+#if (SIZEOF_INT == 4)
+#define CAST_time_t(n)	(int)(n)
+#elif (SIZEOF_LONG == 4)
+#define CAST_time_t(n)	(long)(n)
+#else
+#define CAST_time_t(n)	(int32_t)(n)
+#endif
+
+#endif
+#endif
+
+#ifndef PRI_time_t
+#if (SIZEOF_TIME_T > SIZEOF_LONG)
+#define PRI_time_t	"lld"
+#define SCN_time_t	"lld"
+#define CAST_time_t(n)	(long long)(n)
+#else
+#define PRI_time_t	"ld"
+#define SCN_time_t	"ld"
+#define CAST_time_t(n)	(long)(n)
+#endif
+#endif
+
+/*
+ * Printing-format for "UCode_t".
+ */
+#define PRI_UCode_t	"ld"
+
+/*
+ * Verbose-tracing.
+ */
 #if defined(USE_VERTRACE) && !defined(LY_TRACELINE)
 #define LY_TRACELINE __LINE__
 #endif
@@ -537,7 +624,7 @@ extern int WWW_TraceMask;
 #define CTRACE(p)         ((void)((TRACE) && ( LY_SHOWWHERE fprintf p )))
 #define CTRACE2(m,p)      ((void)((m)     && ( LY_SHOWWHERE fprintf p )))
 #define tfp TraceFP()
-#define CTRACE_SLEEP(secs) if (TRACE && LYTraceLogFP == 0) sleep(secs)
+#define CTRACE_SLEEP(secs) if (TRACE && LYTraceLogFP == 0) sleep((unsigned)secs)
 #define CTRACE_FLUSH(fp)   if (TRACE) fflush(fp)
 
 #include <www_tcp.h>
@@ -591,6 +678,7 @@ extern int WWW_TraceMask;
 #define SHORTENED_RBIND		/* FIXME: do this in configure-script */
 
 #ifdef USE_SSL
+
 #define free_func free__func
 
 #ifdef USE_OPENSSL_INCL
@@ -601,7 +689,10 @@ extern int WWW_TraceMask;
 
 #else
 
-#ifdef USE_GNUTLS_INCL
+#if defined(USE_GNUTLS_FUNCS)
+#include <tidy_tls.h>
+#define USE_GNUTLS_INCL 1	/* do this for the ".c" ifdef's */
+#elif defined(USE_GNUTLS_INCL)
 #include <gnutls/openssl.h>
 /*
  * GNUTLS's implementation of OpenSSL is very incomplete and rudimentary.
@@ -610,6 +701,10 @@ extern int WWW_TraceMask;
 #ifndef SSL_VERIFY_PEER
 #define SSL_VERIFY_PEER			0x01
 #endif
+#else
+
+#ifdef USE_NSS_COMPAT_INCL
+#include <nss_compat_ossl/nss_compat_ossl.h>
 
 #else /* assume SSLeay */
 #include <ssl.h>
@@ -617,10 +712,10 @@ extern int WWW_TraceMask;
 #include <rand.h>
 #include <err.h>
 #endif
+#endif
 #endif /* USE_OPENSSL_INCL */
 
 #undef free_func
-
 #endif /* USE_SSL */
 
 #ifdef HAVE_LIBDMALLOC
@@ -655,7 +750,7 @@ extern "C" {
 #ifdef USE_SSL
     extern SSL *HTGetSSLHandle(void);
     extern void HTSSLInitPRNG(void);
-    extern char HTGetSSLCharacter(void *handle);
+    extern int HTGetSSLCharacter(void *handle);
 #endif				/* USE_SSL */
 
 #ifdef __cplusplus

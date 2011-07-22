@@ -54,12 +54,11 @@
        ignored.
 
        The  default boolean, number and string option values that are compiled
-       into lynx are displayed in the help-message  provided  by  lynx  -help.
-       Some  of those may differ according to how lynx was built; see the help
-       message itself for these values.  The -help option is processed  before
-       any  option,  including  those  that  control reading from the lynx.cfg
-       file.  Therefore runtime configuration values are not reflected in  the
-       help-message.
+       into Lynx are displayed in the help-message  provided  by  lynx  -help.
+       Some  of those may differ according to how Lynx was built; see the help
+       message itself for these values.  The -help option is processed in  the
+       third  pass of options-processing, so any option which sets a value, as
+       well as runtime configuration values are reflected in the help-message.
 
        -      If  the  argument  is only `-', then Lynx expects to receive the
               arguments from the standard input.  This is  to  allow  for  the
@@ -80,7 +79,7 @@
               charset for documents that don't specify it.
 
        -assume_local_charset=MIMEname
-              charset  assumed for local files, i.e., files which lynx creates
+              charset  assumed for local files, i.e., files which Lynx creates
               such as internal pages for the options menu.
 
        -assume_unrec_charset=MIMEname
@@ -125,7 +124,12 @@
               specifies a Lynx  configuration  file  other  than  the  default
               lynx.cfg.
 
-       -child exit on left-arrow in startfile, and disable save to disk.
+       -child exit  on  left-arrow  in startfile, and disable save to disk and
+              associated print/mail options.
+
+       -child_relaxed
+              exit on left-arrow in startfile, but  allow  save  to  disk  and
+              associated print/mail options.
 
        -cmd_log=FILENAME
               write   keystroke   commands  and  related  information  to  the
@@ -257,7 +261,7 @@
 
        -head  send a HEAD request for the mime headers.
 
-       -help  print the Lynx command syntax usage message.
+       -help  print the Lynx command syntax usage message, and exit.
 
        -hiddenlinks=[option]
               control the display of hidden links.
@@ -306,7 +310,9 @@
 
        -lss=FILENAME
               specify  filename  containing  color-style   information.    The
-              default is lynx.lss.
+              default is lynx.lss.  If you give an empty filename, lynx uses a
+              built-in monochrome scheme which  imitates  the  non-color-style
+              configuration.
 
        -mime_header
               prints  the  MIME  header  of  a fetched document along with its
@@ -351,6 +357,9 @@
 
        -nomargins
               disable left/right margins in the default style sheet.
+
+       -nomore
+              disable -more- string in statusline messages.
 
        -nonrestarting_sigwinch
               This  flag  is  not  available  on all systems, Lynx needs to be
@@ -403,6 +412,9 @@
               number  of  lines  to  render  before  repainting  display  with
               partial-display logic
 
+       -passive-ftp
+              toggles passive ftp connections.
+
        -pauth=ID:PASSWD
               set  authorization  ID and password for a protected proxy server
               at startup.  Be sure to protect any script files which use  this
@@ -432,6 +444,9 @@
               mode for the startup character set.
 
        -realm restricts access to URLs in the starting realm.
+
+       -read_timeout=N
+              Sets the read-timeout, where N is given in seconds.
 
        -reload
               flushes the cache on a proxy server  (only  the  first  document
@@ -552,10 +567,24 @@
        -selective
               require .www_browsable files to browse directories.
 
+       -session=FILENAME
+              resumes from specified file on startup and saves session to that
+              file on exit.
+
+       -sessionin=FILENAME
+              resumes session from specified file.
+
+       -sessionout=FILENAME
+              saves session to specified file.
+
        -short_url
-              show very long URLs in the status line with "..."  to  represent
+              show  very  long URLs in the status line with "..." to represent
               the portion which cannot be displayed.  The beginning and end of
               the URL are displayed, rather than suppressing the end.
+
+       -show_cfg
+              Print the configuration settings, e.g., as read from "lynx.cfg",
+              and exit.
 
        -show_cursor
               If enabled the cursor will not  be  hidden  in  the  right  hand
@@ -637,16 +666,21 @@
               1=SGML character parsing states
               2=color-style
               4=TRST (table layout)
-              8=config (lynx.cfg and .lynxrc contents)
+              8=config  (lynx.cfg,  .lynxrc,  .lynx-keymaps,  mime.types   and
+              mailcap contents)
               16=binary string copy/append, used in form data construction.
+              32=cookies
+              64=character sets
+              128=GridText parsing
+              256=timing
 
        -traversal
-              traverse all http links derived from startfile.  When used  with
-              -crawl,  each link that begins with the same string as startfile
-              is output to a file, intended for indexing.  See  CRAWL.announce
+              traverse  all http links derived from startfile.  When used with
+              -crawl, each link that begins with the same string as  startfile
+              is  output to a file, intended for indexing.  See CRAWL.announce
               for more information.
 
-       trim_input_fields
+       -trim_input_fields
               trim input text/textarea fields in forms.
 
        -underline_links
@@ -656,44 +690,50 @@
               toggles use of _underline_ format in dumps.
 
        -use_mouse
-              turn  on  mouse  support, if available.  Clicking the left mouse
-              button on a link traverses it.  Clicking the right mouse  button
-              pops  back.   Click  on the top line to scroll up.  Click on the
-              bottom line to scroll down.  The first few positions in the  top
-              and  bottom  line may invoke additional functions.  Lynx must be
-              compiled with ncurses or slang  to  support  this  feature.   If
-              ncurses  is  used,  clicking  the  middle mouse button pops up a
-              simple menu.  Mouse clicks may only work reliably while Lynx  is
+              turn on mouse support, if available.  Clicking  the  left  mouse
+              button  on a link traverses it.  Clicking the right mouse button
+              pops back.  Click on the top line to scroll up.   Click  on  the
+              bottom  line to scroll down.  The first few positions in the top
+              and bottom line may invoke additional functions.  Lynx  must  be
+              compiled  with  ncurses  or  slang  to support this feature.  If
+              ncurses is used, clicking the middle  mouse  button  pops  up  a
+              simple  menu.  Mouse clicks may only work reliably while Lynx is
               idle waiting for input.
 
        -useragent=Name
               set alternate Lynx User-Agent header.
 
        -validate
-              accept  only  http  URLs  (for  validation).   Complete security
+              accept only  http  URLs  (for  validation).   Complete  security
               restrictions also are implemented.
 
        -verbose
-              toggle [LINK], [IMAGE] and [INLINE] comments with  filenames  of
+              toggle  [LINK],  [IMAGE] and [INLINE] comments with filenames of
               these images.
 
        -version
-              print version information.
+              print version information, and exit.
 
        -vikeys
               enable vi-like key movement.
 
        -wdebug
-              enable  Waterloo  tcp/ip packet debug (print to watt debugfile).
-              This applies only  to  DOS  versions  compiled  with  WATTCP  or
+              enable Waterloo tcp/ip packet debug (print to  watt  debugfile).
+              This  applies  only  to  DOS  versions  compiled  with WATTCP or
               WATT-32.
 
        -width=NUMBER
-              number of columns for formatting of dumps, default is 80.
+              number of columns for formatting of dumps, default is 80.   This
+              is  limited  by  the  number of columns that Lynx could display,
+              typically 1024 (the MAX_LINE symbol).
 
        -with_backspaces
               emit backspaces in output if -dump'ing or -crawl'ing (like `man'
               does)
+
+       -xhtml_parsing
+              tells Lynx that it can ignore certain tags which have no content
+              in an XHTML 1.0 document.  For example "<p/>" will be discarded.
 
 2 Commands
        o  Use Up arrow and Down arrow to scroll through hypertext links.
@@ -702,147 +742,150 @@
 
        o  Left Arrow will retreat from a link.
 
-       o  Type "H" or "?" for  online  help  and  descriptions  of  key-stroke
+       o  Type  "H"  or  "?"  for  online  help and descriptions of key-stroke
           commands.
 
-       o  Type  "K"  for  a  complete  list  of the current key-stroke command
+       o  Type "K" for a complete  list  of  the  current  key-stroke  command
           mappings.
 
 2 Environment
-       In addition to various "standard" environment variables such  as  HOME,
-       PATH,  USER,  DISPLAY, TMPDIR, etc, Lynx utilizes several Lynx-specific
+       In  addition  to various "standard" environment variables such as HOME,
+       PATH, USER, DISPLAY, TMPDIR, etc, Lynx utilizes  several  Lynx-specific
        environment variables, if they exist.
 
-       Others may be created or modified by Lynx to pass data to  an  external
+       Others  may  be created or modified by Lynx to pass data to an external
        program, or for other reasons.  These are listed separately below.
 
-       See  also  the  sections  on  SIMULATED CGI SUPPORT and NATIVE LANGUAGE
+       See also the sections on SIMULATED  CGI  SUPPORT  and  NATIVE  LANGUAGE
        SUPPORT, below.
 
-       Note:  Not all environment variables apply to all  types  of  platforms
-       supported  by  Lynx, though most do.  Feedback on platform dependencies
+       Note:   Not  all  environment variables apply to all types of platforms
+       supported by Lynx, though most do.  Feedback on  platform  dependencies
        is solicited.
 
        Environment Variables Used By Lynx:
 
        COLORTERM           If set, color capability for the terminal is forced
-                           on  at  startup time.  The actual value assigned to
-                           the variable is ignored.   This  variable  is  only
+                           on at startup time.  The actual value  assigned  to
+                           the  variable  is  ignored.   This variable is only
                            meaningful  if  Lynx  was  built  using  the  slang
                            screen-handling library.
 
-       LYNX_CFG            This variable, if set, will  override  the  default
-                           location  and name of the global configuration file
-                           (normally,  lynx.cfg)  that  was  defined  by   the
+       LYNX_CFG            This  variable,  if  set, will override the default
+                           location and name of the global configuration  file
+                           (normally,   lynx.cfg)  that  was  defined  by  the
                            LYNX_CFG_FILE  constant  in  the  userdefs.h  file,
-                           during installation.  See the userdefs.h  file  for
+                           during  installation.   See the userdefs.h file for
                            more information.
 
-       LYNX_LOCALEDIR      If  set,  this  variable  overrides the compiled-in
-                           location of the  locale  directory  which  contains
+       LYNX_HELPFILE       If set, this variable overrides the compiled-in URL
+                           and  configuration file URL for the Lynx help file.
+
+       LYNX_LOCALEDIR      If set, this  variable  overrides  the  compiled-in
+                           location  of  the  locale  directory which contains
                            native language (NLS) message text.
 
-       LYNX_LSS            This  variable,  if  set, specifies the location of
-                           the  default  Lynx  character  style  sheet   file.
-                           [Currently  only meaningful if Lynx was built using
+       LYNX_LSS            This variable, if set, specifies  the  location  of
+                           the   default  Lynx  character  style  sheet  file.
+                           [Currently only meaningful if Lynx was built  using
                            experimental color style support.]
 
-       LYNX_SAVE_SPACE     This variable, if set, will  override  the  default
+       LYNX_SAVE_SPACE     This  variable,  if  set, will override the default
                            path prefix for files saved to disk that is defined
-                           in the lynx.cfg  SAVE_SPACE:  statement.   See  the
+                           in  the  lynx.cfg  SAVE_SPACE:  statement.  See the
                            lynx.cfg file for more information.
 
-       LYNX_TEMP_SPACE     This  variable,  if  set, will override the default
-                           path prefix for temporary files  that  was  defined
-                           during  installation, as well as any value that may
+       LYNX_TEMP_SPACE     This variable, if set, will  override  the  default
+                           path  prefix  for  temporary files that was defined
+                           during installation, as well as any value that  may
                            be assigned to the TMPDIR variable.
 
        MAIL                This variable specifies the default inbox Lynx will
-                           check  for new mail, if such checking is enabled in
+                           check for new mail, if such checking is enabled  in
                            the lynx.cfg file.
 
-       NEWS_ORGANIZATION   This variable, if set, provides the string used  in
-                           the  Organization:  header of USENET news postings.
-                           It will override the setting  of  the  ORGANIZATION
-                           environment  variable,  if  it is also set (and, on
+       NEWS_ORGANIZATION   This  variable, if set, provides the string used in
+                           the Organization: header of USENET  news  postings.
+                           It  will  override  the setting of the ORGANIZATION
+                           environment variable, if it is also  set  (and,  on
                            UNIX, the contents of an /etc/organization file, if
                            present).
 
-       NNTPSERVER          If  set,  this  variable specifies the default NNTP
-                           server that will be used for  USENET  news  reading
+       NNTPSERVER          If set, this variable specifies  the  default  NNTP
+                           server  that  will  be used for USENET news reading
                            and posting with Lynx, via news: URL's.
 
-       ORGANIZATION        This  variable, if set, provides the string used in
-                           the Organization: header of USENET  news  postings.
-                           On  UNIX,  it  will  override  the  contents  of an
+       ORGANIZATION        This variable, if set, provides the string used  in
+                           the  Organization:  header of USENET news postings.
+                           On UNIX,  it  will  override  the  contents  of  an
                            /etc/organization file, if present.
 
        PROTOCOL_proxy      Lynx supports the use of proxy servers that can act
                            as firewall gateways and caching servers.  They are
-                           preferable  to  the  older  gateway  servers   (see
-                           WWW_access_GATEWAY,  below).  Each protocol used by
-                           Lynx, (http,  ftp,  gopher,  etc),  can  be  mapped
-                           separately  by setting environment variables of the
-                           form   PROTOCOL_proxy    (literally:    http_proxy,
+                           preferable   to  the  older  gateway  servers  (see
+                           WWW_access_GATEWAY, below).  Each protocol used  by
+                           Lynx,  (http,  ftp,  gopher,  etc),  can  be mapped
+                           separately by setting environment variables of  the
+                           form    PROTOCOL_proxy    (literally:   http_proxy,
                            ftp_proxy,       gopher_proxy,       etc),       to
-                           "http://some.server.dom:port/".   See  Lynx   Users
+                           "http://some.server.dom:port/".    See  Lynx  Users
                            Guide for additional details and examples.
 
-       SSL_CERT_DIR        Set    to    the   directory   containing   trusted
+       SSL_CERT_DIR        Set   to   the   directory    containing    trusted
                            certificates.
 
-       SSL_CERT_FILE       Set to the full path and filename for your file  of
+       SSL_CERT_FILE       Set  to the full path and filename for your file of
                            trusted certificates.
 
-       WWW_access_GATEWAY  Lynx  still  supports  use of gateway servers, with
-                           the  servers  specified  via   "WWW_access_GATEWAY"
-                           variables  (where "access" is lower case and can be
-                           "http", "ftp", "gopher" or  "wais"),  however  most
-                           gateway  servers have been discontinued.  Note that
+       WWW_access_GATEWAY  Lynx still supports use of  gateway  servers,  with
+                           the   servers  specified  via  "WWW_access_GATEWAY"
+                           variables (where "access" is lower case and can  be
+                           "http",  "ftp",  "gopher"  or "wais"), however most
+                           gateway servers have been discontinued.  Note  that
                            you do not include a terminal `/' for gateways, but
-                           do   for   proxies   specified   by  PROTOCOL_proxy
-                           environment variables.  See Lynx  Users  Guide  for
+                           do  for   proxies   specified   by   PROTOCOL_proxy
+                           environment  variables.   See  Lynx Users Guide for
                            details.
 
-       WWW_HOME            This  variable,  if  set, will override the default
-                           startup  URL  specified  in   any   of   the   Lynx
+       WWW_HOME            This variable, if set, will  override  the  default
+                           startup   URL   specified   in   any  of  the  Lynx
                            configuration files.
 
        Environment Variables Set or Modified By Lynx:
 
-       LYNX_PRINT_DATE     This  variable is set by the Lynx p(rint) function,
-                           to  the  Date:  string  seen  in   the   document's
-                           "Information  about"  page  (= cmd), if any.  It is
-                           created for use by an external program, as  defined
-                           in  a  lynx.cfg  PRINTER: definition statement.  If
-                           the field does not  exist  for  the  document,  the
+       LYNX_PRINT_DATE     This variable is set by the Lynx p(rint)  function,
+                           to   the   Date:  string  seen  in  the  document's
+                           "Information about" page (= cmd), if  any.   It  is
+                           created  for use by an external program, as defined
+                           in a lynx.cfg PRINTER:  definition  statement.   If
+                           the  field  does  not  exist  for the document, the
                            variable is set to a null string under UNIX, or "No
                            Date" under VMS.
 
-       LYNX_PRINT_LASTMOD  This variable is set by the Lynx p(rint)  function,
-                           to  the  Last  Mod:  string  seen in the document's
-                           "Information about" page (= cmd), if  any.   It  is
-                           created  for use by an external program, as defined
-                           in a lynx.cfg PRINTER:  definition  statement.   If
-                           the  field  does  not  exist  for the document, the
-                           variable is set to a null string under UNIX, or "No
-                           LastMod" under VMS.
-
-       LYNX_PRINT_TITLE    This  variable is set by the Lynx p(rint) function,
-                           to the Linkname:  string  seen  in  the  document's
+       LYNX_PRINT_LASTMOD  This  variable is set by the Lynx p(rint) function,
+                           to the Last Mod:  string  seen  in  the  document's
                            "Information  about"  page  (= cmd), if any.  It is
                            created for use by an external program, as  defined
                            in  a  lynx.cfg  PRINTER: definition statement.  If
                            the field does not  exist  for  the  document,  the
                            variable is set to a null string under UNIX, or "No
-                           Title" under VMS.
+                           LastMod" under VMS.
 
-       LYNX_PRINT_URL      This variable is set by the Lynx p(rint)  function,
-                           to   the   URL:   string  seen  in  the  document's
+       LYNX_PRINT_TITLE    This variable is set by the Lynx p(rint)  function,
+                           to  the  Linkname:  string  seen  in the document's
                            "Information about" page (= cmd), if  any.   It  is
                            created  for use by an external program, as defined
                            in a lynx.cfg PRINTER:  definition  statement.   If
                            the  field  does  not  exist  for the document, the
+                           variable is set to a null string under UNIX, or "No
+                           Title" under VMS.
+
+       LYNX_PRINT_URL      This  variable is set by the Lynx p(rint) function,
+                           to  the  URL:  string  seen   in   the   document's
+                           "Information  about"  page  (= cmd), if any.  It is
+                           created for use by an external program, as  defined
+                           in  a  lynx.cfg  PRINTER: definition statement.  If
+                           the field does not  exist  for  the  document,  the
                            variable is set to a null string under UNIX, or "No
                            URL" under VMS.
 
@@ -850,32 +893,32 @@
                            -trace option were supplied.
 
        LYNX_TRACE_FILE     If set, overrides the compiled-in name of the trace
-                           file,  which  is  either Lynx.trace or LY-TRACE.LOG
-                           (the latter on the DOS platform).  The  trace  file
+                           file, which is either  Lynx.trace  or  LY-TRACE.LOG
+                           (the  latter  on the DOS platform).  The trace file
                            is in either case relative to the home directory.
 
-       LYNX_VERSION        This  variable  is  always  set by Lynx, and may be
-                           used by an external program to determine if it  was
-                           invoked  by  Lynx.   See  also  the comments in the
-                           distribution's sample mailcap file,  for  notes  on
+       LYNX_VERSION        This variable is always set by  Lynx,  and  may  be
+                           used  by an external program to determine if it was
+                           invoked by Lynx.  See  also  the  comments  in  the
+                           distribution's  sample  mailcap  file, for notes on
                            usage in such a file.
 
-       TERM                Normally,   this   variable  is  used  by  Lynx  to
-                           determine the terminal type being  used  to  invoke
+       TERM                Normally,  this  variable  is  used  by   Lynx   to
+                           determine  the  terminal  type being used to invoke
                            Lynx.  If, however, it is unset at startup time (or
-                           has the value "unknown"), or if the -term  command-
-                           line  option  is  used (see OPTIONS section above),
-                           Lynx will set or  modify  its  value  to  the  user
-                           specified  terminal  type  (for  the Lynx execution
-                           environment).  Note: If set/modified by  Lynx,  the
-                           values  of  the  LINES  and/or  COLUMNS environment
+                           has  the value "unknown"), or if the -term command-
+                           line option is used (see  OPTIONS  section  above),
+                           Lynx  will  set  or  modify  its  value to the user
+                           specified terminal type  (for  the  Lynx  execution
+                           environment).   Note:  If set/modified by Lynx, the
+                           values of  the  LINES  and/or  COLUMNS  environment
                            variables may also be changed.
 
 2 Simulated Cgi Support
        If built with the cgi-links option enabled, Lynx allows access to a cgi
        script directly without the need for an http daemon.
 
-       When  executing  such  "lynxcgi  scripts"  (if  enabled), the following
+       When executing such  "lynxcgi  scripts"  (if  enabled),  the  following
        variables may be set for simulating a CGI environment:
 
        CONTENT_LENGTH
@@ -904,98 +947,98 @@
 
        SERVER_SOFTWARE
 
-       Other environment variables are not inherited  by  the  script,  unless
-       they   are   provided   via  a  LYNXCGI_ENVIRONMENT  statement  in  the
-       configuration file.  See the lynx.cfg file, and  the  (draft)  CGI  1.1
+       Other  environment  variables  are  not inherited by the script, unless
+       they  are  provided  via  a  LYNXCGI_ENVIRONMENT   statement   in   the
+       configuration  file.   See  the  lynx.cfg file, and the (draft) CGI 1.1
        Specification <http://Web.Golux.Com/coar/cgi/draft-coar-cgi-v11-00.txt>
        for the definition and usage of these variables.
 
-       The CGI Specification, and other associated  documentation,  should  be
+       The  CGI  Specification,  and other associated documentation, should be
        consulted for general information on CGI script programming.
 
 2 Native Language Support
-       If  configured  and  installed  with Native Language Support, Lynx will
+       If configured and installed with Native  Language  Support,  Lynx  will
        display status and other messages in your local language.  See the file
-       ABOUT_NLS  in  the  source distribution, or at your local GNU site, for
+       ABOUT_NLS in the source distribution, or at your local  GNU  site,  for
        more information about internationalization.
 
-       The following environment  variables  may  be  used  to  alter  default
+       The  following  environment  variables  may  be  used  to alter default
        settings:
 
-       LANG                This  variable,  if  set, will override the default
+       LANG                This variable, if set, will  override  the  default
                            message language.  It is an ISO 639 two-letter code
-                           identifying  the  language.  Language codes are NOT
+                           identifying the language.  Language codes  are  NOT
                            the same as the country codes given in ISO 3166.
 
-       LANGUAGE            This variable, if set, will  override  the  default
+       LANGUAGE            This  variable,  if  set, will override the default
                            message language.  This is a GNU extension that has
-                           higher priority for  setting  the  message  catalog
+                           higher  priority  for  setting  the message catalog
                            than LANG or LC_ALL.
 
        LC_ALL              and
 
-       LC_MESSAGES         These  variables,  if  set,  specify  the notion of
+       LC_MESSAGES         These variables, if  set,  specify  the  notion  of
                            native language formatting style.  They are POSIXly
                            correct.
 
        LINGUAS             This  variable,  if  set  prior  to  configuration,
-                           limits the installed languages to specific  values.
-                           It  is  a space-separated list of two-letter codes.
+                           limits  the installed languages to specific values.
+                           It is a space-separated list of  two-letter  codes.
                            Currently, it is hard-coded to a wish list.
 
-       NLSPATH             This variable, if set, is used as the  path  prefix
+       NLSPATH             This  variable,  if set, is used as the path prefix
                            for message catalogs.
 
 2 Notes
-       This  is the Lynx v2.8.6 Release; development is in progress for 2.8.7.
+       This is the Lynx v2.8.7 Release; development is in progress for  2.8.8.
 
        If you wish to contribute to the further development of Lynx, subscribe
-       to  our mailing list.  Send email to <lynx-dev-request@nongnu.org> with
+       to our mailing list.  Send email to <lynx-dev-request@nongnu.org>  with
        "subscribe lynx-dev" as the only line in the body of your message.
 
-       Send bug reports, comments, suggestions to <lynx-dev@nongnu.org>  after
+       Send  bug reports, comments, suggestions to <lynx-dev@nongnu.org> after
        subscribing.
 
-       Unsubscribe  by  sending  email  to  <lynx-dev-request@nongnu.org> with
-       "unsubscribe lynx-dev" as the only line in the body  of  your  message.
+       Unsubscribe by  sending  email  to  <lynx-dev-request@nongnu.org>  with
+       "unsubscribe  lynx-dev"  as  the only line in the body of your message.
        Do not send the unsubscribe message to the lynx-dev list, itself.
 
 2 See Also
-       catgets(3),  curses(3),  environ(7),  execve(2),  ftp(1), gettext(GNU),
-       localeconv(3),   ncurses(3),   setlocale(3),   slang(?),    termcap(5),
+       catgets(3), curses(3),  environ(7),  execve(2),  ftp(1),  gettext(GNU),
+       localeconv(3),    ncurses(3),   setlocale(3),   slang(?),   termcap(5),
        terminfo(5), wget(GNU)
 
        Note that man page availability and section numbering is somewhat platform
        dependent, and may vary from the above references.
 
-       A section shown as (GNU), is intended to denote that the topic  may  be
+       A  section  shown as (GNU), is intended to denote that the topic may be
        available via an info page, instead of a man page (i.e., try "info subject",
        rather than "man subject").
 
-       A section shown as (?) denotes that documentation on the topic  exists,
-       but  is  not part of an established documentation retrieval system (see
-       the distribution files associated with the topic, or contact your  System
+       A  section shown as (?) denotes that documentation on the topic exists,
+       but is not part of an established documentation retrieval  system  (see
+       the  distribution files associated with the topic, or contact your System
        Administrator for further information).
 
 2 Acknowledgments
-       Lynx  has  incorporated  code  from a variety of sources along the way.
-       The earliest versions of Lynx included code from Earl Fogel of  Comput-
-       ing  Services at the University of Saskatchewan, who implemented HYPER-
-       REZ in the Unix environment.  HYPERREZ was developed by Niel Larson  of
-       Think.com  and  served  as  the  model  for the early versions of Lynx.
+       Lynx has incorporated code from a variety of  sources  along  the  way.
+       The  earliest versions of Lynx included code from Earl Fogel of Comput-
+       ing Services at the University of Saskatchewan, who implemented  HYPER-
+       REZ  in the Unix environment.  HYPERREZ was developed by Niel Larson of
+       Think.com and served as the model  for  the  early  versions  of  Lynx.
        Those versions also incorporated libraries from the Unix Gopher clients
-       developed  at  the  University  of Minnesota, and the later versions of
-       Lynx rely on the WWW client library code developed by  Tim  Berners-Lee
-       and  the  WWW  community.  Also a special thanks to Foteos Macrides who
+       developed at the University of Minnesota, and  the  later  versions  of
+       Lynx  rely  on the WWW client library code developed by Tim Berners-Lee
+       and the WWW community.  Also a special thanks to  Foteos  Macrides  who
        ported much of Lynx to VMS and did or organized most of its development
-       since  the  departures of Lou Montulli and Garrett Blythe from the Uni-
-       versity of Kansas in the summer of 1994 through the release of  v2.7.2,
-       and  to  everyone  on the net who has contributed to Lynx's development
+       since the departures of Lou Montulli and Garrett Blythe from  the  Uni-
+       versity  of Kansas in the summer of 1994 through the release of v2.7.2,
+       and to everyone on the net who has contributed  to  Lynx's  development
        either directly (through patches, comments or bug reports) or indirect-
        ly (through inspiration and development of other systems).
 
 2 Authors
-       Lou  Montulli,  Garrett  Blythe, Craig Lavender, Michael Grobe, Charles
+       Lou Montulli, Garrett Blythe, Craig Lavender,  Michael  Grobe,  Charles
        Rezac
        Academic Computing Services
        University of Kansas

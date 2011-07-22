@@ -1,3 +1,6 @@
+/*
+ * $LynxId: LYMain.c,v 1.204 2009/06/30 08:35:34 tom Exp $
+ */
 #include <HTUtils.h>
 #include <HTTP.h>
 #include <HTParse.h>
@@ -26,6 +29,11 @@
 #include <HTForms.h>
 #include <LYList.h>
 #include <LYJump.h>
+
+#ifdef USE_SESSIONS
+#include <LYSession.h>
+#endif
+
 #include <LYMainLoop.h>
 #include <LYBookmark.h>
 #include <LYCookie.h>
@@ -49,7 +57,7 @@
 #include <io.h>
 #endif
 
-#ifdef LOCALE
+#if defined(LOCALE) && !defined(HAVE_LIBINTL_H)
 #undef gettext			/* Solaris locale.h prototypes gettext() */
 #include <locale.h>
 #ifndef HAVE_GETTEXT
@@ -59,14 +67,6 @@
 
 #include <LYexit.h>
 #include <LYLeaks.h>
-
-#ifdef FNAMES_8_3
-#define COOKIE_FILE "cookies"
-#define TRACE_FILE "LY-TRACE.LOG"
-#else
-#define COOKIE_FILE ".lynx_cookies"
-#define TRACE_FILE "Lynx.trace"
-#endif /* FNAMES_8_3 */
 
 /* ahhhhhhhhhh!! Global variables :-< */
 #ifdef SOCKS
@@ -95,10 +95,14 @@ static char *lynx_version_putenv_command = NULL;
 char *list_format = NULL;	/* LONG_LIST formatting mask */
 #endif /* !VMS */
 
+char *ftp_format = NULL;	/* LONG_LIST formatting mask */
+
 #ifdef SYSLOG_REQUESTED_URLS
 char *syslog_txt = NULL;	/* syslog arb text for session */
 BOOLEAN syslog_requested_urls = TRUE;
 #endif
+
+int cfg_bad_html = BAD_HTML_WARN;
 
 #ifdef DIRED_SUPPORT
 BOOLEAN lynx_edit_mode = FALSE;
@@ -193,6 +197,7 @@ BOOLEAN LYinternal_flag = FALSE;	/* override no-cache b/c internal link */
 BOOLEAN LYoverride_no_cache = FALSE;	/*override no-cache b/c history etc */
 BOOLEAN LYresubmit_posts = ALWAYS_RESUBMIT_POSTS;
 BOOLEAN LYtrimInputFields = FALSE;
+BOOLEAN LYxhtml_parsing = FALSE;
 BOOLEAN bold_H1 = FALSE;
 BOOLEAN bold_headers = FALSE;
 BOOLEAN bold_name_anchors = FALSE;
@@ -204,9 +209,6 @@ BOOLEAN dump_output_immediately = FALSE;
 BOOLEAN dump_to_stderr = FALSE;
 BOOLEAN emacs_keys = EMACS_KEYS_ALWAYS_ON;
 BOOLEAN error_logging = MAIL_SYSTEM_ERROR_LOGGING;
-BOOLEAN ftp_passive = FTP_PASSIVE;	/* TRUE if doing ftp in passive mode */
-BOOLEAN ftp_local_passive;
-char *ftp_lasthost;
 BOOLEAN goto_buffer = GOTOBUFFER;	/* TRUE if offering default goto URL */
 BOOLEAN historical_comments = FALSE;
 BOOLEAN is_www_index = FALSE;
@@ -281,6 +283,14 @@ BOOLEAN no_suspend = FALSE;
 BOOLEAN no_telnet_port = FALSE;
 BOOLEAN no_useragent = FALSE;
 
+#ifndef DISABLE_FTP
+BOOLEAN ftp_passive = FTP_PASSIVE;	/* TRUE if doing ftp in passive mode */
+BOOLEAN ftp_local_passive;
+HTList *broken_ftp_epsv = NULL;
+HTList *broken_ftp_retr = NULL;
+char *ftp_lasthost = NULL;
+#endif
+
 #ifndef DISABLE_NEWS
 BOOLEAN no_goto_news = FALSE;
 BOOLEAN no_goto_nntp = FALSE;
@@ -332,9 +342,7 @@ CRITICAL_SECTION critSec_READ;	/* 1998/09/03 (Thu) 22:01:56 */
 BOOLEAN system_is_NT = FALSE;
 #endif
 
-#ifdef SH_EX
 BOOLEAN show_cfg = FALSE;
-#endif
 
 BOOLEAN no_table_center = FALSE;	/* 1998/10/09 (Fri) 15:12:49 */
 
@@ -366,6 +374,7 @@ BOOLEAN LYNoRefererForThis = FALSE;	/* No Referer header for this URL? */
 BOOLEAN LYNoRefererHeader = FALSE;	/* Never send Referer header?     */
 BOOLEAN LYRawMode;
 BOOLEAN LYSelectPopups = USE_SELECT_POPUPS;
+BOOLEAN LYSendUserAgent = SEND_USERAGENT;	/* send Lynx User-Agent header? */
 BOOLEAN LYSetCookies = SET_COOKIES;	/* Process Set-Cookie headers? */
 BOOLEAN LYUseDefSelPop = TRUE;	/* Command line -popup toggle */
 BOOLEAN LYUseDefaultRawMode = TRUE;
@@ -382,6 +391,7 @@ BOOLEAN more_text = FALSE;	/* is there more text to display? */
 BOOLEAN more_links = FALSE;	/* Links beyond a displayed page with no links? */
 BOOLEAN no_list = FALSE;
 BOOLEAN no_margins = FALSE;
+BOOLEAN no_pause = FALSE;
 BOOLEAN no_title = FALSE;
 BOOLEAN no_url_redirection = FALSE;	/* Don't follow URL redirections */
 BOOLEAN pseudo_inline_alts = MAKE_PSEUDO_ALTS_FOR_INLINES;
@@ -442,6 +452,19 @@ char *personal_type_map = NULL;	/* .mailcap */
 char *pref_charset = NULL;	/* preferred character set */
 char *proxyauth_info[2] =
 {NULL, NULL};			/* Id:Password for protected proxy servers */
+
+#ifdef USE_SESSIONS
+BOOLEAN LYAutoSession = FALSE;	/* enable/disable auto saving/restoring of */
+
+				/* session */
+char *LYSessionFile = NULL;	/* the session file from lynx.cfg */
+char *session_file = NULL;	/* the current session file */
+char *sessionin_file = NULL;	/* only resume session from this file */
+char *sessionout_file = NULL;	/* only save session to this file */
+short session_limit = 250;	/* maximal number of entries saved per */
+
+				/* session file, rest will be ignored */
+#endif /* USE_SESSIONS */
 char *startfile = NULL;		/* the first file */
 char *startrealm = NULL;	/* the startfile realm */
 char *system_mail = NULL;	/* The path for sending mail */
@@ -454,6 +477,7 @@ int size_history;		/* number of allocated history entries */
 
 LinkInfo links[MAXLINKS];
 
+BOOLEAN nomore = FALSE;		/* display -more- string in statusline messages */
 int AlertSecs;			/* time-delay for HTAlert() messages   */
 int DebugSecs;			/* time-delay for HTProgress messages */
 int InfoSecs;			/* time-delay for Information messages */
@@ -465,6 +489,7 @@ int MessageSecs;		/* time-delay for important Messages   */
 int ReplaySecs;			/* time-delay for command-scripts */
 int crawl_count = 0;		/* Starting number for lnk#.dat files in crawls */
 int dump_output_width = 0;
+int dump_server_status = 0;
 int lynx_temp_subspace = 0;	/* > 0 if we made temp-directory */
 int max_cookies_domain = 50;
 int max_cookies_global = 500;
@@ -506,8 +531,10 @@ char *XLoadImageCommand = NULL;	/* Default image viewer for X */
 BOOLEAN LYNoISMAPifUSEMAP = FALSE;	/* Omit ISMAP link if MAP present? */
 int LYHiddenLinks = HIDDENLINKS_SEPARATE;	/* Show hidden links? */
 
+char *SSL_cert_file = NULL;	/* Default CA CERT file */
+
 int Old_DTD = NO;
-static BOOL DTD_recovery = NO;
+static BOOLEAN DTD_recovery = NO;
 
 #ifndef NO_LYNX_TRACE
 FILE *LYTraceLogFP = NULL;	/* Pointer for TRACE log  */
@@ -533,13 +560,14 @@ int ssl_noprompt = FORCE_PROMPT_DFT;
 #endif
 
 int connect_timeout = 18000; /*=180000*0.1 - used in HTDoConnect.*/
+int reading_timeout = 18000; /*=180000*0.1 - used in HTDoConnect.*/
 
 #ifdef EXP_JUSTIFY_ELTS
-BOOL ok_justify = FALSE;
+BOOLEAN ok_justify = FALSE;
 int justify_max_void_percent = 35;
 #endif
 
-#ifdef EXP_LOCALE_CHARSET
+#ifdef USE_LOCALE_CHARSET
 BOOLEAN LYLocaleCharset = FALSE;
 #endif
 
@@ -552,11 +580,11 @@ int scrsize_x = 0;
 int scrsize_y = 0;
 #endif
 
-BOOL force_empty_hrefless_a = FALSE;
+BOOLEAN force_empty_hrefless_a = FALSE;
 
 #ifdef TEXTFIELDS_MAY_NEED_ACTIVATION
 BOOL textfields_need_activation = FALSE;
-BOOL textfields_activation_option = FALSE;
+BOOLEAN textfields_activation_option = FALSE;
 #endif
 
 BOOLEAN textfield_prompt_at_left_edge = FALSE;
@@ -593,6 +621,7 @@ static BOOLEAN number_links = FALSE;
 static BOOLEAN number_fields = FALSE;
 static BOOLEAN LYPrependBase = FALSE;
 static HTList *LYStdinArgs = NULL;
+HTList *positionable_editor = NULL;
 
 #ifndef EXTENDED_OPTION_LOGIC
 /* if set then '--' will be recognized as the end of options */
@@ -678,6 +707,7 @@ static void free_lynx_globals(void)
 {
     int i;
 
+    FREE(ftp_format);
 #ifndef VMS
     FREE(list_format);
 #ifdef LYNXCGI_LINKS		/* WebSter Mods -jkt */
@@ -753,7 +783,11 @@ static void free_lynx_globals(void)
     FREE(proxyauth_info[0]);
     FREE(proxyauth_info[1]);
     FREE(lynxjumpfile);
+#ifndef DISABLE_FTP
     FREE(ftp_lasthost);
+    LYFreeStringList(broken_ftp_epsv);
+    LYFreeStringList(broken_ftp_retr);
+#endif
     FREE(startrealm);
     FREE(personal_mail_address);
     FREE(anonftp_password);
@@ -777,6 +811,7 @@ static void free_lynx_globals(void)
 #if EXTENDED_STARTFILE_RECALL
     FREE(nonoption);
 #endif
+    LYFreeStringList(positionable_editor);
 
     return;
 }
@@ -809,43 +844,16 @@ void reset_signals(void)
 void exit_immediately(int code)
 {
     reset_signals();
-#ifdef NCURSES_NO_LEAKS
-    _nc_freeall();
-#endif
     exit(code);
 }
 
 #ifdef  EBCDIC
-/* *INDENT-OFF* */
-      char un_IBM1047[ 256 ] = "";
-unsigned char IBM1047[ 256 ] = /* ATOE OEMVS311 */
-{
-0x00,0x01,0x02,0x03,0x37,0x2d,0x2e,0x2f,0x16,0x05,0x15,0x0b,0x0c,0x0d,0x0e,0x0f,
-0x10,0x11,0x12,0x13,0x3c,0x3d,0x32,0x26,0x18,0x19,0x3f,0x27,0x1c,0x1d,0x1e,0x1f,
-0x40,0x5a,0x7f,0x7b,0x5b,0x6c,0x50,0x7d,0x4d,0x5d,0x5c,0x4e,0x6b,0x60,0x4b,0x61,
-0xf0,0xf1,0xf2,0xf3,0xf4,0xf5,0xf6,0xf7,0xf8,0xf9,0x7a,0x5e,0x4c,0x7e,0x6e,0x6f,
-0x7c,0xc1,0xc2,0xc3,0xc4,0xc5,0xc6,0xc7,0xc8,0xc9,0xd1,0xd2,0xd3,0xd4,0xd5,0xd6,
-0xd7,0xd8,0xd9,0xe2,0xe3,0xe4,0xe5,0xe6,0xe7,0xe8,0xe9,0xad,0xe0,0xbd,0x5f,0x6d,
-0x79,0x81,0x82,0x83,0x84,0x85,0x86,0x87,0x88,0x89,0x91,0x92,0x93,0x94,0x95,0x96,
-0x97,0x98,0x99,0xa2,0xa3,0xa4,0xa5,0xa6,0xa7,0xa8,0xa9,0xc0,0x4f,0xd0,0xa1,0x07,
-0x20,0x21,0x22,0x23,0x24,0x25,0x06,0x17,0x28,0x29,0x2a,0x2b,0x2c,0x09,0x0a,0x1b,
-0x30,0x31,0x1a,0x33,0x34,0x35,0x36,0x08,0x38,0x39,0x3a,0x3b,0x04,0x14,0x3e,0xff,
-0x41,0xaa,0x4a,0xb1,0x9f,0xb2,0x6a,0xb5,0xbb,0xb4,0x9a,0x8a,0xb0,0xca,0xaf,0xbc,
-0x90,0x8f,0xea,0xfa,0xbe,0xa0,0xb6,0xb3,0x9d,0xda,0x9b,0x8b,0xb7,0xb8,0xb9,0xab,
-0x64,0x65,0x62,0x66,0x63,0x67,0x9e,0x68,0x74,0x71,0x72,0x73,0x78,0x75,0x76,0x77,
-0xac,0x69,0xed,0xee,0xeb,0xef,0xec,0xbf,0x80,0xfd,0xfe,0xfb,0xfc,0xba,0xae,0x59,
-0x44,0x45,0x42,0x46,0x43,0x47,0x9c,0x48,0x54,0x51,0x52,0x53,0x58,0x55,0x56,0x57,
-0x8c,0x49,0xcd,0xce,0xcb,0xcf,0xcc,0xe1,0x70,0xdd,0xde,0xdb,0xdc,0x8d,0x8e,0xdf
-} ;
-/* *INDENT-ON* */
-
 static void FixCharacters(void)
 {
     int c;
     int work1[256], work2[256];
 
     for (c = 0; c < 256; c++) {
-	un_IBM1047[IBM1047[c]] = c;
 	work1[c] = keymap[c + 1];
 	work2[c] = key_override[c + 1];
     }
@@ -855,37 +863,6 @@ static void FixCharacters(void)
     }
 }
 #endif /* EBCDIC */
-
-static void tildeExpand(char **pathname,
-			BOOLEAN embedded)
-{
-    char *temp = *pathname;
-
-    if (embedded) {
-	if (temp != NULL) {
-	    temp = strstr(*pathname, "/~");
-	    if (temp != 0)
-		temp++;
-	    else
-		temp = *pathname;
-	}
-    }
-
-    if (temp != NULL
-	&& temp[0] == '~') {
-	if (temp[1] == '/'
-	    && temp[2] != '\0') {
-	    temp = NULL;
-	    StrAllocCopy(temp, *pathname + 2);
-	    StrAllocCopy(*pathname, wwwName(Home_Dir()));
-	    LYAddPathSep(pathname);
-	    StrAllocCat(*pathname, temp);
-	    FREE(temp);
-	} else if (temp[1] == '\0') {
-	    StrAllocCopy(*pathname, wwwName(Home_Dir()));
-	}
-    }
-}
 
 static BOOL GetStdin(char **buf,
 		     BOOL marker)
@@ -955,6 +932,27 @@ static void append_ssl_version(char **target,
 }
 #endif /* USE_SSL */
 
+static void SetLocale(void)
+{
+#ifdef LOCALE
+    /*
+     * LOCALE support for international characters.
+     */
+    setlocale(LC_ALL, "");
+#endif /* LOCALE */
+    /* Set the text message domain.  */
+#if defined(HAVE_LIBINTL_H) || defined(HAVE_LIBGETTEXT_H)
+    {
+	char *cp;
+
+	if ((cp = LYGetEnv("LYNX_LOCALEDIR")) == 0)
+	    cp = LOCALEDIR;
+	bindtextdomain("lynx", cp);
+	textdomain("lynx");
+    }
+#endif /* HAVE_LIBINTL_H */
+}
+
 /*
  * Wow!  Someone wants to start up Lynx.
  */
@@ -1016,13 +1014,6 @@ int main(int argc,
 
 #endif /* _WINDOWS */
 
-#if 0				/* defined(__CYGWIN__) - does not work with screen */
-    if (strcmp(ttyname(fileno(stdout)), "/dev/conout") != 0) {
-	printf("please \"$CYGWIN=notty\"\n");
-	exit_immediately(EXIT_SUCCESS);
-    }
-#endif
-
 #if defined(WIN_EX)
     /* 1997/10/19 (Sun) 21:40:54 */
     system_is_NT = (BOOL) is_windows_nt();
@@ -1075,16 +1066,38 @@ int main(int argc,
     }
 
     /*
-     * Act on -help NOW, so we only output the help and exit.  - FM
+     * Set up trace, the anonymous account defaults, validate restrictions,
+     * and/or the nosocks flag, if requested, and an alternate configuration
+     * file, if specified, NOW.  Also, if we only want the help menu, output
+     * that and exit.  - FM
+     */
+#ifndef NO_LYNX_TRACE
+    if (LYGetEnv("LYNX_TRACE") != 0) {
+	WWW_TraceFlag = TRUE;
+    }
+#endif
+
+    /*
+     * Set up the TRACE log path, and logging if appropriate.  - FM
+     */
+    if ((cp = LYGetEnv("LYNX_TRACE_FILE")) == 0)
+	cp = FNAME_LYNX_TRACE;
+    LYTraceLogPath = typeMallocn(char, LY_MAXPATH);
+
+    LYAddPathToHome(LYTraceLogPath, LY_MAXPATH, cp);
+
+    /*
+     * Act on -version, -trace and -trace-mask NOW.
      */
     for (i = 1; i < argc; i++) {
 	parse_arg(&argv[i], 1, &i);
     }
+    LYOpenTraceLog();
 
 #ifdef LY_FIND_LEAKS
     /*
      * Register the final function to be executed when being exited.  Will
-     * display memory leaks if LY_FIND_LEAKS is defined.
+     * display memory leaks if the -find-leaks option is used.
      */
     atexit(LYLeaks);
     /*
@@ -1093,19 +1106,7 @@ int main(int argc,
     atexit(free_lynx_globals);
 #endif /* LY_FIND_LEAKS */
 
-#ifdef LOCALE
-    /*
-     * LOCALE support for international characters.
-     */
-    setlocale(LC_ALL, "");
-#endif /* LOCALE */
-    /* Set the text message domain.  */
-#if defined(HAVE_LIBINTL_H) || defined(HAVE_LIBGETTEXT_H)
-    if ((cp = LYGetEnv("LYNX_LOCALEDIR")) == 0)
-	cp = LOCALEDIR;
-    bindtextdomain("lynx", cp);
-    textdomain("lynx");
-#endif /* HAVE_LIBINTL_H */
+    SetLocale();
 
     /*
      * Initialize our startup and global variables.
@@ -1132,6 +1133,7 @@ int main(int argc,
 #ifndef VMS
     StrAllocCopy(list_format, LIST_FORMAT);
 #endif /* !VMS */
+    StrAllocCopy(ftp_format, FTP_FORMAT);
 
     AlertSecs = SECS2Secs(ALERTSECS);
     DebugSecs = SECS2Secs(DEBUGSECS);
@@ -1205,7 +1207,7 @@ int main(int argc,
 #ifdef WIN_EX			/* for Windows 2000 ... 1999/08/23 (Mon) 08:24:35 */
     if (access(lynx_temp_space, 0) != 0)
 #endif
-	tildeExpand(&lynx_temp_space, TRUE);
+	LYTildeExpand(&lynx_temp_space, TRUE);
 
     if ((cp = strstr(lynx_temp_space, "$USER")) != NULL) {
 	char *cp1;
@@ -1220,12 +1222,6 @@ int main(int argc,
 	    StrAllocCopy(lynx_temp_space, temp);
 	    FREE(temp);
 	}
-    }
-    StrAllocCat(lynx_temp_space, "/lynx-XXXXXXXXXX");
-    lynx_temp_space = mkdtemp(lynx_temp_space);
-    if (lynx_temp_space == NULL) {
-	fprintf(stderr, "temporary directory: %s\n", LYStrerror(errno));
-	exit(EXIT_FAILURE);
     }
 #ifdef VMS
     LYLowerCase(lynx_temp_space);
@@ -1276,6 +1272,7 @@ int main(int argc,
     StrAllocCopy(URLDomainPrefixes, URL_DOMAIN_PREFIXES);
     StrAllocCopy(URLDomainSuffixes, URL_DOMAIN_SUFFIXES);
     StrAllocCopy(XLoadImageCommand, XLOADIMAGE_COMMAND);
+    StrAllocCopy(SSL_cert_file, SSL_CERT_FILE);
 
 #ifndef DISABLE_BIBP
     StrAllocCopy(BibP_globalserver, BIBP_GLOBAL_SERVER);
@@ -1291,17 +1288,6 @@ int main(int argc,
     no_newspost = (BOOL) (LYNewsPosting == FALSE);
 #endif
 
-    /*
-     * Set up trace, the anonymous account defaults, validate restrictions,
-     * and/or the nosocks flag, if requested, and an alternate configuration
-     * file, if specified, NOW.  Also, if we only want the help menu, output
-     * that and exit.  - FM
-     */
-#ifndef NO_LYNX_TRACE
-    if (LYGetEnv("LYNX_TRACE") != 0) {
-	WWW_TraceFlag = TRUE;
-    }
-#endif
     for (i = 1; i < argc; i++) {
 	parse_arg(&argv[i], 2, &i);
     }
@@ -1313,7 +1299,7 @@ int main(int argc,
      * feature is to allow for the potentially very long command line that can
      * be associated with post or get data.  The original implementation
      * required that the lone "-" be the only command line argument, but that
-     * precluded its use when the lynx command is aliased with other arguments. 
+     * precluded its use when the lynx command is aliased with other arguments.
      * When interactive, the stdin input is terminated by by Control-D on Unix
      * or Control-Z on VMS, and each argument is terminated by a RETURN.  When
      * the argument is -get_data or -post_data, the data are terminated by a
@@ -1392,31 +1378,19 @@ int main(int argc,
 	LYRestricted = TRUE;
 	LYUseTraceLog = FALSE;
     }
-
-    /*
-     * Set up the TRACE log path, and logging if appropriate.  - FM
-     */
-    if ((cp = LYGetEnv("LYNX_TRACE_FILE")) == 0)
-	cp = TRACE_FILE;
-    LYTraceLogPath = typeMallocn(char, LY_MAXPATH);
-
-    LYAddPathToHome(LYTraceLogPath, LY_MAXPATH, cp);
-
-    LYOpenTraceLog();
-
 #ifdef EXP_CMD_LOGGING
     /*
      * Open command-script, if specified
      */
     if (lynx_cmd_script != 0) {
-	tildeExpand(&lynx_cmd_script, TRUE);
+	LYTildeExpand(&lynx_cmd_script, TRUE);
 	LYOpenCmdScript();
     }
     /*
      * Open command-logging, if specified
      */
     if (lynx_cmd_logfile != 0) {
-	tildeExpand(&lynx_cmd_logfile, TRUE);
+	LYTildeExpand(&lynx_cmd_logfile, TRUE);
 	LYOpenCmdLogfile(argc, argv);
     }
 #endif
@@ -1455,7 +1429,7 @@ int main(int argc,
 	StrAllocCopy(lynx_cfg_file, LYNX_CFG_FILE);
 
 #ifndef _WINDOWS		/* avoid the whole ~ thing for now */
-    tildeExpand(&lynx_cfg_file, FALSE);
+    LYTildeExpand(&lynx_cfg_file, FALSE);
 #endif
 
     /*
@@ -1572,7 +1546,7 @@ int main(int argc,
     if (!lynx_lss_file)
 	StrAllocCopy(lynx_lss_file, LYNX_LSS_FILE);
 
-    tildeExpand(&lynx_lss_file, TRUE);
+    LYTildeExpand(&lynx_lss_file, TRUE);
 
     /*
      * If the lynx-style file is not available, inform the user and exit.
@@ -1591,7 +1565,7 @@ int main(int argc,
      */
     read_rc(NULL);
 
-#ifdef EXP_LOCALE_CHARSET
+#ifdef USE_LOCALE_CHARSET
     LYFindLocaleCharset();
 #endif
 
@@ -1633,6 +1607,33 @@ int main(int argc,
 	}
 	LYStdinArgs_free();
     }
+#ifdef HAVE_TTYNAME
+    /*
+     * If the input is not a tty, we are either running in cron, or are
+     * getting input via a pipe:
+     *
+     * a) in cron, none of stdin/stdout/stderr are tty's.
+     * b) from a pipe, we should have either "-" or "-stdin" options.
+     */
+    if (!LYGetStdinArgs
+	&& !startfile_stdin
+	&& !isatty(fileno(stdin))
+	&& (isatty(fileno(stdout) || isatty(fileno(stderr))))) {
+	int ignored = 0;
+	int ch;
+
+	while ((ch = fgetc(stdin)) != EOF) {
+	    ++ignored;
+	}
+	if (ignored) {
+	    fprintf(stderr,
+		    gettext("Ignored %d characters from standard input.\n"), ignored);
+	    fprintf(stderr,
+		    gettext("Use \"-stdin\" or \"-\" to tell how to handle piped input.\n"));
+	}
+    }
+#endif /* HAVE_TTYNAME */
+
 #ifdef CAN_SWITCH_DISPLAY_CHARSET
     if (current_char_set == auto_display_charset)	/* Better: explicit option */
 	switch_display_charsets = 1;
@@ -1688,16 +1689,16 @@ int main(int argc,
 	if (LYCookieFile == NULL) {
 	    LYCookieFile = typeMallocn(char, LY_MAXPATH);
 
-	    LYAddPathToHome(LYCookieFile, LY_MAXPATH, COOKIE_FILE);
+	    LYAddPathToHome(LYCookieFile, LY_MAXPATH, FNAME_LYNX_COOKIES);
 	} else {
-	    tildeExpand(&LYCookieFile, FALSE);
+	    LYTildeExpand(&LYCookieFile, FALSE);
 	}
 	LYLoadCookies(LYCookieFile);
     }
 
     /* tilde-expand LYCookieSaveFile */
     if (LYCookieSaveFile != NULL) {
-	tildeExpand(&LYCookieSaveFile, FALSE);
+	LYTildeExpand(&LYCookieSaveFile, FALSE);
     }
 
     /*
@@ -1713,6 +1714,13 @@ int main(int argc,
 	}
     }
 #endif
+
+    /*
+     * Check for a help file URL in the environment. Overiding
+     * compiled-in default and configuration file setting, if found.
+     */
+    if ((cp = LYGetEnv("LYNX_HELPFILE")) != NULL)
+	StrAllocCopy(helpfile, cp);
 
     /*
      * Set up our help and about file base paths. - FM
@@ -1736,7 +1744,7 @@ int main(int argc,
 	FREE(lynx_save_space);
     }
     if (lynx_save_space) {
-	tildeExpand(&lynx_save_space, TRUE);
+	LYTildeExpand(&lynx_save_space, TRUE);
 #ifdef VMS
 	LYLowerCase(lynx_save_space);
 	if (strchr(lynx_save_space, '/') != NULL) {
@@ -1771,13 +1779,10 @@ int main(int argc,
     if (!LYCheckUserAgent()) {
 	HTAlwaysAlert(gettext("Warning:"), UA_NO_LYNX_WARNING);
     }
-#ifdef SH_EX
     if (show_cfg) {
 	cleanup();
 	exit_immediately(EXIT_SUCCESS);
     }
-#endif
-
 #ifdef USE_SLANG
     if (LYShowColor >= SHOW_COLOR_ON &&
 	!(Lynx_Color_Flags & SL_LYNX_USE_COLOR)) {
@@ -1836,14 +1841,14 @@ int main(int argc,
      * Check the -popup command line toggle.  - FM
      */
     if (LYUseDefSelPop == FALSE) {
-	LYSelectPopups = !LYSelectPopups;
+	LYSelectPopups = (BOOLEAN) !LYSelectPopups;
     }
 
     /*
      * Check the -show_cursor command line toggle.  - FM
      */
     if (LYUseDefShoCur == FALSE) {
-	LYShowCursor = !LYShowCursor;
+	LYShowCursor = (BOOLEAN) !LYShowCursor;
     }
 
     /*
@@ -1919,9 +1924,9 @@ int main(int argc,
     if (!TRACE && !dump_output_immediately && !stack_dump) {
 	(void) signal(SIGINT, cleanup_sig);
 #ifndef __linux__
-#ifndef DOSPATH
+#ifdef SIGBUS
 	(void) signal(SIGBUS, FatalProblem);
-#endif /* DOSPATH */
+#endif /* SIGBUS */
 #endif /* !__linux__ */
 	(void) signal(SIGSEGV, FatalProblem);
 	(void) signal(SIGILL, FatalProblem);
@@ -1933,10 +1938,10 @@ int main(int argc,
 	 * disconnected terminal.  So the runaway CPU time problem on Unix
 	 * should not occur any more.
 	 */
-#ifndef DOSPATH
+#ifdef SIGPIPE
 	if (signal(SIGPIPE, SIG_IGN) != SIG_IGN)
 	    restore_sigpipe_for_children = TRUE;
-#endif /* DOSPATH */
+#endif /* SIGPIPE */
     }
 #endif /* !VMS */
 
@@ -2049,6 +2054,14 @@ int main(int argc,
 	ftp_ok = (BOOL) (!no_outside_ftp && ftp_ok);
 	rlogin_ok = (BOOL) (!no_outside_rlogin && rlogin_ok);
     }
+#ifdef DISABLE_FTP
+    ftp_ok = FALSE;
+#else
+    /* predefine some known broken ftp servers */
+    LYSetConfigValue(RC_BROKEN_FTP_RETR, "ProFTPD 1.2.5");
+    LYSetConfigValue(RC_BROKEN_FTP_RETR, "spftp/");
+    LYSetConfigValue(RC_BROKEN_FTP_EPSV, "(Version wu-2.6.2-12)");
+#endif
 
     /*
      * Make sure our bookmark default strings are all allocated and
@@ -2107,8 +2120,7 @@ int main(int argc,
 		    i + 1, HTList_count(Goto_URLs), startfile));
 	    status = mainloop();
 	    if (!no_list &&
-		!crawl &&	/* For -crawl it has already been done! */
-		links_are_numbered())
+		!crawl)		/* For -crawl it has already been done! */
 		printlist(stdout, FALSE);
 	    if (i != 0)
 		printf("\n");
@@ -2122,7 +2134,7 @@ int main(int argc,
 #endif
 #ifdef USE_PERSISTENT_COOKIES
 	/*
-	 * We want to save cookies picked up when in immediate dump mode. 
+	 * We want to save cookies picked up when in immediate dump mode.
 	 * Instead of calling cleanup() here, let's only call this one.  - BJP
 	 */
 	if (persistent_cookies)
@@ -2149,6 +2161,9 @@ int main(int argc,
 #endif
 
 	ena_csi((BOOLEAN) (LYlowest_eightbit[current_char_set] > 155));
+#ifdef USE_SESSIONS
+	RestoreSession();
+#endif /* USE_SESSIONS */
 	status = mainloop();
 	LYCloseCloset(RECALL_URL);
 	LYCloseCloset(RECALL_MAIL);
@@ -2167,15 +2182,19 @@ int main(int argc,
 }
 
 /*
- * Called by HTAccessInit to register any protocols supported by lynx. 
+ * Called by HTAccessInit to register any protocols supported by lynx.
  * Protocols added by lynx:
- *    LYNXKEYMAP, lynxcgi, LYNXIMGMAP, LYNXCOOKIE, LYNXMESSAGES
+ *    LYNXKEYMAP, lynxcgi, LYNXIMGMAP, LYNXCOOKIE, LYNXCACHE, LYNXMESSAGES
  */
 #ifdef GLOBALREF_IS_MACRO
 extern GLOBALREF (HTProtocol, LYLynxKeymap);
 extern GLOBALREF (HTProtocol, LYLynxCGI);
 extern GLOBALREF (HTProtocol, LYLynxIMGmap);
 extern GLOBALREF (HTProtocol, LYLynxCookies);
+
+#ifdef USE_CACHEJAR
+extern GLOBALREF (HTProtocol, LYLynxCache);
+#endif
 extern GLOBALREF (HTProtocol, LYLynxStatusMessages);
 
 #else
@@ -2183,6 +2202,10 @@ GLOBALREF HTProtocol LYLynxKeymap;
 GLOBALREF HTProtocol LYLynxCGI;
 GLOBALREF HTProtocol LYLynxIMGmap;
 GLOBALREF HTProtocol LYLynxCookies;
+
+#ifdef USE_CACHEJAR
+GLOBALREF HTProtocol LYLynxCache;
+#endif
 GLOBALREF HTProtocol LYLynxStatusMessages;
 #endif /* GLOBALREF_IS_MACRO */
 
@@ -2192,6 +2215,9 @@ void LYRegisterLynxProtocols(void)
     HTRegisterProtocol(&LYLynxCGI);
     HTRegisterProtocol(&LYLynxIMGmap);
     HTRegisterProtocol(&LYLynxCookies);
+#ifdef USE_CACHEJAR
+    HTRegisterProtocol(&LYLynxCache);
+#endif
     HTRegisterProtocol(&LYLynxStatusMessages);
 }
 
@@ -2304,28 +2330,10 @@ void reload_read_cfg(void)
 	init_charset_subsets();
 #endif
 
-	/* We are not interested in startfile here */
-	/* but other things may be lost: */
-
-	/*
-	 * Process any command line arguments not already handled.
-	 */
-	/* Not implemented yet here */
-
-	/*
-	 * Process any stdin-derived arguments for a lone "-" which we've
-	 * loaded into LYStdinArgs.
-	 */
-	/* Not implemented yet here */
-
 	/*
 	 * Initialize other things based on the configuration read.
 	 */
-	if (user_mode == NOVICE_MODE) {
-	    display_lines = LYlines - 4;
-	} else {
-	    display_lines = LYlines - 2;
-	}
+	LYSetDisplayLines();
 	/* Not implemented yet here,
 	 * a major problem: file paths
 	 * like lynx_save_space, LYCookieFile etc.
@@ -2356,19 +2364,10 @@ void reload_read_cfg(void)
 }
 #endif /* !NO_CONFIG_INFO */
 
-static void disable_pausing(void)
-{
-    AlertSecs = 0;
-    DebugSecs = 0;
-    InfoSecs = 0;
-    MessageSecs = 0;
-    ReplaySecs = 0;
-}
-
 static void force_dump_mode(void)
 {
     dump_output_immediately = TRUE;
-    disable_pausing();
+    no_pause = TRUE;
     LYcols = DFT_COLS;
 }
 
@@ -2527,6 +2526,14 @@ static int child_fun(char *next_arg GCC_UNUSED)
 {
     child_lynx = TRUE;
     no_disk_save = TRUE;
+    no_mail = TRUE;
+    return 0;
+}
+
+/* -child_relaxed */
+static int child_relaxed_fun(char *next_arg GCC_UNUSED)
+{
+    child_lynx = TRUE;
     return 0;
 }
 
@@ -2672,7 +2679,7 @@ static int get_data_fun(char *next_arg GCC_UNUSED)
     char *buf = NULL;
 
     /*
-     * On Unix, conflicts with curses when interactive so let's force a dump. 
+     * On Unix, conflicts with curses when interactive so let's force a dump.
      * -CL
      *
      * On VMS, mods have been made in LYCurses.c to deal with potential
@@ -2811,7 +2818,14 @@ static int nocolor_fun(char *next_arg GCC_UNUSED)
 /* -nopause */
 static int nopause_fun(char *next_arg GCC_UNUSED)
 {
-    disable_pausing();
+    no_pause = TRUE;
+    return 0;
+}
+
+/* -nomore */
+static int nomore_fun(char *next_arg GCC_UNUSED)
+{
+    nomore = TRUE;
     return 0;
 }
 
@@ -3125,15 +3139,19 @@ static int version_fun(char *next_arg GCC_UNUSED)
 {
     char *result = NULL;
 
+    SetLocale();
     SetOutputMode(O_TEXT);
 
     HTSprintf0(&result, gettext("%s Version %s (%s)"),
 	       LYNX_NAME, LYNX_VERSION,
 	       LYVersionDate());
-#ifdef USE_SSL
+
     StrAllocCat(result, "\n");
+#ifdef USE_SSL
     HTSprintf(&result, "libwww-FM %s,", HTLibraryVersion);
     append_ssl_version(&result, " ");
+#else
+    HTSprintf(&result, "libwww-FM %s", HTLibraryVersion);
 #endif /* USE_SSL */
 
 #if defined(NCURSES) && defined(HAVE_CURSES_VERSION)
@@ -3161,6 +3179,9 @@ static int version_fun(char *next_arg GCC_UNUSED)
  * SYSTEM_NAME is set by the configure script.  Show build date/time for other
  * systems, according to predefined compiler symbols.
  */
+#ifdef SYSTEM_NAME
+    printf(gettext("Built on %s %s %s\n"), SYSTEM_NAME, __DATE__, __TIME__);
+#else
 #ifdef __CYGWIN__
     printf("Compiled by CYGWIN (%s %s).\n", __DATE__, __TIME__);
 #else
@@ -3172,14 +3193,18 @@ static int version_fun(char *next_arg GCC_UNUSED)
 #else
 #ifdef __DJGPP__
     printf("Compiled by DJGPP (%s %s).\n", __DATE__, __TIME__);
+#else
+    printf("Compiled at (%s %s).\n", __DATE__, __TIME__);
 #endif /* __DJGPP__ */
 #endif /* _MSC_VER */
 #endif /* __BORLANDC__ */
 #endif /* __CYGWIN__ */
+#endif
 
     puts("");
-    puts(gettext("Copyrights held by the University of Kansas, CERN, and other contributors."));
-    puts(gettext("Distributed under the GNU General Public License."));
+    puts(gettext("Copyrights held by the Lynx Developers Group,"));
+    puts(gettext("the University of Kansas, CERN, and other contributors."));
+    puts(gettext("Distributed under the GNU General Public License (Version 2)."));
     puts(gettext("See http://lynx.isc.org/ and the online help for more information."));
     puts("");
 #ifdef USE_SSL
@@ -3253,11 +3278,11 @@ static Config_Type Arg_Table [] =
       "=MIMEname\ncharset for documents that don't specify it"
    ),
    PARSE_FUN(
-      "assume_local_charset",	4|NEED_FUNCTION_ARG,assume_local_charset_fun,
+      "assume_local_charset", 4|NEED_FUNCTION_ARG, assume_local_charset_fun,
       "=MIMEname\ncharset assumed for local files"
    ),
    PARSE_FUN(
-      "assume_unrec_charset",	4|NEED_FUNCTION_ARG,assume_unrec_charset_fun,
+      "assume_unrec_charset", 4|NEED_FUNCTION_ARG, assume_unrec_charset_fun,
       "=MIMEname\nuse this instead of unrecognized charsets"
    ),
    PARSE_FUN(
@@ -3266,7 +3291,8 @@ static Config_Type Arg_Table [] =
    ),
    PARSE_FUN(
       "base",		4|FUNCTION_ARG,		base_fun,
-      "prepend a request URL comment and BASE tag to text/html\noutputs for -source dumps"
+      "prepend a request URL comment and BASE tag to text/html\n\
+outputs for -source dumps"
    ),
 #ifndef DISABLE_BIBP
    PARSE_STR(
@@ -3308,14 +3334,18 @@ static Config_Type Arg_Table [] =
       "child",		4|FUNCTION_ARG,		child_fun,
       "exit on left-arrow in startfile, and disable save to disk"
    ),
+   PARSE_FUN(
+      "child_relaxed",	4|FUNCTION_ARG,		child_relaxed_fun,
+      "exit on left-arrow in startfile (allows save to disk)"
+   ),
 #ifdef EXP_CMD_LOGGING
    PARSE_STR(
-       "cmd_log",	2|NEED_LYSTRING_ARG,	lynx_cmd_logfile,
-       "=FILENAME\nlog keystroke commands to the given file"
+      "cmd_log",	2|NEED_LYSTRING_ARG,	lynx_cmd_logfile,
+      "=FILENAME\nlog keystroke commands to the given file"
    ),
    PARSE_STR(
-       "cmd_script",	2|NEED_LYSTRING_ARG,	lynx_cmd_script,
-       "=FILENAME\nread keystroke commands from the given file\n(see -cmd_log)"
+      "cmd_script",	2|NEED_LYSTRING_ARG,	lynx_cmd_script,
+      "=FILENAME\nread keystroke commands from the given file\n(see -cmd_log)"
    ),
 #endif
 #ifdef USE_SLANG
@@ -3340,7 +3370,7 @@ static Config_Type Arg_Table [] =
       "=FILENAME\nspecifies a file to use to read cookies"
    ),
    PARSE_STR(
-      "cookie_save_file",	4|LYSTRING_ARG,	LYCookieSaveFile,
+      "cookie_save_file", 4|LYSTRING_ARG,	LYCookieSaveFile,
       "=FILENAME\nspecifies a file to use to store cookies"
    ),
 #endif /* USE_PERSISTENT_COOKIES */
@@ -3431,7 +3461,8 @@ keys (may be incompatible with some curses packages)"
 #endif
    PARSE_SET(
       "force_empty_hrefless_a",	4|SET_ARG,	force_empty_hrefless_a,
-      "\nforce HREF-less 'A' elements to be empty (close them as\nsoon as they are seen)"
+      "\nforce HREF-less 'A' elements to be empty (close them as\n\
+soon as they are seen)"
    ),
    PARSE_SET(
       "force_html",	4|SET_ARG,		LYforce_HTML_mode,
@@ -3451,10 +3482,12 @@ keys (may be incompatible with some curses packages)"
       "from",		4|TOGGLE_ARG,		LYNoFromHeader,
       "toggle transmission of From headers"
    ),
+#ifndef DISABLE_FTP
    PARSE_SET(
       "ftp",		4|UNSET_ARG,		ftp_ok,
       "disable ftp access"
    ),
+#endif
    PARSE_FUN(
       "get_data",	2|FUNCTION_ARG,		get_data_fun,
       "user data for get forms, read from stdin,\nterminated by '---' on a line"
@@ -3464,7 +3497,7 @@ keys (may be incompatible with some curses packages)"
       "send a HEAD request"
    ),
    PARSE_FUN(
-      "help",		1|FUNCTION_ARG,		help_fun,
+      "help",		4|FUNCTION_ARG,		help_fun,
       "print this usage message"
    ),
    PARSE_FUN(
@@ -3587,7 +3620,11 @@ keys (may be incompatible with some curses packages)"
    ),
    PARSE_SET(
       "nomargins",	4|SET_ARG,		no_margins,
-      "disable the right/left margins in the default style-sheet"
+      "disable the right/left margins in the default\nstyle-sheet"
+   ),
+   PARSE_FUN(
+      "nomore",		4|FUNCTION_ARG,		nomore_fun,
+      "disable -more- string in statusline messages"
    ),
 #if defined(HAVE_SIGACTION) && defined(SIGWINCH)
    PARSE_SET(
@@ -3662,17 +3699,25 @@ keys (may be incompatible with some curses packages)"
 with partial-display logic"
    ),
 #endif
+#ifndef DISABLE_FTP
+   PARSE_SET(
+      "passive-ftp",	4|TOGGLE_ARG,		ftp_passive,
+      "toggles passive ftp connection"
+   ),
+#endif
    PARSE_FUN(
       "pauth",		4|NEED_FUNCTION_ARG,	pauth_fun,
       "=id:pw\nauthentication information for protected proxy server"
    ),
    PARSE_SET(
       "popup",		4|UNSET_ARG,		LYUseDefSelPop,
-      "toggles handling of single-choice SELECT options via\npopup windows or as lists of radio buttons"
+      "toggles handling of single-choice SELECT options via\n\
+popup windows or as lists of radio buttons"
    ),
    PARSE_FUN(
       "post_data",	2|FUNCTION_ARG,		post_data_fun,
-      "user data for post forms, read from stdin,\nterminated by '---' on a line"
+      "user data for post forms, read from stdin,\n\
+terminated by '---' on a line"
    ),
    PARSE_SET(
       "preparsed",	4|SET_ARG,		LYPreparsedSource,
@@ -3701,6 +3746,10 @@ or CJK mode for the startup character set"
    PARSE_SET(
       "realm",		4|SET_ARG,		check_realm,
       "restricts access to URLs in the starting realm"
+   ),
+   PARSE_INT(
+      "read_timeout",	4|NEED_INT_ARG,		reading_timeout,
+      "=N\nset the N-second read-timeout"
    ),
    PARSE_SET(
       "reload",		4|SET_ARG,		reloading,
@@ -3740,16 +3789,29 @@ with the PREV_DOC command or from the History List"
       "selective",	4|FUNCTION_ARG,		selective_fun,
       "require .www_browsable files to browse directories"
    ),
+#ifdef USE_SESSIONS
+   PARSE_STR(
+      "session",	2|NEED_LYSTRING_ARG,	session_file,
+      "=FILENAME\nresumes from specified file on startup and\n\
+saves session to that file on exit"
+   ),
+   PARSE_STR(
+      "sessionin",	2|NEED_LYSTRING_ARG,	sessionin_file,
+      "=FILENAME\nresumes session from specified file"
+   ),
+   PARSE_STR(
+      "sessionout",	2|NEED_LYSTRING_ARG,	sessionout_file,
+      "=FILENAME\nsaves session to specified file"
+   ),
+#endif /* USE_SESSIONS */
    PARSE_SET(
       "short_url",	4|SET_ARG,		long_url_ok,
       "enables examination of beginning and end of long URL in\nstatus line"
    ),
-#ifdef SH_EX
    PARSE_SET(
       "show_cfg",	1|SET_ARG,		show_cfg,
       "Show `LYNX.CFG' setting"
    ),
-#endif
    PARSE_SET(
       "show_cursor",	4|TOGGLE_ARG,		LYUseDefShoCur,
       "toggles hiding of the cursor in the lower right corner"
@@ -3762,8 +3824,8 @@ with the PREV_DOC command or from the History List"
 #endif
    PARSE_SET(
       "soft_dquotes",	4|TOGGLE_ARG,		soft_dquotes,
-      "toggles emulation of the old Netscape and Mosaic bug which\n\
-treated '>' as a co-terminator for double-quotes and tags"
+      "toggles emulation of the old Netscape and Mosaic\n\
+bug which treated '>' as a co-terminator for\ndouble-quotes and tags"
    ),
    PARSE_FUN(
       "source",		4|FUNCTION_ARG,		source_fun,
@@ -3779,7 +3841,7 @@ treated '>' as a co-terminator for double-quotes and tags"
    ),
    PARSE_SET(
       "stderr",		4|SET_ARG,		dump_to_stderr,
-      "write warning messages to standard error when -dump -or -source is used"
+      "write warning messages to standard error when -dump\nor -source is used"
    ),
    PARSE_SET(
       "stdin",		4|SET_ARG,		startfile_stdin,
@@ -3815,7 +3877,7 @@ treated '>' as a co-terminator for double-quotes and tags"
 #endif
    PARSE_SET(
       "tlog",		2|TOGGLE_ARG,		LYUseTraceLog,
-      "toggles use of a Lynx Trace Log for the current session"
+      "toggles use of a Lynx Trace Log for the current\nsession"
    ),
 #ifdef TEXTFIELDS_MAY_NEED_ACTIVATION
    PARSE_SET(
@@ -3825,11 +3887,11 @@ treated '>' as a co-terminator for double-quotes and tags"
 #endif
 #ifndef NO_LYNX_TRACE
    PARSE_SET(
-      "trace",		2|SET_ARG,		WWW_TraceFlag,
+      "trace",		1|SET_ARG,		WWW_TraceFlag,
       "turns on Lynx trace mode"
    ),
    PARSE_INT(
-      "trace_mask",	2|INT_ARG,		WWW_TraceMask,
+      "trace_mask",	1|INT_ARG,		WWW_TraceMask,
       "customize Lynx trace mode"
    ),
 #endif
@@ -3839,7 +3901,7 @@ treated '>' as a co-terminator for double-quotes and tags"
    ),
    PARSE_SET(
       "trim_input_fields", 2|SET_ARG,		LYtrimInputFields,
-      "trim input text/textarea fields in forms"
+      "\ntrim input text/textarea fields in forms"
    ),
    PARSE_SET(
       "underline_links",4|TOGGLE_ARG,		LYUnderlineLinks,
@@ -3861,11 +3923,14 @@ treated '>' as a co-terminator for double-quotes and tags"
    ),
    PARSE_SET(
       "validate",	2|SET_ARG,		LYValidate,
-      "accept only http URLs (meant for validation)\nimplies more restrictions than -anonymous, but\ngoto is allowed for http and https"
+      "accept only http URLs (meant for validation)\n\
+implies more restrictions than -anonymous, but\n\
+goto is allowed for http and https"
    ),
    PARSE_SET(
       "verbose",	4|TOGGLE_ARG,		verbose_img,
-      "toggles [LINK], [IMAGE] and [INLINE] comments \nwith filenames of these images"
+      "toggles [LINK], [IMAGE] and [INLINE] comments\n\
+with filenames of these images"
    ),
    PARSE_FUN(
       "version",	1|FUNCTION_ARG,		version_fun,
@@ -3891,6 +3956,10 @@ treated '>' as a co-terminator for double-quotes and tags"
       "emit backspaces in output if -dumping or -crawling\n(like 'man' does)"
    ),
 #endif
+   PARSE_SET(
+      "xhtml-parsing",	4|SET_ARG,		LYxhtml_parsing,
+      "enable XHTML 1.0 parsing"
+   ),
    PARSE_NIL
 };
 /* *INDENT-ON* */
@@ -4083,6 +4152,7 @@ static BOOL parse_arg(char **argv,
 
 #if EXTENDED_STARTFILE_RECALL
     static BOOLEAN no_options_further = FALSE;	/* set to TRUE after '--' argument */
+    static int nof_index = 0;	/* set the index of -- argument */
 #endif
 
     arg_name = argv[0];
@@ -4090,7 +4160,7 @@ static BOOL parse_arg(char **argv,
 	    arg_name, mask, countp ? *countp : -1));
 
 #if EXTENDED_STARTFILE_RECALL
-    if (mask == ((countp != 0) ? 0 : 1)) {
+    if (mask == (unsigned) ((countp != 0) ? 0 : 1)) {
 	no_options_further = FALSE;
 	/* want to reset nonoption when beginning scan for --stdin */
 	if (nonoption != 0) {
@@ -4104,7 +4174,7 @@ static BOOL parse_arg(char **argv,
      */
     if (*arg_name != '-'
 #if EXTENDED_OPTION_LOGIC
-	|| no_options_further == TRUE
+	|| (no_options_further == TRUE && nof_index < (*countp))
 #endif
 	) {
 #if EXTENDED_STARTFILE_RECALL
@@ -4140,6 +4210,7 @@ static BOOL parse_arg(char **argv,
 #if EXTENDED_OPTION_LOGIC
     if (strcmp(arg_name, "--") == 0) {
 	no_options_further = TRUE;
+	nof_index = *countp;
 	return TRUE;
     }
 #endif
@@ -4236,7 +4307,7 @@ static BOOL parse_arg(char **argv,
 	    if ((q->int_value != 0) && (next_arg != 0)) {
 		float ival;
 
-		if (1 == sscanf(next_arg, "%f", &ival)) {
+		if (1 == LYscanFloat(next_arg, &ival)) {
 		    *(q->int_value) = (int) SECS2Secs(ival);
 		}
 	    }
@@ -4272,9 +4343,9 @@ static void FatalProblem(int sig)
     (void) signal(SIGTERM, SIG_IGN);
     (void) signal(SIGINT, SIG_IGN);
 #ifndef __linux__
-#ifndef DOSPATH
+#ifdef SIGBUS
     (void) signal(SIGBUS, SIG_IGN);
-#endif /* ! DOSPATH */
+#endif /* ! SIGBUS */
 #endif /* !__linux__ */
     (void) signal(SIGSEGV, SIG_IGN);
     (void) signal(SIGILL, SIG_IGN);
@@ -4293,9 +4364,9 @@ static void FatalProblem(int sig)
     }
     cleanup_sig(0);
 #ifndef __linux__
-#ifndef DOSPATH
+#ifdef SIGBUS
     signal(SIGBUS, SIG_DFL);
-#endif /* DOSPATH */
+#endif /* SIGBUS */
 #endif /* !__linux__ */
     signal(SIGSEGV, SIG_DFL);
     signal(SIGILL, SIG_DFL);
@@ -4363,7 +4434,7 @@ Lynx now exiting with signal:  %d\r\n\r\n", sig);
 	/*
 	 * Exit without dumping core.
 	 */
-	exit_immediately(EXIT_SUCCESS);
+	exit_immediately(EXIT_FAILURE);
     }
 }
 #endif /* !VMS */

@@ -1,4 +1,7 @@
-/*		Case-independent string comparison		HTString.c
+/*
+ * $LynxId: HTString.c,v 1.57 2009/03/17 22:27:59 tom Exp $
+ *
+ *	Case-independent string comparison		HTString.c
  *
  *	Original version came with listserv implementation.
  *	Version TBL Oct 91 replaces one which modified the strings.
@@ -11,6 +14,7 @@
 #include <HTUtils.h>
 
 #include <LYLeaks.h>
+#include <LYUtils.h>
 #include <LYStrings.h>
 
 #ifndef NO_LYNX_TRACE
@@ -18,16 +22,16 @@ BOOLEAN WWW_TraceFlag = 0;	/* Global trace flag for ALL W3 code */
 int WWW_TraceMask = 0;		/* Global trace flag for ALL W3 code */
 #endif
 
+#ifdef _WINDOWS
+#undef VC
+#define VC "2.14FM"
+#endif
+
 #ifndef VC
 #define VC "2.14"
 #endif /* !VC */
 
-#ifdef _WINDOWS
-const char *HTLibraryVersion = "2.14FM";	/* String for help screen etc */
-
-#else
 const char *HTLibraryVersion = VC;	/* String for help screen etc */
-#endif
 
 /*
  *     strcasecomp8 is a variant of strcasecomp (below)
@@ -129,53 +133,118 @@ int strncasecomp(const char *a,
     }
     /*NOTREACHED */
 }
+#endif /* VM */
+
+#define end_component(p) (*(p) == '.' || *(p) == '\0')
+
+#ifdef DEBUG_ASTERISK
+#define SHOW_ASTERISK CTRACE
+#else
+#define SHOW_ASTERISK(p)	/* nothing */
+#endif
+
+#define SHOW_ASTERISK_NUM(a,b,c)  \
+	SHOW_ASTERISK((tfp, "test @%d, '%s' vs '%s' (%d)\n", __LINE__, a,b,c))
+
+#define SHOW_ASTERISK_TXT(a,b,c)  \
+	SHOW_ASTERISK((tfp, "test @%d, '%s' vs '%s' %s\n", __LINE__, a,b,c))
 
 /*
- * Compare strings, ignoring case.  If either begins with an asterisk, treat
- * that as a wildcard to match zero-or-more characters.  This does not test
- * for embedded wildcards.
+ * Compare names as described in RFC 2818: ignore case, allow wildcards. 
+ * Return zero on a match, nonzero on mismatch -TD
+ *
+ * From RFC 2818:
+ * Names may contain the wildcard character * which is considered to match any
+ * single domain name component or component fragment.  E.g., *.a.com matches
+ * foo.a.com but not bar.foo.a.com.  f*.com matches foo.com but not bar.com.
  */
 int strcasecomp_asterisk(const char *a, const char *b)
 {
-    unsigned const char *us1 = (unsigned const char *) a;
-    unsigned const char *us2 = (unsigned const char *) b;
+    const char *p;
     int result = 0;
+    int done = FALSE;
 
-    if ((*a != '*') && (*b != '*')) {
-	result = strcasecomp(a, b);
-    } else {
-	int dir = 1;
-
-	if (*b == '*') {
-	    us1 = us2;
-	    us2 = (unsigned const char *) a;
-	    dir = -1;
-	}
-
-	if (strlen((const char *) us2) < (strlen((const char *) us1) - 1)) {
-	    result = 1;
-	} else {
-	    while (*++us1 != '\0') ;
-	    while (*++us2 != '\0') ;
-
-	    while (1) {
-		unsigned char a1 = TOLOWER(*us1);
-		unsigned char b1 = TOLOWER(*us2);
-
-		if (a1 != b1) {
-		    result = (a1 > b1) ? dir : -dir;
+    while (!result && !done) {
+	SHOW_ASTERISK_TXT(a, b, "main");
+	if (*a == '*') {
+	    p = b;
+	    for (;;) {
+		SHOW_ASTERISK_TXT(a, p, "loop");
+		if (end_component(p)) {
+		    if (end_component(a + 1)) {
+			b = p - 1;
+			result = 0;
+		    } else {
+			result = 1;
+		    }
 		    break;
-		} else if ((*--us1) == '*') {
-		    result = 0;
+		} else if (strcasecomp_asterisk(a + 1, p)) {
+		    ++p;
+		    result = 1;	/* could not match */
+		} else {
+		    b = p - 1;
+		    result = 0;	/* found a match starting at 'p' */
+		    done = TRUE;
 		    break;
 		}
-		--us2;
 	    }
+	    SHOW_ASTERISK_NUM(a, b, result);
+	} else if (*b == '*') {
+	    result = strcasecomp_asterisk(b, a);
+	    SHOW_ASTERISK_NUM(a, b, result);
+	    done = (result == 0);
+	} else if (*a == '\0' || *b == '\0') {
+	    result = (*a != *b);
+	    SHOW_ASTERISK_NUM(a, b, result);
+	    break;
+	} else if (TOLOWER(UCH(*a)) != TOLOWER(UCH(*b))) {
+	    result = 1;
+	    SHOW_ASTERISK_NUM(a, b, result);
+	    break;
 	}
+	++a;
+	++b;
     }
     return result;
 }
-#endif /* VM */
+
+#ifdef DEBUG_ASTERISK
+void mismatch_asterisk(void)
+{
+    /* *INDENT-OFF* */
+    static struct {
+	const char *a;
+	const char *b;
+	int	    code;
+    } table[] = {
+	{ "foo.bar",	 "*.*",	      0 },
+	{ "foo.bar",	 "*.b*",      0 },
+	{ "foo.bar",	 "*.ba*",     0 },
+	{ "foo.bar",	 "*.bar*",    0 },
+	{ "foo.bar",	 "*.*bar*",   0 },
+	{ "foo.bar",	 "*.*.",      1 },
+	{ "foo.bar",	 "fo*.b*",    0 },
+	{ "*oo.bar",	 "fo*.b*",    0 },
+	{ "*oo.bar.com", "fo*.b*",    1 },
+	{ "*oo.bar.com", "fo*.b*m",   1 },
+	{ "*oo.bar.com", "fo*.b*.c*", 0 },
+    };
+    /* *INDENT-ON* */
+
+    unsigned n;
+    int code;
+
+    CTRACE((tfp, "mismatch_asterisk testing\n"));
+    for (n = 0; n < TABLESIZE(table); ++n) {
+	CTRACE((tfp, "-------%d\n", n));
+	code = strcasecomp_asterisk(table[n].a, table[n].b);
+	if (code != table[n].code) {
+	    CTRACE((tfp, "mismatch_asterisk '%s' '%s' got %d, want %d\n",
+		    table[n].a, table[n].b, code, table[n].code));
+	}
+    }
+}
+#endif
 
 #ifdef NOT_ASCII
 
@@ -535,9 +604,9 @@ typedef enum {
     Format
 } PRINTF;
 
-#define VA_INTGR(type) ival = va_arg((*ap), type)
-#define VA_FLOAT(type) fval = va_arg((*ap), type)
-#define VA_POINT(type) pval = (char *)va_arg((*ap), type)
+#define VA_INTGR(type) ival = (int)    va_arg((*ap), type)
+#define VA_FLOAT(type) fval = (double) va_arg((*ap), type)
+#define VA_POINT(type) pval = (char *) va_arg((*ap), type)
 
 #define NUM_WIDTH 10		/* allow for width substituted for "*" in "%*s" */
 		/* also number of chars assumed to be needed in addition
@@ -551,6 +620,46 @@ PUBLIC_IF_FIND_LEAKS char *StrAllocVsprintf(char **pstr,
 					    const char *fmt,
 					    va_list * ap)
 {
+#ifdef HAVE_VASPRINTF
+    /*
+     * Use vasprintf() if we have it, since it is simplest.
+     */
+    char *result = 0;
+    char *temp = 0;
+
+    /* discard old destination if no length was given */
+    if (pstr && !dst_len) {
+	if (*pstr)
+	    FREE(*pstr);
+    }
+
+    if (vasprintf(&temp, fmt, *ap) >= 0) {
+	if (dst_len != 0) {
+	    int src_len = strlen(temp);
+	    int new_len = dst_len + src_len + 1;
+
+	    result = HTAlloc(pstr ? *pstr : 0, new_len);
+	    if (result != 0) {
+		strcpy(result + dst_len, temp);
+		mark_malloced(temp, new_len);
+	    }
+	    free(temp);
+	} else {
+	    result = temp;
+	    mark_malloced(temp, strlen(temp));
+	}
+    }
+
+    if (pstr != 0)
+	*pstr = result;
+
+    return result;
+#else /* !HAVE_VASPRINTF */
+    /*
+     * If vasprintf() is not available, this works - but does not implement
+     * the POSIX '$' formatting character which may be used in some of the
+     * ".po" files.
+     */
 #ifdef SAVE_TIME_NOT_SPACE
     static size_t tmp_len = 0;
     static size_t fmt_len = 0;
@@ -566,19 +675,8 @@ PUBLIC_IF_FIND_LEAKS char *StrAllocVsprintf(char **pstr,
     char *dst_ptr = *pstr;
     const char *format = fmt;
 
-    if (fmt == 0 || *fmt == '\0')
+    if (isEmpty(fmt))
 	return 0;
-
-#ifdef USE_VASPRINTF
-    if (pstr && !dst_len) {
-	if (*pstr)
-	    FREE(*pstr);
-	if (vasprintf(pstr, fmt, *ap) >= 0) {
-	    mark_malloced(*pstr, strlen(*pstr) + 1);
-	    return (*pstr);
-	}
-    }
-#endif /* USE_VASPRINTF */
 
     need = strlen(fmt) + 1;
 #ifdef SAVE_TIME_NOT_SPACE
@@ -780,6 +878,7 @@ PUBLIC_IF_FIND_LEAKS char *StrAllocVsprintf(char **pstr,
     if (pstr)
 	*pstr = dst_ptr;
     return (dst_ptr);
+#endif /* HAVE_VASPRINTF */
 }
 #undef SAVE_TIME_NOT_SPACE
 
@@ -827,16 +926,7 @@ char *HTSprintf0(char **pstr, const char *fmt,...)
 
     LYva_start(ap, fmt);
     {
-#ifdef USE_VASPRINTF
-	if (pstr) {
-	    if (*pstr)
-		FREE(*pstr);
-	    if (vasprintf(pstr, fmt, ap) >= 0)	/* else call outofmem?? */
-		mark_malloced(*pstr, strlen(*pstr) + 1);
-	    result = *pstr;
-	} else
-#endif /* USE_VASPRINTF */
-	    result = StrAllocVsprintf(pstr, 0, fmt, &ap);
+	result = StrAllocVsprintf(pstr, 0, fmt, &ap);
     }
     va_end(ap);
 
@@ -872,6 +962,18 @@ char *HTQuoteParameter(const char *parameter)
 	outofmem(__FILE__, "HTQuoteParameter");
 
     n = 0;
+#if (USE_QUOTED_PARAMETER == 1)
+    /*
+     * Only double-quotes are used in Win32/DOS -TD
+     */
+    if (quoted)
+	result[n++] = D_QUOTE;
+    for (i = 0; i < last; i++) {
+	result[n++] = parameter[i];
+    }
+    if (quoted)
+	result[n++] = D_QUOTE;
+#else
     if (quoted)
 	result[n++] = S_QUOTE;
     for (i = 0; i < last; i++) {
@@ -894,6 +996,7 @@ char *HTQuoteParameter(const char *parameter)
     }
     if (quoted)
 	result[n++] = S_QUOTE;
+#endif
     result[n] = '\0';
     return result;
 }
@@ -1076,7 +1179,9 @@ void HTSABCopy(bstring **dest, const char *src,
     bstring *t;
     unsigned need = len + 1;
 
-    CTRACE2(TRACE_BSTRING, (tfp, "HTSABCopy(%p, %p, %d)\n", dest, src, len));
+    CTRACE2(TRACE_BSTRING,
+	    (tfp, "HTSABCopy(%p, %p, %d)\n",
+	     (void *) dest, (const void *) src, len));
     HTSABFree(dest);
     if (src) {
 	if (TRACE_BSTRING) {
@@ -1117,7 +1222,9 @@ void HTSABCat(bstring **dest, const char *src,
 {
     bstring *t = *dest;
 
-    CTRACE2(TRACE_BSTRING, (tfp, "HTSABCat(%p, %p, %d)\n", dest, src, len));
+    CTRACE2(TRACE_BSTRING,
+	    (tfp, "HTSABCat(%p, %p, %d)\n",
+	     (void *) dest, (const void *) src, len));
     if (src) {
 	unsigned need = len + 1;
 

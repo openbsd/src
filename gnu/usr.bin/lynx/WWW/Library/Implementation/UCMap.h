@@ -1,3 +1,6 @@
+/*
+ * $LynxId: UCMap.h,v 1.23 2009/01/01 02:03:25 tom Exp $
+ */
 #ifndef UCMAP_H
 #define UCMAP_H
 
@@ -8,6 +11,18 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+    typedef enum {
+	ucError = -1,
+	ucZeroWidth = -2,
+	ucInvalidHash = -3,
+	ucNotFound = -4,
+	ucNeedMore = -10,
+	ucCannotConvert = -11,
+	ucCannotOutput = -12,
+	ucBufferTooSmall = -13,
+	ucUnknown = -14
+    } UCStatus;
+
     typedef long UCode_t;
 
     extern int UCTransUniChar(UCode_t unicode,
@@ -40,7 +55,7 @@ extern "C" {
     extern int UCGetLYhndl_byMIME(const char *p);	/* returns -1 if name not recognized */
     extern int safeUCGetLYhndl_byMIME(const char *p);	/* returns LATIN1 if name not recognized */
 
-#ifdef EXP_LOCALE_CHARSET
+#ifdef USE_LOCALE_CHARSET
     extern void LYFindLocaleCharset(void);
 #endif
 

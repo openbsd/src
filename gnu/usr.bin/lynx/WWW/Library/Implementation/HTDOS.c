@@ -1,5 +1,6 @@
-/*	       DOS specific routines
-
+/*
+ * $LynxId: HTDOS.c,v 1.36 2009/01/03 01:58:39 tom Exp $
+ *							DOS specific routines
  */
 
 #include <HTUtils.h>
@@ -19,9 +20,16 @@
  */
 static char *copy_plus(char **result, const char *source)
 {
-    int length = strlen(source);
+    int length = (int) strlen(source);
+    int extra = 10;
+    int n;
 
-    HTSprintf0(result, "%-*s", length + 10, source);
+    for (n = 0; n < length; ++n) {
+	if (source[n] == ' ')
+	    ++extra;
+    }
+
+    HTSprintf0(result, "%-*s", length + extra, source);
     (*result)[length] = 0;
     return (*result);
 }
@@ -40,8 +48,6 @@ const char *HTDOS_wwwName(const char *dosname)
     static char *wwwname = NULL;
     char *cp_url = copy_plus(&wwwname, dosname);
     int wwwname_len;
-
-#ifdef SH_EX
     char ch;
 
     while ((ch = *dosname) != '\0') {
@@ -62,13 +68,8 @@ const char *HTDOS_wwwName(const char *dosname)
 	dosname++;
     }
     *cp_url = '\0';
-#else
-    for (; *cp_url != '\0'; cp_url++)
-	if (*cp_url == '\\')
-	    *cp_url = '/';	/* convert dos backslash to unix-style */
-#endif
 
-    wwwname_len = strlen(wwwname);
+    wwwname_len = (int) strlen(wwwname);
     if (wwwname_len > 1)
 	cp_url--;		/* point last char */
 

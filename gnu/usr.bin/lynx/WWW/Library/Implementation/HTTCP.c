@@ -1,4 +1,7 @@
-/*			Generic Communication Code		HTTCP.c
+/*
+ * $LynxId: HTTCP.c,v 1.98 2008/12/07 21:10:36 tom Exp $
+ *
+ *			Generic Communication Code		HTTCP.c
  *			==========================
  *
  *	This code is in common between client and server sides.
@@ -377,7 +380,7 @@ static void dump_hostent(const char *msgprefix,
 	int i;
 	char **pcnt;
 
-	CTRACE((tfp, "%s: %p ", msgprefix, phost));
+	CTRACE((tfp, "%s: %p ", msgprefix, (const void *) phost));
 	if (phost) {
 	    CTRACE((tfp, "{ h_name = %p", phost->h_name));
 	    if (phost->h_name) {
@@ -385,7 +388,7 @@ static void dump_hostent(const char *msgprefix,
 	    } else {
 		CTRACE((tfp, ","));
 	    }
-	    CTRACE((tfp, "\n\t h_aliases = %p", phost->h_aliases));
+	    CTRACE((tfp, "\n\t h_aliases = %p", (void *) phost->h_aliases));
 	    if (phost->h_aliases) {
 		CTRACE((tfp, " {"));
 		for (pcnt = phost->h_aliases; *pcnt; pcnt++) {
@@ -400,7 +403,7 @@ static void dump_hostent(const char *msgprefix,
 	    }
 	    CTRACE((tfp, " h_addrtype = %d,", phost->h_addrtype));
 	    CTRACE((tfp, " h_length = %d,\n\t", phost->h_length));
-	    CTRACE((tfp, " h_addr_list = %p", phost->h_addr_list));
+	    CTRACE((tfp, " h_addr_list = %p", (void *) phost->h_addr_list));
 	    if (phost->h_addr_list) {
 		CTRACE((tfp, " {"));
 		for (pcnt = phost->h_addr_list; *pcnt; pcnt++) {
@@ -575,7 +578,7 @@ static size_t fill_rehostent(char *rehostent,
 #if defined(_WINDOWS_NSL)
 static LYNX_HOSTENT *gbl_phost;	/* Pointer to host - See netdb.h */
 
-#ifndef __CYGWIN__
+#if !(defined(__CYGWIN__) && defined(NSL_FORK))
 static int donelookup;
 
 static unsigned long __stdcall _fork_func(void *arg)
@@ -1148,7 +1151,12 @@ LYNX_HOSTENT *LYGetHostByName(char *str)
 #endif /* !__CYGWIN__ */
 	    gbl_phost = (LYNX_HOSTENT *) NULL;
 	    donelookup = FALSE;
+
+#if defined(__CYGWIN__) || defined(USE_WINSOCK2_H)
+	    SetLastError(WSAHOST_NOT_FOUND);
+#else
 	    WSASetLastError(WSAHOST_NOT_FOUND);
+#endif
 
 	    hThread = CreateThread(NULL, 4096UL, _fork_func, host, 0UL,
 				   &dwThreadID);
@@ -1522,6 +1530,35 @@ const char *HTHostName(void)
     return hostname;
 }
 
+#ifdef _WINDOWS
+#define SET_EINTR WSASetLastError(EINTR)
+#else
+#define SET_EINTR SOCKET_ERRNO = EINTR
+#endif
+
+static BOOL HTWasInterrupted(int *status)
+{
+    BOOL result = FALSE;
+
+    if (HTCheckForInterrupt()) {
+	result = TRUE;
+	*status = HT_INTERRUPTED;
+	SET_EINTR;
+    }
+    return result;
+}
+
+#define TRIES_PER_SECOND 10
+
+/*
+ * Set the select-timeout to 0.1 seconds.
+ */
+static void set_timeout(struct timeval *timeoutp)
+{
+    timeoutp->tv_sec = 0;
+    timeoutp->tv_usec = 100000;
+}
+
 #ifndef MULTINET		/* SOCKET_ERRNO != errno ? */
 #if !defined(UCX) || !defined(VAXC)	/* errno not modifiable ? */
 #define SOCKET_DEBUG_TRACE	/* show errno status after some system calls */
@@ -1722,7 +1759,7 @@ int HTDoConnect(const char *url,
 		/*
 		 * Protect against an infinite loop.
 		 */
-		if ((tries++ / 10) >= connect_timeout) {
+		if ((tries++ / TRIES_PER_SECOND) >= connect_timeout) {
 		    HTAlert(gettext("Connection failed (too many retries)."));
 #ifdef INET6
 		    FREE(line);
@@ -1731,13 +1768,7 @@ int HTDoConnect(const char *url,
 #endif /* INET6 */
 		    return HT_NO_DATA;
 		}
-#ifdef _WINDOWS_NSL
-		select_timeout.tv_sec = connect_timeout;
-		select_timeout.tv_usec = 0;
-#else
-		select_timeout.tv_sec = 0;
-		select_timeout.tv_usec = 100000;
-#endif /* _WINDOWS_NSL */
+		set_timeout(&select_timeout);
 		FD_ZERO(&writefds);
 		FD_SET((unsigned) *s, &writefds);
 #ifdef SOCKS
@@ -1869,14 +1900,8 @@ int HTDoConnect(const char *url,
 			break;
 		    }
 		}
-		if (HTCheckForInterrupt()) {
+		if (HTWasInterrupted(&status)) {
 		    CTRACE((tfp, "*** INTERRUPTED in middle of connect.\n"));
-		    status = HT_INTERRUPTED;
-#ifdef _WINDOWS
-		    WSASetLastError(EINTR);
-#else
-		    SOCKET_ERRNO = EINTR;
-#endif
 		    break;
 		}
 	    }
@@ -1942,7 +1967,11 @@ int HTDoRead(int fildes,
 	     void *buf,
 	     unsigned nbyte)
 {
-    int ready, ret;
+    int result;
+    BOOL ready;
+
+#if !defined(NO_IOCTL)
+    int ret;
     fd_set readfds;
     struct timeval select_timeout;
     int tries = 0;
@@ -1950,10 +1979,9 @@ int HTDoRead(int fildes,
 #ifdef USE_READPROGRESS
     int otries = 0;
     time_t otime = time((time_t *) 0);
+    time_t start = otime;
 #endif
-#if defined(UNIX) || defined(UCX)
-    int nb;
-#endif /* UCX, BSN */
+#endif /* !NO_IOCTL */
 
 #if defined(UNIX) && !defined(__BEOS__)
     if (fildes == 0) {
@@ -1967,37 +1995,31 @@ int HTDoRead(int fildes,
 	}
     } else
 #endif
-    if (fildes <= 0)
+    if (fildes <= 0) {
+	CTRACE((tfp, "HTDoRead - no file descriptor!\n"));
 	return -1;
-
-    if (HTCheckForInterrupt()) {
-#ifdef _WINDOWS
-	WSASetLastError(EINTR);
-#else
-	SOCKET_ERRNO = EINTR;
-#endif
-	return (HT_INTERRUPTED);
     }
-#if !defined(NO_IOCTL)
-    ready = 0;
+
+    if (HTWasInterrupted(&result)) {
+	CTRACE((tfp, "HTDoRead - interrupted before starting!\n"));
+	return (result);
+    }
+#if defined(NO_IOCTL)
+    ready = TRUE;
 #else
-    ready = 1;
-#endif /* bypass for NO_IOCTL */
+    ready = FALSE;
     while (!ready) {
 	/*
 	 * Protect against an infinite loop.
 	 */
-	if (tries++ >= 180000) {
-	    HTAlert(gettext("Socket read failed for 180,000 tries."));
-#ifdef _WINDOWS
-	    WSASetLastError(EINTR);
-#else
-	    SOCKET_ERRNO = EINTR;
-#endif
-	    return HT_INTERRUPTED;
+	if ((tries++ / TRIES_PER_SECOND) >= reading_timeout) {
+	    HTAlert(gettext("Socket read failed (too many tries)."));
+	    SET_EINTR;
+	    result = HT_INTERRUPTED;
+	    break;
 	}
 #ifdef USE_READPROGRESS
-	if (tries - otries > 10) {
+	if (tries - otries > TRIES_PER_SECOND) {
 	    time_t t = time((time_t *) 0);
 
 	    otries = tries;
@@ -2013,8 +2035,7 @@ int HTDoRead(int fildes,
 	 * Allow for this possibility.  - JED
 	 */
 	do {
-	    select_timeout.tv_sec = 0;
-	    select_timeout.tv_usec = 100000;
+	    set_timeout(&select_timeout);
 	    FD_ZERO(&readfds);
 	    FD_SET((unsigned) fildes, &readfds);
 #ifdef SOCKS
@@ -2028,55 +2049,57 @@ int HTDoRead(int fildes,
 	} while ((ret == -1) && (errno == EINTR));
 
 	if (ret < 0) {
-	    return -1;
+	    result = -1;
+	    break;
 	} else if (ret > 0) {
-	    ready = 1;
-	} else if (HTCheckForInterrupt()) {
-#ifdef _WINDOWS
-	    WSASetLastError(EINTR);
-#else
-	    SOCKET_ERRNO = EINTR;
-#endif
-	    return HT_INTERRUPTED;
+	    ready = TRUE;
+	} else if (HTWasInterrupted(&result)) {
+	    break;
 	}
     }
+#endif /* !NO_IOCTL */
 
-#if !defined(UCX) || !defined(VAXC)
+    if (ready) {
+#if defined(UCX) && defined(VAXC)
+	/*
+	 * VAXC and UCX problem only.
+	 */
+	errno = vaxc$errno = 0;
+	result = SOCKET_READ(fildes, buf, nbyte);
+	CTRACE((tfp,
+		"Read - result,errno,vaxc$errno: %d %d %d\n", result, errno, vaxc$errno));
+	if ((result <= 0) && TRACE)
+	    perror("HTTCP.C:HTDoRead:read");	/* RJF */
+	/*
+	 * An errno value of EPIPE and result < 0 indicates end-of-file on VAXC.
+	 */
+	if ((result <= 0) && (errno == EPIPE)) {
+	    result = 0;
+	    set_errno(0);
+	}
+#else
 #ifdef UNIX
-    while ((nb = SOCKET_READ(fildes, buf, nbyte)) == -1) {
-	if (errno == EINTR)
-	    continue;
+	while ((result = SOCKET_READ(fildes, buf, nbyte)) == -1) {
+	    if (errno == EINTR)
+		continue;
 #ifdef ERESTARTSYS
-	if (errno == ERESTARTSYS)
-	    continue;
+	    if (errno == ERESTARTSYS)
+		continue;
 #endif /* ERESTARTSYS */
-	HTInetStatus("read");
-	break;
-    }
-    return nb;
+	    HTInetStatus("read");
+	    break;
+	}
 #else /* UNIX */
-    return SOCKET_READ(fildes, buf, nbyte);
+	result = SOCKET_READ(fildes, buf, nbyte);
 #endif /* !UNIX */
-
-#else /* UCX && VAXC */
-    /*
-     * VAXC and UCX problem only.
-     */
-    errno = vaxc$errno = 0;
-    nb = SOCKET_READ(fildes, buf, nbyte);
-    CTRACE((tfp,
-	    "Read - nb,errno,vaxc$errno: %d %d %d\n", nb, errno, vaxc$errno));
-    if ((nb <= 0) && TRACE)
-	perror("HTTCP.C:HTDoRead:read");	/* RJF */
-    /*
-     * An errno value of EPIPE and nb < 0 indicates end-of-file on VAXC.
-     */
-    if ((nb <= 0) && (errno == EPIPE)) {
-	nb = 0;
-	set_errno(0);
+#endif /* UCX && VAXC */
     }
-    return nb;
-#endif /* UCX, BSN */
+#ifdef USE_READPROGRESS
+    CTRACE2(TRACE_TIMING, (tfp, "...HTDoRead returns %d (%" PRI_time_t
+			   " seconds)\n",
+			   result, CAST_time_t(time((time_t *) 0) - start)));
+#endif
+    return result;
 }
 
 #ifdef SVR4_BSDSELECT

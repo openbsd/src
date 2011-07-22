@@ -1,4 +1,6 @@
-/*		Simple table object
+/*
+ * $LynxId: TRSTable.c,v 1.24 2009/01/01 22:15:35 tom Exp $
+ *		Simple table object
  *		===================
  * Authors
  *	KW	Klaus Weide <kweide@enteract.com>
@@ -449,10 +451,10 @@ static int Stbl_addCellToRow(STable_rowinfo *me, STable_cellinfo *colinfo, int n
 	    growby += CELLS_GROWBY;
 	if (growby) {
 	    if (me->allocated == 0 && !me->cells) {
-		cells = typecallocn(STable_cellinfo, growby);
+		cells = typecallocn(STable_cellinfo, (unsigned) growby);
 	    } else {
 		cells = typeRealloc(STable_cellinfo, me->cells,
-				      (me->allocated + growby));
+				      (unsigned) (me->allocated + growby));
 
 		for (i = 0; cells && i < growby; i++) {
 		    cells[me->allocated + i].alignment = HT_ALIGN_NONE;
@@ -513,14 +515,14 @@ static int Stbl_reserveCellsInRow(STable_rowinfo *me, int icell,
 {
     STable_cellinfo *cells;
     int i;
-    int growby = icell + colspan - me->allocated;
+    int growby = 1 + icell + colspan - me->allocated;
 
     CTRACE2(TRACE_TRST,
 	    (tfp, "TRST:Stbl_reserveCellsInRow(icell=%d, colspan=%d\n",
 	     icell, colspan));
     if (growby > 0) {
 	cells = typeRealloc(STable_cellinfo, me->cells,
-			      (me->allocated + growby));
+			      (unsigned) (me->allocated + growby));
 
 	if (cells) {
 	    for (i = 0; i < growby; i++) {
@@ -957,6 +959,20 @@ static int Stbl_reserveCellsInTable(STable_info *me, int icell,
     int growby;
     int i;
 
+    if (colspan > TRST_MAXCOLSPAN) {
+	CTRACE2(TRACE_TRST,
+		(tfp,
+		 "TRST:*** COLSPAN=%d is too large, ignored!\n",
+		 colspan));
+	return -1;
+    }
+    if (rowspan > TRST_MAXROWSPAN) {
+	CTRACE2(TRACE_TRST,
+		(tfp,
+		 "TRST:*** ROWSPAN=%d is too large, ignored!\n",
+		 rowspan));
+	return -1;
+    }
     if (me->nrows <= 0)
 	return -1;		/* must already have at least one row */
 
@@ -966,7 +982,8 @@ static int Stbl_reserveCellsInTable(STable_info *me, int icell,
 	     icell, colspan, rowspan));
     if (rowspan == 0) {
 	if (!me->rowspans2eog.cells) {
-	    me->rowspans2eog.cells = typecallocn(STable_cellinfo, icell + colspan);
+	    me->rowspans2eog.cells = typecallocn(STable_cellinfo,
+						   (unsigned) HTMAX(1, icell + colspan));
 
 	    if (!me->rowspans2eog.cells)
 		return 0;	/* fail silently */
@@ -979,7 +996,7 @@ static int Stbl_reserveCellsInTable(STable_info *me, int icell,
     growby = me->nrows + rowspan - 1 - me->allocated_rows;
     if (growby > 0) {
 	rows = typeRealloc(STable_rowinfo, me->rows,
-			     (me->allocated_rows + growby));
+			     (unsigned) (me->allocated_rows + growby));
 
 	if (!rows)
 	    return 0;		/* ignore silently, no free memory, may be recoverable */
@@ -992,12 +1009,12 @@ static int Stbl_reserveCellsInTable(STable_info *me, int icell,
 		row->cells = NULL;
 	    } else {
 		row->cells = typecallocn(STable_cellinfo,
-					 me->rowspans2eog.allocated);
+					   (unsigned) me->rowspans2eog.allocated);
 
 		if (row->cells) {
 		    row->allocated = me->rowspans2eog.allocated;
 		    memcpy(row->cells, me->rowspans2eog.cells,
-			   row->allocated * sizeof(STable_cellinfo));
+			   ((unsigned) row->allocated * sizeof(STable_cellinfo)));
 		}
 	    }
 	    row->ncells = 0;
@@ -1011,7 +1028,10 @@ static int Stbl_reserveCellsInTable(STable_info *me, int icell,
 	 i < (rowspan == 0 ? me->allocated_rows : me->nrows + rowspan - 1);
 	 i++) {
 	if (!me->rows[i].allocated) {
-	    me->rows[i].cells = typecallocn(STable_cellinfo, icell + colspan);
+	    me->rows[i].cells = typecallocn(STable_cellinfo, (unsigned)
+									      HTMAX(1,
+									      icell
+									      + colspan));
 
 	    if (!me->rows[i].cells)
 		return 0;	/* fail silently */
@@ -1074,10 +1094,10 @@ int Stbl_addRowToTable(STable_info *me, int alignment,
 	    growby += ROWS_GROWBY;
 	if (growby) {
 	    if (me->allocated_rows == 0 && !me->rows) {
-		rows = typecallocn(STable_rowinfo, growby);
+		rows = typecallocn(STable_rowinfo, (unsigned) growby);
 	    } else {
 		rows = typeRealloc(STable_rowinfo, me->rows,
-				     (me->allocated_rows + growby));
+				     (unsigned) (me->allocated_rows + growby));
 
 		for (i = 0; rows && i < growby; i++) {
 		    row = rows + me->allocated_rows + i;
@@ -1086,12 +1106,12 @@ int Stbl_addRowToTable(STable_info *me, int alignment,
 			row->cells = NULL;
 		    } else {
 			row->cells = typecallocn(STable_cellinfo,
-						 me->rowspans2eog.allocated);
+						   (unsigned) me->rowspans2eog.allocated);
 
 			if (row->cells) {
 			    row->allocated = me->rowspans2eog.allocated;
 			    memcpy(row->cells, me->rowspans2eog.cells,
-				   row->allocated * sizeof(STable_cellinfo));
+				   (unsigned) row->allocated * sizeof(STable_cellinfo));
 			} else {
 			    FREE(rows);
 			    break;
@@ -1223,7 +1243,7 @@ static int get_remaining_colspan(STable_rowinfo *me,
     me->cells[me->ncells - 1].colspan : 1;
 
     if (ncolinfo == 0 || me->ncells + last_colspan > ncolinfo) {
-	colspan = HTMAX(TRST_MAXCOLSPAN,
+	colspan = HTMIN(TRST_MAXCOLSPAN,
 			ncols_sofar - (me->ncells + last_colspan - 1));
     } else {
 	for (i = me->ncells + last_colspan - 1; i < ncolinfo - 1; i++)
@@ -1231,6 +1251,9 @@ static int get_remaining_colspan(STable_rowinfo *me,
 		break;
 	colspan = i - (me->ncells + last_colspan - 2);
     }
+    CTRACE2(TRACE_TRST,
+	    (tfp, "TRST:get_remaining_colspan; colspan = %d\n",
+	     colspan));
     return colspan;
 }
 
@@ -1331,7 +1354,8 @@ static int Stbl_fakeFinishCellInTable(STable_info *me,
 	       the reservation structure when we fake new logical lines.  */
 	    int prev_row_n = prev_row - me->rows;
 	    STable_rowinfo *rows = typeRealloc(STable_rowinfo, me->rows,
-					       (me->allocated_rows + 1));
+					       (unsigned) (me->allocated_rows
+							   + 1));
 	    int need_cells = prev_reserved_last + 1;
 	    int n;
 
@@ -1353,7 +1377,7 @@ static int Stbl_fakeFinishCellInTable(STable_info *me,
 	    lastrow->allocated = 0;
 	    lastrow->cells = 0;
 	    if (need_cells) {
-		lastrow->cells = typecallocn(STable_cellinfo, need_cells);
+		lastrow->cells = typecallocn(STable_cellinfo, (unsigned) need_cells);
 
 		/* ignore silently, no free memory, may be recoverable */
 		if (!lastrow->cells) {
@@ -1361,7 +1385,7 @@ static int Stbl_fakeFinishCellInTable(STable_info *me,
 		}
 		lastrow->allocated = need_cells;
 		memcpy(lastrow->cells, prev_row->cells,
-		       lastrow->allocated * sizeof(STable_cellinfo));
+		       (unsigned) lastrow->allocated * sizeof(STable_cellinfo));
 
 		i = -1;
 		while (++i < ncells) {
@@ -1475,10 +1499,10 @@ int Stbl_addCellToTable(STable_info *me, int colspan,
 	    growby += CELLS_GROWBY;
 	if (growby) {
 	    if (me->allocated_sumcols == 0 && !me->sumcols) {
-		sumcols = typecallocn(STable_cellinfo, growby);
+		sumcols = typecallocn(STable_cellinfo, (unsigned) growby);
 	    } else {
 		sumcols = typeRealloc(STable_cellinfo, me->sumcols,
-				        (me->allocated_sumcols + growby));
+				        (unsigned) (me->allocated_sumcols + growby));
 
 		for (i = 0; sumcols && i < growby; i++) {
 		    sumcol = sumcols + me->allocated_sumcols + i;
@@ -1667,10 +1691,10 @@ int Stbl_addColInfo(STable_info *me, int colspan,
 	    growby += CELLS_GROWBY;
 	if (growby) {
 	    if (me->allocated_sumcols == 0) {
-		sumcols = typecallocn(STable_cellinfo, growby);
+		sumcols = typecallocn(STable_cellinfo, (unsigned) growby);
 	    } else {
 		sumcols = typeRealloc(STable_cellinfo, me->sumcols,
-				        (me->allocated_sumcols + growby));
+				        (unsigned) (me->allocated_sumcols + growby));
 
 		for (i = 0; sumcols && i < growby; i++) {
 		    sumcol = sumcols + me->allocated_sumcols + i;

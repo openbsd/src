@@ -1,5 +1,8 @@
 /*
+ * $LynxId: LYexit.c,v 1.35 2009/03/10 00:12:52 tom Exp $
+ *
  *	Copyright (c) 1994, University of Kansas, All Rights Reserved
+ *	(most of this file was rewritten in 1996 and 2004).
  */
 #include <HTUtils.h>
 #include <LYexit.h>
@@ -84,9 +87,6 @@ void LYexit(int status)
 {
 #ifndef VMS			/*  On VMS, the VMSexit() handler does these. - FM */
 #ifdef _WINDOWS
-    extern CRITICAL_SECTION critSec_DNS;	/* 1998/09/03 (Thu) 22:01:56 */
-    extern CRITICAL_SECTION critSec_READ;	/* 1998/09/03 (Thu) 22:01:56 */
-
     DeleteCriticalSection(&critSec_DNS);
     DeleteCriticalSection(&critSec_READ);
 
@@ -102,9 +102,9 @@ void LYexit(int status)
 	(void) signal(SIGTERM, SIG_IGN);
 	(void) signal(SIGINT, SIG_IGN);
 #ifndef __linux__
-#ifndef DOSPATH
+#ifdef SIGBUS
 	(void) signal(SIGBUS, SIG_IGN);
-#endif /* DOSPATH */
+#endif /* SIGBUS */
 #endif /* !__linux__ */
 	(void) signal(SIGSEGV, SIG_IGN);
 	(void) signal(SIGILL, SIG_IGN);
@@ -123,9 +123,9 @@ void LYexit(int status)
 	}
 	cleanup_sig(0);
 #ifndef __linux__
-#ifndef DOSPATH
+#ifdef SIGBUS
 	signal(SIGBUS, SIG_DFL);
-#endif /* DOSPATH */
+#endif /* SIGBUS */
 #endif /* !__linux__ */
 	signal(SIGSEGV, SIG_DFL);
 	signal(SIGILL, SIG_DFL);
@@ -164,6 +164,15 @@ void LYexit(int status)
     LYCloseTracelog();
 #endif /* !VMS */
     show_alloc();
+
+#if defined(NCURSES_VERSION) && defined(LY_FIND_LEAKS)
+#if defined(HAVE__NC_FREE_AND_EXIT)
+    _nc_free_and_exit(status);
+#elif defined(HAVE__NC_FREEALL)
+    _nc_freeall();
+#endif
+#endif /* NCURSES_VERSION */
+
     exit(status);
 }
 

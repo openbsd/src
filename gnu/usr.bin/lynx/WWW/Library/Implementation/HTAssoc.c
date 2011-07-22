@@ -1,5 +1,7 @@
-
-/* MODULE							HTAssoc.c
+/*
+ * $LynxId: HTAssoc.c,v 1.9 2009/01/03 01:59:16 tom Exp $
+ *
+ * MODULE							HTAssoc.c
  *	    ASSOCIATION LIST FOR STORING NAME-VALUE PAIRS.
  *	    NAMES NOT CASE SENSITIVE, AND ONLY COMMON LENGTH
  *	    IS CHECKED (allows abbreviations; well, length is
@@ -73,7 +75,7 @@ char *HTAssocList_lookup(HTAssocList *alist,
     HTAssoc *assoc;
 
     while (NULL != (assoc = (HTAssoc *) HTList_nextObject(cur))) {
-	if (!strncasecomp(assoc->name, name, strlen(name)))
+	if (!strncasecomp(assoc->name, name, (int) strlen(name)))
 	    return assoc->value;
     }
     return NULL;

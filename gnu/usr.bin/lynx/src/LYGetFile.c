@@ -1,3 +1,4 @@
+/* $LynxId: LYGetFile.c,v 1.79 2009/04/12 17:24:06 tom Exp $ */
 #include <HTUtils.h>
 #include <HTTP.h>
 #include <HTAnchor.h>		/* Anchor class */
@@ -191,6 +192,9 @@ int getfile(DocInfo *doc, int *target)
 		  url_type == LYNXKEYMAP_URL_TYPE ||
 		  url_type == LYNXIMGMAP_URL_TYPE ||
 		  url_type == LYNXCOOKIE_URL_TYPE ||
+#ifdef USE_CACHEJAR
+		  url_type == LYNXCACHE_URL_TYPE ||
+#endif
 		  url_type == LYNXMESSAGES_URL_TYPE ||
 		  (url_type == LYNXOPTIONS_URL_TYPE &&
 		   WWWDoc.post_data) ||
@@ -224,6 +228,9 @@ int getfile(DocInfo *doc, int *target)
 		  url_type == LYNXKEYMAP_URL_TYPE ||
 		  url_type == LYNXIMGMAP_URL_TYPE ||
 		  url_type == LYNXCOOKIE_URL_TYPE ||
+#ifdef USE_CACHEJAR
+		  url_type == LYNXCACHE_URL_TYPE ||
+#endif
 		  url_type == LYNXPRINT_URL_TYPE ||
 		  url_type == LYNXOPTIONS_URL_TYPE ||
 		  url_type == LYNXCFG_URL_TYPE ||
@@ -465,15 +472,9 @@ int getfile(DocInfo *doc, int *target)
 		/*
 		 * Convert '~' to $HOME.
 		 */
-		if ((cp = strchr(doc->address, '~'))) {
-		    HTSprintf0(&p, "%.*s%s%s",
-			       cp - doc->address,
-			       doc->address,
-			       wwwName(Home_Dir()),
-			       cp + 1);
-		} else {
-		    StrAllocCopy(p, doc->address);
-		}
+		StrAllocCopy(p, doc->address);
+		LYTildeExpand(&p, TRUE);
+
 		/*
 		 * Show URL before executing it.
 		 */
@@ -565,6 +566,9 @@ int getfile(DocInfo *doc, int *target)
 		   url_type != LYNXIMGMAP_URL_TYPE &&
 		   url_type != LYNXCOOKIE_URL_TYPE &&
 		   url_type != LYNXMESSAGES_URL_TYPE &&
+#ifdef USE_CACHEJAR
+		   url_type != LYNXCACHE_URL_TYPE &&
+#endif
 		   url_type != LYNXCGI_URL_TYPE &&
 		   !(url_type == NEWS_URL_TYPE &&
 		     strncmp(doc->address, "news://", 7)) &&
@@ -785,33 +789,8 @@ int getfile(DocInfo *doc, int *target)
 	     * was entered, simplifying, and eliminating any residual
 	     * relative elements.  - FM
 	     */
-	    if (((cp = HTParse(doc->address, "",
-			       PARSE_PATH + PARSE_ANCHOR + PARSE_PUNCTUATION))
-		 != NULL) &&
-		!strncmp(cp, "/~", 2)) {
-		char *cp1 = strstr(doc->address, "/~");
-		char *cp2;
-
-		CTRACE((tfp, "getfile: URL '%s'\n",
-			doc->address));
-		*cp1 = '\0';
-		cp1 += 2;
-		StrAllocCopy(temp, doc->address);
-		StrAllocCopy(cp, wwwName(Home_Dir()));
-		if (!LYIsHtmlSep(*cp))
-		    LYAddHtmlSep(&temp);
-		StrAllocCat(temp, cp);
-		if ((cp2 = strchr(cp1, '/')) != NULL) {
-		    LYTrimRelFromAbsPath(cp2);
-		    StrAllocCat(temp, cp2);
-		}
-		StrAllocCopy(doc->address, temp);
-		FREE(temp);
-		CTRACE((tfp, "  changed to '%s'\n",
-			doc->address));
-		WWWDoc.address = doc->address;
-	    }
-	    FREE(cp);
+	    LYTildeExpand(&(doc->address), TRUE);
+	    WWWDoc.address = doc->address;
 	}
 	CTRACE_SLEEP(MessageSecs);
 	user_message(WWW_WAIT_MESSAGE, doc->address);
@@ -870,6 +849,9 @@ int getfile(DocInfo *doc, int *target)
 		     url_type == LYNXCOMPILE_OPTS_URL_TYPE ||
 		     url_type == LYNXHIST_URL_TYPE ||
 		     url_type == LYNXCOOKIE_URL_TYPE ||
+#ifdef USE_CACHEJAR
+		     url_type == LYNXCACHE_URL_TYPE ||
+#endif
 		     url_type == LYNXMESSAGES_URL_TYPE ||
 		     (LYValidate &&
 		      url_type != HTTP_URL_TYPE &&
@@ -1283,7 +1265,7 @@ static struct trust always_trusted_exec_default =
 };
 static struct trust trusted_cgi_default =
 {
-    "", "", CGI_PATH, NULL
+    "none", "", CGI_PATH, NULL
 };
 
 static struct trust *trusted_exec = &trusted_exec_default;

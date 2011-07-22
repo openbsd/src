@@ -1,4 +1,7 @@
-/* Justification for lynx - implemented by Vlad Harchev <hvv@hippo.ru>
+/*
+ * $LynxId: LYJustify.h,v 1.7 2009/04/07 00:24:15 tom Exp $
+ *
+ * Justification for lynx - implemented by Vlad Harchev <hvv@hippo.ru>
  * 11 July 1999
  */
 
@@ -11,7 +14,6 @@
 extern "C" {
 #endif
 #ifdef EXP_JUSTIFY_ELTS
-    extern BOOL ok_justify;
     extern BOOL can_justify_here;
     extern BOOL can_justify_here_saved;
 

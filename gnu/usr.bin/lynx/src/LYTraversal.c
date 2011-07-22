@@ -1,3 +1,6 @@
+/*
+ * $LynxId: LYTraversal.c,v 1.27 2009/01/01 22:37:06 tom Exp $
+ */
 #include <HTUtils.h>
 #include <LYGlobalDefs.h>
 #include <LYUtils.h>
@@ -144,7 +147,7 @@ BOOLEAN lookup_reject(char *target)
     FILE *ifp;
     char *buffer = NULL;
     char *line = NULL;
-    int len;
+    unsigned len;
     int result = FALSE;
 
     if ((ifp = fopen(TRAVERSE_REJECT_FILE, TXT_R)) == NULL) {
@@ -156,7 +159,7 @@ BOOLEAN lookup_reject(char *target)
     while (LYSafeGets(&buffer, ifp) != NULL && !result) {
 	LYTrimTrailing(buffer);
 	len = strlen(buffer);
-	if (len > 0) {		/* if not an empty line */
+	if (len != 0) {		/* if not an empty line */
 	    if (buffer[len - 1] == '*') {
 		/* if last char is * and the rest of the chars match */
 		if ((len == 1) || (strncmp(line, buffer, len - 1) == 0)) {

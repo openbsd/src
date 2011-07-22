@@ -1,3 +1,4 @@
+# $LynxId: makefile.in,v 1.33 2007/05/23 00:57:49 tom Exp $
 #
 # Makefile for the makeuctb and unicode tables.
 #
@@ -42,13 +43,13 @@ x		= @EXEEXT@
 o		= .@BUILD_OBJEXT@
 BUILD_EXEEXT	= @BUILD_EXEEXT@
 
-CPP_OPTS	= $(BUILD_CPPFLAGS) \
+CPP_OPTS	= \
 		-I$(top_builddir) \
 		-I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/chrtrans \
 		-I$(top_srcdir)/$(WWWINC) \
 		-I$(top_srcdir)/ \
-		$(INTLDIR_CPPFLAGS) $(SITE_DEFS)
+		$(INTLDIR_CPPFLAGS) $(SITE_DEFS) $(BUILD_CPPFLAGS)
 CC_OPTS		= $(CPP_OPTS) $(BUILD_CFLAGS)
 
 #

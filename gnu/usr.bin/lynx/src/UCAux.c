@@ -1,3 +1,6 @@
+/*
+ * $LynxId: UCAux.c,v 1.40 2009/03/10 21:13:12 tom Exp $
+ */
 #include <HTUtils.h>
 
 #include <HTCJK.h>
@@ -7,6 +10,7 @@
 #include <UCAux.h>
 #include <LYCharSets.h>
 #include <LYCurses.h>
+#include <LYStrings.h>
 
 BOOL UCCanUniTranslateFrom(int from)
 {
@@ -58,7 +62,7 @@ BOOL UCCanTranslateFromTo(int from,
 	}
 	if (LYCharSet_UC[from].enc == UCT_ENC_CJK) {
 	    /*
-	     * CJK mode may be off (i.e., HTCJK == NOCJK) because the current
+	     * CJK mode may be off (i.e., !IS_CJK_TTY) because the current
 	     * document is not CJK, but the check may be for capability in
 	     * relation to another document, for which CJK mode might be turned
 	     * on when retrieved.  Thus, when the from charset is CJK, check if
@@ -122,7 +126,7 @@ BOOL UCNeedNotTranslate(int from,
 	    return YES;
     }
     if (LYCharSet_UC[from].enc == UCT_ENC_CJK) {
-	if (HTCJK == NOCJK)	/* Use that global flag, for now. */
+	if (!IS_CJK_TTY)	/* Use that global flag, for now. */
 	    return NO;
 	if (HTCJK == JAPANESE &&
 	    (!strcmp(fromname, "euc-jp") ||
@@ -168,6 +172,11 @@ void UCSetTransParams(UCTransParams * pT, int cs_in,
     pT->transp = (BOOL) (!strcmp(p_in->MIMEname, "x-transparent") ||
 			 !strcmp(p_out->MIMEname, "x-transparent"));
 
+    /*
+     * UCS-2 is handled as a special case in SGML_write().
+     */
+    pT->ucs_mode = 0;
+
     if (pT->transp) {
 	/*
 	 * Set up the structure for "transparent".  - FM
@@ -192,7 +201,7 @@ void UCSetTransParams(UCTransParams * pT, int cs_in,
 	/*
 	 * Set this element if we want to treat the input as CJK.  - FM
 	 */
-	pT->do_cjk = (BOOL) ((p_in->enc == UCT_ENC_CJK) && (HTCJK != NOCJK));
+	pT->do_cjk = (BOOL) ((p_in->enc == UCT_ENC_CJK) && IS_CJK_TTY);
 	/*
 	 * Set these elements based on whether we are dealing with UTF-8.  - FM
 	 */
@@ -201,7 +210,7 @@ void UCSetTransParams(UCTransParams * pT, int cs_in,
 	if (pT->do_cjk) {
 	    /*
 	     * Set up the structure for a CJK input with
-	     * a CJK output (HTCJK != NOCJK).  - FM
+	     * a CJK output (IS_CJK_TTY).  - FM
 	     */
 	    intm_ucs = FALSE;
 	    pT->trans_to_uni = FALSE;
@@ -338,13 +347,19 @@ void UCSetBoxChars(int cset,
 	 * This is important if we have loaded a font, which would
 	 * confuse curses.
 	 */
-#ifdef EXP_CHARTRANS_AUTOSWITCH
 	/* US-ASCII vs Latin-1 is safe (usually) */
-	if (cset == US_ASCII && linedrawing_char_set == LATIN1) {
+	if ((cset == US_ASCII
+	     || cset == LATIN1)
+	    && (linedrawing_char_set == US_ASCII
+		|| linedrawing_char_set == LATIN1)) {
+#if (defined(FANCY_CURSES) && defined(A_ALTCHARSET)) || defined(USE_SLANG)
+	    vert_in = 0;
+	    hori_in = 0;
+#else
 	    ;
-	} else if (cset == LATIN1 && linedrawing_char_set == US_ASCII) {
-	    ;
+#endif
 	}
+#ifdef EXP_CHARTRANS_AUTOSWITCH
 #if defined(NCURSES_VERSION) || defined(HAVE_TIGETSTR)
 	else {
 	    static BOOL first = TRUE;
@@ -396,13 +411,17 @@ void UCSetBoxChars(int cset,
 
 	    if (cset == last_cset) {
 		fix_lines = last_result;
+	    } else if (cset == UTF8_handle) {
+		last_result = FALSE;
+		last_cset = cset;
 	    } else {
 		CTRACE((tfp, "check terminal line-drawing map\n"));
 		for (n = 0; n < TABLESIZE(table); ++n) {
 		    int test = UCTransUniChar(table[n].internal, cset);
 
 		    if (test != table[n].external) {
-			CTRACE((tfp, "line-drawing map %c mismatch (have %#x, want %#x)\n",
+			CTRACE((tfp,
+				"line-drawing map %c mismatch (have %#x, want %#x)\n",
 				table[n].mapping,
 				test, table[n].external));
 			fix_lines = TRUE;

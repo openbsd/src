@@ -1,4 +1,7 @@
-/*			FINGER ACCESS				HTFinger.c
+/*
+ * $LynxId: HTFinger.c,v 1.25 2009/01/03 02:02:18 tom Exp $
+ *
+ *			FINGER ACCESS				HTFinger.c
  *			=============
  * Authors:
  *  ARB  Andrew Brooks
@@ -110,7 +113,7 @@ static int response(char *command,
 		    HTStream *sink)
 {
     int status;
-    int length = strlen(command);
+    int length = (int) strlen(command);
     int ch, i;
     char line[BIG], *l, *cmd = NULL;
     char *p = line, *href = NULL;
@@ -125,7 +128,7 @@ static int response(char *command,
     /* Send the command.
      */
     CTRACE((tfp, "HTFinger command to be sent: %s", command));
-    status = NETWRITE(finger_fd, (char *) command, length);
+    status = NETWRITE(finger_fd, (char *) command, (unsigned) length);
     if (status < 0) {
 	CTRACE((tfp, "HTFinger: Unable to send command. Disconnecting.\n"));
 	NETCLOSE(finger_fd);
@@ -165,7 +168,7 @@ static int response(char *command,
     } else {
 	StrAllocCopy(cmd, "");
     }
-    for (i = (strlen(cmd) - 1); i >= 0; i--) {
+    for (i = ((int) strlen(cmd) - 1); i >= 0; i--) {
 	if (cmd[i] == LF || cmd[i] == CR) {
 	    cmd[i] = '\0';
 	} else {

@@ -1,3 +1,6 @@
+/*
+ * $LynxId: LYHistory.c,v 1.75 2009/06/07 16:57:43 tom Exp $
+ */
 #include <HTUtils.h>
 #include <HTTP.h>
 #include <GridText.h>
@@ -29,8 +32,9 @@
 #include <LYLeaks.h>
 #include <HTCJK.h>
 
-static HTList *Visited_Links = NULL;	/* List of safe popped docs. */
+HTList *Visited_Links = NULL;	/* List of safe popped docs. */
 int Visited_Links_As = VISITED_LINKS_AS_LATEST | VISITED_LINKS_REVERSE;
+
 static VisitedLink *PrevVisitedLink = NULL;	/* NULL on auxillary */
 static VisitedLink *PrevActiveVisitedLink = NULL;	/* Last non-auxillary */
 static VisitedLink Latest_first;
@@ -340,7 +344,8 @@ void LYAllocHistory(int entries)
 	int save = size_history;
 
 	size_history = (entries + 2) * 2;
-	want = size_history * sizeof(*history);
+	want = (unsigned) size_history *sizeof(*history);
+
 	if (history == 0) {
 	    history = (HistInfo *) malloc(want);
 	} else {
@@ -349,7 +354,6 @@ void LYAllocHistory(int entries)
 	if (history == 0)
 	    outofmem(__FILE__, "LYAllocHistory");
 	while (save < size_history) {
-	    CTRACE((tfp, "...LYAllocHistory clearing %d\n", save));
 	    memset(&history[save++], 0, sizeof(history[0]));
 	}
     }
@@ -383,8 +387,10 @@ int LYpush(DocInfo *doc, BOOLEAN force_push)
 
     /*
      * If file is identical to one before it, don't push it.
+     * But do not duplicate it if there is only one on the stack,
+     * note that HDOC() starts from 0, so nhist should be > 0.
      */
-    if (nhist > 1 && are_identical(&(history[nhist - 1]), doc)) {
+    if (nhist >= 1 && are_identical(&(history[nhist - 1]), doc)) {
 	if (HDOC(nhist - 1).internal_link == doc->internal_link) {
 	    /* But it is nice to have the last position remembered!
 	       - kw */
@@ -945,18 +951,27 @@ int LYShowVisitedLinks(char **newfile)
 
 /*
  * Keep cycled buffer for statusline messages.
+ * But allow user to change how big it will be from userdefs.h
  */
+#ifndef STATUSBUFSIZE
 #define STATUSBUFSIZE   40
-static char *buffstack[STATUSBUFSIZE];
+#endif
+
+int status_buf_size = STATUSBUFSIZE;
+
+static char **buffstack;
 static int topOfStack = 0;
 
 #ifdef LY_FIND_LEAKS
 static void free_messages_stack(void)
 {
-    topOfStack = STATUSBUFSIZE;
+    if (buffstack != 0) {
+	topOfStack = status_buf_size;
 
-    while (--topOfStack >= 0) {
-	FREE(buffstack[topOfStack]);
+	while (--topOfStack >= 0) {
+	    FREE(buffstack[topOfStack]);
+	}
+	FREE(buffstack);
     }
 }
 #endif
@@ -966,13 +981,16 @@ static void to_stack(char *str)
     /*
      * Cycle buffer:
      */
-    if (topOfStack >= STATUSBUFSIZE) {
+    if (topOfStack >= status_buf_size) {
 	topOfStack = 0;
     }
 
     /*
      * Register string.
      */
+    if (buffstack == 0)
+	buffstack = typecallocn(char *, status_buf_size);
+
     FREE(buffstack[topOfStack]);
     buffstack[topOfStack] = str;
     topOfStack++;
@@ -982,7 +1000,7 @@ static void to_stack(char *str)
 	atexit(free_messages_stack);
     }
 #endif
-    if (topOfStack >= STATUSBUFSIZE) {
+    if (topOfStack >= status_buf_size) {
 	topOfStack = 0;
     }
 }
@@ -998,22 +1016,24 @@ void LYstatusline_messages_on_exit(char **buf)
 {
     int i;
 
-    StrAllocCat(*buf, "\n");
-    /* print messages in chronological order:
-     * probably a single message but let's do it.
-     */
-    i = topOfStack - 1;
-    while (++i < STATUSBUFSIZE) {
-	if (buffstack[i] != NULL) {
-	    StrAllocCat(*buf, buffstack[i]);
-	    StrAllocCat(*buf, "\n");
+    if (buffstack != 0) {
+	StrAllocCat(*buf, "\n");
+	/* print messages in chronological order:
+	 * probably a single message but let's do it.
+	 */
+	i = topOfStack - 1;
+	while (++i < status_buf_size) {
+	    if (buffstack[i] != NULL) {
+		StrAllocCat(*buf, buffstack[i]);
+		StrAllocCat(*buf, "\n");
+	    }
 	}
-    }
-    i = -1;
-    while (++i < topOfStack) {
-	if (buffstack[i] != NULL) {
-	    StrAllocCat(*buf, buffstack[i]);
-	    StrAllocCat(*buf, "\n");
+	i = -1;
+	while (++i < topOfStack) {
+	    if (buffstack[i] != NULL) {
+		StrAllocCat(*buf, buffstack[i]);
+		StrAllocCat(*buf, "\n");
+	    }
 	}
     }
 }
@@ -1064,10 +1084,12 @@ static int LYLoadMESSAGES(const char *arg GCC_UNUSED,
     int i;
     char *temp = NULL;
 
-    i = STATUSBUFSIZE;
-    while (--i >= 0) {
-	if (buffstack[i] != NULL)
-	    nummsg++;
+    if (buffstack != 0) {
+	i = status_buf_size;
+	while (--i >= 0) {
+	    if (buffstack[i] != NULL)
+		nummsg++;
+	}
     }
 
     /*
@@ -1084,7 +1106,7 @@ static int LYLoadMESSAGES(const char *arg GCC_UNUSED,
     }
     anAnchor->no_cache = TRUE;
 
-#define PUTS(buf)    (*target->isa->put_block)(target, buf, strlen(buf))
+#define PUTS(buf)    (*target->isa->put_block)(target, buf, (int) strlen(buf))
 
     HTSprintf0(&buf, "<html>\n<head>\n");
     PUTS(buf);
@@ -1113,7 +1135,7 @@ static int LYLoadMESSAGES(const char *arg GCC_UNUSED,
 		PUTS(buf);
 	    }
 	}
-	i = STATUSBUFSIZE;
+	i = status_buf_size;
 	while (--i >= topOfStack) {
 	    if (buffstack[i] != NULL) {
 		StrAllocCopy(temp, buffstack[i]);

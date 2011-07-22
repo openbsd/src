@@ -1,4 +1,7 @@
-/*	Entity Names to Unicode table
+/*
+ * $LynxId: entities.h,v 1.5 2007/07/31 20:40:07 Tim.Larson Exp $
+ *
+ *     Entity Names to Unicode table
  *     -----------------------------
  *
  *     This is a one-way mapping to Unicode so chartrans implementation
@@ -14,7 +17,7 @@ compatibility between browsers.
 Now we have a choice:  use clean HTML4.0 entities list (and reject everithing
 others), or use a relaxed list with lots of synonyms and new symbols found at
 
-ftp://ftp.unicode.org/MAPPINGS/VENDORS/MISC/SGML.TXT
+ftp://ftp.unicode.org/Public/MAPPINGS/VENDORS/MISC/SGML.TXT
 
 We hold both: #define ENTITIES_HTML40_ONLY for strict version,
 otherwise relaxed.

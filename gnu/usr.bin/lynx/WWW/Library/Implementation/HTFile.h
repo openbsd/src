@@ -1,4 +1,6 @@
-/*							File access in libwww
+/*
+ * $LynxId: HTFile.h,v 1.31 2008/12/07 18:49:53 tom Exp $
+ *							File access in libwww
  *				FILE ACCESS
  *
  *  These are routines for local file access used by WWW browsers and servers.
@@ -221,15 +223,25 @@ extern "C" {
 					       int *rootlen);
 
 /*
- *  Determine compression type from the content-type.
- */
-    extern CompressFileType HTContentToCompressType(const char *encoding);
-
-/*
  *  Determine compression type from the content-encoding.
  */
     extern CompressFileType HTEncodingToCompressType(const char *encoding);
-
+/*
+ *  Determine compression type from the content-encoding.
+ */
+    extern CompressFileType HTContentTypeToCompressType(const char *ct);
+/*
+ *  Determine compression type from the content-type and/or content-encoding.
+ */
+    extern CompressFileType HTContentToCompressType(HTParentAnchor *anchor);
+/*
+ *  Determine compression encoding from the compression method.
+ */
+    extern const char *HTCompressTypeToEncoding(CompressFileType method);
+/*
+ *  Determine expected file-suffix from the compression method.
+ */
+    extern const char *HTCompressTypeToSuffix(CompressFileType method);
 /*
  *  Determine write access to a file.
  *

@@ -1,0 +1,81 @@
+README.options
+
+Using the lynx browser [O]ptions configuration tool. 
+
+General Usage on a unix system:
+
+Press "O" at any time in your lynx session to access this utility page. 
+This is one of several custom "system" URLs that cause lynx to self-configure.
+
+Please note:
+Ensure and confirm that your [O]ptions session is flushed to disk, by selecting:
+
+Save options to disk: [_] before selecting "Accept Changes".
+
+This freshens your .lynxrc file, which is your default "personal" configuration
+for the lynx browser.  Otherwise you will only affect settings for your 
+individual session; they aren't remembered next time you use lynx, (since you
+actually did not tell lynx to remember them).
+
+This disk write to .lynxrc is not default behaviour for [O]ptions
+configurations. The lynx browser tends to tread lightly at first. Note that 
+you must first have permission on your system to create, write to and read
+from a .lynxrc file in your home directory.
+
+Using some of the menu items:
+
+User mode controls the amount of "on screen" help at the bottom of the screen.
+You get the familiar view of the link target you are on when you use ADVANCED
+user mode, and this also gives you the most top to bottom screen area. 
+ADVANCED user mode also allows for sub bookmark functionality (see below). 
+
+The (for now) command line only option --nomargins provides the largest 
+readable left to right screen coverage.
+
+Editor is for jumping to vi or whatever you prefer during local file edits
+and for textarea editing with ^Xe if you are filling out a form while browsing.
+
+Please see README.cookies for a brief cookie handling discussion.
+
+Multi-bookmarks allows several files to be your bookmarks; it will introduce
+a browse list of them if they are defined as below.
+
+Once the Multi-bookmarks setup on Options is done and has been written out to
+your .lynxrc (remember to Accept Changes and to Save Changes to disk),
+in .lynxrc you will see a list of 25 possible "other" bookmark files 
+(26 letters minus "A") - you need to then associate some of them with 
+(meaningful) filenames to get the Multi-bookmark menu.
+
+Note that the files must be relative to your home directory. 
+
+The best way to create and manage them is by using the MultiBookmarkMenu (MBM) 
+configuration tool selectable from the [O]ptions menu. 
+
+The MBM allows you to describe the sub bookmark, and name a file relative 
+to your home directory that will contain the html for the saved links.
+You populate one of the lettered sub bookmarks, describe it, and provide a 
+filename. ">" saves the edits, and ^G cancels edits.
+
+The sub bookmarks will be accessible by pressing the associated key from a
+menu when invoking the bookmark choice (lynx -book, or 'V' in a session), or 
+when saving new bookmarks. You can directly access your sub bookmarks by letter
+key alone by defining sub_bookmarks=ADVANCED in .lynxrc or lynx.cfg, if you 
+have ADVANCED general user mode selected as well.
+The Multi-bookmark submenu can still be seen in ADVANCED by pressing "=", and
+is always seen in STANDARD mode.
+
+They are seen in your .lynxrc like so:
+
+multi_bookmarkB=cars,Cars
+multi_bookmarkC=news,News
+multi_bookmarkD=sports,Sports
+
+Filename precedes description in .lynxrc, whereas in the MBM configuration
+utility, the description is the left column, and the filename is in the right
+column displayed.
+
+
+Stef Caunter 
+http://caunter.ca/contact.html
+http://caunter.ca/README.options
+

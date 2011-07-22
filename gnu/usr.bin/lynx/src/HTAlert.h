@@ -31,6 +31,7 @@ extern "C" {
     extern void HTAlert(const char *Msg);
     extern void HTAlwaysAlert(const char *extra_prefix, const char *Msg);
     extern void HTInfoMsg(const char *Msg);
+    extern void HTInfoMsg2(const char *Msg, const char *Arg);
     extern void HTUserMsg(const char *Msg);
     extern void HTUserMsg2(const char *Msg, const char *Arg);
 
@@ -41,7 +42,7 @@ extern "C" {
  */
     extern const char *HTProgressUnits(int kilobytes);
     extern void HTProgress(const char *Msg);
-    extern void HTReadProgress(long bytes, long total);
+    extern void HTReadProgress(off_t bytes, off_t total);
 
 #define _HTProgress(msg)	mustshow = TRUE, HTProgress(msg)
 

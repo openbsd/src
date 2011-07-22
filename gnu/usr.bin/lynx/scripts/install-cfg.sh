@@ -1,4 +1,5 @@
 #!/bin/sh
+# $LynxId: install-cfg.sh,v 1.3 2008/09/10 13:15:35 tom Exp $
 # install lynx.cfg, ensuring the old config-file is saved to a unique file,
 # and prepending customizations to the newly-installed file.
 #
@@ -8,6 +9,11 @@
 PRG="$1"
 SRC=$2
 DST=$3
+
+LANG=C;		export LANG
+LC_ALL=C;	export LC_ALL
+LC_CTYPE=C;	export LC_CTYPE
+LANGUAGE=C;	export LANGUAGE
 
 if test -f "$DST" ; then
 	echo "** checking if you have customized $DST"

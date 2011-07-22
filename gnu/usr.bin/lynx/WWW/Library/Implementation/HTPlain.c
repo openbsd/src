@@ -1,4 +1,7 @@
-/*		Plain text object		HTWrite.c
+/*
+ * $LynxId: HTPlain.c,v 1.44 2009/01/03 01:23:21 tom Exp $
+ *
+ *		Plain text object		HTWrite.c
  *		=================
  *
  *	This version of the stream object just writes to a socket.
@@ -28,6 +31,7 @@
 #include <UCAux.h>
 
 #include <LYCharSets.h>
+#include <LYStrings.h>
 #include <LYLeaks.h>
 
 static int HTPlain_lastraw = -1;
@@ -134,7 +138,7 @@ static void HTPlain_put_character(HTStream *me, char c)
 	 * For now, don't repeat everything here that has been done below - KW
 	 */
 	HTPlain_write(me, &c, 1);
-    } else if (HTCJK != NOCJK) {
+    } else if (IS_CJK_TTY) {
 	HText_appendCharacter(me->text, c);
     } else if (TOASCII(UCH(c)) >= 127 && TOASCII(UCH(c)) < 161 &&
 	       HTPassHighCtrlRaw) {
@@ -155,13 +159,13 @@ static void HTPlain_put_character(HTStream *me, char c)
 	    UCode_t value = (UCode_t) FROMASCII((TOASCII(UCH(c)) - 160));
 
 	    name = HTMLGetEntityName(value);
-	    len = strlen(name);
-	    for (low = 0, high = HTML_dtd.number_of_entities;
+	    len = (int) strlen(name);
+	    for (low = 0, high = (int) HTML_dtd.number_of_entities;
 		 high > low;
 		 diff < 0 ? (low = i + 1) : (high = i)) {
 		/* Binary search */
 		i = (low + (high - low) / 2);
-		diff = AS_ncmp(HTML_dtd.entity_names[i], name, len);
+		diff = AS_ncmp(HTML_dtd.entity_names[i], name, (unsigned) len);
 		if (diff == 0) {
 		    HText_appendText(me->text,
 				     LYCharSets[me->outUCLYhndl][i]);
@@ -470,7 +474,7 @@ static void HTPlain_write(HTStream *me, const char *s, int l)
 	 * display character set, and if not, the user should toggle off
 	 * raw/CJK mode to reload.  - FM
 	 */
-	if (HTCJK != NOCJK) {
+	if (IS_CJK_TTY) {
 	    HText_appendCharacter(me->text, c);
 
 #define PASSHICTRL (me->T.transp || \
@@ -568,7 +572,7 @@ static void HTPlain_write(HTStream *me, const char *s, int l)
 		 * Out of luck, so use the UHHH notation (ugh).  - gil
 		 */
 		/* S/390 -- gil -- 0517 */
-		sprintf(replace_buf, "U%.2lX", TOASCII(code));
+		sprintf(replace_buf, "U%.2lX", (unsigned long) TOASCII(code));
 		HText_appendText(me->text, replace_buf);
 	    }
 #ifdef NOTDEFINED
@@ -616,12 +620,12 @@ static void HTPlain_write(HTStream *me, const char *s, int l)
 		/*
 		 * Ignore 8204 (zwnj) or 8205 (zwj), if we get to here.  - FM
 		 */
-		CTRACE((tfp, "HTPlain_write: Ignoring '%ld'.\n", code));
+		CTRACE((tfp, "HTPlain_write: Ignoring '%" PRI_UCode_t "'.\n", code));
 	    } else if (code == 8206 || code == 8207) {
 		/*
 		 * Ignore 8206 (lrm) or 8207 (rlm), if we get to here.  - FM
 		 */
-		CTRACE((tfp, "HTPlain_write: Ignoring '%ld'.\n", code));
+		CTRACE((tfp, "HTPlain_write: Ignoring '%" PRI_UCode_t "'.\n", code));
 	    } else {
 		/*
 		 * Out of luck, so use the UHHH notation (ugh).  - FM

@@ -1,4 +1,7 @@
-/*		HTML Generator
+/*
+ * $LynxId: HTMLGen.c,v 1.28 2009/01/03 01:27:53 tom Exp $
+ *
+ *		HTML Generator
  *		==============
  *
  *	This version of the HTML object sends HTML markup to the output stream.
@@ -331,7 +334,7 @@ static int HTMLGen_start_element(HTStructured * me, int element_number,
 	HTSprintf(&Style_className, ";%s", HTML_dtd.tags[element_number].name);
 	strcpy(myHash, HTML_dtd.tags[element_number].name);
 	if (class_string[0]) {
-	    int len = strlen(myHash);
+	    int len = (int) strlen(myHash);
 
 	    sprintf(myHash + len, ".%.*s", (int) sizeof(myHash) - len - 2, class_string);
 	    HTSprintf(&Style_className, ".%s", class_string);
@@ -464,7 +467,9 @@ static int HTMLGen_start_element(HTStructured * me, int element_number,
     /*
      * Make very specific HTML assumption that PRE can't be nested!
      */
-    me->preformatted = (element_number == HTML_PRE) ? YES : was_preformatted;
+    me->preformatted = (BOOL) ((element_number == HTML_PRE)
+			       ? YES
+			       : was_preformatted);
 
     /*
      * Can break after element start.
@@ -561,7 +566,7 @@ static int HTMLGen_end_element(HTStructured * me, int element_number,
  */
 static int HTMLGen_put_entity(HTStructured * me, int entity_number)
 {
-    int nent = HTML_dtd.number_of_entities;
+    int nent = (int) HTML_dtd.number_of_entities;
 
     HTMLGen_put_character(me, '&');
     if (entity_number < nent) {

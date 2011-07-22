@@ -1,6 +1,9 @@
-/* LYEditMap.c
-   Keybindings for line and form editting.
-*/
+/*
+ * $LynxId: LYEditmap.c,v 1.27 2008/09/07 23:00:47 tom Exp $
+ *
+ * LYEditMap.c
+ * Keybindings for line and form editting.
+ */
 
 #include <HTUtils.h>
 #include <LYGlobalDefs.h>
@@ -993,7 +996,7 @@ int EditBinding(int xlkc)
     } else if (xlkc & LKC_MOD3) {
 	xleac = LKC_TO_LEC_M3(c);
     } else {
-	xleac = UCH(LYLineEditors[current_lineedit][c]);
+	xleac = UCH(CurrentLineEditor()[c]);
     }
 #endif
     /*
@@ -1001,7 +1004,7 @@ int EditBinding(int xlkc)
      * look that up now; otherwise we are already done.  - kw
      */
     if (xleac == LYE_UNMOD) {
-	editaction = LYLineEditors[current_lineedit][c];
+	editaction = CurrentLineEditor()[c];
     } else {
 	editaction = xleac;
     }
@@ -1093,7 +1096,7 @@ int LYKeyForEditAction(int lec)
     int editaction, i;
 
     for (i = FIRST_I; i >= 0; i = NEXT_I(i, KEYMAP_SIZE - 2)) {
-	editaction = LYLineEditors[current_lineedit][i];
+	editaction = CurrentLineEditor()[i];
 	if (editaction == lec) {
 #ifdef NOT_ASCII
 	    if (i < 256) {
@@ -1128,7 +1131,7 @@ int LYEditKeyForAction(int lac,
     if (pmodkey)
 	*pmodkey = -1;
     for (i = FIRST_I; i >= 0; i = NEXT_I(i, KEYMAP_SIZE - 2)) {
-	editaction = LYLineEditors[current_lineedit][i];
+	editaction = CurrentLineEditor()[i];
 #ifdef NOT_ASCII
 	if (i < 256) {
 	    c = FROMASCII(i);
@@ -1165,7 +1168,7 @@ int LYEditKeyForAction(int lac,
 #ifdef EXP_ALT_BINDINGS
     if (mod3found >= 0) {
 	for (i = mod3found; i >= 0; i = NEXT_I(i, LAST_MOD3_LKC)) {
-	    editaction = LYLineEditors[current_lineedit][i];
+	    editaction = CurrentLineEditor()[i];
 	    if (!(editaction & LYE_DF))
 		continue;
 	    editaction = Mod3Binding[i];

@@ -1,5 +1,4 @@
-#include <sys/wait.h>
-
+/* $LynxId: LYEdit.c,v 1.38 2008/12/29 01:00:53 tom Exp $ */
 #include <HTUtils.h>
 #include <HTParse.h>
 #include <HTAlert.h>
@@ -12,9 +11,12 @@
 #endif /* VMS */
 
 #include <LYLeaks.h>
+#include <www_wait.h>
 
 BOOLEAN editor_can_position(void)
 {
+    char *value;
+    HTList *p = positionable_editor;
     static const char *table[] =
     {
 #ifdef VMS
@@ -28,6 +30,7 @@ BOOLEAN editor_can_position(void)
 	"jove",
 	"jpico",
 	"jstar",
+	"nano",
 	"pico",
 	"rjoe",
 	"vi"
@@ -38,6 +41,13 @@ BOOLEAN editor_can_position(void)
     for (n = 0; n < TABLESIZE(table); n++) {
 	if (strstr(editor, table[n]) != 0) {
 	    return TRUE;
+	}
+    }
+    if (positionable_editor != NULL) {
+	while ((value = (char *) HTList_nextObject(p)) != NULL) {
+	    if (strcmp(editor, value) == 0) {
+		return TRUE;
+	    }
 	}
     }
     return FALSE;
@@ -243,22 +253,26 @@ void edit_temporary_file(char *filename,
 	 * we don't, but at least put out a message.  - kw
 	 */
 	{
-#ifdef UNIX
-	    int rvhi = (rv >> 8);
+#if defined(UNIX) && defined(WIFEXITED)
+	    int save_err = errno;
 
 	    CTRACE((tfp, "ExtEditForm: system() returned %d (0x%x), %s\n",
-		    rv, rv, errno ? LYStrerror(errno) : "reason unknown"));
+		    rv, rv,
+		    (save_err
+		     ? LYStrerror(save_err)
+		     : "reason unknown")));
 	    LYFixCursesOn("show error warning:");
 	    if (rv == -1) {
 		HTUserMsg2(gettext("Error starting editor, %s"),
-			   LYStrerror(errno));
+			   LYStrerror(save_err));
 	    } else if (WIFSIGNALED(rv)) {
 		HTAlwaysAlert(NULL, gettext("Editor killed by signal"));
-	    } else if (!(rv == -1 || (rvhi == 127 && errno))) {
-		HTUserMsg2(gettext("Editor returned with error status, %s"),
-			   (errno
-			    ? LYStrerror(errno)
-			    : gettext("reason unknown.")));
+	    } else if (WIFEXITED(rv) && WEXITSTATUS(rv) != 127) {
+		char exitcode[80];
+
+		sprintf(exitcode, "%d", WEXITSTATUS(rv));
+		HTUserMsg2(gettext("Editor returned with error status %s"),
+			   exitcode);
 	    } else
 #endif
 		HTAlwaysAlert(NULL, ERROR_SPAWNING_EDITOR);

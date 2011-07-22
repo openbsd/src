@@ -1,3 +1,6 @@
+/*
+ * $LynxId: LYPrettySrc.h,v 1.10 2009/03/11 00:40:00 tom Exp $
+ */
 #ifndef LYPrettySrc_H
 #define LYPrettySrc_H
 
@@ -13,7 +16,7 @@ extern "C" {
     /*whether HTML_put_string should convert string passed with 
        TRANSLATE_AND_UNESCAPE_TO_STD */
     extern BOOL psrc_view;
-    extern BOOL LYpsrc;
+    extern BOOLEAN LYpsrc;
 
 /*
  * This is used for tracking down whether the SGML engine was initialized
@@ -80,7 +83,7 @@ extern "C" {
     extern int tagname_transform;
     extern int attrname_transform;
 
-    extern BOOL psrcview_no_anchor_numbering;
+    extern BOOLEAN psrcview_no_anchor_numbering;
 
 #ifdef __cplusplus
 }

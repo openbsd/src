@@ -1,3 +1,4 @@
+/* $LynxId: LYExtern.h,v 1.13 2008/12/29 18:59:39 tom Exp $ */
 #ifndef EXTERNALS_H
 #define EXTERNALS_H
 
@@ -8,13 +9,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* returns TRUE if something matching was executed */ BOOL run_external(char
-									*c, BOOL only_overriders);
-
-#ifdef WIN_EX
-    extern char *quote_pathname(char *pathname);
-#endif
-
+    extern BOOL run_external(char *c, BOOL only_overriders);
 #ifdef __cplusplus
 }
 #endif

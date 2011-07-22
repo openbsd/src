@@ -1,4 +1,7 @@
-/*		Access Manager					HTAccess.c
+/*
+ * $LynxId: HTAccess.c,v 1.68 2009/01/03 01:31:41 tom Exp $
+ *
+ *		Access Manager					HTAccess.c
  *		==============
  *
  *  Authors
@@ -61,6 +64,7 @@
 
 #include <LYGlobalDefs.h>
 #include <LYexit.h>
+#include <LYStrings.h>
 #include <LYUtils.h>
 #include <LYLeaks.h>
 
@@ -318,7 +322,7 @@ BOOL override_proxy(const char *addr)
     }
     if (!port)
 	port = 80;		/* Default */
-    h_len = strlen(Host);
+    h_len = (int) strlen(Host);
 
     while (*no_proxy) {
 	const char *end;
@@ -352,7 +356,8 @@ BOOL override_proxy(const char *addr)
 #ifdef CJK_EX			/* ASATAKU PROXY HACK */
 	if ((!templ_port || templ_port == port) &&
 	    (t_len > 0 && t_len <= h_len &&
-	     isdigit(UCH(*no_proxy)) && !strncmp(host, no_proxy, t_len))) {
+	     isdigit(UCH(*no_proxy)) &&
+	     !strncmp(host, no_proxy, (unsigned) t_len))) {
 	    FREE(host);
 	    return YES;
 	}
@@ -681,21 +686,19 @@ static int HTLoad(const char *addr,
     if (status == HT_FORBIDDEN) {
 	/* prevent crash if telnet or similar was forbidden by rule. - kw */
 	LYFixCursesOn("show alert:");
-	return HTLoadError(sink, 500, gettext("Access forbidden by rule"));
+	status = HTLoadError(sink, 500, gettext("Access forbidden by rule"));
     } else if (status == HT_REDIRECTING) {
-	return status;		/* fake redirection by rule, to redirecting_url */
+	;			/* fake redirection by rule, to redirecting_url */
+    } else if (status >= 0) {
+	/* prevent crash if telnet or similar mapped or proxied by rule. - kw */
+	LYFixCursesOnForAccess(addr, HTAnchor_physical(anchor));
+	p = (HTProtocol *) HTAnchor_protocol(anchor);
+	anchor->parent->underway = TRUE;	/* Hack to deal with caching */
+	status = p->load(HTAnchor_physical(anchor),
+			 anchor, format_out, sink);
+	anchor->parent->underway = FALSE;
+	LYUCPopAssumed();
     }
-    if (status < 0)
-	return status;		/* Can't resolve or forbidden */
-
-    /* prevent crash if telnet or similar mapped or proxied by rule. - kw */
-    LYFixCursesOnForAccess(addr, HTAnchor_physical(anchor));
-    p = (HTProtocol *) HTAnchor_protocol(anchor);
-    anchor->parent->underway = TRUE;	/* Hack to deal with caching */
-    status = p->load(HTAnchor_physical(anchor),
-		     anchor, format_out, sink);
-    anchor->parent->underway = FALSE;
-    LYUCPopAssumed();
     return status;
 }
 
@@ -903,11 +906,12 @@ static BOOL HTLoadDocument(const char *full_address,	/* may include #fragment */
 	    return YES;
 	} else {
 	    ForcingNoCache = YES;
+	    BStrFree(anchor->post_data);
 	    CTRACE((tfp, "HTAccess: Auto-reloading document.\n"));
 	}
     }
 
-    if (text && HText_HaveUserChangedForms(text)) {
+    if (HText_HaveUserChangedForms(text)) {
 	/*
 	 * Issue a warning.  User forms content will be lost.
 	 * Will not restore changed forms, currently.
@@ -1285,7 +1289,7 @@ BOOL HTSearch(const char *keywords,
 
 	if (WHITE(*p)) {
 	    *q++ = '+';
-	} else if (HTCJK != NOCJK) {
+	} else if (IS_CJK_TTY) {
 	    *q++ = *p;
 	} else if (c >= 32 && c <= UCH(127) && isAcceptable[c - 32]) {
 	    *q++ = *p;		/* 930706 TBL for MVS bug */

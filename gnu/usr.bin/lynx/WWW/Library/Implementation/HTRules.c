@@ -1,4 +1,7 @@
-/*	Configuration manager for Hypertext Daemon		HTRules.c
+/*
+ * $LynxId: HTRules.c,v 1.38 2009/02/01 21:19:02 tom Exp $
+ *
+ *	Configuration manager for Hypertext Daemon		HTRules.c
  *	==========================================
  *
  *
@@ -43,6 +46,7 @@ typedef struct _rule {
 
 #include <HTTP.h>		/* for redirecting_url, indirectly HTPermitRedir - kw */
 #include <LYGlobalDefs.h>	/* for LYUserSpecifiedURL - kw */
+#include <LYStrings.h>		/* for LYscanFloat */
 #include <LYUtils.h>		/* for LYFixCursesOn - kw */
 #include <HTAlert.h>
 
@@ -103,9 +107,9 @@ int HTAddRule(HTRuleOp op, const char *pattern,
     temp->op = op;
 
     if (equiv) {
-	CTRACE((tfp, "Rule: For `%s' op %d `%s'", pattern, op, equiv));
+	CTRACE((tfp, "Rule: For `%s' op %d `%s'", pattern, (int) op, equiv));
     } else {
-	CTRACE((tfp, "Rule: For `%s' op %d", pattern, op));
+	CTRACE((tfp, "Rule: For `%s' op %d", pattern, (int) op));
     }
     if (cond_op) {
 	CTRACE((tfp, "\t%s %s\n", cond_op, NONNULL(cond)));
@@ -453,7 +457,7 @@ int HTSetConfiguration(char *config)
     const char *cond_op = NULL;
     const char *cond = NULL;
     float quality, secs, secs_per_byte;
-    int maxbytes;
+    long maxbytes;
     int status;
 
     StrAllocCopy(line, config);
@@ -487,20 +491,33 @@ int HTSetConfiguration(char *config)
     if (0 == strcasecomp(word1, "suffix")) {
 	char *encoding = HTNextField(&pointer);
 
+	status = 0;
 	if (pointer)
-	    status = sscanf(pointer, "%f", &quality);
-	else
-	    status = 0;
+	    status = LYscanFloat(pointer, &quality);
+
 	HTSetSuffix(word2, word3,
 		    encoding ? encoding : "binary",
 		    status >= 1 ? quality : (float) 1.0);
 
     } else if (0 == strcasecomp(word1, "presentation")) {
-	if (pointer)
-	    status = sscanf(pointer, "%f%f%f%d",
-			    &quality, &secs, &secs_per_byte, &maxbytes);
-	else
-	    status = 0;
+	status = 0;
+	if (pointer) {
+	    const char *temp = pointer;
+
+	    if (LYscanFloat2(&temp, &quality)) {
+		status = 1;
+		if (LYscanFloat2(&temp, &secs)) {
+		    status = 2;
+		    if (LYscanFloat2(&temp, &secs_per_byte)) {
+			status = 3;
+			if (sscanf(temp, "%ld", &maxbytes)) {
+			    status = 4;
+			}
+		    }
+		}
+	    }
+	}
+
 	HTSetPresentation(word2, word3, NULL,
 			  status >= 1 ? quality : 1.0,
 			  status >= 2 ? secs : 0.0,

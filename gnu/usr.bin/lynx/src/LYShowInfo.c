@@ -1,3 +1,4 @@
+/* $LynxId: LYShowInfo.c,v 1.69 2009/01/19 23:42:23 tom Exp $ */
 #include <HTUtils.h>
 #include <HTFile.h>
 #include <HTParse.h>
@@ -24,7 +25,7 @@
 
 #define ADVANCED_INFO 1		/* to get more info in advanced mode */
 
-#define BEGIN_DL(text) fprintf(fp0, "<h2>%s</h2>\n<dl compact>", text)
+#define BEGIN_DL(text) fprintf(fp0, "<h2>%s</h2>\n<dl compact>", LYEntifyTitle(&buffer, text))
 #define END_DL()       fprintf(fp0, "\n</dl>\n")
 
 #define ADD_SS(label,value)       dt_String(fp0, label, value)
@@ -76,7 +77,7 @@ static void dt_String(FILE *fp,
     StrAllocCopy(the_label, label);
     StrAllocCopy(the_value, value);
 
-    have = strlen(the_label);
+    have = (int) strlen(the_label);
     need = LYstrExtent(the_label, have, label_columns);
 
     LYEntify(&the_label, TRUE);
@@ -97,10 +98,12 @@ static void dt_Number(FILE *fp0,
 		      const char *units)
 {
     char *value = NULL;
+    char *buffer = NULL;
 
-    HTSprintf(&value, "%ld %s", number, units);
+    HTSprintf(&value, "%ld %s", number, LYEntifyTitle(&buffer, units));
     ADD_SS(label, value);
     FREE(value);
+    FREE(buffer);
 }
 
 /*
@@ -112,18 +115,20 @@ int LYShowInfo(DocInfo *doc,
 	       char *owner_address)
 {
     static char tempfile[LY_MAXPATH] = "\0";
+
     int url_type;
     FILE *fp0;
     char *Title = NULL;
-    const char *name;
     const char *cp;
     char *temp = 0;
+    char *buffer = 0;
 
 #ifdef ADVANCED_INFO
     BOOLEAN LYInfoAdvanced = (BOOL) (user_mode == ADVANCED_MODE);
 #endif
 #ifdef DIRED_SUPPORT
     struct stat dir_info;
+    const char *name;
 #endif /* DIRED_SUPPORT */
 
     if (LYReuseTempfiles) {
@@ -147,7 +152,7 @@ int LYShowInfo(DocInfo *doc,
 	(url_type == LYNXEXEC_URL_TYPE ||
 	 url_type == LYNXPROG_URL_TYPE)) {
 	char *last_slash = strrchr(links[doc->link].lname, '/');
-	int next_to_last = strlen(links[doc->link].lname) - 1;
+	int next_to_last = (int) strlen(links[doc->link].lname) - 1;
 
 	if ((last_slash - links[doc->link].lname) == next_to_last) {
 	    links[doc->link].lname[next_to_last] = '\0';
@@ -202,21 +207,22 @@ int LYShowInfo(DocInfo *doc,
 	    ADD_SS(gettext("Full name:"), temp);
 #ifdef S_IFLNK
 	    if (S_ISLNK(dir_info.st_mode)) {
-		char buf[1025];
+		char buf[MAX_LINE];
 		int buf_size;
 
 		if ((buf_size = readlink(temp, buf, sizeof(buf) - 1)) != -1) {
 		    buf[buf_size] = '\0';
 		} else {
-		    sprintf(buf, "%.1024s", gettext("Unable to follow link"));
+		    sprintf(buf, "%.*s", (int) sizeof(buf) - 1,
+			    gettext("Unable to follow link"));
 		}
 		ADD_SS(gettext("Points to file:"), buf);
 	    }
 #endif
-	    name = HTAA_UidToName(dir_info.st_uid);
+	    name = HTAA_UidToName((int) dir_info.st_uid);
 	    if (*name)
 		ADD_SS(gettext("Name of owner:"), name);
-	    name = HTAA_GidToName(dir_info.st_gid);
+	    name = HTAA_GidToName((int) dir_info.st_gid);
 	    if (*name)
 		ADD_SS(gettext("Group name:"), name);
 	    if (S_ISREG(dir_info.st_mode)) {
@@ -305,7 +311,7 @@ int LYShowInfo(DocInfo *doc,
 
 	LYformTitle(&Title, doc->title);
 	HTSprintf(&temp, "%s%s",
-		  Title,
+		  LYEntifyTitle(&buffer, Title),
 		  ((doc->isHEAD &&
 		    !strstr(Title, " (HEAD)") &&
 		    !strstr(Title, " - HEAD")) ? " (HEAD)" : ""));
@@ -328,7 +334,7 @@ int LYShowInfo(DocInfo *doc,
 	    if (p_in && non_empty(p_in->MIMEname) &&
 		HTAnchor_getUCLYhndl(HTMainAnchor, UCT_STAGE_MIME) >= 0) {
 		HTSprintf(&temp, "%s %s",
-			  p_in->MIMEname,
+			  LYEntifyTitle(&buffer, p_in->MIMEname),
 			  gettext("(assumed)"));
 		ADD_SS(gettext("Charset:"), p_in->MIMEname);
 		FREE(temp);
@@ -369,7 +375,7 @@ int LYShowInfo(DocInfo *doc,
 
 	if (doc->post_data) {
 	    fprintf(fp0, "<dt><em>%s</em> <xmp>%.*s</xmp>\n",
-		    gettext("Post Data:"),
+		    LYEntifyTitle(&buffer, gettext("Post Data:")),
 		    BStrLen(doc->post_data),
 		    BStrData(doc->post_data));
 	    ADD_SS(gettext("Post Content Type:"), doc->post_content_type);
@@ -436,7 +442,8 @@ int LYShowInfo(DocInfo *doc,
 		}
 		if (!(links[doc->link].l_form->submit_method &&
 		      links[doc->link].l_form->submit_action)) {
-		    fprintf(fp0, "<dt>&nbsp;%s\n", gettext("(Form field)"));
+		    fprintf(fp0, "<dt>&nbsp;%s\n",
+			    LYEntifyTitle(&buffer, gettext("(Form field)")));
 		}
 	    } else {
 		ADD_SS("URL:",
@@ -445,13 +452,17 @@ int LYShowInfo(DocInfo *doc,
 	    END_DL();
 
 	} else {
-	    fprintf(fp0, "<h2>%s</h2>", gettext("No Links on the current page"));
+	    fprintf(fp0, "<h2>%s</h2>",
+		    LYEntifyTitle(&buffer,
+				  gettext("No Links on the current page")));
 	}
 
 #ifdef EXP_HTTP_HEADERS
 	if ((cp = HText_getHttpHeaders()) != 0) {
-	    fprintf(fp0, "<h2>%s</h2>", gettext("Server Headers:"));
-	    fprintf(fp0, "<pre>%s</pre>", cp);
+	    fprintf(fp0, "<h2>%s</h2>",
+		    LYEntifyTitle(&buffer, gettext("Server Headers:")));
+	    fprintf(fp0, "<pre>%s</pre>",
+		    LYEntifyTitle(&buffer, cp));
 	}
 #endif
 
@@ -464,6 +475,7 @@ int LYShowInfo(DocInfo *doc,
 
     LYCloseTemp(tempfile);
     FREE(Title);
+    FREE(buffer);
 
     return (0);
 }

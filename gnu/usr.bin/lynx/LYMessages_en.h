@@ -1,4 +1,6 @@
 /*
+ * $LynxId: LYMessages_en.h,v 1.70 2009/05/28 23:11:50 tom Exp $
+ *
  * Lynx - Hypertext navigation system
  *
  *   (c) Copyright 1992, 1993, 1994 University of Kansas
@@ -128,6 +130,10 @@
  gettext("(Form reset button)   Use right-arrow or <return> to reset form to defaults.")
 #define FORM_LINK_RESET_DIS_MSG \
  gettext("DISABLED form reset button.  Use UP or DOWN arrows or tab to move off.")
+#define FORM_LINK_BUTTON_MESSAGE \
+ gettext("(Script button)   Use UP or DOWN arrows or tab to move off.")
+#define FORM_LINK_BUTTON_DIS_MSG \
+ gettext("DISABLED Script button.  Use UP or DOWN arrows or tab to move off.")
 #define FORM_LINK_OPTION_LIST_MESSAGE \
  gettext("(Option list) Hit return and use arrow keys and return to select option.")
 #define CHOICE_LIST_MESSAGE \
@@ -298,6 +304,8 @@
 #define BOOKMARKS_NOT_OPEN \
  gettext("Unable to open bookmark file, use 'a' to save a link first")
 #define BOOKMARKS_NOLINKS gettext("There are no links in this bookmark file!")
+#define CACHE_D_OR_CANCEL \
+ gettext("D)elete cached document or C)ancel? (d,c): ")
 #define BOOK_D_L_OR_CANCEL \
  gettext("Save D)ocument or L)ink to bookmark file or C)ancel? (d,l,c): ")
 #define BOOK_D_OR_CANCEL gettext("Save D)ocument to bookmark file or C)ancel? (d,c): ")
@@ -653,8 +661,6 @@
 #endif /* VMS */
 #define MAXLINKS_REACHED \
  gettext("Maximum links per page exceeded!  Use half-page or two-line scrolling.")
-#define MAXHIST_REACHED \
- gettext("History List maximum reached!  Document not pushed.")
 #define VISITED_LINKS_EMPTY gettext("No previously visited links available!")
 #define MEMORY_EXHAUSTED_ABORT gettext("Memory exhausted!  Program aborted!")
 #define MEMORY_EXHAUSTED_ABORTING gettext("Memory exhausted!  Aborting...")
@@ -700,6 +706,7 @@
 #define ALLOWING_COOKIE gettext("Allowing this cookie.")
 #define REJECTING_COOKIE gettext("Rejecting this cookie.")
 #define COOKIE_JAR_IS_EMPTY gettext("The Cookie Jar is empty.")
+#define CACHE_JAR_IS_EMPTY gettext("The Cache Jar is empty.")
 #define ACTIVATE_TO_GOBBLE \
  gettext("Activate links to gobble up cookies or entire domains,")
 #define OR_CHANGE_ALLOW gettext("or to change a domain's 'allow' setting.")
@@ -758,6 +765,9 @@
 #define SEGMENT_UP_TO           gettext("Up to ")
 #define SEGMENT_CURRENT_DIR     gettext("Current directory is ")
 
+/* HTFTP.c */
+#define ENTRY_IS_SYMBOLIC_LINK  gettext("Symbolic Link")
+
 /* HTGopher.c */
 #define FAILED_NO_RESPONSE      gettext("No response from server!")
 #define GOPHER_CSO_INDEX        gettext("CSO index")
@@ -814,6 +824,7 @@
 #define DIRED_MENU_TITLE	gettext("File Management Options")
 #define DOWNLOAD_OPTIONS_TITLE	gettext("Download Options")
 #define HISTORY_PAGE_TITLE	gettext("History Page")
+#define CACHE_JAR_TITLE		gettext("Cache Jar")
 #define LIST_PAGE_TITLE		gettext("List Page")
 #define LYNXCFG_TITLE		gettext("Lynx.cfg Information")
 #define MOSAIC_BOOKMARK_TITLE	gettext("Converted Mosaic Hotlist")

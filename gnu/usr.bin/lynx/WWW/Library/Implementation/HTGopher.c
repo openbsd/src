@@ -1,4 +1,7 @@
-/*			GOPHER ACCESS				HTGopher.c
+/*
+ * $LynxId: HTGopher.c,v 1.43 2008/03/17 00:03:23 tom Exp $
+ *
+ *			GOPHER ACCESS				HTGopher.c
  *			=============
  *
  *  History:
@@ -244,7 +247,7 @@ static void parse_menu(const char *arg GCC_UNUSED,
     END(HTML_H1);
     PUTC('\n');
     START(HTML_PRE);
-    PUTC('\n');
+    PUTC('\n');			/* newline after HTML_PRE forces split-line */
     while ((ich = NEXT_CHAR) != EOF) {
 
 	if (interrupted_in_htgetcharacter) {

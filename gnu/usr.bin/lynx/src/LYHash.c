@@ -1,7 +1,12 @@
-/* A hash table for the (fake) CSS support in Lynx-rp
+/*
+ * $LynxId: LYHash.c,v 1.16 2008/12/31 22:10:38 tom Exp $
+ *
+ * A hash table for the (fake) CSS support in Lynx-rp
  * (c) 1996 Rob Partington
+ * rewritten 1997 by Klaus Weide.
  */
 #include <LYHash.h>
+#include <LYUtils.h>
 
 #ifdef USE_COLOR_STYLE
 

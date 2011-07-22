@@ -1,4 +1,6 @@
 /*
+ * $LynxId: UCAuto.c,v 1.39 2009/01/01 22:07:18 tom Exp $
+ *
  *  This file contains code for changing the Linux console mode.
  *  Currently some names for font files are hardwired in here.
  *  You have to change this code if it needs accommodation for your
@@ -29,6 +31,7 @@
 #ifdef EXP_CHARTRANS_AUTOSWITCH
 
 #include <HTFile.h>
+#include <www_wait.h>
 
 #ifdef LINUX
 #include <sysexits.h>		/* EX_DATAERR, etc. */
@@ -101,7 +104,7 @@ static BOOL isSetFont(void)
     const char *slash = strrchr(program, '/');
     const char *leaf = (slash ? slash + 1 : program);
 
-    return !strcmp(leaf, "setfont");
+    return (BOOL) !strcmp(leaf, "setfont");
 }
 
 /*
@@ -172,9 +175,11 @@ static int call_setfont(const char *font,
 	if (rv) {
 	    CTRACE((tfp, "call_setfont: system returned %d (0x%x)!\n",
 		    rv, rv));
-	    if ((rv == (EX_DATAERR << 8) ||
-		 rv == (EX_NOINPUT << 8)) &&
-		non_empty(umap)) {
+	    if (rv == -1 || WIFSIGNALED(rv) || !WIFEXITED(rv)) {
+		return -1;
+	    } else if ((WEXITSTATUS(rv) == EX_DATAERR ||
+			WEXITSTATUS(rv) == EX_NOINPUT) &&
+		       non_empty(umap)) {
 		/*
 		 * Check if the font was loaded ok but something was wrong with
 		 * the umap file.
@@ -691,7 +696,7 @@ static int _Switch_Display_Charset(int ord, enum switch_display_charset_t really
 	if (rc == 0)
 	    goto report;
       err:
-	sprintf(msgbuf, "Can't change to '%s': err=%#lx=%ld", name, rc, rc);
+	sprintf(msgbuf, "Can't change to '%s': err=%#x=%d", name, rc, rc);
 	HTInfoMsg(msgbuf);
 	return -1;
     }
@@ -728,7 +733,7 @@ static int _Switch_Display_Charset(int ord, enum switch_display_charset_t really
 
 	rc = VioGetFont(font, 0);	/* Retrieve data for current font */
 	if (rc) {
-	    sprintf(msgbuf, "Can't fetch current font info: err=%#lx=%ld", rc, rc);
+	    sprintf(msgbuf, "Can't fetch current font info: err=%#x=%d", rc, rc);
 	    HTInfoMsg(msgbuf);
 	    ord = ord1 = auto_display_charset;
 	    goto retry;
@@ -763,7 +768,7 @@ static int _Switch_Display_Charset(int ord, enum switch_display_charset_t really
 	fclose(file);
 	rc = VioSetFont(font, 0);	/* Put it all back.. */
 	if (rc) {
-	    sprintf(msgbuf, "Can't set font: err=%#lx=%ld", rc, rc);
+	    sprintf(msgbuf, "Can't set font: err=%#x=%d", rc, rc);
 	    HTInfoMsg(msgbuf);
 	    ord = ord1 = auto_display_charset;
 	    font_loaded_for = -1;

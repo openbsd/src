@@ -1,3 +1,4 @@
+/* $LynxId: LYJump.h,v 1.8 2009/01/01 22:41:42 tom Exp $ */
 #ifndef LYJUMP_H
 #define LYJUMP_H
 
@@ -13,7 +14,7 @@ extern "C" {
 
     struct JumpTable {
 	int key;
-	int nel;
+	unsigned nel;
 	char *msg;
 	char *file;
 	char *shortcut;

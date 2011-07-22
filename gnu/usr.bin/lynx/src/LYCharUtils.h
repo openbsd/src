@@ -1,3 +1,6 @@
+/*
+ * $LynxId: LYCharUtils.h,v 1.24 2009/01/19 23:53:27 tom Exp $
+ */
 #ifndef LYCHARUTILS_H
 #define LYCHARUTILS_H
 
@@ -37,6 +40,8 @@ extern "C" {
 					  BOOLEAN plain_space);
     extern void LYEntify(char **str,
 			 BOOLEAN isTITLE);
+    extern const char *LYEntifyTitle(char **target, const char *source);
+    extern const char *LYEntifyValue(char **target, const char *source);
     extern void LYTrimHead(char *str);
     extern void LYTrimTail(char *str);
     extern char *LYFindEndOfComment(char *str);

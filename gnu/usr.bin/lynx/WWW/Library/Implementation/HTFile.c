@@ -1,4 +1,7 @@
-/*			File Access				HTFile.c
+/*
+ * $LynxId: HTFile.c,v 1.120 2009/04/08 19:44:19 tom Exp $
+ *
+ *			File Access				HTFile.c
  *			===========
  *
  *	This is unix-specific code in general, with some VMS bits.
@@ -109,13 +112,13 @@ typedef struct {
 
 #include <HTML.h>		/* For directory object building */
 
-#define PUTC(c) (*target->isa->put_character)(target, c)
-#define PUTS(s) (*target->isa->put_string)(target, s)
-#define START(e) (*target->isa->start_element)(target, e, 0, 0, -1, 0)
-#define END(e) (*target->isa->end_element)(target, e, 0)
+#define PUTC(c)      (*target->isa->put_character)(target, c)
+#define PUTS(s)      (*target->isa->put_string)(target, s)
+#define START(e)     (*target->isa->start_element)(target, e, 0, 0, -1, 0)
+#define END(e)       (*target->isa->end_element)(target, e, 0)
 #define MAYBE_END(e) if (HTML_dtd.tags[e].contents != SGML_EMPTY) \
 			(*target->isa->end_element)(target, e, 0)
-#define FREE_TARGET (*target->isa->_free)(target)
+#define FREE_TARGET  (*target->isa->_free)(target)
 #define ABORT_TARGET (*targetClass._abort)(target, NULL);
 
 struct _HTStructured {
@@ -144,14 +147,23 @@ static const char *HTCacheRoot = "/WWW$SCRATCH";	/* Where to cache things */
 static const char *HTCacheRoot = "/tmp/W3_Cache_";	/* Where to cache things */
 #endif /* VMS */
 
+#define NO_SUFFIX      "*"
+#define UNKNOWN_SUFFIX "*.*"
+
 /*
  *  Suffix registration.
  */
 static HTList *HTSuffixes = 0;
+
 static HTSuffix no_suffix =
-{"*", NULL, NULL, NULL, 1.0};
+{
+    NO_SUFFIX, NULL, NULL, NULL, 1.0
+};
+
 static HTSuffix unknown_suffix =
-{"*.*", NULL, NULL, NULL, 1.0};
+{
+    UNKNOWN_SUFFIX, NULL, NULL, NULL, 1.0
+};
 
 /*	To free up the suffixes at program exit.
  *	----------------------------------------
@@ -240,7 +252,7 @@ static void LYListFmtParse(const char *fmtstr,
 #define PBIT(a, n, s)  (s) ? psbits[((a) >> (n)) & 0x7] : \
 	pbits[((a) >> (n)) & 0x7]
 #endif
-#ifdef S_ISVTX
+#if defined(S_ISVTX) && !defined(_WINDOWS)
     static const char *ptbits[] =
     {"--T", "--t", "-wT", "-wt",
      "r-T", "r-t", "rwT", "rwt", 0};
@@ -496,9 +508,9 @@ void HTSetSuffix5(const char *suffix,
     HTSuffix *suff;
     BOOL trivial_enc = (BOOL) IsUnityEncStr(encoding);
 
-    if (strcmp(suffix, "*") == 0)
+    if (strcmp(suffix, NO_SUFFIX) == 0)
 	suff = &no_suffix;
-    else if (strcmp(suffix, "*.*") == 0)
+    else if (strcmp(suffix, UNKNOWN_SUFFIX) == 0)
 	suff = &unknown_suffix;
     else {
 	HTList *cur = HTSuffixes;
@@ -694,7 +706,7 @@ char *HTnameOfFile_WWW(const char *name,
 	}
     } else if (WWW_prefix) {	/* other access */
 #ifdef VMS
-	if ((home = LYGetEnv("HOME")) == 0)
+	if ((home = LYGetEnv("HOME")) == NULL)
 	    home = HTCacheRoot;
 	else
 	    home = HTVMS_wwwName(home);
@@ -704,7 +716,7 @@ char *HTnameOfFile_WWW(const char *name,
 #else
 	home = LYGetEnv("HOME");
 #endif
-	if (home == 0)
+	if (home == NULL)
 	    home = "/tmp";
 #endif /* VMS */
 	HTSprintf0(&result, "%s/WWW/%s/%s%s", home, acc_method, host, path);
@@ -915,9 +927,11 @@ HTFormat HTFileFormat(const char *filename,
 
     /* defaults tree */
 
-    suff = strchr(filename, '.') ?	/* Unknown suffix */
-	(unknown_suffix.rep ? &unknown_suffix : &no_suffix)
-	: &no_suffix;
+    suff = (strchr(filename, '.')
+	    ? (unknown_suffix.rep
+	       ? &unknown_suffix
+	       : &no_suffix)
+	    : &no_suffix);
 
     /*
      * Set default encoding unless found with suffix already.
@@ -1244,6 +1258,62 @@ CompressFileType HTCompressFileType(const char *filename,
 }
 
 /*
+ *  Determine expected file-suffix from the compression method.
+ */
+const char *HTCompressTypeToSuffix(CompressFileType method)
+{
+    const char *result = "";
+
+    switch (method) {
+    default:
+    case cftNone:
+	result = "";
+	break;
+    case cftGzip:
+	result = ".gz";
+	break;
+    case cftCompress:
+	result = ".Z";
+	break;
+    case cftBzip2:
+	result = ".bz2";
+	break;
+    case cftDeflate:
+	result = ".zz";
+	break;
+    }
+    return result;
+}
+
+/*
+ *  Determine compression encoding from the compression method.
+ */
+const char *HTCompressTypeToEncoding(CompressFileType method)
+{
+    const char *result = NULL;
+
+    switch (method) {
+    default:
+    case cftNone:
+	result = NULL;
+	break;
+    case cftGzip:
+	result = "gzip";
+	break;
+    case cftCompress:
+	result = "compress";
+	break;
+    case cftBzip2:
+	result = "bzip2";
+	break;
+    case cftDeflate:
+	result = "deflate";
+	break;
+    }
+    return result;
+}
+
+/*
  * Check if the token from "Content-Encoding" corresponds to a compression
  * type.  RFC 2068 (and cut/paste into RFC 2616) lists these:
  *	gzip
@@ -1255,7 +1325,7 @@ CompressFileType HTEncodingToCompressType(const char *coding)
 {
     CompressFileType result = cftNone;
 
-    if (coding == 0) {
+    if (coding == NULL) {
 	result = cftNone;
     } else if (!strcasecomp(coding, "gzip") ||
 	       !strcasecomp(coding, "x-gzip")) {
@@ -1273,6 +1343,43 @@ CompressFileType HTEncodingToCompressType(const char *coding)
     return result;
 }
 
+CompressFileType HTContentTypeToCompressType(const char *ct)
+{
+    CompressFileType method = cftNone;
+
+    if (ct == NULL) {
+	method = cftNone;
+    } else if (!strncasecomp(ct, "application/gzip", 16) ||
+	       !strncasecomp(ct, "application/x-gzip", 18)) {
+	method = cftGzip;
+    } else if (!strncasecomp(ct, "application/compress", 20) ||
+	       !strncasecomp(ct, "application/x-compress", 22)) {
+	method = cftCompress;
+    } else if (!strncasecomp(ct, "application/bzip2", 17) ||
+	       !strncasecomp(ct, "application/x-bzip2", 19)) {
+	method = cftBzip2;
+    }
+    return method;
+}
+
+/*
+ * Check the anchor's content_type and content_encoding elements for a gzip or
+ * Unix compressed file -FM, TD
+ */
+CompressFileType HTContentToCompressType(HTParentAnchor *anchor)
+{
+    CompressFileType method = cftNone;
+    const char *ct = HTAnchor_content_type(anchor);
+    const char *ce = HTAnchor_content_encoding(anchor);
+
+    if (ce == NULL && ct != 0) {
+	method = HTContentTypeToCompressType(ct);
+    } else if (ce != 0) {
+	method = HTEncodingToCompressType(ce);
+    }
+    return method;
+}
+
 /*	Determine write access to a file.
  *	---------------------------------
  *
@@ -1283,7 +1390,7 @@ CompressFileType HTEncodingToCompressType(const char *coding)
  *	1.	No code for non-unix systems.
  *	2.	Isn't there a quicker way?
  */
-BOOL HTEditable(const char *filename)
+BOOL HTEditable(const char *filename GCC_UNUSED)
 {
 #ifndef NO_GROUPS
     GETGROUPS_T groups[NGROUPS];
@@ -1684,9 +1791,6 @@ static void do_readme(HTStructured * target, const char *localname)
     fp = fopen(readme_file_name, "r");
 
     if (fp) {
-	HTStructuredClass targetClass;
-
-	targetClass = *target->isa;	/* (Can't init agregate in K&R) */
 	START(HTML_PRE);
 	while ((ch = fgetc(fp)) != EOF) {
 	    PUTC((char) ch);
@@ -1774,12 +1878,10 @@ static int print_local_dir(DIR *dp, char *localname,
     char *pathname = NULL;
     char *tail = NULL;
     char *p;
-    BOOL present[HTML_A_ATTRIBUTES];
     char *tmpfilename = NULL;
     BOOL need_parent_link = FALSE;
     BOOL preformatted = FALSE;
     int status;
-    int i;
     struct stat *actual_info;
 
 #ifdef DISP_PARTIAL
@@ -1795,7 +1897,7 @@ static int print_local_dir(DIR *dp, char *localname,
     pathname = HTParse(anchor->address, "",
 		       PARSE_PATH + PARSE_PUNCTUATION);
 
-    if ((p = strrchr(pathname, '/')) == 0)
+    if ((p = strrchr(pathname, '/')) == NULL)
 	p = "/";
     StrAllocCopy(tail, (p + 1));
     FREE(pathname);
@@ -1809,9 +1911,6 @@ static int print_local_dir(DIR *dp, char *localname,
 
     target = HTML_new(anchor, format_out, sink);
     targetClass = *target->isa;	/* Copy routine entry points */
-
-    for (i = 0; i < HTML_A_ATTRIBUTES; i++)
-	present[i] = (BOOL) (i == HTML_A_HREF);
 
     /*
      * The need_parent_link flag will be set if an "Up to <parent>" link was
@@ -1925,8 +2024,7 @@ static int print_local_dir(DIR *dp, char *localname,
 #ifdef DISP_PARTIAL
 	/* optimize for expensive operation: */
 	if (num_of_entries % (partial_threshold > 0 ?
-			      partial_threshold : display_lines)
-	    == 0) {
+			      partial_threshold : display_lines) == 0) {
 	    if (HTCheckForInterrupt()) {
 		status = HT_PARTIAL_CONTENT;
 		break;
@@ -2085,10 +2183,10 @@ static int print_local_dir(DIR *dp, char *localname,
 	    /* optimize for expensive operation: */
 #ifdef DISP_PARTIAL
 	    if (num_of_entries_output %
-		(partial_threshold > 0 ? partial_threshold : display_lines)
-		== 0) {
+		((partial_threshold > 0)
+		 ? partial_threshold
+		 : display_lines) == 0) {
 		/* num_of_entries, num_of_entries_output... */
-		/* HTReadProgress...(bytes, 0); */
 		HTDisplayPartial();
 
 		if (HTCheckForInterrupt()) {
@@ -2231,7 +2329,7 @@ static int decompressAndParse(HTParentAnchor *anchor,
 	FREE(ultrixname);
     }
 #endif /* VMS */
-    CTRACE((tfp, "HTLoadFile: Opening `%s' gives %p\n", localname, fp));
+    CTRACE((tfp, "HTLoadFile: Opening `%s' gives %p\n", localname, (void *) fp));
     if (fp) {			/* Good! */
 	if (HTEditable(localname)) {
 	    HTAtom *put = HTAtom_for("PUT");
@@ -2250,7 +2348,9 @@ static int decompressAndParse(HTParentAnchor *anchor,
 	     * this is a compressed file, no need to look at the filename
 	     * again.  - kw
 	     */
+#if defined(USE_ZLIB) || defined(USE_BZLIB)
 	    CompressFileType method = HTEncodingToCompressType(HTAtom_name(myEncoding));
+#endif
 
 #define isDOWNLOAD(m) (strcmp(format_out->name, "www/download") && (method == m))
 #ifdef USE_ZLIB
@@ -2266,7 +2366,7 @@ static int decompressAndParse(HTParentAnchor *anchor,
 		fp = 0;
 
 		CTRACE((tfp, "HTLoadFile: zzopen of `%s' gives %p\n",
-			localname, zzfp));
+			localname, (void *) zzfp));
 		internal_decompress = cftDeflate;
 	    } else
 #endif /* USE_ZLIB */
@@ -2313,7 +2413,7 @@ static int decompressAndParse(HTParentAnchor *anchor,
 		    fp = 0;
 
 		    CTRACE((tfp, "HTLoadFile: zzopen of `%s' gives %p\n",
-			    localname, zzfp));
+			    localname, (void *) zzfp));
 		    internal_decompress = cftDeflate;
 		}
 #else /* USE_ZLIB */
@@ -2359,16 +2459,16 @@ static int decompressAndParse(HTParentAnchor *anchor,
 	    switch (internal_decompress) {
 #ifdef USE_ZLIB
 	    case cftDeflate:
-		failed_decompress = (zzfp == 0);
+		failed_decompress = (BOOLEAN) (zzfp == NULL);
 		break;
 	    case cftCompress:
 	    case cftGzip:
-		failed_decompress = (gzfp == 0);
+		failed_decompress = (BOOLEAN) (gzfp == NULL);
 		break;
 #endif
 #ifdef USE_BZLIB
 	    case cftBzip2:
-		failed_decompress = (bzfp == 0);
+		failed_decompress = (BOOLEAN) (bzfp == NULL);
 		break;
 #endif
 	    default:
@@ -2491,7 +2591,7 @@ int HTLoadFile(const char *addr,
 
 	if (ftp_passive == ftp_local_passive) {
 	    if ((status >= 400) || (status < 0)) {
-		ftp_local_passive = !ftp_passive;
+		ftp_local_passive = (BOOLEAN) !ftp_passive;
 		status = HTFTPLoad(addr, anchor, format_out, sink);
 	    }
 	}
@@ -2624,7 +2724,7 @@ int HTLoadFile(const char *addr,
 	    char *best_name = NULL;	/* Best dir entry so far */
 
 	    char *base = strrchr(localname, '/');
-	    int baselen = 0;
+	    unsigned baselen = 0;
 
 	    if (!base || base == localname) {
 		forget_multi = YES;
@@ -2649,7 +2749,7 @@ int HTLoadFile(const char *addr,
 		if (dirbuf->d_ino == 0)
 		    continue;	/* if the entry is not being used, skip it */
 #endif
-		if ((int) strlen(dirbuf->d_name) > baselen &&	/* Match? */
+		if (strlen(dirbuf->d_name) > baselen &&		/* Match? */
 		    !strncmp(dirbuf->d_name, base, baselen)) {
 		    HTAtom *enc;
 		    HTFormat rep = HTFileFormat(dirbuf->d_name, &enc, NULL);
@@ -2706,7 +2806,7 @@ int HTLoadFile(const char *addr,
 			    }
 			}
 		    }
-		    if (value != NO_VALUE_FOUND) {
+		    if (value < NO_VALUE_FOUND) {
 			CTRACE((tfp,
 				"HTLoadFile: value of presenting %s is %f\n",
 				HTAtom_name(rep), value));
@@ -2810,10 +2910,10 @@ int HTLoadFile(const char *addr,
 	    }
 	    /* end if localname is a directory */
 	    if (S_ISREG(dir_info.st_mode)) {
-#ifdef INT_MAX
-		if (dir_info.st_size <= INT_MAX)
+#ifdef LONG_MAX
+		if (dir_info.st_size <= LONG_MAX)
 #endif
-		    anchor->content_length = dir_info.st_size;
+		    anchor->content_length = (long) dir_info.st_size;
 	    }
 
 	}			/* end if file stat worked */

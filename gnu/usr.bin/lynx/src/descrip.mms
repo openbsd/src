@@ -1,3 +1,5 @@
+! $LynxId: descrip.mms,v 1.12 2008/06/30 23:50:22 tom Exp $
+!
 !       Make LYNX hypertext browser under VMS
 !       =====================================
 !
@@ -64,7 +66,7 @@ OBJS =	DefaultStyle.obj, GridText.obj, HTAlert.obj, HTFWriter.obj, -
 	LYMap.obj, LYNews.obj, LYOptions.obj, LYPrint.obj, LYReadCFG.obj, -
 	LYSearch.obj, LYShowInfo.obj, LYStrings.obj, LYTraversal.obj, -
 	LYUpload.obj, LYUtils.obj, LYexit.obj, LYrcFile.obj, TRSTable.obj, -
-	UCAuto.obj, UCAux.obj, UCdomap.obj
+	LYmktime.obj, UCAuto.obj, UCAux.obj, UCdomap.obj, parsdate.obj
 
 .ifdef SLANG
 SCREEN_DEF = USE_SLANG

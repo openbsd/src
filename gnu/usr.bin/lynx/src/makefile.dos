@@ -1,13 +1,15 @@
+# $LynxId: makefile.dos,v 1.32 2008/06/30 23:53:42 tom Exp $
+
 OBJS= UCdomap.o UCAux.o UCAuto.o \
 LYClean.o LYShowInfo.o LYEdit.o LYStrings.o \
 LYMail.o HTAlert.o GridText.o LYGetFile.o \
-LYMain.o LYMainLoop.o LYCurses.o LYBookmark.o LYUtils.o \
-LYOptions.o LYReadCFG.o LYSearch.o LYHistory.o \
+LYMain.o LYMainLoop.o LYCurses.o LYBookmark.o LYmktime.o LYUtils.o \
+LYOptions.o LYReadCFG.o LYSearch.o LYHistory.o LYSession.o \
 LYForms.o LYPrint.o LYrcFile.o LYDownload.o LYNews.o LYKeymap.o \
 HTML.o HTFWriter.o HTInit.o DefaultStyle.o LYLocal.o LYUpload.o \
 LYLeaks.o LYexit.o LYJump.o LYList.o LYCgi.o LYTraversal.o \
 LYEditmap.o LYCharSets.o LYCharUtils.o LYMap.o LYCookie.o LYExtern.o \
-LYStyle.o LYHash.o LYPrettySrc.o TRSTable.o
+LYStyle.o LYHash.o LYPrettySrc.o TRSTable.o parsdate.o
 
 CFLAGS= -O2 $(MCFLAGS) $(INTLFLAGS) -I. -I..
 
@@ -109,3 +111,5 @@ LYShowInfo.o:	../userdefs.h
 LYStrings.o:	../userdefs.h
 LYTraversal.o:	../userdefs.h
 LYUtils.o:	../userdefs.h
+LYmktime.o:	../userdefs.h
+parsdate.o:	../userdefs.h

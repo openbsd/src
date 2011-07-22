@@ -1,7 +1,7 @@
-/*		   /Net/dxcern/userd/timbl/hypertext/WWW/Library/Implementation/HTAnchor.html
- */
-
-/*	Hypertext "Anchor" Object				     HTAnchor.h
+/*
+ * $LynxId: HTAnchor.h,v 1.33 2009/01/01 16:47:33 tom Exp $
+ *
+ *	Hypertext "Anchor" Object				     HTAnchor.h
  *	==========================
  *
  *	An anchor represents a region of a hypertext document which is linked
@@ -30,9 +30,7 @@ typedef struct _HTParentAnchor0 HTParentAnchor0;
 #ifdef __cplusplus
 extern "C" {
 #endif
-/*			Main definition of anchor
- *			=========================
- */ struct _HTAnchor {
+    struct _HTAnchor {
 	/* Generic anchor */
 	HTParentAnchor0 *parent;	/* Parent of this anchor (self for adults) */
     };
@@ -54,13 +52,13 @@ extern "C" {
 	BOOL underway;		/* Document about to be attached to it */
     };
 
-/*
- *  Separated from the above to save memory:  allocated on demand,
- *  it is nearly 1:1 to HText (well, sometimes without HText...),
- *  available for SGML, HTML, and HText stages.
- *  [being precise, we currently allocate it before HTLoadDocument(),
- *  in HTAnchor_findAddress() and HTAnchor_parent()].
- */
+    /*
+     *  Separated from the above to save memory:  allocated on demand,
+     *  it is nearly 1:1 to HText (well, sometimes without HText...),
+     *  available for SGML, HTML, and HText stages.
+     *  [being precise, we currently allocate it before HTLoadDocument(),
+     *  in HTAnchor_findAddress() and HTAnchor_parent()].
+     */
     struct _HTParentAnchor {
 	/* Common part from the generic anchor structure */
 	HTParentAnchor0 *parent;	/* Parent of this anchor */
@@ -114,7 +112,7 @@ extern "C" {
 	char *content_md5;	/* Content-MD5 */
 	char *message_id;	/* Message-ID */
 	char *subject;		/* Subject */
-	int content_length;	/* Content-Length */
+	long content_length;	/* Content-Length */
 	char *date;		/* Date */
 	char *expires;		/* Expires */
 	char *last_modified;	/* Last-Modified */
@@ -140,10 +138,10 @@ extern "C" {
 	HTList _add_sources;	/* - just a memory for list entry:) */
     } HTChildAnchor;
 
-/*
- *  DocAddress structure is used for loading an absolute anchor with all
- *  needed information including posting data and post content type.
- */
+    /*
+     *  DocAddress structure is used for loading an absolute anchor with all
+     *  needed information including posting data and post content type.
+     */
     typedef struct _DocAddress {
 	char *address;
 	bstring *post_data;
@@ -153,64 +151,64 @@ extern "C" {
 	BOOL safe;
     } DocAddress;
 
-/* "internal" means "within the same document, with certainty". */
+    /* "internal" means "within the same document, with certainty". */
     extern HTLinkType *HTInternalLink;
 
-/*	Create or find a child anchor with a possible link
- *	--------------------------------------------------
- *
- *	Create new anchor with a given parent and possibly
- *	a name, and possibly a link to a _relatively_ named anchor.
- *	(Code originally in ParseHTML.h)
- */
+    /* Create or find a child anchor with a possible link
+     * --------------------------------------------------
+     *
+     * Create new anchor with a given parent and possibly
+     * a name, and possibly a link to a _relatively_ named anchor.
+     * (Code originally in ParseHTML.h)
+     */
     extern HTChildAnchor *HTAnchor_findChildAndLink(HTParentAnchor *parent,	/* May not be 0 */
 						    const char *tag,	/* May be "" or 0 */
 						    const char *href,	/* May be "" or 0 */
 						    HTLinkType *ltype);		/* May be 0 */
 
-/*	Create new or find old parent anchor
- *	------------------------------------
- *
- *	This one is for a reference which is found in a document, and might
- *	not be already loaded.
- *	Note: You are not guaranteed a new anchor -- you might get an old one,
- *	like with fonts.
- */
+    /* Create new or find old parent anchor
+     * ------------------------------------
+     *
+     * This one is for a reference which is found in a document, and might
+     * not be already loaded.
+     * Note: You are not guaranteed a new anchor -- you might get an old one,
+     * like with fonts.
+     */
     extern HTParentAnchor *HTAnchor_findAddress(const DocAddress *address);
 
-/*	Create new or find old named anchor - simple form
- *	-------------------------------------------------
- *
- *	Like the previous one, but simpler to use for simple cases.
- *	No post data etc. can be supplied. - kw
- */
+    /* Create new or find old named anchor - simple form
+     * -------------------------------------------------
+     *
+     * Like the previous one, but simpler to use for simple cases.
+     * No post data etc.  can be supplied.  - kw
+     */
     extern HTParentAnchor *HTAnchor_findSimpleAddress(const char *url);
 
-/*	Delete an anchor and possibly related things (auto garbage collection)
- *	--------------------------------------------
- *
- *	The anchor is only deleted if the corresponding document is not loaded.
- *	All outgoing links from children are deleted, and children are
- *	removed from the sources lists of their targets.
- *	We also try to delete the targets whose documents are not loaded.
- *	If this anchor's sources list is empty, we delete it and its children.
- */
+    /* Delete an anchor and possibly related things (auto garbage collection)
+     * --------------------------------------------
+     *
+     * The anchor is only deleted if the corresponding document is not loaded.
+     * All outgoing links from children are deleted, and children are
+     * removed from the sources lists of their targets.
+     * We also try to delete the targets whose documents are not loaded.
+     * If this anchor's sources list is empty, we delete it and its children.
+     */
     extern BOOL HTAnchor_delete(HTParentAnchor0 *me);
 
-/*
- *  Unnamed children (children_notag) have no sense without HText -
- *  delete them and their links if we are about to free HText.
- *  Document currently exists.  Called within HText_free().
- */
+    /*
+     * Unnamed children (children_notag) have no sense without HText -
+     * delete them and their links if we are about to free HText.
+     * Document currently exists.  Called within HText_free().
+     */
     extern void HTAnchor_delete_links(HTParentAnchor *me);
 
 #ifdef USE_SOURCE_CACHE
     extern void HTAnchor_clearSourceCache(HTParentAnchor *me);
 #endif
 
-/*	Data access functions
- *	---------------------
- */
+    /* Data access functions
+     * ---------------------
+     */
     extern HTParentAnchor *HTAnchor_parent(HTAnchor * me);
 
     extern void HTAnchor_setDocument(HTParentAnchor *me,
@@ -218,9 +216,9 @@ extern "C" {
 
     extern HyperDoc *HTAnchor_document(HTParentAnchor *me);
 
-/*	Returns the full URI of the anchor, child or parent
- *	as a malloc'd string to be freed by the caller.
- */
+    /* Returns the full URI of the anchor, child or parent
+     * as a malloc'd string to be freed by the caller.
+     */
     extern char *HTAnchor_address(HTAnchor * me);
 
     extern void HTAnchor_setFormat(HTParentAnchor *me,
@@ -245,8 +243,8 @@ extern "C" {
 				  const char *style);
 #endif
 
-/*	Title handling.
-*/
+    /* Title handling.
+     */
     extern const char *HTAnchor_title(HTParentAnchor *me);
 
     extern void HTAnchor_setTitle(HTParentAnchor *me,
@@ -255,120 +253,120 @@ extern "C" {
     extern void HTAnchor_appendTitle(HTParentAnchor *me,
 				     const char *title);
 
-/*	Bookmark handling.
-*/
+    /* Bookmark handling.
+     */
     extern const char *HTAnchor_bookmark(HTParentAnchor *me);
 
     extern void HTAnchor_setBookmark(HTParentAnchor *me,
 				     const char *bookmark);
 
-/*	Owner handling.
-*/
+    /* Owner handling.
+     */
     extern const char *HTAnchor_owner(HTParentAnchor *me);
 
     extern void HTAnchor_setOwner(HTParentAnchor *me,
 				  const char *owner);
 
-/*	TITLE handling in LINKs with REV="made" or REV="owner". - FM
-*/
+    /* TITLE handling in LINKs with REV="made" or REV="owner".  - FM
+     */
     extern const char *HTAnchor_RevTitle(HTParentAnchor *me);
 
     extern void HTAnchor_setRevTitle(HTParentAnchor *me,
 				     const char *title);
 
-/*	Citehost for bibp links from LINKs with REL="citehost". - RDC
-*/
+    /* Citehost for bibp links from LINKs with REL="citehost".  - RDC
+     */
     extern const char *HTAnchor_citehost(HTParentAnchor *me);
 
     extern void HTAnchor_setCitehost(HTParentAnchor *me,
 				     const char *citehost);
 
-/*	Suggested filename handling. - FM
- *	(will be loaded if we had a Content-Disposition
- *	 header or META element with filename=name.suffix)
- */
+    /* Suggested filename handling.  - FM
+     * (will be loaded if we had a Content-Disposition
+     * header or META element with filename=name.suffix)
+     */
     extern const char *HTAnchor_SugFname(HTParentAnchor *me);
 
-/*	HTTP Headers.
-*/
+    /* HTTP Headers.
+     */
     extern const char *HTAnchor_http_headers(HTParentAnchor *me);
 
-/*	Content-Type handling (parameter list).
-*/
+    /* Content-Type handling (parameter list).
+     */
     extern const char *HTAnchor_content_type_params(HTParentAnchor *me);
 
-/*	Content-Type handling. - FM
-*/
+    /* Content-Type handling.  - FM
+     */
     extern const char *HTAnchor_content_type(HTParentAnchor *me);
 
-/*	Content-Encoding handling. - FM
- *	(will be loaded if we had a Content-Encoding
- *	 header.)
- */
+    /* Content-Encoding handling.  - FM
+     * (will be loaded if we had a Content-Encoding
+     * header.)
+     */
     extern const char *HTAnchor_content_encoding(HTParentAnchor *me);
 
-/*	Last-Modified header handling. - FM
-*/
+    /* Last-Modified header handling.  - FM
+     */
     extern const char *HTAnchor_last_modified(HTParentAnchor *me);
 
-/*	Date header handling. - FM
-*/
+    /* Date header handling.  - FM
+     */
     extern const char *HTAnchor_date(HTParentAnchor *me);
 
-/*	Server header handling. - FM
-*/
+    /* Server header handling.  - FM
+     */
     extern const char *HTAnchor_server(HTParentAnchor *me);
 
-/*	Safe header handling. - FM
-*/
+    /* Safe header handling.  - FM
+     */
     extern BOOL HTAnchor_safe(HTParentAnchor *me);
 
-/*	Content-Base header handling. - FM
-*/
+    /* Content-Base header handling.  - FM
+     */
     extern const char *HTAnchor_content_base(HTParentAnchor *me);
 
-/*	Content-Location header handling. - FM
-*/
+    /* Content-Location header handling.  - FM
+     */
     extern const char *HTAnchor_content_location(HTParentAnchor *me);
 
-/*	Message-ID, used for mail replies - kw
-*/
+    /* Message-ID, used for mail replies - kw
+     */
     extern const char *HTAnchor_messageID(HTParentAnchor *me);
 
     extern BOOL HTAnchor_setMessageID(HTParentAnchor *me,
 				      const char *messageid);
 
-/*	Subject, used for mail replies - kw
-*/
+    /* Subject, used for mail replies - kw
+     */
     extern const char *HTAnchor_subject(HTParentAnchor *me);
 
     extern BOOL HTAnchor_setSubject(HTParentAnchor *me,
 				    const char *subject);
 
-/*	Manipulation of links
- *	---------------------
- */
+    /* Manipulation of links
+     * ---------------------
+     */
     extern HTAnchor *HTAnchor_followLink(HTChildAnchor *me);
 
     extern HTAnchor *HTAnchor_followTypedLink(HTChildAnchor *me,
 					      HTLinkType *type);
 
-/*	Read and write methods
- *	----------------------
- */
+    /* Read and write methods
+     * ----------------------
+     */
     extern HTList *HTAnchor_methods(HTParentAnchor *me);
 
-/*	Protocol
- *	--------
- */
+    /* Protocol
+     * --------
+     */
     extern void *HTAnchor_protocol(HTParentAnchor *me);
 
     extern void HTAnchor_setProtocol(HTParentAnchor *me,
 				     void *protocol);
 
-/*	Physical address
- *	----------------
- */
+    /* Physical address
+     * ----------------
+     */
     extern char *HTAnchor_physical(HTParentAnchor *me);
 
     extern void HTAnchor_setPhysical(HTParentAnchor *me,

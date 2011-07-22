@@ -1,3 +1,7 @@
+/*
+ * $LynxId: LYHelp.hin,v 1.4 2008/01/10 23:26:53 tom Exp $
+ * vile:cmode
+ */
 /* definitions for help files */
 
 #ifndef LYHELP_H
@@ -6,6 +10,7 @@
 #define ALT_EDIT_HELP		"keystrokes/@ALT_EDIT_HELP@"
 #define BASHLIKE_EDIT_HELP	"keystrokes/@BASHLIKE_EDIT_HELP@"
 #define COOKIE_JAR_HELP		"@LYNX_USERS_GUIDE@#Cookies"
+#define CACHE_JAR_HELP		"@LYNX_USERS_GUIDE@#Cache"
 #define CURRENT_KEYMAP_HELP	"keystrokes/@KEYSTROKE_HELP@"
 #define DIRED_MENU_HELP		"keystrokes/@DIRED_HELP@"
 #define EDIT_HELP		"keystrokes/@EDIT_HELP@"

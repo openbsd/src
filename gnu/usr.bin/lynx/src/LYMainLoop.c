@@ -1,3 +1,6 @@
+/*
+ * $LynxId: LYMainLoop.c,v 1.160 2009/02/01 12:51:11 tom Exp $
+ */
 #include <HTUtils.h>
 #include <HTAccess.h>
 #include <HTParse.h>
@@ -39,9 +42,17 @@
 #include <LYMainLoop.h>
 #include <LYPrettySrc.h>
 
+#ifdef USE_SESSIONS
+#include <LYSession.h>
+#endif
+
 #ifdef KANJI_CODE_OVERRIDE
 #include <HTCJK.h>
 #endif
+
+#define LinkIsTextarea(linkNumber) \
+		(links[linkNumber].type == WWW_FORM_LINK_TYPE && \
+		 links[linkNumber].l_form->type == F_TEXTAREA_TYPE)
 
 #ifdef KANJI_CODE_OVERRIDE
 char *str_kcode(HTkcode code)
@@ -113,29 +124,6 @@ static void set_ws_title(char *str)
 
 #endif /* WIN_EX */
 
-#ifdef SH_EX			/* 1998/10/30 (Fri) 10:06:47 */
-
-#define NOT_EQU	1
-
-static int str_n_cmp(const char *p, const char *q, int n)
-{
-    if (n == 0)
-	return 0;
-
-    if (p == NULL)
-	return NOT_EQU;
-
-    if (q == NULL)
-	return NOT_EQU;
-
-    return strncmp(p, q, n);
-}
-
-#undef strncmp
-#define	strncmp(p, q, r)	str_n_cmp(p, q, r)
-
-#endif /* SH_EX */
-
 #if defined(USE_EXTERNALS) || defined(WIN_EX)
 #include <LYExtern.h>
 #endif
@@ -190,7 +178,7 @@ HTList *Goto_URLs = NULL;	/* List of Goto URLs */
 char *LYRequestTitle = NULL;	/* newdoc.title in calls to getfile() */
 char *LYRequestReferer = NULL;	/* Referer, may be set in getfile() */
 
-static char prev_target[512];
+static char prev_target[MAX_LINE];
 
 #ifdef DISP_PARTIAL
 BOOLEAN display_partial = FALSE;	/* could be enabled in HText_new() */
@@ -376,7 +364,7 @@ void LYCloseTracelog(void)
 void handle_LYK_TRACE_TOGGLE(void)
 {
 #ifndef NO_LYNX_TRACE
-    WWW_TraceFlag = !WWW_TraceFlag;
+    WWW_TraceFlag = (BOOLEAN) !WWW_TraceFlag;
     if (LYOpenTraceLog())
 	HTUserMsg(WWW_TraceFlag ? TRACE_ON : TRACE_OFF);
 #else
@@ -640,6 +628,9 @@ static void do_check_goto_URL(char *user_input_buffer,
 	{ STR_LYNXCFG,		&no_goto_configinfo },
 	{ STR_LYNXCFLAGS,	&no_goto_configinfo },
 	{ STR_LYNXCOOKIE,	&always },
+#ifdef USE_CACHEJAR
+	{ STR_LYNXCACHE,	&always },
+#endif
 	{ STR_LYNXDIRED,	&always },
 	{ STR_LYNXDOWNLOAD,	&always },
 	{ STR_LYNXOPTIONS,	&always },
@@ -891,7 +882,7 @@ static int find_link_near_col(int col,
 		const char *text = LYGetHiliteStr(i, 0);
 
 		if (text != NULL)
-		    cx += strlen(text) / 2;
+		    cx += (int) strlen(text) / 2;
 		cx -= col;
 		if (cx < 0)
 		    cx = -cx;
@@ -1117,6 +1108,9 @@ static int handle_LYK_ACTIVATE(int *c,
 		 * FM
 		 */
 		if (isLYNXCOOKIE(links[curdoc.link].l_form->submit_action) ||
+#ifdef USE_CACHEJAR
+		    isLYNXCACHE(links[curdoc.link].l_form->submit_action) ||
+#endif
 #ifdef DIRED_SUPPORT
 #ifdef OK_PERMIT
 		    (isLYNXDIRED(links[curdoc.link].l_form->submit_action) &&
@@ -1287,7 +1281,12 @@ static int handle_LYK_ACTIVATE(int *c,
 	    if (no_file_url && isFILE_URL(links[curdoc.link].lname)) {
 		if (!isFILE_URL(curdoc.address) &&
 		    !((isLYNXKEYMAP(curdoc.address) ||
+#ifndef USE_CACHEJAR
 		       isLYNXCOOKIE(curdoc.address)) &&
+#else
+		       isLYNXCOOKIE(curdoc.address) ||
+		       isLYNXCACHE(curdoc.address)) &&
+#endif
 		      !strncmp(links[curdoc.link].lname,
 			       helpfilepath,
 			       strlen(helpfilepath)))) {
@@ -1307,6 +1306,11 @@ static int handle_LYK_ACTIVATE(int *c,
 	    if ((isLYNXCOOKIE(links[curdoc.link].lname) &&
 		 (strcmp(NonNull(curdoc.title), COOKIE_JAR_TITLE) ||
 		  !isLYNXCOOKIE(curdoc.address))) ||
+#ifdef USE_CACHEJAR
+		(isLYNXCACHE(links[curdoc.link].lname) &&
+		 (strcmp(NonNull(curdoc.title), CACHE_JAR_TITLE) ||
+		  !isLYNXCACHE(curdoc.address))) ||
+#endif
 #ifdef DIRED_SUPPORT
 		(isLYNXDIRED(links[curdoc.link].lname) &&
 		 !LYIsUIPage(curdoc.address, UIP_DIRED_MENU) &&
@@ -1473,7 +1477,11 @@ static int handle_LYK_ACTIVATE(int *c,
 		    strip_trailing_slash(newdoc.address);
 	    }
 #endif /* DIRED_SUPPORT  && !__DJGPP__ */
-	    if (isLYNXCOOKIE(curdoc.address)) {
+	    if (isLYNXCOOKIE(curdoc.address)
+#ifdef USE_CACHEJAR
+		|| isLYNXCACHE(curdoc.address)
+#endif
+		) {
 		HTuncache_current_document();
 	    }
 	}
@@ -1539,6 +1547,9 @@ static void handle_LYK_ADD_BOOKMARK(BOOLEAN *refresh_screen,
 #endif /* DIRED_SUPPORT */
 	!LYIsUIPage(curdoc.address, UIP_DOWNLOAD_OPTIONS) &&
 	!isLYNXCOOKIE(curdoc.address) &&
+#ifdef USE_CACHEJAR
+	!isLYNXCACHE(curdoc.address) &&
+#endif
 	!LYIsUIPage(curdoc.address, UIP_OPTIONS_MENU) &&
 	((nlinks <= 0) ||
 	 (links[curdoc.link].lname != NULL &&
@@ -1547,6 +1558,9 @@ static void handle_LYK_ADD_BOOKMARK(BOOLEAN *refresh_screen,
 	  !isLYNXDIRED(links[curdoc.link].lname) &&
 	  !isLYNXDOWNLOAD(links[curdoc.link].lname) &&
 	  !isLYNXCOOKIE(links[curdoc.link].lname) &&
+#ifdef USE_CACHEJAR
+	  !isLYNXCACHE(links[curdoc.link].lname) &&
+#endif
 	  !isLYNXPRINT(links[curdoc.link].lname)))) {
 	if (nlinks > 0) {
 	    if (curdoc.post_data == NULL &&
@@ -1684,7 +1698,7 @@ static void handle_LYK_CLEAR_AUTH(int *old_c,
 
 static int handle_LYK_COMMAND(char *user_input_buffer)
 {
-    int ch;
+    LYKeymapCode ch;
     Kcmd *mp;
     char *src, *tmp;
 
@@ -1694,8 +1708,8 @@ static int handle_LYK_COMMAND(char *user_input_buffer)
 	src = LYSkipBlanks(user_input_buffer);
 	tmp = LYSkipNonBlanks(src);
 	*tmp = 0;
-	ch = ((mp = LYStringToKcmd(src)) != 0) ? mp->code : 0;
-	CTRACE((tfp, "LYK_COMMAND(%s.%s) = %d\n", src, tmp, ch));
+	ch = ((mp = LYStringToKcmd(src)) != 0) ? mp->code : LYK_UNKNOWN;
+	CTRACE((tfp, "LYK_COMMAND(%s.%s) = %d\n", src, tmp, (int) ch));
 	if (ch == 0) {
 	    return *src ? -1 : 0;
 	}
@@ -1736,7 +1750,7 @@ static void handle_LYK_COMMENT(BOOLEAN *refresh_screen,
 
 		if (temp != NULL) {
 		    HTUnEscape(temp);
-		    if (*temp == '~' && strlen(temp) > 1) {
+		    if (LYIsTilde(*temp) && strlen(temp) > 1) {
 			/*
 			 * It's a ~user URL so guess user@host.  - FM
 			 */
@@ -1808,6 +1822,34 @@ static void handle_LYK_COMMENT(BOOLEAN *refresh_screen,
 	}
     }
 }
+
+#ifdef USE_CACHEJAR
+static BOOLEAN handle_LYK_CACHE_JAR(int *cmd)
+{
+    /*
+     * Don't do this if already viewing cache jar.
+     */
+    if (!isLYNXCACHE(curdoc.address)) {
+	set_address(&newdoc, STR_LYNXCACHE "/");
+	LYFreePostData(&newdoc);
+	FREE(newdoc.bookmark);
+	newdoc.isHEAD = FALSE;
+	newdoc.safe = FALSE;
+	newdoc.internal_link = FALSE;
+	LYforce_no_cache = TRUE;
+	if (LYValidate || check_realm) {
+	    LYPermitURL = TRUE;
+	}
+    } else {
+	/*
+	 * If already in the cache jar, get out.
+	 */
+	*cmd = LYK_PREV_DOC;
+	return TRUE;
+    }
+    return FALSE;
+}
+#endif /* USE_CACHEJAR */
 
 static BOOLEAN handle_LYK_COOKIE_JAR(int *cmd)
 {
@@ -2054,7 +2096,6 @@ static int handle_LYK_DOWNLOAD(int *cmd,
 		*old_c = real_c;
 		HTUserMsg(NO_DOWNLOAD_COOKIES);
 	    }
-
 	} else if (LYIsUIPage(curdoc.address, UIP_PRINT_OPTIONS)) {
 	    if (*old_c != real_c) {
 		*old_c = real_c;
@@ -2120,7 +2161,7 @@ static int handle_LYK_DOWNLOAD(int *cmd,
 	    newdoc.isHEAD = HDOC(number).isHEAD;
 	    newdoc.safe = HDOC(number).safe;
 	    newdoc.internal_link = FALSE;
-	    newdoc.link = 0;
+	    newdoc.link = (user_mode == NOVICE_MODE) ? 1 : 0;
 	    HTOutputFormat = HTAtom_for("www/download");
 	    LYUserSpecifiedURL = TRUE;
 	    /*
@@ -2135,6 +2176,9 @@ static int handle_LYK_DOWNLOAD(int *cmd,
 	    }
 
 	} else if (isLYNXCOOKIE(links[curdoc.link].lname) ||
+#ifdef USE_CACHEJAR
+		   isLYNXCACHE(links[curdoc.link].lname) ||
+#endif
 		   isLYNXDIRED(links[curdoc.link].lname) ||
 		   isLYNXDOWNLOAD(links[curdoc.link].lname) ||
 		   isLYNXPRINT(links[curdoc.link].lname) ||
@@ -2191,7 +2235,7 @@ static int handle_LYK_DOWNLOAD(int *cmd,
 		newdoc.safe = FALSE;
 	    }
 	    newdoc.internal_link = FALSE;
-	    newdoc.link = 0;
+	    newdoc.link = (user_mode == NOVICE_MODE) ? 1 : 0;
 	    HTOutputFormat = HTAtom_for("www/download");
 	    /*
 	     * Force the document to be reloaded.
@@ -2244,7 +2288,7 @@ static void handle_LYK_DOWN_LINK(int *follow_col,
 	    *follow_col = links[curdoc.link].lx;
 
 	    if (text != NULL)
-		*follow_col += strlen(text) / 2;
+		*follow_col += (int) strlen(text) / 2;
 	}
 
 	newlink = find_link_near_col(*follow_col, 1);
@@ -2281,8 +2325,7 @@ static int handle_LYK_DWIMEDIT(int *cmd,
      * rather than attempting to edit the html source document.  KED
      */
     if (nlinks > 0 &&
-	links[curdoc.link].type == WWW_FORM_LINK_TYPE &&
-	links[curdoc.link].l_form->type == F_TEXTAREA_TYPE) {
+	LinkIsTextarea(curdoc.link)) {
 	*cmd = LYK_EDIT_TEXTAREA;
 	return 2;
     }
@@ -2397,13 +2440,13 @@ static void handle_LYK_EDIT(int *old_c,
 	    *old_c = real_c;
 	    HTUserMsg(EDIT_DISABLED);
 	}
-    } else
+    }
 #ifdef DIRED_SUPPORT
-	/*
-	 * Allow the user to edit the link rather than curdoc in edit mode.
-	 */
-	if (lynx_edit_mode &&
-	    non_empty(editor) && !no_dired_support) {
+    /*
+     * Allow the user to edit the link rather than curdoc in edit mode.
+     */
+    else if (lynx_edit_mode &&
+	     non_empty(editor) && !no_dired_support) {
 	if (nlinks > 0) {
 	    cp = links[curdoc.link].lname;
 	    if (is_url(cp) == FILE_URL_TYPE) {
@@ -2440,9 +2483,9 @@ static void handle_LYK_EDIT(int *old_c,
 		FREE(tp);
 	    }
 	}
-    } else
+    }
 #endif /* DIRED_SUPPORT */
-    if (non_empty(editor)) {
+    else if (non_empty(editor)) {
 	if (edit_current_file(newdoc.address, curdoc.link, LYGetNewline())) {
 	    HTuncache_current_document();
 	    LYforce_no_cache = TRUE;	/*force reload of document */
@@ -2505,8 +2548,7 @@ static void handle_LYK_EDIT_TEXTAREA(BOOLEAN *refresh_screen,
     /*
      * See if the current link is in a form TEXTAREA.
      */
-    else if (links[curdoc.link].type == WWW_FORM_LINK_TYPE &&
-	     links[curdoc.link].l_form->type == F_TEXTAREA_TYPE) {
+    else if (LinkIsTextarea(curdoc.link)) {
 
 	/* stop screen */
 	stop_curses();
@@ -2653,7 +2695,7 @@ static BOOLEAN handle_LYK_FASTBACKW_LINK(int *cmd,
 {
     int samepage = 0, nextlink = curdoc.link;
     int res;
-    int code = FALSE;
+    BOOLEAN code = FALSE;
 
     if (nlinks > 1) {
 
@@ -2661,32 +2703,27 @@ static BOOLEAN handle_LYK_FASTBACKW_LINK(int *cmd,
 	 * If in textarea, move to first link or textarea group before it if
 	 * there is one on this screen.  - kw
 	 */
-	if (links[curdoc.link].type == WWW_FORM_LINK_TYPE &&
-	    links[curdoc.link].l_form->type == F_TEXTAREA_TYPE) {
+	if (LinkIsTextarea(curdoc.link)) {
 	    int thisgroup = links[curdoc.link].l_form->number;
 	    char *thisname = links[curdoc.link].l_form->name;
 
 	    if (curdoc.link > 0 &&
-		!(links[0].type == WWW_FORM_LINK_TYPE &&
-		  links[0].l_form->type == F_TEXTAREA_TYPE &&
+		!(LinkIsTextarea(0) &&
 		  links[0].l_form->number == thisgroup &&
 		  sametext(links[0].l_form->name, thisname))) {
 		do
 		    nextlink--;
 		while
-		    (links[nextlink].type == WWW_FORM_LINK_TYPE &&
-		     links[nextlink].l_form->type == F_TEXTAREA_TYPE &&
+		    (LinkIsTextarea(nextlink) &&
 		     links[nextlink].l_form->number == thisgroup &&
 		     sametext(links[nextlink].l_form->name, thisname));
 		samepage = 1;
 
 	    } else if (!more_text && LYGetNewline() == 1 &&
-		       (links[0].type == WWW_FORM_LINK_TYPE &&
-			links[0].l_form->type == F_TEXTAREA_TYPE &&
+		       (LinkIsTextarea(0) &&
 			links[0].l_form->number == thisgroup &&
 			sametext(links[0].l_form->name, thisname)) &&
-		       !(links[nlinks - 1].type == WWW_FORM_LINK_TYPE &&
-			 links[nlinks - 1].l_form->type == F_TEXTAREA_TYPE &&
+		       !(LinkIsTextarea(nlinks - 1) &&
 			 links[nlinks - 1].l_form->number == thisgroup &&
 			 sametext(links[nlinks - 1].l_form->name, thisname))) {
 		nextlink = nlinks - 1;
@@ -2712,21 +2749,18 @@ static BOOLEAN handle_LYK_FASTBACKW_LINK(int *cmd,
 	 * - kw
 	 */
 	if (nextlink > 0 &&
-	    links[nextlink].type == WWW_FORM_LINK_TYPE &&
-	    links[nextlink].l_form->type == F_TEXTAREA_TYPE) {
+	    LinkIsTextarea(nextlink)) {
 	    int thisgroup = links[nextlink].l_form->number;
 	    char *thisname = links[nextlink].l_form->name;
 
-	    if (links[0].type == WWW_FORM_LINK_TYPE &&
-		links[0].l_form->type == F_TEXTAREA_TYPE &&
+	    if (LinkIsTextarea(0) &&
 		links[0].l_form->number == thisgroup &&
 		sametext(links[0].l_form->name, thisname)) {
 		nextlink = 0;
 	    } else
 		while
 		    (nextlink > 1 &&
-		     links[nextlink - 1].type == WWW_FORM_LINK_TYPE &&
-		     links[nextlink - 1].l_form->type == F_TEXTAREA_TYPE &&
+		     LinkIsTextarea(nextlink - 1) &&
 		     links[nextlink - 1].l_form->number == thisgroup &&
 		     sametext(links[nextlink - 1].l_form->name, thisname)) {
 		    nextlink--;
@@ -2768,21 +2802,18 @@ static void handle_LYK_FASTFORW_LINK(int *old_c,
 	 * If in textarea, move to first link or field after it if there is one
 	 * on this screen.  - kw
 	 */
-	if (links[curdoc.link].type == WWW_FORM_LINK_TYPE &&
-	    links[curdoc.link].l_form->type == F_TEXTAREA_TYPE) {
+	if (LinkIsTextarea(curdoc.link)) {
 	    int thisgroup = links[curdoc.link].l_form->number;
 	    char *thisname = links[curdoc.link].l_form->name;
 
 	    if (curdoc.link < nlinks - 1 &&
-		!(links[nlinks - 1].type == WWW_FORM_LINK_TYPE &&
-		  links[nlinks - 1].l_form->type == F_TEXTAREA_TYPE &&
+		!(LinkIsTextarea(nlinks - 1) &&
 		  links[nlinks - 1].l_form->number == thisgroup &&
 		  sametext(links[nlinks - 1].l_form->name, thisname))) {
 		do
 		    nextlink++;
 		while
-		    (links[nextlink].type == WWW_FORM_LINK_TYPE &&
-		     links[nextlink].l_form->type == F_TEXTAREA_TYPE &&
+		    (LinkIsTextarea(nextlink) &&
 		     links[nextlink].l_form->number == thisgroup &&
 		     sametext(links[nextlink].l_form->name, thisname));
 		samepage = 1;
@@ -2892,8 +2923,7 @@ static void handle_LYK_GROW_TEXTAREA(BOOLEAN *refresh_screen)
     /*
      * See if the current link is in a form TEXTAREA.
      */
-    if (links[curdoc.link].type == WWW_FORM_LINK_TYPE &&
-	links[curdoc.link].l_form->type == F_TEXTAREA_TYPE) {
+    if (LinkIsTextarea(curdoc.link)) {
 
 	HText_ExpandTextarea(&links[curdoc.link], TEXTAREA_EXPAND_SIZE);
 
@@ -3082,7 +3112,7 @@ static void handle_LYK_HISTORICAL(void)
 #ifdef USE_SOURCE_CACHE
     }				/* end if no bypass */
 #endif
-    historical_comments = !historical_comments;
+    historical_comments = (BOOLEAN) !historical_comments;
     if (minimal_comments) {
 	HTAlert(historical_comments ?
 		HISTORICAL_ON_MINIMAL_OFF : HISTORICAL_OFF_MINIMAL_ON);
@@ -3142,7 +3172,7 @@ static BOOLEAN handle_LYK_HISTORY(BOOLEAN ForcePush)
 
 static BOOLEAN handle_LYK_IMAGE_TOGGLE(int *cmd)
 {
-    clickable_images = !clickable_images;
+    clickable_images = (BOOLEAN) !clickable_images;
 
     HTUserMsg(clickable_images ?
 	      CLICKABLE_IMAGES_ON : CLICKABLE_IMAGES_OFF);
@@ -3290,7 +3320,7 @@ static BOOLEAN handle_LYK_INFO(int *cmd)
 
 static BOOLEAN handle_LYK_INLINE_TOGGLE(int *cmd)
 {
-    pseudo_inline_alts = !pseudo_inline_alts;
+    pseudo_inline_alts = (BOOLEAN) !pseudo_inline_alts;
 
     HTUserMsg(pseudo_inline_alts ?
 	      PSEUDO_INLINE_ALTS_ON : PSEUDO_INLINE_ALTS_OFF);
@@ -3306,8 +3336,7 @@ static void handle_LYK_INSERT_FILE(BOOLEAN *refresh_screen,
     /*
      * See if the current link is in a form TEXTAREA.
      */
-    if (links[curdoc.link].type == WWW_FORM_LINK_TYPE &&
-	links[curdoc.link].l_form->type == F_TEXTAREA_TYPE) {
+    if (LinkIsTextarea(curdoc.link)) {
 
 	/*
 	 * Reject attempts to use this for gaining access to local files when
@@ -3575,7 +3604,7 @@ static void handle_LYK_MINIMAL(void)
 	}			/* end if no bypass */
 #endif
     }
-    minimal_comments = !minimal_comments;
+    minimal_comments = (BOOLEAN) !minimal_comments;
     if (!historical_comments) {
 	HTAlert(minimal_comments ?
 		MINIMAL_ON_IN_EFFECT : MINIMAL_OFF_VALID_ON);
@@ -3617,7 +3646,7 @@ static void handle_LYK_MODIFY(BOOLEAN *refresh_screen)
 #ifdef EXP_NESTED_TABLES
 static BOOLEAN handle_LYK_NESTED_TABLES(int *cmd)
 {
-    nested_tables = !nested_tables;
+    nested_tables = (BOOLEAN) !nested_tables;
     HTUserMsg(nested_tables ? NESTED_TABLES_ON : NESTED_TABLES_OFF);
     return reparse_or_reload(cmd);
 }
@@ -3801,8 +3830,7 @@ static void handle_LYK_NEXT_LINK(int c,
 	/*
 	 * Move to different textarea if TAB in textarea.
 	 */
-	if (links[curdoc.link].type == WWW_FORM_LINK_TYPE &&
-	    links[curdoc.link].l_form->type == F_TEXTAREA_TYPE &&
+	if (LinkIsTextarea(curdoc.link) &&
 	    c == '\t') {
 	    int thisgroup = links[curdoc.link].l_form->number;
 	    char *thisname = links[curdoc.link].l_form->name;
@@ -3810,8 +3838,7 @@ static void handle_LYK_NEXT_LINK(int c,
 	    do
 		curdoc.link++;
 	    while ((curdoc.link < nlinks - 1) &&
-		   links[curdoc.link].type == WWW_FORM_LINK_TYPE &&
-		   links[curdoc.link].l_form->type == F_TEXTAREA_TYPE &&
+		   LinkIsTextarea(curdoc.link) &&
 		   links[curdoc.link].l_form->number == thisgroup &&
 		   sametext(links[curdoc.link].l_form->name, thisname));
 	} else {
@@ -4222,7 +4249,7 @@ static void handle_LYK_SOFT_DQUOTES(void)
 #ifdef USE_SOURCE_CACHE
     }				/* end if no bypass */
 #endif
-    soft_dquotes = !soft_dquotes;
+    soft_dquotes = (BOOLEAN) !soft_dquotes;
     HTUserMsg(soft_dquotes ?
 	      SOFT_DOUBLE_QUOTE_ON : SOFT_DOUBLE_QUOTE_OFF);
 #ifdef USE_SOURCE_CACHE
@@ -4620,7 +4647,7 @@ static void handle_LYK_UP_LINK(int *follow_col,
 	    *follow_col = links[curdoc.link].lx;
 
 	    if (text != NULL)
-		*follow_col += strlen(text) / 2;
+		*follow_col += (int) strlen(text) / 2;
 	}
 
 	newlink = find_link_near_col(*follow_col, -1);
@@ -5008,9 +5035,7 @@ void handle_LYK_CHDIR(void)
 	return;
     }
 
-    if (*buf == '~' && !buf[1]) {
-	StrAllocCopy(p, Home_Dir());
-    } else if (*buf == '~') {
+    if (LYIsTilde(*buf) && (LYIsPathSep(buf[1]) || buf[1] == '\0')) {
 	HTSprintf0(&p, "%s%s", Home_Dir(), buf + 1);
     } else {
 	StrAllocCopy(p, buf);
@@ -5180,12 +5205,8 @@ static BOOLEAN handle_LYK_LINEWRAP_TOGGLE(int *cmd,
 int mainloop(void)
 {
 #if defined(WIN_EX)		/* 1997/10/08 (Wed) 14:52:06 */
-#undef	STRING_MAX
-#define	STRING_MAX	4096
-    char temp_buff[STRING_MAX];
-
-#define	BUFF_MAX	1024
-    char sjis_buff[BUFF_MAX];
+    char sjis_buff[MAX_LINE];
+    char temp_buff[sizeof(sjis_buff) * 4];
 #endif
     int c = 0;
     int real_c = 0;
@@ -5261,7 +5282,9 @@ int mainloop(void)
     curdoc.style = NULL;
     newdoc.style = NULL;
 #endif
+#ifndef USE_SESSIONS
     nhist = 0;
+#endif
     user_input_buffer[(sizeof(user_input_buffer) - 1)] = '\0';
     *prev_target = '\0';
     *user_input_buffer = '\0';
@@ -5331,10 +5354,7 @@ int mainloop(void)
     FREE(form_post_data);
     FREE(form_get_data);
 
-    if (user_mode == NOVICE_MODE)
-	display_lines = LYlines - 4;
-    else
-	display_lines = LYlines - 2;
+    LYSetDisplayLines();
 
     while (TRUE) {
 #ifdef USE_COLOR_STYLE
@@ -5595,6 +5615,9 @@ int mainloop(void)
 			HTMainText &&
 			nlinks > 0 && curdoc.link < nlinks &&
 			!isLYNXHIST(NonNull(newdoc.address)) &&
+#ifdef USE_CACHEJAR
+			!isLYNXCACHE(NonNull(newdoc.address)) &&
+#endif
 			!isLYNXCOOKIE(NonNull(newdoc.address))) {
 			char *mail_owner = NULL;
 
@@ -6034,7 +6057,7 @@ int mainloop(void)
 	    } else if (!dump_links_only) {
 		print_wwwfile_to_fd(stdout, FALSE, FALSE);
 	    }
-	    return (EXIT_SUCCESS);
+	    return ((dump_server_status >= 400) ? EXIT_FAILURE : EXIT_SUCCESS);
 	}
 
 	/*
@@ -6076,11 +6099,8 @@ int mainloop(void)
 	    if (HTMainText)	/* to REALLY force it... - kw */
 		HText_setStale(HTMainText);
 	    recent_sizechange = FALSE;
-	    if (user_mode == NOVICE_MODE) {
-		display_lines = LYlines - 4;
-	    } else {
-		display_lines = LYlines - 2;
-	    }
+
+	    LYSetDisplayLines();
 	}
 
 	if (www_search_result != -1) {
@@ -6356,14 +6376,15 @@ int mainloop(void)
 
 	}
 
-	curlink_is_editable =
+	curlink_is_editable = (BOOLEAN)
 	    (nlinks > 0 &&
-	     links[curdoc.link].type == WWW_FORM_LINK_TYPE &&
+	     (links[curdoc.link].type == WWW_FORM_LINK_TYPE) &&
 	     F_TEXTLIKE(links[curdoc.link].l_form->type));
 
-	use_last_tfpos = (curlink_is_editable &&
-			  (real_cmd == LYK_LPOS_PREV_LINK ||
-			   real_cmd == LYK_LPOS_NEXT_LINK));
+	use_last_tfpos = (BOOLEAN)
+	    (curlink_is_editable &&
+	     (real_cmd == LYK_LPOS_PREV_LINK ||
+	      real_cmd == LYK_LPOS_NEXT_LINK));
 
 #ifdef TEXTFIELDS_MAY_NEED_ACTIVATION
 	if (!textfields_need_activation)
@@ -6418,7 +6439,7 @@ int mainloop(void)
 		    p = links[curdoc.link].lname;
 		}
 
-		if (strlen(p) < 500) {
+		if (strlen(p) < (sizeof(sjis_buff) / 10)) {
 		    strcpy(temp_buff, p);
 		    if (strchr(temp_buff, '%')) {
 			HTUnEscape(temp_buff);
@@ -6546,8 +6567,7 @@ int mainloop(void)
 			c = DO_NOTHING;
 		    }
 #ifdef TEXTFIELDS_MAY_NEED_ACTIVATION
-		} else if ((links[curdoc.link].type == WWW_FORM_LINK_TYPE &&
-			    links[curdoc.link].l_form->type == F_TEXTAREA_TYPE)
+		} else if (LinkIsTextarea(curdoc.link)
 			   && textfields_need_activation
 			   && !links[curdoc.link].l_form->disabled
 			   && peek_mouse_link() < 0 &&
@@ -6558,8 +6578,7 @@ int mainloop(void)
 			      LKC_TO_LAC(keymap, real_c) == LYK_LPOS_NEXT_LINK ||
 			      LKC_TO_LAC(keymap, real_c) == LYK_DOWN_LINK) &&
 			     ((curdoc.link < nlinks - 1 &&
-			       links[curdoc.link + 1].type == WWW_FORM_LINK_TYPE
-			       && links[curdoc.link + 1].l_form->type == F_TEXTAREA_TYPE
+			       LinkIsTextarea(curdoc.link + 1)
 			       && (links[curdoc.link].l_form->number ==
 				   links[curdoc.link + 1].l_form->number)
 			       && strcmp(links[curdoc.link].l_form->name,
@@ -6571,8 +6590,7 @@ int mainloop(void)
 			      LKC_TO_LAC(keymap, real_c) == LYK_LPOS_PREV_LINK ||
 			      LKC_TO_LAC(keymap, real_c) == LYK_UP_LINK) &&
 			     ((curdoc.link > 0 &&
-			       links[curdoc.link - 1].type == WWW_FORM_LINK_TYPE
-			       && links[curdoc.link - 1].l_form->type == F_TEXTAREA_TYPE
+			       LinkIsTextarea(curdoc.link - 1)
 			       && (links[curdoc.link].l_form->number ==
 				   links[curdoc.link - 1].l_form->number) &&
 			       strcmp(links[curdoc.link].l_form->name,
@@ -6606,19 +6624,16 @@ int mainloop(void)
 			 * "readability" (such as it is).  Caveat emptor to
 			 * anyone trying to change it.]
 			 */
-			if ((links[curdoc.link].type == WWW_FORM_LINK_TYPE &&
-			     links[curdoc.link].l_form->type == F_TEXTAREA_TYPE)
+			if (LinkIsTextarea(curdoc.link)
 			    && ((curdoc.link == nlinks - 1 &&
 				 !(more_text &&
 				   HText_TAHasMoreLines(curdoc.link, 1)))
 				||
 				((curdoc.link < nlinks - 1) &&
-				 !(links[curdoc.link + 1].type == WWW_FORM_LINK_TYPE
-				   && links[curdoc.link + 1].l_form->type == F_TEXTAREA_TYPE))
+				 !LinkIsTextarea(curdoc.link + 1))
 				||
 				((curdoc.link < nlinks - 1) &&
-				 ((links[curdoc.link + 1].type == WWW_FORM_LINK_TYPE
-				   && links[curdoc.link + 1].l_form->type == F_TEXTAREA_TYPE)
+				 (LinkIsTextarea(curdoc.link + 1)
 				  && ((links[curdoc.link].l_form->number !=
 				       links[curdoc.link + 1].l_form->number) ||
 				      (strcmp(links[curdoc.link].l_form->name,
@@ -6940,7 +6955,7 @@ int mainloop(void)
 
 		if (!s)
 		    break;
-		len2 = strlen((const char *) s);
+		len2 = (int) strlen((const char *) s);
 		e = s + len2;
 		while (s < e && strchr(" \t\n\r", *s))
 		    s++;
@@ -6956,11 +6971,11 @@ int mainloop(void)
 		    HTInfoMsg(gettext("No URL in the clipboard."));
 		    break;
 		}
-		len = e - s + 1;
+		len = (unsigned) (e - s + 1);
 		if (len < MAX_LINE)
 		    len = MAX_LINE;	/* Required for do_check_goto_URL() */
 		buf = (char *) malloc(len);
-		strncpy(buf, (const char *) s, e - s);
+		strncpy(buf, (const char *) s, (unsigned) (e - s));
 		buf[e - s] = '\0';
 		t = (unsigned char *) buf;
 
@@ -6993,7 +7008,7 @@ int mainloop(void)
 #endif
 
 #ifdef KANJI_CODE_OVERRIDE
-	case LYK_CHG_KCODE:	/* ^L */
+	case LYK_CHG_KCODE:
 	    if (LYRawMode && (HTCJK == JAPANESE)) {
 		switch (last_kcode) {
 		case NOKANJI:
@@ -7097,6 +7112,13 @@ int mainloop(void)
 	    if (handle_LYK_COOKIE_JAR(&cmd))
 		goto new_cmd;
 	    break;
+
+#ifdef USE_CACHEJAR
+	case LYK_CACHE_JAR:	/* show the cache jar */
+	    if (handle_LYK_CACHE_JAR(&cmd))
+		goto new_cmd;
+	    break;
+#endif
 
 	case LYK_HISTORY:	/* show the history page */
 	    if (handle_LYK_HISTORY(ForcePush))
@@ -7619,7 +7641,7 @@ static void show_main_statusline(const LinkInfo curlink,
 	if (is_www_index) {
 	    const char *indx = gettext("-index-");
 
-	    LYmove(LYlines - 1, LYcolLimit - strlen(indx));
+	    LYmove(LYlines - 1, LYcolLimit - (int) strlen(indx));
 	    lynx_start_reverse();
 	    LYaddstr(indx);
 	    lynx_stop_reverse();
@@ -7778,19 +7800,19 @@ static void status_link(char *curlink_name,
     int length;
 
     *format = 0;
-    if (show_more) {
+    if (show_more && !nomore) {
 	sprintf(format, "%.*s ",
 		(int) (sizeof(format) - 2),
 		gettext("-more-"));
-	prefix = strlen(format);
+	prefix = (int) strlen(format);
     }
     if (show_indx) {
 	sprintf(format + prefix, "%.*s ",
-		(int) (sizeof(format) - prefix - 2),
+		((int) sizeof(format) - prefix - 2),
 		gettext("-index-"));
     }
-    prefix = strlen(format);
-    length = strlen(curlink_name);
+    prefix = (int) strlen(format);
+    length = (int) strlen(curlink_name);
 
     if (prefix > MAX_STATUS || prefix >= MAX_LINE - 1) {
 	_user_message("%s", format);	/* no room for url */

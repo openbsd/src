@@ -1,4 +1,6 @@
-/*                   Lynx CGI support                              LYCgi.c
+/*
+ * $LynxId: LYCgi.c,v 1.56 2009/04/12 17:14:41 tom Exp $
+ *                   Lynx CGI support                              LYCgi.c
  *                   ================
  *
  * Authors
@@ -52,11 +54,11 @@ struct _HTStream {
 };
 
 static char **env = NULL;	/* Environment variables */
-static int envc_size = 0;	/* Slots in environment array */
-static int envc = 0;		/* Slots used so far */
+static unsigned envc_size = 0;	/* Slots in environment array */
+static unsigned envc = 0;	/* Slots used so far */
 static HTList *alloced = NULL;
 
-#ifdef LYNXCGI_LINKS
+#if defined(LYNXCGI_LINKS) && !defined(__MINGW32__)
 static char *user_agent = NULL;
 static char *server_software = NULL;
 static char *accept_language = NULL;
@@ -165,7 +167,7 @@ static BOOL can_exec_cgi(const char *linktext, const char *linkargs)
     if (!exec_ok(HTLoadedDocumentURL(), linktext, CGI_PATH)) {
 	/* exec_ok gives out msg. */
 	result = FALSE;
-    } else if (user_mode < ADVANCED_MODE) {
+    } else {
 	StrAllocCopy(command, linktext);
 	if (non_empty(linkargs)) {
 	    HTSprintf(&command, " %s", linkargs);
@@ -358,7 +360,7 @@ static int LYLoadCGI(const char *arg,
 	HTFormat format_in;
 	HTStream *target = NULL;	/* Unconverted data */
 	int fd1[2], fd2[2];
-	char buf[1024];
+	char buf[MAX_LINE];
 	int pid;
 
 #ifdef HAVE_TYPE_UNIONWAIT
@@ -447,7 +449,7 @@ static int LYLoadCGI(const char *arg,
 		    remaining = BStrLen(anAnchor->post_data);
 		    while ((written = write(fd1[1],
 					    BStrData(anAnchor->post_data) + total_written,
-					    remaining)) != 0) {
+					    (unsigned) remaining)) != 0) {
 			if (written < 0) {
 #ifdef EINTR
 			    if (errno == EINTR)
@@ -583,7 +585,7 @@ static int LYLoadCGI(const char *arg,
 		    }
 		}
 
-		argv = (char **) malloc(argv_cnt * sizeof(char *));
+		argv = (char **) malloc((unsigned) argv_cnt * sizeof(char *));
 
 		if (argv == NULL) {
 		    outofmem(__FILE__, "LYCgi");

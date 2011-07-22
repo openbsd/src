@@ -1,4 +1,7 @@
-/*	A small List class					      HTList.c
+/*
+ * $LynxId: HTList.c,v 1.17 2008/09/18 21:36:59 tom Exp $
+ *
+ *	A small List class					      HTList.c
  *	==================
  *
  *	A list is represented as a sequence of linked nodes of type HTList.
@@ -70,7 +73,7 @@ HTList *HTList_appendList(HTList *start,
     if (!start) {
 	CTRACE((tfp,
 		"HTList: Trying to append list %p to a nonexisting list\n",
-		tail));
+		(void *) tail));
 	return NULL;
     }
     if (!(tail && tail->next))
@@ -107,7 +110,7 @@ void HTList_linkObject(HTList *me, void *newObject,
 	     */
 	    CTRACE((tfp, "*** HTList: Refuse linking already linked obj "));
 	    CTRACE((tfp, "%p, node %p, list %p\n",
-		    newObject, newNode, me));
+		    (void *) newObject, (void *) newNode, (void *) me));
 	}
 
     } else {

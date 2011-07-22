@@ -1,3 +1,4 @@
+/* $LynxId: LYForms.c,v 1.81 2009/05/28 23:10:06 tom Exp $ */
 #include <HTUtils.h>
 #include <HTCJK.h>
 #include <HTTP.h>
@@ -110,7 +111,6 @@ int change_form_link_ex(int cur,
 				      form->size,
 				      form->size_l,
 				      form->disabled,
-				      FALSE,
 				      FALSE);
 #if CTRL_W_HACK != DO_NOTHING
 	    if (!enable_scrollback)
@@ -128,7 +128,6 @@ int change_form_link_ex(int cur,
 					    form->size,
 					    form->size_l,
 					    form->disabled,
-					    FALSE,
 					    FALSE);
 	{
 	    OptionType *opt_ptr = form->select_list;
@@ -205,9 +204,9 @@ int change_form_link_ex(int cur,
     case F_TEXTAREA_TYPE:
     case F_PASSWORD_TYPE:
 	c = form_getstr(cur, use_last_tfpos, redraw_only);
-	LYSetHilite(cur, (form->type == F_PASSWORD_TYPE)
-		    ? STARS(strlen(form->value))
-		    : form->value);
+	LYSetHilite(cur, ((form->type == F_PASSWORD_TYPE)
+			  ? STARS(LYstrCells(form->value))
+			  : form->value));
 	break;
 
     case F_RESET_TYPE:
@@ -373,7 +372,7 @@ static int form_getstr(int cur,
     char *value = form->value;
     int ch;
     int far_col;
-    int max_length;
+    unsigned max_length;
     int startcol, startline;
     BOOL HaveMaxlength = FALSE;
     int action, repeat;
@@ -399,10 +398,10 @@ static int form_getstr(int cur,
      * Make sure the form field value does not exceed our buffer.  - FM
      */
     max_length = ((form->maxlength > 0 &&
-		   form->maxlength < sizeof(MyEdit.buffer)) ?
-		  form->maxlength :
-		  (sizeof(MyEdit.buffer) - 1));
-    if (strlen(form->value) > (size_t) max_length) {
+		   form->maxlength < sizeof(MyEdit.buffer))
+		  ? form->maxlength
+		  : (sizeof(MyEdit.buffer) - 1));
+    if (strlen(form->value) > max_length) {
 	/*
 	 * We can't fit the entire value into the editing buffer, so enter as
 	 * much of the tail as fits.  - FM
@@ -422,7 +421,7 @@ static int form_getstr(int cur,
     /*
      * Print panned line
      */
-    LYSetupEdit(&MyEdit, value, max_length, (far_col - startcol));
+    LYSetupEdit(&MyEdit, value, (int) max_length, (far_col - startcol));
     MyEdit.pad = '_';
     MyEdit.hidden = (BOOL) (form->type == F_PASSWORD_TYPE);
     if (use_last_tfpos && LastTFPos >= 0 && LastTFPos < MyEdit.strlen) {
@@ -459,8 +458,9 @@ static int form_getstr(int cur,
     }
 #endif /* TEXTFIELDS_MAY_NEED_ACTIVATION && INACTIVE_INPUT_STYLE_VH */
     LYRefreshEdit(&MyEdit);
-    if (redraw_only)
+    if (redraw_only) {
 	return 0;		/*return value won't be analysed */
+    }
 
     /*
      * And go for it!
@@ -603,7 +603,7 @@ static int form_getstr(int cur,
 
 	    if (!s)
 		break;
-	    len = strlen((const char *) s);
+	    len = (int) strlen((const char *) s);
 	    e = s + len;
 
 	    if (len > 0) {
@@ -630,10 +630,10 @@ static int form_getstr(int cur,
 		if (e1 + 1 < e && *e1 == '\n')
 		    StrAllocCopy(buf, (char *) e1 + 1);		/* Survive _release() */
 		get_clip_release();
-		if (MyEdit.strlen >= max_length) {
+		if (MyEdit.strlen >= (int) max_length) {
 		    HaveMaxlength = TRUE;
 		} else if (HaveMaxlength &&
-			   MyEdit.strlen < max_length) {
+			   MyEdit.strlen < (int) max_length) {
 		    HaveMaxlength = FALSE;
 		    _statusline(ENTER_TEXT_ARROWS_OR_TAB);
 		}
@@ -655,7 +655,7 @@ static int form_getstr(int cur,
 #endif
 #ifndef WIN_EX
 	if (action == LYE_AIX &&
-	    (HTCJK == NOCJK && LYlowest_eightbit[current_char_set] > 0x97))
+	    (!IS_CJK_TTY && LYlowest_eightbit[current_char_set] > 0x97))
 	    break;
 #endif
 	if (action == LYE_TAB) {
@@ -688,7 +688,7 @@ static int form_getstr(int cur,
 	switch (ch) {
 	default:
 	    /* [ 1999/04/14 (Wed) 15:01:33 ]
-	     * Left arrrow in column 0 deserves special treatment here, else
+	     * Left arrow in column 0 deserves special treatment here, else
 	     * you can get trapped in a form without submit button!
 	     */
 	    if (action == LYE_BACK && MyEdit.pos == 0 && repeat == -1) {
@@ -769,7 +769,7 @@ static int form_getstr(int cur,
 		}
 #ifdef SUPPORT_MULTIBYTE_EDIT
 		if (rc == 0) {
-		    if (HTCJK != NOCJK && (0x80 <= ch)
+		    if (IS_CJK_TTY && (0x80 <= ch)
 			&& (ch <= 0xfe) && refresh_mb)
 			refresh_mb = FALSE;
 		    else
@@ -781,10 +781,10 @@ static int form_getstr(int cur,
 		}
 #endif /* SUPPORT_MULTIBYTE_EDIT */
 	    }
-	    if (MyEdit.strlen >= max_length) {
+	    if (MyEdit.strlen >= (int) max_length) {
 		HaveMaxlength = TRUE;
 	    } else if (HaveMaxlength &&
-		       MyEdit.strlen < max_length) {
+		       MyEdit.strlen < (int) max_length) {
 		HaveMaxlength = FALSE;
 		_statusline(ENTER_TEXT_ARROWS_OR_TAB);
 	    }
@@ -800,7 +800,6 @@ static int form_getstr(int cur,
     }
   breakfor:
     if (Edited) {
-	char *p;
 
 	/*
 	 * Load the new value.
@@ -812,10 +811,13 @@ static int form_getstr(int cur,
 	     */
 	    StrAllocCopy(form->value, MyEdit.buffer);
 	} else {
+	    int old_len = (int) strlen(form->value);
+	    int new_len = (int) strlen(value);
+
 	    /*
 	     * Combine the modified tail with the unmodified head.  - FM
 	     */
-	    form->value[(strlen(form->value) - strlen(value))] = '\0';
+	    form->value[(old_len > new_len) ? (old_len - new_len) : 0] = '\0';
 	    StrAllocCat(form->value, MyEdit.buffer);
 	    HTUserMsg(FORM_TAIL_COMBINED_WITH_HEAD);
 	}
@@ -830,10 +832,7 @@ static int form_getstr(int cur,
 	 * form????
 	 */
 	if (LYtrimInputFields) {
-	    p = &(form->value[strlen(form->value)]);
-	    while ((p != form->value) && (p[-1] == ' '))
-		p--;
-	    *p = '\0';
+	    LYTrimTrailing(form->value);
 	}
 
 	/*
@@ -982,6 +981,12 @@ void show_formlink_statusline(const FormInfo * form,
 	    statusline(FORM_LINK_RESET_DIS_MSG);
 	else
 	    statusline(FORM_LINK_RESET_MESSAGE);
+	break;
+    case F_BUTTON_TYPE:
+	if (form->disabled == YES)
+	    statusline(FORM_LINK_BUTTON_DIS_MSG);
+	else
+	    statusline(FORM_LINK_BUTTON_MESSAGE);
 	break;
     case F_FILE_TYPE:
 	if (form->disabled == YES)
