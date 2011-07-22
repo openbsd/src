@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.h,v 1.16 2010/06/28 18:50:37 claudio Exp $	*/
+/*	$OpenBSD: radix.h,v 1.17 2011/07/22 13:05:29 henning Exp $	*/
 /*	$NetBSD: radix.h,v 1.8 1996/02/13 22:00:37 christos Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ struct radix_node_head {
 		     int (*)(struct radix_node *, void *, u_int), void *);
 	struct	radix_node rnh_nodes[3];/* empty tree for common case */
 	int	rnh_multipath;		/* multipath? */
-	u_int	rnh_rtabelid;
+	u_int	rnh_rtableid;
 };
 
 #ifdef _KERNEL

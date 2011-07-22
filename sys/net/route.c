@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.131 2011/07/04 04:29:17 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.132 2011/07/22 13:05:29 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -197,7 +197,7 @@ rtable_init(struct radix_node_head ***table, u_int id)
 
 	for (i = 0; i < rtafidx_max; i++) {
 		if ((*table)[i] != NULL)
-			(*table)[i]->rnh_rtabelid = id;
+			(*table)[i]->rnh_rtableid = id;
 	}
 
 	return (0);

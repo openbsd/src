@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.764 2011/07/09 17:42:19 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.765 2011/07/22 13:05:29 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2592,7 +2592,7 @@ pf_get_mss(struct mbuf *m, int off, u_int16_t th_off, sa_family_t af)
 }
 
 u_int16_t
-pf_calc_mss(struct pf_addr *addr, sa_family_t af, int rtabelid, u_int16_t offer)
+pf_calc_mss(struct pf_addr *addr, sa_family_t af, int rtableid, u_int16_t offer)
 {
 #ifdef INET
 	struct sockaddr_in	*dst;
@@ -2615,7 +2615,7 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, int rtabelid, u_int16_t offer)
 		dst->sin_family = AF_INET;
 		dst->sin_len = sizeof(*dst);
 		dst->sin_addr = addr->v4;
-		ro.ro_tableid = rtabelid;
+		ro.ro_tableid = rtableid;
 		rtalloc_noclone(&ro);
 		rt = ro.ro_rt;
 		break;
@@ -2628,7 +2628,7 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, int rtabelid, u_int16_t offer)
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_len = sizeof(*dst6);
 		dst6->sin6_addr = addr->v6;
-		ro6.ro_tableid = rtabelid;
+		ro6.ro_tableid = rtableid;
 		rtalloc_noclone((struct route *)&ro6);
 		rt = ro6.ro_rt;
 		break;
