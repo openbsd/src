@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.765 2011/07/22 13:05:29 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.766 2011/07/22 14:57:31 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3031,11 +3031,14 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 				    r->return_ttl, 1, 0, pd->rdomain,
 				    pd->eh, kif->pfik_ifp);
 			}
-		} else if (pd->proto != IPPROTO_ICMP && af == AF_INET &&
+		} else if ((pd->proto != IPPROTO_ICMP ||
+		    ICMP_INFOTYPE(icmptype)) && af == AF_INET &&
 		    r->return_icmp)
 			pf_send_icmp(m, r->return_icmp >> 8,
 			    r->return_icmp & 255, af, r, pd->rdomain);
-		else if (pd->proto != IPPROTO_ICMPV6 && af == AF_INET6 &&
+		else if ((pd->proto != IPPROTO_ICMPV6 ||
+		    (icmptype >= ICMP6_ECHO_REQUEST &&
+		    icmptype != ND_REDIRECT)) && af == AF_INET6 &&
 		    r->return_icmp6)
 			pf_send_icmp(m, r->return_icmp6 >> 8,
 			    r->return_icmp6 & 255, af, r, pd->rdomain);
