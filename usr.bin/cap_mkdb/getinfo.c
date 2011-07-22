@@ -1,4 +1,4 @@
-/*	$OpenBSD: getinfo.c,v 1.17 2011/07/04 21:34:54 nicm Exp $	*/
+/*	$OpenBSD: getinfo.c,v 1.18 2011/07/22 01:11:05 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
 #define TCERR	(char)1
 #define	SHADOW	(char)2
 
-static int 	 getent(char **, u_int *, char **, int, char *, int);
+static int 	 getent(char **, u_int *, char **, FILE *, char *, int);
 static char	*igetcap(char *, char *, int);
 static int	 igetmatch(char *, char *);
 static int	 igetclose(void);
@@ -111,8 +111,8 @@ igetcap(char *buf, char *cap, int type)
 }
 
 /*
- * Getent implements the functions of igetent.  If fd is non-negative,
- * *db_array has already been opened and fd is the open file descriptor.  We
+ * Getent implements the functions of igetent.  If fp is non-NULL,
+ * *db_array has already been opened and fp is the open file descriptor.  We
  * do this to save time and avoid using up file descriptors for use=
  * recursions.
  *
@@ -129,7 +129,7 @@ igetcap(char *buf, char *cap, int type)
  *	  MAX_RECURSION.
  */
 static int
-getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
+getent(char **cap, u_int *len, char **db_array, FILE *fp, char *name, int depth)
 {
 	char *r_end, *rp, **db_p;
 	int myfd, eof, foundit;
@@ -143,6 +143,21 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 	if (depth > MAX_RECURSION)
 		return (-3);
 
+        /*
+         * If no name we better have a record in cap
+         */
+        if (depth == 0 && name == NULL) {
+                if ((record = malloc(*len + 1 + BFRAG)) == NULL)
+                        return (-2);
+                memcpy(record, *cap, *len);
+                myfd = 0;
+                db_p = db_array;
+                rp = record + *len + 1;
+                r_end = rp + BFRAG;
+		*rp = '\0';
+                goto exp_use;
+        }
+
 	/*
 	 * Allocate first chunk of memory.
 	 */
@@ -154,10 +169,10 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 	foundit = 0;
 	rp = NULL;
 	myfd = -1;
+
 	/*
 	 * Loop through database array until finding the record.
 	 */
-
 	for (db_p = db_array; *db_p != NULL; db_p++) {
 		eof = 0;
 
@@ -165,12 +180,12 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 		 * Open database if not already open.
 		 */
 
-		if (fd >= 0) {
-			(void)lseek(fd, (off_t)0, SEEK_SET);
+		if (fp != NULL) {
+			(void)fseek(fp, 0L, SEEK_SET);
 			myfd = 0;
 		} else {
-			fd = open(*db_p, O_RDONLY, 0);
-			if (fd < 0) {
+			fp = fopen(*db_p, "r");
+			if (fp == NULL) {
 				/* No error on unfound file. */
 				continue;
 			}
@@ -197,26 +212,24 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 		for (;;) {
 
 			/*
-			 * Read in a line implementing (\, newline)
-			 * line continuation.
+			 * Read in a record implementing line continuation.
 			 */
 			rp = record;
 			for (;;) {
 				if (bp >= b_end) {
-					int n;
+					size_t n;
 
-					n = read(fd, buf, sizeof(buf));
-					if (n <= 0) {
+					n = fread(buf, 1, sizeof(buf), fp);
+					if (n == 0) {
+						eof = feof(fp);
 						if (myfd)
-							(void)close(fd);
-						if (n < 0) {
-							free(record);
-							return (-2);
-						} else {
-							fd = -1;
-							eof = 1;
+							(void)fclose(fp);
+						if (eof) {
+							fp = NULL;
 							break;
 						}
+						free(record);
+						return (-2);
 					}
 					b_end = buf+n;
 					bp = buf;
@@ -225,20 +238,19 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 				c = *bp++;
 				if (c == '\n') {
 					if (bp >= b_end) {
-						int n;
+						size_t n;
 
-						n = read(fd, buf, sizeof(buf));
-						if (n <= 0) {
+						n = fread(buf, 1, sizeof(buf), fp);
+						if (n == 0) {
+							eof = feof(fp);
 							if (myfd)
-								(void)close(fd);
-							if (n < 0) {
-								free(record);
-								return (-2);
-							} else {
-								fd = -1;
-								eof = 1;
+								(void)fclose(fp);
+							if (eof) {
+								fp = NULL;
 								break;
 							}
+							free(record);
+							return (-2);
 						}
 						b_end = buf+n;
 						bp = buf;
@@ -257,22 +269,22 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 				 * some more.
 				 */
 				if (rp >= r_end) {
-					u_int pos;
+					size_t off;
 					size_t newsize;
 
-					pos = rp - record;
+					off = rp - record;
 					newsize = r_end - record + BFRAG;
 					s = realloc(record, newsize);
 					if (s == NULL) {
 						free(record);
 						errno = ENOMEM;
 						if (myfd)
-							(void)close(fd);
+							(void)fclose(fp);
 						return (-2);
 					}
 					record = s;
 					r_end = record + newsize;
-					rp = record + pos;
+					rp = record + off;
 				}
 			}
 			/* loop invariant lets us do this */
@@ -312,7 +324,7 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 	 * Got the capability record, but now we have to expand all use=name
 	 * references in it ...
 	 */
-	{
+exp_use: {
 		char *newicap;
 		int newilen;
 		u_int ilen;
@@ -346,14 +358,14 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 			tclen = s - tcstart;
 			tcend = s;
 
-			iret = getent(&icap, &ilen, db_p, fd, tc, depth+1);
+			iret = getent(&icap, &ilen, db_p, fp, tc, depth+1);
 			newicap = icap;		/* Put into a register. */
 			newilen = ilen;
 			if (iret != 0) {
 				/* an error */
 				if (iret < -1) {
 					if (myfd)
-						(void)close(fd);
+						(void)fclose(fp);
 					free(record);
 					return (iret);
 				}
@@ -388,27 +400,27 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 			 */
 			diff = newilen - tclen;
 			if (diff >= r_end - rp) {
-				u_int pos, tcpos, tcposend;
+				size_t off, tcoff, tcoffend;
 				size_t newsize;
 
-				pos = rp - record;
+				off = rp - record;
 				newsize = r_end - record + diff + BFRAG;
-				tcpos = tcstart - record;
-				tcposend = tcend - record;
+				tcoff = tcstart - record;
+				tcoffend = tcend - record;
 				s = realloc(record, newsize);
 				if (s == NULL) {
 					free(record);
 					errno = ENOMEM;
 					if (myfd)
-						(void)close(fd);
+						(void)fclose(fp);
 					free(icap);
 					return (-2);
 				}
 				record = s;
 				r_end = record + newsize;
-				rp = record + pos;
-				tcstart = record + tcpos;
-				tcend = record + tcposend;
+				rp = record + off;
+				tcstart = record + tcoff;
+				tcend = record + tcoffend;
 			}
 
 			/*
@@ -433,7 +445,7 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 	 * return capability, length and success.
 	 */
 	if (myfd)
-		(void)close(fd);
+		(void)fclose(fp);
 	*len = rp - record - 1;	/* don't count NUL */
 	if (r_end > rp) {
 		if ((s =
@@ -515,107 +527,149 @@ igetclose(void)
  * upon returning an entry with more remaining, and -1 if an error occurs.
  */
 int
-igetnext(char **bp, char **db_array)
+igetnext(char **cap, char **db_array)
 {
-	size_t len;
-	int status, done;
-	char *cp, *line, *rp, *np, buf[BSIZE], nbuf[BSIZE];
-	u_int dummy;
+	int c, eof = 0, serrno, status = -1;
+	char buf[BUFSIZ];
+	char *b_end, *bp, *r_end, *rp;
+	char *record = NULL;
+	u_int len;
+	off_t pos;
 
 	if (dbp == NULL)
 		dbp = db_array;
 
-	if (pfp == NULL && (pfp = fopen(*dbp, "r")) == NULL) {
-		(void)igetclose();
-		return (-1);
-	}
+	if (pfp == NULL && (pfp = fopen(*dbp, "r")) == NULL)
+		goto done;
+
+	/*
+	 * Allocate first chunk of memory.
+	 */
+	if ((record = malloc(BFRAG)) == NULL)
+		goto done;
+	r_end = record + BFRAG;
+
+	/*
+	 * Find the next capability record
+	 */
+	/*
+	 * Loop invariants:
+	 *	There is always room for one more character in record.
+	 *	R_end always points just past end of record.
+	 *	Rp always points just past last character in record.
+	 *	B_end always points just past last character in buf.
+	 *	Bp always points at next character in buf.
+	 */
+	b_end = buf;
+	bp = buf;
 	for (;;) {
-		line = fgetln(pfp, &len);
-		if (line == NULL) {
-			if (ferror(pfp)) {
-				(void)igetclose();
-				return (-1);
-			} else {
-				(void)fclose(pfp);
-				pfp = NULL;
-				if (*++dbp == NULL) {
-					(void)igetclose();
-					return (0);
-				} else if ((pfp =
-				    fopen(*dbp, "r")) == NULL) {
-					(void)igetclose();
-					return (-1);
-				} else
-					continue;
+		/*
+		 * If encountered EOF check next file.
+		 */
+		if (eof) {
+			(void)fclose(pfp);
+			pfp = NULL;
+			if (*++dbp == NULL) {
+				status = 0;
+				break;
 			}
-		} else
-			line[len - 1] = '\0';/* XXX - assumes newline */
-		if (len == 1) {
-			slash = 0;
-			continue;
+			if ((pfp = fopen(*dbp, "r")) == NULL)
+				break;
+			eof = 0;
 		}
-		if (isspace(*line) ||
-		    *line == ',' || *line == '#' || slash) {
-			if (line[len - 2] == '\\')
-				slash = 1;
-			else
-				slash = 0;
-			continue;
-		}
-		if (line[len - 2] == '\\')
-			slash = 1;
-		else
-			slash = 0;
 
 		/*
-		 * Line points to a name line.
+		 * Read in a record implementing line continuation.
 		 */
-		done = 0;
-		np = nbuf;
+		rp = record;
 		for (;;) {
-			for (cp = line; *cp != '\0'; cp++) {
-				if (*cp == ',') {
-					*np++ = ',';
-					done = 1;
-					break;
+			if (bp >= b_end) {
+				size_t n;
+
+				n = fread(buf, 1, sizeof(buf), pfp);
+				if (n == 0) {
+					eof = feof(pfp);
+					if (eof)
+						break;
+					else
+						goto done;
 				}
-				*np++ = *cp;
+				b_end = buf + n;
+				bp = buf;
 			}
-			if (done) {
-				*np = '\0';
-				break;
-			} else { /* name field extends beyond the line */
-				line = fgetln(pfp, &len);
-				if (line == NULL) {
-					if (ferror(pfp)) {
-						(void)igetclose();
-						return (-1);
+
+			c = *bp++;
+			if (c == '\n') {
+				if (bp >= b_end) {
+					size_t n;
+
+					n = fread(buf, 1, sizeof(buf), pfp);
+					if (n == 0) {
+						eof = feof(pfp);
+						if (eof)
+							break;
+						else
+							goto done;
 					}
-					/* Move on to next file. */
-					(void)fclose(pfp);
-					pfp = NULL;
-					++dbp;
-					/* NUL terminate nbuf. */
-					*np = '\0';
+					b_end = buf + n;
+					bp = buf;
+				}
+				if (rp > record && isspace(*bp))
+					continue;
+				else
 					break;
-				} else
-					/* XXX - assumes newline */
-					line[len - 1] = '\0';
+			}
+			if (rp <= record || *(rp - 1) != ',' || !isspace(c))
+				*rp++ = c;
+
+			/*
+			 * Enforce loop invariant: if no room
+			 * left in record buffer, try to get
+			 * some more.
+			 */
+			if (rp >= r_end) {
+				size_t newsize, off;
+				char *nrecord;
+
+				off = rp - record;
+				newsize = r_end - record + BFRAG;
+				nrecord = realloc(record, newsize);
+				if (nrecord == NULL)
+					goto done;
+				record = nrecord;
+				r_end = record + newsize;
+				rp = record + off;
 			}
 		}
-		rp = buf;
-		for(cp = nbuf; *cp != '\0'; cp++)
-			if (*cp == '|' || *cp == ',')
-				break;
-			else
-				*rp++ = *cp;
+		/* loop invariant lets us do this */
+		*rp++ = '\0';
 
-		*rp = '\0';
-		status = getent(bp, &dummy, db_array, -1, buf, 0);
-		if (status == -2 || status == -3)
-			(void)igetclose();
+		/*
+		 * Toss blank lines and comments.
+		 */
+		if (*record == '\0' || *record == '#')
+			continue;
 
-		return (status + 1);
+		/* rewind to end of record */
+		fseeko(pfp, (off_t)(bp - b_end), SEEK_CUR);
+
+		/* we pass the record to getent() in cap */
+		*cap = record;
+		len = rp - record;
+
+		/* return value of getent() is one less than igetnext() */
+		pos = ftello(pfp);
+		status = getent(cap, &len, dbp, pfp, NULL, 0) + 1;
+		if (status > 0)
+			fseeko(pfp, pos, SEEK_SET);
+		break;
 	}
-	/* NOTREACHED */
+done:
+	serrno = errno;
+	free(record);
+	if (status <= 0)
+		(void)igetclose();
+	errno = serrno;
+
+	return (status);
 }
