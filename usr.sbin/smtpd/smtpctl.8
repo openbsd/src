@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.19 2011/07/21 23:29:24 gilles Exp $
+.\" $OpenBSD: smtpctl.8,v 1.20 2011/07/22 06:33:54 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 21 2011 $
+.Dd $Mdocdate: July 22 2011 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -78,11 +78,11 @@ for the message, and one
 per recipient.
 The
 .Ar message-id
-is a 32 bits random identifier that is guaranteed to be
+is a 32-bit random identifier that is guaranteed to be
 unique on the host system.
 The
 .Ar envelope-id
-is a 64 bits unique identifier that encodes the
+is a 64-bit unique identifier that encodes the
 .Ar message-id
 in the 32 upper bits and a random envelope identifier
 in the 32 lower bits.
