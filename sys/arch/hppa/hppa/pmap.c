@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.157 2011/05/30 22:25:21 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.158 2011/07/22 19:43:52 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -724,7 +724,7 @@ pmap_destroy(pmap)
 				npv = pv->pv_next;
 				if (pv->pv_pmap == pmap) {
 #ifdef PMAPDEBUG
-					printf(" 0x%x", haggis->pv_va);
+					printf(" 0x%x", pv->pv_va);
 #endif
 					pmap_remove(pmap, pv->pv_va,
 					    pv->pv_va + PAGE_SIZE);
