@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.7 2010/05/11 16:27:14 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.8 2011/07/23 21:41:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -39,6 +39,11 @@
 	.type	_dl_start,@function
 _dl_start:
 	movq	%rsp, %r12		# save stack pointer for _rtld
+
+	subq	$8, %rsp		# align stack
+	andq	$~15, %rsp
+	addq	$8, %rsp
+	
 	pushq	%rbx			# save ps_strings
 	subq	$DL_DATA_SIZE, %rsp	# allocate dl_data
 
