@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: direct.pl,v 1.1 2011/01/07 22:06:08 bluhm Exp $
+#	$OpenBSD: direct.pl,v 1.2 2011/07/23 23:56:08 bluhm Exp $
 
 # Copyright (c) 2010 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -66,12 +66,13 @@ my $slen = $s->loggrep(qr/^LEN: /) unless $args{server}{nocheck};
 
 my $cmd5 = $c->loggrep(qr/^MD5: /) unless $args{client}{nocheck};
 my $smd5 = $s->loggrep(qr/^MD5: /) unless $args{server}{nocheck};
-!$cmd5 || !$smd5 || $cmd5 eq $smd5
+!$cmd5 || !$smd5 || ref($args{md5}) eq 'ARRAY' || $cmd5 eq $smd5
     or die "client: $cmd5", "server: $smd5", "md5 mismatch";
-!defined($args{md5}) || !$cmd5 || $cmd5 eq "MD5: $args{md5}\n"
-    or die "client: $cmd5", "md5 $args{md5} expected";
-!defined($args{md5}) || !$smd5 || $smd5 eq "MD5: $args{md5}\n"
-    or die "server: $smd5", "md5 $args{md5} expected";
+my $md5 = ref($args{md5}) eq 'ARRAY' ? join('|', @{$args{md5}}) : $args{md5};
+!$md5 || !$cmd5 || $cmd5 =~ /^MD5: ($md5)$/
+    or die "client: $cmd5", "md5 $md5 expected";
+!$md5 || !$smd5 || $smd5 =~ /^MD5: ($md5)$/
+    or die "server: $smd5", "md5 $md5 expected";
 
 my %name2proc = (client => $c, server => $s);
 foreach my $name (qw(client server)) {
