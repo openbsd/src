@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.221 2011/07/04 20:59:05 halex Exp $
+#	$OpenBSD: install.sh,v 1.222 2011/07/23 08:31:25 fgsch Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -315,6 +315,8 @@ fi
 
 if grep -qs '^rtsol' /mnt/etc/hostname.*; then
 	sed -e "/^#\(net\.inet6\.ip6\.accept_rtadv\)/s//\1/" \
+		/mnt/etc/sysctl.conf >/tmp/sysctl.conf
+	sed -e "/^#\(net\.inet6\.ip6\.rediraccept\)/s//\1/" \
 		/mnt/etc/sysctl.conf >/tmp/sysctl.conf
 	cp /tmp/sysctl.conf /mnt/etc/sysctl.conf
 fi
