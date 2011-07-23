@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.42 2011/07/08 18:57:49 robert Exp $
+#	$OpenBSD: rc.subr,v 1.43 2011/07/23 22:41:44 sthen Exp $
 #
 # Copyright (c) 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -50,7 +50,7 @@ rc_do() {
 
 rc_exit() {
 	[ -z "${INRC}" -o X"$1" != X"ok" ] && _pfix="($1)"
-	echo ${INRC:+'-n'} "${INRC:+ }${_name}${_pfix}"
+	echo ${INRC:+'-n'} "${_pfix}"
 	[ X"$1" = X"ok" ] && exit 0 || exit 1
 }
 
@@ -85,6 +85,7 @@ rc_cmd() {
 	[ X"${_enotsup}" != X"NO" ] || rc_err "$0: $1 is not supported"
 
 	[ X"${rc_bg}" = X"YES" ] && local _bg="&"
+	[ -n "${RC_DEBUG}" ] || local _n="-n"
 
 	case "$1" in
 	check)
@@ -92,6 +93,7 @@ rc_cmd() {
 		;;
 	start)
 		[ -z "${INRC}" ] && rc_do rc_check && exit 0
+		echo $_n "${INRC:+ }${_name}"
 		while true; do  # no real loop, only needed to break
 			if type rc_pre >/dev/null; then
 				rc_do rc_pre || break
@@ -109,6 +111,7 @@ rc_cmd() {
 		;;
 	stop)
 		rc_do rc_check || exit 0
+		echo $_n "${INRC:+ }${_name}"
 		rc_do rc_stop || rc_exit failed
 		rc_do rc_wait stop || rc_exit failed
 		if type rc_post >/dev/null; then \
@@ -118,6 +121,7 @@ rc_cmd() {
 		;;
 	reload)
 		rc_do rc_check || exit 0
+		echo $_n "${INRC:+ }${_name}"
 		rc_do rc_reload || rc_exit failed
 		rc_do rc_check || rc_exit failed
 		rc_exit ok
