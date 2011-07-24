@@ -1,4 +1,4 @@
-/*	$OpenBSD: realpath.c,v 1.13 2005/08/08 08:05:37 espie Exp $ */
+/*	$OpenBSD: realpath.c,v 1.14 2011/07/24 21:03:00 miod Exp $ */
 /*
  * Copyright (c) 2003 Constantin S. Svintsoff <kostik@iclub.nsu.ru>
  *
@@ -43,16 +43,30 @@
  * in which case the path which caused trouble is left in (resolved).
  */
 char *
-realpath(const char *path, char resolved[PATH_MAX])
+realpath(const char *path, char *resolved)
 {
 	struct stat sb;
 	char *p, *q, *s;
 	size_t left_len, resolved_len;
 	unsigned symlinks;
-	int serrno, slen;
+	int serrno, slen, mem_allocated;
 	char left[PATH_MAX], next_token[PATH_MAX], symlink[PATH_MAX];
 
+	if (path[0] == '\0') {
+		errno = ENOENT;
+		return (NULL);
+	}
+
 	serrno = errno;
+
+	if (resolved == NULL) {
+		resolved = malloc(PATH_MAX);
+		if (resolved == NULL)
+			return (NULL);
+		mem_allocated = 1;
+	} else
+		mem_allocated = 0;
+
 	symlinks = 0;
 	if (path[0] == '/') {
 		resolved[0] = '/';
@@ -63,7 +77,10 @@ realpath(const char *path, char resolved[PATH_MAX])
 		left_len = strlcpy(left, path + 1, sizeof(left));
 	} else {
 		if (getcwd(resolved, PATH_MAX) == NULL) {
-			strlcpy(resolved, ".", PATH_MAX);
+			if (mem_allocated)
+				free(resolved);
+			else
+				strlcpy(resolved, ".", PATH_MAX);
 			return (NULL);
 		}
 		resolved_len = strlen(resolved);
@@ -71,7 +88,7 @@ realpath(const char *path, char resolved[PATH_MAX])
 	}
 	if (left_len >= sizeof(left) || resolved_len >= PATH_MAX) {
 		errno = ENAMETOOLONG;
-		return (NULL);
+		goto err;
 	}
 
 	/*
@@ -86,7 +103,7 @@ realpath(const char *path, char resolved[PATH_MAX])
 		s = p ? p : left + left_len;
 		if (s - left >= sizeof(next_token)) {
 			errno = ENAMETOOLONG;
-			return (NULL);
+			goto err;
 		}
 		memcpy(next_token, left, s - left);
 		next_token[s - left] = '\0';
@@ -96,7 +113,7 @@ realpath(const char *path, char resolved[PATH_MAX])
 		if (resolved[resolved_len - 1] != '/') {
 			if (resolved_len + 1 >= PATH_MAX) {
 				errno = ENAMETOOLONG;
-				return (NULL);
+				goto err;
 			}
 			resolved[resolved_len++] = '/';
 			resolved[resolved_len] = '\0';
@@ -127,23 +144,23 @@ realpath(const char *path, char resolved[PATH_MAX])
 		resolved_len = strlcat(resolved, next_token, PATH_MAX);
 		if (resolved_len >= PATH_MAX) {
 			errno = ENAMETOOLONG;
-			return (NULL);
+			goto err;
 		}
 		if (lstat(resolved, &sb) != 0) {
 			if (errno == ENOENT && p == NULL) {
 				errno = serrno;
 				return (resolved);
 			}
-			return (NULL);
+			goto err;
 		}
 		if (S_ISLNK(sb.st_mode)) {
 			if (symlinks++ > MAXSYMLINKS) {
 				errno = ELOOP;
-				return (NULL);
+				goto err;
 			}
 			slen = readlink(resolved, symlink, sizeof(symlink) - 1);
 			if (slen < 0)
-				return (NULL);
+				goto err;
 			symlink[slen] = '\0';
 			if (symlink[0] == '/') {
 				resolved[1] = 0;
@@ -165,7 +182,7 @@ realpath(const char *path, char resolved[PATH_MAX])
 				if (symlink[slen - 1] != '/') {
 					if (slen + 1 >= sizeof(symlink)) {
 						errno = ENAMETOOLONG;
-						return (NULL);
+						goto err;
 					}
 					symlink[slen] = '/';
 					symlink[slen + 1] = 0;
@@ -173,7 +190,7 @@ realpath(const char *path, char resolved[PATH_MAX])
 				left_len = strlcat(symlink, left, sizeof(left));
 				if (left_len >= sizeof(left)) {
 					errno = ENAMETOOLONG;
-					return (NULL);
+					goto err;
 				}
 			}
 			left_len = strlcpy(left, symlink, sizeof(left));
@@ -187,4 +204,9 @@ realpath(const char *path, char resolved[PATH_MAX])
 	if (resolved_len > 1 && resolved[resolved_len - 1] == '/')
 		resolved[resolved_len - 1] = '\0';
 	return (resolved);
+
+err:
+	if (mem_allocated)
+		free(resolved);
+	return (NULL);
 }

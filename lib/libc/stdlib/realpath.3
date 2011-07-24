@@ -28,9 +28,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: realpath.3,v 1.15 2007/07/06 15:42:04 millert Exp $
+.\"	$OpenBSD: realpath.3,v 1.16 2011/07/24 21:03:00 miod Exp $
 .\"
-.Dd $Mdocdate: July 6 2007 $
+.Dd $Mdocdate: July 24 2011 $
 .Dt REALPATH 3
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Fd #include <limits.h>
 .Fd #include <stdlib.h>
 .Ft "char *"
-.Fn realpath "const char *pathname" "char resolved[PATH_MAX]"
+.Fn realpath "const char *pathname" "char *resolved"
 .Sh DESCRIPTION
 The
 .Fn realpath
@@ -60,7 +60,8 @@ argument
 .Em must
 refer to a buffer capable of storing at least
 .Dv PATH_MAX
-characters.
+characters, or be
+.Dv NULL .
 .Pp
 The
 .Fn realpath
@@ -78,6 +79,13 @@ The
 function returns
 .Fa resolved
 on success.
+If
+.Fa resolved
+is
+.Dv NULL
+and no error occured, then
+.Fa realpath
+returns a NUL-terminated string in a newly allocated buffer.
 If an error occurs,
 .Fn realpath
 returns
@@ -98,6 +106,11 @@ and
 .Sh SEE ALSO
 .Xr readlink 1 ,
 .Xr getcwd 3
+.Sh STANDARDS
+The
+.Fn realpath
+function conforms to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn realpath
