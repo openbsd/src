@@ -16,6 +16,7 @@ no IP address found for invalid$host
 # kill
 1 tables deleted.
 rules cleared
-nat cleared
 ktable: 8 allocated, 8 released, 0 leaked.
-kentry: 10 allocated, 10 released, 0 leaked.
+pfrke_plain: 10 allocated, 10 released, 0 leaked.
+pfrke_route: 0 allocated, 0 released, 0 leaked.
+pfrke_cost: 0 allocated, 0 released, 0 leaked.

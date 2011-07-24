@@ -2,7 +2,7 @@
 # pass list 
 regress
 # pass list -v
--pa---	regress	regress
+-pa----	regress	regress
 # pass kill 
 1 table deleted.
 # pass show 
@@ -10,10 +10,10 @@ pfctl: Table does not exist.
 # pass rule pass in from <regress> to any
 # pass list 
 # pass list -v
-----r-	regress	regress
+----r--	regress	regress
 # pass list 
 # pass list -v
-----r-	regress	regress
+----r--	regress	regress
 # pass rule 
 # pass list 
 # pass list -v
@@ -24,20 +24,21 @@ pfctl: Table does not exist.
 # pass rule pass in from <regress> to any
 # pass list 
 # pass list -v
-----r-	regress	regress
+----r--	regress	regress
 # pass load table <regress> persist
 # pass list 
 regress
 # pass list -v
--pa-r-	regress	regress
+-pa----	regress	regress
 # pass rule 
 # pass list 
 regress
 # pass list -v
--pa---	regress	regress
+-pa----	regress	regress
 # kill
 1 tables deleted.
 rules cleared
-nat cleared
 ktable: 8 allocated, 8 released, 0 leaked.
-kentry: 0 allocated, 0 released, 0 leaked.
+pfrke_plain: 0 allocated, 0 released, 0 leaked.
+pfrke_route: 0 allocated, 0 released, 0 leaked.
+pfrke_cost: 0 allocated, 0 released, 0 leaked.

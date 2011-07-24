@@ -338,6 +338,7 @@
    10.0.0.0/8
    127.0.0.0/24
    127.0.0.0/8
+   127.0.0.1
    172.16.0.0/12
    192.168.0.0/16
    2.2.2.2
@@ -348,7 +349,6 @@
    fe80::/16
    fe80::/24
    fe80::1
-  !127.0.0.1
 # pass load table <regress> persist file "DIR/pfr.addrs1" { 3.3.3.3 }
 # pass show 
    1.1.1.1
@@ -389,6 +389,7 @@
 # kill
 1 tables deleted.
 rules cleared
-nat cleared
 ktable: 8 allocated, 8 released, 0 leaked.
-kentry: 377 allocated, 377 released, 0 leaked.
+pfrke_plain: 377 allocated, 377 released, 0 leaked.
+pfrke_route: 0 allocated, 0 released, 0 leaked.
+pfrke_cost: 0 allocated, 0 released, 0 leaked.

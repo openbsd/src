@@ -191,6 +191,7 @@ D  0.0.0.0/23
 # kill
 1 tables deleted.
 rules cleared
-nat cleared
 ktable: 23 allocated, 23 released, 0 leaked.
-kentry: 160 allocated, 160 released, 0 leaked.
+pfrke_plain: 160 allocated, 160 released, 0 leaked.
+pfrke_route: 0 allocated, 0 released, 0 leaked.
+pfrke_cost: 0 allocated, 0 released, 0 leaked.

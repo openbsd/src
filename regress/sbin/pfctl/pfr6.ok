@@ -146,6 +146,7 @@ A !fe80:fe80::/32
 # kill
 1 tables deleted.
 rules cleared
-nat cleared
 ktable: 28 allocated, 28 released, 0 leaked.
-kentry: 95 allocated, 95 released, 0 leaked.
+pfrke_plain: 95 allocated, 95 released, 0 leaked.
+pfrke_route: 0 allocated, 0 released, 0 leaked.
+pfrke_cost: 0 allocated, 0 released, 0 leaked.

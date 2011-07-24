@@ -30,6 +30,7 @@ regress
 # kill
 1 tables deleted.
 rules cleared
-nat cleared
 ktable: 7 allocated, 7 released, 0 leaked.
-kentry: 0 allocated, 0 released, 0 leaked.
+pfrke_plain: 0 allocated, 0 released, 0 leaked.
+pfrke_route: 0 allocated, 0 released, 0 leaked.
+pfrke_cost: 0 allocated, 0 released, 0 leaked.

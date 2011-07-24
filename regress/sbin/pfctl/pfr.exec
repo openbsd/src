@@ -3,13 +3,16 @@ D=`dirname $1`
 A='regress'
 pfctl -a $A -FT 2>/dev/null
 pfctl -a $A -Fr 2>/dev/null
-pfctl -a $A -Fn 2>/dev/null
 KT_R=`vmstat -mv | awk '/pfrktable/{print $3}'`
 KT_I=`vmstat -mv | awk '/pfrktable/{print $5}'`
-KE_R=`vmstat -mv | awk '/pfrkentry /{print $3}'`
-KE_I=`vmstat -mv | awk '/pfrkentry /{print $5}'`
+KEP_R=`vmstat -mv | awk '/pfrke_plain /{print $3}'`
+KEP_I=`vmstat -mv | awk '/pfrke_plain /{print $5}'`
+KER_R=`vmstat -mv | awk '/pfrke_route /{print $3}'`
+KER_I=`vmstat -mv | awk '/pfrke_route /{print $5}'`
+KEC_R=`vmstat -mv | awk '/pfrke_cost /{print $3}'`
+KEC_I=`vmstat -mv | awk '/pfrke_cost /{print $5}'`
 echo "# create"
-echo "table <regress> persist" | pfctl -a $A -Tl -f - 2>&1 || exit 1
+echo "table <regress> persist" | pfctl -a $A -f - 2>&1 || exit 1
 for LINE in `sed -e "s/ /_/g" $1`; do 
 	RESULT=`echo $LINE | awk '{split($1,a,"_");print a[1]}'`
 	case $RESULT in
@@ -48,7 +51,7 @@ for LINE in `sed -e "s/ /_/g" $1`; do
 			pfctl -a $A -gvsT 2>&1
 			;;
 		load)
-			echo $ARGS | sed "s,DIR,$D,g" | pfctl -a $A -Tl -f- \
+			echo $ARGS | sed "s,DIR,$D,g" | pfctl -a $A -f- \
 			    || exit 1
 			;;
 		rule)
@@ -77,13 +80,20 @@ done
 echo "# kill"
 pfctl -a $A -FT 2>&1
 pfctl -a $A -Fr 2>&1
-pfctl -a $A -Fn 2>&1
 let KT_R=`vmstat -mv | awk '/pfrktable/{print $3}'`-$KT_R
 let KT_I=`vmstat -mv | awk '/pfrktable/{print $5}'`-$KT_I
 let KT_RL=$KT_R-$KT_I
-let KE_R=`vmstat -mv | awk '/pfrkentry /{print $3}'`-$KE_R
-let KE_I=`vmstat -mv | awk '/pfrkentry /{print $5}'`-$KE_I
-let KE_RL=$KE_R-$KE_I
+let KEP_R=`vmstat -mv | awk '/pfrke_plain /{print $3}'`-$KEP_R
+let KEP_I=`vmstat -mv | awk '/pfrke_plain /{print $5}'`-$KEP_I
+let KEP_RL=$KEP_R-$KEP_I
+let KER_R=`vmstat -mv | awk '/pfrke_route /{print $3}'`-$KER_R
+let KER_I=`vmstat -mv | awk '/pfrke_route /{print $5}'`-$KER_I
+let KER_RL=$KER_R-$KER_I
+let KEC_R=`vmstat -mv | awk '/pfrke_cost /{print $3}'`-$KEC_R
+let KEC_I=`vmstat -mv | awk '/pfrke_cost /{print $5}'`-$KEC_I
+let KEC_RL=$KEC_R-$KEC_I
 echo "ktable: $KT_R allocated, $KT_RL released, $KT_I leaked."
-echo "kentry: $KE_R allocated, $KE_RL released, $KE_I leaked."
-[ "$KT_I" = "0" -a "$KE_I" = "0" ] || exit 1
+echo "pfrke_plain: $KEP_R allocated, $KEP_RL released, $KEP_I leaked."
+echo "pfrke_route: $KER_R allocated, $KER_RL released, $KER_I leaked."
+echo "pfrke_cost: $KEC_R allocated, $KEC_RL released, $KEC_I leaked."
+[ "$KT_I" = "0" -a "$KEP_I" = "0"  -a "$KER_I" = "0" -a "$KEC_I" = "0" ] || exit 1
