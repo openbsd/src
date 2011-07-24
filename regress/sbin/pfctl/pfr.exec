@@ -57,6 +57,10 @@ for LINE in `sed -e "s/ /_/g" $1`; do
 		rule)
 			echo $ARGS | pfctl -a $A -f- 2>&1 || exit 1
 			;;
+		show)
+			pfctl -qvv -a $A -t regress -T $CMD $ARGS 2>&1 | \
+			    grep -v "Cleared:"
+			;;
 		*)
 			pfctl -a $A -t regress -T $CMD $ARGS 2>&1 | sort \
 			    || exit 1
