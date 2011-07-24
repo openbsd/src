@@ -1,0 +1,13 @@
+.TH TP-MACROTAG 1
+.SH NAME
+TP-macrotag \- macro in the head of a tagged paragraph
+.SH DESCRIPTION
+regular
+text
+.TP
+.B longindent
+indented
+text
+.PP
+regular
+text
