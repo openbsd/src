@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.42 2011/03/19 09:32:36 jmc Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.43 2011/07/24 10:46:10 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: March 19 2011 $
+.Dd $Mdocdate: July 24 2011 $
 .Dt PKG_INFO 1
 .Os
 .Sh NAME
@@ -78,6 +78,10 @@ Show the long-description field for each package.
 .It Fl E Ar filename
 Look for the package(s) that contains the given
 .Ar filename .
+As a faster alternative, note that there is a package, pkglocatedb, that
+contains a
+.Xr locate 1
+database of every file in every package.
 .It Fl e Ar pkg-name
 This option
 allows you to test for the presence of another (perhaps
