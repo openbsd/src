@@ -1,9 +1,47 @@
 #!/bin/sh
+#
+#	$OpenBSD: substitute.sh,v 1.2 2011/07/24 13:16:18 schwarze Exp $
+#
+# Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
+#
+# Permission to use, copy, modify, and distribute this test suite for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+# Test suite for the sed(1) -E substitute command, checking
+# the handling of multiple zero-length matches in particular.
 
 # error counter
 err=0
 
-# test function; arguments are:
+# test function for one specific flag; arguments are:
+# input string
+# regular expression to replace
+# substitution flag
+# wanted output
+tf() {
+	in=$1
+	expr=$2
+	flag=$3
+	want=$4
+	out=`echo "$in" | sed -E "s/$expr/x/$flag"`
+	[ "X$out" = "X$want" ] || \
+		echo "$in/$expr/$flag/$want/$out ($((++err)))"
+	[ -z "$in" ] && return
+	out=`echo -n "$in" | sed -E "s/$expr/x/$flag"`
+	[ "X$out" = "X$want" ] || \
+		echo "-n:$in/$expr/$flag/$want/$out ($((++err)))"
+}
+
+# test function for various flags; arguments are:
 # input string
 # regular expression to replace
 # wanted output for /g (global substitution)
@@ -14,23 +52,19 @@ t() {
 	expr=$2
 	want=$3
 	shift 3
-	out=`echo "$in" | sed -E "s/$expr/x/g"`
-	[ "X$out" = "X$want" ] || echo "$in/$expr/g/$want/$out ($((++err)))"
+	tf "$in" "$expr" g "$want"
 
 	# substitution with specific index
 	num=1
 	while [ $# -gt 0 ]; do
 		want=$1
 		shift
-		out=`echo "$in" | sed -E "s/$expr/x/$num"`
-		[ "X$out" = "X$want" ] || \
-			echo "$in/$expr/$num/$want/$out ($((++err)))"
+		tf "$in" "$expr" "$num" "$want"
 		num=$((num+1))
 	done
 
 	# substitution with excessive index
-	out=`echo "$in" | sed -E "s/$expr/x/$num"`
-	[ "X$out" = "X$in" ] || echo "$in/$expr/$num/=/$out ($((++err)))"
+	tf "$in" "$expr" "$num" "$in"
 }
 
 t '' ^ x x
