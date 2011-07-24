@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.767 2011/07/23 21:17:47 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.768 2011/07/24 12:13:10 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2868,6 +2868,10 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		case IPPROTO_TCP:
 			PF_TEST_ATTRIB(((r->flagset & th->th_flags) != r->flags),
 				TAILQ_NEXT(r, entries));
+			PF_TEST_ATTRIB((r->os_fingerprint != PF_OSFP_ANY &&
+			    !pf_osfp_match(pf_osfp_fingerprint(pd, m, off, th),
+		    	    r->os_fingerprint)),
+				TAILQ_NEXT(r, entries));
 			/* FALLTHROUGH */
 
 		case IPPROTO_UDP:
@@ -2912,11 +2916,6 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 		PF_TEST_ATTRIB((r->rule_flag & PFRULE_FRAGMENT &&
 		    pd->virtual_proto != PF_VPROTO_FRAGMENT),
-			TAILQ_NEXT(r, entries));
-		PF_TEST_ATTRIB((r->os_fingerprint != PF_OSFP_ANY &&
-		    (pd->virtual_proto != IPPROTO_TCP || !pf_osfp_match(
-		    pf_osfp_fingerprint(pd, m, off, th),
-		    r->os_fingerprint))),
 			TAILQ_NEXT(r, entries));
 		PF_TEST_ATTRIB((r->tos && !(r->tos == pd->tos)),
 			TAILQ_NEXT(r, entries));
