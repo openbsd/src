@@ -33,7 +33,7 @@ ${IMAGE}: rd_setup do_files rd_teardown
 .endif
 
 do_files:
-	dd if=${DESTDIR}/usr/mdec/boot.elf of=${VND_IRDEV} conv=sync
+	dd if=${DESTDIR}/usr/mdec/boot.elf of=${VND_IRDEV}
 	gzip -c < ${.OBJDIR}/../ramdisk/bsd.rd > ${MOUNT_POINT}/bsd.rd
 	ln ${MOUNT_POINT}/bsd.rd ${MOUNT_POINT}/bsd
 
