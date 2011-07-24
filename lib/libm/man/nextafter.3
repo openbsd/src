@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nextafter.3,v 1.5 2011/07/07 01:34:52 martynas Exp $
+.\"	$OpenBSD: nextafter.3,v 1.6 2011/07/24 19:25:50 martynas Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,13 +28,16 @@
 .\"
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
 .\"
-.Dd $Mdocdate: July 7 2011 $
+.Dd $Mdocdate: July 24 2011 $
 .Dt NEXTAFTER 3
 .Os
 .Sh NAME
 .Nm nextafter ,
 .Nm nextafterf ,
-.Nm nextafterl
+.Nm nextafterl ,
+.Nm nexttoward ,
+.Nm nexttowardf ,
+.Nm nexttowardl ,
 .Nd next representable value
 .Sh SYNOPSIS
 .Fd #include <math.h>
@@ -44,9 +47,15 @@
 .Fn nextafterf "float x" "float y"
 .Ft long double
 .Fn nextafterl "long double x" "long double y"
+.Ft double
+.Fn nexttoward "double x" "long double y"
+.Ft float
+.Fn nexttowardf "float x" "long double y"
+.Ft long double
+.Fn nexttowardl "long double x" "long double y"
 .Sh DESCRIPTION
-.Fn nextafter
-returns the next machine representable number from
+These functions
+return the next machine representable number from
 .Fa x
 in direction
 .Fa y .
@@ -54,17 +63,8 @@ If
 .Fa x
 equals
 .Fa y ,
-.Fn nextafter
-returns
+these functions return
 .Fa y .
-The
-.Fn nextafterf
-function is a single precision version of
-.Fn nextafter .
-The
-.Fn nextafterl
-function is an extended precision version of
-.Fn nextafter .
 .Sh SEE ALSO
 .Xr nearbyint 3
 .Sh STANDARDS
