@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.8,v 1.16 2010/05/24 19:44:23 jmc Exp $
+.\" $OpenBSD: hostapd.8,v 1.17 2011/07/25 02:01:42 krw Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 24 2010 $
+.Dd $Mdocdate: July 25 2011 $
 .Dt HOSTAPD 8
 .Os
 .Sh NAME
@@ -57,15 +57,14 @@ in the same broadcast domain or multicast group.
 Usually a wired interface is used to communicate with other
 .Nm .
 .Pp
-The
 .Nm
-will send an
+broadcasts an
 .Em ADD.notify
-IAPP message if a new station has been associated successfully to the Host AP.
-If the
+IAPP message when a new station is associated to the Host AP.
+When
 .Nm
-receives ADD.notify messages it will request the Host AP
-remove a station which has been associated to another access point.
+receives an ADD.notify message it tells the Host AP
+to remove the specified station.
 .Pp
 .Nm
 may also handle dynamic roaming of IP addresses and routes in
