@@ -1,3 +1,5 @@
+.\"	$OpenBSD: strcspn.3,v 1.10 2011/07/25 00:38:53 schwarze Exp $
+.\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -29,9 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strcspn.3,v 1.9 2007/08/08 07:20:45 ray Exp $
-.\"
-.Dd $Mdocdate: August 8 2007 $
+.Dd $Mdocdate: July 25 2011 $
 .Dt STRCSPN 3
 .Os
 .Sh NAME
@@ -92,9 +92,17 @@ if (fgets(line, sizeof(line), fp) != NULL)
 .Xr strsep 3 ,
 .Xr strspn 3 ,
 .Xr strstr 3 ,
-.Xr strtok 3
+.Xr strtok 3 ,
+.Xr wcscspn 3
 .Sh STANDARDS
 The
 .Fn strcspn
 function conforms to
 .St -ansiC .
+.Sh HISTORY
+The
+.Fn strcspn
+function first appeared in
+.At III
+and was reimplemented for
+.Bx 4.3 Tahoe .

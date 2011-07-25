@@ -1,3 +1,5 @@
+.\"	$OpenBSD: strcmp.3,v 1.11 2011/07/25 00:38:53 schwarze Exp $
+.\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -29,9 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strcmp.3,v 1.10 2009/12/05 07:45:48 jmc Exp $
-.\"
-.Dd $Mdocdate: December 5 2009 $
+.Dd $Mdocdate: July 25 2011 $
 .Dt STRCMP 3
 .Os
 .Sh NAME
@@ -53,6 +53,11 @@ functions lexicographically compare the NUL-terminated strings
 .Fa s1
 and
 .Fa s2 .
+The
+.Fn strncmp
+function compares at most
+.Fa len
+characters.
 .Sh RETURN VALUES
 The
 .Fn strcmp
@@ -67,17 +72,13 @@ The comparison is done using unsigned characters, so that
 .Ql \e200
 is greater than
 .Ql \e0 .
-.Pp
-.Fn strncmp
-compares at most
-.Fa len
-characters.
 .Sh SEE ALSO
 .Xr bcmp 3 ,
 .Xr memcmp 3 ,
 .Xr strcasecmp 3 ,
 .Xr strcoll 3 ,
-.Xr strxfrm 3
+.Xr strxfrm 3 ,
+.Xr wcscmp
 .Sh STANDARDS
 The
 .Fn strcmp
@@ -85,3 +86,10 @@ and
 .Fn strncmp
 functions conform to
 .St -ansiC .
+.Sh HISTORY
+The
+.Fn strcmp
+and
+.Fn strncmp
+functions first appeared in
+.At v7 .

@@ -1,4 +1,4 @@
-.\" $OpenBSD: wcslcpy.3,v 1.1 2011/07/09 16:32:11 nicm Exp $
+.\"	$OpenBSD: wcslcpy.3,v 1.2 2011/07/25 00:38:53 schwarze Exp $
 .\"
 .\" Copyright (c) 1998, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 9 2011 $
+.Dd $Mdocdate: July 25 2011 $
 .Dt WCSLCPY 3
 .Os
 .Sh NAME
@@ -127,6 +127,7 @@ is incorrect or that
 is not terminated with a null wide character).
 The check exists to prevent potential security problems in incorrect code.
 .Sh SEE ALSO
+.Xr strlcpy 3 ,
 .Xr swprintf 3 ,
 .Xr wcsncat 3 ,
 .Xr wcsncpy 3
@@ -137,3 +138,10 @@ and
 .Fn wcslcat
 functions first appeared in
 .Ox 3.8 .
+.Sh AUTHORS
+The
+.Fn wcslcpy
+and
+.Fn wcslcat
+functions are based on code by 
+.An Todd C. Miller Aq Todd.Miller@courtesan.com .

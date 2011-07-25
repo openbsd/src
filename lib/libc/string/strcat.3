@@ -1,3 +1,5 @@
+.\"	$OpenBSD: strcat.3,v 1.13 2011/07/25 00:38:52 schwarze Exp $
+.\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -29,9 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strcat.3,v 1.12 2007/05/31 19:19:32 jmc Exp $
-.\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 25 2011 $
 .Dt STRCAT 3
 .Os
 .Sh NAME
@@ -122,8 +122,9 @@ functions are a better choice, as shown below.
 .Xr memcpy 3 ,
 .Xr memmove 3 ,
 .Xr strcpy 3 ,
-.Xr strlcat 3 ,
-.Xr strlcpy 3
+.Xr strlcpy 3 ,
+.Xr wcscat 3 ,
+.Xr wcslcpy 3
 .Sh STANDARDS
 The
 .Fn strcat
@@ -131,3 +132,10 @@ and
 .Fn strncat
 functions conform to
 .St -ansiC .
+.Sh HISTORY
+The
+.Fn strcat
+and
+.Fn strncat
+functions first appeared in
+.At v7 .

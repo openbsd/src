@@ -1,3 +1,5 @@
+.\"	$OpenBSD: memcpy.3,v 1.8 2011/07/25 00:38:52 schwarze Exp $
+.\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -29,9 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: memcpy.3,v 1.7 2007/05/31 19:19:32 jmc Exp $
-.\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 25 2011 $
 .Dt MEMCPY 3
 .Os
 .Sh NAME
@@ -60,18 +60,26 @@ function returns the original value of
 .Xr memccpy 3 ,
 .Xr memmove 3 ,
 .Xr strcpy 3 ,
-.Xr strlcpy 3
+.Xr strlcpy 3 ,
+.Xr wmemcpy 3
 .Sh STANDARDS
 The
 .Fn memcpy
 function conforms to
 .St -ansiC .
-.Sh BUGS
+.Sh HISTORY
+The
+.Fn memcpy
+function first appeared in
+.At V
+and was reimplemented for
+.Bx 4.3 Tahoe .
+.Sh CAVEATS
 In this implementation
 .Fn memcpy
 is implemented using
 .Xr bcopy 3 ,
 and therefore the buffers may overlap.
 On other systems, copying overlapping buffers may produce surprises.
-A simpler solution is to not use
-.Fn memcpy .
+A portable, safe solution is to use
+.Xr memmove 3 .

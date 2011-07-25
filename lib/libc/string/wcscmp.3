@@ -1,3 +1,5 @@
+.\"	$OpenBSD: wcscmp.3,v 1.2 2011/07/25 00:38:53 schwarze Exp $
+.\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -29,9 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: wcscmp.3,v 1.1 2011/07/09 16:32:11 nicm Exp $
-.\"
-.Dd $Mdocdate: July 9 2011 $
+.Dd $Mdocdate: July 25 2011 $
 .Dt WCSCMP 3
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@ and
 .Fa s2 .
 The
 .Fn wcsncmp
-compares at most
+function compares at most
 .Fa len
 wide characters.
 .Sh RETURN VALUES
@@ -69,6 +69,7 @@ to whether the wide string
 is greater than, equal to, or less than the wide string
 .Fa s2 .
 .Sh SEE ALSO
+.Xr strcmp 3 ,
 .Xr wcscasecmp 3 ,
 .Xr wmemcmp 3
 .Sh STANDARDS
@@ -80,3 +81,12 @@ functions conform to
 .St -isoC-99
 and were first introduced in
 .St -isoC-amd1 .
+.Sh HISTORY
+The
+.Fn wcscmp
+and
+.Fn wcsncmp
+functions were ported from
+.Nx
+and first appeared in
+.Ox 3.8 .

@@ -1,4 +1,4 @@
-.\" $OpenBSD: strlcpy.3,v 1.19 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: strlcpy.3,v 1.20 2011/07/25 00:38:53 schwarze Exp $
 .\"
 .\" Copyright (c) 1998, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 25 2011 $
 .Dt STRLCPY 3
 .Os
 .Sh NAME
@@ -176,7 +176,8 @@ As a matter of fact, the first version of this manual page got it wrong.
 .Sh SEE ALSO
 .Xr snprintf 3 ,
 .Xr strncat 3 ,
-.Xr strncpy 3
+.Xr strncpy 3 ,
+.Xr wcslcpy 3
 .Sh HISTORY
 The
 .Fn strlcpy
@@ -184,3 +185,10 @@ and
 .Fn strlcat
 functions first appeared in
 .Ox 2.4 .
+.Sh AUTHORS
+The
+.Fn strlcpy
+and
+.Fn strlcat
+functions were created by
+.An Todd C. Miller Aq Todd.Miller@courtesan.com .

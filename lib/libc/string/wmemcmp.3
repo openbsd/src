@@ -1,3 +1,5 @@
+.\"	$OpenBSD: wmemcmp.3,v 1.2 2011/07/25 00:38:53 schwarze Exp $
+.\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -29,9 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: wmemcmp.3,v 1.1 2011/07/09 16:32:11 nicm Exp $
-.\"
-.Dd $Mdocdate: July 9 2011 $
+.Dd $Mdocdate: July 25 2011 $
 .Dt WMEMCMP 3
 .Os
 .Sh NAME
@@ -59,8 +59,9 @@ otherwise the difference between the first two differing wide characters is
 returned.
 Zero-length wide strings are always identical.
 .Sh SEE ALSO
+.Xr memcmp 3 ,
 .Xr wcscasecmp 3 ,
-.Xr wcscmp 3 ,
+.Xr wcscmp 3
 .Sh STANDARDS
 The
 .Fn wmemcmp
@@ -68,3 +69,10 @@ function conforms to
 .St -isoC-99
 and was first introduced in
 .St -isoC-amd1 .
+.Sh HISTORY
+The
+.Fn wmemcmp
+function was ported from
+.Nx
+and first appeared in
+.Ox 3.8 .

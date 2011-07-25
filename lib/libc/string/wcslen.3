@@ -1,3 +1,5 @@
+.\"	$OpenBSD: wcslen.3,v 1.2 2011/07/25 00:38:53 schwarze Exp $
+.\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -29,9 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: wcslen.3,v 1.1 2011/07/09 16:32:11 nicm Exp $
-.\"
-.Dd $Mdocdate: July 9 2011 $
+.Dd $Mdocdate: July 25 2011 $
 .Dt WCSLEN 3
 .Os
 .Sh NAME
@@ -52,6 +52,7 @@ The
 function returns the number of wide characters that precede the terminating
 null wide character.
 .Sh SEE ALSO
+.Xr strlen 3 ,
 .Xr wcswidth 3
 .Sh STANDARDS
 The
@@ -60,3 +61,10 @@ function conforms to
 .St -isoC-99
 and was first introduced in
 .St -isoC-amd1 .
+.Sh HISTORY
+The
+.Fn wcslen
+function was ported from
+.Nx
+and first appeared in
+.Ox 3.8 .

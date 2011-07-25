@@ -1,4 +1,4 @@
-.\" $OpenBSD: memccpy.3,v 1.9 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: memccpy.3,v 1.10 2011/07/25 00:38:52 schwarze Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)memccpy.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 25 2011 $
 .Dt MEMCCPY 3
 .Os
 .Sh NAME
@@ -70,4 +70,6 @@ bytes are copied, and a null pointer is returned.
 The
 .Fn memccpy
 function first appeared in
-.Bx 4.4 .
+.At V
+and was reimplemented for
+.Bx 4.3 Tahoe .

@@ -27,9 +27,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: bstring.3,v 1.8 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: bstring.3,v 1.9 2011/07/25 00:38:52 schwarze Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 25 2011 $
 .Dt BSTRING 3
 .Os
 .Sh NAME
@@ -85,14 +85,24 @@ conform to
 .St -ansiC .
 .Sh HISTORY
 The
+.Fn bcmp ,
+.Fn bcopy ,
+and
 .Fn bzero
-and
-.Fn memccpy
-functions appeared in
-.Bx 4.3 .
-The
-.Fn bcmp
-and
-.Fn bcopy
-functions appeared in
+functions first appeared in
 .Bx 4.2 .
+The
+.Fn memchr ,
+.Fn memcmp ,
+.Fn memccpy ,
+.Fn memcpy ,
+and
+.Fn memset
+functions first appeared in
+.At V
+and were reimplemented for
+.Bx 4.3 Tahoe .
+The
+.Fn memmove
+function first appeared in
+.Bx 4.3 Reno .

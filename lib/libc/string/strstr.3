@@ -1,3 +1,5 @@
+.\"	$OpenBSD: strstr.3,v 1.11 2011/07/25 00:38:53 schwarze Exp $
+.\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -29,9 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strstr.3,v 1.10 2007/09/19 16:06:45 jmc Exp $
-.\"
-.Dd $Mdocdate: September 19 2007 $
+.Dd $Mdocdate: July 25 2011 $
 .Dt STRSTR 3
 .Os
 .Sh NAME
@@ -79,7 +79,8 @@ is returned.
 .Xr strrchr 3 ,
 .Xr strsep 3 ,
 .Xr strspn 3 ,
-.Xr strtok 3
+.Xr strtok 3 ,
+.Xr wcsstr 3
 .Sh STANDARDS
 The
 .Fn strstr
@@ -87,6 +88,13 @@ function conforms to
 .St -ansiC .
 .Sh HISTORY
 The
-.Fn strcasestr
+.Fn strstr
 function first appeared in
+.Bx 4.3 Reno .
+The
+.Fn strcasestr
+function appeared in glibc 2.1,
+was reimplemented for
+.Fx 4.5
+and ported to
 .Ox 3.8 .

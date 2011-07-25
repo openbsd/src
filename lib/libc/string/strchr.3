@@ -1,3 +1,5 @@
+.\"	$OpenBSD: strchr.3,v 1.10 2011/07/25 00:38:53 schwarze Exp $
+.\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -29,9 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strchr.3,v 1.9 2007/05/31 19:19:32 jmc Exp $
-.\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 25 2011 $
 .Dt STRCHR 3
 .Os
 .Sh NAME
@@ -90,7 +90,8 @@ p = strchr(s, 'o');
 .Xr strsep 3 ,
 .Xr strspn 3 ,
 .Xr strstr 3 ,
-.Xr strtok 3
+.Xr strtok 3 ,
+.Xr wcschr 3
 .Sh STANDARDS
 The
 .Fn strchr
@@ -100,3 +101,14 @@ function conforms to
 The
 .Fn index
 function is deprecated and shouldn't be used in new code.
+.Sh HISTORY
+The
+.Fn index
+function first appeared in
+.At v7 .
+The
+.Fn strchr
+function first appeared in
+.At III
+and was reimplemented for
+.Bx 4.3 Tahoe .

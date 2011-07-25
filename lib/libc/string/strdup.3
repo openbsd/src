@@ -1,4 +1,4 @@
-.\" $OpenBSD: strdup.3,v 1.17 2010/05/19 06:32:43 jmc Exp $
+.\"	$OpenBSD: strdup.3,v 1.18 2011/07/25 00:38:53 schwarze Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)strdup.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: May 19 2010 $
+.Dd $Mdocdate: July 25 2011 $
 .Dt STRDUP 3
 .Os
 .Sh NAME
@@ -73,10 +73,8 @@ to an allocated area of memory containing the NUL-terminated string
 char *p;
 
 p = strdup("foobar");
-if (p == NULL) {
-	fprintf(stderr, "Out of memory.\en");
-	exit(1);
-}
+if (p == NULL)
+	err(1, NULL);
 .Ed
 .Sh ERRORS
 The
@@ -90,7 +88,8 @@ for any of the errors specified for the library function
 .Xr malloc 3 ,
 .Xr strcpy 3 ,
 .Xr strlcpy 3 ,
-.Xr strlen 3
+.Xr strlen 3 ,
+.Xr wcsdup 3
 .Sh STANDARDS
 The
 .Fn strdup
@@ -102,8 +101,10 @@ functions conform to
 The
 .Fn strdup
 function first appeared in
-.Bx 4.4 .
+.Bx 4.3 Reno .
 The
 .Fn strndup
-function first appeared in
+function appeared in glibc 2.0, was reimplemented for
+.Nx 4.0 ,
+and ported to
 .Ox 4.8 .

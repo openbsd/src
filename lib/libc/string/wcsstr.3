@@ -1,3 +1,5 @@
+.\"	$OpenBSD: wcsstr.3,v 1.2 2011/07/25 00:38:53 schwarze Exp $
+.\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -29,9 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: wcsstr.3,v 1.1 2011/07/09 16:32:11 nicm Exp $
-.\"
-.Dd $Mdocdate: July 9 2011 $
+.Dd $Mdocdate: July 25 2011 $
 .Dt WCSSTR 3
 .Os
 .Sh NAME
@@ -64,13 +64,14 @@ otherwise a pointer to the first wide character of the first occurrence of
 .Fa little
 is returned.
 .Sh SEE ALSO
+.Xr strstr 3 ,
 .Xr wcschr 3 ,
 .Xr wcscspn 3 ,
 .Xr wcspbrk 3 ,
 .Xr wcsrchr 3 ,
 .Xr wcsspn 3 ,
 .Xr wcstok 3 ,
-.Xr wmemchr 3 ,
+.Xr wmemchr 3
 .Sh STANDARDS
 The
 .Fn wcsstr
@@ -78,3 +79,10 @@ function conforms to
 .St -isoC-99
 and was first introduced in
 .St -isoC-amd1 .
+.Sh HISTORY
+The
+.Fn wcsstr
+function was ported from
+.Nx
+and first appeared in
+.Ox 3.8 .

@@ -1,3 +1,5 @@
+.\"	$OpenBSD: strcpy.3,v 1.16 2011/07/25 00:38:53 schwarze Exp $
+.\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -29,9 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strcpy.3,v 1.15 2007/05/31 19:19:32 jmc Exp $
-.\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 25 2011 $
 .Dt STRCPY 3
 .Os
 .Sh NAME
@@ -57,8 +57,9 @@ to
 .Ql \e0
 character).
 .Pp
+The
 .Fn strncpy
-copies not more than
+function copies not more than
 .Fa len
 characters into
 .Fa dst ,
@@ -141,7 +142,10 @@ is simply:
 .Xr memccpy 3 ,
 .Xr memcpy 3 ,
 .Xr memmove 3 ,
-.Xr strlcpy 3
+.Xr strcat 3 ,
+.Xr strlcpy 3 ,
+.Xr wcscpy 3 ,
+.Xr wcslcpy 3
 .Sh STANDARDS
 The
 .Fn strcpy
@@ -149,3 +153,10 @@ and
 .Fn strncpy
 functions conform to
 .St -ansiC .
+.Sh HISTORY
+The
+.Fn strcpy
+and
+.Fn strncpy
+functions first appeared in
+.At v7 .

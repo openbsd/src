@@ -1,3 +1,5 @@
+.\"	$OpenBSD: strspn.3,v 1.10 2011/07/25 00:38:53 schwarze Exp $
+.\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -29,9 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strspn.3,v 1.9 2007/05/31 19:19:32 jmc Exp $
-.\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 25 2011 $
 .Dt STRSPN 3
 .Os
 .Sh NAME
@@ -76,9 +76,17 @@ span = strspn(s, charset);
 .Xr strrchr 3 ,
 .Xr strsep 3 ,
 .Xr strstr 3 ,
-.Xr strtok 3
+.Xr strtok 3 ,
+.Xr wcsspn 3
 .Sh STANDARDS
 The
 .Fn strspn
 function conforms to
 .St -ansiC .
+.Sh HISTORY
+The
+.Fn strspn
+function first appeared in
+.At III
+and was reimplemented for
+.Bx 4.3 Tahoe .
