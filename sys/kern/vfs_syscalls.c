@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.177 2011/07/18 00:16:54 matthew Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.178 2011/07/25 19:51:24 miod Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -146,6 +146,7 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 			return (EINVAL);
 		}
 		mp = vp->v_mount;
+		vfsp = mp->mnt_vfc;
 		mntflag = mp->mnt_flag;
 		/*
 		 * We only allow the filesystem to be reloaded if it
