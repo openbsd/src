@@ -1,7 +1,7 @@
-.\"	$OpenBSD: chat.8,v 1.18 2010/10/28 18:34:44 jmc Exp $
+.\"	$OpenBSD: chat.8,v 1.19 2011/07/25 18:33:19 jmc Exp $
 .\" Id: chat.8,v 1.7 1998/02/04 01:35:49 paulus Exp $
 .\" manual page [] for chat 1.8
-.Dd $Mdocdate: October 28 2010 $
+.Dd $Mdocdate: July 25 2011 $
 .Dt CHAT 8
 .Os
 .Sh NAME
@@ -58,8 +58,12 @@ file is used for the report strings.
 .It Fl S
 Do not use
 .Xr syslog 3 .
-By default, error messages are logged via
-.Xr syslog 3 .
+By default, error messages are logged through
+.Xr syslog 3
+with facility
+.Dq local2
+and level
+.Dq warning .
 The use of
 .Fl S
 will prevent both log messages from
@@ -110,9 +114,11 @@ The
 .Nm
 program will then log the execution state of the chat script as well as all
 text received from the modem and the output strings sent to the modem.
-The default is to log via
-.Xr syslog 3 ;
-the logging method may be altered with the
+The default is to log through
+.Xr syslog 3
+with level
+.Dq info ,
+though this may be altered with the
 .Fl S
 and
 .Fl s
