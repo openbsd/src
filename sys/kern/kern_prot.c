@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.49 2011/07/07 18:08:36 tedu Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.50 2011/07/25 20:32:06 tedu Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -95,7 +95,7 @@ sys_getpgrp(struct proc *p, void *v, register_t *retval)
 /*
  * SysVR.4 compatible getpgid()
  */
-pid_t
+int
 sys_getpgid(struct proc *curp, void *v, register_t *retval)
 {
 	struct sys_getpgid_args /* {
@@ -114,7 +114,7 @@ found:
 	return (0);
 }
 
-pid_t
+int
 sys_getsid(struct proc *curp, void *v, register_t *retval)
 {
 	struct sys_getsid_args /* {
