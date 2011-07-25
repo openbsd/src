@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.10 2011/07/06 05:35:53 kettenis Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.11 2011/07/25 20:56:02 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -272,7 +272,9 @@ vpci_init_msi(struct vpci_softc *sc, struct vpci_pbm *pbm)
 	if (err != H_EOK)
 		panic("vpci: can't enable msi eq");
 
+#ifdef notyet
 	pbm->vp_flags |= PCI_FLAGS_MSI_ENABLED;
+#endif
 	return;
 
 disable_queue:
