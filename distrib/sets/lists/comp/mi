@@ -3915,6 +3915,9 @@
 ./usr/share/man/man3/floorf.3
 ./usr/share/man/man3/floorl.3
 ./usr/share/man/man3/flushinp.3
+./usr/share/man/man3/fma.3
+./usr/share/man/man3/fmaf.3
+./usr/share/man/man3/fmal.3
 ./usr/share/man/man3/fmax.3
 ./usr/share/man/man3/fmaxf.3
 ./usr/share/man/man3/fmaxl.3
@@ -5291,6 +5294,9 @@
 ./usr/share/man/man3/nextafterf.3
 ./usr/share/man/man3/nextafterl.3
 ./usr/share/man/man3/nextkey.3
+./usr/share/man/man3/nexttoward.3
+./usr/share/man/man3/nexttowardf.3
+./usr/share/man/man3/nexttowardl.3
 ./usr/share/man/man3/nftw.3
 ./usr/share/man/man3/nice.3
 ./usr/share/man/man3/nl.3
