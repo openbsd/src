@@ -1,4 +1,4 @@
-# $OpenBSD: login.conf.in,v 1.3 2010/12/17 05:33:06 tedu Exp $
+# $OpenBSD: login.conf.in,v 1.4 2011/07/26 15:16:12 sthen Exp $
 
 #
 # Sample login.conf file.  See login.conf(5) for details.
@@ -84,3 +84,10 @@ authpf:\
 	:welcome=/etc/motd.authpf:\
 	:shell=/usr/sbin/authpf:\
 	:tc=default:
+
+#
+# Override resource limits for certain daemons started by rc.d(8)
+#
+bgpd:\
+	:openfiles-cur=512:\
+	:tc=daemon:
