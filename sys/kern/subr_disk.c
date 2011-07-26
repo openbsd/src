@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.130 2011/07/06 16:36:52 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.131 2011/07/26 12:32:14 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -299,7 +299,6 @@ checkdisklabel(void *rlp, struct disklabel *lp,
 			dlp->d_spare[i] = swap32(dlp->d_spare[i]);
 
 		dlp->d_magic2 = swap32(dlp->d_magic2);
-		dlp->d_checksum = swap16(dlp->d_checksum);
 
 		dlp->d_npartitions = swap16(dlp->d_npartitions);
 		dlp->d_bbsize = swap32(dlp->d_bbsize);
