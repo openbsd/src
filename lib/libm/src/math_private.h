@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_private.h,v 1.13 2011/07/06 00:02:42 martynas Exp $	*/
+/*	$OpenBSD: math_private.h,v 1.14 2011/07/26 09:24:52 martynas Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -222,11 +222,11 @@ do {								\
    ints.  */
 
 /*
- * The arm32 port is little endian except for the FP word order which is
+ * The arm port is little endian except for the FP word order which is
  * big endian.
  */
 
-#if (BYTE_ORDER == BIG_ENDIAN) || defined(arm32)
+#if (BYTE_ORDER == BIG_ENDIAN) || defined(__arm__)
 
 typedef union
 {
@@ -240,7 +240,7 @@ typedef union
 
 #endif
 
-#if (BYTE_ORDER == LITTLE_ENDIAN) && !defined(arm32)
+#if (BYTE_ORDER == LITTLE_ENDIAN) && !defined(__arm__)
 
 typedef union
 {

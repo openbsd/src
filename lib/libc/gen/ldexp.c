@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldexp.c,v 1.3 2011/07/07 00:25:39 martynas Exp $	*/
+/*	$OpenBSD: ldexp.c,v 1.4 2011/07/26 09:24:52 martynas Exp $	*/
 /* @(#)s_scalbn.c 5.1 93/09/24 */
 /* @(#)fdlibm.h 5.1 93/09/24 */
 /*
@@ -22,7 +22,7 @@
 
 /* Bit fiddling routines copied from msun/src/math_private.h,v 1.15 */
 
-#if (BYTE_ORDER == BIG_ENDIAN) || defined(arm32)
+#if (BYTE_ORDER == BIG_ENDIAN) || defined(__arm__)
 
 typedef union
 {
@@ -36,7 +36,7 @@ typedef union
 
 #endif
 
-#if (BYTE_ORDER == LITTLE_ENDIAN) && !defined(arm32)
+#if (BYTE_ORDER == LITTLE_ENDIAN) && !defined(__arm__)
 
 typedef union
 {
