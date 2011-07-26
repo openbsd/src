@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_float.c,v 1.19 2011/07/26 09:36:25 martynas Exp $ */
+/*	$OpenBSD: xdr_float.c,v 1.20 2011/07/26 11:43:01 martynas Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -210,7 +210,7 @@ xdr_double(XDR *xdrs, double *dp)
 	case XDR_ENCODE:
 #ifdef IEEEFP
 		i32p = (int32_t *)dp;
-#if (BYTE_ORDER == BIG_ENDIAN) || defined(__arm__)
+#if (BYTE_ORDER == BIG_ENDIAN) || (defined(__arm__) && !defined(__VFP_FP__))
 		tmpl = *i32p++;
 		rv = XDR_PUTLONG(xdrs, &tmpl);
 		if (!rv)
@@ -254,7 +254,7 @@ xdr_double(XDR *xdrs, double *dp)
 	case XDR_DECODE:
 #ifdef IEEEFP
 		i32p = (int32_t *)dp;
-#if (BYTE_ORDER == BIG_ENDIAN) || defined(__arm__)
+#if (BYTE_ORDER == BIG_ENDIAN) || (defined(__arm__) && !defined(__VFP_FP__))
 		rv = XDR_GETLONG(xdrs, &tmpl);
 		*i32p++ = tmpl;
 		if (!rv)
