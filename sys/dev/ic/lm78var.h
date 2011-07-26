@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78var.h,v 1.14 2007/06/25 22:50:18 cnst Exp $	*/
+/*	$OpenBSD: lm78var.h,v 1.15 2011/07/26 18:43:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -152,7 +152,9 @@ struct lm_softc {
 	u_int8_t sbusaddr;
 	u_int8_t chipid;
 	u_int8_t vrm9;
+
+#define LM78_DEAD	1
+	int flags;
 };
 
 void lm_attach(struct lm_softc *);
-int lm_detach(struct lm_softc *);

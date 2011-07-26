@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78_i2c.c,v 1.2 2008/11/03 00:17:47 cnst Exp $	*/
+/*	$OpenBSD: lm78_i2c.c,v 1.3 2011/07/26 18:43:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -34,13 +34,11 @@ struct lm_i2c_softc {
 
 int lm_i2c_match(struct device *, void *, void *);
 void lm_i2c_attach(struct device *, struct device *, void *);
-int lm_i2c_detach(struct device *, int);
 u_int8_t lm_i2c_readreg(struct lm_softc *, int);
 void lm_i2c_writereg(struct lm_softc *, int, int);
 
 struct cfattach lm_i2c_ca = {
-	sizeof(struct lm_i2c_softc), lm_i2c_match,
-	lm_i2c_attach, lm_i2c_detach
+	sizeof(struct lm_i2c_softc), lm_i2c_match, lm_i2c_attach
 };
 
 int
@@ -97,14 +95,6 @@ lm_i2c_attach(struct device *parent, struct device *self, void *aux)
 	/* Make the bus scan ignore the satellites. */
 	iic_ignore_addr(0x48 + (data & 0x7));
 	iic_ignore_addr(0x48 + ((data >> 4) & 0x7));
-}
-
-int
-lm_i2c_detach(struct device *self, int flags)
-{
-	struct lm_i2c_softc *sc = (struct lm_i2c_softc *)self;
-
-	return lm_detach(&sc->sc_lmsc);
 }
 
 u_int8_t
