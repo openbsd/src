@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.56 2011/03/09 23:31:25 bluhm Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.57 2011/07/26 21:19:51 bluhm Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		/*
 		 * Make sure the source address is from a neighbor's address.
 		 */
-		if (in6ifa_ifplocaladdr(ifp, &saddr6) == NULL) {
+		if (!in6_ifpprefix(ifp, &saddr6)) {
 			nd6log((LOG_INFO, "nd6_ns_input: "
 			    "NS packet from non-neighbor\n"));
 			goto bad;
@@ -640,7 +640,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	/*
 	 * Make sure the source address is from a neighbor's address.
 	 */
-	if (in6ifa_ifplocaladdr(ifp, &saddr6) == NULL) {
+	if (!in6_ifpprefix(ifp, &saddr6)) {
 		nd6log((LOG_INFO, "nd6_na_input: "
 		    "ND packet from non-neighbor\n"));
 		goto bad;

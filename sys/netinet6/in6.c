@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.90 2011/04/03 13:55:36 stsp Exp $	*/
+/*	$OpenBSD: in6.c,v 1.91 2011/07/26 21:19:51 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1927,28 +1927,31 @@ in6ifa_ifpwithaddr(struct ifnet *ifp, struct in6_addr *addr)
 }
 
 /*
- * find the internet address on a given interface corresponding to a neighbor's
- * address.
+ * Check wether an interface has a prefix by looking up the cloning route.
  */
-struct in6_ifaddr *
-in6ifa_ifplocaladdr(const struct ifnet *ifp, const struct in6_addr *addr)
+int
+in6_ifpprefix(const struct ifnet *ifp, const struct in6_addr *addr)
 {
-	struct ifaddr *ifa;
-	struct in6_ifaddr *ia;
+	struct sockaddr_in6 dst;
+	struct rtentry *rt;
+	u_int tableid = 0;  /* XXX */
 
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-		if (ifa->ifa_addr == NULL)
-			continue;	/* just for safety */
-		if (ifa->ifa_addr->sa_family != AF_INET6)
-			continue;
-		ia = (struct in6_ifaddr *)ifa;
-		if (IN6_ARE_MASKED_ADDR_EQUAL(addr,
-				&ia->ia_addr.sin6_addr,
-				&ia->ia_prefixmask.sin6_addr))
-			return ia;
+	bzero(&dst, sizeof(dst));
+	dst.sin6_len = sizeof(struct sockaddr_in6);
+	dst.sin6_family = AF_INET6;
+	dst.sin6_addr = *addr;
+	rt = rtalloc1((struct sockaddr *)&dst, RT_NOCLONING, tableid);
+
+	if (rt == NULL)
+		return (0);
+	if ((rt->rt_flags & (RTF_CLONING | RTF_CLONED)) == 0 ||
+	    rt->rt_ifp != ifp) {
+		RTFREE(rt);
+		return (0);
 	}
 
-	return NULL;
+	RTFREE(rt);
+	return (1);
 }
 
 /*
