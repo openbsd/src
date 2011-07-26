@@ -31,14 +31,13 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb_osdep.h,v 1.3 2010/02/20 22:37:05 jsg Exp $ */
+/* $OpenBSD: if_ixgb_osdep.h,v 1.4 2011/07/26 14:57:57 deraadt Exp $ */
 
 #ifndef _IXGB_OPENBSD_OS_H_
 #define _IXGB_OPENBSD_OS_H_
 
 #define ASSERT(x)	if(!(x)) panic("IXGB: x")
 
-/* The happy-fun DELAY macro is defined in /usr/src/sys/i386/include/clock.h */
 #define usec_delay(x)	DELAY(x)
 #define msec_delay(x)	DELAY(1000*(x))
 

@@ -31,13 +31,12 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em_osdep.h,v 1.10 2006/11/06 03:52:37 brad Exp $ */
+/* $OpenBSD: if_em_osdep.h,v 1.11 2011/07/26 14:57:57 deraadt Exp $ */
 /* $FreeBSD: if_em_osdep.h,v 1.11 2003/05/02 21:17:08 pdeuskar Exp $ */
 
 #ifndef _EM_OPENBSD_OS_H_
 #define _EM_OPENBSD_OS_H_
 
-/* The happy-fun DELAY macro is defined in /usr/src/sys/i386/include/clock.h */
 #define usec_delay(x)		DELAY(x)
 #define msec_delay(x)		DELAY(1000*(x))
 /* TODO: Should we be paranoid about delaying in interrupt context? */
