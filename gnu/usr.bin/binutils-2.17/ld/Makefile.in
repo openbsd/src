@@ -645,7 +645,8 @@ ALL_64_EMULATIONS = \
 	emmo.o \
 	eelf64ppc.o \
 	eelf64lppc.o \
-	ehppa64linux.o
+	ehppa64linux.o \
+	ehppa64obsd.o
 
 ALL_EMUL_EXTRA_OFILES = \
 	deffilep.o \
@@ -1897,6 +1898,9 @@ ehppaobsd.c: $(srcdir)/emulparams/hppaobsd.sh \
 ehppa64linux.c: $(srcdir)/emulparams/hppa64linux.sh \
   $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} hppa64linux "$(tdir_hppa64linux)"
+ehppa64obsd.c: $(srcdir)/emulparams/hppa64obsd.sh \
+  $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} hppa64obsd "$(tdir_hppa64obsd)"
 ei386aout.c: $(srcdir)/emulparams/i386aout.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} i386aout "$(tdir_i386aout)"
