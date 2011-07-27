@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2011/06/20 14:31:46 jasper Exp $
+#	$OpenBSD: Makefile,v 1.22 2011/07/27 12:30:58 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -43,6 +43,7 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		static-libs4 \
 		variable-get \
 		variable-set \
+		variable-requires \
 		missing-req-1 \
 		missing-req-2 \
 		missing-req-3 \
@@ -368,6 +369,13 @@ variable-set:
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --errors-to-stdout \
 		--print-errors --define-variable=prefix=/usr/local2 \
 		--cflags sysroot > ${GOT}
+	@diff -u ${WANT} ${GOT}
+
+variable-requires:
+	# Test variable expansion in non-variable fields, to multiple values
+	@echo " -lalpha2" > ${WANT}
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --errors-to-stdout \
+		--print-errors --libs requires-test3 > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 # This fails as we read and check Requires as well as Requires.private where
