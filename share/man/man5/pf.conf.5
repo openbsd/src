@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.502 2011/07/27 00:26:10 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.503 2011/07/27 07:16:08 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -923,7 +923,8 @@ is as described above.
 The
 .Ar round-robin
 option loops through the redirection address(es) and considers given weights
-associated with address(es). Weights can be specified between 1 and 65535.
+associated with address(es).
+Weights can be specified between 1 and 65535.
 Addresses with higher weights are selected more often.
 .Ar sticky-address
 is as described above.
@@ -951,8 +952,8 @@ from modifying the source port on TCP and UDP packets.
 .Pp
 When more than one redirection address is specified,
 .Ar round-robin
-and 
-.Ar least-states 
+and
+.Ar least-states
 are the only permitted pool types.
 .Ss Routing
 If a packet matches a rule with one of the following route options set,
@@ -2774,8 +2775,8 @@ hosts          = "all" |
                  "{" host-list "}" | "route" string ) [ port ]
 
 ipspec         = "any" | host | "{" host-list "}"
-host           = [ "!" ] ( address [ "weight" number ] | 
-                 address [ "/" mask-bits ] [ "weight" number ] | 
+host           = [ "!" ] ( address [ "weight" number ] |
+                 address [ "/" mask-bits ] [ "weight" number ] |
                  "\*(Lt" string "\*(Gt" )
 redirhost      = address [ "/" mask-bits ]
 routehost      = host | host "@" interface-name |
@@ -2836,9 +2837,9 @@ limit-list     = limit-item [ [ "," ] limit-list ]
 limit-item     = ( "states" | "frags" | "src-nodes" | "tables" |
                  "table-entries" ) number
 
-pooltype       = ( "bitmask" | "least-states" | 
+pooltype       = ( "bitmask" | "least-states" |
                  "random" | "round-robin" |
-                 "source-hash" [ ( hex-key | string-key ) ] ) 
+                 "source-hash" [ ( hex-key | string-key ) ] )
                  [ sticky-address ]
 
 subqueue       = string | "{" queue-list "}"
