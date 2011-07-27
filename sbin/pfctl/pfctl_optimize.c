@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.28 2011/07/07 00:47:19 mcbride Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.29 2011/07/27 00:26:10 mcbride Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -1231,6 +1231,7 @@ add_opt_table(struct pfctl *pf, struct pf_opt_tbl **tbl, sa_family_t af,
 	node_host.af = af;
 	node_host.addr = addr->addr;
 	node_host.ifname = ifname;
+	node_host.weight = addr->weight;
 
 #ifdef OPT_DEBUG
 	DEBUG("<%s> adding %s/%d", (*tbl)->pt_name, inet_ntop(af,

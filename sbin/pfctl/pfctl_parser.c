@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.278 2011/07/08 18:52:47 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.279 2011/07/27 00:26:10 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1092,8 +1092,6 @@ print_tabledef(const char *name, int flags, int addrs,
 		printf(" persist");
 	if (flags & PFR_TFLAG_COUNTERS)
 		printf(" counters");
-	if (flags & PFR_TFLAG_COST)
-		printf(" cost");
 	SIMPLEQ_FOREACH(ti, nodes, entries) {
 		if (ti->file) {
 			printf(" file \"%s\"", ti->file);
@@ -1450,7 +1448,6 @@ ifa_skip_if(const char *filter, struct node_host *p)
 	return (p->ifname[n] < '0' || p->ifname[n] > '9');
 }
 
-
 struct node_host *
 host(const char *s)
 {
@@ -1509,8 +1506,10 @@ host(const char *s)
 		fprintf(stderr, "no IP address found for %s\n", s);
 		return (NULL);
 	}
-	for (n = h; n != NULL; n = n->next)
+	for (n = h; n != NULL; n = n->next) {
 		n->addr.type = PF_ADDR_ADDRMASK;
+		n->weight = 0;
+	}	
 	return (h);
 }
 
@@ -1702,9 +1701,41 @@ host_dns(const char *s, int v4mask, int v6mask)
 int
 append_addr(struct pfr_buffer *b, char *s, int test)
 {
-	char			 *r;
+	static int 		 previous = 0;
+	static int		 expect = 0;
+	struct pfr_addr		*a;
 	struct node_host	*h, *n;
-	int			 rv, not = 0;
+	char			*r;
+	const char		*errstr;
+	int			 rv, not = 0, i = 0;
+	u_int16_t		 weight;
+	
+	/* skip weight if given */
+	if (strcmp(s, "weight") == 0) {
+		expect = 1;
+		return (1); /* expecting further call */
+	}
+	
+	/* check if previous host is set */
+	if (expect) {
+		/* parse and append load balancing weight */
+		weight = strtonum(s, 1, USHRT_MAX, &errstr);
+		if (errstr) {
+			fprintf(stderr, "failed to convert weight %s\n", s);
+			return (-1);
+		}
+		if (previous != -1) {
+			PFRB_FOREACH(a, b) {
+				if (++i >= previous) {
+					a->pfra_weight = weight;
+					a->pfra_type = PFRKE_COST;
+				}
+			}
+		}
+		
+		expect = 0;
+		return (0);
+	}
 
 	for (r = s; *r == '!'; r++)
 		not = !not;
@@ -1713,6 +1744,7 @@ append_addr(struct pfr_buffer *b, char *s, int test)
 		return (-1);
 	}
 	rv = append_addr_host(b, n, test, not);
+	previous = b->pfrb_size;
 	do {
 		h = n;
 		n = n->next;
@@ -1743,6 +1775,10 @@ append_addr_host(struct pfr_buffer *b, struct node_host *n, int test, int not)
 		 	   sizeof(addr.pfra_ifname)) >= sizeof(addr.pfra_ifname))
 				errx(1, "append_addr_host: strlcpy");
 			addr.pfra_type = PFRKE_ROUTE;
+		}
+		if (n->weight > 0) {
+			addr.pfra_weight = n->weight;
+			addr.pfra_type = PFRKE_COST;
 		}
 		switch (n->af) {
 		case AF_INET:

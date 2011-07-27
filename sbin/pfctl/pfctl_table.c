@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.70 2011/07/03 23:37:55 zinke Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.71 2011/07/27 00:26:10 mcbride Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -411,13 +411,18 @@ int
 load_addr(struct pfr_buffer *b, int argc, char *argv[], char *file,
     int nonetwork)
 {
+	int	ev = 0;
 	while (argc--)
-		if (append_addr(b, *argv++, nonetwork)) {
+		if ((ev = append_addr(b, *argv++, nonetwork)) == -1) {
 			if (errno)
 				warn("cannot decode %s", argv[-1]);
 			return (-1);
 		}
-	if (pfr_buf_load(b, file, nonetwork, append_addr)) {
+	if (ev == 1) { /* expected further append_addr call */
+		warnx("failed to decode %s", argv[-1]);
+		return (-1);
+	}
+	if (pfr_buf_load(b, file, nonetwork)) {
 		warn("cannot load %s", file);
 		return (-1);
 	}
@@ -479,12 +484,14 @@ print_astats(struct pfr_astats *as, int dns)
 
 	print_addrx(&as->pfras_a, NULL, dns);
 	printf("\tCleared:            %s", ctime(&time));
-	if (as->pfras_a.pfra_type == PFRKE_COST)
+	if (as->pfras_a.pfra_states)
 		printf("\tActive States:      %d\n", as->pfras_a.pfra_states);
- 	if (as->pfras_a.pfra_fback == PFR_FB_NOCOUNT)
-		return;
+	if (as->pfras_a.pfra_type == PFRKE_COST)
+		printf("\tWeight:             %d\n", as->pfras_a.pfra_weight);	
 	if (as->pfras_a.pfra_ifname[0])
 		printf("\tInterface:          %s\n", as->pfras_a.pfra_ifname);
+ 	if (as->pfras_a.pfra_fback == PFR_FB_NOCOUNT)
+		return;
 	for (dir = 0; dir < PFR_DIR_MAX; dir++)
 		for (op = 0; op < PFR_OP_ADDR_MAX; op++)
 			printf("\t%-19s [ Packets: %-18llu Bytes: %-18llu ]\n",

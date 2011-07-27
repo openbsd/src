@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.768 2011/07/24 12:13:10 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.769 2011/07/27 00:26:10 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2942,16 +2942,10 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 				/* order is irrelevant */
 				SLIST_INSERT_HEAD(&rules, ri, entry);
 				pf_rule_to_actions(r, &act);
-				if (pf_get_transaddr(r, pd, sns) == -1) {
+				if (pf_get_transaddr(r, pd, sns, &nr) == -1) {
 					REASON_SET(&reason, PFRES_MEMORY);
 					goto cleanup;
 				}
-				/* 
-				 * We need to save this rule pointer, 
-				 * otherwise the counter decrease
-				 * would not work for SLB.
-				 */
-				nr = r;
 				if (r->log || act.log & PF_LOG_MATCHES)
 					PFLOG_PACKET(kif, m, direction,
 					    reason, r, a, ruleset, pd);
@@ -2983,7 +2977,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 	/* apply actions for last matching pass/block rule */
 	pf_rule_to_actions(r, &act);
-	if (pf_get_transaddr(r, pd, sns) == -1) {
+	if (pf_get_transaddr(r, pd, sns, &nr) == -1) {
 		REASON_SET(&reason, PFRES_MEMORY);
 		goto cleanup;
 	}

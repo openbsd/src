@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.96 2011/07/03 23:37:55 zinke Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.97 2011/07/27 00:26:10 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -117,6 +117,7 @@ struct node_host {
 	sa_family_t		 af;
 	u_int8_t		 not;
 	u_int32_t		 ifindex;	/* link-local IPv6 addrs */
+	u_int16_t		 weight;	/* load balancing weight */
 	char			*ifname;
 	u_int			 ifa_flags;
 	struct node_host	*next;

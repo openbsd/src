@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.340 2011/07/08 18:50:52 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.341 2011/07/27 00:26:10 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -393,6 +393,7 @@ struct pf_rule_addr {
 	u_int16_t		 port[2];
 	u_int8_t		 neg;
 	u_int8_t		 port_op;
+	u_int16_t		 weight;
 };
 
 struct pf_poolhashkey {
@@ -413,7 +414,9 @@ struct pf_pool {
 	char			 ifname[IFNAMSIZ];
 	struct pfi_kif		*kif;
 	int			 tblidx;
-	u_int32_t		 states;
+	u_int64_t		 states;
+	int		 	 curweight;
+	u_int16_t		 weight;
 	u_int16_t		 proxy_port[2];
 	u_int8_t		 port_op;
 	u_int8_t		 opts;
@@ -1007,11 +1010,10 @@ RB_PROTOTYPE(pf_anchor_node, pf_anchor, entry_node, pf_anchor_compare);
 #define PFR_TFLAG_REFERENCED	0x00000010
 #define PFR_TFLAG_REFDANCHOR	0x00000020
 #define PFR_TFLAG_COUNTERS	0x00000040
-#define PFR_TFLAG_COST		0x00000080
 /* Adjust masks below when adding flags. */
-#define PFR_TFLAG_USRMASK	0x000000C3
+#define PFR_TFLAG_USRMASK	0x00000043
 #define PFR_TFLAG_SETMASK	0x0000003C
-#define PFR_TFLAG_ALLMASK	0x000000FF
+#define PFR_TFLAG_ALLMASK	0x0000007F
 
 struct pfr_table {
 	char			 pfrt_anchor[MAXPATHLEN];
@@ -1031,6 +1033,7 @@ struct pfr_addr {
 	}		 pfra_u;
 	char		 pfra_ifname[IFNAMSIZ];
 	u_int32_t	 pfra_states;
+	u_int16_t	 pfra_weight;
 	u_int8_t	 pfra_af;
 	u_int8_t	 pfra_net;
 	u_int8_t	 pfra_not;
@@ -1070,6 +1073,7 @@ struct pfr_tstats {
 struct pfr_kcounters {
 	u_int64_t		 pfrkc_packets[PFR_DIR_MAX][PFR_OP_ADDR_MAX];
 	u_int64_t		 pfrkc_bytes[PFR_DIR_MAX][PFR_OP_ADDR_MAX];
+	u_int64_t		 states;
 };
 
 SLIST_HEAD(pfr_kentryworkq, pfr_kentry);
@@ -1121,7 +1125,7 @@ struct pfr_kentry_cost {
 	struct pfi_kif		*kif;
 	/* Above overlaps with pfr_kentry route */
 
-	u_int32_t		 states;
+	u_int16_t		 weight;
 };
 
 struct pfr_kentry_all {
@@ -1146,6 +1150,9 @@ struct pfr_ktable {
 	struct pf_ruleset	*pfrkt_rs;
 	long			 pfrkt_larg;
 	int			 pfrkt_nflags;
+	u_int64_t		 pfrkt_refcntcost;
+	u_int16_t		 pfrkt_gcdweight;
+	u_int16_t		 pfrkt_maxweight;
 };
 #define pfrkt_t		pfrkt_ts.pfrts_t
 #define pfrkt_name	pfrkt_t.pfrt_name
@@ -1825,7 +1832,8 @@ void	pfr_update_stats(struct pfr_ktable *, struct pf_addr *, sa_family_t,
 	    u_int64_t, int, int, int);
 int	pfr_pool_get(struct pfr_ktable *, int *, struct pf_addr *,
 	    struct pf_addr **, struct pf_addr **, struct pfi_kif **,
-	    u_int32_t *, sa_family_t, int (*)(sa_family_t, struct pf_addr *));
+	    u_int64_t *, u_int16_t *, int *,
+	    sa_family_t, int (*)(sa_family_t, struct pf_addr *));
 int	pfr_states_increase(struct pfr_ktable *, struct pf_addr *, int);
 int	pfr_states_decrease(struct pfr_ktable *, struct pf_addr *, int);
 struct pfr_kentry *
@@ -1961,7 +1969,7 @@ int			 pf_step_out_of_anchor(int *, struct pf_ruleset **,
 			     int *);
 
 int			 pf_get_transaddr(struct pf_rule *, struct pf_pdesc *,
-			    struct pf_src_node **);
+			    struct pf_src_node **, struct pf_rule **);
 
 int			 pf_map_addr(sa_family_t, struct pf_rule *,
 			    struct pf_addr *, struct pf_addr *,

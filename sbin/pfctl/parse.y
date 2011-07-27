@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.605 2011/07/13 20:57:10 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.606 2011/07/27 00:26:10 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -380,6 +380,7 @@ typedef struct {
 		int			 i;
 		char			*string;
 		u_int			 rtableid;
+		u_int16_t		 weight;		
 		struct {
 			u_int8_t	 b1;
 			u_int8_t	 b2;
@@ -451,6 +452,7 @@ int	parseport(char *, struct range *r, int);
 %token	SYNPROXY FINGERPRINTS NOSYNC DEBUG SKIP HOSTID
 %token	ANTISPOOF FOR INCLUDE MATCHES
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN LEASTSTATES STATICPORT PROBABILITY
+%token	WEIGHT
 %token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE LINKSHARE REALTIME UPPERLIMIT
 %token	QUEUE PRIORITY QLIMIT RTABLE RDOMAIN
 %token	LOAD RULESET_OPTIMIZATION RTABLE RDOMAIN PRIO
@@ -465,6 +467,7 @@ int	parseport(char *, struct range *r, int);
 %type	<v.number>		number icmptype icmp6type uid gid
 %type	<v.number>		tos not yesno optnodf
 %type	<v.probability>		probability
+%type	<v.weight>		optweight
 %type	<v.i>			dir af optimizer
 %type	<v.i>			sourcetrack flush unaryop statelock
 %type	<v.b>			action
@@ -480,6 +483,7 @@ int	parseport(char *, struct range *r, int);
 %type	<v.fromto>		fromto
 %type	<v.peer>		ipportspec from to
 %type	<v.host>		ipspec xhost host dynaddr host_list
+%type	<v.host>		table_host_list tablespec
 %type	<v.host>		redir_host_list redirspec
 %type	<v.host>		route_host route_host_list routespec
 %type	<v.os>			os xos os_list
@@ -1190,8 +1194,6 @@ table_opt	: STRING		{
 				table_opts.flags |= PFR_TFLAG_PERSIST;
 			else if (!strcmp($1, "counters"))
 				table_opts.flags |= PFR_TFLAG_COUNTERS;
-			else if (!strcmp($1, "cost"))
-				table_opts.flags |= PFR_TFLAG_COST;
 			else {
 				yyerror("invalid table option '%s'", $1);
 				free($1);
@@ -1200,7 +1202,7 @@ table_opt	: STRING		{
 			free($1);
 		}
 		| '{' optnl '}'		{ table_opts.init_addr = 1; }
-		| '{' optnl host_list '}'	{
+		| '{' optnl table_host_list '}'	{
 			struct node_host	*n;
 			struct node_tinit	*ti;
 
@@ -1249,6 +1251,25 @@ table_opt	: STRING		{
 			SIMPLEQ_INSERT_TAIL(&table_opts.init_nodes, ti,
 			    entries);
 			table_opts.init_addr = 1;
+		}
+		;
+
+tablespec	: xhost	optweight		{
+			if ($2 > 0) {
+				struct node_host	*n;
+				for (n = $1; n != NULL; n = n->next)
+					n->weight = $2;
+			}
+			$$ = $1;
+		}
+		| '{' optnl table_host_list '}'	{ $$ = $3; }
+		;
+
+table_host_list	: tablespec optnl			{ $$ = $1; }
+		| table_host_list comma tablespec optnl {
+			$1->tail->next = $3;
+			$1->tail = $3->tail;
+			$$ = $1;
 		}
 		;
 
@@ -2269,6 +2290,8 @@ filter_opt	: USER uids {
 			filter_opts.route.host = $2;
 			filter_opts.route.rt = PF_DUPTO;
 			filter_opts.route.pool_opts = $3.type | $3.opts;
+			memcpy(&filter_opts.rroute.pool_opts, &$3,
+			    sizeof(filter_opts.rroute.pool_opts));
 			if ($3.key != NULL)
 				filter_opts.route.key = $3.key;
 		}
@@ -2675,6 +2698,7 @@ ipspec		: ANY				{ $$ = NULL; }
 		| '{' optnl host_list '}'	{ $$ = $3; }
 		;
 
+
 host_list	: ipspec optnl			{ $$ = $1; }
 		| host_list comma ipspec optnl	{
 			if ($1 == NULL) {
@@ -2716,6 +2740,16 @@ xhost		: not host			{
 			$$->not = $1;
 			$$->tail = $$;
 		}
+		;
+		
+optweight	: WEIGHT NUMBER			{
+			if ($2 < 1 || $2 > USHRT_MAX) {
+				yyerror("weight out of range");
+				YYERROR;
+			}
+			$$ = $2;
+		}
+		| /* empty */ { $$ = 0; }
 		;
 
 host		: STRING			{
@@ -3572,22 +3606,39 @@ portstar	: numberstring			{
 		}
 		;
 
-redirspec	: host				{ $$ = $1; }
+redirspec	: host optweight		{ 
+			if ($2 > 0) {
+				struct node_host	*n;
+				for (n = $1; n != NULL; n = n->next)
+					n->weight = $2;
+			}
+			$$ = $1;
+		}
 		| '{' optnl redir_host_list '}'	{ $$ = $3; }
 		;
 
-redir_host_list	: host optnl			{
+redir_host_list	: host optweight optnl			{
 			if ($1->addr.type != PF_ADDR_ADDRMASK) {
 				free($1);
 				yyerror("only addresses can be listed for"
 				    "redirection pools ");
 				YYERROR;
 			}
+			if ($2 > 0) {
+				struct node_host	*n;
+				for (n = $1; n != NULL; n = n->next)
+					n->weight = $2;
+			}
 			$$ = $1;
 		}
-		| redir_host_list comma host optnl {
+		| redir_host_list comma host optweight optnl {
 			$1->tail->next = $3;
 			$1->tail = $3->tail;
+			if ($4 > 0) {
+				struct node_host	*n;
+				for (n = $3; n != NULL; n = n->next)
+					n->weight = $4;
+			}
 			$$ = $1;
 		}
 		;
@@ -3804,8 +3855,15 @@ route_host	: STRING			{
 		}
 		;
 
-route_host_list	: route_host optnl			{ $$ = $1; }
-		| route_host_list comma route_host optnl {
+route_host_list	: route_host optweight optnl		{ 
+			if ($2 > 0) {
+				struct node_host	*n;
+				for (n = $1; n != NULL; n = n->next)
+					n->weight = $2;
+			}
+			$$ = $1;
+		}
+		| route_host_list comma route_host optweight optnl {
 			if ($1->af == 0)
 				$1->af = $3->af;
 			if ($1->af != $3->af) {
@@ -3815,11 +3873,23 @@ route_host_list	: route_host optnl			{ $$ = $1; }
 			}
 			$1->tail->next = $3;
 			$1->tail = $3->tail;
+			if ($4 > 0) {
+				struct node_host	*n;
+				for (n = $3; n != NULL; n = n->next)
+					n->weight = $4;
+			}
 			$$ = $1;
 		}
 		;
 
-routespec	: route_host			{ $$ = $1; }
+routespec	: route_host optweight			{
+			if ($2 > 0) {
+				struct node_host	*n;
+				for (n = $1; n != NULL; n = n->next)
+					n->weight = $2;
+			}
+			$$ = $1;
+		}
 		| '{' optnl route_host_list '}'	{ $$ = $3; }
 		;
 
@@ -4057,7 +4127,7 @@ process_tabledef(char *name, struct table_opts *opts)
 	ab.pfrb_type = PFRB_ADDRS;
 	SIMPLEQ_FOREACH(ti, &opts->init_nodes, entries) {
 		if (ti->file)
-			if (pfr_buf_load(&ab, ti->file, 0, append_addr)) {
+			if (pfr_buf_load(&ab, ti->file, 0)) {
 				if (errno)
 					yyerror("cannot load \"%s\": %s",
 					    ti->file, strerror(errno));
@@ -4576,8 +4646,8 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 		return (0);
 	} else {		/* more than one address */
 		if (rs->pool_opts.type &&
-		     (rs->pool_opts.type != PF_POOL_ROUNDROBIN) &&
-		     (rs->pool_opts.type != PF_POOL_LEASTSTATES)) {
+		    (rs->pool_opts.type != PF_POOL_ROUNDROBIN) &&
+		    (rs->pool_opts.type != PF_POOL_LEASTSTATES)) {
 			yyerror("only round-robin or "
 			    "least-states valid for multiple "
 			    "translation or routing addresses");
@@ -4598,15 +4668,13 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 			}
 			memset(&ra, 0, sizeof(ra));
 			ra.addr = h->addr;
+			ra.weight = h->weight;
 			if (add_opt_table(pf, &tbl,
 			    h->af, &ra, h->ifname))
 				return (1);
-                }
+		}
 	}
 	if (tbl) {
-		if (rs->pool_opts.type == PF_POOL_LEASTSTATES)
-			tbl->pt_flags |= PFR_TFLAG_COST;
-
 		if ((pf->opts & PF_OPT_NOACTION) == 0 &&
 		     pf_opt_create_table(pf, tbl))
 				return (1);
@@ -5150,6 +5218,7 @@ lookup(char *s)
 		{ "upperlimit",		UPPERLIMIT},
 		{ "urpf-failed",	URPFFAILED},
 		{ "user",		USER},
+		{ "weight",		WEIGHT},
 	};
 	const struct keywords	*p;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.28 2007/12/05 12:01:47 chl Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.29 2011/07/27 00:26:10 mcbride Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -46,6 +46,7 @@
 #include <err.h>
 
 #include "pfctl.h"
+#include "pfctl_parser.h"
 
 #define BUF_SIZE 256
 
@@ -505,12 +506,12 @@ pfr_buf_clear(struct pfr_buffer *b)
 }
 
 int
-pfr_buf_load(struct pfr_buffer *b, char *file, int nonetwork,
-    int (*append_addr)(struct pfr_buffer *, char *, int))
+pfr_buf_load(struct pfr_buffer *b, char *file, int nonetwork)
 {
 	FILE	*fp;
 	char	 buf[BUF_SIZE];
 	int	 rv;
+	int	 ev = 0;
 
 	if (file == NULL)
 		return (0);
@@ -522,10 +523,12 @@ pfr_buf_load(struct pfr_buffer *b, char *file, int nonetwork,
 			return (-1);
 	}
 	while ((rv = pfr_next_token(buf, fp)) == 1)
-		if (append_addr(b, buf, nonetwork)) {
+		if ((ev = append_addr(b, buf, nonetwork)) == -1) {
 			rv = -1;
 			break;
 		}
+	if (ev == 1) /* expected further append_addr call */
+		rv = -1;
 	if (fp != stdin)
 		fclose(fp);
 	return (rv);
