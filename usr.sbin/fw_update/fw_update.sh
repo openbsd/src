@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $OpenBSD: fw_update.sh,v 1.6 2011/07/16 22:27:09 espie Exp $
+# $OpenBSD: fw_update.sh,v 1.7 2011/07/27 15:12:57 halex Exp $
 # Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -21,17 +21,21 @@ DRIVERS="acx athn bwi ipw iwi iwn malo otus pgt rsu uath ueagle upgt urtwn
 
 PKG_ADD="pkg_add -D repair"
 
-[ 0 = $(id -u) ] || { echo "${0##*/} must be run as root" >&2; exit 1; }
-
 usage() {
-	echo "usage: ${0##*/} [-v]" >&2
+	echo "usage: ${0##*/} [-nv]" >&2
 	exit 1
 }
 
+verbose() {
+	[ "$verbose" ] && echo "${0##*/}: $@"
+}
+
 verbose=
-while getopts 'v' s "$@" 2>&-; do
+nop=
+while getopts 'nv' s "$@" 2>&-; do
 	case "$s" in
-	v)	verbose=-v ;;
+	v)	verbose=${verbose:--}v ;;
+	n)	nop=-n ;;
 	*)	usage ;;
 	esac
 done
@@ -48,6 +52,7 @@ tag=$2
 export PKG_PATH=http://firmware.openbsd.org/firmware/$version/
 
 installed=$(pkg_info -q)
+dmesg=$(cat /var/run/dmesg.boot; echo; dmesg)
 
 install=
 update=
@@ -55,15 +60,27 @@ update=
 for driver in $DRIVERS; do
 	if print -r -- "$installed" | grep -q "^${driver}-firmware-"; then
 		update="$update ${driver}-firmware"
-	elif grep -q "^${driver}[0-9][0-9]* at " /var/run/dmesg.boot; then
+	elif print -r -- "$dmesg" | grep -q "^${driver}[0-9][0-9]* at "; then
 		install="$install ${driver}-firmware"
 	fi
 done
 
-[ "$install$update" ] || exit 0
+if [ -z "$install$update" ]; then
+	verbose "No devices found which need firmwares to be downloaded."
+	exit 0
+fi
+
+[ "$nop" ] || [ 0 = $(id -u) ] ||
+	{ echo "${0##*/} must be run as root" >&2; exit 1; }
 
 # Install missing firmwares
-[ "$install" ] && $PKG_ADD $verbose $install
+if [ "$install" ]; then
+	verbose "Installing firmwares:$install."
+	$PKG_ADD $nop $verbose $install
+fi
 
 # Update installed firmwares
-[ "$update" ] && $PKG_ADD $verbose -u $update
+if [ "$update" ]; then
+	verbose "Updating firmwares:$update."
+	$PKG_ADD $nop $verbose -u $update
+fi
