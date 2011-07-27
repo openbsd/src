@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2009/04/17 03:58:54 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2011/07/27 14:53:33 espie Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -23,7 +23,7 @@ ${CDROM}:
 
 .ifdef RELEASEDIR
 install:
-	cp ${CDROM} ${RELEASeDIR}
+	cp ${CDROM} ${RELEASEDIR}
 .endif
 
 clean cleandir:
