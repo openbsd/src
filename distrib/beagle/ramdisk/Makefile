@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2011/07/09 00:42:49 drahn Exp $
+#	$OpenBSD: Makefile,v 1.7 2011/07/27 20:44:53 drahn Exp $
 
 REV=	${OSrev}
 
@@ -38,13 +38,7 @@ all:	${BSD_RD}
 
 ${BSD_RD}: ${CBIN} ${IMAGE} bsd rdsetroot
 	cp bsd ${BSD_RD}
-	awk 'BEGIN { printf("%c", 192); }' < /dev/null | dd of=${BSD_RD} bs=1 count=1 seek=95 conv=notrunc 2>/dev/null;
-	awk 'BEGIN { printf("%c", 192); }' < /dev/null | dd of=${BSD_RD} bs=1 count=1 seek=127 conv=notrunc 2>/dev/null;
-	awk 'BEGIN { printf("%c", 192); }' < /dev/null | dd of=${BSD_RD} bs=1 count=1 seek=159 conv=notrunc 2>/dev/null;
 	${.OBJDIR}/rdsetroot ${BSD_RD} ${IMAGE}
-	dd if=/dev/zero of=${BSD_RD} bs=1 count=1 seek=95 conv=notrunc 2>/dev/null;
-	dd if=/dev/zero of=${BSD_RD} bs=1 count=1 seek=127 conv=notrunc 2>/dev/null;
-	dd if=/dev/zero of=${BSD_RD} bs=1 count=1 seek=159 conv=notrunc 2>/dev/null;
 
 ${IMAGE}: rd_setup do_files rd_teardown
 
