@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.4,v 1.46 2011/03/13 21:26:51 jmc Exp $
+.\"	$OpenBSD: dc.4,v 1.47 2011/07/27 00:50:23 sthen Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/dc.4,v 1.1 1999/12/04 17:41:24 wpaul Exp $
 .\"
-.Dd $Mdocdate: March 13 2011 $
+.Dd $Mdocdate: July 27 2011 $
 .Dt DC 4
 .Os
 .Sh NAME
@@ -44,6 +44,7 @@
 .Cd "amphy* at mii?"
 .Cd "bmtphy* at mii?"
 .Cd "dcphy* at mii?"
+.Cd "icsphy* at mii?"
 .Cd "lxtphy* at mii?"
 .Cd "mtdphy* at mii?"
 .Cd "nsphy* at mii?"
@@ -279,6 +280,7 @@ the card should be configured correctly.
 .Xr bmtphy 4 ,
 .Xr cardbus 4 ,
 .Xr dcphy 4 ,
+.Xr icsphy 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr lxtphy 4 ,
