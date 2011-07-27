@@ -332,6 +332,48 @@
    fe80::/24
    fe80::/16
    fe80::1
+# pass load table <regress> persist file "DIR/pfr.addrs3"
+# pass show 
+   1.1.1.1
+   2.2.2.2
+   3.3.3.3
+	Weight:             6
+   10.0.0.0/8
+   127.0.0.0/24
+   127.0.0.0/8
+   127.0.0.1
+   172.16.0.0/12
+   192.168.0.0/16
+   ::/24
+   ::1
+   ::4
+	Weight:             6
+   ::5
+   2000::1
+   fe80::/24
+   fe80::/16
+   fe80::1
+# pass load table <regress> persist file "DIR/pfr.addrs1" file "DIR/pfr.addrs3"
+# pass show 
+   1.1.1.1
+   2.2.2.2
+   3.3.3.3
+	Weight:             6
+   10.0.0.0/8
+   127.0.0.0/24
+   127.0.0.0/8
+   127.0.0.1
+   172.16.0.0/12
+   192.168.0.0/16
+   ::/24
+   ::1
+   ::4
+	Weight:             6
+   ::5
+   2000::1
+   fe80::/24
+   fe80::/16
+   fe80::1
 # pass load table <regress> persist { !127.0.0.1 } file "DIR/pfr.addrs1"
 # pass show 
    1.1.1.1
@@ -367,10 +409,11 @@
    fe80::/24
    fe80::/16
    fe80::1
-# pass load table <regress> persist { 11/8 } file "DIR/pfr.addrs1" { !12/8 }
+# pass load table <regress> persist { 11/8 } file "DIR/pfr.addrs3" { !12/8 }
 # pass show 
    1.1.1.1
    2.2.2.2
+   3.3.3.3
    10.0.0.0/8
    11.0.0.0/8
   !12.0.0.0/8
@@ -381,6 +424,8 @@
    192.168.0.0/16
    ::/24
    ::1
+   ::4
+	Weight:             6
    ::5
    2000::1
    fe80::/24
@@ -389,7 +434,7 @@
 # kill
 1 tables deleted.
 rules cleared
-ktable: 8 allocated, 8 released, 0 leaked.
-pfrke_plain: 377 allocated, 377 released, 0 leaked.
+ktable: 10 allocated, 10 released, 0 leaked.
+pfrke_plain: 397 allocated, 397 released, 0 leaked.
 pfrke_route: 0 allocated, 0 released, 0 leaked.
-pfrke_cost: 0 allocated, 0 released, 0 leaked.
+pfrke_cost: 16 allocated, 16 released, 0 leaked.

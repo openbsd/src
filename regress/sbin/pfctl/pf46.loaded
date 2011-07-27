@@ -10,7 +10,7 @@
   [ Skip steps: i=end d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@3 pass out on lo0 inet all flags S/SA dup-to 127.0.0.0/24@pflog0
+@3 pass out on lo0 inet all flags S/SA dup-to 127.0.0.0/24@pflog0 random
   [ Skip steps: i=end d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -22,7 +22,7 @@
   [ Skip steps: i=end d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@6 pass in on lo0 inet all flags S/SA dup-to 127.0.0.0/24@pflog0
+@6 pass in on lo0 inet all flags S/SA dup-to 127.0.0.0/24@pflog0 round-robin
   [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
