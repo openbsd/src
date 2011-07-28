@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc_debug.c,v 1.27 2009/04/24 08:13:24 jsg Exp $	*/
+/*	$OpenBSD: kern_malloc_debug.c,v 1.28 2011/07/28 14:07:01 mcbride Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -278,7 +278,7 @@ void
 debug_malloc_print(void)
 {
 
-	debug_malloc_printit(printf, NULL);
+	debug_malloc_printit(printf, 0);
 }
 
 void
