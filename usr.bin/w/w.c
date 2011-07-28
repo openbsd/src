@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.49 2011/04/26 07:29:05 jasper Exp $	*/
+/*	$OpenBSD: w.c,v 1.50 2011/07/28 10:14:00 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -188,7 +188,7 @@ main(int argc, char *argv[])
 		if (!(stp = ttystat(ep->utmp.ut_line)))
 			continue;
 		ep->tdev = stp->st_rdev;
-#ifdef CPU_CONSDEV
+
 		/*
 		 * If this is the console device, attempt to ascertain
 		 * the true console device dev_t.
@@ -197,12 +197,12 @@ main(int argc, char *argv[])
 			int mib[2];
 			size_t size;
 
-			mib[0] = CTL_MACHDEP;
-			mib[1] = CPU_CONSDEV;
+			mib[0] = CTL_KERN;
+			mib[1] = KERN_CONSDEV;
 			size = sizeof(dev_t);
 			(void) sysctl(mib, 2, &ep->tdev, &size, NULL, 0);
 		}
-#endif
+
 		if ((ep->idle = now - stp->st_atime) < 0)
 			ep->idle = 0;
 	}
