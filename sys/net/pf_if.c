@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.62 2011/05/20 22:50:44 sthen Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.63 2011/07/28 11:03:49 henning Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -728,7 +728,7 @@ pfi_skip_if(const char *filter, struct pfi_kif *p)
 		return (1);     /* group names may not end in a digit */
 	if (p->pfik_ifp != NULL)
 		TAILQ_FOREACH(i, &p->pfik_ifp->if_groups, ifgl_next)
-			if (!strncmp(i->ifgl_group->ifg_group, filter, n))
+			if (!strncmp(i->ifgl_group->ifg_group, filter, IFNAMSIZ))
 				return (0);	/* iface is in group "filter" */
 	return (1);
 }
