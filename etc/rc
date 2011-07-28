@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.391 2011/07/20 10:00:13 halex Exp $
+#	$OpenBSD: rc,v 1.392 2011/07/28 19:09:16 halex Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -515,7 +515,7 @@ fi
 if [ -f /etc/rc.firsttime ]; then
 	mv /etc/rc.firsttime /etc/rc.firsttime.run
 	. /etc/rc.firsttime.run 2>&1 | tee /dev/tty |
-		mail -s 'rc.firsttime output' root >/dev/null
+		mail -Es "`hostname` rc.firsttime output" root >/dev/null
 fi
 rm -f /etc/rc.firsttime.run
 
