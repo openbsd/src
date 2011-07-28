@@ -1,4 +1,4 @@
-.\" $OpenBSD: fw_update.1,v 1.5 2011/07/27 15:12:57 halex Exp $
+.\" $OpenBSD: fw_update.1,v 1.6 2011/07/28 13:26:13 jmc Exp $
 .\"
 .\" Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 27 2011 $
+.Dd $Mdocdate: July 28 2011 $
 .Dt FW_UPDATE 1
 .Os
 .Sh NAME
@@ -37,10 +37,12 @@ The options are as follows:
 .It Fl n
 Pass the
 .Fl n
-flag to pkg_add, causing it to not actually install any firmware packages,
+flag to
+.Xr pkg_add 1 ,
+causing it to not actually install any firmware packages,
 just report the steps that would be taken if it was.
 .It Fl v
-Turn on verbose output and passes the
+Turn on verbose output and pass the
 .Fl v
 flag to
 .Xr pkg_add 1 .
