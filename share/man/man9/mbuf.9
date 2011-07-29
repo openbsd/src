@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.53 2011/04/05 11:59:11 blambert Exp $
+.\"     $OpenBSD: mbuf.9,v 1.54 2011/07/29 12:59:28 blambert Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 5 2011 $
+.Dd $Mdocdate: July 29 2011 $
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -55,8 +55,6 @@
 .Fn m_pulldown "struct mbuf *m" "int off" "int len" "int *offp"
 .Ft struct mbuf *
 .Fn m_pullup "struct mbuf *n" "int len"
-.Ft struct mbuf *
-.Fn m_pullup2 "struct mbuf *n" "int len"
 .Ft struct mbuf *
 .Fn m_split "struct mbuf *m0" "int len0" "int wait"
 .Ft struct mbuf *
@@ -470,7 +468,7 @@ and ending at
 .Fa off+len
 will be put in a continuous memory region.
 .Fa len
-must be smaller or equal than MCLBYTES.
+must be smaller than or equal to MCLBYTES.
 The pointer returned points to an mbuf in the chain and the new offset
 for data in this mbuf is
 .Fa *offp .
@@ -482,33 +480,12 @@ Ensure that the data in the mbuf chain starting at the beginning of
 the chain and ending at
 .Fa len
 will be put in continuous memory region.
-To avoid being called again,
-.Fn m_pullup
-will attempt to copy
-.Fa "max_protohdr - len"
-bytes into the first mbuf.
 The
 .Fa len
-argument must be smaller or equal than MHLEN.
+argument must be smaller than or equal to MCLBYTES.
 If this function fails,
 .Fa n
 is freed.
-.It Fn m_pullup2 "struct mbuf *n" "int len"
-Just like
-.Fn m_pullup ,
-ensure that the data starting at the beginning of the mbuf chain and
-ending at
-.Fa len
-will be put in continuous memory region.
-The
-.Fa len
-argument can be up to MCLBYTES.
-.Fn m_pullup2
-will simply call
-.Fn m_pullup
-if
-.Fa len
-is smaller or equal to MHLEN.
 .It Fn m_split "struct mbuf *m0" "int len0" "int wait"
 Split an mbuf chain in two pieces, returning a pointer to
 the tail (which is made of the previous mbuf chain except the first
