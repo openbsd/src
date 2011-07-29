@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.16 2011/07/27 00:26:10 mcbride Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.17 2011/07/29 10:48:35 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -416,7 +416,10 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 			return (1);
 
 		/* iterate over table if it contains entries which are weighted */
-		if (rpool->addr.p.tbl->pfrkt_refcntcost > 0) {
+		if ((rpool->addr.type == PF_ADDR_TABLE &&
+		    rpool->addr.p.tbl->pfrkt_refcntcost > 0) ||
+		    (rpool->addr.type == PF_ADDR_DYNIFTL &&
+		    rpool->addr.p.dyn->pfid_kt->pfrkt_refcntcost > 0)) {
 			do {
 				if (rpool->addr.type == PF_ADDR_TABLE) {
 					if (pfr_pool_get(rpool->addr.p.tbl,
@@ -434,11 +437,15 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 					    &rpool->curweight, af,
 					    pf_islinklocal))
 						return (1);
-				} else if (pf_match_addr(0, raddr, rmask,
-				    &rpool->counter, af))
+				} else {
+					log(LOG_ERR, "pf: pf_map_addr: "
+					    "weighted RR failure");
 					return (1);
+				}
+				if (rpool->weight >= rpool->curweight)
+					break;
 				PF_AINC(&rpool->counter, af);
-			} while (rpool->weight < rpool->curweight);
+			} while (1);
  
 			weight = rpool->weight;
 		}
@@ -554,8 +561,11 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 		if ((rpool->opts & PF_POOL_TYPEMASK) ==
 		    PF_POOL_LEASTSTATES)
 			addlog(" with state count %d", states);
-		if ((rpool->addr.p.tbl->pfrkt_refcntcost > 0) &&
-		    ((rpool->opts & PF_POOL_TYPEMASK) != PF_POOL_LEASTSTATES))
+		if (((rpool->addr.type == PF_ADDR_TABLE &&
+		    rpool->addr.p.tbl->pfrkt_refcntcost > 0) ||
+		    (rpool->addr.type == PF_ADDR_DYNIFTL &&
+		    rpool->addr.p.dyn->pfid_kt->pfrkt_refcntcost > 0)) &&
+		    ((rpool->opts & PF_POOL_TYPEMASK) != PF_POOL_LEASTSTATES)) 
 			addlog(" with weight %u", weight);
 		addlog("\n");
 	}
