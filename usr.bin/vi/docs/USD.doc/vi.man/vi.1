@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.53 2011/05/16 16:41:58 jmc Exp $
+.\"	$OpenBSD: vi.1,v 1.54 2011/07/29 13:24:50 jmc Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.Dd $Mdocdate: May 16 2011 $
+.Dd $Mdocdate: July 29 2011 $
 .Dt VI 1
 .Os
 .Sh NAME
@@ -317,6 +317,48 @@ The above commands work on
 characters and lines,
 i.e. they affect the entire line no matter how many screen lines it takes up
 and the entire character no matter how many screen columns it takes up.
+.Sh REGULAR EXPRESSIONS
+.Nm ex Ns / Ns Nm vi
+supports regular expressions
+.Pq REs ,
+as documented in
+.Xr re_format 7 ,
+for line addresses, as the first part of the
+.Nm ex Cm substitute ,
+.Cm global
+and
+.Cm v
+commands, and in search patterns.
+Basic regular expressions
+.Pq BREs
+are enabled by default;
+extended regular expressions
+.Pq EREs
+are used if the
+.Cm extended
+option is enabled.
+The use of regular expressions can be largely disabled using the
+.Cm magic
+option.
+.Pp
+The following strings have special meanings in the
+.Nm ex Ns / Ns Nm vi
+version of regular expressions:
+.Bl -bullet -offset 6u
+.It
+An empty regular expression is equivalent to the last regular expression used.
+.It
+.Sq \e\(la
+matches the beginning of the word.
+.It
+.Sq \e\(ra
+matches the end of the word.
+.It
+.Sq \(a~
+matches the replacement part of the last
+.Cm substitute
+command.
+.El
 .Sh BUFFERS
 A buffer is an area where commands can save changed or deleted text
 for later use.
@@ -1736,6 +1778,45 @@ commands from a file.
 .Op Ar flags
 .Xc
 Make substitutions.
+The
+.Ar replace
+field may contain any of the following sequences:
+.Bl -tag -width Ds
+.It Sq \*(Am
+The text matched by
+.Ar pattern .
+.It Sq \(a~
+The replacement part of the previous
+.Cm substitute
+command.
+.It Sq %
+If this is the entire
+.Ar replace
+pattern, the replacement part of the previous
+.Cm substitute
+command.
+.It Sq \e\(sh
+Where
+.Sq \(sh
+is an integer from 1 to 9, the text matched by the #'th subexpression in
+.Ar pattern .
+.It Sq \eL
+Causes the characters up to the end of the line of the next occurrence of
+.Sq \eE
+or
+.Sq \ee
+to be converted to lowercase.
+.It Sq \el
+Causes the next character to be converted to lowercase.
+.It Sq \eU
+Causes the characters up to the end of the line of the next occurrence of
+.Sq \eE
+or
+.Sq \ee
+to be converted to uppercase.
+.It Sq \eu
+Causes the next character to be converted to uppercase.
+.El
 .Pp
 .It Xo
 .Cm su Ns Op Cm spend Ns
@@ -2003,7 +2084,14 @@ Display lines in an unambiguous fashion.
 .It Cm lock Bq on
 Attempt to get an exclusive lock on any file being edited, read or written.
 .It Cm magic Bq on
-Treat certain characters specially in regular expressions.
+When turned off, all regular expression characters except for
+.Sq \(ha
+and
+.Sq \(Do
+are treated as ordinary characters.
+Preceding individual characters by
+.Sq \e
+re-enables them.
 .It Cm matchtime Bq 7
 .Nm vi
 only.
