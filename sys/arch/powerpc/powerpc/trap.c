@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.87 2011/07/11 15:40:47 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.88 2011/07/30 20:50:47 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -560,7 +560,7 @@ syscall_bad:
 		else {
 			sv.sival_int = frame->srr0;
 			KERNEL_LOCK();
-			trapsignal(p, SIGSEGV, VM_PROT_EXECUTE, SEGV_MAPERR,
+			trapsignal(p, SIGBUS, VM_PROT_EXECUTE, BUS_ADRALN,
 				sv);
 			KERNEL_UNLOCK();
 		}
