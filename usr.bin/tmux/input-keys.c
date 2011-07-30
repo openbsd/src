@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.22 2011/04/19 21:31:33 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.23 2011/07/30 18:01:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -204,6 +204,7 @@ input_mouse(struct window_pane *wp, struct mouse_event *m)
 {
 	char	buf[10];
 	size_t	len;
+	int	value;
 
 	if (wp->screen->mode & ALL_MOUSE_MODES) {
 		if (wp->screen->mode & MODE_MOUSE_UTF8) {
@@ -221,7 +222,8 @@ input_mouse(struct window_pane *wp, struct mouse_event *m)
 		}
 		bufferevent_write(wp->event, buf, len);
 	} else if ((m->b & MOUSE_BUTTON) != MOUSE_2) {
-		if (options_get_number(&wp->window->options, "mode-mouse") &&
+		value = options_get_number(&wp->window->options, "mode-mouse");
+		if (value == 1 &&
 		    window_pane_set_mode(wp, &window_copy_mode) == 0) {
 			window_copy_init_from_pane(wp);
 			if (wp->mode->mouse != NULL)
