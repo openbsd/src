@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.67 2011/07/05 05:37:07 deraadt Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.68 2011/07/30 10:26:03 jsing Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -489,10 +489,10 @@ spec_close(void *v)
 		 * if the reference count is 2 (this last descriptor
 		 * plus the session), release the reference from the session.
 		 */
-		if (vcount(vp) == 2 && ap->a_p &&
-		    vp == ap->a_p->p_p->ps_session->s_ttyvp) {
+		if (vcount(vp) == 2 && ap->a_p && ap->a_p->p_p->ps_pgrp &&
+		    vp == ap->a_p->p_p->ps_pgrp->pg_session->s_ttyvp) {
 			vrele(vp);
-			ap->a_p->p_p->ps_session->s_ttyvp = NULL;
+			ap->a_p->p_p->ps_pgrp->pg_session->s_ttyvp = NULL;
 		}
 		if (cdevsw[major(dev)].d_flags & D_CLONE)
 			return (spec_close_clone(ap));
