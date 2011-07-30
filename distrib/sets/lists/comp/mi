@@ -6673,7 +6673,6 @@
 ./usr/share/man/man9/m_prepend.9
 ./usr/share/man/man9/m_pulldown.9
 ./usr/share/man/man9/m_pullup.9
-./usr/share/man/man9/m_pullup2.9
 ./usr/share/man/man9/m_reclaim.9
 ./usr/share/man/man9/m_split.9
 ./usr/share/man/man9/m_tag_copy.9
