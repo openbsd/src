@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.74 2011/07/24 02:52:56 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.75 2011/07/31 17:12:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 24 2011 $
+.Dd $Mdocdate: July 31 2011 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1824,16 +1824,20 @@ See also
 .Sx \&Dv
 for general constants.
 .Ss \&Ex
-Insert a standard sentence regarding exit values.
+Insert a standard sentence regarding command exit values of 0 on success
+and >0 on failure.
 Its syntax is as follows:
 .Pp
-.D1 Pf \. Sx \&Ex Fl std Op Ar utility
+.D1 Pf \. Sx \&Ex Fl std Op Ar utility ...
 .Pp
-When
+If
 .Ar utility
 is not specified, the document's name set by
 .Sx \&Nm
 is used.
+Multiple
+.Ar utility
+arguments are treated as separate utilities.
 .Pp
 See also
 .Sx \&Rv .
@@ -2465,16 +2469,22 @@ block is used within a SEE ALSO section, a vertical space is asserted
 before the rendered output, else the block continues on the current
 line.
 .Ss \&Rv
-Inserts text regarding a function call's return value.
-This macro must consist of the
-.Fl std
-argument followed by an optional
-.Ar function .
+Insert a standard sentence regarding a function call's return value of 0
+on success and \-1 on error, with the
+.Va errno
+libc global variable set on error.
+Its syntax is as follows:
+.Pp
+.D1 Pf \. Sx \&Rv Fl std Op Ar function ...
+.Pp
 If
 .Ar function
-is not provided, the document's name as stipulated by the first
+is not specified, the document's name set by
 .Sx \&Nm
-is provided.
+is used.
+Multiple
+.Ar function
+arguments are treated as separate functions.
 .Pp
 See also
 .Sx \&Ex .
