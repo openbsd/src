@@ -98,7 +98,6 @@
 ./etc/rbootd.conf
 ./etc/rc
 ./etc/rc.conf
-./etc/rc.d
 ./etc/rc.d/amd
 ./etc/rc.d/apmd
 ./etc/rc.d/aucat
@@ -181,13 +180,11 @@
 ./etc/skel/.login
 ./etc/skel/.mailrc
 ./etc/skel/.profile
-./etc/skel/.ssh
 ./etc/skel/.ssh/authorized_keys
 ./etc/sliphome/slip.hosts
 ./etc/sliphome/slip.login
 ./etc/snmpd.conf
 ./etc/spwd.db
-./etc/ssh
 ./etc/ssh/ssh_config
 ./etc/ssh/sshd_config
 ./etc/ssl/openssl.cnf
@@ -232,7 +229,6 @@
 ./var/named/etc/root.hint
 ./var/named/master
 ./var/named/slave
-./var/named/standard
 ./var/named/standard/localhost
 ./var/named/standard/loopback
 ./var/named/standard/loopback6.arpa
@@ -246,7 +242,6 @@
 ./var/www/conf/magic
 ./var/www/conf/mime.types
 ./var/www/htdocs/apache_pb.gif
-./var/www/htdocs/bgplg
 ./var/www/htdocs/bgplg/index.html
 ./var/www/htdocs/bgplg/openbgpd.gif
 ./var/www/htdocs/blowfish.jpg

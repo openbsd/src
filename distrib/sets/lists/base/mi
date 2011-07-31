@@ -88,8 +88,11 @@
 ./etc/ppp/ppp.linkdown.sample
 ./etc/ppp/ppp.linkup.sample
 ./etc/ppp/ppp.secret.sample
+./etc/rc.d
 ./etc/skel
+./etc/skel/.ssh
 ./etc/sliphome
+./etc/ssh
 ./etc/ssl
 ./etc/ssl/cert.pem
 ./etc/ssl/lib
@@ -5113,6 +5116,7 @@
 ./var/named
 ./var/named/dev
 ./var/named/etc
+./var/named/standard
 ./var/named/tmp
 ./var/nsd
 ./var/nsd/db
@@ -5150,6 +5154,7 @@
 ./var/www/conf/modules.sample
 ./var/www/dev
 ./var/www/htdocs
+./var/www/htdocs/bgplg
 ./var/www/icons
 ./var/www/icons/small
 ./var/www/logs
