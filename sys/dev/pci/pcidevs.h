@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1616 2011/06/22 08:34:05 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1617 2011/07/31 15:31:22 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4886,7 +4886,7 @@
 #define	PCI_PRODUCT_RICOH_R5C852	0x0852		/* 5C852 xD */
 #define	PCI_PRODUCT_RICOH_R5U230	0xe230		/* 5U230 Memory Stick */
 #define	PCI_PRODUCT_RICOH_R5U822	0xe822		/* 5U822 SD/MMC */
-#define	PCI_PRODUCT_RICOH_RSU823	0xe823		/* 5U823 SD/MMC */
+#define	PCI_PRODUCT_RICOH_R5U823	0xe823		/* 5U823 SD/MMC */
 #define	PCI_PRODUCT_RICOH_R5U832	0xe832		/* 5U832 Firewire */
 #define	PCI_PRODUCT_RICOH_R5U852	0xe852		/* 5U852 SD/MMC */
 

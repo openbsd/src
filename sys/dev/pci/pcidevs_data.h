@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1616 2011/06/22 08:34:05 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1617 2011/07/31 15:31:22 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -16432,7 +16432,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "5U822 SD/MMC",
 	},
 	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RSU823,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_R5U823,
 	    "5U823 SD/MMC",
 	},
 	{
