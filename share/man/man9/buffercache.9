@@ -1,4 +1,4 @@
-.\"	$OpenBSD: buffercache.9,v 1.7 2008/07/24 14:19:24 jmc Exp $
+.\"	$OpenBSD: buffercache.9,v 1.8 2011/07/31 08:50:40 shadchin Exp $
 .\"     $NetBSD: buffercache.9,v 1.13 2004/06/25 15:31:37 wiz Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
@@ -102,7 +102,7 @@
 .\"
 .\"
 .\" ------------------------------------------------------------
-.Dd $Mdocdate: July 24 2008 $
+.Dd $Mdocdate: July 31 2011 $
 .Dt BUFFERCACHE 9
 .Os
 .Sh NAME
@@ -125,11 +125,11 @@
 .In sys/buf.h
 .Ft int
 .Fn bread "struct vnode *vp" "daddr64_t blkno" "int size" \
-"struct ucred *cred" "struct buf **bpp"
+"struct buf **bpp"
 .Ft int
 .Fn breadn "struct vnode *vp" "daddr64_t blkno" "int size" \
 "daddr64_t rablks[]" "int rasizes[]" "int nrablks" \
-"struct ucred *cred" "struct buf **bpp"
+"struct buf **bpp"
 .Ft int
 .Fn bwrite "struct buf *bp"
 .Ft void
@@ -171,7 +171,7 @@ the disk driver interface.
 .\" ------------------------------------------------------------
 .Sh FUNCTIONS
 .Bl -tag -width compact
-.It Fn bread "vp" "blkno" "size" "cred" "bpp"
+.It Fn bread "vp" "blkno" "size" "bpp"
 Read a block corresponding to
 .Fa vp
 and
@@ -210,7 +210,6 @@ Otherwise, it should be unbusied using
 .Fa "rablks"
 .Fa "rasizes"
 .Fa "nrablks"
-.Fa "cred"
 .Fa "bpp"
 .Fc
 .Xc
@@ -370,9 +369,3 @@ The buffer cache subsystem is implemented within the file
 .%I Addison Wesley
 .%D 1989
 .Re
-.\" ------------------------------------------------------------
-.Sh BUGS
-In the current implementation,
-.Fn bread
-and its variants
-don't use a specified credential.
