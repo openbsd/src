@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkdep.1,v 1.8 2007/08/06 19:16:06 sobrado Exp $
+.\"	$OpenBSD: mkdep.1,v 1.9 2011/07/31 11:17:43 schwarze Exp $
 .\"	$NetBSD: mkdep.1,v 1.3 1994/12/23 07:34:56 jtc Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mkdep.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: August 6 2007 $
+.Dd $Mdocdate: July 31 2011 $
 .Dt MKDEP 1
 .Os
 .Sh NAME
@@ -47,7 +47,9 @@
 takes a set of flags for the C compiler and a list
 of C source files as arguments and constructs a set of include
 file dependencies which are written into the file
-.Pa .depend .
+.Pa .depend ,
+for use by
+.Xr make 1 .
 An example of its use in a Makefile might be:
 .Bd -literal -offset indent
 CFLAGS= -O -I../include
