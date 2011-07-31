@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.43 2011/07/23 22:41:44 sthen Exp $
+#	$OpenBSD: rc.subr,v 1.44 2011/07/31 20:18:45 robert Exp $
 #
 # Copyright (c) 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -20,7 +20,7 @@
 # Default functions and variables used by rc.d(8) scripts.
 
 rc_err() {
-	echo $1
+	echo $1 1>&2
 	exit 1
 }
 
