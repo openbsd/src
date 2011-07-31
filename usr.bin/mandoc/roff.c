@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.39 2011/07/07 20:07:38 schwarze Exp $ */
+/*	$Id: roff.c,v 1.40 2011/07/31 14:11:48 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -1343,6 +1343,12 @@ roff_setstr(struct roff *r, const char *name, const char *string,
 	struct roffstr	 *n;
 	char		 *c;
 	size_t		  oldch, newch;
+
+	/* XXX workaround for the Perl preamble until we get .tr */
+	if ( ! strcmp(name, "--")) {
+		string = "--";
+		multiline = 0;
+	}
 
 	/* Search for an existing string with the same name. */
 	n = r->first_string;
