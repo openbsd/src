@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.44 2011/07/31 20:18:45 robert Exp $
+#	$OpenBSD: rc.subr,v 1.45 2011/07/31 20:22:34 robert Exp $
 #
 # Copyright (c) 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -59,7 +59,7 @@ rc_wait() {
 	[ -n "$2" ] && w=$2 || w=30
 	while [ $i -lt $w ]; do
 		case "$1" in
-			start)
+			reload|start)
 				rc_do rc_check && return 0
 				;;
 			stop)
@@ -123,7 +123,7 @@ rc_cmd() {
 		rc_do rc_check || exit 0
 		echo $_n "${INRC:+ }${_name}"
 		rc_do rc_reload || rc_exit failed
-		rc_do rc_check || rc_exit failed
+		rc_do rc_wait reload || rc_exit failed
 		rc_exit ok
 		;;
 	restart)
