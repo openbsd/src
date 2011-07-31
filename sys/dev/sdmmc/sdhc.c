@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.33 2010/09/07 16:21:46 deraadt Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.34 2011/07/31 16:55:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -129,11 +129,10 @@ struct cfdriver sdhc_cd = {
  */
 int
 sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
-    bus_space_handle_t ioh, bus_size_t iosize, int usedma)
+    bus_space_handle_t ioh, bus_size_t iosize, int usedma, u_int32_t caps)
 {
 	struct sdmmcbus_attach_args saa;
 	struct sdhc_host *hp;
-	u_int32_t caps;
 	int error = 1;
 #ifdef SDHC_DEBUG
 	u_int16_t version;
@@ -167,7 +166,8 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	(void)sdhc_host_reset(hp);
 
 	/* Determine host capabilities. */
-	caps = HREAD4(hp, SDHC_CAPABILITIES);
+	if (caps == 0)
+		caps = HREAD4(hp, SDHC_CAPABILITIES);
 
 	/* Use DMA if the host system and the controller support it. */
 	if (usedma && ISSET(caps, SDHC_DMA_SUPPORT))

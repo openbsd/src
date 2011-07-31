@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_pci.c,v 1.10 2010/09/07 16:21:46 deraadt Exp $	*/
+/*	$OpenBSD: sdhc_pci.c,v 1.11 2011/07/31 16:55:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -62,6 +62,10 @@ sdhc_pci_match(struct device *parent, void *match, void *aux)
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_SYSTEM_SDHC)
 		return 1;
 
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_RICOH &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RICOH_R5U823)
+		return 1;
+
 	return 0;
 }
 
@@ -79,6 +83,7 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_size_t size;
+	u_int32_t caps = 0;
 
 	/* Some TI controllers needs special treatment. */
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_TI &&
@@ -86,10 +91,18 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
             pa->pa_function == 4)
 		sdhc_takecontroller(pa);
 
-	/* ENE controllers break if set to 0V bus power */
+	/* ENE controllers break if set to 0V bus power. */
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ENE &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ENE_SDCARD)
 		sc->sc.sc_flags |= SDHC_F_NOPWR0;
+
+	/* Some RICOH controllers lack a capability register. */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_RICOH &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RICOH_R5U823)
+		caps = (0x21 << SDHC_BASE_FREQ_SHIFT) |
+			(0x21 << SDHC_TIMEOUT_FREQ_SHIFT) |
+			SDHC_TIMEOUT_FREQ_UNIT | SDHC_VOLTAGE_SUPP_3_3V |
+			SDHC_DMA_SUPPORT;
 
 	if (pci_intr_map(pa, &ih)) {
 		printf(": can't map interrupt\n");
@@ -136,7 +149,7 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 			continue;
 		}
 
-		if (sdhc_host_found(&sc->sc, iot, ioh, size, usedma) != 0)
+		if (sdhc_host_found(&sc->sc, iot, ioh, size, usedma, caps) != 0)
 			/* XXX: sc->sc_host leak */
 			printf("%s at 0x%x: can't initialize host\n",
 			    sc->sc.sc_dev.dv_xname, reg);
