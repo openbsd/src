@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.27 2009/06/04 23:39:37 kjell Exp $	*/
+/*	$OpenBSD: window.c,v 1.28 2011/08/01 12:15:23 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -121,7 +121,7 @@ nextwind(int f, int n)
 	return (TRUE);
 }
 
-/* not in Gnu Emacs */
+/* not in GNU Emacs */
 /*
  * This command makes the previous window (previous => up the screen) the
  * current window. There are no errors, although the command does not do

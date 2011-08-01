@@ -66,7 +66,7 @@ bytes.
 New implementation oddities:
 
 insert and define-key are new commands corresponding to the mocklisp
-functions in Gnu Emacs.	 (Mg does not have non-command functions.)
+functions in GNU Emacs.	 (Mg does not have non-command functions.)
 (Mg's insert will only insert one string.)
 
 The display wrap code does not work at all like that of GNU emacs.
