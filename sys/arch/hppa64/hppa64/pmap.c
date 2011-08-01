@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.19 2011/07/07 22:50:42 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.20 2011/08/01 22:21:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -117,6 +117,8 @@ struct pv_entry *pmap_pv_remove(struct vm_page *pg, struct pmap *pmap,
 		    vaddr_t va);
 void		 pmap_maphys(paddr_t spa, paddr_t epa);
 
+#define	IS_IOPAGE(pa)	((pa) >= (HPPA_IOBEGIN & HPPA_PHYSMAP))
+
 struct vm_page *
 pmap_pagealloc(int wait)
 {
@@ -213,12 +215,15 @@ pmap_pde_ptp(struct pmap *pm, volatile pt_entry_t *pde)
 static __inline void
 pmap_pde_release(struct pmap *pmap, vaddr_t va, struct vm_page *ptp)
 {
+	paddr_t pa;
+
 	DPRINTF(PDB_FOLLOW|PDB_PV,
 	    ("pmap_pde_release(%p, 0x%lx, %p)\n", pmap, va, ptp));
 
 	if (pmap != pmap_kernel() && --ptp->wire_count <= 1) {
 		DPRINTF(PDB_FOLLOW|PDB_PV,
 		    ("pmap_pde_release: disposing ptp %p\n", ptp));
+
 		pmap_pde_set(pmap, va, 0);
 		pmap->pm_stats.resident_count--;
 		if (pmap->pm_ptphint == ptp)
@@ -228,8 +233,9 @@ pmap_pde_release(struct pmap *pmap, vaddr_t va, struct vm_page *ptp)
 		if (ptp->pg_flags & PG_BUSY)
 			panic("pmap_pde_release: busy page table page");
 #endif
-		pdcache(HPPA_SID_KERNEL, (vaddr_t)ptp, PAGE_SIZE);
-		pdtlb(HPPA_SID_KERNEL, (vaddr_t)ptp);
+		pa = VM_PAGE_TO_PHYS(ptp);
+		pdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
+		pdtlb(HPPA_SID_KERNEL, pa);
 		uvm_pagefree(ptp);
 	}
 }
@@ -323,7 +329,6 @@ pmap_dump_pv(paddr_t pa)
 }
 #endif
 
-#ifdef PMAPDEBUG
 int
 pmap_check_alias(struct pv_entry *pve, vaddr_t va, pt_entry_t pte)
 {
@@ -334,16 +339,17 @@ pmap_check_alias(struct pv_entry *pve, vaddr_t va, pt_entry_t pte)
 		pte |= pmap_vp_find(pve->pv_pmap, pve->pv_va);
 		if ((va & HPPA_PGAOFF) != (pve->pv_va & HPPA_PGAOFF) &&
 		    (pte & PTE_WRITE)) {
+#ifdef PMAPDEBUG
 			printf("pmap_check_alias: "
 			    "aliased writable mapping 0x%x:0x%lx\n",
 			    pve->pv_pmap->pm_space, pve->pv_va);
 			ret++;
+#endif
 		}
 	}
 
 	return (ret);
 }
-#endif
 
 static __inline struct pv_entry *
 pmap_pv_alloc(void)
@@ -764,7 +770,6 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			pmap->pm_stats.wired_count++;
 		else if (!wired && (pte & PTE_WIRED))
 			pmap->pm_stats.wired_count--;
-		pte &= PTE_UNCACHABLE|PTE_DIRTY|PTE_REFTRAP;
 
 		if (PTE_PAGE(pte) == pa) {
 			DPRINTF(PDB_FOLLOW|PDB_ENTER,
@@ -773,9 +778,12 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		}
 
 		pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte));
-		simple_lock(&pg->mdpage.pvh_lock);
-		pve = pmap_pv_remove(pg, pmap, va);
-		pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
+		if (pg != NULL) {
+			simple_lock(&pg->mdpage.pvh_lock);
+			pve = pmap_pv_remove(pg, pmap, va);
+			pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
+			simple_unlock(&pg->mdpage.pvh_lock);
+		}
 	} else {
 		DPRINTF(PDB_ENTER,
 		    ("pmap_enter: new mapping 0x%lx -> 0x%lx\n", va, pa));
@@ -786,7 +794,6 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			pmap->pm_stats.wired_count++;
 		if (ptp)
 			ptp->wire_count++;
-		simple_lock(&pg->mdpage.pvh_lock);
 	}
 
 	if (pmap_initialized && (pg = PHYS_TO_VM_PAGE(pa))) {
@@ -798,14 +805,21 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			}
 			panic("pmap_enter: no pv entries available");
 		}
+		pte |= pmap_prot(pmap, prot);
+		simple_lock(&pg->mdpage.pvh_lock);
+		if (pmap_check_alias(pg->mdpage.pvh_list, va, pte))
+			pmap_page_remove(pg);
 		pmap_pv_enter(pg, pve, pmap, va, ptp);
+		simple_unlock(&pg->mdpage.pvh_lock);
 	} else if (pve)
 		pmap_pv_free(pve);
-	simple_unlock(&pg->mdpage.pvh_lock);
 
 enter:
 	/* preserve old ref & mod */
-	pte = TLB_PAGE(pa) | pmap_prot(pmap, prot);
+	pte = TLB_PAGE(pa) | pmap_prot(pmap, prot) |
+	    (pte & (PTE_UNCACHABLE|PTE_DIRTY|PTE_REFTRAP));
+	if (IS_IOPAGE(pa))
+		pte |= PTE_UNCACHABLE | PTE_ORDER;
 	if (wired)
 		pte |= PTE_WIRED;
 	pmap_pte_set(pde, va, pte);
@@ -823,7 +837,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	struct pv_entry *pve;
 	volatile pt_entry_t *pde;
 	pt_entry_t pte;
-	struct vm_page *pg;
+	struct vm_page *pg, *ptp;
 	vaddr_t pdemask;
 	int batch;
 
@@ -832,14 +846,17 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 
 	simple_lock(&pmap->pm_lock);
 
-	for (batch = 0, pdemask = 1; sva < eva; sva += PAGE_SIZE) {
-		if (pdemask != (sva & PDE_MASK)) {
-			pdemask = sva & PDE_MASK;
-			if (!(pde = pmap_pde_get(pmap->pm_pdir, sva))) {
-				sva += ~PDE_MASK + 1 - PAGE_SIZE;
-				continue;
-			}
-			batch = pdemask == sva && sva + ~PDE_MASK + 1 <= eva;
+	for (batch = 0; sva < eva; sva += PAGE_SIZE) {
+		pdemask = sva & PDE_MASK;
+		if (!(pde = pmap_pde_get(pmap->pm_pdir, sva))) {
+			sva = pdemask + (~PDE_MASK + 1) - PAGE_SIZE;
+			continue;
+		}
+		if (pdemask == sva) {
+			if (sva + (~PDE_MASK + 1) <= eva)
+				batch = 1;
+			else
+				batch = 0;
 		}
 
 		if ((pte = pmap_pte_get(pde, sva))) {
@@ -865,6 +882,12 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 				if ((pve = pmap_pv_remove(pg, pmap, sva)))
 					pmap_pv_free(pve);
 				simple_unlock(&pg->mdpage.pvh_lock);
+			} else {
+				if (IS_IOPAGE(PTE_PAGE(pte))) {
+					ptp = pmap_pde_ptp(pmap, pde);
+					if (ptp != NULL)
+						pmap_pde_release(pmap, sva, ptp);
+				}
 			}
 		}
 	}
@@ -894,7 +917,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		if (pdemask != (sva & PDE_MASK)) {
 			pdemask = sva & PDE_MASK;
 			if (!(pde = pmap_pde_get(pmap->pm_pdir, sva))) {
-				sva += ~PDE_MASK + 1 - PAGE_SIZE;
+				sva = pdemask + (~PDE_MASK + 1) - PAGE_SIZE;
 				continue;
 			}
 		}
@@ -911,9 +934,11 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 				continue;
 
 			pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte));
-			simple_lock(&pg->mdpage.pvh_lock);
-			pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
-			simple_unlock(&pg->mdpage.pvh_lock);
+			if (pg != NULL) {
+				simple_lock(&pg->mdpage.pvh_lock);
+				pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
+				simple_unlock(&pg->mdpage.pvh_lock);
+			}
 
 			pmap_pte_flush(pmap, sva, pte);
 			pte &= ~PTE_ACC_MASK;
@@ -1110,7 +1135,7 @@ pmap_flush_page(struct vm_page *pg, int purge)
 		ficache(pve->pv_pmap->pm_space, pve->pv_va, PAGE_SIZE);
 		pdtlb(pve->pv_pmap->pm_space, pve->pv_va);
 		pitlb(pve->pv_pmap->pm_space, pve->pv_va);
-}
+	}
 	simple_unlock(&pg->mdpage.pvh_lock);
 }
 
@@ -1160,15 +1185,13 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	opte = pmap_pte_get(pde, va);
 	pte = TLB_PAGE(pa) | PTE_WIRED | PTE_REFTRAP |
 	    pmap_prot(pmap_kernel(), prot);
-	if (pa >= 0xf0000000ULL /* TODO (HPPA_IOBEGIN & HPPA_PHYSMAP) */)
+	if (IS_IOPAGE(pa))
 		pte |= PTE_UNCACHABLE | PTE_ORDER;
-	DPRINTF(PDB_ENTER, ("pmap_kenter_pa: pde %p va %lx pte %lx\n",
-	    pde, va, pte));
+	if (opte)
+		pmap_pte_flush(pmap_kernel(), va, opte);
 	pmap_pte_set(pde, va, pte);
 	pmap_kernel()->pm_stats.wired_count++;
 	pmap_kernel()->pm_stats.resident_count++;
-	if (opte)
-		pmap_pte_flush(pmap_kernel(), va, opte);
 
 #ifdef PMAPDEBUG
 	{
@@ -1212,7 +1235,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 		if (pdemask != (va & PDE_MASK)) {
 			pdemask = va & PDE_MASK;
 			if (!(pde = pmap_pde_get(pmap_kernel()->pm_pdir, va))) {
-				va += ~PDE_MASK + 1 - PAGE_SIZE;
+				va = pdemask + (~PDE_MASK + 1) - PAGE_SIZE;
 				continue;
 			}
 		}
