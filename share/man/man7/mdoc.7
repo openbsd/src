@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.75 2011/07/31 17:12:29 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.76 2011/08/01 07:45:08 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 31 2011 $
+.Dd $Mdocdate: August 1 2011 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -179,14 +179,37 @@ trailing spaces are stripped from input (unless in a literal context).
 Blank text lines, which may include whitespace, are only permitted
 within literal contexts.
 .Pp
+In general, trailing whitespace on input lines is discouraged
+for reasons of clarity and portability.
+In the rare case that a blank character is needed at the end of an
+input line, it may be forced by
+.Sq \e\ \e& .
+.Pp
 In macro lines, whitespace delimits arguments and is discarded.
-If arguments are quoted, whitespace within the quotes is retained.
 .Ss Quotation
-Macro arguments may be quoted with double-quotes to group
-space-delimited terms or to retain blocks of whitespace.
+Macro arguments may be quoted with double-quotes; in this case,
+whitespace within the quotes is retained as part of the argument.
+For example,
+.Pp
+.D1 Pf \. \&Fn strlen "\(dqconst char *s\(dq"
+.Pp
+renders as
+.Sq Fn strlen "const char *s" ,
+while
+.Pp
+.D1 Pf \. \&Fn strlen "const char *s"
+.Pp
+would produce
+.Sq Fn strlen const char *s .
+.Pp
 A quoted argument begins with a double-quote preceded by whitespace.
 The next double-quote not pairwise adjacent to another double-quote
 terminates the literal, regardless of surrounding whitespace.
+.Pp
+In unquoted arguments, space characters can alternatively be included
+by preceding them with a backslash
+.Pq Sq \e\~ ,
+but quoting is usually better for clarity.
 .Pp
 Note that any quoted text, even if it would cause a macro invocation
 when unquoted, is considered literal text.
@@ -305,7 +328,7 @@ file for a utility
 \&.Os
 \&.Sh NAME
 \&.Nm progname
-\&.Nd a description goes here
+\&.Nd one line about what it does
 \&.\e\*q .Sh LIBRARY
 \&.\e\*q For sections 2, 3, & 9 only.
 \&.\e\*q Not used in OpenBSD.
@@ -601,6 +624,17 @@ The
 .Em Callable
 column indicates that the macro may also be called by passing its name
 as an argument to another macro.
+For example,
+.Sq \&.Op \&Fl O \&Ar file
+produces
+.Sq Op Fl O Ar file .
+To prevent a macro call and render the macro name literally,
+escape it by prepending a non-breaking space,
+.Sq \e& .
+For example,
+.Sq \&Op \e&Fl O
+produces
+.Sq Op \&Fl O .
 If a macro is not callable but its name appears as an argument
 to another macro, it is interpreted as opaque text.
 For example,
