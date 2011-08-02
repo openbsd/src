@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.324 2011/07/07 23:41:09 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.325 2011/08/02 00:53:48 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -291,10 +291,10 @@ wskbd*		at pckbd? mux 1
 wsmouse*	at pms? mux 0
 
 intagp*		at vga?		# intel integrated graphics
-mmuagp*		at pchb?	# amd64 mmu agp.
+#mmuagp*	at pchb?	# amd64 mmu agp.
 
 agp*		at intagp?
-agp*		at mmuagp?
+#agp*		at mmuagp?
 
 #option		DRM_DEBUG
 inteldrm*	at vga? 	# Intel i915, i945 DRM driver
