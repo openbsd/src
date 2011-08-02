@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $OpenBSD: fw_update.sh,v 1.7 2011/07/27 15:12:57 halex Exp $
+# $OpenBSD: fw_update.sh,v 1.8 2011/08/02 15:52:26 deraadt Exp $
 # Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -66,21 +66,21 @@ for driver in $DRIVERS; do
 done
 
 if [ -z "$install$update" ]; then
-	verbose "No devices found which need firmwares to be downloaded."
+	verbose "No devices found which need firmware files to be downloaded."
 	exit 0
 fi
 
 [ "$nop" ] || [ 0 = $(id -u) ] ||
 	{ echo "${0##*/} must be run as root" >&2; exit 1; }
 
-# Install missing firmwares
+# Install missing firmware
 if [ "$install" ]; then
-	verbose "Installing firmwares:$install."
+	verbose "Installing firmware files:$install."
 	$PKG_ADD $nop $verbose $install
 fi
 
-# Update installed firmwares
+# Update installed firmware
 if [ "$update" ]; then
-	verbose "Updating firmwares:$update."
+	verbose "Updating firmware files:$update."
 	$PKG_ADD $nop $verbose -u $update
 fi
