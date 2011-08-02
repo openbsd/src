@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.76 2011/08/01 07:45:08 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.77 2011/08/02 00:52:34 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 1 2011 $
+.Dd $Mdocdate: August 2 2011 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -65,43 +65,6 @@ A macro line with only a control character and comment escape,
 is also ignored.
 Macro lines with only a control character and optional whitespace are
 stripped from input.
-.Ss Reserved Characters
-Within a macro line, the following characters are reserved:
-.Pp
-.Bl -tag -width Ds -offset indent -compact
-.It \&.
-.Pq period
-.It \e.
-.Pq escaped period
-.It \&,
-.Pq comma
-.It \&:
-.Pq colon
-.It \&;
-.Pq semicolon
-.It \&(
-.Pq left-parenthesis
-.It \&)
-.Pq right-parenthesis
-.It \&[
-.Pq left-bracket
-.It \&]
-.Pq right-bracket
-.It \&?
-.Pq question
-.It \&!
-.Pq exclamation
-.It \&|
-.Pq vertical bar
-.It \e*(Ba
-.Pq reserved-word vertical bar
-.El
-.Pp
-For general use in macro lines, these characters can either be escaped
-with a non-breaking space
-.Pq Sq \e&
-or, if applicable, an appropriate escape sequence can be used.
-In text lines, these may be used as normal punctuation.
 .Ss Special Characters
 Special characters may occur in both macro and text lines.
 Sequences begin with the escape character
@@ -629,7 +592,7 @@ For example,
 produces
 .Sq Op Fl O Ar file .
 To prevent a macro call and render the macro name literally,
-escape it by prepending a non-breaking space,
+escape it by prepending a zero-width space,
 .Sq \e& .
 For example,
 .Sq \&Op \e&Fl O
@@ -763,9 +726,8 @@ and/or tail
 .It Sx \&Xo  Ta    Yes      Ta    Yes      Ta    closed by Sx \&Xc
 .El
 .Ss Block partial-implicit
-Like block full-implicit, but with single-line scope closed by
-.Sx Reserved Characters
-or end of line.
+Like block full-implicit, but with single-line scope closed by the
+end of the line.
 .Bd -literal -offset indent
 \&.Yo \(lB\-arg \(lBval...\(rB\(rB \(lBbody...\(rB \(lBres...\(rB
 .Ed
@@ -811,9 +773,8 @@ these blocks have bodies, but no heads.
 .It Sx \&Ta  Ta    Yes      Ta    Yes    Ta closed by Sx \&Ta , Sx \&It
 .El
 .Ss In-line
-Closed by
-.Sx Reserved Characters ,
-end of line, fixed argument lengths, and/or subsequent macros.
+Closed by the end of the line, fixed argument lengths,
+and/or subsequent macros.
 In-line macros have only text children.
 If a number (or inequality) of arguments is
 .Pq n ,
@@ -903,6 +864,90 @@ then the macro accepts an arbitrary number of arguments.
 .It Sx \&br  Ta    \&No     Ta    \&No     Ta    0
 .It Sx \&sp  Ta    \&No     Ta    \&No     Ta    1
 .El
+.Ss Delimiters
+When a macro argument consists of one single input character
+considered as a delimiter, the argument gets special handling.
+This does not apply when delimiters appear in arguments containing
+more than one character.
+Consequently, to prevent special handling and just handle it
+like any other argument, a delimiter can be escaped by prepending
+a zero-width space
+.Pq Sq \e& .
+In text lines, delimiters never need escaping, but may be used
+as normal punctuation.
+.Pp
+For many macros, when the leading arguments are opening delimiters,
+these delimiters are put before the macro scope,
+and when the trailing arguments are closing delimiters,
+these delimiters are put after the macro scope.
+For example,
+.Pp
+.D1 Pf \. \&Aq "( [ word ] ) ."
+.Pp
+renders as:
+.Pp
+.D1 Aq ( [ word ] ) .
+.Pp
+Opening delimiters are:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It \&(
+left parenthesis
+.It \&[
+left bracket
+.El
+.Pp
+Closing delimiters are:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It \&.
+period
+.It \&,
+comma
+.It \&:
+colon
+.It \&;
+semicolon
+.It \&)
+right parenthesis
+.It \&]
+right bracket
+.It \&?
+question mark
+.It \&!
+exclamation mark
+.El
+.Pp
+Note that even a period preceded by a backslash
+.Pq Sq \e.\&
+gets this special handling; use
+.Sq \e&.
+to prevent that.
+.Pp
+Many in-line macros interrupt their scope when they encounter
+delimiters, and resume their scope when more arguments follow that
+are not delimiters.
+For example,
+.Pp
+.D1 Pf \. \&Fl "a ( b | c \e*(Ba d ) e"
+.Pp
+renders as:
+.Pp
+.D1 Fl a ( b | c \*(Ba d ) e
+.Pp
+This applies to both opening and closing delimiters,
+and also to the middle delimiter:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It \&|
+vertical bar
+.El
+.Pp
+As a special case, the predefined string \e*(Ba is handled and rendered
+in the same way as a plain
+.Sq \&|
+character.
+Using this predefined string is not recommended in new manuals.
 .Sh REFERENCE
 This section is a canonical reference of all macros, arranged
 alphabetically.
@@ -2917,7 +2962,7 @@ In new groff and mandoc, any list may be nested by default and
 lists will restart the sequence only for the sub-list.
 .It
 .Sx \&Li
-followed by a reserved character is incorrectly used in some manuals
+followed by a delimiter is incorrectly used in some manuals
 instead of properly quoting that character, which sometimes works with
 historic groff.
 .It
