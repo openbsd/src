@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.186 2010/09/22 13:45:16 mikeb Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.187 2011/08/02 22:51:38 markus Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -2108,7 +2108,7 @@ passed:
 	af = conf_begin();
 
 	configname = conf_get_str(section, "Configuration");
-	conf_remove_section(af, configname);
+	pf_key_v2_conf_refhandle(af, configname);
 
 	/* These are the Phase 2 Local/Remote IDs. */
 	localid = conf_get_str(section, "Local-ID");
@@ -3272,6 +3272,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	if (!conf_get_str(configname, "Exchange_type")) {
 		if (conf_set(af, configname, "Exchange_type", "Quick_mode",
 		    0, 0) ||
+		    conf_set(af, peer, "Refcount", "1", 0, 0) ||
 		    conf_set(af, configname, "DOI", "IPSEC", 0, 0)) {
 			conf_end(af, 0);
 			goto fail;
@@ -3290,7 +3291,8 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 				goto fail;
 			}
 		}
-	}
+	} else 
+		pf_key_v2_conf_refinc(af, configname);
 
 	/* Set the ISAKMP-peer section. */
 	if (!conf_get_str(peer, "Phase")) {
