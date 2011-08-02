@@ -1,4 +1,4 @@
-.\" $OpenBSD: fw_update.1,v 1.7 2011/08/02 17:35:40 jmc Exp $
+.\" $OpenBSD: fw_update.1,v 1.8 2011/08/02 23:46:39 deraadt Exp $
 .\"
 .\" Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 .\"
@@ -26,9 +26,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility checks which firmware are needed on the host system,
-retrieves the relevant packages from the Internet,
-and then installs them.
+utility checks which firmware are needed on the system and then
+installs or updates the relevant packages from the Internet.
 Since firmware with acceptable licenses are already present in
 .Ox ,
 .Nm
