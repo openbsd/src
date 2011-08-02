@@ -6,7 +6,7 @@ LINK	instbin					sbin/dhclient
 LINK	instbin					bin/mt bin/eject
 LINK	instbin					sbin/bioctl
 
-# firmwares that might need loading
+# firmware we might need
 #COPY	${DESTDIR}/etc/firmware/tigon1		etc/firmware/tigon1
 #COPY	${DESTDIR}/etc/firmware/tigon2		etc/firmware/tigon2
 COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue

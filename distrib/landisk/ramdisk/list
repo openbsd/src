@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.20 2010/10/18 04:07:50 deraadt Exp $
+#	$OpenBSD: list,v 1.21 2011/08/02 01:14:28 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -59,7 +59,7 @@ LINK	instbin					usr/bin/less usr/bin/more
 LINK	instbin					usr/bin/sed
 LINK	instbin					sbin/sysctl
 
-# firmwares that might need loading
+# firmware we might need
 COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue
 COPY	${DESTDIR}/etc/firmware/zd1211		etc/firmware/zd1211
 COPY	${DESTDIR}/etc/firmware/zd1211b		etc/firmware/zd1211b

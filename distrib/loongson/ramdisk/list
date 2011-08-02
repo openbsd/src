@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.6 2010/10/18 04:07:50 deraadt Exp $
+#	$OpenBSD: list,v 1.7 2011/08/02 01:14:28 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -80,7 +80,7 @@ TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
 COPY	${DESTDIR}/usr/mdec/boot		usr/mdec/boot
 COPY	${DESTDIR}/usr/mdec/mbr			usr/mdec/mbr
 
-# firmwares that might need loading
+# firmware we might need
 COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue
 COPY	${DESTDIR}/etc/firmware/rum-rt2573	etc/firmware/rum-rt2573
 COPY	${DESTDIR}/etc/firmware/atu-at76c503-i3863-ext etc/firmware/atu-at76c503-i3863-ext

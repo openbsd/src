@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.12 2010/10/18 04:08:32 deraadt Exp $
+#	$OpenBSD: list,v 1.13 2011/08/02 01:14:28 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -77,7 +77,7 @@ SYMLINK	/tmp/resolv.conf.shadow			etc/resolv.conf
 SYMLINK	/tmp/hosts				etc/hosts
 TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
 
-# firmwares that might need loading
+# firmware we might need
 COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue
 COPY	${DESTDIR}/etc/firmware/rum-rt2573	etc/firmware/rum-rt2573
 COPY	${DESTDIR}/etc/firmware/run-rt2870	etc/firmware/run-rt2870

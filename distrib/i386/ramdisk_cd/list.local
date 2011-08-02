@@ -1,4 +1,4 @@
-# $OpenBSD: list.local,v 1.28 2010/10/12 23:37:41 deraadt Exp $
+# $OpenBSD: list.local,v 1.29 2011/08/02 01:14:28 deraadt Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 LINK	instbin					bin/sha256
@@ -12,7 +12,7 @@ LINK	instbin					sbin/apmd
 LINK	instbin					sbin/mount_udf
 LINK	instbin					sbin/bioctl
 
-# firmwares that might need loading
+# firmware we might need
 #COPY	${DESTDIR}/etc/firmware/tigon1		etc/firmware/tigon1
 #COPY	${DESTDIR}/etc/firmware/tigon2		etc/firmware/tigon2
 COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue
