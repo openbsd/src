@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.648 2011/07/28 19:11:33 halex Exp $
+#	$OpenBSD: install.sub,v 1.649 2011/08/02 15:52:04 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1643,10 +1643,10 @@ run_sysmerge() {
 	fi
 }
 
-update_firmwares() {
+update_firmware() {
 	local _get=Install
 	[[ $MODE == upgrade ]] && _get=Update
-	ask_yn "$_get non-free firmwares on first boot?" no
+	ask_yn "$_get non-free firmware files on first boot?" no
 	[[ $resp == y ]] && \
 		echo "/usr/sbin/fw_update -v" >> /mnt/etc/rc.firsttime
 }
@@ -1990,7 +1990,7 @@ finish_up() {
 
 	[[ "$MODE" == upgrade ]] && run_sysmerge
 
-	update_firmwares
+	update_firmware
 
 	# Pat on the back.
 	cat <<__EOT
