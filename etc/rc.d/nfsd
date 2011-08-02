@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: nfsd,v 1.2 2011/08/02 11:50:39 robert Exp $
+# $OpenBSD: nfsd,v 1.3 2011/08/02 11:59:25 robert Exp $
 
 daemon="/sbin/nfsd"
 
@@ -11,9 +11,7 @@ pexp="(${daemon}*|nfsd: (master|server)$)"
 rc_reload=NO
 
 rc_pre() {
-	[ -s /etc/exports -a `sed -e '/^#/d' < /etc/exports | wc -l` -ne 0 ] &&
-		rm -f /var/db/mountdtab && \
-		echo -n > /var/db/mountdtab
+	[ -s /etc/exports -a `sed -e '/^#/d' < /etc/exports | wc -l` -ne 0 ]
 }
 
 rc_cmd $1

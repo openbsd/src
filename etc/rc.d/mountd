@@ -1,9 +1,15 @@
 #!/bin/sh
 #
-# $OpenBSD: mountd,v 1.1 2011/07/08 00:54:04 ajacoutot Exp $
+# $OpenBSD: mountd,v 1.2 2011/08/02 11:59:25 robert Exp $
 
 daemon="/sbin/mountd"
 
 . /etc/rc.d/rc.subr
+
+rc_pre() {
+	[ -s /etc/exports -a `sed -e '/^#/d' < /etc/exports | wc -l` -ne 0 ] &&
+		rm -f /var/db/mountdtab && \
+		echo -n > /var/db/mountdtab
+}
 
 rc_cmd $1
