@@ -2756,6 +2756,10 @@ $define|true|[yY]*)
 				echo "Failed to create the symlinks (t/base/lex.t missing).  Aborting." >&4
 				exit 1
 			fi
+			if test ! -f x2p/walk.c; then
+				echo "Failed to create the symlinks (x2p/walk.c missing).  Aborting." >&4
+				exit 1
+			fi
 			cd UU
 			;;
 		*)	echo "(I cannot figure out how to do symbolic links, ignoring mksymlinks)." >&4
