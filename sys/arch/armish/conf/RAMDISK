@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.19 2011/06/29 20:52:09 matthew Exp $ 
+# $OpenBSD: RAMDISK,v 1.20 2011/08/02 06:36:29 matthieu Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -35,6 +35,7 @@ option		INET			# IP + ICMP + TCP + UDP
 option		INET6			# IPv6 (needs INET)
 option		DDB			# kernel debugger
 option		EXT2FS			# Second Extended Filesystem
+option		CRYPTO			# Cryptographic framework
 
 config		bsd	root on rd0a swap on rd0b
 
@@ -71,6 +72,7 @@ bwi*		at pci?
 pciide*		at pci? flags 0x0000
 wd*		at pciide? flags 0x0000
 
+softraid0	at root		# Software RAID
 
 scsibus*	at scsi?
 sd*		at scsibus?		# SCSI disk drives
