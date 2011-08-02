@@ -1,4 +1,4 @@
-.\" $OpenBSD: fw_update.1,v 1.6 2011/07/28 13:26:13 jmc Exp $
+.\" $OpenBSD: fw_update.1,v 1.7 2011/08/02 17:35:40 jmc Exp $
 .\"
 .\" Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 28 2011 $
+.Dd $Mdocdate: August 2 2011 $
 .Dt FW_UPDATE 1
 .Os
 .Sh NAME
@@ -26,11 +26,15 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility installs and updates device firmwares with non-free licenses
-that may not be shipped with
+utility checks which firmware are needed on the host system,
+retrieves the relevant packages from the Internet,
+and then installs them.
+Since firmware with acceptable licenses are already present in
+.Ox ,
+.Nm
+exists purely to install and update firmware that may not be freely
+distributed with
 .Ox .
-It automatically detects such devices and downloads and installs the proper
-firmware packages for the currently running kernel.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
