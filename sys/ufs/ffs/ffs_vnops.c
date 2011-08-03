@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.65 2011/07/04 20:35:35 deraadt Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.66 2011/08/03 20:21:19 beck Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -299,7 +299,6 @@ ffs_write(void *v)
 	daddr64_t lbn;
 	off_t osize;
 	int blkoffset, error, extended, flags, ioflag, resid, size, xfersize;
-	extern int num_indirdep, max_indirdep;
 
 	extended = 0;
 	ioflag = ap->a_ioflag;
@@ -373,11 +372,7 @@ ffs_write(void *v)
 		if (uio->uio_offset + xfersize > DIP(ip, size)) {
 			DIP_ASSIGN(ip, size, uio->uio_offset + xfersize);
 			uvm_vnp_setsize(vp, DIP(ip, size));
-			/* Are we extending into an indirect block? */
-			if (bp->b_lblkno < NDADDR)
-				extended = 1;
-			else
-				extended = 2;
+			extended = 1;
 		}
 		(void)uvm_vnp_uncache(vp);
 
@@ -421,20 +416,8 @@ ffs_write(void *v)
 			uio->uio_offset -= resid - uio->uio_resid;
 			uio->uio_resid = resid;
 		}
-	} else if (resid > uio->uio_resid) {
-		if (ioflag & IO_SYNC)
-			error = UFS_UPDATE(ip, MNT_WAIT);
-		if (DOINGSOFTDEP(vp) && num_indirdep > max_indirdep)
-			if (extended > 1) {
-				/*
-				 * If the number of pending indirect block
-				 * dependencies is sufficiently close to the
-				 * maximum number of simultaneously mappable
-				 * buffers force a sync on the vnode to prevent
-				 * buffer cache exhaustion.
-				 */
-				VOP_FSYNC(vp, NULL, MNT_WAIT, p);
-			}
+	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC)) {
+		error = UFS_UPDATE(ip, MNT_WAIT);
 	}
 	return (error);
 }
