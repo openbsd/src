@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.115 2011/07/17 22:46:48 matthew Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.116 2011/08/03 00:27:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1105,6 +1105,7 @@ atascsi_disk_unmap_task(void *xxs, void *a)
 
 	trims = dma_alloc(512, PR_WAITOK | PR_ZERO);
 
+	ap = atascsi_lookup_port(link);
 	unmap = (struct scsi_unmap_data *)xs->data;
 	descs = (struct scsi_unmap_desc *)(unmap + 1);
 
