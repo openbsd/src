@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.77 2011/08/02 00:52:34 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.78 2011/08/03 21:03:11 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 2 2011 $
+.Dd $Mdocdate: August 3 2011 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1037,6 +1037,8 @@ Examples:
 .Dl \&.Ad 0x00000000
 .Ss \&An
 Author name.
+Can be used both for the authors of the program, function, or driver
+documented in the manual, or for the authors of the manual itself.
 Requires either the name of an author or one of the following arguments:
 .Pp
 .Bl -tag -width "-nosplitX" -offset indent -compact
@@ -1107,9 +1109,17 @@ If an argument is not provided, the string
 is used as a default.
 .Pp
 Examples:
-.Dl \&.Fl o \&Ns \&Ar file1
-.Dl \&.Ar
-.Dl \&.Ar arg1 , arg2 .
+.Dl ".Fl o Ar file"
+.Dl ".Ar"
+.Dl ".Ar arg1 , arg2 ."
+.Pp
+The arguments to the
+.Sx \&Ar
+macro are names and placeholders for command arguments;
+for fixed strings to be passed verbatim as arguments, use
+.Sx \&Fl
+or
+.Sx \&Cm .
 .Ss \&At
 Formats an AT&T version.
 Accepts one optional argument:
@@ -1512,6 +1522,7 @@ and
 Kernel configuration declaration.
 This denotes strings accepted by
 .Xr config 8 .
+It is most often used in section 4 manual pages.
 .Pp
 Examples:
 .Dl \&.Cd device le0 at scode?
@@ -1524,14 +1535,17 @@ declarations.
 This practise is discouraged.
 .Ss \&Cm
 Command modifiers.
-Useful when specifying configuration options or keys.
+Typically used for fixed strings passed as arguments, unless
+.Sx \&Fl
+is more appropriate.
+Also useful when specifying configuration options or keys.
 .Pp
 Examples:
-.Dl \&.Cm ControlPath
-.Dl \&.Cm ControlMaster
-.Pp
-See also
-.Sx \&Fl .
+.Dl ".Nm mt Fl f Ar device Cm rewind"
+.Dl ".Nm ps Fl o Cm pid , Ns Cm command"
+.Dl ".Nm dd Cm if= Ns Ar file1 Cm of= Ns Ar file2"
+.Dl ".Cm IdentityFile Pa ~/.ssh/id_rsa"
+.Dl ".Cm LogLevel Dv DEBUG"
 .Ss \&D1
 One-line indented display.
 This is formatted by the default rules and is useful for simple indented
@@ -1881,6 +1895,7 @@ will emulate
 Error constants for definitions of the
 .Va errno
 libc global variable.
+This is most often used in section 2 and 3 manual pages.
 .Pp
 Examples:
 .Dl \&.Er EPERM
@@ -1905,6 +1920,7 @@ for general constants.
 .Ss \&Ex
 Insert a standard sentence regarding command exit values of 0 on success
 and >0 on failure.
+This is most often used in section 1, 6, and 8 manual pages.
 Its syntax is as follows:
 .Pp
 .D1 Pf \. Sx \&Ex Fl std Op Ar utility ...
@@ -1965,7 +1981,7 @@ See also
 and
 .Sx \&In .
 .Ss \&Fl
-Command-line flag.
+Command-line flag or option.
 Used when listing arguments to command-line utilities.
 Prints a fixed-width hyphen
 .Sq \-
@@ -1975,10 +1991,11 @@ If the argument is a macro, a hyphen is prefixed to the subsequent macro
 output.
 .Pp
 Examples:
-.Dl \&.Fl a b c
-.Dl \&.Fl \&Pf a b
-.Dl \&.Fl
-.Dl \&.Op \&Fl o \&Ns \&Ar file
+.Dl ".Nm cat Fl v No considered harmful"
+.Dl ".Nm cp Fl pR Ar source ... directory"
+.Dl ".Nm find Ar dir Fl type Cm d Fl name Pa CVS
+.Dl ".Nm kill Fl Ar signal_number pid"
+.Dl ".Nm su Fl"
 .Pp
 See also
 .Sx \&Cm .
@@ -1995,11 +2012,16 @@ Its syntax is as follows:
 Function arguments are surrounded in parenthesis and
 are delimited by commas.
 If no arguments are specified, blank parenthesis are output.
+In the
+.Em SYNOPSIS
+section, this macro starts a new output line,
+and a blank line is automatically inserted between function definitions.
 .Pp
 Examples:
 .Dl \&.Fn \*qint funcname\*q \*qint arg0\*q \*qint arg1\*q
 .Dl \&.Fn funcname \*qint arg0\*q
 .Dl \&.Fn funcname arg0
+.Pp
 .Bd -literal -offset indent -compact
 \&.Ft functype
 \&.Fn funcname
@@ -2009,7 +2031,8 @@ When referring to a function documented in another manual page, use
 .Sx \&Xr
 instead.
 See also
-.Sx MANUAL STRUCTURE
+.Sx MANUAL STRUCTURE ,
+.Sx \&Fo ,
 and
 .Sx \&Ft .
 .Ss \&Fo
@@ -2036,6 +2059,7 @@ Invocations usually occur in the following context:
 A
 .Sx \&Fo
 scope is closed by
+.Sx \&Fc .
 .Pp
 See also
 .Sx MANUAL STRUCTURE ,
@@ -2050,6 +2074,10 @@ A function type.
 Its syntax is as follows:
 .Pp
 .D1 Pf \. Sx \&Ft Ar functype
+.Pp
+In the
+.Em SYNOPSIS
+section, a new output line is started after this macro.
 .Pp
 Examples:
 .Dl \&.Ft int
@@ -2091,6 +2119,7 @@ This is similar to
 but used for instructions rather than values.
 .Pp
 Examples:
+.Dl \&.Ic :wq
 .Dl \&.Ic hash
 .Dl \&.Ic alias
 .Pp
@@ -2105,15 +2134,17 @@ macro is used when referring to specific instructions.
 An
 .Dq include
 file.
-In the
+When invoked as the first macro on an input line in the
 .Em SYNOPSIS
-section (only if invoked as the line macro), the first argument is
-preceded by
+section, the argument is displayed in angle brackets
+and preceded by
 .Dq #include ,
-the arguments is enclosed in angle brackets.
+and a blank line is inserted in front if there is a preceding
+function declaration.
+This is most often used in section 2, 3, and 9 manual pages.
 .Pp
 Examples:
-.Dl \&.In sys/types
+.Dl \&.In sys/types.h
 .Pp
 See also
 .Sx MANUAL STRUCTURE .
@@ -2378,9 +2409,11 @@ Examples:
 \&.Oc
 .Ed
 .Ss \&Op
-Command-line option.
-Used when listing options to command-line utilities.
+Optional part of a command line.
 Prints the argument(s) in brackets.
+This is most often used in the
+.Em SYNOPSIS
+section of section 1 and 8 manual pages.
 .Pp
 Examples:
 .Dl \&.Op \&Fl a \&Ar b
@@ -2438,9 +2471,9 @@ See also
 and
 .Sx \&Ux .
 .Ss \&Pa
-A file-system path.
-If an argument is not provided, the string
-.Dq \(ti
+An absolute or relative file system path, or a file or directory name.
+If an argument is not provided, the character
+.Sq \(ti
 is used as a default.
 .Pp
 Examples:
@@ -2703,6 +2736,7 @@ The following standards are recognised:
 .St -xpg4
 .It \-xpg4.2
 .St -xpg4.2
+.It \-xpg4.3
 .St -xpg4.3
 .It \-xbd5
 .St -xbd5
@@ -2790,11 +2824,14 @@ This is also used for indicating global variables in the
 section, in which case a variable name is also specified.
 Note that it accepts
 .Sx Block partial-implicit
-syntax when invoked as the first macro in the
+syntax when invoked as the first macro on an input line in the
 .Em SYNOPSIS
 section, else it accepts ordinary
 .Sx In-line
 syntax.
+In the former case, this macro starts a new output line,
+and a blank line is inserted in front if there is a preceding
+function definition or include directive.
 .Pp
 Note that this should not be confused with
 .Sx \&Ft ,
