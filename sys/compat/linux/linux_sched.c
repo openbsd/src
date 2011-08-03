@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_sched.c,v 1.10 2011/04/05 15:44:40 pirofti Exp $	*/
+/*	$OpenBSD: linux_sched.c,v 1.11 2011/08/03 16:11:31 guenther Exp $	*/
 /*	$NetBSD: linux_sched.c,v 1.6 2000/05/28 05:49:05 thorpej Exp $	*/
 
 /*-
@@ -177,7 +177,7 @@ linux_sys_clone(struct proc *p, void *v, register_t *retval)
 	 * that makes this adjustment is a noop.
 	 */
 	error = fork1(p, sig, flags, SCARG(uap, stack), 0, linux_child_return,
-	    p, retval, NULL);
+	    NULL, retval, NULL);
 	if (error)
 		return error;
 
@@ -407,8 +407,7 @@ linux_child_return(void *arg)
 	struct proc *p = (struct proc *)arg;
 	struct linux_emuldata *emul = p->p_emuldata;
 
-	if (i386_set_threadbase(p, &emul->my_tls_base, TSEG_GS))
-		return;
+	i386_set_threadbase(p, emul->my_tls_base, TSEG_GS);
 
 	if (emul->my_set_tid) {
 		pid_t pid = p->p_pid + THREAD_PID_OFFSET;

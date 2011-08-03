@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.29 2011/04/15 15:08:19 chl Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.30 2011/08/03 16:11:31 guenther Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.28 1996/05/03 19:42:29 christos Exp $	*/
 
 /*-
@@ -72,8 +72,6 @@ extern struct vm_map *kernel_map;
 int i386_iopl(struct proc *, void *, register_t *);
 int i386_get_ioperm(struct proc *, void *, register_t *);
 int i386_set_ioperm(struct proc *, void *, register_t *);
-int i386_get_threadbase(struct proc *, void *, int);
-int i386_set_threadbase(struct proc *, void *, int);
 
 #ifdef USER_LDT
 
@@ -405,14 +403,9 @@ i386_get_threadbase(struct proc *p, void *args, int which)
 }
 
 int
-i386_set_threadbase(struct proc *p, void *args, int which)
+i386_set_threadbase(struct proc *p, uint32_t base, int which)
 {
-	int error;
-	uint32_t base;
 	struct segment_descriptor *sdp;
-
-	if ((error = copyin(args, &base, sizeof(base))) != 0)
-		return error;
 
 	/*
 	 * We can't place a limit on the segment used by the library
@@ -472,16 +465,28 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 		break;
 
 	case I386_SET_FSBASE:
-		error = i386_set_threadbase(p, SCARG(uap, parms), TSEG_FS);
+	      {
+		uint32_t base;
+
+		if ((error = copyin(SCARG(uap, parms), &base, sizeof(base))))
+			break;
+		error = i386_set_threadbase(p, base, TSEG_FS);
 		break;
+	      }
 
 	case I386_GET_GSBASE:
 		error = i386_get_threadbase(p, SCARG(uap, parms), TSEG_GS);
 		break;
 
 	case I386_SET_GSBASE:
-		error = i386_set_threadbase(p, SCARG(uap, parms), TSEG_GS);
+	      {
+		uint32_t base;
+
+		if ((error = copyin(SCARG(uap, parms), &base, sizeof(base))))
+			break;
+		error = i386_set_threadbase(p, base, TSEG_GS);
 		break;
+	      }
 
 	default:
 		error = EINVAL;
