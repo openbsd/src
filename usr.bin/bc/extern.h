@@ -1,4 +1,4 @@
-/*      $OpenBSD: extern.h,v 1.8 2011/06/03 06:10:33 otto Exp $	*/
+/*      $OpenBSD: extern.h,v 1.9 2011/08/03 08:48:19 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -27,6 +27,7 @@ int		yylex(void);
 void		yyerror(char *);
 void		fatal(const char *);
 void		abort_line(int);
+int		gettty(struct termios *);
 unsigned char	bc_eof(EditLine *, int);
 
 extern int	lineno;
@@ -41,5 +42,5 @@ extern EditLine		*el;
 extern History		*hist;
 extern HistEvent	 he;
 extern char	*cmdexpr;
-
-bool		interactive;
+extern struct termios ttysaved;
+extern bool		interactive;
