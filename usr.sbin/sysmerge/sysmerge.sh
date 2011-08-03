@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.80 2011/07/11 04:37:21 deraadt Exp $
+# $OpenBSD: sysmerge.sh,v 1.81 2011/08/03 13:33:29 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -21,8 +21,8 @@
 umask 0022
 
 unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE ETCSUM NEED_NEWALIASES
-unset NEWGRP NEWUSR NEED_REBOOT OBSOLETE_FILES SRCDIR SRCSUM TGZ TGZURL
-unset XETCSUM XTGZ XTGZURL
+unset NEWGRP NEWUSR NEED_REBOOT SRCDIR SRCSUM TGZ TGZURL XETCSUM
+unset XTGZ XTGZURL
 
 WRKDIR=`mktemp -d -p ${TMPDIR:=/var/tmp} sysmerge.XXXXXXXXXX` || exit 1
 SWIDTH=`stty size | awk '{w=$2} END {if (w==0) {w=80} print w}'`
@@ -130,16 +130,6 @@ do_populate() {
 				set -A AUTO_UPG -- ${_array}
 			fi
 
-			# check for obsolete files
-			awk '{ print $3 }' ${DESTDIR}/${DBDIR}/${i} | sed 's/^./X/;s/$/X/' > ${WRKDIR}/new
-			awk '{ print $3 }' ${WRKDIR}/${i} | sed 's/^./X/;s/$/X/' > ${WRKDIR}/old
-			if [ -n "`diff -q ${WRKDIR}/old ${WRKDIR}/new`" ]; then
-				local _diff=`grep -v -f ${WRKDIR}/old ${WRKDIR}/new | sed 's/^X//;s/X$//'`
-				_obs="${_diff} ${_obs}"
-				set -A OBSOLETE_FILES -- ${_obs}
-			fi
-			rm ${WRKDIR}/new ${WRKDIR}/old
-			
 			mv ${DESTDIR}/${DBDIR}/${i} ${DESTDIR}/${DBDIR}/.${i}.bak
 		fi
 		mv ${WRKDIR}/${i} ${DESTDIR}/${DBDIR}/${i}
@@ -598,11 +588,6 @@ do_post() {
 		echo "===> Backup of replaced file(s) can be found under" >> ${REPORT}
 		echo "${BKPDIR}\n" >> ${REPORT}
 	fi
-	if [ "${OBSOLETE_FILES}" ]; then
-		echo "===> File(s) removed from previous source (maybe obsolete)" >> ${REPORT}
-		echo "${OBSOLETE_FILES[@]}" | tr "[:space:]" "\n" >> ${REPORT}
-		echo "" >> ${REPORT}
-	fi
 	if [ "${NEWUSR}" -o "${NEWGRP}" ]; then
 		echo "===> The following user(s)/group(s) have been added" >> ${REPORT}
 		if [ "${NEWUSR}" ]; then
@@ -629,10 +614,6 @@ do_post() {
 		echo "\t*** WARNING: some files are still left for comparison"
 	fi
 
-	if [ "${OBSOLETE_FILES}" ]; then
-		echo "\t*** WARNING: file(s) detected as obsolete: ${OBSOLETE_FILES[@]}"
-	fi
-
 	if [ "${NEED_NEWALIASES}" ]; then
 		echo "\t*** WARNING: newaliases(8) failed to run properly"
 	fi
@@ -641,7 +622,7 @@ do_post() {
 		echo "\t*** WARNING: some new/updated file(s) may require a reboot"
 	fi
 
-	unset FILES_IN_TEMPROOT OBSOLETE_FILES NEED_NEWALIASES NEED_REBOOT
+	unset FILES_IN_TEMPROOT NEED_NEWALIASES NEED_REBOOT
 
 	clean_src
 	rm -f ${DESTDIR}/${DBDIR}/.*.bak
