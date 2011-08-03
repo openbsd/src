@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep.c,v 1.5 2006/11/24 04:58:59 drahn Exp $	*/
+/*	$OpenBSD: uthread_machdep.c,v 1.6 2011/08/03 20:19:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Dale Rahn. All rights reserved.
@@ -57,7 +57,7 @@ _thread_machdep_init(statep, base, len, entry)
 	void (*entry)(void);
 {
 	struct frame *f;
-	int scratch;
+	int cpsr;
 
 	/* Locate the initial frame, aligned at the top of the stack */
 	f = (struct frame *)(((int)base + len - sizeof *f) & ~ALIGNBYTES);
@@ -70,8 +70,8 @@ _thread_machdep_init(statep, base, len, entry)
 
 	/* Initialise the new thread with all the state from this thread. */
 
-	__asm__ volatile ("mrs	%0, cpsr_all; str %0, [%2, #0]"
-	    : "=r"(scratch) : "0"(scratch), "r" (&f->cpsr));
+	__asm__ volatile ("mrs	%0, cpsr_all" : "=r" (cpsr));
+	f->cpsr = cpsr;
 
 	__asm__ volatile ("stmia %0, {r4-r12}":: "r"(&f->r[0]));
 
