@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.101 2011/07/06 02:42:28 henning Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.102 2011/08/04 16:40:08 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -270,7 +270,13 @@ ip6_input(struct mbuf *m)
 		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_addrerr);
 		goto bad;
 	}
-
+	if ((IN6_IS_ADDR_LOOPBACK(&ip6->ip6_src) ||
+	    IN6_IS_ADDR_LOOPBACK(&ip6->ip6_dst)) &&
+	    (m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0) {
+		    ip6stat.ip6s_badscope++;
+		    in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_addrerr);
+		    goto bad;
+	}
 	if (IN6_IS_ADDR_MC_INTFACELOCAL(&ip6->ip6_dst) &&
 	    !(m->m_flags & M_LOOP)) {
 		/*
@@ -343,15 +349,9 @@ ip6_input(struct mbuf *m)
 
 	if (IN6_IS_ADDR_LOOPBACK(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_LOOPBACK(&ip6->ip6_dst)) {
-		if (m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) {
-			ours = 1;
-			deliverifp = m->m_pkthdr.rcvif;
-			goto hbhcheck;
-		} else {
-			ip6stat.ip6s_badscope++;
-			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_addrerr);
-			goto bad;
-		}
+		ours = 1;
+		deliverifp = m->m_pkthdr.rcvif;
+		goto hbhcheck;
 	}
 
 	/* drop packets if interface ID portion is already filled */
