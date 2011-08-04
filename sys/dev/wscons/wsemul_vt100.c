@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.27 2010/09/01 21:17:16 nicm Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.28 2011/08/04 04:18:42 miod Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -386,7 +386,13 @@ wsemul_vt100_output_c0c1(struct wsemul_vt100_emuldata *edp, u_char c,
 		/* ignore */
 		break;
 	case ASCII_BEL:
-		wsdisplay_emulbell(edp->cbcookie);
+		if (edp->state == VT100_EMUL_STATE_STRING) {
+			/* acts as an equivalent to the ``ESC \'' string end */
+			wsemul_vt100_handle_dcs(edp);
+			edp->state = VT100_EMUL_STATE_NORMAL;
+		} else {
+			wsdisplay_emulbell(edp->cbcookie);
+		}
 		break;
 	case ASCII_BS:
 		if (edp->ccol > 0) {
