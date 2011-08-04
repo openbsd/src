@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/cc_tools/Makefile,v 1.88.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.10 2011/06/25 20:56:21 miod Exp $
+# $OpenBSD: Makefile,v 1.11 2011/08/04 14:46:58 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -26,6 +26,9 @@ LIBIBERTY=	/usr/lib/libiberty.a
 TARGET_INC+=	options.h
 .if ${TARGET_ARCH} == "amd64"
 TARGET_INC+=	i386/biarch64.h
+.endif
+.if ${TARGET_ARCH} == "hppa64"
+TARGET_INC+=	pa/pa64-start.h
 .endif
 .if ${TARGET_ARCH} == "sh"
 TARGET_INC+=	sh/little.h
@@ -73,6 +76,8 @@ TM_DEFINES+= TARGET_ENDIAN_DEFAULT=0
 .endif
 .if ${TARGET_ARCH} == "amd64"
 TARGET_INC+=	${GCC_CPU}/x86-64.h
+TARGET_INC+=	${GCC_CPU}/openbsd64.h
+.elif ${TARGET_ARCH} == "hppa64"
 TARGET_INC+=	${GCC_CPU}/openbsd64.h
 .elif ${TARGET_ARCH} == "sparc64"
 TARGET_INC+=	${GCC_CPU}/openbsd64.h
