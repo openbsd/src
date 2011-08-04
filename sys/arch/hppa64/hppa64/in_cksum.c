@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.1 2005/04/01 10:40:47 mickey Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.2 2011/08/04 16:10:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -66,7 +66,7 @@
 #define REDUCE		{sum = (sum & 0xffff) + (sum >> 16); ADDCARRY}
 #define ROL		asm volatile ("shd %0, %0, 8, %0" : "+r" (sum))
 #define ADDBYTE		{ROL; sum += *w++; bins++; mlen--;}
-#define ADDSHORT	{sum += *((u_short *)w)++; mlen -= 2;}
+#define ADDSHORT	{sum += *(u_short *)w; w += 2; mlen -= 2;}
 #define ADDWORD	asm volatile(	"ldwm 4(%1), %%r19! add %0, %%r19, %0\n\t" \
 				"ldo -4(%2), %2   ! addc    %0, 0, %0" \
 				: "+r" (sum), "+r" (w), "+r" (mlen) :: "r19")
