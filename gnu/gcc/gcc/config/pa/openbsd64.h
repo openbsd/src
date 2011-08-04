@@ -172,6 +172,9 @@ Boston, MA 02111-1307, USA.  */
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
+#undef LONG_DOUBLE_TYPE_SIZE
+#define LONG_DOUBLE_TYPE_SIZE 64
+
 /* As an elf system, we need crtbegin/crtend stuff.  */
 #undef STARTFILE_SPEC
 #define STARTFILE_SPEC "%{!shared: %{pg:gcrt0%O%s} %{!pg:%{p:gcrt0%O%s} %{!p:crt0%O%s}} crtbegin%O%s} %{shared:crtbeginS%O%s}"
