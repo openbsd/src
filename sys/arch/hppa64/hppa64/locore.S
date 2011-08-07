@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.31 2011/07/08 22:26:43 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.32 2011/08/07 20:48:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -400,14 +400,13 @@ $bsd_syscall
 	mfctl	%eiem, %ret1
 	mtctl	%r0, %eiem
 	mtsp	%r0, %sr1
-	mfctl	%pidr1, %ret0
-	ldi	HPPA_PID_KERNEL, arg7
-	mtctl	arg7, %pidr1
+	ldi	HPPA_PID_KERNEL, %ret0
+	mtctl	%ret0, %pidr1
 
 	.import $syscall, code
 	.call
-	ldil	L%$syscall, arg7
-	be	R%$syscall(%sr1, arg7)
+	ldil	L%$syscall, %ret0
+	be	R%$syscall(%sr1, %ret0)
 	nop ! nop ! nop ! nop
 	
 gateway_end
@@ -417,7 +416,7 @@ gateway_end
 	.export $syscall, entry
 $syscall
 
-	mfsp	%sr0, arg7
+	mfsp	%sr0, %ret0
 	mtsp	%r0, %sr0
 	mtsp	%r0, %sr1
 	mtsp	%r0, %sr2
@@ -426,31 +425,35 @@ $syscall
 	mtsp	%r0, %sr5
 	mtsp	%r0, %sr6
 	mtsp	%r0, %sr7
+	mtctl	%ret0, %cr28
+	mtctl	%ret1, %cr29
 
-	copy	%sp, arg6
+	copy	%sp, %ret1
 
-	mfctl	%cr24, %r9
-	ldd	CI_CURPROC(%r9), %r9
-	ldd	P_ADDR(%r9), %sp
+	mfctl	%cr24, %ret0
+	ldd	CI_CURPROC(%ret0), %ret0
+	ldd	P_ADDR(%ret0), %sp
 	ldo	PAGE_SIZE-TRAPFRAME_SIZEOF(%sp), %sp
-	std	%sp, P_MD_REGS(%r9)
+	std	%sp, P_MD_REGS(%ret0)
 	ldo	TRAPFRAME_SIZEOF(%sp), %sp
 
-	std	arg6, TF_SP-TRAPFRAME_SIZEOF(%sp)
-	std	arg7, TF_SR0-TRAPFRAME_SIZEOF(%sp)
-	std	arg7, TF_SR1-TRAPFRAME_SIZEOF(%sp)
-	std	arg7, TF_SR2-TRAPFRAME_SIZEOF(%sp)
-	std	arg7, TF_SR3-TRAPFRAME_SIZEOF(%sp)
-	std	arg7, TF_SR4-TRAPFRAME_SIZEOF(%sp)
-	std	arg7, TF_SR5-TRAPFRAME_SIZEOF(%sp)
-	std	arg7, TF_SR6-TRAPFRAME_SIZEOF(%sp)
+	std	%ret1, TF_SP-TRAPFRAME_SIZEOF(%sp)
+	mfctl	%cr28, %ret0
+	mfctl	%cr29, %ret1
+	std	%ret0, TF_SR0-TRAPFRAME_SIZEOF(%sp)
+	std	%ret0, TF_SR1-TRAPFRAME_SIZEOF(%sp)
+	std	%ret0, TF_SR2-TRAPFRAME_SIZEOF(%sp)
+	std	%ret0, TF_SR3-TRAPFRAME_SIZEOF(%sp)
+	std	%ret0, TF_SR4-TRAPFRAME_SIZEOF(%sp)
+	std	%ret0, TF_SR5-TRAPFRAME_SIZEOF(%sp)
+	std	%ret0, TF_SR6-TRAPFRAME_SIZEOF(%sp)
 	std	%r0, TF_SR7-TRAPFRAME_SIZEOF(%sp)
-	std	arg7, TF_IISQ-TRAPFRAME_SIZEOF(%sp)
-	std	arg7, TF_IISQ+8-TRAPFRAME_SIZEOF(%sp)
+	std	%ret0, TF_IISQ-TRAPFRAME_SIZEOF(%sp)
+	std	%ret0, TF_IISQ+8-TRAPFRAME_SIZEOF(%sp)
 
-	ldo	4(%r31), arg7
+	ldo	4(%r31), %ret0
 	std	%r31, TF_IIOQ-TRAPFRAME_SIZEOF(%sp)
-	std	arg7, TF_IIOQ+8-TRAPFRAME_SIZEOF(%sp)
+	std	%ret0, TF_IIOQ+8-TRAPFRAME_SIZEOF(%sp)
 	std	%r1, TF_R1-TRAPFRAME_SIZEOF(%sp)
 	std	%arg0, TF_ARGS+(0*8)-TRAPFRAME_SIZEOF(%sp)
 	std	%arg1, TF_ARGS+(1*8)-TRAPFRAME_SIZEOF(%sp)
@@ -464,7 +467,7 @@ $syscall
 	std	%dp, TF_DP-TRAPFRAME_SIZEOF(%sp)
 
 	mfctl	%pidr2, arg7
-	std	%ret0, TF_PIDR1-TRAPFRAME_SIZEOF(%sp)
+	std	arg7, TF_PIDR1-TRAPFRAME_SIZEOF(%sp)
 	std	arg7, TF_PIDR2-TRAPFRAME_SIZEOF(%sp)
 
 	mfctl	%sar, %arg2
