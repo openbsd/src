@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa64,v 1.14 2011/04/16 22:04:36 kettenis Exp $
+#	$OpenBSD: files.hppa64,v 1.15 2011/08/07 20:39:39 kettenis Exp $
 #
 # hppa64-specific configuration info
 
@@ -101,6 +101,16 @@ device	elroy: pcibus
 attach	elroy at gedoens
 file	arch/hppa64/dev/elroy.c		elroy
 file	arch/hppa64/dev/apic.c		elroy
+
+device	ssio {[irq = -1]}
+attach	ssio at pci
+file	arch/hppa64/dev/ssio.c			ssio
+
+attach	com at ssio with com_ssio
+file	arch/hppa64/dev/com_ssio.c		com_ssio
+
+#attach	lpt at ssio with lpt_ssio
+#file	arch/hppa64/dev/lpt_ssio.c		lpt_ssio
 
 ###
 

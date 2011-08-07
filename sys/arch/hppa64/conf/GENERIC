@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.25 2011/06/29 20:52:09 matthew Exp $
+#	$OpenBSD: GENERIC,v 1.26 2011/08/07 20:39:39 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -33,10 +33,10 @@ option	PCIVERBOSE
 ppb*	at pci?
 pci*	at ppb?
 
-#goofy*	at pci?			# NS87560UBD
-#com*	at goofy?
-#lpt*	at goofy?
-#fdc*	at goofy?
+ssio*	at pci?
+com0	at ssio? irq 4
+com1	at ssio? irq 3
+#lpt0	at ssio?
 
 # CardBus bus support
 #cbb*		at pci?
