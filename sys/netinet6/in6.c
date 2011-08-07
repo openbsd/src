@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.91 2011/07/26 21:19:51 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.92 2011/08/07 15:18:40 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -60,6 +60,9 @@
  *
  *	@(#)in.c	8.2 (Berkeley) 11/15/93
  */
+
+#include "bridge.h"
+#include "carp.h"
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -1945,7 +1948,16 @@ in6_ifpprefix(const struct ifnet *ifp, const struct in6_addr *addr)
 	if (rt == NULL)
 		return (0);
 	if ((rt->rt_flags & (RTF_CLONING | RTF_CLONED)) == 0 ||
-	    rt->rt_ifp != ifp) {
+	    (rt->rt_ifp != ifp &&
+#if NBRIDGE > 0
+	    (rt->rt_ifp->if_bridge == NULL || ifp->if_bridge == NULL ||
+	    rt->rt_ifp->if_bridge != ifp->if_bridge) &&
+#endif
+#if NCARP > 0
+	    (ifp->if_type != IFT_CARP || rt->rt_ifp != ifp->if_carpdev) &&
+	    (rt->rt_ifp->if_type != IFT_CARP || rt->rt_ifp->if_carpdev != ifp)&&
+#endif
+	    1)) {
 		RTFREE(rt);
 		return (0);
 	}
