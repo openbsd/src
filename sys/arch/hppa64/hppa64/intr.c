@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.5 2011/04/13 15:23:53 jsing Exp $	*/
+/*	$OpenBSD: intr.c,v 1.6 2011/08/07 15:47:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -51,14 +51,13 @@ struct hppa_iv {
 	char flags;
 #define	HPPA_IV_SOFT	0x01
 	char pad;
-	int pad2;
+	u_int bit;
 	int (*handler)(void *);
 	void *arg;
-	u_int bit;
 	struct hppa_iv *share;
 	struct hppa_iv *next;
 	struct evcount *cnt;
-} __packed;
+};
 
 struct hppa_iv *intr_list;
 struct hppa_iv intr_table[CPU_NINTS] __attribute__ ((aligned(64))) = {
@@ -173,7 +172,7 @@ cpu_intr_establish(int pri, int irq, int (*handler)(void *), void *arg,
 	if (!cnt)
 		return (NULL);
 
-	imask[pri] |= (1UL << irq);
+	imask[pri - 1] |= (1UL << irq);
 
 	iv = &intr_table[irq];
 	iv->pri = pri;
@@ -315,7 +314,7 @@ softintr_establish(int pri, void (*handler)(void *), void *arg)
 		iv->next = nv;
 		iv = nv;
 	} else
-		imask[pri] |= (1 << irq);
+		imask[pri - 1] |= (1 << irq);
 
 	iv->pri = pri;
 	iv->irq = 0;
