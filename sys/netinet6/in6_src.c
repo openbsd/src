@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.25 2010/05/07 13:33:17 claudio Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.26 2011/08/07 18:49:50 mikeb Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -86,6 +86,8 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 
+int in6_selectif(struct sockaddr_in6 *, struct ip6_pktopts *,
+    struct ip6_moptions *, struct route_in6 *, struct ifnet **);
 int selectroute(struct sockaddr_in6 *, struct ip6_pktopts *,
     struct ip6_moptions *, struct route_in6 *, struct ifnet **,
     struct rtentry **, int);
@@ -110,11 +112,40 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 
 	/*
 	 * If the source address is explicitly specified by the caller,
-	 * use it.
+	 * check if the requested source address is indeed a unicast address
+	 * assigned to the node, and can be used as the packet's source
+	 * address.  If everything is okay, use the address as source.
 	 */
 	if (opts && (pi = opts->ip6po_pktinfo) &&
-	    !IN6_IS_ADDR_UNSPECIFIED(&pi->ipi6_addr))
+	    !IN6_IS_ADDR_UNSPECIFIED(&pi->ipi6_addr)) {
+		struct ifnet *ifp = NULL;
+		struct sockaddr_in6 sa6;
+
+		/* get the outgoing interface */
+		if ((*errorp = in6_selectif(dstsock, opts, mopts, ro,
+		    &ifp)) != 0)
+			return (NULL);
+
+		bzero(&sa6, sizeof(sa6));
+		sa6.sin6_family = AF_INET6;
+		sa6.sin6_len = sizeof(sa6);
+		sa6.sin6_addr = pi->ipi6_addr;
+
+		if (ifp && IN6_IS_SCOPE_EMBED(&sa6.sin6_addr))
+			sa6.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
+
+		ia6 = (struct in6_ifaddr *)
+		    ifa_ifwithaddr((struct sockaddr *)&sa6, 0);
+		if (ia6 == NULL ||
+		    (ia6->ia6_flags & (IN6_IFF_ANYCAST | IN6_IFF_NOTREADY))) {
+			*errorp = EADDRNOTAVAIL;
+			return (NULL);
+		}
+
+		pi->ipi6_addr = sa6.sin6_addr; /* XXX: this overrides pi */
+
 		return (&pi->ipi6_addr);
+	}
 
 	/*
 	 * If the source address is not specified but the socket(if any)
@@ -480,6 +511,50 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		*retrt = rt;	/* rt may be NULL */
 
 	return (error);
+}
+
+int
+in6_selectif(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
+    struct ip6_moptions *mopts, struct route_in6 *ro, struct ifnet **retifp)
+{
+	struct rtentry *rt = NULL;
+	int error;
+
+	if ((error = selectroute(dstsock, opts, mopts, ro, retifp,
+	    &rt, 1)) != 0)
+		return (error);
+
+	/*
+	 * do not use a rejected or black hole route.
+	 * XXX: this check should be done in the L2 output routine.
+	 * However, if we skipped this check here, we'd see the following
+	 * scenario:
+	 * - install a rejected route for a scoped address prefix
+	 *   (like fe80::/10)
+	 * - send a packet to a destination that matches the scoped prefix,
+	 *   with ambiguity about the scope zone.
+	 * - pick the outgoing interface from the route, and disambiguate the
+	 *   scope zone with the interface.
+	 * - ip6_output() would try to get another route with the "new"
+	 *   destination, which may be valid.
+	 * - we'd see no error on output.
+	 * Although this may not be very harmful, it should still be confusing.
+	 * We thus reject the case here.
+	 */
+	if (rt && (rt->rt_flags & (RTF_REJECT | RTF_BLACKHOLE)))
+		return (rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
+
+	/*
+	 * Adjust the "outgoing" interface.  If we're going to loop the packet
+	 * back to ourselves, the ifp would be the loopback interface.
+	 * However, we'd rather know the interface associated to the
+	 * destination address (which should probably be one of our own
+	 * addresses.)
+	 */
+	if (rt && rt->rt_ifa && rt->rt_ifa->ifa_ifp)
+		*retifp = rt->rt_ifa->ifa_ifp;
+
+	return (0);
 }
 
 int
