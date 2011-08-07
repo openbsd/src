@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.32 2011/08/07 20:48:48 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.33 2011/08/07 22:35:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -1178,7 +1178,7 @@ ENTRY(TLABEL(excpt),0)
 	copy	%rp, %r1
 	copy	%arg0, %r8
 	mfctl	%cr30, %r9
-#if FP_REGS != 0
+#if HFP_REGS != 0
 	ldo	HFP_REGS(%r9), %r9
 #endif
 	.import	fpu_save, code
@@ -1187,9 +1187,12 @@ ENTRY(TLABEL(excpt),0)
 	copy	%r9, %arg0
 	copy	%r1, %rp
 	copy	%r8, %arg0
+	mfctl	%cr24, %r1
 	mtctl	%r0, %cr10	/* reset ccr: cause a reload after exception */
-	ldil	L%fpu_curpcb, %r1
-	std	%r0, R%fpu_curpcb(%r1)
+	ldd	CI_FPU_STATE(%r1), %r16
+	std	%r0, CI_FPU_STATE(%r1)
+	std	%r0, HFP_CPU(%r16)
+	sync
 
 	/* now, check for trap */
 	ldw	0(%r9), %r1
@@ -1253,13 +1256,17 @@ ENTRY(TLABEL(emu),0)
 
 	/* if we are already enabled and hit again, emulate */
 	mfctl	%cr10, %r1	/* ccr */
-	extru,<> %r1, 25, 2, %r0
+	extrd,u,*<> %r1, 57, 2, %r0
 	b,n	$fpusw_set
 	nop
 
 $fpusw_emu
+	mfctl	%cr24, %r1
 	mtctl	%r0, %cr10	/* reset ccr: cause a reload after exception */
-	std	%r0, R%fpu_curpcb(%r1)
+	ldd	CI_FPU_STATE(%r1), %r16
+	std	%r0, CI_FPU_STATE(%r1)
+	std	%r0, HFP_CPU(%r16)
+	sync
 #if TODO_emulate
 	/* here we emulate the fld/fst */
 	mfctl	%iir, %r1
@@ -1280,9 +1287,10 @@ $fpusw_emu
 	b	TLABEL(all)
 	ldi	T_ILLEGAL, %r1
 #endif
+
 $fpusw_set
 	/* enable coprocessor */
-	depdi	3, 37, 2, %r1
+	depdi	3, 57, 2, %r1
 	mtctl	%r1, %cr10	/* ccr */
 
 	mfctl	%cr24, %r16
@@ -1352,13 +1360,13 @@ $fpusw_nosave
 	sync
 
 $fpusw_done
-	rfir
+	rfi,r
 	nop
 EXIT(TLABEL(emu))
 
 LEAF_ENTRY(fpu_exit)
 	/* enable coprocessor XXX */
-	depi    3, 25, 2, %r1
+	depdi	3, 57, 2, %r1
 	mtctl   %r1, %cr10
 
 	ldil    L%fpu_scratch, %r25
@@ -1402,16 +1410,6 @@ LEAF_ENTRY(fpu_save)
 	fstds,ma %fr29, 8(%arg0)
 	fstds,ma %fr30, 8(%arg0)
 	fstds    %fr31, 0(%arg0)
-	ldo	-24(%arg0), %arg0
-	ldi	-32, %r25	/* gotta be free for all callers */
-	fdc,m	%r25(%arg0)
-	fdc,m	%r25(%arg0)
-	fdc,m	%r25(%arg0)
-	fdc,m	%r25(%arg0)
-	fdc,m	%r25(%arg0)
-	fdc,m	%r25(%arg0)
-	fdc,m	%r25(%arg0)
-	fdc,m	%r25(%arg0)
 	bv	%r0(%rp)
 	sync
 EXIT(fpu_save)
