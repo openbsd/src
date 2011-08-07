@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.21 2011/07/09 02:12:16 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.22 2011/08/07 15:49:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -45,10 +45,16 @@
 #endif
 
 static __inline int inst_store(u_int ins) {
-	return (ins & 0xf0000000) == 0x60000000 ||	/* st */
-	       (ins & 0xf4000200) == 0x24000200 ||	/* fst/cst */
-	       (ins & 0xfc000200) == 0x0c000200 ||	/* stby */
-	       (ins & 0xfc0003c0) == 0x0c0001c0;	/* ldcw */
+	return (ins & 0xf0000000) == 0x60000000 ||	/* stb/sth/stw */
+	       (ins & 0xfc000000) == 0x70000000 ||	/* std/fstd */
+	       (ins & 0xfc000000) == 0x78000000 ||	/* fstw */
+	       (ins & 0xfc000000) == 0x7c000000 ||	/* stw/fstw */
+	       (ins & 0xfc000200) == 0x24000200 ||	/* cstw */
+	       (ins & 0xfc000200) == 0x2c000200 ||	/* cstd */
+	       (ins & 0xfc001300) == 0x0c001200 ||	/* stb/sth/stw/std */
+	       (ins & 0xfc001380) == 0x0c001300 ||	/* stby/stdby */
+	       (ins & 0xfc0003c0) == 0x0c0001c0 ||	/* ldcw */
+	       (ins & 0xfc0003c0) == 0x0c000140;	/* ldcd */
 }
 
 const char *trap_type[] = {
