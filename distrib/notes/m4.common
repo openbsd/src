@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.94 2011/05/28 06:25:41 jmc Exp $
+dnl	$OpenBSD: m4.common,v 1.95 2011/08/08 20:03:03 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -457,10 +457,17 @@ ifelse(MDTZ,,,
 	of the installation.
 -:})dnl
 
+dnl install.sh ask whether to use DUIDs before the md_prep_disklabel loop
+	The installation program will now tell you which disks it can
+	install on, and ask you which it should use.
+	Reply with the name of your root disk.
+
+	You will the be asked if you want to use DUID notation in
+	/etc/fstab, instead of traditional device names. You are strongly
+	advised to use DUIDs, as they allow you to move your disks to
+	different controllers, or change their bus identifiers, without
+	having to modify /etc/fstab every time your configuration changes.-:})dnl
 dnl install.sh md_prep_disklabel loop
-	The installation program will now tell you which disks
-	it can install on, and ask you which it should use.
-	Reply with the name of your root disk.-:})dnl
 dnl
 dnl OpenBSDInstallMBRPart1
 dnl Describes MBR partitioning. So much to save four lines of text
@@ -750,15 +757,21 @@ ifelse(MDTZ,,dnl
 	For this work properly, it is expected that you have installed at
 	least the "base{:--:}OSrev", "etc{:--:}OSrev", and "bsd" distribution sets.
 -:})dnl
+dnl install.sh finish_up()
 
 	The installation program will then proceed to save the system
 	configuration, create all the device nodes needed by the installed
-	system, and will install bootblocks on the root disk.ifelse(MDSMP,,,{:-
-
+	system, and will install bootblocks on the root disk.
+ifelse(MDSMP,,,{:-
 	On multiprocessor systems, if the bsd.mp kernel has been installed,
 	it will be renamed to `bsd', which is the default kernel the boot
 	blocks look for.  The single processor kernel, `bsd', will be
-	available as `bsd.sp'.-:})-:})dnl
+	available as `bsd.sp'.
+-:})
+	Finally, you will be asked whether you would like to install
+	non-free firmware files (which can't be tightly integrated to
+	the OpenBSD system) on first boot, by invoking fw_update(8) on
+	the next boot.-:})dnl
 dnl
 define({:-OpenBSDCongratulations-:},{:-
 Congratulations, you have successfully installed OpenBSD OSREV.  When you
@@ -796,8 +809,12 @@ define({:-OpenBSDUpgrade-:},
 {:-Warning! Upgrades to OpenBSD OSREV are currently only supported from the
 immediately previous release.  The upgrade process will also work with older
 releases, but might not execute some migration tasks that would be necessary
-for a proper upgrade.  The best solution, whenever possible, is to backup
-your data and reinstall from scratch.
+for a proper upgrade.
+
+The best solution, whenever possible, is to backup your data and reinstall
+from scratch. As a minimum, if the toolchain (the ``comp'' set) was installed,
+you should remove all files within /usr/{:-include-:} before attempting to
+upgrade.
 
 To upgrade OpenBSD OSREV from a previous version, start with the general
 instructions in the section "Installing OpenBSD".

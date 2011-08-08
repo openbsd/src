@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.7 2011/04/10 13:47:19 miod Exp $
+dnl	$OpenBSD: contents,v 1.8 2011/08/08 20:03:03 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -9,26 +9,28 @@ OpenBSDrd
 dnl not yet...
 dnl OpenBSDcd
 
+OpenBSDminiroot
+
 	boot		The OpenBSD/MACHINE bootloader.
 
 DistributionDescription(ten)
 
-OpenBSDbase(56815681,198860931)
+OpenBSDbase(55794212,195476342)
 
-OpenBSDcomp(76547924,269340459)
+OpenBSDcomp(52384272,207488467)
 
-OpenBSDetc(520657,1415328)
+OpenBSDetc(524721,1579254)
 
-OpenBSDgame(2783627,6680728)
+OpenBSDgame(2768586,6671543)
 
-OpenBSDman(9461489,34562433)
+OpenBSDman(9727207,37465444)
 
-OpenBSDxbase(14474638,52124493)
+OpenBSDxbase(11355064,41112914)
 
-OpenBSDxetc(71850,278151)
+OpenBSDxetc(72921,280808)
 
-OpenBSDxfont(39687242,51387549)
+OpenBSDxfont(39410096,50905227)
 
-OpenBSDxserv(5253685,16860217)
+OpenBSDxserv(5559322,17479306)
 
-OpenBSDxshare(2946824,16053948)
+OpenBSDxshare(3425893,18440335)

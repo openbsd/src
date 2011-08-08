@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.282 2009/05/16 23:51:43 sthen Exp $
+dnl	$OpenBSD: hardware,v 1.283 2011/08/08 20:03:03 miod Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -1198,28 +1198,3 @@ PCI BIOS, or autoconfigured.
 
 Hardware not listed in the above table doesn't need any specific
 configuration.
-
-ACPI notice:
-
-	OpenBSD supports the ACPI information provided by many modern
-	machine BIOSes.  On a minority of systems, this ACPI information
-	may be misleading or misinterpreted.
-
-	This might cause various drivers to misbehave in more or less
-	fatal ways, most problems being interrupt-related (interrupt
-	storms slowing the machine down, or a device not getting any
-	interrupts at all).
-
-	If your system seems to misbehave under OpenBSD, you might want
-	to try booting the kernel with ACPI support disabled.
-
-	To do so, boot with the -c flag at the initial bootloader prompt.
-	After the kernel loads, at the UKC> prompt, enter "disable acpi"
-	followed by "quit". This will disable ACPI support.
-
-	If disabling ACPI helps, it is possible to make this behaviour
-	permanent with the userland config(8) utility. In any case,
-	please open a bug report with sendbug(1), giving as many
-	details as possible, including the dmesg(8) output for both ACPI
-	and ACPI-disabled kernels, as well as the output from acpidump(8)
-	and pcidump(8).

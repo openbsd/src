@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.35 2010/03/16 17:23:09 miod Exp $
+dnl	$OpenBSD: install,v 1.36 2011/08/08 20:03:03 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk.  The easiest way is
@@ -99,7 +99,8 @@ OpenBSDInstallPart2
 	Boot your machine from the installation media as described above.
 
 	It will take a while to load the miniroot image, especially from
-	a slow network connection or a CD-ROM, most likely more than a minute.
+	a slow network connection or a CD-ROM, most likely more than a
+	minute.
 	If some action doesn't eventually happen, or the spinning cursor
 	has stopped and nothing further has happened, either your boot
 	media is bad, your diskless setup is incorrect, or you may have

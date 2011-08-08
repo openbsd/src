@@ -1,4 +1,4 @@
-dnl	$OpenBSD: INSTALL,v 1.44 2010/06/29 19:13:10 miod Exp $
+dnl	$OpenBSD: INSTALL,v 1.45 2011/08/08 20:03:03 miod Exp $
 include(INCLUDE/../m4.common)dnl
 includeit(features)dnl
 INSTALLATION NOTES for OpenBSD/MACHINE OSREV
@@ -107,10 +107,9 @@ access to source code so that you can recompile pieces of the system.
 
 A few methods are provided.  If you have an OpenBSD CD-ROM, the source
 code is provided.  Otherwise, you can get the pieces over the Internet
-using anonymous CVS, CTM, CVSync or FTP.  For more information, see
+using anonymous CVS, CVSync or FTP.  For more information, see
 
 	http://www.OpenBSD.org/anoncvs.html
-	http://www.OpenBSD.org/ctm.html
 	http://www.OpenBSD.org/cvsync.html
 	http://www.OpenBSD.org/ftp.html
 
@@ -185,10 +184,12 @@ be sent by mail to:
 
 	bugs@OpenBSD.org
 
-Use of 'sendbug' is encouraged, however, because bugs reported with it
-are entered into the OpenBSD bugs database, and thus can't slip through
-the cracks.
-
+dnl uncomment when this is true again...
+dnl
+dnl Use of 'sendbug' is encouraged, however, because bugs reported with it
+dnl are entered into the OpenBSD bugs database, and thus can't slip through
+dnl the cracks.
+dnl 
 As a favor, please avoid mailing huge documents or files to the
 mailing lists.  Instead, put the material you would have sent up
 for FTP somewhere, then mail the appropriate list about it, or, if

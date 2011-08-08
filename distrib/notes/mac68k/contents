@@ -1,45 +1,45 @@
-dnl	$OpenBSD: contents,v 1.53 2011/04/10 13:47:19 miod Exp $
+dnl	$OpenBSD: contents,v 1.54 2011/08/08 20:03:03 miod Exp $
 TopPart
 
 OpenBSDdistsets
 
 OpenBSDbsd
 
-	bsdsbc		A slightly different GENERIC MACHINE kernel, using
-			a different SCSI driver for some MACHINE models, which
-			may allow some otherwise incompatible SCSI devices to
-			function with OpenBSD/MACHINE.
-
+dnl	bsdsbc		A slightly different GENERIC MACHINE kernel, using
+dnl			a different SCSI driver for some MACHINE models, which
+dnl			may allow some otherwise incompatible SCSI devices to
+dnl			function with OpenBSD/MACHINE.
+dnl
 OpenBSDrd
 
-	bsdsbc.rd	A slightly different RAMDISK kernel, using
-			a different SCSI driver for some MACHINE models, which
-			may allow some otherwise incompatible SCSI devices to
-			function with OpenBSD/MACHINE.
-
+dnl	bsdsbc.rd	A slightly different RAMDISK kernel, using
+dnl			a different SCSI driver for some MACHINE models, which
+dnl			may allow some otherwise incompatible SCSI devices to
+dnl			function with OpenBSD/MACHINE.
+dnl
 	utils/		The OpenBSD/MACHINE boot program for Mac OS.
 
 DistributionDescription(ten)
 
-OpenBSDbase(49888006,160478255)
+OpenBSDbase(55006013,185741778)
 
-OpenBSDcomp(59123843,199085530)
+OpenBSDcomp(62501585,210417096)
 
-OpenBSDetc(511799,1522575)
+OpenBSDetc(525305,1578964)
 
-OpenBSDgame(2650734,6304930)
+OpenBSDgame(2643560,6316587)
 
-OpenBSDman(7716948,28069759)
+OpenBSDman(9047685,34754033)
 
-OpenBSDxbase(8764728,26625934)
+OpenBSDxbase(12728397,40731032)
 
-OpenBSDxetc(75961,302749)
+OpenBSDxetc(72076,283538)
 
-OpenBSDxfont(35585999,43728442)
+OpenBSDxfont(39421217,50905227)
 
-OpenBSDxserv(3007361,8684510)
+OpenBSDxserv(2841706,8539272)
 
-OpenBSDxshare(2769658,14738551)
+OpenBSDxshare(3439224,18465957)
 
 The directory '../OSREV/MACHINE/utils' contains the OpenBSD/MACHINE boot
 program, used to load the OpenBSD kernel. This program is distributed
