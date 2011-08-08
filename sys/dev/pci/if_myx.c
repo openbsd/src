@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.28 2011/06/23 04:09:08 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.29 2011/08/08 01:30:25 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1426,8 +1426,6 @@ myx_start(struct ifnet *ifp)
 		bus_dmamap_sync(sc->sc_dmat, map, 0,
 		    map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 
-		sc->sc_tx_free -= map->dm_nsegs;
-
 		myx_buf_put(&sc->sc_tx_buf_list, mb);
 
 		flags = MYXTXD_FLAGS_NO_TSO;
@@ -1470,6 +1468,7 @@ myx_start(struct ifnet *ifp)
 		myx_write(sc, offset + idx * sizeof(txd),
 		    &txd, sizeof(txd));
 
+		sc->sc_tx_free -= i;
 		idx += i;
 		idx %= sc->sc_tx_ring_count;
 	}
