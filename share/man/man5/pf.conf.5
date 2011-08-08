@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.504 2011/07/29 10:51:46 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.505 2011/08/08 02:50:57 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 29 2011 $
+.Dd $Mdocdate: August 8 2011 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -2290,10 +2290,16 @@ blind attacker would have to guess the timestamp as well.
 Enforces a TOS for matching IPv4 packets.
 .Ar string
 may be one of
+.Ar critical ,
+.Ar inetcontrol ,
 .Ar lowdelay ,
+.Ar netcontrol ,
 .Ar throughput ,
-or
-.Ar reliability ;
+.Ar reliability ,
+or one of the DiffServ Code Points:
+.Ar ef ,
+.Ar af11 ... af43 ,
+.Ar cs0 ... cs7 ;
 .Ar number
 may be either a hex or decimal number.
 .El
