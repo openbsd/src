@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.651 2011/08/07 15:07:22 krw Exp $
+#	$OpenBSD: install.sub,v 1.652 2011/08/08 15:41:17 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1553,30 +1553,26 @@ set_timezone() {
 		"")	continue ;;
 		"?")	grep -v /. $_zonefile | showcols
 			continue ;;
-		*+([[:space:]])*)
-			echo "'$_zonepath' is not a valid timezone on this system."
-			continue ;;
 		esac
 
-		while isin $_zonepath/ $(cat $_zonefile); do
+		while isin "$_zonepath/" $(cat $_zonefile); do
 			ask "What sub-timezone of '$_zonepath' are you in? ('?' for list)"
 			_zsed=$(echo $_zonepath/ | sed 's,/,\\/,g')
 			resp=${resp%%*(/)}
 			case $resp in
 			"")	;;
 			"?")	sed -n "/^$_zsed/{s/$_zsed//;/\/./!p;}" $_zonefile | showcols ;;
-			*+([[:space:]])*)
-				echo "'$_zonepath/$resp' is not a valid timezone on this system." ;;
 			*)	_zonepath=$_zonepath/$resp ;;
 			esac
 		done
 
-		if isin $_zonepath $(cat $_zonefile); then
+		if isin "$_zonepath" $(cat $_zonefile); then
 			TZ=${_zonepath#$_zoneroot}
 			return
 		fi
 
-		echo "'${_zonepath}' is not a valid timezone on this system."
+		echo -n "'${_zonepath}'"
+		echo " is not a valid timezone on this system."
 	done
 }
 
