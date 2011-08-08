@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.32 2011/06/05 19:41:09 deraadt Exp $	*/
+/*	$OpenBSD: param.c,v 1.33 2011/08/08 19:34:25 deraadt Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ int	mblowat = MBLOWAT;
 int	mcllowat = MCLLOWAT;
 
 #ifndef BUFCACHEPERCENT
-#define BUFCACHEPERCENT	42
+#define BUFCACHEPERCENT	20
 #endif
 int     bufcachepercent = BUFCACHEPERCENT;
 
