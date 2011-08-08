@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.92 2011/08/07 15:18:40 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.93 2011/08/08 13:04:35 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1956,6 +1956,8 @@ in6_ifpprefix(const struct ifnet *ifp, const struct in6_addr *addr)
 #if NCARP > 0
 	    (ifp->if_type != IFT_CARP || rt->rt_ifp != ifp->if_carpdev) &&
 	    (rt->rt_ifp->if_type != IFT_CARP || rt->rt_ifp->if_carpdev != ifp)&&
+	    (ifp->if_type != IFT_CARP || rt->rt_ifp->if_type != IFT_CARP ||
+	    rt->rt_ifp->if_carpdev != ifp->if_carpdev) &&
 #endif
 	    1)) {
 		RTFREE(rt);
