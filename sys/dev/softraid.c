@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.245 2011/07/17 22:46:48 matthew Exp $ */
+/* $OpenBSD: softraid.c,v 1.246 2011/08/08 18:18:22 marco Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3958,7 +3958,7 @@ sr_rebuild_thread(void *arg)
 			percent = 100 - ((psz * 100 - rb * 100) / psz) - 1;
 		else
 			percent = 0;
-		printf("%s: resuming rebuild on %s at %llu%%\n",
+		printf("%s: resuming rebuild on %s at %d%%\n",
 		    DEVNAME(sc), sd->sd_meta->ssd_devname, percent);
 	}
 
