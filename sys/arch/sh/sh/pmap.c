@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.18 2011/04/28 20:40:36 ariane Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.19 2011/08/09 20:21:44 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
@@ -214,15 +214,17 @@ pmap_t
 pmap_create()
 {
 	pmap_t pmap;
+	struct vm_page *pg;
 
 	pmap = pool_get(&__pmap_pmap_pool, PR_WAITOK|PR_ZERO);
 	pmap->pm_asid = -1;
 	pmap->pm_refcnt = 1;
 	/* Allocate page table page holder (512 slot) */
-	pmap->pm_ptp = (pt_entry_t **)
-	    SH3_PHYS_TO_P1SEG(VM_PAGE_TO_PHYS(
-		    uvm_pagealloc(NULL, 0, NULL,
-			UVM_PGA_USERESERVE | UVM_PGA_ZERO)));
+	while ((pg = uvm_pagealloc(NULL, 0, NULL,
+	    UVM_PGA_USERESERVE | UVM_PGA_ZERO)) == NULL)
+		uvm_wait("pmap_create");
+			
+	pmap->pm_ptp = (pt_entry_t **)SH3_PHYS_TO_P1SEG(VM_PAGE_TO_PHYS(pg));
 
 	return (pmap);
 }
