@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.20 2011/07/21 23:29:24 gilles Exp $	*/
+/*	$OpenBSD: parser.c,v 1.21 2011/08/16 19:12:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -82,6 +82,7 @@ static const struct token t_show[] = {
 	{KEYWORD,	"queue",	SHOW_QUEUE,	NULL},
 	{KEYWORD,	"runqueue",	SHOW_RUNQUEUE,	NULL},
 	{KEYWORD,	"stats",	SHOW_STATS,	NULL},
+	{KEYWORD,	"sizes",	SHOW_SIZES,	NULL},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 

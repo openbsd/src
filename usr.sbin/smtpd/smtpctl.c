@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.62 2011/08/16 19:02:03 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.63 2011/08/16 19:12:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -39,7 +39,8 @@
 #include "parser.h"
 
 void usage(void);
-static int show_command_output(struct imsg*);
+static void show_sizes(void);
+static int show_command_output(struct imsg *);
 static int show_stats_output(struct imsg *);
 
 int proctype;
@@ -95,6 +96,9 @@ main(int argc, char *argv[])
 			show_queue(PATH_QUEUE, 0);
 			break;
 		case SHOW_RUNQUEUE:
+			break;
+		case SHOW_SIZES:
+			show_sizes();
 			break;
 		default:
 			goto connected;
@@ -256,6 +260,31 @@ show_command_output(struct imsg *imsg)
 		errx(1, "wrong message in summary: %u", imsg->hdr.type);
 	}
 	return (1);
+}
+
+void
+show_sizes(void)
+{
+	/*
+	 * size _does_ matter.
+	 *
+	 * small changes to ramqueue and diskqueue structures may cause
+	 * large changes to memory and disk usage on busy/large hosts.
+	 *
+	 * this will help developers optimize memory/disk use, and help
+	 * admins understand how the ramqueue.size / ramqueue.size.max
+	 * stats are computed (smtpctl show stats).
+	 *
+	 * -- gilles@
+	 *
+	 */
+	printf("struct ramqueue: %ld\n", sizeof (struct ramqueue));
+	printf("struct ramqueue_host: %ld\n", sizeof (struct ramqueue_host));
+	printf("struct ramqueue_message: %ld\n", sizeof (struct ramqueue_message));
+	printf("struct ramqueue_envelope: %ld\n", sizeof (struct ramqueue_envelope));
+
+	printf("struct envelope: %ld\n", sizeof (struct envelope));
+	printf("struct delivery: %ld\n", sizeof (struct delivery));
 }
 
 static int
