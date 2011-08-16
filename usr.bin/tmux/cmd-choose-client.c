@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-client.c,v 1.5 2011/01/04 00:42:46 nicm Exp $ */
+/* $OpenBSD: cmd-choose-client.c,v 1.6 2011/08/16 10:00:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -76,9 +76,11 @@ cmd_choose_client_exec(struct cmd *self, struct cmd_ctx *ctx)
 		idx++;
 
 		window_choose_add(wl->window->active, i,
-		    "%s: %s [%ux%u %s]%s", c->tty.path,
+		    "%s: %s [%ux%u %s]%s%s", c->tty.path,
 		    c->session->name, c->tty.sx, c->tty.sy,
-		    c->tty.termname, c->tty.flags & TTY_UTF8 ? " (utf8)" : "");
+		    c->tty.termname,
+		    c->tty.flags & TTY_UTF8 ? " (utf8)" : "",
+		    c->flags & CLIENT_READONLY ? " (ro)" : "");
 	}
 
 	cdata = xmalloc(sizeof *cdata);

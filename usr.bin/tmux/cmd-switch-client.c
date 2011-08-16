@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-switch-client.c,v 1.12 2011/04/05 19:37:01 nicm Exp $ */
+/* $OpenBSD: cmd-switch-client.c,v 1.13 2011/08/16 10:00:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -32,9 +32,9 @@ int	cmd_switch_client_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_switch_client_entry = {
 	"switch-client", "switchc",
-	"lc:npt:", 0, 0,
-	"[-lnp] [-c target-client] [-t target-session]",
-	0,
+	"lc:npt:r", 0, 0,
+	"[-lnpr] [-c target-client] [-t target-session]",
+	CMD_READONLY,
 	cmd_switch_client_key_binding,
 	NULL,
 	cmd_switch_client_exec
@@ -66,6 +66,16 @@ cmd_switch_client_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 	if ((c = cmd_find_client(ctx, args_get(args, 'c'))) == NULL)
 		return (-1);
+
+	if (args_has(args, 'r')) {
+		if (c->flags & CLIENT_READONLY) {
+			c->flags &= ~CLIENT_READONLY;
+			ctx->info(ctx, "made client writable");
+		} else {
+			c->flags |= CLIENT_READONLY;
+			ctx->info(ctx, "made client read-only");
+		}
+	}
 
 	s = NULL;
 	if (args_has(args, 'n')) {
