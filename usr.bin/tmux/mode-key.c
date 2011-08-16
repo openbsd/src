@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-key.c,v 1.38 2011/05/18 18:06:36 nicm Exp $ */
+/* $OpenBSD: mode-key.c,v 1.39 2011/08/16 09:47:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -126,12 +126,16 @@ const struct mode_key_cmdstr mode_key_cmdstr_copy[] = {
 const struct mode_key_entry mode_key_vi_edit[] = {
 	{ '\003' /* C-c */,	0, MODEKEYEDIT_CANCEL },
 	{ '\010' /* C-h */, 	0, MODEKEYEDIT_BACKSPACE },
-	{ '\025' /* C-u	*/,	0, MODEKEYEDIT_DELETELINE },
 	{ '\011' /* Tab */,	0, MODEKEYEDIT_COMPLETE },
+	{ '\025' /* C-u	*/,	0, MODEKEYEDIT_DELETELINE },
 	{ '\033' /* Escape */,	0, MODEKEYEDIT_SWITCHMODE },
 	{ '\r',			0, MODEKEYEDIT_ENTER },
 	{ KEYC_BSPACE,		0, MODEKEYEDIT_BACKSPACE },
 	{ KEYC_DC,		0, MODEKEYEDIT_DELETE },
+	{ KEYC_DOWN,		0, MODEKEYEDIT_HISTORYDOWN },
+	{ KEYC_LEFT,		0, MODEKEYEDIT_CURSORLEFT },
+	{ KEYC_RIGHT,		0, MODEKEYEDIT_CURSORRIGHT },
+	{ KEYC_UP,		0, MODEKEYEDIT_HISTORYUP },
 
 	{ '$',			1, MODEKEYEDIT_ENDOFLINE },
 	{ '0',			1, MODEKEYEDIT_STARTOFLINE },
