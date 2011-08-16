@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.34 2011/08/16 17:30:02 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.35 2011/08/16 17:31:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -1935,7 +1935,7 @@ EXIT(switch_trampoline)
  * Signal "trampoline" code. Invoked from RTE setup by sendsig().
  */
 ENTRY(sigcode,0)
-	ldd	0x18(%arg3), %r19
+	ldd	0x18(%arg3), %dp
 	ldd	0x10(%arg3), %arg3
 	.call
 	ble	0(%sr0, %arg3)
