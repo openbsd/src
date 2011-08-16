@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.29 2011/07/30 21:02:13 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.30 2011/08/16 14:18:25 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -629,7 +629,8 @@ get_sysvpattern(const char **p, SymTable *ctxt UNUSED, bool err, int endc)
 	}
 	Buf_Init(&buf, 0);
 	for (cp2 = cp+1;; cp2++) {
-		if ((*cp2 == ':' || *cp2 == endc) && cnt == 0)
+		if (((*cp2 == ':' && cp2[1] != endc) || *cp2 == endc) && 
+		    cnt == 0)
 			break;
 		if (*cp2 == '\0') {
 			Buf_Destroy(&buf);
