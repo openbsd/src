@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.39 2011/07/05 04:48:01 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.40 2011/08/16 17:36:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -519,7 +519,7 @@ ptlball(void)
 		vaddr_t off = pdc_cache.it_off_base;
 		for (j = 0; j < pdc_cache.it_off_count; j++) {
 			for (k = 0; k < pdc_cache.it_loop; k++)
-				pitlb(sp, off);
+				pitlbe(sp, off);
 			off += pdc_cache.it_off_stride;
 		}
 		sp += pdc_cache.it_sp_stride;
@@ -531,7 +531,7 @@ ptlball(void)
 		vaddr_t off = pdc_cache.dt_off_base;
 		for (j = 0; j < pdc_cache.dt_off_count; j++) {
 			for (k = 0; k < pdc_cache.dt_loop; k++)
-				pdtlb(sp, off);
+				pdtlbe(sp, off);
 			off += pdc_cache.dt_off_stride;
 		}
 		sp += pdc_cache.dt_sp_stride;

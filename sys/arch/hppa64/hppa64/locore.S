@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.35 2011/08/16 17:31:42 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.36 2011/08/16 17:36:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -1512,6 +1512,30 @@ LEAF_ENTRY(pitlb)
 	mfsp	%sr1, %arg2
 	mtsp	%arg0, %sr1
 	pitlb	%r0(%sr1, %arg1)
+	bv	%r0(%rp)
+	mtsp	%arg2, %sr1
+EXIT(pitlb)
+
+/*
+ * void  
+ * pdtlbe(pa_space_t sp, vaddr_t va)
+ */
+LEAF_ENTRY(pdtlbe)
+	mfsp	%sr1, %arg2
+	mtsp	%arg0, %sr1
+	pdtlbe	%r0(%sr1, %arg1)
+	bv	%r0(%rp)
+	mtsp	%arg2, %sr1
+EXIT(pdtlb)
+
+/*
+ * void  
+ * pitlbe(pa_space_t sp, vaddr_t va)
+ */
+LEAF_ENTRY(pitlbe)
+	mfsp	%sr1, %arg2
+	mtsp	%arg0, %sr1
+	pitlbe	%r0(%sr1, %arg1)
 	bv	%r0(%rp)
 	mtsp	%arg2, %sr1
 EXIT(pitlb)
