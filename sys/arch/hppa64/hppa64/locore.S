@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.33 2011/08/07 22:35:53 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.34 2011/08/16 17:30:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -1819,7 +1819,7 @@ kstack_ok
 	std	%arg1, CI_CURPROC(%r1)
 
 	/* If old process exited, don't bother. */
-	comb,=,n %r0, %arg2, switch_exited
+	comb,=,n %r0, %arg0, switch_exited
 
 	/*
 	 * 2. save old proc context
