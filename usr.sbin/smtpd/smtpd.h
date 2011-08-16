@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.229 2011/07/21 23:29:24 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.230 2011/08/16 19:02:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -563,7 +563,7 @@ struct session {
 
 /* ram-queue structures */
 struct ramqueue_host {
-	RB_ENTRY(ramqueue_host)		host_entry;
+	RB_ENTRY(ramqueue_host)		hosttree_entry;
 	TAILQ_HEAD(,ramqueue_batch)	batch_queue;
 	u_int64_t			h_id;
 	char				hostname[MAXHOSTNAMELEN];
@@ -580,15 +580,22 @@ struct ramqueue_batch {
 struct ramqueue_envelope {
 	TAILQ_ENTRY(ramqueue_envelope)	 queue_entry;
 	TAILQ_ENTRY(ramqueue_envelope)	 batchqueue_entry;
+	RB_ENTRY(ramqueue_envelope)	 evptree_entry;
 	struct ramqueue_host		*host;
 	struct ramqueue_batch		*batch;
+	struct ramqueue_message		*message;
 	u_int64_t      			 evpid;
 	time_t				 sched;
 };
-
+struct ramqueue_message {
+	RB_ENTRY(ramqueue_message)		msgtree_entry;
+	RB_HEAD(evptree, ramqueue_envelope)	evptree;
+	u_int32_t				msgid;
+};
 struct ramqueue {
 	struct ramqueue_envelope	       *current_evp;
 	RB_HEAD(hosttree, ramqueue_host)	hosttree;
+	RB_HEAD(msgtree, ramqueue_message)	msgtree;
 	TAILQ_HEAD(,ramqueue_envelope)		queue;
 };
 
@@ -625,7 +632,6 @@ struct smtpd {
 	TAILQ_HEAD(maplist, map)		*sc_maps, *sc_maps_reload;
 	TAILQ_HEAD(rulelist, rule)		*sc_rules, *sc_rules_reload;
 	SPLAY_HEAD(sessiontree, session)	 sc_sessions;
-	SPLAY_HEAD(msgtree, envelope)		 sc_messages;
 	SPLAY_HEAD(ssltree, ssl)		*sc_ssl;
 	SPLAY_HEAD(childtree, child)		 children;
 	SPLAY_HEAD(lkatree, lka_session)	 lka_sessions;
@@ -704,9 +710,11 @@ struct s_lka {
 struct s_ramqueue {
 	size_t		hosts;
 	size_t		batches;
+	size_t		messages;
 	size_t		envelopes;
 	size_t		hosts_max;
 	size_t		batches_max;
+	size_t		messages_max;
 	size_t		envelopes_max;
 };
 
@@ -1085,6 +1093,8 @@ void ramqueue_init(struct ramqueue *);
 int ramqueue_load(struct ramqueue *, time_t *);
 int ramqueue_load_offline(struct ramqueue *);
 int ramqueue_host_cmp(struct ramqueue_host *, struct ramqueue_host *);
+int ramqueue_msg_cmp(struct ramqueue_message *, struct ramqueue_message *);
+int ramqueue_evp_cmp(struct ramqueue_envelope *, struct ramqueue_envelope *);
 void ramqueue_remove(struct ramqueue *, struct ramqueue_envelope *);
 int ramqueue_is_empty(struct ramqueue *);
 int ramqueue_is_empty(struct ramqueue *);
@@ -1097,7 +1107,13 @@ struct ramqueue_envelope *ramqueue_envelope_by_id(struct ramqueue *, u_int64_t);
 struct ramqueue_envelope *ramqueue_first_envelope(struct ramqueue *);
 struct ramqueue_envelope *ramqueue_next_envelope(struct ramqueue *);
 struct ramqueue_envelope *ramqueue_batch_first_envelope(struct ramqueue_batch *);
-RB_PROTOTYPE(hosttree, ramqueue_host, host_entry, ramqueue_host_cmp);
+void ramqueue_insert(struct ramqueue *, struct envelope *, time_t);
+int ramqueue_message_is_empty(struct ramqueue_message *);
+void ramqueue_remove_message(struct ramqueue *, struct ramqueue_message *);
+
+RB_PROTOTYPE(hosttree, ramqueue_host, hosttree_entry, ramqueue_host_cmp);
+RB_PROTOTYPE(msgtree,  ramqueue_message, msg_entry, ramqueue_msg_cmp);
+RB_PROTOTYPE(evptree,  ramqueue_envelope, evp_entry, ramqueue_evp_cmp);
 
 
 /* runner.c */

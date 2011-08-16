@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.108 2011/07/21 23:29:24 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.109 2011/08/16 19:02:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -41,8 +41,6 @@
 #include "smtpd.h"
 #include "log.h"
 
-
-void ramqueue_insert(struct ramqueue *, struct envelope *, time_t);
 
 static void runner_imsg(struct imsgev *, struct imsg *);
 static void runner_shutdown(void);
@@ -425,6 +423,7 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 {
 	struct ramqueue_host	 *host = rq_evp->host;
 	struct ramqueue_batch	 *batch = rq_evp->batch;
+	struct ramqueue_message	 *message = rq_evp->message;
 	struct envelope envelope;
 	int fd;
 
@@ -502,6 +501,13 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 		
 	default:
 		fatalx("runner_process_batchqueue: unknown type");
+	}
+
+	if (ramqueue_message_is_empty(message)) {
+		ramqueue_remove_message(&env->sc_rqueue, message);
+		free(message);
+		env->stats->ramqueue.messages--;
+		
 	}
 
 	if (ramqueue_batch_is_empty(batch)) {
