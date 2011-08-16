@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigpending.S,v 1.4 2011/04/21 14:12:20 jsing Exp $	*/
+/*	$OpenBSD: sigpending.S,v 1.5 2011/08/16 18:58:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -29,9 +29,12 @@
 #include "SYS.h"
 
 SYSENTRY(sigpending)
+	std	%arg0, HPPA_FRAME_ARG(0)(%sp)
+
 	SYSCALL(sigpending)
-	ldd	HPPA_FRAME_ARG(0)(%sp), %arg3
-	std	%ret0, 0(%arg3)
+
+	ldd	HPPA_FRAME_ARG(0)(%sp), %arg0
+	stw	%ret0, 0(%arg0)
 	bv	%r0(%rp)
 	copy	%r0, %ret0
 SYSEXIT(sigpending)
