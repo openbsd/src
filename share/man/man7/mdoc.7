@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.78 2011/08/03 21:03:11 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.79 2011/08/16 23:27:52 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 3 2011 $
+.Dd $Mdocdate: August 16 2011 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -471,6 +471,21 @@ Print verbose information.
 .Ed
 .Pp
 Manuals not documenting a command won't include the above fragment.
+.Pp
+Since the
+.Em DESCRIPTION
+section usually contains most of the text of a manual, longer manuals
+often use the
+.Sx \&Ss
+macro to form subsections.
+In very long manuals, the
+.Em DESCRIPTION
+may be split into multiple sections, each started by an
+.Sx \&Sh
+macro followed by a non-standard section name, and each having
+several subsections, like in the present
+.Nm
+manual.
 .It Em IMPLEMENTATION NOTES
 Implementation-specific notes should be kept here.
 This is useful when implementing standard functions that may have side
@@ -532,7 +547,13 @@ This section should exist for most manuals.
 Cross-references should conventionally be ordered first by section, then
 alphabetically.
 .Pp
+References to other documentation concerning the topic of the manual page,
+for example authoritative books or journal articles, may also be
+provided in this section.
+.Pp
 See
+.Sx \&Rs
+and
 .Sx \&Xr .
 .It Em STANDARDS
 References any standards implemented or used.
@@ -543,7 +564,8 @@ section should be used instead.
 See
 .Sx \&St .
 .It Em HISTORY
-A brief history of the subject, including where support first appeared.
+A brief history of the subject, including where it was first implemented,
+and when it was ported to or reimplemented for the operating system at hand.
 .It Em AUTHORS
 Credits to the person or persons who wrote the code and/or documentation.
 Authors should generally be noted by both name and email address.
@@ -1176,20 +1198,27 @@ The
 must be one of the following:
 .Bl -tag -width 13n -offset indent
 .It Fl centered
-Centre-justify each line.
+Produce one output line from each input line, and centre-justify each line.
 Using this display type is not recommended; many
 .Nm
 implementations render it poorly.
 .It Fl filled
-Left- and right-justify the block.
+Change the positions of line breaks to fill each line, and left- and
+right-justify the resulting block.
 .It Fl literal
-Do not justify the block at all.
+Produce one output line from each input line,
+and do not justify the block at all.
 Preserve white space as it appears in the input.
+Always use a constant-width font.
+Use this for displaying source code.
 .It Fl ragged
-Only left-justify the block.
+Change the positions of line breaks to fill each line, and left-justify
+the resulting block.
 .It Fl unfilled
-An alias for
-.Fl literal .
+The same as
+.Fl literal ,
+but using the same font as for normal text, which is a variable width font
+if supported by the output device.
 .El
 .Pp
 The
@@ -1205,7 +1234,7 @@ which may be one of the following:
 .It
 One of the pre-defined strings
 .Cm indent ,
-the width of standard indentation;
+the width of a standard indentation (six constant width characters);
 .Cm indent-two ,
 twice
 .Cm indent ;
@@ -1382,9 +1411,12 @@ except that dashes are used in place of bullets.
 Like
 .Fl inset ,
 except that item heads are not parsed for macro invocations.
-.\" but with additional formatting to the head.
+Most often used in the
+.Em DIAGNOSTICS
+section with error constants in the item heads.
 .It Fl enum
 A numbered list.
+No item heads can be specified.
 Formatted like
 .Fl bullet ,
 except that cardinal numbers are used in place of bullets,
@@ -1423,6 +1455,13 @@ When an item head fits inside the indentation, the item body follows
 this head on the same output line.
 Otherwise, the body starts on the output line following the head.
 .El
+.Pp
+Lists may be nested within lists and displays.
+Nesting of
+.Fl column
+and
+.Fl enum
+lists may not be portable.
 .Pp
 See also
 .Sx \&El
@@ -1500,12 +1539,13 @@ and
 .Sx \&Ux .
 .Ss \&Bt
 Prints
-.Dq is currently in beta test .
+.Dq is currently in beta test.
 .Ss \&Bx
 Format the BSD version provided as an argument, or a default value if no
 argument is provided.
 .Pp
 Examples:
+.Dl \&.Bx 4.3 Tahoe
 .Dl \&.Bx 4.4
 .Dl \&.Bx
 .Pp
@@ -1864,9 +1904,12 @@ See also
 and
 .Sx \&It .
 .Ss \&Em
-Denotes text that should be emphasised.
+Denotes text that should be
+.Em emphasised .
 Note that this is a presentation term and should not be used for
 stylistically decorating technical terms.
+Depending on the output device, this is usually represented
+using an italic font or underlined characters.
 .Pp
 Examples:
 .Dl \&.Em Warnings!
@@ -1874,9 +1917,10 @@ Examples:
 .Pp
 See also
 .Sx \&Bf ,
-.Sx \&Sy ,
+.Sx \&Li ,
+.Sx \&No ,
 and
-.Sx \&Li .
+.Sx \&Sy .
 .Ss \&En
 This macro is obsolete and not implemented in
 .Xr mandoc 1 .
@@ -1993,7 +2037,7 @@ output.
 Examples:
 .Dl ".Nm cat Fl v No considered harmful"
 .Dl ".Nm cp Fl pR Ar source ... directory"
-.Dl ".Nm find Ar dir Fl type Cm d Fl name Pa CVS
+.Dl ".Nm find Ar dir Fl type Cm d Fl name Pa CVS"
 .Dl ".Nm kill Fl Ar signal_number pid"
 .Dl ".Nm su Fl"
 .Pp
@@ -2068,7 +2112,13 @@ See also
 and
 .Sx \&Ft .
 .Ss \&Fr
-This macro is obsolete and not implemented.
+This macro is obsolete and not implemented in
+.Xr mandoc 1 .
+.Pp
+It was used to show function return values.
+The syntax was:
+.Pp
+.Dl Pf . Sx \&Fr Ar value
 .Ss \&Ft
 A function type.
 Its syntax is as follows:
@@ -2111,7 +2161,13 @@ See also
 and
 .Sx \&Ux .
 .Ss \&Hf
-This macro is obsolete and not implemented.
+This macro is not implemented in
+.Xr mandoc 1 .
+.Pp
+It was used to include the contents of a (header) file literally.
+The syntax was:
+.Pp
+.Dl Pf . Sx \&Hf Ar filename
 .Ss \&Ic
 Designate an internal or interactive command.
 This is similar to
@@ -2250,15 +2306,21 @@ Examples:
 .Dl \&.Lb libz
 .Dl \&.Lb mdoc
 .Ss \&Li
-Denotes text that should be in a literal font mode.
+Denotes text that should be in a
+.Li literal
+font mode.
 Note that this is a presentation term and should not be used for
 stylistically decorating technical terms.
 .Pp
+On terminal output devices, this is often indistinguishable from
+normal text.
+.Pp
 See also
 .Sx \&Bf ,
-.Sx \&Sy ,
+.Sx \&Em ,
+.Sx \&No ,
 and
-.Sx \&Em .
+.Sx \&Sy .
 .Ss \&Lk
 Format a hyperlink.
 Its syntax is as follows:
@@ -2302,8 +2364,8 @@ section subsequent the
 macro.
 .Pp
 Examples:
-.Dl \&.Sx \&Nd mdoc language reference
-.Dl \&.Sx \&Nd format and display UNIX manuals
+.Dl Pf . Sx \&Nd mdoc language reference
+.Dl Pf . Sx \&Nd format and display UNIX manuals
 .Pp
 The
 .Sx \&Nd
@@ -2355,21 +2417,44 @@ macro rather than
 .Sx \&Nm
 to mark up the name of the manual page.
 .Ss \&No
-A
-.Dq noop
-macro used to terminate prior macro contexts.
+Normal text.
+Closes the scope of any preceding in-line macro.
+When used after physical formatting macros like
+.Sx \&Em
+or
+.Sx \&Sy ,
+switches back to the standard font face and weight.
+Can also be used to embed plain text strings in macro lines
+using semantic annotation macros.
 .Pp
 Examples:
-.Dl \&.Sx \&Fl ab \&No cd \&Fl ef
+.Dl ".Em italic , Sy bold , No and roman"
+.Pp
+.Bd -literal -offset indent -compact
+\&.Sm off
+\&.Cm :C No / Ar pattern No / Ar replacement No /
+\&.Sm on
+.Ed
+.Pp
+See also
+.Sx \&Em ,
+.Sx \&Li ,
+and
+.Sx \&Sy .
 .Ss \&Ns
-Suppress a space.
-Following invocation, text is interpreted as free-form text until a
-macro is encountered.
+Suppress a space between the output of the preceding macro
+and the following text or macro.
+Following invocation, input is interpreted as normal text
+just like after an
+.Sx \&No
+macro.
 .Pp
 This has no effect when invoked at the start of a macro line.
 .Pp
 Examples:
-.Dl \&.Fl o \&Ns \&Ar output
+.Dl ".Ar name Ns = Ns Ar value"
+.Dl ".Cm :M Ns Ar pattern"
+.Dl ".Fl o Ns Ar output"
 .Pp
 See also
 .Sx \&No
@@ -2447,10 +2532,13 @@ See also
 and
 .Sx \&Dt .
 .Ss \&Ot
-Unknown usage.
+This macro is obsolete and not implemented in
+.Xr mandoc 1 .
 .Pp
-.Em Remarks :
-this macro has been deprecated.
+Historical
+.Xr mdoc 7
+packages described it as
+.Dq "old function type (FORTRAN)" .
 .Ss \&Ox
 Format the
 .Ox
@@ -2486,19 +2574,25 @@ See also
 Close parenthesised context opened by
 .Sx \&Po .
 .Ss \&Pf
-Removes the space
+Removes the space between its argument
 .Pq Dq prefix
-between its arguments.
+and the following macro.
 Its syntax is as follows:
 .Pp
-.D1 Pf \. \&Pf Ar prefix suffix
+.D1 .Pf Ar prefix macro arguments ...
 .Pp
-The
-.Ar suffix
-argument may be a macro.
+This is equivalent to:
+.Pp
+.D1 .No Ar prefix No \&Ns Ar macro arguments ...
 .Pp
 Examples:
-.Dl \&.Pf \e. \&Sx \&Pf \&Ar prefix suffix
+.Dl ".Pf $ Ar variable_name"
+.Dl ".Pf 0x Ar hex_digits"
+.Pp
+See also
+.Sx \&Ns
+and
+.Sx \&Sm .
 .Ss \&Po
 Multi-line version of
 .Sx \&Pq .
@@ -2506,6 +2600,18 @@ Multi-line version of
 Break a paragraph.
 This will assert vertical space between prior and subsequent macros
 and/or text.
+.Pp
+Paragraph breaks are not needed before or after
+.Sx \&Sh
+or
+.Sx \&Ss
+macros or before displays
+.Pq Sx \&Bd
+or lists
+.Pq Sx \&Bl
+unless the
+.Fl compact
+flag is given.
 .Ss \&Pq
 Parenthesised enclosure.
 .Pp
@@ -2525,7 +2631,7 @@ Multi-line version of
 .Sx \&Qq .
 .Ss \&Qq
 Encloses its arguments in
-.Dq typewriter
+.Qq typewriter
 double-quotes.
 Consider using
 .Sx \&Dq .
@@ -2636,7 +2742,7 @@ Multi-line version of
 .Sx \&Sq .
 .Ss \&Sq
 Encloses its arguments in
-.Dq typewriter
+.Sq typewriter
 single-quotes.
 .Pp
 See also
@@ -2645,13 +2751,15 @@ See also
 and
 .Sx \&So .
 .Ss \&Ss
-Begin a new sub-section.
+Begin a new subsection.
 Unlike with
 .Sx \&Sh ,
-there's no convention for sub-sections.
-Conventional sections, as described in
-.Sx MANUAL STRUCTURE ,
-rarely have sub-sections.
+there is no convention for the naming of subsections.
+Except
+.Em DESCRIPTION ,
+the conventional sections described in
+.Sx MANUAL STRUCTURE
+rarely have subsections.
 .Pp
 Sub-section names should be unique so that they may be keyed by
 .Sx \&Sx .
@@ -2760,8 +2868,8 @@ The following standards are recognised:
 .St -svid4
 .El
 .Ss \&Sx
-Reference a section or sub-section.
-The referenced section or sub-section name must be identical to the
+Reference a section or subsection in the same manual page.
+The referenced section or subsection name must be identical to the
 enclosed argument, including whitespace.
 .Pp
 Examples:
@@ -2779,9 +2887,10 @@ stylistically decorating technical terms.
 .Pp
 See also
 .Sx \&Bf ,
+.Sx \&Em ,
 .Sx \&Li ,
 and
-.Sx \&Em .
+.Sx \&No .
 .Ss \&Ta
 Table cell separator in
 .Sx \&Bl Fl column
@@ -2790,11 +2899,16 @@ lists; can only be used below
 .Ss \&Tn
 Format a tradename.
 .Pp
+Since this macro is often implemented to use a small caps font,
+it has historically been used for acronyms (like ASCII) as well.
+Such usage is not recommended because it would use the same macro
+sometimes for semantical annotation, sometimes for physical formatting.
+.Pp
 Examples:
 .Dl \&.Tn IBM
 .Ss \&Ud
 Prints out
-.Dq currently under development .
+.Dq currently under development.
 .Ss \&Ux
 Format the UNIX name.
 Accepts no argument.
@@ -3090,7 +3204,6 @@ This is not supported by mandoc.
 .Xr mandoc 1 ,
 .Xr man 7 ,
 .Xr mandoc_char 7 ,
-.Xr mdoc.samples 7 ,
 .Xr roff 7 ,
 .Xr tbl 7
 .Sh HISTORY
