@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.17 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.18 2011/08/17 18:58:45 jasper Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -193,6 +193,7 @@ const struct cfattach uticom_ca = {
 
 static const struct usb_devno uticom_devs[] = {
 	{ USB_VENDOR_TI, USB_PRODUCT_TI_TUSB3410 },
+	{ USB_VENDOR_TI, USB_PRODUCT_TI_MSP430_JTAG },
 	{ USB_VENDOR_STARTECH, USB_PRODUCT_STARTECH_ICUSB232X },
 	{ USB_VENDOR_MOXA, USB_PRODUCT_MOXA_UPORT1110 },
 	{ USB_VENDOR_ABBOTT, USB_PRODUCT_ABBOTT_STEREO_PLUG }
