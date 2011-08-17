@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramqueue.c,v 1.11 2011/08/16 19:02:03 gilles Exp $	*/
+/*	$OpenBSD: ramqueue.c,v 1.12 2011/08/17 19:36:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -383,28 +383,36 @@ ramqueue_remove_message(struct ramqueue *rqueue, struct ramqueue_message *rq_msg
 }
 
 void
-ramqueue_reschedule(struct ramqueue *rqueue, u_int64_t id)
+ramqueue_reschedule(struct ramqueue *rq, u_int64_t id)
 {
+	struct ramqueue_message *rq_msg;
 	struct ramqueue_envelope *rq_evp;
-	time_t tm;
 
-	tm = time(NULL);
-	TAILQ_FOREACH(rq_evp, &rqueue->queue, queue_entry) {
-		if (id != rq_evp->evpid &&
-		    (id <= 0xffffffffLL &&
-			evpid_to_msgid(rq_evp->evpid) != id))
-			continue;
-
-		TAILQ_REMOVE(&rqueue->queue, rq_evp, queue_entry);
-		rq_evp->sched = 0;
-		TAILQ_INSERT_HEAD(&rqueue->queue, rq_evp, queue_entry);
-
-		/* we were scheduling one envelope and found it,
-		 * no need to go through the entire queue
-		 */
-		if (id > 0xffffffffLL)
-			break;
+	/* scheduling by evpid */
+	if (id > 0xffffffffL) {
+		rq_evp = ramqueue_lookup_envelope(rq, id);
+		if (rq_evp == NULL)
+			return;
+		ramqueue_reschedule_envelope(rq, rq_evp);
+		return;
 	}
+
+	rq_msg = ramqueue_lookup_message(rq, id);
+	if (rq_msg == NULL)
+		return;
+
+	/* scheduling by msgid */
+	RB_FOREACH(rq_evp, evptree, &rq_msg->evptree) {
+		ramqueue_reschedule_envelope(rq, rq_evp);
+	}
+}
+
+void
+ramqueue_reschedule_envelope(struct ramqueue *rq, struct ramqueue_envelope *rq_evp)
+{
+	rq_evp->sched = 0;
+	TAILQ_REMOVE(&rq->queue, rq_evp, queue_entry);
+	TAILQ_INSERT_HEAD(&rq->queue, rq_evp, queue_entry);
 }
 
 struct ramqueue_envelope *
@@ -439,6 +447,40 @@ ramqueue_evp_cmp(struct ramqueue_envelope *e1, struct ramqueue_envelope *e2)
 	return (e1->evpid < e2->evpid ? -1 : e1->evpid > e2->evpid);
 }
 
+struct ramqueue_host *
+ramqueue_lookup_host(struct ramqueue *rq, char *hostname)
+{
+	struct ramqueue_host hostkey;
+
+	if (strlcpy(hostkey.hostname, hostname, sizeof(hostkey.hostname))
+	    >= sizeof(hostkey.hostname))
+		fatalx("ramqueue_lookup_host: hostname truncated");
+
+	return RB_FIND(hosttree, &rq->hosttree, &hostkey);
+}
+
+struct ramqueue_message *
+ramqueue_lookup_message(struct ramqueue *rq, u_int32_t msgid)
+{
+	struct ramqueue_message  msgkey;
+
+	msgkey.msgid = msgid;
+	return RB_FIND(msgtree, &rq->msgtree, &msgkey);
+}
+
+struct ramqueue_envelope *
+ramqueue_lookup_envelope(struct ramqueue *rq, u_int64_t evpid)
+{
+	struct ramqueue_envelope  evpkey;
+	struct ramqueue_message *rq_msg;
+
+	rq_msg = ramqueue_lookup_message(rq, evpid_to_msgid(evpid));
+	if (rq_msg == NULL)
+		return NULL;
+
+	evpkey.evpid = evpid;
+	return RB_FIND(evptree, &rq_msg->evptree, &evpkey);
+}
 
 RB_GENERATE(hosttree, ramqueue_host, hosttree_entry, ramqueue_host_cmp);
 RB_GENERATE(msgtree, ramqueue_message, msgtree_entry, ramqueue_msg_cmp);

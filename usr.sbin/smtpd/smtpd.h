@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.230 2011/08/16 19:02:03 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.231 2011/08/17 19:36:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1102,7 +1102,6 @@ int ramqueue_batch_is_empty(struct ramqueue_batch *);
 int ramqueue_host_is_empty(struct ramqueue_host *);
 void ramqueue_remove_batch(struct ramqueue_host *, struct ramqueue_batch *);
 void ramqueue_remove_host(struct ramqueue *, struct ramqueue_host *);
-void ramqueue_reschedule(struct ramqueue *, u_int64_t);
 struct ramqueue_envelope *ramqueue_envelope_by_id(struct ramqueue *, u_int64_t);
 struct ramqueue_envelope *ramqueue_first_envelope(struct ramqueue *);
 struct ramqueue_envelope *ramqueue_next_envelope(struct ramqueue *);
@@ -1110,6 +1109,13 @@ struct ramqueue_envelope *ramqueue_batch_first_envelope(struct ramqueue_batch *)
 void ramqueue_insert(struct ramqueue *, struct envelope *, time_t);
 int ramqueue_message_is_empty(struct ramqueue_message *);
 void ramqueue_remove_message(struct ramqueue *, struct ramqueue_message *);
+
+struct ramqueue_host *ramqueue_lookup_host(struct ramqueue *, char *);
+struct ramqueue_message *ramqueue_lookup_message(struct ramqueue *, u_int32_t);
+struct ramqueue_envelope *ramqueue_lookup_envelope(struct ramqueue *, u_int64_t);
+
+void ramqueue_reschedule(struct ramqueue *, u_int64_t);
+void ramqueue_reschedule_envelope(struct ramqueue *, struct ramqueue_envelope *);
 
 RB_PROTOTYPE(hosttree, ramqueue_host, hosttree_entry, ramqueue_host_cmp);
 RB_PROTOTYPE(msgtree,  ramqueue_message, msg_entry, ramqueue_msg_cmp);
