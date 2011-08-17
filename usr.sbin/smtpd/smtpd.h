@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.232 2011/08/17 20:04:43 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.233 2011/08/17 20:35:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -581,15 +581,15 @@ struct ramqueue_envelope {
 	TAILQ_ENTRY(ramqueue_envelope)	 queue_entry;
 	TAILQ_ENTRY(ramqueue_envelope)	 batchqueue_entry;
 	RB_ENTRY(ramqueue_envelope)	 evptree_entry;
-	struct ramqueue_host		*host;
-	struct ramqueue_batch		*batch;
-	struct ramqueue_message		*message;
+	struct ramqueue_batch		*rq_batch;
+	struct ramqueue_message		*rq_msg;
 	u_int64_t      			 evpid;
 	time_t				 sched;
 };
 struct ramqueue_message {
 	RB_ENTRY(ramqueue_message)		msgtree_entry;
 	RB_HEAD(evptree, ramqueue_envelope)	evptree;
+	struct ramqueue_host		       *rq_host;
 	u_int32_t				msgid;
 };
 struct ramqueue {
@@ -1116,7 +1116,7 @@ struct ramqueue_envelope *ramqueue_lookup_envelope(struct ramqueue *, u_int64_t)
 void ramqueue_schedule(struct ramqueue *, u_int64_t);
 void ramqueue_schedule_envelope(struct ramqueue *, struct ramqueue_envelope *);
 
-void ramqueue_remove_renvelope(struct ramqueue *, struct ramqueue_envelope *);
+void ramqueue_remove_envelope(struct ramqueue *, struct ramqueue_envelope *);
 
 
 RB_PROTOTYPE(hosttree, ramqueue_host, hosttree_entry, ramqueue_host_cmp);
@@ -1127,6 +1127,9 @@ RB_PROTOTYPE(evptree,  ramqueue_envelope, evp_entry, ramqueue_evp_cmp);
 /* runner.c */
 pid_t runner(void);
 void message_reset_flags(struct envelope *);
+void runner_schedule(struct ramqueue *, u_int64_t);
+void runner_remove(struct ramqueue *, u_int64_t);
+void runner_remove_envelope(struct ramqueue *, struct ramqueue_envelope *);
 
 
 /* smtp.c */

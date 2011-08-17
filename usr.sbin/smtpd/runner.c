@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.110 2011/08/17 20:04:43 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.111 2011/08/17 20:35:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -408,15 +408,19 @@ runner_process_envelope(struct ramqueue_envelope *rq_evp, time_t curtm)
 void
 runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 {
-	struct ramqueue_host	 *host = rq_evp->host;
-	struct ramqueue_batch	 *batch = rq_evp->batch;
-	struct ramqueue_message	 *message = rq_evp->message;
+	struct ramqueue_batch	 *rq_batch;
+	struct ramqueue_message	 *rq_msg;
+	struct ramqueue_host	 *rq_host;
 	struct envelope envelope;
 	int fd;
 
-	switch (batch->type) {
+	rq_msg = rq_evp->rq_msg;
+	rq_batch = rq_evp->rq_batch;
+	rq_host = rq_msg->rq_host;
+
+	switch (rq_batch->type) {
 	case D_BOUNCE:
-		while ((rq_evp = ramqueue_batch_first_envelope(batch))) {
+		while ((rq_evp = ramqueue_batch_first_envelope(rq_batch))) {
 			if (! queue_envelope_load(Q_QUEUE, rq_evp->evpid,
 				&envelope))
 				return;
@@ -437,8 +441,7 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 		break;
 		
 	case D_MDA:
-
-		rq_evp = ramqueue_batch_first_envelope(batch);
+		rq_evp = ramqueue_batch_first_envelope(rq_batch);
 		if (! queue_envelope_load(Q_QUEUE, rq_evp->evpid, &envelope))
 			return;
 		envelope.delivery.lasttry = curtm;
@@ -460,14 +463,14 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 		
 	case D_MTA:
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-		    IMSG_BATCH_CREATE, PROC_MTA, 0, -1, batch,
-		    sizeof *batch);
-		while ((rq_evp = ramqueue_batch_first_envelope(batch))) {
+		    IMSG_BATCH_CREATE, PROC_MTA, 0, -1, rq_batch,
+		    sizeof *rq_batch);
+		while ((rq_evp = ramqueue_batch_first_envelope(rq_batch))) {
 			if (! queue_envelope_load(Q_QUEUE, rq_evp->evpid,
 				&envelope))
 				return;
 			envelope.delivery.lasttry = curtm;
-			envelope.batch_id = batch->b_id;
+			envelope.batch_id = rq_batch->b_id;
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 			    IMSG_BATCH_APPEND, PROC_MTA, 0, -1, &envelope,
 			    sizeof envelope);
@@ -478,8 +481,8 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 			    env->stats->runner.maxactive);
 		}
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-		    IMSG_BATCH_CLOSE, PROC_MTA, 0, -1, batch,
-		    sizeof *batch);
+		    IMSG_BATCH_CLOSE, PROC_MTA, 0, -1, rq_batch,
+		    sizeof *rq_batch);
 		env->stats->mta.sessions_active++;
 		env->stats->mta.sessions++;
 		SET_IF_GREATER(env->stats->mta.sessions_active,
@@ -490,23 +493,23 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 		fatalx("runner_process_batchqueue: unknown type");
 	}
 
-	if (ramqueue_message_is_empty(message)) {
-		ramqueue_remove_message(&env->sc_rqueue, message);
-		free(message);
+	if (ramqueue_message_is_empty(rq_msg)) {
+		ramqueue_remove_message(&env->sc_rqueue, rq_msg);
+		free(rq_msg);
 		env->stats->ramqueue.messages--;
 		
 	}
 
-	if (ramqueue_batch_is_empty(batch)) {
-		ramqueue_remove_batch(host, batch);
-		free(batch);
+	if (ramqueue_batch_is_empty(rq_batch)) {
+		ramqueue_remove_batch(rq_host, rq_batch);
+		free(rq_batch);
 		env->stats->ramqueue.batches--;
 		
 	}
 
-	if (ramqueue_host_is_empty(host)) {
-		ramqueue_remove_host(&env->sc_rqueue, host);
-		free(host);
+	if (ramqueue_host_is_empty(rq_host)) {
+		ramqueue_remove_host(&env->sc_rqueue, rq_host);
+		free(rq_host);
 		env->stats->ramqueue.hosts--;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramqueue.c,v 1.13 2011/08/17 20:04:43 gilles Exp $	*/
+/*	$OpenBSD: ramqueue.c,v 1.14 2011/08/17 20:35:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -194,18 +194,18 @@ ramqueue_insert(struct ramqueue *rqueue, struct envelope *envelope, time_t curtm
 		SET_IF_GREATER(env->stats->ramqueue.messages,
 		    env->stats->ramqueue.messages_max);
 	}
+	rq_msg->rq_host = ramqueue_get_host(rqueue, envelope->delivery.rcpt.domain);
 
 	rq_evp = calloc(1, sizeof (*rq_evp));
 	if (rq_evp == NULL)
 		fatal("calloc");
 	rq_evp->evpid = envelope->delivery.id;
 	rq_evp->sched = ramqueue_next_schedule(envelope, curtm);
-	rq_evp->host = ramqueue_get_host(rqueue, envelope->delivery.rcpt.domain);
-	rq_evp->batch = ramqueue_get_batch(rqueue, rq_evp->host, envelope);
+	rq_evp->rq_batch = ramqueue_get_batch(rqueue, rq_msg->rq_host, envelope);
 	RB_INSERT(evptree, &rq_msg->evptree, rq_evp);
-	rq_evp->message = rq_msg;
+	rq_evp->rq_msg = rq_msg;
 
-	TAILQ_INSERT_TAIL(&rq_evp->batch->envelope_queue, rq_evp,
+	TAILQ_INSERT_TAIL(&rq_evp->rq_batch->envelope_queue, rq_evp,
 	    batchqueue_entry);
 
 	/* sorted insert */
@@ -469,11 +469,14 @@ ramqueue_lookup_envelope(struct ramqueue *rq, u_int64_t evpid)
 void
 ramqueue_remove_envelope(struct ramqueue *rq, struct ramqueue_envelope *rq_evp)
 {
-	struct ramqueue_batch *rq_batch = rq_evp->batch;
-	struct ramqueue_message *rq_msg = rq_evp->message;
+	struct ramqueue_batch *rq_batch;
+	struct ramqueue_message *rq_msg;
 
 	if (rq_evp == rq->current_evp)
 		rq->current_evp = TAILQ_NEXT(rq->current_evp, queue_entry);
+
+	rq_msg = rq_evp->rq_msg;
+	rq_batch = rq_evp->rq_batch;
 
 	RB_REMOVE(evptree, &rq_msg->evptree, rq_evp);
 	TAILQ_REMOVE(&rq_batch->envelope_queue, rq_evp, batchqueue_entry);
