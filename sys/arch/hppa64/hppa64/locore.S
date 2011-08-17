@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.36 2011/08/16 17:36:37 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.37 2011/08/17 20:49:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -93,8 +93,8 @@ $start
 	ldil	L%cpu0_info, %r1
 	ldo	R%cpu0_info(%r1), %r1
 	mtctl	%r1, %cr24
-	ldil	L%(PSL_W|PSL_Q|PSL_P|PSL_C|PSL_D|PSL_S|PSL_O), %r8
-	ldo	R%(PSL_W|PSL_Q|PSL_P|PSL_C|PSL_D|PSL_S|PSL_O)(%r8), %r8
+	ldil	L%(PSL_W|PSL_Q|PSL_P|PSL_C|PSL_D|PSL_O), %r8
+	ldo	R%(PSL_W|PSL_Q|PSL_P|PSL_C|PSL_D|PSL_O)(%r8), %r8
 	stw	%r8, CI_PSW(%r1)
 	ldi	IPL_HIGH, %r8
 	stw	%r8, CI_CPL(%r1)
