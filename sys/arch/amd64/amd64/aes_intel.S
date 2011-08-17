@@ -1,4 +1,4 @@
-/*	$OpenBSD: aes_intel.S,v 1.4 2010/11/15 14:48:17 mikeb Exp $	*/
+/*	$OpenBSD: aes_intel.S,v 1.5 2011/08/17 17:00:35 mikeb Exp $	*/
 
 /*
  * Implement AES algorithm in Intel AES-NI instructions.
@@ -71,6 +71,7 @@
 #define OUTP		%rsi
 #define INP		%rdx
 #define LEN		%rcx
+#define HSTATE		%rcx
 #define IVP		%r8
 #define ICBP		%r8
 #define KLEN		%r9d
@@ -875,4 +876,115 @@ ENTRY(aesni_ctr_enc)
 .Lctr_enc_ret:
 	movq IV, (IVP)
 .Lctr_enc_just_ret:
+	ret
+
+_aesni_gmac_gfmul:
+	movdqa	%xmm0, %xmm3
+	pclmulqdq $0x00, %xmm1, %xmm3	# xmm3 holds a0*b0
+	movdqa	%xmm0, %xmm4
+	pclmulqdq $0x10, %xmm1, %xmm4	# xmm4 holds a0*b1
+	movdqa	%xmm0, %xmm5
+	pclmulqdq $0x01, %xmm1, %xmm5	# xmm5 holds a1*b0
+	movdqa	%xmm0, %xmm6
+	pclmulqdq $0x11, %xmm1, %xmm6	# xmm6 holds a1*b1
+
+	pxor	%xmm5, %xmm4		# xmm4 holds a0*b1 + a1*b0
+	movdqa	%xmm4, %xmm5
+	psrldq	$8, %xmm4
+	pslldq	$8, %xmm5
+	pxor	%xmm5, %xmm3
+	pxor	%xmm4, %xmm6
+
+	/*
+	 * <xmm6:xmm3> holds the result of the carry-less
+	 * multiplication of xmm0 by xmm1
+	 *
+	 * shift the result by one bit position to the left
+	 * cope for the fact that bits are reversed
+	 */
+	movdqa	%xmm3, %xmm7
+	movdqa	%xmm6, %xmm8
+	pslld	$1, %xmm3
+	pslld	$1, %xmm6
+	psrld	$31, %xmm7
+	psrld	$31, %xmm8
+	movdqa	%xmm7, %xmm9
+	pslldq	$4, %xmm8
+	pslldq	$4, %xmm7
+	psrldq	$12, %xmm9
+	por	%xmm7, %xmm3
+	por	%xmm8, %xmm6
+	por	%xmm9, %xmm6
+
+	/* first phase of the reduction */
+	movdqa	%xmm3, %xmm7
+	movdqa	%xmm3, %xmm8
+	movdqa	%xmm3, %xmm9
+	pslld	$31, %xmm7		# packed right shifting << 31
+	pslld	$30, %xmm8		# packed right shifting shift << 30
+	pslld	$25, %xmm9		# packed right shifting shift << 25
+	pxor	%xmm8, %xmm7		# xor the shifted versions
+	pxor	%xmm9, %xmm7
+	movdqa	%xmm7, %xmm8
+	pslldq	$12, %xmm7
+	psrldq	$4, %xmm8
+	pxor	%xmm7, %xmm3
+
+	/* second phase of the reduction */
+	movdqa	%xmm3,%xmm2
+	movdqa	%xmm3,%xmm4
+	movdqa	%xmm3,%xmm5
+	psrld	$1, %xmm2		# packed left shifting >> 1
+	psrld	$2, %xmm4		# packed left shifting >> 2
+	psrld	$7, %xmm5		# packed left shifting >> 7
+	pxor	%xmm4, %xmm2		# xor the shifted versions
+	pxor	%xmm5, %xmm2
+	pxor	%xmm8, %xmm2
+	pxor	%xmm2, %xmm3
+	pxor	%xmm3, %xmm6		# the result is in xmm6
+	ret
+
+/*
+ * void aesni_gmac_update(GHASH_CTX *ghash, uint8_t *src, size_t len)
+ */
+ENTRY(aesni_gmac_update)
+	cmp	$16, %rdx
+	jb	.Lgcm_hash_just_ret
+
+	movdqu	.Lbswap_mask, BSWAP_MASK	# endianness swap mask
+
+	movdqu	(%rdi), %xmm1		# hash subkey
+	movdqu	32(%rdi), %xmm6		# initial state
+	pshufb	BSWAP_MASK, %xmm1
+	pshufb	BSWAP_MASK, %xmm6
+
+.Lgcm_hash_loop:
+	movdqu	(%rsi), %xmm2
+	pshufb	BSWAP_MASK, %xmm2
+	movdqa	%xmm6, %xmm0
+	pxor	%xmm2, %xmm0
+	call	_aesni_gmac_gfmul
+
+	sub	$16, %rdx
+	add	$16, %rsi
+	cmp	$16, %rdx
+	jge	.Lgcm_hash_loop
+
+	pshufb	BSWAP_MASK, %xmm6
+	movdqu	%xmm6, 16(%rdi)
+	movdqu	%xmm6, 32(%rdi)
+.Lgcm_hash_just_ret:
+	ret
+
+/*
+ * void aesni_gmac_final(struct aesni_sess *ses, uint8_t *tag,
+ *     uint8_t *icb, uint8_t *hashstate)
+ */
+ENTRY(aesni_gmac_final)
+	movl	480(KEYP), KLEN		# key length
+	movdqu	(INP), STATE		# icb
+	call	_aesni_enc1
+	movdqu	(HSTATE), IN
+	pxor	IN, STATE
+	movdqu	STATE, (OUTP)		# output
 	ret
