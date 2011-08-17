@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.21 2010/07/26 01:56:27 guenther Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.22 2011/08/17 16:10:27 shadchin Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -507,6 +507,14 @@ wsmouseopen(dev_t dev, int flags, int mode, struct proc *p)
 		return (0);			/* always allow open for write
 						   so ioctl() is possible. */
 
+#if NWSMUX > 0
+	if (sc->sc_base.me_parent != NULL) {
+		/* Grab the mouse out of the greedy hands of the mux. */
+		DPRINTF(("wsmouseopen: detach\n"));
+		wsmux_detach_sc(&sc->sc_base);
+	}
+#endif
+
 	if (sc->sc_base.me_evp != NULL)
 		return (EBUSY);
 
@@ -540,6 +548,21 @@ wsmouseclose(dev_t dev, int flags, int mode, struct proc *p)
 	sc->sc_base.me_evp = NULL;
 	(*sc->sc_accessops->disable)(sc->sc_accesscookie);
 	wsevent_fini(evar);
+
+#if NWSMUX > 0
+	if (sc->sc_base.me_parent == NULL) {
+		int mux, error;
+
+		DPRINTF(("wsmouseclose: attach\n"));
+		mux = sc->sc_base.me_dv.dv_cfdata->wsmousedevcf_mux;
+		if (mux >= 0) {
+			error = wsmux_attach_sc(wsmux_getmux(mux), &sc->sc_base);
+			if (error)
+				printf("%s: can't attach mux (error=%d)\n",
+				    sc->sc_base.me_dv.dv_xname, error);
+		}
+	}
+#endif
 
 	return (0);
 }
