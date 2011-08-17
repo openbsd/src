@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.40 2011/07/18 19:19:08 espie Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.41 2011/08/17 10:48:27 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: July 18 2011 $
+.Dd $Mdocdate: August 17 2011 $
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -48,6 +48,15 @@ see
 .Xr packages-specs 7
 .Pc
 can be omitted, unless the resulting specification is ambiguous.
+.Pp
+.Nm
+will
+.Xr syslog 3
+deletions by default
+.Po
+but see
+.Xr pkg.conf 5
+.Pc .
 .Pp
 The options are as follows:
 .Bl -tag -width BB-pkg-destdir

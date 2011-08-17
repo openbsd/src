@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg.conf.5,v 1.3 2010/10/25 21:04:49 espie Exp $
+.\"	$OpenBSD: pkg.conf.5,v 1.4 2011/08/17 10:48:27 espie Exp $
 .\"
 .\" Copyright (c) 2010 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 25 2010 $
+.Dd $Mdocdate: August 17 2011 $
 .Dt PKG.CONF 5
 .Os
 .Sh NAME
@@ -52,6 +52,19 @@ Currently defined options are as follows:
 Set to
 .Ar yes
 if you really want to use the full width of the terminal for the progressmeter.
+.It Ar loglevel
+.Xr pkg_add 1
+and
+.Xr pkg_delete 1
+will
+.Xr syslog 3
+installations, updates and deletions by default.
+Set to
+.Ar 0
+to avoid logging entirely.
+Levels higher than
+.Ar 1
+may log more information in the future.
 .It Ar installpath
 URL to package repository updated during installation.
 Used for accessing packages if the environment variable

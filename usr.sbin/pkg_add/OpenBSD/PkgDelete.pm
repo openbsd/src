@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.20 2011/07/19 05:58:33 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.21 2011/08/17 10:48:27 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -253,6 +253,7 @@ sub really_remove
 		OpenBSD::Delete::delete_package($pkgname, $state);
 	}
 	$state->progress->next($state->ntogo);
+	$state->syslog("Removed #1", $set->print);
 }
 
 sub delete_dependencies

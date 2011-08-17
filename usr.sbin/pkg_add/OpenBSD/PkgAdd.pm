@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.30 2011/07/23 15:04:27 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.31 2011/08/17 10:48:27 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -837,6 +837,7 @@ sub really_add
 		$set->{solver}->repair_dependencies($state);
 	}
 	delete $state->{delete_first};
+	$state->syslog("Added #1", $set->print);
 }
 
 sub newer_has_errors

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.109 2011/07/20 14:30:45 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.110 2011/08/17 10:48:27 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: July 20 2011 $
+.Dd $Mdocdate: August 17 2011 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -71,6 +71,15 @@ option
 .Pp
 Details of packing-list internals are documented in
 .Xr pkg_create 1 .
+.Pp
+.Nm
+will
+.Xr syslog 3
+installations and updates by default
+.Po
+but see
+.Xr pkg.conf 5
+.Pc .
 .Pp
 If a package is digitally signed:
 .Bl -bullet
