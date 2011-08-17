@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.551 2011/07/22 11:34:17 dcoppa Exp $
+$OpenBSD: usbdevs,v 1.552 2011/08/17 18:57:11 jasper Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3699,6 +3699,7 @@ product TI UTUSB41		0x1446	UT-USB41 hub
 product TI TUSB2046		0x2046	TUSB2046 hub
 product TI TUSB3410		0x3410	TUSB3410
 product TI NEXII		0x5409	Nex II Digital
+product TI MSP430_JTAG		0xf430	MSP-FET430UIF JTAG
 product TI MSP430		0xf432	MSP-FET430UIF
 
 /* Thrustmaster products */
