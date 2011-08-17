@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.109 2011/08/16 14:36:39 thib Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.110 2011/08/17 15:48:22 thib Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -1159,7 +1159,6 @@ softdep_initialize(void)
 #else
 	max_softdeps = desiredvnodes * 4;
 #endif
-	max_softdeps = 64;
 	pagedep_hashtbl = hashinit(desiredvnodes / 5, M_PAGEDEP, M_WAITOK,
 	    &pagedep_hash);
 	sema_init(&pagedep_in_progress, "pagedep", PRIBIO, 0);
