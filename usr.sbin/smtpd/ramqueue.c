@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramqueue.c,v 1.14 2011/08/17 20:35:11 gilles Exp $	*/
+/*	$OpenBSD: ramqueue.c,v 1.15 2011/08/17 20:54:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -481,7 +481,6 @@ ramqueue_remove_envelope(struct ramqueue *rq, struct ramqueue_envelope *rq_evp)
 	RB_REMOVE(evptree, &rq_msg->evptree, rq_evp);
 	TAILQ_REMOVE(&rq_batch->envelope_queue, rq_evp, batchqueue_entry);
 	TAILQ_REMOVE(&rq->queue, rq_evp, queue_entry);
-
 	env->stats->ramqueue.envelopes--;
 }
 

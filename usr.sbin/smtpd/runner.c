@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.111 2011/08/17 20:35:11 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.112 2011/08/17 20:54:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -411,7 +411,7 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 	struct ramqueue_batch	 *rq_batch;
 	struct ramqueue_message	 *rq_msg;
 	struct ramqueue_host	 *rq_host;
-	struct envelope envelope;
+	struct envelope evp;
 	int fd;
 
 	rq_msg = rq_evp->rq_msg;
@@ -422,12 +422,12 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 	case D_BOUNCE:
 		while ((rq_evp = ramqueue_batch_first_envelope(rq_batch))) {
 			if (! queue_envelope_load(Q_QUEUE, rq_evp->evpid,
-				&envelope))
+				&evp))
 				return;
-			envelope.delivery.lasttry = curtm;
+			evp.delivery.lasttry = curtm;
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-			    IMSG_SMTP_ENQUEUE, PROC_SMTP, 0, -1, &envelope,
-			    sizeof envelope);
+			    IMSG_SMTP_ENQUEUE, PROC_SMTP, 0, -1, &evp,
+			    sizeof evp);
 			ramqueue_remove_envelope(&env->sc_rqueue, rq_evp);
 			free(rq_evp);
 		}
@@ -442,13 +442,13 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 		
 	case D_MDA:
 		rq_evp = ramqueue_batch_first_envelope(rq_batch);
-		if (! queue_envelope_load(Q_QUEUE, rq_evp->evpid, &envelope))
+		if (! queue_envelope_load(Q_QUEUE, rq_evp->evpid, &evp))
 			return;
-		envelope.delivery.lasttry = curtm;
+		evp.delivery.lasttry = curtm;
 		fd = queue_message_fd_r(Q_QUEUE, rq_evp->evpid>>32);
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-		    IMSG_MDA_SESS_NEW, PROC_MDA, 0, fd, &envelope,
-		    sizeof envelope);
+		    IMSG_MDA_SESS_NEW, PROC_MDA, 0, fd, &evp,
+		    sizeof evp);
 		ramqueue_remove_envelope(&env->sc_rqueue, rq_evp);
 		free(rq_evp);
 
@@ -467,13 +467,13 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 		    sizeof *rq_batch);
 		while ((rq_evp = ramqueue_batch_first_envelope(rq_batch))) {
 			if (! queue_envelope_load(Q_QUEUE, rq_evp->evpid,
-				&envelope))
+				&evp))
 				return;
-			envelope.delivery.lasttry = curtm;
-			envelope.batch_id = rq_batch->b_id;
+			evp.delivery.lasttry = curtm;
+			evp.batch_id = rq_batch->b_id;
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-			    IMSG_BATCH_APPEND, PROC_MTA, 0, -1, &envelope,
-			    sizeof envelope);
+			    IMSG_BATCH_APPEND, PROC_MTA, 0, -1, &evp,
+			    sizeof evp);
 			ramqueue_remove_envelope(&env->sc_rqueue, rq_evp);
 			free(rq_evp);
 			env->stats->runner.active++;
@@ -738,4 +738,5 @@ runner_remove_envelope(struct ramqueue *rq, struct ramqueue_envelope *rq_evp)
 		queue_envelope_delete(Q_QUEUE, &evp);
 
 	ramqueue_remove_envelope(rq, rq_evp);
+	free(rq_evp);
 }
