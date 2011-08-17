@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramqueue.c,v 1.12 2011/08/17 19:36:23 gilles Exp $	*/
+/*	$OpenBSD: ramqueue.c,v 1.13 2011/08/17 20:04:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -223,22 +223,6 @@ ramqueue_insert(struct ramqueue *rqueue, struct envelope *envelope, time_t curtm
 	    env->stats->ramqueue.envelopes_max);
 }
 
-void
-ramqueue_remove(struct ramqueue *rqueue, struct ramqueue_envelope *rq_evp)
-{
-	struct ramqueue_batch *rq_batch = rq_evp->batch;
-	struct ramqueue_message *rq_message = rq_evp->message;
-
-	if (rq_evp == rqueue->current_evp)
-		rqueue->current_evp = TAILQ_NEXT(rqueue->current_evp, queue_entry);
-
-	RB_REMOVE(evptree, &rq_message->evptree, rq_evp);
-	TAILQ_REMOVE(&rq_batch->envelope_queue, rq_evp, batchqueue_entry);
-	TAILQ_REMOVE(&rqueue->queue, rq_evp, queue_entry);
-
-	env->stats->ramqueue.envelopes--;
-}
-
 static int
 ramqueue_expire(struct envelope *envelope, time_t curtm)
 {
@@ -383,7 +367,7 @@ ramqueue_remove_message(struct ramqueue *rqueue, struct ramqueue_message *rq_msg
 }
 
 void
-ramqueue_reschedule(struct ramqueue *rq, u_int64_t id)
+ramqueue_schedule(struct ramqueue *rq, u_int64_t id)
 {
 	struct ramqueue_message *rq_msg;
 	struct ramqueue_envelope *rq_evp;
@@ -393,7 +377,7 @@ ramqueue_reschedule(struct ramqueue *rq, u_int64_t id)
 		rq_evp = ramqueue_lookup_envelope(rq, id);
 		if (rq_evp == NULL)
 			return;
-		ramqueue_reschedule_envelope(rq, rq_evp);
+		ramqueue_schedule_envelope(rq, rq_evp);
 		return;
 	}
 
@@ -403,12 +387,12 @@ ramqueue_reschedule(struct ramqueue *rq, u_int64_t id)
 
 	/* scheduling by msgid */
 	RB_FOREACH(rq_evp, evptree, &rq_msg->evptree) {
-		ramqueue_reschedule_envelope(rq, rq_evp);
+		ramqueue_schedule_envelope(rq, rq_evp);
 	}
 }
 
 void
-ramqueue_reschedule_envelope(struct ramqueue *rq, struct ramqueue_envelope *rq_evp)
+ramqueue_schedule_envelope(struct ramqueue *rq, struct ramqueue_envelope *rq_evp)
 {
 	rq_evp->sched = 0;
 	TAILQ_REMOVE(&rq->queue, rq_evp, queue_entry);
@@ -481,6 +465,23 @@ ramqueue_lookup_envelope(struct ramqueue *rq, u_int64_t evpid)
 	evpkey.evpid = evpid;
 	return RB_FIND(evptree, &rq_msg->evptree, &evpkey);
 }
+
+void
+ramqueue_remove_envelope(struct ramqueue *rq, struct ramqueue_envelope *rq_evp)
+{
+	struct ramqueue_batch *rq_batch = rq_evp->batch;
+	struct ramqueue_message *rq_msg = rq_evp->message;
+
+	if (rq_evp == rq->current_evp)
+		rq->current_evp = TAILQ_NEXT(rq->current_evp, queue_entry);
+
+	RB_REMOVE(evptree, &rq_msg->evptree, rq_evp);
+	TAILQ_REMOVE(&rq_batch->envelope_queue, rq_evp, batchqueue_entry);
+	TAILQ_REMOVE(&rq->queue, rq_evp, queue_entry);
+
+	env->stats->ramqueue.envelopes--;
+}
+
 
 RB_GENERATE(hosttree, ramqueue_host, hosttree_entry, ramqueue_host_cmp);
 RB_GENERATE(msgtree, ramqueue_message, msgtree_entry, ramqueue_msg_cmp);

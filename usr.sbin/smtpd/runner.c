@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.109 2011/08/16 19:02:03 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.110 2011/08/17 20:04:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -155,27 +155,14 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 		return;
 
 	case IMSG_RUNNER_SCHEDULE:
-		ramqueue_reschedule(&env->sc_rqueue,
+		runner_schedule(&env->sc_rqueue,
 		    *(u_int64_t *)imsg->data);
 		runner_reset_events();		
 		return;
 
 	case IMSG_RUNNER_REMOVE: {
-		u_int64_t ullval = *(u_int64_t *)imsg->data;
-		struct envelope	 envelope;
-		struct ramqueue_envelope *rq_evp;
-		
-		if (! queue_envelope_load(Q_QUEUE, ullval, &envelope))
-			return;
-		
-		rq_evp = ramqueue_envelope_by_id(&env->sc_rqueue, ullval);
-		if (rq_evp == NULL)
-			return;
-
-		ramqueue_remove(&env->sc_rqueue, rq_evp);
-
-		queue_envelope_delete(Q_QUEUE, &envelope);
-
+		runner_remove(&env->sc_rqueue,
+		    *(u_int64_t *)imsg->data);
 		runner_reset_events();
 		return;
 	}
@@ -437,7 +424,7 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 			    IMSG_SMTP_ENQUEUE, PROC_SMTP, 0, -1, &envelope,
 			    sizeof envelope);
-			ramqueue_remove(&env->sc_rqueue, rq_evp);
+			ramqueue_remove_envelope(&env->sc_rqueue, rq_evp);
 			free(rq_evp);
 		}
 		env->stats->runner.bounces_active++;
@@ -459,7 +446,7 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 		    IMSG_MDA_SESS_NEW, PROC_MDA, 0, fd, &envelope,
 		    sizeof envelope);
-		ramqueue_remove(&env->sc_rqueue, rq_evp);
+		ramqueue_remove_envelope(&env->sc_rqueue, rq_evp);
 		free(rq_evp);
 
 		env->stats->mda.sessions_active++;
@@ -484,7 +471,7 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 			    IMSG_BATCH_APPEND, PROC_MTA, 0, -1, &envelope,
 			    sizeof envelope);
-			ramqueue_remove(&env->sc_rqueue, rq_evp);
+			ramqueue_remove_envelope(&env->sc_rqueue, rq_evp);
 			free(rq_evp);
 			env->stats->runner.active++;
 			SET_IF_GREATER(env->stats->runner.active,
@@ -705,4 +692,47 @@ runner_check_loop(struct envelope *ep)
 
 	fclose(fp);
 	return ret;
+}
+
+void
+runner_schedule(struct ramqueue *rq, u_int64_t id)
+{
+	ramqueue_schedule(rq, id);
+}
+
+
+void
+runner_remove(struct ramqueue *rq, u_int64_t id)
+{
+	struct ramqueue_message *rq_msg;
+	struct ramqueue_envelope *rq_evp;
+
+	/* removing by evpid */
+	if (id > 0xffffffffL) {
+		rq_evp = ramqueue_lookup_envelope(rq, id);
+		if (rq_evp == NULL)
+			return;
+		runner_remove_envelope(rq, rq_evp);
+		return;
+	}
+
+	rq_msg = ramqueue_lookup_message(rq, id);
+	if (rq_msg == NULL)
+		return;
+
+	/* scheduling by msgid */
+	RB_FOREACH(rq_evp, evptree, &rq_msg->evptree) {
+		runner_remove_envelope(rq, rq_evp);
+	}
+}
+
+void
+runner_remove_envelope(struct ramqueue *rq, struct ramqueue_envelope *rq_evp)
+{
+	struct envelope evp;
+
+	if (queue_envelope_load(Q_QUEUE, rq_evp->evpid, &evp))
+		queue_envelope_delete(Q_QUEUE, &evp);
+
+	ramqueue_remove_envelope(rq, rq_evp);
 }

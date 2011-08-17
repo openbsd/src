@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.20 2011/07/22 06:33:54 jmc Exp $
+.\" $OpenBSD: smtpctl.8,v 1.21 2011/08/17 20:04:43 gilles Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 22 2011 $
+.Dd $Mdocdate: August 17 2011 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -47,8 +47,8 @@ Temporarily stop deliveries to local users.
 .It Cm pause outgoing
 Temporarily stop relaying and deliveries to
 remote users.
-.It Cm remove Ar envelope-id
-Removes a single envelope from queue.
+.It Cm remove Ar envelope-id | message-id
+Removes a single envelope, or all envelopes with the same message ID.
 .It Cm resume incoming
 Resume accepting incoming sessions.
 .It Cm resume local
