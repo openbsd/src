@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.506 2011/08/16 14:48:39 mikeb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.507 2011/08/18 10:49:40 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 16 2011 $
+.Dd $Mdocdate: August 18 2011 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -2827,7 +2827,7 @@ state-opt      = ( "max" number | "no-sync" | timeout | "sloppy" |
                  "max-src-nodes" number | "max-src-states" number |
                  "max-src-conn" number |
                  "max-src-conn-rate" number "/" number |
-                 "overload" "\*(Lt" string "\*(Gt" [ "flush" ] |
+                 "overload" "\*(Lt" string "\*(Gt" [ "flush" [ "global" ] ] |
                  "if-bound" | "floating" )
 
 timeout-list   = timeout [ [ "," ] timeout-list ]
