@@ -1,4 +1,4 @@
-/*	$OpenBSD: dioreg.h,v 1.6 2010/04/15 20:38:09 miod Exp $	*/
+/*	$OpenBSD: dioreg.h,v 1.7 2011/08/18 19:55:43 miod Exp $	*/
 /*	$NetBSD: dioreg.h,v 1.3 1997/01/30 09:18:40 thorpej Exp $	*/
 
 /*-
@@ -53,8 +53,8 @@
 #define	DIO_IHPIBADDR		0x478000 /* internal HP-IB; select code 7 */
 
 /*
- * DIO ranges from select codes 0-63 at physical addresses given by:
- *	0x600000 + (sc - 32) * 0x10000
+ * DIO ranges from select codes 0-31 at physical addresses given by:
+ *	0x600000 + sc * 0x10000
  * DIO cards are addressed in the range 0-31 [0x600000-0x800000) for
  * their control space and the remaining areas, [0x200000-0x400000) and
  * [0x800000-0x1000000), are for additional space required by a card;
@@ -68,13 +68,14 @@
  * are mapped into kernel virtual address space allocated from a range
  * of EIOMAPSIZE pages (vmparam.h) starting at ``extiobase''.
  */
-#define	DIO_BASE		0x600000	/* start of DIO space */
-#define	DIO_END			0x1000000	/* end of DIO space */
-#define	DIO_DEVSIZE		0x10000		/* size of a DIO device */
+#define	DIO_BASE		0x00600000	/* start of DIO space */
+#define	DIO_END			0x01000000	/* end of DIO space */
+#define	DIO_DEVSIZE		0x00010000	/* size of a DIO device */
 
 #define	DIOII_BASE		0x01000000	/* start of DIO-II space */
 #define	DIOII_END		0x20000000	/* end of DIO-II space */
-#define	DIOII_DEVSIZE		0x00400000	/* size of a DIO-II device */
+#define	DIOII_DEVSIZE		0x00400000	/* size of a DIO-II scode */
+#define	DIOII_DEVSIZE_UNIT	0x00100000	/* unit of DIO-II size */
 
 /*
  * Find the highest select code for a given machine; HP320 doesn't
@@ -106,7 +107,7 @@
 	((id) == DIO_DEVICE_ID_FRAMEBUFFER)
 
 /*
- * Macro to extract primary and decondary device ids, given
+ * Macro to extract primary and secondary device ids, given
  * the base address of the device.
  */
 #define	DIO_ID(base)			\
@@ -127,7 +128,7 @@
  */
 #define DIOII_SIZE(base)		\
 	((int)((*((u_int8_t *)((u_long)(base) + DIOII_SIZEOFF)) + 1)	\
-	    * 0x100000))
+	    * DIOII_DEVSIZE_UNIT))
 
 /*
  * Given a select code and device base address, compute
