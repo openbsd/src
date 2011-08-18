@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_read.3,v 1.7 2007/05/31 19:19:35 jmc Exp $
+.\"	$OpenBSD: kvm_read.3,v 1.8 2011/08/18 13:01:26 jmc Exp $
 .\"	$NetBSD: kvm_read.3,v 1.2 1996/03/18 22:34:01 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)kvm_read.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 18 2011 $
 .Dt KVM_READ 3
 .Os
 .Sh NAME
@@ -55,9 +55,7 @@ and
 functions are used to read and write kernel virtual memory (or a crash
 dump file).
 See
-.Fn kvm_open 3
-or
-.Fn kvm_openfiles 3
+.Xr kvm_open 3
 for information regarding opening kernel virtual memory and crash dumps.
 .Pp
 The
@@ -83,11 +81,7 @@ returned.
 Otherwise, \-1 is returned.
 .Sh SEE ALSO
 .Xr kvm 3 ,
-.Xr kvm_close 3 ,
-.Xr kvm_getargv 3 ,
-.Xr kvm_getenvv 3 ,
 .Xr kvm_geterr 3 ,
 .Xr kvm_getprocs 3 ,
 .Xr kvm_nlist 3 ,
-.Xr kvm_open 3 ,
-.Xr kvm_openfiles 3
+.Xr kvm_open 3

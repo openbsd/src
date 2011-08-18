@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_geterr.3,v 1.7 2007/05/31 19:19:35 jmc Exp $
+.\"	$OpenBSD: kvm_geterr.3,v 1.8 2011/08/18 13:01:26 jmc Exp $
 .\"	$NetBSD: kvm_geterr.3,v 1.2 1996/03/18 22:33:20 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)kvm_geterr.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 18 2011 $
 .Dt KVM_GETERR 3
 .Os
 .Sh NAME
@@ -57,22 +57,18 @@ so the message should be copied out and saved elsewhere if necessary.
 .Sh SEE ALSO
 .Xr kvm 3 ,
 .Xr kvm_close 3 ,
-.Xr kvm_getargv 3 ,
-.Xr kvm_getenvv 3 ,
 .Xr kvm_getprocs 3 ,
 .Xr kvm_nlist 3 ,
 .Xr kvm_open 3 ,
-.Xr kvm_openfiles 3 ,
-.Xr kvm_read 3 ,
-.Xr kvm_write 3
+.Xr kvm_read 3
 .Sh BUGS
 This routine cannot be used to access error conditions due to a failed
-.Fn kvm_openfiles
+.Xr kvm_openfiles 3
 call, since failure is indicated by returning a
 .Dv NULL
 descriptor.
 Therefore, errors on open are output to the special error buffer
 passed to
-.Fn kvm_openfiles .
+.Xr kvm_openfiles 3 .
 This option is not available to
-.Fn kvm_open .
+.Xr kvm_open 3 .

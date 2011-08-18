@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_open.3,v 1.13 2009/01/21 22:18:00 miod Exp $
+.\"	$OpenBSD: kvm_open.3,v 1.14 2011/08/18 13:01:26 jmc Exp $
 .\"	$NetBSD: kvm_open.3,v 1.2 1996/03/18 22:33:52 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)kvm_open.3	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: January 21 2009 $
+.Dd $Mdocdate: August 18 2011 $
 .Dt KVM_OPEN 3
 .Os
 .Sh NAME
@@ -188,13 +188,10 @@ function returns 0 on success and \-1 on failure.
 .Sh SEE ALSO
 .Xr open 2 ,
 .Xr kvm 3 ,
-.Xr kvm_getargv 3 ,
-.Xr kvm_getenvv 3 ,
 .Xr kvm_geterr 3 ,
 .Xr kvm_getprocs 3 ,
 .Xr kvm_nlist 3 ,
-.Xr kvm_read 3 ,
-.Xr kvm_write 3
+.Xr kvm_read 3
 .Sh BUGS
 There should not be two open calls.
 The ill-defined error semantics of the Sun library and the desire to have
