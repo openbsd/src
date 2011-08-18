@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.62 2011/04/07 15:30:16 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.63 2011/08/18 20:02:58 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -1326,11 +1326,10 @@ sti_unpack_attr(void *v, long attr, int *fg, int *bg, int *ul)
 		*ul = 0;
 }
 
-#if NSTI_SGC > 0
+#if NSTI_DIO > 0 || NSTI_SGC > 0
 
 /*
- * Early console support.
- * Only used on hp300 with unique sti@sgc attachment.
+ * Early console support.  Only used on hp300.
  */
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkboot.c,v 1.6 2009/10/27 23:59:34 deraadt Exp $	*/
+/*	$OpenBSD: mkboot.c,v 1.7 2011/08/18 20:02:58 miod Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,9 +83,7 @@ void	usage(void);
  *	sector 32-:	LIF file 0, LIF file 1, etc.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ac;
 	char **av;

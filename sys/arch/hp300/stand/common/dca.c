@@ -1,4 +1,4 @@
-/*	$OpenBSD: dca.c,v 1.7 2008/01/23 16:37:56 jsing Exp $	*/
+/*	$OpenBSD: dca.c,v 1.8 2011/08/18 20:02:58 miod Exp $	*/
 /*	$NetBSD: dca.c,v 1.10 1996/10/06 01:42:48 mycroft Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 #include "samachdep.h"
 #include "consdefs.h"
 
-struct dcadevice *dcacnaddr = 0;
+struct dcadevice *dcacnaddr = NULL;
 
 #define DCACONSCODE	9	/* XXX */
 
@@ -54,7 +54,7 @@ dcaprobe(struct consdev *cp)
 {
 	struct dcadevice *dca;
 
-	dcacnaddr = (struct dcadevice *) sctoaddr(DCACONSCODE);
+	dcacnaddr = (struct dcadevice *)sctoaddr(DCACONSCODE);
 	if (badaddr((char *)dcacnaddr))
 		return;
 

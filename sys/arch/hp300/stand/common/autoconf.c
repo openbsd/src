@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.8 2011/08/18 19:54:19 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.9 2011/08/18 20:02:58 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.12 1997/01/30 10:32:51 thorpej Exp $	*/
 
 /*
@@ -46,7 +46,10 @@
 #include "consdefs.h"
 #include "rominfo.h"
 #include "device.h"
-#include "grfreg.h"
+
+#include <hp300/dev/dioreg.h>
+#include <hp300/dev/diodevs.h>
+#include <hp300/dev/diofbreg.h>
 
 void	configure(void);
 void	find_devs(void);
@@ -137,13 +140,12 @@ configure()
  *	PARTITION is set to 0 ('a')
  *	UNIT comes from MSUS unit (almost always 0)
  *	CONTROLLER comes from MSUS primary address
- *	ADAPTER comes from SCSI/HPIB driver logical unit number
- *		(passed back via unused hw_pa field)
+ *	ADAPTER comes from SCSI/HPIB driver logical unit number (hw_ctrl)
  */
 u_long
 msustobdev()
 {
-	struct rominfo *rp = (struct rominfo *) ROMADDR;
+	struct rominfo *rp = (struct rominfo *)ROMADDR;
 	u_long bdev = 0;
 	struct hp_hw *hw;
 	int sc, type, ctlr, slave, punit;
@@ -154,7 +156,7 @@ msustobdev()
 			break;
 
 	type  = rom2mdev[(rp->msus >> 24) & 0x1F];
-	ctlr  = (int)hw->hw_pa;
+	ctlr  = hw->hw_ctrl;
 	slave = (rp->msus & 0xFF);
 	punit = ((rp->msus >> 16) & 0xFF);
 
@@ -167,23 +169,23 @@ msustobdev()
 }
 
 u_long
-sctoaddr(sc)
-	int sc;
+sctoaddr(int sc)
 {
 	if (sc == -1)
-		return(GRFIADDR);
+		return (GRFIADDR);
 	if (sc == 7 && internalhpib)
-		return(internalhpib);
-	if (sc < 32)
-		return(DIOBASE + sc * DIOCSIZE);
-	if (sc >= 132)
-		return(DIOIIBASE + (sc - 132) * DIOIICSIZE);
-	return(sc);
+		return (internalhpib);
+	if (DIO_ISDIO(sc))
+		return (DIO_BASE + sc * DIO_DEVSIZE);
+	if (DIO_ISDIOII(sc))
+		return (DIOII_BASE + (sc - DIOII_SCBASE) * DIOII_DEVSIZE);
+	return 0;
 }
 
 /*
  * Probe all DIO select codes (0 - 32), the internal display address,
- * and DIO-II select codes (132 - 256).
+ * and DIO-II select codes (132 - 256). SGC frame buffers are probed
+ * separately.
  *
  * Note that we only care about displays, LANCEs, SCSIs and HP-IBs.
  */
@@ -196,23 +198,20 @@ find_devs()
 	struct hp_hw *hw;
 
 	hw = sc_table;
-	sctop = machineid == HP_320 ? 32 : 256;
+	sctop = machineid == HP_320 ? 32 : 256;	/* DIO_SCMAX(machineid); */
+	/* starting at -1 to probe the intio framebuffer, if any */
 	for (sc = -1; sc < sctop; sc++) {
-		if (sc >= 32 && sc < 132)
+		if (sc >= 32 && sc < DIOII_SCBASE)
 			continue;
-		addr = (caddr_t) sctoaddr(sc);
+		addr = (caddr_t)sctoaddr(sc);
 		if (badaddr(addr))
 			continue;
 
-		id_reg = (u_char *) addr;
-		hw->hw_pa = 0;	/* XXX used to pass back LUN from driver */
-		if (sc >= 132)
-			hw->hw_size = (id_reg[0x101] + 1) * 0x100000;
-		else
-			hw->hw_size = DIOCSIZE;
+		id_reg = (u_char *)addr;
 		hw->hw_kva = addr;
-		hw->hw_id = id_reg[1];
+		hw->hw_type = 0;
 		hw->hw_sc = sc;
+		hw->hw_ctrl = 0;
 
 		/*
 		 * Not all internal HP-IBs respond rationally to id requests
@@ -224,44 +223,48 @@ find_devs()
 			continue;
 		}
 
-		switch (hw->hw_id) {
-		case 5:		/* 98642A */
-		case 5+128:	/* 98642A remote */
+		switch (id_reg[DIO_IDOFF]) {
+		case DIO_DEVICE_ID_DCM:
+		case DIO_DEVICE_ID_DCMREM:
 			hw->hw_type = D_COMMDCM;
 			break;
-		case 8:		/* 98625B */
-		case 128:	/* 98624A */
+		case DIO_DEVICE_ID_FHPIB:
+		case DIO_DEVICE_ID_NHPIB:
 			hw->hw_type = C_HPIB;
 			break;
-		case 21:	/* LANCE */
+		case DIO_DEVICE_ID_LAN:
+		case DIO_DEVICE_ID_LANREM:	/* does this even make sense? */
 			hw->hw_type = D_LAN;
 			break;
-		case 57:	/* Displays */
+		case DIO_DEVICE_ID_FRAMEBUFFER:
 			hw->hw_type = D_BITMAP;
-			hw->hw_secid = id_reg[0x15];
-			switch (hw->hw_secid) {
-			case 4:		/* renaissance */
-			case 8:		/* davinci */
-				sc++;		/* occupy 2 select codes */
+			switch(id_reg[DIO_SECIDOFF]) {
+			case DIO_DEVICE_SECID_RENAISSANCE:
+			case DIO_DEVICE_SECID_DAVINCI:
+				sc += 2 - 1;	/* occupy 2 select codes */
 				break;
-			case 0x11:	/* 3x2 internal display */
-				sc += 3;	/* occupy 4 select codes */
+			case DIO_DEVICE_SECID_TIGERSHARK:
+				sc += 3 - 1;	/* occupy 3 select codes */
+				break;
+			case DIO_DEVICE_SECID_FB3X2_A:
+			case DIO_DEVICE_SECID_FB3X2_B:
+				sc += 4 - 1;	/* occupy 4 select codes */
 				break;
 			}
 			break;
-		case 9:
-			hw->hw_type = D_KEYBOARD;
-			break;
-		case 7:
-		case 7+32:
-		case 7+64:
-		case 7+96:
+		case DIO_DEVICE_ID_SCSI0:
+		case DIO_DEVICE_ID_SCSI1:
+		case DIO_DEVICE_ID_SCSI2:
+		case DIO_DEVICE_ID_SCSI3:
 			hw->hw_type = C_SCSI;
 			break;
 		default:	/* who cares */
-			hw->hw_type = D_MISC;
 			break;
 		}
+		if (hw->hw_type == 0)
+			continue;
 		hw++;
+		if (hw == sc_table + MAXCTLRS)
+			break;	/* oflows are so boring */
 	}
 }

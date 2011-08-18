@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.9 2010/04/15 20:35:22 miod Exp $	*/
+/*	$OpenBSD: version.c,v 1.10 2011/08/18 20:02:58 miod Exp $	*/
 
 /*
  * Record major changes in the boot code here, and increment the version
@@ -16,8 +16,11 @@
  * 2.7			Minor syncs with the kernel (recognize more models
  *			and use the same logic to pick the console on 425e).
  * 2.8			TurboVRX frame buffer support.
- * 2.9			SGC frame buffers support, bug fixes and code cleanup
- * 2.10			SGC support on models 362 and 382.
+ * 2.9			SGC frame buffers support, bug fixes and code cleanup.
+ * 2.10			blind SGC support on models 362 and 382, turned out
+ *			to be useless.
+ * 2.11			sti@dio frame buffer support (for models 362 and 382),
+ *			and various cleanups.
  */
 
-const char version[] = "2.10";
+const char version[] = "2.11";

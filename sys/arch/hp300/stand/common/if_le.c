@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.7 2010/12/06 18:44:49 jasper Exp $	*/;
+/*	$OpenBSD: if_le.c,v 1.8 2011/08/18 20:02:58 miod Exp $	*/;
 /*	$NetBSD: if_le.c,v 1.9 1997/01/30 10:32:54 thorpej Exp $	*/
 
 /*
@@ -199,7 +199,7 @@ leinit()
 			printf("le%d at sc%d physical address %s\n",
 				i, hw->hw_sc, ether_sprintf(sc->sc_addr));
 #endif
-		hw->hw_pa = (caddr_t) i;	/* XXX for autoconfig */
+		hw->hw_ctrl = i;
 		i++;
 	}
 }

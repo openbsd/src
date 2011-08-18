@@ -1,4 +1,4 @@
-/*	$OpenBSD: netio.c,v 1.4 2011/03/13 00:13:52 deraadt Exp $	*/
+/*	$OpenBSD: netio.c,v 1.5 2011/08/18 20:02:58 miod Exp $	*/
 /*	$NetBSD: netio.c,v 1.5 1997/01/30 10:32:56 thorpej Exp $	*/
 
 /*
@@ -68,19 +68,15 @@
 
 extern int nfs_root_node[];	/* XXX - get from nfs_mount() */
 
-struct	in_addr myip, rootip, gateip;
+/* Why be any different? */
+#define SUN_BOOTPARAMS
+
+#ifndef SUN_BOOTPARAMS
 n_long	netmask;
-char rootpath[FNAME_SIZE];
+#endif
 
 int netdev_sock = -1;
 static int open_count;
-
-int netio_ask = 0;		/* default to bootparam, can override */
-
-static	char input_line[100];
-
-/* Why be any different? */
-#define SUN_BOOTPARAMS
 
 int	netclose(struct open_file *);
 int	netmountroot(struct open_file *, char *);
@@ -132,68 +128,9 @@ netstrategy(void *devdata, int func, daddr32_t dblk, size_t size, void *v_buf,
 int
 netmountroot(struct open_file *f, char *devname)
 {
-	int error;
-	struct iodesc *d;
-
 #ifdef DEBUG
 	printf("netmountroot: %s\n", devname);
 #endif
-
-	if (netio_ask) {
- get_my_ip:
-		printf("My IP address? ");
-		bzero(input_line, sizeof(input_line));
-		gets(input_line);
-		if ((myip.s_addr = inet_addr(input_line)) ==
-		    htonl(INADDR_NONE)) {
-			printf("invalid IP address: %s\n", input_line);
-			goto get_my_ip;
-		}
-
- get_my_netmask:
-		printf("My netmask? ");
-		bzero(input_line, sizeof(input_line));
-		gets(input_line);
-		if ((netmask = inet_addr(input_line)) ==
-		    htonl(INADDR_NONE)) {
-			printf("invalid netmask: %s\n", input_line);
-			goto get_my_netmask;
-		}
-
- get_my_gateway:
-		printf("My gateway? ");
-		bzero(input_line, sizeof(input_line));
-		gets(input_line);
-		if ((gateip.s_addr = inet_addr(input_line)) ==
-		    htonl(INADDR_NONE)) {
-			printf("invalid IP address: %s\n", input_line);
-			goto get_my_gateway;
-		}
-
- get_server_ip:
-		printf("Server IP address? ");
-		bzero(input_line, sizeof(input_line));
-		gets(input_line);
-		if ((rootip.s_addr = inet_addr(input_line)) ==
-		    htonl(INADDR_NONE)) {
-			printf("invalid IP address: %s\n", input_line);
-			goto get_server_ip;
-		}
-
- get_server_path:
-		printf("Server path? ");
-		bzero(rootpath, sizeof(rootpath));
-		gets(rootpath);
-		if (rootpath[0] == '\0' || rootpath[0] == '\n')
-			goto get_server_path;
-
-		if ((d = socktodesc(netdev_sock)) == NULL)
-			return (EMFILE);
-
-		d->myip = myip;
-
-		goto do_nfs_mount;
-	}
 
 	/*
 	 * Get info for NFS boot: our IP address, our hostname,
@@ -229,8 +166,6 @@ netmountroot(struct open_file *f, char *devname)
 	printf("Using IP address: %s\n", inet_ntoa(myip));
 
 	printf("myip: %s (%s)", hostname, inet_ntoa(myip));
-	if (gateip)
-		printf(", gateip: %s", inet_ntoa(gateip));
 	if (mask)
 		printf(", mask: %s", intoa(netmask));
 	printf("\n");
@@ -239,9 +174,6 @@ netmountroot(struct open_file *f, char *devname)
 
 	printf("root addr=%s path=%s\n", inet_ntoa(rootip), rootpath);
 
- do_nfs_mount:
 	/* Get the NFS file handle (mount). */
-	error = nfs_mount(netdev_sock, rootip, rootpath);
-
-	return (error);
+	return nfs_mount(netdev_sock, rootip, rootpath);
 }

@@ -1,6 +1,6 @@
-/*	$OpenBSD: ite_sti.c,v 1.1 2006/08/17 06:31:10 miod Exp $	*/
+/*	$OpenBSD: ite_sti.c,v 1.2 2011/08/18 20:02:58 miod Exp $	*/
 /*
- * Copyright (c) 2006, Miodrag Vallat
+ * Copyright (c) 2006, 2011, Miodrag Vallat
  * Copyright (c) 2000-2003 Michael Shalayeff
  * All rights reserved.
  *
@@ -35,7 +35,9 @@
 #include "consdefs.h"
 #include "itevar.h"
 
+#include <hp300/dev/dioreg.h>
 #include <hp300/dev/sgcreg.h>
+#include <hp300/dev/sti_machdep.h>
 #include <dev/ic/stireg.h>
 
 /*
@@ -61,6 +63,39 @@ void	sti_do_cursor(struct ite_data *);
 void	sti_fontinfo(struct ite_data *);
 void	sti_init(int);
 void	sti_inqcfg(struct sti_inqconfout *);
+void	sti_iteinit_common(struct ite_data *);
+
+/* kinda similar to sti_dio_probe() */
+int
+sti_dio_probe(struct ite_data *ip)
+{
+	int scode = ip->scode;
+	uint8_t *id_reg;
+
+	id_reg = (uint8_t *)sctoaddr(scode);
+	if (id_reg[DIOII_SIZEOFF] < STI_DIO_SIZE - 1)
+		return ENODEV;
+
+	id_reg = (uint8_t *)sctoaddr(scode + STI_DIO_SCODE_OFFSET);
+	if (id_reg[3] != STI_DEVTYPE1)
+		return ENODEV;
+
+	return 0;
+}
+
+void
+sti_iteinit_dio(struct ite_data *ip)
+{
+	ip->fbbase = (caddr_t)sctoaddr(ip->scode + STI_DIO_SCODE_OFFSET);
+	sti_iteinit_common(ip);
+}
+
+void
+sti_iteinit_sgc(struct ite_data *ip)
+{
+	ip->fbbase = (caddr_t)IIOV(SGC_BASE + (ip->scode * SGC_DEVSIZE));
+	sti_iteinit_common(ip);
+}
 
 /*
  * Initialize the sti device for ite's needs.
@@ -70,9 +105,9 @@ void	sti_inqcfg(struct sti_inqconfout *);
  *   can report errors (although we could switch to serial...)
  */
 void
-sti_iteinit(struct ite_data *ip)
+sti_iteinit_common(struct ite_data *ip)
 {
-	int slotno, i;
+	int i;
 	size_t codesize, memsize;
 	u_int8_t *va, *code;
 	u_int addr, eaddr, reglist, tmp;
@@ -80,8 +115,7 @@ sti_iteinit(struct ite_data *ip)
 	struct sti_einqconfout ecfg;
 
 	bzero(&sti, sizeof sti);
-	slotno = (int)ip->fbbase;
-	ip->fbbase = va = (u_int8_t *)IIOV(SGC_BASE + (slotno * SGC_DEVSIZE));
+	va = (u_int8_t *)ip->fbbase;
 
 	/*
 	 * Read the microcode.

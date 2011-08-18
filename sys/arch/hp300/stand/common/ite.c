@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.10 2011/08/18 19:54:19 miod Exp $	*/
+/*	$OpenBSD: ite.c,v 1.11 2011/08/18 20:02:58 miod Exp $	*/
 /*	$NetBSD: ite.c,v 1.12 1997/01/30 10:32:55 thorpej Exp $	*/
 
 /*
@@ -47,13 +47,14 @@
 
 #include <sys/param.h>
 
+#include <hp300/dev/dioreg.h>
 #include <hp300/dev/sgcreg.h>
+#include <hp300/dev/diofbreg.h>
 #include <dev/ic/stireg.h>
 
 #include "samachdep.h"
 #include "consdefs.h"
 #include "device.h"
-#include "grfreg.h"
 #include "itevar.h"
 #include "kbdvar.h"
 
@@ -61,48 +62,57 @@ void	itecheckwrap(struct ite_data *, struct itesw *);
 void	iteconfig(void);
 void	ite_clrtoeol(struct ite_data *, struct itesw *, int, int);
 
+#define	GID_STI		0x100	/* any value which is not a DIO fb, really */
+
 struct itesw itesw[] = {
 	{ GID_TOPCAT,
-	topcat_init,	ite_dio_clear,	ite_dio_putc8bpp,
-	ite_dio_cursor,	ite_dio_scroll },
+	NULL,		topcat_init,
+	ite_dio_clear,	ite_dio_putc8bpp,	ite_dio_cursor,	ite_dio_scroll },
 
 	{ GID_GATORBOX,
-	gbox_init,	ite_dio_clear,	ite_dio_putc8bpp,
-	ite_dio_cursor,	gbox_scroll },
+	NULL,		gbox_init,
+	ite_dio_clear,	ite_dio_putc8bpp,	ite_dio_cursor,	gbox_scroll },
 
 	{ GID_RENAISSANCE,
-	rbox_init,	ite_dio_clear,	ite_dio_putc8bpp,
-	ite_dio_cursor,	ite_dio_scroll },
+	NULL,		rbox_init,
+	ite_dio_clear,	ite_dio_putc8bpp,	ite_dio_cursor,	ite_dio_scroll },
 
 	{ GID_LRCATSEYE,
-	topcat_init,	ite_dio_clear,	ite_dio_putc8bpp,
-	ite_dio_cursor,	ite_dio_scroll },
+	NULL,		topcat_init,
+	ite_dio_clear,	ite_dio_putc8bpp,	ite_dio_cursor,	ite_dio_scroll },
 
 	{ GID_HRCCATSEYE,
-	topcat_init,	ite_dio_clear,	ite_dio_putc8bpp,
-	ite_dio_cursor,	ite_dio_scroll },
+	NULL,		topcat_init,
+	ite_dio_clear,	ite_dio_putc8bpp,	ite_dio_cursor,	ite_dio_scroll },
 
 	{ GID_HRMCATSEYE,
-	topcat_init,	ite_dio_clear,	ite_dio_putc8bpp,
-	ite_dio_cursor,	ite_dio_scroll },
+	NULL,		topcat_init,
+	ite_dio_clear,	ite_dio_putc8bpp,	ite_dio_cursor,	ite_dio_scroll },
 
 	{ GID_DAVINCI,
-      	dvbox_init,	ite_dio_clear,	ite_dio_putc8bpp,
-	ite_dio_cursor,	ite_dio_scroll },
+      	NULL,		dvbox_init,
+	ite_dio_clear,	ite_dio_putc8bpp,	ite_dio_cursor,	ite_dio_scroll },
 
 	{ GID_HYPERION,
-	hyper_init,	ite_dio_clear,	ite_dio_putc1bpp,
-	ite_dio_cursor,	ite_dio_scroll },
+	NULL,		hyper_init,
+	ite_dio_clear,	ite_dio_putc1bpp,	ite_dio_cursor,	ite_dio_scroll },
 
 	{ GID_TIGER,
-	tvrx_init,	ite_dio_clear,	ite_dio_putc1bpp,
-	ite_dio_cursor,	ite_dio_scroll },
+	NULL,		tvrx_init,
+	ite_dio_clear,	ite_dio_putc1bpp,	ite_dio_cursor,	ite_dio_scroll },
+
+	{ GID_FB3X2_A,
+	sti_dio_probe,	sti_iteinit_dio,
+	sti_clear,	sti_putc,		sti_cursor,	sti_scroll },
+
+	{ GID_FB3X2_B,
+	sti_dio_probe,	sti_iteinit_dio,
+	sti_clear,	sti_putc,		sti_cursor,	sti_scroll },
 
 	{ GID_STI,
-	sti_iteinit,	sti_clear,	sti_putc,
-	sti_cursor,	sti_scroll },
+	NULL,		sti_iteinit_sgc,
+	sti_clear,	sti_putc,		sti_cursor,	sti_scroll }
 };
-int	nitesw = sizeof(itesw) / sizeof(itesw[0]);
 
 /* these guys need to be in initialized data */
 int itecons = -1;
@@ -118,36 +128,37 @@ iteconfig()
 	int dtype, fboff, slotno, i;
 	u_int8_t *va;
 	struct hp_hw *hw;
-	struct grfreg *gr;
+	struct diofbreg *fb;
 	struct ite_data *ip;
 
 	i = 0;
 	for (hw = sc_table; hw < &sc_table[MAXCTLRS]; hw++) {
 	        if (!HW_ISDEV(hw, D_BITMAP))
 			continue;
-		gr = (struct grfreg *) hw->hw_kva;
+		fb = (struct diofbreg *)hw->hw_kva;
 		/* XXX: redundent but safe */
-		if (badaddr((caddr_t)gr) || gr->gr_id != GRFHWID)
+		if (badaddr((caddr_t)fb) || fb->id != GRFHWID)
 			continue;
-		for (dtype = 0; dtype < nitesw; dtype++)
-			if (itesw[dtype].ite_hwid == gr->gr_id2)
+		for (dtype = 0; dtype < nitems(itesw); dtype++)
+			if (itesw[dtype].ite_hwid == fb->fbid)
 				break;
-		if (dtype == nitesw)
+		if (dtype == nitems(itesw))
 			continue;
 		if (i >= NITE)
 			break;
 		ip = &ite_data[i];
+		ip->scode = hw->hw_sc;
 		ip->isw = &itesw[dtype];
-		ip->regbase = (caddr_t) gr;
-		fboff = (gr->gr_fbomsb << 8) | gr->gr_fbolsb;
+		ip->regbase = (caddr_t)fb;
+		fboff = (fb->fbomsb << 8) | fb->fbolsb;
 		ip->fbbase = (caddr_t) (*((u_char *)ip->regbase+fboff) << 16);
 		/* DIO II: FB offset is relative to select code space */
-		if (ip->regbase >= (caddr_t)DIOIIBASE)
+		if (DIO_ISDIOII(ip->scode))
 			ip->fbbase += (int)ip->regbase;
-		ip->fbwidth  = gr->gr_fbwidth_h << 8 | gr->gr_fbwidth_l;
-		ip->fbheight = gr->gr_fbheight_h << 8 | gr->gr_fbheight_l;
-		ip->dwidth   = gr->gr_dwidth_h << 8 | gr->gr_dwidth_l;
-		ip->dheight  = gr->gr_dheight_h << 8 | gr->gr_dheight_l;
+		ip->fbwidth  = fb->fbwmsb << 8 | fb->fbwlsb;
+		ip->fbheight = fb->fbhmsb << 8 | fb->fbhlsb;
+		ip->dwidth   = fb->dwmsb << 8 | fb->dwlsb;
+		ip->dheight  = fb->dhmsb << 8 | fb->dhlsb;
 		/*
 		 * XXX some displays (e.g. the davinci) appear
 		 * to return a display height greater than the
@@ -159,6 +170,10 @@ iteconfig()
 			ip->dwidth = ip->fbwidth;
 		if (ip->dheight > ip->fbheight)
 			ip->dheight = ip->fbheight;
+		/* confirm hardware is what we think it is */
+		if (itesw[dtype].ite_probe != NULL &&
+		    (*itesw[dtype].ite_probe)(ip) != 0)
+			continue;
 		ip->alive = 1;
 		i++;
 	}
@@ -175,10 +190,11 @@ iteconfig()
 		return;
 	}
 
-	for (dtype = 0; dtype < nitesw; dtype++)
+	/* SGC frame buffers can only be STI... */
+	for (dtype = 0; dtype < nitems(itesw); dtype++)
 		if (itesw[dtype].ite_hwid == GID_STI)
 			break;
-	if (dtype == nitesw)
+	if (dtype == nitems(itesw))
 		return;
 
 	for (slotno = 0; slotno < SGC_NSLOTS; slotno++) {
@@ -193,9 +209,10 @@ iteconfig()
 			if (i >= NITE)
 				break;
 			ip = &ite_data[i];
+			ip->scode = slotno;
 			ip->isw = &itesw[dtype];
 			ip->regbase = (caddr_t)GRFIADDR; /* to get CN_MIDPRI */
-			ip->fbbase = (caddr_t)slotno;
+			/* ...and do not need an ite_probe() check */
 			ip->alive = 1;
 			i++;
 			/* we only support one SGC frame buffer at the moment */

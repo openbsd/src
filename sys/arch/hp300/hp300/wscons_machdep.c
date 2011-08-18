@@ -1,7 +1,7 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.11 2011/04/07 15:30:15 miod Exp $	*/
+/*	$OpenBSD: wscons_machdep.c,v 1.12 2011/08/18 20:02:58 miod Exp $	*/
 
 /*
- * Copyright (c) 2005, Miodrag Vallat
+ * Copyright (c) 2005, 2011, Miodrag Vallat
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -59,6 +59,7 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/hp300spu.h>
 
@@ -78,9 +79,11 @@
 #include "gbox.h"
 #include "hyper.h"
 #include "rbox.h"
+#include "sti.h"
 #include "topcat.h"
 #include "tvrx.h"
-#if NDVBOX > 0 || NGBOX > 0 || NHYPER > 0 || NRBOX > 0 || NTOPCAT > 0 || NTVRX > 0
+
+#if NDVBOX > 0 || NGBOX > 0 || NHYPER > 0 || NRBOX > 0 || NSTI_DIO > 0 || NTOPCAT > 0 || NTVRX > 0
 #include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diofbreg.h>
@@ -88,31 +91,29 @@
 struct diofb diofb_cn;
 #endif
 
-#include "sti.h"
 #if NSTI > 0
-#include <machine/bus.h>
 #include <hp300/dev/sgcreg.h>
 #include <hp300/dev/sgcvar.h>
 #include <dev/ic/stireg.h>
 #include <dev/ic/stivar.h>
-extern	int sti_console_scan(int);
-extern	void sticninit(void);
+#include <hp300/dev/sti_machdep.h>
 #endif
 
+extern struct hp300_bus_space_tag hp300_mem_tag;
 extern caddr_t internalhpib;
 
 cons_decl(ws);
 
 void (*wsfbcninit)(void) = NULL;
 
-#if NDVBOX > 0 || NGBOX > 0 || NHYPER > 0 || NRBOX > 0 || NTOPCAT > 0 || NTVRX > 0
-int	dio_fbidentify(struct diofbreg *);
+#if NDVBOX > 0 || NGBOX > 0 || NHYPER > 0 || NRBOX > 0 || NSTI_DIO > 0 || NTOPCAT > 0 || NTVRX > 0
+int	dio_fbidentify(int, struct diofbreg *);
 
 /*
  * Identify a DIO frame buffer and set up wsfbcninit accordingly.
  */
 int
-dio_fbidentify(struct diofbreg *fbr)
+dio_fbidentify(int scode, struct diofbreg *fbr)
 {
 	if (fbr->id == GRFHWID)
 		switch (fbr->fbid) {
@@ -135,6 +136,15 @@ dio_fbidentify(struct diofbreg *fbr)
 		case GID_RENAISSANCE:
 			wsfbcninit = rboxcninit;
 			return (1);
+#endif
+#if NSTI_DIO > 0
+		case GID_FB3X2_A:
+		case GID_FB3X2_B:
+			if (scode >= 0 && sti_dio_probe(scode) != 0) {
+				wsfbcninit = sticninit;
+				return (1);
+			}
+			break;
 #endif
 #if NTOPCAT > 0
 		case GID_TOPCAT:
@@ -172,7 +182,7 @@ wscnprobe(struct consdev *cp)
 	int maj, tmpconscode;
 	vsize_t mapsize;
 	vaddr_t va;
-#if NDVBOX > 0 || NGBOX > 0 || NHYPER > 0 || NRBOX > 0 || NTOPCAT > 0 || NTVRX > 0
+#if NDVBOX > 0 || NGBOX > 0 || NHYPER > 0 || NRBOX > 0 || NSTI_DIO > 0 || NTOPCAT > 0 || NTVRX > 0
 	paddr_t pa;
 	u_int scode, sctop, sctmp;
 	struct diofbreg *fbr;
@@ -193,7 +203,7 @@ wscnprobe(struct consdev *cp)
 	va = IIOV(GRFIADDR);
 	fbr = (struct diofbreg *)va;
 	if (!badaddr((caddr_t)va)) {
-		if (dio_fbidentify(fbr)) {
+		if (dio_fbidentify(-1, fbr)) {
 			tmpconscode = CONSCODE_INTERNAL;
 			mapsize = 0;
 			goto found;
@@ -201,7 +211,7 @@ wscnprobe(struct consdev *cp)
 	}
 #endif
 
-#if NDVBOX > 0 || NGBOX > 0 || NHYPER > 0 || NRBOX > 0 || NTOPCAT > 0 || NTVRX > 0
+#if NDVBOX > 0 || NGBOX > 0 || NHYPER > 0 || NRBOX > 0 || NSTI_DIO > 0 || NTOPCAT > 0 || NTVRX > 0
 	/*
 	 * Scan the DIO bus.
 	 */
@@ -232,20 +242,29 @@ wscnprobe(struct consdev *cp)
 
 		/* Check hardware. */
 		fbr = (struct diofbreg *)va;
-		if (dio_fbidentify(fbr)) {
+		if (dio_fbidentify(scode, fbr)) {
 			tmpconscode = scode;
 			mapsize = DIO_SIZE(scode, va);
 			iounmap((caddr_t)va, PAGE_SIZE);
-			va = (vaddr_t)iomap((caddr_t)pa, mapsize);
-			if (va == 0)
-				continue;
+
+#if NSTI_DIO > 0
+			if (wsfbcninit == sticninit) {
+				mapsize = 0;
+				va = 0;
+			} else
+#endif
+			       {
+				va = (vaddr_t)iomap((caddr_t)pa, mapsize);
+				if (va == 0)
+					continue;
+			}
 			goto found;
 		} else
 			iounmap((caddr_t)va, PAGE_SIZE);
 	}
 #endif
 
-#if NSTI > 0
+#if NSTI_SGC > 0
 	/*
 	 * Scan the SGC bus.
 	 */
@@ -265,7 +284,7 @@ wscnprobe(struct consdev *cp)
 			continue;
 
 		/* Check hardware. */
-		if (sti_console_scan(scode) != 0) {
+		if (sti_sgc_probe(&hp300_mem_tag, scode) != 0) {
 			wsfbcninit = sticninit;
 			tmpconscode = SGC_SLOT_TO_CONSCODE(scode);
 			mapsize = 0;
@@ -304,9 +323,10 @@ void
 wscninit(struct consdev *cp)
 {
 	/*
-	 * Note that this relies on the fact that DIO frame buffers will cause
-	 * cn_tab to switch to wsdisplaycons, so their cninit function will
-	 * never get invoked a second time during the second console pass.
+	 * Note that this relies on the fact that DIO frame buffers (except
+	 * for sti@dio) will cause cn_tab to switch to wsdisplaycons, so
+	 * their cninit function will never get invoked a second time during
+	 * the second console pass.
 	 */
 	if (wsfbcninit != NULL)
 		(*wsfbcninit)();

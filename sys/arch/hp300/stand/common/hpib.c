@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpib.c,v 1.4 2006/08/17 06:31:10 miod Exp $	*/
+/*	$OpenBSD: hpib.c,v 1.5 2011/08/18 20:02:58 miod Exp $	*/
 /*	$NetBSD: hpib.c,v 1.2 1997/05/12 07:48:23 thorpej Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ hpibinit()
 				continue;
 		if (howto & RB_ASKNAME)
 			printf("hpib%d at sc%d\n", i, hw->hw_sc);
-		hw->hw_pa = (caddr_t) i;	/* XXX for autoconfig */
+		hw->hw_ctrl = i;
 		hs->sc_alive = 1;
 		i++;
 	}

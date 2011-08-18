@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.7 2011/03/13 00:13:52 deraadt Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.8 2011/08/18 20:02:58 miod Exp $	*/
 /*	$NetBSD: scsi.c,v 1.7 1997/01/30 10:32:57 thorpej Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ scsiinit()
 		scsireset(i);
 		if (howto & RB_ASKNAME)
 			printf("scsi%d at sc%d\n", i, hw->hw_sc);
-		hw->hw_pa = (caddr_t) i;	/* XXX for autoconfig */
+		hw->hw_ctrl = i;
 		hs->sc_alive = 1;
 		i++;
 	}

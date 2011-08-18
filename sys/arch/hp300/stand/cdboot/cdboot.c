@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdboot.c,v 1.7 2007/05/29 00:03:09 deraadt Exp $	*/
+/*	$OpenBSD: cdboot.c,v 1.8 2011/08/18 20:02:58 miod Exp $	*/
 /*	$NetBSD: uboot.c,v 1.3 1997/04/27 21:17:13 thorpej Exp $	*/
 
 /*-
@@ -47,8 +47,6 @@
  * information.
  */
 
-char line[100];
-
 extern	u_int opendev;
 extern	char *lowram;
 extern	int noconsole;
@@ -58,7 +56,6 @@ extern	const char version[];
 /*
  * XXX UFS accepts a /, NFS doesn't.
  */
-char *name;
 char *names[] = {
 #ifdef OSREV
 	OSREV "/hp300/bsd.rd",
@@ -67,21 +64,26 @@ char *names[] = {
 };
 #define NUMNAMES	(sizeof(names) / sizeof(char *))
 
+#if 0
 static int bdev, badapt, bctlr, bunit, bpart;
+#endif
 
 int
-main()
+main(void)
 {
 	int currname = 0;
+	char *name;
 
 	printf("\n>> OpenBSD [%dKB] CDROM BOOT %s HP 9000/%s CPU\n",
 	       (__LDPGSZ / 1024), version, getmachineid());
 
+#if 0
 	bdev   = B_TYPE(bootdev);
 	badapt = B_ADAPTOR(bootdev);
 	bctlr  = B_CONTROLLER(bootdev);
 	bunit  = B_UNIT(bootdev);
 	bpart  = B_PARTITION(bootdev);
+#endif
 
 	for (;;) {
 		name = names[currname++];

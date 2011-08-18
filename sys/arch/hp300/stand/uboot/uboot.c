@@ -1,4 +1,4 @@
-/*	$OpenBSD: uboot.c,v 1.5 2007/05/29 00:03:09 deraadt Exp $	*/
+/*	$OpenBSD: uboot.c,v 1.6 2011/08/18 20:02:58 miod Exp $	*/
 /*	$NetBSD: uboot.c,v 1.3 1997/04/27 21:17:13 thorpej Exp $	*/
 
 /*-
@@ -69,7 +69,7 @@ static int bdev, badapt, bctlr, bunit, bpart;
 void	getbootdev(int *);
 
 int
-main()
+main(void)
 {
 	int currname = 0;
 

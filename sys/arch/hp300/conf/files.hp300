@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hp300,v 1.33 2010/06/29 20:30:32 guenther Exp $
+#	$OpenBSD: files.hp300,v 1.34 2011/08/18 20:02:57 miod Exp $
 #	$NetBSD: files.hp300,v 1.28 1997/05/12 08:23:28 thorpej Exp $
 #
 # hp300-specific configuration info
@@ -69,6 +69,8 @@ file	arch/hp300/hp300/wscons_machdep.c	wsdisplay
 #
 # Frame buffer devices
 #
+file	arch/hp300/dev/sti_machdep.c		sti
+
 define	diofb
 define	diofb_mono
 file	arch/hp300/dev/diofb.c			diofb | diofb_mono
@@ -92,6 +94,9 @@ device	rbox: wsemuldisplaydev, diofb, rasops8
 attach	rbox at intio with rbox_intio
 attach	rbox at dio with rbox_dio
 file	arch/hp300/dev/rbox.c			rbox	needs-flag
+
+attach	sti at dio with sti_dio
+file	arch/hp300/dev/sti_dio.c		sti_dio
 
 device	topcat: wsemuldisplaydev, diofb, rasops8
 attach	topcat at intio with topcat_intio

@@ -1,4 +1,4 @@
-/*	$OpenBSD: samachdep.h,v 1.6 2008/02/13 21:20:32 miod Exp $	*/
+/*	$OpenBSD: samachdep.h,v 1.7 2011/08/18 20:02:58 miod Exp $	*/
 /*	$NetBSD: samachdep.h,v 1.3 1997/05/12 07:54:45 thorpej Exp $	*/
 
 /*
@@ -44,13 +44,8 @@
 #define NITE		4
 
 /* from cpu.h */
-#define	INTIOBASE	(0x00400000)
 #undef	IIOV
 #define IIOV(x)		(x)
-#define DIOBASE		(0x600000)
-#define	DIOCSIZE	(0x10000)
-#define DIOIIBASE	(0x01000000)
-#define DIOIICSIZE	(0x00400000)
 
 #define MHZ_8		1
 #define MHZ_16		2
@@ -83,13 +78,6 @@ struct punitsw {
 	int	(*p_punit)(int, int, int *);
 };
 extern	struct punitsw punitsw[];
-extern	int npunit;
-
-extern	struct devsw devsw_net[];
-extern	int ndevs_net;
-
-extern	struct devsw devsw_general[];
-extern	int ndevs_general;
 
 extern	struct fs_ops file_system_rawfs[];
 extern	struct fs_ops file_system_ufs[];

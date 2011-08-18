@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.2 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: device.h,v 1.3 2011/08/18 20:02:58 miod Exp $	*/
 /*	$NetBSD: device.h,v 1.1 1997/01/30 10:31:44 thorpej Exp $	*/
 
 /*
@@ -33,43 +33,24 @@
  */
 
 struct hp_hw {
-	caddr_t	hw_pa;		/* physical address of control space */
-	int	hw_size;	/* size of control space */
 	caddr_t	hw_kva;		/* kernel virtual address of control space */
-	short	hw_id;		/* HW returned id */
-	short	hw_secid;	/* secondary HW id (displays) */
 	short	hw_type;	/* type (defined below) */
 	short	hw_sc;		/* select code (if applicable) */
+	int	hw_ctrl;	/* controller number */
 };
 
 #define	MAXCTLRS	16	/* Size of HW table (arbitrary) */
-#define	MAXSLAVES	8	/* Slaves per controller (HPIB/SCSI limit) */
 
-/* bus types */
-#define	B_MASK		0xE000
-#define	B_DIO		0x2000
-#define B_DIOII		0x4000
-#define B_VME		0x6000
 /* controller types */
-#define	C_MASK		0x8F
-#define C_FLAG		0x80
-#define	C_HPIB		0x81
-#define C_SCSI		0x82
-#define C_VME		0x83
+#define	C_MASK		0xF0
+#define	C_HPIB		0x10
+#define C_SCSI		0x20
 /* device types (controllers with no slaves) */
-#define D_MASK		0x8F
+#define D_MASK		0x0F
 #define	D_BITMAP	0x01
 #define	D_LAN		0x02
-#define	D_FPA		0x03
-#define	D_KEYBOARD	0x04
-#define	D_COMMDCA	0x05
-#define	D_COMMDCM	0x06
-#define	D_COMMDCL	0x07
-#define	D_PPORT		0x08
-#define	D_MISC		0x7F
+#define	D_COMMDCM	0x03
 
-#define HW_ISCTLR(hw)	((hw)->hw_type & C_FLAG)
-#define HW_ISDIOII(hw)	((hw)->hw_type & B_DIOII)
 #define HW_ISHPIB(hw)	(((hw)->hw_type & C_MASK) == C_HPIB)
 #define HW_ISSCSI(hw)	(((hw)->hw_type & C_MASK) == C_SCSI)
 #define HW_ISDEV(hw,d)	(((hw)->hw_type & D_MASK) == (d))

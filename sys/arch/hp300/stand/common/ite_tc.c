@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_tc.c,v 1.5 2006/08/17 06:31:10 miod Exp $	*/
+/*	$OpenBSD: ite_tc.c,v 1.6 2011/08/18 20:02:58 miod Exp $	*/
 /*	$NetBSD: ite_tc.c,v 1.8 1996/03/03 04:23:41 thorpej Exp $	*/
 
 /*
@@ -46,7 +46,9 @@
 #include "samachdep.h"
 #include "itevar.h"
 #include "itereg.h"
-#include "grfreg.h"
+
+#include <hp300/dev/diofbreg.h>
+
 #include "grf_tcreg.h"
 
 #define REGBASE	    	((struct tcboxfb *)(ip->regbase))

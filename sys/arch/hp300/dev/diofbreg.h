@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofbreg.h,v 1.3 2007/01/07 15:13:52 miod Exp $	*/
+/*	$OpenBSD: diofbreg.h,v 1.4 2011/08/18 20:02:57 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,19 +44,21 @@
 /* 300 internal bitmapped display address */
 #define GRFIADDR	0x560000
 
-/* 300 hardware secondary ids */
-#define GID_GATORBOX	1
-#define	GID_TOPCAT	2
-#define GID_RENAISSANCE	4
-#define GID_LRCATSEYE	5
-#define GID_HRCCATSEYE	6
-#define GID_HRMCATSEYE	7
-#define GID_DAVINCI	8
-#define GID_XXXCATSEYE	9
-#define GID_XGENESIS   11
-#define GID_TIGER      12
-#define GID_YGENESIS   13
-#define GID_HYPERION   14
+/* 300 hardware secondary ids - XXX duplicates some diodevs.h values */
+#define	GID_GATORBOX	0x01
+#define	GID_TOPCAT	0x02
+#define	GID_RENAISSANCE	0x04
+#define	GID_LRCATSEYE	0x05
+#define	GID_HRCCATSEYE	0x06
+#define	GID_HRMCATSEYE	0x07
+#define	GID_DAVINCI	0x08
+#define	GID_XXXCATSEYE	0x09
+#define	GID_XGENESIS	0x0b
+#define	GID_TIGER	0x0c
+#define	GID_YGENESIS	0x0d
+#define	GID_HYPERION	0x0e
+#define	GID_FB3X2_A	0x10
+#define	GID_FB3X2_B	0x11
 
 #ifndef	_LOCORE
 struct	diofbreg {

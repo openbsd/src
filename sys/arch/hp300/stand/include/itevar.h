@@ -1,4 +1,4 @@
-/*	$OpenBSD: itevar.h,v 1.5 2006/08/17 06:31:10 miod Exp $	*/
+/*	$OpenBSD: itevar.h,v 1.6 2011/08/18 20:02:58 miod Exp $	*/
 /*	$NetBSD: itevar.h,v 1.1 1996/03/03 04:23:42 thorpej Exp $	*/
 
 /*
@@ -50,6 +50,7 @@ typedef	void (*ite_windowmover)(struct ite_data *, int, int, int, int, int,
 
 struct ite_data {
 	int	alive;
+	int	scode;			/* DIO select code or SGC slot # */
 	struct  itesw *isw;
 	caddr_t regbase, fbbase;
 	short	curx, cury;
@@ -67,6 +68,7 @@ struct ite_data {
 
 struct itesw {
 	int	ite_hwid;
+	int	(*ite_probe)(struct ite_data *);
 	void	(*ite_init)(struct ite_data *);
 	void	(*ite_clear)(struct ite_data *, int, int, int, int);
 	void	(*ite_putc)(struct ite_data *, int, int, int);
@@ -125,7 +127,9 @@ void	dvbox_init(struct ite_data *);
 void	hyper_init(struct ite_data *);
 void	tvrx_init(struct ite_data *);
 
-void	sti_iteinit(struct ite_data *);
+int	sti_dio_probe(struct ite_data *);
+void	sti_iteinit_dio(struct ite_data *);
+void	sti_iteinit_sgc(struct ite_data *);
 void	sti_clear(struct ite_data *, int, int, int, int);
 void	sti_putc(struct ite_data *, int, int, int);
 void	sti_cursor(struct ite_data *, int);

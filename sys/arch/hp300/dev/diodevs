@@ -1,4 +1,4 @@
-$OpenBSD: diodevs,v 1.9 2008/06/26 05:42:10 ray Exp $
+$OpenBSD: diodevs,v 1.10 2011/08/18 20:02:57 miod Exp $
 /* $NetBSD: diodevs,v 1.7 2003/11/23 01:57:35 tsutsui Exp $ */
 
 /*-
@@ -68,15 +68,15 @@ framebuffer HRCCATSEYE	0x06	1	high-res color catseye display
 framebuffer HRMCATSEYE	0x07	1	high-res mono catseye display
 framebuffer DAVINCI	0x08	2	98730/98731 (\"davinci\") display
 framebuffer XXXCATSEYE	0x09	1	catseye display
+framebuffer TIGERSHARK	0x0c	3	TurboVRX (\"tigershark\") display
 framebuffer HYPERION	0x0e	1	A1096A (\"hyperion\") display
+framebuffer FB3X2_A	0x10	4	362/382 internal display #1
+framebuffer FB3X2_B	0x11	4	362/382 internal display #2
 
 /* Unsupported framebuffers. */
 
 framebuffer XGENESIS	0x0b	1	x-genesis display
-framebuffer TIGERSHARK	0x0c	3	TurboVRX (\"tigershark\") display
 framebuffer YGENESIS	0x0d	1	y-genesis display
-framebuffer FB3X2_A	0x10	4	362/382 internal display #1
-framebuffer FB3X2_B	0x11	4	362/382 internal display #2
 
 /* Devices not yet supported.  Descriptions are lacking. */
 

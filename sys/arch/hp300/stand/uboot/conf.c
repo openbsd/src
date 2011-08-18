@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.7 2011/03/13 00:13:52 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.8 2011/08/18 20:02:58 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.12 1996/10/14 07:29:15 thorpej Exp $	*/
 
 /*
@@ -127,7 +127,6 @@ struct punitsw punitsw[] = {
 	{ xxpunit },
 	{ lepunit },
 };
-int	npunit = (sizeof(punitsw) / sizeof(punitsw[0]));
 
 /*
  * Filesystem configuration

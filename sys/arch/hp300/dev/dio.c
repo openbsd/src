@@ -1,4 +1,4 @@
-/*	$OpenBSD: dio.c,v 1.15 2011/08/18 19:52:08 miod Exp $	*/
+/*	$OpenBSD: dio.c,v 1.16 2011/08/18 20:02:57 miod Exp $	*/
 /*	$NetBSD: dio.c,v 1.7 1997/05/05 21:00:32 thorpej Exp $	*/
 
 /*-
@@ -110,10 +110,13 @@ dioattach(parent, self, aux)
 		 * Temporarily map the space corresponding to
 		 * the current select code unless:
 		 *	- this is the internal hpib select code,
-		 *	- this is the console select code.
+		 *	- this is the console select code, and
+		 *	  the console driver actually has a mapping
+		 *	  of the beginning of the select code space
+		 *	  (sti@dio doesn't).
 		 */
 		pa = dio_scodetopa(scode);
-		if (scode == conscode)
+		if (scode == conscode && conaddr != 0)
 			va = conaddr;
 		else if ((scode == 7) && internalhpib)
 			va = internalhpib = (caddr_t)IIOV(pa);
