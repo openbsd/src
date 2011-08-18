@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.25 2010/04/17 11:15:26 miod Exp $
+dnl	$OpenBSD: hardware,v 1.26 2011/08/18 19:31:00 miod Exp $
 OpenBSD/MACHINE OSREV will run on most HP 9000/300- and 400-series
 machines.
 8MB of RAM should be sufficient to boot and a minimal system can probably
@@ -91,8 +91,9 @@ The following HP hardware is supported:
 Unsupported hardware mainly consists of:
 
     68010 and 68020 based systems: 310, 318, 319, 320, 330 and 350.
+    68030 FPU-less systems: 332.
     425e built-in audio.
-    parallel port on the 4xx models.
+    parallel port on the 3x2 and 4xx models.
     X-Genesis and Y-Genesis frame buffers.
     ISA slot on 4xx ``t'' models.
     EISA slots on 4xx ``s'' models.
