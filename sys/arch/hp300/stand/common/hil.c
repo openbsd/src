@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.6 2006/08/17 06:31:10 miod Exp $	*/
+/*	$OpenBSD: hil.c,v 1.7 2011/08/18 19:37:26 miod Exp $	*/
 /*	$NetBSD: hil.c,v 1.2 1997/04/14 19:00:10 thorpej Exp $	*/
 
 /*
@@ -63,14 +63,14 @@
  * Supports only unshifted, shifted and control keys.
  */
 char	hilkbd_keymap[] = {
-	NULL,	'`',	'\\',	ESC,	NULL,	DEL,	NULL,	NULL,
-	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	'\b',	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	ESC,	'\r',	NULL,	'\n',	'0',	'.',	',',	'+',
+	0,	'`',	'\\',	ESC,	0,	DEL,	0,	0,
+	'\n',	'\t',	0,	0,	0,	0,	0,	0,
+	0,	'\n',	0,	0,	0,	0,	0,	0,
+	0,	'\t',	0,	0,	0,	0,	0,	0,
+	0,	0,	0,	0,	0,	0,	0,	0,
+	0,	0,	0,	0,	0,	0,	'\b',	0,
+	0,	0,	0,	0,	0,	0,	0,	0,
+	ESC,	'\r',	0,	'\n',	'0',	'.',	',',	'+',
 	'1',	'2',	'3',	'-',	'4',	'5',	'6',	'*',
 	'7',	'8',	'9',	'/',	'E',	'(',	')',	'^',
 	'1',	'2',	'3',	'4',	'5',	'6',	'7',	'8',
@@ -78,18 +78,18 @@ char	hilkbd_keymap[] = {
 	',',	'.',	'/',	'\040',	'o',	'p',	'k',	'l',
 	'q',	'w',	'e',	'r',	't',	'y',	'u',	'i',
 	'a',	's',	'd',	'f',	'g',	'h',	'j',	'm',
-	'z',	'x',	'c',	'v',	'b',	'n',	NULL,	NULL
+	'z',	'x',	'c',	'v',	'b',	'n',	0,	0
 };
 
 char	hilkbd_shiftmap[] = {
-	NULL,	'~',	'|',	DEL,	NULL,	DEL,	NULL,	NULL,
-	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	DEL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	ESC,	'\r',	NULL,	'\n',	'0',	'.',	',',	'+',
+	0,	'~',	'|',	DEL,	0,	DEL,	0,	0,
+	'\n',	'\t',	0,	0,	0,	0,	0,	0,
+	0,	'\n',	0,	0,	0,	0,	0,	0,
+	0,	'\t',	0,	0,	0,	0,	0,	0,
+	0,	0,	0,	0,	0,	0,	0,	0,
+	0,	0,	0,	0,	0,	0,	DEL,	0,
+	0,	0,	0,	0,	0,	0,	0,	0,
+	ESC,	'\r',	0,	'\n',	'0',	'.',	',',	'+',
 	'1',	'2',	'3',	'-',	'4',	'5',	'6',	'*',
 	'7',	'8',	'9',	'/',	'`',	'|',	'\\',	'~',
 	'!',	'@',	'#',	'$',	'%',	'^',	'&',	'*',
@@ -97,18 +97,18 @@ char	hilkbd_shiftmap[] = {
 	'<',	'>',	'?',	'\040',	'O',	'P',	'K',	'L',
 	'Q',	'W',	'E',	'R',	'T',	'Y',	'U',	'I',
 	'A',	'S',	'D',	'F',	'G',	'H',	'J',	'M',
-	'Z',	'X',	'C',	'V',	'B',	'N',	NULL,	NULL
+	'Z',	'X',	'C',	'V',	'B',	'N',	0,	0
 };
 
 char	hilkbd_ctrlmap[] = {
-	NULL,	'`',	'\034',	ESC,	NULL,	DEL,	NULL,	NULL,
-	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	'\b',	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	ESC,	'\r',	NULL,	'\n',	'0',	'.',	',',	'+',
+	0,	'`',	'\034',	ESC,	0,	DEL,	0,	0,
+	'\n',	'\t',	0,	0,	0,	0,	0,	0,
+	0,	'\n',	0,	0,	0,	0,	0,	0,
+	0,	'\t',	0,	0,	0,	0,	0,	0,
+	0,	0,	0,	0,	0,	0,	0,	0,
+	0,	0,	0,	0,	0,	0,	'\b',	0,
+	0,	0,	0,	0,	0,	0,	0,	0,
+	ESC,	'\r',	0,	'\n',	'0',	'.',	',',	'+',
 	'1',	'2',	'3',	'-',	'4',	'5',	'6',	'*',
 	'7',	'8',	'9',	'/',	'E',	'(',	')',	'\036',
 	'1',	'2',	'3',	'4',	'5',	'6',	'7',	'8',
@@ -116,7 +116,7 @@ char	hilkbd_ctrlmap[] = {
 	',',	'.',	'/',	'\040',	'\017',	'\020',	'\013',	'\014',
 	'\021',	'\027',	'\005',	'\022',	'\024',	'\031',	'\025',	'\011',
 	'\001',	'\023',	'\004',	'\006',	'\007',	'\010',	'\012',	'\015',
-	'\032',	'\030',	'\003',	'\026',	'\002',	'\016',	NULL,	NULL
+	'\032',	'\030',	'\003',	'\026',	'\002',	'\016',	0,	0
 };
 
 int
