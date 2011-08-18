@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.65 2010/06/29 20:30:31 guenther Exp $	*/
+/*	$OpenBSD: locore.s,v 1.66 2011/08/18 19:54:18 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -203,7 +203,7 @@ Lhaveihpib:
 	movl	#HP_340,a0@		| yes, must be a 340
 	jra	Lstart1
 Lnot370:
-	movl	#HP_360,a0@		| type is at least a 360
+	movl	#HP_36X,a0@		| type is at least a 360
 	movl	#0,a1@(MMUCMD)		| clear magic cookie2
 	movl	a1@(MMUCMD),d0		| read it back
 	btst	#16,d0			| still on?
@@ -338,20 +338,12 @@ Lis320:
 	 */
 
 Lisa36x:
-#if defined(HP362)
 	/*
-	 * If we found a 360, we need to check for a 362 (neither the 360
-	 * nor the 362 have a nonzero mmuid). Since the 362 has a frodo
-	 * utility chip in the DIO hole, check for it.
+	 * There is currently no easy way of telling a 362 and a 360
+	 * apart, except perhaps checking for the 362 frame buffer if
+	 * it isn't disabled.
 	 */
-	movl	#FRODO_BASE, a0
-	ASRELOC(phys_badaddr, a3)
-	jbsr	a3@
-	tstl	d0			| found a frodo?
-	jne	Lstart1			| no, really a 360 or a 380
-	RELOC(machineid,a0)
-	movl	#HP_362,a0@
-#endif
+	/* FALLTHROUGH */
 
 Lstart1:
 	/*

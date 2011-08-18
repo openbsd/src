@@ -1,4 +1,4 @@
-/*	$OpenBSD: frodo.c,v 1.13 2010/09/20 06:33:47 matthew Exp $	*/
+/*	$OpenBSD: frodo.c,v 1.14 2011/08/18 19:54:18 miod Exp $	*/
 /*	$NetBSD: frodo.c,v 1.5 1999/07/31 21:15:20 thorpej Exp $	*/
 
 /*-
@@ -57,7 +57,7 @@
 
 /*
  * Support for the "Frodo" (a.k.a. "Apollo Utility") chip found
- * in HP Apollo 9000/4xx workstations, as well as HP 9000/362 and 9000/382.
+ * in HP Apollo 9000/4xx workstations, as well as HP 9000/382.
  */
 
 #include <sys/param.h>
@@ -137,7 +137,6 @@ frodomatch(parent, match, aux)
 
 	/* only specific workstations can have this */
 	switch (machineid) {
-	case HP_362:
 	case HP_382:
 	case HP_400:
 	case HP_425:

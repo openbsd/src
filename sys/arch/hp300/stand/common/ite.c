@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.9 2010/04/15 20:35:22 miod Exp $	*/
+/*	$OpenBSD: ite.c,v 1.10 2011/08/18 19:54:19 miod Exp $	*/
 /*	$NetBSD: ite.c,v 1.12 1997/01/30 10:32:55 thorpej Exp $	*/
 
 /*
@@ -165,11 +165,8 @@ iteconfig()
 
 	/*
 	 * Now probe for SGC frame buffers.
-	 * Note that we do not tell 360 from 362 in the bootblocks.
 	 */
 	switch (machineid) {
-	case HP_360:
-	case HP_382:
 	case HP_400:
 	case HP_425:
 	case HP_433:

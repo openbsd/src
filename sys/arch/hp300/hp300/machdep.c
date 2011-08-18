@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.132 2011/06/26 22:39:59 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.133 2011/08/18 19:54:18 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -325,7 +325,7 @@ const char *hp300_models[] = {
 	"320",		/* HP_320 */
 	"318/319/330",	/* HP_330 */
 	"350",		/* HP_350 */
-	"360",		/* HP_360 */
+	"360",		/* HP_36X */
 	"370",		/* HP_370 */
 	"340",		/* HP_340 */
 	"345",		/* HP_345 */
@@ -335,7 +335,6 @@ const char *hp300_models[] = {
 	"425",		/* HP_425 */
 	"433",		/* HP_433 */
 	"385",		/* HP_385 */
-	"362",		/* HP_362 */
 	"382",		/* HP_382 */
 };
 
@@ -485,11 +484,8 @@ identifycpu()
 #if !defined(HP350)
 	case HP_350:
 #endif
-#if !defined(HP360)
-	case HP_360:
-#endif
-#if !defined(HP362)
-	case HP_362:
+#if !defined(HP360) && !defined(HP_362)
+	case HP_36X:
 #endif
 #if !defined(HP370)
 	case HP_370:

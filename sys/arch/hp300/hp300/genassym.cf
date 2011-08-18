@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.21 2005/09/27 22:05:37 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.22 2011/08/18 19:54:18 miod Exp $
 #	$NetBSD: genassym.cf,v 1.11 1998/02/16 20:58:29 thorpej Exp $
 
 #
@@ -57,8 +57,7 @@ export	HP_330
 export	HP_340
 export	HP_345
 export	HP_350
-export	HP_360
-export	HP_362
+export	HP_36X
 export	HP_370
 export	HP_375
 export	HP_380

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnkbd.c,v 1.4 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: dnkbd.c,v 1.5 2011/08/18 19:54:19 miod Exp $	*/
 /*	$NetBSD: dnkbd.c,v 1.3 1997/05/12 07:47:03 thorpej Exp $	*/
 
 /*-
@@ -153,12 +153,9 @@ dnkbd_init()
 {
 
 	/*
-	 * 362, 382, 400, 425, and 433 models can have a Domain keyboard.
-	 * Note that we do not tell 360 from 362 in the bootblocks.
+	 * 400, 425, and 433 models can have a Domain keyboard.
 	 */
 	switch (machineid) {
-	case HP_360:
-	case HP_382:
 	case HP_400:
 	case HP_425:
 	case HP_433:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgc.c,v 1.6 2010/04/15 20:35:21 miod Exp $	*/
+/*	$OpenBSD: sgc.c,v 1.7 2011/08/18 19:54:18 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -71,8 +71,6 @@ static	int sgc_matched = 0;
 	 */
 
 	switch (machineid) {
-	case HP_362:
-	case HP_382:
 	case HP_400:
 	case HP_425:
 	case HP_433:

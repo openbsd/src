@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.31 2011/06/29 20:52:09 matthew Exp $
+#	$OpenBSD: RAMDISK,v 1.32 2011/08/18 19:54:16 miod Exp $
 #
 # Ram disk kernel.
 #
@@ -66,7 +66,7 @@ wskbd*		at hilkbd? mux 1
 #wsmouse*	at hilms? mux 0
 #hilid*		at hil?		# ID module
 
-# Frodo utility chip found on 362, 382 and 4xx's
+# Frodo utility chip found on 382 and 4xx's
 frodo0		at intio?
 
 # 8250-like serial ports found on Frodo ASIC

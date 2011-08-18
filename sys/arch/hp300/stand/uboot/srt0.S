@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.6 2006/08/17 06:31:10 miod Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.7 2011/08/18 19:54:19 miod Exp $	*/
 /*	$NetBSD: srt0.S,v 1.4 1997/05/12 07:56:00 thorpej Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ ASENTRY_NOPROFILE(begin)
 	jra	ihpibcheck
 
 not370:
-	movl	#HP_360,a0@		| type is at least a 360
+	movl	#HP_36X,a0@		| type is at least a 360
 	movl	#0,MMUCMD		| clear magic cookie2
 	movl	MMUCMD,d0		| read it back
 	btst	#16,d0			| still on?

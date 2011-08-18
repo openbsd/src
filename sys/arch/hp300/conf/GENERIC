@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.52 2011/06/29 20:52:09 matthew Exp $
+#	$OpenBSD: GENERIC,v 1.53 2011/08/18 19:54:16 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -55,7 +55,7 @@ hilms*		at hil?		# mice, buttons and tablets
 wsmouse*	at hilms? mux 0
 hilid*		at hil?		# ID module
 
-# Frodo utility chip found on 362, 382 and 4xx's
+# Frodo utility chip found on 382 and 4xx's
 frodo0		at intio?
 #isabr0		at frodo0	# ISA slot on some 4xx models
 

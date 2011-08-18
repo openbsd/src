@@ -1,4 +1,4 @@
-/*	$OpenBSD: hp300spu.h,v 1.9 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: hp300spu.h,v 1.10 2011/08/18 19:54:18 miod Exp $	*/
 /*	$NetBSD: hp300spu.h,v 1.2 1997/05/01 05:26:48 thorpej Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #define	HP_320		0	/* 16MHz 68020+HP MMU+16K external cache */
 #define	HP_330		1	/* 16MHz 68020+68851 MMU */
 #define	HP_350		2	/* 25MHz 68020+HP MMU+32K external cache */
-#define	HP_360		3	/* 25MHz 68030 */
+#define	HP_36X		3	/* 25MHz 68030 */
 #define	HP_370		4	/* 33MHz 68030+64K external cache */
 #define	HP_340		5	/* 16MHz 68030 */
 #define	HP_345		6	/* 50MHz 68030+32K external cache */
@@ -52,8 +52,7 @@
 #define	HP_425		10	/* 25MHz 68040 */
 #define HP_433		11	/* 33MHz 68040 */
 #define	HP_385		12	/* 33MHz 68040 */
-#define	HP_362		13	/* 25MHz 68030 */
-#define	HP_382		14	/* 25MHz 68040 */
+#define	HP_382		13	/* 25MHz 68040 */
 
 /* values for mmuid - used to differentiate similar CPU/cache combos */
 #define	MMUID_345	1	/* 345 */
