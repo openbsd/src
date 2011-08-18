@@ -1,4 +1,4 @@
-/*	$OpenBSD: smbiosvar.h,v 1.8 2010/08/02 16:57:53 marco Exp $	*/
+/*	$OpenBSD: smbiosvar.h,v 1.9 2011/08/18 16:01:24 marco Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  * Copyright (c) 2005 Jordan Hargrave
@@ -52,19 +52,19 @@ struct smbios_entry {
 
 struct smbhdr {
 	u_int32_t	sig;		/* "_SM_" */
-	u_int8_t 	checksum;	/* Entry point checksum */
-	u_int8_t 	len;		/* Entry point structure length */
+	u_int8_t	checksum;	/* Entry point checksum */
+	u_int8_t	len;		/* Entry point structure length */
 	u_int8_t	majrev;		/* Specification major revision */
 	u_int8_t	minrev;		/* Specification minor revision */
 	u_int16_t	mss;		/* Maximum Structure Size */
-	u_int8_t 	epr;		/* Entry Point Revision */
-	u_int8_t 	fa[5];		/* value determined by EPR */
-	u_int8_t	sasig[5];  	/* Secondary Anchor "_DMI_" */
+	u_int8_t	epr;		/* Entry Point Revision */
+	u_int8_t	fa[5];		/* value determined by EPR */
+	u_int8_t	sasig[5];	/* Secondary Anchor "_DMI_" */
 	u_int8_t	sachecksum;	/* Secondary Checksum */
-	u_int16_t	size;   	/* Length of structure table in bytes */
-	u_int32_t	addr;	  	/* Structure table address */
+	u_int16_t	size;		/* Length of structure table in bytes */
+	u_int32_t	addr;		/* Structure table address */
 	u_int16_t	count;		/* Number of SMBIOS structures */
-	u_int8_t	rev;  		/* BCD revision */
+	u_int8_t	rev;		/* BCD revision */
 } __packed;
 
 struct smbtblhdr {
@@ -137,7 +137,7 @@ struct smbios_struct_bios {
 	u_int8_t	major_rel;
 	u_int8_t	minor_rel;
 	u_int8_t	ecf_mjr_rel;	/* embedded controler firmware */
-	u_int8_t 	ecf_min_rel;	/* embedded controler firmware */
+	u_int8_t	ecf_min_rel;	/* embedded controler firmware */
 } __packed;
 
 /*
