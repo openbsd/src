@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.53 2011/08/18 19:54:16 miod Exp $
+#	$OpenBSD: GENERIC,v 1.54 2011/08/18 20:03:38 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -93,9 +93,13 @@ wsdisplay*	at topcat?
 tvrx*		at dio?
 wsdisplay*	at tvrx?
 
+# 362/382 built-in framebuffer
+sti*		at dio?
+wsdisplay*	at sti?
+
 # SGC framebuffers
 sti*		at sgc?
-wsdisplay*	at sti?
+#wsdisplay*	at sti?		# already done above
 
 dca0		at dio? scode 9 flags 1	# DCA serial interfaces
 dca*		at dio?

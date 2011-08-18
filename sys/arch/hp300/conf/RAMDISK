@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.32 2011/08/18 19:54:16 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.33 2011/08/18 20:03:38 miod Exp $
 #
 # Ram disk kernel.
 #
@@ -103,9 +103,13 @@ wsdisplay*	at topcat?
 tvrx*		at dio?
 wsdisplay*	at tvrx?
 
+# 362/382 built-in framebuffer
+sti*		at dio?
+wsdisplay*	at sti?
+
 # SGC framebuffers
 sti*		at sgc?
-wsdisplay*	at sti?
+#wsdisplay*	at sti?		# already done above
 
 dca0		at dio? scode 9	flags 1	# DCA serial interfaces
 dca*		at dio?
