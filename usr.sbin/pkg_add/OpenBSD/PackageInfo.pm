@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.54 2011/07/12 10:30:29 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.55 2011/08/18 07:53:59 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -125,7 +125,8 @@ sub installed_info
 
 sub installed_contents
 {
-	return installed_info(shift).CONTENTS;
+	my $name = shift;
+	return installed_info($name).CONTENTS;
 }
 
 sub borked_package
