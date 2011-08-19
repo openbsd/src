@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidms.c,v 1.3 2011/04/07 15:30:16 miod Exp $ */
+/*	$OpenBSD: hidms.c,v 1.4 2011/08/19 18:46:22 matthieu Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -70,6 +70,8 @@ int
 hidms_setup(struct device *self, struct hidms *ms, uint32_t quirks,
     int id, void *desc, int dlen)
 {
+	struct hid_item h;
+	struct hid_data *d;
 	uint32_t flags;
 	int i, wheel, twheel;
 
@@ -211,7 +213,24 @@ hidms_setup(struct device *self, struct hidms *ms, uint32_t quirks,
 		ms->sc_loc_btn[1].pos = 9;
 		ms->sc_loc_btn[2].pos = 10;
 	}
-
+	/* Parse descriptors to get touch panel bounds */
+	d = hid_start_parse(desc, dlen, hid_input);
+	while (hid_get_item(d, &h)) {
+		switch (HID_GET_USAGE(h.usage)) {
+		case HUG_X:
+			if (ms->sc_flags & HIDMS_ABSX) {
+				ms->sc_tsscale.minx = h.logical_minimum;
+				ms->sc_tsscale.maxx = h.logical_maximum;
+			}
+			break;
+		case HUG_Y:
+			if (ms->sc_flags & HIDMS_ABSY) {
+				ms->sc_tsscale.miny = h.logical_minimum;
+				ms->sc_tsscale.maxy = h.logical_maximum;
+			}
+			break;
+		}
+	}
 	return 0;
 }
 
