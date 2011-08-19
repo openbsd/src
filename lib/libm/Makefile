@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.96 2011/07/24 19:25:50 martynas Exp $
+#  $OpenBSD: Makefile,v 1.97 2011/08/19 15:44:36 kettenis Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -165,8 +165,7 @@ SRCS=	${COMMON_SRCS}
 CPPFLAGS+=	-I${.CURDIR}/src -I${.CURDIR}/src/ld80
 SRCS+=		${LONG_SRCS}
 .endif
-.if (${MACHINE_ARCH} == "hppa64") || (${MACHINE_CPU} == "mips64") || \
-	(${MACHINE_ARCH} == "sparc64")
+.if (${MACHINE_CPU} == "mips64") || (${MACHINE_ARCH} == "sparc64")
 .PATH:		${.CURDIR}/src/ld128
 CPPFLAGS+=	-I${.CURDIR}/src -I${.CURDIR}/src/ld128
 SRCS+=		${LONG_SRCS}
