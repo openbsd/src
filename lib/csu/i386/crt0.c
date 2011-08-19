@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.13 2005/08/04 16:33:05 espie Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.14 2011/08/19 07:59:49 kettenis Exp $	*/
 /*	$NetBSD: crt0.c,v 1.20 1995/06/03 13:16:08 pk Exp $	*/
 
 /*
@@ -56,15 +56,20 @@ __asm(".text\n"
 "	.globl  _start\n"
 "_start:\n"
 "__start:\n"
-"	pushl	%ebx			#ps_strings\n"
+"	movl	%esp,%ebp\n"
+"	subl	$12,%esp		# align stack\n"
+"	andl	$~15,%esp\n"
+"	addl	$12,%esp\n"
+"	pushl	%ebx			# ps_strings\n"
 "	pushl   %ecx                    # obj\n"
 "	pushl   %edx                    # cleanup\n"
-"	movl    12(%esp),%eax\n"
-"	leal    20(%esp,%eax,4),%ecx\n"
-"	leal    16(%esp),%edx\n"
+"	movl    0(%ebp),%eax\n"
+"	leal    8(%ebp,%eax,4),%ecx\n"
+"	leal    4(%ebp),%edx\n"
 "	pushl   %ecx\n"
 "	pushl   %edx\n"
 "	pushl   %eax\n"
+"	xorl	%ebp,%ebp		# mark deepest stack frame\n"
 "	call    ___start ");
 
 void
