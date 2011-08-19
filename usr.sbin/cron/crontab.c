@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.62 2011/05/19 15:00:17 phessler Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.63 2011/08/19 20:53:36 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -286,8 +286,7 @@ edit_cmd(void) {
 	FILE *f;
 	int t;
 	struct stat statbuf, xstatbuf;
-	struct timespec mtimespec;
-	struct timeval tv[2];
+	struct timespec ts[2];
 
 	log_it(RealUser, Pid, "BEGIN EDIT", User);
 	if (snprintf(n, sizeof n, "%s/%s", SPOOL_DIR, User) >= sizeof(n)) {
@@ -311,13 +310,8 @@ edit_cmd(void) {
 		perror("fstat");
 		goto fatal;
 	}
-	/*
-	 * Note that timespec has higher precision than timeval so we
-	 * store mtimespec using timeval precision so we can compare later.
-	 */
-	TIMESPEC_TO_TIMEVAL(&tv[0], &statbuf.st_atimespec);
-	TIMESPEC_TO_TIMEVAL(&tv[1], &statbuf.st_mtimespec);
-	TIMEVAL_TO_TIMESPEC(&tv[1], &mtimespec);
+	ts[0] = statbuf.st_atim;
+	ts[1] = statbuf.st_mtim;
 
 	/* Turn off signals. */
 	(void)signal(SIGHUP, SIG_IGN);
@@ -360,7 +354,7 @@ edit_cmd(void) {
 		perror(Filename);
 		exit(ERROR_EXIT);
 	}
-	(void)futimes(t, tv);
+	(void)futimens(t, ts);
  again:
 	rewind(NewCrontab);
 	if (ferror(NewCrontab)) {
@@ -395,7 +389,7 @@ edit_cmd(void) {
 		perror("fstat");
 		goto fatal;
 	}
-	if (timespeccmp(&mtimespec, &statbuf.st_mtimespec, -) == 0) {
+	if (timespeccmp(&ts[1], &statbuf.st_mtim, ==)) {
 		if (swap_gids() < OK) {
 			perror("swapping gids");
 			exit(ERROR_EXIT);

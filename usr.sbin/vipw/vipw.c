@@ -1,4 +1,4 @@
-/*	$OpenBSD: vipw.c,v 1.15 2009/10/27 23:59:57 deraadt Exp $	 */
+/*	$OpenBSD: vipw.c,v 1.16 2011/08/19 20:53:36 millert Exp $	 */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -78,7 +78,7 @@ main(int argc, char *argv[])
 		pw_edit(0, NULL);
 		if (stat(_PATH_MASTERPASSWD_LOCK, &end))
 			pw_error(_PATH_MASTERPASSWD_LOCK, 1, 1);
-		if (!timespeccmp(&begin.st_mtimespec, &end.st_mtimespec, -) &&
+		if (timespeccmp(&begin.st_mtimespec, &end.st_mtimespec, ==) &&
 		    begin.st_size == end.st_size) {
 			warnx("no changes made");
 			pw_error((char *)NULL, 0, 0);
@@ -95,7 +95,7 @@ copyfile(int from, int to, struct stat *sb)
 {
 	int nr, nw, off;
 	char buf[8*1024];
-	struct timeval tv[2];
+	struct timespec ts[2];
 
 	if (fstat(from, sb) == -1)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
@@ -106,12 +106,9 @@ copyfile(int from, int to, struct stat *sb)
 	if (nr < 0)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
 
-	TIMESPEC_TO_TIMEVAL(&tv[0], &sb->st_atimespec);
-	TIMESPEC_TO_TIMEVAL(&tv[1], &sb->st_mtimespec);
-	(void)futimes(to, tv);
-
-	/* Make tv_nsec the same precision as tv_usec so it compares OK. */
-	TIMEVAL_TO_TIMESPEC(&tv[1], &sb->st_mtimespec);
+	ts[0] = sb->st_atim;
+	ts[1] = sb->st_mtim;
+	(void)futimens(to, ts);
 }
 
 void
