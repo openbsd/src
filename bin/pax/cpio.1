@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cpio.1,v 1.32 2011/01/23 21:33:22 schwarze Exp $
+.\"	$OpenBSD: cpio.1,v 1.33 2011/08/19 19:59:51 jmc Exp $
 .\"
 .\" Copyright (c) 1997 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 23 2011 $
+.Dd $Mdocdate: August 19 2011 $
 .Dt CPIO 1
 .Os
 .Sh NAME
@@ -292,8 +292,7 @@ Keith Muller at the University of California, San Diego.
 Different file formats have different maximum file sizes.
 It is recommended that a format such as cpio or ustar
 be used for larger files.
-.Pp
-.Bl -column "File format" "Maximum file size" -offset indent -compact
+.Bl -column "File format" "Maximum file size" -offset indent
 .It Sy "File format" Ta Sy "Maximum file size"
 .It bcpio Ta 4 Gigabytes
 .It sv4cpio Ta 4 Gigabytes

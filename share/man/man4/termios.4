@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termios.4,v 1.34 2010/09/19 12:41:23 jmc Exp $
+.\"	$OpenBSD: termios.4,v 1.35 2011/08/19 19:59:51 jmc Exp $
 .\"	$NetBSD: termios.4,v 1.5 1994/11/30 16:22:36 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)termios.4	8.4 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: September 19 2010 $
+.Dd $Mdocdate: August 19 2011 $
 .Dt TERMIOS 4
 .Os
 .Sh NAME
@@ -1460,11 +1460,10 @@ a \e character.
 In addition, this prefix is added to upper case characters on output.
 .Pp
 In addition, the following special character translations are in effect:
-.Pp
-.Bl -column "for:" "use:" -offset indent -compact
-.It Em "for:    use:"
+.Bl -column "for:" "use:" -offset indent
+.It Em "for:" Ta Em "use:"
 .It Dv ` Ta \&\e'
-.It Dv | Ta \&\e!
+.It Dv \&| Ta \&\e!
 .It Dv ~ Ta \&\e^
 .It Dv { Ta \&\e(
 .It Dv } Ta \&\e)
@@ -1502,9 +1501,8 @@ This table lists the array index, the corresponding special character,
 and the system default value.
 For an accurate list of the system defaults, consult the header file
 .Aq Pa sys/ttydefaults.h .
-.Pp
-.Bl -column "Index Name" "Special Character" -offset indent -compact
-.It Em "Index Name	Special Character	Default Value"
+.Bl -column "Index Name" "Special Character" -offset indent
+.It Em "Index Name" Ta Em "Special Character" Ta Em "Default Value"
 .It Dv VEOF Ta EOF Ta \&^D
 .It Dv VEOL Ta EOL Ta _POSIX_VDISABLE
 .It Dv VEOL2 Ta EOL2 Ta _POSIX_VDISABLE

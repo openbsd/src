@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umsm.4,v 1.70 2011/07/22 11:40:48 dcoppa Exp $
+.\"	$OpenBSD: umsm.4,v 1.71 2011/08/19 19:59:51 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 22 2011 $
+.Dd $Mdocdate: August 19 2011 $
 .Dt UMSM 4
 .Os
 .Sh NAME
@@ -34,9 +34,8 @@ USB controller with the actual device attached to it.
 The following devices are known to work with the
 .Nm
 driver:
-.Pp
-.Bl -column "Device                " "Bus" -compact -offset 6n
-.It Em "Device		Bus"
+.Bl -column "Device                        " "Bus" -offset 6n
+.It Em Device Ta Ta Em Bus
 .It Li "AirPrime PC5220" Ta Ta CardBus
 .It Li "Alcatel One Touch X060" Ta Ta USB
 .It Li "Alcatel One Touch X200" Ta Ta USB
@@ -89,7 +88,7 @@ driver:
 .It Li "Sierra Wireless MC8790" Ta Ta PCI Express Mini Card
 .It Li "Sierra Wireless AirCard 580" Ta Ta CardBus
 .It Li "Sierra Wireless AirCard 875" Ta Ta CardBus
-.It Li "Sierra Wireless AirCard 881" Ta CardBus
+.It Li "Sierra Wireless AirCard 881" Ta Ta CardBus
 .It Li "Sierra Wireless AirCard 881U" Ta Ta USB
 .It Li "Sierra Wireless Inc. USB 305" Ta Ta USB
 .It Li "Softbank C01SW (Sierra OEM)" Ta Ta USB
@@ -103,8 +102,7 @@ driver:
 .El
 .Pp
 Devices suspected of being compatible are:
-.Pp
-.Bl -column "Device                " "Bus" -compact -offset 6n
+.Bl -column "Device                        " "Bus" -offset 6n
 .It Em "Device		Bus"
 .It Li "Dell W5500" Ta Ta PCI Express Mini Card
 .It Li "Huawei E270+" Ta Ta USB
@@ -112,10 +110,10 @@ Devices suspected of being compatible are:
 .It Li "Huawei E1690" Ta Ta USB
 .It Li "Huawei E1762" Ta Ta USB
 .It Li "Huawei E1820" Ta Ta USB
-.It Li "Novatel Wireless ExpressCard" Ta ExpressCard
-.It Li "Novatel Wireless Merlin V620" Ta CardBus
-.It Li "Novatel Wireless Merlin V740" Ta CardBus
-.It Li "Novatel Wireless Merlin X950D" Ta ExpressCard
+.It Li "Novatel Wireless ExpressCard" Ta Ta ExpressCard
+.It Li "Novatel Wireless Merlin V620" Ta Ta CardBus
+.It Li "Novatel Wireless Merlin V740" Ta Ta CardBus
+.It Li "Novatel Wireless Merlin X950D" Ta Ta ExpressCard
 .It Li "Novatel Wireless MC950D" Ta Ta USB
 .It Li "Novatel Wireless S720" Ta Ta CardBus
 .It Li "Novatel Wireless U720" Ta Ta USB
@@ -123,13 +121,13 @@ Devices suspected of being compatible are:
 .It Li "Novatel Wireless U870" Ta Ta CardBus
 .It Li "Novatel Wireless V720" Ta Ta CardBus
 .It Li "Novatel Wireless X950D" Ta Ta ExpressCard
-.It Li "Novatel Wireless XU870 HSDPA" Ta ExpressCard
-.It Li "Sierra Wireless AirCard 595" Ta CardBus
-.It Li "Sierra Wireless AirCard 597E" Ta CardBus
-.It Li "Sierra Wireless AirCard 880" Ta CardBus
-.It Li "Sierra Wireless AirCard 880E" Ta ExpressCard
+.It Li "Novatel Wireless XU870 HSDPA" Ta Ta ExpressCard
+.It Li "Sierra Wireless AirCard 595" Ta Ta CardBus
+.It Li "Sierra Wireless AirCard 597E" Ta Ta CardBus
+.It Li "Sierra Wireless AirCard 880" Ta Ta CardBus
+.It Li "Sierra Wireless AirCard 880E" Ta Ta ExpressCard
 .It Li "Sierra Wireless AirCard 880U" Ta Ta USB
-.It Li "Sierra Wireless AirCard 881E" Ta ExpressCard
+.It Li "Sierra Wireless AirCard 881E" Ta Ta ExpressCard
 .It Li "Sierra Wireless AirCard 885U" Ta Ta USB
 .It Li "Sierra Wireless C597" Ta Ta USB
 .It Li "Sierra Wireless EM5625" Ta Ta USB

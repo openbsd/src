@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.133 2011/07/07 04:17:53 deraadt Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.134 2011/08/19 19:59:51 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 7 2011 $
+.Dd $Mdocdate: August 19 2011 $
 .Dt IPSEC.CONF 5
 .Os
 .Sh NAME
@@ -589,8 +589,7 @@ $ openssl rand 20 | hexdump -e '20/1 "%02x"'
 The following authentication types are permitted with the
 .Ic auth
 keyword:
-.Pp
-.Bl -column "authenticationXX" "Key Length" -offset indent -compact
+.Bl -column "authenticationXX" "Key Length" -offset indent
 .It Em Authentication	Key Length
 .It Li hmac-md5 Ta "128 bits"
 .It Li hmac-ripemd160 Ta "160 bits" Ta "[phase 2 only]"
@@ -603,8 +602,7 @@ keyword:
 The following cipher types are permitted with the
 .Ic enc
 keyword:
-.Pp
-.Bl -column "authenticationXX" "Key Length" -offset indent -compact
+.Bl -column "authenticationXX" "Key Length" -offset indent
 .It Em Cipher	Key Length
 .It Li des Ta "56 bits"
 .It Li 3des Ta "168 bits"
@@ -642,8 +640,7 @@ This is useful in setups where AH can not be used, e.g. when NAT is involved.
 The following group types are permitted with the
 .Ic group
 keyword:
-.Pp
-.Bl -column "authenticationXX" "Key Length" -offset indent -compact
+.Bl -column "authenticationXX" "Key Length" -offset indent
 .It Em Group	Size
 .It Li modp768  Ta 768 Ta [DH group 1]
 .It Li modp1024 Ta 1024 Ta [DH group 2]

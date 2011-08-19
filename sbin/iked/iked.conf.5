@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.13 2011/01/21 12:34:11 jmc Exp $
+.\" $OpenBSD: iked.conf.5,v 1.14 2011/08/19 19:59:51 jmc Exp $
 .\" $vantronix: iked.conf.5,v 1.10 2010/06/03 16:13:40 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 21 2011 $
+.Dd $Mdocdate: August 19 2011 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -681,8 +681,7 @@ and all the traffic arrives with that source address.
 The following authentication types are permitted with the
 .Ic auth
 keyword:
-.Pp
-.Bl -column "authenticationXX" "Key Length" -offset indent -compact
+.Bl -column "authenticationXX" "Key Length" -offset indent
 .It Em Authentication	Key Length	Truncated Length
 .It Li hmac-md5 Ta "128 bits" Ta "96 bits"
 .It Li hmac-sha1 Ta "160 bits" Ta "96 bits"
@@ -694,8 +693,7 @@ keyword:
 The following pseudo-random function types are permitted with the
 .Ic prf
 keyword:
-.Pp
-.Bl -column "authenticationXX" "Key Length" -offset indent -compact
+.Bl -column "authenticationXX" "Key Length" -offset indent
 .It Em Authentication	Key Length
 .It Li hmac-md5 Ta "128 bits" Ta "[IKE only]"
 .It Li hmac-sha1 Ta "160 bits" Ta "[IKE only]"
@@ -707,8 +705,7 @@ keyword:
 The following cipher types are permitted with the
 .Ic enc
 keyword:
-.Pp
-.Bl -column "authenticationXX" "Key Length" -offset indent -compact
+.Bl -column "authenticationXX" "Key Length" -offset indent
 .It Em Cipher	Key Length
 .It Li des Ta "56 bits" Ta "[ESP only]"
 .It Li 3des Ta "168 bits"
@@ -745,8 +742,7 @@ This is useful in setups where AH can not be used, e.g. when NAT is involved.
 The following group types are permitted with the
 .Ic group
 keyword:
-.Pp
-.Bl -column "modpXXXX-XXX" "grpXX" "XXXX" "Alias" -offset indent -compact
+.Bl -column "modpXXXX-XXX" "grpXX" "XXXX" "Alias" -offset indent
 .It Em Name	Group	Size	Type
 .It Li modp768 Ta grp1 Ta 768 Ta "MODP"
 .It Li modp1024 Ta grp2 Ta 1024 Ta "MODP"
