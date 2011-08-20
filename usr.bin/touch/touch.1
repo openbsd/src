@@ -1,4 +1,4 @@
-.\"	$OpenBSD: touch.1,v 1.20 2011/08/20 07:51:48 jmc Exp $
+.\"	$OpenBSD: touch.1,v 1.21 2011/08/20 20:17:55 jmc Exp $
 .\"	$NetBSD: touch.1,v 1.8 1995/08/31 22:10:05 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -93,9 +93,10 @@ The hour of the day, from 0 to 23.
 The minute of the hour, from 0 to 59.
 .It Ar SS
 The second of the minute, from 0 to 60.
-.It Ar .frac
-The decimal fraction of the second, either a period or comma, followed
-by one or more decimal digits.
+.It No \&. Ns Ar frac
+The decimal fraction of the second,
+either a period or comma,
+followed by one or more decimal digits.
 .It Ar Z
 The timezone specifier, a capital letter
 .Sq Z
@@ -141,8 +142,9 @@ The day of the month, from 1 to 31.
 The hour of the day, from 0 to 23.
 .It Ar mm
 The minute of the hour, from 0 to 59.
-.It Ar SS
-The second of the minute, from 0 to 60.
+.It No \&. Ns Ar SS
+The second of the minute, from 0 to 60,
+preceded by a period.
 .El
 .Pp
 If the
@@ -170,7 +172,7 @@ The obsolescent form of
 .Nm touch ,
 where a time format is specified as the first argument, is supported.
 When no
-.Fl r
+.Fl d , r ,
 or
 .Fl t
 option is specified, there are at least two arguments, and the first
