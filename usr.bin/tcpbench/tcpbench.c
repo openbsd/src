@@ -642,6 +642,7 @@ again:
 	} else if (n == 0) {
 		if (ptb->vflag)
 			fprintf(stderr, "%8d closed by remote end\n", sc->fd);
+		event_del(&sc->ev);
 		close(sc->fd);
 		TAILQ_REMOVE(&sc_queue, sc, entry);
 		free(sc);
