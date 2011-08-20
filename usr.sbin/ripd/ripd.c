@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.20 2010/02/08 00:26:51 guenther Exp $ */
+/*	$OpenBSD: ripd.c,v 1.21 2011/08/20 19:02:28 sthen Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -129,6 +129,7 @@ main(int argc, char *argv[])
 	ripd_process = PROC_MAIN;
 
 	log_init(1);	/* log to stderr until daemonized */
+	log_verbose(1);
 
 	while ((ch = getopt(argc, argv, "cdD:f:nv")) != -1) {
 		switch (ch) {
@@ -200,6 +201,7 @@ main(int argc, char *argv[])
 		errx(1, "unknown user %s", RIPD_USER);
 
 	log_init(debug);
+	log_verbose(conf->opts & RIPD_OPT_VERBOSE);
 
 	if (!debug)
 		daemon(1, 0);

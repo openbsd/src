@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.6 2009/12/22 17:45:47 claudio Exp $ */
+/*	$OpenBSD: log.c,v 1.7 2011/08/20 19:02:28 sthen Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -51,7 +51,6 @@ log_init(int n_debug)
 	extern char	*__progname;
 
 	debug = n_debug;
-	verbose = n_debug;
 
 	if (!debug)
 		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);

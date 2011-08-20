@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.c,v 1.13 2010/02/08 00:36:20 guenther Exp $ */
+/*	$OpenBSD: dvmrpd.c,v 1.14 2011/08/20 19:02:28 sthen Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -129,6 +129,7 @@ main(int argc, char *argv[])
 	dvmrpd_process = PROC_MAIN;
 
 	log_init(1);	/* log to stderr until daemonized */
+	log_verbose(1);
 
 	while ((ch = getopt(argc, argv, "df:nv")) != -1) {
 		switch (ch) {
@@ -159,6 +160,7 @@ main(int argc, char *argv[])
 		usage();
 
 	log_init(debug);
+	log_verbose(opts & DVMRPD_OPT_VERBOSE);
 
 	/* multicast IP forwarding must be enabled */
 	mib[0] = CTL_NET;
