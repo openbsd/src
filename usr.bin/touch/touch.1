@@ -1,4 +1,4 @@
-.\"	$OpenBSD: touch.1,v 1.17 2010/09/03 11:09:29 jmc Exp $
+.\"	$OpenBSD: touch.1,v 1.18 2011/08/20 06:44:24 guenther Exp $
 .\"	$NetBSD: touch.1,v 1.8 1995/08/31 22:10:05 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)touch.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: August 20 2011 $
 .Dt TOUCH 1
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .Sh SYNOPSIS
 .Nm touch
 .Op Fl acm
+.Op Fl d Ar YYYY-MM-DDThh:mm:SS[.frac][Z]
 .Op Fl r Ar file
 .Op Fl t Ar [[CC]YY]MMDDhhmm[.SS]
 .Ar
@@ -65,6 +66,38 @@ The
 .Nm
 utility does not treat this as an error.
 No error messages are displayed and the exit value is not affected.
+.It Fl d Ar YYYY-MM-DDThh:mm:SS[.frac][Z]
+Change the access and modification times to the specified time.
+The argument should be in the form
+.Dq YYYY-MM-DDThh:mm:SS[.frac][Z]
+where the parts of the argument represent the following:
+.Pp
+.Bl -tag -width .frac -compact -offset indent
+.It Ar YYYY
+The four digits of the year.
+.It Ar MM
+The month of the year, from 1 to 12.
+.It Ar DD
+The day of the month, from 1 to 31.
+.It Ar T
+Either the capital letter
+.Sq T
+or a single space.
+.It Ar hh
+The hour of the day, from 0 to 23.
+.It Ar mm
+The minute of the hour, from 0 to 59.
+.It Ar SS
+The second of the minute, from 0 to 60.
+.It Ar .frac
+The decimal fraction of the second, either a period or comma, followed
+by one or more decimal digits.
+.It Ar Z
+The timezone specifier, a capital letter
+.Sq Z
+indicating that the time is in UTC.
+If not specified, the time is in the local timezone.
+.El
 .It Fl m
 Change the modification time of the file.
 The access time of the file is not changed unless the
@@ -105,7 +138,7 @@ The hour of the day, from 0 to 23.
 .It Ar mm
 The minute of the hour, from 0 to 59.
 .It Ar SS
-The second of the minute, from 0 to 61.
+The second of the minute, from 0 to 60.
 .El
 .Pp
 If the
