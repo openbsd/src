@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iscsid.8,v 1.3 2010/09/25 14:09:52 jmc Exp $
+.\"	$OpenBSD: iscsid.8,v 1.4 2011/08/20 19:03:39 sthen Exp $
 .\"
 .\" Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 25 2010 $
+.Dd $Mdocdate: August 20 2011 $
 .Dt ISCSID 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd "iSCSI (Internet SCSI) daemon"
 .Sh SYNOPSIS
 .Nm
-.Op Fl d
+.Op Fl dv
 .Op Fl n Ar device
 .Op Fl s Ar socket
 .Sh DESCRIPTION
@@ -52,6 +52,8 @@ will run in the foreground and log to
 Use an alternate /dev entry for communicating with the kernel.
 .It Fl s Ar socket
 Use an alternate location for the default control socket.
+.It Fl v
+Produce more verbose output.
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/iscsid.sockXX" -compact
