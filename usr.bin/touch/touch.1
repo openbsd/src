@@ -1,4 +1,4 @@
-.\"	$OpenBSD: touch.1,v 1.19 2011/08/20 07:47:10 jmc Exp $
+.\"	$OpenBSD: touch.1,v 1.20 2011/08/20 07:51:48 jmc Exp $
 .\"	$NetBSD: touch.1,v 1.8 1995/08/31 22:10:05 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -72,8 +72,8 @@ No error messages are displayed and the exit value is not affected.
 .It Fl "d " Ar YYYY No - Ar MM No - Ar DDThh : Ar mm : Ar SS Oo \&. Ar frac Oc Op Ar Z
 .Sm on
 Change the access and modification times to the specified time.
-The argument should be in the form
-.Dq YYYY-MM-DDThh:mm:SS[.frac][Z]
+The argument should be of the form
+YYYY-MM-DDThh:mm:SS[.frac][Z],
 where the parts of the argument represent the following:
 .Pp
 .Bl -tag -width .frac -compact -offset indent
@@ -112,9 +112,9 @@ Use the access and modification times from the specified file
 instead of the current time of day.
 .It Fl t Oo Ns Oo Ar CC Oc Ns Ar YY Oc Ns Ar MMDDhhmm Ns Op \&. Ns Ar SS
 Change the access and modification times to the specified time.
-The argument should be in the form
-.Dq [[CC]YY]MMDDhhmm[.SS]
-where each pair of letters represents the following:
+The argument should be of the form
+[[CC]YY]MMDDhhmm[.SS],
+where the parts of the argument represent the following:
 .Pp
 .Bl -tag -width Ds -compact -offset indent
 .It Ar CC
