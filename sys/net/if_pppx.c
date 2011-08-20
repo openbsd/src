@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.9 2011/07/07 20:42:56 henning Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.10 2011/08/20 06:21:32 mcbride Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -1057,6 +1057,10 @@ pppx_if_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	s = splnet();
 	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
+	if (error) {
+		splx(s);
+		goto out;
+	}
 	if_start(ifp);
 	splx(s);
 

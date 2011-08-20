@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.25 2011/01/28 14:58:24 reyk Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.26 2011/08/20 06:21:32 mcbride Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -265,7 +265,7 @@ mpeoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	if (error) {
 		/* mbuf is already freed */
 		splx(s);
-		return (error);
+		goto out;
 	}
 	if_start(ifp);
 	splx(s);
