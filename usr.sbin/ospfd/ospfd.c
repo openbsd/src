@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.77 2011/05/06 13:50:37 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.78 2011/08/20 11:16:09 sthen Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -139,6 +139,7 @@ main(int argc, char *argv[])
 	sockname = OSPFD_SOCKET;
 
 	log_init(1);	/* log to stderr until daemonized */
+	log_verbose(1);
 
 	while ((ch = getopt(argc, argv, "cdD:f:ns:v")) != -1) {
 		switch (ch) {
@@ -166,7 +167,6 @@ main(int argc, char *argv[])
 			if (opts & OSPFD_OPT_VERBOSE)
 				opts |= OSPFD_OPT_VERBOSE2;
 			opts |= OSPFD_OPT_VERBOSE;
-			log_verbose(1);
 			break;
 		default:
 			usage();
@@ -222,6 +222,7 @@ main(int argc, char *argv[])
 		errx(1, "unknown user %s", OSPFD_USER);
 
 	log_init(debug);
+	log_verbose(ospfd_conf->opts & OSPFD_OPT_VERBOSE);
 
 	if (!debug)
 		daemon(1, 0);
