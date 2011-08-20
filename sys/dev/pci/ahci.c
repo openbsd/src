@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.181 2011/07/04 22:06:07 jmatthew Exp $ */
+/*	$OpenBSD: ahci.c,v 1.182 2011/08/20 20:16:01 kettenis Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -416,9 +416,8 @@ struct ahci_softc {
 
 	int			sc_flags;
 #define AHCI_F_NO_NCQ			(1<<0)
-#define AHCI_F_IGN_FR			(1<<1)
-#define AHCI_F_IPMS_PROBE		(1<<2)	/* IPMS on failed PMP probe */
-#define AHCI_F_NO_PMP			(1<<3)	/* ignore PMP capability */
+#define AHCI_F_IPMS_PROBE		(1<<1)	/* IPMS on failed PMP probe */
+#define AHCI_F_NO_PMP			(1<<2)	/* ignore PMP capability */
 
 	u_int			sc_ncmds;
 
@@ -458,8 +457,6 @@ int			ahci_ati_sb700_attach(struct ahci_softc *,
 int			ahci_amd_hudson2_attach(struct ahci_softc *,
 			    struct pci_attach_args *);
 int			ahci_intel_attach(struct ahci_softc *,
-			    struct pci_attach_args *);
-int			ahci_nvidia_mcp_attach(struct ahci_softc *,
 			    struct pci_attach_args *);
 
 static const struct ahci_device ahci_devices[] = {
@@ -517,27 +514,6 @@ static const struct ahci_device ahci_devices[] = {
 	    NULL,		ahci_intel_attach },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_EP80579_AHCI,
 	    NULL,		ahci_intel_attach },
-
-	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP65_AHCI_2,
-	    NULL,		ahci_nvidia_mcp_attach },
-	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP67_AHCI_1,
-	    NULL,		ahci_nvidia_mcp_attach },
-	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP73_AHCI_5,
-	    NULL,		ahci_nvidia_mcp_attach },
-	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP73_AHCI_9,
-	    NULL,		ahci_nvidia_mcp_attach },
-	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP77_AHCI_5,
-	    NULL,		ahci_nvidia_mcp_attach },
-	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP77_AHCI_6,
-	    NULL,		ahci_nvidia_mcp_attach },
-	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP79_AHCI_1,
-	    NULL,		ahci_nvidia_mcp_attach },
-	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP79_AHCI_2,
-	    NULL,		ahci_nvidia_mcp_attach },
-	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP79_AHCI_3,
-	    NULL,		ahci_nvidia_mcp_attach },
-	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP79_AHCI_4,
-	    NULL,		ahci_nvidia_mcp_attach },
 
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8251_SATA,
 	  ahci_no_match,	ahci_vt8251_attach }
@@ -730,7 +706,7 @@ ahci_ati_sb600_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 {
 	ahci_ati_sb_idetoahci(sc, pa);
 
-	sc->sc_flags |= AHCI_F_IGN_FR | AHCI_F_IPMS_PROBE;
+	sc->sc_flags |= AHCI_F_IPMS_PROBE;
 
 	return (0);
 }
@@ -754,14 +730,6 @@ int
 ahci_intel_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 {
 	sc->sc_flags |= AHCI_F_NO_PMP;
-	return (0);
-}
-
-int
-ahci_nvidia_mcp_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
-{
-	sc->sc_flags |= AHCI_F_IGN_FR;
-	
 	return (0);
 }
 
@@ -1550,12 +1518,6 @@ ahci_port_start(struct ahci_port *ap, int fre_only)
 		    ap->ap_sc->sc_ccc_ports_cur);
 	}
 #endif
-
-	if (!(ap->ap_sc->sc_flags & AHCI_F_IGN_FR)) {
-		/* Wait for FR to come on */
-		if (ahci_pwait_set(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_FR, 1))
-			return (2);
-	}
 
 	/* Wait for CR to come on */
 	if (!fre_only &&
