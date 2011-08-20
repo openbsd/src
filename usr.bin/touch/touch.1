@@ -1,4 +1,4 @@
-.\"	$OpenBSD: touch.1,v 1.18 2011/08/20 06:44:24 guenther Exp $
+.\"	$OpenBSD: touch.1,v 1.19 2011/08/20 07:47:10 jmc Exp $
 .\"	$NetBSD: touch.1,v 1.8 1995/08/31 22:10:05 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -42,9 +42,11 @@
 .Sh SYNOPSIS
 .Nm touch
 .Op Fl acm
-.Op Fl d Ar YYYY-MM-DDThh:mm:SS[.frac][Z]
+.Sm off
+.Op Fl "d " Ar YYYY No - Ar MM No - Ar DDThh : Ar mm : Ar SS Oo \&. Ar frac Oc Op Ar Z
+.Sm on
 .Op Fl r Ar file
-.Op Fl t Ar [[CC]YY]MMDDhhmm[.SS]
+.Op Fl t Oo Ns Oo Ar CC Oc Ns Ar YY Oc Ns Ar MMDDhhmm Ns Op \&. Ns Ar SS
 .Ar
 .Sh DESCRIPTION
 The
@@ -66,7 +68,9 @@ The
 .Nm
 utility does not treat this as an error.
 No error messages are displayed and the exit value is not affected.
-.It Fl d Ar YYYY-MM-DDThh:mm:SS[.frac][Z]
+.Sm off
+.It Fl "d " Ar YYYY No - Ar MM No - Ar DDThh : Ar mm : Ar SS Oo \&. Ar frac Oc Op Ar Z
+.Sm on
 Change the access and modification times to the specified time.
 The argument should be in the form
 .Dq YYYY-MM-DDThh:mm:SS[.frac][Z]
@@ -106,7 +110,7 @@ flag is also specified.
 .It Fl r Ar file
 Use the access and modification times from the specified file
 instead of the current time of day.
-.It Fl t Ar [[CC]YY]MMDDhhmm[.SS]
+.It Fl t Oo Ns Oo Ar CC Oc Ns Ar YY Oc Ns Ar MMDDhhmm Ns Op \&. Ns Ar SS
 Change the access and modification times to the specified time.
 The argument should be in the form
 .Dq [[CC]YY]MMDDhhmm[.SS]
