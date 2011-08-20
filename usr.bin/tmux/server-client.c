@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.60 2011/07/08 21:51:40 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.61 2011/08/20 20:37:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -170,6 +170,8 @@ server_client_lost(struct client *c)
 
 	if (c->cwd != NULL)
 		xfree(c->cwd);
+
+	environ_free(&c->environ);
 
 	close(c->ibuf.fd);
 	imsg_clear(&c->ibuf);
