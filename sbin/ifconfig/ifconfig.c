@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.248 2011/07/09 00:45:40 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.249 2011/08/21 06:28:31 haesbaert Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -314,9 +314,6 @@ const struct	cmd {
 	{ "wpaprotos",	NEXTARG,	0,		setifwpaprotos },
 	{ "wpakey",	NEXTARG,	0,		setifwpakey },
 	{ "-wpakey",	-1,		0,		setifwpakey },
-/*XXX delete these two after the 4.9 release */
-/*XXX*/	{ "wpapsk",     NEXTARG,        0,              setifwpakey },
-/*XXX*/	{ "-wpapsk",    -1,             0,              setifwpakey },
 	{ "chan",	NEXTARG0,	0,		setifchan },
 	{ "-chan",	-1,		0,		setifchan },
 	{ "scan",	NEXTARG0,	0,		setifscan },
@@ -2838,9 +2835,9 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 		goto proto_status;
 	}
 
-	media_list = (int *)calloc(ifmr.ifm_count, sizeof(int));
+	media_list = calloc(ifmr.ifm_count, sizeof(int));
 	if (media_list == NULL)
-		err(1, "malloc");
+		err(1, "calloc");
 	ifmr.ifm_ulist = media_list;
 
 	if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0)
@@ -3415,7 +3412,7 @@ setcarp_passwd(const char *val, int d)
 {
 	struct carpreq carpr;
 
-	memset((char *)&carpr, 0, sizeof(struct carpreq));
+	bzero(&carpr, sizeof(struct carpreq));
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
@@ -3440,7 +3437,7 @@ setcarp_vhid(const char *val, int d)
 	if (errmsg)
 		errx(1, "vhid %s: %s", val, errmsg);
 
-	memset((char *)&carpr, 0, sizeof(struct carpreq));
+	bzero(&carpr, sizeof(struct carpreq));
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
@@ -3465,7 +3462,7 @@ setcarp_advskew(const char *val, int d)
 	if (errmsg)
 		errx(1, "advskew %s: %s", val, errmsg);
 
-	memset((char *)&carpr, 0, sizeof(struct carpreq));
+	bzero(&carpr, sizeof(struct carpreq));
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
@@ -3489,7 +3486,7 @@ setcarp_advbase(const char *val, int d)
 	if (errmsg)
 		errx(1, "advbase %s: %s", val, errmsg);
 
-	memset((char *)&carpr, 0, sizeof(struct carpreq));
+	bzero(&carpr, sizeof(struct carpreq));
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
@@ -3509,7 +3506,7 @@ setcarppeer(const char *val, int d)
 	struct addrinfo hints, *peerres;
 	int ecode;
 
-	memset((char *)&carpr, 0, sizeof(struct carpreq));
+	bzero(&carpr, sizeof(struct carpreq));
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
@@ -3540,13 +3537,13 @@ unsetcarppeer(const char *val, int d)
 {
 	struct carpreq carpr;
 
-	bzero((char *)&carpr, sizeof(struct carpreq));
+	bzero(&carpr, sizeof(struct carpreq));
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
 		err(1, "SIOCGVH");
 
-	bzero((char *)&carpr.carpr_peer, sizeof(carpr.carpr_peer));
+	bzero(&carpr.carpr_peer, sizeof(carpr.carpr_peer));
 
 	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSVH");
@@ -3559,7 +3556,7 @@ setcarp_state(const char *val, int d)
 	struct carpreq carpr;
 	int i;
 
-	bzero((char *)&carpr, sizeof(struct carpreq));
+	bzero(&carpr, sizeof(struct carpreq));
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
@@ -3582,7 +3579,7 @@ setcarpdev(const char *val, int d)
 {
 	struct carpreq carpr;
 
-	bzero((char *)&carpr, sizeof(struct carpreq));
+	bzero(&carpr, sizeof(struct carpreq));
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
@@ -3599,13 +3596,13 @@ unsetcarpdev(const char *val, int d)
 {
 	struct carpreq carpr;
 
-	bzero((char *)&carpr, sizeof(struct carpreq));
+	bzero(&carpr, sizeof(struct carpreq));
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
 		err(1, "SIOCGVH");
 
-	bzero((char *)&carpr.carpr_carpdev, sizeof(carpr.carpr_carpdev));
+	bzero(&carpr.carpr_carpdev, sizeof(carpr.carpr_carpdev));
 
 	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSVH");
@@ -3618,7 +3615,7 @@ setcarp_nodes(const char *val, int d)
 	int i;
 	struct carpreq carpr;
 
-	bzero((char *)&carpr, sizeof(struct carpreq));
+	bzero(&carpr, sizeof(struct carpreq));
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
@@ -3661,7 +3658,7 @@ setcarp_balancing(const char *val, int d)
 	int i;
 	struct carpreq carpr;
 
-	bzero((char *)&carpr, sizeof(struct carpreq));
+	bzero(&carpr, sizeof(struct carpreq));
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
@@ -3685,7 +3682,7 @@ setpfsync_syncdev(const char *val, int d)
 {
 	struct pfsyncreq preq;
 
-	bzero((char *)&preq, sizeof(struct pfsyncreq));
+	bzero(&preq, sizeof(struct pfsyncreq));
 	ifr.ifr_data = (caddr_t)&preq;
 
 	if (ioctl(s, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
@@ -3703,13 +3700,13 @@ unsetpfsync_syncdev(const char *val, int d)
 {
 	struct pfsyncreq preq;
 
-	bzero((char *)&preq, sizeof(struct pfsyncreq));
+	bzero(&preq, sizeof(struct pfsyncreq));
 	ifr.ifr_data = (caddr_t)&preq;
 
 	if (ioctl(s, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
 		err(1, "SIOCGETPFSYNC");
 
-	bzero((char *)&preq.pfsyncr_syncdev, sizeof(preq.pfsyncr_syncdev));
+	bzero(&preq.pfsyncr_syncdev, sizeof(preq.pfsyncr_syncdev));
 
 	if (ioctl(s, SIOCSETPFSYNC, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSETPFSYNC");
@@ -3723,7 +3720,7 @@ setpfsync_syncpeer(const char *val, int d)
 	struct addrinfo hints, *peerres;
 	int ecode;
 
-	bzero((char *)&preq, sizeof(struct pfsyncreq));
+	bzero(&preq, sizeof(struct pfsyncreq));
 	ifr.ifr_data = (caddr_t)&preq;
 
 	if (ioctl(s, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
@@ -3755,7 +3752,7 @@ unsetpfsync_syncpeer(const char *val, int d)
 {
 	struct pfsyncreq preq;
 
-	bzero((char *)&preq, sizeof(struct pfsyncreq));
+	bzero(&preq, sizeof(struct pfsyncreq));
 	ifr.ifr_data = (caddr_t)&preq;
 
 	if (ioctl(s, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
@@ -3779,7 +3776,7 @@ setpfsync_maxupd(const char *val, int d)
 	if (errmsg)
 		errx(1, "maxupd %s: %s", val, errmsg);
 
-	memset((char *)&preq, 0, sizeof(struct pfsyncreq));
+	bzero(&preq, sizeof(struct pfsyncreq));
 	ifr.ifr_data = (caddr_t)&preq;
 
 	if (ioctl(s, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
@@ -3796,7 +3793,7 @@ setpfsync_defer(const char *val, int d)
 {
 	struct pfsyncreq preq;
 
-	memset((char *)&preq, 0, sizeof(struct pfsyncreq));
+	bzero(&preq, sizeof(struct pfsyncreq));
 	ifr.ifr_data = (caddr_t)&preq;
 
 	if (ioctl(s, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
@@ -3812,7 +3809,7 @@ pfsync_status(void)
 {
 	struct pfsyncreq preq;
 
-	bzero((char *)&preq, sizeof(struct pfsyncreq));
+	bzero(&preq, sizeof(struct pfsyncreq));
 	ifr.ifr_data = (caddr_t)&preq;
 
 	if (ioctl(s, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
@@ -3833,7 +3830,7 @@ pflow_status(void)
 {
 	struct pflowreq preq;
 
-	bzero((char *)&preq, sizeof(struct pflowreq));
+	bzero(&preq, sizeof(struct pflowreq));
 	ifr.ifr_data = (caddr_t)&preq;
 
 	if (ioctl(s, SIOCGETPFLOW, (caddr_t)&ifr) == -1)
@@ -3852,7 +3849,7 @@ setpflow_sender(const char *val, int d)
 	struct addrinfo hints, *sender;
 	int ecode;
 
-	memset(&hints, 0, sizeof(hints));
+	bzero(&hints, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
 
@@ -3863,13 +3860,12 @@ setpflow_sender(const char *val, int d)
 	if (sender->ai_addr->sa_family != AF_INET)
 		errx(1, "only IPv4 addresses supported for the sender");
 
-	bzero((char *)&preq, sizeof(struct pflowreq));
+	bzero(&preq, sizeof(struct pflowreq));
 	ifr.ifr_data = (caddr_t)&preq;
 	preq.addrmask |= PFLOW_MASK_SRCIP;
 	preq.sender_ip.s_addr = ((struct sockaddr_in *)
 	    sender->ai_addr)->sin_addr.s_addr;
 	
-
 	if (ioctl(s, SIOCSETPFLOW, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSETPFLOW");
 
@@ -3881,7 +3877,7 @@ unsetpflow_sender(const char *val, int d)
 {
 	struct pflowreq preq;
 
-	bzero((char *)&preq, sizeof(struct pflowreq));
+	bzero(&preq, sizeof(struct pflowreq));
 	preq.addrmask |= PFLOW_MASK_SRCIP;
 	ifr.ifr_data = (caddr_t)&preq;
 	if (ioctl(s, SIOCSETPFLOW, (caddr_t)&ifr) == -1)
@@ -3906,7 +3902,7 @@ setpflow_receiver(const char *val, int d)
 	*port++ = '\0';
 	ip = buf;
 
-	memset(&hints, 0, sizeof(hints));
+	bzero(&hints, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
 
@@ -3917,7 +3913,7 @@ setpflow_receiver(const char *val, int d)
 	if (receiver->ai_addr->sa_family != AF_INET)
 		errx(1, "only IPv4 addresses supported for the receiver");
 
-	bzero((char *)&preq, sizeof(struct pflowreq));
+	bzero(&preq, sizeof(struct pflowreq));
 	ifr.ifr_data = (caddr_t)&preq;
 	preq.addrmask |= PFLOW_MASK_DSTIP | PFLOW_MASK_DSTPRT;
 	preq.receiver_ip.s_addr = ((struct sockaddr_in *)
@@ -3936,7 +3932,7 @@ unsetpflow_receiver(const char *val, int d)
 {
 	struct pflowreq preq;
 
-	bzero((char *)&preq, sizeof(struct pflowreq));
+	bzero(&preq, sizeof(struct pflowreq));
 	ifr.ifr_data = (caddr_t)&preq;
 	preq.addrmask |= PFLOW_MASK_DSTIP | PFLOW_MASK_DSTPRT;
 	if (ioctl(s, SIOCSETPFLOW, (caddr_t)&ifr) == -1)
@@ -3955,7 +3951,7 @@ pppoe_status(void)
 	day = hour = min = sec = 0; /* XXX make gcc happy */
 
 	memset(&state, 0, sizeof(state));
-	memset(&temp_time, 0, sizeof(temp_time));
+	timerclear(&temp_time);
 
 	strlcpy(parms.ifname, name, sizeof(parms.ifname));
 	if (ioctl(s, PPPOEGETPARMS, &parms))
@@ -4007,7 +4003,8 @@ pppoe_status(void)
 			sec = diff_time;
 		}
 		printf(" time: ");
-		if (day != 0) printf("%ldd ", day);
+		if (day != 0)
+			printf("%ldd ", day);
 		printf("%02ld:%02ld:%02ld", hour, min, sec);
 	}
 	putchar('\n');
@@ -4679,8 +4676,7 @@ getifgroups(void)
 	}
 
 	len = ifgr.ifgr_len;
-	ifgr.ifgr_groups =
-	    (struct ifg_req *)calloc(len / sizeof(struct ifg_req),
+	ifgr.ifgr_groups = calloc(len / sizeof(struct ifg_req),
 	    sizeof(struct ifg_req));
 	if (ifgr.ifgr_groups == NULL)
 		err(1, "getifgroups");
