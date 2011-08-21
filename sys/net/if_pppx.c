@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.10 2011/08/20 06:21:32 mcbride Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.11 2011/08/21 09:00:15 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -629,10 +629,19 @@ pppx_if_next_unit(void)
 	rw_assert_wrlock(&pppx_ifs_lk);
 
 	/* this is safe without splnet since we're not modifying it */
-	RB_FOREACH(pxi, pppx_ifs, &pppx_ifs) {
-		if (pxi->pxi_unit >= unit)
-			unit = pxi->pxi_unit + 1;
-	}
+	do {
+		int found = 0;
+		RB_FOREACH(pxi, pppx_ifs, &pppx_ifs) {
+			if (pxi->pxi_unit == unit) {
+				found = 1;
+				break;
+			}
+		}
+
+		if (found == 0)
+			break;
+		unit++;
+	} while (unit > 0);
 
 	return (unit);
 }
@@ -812,6 +821,11 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	/* try to set the interface up */
 	rw_enter_write(&pppx_ifs_lk);
 	unit = pppx_if_next_unit();
+	if (unit < 0) {
+		pool_put(pppx_if_pl, pxi);
+		error = ENOMEM;
+		goto out;
+	}
 
 	pxi->pxi_unit = unit;
 	pxi->pxi_key.pxik_session_id = req->pr_session_id;
