@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.18 2011/08/20 06:44:24 guenther Exp $	*/
+/*	$OpenBSD: touch.c,v 1.19 2011/08/21 20:55:23 guenther Exp $	*/
 /*	$NetBSD: touch.c,v 1.11 1995/08/31 22:10:06 jtc Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ stime_arg1(char *arg, struct timespec *tsp)
 	int		 yearset;
 	char		*dot, *p;
 					/* Start with the current time. */
-	tmptime = tsp[0].tv_sec;
+	tmptime = time(NULL);
 	if ((lt = localtime(&tmptime)) == NULL)
 		err(1, "localtime");
 					/* [[CC]YY]MMDDhhmm[.SS] */
@@ -227,7 +227,7 @@ stime_arg2(char *arg, int year, struct timespec *tsp)
 	struct tm	*lt;
 	time_t		 tmptime;
 					/* Start with the current time. */
-	tmptime = tsp[0].tv_sec;
+	tmptime = time(NULL);
 	if ((lt = localtime(&tmptime)) == NULL)
 		err(1, "localtime");
 
