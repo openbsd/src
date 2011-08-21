@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: echo.pl,v 1.4 2011/07/23 23:56:08 bluhm Exp $
+#	$OpenBSD: echo.pl,v 1.5 2011/08/21 22:50:59 bluhm Exp $
 
 # Copyright (c) 2010 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -83,7 +83,7 @@ $s->{pid} = -1;  # XXX hack
 exit if $args{nocheck};
 
 $r->loggrep(qr/^Timeout$/) or die "no relay timeout"
-    if $args{relay}{idle};
+    if $args{relay}{timeout};
 $r->loggrep(qr/^Max$/) or die "no relay max"
     if $args{relay}{max} && $args{len};
 

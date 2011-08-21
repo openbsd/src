@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.6 2011/07/04 05:43:02 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.7 2011/08/21 22:50:59 bluhm Exp $
 
 # Copyright (c) 2010,2011 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -31,6 +31,7 @@ use BSD::Socket::Splice qw(setsplice getsplice geterror);
 sub write_char {
 	my $self = shift;
 	my $len = shift // $self->{len} // 251;
+	my $sleep = $self->{sleep};
 
 	my $ctx = Digest::MD5->new();
 	my $char = '0';
@@ -44,6 +45,10 @@ sub write_char {
 			when(/z/)	{ $char = "\n" }
 			when(/\n/)	{ print STDERR "."; $char = '0' }
 			default		{ $char++ }
+		}
+		if ($self->{sleep}) {
+			IO::Handle::flush(\*STDOUT);
+			sleep $self->{sleep};
 		}
 	}
 	if ($len) {
