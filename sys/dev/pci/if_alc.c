@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.15 2011/06/17 07:16:42 kevlo Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.16 2011/08/21 15:25:20 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -214,13 +214,11 @@ alc_miibus_statchg(struct device *dev)
 {
 	struct alc_softc *sc = (struct alc_softc *)dev;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	struct mii_data *mii;
+	struct mii_data *mii = &sc->sc_miibus;
 	uint32_t reg;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
-
-	mii = &sc->sc_miibus;
 
 	sc->alc_flags &= ~ALC_FLAG_LINK;
 	if ((mii->mii_media_status & (IFM_ACTIVE | IFM_AVALID)) ==
@@ -259,6 +257,9 @@ alc_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct alc_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_miibus;
+
+	if ((ifp->if_flags & IFF_UP) == 0)
+		return;
 
 	mii_pollstat(mii);
 	ifmr->ifm_status = mii->mii_media_status;
@@ -1381,6 +1382,10 @@ alc_start(struct ifnet *ifp)
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
+	if ((sc->alc_flags & ALC_FLAG_LINK) == 0)
+		return;
+	if (IFQ_IS_EMPTY(&ifp->if_snd))
+		return;
 
 	for (;;) {
 		IFQ_DEQUEUE(&ifp->if_snd, m_head);
@@ -1441,9 +1446,7 @@ alc_watchdog(struct ifnet *ifp)
 	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
 	ifp->if_oerrors++;
 	alc_init(ifp);
-
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
-		alc_start(ifp);
+	alc_start(ifp);
 }
 
 int
@@ -1726,12 +1729,12 @@ alc_intr(void *arg)
 			return (0);
 		}
 
-		if (status & INTR_TX_PKT) {
+		if (status & INTR_TX_PKT)
 			alc_txeof(sc);
-		    if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			alc_start(ifp);
-		}
+
+		alc_start(ifp);
 	}
+
 	claimed = 1;
 back:
 	/* Re-enable interrupts. */
