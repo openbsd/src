@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.75 2010/12/16 18:08:57 ajacoutot Exp $
+#	$OpenBSD: services,v 1.76 2011/08/21 17:29:15 ajacoutot Exp $
 #
 # Network services, Internet style
 #
@@ -242,6 +242,8 @@ iscsi		3260/tcp			# ISCSI
 iapp		3517/udp	802-11-iapp	# IEEE 802.11f IAPP
 daap		3689/tcp			# Digital Audio Access Protocol
 daap		3689/udp			# Digital Audio Access Protocol
+sieve		4190/tcp			# ManageSieve Protocol
+sieve		4190/udp			# ManageSieve Protocol
 krb524		4444/tcp			# Kerberos 5->4
 krb524		4444/udp			# Kerberos 5->4
 ipsec-nat-t	4500/tcp	ipsec-msft	# IPsec NAT-Traversal
