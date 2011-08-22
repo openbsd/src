@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.12 2008/04/27 16:01:47 drahn Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.13 2011/08/22 18:18:35 deraadt Exp $	*/
 /*	$NetBSD: pcb.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -67,6 +67,6 @@ struct md_coredump {
 
 #ifdef	_KERNEL
 extern struct proc *fpuproc;
-int  setfault(faultbuf *env);
+int  setfault(faultbuf *env) __returns_twice;
 #endif
 #endif	/* _POWERPC_PCB_H_ */
