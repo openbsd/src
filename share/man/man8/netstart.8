@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstart.8,v 1.17 2011/02/10 09:11:24 sobrado Exp $
+.\"	$OpenBSD: netstart.8,v 1.18 2011/08/22 12:52:54 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\"
 .\"     @(#)rc.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: February 10 2011 $
+.Dd $Mdocdate: August 22 2011 $
 .Dt NETSTART 8
 .Os
 .Sh NAME
@@ -99,7 +99,7 @@ To enable
 routing, the
 .Va net.inet.ip.mforwarding
 and/or
-.Va net.inet.ip6.mforwarding
+.Va net.inet6.ip6.mforwarding
 .Xr sysctl 8
 variables should be set to 1.
 Routing to the 224.0.0.0/4 net is set up using values from
