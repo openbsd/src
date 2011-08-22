@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.16 2011/03/23 16:54:36 pirofti Exp $ */
+/*	$OpenBSD: endian.h,v 1.17 2011/08/22 18:22:07 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -30,7 +30,5 @@
 #undef _BIG_ENDIAN	/* XXX - gcc may define _BIG_ENDIAN too */
 #define _BYTE_ORDER _BIG_ENDIAN
 #include <sys/endian.h>
-
-#define	__STRICT_ALIGNMENT
 
 #endif /* _POWERPC_ENDIAN_H_ */
