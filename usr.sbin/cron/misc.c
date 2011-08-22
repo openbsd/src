@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.43 2011/07/09 14:49:14 dhill Exp $	*/
+/*	$OpenBSD: misc.c,v 1.44 2011/08/22 19:32:42 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -128,12 +128,12 @@ set_cron_uid(void) {
 #if defined(BSD) || defined(POSIX)
 	if (seteuid(ROOT_UID) < OK) {
 		perror("seteuid");
-		exit(ERROR_EXIT);
+		exit(EXIT_FAILURE);
 	}
 #else
 	if (setuid(ROOT_UID) < OK) {
 		perror("setuid");
-		exit(ERROR_EXIT);
+		exit(EXIT_FAILURE);
 	}
 #endif
 }
@@ -156,18 +156,18 @@ set_cron_cwd(void) {
 		} else {
 			fprintf(stderr, "%s: ", CRONDIR);
 			perror("mkdir");
-			exit(ERROR_EXIT);
+			exit(EXIT_FAILURE);
 		}
 	}
 	if (!S_ISDIR(sb.st_mode)) {
 		fprintf(stderr, "'%s' is not a directory, bailing out.\n",
 			CRONDIR);
-		exit(ERROR_EXIT);
+		exit(EXIT_FAILURE);
 	}
 	if (chdir(CRONDIR) < OK) {
 		fprintf(stderr, "cannot chdir(%s), bailing out.\n", CRONDIR);
 		perror(CRONDIR);
-		exit(ERROR_EXIT);
+		exit(EXIT_FAILURE);
 	}
 
 	/* CRONDIR okay (now==CWD), now look at SPOOL_DIR ("tabs" or some such)
@@ -180,13 +180,13 @@ set_cron_cwd(void) {
 		} else {
 			fprintf(stderr, "%s: ", SPOOL_DIR);
 			perror("mkdir");
-			exit(ERROR_EXIT);
+			exit(EXIT_FAILURE);
 		}
 	}
 	if (!S_ISDIR(sb.st_mode)) {
 		fprintf(stderr, "'%s' is not a directory, bailing out.\n",
 			SPOOL_DIR);
-		exit(ERROR_EXIT);
+		exit(EXIT_FAILURE);
 	}
 	if (grp != NULL) {
 		if (sb.st_gid != grp->gr_gid)
@@ -205,13 +205,13 @@ set_cron_cwd(void) {
 		} else {
 			fprintf(stderr, "%s: ", AT_DIR);
 			perror("mkdir");
-			exit(ERROR_EXIT);
+			exit(EXIT_FAILURE);
 		}
 	}
 	if (!S_ISDIR(sb.st_mode)) {
 		fprintf(stderr, "'%s' is not a directory, bailing out.\n",
 			AT_DIR);
-		exit(ERROR_EXIT);
+		exit(EXIT_FAILURE);
 	}
 	if (grp != NULL) {
 		if (sb.st_gid != grp->gr_gid)
@@ -221,7 +221,7 @@ set_cron_cwd(void) {
 	}
 }
 
-/* acquire_daemonlock() - write our PID into /etc/cron.pid, unless
+/* acquire_daemonlock() - write our PID into /var/run/cron.pid, unless
  *	another daemon is already running, which we detect here.
  *
  * note: main() calls us twice; once before forking, once after.
@@ -258,7 +258,7 @@ acquire_daemonlock(int closeflag) {
 				    strerror(save_errno));
 				fprintf(stderr, "%s: %s\n", ProgramName, buf);
 				log_it("CRON", getpid(), "DEATH", buf);
-				exit(ERROR_EXIT);
+				exit(EXIT_FAILURE);
 			}
 
 			/* couldn't lock the pid file, try to read existing. */
@@ -277,19 +277,19 @@ acquire_daemonlock(int closeflag) {
 			}
 			fprintf(stderr, "%s: %s\n", ProgramName, buf);
 			log_it("CRON", getpid(), "DEATH", buf);
-			exit(ERROR_EXIT);
+			exit(EXIT_FAILURE);
 		}
-		/* fd must be > STDERR since we dup fd 0-2 to /dev/null */
-		if (fd <= STDERR) {
-			if (dup2(fd, STDERR + 1) < 0) {
+		/* fd must be > STDERR_FILENO since we dup fd 0-2 to /dev/null */
+		if (fd <= STDERR_FILENO) {
+			if (dup2(fd, STDERR_FILENO + 1) < 0) {
 				snprintf(buf, sizeof buf,
 				    "can't dup pid fd: %s", strerror(errno));
 				fprintf(stderr, "%s: %s\n", ProgramName, buf);
 				log_it("CRON", getpid(), "DEATH", buf);
-				exit(ERROR_EXIT);
+				exit(EXIT_FAILURE);
 			}
 			close(fd);
-			fd = STDERR + 1;
+			fd = STDERR_FILENO + 1;
 		}
 		(void) fcntl(fd, F_SETFD, FD_CLOEXEC);
 	}
@@ -483,7 +483,7 @@ log_it(const char *username, PID_T xpid, const char *event, const char *detail) 
 		if (LogFD >= OK)
 			perror(LOG_FILE);
 		fprintf(stderr, "%s: can't write to log file\n", ProgramName);
-		write(STDERR, msg, strlen(msg));
+		write(STDERR_FILENO, msg, strlen(msg));
 	}
 
 	free(msg);
@@ -706,28 +706,28 @@ open_socket(void)
 		fprintf(stderr, "%s: can't create socket: %s\n",
 		    ProgramName, strerror(errno));
 		log_it("CRON", getpid(), "DEATH", "can't create socket");
-		exit(ERROR_EXIT);
+		exit(EXIT_FAILURE);
 	}
 	if (fcntl(sock, F_SETFD, FD_CLOEXEC) == -1) {
 		fprintf(stderr, "%s: can't make socket close on exec: %s\n",
 		    ProgramName, strerror(errno));
 		log_it("CRON", getpid(), "DEATH",
 		    "can't make socket close on exec");
-		exit(ERROR_EXIT);
+		exit(EXIT_FAILURE);
 	}
 	if (fcntl(sock, F_SETFL, O_NONBLOCK) == -1) {
 		fprintf(stderr, "%s: can't make socket non-blocking: %s\n",
 		    ProgramName, strerror(errno));
 		log_it("CRON", getpid(), "DEATH",
 		    "can't make socket non-blocking");
-		exit(ERROR_EXIT);
+		exit(EXIT_FAILURE);
 	}
 	bzero(&s_un, sizeof(s_un));
 	if (snprintf(s_un.sun_path, sizeof s_un.sun_path, "%s/%s",
 	      SPOOL_DIR, CRONSOCK) >= sizeof(s_un.sun_path)) {
 		fprintf(stderr, "%s/%s: path too long\n", SPOOL_DIR, CRONSOCK);
 		log_it("CRON", getpid(), "DEATH", "path too long");
-		exit(ERROR_EXIT);
+		exit(EXIT_FAILURE);
 	}
 	unlink(s_un.sun_path);
 	s_un.sun_family = AF_UNIX;
@@ -741,14 +741,14 @@ open_socket(void)
 		    ProgramName, strerror(errno));
 		log_it("CRON", getpid(), "DEATH", "can't bind socket");
 		umask(omask);
-		exit(ERROR_EXIT);
+		exit(EXIT_FAILURE);
 	}
 	umask(omask);
 	if (listen(sock, SOMAXCONN)) {
 		fprintf(stderr, "%s: can't listen on socket: %s\n",
 		    ProgramName, strerror(errno));
 		log_it("CRON", getpid(), "DEATH", "can't listen on socket");
-		exit(ERROR_EXIT);
+		exit(EXIT_FAILURE);
 	}
 	chmod(s_un.sun_path, 0660);
 

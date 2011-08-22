@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.17 2011/03/03 15:08:14 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.18 2011/08/22 19:32:42 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -286,41 +286,41 @@ run_job(atjob *job, char *atfile)
 	pw = getpwuid(job->uid);
 	if (pw == NULL) {
 		log_it("CRON", getpid(), "ORPHANED JOB", atfile);
-		_exit(ERROR_EXIT);
+		_exit(EXIT_FAILURE);
 	}
 #if (defined(BSD)) && (BSD >= 199103)
 	if (pw->pw_expire && time(NULL) >= pw->pw_expire) {
 		log_it(pw->pw_name, getpid(), "ACCOUNT EXPIRED, JOB ABORTED",
 		    atfile);
-		_exit(ERROR_EXIT);
+		_exit(EXIT_FAILURE);
 	}
 #endif
 
 	/* Sanity checks */
 	if (fstat(fd, &statbuf) < OK) {
 		log_it(pw->pw_name, getpid(), "FSTAT FAILED", atfile);
-		_exit(ERROR_EXIT);
+		_exit(EXIT_FAILURE);
 	}
 	if (!S_ISREG(statbuf.st_mode)) {
 		log_it(pw->pw_name, getpid(), "NOT REGULAR", atfile);
-		_exit(ERROR_EXIT);
+		_exit(EXIT_FAILURE);
 	}
 	if ((statbuf.st_mode & ALLPERMS) != (S_IRUSR | S_IWUSR | S_IXUSR)) {
 		log_it(pw->pw_name, getpid(), "BAD FILE MODE", atfile);
-		_exit(ERROR_EXIT);
+		_exit(EXIT_FAILURE);
 	}
 	if (statbuf.st_uid != 0 && statbuf.st_uid != job->uid) {
 		log_it(pw->pw_name, getpid(), "WRONG FILE OWNER", atfile);
-		_exit(ERROR_EXIT);
+		_exit(EXIT_FAILURE);
 	}
 	if (statbuf.st_nlink > 1) {
 		log_it(pw->pw_name, getpid(), "BAD LINK COUNT", atfile);
-		_exit(ERROR_EXIT);
+		_exit(EXIT_FAILURE);
 	}
 
 	if ((fp = fdopen(dup(fd), "r")) == NULL) {
 		log_it("CRON", getpid(), "error", "dup(2) failed");
-		_exit(ERROR_EXIT);
+		_exit(EXIT_FAILURE);
 	}
 
 	/*
@@ -371,14 +371,14 @@ run_job(atjob *job, char *atfile)
 
 	(void)fclose(fp);
 	if (!safe_p(pw->pw_name, mailto))
-		_exit(ERROR_EXIT);
+		_exit(EXIT_FAILURE);
 	if ((uid_t)nuid != job->uid) {
 		log_it(pw->pw_name, getpid(), "UID MISMATCH", atfile);
-		_exit(ERROR_EXIT);
+		_exit(EXIT_FAILURE);
 	}
 	if ((gid_t)ngid != job->gid) {
 		log_it(pw->pw_name, getpid(), "GID MISMATCH", atfile);
-		_exit(ERROR_EXIT);
+		_exit(EXIT_FAILURE);
 	}
 
 	/* mark ourselves as different to PS command watchers */
@@ -390,7 +390,7 @@ run_job(atjob *job, char *atfile)
 	switch ((pid = fork())) {
 	case -1:
 		log_it("CRON", getpid(), "error", "can't fork");
-		_exit(ERROR_EXIT);
+		_exit(EXIT_FAILURE);
 		/*NOTREACHED*/
 	case 0:
 		Debug(DPROC, ("[%ld] grandchild process fork()'ed\n",
@@ -405,19 +405,19 @@ run_job(atjob *job, char *atfile)
 		/* Connect grandchild's stdin to the at job file. */
 		if (lseek(fd, (off_t) 0, SEEK_SET) < 0) {
 			perror("lseek");
-			_exit(ERROR_EXIT);
+			_exit(EXIT_FAILURE);
 		}
-		if (fd != STDIN) {
-			dup2(fd, STDIN);
+		if (fd != STDIN_FILENO) {
+			dup2(fd, STDIN_FILENO);
 			close(fd);
 		}
 
 		/* Connect stdout/stderr to the pipe from our parent. */
-		if (output_pipe[WRITE_PIPE] != STDOUT) {
-			dup2(output_pipe[WRITE_PIPE], STDOUT);
+		if (output_pipe[WRITE_PIPE] != STDOUT_FILENO) {
+			dup2(output_pipe[WRITE_PIPE], STDOUT_FILENO);
 			close(output_pipe[WRITE_PIPE]);
 		}
-		dup2(STDOUT, STDERR);
+		dup2(STDOUT_FILENO, STDERR_FILENO);
 		close(output_pipe[READ_PIPE]);
 
 		(void) setsid();
@@ -432,7 +432,7 @@ run_job(atjob *job, char *atfile)
 				fprintf(stderr,
 				    "Cannot get login class for %s\n",
 				    pw->pw_name);
-				_exit(ERROR_EXIT);
+				_exit(EXIT_FAILURE);
 
 			}
 
@@ -440,18 +440,18 @@ run_job(atjob *job, char *atfile)
 				fprintf(stderr,
 				    "setusercontext failed for %s\n",
 				    pw->pw_name);
-				_exit(ERROR_EXIT);
+				_exit(EXIT_FAILURE);
 			}
 # ifdef BSD_AUTH
 			as = auth_open();
 			if (as == NULL || auth_setpwd(as, pw) != 0) {
 				fprintf(stderr, "can't malloc\n");
-				_exit(ERROR_EXIT);
+				_exit(EXIT_FAILURE);
 			}
 			if (auth_approval(as, lc, pw->pw_name, "cron") <= 0) {
 				fprintf(stderr, "approval failed for %s\n",
 				    pw->pw_name);
-				_exit(ERROR_EXIT);
+				_exit(EXIT_FAILURE);
 			}
 			auth_close(as);
 # endif /* BSD_AUTH */
@@ -461,7 +461,7 @@ run_job(atjob *job, char *atfile)
 		if (setgid(pw->pw_gid) || initgroups(pw->pw_name, pw->pw_gid)) {
 			fprintf(stderr,
 			    "unable to set groups for %s\n", pw->pw_name);
-			_exit(ERROR_EXIT);
+			_exit(EXIT_FAILURE);
 		}
 #if (defined(BSD)) && (BSD >= 199103)
 		setlogin(pw->pw_name);
@@ -469,7 +469,7 @@ run_job(atjob *job, char *atfile)
 		if (setuid(pw->pw_uid)) {
 			fprintf(stderr, "unable to set uid to %lu\n",
 			    (unsigned long)pw->pw_uid);
-			_exit(ERROR_EXIT);
+			_exit(EXIT_FAILURE);
 		}
 
 #endif /* LOGIN_CAP */
@@ -485,7 +485,7 @@ run_job(atjob *job, char *atfile)
 			fprintf(stderr,
 			    "debug DTEST is on, not exec'ing at job %s\n",
 			    atfile);
-			_exit(OK_EXIT);
+			_exit(EXIT_SUCCESS);
 		}
 #endif /*DEBUGGING*/
 
@@ -501,7 +501,7 @@ run_job(atjob *job, char *atfile)
 		nenvp[0] = NULL;
 		if (execve(_PATH_BSHELL, nargv, nenvp) != 0) {
 			perror("execve: " _PATH_BSHELL);
-			_exit(ERROR_EXIT);
+			_exit(EXIT_FAILURE);
 		}
 		break;
 	default:
@@ -522,7 +522,7 @@ run_job(atjob *job, char *atfile)
 
 	if ((fp = fdopen(output_pipe[READ_PIPE], "r")) == NULL) {
 		perror("fdopen");
-		(void) _exit(ERROR_EXIT);
+		(void) _exit(EXIT_FAILURE);
 	}
 	nread = fread(buf, 1, sizeof(buf), fp);
 	if (nread != 0 || always_mail) {
@@ -540,11 +540,11 @@ run_job(atjob *job, char *atfile)
 		if (snprintf(mailcmd, sizeof mailcmd,  MAILFMT,
 		    MAILARG) >= sizeof mailcmd) {
 			fprintf(stderr, "mailcmd too long\n");
-			(void) _exit(ERROR_EXIT);
+			(void) _exit(EXIT_FAILURE);
 		}
 		if (!(mail = cron_popen(mailcmd, "w", pw))) {
 			perror(mailcmd);
-			(void) _exit(ERROR_EXIT);
+			(void) _exit(EXIT_FAILURE);
 		}
 		fprintf(mail, "From: %s (Atrun Service)\n", pw->pw_name);
 		fprintf(mail, "To: %s\n", mailto);
@@ -600,9 +600,9 @@ run_job(atjob *job, char *atfile)
 			break;
 		}
 	}
-	_exit(OK_EXIT);
+	_exit(EXIT_SUCCESS);
 
 bad_file:
 	log_it(pw->pw_name, getpid(), "BAD FILE FORMAT", atfile);
-	_exit(ERROR_EXIT);
+	_exit(EXIT_FAILURE);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.6 2004/06/17 22:11:55 millert Exp $	*/
+/*	$OpenBSD: macros.h,v 1.7 2011/08/22 19:32:42 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -37,11 +37,6 @@
 #define	INIT_PID	1	/* parent of orphans */
 #define READ_PIPE	0	/* which end of a pipe pair do you read? */
 #define WRITE_PIPE	1	/*   or write to? */
-#define STDIN		0	/* what is stdin's file descriptor? */
-#define STDOUT		1	/*   stdout's? */
-#define STDERR		2	/*   stderr's? */
-#define ERROR_EXIT	1	/* exit() with this will scare the shell */
-#define	OK_EXIT		0	/* exit() with this is considered 'normal' */
 #define	MAX_FNAME	100	/* max length of internally generated fn */
 #define	MAX_COMMAND	1000	/* max length of internally generated cmd */
 #define	MAX_ENVSTR	1000	/* max length of envvar=value\0 strings */

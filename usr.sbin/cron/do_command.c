@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.35 2011/03/03 15:08:14 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.36 2011/08/22 19:32:42 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -48,7 +48,7 @@ do_command(entry *e, user *u) {
 		child_process(e, u);
 		Debug(DPROC, ("[%ld] child process done, exiting\n",
 			      (long)getpid()))
-		_exit(OK_EXIT);
+		_exit(EXIT_SUCCESS);
 		break;
 	default:
 		/* parent process */
@@ -127,7 +127,7 @@ child_process(entry *e, user *u) {
 	switch (fork()) {
 	case -1:
 		log_it("CRON", getpid(), "error", "can't fork");
-		_exit(ERROR_EXIT);
+		_exit(EXIT_FAILURE);
 		/*NOTREACHED*/
 	case 0:
 		Debug(DPROC, ("[%ld] grandchild process fork()'ed\n",
@@ -165,15 +165,15 @@ child_process(entry *e, user *u) {
 		/* grandchild process.  make std{in,out} be the ends of
 		 * pipes opened by our daddy; make stderr go to stdout.
 		 */
-		if (stdin_pipe[READ_PIPE] != STDIN) {
-			dup2(stdin_pipe[READ_PIPE], STDIN);
+		if (stdin_pipe[READ_PIPE] != STDIN_FILENO) {
+			dup2(stdin_pipe[READ_PIPE], STDIN_FILENO);
 			close(stdin_pipe[READ_PIPE]);
 		}
-		if (stdout_pipe[WRITE_PIPE] != STDOUT) {
-			dup2(stdout_pipe[WRITE_PIPE], STDOUT);
+		if (stdout_pipe[WRITE_PIPE] != STDOUT_FILENO) {
+			dup2(stdout_pipe[WRITE_PIPE], STDOUT_FILENO);
 			close(stdout_pipe[WRITE_PIPE]);
 		}
-		dup2(STDOUT, STDERR);
+		dup2(STDOUT_FILENO, STDERR_FILENO);
 
 		/* set our directory, uid and gid.  Set gid first, since once
 		 * we set uid, we've lost root privileges.
@@ -192,24 +192,24 @@ child_process(entry *e, user *u) {
 				fprintf(stderr,
 				    "unable to get login class for %s\n",
 				    e->pwd->pw_name);
-				_exit(ERROR_EXIT);
+				_exit(EXIT_FAILURE);
 			}
 			if (setusercontext(lc, e->pwd, e->pwd->pw_uid, LOGIN_SETALL) < 0) {
 				fprintf(stderr,
 				    "setusercontext failed for %s\n",
 				    e->pwd->pw_name);
-				_exit(ERROR_EXIT);
+				_exit(EXIT_FAILURE);
 			}
 #ifdef BSD_AUTH
 			as = auth_open();
 			if (as == NULL || auth_setpwd(as, e->pwd) != 0) {
 				fprintf(stderr, "can't malloc\n");
-				_exit(ERROR_EXIT);
+				_exit(EXIT_FAILURE);
 			}
 			if (auth_approval(as, lc, usernm, "cron") <= 0) {
 				fprintf(stderr, "approval failed for %s\n",
 				    e->pwd->pw_name);
-				_exit(ERROR_EXIT);
+				_exit(EXIT_FAILURE);
 			}
 			auth_close(as);
 #endif /* BSD_AUTH */
@@ -232,7 +232,7 @@ child_process(entry *e, user *u) {
 		if (setgid(e->pwd->pw_gid) || initgroups(usernm, e->pwd->pw_gid)) {
 			fprintf(stderr,
 			    "unable to set groups for %s\n", e->pwd->pw_name);
-			_exit(ERROR_EXIT);
+			_exit(EXIT_FAILURE);
 		}
 #if (defined(BSD)) && (BSD >= 199103)
 		setlogin(usernm);
@@ -241,7 +241,7 @@ child_process(entry *e, user *u) {
 			fprintf(stderr,
 			    "unable to set uid to %lu\n",
 			    (unsigned long)e->pwd->pw_uid);
-			_exit(ERROR_EXIT);
+			_exit(EXIT_FAILURE);
 		}
 
 #endif /* LOGIN_CAP */
@@ -261,13 +261,13 @@ child_process(entry *e, user *u) {
 				"debug DTEST is on, not exec'ing command.\n");
 				fprintf(stderr,
 				"\tcmd='%s' shell='%s'\n", e->cmd, shell);
-				_exit(OK_EXIT);
+				_exit(EXIT_SUCCESS);
 			}
 # endif /*DEBUGGING*/
 			execle(shell, shell, "-c", e->cmd, (char *)NULL, e->envp);
 			fprintf(stderr, "execle: couldn't exec `%s'\n", shell);
 			perror("execle");
-			_exit(ERROR_EXIT);
+			_exit(EXIT_FAILURE);
 		}
 		break;
 	default:
@@ -345,7 +345,7 @@ child_process(entry *e, user *u) {
 
 		Debug(DPROC, ("[%ld] child2 done sending to grandchild\n",
 			      (long)getpid()))
-		_exit(OK_EXIT);
+		_exit(EXIT_SUCCESS);
 	}
 
 	/* close the pipe to the grandkiddie's stdin, since its wicked uncle
@@ -406,11 +406,11 @@ child_process(entry *e, user *u) {
 				if (snprintf(mailcmd, sizeof mailcmd,  MAILFMT,
 				    MAILARG) >= sizeof mailcmd) {
 					fprintf(stderr, "mailcmd too long\n");
-					(void) _exit(ERROR_EXIT);
+					(void) _exit(EXIT_FAILURE);
 				}
 				if (!(mail = cron_popen(mailcmd, "w", e->pwd))) {
 					perror(mailcmd);
-					(void) _exit(ERROR_EXIT);
+					(void) _exit(EXIT_FAILURE);
 				}
 				fprintf(mail, "From: root (Cron Daemon)\n");
 				fprintf(mail, "To: %s\n", mailto);

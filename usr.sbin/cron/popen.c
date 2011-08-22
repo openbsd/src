@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.21 2009/10/27 23:59:51 deraadt Exp $	*/
+/*	$OpenBSD: popen.c,v 1.22 2011/08/22 19:32:42 millert Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -89,7 +89,7 @@ cron_popen(char *program, char *type, struct passwd *pw) {
 				fprintf(stderr,
 				    "setusercontext failed for %s\n",
 				    pw->pw_name);
-				_exit(ERROR_EXIT);
+				_exit(EXIT_FAILURE);
 			}
 #else
 			if (setgid(pw->pw_gid) < 0 ||
@@ -111,15 +111,15 @@ cron_popen(char *program, char *type, struct passwd *pw) {
 #endif /* LOGIN_CAP */
 		}
 		if (*type == 'r') {
-			if (pdes[1] != STDOUT) {
-				dup2(pdes[1], STDOUT);
+			if (pdes[1] != STDOUT_FILENO) {
+				dup2(pdes[1], STDOUT_FILENO);
 				(void)close(pdes[1]);
 			}
-			dup2(STDOUT, STDERR);	/* stderr too! */
+			dup2(STDOUT_FILENO, STDERR_FILENO);
 			(void)close(pdes[0]);
 		} else {
-			if (pdes[0] != STDIN) {
-				dup2(pdes[0], STDIN);
+			if (pdes[0] != STDIN_FILENO) {
+				dup2(pdes[0], STDIN_FILENO);
 				(void)close(pdes[0]);
 			}
 			(void)close(pdes[1]);

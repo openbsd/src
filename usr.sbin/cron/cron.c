@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.42 2011/01/18 14:09:54 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.43 2011/08/22 19:32:42 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -59,7 +59,7 @@ usage(void) {
 	fprintf(stderr, "debugging flags (none supported in this build)]");
 #endif
 	fprintf(stderr, "]\n");
-	exit(ERROR_EXIT);
+	exit(EXIT_FAILURE);
 }
 
 int
@@ -101,7 +101,7 @@ main(int argc, char *argv[]) {
 
 	if (putenv("PATH="_PATH_DEFPATH) < 0) {
 		log_it("CRON", getpid(), "DEATH", "can't malloc");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	/* if there are no debug flags turned on, fork as a daemon should.
@@ -114,23 +114,23 @@ main(int argc, char *argv[]) {
 		switch (fork()) {
 		case -1:
 			log_it("CRON",getpid(),"DEATH","can't fork");
-			exit(0);
+			exit(EXIT_FAILURE);
 			break;
 		case 0:
 			/* child process */
 			(void) setsid();
 			if ((fd = open(_PATH_DEVNULL, O_RDWR, 0)) >= 0) {
-				(void) dup2(fd, STDIN);
-				(void) dup2(fd, STDOUT);
-				(void) dup2(fd, STDERR);
-				if (fd != STDERR)
+				(void) dup2(fd, STDIN_FILENO);
+				(void) dup2(fd, STDOUT_FILENO);
+				(void) dup2(fd, STDERR_FILENO);
+				if (fd != STDERR_FILENO)
 					(void) close(fd);
 			}
 			log_it("CRON",getpid(),"STARTUP",CRON_VERSION);
 			break;
 		default:
 			/* parent process should just die */
-			_exit(0);
+			_exit(EXIT_SUCCESS);
 		}
 	}
 
