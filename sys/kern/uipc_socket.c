@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.94 2011/07/04 00:33:36 mikeb Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.95 2011/08/23 13:44:58 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1123,7 +1123,7 @@ somove(struct socket *so, int wait)
 		error = EPIPE;
 		goto release;
 	}
-	if (sosp->so_error) {
+	if (sosp->so_error && sosp->so_error != ETIMEDOUT) {
 		error = sosp->so_error;
 		goto release;
 	}
