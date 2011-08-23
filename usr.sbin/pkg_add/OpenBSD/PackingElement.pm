@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.199 2011/06/24 22:43:58 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.200 2011/08/23 10:32:27 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1631,35 +1631,6 @@ sub category() { OpenBSD::PackageInfo::CONTENTS }
 sub write
 {}
 
-package OpenBSD::PackingElement::ScriptFile;
-our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
-use OpenBSD::Error;
-
-sub exec_on_add { 1 }
-sub exec_on_delete { 1 }
-
-sub run
-{
-	my ($self, $state, @args) = @_;
-
-	my $pkgname = $state->{pkgname};
-	my $name = $self->fullname;
-
-	return if $state->{dont_run_scripts};
-
-	$state->ldconfig->ensure;
-	$state->say("#1 script: #2 #3 #4", $self->beautify, $name, $pkgname,
-	    join(' ', @args)) if $state->verbose >= 2;
-	return if $state->{not};
-	chmod 0755, $name;
-	return if $state->log->system($name, $pkgname, @args) == 0;
-	if ($state->defines('scripts')) {
-		$state->log->say($self->beautify." script failed");
-	} else {
-		$state->log->fatal($self->beautify." script failed");
-	}
-}
-
 package OpenBSD::PackingElement::FCOMMENT;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
 sub category() { OpenBSD::PackageInfo::COMMENT }
@@ -1667,23 +1638,6 @@ sub category() { OpenBSD::PackageInfo::COMMENT }
 package OpenBSD::PackingElement::FDESC;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
 sub category() { OpenBSD::PackageInfo::DESC }
-
-package OpenBSD::PackingElement::FINSTALL;
-our @ISA=qw(OpenBSD::PackingElement::ScriptFile);
-sub exec_on_delete { 0 }
-sub category() { OpenBSD::PackageInfo::INSTALL }
-sub beautify() { "Install" }
-
-package OpenBSD::PackingElement::FDEINSTALL;
-our @ISA=qw(OpenBSD::PackingElement::ScriptFile);
-sub exec_on_add { 0 }
-sub category() { OpenBSD::PackageInfo::DEINSTALL }
-sub beautify() { "Deinstall" }
-
-package OpenBSD::PackingElement::FREQUIRE;
-our @ISA=qw(OpenBSD::PackingElement::ScriptFile);
-sub category() { OpenBSD::PackageInfo::REQUIRE }
-sub beautify() { "Require" }
 
 package OpenBSD::PackingElement::DisplayFile;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
@@ -1712,10 +1666,6 @@ sub category() { OpenBSD::PackageInfo::DISPLAY }
 package OpenBSD::PackingElement::FUNDISPLAY;
 our @ISA=qw(OpenBSD::PackingElement::DisplayFile);
 sub category() { OpenBSD::PackageInfo::UNDISPLAY }
-
-package OpenBSD::PackingElement::FMTREE_DIRS;
-our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
-sub category() { OpenBSD::PackageInfo::MTREE_DIRS }
 
 package OpenBSD::PackingElement::Arch;
 our @ISA=qw(OpenBSD::PackingElement::Unique);

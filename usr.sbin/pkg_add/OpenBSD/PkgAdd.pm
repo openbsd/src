@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.31 2011/08/17 10:48:27 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.32 2011/08/23 10:32:27 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -104,7 +104,7 @@ sub handle_options
 {
 	my $state = shift;
 	$state->SUPER::handle_options('ruUzl:A:P:Q:',
-	    '[-acIinqrsUuvxz] [-A arch] [-B pkg-destdir] [-D name[=value]]',
+	    '[-acinqrsUuvxz] [-A arch] [-B pkg-destdir] [-D name[=value]]',
 	    '[-L localbase] [-l file] [-P type] [-Q quick-destdir] pkg-name [...]');
 
 	$state->{do_faked} = 0;
@@ -795,9 +795,6 @@ sub really_add
 
 		try {
 			OpenBSD::Add::perform_installation($handle, $state);
-			if (!$state->{interrupted} && $plist->has(INSTALL)) {
-				$plist->get(INSTALL)->run($state, 'POST-INSTALL');
-			}
 		} catchall {
 			unless ($state->{interrupted}) {
 				$state->errsay($_);

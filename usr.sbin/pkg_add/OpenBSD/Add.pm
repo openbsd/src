@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.124 2011/07/12 10:09:52 espie Exp $
+# $OpenBSD: Add.pm,v 1.125 2011/08/23 10:32:27 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -705,13 +705,6 @@ sub copy_info
 	File::Copy::move($self->fullname, $dest) or
 	    $state->errsay("Problem while moving #1 into #2: #3", 
 		$self->fullname, $dest, $!);
-}
-
-package OpenBSD::PackingElement::FINSTALL;
-sub install
-{
-	my ($self, $state) = @_;
-	$self->run($state, 'PRE-INSTALL');
 }
 
 package OpenBSD::PackingElement::FCONTENTS;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.82 2011/06/25 11:10:11 espie Exp $
+# $OpenBSD: Replace.pm,v 1.83 2011/08/23 10:32:27 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -127,29 +127,6 @@ sub extract
 package OpenBSD::PackingElement::Sampledir;
 sub extract
 {
-}
-
-package OpenBSD::PackingElement::ScriptFile;
-sub update_issue
-{
-	my ($self, $installing) = @_;
-	return $self->name." script";
-}
-
-package OpenBSD::PackingElement::FINSTALL;
-sub update_issue
-{
-	my ($self, $installing) = @_;
-	return if !$installing;
-	return $self->SUPER::update_issue($installing);
-}
-
-package OpenBSD::PackingElement::FDEINSTALL;
-sub update_issue
-{
-	my ($self, $installing) = @_;
-	return if $installing;
-	return $self->SUPER::update_issue($installing);
 }
 
 package OpenBSD::PackingElement::Exec;

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.110 2011/08/17 10:48:27 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.111 2011/08/23 10:32:26 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: August 17 2011 $
+.Dd $Mdocdate: August 23 2011 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Sh SYNOPSIS
 .Nm pkg_add
 .Bk -words
-.Op Fl acIimnqrsUuvxz
+.Op Fl acimnqrsUuvxz
 .Op Fl A Ar arch
 .Op Fl B Ar pkg-destdir
 .Op Fl D Ar name Ns Op = Ns Ar value
@@ -282,8 +282,6 @@ external scripts may fail.
 .It Ar updatedepends
 force update even if forward dependencies no longer match.
 .El
-.It Fl I
-If scripts exist for a given package, do not execute them.
 .It Fl i
 Switch on interactive mode.
 .Nm
