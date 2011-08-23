@@ -1,4 +1,4 @@
-.\" $OpenBSD: tcpbench.1,v 1.12 2011/03/16 08:06:10 jmc Exp $
+.\" $OpenBSD: tcpbench.1,v 1.13 2011/08/23 04:13:37 haesbaert Exp $
 .\"
 .\" Copyright (c) 2008 Damien Miller <djm@mindrot.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 16 2011 $
+.Dd $Mdocdate: August 23 2011 $
 .Dt TCPBENCH 1
 .Os
 .Sh NAME
@@ -31,6 +31,7 @@
 .Op Fl p Ar port
 .Op Fl r Ar interval
 .Op Fl S Ar space
+.Op Fl T Ar toskeyword
 .Op Fl V Ar rtable
 .Ar hostname
 .Nm
@@ -41,6 +42,7 @@
 .Op Fl k Ar kvars
 .Op Fl p Ar port
 .Op Fl r Ar interval
+.Op Fl T Ar toskeyword
 .Op Fl S Ar space
 .Op Fl V Ar rtable
 .Ek
@@ -105,6 +107,21 @@ connections.
 It defaults to using TCP if
 .Fl u
 is not specified.
+.It Fl T Ar toskeyword
+Change the IPv4 TOS or IPv6 TCLASS value.
+.Ar toskeyword
+may be one of
+.Ar critical ,
+.Ar inetcontrol ,
+.Ar lowdelay ,
+.Ar netcontrol ,
+.Ar throughput ,
+.Ar reliability ,
+or one of the DiffServ Code Points:
+.Ar ef ,
+.Ar af11 ... af43 ,
+.Ar cs0 ... cs7 ;
+or a number in either hex or decimal.
 .It Fl u
 Use UDP instead of TCP; this must be specified on both the client
 and the server.
