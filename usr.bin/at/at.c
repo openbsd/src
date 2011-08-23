@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.58 2011/03/03 15:06:43 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.59 2011/08/23 15:06:37 millert Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -82,7 +82,7 @@ panic(const char *a)
 		PRIV_END;
 	}
 
-	exit(ERROR_EXIT);
+	exit(EXIT_FAILURE);
 }
 
 /*
@@ -98,7 +98,7 @@ panic2(const char *a, const char *b)
 		PRIV_END;
 	}
 
-	exit(ERROR_EXIT);
+	exit(EXIT_FAILURE);
 }
 
 /*
@@ -115,7 +115,7 @@ perr(const char *a)
 		PRIV_END;
 	}
 
-	exit(ERROR_EXIT);
+	exit(EXIT_FAILURE);
 }
 
 /*
@@ -140,7 +140,7 @@ sigc(int signo)
 		PRIV_END;
 	}
 
-	_exit(ERROR_EXIT);
+	_exit(EXIT_FAILURE);
 }
 
 /* ARGSUSED */
@@ -669,7 +669,7 @@ process_jobs(int argc, char **argv, int what)
 					    " may %s other users' jobs\n",
 					    ProgramName, what == ATRM
 					    ? "remove" : "view");
-					exit(ERROR_EXIT);
+					exit(EXIT_FAILURE);
 				}
 				uids[uids_len++] = pw->pw_uid;
 			} else
@@ -876,7 +876,7 @@ check_permission(void)
 
 	if ((pw = getpwuid(uid)) == NULL) {
 		perror("Cannot access password database");
-		exit(ERROR_EXIT);
+		exit(EXIT_FAILURE);
 	}
 
 	PRIV_START;
@@ -913,7 +913,7 @@ usage(void)
 		    "usage: batch [-m] [-f file] [-q queue] [timespec]\n");
 		break;
 	}
-	exit(ERROR_EXIT);
+	exit(EXIT_FAILURE);
 }
 
 int
@@ -1076,7 +1076,7 @@ main(int argc, char **argv)
 			if (argc == 0)
 				usage();
 			else if ((timer = parsetime(argc, argv)) == -1)
-				exit(ERROR_EXIT);
+				exit(EXIT_FAILURE);
 		}
 		writefile(cwd, timer, queue);
 		break;
@@ -1090,7 +1090,7 @@ main(int argc, char **argv)
 		if (argc == 0)
 			timer = time(NULL);
 		else if ((timer = parsetime(argc, argv)) == -1)
-			exit(ERROR_EXIT);
+			exit(EXIT_FAILURE);
 
 		writefile(cwd, timer, queue);
 		break;
@@ -1099,5 +1099,5 @@ main(int argc, char **argv)
 		panic("Internal error");
 		break;
 	}
-	exit(OK_EXIT);
+	exit(EXIT_SUCCESS);
 }
