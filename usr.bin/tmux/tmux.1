@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.242 2011/08/16 10:00:52 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.243 2011/08/24 10:29:57 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 16 2011 $
+.Dd $Mdocdate: August 24 2011 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2417,6 +2417,11 @@ Like
 but set the width of other panes in the
 .Ic main-vertical
 layout.
+.Pp
+.It Ic pane-base-index Ar index
+Like
+.Ic base-index ,
+but set the starting index for pane numbers.
 .Pp
 .It Xo Ic remain-on-exit
 .Op Ic on | off

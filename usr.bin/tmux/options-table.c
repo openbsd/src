@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.12 2011/07/30 18:01:26 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.13 2011/08/24 10:29:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -520,6 +520,13 @@ const struct options_table_entry window_options_table[] = {
 	  .type = OPTIONS_TABLE_NUMBER,
 	  .minimum = 0,
 	  .maximum = INT_MAX,
+	  .default_num = 0
+	},
+
+	{ .name = "pane-base-index",
+	  .type = OPTIONS_TABLE_NUMBER,
+	  .minimum = 0,
+	  .maximum = USHRT_MAX,
 	  .default_num = 0
 	},
 

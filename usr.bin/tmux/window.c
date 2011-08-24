@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.66 2011/06/05 10:53:05 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.67 2011/08/24 10:29:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -454,7 +454,7 @@ window_pane_at_index(struct window *w, u_int idx)
 	struct window_pane	*wp;
 	u_int			 n;
 
-	n = 0;
+	n = options_get_number(&w->options, "pane-base-index");
 	TAILQ_FOREACH(wp, &w->panes, entry) {
 		if (n == idx)
 			return (wp);
@@ -492,7 +492,7 @@ window_pane_index(struct window *w, struct window_pane *wp)
 	struct window_pane	*wq;
 	u_int			 n;
 
-	n = 0;
+	n = options_get_number(&w->options, "pane-base-index");
 	TAILQ_FOREACH(wq, &w->panes, entry) {
 		if (wp == wq)
 			break;
