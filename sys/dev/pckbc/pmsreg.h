@@ -1,4 +1,4 @@
-/* $OpenBSD: pmsreg.h,v 1.3 2011/08/22 16:26:42 shadchin Exp $ */
+/* $OpenBSD: pmsreg.h,v 1.4 2011/08/24 15:34:25 shadchin Exp $ */
 /* $NetBSD: psmreg.h,v 1.1 1998/03/22 15:41:28 drochner Exp $ */
 
 #ifndef SYS_DEV_PCKBC_PMSREG_H
@@ -36,11 +36,6 @@
 #define PMS_INTELLI_MAGIC2	100
 #define PMS_INTELLI_MAGIC3	80
 #define PMS_INTELLI_ID		0x03
-
-#define PMS_ALPS_MAGIC1		0
-#define PMS_ALPS_MAGIC2		0
-#define PMS_ALPS_MAGIC3_1	10
-#define PMS_ALPS_MAGIC3_2	100
 
 /* Synaptics queries */
 #define SYNAPTICS_QUE_IDENTIFY			0x00

@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.20 2011/08/22 16:26:42 shadchin Exp $ */
+/* $OpenBSD: pms.c,v 1.21 2011/08/24 15:34:25 shadchin Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -50,7 +50,6 @@ struct pms_protocol {
 #define PMS_STANDARD	0
 #define PMS_INTELLI	1
 #define PMS_SYNAPTICS	2
-#define PMS_ALPS	3
 	u_int packetsize;
 	int (*enable)(struct pms_softc *);
 	int (*ioctl)(struct pms_softc *, u_long, caddr_t, int, struct proc *);
@@ -151,8 +150,6 @@ int	pms_sync_synaptics(struct pms_softc *, int);
 void	pms_proc_synaptics(struct pms_softc *);
 void	pms_disable_synaptics(struct pms_softc *);
 
-int	pms_enable_alps(struct pms_softc *);
-
 int	synaptics_set_mode(struct pms_softc *, int);
 int	synaptics_query(struct pms_softc *, int, int *);
 int	synaptics_get_hwinfo(struct pms_softc *);
@@ -211,15 +208,6 @@ const struct pms_protocol pms_protocols[] = {
 		pms_sync_synaptics,
 		pms_proc_synaptics,
 		pms_disable_synaptics
-	},
-	/* ALPS touchpad - not supported yet */
-	{
-		PMS_ALPS, 3,
-		pms_enable_alps,
-		pms_ioctl_mouse,
-		pms_sync_mouse,
-		pms_proc_mouse,
-		NULL
 	}
 };
 
@@ -395,7 +383,6 @@ pms_sync_mouse(struct pms_softc *sc, int data)
 
 	switch (sc->protocol->type) {
 	case PMS_STANDARD:
-	case PMS_ALPS:			/* XXX */
 		if ((data & 0xc0) != 0)
 			return (-1);
 		break;
@@ -422,7 +409,6 @@ pms_proc_mouse(struct pms_softc *sc)
 
 	switch (sc->protocol->type) {
 	case PMS_STANDARD:
-	case PMS_ALPS:			/* XXX */
 		dz = 0;
 		break;
 	case PMS_INTELLI:
@@ -979,25 +965,4 @@ pms_disable_synaptics(struct pms_softc *sc)
 	if (syn->capabilities & SYNAPTICS_CAP_SLEEP)
 		synaptics_set_mode(sc, SYNAPTICS_SLEEP_MODE |
 		    SYNAPTICS_DISABLE_GESTURE);
-}
-
-int
-pms_enable_alps(struct pms_softc *sc)
-{
-	u_char resp[3];
-
-	if (pms_set_resolution(sc, 0) ||
-	    pms_set_scaling(sc, 1) ||
-	    pms_set_scaling(sc, 1) ||
-	    pms_set_scaling(sc, 1) ||
-	    pms_get_status(sc, resp) ||
-	    resp[0] != PMS_ALPS_MAGIC1 ||
-	    resp[1] != PMS_ALPS_MAGIC2 ||
-	    (resp[2] != PMS_ALPS_MAGIC3_1 && resp[2] != PMS_ALPS_MAGIC3_2))
-		return (0);
-
-	/* XXX reset, ALPS not supported yet */
-	pms_reset(sc);
-
-	return (1);
 }
