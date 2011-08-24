@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.109 2011/05/26 07:08:48 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.110 2011/08/24 09:58:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1545,4 +1545,10 @@ tty_try_88(struct tty *tty, u_char colour, const char *type)
 	xsnprintf(s, sizeof s, "\033[%s;5;%hhum", type, colour);
 	tty_puts(tty, s);
 	return (0);
+}
+
+void
+tty_bell(struct tty *tty)
+{
+	tty_putcode(tty, TTYC_BEL);
 }
