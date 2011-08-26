@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.148 2011/07/18 02:49:20 matthew Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.149 2011/08/26 04:36:42 matthew Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -304,6 +304,15 @@ vndstrategy(struct buf *bp)
 	if (sc->sc_keyctx == NULL) {
 		u_int32_t secsize = sc->sc_dk.dk_label->d_secsize;
 		bp->b_bcount = ((origbcount + secsize - 1) & ~(secsize - 1));
+#ifdef DIAGNOSTIC
+		if (bp->b_bcount != origbcount) {
+			struct proc *pr = curproc;
+			printf("%s: sloppy %s from proc %d (%s): "
+			    "blkno %lld bcount %ld\n", sc->sc_dev.dv_xname,
+			    (bp->b_flags & B_READ) ? "read" : "write",
+			    pr->p_pid, pr->p_comm, bp->b_blkno, origbcount);
+		}
+#endif
 	}
 
 	if (bounds_check_with_label(bp, sc->sc_dk.dk_label) == -1) {
