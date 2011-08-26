@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.56 2011/05/16 21:05:51 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.57 2011/08/26 14:39:47 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <vis.h>
 
