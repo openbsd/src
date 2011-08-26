@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.15 2011/06/17 07:14:35 kevlo Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.16 2011/08/26 07:52:22 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -380,12 +380,10 @@ age_miibus_statchg(struct device *dev)
 {
 	struct age_softc *sc = (struct age_softc *)dev;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	struct mii_data *mii;
+	struct mii_data *mii = &sc->sc_miibus;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
-
-	mii = &sc->sc_miibus;
 
 	sc->age_flags &= ~AGE_FLAG_LINK;
 	if ((mii->mii_media_status & IFM_AVALID) != 0) {
@@ -504,8 +502,7 @@ age_intr(void *arg)
 			age_init(ifp);
 		}
 
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			age_start(ifp);
+		age_start(ifp);
 
 		if (status & INTR_SMB)
 			age_stats_update(sc);
@@ -975,6 +972,10 @@ age_start(struct ifnet *ifp)
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
+	if ((sc->age_flags & AGE_FLAG_LINK) == 0)
+		return;
+	if (IFQ_IS_EMPTY(&ifp->if_snd))
+		return;
 
 	enq = 0;
 	for (;;) {
@@ -1029,17 +1030,14 @@ age_watchdog(struct ifnet *ifp)
 	if (sc->age_cdata.age_tx_cnt == 0) {
 		printf("%s: watchdog timeout (missed Tx interrupts) "
 		    "-- recovering\n", sc->sc_dev.dv_xname);
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			age_start(ifp);
+		age_start(ifp);
 		return;
 	}
 
 	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
 	ifp->if_oerrors++;
 	age_init(ifp);
-
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
-		age_start(ifp);
+	age_start(ifp);
 }
 
 int
@@ -1099,10 +1097,8 @@ age_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 void
 age_mac_config(struct age_softc *sc)
 {
-	struct mii_data *mii;
+	struct mii_data *mii = &sc->sc_miibus;
 	uint32_t reg;
-
-	mii = &sc->sc_miibus;
 
 	reg = CSR_READ_4(sc, AGE_MAC_CFG);
 	reg &= ~MAC_CFG_FULL_DUPLEX;
@@ -1549,7 +1545,7 @@ int
 age_init(struct ifnet *ifp)
 {
 	struct age_softc *sc = ifp->if_softc;
-	struct mii_data *mii;
+	struct mii_data *mii = &sc->sc_miibus;
 	uint8_t eaddr[ETHER_ADDR_LEN];
 	bus_addr_t paddr;
 	uint32_t reg, fsize;
@@ -1813,7 +1809,6 @@ age_init(struct ifnet *ifp)
 	sc->age_flags &= ~AGE_FLAG_LINK;
 
 	/* Switch to the current media. */
-	mii = &sc->sc_miibus;
 	mii_mediachg(mii);
 
 	timeout_add_sec(&sc->age_tick_ch, 1);
