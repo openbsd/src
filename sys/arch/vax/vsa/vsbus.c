@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbus.c,v 1.21 2010/11/18 21:13:19 miod Exp $ */
+/*	$OpenBSD: vsbus.c,v 1.22 2011/08/26 21:47:25 miod Exp $ */
 /*	$NetBSD: vsbus.c,v 1.29 2000/06/29 07:14:37 mrg Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
@@ -222,7 +222,7 @@ vsbus_search(parent, cfd, aux)
 	struct	vsbus_softc *sc = (void *)parent;
 	struct	vsbus_attach_args va;
 	struct	cfdata *cf = cfd;
-	int i, vec, br;
+	int rc, i, vec, br;
 	u_char c;
 
 	va.va_paddr = cf->cf_loc[0];
@@ -234,13 +234,13 @@ vsbus_search(parent, cfd, aux)
 	*sc->sc_intclr = 0xff;
 	scb_vecref(0, 0); /* Clear vector ref */
 
-	i = (*cf->cf_attach->ca_match) (parent, cf, &va);
+	rc = (*cf->cf_attach->ca_match) (parent, cf, &va);
 	vax_unmap_physmem(va.va_addr, 1);
 	c = *sc->sc_intreq & ~sc->sc_mask;
 
-	if (i == 0)
+	if (rc == 0)
 		goto forgetit;
-	if (i > 10)
+	if (rc > 10)
 		c = sc->sc_mask; /* Fooling interrupt */
 	else if (c == 0)
 		goto forgetit;
@@ -270,7 +270,7 @@ vsbus_search(parent, cfd, aux)
 	*sc->sc_intmsk = c; /* Allow interrupts during attach */
 	config_attach(parent, cf, &va, vsbus_print);
 	*sc->sc_intmsk = 0;
-	return 0;
+	return rc;
 
 fail:
 	printf("%s%d at %s csr 0x%x %s\n",
