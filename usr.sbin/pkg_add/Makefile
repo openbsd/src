@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.70 2011/07/06 13:05:52 espie Exp $
+# $OpenBSD: Makefile,v 1.71 2011/08/26 09:02:30 espie Exp $
 
 .include <bsd.own.mk>
 
-MAN1=pkg_add.1 pkg_info.1 pkg_create.1 pkg_delete.1 pkg_merge.1 \
+MAN1=pkg_add.1 pkg_info.1 pkg_create.1 pkg_delete.1 \
 	pkg.1 pkg_mklocatedb.1
 MAN5=package.5 pkg.conf.5
 MAN8=pkg_check.8
@@ -74,7 +74,6 @@ PACKAGEDIRS=OpenBSD  OpenBSD/PackageRepository OpenBSD/ProgressMeter \
     OpenBSD/LibSpec
 
 SCRIPTS= \
-    pkg_merge \
     pkg_mklocatedb \
     pkg
 
