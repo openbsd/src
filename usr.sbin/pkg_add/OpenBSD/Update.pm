@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.149 2011/07/19 20:04:23 espie Exp $
+# $OpenBSD: Update.pm,v 1.150 2011/08/26 08:46:10 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -148,7 +148,6 @@ sub process_handle
 		}
 		my @l2 = ();
 		for my $loc (@$l) {
-		    $loc->set_arch($state->{arch});
 		    if (!$loc) {
 			    next;
 		    }

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.23 2011/08/23 10:32:27 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.24 2011/08/26 08:46:10 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -222,7 +222,7 @@ sub process_parameters
 				$l = $state->stem2location($inst, $pkgname,
 				    $state);
 			} else {
-				$l = $inst->find($pkgname, $state->{arch});
+				$l = $inst->find($pkgname);
 			}
 			if (!defined $l) {
 				$state->say("Problem finding #1", $pkgname);

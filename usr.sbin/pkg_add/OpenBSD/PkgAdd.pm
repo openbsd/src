@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.32 2011/08/23 10:32:27 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.33 2011/08/26 08:46:10 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1065,7 +1065,7 @@ sub process_parameters
 			if (OpenBSD::PackageName::is_stem($pkgname)) {
 				$l = $state->updater->stem2location($inst, $pkgname, $state);
 			} else {
-				$l = $inst->find($pkgname, $state->{arch});
+				$l = $inst->find($pkgname);
 			}
 			if (!defined $l) {
 				$state->say("Problem finding #1", $pkgname);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: package.5,v 1.9 2010/01/11 10:16:20 jmc Exp $
+.\"	$OpenBSD: package.5,v 1.10 2011/08/26 08:46:09 espie Exp $
 .\" Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -12,7 +12,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: January 11 2010 $
+.Dd $Mdocdate: August 26 2011 $
 .Dt PACKAGE 5
 .Os
 .Sh NAME
@@ -29,7 +29,6 @@ and
 .Xr pkg_merge 1 ,
 and are usually manipulated using
 .Xr pkg_add 1 ,
-.Xr pkg_merge 1 ,
 .Xr pkg_mklocatedb 1 ,
 or
 .Xr pkg_info 1 .
@@ -57,9 +56,6 @@ All types of archive contents can be present in a package,
 including files, directories, hardlinks, symlinks, fifos, block and character
 devices.
 .Pp
-A special extension to the format, dubbed fat packages, is described in
-the next section.
-.Pp
 In order to allow just-in-time extraction,
 packages always begin with a table of contents, named
 .Pa +CONTENTS .
@@ -74,8 +70,8 @@ See
 for annotation details.
 .Pp
 This table of contents is always followed by a few special files, some of
-which are optional: the package description (+DESC), an installation script
-(+INSTALL), a display message (+DISPLAY), etc.
+which are optional: the package description (+DESC),
+a display message (+DISPLAY), etc.
 .Pp
 The ustar format has some limitations with respect to file names.
 Accordingly, the package tools will replace very long names with
@@ -103,36 +99,14 @@ Once the packing-list signature is checked, all individual packing elements
 will be checksummed, resulting in a
 .Sq just-in-time
 signature checking.
-.Sh FAT PACKAGES DESCRIPTION
-The
-.Xr pkg_merge 1
-command can create fat packages, which coalesce several normal packages in
-a single ustar archive, by interleaving their contents.
 .Pp
-Other tools, such as
-.Xr pkg_add 1 ,
-are aware of fat packages and can handle them transparently.
-.Pp
-In a fat package, every item has a small prefix that identifies the
-original package.
-For instance, after merging two packages, the package will usually
-begin with
-.Pa a/+CONTENTS
-and
-.Pa b/+CONTENTS .
-Individual items will then begin with
-.Pa ab/file ,
-for a file common to both packages;
-.Pa a/file
-for a file belonging to the first package;
-and
-.Pa b/file
-for a file belonging to the second package.
+Fat packages were removed in
+.Ox 5.1 ,
+since no practical application was found.
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
 .Xr pkg_create 1 ,
 .Xr pkg_info 1 ,
-.Xr pkg_merge 1 ,
 .Xr packages 7 ,
 .Xr packages-specs 7
 .Sh STANDARDS

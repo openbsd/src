@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.114 2011/06/16 14:48:36 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.115 2011/08/26 08:46:10 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -287,21 +287,6 @@ sub UpdateInfoOnly
 		    return;
 		}
 		next unless m/^\@(?:name\b|depend\b|wantlib\b|conflict|\b|option\b|pkgpath\b|comment\s+subdir\=|arch\b|url\b)/o;
-		&$cont($_);
-	}
-}
-
-sub FatOnly
-{
-	my ($fh, $cont) = @_;
-	my $_;
-	while (<$fh>) {
-		# XXX optimization
-		if (m/^\@arch\b/o) {
-			&$cont($_);
-			return;
-		}
-		next unless m/^\@(?:name\b)/o;
 		&$cont($_);
 	}
 }

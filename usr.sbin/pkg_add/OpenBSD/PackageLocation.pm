@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.29 2011/03/20 08:17:49 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.30 2011/08/26 08:46:09 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -26,22 +26,12 @@ use OpenBSD::Error;
 
 sub new
 {
-	my ($class, $repository, $name, $arch) = @_;
+	my ($class, $repository, $name) = @_;
 
 	my $self = { repository => $repository, name => $repository->canonicalize($name), state => $repository->{state} };
-	if (defined $arch) {
-		$self->{arch} = $arch;
-	}
 	bless $self, $class;
 	return $self;
 
-}
-
-sub set_arch
-{
-	my ($self, $arch) = @_;
-
-	$self->{arch} = $arch;
 }
 
 sub url
@@ -122,32 +112,6 @@ sub find_contents
 	}
 }
 
-sub find_fat_contents
-{
-	my $self = shift;
-
-	while (my $e = $self->_next) {
-		unless ($e->{name} =~ m/^(.*)\/\+CONTENTS$/o) {
-			last;
-		}
-		my $prefix = $1;
-		my $contents = $e->contents;
-		require OpenBSD::PackingList;
-
-		my $plist = OpenBSD::PackingList->fromfile(\$contents,
-		    \&OpenBSD::PackingList::FatOnly);
-		if (defined $self->name) {
-			next if $plist->pkgname ne $self->name;
-		}
-		if ($plist->has('arch')) {
-			if ($plist->{arch}->check($self->{arch})) {
-				$self->{filter} = $prefix;
-				return $contents;
-			}
-		}
-	}
-}
-
 sub contents
 {
 	my ($self, $extra) = @_;
@@ -159,12 +123,10 @@ sub contents
 			my $contents = $self->find_contents($extra);
 			if ($contents) {
 				$self->unput;
-				return $contents;
 			}
-			return $self->find_fat_contents;
+			return $contents;
 		}
-		$self->{contents} = $self->find_contents ||
-		    $self->find_fat_contents;
+		$self->{contents} = $self->find_contents;
 	}
 
 	return $self->{contents};
@@ -339,20 +301,7 @@ sub getNext
 {
 	my $self = shift;
 
-	my $e = $self->{_archive}->next;
-	if (defined $self->{filter}) {
-		if ($e->{name} =~ m/^(.*?)\/(.*)$/o) {
-			my ($beg, $name) = ($1, $2);
-			if (index($beg, $self->{filter}) == -1) {
-				return $self->getNext;
-			}
-			$e->{name} = $name;
-			if ($e->isHardLink) {
-				$e->{linkname} =~ s/^(.*?)\///o;
-			}
-		}
-	}
-	return $e;
+	return $self->{_archive}->next;
 }
 
 sub skip

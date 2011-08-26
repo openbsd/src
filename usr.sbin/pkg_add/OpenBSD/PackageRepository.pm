@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.93 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.94 2011/08/26 08:46:10 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -235,8 +235,8 @@ sub open
 
 sub find
 {
-	my ($repository, $name, $arch) = @_;
-	my $self = $repository->new_location($name, $arch);
+	my ($repository, $name) = @_;
+	my $self = $repository->new_location($name);
 
 	if ($self->contents) {
 		return $self;
@@ -245,8 +245,8 @@ sub find
 
 sub grabPlist
 {
-	my ($repository, $name, $arch, $code) = @_;
-	my $self = $repository->new_location($name, $arch);
+	my ($repository, $name, $code) = @_;
+	my $self = $repository->new_location($name);
 
 	return $self->grabPlist($code);
 }

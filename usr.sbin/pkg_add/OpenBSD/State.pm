@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.20 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: State.pm,v 1.21 2011/08/26 08:46:10 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -119,10 +119,10 @@ sub path_parse
 
 sub find
 {
-	my ($self, $pkg, $arch) = @_;
+	my ($self, $pkg) = @_;
 	require OpenBSD::PackageLocator;
 
-	return OpenBSD::PackageLocator->find($pkg, $arch, $self->{state});
+	return OpenBSD::PackageLocator->find($pkg, $self->{state});
 }
 
 sub match_locations
@@ -135,10 +135,10 @@ sub match_locations
 
 sub grabPlist
 {
-	my ($self, $url, $arch, $code) = @_;
+	my ($self, $url, $code) = @_;
 	require OpenBSD::PackageLocator;
 
-	return OpenBSD::PackageLocator->grabPlist($url, $arch, $code, $self->{state});
+	return OpenBSD::PackageLocator->grabPlist($url, $code, $self->{state});
 }
 
 sub path
