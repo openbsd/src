@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.115 2011/08/26 08:46:10 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.116 2011/08/26 08:47:45 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -308,27 +308,6 @@ sub ConflictOnly
 			return;
 		}
 	    	next unless m/^\@(?:conflict|option|name)\b/o;
-		&$cont($_);
-	}
-}
-
-sub SharedStuffOnly
-{
-	my ($fh, $cont) = @_;
-	my $_;
-MAINLOOP:
-	while (<$fh>) {
-		if (m/^\@shared\b/o) {
-			&$cont($_);
-			while(<$fh>) {
-				redo MAINLOOP unless m/^\@(?:sha|md5|size|symlink|link)\b/o;
-				    m/^\@size\b/o || m/^\@symlink\b/o ||
-				    m/^\@link\b/o;
-				&$cont($_);
-			}
-		} else {
-			next unless m/^\@(?:cwd|name)\b/o;
-		}
 		&$cont($_);
 	}
 }
