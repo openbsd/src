@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.16 2011/08/21 15:25:20 kevlo Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.17 2011/08/26 07:49:04 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1996,11 +1996,11 @@ alc_rxeof(struct alc_softc *sc, struct rx_rdesc *rrd)
 			} else
 				m->m_len = m->m_pkthdr.len;
 			m->m_pkthdr.rcvif = ifp;
-#if NVLAN > 0
 			/*
 			 * Due to hardware bugs, Rx checksum offloading
 			 * was intentionally disabled.
 			 */
+#if NVLAN > 0
 			if (status & RRD_VLAN_TAG) {
 				u_int32_t vtag = RRD_VLAN(letoh32(rrd->vtag));
 				m->m_pkthdr.ether_vtag = ntohs(vtag);
