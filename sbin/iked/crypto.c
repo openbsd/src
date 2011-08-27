@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.5 2010/12/21 13:24:11 mikeb Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.6 2011/08/27 16:29:20 mikeb Exp $	*/
 /*	$vantronix: crypto.c,v 1.18 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -613,8 +613,9 @@ dsa_init(struct iked_dsa *dsa)
 	int	 ret;
 
 	if (dsa->dsa_hmac) {
-		HMAC_Init_ex(dsa->dsa_ctx, ibuf_data(dsa->dsa_keydata),
-		    ibuf_length(dsa->dsa_keydata), dsa->dsa_priv, NULL);
+		if (!HMAC_Init_ex(dsa->dsa_ctx, ibuf_data(dsa->dsa_keydata),
+		    ibuf_length(dsa->dsa_keydata), dsa->dsa_priv, NULL))
+			return (-1);
 		return (0);
 	}
 
@@ -632,7 +633,7 @@ dsa_update(struct iked_dsa *dsa, const void *buf, size_t len)
 	int	ret = 1;
 
 	if (dsa->dsa_hmac)
-		HMAC_Update(dsa->dsa_ctx, buf, len);
+		ret = HMAC_Update(dsa->dsa_ctx, buf, len);
 	else if (dsa->dsa_sign)
 		ret = EVP_SignUpdate(dsa->dsa_ctx, buf, len);
 	else
@@ -657,9 +658,10 @@ dsa_sign_final(struct iked_dsa *dsa, void *buf, size_t len)
 	if (len < dsa_length(dsa))
 		return (-1);
 
-	if (dsa->dsa_hmac)
-		HMAC_Final(dsa->dsa_ctx, buf, &siglen);
-	else {
+	if (dsa->dsa_hmac) {
+		if (!HMAC_Final(dsa->dsa_ctx, buf, &siglen))
+			return (-1);
+	} else {
 		if (!EVP_SignFinal(dsa->dsa_ctx, buf, &siglen,
 		    dsa->dsa_key))
 			return (-1);
@@ -675,12 +677,13 @@ dsa_verify_final(struct iked_dsa *dsa, void *buf, size_t len)
 	u_int		 siglen = sizeof(sig);
 
 	if (dsa->dsa_hmac) {
-		HMAC_Final(dsa->dsa_ctx, sig, &siglen);
+		if (!HMAC_Final(dsa->dsa_ctx, sig, &siglen))
+			return (-1);
 		if (siglen != len || memcmp(buf, sig, siglen) != 0)
 			return (-1);
 	} else {
-		if (!EVP_VerifyFinal(dsa->dsa_ctx, buf, len,
-		    dsa->dsa_key)) {
+		if (EVP_VerifyFinal(dsa->dsa_ctx, buf, len,
+		    dsa->dsa_key) != 1) {
 			ca_sslerror();
 			return (-1);
 		}
