@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.116 2011/08/26 08:47:45 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.117 2011/08/27 08:57:39 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -193,8 +193,7 @@ sub LibraryOnly
 	my ($fh, $cont) = @_;
 	my $_;
 	while (<$fh>) {
-		next unless m/^\@(?:cwd|lib|name)\b/o ||
-			m/^\@comment\s+subdir\=/o;
+		next unless m/^\@(?:cwd|lib|name|comment\s+subdir\=)\b/o;
 		&$cont($_);
 	}
 }
@@ -214,8 +213,7 @@ sub PrelinkStuffOnly
 	my ($fh, $cont) = @_;
 	my $_;
 	while (<$fh>) {
-		next unless m/^\@(?:cwd|bin|lib|name|depend|wantlib)\b/o ||
-			m/^\@comment\s+subdir\=/o;
+		next unless m/^\@(?:cwd|bin|lib|name|depend|wantlib|comment\s+ubdir\=)\b/o;
 		&$cont($_);
 	}
 }
@@ -225,19 +223,12 @@ sub DependOnly
 	my ($fh, $cont) = @_;
 	my $_;
 	while (<$fh>) {
+		if (m/^\@(?:depend|wantlib|define-tag)\b/o) {
+			&$cont($_);
 		# XXX optimization
-		if (m/^\@arch\b/o) {
-			while (<$fh>) {
-			    if (m/^\@(?:depend|wantlib|define-tag)\b/o) {
-				    &$cont($_);
-			    } elsif (m/^\@(?:newgroup|newuser|cwd)\b/o) {
-				    last;
-			    }
-			}
-			return;
+		} elsif (m/^\@(?:newgroup|newuser|cwd)\b/o) {
+			last;
 		}
-		next unless m/^\@(?:depend|wantlib|define-tag)\b/o;
-		&$cont($_);
 	}
 }
 
@@ -246,19 +237,12 @@ sub ExtraInfoOnly
 	my ($fh, $cont) = @_;
 	my $_;
 	while (<$fh>) {
+		if (m/^\@(?:name|pkgpath|comment\s+subdir\=)\b/o) {
+			&$cont($_);
 		# XXX optimization
-		if (m/^\@arch\b/o) {
-			while (<$fh>) {
-			    if (m/^\@(?:pkgpath)\b/o) {
-				    &$cont($_);
-			    } elsif (m/^\@(?:newgroup|newuser|cwd)\b/o) {
-				    last;
-			    }
-			}
-			return;
+		} elsif (m/^\@(?:depend|wantlib|newgroup|newuser|cwd)\b/o) {
+			last;
 		}
-		next unless m/^\@(?:name\b|comment\s+subdir\=)/o;
-		&$cont($_);
 	}
 }
 
@@ -267,17 +251,6 @@ sub UpdateInfoOnly
 	my ($fh, $cont) = @_;
 	my $_;
 	while (<$fh>) {
-		# XXX optimization
-		if (m/^\@arch\b/o) {
-			while (<$fh>) {
-			    if (m/^\@(?:depend|wantlib|conflict|option|pkgpath|url)\b/o) {
-				    &$cont($_);
-			    } elsif (m/^\@(?:newgroup|newuser|cwd)\b/o) {
-				    last;
-			    }
-			}
-			return;
-		}
 		# if alwaysupdate, all info is sig
 		if (m/^\@option\s+always-update\b/o) {
 		    &$cont($_);
@@ -286,8 +259,12 @@ sub UpdateInfoOnly
 		    }
 		    return;
 		}
-		next unless m/^\@(?:name\b|depend\b|wantlib\b|conflict|\b|option\b|pkgpath\b|comment\s+subdir\=|arch\b|url\b)/o;
-		&$cont($_);
+		if (m/^\@(?:name|depend|wantlib|conflict|option|pkgpath|url|arch|comment\s+subdir\=)\b/o) {
+			&$cont($_);
+		# XXX optimization
+		} elsif (m/^\@(?:newgroup|newuser|cwd)\b/o) {
+			last;
+		}
 	}
 }
 
@@ -296,19 +273,12 @@ sub ConflictOnly
 	my ($fh, $cont) = @_;
 	my $_;
 	while (<$fh>) {
+		if (m/^\@(?:name|conflict|option)\b/o) {
+			&$cont($_);
 		# XXX optimization
-		if (m/^\@arch\b/o) {
-			while (<$fh>) {
-			    if (m/^\@(?:conflict|option|name)\b/o) {
-				    &$cont($_);
-			    } elsif (m/^\@(?:depend|wantlib|newgroup|newuser|cwd)\b/o) {
-				    last;
-			    }
-			}
-			return;
+		} elsif (m/^\@(?:depend|wantlib|newgroup|newuser|cwd)\b/o) {
+			last;
 		}
-	    	next unless m/^\@(?:conflict|option|name)\b/o;
-		&$cont($_);
 	}
 }
 
