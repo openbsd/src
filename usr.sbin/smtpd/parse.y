@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.76 2011/06/09 17:41:52 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.77 2011/08/27 22:32:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -123,7 +123,7 @@ typedef struct {
 %token	DNS DB PLAIN EXTERNAL DOMAIN CONFIG SOURCE
 %token  RELAY VIA DELIVER TO MAILDIR MBOX HOSTNAME
 %token	ACCEPT REJECT INCLUDE NETWORK ERROR MDA FROM FOR
-%token	ARROW ENABLE AUTH TLS LOCAL VIRTUAL TAG ALIAS
+%token	ARROW ENABLE AUTH TLS LOCAL VIRTUAL TAG ALIAS FILTER
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.map>		map
@@ -379,7 +379,39 @@ main		: QUEUE INTERVAL interval	{
 				YYERROR;
 			}
 			free($2);
+		}/*
+		| FILTER STRING STRING		{
+			struct filter *filter;
+			struct filter *tmp;
+
+			filter = calloc(1, sizeof (*filter));
+			if (filter == NULL ||
+			    strlcpy(filter->name, $2, sizeof (filter->name))
+			    >= sizeof (filter->name) ||
+			    strlcpy(filter->path, $3, sizeof (filter->path))
+			    >= sizeof (filter->path)) {
+				free(filter);
+				free($2);
+				free($3);
+				YYERROR;
+			}
+
+			TAILQ_FOREACH(tmp, conf->sc_filters, f_entry) {
+				if (strcasecmp(filter->name, tmp->name) == 0)
+					break;
+			}
+			if (tmp == NULL)
+				TAILQ_INSERT_TAIL(conf->sc_filters, filter, f_entry);
+			else {
+       				yyerror("ambiguous filter name: %s", filter->name);
+				free($2);
+				free($3);
+				YYERROR;
+			}
+			free($2);
+			free($3);
 		}
+		 */
 		;
 
 maptype		: SINGLE			{ map->m_type = T_SINGLE; }
@@ -1195,6 +1227,7 @@ lookup(char *s)
 		{ "enable",		ENABLE },
 		{ "expire",		EXPIRE },
 		{ "external",		EXTERNAL },
+		{ "filter",		FILTER },
 		{ "for",		FOR },
 		{ "from",		FROM },
 		{ "hash",		HASH },
@@ -1561,34 +1594,26 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 
 	conf->sc_maxsize = SIZE_MAX;
 
-	if ((conf->sc_maps = calloc(1, sizeof(*conf->sc_maps))) == NULL) {
-		log_warn("cannot allocate memory");
-		return (-1);
-	}
-	if ((conf->sc_rules = calloc(1, sizeof(*conf->sc_rules))) == NULL) {
-		log_warn("cannot allocate memory");
-		free(conf->sc_maps);
-		return (-1);
-	}
-	if ((conf->sc_listeners = calloc(1, sizeof(*conf->sc_listeners))) == NULL) {
-		log_warn("cannot allocate memory");
-		free(conf->sc_maps);
-		free(conf->sc_rules);
-		return (-1);
-	}
-	if ((conf->sc_ssl = calloc(1, sizeof(*conf->sc_ssl))) == NULL) {
-		log_warn("cannot allocate memory");
-		free(conf->sc_maps);
-		free(conf->sc_rules);
-		free(conf->sc_listeners);
-		return (-1);
-	}
-	if ((m = calloc(1, sizeof(*m))) == NULL) {
+	conf->sc_maps = calloc(1, sizeof(*conf->sc_maps));
+	conf->sc_rules = calloc(1, sizeof(*conf->sc_rules));
+	conf->sc_listeners = calloc(1, sizeof(*conf->sc_listeners));
+	conf->sc_ssl = calloc(1, sizeof(*conf->sc_ssl));
+	conf->sc_filters = calloc(1, sizeof(*conf->sc_filters));
+	m = calloc(1, sizeof(*m));
+
+	if (conf->sc_maps == NULL	||
+	    conf->sc_rules == NULL	||
+	    conf->sc_listeners == NULL	||
+	    conf->sc_ssl == NULL	||
+	    conf->sc_filters == NULL	||
+	    m == NULL) {
 		log_warn("cannot allocate memory");
 		free(conf->sc_maps);
 		free(conf->sc_rules);
 		free(conf->sc_listeners);
 		free(conf->sc_ssl);
+		free(conf->sc_filters);
+		free(m);
 		return (-1);
 	}
 
@@ -1601,6 +1626,7 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	TAILQ_INIT(conf->sc_listeners);
 	TAILQ_INIT(conf->sc_maps);
 	TAILQ_INIT(conf->sc_rules);
+	TAILQ_INIT(conf->sc_filters);
 	SPLAY_INIT(conf->sc_ssl);
 	SPLAY_INIT(&conf->sc_sessions);
 

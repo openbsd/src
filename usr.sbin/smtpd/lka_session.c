@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.8 2011/07/04 19:44:31 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.9 2011/08/27 22:32:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -650,6 +650,5 @@ lka_session_cmp(struct lka_session *s1, struct lka_session *s2)
 
 	return 0;
 }
-
 
 SPLAY_GENERATE(lkatree, lka_session, nodes, lka_session_cmp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.127 2011/08/26 14:39:47 chl Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.128 2011/08/27 22:32:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -84,12 +84,10 @@ int __b64_pton(char const *, unsigned char *, size_t);
 static void
 parent_imsg(struct imsgev *iev, struct imsg *imsg)
 {
-	struct smtpd		 newenv, *saveenv;
 	struct forward_req	*fwreq;
-	struct reload		*reload;
 	struct auth		*auth;
 	struct auth_backend	*auth_backend;
-	int			 fd, r;
+	int			 fd;
 
 	if (iev->proc == PROC_SMTP) {
 		switch (imsg->hdr.type) {
@@ -147,33 +145,6 @@ parent_imsg(struct imsgev *iev, struct imsg *imsg)
 
 	if (iev->proc == PROC_CONTROL) {
 		switch (imsg->hdr.type) {
-		case IMSG_CONF_RELOAD:
-			reload = imsg->data;
-			reload->ret = 0;
-			saveenv = env;
-			env = &newenv;
-			r = parse_config(&newenv, saveenv->sc_conffile, 0);
-			env = saveenv;
-			if (r == 0) {
-				strlcpy(env->sc_hostname, newenv.sc_hostname,
-				    sizeof env->sc_hostname);
-				env->sc_listeners = newenv.sc_listeners;
-				env->sc_maps = newenv.sc_maps;
-				env->sc_rules = newenv.sc_rules;
-				env->sc_rules = newenv.sc_rules;
-				env->sc_ssl = newenv.sc_ssl;
-				
-				parent_send_config_client_certs();
-				parent_send_config_ruleset(PROC_MFA);
-				parent_send_config_ruleset(PROC_LKA);
-				imsg_compose_event(env->sc_ievs[PROC_SMTP],
-				    IMSG_CONF_RELOAD, 0, 0, -1, NULL, 0);
-				reload->ret = 1;
-			}
-			imsg_compose_event(iev, IMSG_CONF_RELOAD, 0, 0, -1,
-			    reload, sizeof *reload);
-			return;
-
 		case IMSG_CTL_VERBOSE:
 			log_verbose(*(int *)imsg->data);
 
@@ -230,6 +201,7 @@ parent_send_config(int fd, short event, void *p)
 {
 	parent_send_config_listeners();
 	parent_send_config_client_certs();
+	parent_send_config_ruleset(PROC_MFA);
 	parent_send_config_ruleset(PROC_LKA);
 }
 
@@ -317,25 +289,34 @@ parent_send_config_ruleset(int proc)
 	struct rule		*r;
 	struct map		*m;
 	struct mapel		*mapel;
+	struct filter		*f;
 	
 	log_debug("parent_send_config_ruleset: reloading rules and maps");
 	imsg_compose_event(env->sc_ievs[proc], IMSG_CONF_START,
 	    0, 0, -1, NULL, 0);
-	
-	TAILQ_FOREACH(m, env->sc_maps, m_entry) {
-		imsg_compose_event(env->sc_ievs[proc], IMSG_CONF_MAP,
-		    0, 0, -1, m, sizeof(*m));
-		TAILQ_FOREACH(mapel, &m->m_contents, me_entry) {
-			imsg_compose_event(env->sc_ievs[proc], IMSG_CONF_MAP_CONTENT,
-			    0, 0, -1, mapel, sizeof(*mapel));
+
+	if (proc == PROC_MFA) {
+		TAILQ_FOREACH(f, env->sc_filters, f_entry) {
+			imsg_compose_event(env->sc_ievs[proc], IMSG_CONF_FILTER,
+			    0, 0, -1, f, sizeof(*f));
 		}
 	}
+	else {
+		TAILQ_FOREACH(m, env->sc_maps, m_entry) {
+			imsg_compose_event(env->sc_ievs[proc], IMSG_CONF_MAP,
+			    0, 0, -1, m, sizeof(*m));
+			TAILQ_FOREACH(mapel, &m->m_contents, me_entry) {
+			imsg_compose_event(env->sc_ievs[proc], IMSG_CONF_MAP_CONTENT,
+			    0, 0, -1, mapel, sizeof(*mapel));
+			}
+		}
 	
-	TAILQ_FOREACH(r, env->sc_rules, r_entry) {
-		imsg_compose_event(env->sc_ievs[proc], IMSG_CONF_RULE,
-		    0, 0, -1, r, sizeof(*r));
-		imsg_compose_event(env->sc_ievs[proc], IMSG_CONF_RULE_SOURCE,
-		    0, 0, -1, &r->r_sources->m_name, sizeof(r->r_sources->m_name));
+		TAILQ_FOREACH(r, env->sc_rules, r_entry) {
+			imsg_compose_event(env->sc_ievs[proc], IMSG_CONF_RULE,
+			    0, 0, -1, r, sizeof(*r));
+			imsg_compose_event(env->sc_ievs[proc], IMSG_CONF_RULE_SOURCE,
+			    0, 0, -1, &r->r_sources->m_name, sizeof(r->r_sources->m_name));
+		}
 	}
 	
 	imsg_compose_event(env->sc_ievs[proc], IMSG_CONF_END,

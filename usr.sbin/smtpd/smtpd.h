@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.233 2011/08/17 20:35:11 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.234 2011/08/27 22:32:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -21,6 +21,8 @@
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
+#include "filter.h"
+
 #define IMSG_SIZE_CHECK(p) do {					\
 		if (IMSG_DATA_SIZE(&imsg) != sizeof(*p))	\
 			fatalx("bad length imsg received");	\
@@ -35,13 +37,14 @@
 
 #define MAX_HOPS_COUNT		 100
 
-/* sizes include the tailing '\0' */
-#define MAX_LINE_SIZE		 1024
-#define MAX_LOCALPART_SIZE	 128
-#define MAX_DOMAINPART_SIZE	 MAXHOSTNAMELEN
 #define MAX_TAG_SIZE		 32
+/* SYNC WITH filter.h		  */
+//#define MAX_LINE_SIZE		 1024
+//#define MAX_LOCALPART_SIZE	 128
+//#define MAX_DOMAINPART_SIZE	 MAXHOSTNAMELEN
 
 /* return and forward path size */
+#define	MAX_FILTER_NAME		 32
 #define MAX_PATH_SIZE		 256
 #define MAX_RULEBUFFER_LEN	 256
 
@@ -49,6 +52,7 @@
 #define SMTPD_QUEUE_MAXINTERVAL	 (4 * 60 * 60)
 #define SMTPD_QUEUE_EXPIRY	 (4 * 24 * 60 * 60)
 #define SMTPD_USER		 "_smtpd"
+#define SMTPD_FILTER_USER      	 "_smtpdmfa"
 #define SMTPD_SOCKET		 "/var/run/smtpd.sock"
 #define SMTPD_BANNER		 "220 %s ESMTP OpenSMTPD"
 #define SMTPD_SESSION_TIMEOUT	 300
@@ -130,6 +134,7 @@ enum imsg_type {
 	IMSG_CONF_MAP_CONTENT,
 	IMSG_CONF_RULE,
 	IMSG_CONF_RULE_SOURCE,
+	IMSG_CONF_FILTER,
 	IMSG_CONF_END,
 	IMSG_CONF_RELOAD,
 	IMSG_LKA_MAIL,
@@ -138,8 +143,11 @@ enum imsg_type {
 	IMSG_LKA_RULEMATCH,
 	IMSG_MDA_SESS_NEW,
 	IMSG_MDA_DONE,
-	IMSG_MFA_RCPT,
+
+	IMSG_MFA_HELO,
 	IMSG_MFA_MAIL,
+	IMSG_MFA_RCPT,
+	IMSG_MFA_DISCONNECT,
 
 	IMSG_QUEUE_CREATE_MESSAGE,
 	IMSG_QUEUE_SUBMIT_ENVELOPE,
@@ -337,7 +345,6 @@ struct mailaddr {
 	char	domain[MAX_DOMAINPART_SIZE];
 };
 
-
 enum delivery_type {
 	D_INVALID = 0,
 	D_MDA,
@@ -453,7 +460,7 @@ enum child_type {
 	CHILD_INVALID,
 	CHILD_DAEMON,
 	CHILD_MDA,
-	CHILD_ENQUEUE_OFFLINE
+	CHILD_ENQUEUE_OFFLINE,
 };
 
 struct child {
@@ -628,6 +635,8 @@ struct smtpd {
 	struct ramqueue				 sc_rqueue;
 	struct queue_backend			*sc_queue;
 
+	TAILQ_HEAD(filterlist, filter)		*sc_filters;
+
 	TAILQ_HEAD(listenerlist, listener)	*sc_listeners;
 	TAILQ_HEAD(maplist, map)		*sc_maps, *sc_maps_reload;
 	TAILQ_HEAD(rulelist, rule)		*sc_rules, *sc_rules_reload;
@@ -635,6 +644,7 @@ struct smtpd {
 	SPLAY_HEAD(ssltree, ssl)		*sc_ssl;
 	SPLAY_HEAD(childtree, child)		 children;
 	SPLAY_HEAD(lkatree, lka_session)	 lka_sessions;
+	SPLAY_HEAD(mfatree, mfa_session)	 mfa_sessions;
 	SPLAY_HEAD(mtatree, mta_session)	 mta_sessions;
 	LIST_HEAD(mdalist, mda_session)		 mda_sessions;
 
@@ -817,6 +827,25 @@ struct lka_session {
 	u_int32_t			 pending;
 	enum lka_session_flags		 flags;
 	struct submit_status		 ss;
+};
+
+struct filter {
+	TAILQ_ENTRY(filter)     f_entry;
+	pid_t			pid;
+	struct event		ev;
+	struct imsgbuf		*ibuf;
+	char			name[MAX_FILTER_NAME];
+	char			path[MAXPATHLEN];
+};
+
+struct mfa_session {
+	SPLAY_ENTRY(mfa_session)	 nodes;
+	u_int64_t			 id;
+
+	enum session_state		 state;
+	struct submit_status		 ss;
+	struct filter			*filter;
+	struct filter_msg		 fm;
 };
 
 enum mta_state {
@@ -1046,7 +1075,8 @@ pid_t mda(void);
 
 /* mfa.c */
 pid_t mfa(void);
-
+int mfa_session_cmp(struct mfa_session *, struct mfa_session *);
+SPLAY_PROTOTYPE(mfatree, mfa_session, nodes, mfa_session_cmp);
 
 /* mta.c */
 pid_t mta(void);

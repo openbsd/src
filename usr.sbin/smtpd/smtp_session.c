@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.142 2011/05/16 21:05:52 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.143 2011/08/27 22:32:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -329,12 +329,12 @@ session_rfc5321_helo_handler(struct session *s, char *args)
 		return 1;
 	}
 
+	s->s_msg.session_id = s->s_id;
 	s->s_state = S_HELO;
 	s->s_flags &= F_SECURE|F_AUTHENTICATED;
 
-	session_respond(s, "250 %s Hello %s [%s], pleased to meet you",
-	    env->sc_hostname, args, ss_to_text(&s->s_ss));
-
+	session_imsg(s, PROC_MFA, IMSG_MFA_HELO, 0, 0, -1, &s->s_msg,
+	    sizeof(s->s_msg));
 	return 1;
 }
 
@@ -352,29 +352,14 @@ session_rfc5321_ehlo_handler(struct session *s, char *args)
 		return 1;
 	}
 
+	s->s_msg.session_id = s->s_id;
 	s->s_state = S_HELO;
 	s->s_flags &= F_SECURE|F_AUTHENTICATED;
 	s->s_flags |= F_EHLO;
 	s->s_flags |= F_8BITMIME;
 
-	session_respond(s, "250-%s Hello %s [%s], pleased to meet you",
-	    env->sc_hostname, args, ss_to_text(&s->s_ss));
-
-	/* unconditionnal extensions go first */
-	session_respond(s, "250-8BITMIME");
-	session_respond(s, "250-ENHANCEDSTATUSCODES");
-
-	/* XXX - we also want to support reading SIZE from MAIL parameters */
-	session_respond(s, "250-SIZE %zu", env->sc_maxsize);
-
-	if (ADVERTISE_TLS(s))
-		session_respond(s, "250-STARTTLS");
-
-	if (ADVERTISE_AUTH(s))
-		session_respond(s, "250-AUTH PLAIN LOGIN");
-
-	session_respond(s, "250 HELP");
-
+	session_imsg(s, PROC_MFA, IMSG_MFA_HELO, 0, 0, -1, &s->s_msg,
+	    sizeof(s->s_msg));
 	return 1;
 }
 
@@ -416,7 +401,6 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 
 	s->rcptcount = 0;
 	s->s_state = S_MAIL_MFA;
-	s->s_msg.session_id = s->s_id;
 	s->s_msg.delivery.id = 0;
 	s->s_msg.delivery.ss = s->s_ss;
 
@@ -447,7 +431,6 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 	}
 
 	s->s_state = S_RCPT_MFA;
-
 	session_imsg(s, PROC_MFA, IMSG_MFA_RCPT, 0, 0, -1, &s->s_msg,
 	    sizeof(s->s_msg));
 	return 1;
@@ -456,10 +439,8 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 static int
 session_rfc5321_quit_handler(struct session *s, char *args)
 {
-	session_respond(s, "221 2.0.0 %s Closing connection", env->sc_hostname);
-
 	s->s_flags |= F_QUIT;
-
+	session_respond(s, "221 2.0.0 %s Closing connection", env->sc_hostname);
 	return 1;
 }
 
@@ -628,6 +609,36 @@ session_pickup(struct session *s, struct submit_status *ss)
 		else
 			session_respond(s, "535 Authentication failed");
 		s->s_state = S_HELO;
+		break;
+
+	case S_HELO:
+		if (ss == NULL)
+			fatalx("bad ss at S_HELO");
+		if (ss->code != 250) {
+			s->s_state = S_GREETED;
+			session_respond(s, "%d Helo rejected", ss->code);
+			return;
+		}
+
+		session_respond(s, "250%c%s Hello %s [%s], pleased to meet you",
+		    (s->s_flags & F_EHLO) ? '-' : ' ',
+		    env->sc_hostname, s->s_msg.delivery.helo, ss_to_text(&s->s_ss));
+
+		if (s->s_flags & F_EHLO) {
+			/* unconditionnal extensions go first */
+			session_respond(s, "250-8BITMIME");
+			session_respond(s, "250-ENHANCEDSTATUSCODES");
+
+			/* XXX - we also want to support reading SIZE from MAIL parameters */
+			session_respond(s, "250-SIZE %zu", env->sc_maxsize);
+
+			if (ADVERTISE_TLS(s))
+				session_respond(s, "250-STARTTLS");
+
+			if (ADVERTISE_AUTH(s))
+				session_respond(s, "250-AUTH PLAIN LOGIN");
+			session_respond(s, "250 HELP");
+		}
 		break;
 
 	case S_MAIL_MFA:
@@ -839,7 +850,6 @@ session_read_data(struct session *s, char *line)
 			    0, 0, -1, &s->s_msg, sizeof(s->s_msg));
 			s->s_state = S_DONE;
 		}
-
 		return;
 	}
 
@@ -1037,7 +1047,6 @@ session_readline(struct session *s)
 		s->s_flags |= F_QUIT;
 		free(line);
 		free(line2);
-
 		return NULL;
 	}
 
