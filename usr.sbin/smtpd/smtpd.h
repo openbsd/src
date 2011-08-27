@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.234 2011/08/27 22:32:41 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.235 2011/08/27 22:37:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -52,7 +52,7 @@
 #define SMTPD_QUEUE_MAXINTERVAL	 (4 * 60 * 60)
 #define SMTPD_QUEUE_EXPIRY	 (4 * 24 * 60 * 60)
 #define SMTPD_USER		 "_smtpd"
-#define SMTPD_FILTER_USER      	 "_smtpdmfa"
+#define SMTPD_FILTER_USER      	 "_smtpmfa"
 #define SMTPD_SOCKET		 "/var/run/smtpd.sock"
 #define SMTPD_BANNER		 "220 %s ESMTP OpenSMTPD"
 #define SMTPD_SESSION_TIMEOUT	 300
