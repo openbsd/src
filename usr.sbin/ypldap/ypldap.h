@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.h,v 1.11 2010/10/11 08:38:30 pyr Exp $ */
+/*	$OpenBSD: ypldap.h,v 1.12 2011/08/28 11:53:16 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -55,6 +55,8 @@ struct userent {
 	RB_ENTRY(userent)		 ue_uid_node;
 	uid_t				 ue_uid;
 	char				*ue_line;
+	char				*ue_netid_line;
+	gid_t				 ue_gid;
 };
 
 struct groupent {
@@ -147,6 +149,7 @@ struct env {
 #define YPMAP_MASTER_PASSWD_BYUID	 0x00000008
 #define YPMAP_GROUP_BYNAME		 0x00000010
 #define YPMAP_GROUP_BYGID		 0x00000020
+#define YPMAP_NETID_BYNAME		 0x00000040
 	u_int32_t			 sc_flags;
 
 	u_int32_t			 sc_maxid;
@@ -170,6 +173,8 @@ struct env {
 	char				*sc_group_lines;
 
 	struct yp_data			*sc_yp;
+
+	int				 update_trashed;
 };
 
 /* log.c */

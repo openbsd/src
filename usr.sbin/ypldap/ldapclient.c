@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.21 2011/01/17 14:34:15 martinh Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.22 2011/08/28 11:53:16 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -466,6 +466,7 @@ client_build_req(struct idm *idm, struct idm_req *ir, struct aldap_message *m,
 			if (ldap_attrs[0] == NULL)
 				return (-1);
 			for (k = 0; k >= 0 && ldap_attrs[k] != NULL; k++) {
+				/* XXX: Fail when entries have ilegal characters e.g. ',' */
 				if (strlcat(ir->ir_line, ldap_attrs[k],
 				    sizeof(ir->ir_line)) >= sizeof(ir->ir_line))
 					continue;

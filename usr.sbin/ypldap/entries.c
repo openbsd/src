@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.1 2008/06/26 15:10:01 pyr Exp $ */
+/*	$OpenBSD: entries.c,v 1.2 2011/08/28 11:53:16 aschrijver Exp $ */
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
@@ -42,6 +42,7 @@ flatten_entries(struct env *env)
 	size_t		 len;
 	char		*linep;
 	char		*endp;
+	char		*tmp;
 	struct userent	*ue;
 	struct groupent	*ge;
 
@@ -76,6 +77,17 @@ flatten_entries(struct env *env)
 		ue->ue_line = endp;
 		endp += len;
 		wrlen -= len;
+
+		/*
+		 * To save memory strdup(3) the netid_line which originally used
+		 * LINE_WIDTH bytes
+		 */
+		tmp = ue->ue_netid_line;
+		ue->ue_netid_line = strdup(tmp);
+		if (ue->ue_netid_line == NULL) {
+			fatal("out of memory");
+		}
+		free(tmp);
 	}
 	env->sc_user_lines = linep;
 

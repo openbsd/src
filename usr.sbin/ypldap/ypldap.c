@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.c,v 1.9 2010/04/01 18:24:04 zinovik Exp $ */
+/*	$OpenBSD: ypldap.c,v 1.10 2011/08/28 11:53:16 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -44,6 +44,10 @@ void		 main_shutdown(void);
 void		 main_dispatch_client(int, short, void *);
 void		 main_configure_client(struct env *);
 void		 main_init_timer(int, short, void *);
+void		 main_start_update(struct env *);
+void		 main_trash_update(struct env *);
+void		 main_end_update(struct env *);
+int		 main_create_user_groups(struct env *);
 void		 purge_config(struct env *);
 void		 reconfigure(struct env *);
 void		 set_nonblock(int);
@@ -117,6 +121,229 @@ main_shutdown(void)
 }
 
 void
+main_start_update(struct env *env)
+{
+	env->update_trashed = 0;
+
+	log_debug("starting directory update");
+	env->sc_user_line_len = 0;
+	env->sc_group_line_len = 0;
+	if ((env->sc_user_names_t = calloc(1,
+	    sizeof(*env->sc_user_names_t))) == NULL ||
+	    (env->sc_group_names_t = calloc(1,
+	    sizeof(*env->sc_group_names_t))) == NULL)
+		fatal(NULL);
+	RB_INIT(env->sc_user_names_t);
+	RB_INIT(env->sc_group_names_t);
+}
+
+/*
+ * XXX: Currently this function should only be called when updating is
+ * finished. A notification should be send to ldapclient that it should stop
+ * sending new pwd/grp entries before it can be called from different places.
+ */
+void
+main_trash_update(struct env *env)
+{
+	struct userent	*ue;
+	struct groupent	*ge;
+
+	env->update_trashed = 1;
+
+	while ((ue = RB_ROOT(env->sc_user_names_t)) != NULL) {
+		RB_REMOVE(user_name_tree,
+		    env->sc_user_names_t, ue);
+		free(ue->ue_line);
+		free(ue->ue_netid_line);
+		free(ue);
+	}
+	free(env->sc_user_names_t);
+	env->sc_user_names_t = NULL;
+	while ((ge = RB_ROOT(env->sc_group_names_t))
+	    != NULL) {
+		RB_REMOVE(group_name_tree,
+		    env->sc_group_names_t, ge);
+		free(ge->ge_line);
+		free(ge);
+	}
+	free(env->sc_group_names_t);
+	env->sc_group_names_t = NULL;
+}
+
+int
+main_create_user_groups(struct env *env)
+{
+	struct userent		*ue;
+	struct userent		 ukey;
+	struct groupent		*ge;
+	gid_t			 pw_gid;
+	char			*bp, *cp;
+	char			*p;
+	const char		*errstr = NULL;
+	size_t			 len;
+
+	RB_FOREACH(ue, user_name_tree, env->sc_user_names_t) {
+		bp = cp = ue->ue_line;
+
+		/* name */
+		bp += strlen(bp) + 1;
+
+		/* password */
+		bp += strcspn(bp, ":") + 1;
+
+		/* uid */
+		bp += strcspn(bp, ":") + 1;
+
+		/* gid */
+		bp[strcspn(bp, ":")] = '\0';
+
+		pw_gid = (gid_t)strtonum(bp, 0, GID_MAX, &errstr);
+		if (errstr) {
+			log_warnx("main: failed to parse gid for uid: %d\n", ue->ue_uid);
+			return (-1);
+		}
+
+		/* bring gid column back to its proper state */
+		bp[strlen(bp)] = ':';
+
+		if ((ue->ue_netid_line = calloc(1, LINE_WIDTH)) == NULL) {
+			return (-1);
+		}
+
+		if (snprintf(ue->ue_netid_line, LINE_WIDTH-1, "%d:%d", ue->ue_uid, pw_gid) >= LINE_WIDTH) {
+
+			return (-1);
+		}
+
+		ue->ue_gid = pw_gid;
+	}
+
+	RB_FOREACH(ge, group_name_tree, env->sc_group_names_t) {
+		bp = cp = ge->ge_line;
+
+		/* name */
+		bp += strlen(bp) + 1;
+
+		/* password */
+		bp += strcspn(bp, ":") + 1;
+
+		/* gid */
+		bp += strcspn(bp, ":") + 1;
+
+		cp = bp;
+		if (*bp == '\0')
+			continue;
+		bp = cp;
+		for (;;) { 
+			if (!(cp = strsep(&bp, ",")))
+				break;
+			ukey.ue_line = cp;
+			if ((ue = RB_FIND(user_name_tree, env->sc_user_names_t,
+			    &ukey)) == NULL) {
+				/* User not found */
+				log_warnx("main: user: %s is referenced as a "
+					"group member, but can't be found in the "
+					"users map.\n", ukey.ue_line);
+				if (bp != NULL)
+					*(bp-1) = ',';
+				return (-1);
+			}
+			if (bp != NULL)
+				*(bp-1) = ',';
+
+			/* Make sure the new group doesn't equal to the main gid */
+			if (ge->ge_gid == ue->ue_gid)
+				continue;
+
+			len = strlen(ue->ue_netid_line);
+			p = ue->ue_netid_line + len;
+
+			if ((snprintf(p, LINE_WIDTH-len-1, ",%d",
+				ge->ge_gid)) >= (int)(LINE_WIDTH-len)) {
+				return (-1);
+			}
+		}
+	}
+
+	return (0);
+}
+
+void
+main_end_update(struct env *env)
+{
+	struct userent		*ue;
+	struct groupent		*ge;
+
+	if (env->update_trashed)
+		return;
+
+	log_debug("updates are over, cleaning up trees now");
+
+	if (main_create_user_groups(env) == -1) {
+		main_trash_update(env);
+		return;
+	}
+
+	if (env->sc_user_names == NULL) {
+		env->sc_user_names = env->sc_user_names_t;
+		env->sc_user_lines = NULL;
+		env->sc_user_names_t = NULL;
+
+		env->sc_group_names = env->sc_group_names_t;
+		env->sc_group_lines = NULL;
+		env->sc_group_names_t = NULL;
+
+		flatten_entries(env);
+		goto make_uids;
+	}
+
+	/*
+	 * clean previous tree.
+	 */
+	while ((ue = RB_ROOT(env->sc_user_names)) != NULL) {
+		RB_REMOVE(user_name_tree, env->sc_user_names,
+		    ue);
+		free(ue);
+	}
+	free(env->sc_user_names);
+	free(env->sc_user_lines);
+
+	env->sc_user_names = env->sc_user_names_t;
+	env->sc_user_lines = NULL;
+	env->sc_user_names_t = NULL;
+
+	while ((ge = RB_ROOT(env->sc_group_names)) != NULL) {
+		RB_REMOVE(group_name_tree,
+		    env->sc_group_names, ge);
+		free(ge);
+	}
+	free(env->sc_group_names);
+	free(env->sc_group_lines);
+
+	env->sc_group_names = env->sc_group_names_t;
+	env->sc_group_lines = NULL;
+	env->sc_group_names_t = NULL;
+
+
+	flatten_entries(env);
+
+	/*
+	 * trees are flat now. build up uid, gid and netid trees.
+	 */
+
+make_uids:
+	RB_INIT(&env->sc_user_uids);
+	RB_INIT(&env->sc_group_gids);
+	RB_FOREACH(ue, user_name_tree, env->sc_user_names)
+		RB_INSERT(user_uid_tree,
+		    &env->sc_user_uids, ue);
+	RB_FOREACH(ge, group_name_tree, env->sc_group_names)
+		RB_INSERT(group_gid_tree,
+		    &env->sc_group_gids, ge);
+
+}
+
+void
 main_dispatch_client(int fd, short event, void *p)
 {
 	int		 n;
@@ -151,20 +378,14 @@ main_dispatch_client(int fd, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_START_UPDATE:
-			log_debug("starting directory update");
-			env->sc_user_line_len = 0;
-			env->sc_group_line_len = 0;
-			if ((env->sc_user_names_t = calloc(1,
-			    sizeof(*env->sc_user_names_t))) == NULL ||
-			    (env->sc_group_names_t = calloc(1,
-			    sizeof(*env->sc_group_names_t))) == NULL)
-				fatal(NULL);
-			RB_INIT(env->sc_user_names_t);
-			RB_INIT(env->sc_group_names_t);
+			main_start_update(env);
 			break;
 		case IMSG_PW_ENTRY: {
 			struct userent	*ue;
 			size_t		 len;
+
+			if (env->update_trashed)
+				break;
 
 			(void)memcpy(&ir, imsg.data, sizeof(ir));
 			if ((ue = calloc(1, sizeof(*ue))) == NULL ||
@@ -189,6 +410,9 @@ main_dispatch_client(int fd, short event, void *p)
 			struct groupent	*ge;
 			size_t		 len;
 
+			if (env->update_trashed)
+				break;
+
 			(void)memcpy(&ir, imsg.data, sizeof(ir));
 			if ((ge = calloc(1, sizeof(*ge))) == NULL ||
 			    (ge->ge_line = strdup(ir.ir_line)) == NULL) {
@@ -208,91 +432,11 @@ main_dispatch_client(int fd, short event, void *p)
 				env->sc_group_line_len += len;
 			break;
 		}
-		case IMSG_TRASH_UPDATE: {
-			struct userent	*ue;
-			struct groupent	*ge;
-
-			while ((ue = RB_ROOT(env->sc_user_names_t)) != NULL) {
-				RB_REMOVE(user_name_tree,
-				    env->sc_user_names_t, ue);
-				free(ue->ue_line);
-				free(ue);
-			}
-			free(env->sc_user_names_t);
-			env->sc_user_names_t = NULL;
-			while ((ge = RB_ROOT(env->sc_group_names_t))
-			    != NULL) {
-				RB_REMOVE(group_name_tree,
-				    env->sc_group_names_t, ge);
-				free(ge->ge_line);
-				free(ge);
-			}
-			free(env->sc_group_names_t);
-			env->sc_group_names_t = NULL;
+		case IMSG_TRASH_UPDATE:
+			main_trash_update(env);
 			break;
-		}
 		case IMSG_END_UPDATE: {
-			struct userent	*ue;
-			struct groupent	*ge;
-
-			log_debug("updates are over, cleaning up trees now");
-
-			if (env->sc_user_names == NULL) {
-				env->sc_user_names = env->sc_user_names_t;
-				env->sc_user_lines = NULL;
-				env->sc_user_names_t = NULL;
-
-				env->sc_group_names = env->sc_group_names_t;
-				env->sc_group_lines = NULL;
-				env->sc_group_names_t = NULL;
-
-				flatten_entries(env);
-				goto make_uids;
-			}
-
-			/*
-			 * clean previous tree.
-			 */
-			while ((ue = RB_ROOT(env->sc_user_names)) != NULL) {
-				RB_REMOVE(user_name_tree, env->sc_user_names,
-				    ue);
-				free(ue);
-			}
-			free(env->sc_user_names);
-			free(env->sc_user_lines);
-
-			env->sc_user_names = env->sc_user_names_t;
-			env->sc_user_lines = NULL;
-			env->sc_user_names_t = NULL;
-
-			while ((ge = RB_ROOT(env->sc_group_names)) != NULL) {
-				RB_REMOVE(group_name_tree,
-				    env->sc_group_names, ge);
-				free(ge);
-			}
-			free(env->sc_group_names);
-			free(env->sc_group_lines);
-
-			env->sc_group_names = env->sc_group_names_t;
-			env->sc_group_lines = NULL;
-			env->sc_group_names_t = NULL;
-
-
-			flatten_entries(env);
-
-			/*
-			 * trees are flat now. build up uid and gid trees.
-			 */
-
-make_uids:
-			RB_INIT(&env->sc_user_uids);
-			RB_INIT(&env->sc_group_gids);
-			RB_FOREACH(ue, user_name_tree, env->sc_user_names)
-				RB_INSERT(user_uid_tree,
-				    &env->sc_user_uids, ue);
-			RB_FOREACH(ge, group_name_tree, env->sc_group_names)
-				RB_INSERT(group_gid_tree,
-				    &env->sc_group_gids, ge);
+			main_end_update(env);
 			break;
 		}
 		default:

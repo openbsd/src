@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.9 2010/08/03 18:42:41 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.10 2011/08/28 11:53:16 aschrijver Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -295,6 +295,8 @@ main		: INTERVAL NUMBER			{
 				conf->sc_flags |= YPMAP_GROUP_BYNAME;
 			else if (strcmp($3, "group.bygid") == 0)
 				conf->sc_flags |= YPMAP_GROUP_BYGID;
+			else if (strcmp($3, "netid.byname") == 0)
+				conf->sc_flags |= YPMAP_NETID_BYNAME;
 			else {
 				yyerror("unsupported map type: %s", $3);
 				free($3);

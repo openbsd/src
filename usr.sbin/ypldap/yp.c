@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp.c,v 1.10 2011/01/13 06:09:35 martinh Exp $ */
+/*	$OpenBSD: yp.c,v 1.11 2011/08/28 11:53:16 aschrijver Exp $ */
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
@@ -49,7 +49,7 @@ void	yp_disable_events(void);
 void	yp_fd_event(int, short, void *);
 int	yp_check(struct svc_req *);
 int	yp_valid_domain(char *, struct ypresp_val *);
-void	yp_make_val(struct ypresp_val *, char *);
+void	yp_make_val(struct ypresp_val *, char *, int);
 void	yp_make_keyval(struct ypresp_key_val *, char *, char *);
 
 static struct env	*env;
@@ -322,6 +322,7 @@ ypproc_match_2_svc(ypreq_key *arg, struct svc_req *req)
 	struct groupent		*ge;
 	static struct ypresp_val res;
 	const char		*estr;
+	char			*bp, *cp;
 	char			 key[YPMAXRECORD+1];
 
 	log_debug("matching '%.*s' in map %s", arg->key.keydat_len,
@@ -353,7 +354,7 @@ ypproc_match_2_svc(ypreq_key *arg, struct svc_req *req)
 			return (&res);
 		}
 
-		yp_make_val(&res, ue->ue_line);
+		yp_make_val(&res, ue->ue_line, 1);
 		return (&res);
 	} else if (strcmp(arg->map, "passwd.byuid") == 0 ||
 		   strcmp(arg->map, "master.passwd.byuid") == 0) {
@@ -369,7 +370,7 @@ ypproc_match_2_svc(ypreq_key *arg, struct svc_req *req)
 			return (&res);
 		}
 
-		yp_make_val(&res, ue->ue_line);
+		yp_make_val(&res, ue->ue_line, 1);
 		return (&res);
 	} else if (strcmp(arg->map, "group.bygid") == 0) {
 		gkey.ge_gid = strtonum(key, 0, GID_MAX, &estr); 
@@ -383,7 +384,7 @@ ypproc_match_2_svc(ypreq_key *arg, struct svc_req *req)
 			return (&res);
 		}
 
-		yp_make_val(&res, ge->ge_line);
+		yp_make_val(&res, ge->ge_line, 1);
 		return (&res);
 	} else if (strcmp(arg->map, "group.byname") == 0) {
 		gkey.ge_line = key;
@@ -393,8 +394,48 @@ ypproc_match_2_svc(ypreq_key *arg, struct svc_req *req)
 			return (&res);
 		}
 
-		yp_make_val(&res, ge->ge_line);
+		yp_make_val(&res, ge->ge_line, 1);
 		return (&res);
+	} else if (strcmp(arg->map, "netid.byname") == 0) {
+		bp = cp = key;
+
+		if (strncmp(bp, "unix.", strlen("unix.")) != 0) {
+			res.stat = YP_BADARGS;
+			return (&res);
+		}
+
+		bp += strlen("unix.");
+
+		if (*bp == '\0') {
+			res.stat = YP_BADARGS;
+			return (&res);
+		}
+
+		if (!(cp = strsep(&bp, "@"))) {
+			res.stat = YP_BADARGS;
+			return (&res);
+		}
+
+		if (strcmp(bp, arg->domain) != 0) {
+			res.stat = YP_BADARGS;
+			return (&res);
+		}
+
+		ukey.ue_uid = strtonum(cp, 0, UID_MAX, &estr); 
+		if (estr) {
+			res.stat = YP_BADARGS;
+			return (&res);
+		}
+
+		if ((ue = RB_FIND(user_uid_tree, &env->sc_user_uids,
+		    &ukey)) == NULL) {
+			res.stat = YP_NOKEY;
+			return (&res);
+		}
+
+		yp_make_val(&res, ue->ue_netid_line, 0);
+		return (&res);
+	
 	} else {
 		log_debug("unknown map %s", arg->map);
 		res.stat = YP_NOMAP;
@@ -539,13 +580,14 @@ ypproc_maplist_2_svc(domainname *arg, struct svc_req *req)
 	static struct {
 		char		*name;
 		int		 cond;
-	}			 mapnames[6] = {
+	}			 mapnames[] = {
 		{ "passwd.byname",		YPMAP_PASSWD_BYNAME },
 		{ "passwd.byuid",		YPMAP_PASSWD_BYUID },
 		{ "master.passwd.byname",	YPMAP_MASTER_PASSWD_BYNAME },
 		{ "master.passwd.byuid",	YPMAP_MASTER_PASSWD_BYUID },
 		{ "group.byname",		YPMAP_GROUP_BYNAME },
 		{ "group.bygid",		YPMAP_GROUP_BYGID },
+		{ "netid.byname",		YPMAP_NETID_BYNAME },
 	};
 	static ypresp_maplist	 res;
 	static struct ypmaplist	 maps[sizeof(mapnames) / sizeof(mapnames[0])];
@@ -567,15 +609,17 @@ ypproc_maplist_2_svc(domainname *arg, struct svc_req *req)
 }
 
 void
-yp_make_val(struct ypresp_val *res, char *line)
+yp_make_val(struct ypresp_val *res, char *line, int replacecolon)
 {
 	static char		 buf[LINE_WIDTH];
 
 	bzero(buf, sizeof(buf));
 
-	line[strlen(line)] = ':';
+	if (replacecolon)
+		line[strlen(line)] = ':';
 	(void)strlcpy(buf, line, sizeof(buf));
-	line[strcspn(line, ":")] = '\0';
+	if (replacecolon)
+		line[strcspn(line, ":")] = '\0';
 	log_debug("sending out %s", buf);
 
 	res->stat = YP_TRUE;

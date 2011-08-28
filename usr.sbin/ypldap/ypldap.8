@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypldap.8,v 1.6 2010/05/24 19:44:23 jmc Exp $
+.\"	$OpenBSD: ypldap.8,v 1.7 2011/08/28 11:53:16 aschrijver Exp $
 .\"
 .\" Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 24 2010 $
+.Dd $Mdocdate: August 28 2011 $
 .Dt YPLDAP 8
 .Os
 .Sh NAME
@@ -28,7 +28,7 @@
 .Sh DESCRIPTION
 .Nm
 is a daemon providing YP maps using LDAP as a backend.
-Arbitrary LDAP schemas can be tied to the different YP maps.
+RFC 2307 or similar LDAP schemas can be tied to the different YP maps.
 .Nm
 has the same role as
 .Xr ypserv 8
