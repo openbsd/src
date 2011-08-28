@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.27 2011/04/06 11:36:26 miod Exp $ */
-/*	$OpenBSD: aldap.c,v 1.27 2011/04/06 11:36:26 miod Exp $ */
+/*	$Id: aldap.c,v 1.28 2011/08/28 16:37:28 aschrijver Exp $ */
+/*	$OpenBSD: aldap.c,v 1.28 2011/08/28 16:37:28 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -231,7 +231,7 @@ aldap_parse(struct aldap *ldap)
 		break;
 	case LDAP_RES_SEARCH_ENTRY:
 		if (ber_scanf_elements(m->protocol_op, "{eS{e", &m->dn,
-		    &m->body.search.entries) != 0)
+		    &m->body.search.attrs) != 0)
 			goto parsefail;
 		break;
 	case LDAP_RES_SEARCH_REFERENCE:
@@ -312,15 +312,15 @@ aldap_get_diagmsg(struct aldap_message *msg)
 }
 
 int
-aldap_count_entries(struct aldap_message *msg)
+aldap_count_attrs(struct aldap_message *msg)
 {
 	int i;
 	struct ber_element *a;
 
-	if (msg->body.search.entries == NULL)
+	if (msg->body.search.attrs == NULL)
 		return (-1);
 
-	for (i = 0, a = msg->body.search.entries;
+	for (i = 0, a = msg->body.search.attrs;
 	    a != NULL && ber_get_eoc(a) != 0;
 	    i++, a = a->be_next)
 		;
@@ -329,20 +329,20 @@ aldap_count_entries(struct aldap_message *msg)
 }
 
 int
-aldap_first_entry(struct aldap_message *msg, char **outkey, char ***outvalues)
+aldap_first_attr(struct aldap_message *msg, char **outkey, char ***outvalues)
 {
 	struct ber_element *b, *c;
 	char *key;
 	char **ret;
 
-	if (msg->body.search.entries == NULL)
+	if (msg->body.search.attrs == NULL)
 		goto fail;
 
-	if (ber_scanf_elements(msg->body.search.entries, "{s(e)}e",
+	if (ber_scanf_elements(msg->body.search.attrs, "{s(e)}e",
 	    &key, &b, &c) != 0)
 		goto fail;
 
-	msg->body.search.iter = msg->body.search.entries->be_next;
+	msg->body.search.iter = msg->body.search.attrs->be_next;
 
 	if ((ret = aldap_get_stringset(b)) == NULL)
 		goto fail;
@@ -358,7 +358,7 @@ fail:
 }
 
 int
-aldap_next_entry(struct aldap_message *msg, char **outkey, char ***outvalues)
+aldap_next_attr(struct aldap_message *msg, char **outkey, char ***outvalues)
 {
 	struct ber_element *a, *b;
 	char *key;
@@ -367,7 +367,7 @@ aldap_next_entry(struct aldap_message *msg, char **outkey, char ***outvalues)
 	if (msg->body.search.iter == NULL)
 		goto notfound;
 
-	LDAP_DEBUG("entry", msg->body.search.iter);
+	LDAP_DEBUG("attr", msg->body.search.iter);
 
 	if (ber_get_eoc(msg->body.search.iter) == 0)
 		goto notfound;
@@ -393,18 +393,18 @@ notfound:
 }
 
 int
-aldap_match_entry(struct aldap_message *msg, char *inkey, char ***outvalues)
+aldap_match_attr(struct aldap_message *msg, char *inkey, char ***outvalues)
 {
 	struct ber_element *a, *b;
 	char *descr = NULL;
 	char **ret;
 
-	if (msg->body.search.entries == NULL)
+	if (msg->body.search.attrs == NULL)
 		return (-1);
 
-	LDAP_DEBUG("entry", msg->body.search.entries);
+	LDAP_DEBUG("attr", msg->body.search.attrs);
 
-	for (a = msg->body.search.entries;;) {
+	for (a = msg->body.search.attrs;;) {
 		if (a == NULL)
 			goto notfound;
 		if (ber_get_eoc(a) == 0)
@@ -430,7 +430,7 @@ notfound:
 }
 
 int
-aldap_free_entry(char **values)
+aldap_free_attr(char **values)
 {
 	int i;
 

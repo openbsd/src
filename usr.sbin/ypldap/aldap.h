@@ -1,5 +1,5 @@
-/*	$Id: aldap.h,v 1.7 2010/02/06 08:04:45 blambert Exp $ */
-/*	$OpenBSD: aldap.h,v 1.7 2010/02/06 08:04:45 blambert Exp $ */
+/*	$Id: aldap.h,v 1.8 2011/08/28 16:37:28 aschrijver Exp $ */
+/*	$OpenBSD: aldap.h,v 1.8 2011/08/28 16:37:28 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -52,7 +52,7 @@ struct aldap_message {
 		}			 res;
 		struct {
 			struct ber_element	*iter;
-			struct ber_element	*entries;
+			struct ber_element	*attrs;
 		}			 search;
 	} body;
 	struct ber_element	*references;
@@ -202,8 +202,8 @@ void	 aldap_free_url(struct aldap_url *);
 int	 aldap_search_url(struct aldap *, char *, int, int, int);
 #endif
 
-int	 aldap_count_entries(struct aldap_message *);
-int	 aldap_match_entry(struct aldap_message *, char *, char ***);
-int	 aldap_first_entry(struct aldap_message *, char **, char ***);
-int	 aldap_next_entry(struct aldap_message *, char **, char ***);
-int	 aldap_free_entry(char **);
+int	 aldap_count_attrs(struct aldap_message *);
+int	 aldap_match_attr(struct aldap_message *, char *, char ***);
+int	 aldap_first_attr(struct aldap_message *, char **, char ***);
+int	 aldap_next_attr(struct aldap_message *, char **, char ***);
+int	 aldap_free_attr(char **);
