@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa_session.c,v 1.1 2011/08/27 22:32:41 gilles Exp $	*/
+/*	$OpenBSD: mfa_session.c,v 1.2 2011/08/28 00:03:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -106,20 +106,20 @@ mfa_session_proceed(struct mfa_session *ms)
 	case S_MAIL_MFA:
 		fm.type = FILTER_MAIL;
 		if (strlcpy(fm.u.mail.user, ms->ss.u.maddr.user,
-			sizeof(ms->ss.u.maddr.user)) >= sizeof(ms->ss.u.maddr.user))
+			sizeof(fm.u.mail.user)) >= sizeof(fm.u.mail.user))
 			fatalx("mfa_session_proceed: MAIL: user truncation");
 		if (strlcpy(fm.u.mail.domain, ms->ss.u.maddr.domain,
-			sizeof(ms->ss.u.maddr.domain)) >= sizeof(ms->ss.u.maddr.domain))
+			sizeof(fm.u.mail.domain)) >= sizeof(fm.u.mail.domain))
 			fatalx("mfa_session_proceed: MAIL: domain truncation");
 		break;
 
 	case S_RCPT_MFA:
 		fm.type = FILTER_RCPT;
 		if (strlcpy(fm.u.mail.user, ms->ss.u.maddr.user,
-			sizeof(ms->ss.u.maddr.user)) >= sizeof(ms->ss.u.maddr.user))
+			sizeof(fm.u.mail.user)) >= sizeof(fm.u.mail.user))
 			fatalx("mfa_session_proceed: RCPT: user truncation");
 		if (strlcpy(fm.u.mail.domain, ms->ss.u.maddr.domain,
-			sizeof(ms->ss.u.maddr.domain)) >= sizeof(ms->ss.u.maddr.domain))
+			sizeof(fm.u.mail.domain)) >= sizeof(fm.u.mail.domain))
 			fatalx("mfa_session_proceed: RCPT: domain truncation");
 		break;
 
