@@ -1,4 +1,4 @@
-.\"	$OpenBSD: touch.1,v 1.22 2011/08/20 20:19:39 jmc Exp $
+.\"	$OpenBSD: touch.1,v 1.23 2011/08/28 22:54:05 jmc Exp $
 .\"	$NetBSD: touch.1,v 1.8 1995/08/31 22:10:05 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)touch.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: August 20 2011 $
+.Dd $Mdocdate: August 28 2011 $
 .Dt TOUCH 1
 .Os
 .Sh NAME
@@ -179,20 +179,6 @@ option is specified, there are at least two arguments, and the first
 argument is a string of digits either eight or ten characters in length,
 the first argument is interpreted as a time specification of the form
 .Dq MMDDhhmm[YY] .
-.Pp
-The
-.Dq MM ,
-.Dq DD ,
-.Dq hh
-and
-.Dq mm
-letter pairs are treated as their counterparts specified to the
-.Fl t
-option.
-If the
-.Dq YY
-letter pair is in the range 69 to 99, the year is set from 1969 to 1999;
-otherwise, the year is set in the 21st century.
 .Sh HISTORY
 A
 .Nm
