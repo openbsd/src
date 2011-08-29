@@ -1,6 +1,6 @@
-# $OpenBSD: europe,v 1.42 2011/06/27 12:46:06 millert Exp $
+# $OpenBSD: europe,v 1.43 2011/08/29 12:48:16 millert Exp $
 # <pre>
-# @(#)europe	8.33
+# @(#)europe	8.34
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -2035,7 +2035,7 @@ Zone Europe/Kaliningrad	 1:22:00 -	LMT	1893 Apr
 			 2:00	Poland	CE%sT	1946
 			 3:00	Russia	MSK/MSD	1991 Mar 31 2:00s
 			 2:00	Russia	EE%sT	2011 Mar 27 2:00s
-			 3:00	-	EET
+			 3:00	-	KALT
 #
 # From Oscar van Vlijmen (2001-08-25): [This region consists of]
 # Respublika Adygeya, Arkhangel'skaya oblast',

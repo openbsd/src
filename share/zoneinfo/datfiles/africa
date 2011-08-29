@@ -1,6 +1,6 @@
-# $OpenBSD: africa,v 1.34 2011/04/25 13:23:44 millert Exp $
+# $OpenBSD: africa,v 1.35 2011/08/29 12:48:16 millert Exp $
 # <pre>
-# @(#)africa	8.31
+# @(#)africa	8.32
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -955,6 +955,11 @@ Rule	Sudan	1971	only	-	Apr	30	0:00	1:00	S
 Rule	Sudan	1972	1985	-	Apr	lastSun	0:00	1:00	S
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Africa/Khartoum	2:10:08 -	LMT	1931
+			2:00	Sudan	CA%sT	2000 Jan 15 12:00
+			3:00	-	EAT
+
+# South Sudan
+Zone	Africa/Juba	2:06:24 -	LMT	1931
 			2:00	Sudan	CA%sT	2000 Jan 15 12:00
 			3:00	-	EAT
 
