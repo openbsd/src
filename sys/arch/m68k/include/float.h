@@ -1,4 +1,4 @@
-/*	$OpenBSD: float.h,v 1.7 2008/09/07 20:36:06 martynas Exp $	*/
+/*	$OpenBSD: float.h,v 1.8 2011/08/29 13:13:21 kettenis Exp $	*/
 /*	$NetBSD: float.h,v 1.10 1995/06/20 20:45:41 jtc Exp $	*/
 
 /*
@@ -43,7 +43,9 @@ __END_DECLS
 
 #define FLT_RADIX	2		/* b */
 #define FLT_ROUNDS	__flt_rounds()
+#if __ISO_C_VISIBLE >= 1999
 #define FLT_EVAL_METHOD	2		/* long double */
+#endif
 
 #define FLT_MANT_DIG	24		/* p */
 #define FLT_EPSILON	1.19209290E-07F	/* b**(1-p) */
@@ -74,5 +76,9 @@ __END_DECLS
 #define LDBL_MAX_EXP	16384
 #define LDBL_MAX	1.18973149535723176502e+4932L
 #define LDBL_MAX_10_EXP	4932
+
+#if __ISO_C_VISIBLE >= 1999
+#define DECIMAL_DIG	21
+#endif
 
 #endif /* !_M68K_FLOAT_H_ */

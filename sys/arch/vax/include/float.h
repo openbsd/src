@@ -1,4 +1,4 @@
-/*	$OpenBSD: float.h,v 1.8 2011/03/23 16:54:37 pirofti Exp $	*/
+/*	$OpenBSD: float.h,v 1.9 2011/08/29 13:13:21 kettenis Exp $	*/
 /*	$NetBSD: float.h,v 1.5 1998/10/10 02:13:55 matt Exp $	*/
 
 /*
@@ -35,9 +35,13 @@
 #ifndef _MACHINE_FLOAT_H_
 #define _MACHINE_FLOAT_H_
 
+#include <sys/cdefs.h>
+
 #define FLT_RADIX	2		/* b */
 #define FLT_ROUNDS	1		/* FP addition rounds to nearest */
+#if __ISO_C_VISIBLE >= 1999
 #define FLT_EVAL_METHOD	0		/* no promotions */
+#endif
 
 #define FLT_MANT_DIG	24		/* p */
 #define FLT_EPSILON	1.19209290E-7F	/* b**(1-p) */
@@ -72,5 +76,9 @@
 #define LDBL_MAX_EXP	DBL_MAX_EXP
 #define LDBL_MAX	DBL_MAX
 #define LDBL_MAX_10_EXP	DBL_MAX_10_EXP
+
+#if __ISO_C_VISIBLE >= 1999
+#define DECIMAL_DIG	18
+#endif
 
 #endif	/* _MACHINE_FLOAT_H_ */
