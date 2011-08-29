@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.50 2011/08/28 22:20:27 chl Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.51 2011/08/29 21:43:09 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -330,13 +330,13 @@ display_envelope(struct envelope *e, int flags)
 		printf("UNKNOWN");
 	}
 	
-	printf("|%016llx|%s|%s@%s|%s@%s|%d|%d|%u",
+	printf("|%016llx|%s|%s@%s|%s@%s|%lld|%lld|%u",
 	    e->delivery.id,
 	    status,
 	    e->delivery.from.user, e->delivery.from.domain,
 	    e->delivery.rcpt.user, e->delivery.rcpt.domain,
-	    e->delivery.lasttry,
-	    e->delivery.expire,
+	    (long long int) e->delivery.lasttry,
+	    (long long int) e->delivery.expire,
 	    e->delivery.retry);
 	
 	if (e->delivery.errorline[0] != '\0')

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.112 2011/08/29 18:49:29 chl Exp $	*/
+/*	$OpenBSD: mta.c,v 1.113 2011/08/29 21:43:09 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -697,9 +697,10 @@ mta_message_log(struct mta_session *s, struct envelope *e)
 	struct mta_relay	*relay = TAILQ_FIRST(&s->relays);
 	char			*status = e->delivery.errorline;
 
-	log_info("%016llx: to=<%s@%s>, delay=%d, relay=%s [%s], stat=%s (%s)",
+	log_info("%016llx: to=<%s@%s>, delay=%lld, relay=%s [%s], stat=%s (%s)",
 	    e->delivery.id, e->delivery.rcpt.user,
-	    e->delivery.rcpt.domain, time(NULL) - e->delivery.creation,
+	    e->delivery.rcpt.domain,
+	    (long long int) (time(NULL) - e->delivery.creation),
 	    relay ? relay->fqdn : "(none)",
 	    relay ? ss_to_text(&relay->sa) : "",
 	    *status == '2' ? "Sent" :

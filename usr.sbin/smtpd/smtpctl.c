@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.64 2011/08/26 14:39:47 chl Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.65 2011/08/29 21:43:09 chl Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -323,7 +323,8 @@ show_stats_output(struct imsg *imsg)
 	printf("lka.queries.cname=%zd\n", stats->lka.queries_cname);
 	printf("lka.queries.failure=%zd\n", stats->lka.queries_failure);
 
-	printf("parent.uptime=%d\n", time(NULL) - stats->parent.start);
+	printf("parent.uptime=%lld\n",
+	    (long long int) (time(NULL) - stats->parent.start));
 
 	printf("queue.inserts.local=%zd\n", stats->queue.inserts_local);
 	printf("queue.inserts.remote=%zd\n", stats->queue.inserts_remote);
