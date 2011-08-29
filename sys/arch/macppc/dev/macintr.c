@@ -1,6 +1,7 @@
-/*	$OpenBSD: macintr.c,v 1.42 2011/04/15 20:52:55 deraadt Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.43 2011/08/29 20:21:44 drahn Exp $	*/
 
 /*-
+ * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 1995 Per Fogelstrom
  * Copyright (c) 1993, 1994 Charles M. Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -58,25 +59,17 @@
 #define ICU_LEN 64
 #define LEGAL_IRQ(x) ((x >= 0) && (x < ICU_LEN))
 
-int m_intrtype[ICU_LEN], m_intrmask[ICU_LEN], m_intrlevel[ICU_LEN];
-struct intrhand *m_intrhand[ICU_LEN];
-int m_hwirq[ICU_LEN], m_virq[64];
-unsigned int imen_m = 0xffffffff;
-int m_virq_max = 0;
+int macintr_ienable_l[IPL_NUM], macintr_ienable_h[IPL_NUM];
+int macintr_pri_share[IPL_NUM];
 
-static int fakeintr(void *);
-static char *intr_typename(int type);
-static void intr_calculatemasks(void);
-static void enable_irq(int x);
-static __inline int cntlzw(int x);
-static int mapirq(int irq);
-static int read_irq(void);
-static void mac_intr_do_pending_int(void);
+struct intrq macintr_handler[ICU_LEN];
+
+void macintr_calc_mask(void);
+void macintr_eoi(int irq);
+int macintr_read_irq(void);
+static void macintr_do_pending_int(void);
 
 extern u_int32_t *heathrow_FCR;
-
-#define HWIRQ_MAX 27
-#define HWIRQ_MASK 0x0fffffff
 
 #define INT_STATE_REG0  (interrupt_reg + 0x20)
 #define INT_ENABLE_REG0 (interrupt_reg + 0x24)
@@ -95,6 +88,8 @@ int	macintr_match(struct device *parent, void *cf, void *aux);
 void	macintr_attach(struct device *, struct device *, void *);
 void	mac_do_pending_int(void);
 void	mac_ext_intr(void);
+void	macintr_collect_preconf_intr(void);
+void	macintr_setipl(int ipl);
 
 struct cfattach macintr_ca = {
 	sizeof(struct macintr_softc),
@@ -140,23 +135,77 @@ intr_establish_t macintr_establish;
 intr_disestablish_t macintr_disestablish;
 extern intr_establish_t *mac_intr_establish_func;
 extern intr_disestablish_t *mac_intr_disestablish_func;
-void macintr_collect_preconf_intr(void);
+
+ppc_splraise_t macintr_splraise;
+ppc_spllower_t macintr_spllower;
+ppc_splx_t macintr_splx;
+
+
+int
+macintr_splraise(int newcpl)
+{
+	struct cpu_info *ci = curcpu();
+	newcpl = macintr_pri_share[newcpl];
+	int ocpl = ci->ci_cpl;
+	if (ocpl > newcpl)
+		newcpl = ocpl;
+
+	macintr_setipl(newcpl);
+
+	return ocpl;
+}
+
+int
+macintr_spllower(int newcpl)
+{
+	struct cpu_info *ci = curcpu();
+	int ocpl = ci->ci_cpl;
+
+	macintr_splx(newcpl);
+
+	return ocpl;
+}
+
+void
+macintr_splx(int newcpl)
+{
+	struct cpu_info *ci = curcpu();
+	 
+	macintr_setipl(newcpl);
+	if (ci->ci_ipending & ppc_smask[newcpl])
+		macintr_do_pending_int();
+}
 
 void
 macintr_attach(struct device *parent, struct device *self, void *aux)
 {
+	struct cpu_info *ci = curcpu();
 	struct confargs *ca = aux;
 	extern intr_establish_t *intr_establish_func;
 	extern intr_disestablish_t *intr_disestablish_func;
+	struct intrq *iq;
+	int i;
 
 	interrupt_reg = (void *)mapiodev(ca->ca_baseaddr,0x100); /* XXX */
 
+	for (i = 0; i < ICU_LEN; i++) {
+		iq = &macintr_handler[i];
+		TAILQ_INIT(&iq->iq_list);
+	}
+	ppc_smask_init();
+
 	install_extint(mac_ext_intr);
-	pending_int_f = mac_intr_do_pending_int;
+	pending_int_f = macintr_do_pending_int;
 	intr_establish_func  = macintr_establish;
 	intr_disestablish_func  = macintr_disestablish;
 	mac_intr_establish_func  = macintr_establish;
 	mac_intr_disestablish_func  = macintr_disestablish;
+
+	ppc_intr_func.raise = macintr_splraise;
+	ppc_intr_func.lower = macintr_spllower;
+	ppc_intr_func.x = macintr_splx;
+
+	ci->ci_iactive = 0;
 
 	macintr_collect_preconf_intr();
 
@@ -164,7 +213,6 @@ macintr_attach(struct device *parent, struct device *self, void *aux)
 	    macintr_prog_button, (void *)0x14, "progbutton");
 
 	ppc_intr_enable(1);
-
 	printf("\n");
 }
 
@@ -209,11 +257,19 @@ macintr_prog_button (void *arg)
 	return 1;
 }
 
-static int
-fakeintr(void *arg)
+void
+macintr_setipl(int ipl)
 {
+	struct cpu_info *ci = curcpu();
+	int s;
+	s = ppc_intr_disable();
+	ci->ci_cpl = ipl;
+	if (heathrow_FCR)
+		out32rb(INT_ENABLE_REG1,
+		    macintr_ienable_h[macintr_pri_share[ipl]]);
 
-	return 0;
+	out32rb(INT_ENABLE_REG0, macintr_ienable_l[macintr_pri_share[ipl]]);
+	ppc_intr_enable(s);
 }
 
 /*
@@ -223,19 +279,13 @@ void *
 macintr_establish(void * lcv, int irq, int type, int level,
     int (*ih_fun)(void *), void *ih_arg, const char *name)
 {
-	struct intrhand **p, *q, *ih;
-	static struct intrhand fakehand;
-
-	fakehand.ih_next = NULL;
-	fakehand.ih_fun  = fakeintr;
+	struct cpu_info *ci = curcpu();
+	struct intrq *iq;
+	struct intrhand *ih;
+	int s;
 
 #if 0
-printf("macintr_establish, hI %d L %d ", irq, type);
-printf("addr reg0 %x\n", INT_STATE_REG0);
-#endif
-	irq = mapirq(irq);
-#if 0
-printf("vI %d ", irq);
+printf("macintr_establish, hI %d L %d %s", irq, level, ppc_intr_typename(type));
 #endif
 
 	/* no point in sleeping unless someone can free memory. */
@@ -246,52 +296,41 @@ printf("vI %d ", irq);
 	if (!LEGAL_IRQ(irq) || type == IST_NONE)
 		panic("intr_establish: bogus irq or type");
 
-	switch (m_intrtype[irq]) {
+	iq = &macintr_handler[irq];
+	switch (iq->iq_ist) {
 	case IST_NONE:
-		m_intrtype[irq] = type;
+		iq->iq_ist = type;
 		break;
 	case IST_EDGE:
 		intr_shared_edge = 1;
 		/* FALLTHROUGH */
 	case IST_LEVEL:
-		if (type == m_intrtype[irq])
+		if (type == iq->iq_ist)
 			break;
 	case IST_PULSE:
 		if (type != IST_NONE)
 			panic("intr_establish: can't share %s with %s",
-			    intr_typename(m_intrtype[irq]),
-			    intr_typename(type));
+			    ppc_intr_typename(iq->iq_ist),
+			    ppc_intr_typename(type));
 		break;
 	}
 
-	/*
-	 * Figure out where to put the handler.
-	 * This is O(N^2), but we want to preserve the order, and N is
-	 * generally small.
-	 */
-	for (p = &m_intrhand[irq]; (q = *p) != NULL; p = &q->ih_next)
-		;
-
-	/*
-	 * Actually install a fake handler momentarily, since we might be doing
-	 * this with interrupts enabled and DON'T WANt the real routine called
-	 * until masking is set up.
-	 */
-	fakehand.ih_level = level;
-	*p = &fakehand;
-
-	intr_calculatemasks();
-
-	/*
-	 * Poke the real handler in now.
-	 */
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;
-	ih->ih_next = NULL;
 	ih->ih_level = level;
 	ih->ih_irq = irq;
-	evcount_attach(&ih->ih_count, name, &m_hwirq[irq]);
-	*p = ih;
+	evcount_attach(&ih->ih_count, name, &ih->ih_irq);
+
+	/*
+	 * Append handler to end of list
+	 */
+	s = ppc_intr_disable();
+
+	TAILQ_INSERT_TAIL(&iq->iq_list, ih, ih_list);
+	macintr_calc_mask();
+
+	macintr_setipl(ci->ci_cpl);
+	ppc_intr_enable(s);
 
 	return (ih);
 }
@@ -302,195 +341,93 @@ printf("vI %d ", irq);
 void
 macintr_disestablish(void *lcp, void *arg)
 {
+	struct cpu_info *ci = curcpu();
 	struct intrhand *ih = arg;
 	int irq = ih->ih_irq;
-	struct intrhand **p, *q;
+	int s;
+	struct intrq *iq;
 
 	if (!LEGAL_IRQ(irq))
 		panic("intr_disestablish: bogus irq");
 
 	/*
 	 * Remove the handler from the chain.
-	 * This is O(n^2), too.
 	 */
-	for (p = &m_intrhand[irq]; (q = *p) != NULL && q != ih; p = &q->ih_next)
-		;
-	if (q)
-		*p = q->ih_next;
-	else
-		panic("intr_disestablish: handler not registered");
+
+	iq = &macintr_handler[irq];
+	s = ppc_intr_disable();
+
+	TAILQ_REMOVE(&iq->iq_list, ih, ih_list);
+	macintr_calc_mask();
+
+	macintr_setipl(ci->ci_cpl);
+	ppc_intr_enable(s);
 
 	evcount_detach(&ih->ih_count);
 	free((void *)ih, M_DEVBUF);
 
-	intr_calculatemasks();
-
-	if (m_intrhand[irq] == NULL)
-		m_intrtype[irq] = IST_NONE;
+	if (TAILQ_EMPTY(&iq->iq_list))
+		iq->iq_ist = IST_NONE;
 }
 
-
-static char *
-intr_typename(int type)
-{
-	switch (type) {
-        case IST_NONE :
-		return ("none");
-        case IST_PULSE:
-		return ("pulsed");
-        case IST_EDGE:
-		return ("edge-triggered");
-        case IST_LEVEL:
-		return ("level-triggered");
-	default:
-		panic("intr_typename: invalid type %d", type);
-#if 1 /* XXX */
-		return ("unknown");
-#endif
-	}
-}
 /*
  * Recalculate the interrupt masks from scratch.
  * We could code special registry and deregistry versions of this function that
  * would be faster, but the code would be nastier, and we don't expect this to
  * happen very much anyway.
  */
-static void
-intr_calculatemasks()
+void
+macintr_calc_mask()
 {
-	int irq, level;
-	struct intrhand *q;
-
-	/* First, figure out which levels each IRQ uses. */
-	for (irq = 0; irq < ICU_LEN; irq++) {
-		register int levels = 0;
-		for (q = m_intrhand[irq]; q; q = q->ih_next)
-			levels |= 1 << q->ih_level;
-		m_intrlevel[irq] = levels;
-	}
-
-	/* Then figure out which IRQs use each level. */
-	for (level = IPL_NONE; level < IPL_NUM; level++) {
-		register int irqs = 0;
-		for (irq = 0; irq < ICU_LEN; irq++)
-			if (m_intrlevel[irq] & (1 << level))
-				irqs |= 1 << irq;
-		cpu_imask[level] = irqs | SINT_ALLMASK;
-	}
-
-	/*
-	 * There are tty, network and disk drivers that use free() at interrupt
-	 * time, so vm > (tty | net | bio).
-	 *
-	 * Enforce a hierarchy that gives slow devices a better chance at not
-	 * dropping data.
-	 */
-	cpu_imask[IPL_NET] |= cpu_imask[IPL_BIO];
-	cpu_imask[IPL_TTY] |= cpu_imask[IPL_NET];
-	cpu_imask[IPL_VM] |= cpu_imask[IPL_TTY];
-	cpu_imask[IPL_CLOCK] |= cpu_imask[IPL_VM] | SPL_CLOCKMASK;
-
-	/*
-	 * These are pseudo-levels.
-	 */
-	cpu_imask[IPL_NONE] = 0x00000000;
-	cpu_imask[IPL_HIGH] = 0xffffffff;
-
-	/* And eventually calculate the complete masks. */
-	for (irq = 0; irq < ICU_LEN; irq++) {
-		register int irqs = 1 << irq;
-		for (q = m_intrhand[irq]; q; q = q->ih_next)
-			irqs |= cpu_imask[q->ih_level];
-		m_intrmask[irq] = irqs | SINT_ALLMASK;
-	}
-
-	/* Lastly, determine which IRQs are actually in use. */
-	{
-		register int irqs = 0;
-		for (irq = 0; irq < ICU_LEN; irq++) {
-			if (m_intrhand[irq])
-				irqs |= 1 << irq;
-		}
-		imen_m = ~irqs;
-		enable_irq(~imen_m);
-	}
-}
-static void
-enable_irq(int x)
-{
-	int state0, state1, v;
 	int irq;
-
-	x &= HWIRQ_MASK;	/* XXX Higher bits are software interrupts. */
-
-	state0 = state1 = 0;
-	while (x) {
-		v = 31 - cntlzw(x);
-		irq = m_hwirq[v];
-		if (irq < 32)
-			state0 |= 1 << irq;
-		else
-			state1 |= 1 << (irq - 32);
-
-		x &= ~(1 << v);
-	}
-
-	if (heathrow_FCR)
-		out32rb(INT_ENABLE_REG1, state1);
-
-	out32rb(INT_ENABLE_REG0, state0);
-}
-
-int m_virq_inited = 0;
-
-/*
- * Map 64 irqs into 32 (bits).
- */
-static int
-mapirq(int irq)
-{
-	int v;
+	struct intrhand *ih;
 	int i;
 
-	if (m_virq_inited == 0) {
-		m_virq_max = 0;
-		for (i = 0; i < ICU_LEN; i++) {
-			m_virq[i] = 0;
-		}
-		m_virq_inited = 1;
+	for (i = IPL_NONE; i < IPL_NUM; i++) {
+		macintr_pri_share[i] = i;
 	}
 
-	/* irq in table already? */
-	if (m_virq[irq] != 0)
-		return m_virq[irq];
+	for (irq = 0; irq < ICU_LEN; irq++) {
+		int maxipl = IPL_NONE;
+		int minipl = IPL_HIGH;
+		struct intrq *iq = &macintr_handler[irq];
 
-	if (irq < 0 || irq >= 64)
-		panic("invalid irq %d", irq);
-	m_virq_max++;
-	v = m_virq_max;
-	if (v > HWIRQ_MAX)
-		panic("virq overflow");
+		TAILQ_FOREACH(ih, &iq->iq_list, ih_list) {
+			if (ih->ih_level > maxipl)
+				maxipl = ih->ih_level;
+			if (ih->ih_level < minipl)
+				minipl = ih->ih_level;
+		}
 
-	m_hwirq[v] = irq;
-	m_virq[irq] = v;
+		iq->iq_ipl = maxipl;
+
+		if (maxipl == IPL_NONE) {
+			minipl = IPL_NONE; /* Interrupt not enabled */
+		} else {
+			for (i = minipl; i <= maxipl; i++)
+				macintr_pri_share[i] = i;
+		}
+
+		/* Enable interrupts at lower levels */
+
+		if (irq < 32) {
+			for (i = IPL_NONE; i < minipl; i++)
+				macintr_ienable_l[i] |= (1 << irq);
+			for (; i <= IPL_HIGH; i++)
+				macintr_ienable_l[i] &= ~(1 << irq);
+		} else {
+			for (i = IPL_NONE; i < minipl; i++)
+				macintr_ienable_h[i] |= (1 << (irq-32));
+			for (; i <= IPL_HIGH; i++)
+				macintr_ienable_h[i] &= ~(1 << (irq-32));
+		}
+	}
+
 #if 0
-printf("\nmapirq %x to %x\n", irq, v);
+	for (i = 0; i < IPL_NUM; i++)
+		printf("imask[%d] %x %x\n", i, macintr_ienable_l[i],
+		    macintr_ienable_h[i]);
 #endif
-
-	return v;
-}
-
-/*
- * Count leading zeros.
- */
-static __inline int
-cntlzw(int x)
-{
-	int a;
-
-	__asm __volatile ("cntlzw %0,%1" : "=r"(a) : "r"(x));
-
-	return a;
 }
 
 /*
@@ -500,141 +437,118 @@ void
 mac_ext_intr()
 {
 	int irq = 0;
-	int o_imen, r_imen;
 	int pcpl, ret;
 	struct cpu_info *ci = curcpu();
+	struct intrq *iq;
 	struct intrhand *ih;
-	volatile unsigned long int_state;
 
 	pcpl = ci->ci_cpl;	/* Turn off all */
 
-	int_state = read_irq();
-	if (int_state == 0)
-		goto out;
+	irq = macintr_read_irq();
+	while (irq != 255) {
+		iq = &macintr_handler[irq];
+		macintr_setipl(iq->iq_ipl);
 
-start:
-	irq = 31 - cntlzw(int_state);
-
-	o_imen = imen_m;
-	r_imen = 1 << irq;
-
-	if ((ci->ci_cpl & r_imen) != 0) {
-		/* Masked! Mark this as pending. */
-		ci->ci_ipending |= r_imen;
-		imen_m |= r_imen;
-		enable_irq(~imen_m);
-	} else {
-		splraise(m_intrmask[irq]);
-
-		ih = m_intrhand[irq];
-		while (ih) {
+		TAILQ_FOREACH(ih, &iq->iq_list, ih_list) {
+			ppc_intr_enable(1);
 			ret = ((*ih->ih_fun)(ih->ih_arg));
 			if (ret) {
 				ih->ih_count.ec_count++;
 				if (intr_shared_edge == 0 && ret == 1)
 					break;
 			}
-			ih = ih->ih_next;
+			(void)ppc_intr_disable();
 		}
+		macintr_eoi(irq);
+		macintr_setipl(pcpl);
 
 		uvmexp.intrs++;
-	}
-	int_state &= ~r_imen;
-	if (int_state)
-		goto start;
 
-out:
+		irq = macintr_read_irq();
+	}
+
+	ppc_intr_enable(1);
 	splx(pcpl);	/* Process pendings. */
 }
 
 void
-mac_intr_do_pending_int()
+macintr_do_pending_int()
 {
 	struct cpu_info *ci = curcpu();
-	struct intrhand *ih;
-	int irq;
-	int pcpl;
-	int hwpend;
+	int pcpl = ci->ci_cpl; /* XXX */
 	int s;
-
-	if (ci->ci_iactive)
-		return;
-
-	ci->ci_iactive = 1;
-	pcpl = splhigh();		/* Turn off all */
 	s = ppc_intr_disable();
-
-	hwpend = ci->ci_ipending & ~pcpl;	/* Do now unmasked pendings */
-	imen_m &= ~hwpend;
-	enable_irq(~imen_m);
-	hwpend &= HWIRQ_MASK;
-	while (hwpend) {
-		irq = 31 - cntlzw(hwpend);
-		hwpend &= ~(1L << irq);
-		ih = m_intrhand[irq];
-		while(ih) {
-			if ((*ih->ih_fun)(ih->ih_arg))
-				ih->ih_count.ec_count++;
-			ih = ih->ih_next;
-		}
+	if (ci->ci_iactive & CI_IACTIVE_PROCESSING_SOFT) {
+		ppc_intr_enable(s);
+		return;
 	}
-
-	/*out32rb(INT_ENABLE_REG, ~imen_m);*/
+	atomic_setbits_int(&ci->ci_iactive, CI_IACTIVE_PROCESSING_SOFT);
 
 	do {
-		if((ci->ci_ipending & SINT_CLOCK) & ~pcpl) {
-			ci->ci_ipending &= ~SINT_CLOCK;
+		if((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTCLOCK)) &&
+		    (pcpl < IPL_SOFTCLOCK)) {
+ 			ci->ci_ipending &= ~SI_TO_IRQBIT(SI_SOFTCLOCK);
 			softintr_dispatch(SI_SOFTCLOCK);
-		}
-		if((ci->ci_ipending & SINT_NET) & ~pcpl) {
-			ci->ci_ipending &= ~SINT_NET;
+ 		}
+		if((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTNET)) &&
+		    (pcpl < IPL_SOFTNET)) {
+			ci->ci_ipending &= ~SI_TO_IRQBIT(SI_SOFTNET);
 			softintr_dispatch(SI_SOFTNET);
 		}
-		if((ci->ci_ipending & SINT_TTY) & ~pcpl) {
-			ci->ci_ipending &= ~SINT_TTY;
+		if((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTTTY)) &&
+		    (pcpl < IPL_SOFTTTY)) {
+			ci->ci_ipending &= ~SI_TO_IRQBIT(SI_SOFTTTY);
 			softintr_dispatch(SI_SOFTTTY);
 		}
-	} while ((ci->ci_ipending & SINT_ALLMASK) & ~pcpl);
-	ci->ci_ipending &= pcpl;
-	ci->ci_cpl = pcpl;	/* Don't use splx... we are here already! */
+
+	} while (ci->ci_ipending & ppc_smask[pcpl]);
+	macintr_setipl(pcpl);
 	ppc_intr_enable(s);
-	ci->ci_iactive = 0;
+
+	atomic_clearbits_int(&ci->ci_iactive, CI_IACTIVE_PROCESSING_SOFT);
 }
 
-static int
-read_irq()
+void
+macintr_eoi(int irq)
 {
-	int rv = 0;
-	int state0, state1, p;
-	int state0save, state1save;
+	u_int32_t state0, state1;
+
+	if (irq < 32) {
+		state0 =  1 << irq;
+		out32rb(INT_CLEAR_REG0, state0);
+	} else {
+		if (heathrow_FCR) {		/* has heathrow? */
+			state1 = 1 << (irq - 32);
+			out32rb(INT_CLEAR_REG1, state1);
+		}
+	}
+}
+
+int
+macintr_read_irq()
+{
+	struct cpu_info *ci = curcpu();
+	u_int32_t state0, state1, irq_mask;
+	int ipl, irq;
 
 	state0 = in32rb(INT_STATE_REG0);
-	if (state0)
-		out32rb(INT_CLEAR_REG0, state0);
-	state0save = state0;
-	while (state0) {
-		p = 31 - cntlzw(state0);
-		rv |= 1 << m_virq[p];
-		state0 &= ~(1 << p);
-	}
 
 	if (heathrow_FCR)			/* has heathrow? */
 		state1 = in32rb(INT_STATE_REG1);
 	else
 		state1 = 0;
 
-	if (state1)
-		out32rb(INT_CLEAR_REG1, state1);
-	state1save = state1;
-	while (state1) {
-		p = 31 - cntlzw(state1);
-		rv |= 1 << m_virq[p + 32];
-		state1 &= ~(1 << p);
+	for (ipl = IPL_HIGH; ipl >= ci->ci_cpl; ipl --) {
+		irq_mask = state0 & macintr_ienable_l[ipl];
+		if (irq_mask) {
+			irq = ffs(irq_mask) - 1;
+			return irq;
+		}
+		irq_mask = state1 & macintr_ienable_h[ipl];
+		if (irq_mask) {
+			irq = ffs(irq_mask) + 31;
+			return irq;
+		}
 	}
-#if 0
-printf("mac_intr int_stat 0:%x 1:%x\n", state0save, state1save);
-#endif
-
-	/* 1 << 0 is invalid. */
-	return rv & ~1;
+	return 255;
 }

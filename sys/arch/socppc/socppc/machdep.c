@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.32 2011/07/05 04:48:02 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.33 2011/08/29 20:21:44 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1095,59 +1095,41 @@ boot(int howto)
 	while(1) /* forever */;
 }
 
-extern void ipic_do_pending_int(void);
-
 void
 do_pending_int(void)
 {
 	struct cpu_info *ci = curcpu();
-	int pcpl, s;
-
-	if (ci->ci_iactive)
-		return;
-
-	ci->ci_iactive = 1;
+	int pcpl = ci->ci_cpl; /* XXX */
+	int s;
 	s = ppc_intr_disable();
-	pcpl = ci->ci_cpl;
-
-	ipic_do_pending_int();
+	if (ci->ci_iactive & CI_IACTIVE_PROCESSING_SOFT) {
+		ppc_intr_enable(s);
+		return;
+	}
+	atomic_setbits_int(&ci->ci_iactive, CI_IACTIVE_PROCESSING_SOFT);
 
 	do {
-		if((ci->ci_ipending & SINT_CLOCK) & ~pcpl) {
-			ci->ci_ipending &= ~SINT_CLOCK;
-			ci->ci_cpl = SINT_CLOCK|SINT_NET|SINT_TTY;
-			ppc_intr_enable(1);
-			KERNEL_LOCK();
+		if((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTCLOCK)) &&
+		    (pcpl < IPL_SOFTCLOCK)) {
+ 			ci->ci_ipending &= ~SI_TO_IRQBIT(SI_SOFTCLOCK);
 			softintr_dispatch(SI_SOFTCLOCK);
-			KERNEL_UNLOCK();
-			ppc_intr_disable();
-			continue;
-		}
-		if((ci->ci_ipending & SINT_NET) & ~pcpl) {
-			ci->ci_ipending &= ~SINT_NET;
-			ci->ci_cpl = SINT_NET|SINT_TTY;
-			ppc_intr_enable(1);
-			KERNEL_LOCK();
+ 		}
+		if((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTNET)) &&
+		    (pcpl < IPL_SOFTNET)) {
+			ci->ci_ipending &= ~SI_TO_IRQBIT(SI_SOFTNET);
 			softintr_dispatch(SI_SOFTNET);
-			KERNEL_UNLOCK();
-			ppc_intr_disable();
-			continue;
 		}
-		if((ci->ci_ipending & SINT_TTY) & ~pcpl) {
-			ci->ci_ipending &= ~SINT_TTY;
-			ci->ci_cpl = SINT_TTY;
-			ppc_intr_enable(1);
-			KERNEL_LOCK();
+		if((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTTTY)) &&
+		    (pcpl < IPL_SOFTTTY)) {
+			ci->ci_ipending &= ~SI_TO_IRQBIT(SI_SOFTTTY);
 			softintr_dispatch(SI_SOFTTTY);
-			KERNEL_UNLOCK();
-			ppc_intr_disable();
-			continue;
 		}
-	} while ((ci->ci_ipending & SINT_ALLMASK) & ~pcpl);
-	ci->ci_cpl = pcpl;	/* Don't use splx... we are here already! */
 
-	ci->ci_iactive = 0;
+	} while (ci->ci_ipending & ppc_smask[pcpl]);
+	splx(pcpl);
 	ppc_intr_enable(s);
+
+	atomic_clearbits_int(&ci->ci_iactive, CI_IACTIVE_PROCESSING_SOFT);
 }
 
 /*

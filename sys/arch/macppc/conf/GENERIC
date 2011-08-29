@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.212 2011/07/07 23:41:09 tedu Exp $g
+#	$OpenBSD: GENERIC,v 1.213 2011/08/29 20:21:44 drahn Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -143,7 +143,7 @@ pwdog0		at pci?		# Quancom PWDOG1 watchdog timer
 macintr0	at macobio?	# old interrupt controller
 openpic*	at macobio?	# openpic interrupt controller
 bm*		at macobio?	# BMAC ethernet
-#xlights*	at macobio?	# Xserve front panel LEDs
+xlights*	at macobio?	# Xserve front panel LEDs
 mc*		at macobio?	# MACE ethernet
 #esp*		at macobio? flags 0x0000ffff # 53c9x SCSI
 mesh*		at macobio? flags 0xffff # MESH SCSI

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.13 2011/07/07 05:43:48 drahn Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.14 2011/08/29 20:21:44 drahn Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn
@@ -33,19 +33,16 @@ ENTRY(mtx_init)
 
 
 ENTRY(mtx_enter)
-	stwu	%r1,-32(%r1)			# reserve stack
+	stwu	%r1,-16(%r1)			# reserve stack
 	mflr	%r0
-	stw	%r0,36(%r1)			# save return address
+	stw	%r0,20(%r1)			# save return address
 .L_retry:
+	stw	%r3, 12(%r1)
+	lwz	%r3,MTX_WANTIPL(%r3)		# load new ipl
+	bl	_C_LABEL(splraise)
+	mr	%r7, %r3
 	GET_CPUINFO(%r4)
-	lwz	%r5,MTX_WANTIPL(%r3)		# load new ipl
-	lis	%r6,_C_LABEL(cpu_imask)@ha	# convert into cpl
-	slwi	%r5,%r5,2
-	addi	%r5,%r5,_C_LABEL(cpu_imask)@l
-	lwzx	%r5,%r5,%r6
-	lwz	%r7,CI_CPL(%r4)			# load current cpl
-	or	%r6,%r5,%r7			# raise	cpl
-	stw	%r6,CI_CPL(%r4)			# store new cpl
+	lwz	%r3,12(%r1)
 	li	%r5,MTX_OWNER			# load offset constant
 	lwarx	%r6,%r5,%r3			# load reserve owner
 	cmpwi	0,%r6,0				# test owner == 0
@@ -55,12 +52,12 @@ ENTRY(mtx_enter)
 	cmpl	0,%r4,%r6
 	beq-	.L_mutex_selflocked
 #endif
-	stw	%r3,28(%r1)			# save mtx during lcsplx
-	la	%r4,28(%r1)
+	stw	%r3,12(%r1)			# save mtx during lcsplx
+	la	%r4,12(%r1)
 	stwcx.	%r3,0,%r4			# unreserve owner
 	mr	%r3,%r7				# move old cpl to arg0
 	bl	_C_LABEL(lcsplx)		# call splx on old cpl
-	lwz	%r3,28(%r1)
+	lwz	%r3,12(%r1)
 	b	.L_retry
 
 .L_mutex_free:
@@ -72,9 +69,9 @@ ENTRY(mtx_enter)
 	stw	%r6,CI_MUTEX_LEVEL(%r4)
 #endif
 	stw	%r7,MTX_OLDCPL(%r3)		# save old ipl
-	lwz	%r0,36(%r1)			# load return address
+	lwz	%r0,20(%r1)			# load return address
 	mtlr	%r0
-	addi	%r1,%r1,32			# restore stack
+	addi	%r1,%r1,16			# restore stack
 	blr
 
 #ifdef DIAGNOSTIC
@@ -89,18 +86,15 @@ ENTRY(mtx_enter)
 
 
 ENTRY(mtx_enter_try)
-	stwu	%r1,-32(%r1)			# reserve stack
+	stwu	%r1,-16(%r1)			# reserve stack
 	mflr	%r0
-	stw	%r0,36(%r1)			# save return address
+	stw	%r0,20(%r1)			# save return address
+	stw	%r3, 12(%r1)
+	lwz	%r3,MTX_WANTIPL(%r3)		# load new ipl
+	bl	_C_LABEL(splraise)
+	mr	%r7, %r3
 	GET_CPUINFO(%r4)
-	lwz	%r5,MTX_WANTIPL(%r3)		# load new ipl
-	lis	%r6,_C_LABEL(cpu_imask)@ha	# convert into cpl
-	slwi	%r5,%r5,2
-	addi	%r5,%r5,_C_LABEL(cpu_imask)@l
-	lwzx	%r5,%r5,%r6
-	lwz	%r7,CI_CPL(%r4)			# load current cpl
-	or	%r6,%r5,%r7			# raise	cpl
-	stw	%r6,CI_CPL(%r4)			# store new cpl
+	lwz	%r3,12(%r1)
 	li	%r5,MTX_OWNER			# load offset constant
 	lwarx	%r6,%r5,%r3			# load reserve owner
 	cmpwi	0,%r6,0				# test owner == 0
@@ -110,15 +104,15 @@ ENTRY(mtx_enter_try)
 	cmpl	0,%r4,%r6
 	beq-	.L_mutex_try_selflocked
 #endif
-	stw	%r3,28(%r1)			# save mtx during lcsplx
-	la	%r4,28(%r1)
+	stw	%r3,12(%r1)			# save mtx during lcsplx
+	la	%r4,12(%r1)
 	stwcx.	%r3,0,%r4			# unreserve owner
 	mr	%r3,%r7				# move old cpl to arg0
 	bl	_C_LABEL(lcsplx)		# call splx on old cpl
 
-	lwz	%r0,36(%r1)			# load return address
+	lwz	%r0,20(%r1)			# load return address
 	mtlr	%r0
-	addi	%r1,%r1,32			# restore stack
+	addi	%r1,%r1,16			# restore stack
 	li	%r3,0				# return zero
 	blr
 
@@ -131,9 +125,9 @@ ENTRY(mtx_enter_try)
 	stw	%r6,CI_MUTEX_LEVEL(%r4)
 #endif
 	stw	%r7,MTX_OLDCPL(%r3)		# save old ipl
-	lwz	%r0,36(%r1)			# load return address
+	lwz	%r0,20(%r1)			# load return address
 	mtlr	%r0
-	addi	%r1,%r1,32			# restore stack
+	addi	%r1,%r1,16			# restore stack
 	li	%r3,1				# return nonzero
 	blr
 
@@ -151,7 +145,7 @@ ENTRY(mtx_enter_try)
 ENTRY(mtx_leave)
 #ifdef DIAGNOSTIC
 	lwz	%r6,MTX_OWNER(%r3)
-	cmpwi   0,%r6,0                         # test owner == 0
+	cmpwi   0,%r6,0				# test owner == 0
 
 	beq-	.L_mutex_notlocked
 #endif
