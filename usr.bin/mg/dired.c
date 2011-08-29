@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.48 2011/01/23 00:45:03 kjell Exp $	*/
+/*	$OpenBSD: dired.c,v 1.49 2011/08/29 11:02:06 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -36,6 +36,11 @@ static int	 d_rename(int, int);
 static int	 d_shell_command(int, int);
 static int	 d_create_directory(int, int);
 static int	 d_makename(struct line *, char *, size_t);
+static int	 d_warpdot(struct line *, int *);
+static int	 d_forwpage(int, int);
+static int	 d_backpage(int, int);
+static int	 d_forwline(int, int);
+static int	 d_backline(int, int);
 static void	 reaper(int);
 
 extern struct keymap_s helpmap, cXmap, metamap;
@@ -57,15 +62,15 @@ static PF dirednul[] = {
 static PF diredcl[] = {
 	reposition,		/* ^L */
 	d_findfile,		/* ^M */
-	forwline,		/* ^N */
+	d_forwline,		/* ^N */
 	rescan,			/* ^O */
-	backline,		/* ^P */
+	d_backline,		/* ^P */
 	rescan,			/* ^Q */
 	backisearch,		/* ^R */
 	forwisearch,		/* ^S */
 	rescan,			/* ^T */
 	universal_argument,	/* ^U */
-	forwpage,		/* ^V */
+	d_forwpage,		/* ^V */
 	rescan,			/* ^W */
 	NULL			/* ^X */
 };
@@ -77,7 +82,7 @@ static PF diredcz[] = {
 	rescan,			/* ^] */
 	rescan,			/* ^^ */
 	rescan,			/* ^_ */
-	forwline,		/* SP */
+	d_forwline,		/* SP */
 	d_shell_command,	/* ! */
 	rescan,			/* " */
 	rescan,			/* # */
@@ -99,9 +104,9 @@ static PF diredc[] = {
 };
 
 static PF diredn[] = {
-	forwline,		/* n */
+	d_forwline,		/* n */
 	d_ffotherwindow,	/* o */
-	backline,		/* p */
+	d_backline,		/* p */
 	rescan,			/* q */
 	d_rename,		/* r */
 	rescan,			/* s */
@@ -116,13 +121,32 @@ static PF direddl[] = {
 	d_undelbak		/* del */
 };
 
+static PF diredbp[] = {
+	d_backpage		/* v */	
+};
+
+static PF dirednull[] = {
+	NULL
+};
+
 #ifndef	DIRED_XMAPS
 #define	NDIRED_XMAPS	0	/* number of extra map sections */
 #endif /* DIRED_XMAPS */
 
-static struct KEYMAPE (6 + NDIRED_XMAPS + IMAPEXT) diredmap = {
-	6 + NDIRED_XMAPS,
-	6 + NDIRED_XMAPS + IMAPEXT,
+static struct KEYMAPE (1 + IMAPEXT) d_backpagemap = {
+	1,
+	1 + IMAPEXT,
+	rescan,                 
+	{
+		{
+		'v', 'v', diredbp, NULL
+		}
+	}
+};
+
+static struct KEYMAPE (7 + NDIRED_XMAPS + IMAPEXT) diredmap = {
+	7 + NDIRED_XMAPS,
+	7 + NDIRED_XMAPS + IMAPEXT,
 	rescan,
 	{
 #ifndef NO_HELP
@@ -136,6 +160,10 @@ static struct KEYMAPE (6 + NDIRED_XMAPS + IMAPEXT) diredmap = {
 #endif /* !NO_HELP */
 		{
 			CCHR('L'), CCHR('X'), diredcl, (KEYMAP *) & cXmap
+		},
+		{
+			CCHR('['), CCHR('['), dirednull, (KEYMAP *) & 
+			d_backpagemap
 		},
 		{
 			CCHR('Z'), '+', diredcz, (KEYMAP *) & metamap
@@ -165,8 +193,12 @@ dired_init(void)
 	funmap_add(d_findfile, "dired-find-file");
 	funmap_add(d_ffotherwindow, "dired-find-file-other-window");
 	funmap_add(d_del, "dired-flag-file-deleted");
+	funmap_add(d_forwline, "dired-next-line");
 	funmap_add(d_otherwindow, "dired-other-window");
+	funmap_add(d_backline, "dired-previous-line");
 	funmap_add(d_rename, "dired-rename-file");
+	funmap_add(d_backpage, "dired-scroll-down");
+	funmap_add(d_forwpage, "dired-scroll-up");
 	funmap_add(d_undel, "dired-unflag");
 	maps_add((KEYMAP *)&diredmap, "dired");
 	dobindkey(fundamental_map, "dired", "^Xd");
@@ -592,6 +624,58 @@ d_makename(struct line *lp, char *fn, size_t len)
 	return ((lgetc(lp, 2) == 'd') ? TRUE : FALSE);
 }
 
+static int
+d_warpdot(struct line *dotp, int *doto)
+{
+	char *tp = dotp->l_text;
+	int off = 0, field = 0, len;
+
+	/*
+	 * Find the byte offset to the (space-delimited) filename
+	 * field in formatted ls output.
+	 */
+	len = llength(dotp);
+	while (off < len) {
+		if (tp[off++] == ' ') {
+			if (++field == 9)
+				break;
+			/* Skip the space. */
+			while (off < len && tp[off] == ' ')
+				off++;
+		}
+	}
+	*doto = off;
+	return (TRUE);
+}
+
+static int
+d_forwpage(int f, int n) 
+{
+	forwpage(f | FFRAND, n);
+	return (d_warpdot(curwp->w_dotp, &curwp->w_doto));
+}
+
+static int 
+d_backpage (int f, int n)
+{
+	backpage(f | FFRAND, n);
+	return (d_warpdot(curwp->w_dotp, &curwp->w_doto));
+}
+
+static int
+d_forwline (int f, int n)
+{
+	forwline(f | FFRAND, n);
+	return (d_warpdot(curwp->w_dotp, &curwp->w_doto));
+}
+
+static int
+d_backline (int f, int n)
+{
+	backline(f | FFRAND, n);
+	return (d_warpdot(curwp->w_dotp, &curwp->w_doto));
+}
+
 /*
  * XXX dname needs to have enough place to store an additional '/'.
  */
@@ -601,9 +685,7 @@ dired_(char *dname)
 	struct buffer	*bp;
 	FILE	*dirpipe;
 	char	 line[256];
-	int	 len, ret, counter, warp;
-	counter = 0;
-	warp = 0;
+	int	 len, ret, i;
 
 	if ((fopen(dname,"r")) == NULL) {
 		if (errno == EACCES)
@@ -640,26 +722,29 @@ dired_(char *dname)
 	while (fgets(&line[2], sizeof(line) - 2, dirpipe) != NULL) {
 		line[strcspn(line, "\n")] = '\0'; /* remove ^J	 */
 		(void) addline(bp, line);
-		if ((strrchr(line,' ')) != NULL) {
-			counter++;
-			if ((strcmp((strrchr(line,' '))," ..")) == 0)  
-				warp = counter;
-		}
 	}
-	if ((strrchr(line,' ')) != NULL) {
-		if (strcmp((strrchr(line,' '))," ..") == 0) 
-			warp = counter - 1;
-	}		
-	if ((strrchr(line,' ')) != NULL)
-		bp->b_doto = strrchr(line,' ') - line + 1;
 	if (pclose(dirpipe) == -1) {
 		ewprintf("Problem closing pipe to ls : %s",
 		    strerror(errno));
 		return (NULL);
 	}
+
+	/* Find the line with ".." on it. */
 	bp->b_dotp = bfirstlp(bp);
-	while (warp--)
-		bp->b_dotp  = lforw(bp->b_dotp);
+	for (i = 0; i < bp->b_lines; i++) {
+		bp->b_dotp = lforw(bp->b_dotp);
+		d_warpdot(bp->b_dotp, &bp->b_doto);
+		if (bp->b_doto >= llength(bp->b_dotp))
+			continue;
+		if (strcmp(ltext(bp->b_dotp) + bp->b_doto, "..") == 0)
+			break;
+	}
+
+	/* We want dot on the entry right after "..", if possible. */
+	if (++i < bp->b_lines - 2)
+		bp->b_dotp = lforw(bp->b_dotp);
+	d_warpdot(bp->b_dotp, &bp->b_doto);
+
 	(void)strlcpy(bp->b_fname, dname, sizeof(bp->b_fname));
 	(void)strlcpy(bp->b_cwd, dname, sizeof(bp->b_cwd));
 	if ((bp->b_modes[1] = name_mode("dired")) == NULL) {
