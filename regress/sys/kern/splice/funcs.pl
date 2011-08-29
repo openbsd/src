@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.7 2011/08/21 22:50:59 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.8 2011/08/29 01:50:38 bluhm Exp $
 
 # Copyright (c) 2010,2011 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -157,7 +157,7 @@ sub relay_copy {
 		}
 		my $read = sysread(STDIN, $buf,
 		    $max && $max < $size ? $max : $size);
-		defined $read
+		defined($read)
 		    or die ref($self), " sysread at $len failed: $!";
 		if ($read == 0) {
 			print STDERR "\n";
@@ -177,9 +177,9 @@ sub relay_copy {
 				    " select write failed: $!";
 			}
 			my $write = syswrite(STDOUT, $buf, $read - $off, $off);
-			defined $write
+			defined($write) || $!{ETIMEDOUT}
 			    or die ref($self), " syswrite at $len failed: $!";
-			defined $write or next;
+			defined($write) or next;
 			$off += $write;
 			$len += $write;
 		}
