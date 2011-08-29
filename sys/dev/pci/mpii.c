@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.47 2011/07/21 01:03:30 sthen Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.48 2011/08/29 12:42:18 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -1815,10 +1815,10 @@ struct mpii_ccb {
 	void			(*ccb_done)(struct mpii_ccb *);
 	struct mpii_rcb		*ccb_rcb;
 
-	SLIST_ENTRY(mpii_ccb)	ccb_link;
+	SIMPLEQ_ENTRY(mpii_ccb)	ccb_link;
 };
 
-SLIST_HEAD(mpii_ccb_list, mpii_ccb);
+SIMPLEQ_HEAD(mpii_ccb_list, mpii_ccb);
 
 struct mpii_softc {
 	struct device		sc_dev;
@@ -1844,7 +1844,6 @@ struct mpii_softc {
 
 	struct mutex		sc_req_mtx;
 	struct mutex		sc_rep_mtx;
-	u_int			sc_rep_sem;
 
 	u_int8_t		sc_porttype;
 	int			sc_request_depth;
@@ -1967,13 +1966,10 @@ struct mpii_device *mpii_find_dev(struct mpii_softc *, u_int16_t);
 void		mpii_start(struct mpii_softc *, struct mpii_ccb *);
 int		mpii_poll(struct mpii_softc *, struct mpii_ccb *);
 void		mpii_poll_done(struct mpii_ccb *);
-int		mpii_reply(struct mpii_softc *, struct mpii_reply_descr *);
+struct mpii_rcb *mpii_reply(struct mpii_softc *, struct mpii_reply_descr *);
 
 void		mpii_wait(struct mpii_softc *, struct mpii_ccb *);
 void		mpii_wait_done(struct mpii_ccb *);
-
-int		mpii_sem_enter(struct mpii_softc *);
-int		mpii_sem_leave(struct mpii_softc *);
 
 void		mpii_init_queues(struct mpii_softc *);
 
@@ -2161,24 +2157,19 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(": %s\n", pci_intr_string(sc->sc_pc, ih));
 
-	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO,
-	    mpii_intr, sc, sc->sc_dev.dv_xname);
-	if (sc->sc_ih == NULL)
-		goto unmap;
-
 	if (mpii_init(sc) != 0) {
 		printf("%s: unable to initialize ioc\n", DEVNAME(sc));
-		goto deintr;
+		goto unmap;
 	}
 
 	if (mpii_iocfacts(sc) != 0) {
 		printf("%s: unable to get iocfacts\n", DEVNAME(sc));
-		goto deintr;
+		goto unmap;
 	}
 
 	if (mpii_alloc_ccbs(sc) != 0) {
 		/* error already printed */
-		goto deintr;
+		goto unmap;
 	}
 
 	if (mpii_alloc_replies(sc) != 0) {
@@ -2254,6 +2245,11 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
+	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO,
+	    mpii_intr, sc, sc->sc_dev.dv_xname);
+	if (sc->sc_ih == NULL)
+		goto free_dev;
+
 	/* config_found() returns the scsibus attached to us */
 	sc->sc_scsibus = (struct scsibus_softc *) config_found(&sc->sc_dev,
 	    &saa, scsiprint);
@@ -2303,10 +2299,6 @@ free_ccbs:
 	mpii_dmamem_free(sc, sc->sc_requests);
 	free(sc->sc_ccbs, M_DEVBUF);
 
-deintr:
-	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
-	sc->sc_ih = NULL;
-
 unmap:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 	sc->sc_ios = 0;
@@ -2330,76 +2322,75 @@ mpii_detach(struct device *self, int flags)
 }
 
 int
-mpii_sem_enter(struct mpii_softc *sc)
-{
-	int rv = 1;
-
-	mtx_enter(&sc->sc_rep_mtx);
-	sc->sc_rep_sem++;
-	if (sc->sc_rep_sem > 1)
-		rv = 0;
-	mtx_leave(&sc->sc_rep_mtx);
-
-	return (rv);
-}
-
-int
-mpii_sem_leave(struct mpii_softc *sc)
-{
-	int rv = 1;
-
-	mtx_enter(&sc->sc_rep_mtx);
-	sc->sc_rep_sem--;
-	if (sc->sc_rep_sem > 0)
-		rv = 0;
-	mtx_leave(&sc->sc_rep_mtx);
-
-	return (rv);
-}
-
-int
 mpii_intr(void *arg)
 {
+	struct mpii_rcb_list		evts = SIMPLEQ_HEAD_INITIALIZER(evts);
+	struct mpii_ccb_list		ccbs = SIMPLEQ_HEAD_INITIALIZER(ccbs);
 	struct mpii_softc		*sc = arg;
 	struct mpii_reply_descr		*postq = sc->sc_reply_postq_kva, *rdp;
+	struct mpii_ccb			*ccb;
+	struct mpii_rcb			*rcb;
+	int				smid;
 	int				rv = 0;
 
-	if (!mpii_sem_enter(sc))
-		return (0);
-	do {
+	mtx_enter(&sc->sc_rep_mtx);
+	bus_dmamap_sync(sc->sc_dmat,
+	    MPII_DMA_MAP(sc->sc_reply_postq),
+	    0, 8 * sc->sc_reply_post_qdepth,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-		for (;;) {
-			bus_dmamap_sync(sc->sc_dmat,
-			    MPII_DMA_MAP(sc->sc_reply_postq),
-			    0, 8 * sc->sc_reply_post_qdepth,
-			    BUS_DMASYNC_POSTWRITE);
-
-			rdp = &postq[sc->sc_reply_post_host_index];
-			if ((rdp->reply_flags & MPII_REPLY_DESCR_TYPE_MASK) ==
-			    MPII_REPLY_DESCR_UNUSED)
-				break;
-			if (rdp->data == 0xffffffff) {
-				/*
-				 * ioc is still writing to the reply post queue
-				 * race condition - bail!
-				 */
-				break;
-			}
-
-			mpii_reply(sc, rdp);
-
-			sc->sc_reply_post_host_index =
-			    (sc->sc_reply_post_host_index + 1) %
-			    sc->sc_reply_post_qdepth;
-
-			rv = 1;
+	for (;;) {
+		rdp = &postq[sc->sc_reply_post_host_index];
+		if ((rdp->reply_flags & MPII_REPLY_DESCR_TYPE_MASK) ==
+		    MPII_REPLY_DESCR_UNUSED)
+			break;
+		if (rdp->data == 0xffffffff) {
+			/*
+			 * ioc is still writing to the reply post queue
+			 * race condition - bail!
+			 */
+			break;
 		}
-		if (rv)
-			mpii_write_reply_post(sc, sc->sc_reply_post_host_index);
 
-	} while (!mpii_sem_leave(sc));
+		smid = letoh16(rdp->smid);
+		rcb = mpii_reply(sc, rdp);
 
-	return (rv);
+		if (smid) {
+			ccb = &sc->sc_ccbs[smid - 1];
+			ccb->ccb_state = MPII_CCB_READY;
+			ccb->ccb_rcb = rcb;
+			SIMPLEQ_INSERT_TAIL(&ccbs, ccb, ccb_link);
+		} else
+			SIMPLEQ_INSERT_TAIL(&evts, rcb, rcb_link);
+
+		sc->sc_reply_post_host_index++;
+		sc->sc_reply_post_host_index %= sc->sc_reply_post_qdepth;
+		rv = 1;
+	}
+
+	bus_dmamap_sync(sc->sc_dmat,
+	    MPII_DMA_MAP(sc->sc_reply_postq),
+	    0, 8 * sc->sc_reply_post_qdepth,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	if (rv)
+		mpii_write_reply_post(sc, sc->sc_reply_post_host_index);
+
+	mtx_leave(&sc->sc_rep_mtx);
+
+	if (rv == 0)
+		return (0);
+
+	while ((ccb = SIMPLEQ_FIRST(&ccbs)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&ccbs, ccb_link);
+		ccb->ccb_done(ccb);
+	}
+	while ((rcb = SIMPLEQ_FIRST(&evts)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&evts, rcb_link);
+		mpii_event_process(sc, rcb);
+	}
+
+	return (1);
 }
 
 int
@@ -3945,17 +3936,14 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
 	return (rv);
 }
 
-int
+struct mpii_rcb *
 mpii_reply(struct mpii_softc *sc, struct mpii_reply_descr *rdp)
 {
-	struct mpii_ccb		*ccb = NULL;
 	struct mpii_rcb		*rcb = NULL;
 	u_int32_t		rfid;
-	int			smid;
 
 	DNPRINTF(MPII_D_INTR, "%s: mpii_reply\n", DEVNAME(sc));
 
-	smid = letoh16(rdp->smid);
 	if ((rdp->reply_flags & MPII_REPLY_DESCR_TYPE_MASK) ==
 	    MPII_REPLY_DESCR_ADDRESS_REPLY) {
 		rfid = (letoh32(rdp->frame_addr) -
@@ -3968,25 +3956,13 @@ mpii_reply(struct mpii_softc *sc, struct mpii_reply_descr *rdp)
 		rcb = &sc->sc_rcbs[rfid];
 	}
 
-	DNPRINTF(MPII_D_INTR, "%s: mpii_reply reply_flags: %d smid: %d "
-	    "reply: %p\n", DEVNAME(sc), rdp->reply_flags, smid,
-	    rcb->rcb_reply);
-
 	memset(rdp, 0xff, sizeof(*rdp));
 
 	bus_dmamap_sync(sc->sc_dmat, MPII_DMA_MAP(sc->sc_reply_postq),
 	    8 * sc->sc_reply_post_host_index, 8,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-	if (smid)  {
-		ccb = &sc->sc_ccbs[smid - 1];
-		ccb->ccb_state = MPII_CCB_READY;
-		ccb->ccb_rcb = rcb;
-		ccb->ccb_done(ccb);
-	} else
-		mpii_event_process(sc, rcb);
-
-	return (smid);
+	return (rcb);
 }
 
 struct mpii_dmamem *
@@ -4109,8 +4085,8 @@ mpii_alloc_ccbs(struct mpii_softc *sc)
 	u_int8_t		*cmd;
 	int			i;
 
-	SLIST_INIT(&sc->sc_ccb_free);
-	SLIST_INIT(&sc->sc_ccb_tmos);
+	SIMPLEQ_INIT(&sc->sc_ccb_free);
+	SIMPLEQ_INIT(&sc->sc_ccb_tmos);
 	mtx_init(&sc->sc_ccb_free_mtx, IPL_BIO);
 	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
 	scsi_ioh_set(&sc->sc_ccb_tmo_handler, &sc->sc_iopool,
@@ -4195,7 +4171,7 @@ mpii_put_ccb(void *cookie, void *io)
 	bzero(ccb->ccb_cmd, MPII_REQUEST_SIZE);
 
 	mtx_enter(&sc->sc_ccb_free_mtx);
-	SLIST_INSERT_HEAD(&sc->sc_ccb_free, ccb, ccb_link);
+	SIMPLEQ_INSERT_HEAD(&sc->sc_ccb_free, ccb, ccb_link);
 	mtx_leave(&sc->sc_ccb_free_mtx);
 }
 
@@ -4206,9 +4182,9 @@ mpii_get_ccb(void *cookie)
 	struct mpii_ccb		*ccb;
 
 	mtx_enter(&sc->sc_ccb_free_mtx);
-	ccb = SLIST_FIRST(&sc->sc_ccb_free);
+	ccb = SIMPLEQ_FIRST(&sc->sc_ccb_free);
 	if (ccb != NULL) {
-		SLIST_REMOVE_HEAD(&sc->sc_ccb_free, ccb_link);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_free, ccb_link);
 		ccb->ccb_state = MPII_CCB_READY;
 	}
 	mtx_leave(&sc->sc_ccb_free_mtx);
@@ -4554,7 +4530,7 @@ mpii_scsi_cmd_tmo(void *xccb)
 	mtx_enter(&sc->sc_ccb_mtx);
 	if (ccb->ccb_state == MPII_CCB_QUEUED) {
 		ccb->ccb_state = MPII_CCB_TIMEOUT;
-		SLIST_INSERT_HEAD(&sc->sc_ccb_tmos, ccb, ccb_link);
+		SIMPLEQ_INSERT_HEAD(&sc->sc_ccb_tmos, ccb, ccb_link);
 	}
 	mtx_leave(&sc->sc_ccb_mtx);
 
@@ -4570,9 +4546,9 @@ mpii_scsi_cmd_tmo_handler(void *cookie, void *io)
 	struct mpii_msg_scsi_task_request	*stq;
 
 	mtx_enter(&sc->sc_ccb_mtx);
-	ccb = SLIST_FIRST(&sc->sc_ccb_tmos);
+	ccb = SIMPLEQ_FIRST(&sc->sc_ccb_tmos);
 	if (ccb != NULL) {
-		SLIST_REMOVE_HEAD(&sc->sc_ccb_tmos, ccb_link);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_tmos, ccb_link);
 		ccb->ccb_state = MPII_CCB_QUEUED;
 	}
 	/* should remove any other ccbs for the same dev handle */
@@ -4601,6 +4577,7 @@ mpii_scsi_cmd_tmo_done(struct mpii_ccb *tccb)
 void
 mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 {
+	struct mpii_ccb		*tccb;
 	struct mpii_msg_scsi_io_error	*sie;
 	struct mpii_softc	*sc = ccb->ccb_sc;
 	struct scsi_xfer	*xs = ccb->ccb_cookie;
@@ -4609,8 +4586,20 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 
 	timeout_del(&xs->stimeout);
 	mtx_enter(&sc->sc_ccb_mtx);
-	if (ccb->ccb_state == MPII_CCB_TIMEOUT)
-		SLIST_REMOVE(&sc->sc_ccb_tmos, ccb, mpii_ccb, ccb_link);
+	if (ccb->ccb_state == MPII_CCB_TIMEOUT) {
+		/* ENOSIMPLEQ_REMOVE :( */
+		if (ccb == SIMPLEQ_FIRST(&sc->sc_ccb_tmos))
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_tmos, ccb_link);
+		else {
+			SIMPLEQ_FOREACH(tccb, &sc->sc_ccb_tmos, ccb_link) {
+				if (SIMPLEQ_NEXT(tccb, ccb_link) == ccb) {
+					SIMPLEQ_REMOVE_NEXT(&sc->sc_ccb_tmos,
+					    tccb, ccb_link);
+					break;
+				}
+			}
+		}
+	}
 
 	ccb->ccb_state = MPII_CCB_READY;
 	mtx_leave(&sc->sc_ccb_mtx);
