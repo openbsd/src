@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.552 2011/08/17 18:57:11 jasper Exp $
+$OpenBSD: usbdevs,v 1.553 2011/08/29 10:51:18 mikeb Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1789,6 +1789,7 @@ product	GMATE YP3X00		0x1001	YP3X00 PDA
 /* Garmin International products */
 product GARMIN GPSMAP60CSX	0x0003	GPSmap 60Csx
 product GARMIN IQUE3600		0x0004	Ique 3600
+product GARMIN GPSMAP62S	0x2459	GPSmap 62s
 
 /* GCT Semiconductor products */
 product GCTSEMICON INSTALL	0x7f40	GDM720x MASS storage mode	
