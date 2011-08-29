@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.45 2011/08/26 14:39:47 chl Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.46 2011/08/29 18:49:29 chl Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -28,6 +28,7 @@
 #include <event.h>
 #include <imsg.h>
 #include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
