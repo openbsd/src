@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.50 2010/11/11 17:47:00 miod Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.51 2011/08/29 17:25:28 miod Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -891,10 +891,12 @@ ncr53c9x_poll(sc, xs, count)
 #endif
 		if ((xs->flags & ITSDONE) != 0)
 			return (0);
+		s = splbio();
 		if (sc->sc_state == NCR_IDLE) {
 			NCR_TRACE(("[ncr53c9x_poll: rescheduling] "));
 			ncr53c9x_sched(sc);
 		}
+		splx(s);
 		DELAY(1000);
 		count--;
 	}
