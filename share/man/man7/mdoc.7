@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.79 2011/08/16 23:27:52 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.80 2011/08/30 11:38:59 jmc Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 16 2011 $
+.Dd $Mdocdate: August 30 2011 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -650,8 +650,7 @@ contain a head.
 \(lBbody...\(rB
 \&.Yc
 .Ed
-.Pp
-.Bl -column -compact -offset indent "MacroX" "CallableX" "ParsedX" "closed by XXX"
+.Bl -column -offset indent "MacroX" "CallableX" "ParsedX" "closed by XXX"
 .It Em Macro Ta Em Callable Ta Em Parsed Ta Em Scope
 .It Sx \&Bd  Ta    \&No     Ta    \&No     Ta    closed by Sx \&Ed
 .It Sx \&Bf  Ta    \&No     Ta    \&No     Ta    closed by Sx \&Ef
@@ -683,8 +682,7 @@ has multiple heads.
 \&.Yo \(lB\-arg \(lBparm...\(rB\(rB \(lBhead... \(lBTa head...\(rB\(rB
 \(lBbody...\(rB
 .Ed
-.Pp
-.Bl -column -compact -offset indent "MacroX" "CallableX" "ParsedX" "closed by XXXXXXXXXXX"
+.Bl -column -offset indent "MacroX" "CallableX" "ParsedX" "closed by XXXXXXXXXXX"
 .It Em Macro Ta Em Callable Ta Em Parsed Ta Em Scope
 .It Sx \&It  Ta    \&No     Ta    Yes      Ta    closed by Sx \&It , Sx \&El
 .It Sx \&Nd  Ta    \&No     Ta    \&No     Ta    closed by Sx \&Sh
@@ -719,8 +717,7 @@ and/or tail
 \&.Yo \(lB\-arg \(lBparm...\(rB\(rB \(lBhead...\(rB \
 \(lBbody...\(rB \&Yc \(lBtail...\(rB
 .Ed
-.Pp
-.Bl -column "MacroX" "CallableX" "ParsedX" "closed by XXXX" -compact -offset indent
+.Bl -column "MacroX" "CallableX" "ParsedX" "closed by XXXX" -offset indent
 .It Em Macro Ta Em Callable Ta Em Parsed Ta Em Scope
 .It Sx \&Ac  Ta    Yes      Ta    Yes      Ta    opened by Sx \&Ao
 .It Sx \&Ao  Ta    Yes      Ta    Yes      Ta    closed by Sx \&Ac
@@ -753,8 +750,7 @@ end of the line.
 .Bd -literal -offset indent
 \&.Yo \(lB\-arg \(lBval...\(rB\(rB \(lBbody...\(rB \(lBres...\(rB
 .Ed
-.Pp
-.Bl -column "MacroX" "CallableX" "ParsedX" -compact -offset indent
+.Bl -column "MacroX" "CallableX" "ParsedX" -offset indent
 .It Em Macro Ta Em Callable Ta Em Parsed
 .It Sx \&Aq  Ta    Yes      Ta    Yes
 .It Sx \&Bq  Ta    Yes      Ta    Yes
@@ -789,8 +785,7 @@ in
 lists.
 It delimits blocks representing table cells;
 these blocks have bodies, but no heads.
-.Pp
-.Bl -column "MacroX" "CallableX" "ParsedX" "closed by XXXX" -compact -offset indent
+.Bl -column "MacroX" "CallableX" "ParsedX" "closed by XXXX" -offset indent
 .It Em Macro Ta Em Callable Ta Em Parsed Ta Em Scope
 .It Sx \&Ta  Ta    Yes      Ta    Yes    Ta closed by Sx \&Ta , Sx \&It
 .El
@@ -808,8 +803,7 @@ then the macro accepts an arbitrary number of arguments.
 
 \&.Yo \(lB\-arg \(lBval...\(rB\(rB arg0 arg1 argN
 .Ed
-.Pp
-.Bl -column "MacroX" "CallableX" "ParsedX" "Arguments" -compact -offset indent
+.Bl -column "MacroX" "CallableX" "ParsedX" "Arguments" -offset indent
 .It Em Macro Ta Em Callable Ta Em Parsed Ta Em Arguments
 .It Sx \&%A  Ta    \&No     Ta    \&No     Ta    >0
 .It Sx \&%B  Ta    \&No     Ta    \&No     Ta    >0

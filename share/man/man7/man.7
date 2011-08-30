@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.19 2011/07/15 10:14:17 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.20 2011/08/30 11:38:59 jmc Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 15 2011 $
+.Dd $Mdocdate: August 30 2011 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -405,8 +405,7 @@ The syntax is as follows:
 \&.YO \(lBbody...\(rB
 \(lBbody...\(rB
 .Ed
-.Pp
-.Bl -column -compact -offset indent "MacroX" "ArgumentsX" "ScopeXXXXX" "CompatX"
+.Bl -column -offset indent "MacroX" "ArgumentsX" "ScopeXXXXX" "CompatX"
 .It Em Macro Ta Em Arguments Ta Em Scope     Ta Em Notes
 .It Sx \&AT  Ta    <=1       Ta    current   Ta    \&
 .It Sx \&B   Ta    n         Ta    next-line Ta    \&
@@ -472,8 +471,7 @@ No closure refers to an explicit block closing macro.
 As a rule, block macros may not be nested; thus, calling a block macro
 while another block macro scope is open, and the open scope is not
 implicitly closed, is syntactically incorrect.
-.Pp
-.Bl -column -compact -offset indent "MacroX" "ArgumentsX" "Head ScopeX" "sub-sectionX" "compatX"
+.Bl -column -offset indent "MacroX" "ArgumentsX" "Head ScopeX" "sub-sectionX" "compatX"
 .It Em Macro Ta Em Arguments Ta Em Head Scope Ta Em Body Scope  Ta Em Notes
 .It Sx \&HP  Ta    <2        Ta    current    Ta    paragraph   Ta    \&
 .It Sx \&IP  Ta    <3        Ta    current    Ta    paragraph   Ta    \&
