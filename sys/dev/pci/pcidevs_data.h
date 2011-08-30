@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1617 2011/07/31 15:31:22 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1618 2011/08/30 15:57:10 mpi Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -14384,7 +14384,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GeForce 8500 GT",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE8400_GS,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE8400_GS_0,
 	    "GeForce 8400 GS",
 	},
 	{
@@ -14686,6 +14686,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_9600_GT,
 	    "GeForce 9600 GT",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE8400_GS_1,
+	    "GeForce 8400 GS",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE9300M_GS,
