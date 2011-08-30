@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.116 2011/07/08 18:38:55 yasuoka Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.117 2011/08/30 01:09:29 guenther Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -453,7 +453,7 @@ struct kinfo_proc {
  *	kp - target kinfo_proc structure
  *	copy_str - a function or macro invoked as copy_str(dst,src,maxlen)
  *	    that has strlcpy or memcpy semantics; the destination is
- *	    pre-filled with zeros
+ *	    pre-filled with zeros; for libkvm, src is a kvm address
  *	p - source struct proc
  *	pr - source struct process
  *	pc - source struct pcreds
@@ -482,7 +482,7 @@ do {									\
 	(kp)->p_limit = PTRTOINT64((pr)->ps_limit);			\
 	(kp)->p_vmspace = PTRTOINT64((p)->p_vmspace);			\
 	(kp)->p_sigacts = PTRTOINT64((p)->p_sigacts);			\
-	(kp)->p_sess = PTRTOINT64((pr)->ps_session);			\
+	(kp)->p_sess = PTRTOINT64((pg)->pg_session);			\
 	(kp)->p_ru = PTRTOINT64((p)->p_ru);				\
 									\
 	(kp)->p_exitsig = (p)->p_exitsig;				\
@@ -528,12 +528,12 @@ do {									\
 	(kp)->p_xstat = (p)->p_xstat;					\
 	(kp)->p_acflag = (p)->p_acflag;					\
 									\
-	/* XXX depends on p_emul being an array and not a pointer */	\
+	/* XXX depends on e_name being an array and not a pointer */	\
 	copy_str((kp)->p_emul, (char *)(p)->p_emul +			\
 	    offsetof(struct emul, e_name), sizeof((kp)->p_emul));	\
-	copy_str((kp)->p_comm, (p)->p_comm, sizeof((kp)->p_comm));	\
-	copy_str((kp)->p_login, (sess)->s_login,			\
-	    MIN(sizeof((kp)->p_login) - 1, sizeof((sess)->s_login)));	\
+	strlcpy((kp)->p_comm, (p)->p_comm, sizeof((kp)->p_comm));	\
+	strlcpy((kp)->p_login, (sess)->s_login,			\
+	    MIN(sizeof((kp)->p_login), sizeof((sess)->s_login)));	\
 									\
 	if ((sess)->s_ttyvp)						\
 		(kp)->p_eflag |= EPROC_CTTY;				\
