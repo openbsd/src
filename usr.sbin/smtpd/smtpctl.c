@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.65 2011/08/29 21:43:09 chl Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.66 2011/08/30 07:06:06 chl Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -279,13 +279,13 @@ show_sizes(void)
 	 * -- gilles@
 	 *
 	 */
-	printf("struct ramqueue: %ld\n", sizeof (struct ramqueue));
-	printf("struct ramqueue_host: %ld\n", sizeof (struct ramqueue_host));
-	printf("struct ramqueue_message: %ld\n", sizeof (struct ramqueue_message));
-	printf("struct ramqueue_envelope: %ld\n", sizeof (struct ramqueue_envelope));
+	printf("struct ramqueue: %zu\n", sizeof (struct ramqueue));
+	printf("struct ramqueue_host: %zu\n", sizeof (struct ramqueue_host));
+	printf("struct ramqueue_message: %zu\n", sizeof (struct ramqueue_message));
+	printf("struct ramqueue_envelope: %zu\n", sizeof (struct ramqueue_envelope));
 
-	printf("struct envelope: %ld\n", sizeof (struct envelope));
-	printf("struct delivery: %ld\n", sizeof (struct delivery));
+	printf("struct envelope: %zu\n", sizeof (struct envelope));
+	printf("struct delivery: %zu\n", sizeof (struct delivery));
 }
 
 static int
