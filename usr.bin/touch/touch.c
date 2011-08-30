@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.19 2011/08/21 20:55:23 guenther Exp $	*/
+/*	$OpenBSD: touch.c,v 1.20 2011/08/30 02:07:11 guenther Exp $	*/
 /*	$NetBSD: touch.c,v 1.11 1995/08/31 22:10:06 jtc Exp $	*/
 
 /*
@@ -189,8 +189,10 @@ stime_arg1(char *arg, struct timespec *tsp)
 			lt->tm_year += yearset;
 		} else {
 			yearset = ATOI2(arg);
-			/* Preserve current century. */
-			lt->tm_year = ((lt->tm_year / 100) * 100) + yearset;
+			/* POSIX logic: [00,68]=>20xx, [69,99]=>19xx */
+			lt->tm_year = yearset + 1900 - TM_YEAR_BASE;
+			if (yearset < 69)
+				lt->tm_year += 100;
 		}
 		/* FALLTHROUGH */
 	case 8:				/* MMDDhhmm */
@@ -245,8 +247,11 @@ stime_arg2(char *arg, int year, struct timespec *tsp)
 	if (lt->tm_min > 59)
 		goto terr;
 	if (year) {
-		year = ATOI2(arg);	/* Preserve current century. */
-		lt->tm_year = ((lt->tm_year / 100) * 100) + year;
+		year = ATOI2(arg);
+		/* POSIX logic: [00,68]=>20xx, [69,99]=>19xx */
+		lt->tm_year = year + 1900 - TM_YEAR_BASE;
+		if (year < 69)
+			lt->tm_year += 100;
 	}
 	lt->tm_sec = 0;
 
