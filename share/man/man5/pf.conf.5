@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.507 2011/08/18 10:49:40 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.508 2011/08/30 00:47:16 mikeb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 18 2011 $
+.Dd $Mdocdate: August 30 2011 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -599,6 +599,12 @@ pass in inet proto tcp from any to 1.2.3.5 \e
 The macro expansion for the
 .Ar label
 directive occurs only at configuration file parse time, not during runtime.
+.Pp
+.It Ar once
+Creates a one shot rule that will remove itself from an active ruleset after
+the first match.
+In case this is the only rule in the anchor, the anchor will be destroyed
+automatically after the rule is matched.
 .Pp
 .It Ar probability Aq Ar number
 A probability attribute can be attached to a rule,
@@ -2701,7 +2707,7 @@ filteropt      = user | group | flags | icmp-type | icmp6-type |
                  "tos" tos |
                  ( "no" | "keep" | "modulate" | "synproxy" ) "state"
                  [ "(" state-opts ")" ] | "scrub" "(" scrubopts ")" |
-                 "fragment" | "allow-opts" |
+                 "fragment" | "allow-opts" | "once" |
 		 "divert-packet" "port" port | "divert-reply" |
 		 "divert-to" host "port" port |
                  "label" string | "tag" string | [ ! ] "tagged" string |
