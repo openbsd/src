@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termcap.5,v 1.24 2010/07/22 10:21:52 jmc Exp $
+.\"	$OpenBSD: termcap.5,v 1.25 2011/08/30 12:25:09 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)termcap.5	6.11 (Berkeley) 3/6/93
 .\"
-.Dd $Mdocdate: July 22 2010 $
+.Dd $Mdocdate: August 30 2011 $
 .Dt TERMCAP 5
 .Os
 .Sh NAME
@@ -80,8 +80,7 @@ in 132-column mode would be
 .Dq vt100-w .
 .Pp
 The following suffixes should be used where possible:
-.Bd -filled
-.Bl -column indent "With automatic margins (usually default)xx"
+.Bl -column "suffix" "With automatic margins (usually default)" "example"
 .It Sy Suffix	Meaning	Example
 .It \-w	Wide mode (more than 80 columns).	vt100-w
 .It \-am	With automatic margins (usually default).	vt100-am
@@ -91,7 +90,6 @@ The following suffixes should be used where possible:
 .It Pf \- Ar \&np Ta No "Number of pages of memory.	concept100-4p"
 .It \-rv	Reverse video.	concept100-rv
 .El
-.Ed
 .Sh CAPABILITIES
 The characters in the
 .Em Notes

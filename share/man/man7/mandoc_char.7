@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc_char.7,v 1.10 2011/08/30 11:38:59 jmc Exp $
+.\"	$OpenBSD: mandoc_char.7,v 1.11 2011/08/30 12:25:09 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -74,7 +74,7 @@ It's guaranteed that each input symbol will correspond to a
 These are the preferred input symbols for producing special characters.
 .Pp
 Spacing:
-.Bl -column -compact -offset indent "Input" "Description"
+.Bl -column "Input" "Description" -offset indent -compact
 .It Em Input Ta Em Description
 .It \e~      Ta non-breaking, non-collapsing space
 .It \e       Ta breaking, non-collapsing n-width space
@@ -87,7 +87,7 @@ Spacing:
 .El
 .Pp
 Lines:
-.Bl -column -compact -offset indent "Input" "Rendered" "Description"
+.Bl -column "Input" "Rendered" "Description" -offset indent -compact
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(ba    Ta \(ba        Ta bar
 .It \e(br    Ta \(br        Ta box rule
@@ -99,7 +99,7 @@ Lines:
 .El
 .Pp
 Text markers:
-.Bl -column -compact -offset indent "Input" "Rendered" "Description"
+.Bl -column "Input" "Rendered" "Description" -offset indent -compact
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(ci    Ta \(ci        Ta circle
 .It \e(bu    Ta \(bu        Ta bullet
@@ -118,7 +118,7 @@ Text markers:
 .El
 .Pp
 Legal symbols:
-.Bl -column -compact -offset indent "Input" "Rendered" "Description"
+.Bl -column "Input" "Rendered" "Description" -offset indent -compact
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(co    Ta \(co        Ta copyright
 .It \e(rg    Ta \(rg        Ta registered
@@ -126,7 +126,7 @@ Legal symbols:
 .El
 .Pp
 Punctuation:
-.Bl -column -compact -offset indent "Input" "Rendered" "Description"
+.Bl -column "Input" "Rendered" "Description" -offset indent -compact
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(em    Ta \(em        Ta em-dash
 .It \e(en    Ta \(en        Ta en-dash
@@ -138,7 +138,7 @@ Punctuation:
 .El
 .Pp
 Quotes:
-.Bl -column -compact -offset indent "Input" "Rendered" "Description"
+.Bl -column "Input" "Rendered" "Description" -offset indent -compact
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(Bq    Ta \(Bq        Ta right low double-quote
 .It \e(bq    Ta \(bq        Ta right low single-quote
@@ -155,7 +155,7 @@ Quotes:
 .El
 .Pp
 Brackets:
-.Bl -column -compact -offset indent "xxbracketrightbpx" Rendered Description
+.Bl -column "xxbracketrightbpx" Rendered Description -offset indent -compact
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(lB    Ta \(lB        Ta left bracket
 .It \e(rB    Ta \(rB        Ta right bracket
@@ -194,7 +194,7 @@ Brackets:
 .El
 .Pp
 Arrows:
-.Bl -column -compact -offset indent "Input" "Rendered" "Description"
+.Bl -column "Input" "Rendered" "Description" -offset indent -compact
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(<-    Ta \(<-        Ta left arrow
 .It \e(->    Ta \(->        Ta right arrow
@@ -211,7 +211,7 @@ Arrows:
 .El
 .Pp
 Logical:
-.Bl -column -compact -offset indent "Input" "Rendered" "Description"
+.Bl -column "Input" "Rendered" "Description" -offset indent -compact
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(AN    Ta \(AN        Ta logical and
 .It \e(OR    Ta \(OR        Ta logical or
@@ -226,7 +226,7 @@ Logical:
 .El
 .Pp
 Mathematical:
-.Bl -column -compact -offset indent "xxcoproductxx" "Rendered" "Description"
+.Bl -column "xxcoproductxx" "Rendered" "Description" -offset indent -compact
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(pl    Ta \(pl        Ta plus
 .It \e(mi    Ta \(mi        Ta minus
@@ -291,7 +291,7 @@ Mathematical:
 .El
 .Pp
 Ligatures:
-.Bl -column -compact -offset indent "Input" "Rendered" "Description"
+.Bl -column "Input" "Rendered" "Description" -offset indent -compact
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(ff    Ta \(ff        Ta ff ligature
 .It \e(fi    Ta \(fi        Ta fi ligature
@@ -308,7 +308,7 @@ Ligatures:
 .El
 .Pp
 Accents:
-.Bl -column -compact -offset indent "Input" "Rendered" "Description"
+.Bl -column "Input" "Rendered" "Description" -offset indent -compact
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(a"    Ta \(a"        Ta Hungarian umlaut
 .It \e(a-    Ta \(a-        Ta macron
@@ -330,7 +330,7 @@ Accents:
 .El
 .Pp
 Accented letters:
-.Bl -column -compact -offset indent "Input" "Rendered" "Description"
+.Bl -column "Input" "Rendered" "Description" -offset indent -compact
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e('A    Ta \('A        Ta acute A
 .It \e('E    Ta \('E        Ta acute E
@@ -390,7 +390,7 @@ Accented letters:
 .El
 .Pp
 Special letters:
-.Bl -column -compact -offset indent "Input" "Rendered" "Description"
+.Bl -column "Input" "Rendered" "Description" -offset indent -compact
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(-D    Ta \(-D        Ta Eth
 .It \e(Sd    Ta \(Sd        Ta eth
@@ -401,7 +401,7 @@ Special letters:
 .El
 .Pp
 Currency:
-.Bl -column -compact -offset indent "Input" "Rendered" "Description"
+.Bl -column "Input" "Rendered" "Description" -offset indent -compact
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(Do    Ta \(Do        Ta dollar
 .It \e(ct    Ta \(ct        Ta cent
@@ -414,7 +414,7 @@ Currency:
 .El
 .Pp
 Units:
-.Bl -column -compact -offset indent "Input" "Rendered" "Description"
+.Bl -column "Input" "Rendered" "Description" -offset indent -compact
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(de    Ta \(de        Ta degree
 .It \e(%0    Ta \(%0        Ta per-thousand
@@ -424,7 +424,7 @@ Units:
 .El
 .Pp
 Greek letters:
-.Bl -column -compact -offset indent "Input" "Rendered" "Description"
+.Bl -column "Input" "Rendered" "Description" -offset indent -compact
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(*A    Ta \(*A        Ta Alpha
 .It \e(*B    Ta \(*B        Ta Beta
@@ -488,7 +488,7 @@ They are
 for use, as they differ across implementations.
 Manuals using these predefined strings are almost certainly not
 portable.
-.Bl -column -offset indent "Input" "Rendered" "Description"
+.Bl -column "Input" "Rendered" "Description" -offset indent
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e*(Ba   Ta \*(Ba       Ta vertical bar
 .It \e*(Ne   Ta \*(Ne       Ta not equal

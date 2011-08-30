@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc.1,v 1.28 2011/03/07 09:56:51 jmc Exp $
+.\"	$OpenBSD: bc.1,v 1.29 2011/08/30 12:25:09 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)bc.1	6.8 (Berkeley) 8/8/91
 .\"
-.Dd $Mdocdate: March 7 2011 $
+.Dd $Mdocdate: August 30 2011 $
 .Dt BC 1
 .Os
 .Sh NAME
@@ -135,8 +135,7 @@ The following arithmetic and logical operators can be used.
 The semantics of the operators is the same as in the C language.
 They are listed in order of decreasing precedence.
 Operators in the same group have the same precedence.
-.Bl -column -offset indent "= += \-= *= /= %= ^=" "Associativity" \
-"multiply, divide, modulus"
+.Bl -column "= += \-= *= /= %= ^=" "Associativity" "multiply, divide, modulus" -offset indent
 .It Sy "Operator" Ta Sy "Associativity" Ta Sy "Description"
 .It "++ \-\-" Ta "none" Ta "increment, decrement"
 .It "\-" Ta "none" Ta "unary minus"

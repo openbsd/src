@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.20 2011/08/30 11:38:59 jmc Exp $
+.\"	$OpenBSD: man.7,v 1.21 2011/08/30 12:25:09 jmc Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -405,7 +405,7 @@ The syntax is as follows:
 \&.YO \(lBbody...\(rB
 \(lBbody...\(rB
 .Ed
-.Bl -column -offset indent "MacroX" "ArgumentsX" "ScopeXXXXX" "CompatX"
+.Bl -column "MacroX" "ArgumentsX" "ScopeXXXXX" "CompatX" -offset indent
 .It Em Macro Ta Em Arguments Ta Em Scope     Ta Em Notes
 .It Sx \&AT  Ta    <=1       Ta    current   Ta    \&
 .It Sx \&B   Ta    n         Ta    next-line Ta    \&
@@ -471,7 +471,7 @@ No closure refers to an explicit block closing macro.
 As a rule, block macros may not be nested; thus, calling a block macro
 while another block macro scope is open, and the open scope is not
 implicitly closed, is syntactically incorrect.
-.Bl -column -offset indent "MacroX" "ArgumentsX" "Head ScopeX" "sub-sectionX" "compatX"
+.Bl -column "MacroX" "ArgumentsX" "Head ScopeX" "sub-sectionX" "compatX" -offset indent
 .It Em Macro Ta Em Arguments Ta Em Head Scope Ta Em Body Scope  Ta Em Notes
 .It Sx \&HP  Ta    <2        Ta    current    Ta    paragraph   Ta    \&
 .It Sx \&IP  Ta    <3        Ta    current    Ta    paragraph   Ta    \&

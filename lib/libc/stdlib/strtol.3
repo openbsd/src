@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtol.3,v 1.19 2007/11/13 18:30:04 tobias Exp $
+.\"	$OpenBSD: strtol.3,v 1.20 2011/08/30 12:25:09 jmc Exp $
 .\"
-.Dd $Mdocdate: November 13 2007 $
+.Dd $Mdocdate: August 30 2011 $
 .Dt STRTOL 3
 .Os
 .Sh NAME
@@ -164,7 +164,7 @@ If overflow or underflow occurs,
 is set to
 .Er ERANGE
 and the function return value is as follows:
-.Bl -column -offset indent "strtoimax" "overflow" "underflow"
+.Bl -column "strtoimax" "overflow" "underflow" -offset indent
 .It Sy Function Ta Sy underflow Ta Sy overflow
 .It Fn strtol Ta Dv LONG_MIN Ta Dv LONG_MAX
 .It Fn strtoll Ta Dv LLONG_MIN Ta Dv LLONG_MAX

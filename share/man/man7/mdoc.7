@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.80 2011/08/30 11:38:59 jmc Exp $
+.\"	$OpenBSD: mdoc.7,v 1.81 2011/08/30 12:25:09 jmc Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -650,7 +650,7 @@ contain a head.
 \(lBbody...\(rB
 \&.Yc
 .Ed
-.Bl -column -offset indent "MacroX" "CallableX" "ParsedX" "closed by XXX"
+.Bl -column "MacroX" "CallableX" "ParsedX" "closed by XXX" -offset indent
 .It Em Macro Ta Em Callable Ta Em Parsed Ta Em Scope
 .It Sx \&Bd  Ta    \&No     Ta    \&No     Ta    closed by Sx \&Ed
 .It Sx \&Bf  Ta    \&No     Ta    \&No     Ta    closed by Sx \&Ef
@@ -682,7 +682,7 @@ has multiple heads.
 \&.Yo \(lB\-arg \(lBparm...\(rB\(rB \(lBhead... \(lBTa head...\(rB\(rB
 \(lBbody...\(rB
 .Ed
-.Bl -column -offset indent "MacroX" "CallableX" "ParsedX" "closed by XXXXXXXXXXX"
+.Bl -column "MacroX" "CallableX" "ParsedX" "closed by XXXXXXXXXXX" -offset indent
 .It Em Macro Ta Em Callable Ta Em Parsed Ta Em Scope
 .It Sx \&It  Ta    \&No     Ta    Yes      Ta    closed by Sx \&It , Sx \&El
 .It Sx \&Nd  Ta    \&No     Ta    \&No     Ta    closed by Sx \&Sh
