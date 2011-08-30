@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.770 2011/08/03 12:28:40 mpf Exp $ */
+/*	$OpenBSD: pf.c,v 1.771 2011/08/30 00:40:47 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3104,6 +3104,9 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 			return (PF_DEFER);
 	}
 #endif
+
+	if (r->rule_flag & PFRULE_ONCE)
+		pf_purge_rule(ruleset, r);
 
 	return (PF_PASS);
 

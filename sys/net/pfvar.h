@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.343 2011/08/03 00:01:30 dlg Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.344 2011/08/30 00:40:47 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -673,6 +673,7 @@ struct pf_rule {
 #define PFRULE_IFBOUND		0x00010000	/* if-bound */
 #define PFRULE_STATESLOPPY	0x00020000	/* sloppy state tracking */
 #define PFRULE_PFLOW		0x00040000
+#define PFRULE_ONCE		0x00100000	/* one shot rule */
 
 #define PFSTATE_HIWAT		10000	/* default state table size */
 #define PFSTATE_ADAPT_START	6000	/* default adaptive timeout start */
@@ -1767,6 +1768,8 @@ extern struct pf_rule		 pf_default_rule;
 extern void			 pf_addrcpy(struct pf_addr *, struct pf_addr *,
 				    u_int8_t);
 void				 pf_rm_rule(struct pf_rulequeue *,
+				    struct pf_rule *);
+void				 pf_purge_rule(struct pf_ruleset *,
 				    struct pf_rule *);
 struct pf_divert		*pf_find_divert(struct mbuf *);
 int				 pf_setup_pdesc(sa_family_t, int,

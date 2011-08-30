@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.241 2011/07/08 18:50:51 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.242 2011/08/30 00:40:47 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -315,6 +315,24 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 	pfi_kif_unref(rule->route.kif, PFI_KIF_REF_RULE);
 	pf_anchor_remove(rule);
 	pool_put(&pf_rule_pl, rule);
+}
+
+void
+pf_purge_rule(struct pf_ruleset *ruleset, struct pf_rule *rule)
+{
+	u_int32_t		 nr;
+
+	pf_rm_rule(ruleset->rules.active.ptr, rule);
+	ruleset->rules.active.rcount--;
+
+	nr = 0;
+	TAILQ_FOREACH(rule, ruleset->rules.active.ptr, entries)
+		rule->nr = nr++;
+
+	ruleset->rules.active.ticket++;
+
+	pf_calc_skip_steps(ruleset->rules.active.ptr);
+	pf_remove_if_empty_ruleset(ruleset);
 }
 
 u_int16_t
