@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-capture-pane.c,v 1.8 2011/05/08 20:37:04 nicm Exp $ */
+/* $OpenBSD: cmd-capture-pane.c,v 1.9 2011/08/30 09:20:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Jonathan Alvarado <radobobo@users.sourceforge.net>
@@ -109,6 +109,7 @@ cmd_capture_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 	buffer = args_strtonum(args, 'b', 0, INT_MAX, &cause);
 	if (cause != NULL) {
 		ctx->error(ctx, "buffer %s", cause);
+		xfree(buf);
 		xfree(cause);
 		return (-1);
 	}
