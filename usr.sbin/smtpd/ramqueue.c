@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramqueue.c,v 1.16 2011/08/26 14:39:47 chl Exp $	*/
+/*	$OpenBSD: ramqueue.c,v 1.17 2011/08/30 17:06:01 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -353,18 +353,24 @@ void
 ramqueue_remove_batch(struct ramqueue_host *rq_host, struct ramqueue_batch *rq_batch)
 {
 	TAILQ_REMOVE(&rq_host->batch_queue, rq_batch, batch_entry);
+	free(rq_batch);
+	env->stats->ramqueue.batches--;
 }
 
 void
 ramqueue_remove_host(struct ramqueue *rqueue, struct ramqueue_host *rq_host)
 {
 	RB_REMOVE(hosttree, &rqueue->hosttree, rq_host);
+	free(rq_host);
+	env->stats->ramqueue.hosts--;
 }
 
 void
 ramqueue_remove_message(struct ramqueue *rqueue, struct ramqueue_message *rq_msg)
 {
 	RB_REMOVE(msgtree, &rqueue->msgtree, rq_msg);
+	free(rq_msg);
+	env->stats->ramqueue.messages--;
 }
 
 void
@@ -483,6 +489,7 @@ ramqueue_remove_envelope(struct ramqueue *rq, struct ramqueue_envelope *rq_evp)
 	TAILQ_REMOVE(&rq_batch->envelope_queue, rq_evp, batchqueue_entry);
 	TAILQ_REMOVE(&rq->queue, rq_evp, queue_entry);
 	env->stats->ramqueue.envelopes--;
+	free(rq_evp);
 }
 
 

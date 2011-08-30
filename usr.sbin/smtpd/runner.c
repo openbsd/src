@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.115 2011/08/29 21:43:09 chl Exp $	*/
+/*	$OpenBSD: runner.c,v 1.116 2011/08/30 17:06:01 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -431,7 +431,6 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 			    IMSG_SMTP_ENQUEUE, PROC_SMTP, 0, -1, &evp,
 			    sizeof evp);
 			ramqueue_remove_envelope(&env->sc_rqueue, rq_evp);
-			free(rq_evp);
 		}
 		env->stats->runner.bounces_active++;
 		env->stats->runner.bounces++;
@@ -452,7 +451,6 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 		    IMSG_MDA_SESS_NEW, PROC_MDA, 0, fd, &evp,
 		    sizeof evp);
 		ramqueue_remove_envelope(&env->sc_rqueue, rq_evp);
-		free(rq_evp);
 
 		env->stats->mda.sessions_active++;
 		env->stats->mda.sessions++;
@@ -477,7 +475,6 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 			    IMSG_BATCH_APPEND, PROC_MTA, 0, -1, &evp,
 			    sizeof evp);
 			ramqueue_remove_envelope(&env->sc_rqueue, rq_evp);
-			free(rq_evp);
 			env->stats->runner.active++;
 			SET_IF_GREATER(env->stats->runner.active,
 			    env->stats->runner.maxactive);
@@ -495,25 +492,14 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 		fatalx("runner_process_batchqueue: unknown type");
 	}
 
-	if (ramqueue_message_is_empty(rq_msg)) {
+	if (ramqueue_message_is_empty(rq_msg))
 		ramqueue_remove_message(&env->sc_rqueue, rq_msg);
-		free(rq_msg);
-		env->stats->ramqueue.messages--;
-		
-	}
 
-	if (ramqueue_batch_is_empty(rq_batch)) {
+	if (ramqueue_batch_is_empty(rq_batch))
 		ramqueue_remove_batch(rq_host, rq_batch);
-		free(rq_batch);
-		env->stats->ramqueue.batches--;
-		
-	}
 
-	if (ramqueue_host_is_empty(rq_host)) {
+	if (ramqueue_host_is_empty(rq_host))
 		ramqueue_remove_host(&env->sc_rqueue, rq_host);
-		free(rq_host);
-		env->stats->ramqueue.hosts--;
-	}
 }
 
 /* XXX - temporary solution */
@@ -740,5 +726,4 @@ runner_remove_envelope(struct ramqueue *rq, struct ramqueue_envelope *rq_evp)
 		queue_envelope_delete(Q_QUEUE, &evp);
 
 	ramqueue_remove_envelope(rq, rq_evp);
-	free(rq_evp);
 }
