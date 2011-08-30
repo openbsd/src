@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.279 2011/07/27 00:26:10 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.280 2011/08/30 00:43:57 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1019,6 +1019,8 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 		printf(" allow-opts");
 	if (r->label[0])
 		printf(" label \"%s\"", r->label);
+	if (r->rule_flag & PFRULE_ONCE)
+		printf(" once");
 	if (r->qname[0] && r->pqname[0])
 		printf(" queue(%s, %s)", r->qname, r->pqname);
 	else if (r->qname[0])

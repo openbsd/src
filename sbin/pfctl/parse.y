@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.607 2011/07/29 10:51:46 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.608 2011/08/30 00:43:57 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -231,6 +231,7 @@ struct filter_opts {
 #define FOM_SETTOS	0x0100
 #define FOM_SCRUB_TCP	0x0200
 #define FOM_PRIO	0x0400
+#define FOM_ONCE	0x1000
 	struct node_uid		*uid;
 	struct node_gid		*gid;
 	struct node_if		*rcv;
@@ -455,7 +456,7 @@ int	parseport(char *, struct range *r, int);
 %token	WEIGHT
 %token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE LINKSHARE REALTIME UPPERLIMIT
 %token	QUEUE PRIORITY QLIMIT RTABLE RDOMAIN
-%token	LOAD RULESET_OPTIMIZATION RTABLE RDOMAIN PRIO
+%token	LOAD RULESET_OPTIMIZATION RTABLE RDOMAIN PRIO ONCE
 %token	STICKYADDRESS MAXSRCSTATES MAXSRCNODES SOURCETRACK GLOBAL RULE
 %token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH SLOPPY PFLOW
 %token	TAGGED TAG IFBOUND FLOATING STATEPOLICY STATEDEFAULTS ROUTE SETTOS
@@ -870,6 +871,12 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 
 			if ($9.route.rt) {
 				yyerror("cannot specify route handling "
+				    "on anchors");
+				YYERROR;
+			}
+
+			if ($9.marker & FOM_ONCE) {
+				yyerror("cannot specify 'once' "
 				    "on anchors");
 				YYERROR;
 			}
@@ -1705,6 +1712,8 @@ pfrule		: action dir logquick interface af proto fromto
 				r.prio[1] = $8.prio[1];
 			} else
 				r.prio[0] = r.prio[1] = PF_PRIO_NOTSET;
+			if ($8.marker & FOM_ONCE)
+				r.rule_flag |= PFRULE_ONCE;
 
 			r.af = $5;
 			if ($8.tag)
@@ -2316,6 +2325,9 @@ filter_opt	: USER uids {
 			filter_opts.marker |= FOM_PRIO;
 			filter_opts.prio[0] = $1.b1;
 			filter_opts.prio[1] = $1.b2;
+		}
+		| ONCE {
+			filter_opts.marker |= FOM_ONCE;
 		}
 		;
 
@@ -5167,6 +5179,7 @@ lookup(char *s)
 		{ "no-route",		NOROUTE},
 		{ "no-sync",		NOSYNC},
 		{ "on",			ON},
+		{ "once",		ONCE},
 		{ "optimization",	OPTIMIZATION},
 		{ "os",			OS},
 		{ "out",		OUT},
