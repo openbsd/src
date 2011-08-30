@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.59 2011/08/23 15:06:37 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.60 2011/08/30 19:56:08 guenther Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -831,10 +831,11 @@ ttime(char *arg)
 			yearset = ATOI2(arg);
 			lt->tm_year += yearset;
 		} else {
-			/* current century + specified year */
 			yearset = ATOI2(arg);
-			lt->tm_year = ((lt->tm_year / 100) * 100);
-			lt->tm_year += yearset;
+			/* POSIX logic: [00,68]=>20xx, [69,99]=>19xx */
+			lt->tm_year = yearset;
+			if (yearset < 69)
+				lt->tm_year += 100;
 		}
 		/* FALLTHROUGH */
 	case 8:				/* MMDDhhmm */
