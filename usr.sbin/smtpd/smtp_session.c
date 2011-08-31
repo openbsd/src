@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.143 2011/08/27 22:32:41 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.144 2011/08/31 18:56:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -589,6 +589,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 		return;
 	}
 
+	log_debug("state: %d", s->s_state);
 	switch (s->s_state) {
 	case S_INIT:
 		s->s_state = S_GREETED;
@@ -714,6 +715,13 @@ session_pickup(struct session *s, struct submit_status *ss)
 		fprintf(s->datafp, "%s\n", time_to_text(time(NULL)));
 		break;
 
+	case S_DATACONTENT:
+		log_debug("line: %s\n", ss->u.dataline);
+		if (ss->code != 250)
+			s->s_msg.delivery.status |= DS_PERMFAILURE;
+		session_read_data(s, ss->u.dataline);
+		break;
+
 	case S_DONE:
 		session_respond(s, "250 2.0.0 %08x Message accepted for delivery",
 		    (u_int32_t)(s->s_msg.delivery.id >> 32));
@@ -806,9 +814,22 @@ session_read(struct bufferevent *bev, void *p)
 			session_command(s, line);
 			break;
 
-		case S_DATACONTENT:
-			session_read_data(s, line);
-			break;
+		case S_DATACONTENT: {
+			struct submit_status ss;
+
+			bzero(&ss, sizeof(ss));
+			ss.id = s->s_id;
+			if (strlcpy(ss.u.dataline, line,
+				sizeof(ss.u.dataline)) >= sizeof(ss.u.dataline))
+				fatal("session_read: data truncation");
+
+			session_imsg(s, PROC_MFA, IMSG_MFA_DATALINE,
+			    0, 0, -1, &ss, sizeof(ss));
+
+			free(line);
+
+			return;
+		}
 
 		default:
 			fatalx("session_read: unexpected state");
@@ -850,12 +871,12 @@ session_read_data(struct session *s, char *line)
 			    0, 0, -1, &s->s_msg, sizeof(s->s_msg));
 			s->s_state = S_DONE;
 		}
-		return;
+		goto end;
 	}
 
 	/* Don't waste resources on message if it's going to bin anyway. */
 	if (s->s_msg.delivery.status & (DS_PERMFAILURE|DS_TEMPFAILURE))
-		return;
+		goto end;
 
 	/* "If the first character is a period and there are other characters
 	 *  on the line, the first character is deleted." [4.5.2]
@@ -872,12 +893,12 @@ session_read_data(struct session *s, char *line)
 	if (SIZE_MAX - datalen < len + 1 ||
 	    datalen + len + 1 > env->sc_maxsize) {
 		s->s_msg.delivery.status |= DS_PERMFAILURE;
-		return;
+		goto end;
 	}
 
 	if (fprintf(s->datafp, "%s\n", line) != (int)len + 1) {
 		s->s_msg.delivery.status |= DS_TEMPFAILURE;
-		return;
+		goto end;
 	}
 
 	if (! (s->s_flags & F_8BITMIME)) {
@@ -885,6 +906,10 @@ session_read_data(struct session *s, char *line)
 			if (line[i] & 0x80)
 				line[i] = line[i] & 0x7f;
 	}
+
+end:
+	bufferevent_enable(s->s_bev, EV_READ);
+	session_read(s->s_bev, s);
 }
 
 static void

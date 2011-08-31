@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa_session.c,v 1.2 2011/08/28 00:03:24 gilles Exp $	*/
+/*	$OpenBSD: mfa_session.c,v 1.3 2011/08/31 18:56:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -123,6 +123,13 @@ mfa_session_proceed(struct mfa_session *ms)
 			fatalx("mfa_session_proceed: RCPT: domain truncation");
 		break;
 
+	case S_DATACONTENT:
+		fm.type = FILTER_DATALINE;
+		if (strlcpy(fm.u.dataline.line, ms->ss.u.dataline,
+			sizeof(fm.u.dataline.line)) >= sizeof(fm.u.dataline.line))
+			fatalx("mfa_session_proceed: DATA: line truncation");
+		break;
+
 	default:
 		fatalx("mfa_session_proceed: no such state");
 	}
@@ -175,6 +182,12 @@ mfa_session_done(struct mfa_session *ms)
 			return;
 		}
 		imsg_type = IMSG_MFA_RCPT;
+		break;
+	case S_DATACONTENT:
+		if (ms->ss.code != 530)
+			(void)strlcpy(ms->ss.u.dataline, ms->fm.u.dataline.line,
+			    sizeof(ms->ss.u.dataline));
+		imsg_type = IMSG_MFA_DATALINE;
 		break;
 	default:
 		fatalx("mfa_session_done: unsupported state");
@@ -268,7 +281,7 @@ mfa_session_imsg(int fd, short event, void *p)
 		case FILTER_EHLO:
 		case FILTER_MAIL:
 		case FILTER_RCPT:
-		case FILTER_DATA:
+		case FILTER_DATALINE:
 			ms = mfa_session_xfind(fm.id);
 
 			/* overwrite filter code */

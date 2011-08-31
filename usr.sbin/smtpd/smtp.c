@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.88 2011/08/29 18:49:29 chl Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.89 2011/08/31 18:56:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -83,6 +83,7 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 		case IMSG_MFA_HELO:
 		case IMSG_MFA_MAIL:
 		case IMSG_MFA_RCPT:
+		case IMSG_MFA_DATALINE:
 			log_debug("smtp: got imsg_mfa_helo/mail/rcpt/quit");
 			ss = imsg->data;
 			s = session_lookup(ss->id);

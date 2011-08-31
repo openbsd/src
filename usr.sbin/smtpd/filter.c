@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.1 2011/08/27 22:32:41 gilles Exp $	*/
+/*	$OpenBSD: filter.c,v 1.2 2011/08/31 18:56:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -47,11 +47,8 @@ static struct filter_internals {
 	int (*rcpt_cb)(u_int64_t, struct filter_rcpt *, void *);
 	void *rcpt_cb_arg;
 
-	int (*data_cb)(u_int64_t, struct filter_data *, void *);
-	void *data_cb_arg;
-
-	int (*quit_cb)(u_int64_t, struct filter_quit *, void *);
-	void *quit_cb_arg;
+	int (*dataline_cb)(u_int64_t, struct filter_dataline *, void *);
+	void *dataline_cb_arg;
 } fi;
 
 static void filter_handler(int, short, void *);
@@ -101,15 +98,9 @@ filter_register_rcpt_callback(int (*cb)(u_int64_t, struct filter_rcpt *, void *)
 }
 
 void
-filter_register_data_callback(int (*cb)(u_int64_t, struct filter_data *, void *), void *cb_arg)
+filter_register_dataline_callback(int (*cb)(u_int64_t, struct filter_dataline *, void *), void *cb_arg)
 {
-	filter_register_callback(FILTER_DATA, cb, cb_arg);
-}
-
-void
-filter_register_quit_callback(int (*cb)(u_int64_t, struct filter_quit *, void *), void *cb_arg)
-{
-	filter_register_callback(FILTER_QUIT, cb, cb_arg);
+	filter_register_callback(FILTER_DATALINE, cb, cb_arg);
 }
 
 static void
@@ -136,14 +127,9 @@ filter_register_callback(enum filter_type type, void *cb, void *cb_arg)
 		fi.rcpt_cb_arg = cb_arg;
 		break;
 
-	case FILTER_DATA:
-		fi.data_cb = cb;
-		fi.data_cb_arg = cb_arg;
-		break;
-
-	case FILTER_QUIT:
-		fi.quit_cb = cb;
-		fi.quit_cb_arg = cb_arg;
+	case FILTER_DATALINE:
+		fi.dataline_cb = cb;
+		fi.dataline_cb_arg = cb_arg;
 		break;
 	}
 }
@@ -214,17 +200,11 @@ filter_handler(int fd, short event, void *p)
 			fm.code = fi.rcpt_cb(fm.cl_id, &fm.u.rcpt,
 			    fi.rcpt_cb_arg);
 			break;
-		case FILTER_DATA:
-			if (fi.data_cb == NULL)
+		case FILTER_DATALINE:
+			if (fi.dataline_cb == NULL)
 				goto ignore;
-			fm.code = fi.data_cb(fm.cl_id, &fm.u.data,
-			    fi.data_cb_arg);
-			break;
-		case FILTER_QUIT:
-			if (fi.quit_cb == NULL)
-				goto ignore;
-			fm.code = fi.quit_cb(fm.cl_id, &fm.u.quit,
-			    fi.quit_cb_arg);
+			fm.code = fi.dataline_cb(fm.cl_id, &fm.u.dataline,
+			    fi.dataline_cb_arg);
 			break;
 		default:
 			errx(1, "unsupported imsg");

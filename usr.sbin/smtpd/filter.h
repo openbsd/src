@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.h,v 1.1 2011/08/27 22:32:41 gilles Exp $	*/
+/*	$OpenBSD: filter.h,v 1.2 2011/08/31 18:56:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -36,8 +36,7 @@ enum filter_type {
 	FILTER_EHLO,
 	FILTER_MAIL,
 	FILTER_RCPT,
-	FILTER_DATA,
-	FILTER_QUIT,
+	FILTER_DATALINE,
 };
 
 struct filter_helo {
@@ -54,20 +53,15 @@ struct filter_rcpt {
 	char	domain[MAX_DOMAINPART_SIZE];
 };
 
-struct filter_data {
-	char	data[4096];
-};
-
-struct filter_quit {
-	char	data[4096];
+struct filter_dataline {
+	char	line[MAX_LINE_SIZE];
 };
 
 union filter_union {
 	struct filter_helo	helo;
 	struct filter_mail	mail;
 	struct filter_rcpt	rcpt;
-	struct filter_data	data;
-	struct filter_quit	quit;
+	struct filter_dataline	dataline;
 };
 
 struct filter_msg {
@@ -87,5 +81,4 @@ void filter_register_helo_callback(int (*)(u_int64_t, struct filter_helo *, void
 void filter_register_ehlo_callback(int (*)(u_int64_t, struct filter_helo *, void *), void *);
 void filter_register_mail_callback(int (*)(u_int64_t, struct filter_mail *, void *), void *);
 void filter_register_rcpt_callback(int (*)(u_int64_t, struct filter_rcpt *, void *), void *);
-void filter_register_data_callback(int (*)(u_int64_t, struct filter_data *, void *), void *);
-void filter_register_quit_callback(int (*)(u_int64_t, struct filter_quit *, void *), void *);
+void filter_register_dataline_callback(int (*)(u_int64_t, struct filter_dataline *, void *), void *);

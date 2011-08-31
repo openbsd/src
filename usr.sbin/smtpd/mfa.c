@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.60 2011/08/27 22:32:41 gilles Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.61 2011/08/31 18:56:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -44,6 +44,7 @@ static void mfa_test_helo(struct envelope *);
 static void mfa_test_mail(struct envelope *);
 static void mfa_test_rcpt(struct envelope *);
 static void mfa_test_rcpt_resume(struct submit_status *);
+static void mfa_test_dataline(struct submit_status *);
 static int mfa_strip_source_route(char *, size_t);
 static int mfa_fork_filter(struct filter *);
 void mfa_session(struct submit_status *, enum session_state);
@@ -63,6 +64,9 @@ mfa_imsg(struct imsgev *iev, struct imsg *imsg)
 			return;
 		case IMSG_MFA_RCPT:
 			mfa_test_rcpt(imsg->data);
+			return;
+		case IMSG_MFA_DATALINE:
+			mfa_test_dataline(imsg->data);
 			return;
 		}
 	}
@@ -301,6 +305,14 @@ mfa_test_rcpt_resume(struct submit_status *ss) {
 	ss->envelope.delivery.expire = ss->envelope.rule.r_qexpire;
 	imsg_compose_event(env->sc_ievs[PROC_LKA], IMSG_LKA_RCPT, 0, 0, -1,
 	    ss, sizeof(*ss));
+}
+
+static void
+mfa_test_dataline(struct submit_status *ss)
+{
+	ss->code = 250;
+
+	mfa_session(ss, S_DATACONTENT);
 }
 
 static int

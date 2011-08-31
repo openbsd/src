@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.235 2011/08/27 22:37:35 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.236 2011/08/31 18:56:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -147,7 +147,7 @@ enum imsg_type {
 	IMSG_MFA_HELO,
 	IMSG_MFA_MAIL,
 	IMSG_MFA_RCPT,
-	IMSG_MFA_DISCONNECT,
+	IMSG_MFA_DATALINE,
 
 	IMSG_QUEUE_CREATE_MESSAGE,
 	IMSG_QUEUE_SUBMIT_ENVELOPE,
@@ -753,6 +753,7 @@ struct submit_status {
 		u_int32_t		 msgid;
 		u_int64_t		 evpid;
 		char			 errormsg[MAX_LINE_SIZE];
+		char			 dataline[MAX_LINE_SIZE];
 	}				 u;
 	enum delivery_flags		 flags;
 	struct sockaddr_storage		 ss;
