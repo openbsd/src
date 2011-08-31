@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.38 2011/08/31 10:11:58 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.39 2011/08/31 22:50:21 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -451,8 +451,8 @@ sub add_version_constraints
 	my ($class, $constraints, $vspec) = @_;
 	return if $vspec eq '*'; # XXX
 	my $v = OpenBSD::PkgSpec::versionspec->new($vspec);
-	die "not a good exact spec" if !$$v->is_exact;
-	delete $$v->{p};
+	die "not a good exact spec" if !$v->is_exact;
+	delete $v->{p};
 	push(@$constraints, $v);
 }
 
