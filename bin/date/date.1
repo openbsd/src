@@ -1,4 +1,4 @@
-.\"	$OpenBSD: date.1,v 1.58 2011/07/08 06:54:11 jmc Exp $
+.\"	$OpenBSD: date.1,v 1.59 2011/08/31 08:48:40 jmc Exp $
 .\"	$NetBSD: date.1,v 1.12 1996/03/12 04:32:37 phil Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)date.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: July 8 2011 $
+.Dd $Mdocdate: August 31 2011 $
 .Dt DATE 1
 .Os
 .Sh NAME
@@ -54,7 +54,7 @@
 .Ar mm Oc
 .Ar dd Oc
 .Ar HH Oc
-.Ar MM Op Ar \&.SS
+.Ar MM Op No \&. Ns Ar SS
 .Oc
 .Sm on
 .Sh DESCRIPTION
@@ -135,19 +135,27 @@ The canonical representation for setting the date and time is:
 .Pp
 .Bl -tag -width Ds -compact -offset indent
 .It Ar ccyy
-Year:
-the first two digits (representing the century) may be omitted
-for non-ambiguous years (1969\-2068).
+Year.
+If yy is specified, but cc is not,
+a value for yy between 69 and 99 results in a cc value of 19.
+Otherwise, a cc value of 20 is used.
 .It Ar mm
-Numeric month: a number from 1 to 12.
+Month:
+a number from 1 to 12.
 .It Ar dd
-Day: a number from 1 to 31.
+Day:
+a number from 1 to 31.
 .It Ar HH
-Hour: a number from 0 to 23.
+Hour:
+a number from 0 to 23.
 .It Ar MM
-Minute: a number from 0 to 59.
+Minute:
+a number from 0 to 59.
 .It Ar SS
-Second: a number from 0 to 61 (59 plus a maximum of two leap seconds).
+Second:
+a number from 0 to 60
+(permitting a leap second),
+preceded by a period.
 .El
 .Pp
 Everything but the minute is optional.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: touch.1,v 1.23 2011/08/28 22:54:05 jmc Exp $
+.\"	$OpenBSD: touch.1,v 1.24 2011/08/31 08:48:40 jmc Exp $
 .\"	$NetBSD: touch.1,v 1.8 1995/08/31 22:10:05 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)touch.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: August 28 2011 $
+.Dd $Mdocdate: August 31 2011 $
 .Dt TOUCH 1
 .Os
 .Sh NAME
@@ -43,10 +43,10 @@
 .Nm touch
 .Op Fl acm
 .Sm off
-.Op Fl "d " Ar YYYY No - Ar MM No - Ar DDThh : Ar mm : Ar SS Oo \&. Ar frac Oc Op Ar Z
+.Op Fl "d " Ar ccyy No - Ar mm No - Ar ddTHH : Ar MM : Ar SS Oo \&. Ar frac Oc Op Ar Z
 .Sm on
 .Op Fl r Ar file
-.Op Fl t Oo Ns Oo Ar CC Oc Ns Ar YY Oc Ns Ar MMDDhhmm Ns Op \&. Ns Ar SS
+.Op Fl t Oo Ns Oo Ar cc Oc Ns Ar yy Oc Ns Ar mmddHHMM Ns Op \&. Ns Ar SS
 .Ar
 .Sh DESCRIPTION
 The
@@ -69,31 +69,37 @@ The
 utility does not treat this as an error.
 No error messages are displayed and the exit value is not affected.
 .Sm off
-.It Fl "d " Ar YYYY No - Ar MM No - Ar DDThh : Ar mm : Ar SS Oo \&. Ar frac Oc Op Ar Z
+.It Fl "d " Ar ccyy No - Ar mm No - Ar ddTHH : Ar MM : Ar SS Oo \&. Ar frac Oc Op Ar Z
 .Sm on
 Change the access and modification times to the specified time.
 The argument should be of the form
-YYYY-MM-DDThh:mm:SS[.frac][Z],
+ccyy-mm-ddTHH:MM:SS[.frac][Z],
 where the parts of the argument represent the following:
 .Pp
 .Bl -tag -width .frac -compact -offset indent
-.It Ar YYYY
-The four digits of the year.
-.It Ar MM
-The month of the year, from 1 to 12.
-.It Ar DD
-The day of the month, from 1 to 31.
+.It Ar ccyy
+Year.
+.It Ar mm
+Month:
+a number from 1 to 12.
+.It Ar dd
+Day:
+a number from 1 to 31.
 .It Ar T
 Either the capital letter
 .Sq T
 or a single space.
-.It Ar hh
-The hour of the day, from 0 to 23.
-.It Ar mm
-The minute of the hour, from 0 to 59.
+.It Ar HH
+Hour:
+a number from 0 to 23.
+.It Ar MM
+Minute:
+a number from 0 to 59.
 .It Ar SS
-The second of the minute, from 0 to 60.
-.It No \&. Ns Ar frac
+Second:
+a number from 0 to 60
+(permitting a leap second).
+.It Ar frac
 The decimal fraction of the second,
 either a period or comma,
 followed by one or more decimal digits.
@@ -111,51 +117,37 @@ flag is also specified.
 .It Fl r Ar file
 Use the access and modification times from the specified file
 instead of the current time of day.
-.It Fl t Oo Ns Oo Ar CC Oc Ns Ar YY Oc Ns Ar MMDDhhmm Ns Op \&. Ns Ar SS
+.It Fl t Oo Ns Oo Ar cc Oc Ns Ar yy Oc Ns Ar mmddHHMM Ns Op \&. Ns Ar SS
 Change the access and modification times to the specified time.
 The argument should be of the form
-[[CC]YY]MMDDhhmm[.SS],
+[[cc]yy]mmddHHMM[.SS],
 where the parts of the argument represent the following:
 .Pp
 .Bl -tag -width Ds -compact -offset indent
-.It Ar CC
-The first two digits of the year (the century).
-.It Ar YY
-The second two digits of the year.
-If
-.Dq YY
-is specified, but
-.Dq CC
-is not, a value for
-.Dq YY
-between 69 and 99 results in a
-.Dq CC
-value of 19.
-Otherwise, a
-.Dq CC
-value of 20 is used.
-.It Ar MM
-The month of the year, from 1 to 12.
-.It Ar DD
-The day of the month, from 1 to 31.
-.It Ar hh
-The hour of the day, from 0 to 23.
+.It Ar ccyy
+Year.
+If yy is specified, but cc is not,
+a value for yy between 69 and 99 results in a cc value of 19.
+Otherwise, a cc value of 20 is used.
 .It Ar mm
-The minute of the hour, from 0 to 59.
-.It No \&. Ns Ar SS
-The second of the minute, from 0 to 60,
+Month:
+a number from 1 to 12.
+.It Ar dd
+Day:
+a number from 1 to 31.
+.It Ar HH
+Hour:
+a number from 0 to 23.
+.It Ar MM
+Minute:
+a number from 0 to 59.
+.It Ar SS
+Second:
+a number from 0 to 60
+(permitting a leap second),
 preceded by a period.
+The default is 0.
 .El
-.Pp
-If the
-.Dq CC
-and
-.Dq YY
-letter pairs are not specified, the values default to the current
-year.
-If the
-.Dq SS
-letter pair is not specified, the value defaults to 0.
 .El
 .Sh EXIT STATUS
 .Ex -std touch
@@ -178,7 +170,7 @@ or
 option is specified, there are at least two arguments, and the first
 argument is a string of digits either eight or ten characters in length,
 the first argument is interpreted as a time specification of the form
-.Dq MMDDhhmm[YY] .
+.Dq mmddHHMM[yy] .
 .Sh HISTORY
 A
 .Nm

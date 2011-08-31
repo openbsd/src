@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.20 2011/08/30 02:07:11 guenther Exp $	*/
+/*	$OpenBSD: touch.c,v 1.21 2011/08/31 08:48:40 jmc Exp $	*/
 /*	$NetBSD: touch.c,v 1.11 1995/08/31 22:10:06 jtc Exp $	*/
 
 /*
@@ -326,7 +326,7 @@ __dead void
 usage(void)
 {
 	(void)fprintf(stderr,
-"usage: touch [-acm] [-d YYYY-MM-DDThh:mm:SS[.frac][Z]] [-r file]\n"
-"             [-t [[CC]YY]MMDDhhmm[.SS]] file ...\n");
+"usage: touch [-acm] [-d ccyy-mm-ddTHH:MM:SS[.frac][Z]] [-r file]\n"
+"             [-t [[cc]yy]mmddHHMM[.SS]] file ...\n");
 	exit(1);
 }
