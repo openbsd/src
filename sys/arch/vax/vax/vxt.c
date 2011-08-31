@@ -1,4 +1,4 @@
-/*	$OpenBSD: vxt.c,v 1.6 2011/07/06 20:42:05 miod Exp $	*/
+/*	$OpenBSD: vxt.c,v 1.7 2011/08/31 21:33:26 miod Exp $	*/
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -77,7 +77,7 @@ struct	cpu_dep vxt_calls = {
 void
 vxt_conf()
 {
-	printf("cpu: KA48\n");
+	printf("cpu: VXT\n");
 }
 
 void
