@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.50 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.51 2011/08/31 10:11:58 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -321,87 +321,6 @@ sub has_issues
 	} else {
 		return ();
 	}
-}
-
-package OpenBSD::PackageName::versionspec;
-our @ISA = qw(OpenBSD::PackageName::version);
-
-my $ops = {
-	'<' => 'lt',
-	'<=' => 'le',
-	'>' => 'gt',
-	'>=' => 'ge',
-	'=' => 'eq'
-};
-
-sub from_string
-{
-	my ($class, $s) = @_;
-	my ($op, $version) = ('=', $s);
-	if ($s =~ m/^(\>\=|\>|\<\=|\<|\=)(.*)$/) {
-		($op, $version) = ($1, $2);
-	}
-	bless $class->SUPER::from_string($version),
-		"OpenBSD::PackageName::version::$ops->{$op}";
-}
-
-sub pnum_compare
-{
-	my ($spec, $b) = @_;
-	if (!defined $spec->{p}) {
-		return 0;
-	} else {
-		return $spec->SUPER::pnum_compare($b);
-	}
-}
-
-sub is_exact
-{
-	return 0;
-}
-package OpenBSD::PackageName::version::lt;
-our @ISA = qw(OpenBSD::PackageName::versionspec);
-sub match
-{
-	my ($self, $b) = @_;
-	-$self->compare($b) >= 0 ? 0 : 1;
-}
-
-package OpenBSD::PackageName::version::le;
-our @ISA = qw(OpenBSD::PackageName::versionspec);
-sub match
-{
-	my ($self, $b) = @_;
-	-$self->compare($b) <= 0 ? 1 : 0;
-}
-
-package OpenBSD::PackageName::version::gt;
-our @ISA = qw(OpenBSD::PackageName::versionspec);
-sub match
-{
-	my ($self, $b) = @_;
-	-$self->compare($b) > 0 ? 1 : 0;
-}
-
-package OpenBSD::PackageName::version::ge;
-our @ISA = qw(OpenBSD::PackageName::versionspec);
-sub match
-{
-	my ($self, $b) = @_;
-	-$self->compare($b) >= 0 ? 1 : 0;
-}
-
-package OpenBSD::PackageName::version::eq;
-our @ISA = qw(OpenBSD::PackageName::versionspec);
-sub match
-{
-	my ($self, $b) = @_;
-	-$self->compare($b) == 0 ? 1 : 0;
-}
-
-sub is_exact
-{
-	return 1;
 }
 
 package OpenBSD::PackageName::Stem;
