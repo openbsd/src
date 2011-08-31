@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strptime.3,v 1.16 2011/01/19 12:04:23 jasper Exp $
+.\"	$OpenBSD: strptime.3,v 1.17 2011/08/31 08:49:42 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 19 2011 $
+.Dd $Mdocdate: August 31 2011 $
 .Dt STRPTIME 3
 .Os
 .Sh NAME
@@ -138,7 +138,7 @@ the time as %I:%M:%S %p.
 .It Cm \&%R
 the time as %H:%M.
 .It Cm \&%S
-the seconds [0,61];
+the seconds [0,60];
 leading zeros are permitted but not required.
 .It Cm \&%t
 any whitespace.
