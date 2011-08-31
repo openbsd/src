@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.49 2011/08/29 11:02:06 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.50 2011/08/31 03:40:53 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <libgen.h>
+#include <stdarg.h>
 
 void		 dired_init(void);
 static int	 dired(int, int);
@@ -33,6 +34,7 @@ static int	 d_expunge(int, int);
 static int	 d_copy(int, int);
 static int	 d_del(int, int);
 static int	 d_rename(int, int);
+static int	 d_exec(int, struct buffer *, const char *, const char *, ...);
 static int	 d_shell_command(int, int);
 static int	 d_create_directory(int, int);
 static int	 d_makename(struct line *, char *, size_t);
@@ -483,14 +485,10 @@ reaper(int signo __attribute__((unused)))
 int
 d_shell_command(int f, int n)
 {
-	char	 command[512], fname[MAXPATHLEN], buf[BUFSIZ], *bufp, *cp;
-	int	 infd, fds[2];
-	pid_t	 pid;
-	struct	 sigaction olda, newa;
+	char		 command[512], fname[MAXPATHLEN], *bufp;
 	struct buffer	*bp;
 	struct mgwin	*wp;
-	FILE	*fin;
-	char	 sname[NFILEN];
+	char		 sname[NFILEN];
 
 	bp = bfind("*Shell Command Output*", TRUE);
 	if (bclear(bp) != TRUE)
@@ -506,68 +504,125 @@ d_shell_command(int f, int n)
 	bufp = eread("! on %s: ", command, sizeof(command), EFNEW, sname);
 	if (bufp == NULL)
 		return (ABORT);
-	infd = open(fname, O_RDONLY);
-	if (infd == -1) {
-		ewprintf("Can't open input file : %s", strerror(errno));
-		return (FALSE);
+
+	if (d_exec(0, bp, fname, "sh", "-c", command, NULL) != TRUE)
+		return (ABORT);
+
+	if ((wp = popbuf(bp, WNONE)) == NULL)
+		return (ABORT);	/* XXX - free the buffer?? */
+	curwp = wp;
+	curbp = wp->w_bufp;
+	return (TRUE);
+}
+
+/*
+ * Pipe input file to cmd and insert the command's output in the
+ * given buffer.  Each line will be prefixed with the given
+ * number of spaces.
+ */
+static int
+d_exec(int space, struct buffer *bp, const char *input, const char *cmd, ...)
+{
+	char	 buf[BUFSIZ];
+	va_list	 ap;
+	struct	 sigaction olda, newa;
+	char	**argv = NULL, *cp;
+	FILE	*fin;
+	int	 fds[2] = { -1, -1 };
+	int	 infd = -1;
+	int	 ret = (ABORT), n;
+	pid_t	 pid;
+
+	if (sigaction(SIGCHLD, NULL, &olda) == -1)
+		return (ABORT);
+
+	/* Find the number of arguments. */
+	va_start(ap, cmd);
+	for (n = 2; va_arg(ap, char *) != NULL; n++)
+		;
+	va_end(ap);
+
+	/* Allocate and build the argv. */
+	if ((argv = calloc(n, sizeof(*argv))) == NULL) {
+		ewprintf("Can't allocate argv : %s", strerror(errno));
+		goto out;
 	}
+
+	n = 1;
+	argv[0] = (char *)cmd;
+	va_start(ap, cmd);
+	while ((argv[n] = va_arg(ap, char *)) != NULL)
+		n++;
+	va_end(ap);
+
+	if (input == NULL)
+		input = "/dev/null";
+
+	if ((infd = open(input, O_RDONLY)) == -1) {
+		ewprintf("Can't open input file : %s", strerror(errno));
+		goto out;
+	}
+
 	if (pipe(fds) == -1) {
 		ewprintf("Can't create pipe : %s", strerror(errno));
-		close(infd);
-		return (FALSE);
+		goto out;
 	}
 
 	newa.sa_handler = reaper;
 	newa.sa_flags = 0;
-	if (sigaction(SIGCHLD, &newa, &olda) == -1) {
-		close(infd);
-		close(fds[0]);
-		close(fds[1]);
-		return (ABORT);
-	}
-	pid = fork();
-	switch (pid) {
-	case -1:
+	if (sigaction(SIGCHLD, &newa, NULL) == -1)
+		goto out;
+
+	if ((pid = fork()) == -1) {
 		ewprintf("Can't fork");
-		return (ABORT);
-	case 0:
+		goto out;
+	}
+
+	switch (pid) {
+	case 0: /* Child */
 		close(fds[0]);
 		dup2(infd, STDIN_FILENO);
 		dup2(fds[1], STDOUT_FILENO);
 		dup2(fds[1], STDERR_FILENO);
-		execl("/bin/sh", "sh", "-c", bufp, (char *)NULL);
+		if (execvp(argv[0], argv) == -1)
+			ewprintf("Can't exec %s: %s", argv[0], strerror(errno));
 		exit(1);
 		break;
-	default:
+	default: /* Parent */
 		close(infd);
 		close(fds[1]);
-		fin = fdopen(fds[0], "r");
-		if (fin == NULL)	/* "r" is surely a valid mode! */
-			panic("can't happen");
+		infd = fds[1] = -1;
+		if ((fin = fdopen(fds[0], "r")) == NULL)
+			goto out;
 		while (fgets(buf, sizeof(buf), fin) != NULL) {
 			cp = strrchr(buf, '\n');
 			if (cp == NULL && !feof(fin)) {	/* too long a line */
 				int c;
-				addlinef(bp, "%s...", buf);
+				addlinef(bp, "%*s%s...", space, "", buf);
 				while ((c = getc(fin)) != EOF && c != '\n')
 					;
 				continue;
 			} else if (cp)
 				*cp = '\0';
-			addline(bp, buf);
+			addlinef(bp, "%*s%s", space, "", buf);
 		}
 		fclose(fin);
-		close(fds[0]);
 		break;
 	}
-	wp = popbuf(bp, WNONE);
-	if (wp == NULL)
-		return (ABORT);	/* XXX - free the buffer?? */
-	curwp = wp;
-	curbp = wp->w_bufp;
+	ret = (TRUE);
+
+out:
 	if (sigaction(SIGCHLD, &olda, NULL) == -1)
 		ewprintf("Warning, couldn't reset previous signal handler");
-	return (TRUE);
+	if (fds[0] != -1)
+		close(fds[0]);
+	if (fds[1] != -1)
+		close(fds[1]);
+	if (infd != -1)
+		close(infd);
+	if (argv != NULL)
+		free(argv);
+	return ret;
 }
 
 /* ARGSUSED */
@@ -595,34 +650,25 @@ d_create_directory(int f, int n)
 	return (showbuffer(bp, curwp, WFFULL | WFMODE));
 }
 
-#define NAME_FIELD	8
-
 static int
 d_makename(struct line *lp, char *fn, size_t len)
 {
-	int	 i;
-	char	*p, *ep;
+	int	 start, nlen;
+	char	*namep;
 
-	if (strlcpy(fn, curbp->b_fname, len) >= len)
-		return (FALSE);
-	if ((p = lp->l_text) == NULL)
+	if (d_warpdot(lp, &start) == FALSE)
 		return (ABORT);
-	ep = lp->l_text + llength(lp);
-	p++; /* skip action letter, if any */
-	for (i = 0; i < NAME_FIELD; i++) {
-		while (p < ep && isspace(*p))
-			p++;
-		while (p < ep && !isspace(*p))
-			p++;
-		while (p < ep && isspace(*p))
-			p++;
-		if (p == ep)
-			return (ABORT);
-	}
-	if (strlcat(fn, p, len) >= len)
-		return (FALSE);
+	namep = &lp->l_text[start];
+	nlen = llength(lp) - start;
+
+	if (snprintf(fn, len, "%s%.*s", curbp->b_fname, nlen, namep) >= len)
+		return (ABORT); /* Name is too long. */
+
+	/* Return TRUE if the entry is a directory. */
 	return ((lgetc(lp, 2) == 'd') ? TRUE : FALSE);
 }
+
+#define NAME_FIELD	9
 
 static int
 d_warpdot(struct line *dotp, int *doto)
@@ -637,15 +683,18 @@ d_warpdot(struct line *dotp, int *doto)
 	len = llength(dotp);
 	while (off < len) {
 		if (tp[off++] == ' ') {
-			if (++field == 9)
-				break;
+			if (++field == NAME_FIELD) {
+				*doto = off;
+				return (TRUE);
+			}
 			/* Skip the space. */
 			while (off < len && tp[off] == ' ')
 				off++;
 		}
 	}
-	*doto = off;
-	return (TRUE);
+	/* We didn't find the field. */
+	*doto = 0;
+	return (FALSE);
 }
 
 static int
@@ -683,9 +732,7 @@ struct buffer *
 dired_(char *dname)
 {
 	struct buffer	*bp;
-	FILE	*dirpipe;
-	char	 line[256];
-	int	 len, ret, i;
+	int		 len, i;
 
 	if ((fopen(dname,"r")) == NULL) {
 		if (errno == EACCES)
@@ -709,32 +756,15 @@ dired_(char *dname)
 	if (bclear(bp) != TRUE)
 		return (NULL);
 	bp->b_flag |= BFREADONLY;
-	ret = snprintf(line, sizeof(line), "ls -al %s", dname);
-	if (ret < 0 || ret  >= sizeof(line)) {
-		ewprintf("Path too long");
+
+	if ((d_exec(2, bp, NULL, "ls", "-al", dname, NULL)) != TRUE)
 		return (NULL);
-	}
-	if ((dirpipe = popen(line, "r")) == NULL) {
-		ewprintf("Problem opening pipe to ls");
-		return (NULL);
-	}
-	line[0] = line[1] = ' ';
-	while (fgets(&line[2], sizeof(line) - 2, dirpipe) != NULL) {
-		line[strcspn(line, "\n")] = '\0'; /* remove ^J	 */
-		(void) addline(bp, line);
-	}
-	if (pclose(dirpipe) == -1) {
-		ewprintf("Problem closing pipe to ls : %s",
-		    strerror(errno));
-		return (NULL);
-	}
 
 	/* Find the line with ".." on it. */
 	bp->b_dotp = bfirstlp(bp);
 	for (i = 0; i < bp->b_lines; i++) {
 		bp->b_dotp = lforw(bp->b_dotp);
-		d_warpdot(bp->b_dotp, &bp->b_doto);
-		if (bp->b_doto >= llength(bp->b_dotp))
+		if (d_warpdot(bp->b_dotp, &bp->b_doto) == FALSE)
 			continue;
 		if (strcmp(ltext(bp->b_dotp) + bp->b_doto, "..") == 0)
 			break;
