@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.53 2011/08/01 12:15:23 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.54 2011/08/31 14:34:28 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: August 1 2011 $
+.Dd $Mdocdate: August 31 2011 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -76,7 +76,7 @@ not buffer-specific, as in other emacs flavours.
 .Sh DEFAULT KEY BINDINGS
 Normal editing commands are very similar to GNU Emacs.
 In the following examples, C-x means Control-x, and M-x means Meta-x,
-where the Meta key may be either a special key on your keyboard
+where the Meta key may be either a special key on the keyboard
 or the ALT key; otherwise ESC followed by the key X works as well.
 .Pp
 .Bl -tag -width xxxxxxxxxx -compact
@@ -447,9 +447,9 @@ Print an error if there is anything wrong.
 Justify a paragraph, wrapping text at the current fill column.
 .It find-file
 Select a file for editing.
-First check if you can find the file
-in another buffer; if you can find it, just switch to the buffer.
-If you cannot find the file, create a new buffer, read in the
+First check if the file can be found
+in another buffer; if it is there, just switch to that buffer.
+If the file cannot be found, create a new buffer, read in the
 file from disk, and switch to the new buffer.
 .It find-file-read-only
 Same as find-file, except the new buffer is set to read-only.
@@ -775,7 +775,7 @@ Change all of the lower case characters in the region to
 upper case.
 .It upcase-word
 Move the cursor forward by the specified number of words.
-As you move, convert any characters to upper case.
+As it moves, convert any characters to upper case.
 .It what-cursor-position
 Display a bunch of useful information about the current location of
 dot.
@@ -804,7 +804,7 @@ and
 .Pa .mg-TERM .
 Here,
 .Ev TERM
-represents the name of your terminal type; e.g., if your terminal type
+represents the name of the terminal type; e.g., if the terminal type
 is set to
 .Dq vt100 ,
 .Nm
@@ -838,8 +838,8 @@ concise tutorial
 .Xr vi 1
 .Sh CAVEATS
 Since it is written completely in C, there is currently no
-language in which you can write extensions;
-however, you can rebind keys and change certain parameters
+language in which extensions can be written;
+however, keys can be rebound and certain parameters can be changed
 in startup files.
 .Pp
 In order to use 8-bit characters (such as German umlauts), the Meta key
