@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka48.c,v 1.11 2011/07/06 20:42:05 miod Exp $	*/
+/*	$OpenBSD: ka48.c,v 1.12 2011/08/31 21:32:44 miod Exp $	*/
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -99,8 +99,6 @@ ka48_conf()
 	}
 	printf("cpu: %s\n", cpuname);
 	ka48_cpu = (void *)vax_map_physmem(VS_REGS, 1);
-	printf("cpu: turning on floating point chip\n");
-	mtpr(2, PR_ACCS); /* Enable floating points */
 	/*
 	 * Setup parameters necessary to read time from clock chip.
 	 */
