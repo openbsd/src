@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.42 2010/09/03 11:09:28 jmc Exp $
+.\" $OpenBSD: at.1,v 1.43 2011/08/31 07:36:37 guenther Exp $
 .\"
 .\" Copyright (C) 1993, 1994  Thomas Koenig
 .\" Copyright (C) 1993  David Parsons
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: August 31 2011 $
 .Dt AT 1
 .Os
 .Sh NAME
@@ -127,39 +127,37 @@ is given a specific queue, only jobs pending in that queue will be shown.
 Remove the specified job(s) from the
 .Nm at
 queue.
-.It Fl t Ar time_arg
-Specify the job time using the format specified by
-.Xr touch 1 .
-The argument should be in the form
-.Ar [[CC]YY]MMDDhhmm[.SS]
-where each pair of letters represents the following:
+.It Fl t Oo Ns Oo Ar cc Oc Ns Ar yy Oc Ns Ar mmddHHMM Ns Op \&. Ns Ar SS
+Specify the job time.
+The argument should be of the form
+[[cc]yy]mmddHHMM[.SS],
+where the parts of the argument represent the following:
 .Pp
 .Bl -tag -width Ds -compact -offset indent
-.It Ar CC
-The first two digits of the year (the century).
-.It Ar YY
-The second two digits of the year.
-.It Ar MM
-The month of the year, from 1 to 12.
-.It Ar DD
-the day of the month, from 1 to 31.
-.It Ar hh
-The hour of the day, from 0 to 23.
+.It Ar ccyy
+Year.
+If yy is specified, but cc is not,
+a value for yy between 69 and 99 results in a cc value of 19.
+Otherwise, a cc value of 20 is used.
 .It Ar mm
-The minute of the hour, from 0 to 59.
+Month:
+a number from 1 to 12.
+.It Ar dd
+Day:
+a number from 1 to 31.
+.It Ar HH
+Hour:
+a number from 0 to 23.
+.It Ar MM
+Minute:
+a number from 0 to 59.
 .It Ar SS
-The second of the minute, from 0 to 61.
+Second:
+a number from 0 to 60
+(permitting a leap second),
+preceded by a period.
+The default is 0.
 .El
-.Pp
-If the
-.Ar CC
-and
-.Ar YY
-letter pairs are not specified, the values default to the current
-year.
-If the
-.Ar SS
-letter pair is not specified, the value defaults to 0.
 .El
 .Pp
 .Nm at
