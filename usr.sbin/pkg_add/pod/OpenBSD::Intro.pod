@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Intro.pod,v 1.15 2010/06/30 10:51:04 espie Exp $
+$OpenBSD: OpenBSD::Intro.pod,v 1.16 2011/08/31 09:18:47 espie Exp $
 
 =head1 NAME
 
@@ -99,12 +99,15 @@ and invokes C<install> and shows a progress bar if needed.
 =item package names and specs
 
 Package names and specifications for package names have a specific format,
-which is described in L<packages-specs(7)>.   Package names are handled
-within L<OpenBSD::PackageName(3p)>.  There is also a framework to organize
-searches based on L<OpenBSD::Search(3p)> objects.  Specifications are
-structured in a specific way, which yields a shorthand for conflict handling
-through L<OpenBSD::PkgCfl(3p)>, allows the package system to resolve
-dependencies in L<OpenBSD::Dependencies(3p)> and to figure out package
+which is described in L<packages-specs(7)>.   Package specs are objects
+created in L<OpenBSD::PkgSpec(3p)>, which are then compared to objects
+created in L<OpenBSD::PackageName(3p)>.  Both classes contain further functions
+for high level manipulation of names and specs. 
+There is also a framework to organize searches based on L<OpenBSD::Search(3p)> 
+objects.  Specifications are structured in a specific way, which yields 
+a shorthand for conflict handling through L<OpenBSD::PkgCfl(3p)>, 
+allows the package system to resolve dependencies in 
+L<OpenBSD::Dependencies(3p)> and to figure out package
 updates in L<OpenBSD::Update(3p)>.
 
 =item sources of packages
@@ -118,7 +121,7 @@ yields a proxy object called L<OpenBSD::PackageLocation(3p)> that can be used
 to gain further info.  (There are still shortcuts for installed packages
 for performance and simplicity reasons.)
 
-=item update sets
+=item package sets
 
 Each operation (installation, removal, or replacement of packages)
 is cut up into small atomic operations, in order to guarantee maximal
@@ -137,10 +140,15 @@ depends on A-0.0), or where files move between packages, which in
 theory will require update-sets with two new packages that replace two
 old packages.  We still cheat in a few cases, but in most cases, L<pkg_add(1)>
 will recognize those situations, and merge updatesets as required.
+L<pkg_delete(1)> also uses package sets, but a simpler variation, known as
+delete sets. Some update operations may produce inter-dependent packages,
+and those will have to be deleted together, instead of one after another.
+L<OpenBSD::UpdateSet(3p)> contains the code for both UpdateSets and DeleteSets
+for historical reasons.
 
 =item updater and tracker
 
-Updatesets contain some initial information, such as a package name to
+PackageSets contain some initial information, such as a package name to
 install, or a package location to update.
 
 This information will be completed incrementally by a
@@ -151,6 +159,9 @@ to resolve a hint to a package name to a full package location.
 In order to avoid loops, a C<OpenBSD::Tracker> tracker
 object keeps track of all the package name statuses: what's queued for
 update, what is uptodate, or what can't be updated.
+
+L<pkgdelete(1)> uses a simpler tracker, which is currently located inside
+the L<OpenBSD::PkgDelete(3p)> code.
 
 =item dependency information
 
