@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.75 2011/01/23 00:45:03 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.76 2011/08/31 08:58:29 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -414,7 +414,7 @@ retry:
 	}
 endoffile:
 	/* ignore errors */
-	ffclose(NULL);
+	(void)ffclose(NULL);
 	/* don't zap an error */
 	if (s == FIOEOF) {
 		if (nline == 1)
@@ -635,9 +635,11 @@ writeout(struct buffer *bp, char *fn)
 		s = ffclose(bp);
 		if (s == FIOSUC)
 			ewprintf("Wrote %s", fn);
-	} else
-		/* ignore close error if it is a write error */
+	} else {
+		/* print a message indicating write error */
 		(void)ffclose(bp);
+		ewprintf("Unable to write %s", fn);
+	}
 	(void)fupdstat(bp);
 	return (s == FIOSUC);
 }

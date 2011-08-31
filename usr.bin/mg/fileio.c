@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.84 2011/01/21 19:10:13 kjell Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.85 2011/08/31 08:58:29 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -77,7 +77,7 @@ fupdstat(struct buffer *bp)
 		return (FIOERR);
 	}
 	ffstat(bp);
-	ffclose(bp);
+	(void)ffclose(bp);
 	return (FIOSUC);
 }
 
@@ -122,14 +122,14 @@ ffwopen(const char *fn, struct buffer *bp)
 
 /*
  * Close a file.
- * XXX - Should look at the status.
  */
 /* ARGSUSED */
 int
 ffclose(struct buffer *bp)
 {
-	(void) fclose(ffp);
-	return (FIOSUC);
+	if (fclose(ffp) == 0)
+		return (FIOSUC);
+	return (FIOERR);	
 }
 
 /*
