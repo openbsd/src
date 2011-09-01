@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.110 2011/06/16 19:48:22 oga Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.111 2011/09/01 18:49:56 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -207,6 +207,7 @@ int		iwn_send_sensitivity(struct iwn_softc *);
 int		iwn_set_pslevel(struct iwn_softc *, int, int, int);
 int		iwn_send_temperature_offset(struct iwn_softc *);
 int		iwn_send_btcoex(struct iwn_softc *);
+int		iwn5000_runtime_calib(struct iwn_softc *);
 int		iwn_config(struct iwn_softc *);
 int		iwn_scan(struct iwn_softc *, uint16_t);
 int		iwn_auth(struct iwn_softc *);
@@ -4126,6 +4127,18 @@ iwn_send_btcoex(struct iwn_softc *sc)
 }
 
 int
+iwn5000_runtime_calib(struct iwn_softc *sc)
+{
+	struct iwn5000_calib_config cmd;
+
+	memset(&cmd, 0, sizeof cmd);
+	cmd.ucode.once.enable = 0xffffffff;
+	cmd.ucode.once.start = IWN5000_CALIB_DC;
+	DPRINTF(("configuring runtime calibration\n"));
+	return iwn_cmd(sc, IWN5000_CMD_CALIB_CONFIG, &cmd, sizeof(cmd), 0);
+}
+
+int
 iwn_config(struct iwn_softc *sc)
 {
 	struct iwn_ops *ops = &sc->ops;
@@ -4140,6 +4153,17 @@ iwn_config(struct iwn_softc *sc)
 		error = iwn5000_temp_offset_calib(sc);
 		if (error != 0) {
 			printf("%s: could not set temperature offset\n",
+			    sc->sc_dev.dv_xname);
+			return error;
+		}
+	}
+
+	if (sc->hw_type == IWN_HW_REV_TYPE_6050 ||
+	    sc->hw_type == IWN_HW_REV_TYPE_6005) {
+		/* Configure runtime DC calibration. */
+		error = iwn5000_runtime_calib(sc);
+		if (error != 0) {
+			printf("%s: could not configure runtime calibration\n",
 			    sc->sc_dev.dv_xname);
 			return error;
 		}
