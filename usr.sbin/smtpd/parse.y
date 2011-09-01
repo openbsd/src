@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.79 2011/09/01 09:42:15 chl Exp $	*/
+/*	$OpenBSD: parse.y,v 1.80 2011/09/01 16:23:33 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -44,6 +44,7 @@
 #include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <util.h>
 
