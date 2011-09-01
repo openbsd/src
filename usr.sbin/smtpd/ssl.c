@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.36 2011/05/21 17:01:58 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.37 2011/09/01 19:56:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -536,18 +536,11 @@ ssl_session_accept(int fd, short event, void *p)
 	log_info("ssl_session_accept: accepted ssl client");
 	s->s_flags |= F_SECURE;
 
-	if (s->s_l->flags & F_SMTPS) {
-		env->stats->smtp.smtps++;
-		env->stats->smtp.smtps_active++;
-		SET_IF_GREATER(env->stats->smtp.smtps_active,
-			env->stats->smtp.smtps_maxactive);
-	}
-	if (s->s_l->flags & F_STARTTLS) {
-		env->stats->smtp.starttls++;
-		env->stats->smtp.starttls_active++;
-		SET_IF_GREATER(env->stats->smtp.starttls_active,
-			env->stats->smtp.starttls_maxactive);
-	}
+	if (s->s_l->flags & F_SMTPS)
+		stat_increment(STATS_SMTP_SMTPS);
+
+	if (s->s_l->flags & F_STARTTLS)
+		stat_increment(STATS_SMTP_STARTTLS);
 
 	session_bufferevent_new(s);
 	event_set(&s->s_bev->ev_read, s->s_fd, EV_READ, ssl_read, s->s_bev);
@@ -644,14 +637,13 @@ ssl_session_destroy(struct session *s)
 		return;
 	}
 
-	if (s->s_l->flags & F_SMTPS) {
+	if (s->s_l->flags & F_SMTPS)
 		if (s->s_flags & F_SECURE)
-			env->stats->smtp.smtps_active--;
-	}
-	if (s->s_l->flags & F_STARTTLS) {
+			stat_decrement(STATS_SMTP_SMTPS);
+
+	if (s->s_l->flags & F_STARTTLS)
 		if (s->s_flags & F_SECURE)
-			env->stats->smtp.starttls_active--;
-	}
+			stat_decrement(STATS_SMTP_STARTTLS);
 }
 
 int

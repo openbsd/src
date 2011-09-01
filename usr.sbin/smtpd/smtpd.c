@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.129 2011/08/29 21:43:09 chl Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.130 2011/09/01 19:56:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -513,6 +513,7 @@ main(int argc, char *argv[])
 	if (env->stats == MAP_FAILED)
 		fatal("mmap");
 	bzero(env->stats, sizeof(struct stats));
+	stat_init(env->stats->counters, STATS_MAX);
 
 	env->stats->parent.start = time(NULL);
 

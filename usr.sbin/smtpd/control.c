@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.59 2011/07/21 23:29:24 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.60 2011/09/01 19:56:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -267,12 +267,7 @@ control_accept(int listenfd, short event, void *arg)
 	event_add(&c->iev.ev, NULL);
 	TAILQ_INSERT_TAIL(&ctl_conns, c, entry);
 
-	env->stats->control.sessions++;
-	env->stats->control.sessions_active++;
-	SET_IF_GREATER(env->stats->control.sessions_active,
-		env->stats->control.sessions_maxactive);
-
-	if (env->stats->control.sessions_active >= env->sc_maxconn) {
+	if (stat_increment(STATS_CONTROL_SESSION) >= env->sc_maxconn) {
 		log_warnx("ctl client limit hit, disabling new connections");
 		event_del(&control_state.ev);
 	}
@@ -305,10 +300,8 @@ control_close(int fd)
 	close(fd);
 	free(c);
 
-	env->stats->control.sessions_active--;
-
-	if (!event_pending(&control_state.ev, EV_READ, NULL) &&
-	    env->stats->control.sessions_active < env->sc_maxconn) {
+	if (stat_decrement(STATS_CONTROL_SESSION) < env->sc_maxconn &&
+	    !event_pending(&control_state.ev, EV_READ, NULL)) {
 		log_warnx("re-enabling ctl connections");
 		event_add(&control_state.ev, NULL);
 	}

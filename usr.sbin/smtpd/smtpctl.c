@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.66 2011/08/30 07:06:06 chl Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.67 2011/09/01 19:56:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -288,10 +288,56 @@ show_sizes(void)
 	printf("struct delivery: %zu\n", sizeof (struct delivery));
 }
 
+static void
+stat_print(int stat, int what)
+{
+	static const char *names[STATS_MAX] = {
+		"smtp.sessions",
+		"smtp.sessions.inet4",
+		"smtp.sessions.inet6",
+		"smtp.sessions.smtps",
+		"smtp.sessions.starttls",
+
+		"mta.sessions",
+
+		"mda.sessions",
+
+		"control.sessions",
+
+		"lka.sessions",
+		"lka.sessions.mx",
+		"lka.sessions.host",
+		"lka.sessions.cname",
+		"lka.sessions.failure",
+
+		"runner",
+		"runner.bounces",
+
+		"queue.inserts.local",
+		"queue.inserts.remote",
+
+		"ramqueue.envelopes",
+		"ramqueue.messages",
+		"ramqueue.batches",
+		"ramqueue.hosts",
+	};
+	const char *sfx;
+
+	if (what == STAT_ACTIVE)
+		sfx = ".active";
+	else if (what == STAT_MAXACTIVE)
+		sfx = ".maxactive";
+	else
+		sfx = "";
+
+	printf("%s%s=%zd\n", names[stat], sfx, stat_get(stat, what));
+}
+
 static int
 show_stats_output(struct imsg *imsg)
 {
 	struct stats	*stats;
+	struct stat_counter	*s;
 
 	if (imsg->hdr.type != IMSG_STATS)
 		errx(1, "show_stats_output: bad hdr type (%d)", imsg->hdr.type);
@@ -300,60 +346,63 @@ show_stats_output(struct imsg *imsg)
 		errx(1, "show_stats_output: bad data size");
 
 	stats = imsg->data;
+	stat_init(stats->counters, STATS_MAX);
+	s = stats->counters;
 
-	printf("control.sessions=%zd\n", stats->control.sessions);
-	printf("control.sessions_active=%zd\n",
-	    stats->control.sessions_active);
-	printf("control.sessions_maxactive=%zd\n",
-	    stats->control.sessions_maxactive);
+	stat_print(STATS_CONTROL_SESSION, STAT_COUNT);
+	stat_print(STATS_CONTROL_SESSION, STAT_ACTIVE);
+	stat_print(STATS_CONTROL_SESSION, STAT_MAXACTIVE);
 
-	printf("mda.sessions=%zd\n", stats->mda.sessions);
-	printf("mda.sessions.active=%zd\n", stats->mda.sessions_active);
-	printf("mda.sessions.maxactive=%zd\n", stats->mda.sessions_maxactive);
+	stat_print(STATS_MDA_SESSION, STAT_COUNT);
+	stat_print(STATS_MDA_SESSION, STAT_ACTIVE);
+	stat_print(STATS_MDA_SESSION, STAT_MAXACTIVE);
 
-	printf("mta.sessions=%zd\n", stats->mta.sessions);
-	printf("mta.sessions.active=%zd\n", stats->mta.sessions_active);
-	printf("mta.sessions.maxactive=%zd\n", stats->mta.sessions_maxactive);
+	stat_print(STATS_MTA_SESSION, STAT_COUNT);
+	stat_print(STATS_MTA_SESSION, STAT_ACTIVE);
+	stat_print(STATS_MTA_SESSION, STAT_MAXACTIVE);
 
-	printf("lka.queries=%zd\n", stats->lka.queries);
-	printf("lka.queries.active=%zd\n", stats->lka.queries_active);
-	printf("lka.queries.maxactive=%zd\n", stats->lka.queries_maxactive);
-	printf("lka.queries.mx=%zd\n", stats->lka.queries_mx);
-	printf("lka.queries.host=%zd\n", stats->lka.queries_host);
-	printf("lka.queries.cname=%zd\n", stats->lka.queries_cname);
-	printf("lka.queries.failure=%zd\n", stats->lka.queries_failure);
+	stat_print(STATS_LKA_SESSION, STAT_COUNT);
+	stat_print(STATS_LKA_SESSION, STAT_ACTIVE);
+	stat_print(STATS_LKA_SESSION, STAT_MAXACTIVE);
+	stat_print(STATS_LKA_SESSION_MX, STAT_COUNT);
+	stat_print(STATS_LKA_SESSION_HOST, STAT_COUNT);
+	stat_print(STATS_LKA_SESSION_CNAME, STAT_COUNT);
+	stat_print(STATS_LKA_FAILURE, STAT_COUNT);
 
 	printf("parent.uptime=%lld\n",
 	    (long long int) (time(NULL) - stats->parent.start));
 
-	printf("queue.inserts.local=%zd\n", stats->queue.inserts_local);
-	printf("queue.inserts.remote=%zd\n", stats->queue.inserts_remote);
+	stat_print(STATS_QUEUE_LOCAL, STAT_COUNT);
+	stat_print(STATS_QUEUE_REMOTE, STAT_COUNT);
 
-	printf("runner.active=%zd\n", stats->runner.active);
-	printf("runner.maxactive=%zd\n", stats->runner.maxactive);
-	printf("runner.bounces=%zd\n", stats->runner.bounces);
-	printf("runner.bounces.active=%zd\n", stats->runner.bounces_active);
-	printf("runner.bounces.maxactive=%zd\n",
-	    stats->runner.bounces_maxactive);
+	stat_print(STATS_RUNNER, STAT_COUNT);
+	stat_print(STATS_RUNNER, STAT_ACTIVE);
+	stat_print(STATS_RUNNER, STAT_MAXACTIVE);
 
-	printf("ramqueue.hosts=%zd\n", stats->ramqueue.hosts);
-	printf("ramqueue.batches=%zd\n", stats->ramqueue.batches);
-	printf("ramqueue.messages=%zd\n", stats->ramqueue.messages);
-	printf("ramqueue.envelopes=%zd\n", stats->ramqueue.envelopes);
-	printf("ramqueue.hosts.max=%zd\n", stats->ramqueue.hosts_max);
-	printf("ramqueue.batches.max=%zd\n", stats->ramqueue.batches_max);
-	printf("ramqueue.messages.max=%zd\n", stats->ramqueue.messages_max);
-	printf("ramqueue.envelopes.max=%zd\n", stats->ramqueue.envelopes_max);
+	stat_print(STATS_RUNNER_BOUNCES, STAT_COUNT);
+	stat_print(STATS_RUNNER_BOUNCES, STAT_ACTIVE);
+	stat_print(STATS_RUNNER_BOUNCES, STAT_MAXACTIVE);
+
+	stat_print(STATS_RAMQUEUE_HOST, STAT_ACTIVE);
+	stat_print(STATS_RAMQUEUE_BATCH, STAT_ACTIVE);
+	stat_print(STATS_RAMQUEUE_MESSAGE, STAT_ACTIVE);
+	stat_print(STATS_RAMQUEUE_ENVELOPE, STAT_ACTIVE);
+
+	stat_print(STATS_RAMQUEUE_HOST, STAT_MAXACTIVE);
+	stat_print(STATS_RAMQUEUE_BATCH, STAT_MAXACTIVE);
+	stat_print(STATS_RAMQUEUE_MESSAGE, STAT_MAXACTIVE);
+	stat_print(STATS_RAMQUEUE_ENVELOPE, STAT_MAXACTIVE);
+
 	printf("ramqueue.size=%zd\n",
-	    stats->ramqueue.hosts * sizeof(struct ramqueue_host) +
-	    stats->ramqueue.batches * sizeof(struct ramqueue_batch) +
-	    stats->ramqueue.messages * sizeof(struct ramqueue_message) +
-	    stats->ramqueue.envelopes * sizeof(struct ramqueue_envelope));
+	    s[STATS_RAMQUEUE_HOST].active * sizeof(struct ramqueue_host) +
+	    s[STATS_RAMQUEUE_BATCH].active * sizeof(struct ramqueue_batch) +
+	    s[STATS_RAMQUEUE_MESSAGE].active * sizeof(struct ramqueue_message) +
+	    s[STATS_RAMQUEUE_ENVELOPE].active * sizeof(struct ramqueue_envelope));
 	printf("ramqueue.size.max=%zd\n",
-	    stats->ramqueue.hosts_max * sizeof(struct ramqueue_host) +
-	    stats->ramqueue.batches_max * sizeof(struct ramqueue_batch) +
-	    stats->ramqueue.messages_max * sizeof(struct ramqueue_message) +
-	    stats->ramqueue.envelopes_max * sizeof(struct ramqueue_envelope));
+	    s[STATS_RAMQUEUE_HOST].maxactive * sizeof(struct ramqueue_host) +
+	    s[STATS_RAMQUEUE_BATCH].maxactive * sizeof(struct ramqueue_batch) +
+	    s[STATS_RAMQUEUE_MESSAGE].maxactive * sizeof(struct ramqueue_message) +
+	    s[STATS_RAMQUEUE_ENVELOPE].maxactive * sizeof(struct ramqueue_envelope));
 
 	printf("smtp.errors.delays=%zd\n", stats->smtp.delays);
 	printf("smtp.errors.linetoolong=%zd\n", stats->smtp.linetoolong);
@@ -366,27 +415,26 @@ show_stats_output(struct imsg *imsg)
 	printf("smtp.errors.write_system=%zd\n", stats->smtp.write_error);
 	printf("smtp.errors.write_timeout=%zd\n", stats->smtp.write_timeout);
 
-	printf("smtp.sessions.inet4=%zd\n", stats->smtp.sessions_inet4);
-	printf("smtp.sessions.inet6=%zd\n", stats->smtp.sessions_inet6);
-
-	printf("smtp.sessions=%zd\n", stats->smtp.sessions);
+	stat_print(STATS_SMTP_SESSION, STAT_COUNT);
+	stat_print(STATS_SMTP_SESSION_INET4, STAT_COUNT);
+	stat_print(STATS_SMTP_SESSION_INET6, STAT_COUNT);
 	printf("smtp.sessions.aborted=%zd\n", stats->smtp.read_eof +
 	    stats->smtp.read_error + stats->smtp.write_eof +
 	    stats->smtp.write_error);
-	printf("smtp.sessions.active=%zd\n", stats->smtp.sessions_active);
-	printf("smtp.sessions.maxactive=%zd\n",
-	    stats->smtp.sessions_maxactive);
+
+	stat_print(STATS_SMTP_SESSION, STAT_ACTIVE);
+	stat_print(STATS_SMTP_SESSION, STAT_MAXACTIVE);
+
 	printf("smtp.sessions.timeout=%zd\n", stats->smtp.read_timeout +
 	    stats->smtp.write_timeout);
-	printf("smtp.sessions.smtps=%zd\n", stats->smtp.smtps);
-	printf("smtp.sessions.smtps.active=%zd\n", stats->smtp.smtps_active);
-	printf("smtp.sessions.smtps.maxactive=%zd\n",
-	    stats->smtp.smtps_maxactive);
-	printf("smtp.sessions.starttls=%zd\n", stats->smtp.starttls);
-	printf("smtp.sessions.starttls.active=%zd\n",
-	    stats->smtp.starttls_active);
-	printf("smtp.sessions.starttls.maxactive=%zd\n",
-	    stats->smtp.starttls_maxactive);
+
+	stat_print(STATS_SMTP_SMTPS, STAT_COUNT);
+	stat_print(STATS_SMTP_SMTPS, STAT_ACTIVE);
+	stat_print(STATS_SMTP_SMTPS, STAT_MAXACTIVE);
+
+	stat_print(STATS_SMTP_STARTTLS, STAT_COUNT);
+	stat_print(STATS_SMTP_STARTTLS, STAT_ACTIVE);
+	stat_print(STATS_SMTP_STARTTLS, STAT_MAXACTIVE);
 
 	return (1);
 }

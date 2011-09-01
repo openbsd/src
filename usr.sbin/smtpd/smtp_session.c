@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.145 2011/09/01 09:42:15 chl Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.146 2011/09/01 19:56:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1020,11 +1020,9 @@ session_destroy(struct session *s)
 	if (s->s_fd != -1 && close(s->s_fd) == -1)
 		fatal("session_destroy: close");
 
-	env->stats->smtp.sessions_active--;
-
 	/* resume when session count decreases to 95% */
 	resume = env->sc_maxconn * 95 / 100;
-	if (env->stats->smtp.sessions_active == resume) {
+	if (stat_decrement(STATS_SMTP_SESSION) == resume) {
 		log_warnx("re-enabling incoming connections");
 		smtp_resume();
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.105 2011/08/29 18:49:29 chl Exp $	*/
+/*	$OpenBSD: queue.c,v 1.106 2011/09/01 19:56:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -80,12 +80,12 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 			ss.id = e->session_id;
 			if (e->delivery.flags & DF_ENQUEUED) {
 				if (queue_message_commit(Q_ENQUEUE, evpid_to_msgid(e->delivery.id)))
-					env->stats->queue.inserts_local++;
+					stat_increment(STATS_QUEUE_LOCAL);
 				else
 					ss.code = 421;
 			} else {
 				if (queue_message_commit(Q_INCOMING, evpid_to_msgid(e->delivery.id)))
-					env->stats->queue.inserts_remote++;
+					stat_increment(STATS_QUEUE_REMOTE);
 				else
 					ss.code = 421;
 			}

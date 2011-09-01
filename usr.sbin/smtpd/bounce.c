@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.32 2011/05/16 21:05:51 gilles Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.33 2011/09/01 19:56:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -158,8 +158,8 @@ out:
 		queue_message_update(&cc->m);
 	}
 
-	env->stats->runner.active--;
-	env->stats->runner.bounces_active--;
+	stat_decrement(STATS_RUNNER);
+	stat_decrement(STATS_RUNNER_BOUNCES);
 	client_close(cc->pcb);
 	fclose(cc->msgfp);
 	free(cc);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.116 2011/08/30 17:06:01 chl Exp $	*/
+/*	$OpenBSD: runner.c,v 1.117 2011/09/01 19:56:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -80,7 +80,7 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 	case IMSG_QUEUE_MESSAGE_UPDATE:
 		e = imsg->data;
 		e->delivery.retry++;
-		env->stats->runner.active--;
+		stat_decrement(STATS_RUNNER);
 
 		/* temporary failure, message remains in queue,
 		 * gets reinserted in ramqueue
@@ -114,11 +114,11 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 		return;
 
 	case IMSG_MDA_SESS_NEW:
-		env->stats->mda.sessions_active--;
+		stat_decrement(STATS_MDA_SESSION);
 		return;
 
 	case IMSG_BATCH_DONE:
-		env->stats->mta.sessions_active--;
+		stat_decrement(STATS_MTA_SESSION);
 		return;
 
 	case IMSG_PARENT_ENQUEUE_OFFLINE:
@@ -362,9 +362,9 @@ runner_process_envelope(struct ramqueue_envelope *rq_evp, time_t curtm)
 	size_t		 mta_av, mda_av, bnc_av;
 	struct envelope	 envelope;
 
-	mta_av = env->sc_maxconn - env->stats->mta.sessions_active;
-	mda_av = env->sc_maxconn - env->stats->mda.sessions_active;
-	bnc_av = env->sc_maxconn - env->stats->runner.bounces_active;
+	mta_av = env->sc_maxconn - stat_get(STATS_MTA_SESSION, STAT_ACTIVE);
+	mda_av = env->sc_maxconn - stat_get(STATS_MDA_SESSION, STAT_ACTIVE);
+	bnc_av = env->sc_maxconn - stat_get(STATS_RUNNER_BOUNCES, STAT_ACTIVE);
 	
 	if (! queue_envelope_load(Q_QUEUE, rq_evp->evpid, &envelope))
 		return 0;
@@ -432,13 +432,10 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 			    sizeof evp);
 			ramqueue_remove_envelope(&env->sc_rqueue, rq_evp);
 		}
-		env->stats->runner.bounces_active++;
-		env->stats->runner.bounces++;
-		SET_IF_GREATER(env->stats->runner.bounces_active,
-		    env->stats->runner.bounces_maxactive);
-		env->stats->runner.active++;
-		SET_IF_GREATER(env->stats->runner.active,
-		    env->stats->runner.maxactive);
+
+		stat_increment(STATS_RUNNER);
+		stat_increment(STATS_RUNNER_BOUNCES);
+
 		break;
 		
 	case D_MDA:
@@ -452,13 +449,9 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 		    sizeof evp);
 		ramqueue_remove_envelope(&env->sc_rqueue, rq_evp);
 
-		env->stats->mda.sessions_active++;
-		env->stats->mda.sessions++;
-		SET_IF_GREATER(env->stats->mda.sessions_active,
-		    env->stats->mda.sessions_maxactive);
-		env->stats->runner.active++;
-		SET_IF_GREATER(env->stats->runner.active,
-		    env->stats->runner.maxactive);
+		stat_increment(STATS_RUNNER);
+		stat_increment(STATS_MDA_SESSION);
+
 		break;
 		
 	case D_MTA:
@@ -475,17 +468,13 @@ runner_process_batch(struct ramqueue_envelope *rq_evp, time_t curtm)
 			    IMSG_BATCH_APPEND, PROC_MTA, 0, -1, &evp,
 			    sizeof evp);
 			ramqueue_remove_envelope(&env->sc_rqueue, rq_evp);
-			env->stats->runner.active++;
-			SET_IF_GREATER(env->stats->runner.active,
-			    env->stats->runner.maxactive);
+			stat_increment(STATS_RUNNER);
 		}
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 		    IMSG_BATCH_CLOSE, PROC_MTA, 0, -1, rq_batch,
 		    sizeof *rq_batch);
-		env->stats->mta.sessions_active++;
-		env->stats->mta.sessions++;
-		SET_IF_GREATER(env->stats->mta.sessions_active,
-		    env->stats->mta.sessions_maxactive);
+
+		stat_increment(STATS_MTA_SESSION);
 		break;
 		
 	default:

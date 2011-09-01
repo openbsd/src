@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.236 2011/08/31 18:56:30 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.237 2011/09/01 19:56:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -103,7 +103,6 @@
 	((s)->s_l->flags & F_AUTH && (s)->s_flags & F_SECURE && \
 	 !((s)->s_flags & F_AUTHENTICATED))
 
-#define SET_IF_GREATER(x,y) do { y = MAX(x,y); } while(0)
 		
 
 typedef u_int32_t	objid_t;
@@ -651,38 +650,54 @@ struct smtpd {
 	struct stats				*stats;
 };
 
+enum {
+	STATS_SMTP_SESSION = 0,
+	STATS_SMTP_SESSION_INET4,
+	STATS_SMTP_SESSION_INET6,
+	STATS_SMTP_SMTPS,
+	STATS_SMTP_STARTTLS,
+
+	STATS_MTA_SESSION,
+
+	STATS_MDA_SESSION,
+
+	STATS_CONTROL_SESSION,
+
+	STATS_LKA_SESSION,
+	STATS_LKA_SESSION_MX,
+	STATS_LKA_SESSION_HOST,
+	STATS_LKA_SESSION_CNAME,
+	STATS_LKA_FAILURE,
+
+	STATS_RUNNER,
+	STATS_RUNNER_BOUNCES,
+
+	STATS_QUEUE_LOCAL,
+	STATS_QUEUE_REMOTE,
+
+	STATS_RAMQUEUE_ENVELOPE,
+	STATS_RAMQUEUE_MESSAGE,
+	STATS_RAMQUEUE_BATCH,
+	STATS_RAMQUEUE_HOST,
+
+	STATS_MAX,
+};
+
+#define STAT_COUNT	0
+#define STAT_ACTIVE	1
+#define STAT_MAXACTIVE	2
+
+struct	stat_counter {
+	size_t	count;
+	size_t	active;
+	size_t	maxactive;
+};
+
 struct s_parent {
 	time_t		start;
 };
 
-struct s_queue {
-	size_t		inserts_local;
-	size_t		inserts_remote;
-};
-
-struct s_runner {
-	size_t		active;
-	size_t		maxactive;
-	size_t		bounces_active;
-	size_t		bounces_maxactive;
-	size_t		bounces;
-};
-
 struct s_session {
-	size_t		sessions;
-	size_t		sessions_inet4;
-	size_t		sessions_inet6;
-	size_t		sessions_active;
-	size_t		sessions_maxactive;
-
-	size_t		smtps;
-	size_t		smtps_active;
-	size_t		smtps_maxactive;
-
-	size_t		starttls;
-	size_t		starttls_active;
-	size_t		starttls_maxactive;
-
 	size_t		read_error;
 	size_t		read_timeout;
 	size_t		read_eof;
@@ -695,49 +710,12 @@ struct s_session {
 	size_t		delays;
 };
 
-struct s_mda {
-	size_t		sessions;
-	size_t		sessions_active;
-	size_t		sessions_maxactive;
-};
-
-struct s_control {
-	size_t		sessions;
-	size_t		sessions_active;
-	size_t		sessions_maxactive;
-};
-
-struct s_lka {
-	size_t		queries;
-	size_t		queries_active;
-	size_t		queries_maxactive;
-	size_t		queries_mx;
-	size_t		queries_host;
-	size_t		queries_cname;
-	size_t		queries_failure;
-};
-
-struct s_ramqueue {
-	size_t		hosts;
-	size_t		batches;
-	size_t		messages;
-	size_t		envelopes;
-	size_t		hosts_max;
-	size_t		batches_max;
-	size_t		messages_max;
-	size_t		envelopes_max;
-};
-
 struct stats {
 	struct s_parent		 parent;
-	struct s_queue		 queue;
-	struct s_runner		 runner;
 	struct s_session	 mta;
-	struct s_mda		 mda;
 	struct s_session	 smtp;
-	struct s_control	 control;
-	struct s_lka		 lka;
-	struct s_ramqueue	 ramqueue;
+
+	struct stat_counter	 counters[STATS_MAX];
 };
 
 struct reload {
@@ -1202,6 +1180,12 @@ SPLAY_PROTOTYPE(ssltree, ssl, ssl_nodes, ssl_cmp);
 /* ssl_privsep.c */
 int	 ssl_ctx_use_private_key(void *, char *, off_t);
 int	 ssl_ctx_use_certificate_chain(void *, char *, off_t);
+
+/* stats.c */
+void	stat_init(struct stat_counter *, int);
+size_t	stat_get(int, int);
+size_t	stat_increment(int);
+size_t	stat_decrement(int);
 
 
 /* user_backend.c */
