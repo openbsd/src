@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.78 2011/08/31 18:56:30 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.79 2011/09/01 09:42:15 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -379,7 +379,7 @@ main		: QUEUE INTERVAL interval	{
 				YYERROR;
 			}
 			free($2);
-		}
+		}/*
 		| FILTER STRING STRING		{
 			struct filter *filter;
 			struct filter *tmp;
@@ -411,6 +411,7 @@ main		: QUEUE INTERVAL interval	{
 			free($2);
 			free($3);
 		}
+		*/
 		;
 
 maptype		: SINGLE			{ map->m_type = T_SINGLE; }

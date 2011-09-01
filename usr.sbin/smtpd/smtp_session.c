@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.144 2011/08/31 18:56:30 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.145 2011/09/01 09:42:15 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -589,7 +589,6 @@ session_pickup(struct session *s, struct submit_status *ss)
 		return;
 	}
 
-	log_debug("state: %d", s->s_state);
 	switch (s->s_state) {
 	case S_INIT:
 		s->s_state = S_GREETED;
@@ -716,7 +715,6 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_DATACONTENT:
-		log_debug("line: %s\n", ss->u.dataline);
 		if (ss->code != 250)
 			s->s_msg.delivery.status |= DS_PERMFAILURE;
 		session_read_data(s, ss->u.dataline);

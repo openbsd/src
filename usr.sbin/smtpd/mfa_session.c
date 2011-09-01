@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa_session.c,v 1.3 2011/08/31 18:56:30 gilles Exp $	*/
+/*	$OpenBSD: mfa_session.c,v 1.4 2011/09/01 09:42:15 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -184,9 +184,9 @@ mfa_session_done(struct mfa_session *ms)
 		imsg_type = IMSG_MFA_RCPT;
 		break;
 	case S_DATACONTENT:
-		if (ms->ss.code != 530)
+		if (ms->ss.code != 530 && ms->fm.code != 0)
 			(void)strlcpy(ms->ss.u.dataline, ms->fm.u.dataline.line,
-			    sizeof(ms->ss.u.dataline));
+				      sizeof(ms->ss.u.dataline));
 		imsg_type = IMSG_MFA_DATALINE;
 		break;
 	default:
