@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.81 2011/08/03 13:33:29 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.82 2011/09/01 07:52:46 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -177,7 +177,6 @@ do_install_and_rm() {
 
 mm_install() {
 	local INSTDIR
-	unset RUNNING
 	INSTDIR=${1#.}
 	INSTDIR=${INSTDIR%/*}
 
@@ -194,24 +193,24 @@ mm_install() {
 
 	case "${1#.}" in
 	/dev/MAKEDEV)
-		RUNNING=" (running MAKEDEV(8))"
+		echo " (running MAKEDEV(8))"
 		(cd ${DESTDIR}/dev && /bin/sh MAKEDEV all)
 		export NEED_REBOOT=1
 		;;
 	/etc/login.conf)
 		if [ -f ${DESTDIR}/etc/login.conf.db ]; then
-			RUNNING=" (running cap_mkdb(1))"
+			echo " (running cap_mkdb(1))"
 			cap_mkdb ${DESTDIR}/etc/login.conf
 		fi
 		export NEED_REBOOT=1
 		;;
 	/etc/mail/access|/etc/mail/genericstable|/etc/mail/mailertable|/etc/mail/virtusertable)
-		RUNNING=" (running makemap(8))"
+		echo " (running makemap(8))"
 		DBFILE=`echo ${1} | sed -e 's,.*/,,'`
 		/usr/libexec/sendmail/makemap hash ${DESTDIR}/${1#.} < ${DESTDIR}/${1#.}
 		;;
 	/etc/mail/aliases)
-		RUNNING=" (running newaliases(8))"
+		echo " (running newaliases(8))"
 		if [ "${DESTDIR}" ]; then
 			chroot ${DESTDIR} newaliases >/dev/null || export NEED_NEWALIASES=1
 		else
@@ -219,8 +218,11 @@ mm_install() {
 		fi
 		;;
 	/etc/master.passwd)
-		RUNNING=" (running pwd_mkdb(8))"
+		echo " (running pwd_mkdb(8))"
 		pwd_mkdb -d ${DESTDIR}/etc -p ${DESTDIR}/etc/master.passwd
+		;;
+	*)
+		echo ""
 		;;
 	esac
 }
@@ -274,7 +276,7 @@ merge_loop() {
 				;;
 			[iI])
 				mv "${COMPFILE}.merged" "${COMPFILE}"
-				echo "\n===> Merging ${COMPFILE#.}${RUNNING}"
+				echo -n "\n===> Merging ${COMPFILE#.}"
 				if ! mm_install "${COMPFILE}"; then
 					echo "\t*** WARNING: problem merging ${COMPFILE#.}"
 				fi
@@ -339,7 +341,7 @@ diff_loop() {
 				done
 				# automatically install files which differ only by CVS Id or that are binaries
 				if [ -z "`diff -q -I'[$]OpenBSD:.*$' "${DESTDIR}${COMPFILE#.}" "${COMPFILE}"`" -o -n "${FORCE_UPG}" -o -n "${IS_BINFILE}" ]; then
-					echo "===> Updating ${COMPFILE#.}${RUNNING}"
+					echo -n "===> Updating ${COMPFILE#.}"
 					if mm_install "${COMPFILE}"; then
 						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
 					else
@@ -428,7 +430,7 @@ diff_loop() {
 				echo ""
 				NO_INSTALLED=1
 			else
-				echo "===> Installing ${COMPFILE#.}${RUNNING}"
+				echo -n "===> Installing ${COMPFILE#.}"
 				if mm_install "${COMPFILE}"; then
 					AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
 				else
@@ -473,7 +475,7 @@ diff_loop() {
 						echo "\t*** WARNING: problem creating ${COMPFILE#.} link"
 					fi
 				else
-					echo "===> Updating ${COMPFILE#.}${RUNNING}"
+					echo -n "===> Updating ${COMPFILE#.}"
 					if ! mm_install "${COMPFILE}"; then
 						echo "\t*** WARNING: problem updating ${COMPFILE#.}"
 					fi
