@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: relayd.pl,v 1.1 2011/09/01 17:33:17 bluhm Exp $
+#	$OpenBSD: relayd.pl,v 1.2 2011/09/02 10:45:36 bluhm Exp $
 
 # Copyright (c) 2010,2011 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -77,16 +77,24 @@ $r->down;
 
 exit if $args{nocheck};
 
-my $clen = $c->loggrep(qr/^LEN: /) // die "no client len"
+my @clen = $c->loggrep(qr/^LEN: /) or die "no client len"
     unless $args{client}{nocheck};
-my $slen = $s->loggrep(qr/^LEN: /) // die "no server len"
+my @slen = $s->loggrep(qr/^LEN: /) or die "no server len"
     unless $args{server}{nocheck};
-!$clen || !$slen || $clen eq $slen
-    or die "client: $clen", "server: $slen", "len mismatch";
-!defined($args{len}) || !$clen || $clen eq "LEN: $args{len}\n"
-    or die "client: $clen", "len $args{len} expected";
-!defined($args{len}) || !$slen || $slen eq "LEN: $args{len}\n"
-    or die "server: $slen", "len $args{len} expected";
+!@clen || !@slen || @clen ~~ @slen
+    or die "client: @clen", "server: @slen", "len mismatch";
+!defined($args{len}) || !$clen[0] || $clen[0] eq "LEN: $args{len}\n"
+    or die "client: $clen[0]", "len $args{len} expected";
+!defined($args{len}) || !$slen[0] || $slen[0] eq "LEN: $args{len}\n"
+    or die "server: $slen[0]", "len $args{len} expected";
+foreach my $len (@{$args{lengths} || []}) {
+	my $clen = shift @clen;
+	$clen eq "LEN: $len\n"
+	    or die "client: $clen", "len $len expected";
+	my $slen = shift @slen;
+	$slen eq "LEN: $len\n"
+	    or die "server: $slen", "len $len expected";
+}
 
 my $cmd5 = $c->loggrep(qr/^MD5: /) unless $args{client}{nocheck};
 my $smd5 = $s->loggrep(qr/^MD5: /) unless $args{server}{nocheck};

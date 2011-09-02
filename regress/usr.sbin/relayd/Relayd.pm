@@ -1,4 +1,4 @@
-#	$OpenBSD: Relayd.pm,v 1.1 2011/09/01 17:33:17 bluhm Exp $
+#	$OpenBSD: Relayd.pm,v 1.2 2011/09/02 10:45:36 bluhm Exp $
 
 # Copyright (c) 2010,2011 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -46,9 +46,10 @@ sub new {
 	$self->{connectport}
 	    or croak "$class connect port not given";
 
+	my $test = basename($self->{test} || "");
 	open(my $fh, '>', $self->{conffile})
 	    or die ref($self), " conf file $self->{conffile} create failed: $!";
-	my $test = basename($self->{test} || "");
+	print $fh "log all\n";
 
 	my @protocol = @{$self->{protocol}};
 	my $proto = shift @protocol;

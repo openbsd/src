@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.1 2011/09/01 17:33:17 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.2 2011/09/02 10:45:36 bluhm Exp $
 
 # Copyright (c) 2010,2011 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -83,19 +83,40 @@ sub write_char {
 	print STDERR "MD5: ", $ctx->hexdigest, "\n";
 }
 
-sub errignore {
-	$SIG{PIPE} = 'IGNORE';
-	$SIG{__DIE__} = sub {
-		die @_ if $^S;
-		warn @_;
-		my $soerror;
-		$soerror = getsockopt(STDIN, SOL_SOCKET, SO_ERROR);
-		print STDERR "ERROR IN: ", unpack('i', $soerror), "\n";
-		$soerror = getsockopt(STDOUT, SOL_SOCKET, SO_ERROR);
-		print STDERR "ERROR OUT: ", unpack('i', $soerror), "\n";
-		IO::Handle::flush(\*STDERR);
-		POSIX::_exit(0);
-	};
+sub http_client {
+	my $self = shift;
+	my @lengths = @{$self->{lengths} || [ shift // $self->{len} // 251 ]};
+	my $vers = $self->{lengths} ? "1.1" : "1.0";
+
+	foreach my $len (@lengths) {
+		{
+			local $\ = "\r\n";
+			print "GET /$len HTTP/$vers";
+			print "Host: foo.bar";
+			print "";
+		}
+		IO::Handle::flush(\*STDOUT);
+
+		{
+			local $\ = "\n";
+			local $/ = "\r\n";
+			local $_ = <STDIN>;
+			chomp;
+			print STDERR;
+			m{^HTTP/$vers 200 OK$}
+			    or die ref($self), " http response not ok";
+			while (<STDIN>) {
+				chomp;
+				last if /^$/;
+				print STDERR;
+				if (/^Content-Length: (.*)/) {
+					$1 == $len or die ref($self),
+					    " bad content length $1";
+				}
+			}
+		}
+		read_char($self, $vers eq "1.1" ? $len : undef);
+	}
 }
 
 ########################################################################
@@ -104,23 +125,61 @@ sub errignore {
 
 sub read_char {
 	my $self = shift;
-	my $max = $self->{max};
+	my $max = shift // $self->{max};
 
 	my $ctx = Digest::MD5->new();
 	my $len = 0;
-	while (<STDIN>) {
-		$len += length($_);
-		$ctx->add($_);
-		print STDERR ".";
-		if ($max && $len >= $max) {
-			print STDERR "\nMax";
-			last;
+	if (defined($max) && $max == 0) {
+		print STDERR "Max\n";
+	} else {
+		while (<STDIN>) {
+			$len += length($_);
+			$ctx->add($_);
+			print STDERR ".";
+			if (defined($max) && $len >= $max) {
+				print STDERR "\nMax";
+				last;
+			}
 		}
+		print STDERR "\n";
 	}
-	print STDERR "\n";
 
 	print STDERR "LEN: ", $len, "\n";
 	print STDERR "MD5: ", $ctx->hexdigest, "\n";
+}
+
+sub http_server {
+	my $self = shift;
+
+	my($url, $vers);
+	do {
+		{
+			local $\ = "\n";
+			local $/ = "\r\n";
+			local $_ = <STDIN>;
+			return unless defined $_;
+			chomp;
+			print STDERR;
+			($url, $vers) = m{^GET (.*) HTTP/(1\.[01])$}
+			    or die ref($self), " http request not ok";
+			while (<STDIN>) {
+				chomp;
+				last if /^$/;
+				print STDERR;
+			}
+		}
+
+		$url =~ /(\d+)$/;
+		my $len = $1;
+		{
+			local $\ = "\r\n";
+			print "HTTP/$vers 200 OK";
+			print "Content-Length: $len" if $vers eq "1.1";
+			print "";
+		}
+		write_char($self, $len);
+		IO::Handle::flush(\*STDOUT);
+	} while ($vers eq "1.1");
 }
 
 1;
