@@ -1,4 +1,4 @@
-$Id: tutorial,v 1.5 2008/07/30 17:39:31 kjell Exp $
+$Id: tutorial,v 1.6 2011/09/02 02:37:52 lum Exp $
 
 The mg Tutorial
 ---------------
@@ -243,7 +243,7 @@ you should see the line and column number change.
 In the middle of the screen, you should see the word "(fundamental)" which 
 indicates that the current editing mode is "fundamental-mode". The mg editor
 also supports a c-mode that is more suited to editing C code. There are also
-some other useful editing modes for different situations. See the man pages 
+some other useful editing modes for different situations. See the man page 
 for mg(1) to learn about the various editing modes.
 
 Opening and Saving Files
@@ -316,7 +316,7 @@ for autocompleting the command.
 For instance, to replace text, you can type M-x repl TAB enter to execute 
 the replace-text command. To cancel this command, type C-g. 
 
-To see a list of all available mg(1) commands, consult the man pages.
+To see a list of all available mg(1) commands, consult the man page.
 
 Exiting mg
 ----------
@@ -332,9 +332,9 @@ Conclusion
 ----------
 
 This tutorial is meant to get new users up and running with mg. There is more
-information available via the mg(1) man pages. If you have any suggestions for
+information available via the mg(1) man page. If you have any suggestions for
 improvement, please don't hesitate to drop a message or (better still) submit
-a diff listing.
+a diff to tech@openbsd.org.
 
 History
 -------
@@ -360,7 +360,7 @@ Author Info
 -----------
 
 Original Author of this document: Mayukh Bose, 
-Date last updated: 2008-07-29
+Date last updated: 2011-09-02
 
 Copyright
 ---------
