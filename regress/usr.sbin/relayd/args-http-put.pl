@@ -10,7 +10,7 @@ our %args = (
 	lengths => \@lengths,
 	method => "PUT",
     },
-    relay => {
+    relayd => {
 	protocol => [ "http",
 	    "request header log foo",
 	    "response header log bar",

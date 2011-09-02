@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.3 2011/09/02 17:02:10 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.4 2011/09/02 21:05:41 bluhm Exp $
 
 # Copyright (c) 2010,2011 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -122,6 +122,21 @@ sub http_client {
 		read_char($self, $vers eq "1.1" ? $len : undef)
 		    if $method eq "GET";
 	}
+}
+
+sub errignore {
+	$SIG{PIPE} = 'IGNORE';
+	$SIG{__DIE__} = sub {
+		die @_ if $^S;
+		warn @_;
+		my $soerror;
+		$soerror = getsockopt(STDIN, SOL_SOCKET, SO_ERROR);
+		print STDERR "ERROR IN: ", unpack('i', $soerror), "\n";
+		$soerror = getsockopt(STDOUT, SOL_SOCKET, SO_ERROR);
+		print STDERR "ERROR OUT: ", unpack('i', $soerror), "\n";
+		IO::Handle::flush(\*STDERR);
+		POSIX::_exit(0);
+	};
 }
 
 ########################################################################

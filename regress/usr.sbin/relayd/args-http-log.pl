@@ -7,7 +7,7 @@ our %args = (
     client => {
 	func => \&http_client,
     },
-    relay => {
+    relayd => {
 	protocol => [ "http",
 	    "request header log foo",
 	    "response header log bar",

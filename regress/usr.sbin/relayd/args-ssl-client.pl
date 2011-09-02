@@ -7,7 +7,7 @@ our %args = (
     client => {
 	ssl => 1,
     },
-    relay => {
+    relayd => {
 	listenssl => 1,
     },
     len => 251,

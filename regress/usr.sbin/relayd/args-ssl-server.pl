@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 our %args = (
-    relay => {
+    relayd => {
 	forwardssl => 1,
     },
     server => {

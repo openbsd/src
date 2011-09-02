@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: relayd.pl,v 1.2 2011/09/02 10:45:36 bluhm Exp $
+#	$OpenBSD: relayd.pl,v 1.3 2011/09/02 21:05:41 bluhm Exp $
 
 # Copyright (c) 2010,2011 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -54,7 +54,7 @@ my $r = Relayd->new(
     connectdomain       => AF_INET,
     connectaddr         => "127.0.0.1",
     connectport         => $sport,
-    %{$args{relay}},
+    %{$args{relayd}},
     test                => $test,
 );
 my $c = Client->new(

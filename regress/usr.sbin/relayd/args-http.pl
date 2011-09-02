@@ -7,7 +7,7 @@ our %args = (
     client => {
 	func => \&http_client,
     },
-    relay => {
+    relayd => {
 	protocol => [ "http" ],
     },
     server => {
