@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.2 2011/09/02 10:45:36 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.3 2011/09/02 17:02:10 bluhm Exp $
 
 # Copyright (c) 2010,2011 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -87,14 +87,18 @@ sub http_client {
 	my $self = shift;
 	my @lengths = @{$self->{lengths} || [ shift // $self->{len} // 251 ]};
 	my $vers = $self->{lengths} ? "1.1" : "1.0";
+	my $method = $self->{method} || "GET";
 
 	foreach my $len (@lengths) {
 		{
 			local $\ = "\r\n";
-			print "GET /$len HTTP/$vers";
+			print "$method /$len HTTP/$vers";
 			print "Host: foo.bar";
+			print "Content-Length: $len"
+			    if $vers eq "1.1" && $method eq "PUT";
 			print "";
 		}
+		write_char($self, $len) if $method eq "PUT";
 		IO::Handle::flush(\*STDOUT);
 
 		{
@@ -115,7 +119,8 @@ sub http_client {
 				}
 			}
 		}
-		read_char($self, $vers eq "1.1" ? $len : undef);
+		read_char($self, $vers eq "1.1" ? $len : undef)
+		    if $method eq "GET";
 	}
 }
 
@@ -151,8 +156,9 @@ sub read_char {
 sub http_server {
 	my $self = shift;
 
-	my($url, $vers);
+	my($method, $url, $vers);
 	do {
+		my $len;
 		{
 			local $\ = "\n";
 			local $/ = "\r\n";
@@ -160,24 +166,32 @@ sub http_server {
 			return unless defined $_;
 			chomp;
 			print STDERR;
-			($url, $vers) = m{^GET (.*) HTTP/(1\.[01])$}
+			($method, $url, $vers) = m{^(\w+) (.*) HTTP/(1\.[01])$}
 			    or die ref($self), " http request not ok";
+			$method =~ /^(GET|PUT)$/
+			    or die ref($self), " unknown method: $method";
+			($len) = $url =~ /(\d+)$/;
 			while (<STDIN>) {
 				chomp;
 				last if /^$/;
 				print STDERR;
+				if (/^Content-Length: (.*)/) {
+					$1 == $len or die ref($self),
+					    " bad content length $1";
+				}
 			}
 		}
+		read_char($self, $vers eq "1.1" ? $len : undef)
+		    if $method eq "PUT";
 
-		$url =~ /(\d+)$/;
-		my $len = $1;
 		{
 			local $\ = "\r\n";
 			print "HTTP/$vers 200 OK";
-			print "Content-Length: $len" if $vers eq "1.1";
+			print "Content-Length: $len"
+			    if $vers eq "1.1" && $method eq "GET";
 			print "";
 		}
-		write_char($self, $len);
+		write_char($self, $len) if $method eq "GET";
 		IO::Handle::flush(\*STDOUT);
 	} while ($vers eq "1.1");
 }

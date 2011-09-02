@@ -1,4 +1,4 @@
-# test persistent http 1.1 connection over http relay
+# test persistent http 1.1 put over http relay
 
 use strict;
 use warnings;
@@ -8,6 +8,7 @@ our %args = (
     client => {
 	func => \&http_client,
 	lengths => \@lengths,
+	method => "PUT",
     },
     relay => {
 	protocol => [ "http",
