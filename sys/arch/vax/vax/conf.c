@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.64 2011/07/06 18:32:59 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.65 2011/09/03 20:41:31 miod Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -183,6 +183,7 @@ cdev_decl(nnpfs_dev);
 
 #include "vscsi.h"
 #include "pppx.h"
+#include "audio.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -271,6 +272,7 @@ struct cdevsw	cdevsw[] =
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 78: vscsi */
 	cdev_disk_init(1,diskmap),	/* 79: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 80: pppx */
+	cdev_audio_init(NAUDIO,audio),	/* 81: /dev/audio */
 };
 int	nchrdev = nitems(cdevsw);
 

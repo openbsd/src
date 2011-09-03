@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.56 2011/07/06 18:32:59 miod Exp $
+#	$OpenBSD: GENERIC,v 1.57 2011/09/03 20:41:31 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -55,6 +55,10 @@ smg0		at vsbus0 csr 0x200f0000 # VS3100 on-board mono frame buffer
 gpx0		at vsbus0 csr 0x3c000000 # VS3100 GPX display option
 lcg0		at vsbus0 csr 0x20100000 # VS4000/60 (or VLC) frame buffer
 lcspx0		at vsbus0 csr 0x39302000 # VS4000/90 frame buffer
+vsaudio0	at vsbus0 csr 0x200d0000 # VS4000/60 (or VLC) audio
+vsaudio0	at vsbus0 csr 0x26800000 # VS4000/90 audio
+
+audio0		at vsaudio?
 
 hd*		at hdc0 drive?		# RD5x disks
 #ry*		at hdc0 drive?		# RX floppies
