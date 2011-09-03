@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stdio.3,v 1.21 2011/09/03 22:59:07 jmc Exp $
+.\"	$OpenBSD: stdio.3,v 1.22 2011/09/03 23:24:51 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,13 +40,9 @@
 .Fd FILE *stdout;
 .Fd FILE *stderr;
 .Sh DESCRIPTION
-The standard
-.Tn I/O
-library provides a simple and efficient buffered stream
-.Tn I/O
-interface.
-Input and output is mapped into logical data streams and the physical
-.Tn I/O
+The standard I/O library
+provides a simple and efficient buffered stream I/O interface.
+Input and output is mapped into logical data streams and the physical I/O
 characteristics are concealed.
 The functions and macros are listed below;
 more information is available from the individual man pages.
@@ -160,11 +156,10 @@ function.
 .Pp
 The
 .Nm stdio
-library is a part of the library
-.Xr libc
+library is a part of the library libc
 and routines are automatically loaded as needed by the compiler.
 The
-.Tn SYNOPSIS
+.Sx SYNOPSIS
 sections of the following manual pages indicate which include files
 are to be used, what the compiler declaration for the function
 looks like, and which external variables are of interest.

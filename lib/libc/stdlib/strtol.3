@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtol.3,v 1.21 2011/09/03 22:59:07 jmc Exp $
+.\"	$OpenBSD: strtol.3,v 1.22 2011/09/03 23:24:51 jmc Exp $
 .\"
 .Dd $Mdocdate: September 3 2011 $
 .Dt STRTOL 3
@@ -157,7 +157,7 @@ If no conversion could be performed, 0 is returned;
 the global variable
 .Va errno
 is also set to
-.Er EINVAL,
+.Er EINVAL ,
 though this is not portable across all platforms.
 If overflow or underflow occurs,
 .Va errno
