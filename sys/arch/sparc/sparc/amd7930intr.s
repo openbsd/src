@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930intr.s,v 1.11 2010/08/17 20:05:08 miod Exp $	*/
+/*	$OpenBSD: amd7930intr.s,v 1.12 2011/09/03 20:04:04 miod Exp $	*/
 /*	$NetBSD: amd7930intr.s,v 1.10 1997/03/11 01:03:07 pk Exp $	*/
 /*
  * Copyright (c) 1995 Rolf Grossmann.
@@ -47,6 +47,8 @@
 #include <sparc/sparc/intreg.h>
 #include <machine/psl.h>
 #include <machine/asm.h>
+
+#include <dev/ic/am7930reg.h>
 
 /*
  * Note the following code hardcodes soft interrupt level 4, instead of
@@ -117,7 +119,7 @@ _C_LABEL(amd7930_trap):
 	std	%l2, [%l7 + AU_COUNT]
 
 	ld	[%l7 + AU_AMD], R_amd
-	ldub    [R_amd + AMD_IR], %g0		! clear interrupt
+	ldub    [R_amd + AM7930_DREG_IR], %g0	! clear interrupt
 
 	! receive incoming data
 	ld	[%l7 + AU_RDATA], R_data
@@ -129,7 +131,7 @@ _C_LABEL(amd7930_trap):
 	bgu	1f
 	 nop
 
-	ldub	[R_amd + AMD_BBRB], %l6		! *d = amd->bbrb
+	ldub	[R_amd + AM7930_DREG_BBRB], %l6	! *d = amd->bbrb
 	stb	%l6, [ R_data ]
 	cmp	R_data, R_end
 	inc	R_data				! au->au_rdata++
@@ -153,7 +155,7 @@ _C_LABEL(amd7930_trap):
 	 nop
 
 	ldub	[ R_data ], %l6			! amd->bbtb = *d
-	stb	%l6, [ R_amd + AMD_BBTB ]
+	stb	%l6, [ R_amd + AM7930_DREG_BBTB ]
 
 	cmp	R_data, R_end
 	inc	R_data				! au->au_pdata++
