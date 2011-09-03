@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.48 2011/07/04 15:54:24 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.49 2011/09/03 01:21:00 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -637,6 +637,7 @@ longmode_hi:
 
 /*
  * Signal trampoline; copied to top of user stack.
+ * gdb's backtrace logic matches against the instructions in this.
  */
 NENTRY(sigcode)
 	call	*%rax
