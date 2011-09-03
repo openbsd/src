@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.17 2011/08/26 07:49:04 kevlo Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.18 2011/09/03 14:33:51 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -420,13 +420,11 @@ alc_phy_reset(struct alc_softc *sc)
 	uint16_t data;
 
 	/* Reset magic from Linux. */
-	CSR_WRITE_2(sc, ALC_GPHY_CFG,
-	    GPHY_CFG_HIB_EN | GPHY_CFG_HIB_PULSE | GPHY_CFG_SEL_ANA_RESET);
+	CSR_WRITE_2(sc, ALC_GPHY_CFG, GPHY_CFG_SEL_ANA_RESET);
 	CSR_READ_2(sc, ALC_GPHY_CFG);
 	DELAY(10 * 1000);
 
-	CSR_WRITE_2(sc, ALC_GPHY_CFG,
-	    GPHY_CFG_EXT_RESET | GPHY_CFG_HIB_EN | GPHY_CFG_HIB_PULSE |
+	CSR_WRITE_2(sc, ALC_GPHY_CFG, GPHY_CFG_EXT_RESET |
 	    GPHY_CFG_SEL_ANA_RESET);
 	CSR_READ_2(sc, ALC_GPHY_CFG);
 	DELAY(10 * 1000);
@@ -511,6 +509,23 @@ alc_phy_reset(struct alc_softc *sc)
 	alc_miibus_writereg(&sc->sc_dev, sc->alc_phyaddr,
 	    ALC_MII_DBG_DATA, data);
 	DELAY(1000);
+
+	/* Disable hibernation. */
+	alc_miibus_writereg(&sc->sc_dev, sc->alc_phyaddr, ALC_MII_DBG_ADDR,
+	    0x0029);
+	data = alc_miibus_readreg(&sc->sc_dev, sc->alc_phyaddr,
+	    ALC_MII_DBG_DATA);
+	data &= ~0x8000;
+	alc_miibus_writereg(&sc->sc_dev, sc->alc_phyaddr, ALC_MII_DBG_DATA,
+	    data);
+
+	alc_miibus_writereg(&sc->sc_dev, sc->alc_phyaddr, ALC_MII_DBG_ADDR,
+	    0x000B);
+	data = alc_miibus_readreg(&sc->sc_dev, sc->alc_phyaddr,
+	    ALC_MII_DBG_DATA);
+	data &= ~0x8000;
+	alc_miibus_writereg(&sc->sc_dev, sc->alc_phyaddr, ALC_MII_DBG_DATA,
+	    data);
 }
 
 void
@@ -535,8 +550,7 @@ alc_phy_down(struct alc_softc *sc)
 		break;
 	default:
 		/* Force PHY down. */
-		CSR_WRITE_2(sc, ALC_GPHY_CFG,
-		    GPHY_CFG_EXT_RESET | GPHY_CFG_HIB_EN | GPHY_CFG_HIB_PULSE |
+		CSR_WRITE_2(sc, ALC_GPHY_CFG, GPHY_CFG_EXT_RESET |
 		    GPHY_CFG_SEL_ANA_RESET | GPHY_CFG_PHY_IDDQ | 
 		    GPHY_CFG_PWDOWN_HW);
 		DELAY(1000);
