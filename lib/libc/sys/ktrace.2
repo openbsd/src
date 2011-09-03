@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.2,v 1.20 2011/07/08 19:30:32 otto Exp $
+.\"	$OpenBSD: ktrace.2,v 1.21 2011/09/03 22:59:07 jmc Exp $
 .\"	$NetBSD: ktrace.2,v 1.2 1995/02/27 12:33:58 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ktrace.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 8 2011 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt KTRACE 2
 .Os
 .Sh NAME
@@ -72,11 +72,18 @@ The
 .Fa ops
 parameter specifies the requested ktrace operation.
 The defined operations are:
-.Bl -column KTRFLAG_DESCENDXXX -offset indent
-.It Dv KTROP_SET	Enable trace points specified in Ar trpoints .
-.It Dv KTROP_CLEAR	Disable trace points specified in Ar trpoints .
-.It Dv KTROP_CLEARFILE	Stop all tracing.
-.It Dv KTRFLAG_DESCEND	The tracing change should apply to the
+.Pp
+.Bl -tag -width KTRFLAG_DESCEND -offset indent -compact
+.It Dv KTROP_SET
+Enable trace points specified in
+.Ar trpoints .
+.It Dv KTROP_CLEAR
+Disable trace points specified in
+.Ar trpoints .
+.It Dv KTROP_CLEARFILE
+Stop all tracing.
+.It Dv KTRFLAG_DESCEND
+The tracing change should apply to the
 specified process and all its current children.
 .El
 .Pp
@@ -84,17 +91,27 @@ The
 .Fa trpoints
 parameter specifies the trace points of interest.
 The defined trace points are:
-.Bl -column KTRFAC_SYSCALLXXX -offset indent
-.It Dv KTRFAC_SYSCALL	Trace system calls.
-.It Dv KTRFAC_SYSRET	Trace return values from system calls.
-.It Dv KTRFAC_NAMEI	Trace name lookup operations.
-.It Dv KTRFAC_GENIO	Trace all I/O (note that this option can
-generate much output).
-.It Dv KTRFAC_PSIG	Trace posted signals.
-.It Dv KTRFAC_EMUL	Trace emulation changes.
-.It Dv KTRFAC_CSW	Trace context switch points.
-.It Dv KTRFAC_STRUCT	Trace various structs
-.It Dv KTRFAC_INHERIT	Inherit tracing to future children.
+.Pp
+.Bl -tag -width KTRFAC_INHERIT -offset indent -compact
+.It Dv KTRFAC_SYSCALL
+Trace system calls.
+.It Dv KTRFAC_SYSRET
+Trace return values from system calls.
+.It Dv KTRFAC_NAMEI
+Trace name lookup operations.
+.It Dv KTRFAC_GENIO
+Trace all I/O
+(note that this option can generate much output).
+.It Dv KTRFAC_PSIG
+Trace posted signals.
+.It Dv KTRFAC_EMUL
+Trace emulation changes.
+.It Dv KTRFAC_CSW
+Trace context switch points.
+.It Dv KTRFAC_STRUCT
+Trace various structs
+.It Dv KTRFAC_INHERIT
+Inherit tracing to future children.
 .El
 .Pp
 Each tracing event outputs a record composed of a generic header

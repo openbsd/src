@@ -1,4 +1,4 @@
-.\"     $OpenBSD: uperf.4,v 1.14 2007/05/31 19:19:57 jmc Exp $
+.\"     $OpenBSD: uperf.4,v 1.15 2011/09/03 22:59:07 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt UPERF 4 sparc64
 .Os
 .Sh NAME
@@ -73,57 +73,108 @@ fields specify the source for the counter.
 Not all counters support monitoring all sources and specifying an invalid
 source for a counter to monitor will result in an error.
 The sources are specified below:
-.Bl -column "XXXXXXXXXXXXXX" "description" -offset indent
-.It Em UPERFSRC_SYSCK Ta "system clock ticks"
-.It Em UPERFSRC_PRALL Ta "all p-requests"
-.It Em UPERFSRC_PRP0 Ta "p-requests from processor 0"
-.It Em UPERFSRC_PRU2S Ta "p-requests from the U2S"
-.It Em UPERFSRC_UPA128 Ta "cycles UPA 128 bit data is busy"
-.It Em UPERFSRC_UPA64 Ta "cycles UPA 64 bit data is busy"
-.It Em UPERFSRC_PIOS Ta "cycles stalled during PIO"
-.It Em UPERFSRC_MEMRI Ta "memory requests issued"
-.It Em UPERFSRC_MCBUSY Ta "cycles memory controller is busy"
-.It Em UPERFSRC_PXSH Ta "stall cycles due to pending transaction scoreboard hit"
-.It Em UPERFSRC_P0CWMR Ta "coherent write miss requests, processor 0"
-.It Em UPERFSRC_P1CWMR Ta "coherent write miss requests, processor 1"
-.It Em UPERFSRC_CIT Ta "coherent intervention transactions"
-.It Em UPERFSRC_U2SDAT Ta "data transactions on U2S"
-.It Em UPERFSRC_CRXI Ta "coherent read transactions issued"
-.It Em UPERFSRC_RDP0 Ta "read requests, processor 0"
-.It Em UPERFSRC_P0CRMR Ta "coherent read misses, processor 0"
-.It Em UPERFSRC_P0PIO Ta "PIO accesses, processor 0"
-.It Em UPERFSRC_MEMRC Ta "memory requests completed"
-.It Em UPERFSRC_P1RR Ta "read requests, processor 1"
-.It Em UPERFSRC_CRMP1 Ta "coherent read misses, processor 1"
-.It Em UPERFSRC_PIOP1 Ta "PIO accesses, processor 1"
-.It Em UPERFSRC_CWXI Ta "coherent write transactions issued"
-.It Em UPERFSRC_RP0 Ta "read requests, processor 0"
-.It Em UPERFSRC_SDVRA Ta "streaming DVMA read transfers, PCI bus A"
-.It Em UPERFSRC_SDVWA Ta "streaming DVMA write transfers, PCI bus A"
-.It Em UPERFSRC_CDVRA Ta "consistent DVMA read transfers, PCI bus A"
-.It Em UPERFSRC_CDVWA Ta "consistent DVMA write transfers, PCI bus A"
-.It Em UPERFSRC_SBMA Ta "streaming buffer misses, PCI bus A"
-.It Em UPERFSRC_DVA Ta "DVMA cycles, PCI bus A"
-.It Em UPERFSRC_DVWA Ta "words transferred via DVMA, PCI bus A"
-.It Em UPERFSRC_PIOA Ta "cycles consumed by PIO, bus A"
-.It Em UPERFSRC_SDVRB Ta "streaming DVMA read transfers, PCI bus B"
-.It Em UPERFSRC_SDVWB Ta "streaming DVMA write transfers, PCI bus B"
-.It Em UPERFSRC_CDVRB Ta "consistent DVMA read transfers, PCI bus B"
-.It Em UPERFSRC_CDVWB Ta "consistent DVMA write transfers, PCI bus B"
-.It Em UPERFSRC_SBMB Ta "streaming buffer misses, PCI bus B"
-.It Em UPERFSRC_DVB Ta "DVMA cycles, PCI bus B"
-.It Em UPERFSRC_DVWB Ta "words transferred via DVMA, PCI bus B"
-.It Em UPERFSRC_PIOB Ta "cycles consumed by PIO, bus B"
-.It Em UPERFSRC_TLBMISS Ta "TLB misses"
-.It Em UPERFSRC_NINTRS Ta "interrupts"
-.It Em UPERFSRC_INACK Ta "interrupt NACKS on UPA"
-.It Em UPERFSRC_PIOR Ta "PIO read transfers"
-.It Em UPERFSRC_PIOW Ta "PIO write transfers"
-.It Em UPERFSRC_MERGE Ta "merge buffer transactions"
-.It Em UPERFSRC_TBLA Ta "DMA requests retried due to tablewalks, PCI bus A"
-.It Em UPERFSRC_STCA Ta "DMA requests retries due to STC, PCI bus A"
-.It Em UPERFSRC_TBLB Ta "DMA requests retries due to tablewalks, PCI bus B"
-.It Em UPERFSRC_STCB Ta "DMA requests retries due to STC, PCI bus B"
+.Pp
+.Bl -tag -width "UPERFSRC_TLBMISS" -offset indent -compact
+.It Em UPERFSRC_SYSCK
+system clock ticks
+.It Em UPERFSRC_PRALL
+all p-requests
+.It Em UPERFSRC_PRP0
+p-requests from processor 0
+.It Em UPERFSRC_PRU2S
+p-requests from the U2S
+.It Em UPERFSRC_UPA128
+cycles UPA 128 bit data is busy
+.It Em UPERFSRC_UPA64
+cycles UPA 64 bit data is busy
+.It Em UPERFSRC_PIOS
+cycles stalled during PIO
+.It Em UPERFSRC_MEMRI
+memory requests issued
+.It Em UPERFSRC_MCBUSY
+cycles memory controller is busy
+.It Em UPERFSRC_PXSH
+stall cycles due to pending transaction scoreboard hit
+.It Em UPERFSRC_P0CWMR
+coherent write miss requests, processor 0
+.It Em UPERFSRC_P1CWMR
+coherent write miss requests, processor 1
+.It Em UPERFSRC_CIT
+coherent intervention transactions
+.It Em UPERFSRC_U2SDAT
+data transactions on U2S
+.It Em UPERFSRC_CRXI
+coherent read transactions issued
+.It Em UPERFSRC_RDP0
+read requests, processor 0
+.It Em UPERFSRC_P0CRMR
+coherent read misses, processor 0
+.It Em UPERFSRC_P0PIO
+PIO accesses, processor 0
+.It Em UPERFSRC_MEMRC
+memory requests completed
+.It Em UPERFSRC_P1RR
+read requests, processor 1
+.It Em UPERFSRC_CRMP1
+coherent read misses, processor 1
+.It Em UPERFSRC_PIOP1
+PIO accesses, processor 1
+.It Em UPERFSRC_CWXI
+coherent write transactions issued
+.It Em UPERFSRC_RP0
+read requests, processor 0
+.It Em UPERFSRC_SDVRA
+streaming DVMA read transfers, PCI bus A
+.It Em UPERFSRC_SDVWA
+streaming DVMA write transfers, PCI bus A
+.It Em UPERFSRC_CDVRA
+consistent DVMA read transfers, PCI bus A
+.It Em UPERFSRC_CDVWA
+consistent DVMA write transfers, PCI bus A
+.It Em UPERFSRC_SBMA
+streaming buffer misses, PCI bus A
+.It Em UPERFSRC_DVA
+DVMA cycles, PCI bus A
+.It Em UPERFSRC_DVWA
+words transferred via DVMA, PCI bus A
+.It Em UPERFSRC_PIOA
+cycles consumed by PIO, bus A
+.It Em UPERFSRC_SDVRB
+streaming DVMA read transfers, PCI bus B
+.It Em UPERFSRC_SDVWB
+streaming DVMA write transfers, PCI bus B
+.It Em UPERFSRC_CDVRB
+consistent DVMA read transfers, PCI bus B
+.It Em UPERFSRC_CDVWB
+consistent DVMA write transfers, PCI bus B
+.It Em UPERFSRC_SBMB
+streaming buffer misses, PCI bus B
+.It Em UPERFSRC_DVB
+DVMA cycles, PCI bus B
+.It Em UPERFSRC_DVWB
+words transferred via DVMA, PCI bus B
+.It Em UPERFSRC_PIOB
+cycles consumed by PIO, bus B
+.It Em UPERFSRC_TLBMISS
+TLB misses
+.It Em UPERFSRC_NINTRS
+interrupts
+.It Em UPERFSRC_INACK
+interrupt NACKS on UPA
+.It Em UPERFSRC_PIOR
+PIO read transfers
+.It Em UPERFSRC_PIOW
+PIO write transfers
+.It Em UPERFSRC_MERGE
+merge buffer transactions
+.It Em UPERFSRC_TBLA
+DMA requests retried due to tablewalks, PCI bus A
+.It Em UPERFSRC_STCA
+DMA requests retries due to STC, PCI bus A
+.It Em UPERFSRC_TBLB
+DMA requests retries due to tablewalks, PCI bus B
+.It Em UPERFSRC_STCB
+DMA requests retries due to STC, PCI bus B
 .El
 .Pp
 The

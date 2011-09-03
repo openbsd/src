@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termcap.5,v 1.25 2011/08/30 12:25:09 jmc Exp $
+.\"	$OpenBSD: termcap.5,v 1.26 2011/09/03 22:59:08 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)termcap.5	6.11 (Berkeley) 3/6/93
 .\"
-.Dd $Mdocdate: August 30 2011 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt TERMCAP 5
 .Os
 .Sh NAME
@@ -80,15 +80,15 @@ in 132-column mode would be
 .Dq vt100-w .
 .Pp
 The following suffixes should be used where possible:
-.Bl -column "suffix" "With automatic margins (usually default)" "example"
-.It Sy Suffix	Meaning	Example
-.It \-w	Wide mode (more than 80 columns).	vt100-w
-.It \-am	With automatic margins (usually default).	vt100-am
-.It \-nam	Without automatic margins.	vt100-nam
-.It Pf \- Ar n Ta No "Number of lines on screen.	aaa-60"
-.It \-na	No arrow keys (leave them in local).	concept100-na
-.It Pf \- Ar \&np Ta No "Number of pages of memory.	concept100-4p"
-.It \-rv	Reverse video.	concept100-rv
+.Bl -column "Suffix" "With automatic margins (usually default)" "Example"
+.It Sy Suffix Ta Sy Meaning Ta Sy Example
+.It \-w Ta "Wide mode (more than 80 columns)." Ta vt100-w
+.It \-am Ta "With automatic margins (usually default)." Ta vt100-am
+.It \-nam Ta "Without automatic margins." Ta vt100-nam
+.It Pf \- Ar n Ta "Number of lines on screen." Ta aaa-60
+.It \-na Ta "arrow keys (leave them in local)." Ta concept100-na
+.It Pf \- Ar np Ta "Number of pages of memory." Ta concept100-4p
+.It \-rv Ta "Reverse video." Ta concept100-rv
 .El
 .Sh CAPABILITIES
 The characters in the
@@ -109,298 +109,298 @@ capabilities have no
 equivalents, since they were considered useless,
 or are subsumed by other capabilities.
 New software should not rely on them at all.
-.Bl -column indent indent indent
-.It Sy Name	Type	Notes	Description
-.It "ae	str	(P)	End alternate character set."
-.It "AL	str	(NP*)	Add"
+.Bl -column "i1-i3" "Type" "(NP*)" "Description"
+.It Sy Name Ta Sy Type Ta Sy Notes Ta Sy Description
+.It ae Ta str Ta (P) Ta "End alternate character set."
+.It AL Ta str Ta (NP*) Ta "Add"
 .Em n
 new blank lines
-.It "al	str	(P*)	Add new blank line."
-.It "am	bool		Terminal has automatic margins."
-.It "as	str	(P)	Start alternate character set."
-.It "bc	str	(o)	Backspace if not"
+.It al Ta str Ta (P*) Ta "Add new blank line."
+.It am Ta bool Ta "" Ta "Terminal has automatic margins."
+.It as Ta str Ta (P) Ta "Start alternate character set."
+.It bc Ta str Ta (o) Ta "Backspace if not"
 .Sy \&^H .
-.It "bl	str	(P)	Audible signal (bell)."
-.It "bs	bool	(o)	Terminal can backspace with"
+.It bl Ta str Ta (P) Ta "Audible signal (bell)."
+.It bs Ta bool Ta (o) Ta "Terminal can backspace with"
 .Sy \&^H .
-.It "bt	str	(P)	Back tab."
-.It "bw	bool	" Ta Sy \&le
+.It bt Ta str Ta (P) Ta "Back tab."
+.It bw Ta bool Ta "" Ta Sy \&le
 (backspace) wraps from column 0 to last column.
-.It "CC	str		Terminal settable command character in prototype."
-.It "cd	str	(P*)	Clear to end of display."
-.It "ce	str	(P)	Clear to end of line."
-.It "ch	str	(NP)	Set cursor column (horizontal position)."
-.It "cl	str	(P*)	Clear screen and home cursor."
-.It "CM	str	(NP)	Memory-relative cursor addressing."
-.It "cm	str	(NP)	Screen-relative cursor motion."
-.It "co	num		Number of columns in a line (see"
+.It CC Ta str Ta "" Ta "Terminal settable command character in prototype."
+.It cd Ta str Ta (P*) Ta "Clear to end of display."
+.It ce Ta str Ta (P) Ta "Clear to end of line."
+.It ch Ta str Ta (NP) Ta "Set cursor column (horizontal position)."
+.It cl Ta str Ta (P*) Ta "Clear screen and home cursor."
+.It CM Ta str Ta (NP) Ta "Memory-relative cursor addressing."
+.It cm Ta str Ta (NP) Ta "Screen-relative cursor motion."
+.It co Ta num Ta "" Ta "Number of columns in a line (see"
 .Sx BUGS
 section below).
-.It "cr	str	(P)	Carriage return."
-.It "cs	str	(NP)	Change scrolling region (VT100)."
-.It "ct	str	(P)	Clear all tab stops."
-.It "cv	str	(NP)	Set cursor row (vertical position)."
-.It "da	bool		Display may be retained above the screen."
-.It "dB	num	(o)	Milliseconds"
+.It cr Ta str Ta (P) Ta "Carriage return."
+.It cs Ta str Ta (NP) Ta "Change scrolling region (VT100)."
+.It ct Ta str Ta (P) Ta "Clear all tab stops."
+.It cv Ta str Ta (NP) Ta "Set cursor row (vertical position)."
+.It da Ta bool Ta "" Ta "Display may be retained above the screen."
+.It dB Ta num Ta (o) Ta "Milliseconds"
 .Sy \&bs
 delay needed (default 0).
-.It "db	bool		Display may be retained below the screen."
-.It "DC	str	(NP*)	Delete"
+.It db Ta bool Ta "" Ta "Display may be retained below the screen."
+.It DC Ta str Ta (NP*) Ta "Delete"
 .Em n
 characters.
-.It "dC	num	(o)	Milliseconds"
+.It dC Ta num Ta (o) Ta "Milliseconds"
 .Sy \&cr
 delay needed (default 0).
-.It "dc	str	(P*)	Delete character."
-.It "dF	num	(o)	Milliseconds"
+.It dc Ta str Ta (P*) Ta "Delete character."
+.It dF Ta num Ta (o) Ta "Milliseconds"
 .Sy \&ff
 delay needed (default 0).
-.It "DL	str	(NP*)	Delete"
+.It DL Ta str Ta (NP*) Ta "Delete"
 .Ar n
 lines.
-.It "dl	str	(P*)	Delete line."
-.It "dm	str		Enter delete mode."
-.It "dN	num	(o)	Milliseconds"
+.It dl Ta str Ta (P*) Ta "Delete line."
+.It dm Ta str Ta "" Ta "Enter delete mode."
+.It dN Ta num Ta (o) Ta "Milliseconds"
 .Sy \&nl
 delay needed (default 0).
-.It "DO	str	(NP*)	Move cursor down"
+.It DO Ta str Ta (NP*) Ta "Move cursor down"
 .Ar n
 lines.
-.It "do	str		Down one line."
-.It "ds	str		Disable status line."
-.It "dT	num	(o)	Milliseconds of horizontal tab delay needed (default 0)."
-.It "dV	num	(o)	Milliseconds of vertical tab delay needed (default 0)."
-.It "ec	str	(NP)	Erase"
+.It do Ta str Ta "" Ta "Down one line."
+.It ds Ta str Ta "" Ta "Disable status line."
+.It dT Ta num Ta (o) Ta "Milliseconds of horizontal tab delay needed (default 0)."
+.It dV Ta num Ta (o) Ta "Milliseconds of vertical tab delay needed (default 0)."
+.It ec Ta str Ta (NP) Ta "Erase"
 .Ar n
 characters.
-.It "ed	str		End delete mode."
-.It "ei	str		End insert mode."
-.It "eo	bool		Can erase overstrikes with a blank."
-.It "EP	bool	(o)	Even parity."
-.It "es	bool		Escape can be used on the status line."
-.It "ff	str	(P*)	Hardcopy terminal page eject."
-.It "fs	str		Return from status line."
-.It "gn	bool		Generic line type, for example dialup, switch)."
-.It "hc	bool		Hardcopy terminal."
-.It "HD	bool	(o)	Half-duplex."
-.It "hd	str		Half-line down (forward 1/2 linefeed)."
-.It "ho	str	(P)	Home cursor."
-.It "hs	bool		Has extra"
+.It ed Ta str Ta "" Ta "End delete mode."
+.It ei Ta str Ta "" Ta "End insert mode."
+.It eo Ta bool Ta "" Ta "Can erase overstrikes with a blank."
+.It EP Ta bool Ta (o) Ta "Even parity."
+.It es Ta bool Ta "" Ta "Escape can be used on the status line."
+.It ff Ta str Ta (P*) Ta "Hardcopy terminal page eject."
+.It fs Ta str Ta "" Ta "Return from status line."
+.It gn Ta bool Ta "" Ta "Generic line type, for example dialup, switch)."
+.It hc Ta bool Ta "" Ta "Hardcopy terminal."
+.It HD Ta bool Ta (o) Ta "Half-duplex."
+.It hd Ta str Ta "" Ta "Half-line down (forward 1/2 linefeed)."
+.It ho Ta str Ta (P) Ta "Home cursor."
+.It hs Ta bool Ta "" Ta "Has extra"
 .Dq status line .
-.It "hu	str		Half-line up (reverse 1/2 linefeed)."
-.It "hz	bool		Cannot print ``~'' (Hazeltine)."
-.It "i1-i3	str		Terminal initialization strings"
+.It hu Ta str Ta "" Ta "Half-line up (reverse 1/2 linefeed)."
+.It hz Ta bool Ta "" Ta "Cannot print ``~'' (Hazeltine)."
+.It i1-i3 Ta str Ta "" Ta "Terminal initialization strings"
 .Pf ( Xr terminfo
 only)
-.It "IC	str	(NP*)	Insert"
+.It IC Ta str Ta (NP*) Ta "Insert"
 .Ar n
 blank characters.
-.It "ic	str	(P*)	Insert character."
-.It "if	str		Name of file containing initialization string."
-.It "im	str		Enter insert mode."
-.It "in	bool		Insert mode distinguishes nulls."
-.It "iP	str		Pathname of program for initialization"
+.It ic Ta str Ta (P*) Ta "Insert character."
+.It if Ta str Ta "" Ta "Name of file containing initialization string."
+.It im Ta str Ta "" Ta "Enter insert mode."
+.It in Ta bool Ta "" Ta "Insert mode distinguishes nulls."
+.It iP Ta str Ta "" Ta "Pathname of program for initialization"
 .Pf ( Xr terminfo
 only).
-.It "ip	str	(P*)	Insert pad after character inserted."
-.It "is	str		Terminal initialization string"
+.It ip Ta str Ta (P*) Ta "Insert pad after character inserted."
+.It is Ta str Ta "" Ta "Terminal initialization string"
 .Pf ( Nm termcap
 only).
-.It "it	num		Tabs initially every"
+.It it Ta num Ta "" Ta "Tabs initially every"
 .Ar n
 positions.
-.It "K1	str		Sent by keypad upper left."
-.It "K2	str		Sent by keypad center."
-.It "K3	str		Sent by keypad upper right."
-.It "K4	str		Sent by keypad lower left."
-.It "K5	str		Sent by keypad lower right."
-.It "k0-k9	str		Sent by function keys 0-9."
-.It "kA	str		Sent by insert-line key."
-.It "ka	str		Sent by clear-all-tabs key."
-.It "kb	str		Sent by backspace key."
-.It "kC	str		Sent by clear-screen or erase key."
-.It "kD	str		Sent by delete-character key."
-.It "kd	str		Sent by down-arrow key."
-.It "kE	str		Sent by clear-to-end-of-line key."
-.It "ke	str		Out of"
+.It K1 Ta str Ta "" Ta "Sent by keypad upper left."
+.It K2 Ta str Ta "" Ta "Sent by keypad center."
+.It K3 Ta str Ta "" Ta "Sent by keypad upper right."
+.It K4 Ta str Ta "" Ta "Sent by keypad lower left."
+.It K5 Ta str Ta "" Ta "Sent by keypad lower right."
+.It k0-k9 Ta str Ta "" Ta "Sent by function keys 0-9."
+.It kA Ta str Ta "" Ta "Sent by insert-line key."
+.It ka Ta str Ta "" Ta "Sent by clear-all-tabs key."
+.It kb Ta str Ta "" Ta "Sent by backspace key."
+.It kC Ta str Ta "" Ta "Sent by clear-screen or erase key."
+.It kD Ta str Ta "" Ta "Sent by delete-character key."
+.It kd Ta str Ta "" Ta "Sent by down-arrow key."
+.It kE Ta str Ta "" Ta "Sent by clear-to-end-of-line key."
+.It ke Ta str Ta "" Ta "Out of"
 .Dq keypad transmit
 mode.
-.It "kF	str		Sent by scroll-forward/down key."
-.It "kH	str		Sent by home-down key."
-.It "kh	str		Sent by home key."
-.It "kI	str		Sent by insert-character or enter-insert-mode key."
-.It "kL	str		Sent by delete-line key."
-.It "kl	str		Sent by left-arrow key."
-.It "kM	str		Sent by insert key while in insert mode."
-.It "km	bool		Has a"
+.It kF Ta str Ta "" Ta "Sent by scroll-forward/down key."
+.It kH Ta str Ta "" Ta "Sent by home-down key."
+.It kh Ta str Ta "" Ta "Sent by home key."
+.It kI Ta str Ta "" Ta "Sent by insert-character or enter-insert-mode key."
+.It kL Ta str Ta "" Ta "Sent by delete-line key."
+.It kl Ta str Ta "" Ta "Sent by left-arrow key."
+.It kM Ta str Ta "" Ta "Sent by insert key while in insert mode."
+.It km Ta bool Ta "" Ta "Has a"
 .Dq meta
 key (shift, sets parity bit).
-.It "kN	str		Sent by next-page key."
-.It "kn	num	(o)	Number of function"
+.It kN Ta str Ta "" Ta "Sent by next-page key."
+.It kn Ta num Ta (o) Ta "Number of function"
 .Pq Sy \&k\&0 Ns \- Ns Sy \&k\&9
 keys (default 0).
-.It "ko	str	(o)	Termcap entries for other non-function keys."
-.It "kP	str		Sent by previous-page key."
-.It "kR	str		Sent by scroll-backward/up key."
-.It "kr	str		Sent by right-arrow key."
-.It "kS	str		Sent by clear-to-end-of-screen key."
-.It "ks	str		Put terminal in"
+.It ko Ta str Ta (o) Ta "Termcap entries for other non-function keys."
+.It kP Ta str Ta "" Ta "Sent by previous-page key."
+.It kR Ta str Ta "" Ta "Sent by scroll-backward/up key."
+.It kr Ta str Ta "" Ta "Sent by right-arrow key."
+.It kS Ta str Ta "" Ta "Sent by clear-to-end-of-screen key."
+.It ks Ta str Ta "" Ta "Put terminal in"
 .Dq keypad transmit
 mode.
-.It "kT	str		Sent by set-tab key."
-.It "kt	str		Sent by clear-tab key."
-.It "ku	str		Sent by up-arrow key."
-.It "l0-l9	str		Labels on function keys if not"
+.It kT Ta str Ta "" Ta "Sent by set-tab key."
+.It kt Ta str Ta "" Ta "Sent by clear-tab key."
+.It ku Ta str Ta "" Ta "Sent by up-arrow key."
+.It l0-l9 Ta str Ta "" Ta "Labels on function keys if not"
 .Dq \&f Ns Em n .
-.It "LC	bool	(o)	Lower-case only."
-.It "LE	str	(NP)	Move cursor left"
+.It LC Ta bool Ta (o) Ta "Lower-case only."
+.It LE Ta str Ta (NP) Ta "Move cursor left"
 .Ar n
 positions.
-.It "le	str	(P)	Move cursor left one position."
-.It "li	num		Number of lines on screen or page (see"
+.It le Ta str Ta (P) Ta "Move cursor left one position."
+.It li Ta num Ta "" Ta "Number of lines on screen or page (see"
 .Sx BUGS
 section below).
-.It "ll	str		Last line, first column."
-.It "lm	num		Lines of memory if >" Sy \&li
+.It ll Ta str Ta "" Ta "Last line, first column."
+.It lm Ta num Ta "" Ta "Lines of memory if >" Sy \&li
 (0 means varies).
-.It "ma	str	(o)	Arrow key map (used by"
+.It ma Ta str Ta (o) Ta "Arrow key map (used by"
 .Xr \&vi 1
 version 2 only).
-.It "mb	str		Turn on blinking attribute."
-.It "md	str		Turn on bold (extra bright) attribute."
-.It "me	str		Turn off all attributes."
-.It "mh	str		Turn on half-bright attribute."
-.It "mi	bool		Safe to move while in insert mode."
-.It "mk	str		Turn on blank attribute (characters invisible)."
-.It "ml	str	(o)	Memory lock on above cursor."
-.It "mm	str		Turn on"
+.It mb Ta str Ta "" Ta "Turn on blinking attribute."
+.It md Ta str Ta "" Ta "Turn on bold (extra bright) attribute."
+.It me Ta str Ta "" Ta "Turn off all attributes."
+.It mh Ta str Ta "" Ta "Turn on half-bright attribute."
+.It mi Ta bool Ta "" Ta "Safe to move while in insert mode."
+.It mk Ta str Ta "" Ta "Turn on blank attribute (characters invisible)."
+.It ml Ta str Ta (o) Ta "Memory lock on above cursor."
+.It mm Ta str Ta "" Ta "Turn on"
 .Dq meta mode
 (8th bit).
-.It "mo	str		Turn off"
+.It mo Ta str Ta "" Ta "Turn off"
 .Dq meta mode .
-.It "mp	str		Turn on protected attribute."
-.It "mr	str		Turn on reverse-video attribute."
-.It "ms	bool		Safe to move in standout modes."
-.It "mu	str	(o)	Memory unlock (turn off memory lock)."
-.It "nc	bool	(o)	No correctly-working"
+.It mp Ta str Ta "" Ta "Turn on protected attribute."
+.It mr Ta str Ta "" Ta "Turn on reverse-video attribute."
+.It ms Ta bool Ta "" Ta "Safe to move in standout modes."
+.It mu Ta str Ta (o) Ta "Memory unlock (turn off memory lock)."
+.It nc Ta bool Ta (o) Ta "No correctly-working"
 .Sy \&cr
 (Datamedia 2500, Hazeltine 2000).
-.It "nd	str		Non-destructive space (cursor right)."
-.It "NL	bool	(o)" Ta Sy \&\en No "is newline, not line feed."
-.It "nl	str	(o)	Newline character if not" Sy \en .
-.It "ns	bool	(o)	Terminal doesn't scroll."
-.It "nw	str	(P)	Newline (behaves like"
+.It nd Ta str Ta "" Ta "Non-destructive space (cursor right)."
+.It NL Ta bool Ta (o)" Ta Sy \&\en No "is newline, not line feed."
+.It nl Ta str Ta (o) Ta "Newline character if not" Sy \en .
+.It ns Ta bool Ta (o) Ta "Terminal doesn't scroll."
+.It nw Ta str Ta (P) Ta "Newline (behaves like"
 .Sy \&cr
 followed by
 .Sy \&do ) .
-.It "OP	bool	(o)	Odd parity."
-.It "os	bool		Terminal overstrikes."
-.It "pb	num		Lowest baud where delays are required."
-.It "pc	str		Pad character (default" Tn NUL ).
-.It "pf	str		Turn off the printer."
-.It "pk	str		Program function key"
+.It OP Ta bool Ta (o) Ta "Odd parity."
+.It os Ta bool Ta "" Ta "Terminal overstrikes."
+.It pb Ta num Ta "" Ta "Lowest baud where delays are required."
+.It pc Ta str Ta "" Ta "Pad character (default NUL)."
+.It pf Ta str Ta "" Ta "Turn off the printer."
+.It pk Ta str Ta "" Ta "Program function key"
 .Em n
 to type string
 .Em s
 .Pf ( Xr terminfo
 only).
-.It "pl	str		Program function key"
+.It pl Ta str Ta "" Ta "Program function key"
 .Em n
 to execute string
 .Em s
 .Pf ( Xr terminfo
 only).
-.It "pO	str	(N)	Turn on the printer for"
+.It pO Ta str Ta (N) Ta "Turn on the printer for"
 .Em n
 bytes.
-.It "po	str		Turn on the printer."
-.It "ps	str		Print contents of the screen."
-.It "pt	bool	(o)	Has hardware tabs (may need to be set with"
+.It po Ta str Ta "" Ta "Turn on the printer."
+.It ps Ta str Ta "" Ta "Print contents of the screen."
+.It pt Ta bool Ta (o) Ta "Has hardware tabs (may need to be set with"
 .Sy \&is ) .
-.It "px	str		Program function key"
+.It px Ta str Ta "" Ta "Program function key"
 .Em n
 to transmit string
 .Em s
 .Pf ( Xr terminfo
 only).
-.It "r1-r3	str		Reset terminal completely to sane modes"
+.It r1-r3 Ta str Ta "" Ta "Reset terminal completely to sane modes"
 .Pf ( Xr terminfo
 only).
-.It "rc	str	(P)	Restore cursor to position of last"
+.It rc Ta str Ta (P) Ta "Restore cursor to position of last"
 .Sy \&sc .
-.It "rf	str		Name of file containing reset codes."
-.It "RI	str	(NP)	Move cursor right"
+.It rf Ta str Ta "" Ta "Name of file containing reset codes."
+.It RI Ta str Ta (NP) Ta "Move cursor right"
 .Em n
 positions.
-.It "rp	str	(NP*)	Repeat character"
+.It rp Ta str Ta (NP*) Ta "Repeat character"
 .Em c n
 times.
-.It "rs	str		Reset terminal completely to sane modes"
+.It rs Ta str Ta "" Ta "Reset terminal completely to sane modes"
 .Pf ( Nm termcap
 only).
-.It "sa	str	(NP)	Define the video attributes."
-.It "sc	str	(P)	Save cursor position."
-.It "se	str		End standout mode."
-.It "SF	str	(NP*)	Scroll forward"
+.It sa Ta str Ta (NP) Ta "Define the video attributes."
+.It sc Ta str Ta (P) Ta "Save cursor position."
+.It se Ta str Ta "" Ta "End standout mode."
+.It SF Ta str Ta (NP*) Ta "Scroll forward"
 .Em n
 lines.
-.It "sf	str	(P)	Scroll text up."
-.It "sg	num		Number of garbage chars left by"
+.It sf Ta str Ta (P) Ta "Scroll text up."
+.It sg Ta num Ta "" Ta "Number of garbage chars left by"
 .Sy \&so
 or
 .Sy \&se
 (default 0).
-.It "so	str		Begin standout mode."
-.It "SR	str	(NP*)	Scroll backward"
+.It so Ta str Ta "" Ta "Begin standout mode."
+.It SR Ta str Ta (NP*) Ta "Scroll backward"
 .Em n
 lines.
-.It "sr	str	(P)	Scroll text down."
-.It "st	str		Set a tab in all rows, current column."
-.It "ta	str	(P)	Tab to next 8-position hardware tab stop."
-.It "tc	str		Entry of similar terminal; must be last."
-.It "te	str		String to end programs that use"
+.It sr Ta str Ta (P) Ta "Scroll text down."
+.It st Ta str Ta "" Ta "Set a tab in all rows, current column."
+.It ta Ta str Ta (P) Ta "Tab to next 8-position hardware tab stop."
+.It tc Ta str Ta "" Ta "Entry of similar terminal; must be last."
+.It te Ta str Ta "" Ta "String to end programs that use"
 .Nm .
-.It "ti	str		String to begin programs that use"
+.It ti Ta str Ta "" Ta "String to begin programs that use"
 .Nm .
-.It "ts	str	(N)	Go to status line, column"
+.It ts Ta str Ta (N) Ta "Go to status line, column"
 .Em n .
-.It "UC	bool	(o)	Upper-case only."
-.It "uc	str		Underscore one character and move past it."
-.It "ue	str		End underscore mode."
-.It "ug	num		Number of garbage chars left by"
+.It UC Ta bool Ta (o) Ta "Upper-case only."
+.It uc Ta str Ta "" Ta "Underscore one character and move past it."
+.It ue Ta str Ta "" Ta "End underscore mode."
+.It ug Ta num Ta "" Ta "Number of garbage chars left by"
 .Sy \&us
 or
 .Sy \&ue
 (default 0).
-.It "ul	bool		Underline character overstrikes."
-.It "UP	str	(NP*)	Move cursor up"
+.It ul Ta bool Ta "" Ta "Underline character overstrikes."
+.It UP Ta str Ta (NP*) Ta "Move cursor up"
 .Em n
 lines.
-.It "up	str		Upline (cursor up)."
-.It "us	str		Start underscore mode."
-.It "vb	str		Visible bell (must not move cursor)."
-.It "ve	str		Make cursor appear normal (undo"
+.It up Ta str Ta "" Ta "Upline (cursor up)."
+.It us Ta str Ta "" Ta "Start underscore mode."
+.It vb Ta str Ta "" Ta "Visible bell (must not move cursor)."
+.It ve Ta str Ta "" Ta "Make cursor appear normal (undo"
 .Sy \&vs Ns / Ns Sy \&vi ) .
-.It "vi	str		Make cursor invisible."
-.It "vs	str		Make cursor very visible."
-.It "vt	num		Virtual terminal number (not supported on all systems)."
-.It "wi	str	(N)	Set current window."
-.It "ws	num		Number of columns in status line."
-.It "xb	bool		Beehive"
+.It vi Ta str Ta "" Ta "Make cursor invisible."
+.It vs Ta str Ta "" Ta "Make cursor very visible."
+.It vt Ta num Ta "" Ta "Virtual terminal number (not supported on all systems)."
+.It wi Ta str Ta (N) Ta "Set current window."
+.It ws Ta num Ta "" Ta "Number of columns in status line."
+.It xb Ta bool Ta "" Ta "Beehive"
 .Pf ( "f1=" Dv ESC ,
 .Pf "f2=" Sy \&^C ) .
-.It "xn	bool		Newline ignored after 80 columns (Concept)."
-.It "xo	bool		Terminal uses xoff/xon"
+.It xn Ta bool Ta "" Ta "Newline ignored after 80 columns (Concept)."
+.It xo Ta bool Ta "" Ta "Terminal uses xoff/xon"
 .Pq Dv DC3 Ns / Ns Dv DC1
 handshaking.
-.It "xr	bool	(o)	Return acts like"
+.It xr Ta bool Ta (o) Ta "Return acts like"
 .Sy "ce cr nl"
 (Delta Data).
-.It "xs	bool		Standout not erased by overwriting (Hewlett-Packard)."
-.It "xt	bool		Tabs ruin, magic"
+.It xs Ta bool Ta "" Ta "Standout not erased by overwriting (Hewlett-Packard)."
+.It xt Ta bool Ta "" Ta "Tabs ruin, magic"
 .Sy \&so
 char (Teleray 1061).
-.It "xx	bool	(o)	Tektronix 4025 insert-line."
+.It xx Ta bool Ta (o) Ta "Tektronix 4025 insert-line."
 .El
 .Ss A Sample Entry
 The following entry, which describes the Concept\-100, is among the more
@@ -759,34 +759,47 @@ capability.)
 The
 .Sy \&%
 encodings have the following meanings:
-.Bl -column xxxxx
-.It "%%	output `%'"
-.It "%d	output value as in"
+.Pp
+.Bl -tag -width "%>xy" -compact
+.It %%
+output `%'
+.It %d
+output value as in
 .Xr printf 3
 %d
-.It "%2	output value as in"
+.It %2
+output value as in
 .Xr printf 3
 %2d
-.It "%3	output value as in"
+.It %3
+output value as in
 .Xr printf 3
 %3d
-.It "%.	output value as in"
+.It %.
+output value as in
 .Xr printf 3
 %c
-.It "%+" Ns Em x Ta No add
+.It %+ Ns Em x
+add
 .Em x
 to value, then do %.
-.It "%>" Ns Em \&xy Ta No if
+.It %> Ns Em \&xy
+if
 value >
 .Em x
 then add
 .Em y ,
 no output
-.It "%r	reverse order of two parameters, no output"
-.It "%i	increment by one, no output"
-.It "%n	exclusive-or all parameters with 0140 (Datamedia 2500)"
-.It "\&%B" Ta Tn BCD No "(16*(value/10)) + (value%10), no output"
-.It "\&%D" Ta "Reverse coding (value \- 2*(value%16)), no output (Delta Data)."
+.It %r
+reverse order of two parameters, no output
+.It %i
+increment by one, no output
+.It %n
+exclusive-or all parameters with 0140 (Datamedia 2500)
+.It \&%B
+BCD (16*(value/10)) + (value%10), no output
+.It \&%D
+Reverse coding (value \- 2*(value%16)), no output (Delta Data)
 .El
 .Pp
 Consider the Hewlett-Packard 2645, which, to get to row 3 and column 12, needs

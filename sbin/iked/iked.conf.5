@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.14 2011/08/19 19:59:51 jmc Exp $
+.\" $OpenBSD: iked.conf.5,v 1.15 2011/09/03 22:59:08 jmc Exp $
 .\" $vantronix: iked.conf.5,v 1.10 2010/06/03 16:13:40 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 19 2011 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -681,8 +681,8 @@ and all the traffic arrives with that source address.
 The following authentication types are permitted with the
 .Ic auth
 keyword:
-.Bl -column "authenticationXX" "Key Length" -offset indent
-.It Em Authentication	Key Length	Truncated Length
+.Bl -column "Authentication" "Key Length" "Truncated Length" -offset indent
+.It Em "Authentication" Ta Em "Key Length" Ta Em "Truncated Length"
 .It Li hmac-md5 Ta "128 bits" Ta "96 bits"
 .It Li hmac-sha1 Ta "160 bits" Ta "96 bits"
 .It Li hmac-sha2-256 Ta "256 bits" Ta "128 bits"
@@ -693,8 +693,8 @@ keyword:
 The following pseudo-random function types are permitted with the
 .Ic prf
 keyword:
-.Bl -column "authenticationXX" "Key Length" -offset indent
-.It Em Authentication	Key Length
+.Bl -column "Authentication" "Key Length" "[IKE only]" -offset indent
+.It Em "Authentication" Ta Em "Key Length" Ta ""
 .It Li hmac-md5 Ta "128 bits" Ta "[IKE only]"
 .It Li hmac-sha1 Ta "160 bits" Ta "[IKE only]"
 .It Li hmac-sha2-256 Ta "256 bits" Ta "[IKE only]"
@@ -705,13 +705,13 @@ keyword:
 The following cipher types are permitted with the
 .Ic enc
 keyword:
-.Bl -column "authenticationXX" "Key Length" -offset indent
-.It Em Cipher	Key Length
+.Bl -column "aes-128-gmac" "Key Length" "[ESP only]" -offset indent
+.It Em "Cipher" Ta Em "Key Length" Ta ""
 .It Li des Ta "56 bits" Ta "[ESP only]"
-.It Li 3des Ta "168 bits"
-.It Li aes-128 Ta "128 bits"
-.It Li aes-192 Ta "192 bits"
-.It Li aes-256 Ta "256 bits"
+.It Li 3des Ta "168 bits" Ta ""
+.It Li aes-128 Ta "128 bits" Ta ""
+.It Li aes-192 Ta "192 bits" Ta ""
+.It Li aes-256 Ta "256 bits" Ta ""
 .It Li aes-ctr Ta "160 bits" Ta "[ESP only]"
 .It Li aes-128-gcm Ta "160 bits" Ta "[ESP only]"
 .It Li aes-192-gcm Ta "224 bits" Ta "[ESP only]"
@@ -721,7 +721,7 @@ keyword:
 .It Li aes-256-gmac Ta "288 bits" Ta "[ESP only]"
 .It Li blowfish Ta "160 bits" Ta "[ESP only]"
 .It Li cast Ta "128 bits" Ta "[ESP only]"
-.It Li null Ta "" Ta "[ESP only]"
+ Ta "".It Li null Ta "" Ta "[ESP only]"
 .El
 .Pp
 Use of DES as an encryption algorithm is not recommended (except for
@@ -742,8 +742,8 @@ This is useful in setups where AH can not be used, e.g. when NAT is involved.
 The following group types are permitted with the
 .Ic group
 keyword:
-.Bl -column "modpXXXX-XXX" "grpXX" "XXXX" "Alias" -offset indent
-.It Em Name	Group	Size	Type
+.Bl -column "modp1024-160" "Group" "Size" "Type" -offset indent
+.It Em Name Ta Em Group Ta Em Size Ta Em Type
 .It Li modp768 Ta grp1 Ta 768 Ta "MODP"
 .It Li modp1024 Ta grp2 Ta 1024 Ta "MODP"
 .It Li ec2n155 Ta grp3 Ta 155 Ta "EC2N [insecure]"

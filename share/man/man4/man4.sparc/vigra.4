@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vigra.4,v 1.19 2008/03/31 07:44:30 jmc Exp $
+.\"	$OpenBSD: vigra.4,v 1.20 2011/09/03 22:59:07 jmc Exp $
 .\" Copyright (c) 2002 Miodrag Vallat.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2008 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt VIGRA 4 sparc
 .Os
 .Sh NAME
@@ -51,10 +51,9 @@ The video resolution and signal synchronization modes are
 selected with four DIP switches on the back of the card.
 .Ss VS10 and VS12 Switch Settings:
 The VS10 and VS12 support the following basic modes:
-.Bl -column "Switches" "Resolution" "Refresh"
-.It Li Switches Ta Resolution Ta Refresh Ta Description
-.It Li "1 2 3 4" Ta "" Ta "Rate"
-.It " "
+.Bl -column "Switches" "Resolution" "Refresh" "Description"
+.It Sy Switches Ta Sy Resolution Ta Sy Refresh Ta Sy Description
+.It Sy "1 2 3 4" Ta "" Ta Sy "Rate" Ta ""
 .It Li "D D D D" Ta 640x480 Ta 60Hz Ta "Standard VGA, negative separate sync"
 .It Li "U D D D" Ta 800x600 Ta 56Hz Ta "Super VGA, negative separate sync"
 .It Li "D U D D" Ta 800x600 Ta 56Hz Ta "Super VGA, positive separate sync"
@@ -71,10 +70,9 @@ The VS10 and VS12 support the following basic modes:
 .Ss VS12-only Switch Settings:
 The VS12 supports all of the previously listed modes, as well as a few high
 resolution settings.
-.Bl -column "Switches" "Resolution" "Refresh"
-.It Li Switches Ta Resolution Ta Refresh Ta Description
-.It Li "1 2 3 4" Ta "" Ta "Rate"
-.It " "
+.Bl -column "Switches" "Resolution" "Refresh" "Description"
+.It Sy Switches Ta Sy Resolution Ta Sy Refresh Ta Sy Description
+.It Sy "1 2 3 4" Ta "" Ta Sy "Rate" Ta ""
 .It Li "D D U U" Ta 1280x1024 Ta 60Hz Ta "NEC xD, negative separate sync"
 .It Li "U D U U" Ta 1280x1024 Ta 60Hz Ta "NEC xD, composite sync"
 .It Li "D U U U" Ta 1280x1024 Ta 60Hz Ta "NEC xD, sync-on-green"
@@ -83,10 +81,9 @@ resolution settings.
 .Ss VS11 Switch Settings:
 The VS11 supports a similar set of modes as the VS12, but with higher refresh
 rates.
-.Bl -column "Switches" "Resolution" "Refresh"
-.It Li Switches Ta Resolution Ta Refresh Ta Description
-.It Li "1 2 3 4" Ta "" Ta "Rate"
-.It " "
+.Bl -column "Switches" "Resolution" "Refresh" "Description"
+.It Sy Switches Ta Sy Resolution Ta Sy Refresh Ta Sy Description
+.It Sy "1 2 3 4" Ta "" Ta Sy "Rate" Ta ""
 .It Li "D D D D" Ta 640x480 Ta 60Hz Ta "Standard VGA, negative separate sync"
 .It Li "U D D D" Ta 800x600 Ta 72Hz Ta "VESA, negative separate sync"
 .It Li "D U D D" Ta 1024x768 Ta 60Hz Ta "VESA, negative separate sync"

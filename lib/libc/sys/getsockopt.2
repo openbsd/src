@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.34 2011/07/04 05:52:17 jmc Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.35 2011/09/03 22:59:07 jmc Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: July 4 2011 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -132,28 +132,50 @@ Except as noted, each may be examined with
 .Fn getsockopt
 and set with
 .Fn setsockopt .
-.Bl -column SO_OOBINLINE -offset indent
-.It Dv SO_DEBUG Ta "enables recording of debugging information"
-.It Dv SO_REUSEADDR Ta "enables local address reuse"
-.It Dv SO_REUSEPORT Ta "enables duplicate address and port bindings"
-.It Dv SO_KEEPALIVE Ta "enables keep connections alive"
-.It Dv SO_DONTROUTE Ta "enables routing bypass for outgoing messages"
-.It Dv SO_LINGER Ta "linger on close if data present"
-.It Dv SO_BROADCAST Ta "enables permission to transmit broadcast messages"
-.It Dv SO_OOBINLINE Ta "enables reception of out-of-band data in band"
-.It Dv SO_BINDANY Ta "enables binding to any address"
-.It Dv SO_SNDBUF Ta "set buffer size for output"
-.It Dv SO_RCVBUF Ta "set buffer size for input"
-.It Dv SO_SNDLOWAT Ta "set minimum count for output"
-.It Dv SO_RCVLOWAT Ta "set minimum count for input"
-.It Dv SO_SNDTIMEO Ta "set timeout value for output"
-.It Dv SO_RCVTIMEO Ta "set timeout value for input"
-.It Dv SO_TIMESTAMP Ta "enables reception of a timestamp with datagrams"
-.It Dv SO_PEERCRED Ta "get the credentials from other side of connection"
-.It Dv SO_RTABLE Ta "set the routing domain"
-.It Dv SO_SPLICE Ta "splice two sockets together or get data length"
-.It Dv SO_TYPE Ta "get the type of the socket (get only)"
-.It Dv SO_ERROR Ta "get and clear error on the socket (get only)"
+.Pp
+.Bl -tag -width SO_OOBINLINE -offset indent -compact
+.It Dv SO_DEBUG
+enables recording of debugging information
+.It Dv SO_REUSEADDR
+enables local address reuse
+.It Dv SO_REUSEPORT
+enables duplicate address and port bindings
+.It Dv SO_KEEPALIVE
+enables keep connections alive
+.It Dv SO_DONTROUTE
+enables routing bypass for outgoing messages
+.It Dv SO_LINGER
+linger on close if data present
+.It Dv SO_BROADCAST
+enables permission to transmit broadcast messages
+.It Dv SO_OOBINLINE
+enables reception of out-of-band data in band
+.It Dv SO_BINDANY
+enables binding to any address
+.It Dv SO_SNDBUF
+set buffer size for output
+.It Dv SO_RCVBUF
+set buffer size for input
+.It Dv SO_SNDLOWAT
+set minimum count for output
+.It Dv SO_RCVLOWAT
+set minimum count for input
+.It Dv SO_SNDTIMEO
+set timeout value for output
+.It Dv SO_RCVTIMEO
+set timeout value for input
+.It Dv SO_TIMESTAMP
+enables reception of a timestamp with datagrams
+.It Dv SO_PEERCRED
+get the credentials from other side of connection
+.It Dv SO_RTABLE
+set the routing domain
+.It Dv SO_SPLICE
+splice two sockets together or get data length
+.It Dv SO_TYPE
+get the type of the socket (get only)
+.It Dv SO_ERROR
+get and clear error on the socket (get only)
 .El
 .Pp
 .Dv SO_DEBUG

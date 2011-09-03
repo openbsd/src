@@ -1,4 +1,4 @@
-.\"	$OpenBSD: popa3d.8,v 1.14 2007/05/31 19:20:27 jmc Exp $
+.\"	$OpenBSD: popa3d.8,v 1.15 2011/09/03 22:59:08 jmc Exp $
 .\"
 .\" Copyright (c) 2001-2003 Camiel Dobbelaar (cd@sentia.nl)
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt POPA3D 8
 .Os
 .Sh NAME
@@ -116,7 +116,7 @@ After the TCP connection opens, the client must authenticate itself
 to the server in the authorization state.
 The following commands are supported in the authorization state.
 All commands are case-insensitive.
-.Bl -column "Command    " -offset indent
+.Bl -column "PASS string" "Description""Description"  -offset indent
 .It Sy Command Ta Sy Description
 .It USER name Ta "authenticate as user ``name''"
 .It PASS string Ta "authenticate using password ``string''"
@@ -128,7 +128,7 @@ state.
 The client can now list and retrieve messages or mark messages for
 deletion.
 The following commands are supported in the transaction state.
-.Bl -column "Command    " -offset indent
+.Bl -column "LIST [msg]" "Description" -offset indent
 .It Sy Command Ta Sy Description
 .It DELE msg Ta "mark message for deletion"
 .It LAST Ta "show highest message number accessed (obsolete)"

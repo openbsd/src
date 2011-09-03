@@ -1,4 +1,4 @@
-.\" $OpenBSD: pdc.4,v 1.7 2010/09/19 12:49:37 jmc Exp $
+.\" $OpenBSD: pdc.4,v 1.8 2011/09/03 22:59:07 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Michael Shalayeff
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 19 2010 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt PDC 4 hppa
 .Os
 .Sh NAME
@@ -119,7 +119,7 @@ pointed to by the
 .Ar ptr
 argument.
 The format of the data stores is as follows:
-.Bl -column "0x00" "contents" -offset left
+.Bl -column "0x00" "contents" -offset indent
 .It Sy "addr" Ta Sy "contents"
 .It "0x00" Ta "I-cache size in bytes"
 .It "0x04" Ta "I-cache configuration"
@@ -154,16 +154,16 @@ The format of the data stores is as follows:
 .El
 .Pp
 The cache configuration word is formatted as follows:
-.Bl -column "bit" "len" "contents" -offset left
-.It Sy "bit" "len" "contents"
-.It "0" "12" "reserved"
-.It "13" "3" "set 1 if coherent operation supported"
-.It "16" "2" "flush mode: 0 -- fdc & fic; 1 -- fdc; 2 -- fic; 3 -- either"
-.It "18" "1" "write-thru D-cache if set"
-.It "19" "2" "reserved"
-.It "21" "3" "cache line size"
-.It "24" "4" "associativity"
-.It "28" "4" "virtual address alias boundary"
+.Bl -column "bit" "len" "contents" -offset indent
+.It Sy "bit" Ta Sy "len" Ta Sy "contents"
+.It "0" Ta "12" Ta "reserved"
+.It "13" Ta "3" Ta "set 1 if coherent operation supported"
+.It "16" Ta "2" Ta "flush mode: 0 -- fdc & fic; 1 -- fdc; 2 -- fic; 3 -- either"
+.It "18" Ta "1" Ta "write-thru D-cache if set"
+.It "19" Ta "2" Ta "reserved"
+.It "21" Ta "3" Ta "cache line size"
+.It "24" Ta "4" Ta "associativity"
+.It "28" Ta "4" Ta "virtual address alias boundary"
 .El
 .Pp
 .It Fn pdc "PDC_CACHE" "PDC_CACHE_SETCS" "ptr" "i_cst" "d_cst" "it_cst" "dt_cst"
@@ -392,7 +392,7 @@ argument of no more than
 bytes.
 .Pp
 The format of the NVM is as follows:
-.Bl -column "0x0000" "size" "contents" -offset left
+.Bl -column "0x0000" "size" "contents" -offset indent
 .It Sy "offset" Ta Sy "size" Ta Sy "contents"
 .It "0x00" Ta "0x24" Ta "HV dependent"
 .It "0x24" Ta "0x20" Ta "bootpath"
@@ -552,34 +552,34 @@ argument of no more than
 bytes.
 .Pp
 The format of the stable storage is as follows:
-.Bl -column "offset" "0x00" "contents" -offset left
-.It Sy "offset" "size" "contents"
-.It "0x0000" "0x20" "primary bootpath"
-.It "0x0020" "0x20" "reserved"
-.It "0x0040" "0x02" "OS ID"
-.It "0x0042" "0x16" "OS dependent"
-.It "0x0058" "0x02" "diagnostic"
-.It "0x005a" "0x03" "reserved"
-.It "0x005d" "0x02" "OS dependent"
-.It "0x005f" "0x01" "fast size"
-.It "0x0060" "0x20" "console path"
-.It "0x0080" "0x20" "alternative boot path"
-.It "0x00a0" "0x20" "keyboard path"
-.It "0x00c0" "0x20" "reserved"
-.It "0x00e0" "size" "OS dependent"
+.Bl -column "offset" "0x00" "contents" -offset indent
+.It Sy "offset" Ta Sy "size" Ta Sy "contents"
+.It "0x0000" Ta "0x20" Ta "primary bootpath"
+.It "0x0020" Ta "0x20" Ta "reserved"
+.It "0x0040" Ta "0x02" Ta "OS ID"
+.It "0x0042" Ta "0x16" Ta "OS dependent"
+.It "0x0058" Ta "0x02" Ta "diagnostic"
+.It "0x005a" Ta "0x03" Ta "reserved"
+.It "0x005d" Ta "0x02" Ta "OS dependent"
+.It "0x005f" Ta "0x01" Ta "fast size"
+.It "0x0060" Ta "0x20" Ta "console path"
+.It "0x0080" Ta "0x20" Ta "alternative boot path"
+.It "0x00a0" Ta "0x20" Ta "keyboard path"
+.It "0x00c0" Ta "0x20" Ta "reserved"
+.It "0x00e0" Ta "size" Ta "OS dependent"
 .El
 .Pp
 The
 .Dq OS ID
 field may have the following values:
-.Bl -column "value" "OS" -offset left
-.It Sy "value" "OS"
-.It "0x000" "No OS-dependent info"
-.It "0x001" "HP-UX"
-.It "0x002" "MPE-iX"
-.It "0x003" "OSF"
-.It "0x004" "HP-RT"
-.It "0x005" "Novell Netware"
+.Bl -column "value" "OS" -offset indent
+.It Sy "value" Ta Sy "OS"
+.It "0x000" Ta "No OS-dependent info"
+.It "0x001" Ta "HP-UX"
+.It "0x002" Ta "MPE-iX"
+.It "0x003" Ta "OSF"
+.It "0x004" Ta "HP-RT"
+.It "0x005" Ta "Novell Netware"
 .El
 .Pp
 The

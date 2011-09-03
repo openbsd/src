@@ -1,4 +1,4 @@
-.\"	$OpenBSD: execve.2,v 1.35 2011/08/19 19:59:51 jmc Exp $
+.\"	$OpenBSD: execve.2,v 1.36 2011/09/03 22:59:07 jmc Exp $
 .\"	$NetBSD: execve.2,v 1.9 1995/02/27 12:32:25 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)execve.2	8.3 (Berkeley) 1/24/94
 .\"
-.Dd $Mdocdate: August 19 2011 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt EXECVE 2
 .Os
 .Sh NAME
@@ -160,22 +160,49 @@ The process will be started without the new permissions.
 .Pp
 The new process also inherits the following attributes from
 the calling process:
-.Bl -column parent_process_ID -offset indent
-.It process ID Ta see Xr getpid 2
-.It parent process ID Ta see Xr getppid 2
-.It process group ID Ta see Xr getpgrp 2
-.It session ID Ta see Xr getsid 2
-.It access groups Ta see Xr getgroups 2
-.It working directory Ta see Xr chdir 2
-.It root directory Ta see Xr chroot 2
-.It control terminal Ta see Xr termios 4
-.It resource usages Ta see Xr getrusage 2
-.It interval timers Ta see Xr getitimer 2
+.Pp
+.Bl -tag -width parent_process_ID -offset indent -compact
+.It process ID
+see
+.Xr getpid 2
+.It parent process ID
+see
+.Xr getppid 2
+.It process group ID
+see
+.Xr getpgrp 2
+.It session ID
+see
+.Xr getsid 2
+.It access groups
+see
+.Xr getgroups 2
+.It working directory
+see
+.Xr chdir 2
+.It root directory
+see
+.Xr chroot 2
+.It control terminal
+see
+.Xr termios 4
+.It resource usages
+see
+.Xr getrusage 2
+.It interval timers
+see
+.Xr getitimer 2
 (unless process image file is setuid or setgid,
 in which case all timers are disabled)
-.It resource limits Ta see Xr getrlimit 2
-.It file mode mask Ta see Xr umask 2
-.It signal mask Ta see Xr sigaction 2 ,
+.It resource limits
+see
+.Xr getrlimit 2
+.It file mode mask
+see
+.Xr umask 2
+.It signal mask
+see
+.Xr sigaction 2 ,
 .Xr sigsetmask 3
 .El
 .Pp

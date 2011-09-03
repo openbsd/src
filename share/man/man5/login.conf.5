@@ -30,10 +30,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.47 2011/04/17 06:34:31 jmc Exp $
+.\" $OpenBSD: login.conf.5,v 1.48 2011/09/03 22:59:07 jmc Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
-.Dd $Mdocdate: April 17 2011 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -94,8 +94,8 @@ file are either boolean or use a
 .Ql =
 to separate the capability from the value.
 The types are described after the capability table.
-.Bl -column minpasswordlen program xetcxmotd
-.It Sy Name	Type	Default	Description
+.Bl -column "approve-service" "program" "blowfish,6" "Description"
+.It Sy Name Ta Sy Type Ta Sy Default Ta Sy Description
 .\"
 .It approve Ta program Ta "" Ta
 Default program to approve login.

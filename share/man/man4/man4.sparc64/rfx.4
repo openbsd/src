@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rfx.4,v 1.10 2008/06/07 20:42:28 miod Exp $
+.\"	$OpenBSD: rfx.4,v 1.11 2011/09/03 22:59:07 jmc Exp $
 .\"
 .\" Copyright (c) 2004, Miodrag Vallat.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 7 2008 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt RFX 4 sparc64
 .Os
 .Sh NAME
@@ -85,25 +85,23 @@ If the jumper position is not specified
 it means it has to be removed
 .Pq open .
 .Ss RasterFlex-24 and RasterFlex-32 Jumper Settings:
-.Bl -column "Jumpers" "Resolution" "Refresh"
-.It Li "J2 J3 J4" Ta Resolution Ta Refresh Ta Description
-.It " "
-.It Li " R  R  R" Ta 1152x900 Ta 66Hz Ta "Automatic Configuration"
+.Bl -column "J2 J3 J4" "Resolution" "Refresh Rate" "Description" -offset indent
+.It Sy "J2 J3 J4" Ta Sy "Resolution" Ta Sy "Refresh Rate" Ta Sy "Description"
+.It Li "\ \&R \ \&R \ \&R" Ta 1152x900 Ta 66Hz Ta "Automatic Configuration"
 .It Li "L  L  L " Ta 1024x768 Ta 76Hz Ta "SVGA"
-.It Li "L  _  _ " Ta 1152x900 Ta 66Hz
-.It Li "_  L  L " Ta 1152x900 Ta 76Hz
+.It Li "L  _  _ " Ta 1152x900 Ta 66Hz Ta ""
+.It Li "_  L  L " Ta 1152x900 Ta 76Hz Ta ""
 .El
 .Ss RasterFlex-HR Jumper Settings:
-.Bl -column "Jumpers" "Resolution" "Refresh"
-.It Li "J2 J3 J4" Ta Resolution Ta Refresh Ta Description
-.It " "
-.It Li " R  R  R" Ta 1152x900 Ta 66Hz Ta "Automatic Configuration"
+.Bl -column "J2 J3 J4" "Resolution" "Refresh Rate" "Description" -offset indent
+.It Sy "J2 J3 J4" Ta Sy "Resolution" Ta Sy "Refresh Rate" Ta Sy "Description"
+.It Li "\ \&R \ \&R \ \&R" Ta 1152x900 Ta 66Hz Ta "Automatic Configuration"
 .It Li "L  L  L " Ta 1024x768 Ta 76Hz Ta "SVGA"
-.It Li "L  _  _ " Ta 1152x900 Ta 66Hz
-.It Li "L  L  _ " Ta 1152x900 Ta 76Hz
-.It Li "_  L  _ " Ta 1280x1024 Ta 60Hz
-.It Li "_  L  L " Ta 1280x1024 Ta 67Hz
-.It Li "L  _  L " Ta 1280x1024 Ta 76Hz
+.It Li "L  _  _ " Ta 1152x900 Ta 66Hz Ta ""
+.It Li "L  L  _ " Ta 1152x900 Ta 76Hz Ta ""
+.It Li "_  L  _ " Ta 1280x1024 Ta 60Hz Ta ""
+.It Li "_  L  L " Ta 1280x1024 Ta 67Hz Ta ""
+.It Li "L  _  L " Ta 1280x1024 Ta 76Hz Ta ""
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,

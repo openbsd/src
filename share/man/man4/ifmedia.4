@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifmedia.4,v 1.19 2010/02/09 15:25:29 claudio Exp $
+.\"	$OpenBSD: ifmedia.4,v 1.20 2011/09/03 22:59:07 jmc Exp $
 .\"	$NetBSD: ifmedia.4,v 1.14 2001/06/30 17:57:56 bjh21 Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 9 2010 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt IFMEDIA 4
 .Os
 .Sh NAME
@@ -314,26 +314,23 @@ specified by regional authorities.
 Recognized regulatory authorities include
 the FCC (United States), ETSI (Europe), France, and Japan.
 Frequencies in the table are specified in MHz.
-.Pp
-.Bd -ragged -offset indent
-.Bl -column "Channel " "FCC" "ETSI" "France" "Japan"
-.It Em "Channel	FCC	ETSI	France	Japan"
-.It 1	2412	2412	-	2412
-.It 2	2417	2417	-	2417
-.It 3	2422	2422	-	2422
-.It 4	2427	2427	-	2427
-.It 5	2432	2432	-	2432
-.It 6	2437	2437	-	2437
-.It 7	2442	2442	-	2442
-.It 8	2447	2447	-	2447
-.It 9	2452	2452	-	2452
-.It 10	2457	2457	2457	2457
-.It 11	2462	2462	2462	2462
-.It 12	-	2467	2467	2467
-.It 13	-	2472	2472	2472
-.It 14	-	-	-	2484
+.Bl -column "Channel " "2412" "ETSI" "France" "Japan" -offset indent
+.It Em Channel Ta Em FCC Ta Em ETSI Ta Em France Ta Em Japan
+.It 1 Ta 2412 Ta 2412 Ta - Ta 2412
+.It 2 Ta 2417 Ta 2417 Ta - Ta 2417
+.It 3 Ta 2422 Ta 2422 Ta - Ta 2422
+.It 4 Ta 2427 Ta 2427 Ta - Ta 2427
+.It 5 Ta 2432 Ta 2432 Ta - Ta 2432
+.It 6 Ta 2437 Ta 2437 Ta - Ta 2437
+.It 7 Ta 2442 Ta 2442 Ta - Ta 2442
+.It 8 Ta 2447 Ta 2447 Ta - Ta 2447
+.It 9 Ta 2452 Ta 2452 Ta - Ta 2452
+.It 10 Ta 2457 Ta 2457 Ta 2457 Ta 2457
+.It 11 Ta 2462 Ta 2462 Ta 2462 Ta 2462
+.It 12 Ta - Ta 2467 Ta 2467 Ta 2467
+.It 13 Ta - Ta 2472 Ta 2472 Ta 2472
+.It 14 Ta - Ta - Ta - Ta 2484
 .El
-.Ed
 .Pp
 Note that the channels do overlap; the bandwidth required for
 each channel is about 20MHz.

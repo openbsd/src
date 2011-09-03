@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.134 2011/08/19 19:59:51 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.135 2011/09/03 22:59:08 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 19 2011 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt IPSEC.CONF 5
 .Os
 .Sh NAME
@@ -589,27 +589,27 @@ $ openssl rand 20 | hexdump -e '20/1 "%02x"'
 The following authentication types are permitted with the
 .Ic auth
 keyword:
-.Bl -column "authenticationXX" "Key Length" -offset indent
-.It Em Authentication	Key Length
-.It Li hmac-md5 Ta "128 bits"
+.Bl -column "Authentication" "Key Length" "Description" -offset indent
+.It Em "Authentication" Ta Em "Key Length" Ta ""
+.It Li hmac-md5 Ta "128 bits" Ta ""
 .It Li hmac-ripemd160 Ta "160 bits" Ta "[phase 2 only]"
-.It Li hmac-sha1 Ta "160 bits"
-.It Li hmac-sha2-256 Ta "256 bits"
-.It Li hmac-sha2-384 Ta "384 bits"
-.It Li hmac-sha2-512 Ta "512 bits"
+.It Li hmac-sha1 Ta "160 bits" Ta ""
+.It Li hmac-sha2-256 Ta "256 bits" Ta ""
+.It Li hmac-sha2-384 Ta "384 bits" Ta ""
+.It Li hmac-sha2-512 Ta "512 bits" Ta ""
 .El
 .Pp
 The following cipher types are permitted with the
 .Ic enc
 keyword:
-.Bl -column "authenticationXX" "Key Length" -offset indent
-.It Em Cipher	Key Length
-.It Li des Ta "56 bits"
-.It Li 3des Ta "168 bits"
-.It Li aes Ta "128 bits"
-.It Li aes-128 Ta "128 bits"
-.It Li aes-192 Ta "192 bits"
-.It Li aes-256 Ta "256 bits"
+.Bl -column "aes-128-gmac" "Key Length" "Description" -offset indent
+.It Em "Cipher" Ta Em "Key Length" Ta ""
+.It Li des Ta "56 bits" Ta ""
+.It Li 3des Ta "168 bits" Ta ""
+.It Li aes Ta "128 bits" Ta ""
+.It Li aes-128 Ta "128 bits" Ta ""
+.It Li aes-192 Ta "192 bits" Ta ""
+.It Li aes-256 Ta "256 bits" Ta ""
 .It Li aesctr Ta "160 bits" Ta "[phase 2 only]"
 .It Li aes-128-gcm Ta "160 bits" Ta "[phase 2 only]"
 .It Li aes-192-gcm Ta "224 bits" Ta "[phase 2 only]"
@@ -617,8 +617,8 @@ keyword:
 .It Li aes-128-gmac Ta "160 bits" Ta "[phase 2 only]"
 .It Li aes-192-gmac Ta "224 bits" Ta "[phase 2 only]"
 .It Li aes-256-gmac Ta "288 bits" Ta "[phase 2 only]"
-.It Li blowfish Ta "160 bits"
-.It Li cast Ta "128 bits"
+.It Li blowfish Ta "160 bits" Ta ""
+.It Li cast Ta "128 bits" Ta ""
 .It Li null Ta "(none)" Ta "[phase 2 only]"
 .El
 .Pp
@@ -640,17 +640,17 @@ This is useful in setups where AH can not be used, e.g. when NAT is involved.
 The following group types are permitted with the
 .Ic group
 keyword:
-.Bl -column "authenticationXX" "Key Length" -offset indent
-.It Em Group	Size
-.It Li modp768  Ta 768 Ta [DH group 1]
-.It Li modp1024 Ta 1024 Ta [DH group 2]
-.It Li modp1536 Ta 1536 Ta [DH group 5]
-.It Li modp2048 Ta 2048 Ta [DH group 14]
-.It Li modp3072 Ta 3072 Ta [DH group 15]
-.It Li modp4096 Ta 4096 Ta [DH group 16]
-.It Li modp6144 Ta 6144 Ta [DH group 17]
-.It Li modp8192 Ta 8192 Ta [DH group 18]
-.It Li none Ta 0 Ta [phase 2 only]
+.Bl -column "modp1024" "Size" "Description" -offset indent
+.It Em Group Ta Em Size Ta ""
+.It Li modp768 Ta 768 Ta "[DH group 1]"
+.It Li modp1024 Ta 1024 Ta "[DH group 2]"
+.It Li modp1536 Ta 1536 Ta "[DH group 5]"
+.It Li modp2048 Ta 2048 Ta "[DH group 14]"
+.It Li modp3072 Ta 3072 Ta "[DH group 15]"
+.It Li modp4096 Ta 4096 Ta "[DH group 16]"
+.It Li modp6144 Ta 6144 Ta "[DH group 17]"
+.It Li modp8192 Ta 8192 Ta "[DH group 18]"
+.It Li none Ta 0 Ta "[phase 2 only]"
 .El
 .Sh MANUAL FLOWS
 In this scenario,

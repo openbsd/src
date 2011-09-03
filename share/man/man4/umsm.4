@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umsm.4,v 1.71 2011/08/19 19:59:51 jmc Exp $
+.\"	$OpenBSD: umsm.4,v 1.72 2011/09/03 22:59:08 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 19 2011 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt UMSM 4
 .Os
 .Sh NAME
@@ -34,109 +34,109 @@ USB controller with the actual device attached to it.
 The following devices are known to work with the
 .Nm
 driver:
-.Bl -column "Device                        " "Bus" -offset 6n
-.It Em Device Ta Ta Em Bus
-.It Li "AirPrime PC5220" Ta Ta CardBus
-.It Li "Alcatel One Touch X060" Ta Ta USB
-.It Li "Alcatel One Touch X200" Ta Ta USB
-.It Li "AnyDATA ADU-500A" Ta Ta USB
-.It Li "AnyDATA ADU-E100H" Ta Ta USB
-.It Li "AnyDATA A2502" Ta Ta USB
-.It Li "C-motech CNU 680" Ta Ta USB
-.It Li "Emobile D01HW (Huawei OEM)" Ta Ta USB
-.It Li "Emobile D02HW (Huawei OEM)" Ta Ta USB
-.It Li "Emobile D12HW (Huawei OEM)" Ta Ta USB
-.It Li "Emobile D22HW (Huawei OEM)" Ta Ta USB
-.It Li "Emobile D31HW (Huawei OEM)" Ta Ta USB
-.It Li "Emobile H12HW (Huawei OEM)" Ta Ta USB
-.It Li "Emobile D21LC (longcheer OEM)" Ta Ta USB
-.It Li "Huawei Mobile E156G" Ta Ta USB
-.It Li "Huawei Mobile E160E" Ta Ta USB
-.It Li "Huawei Mobile E161" Ta Ta USB
-.It Li "Huawei Mobile E160g" Ta Ta USB
-.It Li "Huawei Mobile E1692" Ta Ta USB
-.It Li "Huawei Mobile E172" Ta Ta USB
-.It Li "Huawei Mobile E180" Ta Ta USB
-.It Li "Huawei Mobile E181" Ta Ta USB
-.It Li "Huawei Mobile E182" Ta Ta USB
-.It Li "Huawei Mobile E220" Ta Ta USB
-.It Li "Huawei Mobile E510" Ta Ta USB
-.It Li "Huawei Mobile E1750" Ta Ta USB
-.It Li "Huawei Mobile E1752" Ta Ta USB
-.It Li "Huawei Mobile Connect E169g" Ta Ta USB
-.It Li "Huawei Mobile Connect E618" Ta Ta USB
-.It Li "Huawei Mobile Connect E620" Ta Ta USB
-.It Li "IIJMobile 120FU (ZTE OEM)" Ta Ta USB
-.It Li "Kyocera KPC650" Ta Ta CardBus
-.It Li "Novatel Wireless ES620" Ta Ta USB
-.It Li "Novatel Wireless Ovation U727" Ta Ta USB
-.It Li "Novatel Wireless U760" Ta Ta USB
-.It Li "NTT DoCoMo A2502" Ta Ta USB
-.It Li "ONDA Communication H600" Ta Ta CardBus
-.It Li "ONDA Communication MSA110UP" Ta Ta USB
-.It Li "Option GlobeSurfer ICON7.2" Ta Ta USB
-.It Li "Option GlobeTrotter 3G+" Ta Ta CardBus
-.It Li "Option GlobeTrotter 3G Quad" Ta Ta CardBus
-.It Li "Option GlobeTrotter 3G Quad Plus" Ta Ta CardBus
-.It Li "Option GlobeTrotter GT Fusion" Ta Ta CardBus
-.It Li "Option GlobeTrotter GT Max" Ta Ta CardBus
-.It Li "Option GlobeTrotter HSDPA" Ta Ta USB
-.It Li "Option GlobeTrotter HSDPA ICON225" Ta Ta USB
-.It Li "Option GlobeTrotter HSUPA 380E" Ta Ta PCI Express Mini Card
-.It Li "Sierra Wireless MC8755" Ta Ta PCI Express Mini Card
-.It Li "Sierra Wireless MC8775" Ta Ta PCI Express Mini Card
-.It Li "Sierra Wireless MC8790" Ta Ta PCI Express Mini Card
-.It Li "Sierra Wireless AirCard 580" Ta Ta CardBus
-.It Li "Sierra Wireless AirCard 875" Ta Ta CardBus
-.It Li "Sierra Wireless AirCard 881" Ta Ta CardBus
-.It Li "Sierra Wireless AirCard 881U" Ta Ta USB
-.It Li "Sierra Wireless Inc. USB 305" Ta Ta USB
-.It Li "Softbank C01SW (Sierra OEM)" Ta Ta USB
-.It Li "Toshiba 3G HSDPA MiniCard" Ta Ta PCI Express Mini Card
-.It Li "Vodafone Mobile Connect 3G" Ta Ta CardBus
-.It Li "Vodafone Mobile Broadband K3765" Ta Ta USB
-.It Li "ZTE AC2746" Ta Ta USB
-.It Li "ZTE MF112" Ta Ta USB
-.It Li "ZTE MF633" Ta Ta USB
-.It Li "ZTE MF637" Ta Ta USB
+.Bl -column "Option GlobeTrotter HSDPA ICON225" "Bus" -offset 6n
+.It Em Device Ta Em Bus
+.It Li "AirPrime PC5220" Ta "CardBus"
+.It Li "Alcatel One Touch X060" Ta "USB"
+.It Li "Alcatel One Touch X200" Ta "USB"
+.It Li "AnyDATA ADU-500A" Ta "USB"
+.It Li "AnyDATA ADU-E100H" Ta "USB"
+.It Li "AnyDATA A2502" Ta "USB"
+.It Li "C-motech CNU 680" Ta "USB"
+.It Li "Emobile D01HW (Huawei OEM)" Ta "USB"
+.It Li "Emobile D02HW (Huawei OEM)" Ta "USB"
+.It Li "Emobile D12HW (Huawei OEM)" Ta "USB"
+.It Li "Emobile D22HW (Huawei OEM)" Ta "USB"
+.It Li "Emobile D31HW (Huawei OEM)" Ta "USB"
+.It Li "Emobile H12HW (Huawei OEM)" Ta "USB"
+.It Li "Emobile D21LC (longcheer OEM)" Ta "USB"
+.It Li "Huawei Mobile E156G" Ta "USB"
+.It Li "Huawei Mobile E160E" Ta "USB"
+.It Li "Huawei Mobile E161" Ta "USB"
+.It Li "Huawei Mobile E160g" Ta "USB"
+.It Li "Huawei Mobile E1692" Ta "USB"
+.It Li "Huawei Mobile E172" Ta "USB"
+.It Li "Huawei Mobile E180" Ta "USB"
+.It Li "Huawei Mobile E181" Ta "USB"
+.It Li "Huawei Mobile E182" Ta "USB"
+.It Li "Huawei Mobile E220" Ta "USB"
+.It Li "Huawei Mobile E510" Ta "USB"
+.It Li "Huawei Mobile E1750" Ta "USB"
+.It Li "Huawei Mobile E1752" Ta "USB"
+.It Li "Huawei Mobile Connect E169g" Ta "USB"
+.It Li "Huawei Mobile Connect E618" Ta "USB"
+.It Li "Huawei Mobile Connect E620" Ta "USB"
+.It Li "IIJMobile 120FU (ZTE OEM)" Ta "USB"
+.It Li "Kyocera KPC650" Ta "CardBus"
+.It Li "Novatel Wireless ES620" Ta "USB"
+.It Li "Novatel Wireless Ovation U727" Ta "USB"
+.It Li "Novatel Wireless U760" Ta "USB"
+.It Li "NTT DoCoMo A2502" Ta "USB"
+.It Li "ONDA Communication H600" Ta "CardBus"
+.It Li "ONDA Communication MSA110UP" Ta "USB"
+.It Li "Option GlobeSurfer ICON7.2" Ta "USB"
+.It Li "Option GlobeTrotter 3G+" Ta "CardBus"
+.It Li "Option GlobeTrotter 3G Quad" Ta "CardBus"
+.It Li "Option GlobeTrotter 3G Quad Plus" Ta "CardBus"
+.It Li "Option GlobeTrotter GT Fusion" Ta "CardBus"
+.It Li "Option GlobeTrotter GT Max" Ta "CardBus"
+.It Li "Option GlobeTrotter HSDPA" Ta "USB"
+.It Li "Option GlobeTrotter HSDPA ICON225" Ta "USB"
+.It Li "Option GlobeTrotter HSUPA 380E" Ta "PCI Express Mini Card"
+.It Li "Sierra Wireless MC8755" Ta "PCI Express Mini Card"
+.It Li "Sierra Wireless MC8775" Ta "PCI Express Mini Card"
+.It Li "Sierra Wireless MC8790" Ta "PCI Express Mini Card"
+.It Li "Sierra Wireless AirCard 580" Ta "CardBus"
+.It Li "Sierra Wireless AirCard 875" Ta "CardBus"
+.It Li "Sierra Wireless AirCard 881" Ta "CardBus"
+.It Li "Sierra Wireless AirCard 881U" Ta "USB"
+.It Li "Sierra Wireless Inc. USB 305" Ta "USB"
+.It Li "Softbank C01SW (Sierra OEM)" Ta "USB"
+.It Li "Toshiba 3G HSDPA MiniCard" Ta "PCI Express Mini Card"
+.It Li "Vodafone Mobile Connect 3G" Ta "CardBus"
+.It Li "Vodafone Mobile Broadband K3765" Ta "USB"
+.It Li "ZTE AC2746" Ta "USB"
+.It Li "ZTE MF112" Ta "USB"
+.It Li "ZTE MF633" Ta "USB"
+.It Li "ZTE MF637" Ta "USB"
 .El
 .Pp
 Devices suspected of being compatible are:
-.Bl -column "Device                        " "Bus" -offset 6n
-.It Em "Device		Bus"
-.It Li "Dell W5500" Ta Ta PCI Express Mini Card
-.It Li "Huawei E270+" Ta Ta USB
-.It Li "Huawei E1550" Ta Ta USB
-.It Li "Huawei E1690" Ta Ta USB
-.It Li "Huawei E1762" Ta Ta USB
-.It Li "Huawei E1820" Ta Ta USB
-.It Li "Novatel Wireless ExpressCard" Ta Ta ExpressCard
-.It Li "Novatel Wireless Merlin V620" Ta Ta CardBus
-.It Li "Novatel Wireless Merlin V740" Ta Ta CardBus
-.It Li "Novatel Wireless Merlin X950D" Ta Ta ExpressCard
-.It Li "Novatel Wireless MC950D" Ta Ta USB
-.It Li "Novatel Wireless S720" Ta Ta CardBus
-.It Li "Novatel Wireless U720" Ta Ta USB
-.It Li "Novatel Wireless U740" Ta Ta CardBus
-.It Li "Novatel Wireless U870" Ta Ta CardBus
-.It Li "Novatel Wireless V720" Ta Ta CardBus
-.It Li "Novatel Wireless X950D" Ta Ta ExpressCard
-.It Li "Novatel Wireless XU870 HSDPA" Ta Ta ExpressCard
-.It Li "Sierra Wireless AirCard 595" Ta Ta CardBus
-.It Li "Sierra Wireless AirCard 597E" Ta Ta CardBus
-.It Li "Sierra Wireless AirCard 880" Ta Ta CardBus
-.It Li "Sierra Wireless AirCard 880E" Ta Ta ExpressCard
-.It Li "Sierra Wireless AirCard 880U" Ta Ta USB
-.It Li "Sierra Wireless AirCard 881E" Ta Ta ExpressCard
-.It Li "Sierra Wireless AirCard 885U" Ta Ta USB
-.It Li "Sierra Wireless C597" Ta Ta USB
-.It Li "Sierra Wireless EM5625" Ta Ta USB
-.It Li "Sierra Wireless MC5720" Ta Ta PCI Express Mini Card
-.It Li "Sierra Wireless MC5725" Ta Ta PCI Express Mini Card
-.It Li "Sierra Wireless MC8755" Ta Ta PCI Express Mini Card
-.It Li "Sierra Wireless MC8765" Ta Ta PCI Express Mini Card
-.It Li "Sierra Wireless MC8780" Ta Ta PCI Express Mini Card
-.It Li "Sierra Wireless MC8781" Ta Ta PCI Express Mini Card
+.Bl -column "Option GlobeTrotter HSDPA ICON225" "Bus" -offset 6n
+.It Em Device Ta Em Bus
+.It Li "Dell W5500" Ta "PCI Express Mini Card"
+.It Li "Huawei E270+" Ta "USB"
+.It Li "Huawei E1550" Ta "USB"
+.It Li "Huawei E1690" Ta "USB"
+.It Li "Huawei E1762" Ta "USB"
+.It Li "Huawei E1820" Ta "USB"
+.It Li "Novatel Wireless ExpressCard" Ta "ExpressCard"
+.It Li "Novatel Wireless Merlin V620" Ta "CardBus"
+.It Li "Novatel Wireless Merlin V740" Ta "CardBus"
+.It Li "Novatel Wireless Merlin X950D" Ta "ExpressCard"
+.It Li "Novatel Wireless MC950D" Ta "USB"
+.It Li "Novatel Wireless S720" Ta "CardBus"
+.It Li "Novatel Wireless U720" Ta "USB"
+.It Li "Novatel Wireless U740" Ta "CardBus"
+.It Li "Novatel Wireless U870" Ta "CardBus"
+.It Li "Novatel Wireless V720" Ta "CardBus"
+.It Li "Novatel Wireless X950D" Ta "ExpressCard"
+.It Li "Novatel Wireless XU870 HSDPA" Ta "ExpressCard"
+.It Li "Sierra Wireless AirCard 595" Ta "CardBus"
+.It Li "Sierra Wireless AirCard 597E" Ta "CardBus"
+.It Li "Sierra Wireless AirCard 880" Ta "CardBus"
+.It Li "Sierra Wireless AirCard 880E" Ta "ExpressCard"
+.It Li "Sierra Wireless AirCard 880U" Ta "USB"
+.It Li "Sierra Wireless AirCard 881E" Ta "ExpressCard"
+.It Li "Sierra Wireless AirCard 885U" Ta "USB"
+.It Li "Sierra Wireless C597" Ta "USB"
+.It Li "Sierra Wireless EM5625" Ta "USB"
+.It Li "Sierra Wireless MC5720" Ta "PCI Express Mini Card"
+.It Li "Sierra Wireless MC5725" Ta "PCI Express Mini Card"
+.It Li "Sierra Wireless MC8755" Ta "PCI Express Mini Card"
+.It Li "Sierra Wireless MC8765" Ta "PCI Express Mini Card"
+.It Li "Sierra Wireless MC8780" Ta "PCI Express Mini Card"
+.It Li "Sierra Wireless MC8781" Ta "PCI Express Mini Card"
 .El
 .Pp
 Some modems have multiple serial ports,

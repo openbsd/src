@@ -1,4 +1,4 @@
-.\"	$OpenBSD: infnan.3,v 1.12 2011/07/07 01:34:52 martynas Exp $
+.\"	$OpenBSD: infnan.3,v 1.13 2011/09/03 22:59:07 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)infnan.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 7 2011 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt INFNAN 3
 .Os
 .Sh NAME
@@ -124,22 +124,14 @@ revised
 .Fn infnan
 to return.
 And a C program to implement that suggestion follows.
-.sp 0.5
-.Bd -filled -offset indent
-.Bl -column "IEEE Sig" "IEEE Default" XXERANGE ERANGExEDOM
-.It IEEE Signal	IEEE Default Ta
-.Fa iarg Ta
-.Va errno Ta
-.Fn infnan
-.It Invalid	\*(Na Ta
-.Dv EDOM	EDOM	0
-.It Overflow	\(+-\*(If Ta
-.Dv ERANGE	ERANGE	HUGE
-.It Div\-by\-0	\(+-Infinity Ta
-.Dv \(+-ERANGE	ERANGE/EDOM	\(+-HUGE
-.It 	( Ns Dv HUGE No "= 1.7e38 ... nearly  2.0**127)"
+.Bl -column "IEEE Signal" "IEEE Default" "+-ERANGE" "ERANGE/EDOM" "infnanXX"
+.It Sy "IEEE Signal" Ta Sy "IEEE Default" Ta Fa iarg Ta Va errno Ta Fn infnan
+.It Invalid Ta \*(Na Ta Dv EDOM Ta Dv EDOM Ta 0
+.It Overflow Ta \(+-\*(If Ta Dv ERANGE Ta Dv ERANGE Ta Dv HUGE
+.It Div\-by\-0 Ta \(+-Infinity Ta Dv +-ERANGE Ta Dv ERANGE/EDOM Ta Dv +-HUGE
 .El
-.Ed
+.Pp
+.Dl ( Ns Dv HUGE No = 1.7e38 ... nearly  2.0**127)
 .Pp
 ALTERNATIVE
 .Fn infnan :

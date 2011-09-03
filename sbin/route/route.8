@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.68 2011/07/05 05:44:05 jmc Exp $
+.\"	$OpenBSD: route.8,v 1.69 2011/09/03 22:59:08 jmc Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: July 5 2011 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -376,7 +376,7 @@ Routes have associated flags which influence operation of the protocols
 when sending to destinations matched by the routes.
 These flags may be set (or sometimes cleared)
 by indicating the following corresponding modifiers:
-.Bl -column blackhole RTF_BLACKHOLE
+.Bl -column "-blackhole" "RTF_BLACKHOLE" "description"
 .It Fl blackhole Ta Dv RTF_BLACKHOLE Ta "silently discard pkts (during updates)"
 .It Fl cloning   Ta Dv RTF_CLONING   Ta "generates a new route on use"
 .It Fl iface     Ta Dv ~RTF_GATEWAY  Ta "destination is directly reachable"

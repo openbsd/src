@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.65 2011/08/19 19:59:51 jmc Exp $
+.\"	$OpenBSD: netstat.1,v 1.66 2011/09/03 22:59:07 jmc Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)netstat.1	8.8 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: August 19 2011 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt NETSTAT 1
 .Os
 .Sh NAME
@@ -351,24 +351,24 @@ and
 manual pages.
 .Pp
 The mapping between letters and flags is:
-.Bl -column XXXX RTF_BLACKHOLE
-.It 1	RTF_PROTO1	Protocol specific routing flag #1.
-.It 2	RTF_PROTO2	Protocol specific routing flag #2.
-.It 3	RTF_PROTO3	Protocol specific routing flag #3.
-.It B	RTF_BLACKHOLE	Just discard pkts (during updates).
-.It C	RTF_CLONING	Generate new routes on use.
-.It c	RTF_CLONED	Cloned routes (generated from RTF_CLONING).
-.It D	RTF_DYNAMIC	Created dynamically (by redirect).
-.It G	RTF_GATEWAY	Destination requires forwarding by intermediary.
-.It H	RTF_HOST	Host entry (net otherwise).
-.It L	RTF_LLINFO	Valid protocol to link address translation.
-.It M	RTF_MODIFIED	Modified dynamically (by redirect).
-.It P	RTF_MPATH	Multipath route.
-.It R	RTF_REJECT	Host or net unreachable.
-.It S	RTF_STATIC	Manually added.
-.It T	RTF_MPLS	MPLS route.
-.It U	RTF_UP	Route usable.
-.It X	RTF_XRESOLVE	External daemon translates proto to link address.
+.Bl -column "1" "RTF_BLACKHOLE" "Protocol specific routing flag #1."
+.It 1 Ta RTF_PROTO1 Ta "Protocol specific routing flag #1."
+.It 2 Ta RTF_PROTO2 Ta "Protocol specific routing flag #2."
+.It 3 Ta RTF_PROTO3 Ta "Protocol specific routing flag #3."
+.It B Ta RTF_BLACKHOLE Ta "Just discard pkts (during updates)."
+.It C Ta RTF_CLONING Ta "Generate new routes on use."
+.It c Ta RTF_CLONED Ta "Cloned routes (generated from RTF_CLONING)."
+.It D Ta RTF_DYNAMIC Ta "Created dynamically (by redirect)."
+.It G Ta RTF_GATEWAY Ta "Destination requires forwarding by intermediary."
+.It H Ta RTF_HOST Ta "Host entry (net otherwise)."
+.It L Ta RTF_LLINFO Ta "Valid protocol to link address translation."
+.It M Ta RTF_MODIFIED Ta "Modified dynamically (by redirect)."
+.It P Ta RTF_MPATH Ta "Multipath route."
+.It R Ta RTF_REJECT Ta "Host or net unreachable."
+.It S Ta RTF_STATIC Ta "Manually added."
+.It T Ta RTF_MPLS Ta "MPLS route."
+.It U Ta RTF_UP Ta "Route usable."
+.It X Ta RTF_XRESOLVE Ta "External daemon translates proto to link address."
 .El
 .Pp
 Direct routes are created for each interface attached to the local host;

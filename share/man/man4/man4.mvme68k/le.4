@@ -1,4 +1,4 @@
-.\"	$OpenBSD: le.4,v 1.17 2008/03/27 20:19:33 jmc Exp $
+.\"	$OpenBSD: le.4,v 1.18 2011/09/03 22:59:07 jmc Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -33,7 +33,7 @@
 .\"	from: Header: le.4,v 1.2 92/10/13 05:31:33 leres Exp
 .\"	from: @(#)le.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: March 27 2008 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt LE 4 mvme68k
 .Os
 .Sh NAME
@@ -82,9 +82,8 @@ VME connectors, and
 closer to the AM7990DC chip at the bottom edge.
 .Pp
 The only supported configurations are:
-.Bl -column "xxxxxxxx" "xxxxxxxx" "xxxxxxxx" "0xffffffff"
-.It Li SW1 Ta SW2 Ta SW3 Ta Address
-.It " "
+.Bl -column "xxxxxxxx" "xxxxxxxx" "xxxxxxxx" "0xffffffff" -offset indent
+.It Sy SW1 Ta Sy SW2 Ta Sy SW3 Ta Sy Address
 .It Li "UUU_UU_U" Ta "U__U____" Ta "______U_" Ta "0xffff1200"
 .It Li "UUU_U_UU" Ta "U__U_U__" Ta "______U_" Ta "0xffff1400"
 .It Li "UUU_U__U" Ta "U__UU___" Ta "______U_" Ta "0xffff1600"

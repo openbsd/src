@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aps.4,v 1.8 2007/12/23 22:09:19 jmc Exp $
+.\"	$OpenBSD: aps.4,v 1.9 2011/09/03 22:59:08 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 23 2007 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt APS 4
 .Os
 .Sh NAME
@@ -30,7 +30,7 @@ driver provides support for several sensors found in some ThinkPad laptops.
 The sensors currently exposed via the
 .Xr sysctl 8
 interface are:
-.Bl -column "Sensor          " "Units" "Typical" -offset indent
+.Bl -column "Keyboard Active" "Unknown" "Typical Use" -offset indent
 .It Sy "Sensor" Ta Sy "Units" Ta Sy "Typical Use"
 .It Li "X_ACCEL" Ta "Unknown" Ta "X Acceleration"
 .It Li "Y_ACCEL" Ta "Unknown" Ta "Y Acceleration"

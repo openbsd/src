@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rx.4,v 1.13 2010/01/05 19:26:26 jmc Exp $
+.\"	$OpenBSD: rx.4,v 1.14 2011/09/03 22:59:07 jmc Exp $
 .\"	$NetBSD: rx.4,v 1.3 1996/03/03 17:14:03 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991 Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     from: @(#)rx.4	6.2 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: January 5 2010 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt RX 4 vax
 .Os
 .Sh NAME
@@ -79,12 +79,12 @@ operating system
 .Tn RT-11 .
 .Pp
 The minor device number is interpreted as follows:
-.Bl -column Otherx -offset indent
-.It Sy Bit	Description
-.It 0	Sector interleaving (1 disables interleaving)
-.It 1	Logical sector\~1 is on track\~1 (0\~no, 1\~yes)
-.It 2	Not used, reserved
-.It Other	Drive number
+.Bl -column "Other" "Description" -offset indent
+.It Sy Bit Ta Sy Description
+.It 0 Ta "Sector interleaving (1 disables interleaving)"
+.It 1 Ta "Logical sector 1 is on track 1 (0 no, 1 yes)"
+.It 2 Ta "Not used, reserved"
+.It Other Ta "Drive number"
 .El
 .Pp
 The two drives in a single

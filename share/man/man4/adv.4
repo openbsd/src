@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adv.4,v 1.25 2010/07/03 03:59:16 krw Exp $
+.\"	$OpenBSD: adv.4,v 1.26 2011/09/03 22:59:08 jmc Exp $
 .\"
 .\" Copyright (c) 1998, Jason Downs.  All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: July 3 2010 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt ADV 4
 .Os
 .Sh NAME
@@ -43,22 +43,22 @@ and
 .Nm adw
 drivers support most AdvanSys PCI SCSI host adapters, as shown in this
 table:
-.Bl -column "ABP940UWxxxxx" "ASB3940U2W-00" -offset indent
-.It Nm adv	adw
-.It ABP-920	ABP-940UW
-.It ABP-930 (1)	ABP-940UWD
-.It ABP-930U	ABP-970UW
-.It ABP-930UA	ASB-3940UW-00
-.It ABP-940	ASB-3940U2W-00
-.It ABP-940U	ASB-3950U160
-.It ABP-940UA
-.It ABP-950
-.It ABP-960 (2)
-.It ABP-960U (2)
-.It ABP-970
-.It ABP-970U
-.It ABP-980
-.It ABP-980U
+.Bl -column "ABP-960U (2)" "ASB3940U2W-00" -offset indent
+.It Sy adv Ta Sy adw
+.It "ABP-920" Ta ABP-940UW
+.It "ABP-930 (1)" Ta ABP-940UWD
+.It "ABP-930U" Ta ABP-970UW
+.It "ABP-930UA" Ta ASB-3940UW-00
+.It "ABP-940" Ta ASB-3940U2W-00
+.It "ABP-940U" Ta ASB-3950U160
+.It "ABP-940UA" Ta ""
+.It "ABP-950" Ta ""
+.It "ABP-960 (2)" Ta ""
+.It "ABP-960U (2)" Ta ""
+.It "ABP-970" Ta ""
+.It "ABP-970U" Ta ""
+.It "ABP-980" Ta ""
+.It "ABP-980U" Ta ""
 .El
 .Pp
 .Bl -enum -compact
@@ -79,33 +79,32 @@ adw0:0:0: host adapter error 0x12, resetting bus. See adw(4).
 Some further information on the meaning of such errors can be obtained
 from the following table derived from the source code provided by
 ConnectCom.
-.Bl -column "Error" "QHSTA_M_SCSI_BUS_RESET_UNSOL"
-.It Em Error	Define Name	Comment
-.Pp
-.It 0x12	QHSTA_M_SXFR_XFR_OFLW	SXFR_STATUS Transfer Overflow
-.It 0x13	QHSTA_M_UNEXPECTED_BUS_FREE
-.It 0x15	QHSTA_M_QUEUE_ABORTED
-.It 0x16	QHSTA_M_SXFR_SDMA_ERR	SXFR_STATUS SCSI DMA Error
-.It 0x17	QHSTA_M_SXFR_SXFR_PERR	SXFR_STATUS SCSI Bus Parity Error
-.It 0x18	QHSTA_M_RDMA_PERR	RISC PCI DMA parity error
-.It 0x19	QHSTA_M_SXFR_OFF_UFLW	SXFR_STATUS Offset Underflow
-.It 0x20	QHSTA_M_SXFR_OFF_OFLW	SXFR_STATUS Offset Overflow
-.It 0x21	QHSTA_M_SXFR_WD_TMO	SXFR_STATUS Watchdog Timeout
-.It 0x22	QHSTA_M_SXFR_DESELECTED	SXFR_STATUS Deselected
-.It 0x24	QHSTA_M_SXFR_XFR_PH_ERR	SXFR_STATUS Transfer Phase Error
-.It 0x25	QHSTA_M_SXFR_UNKNOWN_ERROR	SXFR_STATUS Unknown Error
-.It 0x30	QHSTA_M_SCSI_BUS_RESET	Request aborted from SBR
-.It 0x31	QHSTA_M_SCSI_BUS_RESET_UNSOL	Request aborted from unsolicited SBR
-.It 0x32	QHSTA_M_BUS_DEVICE_RESET	Request aborted from BDR
-.It 0x35	QHSTA_M_DIRECTION_ERR	Data Phase mismatch
-.It 0x36	QHSTA_M_DIRECTION_ERR_HUNG	Data Phase mismatch and bus hang
-.It 0x41	QHSTA_M_WTM_TIMEOUT
-.It 0x42	QHSTA_M_BAD_CMPL_STATUS_IN
-.It 0x43	QHSTA_M_NO_AUTO_REQ_SENSE
-.It 0x44	QHSTA_M_AUTO_REQ_SENSE_FAIL
-.It 0x45	QHSTA_M_INVALID_DEVICE	Bad target ID
-.It 0x46	QHSTA_M_FROZEN_TIDQ	TID Queue frozen
-.It 0x47	QHSTA_M_SGBACKUP_ERROR	Scatter-Gather backup error
+.Bl -column "Error" "QHSTA_M_SCSI_BUS_RESET_UNSOL" "Comment"
+.It Em "Error" Ta Em "Define Name" Ta Em "Comment"
+.It 0x12 Ta QHSTA_M_SXFR_XFR_OFLW Ta "SXFR_STATUS Transfer Overflow"
+.It 0x13 Ta QHSTA_M_UNEXPECTED_BUS_FREE Ta ""
+.It 0x15 Ta QHSTA_M_QUEUE_ABORTED Ta ""
+.It 0x16 Ta QHSTA_M_SXFR_SDMA_ERR Ta "SXFR_STATUS SCSI DMA Error"
+.It 0x17 Ta QHSTA_M_SXFR_SXFR_PERR Ta "SXFR_STATUS SCSI Bus Parity Error"
+.It 0x18 Ta QHSTA_M_RDMA_PERR Ta "RISC PCI DMA parity error"
+.It 0x19 Ta QHSTA_M_SXFR_OFF_UFLW Ta "SXFR_STATUS Offset Underflow"
+.It 0x20 Ta QHSTA_M_SXFR_OFF_OFLW Ta "SXFR_STATUS Offset Overflow"
+.It 0x21 Ta QHSTA_M_SXFR_WD_TMO Ta "SXFR_STATUS Watchdog Timeout"
+.It 0x22 Ta QHSTA_M_SXFR_DESELECTED Ta "SXFR_STATUS Deselected"
+.It 0x24 Ta QHSTA_M_SXFR_XFR_PH_ERR Ta "SXFR_STATUS Transfer Phase Error"
+.It 0x25 Ta QHSTA_M_SXFR_UNKNOWN_ERROR Ta "SXFR_STATUS Unknown Error"
+.It 0x30 Ta QHSTA_M_SCSI_BUS_RESET Ta "Request aborted from SBR"
+.It 0x31 Ta QHSTA_M_SCSI_BUS_RESET_UNSOL Ta "Request aborted from unsolicited SBR"
+.It 0x32 Ta QHSTA_M_BUS_DEVICE_RESET Ta "Request aborted from BDR"
+.It 0x35 Ta QHSTA_M_DIRECTION_ERR Ta "Data Phase mismatch"
+.It 0x36 Ta QHSTA_M_DIRECTION_ERR_HUNG Ta "Data Phase mismatch and bus hang"
+.It 0x41 Ta QHSTA_M_WTM_TIMEOUT Ta ""
+.It 0x42 Ta QHSTA_M_BAD_CMPL_STATUS_IN Ta ""
+.It 0x43 Ta QHSTA_M_NO_AUTO_REQ_SENSE Ta ""
+.It 0x44 Ta QHSTA_M_AUTO_REQ_SENSE_FAIL Ta ""
+.It 0x45 Ta QHSTA_M_INVALID_DEVICE Ta "Bad target ID"
+.It 0x46 Ta QHSTA_M_FROZEN_TIDQ Ta "TID Queue frozen"
+.It 0x47 Ta QHSTA_M_SGBACKUP_ERROR Ta "Scatter-Gather backup error"
 .El
 .Sh SEE ALSO
 .Xr cd 4 ,

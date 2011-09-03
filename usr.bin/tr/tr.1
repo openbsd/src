@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tr.1,v 1.18 2011/06/27 23:10:19 jmc Exp $
+.\"	$OpenBSD: tr.1,v 1.19 2011/09/03 22:59:07 jmc Exp $
 .\"	$NetBSD: tr.1,v 1.5 1994/12/07 08:35:13 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)tr.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: June 27 2011 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt TR 1
 .Os
 .Sh NAME
@@ -143,14 +143,21 @@ the octal sequence to the full 3 octal digits.
 A backslash followed by certain special characters maps to special
 values.
 .Pp
-.Bl -column "nn" "<alert character>"
-.It \ea	<alert character>
-.It \eb	<backspace>
-.It \ef	<form-feed>
-.It \en	<newline>
-.It \er	<carriage return>
-.It \et	<tab>
-.It \ev	<vertical tab>
+.Bl -tag -width "nn" -offset indent -compact
+.It \ea
+<alert character>
+.It \eb
+<backspace>
+.It \ef
+<form-feed>
+.It \en
+<newline>
+.It \er
+<carriage return>
+.It \et
+<tab>
+.It \ev
+<vertical tab>
 .El
 .Pp
 A backslash followed by any other character maps to that character.
@@ -160,19 +167,31 @@ Represents the range of characters between the range endpoints, inclusively.
 Represents all characters belonging to the defined character class.
 Class names are:
 .Pp
-.Bl -column "xdigit" "<lower-case alphabetic characters>"
-.It alnum	<alphanumeric characters>
-.It alpha	<alphabetic characters>
-.It blank	<blank characters>
-.It cntrl	<control characters>
-.It digit	<numeric characters>
-.It graph	<graphic characters>
-.It lower	<lower-case alphabetic characters>
-.It print	<printable characters>
-.It punct	<punctuation characters>
-.It space	<space characters>
-.It upper	<upper-case characters>
-.It xdigit	<hexadecimal characters>
+.Bl -tag -width "xdigit" -offset indent -compact
+.It alnum
+<alphanumeric characters>
+.It alpha
+<alphabetic characters>
+.It blank
+<blank characters>
+.It cntrl
+<control characters>
+.It digit
+<numeric characters>
+.It graph
+<graphic characters>
+.It lower
+<lower-case alphabetic characters>
+.It print
+<printable characters>
+.It punct
+<punctuation characters>
+.It space
+<space characters>
+.It upper
+<upper-case characters>
+.It xdigit
+<hexadecimal characters>
 .El
 .Pp
 .\" All classes may be used in

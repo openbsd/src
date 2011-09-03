@@ -1,4 +1,4 @@
-.\"	$OpenBSD: icmp6.4,v 1.24 2011/05/17 13:52:14 jmc Exp $
+.\"	$OpenBSD: icmp6.4,v 1.25 2011/09/03 22:59:07 jmc Exp $
 .\"	$KAME: icmp6.4,v 1.6 2004/12/27 05:30:56 itojun Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -27,7 +27,7 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.Dd $Mdocdate: May 17 2011 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt ICMP6 4
 .Os
 .Sh NAME
@@ -82,8 +82,8 @@ present in the ICMPv6 header.
 The abbreviations for the types and codes may be used in rules in
 .Xr pf.conf 5 .
 The following types are defined:
-.Bl -column x xxxxxxxxxxxx -offset indent
-.It Sy Num Ta Sy Abbrev. Ta Sy Description
+.Bl -column "Num" "listendone" "Description" -offset indent
+.It Sy Num Ta Sy "Abbrev." Ta Sy Description
 .It 1 Ta unreach Ta "Destination unreachable"
 .It 2 Ta toobig Ta "Packet too big"
 .It 3 Ta timex Ta "Time exceeded"
@@ -113,9 +113,8 @@ The following types are defined:
 .El
 .Pp
 The following codes are defined:
-.Bl -column x xxxxxxxxxxxx xxxxxxxx -offset indent
-.It Sy Num Ta Sy Abbrev. Ta Sy Type Ta
-.Sy Description
+.Bl -column "Num" "redironlink" "paramprob" "Description" -offset indent
+.It Sy Num Ta Sy "Abbrev." Ta Sy Type Ta Sy Description
 .It 0 Ta noroute-unr Ta unreach Ta "No route to destination"
 .It 1 Ta admin-unr Ta unreach Ta "Administratively prohibited"
 .It 2 Ta beyond-unr Ta unreach Ta "Beyond scope of source address"

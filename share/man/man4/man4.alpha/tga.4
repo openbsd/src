@@ -1,4 +1,4 @@
-.\" $OpenBSD: tga.4,v 1.11 2007/12/23 22:16:39 jmc Exp $
+.\" $OpenBSD: tga.4,v 1.12 2011/09/03 22:59:07 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Nathan L. Binkert <binkertn@umich.edu>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 23 2007 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt TGA 4 alpha
 .Os
 .Sh NAME
@@ -34,10 +34,9 @@ On some TGA models, there are four DIP switches.
 On other models, there is a rotary switch with positions 0-F.
 There are also some that use jumpers.
 .Ss TGA Switch Settings
-.Bl -column "Setting" "Pixel Freq" "Resolution" "Refresh Rate" -offset indent
-.It Li Switch Ta Pixel Ta Monitor Ta Refresh
-.It Em "Setting	Freq (MHz)	Resolution	Rate (MHz)"
-.It " "
+.Bl -column "Setting" "Freq (MHz)" "Resolution" "Rate (MHz)" -offset indent
+.It Sy Switch Ta Sy Pixel Ta Sy Monitor Ta Sy Refresh
+.It Sy "Setting" Ta Sy "Freq (MHz)" Ta Sy "Resolution" Ta Sy "Rate (MHz)"
 .It Li 0 Ta 130 Ta 1280x1024 Ta 72
 .It Li 1 Ta 119 Ta 1280x1024 Ta 66
 .It Li 2 Ta 108 Ta 1280x1024 Ta 60

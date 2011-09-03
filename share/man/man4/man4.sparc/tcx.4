@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcx.4,v 1.33 2009/11/26 20:22:50 jmc Exp $
+.\"	$OpenBSD: tcx.4,v 1.34 2011/09/03 22:59:07 jmc Exp $
 .\"	$NetBSD: tcx.4,v 1.3 1997/10/08 22:00:14 jtc Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 26 2009 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt TCX 4 sparc
 .Os
 .Sh NAME
@@ -78,8 +78,8 @@ The supported video modes depend on the particular frame buffer type.
 .\"
 .Ss TCX (8 bit) video modes
 The 8 bit frame buffer supports the following video modes:
-.Bl -column "Mode identifier" "Resolution" "Refresh Rate"
-.It Li Mode identifier Ta Resolution Ta Refresh Rate (MHz)
+.Bl -column "Mode identifier" "Resolution" "Refresh Rate" -offset indent
+.It Sy "Mode identifier" Ta Sy "Resolution" Ta Sy "Refresh Rate (MHz)"
 .\" refresh rate not confirmed for the following mode
 .It Li r640x480x21 Ta 640x480 Ta 56Hz
 .It Li r640x480x25 Ta 640x480 Ta 60Hz
@@ -113,8 +113,8 @@ The 8 bit frame buffer supports the following video modes:
 .Pp
 With the addition of a 1MB VSIMM, the following higher resolution models
 become available:
-.Bl -column "Mode identifier" "Resolution" "Refresh Rate"
-.It Li Mode identifier Ta Resolution Ta Refresh Rate (MHz)
+.Bl -column "Mode identifier" "Resolution" "Refresh Rate" -offset indent
+.It Sy "Mode identifier" Ta Sy "Resolution" Ta Sy "Refresh Rate (MHz)"
 .It Li r1280x1024x117 Ta 1280x1024 Ta 66Hz
 .It Li r1280x1024x118 Ta 1280x1024 Ta 67Hz
 .It Li r1280x1024x135 Ta 1280x1024 Ta 76Hz
@@ -148,8 +148,8 @@ is absolutely necessary for the resolution settings to be honoured.
 .\"
 .Ss S24 (24 bit) video modes
 The 24 bit frame buffer only supports the following video modes:
-.Bl -column "Mode identifier" "Resolution" "Refresh Rate"
-.It Li Mode identifier Ta Resolution Ta Refresh Rate (MHz)
+.Bl -column "Mode identifier" "Resolution" "Refresh Rate" -offset indent
+.It Sy Mode identifier Ta Sy "Resolution" Ta Sy "Refresh Rate (MHz)"
 .It Li r1024x768x70 Ta 1024x768 Ta 70Hz
 .It Li r1152x900x66 Ta 1152x900 Ta 66Hz
 .It Li r1152x900x76 Ta 1152x900 Ta 76Hz

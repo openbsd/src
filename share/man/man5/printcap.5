@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printcap.5,v 1.22 2010/01/03 14:31:01 schwarze Exp $
+.\"	$OpenBSD: printcap.5,v 1.23 2011/09/03 22:59:07 jmc Exp $
 .\"	$NetBSD: printcap.5,v 1.7 1998/02/20 12:24:50 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)printcap.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: January 3 2010 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt PRINTCAP 5
 .Os
 .Sh NAME
@@ -68,64 +68,60 @@ for a complete discussion on how to set up the database for a given printer.
 Refer to
 .Xr termcap 5
 for a description of the file layout.
-.Bl -column "xx" "xx" "/var/spool/"
-.It Sy Name	Type	Default	Description
-.It "af	str" Ta Dv NULL Ta No "name of accounting file"
-.It "br	num	none	if lp is a tty, set baud rate"
+.Bl -column "Name" "Type" "/var/spool/output" "Description"
+.It Sy Name Ta Sy Type Ta Sy Default Ta Sy Description
+.It "af	str" Ta Dv NULL Ta "name of accounting file"
+.It "br" Ta "num" Ta "none" Ta "if lp is a tty, set baud rate"
 .Pf ( Xr ioctl 2
 call)
-.It "cf	str" Ta Dv NULL Ta No "cifplot data filter"
-.It "df	str" Ta Dv NULL Ta No "tex data filter"
-.Pf ( Tn DVI
-format)
-.It "fc	num	0	if lp is a tty, clear flag bits"
+.It "cf" Ta "str" Ta Dv NULL Ta "cifplot data filter"
+.It "df" Ta "str" Ta Dv NULL Ta "tex data filter (DVI format)"
+.It "fc" Ta "num" Ta "0" Ta "if lp is a tty, clear flag bits"
 .Pq Aq Pa sgtty.h
-.It "ff	str" Ta So Li \ef Sc Ta No "string to send for a form feed"
-.It "fo	bool	false	print a form feed when device is opened"
-.It "fs	num	0	if lp is a tty, set flag bits"
+.It "ff" Ta "str" Ta So Li \ef Sc Ta "string to send for a form feed"
+.It "fo" Ta "bool" Ta "false" Ta "print a form feed when device is opened"
+.It "fs" Ta "num" Ta "0" Ta "if lp is a tty, set flag bits"
 .Pq Aq Pa sgtty.h
-.It "gf	str" Ta Dv NULL Ta No "graph data filter"
+.It "gf" Ta "str" Ta Dv NULL Ta "graph data filter"
 .Pf ( Xr plot 3
 format)
-.It "hl	bool	false	print the burst header page last"
-.It "ic	bool	false	supports non-standard ioctl to indent printout"
-.It "if	str" Ta Dv NULL Ta No "name of text filter which does accounting"
-.It "lf	str" Ta Pa /dev/console Ta No "error logging file name"
-.It "lo	str" Ta Pa lock Ta No "name of lock file"
-.It "lp	str" Ta Pa /dev/lp Ta No "local printer device, or port@host for remote"
-.It "mc	num	0	maximum number of copies allowed; 0=unlimited"
-.It "ms	str" Ta Dv NULL Ta No "list of terminal modes to set or clear"
-.It "mx	num	0	max file size (in"
+.It "hl" Ta "bool" Ta "false" Ta "print the burst header page last"
+.It "ic" Ta "bool" Ta "false" Ta "supports non-standard ioctl to indent printout"
+.It "if" Ta "str" Ta Dv NULL Ta "name of text filter which does accounting"
+.It "lf" Ta "str" Ta Pa /dev/console Ta "error logging file name"
+.It "lo" Ta "str" Ta Pa lock Ta "name of lock file"
+.It "lp" Ta "str" Ta Pa /dev/lp Ta "local printer device, or port@host for remote"
+.It "mc" Ta "num" Ta "0" Ta "maximum number of copies allowed; 0=unlimited"
+.It "ms" Ta "str" Ta Dv NULL Ta "list of terminal modes to set or clear"
+.It "mx" Ta "num" Ta "0" Ta "max file size (in"
 .Dv BUFSIZ
 blocks); 0=unlimited
-.It "nd	str" Ta Dv NULL Ta No "next directory for queues list (unimplemented)"
-.It "nf	str" Ta Dv NULL Ta No "ditroff data filter (device independent troff)"
-.It "of	str" Ta Dv NULL Ta No "name of output filtering program"
-.It "pc	num	200	price per foot or page in hundredths of cents"
-.It "pl	num	66	page length (in lines)"
-.It "pw	num	132	page width (in characters)"
-.It "px	num	0	page width in pixels (horizontal)"
-.It "py	num	0	page length in pixels (vertical)"
-.It "rf	str" Ta Dv NULL Ta No "filter for printing"
-.Tn FORTRAN
-style text files
-.It "rg	str" Ta Dv NULL Ta No "restricted group-only group members can access"
-.It "rm	str" Ta Dv NULL Ta No "machine name for remote printer"
-.It "rp	str	``lp''	remote printer name argument"
-.It "rs	bool	false	remote users must have a local account"
-.It "rw	bool	false	open printer device for reading and writing"
-.It "sb	bool	false	short banner (one line only)"
-.It "sc	bool	false	suppress multiple copies"
-.It "sd	str" Ta Pa /var/spool/output Ta No "spool directory"
-.It "sf	bool	false	suppress form feeds"
-.It "sh	bool	false	suppress printing of burst page header"
-.It "st	str" Ta Pa status Ta No "status file name"
-.It "tf	str" Ta Dv NULL Ta No "troff data filter (cat phototypesetter)"
-.It "tr	str" Ta Dv NULL Ta No "trailer string to print when queue empties"
-.It "vf	str" Ta Dv NULL Ta No "raster image filter"
-.It "xc	num	0	if lp is a tty, clear local mode bits"
+.It "nd" Ta "str" Ta Dv NULL Ta "next directory for queues list (unimplemented)"
+.It "nf" Ta "str" Ta Dv NULL Ta "ditroff data filter (device independent troff)"
+.It "of" Ta "str" Ta Dv NULL Ta "name of output filtering program"
+.It "pc" Ta "num" Ta "200" Ta "price per foot or page in hundredths of cents"
+.It "pl" Ta "num" Ta "66" Ta "page length (in lines)"
+.It "pw" Ta "num" Ta "132" Ta "page width (in characters)"
+.It "px" Ta "num" Ta "0" Ta "page width in pixels (horizontal)"
+.It "py" Ta "num" Ta "0" Ta "page length in pixels (vertical)"
+.It "rf" Ta "str" Ta Dv NULL Ta "filter for printing FORTRAN style text files"
+.It "rg" Ta "str" Ta Dv NULL Ta "restricted group-only group members can access"
+.It "rm" Ta "str" Ta Dv NULL Ta "machine name for remote printer"
+.It "rp" Ta "str" Ta "``lp''" Ta "remote printer name argument"
+.It "rs" Ta "bool" Ta "false" Ta "remote users must have a local account"
+.It "rw" Ta "bool" Ta "false" Ta "open printer device for reading and writing"
+.It "sb" Ta "bool" Ta "false" Ta "short banner (one line only)"
+.It "sc" Ta "bool" Ta "false" Ta "suppress multiple copies"
+.It "sd" Ta "str" Ta Pa /var/spool/output Ta "spool directory"
+.It "sf" Ta "bool" Ta "false" Ta "suppress form feeds"
+.It "sh" Ta "bool" Ta "false" Ta "suppress printing of burst page header"
+.It "st" Ta "str" Ta Pa status Ta "status file name"
+.It "tf" Ta "str" Ta Dv NULL Ta "troff data filter (cat phototypesetter)"
+.It "tr" Ta "str" Ta Dv NULL Ta "trailer string to print when queue empties"
+.It "vf" Ta "str" Ta Dv NULL Ta "raster image filter"
+.It "xc" Ta "num" Ta "0" Ta "if lp is a tty, clear local mode bits"
 .Pq Xr tty 4
-.It "xs	num	0	if lp is a tty, set local mode bits"
+.It "xs" Ta "num" Ta "0" Ta "if lp is a tty, set local mode bits"
 .Pq Xr tty 4
 .El
 .Pp

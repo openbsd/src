@@ -1,4 +1,4 @@
-.\"	$OpenBSD: operator.7,v 1.8 2010/09/05 19:12:36 schwarze Exp $
+.\"	$OpenBSD: operator.7,v 1.9 2011/09/03 22:59:07 jmc Exp $
 .\"	$NetBSD: operator.7,v 1.3 1994/11/30 19:07:26 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)operator.7	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: September 5 2010 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt OPERATOR 7
 .Os
 .Sh NAME
@@ -38,24 +38,24 @@
 .Nd C operator precedence and associativity
 .Sh DESCRIPTION
 .Bd -ragged -offset indent
-.Bl -column "= += -= *= /= %= <<= >>= &= ^= |="
-.It Operator	Associativity
-.It --------	-------------
-.It \&() [] -> \&.	left to right
-.It "! ~ ++ -- - (type) * & sizeof"	right to left
-.It \&* / %	left to right
-.It \&+ -	left to right
-.It \&<< >>	left to right
-.It \&< <= > >=	left to right
-.It \&== !=	left to right
-.It \&&	left to right
-.It \&^	left to right
-.It \&|	left to right
-.It \&&&	left to right
-.It \&||	left to right
-.It \&?:	right to left
-.It "= += -= *= /= %= <<= >>= &= ^= |=	right to left"
-.It \&,	left to right
+.Bl -column "= += -= *= /= %= <<= >>= &= ^= |=" "Associativity"
+.It Sy Operator Ta Sy Associativity
+.It -------- Ta -------------
+.It "\&() [] -> \&." Ta "left to right"
+.It "! ~ ++ -- - (type) * & sizeof" Ta "right to left"
+.It "\&* / %" Ta "left to right"
+.It "\&+ -" Ta "left to right"
+.It "\&<< >>" Ta "left to right"
+.It "\&< <= > >=" Ta "left to right"
+.It "\&== !=" Ta "left to right"
+.It "\&&" Ta "left to right"
+.It "\&^" Ta "left to right"
+.It "\&|" Ta "left to right"
+.It "\&&&" Ta "left to right"
+.It "\&||" Ta "left to right"
+.It "\&?:" Ta "right to left"
+.It "= += -= *= /= %= <<= >>= &= ^= |=" Ta "right to left"
+.It "\&," Ta "left to right"
 .El
 .Ed
 .Sh FILES

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disktab.5,v 1.13 2011/07/11 09:37:51 jmc Exp $
+.\"	$OpenBSD: disktab.5,v 1.14 2011/09/03 22:59:07 jmc Exp $
 .\"	$NetBSD: disktab.5,v 1.4 1994/11/30 19:31:15 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)disktab.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: July 11 2011 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt DISKTAB 5
 .Os
 .Sh NAME
@@ -59,99 +59,97 @@ characters.
 The last name given should be a long name fully identifying the disk.
 .Pp
 The following list indicates the normal values stored for each disk entry:
-.Bl -column "indent" "boolx"
-.It Sy Name	Type	Description
-.It "\&ty	str	Type of disk (e.g., removable, winchester)."
-.It "\&dt	str	Type of controller (e.g.,"
-.Tn SMD , ESDI ,
-floppy).
-.It "\&ns	num	Number of sectors per track."
-.It "\&nt	num	Number of tracks per cylinder."
-.It "\&nc	num	Total number of cylinders on the disk."
-.It "\&sc	num	Number of sectors per cylinder (default: ns*nt)."
-.It "\&su	num	Number of sectors per unit (default: sc*nc)."
-.It "\&se	num	Sector size in bytes (default:"
+.Bl -column "d[0-4]" "bool" "Description"
+.It Sy Name Ta Sy Type Ta Sy Description
+.It \&ty Ta str Ta "Type of disk (e.g., removable, winchester)."
+.It \&dt Ta str Ta "Type of controller (e.g.,SMD, ESDI, floppy)."
+.It \&ns Ta num Ta "Number of sectors per track."
+.It \&nt Ta num Ta "Number of tracks per cylinder."
+.It \&nc Ta num Ta "Total number of cylinders on the disk."
+.It \&sc Ta num Ta "Number of sectors per cylinder (default: ns*nt)."
+.It \&su Ta num Ta "Number of sectors per unit (default: sc*nc)."
+.It \&se Ta num Ta "Sector size in bytes (default:"
 .Dv DEV_BSIZE ) .
-.It "\&sf	bool	Controller supports bad144-style bad sector forwarding."
-.It "\&rm	num	Rotation speed in RPM (default: 3600)."
-.It "\&sk	num	Sector skew per track (default: 0)."
-.It "\&cs	num	Sector skew per cylinder (default: 0)."
-.It "\&hs	num	Headswitch time in usec (default: 0)."
-.It "\&ts	num	One-cylinder seek time in usec (default: 0)."
-.It "\&il	num	Sector interleave (n:1) (default: 1)."
-.It "\&d[0-4]	num	Drive-type-dependent parameters."
-.It "\&b0	str	Pathname to primary bootstrap."
-.It "\&b1	str	Pathname to secondary bootstrap."
-.It "\&bs	num	Boot block size (default:"
+.It \&sf Ta bool Ta "Controller supports bad144-style bad sector forwarding."
+.It \&rm Ta num Ta "Rotation speed in RPM (default: 3600)."
+.It \&sk Ta num Ta "Sector skew per track (default: 0)."
+.It \&cs Ta num Ta "Sector skew per cylinder (default: 0)."
+.It \&hs Ta num Ta "Headswitch time in usec (default: 0)."
+.It \&ts Ta num Ta "One-cylinder seek time in usec (default: 0)."
+.It \&il Ta num Ta "Sector interleave (n:1) (default: 1)."
+.It \&d[0-4] Ta num Ta "Drive-type-dependent parameters."
+.It \&b0 Ta str Ta "Pathname to primary bootstrap."
+.It \&b1 Ta str Ta "Pathname to secondary bootstrap."
+.It \&bs Ta num Ta "Boot block size (default:"
 .Dv BBSIZE ) .
-.It "\&sb	num	Superblock size (default: "
+.It \&sb Ta num Ta "Superblock size (default: "
 .Dv SBSIZE ) .
 .Pp
-.It "\&ba	num	Block size for partition"
+.It \&ba Ta num Ta "Block size for partition"
 .Dq a
 (bytes).
-.It "\&bd	num	Block size for partition"
+.It \&bd Ta num Ta "Block size for partition"
 .Dq d
 (bytes).
-.It "\&be	num	Block size for partition"
+.It \&be Ta num Ta "Block size for partition"
 .Dq e
 (bytes).
-.It [...]
-.It "\&bp	num	Block size for partition"
+.It [...] Ta "" Ta ""
+.It \&bp Ta num Ta "Block size for partition"
 .Dq p
 (bytes).
 .Pp
-.It "\&fa	num	Fragment size for partition"
+.It \&fa Ta num Ta "Fragment size for partition"
 .Dq a
 (bytes).
-.It "\&fd	num	Fragment size for partition"
+.It \&fd Ta num Ta "Fragment size for partition"
 .Dq d
 (bytes).
-.It "\&fe	num	Fragment size for partition"
+.It \&fe Ta num Ta "Fragment size for partition"
 .Dq e
 (bytes).
-.It [...]
-.It "\&fp	num	Fragment size for partition"
+.It [...] Ta "" Ta ""
+.It \&fp Ta num Ta "Fragment size for partition"
 .Dq p
 (bytes).
 .Pp
-.It "\&oa	num	Offset of partition"
+.It \&oa Ta num Ta "Offset of partition"
 .Dq a
 (sectors).
-.It "\&ob	num	Offset of partition"
+.It \&ob Ta num Ta "Offset of partition"
 .Dq b
 (sectors).
-.It "\&oc	num	Offset of partition"
+.It \&oc Ta num Ta "Offset of partition"
 .Dq c
 (sectors).
-.It [...]
-.It "\&op	num	Offset of partition"
+.It [...] Ta "" Ta ""
+.It \&op Ta num Ta "Offset of partition"
 .Dq p
 (sectors).
 .Pp
-.It "\&pa	num	Size of partition"
+.It \&pa Ta num Ta "Size of partition"
 .Dq a
 (sectors).
-.It "\&pb	num	Size of partition"
+.It \&pb Ta num Ta "Size of partition"
 .Dq b
 (sectors).
-.It "\&pc	num	Size of partition"
+.It \&pc Ta num Ta "Size of partition"
 .Dq c
 (sectors).
-.It [...]
-.It "\&pp	num	Size of partition"
+.It [...] Ta "" Ta ""
+.It \&pp Ta num Ta "Size of partition"
 .Dq p
 (sectors).
 .Pp
-.It "\&ta	str	Type of partition"
+.It \&ta Ta str Ta "Type of partition"
 .Dq a
 (4.2BSD, swap, etc.).
-.It "\&tb	str	Type of partition"
+.It \&tb Ta str Ta "Type of partition"
 .Dq b .
-.It "\&tc	str	Type of partition"
+.It \&tc Ta str Ta "Type of partition"
 .Dq c .
-.It [...]
-.It "\&tp	str	Type of partition"
+.It [...] Ta "" Ta ""
+.It \&tp Ta str Ta "Type of partition"
 .Dq p .
 .El
 .Sh FILES

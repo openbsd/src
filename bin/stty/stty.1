@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stty.1,v 1.37 2010/09/03 09:53:20 jmc Exp $
+.\"	$OpenBSD: stty.1,v 1.38 2011/09/03 22:59:08 jmc Exp $
 .\"	$NetBSD: stty.1,v 1.10 1995/09/07 06:57:14 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)stty.1	8.5 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt STTY 1
 .Os
 .Sh NAME
@@ -405,28 +405,25 @@ is disabled (i.e., set to
 .Pf { Dv _POSIX_VDISABLE Ns } ) .
 .Pp
 Recognized control-characters:
-.Bd -ragged -offset indent
-.Bl -column character Subscript
-.It control-
-.It character	Subscript	Description
-.It _________	_________	_______________
-.It eof Ta Dv VEOF	EOF No character
-.It eol Ta Dv VEOL	EOL No character
-.It eol2 Ta Dv VEOL2	EOL2 No character
-.It erase Ta Dv VERASE	ERASE No character
-.It werase Ta Dv VWERASE	WERASE No character
-.It intr Ta Dv VINTR	INTR No character
-.It kill Ta Dv VKILL	KILL No character
-.It quit Ta Dv VQUIT	QUIT No character
-.It susp Ta Dv VSUSP	SUSP No character
-.It start Ta Dv VSTART	START No character
-.It stop Ta Dv VSTOP	STOP No character
-.It dsusp Ta Dv VDSUSP	DSUSP No character
-.It lnext Ta Dv VLNEXT	LNEXT No character
-.It reprint Ta Dv VREPRINT	REPRINT No character
-.It status Ta Dv VSTATUS	STATUS No character
+.Bl -column "character" "Subscript" "Description"
+.It Sy Control Ta Sy Subscript Ta Sy Description
+.It Sy character Ta "" Ta ""
+.It eof Ta Dv VEOF Ta "EOF character"
+.It eol Ta Dv VEOL Ta "EOL character"
+.It eol2 Ta Dv VEOL2 Ta "EOL2 character"
+.It erase Ta Dv VERASE Ta "ERASE character"
+.It werase Ta Dv VWERASE Ta "WERASE character"
+.It intr Ta Dv VINTR Ta "INTR character"
+.It kill Ta Dv VKILL Ta "KILL character"
+.It quit Ta Dv VQUIT Ta "QUIT character"
+.It susp Ta Dv VSUSP Ta "SUSP character"
+.It start Ta Dv VSTART Ta "START character"
+.It stop Ta Dv VSTOP Ta "STOP character"
+.It dsusp Ta Dv VDSUSP Ta "DSUSP character"
+.It lnext Ta Dv VLNEXT Ta "LNEXT character"
+.It reprint Ta Dv VREPRINT Ta "REPRINT character"
+.It status Ta Dv VSTATUS Ta "STATUS character"
 .El
-.Ed
 .It Cm min Ar number
 .It Cm time Ar number
 Set the value of min or time to

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: procmap.1,v 1.13 2010/09/03 11:22:36 jmc Exp $
+.\"	$OpenBSD: procmap.1,v 1.14 2011/09/03 22:59:08 jmc Exp $
 .\"	$NetBSD: pmap.1,v 1.6 2003/01/19 21:25:43 atatat Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt PROCMAP 1
 .Os
 .Sh NAME
@@ -221,13 +221,13 @@ MAP 0xcf7cac84: [0x0-\*(Gt0xbfbfe000]
 The value of the flags field (in hexadecimal) is taken from
 the include file
 .Aq Pa uvm/uvm_map.h :
-.Bl -column VM_MAP_WIREFUTURE VM_MAP_WIREFUTURE -offset indent
-.It Dv "VM_MAP_PAGEABLE"   Ta No "0x01   ro: entries are pageable"
-.It Dv "VM_MAP_INTRSAFE"   Ta No "0x02   ro: interrupt safe map"
-.It Dv "VM_MAP_WIREFUTURE" Ta No "0x04   rw: wire future mappings"
-.It Dv "VM_MAP_BUSY"       Ta No "0x08   rw: map is busy"
-.It Dv "VM_MAP_WANTLOCK"   Ta No "0x10   rw: want to write-lock"
-.El
+.Bd -literal -offset indent
+VM_MAP_PAGEABLE		0x01	ro: entries are pageable
+VM_MAP_INTRSAFE		0x02	ro: interrupt safe map
+VM_MAP_WIREFUTURE	0x04	rw: wire future mappings
+VM_MAP_BUSY		0x08	rw: map is busy
+VM_MAP_WANTLOCK		0x10	rw: want to write-lock
+.Ed
 .Pp
 The
 .Dq submap ,
@@ -244,11 +244,11 @@ The
 .Aq Pa uvm/uvm_extern.h :
 .\" this column width specifically chosen so that all the header file
 .\" excerpts appear to line up cleanly
-.Bl -column VM_MAP_WIREFUTURE VM_MAP_WIREFUTURE -offset indent
-.It Dv "UVM_PROT_READ"  Ta No "0x01   read allowed"
-.It Dv "UVM_PROT_WRITE" Ta No "0x02   write allowed"
-.It Dv "UVM_PROT_EXEC"  Ta No "0x04   execute allowed"
-.El
+.Bd -literal -offset indent
+UVM_PROT_READ	0x01	read allowed
+UVM_PROT_WRITE	0x02	write allowed
+UVM_PROT_EXEC	0x04	execute allowed
+.Ed
 .Pp
 The
 .Dq obj

@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.140 2011/04/23 10:14:59 sobrado Exp $
+.\"	$OpenBSD: ksh.1,v 1.141 2011/09/03 22:59:08 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: April 23 2011 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -1893,11 +1893,11 @@ and
 .Sq :]
 stands for the list of all characters belonging to that class.
 Supported character classes:
-.Bl -column "xdigit" "xdigit" "xdigit" -offset indent
-.It Li "alnum" Ta "cntrl" Ta "lower" Ta "space"
-.It Li "alpha" Ta "digit" Ta "print" Ta "upper"
-.It Li "blank" Ta "graph" Ta "punct" Ta "xdigit"
-.El
+.Bd -literal -offset indent
+alnum	cntrl	lower	space
+alpha	digit	print	upper
+blank	graph	punct	xdigit
+.Ed
 .Pp
 These match characters using the macros specified in
 .Xr ctype 3 .

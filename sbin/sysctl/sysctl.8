@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.161 2011/07/08 18:30:17 yasuoka Exp $
+.\"	$OpenBSD: sysctl.8,v 1.162 2011/09/03 22:59:08 jmc Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: July 8 2011 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -113,303 +113,303 @@ Note:
 not all of the variables are relevant to all architectures,
 and a few require a kernel compiled with non-standard
 .Xr options 4 .
-.Bl -column net.inet.ip.ipsec-expire-acquirexxxx integerxxx
-.It Sy Name	Type	Changeable
+.Bl -column "kern.timecounter.timestepwarnings" "integer" "Changeable"
+.It Sy Name Ta Sy Type Ta Sy Changeable
 .It kern.ostype	string	no
-.It kern.osrelease	string	no
-.It kern.osrevision	integer	no
-.It kern.version	string	no
-.It kern.maxvnodes	integer	yes
-.It kern.maxproc	integer	yes
-.It kern.maxfiles	integer	yes
-.It kern.argmax	integer	no
-.It kern.securelevel	integer	raise only
-.It kern.hostname	string	yes
-.It kern.hostid	u_int	yes
-.It kern.clockrate	struct	no
-.It kern.posix1version	integer	no
-.It kern.ngroups	integer	no
-.It kern.job_control	integer	no
-.It kern.saved_ids	integer	no
-.It kern.boottime	struct	no
-.It kern.domainname	string	yes
-.It kern.maxpartitions	integer	no
-.It kern.rawpartition	integer	no
-.It kern.osversion	string	no
-.It kern.somaxconn	integer	yes
-.It kern.sominconn	integer	yes
-.It kern.usermount	integer	yes
-.It kern.random	struct	no
-.It kern.nosuidcoredump	integer	yes
-.It kern.fsync	integer	no
-.It kern.sysvmsg	integer	no
-.It kern.sysvsem	integer	no
-.It kern.sysvshm	integer	no
-.It kern.arandom	u_int	no
-.It kern.msgbufsize	integer	no
-.It kern.malloc.buckets	string	no
-.It kern.malloc.bucket.<sz>	string	no
-.It kern.malloc.kmemnames	string	no
-.It kern.malloc.kmemstat.<name>	string	no
-.It kern.cp_time	struct	no
-.It kern.nchstats	struct	no
-.It kern.forkstat	struct	no
-.It kern.nselcoll	integer	no
-.It kern.tty.tk_nin	int64_t	no
-.It kern.tty.tk_nout	int64_t	no
-.It kern.tty.tk_rawcc	int64_t	no
-.It kern.tty.tk_cancc	int64_t	no
-.It kern.tty.ttyinfo	struct	no
-.It kern.tty.maxptys	integer	yes
-.It kern.tty.nptys	integer	no
-.It kern.ccpu	u_int	no
-.It kern.fscale	integer	no
-.It kern.nprocs	integer	no
-.It kern.stackgap_random	integer	yes
-.It kern.usercrypto	integer	yes
-.It kern.cryptodevallowsoft	integer	yes
-.It kern.splassert	integer	yes
-.It kern.nfiles	integer	no
-.It kern.ttycount	integer	no
-.It kern.numvnodes	integer	no
-.It kern.userasymcrypto	integer	yes
-.It kern.seminfo.semmni	integer	yes
-.It kern.seminfo.semmns	integer	yes
-.It kern.seminfo.semmnu	integer	yes
-.It kern.seminfo.semmsl	integer	yes
-.It kern.seminfo.semopm	integer	yes
-.It kern.seminfo.semume	integer	no
-.It kern.seminfo.semusz	integer	no
-.It kern.seminfo.semvmx	integer	no
-.It kern.seminfo.semaem	integer	no
-.It kern.shminfo.shmmax	integer	yes
-.It kern.shminfo.shmmin	integer	yes
-.It kern.shminfo.shmmni	integer	yes
-.It kern.shminfo.shmseg	integer	yes
-.It kern.shminfo.shmall	integer	yes
-.It kern.watchdog.period	integer	yes
-.It kern.watchdog.auto	integer	yes
-.It kern.emul.nemuls	integer	no
-.It kern.emul.other	integer	yes
-.It kern.maxclusters	integer	yes
-.It kern.timecounter.tick	integer	no
-.It kern.timecounter.timestepwarnings	integer	yes
-.It kern.timecounter.hardware	string	yes
-.It kern.timecounter.choice	string	no
-.It kern.maxlocksperuid	integer	yes
-.It kern.bufcachepercent	integer	yes
-.It kern.rthreads	integer	yes
-.It kern.consdev	string	no
-.It vm.vmmeter	struct	no
-.It vm.loadavg	struct	no
-.It vm.psstrings	struct	no
-.It vm.uvmexp	struct	no
-.It vm.swapencrypt.enable	integer	yes
-.It vm.swapencrypt.keyscreated	integer	no
-.It vm.swapencrypt.keysdeleted	integer	no
-.It vm.nkmempages	integer	no
-.It vm.anonmin	integer	yes
-.It vm.vtextmin	integer	yes
-.It vm.vnodemin	integer	yes
-.It vm.maxslp	integer	no
-.It vm.uspace	integer	no
-.It fs.posix.setuid	integer	yes
-.It net.inet.divert.recvspace	integer	yes
-.It net.inet.divert.sendspace	integer	yes
-.It net.inet.ip.forwarding	integer	yes
-.It net.inet.ip.redirect	integer	yes
-.It net.inet.ip.ttl	integer	yes
-.\" .It net.inet.ip.mtu	integer	yes
-.It net.inet.ip.sourceroute	integer	yes
-.It net.inet.ip.directed-broadcast	integer	yes
-.It net.inet.ip.portfirst	integer	yes
-.It net.inet.ip.portlast	integer	yes
-.It net.inet.ip.porthifirst	integer	yes
-.It net.inet.ip.porthilast	integer	yes
-.It net.inet.ip.maxqueue	integer	yes
-.It net.inet.ip.encdebug	integer	yes
-.It net.inet.ip.ipsec-expire-acquire	integer	yes
-.It net.inet.ip.ipsec-invalid-life	integer	yes
-.It net.inet.ip.ipsec-pfs	integer	yes
-.It net.inet.ip.ipsec-soft-allocs	integer	yes
-.It net.inet.ip.ipsec-allocs	integer	yes
-.It net.inet.ip.ipsec-soft-bytes	integer	yes
-.It net.inet.ip.ipsec-bytes	integer	yes
-.It net.inet.ip.ipsec-timeout	integer	yes
-.It net.inet.ip.ipsec-soft-timeout	integer	yes
-.It net.inet.ip.ipsec-soft-firstuse	integer	yes
-.It net.inet.ip.ipsec-firstuse	integer	yes
-.It net.inet.ip.ipsec-enc-alg	string	yes
-.It net.inet.ip.ipsec-auth-alg	string	yes
-.It net.inet.ip.mtudisc	integer	yes
-.It net.inet.ip.mtudisctimeout	integer	yes
-.It net.inet.ip.ipsec-comp-alg	string	yes
-.It net.inet.ip.mforwarding	integer	yes
-.It net.inet.ip.multipath	integer	yes
-.It net.inet.icmp.maskrepl	integer	yes
-.It net.inet.icmp.bmcastecho	integer	yes
-.It net.inet.icmp.errppslimit	integer	yes
-.It net.inet.icmp.rediraccept	integer	yes
-.It net.inet.icmp.redirtimeout	integer	yes
-.It net.inet.icmp.tstamprepl	integer	yes
-.It net.inet.ipip.allow	integer	yes
-.It net.inet.tcp.rfc1323	integer	yes
-.It net.inet.tcp.keepinittime	integer	yes
-.It net.inet.tcp.keepidle	integer	yes
-.It net.inet.tcp.keepintvl	integer	yes
-.It net.inet.tcp.always_keepalive	integer	yes
-.It net.inet.tcp.slowhz	integer	no
-.It net.inet.tcp.baddynamic	array	yes
-.It net.inet.tcp.sack	integer	yes
-.It net.inet.tcp.mssdflt	integer	yes
-.It net.inet.tcp.rstppslimit	integer	yes
-.It net.inet.tcp.ackonpush	integer	yes
-.It net.inet.tcp.ecn	integer	yes
-.It net.inet.tcp.syncachelimit	integer	yes
-.It net.inet.tcp.synbucketlimit	integer	yes
-.It net.inet.tcp.rfc3390	integer	yes
-.It net.inet.tcp.reasslimit	integer	yes
-.It net.inet.udp.checksum	integer	yes
-.It net.inet.udp.baddynamic	array	yes
-.It net.inet.udp.recvspace	integer	yes
-.It net.inet.udp.sendspace	integer	yes
-.It net.inet.gre.allow	integer	yes
-.It net.inet.gre.wccp	integer	yes
-.It net.inet.esp.enable	integer	yes
-.It net.inet.esp.udpencap	integer	yes
-.It net.inet.esp.udpencap_port	integer	yes
-.It net.inet.ah.enable	integer	yes
-.It net.inet.mobileip.allow	integer	yes
-.It net.inet.etherip.allow	integer	yes
-.It net.inet.ipcomp.enable	integer	yes
-.It net.inet.carp.allow	integer	yes
-.It net.inet.carp.preempt	integer	yes
-.It net.inet.carp.log	integer	yes
-.It net.inet6.ip6.forwarding	integer	yes
-.It net.inet6.ip6.redirect	integer	yes
-.It net.inet6.ip6.hlim	integer	yes
-.It net.inet6.ip6.maxfragpackets	integer	yes
-.It net.inet6.ip6.accept_rtadv	integer	yes
-.It net.inet6.ip6.keepfaith	integer	yes
-.It net.inet6.ip6.log_interval	integer	yes
-.It net.inet6.ip6.hdrnestlimit	integer	yes
-.It net.inet6.ip6.dad_count	integer	yes
-.It net.inet6.ip6.auto_flowlabel	integer	yes
-.It net.inet6.ip6.defmcasthlim	integer	yes
-.It net.inet6.ip6.kame_version	string	no
-.It net.inet6.ip6.use_deprecated	integer	yes
-.It net.inet6.ip6.rr_prune	integer	yes
-.It net.inet6.ip6.v6only	integer	no
-.It net.inet6.ip6.maxfrags	integer	yes
-.It net.inet6.ip6.mforwarding	integer	yes
-.It net.inet6.ip6.multipath	integer	yes
-.It net.inet6.ip6.multicast_mtudisc	integer	yes
-.It net.inet6.icmp6.rediraccept	integer	yes
-.It net.inet6.icmp6.redirtimeout	integer	yes
-.It net.inet6.icmp6.nd6_prune	integer	yes
-.It net.inet6.icmp6.nd6_delay	integer	yes
-.It net.inet6.icmp6.nd6_umaxtries	integer	yes
-.It net.inet6.icmp6.nd6_mmaxtries	integer	yes
-.It net.inet6.icmp6.nd6_useloopback	integer	yes
-.It net.inet6.icmp6.nodeinfo	integer	yes
-.It net.inet6.icmp6.errppslimit	integer	yes
-.It net.inet6.icmp6.nd6_maxnudhint	integer	yes
-.It net.inet6.icmp6.mtudisc_hiwat	integer	yes
-.It net.inet6.icmp6.mtudisc_lowat	integer	yes
-.It net.inet6.icmp6.nd6_debug	integer	yes
-.It net.pipex.enable	integer	yes
-.It debug.syncprt	integer	yes
-.It debug.busyprt	integer	yes
-.It debug.doclusterread	integer	yes
-.It debug.doclusterwrite	integer	yes
-.It debug.doreallocblks	integer	yes
-.It debug.doasyncfree	integer	yes
-.It debug.prtrealloc	integer	yes
-.It hw.machine	string	no
-.It hw.model	string	no
-.It hw.ncpu	integer	no
-.It hw.byteorder	integer	no
-.It hw.physmem	int64_t	no
-.It hw.usermem	int64_t	no
-.It hw.pagesize	integer	no
-.It hw.diskstats	struct	no
-.It hw.disknames	string	no
-.It hw.diskcount	integer	no
-.It hw.sensors.<xname>.<type><numt>	struct	no
-.It hw.cpuspeed	integer	no
-.It hw.setperf	integer	yes
-.It hw.vendor	string	no
-.It hw.product	string	no
-.It hw.version	string	no
-.It hw.serialno	string	no
-.It hw.uuid	string	no
-.It hw.ncpufound	integer	no
-.It hw.allowpowerdown	integer	yes
-.It machdep.console_device	dev_t	no
-.It machdep.unaligned_print	integer	yes
-.It machdep.unaligned_fix	integer	yes
-.It machdep.unaligned_sigbus	integer	yes
-.It machdep.apmwarn	integer	yes
-.It machdep.apmhalt	integer	yes
-.It machdep.kbdreset	integer	yes
-.It machdep.userldt	integer	yes
-.It machdep.osxsfr	integer	no
-.It machdep.sse	integer	no
-.It machdep.sse2	integer	no
-.It machdep.xcrypt	integer	no
-.It machdep.allowaperture	integer	yes
-.It machdep.led_blink	integer	yes
-.It machdep.ceccerrs	integer	no
-.It machdep.cecclast	quad	no
-.It user.cs_path	string	no
-.It user.bc_base_max	integer	no
-.It user.bc_dim_max	integer	no
-.It user.bc_scale_max	integer	no
-.It user.bc_string_max	integer	no
-.It user.coll_weights_max	integer	no
-.It user.expr_nest_max	integer	no
-.It user.line_max	integer	no
-.It user.re_dup_max	integer	no
-.It user.posix2_version	integer	no
-.It user.posix2_c_bind	integer	no
-.It user.posix2_c_dev	integer	no
-.It user.posix2_char_term	integer	no
-.It user.posix2_fort_dev	integer	no
-.It user.posix2_fort_run	integer	no
-.It user.posix2_localedef	integer	no
-.It user.posix2_sw_dev	integer	no
-.It user.posix2_upe	integer	no
-.It user.stream_max	integer	no
-.It user.tzname_max	integer	no
-.It ddb.radix	integer	yes
-.It ddb.max_width	integer	yes
-.It ddb.max_line	integer	yes
-.It ddb.tab_stop_width	integer	yes
-.It ddb.panic	integer	yes
-.It ddb.console	integer	yes
-.It ddb.log	integer	yes
-.It ddb.trigger	integer	yes
-.It vfs.mounts.*	struct	no
-.It vfs.ffs.doclusterread	integer	yes
-.It vfs.ffs.doclusterwrite	integer	yes
-.It vfs.ffs.doreallocblks	integer	yes
-.It vfs.ffs.doasyncfree	integer	yes
-.It vfs.ffs.max_softdeps	integer	yes
-.It vfs.ffs.sd_tickdelay	integer	yes
-.It vfs.ffs.sd_worklist_push	integer	no
-.It vfs.ffs.sd_blk_limit_push	integer	no
-.It vfs.ffs.sd_ino_limit_push	integer	no
-.It vfs.ffs.sd_blk_limit_hit	integer	no
-.It vfs.ffs.sd_ino_limit_hit	integer	no
-.It vfs.ffs.sd_sync_limit_hit	integer	no
-.It vfs.ffs.sd_indir_blk_ptrs	integer	no
-.It vfs.ffs.sd_inode_bitmap	integer	no
-.It vfs.ffs.sd_direct_blk_ptrs	integer	no
-.It vfs.ffs.sd_dir_entry	integer	no
-.It vfs.ffs.dirhash_dirsize	integer	yes
-.It vfs.ffs.dirhash_maxmem	integer	yes
-.It vfs.ffs.dirhash_mem	integer	no
-.It vfs.nfs.iothreads	integer	yes
+.It kern.osrelease Ta string Ta no
+.It kern.osrevision Ta integer Ta no
+.It kern.version Ta string Ta no
+.It kern.maxvnodes Ta integer Ta yes
+.It kern.maxproc Ta integer Ta yes
+.It kern.maxfiles Ta integer Ta yes
+.It kern.argmax Ta integer Ta no
+.It kern.securelevel Ta integer Ta raise only
+.It kern.hostname Ta string Ta yes
+.It kern.hostid Ta u_int Ta yes
+.It kern.clockrate Ta struct Ta no
+.It kern.posix1version Ta integer Ta no
+.It kern.ngroups Ta integer Ta no
+.It kern.job_control Ta integer Ta no
+.It kern.saved_ids Ta integer Ta no
+.It kern.boottime Ta struct Ta no
+.It kern.domainname Ta string Ta yes
+.It kern.maxpartitions Ta integer Ta no
+.It kern.rawpartition Ta integer Ta no
+.It kern.osversion Ta string Ta no
+.It kern.somaxconn Ta integer Ta yes
+.It kern.sominconn Ta integer Ta yes
+.It kern.usermount Ta integer Ta yes
+.It kern.random Ta struct Ta no
+.It kern.nosuidcoredump Ta integer Ta yes
+.It kern.fsync Ta integer Ta no
+.It kern.sysvmsg Ta integer Ta no
+.It kern.sysvsem Ta integer Ta no
+.It kern.sysvshm Ta integer Ta no
+.It kern.arandom Ta u_int Ta no
+.It kern.msgbufsize Ta integer Ta no
+.It kern.malloc.buckets Ta string Ta no
+.It kern.malloc.bucket.<sz> Ta string Ta no
+.It kern.malloc.kmemnames Ta string Ta no
+.It kern.malloc.kmemstat.<name> Ta string Ta no
+.It kern.cp_time Ta struct Ta no
+.It kern.nchstats Ta struct Ta no
+.It kern.forkstat Ta struct Ta no
+.It kern.nselcoll Ta integer Ta no
+.It kern.tty.tk_nin Ta int64_t Ta no
+.It kern.tty.tk_nout Ta int64_t Ta no
+.It kern.tty.tk_rawcc Ta int64_t Ta no
+.It kern.tty.tk_cancc Ta int64_t Ta no
+.It kern.tty.ttyinfo Ta struct Ta no
+.It kern.tty.maxptys Ta integer Ta yes
+.It kern.tty.nptys Ta integer Ta no
+.It kern.ccpu Ta u_int Ta no
+.It kern.fscale Ta integer Ta no
+.It kern.nprocs Ta integer Ta no
+.It kern.stackgap_random Ta integer Ta yes
+.It kern.usercrypto Ta integer Ta yes
+.It kern.cryptodevallowsoft Ta integer Ta yes
+.It kern.splassert Ta integer Ta yes
+.It kern.nfiles Ta integer Ta no
+.It kern.ttycount Ta integer Ta no
+.It kern.numvnodes Ta integer Ta no
+.It kern.userasymcrypto Ta integer Ta yes
+.It kern.seminfo.semmni Ta integer Ta yes
+.It kern.seminfo.semmns Ta integer Ta yes
+.It kern.seminfo.semmnu Ta integer Ta yes
+.It kern.seminfo.semmsl Ta integer Ta yes
+.It kern.seminfo.semopm Ta integer Ta yes
+.It kern.seminfo.semume Ta integer Ta no
+.It kern.seminfo.semusz Ta integer Ta no
+.It kern.seminfo.semvmx Ta integer Ta no
+.It kern.seminfo.semaem Ta integer Ta no
+.It kern.shminfo.shmmax Ta integer Ta yes
+.It kern.shminfo.shmmin Ta integer Ta yes
+.It kern.shminfo.shmmni Ta integer Ta yes
+.It kern.shminfo.shmseg Ta integer Ta yes
+.It kern.shminfo.shmall Ta integer Ta yes
+.It kern.watchdog.period Ta integer Ta yes
+.It kern.watchdog.auto Ta integer Ta yes
+.It kern.emul.nemuls Ta integer Ta no
+.It kern.emul.other Ta integer Ta yes
+.It kern.maxclusters Ta integer Ta yes
+.It kern.timecounter.tick Ta integer Ta no
+.It kern.timecounter.timestepwarnings Ta integer Ta yes
+.It kern.timecounter.hardware Ta string Ta yes
+.It kern.timecounter.choice Ta string Ta no
+.It kern.maxlocksperuid Ta integer Ta yes
+.It kern.bufcachepercent Ta integer Ta yes
+.It kern.rthreads Ta integer Ta yes
+.It kern.consdev Ta string Ta no
+.It vm.vmmeter Ta struct Ta no
+.It vm.loadavg Ta struct Ta no
+.It vm.psstrings Ta struct Ta no
+.It vm.uvmexp Ta struct Ta no
+.It vm.swapencrypt.enable Ta integer Ta yes
+.It vm.swapencrypt.keyscreated Ta integer Ta no
+.It vm.swapencrypt.keysdeleted Ta integer Ta no
+.It vm.nkmempages Ta integer Ta no
+.It vm.anonmin Ta integer Ta yes
+.It vm.vtextmin Ta integer Ta yes
+.It vm.vnodemin Ta integer Ta yes
+.It vm.maxslp Ta integer Ta no
+.It vm.uspace Ta integer Ta no
+.It fs.posix.setuid Ta integer Ta yes
+.It net.inet.divert.recvspace Ta integer Ta yes
+.It net.inet.divert.sendspace Ta integer Ta yes
+.It net.inet.ip.forwarding Ta integer Ta yes
+.It net.inet.ip.redirect Ta integer Ta yes
+.It net.inet.ip.ttl Ta integer Ta yes
+.\" .It net.inet.ip.mtu Ta integer Ta yes
+.It net.inet.ip.sourceroute Ta integer Ta yes
+.It net.inet.ip.directed-broadcast Ta integer Ta yes
+.It net.inet.ip.portfirst Ta integer Ta yes
+.It net.inet.ip.portlast Ta integer Ta yes
+.It net.inet.ip.porthifirst Ta integer Ta yes
+.It net.inet.ip.porthilast Ta integer Ta yes
+.It net.inet.ip.maxqueue Ta integer Ta yes
+.It net.inet.ip.encdebug Ta integer Ta yes
+.It net.inet.ip.ipsec-expire-acquire Ta integer Ta yes
+.It net.inet.ip.ipsec-invalid-life Ta integer Ta yes
+.It net.inet.ip.ipsec-pfs Ta integer Ta yes
+.It net.inet.ip.ipsec-soft-allocs Ta integer Ta yes
+.It net.inet.ip.ipsec-allocs Ta integer Ta yes
+.It net.inet.ip.ipsec-soft-bytes Ta integer Ta yes
+.It net.inet.ip.ipsec-bytes Ta integer Ta yes
+.It net.inet.ip.ipsec-timeout Ta integer Ta yes
+.It net.inet.ip.ipsec-soft-timeout Ta integer Ta yes
+.It net.inet.ip.ipsec-soft-firstuse Ta integer Ta yes
+.It net.inet.ip.ipsec-firstuse Ta integer Ta yes
+.It net.inet.ip.ipsec-enc-alg Ta string Ta yes
+.It net.inet.ip.ipsec-auth-alg Ta string Ta yes
+.It net.inet.ip.mtudisc Ta integer Ta yes
+.It net.inet.ip.mtudisctimeout Ta integer Ta yes
+.It net.inet.ip.ipsec-comp-alg Ta string Ta yes
+.It net.inet.ip.mforwarding Ta integer Ta yes
+.It net.inet.ip.multipath Ta integer Ta yes
+.It net.inet.icmp.maskrepl Ta integer Ta yes
+.It net.inet.icmp.bmcastecho Ta integer Ta yes
+.It net.inet.icmp.errppslimit Ta integer Ta yes
+.It net.inet.icmp.rediraccept Ta integer Ta yes
+.It net.inet.icmp.redirtimeout Ta integer Ta yes
+.It net.inet.icmp.tstamprepl Ta integer Ta yes
+.It net.inet.ipip.allow Ta integer Ta yes
+.It net.inet.tcp.rfc1323 Ta integer Ta yes
+.It net.inet.tcp.keepinittime Ta integer Ta yes
+.It net.inet.tcp.keepidle Ta integer Ta yes
+.It net.inet.tcp.keepintvl Ta integer Ta yes
+.It net.inet.tcp.always_keepalive Ta integer Ta yes
+.It net.inet.tcp.slowhz Ta integer Ta no
+.It net.inet.tcp.baddynamic Ta array Ta yes
+.It net.inet.tcp.sack Ta integer Ta yes
+.It net.inet.tcp.mssdflt Ta integer Ta yes
+.It net.inet.tcp.rstppslimit Ta integer Ta yes
+.It net.inet.tcp.ackonpush Ta integer Ta yes
+.It net.inet.tcp.ecn Ta integer Ta yes
+.It net.inet.tcp.syncachelimit Ta integer Ta yes
+.It net.inet.tcp.synbucketlimit Ta integer Ta yes
+.It net.inet.tcp.rfc3390 Ta integer Ta yes
+.It net.inet.tcp.reasslimit Ta integer Ta yes
+.It net.inet.udp.checksum Ta integer Ta yes
+.It net.inet.udp.baddynamic Ta array Ta yes
+.It net.inet.udp.recvspace Ta integer Ta yes
+.It net.inet.udp.sendspace Ta integer Ta yes
+.It net.inet.gre.allow Ta integer Ta yes
+.It net.inet.gre.wccp Ta integer Ta yes
+.It net.inet.esp.enable Ta integer Ta yes
+.It net.inet.esp.udpencap Ta integer Ta yes
+.It net.inet.esp.udpencap_port Ta integer Ta yes
+.It net.inet.ah.enable Ta integer Ta yes
+.It net.inet.mobileip.allow Ta integer Ta yes
+.It net.inet.etherip.allow Ta integer Ta yes
+.It net.inet.ipcomp.enable Ta integer Ta yes
+.It net.inet.carp.allow Ta integer Ta yes
+.It net.inet.carp.preempt Ta integer Ta yes
+.It net.inet.carp.log Ta integer Ta yes
+.It net.inet6.ip6.forwarding Ta integer Ta yes
+.It net.inet6.ip6.redirect Ta integer Ta yes
+.It net.inet6.ip6.hlim Ta integer Ta yes
+.It net.inet6.ip6.maxfragpackets Ta integer Ta yes
+.It net.inet6.ip6.accept_rtadv Ta integer Ta yes
+.It net.inet6.ip6.keepfaith Ta integer Ta yes
+.It net.inet6.ip6.log_interval Ta integer Ta yes
+.It net.inet6.ip6.hdrnestlimit Ta integer Ta yes
+.It net.inet6.ip6.dad_count Ta integer Ta yes
+.It net.inet6.ip6.auto_flowlabel Ta integer Ta yes
+.It net.inet6.ip6.defmcasthlim Ta integer Ta yes
+.It net.inet6.ip6.kame_version Ta string Ta no
+.It net.inet6.ip6.use_deprecated Ta integer Ta yes
+.It net.inet6.ip6.rr_prune Ta integer Ta yes
+.It net.inet6.ip6.v6only Ta integer Ta no
+.It net.inet6.ip6.maxfrags Ta integer Ta yes
+.It net.inet6.ip6.mforwarding Ta integer Ta yes
+.It net.inet6.ip6.multipath Ta integer Ta yes
+.It net.inet6.ip6.multicast_mtudisc Ta integer Ta yes
+.It net.inet6.icmp6.rediraccept Ta integer Ta yes
+.It net.inet6.icmp6.redirtimeout Ta integer Ta yes
+.It net.inet6.icmp6.nd6_prune Ta integer Ta yes
+.It net.inet6.icmp6.nd6_delay Ta integer Ta yes
+.It net.inet6.icmp6.nd6_umaxtries Ta integer Ta yes
+.It net.inet6.icmp6.nd6_mmaxtries Ta integer Ta yes
+.It net.inet6.icmp6.nd6_useloopback Ta integer Ta yes
+.It net.inet6.icmp6.nodeinfo Ta integer Ta yes
+.It net.inet6.icmp6.errppslimit Ta integer Ta yes
+.It net.inet6.icmp6.nd6_maxnudhint Ta integer Ta yes
+.It net.inet6.icmp6.mtudisc_hiwat Ta integer Ta yes
+.It net.inet6.icmp6.mtudisc_lowat Ta integer Ta yes
+.It net.inet6.icmp6.nd6_debug Ta integer Ta yes
+.It net.pipex.enable Ta integer Ta yes
+.It debug.syncprt Ta integer Ta yes
+.It debug.busyprt Ta integer Ta yes
+.It debug.doclusterread Ta integer Ta yes
+.It debug.doclusterwrite Ta integer Ta yes
+.It debug.doreallocblks Ta integer Ta yes
+.It debug.doasyncfree Ta integer Ta yes
+.It debug.prtrealloc Ta integer Ta yes
+.It hw.machine Ta string Ta no
+.It hw.model Ta string Ta no
+.It hw.ncpu Ta integer Ta no
+.It hw.byteorder Ta integer Ta no
+.It hw.physmem Ta int64_t Ta no
+.It hw.usermem Ta int64_t Ta no
+.It hw.pagesize Ta integer Ta no
+.It hw.diskstats Ta struct Ta no
+.It hw.disknames Ta string Ta no
+.It hw.diskcount Ta integer Ta no
+.It hw.sensors.<xname>.<type><numt> Ta struct Ta no
+.It hw.cpuspeed Ta integer Ta no
+.It hw.setperf Ta integer Ta yes
+.It hw.vendor Ta string Ta no
+.It hw.product Ta string Ta no
+.It hw.version Ta string Ta no
+.It hw.serialno Ta string Ta no
+.It hw.uuid Ta string Ta no
+.It hw.ncpufound Ta integer Ta no
+.It hw.allowpowerdown Ta integer Ta yes
+.It machdep.console_device Ta dev_t Ta no
+.It machdep.unaligned_print Ta integer Ta yes
+.It machdep.unaligned_fix Ta integer Ta yes
+.It machdep.unaligned_sigbus Ta integer Ta yes
+.It machdep.apmwarn Ta integer Ta yes
+.It machdep.apmhalt Ta integer Ta yes
+.It machdep.kbdreset Ta integer Ta yes
+.It machdep.userldt Ta integer Ta yes
+.It machdep.osxsfr Ta integer Ta no
+.It machdep.sse Ta integer Ta no
+.It machdep.sse2 Ta integer Ta no
+.It machdep.xcrypt Ta integer Ta no
+.It machdep.allowaperture Ta integer Ta yes
+.It machdep.led_blink Ta integer Ta yes
+.It machdep.ceccerrs Ta integer Ta no
+.It machdep.cecclast Ta quad Ta no
+.It user.cs_path Ta string Ta no
+.It user.bc_base_max Ta integer Ta no
+.It user.bc_dim_max Ta integer Ta no
+.It user.bc_scale_max Ta integer Ta no
+.It user.bc_string_max Ta integer Ta no
+.It user.coll_weights_max Ta integer Ta no
+.It user.expr_nest_max Ta integer Ta no
+.It user.line_max Ta integer Ta no
+.It user.re_dup_max Ta integer Ta no
+.It user.posix2_version Ta integer Ta no
+.It user.posix2_c_bind Ta integer Ta no
+.It user.posix2_c_dev Ta integer Ta no
+.It user.posix2_char_term Ta integer Ta no
+.It user.posix2_fort_dev Ta integer Ta no
+.It user.posix2_fort_run Ta integer Ta no
+.It user.posix2_localedef Ta integer Ta no
+.It user.posix2_sw_dev Ta integer Ta no
+.It user.posix2_upe Ta integer Ta no
+.It user.stream_max Ta integer Ta no
+.It user.tzname_max Ta integer Ta no
+.It ddb.radix Ta integer Ta yes
+.It ddb.max_width Ta integer Ta yes
+.It ddb.max_line Ta integer Ta yes
+.It ddb.tab_stop_width Ta integer Ta yes
+.It ddb.panic Ta integer Ta yes
+.It ddb.console Ta integer Ta yes
+.It ddb.log Ta integer Ta yes
+.It ddb.trigger Ta integer Ta yes
+.It vfs.mounts.* Ta struct Ta no
+.It vfs.ffs.doclusterread Ta integer Ta yes
+.It vfs.ffs.doclusterwrite Ta integer Ta yes
+.It vfs.ffs.doreallocblks Ta integer Ta yes
+.It vfs.ffs.doasyncfree Ta integer Ta yes
+.It vfs.ffs.max_softdeps Ta integer Ta yes
+.It vfs.ffs.sd_tickdelay Ta integer Ta yes
+.It vfs.ffs.sd_worklist_push Ta integer Ta no
+.It vfs.ffs.sd_blk_limit_push Ta integer Ta no
+.It vfs.ffs.sd_ino_limit_push Ta integer Ta no
+.It vfs.ffs.sd_blk_limit_hit Ta integer Ta no
+.It vfs.ffs.sd_ino_limit_hit Ta integer Ta no
+.It vfs.ffs.sd_sync_limit_hit Ta integer Ta no
+.It vfs.ffs.sd_indir_blk_ptrs Ta integer Ta no
+.It vfs.ffs.sd_inode_bitmap Ta integer Ta no
+.It vfs.ffs.sd_direct_blk_ptrs Ta integer Ta no
+.It vfs.ffs.sd_dir_entry Ta integer Ta no
+.It vfs.ffs.dirhash_dirsize Ta integer Ta yes
+.It vfs.ffs.dirhash_maxmem Ta integer Ta yes
+.It vfs.ffs.dirhash_mem Ta integer Ta no
+.It vfs.nfs.iothreads Ta integer Ta yes
 .El
 .Pp
 The

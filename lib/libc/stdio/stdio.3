@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stdio.3,v 1.20 2010/01/03 14:31:01 schwarze Exp $
+.\"	$OpenBSD: stdio.3,v 1.21 2011/09/03 22:59:07 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 3 2010 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt STDIO 3
 .Os
 .Sh NAME
@@ -211,72 +211,72 @@ and
 exist and will be used if the macro
 definitions are explicitly removed.
 .Sh LIST OF FUNCTIONS
-.Bl -column "Description"
-.It Sy Function	Description
-.It asprintf	formatted output conversion with allocation
-.It clearerr	check and reset stream status
-.It fclose	close a stream
-.It fdopen	stream open functions
-.It feof	check and reset stream status
-.It ferror	check and reset stream status
-.It fflush	flush a stream
-.It fgetc	get next character or word from input stream
-.It fgetln	get a line from a stream
-.It fgetpos	reposition a stream
-.It fgets	get a line from a stream
-.It fileno	get a stream's underlying file descriptor
-.It fopen	stream open functions
-.It fprintf	formatted output conversion
-.It fpurge	flush a stream
-.It fputc	output a character or word to a stream
-.It fputs	output a line to a stream
-.It fread	binary stream input/output
-.It freopen	stream open functions
-.It fropen	open a stream
-.It fscanf	input format conversion
-.It fseek	reposition a stream
-.It fsetpos	reposition a stream
-.It ftell	reposition a stream
-.It funopen	open a stream
-.It fwopen	open a stream
-.It fwrite	binary stream input/output
-.It getc	get next character or word from input stream
-.It getchar	get next character or word from input stream
-.It gets	get a line from a stream
-.It getw	get next character or word from input stream
-.It mkstemp	create unique temporary file
-.It mktemp	create unique temporary file
-.It perror	system error messages
-.It printf	formatted output conversion
-.It putc	output a character or word to a stream
-.It putchar	output a character or word to a stream
-.It puts	output a line to a stream
-.It putw	output a character or word to a stream
-.It remove	remove directory entry
-.It rewind	reposition a stream
-.It scanf	input format conversion
-.It setbuf	stream buffering operations
-.It setbuffer	stream buffering operations
-.It setlinebuf	stream buffering operations
-.It setvbuf	stream buffering operations
-.It snprintf	formatted output conversion
-.It sprintf	formatted output conversion
-.It sscanf	input format conversion
-.It strerror	system error messages
-.It sys_errlist	system error messages
-.It sys_nerr	system error messages
-.It tempnam	temporary file routines
-.It tmpfile	temporary file routines
-.It tmpnam	temporary file routines
-.It ungetc	un-get character from input stream
-.It vasprintf	formatted output conversion with allocation
-.It vfprintf	formatted output conversion
-.It vfscanf	input format conversion
-.It vprintf	formatted output conversion
-.It vscanf	input format conversion
-.It vsnprintf	formatted output conversion
-.It vsprintf	formatted output conversion
-.It vsscanf	input format conversion
+.Bl -column "sys_errlist" "Description"
+.It Sy Function Ta Sy Description
+.It asprintf Ta "formatted output conversion with allocation"
+.It clearerr Ta "check and reset stream status"
+.It fclose Ta "close a stream"
+.It fdopen Ta "stream open functions"
+.It feof Ta "check and reset stream status"
+.It ferror Ta "check and reset stream status"
+.It fflush Ta "flush a stream"
+.It fgetc Ta "get next character or word from input stream"
+.It fgetln Ta "get a line from a stream"
+.It fgetpos Ta "reposition a stream"
+.It fgets Ta "get a line from a stream"
+.It fileno Ta "get a stream's underlying file descriptor"
+.It fopen Ta "stream open functions"
+.It fprintf Ta "formatted output conversion"
+.It fpurge Ta "flush a stream"
+.It fputc Ta "output a character or word to a stream"
+.It fputs Ta "output a line to a stream"
+.It fread Ta "binary stream input/output"
+.It freopen Ta "stream open functions"
+.It fropen Ta "open a stream"
+.It fscanf Ta "input format conversion"
+.It fseek Ta "reposition a stream"
+.It fsetpos Ta "reposition a stream"
+.It ftell Ta "reposition a stream"
+.It funopen Ta "open a stream"
+.It fwopen Ta "open a stream"
+.It fwrite Ta "binary stream input/output"
+.It getc Ta "get next character or word from input stream"
+.It getchar Ta "get next character or word from input stream"
+.It gets Ta "get a line from a stream"
+.It getw Ta "get next character or word from input stream"
+.It mkstemp Ta "create unique temporary file"
+.It mktemp Ta "create unique temporary file"
+.It perror Ta "system error messages"
+.It printf Ta "formatted output conversion"
+.It putc Ta "output a character or word to a stream"
+.It putchar Ta "output a character or word to a stream"
+.It puts Ta "output a line to a stream"
+.It putw Ta "output a character or word to a stream"
+.It remove Ta "remove directory entry"
+.It rewind Ta "reposition a stream"
+.It scanf Ta "input format conversion"
+.It setbuf Ta "stream buffering operations"
+.It setbuffer Ta "stream buffering operations"
+.It setlinebuf Ta "stream buffering operations"
+.It setvbuf Ta "stream buffering operations"
+.It snprintf Ta "formatted output conversion"
+.It sprintf Ta "formatted output conversion"
+.It sscanf Ta "input format conversion"
+.It strerror Ta "system error messages"
+.It sys_errlist Ta "system error messages"
+.It sys_nerr Ta "system error messages"
+.It tempnam Ta "temporary file routines"
+.It tmpfile Ta "temporary file routines"
+.It tmpnam Ta "temporary file routines"
+.It ungetc Ta "un-get character from input stream"
+.It vasprintf Ta "formatted output conversion with allocation"
+.It vfprintf Ta "formatted output conversion"
+.It vfscanf Ta "input format conversion"
+.It vprintf Ta "formatted output conversion"
+.It vscanf Ta "input format conversion"
+.It vsnprintf Ta "formatted output conversion"
+.It vsprintf Ta "formatted output conversion"
+.It vsscanf Ta "input format conversion"
 .El
 .Sh SEE ALSO
 .Xr close 2 ,

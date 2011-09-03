@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ocurses.3,v 1.12 2007/05/31 19:19:36 jmc Exp $
+.\"	$OpenBSD: ocurses.3,v 1.13 2011/09/03 22:59:07 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)curses.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt OCURSES 3
 .Os
 .Sh NAME
@@ -57,127 +57,198 @@ The routine
 .Fn endwin
 should be called before exiting.
 .Sh FUNCTIONS
-.Bl -column "subwin(win,lines,cols,begin_y,begin_x)   "
-.It addch(ch)	add a character to
+.Bl -tag -width "subwin(win,lines,cols,begin_y,begin_x)" -compact
+.It addch(ch)
+add a character to
 .Em stdscr
-.It addstr(str)	add a string to
+.It addstr(str)
+add a string to
 .Em stdscr
-.It box(win,vert,hor)	draw a box around a window
-.It cbreak()	set cbreak mode
-.It clear()	clear
+.It box(win,vert,hor)
+draw a box around a window
+.It cbreak()
+set cbreak mode
+.It clear()
+clear
 .Em stdscr
-.It clearok(scr,boolf)	set clear flag for
+.It clearok(scr,boolf)
+set clear flag for
 .Em scr
-.It clrtobot()	clear to bottom on
+.It clrtobot()
+clear to bottom on
 .Em stdscr
-.It clrtoeol()	clear to end of line on
+.It clrtoeol()
+clear to end of line on
 .Em stdscr
-.It delch()	delete a character
-.It deleteln()	delete a line
-.It delwin(win)	delete
+.It delch()
+delete a character
+.It deleteln()
+delete a line
+.It delwin(win)
+delete
 .Em stdscr
-.It echo()	set echo mode
-.It endwin()	end window modes
-.It erase()	erase
+.It echo()
+set echo mode
+.It endwin()
+end window modes
+.It erase()
+erase
 .Em stdscr
-.It flusok(win,boolf)	set flush-on-refresh flag for
+.It flusok(win,boolf)
+set flush-on-refresh flag for
 .Em win
-.It getch()	get a char through
+.It getch()
+get a char through
 .Em stdscr
-.It getcap(name)	get terminal capability
+.It getcap(name)
+get terminal capability
 .Em name
-.It getstr(str)	get a string through
+.It getstr(str)
+get a string through
 .Em stdscr
-.It gettmode()	get tty modes
-.It getyx(win,y,x)	get (y,x) co-ordinates
-.It inch()	get char at current (y,x) co-ordinates
-.It initscr()	initialize screens
-.It insch(c)	insert a char
-.It insertln()	insert a line
-.It leaveok(win,boolf)	set leave flag for
+.It gettmode()
+get tty modes
+.It getyx(win,y,x)
+get (y,x) co-ordinates
+.It inch()
+get char at current (y,x) co-ordinates
+.It initscr()
+initialize screens
+.It insch(c)
+insert a char
+.It insertln()
+insert a line
+.It leaveok(win,boolf)
+set leave flag for
 .Em stdscr
-.It longname(termbuf,name)	get long name from
+.It longname(termbuf,name)
+get long name from
 .Em termbuf
-.It move(y,x)	move to (y,x) on
+.It move(y,x)
+move to (y,x) on
 .Em stdscr
-.It mvcur(lasty,lastx,newy,newx)	actually move cursor
-.It newwin(lines,cols,begin_y,begin_x)\ 	create a new window
-.It nl()	set newline mapping
-.It nocbreak()	unset cbreak mode
-.It noecho()	unset echo mode
-.It nonl()	unset newline mapping
-.It noraw()	unset raw mode
-.It overlay(win1,win2)	overlay win1 on win2
-.It overwrite(win1,win2)	overwrite win1 on top of win2
-.It printw(fmt,arg1,arg2,...)	printf on
+.It mvcur(lasty,lastx,newy,newx)
+actually move cursor
+.It newwin(lines,cols,begin_y,begin_x)
+create a new window
+.It nl()
+set newline mapping
+.It nocbreak()
+unset cbreak mode
+.It noecho()
+unset echo mode
+.It nonl()
+unset newline mapping
+.It noraw()
+unset raw mode
+.It overlay(win1,win2)
+overlay win1 on win2
+.It overwrite(win1,win2)
+overwrite win1 on top of win2
+.It printw(fmt,arg1,arg2,...)
+printf on
 .Em stdscr
-.It raw()	set raw mode
-.It refresh()	make current screen look like
+.It raw()
+set raw mode
+.It refresh()
+make current screen look like
 .Em stdscr
-.It resetty()	reset tty flags to stored value
-.It savetty()	stored current tty flags
-.It scanw(fmt,arg1,arg2,...)	scanf through
+.It resetty()
+reset tty flags to stored value
+.It savetty()
+stored current tty flags
+.It scanw(fmt,arg1,arg2,...)
+scanf through
 .Em stdscr
-.It scroll(win)	scroll
+.It scroll(win)
+scroll
 .Em win
 one line
-.It scrollok(win,boolf)	set scroll flag
-.It setterm(name)	set term variables for name
-.It standend()	end standout mode
-.It standout()	start standout mode
-.It subwin(win,lines,cols,begin_y,begin_x)\ 	create a subwindow
-.It touchline(win,y,sx,ex)	mark line
+.It scrollok(win,boolf)
+set scroll flag
+.It setterm(name)
+set term variables for name
+.It standend()
+end standout mode
+.It standout()
+start standout mode
+.It subwin(win,lines,cols,begin_y,begin_x)
+create a subwindow
+.It touchline(win,y,sx,ex)
+mark line
 .Em y
 .Em sx
 through
 .Em sy
 as changed
-.It touchoverlap(win1,win2)	mark overlap of
+.It touchoverlap(win1,win2)
+mark overlap of
 .Em win1
 on
 .Em win2
 as changed
-.It touchwin(win)	\*(lqchange\*(rq all of
+.It touchwin(win)
+\*(lqchange\*(rq all of
 .Em win
-.It unctrl(ch)	printable version of
+.It unctrl(ch)
+printable version of
 .Em ch
-.It waddch(win,ch)	add char to
+.It waddch(win,ch)
+add char to
 .Em win
-.It waddstr(win,str)	add string to
+.It waddstr(win,str)
+add string to
 .Em win
-.It wclear(win)	clear
+.It wclear(win)
+clear
 .Em win
-.It wclrtobot(win)	clear to bottom of
+.It wclrtobot(win)
+clear to bottom of
 .Em win
-.It wclrtoeol(win)	clear to end of line on
+.It wclrtoeol(win)
+clear to end of line on
 .Em win
-.It wdelch(win)	delete char from
+.It wdelch(win)
+delete char from
 .Em win
-.It wdeleteln(win)	delete line from
+.It wdeleteln(win)
+delete line from
 .Em win
-.It werase(win)	erase
+.It werase(win)
+erase
 .Em win
-.It wgetch(win)	get a char through
+.It wgetch(win)
+get a char through
 .Em win
-.It wgetstr(win,str)	get a string through
+.It wgetstr(win,str)
+get a string through
 .Em win
-.It winch(win)	get char at current (y,x) in
+.It winch(win)
+get char at current (y,x) in
 .Em win
-.It winsch(win,c)	insert char into
+.It winsch(win,c)
+insert char into
 .Em win
-.It winsertln(win)	insert line into
+.It winsertln(win)
+insert line into
 .Em win
-.It wmove(win,y,x)	set current (y,x) co-ordinates on
+.It wmove(win,y,x)
+set current (y,x) co-ordinates on
 .Em win
-.It wprintw(win,fmt,arg1,arg2,...)\ 	printf on
+.It wprintw(win,fmt,arg1,arg2,...)
+printf on
 .Em win
-.It wrefresh(win)	make screen look like
+.It wrefresh(win)
+make screen look like
 .Em win
-.It wscanw(win,fmt,arg1,arg2,...)\ 	scanf through
+.It wscanw(win,fmt,arg1,arg2,...)
+scanf through
 .Em win
-.It wstandend(win)	end standout mode on
+.It wstandend(win)
+end standout mode on
 .Em win
-.It wstandout(win)	start standout mode on
+.It wstandout(win)
+start standout mode on
 .Em win
 .El
 .Sh SEE ALSO

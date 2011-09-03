@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vs.4,v 1.10 2010/07/03 09:20:06 krw Exp $
+.\"	$OpenBSD: vs.4,v 1.11 2011/09/03 22:59:07 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Paul Weissmann
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 3 2010 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt VS 4 mvme88k
 .Os
 .Sh NAME
@@ -61,8 +61,8 @@ known with certitude.
 .Ss MVME328 channel configuration
 The following table lists the channel configuration for Motorola MVME328
 boards.
-.Bl -column "Model Number" "Differential" "Channel 1" -offset indent
-.It Li Model Number Ta Channel 0 Ta Channel 1
+.Bl -column "Model Number" "Single-ended" "Single-ended" -offset indent
+.It Sy "Model Number" Ta Sy "Channel 0" Ta Sy "Channel 1"
 .It Li MVME328-1 Ta Single-ended Ta Missing
 .It Li MVME328-2 Ta Single-ended Ta Single-ended
 .It Li MVME328-3 Ta Differential Ta Missing
@@ -71,8 +71,8 @@ boards.
 .Ss MVME328S channel configuration
 The following table lists the channel configuration for Motorola MVME328S
 boards.
-.Bl -column "Model Number" "Differential" "Channel 1" -offset indent
-.It Li Model Number Ta Channel 0 Ta Channel 1
+.Bl -column "Model Number" "Single-ended" "Single-ended" -offset indent
+.It Sy "Model Number" Ta Sy "Channel 0" Ta Sy "Channel 1"
 .It Li MVME328S-1 Ta Single-ended Ta Missing
 .It Li MVME328S-2 Ta Single-ended Ta Single-ended
 .\" No -3 model
@@ -100,8 +100,8 @@ dual jumper, located immediately to the left of the
 block.
 .Pp
 The only supported configurations are:
-.Bl -column "xxxxxxxxx" "0xffffffff" -offset indent
-.It Li JB1 Ta Address Ta Configuration
+.Bl -column "xxxxxxxxx" "0xffffffff" "Configuration" -offset indent
+.It Sy JB1 Ta Sy Address Ta Sy Configuration
 .It Li "___X_XX__" Ta "0xffff9000" Ta "1st board"
 .It Li "_____XX__" Ta "0xffff9800" Ta "2nd board"
 .It Li "____XX_X_" Ta "0xffff4800" Ta "3rd board"
@@ -118,8 +118,8 @@ the bottom row of eleven jumpers should have the leftmost jumper set
 and the ten rightmost jumpers open.
 .Pp
 The only supported configurations for the top row are:
-.Bl -column "xxxxxxxxxxx" "0xffffffff" -offset indent
-.It Li Jumpers Ta Address Ta Configuration
+.Bl -column "xxxxxxxxxxx" "0xffffffff" "Configuration" -offset indent
+.It Sy Jumpers Ta Sy Address Ta Sy Configuration
 .It Li "___X_XX____" Ta "0xffff9000" Ta "1st board"
 .It Li "_____XX____" Ta "0xffff9800" Ta "2nd board"
 .It Li "____XX_X___" Ta "0xffff4800" Ta "3rd board"

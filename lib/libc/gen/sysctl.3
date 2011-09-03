@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.207 2011/07/08 19:50:32 jmc Exp $
+.\"	$OpenBSD: sysctl.3,v 1.208 2011/09/03 22:59:07 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 8 2011 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -119,18 +119,18 @@ prefix in
 and are as follows.
 The next and subsequent levels down are found in the include files
 listed here, and described in separate sections below.
-.Bl -column CTLXMACHDEPXXX "Next level namesXXXXXX" -offset indent
-.It Sy Name	Next level names	Description
-.It Dv CTL_DDB No "	ddb/db_var.h	Kernel debugger"
-.It Dv CTL_DEBUG No "	sys/sysctl.h	Debugging"
-.It Dv CTL_FS No "	sys/sysctl.h	File system"
-.It Dv CTL_HW No "	sys/sysctl.h	Generic CPU, I/O"
-.It Dv CTL_KERN No "	sys/sysctl.h	High kernel limits"
-.It Dv CTL_MACHDEP No "	sys/sysctl.h	Machine dependent"
-.It Dv CTL_NET No "	sys/socket.h	Networking"
-.It Dv CTL_USER No "	sys/sysctl.h	User-level"
-.It Dv CTL_VFS No "	ufs/ffs/ffs_extern.h	Virtual file system"
-.It Dv CTL_VM No "	uvm/uvm_param.h	Virtual memory"
+.Bl -column "CTL_MACHDEP" "ufs/ffs/ffs_extern.h" "Description" -offset indent
+.It Sy "Name" Ta Sy "Next level names" Ta Sy "Description"
+.It Dv CTL_DDB Ta "ddb/db_var.h" Ta "Kernel debugger"
+.It Dv CTL_DEBUG Ta "sys/sysctl.h" Ta "Debugging"
+.It Dv CTL_FS Ta "sys/sysctl.h" Ta "File system"
+.It Dv CTL_HW Ta "sys/sysctl.h" Ta "Generic CPU, I/O"
+.It Dv CTL_KERN Ta "sys/sysctl.h" Ta "High kernel limits"
+.It Dv CTL_MACHDEP Ta "sys/sysctl.h" Ta "Machine dependent"
+.It Dv CTL_NET Ta "sys/socket.h" Ta "Networking"
+.It Dv CTL_USER Ta "sys/sysctl.h" Ta "User-level"
+.It Dv CTL_VFS Ta "ufs/ffs/ffs_extern.h" Ta "Virtual file system"
+.It Dv CTL_VM Ta "uvm/uvm_param.h" Ta "Virtual memory"
 .El
 .Pp
 For example, the following retrieves the maximum number of processes allowed
@@ -167,16 +167,16 @@ Integer information and settable variables are available for the
 as described below.
 More information is also available in
 .Xr ddb 4 .
-.Bl -column "Second level nameXXXXXX" "struct loadavgXXX" -offset indent
-.It Sy Second level name	Type	Changeable
-.It Dv DBCTL_CONSOLE No "	integer	yes"
-.It Dv DBCTL_LOG No "	integer	yes"
-.It Dv DBCTL_MAXLINE No "	integer	yes"
-.It Dv DBCTL_MAXWIDTH No "	integer	yes"
-.It Dv DBCTL_PANIC No "	integer	yes"
-.It Dv DBCTL_RADIX No "	integer	yes"
-.It Dv DBCTL_TABSTOP No "	integer	yes"
-.It Dv DBCTL_TRIGGER No "	integer	yes"
+.Bl -column "Second level name" "integer" "Changeable" -offset indent
+.It Sy "Second level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv DBCTL_CONSOLE Ta "integer" Ta "yes"
+.It Dv DBCTL_LOG Ta "integer" Ta "yes"
+.It Dv DBCTL_MAXLINE Ta "integer" Ta "yes"
+.It Dv DBCTL_MAXWIDTH Ta "integer" Ta "yes"
+.It Dv DBCTL_PANIC Ta "integer" Ta "yes"
+.It Dv DBCTL_RADIX Ta "integer" Ta "yes"
+.It Dv DBCTL_TABSTOP Ta "integer" Ta "yes"
+.It Dv DBCTL_TRIGGER Ta "integer" Ta "yes"
 .El
 .Bl -tag -width "123456"
 .It Dv DBCTL_CONSOLE
@@ -266,9 +266,9 @@ The string and integer information available for the
 level is detailed below.
 The changeable column shows whether a process with appropriate
 privileges may change the value.
-.Bl -column "Second level nameXXXXXX" integerXXX -offset indent
-.It Sy Second level name	Type	Changeable
-.It Dv FS_POSIX_SETUID No "	integer	yes"
+.Bl -column "Second level name" "integer" "Changeable" -offset indent
+.It Sy "Second level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv FS_POSIX_SETUID Ta "integer" Ta "yes"
 .El
 .Bl -tag -width "123456"
 .It Dv FS_POSIX_SETUID
@@ -288,30 +288,30 @@ The string and integer information available for the
 level is detailed below.
 The changeable column shows whether a process with appropriate
 privileges may change the value.
-.Bl -column "Second level nameXXXXXX" integerXXX -offset indent
-.It Sy Second level name	Type	Changeable
-.It Dv HW_ALLOWPOWERDOWN No "	integer	yes"
-.It Dv HW_BYTEORDER No "	integer	no"
-.It Dv HW_CPUSPEED No "	integer	no"
-.It Dv HW_DISKCOUNT No "	integer	no"
-.It Dv HW_DISKNAMES No "	string	no"
-.It Dv HW_DISKSTATS No "	struct	no"
-.It Dv HW_MACHINE No "	string	no"
-.It Dv HW_MODEL No "	string	no"
-.It Dv HW_NCPU No "	integer	no"
-.It Dv HW_NCPUFOUND No "	integer	no"
-.It Dv HW_PAGESIZE No "	integer	no"
-.It Dv HW_PHYSMEM No "	integer	no"
-.It Dv HW_PHYSMEM64 No "	int64_t	no"
-.It Dv HW_PRODUCT No "	string	no"
-.It Dv HW_SENSORS No "	node	not applicable"
-.It Dv HW_SERIALNO No "	string	no"
-.It Dv HW_SETPERF No "	integer	yes"
-.It Dv HW_USERMEM No "	integer	no"
-.It Dv HW_USERMEM64 No "	int64_t	no"
-.It Dv HW_UUID No "	string	no"
-.It Dv HW_VENDOR No "	string	no"
-.It Dv HW_VERSION No "	string	no"
+.Bl -column "Second level name" "integer" "Changeable" -offset indent
+.It Sy "Second level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv HW_ALLOWPOWERDOWN Ta "integer" Ta "yes"
+.It Dv HW_BYTEORDER Ta "integer" Ta "no"
+.It Dv HW_CPUSPEED Ta "integer" Ta "no"
+.It Dv HW_DISKCOUNT Ta "integer" Ta "no"
+.It Dv HW_DISKNAMES Ta "string" Ta "no"
+.It Dv HW_DISKSTATS Ta "struct" Ta "no"
+.It Dv HW_MACHINE Ta "string" Ta "no"
+.It Dv HW_MODEL Ta "string" Ta "no"
+.It Dv HW_NCPU Ta "integer" Ta "no"
+.It Dv HW_NCPUFOUND Ta "integer" Ta "no"
+.It Dv HW_PAGESIZE Ta "integer" Ta "no"
+.It Dv HW_PHYSMEM Ta "integer" Ta "no"
+.It Dv HW_PHYSMEM64 Ta "int64_t" Ta "no"
+.It Dv HW_PRODUCT Ta "string" Ta "no"
+.It Dv HW_SENSORS Ta "node" Ta "not applicable"
+.It Dv HW_SERIALNO Ta "string" Ta "no"
+.It Dv HW_SETPERF Ta "integer" Ta "yes"
+.It Dv HW_USERMEM Ta "integer" Ta "no"
+.It Dv HW_USERMEM64 Ta "int64_t" Ta "no"
+.It Dv HW_UUID Ta "string" Ta "no"
+.It Dv HW_VENDOR Ta "string" Ta "no"
+.It Dv HW_VERSION Ta "string" Ta "no"
 .El
 .Bl -tag -width "123456"
 .It Dv HW_ALLOWPOWERDOWN
@@ -411,78 +411,78 @@ The types of data currently available are process information,
 system vnodes, the open file entries, routing table entries,
 virtual memory statistics, load average history, and clock rate
 information.
-.Bl -column "KERNXCRYPTODEVALLOWSOFTXXX" "struct clockrateXXX" -offset indent
-.It Sy Second level name	Type	Changeable
-.It Dv KERN_ARGMAX No "	integer	no"
-.It Dv KERN_ARND No "	char[]	no"
-.It Dv KERN_BOOTTIME No "	struct timeval	no"
-.It Dv KERN_BUFCACHEPERCENT No "	integer	yes"
-.It Dv KERN_CCPU No "	integer	no"
-.It Dv KERN_CLOCKRATE No "	struct clockinfo	no"
-.It Dv KERN_CONSDEV No "	dev_t	no"
-.It Dv KERN_CPTIME No "	long[CPUSTATES]	no"
-.It Dv KERN_CPTIME2 No "	u_int64_t[CPUSTATES]	no"
-.It Dv KERN_CRYPTODEVALLOWSOFT No "	integer	yes"
-.It Dv KERN_DOMAINNAME No "	string	yes"
-.It Dv KERN_EMUL No "	node	not applicable"
-.It Dv KERN_FILE No "	struct file	no"
-.It Dv KERN_FILE2 No "	struct kinfo_file2	no"
-.It Dv KERN_FORKSTAT No "	struct forkstat	no"
-.It Dv KERN_FSCALE No "	integer	no"
-.It Dv KERN_FSYNC No "	integer	no"
-.It Dv KERN_HOSTID No "	integer	yes"
-.It Dv KERN_HOSTNAME No "	string	yes"
-.It Dv KERN_INTRCNT No "	node	not applicable"
-.It Dv KERN_JOB_CONTROL No "	integer	no"
-.It Dv KERN_MALLOCSTATS No "	node	no"
-.It Dv KERN_MAXCLUSTERS No "	integer	yes"
-.It Dv KERN_MAXFILES No "	integer	yes"
-.It Dv KERN_MAXLOCKSPERUID No "	integer	yes"
-.It Dv KERN_MAXPARTITIONS No "	integer	no"
-.It Dv KERN_MAXPROC No "	integer	yes"
-.It Dv KERN_MAXVNODES No "	integer	yes"
-.It Dv KERN_MBSTAT No "	struct mbstat	no"
-.It Dv KERN_MSGBUF No "	char[]	no"
-.It Dv KERN_MSGBUFSIZE No "	integer	no"
-.It Dv KERN_NCHSTATS No "	struct nchstats	no"
-.It Dv KERN_NFILES No "	integer	no"
-.It Dv KERN_NGROUPS No "	integer	no"
-.It Dv KERN_NOSUIDCOREDUMP No "	integer	yes"
-.It Dv KERN_NPROCS No "	integer	no"
-.It Dv KERN_NSELCOLL No "	integer	no"
-.It Dv KERN_NUMVNODES No "	integer	no"
-.It Dv KERN_OSRELEASE No "	string	no"
-.It Dv KERN_OSREV No "	integer	no"
-.It Dv KERN_OSTYPE No "	string	no"
-.It Dv KERN_OSVERSION No "	string	no"
-.It Dv KERN_POSIX1 No "	integer	no"
-.It Dv KERN_PROC No "	struct kinfo_proc	no"
-.It Dv KERN_PROC_ARGS No "	node	not applicable"
-.It Dv KERN_PROF No "	node	not applicable"
-.It Dv KERN_RAWPARTITION No "	integer	no"
-.It Dv KERN_RND No "	struct rndstats	no"
-.It Dv KERN_RTHREADS No "	integer	yes"
-.It Dv KERN_SAVED_IDS No "	integer	no"
-.It Dv KERN_SECURELVL No "	integer	raise only"
-.It Dv KERN_SEMINFO No "	node	not applicable"
-.It Dv KERN_SHMINFO No "	node	not applicable"
-.It Dv KERN_SOMAXCONN No "	integer	yes"
-.It Dv KERN_SOMINCONN No "	integer	yes"
-.It Dv KERN_SPLASSERT No "	int	yes"
-.It Dv KERN_STACKGAPRANDOM No "	integer	yes"
-.It Dv KERN_SYSVIPC_INFO No "	node	not applicable"
-.It Dv KERN_SYSVMSG No "	integer	no"
-.It Dv KERN_SYSVSEM No "	integer	no"
-.It Dv KERN_SYSVSHM No "	integer	no"
-.It Dv KERN_TIMECOUNTER No "	node	not applicable"
-.It Dv KERN_TTY No "	node	not applicable"
-.It Dv KERN_TTYCOUNT No "	integer	no"
-.It Dv KERN_USERASYMCRYPTO No "	integer	yes"
-.It Dv KERN_USERCRYPTO No "	integer	yes"
-.It Dv KERN_USERMOUNT No "	integer	yes"
-.It Dv KERN_VERSION No "	string	no"
-.It Dv KERN_VNODE No "	struct e_vnode	no"
-.It Dv KERN_WATCHDOG No "	node	not applicable"
+.Bl -column "KERN_CRYPTODEVALLOWSOFT" "u_int64_t[CPUSTATES]" "no" -offset indent
+.It Sy "Second level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv KERN_ARGMAX Ta "integer" Ta "no"
+.It Dv KERN_ARND Ta "char[]" Ta "no"
+.It Dv KERN_BOOTTIME Ta "struct timeval" Ta "no"
+.It Dv KERN_BUFCACHEPERCENT Ta "integer" Ta "yes"
+.It Dv KERN_CCPU Ta "integer" Ta "no"
+.It Dv KERN_CLOCKRATE Ta "struct clockinfo" Ta "no"
+.It Dv KERN_CONSDEV Ta "dev_t" Ta "no"
+.It Dv KERN_CPTIME Ta "long[CPUSTATES]" Ta "no"
+.It Dv KERN_CPTIME2 Ta "u_int64_t[CPUSTATES]" Ta "no"
+.It Dv KERN_CRYPTODEVALLOWSOFT Ta "integer" Ta "yes"
+.It Dv KERN_DOMAINNAME Ta "string" Ta "yes"
+.It Dv KERN_EMUL Ta "node" Ta "not applicable"
+.It Dv KERN_FILE Ta "struct file" Ta "no"
+.It Dv KERN_FILE2 Ta "struct kinfo_file2" Ta "no"
+.It Dv KERN_FORKSTAT Ta "struct forkstat" Ta "no"
+.It Dv KERN_FSCALE Ta "integer" Ta "no"
+.It Dv KERN_FSYNC Ta "integer" Ta "no"
+.It Dv KERN_HOSTID Ta "integer" Ta "yes"
+.It Dv KERN_HOSTNAME Ta "string" Ta "yes"
+.It Dv KERN_INTRCNT Ta "node" Ta "not applicable"
+.It Dv KERN_JOB_CONTROL Ta "integer" Ta "no"
+.It Dv KERN_MALLOCSTATS Ta "node" Ta "no"
+.It Dv KERN_MAXCLUSTERS Ta "integer" Ta "yes"
+.It Dv KERN_MAXFILES Ta "integer" Ta "yes"
+.It Dv KERN_MAXLOCKSPERUID Ta "integer" Ta "yes"
+.It Dv KERN_MAXPARTITIONS Ta "integer" Ta "no"
+.It Dv KERN_MAXPROC Ta "integer" Ta "yes"
+.It Dv KERN_MAXVNODES Ta "integer" Ta "yes"
+.It Dv KERN_MBSTAT Ta "struct mbstat" Ta "no"
+.It Dv KERN_MSGBUF Ta "char[]" Ta "no"
+.It Dv KERN_MSGBUFSIZE Ta "integer" Ta "no"
+.It Dv KERN_NCHSTATS Ta "struct nchstats" Ta "no"
+.It Dv KERN_NFILES Ta "integer" Ta "no"
+.It Dv KERN_NGROUPS Ta "integer" Ta "no"
+.It Dv KERN_NOSUIDCOREDUMP Ta "integer" Ta "yes"
+.It Dv KERN_NPROCS Ta "integer" Ta "no"
+.It Dv KERN_NSELCOLL Ta "integer" Ta "no"
+.It Dv KERN_NUMVNODES Ta "integer" Ta "no"
+.It Dv KERN_OSRELEASE Ta "string" Ta "no"
+.It Dv KERN_OSREV Ta "integer" Ta "no"
+.It Dv KERN_OSTYPE Ta "string" Ta "no"
+.It Dv KERN_OSVERSION Ta "string" Ta "no"
+.It Dv KERN_POSIX1 Ta "integer" Ta "no"
+.It Dv KERN_PROC Ta "struct kinfo_proc" Ta "no"
+.It Dv KERN_PROC_ARGS Ta "node" Ta "not applicable"
+.It Dv KERN_PROF Ta "node" Ta "not applicable"
+.It Dv KERN_RAWPARTITION Ta "integer" Ta "no"
+.It Dv KERN_RND Ta "struct rndstats" Ta "no"
+.It Dv KERN_RTHREADS Ta "integer" Ta "yes"
+.It Dv KERN_SAVED_IDS Ta "integer" Ta "no"
+.It Dv KERN_SECURELVL Ta "integer" Ta "raise only"
+.It Dv KERN_SEMINFO Ta "node" Ta "not applicable"
+.It Dv KERN_SHMINFO Ta "node" Ta "not applicable"
+.It Dv KERN_SOMAXCONN Ta "integer" Ta "yes"
+.It Dv KERN_SOMINCONN Ta "integer" Ta "yes"
+.It Dv KERN_SPLASSERT Ta "int" Ta "yes"
+.It Dv KERN_STACKGAPRANDOM Ta "integer" Ta "yes"
+.It Dv KERN_SYSVIPC_INFO Ta "node" Ta "not applicable"
+.It Dv KERN_SYSVMSG Ta "integer" Ta "no"
+.It Dv KERN_SYSVSEM Ta "integer" Ta "no"
+.It Dv KERN_SYSVSHM Ta "integer" Ta "no"
+.It Dv KERN_TIMECOUNTER Ta "node" Ta "not applicable"
+.It Dv KERN_TTY Ta "node" Ta "not applicable"
+.It Dv KERN_TTYCOUNT Ta "integer" Ta "no"
+.It Dv KERN_USERASYMCRYPTO Ta "integer" Ta "yes"
+.It Dv KERN_USERCRYPTO Ta "integer" Ta "yes"
+.It Dv KERN_USERMOUNT Ta "integer" Ta "yes"
+.It Dv KERN_VERSION Ta "string" Ta "no"
+.It Dv KERN_VNODE Ta "struct e_vnode" Ta "no"
+.It Dv KERN_WATCHDOG Ta "node" Ta "not applicable"
 .El
 .Bl -tag -width "123456"
 .It Dv KERN_ARGMAX
@@ -538,11 +538,11 @@ even if there is no hardware crypto accelerator in the system.
 Get or set the YP domain name.
 .It Dv KERN_EMUL
 Enable binary emulation.
-.Bl -column "KERN_EMUL_FREEBSD" "string" -offset indent
-.It Sy Third level name	Type	Changeable
-.It Dv KERN_EMUL_ENABLED No "	integer	yes"
-.It Dv KERN_EMUL_NAME No "	string	no"
-.It Dv KERN_EMUL_NEMULS No "	integer	no"
+.Bl -column "KERN_EMUL_ENABLED" "integer" "Changeable" -offset indent
+.It Sy "Third level name" Ta Sy "Type" Ta Sy Changeable
+.It Dv KERN_EMUL_ENABLED Ta "integer" Ta "yes"
+.It Dv KERN_EMUL_NAME Ta "string" Ta "no"
+.It Dv KERN_EMUL_NEMULS Ta "integer" Ta "no"
 .El
 .Pp
 Third level names in
@@ -578,11 +578,11 @@ but an array of
 .Li struct kinfo_file2
 structures is returned.
 The third and fourth level names are as follows:
-.Bl -column "Third level nameXXXXXX" "Fourth level is:XXXXXX" -offset indent
-.It Sy Third level name	Fourth level is:
-.It Dv KERN_FILE_BYFILE No "	Zero"
-.It Dv KERN_FILE_BYPID No "	A process ID"
-.It Dv KERN_FILE_BYUID No "	A user ID"
+.Bl -column "Third level name" "Fourth level is:" -offset indent
+.It Sy "Third level name" Ta Sy "Fourth level is:"
+.It Dv KERN_FILE_BYFILE Ta "Zero"
+.It Dv KERN_FILE_BYPID Ta "A process ID"
+.It Dv KERN_FILE_BYUID Ta "A user ID"
 .El
 .Pp
 The fifth level name is the size of the
@@ -615,11 +615,11 @@ Return kernel memory bucket statistics.
 The third level names are detailed below.
 There are no changeable values in this branch.
 .Bl -column "KERN_MALLOC_KMEMNAMES" "string" -offset indent
-.It Sy Third level name		Type
-.It Dv KERN_MALLOC_BUCKET No "		node"
-.It Dv KERN_MALLOC_BUCKETS No "		string"
-.It Dv KERN_MALLOC_KMEMNAMES No "		string"
-.It Dv KERN_MALLOC_KMEMSTATS No "		node"
+.It Sy "Third level name" Ta Sy "Type"
+.It Dv KERN_MALLOC_BUCKET Ta "node"
+.It Dv KERN_MALLOC_BUCKETS Ta "string"
+.It Dv KERN_MALLOC_KMEMNAMES Ta "string"
+.It Dv KERN_MALLOC_KMEMSTATS Ta "node"
 .El
 .Pp
 The variables are as follows:
@@ -688,10 +688,10 @@ The maximum number of supplemental groups.
 .It Dv KERN_NOSUIDCOREDUMP
 Whether a process may dump core after changing user or group ID:
 .Bl -column "value" "condition" "current directory"
-.It Sy value Ta Sy condition Ta Sy "dump core to"
+.It Sy "value" Ta Sy "condition" Ta Sy "dump core to"
 .It 0 Ta "euid == 0" Ta "current directory"
-.It 1 Ta  never      Ta ""
-.It 2 Ta  always     Ta Pa /var/crash
+.It 1 Ta "never" Ta ""
+.It 2 Ta "always" Ta Pa "/var/crash"
 .El
 .It Dv KERN_NPROCS
 The number of entries in the kernel process table.
@@ -719,16 +719,16 @@ An array of
 structures is returned,
 whose size depends on the current number of such objects in the system.
 The third and fourth level names are as follows:
-.Bl -column "Third level nameXXXXXX" "Fourth level is:XXXXXX" -offset indent
-.It Sy Third level name	Fourth level is:
-.It Dv KERN_PROC_ALL No "	None"
-.It Dv KERN_PROC_KTHREAD No "	A kernel thread"
-.It Dv KERN_PROC_PID No "	A process ID"
-.It Dv KERN_PROC_PGRP No "	A process group"
-.It Dv KERN_PROC_RUID No "	A real user ID"
-.It Dv KERN_PROC_SESSION No "	A session PID"
-.It Dv KERN_PROC_TTY No "	A tty device"
-.It Dv KERN_PROC_UID No "	A user ID"
+.Bl -column "KERN_PROC_SESSION" "Fourth level is:" -offset indent
+.It Sy "Third level name" Ta Sy "Fourth level is:"
+.It Dv KERN_PROC_ALL Ta "None"
+.It Dv KERN_PROC_KTHREAD Ta "A kernel thread"
+.It Dv KERN_PROC_PID Ta "A process ID"
+.It Dv KERN_PROC_PGRP Ta "A process group"
+.It Dv KERN_PROC_RUID Ta "A real user ID"
+.It Dv KERN_PROC_SESSION Ta "A session PID"
+.It Dv KERN_PROC_TTY Ta "A tty device"
+.It Dv KERN_PROC_UID Ta "A user ID"
 .El
 .Pp
 The fifth level name is the size of the
@@ -738,7 +738,7 @@ and the sixth level name is the number of structures to return.
 Returns the arguments or environment of a process.
 The third level name is the PID of the process.
 The fourth level name is one of:
-.Bl -column KERN_PROC_NARGVXXX -offset indent
+.Bl -column KERN_PROC_NARGV -offset indent
 .It Dv KERN_PROC_ARGV
 .It Dv KERN_PROC_ENV
 .It Dv KERN_PROC_NARGV
@@ -773,13 +773,13 @@ The third level names for the string and integer profiling information
 are detailed below.
 The changeable column shows whether a process with appropriate
 privileges may change the value.
-.Bl -column "GPROFXGMONPARAMXXX" "struct gmonparamXXX" -offset indent
-.It Sy Third level name	Type	Changeable
-.It Dv GPROF_COUNT No "	u_short[]	yes"
-.It Dv GPROF_FROMS No "	u_short[]	yes"
-.It Dv GPROF_GMONPARAM No "	struct gmonparam	no"
-.It Dv GPROF_STATE No "	integer	yes"
-.It Dv GPROF_TOS No "	struct tostruct	yes"
+.Bl -column "Third level name" "struct gmonparam" -offset indent
+.It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv GPROF_COUNT Ta "u_short[]" Ta "yes"
+.It Dv GPROF_FROMS Ta "u_short[]" Ta "yes"
+.It Dv GPROF_GMONPARAM Ta "struct gmonparam" Ta "no"
+.It Dv GPROF_STATE Ta "integer" Ta "yes"
+.It Dv GPROF_TOS Ta "struct tostruct" Ta "yes"
 .El
 .Pp
 The variables are as follows:
@@ -831,17 +831,17 @@ The third level names for the elements of
 are detailed below.
 The changeable column shows whether a process with appropriate
 privileges may change the value.
-.Bl -column "KERN_SEMINFO_SEMMNI" "integer" "yes" -offset indent
-.It Sy "Third level name"	Type	Changeable
-.It Dv KERN_SEMINFO_SEMAEM No "	integer	no"
-.It Dv KERN_SEMINFO_SEMMNI No "	integer	yes"
-.It Dv KERN_SEMINFO_SEMMNS No "	integer	yes"
-.It Dv KERN_SEMINFO_SEMMNU No "	integer	yes"
-.It Dv KERN_SEMINFO_SEMMSL No "	integer	yes"
-.It Dv KERN_SEMINFO_SEMOPM No "	integer	yes"
-.It Dv KERN_SEMINFO_SEMUME No "	integer	no"
-.It Dv KERN_SEMINFO_SEMUSZ No "	integer	no"
-.It Dv KERN_SEMINFO_SEMVMX No "	integer	no"
+.Bl -column "KERN_SEMINFO_SEMMNI" "integer" "Changeable" -offset indent
+.It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv KERN_SEMINFO_SEMAEM Ta "integer" Ta "no"
+.It Dv KERN_SEMINFO_SEMMNI Ta "integer" Ta "yes"
+.It Dv KERN_SEMINFO_SEMMNS Ta "integer" Ta "yes"
+.It Dv KERN_SEMINFO_SEMMNU Ta "integer" Ta "yes"
+.It Dv KERN_SEMINFO_SEMMSL Ta "integer" Ta "yes"
+.It Dv KERN_SEMINFO_SEMOPM Ta "integer" Ta "yes"
+.It Dv KERN_SEMINFO_SEMUME Ta "integer" Ta "no"
+.It Dv KERN_SEMINFO_SEMUSZ Ta "integer" Ta "no"
+.It Dv KERN_SEMINFO_SEMVMX Ta "integer" Ta "no"
 .El
 .Pp
 The variables are as follows:
@@ -880,13 +880,13 @@ The third level names for the elements of
 are detailed below.
 The changeable column shows whether a process with appropriate
 privileges may change the value.
-.Bl -column "KERN_SHMINFO_SHMMAX" "integer" "yes" -offset indent
-.It Sy "Third level name"	Type	Changeable
-.It Dv KERN_SHMINFO_SHMALL No "	integer	yes"
-.It Dv KERN_SHMINFO_SHMMAX No "	integer	yes"
-.It Dv KERN_SHMINFO_SHMMIN No "	integer	yes"
-.It Dv KERN_SHMINFO_SHMMNI No "	integer	yes"
-.It Dv KERN_SHMINFO_SHMSEG No "	integer	yes"
+.Bl -column "KERN_SHMINFO_SHMMAX" "integer" "Changeable" -offset indent
+.It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv KERN_SHMINFO_SHMALL Ta "integer" Ta "yes"
+.It Dv KERN_SHMINFO_SHMMAX Ta "integer" Ta "yes"
+.It Dv KERN_SHMINFO_SHMMIN Ta "integer" Ta "yes"
+.It Dv KERN_SHMINFO_SHMMNI Ta "integer" Ta "yes"
+.It Dv KERN_SHMINFO_SHMSEG Ta "integer" Ta "yes"
 .El
 .Pp
 The variables are as follows:
@@ -942,11 +942,11 @@ but it also means bigger waste of memory.
 .It Li KERN_SYSVIPC_INFO
 Return System V style IPC configuration and run-time information.
 The third level name selects the System V style IPC facility.
-.Bl -column "KERN_SYSVIPC_MSG_INFOXXX" "struct shm_sysctl_infoXXX" -offset indent
-.It Sy Third level name	Type
-.It Dv KERN_SYSVIPC_MSG_INFO No "	struct msg_sysctl_info"
-.It Dv KERN_SYSVIPC_SEM_INFO No "	struct sem_sysctl_info"
-.It Dv KERN_SYSVIPC_SHM_INFO No "	struct shm_sysctl_info"
+.Bl -column "KERN_SYSVIPC_MSG_INFO" "struct shm_sysctl_info" -offset indent
+.It Sy "Third level name" Ta Sy "Type"
+.It Dv KERN_SYSVIPC_MSG_INFO Ta "struct msg_sysctl_info"
+.It Dv KERN_SYSVIPC_SEM_INFO Ta "struct sem_sysctl_info"
+.It Dv KERN_SYSVIPC_SHM_INFO Ta "struct shm_sysctl_info"
 .El
 .Bl -tag -width "123456"
 .It Dv KERN_SYSVIPC_MSG_INFO
@@ -983,11 +983,11 @@ The third level names information is detailed below.
 The changeable column shows whether a process with appropriate
 privileges may change the value.
 .Bl -column "KERN_TIMECOUNTER_TIMESTEPWARNINGS" "integer" -offset indent
-.It Sy Third level name	Type	Changeable
-.It Dv KERN_TIMECOUNTER_CHOICE No "	string	no"
-.It Dv KERN_TIMECOUNTER_HARDWARE No "	string	yes"
-.It Dv KERN_TIMECOUNTER_TICK No "	integer	no"
-.It Dv KERN_TIMECOUNTER_TIMESTEPWARNINGS No "	integer	yes"
+.It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv KERN_TIMECOUNTER_CHOICE Ta "string" Ta "no"
+.It Dv KERN_TIMECOUNTER_HARDWARE Ta "string" Ta "yes"
+.It Dv KERN_TIMECOUNTER_TICK Ta "integer" Ta "no"
+.It Dv KERN_TIMECOUNTER_TIMESTEPWARNINGS Ta "integer" Ta "yes"
 .El
 .Pp
 The variables are as follows:
@@ -1009,15 +1009,15 @@ Return statistics information about tty input/output.
 The third level names information is detailed below.
 The changeable column shows whether a process with appropriate
 privileges may change the value.
-.Bl -column "KERN_TTY_TKRAWCCXXX" "int64_tXX" -offset indent
-.It Sy Third level name	Type	Changeable
-.It Dv KERN_TTY_INFO No "	struct itty	no"
-.It Dv KERN_TTY_NPTYS No "	integer	no"
-.It Dv KERN_TTY_MAXPTYS No "	integer	yes"
-.It Dv KERN_TTY_TKCANCC No "	int64_t	no"
-.It Dv KERN_TTY_TKNIN No "	int64_t	no"
-.It Dv KERN_TTY_TKNOUT No "	int64_t	no"
-.It Dv KERN_TTY_TKRAWCC No "	int64_t	no"
+.Bl -column "KERN_TTY_TKRAWCC" "struct itty" "Changeable" -offset indent
+.It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv KERN_TTY_INFO Ta "struct itty" Ta "no"
+.It Dv KERN_TTY_NPTYS Ta "integer" Ta "no"
+.It Dv KERN_TTY_MAXPTYS Ta "integer" Ta "yes"
+.It Dv KERN_TTY_TKCANCC Ta "int64_t" Ta "no"
+.It Dv KERN_TTY_TKNIN Ta "int64_t" Ta "no"
+.It Dv KERN_TTY_TKNOUT Ta "int64_t" Ta "no"
+.It Dv KERN_TTY_TKRAWCC Ta "int64_t" Ta "no"
 .El
 .Pp
 The variables are as follows:
@@ -1086,10 +1086,10 @@ attempts to retrieve or set any of the
 .Dv KERN_WATCHDOG
 values will fail with
 .Er EOPNOTSUPP .
-.Bl -column "KERN_WATCHDOG_PERIOD" "integer" "yes" -offset indent
-.It Sy "Third level name"	Type	Changeable
-.It Dv KERN_WATCHDOG_AUTO No "	integer	yes"
-.It Dv KERN_WATCHDOG_PERIOD No "	integer	yes"
+.Bl -column "KERN_WATCHDOG_PERIOD" "integer" "Changeable" -offset indent
+.It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv KERN_WATCHDOG_AUTO Ta "integer" Ta "yes"
+.It Dv KERN_WATCHDOG_PERIOD Ta "integer" Ta "yes"
 .El
 .Pp
 The variables are as follows:
@@ -1108,9 +1108,9 @@ Set to 0 to disable the watchdog timer.
 .Ss CTL_MACHDEP
 The set of variables defined is architecture dependent.
 Most architectures define at least the following variables.
-.Bl -column "CONSOLE_DEVICEXXX" "integerXXX" -offset indent
-.It Sy Second level name	Type	Changeable
-.It Dv CPU_CONSDEV No "	dev_t	no"
+.Bl -column "Second level name" "dev_t" "Changeable" -offset indent
+.It Sy "Second level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv CPU_CONSDEV Ta "dev_t" Ta "no"
 .El
 .Ss CTL_NET
 The string and integer information available for the
@@ -1118,13 +1118,13 @@ The string and integer information available for the
 level is detailed below.
 The changeable column shows whether a process with appropriate
 privileges may change the value.
-.Bl -column "Second level nameXXXXXX" "routing messagesXXX" -offset indent
-.It Sy Second level name	Type	Changeable
-.It Dv PF_ROUTE No "	routing messages	no"
-.It Dv PF_INET No "	IPv4 values	yes"
-.It Dv PF_INET6 No "	IPv6 values	yes"
-.It Dv PF_KEY No "	key management	no"
-.It Dv PF_PIPEX No "	PIPEX values	yes"
+.Bl -column "Second level name" "routing messages" "Changeable" -offset indent
+.It Sy "Second level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv PF_ROUTE Ta "routing messages" Ta "no"
+.It Dv PF_INET Ta "IPv4 values" Ta "yes"
+.It Dv PF_INET6 Ta "IPv6 values" Ta "yes"
+.It Dv PF_KEY Ta "key management" Ta "no"
+.It Dv PF_PIPEX Ta "PIPEX values" Ta "yes"
 .El
 .Bl -tag -width "123456"
 .It Dv PF_ROUTE
@@ -1138,12 +1138,12 @@ The third level name is a protocol number, which is currently always 0.
 The fourth level name is an address family, which may be set to 0 to
 select all address families.
 The fifth and sixth level names are as follows:
-.Bl -column "Fifth level nameXXXXXX" "Sixth level is:XXX" -offset indent
-.It Sy Fifth level name	Sixth level is:
-.It Dv NET_RT_DUMP No "	None"
-.It Dv NET_RT_FLAGS No "	rtflags"
-.It Dv NET_RT_IFLIST No "	None"
-.It Dv NET_RT_STATS No "	None"
+.Bl -column "Fifth level name" "Sixth level is:" -offset indent
+.It Sy "Fifth level name" Ta Sy "Sixth level is:"
+.It Dv NET_RT_DUMP Ta "None"
+.It Dv NET_RT_FLAGS Ta "rtflags"
+.It Dv NET_RT_IFLIST Ta "None"
+.It Dv NET_RT_STATS Ta "None"
 .El
 .Pp
 An optional seventh level name can be provided to select the routing table
@@ -1155,85 +1155,85 @@ Get or set various global information about IPv4
 The third level name is the protocol.
 The fourth level name is the variable name.
 The currently defined protocols and names are:
-.Bl -column "Protocol name" "ipsec-soft-bytes " "integer" -offset indent
-.It Sy Protocol name	Variable name	Type	Changeable
-.It ah	enable	integer	yes
-.It bpf	bufsize	integer	yes
-.It bpf	maxbufsize	integer	yes
-.It carp	allow	integer	yes
-.It carp	log	integer	yes
-.It carp	preempt	integer	yes
-.It divert	recvspace	integer	yes
-.It divert	sendspace	integer	yes
-.It esp	enable	integer	yes
-.It esp	udpencap	integer	yes
-.It esp	udpencap_port	integer	yes
-.It etherip	allow	integer	yes
-.It gre	allow	integer	yes
-.It gre	wccp	integer	yes
-.It icmp	bmcastecho	integer	yes
-.It icmp	errppslimit	integer	yes
-.It icmp	maskrepl	integer	yes
-.It icmp	rediraccept	integer	yes
-.It icmp	redirtimeout	integer	yes
-.It icmp	stats	structure	no
-.It icmp	tstamprepl	integer	yes
-.It ip	directed-broadcast	integer	yes
-.It ip	encdebug	integer	yes
-.It ip	forwarding	integer	yes
-.It ip	ipsec-allocs	integer	yes
-.It ip	ipsec-auth-alg	string	yes
-.It ip	ipsec-bytes	integer	yes
-.It ip	ipsec-comp-alg	string	yes
-.It ip	ipsec-enc-alg	string	yes
-.It ip	ipsec-expire-acquire	integer	yes
-.It ip	ipsec-firstuse	integer	yes
-.It ip	ipsec-invalid-life	integer	yes
-.It ip	ipsec-pfs	integer	yes
-.It ip	ipsec-soft-allocs	integer	yes
-.It ip	ipsec-soft-bytes	integer	yes
-.It ip	ipsec-soft-firstuse	integer	yes
-.It ip	ipsec-soft-timeout	integer	yes
-.It ip	ipsec-timeout	integer	yes
-.It ip	maxqueue	integer	yes
-.It ip	mforwarding	integer	yes
-.It ip	mtudisc	integer	yes
-.It ip	mtudisctimeout	integer	yes
-.It ip	multipath	integer	yes
-.It ip	portfirst	integer	yes
-.It ip	porthifirst	integer	yes
-.It ip	porthilast	integer	yes
-.It ip	portlast	integer	yes
-.It ip	redirect	integer	yes
-.It ip	sourceroute	integer	yes
-.It ip	stats	structure	no
-.It ip	ttl	integer	yes
-.It ipcomp	enable	integer	yes
-.It ipip	allow	integer	yes
-.It mobileip	allow	integer	yes
-.It tcp	ackonpush	integer	yes
-.It tcp	always_keepalive	integer	yes
-.It tcp	baddynamic	array	yes
-.It tcp	ecn	integer	yes
-.It tcp	ident	structure	no
-.It tcp	keepidle	integer	yes
-.It tcp	keepinittime	integer	yes
-.It tcp	keepintvl	integer	yes
-.It tcp	mssdflt	integer	yes
-.It tcp	reasslimit	integer	yes
-.It tcp	rfc1323	integer	yes
-.It tcp	rfc3390	integer	yes
-.It tcp	rstppslimit	integer	yes
-.It tcp	sack	integer	yes
-.It tcp	slowhz	integer	no
-.It tcp	stats	structure	no
-.It tcp	synbucketlimit	integer	yes
-.It tcp	syncachelimit	integer	yes
-.It udp	baddynamic	array	yes
-.It udp	checksum	integer	yes
-.It udp	recvspace	integer	yes
-.It udp	sendspace	integer	yes
-.It udp	stats	structure	no
+.Bl -column "Protocol name" "ipsec-expire-acquire" "structure" "Changeable" -offset 2n
+.It Sy "Protocol name" Ta Sy "Variable name" Ta Sy "Type" Ta Sy "yes"
+.It ah Ta enable Ta integer Ta yes
+.It bpf Ta bufsize Ta integer Ta yes
+.It bpf Ta maxbufsize Ta integer Ta yes
+.It carp Ta allow Ta integer Ta yes
+.It carp Ta log Ta integer Ta yes
+.It carp Ta preempt Ta integer Ta yes
+.It divert Ta recvspace Ta integer Ta yes
+.It divert Ta sendspace Ta integer Ta yes
+.It esp Ta enable Ta integer Ta yes
+.It esp Ta udpencap Ta integer Ta yes
+.It esp Ta udpencap_port Ta integer Ta yes
+.It etherip Ta allow Ta integer Ta yes
+.It gre Ta allow Ta integer Ta yes
+.It gre Ta wccp Ta integer Ta yes
+.It icmp Ta bmcastecho Ta integer Ta yes
+.It icmp Ta errppslimit Ta integer Ta yes
+.It icmp Ta maskrepl Ta integer Ta yes
+.It icmp Ta rediraccept Ta integer Ta yes
+.It icmp Ta redirtimeout Ta integer Ta yes
+.It icmp Ta stats Ta structure Ta no
+.It icmp Ta tstamprepl Ta integer Ta yes
+.It ip Ta directed-broadcast Ta integer Ta yes
+.It ip Ta encdebug Ta integer Ta yes
+.It ip Ta forwarding Ta integer Ta yes
+.It ip Ta ipsec-allocs Ta integer Ta yes
+.It ip Ta ipsec-auth-alg Ta string Ta yes
+.It ip Ta ipsec-bytes Ta integer Ta yes
+.It ip Ta ipsec-comp-alg Ta string Ta yes
+.It ip Ta ipsec-enc-alg Ta string Ta yes
+.It ip Ta ipsec-expire-acquire Ta integer Ta yes
+.It ip Ta ipsec-firstuse Ta integer Ta yes
+.It ip Ta ipsec-invalid-life Ta integer Ta yes
+.It ip Ta ipsec-pfs Ta integer Ta yes
+.It ip Ta ipsec-soft-allocs Ta integer Ta yes
+.It ip Ta ipsec-soft-bytes Ta integer Ta yes
+.It ip Ta ipsec-soft-firstuse Ta integer Ta yes
+.It ip Ta ipsec-soft-timeout Ta integer Ta yes
+.It ip Ta ipsec-timeout Ta integer Ta yes
+.It ip Ta maxqueue Ta integer Ta yes
+.It ip Ta mforwarding Ta integer Ta yes
+.It ip Ta mtudisc Ta integer Ta yes
+.It ip Ta mtudisctimeout Ta integer Ta yes
+.It ip Ta multipath Ta integer Ta yes
+.It ip Ta portfirst Ta integer Ta yes
+.It ip Ta porthifirst Ta integer Ta yes
+.It ip Ta porthilast Ta integer Ta yes
+.It ip Ta portlast Ta integer Ta yes
+.It ip Ta redirect Ta integer Ta yes
+.It ip Ta sourceroute Ta integer Ta yes
+.It ip Ta stats Ta structure Ta no
+.It ip Ta ttl Ta integer Ta yes
+.It ipcomp Ta enable Ta integer Ta yes
+.It ipip Ta allow Ta integer Ta yes
+.It mobileip Ta allow Ta integer Ta yes
+.It tcp Ta ackonpush Ta integer Ta yes
+.It tcp Ta always_keepalive Ta integer Ta yes
+.It tcp Ta baddynamic Ta array Ta yes
+.It tcp Ta ecn Ta integer Ta yes
+.It tcp Ta ident Ta structure Ta no
+.It tcp Ta keepidle Ta integer Ta yes
+.It tcp Ta keepinittime Ta integer Ta yes
+.It tcp Ta keepintvl Ta integer Ta yes
+.It tcp Ta mssdflt Ta integer Ta yes
+.It tcp Ta reasslimit Ta integer Ta yes
+.It tcp Ta rfc1323 Ta integer Ta yes
+.It tcp Ta rfc3390 Ta integer Ta yes
+.It tcp Ta rstppslimit Ta integer Ta yes
+.It tcp Ta sack Ta integer Ta yes
+.It tcp Ta slowhz Ta integer Ta no
+.It tcp Ta stats Ta structure Ta no
+.It tcp Ta synbucketlimit Ta integer Ta yes
+.It tcp Ta syncachelimit Ta integer Ta yes
+.It udp Ta baddynamic Ta array Ta yes
+.It udp Ta checksum Ta integer Ta yes
+.It udp Ta recvspace Ta integer Ta yes
+.It udp Ta sendspace Ta integer Ta yes
+.It udp Ta stats Ta structure Ta no
 .El
 .Pp
 The variables are as follows:
@@ -1645,40 +1645,40 @@ Get or set various global information about IPv6
 The third level name is the protocol.
 The fourth level name is the variable name.
 The currently defined protocols and names are:
-.Bl -column "Protocol name" "Variable nameXX" "integer" "yes" -offset indent
-.It Sy Protocol name	Variable name	Type	Changeable
-.It icmp6	errppslimit	integer	yes
-.It icmp6	mtudisc_hiwat	integer	yes
-.It icmp6	mtudisc_lowat	integer	yes
-.It icmp6	nd6_debug	integer	yes
-.It icmp6	nd6_delay	integer	yes
-.It icmp6	nd6_maxnudhint	integer	yes
-.It icmp6	nd6_mmaxtries	integer	yes
-.It icmp6	nd6_prune	integer	yes
-.It icmp6	nd6_umaxtries	integer	yes
-.It icmp6	nd6_useloopback	integer	yes
-.It icmp6	nodeinfo	integer	yes
-.It icmp6	rediraccept	integer	yes
-.It icmp6	redirtimeout	integer	yes
-.It ip6	accept_rtadv	integer	yes
-.It ip6	auto_flowlabel	integer	yes
-.It ip6	dad_count	integer	yes
-.It ip6	defmcasthlim	integer	yes
-.It ip6	forwarding	integer	yes
-.It ip6	hdrnestlimit	integer	yes
-.It ip6	hlim	integer	yes
-.It ip6	kame_version	string	no
-.It ip6	keepfaith	integer	yes
-.It ip6	log_interval	integer	yes
-.It ip6	maxfragpackets	integer	yes
-.It ip6	maxfrags	integer	yes
-.It ip6	mforwarding	integer	yes
-.It ip6	multicast_mtudisc	integer	yes
-.It ip6	multipath	integer	yes
-.It ip6	redirect	integer	yes
-.It ip6	rr_prune	integer	yes
-.It ip6	use_deprecated	integer	yes
-.It ip6	v6only	integer	no
+.Bl -column "Protocol name" "multicast_mtudisc" "integer" "yes" -offset indent
+.It Sy "Protocol name" Ta Sy "Variable name" Ta Sy "Type" Ta Sy "Changeable"
+.It icmp6 Ta errppslimit Ta integer Ta yes
+.It icmp6 Ta mtudisc_hiwat Ta integer Ta yes
+.It icmp6 Ta mtudisc_lowat Ta integer Ta yes
+.It icmp6 Ta nd6_debug Ta integer Ta yes
+.It icmp6 Ta nd6_delay Ta integer Ta yes
+.It icmp6 Ta nd6_maxnudhint Ta integer Ta yes
+.It icmp6 Ta nd6_mmaxtries Ta integer Ta yes
+.It icmp6 Ta nd6_prune Ta integer Ta yes
+.It icmp6 Ta nd6_umaxtries Ta integer Ta yes
+.It icmp6 Ta nd6_useloopback Ta integer Ta yes
+.It icmp6 Ta nodeinfo Ta integer Ta yes
+.It icmp6 Ta rediraccept Ta integer Ta yes
+.It icmp6 Ta redirtimeout Ta integer Ta yes
+.It ip6 Ta accept_rtadv Ta integer Ta yes
+.It ip6 Ta auto_flowlabel Ta integer Ta yes
+.It ip6 Ta dad_count Ta integer Ta yes
+.It ip6 Ta defmcasthlim Ta integer Ta yes
+.It ip6 Ta forwarding Ta integer Ta yes
+.It ip6 Ta hdrnestlimit Ta integer Ta yes
+.It ip6 Ta hlim Ta integer Ta yes
+.It ip6 Ta kame_version Ta string Ta no
+.It ip6 Ta keepfaith Ta integer Ta yes
+.It ip6 Ta log_interval Ta integer Ta yes
+.It ip6 Ta maxfragpackets Ta integer Ta yes
+.It ip6 Ta maxfrags Ta integer Ta yes
+.It ip6 Ta mforwarding Ta integer Ta yes
+.It ip6 Ta multicast_mtudisc Ta integer Ta yes
+.It ip6 Ta multipath Ta integer Ta yes
+.It ip6 Ta redirect Ta integer Ta yes
+.It ip6 Ta rr_prune Ta integer Ta yes
+.It ip6 Ta use_deprecated Ta integer Ta yes
+.It ip6 Ta v6only Ta integer Ta no
 .El
 .Pp
 The variables are as follows:
@@ -1919,9 +1919,9 @@ IPsec flow database (SPD).
 Get or set global information about PIPEX.
 .Pp
 The currently defined variable names are:
-.Bl -column "Third level nameXXXXXX" "struct loadavgXXX" -offset indent
-.It Sy Third level name	Type	Changeable
-.It Dv PIPEXCTL_ENABLE	integer	yes
+.Bl -column "Third level name" "integer" "Changeable" -offset indent
+.It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv PIPEXCTL_ENABLE Ta integer Ta yes
 .El
 .Bl -tag -width "123456"
 .It Dv PIPEXCTL_ENABLE
@@ -1935,28 +1935,28 @@ The string and integer information available for the
 level is detailed below.
 The changeable column shows whether a process with appropriate
 privileges may change the value.
-.Bl -column "USER_COLL_WEIGHTS_MAXXXX" "integerXXX" -offset indent
-.It Sy Second level name	Type	Changeable
-.It Dv USER_BC_BASE_MAX No "	integer	no"
-.It Dv USER_BC_DIM_MAX No "	integer	no"
-.It Dv USER_BC_SCALE_MAX No "	integer	no"
-.It Dv USER_BC_STRING_MAX No "	integer	no"
-.It Dv USER_COLL_WEIGHTS_MAX No "	integer	no"
-.It Dv USER_CS_PATH No "	string	no"
-.It Dv USER_EXPR_NEST_MAX No "	integer	no"
-.It Dv USER_LINE_MAX No "	integer	no"
-.It Dv USER_POSIX2_C_BIND No "	integer	no"
-.It Dv USER_POSIX2_C_DEV No "	integer	no"
-.It Dv USER_POSIX2_CHAR_TERM No "	integer	no"
-.It Dv USER_POSIX2_FORT_DEV No "	integer	no"
-.It Dv USER_POSIX2_FORT_RUN No "	integer	no"
-.It Dv USER_POSIX2_LOCALEDEF No "	integer	no"
-.It Dv USER_POSIX2_SW_DEV No "	integer	no"
-.It Dv USER_POSIX2_UPE No "	integer	no"
-.It Dv USER_POSIX2_VERSION No "	integer	no"
-.It Dv USER_RE_DUP_MAX No "	integer	no"
-.It Dv USER_STREAM_MAX No "	integer	no"
-.It Dv USER_TZNAME_MAX No "	integer	no"
+.Bl -column "USER_POSIX2_CHAR_TERM" "integer" "Changeable" -offset indent
+.It Sy "Second level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv USER_BC_BASE_MAX Ta "integer" Ta "no"
+.It Dv USER_BC_DIM_MAX Ta "integer" Ta "no"
+.It Dv USER_BC_SCALE_MAX Ta "integer" Ta "no"
+.It Dv USER_BC_STRING_MAX Ta "integer" Ta "no"
+.It Dv USER_COLL_WEIGHTS_MAX Ta "integer" Ta "no"
+.It Dv USER_CS_PATH Ta "string" Ta "no"
+.It Dv USER_EXPR_NEST_MAX Ta "integer" Ta "no"
+.It Dv USER_LINE_MAX Ta "integer" Ta "no"
+.It Dv USER_POSIX2_C_BIND Ta "integer" Ta "no"
+.It Dv USER_POSIX2_C_DEV Ta "integer" Ta "no"
+.It Dv USER_POSIX2_CHAR_TERM Ta "integer" Ta "no"
+.It Dv USER_POSIX2_FORT_DEV Ta "integer" Ta "no"
+.It Dv USER_POSIX2_FORT_RUN Ta "integer" Ta "no"
+.It Dv USER_POSIX2_LOCALEDEF Ta "integer" Ta "no"
+.It Dv USER_POSIX2_SW_DEV Ta "integer" Ta "no"
+.It Dv USER_POSIX2_UPE Ta "integer" Ta "no"
+.It Dv USER_POSIX2_VERSION Ta "integer" Ta "no"
+.It Dv USER_RE_DUP_MAX Ta "integer" Ta "no"
+.It Dv USER_STREAM_MAX Ta "integer" Ta "no"
+.It Dv USER_TZNAME_MAX Ta "integer" Ta "no"
 .El
 .Bl -tag -width "123456"
 .It Dv USER_BC_BASE_MAX
@@ -2033,20 +2033,20 @@ The string and integer information available for the
 level is detailed below.
 The changeable column shows whether a process with appropriate
 privileges may change the value.
-.Bl -column "Second level nameXXXXXX" "struct loadavgXXX" -offset indent
-.It Sy Second level name	Type	Changeable
-.It Dv VFS_GENERIC No "	VFS generic info	no"
-.It Dv filesystem # No "	filesystem info	no"
+.Bl -column "Second level name" "VFS generic info" "Changeable" -offset indent
+.It Sy "Second level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv VFS_GENERIC Ta "VFS generic info" Ta "no"
+.It Dv "filesystem #" Ta "filesystem info" Ta "no"
 .El
 .Bl -tag -width "123456"
 .It Dv VFS_GENERIC
 This second level identifier requests generic information about the
 VFS layer.
 Within it, the following third level identifiers exist:
-.Bl -column "Third level nameXXXXXX" "struct loadavgXXX" -offset indent
-.It Sy Third level name	Type	Changeable
-.It Dv VFS_CONF No "	struct vfsconf	no"
-.It Dv VFS_MAXTYPENUM No "	int	no"
+.Bl -column "Third level name" "struct vfsconf" "Changeable" -offset indent
+.It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv VFS_CONF Ta "struct vfsconf" Ta "no"
+.It Dv VFS_MAXTYPENUM Ta "int" Ta "no"
 .El
 .It filesystem #
 After finding the filesystem dependent
@@ -2060,27 +2060,27 @@ it is possible to access filesystem dependent information.
 Some filesystems may contain settings.
 .Bl -tag -width "123"
 .It FFS
-.Bl -column "Third level nameXXXX" "FFS_SD_DIRECT_BLK " -offset ind
-.It Sy Third level name	Type	Changeable
-.It Dv FFS_ASYNCFREE No "	integer	yes"
-.It Dv FFS_CLUSTERREAD No "	integer	yes"
-.It Dv FFS_CLUSTERWRITE No "	integer	yes"
-.It Dv FFS_DIRHASH_DIRSIZE No "	integer	yes"
-.It Dv FFS_DIRHASH_MAXMEM No "	integer	yes"
-.It Dv FFS_DIRHASH_MEM No "	integer	no"
-.It Dv FFS_MAXSOFTDEPS No "	integer	yes"
-.It Dv FFS_REALLOCBLOCKS No "	integer	yes"
-.It Dv FFS_SD_BLK_LIMIT_HIT No "	integer	yes"
-.It Dv FFS_SD_BLK_LIMIT_PUSH No "	integer	yes"
-.It Dv FFS_SD_DIR_ENTRY No "	integer	yes"
-.It Dv FFS_SD_DIRECT_BLK_PTRS No "	integer	yes"
-.It Dv FFS_SD_INDR_BLK_PTRS No "	integer	yes"
-.It Dv FFS_SD_INO_LIMIT_HIT No "	integer	yes"
-.It Dv FFS_SD_INO_LIMIT_PUSH No "	integer	yes"
-.It Dv FFS_SD_INODE_BITMAP No "	integer	yes"
-.It Dv FFS_SD_SYNC_LIMIT_HIT No "	integer	yes"
-.It Dv FFS_SD_TICKDELAY No "	integer	yes"
-.It Dv FFS_SD_WORKLIST_PUSH No "	integer	yes"
+.Bl -column "FFS_SD_DIRECT_BLK_PTRS" "integer" "Changeable" -offset indent
+.It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv FFS_ASYNCFREE Ta "integer" Ta "yes"
+.It Dv FFS_CLUSTERREAD Ta "integer" Ta "yes"
+.It Dv FFS_CLUSTERWRITE Ta "integer" Ta "yes"
+.It Dv FFS_DIRHASH_DIRSIZE Ta "integer" Ta "yes"
+.It Dv FFS_DIRHASH_MAXMEM Ta "integer" Ta "yes"
+.It Dv FFS_DIRHASH_MEM Ta "integer" Ta "no"
+.It Dv FFS_MAXSOFTDEPS Ta "integer" Ta "yes"
+.It Dv FFS_REALLOCBLOCKS Ta "integer" Ta "yes"
+.It Dv FFS_SD_BLK_LIMIT_HIT Ta "integer" Ta "yes"
+.It Dv FFS_SD_BLK_LIMIT_PUSH Ta "integer" Ta "yes"
+.It Dv FFS_SD_DIR_ENTRY Ta "integer" Ta "yes"
+.It Dv FFS_SD_DIRECT_BLK_PTRS Ta "integer" Ta "yes"
+.It Dv FFS_SD_INDR_BLK_PTRS Ta "integer" Ta "yes"
+.It Dv FFS_SD_INO_LIMIT_HIT Ta "integer" Ta "yes"
+.It Dv FFS_SD_INO_LIMIT_PUSH Ta "integer" Ta "yes"
+.It Dv FFS_SD_INODE_BITMAP Ta "integer" Ta "yes"
+.It Dv FFS_SD_SYNC_LIMIT_HIT Ta "integer" Ta "yes"
+.It Dv FFS_SD_TICKDELAY Ta "integer" Ta "yes"
+.It Dv FFS_SD_WORKLIST_PUSH Ta "integer" Ta "yes"
 .El
 .Bl -tag -width "123456"
 .It Dv FFS_CLUSTERREAD
@@ -2099,10 +2099,10 @@ When enabled, the kernel will attempt to relocate growing files so that they
 are contiguous on disk, reducing fragmentation.
 .El
 .It NFS
-.Bl -column "Third level nameXXX" "struct loadavgXXX" -offset ind
-.It Sy Third level name	Type	Changeable
-.It Dv NFS_NFSSTATS No "	struct nfsstats	yes"
-.It Dv NFS_NIOTHREADS No "	int	yes"
+.Bl -column "Third level name" "struct nfsstats" "Changeable" -offset indent
+.It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv NFS_NFSSTATS Ta "struct nfsstats" Ta "yes"
+.It Dv NFS_NIOTHREADS Ta "int" Ta "yes"
 .El
 .Bl -tag -width Ds
 .It Dv NFS_NIOTHREADS
@@ -2119,19 +2119,19 @@ The string and integer information available for the
 level is detailed below.
 The changeable column shows whether a process with appropriate
 privileges may change the value.
-.Bl -column "Second level nameXXXXXX" "struct loadavgXXX" -offset indent
-.It Sy Second level name	Type	Changeable
-.It Dv VM_ANONMIN No "	integer	yes"
-.It Dv VM_LOADAVG No "	struct loadavg	no"
-.It Dv VM_MAXSLP No "	integer	no"
-.It Dv VM_METER No "	struct vmtotal	no"
-.It Dv VM_NKMEMPAGES No "	integer	no"
-.It Dv VM_PSSTRINGS No "	struct psstrings	no"
-.It Dv VM_SWAPENCRYPT No "	swap encrypt values	yes"
-.It Dv VM_USPACE No "	integer	no"
-.It Dv VM_UVMEXP No "	struct uvmexp	no"
-.It Dv VM_VNODEMIN No "	integer	yes"
-.It Dv VM_VTEXTMIN No "	integer	yes"
+.Bl -column "Second level name" "swap encrypt values" "yes" -offset indent
+.It Sy "Second level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv VM_ANONMIN Ta "integer" Ta "yes"
+.It Dv VM_LOADAVG Ta "struct loadavg" Ta "no"
+.It Dv VM_MAXSLP Ta "integer" Ta "no"
+.It Dv VM_METER Ta "struct vmtotal" Ta "no"
+.It Dv VM_NKMEMPAGES Ta "integer" Ta "no"
+.It Dv VM_PSSTRINGS Ta "struct psstrings" Ta "no"
+.It Dv VM_SWAPENCRYPT Ta "swap encrypt values" Ta "yes"
+.It Dv VM_USPACE Ta "integer" Ta "no"
+.It Dv VM_UVMEXP Ta "struct uvmexp" Ta "no"
+.It Dv VM_VNODEMIN Ta "integer" Ta "yes"
+.It Dv VM_VTEXTMIN Ta "integer" Ta "yes"
 .El
 .Bl -tag -width "123456"
 .It Dv VM_ANONMIN
@@ -2160,11 +2160,11 @@ program uses it to locate the argument and environment strings.
 Contains statistics about swap encryption.
 The string and integer information available for the third level is
 detailed below.
-.Bl -column "Third level nameXXXXXX" "struct loadavgXXX" -offset indent
-.It Sy Third level name	Type	Changeable
-.It Dv SWPENC_CREATED No "	integer	no"
-.It Dv SWPENC_DELETED No "	integer	no"
-.It Dv SWPENC_ENABLE No "	integer	yes"
+.Bl -column "Third level name" "integer" "Changeable" -offset indent
+.It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv SWPENC_CREATED Ta "integer" Ta "no"
+.It Dv SWPENC_DELETED Ta "integer" Ta "no"
+.It Dv SWPENC_ENABLE Ta "integer" Ta "yes"
 .El
 .Bl -tag -width "123456"
 .It Dv SWPENC_CREATED

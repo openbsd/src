@@ -1,4 +1,4 @@
-.\"     $OpenBSD: fga.4,v 1.11 2007/05/31 19:19:56 jmc Exp $
+.\"     $OpenBSD: fga.4,v 1.12 2011/09/03 22:59:07 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt FGA 4 sparc
 .Os
 .Sh NAME
@@ -54,14 +54,14 @@ VME devices are attached to the
 pseudo-devices, which provide an interface for drivers to establish
 VME level/vectored interrupts and map address ranges.
 By default the following address ranges are established:
-.Bl -column "256MBXXX" "SBus Slot" "SBus Offset" "VME Space" "VME Offset" -offset indent
-.It Sy Size	SBus Slot	SBus Offset	VME Space	VME Offset
-.It Dv "256MB" No "	1" No "	0x0000000" No "	A32/D32	0xf0000000"
-.It Dv "256MB" No "	4" No "	0x0000000" No "	A32/D16	0xf0000000"
-.It Dv "16MB" No "	5" No "	0xe000000" No "	A24/D16	0x000000"
-.It Dv "64KB" No "	5" No "	0xffc0000" No "	A16/D8	0x0000"
-.It Dv "64KB" No "	5" No "	0xffd0000" No "	A16/D16	0x0000"
-.It Dv "64KB" No "	5" No "	0xffe0000" No "	A16/D32	0x0000"
+.Bl -column "256MB" "SBus Slot" "SBus Offset" "VME Space" "VME Offset" -offset indent
+.It Sy "Size" Ta Sy "SBus Slot" Ta Sy "SBus Offset" Ta Sy "VME Space" Ta Sy "VME Offset"
+.It "256MB" Ta "1" Ta "0x0000000" Ta "A32/D32" Ta "0xf0000000"
+.It "256MB" Ta "4" Ta "0x0000000" Ta "A32/D16" Ta "0xf0000000"
+.It "16MB" Ta "5" Ta "0xe000000" Ta "A24/D16" Ta "0x000000"
+.It "64KB" Ta "5" Ta "0xffc0000" Ta "A16/D8" Ta "0x0000"
+.It "64KB" Ta "5" Ta "0xffd0000" Ta "A16/D16" Ta "0x0000"
+.It "64KB" Ta "5" Ta "0xffe0000" Ta "A16/D32" Ta "0x0000"
 .El
 .Pp
 The abort switch on the FORCE CPU boards is also controlled by the

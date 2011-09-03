@@ -1,4 +1,4 @@
-.\"	$OpenBSD: oldrdist.1,v 1.19 2010/07/15 20:51:38 schwarze Exp $
+.\"	$OpenBSD: oldrdist.1,v 1.20 2011/09/03 22:59:07 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)rdist.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: July 15 2010 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt OLDRDIST 1
 .Os
 .Sh NAME
@@ -272,15 +272,13 @@ home directory as the root directory for the rest of the file name.
 .Pp
 The command list consists of zero or more commands of the following
 format:
-.Bd -ragged -offset indent -compact
-.Bl -column except_patx pattern\ listx
-.It `install'	<options>	opt_dest_name `;'
-.It `notify'	<name list>	`;'
-.It `except'	<name list>	`;'
-.It `except_pat'	<pattern list>	`;'
-.It `special'	<name list>	string `;'
+.Bl -column "`except_pat'" "<pattern list>" "opt_dest_name" "`;'" -offset indent
+.It `install' Ta "<options>" Ta opt_dest_name Ta `;'
+.It `notify' Ta "<name list>" Ta "" Ta `;'
+.It `except' Ta "<name list>" Ta "" Ta `;'
+.It `except_pat' Ta "<pattern list>" Ta "" Ta `;'
+.It `special' Ta "<name list>" Ta string Ta `;'
 .El
-.Ed
 .Pp
 The
 .Ic install
