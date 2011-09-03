@@ -1,0 +1,55 @@
+.\"	$OpenBSD: vsaudio.4,v 1.1 2011/09/03 20:46:49 miod Exp $
+.\"
+.\" Copyright (c) 2011 Miodrag Vallat.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: September 3 2011 $
+.Dt VSAUDIO 4 vax
+.Os
+.Sh NAME
+.Nm vsaudio
+.Nd VAXstation audio device
+.Sh SYNOPSIS
+.Cd "vsaudio0 at vsbus0 csr 0x200d0000" Pq "VAXstation 4000/60 and VLC"
+.Cd "vsaudio0 at vsbus0 csr 0x26800000" Pq "VAXstation 4000/90"
+.Cd "audio* at vsaudio?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports the onboard audio device found on VAXstation 4000 systems,
+based upon the
+.Tn AMD
+AM79C30A
+Digital Subscriber Controller
+chip.
+.Pp
+On all VAXstation systems but the VLC, audio output is routed either to the
+internal speaker, or to the RJ-11 phone jack on the front of the machine. 
+The output device is selected with the phone/speaker switch next to the
+phone jack; there is no way for software to select the output device.
+.Pp
+The VAXstation VLC has no internal speaker and can only output to the RJ-11
+phone jack connector on the right side of the machine.
+.Pp
+There is no input source connected to the
+.Nm
+device, therefore audio recording is not supported.
+.Pp
+The
+.Nm
+driver only supports 8 bit, 8KHz monaural mu-law output.
+.Sh SEE ALSO
+.Xr audio 4 ,
+.Xr intro 4 ,
+.Xr vsbus 4
