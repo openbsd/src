@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.17 2011/04/05 18:01:21 henning Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.18 2011/09/03 14:38:26 kevlo Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -206,13 +206,11 @@ ale_miibus_statchg(struct device *dev)
 {
 	struct ale_softc *sc = (struct ale_softc *)dev;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	struct mii_data *mii;
+	struct mii_data *mii = &sc->sc_miibus;
 	uint32_t reg;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
-
-	mii = &sc->sc_miibus;
 
 	sc->ale_flags &= ~ALE_FLAG_LINK;
 	if ((mii->mii_media_status & (IFM_ACTIVE | IFM_AVALID)) ==
@@ -1021,12 +1019,16 @@ ale_start(struct ifnet *ifp)
 	struct mbuf *m_head;
 	int enq;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
-		return;
-
 	/* Reclaim transmitted frames. */
 	if (sc->ale_cdata.ale_tx_cnt >= ALE_TX_DESC_HIWAT)
 		ale_txeof(sc);
+
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+		return;
+	if ((sc->ale_flags & ALE_FLAG_LINK) == 0)
+		return;
+	if (IFQ_IS_EMPTY(&ifp->if_snd))
+		return;
 
 	enq = 0;
 	for (;;) {
@@ -1083,9 +1085,7 @@ ale_watchdog(struct ifnet *ifp)
 	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
 	ifp->if_oerrors++;
 	ale_init(ifp);
-
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
-		ale_start(ifp);
+	ale_start(ifp);
 }
 
 int
@@ -1328,8 +1328,7 @@ ale_intr(void *xsc)
 		}
 
 		ale_txeof(sc);
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			ale_start(ifp);
+		ale_start(ifp);
 	}
 
 	/* Re-enable interrupts. */
