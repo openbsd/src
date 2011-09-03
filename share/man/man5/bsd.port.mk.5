@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.285 2011/08/29 18:48:31 matthew Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.286 2011/09/03 15:09:10 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 29 2011 $
+.Dd $Mdocdate: September 3 2011 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1495,6 +1495,21 @@ To be tested after including
 if neither PFRAG.shared nor CONFIGURE_SHARED are enough.
 .It Ev NO_SYSTRACE
 Port does not build with systrace enabled build targets.
+.It Ev OLD_WRKDIR_NAME
+Base name for
+.Ev WRKDIR
+in the old scheme without
+.Ev WRKOBJDIR .
+Mostly used as a value for
+.Ev WRKDIR_LINKNAME ,
+e.g.,
+.Bd -literal
+WRKDIR_LINKNAME = ${OLD_WRKDIR_NAME}
+.Ed
+.Pp
+in
+.Pa /etc/mk.conf .
+Read-only.
 .It Ev ONLY_FOR_ARCHS
 List of architectures on which this port builds.
 Can hold both processor-specific information (e.g., m68k), and more
@@ -2120,6 +2135,8 @@ is put at the front of the
 .It Ev WRKDIR_LINKNAME
 Name of a symbolic link to create within the port directory which will
 point to the port's ${WRKDIR}.
+See
+.Ev OLD_WRKDIRNAME .
 .It Ev WRKDIST
 Subdirectory of ${WRKDIR} in which the distribution files normally unpacks.
 Base for all patches (default: ${WRKDIR}/${DISTNAME}).
