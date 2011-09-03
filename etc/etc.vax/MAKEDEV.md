@@ -1,6 +1,6 @@
 define(MACHINE,vax)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.44 2011/07/06 18:32:58 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.45 2011/09/03 20:45:17 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -119,6 +119,7 @@ _DEV(wskbd, 69)
 _TITLE(point)
 _DEV(wsmouse, 70)
 _TITLE(spec)
+_DEV(au, 81)
 _DEV(bio, 72)
 _DEV(bpf, 56)
 _DEV(diskmap, 79)
