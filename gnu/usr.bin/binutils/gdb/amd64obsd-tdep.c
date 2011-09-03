@@ -92,7 +92,7 @@ amd64obsd_sigtramp_p (struct frame_info *next_frame)
   {
     0x48, 0xc7, 0xc0,
     0x67, 0x00, 0x00, 0x00,	/* movq $SYS_sigreturn, %rax */
-    0xcd, 0x80			/* int $0x80 */
+    0x0f, 0x05			/* syscall */
   };
   size_t buflen = (sizeof sigreturn) + 1;
   char *name, *buf;
