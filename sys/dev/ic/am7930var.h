@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7930var.h,v 1.1 2011/09/03 20:03:29 miod Exp $	*/
+/*	$OpenBSD: am7930var.h,v 1.2 2011/09/04 20:08:37 miod Exp $	*/
 /*	$NetBSD: am7930var.h,v 1.10 2005/01/15 15:19:52 kent Exp $	*/
 
 /*
@@ -50,6 +50,9 @@ struct am7930_glue {
 	void	(*codec_iwrite16)(struct am7930_softc *sc, int, uint16_t);
 	void	(*onopen)(struct am7930_softc *sc);
 	void	(*onclose)(struct am7930_softc *sc);
+	int	factor;
+	void	(*input_conv)(void *, u_char *, int);
+	void	(*output_conv)(void *, u_char *, int);
 };
 
 struct am7930_softc {
@@ -64,6 +67,10 @@ struct am7930_softc {
 	uint8_t	sc_mic_mute;
 
 	struct am7930_glue *sc_glue;
+
+	/* saved audio_params sw_code if overwritten with the glue pointers */
+	void	(*play_sw_code)(void *, u_char *, int);
+	void	(*rec_sw_code)(void *, u_char *, int);
 };
 
 extern int     am7930debug;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7930.c,v 1.2 2011/09/04 08:03:32 miod Exp $	*/
+/*	$OpenBSD: am7930.c,v 1.3 2011/09/04 20:08:37 miod Exp $	*/
 /*	$NetBSD: am7930.c,v 1.44 2001/11/13 13:14:34 lukem Exp $	*/
 
 /*
@@ -206,18 +206,13 @@ am7930_close(void *addr)
 	DPRINTF(("sa_close: closed.\n"));
 }
 
-/*
- * XXX should be extended to handle a few of the more common formats.
- */
 int
 am7930_set_params(void *addr, int setmode, int usemode,
     struct audio_params *play, struct audio_params *rec)
 {
+	struct am7930_softc *sc = addr;
 	struct audio_params *p;
 	int mode;
-#if 0
-	struct am7930_softc *sc = addr;
-#endif
 
 	for (mode = AUMODE_RECORD; mode != -1;
 	    mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
@@ -263,6 +258,27 @@ am7930_set_params(void *addr, int setmode, int usemode,
 		p->channels = 1;
 		/* no other rates supported by amd chip */
 		p->sample_rate = 8000;
+
+		if (sc->sc_glue->factor > 1) {
+			p->factor = sc->sc_glue->factor;
+			/*
+			 * Remember which converter routine had been
+			 * selected, if any, since there is no way
+			 * to stack filters yet.
+			 *
+			 * Note that we rely upon the converters working
+			 * in place (i.e. with factor == 1), which is
+			 * correct as long as we don't try to emulate
+			 * 16-bit encodings.
+			 */
+			if (mode == AUMODE_PLAY) {
+				sc->play_sw_code = p->sw_code;
+				p->sw_code = sc->sc_glue->output_conv;
+			} else {
+				sc->rec_sw_code = p->sw_code;
+				p->sw_code = sc->sc_glue->input_conv;
+			}
+		}
 	}
 
 	return 0;
