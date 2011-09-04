@@ -1,4 +1,4 @@
-.\"	$OpenBSD: touch.1,v 1.24 2011/08/31 08:48:40 jmc Exp $
+.\"	$OpenBSD: touch.1,v 1.25 2011/09/04 10:26:47 jmc Exp $
 .\"	$NetBSD: touch.1,v 1.8 1995/08/31 22:10:05 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)touch.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: August 31 2011 $
+.Dd $Mdocdate: September 4 2011 $
 .Dt TOUCH 1
 .Os
 .Sh NAME
@@ -71,9 +71,7 @@ No error messages are displayed and the exit value is not affected.
 .Sm off
 .It Fl "d " Ar ccyy No - Ar mm No - Ar ddTHH : Ar MM : Ar SS Oo \&. Ar frac Oc Op Ar Z
 .Sm on
-Change the access and modification times to the specified time.
-The argument should be of the form
-ccyy-mm-ddTHH:MM:SS[.frac][Z],
+Change the access and modification times to the specified time,
 where the parts of the argument represent the following:
 .Pp
 .Bl -tag -width .frac -compact -offset indent
@@ -118,9 +116,7 @@ flag is also specified.
 Use the access and modification times from the specified file
 instead of the current time of day.
 .It Fl t Oo Ns Oo Ar cc Oc Ns Ar yy Oc Ns Ar mmddHHMM Ns Op \&. Ns Ar SS
-Change the access and modification times to the specified time.
-The argument should be of the form
-[[cc]yy]mmddHHMM[.SS],
+Change the access and modification times to the specified time,
 where the parts of the argument represent the following:
 .Pp
 .Bl -tag -width Ds -compact -offset indent
