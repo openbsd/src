@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.44 2011/08/31 08:45:52 jmc Exp $
+.\" $OpenBSD: at.1,v 1.45 2011/09/04 10:24:46 jmc Exp $
 .\"
 .\" Copyright (C) 1993, 1994  Thomas Koenig
 .\" Copyright (C) 1993  David Parsons
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 31 2011 $
+.Dd $Mdocdate: September 4 2011 $
 .Dt AT 1
 .Os
 .Sh NAME
@@ -127,7 +127,7 @@ is given a specific queue, only jobs pending in that queue will be shown.
 Remove the specified job(s) from the
 .Nm at
 queue.
-.It Fl t Oo Ns Oo Ar cc Oc Ns Ar yy Oc Ns Ar mmddHHMM Ns Op \&. Ns Ar SS
+.It Fl t Ar time_arg
 Specify the job time.
 The argument should be of the form
 [[cc]yy]mmddHHMM[.SS],
