@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.140 2011/09/04 10:42:47 bluhm Exp $	*/
+/*	$OpenBSD: relay.c,v 1.141 2011/09/04 20:26:58 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -2018,8 +2018,8 @@ relay_accept(int fd, short sig, void *arg)
 			return;
 		}
 
-		proc_compose_imsg(env->sc_ps, PROC_PFE, -1, IMSG_NATLOOK, -1, cnl,
-		    sizeof(*cnl));
+		proc_compose_imsg(env->sc_ps, PROC_PFE, -1, IMSG_NATLOOK, -1,
+		    cnl, sizeof(*cnl));
 
 		/* Schedule timeout */
 		evtimer_set(&con->se_ev, relay_natlook, con);

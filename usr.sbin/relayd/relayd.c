@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.103 2011/05/19 08:56:49 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.104 2011/09/04 20:26:58 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -54,7 +54,8 @@ void		 parent_sig_handler(int, short, void *);
 void		 parent_shutdown(struct relayd *);
 int		 parent_dispatch_pfe(int, struct privsep_proc *, struct imsg *);
 int		 parent_dispatch_hce(int, struct privsep_proc *, struct imsg *);
-int		 parent_dispatch_relay(int, struct privsep_proc *, struct imsg *);
+int		 parent_dispatch_relay(int, struct privsep_proc *,
+		    struct imsg *);
 int		 bindany(struct ctl_bindany *);
 
 struct relayd			*relayd_env;
@@ -377,7 +378,7 @@ parent_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct relayd		*env = p->p_env;
 	struct ctl_demote	 demote;
 	struct ctl_netroute	 crt;
-	u_int		 	 v;
+	u_int			 v;
 	char			*str = NULL;
 
 	switch (imsg->hdr.type) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.150 2011/05/26 14:48:20 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.151 2011/09/04 20:26:58 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -474,11 +474,11 @@ enum noderesult {
 };
 
 struct protonode_config {
-	objid_t			 	 protoid;
-	size_t			 	 keylen;
-	size_t			 	 valuelen;
-	size_t			 	 len;
-	u_int			 	 dir;
+	objid_t				 protoid;
+	size_t				 keylen;
+	size_t				 valuelen;
+	size_t				 len;
+	u_int				 dir;
 };
 
 struct protonode {
@@ -713,7 +713,7 @@ struct ctl_conn {
 	u_int8_t		 flags;
 	u_int			 waiting;
 #define CTL_CONN_NOTIFY		 0x01
-	struct imsgev	 	 iev;
+	struct imsgev		 iev;
 
 };
 TAILQ_HEAD(ctl_connlist, ctl_conn);
@@ -1020,7 +1020,7 @@ int		 protonode_load(enum direction, struct protocol *,
 int		 map6to4(struct sockaddr_storage *);
 int		 map4to6(struct sockaddr_storage *, struct sockaddr_storage *);
 void		 imsg_event_add(struct imsgev *);
-int	 	 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
+int		 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
 		    pid_t, int, void *, u_int16_t);
 void		 socket_rlimit(int);
 char		*get_string(u_int8_t *, size_t);

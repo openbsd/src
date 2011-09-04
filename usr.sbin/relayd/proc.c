@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.2 2011/05/19 08:56:49 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.3 2011/09/04 20:26:58 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2010,2011 Reyk Floeter <reyk@openbsd.org>
@@ -198,7 +198,7 @@ proc_config(struct privsep *ps, struct privsep_proc *p, u_int nproc)
 			fatal("proc_config: cannot peer with oneself");
 
 		count = ps->ps_instances[src] * ps->ps_instances[dst];
-		
+
 		if ((ps->ps_ievs[dst] = calloc(count,
 		    sizeof(struct imsgev))) == NULL)
 			fatal("proc_config");
