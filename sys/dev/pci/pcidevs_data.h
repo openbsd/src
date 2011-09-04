@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1619 2011/09/04 09:26:05 sthen Exp 
+ *	OpenBSD: pcidevs,v 1.1620 2011/09/04 12:01:53 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -8036,6 +8036,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "6 Series KT",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_Z68_LPC,
+	    "Z68 LPC",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_P67_LPC,
 	    "P67 LPC",
 	},
@@ -8076,10 +8080,6 @@ static const struct pci_known_product pci_known_products[] = {
 	    "B65 LPC",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_H61_LPC,
-	    "H61 LPC",
-	},
-	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C202_LPC,
 	    "C202 LPC",
 	},
@@ -8090,6 +8090,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C206_LPC,
 	    "C206 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_H61_LPC,
+	    "H61 LPC",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_LPC,
