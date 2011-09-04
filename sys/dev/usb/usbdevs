@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.553 2011/08/29 10:51:18 mikeb Exp $
+$OpenBSD: usbdevs,v 1.554 2011/09/04 18:32:14 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -53,6 +53,7 @@ $OpenBSD: usbdevs,v 1.553 2011/08/29 10:51:18 mikeb Exp $
 vendor UNKNOWN1		0x0053	Unknown vendor
 vendor UNKNOWN2		0x0105	Unknown vendor
 vendor EGALAX2		0x0123	eGalax
+vendor UNKNOWN6		0x01e1	Unknown vendor
 vendor HUMAX		0x02ad	HUMAX
 vendor BWCT		0x03da	Bernd Walter Computer Technology
 vendor AOX		0x03e8	AOX
@@ -2049,7 +2050,8 @@ product INSYSTEM USBCABLE	0x081a	USB cable
 product INSYSTEM ADAPTERV2	0x5701	USB Storage Adapter V2
 
 /* Intel products */
-product INTEL2 RMH		0x0020	Rate Matching Hub
+product INTEL2 RMH_1		0x0020	Rate Matching Hub
+product INTEL2 RMH_2		0x0024	Rate Matching Hub
 product INTEL EASYPC_CAMERA	0x0110	EasyPC
 product INTEL AP310		0x0200	AP310 AnyPoint II
 product INTEL I2011B		0x1111	Wireless 2011B
@@ -3787,6 +3789,9 @@ product UNKNOWN4 DM9601		0x8101 DM9601
 
 /* Unknown vendor 5 */
 product UNKNOWN5 NF_RIC		0x0001	NF RIC
+
+/* Unknown vendor 6 */
+product UNKNOWN6 DM9601		0x9601	DM9601
 
 /* U.S. Robotics products */
 product USR USR1120		0x00eb	USR1120 WLAN
