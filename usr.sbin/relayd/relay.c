@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.138 2011/05/20 09:43:53 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.139 2011/09/04 09:55:10 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -2279,7 +2279,8 @@ relay_connect(struct rsession *con)
 
 	if (errno == EINPROGRESS)
 		event_again(&con->se_ev, con->se_out.s, EV_WRITE|EV_TIMEOUT,
-		    relay_connected, &con->se_tv_start, &env->sc_timeout, con);
+		    relay_connected, &con->se_tv_start, &rlay->rl_conf.timeout,
+		    con);
 	else
 		relay_connected(con->se_out.s, EV_WRITE, con);
 
@@ -2625,7 +2626,7 @@ relay_ssl_transaction(struct rsession *con, struct ctl_relay_event *cre)
 	SSL			*ssl;
 	const SSL_METHOD	*method;
 	void			(*cb)(int, short, void *);
-	u_int			 flags = EV_TIMEOUT;
+	u_int			 flag;
 
 	ssl = SSL_new(rlay->rl_ssl_ctx);
 	if (ssl == NULL)
@@ -2634,11 +2635,11 @@ relay_ssl_transaction(struct rsession *con, struct ctl_relay_event *cre)
 	if (cre->dir == RELAY_DIR_REQUEST) {
 		cb = relay_ssl_accept;
 		method = SSLv23_server_method();
-		flags |= EV_READ;
+		flag = EV_READ;
 	} else {
 		cb = relay_ssl_connect;
 		method = SSLv23_client_method();
-		flags |= EV_WRITE;
+		flag = EV_WRITE;
 	}
 
 	if (!SSL_set_ssl_method(ssl, method))
@@ -2653,8 +2654,10 @@ relay_ssl_transaction(struct rsession *con, struct ctl_relay_event *cre)
 
 	cre->ssl = ssl;
 
-	event_again(&con->se_ev, cre->s, EV_TIMEOUT|flags,
-	    cb, &con->se_tv_start, &env->sc_timeout, con);
+	DPRINTF("%s: session %d: scheduling on %s", __func__, con->se_id,
+	    (flag == EV_READ) ? "EV_READ" : "EV_WRITE");
+	event_again(&con->se_ev, cre->s, EV_TIMEOUT|flag, cb,
+	    &con->se_tv_start, &rlay->rl_conf.timeout, con);
 	return;
 
  err:
@@ -2721,7 +2724,7 @@ retry:
 	DPRINTF("%s: session %d: scheduling on %s", __func__, con->se_id,
 	    (retry_flag == EV_READ) ? "EV_READ" : "EV_WRITE");
 	event_again(&con->se_ev, fd, EV_TIMEOUT|retry_flag, relay_ssl_accept,
-	    &con->se_tv_start, &env->sc_timeout, con);
+	    &con->se_tv_start, &rlay->rl_conf.timeout, con);
 }
 
 void
@@ -2780,7 +2783,7 @@ retry:
 	DPRINTF("%s: session %d: scheduling on %s", __func__, con->se_id,
 	    (retry_flag == EV_READ) ? "EV_READ" : "EV_WRITE");
 	event_again(&con->se_ev, fd, EV_TIMEOUT|retry_flag, relay_ssl_connect,
-	    &con->se_tv_start, &env->sc_timeout, con);
+	    &con->se_tv_start, &rlay->rl_conf.timeout, con);
 }
 
 void
