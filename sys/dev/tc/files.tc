@@ -1,4 +1,4 @@
-#	$OpenBSD: files.tc,v 1.8 2005/03/08 20:00:25 tdeval Exp $
+#	$OpenBSD: files.tc,v 1.9 2011/09/04 20:10:18 miod Exp $
 #	$NetBSD: files.tc,v 1.26 2001/11/28 10:21:24 lukem Exp $
 #
 # Config file and device description for machine-independent
@@ -22,6 +22,11 @@ file	dev/tc/if_le_ioasic.c		le_ioasic
 
 attach	le at tc with le_tc:		le_dec_subr
 file	dev/tc/if_le_tc.c		le_tc
+
+# baseboard audio
+device	bba: audio, am7930, mulaw
+attach	bba at ioasic
+file	dev/tc/bba.c			bba
 
 # DEFTA FDDI controller
 device	fta: pdq, fddi, ifnet

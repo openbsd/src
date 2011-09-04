@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.224 2011/07/07 23:41:09 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.225 2011/09/04 20:10:18 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -156,6 +156,7 @@ tc*	at	tcasic?
 ioasic*	at	tc?
 mcclock* at	ioasic?
 le*	at	ioasic?
+bba0	at	ioasic?
 scc0	at	ioasic?
 scc1	at	ioasic?
 tcds*	at	tc?
@@ -390,6 +391,7 @@ auvia*	at pci?				# VIA VT82C686A
 midi*	at eap?
 
 #Audio Support
+audio*	at bba?
 audio*	at eap?
 audio*	at emu?
 audio*	at eso?
