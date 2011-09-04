@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: relayd.pl,v 1.3 2011/09/02 21:05:41 bluhm Exp $
+#	$OpenBSD: relayd.pl,v 1.4 2011/09/04 12:19:44 bluhm Exp $
 
 # Copyright (c) 2010,2011 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -74,6 +74,16 @@ $s->up;
 $c->down;
 $s->down;
 $r->down;
+
+foreach ([ client => $c ], [ relayd => $r ], [ server => $s ]) {
+	my($name, $proc) = @$_;
+	my $pattern = $args{$name}{loggrep} or next;
+	$pattern = [ $pattern ] unless ref($pattern) eq 'ARRAY';
+	foreach my $pat (@$pattern) {
+		$proc->loggrep($pat)
+		    or die "$name log missing pattern: $pat";
+	}
+}
 
 exit if $args{nocheck};
 
