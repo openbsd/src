@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.26 2011/09/04 18:46:41 miod Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.27 2011/09/04 18:48:10 miod Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -1072,7 +1072,7 @@ awacs_trigger_input(void *h, void *start, void *end, int bsize,
 	vaddr_t spa, pa, epa;
 	int c;
 
-	DPRINTF(("trigger_input %p %p 0x%x\n", start, end, bsize));
+	DPRINTF("trigger_input %p %p 0x%x\n", start, end, bsize);
 
 	for (p = sc->sc_dmas; p && p->addr != start; p = p->next);
 	if (!p)
