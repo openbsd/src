@@ -810,6 +810,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/aic7xxx_openbsd.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/aic7xxxvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/am7930reg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/am7930var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/am79900reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/am7990reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/am7990var.ph

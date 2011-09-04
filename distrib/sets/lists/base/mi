@@ -2628,7 +2628,6 @@
 ./usr/sbin/pkg_create
 ./usr/sbin/pkg_delete
 ./usr/sbin/pkg_info
-./usr/sbin/pkg_merge
 ./usr/sbin/pkg_mklocatedb
 ./usr/sbin/popa3d
 ./usr/sbin/portmap
@@ -3310,6 +3309,7 @@
 ./usr/share/zoneinfo/Africa/Gaborone
 ./usr/share/zoneinfo/Africa/Harare
 ./usr/share/zoneinfo/Africa/Johannesburg
+./usr/share/zoneinfo/Africa/Juba
 ./usr/share/zoneinfo/Africa/Kampala
 ./usr/share/zoneinfo/Africa/Khartoum
 ./usr/share/zoneinfo/Africa/Kigali
@@ -3911,6 +3911,7 @@
 ./usr/share/zoneinfo/posix/Africa/Gaborone
 ./usr/share/zoneinfo/posix/Africa/Harare
 ./usr/share/zoneinfo/posix/Africa/Johannesburg
+./usr/share/zoneinfo/posix/Africa/Juba
 ./usr/share/zoneinfo/posix/Africa/Kampala
 ./usr/share/zoneinfo/posix/Africa/Khartoum
 ./usr/share/zoneinfo/posix/Africa/Kigali
@@ -4513,6 +4514,7 @@
 ./usr/share/zoneinfo/right/Africa/Gaborone
 ./usr/share/zoneinfo/right/Africa/Harare
 ./usr/share/zoneinfo/right/Africa/Johannesburg
+./usr/share/zoneinfo/right/Africa/Juba
 ./usr/share/zoneinfo/right/Africa/Kampala
 ./usr/share/zoneinfo/right/Africa/Khartoum
 ./usr/share/zoneinfo/right/Africa/Kigali

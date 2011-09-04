@@ -646,7 +646,6 @@
 ./usr/share/man/man1/pkg_create.1
 ./usr/share/man/man1/pkg_delete.1
 ./usr/share/man/man1/pkg_info.1
-./usr/share/man/man1/pkg_merge.1
 ./usr/share/man/man1/pkg_mklocatedb.1
 ./usr/share/man/man1/pkill.1
 ./usr/share/man/man1/pl2pm.1
@@ -2319,6 +2318,7 @@
 ./usr/share/man/man4/vax/smg.4
 ./usr/share/man/man4/vax/uba.4
 ./usr/share/man/man4/vax/uda.4
+./usr/share/man/man4/vax/vsaudio.4
 ./usr/share/man/man4/vax/vsbus.4
 ./usr/share/man/man4/vax/vxtbus.4
 ./usr/share/man/man4/vax/ze.4
