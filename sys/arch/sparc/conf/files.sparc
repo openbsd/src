@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.90 2011/09/03 20:04:00 miod Exp $
+#	$OpenBSD: files.sparc,v 1.91 2011/09/04 08:03:32 miod Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -144,7 +144,7 @@ file	arch/sparc/dev/hme.c		hme
 attach	esp at sbus, dma, obio
 file	arch/sparc/dev/esp.c		esp
 
-device	audioamd: audio, am7930
+device	audioamd: audio, am7930, mulaw
 attach	audioamd at mainbus, obio, sbus
 file	arch/sparc/dev/audioamd.c	audioamd
 file	arch/sparc/sparc/amd7930intr.s	audioamd

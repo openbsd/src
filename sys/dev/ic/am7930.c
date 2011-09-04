@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7930.c,v 1.1 2011/09/03 20:03:29 miod Exp $	*/
+/*	$OpenBSD: am7930.c,v 1.2 2011/09/04 08:03:32 miod Exp $	*/
 /*	$NetBSD: am7930.c,v 1.44 2001/11/13 13:14:34 lukem Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
+#include <dev/mulaw.h>
 
 #include <dev/ic/am7930reg.h>
 #include <dev/ic/am7930var.h>
@@ -209,30 +210,59 @@ am7930_close(void *addr)
  * XXX should be extended to handle a few of the more common formats.
  */
 int
-am7930_set_params(void *addr, int setmode, int usemode, struct audio_params *p,
-    struct audio_params *r)
+am7930_set_params(void *addr, int setmode, int usemode,
+    struct audio_params *play, struct audio_params *rec)
 {
+	struct audio_params *p;
+	int mode;
 #if 0
 	struct am7930_softc *sc = addr;
 #endif
 
-	if ((usemode & AUMODE_PLAY) == AUMODE_PLAY) {
-		p->encoding = AUDIO_ENCODING_ULAW;
+	for (mode = AUMODE_RECORD; mode != -1;
+	    mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
+		if ((setmode & mode) == 0)
+			continue;
+
+		p = mode == AUMODE_PLAY ? play : rec;
+		if (p == NULL)
+			continue;
+
+		switch (p->encoding) {
+		case AUDIO_ENCODING_ULAW:
+			p->sw_code = NULL;
+			break;
+		case AUDIO_ENCODING_SLINEAR:
+		case AUDIO_ENCODING_SLINEAR_BE:
+		case AUDIO_ENCODING_SLINEAR_LE:
+			if (mode == AUMODE_PLAY)
+				p->sw_code = slinear8_to_mulaw;
+			else
+				p->sw_code = mulaw_to_slinear8;
+			break;
+		case AUDIO_ENCODING_ULINEAR:
+		case AUDIO_ENCODING_ULINEAR_BE:
+		case AUDIO_ENCODING_ULINEAR_LE:
+			if (mode == AUMODE_PLAY)
+				p->sw_code = ulinear8_to_mulaw;
+			else
+				p->sw_code = mulaw_to_ulinear8;
+			break;
+		case AUDIO_ENCODING_ALAW:
+			if (mode == AUMODE_PLAY)
+				p->sw_code = alaw_to_mulaw;
+			else
+				p->sw_code = mulaw_to_alaw;
+			break;
+		default:
+			return EINVAL;
+		}
 		p->precision = 8;
 		p->bps = 1;
 		p->msb = 1;
 		p->channels = 1;
 		/* no other rates supported by amd chip */
 		p->sample_rate = 8000;
-	}
-	if ((usemode & AUMODE_RECORD) == AUMODE_RECORD) {
-		r->encoding = AUDIO_ENCODING_ULAW;
-		r->precision = 8;
-		r->bps = 1;
-		r->msb = 1;
-		r->channels = 1;
-		/* no other rates supported by amd chip */
-		r->sample_rate = 8000;
 	}
 
 	return 0;
@@ -249,6 +279,30 @@ am7930_query_encoding(void *addr, struct audio_encoding *fp)
 		fp->bps = 1;
 		fp->msb = 1;
 		fp->flags = 0;
+		break;
+	case 1:
+		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
+		fp->encoding = AUDIO_ENCODING_SLINEAR;
+		fp->precision = 8;
+		fp->bps = 1;
+		fp->msb = 1;
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 2:
+		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
+		fp->encoding = AUDIO_ENCODING_ULINEAR;
+		fp->precision = 8;
+		fp->bps = 1;
+		fp->msb = 1;
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 3:
+		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
+		fp->encoding = AUDIO_ENCODING_ALAW;
+		fp->precision = 8;
+		fp->bps = 1;
+		fp->msb = 1;
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	default:
 		return EINVAL;
