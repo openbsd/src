@@ -1,4 +1,4 @@
-/*	$OpenBSD: bba.c,v 1.1 2011/09/04 20:10:18 miod Exp $	*/
+/*	$OpenBSD: bba.c,v 1.2 2011/09/05 16:54:41 miod Exp $	*/
 /* $NetBSD: bba.c,v 1.38 2011/06/04 01:27:57 tsutsui Exp $ */
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -641,7 +641,7 @@ bba_input_conv(void *v, u_char *p, int cc)
 	/* convert data from dma stream - one byte per longword<23:16> */
 #ifdef __alpha__
 	/* try to avoid smaller than 32 bit accesses whenever possible */
-	if ((cc & 3) == 0 && ((vaddr_t)p & 3) == 0) {
+	if (((vaddr_t)p & 3) == 0) {
 		while (cc >= 4) {
 			uint32_t fp;
 
@@ -681,7 +681,7 @@ bba_output_conv(void *v, u_char *p, int cc)
 	q += cc;
 #ifdef __alpha__
 	/* try to avoid smaller than 32 bit accesses whenever possible */
-	if ((cc & 3) == 0 && ((vaddr_t)p & 3) == 0) {
+	if (((vaddr_t)p & 3) == 0) {
 		while (cc >= 4) {
 			uint32_t fp;
 
