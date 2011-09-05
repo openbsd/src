@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.43 2011/03/14 21:20:01 okan Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.44 2011/09/05 04:50:33 marco Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1787,8 +1787,13 @@ x_set_arg(int c)
 	int first = 1;
 
 	c &= CHARMASK;	/* strip command prefix */
-	for (; c >= 0 && isdigit(c); c = x_e_getc(), first = 0)
+	for (; c >= 0 && isdigit(c); c = x_e_getc(), first = 0) {
 		n = n * 10 + (c - '0');
+		if (n < 0 || n > LINE) {
+			c = -1;
+			break;
+		}
+	}
 	if (c < 0 || first) {
 		x_e_putc(BEL);
 		x_arg = 1;
