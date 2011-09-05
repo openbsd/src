@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.18 2011/09/03 14:38:26 kevlo Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.19 2011/09/05 05:44:36 kevlo Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -147,11 +147,10 @@ ale_miibus_readreg(struct device *dev, int phy, int reg)
 	if (phy != sc->ale_phyaddr)
 		return (0);
 
-	if (sc->ale_flags & ALE_FLAG_FASTETHER) {
-		if (reg == MII_100T2CR || reg == MII_100T2SR ||
-		    reg == MII_EXTSR)
-			return (0);
-	}
+	if ((sc->ale_flags & ALE_FLAG_FASTETHER) != 0 &&
+	    reg == MII_EXTSR)
+		return (0);
+
 	CSR_WRITE_4(sc, ALE_MDIO, MDIO_OP_EXECUTE | MDIO_OP_READ |
 	    MDIO_SUP_PREAMBLE | MDIO_CLK_25_4 | MDIO_REG_ADDR(reg));
 	for (i = ALE_PHY_TIMEOUT; i > 0; i--) {
@@ -179,12 +178,6 @@ ale_miibus_writereg(struct device *dev, int phy, int reg, int val)
 
 	if (phy != sc->ale_phyaddr)
 		return;
-
-	if (sc->ale_flags & ALE_FLAG_FASTETHER) {
-		if (reg == MII_100T2CR || reg == MII_100T2SR ||
-		    reg == MII_EXTSR)
-			return;
-	}
 
 	CSR_WRITE_4(sc, ALE_MDIO, MDIO_OP_EXECUTE | MDIO_OP_WRITE |
 	    (val & MDIO_DATA_MASK) << MDIO_DATA_SHIFT |
@@ -396,7 +389,7 @@ ale_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (pci_intr_map(pa, &ih) != 0) {
+	if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
 		printf(": can't map interrupt\n");
 		goto fail;
 	}
