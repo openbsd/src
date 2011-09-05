@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.5 2011/04/04 12:42:39 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.6 2011/09/05 02:56:44 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -45,7 +45,6 @@
 #ifdef __STDC__
 
 #define SYSTRAP(x)	movl $(SYS_ ## x),%eax; movq %rcx, %r10; syscall
-#define OSYSTRAP(x)	movl $(SYS_ ## x),%eax; int  $0x80
 #define SYSENTRY(x)							\
 	ENTRY(_thread_sys_ ## x);					\
 	.weak _C_LABEL(x);						\
@@ -53,7 +52,6 @@
 #else
 
 #define SYSTRAP(x)	movl $(SYS_/**/x),%eax; movq %rcx, %r10; syscall
-#define OSYSTRAP(x)	movl $(SYS_/**/x),%eax; int  $0x80
 #define SYSENTRY(x)							\
 	ENTRY(_thread_sys_/**/x);					\
 	.weak _C_LABEL(x);						\
@@ -69,10 +67,6 @@
 	SYSENTRY(x);							\
 	SYSTRAP(y)
 
-#define _OSYSCALL_NOERROR(x,y)						\
-	SYSENTRY(x);							\
-	OSYSTRAP(y)
-
 #ifdef PIC
 #define _SYSCALL(x,y)							\
 	.text; _ALIGN_TEXT;						\
@@ -80,36 +74,19 @@
 	jmp *%rcx;							\
 	_SYSCALL_NOERROR(x,y);						\
 	jc 2b
-#define _OSYSCALL(x,y)							\
-	.text; _ALIGN_TEXT;						\
-	2: mov PIC_GOT(CERROR), %rcx;					\
-	jmp *%rcx;							\
-	_OSYSCALL_NOERROR(x,y);						\
-	jc 2b
 #else
 #define _SYSCALL(x,y)							\
 	.text; _ALIGN_TEXT;						\
 	2: jmp CERROR;							\
 	_SYSCALL_NOERROR(x,y);						\
 	jc 2b
-#define _OSYSCALL(x,y)							\
-	.text; _ALIGN_TEXT;						\
-	2: jmp CERROR;							\
-	_OSYSCALL_NOERROR(x,y);						\
-	jc 2b
 #endif
 
 #define SYSCALL_NOERROR(x)						\
 	_SYSCALL_NOERROR(x,x)
 
-#define OSYSCALL_NOERROR(x)						\
-	_OSYSCALL_NOERROR(x,x)
-
 #define SYSCALL(x)							\
 	_SYSCALL(x,x)
-
-#define OSYSCALL(x)							\
-	_OSYSCALL(x,x)
 
 #define PSEUDO_NOERROR(x,y)						\
 	_SYSCALL_NOERROR(x,y);						\
