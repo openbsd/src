@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.4 2011/09/02 21:05:41 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.5 2011/09/06 23:25:27 bluhm Exp $
 
 # Copyright (c) 2010,2011 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -90,9 +90,10 @@ sub http_client {
 	my $method = $self->{method} || "GET";
 
 	foreach my $len (@lengths) {
+		my $path = ref($len) eq 'ARRAY' ? join("/", @$len) : $len;
 		{
 			local $\ = "\r\n";
-			print "$method /$len HTTP/$vers";
+			print "$method /$path HTTP/$vers";
 			print "Host: foo.bar";
 			print "Content-Length: $len"
 			    if $vers eq "1.1" && $method eq "PUT";
@@ -101,6 +102,7 @@ sub http_client {
 		write_char($self, $len) if $method eq "PUT";
 		IO::Handle::flush(\*STDOUT);
 
+		my $chunked = 0;
 		{
 			local $\ = "\n";
 			local $/ = "\r\n";
@@ -117,10 +119,56 @@ sub http_client {
 					$1 == $len or die ref($self),
 					    " bad content length $1";
 				}
+				if (/^Transfer-Encoding: chunked$/) {
+					$chunked = 1;
+				}
 			}
 		}
-		read_char($self, $vers eq "1.1" ? $len : undef)
-		    if $method eq "GET";
+		if ($chunked) {
+			read_chunked($self);
+		} else {
+			read_char($self, $vers eq "1.1" ? $len : undef)
+			    if $method eq "GET";
+		}
+	}
+}
+
+sub read_chunked {
+	my $self = shift;
+
+	for (;;) {
+		my $len;
+		{
+			local $\ = "\n";
+			local $/ = "\r\n";
+			local $_ = <STDIN>;
+			defined or die ref($self), " missing chunk size";
+			chomp;
+			print STDERR;
+			/^[[:xdigit:]]+$/
+			    or die ref($self), " chunk size not hex: $_";
+			$len = hex;
+		}
+		last unless $len > 0;
+		read_char($self, $len);
+		{
+			local $\ = "\n";
+			local $/ = "\r\n";
+			local $_ = <STDIN>;
+			defined or die ref($self), " missing chunk data end";
+			chomp;
+			/^$/ or die ref($self), " no chunk data end: $_";
+		}
+	}
+	{
+		local $\ = "\n";
+		local $/ = "\r\n";
+		while (<STDIN>) {
+			chomp;
+			last if /^$/;
+			print STDERR;
+		}
+		defined or die ref($self), " missing chunk trailer";
 	}
 }
 
@@ -185,7 +233,8 @@ sub http_server {
 			    or die ref($self), " http request not ok";
 			$method =~ /^(GET|PUT)$/
 			    or die ref($self), " unknown method: $method";
-			($len) = $url =~ /(\d+)$/;
+			($len, my @chunks) = $url =~ /(\d+)/g;
+			$len = [ $len, @chunks ] if @chunks;
 			while (<STDIN>) {
 				chomp;
 				last if /^$/;
@@ -202,13 +251,36 @@ sub http_server {
 		{
 			local $\ = "\r\n";
 			print "HTTP/$vers 200 OK";
-			print "Content-Length: $len"
-			    if $vers eq "1.1" && $method eq "GET";
+			if (ref($len) eq 'ARRAY') {
+				print "Transfer-Encoding: chunked"
+				    if $vers eq "1.1";
+			} else {
+				print "Content-Length: $len"
+				    if $vers eq "1.1" && $method eq "GET";
+			}
 			print "";
 		}
-		write_char($self, $len) if $method eq "GET";
+		if (ref($len) eq 'ARRAY') {
+			write_chunked($self, @$len);
+		} else {
+			write_char($self, $len) if $method eq "GET";
+		}
 		IO::Handle::flush(\*STDOUT);
 	} while ($vers eq "1.1");
+}
+
+sub write_chunked {
+	my $self = shift;
+	my @chunks = @_;
+
+	foreach my $len (@chunks) {
+		printf "%x\r\n", $len;
+		write_char($self, $len);
+		print "\r\n";
+	}
+	print "0\r\n";
+	print "X-Chunk-Trailer: @chunks\r\n";
+	print "\r\n";
 }
 
 1;
