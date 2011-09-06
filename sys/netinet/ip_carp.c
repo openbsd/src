@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.189 2011/07/08 19:07:18 henning Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.190 2011/09/06 16:00:22 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1820,7 +1820,7 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 			return (EINVAL);
 
 		if (ifp->if_carp == NULL) {
-			ncif = malloc(sizeof(*cif), M_IFADDR, M_NOWAIT);
+			ncif = malloc(sizeof(*cif), M_IFADDR, M_NOWAIT|M_ZERO);
 			if (ncif == NULL)
 				return (ENOBUFS);
 			if ((error = ifpromisc(ifp, 1))) {
