@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.608 2011/08/30 00:43:57 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.609 2011/09/07 23:40:52 haesbaert Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3381,7 +3381,7 @@ tos	: STRING			{
 		| NUMBER			{
 			$$ = $1;
 			if ($$ > 255) {
-				yyerror("illegal tos value %s", $1);
+				yyerror("illegal tos value %lu", $1);
 				YYERROR;
 			}
 		}
