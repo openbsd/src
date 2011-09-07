@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.46 2010/05/19 17:36:08 jasper Exp $	*/
+/*	$OpenBSD: main.c,v 1.47 2011/09/07 11:33:25 otto Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -748,7 +748,14 @@ is_restricted(char *name)
 	char *p;
 
 	if ((p = strrchr(name, '/')))
-		name = p;
-	/* accepts rsh, rksh, rpdksh, pdrksh, etc. */
-	return (p = strchr(name, 'r')) && strstr(p, "sh");
+		name = p + 1;
+	/* accepts rsh, rksh, rpdksh, pdrksh */
+	if (strcmp(name, "rsh") && \
+		strcmp(name, "rksh") && \
+		strcmp(name, "rpdksh") && \
+		strcmp(name, "pdrksh"))
+		return(0);
+	else
+		return(1);
+
 }
