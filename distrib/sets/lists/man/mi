@@ -1433,6 +1433,7 @@
 ./usr/share/man/man4/alpha/apecs.4
 ./usr/share/man/man4/alpha/asc.4
 ./usr/share/man/man4/alpha/autoconf.4
+./usr/share/man/man4/alpha/bba.4
 ./usr/share/man/man4/alpha/cia.4
 ./usr/share/man/man4/alpha/intro.4
 ./usr/share/man/man4/alpha/irongate.4
