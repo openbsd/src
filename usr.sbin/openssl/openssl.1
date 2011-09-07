@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.85 2011/01/20 13:32:19 lum Exp $
+.\" $OpenBSD: openssl.1,v 1.86 2011/09/07 09:30:16 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: January 20 2011 $
+.Dd $Mdocdate: September 7 2011 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -6115,17 +6115,17 @@ Examine and verify a certificate request:
 .Pp
 Create a private key and then generate a certificate request from it:
 .Bd -literal -offset indent
-$ openssl genrsa -out key.pem 1024
+$ openssl genrsa -out key.pem 2048
 $ openssl req -new -key key.pem -out req.pem
 .Ed
 .Pp
 The same but just using req:
 .Pp
-.Dl $ openssl req -newkey rsa:1024 -keyout key.pem -out req.pem
+.Dl $ openssl req -newkey rsa:2048 -keyout key.pem -out req.pem
 .Pp
 Generate a self-signed root certificate:
 .Pp
-.Dl "$ openssl req -x509 -newkey rsa:1024 -keyout key.pem -out req.pem"
+.Dl "$ openssl req -x509 -newkey rsa:2048 -keyout key.pem -out req.pem"
 .Pp
 Example of a file pointed to by the
 .Ar oid_file
@@ -8891,7 +8891,6 @@ $ openssl ts -verify \e
 	-in design2.tsr -CAfile cacert.pem
 .Ed
 .Sh TS BUGS
-.Pp
 No support for time stamps over SMTP, though it is quite easy
 to implement an automatic email-based TSA with
 .Xr procmail

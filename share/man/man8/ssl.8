@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ssl.8,v 1.46 2010/03/26 19:30:40 jmc Exp $
+.\"	$OpenBSD: ssl.8,v 1.47 2011/09/07 09:30:15 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Theo de Raadt, Bob Beck
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 26 2010 $
+.Dd $Mdocdate: September 7 2011 $
 .Dt SSL 8
 .Os
 .Sh NAME
@@ -94,7 +94,7 @@ directory, with the keys in the
 directory.
 .Pp
 Private keys can be encrypted using
-.Ar 3DES
+.Ar AES
 and a passphrase to protect their integrity should the encrypted file
 be disclosed.
 However, it is important to note that encrypted server keys mean that the
@@ -110,13 +110,13 @@ you will need to generate an
 .Ar RSA
 certificate.
 .Bd -literal -offset indent
-# openssl genrsa -out /etc/ssl/private/server.key 1024
+# openssl genrsa -out /etc/ssl/private/server.key 2048
 .Ed
 .Pp
 Or, if you wish the key to be encrypted with a passphrase that you will
 have to type in when starting servers
 .Bd -literal -offset indent
-# openssl genrsa -des3 -out /etc/ssl/private/server.key 1024
+# openssl genrsa -aes256 -out /etc/ssl/private/server.key 2048
 .Ed
 .Pp
 The next step is to generate a
