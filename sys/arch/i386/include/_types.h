@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.12 2011/09/08 02:47:13 guenther Exp $	*/
+/*	$OpenBSD: _types.h,v 1.13 2011/09/08 03:40:32 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,6 +34,20 @@
 
 #ifndef _MACHINE__TYPES_H_
 #define _MACHINE__TYPES_H_
+
+/*
+ * _ALIGN(p) rounds p (pointer or byte index) up to a correctly-aligned
+ * value for all data types (int, long, ...).   The result is an
+ * unsigned long and must be cast to any desired pointer type.
+ *
+ * _ALIGNED_POINTER is a boolean macro that checks whether an address
+ * is valid to fetch data elements of type t from on this architecture.
+ * This does not reflect the optimal alignment, just the possibility
+ * (within reasonable limits).
+ */
+#define	_ALIGNBYTES	(sizeof(int) - 1)
+#define	_ALIGN(p)	(((unsigned long)(p) + _ALIGNBYTES) & ~_ALIGNBYTES)
+#define	_ALIGNED_POINTER(p,t)	1
 
 #if defined(_KERNEL)
 typedef struct label_t {

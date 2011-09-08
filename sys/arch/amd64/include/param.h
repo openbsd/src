@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.17 2010/11/29 00:06:04 dlg Exp $	*/
+/*	$OpenBSD: param.h,v 1.18 2011/09/08 03:40:32 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,20 +48,9 @@
 #define	MACHINE_ARCH	"amd64"
 #define MID_MACHINE	MID_AMD64
 
-/*
- * Round p (pointer or byte index) up to a correctly-aligned value
- * for all data types (int, long, ...).   The result is u_long and
- * must be cast to any desired pointer type.
- *
- * ALIGNED_POINTER is a boolean macro that checks whether an address
- * is valid to fetch data elements of type t from on this architecture.
- * This does not reflect the optimal alignment, just the possibility
- * (within reasonable limits). 
- *
- */
-#define ALIGNBYTES		(sizeof(long) - 1)
-#define ALIGN(p)		(((u_long)(p) + ALIGNBYTES) &~ALIGNBYTES)
-#define ALIGNED_POINTER(p,t)	1
+#define	ALIGNBYTES		_ALIGNBYTES
+#define	ALIGN(p)		_ALIGN(p)
+#define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */

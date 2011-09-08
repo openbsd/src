@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.13 2011/04/07 15:45:17 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.14 2011/09/08 03:40:32 guenther Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -50,17 +50,9 @@
 #define  MACHINE_ARCH   "m88k"
 #define  MID_MACHINE    MID_M88K
 
-/*
- * Round p (pointer or byte index) down to a correctly-aligned value
- * for all data types (int, long, ...).   The result is u_long and
- * must be cast to any desired pointer type. ALIGN() is used for
- * aligning stack, which needs to be on a double word boundary for
- * 88k.
- */
-
-#define  ALIGNBYTES		15		/* 64 bit alignment */
-#define  ALIGN(p)		(((u_long)(p) + ALIGNBYTES) & ~ALIGNBYTES)
-#define  ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
+#define	ALIGNBYTES		_ALIGNBYTES
+#define	ALIGN(p)		_ALIGN(p)
+#define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
 
 #define NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define PGOFSET		(NBPG-1)	/* byte offset into page */

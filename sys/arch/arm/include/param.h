@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.15 2011/04/07 15:45:16 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.16 2011/09/08 03:40:32 guenther Exp $	*/
 /*	$NetBSD: param.h,v 1.9 2002/03/24 03:37:23 thorpej Exp $	*/
 
 /*
@@ -126,20 +126,10 @@ void	delay (unsigned);
 
 #define	MID_MACHINE	MID_ARM6
 
-/*
- * Round p (pointer or byte index) up to a correctly-aligned value
- * for all data types (int, long, ...).   The result is u_int and
- * must be cast to any desired pointer type.
- *
- * ALIGNED_POINTER is a boolean macro that checks whether an address
- * is valid to fetch data elements of type t from on this architecture.
- * This does not reflect the optimal alignment, just the possibility
- * (within reasonable limits). 
- *
- */
-#define ALIGNBYTES		(sizeof(int) - 1)
-#define ALIGN(p)		(((u_long)(p) + ALIGNBYTES) &~ ALIGNBYTES)
-#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
+#define	ALIGNBYTES		_ALIGNBYTES
+#define	ALIGN(p)		_ALIGN(p)
+#define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
+
 /* ARM-specific macro to align a stack pointer (downwards). */
 #define STACKALIGNBYTES		(8 - 1)
 #define STACKALIGN(p)		((u_long)(p) &~ STACKALIGNBYTES)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.40 2011/04/07 15:45:17 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.41 2011/09/08 03:40:32 guenther Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -36,14 +36,9 @@
 #define	MACHINE_ARCH	"hppa"
 #define	MID_MACHINE	MID_HPUX800
 
-/*
- * Round p (pointer or byte index) up to a correctly-aligned value for all
- * data types (int, long, ...).   The result is u_long and must be cast to
- * any desired pointer type.
- */
-#define	ALIGNBYTES	7
-#define	ALIGN(p)	(((u_long)(p) + ALIGNBYTES) &~ ALIGNBYTES)
-#define	ALIGNED_POINTER(p,t) ((((u_long)(p)) & (sizeof(t) - 1)) == 0)
+#define	ALIGNBYTES		_ALIGNBYTES
+#define	ALIGN(p)		_ALIGN(p)
+#define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
 
 #define	PAGE_SIZE	4096
 #define	PAGE_MASK	(PAGE_SIZE-1)
