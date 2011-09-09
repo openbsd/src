@@ -110,7 +110,8 @@ static void	tcp_server_handle_sc(int, short, void *);
 static void	tcp_server_accept(int, short, void *);
 static void	server_init(struct addrinfo *, struct statctx *);
 static void	client_handle_sc(int, short, void *);
-static void	client_init(struct addrinfo *, int, struct statctx *);
+static void	client_init(struct addrinfo *, int, struct statctx *,
+    struct addrinfo *);
 static int	clock_gettime_tv(clockid_t, struct timeval *);
 static void	udp_server_handle_sc(int, short, void *);
 static void	udp_process_slice(int, short, void *);
@@ -173,9 +174,9 @@ usage(void)
 {
 	fprintf(stderr,
 	    "usage: tcpbench -l\n"
-	    "       tcpbench [-uv] [-B buf] [-k kvars] [-n connections] [-p port]\n"
-	    "                [-r interval] [-S space] [-T toskeyword] [-V rtable]\n"
-	    "                hostname\n"
+	    "       tcpbench [-uv] [-B buf] [-b addr] [-k kvars] [-n connections]\n"
+	    "                [-p port] [-r interval] [-S space] [-T toskeyword]\n"
+	    "                [-V rtable] hostname\n"
 	    "       tcpbench -s [-uv] [-B buf] [-k kvars] [-p port]\n"
 	    "                [-r interval] [-S space] [-T toskeyword] [-V rtable]\n");
 	exit(1);
@@ -821,7 +822,8 @@ again:
 }
 
 static void
-client_init(struct addrinfo *aitop, int nconn, struct statctx *udp_sc)
+client_init(struct addrinfo *aitop, int nconn, struct statctx *udp_sc,
+    struct addrinfo *aib)
 {
 	struct statctx *sc;
 	struct addrinfo *ai;
@@ -842,6 +844,17 @@ client_init(struct addrinfo *aitop, int nconn, struct statctx *udp_sc)
 				if (ptb->vflag)
 					warn("socket");
 				continue;
+			}
+			if (aib != NULL) {
+				saddr_ntop(aib->ai_addr, aib->ai_addrlen,
+				    tmp, sizeof(tmp));
+				if (ptb->vflag)
+					fprintf(stderr,
+					    "Try to bind to %s\n", tmp);
+				if (bind(sock, (struct sockaddr *)aib->ai_addr,
+				    aib->ai_addrlen) == -1)
+					err(1, "bind");
+				freeaddrinfo(aib);
 			}
 			if (ptb->Tflag != -1 && ai->ai_family == AF_INET) {
 				if (setsockopt(sock, IPPROTO_IP, IP_TOS,
@@ -962,12 +975,12 @@ main(int argc, char **argv)
 	extern char *optarg;
 
 	char kerr[_POSIX2_LINE_MAX], *tmp;
-	struct addrinfo *aitop, hints;
+	struct addrinfo *aitop, *aib, hints;
 	const char *errstr;
 	struct rlimit rl;
 	int ch, herr, nconn;
 	struct nlist nl[] = { { "_tcbtable" }, { "" } };
-	const char *host = NULL, *port = DEFAULT_PORT;
+	const char *host = NULL, *port = DEFAULT_PORT, *srcbind = NULL;
 	struct event ev_sigint, ev_sigterm, ev_sighup;
 	struct statctx *udp_sc = NULL;
 
@@ -980,9 +993,13 @@ main(int argc, char **argv)
 	ptb->rflag = DEFAULT_STATS_INTERVAL;
 	ptb->Tflag = -1;
 	nconn = 1;
+	aib = NULL;
 
-	while ((ch = getopt(argc, argv, "B:hlk:n:p:r:sS:T:uvV:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:B:hlk:n:p:r:sS:T:uvV:")) != -1) {
 		switch (ch) {
+		case 'b':
+			srcbind = optarg;
+			break;
 		case 'l':
 			list_kvars();
 			exit(0);
@@ -1079,12 +1096,27 @@ main(int argc, char **argv)
 	}
 
 	bzero(&hints, sizeof(hints));
-	if (UDP_MODE)
+	if (UDP_MODE) {
 		hints.ai_socktype = SOCK_DGRAM;
-	else
+		hints.ai_protocol = IPPROTO_UDP;
+	}
+	else {
 		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_protocol = IPPROTO_TCP;
+	}
 	if (ptb->sflag)
 		hints.ai_flags = AI_PASSIVE;
+	if (srcbind != NULL) {
+		hints.ai_flags |= AI_NUMERICHOST;
+		herr = getaddrinfo(srcbind, NULL, &hints, &aib);
+		hints.ai_flags &= ~AI_NUMERICHOST;
+		if (herr != 0) {
+			if (herr == EAI_SYSTEM)
+				err(1, "getaddrinfo");
+			else
+				errx(1, "getaddrinfo: %s", gai_strerror(herr));
+		}
+	}
 	if ((herr = getaddrinfo(host, port, &hints, &aitop)) != 0) {
 		if (herr == EAI_SYSTEM)
 			err(1, "getaddrinfo");
@@ -1145,7 +1177,7 @@ main(int argc, char **argv)
 	if (ptb->sflag) {
 		server_init(aitop, udp_sc);
 	} else
-		client_init(aitop, nconn, udp_sc);
+		client_init(aitop, nconn, udp_sc, aib);
 	
 	/* libevent main loop*/
 	event_dispatch();

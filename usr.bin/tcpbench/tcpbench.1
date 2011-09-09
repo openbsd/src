@@ -1,4 +1,4 @@
-.\" $OpenBSD: tcpbench.1,v 1.14 2011/08/23 07:02:34 jmc Exp $
+.\" $OpenBSD: tcpbench.1,v 1.15 2011/09/09 00:40:54 haesbaert Exp $
 .\"
 .\" Copyright (c) 2008 Damien Miller <djm@mindrot.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 23 2011 $
+.Dd $Mdocdate: September 9 2011 $
 .Dt TCPBENCH 1
 .Os
 .Sh NAME
@@ -26,6 +26,7 @@
 .Nm
 .Op Fl uv
 .Op Fl B Ar buf
+.Op Fl b Ar addr
 .Op Fl k Ar kvars
 .Op Fl n Ar connections
 .Op Fl p Ar port
@@ -79,6 +80,8 @@ Specify the size of the internal read/write buffer used by
 The default is 262144 bytes for TCP client/server and UDP server.
 In UDP client mode this may be used to specify the packet size on the test
 stream.
+.It Fl b Ar addr
+Specifies the IP address of the interface which is used to send the packets.
 .It Fl k Ar kvars
 Specify one or more kernel variables to monitor; multiple variables must be
 separated with commas.
