@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
-# $OpenBSD: pkg_mklocatedb,v 1.29 2010/07/28 12:19:54 espie Exp $
+# $OpenBSD: pkg_mklocatedb,v 1.30 2011/09/10 08:46:37 espie Exp $
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -170,7 +170,9 @@ sub do_portsdir
 {
 	my $state = shift;
 	my $make = $ENV{MAKE} || 'make';
-	open my $in, "cd $state->{portsdir} && $make print-plist-all |";
+	my $target = defined $ENV{SUBDIRLIST} ? 
+	    'print-plist' : 'print-plist-all';
+	open my $in, "cd $state->{portsdir} && $make $target |";
 	my $done = 0;
 	while (!$done) {
 		my $plist = OpenBSD::PackingList->read($in,

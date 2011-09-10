@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_mklocatedb.1,v 1.12 2010/06/09 10:25:17 espie Exp $
+.\"	$OpenBSD: pkg_mklocatedb.1,v 1.13 2011/09/10 08:46:37 espie Exp $
 .\" Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 9 2010 $
+.Dd $Mdocdate: September 10 2011 $
 .Dt PKG_MKLOCATEDB 1
 .Os
 .Sh NAME
@@ -44,8 +44,22 @@ Entries created for each package will have the package name prepended:
 If the
 .Fl p
 option is used,
+and
+.Ev SUBDIRLIST
+is not defined,
 .Nm
 will retrieve all package entries from the ports tree.
+.Pp
+If the
+.Fl p
+option is used
+together with
+.Ev SUBDIRLIST ,
+.Nm
+will retrieve the package entries listed in
+.Ev SUBDIRLIST
+from the ports tree.
+.Pp
 Otherwise,
 .Nm
 will build database entries for every file object for each
