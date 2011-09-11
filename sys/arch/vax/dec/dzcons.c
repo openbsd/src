@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzcons.c,v 1.4 2008/08/20 19:00:01 miod Exp $	*/
+/*	$OpenBSD: dzcons.c,v 1.5 2011/09/11 19:29:01 miod Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -166,7 +166,7 @@ dzcnprobe(cndev)
 {
 	extern	vaddr_t iospace;
 	int diagcons, major, pri;
-	paddr_t ioaddr = 0x200a0000;
+	paddr_t ioaddr = DZ_CSR;
 
 	if ((major = getmajor(dzopen)) < 0)
 		return;
@@ -186,12 +186,12 @@ dzcnprobe(cndev)
 		break;
 
 	case VAX_BTYP_49:
-		ioaddr = 0x25000000;
+		ioaddr = DZ_CSR_KA49;
 		diagcons = (vax_confdata & 8 ? 3 : 0);
 		break;
 
 	case VAX_BTYP_1303:
-		ioaddr = 0x25000000;
+		ioaddr = DZ_CSR_KA49;
 		diagcons = 3;
 		break;
 

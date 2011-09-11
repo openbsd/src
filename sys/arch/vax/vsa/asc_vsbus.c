@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc_vsbus.c,v 1.13 2010/09/20 06:33:48 matthew Exp $	*/
+/*	$OpenBSD: asc_vsbus.c,v 1.14 2011/09/11 19:29:01 miod Exp $	*/
 /*	$NetBSD: asc_vsbus.c,v 1.22 2001/02/04 20:36:32 ragge Exp $	*/
 
 /*-
@@ -152,14 +152,18 @@ asc_vsbus_match(struct device *parent, void *conf, void *aux)
 	if (asc_attached)
 		return 0;
 
-	if (vax_boardtype == VAX_BTYP_46 || vax_boardtype == VAX_BTYP_48) {
-		if (cf->cf_loc[0] != 0x200c0080)
+	switch (vax_boardtype) {
+	case VAX_BTYP_46:
+	case VAX_BTYP_48:
+		if (cf->cf_loc[0] != (SCA_REGS | 0x80))
 			return 0;
-	} else if (vax_boardtype == VAX_BTYP_49 ||
-	    vax_boardtype == VAX_BTYP_1303) {
-		if (cf->cf_loc[0] != 0x26000080)
+		break;
+	case VAX_BTYP_49:
+	case VAX_BTYP_1303:
+		if (cf->cf_loc[0] != (SCA_REGS_KA49 | 0x80))
 			return 0;
-	} else {
+		break;
+	default:
 		return 0;
 	}
 

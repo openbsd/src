@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_ibus.c,v 1.28 2010/09/20 06:33:48 matthew Exp $	*/
+/*	$OpenBSD: dz_ibus.c,v 1.29 2011/09/11 19:29:01 miod Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -79,7 +79,7 @@ dz_vsbus_match(parent, cf, aux)
 #if VAX53 || VAX49
 	if (vax_boardtype == VAX_BTYP_49 ||
 	    vax_boardtype == VAX_BTYP_1303)
-		if (cf->cf_loc[0] != 0x25000000)
+		if (cf->cf_loc[0] != DZ_CSR_KA49)
 			return 0; /* don't probe unnecessarily */
 #endif
 

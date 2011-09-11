@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka410.h,v 1.6 2009/06/20 20:57:39 miod Exp $ */
+/*	$OpenBSD: ka410.h,v 1.7 2011/09/11 19:29:01 miod Exp $ */
 /*	$NetBSD: ka410.h,v 1.2 1997/02/19 10:06:05 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -71,7 +71,7 @@
 #define KA410_SER_BASE	0x200A0000	/* Serial line controller */
 #define KA410_SER_END	0x200A000F
 #define KA410_SER_SIZE        0x10
-#define KA410_WAT_BASE	((struct ka410_clock *)0x200B0000)/* TOY clock */
+#define KA410_WAT_BASE	0x200B0000	/* TOY clock */
 #define KA410_WAT_END	0x200B00FF
 #define KA410_WAT_SIZE	     0x100
 #define KA410_DKC_BASE	0x200C0000	/* Disk Controller Ports */

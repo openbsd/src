@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbus.h,v 1.10 2011/03/23 16:54:37 pirofti Exp $ */
+/*	$OpenBSD: vsbus.h,v 1.11 2011/09/11 19:29:01 miod Exp $ */
 /*	$NetBSD: vsbus.h,v 1.13 2000/06/25 16:00:46 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -61,11 +61,14 @@ struct	vsbus_attach_args {
  * Some chip addresses and constants, same on all VAXstations.
  */
 #define VS_CFGTST	0x20020000      /* config register */
-#define VS_REGS         0x20080000      /* Misc cpu internal regs */
-#define NI_ADDR         0x20090000      /* Ethernet address */
-#define DZ_CSR          0x200a0000      /* DZ11-compatible chip csr */
-#define VS_CLOCK        0x200b0000      /* clock chip address */
-#define SCA_REGS        0x200c0000      /* disk device addresses */
+#define VS_REGS		0x20080000      /* Misc cpu internal regs */
+#define VS_REGS_KA49	0x25c00000      /* ... same, on 512KB ROM systems */
+#define NI_ADDR		0x20090000      /* Ethernet address */
+#define DZ_CSR		0x200a0000      /* DZ11-compatible chip csr */
+#define DZ_CSR_KA49	0x25000000      /* ... same, on 512KB ROM systems */
+#define VS_CLOCK	0x200b0000      /* clock chip address */
+#define SCA_REGS	0x200c0000      /* disk device addresses */
+#define SCA_REGS_KA49	0x26000000      /* ... same, on 512KB ROM systems */
 #define NI_BASE         0x200e0000      /* LANCE CSRs */
 #define NI_IOSIZE       (128 * VAX_NBPG)    /* IO address size */
 

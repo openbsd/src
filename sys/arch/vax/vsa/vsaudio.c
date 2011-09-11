@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsaudio.c,v 1.1 2011/09/03 20:41:31 miod Exp $	*/
+/*	$OpenBSD: vsaudio.c,v 1.2 2011/09/11 19:29:01 miod Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -81,8 +81,8 @@
 #endif	/* AUDIO_DEBUG */
 
 /* physical addresses of the AM79C30 chip */
-#define	KA46_KA48_AUDIO_CSR		0x200d0000
-#define	KA49_AUDIO_CSR			0x26800000
+#define	VSAUDIO_CSR			0x200d0000
+#define	VSAUDIO_CSR_KA49		0x26800000
 
 struct vsaudio_softc {
 	struct am7930_softc sc_am7930;	/* base device */
@@ -144,7 +144,7 @@ int	vsaudio_start_output(void *, void *, int, void (*)(void *), void *);
 int	vsaudio_start_input(void *, void *, int, void (*)(void *), void *);
 int	vsaudio_getdev(void *, struct audio_device *);
 
-struct audio_hw_if sa_hw_if = {
+struct audio_hw_if vsaudio_hw_if = {
 	am7930_open,
 	am7930_close,
 	NULL,
@@ -194,13 +194,13 @@ vsaudio_match(struct device *parent, void *vcf, void *aux)
 #if defined(VAX46) || defined(VAX48)
 	case VAX_BTYP_46:
 	case VAX_BTYP_48:
-		if (va->va_paddr != KA46_KA48_AUDIO_CSR)
+		if (va->va_paddr != VSAUDIO_CSR)
 			return 0;
 		break;
 #endif
 #if defined(VAX49)
 	case VAX_BTYP_49:
-		if (va->va_paddr != KA49_AUDIO_CSR)
+		if (va->va_paddr != VSAUDIO_CSR_KA49)
 			return 0;
 		break;
 #endif
@@ -258,7 +258,7 @@ vsaudio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_swintr = softintr_establish(IPL_SOFT, &vsaudio_swintr, sc);
 
 	printf("\n");
-	audio_attach_mi(&sa_hw_if, sc, &sc->sc_am7930.sc_dev);
+	audio_attach_mi(&vsaudio_hw_if, sc, &sc->sc_am7930.sc_dev);
 }
 
 void

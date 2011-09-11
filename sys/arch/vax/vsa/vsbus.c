@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbus.c,v 1.22 2011/08/26 21:47:25 miod Exp $ */
+/*	$OpenBSD: vsbus.c,v 1.23 2011/09/11 19:29:01 miod Exp $ */
 /*	$NetBSD: vsbus.c,v 1.29 2000/06/29 07:14:37 mrg Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
@@ -143,7 +143,7 @@ vsbus_attach(parent, self, aux)
 #if VAX49 || VAX53
 	case VAX_BTYP_1303:
 	case VAX_BTYP_49:
-		sc->sc_vsregs = vax_map_physmem(0x25c00000, 1);
+		sc->sc_vsregs = vax_map_physmem(VS_REGS_KA49, 1);
 		sc->sc_intreq = (char *)sc->sc_vsregs + 12;
 		sc->sc_intclr = (char *)sc->sc_vsregs + 12;
 		sc->sc_intmsk = (char *)sc->sc_vsregs + 8;
