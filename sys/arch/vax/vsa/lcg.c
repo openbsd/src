@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcg.c,v 1.17 2011/08/26 21:50:16 miod Exp $	*/
+/*	$OpenBSD: lcg.c,v 1.18 2011/09/11 14:00:34 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -367,9 +367,9 @@ lcg_probe_screen(u_int32_t cfg, u_int *width, u_int *height)
 			break;
 		case 0x07:
 			if (vax_confdata & 0x80) {
-				w = 1024; h = 864;
-			} else {
 				w = 1024; h = 768;
+			} else {
+				w = 1024; h = 864;
 			}
 			break;
 		default:
