@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.24 2010/03/16 17:23:09 miod Exp $
+dnl	$OpenBSD: install,v 1.25 2011/09/11 13:54:11 miod Exp $
 OpenBSDInstallPrelude({:-MSCP or other non-SCSI disks-:})
 
 For most systems, the easiest way to install OpenBSD/MACHINE OSREV is via
@@ -96,7 +96,14 @@ OpenBSDInstallPart3(the quick brown vax jumped over the lazy pdp,"sd0" for SCSI 
 
 OpenBSDInstallPart4
 
-OpenBSDInstallPart5
+dnl Authoritative source for the affected systems list: Antonio Carlini in
+dnl http://mail-index.netbsd.org/port-vax/2000/01/21/0007.html
+OpenBSDInstallPart5(,{:-
+	Due to firmware limitations on some systems, you should make sure
+	the whole 'a' partition is CONTAINED WITHIN THE FIRST 1GB of the
+	disk if you intend to boot from it.
+	The affected systems are: all VAXstation 3100, and MicroVAX
+	3100 models 10, 10e, 20 and 20e shipped before april 1992.-:})
 
 OpenBSDInstallPart6({:-CD-ROM, tape, NFS, -:})
 
