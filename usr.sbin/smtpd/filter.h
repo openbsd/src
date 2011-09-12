@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.h,v 1.2 2011/08/31 18:56:30 gilles Exp $	*/
+/*	$OpenBSD: filter.h,v 1.3 2011/09/12 20:47:15 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -32,11 +32,11 @@
 #endif
 
 enum filter_type {
-	FILTER_HELO,
-	FILTER_EHLO,
-	FILTER_MAIL,
-	FILTER_RCPT,
-	FILTER_DATALINE,
+	FILTER_HELO		= 0x01,
+	FILTER_EHLO		= 0x02,
+	FILTER_MAIL		= 0x04,
+	FILTER_RCPT		= 0x08,
+	FILTER_DATALINE		= 0x10,
 };
 
 struct filter_helo {
