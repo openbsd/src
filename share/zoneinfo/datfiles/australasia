@@ -1,6 +1,6 @@
-# $OpenBSD: australasia,v 1.39 2011/08/29 12:48:16 millert Exp $
+# $OpenBSD: australasia,v 1.40 2011/09/12 14:06:25 millert Exp $
 # <pre>
-# @(#)australasia	8.25
+# @(#)australasia	8.27
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -500,7 +500,7 @@ Zone Pacific/Pago_Pago	 12:37:12 -	LMT	1879 Jul  5
 # http://www.parliament.gov.ws/documents/acts/Daylight%20Saving%20Act%20%202009%20%28English%29%20-%20Final%207-7-091.pdf
 # </a>
 
-# From Raymond Hughes (2010-10-07):
+# From Laupue Raymond Hughes (2010-10-07):
 # Please see
 # <a href="http://www.mcil.gov.ws">
 # http://www.mcil.gov.ws
@@ -510,7 +510,7 @@ Zone Pacific/Pago_Pago	 12:37:12 -	LMT	1879 Jul  5
 # to 01:00am and First Sunday April 2011 (03/04/11) - adjust clocks
 # backwards from 1:00am to 12:00am"
 
-# From Raymond Hughes (2011-03-07)
+# From Laupue Raymond Hughes (2011-03-07):
 # I believe this will be posted shortly on the website
 # <a href="http://www.mcil.gov.ws">
 # www.mcil.gov.ws
@@ -574,12 +574,29 @@ Zone Pacific/Pago_Pago	 12:37:12 -	LMT	1879 Jul  5
 # Act affects the provisions of the Daylight Saving Act 2009, except that
 # it defines Samoa standard time....
 
+# From Laupue Raymond Hughes (2011-09-02):
+# <a href="http://www.mcil.gov.ws/mcil_publications.html">
+# http://www.mcil.gov.ws/mcil_publications.html
+# </a>
+#
+# here is the official website publication for Samoa DST and dateline change
+#
+# DST
+# Year	End	Time	Start	Time
+# 2011	- - -	- - -	24 September	3:00am to 4:00am
+# 2012	01 April	4:00am to 3:00am	- - -	- - -
+#
+# Dateline Change skip Friday 30th Dec 2011
+# Thursday 29th December 2011	23:59:59 Hours
+# Saturday 31st December 2011	00:00:00 Hours
 Zone Pacific/Apia	 12:33:04 -	LMT	1879 Jul  5
 			-11:26:56 -	LMT	1911
 			-11:30	-	SAMT	1950		# Samoa Time
 			-11:00	-	WST	2010 Sep 26
 			-11:00	1:00	WSDT	2011 Apr 2 4:00
-			-11:00	-	WST	2011 Dec 30
+			-11:00	-	WST	2011 Sep 24 3:00
+			-11:00	1:00	WSDT	2011 Dec 30
+			 13:00	1:00	WSDT	2012 Apr 1 4:00
 			 13:00	-	WST
 
 # Solomon Is
@@ -1252,7 +1269,7 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # Lord Howe Island Board (controlling authority for the Island) is
 # seeking the community's views on various options for summer time
 # arrangements on the Island, e.g. advance clocks by 1 full hour
-# instead of only 30 minutes.  Dependant on the wishes of residents
+# instead of only 30 minutes.  [Dependent] on the wishes of residents
 # the Board may approach the NSW government to change the existing
 # arrangements.  The starting date for summer time on the Island will
 # however always coincide with the rest of NSW.
@@ -1378,7 +1395,7 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 
 # From Paul Eggert (1996-01-22):
 # Today's _Wall Street Journal_ (page 1) reports that Kiribati
-# ``declared it the same day throught the country as of Jan. 1, 1995''
+# ``declared it the same day [throughout] the country as of Jan. 1, 1995''
 # as part of the competition to be first into the 21st century.
 
 
