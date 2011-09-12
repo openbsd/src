@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.48 2011/08/29 12:42:18 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.49 2011/09/12 12:33:26 mikeb Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -1747,7 +1747,7 @@ u_int32_t  mpii_debug = 0
  */
 #define MPII_MAX_SGL			(32)
 
-#define MPII_MAX_REQUEST_CREDIT		(128)
+#define MPII_MAX_REQUEST_CREDIT		(40)
 
 struct mpii_dmamem {
 	bus_dmamap_t		mdm_map;
