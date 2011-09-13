@@ -1,4 +1,4 @@
-/* $OpenBSD: clock.c,v 1.6 2006/01/09 21:01:45 miod Exp $ */
+/* $OpenBSD: clock.c,v 1.7 2011/09/13 05:01:21 miod Exp $ */
 /* $NetBSD: clock.c,v 1.2 2000/01/11 10:29:35 nisimura Exp $ */
 
 /*
@@ -59,7 +59,7 @@
 struct device *clockdev;
 const struct clockfns *clockfns;
 struct evcount *clockevc;
-int clockinitted;
+int clockinitted, todrvalid;
 
 void
 clockattach(dev, fns, evc)
@@ -104,6 +104,8 @@ cpu_initclocks()
 #endif
 
 	tick = 1000000 / hz;	/* number of microseconds between interrupts */
+
+	clockinitted = 1;
 }
 
 /*
@@ -140,7 +142,7 @@ inittodr(base)
 		badbase = 0;
 
 	(*clockfns->cf_get)(clockdev, base, &dt);
-	clockinitted = 1;
+	todrvalid = 1;
 	/* simple sanity checks */
 	if (dt.dt_year < 1970 || dt.dt_mon < 1 || dt.dt_mon > 12
 		|| dt.dt_day < 1 || dt.dt_day > 31
@@ -189,7 +191,7 @@ resettodr()
 {
 	struct clock_ymdhms dt;
 
-	if (!clockinitted)
+	if (!todrvalid)
 		return;
 	clock_secs_to_ymdhms(time.tv_sec, &dt);
 	(*clockfns->cf_set)(clockdev, &dt);
@@ -207,6 +209,7 @@ clockintr(void *eframe)
 	clockevc->ec_count++;
 
 	*clock_reg[cpu] = 0xffffffff;
-	hardclock(eframe);
+	if (clockinitted)
+		hardclock(eframe);
 	return 1;
 }
