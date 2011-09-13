@@ -1,13 +1,13 @@
-# $OpenBSD: Makefile,v 1.27 2010/01/03 23:02:33 fgsch Exp $
+# $OpenBSD: Makefile,v 1.28 2011/09/13 23:50:17 fgsch Exp $
 
-SUBDIR= blocked_close blocked_dup2 blocked_shutdown cancel cancel2 close \
-	closefrom close_race cwd dup2_race execve fork group \
-	malloc_duel netdb pcap poll \
-	preemption preemption_float \
+SUBDIR= blocked_close blocked_dup2 blocked_shutdown cancel cancel2 \
+	close close_race closefrom cwd dup2_race execve fork \
+	group malloc_duel netdb pcap poll preemption preemption_float \
 	pthread_atfork pthread_cond_timedwait pthread_create \
-	pthread_join pthread_kill pthread_mutex pthread_specific readdir \
-	select setjmp setsockopt signal sigdeliver siginfo signodefer \
-	sigsuspend sigwait sleep socket stdarg stdio switch system
+	pthread_join pthread_kill pthread_mutex pthread_specific \
+	readdir restart select setjmp setsockopt sigdeliver siginfo \
+	siginterrupt signal signodefer sigsuspend sigwait sleep socket \
+	stdarg stdio switch system
 
 # Not available or disabled: fcntl, getaddrinfo, pause, pw, sigmask, stdfiles
 
