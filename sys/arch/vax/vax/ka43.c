@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka43.c,v 1.13 2011/07/06 20:42:05 miod Exp $ */
+/*	$OpenBSD: ka43.c,v 1.14 2011/09/13 21:25:23 miod Exp $ */
 /*	$NetBSD: ka43.c,v 1.19 1999/09/06 19:52:53 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -60,7 +60,7 @@ static	void ka43_memerr(void);
 static	void ka43_clear_errors(void);
 #endif
 static	int ka43_cache_init(void);	/* "int mapen" as argument? */
-static	int ka43_cache_reset(void);
+static	int ka43_cache_reset(int);
 static	int ka43_cache_enable(void);
 static	int ka43_cache_disable(void);
 static	int ka43_cache_invalidate(void);
@@ -78,9 +78,9 @@ struct	cpu_dep ka43_calls = {
 	chip_clkwrite,
 	7,	/* 7.6 VUP */
 	2,	/* SCB pages */
-        ka43_halt,
-        ka43_reboot,
-        ka43_clrf,
+	ka43_halt,
+	ka43_reboot,
+	ka43_clrf,
 	hardclock
 };
 
@@ -156,7 +156,7 @@ ka43_mchk(addr)
 	if ((mcf->mc43_code & KA43_MC_RESTART) || 
 	    (mcf->mc43_psl & KA43_PSL_FPDONE)) {
 		printf("ka43_mchk: recovering from machine-check.\n");
-		ka43_cache_reset();	/* reset caches */
+		ka43_cache_reset(0);	/* reset caches */
 		return (0);		/* go on; */
 	}
 
@@ -182,7 +182,7 @@ ka43_memerr()
 int
 ka43_cache_init()
 {
-	return (ka43_cache_reset());
+	return (ka43_cache_reset(1));
 }
 
 #if 0
@@ -196,7 +196,7 @@ ka43_clear_errors()
 #endif
 
 int
-ka43_cache_reset()
+ka43_cache_reset(int silent)
 {
 	/*
 	 * resetting primary and secondary caches is done in three steps:
@@ -208,8 +208,12 @@ ka43_cache_reset()
 	ka43_cache_invalidate();
 	ka43_cache_enable();
 
-	printf("primary cache status: %b\n", mfpr(PR_PCSTS), KA43_PCSTS_BITS);
-	printf("secondary cache status: %b\n", *ka43_creg, KA43_SESR_BITS);
+	if (silent == 0) {
+		printf("primary cache status: %b\n", mfpr(PR_PCSTS),
+		    KA43_PCSTS_BITS);
+		printf("secondary cache status: %b\n", *ka43_creg,
+		    KA43_SESR_BITS);
+	}
 
 	return (0);
 }
@@ -309,8 +313,8 @@ ka43_conf()
 	 */
 	ka43_cache_init();
 
-        clk_adrshift = 1;       /* Addressed at long's... */
-        clk_tweak = 2;          /* ...and shift two */
+	clk_adrshift = 1;       /* Addressed at long's... */
+	clk_tweak = 2;		/* ...and shift two */
 	clk_page = (short *)vax_map_physmem(VS_CLOCK, 1);
 }
 
@@ -335,26 +339,35 @@ ka43_init()
 static void
 ka43_clrf()
 {
-        struct ka43_clock *clk = (void *)clk_page;
+	volatile struct ka43_clock *clk = (void *)clk_page;
 
-        /*
-         * Clear restart and boot in progress flags in the CPMBX.
-         */
-        clk->cpmbx = (clk->cpmbx & ~0xf0);
+	/*
+	 * Clear restart and boot in progress flags in the CPMBX.
+	 * The cpmbx is split into two 4-bit fields.
+	 * One for the current restart/boot in progress flags, and
+	 * one for the permanent halt flag.
+	 * The restart/boot in progress flag is also used as the action request
+	 * for the CPU at a halt. /BQT
+	 */
+	clk->req = 0;
 }
 
 static void
 ka43_halt()
 {
-        asm("movl $0xc, (%0)"::"r"((int)clk_page + 0x38)); /* Don't ask */
-        asm("halt");
+	volatile struct ka43_clock *clk = (void *)clk_page;
+
+	clk->req = 3;		/* 3 is halt. */
+	asm("halt");
 }
 
 static void
 ka43_reboot(arg)
-        int arg;
+	int arg;
 {
-        asm("movl $0xc, (%0)"::"r"((int)clk_page + 0x38)); /* Don't ask */
-        asm("halt");
+	volatile struct ka43_clock *clk = (void *)clk_page;
+
+	clk->req = 2;		/* 2 is reboot. */
+	asm("halt");
 }
 

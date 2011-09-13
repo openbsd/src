@@ -1,5 +1,5 @@
-/*	$OpenBSD: ka43.h,v 1.5 2006/07/25 21:11:08 miod Exp $ */
-/*	$NetBSD: ka43.h,v 1.2 1997/04/18 18:53:40 ragge Exp $ */
+/*	$OpenBSD: ka43.h,v 1.6 2011/09/13 21:25:23 miod Exp $ */
+/*	$NetBSD: ka43.h,v 1.6 2005/01/14 11:47:43 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -229,5 +229,6 @@ struct ka43_clock {
 	u_long  :2;	u_long	csr1	:8;	u_long  :22;
 	u_long  :2;	u_long	csr2	:8;	u_long  :22;
 	u_long  :2;	u_long	csr3	:8;	u_long  :22;
-	u_long  :2;	u_long	cpmbx	:8;	u_long  :22;
+	u_long  :2;	u_long	req	:4;
+			u_long	halt	:4;	u_long  :22;
 };
