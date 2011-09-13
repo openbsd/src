@@ -1,4 +1,4 @@
-.\"	$OpenBSD: calendar.1,v 1.34 2011/09/12 21:23:00 jmc Exp $
+.\"	$OpenBSD: calendar.1,v 1.35 2011/09/13 13:23:33 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)calendar.1  8.1 (Berkeley) 6/29/93
 .\"
-.Dd $Mdocdate: September 12 2011 $
+.Dd $Mdocdate: September 13 2011 $
 .Dt CALENDAR 1
 .Os
 .Sh NAME
@@ -83,6 +83,9 @@ as the default calendar file.
 Act like the specified value is
 .Dq today
 instead of using the current date.
+If yy is specified, but cc is not,
+a value for yy between 69 and 99 results in a cc value of 19.
+Otherwise, a cc value of 20 is used.
 .El
 .Pp
 To handle calendars in your national code table you can specify
