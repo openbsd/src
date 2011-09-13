@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.39 2011/09/05 21:24:24 guenther Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.40 2011/09/13 23:56:00 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -227,6 +227,7 @@ _thread_kern_sched(struct sigcontext * scp)
 				/* FALLTHROUGH */
 			case PS_FDR_WAIT:
 			case PS_FDW_WAIT:
+			case PS_KEVENT_WAIT:
 			case PS_POLL_WAIT:
 			case PS_SELECT_WAIT:
 				/* Restart the time slice: */
@@ -714,6 +715,7 @@ _thread_kern_poll(int wait_reqd)
 
 		/* File descriptor read wait: */
 		case PS_FDR_WAIT:
+		case PS_KEVENT_WAIT:
 			/* if fd is closing then reschedule this thread */
 			if (_thread_fd_table[pthread->data.fd.fd]->state == FD_ENTRY_CLOSING) {
 				pthread->closing_fd = 1;
@@ -844,6 +846,7 @@ _thread_kern_poll(int wait_reqd)
 
 			/* File descriptor read wait: */
 			case PS_FDR_WAIT:
+			case PS_KEVENT_WAIT:
 				if ((nfds < _thread_max_pfdtsize) &&
 				    (_thread_pfd_table[nfds].revents
 				       & (POLLRDNORM|POLLERR|POLLHUP|POLLNVAL))

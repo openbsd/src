@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_info_openbsd.c,v 1.15 2007/05/21 16:50:36 kurt Exp $	*/
+/*	$OpenBSD: uthread_info_openbsd.c,v 1.16 2011/09/13 23:56:00 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
@@ -62,6 +62,7 @@ static const struct s_thread_info thread_info[] = {
 	{PS_FDR_WAIT	, "fdr_wait"},
 	{PS_FDW_WAIT	, "fdw_wait"},
 	{PS_FILE_WAIT	, "file_wait"},
+	{PS_KEVENT_WAIT	, "kevent_wait"},
 	{PS_POLL_WAIT	, "poll_wait"},
 	{PS_SELECT_WAIT	, "select_wait"},
 	{PS_SLEEP_WAIT	, "sleep_wait"},
@@ -177,6 +178,7 @@ _thread_dump_entry(pthread_t pthread, int fd, int verbose)
 	case PS_FDLW_WAIT:
 	case PS_FDR_WAIT:
 	case PS_FDW_WAIT:
+	case PS_KEVENT_WAIT:
 		/* Write the lock details: */
 		snprintf(s, sizeof(s), "%s fd %d [%s:%d]\n",
 		    info_lead,

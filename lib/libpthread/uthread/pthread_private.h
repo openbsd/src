@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.76 2010/10/28 15:02:41 millert Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.77 2011/09/13 23:56:00 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -486,6 +486,7 @@ enum pthread_state {
 	PS_SUSPENDED,
 	PS_DEAD,
 	PS_DEADLOCK,
+	PS_KEVENT_WAIT,
 	PS_STATE_MAX
 };
 
