@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.19 2011/09/05 05:44:36 kevlo Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.20 2011/09/13 08:15:35 kevlo Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -879,7 +879,7 @@ ale_encap(struct ale_softc *sc, struct mbuf **m_head)
 	struct mbuf *m;
 	bus_dmamap_t map;
 	uint32_t cflags, poff, vtag;
-	int error, i, nsegs, prod;
+	int error, i, prod;
 
 	m = *m_head;
 	cflags = vtag = 0;
@@ -891,46 +891,25 @@ ale_encap(struct ale_softc *sc, struct mbuf **m_head)
 	map = txd->tx_dmamap;
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, *m_head, BUS_DMA_NOWAIT);
-
+	if (error != 0 && error != EFBIG)
+		goto drop;
 	if (error != 0) {
-		bus_dmamap_unload(sc->sc_dmat, map);
-		error = EFBIG;
-	}
-	if (error == EFBIG) {
 		if (m_defrag(*m_head, M_DONTWAIT)) {
-			printf("%s: can't defrag TX mbuf\n",
-			    sc->sc_dev.dv_xname);
-			m_freem(*m_head);
-			*m_head = NULL;
-			return (ENOBUFS);
+			error = ENOBUFS;
+			goto drop;
 		}
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, map, *m_head,
 		    BUS_DMA_NOWAIT);
-		if (error != 0) {
-			printf("%s: could not load defragged TX mbuf\n",
-			    sc->sc_dev.dv_xname);
-			m_freem(*m_head);
-			*m_head = NULL;
-			return (error);
-		}
-	} else if (error) {
-		printf("%s: could not load TX mbuf\n", sc->sc_dev.dv_xname);
-		return (error);
-	}
-
-	nsegs = map->dm_nsegs;
-
-	if (nsegs == 0) {
-		m_freem(*m_head);
-		*m_head = NULL;
-		return (EIO);
+		if (error != 0)
+			goto drop;
 	}
 
 	/* Check descriptor overrun. */
-	if (sc->ale_cdata.ale_tx_cnt + nsegs >= ALE_TX_RING_CNT - 2) {
+	if (sc->ale_cdata.ale_tx_cnt + map->dm_nsegs >= ALE_TX_RING_CNT - 2) {
 		bus_dmamap_unload(sc->sc_dmat, map);
 		return (ENOBUFS);
 	}
+
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
@@ -974,7 +953,7 @@ ale_encap(struct ale_softc *sc, struct mbuf **m_head)
 #endif
 
 	desc = NULL;
-	for (i = 0; i < nsegs; i++) {
+	for (i = 0; i < map->dm_nsegs; i++) {
 		desc = &sc->ale_cdata.ale_tx_ring[prod];
 		desc->addr = htole64(map->dm_segs[i].ds_addr);
 		desc->len = 
@@ -983,6 +962,7 @@ ale_encap(struct ale_softc *sc, struct mbuf **m_head)
 		sc->ale_cdata.ale_tx_cnt++;
 		ALE_DESC_INC(prod, ALE_TX_RING_CNT);
 	}
+
 	/* Update producer index. */
 	sc->ale_cdata.ale_tx_prod = prod;
 
@@ -1003,6 +983,11 @@ ale_encap(struct ale_softc *sc, struct mbuf **m_head)
 	    sc->ale_cdata.ale_tx_ring_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	return (0);
+
+ drop:
+	m_freem(*m_head);
+	*m_head = NULL;
+	return (error);
 }
 
 void
@@ -1035,11 +1020,15 @@ ale_start(struct ifnet *ifp)
 		 * for the NIC to drain the ring.
 		 */
 		if (ale_encap(sc, &m_head)) {
-			if (m_head == NULL)
-				break;
+			if (m_head == NULL) {
+				ifp->if_oerrors++;
+				break; 
+			}
+			IF_PREPEND(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+
 		enq = 1;
 
 #if NBPFILTER > 0
