@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpreg.h,v 1.12 2008/12/24 05:42:58 oga Exp $	*/
+/*	$OpenBSD: agpreg.h,v 1.13 2011/09/14 10:26:16 oga Exp $	*/
 /*	$NetBSD: agpreg.h,v 1.1 2001/09/10 10:01:02 fvdl Exp $	*/
 
 /*-
@@ -274,5 +274,27 @@
 #define AGP_INTEL_GMCH_GMS_STOLEN_224M	0xc0
 #define AGP_INTEL_GMCH_GMS_STOLEN_352M	0xd0
 #define	AGP_G4X_GTT			0x200000
+
+/*
+ * Intel Sandybridge registers and values
+ */
+#define AGP_INTEL_SNB_GMCH_CTRL			0x50
+#define AGP_INTEL_SNB_GMCH_GMS_STOLEN_MASK	0xF8
+#define AGP_INTEL_SNB_GMCH_GMS_STOLEN_32M	(1 << 3)
+#define AGP_INTEL_SNB_GMCH_GMS_STOLEN_64M	(2 << 3)
+#define AGP_INTEL_SNB_GMCH_GMS_STOLEN_96M	(3 << 3)
+#define AGP_INTEL_SNB_GMCH_GMS_STOLEN_128M	(4 << 3)
+#define AGP_INTEL_SNB_GMCH_GMS_STOLEN_160M	(5 << 3)
+#define AGP_INTEL_SNB_GMCH_GMS_STOLEN_192M	(6 << 3)
+#define AGP_INTEL_SNB_GMCH_GMS_STOLEN_224M	(7 << 3)
+#define AGP_INTEL_SNB_GMCH_GMS_STOLEN_256M	(8 << 3)
+#define AGP_INTEL_SNB_GMCH_GMS_STOLEN_288M	(9 << 3)
+#define AGP_INTEL_SNB_GMCH_GMS_STOLEN_320M	(0xa << 3)
+#define AGP_INTEL_SNB_GMCH_GMS_STOLEN_352M	(0xb << 3)
+#define AGP_INTEL_SNB_GMCH_GMS_STOLEN_384M	(0xc << 3)
+#define AGP_INTEL_SNB_GMCH_GMS_STOLEN_416M	(0xd << 3)
+#define AGP_INTEL_SNB_GMCH_GMS_STOLEN_448M	(0xe << 3)
+#define AGP_INTEL_SNB_GMCH_GMS_STOLEN_480M	(0xf << 3)
+#define AGP_INTEL_SNB_GMCH_GMS_STOLEN_512M	(0x10 << 3)
 
 #endif /* !_PCI_AGPREG_H_ */

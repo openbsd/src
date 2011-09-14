@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.115 2011/07/06 01:50:08 deraadt Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.116 2011/09/14 10:26:16 oga Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -194,6 +194,7 @@ bus_size_t	i915_gem_get_gtt_alignment(struct drm_obj *);
 bus_size_t	i915_get_fence_size(struct inteldrm_softc *, bus_size_t);
 int	i915_tiling_ok(struct drm_device *, int, int, int);
 int	i915_gem_object_fence_offset_ok(struct drm_obj *, int);
+void	sandybridge_write_fence_reg(struct inteldrm_fence *);
 void	i965_write_fence_reg(struct inteldrm_fence *);
 void	i915_write_fence_reg(struct inteldrm_fence *);
 void	i830_write_fence_reg(struct inteldrm_fence *);
@@ -272,6 +273,18 @@ const static struct drm_pcidev inteldrm_pciidlist[] = {
 	    CHIP_IRONLAKE|CHIP_IRONLAKE_D|CHIP_I965|CHIP_I9XX|CHIP_HWS},
 	{PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ARRANDALE_IGD,
 	    CHIP_IRONLAKE|CHIP_M|CHIP_IRONLAKE_M|CHIP_I965|CHIP_I9XX|CHIP_HWS},
+	{PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE2G_GT1,
+	    CHIP_SANDYBRIDGE|CHIP_I965|CHIP_I9XX|CHIP_HWS|CHIP_GEN6},
+	{PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE2G_M_GT1,
+	    CHIP_SANDYBRIDGE|CHIP_M|CHIP_I965|CHIP_I9XX|CHIP_HWS|CHIP_GEN6},
+	{PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE2G_GT2,
+	    CHIP_SANDYBRIDGE|CHIP_I965|CHIP_I9XX|CHIP_HWS|CHIP_GEN6},
+	{PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE2G_M_GT2,
+	    CHIP_SANDYBRIDGE|CHIP_M|CHIP_I965|CHIP_I9XX|CHIP_HWS|CHIP_GEN6},
+	{PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE2G_GT2_PLUS,
+	    CHIP_SANDYBRIDGE|CHIP_I965|CHIP_I9XX|CHIP_HWS|CHIP_GEN6},
+	{PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE2G_M_GT2_PLUS,
+	    CHIP_SANDYBRIDGE|CHIP_M|CHIP_I965|CHIP_I9XX|CHIP_HWS|CHIP_GEN6},
 	{0, 0, 0}
 };
 
@@ -434,8 +447,12 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 		dev_priv->num_fence_regs = 16;
 	else
 		dev_priv->num_fence_regs = 8;
+
 	/* Initialise fences to zero, else on some macs we'll get corruption */
-	if (IS_I965G(dev_priv)) {
+	if (IS_GEN6(dev_priv)) {
+		for (i = 0; i < 16; i++)
+			I915_WRITE64(FENCE_REG_SANDYBRIDGE_0 + (i * 8), 0);
+	} else if (IS_I965G(dev_priv)) {
 		for (i = 0; i < 16; i++)
 			I915_WRITE64(FENCE_REG_965_0 + (i * 8), 0);
 	} else {
@@ -1628,11 +1645,14 @@ i915_add_request(struct inteldrm_softc *dev_priv)
 	if (dev_priv->mm.next_gem_seqno == 0)
 		dev_priv->mm.next_gem_seqno++;
 
-	BEGIN_LP_RING(4);
+	if (IS_GEN6(dev_priv))
+		BEGIN_LP_RING(10);
+	else 
+		BEGIN_LP_RING(4);
+
 	OUT_RING(MI_STORE_DWORD_INDEX);
 	OUT_RING(I915_GEM_HWS_INDEX << MI_STORE_DWORD_INDEX_SHIFT);
 	OUT_RING(seqno);
-
 	OUT_RING(MI_USER_INTERRUPT);
 	ADVANCE_LP_RING();
 
@@ -2130,6 +2150,28 @@ i915_gem_get_gtt_alignment(struct drm_obj *obj)
 }
 
 void
+sandybridge_write_fence_reg(struct inteldrm_fence *reg)
+{
+	struct drm_obj		*obj = reg->obj;
+	struct drm_device	*dev = obj->dev;
+	struct inteldrm_softc	*dev_priv = dev->dev_private;
+	struct inteldrm_obj	*obj_priv = (struct inteldrm_obj *)obj;
+	int			 regnum = obj_priv->fence_reg;
+	u_int64_t		 val;
+
+	val = (uint64_t)((obj_priv->gtt_offset + obj->size - 4096) &
+		    0xfffff000) << 32;
+	val |= obj_priv->gtt_offset & 0xfffff000;
+	val |= (uint64_t)((obj_priv->stride / 128) - 1) <<
+		    SANDYBRIDGE_FENCE_PITCH_SHIFT;
+	if (obj_priv->tiling_mode == I915_TILING_Y)
+		val |= 1 << I965_FENCE_TILING_Y_SHIFT;
+	val |= I965_FENCE_REG_VALID;
+
+	I915_WRITE64(FENCE_REG_SANDYBRIDGE_0 + (regnum * 8), val);
+}
+
+void
 i965_write_fence_reg(struct inteldrm_fence *reg)
 {
 	struct drm_obj		*obj = reg->obj;
@@ -2357,7 +2399,9 @@ again:
 	reg->obj = obj;
 	TAILQ_INSERT_TAIL(&dev_priv->mm.fence_list, reg, list);
 
-	if (IS_I965G(dev_priv))
+	if (IS_GEN6(dev_priv))
+		sandybridge_write_fence_reg(reg);
+	else if (IS_I965G(dev_priv))
 		i965_write_fence_reg(reg);
 	else if (IS_I9XX(dev_priv))
 		i915_write_fence_reg(reg);
@@ -2741,6 +2785,7 @@ i915_gem_object_set_to_gtt_domain(struct drm_obj *obj, int write,
 	/* Not valid to be called on unbound objects. */
 	if (obj_priv->dmamap == NULL)
 		return (EINVAL);
+
 	/* Wait on any GPU rendering and flushing to occur. */
 	if ((ret = i915_gem_object_flush_gpu_write_domain(obj, 0,
 	    interruptible, write)) != 0)
@@ -3199,8 +3244,12 @@ i915_dispatch_gem_execbuffer(struct drm_device *dev,
 	} else {
 		BEGIN_LP_RING(4);
 		if (IS_I965G(dev_priv)) {
-			OUT_RING(MI_BATCH_BUFFER_START | (2 << 6) |
-			    MI_BATCH_NON_SECURE_I965);
+			if (IS_GEN6(dev_priv))
+				OUT_RING(MI_BATCH_BUFFER_START |
+				    MI_BATCH_NON_SECURE_I965);
+			else
+				OUT_RING(MI_BATCH_BUFFER_START | (2 << 6) |
+				    MI_BATCH_NON_SECURE_I965);
 			OUT_RING(exec_start);
 		} else {
 			OUT_RING(MI_BATCH_BUFFER_START | (2 << 6));
@@ -4016,8 +4065,13 @@ i915_gem_init_hws(struct inteldrm_softc *dev_priv)
 	drm_unhold_object(obj);
 	dev_priv->hws_obj = obj;
 	memset(dev_priv->hw_status_page, 0, PAGE_SIZE);
-	I915_WRITE(HWS_PGA, obj_priv->gtt_offset);
-	I915_READ(HWS_PGA); /* posting read */
+	if (IS_GEN6(dev_priv)) {
+		I915_WRITE(HWS_PGA_GEN6, obj_priv->gtt_offset);
+		I915_READ(HWS_PGA_GEN6); /* posting read */
+	} else {
+		I915_WRITE(HWS_PGA, obj_priv->gtt_offset);
+		I915_READ(HWS_PGA); /* posting read */
+	}
 	DRM_DEBUG("hws offset: 0x%08x\n", obj_priv->gtt_offset);
 
 	return 0;
@@ -4042,7 +4096,11 @@ i915_gem_cleanup_hws(struct inteldrm_softc *dev_priv)
 	dev_priv->hws_obj = NULL;
 
 	/* Write high address into HWS_PGA when disabling. */
-	I915_WRITE(HWS_PGA, 0x1ffff000);
+	if (IS_GEN6(dev_priv)) {
+		I915_WRITE(HWS_PGA_GEN6, 0x1ffff000);
+	} else {
+		I915_WRITE(HWS_PGA, 0x1ffff000);
+	}
 }
 
 int
@@ -4139,7 +4197,10 @@ inteldrm_start_ring(struct inteldrm_softc *dev_priv)
 	/* Update our cache of the ring state */
 	inteldrm_update_ring(dev_priv);
 
-	if (IS_I9XX(dev_priv) && !IS_GEN3(dev_priv))
+	if (IS_GEN6(dev_priv))
+		I915_WRITE(MI_MODE | MI_FLUSH_ENABLE << 16 | MI_FLUSH_ENABLE,
+		    (VS_TIMER_DISPATCH) << 15 | VS_TIMER_DISPATCH);
+	else if (IS_I9XX(dev_priv) && !IS_GEN3(dev_priv))
 		I915_WRITE(MI_MODE, (VS_TIMER_DISPATCH) << 15 |
 		    VS_TIMER_DISPATCH);
 
@@ -4242,7 +4303,7 @@ inteldrm_error(struct inteldrm_softc *dev_priv)
 	}
 
 	printf("render error detected, EIR: %b\n", eir, errbitstr);
-	if (IS_IRONLAKE(dev_priv)) {
+	if (IS_IRONLAKE(dev_priv) || IS_GEN6(dev_priv)) {
 		if (eir & GT_ERROR_PTE) {
 			dev_priv->mm.wedged = 1;
 			reset = GDRST_FULL;
@@ -4328,7 +4389,7 @@ inteldrm_error(struct inteldrm_softc *dev_priv)
 		if (dev_priv->mm.wedged == 0)
 			DRM_ERROR("EIR stuck: 0x%08x, masking\n", eir);
 		I915_WRITE(EMR, I915_READ(EMR) | eir);
-		if (IS_IRONLAKE(dev_priv)) {
+		if (IS_IRONLAKE(dev_priv) || IS_GEN6(dev_priv)) {
 			I915_WRITE(GTIIR, GT_MASTER_ERROR);
 		} else {
 			I915_WRITE(IIR,
@@ -5075,15 +5136,11 @@ inteldrm_pipe_enabled(struct inteldrm_softc *dev_priv, int pipe)
 {
 	bus_size_t	pipeconf;
 
-#if 0
-	if (IS_IRONLAKE(dev_priv)) {
+	if (IS_IRONLAKE(dev_priv) || IS_GEN6(dev_priv)) {
 		pipeconf = (pipe ? PCH_DPLL_A : PCH_DPLL_B);
 	} else {
-#endif
 		pipeconf = (pipe ? PIPEBCONF : PIPEACONF);
-#if 0
 	}
-#endif
 	return ((I915_READ(pipeconf) & PIPEACONF_ENABLE) == PIPEACONF_ENABLE);
 }
 
@@ -5100,7 +5157,7 @@ i915_save_palette(struct inteldrm_softc *dev_priv, enum pipe pipe)
 	if (!inteldrm_pipe_enabled(dev_priv, pipe))
 		return;
 
-	if (IS_IRONLAKE(dev_priv))
+	if (HAS_PCH_SPLIT(dev_priv))
 		reg = (pipe == PIPE_A) ? LGC_PALETTE_A : LGC_PALETTE_B;
 
 	if (pipe == PIPE_A)
@@ -5122,7 +5179,7 @@ i915_restore_palette(struct inteldrm_softc *dev_priv, enum pipe pipe)
 	if (!inteldrm_pipe_enabled(dev_priv, pipe))
 		return;
 
-	if (IS_IRONLAKE(dev_priv))
+	if (HAS_PCH_SPLIT(dev_priv))
 		reg = (pipe == PIPE_A) ? LGC_PALETTE_A : LGC_PALETTE_B;
 
 	if (pipe == PIPE_A)
@@ -5284,7 +5341,7 @@ void
 i915_save_modeset_reg(struct inteldrm_softc *dev_priv)
 {
 
-	if (IS_IRONLAKE(dev_priv)) {
+	if (HAS_PCH_SPLIT(dev_priv)) {
 		dev_priv->savePCH_DREF_CONTROL = I915_READ(PCH_DREF_CONTROL);
 		dev_priv->saveDISP_ARB_CTL = I915_READ(DISP_ARB_CTL);
 	}
@@ -5292,7 +5349,7 @@ i915_save_modeset_reg(struct inteldrm_softc *dev_priv)
 	/* Pipe & plane A info */
 	dev_priv->savePIPEACONF = I915_READ(PIPEACONF);
 	dev_priv->savePIPEASRC = I915_READ(PIPEASRC);
-	if (IS_IRONLAKE(dev_priv)) {
+	if (HAS_PCH_SPLIT(dev_priv)) {
 		dev_priv->saveFPA0 = I915_READ(PCH_FPA0);
 		dev_priv->saveFPA1 = I915_READ(PCH_FPA1);
 		dev_priv->saveDPLL_A = I915_READ(PCH_DPLL_A);
@@ -5301,7 +5358,7 @@ i915_save_modeset_reg(struct inteldrm_softc *dev_priv)
 		dev_priv->saveFPA1 = I915_READ(FPA1);
 		dev_priv->saveDPLL_A = I915_READ(DPLL_A);
 	}
-	if (IS_I965G(dev_priv) && !IS_IRONLAKE(dev_priv))
+	if (IS_I965G(dev_priv) && !HAS_PCH_SPLIT(dev_priv))
 		dev_priv->saveDPLL_A_MD = I915_READ(DPLL_A_MD);
 	dev_priv->saveHTOTAL_A = I915_READ(HTOTAL_A);
 	dev_priv->saveHBLANK_A = I915_READ(HBLANK_A);
@@ -5309,7 +5366,7 @@ i915_save_modeset_reg(struct inteldrm_softc *dev_priv)
 	dev_priv->saveVTOTAL_A = I915_READ(VTOTAL_A);
 	dev_priv->saveVBLANK_A = I915_READ(VBLANK_A);
 	dev_priv->saveVSYNC_A = I915_READ(VSYNC_A);
-	if (IS_IRONLAKE(dev_priv)) {
+	if (HAS_PCH_SPLIT(dev_priv)) {
 		dev_priv->savePIPEA_DATA_M1 = I915_READ(PIPEA_DATA_M1);
 		dev_priv->savePIPEA_DATA_N1 = I915_READ(PIPEA_DATA_N1);
 		dev_priv->savePIPEA_LINK_M1 = I915_READ(PIPEA_LINK_M1);
@@ -5348,7 +5405,7 @@ i915_save_modeset_reg(struct inteldrm_softc *dev_priv)
 	/* Pipe & plane B info */
 	dev_priv->savePIPEBCONF = I915_READ(PIPEBCONF);
 	dev_priv->savePIPEBSRC = I915_READ(PIPEBSRC);
-	if (IS_IRONLAKE(dev_priv)) {
+	if (HAS_PCH_SPLIT(dev_priv)) {
 		dev_priv->saveFPA0 = I915_READ(PCH_FPB0);
 		dev_priv->saveFPA1 = I915_READ(PCH_FPB1);
 		dev_priv->saveDPLL_A = I915_READ(PCH_DPLL_B);
@@ -5357,7 +5414,7 @@ i915_save_modeset_reg(struct inteldrm_softc *dev_priv)
 		dev_priv->saveFPB1 = I915_READ(FPB1);
 		dev_priv->saveDPLL_B = I915_READ(DPLL_B);
 	}
-	if (IS_I965G(dev_priv) && !IS_IRONLAKE(dev_priv))
+	if (IS_I965G(dev_priv) && (!IS_IRONLAKE(dev_priv) && !IS_GEN6(dev_priv)))
 		dev_priv->saveDPLL_B_MD = I915_READ(DPLL_B_MD);
 	dev_priv->saveHTOTAL_B = I915_READ(HTOTAL_B);
 	dev_priv->saveHBLANK_B = I915_READ(HBLANK_B);
@@ -5365,7 +5422,7 @@ i915_save_modeset_reg(struct inteldrm_softc *dev_priv)
 	dev_priv->saveVTOTAL_B = I915_READ(VTOTAL_B);
 	dev_priv->saveVBLANK_B = I915_READ(VBLANK_B);
 	dev_priv->saveVSYNC_B = I915_READ(VSYNC_B);
-	if (IS_IRONLAKE(dev_priv)) {
+	if (HAS_PCH_SPLIT(dev_priv)) {
 		dev_priv->savePIPEB_DATA_M1 = I915_READ(PIPEB_DATA_M1);
 		dev_priv->savePIPEB_DATA_N1 = I915_READ(PIPEB_DATA_N1);
 		dev_priv->savePIPEB_LINK_M1 = I915_READ(PIPEB_LINK_M1);
@@ -5394,7 +5451,7 @@ i915_save_modeset_reg(struct inteldrm_softc *dev_priv)
 	dev_priv->saveDSPBSIZE = I915_READ(DSPBSIZE);
 	dev_priv->saveDSPBPOS = I915_READ(DSPBPOS);
 	dev_priv->saveDSPBADDR = I915_READ(DSPBADDR);
-	if (IS_I965GM(dev_priv) || IS_GM45(dev_priv)) {
+	if (IS_I965GM(dev_priv) || IS_GM45(dev_priv)) { /* XXX: IS_MOBILE ? */
 		dev_priv->saveDSPBSURF = I915_READ(DSPBSURF);
 		dev_priv->saveDSPBTILEOFF = I915_READ(DSPBTILEOFF);
 	}
@@ -5408,7 +5465,7 @@ i915_restore_modeset_reg(struct inteldrm_softc *dev_priv)
 	bus_size_t	dpll_a_reg, fpa0_reg, fpa1_reg;
 	bus_size_t	dpll_b_reg, fpb0_reg, fpb1_reg;
 
-	if (IS_IRONLAKE(dev_priv)) {
+	if (HAS_PCH_SPLIT(dev_priv)) {
 		dpll_a_reg = PCH_DPLL_A;
 		dpll_b_reg = PCH_DPLL_B;
 		fpa0_reg = PCH_FPA0;
@@ -5424,7 +5481,7 @@ i915_restore_modeset_reg(struct inteldrm_softc *dev_priv)
 		fpb1_reg = FPB1;
 	}
 
-	if (IS_IRONLAKE(dev_priv)) {
+	if (HAS_PCH_SPLIT(dev_priv)) {
 		I915_WRITE(PCH_DREF_CONTROL, dev_priv->savePCH_DREF_CONTROL);
 		I915_WRITE(DISP_ARB_CTL, dev_priv->saveDISP_ARB_CTL);
 	}
@@ -5441,7 +5498,7 @@ i915_restore_modeset_reg(struct inteldrm_softc *dev_priv)
 	/* Actually enable it */
 	I915_WRITE(dpll_a_reg, dev_priv->saveDPLL_A);
 	DRM_UDELAY(150);
-	if (IS_I965G(dev_priv) && !IS_IRONLAKE(dev_priv))
+	if (IS_I965G(dev_priv) && !HAS_PCH_SPLIT(dev_priv))
 		I915_WRITE(DPLL_A_MD, dev_priv->saveDPLL_A_MD);
 	DRM_UDELAY(150);
 
@@ -5452,7 +5509,7 @@ i915_restore_modeset_reg(struct inteldrm_softc *dev_priv)
 	I915_WRITE(VTOTAL_A, dev_priv->saveVTOTAL_A);
 	I915_WRITE(VBLANK_A, dev_priv->saveVBLANK_A);
 	I915_WRITE(VSYNC_A, dev_priv->saveVSYNC_A);
-	if (IS_IRONLAKE(dev_priv)) {
+	if (HAS_PCH_SPLIT(dev_priv)) {
 		I915_WRITE(PIPEA_DATA_M1, dev_priv->savePIPEA_DATA_M1);
 		I915_WRITE(PIPEA_DATA_N1, dev_priv->savePIPEA_DATA_N1);
 		I915_WRITE(PIPEA_LINK_M1, dev_priv->savePIPEA_LINK_M1);
@@ -5505,7 +5562,7 @@ i915_restore_modeset_reg(struct inteldrm_softc *dev_priv)
 	/* Actually enable it */
 	I915_WRITE(dpll_b_reg, dev_priv->saveDPLL_B);
 	DRM_UDELAY(150);
-	if (IS_I965G(dev_priv) && !IS_IRONLAKE(dev_priv))
+	if (IS_I965G(dev_priv) && !HAS_PCH_SPLIT(dev_priv))
 		I915_WRITE(DPLL_B_MD, dev_priv->saveDPLL_B_MD);
 	DRM_UDELAY(150);
 
@@ -5516,7 +5573,7 @@ i915_restore_modeset_reg(struct inteldrm_softc *dev_priv)
 	I915_WRITE(VTOTAL_B, dev_priv->saveVTOTAL_B);
 	I915_WRITE(VBLANK_B, dev_priv->saveVBLANK_B);
 	I915_WRITE(VSYNC_B, dev_priv->saveVSYNC_B);
-	if (IS_IRONLAKE(dev_priv)) {
+	if (HAS_PCH_SPLIT(dev_priv)) {
 		I915_WRITE(PIPEB_DATA_M1, dev_priv->savePIPEB_DATA_M1);
 		I915_WRITE(PIPEB_DATA_N1, dev_priv->savePIPEB_DATA_N1);
 		I915_WRITE(PIPEB_LINK_M1, dev_priv->savePIPEB_LINK_M1);
@@ -5579,14 +5636,14 @@ inteldrm_save_display(struct inteldrm_softc *dev_priv)
 		dev_priv->saveCURSIZE = I915_READ(CURSIZE);
 
 	/* CRT state */
-	if (IS_IRONLAKE(dev_priv)) {
+	if (HAS_PCH_SPLIT(dev_priv)) {
 		dev_priv->saveADPA = I915_READ(PCH_ADPA);
 	} else {
 		dev_priv->saveADPA = I915_READ(ADPA);
 	}
 
 	/* LVDS state */
-	if (IS_IRONLAKE(dev_priv)) {
+	if (HAS_PCH_SPLIT(dev_priv)) {
 		dev_priv->savePP_CONTROL = I915_READ(PCH_PP_CONTROL);
 		dev_priv->saveBLC_PWM_CTL = I915_READ(BLC_PWM_PCH_CTL1);
 		dev_priv->saveBLC_PWM_CTL2 = I915_READ(BLC_PWM_PCH_CTL2);
@@ -5603,9 +5660,11 @@ inteldrm_save_display(struct inteldrm_softc *dev_priv)
 		if (IS_MOBILE(dev_priv) && !IS_I830(dev_priv))
 			dev_priv->saveLVDS = I915_READ(LVDS);
 	}
-	if (!IS_I830(dev_priv) && !IS_845G(dev_priv))
+
+	if (!IS_I830(dev_priv) && !IS_845G(dev_priv) && !HAS_PCH_SPLIT(dev_priv))
 		dev_priv->savePFIT_CONTROL = I915_READ(PFIT_CONTROL);
-	if (IS_IRONLAKE(dev_priv)) {
+
+	if (HAS_PCH_SPLIT(dev_priv)) {
 		dev_priv->savePP_ON_DELAYS = I915_READ(PCH_PP_ON_DELAYS);
 		dev_priv->savePP_OFF_DELAYS = I915_READ(PCH_PP_OFF_DELAYS);
 		dev_priv->savePP_DIVISOR = I915_READ(PCH_PP_DIVISOR);
@@ -5631,7 +5690,7 @@ inteldrm_save_display(struct inteldrm_softc *dev_priv)
 	dev_priv->saveVGA0 = I915_READ(VGA0);
 	dev_priv->saveVGA1 = I915_READ(VGA1);
 	dev_priv->saveVGA_PD = I915_READ(VGA_PD);
-	if (IS_IRONLAKE(dev_priv))
+	if (HAS_PCH_SPLIT(dev_priv))
 		dev_priv->saveVGACNTRL = I915_READ(CPU_VGACNTRL);
 	else
 		dev_priv->saveVGACNTRL = I915_READ(VGACNTRL);
@@ -5661,24 +5720,24 @@ inteldrm_restore_display(struct inteldrm_softc *dev_priv)
 		I915_WRITE(CURSIZE, dev_priv->saveCURSIZE);
 
 	/* CRT state */
-	if (IS_IRONLAKE(dev_priv))
+	if (HAS_PCH_SPLIT(dev_priv))
 		I915_WRITE(PCH_ADPA, dev_priv->saveADPA);
 	else
 		I915_WRITE(ADPA, dev_priv->saveADPA);
 
 	/* LVDS state */
-	if (IS_I965G(dev_priv) && !IS_IRONLAKE(dev_priv))
+	if (IS_I965G(dev_priv) && !HAS_PCH_SPLIT(dev_priv))
 		I915_WRITE(BLC_PWM_CTL2, dev_priv->saveBLC_PWM_CTL2);
 
-	if (IS_IRONLAKE(dev_priv)) {
+	if (HAS_PCH_SPLIT(dev_priv)) {
 		I915_WRITE(PCH_LVDS, dev_priv->saveLVDS);
 	} else if (IS_MOBILE(dev_priv) && !IS_I830(dev_priv))
 		I915_WRITE(LVDS, dev_priv->saveLVDS);
 
-	if (!IS_I830(dev_priv) && !IS_845G(dev_priv) && !IS_IRONLAKE(dev_priv))
+	if (!IS_I830(dev_priv) && !IS_845G(dev_priv) && !HAS_PCH_SPLIT(dev_priv))
 		I915_WRITE(PFIT_CONTROL, dev_priv->savePFIT_CONTROL);
 
-	if (IS_IRONLAKE(dev_priv)) {
+	if (HAS_PCH_SPLIT(dev_priv)) {
 		I915_WRITE(BLC_PWM_PCH_CTL1, dev_priv->saveBLC_PWM_CTL);
 		I915_WRITE(BLC_PWM_PCH_CTL2, dev_priv->saveBLC_PWM_CTL2);
 		I915_WRITE(BLC_PWM_CPU_CTL, dev_priv->saveBLC_CPU_PWM_CTL);
@@ -5712,7 +5771,7 @@ inteldrm_restore_display(struct inteldrm_softc *dev_priv)
 	}
 
 	/* VGA state */
-	if (IS_IRONLAKE(dev_priv))
+	if (HAS_PCH_SPLIT(dev_priv))
 		I915_WRITE(CPU_VGACNTRL, dev_priv->saveVGACNTRL);
 	else
 		I915_WRITE(VGACNTRL, dev_priv->saveVGACNTRL);
@@ -5734,12 +5793,16 @@ inteldrm_save_state(struct inteldrm_softc *dev_priv)
 	dev_priv->saveLBB = pci_conf_read(dev_priv->pc, dev_priv->tag, LBB);
 
 	/* Hardware status page */
-	dev_priv->saveHWS = I915_READ(HWS_PGA);
+	if (IS_GEN6(dev_priv)) {
+		dev_priv->saveHWS = I915_READ(HWS_PGA_GEN6);
+	} else {
+		dev_priv->saveHWS = I915_READ(HWS_PGA);
+	}
 
 	inteldrm_save_display(dev_priv);
 
 	/* Interrupt state */
-	if (IS_IRONLAKE(dev_priv)) {
+	if (HAS_PCH_SPLIT(dev_priv)) {
 		dev_priv->saveDEIER = I915_READ(DEIER);
 		dev_priv->saveDEIMR = I915_READ(DEIMR);
 		dev_priv->saveGTIER = I915_READ(GTIER);
@@ -5754,7 +5817,7 @@ inteldrm_save_state(struct inteldrm_softc *dev_priv)
 	}
 
 	/* Clock gating state */
-	if (IS_IRONLAKE(dev_priv)) {
+	if (HAS_PCH_SPLIT(dev_priv)) {
 		dev_priv->saveDSPCLK_GATE_D = I915_READ(PCH_DSPCLK_GATE_D);
 		dev_priv->saveDSPCLK_GATE = I915_READ(ILK_DSPCLK_GATE);
 	} else if (IS_G4X(dev_priv)) {
@@ -5794,7 +5857,11 @@ inteldrm_save_state(struct inteldrm_softc *dev_priv)
 		dev_priv->saveSWF2[i] = I915_READ(SWF30 + (i << 2));
 
 	/* Fences */
-	if (IS_I965G(dev_priv)) {
+	if (IS_GEN6(dev_priv)) {
+		for (i = 0; i < 16; i++)
+			dev_priv->saveFENCE[i] = I915_READ64(FENCE_REG_SANDYBRIDGE_0 +
+			    (i * 8));
+	} else if (IS_I965G(dev_priv)) {
 		for (i = 0; i < 16; i++)
 			dev_priv->saveFENCE[i] = I915_READ64(FENCE_REG_965_0 +
 			    (i * 8));
@@ -5819,10 +5886,16 @@ inteldrm_restore_state(struct inteldrm_softc *dev_priv)
 	pci_conf_write(dev_priv->pc, dev_priv->tag, LBB, dev_priv->saveLBB);
 
 	/* Hardware status page */
-	I915_WRITE(HWS_PGA, dev_priv->saveHWS);
+	if (IS_GEN6(dev_priv))
+		I915_WRITE(HWS_PGA_GEN6, dev_priv->saveHWS);
+	else
+		I915_WRITE(HWS_PGA, dev_priv->saveHWS);
 
 	/* Fences */
-	if (IS_I965G(dev_priv)) {
+	if (IS_GEN6(dev_priv)) {
+		for (i = 0; i < 16; i++)
+			I915_WRITE64(FENCE_REG_SANDYBRIDGE_0 + (i * 8), dev_priv->saveFENCE[i]);
+	} else if (IS_I965G(dev_priv)) {
 		for (i = 0; i < 16; i++)
 			I915_WRITE64(FENCE_REG_965_0 + (i * 8), dev_priv->saveFENCE[i]);
 	} else {
@@ -5837,7 +5910,7 @@ inteldrm_restore_state(struct inteldrm_softc *dev_priv)
 	inteldrm_restore_display(dev_priv);
 
 	/* Interrupt state */
-	if (IS_IRONLAKE(dev_priv)) {
+	if (HAS_PCH_SPLIT(dev_priv)) {
 		I915_WRITE(DEIER, dev_priv->saveDEIER);
 		I915_WRITE(DEIMR, dev_priv->saveDEIMR);
 		I915_WRITE(GTIER, dev_priv->saveGTIER);
@@ -5850,7 +5923,7 @@ inteldrm_restore_state(struct inteldrm_softc *dev_priv)
 	}
 
 	/* Clock gating state */
-	if (IS_IRONLAKE(dev_priv)) {
+	if (HAS_PCH_SPLIT(dev_priv)) {
 		I915_WRITE(PCH_DSPCLK_GATE_D, dev_priv->saveDSPCLK_GATE_D);
 		I915_WRITE(ILK_DSPCLK_GATE, dev_priv->saveDSPCLK_GATE);
 	} if (IS_G4X(dev_priv)) {
@@ -5951,13 +6024,25 @@ inteldrm_965_reset(struct inteldrm_softc *dev_priv, u_int8_t flags)
 			panic("can't restart ring, we're fucked");
 
 		/* put the hardware status page back */
-		if (I915_NEED_GFX_HWS(dev_priv))
+		if (I915_NEED_GFX_HWS(dev_priv)) {
 			I915_WRITE(HWS_PGA, ((struct inteldrm_obj *)
 			    dev_priv->hws_obj)->gtt_offset);
-		else
+			if (IS_GEN6(dev_priv)) {
+				I915_WRITE(HWS_PGA_GEN6,
+				    ((struct inteldrm_obj *)
+				    dev_priv->hws_obj)->gtt_offset);
+			} else {
+				I915_WRITE(HWS_PGA, ((struct inteldrm_obj *)
+				    dev_priv->hws_obj)->gtt_offset);
+			}
+		} else {
 			I915_WRITE(HWS_PGA,
 			    dev_priv->hws_dmamem->map->dm_segs[0].ds_addr);
-		I915_READ(HWS_PGA); /* posting read */
+		}
+		if (IS_GEN6(dev_priv))
+			I915_READ(HWS_PGA_GEN6); /* posting read */
+		else
+			I915_READ(HWS_PGA); /* posting read */
 
 		/* so we remove the handler and can put it back in */
 		DRM_UNLOCK();

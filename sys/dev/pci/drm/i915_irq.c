@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_irq.c,v 1.51 2011/06/02 18:22:00 weerd Exp $ */
+/* $OpenBSD: i915_irq.c,v 1.52 2011/09/14 10:26:16 oga Exp $ */
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -66,9 +66,15 @@ inline void
 ironlake_enable_graphics_irq(struct inteldrm_softc *dev_priv, u_int32_t mask)
 {
 	if ((dev_priv->gt_irq_mask_reg & mask) != 0) {
+		/* XXX imr bullshit */
 		dev_priv->gt_irq_mask_reg &= ~mask;
-		I915_WRITE(GTIMR, dev_priv->gt_irq_mask_reg);
-		(void)I915_READ(GTIMR);
+		if (IS_GEN6(dev_priv)) {
+			I915_WRITE(0x20a8, dev_priv->gt_irq_mask_reg);
+			(void)I915_READ(0x20a8);
+		} else {
+			I915_WRITE(GTIMR, dev_priv->gt_irq_mask_reg);
+			(void)I915_READ(GTIMR);
+		}
 	}
 }
 
@@ -77,8 +83,13 @@ ironlake_disable_graphics_irq(struct inteldrm_softc *dev_priv, u_int32_t mask)
 {
 	if ((dev_priv->gt_irq_mask_reg & mask) != mask) {
 		dev_priv->gt_irq_mask_reg |= mask;
-		I915_WRITE(GTIMR, dev_priv->gt_irq_mask_reg);
-		(void)I915_READ(GTIMR);
+		if (IS_GEN6(dev_priv)) {
+			I915_WRITE(0x20a8, dev_priv->gt_irq_mask_reg);
+			(void)I915_READ(0x20a8);
+		} else {
+			I915_WRITE(GTIMR, dev_priv->gt_irq_mask_reg);
+			(void)I915_READ(GTIMR);
+		}
 	}
 }
 
@@ -145,7 +156,8 @@ i915_get_vblank_counter(struct drm_device *dev, int pipe)
 	}
 
 	/* GM45 just had to be different... */
-	if (IS_GM45(dev_priv) || IS_G4X(dev_priv) || IS_IRONLAKE(dev_priv)) {
+	if (IS_GM45(dev_priv) || IS_G4X(dev_priv) || IS_IRONLAKE(dev_priv) ||
+	IS_GEN6(dev_priv)) {
 		return (I915_READ(pipe ? PIPEB_FRMCOUNT_GM45 :
 		    PIPEA_FRMCOUNT_GM45));
 	}
@@ -236,7 +248,7 @@ i915_driver_irq_install(struct drm_device *dev)
 	struct inteldrm_softc	*dev_priv = dev->dev_private;
 
 	dev->vblank->vb_max = 0xffffff; /* only 24 bits of frame count */
-	if (IS_G4X(dev_priv) || IS_IRONLAKE(dev_priv))
+	if (IS_G4X(dev_priv) || IS_IRONLAKE(dev_priv) || IS_GEN6(dev_priv))
 		dev->vblank->vb_max = 0xffffffff;
 
 	I915_WRITE(HWSTAM, 0xeffe);

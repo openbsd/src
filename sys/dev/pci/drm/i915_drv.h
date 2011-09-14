@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.69 2011/06/02 18:22:00 weerd Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.70 2011/09/14 10:26:16 oga Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -439,6 +439,7 @@ struct inteldrm_file {
 #define	CHIP_IRONLAKE	0x200000
 #define CHIP_IRONLAKE_D	0x400000
 #define CHIP_IRONLAKE_M	0x800000
+#define CHIP_SANDYBRIDGE	0x1000000
 
 /* flags we use in drm_obj's do_flags */
 #define I915_ACTIVE		0x0010	/* being used by the gpu. */
@@ -767,6 +768,9 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define   I965_FENCE_REG_VALID		(1<<0)
 #define   I965_FENCE_MAX_PITCH_VAL	0x0400
 
+#define FENCE_REG_SANDYBRIDGE_0		0x100000
+#define   SANDYBRIDGE_FENCE_PITCH_SHIFT	32
+
 /*
  * Instruction and interrupt control regs
  */
@@ -801,6 +805,7 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define INSTDONE1	0x0207c /* 965+ only */
 #define ACTHD_I965	0x02074
 #define HWS_PGA		0x02080
+#define HWS_PGA_GEN6	0x04080
 #define HWS_ADDRESS_MASK	0xfffff000
 #define HWS_START_ADDRESS_SHIFT	4
 #define IPEIR		0x02088
@@ -811,6 +816,7 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 
 #define MI_MODE		0x0209c
 #define VS_TIMER_DISPATCH	(1 << 6)
+#define MI_FLUSH_ENABLE		(1 << 11)
 
 #define SCPD0		0x0209c /* 915+ only */
 #define IER		0x020a0
@@ -3051,11 +3057,15 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define IS_IRONLAKE_D(dev_priv) ((dev_priv)->flags & CHIP_IRONLAKE_D)
 #define IS_IRONLAKE_M(dev_priv) ((dev_priv)->flags & CHIP_IRONLAKE_M)
 
+#define IS_SANDYBRIDGE(dev_priv) ((dev_priv)->flags & CHIP_SANDYBRIDGE)
+#define IS_SANDYBRIDGE_D(dev_priv) ((dev_priv)->flags & CHIP_SANDYBRIDGE_D)
+#define IS_SANDYBRIDGE_M(dev_priv) ((dev_priv)->flags & CHIP_SANDYBRIDGE_M)
+
 #define IS_MOBILE(dev_priv) (dev_priv->flags & CHIP_M)
 
 #define I915_NEED_GFX_HWS(dev_priv) (dev_priv->flags & CHIP_HWS)
 
-#define HAS_RESET(dev_priv)	IS_I965G(dev_priv)
+#define HAS_RESET(dev_priv)	IS_I965G(dev_priv) && (!IS_GEN6(dev_priv))
 
 #define IS_GEN2(dev_priv)	(dev_priv->flags & CHIP_GEN2)
 #define IS_GEN3(dev_priv)	(dev_priv->flags & CHIP_GEN3)
