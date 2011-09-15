@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.16 2011/08/26 07:52:22 kevlo Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.17 2011/09/15 01:51:40 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -989,8 +989,11 @@ age_start(struct ifnet *ifp)
 		 * for the NIC to drain the ring.
 		 */
 		if (age_encap(sc, &m_head)) {
-			if (m_head == NULL)
+			if (m_head == NULL) {
+				ifp->if_oerrors++;
 				break;
+			}
+			IF_PREPEND(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
@@ -1134,7 +1137,7 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 	struct mbuf *m;
 	bus_dmamap_t map;
 	uint32_t cflags, poff, vtag;
-	int error, i, nsegs, prod;
+	int error, i, prod;
 
 	m = *m_head;
 	cflags = vtag = 0;
@@ -1146,43 +1149,21 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 	map = txd->tx_dmamap;
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, *m_head, BUS_DMA_NOWAIT);
-
+	if (error != 0 && error != EFBIG)
+		goto drop;
 	if (error != 0) {
-		bus_dmamap_unload(sc->sc_dmat, map);
-		error = EFBIG;
-	}
-	if (error == EFBIG) {
 		if (m_defrag(*m_head, M_DONTWAIT)) {
-			printf("%s: can't defrag TX mbuf\n", 
-			    sc->sc_dev.dv_xname);
-			m_freem(*m_head);
-			*m_head = NULL;
-			return (ENOBUFS);
+			error = ENOBUFS;
+			goto drop;
 		}
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, map, *m_head,
-		  	    BUS_DMA_NOWAIT);
-		if (error != 0) {
-			printf("%s: could not load defragged TX mbuf\n",
-			    sc->sc_dev.dv_xname);
-			m_freem(*m_head);
-			*m_head = NULL;
-			return (error);
-		}
-	} else if (error) {
-		printf("%s: could not load TX mbuf\n", sc->sc_dev.dv_xname);
-		return (error);
-	}
-
-	nsegs = map->dm_nsegs;
-
-	if (nsegs == 0) {
-		m_freem(*m_head);
-		*m_head = NULL;
-		return (EIO);
+		    BUS_DMA_NOWAIT);
+		if (error != 0)
+			goto drop;
 	}
 
 	/* Check descriptor overrun. */
-	if (sc->age_cdata.age_tx_cnt + nsegs >= AGE_TX_RING_CNT - 2) {
+	if (sc->age_cdata.age_tx_cnt + map->dm_nsegs >= AGE_TX_RING_CNT - 2) {
 		bus_dmamap_unload(sc->sc_dmat, map);
 		return (ENOBUFS);
 	}
@@ -1209,7 +1190,7 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 #endif
 
 	desc = NULL;
-	for (i = 0; i < nsegs; i++) {
+	for (i = 0; i < map->dm_nsegs; i++) {
 		desc = &sc->age_rdata.age_tx_ring[prod];
 		desc->addr = htole64(map->dm_segs[i].ds_addr);
 		desc->len = 
@@ -1241,6 +1222,11 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 	    sc->age_cdata.age_tx_ring_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	return (0);
+
+ drop:
+	m_freem(*m_head);
+	*m_head = NULL;
+	return (error);
 }
 
 void
