@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka650.c,v 1.19 2011/07/06 20:42:05 miod Exp $	*/
+/*	$OpenBSD: ka650.c,v 1.20 2011/09/15 00:48:24 miod Exp $	*/
 /*	$NetBSD: ka650.c,v 1.25 2001/04/27 15:02:37 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -79,7 +79,7 @@ struct	cpu_dep	ka650_calls = {
 	cvax_halt,
 	cvax_reboot,
 	NULL,
-	hardclock
+	icr_hardclock
 };
 
 /*
@@ -127,11 +127,11 @@ uvaxIII_memerr()
 
 	if (ka650cbd.cbd_cacr & CACR_CPE) {
 		printf("cache 2 tag parity error: ");
-		if (time.tv_sec - cache2tag < 7) {
+		if (time_second - cache2tag < 7) {
 			ka650setcache(CACHEOFF);
 			printf("caching disabled\n");
 		} else {
-			cache2tag = time.tv_sec;
+			cache2tag = time_second;
 			printf("flushing cache\n");
 			ka650setcache(CACHEON);
 		}
@@ -187,19 +187,19 @@ uvaxIII_mchk(cmcf)
 		if (i & CAER_DAT) {
 			printf("data");
 			i = cache1data;
-			cache1data = time.tv_sec;
+			cache1data = time_second;
 		}
 		if (i & CAER_TAG) {
 			printf("tag");
 			i = cache1tag;
-			cache1tag = time.tv_sec;
+			cache1tag = time_second;
 		}
 	} else if ((i & CAER_MCD) || (ka650merr_ptr->merr_errstat & MEM_CDAL)) {
 		printf("CDAL");
 		i = cdalerr;
-		cdalerr = time.tv_sec;
+		cdalerr = time_second;
 	}
-	if (time.tv_sec - i < 7) {
+	if (time_second - i < 7) {
 		ka650setcache(CACHEOFF);
 		printf(" parity error:	caching disabled\n");
 	} else {

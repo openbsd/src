@@ -1,5 +1,5 @@
-/*      $OpenBSD: cpu.h,v 1.39 2011/07/06 20:42:05 miod Exp $      */
-/*      $NetBSD: cpu.h,v 1.41 1999/10/21 20:01:36 ragge Exp $      */
+/*	$OpenBSD: cpu.h,v 1.40 2011/09/15 00:48:24 miod Exp $	*/
+/*	$NetBSD: cpu.h,v 1.41 1999/10/21 20:01:36 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -70,8 +70,8 @@ extern struct cpu_info cpu_info_store;
 #define cpu_unidle(ci)
 
 struct clockframe {
-        int     pc;
-        int     ps;
+	int	pc;
+	int	ps;
 };
 
 /*
@@ -79,12 +79,11 @@ struct clockframe {
  * struct for the current cpu is set up in locore.c.
  */
 struct	cpu_dep {
-	void	(*cpu_init)(void); /* pmap init before mm is on */
-	int	(*cpu_mchk)(caddr_t);   /* Machine check handling */
-	void	(*cpu_memerr)(void); /* Memory subsystem errors */
-	    /* Autoconfiguration */
-	void	(*cpu_conf)(void);
-	int	(*cpu_clkread)(time_t);	/* Read cpu clock time */
+	void	(*cpu_init)(void);	/* pmap init before mm is on */
+	int	(*cpu_mchk)(caddr_t);	/* Machine check handling */
+	void	(*cpu_memerr)(void);	/* Memory subsystem errors */
+	void	(*cpu_conf)(void);	/* Autoconfiguration */
+	int	(*cpu_clkread)(struct timespec *, time_t); /* Read cpu clock time */
 	void	(*cpu_clkwrite)(void);	/* Write system time to cpu */
 	short	cpu_vups;	/* speed of cpu */
 	short	cpu_scbsz;	/* (estimated) size of system control block */
@@ -116,9 +115,9 @@ extern int bootdev;
  * process as soon as possible.
  */
 
-#define signotify(p)     mtpr(AST_OK,PR_ASTLVL);
+#define signotify(p)		mtpr(AST_OK,PR_ASTLVL);
 
-extern	int     want_resched;   /* resched() was called */
+extern	int	want_resched;	/* resched() was called */
 
 /*
  * This is used during profiling to integrate system time.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka670.c,v 1.10 2011/07/06 20:42:05 miod Exp $	*/
+/*	$OpenBSD: ka670.c,v 1.11 2011/09/15 00:48:24 miod Exp $	*/
 /*	$NetBSD: ka670.c,v 1.4 2000/03/13 23:52:35 soren Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
@@ -69,7 +69,7 @@ struct	cpu_dep ka670_calls = {
 	generic_halt,
 	generic_reboot,
 	NULL,
-	hardclock
+	icr_hardclock
 };
 
 #define KA670_MC_RESTART	0x00008000	/* Restart possible*/

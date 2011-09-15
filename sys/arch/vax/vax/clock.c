@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.23 2011/07/06 18:32:59 miod Exp $	 */
+/*	$OpenBSD: clock.c,v 1.24 2011/09/15 00:48:24 miod Exp $	 */
 /*	$NetBSD: clock.c,v 1.35 2000/06/04 06:16:58 matt Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -35,6 +35,7 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/timetc.h>
 
 #include <dev/clock_subr.h>
 
@@ -45,62 +46,45 @@
 #include <machine/uvax.h>
 
 struct evcount clock_intrcnt;
+uint32_t icr_count;
+
+#if defined(VAX46) || defined(VAX48)
+u_int	vax_diagtmr_get_tc(struct timecounter *);
 
 /*
- * microtime() should return number of usecs in struct timeval.
- * We may get wrap-arounds, but that will be fixed with lasttime
- * check. This may fault within 10 msecs.
+ * This counter is only reliable in millisecond units.  See comments in
+ * vax_diagtmr_get_tc() for details.
  */
-void
-microtime(tvp)
-	struct timeval *tvp;
-{
-	int s, i;
-	static struct timeval lasttime;
-
-	s = splhigh();
-	bcopy((caddr_t)&time, tvp, sizeof(struct timeval));
-
-	switch (vax_boardtype) {
-#ifdef VAX46
-	case VAX_BTYP_46:
-	    {
-		extern struct vs_cpu *ka46_cpu;
-		i = *(volatile int *)(&ka46_cpu->vc_diagtimu);
-		i = (i >> 16) * 1024 + (i & 0x3ff);
-	    }
-		break;
+struct timecounter vax_diagtmr_tc = {
+	.tc_get_timecount = vax_diagtmr_get_tc,
+	.tc_counter_mask = 0xffff,	/* 16 bits */
+	.tc_frequency = 1000,		/* 1kHz */
+	/* tc_name will be filled in */
+	.tc_quality = 100
+};
 #endif
-#if defined(VAX48) || defined(VXT)
-	case VAX_BTYP_48:
-	case VAX_BTYP_VXT:
-		/*
-		 * PR_ICR doesn't exist.  We could use the vc_diagtimu
-		 * counter, saving the value on the timer interrupt and
-		 * subtracting that from the current value.
-		 */
-		i = 0;
-		break;
+
+#ifdef VXT
+u_int	vax_vxt_get_tc(struct timecounter *);
+
+struct timecounter vax_vxt_tc = {
+	.tc_get_timecount = vax_vxt_get_tc,
+	.tc_counter_mask = 0xffffffff,
+	.tc_frequency = 100,		/* 100Hz */
+	.tc_name = "vxt",
+	.tc_quality = 0
+};
 #endif
-	default:
-		i = mfpr(PR_ICR);
-		break;
-	}
-	i += tick; /* Get current interval count */
-	tvp->tv_usec += i;
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	bcopy(tvp, &lasttime, sizeof(struct timeval));
-	splx(s);
-}
+
+u_int	vax_icr_get_tc(struct timecounter *);
+
+struct timecounter vax_icr_tc = {
+	.tc_get_timecount = vax_icr_get_tc,
+	.tc_counter_mask = 0xffffffff,
+	.tc_frequency = 1000000,	/* 1MHz */
+	.tc_name = "icr",
+	.tc_quality = 100
+};
 
 /*
  * Sets year to the year in fs_time and then calculates the number of
@@ -112,38 +96,35 @@ microtime(tvp)
  */
 
 void
-inittodr(fs_time) 
-	time_t fs_time;
+inittodr(time_t fs_time)
 {
 	int rv, deltat;
+	struct timespec ts;
 
-	rv = (*dep_call->cpu_clkread) (fs_time);
-	switch (rv) {
-
-	case CLKREAD_BAD: /* No useable information from system clock */
-		time.tv_sec = fs_time;
+	rv = (*dep_call->cpu_clkread)(&ts, fs_time);
+	if (rv != 0) {
+		/* No useable information from system clock */
+		ts.tv_sec = fs_time;
+		ts.tv_nsec = 0;
 		resettodr();
-		break;
-
-	case CLKREAD_WARN: /* Just give the warning */
-		break;
-
-	default: /* System clock OK, no warning if we don't want to. */
-		deltat = time.tv_sec - fs_time;
+	} else {
+		/* System clock OK, no warning if we don't want to. */
+		deltat = ts.tv_sec - fs_time;
 
 		if (deltat < 0)
 			deltat = -deltat;
 		if (deltat >= 2 * SEC_PER_DAY) {
-			printf("Clock has %s %d days",
-			    time.tv_sec < fs_time ? "lost" : "gained",
+			printf("clock has %s %d days",
+			    ts.tv_sec < fs_time ? "lost" : "gained",
 			    deltat / SEC_PER_DAY);
-			rv = CLKREAD_WARN;
+			rv = EINVAL;
 		}
-		break;
 	}
 
-	if (rv < CLKREAD_OK)
+	if (rv != 0)
 		printf(" -- CHECK AND RESET THE DATE!\n");
+
+	tc_setclock(&ts);
 }
 
 /*   
@@ -155,29 +136,73 @@ resettodr()
 {
 	(*dep_call->cpu_clkwrite)();
 }
+
 /*
  * A delayloop that delays about the number of milliseconds that is
  * given as argument.
  */
 void
-delay(i)
-	int i;
+delay(int i)
 {
 	asm ("1: sobgtr %0, 1b" : : "r" (dep_call->cpu_vups * i));
 }
 
 /*
  * On all VAXen there are a microsecond clock that should
- * be used for interval interrupts. Some CPUs don't use the ICR interval
- * register but it doesn't hurt to load it anyway.
+ * be used for interval interrupts. We have to be wary of the few CPUs
+ * which don't implement the ICR interval register.
  */
 void
 cpu_initclocks()
 {
-	if (vax_boardtype != VAX_BTYP_VXT)
-		mtpr(-10000, PR_NICR); /* Load in count register */
-	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
+	switch (vax_boardtype) {
+#ifdef VAX46
+	/* VAXstation 4000/60: no ICR register but a specific timer */
+	case VAX_BTYP_46:
+	    {
+		extern struct vs_cpu *ka46_cpu;
+
+		vax_diagtmr_tc.tc_priv = ka46_cpu;
+		vax_diagtmr_tc.tc_name = "KA46";
+		tc_init(&vax_diagtmr_tc);
+	    }
+		break;
+#endif
+#ifdef VAX48
+	/* VAXstation 4000/VLC: no ICR register but a specific timer */
+	case VAX_BTYP_48:
+	    {
+		extern struct vs_cpu *ka48_cpu;
+
+		vax_diagtmr_tc.tc_priv = ka48_cpu;
+		vax_diagtmr_tc.tc_name = "KA48";
+		tc_init(&vax_diagtmr_tc);
+	    }
+		break;
+#endif
+#ifdef VXT
+	/* VXT2000: neither NICR nor ICR registers, no known other timer. */
+	case VAX_BTYP_VXT:
+		tc_init(&vax_vxt_tc);
+		break;
+#endif
+	/* all other systems: NICR+ICR registers implementing a 1MHz timer. */
+	default:
+		tc_init(&vax_icr_tc);
+		break;
+	}
+
 	evcount_attach(&clock_intrcnt, "clock", NULL);
+	if (vax_boardtype != VAX_BTYP_VXT)
+		mtpr(-tick, PR_NICR); /* Load in count register */
+	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
+}
+
+void
+icr_hardclock(struct clockframe *cf)
+{
+	icr_count += 10000;	/* tick */
+	hardclock(cf);
 }
 
 /*
@@ -191,8 +216,7 @@ cpu_initclocks()
  * Converts a year to corresponding number of ticks.
  */
 int
-yeartonum(y)
-	int y;
+yeartonum(int y)
 {
 	int n;
 
@@ -205,8 +229,7 @@ yeartonum(y)
  * Converts tick number to a year 70 ->
  */
 int
-numtoyear(num)
-	int num;
+numtoyear(int num)
 {
 	int y = 70, j;
 	while (num >= (j = SECPERYEAR(y))) {
@@ -218,13 +241,12 @@ numtoyear(num)
 
 #if VAX650 || VAX660 || VAX670 || VAX680 || VAX53
 /*
- * Reads the TODR register; returns a (probably) true tick value,
- * or CLKREAD_BAD if failed. The year is based on the argument
- * year; the TODR doesn't hold years.
+ * Reads the TODR register; returns 0 if a valid time has been found, EINVAL
+ * otherwise.  The year is based on the argument year; the TODR doesn't hold
+ * years.
  */
 int
-generic_clkread(base)
-	time_t base;
+generic_clkread(struct timespec *ts, time_t base)
 {
 	unsigned klocka = mfpr(PR_TODR);
 
@@ -236,11 +258,13 @@ generic_clkread(base)
 			printf("TODR stopped");
 		else
 			printf("TODR too small");
-		return CLKREAD_BAD;
+		return EINVAL;
 	}
 
-	time.tv_sec = yeartonum(numtoyear(base)) + (klocka - TODRBASE) / 100;
-	return CLKREAD_OK;
+	ts->tv_sec =
+	    yeartonum(numtoyear(base)) + (klocka - TODRBASE) / 100;
+	ts->tv_nsec = 0;
+	return 0;
 }
 
 /*
@@ -249,7 +273,7 @@ generic_clkread(base)
 void
 generic_clkwrite()
 {
-	unsigned tid = time.tv_sec, bastid;
+	uint32_t tid = time_second, bastid;
 
 	bastid = tid - yeartonum(numtoyear(tid));
 	mtpr((bastid * 100) + TODRBASE, PR_TODR);
@@ -266,8 +290,7 @@ int	clk_tweak;	/* Offset of time into word. */
 #define	REGPOKE(off, v)	(clk_page[off << clk_adrshift] = ((v) << clk_tweak))
 
 int
-chip_clkread(base)
-	time_t base;
+chip_clkread(struct timespec *ts, time_t base)
 {
 	struct clock_ymdhms c;
 	int timeout = 1<<15, s;
@@ -279,12 +302,12 @@ chip_clkread(base)
 
 	if ((REGPEEK(CSRD_OFF) & CSRD_VRT) == 0) {
 		printf("WARNING: TOY clock not marked valid");
-		return CLKREAD_BAD;
+		return EINVAL;
 	}
 	while (REGPEEK(CSRA_OFF) & CSRA_UIP)
 		if (--timeout == 0) {
 			printf ("TOY clock timed out");
-			return CLKREAD_BAD;
+			return EINVAL;
 		}
 
 	s = splhigh();
@@ -297,8 +320,9 @@ chip_clkread(base)
 	c.dt_sec = REGPEEK(SEC_OFF);
 	splx(s);
 
-	time.tv_sec = clock_ymdhms_to_secs(&c);
-	return CLKREAD_OK;
+	ts->tv_sec = clock_ymdhms_to_secs(&c);
+	ts->tv_nsec = 0;
+	return 0;
 }
 
 void
@@ -313,7 +337,7 @@ chip_clkwrite()
 
 	REGPOKE(CSRB_OFF, CSRB_SET);
 
-	clock_secs_to_ymdhms(time.tv_sec, &c);
+	clock_secs_to_ymdhms(time_second, &c);
 
 	REGPOKE(YR_OFF, ((u_char)(c.dt_year - 1970)));
 	REGPOKE(MON_OFF, c.dt_mon);
@@ -326,3 +350,49 @@ chip_clkwrite()
 	REGPOKE(CSRB_OFF, CSRB_DM|CSRB_24);
 };
 #endif
+
+#if defined(VAX46) || defined(VAX48)
+u_int
+vax_diagtmr_get_tc(struct timecounter *tc)
+{
+	/*
+	 * The diagnostic timer runs at about 1024kHz.
+	 * The microsecond counter counts from 0 to 1023 inclusive (so it
+	 * really is a 1/1024th millisecond counter) and increments the
+	 * millisecond counter, which is a free-running 16 bit counter.
+	 *
+	 * To compensate for the timer not running at exactly 1024kHz,
+	 * the microsecond counter is reset (to zero) every clock interrupt,
+	 * i.e. every 10 millisecond.
+	 *
+	 * Without resetting the microsecond counter, experiments show that,
+	 * on KA48, the millisecond counter increments of 960 in a second,
+	 * instead of the expected 1000 (i.e. a 24/25 ratio).  But resetting
+	 * the microsecond counter (which does not affect the millisecond
+	 * counter value) ought to make it __slower__ - who can explain
+	 * this behaviour?
+	 *
+	 * Because we reset the ``binary microsecond'' counter and can not
+	 * afford time moving backwards, we only return the millisecond
+	 * counter here.
+	 */
+	struct vs_cpu *vscpu;
+
+	vscpu = (struct vs_cpu *)tc->tc_priv;
+	return *(volatile uint16_t *)&vscpu->vc_diagtimm;
+}
+#endif
+
+#ifdef VXT
+u_int
+vax_vxt_get_tc(struct timecounter *tc)
+{
+	return (u_int)clock_intrcnt.ec_count;
+}
+#endif
+
+u_int
+vax_icr_get_tc(struct timecounter *tc)
+{
+	return icr_count + (u_int)(tick + (int)mfpr(PR_ICR));
+}

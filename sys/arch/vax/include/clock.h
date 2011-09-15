@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.h,v 1.8 2008/08/18 23:19:24 miod Exp $ */
+/*	$OpenBSD: clock.h,v 1.9 2011/09/15 00:48:24 miod Exp $ */
 /*	$NetBSD: clock.h,v 1.4 1999/09/06 19:52:53 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -42,10 +42,6 @@
 #define DAYSPERYEAR(y)	(IS_LEAPYEAR(y) ? 366 : 365)
 #define SECPERYEAR(y)	(DAYSPERYEAR(y) * SEC_PER_DAY)
 
-#define CLKREAD_OK	0
-#define CLKREAD_BAD	-1
-#define CLKREAD_WARN	-2
-
 #define TODRBASE	(1 << 28) /* Rumours say it comes from VMS */
 
 #define	SEC_OFF		0
@@ -70,9 +66,10 @@ extern	volatile short *clk_page;
 extern	int clk_adrshift, clk_tweak;
 
 /* Prototypes */
-int	generic_clkread(time_t);
+void	icr_hardclock(struct clockframe *);
+int	generic_clkread(struct timespec *, time_t);
 void	generic_clkwrite(void);
-int	chip_clkread(time_t);
+int	chip_clkread(struct timespec *, time_t);
 void	chip_clkwrite(void);
 
 int	yeartonum(int);

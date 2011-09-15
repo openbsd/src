@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka48.c,v 1.12 2011/08/31 21:32:44 miod Exp $	*/
+/*	$OpenBSD: ka48.c,v 1.13 2011/09/15 00:48:24 miod Exp $	*/
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -61,6 +61,7 @@ static	int	ka48_mchk(caddr_t);
 static	void	ka48_halt(void);
 static	void	ka48_reboot(int);
 static	void	ka48_cache_enable(void);
+static	void	ka48_hardclock(struct clockframe *);
 
 struct	vs_cpu *ka48_cpu;
 
@@ -79,7 +80,7 @@ struct	cpu_dep ka48_calls = {
 	ka48_halt,
 	ka48_reboot,
 	NULL,
-	hardclock
+	ka48_hardclock
 };
 
 
@@ -169,4 +170,11 @@ ka48_reboot(arg)
 	if (((u_int8_t *) clk_page)[KA48_CPMBX] != KA48_HLT_BOOT)
 		((u_int8_t *) clk_page)[KA48_CPMBX] = KA48_HLT_BOOT;
 	asm("halt");
+}
+
+static void
+ka48_hardclock(struct clockframe *cf)
+{
+	ka48_cpu->vc_diagtimu = 0;
+	hardclock(cf);
 }

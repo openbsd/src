@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka60.c,v 1.2 2011/07/06 20:42:05 miod Exp $	*/
+/*	$OpenBSD: ka60.c,v 1.3 2011/09/15 00:48:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -76,7 +76,7 @@
 #include <vax/mbus/mbusvar.h>
 #include <vax/mbus/fwioreg.h>
 
-int	ka60_clkread(time_t);
+int	ka60_clkread(struct timespec *, time_t);
 void	ka60_clkwrite(void);
 void	ka60_clrf(void);
 void	ka60_conf(void);
@@ -273,7 +273,7 @@ ka60_mchk(caddr_t mcef)
  * Clock routines.  They need to access the TODR through the SSC.
  */
 int
-ka60_clkread(time_t base)
+ka60_clkread(struct timespec *ts, time_t base)
 {
 	unsigned klocka = cvax_ssc_ptr->ssc_todr;
 
@@ -286,17 +286,18 @@ ka60_clkread(time_t base)
 			cvax_ssc_ptr->ssc_todr = 1;	/* spin it */
 		} else
 			printf("TODR too small");
-		return CLKREAD_BAD;
+		return EINVAL;
 	}
 
-	time.tv_sec = yeartonum(numtoyear(base)) + (klocka - TODRBASE) / 100;
-	return CLKREAD_OK;
+	ts->tv_sec = yeartonum(numtoyear(base)) + (klocka - TODRBASE) / 100;
+	ts->tv_nsec = 0;
+	return 0;
 }
 
 void
 ka60_clkwrite()
 {
-	unsigned tid = time.tv_sec, bastid;
+	uint32_t tid = time_second, bastid;
 
 	bastid = tid - yeartonum(numtoyear(tid));
 	cvax_ssc_ptr->ssc_todr = (bastid * 100) + TODRBASE;
@@ -352,6 +353,6 @@ ka60_hardclock(struct clockframe *cf)
 	int s;
 
 	s = splclock();
-	hardclock(cf);
+	icr_hardclock(cf);
 	splx(s);
 }

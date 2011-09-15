@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka53.c,v 1.8 2011/07/06 20:42:05 miod Exp $	*/
+/*	$OpenBSD: ka53.c,v 1.9 2011/09/15 00:48:24 miod Exp $	*/
 /*	$NetBSD: ka53.c,v 1.2 2000/06/04 02:19:27 matt Exp $	*/
 /*
  * Copyright (c) 2002 Hugh Graham.
@@ -66,7 +66,7 @@ struct cpu_dep ka53_calls = {
 	generic_halt,
 	generic_reboot,
 	NULL,
-	hardclock
+	icr_hardclock
 };
 
 void

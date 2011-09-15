@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka680.c,v 1.13 2011/07/06 20:42:05 miod Exp $	*/
+/*	$OpenBSD: ka680.c,v 1.14 2011/09/15 00:48:24 miod Exp $	*/
 /*	$NetBSD: ka680.c,v 1.3 2001/01/28 21:01:53 ragge Exp $	*/
 /*
  * Copyright (c) 2002 Hugh Graham.
@@ -97,7 +97,7 @@ struct cpu_dep ka680_calls = {
 	generic_halt,
 	generic_reboot,
 	NULL,
-	hardclock
+	icr_hardclock
 };
 
 void
