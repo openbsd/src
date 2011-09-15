@@ -632,7 +632,9 @@ extern void check_function_arguments_recurse (void (*)
 					      void *, tree,
 					      unsigned HOST_WIDE_INT);
 extern void check_function_format (tree, tree);
+extern void check_function_bounded (int *, tree, tree);
 extern void set_Wformat (int);
+extern tree handle_bounded_attribute (tree *, tree, tree, int, bool *);
 extern tree handle_format_attribute (tree *, tree, tree, int, bool *);
 extern tree handle_format_arg_attribute (tree *, tree, tree, int, bool *);
 extern int c_common_handle_option (size_t code, const char *arg, int value);

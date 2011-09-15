@@ -545,7 +545,6 @@ static tree handle_cleanup_attribute (tree *, tree, tree, int, bool *);
 static tree handle_warn_unused_result_attribute (tree *, tree, tree, int,
 						 bool *);
 static tree handle_sentinel_attribute (tree *, tree, tree, int, bool *);
-static tree handle_bounded_attribute (tree *, tree, tree, int, bool *);
 
 static void check_function_nonnull (tree, tree);
 static void check_nonnull_arg (void *, tree, unsigned HOST_WIDE_INT);
@@ -4648,15 +4647,6 @@ handle_mode_attribute (tree *node, tree name, tree args,
   return NULL_TREE;
 }
 
-static tree
-handle_bounded_attribute (tree *ARG_UNUSED (node), tree ARG_UNUSED (name), 
-			  tree ARG_UNUSED (args),
-			  int ARG_UNUSED (flags), bool *no_add_attrs)
-{
-	*no_add_attrs = true;
-	return NULL_TREE;
-}
-
 /* Handle a "section" attribute; arguments as in
    struct attribute_spec.handler.  */
 
@@ -5715,6 +5705,9 @@ check_function_arguments (tree attrs, tree params, tree typelist)
 
   if (warn_format)
     check_function_sentinel (attrs, params, typelist);
+
+  if (warn_bounded)
+    check_function_bounded (NULL, attrs, params);
 }
 
 /* Generic argument checking recursion routine.  PARAM is the argument to

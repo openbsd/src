@@ -385,6 +385,7 @@ c_common_handle_option (size_t scode, const char *arg, int value)
       set_Wunused (value);
       set_Wformat (value);
       set_Wimplicit (value);
+      warn_bounded = value;
       warn_char_subscripts = value;
       warn_missing_braces = value;
       warn_parentheses = value;
