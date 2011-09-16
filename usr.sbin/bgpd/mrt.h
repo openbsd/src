@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.27 2010/06/04 10:13:00 claudio Exp $ */
+/*	$OpenBSD: mrt.h,v 1.28 2011/09/16 15:44:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -35,7 +35,7 @@
  * |               length              | length of packet excluding this header
  * +--------+--------+--------+--------+
  *
- * ET types include an additional 32bit microsecond field comming after the
+ * ET types include an additional 32bit microsecond field coming after the
  * length field.
  */
 #define MRT_HEADER_SIZE		12
