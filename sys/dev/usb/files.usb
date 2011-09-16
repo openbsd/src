@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.98 2011/05/24 20:27:11 matthew Exp $
+#	$OpenBSD: files.usb,v 1.99 2011/09/16 15:48:19 yuo Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -167,6 +167,11 @@ file	dev/usb/utrh.c			utrh
 device	utwitch: hid
 attach	utwitch at uhidbus
 file	dev/usb/utwitch.c		utwitch
+
+# Fujitsu Compnent Smart Power Strip FX-5204PS
+device	usps
+attach	usps at uhub
+file	dev/usb/usps.c			usps
 
 # Ethernet adapters
 # ADMtek AN986 Pegasus
