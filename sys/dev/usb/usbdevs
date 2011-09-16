@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.556 2011/09/16 13:07:39 yuo Exp $
+$OpenBSD: usbdevs,v 1.557 2011/09/16 13:36:18 yuo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -547,6 +547,7 @@ vendor STRAWBERRYLINUX	0x1774	Strawberry linux Co., Ltd.
 vendor SWEEX2		0x177f	Sweex
 vendor MECANIQUE	0x1781	Mecanique
 vendor DISPLAYLINK	0x17e9	DisplayLink
+vendor VAISALA		0x1843	VAISALA
 vendor AMIT		0x18c5	AMIT
 vendor QCOM		0x18e8	Qcom
 vendor LINKSYS3		0x1915	Linksys
@@ -3857,6 +3858,9 @@ product OPTION GSICON72		0x6911	GlobeSurfer Icon 7.2
 product OPTION GTHSDPA225	0x6971	GlobeTrotter HSDPA Icon 225
 product OPTION GTHSUPA380E	0x7211	GlobeTrotter HSUPA 380E
 product OPTION GTICON322	0xd033	GlobeTrotter Icon322 storage
+
+/* Vaisala Products */
+product VAISALA USBINSTCABLE	0x0200	USB instrument cable
 
 /* WCH/QinHeng Electronics */
 product WCH CH341		0x5523	CH341 serial/parallel
