@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.23 2011/09/16 18:12:09 shadchin Exp $
+.\"	$OpenBSD: less.1,v 1.24 2011/09/16 19:57:30 jmc Exp $
 .\"
 .\" Copyright (C) 1984-2011  Mark Nudelman
 .\"
@@ -40,7 +40,7 @@
 .Fl -version
 .Nm less \*(Ba more
 .Bk -words
-.Op Fl Oo Cm + Oc Ns Cm aABCcdEeFfGgIiJKLMmNnQqRrSsUuVWwX~
+.Op Fl Oo Cm + Oc Ns Cm AaBCcdEeFfGgIiJKLMmNnQqRrSsUuVWwX~
 .Op Fl b Ar space
 .Op Fl h Ar lines
 .Op Fl j Ar line
@@ -677,7 +677,7 @@ screen, .3 is three tenths down from the first line, and so on.
 If the line is specified as a fraction, the actual line number
 is recalculated if the terminal window is resized, so that the
 target line remains at the specified fraction of the screen height.
-If any form of the -j option is used, 
+If any form of the -j option is used,
 forward searches begin at the line immediately after the target line,
 and backward searches begin at the target line,
 unless changed by -a or -A.
@@ -692,7 +692,7 @@ when an interrupt character (usually ^C) is typed.
 Normally, an interrupt character causes
 .Nm
 to stop whatever it is doing and return to its command prompt.
-Note that use of this option makes it impossible to return to the 
+Note that use of this option makes it impossible to return to the
 command prompt from the "F" command.
 .It Xo
 .Fl k Ns Ar filename |
@@ -1770,7 +1770,7 @@ shell commands between invocations of
 If set to "-" or "/dev/null", a history file is not used.
 The default is "$HOME/.lesshst".
 .\" The default is "$HOME/.lesshst" on Unix systems, "$HOME/_lesshst" on
-.\" DOS and Windows systems, or "$HOME/lesshst.ini" or "$INIT/lesshst.ini" 
+.\" DOS and Windows systems, or "$HOME/lesshst.ini" or "$INIT/lesshst.ini"
 .\" on OS/2 systems.
 .It Ev LESSHISTSIZE
 The maximum number of commands to save in the history file.
