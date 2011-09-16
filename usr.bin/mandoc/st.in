@@ -1,4 +1,4 @@
-/*	$Id: st.in,v 1.10 2011/09/09 15:29:21 jmc Exp $ */
+/*	$Id: st.in,v 1.11 2011/09/16 19:36:07 jmc Exp $ */
 /*
  * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -59,7 +59,7 @@ LINE("-ansiC-89",	"ANSI X3.159-1989 (\\(lqANSI\\~C89\\(rq)")
 LINE("-ansiC-99",	"ANSI/ISO/IEC 9899-1999 (\\(lqANSI\\~C99\\(rq)")
 LINE("-ieee754",	"IEEE Std 754-1985")
 LINE("-iso8802-3",	"ISO 8802-3: 1989")
-LINE("-iso8601-4",	"ISO 8601:2004")
+LINE("-iso8601",	"ISO 8601")
 LINE("-ieee1275-94",	"IEEE Std 1275-1994 (\\(lqOpen Firmware\\(rq)")
 LINE("-xpg3",		"X/Open Portability Guide Issue\\~3 (\\(lqXPG3\\(rq)")
 LINE("-xpg4",		"X/Open Portability Guide Issue\\~4 (\\(lqXPG4\\(rq)")
