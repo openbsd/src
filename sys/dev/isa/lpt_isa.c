@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_isa.c,v 1.12 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: lpt_isa.c,v 1.13 2011/09/16 17:20:07 miod Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -79,7 +79,7 @@ struct cfattach lpt_isa_ca = {
  *
  *	2) You should be able to write to and read back the same value
  *	   to the control port lower 5 bits, the upper 3 bits are reserved
- *	   per the IBM PC technical reference manauls and different boards
+ *	   per the IBM PC technical reference manuals and different boards
  *	   do different things with them.  Do an alternating zeros, alternating
  *	   ones, walking zero, and walking one test to check for stuck bits.
  *

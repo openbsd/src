@@ -1,4 +1,4 @@
-/*      $OpenBSD: mtpr.h,v 1.6 2011/03/23 16:54:37 pirofti Exp $     */
+/*      $OpenBSD: mtpr.h,v 1.7 2011/09/16 17:20:07 miod Exp $     */
 /*      $NetBSD: mtpr.h,v 1.12 1999/06/06 19:06:29 ragge Exp $     */
 
 /*
@@ -77,7 +77,7 @@
 #define PR_TXDB   35 /* Console Transmit D/B */
 #define PR_TBDR   36 /* Translation Buffer Group Disable Register 11/750 */
 #define PR_CADR   37 /* Cache Disable Register 11/750 */
-#define PR_MCESR  38 /* Machiune Check Error Summary Register 11/750 */
+#define PR_MCESR  38 /* Machine Check Error Summary Register 11/750 */
 #define PR_CAER   39 /* Cache Error Register 11/750 */
 #define PR_ACCS   40 /* Accelerator control register */
 #define PR_SAVISP 41 /* Console Saved ISP */
@@ -98,7 +98,7 @@
 #define PR_TBIS   58 /* Trans. Buf. Invalidate Single */
 #define PR_TBDATA 59 /* Translation Buffer Data */
 #define PR_MBRK   60 /* Microprogram Break */
-#define PR_PMR    61 /* Performance Monnitor Enable */
+#define PR_PMR    61 /* Performance Monitor Enable */
 #define PR_SID    62 /* System ID Register */
 #define PR_TBCHK  63 /* Translation Buffer Check */
 
