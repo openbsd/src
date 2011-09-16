@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usps.4,v 1.1 2011/09/16 15:59:14 yuo Exp $
+.\"	$OpenBSD: usps.4,v 1.2 2011/09/16 22:13:39 jmc Exp $
 .\"
 .\" Copyright (c) 2011 Yojiro UO <yuo@nui.org>
 .\"
@@ -25,14 +25,15 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for Fujitsu Component Smart Power Strip 
-FX-5204PS device.
+driver provides support for the Fujitsu Component Smart Power Strip FX-5204PS.
 The sensor possesses a collection of sensor values which are
 made available through the
 .Xr sysctl 8
 interface.
-The device provides par port electricity consumption and AC voltage and 
-frequency of electric power supply. It also provides device temperature.
+As well as AC voltage,
+the device provides the electricity power supply frequency,
+per port electricity consumption,
+and device temperature.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr sensorsd 8 ,
