@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.h,v 1.30 2010/04/21 19:40:59 deraadt Exp $	*/
+/*	$OpenBSD: sensors.h,v 1.31 2011/09/16 15:44:31 yuo Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -47,7 +47,7 @@ enum sensor_type {
 	SENSOR_DRIVE,			/* disk */
 	SENSOR_TIMEDELTA,		/* system time error (nSec) */
 	SENSOR_HUMIDITY,		/* humidity (m%RH) */
-	SENSOR_FREQ,			/* frequency (Hz) */
+	SENSOR_FREQ,			/* frequency (muHz) */
 	SENSOR_ANGLE,			/* angle (mudegrees) */
 	SENSOR_MAX_TYPES
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.24 2011/03/02 06:48:17 jasper Exp $	*/
+/*	$OpenBSD: sensors.c,v 1.25 2011/09/16 15:44:31 yuo Exp $	*/
 
 /*
  * Copyright (c) 2007 Deanna Phillips <deanna@openbsd.org>
@@ -224,6 +224,10 @@ showsensor(struct sensinfo *s)
 	case SENSOR_FANRPM:
 		tbprintf("%11lld RPM", s->sn_value);
 		break;
+	case SENSOR_VOLTS_AC:
+		tbprintf("%10.2f V AC",
+		    s->sn_value / 1000000.0);
+		break;
 	case SENSOR_VOLTS_DC:
 		tbprintf("%10.2f V DC",
 		    s->sn_value / 1000000.0);
@@ -266,7 +270,7 @@ showsensor(struct sensinfo *s)
 		tbprintf("%3.2f%%", s->sn_value / 1000.0);
 		break;
 	case SENSOR_FREQ:
-		tbprintf("%11lld Hz", s->sn_value);
+		tbprintf("%11.2f Hz", s->sn_value / 1000000.0);
 		break;
 	case SENSOR_ANGLE:
 		tbprintf("%3.4f degrees", s->sn_value / 1000000.0);

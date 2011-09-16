@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.45 2011/07/04 04:34:14 claudio Exp $	*/
+/*	$OpenBSD: mib.c,v 1.46 2011/09/16 15:44:31 yuo Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -1378,6 +1378,7 @@ mib_sensorvalue(struct sensor *s)
 	case SENSOR_WATTHOUR:
 	case SENSOR_AMPHOUR:
 	case SENSOR_LUX:
+	case SENSOR_FREQ:
 		ret = asprintf(&v, "%.2f", s->value / 1000000.0);
 		break;
 	case SENSOR_INDICATOR:
@@ -1398,7 +1399,6 @@ mib_sensorvalue(struct sensor *s)
 		/* FALLTHROUGH */
 	case SENSOR_FANRPM:
 	case SENSOR_INTEGER:
-	case SENSOR_FREQ:
 	default:
 		ret = asprintf(&v, "%lld", s->value);
 		break;

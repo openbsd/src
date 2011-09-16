@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.177 2011/07/08 18:30:17 yasuoka Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.178 2011/09/16 15:44:31 yuo Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -2463,6 +2463,9 @@ print_sensor(struct sensor *s)
 		case SENSOR_FANRPM:
 			printf("%lld RPM", s->value);
 			break;
+		case SENSOR_VOLTS_AC:
+			printf("%.2f ADC", s->value / 1000000.0);
+			break;
 		case SENSOR_VOLTS_DC:
 			printf("%.2f VDC", s->value / 1000000.0);
 			break;
@@ -2535,7 +2538,7 @@ print_sensor(struct sensor *s)
 			printf("%.2f%%", s->value / 1000.0);
 			break;
 		case SENSOR_FREQ:
-			printf("%lld Hz", s->value);
+			printf("%.2f Hz", s->value / 1000000.0);
 			break;
 		case SENSOR_ANGLE:
 			printf("%3.4f degrees", s->value / 1000000.0);
