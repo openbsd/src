@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.555 2011/09/16 13:04:11 yuo Exp $
+$OpenBSD: usbdevs,v 1.556 2011/09/16 13:07:39 yuo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1786,7 +1786,7 @@ product FUJITSUCOMP KEYBOARD6	0x0005	Type 6 Keyboard
 product FUJITSUCOMP KEYBOARD7	0x00a2	Type 7 Keyboard
 /* XXX The above is a North American PC style keyboard possibly */
 product FUJITSUCOMP MOUSE	0x0100	Type 6 Mouse
-
+product FUJITSUCOMP FX5204PS	0x0423	Smart Power Strip FX-5204PS
 
 /* Fujitsu Siemens Computers products */
 product FSC E5400		0x1009	PrismGT USB 2.0 WLAN
