@@ -10,10 +10,10 @@ srcdir = .
 
 SRC = \
 	main.c screen.c brac.c ch.c charset.c cmdbuf.c \
-	command.c decode.c edit.c filename.c forwback.c \
+	command.c cvt.c decode.c edit.c filename.c forwback.c \
 	help.c ifile.c input.c jump.c line.c linenum.c \
 	lsystem.c mark.c optfunc.c option.c opttbl.c os.c \
-	output.c position.c prompt.c search.c signal.c \
+	output.c pattern.c position.c prompt.c search.c signal.c \
 	tags.c ttyin.c version.c  
 DISTFILES_W = \
 	defines.ds  Makefile.dsb Makefile.dsg Makefile.dsu \
@@ -24,13 +24,23 @@ DISTFILES = \
 	${SRC} regexp.c regexp.h \
 	COPYING INSTALL LICENSE Makefile.in Makefile.aut NEWS README \
 	configure configure.ac lesskey.c lessecho.c scrsize.c \
-	cmd.h funcs.h lglob.h less.h lesskey.h option.h pckeys.h position.h \
+	charset.h cmd.h funcs.h lglob.h less.h lesskey.h option.h \
+	pckeys.h pattern.h position.h \
 	install.sh defines.h.in mkinstalldirs \
-	less.nro lesskey.nro less.man lesskey.man less.hlp \
+	less.nro less.man lesskey.nro lesskey.man lessecho.nro lessecho.man \
+	less.hlp \
 	mkfuncs.awk mkhelp.c \
 	${DISTFILES_W}
 
 all: help.c funcs.h ${srcdir}/configure 
+
+release: .FORCE
+	${MAKE} -f Makefile.aut tagall 
+	${MAKE} -f Makefile.aut all 
+	${MAKE} -f Makefile.aut clean 
+	${MAKE} -f Makefile.aut dist
+
+.FORCE:
 
 help.c: less.hlp mkhelp
 	-mv -f ${srcdir}/help.c ${srcdir}/help.c.old
@@ -55,7 +65,8 @@ lint:
 
 clean: 
 	rm -f Makefile config.status config.log config.cache defines.h stamp-h \
-		README NEWS less.nro lesskey.nro  less.man lesskey.man
+		README NEWS \
+		less.nro less.man lesskey.nro lesskey.man lessecho.nro lessecho.man 
 
 distclean: clean
 realclean: clean
@@ -78,6 +89,8 @@ ${srcdir}/less.nro: ${srcdir}/less.nro.VER ${srcdir}/version.c
 	${REPLACE_VERSION} ${srcdir}/less.nro.VER
 ${srcdir}/lesskey.nro: ${srcdir}/lesskey.nro.VER ${srcdir}/version.c
 	${REPLACE_VERSION} ${srcdir}/lesskey.nro.VER
+${srcdir}/lessecho.nro: ${srcdir}/lessecho.nro.VER ${srcdir}/version.c
+	${REPLACE_VERSION} ${srcdir}/lessecho.nro.VER
 ${srcdir}/less.hlp: ${srcdir}/less.hlp.VER ${srcdir}/version.c
 	${REPLACE_VERSION} ${srcdir}/less.hlp.VER
 
@@ -85,6 +98,8 @@ ${srcdir}/less.man: ${srcdir}/less.nro
 	${NROFF} ${srcdir}/less.nro >${srcdir}/less.man
 ${srcdir}/lesskey.man: ${srcdir}/lesskey.nro
 	${NROFF} ${srcdir}/lesskey.nro >${srcdir}/lesskey.man
+${srcdir}/lessecho.man: ${srcdir}/lessecho.nro
+	${NROFF} ${srcdir}/lessecho.nro >${srcdir}/lessecho.man
 
 
 distfiles: ${DISTFILES}
@@ -103,6 +118,8 @@ dist: ${DISTFILES}
 	cd $$REL; chmod +w ${DISTFILES_W}; cd ..; \
 	echo "Creating release/$$REL/$$REL.tar.gz"; \
 	tar -cf - $$REL | gzip -c >release/$$REL/$$REL.tar.gz; \
+	echo "Signing release/$$REL/$$REL.tar.gz"; \
+	gpg --detach-sign release/$$REL/$$REL.tar.gz; \
 	echo "Creating release/$$REL/$$REL.zip"; \
 	zip -rq release/$$REL/$$REL.zip $$REL; \
 	rm -rf $$REL
