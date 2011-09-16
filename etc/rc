@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.392 2011/07/28 19:09:16 halex Exp $
+#	$OpenBSD: rc,v 1.393 2011/09/16 10:11:20 robert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -504,7 +504,7 @@ fi
 
 start_daemon hostapd rwhod lpd ldapd sendmail smtpd httpd ftpd
 start_daemon ftpproxy identd inetd rarpd bootparamd rbootd mopd
-start_daemon spamd spamlogd kdc kadmind kpasswdd aucat
+start_daemon popa3d spamd spamlogd kdc kadmind kpasswdd aucat
 echo '.'
 
 if [ X"${spamd_flags}" != X"NO" ]; then

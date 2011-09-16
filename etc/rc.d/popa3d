@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# $OpenBSD: popa3d,v 1.1 2011/09/16 10:11:20 robert Exp $
+
+daemon="/usr/sbin/popa3d"
+
+. /etc/rc.d/rc.subr
+
+rc_reload=NO
+
+rc_cmd $1
