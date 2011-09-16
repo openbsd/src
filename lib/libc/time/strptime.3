@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strptime.3,v 1.18 2011/09/16 09:44:50 jmc Exp $
+.\"	$OpenBSD: strptime.3,v 1.19 2011/09/16 15:01:58 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,7 +97,9 @@ the same as
 .Cm \&%d .
 .It Cm \&%F
 the date as %Y-%m-%d
-(the ISO 8601 date format).
+(the
+.St -iso8601-4
+date format).
 .It Cm \&%g
 the year corresponding to the ISO week number, without the century.
 .It Cm \&%G
@@ -152,7 +154,9 @@ as a decimal number [0,53];
 leading zeros are permitted but not required.
 All days in a year preceding the first Sunday are considered to be in week 0.
 .It Cm \&%V
-the ISO 8601:1988 week number as a decimal number.
+the
+.St -iso8601-4
+week number as a decimal number.
 If the week (starting on Monday) that contains January 1 has more than
 three days in the new year, then it is considered the first week of the
 year.
@@ -181,7 +185,9 @@ Leading zeros are permitted but not required.
 .It Cm \&%Y
 the year, including the century (i.e., 1998).
 .It Cm \&%z
-an ISO 8601 or RFC 2822 timezone specification.
+an
+.St -iso8601-4
+or RFC 2822 timezone specification.
 This is one of the following:
 the offset from
 Coordinated Universal Time

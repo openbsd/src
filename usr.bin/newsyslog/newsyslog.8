@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.46 2011/05/19 05:11:39 lum Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.47 2011/09/16 15:01:58 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -41,7 +41,7 @@
 .\" the suitability of this software for any purpose.  It is
 .\" provided "as is" without express or implied warranty.
 .\"
-.Dd $Mdocdate: May 19 2011 $
+.Dd $Mdocdate: September 16 2011 $
 .Dt NEWSYSLOG 8
 .Os
 .Sh NAME
@@ -239,7 +239,7 @@ field consists of an optional interval in hours, possibly followed
 by an
 .So Li \&@ Sc Ns -sign
 and a time in a restricted
-.Tn ISO 8601
+.St -iso8601-4
 format or by a
 .So Li \&$ Sc Ns -sign
 and a time specification for logfile rotation at a fixed time once
@@ -260,11 +260,11 @@ component in the current implementation, since the only comparison is
 .Pp
 .Sy ISO 8601 restricted time format:
 The lead-in character for a restricted
-.Tn ISO 8601
+.St -iso8601-4
 time is an
 .So Li \&@ Sc Ns -sign .
 The particular format of the time in restricted
-.Tn ISO 8601
+.St -iso8601-4
 is:
 .Sm off
 .Oo Oo Oo Oo Oo

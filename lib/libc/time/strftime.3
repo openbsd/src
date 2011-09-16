@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3    5.12 (Berkeley) 6/29/91
-.\"	$OpenBSD: strftime.3,v 1.25 2011/08/31 08:49:42 jmc Exp $
+.\"	$OpenBSD: strftime.3,v 1.26 2011/09/16 15:01:58 jmc Exp $
 .\"
-.Dd $Mdocdate: August 31 2011 $
+.Dd $Mdocdate: September 16 2011 $
 .Dt STRFTIME 3
 .Os
 .Sh NAME
@@ -100,9 +100,13 @@ single digits are preceded by a blank.
 is replaced by the date in the format
 .Dq Li %Y-%m-%d .
 .It Cm \&%G
-is replaced by the ISO 8601 year with century as a decimal number.
+is replaced by the
+.St -iso8601-4
+year with century as a decimal number.
 .It Cm \&%g
-is replaced by the ISO 8601 year without century as a decimal number (00\-99).
+is replaced by the
+.St -iso8601-4
+year without century as a decimal number (00\-99).
 .It Cm \&%H
 is replaced by the hour (24-hour clock) as a decimal number (00\-23).
 .It Cm \&%I
@@ -220,7 +224,9 @@ and
 .Ql \&%+
 conversion specifications are extensions.
 .Pp
-Use of the ISO 8601 conversions may produce non-intuitive results.
+Use of the
+.St -iso8601-4
+conversions may produce non-intuitive results.
 Week 01 of a year is per definition the first week which has the Thursday
 in this year, which is equivalent to the week which contains the fourth
 day of January.
