@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.29 2011/01/14 19:04:08 jasper Exp $	*/
+/*	$OpenBSD: conf.c,v 1.30 2011/09/16 21:01:45 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -358,7 +358,7 @@ struct cdevsw cdevsw[] = {
 	cdev_mouse_init(NWSMUX,wsmux),		/* 63: ws multiplexor */
 	cdev_usb_init(NUSB,usb),		/* 64: USB controller */
 	cdev_usbdev_init(NUHID,uhid),		/* 65: USB generic HID */
-	cdev_lpt_init(NULPT,ulpt),		/* 66: USB printer */
+	cdev_ulpt_init(NULPT,ulpt),		/* 66: USB printer */
 	cdev_urio_init(NURIO,urio),		/* 67: Diamond Rio 500 */
 	cdev_tty_init(NUCOM,ucom),		/* 68: USB tty */
 	cdev_usbdev_init(NUSCANNER,uscanner),	/* 69: USB scanner */
