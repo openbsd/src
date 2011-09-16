@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1621 2011/09/04 15:39:15 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1622 2011/09/16 20:07:20 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1204,6 +1204,38 @@ static const struct pci_known_product pci_known_products[] = {
 	    "AMD64 14h CPU Power",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_12_HB,
+	    "AMD64 12h Host",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_12_PCIE_1,
+	    "AMD64 12h PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_12_PCIE_2,
+	    "AMD64 12h PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_12_PCIE_3,
+	    "AMD64 12h PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_12_PCIE_4,
+	    "AMD64 12h PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_12_PCIE_5,
+	    "AMD64 12h PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_12_PCIE_6,
+	    "AMD64 12h PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_12_PCIE_7,
+	    "AMD64 12h PCIE",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_14_NB_PM,
 	    "AMD64 14h NB Power",
 	},
@@ -1440,12 +1472,36 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Hudson-2 SATA",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON_AHCI_1,
+	    "Hudson AHCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON_OHCI,
+	    "Hudson USB",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON_EHCI,
+	    "Hudson USB",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_SMB,
 	    "Hudson-2 SMBus",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_IDE,
 	    "Hudson-2 IDE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON_HDA,
+	    "Hudson HD Audio",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON_LPC,
+	    "Hudson LPC",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON_PCI,
+	    "Hudson PCI",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_RS780_HB,
@@ -4700,6 +4756,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "BCM43225",
 	},
 	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM43227,
+	    "BCM43227",
+	},
+	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401,
 	    "BCM4401",
 	},
@@ -6156,6 +6216,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "RoadRunner Gig-E",
 	},
 	{
+	    PCI_VENDOR_ETRON, PCI_PRODUCT_ETRON_XHCI,
+	    "XHCI",
+	},
+	{
 	    PCI_VENDOR_ES, PCI_PRODUCT_ES_FREEDOM,
 	    "Freedom GBus",
 	},
@@ -6714,6 +6778,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_89HPES24T6,
 	    "89HPES24T6",
+	},
+	{
+	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_89HPES4T4,
+	    "89HPES4T4",
 	},
 	{
 	    PCI_VENDOR_INDCOMPSRC, PCI_PRODUCT_INDCOMPSRC_WDT50x,
@@ -10644,6 +10712,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "5400 RAS",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E600_HB,
+	    "E600 Host",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2200BG,
 	    "PRO/Wireless 2200BG",
 	},
@@ -11096,6 +11168,34 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SCH SD/MMC",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E600_PCIE_3,
+	    "E600 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E600_PCIE_4,
+	    "E600 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E600_IGD,
+	    "E600 Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E600_CFG,
+	    "E600 Config",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E600_PCIE_1,
+	    "E600 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E600_PCIE_2,
+	    "E600 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E600_LPC,
+	    "E600 LPC",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCI450_PB,
 	    "82450KX/GX",
 	},
@@ -11110,6 +11210,110 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82454NX,
 	    "82454NX PXB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_PCIE,
+	    "EG20T PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_PH,
+	    "EG20T Packet Hub",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_GBE,
+	    "EG20T Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_GPIO,
+	    "EG20T GPIO",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_OHCI_1,
+	    "EG20T USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_OHCI_2,
+	    "EG20T USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_OHCI_3,
+	    "EG20T USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_EHCI,
+	    "EG20T USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_USBCL,
+	    "EG20T USB Client",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_SDIO_1,
+	    "EG20T SDIO",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_SDIO_2,
+	    "EG20T SDIO",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_AHCI,
+	    "EG20T AHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_OHCI_4,
+	    "EG20T USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_OHCI_5,
+	    "EG20T USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_OHCI_6,
+	    "EG20T USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_OHCI_7,
+	    "EG20T USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_DMA_1,
+	    "EG20T DMA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_SERIAL_1,
+	    "EG20T Serial",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_SERIAL_2,
+	    "EG20T Serial",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_SERIAL_3,
+	    "EG20T Serial",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_SERIAL_4,
+	    "EG20T Serial",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_DMA_2,
+	    "EG20T DMA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_SPI,
+	    "EG20T SPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_I2C,
+	    "EG20T I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_CAN,
+	    "EG20T CAN",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_1588,
+	    "EG20T 1588",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82802AC,
@@ -16292,6 +16496,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "RT3593",
 	},
 	{
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT5390,
+	    "RT5390",
+	},
+	{
 	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R1010_IDE,
 	    "R1010 IDE",
 	},
@@ -20714,6 +20922,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_MARVELL2,
 	    "Marvell",
+	},
+	{
+	    PCI_VENDOR_ETRON,
+	    "Etron",
 	},
 	{
 	    PCI_VENDOR_SYMPHONY2,
