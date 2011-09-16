@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.554 2011/09/04 18:32:14 jsg Exp $
+$OpenBSD: usbdevs,v 1.555 2011/09/16 13:04:11 yuo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -76,7 +76,7 @@ vendor ADI		0x0422	ADI Systems
 vendor CATC		0x0423	Computer Access Technology
 vendor SMC2		0x0424	Standard Microsystems
 vendor GRAVIS		0x0428	Advanced Gravis Computer
-vendor SUN		0x0430	Sun Microsystems
+vendor FUJITSUCOMP	0x0430	Fujitsu Component
 vendor TAUGA		0x0436	Taugagreining HF
 vendor AMD		0x0438	Advanced Micro Devices
 vendor LEXMARK		0x043d	Lexmark International
@@ -1780,6 +1780,13 @@ product FUJIPHOTO MASS0100	0x0100	Mass Storage
 
 /* Fujitsu products */
 product FUJITSU	AH_F401U	0x105b	AH-F401U Air H device
+
+/* Fujitsu Component products */
+product FUJITSUCOMP KEYBOARD6	0x0005	Type 6 Keyboard
+product FUJITSUCOMP KEYBOARD7	0x00a2	Type 7 Keyboard
+/* XXX The above is a North American PC style keyboard possibly */
+product FUJITSUCOMP MOUSE	0x0100	Type 6 Mouse
+
 
 /* Fujitsu Siemens Computers products */
 product FSC E5400		0x1009	PrismGT USB 2.0 WLAN
@@ -3599,12 +3606,6 @@ product SUNTAC VS10U		0x0009	Slipper U
 product SUNTAC IS96U		0x000a	Ir-Trinity
 product SUNTAC AS64LX		0x000b	U-Cable type A3
 product SUNTAC AS144L4		0x0011	U-Cable type A4
-
-/* Sun Microsystems products */
-product SUN KEYBOARD6		0x0005	Type 6 Keyboard
-product SUN KEYBOARD7		0x00a2	Type 7 Keyboard
-/* XXX The above is a North American PC style keyboard possibly */
-product SUN MOUSE		0x0100	Type 6 Mouse
 
 /* System TALKS, Inc. */
 product	SYSTEMTALKS SGCX2UL	0x1920	SGC-X2UL
