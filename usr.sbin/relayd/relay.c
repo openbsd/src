@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.141 2011/09/04 20:26:58 bluhm Exp $	*/
+/*	$OpenBSD: relay.c,v 1.142 2011/09/16 14:29:26 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1056,8 +1056,7 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
 		ret = PN_PASS;
 		break;
 	case NODE_ACTION_LOG:
-		DPRINTF("%s: log '%s: %s'", __func__,
-		    pn->key, pk->value);
+		log_info("%s: log '%s: %s'", __func__, pn->key, pk->value);
 		ret = PN_PASS;
 		break;
 	case NODE_ACTION_MARK:
