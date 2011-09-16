@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1984-2002  Mark Nudelman
+ * Copyright (C) 1984-2011  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -31,7 +31,7 @@ public int	wscroll;
 public char *	progname;
 public int	quitting;
 public int	secure;
-public int	ismore;
+public int	dohelp;
 
 #if LOGFILE
 public int	logfile = -1;
@@ -54,10 +54,12 @@ extern int	jump_sline;
 static char consoleTitle[256];
 #endif
 
+extern int	less_is_more;
 extern int	missing_cap;
 extern int	know_dumb;
+extern int	quit_if_one_screen;
+extern int	pr_type;
 
-extern char *	__progname;
 
 /*
  * Entry point.
@@ -109,22 +111,36 @@ main(argc, argv)
 	 * Process command line arguments and LESS environment arguments.
 	 * Command line arguments override environment arguments.
 	 */
-	ismore = !strcmp(__progname, "more");
 	is_tty = isatty(1);
 	get_term();
 	init_cmds();
-	init_prompt();
 	init_charset();
 	init_line();
+	init_cmdhist();
 	init_option();
-	if (ismore) {
-		scan_option("-E");
+	init_search();
+
+	/*
+	 * If the name of the executable program is "more",
+	 * act like LESS_IS_MORE is set.
+	 */
+	for (s = progname + strlen(progname);  s > progname;  s--)
+	{
+		if (s[-1] == PATHNAME_SEP[0])
+			break;
+	}
+	if (strcmp(s, "more") == 0)
+		less_is_more = 1;
+
+	init_prompt();
+
+	if (less_is_more) {
 		scan_option("-G");
 		scan_option("-L");
-		scan_option("-m");
-		s = lgetenv("MORE");
-	} else
-		s = lgetenv("LESS");
+		scan_option("-X");
+	}
+
+	s = lgetenv(less_is_more ? "MORE" : "LESS");
 	if (s != NULL)
 		scan_option(save(s));
 
@@ -149,6 +165,9 @@ main(argc, argv)
 		quit(QUIT_OK);
 	}
 
+	if (less_is_more && get_quit_at_eof())
+		quit_if_one_screen = TRUE;
+
 #if EDITOR
 	editor = lgetenv("VISUAL");
 	if (editor == NULL || *editor == '\0')
@@ -167,6 +186,10 @@ main(argc, argv)
 	 * to "register" them with the ifile system.
 	 */
 	ifile = NULL_IFILE;
+#if !SMALL
+	if (dohelp)
+		ifile = get_ifile(HELPFILE, ifile);
+#endif /* !SMALL */
 	while (argc-- > 0)
 	{
 		char *filename;
@@ -221,7 +244,7 @@ main(argc, argv)
 		quit(QUIT_OK);
 	}
 
-	if (missing_cap && !know_dumb && !ismore)
+	if (missing_cap && !know_dumb && !less_is_more)
 		error("WARNING: terminal is not fully functional", NULL_PARG);
 	init_mark();
 	open_getchr();
@@ -284,9 +307,8 @@ save(s)
 	char *s;
 {
 	register char *p;
-	size_t len;
+	size_t len = strlen(s) + 1;
 
-	len = strlen(s)+1, sizeof(char);
 	p = (char *) ecalloc(len, sizeof(char));
 	strlcpy(p, s, len);
 	return (p);
@@ -324,7 +346,7 @@ skipsp(s)
 	return (s);
 }
 
-#ifndef SMALL_PROGRAM
+#if GNU_OPTIONS
 /*
  * See how many characters of two strings are identical.
  * If uppercase is true, the first string must begin with an uppercase
@@ -345,21 +367,21 @@ sprefix(ps, s, uppercase)
 		c = *ps;
 		if (uppercase)
 		{
-			if (len == 0 && SIMPLE_IS_LOWER(c))
+			if (len == 0 && ASCII_IS_LOWER(c))
 				return (-1);
-			if (SIMPLE_IS_UPPER(c))
-				c = SIMPLE_TO_LOWER(c);
+			if (ASCII_IS_UPPER(c))
+				c = ASCII_TO_LOWER(c);
 		}
 		sc = *s;
-		if (len > 0 && SIMPLE_IS_UPPER(sc))
-			sc = SIMPLE_TO_LOWER(sc);
+		if (len > 0 && ASCII_IS_UPPER(sc))
+			sc = ASCII_TO_LOWER(sc);
 		if (c != sc)
 			break;
 		len++;
 	}
 	return (len);
 }
-#endif /* SMALL_PROGRAM */
+#endif /* GNU_OPTIONS */
 
 /*
  * Exit the program.
@@ -380,6 +402,7 @@ quit(status)
 		save_status = status;
 	quitting = 1;
 	edit((char*)NULL);
+	save_cmdhist();
 	if (any_display && is_tty)
 		clear_bot();
 	deinit();
@@ -394,7 +417,7 @@ quit(status)
 	 */
 	close(2);
 #endif
-#if WIN32
+#ifdef WIN32
 	SetConsoleTitle(consoleTitle);
 #endif
 	close_getchr();

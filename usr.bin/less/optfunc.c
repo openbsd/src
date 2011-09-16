@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1984-2002  Mark Nudelman
+ * Copyright (C) 1984-2011  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -28,16 +28,15 @@
 #include "less.h"
 #include "option.h"
 
-#ifndef SMALL_PROGRAM
 extern int nbufs;
-#endif
 extern int bufspace;
 extern int pr_type;
-extern int nohelp;
 extern int plusoption;
 extern int swindow;
+extern int sc_width;
 extern int sc_height;
 extern int secure;
+extern int dohelp;
 extern int any_display;
 extern char openquote;
 extern char closequote;
@@ -47,6 +46,11 @@ extern char *hproto;
 extern char *wproto;
 extern IFILE curr_ifile;
 extern char version[];
+extern int jump_sline;
+extern int jump_sline_fraction;
+extern int shift_count;
+extern int shift_count_fraction;
+extern int less_is_more;
 #if LOGFILE
 extern char *namelogfile;
 extern int force_logfile;
@@ -55,7 +59,6 @@ extern int logfile;
 #if TAGS
 public char *tagoption = NULL;
 extern char *tags;
-extern int jump_sline;
 #endif
 #if MSDOS_COMPILER
 extern int nm_fg_color, nm_bg_color;
@@ -129,31 +132,132 @@ opt__O(type, s)
 #endif
 
 /*
- * Handlers for -l option.
+ * Handlers for -j option.
  */
 	public void
-opt_l(type, s)
+opt_j(type, s)
 	int type;
 	char *s;
 {
+	PARG parg;
+	char buf[16];
+	int len;
 	int err;
-	int n;
-	char *t;
-	
+
 	switch (type)
 	{
 	case INIT:
-		t = s;
-		n = getnum(&t, "l", &err);
-		if (err || n <= 0)
+	case TOGGLE:
+		if (*s == '.')
 		{
-			error("Line number is required after -l", NULL_PARG);
-			return;
+			s++;
+			jump_sline_fraction = getfraction(&s, "j", &err);
+			if (err)
+				error("Invalid line fraction", NULL_PARG);
+			else
+				calc_jump_sline();
+		} else
+		{
+			int sline = getnum(&s, "j", &err);
+			if (err)
+				error("Invalid line number", NULL_PARG);
+			else
+			{
+				jump_sline = sline;
+				jump_sline_fraction = -1;
+			}
 		}
-		plusoption = TRUE;
-		ungetsc(s);
+		break;
+	case QUERY:
+		if (jump_sline_fraction < 0)
+		{
+			parg.p_int =  jump_sline;
+			error("Position target at screen line %d", &parg);
+		} else
+		{
+
+			snprintf(buf, sizeof(buf), ".%06d", jump_sline_fraction);
+			len = strlen(buf);
+			while (len > 2 && buf[len-1] == '0')
+				len--;
+			buf[len] = '\0';
+			parg.p_string = buf;
+			error("Position target at screen position %s", &parg);
+		}
 		break;
 	}
+}
+
+	public void
+calc_jump_sline()
+{
+	if (jump_sline_fraction < 0)
+		return;
+	jump_sline = sc_height * jump_sline_fraction / NUM_FRAC_DENOM;
+}
+
+/*
+ * Handlers for -# option.
+ */
+	public void
+opt_shift(type, s)
+	int type;
+	char *s;
+{
+	PARG parg;
+	char buf[16];
+	int len;
+	int err;
+
+	switch (type)
+	{
+	case INIT:
+	case TOGGLE:
+		if (*s == '.')
+		{
+			s++;
+			shift_count_fraction = getfraction(&s, "#", &err);
+			if (err)
+				error("Invalid column fraction", NULL_PARG);
+			else
+				calc_shift_count();
+		} else
+		{
+			int hs = getnum(&s, "#", &err);
+			if (err)
+				error("Invalid column number", NULL_PARG);
+			else
+			{
+				shift_count = hs;
+				shift_count_fraction = -1;
+			}
+		}
+		break;
+	case QUERY:
+		if (shift_count_fraction < 0)
+		{
+			parg.p_int = shift_count;
+			error("Horizontal shift %d columns", &parg);
+		} else
+		{
+
+			snprintf(buf, sizeof(buf), ".%06d", shift_count_fraction);
+			len = strlen(buf);
+			while (len > 2 && buf[len-1] == '0')
+				len--;
+			buf[len] = '\0';
+			parg.p_string = buf;
+			error("Horizontal shift %s of screen width", &parg);
+		}
+		break;
+	}
+}
+	public void
+calc_shift_count()
+{
+	if (shift_count_fraction < 0)
+		return;
+	shift_count = sc_width * shift_count_fraction / NUM_FRAC_DENOM;
 }
 
 #if USERFILE
@@ -203,10 +307,13 @@ opt_t(type, s)
 		}
 		findtag(skipsp(s));
 		save_ifile = save_curr_ifile();
-		if (edit_tagfile())
-			break;
-		if ((pos = tagsearch()) == NULL_POSITION)
+		/*
+		 * Try to open the file containing the tag
+		 * and search for the tag in that file.
+		 */
+		if (edit_tagfile() || (pos = tagsearch()) == NULL_POSITION)
 		{
+			/* Failed: reopen the old file. */
 			reedit_ifile(save_ifile);
 			break;
 		}
@@ -261,7 +368,12 @@ opt_p(type, s)
 		 */
 		plusoption = TRUE;
 		ungetsc(s);
-		ungetsc("/");
+		/*
+		 * In "more" mode, the -p argument is a command,
+		 * not a search string, so we don't need a slash.
+		 */
+		if (!less_is_more)
+			ungetsc("/");
 		break;
 	}
 }
@@ -369,7 +481,7 @@ opt__V(type, s)
 		any_display = 1;
 		putstr("less ");
 		putstr(version);
-		putstr("\nCopyright (C) 2002 Mark Nudelman\n\n");
+		putstr("\nCopyright (C) 1984-2009 Mark Nudelman\n\n");
 		putstr("less comes with NO WARRANTY, to the extent permitted by law.\n");
 		putstr("For information about the terms of redistribution,\n");
 		putstr("see the file named README in the less distribution.\n");
@@ -399,14 +511,14 @@ colordesc(s, fg_color, bg_color)
 		return;
 	}
 	if (*s != '.')
-		bg = 0;
+		bg = nm_bg_color;
 	else
 	{
 		s++;
 		bg = getnum(&s, "D", &err);
 		if (err)
 		{
-			error("Missing fg color in -D", NULL_PARG);
+			error("Missing bg color in -D", NULL_PARG);
 			return;
 		}
 	}
@@ -452,8 +564,8 @@ opt_D(type, s)
 		}
 		if (type == TOGGLE)
 		{
-			so_enter();
-			so_exit();
+			at_enter(AT_STANDOUT);
+			at_exit();
 		}
 		break;
 	case QUERY:
@@ -514,8 +626,7 @@ opt_x(type, s)
 			    " and then ");
 		}
 		snprintf(msg+strlen(msg), sizeof(msg)-strlen(msg),
-		    "every %d spaces",
-			tabdefault);
+		    "every %d spaces", tabdefault);
 		p.p_string = msg;
 		error("%s", &p);
 		break;
@@ -574,8 +685,6 @@ opt_query(type, s)
 	int type;
 	char *s;
 {
-	if (nohelp)
-		return;
 	switch (type)
 	{
 	case QUERY:
@@ -583,20 +692,7 @@ opt_query(type, s)
 		error("Use \"h\" for help", NULL_PARG);
 		break;
 	case INIT:
-		/*
-		 * This is "less -?".
-		 * It rather ungracefully grabs control,
-		 * does the initializations normally done in main,
-		 * shows the help file and exits.
-		 */
-		raw_mode(1);
-		get_term();
-		open_getchr();
-		init();
-		any_display = TRUE;
-		help(1);
-		quit(QUIT_OK);
-		/*NOTREACHED*/
+		dohelp = 1;
 	}
 }
 

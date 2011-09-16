@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1984-2002  Mark Nudelman
+ * Copyright (C) 1984-2011  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -51,6 +51,8 @@
 extern int force_open;
 extern int secure;
 extern int use_lessopen;
+extern int ctldisp;
+extern int utf_mode;
 extern IFILE curr_ifile;
 extern IFILE old_ifile;
 #if SPACES_IN_FILENAMES
@@ -195,7 +197,7 @@ shell_quote(s)
 	newstr = p = (char *) ecalloc(len, sizeof(char));
 	if (use_quotes)
 	{
-		snprintf(newstr, len, "%c%s%c", openquote, s, closequote);
+		SNPRINTF3(newstr, len, "%c%s%c", openquote, s, closequote);
 	} else
 	{
 		while (*s != '\0')
@@ -226,19 +228,19 @@ dirfile(dirname, filename)
 {
 	char *pathname;
 	char *qpathname;
-	int f;
 	size_t len;
+	int f;
 
 	if (dirname == NULL || *dirname == '\0')
 		return (NULL);
 	/*
 	 * Construct the full pathname.
 	 */
-	len = strlen(dirname) + strlen(filename) + 2;
+	len= strlen(dirname) + strlen(filename) + 2;
 	pathname = (char *) calloc(len, sizeof(char));
 	if (pathname == NULL)
 		return (NULL);
-	snprintf(pathname, len, "%s%s%s", dirname, PATHNAME_SEP, filename);
+	SNPRINTF3(pathname, len, "%s%s%s", dirname, PATHNAME_SEP, filename);
 	/*
 	 * Make sure the file exists.
 	 */
@@ -256,7 +258,7 @@ dirfile(dirname, filename)
 	return (pathname);
 }
 
-#ifndef SMALL_PROGRAM
+#if USERFILE
 /*
  * Return the full pathname of the given file in the "home directory".
  */
@@ -302,26 +304,7 @@ homefile(filename)
 #endif
 	return (NULL);
 }
-#endif /* SMALL_PROGRAM */
-
-#ifdef HELPFILE
-/*
- * Find out where the help file is.
- */
-	public char *
-find_helpfile()
-{
-	char *helpfile;
-	
-	if ((helpfile = getenv("LESSHELP")) != NULL && *helpfile != '\0')
-		return (save(helpfile));
-#if MSDOS_COMPILER || OS2
-	return (homefile(HELPFILE));
-#else
-	return (save(HELPFILE));
-#endif
-}
-#endif
+#endif /* USERFILE */
 
 /*
  * Expand a string, substituting any "%" with the current filename,
@@ -420,6 +403,7 @@ fexpand(s)
 	return (e);
 }
 
+
 #if TAB_COMPLETE_FILENAME
 
 /*
@@ -455,14 +439,16 @@ fcomplete(s)
 		len = strlen(s) + 4;
 		fpat = (char *) ecalloc(len, sizeof(char));
 		if (strchr(slash, '.') == NULL)
-			snprintf(fpat, len, "%s*.*", s);
+			SNPRINTF1(fpat, len, "%s*.*", s);
 		else
-			snprintf(fpat, len, "%s*", s);
+			SNPRINTF1(fpat, len, "%s*", s);
 	}
 #else
+	{
 	len = strlen(s) + 2;
 	fpat = (char *) ecalloc(len, sizeof(char));
-	snprintf(fpat, len, "%s*", s);
+	SNPRINTF1(fpat, len, "%s*", s);
+	}
 #endif
 	qs = lglob(fpat);
 	s = shell_unquote(qs);
@@ -488,19 +474,34 @@ fcomplete(s)
 bin_file(f)
 	int f;
 {
-	int i;
 	int n;
-	unsigned char data[64];
+	int bin_count = 0;
+	char data[256];
+	char* p;
+	char* pend;
 
 	if (!seekable(f))
 		return (0);
 	if (lseek(f, (off_t)0, SEEK_SET) == BAD_LSEEK)
 		return (0);
 	n = read(f, data, sizeof(data));
-	for (i = 0;  i < n;  i++)
-		if (binary_char(data[i]))
-			return (1);
-	return (0);
+	pend = &data[n];
+	for (p = data;  p < pend;  )
+	{
+		LWCHAR c = step_char(&p, +1, pend);
+		if (ctldisp == OPT_ONPLUS && IS_CSI_START(c))
+		{
+			do {
+				c = step_char(&p, +1, pend);
+			} while (p < pend && is_ansi_middle(c));
+		} else if (binary_char(c))
+			bin_count++;
+	}
+	/*
+	 * Call it a binary file if there are more than 5 binary characters
+	 * in the first 256 bytes of the file.
+	 */
+	return (bin_count > 5);
 }
 
 /*
@@ -576,7 +577,6 @@ shellcmd(cmd)
 	char *cmd;
 {
 	FILE *fd;
-	size_t len;
 
 #if HAVE_SHELL
 	char *shell;
@@ -597,10 +597,9 @@ shellcmd(cmd)
 			fd = popen(cmd, "r");
 		} else
 		{
-			len = strlen(shell) + strlen(esccmd) + 5;
+			size_t len = strlen(shell) + strlen(esccmd) + 5;
 			scmd = (char *) ecalloc(len, sizeof(char));
-			snprintf(scmd, len, "%s %s %s", shell, shell_coption(),
-			    esccmd);
+			SNPRINTF3(scmd, len, "%s %s %s", shell, shell_coption(), esccmd);
 			free(esccmd);
 			fd = popen(scmd, "r");
 			free(scmd);
@@ -620,7 +619,7 @@ shellcmd(cmd)
 
 #endif /* HAVE_POPEN */
 
-
+#if !SMALL
 /*
  * Expand a filename, doing any system-specific metacharacter substitutions.
  */
@@ -710,7 +709,7 @@ lglob(filename)
 	do {
 		n = strlen(drive) + strlen(dir) + strlen(fnd.GLOB_NAME) + 1;
 		pathname = (char *) ecalloc(n, sizeof(char));
-		snprintf(pathname, n, "%s%s%s", drive, dir, fnd.GLOB_NAME);
+		SNPRINTF3(pathname, n, "%s%s%s", drive, dir, fnd.GLOB_NAME);
 		qpathname = shell_quote(pathname);
 		free(pathname);
 		if (qpathname != NULL)
@@ -774,8 +773,7 @@ lglob(filename)
 	 */
 	len = strlen(lessecho) + strlen(ofilename) + (7*strlen(metachars())) + 24;
 	cmd = (char *) ecalloc(len, sizeof(char));
-	snprintf(cmd, len, "%s -p0x%x -d0x%x -e%s ", lessecho, openquote,
-	    closequote, esc);
+	SNPRINTF4(cmd, len, "%s -p0x%x -d0x%x -e%s ", lessecho, openquote, closequote, esc);
 	free(esc);
 	for (s = metachars();  *s != '\0';  s++)
 		snprintf(cmd + strlen(cmd), len - strlen(cmd), "-n0x%x ", *s);
@@ -812,6 +810,7 @@ lglob(filename)
 	free(ofilename);
 	return (gfilename);
 }
+#endif /* !SMALL */
 
 /*
  * See if we should open a "replacement file" 
@@ -840,21 +839,28 @@ open_altfile(filename, pf, pfd)
 	ch_ungetchar(-1);
 	if ((lessopen = lgetenv("LESSOPEN")) == NULL)
 		return (NULL);
-	if (strcmp(filename, "-") == 0)
-		return (NULL);
 	if (*lessopen == '|')
 	{
 		/*
 		 * If LESSOPEN starts with a |, it indicates 
 		 * a "pipe preprocessor".
 		 */
-#if HAVE_FILENO
-		lessopen++;
-		returnfd = 1;
-#else
+#if !HAVE_FILENO
 		error("LESSOPEN pipe is not supported", NULL_PARG);
 		return (NULL);
+#else
+		lessopen++;
+		returnfd = 1;
 #endif
+	}
+	if (*lessopen == '-') {
+		/*
+		 * Lessopen preprocessor will accept "-" as a filename.
+		 */
+		lessopen++;
+	} else {
+		if (strcmp(filename, "-") == 0)
+			return (NULL);
 	}
 
 	/* strlen(filename) is guaranteed to be > 0 */
@@ -1016,7 +1022,7 @@ bad_file(filename)
 	size_t len;
 
 	filename = shell_unquote(filename);
-	if (is_dir(filename))
+	if (!force_open && is_dir(filename))
 	{
 		static char is_a_dir[] = " is a directory";
 
@@ -1083,3 +1089,22 @@ shell_coption()
 {
 	return ("-c");
 }
+
+/*
+ * Return last component of a pathname.
+ */
+	public char *
+last_component(name)
+	char *name;
+{
+	char *slash;
+
+	for (slash = name + strlen(name);  slash > name; )
+	{
+		--slash;
+		if (*slash == *PATHNAME_SEP || *slash == '/')
+			return (slash + 1);
+	}
+	return (name);
+}
+

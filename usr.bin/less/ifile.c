@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1984-2002  Mark Nudelman
+ * Copyright (C) 1984-2011  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -307,14 +307,14 @@ hold_ifile(ifile, incr)
 	int_ifile(ifile)->h_hold += incr;
 }
 
-#ifndef SMALL_PROGRAM
+#if !SMALL
 	public int
 held_ifile(ifile)
 	IFILE ifile;
 {
 	return (int_ifile(ifile)->h_hold);
 }
-#endif /* SMALL_PROGRAM */
+#endif /* !SMALL */
 
 	public void *
 get_filestate(ifile)

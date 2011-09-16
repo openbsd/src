@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1984-2002  Mark Nudelman
+ * Copyright (C) 1984-2011  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -30,20 +30,19 @@ public int quit_at_eof;		/* Quit after hitting end of file twice */
 public int quit_if_one_screen;	/* Quit if EOF on first screen */
 public int squeeze;		/* Squeeze multiple blank lines into one */
 public int be_helpful;		/* more(1) style -d */
-#ifndef SMALL_PROGRAM
 public int tabstop;		/* Tab settings */
-#endif
 public int back_scroll;		/* Repaint screen on backwards movement */
 public int forw_scroll;		/* Repaint screen on forward movement */
 public int caseless;		/* Do "caseless" searches */
 public int linenums;		/* Use line numbers */
 public int autobuf;		/* Automatically allocate buffers as needed */
-public int nohelp;		/* Disable the HELP command */
 public int bufspace;		/* Max buffer space per file (K) */
 public int ctldisp;		/* Send control chars to screen untranslated */
 public int force_open;		/* Open the file even if not regular file */
 public int swindow;		/* Size of scrolling window */
 public int jump_sline;		/* Screen line of "jump target" */
+public long jump_sline_fraction = -1;
+public long shift_count_fraction = -1;
 public int chopline;		/* Truncate displayed lines at screen width */
 public int no_init;		/* Disable sending ti/te termcap strings */
 public int no_keypad;		/* Disable sending ks/ke termcap strings */
@@ -52,9 +51,14 @@ public int show_attn;		/* Hilite first unread line */
 public int shift_count;		/* Number of positions to shift horizontally */
 public int status_col;		/* Display a status column */
 public int use_lessopen;	/* Use the LESSOPEN filter */
+public int quit_on_intr;	/* Quit on interrupt */
+public int follow_mode;		/* F cmd Follows file desc or file name? */
+public int oldbot;		/* Old bottom of screen behavior {{REMOVE}} */
 #if HILITE_SEARCH
 public int hilite_search;	/* Highlight matched search patterns? */
 #endif
+
+public int less_is_more = 0;	/* Make compatible with POSIX more */
 
 /*
  * Long option names.
@@ -81,6 +85,7 @@ static struct optname J__optname     = { "status-column",        NULL };
 #if USERFILE
 static struct optname k_optname      = { "lesskey-file",         NULL };
 #endif
+static struct optname K__optname     = { "quit-on-intr",         NULL };
 static struct optname L__optname     = { "no-lessopen",          NULL };
 static struct optname m_optname      = { "long-prompt",          NULL };
 static struct optname n_optname      = { "line-numbers",         NULL };
@@ -111,6 +116,8 @@ static struct optname tilde_optname  = { "tilde",                NULL };
 static struct optname query_optname  = { "help",                 NULL };
 static struct optname pound_optname  = { "shift",                NULL };
 static struct optname keypad_optname = { "no-keypad",            NULL };
+static struct optname oldbot_optname = { "old-bot",              NULL };
+static struct optname follow_optname = { "follow-name",          NULL };
 #else
 static struct optname fake_optname   = { "fake",                 NULL };
 #define a_optname	fake_optname
@@ -134,6 +141,7 @@ static struct optname fake_optname   = { "fake",                 NULL };
 #if USERFILE
 #define k_optname	fake_optname
 #endif
+#define K__optname	fake_optname
 #define L__optname	fake_optname
 #define m_optname	fake_optname
 #define n_optname	fake_optname
@@ -164,6 +172,8 @@ static struct optname fake_optname   = { "fake",                 NULL };
 #define query_optname	fake_optname
 #define pound_optname	fake_optname
 #define keypad_optname	fake_optname
+#define oldbot_optname	fake_optname
+#define follow_optname	fake_optname
 #endif
 
 
@@ -182,11 +192,11 @@ static struct optname fake_optname   = { "fake",                 NULL };
 static struct loption option[] =
 {
 	{ 'a', &a_optname,
-		BOOL, OPT_OFF, &how_search, NULL,
+		TRIPLE, OPT_ONPLUS, &how_search, NULL,
 		{
 			"Search includes displayed screen",
 			"Search skips displayed screen",
-			NULL
+			"Search includes all of displayed screen"
 		}
 	},
 
@@ -210,7 +220,7 @@ static struct loption option[] =
 		TRIPLE, OPT_OFF, &top_scroll, NULL,
 		{
 			"Repaint by scrolling from bottom of screen",
-			"Repaint by clearing each line",
+			"Repaint by painting from top of screen",
 			"Repaint by painting from top of screen"
 		}
 	},
@@ -274,14 +284,6 @@ static struct loption option[] =
 			NULL
 		}
 	},
-	{ 'H',  NULL,
-		BOOL|NO_TOGGLE, OPT_OFF, &nohelp, NULL,
-		{
-			"Allow help command",
-			"Don't allow help command",
-			NULL
-		}
-	},
 	{ 'i', &i_optname,
 		TRIPLE|HL_REPAINT, OPT_OFF, &caseless, opt_i,
 		{
@@ -291,10 +293,10 @@ static struct loption option[] =
 		}
 	},
 	{ 'j', &j_optname,
-		NUMBER, 1, &jump_sline, NULL,
+		STRING, 0, NULL, opt_j,
 		{
 			"Target line: ",
-			"Position target at screen line %d",
+			"0123456789.-",
 			NULL
 		}
 	},
@@ -312,9 +314,13 @@ static struct loption option[] =
 		{ NULL, NULL, NULL }
 	},
 #endif
-	{ 'l', NULL,
-		STRING|NO_TOGGLE|NO_QUERY, 0, NULL, opt_l,
-		{ NULL, NULL, NULL }
+	{ 'K', &K__optname,
+		BOOL, OPT_OFF, &quit_on_intr, NULL,
+		{
+			"Interrupt (ctrl-C) returns to prompt",
+			"Interrupt (ctrl-C) exits less",
+			NULL
+		}
 	},
 	{ 'L', &L__optname,
 		BOOL, OPT_ON, &use_lessopen, NULL,
@@ -469,18 +475,34 @@ static struct loption option[] =
 		{ NULL, NULL, NULL }
 	},
 	{ '#', &pound_optname,
-		NUMBER, 0, &shift_count, NULL,
+		STRING, 0, NULL, opt_shift,
 		{
 			"Horizontal shift: ",
-			"Horizontal shift %d positions",
+			"0123456789.",
 			NULL
 		}
 	},
-	{ '.', &keypad_optname,
+	{ OLETTER_NONE, &keypad_optname,
 		BOOL|NO_TOGGLE, OPT_OFF, &no_keypad, NULL,
 		{
 			"Use keypad mode",
 			"Don't use keypad mode",
+			NULL
+		}
+	},
+	{ OLETTER_NONE, &oldbot_optname,
+		BOOL, OPT_OFF, &oldbot, NULL,
+		{
+			"Use new bottom of screen behavior",
+			"Use old bottom of screen behavior",
+			NULL
+		}
+	},
+	{ OLETTER_NONE, &follow_optname,
+		BOOL, FOLLOW_DESC, &follow_mode, NULL,
+		{
+			"F command follows file descriptor",
+			"F command follows file name",
 			NULL
 		}
 	},
@@ -495,14 +517,18 @@ static struct loption option[] =
 init_option()
 {
 	register struct loption *o;
-	extern int ismore;
+	char *p;
+
+	p = lgetenv("LESS_IS_MORE");
+	if (p != NULL && *p != '\0')
+		less_is_more = 1;
 
 	for (o = option;  o->oletter != '\0';  o++)
 	{
 		/*
 		 * Replace less's -d option if invoked as more
 		 */
-		if (ismore && o->oletter == 'd')
+		if (less_is_more && o->oletter == 'd')
 		{
 			o->onames = NULL;
 			o->otype = BOOL;
@@ -537,7 +563,7 @@ findopt(c)
 	{
 		if (o->oletter == c)
 			return (o);
-		if ((o->otype & TRIPLE) && toupper(o->oletter) == c)
+		if ((o->otype & TRIPLE) && ASCII_TO_UPPER(o->oletter) == c)
 			return (o);
 	}
 	return (NULL);
@@ -550,9 +576,9 @@ findopt(c)
 is_optchar(c)
 	char c;
 {
-	if (SIMPLE_IS_UPPER(c))
+	if (ASCII_IS_UPPER(c))
 		return 1;
-	if (SIMPLE_IS_LOWER(c))
+	if (ASCII_IS_LOWER(c))
 		return 1;
 	if (c == '-')
 		return 1;

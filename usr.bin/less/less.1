@@ -1,6 +1,6 @@
-.\"	$OpenBSD: less.1,v 1.22 2011/05/02 11:14:11 jmc Exp $
+.\"	$OpenBSD: less.1,v 1.23 2011/09/16 18:12:09 shadchin Exp $
 .\"
-.\" Copyright (C) 2002  Mark Nudelman
+.\" Copyright (C) 1984-2011  Mark Nudelman
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -23,7 +23,7 @@
 .\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 2 2011 $
+.Dd $Mdocdate: September 16 2011 $
 .Dt LESS 1
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Fl -version
 .Nm less \*(Ba more
 .Bk -words
-.Op Fl Oo Cm + Oc Ns Cm aBCcdEeFfGgIiJLMmNnQqRrSsUuVWwX~
+.Op Fl Oo Cm + Oc Ns Cm aABCcdEeFfGgIiJKLMmNnQqRrSsUuVWwX~
 .Op Fl b Ar space
 .Op Fl h Ar lines
 .Op Fl j Ar line
@@ -112,9 +112,9 @@ Warning: some systems use ^V as a special literalization character.
 .It Ic z
 Like SPACE, but if N is specified, it becomes the new window size.
 .It Ic ESC-SPACE
-Like SPACE, but scrolls a full screensful, even if it reaches
+Like SPACE, but scrolls a full screenful, even if it reaches
 end-of-file in the process.
-.It Ic RETURN | ^N | e | ^E | j | ^J
+.It Ic ENTER | RETURN | ^N | e | ^E | j | ^J
 Scroll forward N lines, default 1.
 The entire N lines are displayed, even if N is more than the screen size.
 .It Ic d | ^D
@@ -165,7 +165,9 @@ or if N is not specified and standard input, rather than a file,
 is being read.)
 .It Ic p | %
 Go to a position N percent into the file.
-N should be between 0 and 100.
+N should be between 0 and 100, and may contain a decimal point.
+.It Ic P
+Go to the line containing byte offset N in the file.
 .It Ic {
 If a left curly bracket appears in the top line displayed
 on the screen, the { command will go to the matching right curly bracket.
@@ -215,8 +217,8 @@ Same as single quote.
 Search forward in the file for the N-th line containing the pattern.
 N defaults to 1.
 The pattern is a regular expression, as recognized by
-.Xr ed 1 .
-The search starts at the second line displayed
+the regular expression library supplied by your system.
+The search starts at the first line displayed
 (but see the -a and -j options, which change this).
 .Pp
 Certain characters are special if entered at the beginning of the pattern;
@@ -293,6 +295,23 @@ turn highlighting back on.
 Any search command will also turn highlighting back on.
 (Highlighting can also be disabled by toggling the -G option;
 in that case search commands do not turn highlighting back on.)
+.It Ic &pattern
+Display only lines which match the pattern;
+lines which do not match the pattern are not displayed.
+If pattern is empty (if you type & immediately followed by ENTER),
+any filtering is turned off, and all lines are displayed.
+While filtering is in effect, an ampersand is displayed at the
+beginning of the prompt,
+as a reminder that some lines in the file may be hidden.
+.Pp
+Certain characters are special as in the / command:
+.Bl -tag -width Ds
+.It Ic ^N | !
+Display only lines which do NOT match the pattern.
+.It Ic ^R
+Don't interpret regular expression metacharacters;
+that is, do a simple textual comparison.
+.El
 .It Ic :e Op Ar filename
 Examine a new file.
 If the filename is missing, the "current" file (see the :n and :p commands
@@ -358,7 +377,7 @@ Like the \- command, but takes a long option name (see
 .Sx OPTIONS
 below)
 rather than a single option letter.
-You must press RETURN after typing the option name.
+You must press ENTER or RETURN after typing the option name.
 A ^P immediately after the second dash suppresses printing of a
 message describing the new setting, as in the \- command.
 .It Ic \-+
@@ -386,7 +405,7 @@ The setting of the option is not changed.
 (Double underscore.)
 Like the _ (underscore) command, but takes a long option name
 rather than a single option letter.
-You must press RETURN after typing the option name.
+You must press ENTER or RETURN after typing the option name.
 .It Ic +cmd
 Causes the specified cmd to be executed each time a new file is examined.
 For example, +G causes
@@ -508,11 +527,25 @@ This option displays a summary of the commands accepted by
 (the same as the h command).
 (Depending on how your shell interprets the question mark,
 it may be necessary to quote the question mark, thus: "-\e?".)
+.It Fl A | -SEARCH-SKIP-SCREEN
+Causes all forward searches (not just non-repeated searches)
+to start just after the target line, and all backward searches
+to start just before the target line.
+Thus, forward searches will skip part of the displayed screen
+(from the first line up to and including the target line).
+Similarly backwards searches will skip the displayed screen
+from the last line up to and including the target line.
+This was the default behavior in less versions prior to 441.
 .It Fl a | -search-skip-screen
-Causes searches to start after the last line displayed on the screen,
+By default, forward searches start at the top of the displayed screen
+and backwards searches start at the bottom of the displayed screen
+(except for repeated searches invoked by the n or N commands,
+which start after or before the "target" line respectively;
+see the -j option for more about the target line).
+The -a option causes forward searches to instead start at
+the bottom of the screen
+and backward searches to start at the top of the screen,
 thus skipping all lines displayed on the screen.
-By default, searches start at the second line on the screen
-(or after the last found line; see the -j option).
 .It Fl B | -auto-buffers
 By default, when data is read from a pipe,
 buffers are allocated automatically as needed.
@@ -522,7 +555,7 @@ The -B option disables this automatic allocation of buffers for pipes,
 so that only 64K (or the amount of space specified by the -b option)
 is used for the pipe.
 Warning: use of -B can result in erroneous display, since only the
-most recently viewed part of the file is kept in memory;
+most recently viewed part of the piped data is kept in memory;
 any earlier data is lost.
 .It Xo
 .Fl b Ns Ar n |
@@ -536,9 +569,10 @@ By default 64K of buffer space is used for each file
 The -b option specifies instead that n kilobytes of
 buffer space should be used for each file.
 If n is -1, buffer space is unlimited; that is,
-the entire file is read into memory.
+the entire file can be read into memory.
 .It Fl C | -CLEAR-SCREEN
-The -C option is like -c, but the screen is cleared before it is repainted.
+Same as -c, for compatibility with older versions of
+.Nm less .
 .It Fl c | -clear-screen
 Causes full screen repaints to be painted from the top line down.
 By default,
@@ -568,7 +602,8 @@ with pagers.
 .\" color is a pair of numbers separated by a period.
 .\" The first number selects the foreground color and the second selects
 .\" the background color of the text.
-.\" A single number N is the same as N.0.
+.\" A single number N is the same as N.M,
+.\" where M is the normal background color.
 .It Fl E | -QUIT-AT-EOF
 Causes
 .Nm
@@ -628,18 +663,37 @@ The status column is also used if the -w or -W option is in effect.
 .Fl -jump-target Ns = Ns Ar n
 .Xc
 Specifies a line on the screen where the "target" line is to be positioned.
-A target line is the object of a text search,
-tag search, jump to a line number,
-jump to a file percentage, or jump to a marked position.
-The screen line is specified by a number: the top line on the screen
+The target line is the line specified by any command to
+search for a pattern, jump to a line number,
+jump to a file percentage or jump to a tag.
+The screen line may be specified by a number: the top line on the screen
 is 1, the next is 2, and so on.
 The number may be negative to specify a line relative to the bottom
 of the screen: the bottom line on the screen is -1, the second
 to the bottom is -2, and so on.
-If the -j option is used, searches begin at the line immediately
-after the target line.
+Alternately, the screen line may be specified as a fraction of the height
+of the screen, starting with a decimal point: .5 is in the middle of the
+screen, .3 is three tenths down from the first line, and so on.
+If the line is specified as a fraction, the actual line number
+is recalculated if the terminal window is resized, so that the
+target line remains at the specified fraction of the screen height.
+If any form of the -j option is used, 
+forward searches begin at the line immediately after the target line,
+and backward searches begin at the target line,
+unless changed by -a or -A.
 For example, if "-j4" is used, the target line is the
-fourth line on the screen, so searches begin at the fifth line on the screen.
+fourth line on the screen, so forward searches begin at the fifth line
+on the screen.
+.It Fl K | -quit-on-intr
+Causes
+.Nm
+to exit immediately (with status 2)
+when an interrupt character (usually ^C) is typed.
+Normally, an interrupt character causes
+.Nm
+to stop whatever it is doing and return to its command prompt.
+Note that use of this option makes it impossible to return to the 
+command prompt from the "F" command.
 .It Xo
 .Fl k Ns Ar filename |
 .Fl -lesskey-file Ns = Ns Ar filename
@@ -767,22 +821,27 @@ The bell will be rung on certain other errors,
 such as typing an invalid character.
 The default is to ring the terminal bell in all such cases.
 .It Fl R | -RAW-CONTROL-CHARS
-Like -r, but tries to keep track of the screen appearance where possible.
-This works only if the input consists of normal text and possibly some
-ANSI "color" escape sequences, which are sequences of the form:
+Like -r, but only ANSI "color" escape sequences are output in "raw" form.
+Unlike -r, the screen appearance is maintained correctly in most cases.
+ANSI "color" escape sequences are sequences of the form:
 .Pp
 .Dl ESC \&[ ... m
 .Pp
-where the "..." is zero or more characters other than "m".
+where the "..." is zero or more color specification characters.
 For the purpose of keeping track of screen appearance,
-all control characters and all ANSI color escape sequences are
-assumed to not move the cursor.
+ANSI color escape sequences are assumed to not move the cursor.
 You can make
 .Nm
 think that characters other than "m" can end ANSI color escape sequences
 by setting the environment variable
 .Ev LESSANSIENDCHARS
 to the list of characters which can end a color escape sequence.
+And you can make
+.Nm
+think that characters other than the standard ones may appear between
+the ESC and the m by setting the environment variable
+.Ev LESSANSIMIDCHARS
+to the list of characters which can appear.
 .It Fl r | -raw-control-chars
 Causes "raw" control characters to be displayed.
 The default is to display control characters using the caret notation;
@@ -897,7 +956,7 @@ By default, any forward movement causes scrolling.
 Changes the default scrolling window size to n lines.
 The default is one screenful.
 The z and w commands can also be used to change the window size.
-The "z" may be omitted for compatibility with
+The "z" may be omitted for compatibility with some versions of
 .Nm more .
 If the number
 .Ar n
@@ -908,6 +967,19 @@ For example, if the screen is 24 lines, -z-4 sets the
 scrolling window to 20 lines.
 If the screen is resized to 40 lines,
 the scrolling window automatically changes to 36 lines.
+.It Fl -follow-name
+Normally, if the input file is renamed while an F command is executing,
+.Nm
+will continue to display the contents of the original file despite
+its name change.
+If --follow-name is specified, during an F command
+.Nm
+will periodically attempt to reopen the file by name.
+If the reopen succeeds and the file is a different file from the original
+(which means that a new file has been created
+with the same name as the original (now renamed) file),
+.Nm
+will display the contents of that new file.
 .It Fl -no-keypad
 Disables sending the keypad initialization and deinitialization strings
 to the terminal.
@@ -938,6 +1010,13 @@ Specifies the default number of positions to scroll horizontally
 in the RIGHTARROW and LEFTARROW commands.
 If the number specified is zero, it sets the default number of
 positions to one half of the screen width.
+Alternately, the number may be specified as a fraction of the width
+of the screen, starting with a decimal point: .5 is half of the
+screen width, .3 is three tenths of the screen width, and so on.
+If the number is specified as a fraction, the actual number of
+scroll positions is recalculated if the terminal window is resized,
+so that the actual scroll remains at the specified fraction
+of the screen width.
 .It Fl -
 A command line argument of "--" marks the end of option arguments.
 Any arguments following this are interpreted as filenames.
@@ -965,7 +1044,8 @@ or the pattern for a search command),
 certain keys can be used to manipulate the command line.
 Most commands have an alternate form in [ brackets ] which can be used if
 a key does not exist on a particular keyboard.
-.\" (The bracketed forms do not work in the MS-DOS version.)
+.\" (Note that the forms beginning with ESC do not work
+.\" in some MS-DOS and Windows systems because ESC is the line erase character.)
 Any of these special keys may be entered literally by preceding
 it with the "literal" character, either ^V or ^A.
 A backslash itself may also be entered literally by entering two backslashes.
@@ -1021,6 +1101,8 @@ Delete the entire command line,
 or cancel the command if the command line is empty.
 If you have changed your line-kill character to something
 other than ^U, that character is used instead of ^U.
+.It "^G"
+Delete the entire command line and return to the main prompt.
 .El
 .Sh KEY BINDINGS
 You may define your own
@@ -1197,6 +1279,22 @@ When an input pipe is used, a LESSCLOSE postprocessor can be used,
 but it is usually not necessary since there is no replacement file to clean up.
 In this case, the replacement file name passed to the LESSCLOSE
 postprocessor is "-".
+.Pp
+For compatibility with previous versions of
+.Nm less ,
+the input preprocessor or pipe is not used if
+.Nm
+is viewing standard input.
+However, if the first character of LESSOPEN is a dash (-),
+the input preprocessor is used on standard input as well as other files.
+In this case, the dash is not considered to be part of
+the preprocessor command.
+If standard input is being viewed, the input preprocessor is passed
+a file name consisting of a single dash.
+Similarly, if the first two characters of LESSOPEN are vertical bar and dash
+(|-), the input pipe is used on standard input as well as other files.
+Again, in this case the dash is not considered to be part of
+the input pipe command.
 .Sh NATIONAL CHARACTER SETS
 There are three types of characters in the input file:
 .Bl -tag -width "control characters"
@@ -1248,9 +1346,13 @@ Selects a Russian character set.
 Selects a character set appropriate for NeXT computers.
 .It utf-8
 Selects the UTF-8 encoding of the ISO 10646 character set.
+UTF-8 is special in that it supports multi-byte characters in the input file.
+It is the only character set that supports multi-byte characters.
+.It windows
+Selects a character set appropriate for Microsoft Windows (cp 1251).
 .El
 .Pp
-In special cases, it may be desired to tailor
+In rare cases, it may be desired to tailor
 .Nm
 to use a character set other than the ones definable by LESSCHARSET.
 In this case, the environment variable
@@ -1284,7 +1386,7 @@ next		8bcccbcc18b95.bb125.bb
 .Ed
 .Pp
 If neither LESSCHARSET nor LESSCHARDEF is set,
-but the string "UTF-8" is found in the
+but any of the strings "UTF-8", "UTF8", "utf-8" or "utf8" is found in the
 .Ev LC_ALL , LC_CTYPE
 or
 .Ev LANG
@@ -1321,7 +1423,26 @@ The remainder of LESSBINFMT is a string which may include one
 printf-style escape sequence (a % followed by x, X, o, d, etc.).
 For example, if LESSBINFMT is "*u[%x]", binary characters
 are displayed in underlined hexadecimal surrounded by brackets.
-The default if no LESSBINFMT is specified is "*s<%X>".
+The default if no LESSBINFMT is specified is "*s<%02X>".
+Warning: the result of expanding the character via LESSBINFMT must
+be less than 31 characters.
+.Pp
+When the character set is utf-8, the
+.Ev LESSUTFBINFMT
+environment variable
+acts similarly to LESSBINFMT but it applies to Unicode code points
+that were successfully decoded but are unsuitable for display (e.g.,
+unassigned code points).
+Its default value is "<U+%04lX>".
+Note that LESSUTFBINFMT and LESSBINFMT share their display attribute
+setting ("*x") so specifying one will affect both;
+LESSUTFBINFMT is read after LESSBINFMT so its setting, if any,
+will have priority.
+Problematic octets in a UTF-8 file (octets of a truncated sequence,
+octets of a complete but non-shortest form sequence, illegal octets,
+and stray trailing octets)
+are displayed individually using LESSBINFMT so as to facilitate diagnostic
+of how the UTF-8 file is ill-formed.
 .Sh PROMPTS
 The -P option allows you to tailor the prompt to your preference.
 The string given to the -P option replaces the specified prompt string.
@@ -1368,6 +1489,8 @@ is not defined).
 See the discussion of the LESSEDIT feature below.
 .It %f
 Replaced by the name of the current input file.
+.It %F
+Replaced by the last component of the name of the current input file.
 .It %i
 Replaced by the index of the current file in the list of
 input files.
@@ -1544,6 +1667,39 @@ Filename completion (TAB, ^L).
 .El
 .Pp
 Less can also be compiled to be permanently in "secure" mode.
+.Sh COMPATIBILITY WITH MORE
+If the environment variable
+.Ev LESS_IS_MORE
+is set to 1,
+or if the program is invoked via a file link named "more",
+.Nm
+behaves (mostly) in conformance with the POSIX "more" command specification.
+In this mode, less behaves differently in these ways:
+.Pp
+The -e option works differently.
+If the -e option is not set,
+.Nm
+behaves as if the -E option were set.
+If the -e option is set,
+.Nm
+behaves as if the -e and -F options were set.
+.Pp
+The -m option works differently.
+If the -m option is not set, the medium prompt is used.
+If the -m option is set, the short prompt is used.
+.Pp
+The -n option acts like the -z option.
+The normal behavior of the -n option is unavailable in this mode.
+.Pp
+The parameter to the -p option is taken to be a
+.Nm
+command rather than a search pattern.
+.Pp
+The
+.Ev LESS
+environment variable is ignored, and the
+.Ev MORE
+environment variable is used in its place.
 .Sh ENVIRONMENT
 Environment variables may be specified either in the system environment
 as usual, or in a
@@ -1581,8 +1737,12 @@ Options which are passed to
 .Nm
 automatically.
 .It Ev LESSANSIENDCHARS
-Characters which are assumed to end an ANSI color escape sequence
+Characters which may end an ANSI color escape sequence
 (default "m").
+.It Ev LESSANSIMIDCHARS
+Characters which may appear between the ESC character and the
+end character in an ANSI color escape sequence
+(default "0123456789;[?!"'#%()*+\ ").
 .It Ev LESSBINFMT
 Format for displaying non-printable, non-control characters.
 .It Ev LESSCHARDEF
@@ -1603,6 +1763,18 @@ See discussion under
 Name of the command used by the -t option to find global tags.
 Normally should be set to "global" if your system has the global command.
 If not set, global tags are not used.
+.It Ev LESSHISTFILE
+Name of the history file used to remember search commands and
+shell commands between invocations of
+.Nm less .
+If set to "-" or "/dev/null", a history file is not used.
+The default is "$HOME/.lesshst".
+.\" The default is "$HOME/.lesshst" on Unix systems, "$HOME/_lesshst" on
+.\" DOS and Windows systems, or "$HOME/lesshst.ini" or "$INIT/lesshst.ini" 
+.\" on OS/2 systems.
+.It Ev LESSHISTSIZE
+The maximum number of commands to save in the history file.
+The default is 100.
 .It Ev LESSKEY
 Name of the default lesskey(1) file.
 .It Ev LESSKEY_SYSTEM
@@ -1623,6 +1795,12 @@ See discussion under
 .Sx SECURITY .
 .It Ev LESSSEPARATOR
 String to be appended to a directory name in filename completion.
+.It Ev LESSUTFBINFMT
+Format for displaying non-printable Unicode code points.
+.It Ev LESS_IS_MORE
+Emulate the
+.Xr more 1
+command.
 .It Ev LINES
 Sets the number of lines on the screen.
 Takes precedence over the number of lines specified by the TERM variable.
@@ -1662,42 +1840,3 @@ Send bug reports or comments to the above address or to
 .Pp
 For more information, see the less homepage at
 .Pa http://www.greenwoodsoftware.com/less .
-.Sh CAVEATS
-The = command and prompts (unless changed by -P)
-report the line numbers of the lines at the top and bottom of the screen,
-but the byte and percent of the line after the one at the bottom of the screen.
-.Pp
-If the :e command is used to name more than one file,
-and one of the named files has been viewed previously,
-the new files may be entered into the list in an unexpected order.
-.Pp
-On certain older terminals (the so-called "magic cookie" terminals),
-search highlighting will cause an erroneous display.
-On such terminals, search highlighting is disabled by default
-to avoid possible problems.
-.Pp
-In certain cases, when search highlighting is enabled and
-a search pattern begins with a ^,
-more text than the matching string may be highlighted.
-(This problem does not occur when
-.Nm
-is compiled to use the POSIX regular expression package.)
-.Pp
-When viewing text containing ANSI color escape sequences using the -R option,
-searching will not find text containing an embedded escape sequence.
-Also, search highlighting may change the color of some of the text
-which follows the highlighted text.
-.Pp
-On some systems, setlocale claims that ASCII characters 0 through 31 are
-control characters rather than binary characters.
-This causes
-.Nm
-to treat some binary files as ordinary, non-binary files.
-To workaround this problem, set the environment variable
-.Ev LESSCHARSET
-to "ascii" (or whatever character set is appropriate).
-.Pp
-See
-.Pa http://www.greenwoodsoftware.com/less
-for the latest list of known bugs in this version of
-.Nm less .

@@ -97,7 +97,11 @@ cvt_text(odst, osrc, chpos, lenp, ops)
 			/* Just copy the char to the destination buffer. */
 			if ((ops & CVT_TO_LC) && IS_UPPER(ch))
 				ch = TO_LOWER(ch);
+#if !SMALL
 			put_wchar(&dst, ch);
+#else
+			*dst++ = (char)ch;
+#endif /* !SMALL */
 			/*
 			 * Record the original position of the char.
 			 * But if we've already recorded a position

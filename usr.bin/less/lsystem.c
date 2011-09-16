@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1984-2002  Mark Nudelman
+ * Copyright (C) 1984-2011  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -49,7 +49,7 @@ lsystem(cmd, donemsg)
 	register char *p;
 #endif
 	IFILE save_ifile;
-#if MSDOS_COMPILER
+#if MSDOS_COMPILER && MSDOS_COMPILER!=WIN32C
 	char cwd[FILENAME_MAX+1];
 #endif
 
@@ -68,6 +68,10 @@ lsystem(cmd, donemsg)
 	}
 
 #if MSDOS_COMPILER
+#if MSDOS_COMPILER==WIN32C
+	if (*cmd == '\0')
+		cmd = getenv("COMSPEC");
+#else
 	/*
 	 * Working directory is global on MSDOS.
 	 * The child might change the working directory, so we
@@ -76,6 +80,7 @@ lsystem(cmd, donemsg)
 	 * try to "reedit_ifile" it.
 	 */
 	getcwd(cwd, FILENAME_MAX);
+#endif
 #endif
 
 	/*
@@ -135,8 +140,7 @@ lsystem(cmd, donemsg)
 			{
 				size_t len = strlen(shell) + strlen(esccmd) + 5;
 				p = (char *) ecalloc(len, sizeof(char));
-				snprintf(p, len, "%s %s %s", shell,
-				    shell_coption(), esccmd);
+				SNPRINTF3(p, len, "%s %s %s", shell, shell_coption(), esccmd);
 				free(esccmd);
 			}
 		}
@@ -193,7 +197,7 @@ lsystem(cmd, donemsg)
 	init();
 	screen_trashed = 1;
 
-#if MSDOS_COMPILER
+#if MSDOS_COMPILER && MSDOS_COMPILER!=WIN32C
 	/*
 	 * Restore the previous directory (possibly
 	 * changed by the child program we just ran).

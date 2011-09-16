@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1984-2002  Mark Nudelman
+ * Copyright (C) 1984-2011  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -52,6 +52,7 @@ iread(fd, buf, len)
 {
 	register int n;
 
+start:
 #if MSDOS_COMPILER==WIN32C
 	if (ABORT_SIGS())
 		return (READ_INTR);
@@ -109,7 +110,25 @@ iread(fd, buf, len)
 	}
 #endif
 	if (n < 0)
-		return (errno == EINTR ? READ_INTR : -1);
+	{
+#if HAVE_ERRNO
+		/*
+		 * Certain values of errno indicate we should just retry the read.
+		 */
+#if MUST_DEFINE_ERRNO
+		extern int errno;
+#endif
+#ifdef EINTR
+		if (errno == EINTR)
+			goto start;
+#endif
+#ifdef EAGAIN
+		if (errno == EAGAIN)
+			goto start;
+#endif
+#endif
+		return (-1);
+	}
 	return (n);
 }
 
@@ -171,8 +190,30 @@ errno_message(filename)
 #endif
 	len = strlen(filename) + strlen(p) + 3;
 	m = (char *) ecalloc(len, sizeof(char));
-	snprintf(m, len, "%s: %s", filename, p);
+	SNPRINTF2(m, len, "%s: %s", filename, p);
 	return (m);
+}
+
+/* #define HAVE_FLOAT 0 */
+
+	static POSITION
+muldiv(val, num, den)
+	POSITION val, num, den;
+{
+#if HAVE_FLOAT
+	double v = (((double) val) * num) / den;
+	return ((POSITION) (v + 0.5));
+#else
+	POSITION v = ((POSITION) val) * num;
+
+	if (v / num == val)
+		/* No overflow */
+		return (POSITION) (v / den);
+	else
+		/* Above calculation overflows; 
+		 * use a method that is less precise but won't overflow. */
+		return (POSITION) (val / (den / num));
+#endif
 }
 
 /*
@@ -183,30 +224,24 @@ errno_message(filename)
 percentage(num, den)
 	POSITION num, den;
 {
-	POSITION num100 = num * 100;
-
-	if (num100 / 100 == num)
-		return (num100 / den);
-	else
-		return (num / (den / 100));
+	return (int) muldiv(num,  (POSITION) 100, den);
 }
 
 /*
  * Return the specified percentage of a POSITION.
  */
 	public POSITION
-percent_pos(pos, percent)
+percent_pos(pos, percent, fraction)
 	POSITION pos;
 	int percent;
+	long fraction;
 {
-	POSITION result100;
+	/* Change percent (parts per 100) to perden (parts per NUM_FRAC_DENOM). */
+	POSITION perden = (percent * (NUM_FRAC_DENOM / 100)) + (fraction / 100);
 
-	if (percent == 0)
+	if (perden == 0)
 		return (0);
-	else if ((result100 = pos * percent) / percent == pos)
-		return (result100 / 100);
-	else
-		return (percent * (pos / 100));
+	return (POSITION) muldiv(pos, perden, (POSITION) NUM_FRAC_DENOM);
 }
 
 #if !HAVE_STRCHR

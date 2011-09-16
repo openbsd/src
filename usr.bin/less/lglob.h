@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1984-2002  Mark Nudelman
+ * Copyright (C) 1984-2011  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -24,7 +24,7 @@
 
 #include <glob.h>
 
-#define GLOB_FLAGS			(GLOB_NOCHECK|GLOB_BRACE|GLOB_TILDE)
+#define	GLOB_FLAGS			(GLOB_NOCHECK|GLOB_BRACE|GLOB_TILDE)
 #define	DECL_GLOB_LIST(list)		glob_t list;  int i;
 #define	GLOB_LIST(filename,list)	glob(filename,GLOB_FLAGS,0,&list)
 #define	GLOB_LIST_FAILED(list)		0

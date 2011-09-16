@@ -1,26 +1,20 @@
 
-                            Less, version 382
+                            Less, version 444
 
-    This is the distribution of less, version 382, released 03 Feb 2004.
+    This is the distribution of less, version 444, released 09 Jun 2011.
     This program is part of the GNU project (http://www.gnu.org).
 
     This program is free software.  You may redistribute it and/or
     modify it under the terms of either:
 
     1. The GNU General Public License, as published by the Free
-       Software Foundation; either version 2, or (at your option) any
+       Software Foundation; either version 3, or (at your option) any
        later version.  A copy of this license is in the file COPYING.
     or
     2. The Less License, in the file LICENSE.
 
     Please report any problems to bug-less@gnu.org or markn@greenwoodsoftware.com.
     See http://www.greenwoodsoftware.com/less for the latest info.
-    You may also contact the author at:
-          Mark Nudelman
-          Greenwood Software
-          PO Box 2402
-          El Granada, CA  94018
-          USA
 
 =========================================================================
 
@@ -46,6 +40,7 @@ INSTALLATION (Unix systems only):
    --with-editor=program
      Specifies the default editor program used by the "v" command.
      The default is "vi".
+
    --with-regex=lib
      Specifies the regular expression library used by less for pattern
      matching.  The default is "auto", which means the configure program 
@@ -57,6 +52,11 @@ INSTALLATION (Unix systems only):
         regcomp        Use the V8-compatible regcomp.
         regcomp-local  Use Henry Spencer's V8-compatible regcomp
                        (source is supplied with less).
+   --with-secure
+     Builds a "secure" version of less, with some features disabled
+	 to prevent users from viewing other files, accessing shell
+	 commands, etc.
+
 
 3. It is a good idea to look over the generated Makefile and defines.h
    and make sure they look ok.  If you know of any peculiarities of
@@ -67,9 +67,6 @@ INSTALLATION (Unix systems only):
        -lncurses  -lcurses  -ltermcap  -ltermlib
 
    If you wish, you may edit defines.h to remove some optional features.
-   If you wish to build a "secure" version of less (which disables all
-   features which might allow a user to do unintended things to the system
-   on which less is running), edit defines.h and define SECURE to 1.
    If you choose not to include some features in your version, you may
    wish to edit the manual page "less.nro" and the help page "less.hlp" 
    to remove the descriptions of the features which you are removing.
@@ -95,6 +92,10 @@ complaints, etc., you may mail to the author at markn@greenwoodsoftware.com.
 
 Note to hackers: comments noting possible improvements are enclosed
 in double curly brackets {{ like this }}.
+
+(Note that the above note was originally written at a time when 
+"hackers" most commonly meant "enthusiastic and dedicated computer 
+programmers", not "persons who attempt to circumvent computer security".)
 
 
 

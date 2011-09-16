@@ -38,6 +38,7 @@
   ESC-n             *  Repeat previous search, spanning files.
   ESC-N             *  Repeat previous search, reverse dir. & spanning files.
   ESC-u                Undo (toggle) search highlighting.
+  &_p_a_t_t_e_r_n          *  Display only matching lines
         ---------------------------------------------------
         Search patterns may be modified by one or more of:
         ^N or !  Search for NON-matching lines.
@@ -111,12 +112,14 @@
                   Display help (from command line).
   -a  ........  --search-skip-screen
                   Forward search skips current screen.
+  -A  ........  --SEARCH-SKIP-SCREEN
+                  Forward search always skips target line.
   -b [_N]  ....  --buffers=[_N]
                   Number of buffers.
   -B  ........  --auto-buffers
                   Don't automatically allocate buffers for pipes.
-  -c  -C  ....  --clear-screen  --CLEAR-SCREEN
-                  Repaint by scrolling/clearing.
+  -c  ........  --clear-screen
+                  Repaint by clearing rather than scrolling.
   -d  ........  --dumb
                   Dumb terminal.
   -D [_x_n_._n]  .  --color=_x_n_._n
@@ -143,12 +146,14 @@
                   Display a status column at left edge of screen.
   -k [_f_i_l_e]  .  --lesskey-file=[_f_i_l_e]
                   Use a lesskey file.
+  -K            --quit-on-intr
+                  Exit less in response to ctrl-C.
   -L  ........  --no-lessopen
                   Ignore the LESSOPEN environment variable.
   -m  -M  ....  --long-prompt  --LONG-PROMPT
                   Set prompt style.
   -n  -N  ....  --line-numbers  --LINE-NUMBERS
-                  Use line numbers.
+                  Don't use line numbers.
   -o [_f_i_l_e]  .  --log-file=[_f_i_l_e]
                   Copy to log file (standard input only).
   -O [_f_i_l_e]  .  --LOG-FILE=[_f_i_l_e]
@@ -193,6 +198,11 @@
                   Don't display tildes after end of file.
   -# [_N]  ....  --shift=[_N]
                   Horizontal scroll amount (0 = one half screen width)
+      ........  --no-keypad
+                  Don't send keypad init/deinit sequence.
+      ........  --follow-name
+                  The F command changes files if the input file is renamed.
+
 
  ---------------------------------------------------------------------------
 

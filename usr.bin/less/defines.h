@@ -27,7 +27,7 @@
  * SMALL is 1 if you wish to disable a bunch of features in order to
  * build a smaller less binary.
  */
-#define	SMALL		1
+#define	SMALL		0
 
 /*
  * SHELL_ESCAPE is 1 if you wish to allow shell escapes.
@@ -53,7 +53,7 @@
 #define	CMD_HISTORY	(!SMALL)
 
 /*
- * HILITE_SEARCH is 1 if you wish to have search targets to be
+ * HILITE_SEARCH is 1 if you wish to have search targets to be 
  * displayed in standout mode.
  */
 #define	HILITE_SEARCH	1
@@ -71,7 +71,7 @@
 #define	TAGS		(!SECURE && !SMALL)
 
 /*
- * USERFILE is 1 if you wish to allow a .less file to specify
+ * USERFILE is 1 if you wish to allow a .less file to specify 
  * user-defined key bindings.
  */
 #define	USERFILE	(!SECURE && !SMALL)
@@ -108,10 +108,10 @@
 #define	ONLY_RETURN	0
 
 /*
- * LESSKEYFILE is the filename of the default lesskey output file
+ * LESSKEYFILE is the filename of the default lesskey output file 
  * (in the HOME directory).
  * LESSKEYFILE_SYS is the filename of the system-wide lesskey output file.
- * DEF_LESSKEYINFILE is the filename of the default lesskey input
+ * DEF_LESSKEYINFILE is the filename of the default lesskey input 
  * (in the HOME directory).
  * LESSHISTFILE is the filename of the history file
  * (in the HOME directory).
@@ -172,7 +172,7 @@
 #define	DEF_METACHARS	"; *?\t\n'\"()<>[]|&^`#\\$%=~"
 #define	DEF_METAESCAPE	"\\"
 
-/*
+/* 
  * HAVE_DUP is 1 if your system has the dup() call.
  */
 #define	HAVE_DUP	1
@@ -203,7 +203,7 @@
 
 
 /* Define EDIT_PGM to your editor. */
-#define EDIT_PGM "ed"
+#define EDIT_PGM "vi"
 
 /* Define HAVE_CONST if your compiler supports the "const" modifier. */
 #define HAVE_CONST 1
@@ -218,7 +218,7 @@
 #define HAVE_ERRNO_H 1
 
 /* Define to 1 if you have the `fchmod' function. */
-/* #undef HAVE_FCHMOD */
+#define HAVE_FCHMOD 1
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
@@ -227,7 +227,7 @@
 #define HAVE_FILENO 1
 
 /* Define HAVE_FLOAT if your compiler supports the "double" type. */
-/* #undef HAVE_FLOAT */
+#define HAVE_FLOAT 1
 
 /* Define to 1 if you have the `fsync' function. */
 #define HAVE_FSYNC 1
@@ -296,7 +296,7 @@
 #define HAVE_STAT_INO 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
-/* #undef HAVE_STDINT_H */
+#define HAVE_STDINT_H 1
 
 /* Define to 1 if you have the <stdio.h> header file. */
 #define HAVE_STDIO_H 1
@@ -365,10 +365,10 @@
 #define HAVE_VOID 1
 
 /* Define HAVE_WCTYPE if you have iswupper, iswlower, towupper, towlower. */
-/* #undef HAVE_WCTYPE */
+#define HAVE_WCTYPE 1
 
 /* Define to 1 if you have the <wctype.h> header file. */
-/* #undef HAVE_WCTYPE_H */
+#define HAVE_WCTYPE_H 1
 
 /* Define to 1 if you have the `_setjmp' function. */
 #define HAVE__SETJMP 1

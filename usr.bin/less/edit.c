@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1984-2002  Mark Nudelman
+ * Copyright (C) 1984-2011  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -10,6 +10,9 @@
 
 
 #include "less.h"
+#if HAVE_STAT
+#include <sys/stat.h>
+#endif
 
 public int fd0 = 0;
 
@@ -36,10 +39,15 @@ extern int force_logfile;
 extern char *namelogfile;
 #endif
 
+#if HAVE_STAT_INO
+public dev_t curr_dev;
+public ino_t curr_ino;
+#endif
+
 char *curr_altfilename = NULL;
 static void *curr_altpipe;
 
-
+#if EXAMINE || TAB_COMPLETE_FILENAME
 /*
  * Textlist functions deal with a list of words separated by spaces.
  * init_textlist sets up a textlist structure.
@@ -115,7 +123,6 @@ forw_textlist(tlist, prev)
 	return (s);
 }
 
-#ifndef SMALL_PROGRAM
 	public char *
 back_textlist(tlist, prev)
 	struct textlist *tlist;
@@ -141,7 +148,7 @@ back_textlist(tlist, prev)
 		s--;
 	return (s);
 }
-#endif /* SMALL_PROGRAM */
+#endif /* EXAMINE || TAB_COMPLETE_FILENAME */
 
 /*
  * Close the current input file.
@@ -180,6 +187,9 @@ close_file()
 		curr_altfilename = NULL;
 	}
 	curr_ifile = NULL_IFILE;
+#if HAVE_STAT_INO
+	curr_ino = curr_dev = 0;
+#endif
 }
 
 /*
@@ -239,6 +249,16 @@ edit_ifile(ifile)
 	{
 		chflags = ch_getflags();
 		close_file();
+#if !SMALL
+		if ((chflags & CH_HELPFILE) && held_ifile(was_curr_ifile) <= 1)
+		{
+			/*
+			 * Don't keep the help file in the ifile list.
+			 */
+			del_ifile(was_curr_ifile);
+			was_curr_ifile = old_ifile;
+		}
+#endif /* !SMALL */
 	}
 
 	if (ifile == NULL_IFILE)
@@ -263,6 +283,10 @@ edit_ifile(ifile)
 	qopen_filename = shell_unquote(open_filename);
 
 	chflags = 0;
+#if !SMALL
+	if (strcmp(open_filename, HELPFILE) == 0)
+		chflags |= CH_HELPFILE;
+#endif /* !SMALL */
 	if (alt_pipe != NULL)
 	{
 		/*
@@ -312,6 +336,14 @@ edit_ifile(ifile)
 		/*
 		 * Re-open the current file.
 		 */
+		if (was_curr_ifile == ifile)
+		{
+			/*
+			 * Whoops.  The "current" ifile is the one we just deleted.
+			 * Just give up.
+			 */
+			quit(QUIT_ERROR);
+		}
 		reedit_ifile(was_curr_ifile);
 		return (1);
 	} else if ((f = open(qopen_filename, OPEN_READ)) < 0)
@@ -342,7 +374,6 @@ edit_ifile(ifile)
 			}
 		}
 	}
-	free(qopen_filename);
 
 	/*
 	 * Get the new ifile.
@@ -361,13 +392,29 @@ edit_ifile(ifile)
 	new_file = TRUE;
 	ch_init(f, chflags);
 
+	if (!(chflags & CH_HELPFILE))
+	{
 #if LOGFILE
-	if (namelogfile != NULL && is_tty)
-		use_logfile(namelogfile);
+		if (namelogfile != NULL && is_tty)
+			use_logfile(namelogfile);
 #endif
-	if (every_first_cmd != NULL)
-		ungetsc(every_first_cmd);
+#if HAVE_STAT_INO
+		/* Remember the i-number and device of the opened file. */
+		{
+			struct stat statbuf;
+			int r = stat(qopen_filename, &statbuf);
+			if (r == 0)
+			{
+				curr_ino = statbuf.st_ino;
+				curr_dev = statbuf.st_dev;
+			}
+		}
+#endif
+		if (every_first_cmd != NULL)
+			ungetsc(every_first_cmd);
+	}
 
+	free(qopen_filename);
 	no_display = !any_display;
 	flush();
 	any_display = TRUE;
@@ -403,7 +450,7 @@ edit_ifile(ifile)
 	return (0);
 }
 
-#ifndef SMALL_PROGRAM
+#if EXAMINE
 /*
  * Edit a space-separated list of files.
  * For each filename in the list, enter it into the ifile list.
@@ -463,7 +510,7 @@ edit_list(filelist)
 	reedit_ifile(save_ifile);
 	return (edit(good_filename));
 }
-#endif /* SMALL_PROGRAM */
+#endif /* EXAMINE */
 
 /*
  * Edit the first file in the command line (ifile) list.
@@ -487,7 +534,7 @@ edit_last()
 
 
 /*
- * Edit the next or previous file in the command line (ifile) list.
+ * Edit the n-th next or previous file in the command line (ifile) list.
  */
 	static int
 edit_istep(h, n, dir)
@@ -536,14 +583,14 @@ edit_inext(h, n)
 	IFILE h;
 	int n;
 {
-	return (edit_istep(h, n, 1));
+	return (edit_istep(h, n, +1));
 }
 
 	public int
 edit_next(n)
 	int n;
 {
-	return edit_istep(curr_ifile, n, 1);
+	return edit_istep(curr_ifile, n, +1);
 }
 
 	static int
@@ -636,6 +683,14 @@ reedit_ifile(save_ifile)
 	 * If can't even open that, we're stuck.  Just quit.
 	 */
 	quit(QUIT_ERROR);
+}
+
+	public void
+reopen_curr_ifile()
+{
+	IFILE save_ifile = save_curr_ifile();
+	close_file();
+	reedit_ifile(save_ifile);
 }
 
 /*
