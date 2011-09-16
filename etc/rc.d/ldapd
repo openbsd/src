@@ -1,9 +1,11 @@
 #!/bin/sh
 #
-# $OpenBSD: ldapd,v 1.1 2011/07/06 18:55:36 robert Exp $
+# $OpenBSD: ldapd,v 1.2 2011/09/16 10:13:24 robert Exp $
 
 daemon="/usr/sbin/ldapd"
 
 . /etc/rc.d/rc.subr
+
+pexp="ldapd: ldap server.*"
 
 rc_cmd $1
