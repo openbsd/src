@@ -1,4 +1,4 @@
-/*	$OpenBSD: fnm_test.c,v 1.1 2008/10/01 23:04:58 millert Exp $	*/
+/*	$OpenBSD: fnm_test.c,v 1.2 2011/09/17 15:12:38 stsp Exp $	*/
 
 /*
  * Public domain, 2008, Todd C. Miller <Todd.Miller@courtesan.com>
@@ -8,12 +8,15 @@
 #include <fnmatch.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <util.h>
 
 int
 main(int argc, char **argv)
 {
 	FILE *fp = stdin;
 	char pattern[1024], string[1024];
+	char *line;
+	const char delim[3] = {'\0', '\0', '#'};
 	int errors = 0, flags, got, want;
 
 	if (argc > 1) {
@@ -26,12 +29,22 @@ main(int argc, char **argv)
 	 *
 	 * pattern string flags expected_result
 	 *
+	 * lines starting with '#' are comments
 	 */
 	for (;;) {
-		got = fscanf(fp, "%s %s 0x%x %d\n", pattern, string, &flags,
-		    &want);
-		if (got == EOF)
+		line = fparseln(fp, NULL, NULL, delim, 0);
+		if (!line)
 			break;
+		got = sscanf(line, "%s %s 0x%x %d", pattern, string, &flags,
+		    &want);
+		if (got == EOF) {
+			free(line);
+			break;
+		}
+		if (pattern[0] == '#') {
+			free(line);
+			continue;
+		}
 		if (got == 4) {
 			got = fnmatch(pattern, string, flags);
 			if (got != want) {
@@ -39,7 +52,11 @@ main(int argc, char **argv)
 				    string, flags, want, got);
 				errors++;
 			}
+		} else {
+			warnx("unrecognized line '%s'\n", line);
+			errors++;
 		}
+		free(line);
 	}
 	exit(errors);
 }
