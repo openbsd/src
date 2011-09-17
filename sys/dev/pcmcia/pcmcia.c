@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.44 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.45 2011/09/17 15:38:43 miod Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -448,7 +448,8 @@ pcmcia_function_enable(pf)
 		/*
 		 * Don't do anything if we're already enabled.
 		 */
-		DPRINTF(("%s: pcmcia_function_enable on enabled func\n"));
+		DPRINTF(("%s: pcmcia_function_enable on enabled func\n",
+		    pf->sc->dev.dv_xname));
 		return (0);
 	}
 
