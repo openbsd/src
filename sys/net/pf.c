@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.773 2011/09/17 11:34:49 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.774 2011/09/17 16:01:55 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4242,6 +4242,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 		int		fragoff2, extoff2;
 		u_int32_t	jumbolen;
 #endif /* INET6 */
+		u_int16_t	*ipsum2;
 		int		ipoff2;
 		int		off2;
 
@@ -4277,7 +4278,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			pd2.proto = h2.ip_p;
 			pd2.src = (struct pf_addr *)&h2.ip_src;
 			pd2.dst = (struct pf_addr *)&h2.ip_dst;
-			pd2.ip_sum = &h2.ip_sum;
+			ipsum2 = &h2.ip_sum;
 			break;
 #endif /* INET */
 #ifdef INET6
@@ -4299,7 +4300,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 
 			pd2.src = (struct pf_addr *)&h2_6.ip6_src;
 			pd2.dst = (struct pf_addr *)&h2_6.ip6_dst;
-			pd2.ip_sum = NULL;
+			ipsum2 = NULL;
 			break;
 #endif /* INET6 */
 		}
@@ -4397,7 +4398,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 					pf_change_icmp(pd2.src, &th.th_sport,
 					    daddr, &nk->addr[pd2.sidx],
 					    nk->port[pd2.sidx], NULL,
-					    pd2.ip_sum, icmpsum, 0, pd2.af);
+					    ipsum2, icmpsum, 0, pd2.af);
 
 				if (PF_ANEQ(pd2.dst, &nk->addr[pd2.didx],
 				    pd2.af) || pd2.rdomain != nk->rdomain)
@@ -4410,7 +4411,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 					pf_change_icmp(pd2.dst, &th.th_dport,
 					    saddr, &nk->addr[pd2.didx],
 					    nk->port[pd2.didx], NULL,
-					    pd2.ip_sum, icmpsum, 0, pd2.af);
+					    ipsum2, icmpsum, 0, pd2.af);
 				copyback = 1;
 			}
 
@@ -4472,7 +4473,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 					pf_change_icmp(pd2.src, &uh.uh_sport,
 					    daddr, &nk->addr[pd2.sidx],
 					    nk->port[pd2.sidx], &uh.uh_sum,
-					    pd2.ip_sum, icmpsum, 1, pd2.af);
+					    ipsum2, icmpsum, 1, pd2.af);
 
 				if (PF_ANEQ(pd2.dst, &nk->addr[pd2.didx],
 				    pd2.af) || pd2.rdomain != nk->rdomain)
@@ -4485,7 +4486,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 					pf_change_icmp(pd2.dst, &uh.uh_dport,
 					    saddr, &nk->addr[pd2.didx],
 					    nk->port[pd2.didx], &uh.uh_sum,
-					    pd2.ip_sum, icmpsum, 1, pd2.af);
+					    ipsum2, icmpsum, 1, pd2.af);
 
 				switch (pd2.af) {
 #ifdef INET
@@ -4553,7 +4554,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 					    daddr, &nk->addr[pd2.sidx],
 					    (virtual_type == htons(ICMP_ECHO)) ?
 					    nk->port[iidx] : 0, NULL,
-					    pd2.ip_sum, icmpsum, 0, AF_INET);
+					    ipsum2, icmpsum, 0, AF_INET);
 
 				if (PF_ANEQ(pd2.dst, &nk->addr[pd2.didx],
 				    pd2.af) || pd2.rdomain != nk->rdomain)
@@ -4564,7 +4565,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 				    &nk->addr[pd2.didx], pd2.af))
 					pf_change_icmp(pd2.dst, NULL, saddr,
 					    &nk->addr[pd2.didx], 0, NULL,
-					    pd2.ip_sum, icmpsum, 0, AF_INET);
+					    ipsum2, icmpsum, 0, AF_INET);
 
 				m_copyback(m, off, ICMP_MINLEN, pd->hdr.icmp,
 				    M_NOWAIT);
@@ -4631,7 +4632,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 					    (virtual_type ==
 					    htons(ICMP6_ECHO_REQUEST))
 					    ? nk->port[iidx] : 0, NULL,
-					    pd2.ip_sum, icmpsum, 0, AF_INET6);
+					    ipsum2, icmpsum, 0, AF_INET6);
 
 				if (PF_ANEQ(pd2.dst, &nk->addr[pd2.didx],
 				    pd2.af) || pd2.rdomain != nk->rdomain)
@@ -4642,7 +4643,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 				    &nk->addr[pd2.didx], pd2.af))
 					pf_change_icmp(pd2.dst, NULL, saddr,
 					    &nk->addr[pd2.didx], 0, NULL,
-					    pd2.ip_sum, icmpsum, 0, AF_INET6);
+					    ipsum2, icmpsum, 0, AF_INET6);
 
 				m_copyback(m, off, sizeof(struct icmp6_hdr),
 				    pd->hdr.icmp6, M_NOWAIT);
@@ -4675,7 +4676,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 				    &nk->addr[pd2.sidx], pd2.af))
 					pf_change_icmp(pd2.src, NULL, daddr,
 					    &nk->addr[pd2.sidx], 0, NULL,
-					    pd2.ip_sum, icmpsum, 0, pd2.af);
+					    ipsum2, icmpsum, 0, pd2.af);
 
 				if (PF_ANEQ(pd2.dst, &nk->addr[pd2.didx],
 				    pd2.af) || pd2.rdomain != nk->rdomain)
@@ -4686,7 +4687,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 				    &nk->addr[pd2.didx], pd2.af))
 					pf_change_icmp(pd2.dst, NULL, saddr,
 					    &nk->addr[pd2.didx], 0, NULL,
-					    pd2.ip_sum, icmpsum, 0, pd2.af);
+					    ipsum2, icmpsum, 0, pd2.af);
 
 				switch (pd2.af) {
 #ifdef INET
@@ -5640,8 +5641,6 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
 		pd->src = (struct pf_addr *)&h->ip_src;
 		pd->dst = (struct pf_addr *)&h->ip_dst;
 		pd->sport = pd->dport = NULL;
-		pd->ip_sum = &h->ip_sum;
-		pd->proto_sum = NULL;
 		pd->virtual_proto = pd->proto = h->ip_p;
 		pd->dir = dir;
 		pd->sidx = (dir == PF_IN) ? 0 : 1;
@@ -5728,8 +5727,6 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
 		pd->src = (struct pf_addr *)&h->ip6_src;
 		pd->dst = (struct pf_addr *)&h->ip6_dst;
 		pd->sport = pd->dport = NULL;
-		pd->ip_sum = NULL;
-		pd->proto_sum = NULL;
 		pd->dir = dir;
 		pd->sidx = (dir == PF_IN) ? 0 : 1;
 		pd->didx = (dir == PF_IN) ? 1 : 0;
