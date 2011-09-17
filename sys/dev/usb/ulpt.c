@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.39 2011/07/03 15:47:17 matthew Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.40 2011/09/17 08:36:06 miod Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -42,7 +42,6 @@
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/ioctl.h>
 #include <sys/uio.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
@@ -606,19 +605,6 @@ ulptwrite(dev_t dev, struct uio *uio, int flags)
 	error = ulpt_do_write(sc, uio, flags);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(&sc->sc_dev);
-	return (error);
-}
-
-int
-ulptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
-{
-	int error = 0;
-
-	switch (cmd) {
-	default:
-		error = ENODEV;
-	}
-
 	return (error);
 }
 

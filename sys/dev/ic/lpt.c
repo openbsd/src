@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt.c,v 1.7 2010/08/06 00:00:41 miod Exp $ */
+/*	$OpenBSD: lpt.c,v 1.8 2011/09/17 08:36:06 miod Exp $ */
 /*	$NetBSD: lpt.c,v 1.42 1996/10/21 22:41:14 thorpej Exp $	*/
 
 /*
@@ -59,7 +59,6 @@
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
-#include <sys/ioctl.h>
 #include <sys/uio.h>
 #include <sys/device.h>
 #include <sys/conf.h>
@@ -429,22 +428,4 @@ lptintr(arg)
 	}
 
 	return 1;
-}
-
-int
-lptioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
-{
-	int error = 0;
-
-	switch (cmd) {
-	default:
-		error = ENODEV;
-	}
-
-	return error;
 }

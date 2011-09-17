@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.115 2011/07/06 14:49:30 nicm Exp $	*/
+/*	$OpenBSD: conf.h,v 1.116 2011/09/17 08:36:06 miod Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -392,11 +392,11 @@ extern struct cdevsw cdevsw[];
 	(dev_type_stop((*))) enodev, 0, selfalse, \
 	(dev_type_mmap((*))) enodev }
 
-/* open, close, write, ioctl */
+/* open, close, write */
 #define cdev_ulpt_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, selfalse, (dev_type_mmap((*))) enodev }
+	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
+	(dev_type_stop((*))) enodev, 0, selfalse, (dev_type_mmap((*))) enodev }
 
 /* open, close, ioctl */
 #define cdev_pf_init(c,n) { \
@@ -453,11 +453,11 @@ extern struct cdevsw cdevsw[];
 	0, seltrue, (dev_type_mmap((*))) enodev, \
 	0, 0, seltrue_kqfilter }
 
-/* open, close, write, ioctl */
+/* open, close, write */
 #define cdev_lpt_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev, \
+	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
+	(dev_type_stop((*))) enodev, 0, seltrue, (dev_type_mmap((*))) enodev, \
 	0, 0, seltrue_kqfilter }
 
 /* open, close, read, ioctl, mmap */
