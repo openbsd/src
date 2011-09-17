@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.38 2011/05/29 21:22:18 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.39 2011/09/17 13:45:28 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -324,6 +324,7 @@ const char	 *mparse_strlevel(enum mandoclevel);
 void		 *mandoc_calloc(size_t, size_t);
 void		 *mandoc_malloc(size_t);
 void		 *mandoc_realloc(void *, size_t);
+char		 *mandoc_strdup(const char *);
 
 enum mandoc_esc	  mandoc_escape(const char **, const char **, int *);
 
