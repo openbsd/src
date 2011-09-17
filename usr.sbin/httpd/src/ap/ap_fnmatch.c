@@ -1,4 +1,4 @@
-/* $OpenBSD: ap_fnmatch.c,v 1.5 2005/06/20 12:23:22 robert Exp $ */
+/* $OpenBSD: ap_fnmatch.c,v 1.6 2011/09/17 15:20:57 stsp Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -40,16 +40,40 @@
 #include "ap_config.h"
 #include "fnmatch.h"
 #include <string.h>
+#include <limits.h>
 
 #define EOS     '\0'
 
+/* Limit of recursion during matching attempts. */
+#define __FNM_MAX_RECUR	64
+
+static int __fnmatch(const char *, const char *, int, int);
 static const char *rangematch(const char *, int, int);
 
 API_EXPORT(int)
 ap_fnmatch(const char *pattern, const char *string, int flags)
 {
+	int e;
+
+	if (strnlen(pattern, PATH_MAX) == PATH_MAX ||
+	    strnlen(string, PATH_MAX) == PATH_MAX)
+		return (FNM_NOMATCH);
+		
+	e = __fnmatch(pattern, string, flags, __FNM_MAX_RECUR);
+	if (e == -1)
+		e = FNM_NOMATCH;
+	return (e);
+}
+
+int
+__fnmatch(const char *pattern, const char *string, int flags, int recur)
+{
 	const char *stringstart;
 	char c, test;
+	int e;
+
+	if (recur-- == 0)
+		return (-1);
 
 	for (stringstart = string;;) {
 		switch (c = *pattern++) {
@@ -92,9 +116,10 @@ ap_fnmatch(const char *pattern, const char *string, int flags)
 
 			/* General case, use recursion. */
 			while ((test = *string) != EOS) {
-				if (!ap_fnmatch(pattern, string,
-				    flags & ~FNM_PERIOD))
-					return (0);
+				e = __fnmatch(pattern, string,
+				    flags & ~FNM_PERIOD, recur);
+				if (e != FNM_NOMATCH)
+					return (e);
 				if (test == '/' && flags & FNM_PATHNAME)
 					break;
 				++string;
