@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.771 2011/08/30 00:40:47 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.772 2011/09/17 10:12:37 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5666,21 +5666,9 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
 		if (h->ip_hl > 5)	/* has options */
 			pd->badopts++;
 
-		if (h->ip_off & htons(IP_MF | IP_OFFMASK)) {
-			/*
-			 * handle fragments that aren't reassembled by
-			 * normalization
-			 */
+		if (h->ip_off & htons(IP_MF | IP_OFFMASK))
 			pd->virtual_proto = PF_VPROTO_FRAGMENT;
-			if (kif == NULL || r == NULL)	/* pflog */
-				*action = PF_DROP;
-			else
-				*action = pf_test_rule(r, s, dir, kif,
-				    m, *off, pd, a, ruleset, *hdrlen);
-			if (*action != PF_PASS)
-				REASON_SET(reason, PFRES_FRAG);
-			return (-1);
-		}
+
 		break;
 	}
 #endif
@@ -5763,21 +5751,9 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
 		pd->tot_len = ntohs(h->ip6_plen) + sizeof(struct ip6_hdr);
 		pd->virtual_proto = pd->proto = nxt;
 
-		if (fragoff != 0) {
-			/*
-			 * handle fragments that aren't reassembled by
-			 * normalization
-			 */
+		if (fragoff != 0)
 			pd->virtual_proto = PF_VPROTO_FRAGMENT;
-			if (kif == NULL || r == NULL)	/* pflog */
-				*action = PF_DROP;
-			else
-				*action = pf_test_rule(r, s, dir, kif,
-				    m, *off, pd, a, ruleset, *hdrlen);
-			if (*action != PF_PASS)
-				REASON_SET(reason, PFRES_FRAG);
-			return (-1);
-		}
+
 		break;
 	}
 #endif
@@ -5786,7 +5762,20 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
 
 	}
 
-	switch (pd->proto) {
+	switch (pd->virtual_proto) {
+	case PF_VPROTO_FRAGMENT:
+		/*
+		 * handle fragments that aren't reassembled by
+		 * normalization
+		 */
+		if (kif == NULL || r == NULL)	/* pflog */
+			*action = PF_DROP;
+		else
+			*action = pf_test_rule(r, s, dir, kif,
+			    m, *off, pd, a, ruleset, *hdrlen);
+		if (*action != PF_PASS)
+			REASON_SET(reason, PFRES_FRAG);
+		return (-1);
 	case IPPROTO_TCP: {
 		struct tcphdr	*th = pd->hdr.tcp;
 
