@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.125 2011/08/23 10:32:27 espie Exp $
+# $OpenBSD: Add.pm,v 1.126 2011/09/17 15:33:56 schwarze Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -36,7 +36,8 @@ sub manpages_index
 		my @l = map { $destdir.$_ } @$v;
 		if ($state->{not}) {
 			$state->say("Merging manpages in #1: #2",
-				$destdir.$k, join(@l)) if $state->verbose >= 2;
+			    $destdir.$k, join(' ', @l))
+				if $state->verbose >= 2;
 		} else {
 			try {
 				OpenBSD::Makewhatis::merge($destdir.$k, \@l,
@@ -571,7 +572,7 @@ sub install
 {
 	my ($self, $state) = @_;
 	$self->SUPER::install($state);
-	$self->register_manpage($state) unless $state->{not};
+	$self->register_manpage($state);
 }
 
 package OpenBSD::PackingElement::InfoFile;
