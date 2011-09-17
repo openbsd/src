@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.14 2011/06/27 16:54:14 dhill Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.15 2011/09/17 16:45:42 naddy Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -81,7 +81,7 @@ ip6_print(register const u_char *bp, register int length)
 		}
 		memmove((char *)abuf, (char *)ip6, min(length, clen));
 		snapend = abuf + clen;
-		packetp = abuf;
+		packetp = bp = abuf;
 		ip6 = (struct ip6_hdr *)abuf;
 		/* We really want libpcap to give us aligned packets */
 		if (!didwarn) {
