@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.83 2011/09/16 19:36:07 jmc Exp $
+.\"	$OpenBSD: mdoc.7,v 1.84 2011/09/17 21:09:54 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 16 2011 $
+.Dd $Mdocdate: September 17 2011 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -964,6 +964,130 @@ in the same way as a plain
 .Sq \&|
 character.
 Using this predefined string is not recommended in new manuals.
+.Sh MACRO OVERVIEW
+This overview is sorted such that macros of similar purpose are listed
+together, to help find the best macro for any given purpose.
+Deprecated macros are not included in the overview, but can be found
+in the alphabetical reference below.
+.Ss Document preamble and NAME section macros
+.Bl -column "Brq, Bro, Brc" description
+.It Sx \&Dd Ta document date: Cm $Mdocdate: September 17 2011 $ | Ar month day , year
+.It Sx \&Dt Ta document title: Ar TITLE section Op Ar volume | arch
+.It Sx \&Os Ta operating system version: Op Ar system Op Ar version
+.It Sx \&Nm Ta document name (one argument)
+.It Sx \&Nd Ta document description (one line)
+.El
+.Ss Sections and cross references
+.Bl -column "Brq, Bro, Brc" description
+.It Sx \&Sh Ta section header (one line)
+.It Sx \&Ss Ta subsection header (one line)
+.It Sx \&Sx Ta internal cross reference to a section or subsection
+.It Sx \&Xr Ta cross reference to another manual page: Ar name section
+.It Sx \&Pp , \&Lp Ta start a text paragraph (no arguments)
+.El
+.Ss Displays and lists
+.Bl -column "Brq, Bro, Brc" description
+.It Sx \&Bd , \&Ed Ta display block:
+.Fl Ar type
+.Op Fl offset Ar width
+.Op Fl compact
+.It Sx \&D1 Ta indented display (one line)
+.It Sx \&Dl Ta indented literal display (one line)
+.It Sx \&Bl , \&El Ta list block:
+.Fl Ar type
+.Op Fl width Ar val
+.Op Fl offset Ar val
+.Op Fl compact
+.It Sx \&It Ta list item (syntax depends on Fl Ar type )
+.It Sx \&Ta Ta table cell separator in Sx Bl Fl column No lists
+.It Sx \&Rs , \&%* , \&Re Ta bibliographic block (references)
+.El
+.Ss Spacing control
+.Bl -column "Brq, Bro, Brc" description
+.It Sx \&Pf Ta prefix, no following horizontal space (one argument)
+.It Sx \&Ns Ta roman font, no preceding horizontal space (no arguments)
+.It Sx \&Ap Ta apostrophe without surrounding whitespace (no arguments)
+.It Sx \&Sm Ta switch horizontal spacing mode: Cm on | off
+.It Sx \&Bk , \&Ek Ta keep block: Fl words
+.It Sx \&br Ta force output line break in text mode (no arguments)
+.It Sx \&sp Ta force vertical space: Op Ar height
+.El
+.Ss Semantic markup for command line utilities:
+.Bl -column "Brq, Bro, Brc" description
+.It Sx \&Nm Ta start a SYNOPSIS block with the name of a utility
+.It Sx \&Fl Ta command line options (flags) (>=0 arguments)
+.It Sx \&Cm Ta command modifier (>0 arguments)
+.It Sx \&Ar Ta command arguments (>=0 arguments)
+.It Sx \&Op , \&Oo , \&Oc Ta optional syntax elements (enclosure)
+.It Sx \&Ic Ta internal or interactive command (>0 arguments)
+.It Sx \&Ev Ta environmental variable (>0 arguments)
+.It Sx \&Pa Ta file system path (>=0 arguments)
+.El
+.Ss Semantic markup for function libraries:
+.Bl -column "Brq, Bro, Brc" description
+.It Sx \&Lb Ta function library (one argument)
+.It Sx \&In Ta include file (one argument)
+.It Sx \&Ft Ta function type (>0 arguments)
+.It Sx \&Fo , \&Fc Ta function block: Ar funcname
+.It Sx \&Fn Ta function name:
+.Op Ar functype
+.Ar funcname
+.Oo
+.Op Ar argtype
+.Ar argname
+.Oc
+.It Sx \&Fa Ta function argument (>0 arguments)
+.It Sx \&Vt Ta variable type (>0 arguments)
+.It Sx \&Va Ta variable name (>0 arguments)
+.It Sx \&Dv Ta defined variable or preprocessor constant (>0 arguments)
+.It Sx \&Er Ta error constant (>0 arguments)
+.It Sx \&Ev Ta environmental variable (>0 arguments)
+.El
+.Ss Various semantic markup:
+.Bl -column "Brq, Bro, Brc" description
+.It Sx \&An Ta author name (>0 arguments)
+.It Sx \&Lk Ta hyperlink: Ar uri Op Ar name
+.It Sx \&Mt Ta Do mailto Dc hyperlink: Ar address
+.It Sx \&Cd Ta kernel configuration declaration (>0 arguments)
+.It Sx \&Ad Ta memory address (>0 arguments)
+.It Sx \&Ms Ta mathematical symbol (>0 arguments)
+.It Sx \&Tn Ta tradename (>0 arguments)
+.El
+.Ss Physical markup
+.Bl -column "Brq, Bro, Brc" description
+.It Sx \&Em Ta italic font or underline (emphasis) (>0 arguments)
+.It Sx \&Sy Ta boldface font (symbolic) (>0 arguments)
+.It Sx \&Li Ta typewriter font (literal) (>0 arguments)
+.It Sx \&No Ta return to roman font (normal) (no arguments)
+.It Sx \&Bf , \&Ef Ta font block:
+.Op Fl Ar type | Cm \&Em | \&Li | \&Sy
+.El
+.Ss Physical enclosures
+.Bl -column "Brq, Bro, Brc" description
+.It Sx \&Dq , \&Do , \&Dc Ta enclose in typographic double quotes: Dq text
+.It Sx \&Qq , \&Qo , \&Qc Ta enclose in typewriter double quotes: Qq text
+.It Sx \&Sq , \&So , \&Sc Ta enclose in single quotes: Sq text
+.It Sx \&Ql Ta single-quoted literal text: Ql text
+.It Sx \&Pq , \&Po , \&Pc Ta enclose in parentheses: Pq text
+.It Sx \&Bq , \&Bo , \&Bc Ta enclose in square brackets: Bq text
+.It Sx \&Brq , \&Bro , \&Brc Ta enclose in curly braces: Brq text
+.It Sx \&Aq , \&Ao , \&Ac Ta enclose in angle brackets: Aq text
+.It Sx \&Eo , \&Ec Ta generic enclosure
+.El
+.Ss Text production
+.Bl -column "Brq, Bro, Brc" description
+.It Sx \&Ex Fl std Ta standard command exit values: Op Ar utility ...
+.It Sx \&Rv Fl std Ta standard function return values: Op Ar function ...
+.It Sx \&St Ta reference to a standards document (one argument)
+.It Sx \&Ux Ta Ux
+.It Sx \&At Ta At
+.It Sx \&Bx Ta Bx
+.It Sx \&Bsx Ta Bsx
+.It Sx \&Nx Ta Nx
+.It Sx \&Fx Ta Fx
+.It Sx \&Ox Ta Ox
+.It Sx \&Dx Ta Dx
+.El
 .Sh REFERENCE
 This section is a canonical reference of all macros, arranged
 alphabetically.
