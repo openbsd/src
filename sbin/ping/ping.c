@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.89 2011/06/21 17:31:07 mikeb Exp $	*/
+/*	$OpenBSD: ping.c,v 1.90 2011/09/17 14:10:05 haesbaert Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -168,6 +168,9 @@ void pr_pack(char *, int, struct sockaddr_in *);
 void pr_retip(struct ip *);
 quad_t qsqrt(quad_t);
 void pr_iph(struct ip *);
+#ifndef SMALL
+int map_tos(char *, int *);
+#endif	/* SMALL */
 void usage(void);
 
 int
@@ -293,12 +296,23 @@ main(int argc, char *argv[])
 				errx(1, "packet size is %s: %s",
 				    errstr, optarg);
 			break;
+#ifndef SMALL
 		case 'T':
 			options |= F_HDRINCL;
-			tos = (int)strtonum(optarg, 0, 0xff, &errstr);
-			if (errstr)
-				errx(1, "tos value is %s: %s", errstr, optarg);
+			errno = 0;
+			errstr = NULL;
+			if (map_tos(optarg, &tos))
+				break;
+			if (strlen(optarg) > 1 && optarg[0] == '0' &&
+			    optarg[1] == 'x')
+				tos = (int)strtol(optarg, NULL, 16);
+			else
+				tos = (int)strtonum(optarg, 0, 255,
+				    &errstr);
+			if (tos < 0 || tos > 255 || errstr || errno)
+				errx(1, "illegal tos value %s", optarg);
 			break;
+#endif	/* SMALL */
 		case 't':
 			options |= F_TTL;
 			ttl = (u_char)strtonum(optarg, 1, 255, &errstr);
@@ -1359,12 +1373,65 @@ check_icmph(struct ip *iph)
 	return 1;
 }
 
+#ifndef SMALL
+int
+map_tos(char *s, int *val)
+{
+	/* DiffServ Codepoints and other TOS mappings */
+	const struct toskeywords {
+		const char	*keyword;
+		int		 val;
+	} *t, toskeywords[] = {
+		{ "af11",		IPTOS_DSCP_AF11 },
+		{ "af12",		IPTOS_DSCP_AF12 },
+		{ "af13",		IPTOS_DSCP_AF13 },
+		{ "af21",		IPTOS_DSCP_AF21 },
+		{ "af22",		IPTOS_DSCP_AF22 },
+		{ "af23",		IPTOS_DSCP_AF23 },
+		{ "af31",		IPTOS_DSCP_AF31 },
+		{ "af32",		IPTOS_DSCP_AF32 },
+		{ "af33",		IPTOS_DSCP_AF33 },
+		{ "af41",		IPTOS_DSCP_AF41 },
+		{ "af42",		IPTOS_DSCP_AF42 },
+		{ "af43",		IPTOS_DSCP_AF43 },
+		{ "critical",		IPTOS_PREC_CRITIC_ECP },
+		{ "cs0",		IPTOS_DSCP_CS0 },
+		{ "cs1",		IPTOS_DSCP_CS1 },
+		{ "cs2",		IPTOS_DSCP_CS2 },
+		{ "cs3",		IPTOS_DSCP_CS3 },
+		{ "cs4",		IPTOS_DSCP_CS4 },
+		{ "cs5",		IPTOS_DSCP_CS5 },
+		{ "cs6",		IPTOS_DSCP_CS6 },
+		{ "cs7",		IPTOS_DSCP_CS7 },
+		{ "ef",			IPTOS_DSCP_EF },
+		{ "inetcontrol",	IPTOS_PREC_INTERNETCONTROL },
+		{ "lowdelay",		IPTOS_LOWDELAY },
+		{ "netcontrol",		IPTOS_PREC_NETCONTROL },
+		{ "reliability",	IPTOS_RELIABILITY },
+		{ "throughput",		IPTOS_THROUGHPUT },
+		{ NULL, 		-1 },
+	};
+	
+	for (t = toskeywords; t->keyword != NULL; t++) {
+		if (strcmp(s, t->keyword) == 0) {
+			*val = t->val;
+			return (1);
+		}
+	}
+	
+	return (0);
+}
+#endif	/* SMALL */
+
 void
 usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: ping [-DdEefLnqRrv] [-c count] [-I ifaddr] [-i wait]\n"
-	    "\t[-l preload] [-p pattern] [-s packetsize] [-T tos] [-t ttl]\n"
-	    "\t[-V rtable] [-w maxwait] host\n");
+	    "\t[-l preload] [-p pattern] [-s packetsize]"
+#ifndef	SMALL
+	    " [-T toskeyword]"
+#endif	/* SMALL */
+	    "\n\t[-t ttl] [-V rtable] [-w maxwait] host\n");
 	exit(1);
 }

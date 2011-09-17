@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.45 2010/07/03 04:44:51 guenther Exp $
+.\"	$OpenBSD: ping.8,v 1.46 2011/09/17 14:10:05 haesbaert Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: July 3 2010 $
+.Dd $Mdocdate: September 17 2011 $
 .Dt PING 8
 .Os
 .Sh NAME
@@ -46,7 +46,7 @@
 .Op Fl l Ar preload
 .Op Fl p Ar pattern
 .Op Fl s Ar packetsize
-.Op Fl T Ar tos
+.Op Fl T Ar toskeyword
 .Op Fl t Ar ttl
 .Op Fl V Ar rtable
 .Op Fl w Ar maxwait
@@ -180,8 +180,21 @@ Specifies the number of data bytes to be sent.
 The default is 56,
 which translates into 64 ICMP data bytes
 when combined with the 8 bytes of ICMP header data.
-.It Fl T Ar tos
-Use the specified type of service.
+.It Fl T Ar toskeyword
+Change IPv4 TOS value.
+.Ar toskeyword
+may be one of
+.Ar critical ,
+.Ar inetcontrol ,
+.Ar lowdelay ,
+.Ar netcontrol ,
+.Ar throughput ,
+.Ar reliability ,
+or one of the DiffServ Code Points:
+.Ar ef ,
+.Ar af11 ... af43 ,
+.Ar cs0 ... cs7 ;
+or a number in either hex or decimal.
 .It Fl t Ar ttl
 Use the specified time-to-live.
 .It Fl V Ar rtable

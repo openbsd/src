@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.101 2011/06/21 17:31:07 mikeb Exp $ */
+/* $OpenBSD: netcat.c,v 1.102 2011/09/17 14:10:05 haesbaert Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -105,7 +105,7 @@ int	unix_bind(char *);
 int	unix_connect(char *);
 int	unix_listen(char *);
 void	set_common_sockopts(int);
-int	parse_iptos(char *);
+int	map_tos(char *, int *);
 void	usage(int);
 
 int
@@ -234,7 +234,18 @@ main(int argc, char *argv[])
 			Sflag = 1;
 			break;
 		case 'T':
-			Tflag = parse_iptos(optarg);
+			errstr = NULL;
+			errno = 0;
+			if (map_tos(optarg, &Tflag))
+				break;
+			if (strlen(optarg) > 1 && optarg[0] == '0' &&
+			    optarg[1] == 'x')
+				Tflag = (int)strtol(optarg, NULL, 16);
+			else
+				Tflag = (int)strtonum(optarg, 0, 255,
+				    &errstr);
+			if (Tflag < 0 || Tflag > 255 || errstr || errno)
+				errx(1, "illegal tos value %s", optarg);
 			break;
 		default:
 			usage(1);
@@ -874,20 +885,51 @@ set_common_sockopts(int s)
 }
 
 int
-parse_iptos(char *s)
+map_tos(char *s, int *val)
 {
-	int tos = -1;
+	/* DiffServ Codepoints and other TOS mappings */
+	const struct toskeywords {
+		const char	*keyword;
+		int		 val;
+	} *t, toskeywords[] = {
+		{ "af11",		IPTOS_DSCP_AF11 },
+		{ "af12",		IPTOS_DSCP_AF12 },
+		{ "af13",		IPTOS_DSCP_AF13 },
+		{ "af21",		IPTOS_DSCP_AF21 },
+		{ "af22",		IPTOS_DSCP_AF22 },
+		{ "af23",		IPTOS_DSCP_AF23 },
+		{ "af31",		IPTOS_DSCP_AF31 },
+		{ "af32",		IPTOS_DSCP_AF32 },
+		{ "af33",		IPTOS_DSCP_AF33 },
+		{ "af41",		IPTOS_DSCP_AF41 },
+		{ "af42",		IPTOS_DSCP_AF42 },
+		{ "af43",		IPTOS_DSCP_AF43 },
+		{ "critical",		IPTOS_PREC_CRITIC_ECP },
+		{ "cs0",		IPTOS_DSCP_CS0 },
+		{ "cs1",		IPTOS_DSCP_CS1 },
+		{ "cs2",		IPTOS_DSCP_CS2 },
+		{ "cs3",		IPTOS_DSCP_CS3 },
+		{ "cs4",		IPTOS_DSCP_CS4 },
+		{ "cs5",		IPTOS_DSCP_CS5 },
+		{ "cs6",		IPTOS_DSCP_CS6 },
+		{ "cs7",		IPTOS_DSCP_CS7 },
+		{ "ef",			IPTOS_DSCP_EF },
+		{ "inetcontrol",	IPTOS_PREC_INTERNETCONTROL },
+		{ "lowdelay",		IPTOS_LOWDELAY },
+		{ "netcontrol",		IPTOS_PREC_NETCONTROL },
+		{ "reliability",	IPTOS_RELIABILITY },
+		{ "throughput",		IPTOS_THROUGHPUT },
+		{ NULL, 		-1 },
+	};
 
-	if (strcmp(s, "lowdelay") == 0)
-		return (IPTOS_LOWDELAY);
-	if (strcmp(s, "throughput") == 0)
-		return (IPTOS_THROUGHPUT);
-	if (strcmp(s, "reliability") == 0)
-		return (IPTOS_RELIABILITY);
+	for (t = toskeywords; t->keyword != NULL; t++) {
+		if (strcmp(s, t->keyword) == 0) {
+			*val = t->val;
+			return (1);
+		}
+	}
 
-	if (sscanf(s, "0x%x", &tos) != 1 || tos < 0 || tos > 0xff)
-		errx(1, "invalid IP Type of Service");
-	return (tos);
+	return (0);
 }
 
 void
@@ -911,7 +953,7 @@ help(void)
 	\t-r		Randomize remote ports\n\
 	\t-S		Enable the TCP MD5 signature option\n\
 	\t-s addr\t	Local source address\n\
-	\t-T ToS\t	Set IP Type of Service\n\
+	\t-T toskeyword\tSet IP Type of Service\n\
 	\t-t		Answer TELNET negotiation\n\
 	\t-U		Use UNIX domain socket\n\
 	\t-u		UDP mode\n\
