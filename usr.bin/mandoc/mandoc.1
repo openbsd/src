@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.45 2011/05/31 22:44:48 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.46 2011/09/17 14:45:22 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2011 $
+.Dd $Mdocdate: September 17 2011 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -179,6 +179,12 @@ See
 Parse only: produce no output.
 Implies
 .Fl W Ns Cm warning .
+.It Fl T Ns Cm man
+Produce output in
+.Xr man 7
+format; only useful when applied to
+.Fl m Ns Cm doc
+input.
 .It Fl T Ns Cm pdf
 Produce PDF output.
 See
@@ -417,6 +423,16 @@ To check over a large set of manuals:
 To produce a series of PostScript manuals for A4 paper:
 .Pp
 .Dl $ mandoc \-Tps \-Opaper=a4 mdoc.7 man.7 \*(Gt manuals.ps
+.Pp
+Convert a modern
+.Xr mdoc 7
+manual to the older
+.Xr man 7
+format, for use on systems lacking an
+.Xr mdoc 7
+parser:
+.Pp
+.Dl $ mandoc \-Tman foo.mdoc \*(Gt foo.man
 .Sh DIAGNOSTICS
 Standard error messages reporting parsing errors are prefixed by
 .Pp
