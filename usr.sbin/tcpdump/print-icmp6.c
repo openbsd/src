@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp6.c,v 1.8 2010/04/06 16:01:57 jsg Exp $	*/
+/*	$OpenBSD: print-icmp6.c,v 1.9 2011/09/17 15:59:44 naddy Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -422,14 +422,14 @@ icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
 		if (vflag) {
 			printf(",%s", mode == FQDN ? "FQDN" : "WRU");
 			if (mode == FQDN) {
-				long ttl;
-				ttl = (long)ntohl(*(u_long *)&buf[8]);
+				int ttl;
+				ttl = (int)ntohl(*(u_int32_t *)&buf[8]);
 				if (dp->icmp6_code == 1)
 					printf(",TTL=unknown");
 				else if (ttl < 0)
-					printf(",TTL=%ld:invalid", ttl);
+					printf(",TTL=%d:invalid", ttl);
 				else
-					printf(",TTL=%ld", ttl);
+					printf(",TTL=%d", ttl);
 				if (buf[12] != ep - buf - 13) {
 					(void)printf(",invalid namelen:%d/%u",
 						buf[12],
