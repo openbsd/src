@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2011/07/27 12:30:58 jasper Exp $
+#	$OpenBSD: Makefile,v 1.23 2011/09/17 17:46:03 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -41,7 +41,8 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		static-libs2 \
 		static-libs3 \
 		static-libs4 \
-		variable-get \
+		variable-get-1 \
+		variable-get-2 \
 		variable-set \
 		variable-requires \
 		missing-req-1 \
@@ -356,11 +357,18 @@ static-libs4:
 	@diff -u ${WANT} ${GOT}
 
 # Misc. tests
-variable-get:
+variable-get-1:
 	# Test --variable
 	@echo "/tmp" > ${WANT}
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --errors-to-stdout \
 		--print-errors --variable prefix sysroot > ${GOT}
+	@diff -u ${WANT} ${GOT}
+
+variable-get-2:
+	# Test --variable (expansion to multiple values)
+	@echo "alpha beta" > ${WANT}
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --errors-to-stdout \
+		--print-errors --variable requires requires-test3 > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 variable-set:
