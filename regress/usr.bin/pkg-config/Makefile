@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2011/09/17 17:46:03 jasper Exp $
+#	$OpenBSD: Makefile,v 1.24 2011/09/17 18:07:17 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -50,9 +50,11 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		missing-req-3 \
 		whitespace-cflags \
 		whitespace-libs \
+		whitespace-linebreak \
 		whitespace-name
 
 PKG_CONFIG=	pkg-config
+#PKG_CONFIG=	/usr/obj/ports/pkgconfig-0.26/fake-i386/usr/local/bin/pkg-config
 WANT=		${.OBJDIR}/$@.want
 GOT=		${.OBJDIR}/$@.got
 
@@ -421,6 +423,13 @@ whitespace-libs:
 	@echo "-L/tmp/lib -L/tmp/lib/foo -lbaz\ quux" > ${WANT}
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --libs \
 		--errors-to-stdout --print-errors whitespace > ${GOT}
+	@diff -u ${WANT} ${GOT}
+
+whitespace-linebreak:
+	# Test linebreak in Description field
+	@echo "-lc  " > ${WANT}
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --errors-to-stdout \
+		--print-errors --libs linebreak > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 whitespace-name:
