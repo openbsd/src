@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.259 2011/05/01 12:56:04 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.260 2011/09/17 16:29:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -449,6 +449,8 @@ conf_main	: AS as4number		{
 				action = MRT_TABLE_DUMP;
 			else if (!strcmp($2, "table-mp"))
 				action = MRT_TABLE_DUMP_MP;
+			else if (!strcmp($2, "table-v2"))
+				action = MRT_TABLE_DUMP_V2;
 			else {
 				yyerror("unknown mrt dump type");
 				free($2);
@@ -476,6 +478,8 @@ conf_main	: AS as4number		{
 				action = MRT_TABLE_DUMP;
 			else if (!strcmp($4, "table-mp"))
 				action = MRT_TABLE_DUMP_MP;
+			else if (!strcmp($4, "table-v2"))
+				action = MRT_TABLE_DUMP_V2;
 			else {
 				yyerror("unknown mrt dump type");
 				free($3);

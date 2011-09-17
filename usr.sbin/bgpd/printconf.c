@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.85 2010/12/31 21:22:42 guenther Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.86 2011/09/17 16:29:44 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -604,6 +604,8 @@ mrt_type(enum mrt_type t)
 		return "table";
 	case MRT_TABLE_DUMP_MP:
 		return "table-mp";
+	case MRT_TABLE_DUMP_V2:
+		return "table-v2";
 	case MRT_ALL_IN:
 		return "all in";
 	case MRT_ALL_OUT:
@@ -632,13 +634,12 @@ print_mrt(u_int32_t pid, u_int32_t gid, const char *prep, const char *prep2)
 			printf("%s%sdump ", prep, prep2);
 			if (m->rib[0])
 				printf("rib %s ", m->rib);
+			printf("%s \"%s\"", mrt_type(m->type),
+			    MRT2MC(m)->name);
 			if (MRT2MC(m)->ReopenTimerInterval == 0)
-				printf("%s %s\n", mrt_type(m->type),
-				    MRT2MC(m)->name);
+				printf("\n");
 			else
-				printf("%s %s %d\n", mrt_type(m->type),
-				    MRT2MC(m)->name,
-				    MRT2MC(m)->ReopenTimerInterval);
+				printf(" %d\n", MRT2MC(m)->ReopenTimerInterval);
 		}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.138 2010/11/18 12:18:31 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.139 2011/09/17 16:29:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -72,6 +72,7 @@ struct rde_peer {
 	enum peer_state			 state;
 	u_int16_t			 ribid;
 	u_int16_t			 short_as;
+	u_int16_t			 mrt_idx;
 	u_int8_t			 reconf_in;	/* in filter changed */
 	u_int8_t			 reconf_out;	/* out filter changed */
 	u_int8_t			 reconf_rib;	/* rib changed */
@@ -401,6 +402,7 @@ void		 prefix_move(struct rde_aspath *, struct prefix *);
 int		 prefix_remove(struct rib *, struct rde_peer *,
 		    struct bgpd_addr *, int, u_int32_t);
 int		 prefix_write(u_char *, int, struct bgpd_addr *, u_int8_t);
+int		 prefix_writebuf(struct ibuf *, struct bgpd_addr *, u_int8_t);
 struct prefix	*prefix_bypeer(struct rib_entry *, struct rde_peer *,
 		     u_int32_t);
 void		 prefix_updateall(struct rde_aspath *, enum nexthop_state,

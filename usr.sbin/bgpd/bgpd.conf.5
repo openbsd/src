@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.115 2011/06/23 20:35:22 sthen Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.116 2011/09/17 16:29:44 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 23 2011 $
+.Dd $Mdocdate: September 17 2011 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -149,7 +149,7 @@ The default is 120 seconds.
 .It Xo
 .Ic dump
 .Op Ic rib Ar name
-.Pq Ic table Ns | Ns Ic table-mp
+.Pq Ic table Ns | Ns Ic table-mp Ns | Ns Ic table-v2
 .Ar file Op Ar timeout
 .Xc
 .It Xo
@@ -161,17 +161,21 @@ The default is 120 seconds.
 Dump the RIB, a.k.a. the
 .Em routing information base ,
 and all BGP messages in Multi-threaded Routing Toolkit (MRT) format.
-Dumping the RIB is normally an expensive operation,
-but it should not influence the session handling.
 It is possible to dump alternate RIB with the use of
 .Ar name .
 .Pp
 For example, the following will dump the entire table to the
 .Xr strftime 3 Ns -expanded
 filename.
-The
+Only the
+.Ic table-v2
+format is able to dump a multi-protocol RIB correctly.
+Both
+.Ic table
+and
 .Ic table-mp
-format is multi-protocol capable but often not supported by 3rd-party tools.
+formats are more or less limited when handling multi-protocol entries and
+are only left around to support 3rd party tools not handling the new format.
 The timeout is optional:
 .Bd -literal -offset indent
 dump table "/tmp/rib-dump-%H%M" 300

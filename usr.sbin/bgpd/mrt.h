@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.28 2011/09/16 15:44:42 claudio Exp $ */
+/*	$OpenBSD: mrt.h,v 1.29 2011/09/17 16:29:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -104,6 +104,7 @@ enum MRT_BGP4MP_TYPES {
  *
  * The source_ip and dest_ip are dependant of the afi type. For IPv6 source_ip
  * and dest_ip are both 16 bytes long.
+ * For the AS4 types the source_as and dest_as numbers are both 4 bytes long.
  *
  * Payload of a BGP4MP_STATE_CHANGE packet:
  *
@@ -155,6 +156,98 @@ enum MRT_BGP4MP_TYPES {
  */
 
 /*
+ * New MRT dump format MSG_TABLE_DUMP_V2, the dump is implemented with
+ * sub-tables for peers and NLRI entries just use the index into the peer
+ * table.
+ */
+enum MRT_DUMP_V2_TYPES {
+	MRT_DUMP_V2_PEER_INDEX_TABLE=1,
+	MRT_DUMP_V2_RIB_IPV4_UNICAST=2,
+	MRT_DUMP_V2_RIB_IPV4_MULTICAST=3,
+	MRT_DUMP_V2_RIB_IPV6_UNICAST=4,
+	MRT_DUMP_V2_RIB_IPV6_MULTICAST=5,
+	MRT_DUMP_V2_RIB_GENERIC=6
+};
+
+/*
+ * Format of the MRT_DUMP_V2_PEER_INDEX_TABLE:
+ * If there is no view_name, view_name_len must be set to 0
+ *
+ * +--------+--------+--------+--------+
+ * |         collector_bgp_id          |
+ * +--------+--------+--------+--------+
+ * |  view_name_len  |    view_name
+ * +--------+--------+--------+--------+
+ *        view_name (variable) ...     |
+ * +--------+--------+--------+--------+
+ * |   peer_count    |   peer_entries
+ * +--------+--------+--------+--------+
+ *       peer_entries (variable) ...
+ * +--------+--------+--------+--------+
+ *
+ * The format of a peer_entry is the following:
+ *
+ * +--------+
+ * |  type  |    
+ * +--------+--------+--------+--------+
+ * |            peer_bgp_id            |
+ * +--------+--------+--------+--------+
+ * |       peer_ip_addr (variable)     |
+ * +--------+--------+--------+--------+
+ * |            peer_as (variable)     |
+ * +--------+--------+--------+--------+
+ *
+ * The message is packed a bit strangely. The type byte defines what size
+ * the peer addr and peer AS have.
+ * The position of a peer in the PEER_INDEX_TABLE is used as the index for
+ * the other messages.
+ */
+#define MRT_DUMP_V2_PEER_BIT_I	0x1	/* set for IPv6 addrs */
+#define MRT_DUMP_V2_PEER_BIT_A	0x2	/* set for 32 bits AS number */
+
+/*
+ * AFI/SAFI specific RIB Subtypes are special to save a few bytes.
+ * 
+ * +--------+--------+--------+--------+
+ * |              seq_num              |
+ * +--------+--------+--------+--------+
+ * |  plen  |  prefix (variable)
+ * +--------+--------+--------+--------+
+ * | #entry |  rib entries (variable)
+ * +--------+--------+--------+--------+
+ *
+ * The RIB_GENERIC subtype is needed for the less common AFI/SAFI pairs
+ *
+ * +--------+--------+--------+--------+
+ * |              seq_num              |
+ * +--------+--------+--------+--------+
+ * |       AFI       |  SAFI  |  NLRI
+ * +--------+--------+--------+--------+
+ *     NLRI (variable) ...
+ * +--------+--------+--------+--------+
+ * | #entry |  rib entries (variable)
+ * +--------+--------+--------+--------+
+ */
+
+/*
+ * The RIB entries have the following form.
+ *
+ * +--------+--------+
+ * |   peer index    |
+ * +--------+--------+--------+--------+
+ * |          originated_time          |
+ * +--------+--------+--------+--------+
+ * |    attr_len     |   bgp_attrs
+ * +--------+--------+--------+--------+
+ *      bgp_attrs (variable) ...
+ * +--------+--------+--------+--------+
+ *
+ * Some BGP path attributes need special encoding:
+ *  - the AS_PATH attribute MUST be encoded as 4-Byte AS
+ *  - the MP_REACH_NLRI only consists of the nexthop len and nexthop address
+ */
+
+/*
  * Format for routing table dumps in "old" mrt format.
  * Type MSG_TABLE_DUMP and subtype is AFI_IPv4 (1) for IPv4 and AFI_IPv6 (2)
  * for IPv6. In the IPv6 case prefix and peer_ip are both 16 bytes long.
@@ -171,7 +264,7 @@ enum MRT_BGP4MP_TYPES {
  *       peer_ip     |     peer_as     |
  * +--------+--------+--------+--------+
  * |    attr_len     | bgp attributes
- * +--------+--------+--------+--------+
+ 
  *  bgp attributes, attr_len bytes long
  * +--------+--------+--------+--------+
  *   ...                      |
@@ -225,7 +318,7 @@ enum MRT_BGP_TYPES {
  */
 
 /*
- * For subtype MSG_BGP_STATECHANGE (for all BGP types or just for the
+ * For subtype MSG_BGP_STATE_CHANGE (for all BGP types or just for the
  * MSG_PROTOCOL_BGP4PLUS case? Unclear.)
  *
  * +--------+--------+--------+--------+
@@ -236,7 +329,7 @@ enum MRT_BGP_TYPES {
  * |    new_state    |
  * +--------+--------+
  *
- * State are defined in RFC 1771/4271.
+ * States are defined in RFC 1771/4271.
  */
 
 /*
@@ -258,6 +351,7 @@ enum mrt_type {
 	MRT_NONE,
 	MRT_TABLE_DUMP,
 	MRT_TABLE_DUMP_MP,
+	MRT_TABLE_DUMP_V2,
 	MRT_ALL_IN,
 	MRT_ALL_OUT,
 	MRT_UPDATE_IN,
@@ -293,6 +387,8 @@ struct mrt_config {
 #define	MRT2MC(x)	((struct mrt_config *)(x))
 #define	MRT_MAX_TIMEOUT	7200
 
+struct bgpd_config;
+struct rde_peer_head;
 struct peer;
 struct prefix;
 struct rib_entry;
@@ -302,6 +398,8 @@ void		 mrt_dump_bgp_msg(struct mrt *, void *, u_int16_t,
 		     struct peer *);
 void		 mrt_dump_state(struct mrt *, u_int16_t, u_int16_t,
 		     struct peer *);
+int		 mrt_dump_v2_hdr(struct mrt *, struct bgpd_config *,
+		    struct rde_peer_head *);
 void		 mrt_clear_seq(void);
 void		 mrt_dump_upcall(struct rib_entry *, void *);
 void		 mrt_done(void *);

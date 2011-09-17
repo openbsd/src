@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.70 2010/09/02 14:03:21 sobrado Exp $ */
+/*	$OpenBSD: mrt.c,v 1.71 2011/09/17 16:29:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -32,10 +32,12 @@
 
 #include "mrt.h"
 
-int mrt_attr_dump(struct ibuf *, struct rde_aspath *, struct bgpd_addr *);
+int mrt_attr_dump(struct ibuf *, struct rde_aspath *, struct bgpd_addr *, int);
 int mrt_dump_entry_mp(struct mrt *, struct prefix *, u_int16_t,
     struct rde_peer*);
 int mrt_dump_entry(struct mrt *, struct prefix *, u_int16_t, struct rde_peer*);
+int mrt_dump_entry_v2(struct mrt *, struct rib_entry *, u_int32_t);
+int mrt_dump_peer(struct ibuf *, struct rde_peer *);
 int mrt_dump_hdr_se(struct ibuf **, struct peer *, u_int16_t, u_int16_t,
     u_int32_t, int);
 int mrt_dump_hdr_rde(struct ibuf **, u_int16_t type, u_int16_t, u_int32_t);
@@ -45,7 +47,7 @@ int mrt_open(struct mrt *, time_t);
 	do {								\
 		u_char		t = (b);				\
 		if (ibuf_add((x), &t, sizeof(t)) == -1) {		\
-			log_warnx("mrt_dump1: ibuf_add error");		\
+			log_warn("mrt_dump1: ibuf_add error");		\
 			goto fail;					\
 		}							\
 	} while (0)
@@ -55,7 +57,7 @@ int mrt_open(struct mrt *, time_t);
 		u_int16_t	t;					\
 		t = htons((s));						\
 		if (ibuf_add((x), &t, sizeof(t)) == -1) {		\
-			log_warnx("mrt_dump2: ibuf_add error");		\
+			log_warn("mrt_dump2: ibuf_add error");		\
 			goto fail;					\
 		}							\
 	} while (0)
@@ -65,7 +67,7 @@ int mrt_open(struct mrt *, time_t);
 		u_int32_t	t;					\
 		t = htonl((l));						\
 		if (ibuf_add((x), &t, sizeof(t)) == -1) {		\
-			log_warnx("mrt_dump3: ibuf_add error");		\
+			log_warn("mrt_dump3: ibuf_add error");		\
 			goto fail;					\
 		}							\
 	} while (0)
@@ -74,7 +76,7 @@ int mrt_open(struct mrt *, time_t);
 	do {								\
 		u_int32_t	t = (l);				\
 		if (ibuf_add((x), &t, sizeof(t)) == -1) {		\
-			log_warnx("mrt_dump4: ibuf_add error");		\
+			log_warn("mrt_dump4: ibuf_add error");		\
 			goto fail;					\
 		}							\
 	} while (0)
@@ -99,7 +101,7 @@ mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen,
 		return;
 
 	if (ibuf_add(buf, pkg, pkglen) == -1) {
-		log_warnx("mrt_dump_bgp_msg: buf_add error");
+		log_warn("mrt_dump_bgp_msg: buf_add error");
 		ibuf_free(buf);
 		return;
 	}
@@ -132,14 +134,15 @@ fail:
 }
 
 int
-mrt_attr_dump(struct ibuf *buf, struct rde_aspath *a, struct bgpd_addr *nexthop)
+mrt_attr_dump(struct ibuf *buf, struct rde_aspath *a, struct bgpd_addr *nexthop,
+    int v2)
 {
 	struct attr	*oa;
 	u_char		*pdata;
 	u_int32_t	 tmp;
 	int		 neednewpath = 0;
 	u_int16_t	 plen, afi;
-	u_int8_t	 l, mpattr[21];
+	u_int8_t	 l, safi;
 
 	/* origin */
 	if (attr_writebuf(buf, ATTR_WELL_KNOWN, ATTR_ORIGIN,
@@ -148,7 +151,8 @@ mrt_attr_dump(struct ibuf *buf, struct rde_aspath *a, struct bgpd_addr *nexthop)
 
 	/* aspath */
 	pdata = aspath_prepend(a->aspath, rde_local_as(), 0, &plen);
-	pdata = aspath_deflate(pdata, &plen, &neednewpath);
+	if (!v2)
+		pdata = aspath_deflate(pdata, &plen, &neednewpath);
 	if (attr_writebuf(buf, ATTR_WELL_KNOWN, ATTR_ASPATH, pdata,
 	    plen) == -1) {
 		free(pdata);
@@ -170,7 +174,7 @@ mrt_attr_dump(struct ibuf *buf, struct rde_aspath *a, struct bgpd_addr *nexthop)
 			return (-1);
 	}
 
-	/* local preference, only valid for ibgp */
+	/* local preference */
 	tmp = htonl(a->lpref);
 	if (attr_writebuf(buf, ATTR_WELL_KNOWN, ATTR_LOCALPREF, &tmp, 4) == -1)
 		return (-1);
@@ -185,16 +189,40 @@ mrt_attr_dump(struct ibuf *buf, struct rde_aspath *a, struct bgpd_addr *nexthop)
 	}
 
 	if (nexthop && nexthop->aid != AID_INET) {
-		if (aid2afi(nexthop->aid, &afi, &mpattr[2]))
+		struct ibuf *nhbuf;
+
+		if ((nhbuf = ibuf_dynamic(0, UCHAR_MAX)) == NULL)
 			return (-1);
-		afi = htons(afi);
-		memcpy(mpattr, &afi, sizeof(afi));
-		mpattr[3] = sizeof(struct in6_addr);
-		memcpy(&mpattr[4], &nexthop->v6, sizeof(struct in6_addr));
-		mpattr[20] = 0; /* Reserved must be 0 */
+		if (!v2) {
+			if (aid2afi(nexthop->aid, &afi, &safi))
+				return (-1);
+			DUMP_SHORT(nhbuf, afi);
+			DUMP_BYTE(nhbuf, safi);
+		}
+		switch (nexthop->aid) {
+		case AID_INET6:
+			DUMP_BYTE(nhbuf, sizeof(struct in6_addr));
+			if (ibuf_add(nhbuf, &nexthop->v6,
+			    sizeof(struct in6_addr)) == -1) {
+			}
+			break;
+		case AID_VPN_IPv4:
+			DUMP_BYTE(nhbuf, sizeof(u_int64_t) +
+			    sizeof(struct in_addr));
+			DUMP_NLONG(nhbuf, 0);	/* set RD to 0 */
+			DUMP_NLONG(nhbuf, 0);
+			DUMP_NLONG(nhbuf, nexthop->v4.s_addr);
+			break;
+		}
+		if (!v2)
+			DUMP_BYTE(nhbuf, 0);
 		if (attr_writebuf(buf, ATTR_OPTIONAL, ATTR_MP_REACH_NLRI,
-		    mpattr, sizeof(mpattr)) == -1)
+		    nhbuf->buf, ibuf_size(nhbuf)) == -1) {
+fail:
+			ibuf_free(nhbuf);
 			return (-1);
+		}
+		ibuf_free(nhbuf);
 	}
 
 	if (neednewpath) {
@@ -216,10 +244,8 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
     struct rde_peer *peer)
 {
 	struct ibuf	*buf, *hbuf = NULL, *h2buf = NULL;
-	void		*bptr;
 	struct bgpd_addr addr, nexthop, *nh;
 	u_int16_t	 len;
-	u_int8_t	 p_len;
 	u_int8_t	 aid;
 
 	if ((buf = ibuf_dynamic(0, MAX_PKTSIZE)) == NULL) {
@@ -227,7 +253,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		return (-1);
 	}
 
-	if (mrt_attr_dump(buf, p->aspath, NULL) == -1) {
+	if (mrt_attr_dump(buf, p->aspath, NULL, 0) == -1) {
 		log_warnx("mrt_dump_entry_mp: mrt_attr_dump error");
 		goto fail;
 	}
@@ -259,7 +285,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		    sizeof(struct in6_addr)) == -1 ||
 		    ibuf_add(h2buf, &peer->remote_addr.v6,
 		    sizeof(struct in6_addr)) == -1) {
-			log_warnx("mrt_dump_entry_mp: buf_add error");
+			log_warn("mrt_dump_entry_mp: buf_add error");
 			goto fail;
 		}
 		break;
@@ -292,7 +318,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		DUMP_BYTE(h2buf, SAFI_UNICAST);	/* safi */
 		DUMP_BYTE(h2buf, 16);		/* nhlen */
 		if (ibuf_add(h2buf, &nh->v6, sizeof(struct in6_addr)) == -1) {
-			log_warnx("mrt_dump_entry_mp: buf_add error");
+			log_warn("mrt_dump_entry_mp: buf_add error");
 			goto fail;
 		}
 		break;
@@ -301,13 +327,8 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		goto fail;
 	}
 
-	p_len = PREFIX_SIZE(p->prefix->prefixlen);
-	if ((bptr = ibuf_reserve(h2buf, p_len)) == NULL) {
-		log_warnx("mrt_dump_entry_mp: buf_reserve error");
-		goto fail;
-	}
-	if (prefix_write(bptr, p_len, &addr, p->prefix->prefixlen) == -1) {
-		log_warnx("mrt_dump_entry_mp: prefix_write error");
+	if (prefix_writebuf(h2buf, &addr, p->prefix->prefixlen) == -1) {
+		log_warn("mrt_dump_entry_mp: prefix_writebuf error");
 		goto fail;
 	}
 
@@ -349,7 +370,7 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		return (0);
 
 	if ((buf = ibuf_dynamic(0, MAX_PKTSIZE)) == NULL) {
-		log_warnx("mrt_dump_entry: buf_dynamic");
+		log_warn("mrt_dump_entry: buf_dynamic");
 		return (-1);
 	}
 
@@ -359,7 +380,7 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		nh = &addr;
 	} else
 		nh = &p->aspath->nexthop->exit_nexthop;
-	if (mrt_attr_dump(buf, p->aspath, nh) == -1) {
+	if (mrt_attr_dump(buf, p->aspath, nh, 0) == -1) {
 		log_warnx("mrt_dump_entry: mrt_attr_dump error");
 		ibuf_free(buf);
 		return (-1);
@@ -381,7 +402,7 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		break;
 	case AID_INET6:
 		if (ibuf_add(hbuf, &addr.v6, sizeof(struct in6_addr)) == -1) {
-			log_warnx("mrt_dump_entry: buf_add error");
+			log_warn("mrt_dump_entry: buf_add error");
 			goto fail;
 		}
 		break;
@@ -397,7 +418,7 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	case AID_INET6:
 		if (ibuf_add(hbuf, &peer->remote_addr.v6,
 		    sizeof(struct in6_addr)) == -1) {
-			log_warnx("mrt_dump_entry: buf_add error");
+			log_warn("mrt_dump_entry: buf_add error");
 			goto fail;
 		}
 		break;
@@ -416,11 +437,213 @@ fail:
 	return (-1);
 }
 
+int
+mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, u_int32_t snum)
+{
+	struct ibuf	*buf, *hbuf = NULL;
+	struct prefix	*p;
+	struct bgpd_addr addr;
+	size_t		 len, off;
+	u_int16_t	 subtype, nump;
+
+	switch (re->prefix->aid) {
+	case AID_INET:
+		subtype = MRT_DUMP_V2_RIB_IPV4_UNICAST;
+		break;
+	case AID_INET6:
+		subtype = MRT_DUMP_V2_RIB_IPV6_UNICAST;
+		break;
+	default:
+		subtype = MRT_DUMP_V2_RIB_GENERIC;
+		break;
+	}
+
+	if ((buf = ibuf_dynamic(0, UINT_MAX)) == NULL) {
+		log_warn("mrt_dump_entry: buf_dynamic");
+		return (-1);
+	}
+
+	DUMP_LONG(buf, snum);
+	pt_getaddr(re->prefix, &addr);
+	if (subtype == MRT_DUMP_V2_RIB_GENERIC) {
+		u_int16_t afi;
+		u_int8_t safi;
+
+		aid2afi(re->prefix->aid, &afi, &safi);
+		DUMP_SHORT(buf, afi);
+		DUMP_BYTE(buf, safi);
+	}
+	if (prefix_writebuf(buf, &addr, re->prefix->prefixlen) == -1) {
+		log_warn("mrt_dump_entry_mp: prefix_writebuf error");
+		goto fail;
+	}
+
+	off = ibuf_size(buf);
+	if (ibuf_reserve(buf, sizeof(nump)) == NULL) {
+		log_warn("mrt_dump_v2_hdr: buf_reserve error");
+		goto fail;
+	}
+	nump = 0;
+	LIST_FOREACH(p, &re->prefix_h, rib_l) {
+		struct bgpd_addr	*nh;
+		struct ibuf		*tbuf;
+
+		if (p->aspath->nexthop == NULL) {
+			bzero(&addr, sizeof(struct bgpd_addr));
+			addr.aid = p->prefix->aid;
+			nh = &addr;
+		} else
+			nh = &p->aspath->nexthop->exit_nexthop;
+
+		DUMP_SHORT(buf, p->aspath->peer->mrt_idx);
+		DUMP_LONG(buf, p->lastchange); /* originated */
+
+		if ((tbuf = ibuf_dynamic(0, MAX_PKTSIZE)) == NULL) {
+			log_warn("mrt_dump_entry_v2: buf_dynamic");
+			return (-1);
+		}
+		if (mrt_attr_dump(tbuf, p->aspath, nh, 1) == -1) {
+			log_warnx("mrt_dump_entry_v2: mrt_attr_dump error");
+			ibuf_free(buf);
+			return (-1);
+		}
+		len = ibuf_size(tbuf);
+		DUMP_SHORT(buf, (u_int16_t)len);
+		if (ibuf_add(buf, tbuf->buf, ibuf_size(tbuf)) == -1) {
+			log_warn("mrt_dump_entry_v2: ibuf_add error");
+			ibuf_free(tbuf);
+			return (-1);
+		}
+		ibuf_free(tbuf);
+		nump++;
+	}
+	nump = htons(nump);
+	memcpy(ibuf_seek(buf, off, sizeof(nump)), &nump, sizeof(nump));
+
+	len = ibuf_size(buf);
+	if (mrt_dump_hdr_rde(&hbuf, MSG_TABLE_DUMP_V2, subtype, len) == -1) {
+		ibuf_free(buf);
+		return (-1);
+	}
+
+	ibuf_close(&mrt->wbuf, hbuf);
+	ibuf_close(&mrt->wbuf, buf);
+
+	return (0);
+fail:
+	if (hbuf)
+		ibuf_free(hbuf);
+	ibuf_free(buf);
+	return (-1);
+}
+
+int
+mrt_dump_v2_hdr(struct mrt *mrt, struct bgpd_config *conf,
+    struct rde_peer_head *ph)
+{
+	struct rde_peer	*peer;
+	struct ibuf	*buf, *hbuf = NULL;
+	size_t		 len, off;
+	u_int16_t	 nlen, nump;
+
+	if ((buf = ibuf_dynamic(0, UINT_MAX)) == NULL) {
+		log_warn("mrt_dump_v2_hdr: buf_dynamic");
+		return (-1);
+	}
+
+	DUMP_NLONG(buf, conf->bgpid);
+	nlen = strlen(mrt->rib);
+	if (nlen > 0)
+		nlen += 1;
+	DUMP_SHORT(buf, nlen);
+	if (ibuf_add(buf, mrt->rib, nlen) == -1) {
+		log_warn("mrt_dump_v2_hdr: buf_add error");
+		goto fail;
+	}
+
+	off = ibuf_size(buf);
+	if (ibuf_reserve(buf, sizeof(nump)) == NULL) {
+		log_warn("mrt_dump_v2_hdr: buf_reserve error");
+		goto fail;
+	}
+	nump = 0;
+	LIST_FOREACH(peer, ph, peer_l) {
+		peer->mrt_idx = nump;
+		if (mrt_dump_peer(buf, peer) == -1)
+			goto fail;
+		nump++;
+	}
+	nump = htons(nump);
+	memcpy(ibuf_seek(buf, off, sizeof(nump)), &nump, sizeof(nump));
+
+	len = ibuf_size(buf);
+	if (mrt_dump_hdr_rde(&hbuf, MSG_TABLE_DUMP_V2,
+	    MRT_DUMP_V2_PEER_INDEX_TABLE, len) == -1)
+		goto fail;
+
+	ibuf_close(&mrt->wbuf, hbuf);
+	ibuf_close(&mrt->wbuf, buf);
+
+	return (0);
+fail:
+	if (hbuf)
+		ibuf_free(hbuf);
+	ibuf_free(buf);
+	return (-1);
+}
+
+int
+mrt_dump_peer(struct ibuf *buf, struct rde_peer *peer)
+{
+	u_int8_t	type = 0;
+
+	if (peer->capa.as4byte)
+		type |= MRT_DUMP_V2_PEER_BIT_A;
+	if (peer->remote_addr.aid == AID_INET6)
+		type |= MRT_DUMP_V2_PEER_BIT_I;
+
+	DUMP_BYTE(buf, type);
+	DUMP_LONG(buf, peer->remote_bgpid);
+
+	switch (peer->remote_addr.aid) {
+	case AID_INET:
+		DUMP_NLONG(buf, peer->remote_addr.v4.s_addr);
+		break;
+	case AID_INET6:
+		if (ibuf_add(buf, &peer->remote_addr.v6,
+		    sizeof(struct in6_addr)) == -1) {
+			log_warn("mrt_dump_peer: buf_add error");
+			goto fail;
+		}
+		break;
+	case AID_UNSPEC: /* XXX special handling for peer_self? */
+		DUMP_NLONG(buf, 0);
+		break;
+	default:
+		log_warnx("king bula found new AF in mrt_dump_entry_mp");
+		goto fail;
+	}
+
+	if (peer->capa.as4byte)
+		DUMP_LONG(buf, peer->conf.remote_as);
+	else
+		DUMP_SHORT(buf, peer->short_as);
+
+	return (0);
+fail:
+	return (-1);
+}
+
 void
 mrt_dump_upcall(struct rib_entry *re, void *ptr)
 {
 	struct mrt		*mrtbuf = ptr;
 	struct prefix		*p;
+
+	if (mrtbuf->type == MRT_TABLE_DUMP_V2) {
+		mrt_dump_entry_v2(mrtbuf, re, mrtbuf->seqnum++);
+		return;
+	}
 
 	/*
 	 * dump all prefixes even the inactive ones. That is the way zebra
@@ -453,7 +676,7 @@ mrt_dump_hdr_se(struct ibuf ** bp, struct peer *peer, u_int16_t type,
 
 	if ((*bp = ibuf_dynamic(MRT_HEADER_SIZE, MRT_HEADER_SIZE +
 	    MRT_BGP4MP_AS4_IPv6_HEADER_SIZE + len)) == NULL) {
-		log_warnx("mrt_dump_hdr_se: buf_open error");
+		log_warn("mrt_dump_hdr_se: buf_open error");
 		return (-1);
 	}
 
@@ -522,20 +745,20 @@ mrt_dump_hdr_se(struct ibuf ** bp, struct peer *peer, u_int16_t type,
 			if (ibuf_add(*bp, &((struct sockaddr_in6 *)
 			    &peer->sa_local)->sin6_addr,
 			    sizeof(struct in6_addr)) == -1) {
-				log_warnx("mrt_dump_hdr_se: buf_add error");
+				log_warn("mrt_dump_hdr_se: buf_add error");
 				goto fail;
 			}
 		if (ibuf_add(*bp,
 		    &((struct sockaddr_in6 *)&peer->sa_remote)->sin6_addr,
 		    sizeof(struct in6_addr)) == -1) {
-			log_warnx("mrt_dump_hdr_se: buf_add error");
+			log_warn("mrt_dump_hdr_se: buf_add error");
 			goto fail;
 		}
 		if (swap)
 			if (ibuf_add(*bp, &((struct sockaddr_in6 *)
 			    &peer->sa_local)->sin6_addr,
 			    sizeof(struct in6_addr)) == -1) {
-				log_warnx("mrt_dump_hdr_se: buf_add error");
+				log_warn("mrt_dump_hdr_se: buf_add error");
 				goto fail;
 			}
 		break;
@@ -557,7 +780,7 @@ mrt_dump_hdr_rde(struct ibuf **bp, u_int16_t type, u_int16_t subtype,
 	if ((*bp = ibuf_dynamic(MRT_HEADER_SIZE, MRT_HEADER_SIZE +
 	    MRT_BGP4MP_AS4_IPv6_HEADER_SIZE + MRT_BGP4MP_IPv6_ENTRY_SIZE)) ==
 	    NULL) {
-		log_warnx("mrt_dump_hdr_rde: buf_dynamic error");
+		log_warn("mrt_dump_hdr_rde: buf_dynamic error");
 		return (-1);
 	}
 
@@ -579,6 +802,7 @@ mrt_dump_hdr_rde(struct ibuf **bp, u_int16_t type, u_int16_t subtype,
 		DUMP_LONG(*bp, len);
 		break;
 	case MSG_PROTOCOL_BGP4MP:
+	case MSG_TABLE_DUMP_V2:
 		DUMP_LONG(*bp, len);
 		break;
 	default:
@@ -650,7 +874,8 @@ mrt_open(struct mrt *mrt, time_t now)
 	else
 		type = IMSG_MRT_REOPEN;
 
-	if (mrt->type == MRT_TABLE_DUMP || mrt->type == MRT_TABLE_DUMP_MP)
+	if (mrt->type == MRT_TABLE_DUMP || mrt->type == MRT_TABLE_DUMP_MP ||
+	    mrt->type == MRT_TABLE_DUMP_V2)
 		i = 0;
 
 	if (imsg_compose(mrt_imsgbuf[i], type, 0, 0, fd,
@@ -719,7 +944,9 @@ mrt_handler(struct mrt_head *mrt)
 	LIST_FOREACH(m, mrt, entry) {
 		if (m->state == MRT_STATE_RUNNING &&
 		    (MRT2MC(m)->ReopenTimerInterval != 0 ||
-		     m->type == MRT_TABLE_DUMP)) {
+		     m->type == MRT_TABLE_DUMP ||
+		     m->type == MRT_TABLE_DUMP_MP ||
+		     m->type == MRT_TABLE_DUMP_V2)) {
 			if (mrt_open(m, now) == -1)
 				continue;
 			MRT2MC(m)->ReopenTimer =

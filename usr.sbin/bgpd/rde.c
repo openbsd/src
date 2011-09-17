@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.308 2011/07/09 02:51:18 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.309 2011/09/17 16:29:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -820,7 +820,8 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				log_warnx("expected to receive fd for mrt dump "
 				    "but didn't receive any");
 			else if (xmrt.type == MRT_TABLE_DUMP ||
-			    xmrt.type == MRT_TABLE_DUMP_MP) {
+			    xmrt.type == MRT_TABLE_DUMP_MP ||
+			    xmrt.type == MRT_TABLE_DUMP_V2) {
 				rde_dump_mrt_new(&xmrt, imsg.hdr.pid, fd);
 			} else
 				close(fd);
@@ -2336,6 +2337,10 @@ rde_dump_mrt_new(struct mrt *mrt, pid_t pid, int fd)
 		free(ctx);
 		return;
 	}
+
+	if (ctx->mrt.type == MRT_TABLE_DUMP_V2)
+		mrt_dump_v2_hdr(&ctx->mrt, conf, &peerlist);
+
 	ctx->ribctx.ctx_count = RDE_RUNNER_ROUNDS;
 	ctx->ribctx.ctx_rib = &ribs[id];
 	ctx->ribctx.ctx_upcall = mrt_dump_upcall;
