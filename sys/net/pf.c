@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.772 2011/09/17 10:12:37 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.773 2011/09/17 11:34:49 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2762,9 +2762,6 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	u_int16_t		 virtual_type, virtual_id;
 	u_int8_t		 icmptype = 0, icmpcode = 0;
 
-	PF_ACPY(&pd->nsaddr, pd->src, pd->af);
-	PF_ACPY(&pd->ndaddr, pd->dst, pd->af);
-
 	bzero(&act, sizeof(act));
 	act.prio[0] = act.prio[1] = PF_PRIO_NOTSET;
 	bzero(sns, sizeof(sns));
@@ -2782,14 +2779,6 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	}
 
 	switch (pd->virtual_proto) {
-	case IPPROTO_TCP:
-		pd->nsport = th->th_sport;
-		pd->ndport = th->th_dport;
-		break;
-	case IPPROTO_UDP:
-		pd->nsport = pd->hdr.udp->uh_sport;
-		pd->ndport = pd->hdr.udp->uh_dport;
-		break;
 #ifdef INET
 	case IPPROTO_ICMP:
 		icmptype = pd->hdr.icmp->icmp_type;
@@ -2820,9 +2809,6 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		}
 		break;
 #endif /* INET6 */
-	default:
-		pd->nsport = pd->ndport = 0;
-		break;
 	}
 
 	pd->osport = pd->nsport;
@@ -5762,6 +5748,9 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
 
 	}
 
+	PF_ACPY(&pd->nsaddr, pd->src, pd->af);
+	PF_ACPY(&pd->ndaddr, pd->dst, pd->af);
+
 	switch (pd->virtual_proto) {
 	case PF_VPROTO_FRAGMENT:
 		/*
@@ -5838,6 +5827,12 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
 	}
 #endif	/* INET6 */
 	}
+
+	if (pd->sport)
+		pd->nsport = *pd->sport;
+	if (pd->dport)
+		pd->ndport = *pd->dport;
+
 	return (0);
 }
 
