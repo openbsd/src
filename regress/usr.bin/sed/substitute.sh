@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: substitute.sh,v 1.2 2011/07/24 13:16:18 schwarze Exp $
+#	$OpenBSD: substitute.sh,v 1.3 2011/09/17 09:20:28 schwarze Exp $
 #
 # Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
 #
@@ -29,16 +29,23 @@ err=0
 # wanted output
 tf() {
 	in=$1
-	expr=$2
-	flag=$3
+	patt="s/$2/x/$3"
 	want=$4
-	out=`echo "$in" | sed -E "s/$expr/x/$flag"`
-	[ "X$out" = "X$want" ] || \
-		echo "$in/$expr/$flag/$want/$out ($((++err)))"
-	[ -z "$in" ] && return
-	out=`echo -n "$in" | sed -E "s/$expr/x/$flag"`
-	[ "X$out" = "X$want" ] || \
-		echo "-n:$in/$expr/$flag/$want/$out ($((++err)))"
+	hexwant=`echo $want | hexdump -C`
+	hexout=`echo "$in" | sed -E "$patt" | hexdump -C`
+	if [ "X$hexout" != "X$hexwant" ]; then
+		echo "patt: $patt input: \"$in\\\\n\""
+		echo "want:" $hexwant
+		echo "got: " $hexout
+	fi
+	[ -z "$in" ] && want=""
+	hexwant=`echo -n $want | hexdump -C`
+	hexout=`echo -n "$in" | sed -E "$patt" | hexdump -C`
+	if [ "X$hexout" != "X$hexwant" ]; then
+		echo "patt: $patt input: \"$in\\\\0\""
+		echo "want:" $hexwant
+		echo "got: " $hexout
+	fi
 }
 
 # test function for various flags; arguments are:
