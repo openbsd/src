@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.29 2011/07/08 07:00:30 jmc Exp $
+.\" $OpenBSD: ntpd.8,v 1.30 2011/09/17 09:53:21 henning Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 8 2011 $
+.Dd $Mdocdate: September 17 2011 $
 .Dt NTPD 8
 .Os
 .Sh NAME
@@ -60,11 +60,12 @@ Only check the configuration file for validity.
 Do not set the time immediately at startup.
 This is the default.
 .It Fl s
-Set the time immediately at startup.
-Allows for a large time correction,
-eliminating the need to run
-.Xr rdate 8 .
-.It Fl v
+Try to set the time immediately at startup, as opposed to slowly adjusting the
+clock.
+.Nm
+will stay in the foreground for up to 15 seconds waiting for one of the
+configured ntp servers to reply.
+It Fl v
 This option allows
 .Nm
 to send DEBUG priority messages to syslog.
