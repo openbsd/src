@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_arith.h,v 1.4 2006/01/16 22:08:26 miod Exp $	*/
+/*	$OpenBSD: fpu_arith.h,v 1.5 2011/09/17 08:38:07 miod Exp $	*/
 /*	$NetBSD: fpu_arith.h,v 1.3 2003/08/07 16:28:10 agc Exp $ */
 
 /*
@@ -57,7 +57,7 @@
 
 #ifndef FPE_USE_ASM
 
-/* set up for extended-precision arithemtic */
+/* set up for extended-precision arithmetic */
 #define	FPU_DECL_CARRY quad_t fpu_carry, fpu_tmp;
 
 /*
@@ -110,7 +110,7 @@
 
 #else
 
-/* set up for extended-precision arithemtic */
+/* set up for extended-precision arithmetic */
 #define	FPU_DECL_CARRY int fpu_tmp;
 
 /*

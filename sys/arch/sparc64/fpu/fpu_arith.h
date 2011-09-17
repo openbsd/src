@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_arith.h,v 1.2 2003/06/02 23:27:55 millert Exp $	*/
+/*	$OpenBSD: fpu_arith.h,v 1.3 2011/09/17 08:38:08 miod Exp $	*/
 /*	$NetBSD: fpu_arith.h,v 1.2 1994/11/20 20:52:35 deraadt Exp $ */
 
 /*
@@ -55,7 +55,7 @@
  * for example.
  */
 
-/* set up for extended-precision arithemtic */
+/* set up for extended-precision arithmetic */
 #define	FPU_DECL_CARRY
 
 /*
