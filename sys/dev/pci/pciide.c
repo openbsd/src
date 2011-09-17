@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.332 2011/07/15 16:44:18 deraadt Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.333 2011/09/17 12:23:19 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2478,6 +2478,7 @@ sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
 	    WDC_CAPABILITY_MODE | WDC_CAPABILITY_SATA;
 	sc->sc_wdcdev.set_modes = sata_setup_channel;
+	sc->chip_unmap = default_chip_unmap;
 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
