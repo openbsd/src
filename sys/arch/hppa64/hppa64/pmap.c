@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.20 2011/08/01 22:21:42 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.21 2011/09/18 11:02:17 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -285,7 +285,6 @@ pmap_vp_find(struct pmap *pm, vaddr_t va)
 void
 pmap_dump_table(pa_space_t space, vaddr_t sva)
 {
-	pa_space_t sp;
 	volatile pt_entry_t *pde;
 	volatile u_int32_t *pd;
 	pt_entry_t pte;
@@ -301,10 +300,10 @@ pmap_dump_table(pa_space_t space, vaddr_t sva)
 		if (pdemask != (va & (PDE_MASK|PIE_MASK))) {
 			pdemask = va & (PDE_MASK|PIE_MASK);
 			if (!(pde = pmap_pde_get(pd, va))) {
-				va += ~PDE_MASK + 1 - PAGE_SIZE;
+				va = pdemask + PTE_MASK;
 				continue;
 			}
-			printf("%x:%8p:\n", sp, pde);
+			printf("%x:%8p:\n", space, pde);
 		}
 
 		if (!(pte = pmap_pte_get(pde, va)))
@@ -847,13 +846,13 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	simple_lock(&pmap->pm_lock);
 
 	for (batch = 0; sva < eva; sva += PAGE_SIZE) {
-		pdemask = sva & PDE_MASK;
+		pdemask = sva & (PDE_MASK|PIE_MASK);
 		if (!(pde = pmap_pde_get(pmap->pm_pdir, sva))) {
-			sva = pdemask + (~PDE_MASK + 1) - PAGE_SIZE;
+			sva = pdemask + PTE_MASK;
 			continue;
 		}
 		if (pdemask == sva) {
-			if (sva + (~PDE_MASK + 1) <= eva)
+			if (sva + (PTE_MASK + PAGE_SIZE) <= eva)
 				batch = 1;
 			else
 				batch = 0;
@@ -914,10 +913,10 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	simple_lock(&pmap->pm_lock);
 
 	for (pdemask = 1; sva < eva; sva += PAGE_SIZE) {
-		if (pdemask != (sva & PDE_MASK)) {
-			pdemask = sva & PDE_MASK;
+		if (pdemask != (sva & (PDE_MASK|PIE_MASK))) {
+			pdemask = sva & (PDE_MASK|PIE_MASK);
 			if (!(pde = pmap_pde_get(pmap->pm_pdir, sva))) {
-				sva = pdemask + (~PDE_MASK + 1) - PAGE_SIZE;
+				sva = pdemask + PTE_MASK;
 				continue;
 			}
 		}
@@ -1232,10 +1231,10 @@ pmap_kremove(vaddr_t va, vsize_t size)
 	simple_lock(&pmap->pm_lock);
 
 	for (pdemask = 1, eva = va + size; va < eva; va += PAGE_SIZE) {
-		if (pdemask != (va & PDE_MASK)) {
-			pdemask = va & PDE_MASK;
+		if (pdemask != (va & (PDE_MASK|PIE_MASK))) {
+			pdemask = va & (PDE_MASK|PIE_MASK);
 			if (!(pde = pmap_pde_get(pmap_kernel()->pm_pdir, va))) {
-				va = pdemask + (~PDE_MASK + 1) - PAGE_SIZE;
+				va = pdemask + PTE_MASK;
 				continue;
 			}
 		}
