@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.238 2011/09/12 20:47:15 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.239 2011/09/18 21:37:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -589,13 +589,13 @@ struct ramqueue_envelope {
 	RB_ENTRY(ramqueue_envelope)	 evptree_entry;
 	struct ramqueue_batch		*rq_batch;
 	struct ramqueue_message		*rq_msg;
+	struct ramqueue_host		*rq_host;
 	u_int64_t      			 evpid;
 	time_t				 sched;
 };
 struct ramqueue_message {
 	RB_ENTRY(ramqueue_message)		msgtree_entry;
 	RB_HEAD(evptree, ramqueue_envelope)	evptree;
-	struct ramqueue_host		       *rq_host;
 	u_int32_t				msgid;
 };
 struct ramqueue {
