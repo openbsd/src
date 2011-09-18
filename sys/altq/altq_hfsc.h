@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_hfsc.h,v 1.8 2011/07/03 23:48:41 henning Exp $	*/
+/*	$OpenBSD: altq_hfsc.h,v 1.9 2011/09/18 20:34:29 henning Exp $	*/
 /*	$KAME: altq_hfsc.h,v 1.8 2002/11/29 04:36:23 kjc Exp $	*/
 
 /*
@@ -149,24 +149,24 @@ struct runtime_sc {
 };
 
 /* for TAILQ based ellist and actlist implementation */
-struct hfsc_class;
-typedef TAILQ_HEAD(_eligible, hfsc_class) ellist_t;
-typedef TAILQ_ENTRY(hfsc_class) elentry_t;
-typedef TAILQ_HEAD(_active, hfsc_class) actlist_t;
-typedef TAILQ_ENTRY(hfsc_class) actentry_t;
+struct altq_hfsc_class;
+typedef TAILQ_HEAD(_eligible, altq_hfsc_class) ellist_t;
+typedef TAILQ_ENTRY(altq_hfsc_class) elentry_t;
+typedef TAILQ_HEAD(_active, altq_hfsc_class) actlist_t;
+typedef TAILQ_ENTRY(altq_hfsc_class) actentry_t;
 #define	ellist_first(s)		TAILQ_FIRST(s)
 #define	actlist_first(s)	TAILQ_FIRST(s)
 #define	actlist_last(s)		TAILQ_LAST(s, _active)
 
-struct hfsc_class {
+struct altq_hfsc_class {
 	u_int		cl_id;		/* class id (just for debug) */
 	u_int32_t	cl_handle;	/* class handle */
-	struct hfsc_if	*cl_hif;	/* back pointer to struct hfsc_if */
+	struct altq_hfsc_if *cl_hif;	/* back pointer to altq_hfsc_if */
 	int		cl_flags;	/* misc flags */
 
-	struct hfsc_class *cl_parent;	/* parent class */
-	struct hfsc_class *cl_siblings;	/* sibling classes */
-	struct hfsc_class *cl_children;	/* child classes */
+	struct altq_hfsc_class *cl_parent;	/* parent class */
+	struct altq_hfsc_class *cl_siblings;	/* sibling classes */
+	struct altq_hfsc_class *cl_children;	/* child classes */
 
 	class_queue_t	*cl_q;		/* class queue structure */
 	struct red	*cl_red;	/* RED state */
@@ -222,13 +222,13 @@ struct hfsc_class {
 /*
  * hfsc interface state
  */
-struct hfsc_if {
-	struct hfsc_if		*hif_next;	/* interface state list */
+struct altq_hfsc_if {
+	struct altq_hfsc_if	*hif_next;	/* interface state list */
 	struct ifaltq		*hif_ifq;	/* backpointer to ifaltq */
-	struct hfsc_class	*hif_rootclass;		/* root class */
-	struct hfsc_class	*hif_defaultclass;	/* default class */
-	struct hfsc_class	*hif_class_tbl[HFSC_MAX_CLASSES];
-	struct hfsc_class	*hif_pollcache;	/* cache for poll operation */
+	struct altq_hfsc_class	*hif_rootclass;		/* root class */
+	struct altq_hfsc_class	*hif_defaultclass;	/* default class */
+	struct altq_hfsc_class	*hif_class_tbl[HFSC_MAX_CLASSES];
+	struct altq_hfsc_class	*hif_pollcache;	/* cache for poll operation */
 
 	u_int	hif_classes;			/* # of classes in the tree */
 	u_int	hif_packets;			/* # of packets in the tree */
