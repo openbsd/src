@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.206 2011/07/05 04:48:02 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.207 2011/09/18 01:54:41 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -905,7 +905,6 @@ sysctl__string(void *oldp, size_t *oldlenp, void *newp, size_t newlen,
     char *str, int maxlen, int trunc)
 {
 	int len, error = 0;
-	char c;
 
 	len = strlen(str) + 1;
 	if (oldp && *oldlenp < len) {
@@ -916,16 +915,15 @@ sysctl__string(void *oldp, size_t *oldlenp, void *newp, size_t newlen,
 		return (EINVAL);
 	if (oldp) {
 		if (trunc && *oldlenp < len) {
-			/* save & zap NUL terminator while copying */
-			c = str[*oldlenp-1];
-			str[*oldlenp-1] = '\0';
-			error = copyout(str, oldp, *oldlenp);
-			str[*oldlenp-1] = c;
+			len = *oldlenp;
+			error = copyout(str, oldp, len - 1);
+			if (error == 0)
+				error = copyout("", (char *)oldp + len - 1, 1);
 		} else {
-			*oldlenp = len;
 			error = copyout(str, oldp, len);
 		}
 	}
+	*oldlenp = len;
 	if (error == 0 && newp) {
 		error = copyin(newp, str, newlen);
 		str[newlen] = 0;
