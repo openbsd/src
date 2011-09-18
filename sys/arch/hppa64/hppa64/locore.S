@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.39 2011/09/18 14:05:38 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.40 2011/09/18 14:14:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -1971,12 +1971,14 @@ ENTRY(sigcode,0)
 	copy	%r31, %rp
 
 	ldil	L%SYSCALLGATE, %r1
+	depd	%r0, 31, 32, %r1
 	copy	%r4, %arg0
 	.call
 	ble	4(%sr7, %r1)
 	ldi	SYS_sigreturn, %r1
 
 	ldil	L%SYSCALLGATE, %r1
+	depd	%r0, 31, 32, %r1
 	copy	%ret0, %arg0
 	.call
 	ble	4(%sr7, %r1)

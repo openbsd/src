@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.40 2011/08/16 17:36:37 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.41 2011/09/18 14:14:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -825,13 +825,12 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 {
 	struct proc *p = curproc;
 	struct trapframe *tf = p->p_md.md_regs;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct sigacts *psp = p->p_sigacts;
 	struct sigcontext ksc;
 	siginfo_t ksi;
 	register_t scp, sip, zero;
 	int sss;
-
-	/* TODO sendsig */
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
@@ -883,9 +882,10 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	tf->tf_args[2] = tf->tf_r4 = scp;
 	tf->tf_args[3] = (register_t)catcher;
 	tf->tf_sp = scp + sss;
-	tf->tf_ipsw &= ~(PSL_N|PSL_B);
+	tf->tf_ipsw &= ~(PSL_N|PSL_B|PSL_T);
 	tf->tf_iioq[0] = HPPA_PC_PRIV_USER | p->p_sigcode;
 	tf->tf_iioq[1] = tf->tf_iioq[0] + 4;
+	tf->tf_iisq[0] = tf->tf_iisq[1] = pcb->pcb_space;
 	/* disable tracing in the trapframe */
 
 #ifdef DEBUG
@@ -925,8 +925,6 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	struct trapframe *tf = p->p_md.md_regs;
 	int error;
 
-	/* TODO sigreturn */
-
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
@@ -956,9 +954,17 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	bcopy(ksc.sc_fpregs, &p->p_addr->u_pcb.pcb_fpstate->hfp_regs,
 	    sizeof(ksc.sc_fpregs));
 
-	tf->tf_iioq[0] = ksc.sc_pcoqh;
-	tf->tf_iioq[1] = ksc.sc_pcoqt;
-	tf->tf_ipsw = ksc.sc_ps;
+	tf->tf_iioq[0] = ksc.sc_pcoqh | HPPA_PC_PRIV_USER;
+	tf->tf_iioq[1] = ksc.sc_pcoqt | HPPA_PC_PRIV_USER;
+	if ((tf->tf_iioq[0] & ~PAGE_MASK) == SYSCALLGATE)
+		tf->tf_iisq[0] = HPPA_SID_KERNEL;
+	else
+		tf->tf_iisq[0] = p->p_addr->u_pcb.pcb_space;
+	if ((tf->tf_iioq[0] & ~PAGE_MASK) == SYSCALLGATE)
+		tf->tf_iisq[0] = HPPA_SID_KERNEL;
+	else
+		tf->tf_iisq[0] = p->p_addr->u_pcb.pcb_space;
+	tf->tf_ipsw = ksc.sc_ps | (curcpu()->ci_psw & PSL_O);
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
