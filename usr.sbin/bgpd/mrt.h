@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.29 2011/09/17 16:29:44 claudio Exp $ */
+/*	$OpenBSD: mrt.h,v 1.30 2011/09/18 09:31:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -39,6 +39,13 @@
  * length field.
  */
 #define MRT_HEADER_SIZE		12
+
+struct mrt_hdr {
+	u_int32_t	timestamp;
+	u_int16_t	type;
+	u_int16_t	subtype;
+	u_int32_t	length;
+} __packed;
 
 enum MRT_MSG_TYPES {
 	MSG_NULL,		/*  0 empty msg (deprecated) */
@@ -345,71 +352,4 @@ enum MRT_BGP_TYPES {
  *    terminated ... |   0    |
  * +--------+--------+--------+
  */
-
-#define	MRT_FILE_LEN	512
-enum mrt_type {
-	MRT_NONE,
-	MRT_TABLE_DUMP,
-	MRT_TABLE_DUMP_MP,
-	MRT_TABLE_DUMP_V2,
-	MRT_ALL_IN,
-	MRT_ALL_OUT,
-	MRT_UPDATE_IN,
-	MRT_UPDATE_OUT
-};
-
-enum mrt_state {
-	MRT_STATE_RUNNING,
-	MRT_STATE_OPEN,
-	MRT_STATE_REOPEN,
-	MRT_STATE_REMOVE
-};
-
-struct mrt {
-	char			rib[PEER_DESCR_LEN];
-	struct msgbuf		wbuf;
-	LIST_ENTRY(mrt)		entry;
-	u_int32_t		peer_id;
-	u_int32_t		group_id;
-	enum mrt_type		type;
-	enum mrt_state		state;
-	u_int16_t		seqnum;
-};
-
-struct mrt_config {
-	struct mrt		conf;
-	char			name[MRT_FILE_LEN];	/* base file name */
-	char			file[MRT_FILE_LEN];	/* actual file name */
-	time_t			ReopenTimer;
-	time_t			ReopenTimerInterval;
-};
-
-#define	MRT2MC(x)	((struct mrt_config *)(x))
-#define	MRT_MAX_TIMEOUT	7200
-
-struct bgpd_config;
-struct rde_peer_head;
-struct peer;
-struct prefix;
-struct rib_entry;
-
-/* prototypes */
-void		 mrt_dump_bgp_msg(struct mrt *, void *, u_int16_t,
-		     struct peer *);
-void		 mrt_dump_state(struct mrt *, u_int16_t, u_int16_t,
-		     struct peer *);
-int		 mrt_dump_v2_hdr(struct mrt *, struct bgpd_config *,
-		    struct rde_peer_head *);
-void		 mrt_clear_seq(void);
-void		 mrt_dump_upcall(struct rib_entry *, void *);
-void		 mrt_done(void *);
-void		 mrt_write(struct mrt *);
-void		 mrt_clean(struct mrt *);
-void		 mrt_init(struct imsgbuf *, struct imsgbuf *);
-int		 mrt_timeout(struct mrt_head *);
-void		 mrt_reconfigure(struct mrt_head *);
-void		 mrt_handler(struct mrt_head *);
-struct mrt	*mrt_get(struct mrt_head *, struct mrt *);
-int		 mrt_mergeconfig(struct mrt_head *, struct mrt_head *);
-
 #endif

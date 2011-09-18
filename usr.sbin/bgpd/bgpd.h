@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.264 2011/05/01 12:56:04 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.265 2011/09/18 09:31:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -854,6 +854,47 @@ struct rde_memstats {
 	int64_t		attr_dcnt;
 };
 
+#define	MRT_FILE_LEN	512
+#define	MRT2MC(x)	((struct mrt_config *)(x))
+#define	MRT_MAX_TIMEOUT	7200
+
+enum mrt_type {
+	MRT_NONE,
+	MRT_TABLE_DUMP,
+	MRT_TABLE_DUMP_MP,
+	MRT_TABLE_DUMP_V2,
+	MRT_ALL_IN,
+	MRT_ALL_OUT,
+	MRT_UPDATE_IN,
+	MRT_UPDATE_OUT
+};
+
+enum mrt_state {
+	MRT_STATE_RUNNING,
+	MRT_STATE_OPEN,
+	MRT_STATE_REOPEN,
+	MRT_STATE_REMOVE
+};
+
+struct mrt {
+	char			rib[PEER_DESCR_LEN];
+	struct msgbuf		wbuf;
+	LIST_ENTRY(mrt)		entry;
+	u_int32_t		peer_id;
+	u_int32_t		group_id;
+	enum mrt_type		type;
+	enum mrt_state		state;
+	u_int16_t		seqnum;
+};
+
+struct mrt_config {
+	struct mrt		conf;
+	char			name[MRT_FILE_LEN];	/* base file name */
+	char			file[MRT_FILE_LEN];	/* actual file name */
+	time_t			ReopenTimer;
+	time_t			ReopenTimerInterval;
+};
+
 /* prototypes */
 /* bgpd.c */
 void		 send_nexthop_update(struct kroute_nexthop *);
@@ -862,21 +903,9 @@ int		 send_network(int, struct network_config *,
 		     struct filter_set_head *);
 int		 bgpd_filternexthop(struct kroute *, struct kroute6 *);
 
-/* log.c */
-void		 log_init(int);
-void		 log_verbose(int);
-void		 vlog(int, const char *, va_list);
-void		 log_peer_warn(const struct peer_config *, const char *, ...);
-void		 log_peer_warnx(const struct peer_config *, const char *, ...);
-void		 log_warn(const char *, ...);
-void		 log_warnx(const char *, ...);
-void		 log_info(const char *, ...);
-void		 log_debug(const char *, ...);
-void		 fatal(const char *) __dead;
-void		 fatalx(const char *) __dead;
-
-/* parse.y */
-int	 cmdline_symset(char *);
+/* control.c */
+void	control_cleanup(const char *);
+int	control_imsg_relay(struct imsg *);
 
 /* config.c */
 int	 host(const char *, struct bgpd_addr *, u_int8_t *);
@@ -901,17 +930,29 @@ int		 kr_net_reload(u_int, struct network_head *);
 int		 kr_reload(void);
 struct in6_addr	*prefixlen2mask6(u_int8_t prefixlen);
 
-/* control.c */
-void	control_cleanup(const char *);
-int	control_imsg_relay(struct imsg *);
+/* log.c */
+void		 log_init(int);
+void		 log_verbose(int);
+void		 vlog(int, const char *, va_list);
+void		 log_peer_warn(const struct peer_config *, const char *, ...);
+void		 log_peer_warnx(const struct peer_config *, const char *, ...);
+void		 log_warn(const char *, ...);
+void		 log_warnx(const char *, ...);
+void		 log_info(const char *, ...);
+void		 log_debug(const char *, ...);
+void		 fatal(const char *) __dead;
+void		 fatalx(const char *) __dead;
 
-/* pftable.c */
-int	pftable_exists(const char *);
-int	pftable_add(const char *);
-int	pftable_clear_all(void);
-int	pftable_addr_add(struct pftable_msg *);
-int	pftable_addr_remove(struct pftable_msg *);
-int	pftable_commit(void);
+/* mrt.c */
+void		 mrt_clear_seq(void);
+void		 mrt_write(struct mrt *);
+void		 mrt_clean(struct mrt *);
+void		 mrt_init(struct imsgbuf *, struct imsgbuf *);
+int		 mrt_timeout(struct mrt_head *);
+void		 mrt_reconfigure(struct mrt_head *);
+void		 mrt_handler(struct mrt_head *);
+struct mrt	*mrt_get(struct mrt_head *, struct mrt *);
+int		 mrt_mergeconfig(struct mrt_head *, struct mrt_head *);
 
 /* name2id.c */
 u_int16_t	 rib_name2id(const char *);
@@ -927,6 +968,16 @@ const char	*pftable_id2name(u_int16_t);
 void		 pftable_unref(u_int16_t);
 void		 pftable_ref(u_int16_t);
 
+/* parse.y */
+int	 cmdline_symset(char *);
+
+/* pftable.c */
+int	pftable_exists(const char *);
+int	pftable_add(const char *);
+int	pftable_clear_all(void);
+int	pftable_addr_add(struct pftable_msg *);
+int	pftable_addr_remove(struct pftable_msg *);
+int	pftable_commit(void);
 
 /* rde_filter.c */
 void		 filterset_free(struct filter_set_head *);

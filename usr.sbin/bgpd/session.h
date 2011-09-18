@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.111 2010/12/09 13:50:41 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.112 2011/09/18 09:31:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -232,16 +232,24 @@ struct ctl_timer {
 	time_t		val;
 };
 
-/* session.c */
-void		 session_socket_blockmode(int, enum blockmodes);
-pid_t		 session_main(int[2], int[2], int[2], int[2]);
-void		 bgp_fsm(struct peer *, enum session_events);
-int		 session_neighbor_rrefresh(struct peer *p);
-struct peer	*getpeerbyaddr(struct bgpd_addr *);
-struct peer	*getpeerbydesc(const char *);
-int		 imsg_compose_parent(int, u_int32_t, pid_t, void *, u_int16_t);
-int		 imsg_compose_rde(int, pid_t, void *, u_int16_t);
-void	 	 session_stop(struct peer *, u_int8_t);
+/* carp.c */
+int	 carp_demote_init(char *, int);
+void	 carp_demote_shutdown(void);
+int	 carp_demote_get(char *);
+int	 carp_demote_set(char *, int);
+
+/* config.c */
+int	 merge_config(struct bgpd_config *, struct bgpd_config *,
+	    struct peer *, struct listen_addrs *);
+void	 prepare_listeners(struct bgpd_config *);
+int	 get_mpe_label(struct rdomain *);
+
+/* control.c */
+int	control_init(int, char *);
+int	control_listen(int);
+void	control_shutdown(int);
+int	control_dispatch_msg(struct pollfd *, u_int *);
+unsigned int	control_accept(int, int);
 
 /* log.c */
 char		*log_fmt_peer(const struct peer_config *);
@@ -251,26 +259,16 @@ void		 log_notification(const struct peer *, u_int8_t, u_int8_t,
 		    u_char *, u_int16_t, const char *);
 void		 log_conn_attempt(const struct peer *, struct sockaddr *);
 
+/* mrt.c */
+void		 mrt_dump_bgp_msg(struct mrt *, void *, u_int16_t,
+		     struct peer *);
+void		 mrt_dump_state(struct mrt *, u_int16_t, u_int16_t,
+		     struct peer *);
+
 /* parse.y */
 int	 parse_config(char *, struct bgpd_config *, struct mrt_head *,
 	    struct peer **, struct network_head *, struct filter_head *,
 	    struct rdomain_head *);
-
-/* config.c */
-int	 merge_config(struct bgpd_config *, struct bgpd_config *,
-	    struct peer *, struct listen_addrs *);
-void	 prepare_listeners(struct bgpd_config *);
-int	 get_mpe_label(struct rdomain *);
-
-/* rde.c */
-pid_t	 rde_main(int[2], int[2], int[2], int[2], int);
-
-/* control.c */
-int	control_init(int, char *);
-int	control_listen(int);
-void	control_shutdown(int);
-int	control_dispatch_msg(struct pollfd *, u_int *);
-unsigned int	control_accept(int, int);
 
 /* pfkey.c */
 int	pfkey_read(int, struct sadb_msg *);
@@ -283,11 +281,19 @@ void	print_config(struct bgpd_config *, struct rib_names *,
 	    struct network_head *, struct peer *, struct filter_head *,
 	    struct mrt_head *, struct rdomain_head *);
 
-/* carp.c */
-int	 carp_demote_init(char *, int);
-void	 carp_demote_shutdown(void);
-int	 carp_demote_get(char *);
-int	 carp_demote_set(char *, int);
+/* rde.c */
+pid_t	 rde_main(int[2], int[2], int[2], int[2], int);
+
+/* session.c */
+void		 session_socket_blockmode(int, enum blockmodes);
+pid_t		 session_main(int[2], int[2], int[2], int[2]);
+void		 bgp_fsm(struct peer *, enum session_events);
+int		 session_neighbor_rrefresh(struct peer *p);
+struct peer	*getpeerbyaddr(struct bgpd_addr *);
+struct peer	*getpeerbydesc(const char *);
+int		 imsg_compose_parent(int, u_int32_t, pid_t, void *, u_int16_t);
+int		 imsg_compose_rde(int, pid_t, void *, u_int16_t);
+void	 	 session_stop(struct peer *, u_int8_t);
 
 /* timer.c */
 struct peer_timer	*timer_get(struct peer *, enum Timer);

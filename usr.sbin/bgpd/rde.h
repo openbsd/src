@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.139 2011/09/17 16:29:44 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.140 2011/09/18 09:31:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -299,6 +299,12 @@ struct prefix {
 extern struct rde_memstats rdemem;
 
 /* prototypes */
+/* mrt.c */
+int		 mrt_dump_v2_hdr(struct mrt *, struct bgpd_config *,
+		    struct rde_peer_head *);
+void		 mrt_dump_upcall(struct rib_entry *, void *);
+void		 mrt_done(void *);
+
 /* rde.c */
 void		 rde_send_kroute(struct prefix *, struct prefix *, u_int16_t);
 void		 rde_send_nexthop(struct bgpd_addr *, int);
@@ -363,6 +369,42 @@ void		 community_ext_delete(struct rde_aspath *,
 int		 community_ext_conv(struct filter_extcommunity *, u_int16_t,
 		    u_int64_t *);
 
+/* rde_decide.c */
+void		 prefix_evaluate(struct prefix *, struct rib_entry *);
+
+/* rde_filter.c */
+enum filter_actions rde_filter(u_int16_t, struct rde_aspath **,
+		     struct filter_head *, struct rde_peer *,
+		     struct rde_aspath *, struct bgpd_addr *, u_int8_t,
+		     struct rde_peer *, enum directions);
+void		 rde_apply_set(struct rde_aspath *, struct filter_set_head *,
+		     u_int8_t, struct rde_peer *, struct rde_peer *);
+int		 rde_filter_equal(struct filter_head *, struct filter_head *,
+		     struct rde_peer *, enum directions);
+
+/* rde_prefix.c */
+#define pt_empty(pt)	((pt)->refcnt == 0)
+#define pt_ref(pt)	do {				\
+	++(pt)->refcnt;					\
+	if ((pt)->refcnt == 0)				\
+		fatalx("pt_ref: overflow");		\
+} while(0)
+#define pt_unref(pt)	do {				\
+	if ((pt)->refcnt == 0)				\
+		fatalx("pt_unref: underflow");		\
+	--(pt)->refcnt;					\
+} while(0)
+
+void	 pt_init(void);
+void	 pt_shutdown(void);
+void	 pt_getaddr(struct pt_entry *, struct bgpd_addr *);
+struct pt_entry	*pt_fill(struct bgpd_addr *, int);
+struct pt_entry	*pt_get(struct bgpd_addr *, int);
+struct pt_entry *pt_add(struct bgpd_addr *, int);
+void	 pt_remove(struct pt_entry *);
+struct pt_entry	*pt_lookup(struct bgpd_addr *);
+int	 pt_prefix_cmp(const struct pt_entry *, const struct pt_entry *);
+
 /* rde_rib.c */
 extern u_int16_t	 rib_size;
 extern struct rib	*ribs;
@@ -421,9 +463,6 @@ void		 nexthop_update(struct kroute_nexthop *);
 struct nexthop	*nexthop_get(struct bgpd_addr *);
 int		 nexthop_compare(struct nexthop *, struct nexthop *);
 
-/* rde_decide.c */
-void		 prefix_evaluate(struct prefix *, struct rib_entry *);
-
 /* rde_update.c */
 void		 up_init(struct rde_peer *);
 void		 up_down(struct rde_peer *);
@@ -442,40 +481,6 @@ u_char		*up_dump_mp_unreach(u_char *, u_int16_t *, struct rde_peer *,
 		     u_int8_t);
 int		 up_dump_mp_reach(u_char *, u_int16_t *, struct rde_peer *,
 		     u_int8_t);
-
-/* rde_prefix.c */
-#define pt_empty(pt)	((pt)->refcnt == 0)
-#define pt_ref(pt)	do {				\
-	++(pt)->refcnt;					\
-	if ((pt)->refcnt == 0)				\
-		fatalx("pt_ref: overflow");		\
-} while(0)
-#define pt_unref(pt)	do {				\
-	if ((pt)->refcnt == 0)				\
-		fatalx("pt_unref: underflow");		\
-	--(pt)->refcnt;					\
-} while(0)
-
-void	 pt_init(void);
-void	 pt_shutdown(void);
-void	 pt_getaddr(struct pt_entry *, struct bgpd_addr *);
-struct pt_entry	*pt_fill(struct bgpd_addr *, int);
-struct pt_entry	*pt_get(struct bgpd_addr *, int);
-struct pt_entry *pt_add(struct bgpd_addr *, int);
-void	 pt_remove(struct pt_entry *);
-struct pt_entry	*pt_lookup(struct bgpd_addr *);
-int	 pt_prefix_cmp(const struct pt_entry *, const struct pt_entry *);
-
-
-/* rde_filter.c */
-enum filter_actions rde_filter(u_int16_t, struct rde_aspath **,
-		     struct filter_head *, struct rde_peer *,
-		     struct rde_aspath *, struct bgpd_addr *, u_int8_t,
-		     struct rde_peer *, enum directions);
-void		 rde_apply_set(struct rde_aspath *, struct filter_set_head *,
-		     u_int8_t, struct rde_peer *, struct rde_peer *);
-int		 rde_filter_equal(struct filter_head *, struct filter_head *,
-		     struct rde_peer *, enum directions);
 
 /* util.c */
 u_int32_t	 aspath_extract(const void *, int);
