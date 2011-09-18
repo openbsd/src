@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.84 2011/09/17 21:09:54 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.85 2011/09/18 10:38:57 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 17 2011 $
+.Dd $Mdocdate: September 18 2011 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -30,11 +30,13 @@ language is used to format
 manuals.
 This reference document describes its syntax, structure, and
 usage.
-The reference implementation is
+The reference implementation for
+.Nm
+formatting is
 .Xr mandoc 1 ;
 the
 .Sx COMPATIBILITY
-section describes compatibility with other troff \-mdoc implementations.
+section describes compatibility with other implementations.
 .Pp
 An
 .Nm
@@ -42,7 +44,7 @@ document follows simple rules: lines beginning with the control
 character
 .Sq \&.
 are parsed for macros.
-Text lines, those not beginning with the control character, are
+Lines not beginning with the control character are
 interpreted within the scope of prior macros:
 .Bd -literal -offset indent
 \&.Sh Macro lines change control state.
@@ -52,21 +54,37 @@ Text lines are interpreted within the current state.
 .Nm
 documents may contain only graphable 7-bit ASCII characters, the space
 character, and, in certain circumstances, the tab character.
-.Pp
-If the first character of a text line is a space, that line is printed
-with a leading newline.
+The back-space character
+.Sq \e
+indicates the start of an escape sequence for
+.Sx Comments ,
+.Sx Predefined Strings ,
+and
+.Sx Special Characters .
 .Ss Comments
-Text following a
-.Sq \e\*q ,
+Text following an escaped double-quote
+.Sq \e\(dq ,
 whether in a macro or text line, is ignored to the end of
 line.
-A macro line with only a control character and comment escape,
-.Sq \&.\e\*q ,
+A macro line beginning with a control character and comment escape
+.Sq \&.\e\(dq
 is also ignored.
-Macro lines with only a control character and optional whitespace are
+Furthermore,
+macro lines with only a control character and optional trailing
+whitespace are
 stripped from input.
+.Pp
+Examples:
+.Bd -literal -offset indent -compact
+\&.\e\(dq This is a comment line.
+\&.\e\(dq The next line is ignored:
+\&.
+\&.Em Emphasis \e\(dq This is also a comment.
+.Ed
 .Ss Special Characters
-Special characters may occur in both macro and text lines.
+Special characters are used to encode special glyphs and are rendered
+differently across output media.
+They may occur in both macro and text lines.
 Sequences begin with the escape character
 .Sq \e
 followed by either an open-parenthesis
@@ -76,24 +94,24 @@ for two-character sequences; an open-bracket
 for n-character sequences (terminated at a close-bracket
 .Sq \&] ) ;
 or a single one character sequence.
+.Pp
+Examples:
+.Bl -tag -width Ds -offset indent -compact
+.It Li \e(em
+Two-letter em dash escape.
+.It Li \ee
+One-letter backslash escape.
+.El
+.Pp
 See
 .Xr mandoc_char 7
 for a complete list.
-Examples include
-.Sq \e(em
-.Pq em-dash
-and
-.Sq \ee
-.Pq back-slash .
 .Ss Text Decoration
 Terms may be text-decorated using the
 .Sq \ef
-escape followed by an indicator: B (bold), I (italic), R (Roman), or P
-(revert to previous mode):
-.Pp
-.Dl \efBbold\efR \efIitalic\efP
-.Pp
-A numerical representation 3, 2, or 1 (bold, italic, and Roman,
+escape followed by an indicator: B (bold), I (italic), R (regular), or P
+(revert to previous mode).
+A numerical representation 3, 2, or 1 (bold, italic, and regular,
 respectively) may be used instead.
 If a macro opens a font scope after calling
 .Sq \ef ,
@@ -105,19 +123,23 @@ mode will be restored upon exiting the
 .Sx \&Bf
 scope.
 .Pp
-Note this form is
+Examples:
+.Bl -tag -width Ds -offset indent -compact
+.It Li \efBbold\efR
+Write in bold, then switch to regular font mode.
+.It Li \efIitalic\efP
+Write in italic, then return to previous font mode.
+.El
+.Pp
+Text decoration is
 .Em not
 recommended for
 .Nm ,
 which encourages semantic annotation.
 .Ss Predefined Strings
-Historically,
-troff
-also defined a set of package-specific
-.Dq predefined strings ,
-which, like
+Predefined strings, like
 .Sx Special Characters ,
-mark special output characters and strings by way of input codes.
+mark special output glyphs.
 Predefined strings are escaped with the slash-asterisk,
 .Sq \e* :
 single-character
@@ -126,74 +148,78 @@ two-character
 .Sq \e*(XX ,
 and N-character
 .Sq \e*[N] .
-See
-.Xr mandoc_char 7
-for a complete list.
-Examples include
-.Sq \e*(Am
-.Pq ampersand
-and
-.Sq \e*(Ba
-.Pq vertical bar .
+.Pp
+Examples:
+.Bl -tag -width Ds -offset indent -compact
+.It Li \e*(Am
+Two-letter ampersand predefined string.
+.It Li \e*q
+One-letter double-quote predefined string.
+.El
+.Pp
+These strings are set using
+.Xr roff 7 ,
+although
+.Nm
+consists of several pre-set escapes listed in
+.Xr mandoc_char 7 .
 .Ss Whitespace
 Whitespace consists of the space character.
-In text lines, whitespace is preserved within a line; unescaped
-trailing spaces are stripped from input (unless in a literal context).
-Blank text lines, which may include whitespace, are only permitted
-within literal contexts.
+In text lines, whitespace is preserved within a line.
+In macro lines, whitespace delimits arguments and is discarded.
 .Pp
-In general, trailing whitespace on input lines is discouraged
-for reasons of clarity and portability.
+Unescaped trailing spaces are stripped from text line input unless in a
+literal context.
+In general, trailing whitespace on any input line is discouraged for
+reasons of portability.
 In the rare case that a blank character is needed at the end of an
 input line, it may be forced by
 .Sq \e\ \e& .
 .Pp
-In macro lines, whitespace delimits arguments and is discarded.
+In general, space characters can be rendered as literal
+characters by using non-breaking space escapes or
+.Sx Quotation .
+.Pp
+Blank text lines, which may include whitespace, are only permitted
+within literal contexts.
+If the first character of a text line is a space, that line is printed
+with a leading newline.
 .Ss Quotation
-Macro arguments may be quoted with double-quotes; in this case,
-whitespace within the quotes is retained as part of the argument.
-For example,
-.Pp
-.D1 Pf \. \&Fn strlen "\(dqconst char *s\(dq"
-.Pp
-renders as
-.Sq Fn strlen "const char *s" ,
-while
-.Pp
-.D1 Pf \. \&Fn strlen "const char *s"
-.Pp
-would produce
-.Sq Fn strlen const char *s .
+Macro arguments may be quoted with double-quotes to so that the
+enclosed text is one literal term.
+Quoted text, even if whitespace or if it would cause a macro invocation
+when unquoted, is considered literal text.
 .Pp
 A quoted argument begins with a double-quote preceded by whitespace.
 The next double-quote not pairwise adjacent to another double-quote
 terminates the literal, regardless of surrounding whitespace.
 .Pp
-In unquoted arguments, space characters can alternatively be included
-by preceding them with a backslash
-.Pq Sq \e\~ ,
-but quoting is usually better for clarity.
-.Pp
-Note that any quoted text, even if it would cause a macro invocation
-when unquoted, is considered literal text.
-Thus, the following produces
-.Sq Op "Fl a" :
-.Bd -literal -offset indent
-\&.Op "Fl a"
-.Ed
-.Pp
-In text lines, quotes are regarded as opaque text.
+Examples:
+.Bl -tag -width Ds -offset indent -compact
+.It Li .Fn strlen \(dqconst char *s\(dq
+Group arguments
+.Qq const char *s
+into one function argument.
+If unspecified,
+.Qq const ,
+.Qq char ,
+and
+.Qq *s
+would be considered separate arguments.
+.Pq See Sx \&Fn .
+.It Li .Op \(dqFl a\(dq
+Consider
+.Qq \&Fl a
+as literal text instead of a flag macro.
+.Pq Aee Sx \&Op , \&Fl .
+.El
 .Ss Scaling Widths
-Many macros support scaled widths for their arguments, such as
-stipulating a two-inch list indentation with the following:
-.Bd -literal -offset indent
-\&.Bl -tag -width 2i
-.Ed
-.Pp
-The syntax for scaled widths is
+Many macros support scaled widths for their arguments.
+The syntax for a scaled width is
 .Sq Li [+-]?[0-9]*.[0-9]*[:unit:] ,
 where a decimal must be preceded or proceeded by at least one digit.
 Negative numbers, while accepted, are truncated to zero.
+.Pp
 The following scaling units are accepted:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
@@ -235,10 +261,19 @@ or
 is necessarily non-portable across output media.
 See
 .Sx COMPATIBILITY .
+.Pp
+Examples:
+.Bl -tag -width Ds -offset indent -compact
+.It Li \&.Bl -tag -width 2i
+two-inch tagged list indentation
+.Pq see Sx \&Bl
+.It Li \&.sp 2v
+two vertical spaces
+.Pq see Sx \&sp
+.El
 .Ss Sentence Spacing
-When composing a manual, make sure that sentences end at the end of
-a line.
-By doing so, front-ends will be able to apply the proper amount of
+Sentences should terminate at the end of an input line.
+By doing this, a formatter will be able to apply the proper amount of
 spacing after the end of sentence (unescaped) period, exclamation mark,
 or question mark followed by zero or more non-sentence closing
 delimiters
@@ -251,10 +286,14 @@ delimiters
 .Pp
 The proper spacing is also intelligently preserved if a sentence ends at
 the boundary of a macro line.
-For example:
 .Pp
-.Dl \&.Xr mandoc 1 \&.
-.Dl \&.Fl T \&Ns \&Cm ascii \&.
+Examples:
+.Bd -literal -offset indent -compact
+Do not end sentences mid-line like this.  Instead,
+end a sentence like this.
+A macro would end like this:
+\&.Xr mandoc 1 \&.
+.Ed
 .Sh MANUAL STRUCTURE
 A well-formed
 .Nm
@@ -292,9 +331,9 @@ file for a utility
 \&.Sh NAME
 \&.Nm progname
 \&.Nd one line about what it does
-\&.\e\*q .Sh LIBRARY
-\&.\e\*q For sections 2, 3, & 9 only.
-\&.\e\*q Not used in OpenBSD.
+\&.\e\(dq .Sh LIBRARY
+\&.\e\(dq For sections 2, 3, & 9 only.
+\&.\e\(dq Not used in OpenBSD.
 \&.Sh SYNOPSIS
 \&.Nm progname
 \&.Op Fl options
@@ -303,29 +342,29 @@ file for a utility
 The
 \&.Nm
 utility processes files ...
-\&.\e\*q .Sh IMPLEMENTATION NOTES
-\&.\e\*q Not used in OpenBSD.
-\&.\e\*q .Sh RETURN VALUES
-\&.\e\*q For sections 2, 3, & 9 only.
-\&.\e\*q .Sh ENVIRONMENT
-\&.\e\*q For sections 1, 6, 7, & 8 only.
-\&.\e\*q .Sh FILES
-\&.\e\*q .Sh EXIT STATUS
-\&.\e\*q For sections 1, 6, & 8 only.
-\&.\e\*q .Sh EXAMPLES
-\&.\e\*q .Sh DIAGNOSTICS
-\&.\e\*q For sections 1, 4, 6, 7, & 8 only.
-\&.\e\*q .Sh ERRORS
-\&.\e\*q For sections 2, 3, & 9 only.
-\&.\e\*q .Sh SEE ALSO
-\&.\e\*q .Xr foobar 1
-\&.\e\*q .Sh STANDARDS
-\&.\e\*q .Sh HISTORY
-\&.\e\*q .Sh AUTHORS
-\&.\e\*q .Sh CAVEATS
-\&.\e\*q .Sh BUGS
-\&.\e\*q .Sh SECURITY CONSIDERATIONS
-\&.\e\*q Not used in OpenBSD.
+\&.\e\(dq .Sh IMPLEMENTATION NOTES
+\&.\e\(dq Not used in OpenBSD.
+\&.\e\(dq .Sh RETURN VALUES
+\&.\e\(dq For sections 2, 3, & 9 only.
+\&.\e\(dq .Sh ENVIRONMENT
+\&.\e\(dq For sections 1, 6, 7, & 8 only.
+\&.\e\(dq .Sh FILES
+\&.\e\(dq .Sh EXIT STATUS
+\&.\e\(dq For sections 1, 6, & 8 only.
+\&.\e\(dq .Sh EXAMPLES
+\&.\e\(dq .Sh DIAGNOSTICS
+\&.\e\(dq For sections 1, 4, 6, 7, & 8 only.
+\&.\e\(dq .Sh ERRORS
+\&.\e\(dq For sections 2, 3, & 9 only.
+\&.\e\(dq .Sh SEE ALSO
+\&.\e\(dq .Xr foobar 1
+\&.\e\(dq .Sh STANDARDS
+\&.\e\(dq .Sh HISTORY
+\&.\e\(dq .Sh AUTHORS
+\&.\e\(dq .Sh CAVEATS
+\&.\e\(dq .Sh BUGS
+\&.\e\(dq .Sh SECURITY CONSIDERATIONS
+\&.\e\(dq Not used in OpenBSD.
 .Ed
 .Pp
 The sections in an
@@ -406,8 +445,8 @@ macros should follow C header-file conventions.
 .Pp
 And for the third, configurations (section 4):
 .Bd -literal -offset indent
-\&.Cd \*qit* at isa? port 0x2e\*q
-\&.Cd \*qit* at isa? port 0x4e\*q
+\&.Cd \(dqit* at isa? port 0x2e\(dq
+\&.Cd \(dqit* at isa? port 0x4e\(dq
 .Ed
 .Pp
 Manuals not in these sections generally don't need a
@@ -971,7 +1010,7 @@ Deprecated macros are not included in the overview, but can be found
 in the alphabetical reference below.
 .Ss Document preamble and NAME section macros
 .Bl -column "Brq, Bro, Brc" description
-.It Sx \&Dd Ta document date: Cm $Mdocdate: September 17 2011 $ | Ar month day , year
+.It Sx \&Dd Ta document date: Cm $Mdocdate: September 18 2011 $ | Ar month day , year
 .It Sx \&Dt Ta document title: Ar TITLE section Op Ar volume | arch
 .It Sx \&Os Ta operating system version: Op Ar system Op Ar version
 .It Sx \&Nm Ta document name (one argument)
@@ -2180,8 +2219,8 @@ section, this macro starts a new output line,
 and a blank line is automatically inserted between function definitions.
 .Pp
 Examples:
-.Dl \&.Fn \*qint funcname\*q \*qint arg0\*q \*qint arg1\*q
-.Dl \&.Fn funcname \*qint arg0\*q
+.Dl \&.Fn \(dqint funcname\(dq \(dqint arg0\(dq \(dqint arg1\(dq
+.Dl \&.Fn funcname \(dqint arg0\(dq
 .Dl \&.Fn funcname arg0
 .Pp
 .Bd -literal -offset indent -compact
@@ -2386,7 +2425,7 @@ line itself; on following lines, only the
 .Sx \&Ta
 macro can be used to delimit cells, and
 .Sx \&Ta
-is only recognized as a macro when called by other macros,
+is only recognised as a macro when called by other macros,
 not as the first macro on a line.
 .Pp
 Note that quoted strings may span tab-delimited cells on an
@@ -2446,7 +2485,7 @@ Its syntax is as follows:
 .D1 Pf \. Sx \&Lk Ar uri Op Ar name
 .Pp
 Examples:
-.Dl \&.Lk http://bsd.lv \*qThe BSD.lv Project\*q
+.Dl \&.Lk http://bsd.lv \(dqThe BSD.lv Project\(dq
 .Dl \&.Lk http://bsd.lv
 .Pp
 See also
@@ -3174,7 +3213,7 @@ Newer groff and mandoc print
 and the arguments.
 .It
 .Sx \&Bl Fl column
-does not recognize trailing punctuation characters when they immediately
+does not recognise trailing punctuation characters when they immediately
 precede tabulator characters, but treats them as normal text and
 outputs a space before them.
 .It
@@ -3286,7 +3325,7 @@ The following features are unimplemented in mandoc:
 .Fl offset Ar center
 and
 .Fl offset Ar right .
-Groff does not implement centered and flush-right rendering either,
+Groff does not implement centred and flush-right rendering either,
 but produces large indentations.
 .It
 The
@@ -3322,6 +3361,7 @@ This is not supported by mandoc.
 .Sh SEE ALSO
 .Xr man 1 ,
 .Xr mandoc 1 ,
+.Xr eqn 7 ,
 .Xr man 7 ,
 .Xr mandoc_char 7 ,
 .Xr roff 7 ,
@@ -3341,4 +3381,5 @@ utility written by Kristaps Dzonsons appeared in
 The
 .Nm
 reference was written by
-.An Kristaps Dzonsons Aq kristaps@bsd.lv .
+.An Kristaps Dzonsons ,
+.Mt kristaps@bsd.lv .

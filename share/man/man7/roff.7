@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.12 2011/06/07 23:40:10 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.13 2011/09/18 10:38:57 schwarze Exp $
 .\"
 .\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 7 2011 $
+.Dd $Mdocdate: September 18 2011 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -90,7 +90,7 @@ When called, they follow the same syntax as requests, except that
 macro arguments may optionally be quoted by enclosing them
 in double quote characters
 .Pq Sq \(dq .
-To be recognized as the beginning of a quoted argument, the opening
+To be recognised as the beginning of a quoted argument, the opening
 quote character must be preceded by a space character.
 .Pp
 A quoted argument may contain whitespace, and pairs of double quote
@@ -118,7 +118,7 @@ but quoting is usually better for clarity.
 The
 .Xr mandoc 1
 .Nm
-parser recognizes the following requests.
+parser recognises the following requests.
 Note that the
 .Nm
 language defines many more requests not implemented in
@@ -126,7 +126,7 @@ language defines many more requests not implemented in
 .Ss \&ad
 Set line adjustment mode.
 This line-scoped request is intended to have one argument to select
-normal, left, right, or center adjustment for subsequent text.
+normal, left, right, or centre adjustment for subsequent text.
 Currently, it is ignored including its arguments,
 and the number of arguments is not checked.
 .Ss \&am
@@ -344,6 +344,15 @@ then false is assumed.
 The syntax of this request is similar to
 .Sx \&if
 except that the conditional is missing.
+.Ss \&EN
+End an equation block.
+See
+.Sx \&EQ .
+.Ss \&EQ
+Begin an equation block.
+See
+.Xr eqn 7
+for a description of the equation language.
 .Ss \&ft
 Change the font.
 Its syntax is as follows:
@@ -632,6 +641,19 @@ refers to groff version 1.15.
 .Pp
 .Bl -dash -compact
 .It
+In mandoc, the
+.Sx \&EQ ,
+.Sx \&TE ,
+.Sx \&TS ,
+and
+.Sx \&T& ,
+macros are considered regular macros.
+In all other
+.Nm
+implementations, these are special macros that must be specified without
+spacing between the control character (which must be a period) and the
+macro name.
+.It
 The
 .Cm nS
 register is only compatible with OpenBSD's groff-1.15.
@@ -649,6 +671,7 @@ using the next-line syntax.
 .El
 .Sh SEE ALSO
 .Xr mandoc 1 ,
+.Xr eqn 7 ,
 .Xr man 7 ,
 .Xr mandoc_char 7 ,
 .Xr mdoc 7 ,
@@ -683,9 +706,11 @@ Joseph F. Ossanna rewrote it in PDP-11 assembly in 1973,
 and Brian W. Kernighan rewrote it in C in 1975.
 .Sh AUTHORS
 .An -nosplit
-This partial
+This
 .Nm
 reference was written by
-.An Kristaps Dzonsons Aq kristaps@bsd.lv
+.An Kristaps Dzonsons ,
+.Mt kristaps@bsd.lv ;
 and
-.An Ingo Schwarze Aq schwarze@openbsd.org .
+.An Ingo Schwarze ,
+.Mt schwarze@openbsd.org .
