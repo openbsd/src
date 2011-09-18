@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.99 2011/07/03 15:47:17 matthew Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.100 2011/09/18 23:24:12 krw Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -53,7 +53,7 @@
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/kthread.h>
+#include <sys/timeout.h>
 #include <sys/queue.h>
 #include <sys/device.h>
 

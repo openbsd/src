@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.77 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: usb.c,v 1.78 2011/09/18 23:24:12 krw Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 #include <sys/kthread.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
