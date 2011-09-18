@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gtp.c,v 1.3 2010/08/19 15:26:38 jsing Exp $ */
+/*	$OpenBSD: print-gtp.c,v 1.4 2011/09/18 10:24:16 jsing Exp $ */
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
  *
@@ -487,6 +487,7 @@ gtp_v0_print(const u_char *cp, u_int length, u_short sport, u_short dport)
 {
 	struct gtp_v0_hdr *gh = (struct gtp_v0_hdr *)cp;
 	int len, version;
+	u_int64_t tid;
 
 	gtp_proto = GTP_V0_PROTO;
 
@@ -502,9 +503,10 @@ gtp_v0_print(const u_char *cp, u_int length, u_short sport, u_short dport)
 	TCHECK(*gh);
 	cp += sizeof(struct gtp_v0_hdr);
 	len = ntohs(gh->length);
+	bcopy(&gh->tid, &tid, sizeof(tid));
 	printf(" GTPv0 (len %u, seqno %u, flow %u, N-PDU %u, tid 0x%llx) ",
 	    ntohs(gh->length), ntohs(gh->seqno), ntohs(gh->flow),
-	    ntohs(gh->npduno), betoh64(gh->tid));
+	    ntohs(gh->npduno), betoh64(tid));
 
 	/* Decode GTP message. */
 	printf("%s", tok2str(gtp_v0_msgtype, "Message Type %u", gh->msgtype));
