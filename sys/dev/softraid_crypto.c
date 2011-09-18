@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.71 2011/07/07 00:17:14 tedu Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.72 2011/09/18 13:11:08 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -91,7 +91,7 @@ int		sr_crypto_alloc_resources(struct sr_discipline *);
 int		sr_crypto_free_resources(struct sr_discipline *);
 int		sr_crypto_ioctl(struct sr_discipline *,
 		    struct bioc_discipline *);
-int		sr_crypto_meta_opt_load(struct sr_discipline *,
+int		sr_crypto_meta_opt_handler(struct sr_discipline *,
 		    struct sr_meta_opt *);
 int		sr_crypto_write(struct cryptop *);
 int		sr_crypto_rw(struct sr_workunit *);
@@ -128,7 +128,7 @@ sr_crypto_discipline_init(struct sr_discipline *sd)
 	sd->sd_free_resources = sr_crypto_free_resources;
 	sd->sd_start_discipline = NULL;
 	sd->sd_ioctl_handler = sr_crypto_ioctl;
-	sd->sd_meta_opt_load = sr_crypto_meta_opt_load;
+	sd->sd_meta_opt_handler = sr_crypto_meta_opt_handler;
 	sd->sd_scsi_inquiry = sr_raid_inquiry;
 	sd->sd_scsi_read_cap = sr_raid_read_cap;
 	sd->sd_scsi_tur = sr_raid_tur;
@@ -1150,7 +1150,7 @@ bad:
 }
 
 int
-sr_crypto_meta_opt_load(struct sr_discipline *sd, struct sr_meta_opt *om)
+sr_crypto_meta_opt_handler(struct sr_discipline *sd, struct sr_meta_opt *om)
 {
 	int rv = EINVAL;
 

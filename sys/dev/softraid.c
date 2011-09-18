@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.246 2011/08/08 18:18:22 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.247 2011/09/18 13:11:08 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -149,7 +149,7 @@ void			sr_meta_chunks_create(struct sr_softc *,
 			    struct sr_chunk_head *);
 void			sr_meta_init(struct sr_discipline *,
 			    struct sr_chunk_head *);
-void			sr_meta_opt_load(struct sr_discipline *,
+void			sr_meta_opt_handler(struct sr_discipline *,
 			    struct sr_meta_opt *);
 
 /* hotplug magic */
@@ -605,12 +605,9 @@ sr_meta_init(struct sr_discipline *sd, struct sr_chunk_head *cl)
 }
 
 void
-sr_meta_opt_load(struct sr_discipline *sd, struct sr_meta_opt *om)
+sr_meta_opt_handler(struct sr_discipline *sd, struct sr_meta_opt *om)
 {
-	if (om->somi.som_type == SR_OPT_BOOT) {
-
-
-	} else
+	if (om->somi.som_type != SR_OPT_BOOT)
 		panic("unknown optional metadata type");
 }
 
@@ -734,18 +731,15 @@ bad:
 int
 sr_meta_read(struct sr_discipline *sd)
 {
-#ifdef SR_DEBUG
 	struct sr_softc		*sc = sd->sd_sc;
-#endif
 	struct sr_chunk_head 	*cl = &sd->sd_vol.sv_chunk_list;
 	struct sr_metadata	*sm;
 	struct sr_chunk		*ch_entry;
 	struct sr_meta_chunk	*cp;
 	struct sr_meta_driver	*s;
 	struct sr_meta_opt_item *omi;
-	struct sr_meta_opt	*om;
 	void			*fm = NULL;
-	int			i, no_disk = 0, got_meta = 0;
+	int			no_disk = 0, got_meta = 0;
 
 	DNPRINTF(SR_D_META, "%s: sr_meta_read\n", DEVNAME(sc));
 
@@ -795,25 +789,12 @@ sr_meta_read(struct sr_discipline *sd)
 
 		bcopy(cp, &ch_entry->src_meta, sizeof(ch_entry->src_meta));
 
-		/* Process optional metadata. */
-		om = (struct sr_meta_opt *) ((u_int8_t *)(sm + 1) +
-		    sizeof(struct sr_meta_chunk) * sm->ssdi.ssd_chunk_no);
-		for (i = 0; i < sm->ssdi.ssd_opt_no; i++) {
-
-			omi = malloc(sizeof(struct sr_meta_opt_item),
-			    M_DEVBUF, M_WAITOK | M_ZERO);
-			bcopy(om, &omi->omi_om, sizeof(struct sr_meta_opt));
-			SLIST_INSERT_HEAD(&sd->sd_meta_opt, omi, omi_link);
-
-			/* See if discipline wants to handle it. */
-			if (sd->sd_meta_opt_load &&
-			    sd->sd_meta_opt_load(sd, &omi->omi_om) == 0)
-				continue;
-			else
-				sr_meta_opt_load(sd, &omi->omi_om);
-
-			om++;
-		}
+		/* Load and process optional metadata. */
+		sr_meta_opt_load(sc, sm, &sd->sd_meta_opt);
+		SLIST_FOREACH(omi, &sd->sd_meta_opt, omi_link)
+			if (sd->sd_meta_opt_handler == NULL ||
+			    sd->sd_meta_opt_handler(sd, &omi->omi_om) != 0)
+				sr_meta_opt_handler(sd, &omi->omi_om);
 
 		cp++;
 		no_disk++;
@@ -827,6 +808,28 @@ done:
 	DNPRINTF(SR_D_META, "%s: sr_meta_read found %d parts\n", DEVNAME(sc),
 	    no_disk);
 	return (no_disk);
+}
+
+void
+sr_meta_opt_load(struct sr_softc *sc, struct sr_metadata *sm,
+    struct sr_meta_opt_head *som)
+{
+	struct sr_meta_opt_item *omi;
+	struct sr_meta_opt	*om;
+	int			i;
+
+	/* Process optional metadata. */
+	om = (struct sr_meta_opt *)((u_int8_t *)(sm + 1) +
+	    sizeof(struct sr_meta_chunk) * sm->ssdi.ssd_chunk_no);
+	for (i = 0; i < sm->ssdi.ssd_opt_no; i++) {
+
+		omi = malloc(sizeof(struct sr_meta_opt_item),
+		    M_DEVBUF, M_WAITOK | M_ZERO);
+		bcopy(om, &omi->omi_om, sizeof(struct sr_meta_opt));
+		SLIST_INSERT_HEAD(som, omi, omi_link);
+
+		om++;
+	}
 }
 
 int

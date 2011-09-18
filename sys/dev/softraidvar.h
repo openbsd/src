@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.106 2011/07/07 03:50:00 tedu Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.107 2011/09/18 13:11:08 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -559,7 +559,7 @@ struct sr_discipline {
 				    int, int);
 	void			(*sd_set_vol_state)(struct sr_discipline *);
 	int			(*sd_openings)(struct sr_discipline *);
-	int			(*sd_meta_opt_load)(struct sr_discipline *,
+	int			(*sd_meta_opt_handler)(struct sr_discipline *,
 				    struct sr_meta_opt *);
 
 	/* SCSI emulation */
@@ -630,6 +630,8 @@ void			sr_meta_save_callback(void *, void *);
 int			sr_meta_save(struct sr_discipline *, u_int32_t);
 void			sr_meta_getdevname(struct sr_softc *, dev_t, char *,
 			    int);
+void			sr_meta_opt_load(struct sr_softc *,
+			    struct sr_metadata *, struct sr_meta_opt_head *);
 void			sr_checksum(struct sr_softc *, void *, void *,
 			    u_int32_t);
 int			sr_validate_io(struct sr_workunit *, daddr64_t *,
