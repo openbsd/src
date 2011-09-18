@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.247 2011/09/18 13:11:08 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.248 2011/09/18 19:40:49 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -150,7 +150,7 @@ void			sr_meta_chunks_create(struct sr_softc *,
 void			sr_meta_init(struct sr_discipline *,
 			    struct sr_chunk_head *);
 void			sr_meta_opt_handler(struct sr_discipline *,
-			    struct sr_meta_opt *);
+			    struct sr_meta_opt_hdr *);
 
 /* hotplug magic */
 void			sr_disk_attach(struct disk *, int);
@@ -605,9 +605,9 @@ sr_meta_init(struct sr_discipline *sd, struct sr_chunk_head *cl)
 }
 
 void
-sr_meta_opt_handler(struct sr_discipline *sd, struct sr_meta_opt *om)
+sr_meta_opt_handler(struct sr_discipline *sd, struct sr_meta_opt_hdr *om)
 {
-	if (om->somi.som_type != SR_OPT_BOOT)
+	if (om->som_type != SR_OPT_BOOT)
 		panic("unknown optional metadata type");
 }
 
@@ -636,8 +636,8 @@ sr_meta_save(struct sr_discipline *sd, u_int32_t flags)
 	struct sr_chunk		*src;
 	struct sr_meta_chunk	*cm;
 	struct sr_workunit	wu;
+	struct sr_meta_opt_hdr	*omh;
 	struct sr_meta_opt_item *omi;
-	struct sr_meta_opt	*om;
 	int			i;
 
 	DNPRINTF(SR_D_META, "%s: sr_meta_save %s\n",
@@ -672,12 +672,17 @@ restart:
 	}
 
 	/* Optional metadata. */
-	om = (struct sr_meta_opt *)(cm);
+	omh = (struct sr_meta_opt_hdr *)(cm);
 	SLIST_FOREACH(omi, &sd->sd_meta_opt, omi_link) {
-		bcopy(&omi->omi_om, om, sizeof(*om));
-		sr_checksum(sc, om, &om->som_checksum,
-		    sizeof(struct sr_meta_opt_invariant));
-		om++;
+		DNPRINTF(SR_D_META, "%s: saving optional metadata type %u with "
+		    "length %u\n", DEVNAME(sc), omi->omi_som->som_type,
+		    omi->omi_som->som_length);
+		bzero(&omi->omi_som->som_checksum, MD5_DIGEST_LENGTH);
+		sr_checksum(sc, omi->omi_som, &omi->omi_som->som_checksum,
+		    omi->omi_som->som_length);
+		bcopy(omi->omi_som, omh, omi->omi_som->som_length);
+		omh = (struct sr_meta_opt_hdr *)((u_int8_t *)omh +
+		    omi->omi_som->som_length);
 	}
 
 	for (i = 0; i < sm->ssdi.ssd_chunk_no; i++) {
@@ -793,8 +798,8 @@ sr_meta_read(struct sr_discipline *sd)
 		sr_meta_opt_load(sc, sm, &sd->sd_meta_opt);
 		SLIST_FOREACH(omi, &sd->sd_meta_opt, omi_link)
 			if (sd->sd_meta_opt_handler == NULL ||
-			    sd->sd_meta_opt_handler(sd, &omi->omi_om) != 0)
-				sr_meta_opt_handler(sd, &omi->omi_om);
+			    sd->sd_meta_opt_handler(sd, omi->omi_som) != 0)
+				sr_meta_opt_handler(sd, omi->omi_som);
 
 		cp++;
 		no_disk++;
@@ -814,21 +819,85 @@ void
 sr_meta_opt_load(struct sr_softc *sc, struct sr_metadata *sm,
     struct sr_meta_opt_head *som)
 {
+	struct sr_meta_opt_hdr	*omh;
 	struct sr_meta_opt_item *omi;
-	struct sr_meta_opt	*om;
+	u_int8_t		checksum[MD5_DIGEST_LENGTH];
 	int			i;
 
 	/* Process optional metadata. */
-	om = (struct sr_meta_opt *)((u_int8_t *)(sm + 1) +
+	omh = (struct sr_meta_opt_hdr *)((u_int8_t *)(sm + 1) +
 	    sizeof(struct sr_meta_chunk) * sm->ssdi.ssd_chunk_no);
 	for (i = 0; i < sm->ssdi.ssd_opt_no; i++) {
 
 		omi = malloc(sizeof(struct sr_meta_opt_item),
 		    M_DEVBUF, M_WAITOK | M_ZERO);
-		bcopy(om, &omi->omi_om, sizeof(struct sr_meta_opt));
 		SLIST_INSERT_HEAD(som, omi, omi_link);
 
-		om++;
+		if (omh->som_length == 0) {
+
+			/* Load old fixed length optional metadata. */
+			DNPRINTF(SR_D_META, "%s: old optional metadata of type "
+			    "%u\n", DEVNAME(sc), omh->som_type);
+
+			/* Validate checksum. */
+			sr_checksum(sc, (void *)omh, &checksum,
+			    SR_OLD_META_OPT_SIZE - MD5_DIGEST_LENGTH);
+			if (bcmp(&checksum, (void *)omh + SR_OLD_META_OPT_MD5,
+			    sizeof(checksum)))
+				panic("%s: invalid optional metadata "
+				    "checksum", DEVNAME(sc));
+
+			/* Determine correct length. */
+			switch (omh->som_type) {
+			case SR_OPT_CRYPTO:
+				omh->som_length = sizeof(struct sr_meta_crypto);
+				break;
+			case SR_OPT_BOOT:
+				omh->som_length = sizeof(struct sr_meta_boot);
+				break;
+			case SR_OPT_KEYDISK:
+				omh->som_length =
+				    sizeof(struct sr_meta_keydisk);
+				break;
+			default:
+				panic("unknown old optional metadata "
+				    "type %u\n", omh->som_type);
+			}
+
+			omi->omi_som = malloc(omh->som_length, M_DEVBUF,
+			    M_WAITOK | M_ZERO);
+			bcopy((u_int8_t *)omh + SR_OLD_META_OPT_OFFSET,
+			    (u_int8_t *)omi->omi_som + sizeof(*omi->omi_som),
+			    omh->som_length - sizeof(*omi->omi_som));
+			omi->omi_som->som_type = omh->som_type;
+			omi->omi_som->som_length = omh->som_length;
+
+			omh = (struct sr_meta_opt_hdr *)((void *)omh +
+			    SR_OLD_META_OPT_SIZE);
+		} else {
+
+			/* Load variable length optional metadata. */
+			DNPRINTF(SR_D_META, "%s: optional metadata of type %u, "
+			    "length %u\n", DEVNAME(sc), omh->som_type,
+			    omh->som_length);
+			omi->omi_som = malloc(omh->som_length, M_DEVBUF,
+			    M_WAITOK | M_ZERO);
+			bcopy(omh, omi->omi_som, omh->som_length);
+
+			/* Validate checksum. */
+			bcopy(&omi->omi_som->som_checksum, &checksum,
+			    MD5_DIGEST_LENGTH);
+			bzero(&omi->omi_som->som_checksum, MD5_DIGEST_LENGTH);
+			sr_checksum(sc, omi->omi_som,
+			    &omi->omi_som->som_checksum, omh->som_length);
+			if (bcmp(&checksum, &omi->omi_som->som_checksum,
+			    sizeof(checksum)))
+				panic("%s: invalid optional metadata checksum",
+				    DEVNAME(sc));
+
+			omh = (struct sr_meta_opt_hdr *)((void *)omh +
+			    omh->som_length);
+		}
 	}
 }
 
@@ -841,9 +910,9 @@ sr_meta_validate(struct sr_discipline *sd, dev_t dev, struct sr_metadata *sm,
 #ifdef SR_DEBUG
 	struct sr_meta_chunk	*mc;
 #endif
+	u_int8_t		checksum[MD5_DIGEST_LENGTH];
 	char			devname[32];
 	int			rv = 1;
-	u_int8_t		checksum[MD5_DIGEST_LENGTH];
 
 	DNPRINTF(SR_D_META, "%s: sr_meta_validate(%p)\n", DEVNAME(sc), sm);
 
@@ -880,13 +949,10 @@ sr_meta_validate(struct sr_discipline *sd, dev_t dev, struct sr_metadata *sm,
 		 * Version 3 - update metadata version and fix up data offset
 		 * value since this did not exist in version 3.
 		 */
-		sm->ssdi.ssd_version = SR_META_VERSION;
-		snprintf(sm->ssdi.ssd_revision, sizeof(sm->ssdi.ssd_revision),
-		    "%03d", SR_META_VERSION);
 		if (sm->ssd_data_offset == 0)
 			sm->ssd_data_offset = SR_META_V3_DATA_OFFSET;
 
-	} else if (sm->ssdi.ssd_version == SR_META_VERSION) {
+	} else if (sm->ssdi.ssd_version == 4) {
 
 		/*
 		 * Version 4 - original metadata format did not store
@@ -894,6 +960,14 @@ sr_meta_validate(struct sr_discipline *sd, dev_t dev, struct sr_metadata *sm,
 		 */
 		if (sm->ssd_data_offset == 0)
 			sm->ssd_data_offset = SR_DATA_OFFSET;
+
+	} else if (sm->ssdi.ssd_version == SR_META_VERSION) {
+
+		/*
+		 * Version 5 - variable length optional metadata. Migration
+		 * from earlier fixed length optional metadata is handled
+		 * in sr_meta_read().
+		 */
 
 	} else {
 
@@ -903,6 +977,11 @@ sr_meta_validate(struct sr_discipline *sd, dev_t dev, struct sr_metadata *sm,
 		goto done;
 
 	}
+
+	/* Update version number and revision string. */
+	sm->ssdi.ssd_version = SR_META_VERSION;
+	snprintf(sm->ssdi.ssd_revision, sizeof(sm->ssdi.ssd_revision),
+	    "%03d", SR_META_VERSION);
 
 #ifdef SR_DEBUG
 	/* warn if disk changed order */
@@ -3377,7 +3456,7 @@ void
 sr_discipline_free(struct sr_discipline *sd)
 {
 	struct sr_softc		*sc;
-	struct sr_meta_opt_head *omh;
+	struct sr_meta_opt_head *som;
 	struct sr_meta_opt_item	*omi, *omi_next;
 
 	if (!sd)
@@ -3397,9 +3476,11 @@ sr_discipline_free(struct sr_discipline *sd)
 	if (sd->sd_meta_foreign)
 		free(sd->sd_meta_foreign, M_DEVBUF);
 
-	omh = &sd->sd_meta_opt;
-	for (omi = SLIST_FIRST(omh); omi != SLIST_END(omh); omi = omi_next) {
+	som = &sd->sd_meta_opt;
+	for (omi = SLIST_FIRST(som); omi != SLIST_END(som); omi = omi_next) {
 		omi_next = SLIST_NEXT(omi, omi_link);
+		if (omi->omi_som)
+			free(omi->omi_som, M_DEVBUF);
 		free(omi, M_DEVBUF);
 	}
 
@@ -4217,7 +4298,7 @@ sr_meta_print(struct sr_metadata *m)
 {
 	int			i;
 	struct sr_meta_chunk	*mc;
-	struct sr_meta_opt	*mo;
+	struct sr_meta_opt_hdr	*omh;
 
 	if (!(sr_debug & SR_D_META))
 		return;
@@ -4259,12 +4340,15 @@ sr_meta_print(struct sr_metadata *m)
 		printf("\t\tscm_status %d\n", mc->scm_status);
 	}
 
-	mo = (struct sr_meta_opt *)(mc);
-	for (i = 0; i < m->ssdi.ssd_opt_no; i++, mo++) {
-		printf("\t\t\tsom_type %d\n", mo->somi.som_type);
+	omh = (struct sr_meta_opt_hdr *)((u_int8_t *)(m + 1) +
+	    sizeof(struct sr_meta_chunk) * m->ssdi.ssd_chunk_no);
+	for (i = 0; i < m->ssdi.ssd_opt_no; i++) {
+		printf("\t\t\tsom_type %d\n", omh->som_type);
 		printf("\t\t\tsom_checksum ");
-		sr_checksum_print(mo->som_checksum);
+		sr_checksum_print(omh->som_checksum);
 		printf("\n");
+		omh = (struct sr_meta_opt_hdr *)((void *)omh +
+		    omh->som_length);
 	}
 }
 

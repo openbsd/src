@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.72 2011/09/18 13:11:08 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.73 2011/09/18 19:40:49 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -92,7 +92,7 @@ int		sr_crypto_free_resources(struct sr_discipline *);
 int		sr_crypto_ioctl(struct sr_discipline *,
 		    struct bioc_discipline *);
 int		sr_crypto_meta_opt_handler(struct sr_discipline *,
-		    struct sr_meta_opt *);
+		    struct sr_meta_opt_hdr *);
 int		sr_crypto_write(struct cryptop *);
 int		sr_crypto_rw(struct sr_workunit *);
 int		sr_crypto_rw2(struct sr_workunit *, struct sr_crypto_wu *);
@@ -154,9 +154,12 @@ sr_crypto_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 	/* Create crypto optional metadata. */
 	omi = malloc(sizeof(struct sr_meta_opt_item), M_DEVBUF,
 	    M_WAITOK | M_ZERO);
-	omi->omi_om.somi.som_type = SR_OPT_CRYPTO;
+	omi->omi_som = malloc(sizeof(struct sr_meta_crypto), M_DEVBUF,
+	    M_WAITOK | M_ZERO);
+	omi->omi_som->som_type = SR_OPT_CRYPTO;
+	omi->omi_som->som_length = sizeof(struct sr_meta_crypto);
 	SLIST_INSERT_HEAD(&sd->sd_meta_opt, omi, omi_link);
-	sd->mds.mdd_crypto.scr_meta = &omi->omi_om.somi.som_meta.smm_crypto;
+	sd->mds.mdd_crypto.scr_meta = (struct sr_meta_crypto *)omi->omi_som;
 	sd->sd_meta->ssdi.ssd_opt_no++;
 
 	sd->mds.mdd_crypto.key_disk = NULL;
@@ -676,6 +679,7 @@ sr_crypto_create_key_disk(struct sr_discipline *sd, dev_t dev)
 	struct sr_metadata	*sm = NULL;
 	struct sr_meta_chunk    *km;
 	struct sr_meta_opt_item *omi = NULL;
+	struct sr_meta_keydisk	*skm;
 	struct sr_chunk		*key_disk = NULL;
 	struct disklabel	label;
 	struct vnode		*vn;
@@ -793,14 +797,17 @@ sr_crypto_create_key_disk(struct sr_discipline *sd, dev_t dev)
 	    sizeof(sd->mds.mdd_crypto.scr_maskkey));
 
 	/* Copy mask key to optional metadata area. */
-	sm->ssdi.ssd_opt_no = 1;
 	omi = malloc(sizeof(struct sr_meta_opt_item), M_DEVBUF,
 	    M_WAITOK | M_ZERO);
-	omi->omi_om.somi.som_type = SR_OPT_KEYDISK;
-	bcopy(sd->mds.mdd_crypto.scr_maskkey,
-	    omi->omi_om.somi.som_meta.smm_keydisk.skm_maskkey,
-	    sizeof(omi->omi_om.somi.som_meta.smm_keydisk.skm_maskkey));
+	omi->omi_som = malloc(sizeof(struct sr_meta_keydisk), M_DEVBUF,
+	    M_WAITOK | M_ZERO);
+	omi->omi_som->som_type = SR_OPT_KEYDISK;
+	omi->omi_som->som_length = sizeof(struct sr_meta_keydisk);
+	skm = (struct sr_meta_keydisk *)omi->omi_som;
+	bcopy(sd->mds.mdd_crypto.scr_maskkey, &skm->skm_maskkey,
+	    sizeof(skm->skm_maskkey));
 	SLIST_INSERT_HEAD(&fakesd->sd_meta_opt, omi, omi_link);
+	fakesd->sd_meta->ssdi.ssd_opt_no++;
 
 	/* Save metadata. */
 	if (sr_meta_save(fakesd, SR_META_DIRTY)) {
@@ -838,7 +845,10 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, dev_t dev)
 {
 	struct sr_softc		*sc = sd->sd_sc;
 	struct sr_metadata	*sm = NULL;
-	struct sr_meta_opt      *om;
+	struct sr_meta_opt_item *omi, *omi_next;
+	struct sr_meta_opt_hdr	*omh;
+	struct sr_meta_keydisk	*skm;
+	struct sr_meta_opt_head som;
 	struct sr_chunk		*key_disk = NULL;
 	struct disklabel	label;
 	struct vnode		*vn = NULL;
@@ -920,26 +930,33 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, dev_t dev)
 	    sizeof(key_disk->src_meta));
 
 	/* Read mask key from optional metadata. */
-	om = (struct sr_meta_opt *)((u_int8_t *)(sm + 1) +
-	    sizeof(struct sr_meta_chunk) * sm->ssdi.ssd_chunk_no);
-	for (c = 0; c < sm->ssdi.ssd_opt_no; c++) {
-		if (om->somi.som_type == SR_OPT_KEYDISK) {
-			bcopy(&om->somi.som_meta.smm_keydisk.skm_maskkey,
+	SLIST_INIT(&som);
+	sr_meta_opt_load(sc, sm, &som);
+	SLIST_FOREACH(omi, &som, omi_link) {
+		omh = omi->omi_som;
+		if (omh->som_type == SR_OPT_KEYDISK) {
+			skm = (struct sr_meta_keydisk *)omh;
+			bcopy(&skm->skm_maskkey,
 			    sd->mds.mdd_crypto.scr_maskkey,
 			    sizeof(sd->mds.mdd_crypto.scr_maskkey));
-			break;
-		} else if (om->somi.som_type == SR_OPT_CRYPTO) {
-			bcopy(&om->somi.som_meta.smm_crypto,
+		} else if (omh->som_type == SR_OPT_CRYPTO) {
+			/* Original keydisk format with key in crypto area. */
+			bcopy(omh + sizeof(struct sr_meta_opt_hdr),
 			    sd->mds.mdd_crypto.scr_maskkey,
 			    sizeof(sd->mds.mdd_crypto.scr_maskkey));
-			break;
 		}
-		om++;
 	}
 
 	open = 0;
 
 done:
+	for (omi = SLIST_FIRST(&som); omi != SLIST_END(&som); omi = omi_next) {
+		omi_next = SLIST_NEXT(omi, omi_link);
+		if (omi->omi_som)
+			free(omi->omi_som, M_DEVBUF);
+		free(omi, M_DEVBUF);
+	}
+
 	if (sm)
 		free(sm, M_DEVBUF);
 
@@ -1150,12 +1167,12 @@ bad:
 }
 
 int
-sr_crypto_meta_opt_handler(struct sr_discipline *sd, struct sr_meta_opt *om)
+sr_crypto_meta_opt_handler(struct sr_discipline *sd, struct sr_meta_opt_hdr *om)
 {
 	int rv = EINVAL;
 
-	if (om->somi.som_type == SR_OPT_CRYPTO) {
-		sd->mds.mdd_crypto.scr_meta =  &om->somi.som_meta.smm_crypto;
+	if (om->som_type == SR_OPT_CRYPTO) {
+		sd->mds.mdd_crypto.scr_meta = (struct sr_meta_crypto *)om;
 		rv = 0;
 	}
 
