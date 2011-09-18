@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.46 2011/09/17 14:45:22 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.47 2011/09/18 10:25:28 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 17 2011 $
+.Dd $Mdocdate: September 18 2011 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -578,6 +578,7 @@ and
 lists render similarly.
 .El
 .Sh SEE ALSO
+.Xr eqn 7 ,
 .Xr man 7 ,
 .Xr mandoc_char 7 ,
 .Xr mdoc 7 ,
@@ -587,7 +588,8 @@ lists render similarly.
 The
 .Nm
 utility was written by
-.An Kristaps Dzonsons Aq kristaps@bsd.lv .
+.An Kristaps Dzonsons ,
+.Mt kristaps@bsd.lv .
 .Sh CAVEATS
 In
 .Fl T Ns Cm html

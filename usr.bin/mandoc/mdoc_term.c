@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.134 2011/07/05 04:12:41 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.135 2011/09/18 10:25:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -347,7 +347,7 @@ print_mdoc_node(DECL_ARGS)
 			p->flags |= TERMP_NOSPACE;
 		break;
 	case (MDOC_EQN):
-		term_word(p, n->eqn->data);
+		term_eqn(p, n->eqn);
 		break;
 	case (MDOC_TBL):
 		term_tbl(p, n->span);

@@ -1,4 +1,4 @@
-/*	$Id: libmandoc.h,v 1.13 2011/09/17 13:45:28 schwarze Exp $ */
+/*	$Id: libmandoc.h,v 1.14 2011/09/18 10:25:28 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -34,35 +34,6 @@ enum	regs {
 	REG__MAX
 };
 
-/*
- * A register (struct reg) can consist of many types: this consists of
- * normalised types from the original string form.  For the time being,
- * there's only an unsigned integer type.
- */
-union	regval {
-	unsigned  u; /* unsigned integer */
-};
-
-/*
- * A single register entity.  If "set" is zero, the value of the
- * register should be the default one, which is per-register.  It's
- * assumed that callers know which type in "v" corresponds to which
- * register value.
- */
-struct	reg {
-	int		  set; /* whether set or not */
-	union regval	  v; /* parsed data */
-};
-
-/*
- * The primary interface to setting register values is in libroff,
- * although libmdoc and libman from time to time will manipulate
- * registers (such as `.Sh SYNOPSIS' enabling REG_nS).
- */
-struct	regset {
-	struct reg	  regs[REG__MAX];
-};
-
 __BEGIN_DECLS
 
 struct	roff;
@@ -78,10 +49,10 @@ char		*mandoc_normdate(struct mparse *, char *, int, int);
 int		 mandoc_eos(const char *, size_t, int);
 int		 mandoc_hyph(const char *, const char *);
 int		 mandoc_getcontrol(const char *, int *);
-int		 mandoc_strntou(const char *, size_t, int);
+int		 mandoc_strntoi(const char *, size_t, int);
 
 void	 	 mdoc_free(struct mdoc *);
-struct	mdoc	*mdoc_alloc(struct regset *, struct mparse *);
+struct	mdoc	*mdoc_alloc(struct roff *, struct mparse *);
 void		 mdoc_reset(struct mdoc *);
 int	 	 mdoc_parseln(struct mdoc *, int, char *, int);
 int		 mdoc_endparse(struct mdoc *);
@@ -89,7 +60,7 @@ int		 mdoc_addspan(struct mdoc *, const struct tbl_span *);
 int		 mdoc_addeqn(struct mdoc *, const struct eqn *);
 
 void	 	 man_free(struct man *);
-struct	man	*man_alloc(struct regset *, struct mparse *);
+struct	man	*man_alloc(struct roff *, struct mparse *);
 void		 man_reset(struct man *);
 int	 	 man_parseln(struct man *, int, char *, int);
 int		 man_endparse(struct man *);
@@ -97,11 +68,20 @@ int		 man_addspan(struct man *, const struct tbl_span *);
 int		 man_addeqn(struct man *, const struct eqn *);
 
 void	 	 roff_free(struct roff *);
-struct roff	*roff_alloc(struct regset *, struct mparse *);
+struct roff	*roff_alloc(struct mparse *);
 void		 roff_reset(struct roff *);
 enum rofferr	 roff_parseln(struct roff *, int, 
 			char **, size_t *, int, int *);
 void		 roff_endparse(struct roff *);
+int		 roff_regisset(const struct roff *, enum regs);
+unsigned int	 roff_regget(const struct roff *, enum regs);
+void		 roff_regunset(struct roff *, enum regs);
+#if 0
+char		 roff_eqndelim(const struct roff *);
+void		 roff_openeqn(struct roff *, const char *, 
+			int, int, const char *);
+int		 roff_closeeqn(struct roff *);
+#endif
 
 const struct tbl_span	*roff_span(const struct roff *);
 const struct eqn	*roff_eqn(const struct roff *);

@@ -1,4 +1,4 @@
-/*	$Id: libroff.h,v 1.4 2011/04/24 16:22:02 schwarze Exp $ */
+/*	$Id: libroff.h,v 1.5 2011/09/18 10:25:28 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -43,8 +43,23 @@ struct	tbl_node {
 };
 
 struct	eqn_node {
+	struct eqn_def	 *defs;
+	size_t		  defsz;
+	char		 *data;
+	size_t		  rew;
+	size_t		  cur;
+	size_t		  sz;
+	int		  gsize;
 	struct eqn	  eqn;
-	struct eqn_node	 *next;
+	struct mparse	 *parse;
+	struct eqn_node  *next;
+};
+
+struct	eqn_def {
+	char		 *key;
+	size_t		  keysz;
+	char		 *val;
+	size_t		  valsz;
 };
 
 struct tbl_node	*tbl_alloc(int, int, struct mparse *);
@@ -57,11 +72,12 @@ int		 tbl_layout(struct tbl_node *, int, const char *);
 int		 tbl_data(struct tbl_node *, int, const char *);
 int		 tbl_cdata(struct tbl_node *, int, const char *);
 const struct tbl_span	*tbl_span(struct tbl_node *);
-void		 tbl_end(struct tbl_node *);
-struct eqn_node	*eqn_alloc(int, int);
-void		 eqn_end(struct eqn_node *);
+void		 tbl_end(struct tbl_node **);
+struct eqn_node	*eqn_alloc(const char *, int, int, struct mparse *);
+enum rofferr	 eqn_end(struct eqn_node **);
 void		 eqn_free(struct eqn_node *);
-enum rofferr 	 eqn_read(struct eqn_node **, int, const char *, int);
+enum rofferr 	 eqn_read(struct eqn_node **, int, 
+			const char *, int, int *);
 
 __END_DECLS
 

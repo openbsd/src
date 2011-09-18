@@ -1,4 +1,4 @@
-/*	$Id: chars.in,v 1.16 2011/05/29 21:22:18 schwarze Exp $ */
+/*	$Id: chars.in,v 1.17 2011/09/18 10:25:28 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -312,6 +312,9 @@ CHAR("Im",			"I",		8465)
 CHAR("Re",			"R",		8476)
 CHAR("pd",			"a",		8706)
 CHAR("-h",			"/h",		8463)
+CHAR("12",			"1/2",		189)
+CHAR("14",			"1/4",		188)
+CHAR("34",			"3/4",		190)
 
 /* Ligatures. */
 CHAR("ff",			"ff",		64256)

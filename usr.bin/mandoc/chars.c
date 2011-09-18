@@ -1,4 +1,4 @@
-/*	$Id: chars.c,v 1.21 2011/07/08 16:59:50 schwarze Exp $ */
+/*	$Id: chars.c,v 1.22 2011/09/18 10:25:28 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -33,7 +33,7 @@ struct	ln {
 	int		  unicode;
 };
 
-#define	LINES_MAX	  325
+#define	LINES_MAX	  328
 
 #define CHAR(in, ch, code) \
 	{ NULL, (in), (ch), (code) },
@@ -107,7 +107,7 @@ mchars_num2char(const char *p, size_t sz)
 {
 	int		  i;
 
-	if ((i = mandoc_strntou(p, sz, 10)) < 0)
+	if ((i = mandoc_strntoi(p, sz, 10)) < 0)
 		return('\0');
 	return(i > 0 && i < 256 && isprint(i) ? i : '\0');
 }
@@ -117,7 +117,7 @@ mchars_num2uc(const char *p, size_t sz)
 {
 	int               i;
 
-	if ((i = mandoc_strntou(p, sz, 16)) < 0)
+	if ((i = mandoc_strntoi(p, sz, 16)) < 0)
 		return('\0');
 	/* FIXME: make sure we're not in a bogus range. */
 	return(i > 0x80 && i <= 0x10FFFF ? i : '\0');

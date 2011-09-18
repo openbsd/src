@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.39 2011/09/17 13:45:28 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.40 2011/09/18 10:25:28 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -104,7 +104,17 @@ enum	mandocerr {
 	MANDOCERR_BADESCAPE, /* unknown escape sequence */
 	MANDOCERR_BADQUOTE, /* unterminated quoted string */
 
+	/* related to equations */
+	MANDOCERR_EQNQUOTE, /* unexpected literal in equation */
+
 	MANDOCERR_ERROR, /* ===== start of errors ===== */
+
+	/* related to equations */
+	MANDOCERR_EQNNSCOPE, /* unexpected equation scope closure*/
+	MANDOCERR_EQNSCOPE, /* equation scope open on exit */
+	MANDOCERR_EQNBADSCOPE, /* overlapping equation scopes */
+	MANDOCERR_EQNEOF, /* unexpected end of equation */
+	MANDOCERR_EQNSYNT, /* equation syntax error */
 
 	/* related to tables */
 	MANDOCERR_TBL, /* bad table syntax */
@@ -270,10 +280,88 @@ struct	tbl_span {
 	struct tbl_span	 *next;
 };
 
+enum	eqn_boxt {
+	EQN_ROOT, /* root of parse tree */
+	EQN_TEXT, /* text (number, variable, whatever) */
+	EQN_SUBEXPR, /* nested `eqn' subexpression */
+	EQN_LIST, /* subexpressions list */
+	EQN_MATRIX /* matrix subexpression */
+};
+
+enum	eqn_markt {
+	EQNMARK_NONE = 0,
+	EQNMARK_DOT,
+	EQNMARK_DOTDOT,
+	EQNMARK_HAT,
+	EQNMARK_TILDE,
+	EQNMARK_VEC,
+	EQNMARK_DYAD,
+	EQNMARK_BAR,
+	EQNMARK_UNDER,
+	EQNMARK__MAX
+};
+
+enum	eqn_fontt {
+	EQNFONT_NONE = 0,
+	EQNFONT_ROMAN,
+	EQNFONT_BOLD,
+	EQNFONT_FAT,
+	EQNFONT_ITALIC,
+	EQNFONT__MAX
+};
+
+enum	eqn_post {
+	EQNPOS_NONE = 0,
+	EQNPOS_OVER,
+	EQNPOS_SUP,
+	EQNPOS_SUB,
+	EQNPOS_TO,
+	EQNPOS_FROM,
+	EQNPOS__MAX
+};
+
+enum	eqn_pilet {
+	EQNPILE_NONE = 0,
+	EQNPILE_PILE,
+	EQNPILE_CPILE,
+	EQNPILE_RPILE,
+	EQNPILE_LPILE,
+	EQNPILE_COL,
+	EQNPILE_CCOL,
+	EQNPILE_RCOL,
+	EQNPILE_LCOL,
+	EQNPILE__MAX
+};
+
+ /*
+ * A "box" is a parsed mathematical expression as defined by the eqn.7
+ * grammar.
+ */
+struct	eqn_box {
+	int		  size; /* font size of expression */
+#define	EQN_DEFSIZE	  INT_MIN
+	enum eqn_boxt	  type; /* type of node */
+	struct eqn_box	 *first; /* first child node */
+	struct eqn_box	 *last; /* last child node */
+	struct eqn_box	 *next; /* node sibling */
+	struct eqn_box	 *parent; /* node sibling */
+	char		 *text; /* text (or NULL) */
+	char		 *left;
+	char		 *right;
+	enum eqn_post	  pos; /* position of next box */
+	enum eqn_markt	  mark; /* a mark about the box */
+	enum eqn_fontt	  font; /* font of box */
+	enum eqn_pilet	  pile; /* equation piling */
+};
+
+/*
+ * An equation consists of a tree of expressions starting at a given
+ * line and position. 
+ */
 struct	eqn {
-	size_t		  sz;
-	char		 *data;
-	int		  line; /* invocation line */
+	char		 *name; /* identifier (or NULL) */
+	struct eqn_box	 *root; /* root mathematical expression */
+	int		  ln; /* invocation line */
 	int		  pos; /* invocation position */
 };
 
@@ -325,6 +413,7 @@ void		 *mandoc_calloc(size_t, size_t);
 void		 *mandoc_malloc(size_t);
 void		 *mandoc_realloc(void *, size_t);
 char		 *mandoc_strdup(const char *);
+char		 *mandoc_strndup(const char *, size_t);
 
 enum mandoc_esc	  mandoc_escape(const char **, const char **, int *);
 

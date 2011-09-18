@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.59 2011/04/24 16:22:02 schwarze Exp $ */
+/*	$Id: man.c,v 1.60 2011/09/18 10:25:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -92,7 +92,7 @@ man_free(struct man *man)
 
 
 struct man *
-man_alloc(struct regset *regs, struct mparse *parse)
+man_alloc(struct roff *roff, struct mparse *parse)
 {
 	struct man	*p;
 
@@ -100,7 +100,7 @@ man_alloc(struct regset *regs, struct mparse *parse)
 
 	man_hash_init();
 	p->parse = parse;
-	p->regs = regs;
+	p->roff = roff;
 
 	man_alloc1(p);
 	return(p);
@@ -367,14 +367,14 @@ man_addeqn(struct man *m, const struct eqn *ep)
 
 	assert( ! (MAN_HALT & m->flags));
 
-	n = man_node_alloc(m, ep->line, ep->pos, MAN_EQN, MAN_MAX);
+	n = man_node_alloc(m, ep->ln, ep->pos, MAN_EQN, MAN_MAX);
 	n->eqn = ep;
 
 	if ( ! man_node_append(m, n))
 		return(0);
 
 	m->next = MAN_NEXT_SIBLING;
-	return(man_descope(m, ep->line, ep->pos));
+	return(man_descope(m, ep->ln, ep->pos));
 }
 
 int

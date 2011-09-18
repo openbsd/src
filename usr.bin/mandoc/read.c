@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.2 2011/05/29 21:22:18 schwarze Exp $ */
+/*	$Id: read.c,v 1.3 2011/09/18 10:25:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -49,7 +49,6 @@ struct	mparse {
 	struct man	 *man; /* man parser */
 	struct mdoc	 *mdoc; /* mdoc parser */
 	struct roff	 *roff; /* roff parser (!NULL) */
-	struct regset	  regs; /* roff registers */
 	int		  reparse_count; /* finite interp. stack */
 	mandocmsg	  mmsg; /* warning/error message handler */
 	void		 *arg; /* argument to mmsg */
@@ -136,8 +135,18 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"bad comment style",
 	"bad escape sequence",
 	"unterminated quoted string",
+
+	/* related to equations */
+	"unexpected literal in equation",
 	
 	"generic error",
+
+	/* related to equations */
+	"unexpected equation scope closure",
+	"equation scope open on exit",
+	"overlapping equation scopes",
+	"unexpected end of equation",
+	"equation syntax error",
 
 	/* related to tables */
 	"bad table syntax",
@@ -227,13 +236,13 @@ pset(const char *buf, int pos, struct mparse *curp)
 	switch (curp->inttype) {
 	case (MPARSE_MDOC):
 		if (NULL == curp->pmdoc) 
-			curp->pmdoc = mdoc_alloc(&curp->regs, curp);
+			curp->pmdoc = mdoc_alloc(curp->roff, curp);
 		assert(curp->pmdoc);
 		curp->mdoc = curp->pmdoc;
 		return;
 	case (MPARSE_MAN):
 		if (NULL == curp->pman) 
-			curp->pman = man_alloc(&curp->regs, curp);
+			curp->pman = man_alloc(curp->roff, curp);
 		assert(curp->pman);
 		curp->man = curp->pman;
 		return;
@@ -243,14 +252,14 @@ pset(const char *buf, int pos, struct mparse *curp)
 
 	if (pos >= 3 && 0 == memcmp(buf, ".Dd", 3))  {
 		if (NULL == curp->pmdoc) 
-			curp->pmdoc = mdoc_alloc(&curp->regs, curp);
+			curp->pmdoc = mdoc_alloc(curp->roff, curp);
 		assert(curp->pmdoc);
 		curp->mdoc = curp->pmdoc;
 		return;
 	} 
 
 	if (NULL == curp->pman) 
-		curp->pman = man_alloc(&curp->regs, curp);
+		curp->pman = man_alloc(curp->roff, curp);
 	assert(curp->pman);
 	curp->man = curp->pman;
 }
@@ -667,15 +676,13 @@ mparse_alloc(enum mparset inttype, enum mandoclevel wlevel, mandocmsg mmsg, void
 	curp->arg = arg;
 	curp->inttype = inttype;
 
-	curp->roff = roff_alloc(&curp->regs, curp);
+	curp->roff = roff_alloc(curp);
 	return(curp);
 }
 
 void
 mparse_reset(struct mparse *curp)
 {
-
-	memset(&curp->regs, 0, sizeof(struct regset));
 
 	roff_reset(curp->roff);
 

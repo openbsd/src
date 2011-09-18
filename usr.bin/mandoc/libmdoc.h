@@ -1,4 +1,4 @@
-/*	$Id: libmdoc.h,v 1.46 2011/05/29 21:22:18 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.47 2011/09/18 10:25:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -39,7 +39,7 @@ struct	mdoc {
 	struct mdoc_meta  meta; /* document meta-data */
 	enum mdoc_sec	  lastnamed;
 	enum mdoc_sec	  lastsec;
-	struct regset	 *regs; /* registers */
+	struct roff	 *roff;
 };
 
 #define	MACRO_PROT_ARGS	struct mdoc *m, \

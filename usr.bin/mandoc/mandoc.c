@@ -1,4 +1,4 @@
-/*	$Id: mandoc.c,v 1.26 2011/05/29 21:22:18 schwarze Exp $ */
+/*	$Id: mandoc.c,v 1.27 2011/09/18 10:25:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -428,6 +428,16 @@ mandoc_realloc(void *ptr, size_t size)
 	return(ptr);
 }
 
+char *
+mandoc_strndup(const char *ptr, size_t sz)
+{
+	char		*p;
+
+	p = mandoc_malloc(sz + 1);
+	memcpy(p, ptr, sz);
+	p[(int)sz] = '\0';
+	return(p);
+}
 
 char *
 mandoc_strdup(const char *ptr)
@@ -694,7 +704,7 @@ mandoc_getcontrol(const char *cp, int *ppos)
  * If the string is invalid, or is less than 0, return -1.
  */
 int
-mandoc_strntou(const char *p, size_t sz, int base)
+mandoc_strntoi(const char *p, size_t sz, int base)
 {
 	char		 buf[32];
 	char		*ep;
@@ -712,11 +722,10 @@ mandoc_strntou(const char *p, size_t sz, int base)
 	if (buf[0] == '\0' || *ep != '\0')
 		return(-1);
 
-	if ((errno == ERANGE && 
-			(v == LONG_MAX || v == LONG_MIN)) ||
-			(v > INT_MAX || v < 0))
-		return(-1);
+	if (v > INT_MAX)
+		v = INT_MAX;
+	if (v < INT_MIN)
+		v = INT_MIN;
 
 	return((int)v);
 }
-

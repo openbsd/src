@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.93 2011/05/29 21:22:18 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.94 2011/09/18 10:25:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -895,7 +895,7 @@ pre_sh(PRE_ARGS)
 	if (MDOC_BLOCK != n->type)
 		return(1);
 
-	mdoc->regs->regs[(int)REG_nS].set = 0;
+	roff_regunset(mdoc->roff, REG_nS);
 	return(check_parent(mdoc, n, MDOC_MAX, MDOC_ROOT));
 }
 
