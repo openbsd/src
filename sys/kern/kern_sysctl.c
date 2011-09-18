@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.207 2011/09/18 01:54:41 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.208 2011/09/18 13:23:38 miod Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1764,8 +1764,8 @@ sysctl_diskinit(int update, struct proc *p)
 			bzero(duid, sizeof(duid));
 			if (dl && bcmp(dl->d_uid, &uid, sizeof(dl->d_uid))) {
 				snprintf(duid, sizeof(duid), 
-				    "%02hhx%02hhx%02hhx%02hhx"
-				    "%02hhx%02hhx%02hhx%02hhx",
+				    "%02hx%02hx%02hx%02hx"
+				    "%02hx%02hx%02hx%02hx",
 				    dl->d_uid[0], dl->d_uid[1], dl->d_uid[2],
 				    dl->d_uid[3], dl->d_uid[4], dl->d_uid[5],
 				    dl->d_uid[6], dl->d_uid[7]);

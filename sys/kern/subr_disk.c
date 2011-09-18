@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.131 2011/07/26 12:32:14 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.132 2011/09/18 13:23:38 miod Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1269,8 +1269,8 @@ gotswap:
 				    &rootduid, sizeof(rootduid)) == 0)
 					break;
 			if (dk == NULL)
-				panic("root device (%02hhx%02hhx%02hhx%02hhx"
-				    "%02hhx%02hhx%02hhx%02hhx) not found",
+				panic("root device (%02hx%02hx%02hx%02hx"
+				    "%02hx%02hx%02hx%02hx) not found",
 				    rootduid[0], rootduid[1], rootduid[2],
 				    rootduid[3], rootduid[4], rootduid[5],
 				    rootduid[6], rootduid[7]);
@@ -1336,7 +1336,7 @@ gotswap:
 	printf("root on %s%c", rootdv->dv_xname, 'a' + part);
 
 	if (dk != NULL && bcmp(rootduid, &duid, sizeof(rootduid)) == 0)
-		printf(" (%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx.%c)",
+		printf(" (%02hx%02hx%02hx%02hx%02hx%02hx%02hx%02hx.%c)",
 		    rootduid[0], rootduid[1], rootduid[2], rootduid[3],
 		    rootduid[4], rootduid[5], rootduid[6], rootduid[7],
 		    'a' + part);
