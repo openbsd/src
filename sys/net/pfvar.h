@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.346 2011/09/18 10:40:55 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.347 2011/09/18 13:50:13 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1770,7 +1770,7 @@ void				 pf_purge_rule(struct pf_ruleset *,
 				    struct pf_rule *);
 struct pf_divert		*pf_find_divert(struct mbuf *);
 int				 pf_setup_pdesc(sa_family_t, int,
-				    struct pf_pdesc *, struct mbuf **,
+				    struct pf_pdesc *, void *, struct mbuf **,
 				    u_short *, u_short *, int *, int *);
 
 int	pf_test(sa_family_t, int, struct ifnet *, struct mbuf **,

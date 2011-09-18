@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.39 2011/09/18 10:40:54 bluhm Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.40 2011/09/18 13:50:13 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -277,7 +277,7 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	u_char			*dst;
 	u_short			 action, reason;
 	int			 off = 0, hdrlen = 0;
-	union {
+	union pf_headers {
 		struct tcphdr		tcp;
 		struct udphdr		udp;
 		struct icmp		icmp;
@@ -286,7 +286,7 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 		struct mld_hdr		mld;
 		struct nd_neighbor_solicit nd_ns;
 #endif /* INET6 */
-	} pf_hdrs;
+	} pdhdrs;
 
 	struct pf_pdesc		 pd;
 	struct pf_addr		 osaddr, odaddr;
@@ -334,10 +334,8 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 		mfake->m_pkthdr.len = min(mfake->m_pkthdr.len, mfake->m_len);
 
 	/* rewrite addresses if needed */
-	memset(&pd, 0, sizeof(pd));
-	pd.hdr.any = &pf_hdrs;
-	if (pf_setup_pdesc(pfloghdr->af, pfloghdr->dir, &pd, &mfake, &action,
-	    &reason, &off, &hdrlen) == -1)
+	if (pf_setup_pdesc(pfloghdr->af, pfloghdr->dir, &pd, &pdhdrs, &mfake,
+	    &action, &reason, &off, &hdrlen) == -1)
 		return;
 
 	PF_ACPY(&osaddr, pd.src, pd.af);

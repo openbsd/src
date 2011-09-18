@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.775 2011/09/18 10:40:55 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.776 2011/09/18 13:50:13 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -124,7 +124,10 @@ struct pf_anchor_stackframe {
 	struct pf_anchor			*child;
 } pf_anchor_stack[64];
 
-/* cannot fold into pf_pdesc directly, unknown storage size outside pf.c */
+/*
+ * Cannot fold into pf_pdesc directly, unknown storage size outside pf.c.
+ * Keep in sync with union pf_headers in pflog_bpfcopy() in if_pflog.c.
+ */
 union pf_headers {
 	struct tcphdr		tcp;
 	struct udphdr		udp;
@@ -5587,16 +5590,20 @@ pf_walk_header6(struct mbuf *m, struct ip6_hdr *h, int *off, int *extoff,
 }
 
 int
-pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
-    u_short *action, u_short *reason, int *off, int *hdrlen)
+pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, void *pdhdrs,
+    struct mbuf **m0, u_short *action, u_short *reason, int *off, int *hdrlen)
 {
 	struct mbuf *m = *m0;
 
-	if (pd->hdr.any == NULL)
-		panic("pf_setup_pdesc: no storage for headers provided");
-
-	*hdrlen = 0;
+	bzero(pd, sizeof(*pd));
+	pd->hdr.any = pdhdrs;
 	pd->af = af;
+	pd->dir = dir;
+	pd->sidx = (dir == PF_IN) ? 0 : 1;
+	pd->didx = (dir == PF_IN) ? 1 : 0;
+	*off = 0;
+	*hdrlen = 0;
+
 	switch (af) {
 #ifdef INET
 	case AF_INET: {
@@ -5638,13 +5645,9 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
 
 		pd->src = (struct pf_addr *)&h->ip_src;
 		pd->dst = (struct pf_addr *)&h->ip_dst;
-		pd->sport = pd->dport = NULL;
 		pd->virtual_proto = pd->proto = h->ip_p;
-		pd->dir = dir;
-		pd->sidx = (dir == PF_IN) ? 0 : 1;
-		pd->didx = (dir == PF_IN) ? 1 : 0;
-		pd->tos = h->ip_tos;
 		pd->tot_len = ntohs(h->ip_len);
+		pd->tos = h->ip_tos;
 		pd->rdomain = rtable_l2(m->m_pkthdr.rdomain);
 		if (h->ip_hl > 5)	/* has options */
 			pd->badopts++;
@@ -5724,13 +5727,10 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
 
 		pd->src = (struct pf_addr *)&h->ip6_src;
 		pd->dst = (struct pf_addr *)&h->ip6_dst;
-		pd->sport = pd->dport = NULL;
-		pd->dir = dir;
-		pd->sidx = (dir == PF_IN) ? 0 : 1;
-		pd->didx = (dir == PF_IN) ? 1 : 0;
-		pd->tos = 0;
-		pd->tot_len = ntohs(h->ip6_plen) + sizeof(struct ip6_hdr);
 		pd->virtual_proto = pd->proto = nxt;
+		pd->tot_len = ntohs(h->ip6_plen) + sizeof(struct ip6_hdr);
+		pd->tos = 0;
+		pd->rdomain = 0;
 
 		if (fragoff != 0)
 			pd->virtual_proto = PF_VPROTO_FRAGMENT;
@@ -5881,7 +5881,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0,
 	struct pf_state		*s = NULL;
 	struct pf_ruleset	*ruleset = NULL;
 	struct pf_pdesc		 pd;
-	union pf_headers	 hdrs;
+	union pf_headers	 pdhdrs;
 	int			 off, hdrlen;
 	int			 dir = (fwdir == PF_FWD) ? PF_OUT : fwdir;
 	u_int32_t		 qid, pqid = 0;
@@ -5889,8 +5889,6 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0,
 	if (!pf_status.running)
 		return (PF_PASS);
 
-	memset(&pd, 0, sizeof(pd));
-	pd.hdr.any = &hdrs;
 	if (ifp->if_type == IFT_CARP && ifp->if_carpdev)
 		kif = (struct pfi_kif *)ifp->if_carpdev->if_pf_kif;
 	else
@@ -5920,8 +5918,8 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0,
 		return (PF_PASS);
 	}
 
-	if (pf_setup_pdesc(af, dir, &pd, m0, &action, &reason, &off, &hdrlen)
-	    == -1) {
+	if (pf_setup_pdesc(af, dir, &pd, &pdhdrs, m0, &action, &reason, &off,
+	    &hdrlen) == -1) {
 		if (action == PF_PASS)
 			return (PF_PASS);
 		m = *m0;
