@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_emuldata.h,v 1.6 2011/04/05 22:54:30 pirofti Exp $	*/
+/*	$OpenBSD: linux_emuldata.h,v 1.7 2011/09/18 02:23:18 pirofti Exp $	*/
 /*	$NetBSD: linux_emuldata.h,v 1.4 2002/02/15 16:48:02 christos Exp $	*/
 /*-
  * Copyright (c) 1998,2002 The NetBSD Foundation, Inc.
@@ -48,5 +48,8 @@ struct linux_emuldata {
 	void *my_set_tid;
 	void *my_clear_tid;
 	unsigned my_tls_base;
+
+	struct linux_robust_list_head *led_robust_head;
+
 };
 #endif /* !_LINUX_EMULDATA_H_ */

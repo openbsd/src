@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.61 2011/07/14 23:32:08 matthew Exp $
+	$OpenBSD: syscalls.master,v 1.62 2011/09/18 02:23:18 pirofti Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -379,7 +379,9 @@
 237	NOARGS		{ int linux_sys_fremovexattr(void); }
 238	UNIMPL		linux_sys_tkill
 239	UNIMPL		linux_sys_sendfile64
-240	UNIMPL		linux_sys_futex
+240	STD		{ int linux_sys_futex(int *uaddr, int op, int val, \
+			    const struct linux_timespec *timeout,	   \
+			    int *uaddr2, int val3); }
 241	UNIMPL		linux_sys_sched_setaffinity
 242	UNIMPL		linux_sys_sched_getaffinity
 243	STD		{ int linux_sys_set_thread_area(	\
@@ -454,5 +456,8 @@
 308	UNIMPL		linux_sys_pselect6
 309	UNIMPL		linux_sys_ppoll
 310	UNIMPL		linux_sys_unshare
-311	UNIMPL		linux_sys_set_robust_list
-312	UNIMPL		linux_sys_get_robust_list
+311	STD		{ int linux_sys_set_robust_list( \
+			    struct linux_robust_list_head *head, size_t len); }
+312	STD		{ int linux_sys_get_robust_list(int pid, \
+			    struct linux_robust_list_head **head, \
+			    size_t *len); }   

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.34 2011/04/20 19:14:34 pirofti Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.35 2011/09/18 02:23:18 pirofti Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*-
@@ -76,6 +76,9 @@ extern struct sysent linux_sysent[];
 #ifdef SYSCALL_DEBUG
 extern char *linux_syscallnames[];
 #endif
+
+extern struct mutex futex_lock;
+extern void futex_pool_init(void);
 
 int exec_linux_aout_prep_zmagic(struct proc *, struct exec_package *);
 int exec_linux_aout_prep_nmagic(struct proc *, struct exec_package *);
@@ -463,6 +466,7 @@ exec_linux_elf32_makecmds(struct proc *p, struct exec_package *epp)
 {
 	if (!(emul_linux_elf.e_flags & EMUL_ENABLED))
 		return (ENOEXEC);
+
 	return exec_elf32_makecmds(p, epp);
 }
 
@@ -510,6 +514,10 @@ recognized:
 	*pos = ELF32_NO_ADDR;
 	if (*os == OOS_NULL)
 		*os = OOS_LINUX;
+
+	mtx_init(&futex_lock, IPL_NONE);
+	futex_pool_init();
+
 	return (0);
 }
 
