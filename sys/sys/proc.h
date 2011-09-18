@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.141 2011/07/07 18:00:33 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.142 2011/09/18 23:07:32 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -176,9 +176,11 @@ struct process {
 #define	ps_session	ps_pgrp->pg_session
 #define	ps_pgid		ps_pgrp->pg_id
 
+#endif /* __need_process */
+
 /*
  * These flags are kept in ps_flags, but they used to be in proc's p_flag
- * and were exported to userspace via the KERN_PROC2 sysctl.  We'll retain
+ * and were exported to userspace via the KERN_PROC sysctl.  We'll retain
  * compat by using non-overlapping bits for PS_* and P_* flags and just
  * OR them together for export.
  */
@@ -197,8 +199,6 @@ struct process {
 #define	PS_SYSTRACE	_P_SYSTRACE
 #define	PS_CONTINUED	_P_CONTINUED
 #define	PS_STOPPED	_P_STOPPED
-
-#endif /* __need_process */
 
 struct proc {
 	TAILQ_ENTRY(proc) p_runq;
