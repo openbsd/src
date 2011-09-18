@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.28 2011/05/30 20:01:29 miod Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.29 2011/09/18 19:23:46 miod Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -998,7 +998,7 @@ nextbyte:
 			default:
 				printf("%s: unrecognized MESSAGE EXTENDED 0x%x;"
 				    " sending REJECT\n",
-				     sc->sc_imess[2], sc->sc_dev.dv_xname);
+				     sc->sc_dev.dv_xname, sc->sc_imess[2]);
 				SPC_BREAK();
 				goto reject;
 			}
