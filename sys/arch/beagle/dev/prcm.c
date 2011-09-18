@@ -1,4 +1,4 @@
-/* $OpenBSD: prcm.c,v 1.5 2011/03/14 15:16:46 jasper Exp $ */
+/* $OpenBSD: prcm.c,v 1.6 2011/09/18 20:02:25 miod Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -349,7 +349,7 @@ prcm_setup_dpll5(void)
 	while ((val = bus_space_read_4(prcm_iot, prcm_ioh,
 	    CM_IDLEST_CKGEN) & 0x01) == 0x00) {
 #ifdef DIAGNOSTIC
-		printf("CM_IDLEST_PLL = 0x&08x\n", val);
+		printf("CM_IDLEST_PLL = 0x%08x\n", val);
 #endif
 	}
 
