@@ -2537,6 +2537,7 @@
 ./usr/share/man/man6
 ./usr/share/man/man7/ascii.7
 ./usr/share/man/man7/environ.7
+./usr/share/man/man7/eqn.7
 ./usr/share/man/man7/glob.7
 ./usr/share/man/man7/hier.7
 ./usr/share/man/man7/hostname.7
