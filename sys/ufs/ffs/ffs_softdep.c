@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.111 2011/09/18 11:18:28 miod Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.112 2011/09/18 23:20:28 bluhm Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -2915,7 +2915,7 @@ newdirrem(struct buf *bp, struct inode *dp, struct inode *ip, int isrmdir,
 	}
 	if (dap->da_newinum != ip->i_number) {
 		FREE_LOCK(&lk);
-		panic("newdirrem: inum %d should be %d",
+		panic("newdirrem: inum %u should be %u",
 		    ip->i_number, dap->da_newinum);
 	}
 	/*
@@ -3354,7 +3354,7 @@ initiate_write_filepage(struct pagedep *pagedep, struct buf *bp)
 			    ((char *)bp->b_data + dap->da_offset);
 			if (ep->d_ino != dap->da_newinum) {
 				FREE_LOCK(&lk);
-				panic("%s: dir inum %d != new %d",
+				panic("%s: dir inum %u != new %u",
 				    "initiate_write_filepage",
 				    ep->d_ino, dap->da_newinum);
 			}
@@ -3578,7 +3578,7 @@ initiate_write_inodeblock_ufs2(struct inodedep *inodedep, struct buf *bp)
 		if ((d1 = dp->di_extb[adp->ad_lbn]) !=
 		    (d2 = adp->ad_newblkno)) {
 			FREE_LOCK(&lk);
-			panic("%s: direct pointer #%ld mismatch %ld != %ld",
+			panic("%s: direct pointer #%lld mismatch %lld != %lld",
 			    "softdep_write_inodeblock", adp->ad_lbn, d1, d2);
 		}
 		deplist |= 1 << adp->ad_lbn;
@@ -5648,7 +5648,7 @@ worklist_print(struct worklist *wk, int full, int (*pr)(const char *, ...))
 		break;
 	case D_ALLOCDIRECT:
 		adp = WK_ALLOCDIRECT(wk);
-		(*pr)("lbn %lld newlbk %d oldblk %d newsize %lu olsize %lu\n"
+		(*pr)("lbn %lld newlbk %lld oldblk %lld newsize %ld olsize %ld\n"
 		    "%s  bp %p inodedep %p freefrag %p\n", adp->ad_lbn,
 		    adp->ad_newblkno, adp->ad_oldblkno, adp->ad_newsize,
 		    adp->ad_oldsize,
@@ -5661,7 +5661,7 @@ worklist_print(struct worklist *wk, int full, int (*pr)(const char *, ...))
 		break;
 	case D_ALLOCINDIR:
 		aip = WK_ALLOCINDIR(wk);
-		(*pr)("off %d newblk %d oldblk %d freefrag %p\n"
+		(*pr)("off %d newblk %lld oldblk %lld freefrag %p\n"
 		    "%s  indirdep %p buf %p\n", aip->ai_offset,
 		    aip->ai_newblkno, aip->ai_oldblkno, aip->ai_freefrag,
 		    prefix, aip->ai_indirdep, aip->ai_buf);
@@ -5687,7 +5687,7 @@ worklist_print(struct worklist *wk, int full, int (*pr)(const char *, ...))
 		break;
 	case D_DIRADD:
 		dap = WK_DIRADD(wk);
-		(*pr)("off %ld ino %u da_un %p\n", dap->da_offset, 
+		(*pr)("off %d ino %u da_un %p\n", dap->da_offset, 
 		    dap->da_newinum, dap->da_un.dau_previous);
 		break;
 	case D_MKDIR:

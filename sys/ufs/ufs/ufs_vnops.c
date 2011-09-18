@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.101 2011/07/04 20:35:35 deraadt Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.102 2011/09/18 23:20:28 bluhm Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1586,7 +1586,7 @@ ufs_print(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 
-	printf("tag VT_UFS, ino %d, on dev %d, %d", ip->i_number,
+	printf("tag VT_UFS, ino %u, on dev %d, %d", ip->i_number,
 		major(ip->i_dev), minor(ip->i_dev));
 	printf(" flags 0x%x, effnlink %d, nlink %d\n",
 	       ip->i_flag, ip->i_effnlink, DIP(ip, nlink));

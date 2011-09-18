@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.91 2011/07/04 04:30:41 tedu Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.92 2011/09/18 23:20:28 bluhm Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -472,7 +472,7 @@ ffs1_reallocblks(void *v)
 	 */
 #ifdef DEBUG
 	if (prtrealloc)
-		printf("realloc: ino %d, lbns %lld-%lld\n\told:", ip->i_number,
+		printf("realloc: ino %u, lbns %lld-%lld\n\told:", ip->i_number,
 		    start_lbn, end_lbn);
 #endif
 	blkno = newblk;
@@ -684,7 +684,7 @@ ffs2_reallocblks(void *v)
 	 */
 #ifdef DEBUG
 	if (prtrealloc)
-		printf("realloc: ino %d, lbns %lld-%lld\n\told:", ip->i_number,
+		printf("realloc: ino %u, lbns %lld-%lld\n\told:", ip->i_number,
 		    start_lbn, end_lbn);
 #endif
 
@@ -873,7 +873,7 @@ ffs_inode_alloc(struct inode *pip, mode_t mode, struct ucred *cred,
 	ip = VTOI(*vpp);
 
 	if (DIP(ip, mode)) {
-		printf("mode = 0%o, inum = %d, fs = %s\n",
+		printf("mode = 0%o, inum = %u, fs = %s\n",
 		    DIP(ip, mode), ip->i_number, fs->fs_fsmnt);
 		panic("ffs_valloc: dup alloc");
 	}

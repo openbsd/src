@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.40 2010/09/23 18:49:39 oga Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.41 2011/09/18 23:20:28 bluhm Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -607,7 +607,7 @@ ufs_dirbad(struct inode *ip, doff_t offset, char *how)
 	struct mount *mp;
 
 	mp = ITOV(ip)->v_mount;
-	(void)printf("%s: bad dir ino %d at offset %d: %s\n",
+	(void)printf("%s: bad dir ino %u at offset %d: %s\n",
 	    mp->mnt_stat.f_mntonname, ip->i_number, offset, how);
 	if ((mp->mnt_stat.f_flags & MNT_RDONLY) == 0)
 		panic("bad dir");

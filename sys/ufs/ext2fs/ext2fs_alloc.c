@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_alloc.c,v 1.26 2011/07/04 04:30:41 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_alloc.c,v 1.27 2011/09/18 23:20:28 bluhm Exp $	*/
 /*	$NetBSD: ext2fs_alloc.c,v 1.10 2001/07/05 08:38:27 toshii Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ ext2fs_inode_alloc(struct inode *pip, mode_t mode, struct ucred *cred,
 	}
 	ip = VTOI(*vpp);
 	if (ip->i_e2fs_mode && ip->i_e2fs_nlink != 0) {
-		printf("mode = 0%o, nlinks %d, inum = %d, fs = %s\n",
+		printf("mode = 0%o, nlinks %u, inum = %u, fs = %s\n",
 			ip->i_e2fs_mode, ip->i_e2fs_nlink, ip->i_number, fs->e2fs_fsmnt);
 		panic("ext2fs_valloc: dup alloc");
 	}
@@ -474,7 +474,7 @@ ext2fs_blkfree(struct inode *ip, int32_t bno)
 	fs = ip->i_e2fs;
 	cg = dtog(fs, bno);
 	if ((u_int)bno >= fs->e2fs.e2fs_bcount) {
-		printf("bad block %d, ino %d\n", bno, ip->i_number);
+		printf("bad block %d, ino %u\n", bno, ip->i_number);
 		ext2fs_fserr(fs, ip->i_e2fs_uid, "bad block");
 		return;
 	}
