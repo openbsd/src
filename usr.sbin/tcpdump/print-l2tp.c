@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-l2tp.c,v 1.6 2011/07/25 18:39:35 claudio Exp $	*/
+/*	$OpenBSD: print-l2tp.c,v 1.7 2011/09/18 14:04:36 naddy Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -295,7 +295,7 @@ l2tp_bearer_cap_print(const u_char *dat, u_int length)
 static void
 l2tp_tie_breaker_print(const u_char *dat, u_int length)
 {
-	printf("%lx", *(u_long *)dat);	/* XXX */
+	print_octets(dat, (length < 8 ? length : 8));
 }
 
 static void
