@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gtp.c,v 1.4 2011/09/18 10:24:16 jsing Exp $ */
+/*	$OpenBSD: print-gtp.c,v 1.5 2011/09/18 10:25:36 jsing Exp $ */
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
  *
@@ -118,7 +118,7 @@ static struct tok gtp_v0_msgtype[] = {
 	{ 241,	"Data Record Transfer Response" },
 	{ 255,	"T-PDU" },
 
-        { 0,	NULL }
+	{ 0,	NULL }
 };
 
 /* GTPv0 causes. */
@@ -150,7 +150,7 @@ static struct tok gtp_v0_cause[] = {
 	{ 208,	"Authentication failure" },
 	{ 209,	"User authentication failed" },
 
-        { 0,	NULL }
+	{ 0,	NULL }
 };
 
 /* GTPv1 message types. */
@@ -223,19 +223,19 @@ static struct tok gtp_v1_msgtype[] = {
 	{ 241,	"Data Record Transfer Response" },
 	{ 255,	"G-PDU" },
 
-        { 0,	NULL }
+	{ 0,	NULL }
 };
 
 /* GTPv1 Causes. */
 static struct tok gtp_v1_cause[] = {
 
 	/* GTPv1-C. */
-        { 0,	"Request IMSI" },
-        { 1,	"Request IMEI" },
-        { 2,	"Request IMSI and IMEI" },
-        { 3,	"No identity needed" },
-        { 4,	"MS refuses" },
-        { 5,	"MS is not GPRS responding" },
+	{ 0,	"Request IMSI" },
+	{ 1,	"Request IMEI" },
+	{ 2,	"Request IMSI and IMEI" },
+	{ 3,	"No identity needed" },
+	{ 4,	"MS refuses" },
+	{ 5,	"MS is not GPRS responding" },
 	{ 128,	"Request accepted" },
 	{ 192,	"Non-existent" },
 	{ 193,	"Invalid message format" },
@@ -287,7 +287,7 @@ static struct tok gtp_v1_cause[] = {
 	{ 254,	"Sequence numbers of released/cancelled packets IE incorrect" },
 	{ 255,	"Request not fulfilled" },
 
-        { 0,	NULL }
+	{ 0,	NULL }
 };
 
 static int gtp_proto = -1;
