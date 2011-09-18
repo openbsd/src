@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.21 2011/09/18 11:02:17 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.22 2011/09/18 11:55:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -98,7 +98,7 @@ pt_entry_t	kernel_ptes[] = {
 #define	pmap_pvh_attrs(a) \
 	(((a) & PTE_DIRTY) | ((a) ^ PTE_REFTRAP))
 
-struct vm_page	*pmap_pagealloc(int wait);
+struct vm_page	*pmap_pagealloc(struct uvm_object *obj, voff_t off);
 volatile pt_entry_t *pmap_pde_get(volatile u_int32_t *pd, vaddr_t va);
 void		 pmap_pde_set(struct pmap *pm, vaddr_t va, paddr_t ptp);
 void		 pmap_pte_flush(struct pmap *pmap, vaddr_t va, pt_entry_t pte);
@@ -120,11 +120,11 @@ void		 pmap_maphys(paddr_t spa, paddr_t epa);
 #define	IS_IOPAGE(pa)	((pa) >= (HPPA_IOBEGIN & HPPA_PHYSMAP))
 
 struct vm_page *
-pmap_pagealloc(int wait)
+pmap_pagealloc(struct uvm_object *obj, voff_t off)
 {
 	struct vm_page *pg;
 
-	if ((pg = uvm_pagealloc(NULL, 0, NULL,
+	if ((pg = uvm_pagealloc(obj, off, NULL,
 	    UVM_PGA_USERESERVE | UVM_PGA_ZERO)) == NULL)
 		printf("pmap_pagealloc fail\n");
 
@@ -180,7 +180,7 @@ pmap_pde_alloc(struct pmap *pm, vaddr_t va, struct vm_page **pdep)
 	DPRINTF(PDB_FOLLOW|PDB_VP,
 	    ("pmap_pde_alloc(%p, 0x%lx, %p)\n", pm, va, pdep));
 
-	if ((pg = pmap_pagealloc(0)) == NULL)
+	if ((pg = pmap_pagealloc(&pm->pm_obj, va)) == NULL)
 		return (NULL);
 
 	pa = VM_PAGE_TO_PHYS(pg);
@@ -227,7 +227,7 @@ pmap_pde_release(struct pmap *pmap, vaddr_t va, struct vm_page *ptp)
 		pmap_pde_set(pmap, va, 0);
 		pmap->pm_stats.resident_count--;
 		if (pmap->pm_ptphint == ptp)
-			pmap->pm_ptphint = NULL;
+			pmap->pm_ptphint = RB_ROOT(&pmap->pm_obj.memt);
 		ptp->wire_count = 0;
 #ifdef DIAGNOSTIC
 		if (ptp->pg_flags & PG_BUSY)
@@ -496,11 +496,11 @@ pmap_bootstrap(vaddr_t vstart)
 	 */
 	kpm = &kernel_pmap_store;
 	bzero(kpm, sizeof(*kpm));
-	simple_lock_init(&kpm->pm_lock);
-	kpm->pm_refcount = 1;
+	uvm_objinit(&kpm->pm_obj, NULL, 1);
 	kpm->pm_space = HPPA_SID_KERNEL;
 	TAILQ_INIT(&kpm->pm_pglist);
 	kpm->pm_pdir = (u_int32_t *)mfctl(CR_VTOP);
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)kpm->pm_pdir, 5 * PAGE_SIZE);
 
 	/*
 	 * Allocate various tables and structures.
@@ -517,6 +517,7 @@ pmap_bootstrap(vaddr_t vstart)
 	for (va = 0x1000000, eaddr = ptoa(physmem);
 	    va < eaddr; addr += PAGE_SIZE, va += 1 << PDE_SHIFT) {
 		bzero((void *)addr, PAGE_SIZE);
+		fdcache(HPPA_SID_KERNEL, addr, PAGE_SIZE);
 		pmap_pde_set(kpm, va, addr);
 		kpm->pm_stats.resident_count++;	/* count PTP as resident */
 	}
@@ -526,6 +527,7 @@ pmap_bootstrap(vaddr_t vstart)
 	    va >= VM_MIN_KERNEL_ADDRESS;
 	    addr += PAGE_SIZE, va -= 1 << PDE_SHIFT) {
 		bzero((void *)addr, PAGE_SIZE);
+		fdcache(HPPA_SID_KERNEL, addr, PAGE_SIZE);
 		pmap_pde_set(kpm, va, addr);
 		kpm->pm_stats.resident_count++;	/* count PTP as resident */
 	}
@@ -661,8 +663,8 @@ pmap_create(void)
 
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 
-	simple_lock_init(&pmap->pm_lock);
-	pmap->pm_refcount = 1;
+	uvm_objinit(&pmap->pm_obj, NULL, 1);
+
 	pmap->pm_ptphint = NULL;
 
 	TAILQ_INIT(&pmap->pm_pglist);
@@ -674,12 +676,14 @@ pmap_create(void)
 	atomic_clearbits_int(&pg->pg_flags, PG_BUSY|PG_CLEAN);
 	pmap->pm_pdir = (u_int32_t *)(pa = VM_PAGE_TO_PHYS(pg));
 	bzero((void *)pa, PAGE_SIZE);
+	fdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
 
 	/* set the first PIE that's covering low 2g of the address space */
 	pg = TAILQ_LAST(&pmap->pm_pglist, pglist);
 	atomic_clearbits_int(&pg->pg_flags, PG_BUSY|PG_CLEAN);
 	*pmap->pm_pdir = (pa = VM_PAGE_TO_PHYS(pg)) >> PAGE_SHIFT;
 	bzero((void *)pa, PAGE_SIZE);
+	fdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
 
 /* TODO	for (space = 1 + (arc4random() & HPPA_SID_MAX);
 	    pmap_sdir_get(space); space = (space + 1) % HPPA_SID_MAX); */
@@ -695,16 +699,68 @@ pmap_create(void)
 void
 pmap_destroy(struct pmap *pmap)
 {
+	struct vm_page *pg;
+	paddr_t pa;
 	int refs;
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_destroy(%p)\n", pmap));
 
 	simple_lock(&pmap->pm_lock);
-	refs = --pmap->pm_refcount;
+	refs = --pmap->pm_obj.uo_refs;
 	simple_unlock(&pmap->pm_lock);
 
 	if (refs > 0)
 		return;
+
+#ifdef DIAGNOSTIC
+	while ((pg = RB_ROOT(&pmap->pm_obj.memt))) {
+		pt_entry_t *pde, *epde;
+		struct vm_page *spg;
+		struct pv_entry *pv, *npv;
+
+		KASSERT(pg != TAILQ_FIRST(&pmap->pm_pglist));
+		KASSERT(pg != TAILQ_LAST(&pmap->pm_pglist, pglist));
+		pa = VM_PAGE_TO_PHYS(pg);
+#ifdef PMAPDEBUG
+		printf("pmap_destroy(%p): stray ptp 0x%lx w/ %u ents:",
+		    pmap, pa, pg->wire_count - 1);
+#endif
+
+		pde = (pt_entry_t *)pa;
+		epde = (pt_entry_t *)(pa + PAGE_SIZE);
+		for (; pde < epde; pde++) {
+			if (*pde == 0)
+				continue;
+
+			spg = PHYS_TO_VM_PAGE(PTE_PAGE(*pde));
+			if (spg == NULL)
+				continue;
+			for (pv = spg->mdpage.pvh_list; pv != NULL; pv = npv) {
+				npv = pv->pv_next;
+				if (pv->pv_pmap == pmap) {
+#ifdef PMAPDEBUG
+					printf(" 0x%x", pv->pv_va);
+#endif
+					pmap_remove(pmap, pv->pv_va,
+					    pv->pv_va + PAGE_SIZE);
+				}
+			}
+		}
+#ifdef PMAPDEBUG
+		printf("\n");
+#endif
+	}
+#endif
+
+	pg = TAILQ_FIRST(&pmap->pm_pglist);
+	pa = VM_PAGE_TO_PHYS(pg);
+	pdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
+	pdtlb(HPPA_SID_KERNEL, pa);
+
+	pg = TAILQ_LAST(&pmap->pm_pglist, pglist);
+	pa = VM_PAGE_TO_PHYS(pg);
+	pdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
+	pdtlb(HPPA_SID_KERNEL, pa);
 
 	uvm_pglistfree(&pmap->pm_pglist);
 	TAILQ_INIT(&pmap->pm_pglist);
@@ -720,7 +776,7 @@ pmap_reference(struct pmap *pmap)
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_reference(%p)\n", pmap));
 
 	simple_lock(&pmap->pm_lock);
-	pmap->pm_refcount++;
+	pmap->pm_obj.uo_refs++;
 	simple_unlock(&pmap->pm_lock);
 }
 
