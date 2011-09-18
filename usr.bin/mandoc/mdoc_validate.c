@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.94 2011/09/18 10:25:28 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.95 2011/09/18 15:54:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -68,9 +68,7 @@ static	void	 check_text(struct mdoc *, int, int, char *);
 static	void	 check_argv(struct mdoc *, 
 			struct mdoc_node *, struct mdoc_argv *);
 static	void	 check_args(struct mdoc *, struct mdoc_node *);
-
-static	int	 concat(struct mdoc *, char *, 
-			const struct mdoc_node *, size_t);
+static	int	 concat(char *, const struct mdoc_node *, size_t);
 static	enum mdoc_sec	a2sec(const char *);
 static	size_t		macro2len(enum mdoct);
 
@@ -541,39 +539,13 @@ check_argv(struct mdoc *m, struct mdoc_node *n, struct mdoc_argv *v)
 static void
 check_text(struct mdoc *m, int ln, int pos, char *p)
 {
-	char		*cpp, *pp;
-	size_t		 sz;
+	char		*cp;
 
-	while ('\0' != *p) {
-		sz = strcspn(p, "\t\\");
-
-		p += (int)sz;
-		pos += (int)sz;
-
-		if ('\t' == *p) {
-			if ( ! (MDOC_LITERAL & m->flags))
-				mdoc_pmsg(m, ln, pos, MANDOCERR_BADTAB);
-			p++;
-			pos++;
+	cp = p;
+	for (cp = p; NULL != (p = strchr(p, '\t')); p++) {
+		if (MDOC_LITERAL & m->flags)
 			continue;
-		} else if ('\0' == *p)
-			break;
-
-		pos++;
-		pp = ++p;
-
-		if (ESCAPE_ERROR == mandoc_escape
-				((const char **)&pp, NULL, NULL)) {
-			mdoc_pmsg(m, ln, pos, MANDOCERR_BADESCAPE);
-			break;
-		}
-
-		cpp = p;
-		while (NULL != (cpp = memchr(cpp, ASCII_HYPH, pp - cpp)))
-			*cpp = '-';
-
-		pos += pp - p;
-		p = pp;
+		mdoc_pmsg(m, ln, pos + (int)(p - cp), MANDOCERR_BADTAB);
 	}
 }
 
@@ -727,7 +699,7 @@ pre_bl(PRE_ARGS)
 			if (LIST_column == lt) {
 				n->norm->Bl.ncols = 
 					n->args->argv[i].sz;
-				n->norm->Bl.cols = (const char **)
+				n->norm->Bl.cols = (void *)
 					n->args->argv[i].value;
 			}
 		}
@@ -1129,6 +1101,7 @@ static int
 post_nm(POST_ARGS)
 {
 	char		 buf[BUFSIZ];
+	int		 c;
 
 	/* If no child specified, make sure we have the meta name. */
 
@@ -1140,11 +1113,14 @@ post_nm(POST_ARGS)
 
 	/* If no meta name, set it from the child. */
 
-	if ( ! concat(mdoc, buf, mdoc->last->child, BUFSIZ))
+	buf[0] = '\0';
+	if (-1 == (c = concat(buf, mdoc->last->child, BUFSIZ))) {
+		mdoc_nmsg(mdoc, mdoc->last->child, MANDOCERR_MEM);
 		return(0);
+	}
 
+	assert(c);
 	mdoc->meta.name = mandoc_strdup(buf);
-
 	return(1);
 }
 
@@ -1415,7 +1391,7 @@ post_bl_block_width(POST_ARGS)
 
 	assert(i < (int)n->args->argc);
 
-	snprintf(buf, NUMSIZ, "%zun", width);
+	snprintf(buf, NUMSIZ, "%un", (unsigned int)width);
 	free(n->args->argv[i].value[0]);
 	n->args->argv[i].value[0] = mandoc_strdup(buf);
 
@@ -1465,7 +1441,7 @@ post_bl_block_tag(POST_ARGS)
 
 	/* Defaults to ten ens. */
 
-	snprintf(buf, NUMSIZ, "%zun", sz);
+	snprintf(buf, NUMSIZ, "%un", (unsigned int)sz);
 
 	/*
 	 * We have to dynamically add this to the macro's argument list.
@@ -1541,7 +1517,7 @@ post_bl_head(POST_ARGS)
 		((size_t)mdoc->last->nchild * sizeof(char *));
 
 	mdoc->last->norm->Bl.ncols = np->args->argv[j].sz;
-	mdoc->last->norm->Bl.cols = (const char **)np->args->argv[j].value;
+	mdoc->last->norm->Bl.cols = (void *)np->args->argv[j].value;
 
 	for (i = 0, nn = mdoc->last->child; nn; i++) {
 		np->args->argv[j].value[i] = nn->string;
@@ -1840,6 +1816,7 @@ post_sh_head(POST_ARGS)
 {
 	char		 buf[BUFSIZ];
 	enum mdoc_sec	 sec;
+	int		 c;
 
 	/*
 	 * Process a new section.  Sections are either "named" or
@@ -1848,10 +1825,13 @@ post_sh_head(POST_ARGS)
 	 * manual sections.
 	 */
 
-	if ( ! concat(mdoc, buf, mdoc->last->child, BUFSIZ))
+	sec = SEC_CUSTOM;
+	buf[0] = '\0';
+	if (-1 == (c = concat(buf, mdoc->last->child, BUFSIZ))) {
+		mdoc_nmsg(mdoc, mdoc->last->child, MANDOCERR_MEM);
 		return(0);
-
-	sec = a2sec(buf);
+	} else if (1 == c)
+		sec = a2sec(buf);
 
 	/* The NAME should be first. */
 
@@ -2000,6 +1980,7 @@ post_dd(POST_ARGS)
 {
 	char		  buf[DATESIZE];
 	struct mdoc_node *n;
+	int		  c;
 
 	if (mdoc->meta.date)
 		free(mdoc->meta.date);
@@ -2011,9 +1992,13 @@ post_dd(POST_ARGS)
 		return(1);
 	}
 
-	if ( ! concat(mdoc, buf, n->child, DATESIZE))
+	buf[0] = '\0';
+	if (-1 == (c = concat(buf, n->child, DATESIZE))) {
+		mdoc_nmsg(mdoc, n->child, MANDOCERR_MEM);
 		return(0);
+	}
 
+	assert(c);
 	mdoc->meta.date = mandoc_normdate
 		(mdoc->parse, buf, n->line, n->pos);
 
@@ -2042,7 +2027,7 @@ post_dt(POST_ARGS)
 
 	if (NULL != (nn = n->child))
 		for (p = nn->string; *p; p++) {
-			if (toupper((u_char)*p) == *p)
+			if (toupper((unsigned char)*p) == *p)
 				continue;
 
 			/* 
@@ -2168,6 +2153,7 @@ post_os(POST_ARGS)
 {
 	struct mdoc_node *n;
 	char		  buf[BUFSIZ];
+	int		  c;
 #ifndef OSNAME
 	struct utsname	  utsname;
 #endif
@@ -2184,8 +2170,13 @@ post_os(POST_ARGS)
 	if (mdoc->meta.os)
 		free(mdoc->meta.os);
 
-	if ( ! concat(mdoc, buf, n->child, BUFSIZ))
+	buf[0] = '\0';
+	if (-1 == (c = concat(buf, n->child, BUFSIZ))) {
+		mdoc_nmsg(mdoc, n->child, MANDOCERR_MEM);
 		return(0);
+	}
+
+	assert(c);
 
 	/* XXX: yes, these can all be dynamically-adjusted buffers, but
 	 * it's really not worth the extra hackery.
@@ -2252,34 +2243,24 @@ post_std(POST_ARGS)
 	return(1);
 }
 
+/*
+ * Concatenate a node, stopping at the first non-text.
+ * Concatenation is separated by a single whitespace.  
+ * Returns -1 on fatal (string overrun) error, 0 if child nodes were
+ * encountered, 1 otherwise.
+ */
 static int
-concat(struct mdoc *m, char *p, const struct mdoc_node *n, size_t sz)
+concat(char *p, const struct mdoc_node *n, size_t sz)
 {
 
-	p[0] = '\0';
-
-	/*
-	 * Concatenate sibling nodes together.  All siblings must be of
-	 * type MDOC_TEXT or an assertion is raised.  Concatenation is
-	 * separated by a single whitespace.  Returns 0 on fatal (string
-	 * overrun) error.
-	 */
-
-	for ( ; n; n = n->next) {
-		assert(MDOC_TEXT == n->type);
-
-		if (strlcat(p, n->string, sz) >= sz) {
-			mdoc_nmsg(m, n, MANDOCERR_MEM);
+	for ( ; NULL != n; n = n->next) {
+		if (MDOC_TEXT != n->type) 
 			return(0);
-		}
-
-		if (NULL == n->next)
-			continue;
-
-		if (strlcat(p, " ", sz) >= sz) {
-			mdoc_nmsg(m, n, MANDOCERR_MEM);
-			return(0);
-		}
+		if ('\0' != p[0] && strlcat(p, " ", sz) >= sz)
+			return(-1);
+		if (strlcat(p, n->string, sz) >= sz)
+			return(-1);
+		concat(p, n->child, sz);
 	}
 
 	return(1);

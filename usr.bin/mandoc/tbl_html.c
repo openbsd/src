@@ -1,6 +1,6 @@
-/*	$Id: tbl_html.c,v 1.4 2011/01/16 19:41:16 schwarze Exp $ */
+/*	$Id: tbl_html.c,v 1.5 2011/09/18 15:54:48 schwarze Exp $ */
 /*
- * Copyright (c) 2011 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

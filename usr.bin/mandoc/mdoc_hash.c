@@ -1,4 +1,4 @@
-/*	$Id: mdoc_hash.c,v 1.12 2011/04/24 16:22:02 schwarze Exp $ */
+/*	$Id: mdoc_hash.c,v 1.13 2011/09/18 15:54:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -27,7 +27,7 @@
 #include "mandoc.h"
 #include "libmdoc.h"
 
-static	u_char		 table[27 * 13];
+static	unsigned char	 table[27 * 12];
 
 /*
  * XXX - this hash has global scope, so if intended for use as a library
@@ -44,18 +44,18 @@ mdoc_hash_init(void)
 	for (i = 0; i < (int)MDOC_MAX; i++) {
 		p = mdoc_macronames[i];
 
-		if (isalpha((u_char)p[1]))
-			major = 13 * (tolower((u_char)p[1]) - 97);
+		if (isalpha((unsigned char)p[1]))
+			major = 12 * (tolower((unsigned char)p[1]) - 97);
 		else
-			major = 13 * 26;
+			major = 12 * 26;
 
-		for (j = 0; j < 13; j++)
+		for (j = 0; j < 12; j++)
 			if (UCHAR_MAX == table[major + j]) {
-				table[major + j] = (u_char)i;
+				table[major + j] = (unsigned char)i;
 				break;
 			}
 
-		assert(j < 13);
+		assert(j < 12);
 	}
 }
 
@@ -66,20 +66,20 @@ mdoc_hash_find(const char *p)
 
 	if (0 == p[0])
 		return(MDOC_MAX);
-	if ( ! isalpha((u_char)p[0]) && '%' != p[0])
+	if ( ! isalpha((unsigned char)p[0]) && '%' != p[0])
 		return(MDOC_MAX);
 
-	if (isalpha((u_char)p[1]))
-		major = 13 * (tolower((u_char)p[1]) - 97);
+	if (isalpha((unsigned char)p[1]))
+		major = 12 * (tolower((unsigned char)p[1]) - 97);
 	else if ('1' == p[1])
-		major = 13 * 26;
+		major = 12 * 26;
 	else 
 		return(MDOC_MAX);
 
 	if (p[2] && p[3])
 		return(MDOC_MAX);
 
-	for (j = 0; j < 13; j++) {
+	for (j = 0; j < 12; j++) {
 		if (UCHAR_MAX == (i = table[major + j]))
 			break;
 		if (0 == strcmp(p, mdoc_macronames[i]))

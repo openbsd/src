@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.60 2011/09/18 10:25:28 schwarze Exp $ */
+/*	$Id: man.c,v 1.61 2011/09/18 15:54:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -316,16 +316,9 @@ int
 man_word_alloc(struct man *m, int line, int pos, const char *word)
 {
 	struct man_node	*n;
-	size_t		 sv, len;
-
-	len = strlen(word);
 
 	n = man_node_alloc(m, line, pos, MAN_TEXT, MAN_MAX);
-	n->string = mandoc_malloc(len + 1);
-	sv = strlcpy(n->string, word, len + 1);
-
-	/* Prohibit truncation. */
-	assert(sv < len + 1);
+	n->string = roff_strdup(m->roff, word);
 
 	if ( ! man_node_append(m, n))
 		return(0);

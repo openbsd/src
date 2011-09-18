@@ -1,4 +1,4 @@
-/*	$Id: out.c,v 1.14 2011/05/29 21:22:18 schwarze Exp $ */
+/*	$Id: out.c,v 1.15 2011/09/18 15:54:48 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -65,7 +65,7 @@ a2roffsu(const char *src, struct roffsu *dst, enum roffscale def)
 		return(0);
 
 	while (i < BUFSIZ) {
-		if ( ! isdigit((u_char)*src)) {
+		if ( ! isdigit((unsigned char)*src)) {
 			if ('.' != *src)
 				break;
 			else if (hasd)
@@ -126,48 +126,6 @@ a2roffsu(const char *src, struct roffsu *dst, enum roffscale def)
 		dst->scale = 0;
 	dst->unit = unit;
 	return(1);
-}
-
-
-/*
- * Correctly writes the time in nroff form, which differs from standard
- * form in that a space isn't printed in lieu of the extra %e field for
- * single-digit dates.
- */
-void
-time2a(time_t t, char *dst, size_t sz)
-{
-	struct tm	 tm;
-	char		 buf[5];
-	char		*p;
-	size_t		 nsz;
-
-	assert(sz > 1);
-	localtime_r(&t, &tm);
-
-	p = dst;
-	nsz = 0;
-
-	dst[0] = '\0';
-
-	if (0 == (nsz = strftime(p, sz, "%B ", &tm)))
-		return;
-
-	p += (int)nsz;
-	sz -= nsz;
-
-	if (0 == strftime(buf, sizeof(buf), "%e, ", &tm))
-		return;
-
-	nsz = strlcat(p, buf + (' ' == buf[0] ? 1 : 0), sz);
-
-	if (nsz >= sz)
-		return;
-
-	p += (int)nsz;
-	sz -= nsz;
-
-	(void)strftime(p, sz, "%Y", &tm);
 }
 
 /*

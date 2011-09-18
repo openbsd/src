@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.60 2011/09/18 10:25:28 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.61 2011/09/18 15:54:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -30,7 +30,6 @@
 #include "main.h"
 
 #define	INDENT		 5
-#define	HALFINDENT	 3
 
 #define	MDOC_ARGS	  const struct mdoc_meta *m, \
 			  const struct mdoc_node *n, \
@@ -349,10 +348,8 @@ a2offs(const char *p, struct roffsu *su)
 		SCALE_HS_INIT(su, INDENT);
 	else if (0 == strcmp(p, "indent-two"))
 		SCALE_HS_INIT(su, INDENT * 2);
-	else if ( ! a2roffsu(p, su, SCALE_MAX)) {
-		su->unit = SCALE_BU;
-		su->scale = html_strlen(p);
-	}
+	else if ( ! a2roffsu(p, su, SCALE_MAX))
+		SCALE_HS_INIT(su, html_strlen(p));
 }
 
 
@@ -604,17 +601,21 @@ mdoc_sh_pre(MDOC_ARGS)
 
 	bufinit(h);
 	bufcat(h, "x");
-	for (n = n->child; n; n = n->next) {
+
+	for (n = n->child; n && MDOC_TEXT == n->type; ) {
 		bufcat_id(h, n->string);
-		if (n->next)
+		if (NULL != (n = n->next))
 			bufcat_id(h, " ");
 	}
 
-	PAIR_ID_INIT(&tag, h->buf);
-	print_otag(h, TAG_H1, 1, &tag);
+	if (NULL == n) {
+		PAIR_ID_INIT(&tag, h->buf);
+		print_otag(h, TAG_H1, 1, &tag);
+	} else
+		print_otag(h, TAG_H1, 0, NULL);
+
 	return(1);
 }
-
 
 /* ARGSUSED */
 static int
@@ -631,14 +632,19 @@ mdoc_ss_pre(MDOC_ARGS)
 
 	bufinit(h);
 	bufcat(h, "x");
-	for (n = n->child; n; n = n->next) {
+
+	for (n = n->child; n && MDOC_TEXT == n->type; ) {
 		bufcat_id(h, n->string);
-		if (n->next)
+		if (NULL != (n = n->next))
 			bufcat_id(h, " ");
 	}
 
-	PAIR_ID_INIT(&tag, h->buf);
-	print_otag(h, TAG_H2, 1, &tag);
+	if (NULL == n) {
+		PAIR_ID_INIT(&tag, h->buf);
+		print_otag(h, TAG_H2, 1, &tag);
+	} else
+		print_otag(h, TAG_H2, 0, NULL);
+
 	return(1);
 }
 
@@ -1167,9 +1173,10 @@ mdoc_sx_pre(MDOC_ARGS)
 
 	bufinit(h);
 	bufcat(h, "#x");
-	for (n = n->child; n; n = n->next) {
+
+	for (n = n->child; n; ) {
 		bufcat_id(h, n->string);
-		if (n->next)
+		if (NULL != (n = n->next))
 			bufcat_id(h, " ");
 	}
 
@@ -1980,7 +1987,7 @@ mdoc_li_pre(MDOC_ARGS)
 	struct htmlpair	tag;
 
 	PAIR_CLASS_INIT(&tag, "lit");
-	print_otag(h, TAG_SPAN, 1, &tag);
+	print_otag(h, TAG_CODE, 1, &tag);
 	return(1);
 }
 
@@ -2208,7 +2215,11 @@ mdoc_quote_pre(MDOC_ARGS)
 		print_text(h, "(");
 		break;
 	case (MDOC_Ql):
-		/* FALLTHROUGH */
+		print_text(h, "\\(oq");
+		h->flags |= HTML_NOSPACE;
+		PAIR_CLASS_INIT(&tag, "lit");
+		print_otag(h, TAG_CODE, 1, &tag);
+		break;
 	case (MDOC_So):
 		/* FALLTHROUGH */
 	case (MDOC_Sq):

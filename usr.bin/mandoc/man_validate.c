@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.46 2011/07/07 20:07:38 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.47 2011/09/18 15:54:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -42,42 +42,44 @@ struct	man_valid {
 
 static	int	  check_bline(CHKARGS);
 static	int	  check_eq0(CHKARGS);
-static	int	  check_ft(CHKARGS);
 static	int	  check_le1(CHKARGS);
 static	int	  check_ge2(CHKARGS);
 static	int	  check_le5(CHKARGS);
 static	int	  check_par(CHKARGS);
 static	int	  check_part(CHKARGS);
 static	int	  check_root(CHKARGS);
-static	int	  check_sec(CHKARGS);
 static	void	  check_text(CHKARGS);
 
 static	int	  post_AT(CHKARGS);
 static	int	  post_vs(CHKARGS);
 static	int	  post_fi(CHKARGS);
+static	int	  post_ft(CHKARGS);
 static	int	  post_nf(CHKARGS);
+static	int	  post_sec(CHKARGS);
 static	int	  post_TH(CHKARGS);
 static	int	  post_UC(CHKARGS);
+static	int	  pre_sec(CHKARGS);
 
 static	v_check	  posts_at[] = { post_AT, NULL };
 static	v_check	  posts_br[] = { post_vs, check_eq0, NULL };
 static	v_check	  posts_eq0[] = { check_eq0, NULL };
 static	v_check	  posts_fi[] = { check_eq0, post_fi, NULL };
-static	v_check	  posts_ft[] = { check_ft, NULL };
+static	v_check	  posts_ft[] = { post_ft, NULL };
 static	v_check	  posts_nf[] = { check_eq0, post_nf, NULL };
 static	v_check	  posts_par[] = { check_par, NULL };
 static	v_check	  posts_part[] = { check_part, NULL };
-static	v_check	  posts_sec[] = { check_sec, NULL };
+static	v_check	  posts_sec[] = { post_sec, NULL };
 static	v_check	  posts_sp[] = { post_vs, check_le1, NULL };
 static	v_check	  posts_th[] = { check_ge2, check_le5, post_TH, NULL };
 static	v_check	  posts_uc[] = { post_UC, NULL };
 static	v_check	  pres_bline[] = { check_bline, NULL };
+static	v_check	  pres_sec[] = { check_bline, pre_sec, NULL};
 
 static	const struct man_valid man_valids[MAN_MAX] = {
 	{ NULL, posts_br }, /* br */
 	{ pres_bline, posts_th }, /* TH */
-	{ pres_bline, posts_sec }, /* SH */
-	{ pres_bline, posts_sec }, /* SS */
+	{ pres_sec, posts_sec }, /* SH */
+	{ pres_sec, posts_sec }, /* SS */
 	{ pres_bline, NULL }, /* TP */
 	{ pres_bline, posts_par }, /* LP */
 	{ pres_bline, posts_par }, /* PP */
@@ -203,45 +205,15 @@ check_root(CHKARGS)
 }
 
 static void
-check_text(CHKARGS) 
+check_text(CHKARGS)
 {
-	char		*p, *pp, *cpp;
-	int		 pos;
-	size_t		 sz;
+	char		*cp, *p;
 
-	p = n->string;
-	pos = n->pos + 1;
-
-	while ('\0' != *p) {
-		sz = strcspn(p, "\t\\");
-
-		p += (int)sz;
-		pos += (int)sz;
-
-		if ('\t' == *p) {
-			if ( ! (MAN_LITERAL & m->flags))
-				man_pmsg(m, n->line, pos, MANDOCERR_BADTAB);
-			p++;
-			pos++;
+	cp = p = n->string;
+	for (cp = p; NULL != (p = strchr(p, '\t')); p++) {
+		if (MAN_LITERAL & m->flags)
 			continue;
-		} else if ('\0' == *p)
-			break;
-
-		pos++;
-		pp = ++p;
-
-		if (ESCAPE_ERROR == mandoc_escape
-				((const char **)&pp, NULL, NULL)) {
-			man_pmsg(m, n->line, pos, MANDOCERR_BADESCAPE);
-			break;
-		}
-
-		cpp = p;
-		while (NULL != (cpp = memchr(cpp, ASCII_HYPH, pp - cpp)))
-			*cpp = '-';
-
-		pos += pp - p;
-		p = pp;
+		man_pmsg(m, n->line, (int)(p - cp), MANDOCERR_BADTAB);
 	}
 }
 
@@ -263,7 +235,7 @@ INEQ_DEFINE(2, >=, ge2)
 INEQ_DEFINE(5, <=, le5)
 
 static int
-check_ft(CHKARGS)
+post_ft(CHKARGS)
 {
 	char	*cp;
 	int	 ok;
@@ -319,7 +291,16 @@ check_ft(CHKARGS)
 }
 
 static int
-check_sec(CHKARGS)
+pre_sec(CHKARGS)
+{
+
+	if (MAN_BLOCK == n->type)
+		m->flags &= ~MAN_LITERAL;
+	return(1);
+}
+
+static int
+post_sec(CHKARGS)
 {
 
 	if ( ! (MAN_HEAD == n->type && 0 == n->nchild)) 
@@ -328,7 +309,6 @@ check_sec(CHKARGS)
 	man_nmsg(m, n, MANDOCERR_SYNTARGCOUNT);
 	return(0);
 }
-
 
 static int
 check_part(CHKARGS)
@@ -408,7 +388,8 @@ post_TH(CHKARGS)
 	if (n && n->string) {
 		for (p = n->string; '\0' != *p; p++) {
 			/* Only warn about this once... */
-			if (isalpha((u_char)*p) && ! isupper((u_char)*p)) {
+			if (isalpha((unsigned char)*p) && 
+					! isupper((unsigned char)*p)) {
 				man_nmsg(m, n, MANDOCERR_UPPERCASE);
 				break;
 			}

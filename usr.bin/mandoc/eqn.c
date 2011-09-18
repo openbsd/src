@@ -1,4 +1,4 @@
-/*	$Id: eqn.c,v 1.4 2011/09/18 10:25:28 schwarze Exp $ */
+/*	$Id: eqn.c,v 1.5 2011/09/18 15:54:48 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "mandoc.h"
 #include "libmandoc.h"

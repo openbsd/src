@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.85 2011/09/18 10:38:57 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.86 2011/09/18 15:54:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -723,11 +723,11 @@ has multiple heads.
 .Ed
 .Bl -column "MacroX" "CallableX" "ParsedX" "closed by XXXXXXXXXXX" -offset indent
 .It Em Macro Ta Em Callable Ta Em Parsed Ta Em Scope
-.It Sx \&It  Ta    \&No     Ta    Yes      Ta    closed by Sx \&It , Sx \&El
-.It Sx \&Nd  Ta    \&No     Ta    \&No     Ta    closed by Sx \&Sh
-.It Sx \&Nm  Ta    \&No     Ta  Yes Ta closed by Sx \&Nm , Sx \&Sh , Sx \&Ss
-.It Sx \&Sh  Ta    \&No     Ta    \&No     Ta    closed by Sx \&Sh
-.It Sx \&Ss  Ta    \&No     Ta    \&No     Ta    closed by Sx \&Sh , Sx \&Ss
+.It Sx \&It Ta \&No Ta Yes  Ta closed by Sx \&It , Sx \&El
+.It Sx \&Nd Ta \&No Ta \&No Ta closed by Sx \&Sh
+.It Sx \&Nm Ta \&No Ta Yes  Ta closed by Sx \&Nm , Sx \&Sh , Sx \&Ss
+.It Sx \&Sh Ta \&No Ta Yes  Ta closed by Sx \&Sh
+.It Sx \&Ss Ta \&No Ta Yes  Ta closed by Sx \&Sh , Sx \&Ss
 .El
 .Pp
 Note that the
@@ -2875,6 +2875,9 @@ custom sections be used.
 .Pp
 Section names should be unique so that they may be keyed by
 .Sx \&Sx .
+Although this macro is parsed, it should not consist of child node or it
+may not be linked with
+.Sx \&Sx .
 .Pp
 See also
 .Sx \&Pp ,
@@ -2919,6 +2922,9 @@ the conventional sections described in
 rarely have subsections.
 .Pp
 Sub-section names should be unique so that they may be keyed by
+.Sx \&Sx .
+Although this macro is parsed, it should not consist of child node or it
+may not be linked with
 .Sx \&Sx .
 .Pp
 See also

@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.41 2011/09/18 10:25:28 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.42 2011/09/18 15:54:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -32,7 +32,6 @@
 /* FIXME: have PD set the default vspace width. */
 
 #define	INDENT		  5
-#define	HALFINDENT	  3
 
 #define	MAN_ARGS	  const struct man_meta *m, \
 			  const struct man_node *n, \

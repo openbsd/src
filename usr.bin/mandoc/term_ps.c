@@ -1,4 +1,4 @@
-/*	$Id: term_ps.c,v 1.17 2011/05/29 21:22:18 schwarze Exp $ */
+/*	$Id: term_ps.c,v 1.18 2011/09/18 15:54:48 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -429,7 +429,8 @@ static struct termp *
 pspdf_alloc(char *outopts)
 {
 	struct termp	*p;
-	size_t		 pagex, pagey, marginx, marginy, lineheight;
+	unsigned int	 pagex, pagey;
+	size_t		 marginx, marginy, lineheight;
 	const char	*toks[2];
 	const char	*pp;
 	char		*v;
@@ -485,7 +486,7 @@ pspdf_alloc(char *outopts)
 		} else if (0 == strcasecmp(pp, "legal")) {
 			pagex = 216;
 			pagey = 356;
-		} else if (2 != sscanf(pp, "%zux%zu", &pagex, &pagey))
+		} else if (2 != sscanf(pp, "%ux%u", &pagex, &pagey))
 			fprintf(stderr, "%s: Unknown paper\n", pp);
 	} else if (NULL == pp)
 		pp = "letter";
@@ -513,8 +514,8 @@ pspdf_alloc(char *outopts)
 
 	lineheight = PNT2AFM(p, ((double)p->ps->scale * 1.4));
 
-	p->ps->width = pagex;
-	p->ps->height = pagey;
+	p->ps->width = (size_t)pagex;
+	p->ps->height = (size_t)pagey;
 	p->ps->header = pagey - (marginy / 2) - (lineheight / 2);
 	p->ps->top = pagey - marginy;
 	p->ps->footer = (marginy / 2) - (lineheight / 2);
