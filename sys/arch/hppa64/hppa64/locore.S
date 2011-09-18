@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.37 2011/08/17 20:49:07 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.38 2011/09/18 13:46:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -59,6 +59,9 @@
 
 	.text
 
+#define MFCPU(r,x)    .word   0x140008a0 | ((r) << 21) | ((x))
+#define MTCPU(x,r)    .word   0x14001840 | ((r) << 21) | ((x) << 16)
+		
 /*
  * $start(pdc, boothowto, bootdev, esym)
  */
@@ -89,6 +92,11 @@ $start
 	mtctl	%r0, %eiem
 	mtctl	%r1, %eirr
 	mtctl	%r0, %cr10	/* ccr */
+
+	/* disable space-ID hashing */
+	MFCPU(2,28)
+	depdi	0, 54, 1, %r28
+	MTCPU(28,2)
 
 	ldil	L%cpu0_info, %r1
 	ldo	R%cpu0_info(%r1), %r1
