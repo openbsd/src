@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.88 2011/08/20 06:21:32 mcbride Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.89 2011/09/18 11:17:57 miod Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -383,7 +383,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 		 */
 		ifv->ifv_if.if_mtu = p->if_mtu - EVL_ENCAPLEN;
 #ifdef DIAGNOSTIC
-		printf("%s: initialized with non-standard mtu %lu (parent %s)\n",
+		printf("%s: initialized with non-standard mtu %u (parent %s)\n",
 		    ifv->ifv_if.if_xname, ifv->ifv_if.if_mtu,
 		    ifv->ifv_p->if_xname);
 #endif

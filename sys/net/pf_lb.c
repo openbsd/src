@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.17 2011/07/29 10:48:35 mcbride Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.18 2011/09/18 11:17:57 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -560,7 +560,7 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 		pf_print_host(naddr, 0, af);
 		if ((rpool->opts & PF_POOL_TYPEMASK) ==
 		    PF_POOL_LEASTSTATES)
-			addlog(" with state count %d", states);
+			addlog(" with state count %llu", states);
 		if (((rpool->addr.type == PF_ADDR_TABLE &&
 		    rpool->addr.p.tbl->pfrkt_refcntcost > 0) ||
 		    (rpool->addr.type == PF_ADDR_DYNIFTL &&

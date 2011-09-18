@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.140 2011/07/18 21:03:10 mikeb Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.141 2011/09/18 11:17:57 miod Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1228,15 +1228,15 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 			    SEQ_GT(tsecr, dst->scrub->pfss_tsval) ? '2' : ' ',
 			    SEQ_LT(tsecr, dst->scrub->pfss_tsval0)? '3' : ' ');
 			DPFPRINTF(LOG_NOTICE,
-			    " tsval: %lu  tsecr: %lu  +ticks: %lu  "
+			    " tsval: %u  tsecr: %u  +ticks: %u  "
 			    "idle: %lus %lums",
 			    tsval, tsecr, tsval_from_last, delta_ts.tv_sec,
 			    delta_ts.tv_usec / 1000);
 			DPFPRINTF(LOG_NOTICE,
-			    " src->tsval: %lu  tsecr: %lu",
+			    " src->tsval: %u  tsecr: %u",
 			    src->scrub->pfss_tsval, src->scrub->pfss_tsecr);
 			DPFPRINTF(LOG_NOTICE,
-			    " dst->tsval: %lu  tsecr: %lu  tsval0: %lu",
+			    " dst->tsval: %u  tsecr: %u  tsval0: %u",
 			    dst->scrub->pfss_tsval, dst->scrub->pfss_tsecr,
 			    dst->scrub->pfss_tsval0);
 			if (pf_status.debug >= LOG_NOTICE) {
