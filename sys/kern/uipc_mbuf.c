@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.160 2011/07/08 18:48:50 henning Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.161 2011/09/18 23:20:38 miod Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1356,7 +1356,7 @@ m_print(void *v, int (*pr)(const char *, ...))
 		    m->m_pkthdr.pf.qid, m->m_pkthdr.pf.tag);
 		(*pr)("m_pkthdr.pf.prio:\t%u m_pkthdr.pf.tag: %hu\n",
 		    m->m_pkthdr.pf.prio, m->m_pkthdr.pf.tag);
-		(*pr)("m_pkthdr.pf.routed: %hhx\n", m->m_pkthdr.pf.routed);
+		(*pr)("m_pkthdr.pf.routed: %hx\n", m->m_pkthdr.pf.routed);
 	}
 	if (m->m_flags & M_EXT) {
 		(*pr)("m_ext.ext_buf: %p\tm_ext.ext_size: %u\n",
