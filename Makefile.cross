@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.46 2011/08/05 09:28:39 kettenis Exp $
+# $OpenBSD: Makefile.cross,v 1.47 2011/09/18 09:02:18 kettenis Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -73,8 +73,8 @@ CROSSGCC=	${CROSSDIR}/.gcc_done
 #NO_CROSS=	isakmpd keynote ssh
 
 GCC2_ARCH=m68k m88k sparc vax
-GCC4_ARCH=amd64 hppa hppa64 i386 mips64* powerpc sparc64
-BINUTILS217_ARCH=ia64 hppa64
+GCC4_ARCH=amd64 hppa hppa64 i386 ia64 mips64* powerpc sparc64
+BINUTILS217_ARCH=hppa64 ia64
 OLD_BINUTILS_ARCH=m68k m88k vax
 
 .for _arch in ${TARGET_ARCH}
