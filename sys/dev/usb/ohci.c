@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.104 2011/07/03 15:47:17 matthew Exp $ */
+/*	$OpenBSD: ohci.c,v 1.105 2011/09/18 18:29:20 krw Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -442,7 +442,7 @@ ohci_alloc_sed(ohci_softc_t *sc)
 	sed = sc->sc_freeeds;
 	sc->sc_freeeds = sed->next;
 	memset(&sed->ed, 0, sizeof(ohci_ed_t));
-	sed->next = 0;
+	sed->next = NULL;
 	return (sed);
 }
 
