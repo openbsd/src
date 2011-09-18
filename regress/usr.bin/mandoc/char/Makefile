@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.3 2011/07/24 20:26:52 schwarze Exp $
+# $OpenBSD: Makefile,v 1.4 2011/09/18 20:49:57 schwarze Exp $
 
-SUBDIR+= space N
+SUBDIR+= hyphen space N
 
 groff: _SUBDIRUSE
 

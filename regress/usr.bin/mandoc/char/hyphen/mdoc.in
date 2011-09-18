@@ -1,0 +1,14 @@
+.Dd September 18, 2011
+.Dt HYPHEN-MDOC 1
+.Os
+.Sh NAME
+.Nm hyphen-mdoc
+.Nd formatting hyphens and breaking lines
+.Sh DESCRIPTION
+This is a long line of text, such that the last word won't fit: break-here
+.Pp
+Try the same thing once same again, but now in italic font mode:
+\fIbreak-here\fP
+.Pp
+And finally, try it a third time, but this time in bold font mode:
+\fBbreak-here\fP

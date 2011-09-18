@@ -1,0 +1,11 @@
+.TH hyphen-man 1 "September 18, 2011"
+.SH NAME
+\fBhyphen-man\fR - formatting hyphens and breaking lines
+.SH DESCRIPTION
+This is a long line of text, such that the last word won't fit: break-here
+.PP
+Try the same thing once same again, but now in italic font mode:
+\fIbreak-here\fP
+.PP
+Finally, try it a third time, but this time in bold font mode:
+\fBbreak-here\fP
