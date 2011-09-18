@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.774 2011/09/17 16:01:55 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.775 2011/09/18 10:40:55 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5588,9 +5588,7 @@ pf_walk_header6(struct mbuf *m, struct ip6_hdr *h, int *off, int *extoff,
 
 int
 pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
-    u_short *action, u_short *reason, struct pfi_kif *kif, struct pf_rule **a,
-    struct pf_rule **r, struct pf_state **s, struct pf_ruleset **ruleset,
-    int *off, int *hdrlen)
+    u_short *action, u_short *reason, int *off, int *hdrlen)
 {
 	struct mbuf *m = *m0;
 
@@ -5749,19 +5747,6 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pf_pdesc *pd, struct mbuf **m0,
 	PF_ACPY(&pd->ndaddr, pd->dst, pd->af);
 
 	switch (pd->virtual_proto) {
-	case PF_VPROTO_FRAGMENT:
-		/*
-		 * handle fragments that aren't reassembled by
-		 * normalization
-		 */
-		if (kif == NULL || r == NULL)	/* pflog */
-			*action = PF_DROP;
-		else
-			*action = pf_test_rule(r, s, dir, kif,
-			    m, *off, pd, a, ruleset, *hdrlen);
-		if (*action != PF_PASS)
-			REASON_SET(reason, PFRES_FRAG);
-		return (-1);
 	case IPPROTO_TCP: {
 		struct tcphdr	*th = pd->hdr.tcp;
 
@@ -5935,8 +5920,8 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0,
 		return (PF_PASS);
 	}
 
-	if (pf_setup_pdesc(af, dir, &pd, m0, &action, &reason, kif, &a, &r, &s,
-	    &ruleset, &off, &hdrlen) == -1) {
+	if (pf_setup_pdesc(af, dir, &pd, m0, &action, &reason, &off, &hdrlen)
+	    == -1) {
 		if (action == PF_PASS)
 			return (PF_PASS);
 		m = *m0;
@@ -5946,7 +5931,19 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0,
 	pd.eh = eh;
 	m = *m0;	/* pf_setup_pdesc -> pf_normalize messes with m0 */
 
-	switch (pd.proto) {
+	switch (pd.virtual_proto) {
+
+	case PF_VPROTO_FRAGMENT: {
+		/*
+		 * handle fragments that aren't reassembled by
+		 * normalization
+		 */
+		action = pf_test_rule(&r, &s, dir, kif,
+		    m, off, &pd, &a, &ruleset, hdrlen);
+		if (action != PF_PASS)
+			REASON_SET(&reason, PFRES_FRAG);
+		break;
+	}
 
 	case IPPROTO_TCP: {
 		if ((pd.hdr.tcp->th_flags & TH_ACK) && pd.p_len == 0)
