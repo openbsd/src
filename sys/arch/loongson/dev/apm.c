@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.9 2011/07/02 22:20:07 nicm Exp $	*/
+/*	$OpenBSD: apm.c,v 1.10 2011/09/18 12:01:06 phessler Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -371,6 +371,7 @@ apm_suspend()
 		if (rv == 0)
 			rv = sys_platform->resume();
 	}
+	inittodr(time_second);	/* Move the clock forward */
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_RESUME);
 
 	cold = 0;
