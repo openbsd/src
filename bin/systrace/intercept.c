@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.56 2010/04/20 21:56:52 tedu Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.57 2011/09/18 23:24:14 matthew Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -589,6 +589,12 @@ intercept_get_string(int fd, pid_t pid, void *addr)
 char *
 intercept_filename(int fd, pid_t pid, void *addr, int userp, char *before)
 {
+	return (intercept_filenameat(fd, pid, AT_FDCWD, addr, userp, before));
+}
+
+char *
+intercept_filenameat(int fd, pid_t pid, int atfd, void *addr, int userp, char *before)
+{
 	char *name;
 
 	if ((name = intercept_get_string(fd, pid, addr)) == NULL)
@@ -597,7 +603,7 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp, char *before)
 	if (before != NULL)
 		strlcpy(before, name, MAXPATHLEN);
 
-	if ((name = normalize_filename(fd, pid, name, userp)) == NULL)
+	if ((name = normalize_filenameat(fd, pid, atfd, name, userp)) == NULL)
 		goto abort;
 
 	return (name);
@@ -615,6 +621,12 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp, char *before)
 char *
 normalize_filename(int fd, pid_t pid, char *name, int userp)
 {
+	return (normalize_filenameat(fd, pid, AT_FDCWD, name, userp));
+}
+
+char *
+normalize_filenameat(int fd, pid_t pid, int atfd, char *name, int userp)
+{
 	static char cwd[2*MAXPATHLEN];
 	int havecwd = 0;
 
@@ -625,7 +637,7 @@ normalize_filename(int fd, pid_t pid, char *name, int userp)
 	if (strcmp(name, "") == 0)
 		return (name);
 
-	if (fd != -1 && intercept.setcwd(fd, pid) == -1) {
+	if (fd != -1 && intercept.setcwd(fd, pid, atfd) == -1) {
 		if (errno == EBUSY)
 			return (NULL);
 	getcwderr:

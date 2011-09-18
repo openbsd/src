@@ -1,4 +1,4 @@
-/*	$OpenBSD: register.c,v 1.22 2006/08/14 07:24:55 ray Exp $	*/
+/*	$OpenBSD: register.c,v 1.23 2011/09/18 23:24:14 matthew Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -188,6 +188,81 @@ systrace_initcb(void)
 	intercept_register_translation("native", "mmap", 2, &ic_memprot);
 	X(intercept_register_sccb("native", "mprotect", trans_cb, NULL));
 	intercept_register_translation("native", "mprotect", 2, &ic_memprot);
+
+	X(intercept_register_sccb("native", "openat", trans_cb, NULL));
+	tl = intercept_register_translation("native", "openat", 1,
+	    &ic_translate_filenameat);
+	intercept_register_translation("native", "openat", 2, &ic_oflags);
+	alias = systrace_new_alias("native", "openat", "native", "fswrite");
+	systrace_alias_add_trans(alias, tl);
+
+	X(intercept_register_sccb("native", "mkdirat", trans_cb, NULL));
+	tl = intercept_register_translation("native", "mkdirat", 1,
+	    &ic_translate_unlinknameat);
+	alias = systrace_new_alias("native", "mkdirat", "native", "fswrite");
+	systrace_alias_add_trans(alias, tl);
+
+	X(intercept_register_sccb("native", "mkfifoat", trans_cb, NULL));
+	tl = intercept_register_translation("native", "mkfifoat", 1,
+	    &ic_translate_unlinknameat);
+	intercept_register_translation("native", "mkfifoat", 2, &ic_modeflags);
+	alias = systrace_new_alias("native", "mkfifoat", "native", "fswrite");
+	systrace_alias_add_trans(alias, tl);
+
+	X(intercept_register_sccb("native", "mknodat", trans_cb, NULL));
+	intercept_register_translation("native", "mknodat", 1,
+	    &ic_translate_unlinknameat);
+	intercept_register_translation("native", "mknodat", 2, &ic_modeflags);
+
+	X(intercept_register_sccb("native", "symlinkat", trans_cb, NULL));
+	intercept_register_transstring("native", "symlinkat", 0);
+	intercept_register_translation("native", "symlinkat", 2,
+	    &ic_translate_unlinknameat);
+
+	X(intercept_register_sccb("native", "faccessat", trans_cb, NULL));
+	tl = intercept_register_translation("native", "faccessat", 1,
+	    &ic_translate_filenameat);
+	alias = systrace_new_alias("native", "faccessat", "native", "fsread");
+	systrace_alias_add_trans(alias, tl);
+
+	X(intercept_register_sccb("native", "unlinkat", trans_cb, NULL));
+	tl = intercept_register_translation("native", "unlinkat", 1,
+	    &ic_translate_unlinknameat);
+	alias = systrace_new_alias("native", "unlinkat", "native", "fswrite");
+	systrace_alias_add_trans(alias, tl);
+
+	X(intercept_register_sccb("native", "readlinkat", trans_cb, NULL));
+	tl = intercept_register_translation("native", "readlinkat", 1,
+	    &ic_translate_unlinknameat);
+	alias = systrace_new_alias("native", "readlinkat", "native", "fsread");
+	systrace_alias_add_trans(alias, tl);
+
+	X(intercept_register_sccb("native", "renameat", trans_cb, NULL));
+	intercept_register_translation("native", "renameat", 1,
+	    &ic_translate_unlinknameat);
+	intercept_register_translation("native", "renameat", 3,
+	    &ic_translate_unlinknameat);
+
+	X(intercept_register_sccb("native", "fchownat", trans_cb, NULL));
+	intercept_register_translation("native", "fchownat", 1,
+	    &ic_translate_filenameatflag);
+	intercept_register_translation("native", "fchownat", 2, &ic_uidt);
+	intercept_register_translation("native", "fchownat", 3, &ic_gidt);
+	X(intercept_register_sccb("native", "fchmodat", trans_cb, NULL));
+	intercept_register_translation("native", "fchmodat", 1,
+	    &ic_translate_filenameatflag);
+	intercept_register_translation("native", "fchmodat", 2, &ic_modeflags);
+	X(intercept_register_sccb("native", "fstatat", trans_cb, NULL));
+	tl = intercept_register_translation("native", "fstatat", 1,
+	    &ic_translate_filenameatflag);
+	alias = systrace_new_alias("native", "fstatat", "native", "fsread");
+	systrace_alias_add_trans(alias, tl);
+
+	X(intercept_register_sccb("native", "linkat", trans_cb, NULL));
+	intercept_register_translation("native", "linkat", 1,
+	    &ic_translate_unlinknameatflag);
+	intercept_register_translation("native", "linkat", 3,
+	    &ic_translate_unlinknameat);
 
 	X(intercept_register_sccb("linux", "open", trans_cb, NULL));
 	tl = intercept_register_translink("linux", "open", 0);

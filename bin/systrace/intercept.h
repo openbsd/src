@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.h,v 1.24 2006/07/02 12:34:15 sturm Exp $	*/
+/*	$OpenBSD: intercept.h,v 1.25 2011/09/18 23:24:14 matthew Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -47,7 +47,7 @@ struct intercept_system {
 	int (*report)(int, pid_t);
 	int (*read)(int);
 	int (*getsyscallnumber)(const char *, const char *);
-	int (*setcwd)(int, pid_t);
+	int (*setcwd)(int, pid_t, int);
 	int (*restcwd)(int);
 	int (*io)(int, pid_t, int, void *, u_char *, size_t);
 	int (*getarg)(int, void *, int, void **);
@@ -118,10 +118,12 @@ struct intercept_translate {
 	int (*translate)(struct intercept_translate *, int, pid_t, void *);
 	int (*print)(char *, size_t, struct intercept_translate *);
 	int off2;
+	int offend;
 	int off;
 	u_char trans_valid;
 	void *trans_addr;
 	void *trans_addr2;
+	void *trans_addrend;
 	void *trans_data;
 	size_t trans_size;
 	char *trans_print;
@@ -184,6 +186,10 @@ extern struct intercept_translate ic_translate_string;
 extern struct intercept_translate ic_translate_filename;
 extern struct intercept_translate ic_translate_linkname;
 extern struct intercept_translate ic_translate_unlinkname;
+extern struct intercept_translate ic_translate_filenameat;
+extern struct intercept_translate ic_translate_unlinknameat;
+extern struct intercept_translate ic_translate_filenameatflag;
+extern struct intercept_translate ic_translate_unlinknameatflag;
 extern struct intercept_translate ic_translate_connect;
 extern struct intercept_translate ic_translate_sendmsg;
 
@@ -194,7 +200,9 @@ int intercept_existpids(void);
 
 char *intercept_get_string(int, pid_t, void *);
 char *normalize_filename(int, pid_t, char *, int);
+char *normalize_filenameat(int, pid_t, int, char *, int);
 char *intercept_filename(int, pid_t, void *, int, char *);
+char *intercept_filenameat(int, pid_t, int, void *, int, char *);
 void intercept_syscall(int, pid_t, u_int16_t, int, const char *, int,
     const char *, void *, int);
 void intercept_syscall_result(int, pid_t, u_int16_t, int, const char *, int,

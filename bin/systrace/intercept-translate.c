@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept-translate.c,v 1.13 2006/06/10 07:19:13 sturm Exp $	*/
+/*	$OpenBSD: intercept-translate.c,v 1.14 2011/09/18 23:24:14 matthew Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -33,6 +33,7 @@
 #include <sys/param.h>
 #include <sys/tree.h>
 #include <sys/socket.h>
+#include <fcntl.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdio.h>
@@ -75,7 +76,7 @@ int
 intercept_translate(struct intercept_translate *trans,
     int fd, pid_t pid, int off, void *args, int argsize)
 {
-	void *addr, *addr2;
+	void *addr, *addr2, *addrend;
 
 	ic_trans_free(trans);
 
@@ -86,6 +87,12 @@ intercept_translate(struct intercept_translate *trans,
 			args, argsize, &addr2) == -1)
 			return (-1);
 		trans->trans_addr2 = addr2;
+	}
+	if (trans->offend) {
+		if (intercept.getarg(argsize + trans->offend,
+		    args, argsize, &addrend) == -1)
+			return (-1);
+		trans->trans_addrend = addrend;
 	}
 
 	trans->trans_valid = 1;
@@ -205,6 +212,43 @@ ic_get_unlinkname(struct intercept_translate *trans, int fd, pid_t pid,
 	size_t len;
 
 	name = intercept_filename(fd, pid, addr, ICLINK_NOLAST, NULL);
+	if (name == NULL)
+		return (-1);
+
+	len = strlen(name) + 1;
+	trans->trans_data = malloc(len);
+	if (trans->trans_data == NULL)
+		return (-1);
+
+	trans->trans_size = len;
+	memcpy(trans->trans_data, name, len);
+	trans->trans_flags = ICTRANS_NOLINKS;
+
+	return (0);
+}
+
+static int
+ic_get_filenameat(struct intercept_translate *trans, int fd, pid_t pid,
+    void *addr)
+{
+	char *name;
+	size_t len;
+	int atfd = (intptr_t)trans->trans_addr2;
+	int follow = (intptr_t)trans->user;
+	int userp;
+
+	if (trans->offend) {
+		int flag = (intptr_t)trans->trans_addrend;
+		if ((flag & ~(AT_SYMLINK_FOLLOW | AT_SYMLINK_NOFOLLOW)) != 0)
+			return (-1);
+		if ((flag & follow) != 0)
+			return (-1);
+		if (flag != 0)
+			follow = flag;
+	}
+
+	userp = (follow == AT_SYMLINK_FOLLOW) ? ICLINK_ALL : ICLINK_NOLAST;
+	name = intercept_filenameat(fd, pid, atfd, addr, userp, NULL);
 	if (name == NULL)
 		return (-1);
 
@@ -357,6 +401,36 @@ struct intercept_translate ic_translate_linkname = {
 struct intercept_translate ic_translate_unlinkname = {
 	"filename",
 	ic_get_unlinkname, ic_print_filename,
+};
+
+struct intercept_translate ic_translate_filenameat = {
+	"filename",
+	ic_get_filenameat, ic_print_filename,
+	.off2 = -1,
+	.user = (void *)AT_SYMLINK_FOLLOW,
+};
+
+struct intercept_translate ic_translate_unlinknameat = {
+	"filename",
+	ic_get_filenameat, ic_print_filename,
+	.off2 = -1,
+	.user = (void *)AT_SYMLINK_NOFOLLOW,
+};
+
+struct intercept_translate ic_translate_filenameatflag = {
+	"filename",
+	ic_get_filenameat, ic_print_filename,
+	.off2 = -1,
+	.offend = -1,
+	.user = (void *)AT_SYMLINK_FOLLOW,
+};
+
+struct intercept_translate ic_translate_unlinknameatflag = {
+	"filename",
+	ic_get_filenameat, ic_print_filename,
+	.off2 = -1,
+	.offend = -1,
+	.user = (void *)AT_SYMLINK_NOFOLLOW,
 };
 
 struct intercept_translate ic_translate_connect = {

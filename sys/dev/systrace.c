@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.59 2011/07/11 15:40:47 guenther Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.60 2011/09/18 23:24:14 matthew Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -158,7 +158,7 @@ int	systrace_io(struct str_process *, struct systrace_io *);
 int	systrace_policy(struct fsystrace *, struct systrace_policy *);
 int	systrace_preprepl(struct str_process *, struct systrace_replace *);
 int	systrace_replace(struct str_process *, size_t, register_t []);
-int	systrace_getcwd(struct fsystrace *, struct str_process *);
+int	systrace_getcwd(struct fsystrace *, struct str_process *, int);
 int	systrace_fname(struct str_process *, caddr_t, size_t);
 void	systrace_replacefree(struct str_process *);
 
@@ -267,6 +267,7 @@ systracef_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 	struct filedesc *fdp;
 	struct str_process *strp;
 	pid_t pid = 0;
+	int atfd = -1;
 
 	switch (cmd) {
 	case FIONBIO:
@@ -299,11 +300,14 @@ systracef_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 		if (!pid)
 			ret = EINVAL;
 		break;
-	case STRIOCGETCWD:
-		pid = *(pid_t *)data;
+	case STRIOCGETCWD: {
+		struct systrace_getcwd *gd = (struct systrace_getcwd *)data;
+		pid = gd->strgd_pid;
 		if (!pid)
 			ret = EINVAL;
+		atfd = gd->strgd_atfd;
 		break;
+	}
 	case STRIOCATTACH:
 	case STRIOCRESCWD:
 	case STRIOCPOLICY:
@@ -386,7 +390,7 @@ systracef_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 		fst->fd_cdir = fst->fd_rdir = NULL;
 		break;
 	case STRIOCGETCWD:
-		ret = systrace_getcwd(fst, strp);
+		ret = systrace_getcwd(fst, strp, atfd);
 		break;
 	default:
 		ret = ENOTTY;
@@ -1107,9 +1111,10 @@ systrace_processready(struct str_process *strp)
 }
 
 int
-systrace_getcwd(struct fsystrace *fst, struct str_process *strp)
+systrace_getcwd(struct fsystrace *fst, struct str_process *strp, int atfd)
 {
 	struct filedesc *myfdp, *fdp;
+	struct vnode *dvp;
 	int error;
 
 	DPRINTF(("%s: %d\n", __func__, strp->pid));
@@ -1123,12 +1128,23 @@ systrace_getcwd(struct fsystrace *fst, struct str_process *strp)
 	if (myfdp == NULL || fdp == NULL)
 		return (EINVAL);
 
+	if (atfd == AT_FDCWD)
+		dvp = fdp->fd_cdir;
+	else {
+		struct file *fp = fd_getfile(fdp, atfd);
+		if (fp == NULL || fp->f_type != DTYPE_VNODE)
+			return (EINVAL);
+		dvp = (struct vnode *)fp->f_data;
+		if (dvp->v_type != VDIR)
+			return (EINVAL);
+	}
+
 	/* Store our current values */
 	fst->fd_pid = strp->pid;
 	fst->fd_cdir = myfdp->fd_cdir;
 	fst->fd_rdir = myfdp->fd_rdir;
 
-	if ((myfdp->fd_cdir = fdp->fd_cdir) != NULL)
+	if ((myfdp->fd_cdir = dvp) != NULL)
 		vref(myfdp->fd_cdir);
 	if ((myfdp->fd_rdir = fdp->fd_rdir) != NULL)
 		vref(myfdp->fd_rdir);

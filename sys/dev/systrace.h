@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.22 2011/06/22 01:32:16 djm Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.23 2011/09/18 23:24:14 matthew Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -167,6 +167,11 @@ struct systrace_inject {
 	pid_t   stri_pid;
 };
 
+struct systrace_getcwd {
+	pid_t	strgd_pid;
+	int	strgd_atfd;
+};
+
 #define STRIOCCLONE		_IOR('s', 100, int)
 #define SYSTR_CLONE		STRIOCCLONE
 #define STRIOCATTACH		_IOW('s', 101, pid_t)
@@ -174,7 +179,7 @@ struct systrace_inject {
 #define STRIOCANSWER		_IOW('s', 103, struct systrace_answer)
 #define STRIOCIO		_IOWR('s', 104, struct systrace_io)
 #define STRIOCPOLICY		_IOWR('s', 105, struct systrace_policy)
-#define STRIOCGETCWD		_IOW('s', 106, pid_t)
+#define STRIOCGETCWD		_IOW('s', 106, struct systrace_getcwd)
 #define STRIOCRESCWD		_IO('s', 107)
 #define STRIOCREPORT		_IOW('s', 108, pid_t)
 #define STRIOCREPLACE		_IOW('s', 109, struct systrace_replace)

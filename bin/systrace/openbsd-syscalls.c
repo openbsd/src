@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.40 2011/07/04 22:59:42 tedu Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.41 2011/09/18 23:24:14 matthew Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -110,7 +110,7 @@ static int obsd_assignpolicy(int, pid_t, int);
 static int obsd_modifypolicy(int, int, int, short);
 static int obsd_replace(int, pid_t, u_int16_t, struct intercept_replace *);
 static int obsd_io(int, pid_t, int, void *, u_char *, size_t);
-static int obsd_setcwd(int, pid_t);
+static int obsd_setcwd(int, pid_t, int);
 static int obsd_restcwd(int);
 static int obsd_argument(int, void *, int, void **);
 static int obsd_read(int);
@@ -488,9 +488,12 @@ obsd_io(int fd, pid_t pid, int op, void *addr, u_char *buf, size_t size)
 }
 
 static int
-obsd_setcwd(int fd, pid_t pid)
+obsd_setcwd(int fd, pid_t pid, int atfd)
 {
-	return (ioctl(fd, STRIOCGETCWD, &pid));
+	struct systrace_getcwd gd;
+	gd.strgd_pid = pid;
+	gd.strgd_atfd = atfd;
+	return (ioctl(fd, STRIOCGETCWD, &gd));
 }
 
 static int
