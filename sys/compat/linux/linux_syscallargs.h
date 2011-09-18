@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_syscallargs.h,v 1.66 2011/07/14 23:33:09 matthew Exp $	*/
+/*	$OpenBSD: linux_syscallargs.h,v 1.67 2011/09/18 02:26:28 pirofti Exp $	*/
 
 /*
  * System call argument lists.
@@ -568,6 +568,15 @@ struct linux_sys_fcntl64_args {
 	syscallarg(void *) arg;
 };
 
+struct linux_sys_futex_args {
+	syscallarg(int *) uaddr;
+	syscallarg(int) op;
+	syscallarg(int) val;
+	syscallarg(const struct linux_timespec *) timeout;
+	syscallarg(int *) uaddr2;
+	syscallarg(int) val3;
+};
+
 struct linux_sys_set_thread_area_args {
 	syscallarg(struct l_segment_descriptor *) desc;
 };
@@ -588,6 +597,17 @@ struct linux_sys_clock_gettime_args {
 struct linux_sys_clock_getres_args {
 	syscallarg(clockid_t) which;
 	syscallarg(struct l_timespec *) tp;
+};
+
+struct linux_sys_set_robust_list_args {
+	syscallarg(struct linux_robust_list_head *) head;
+	syscallarg(size_t) len;
+};
+
+struct linux_sys_get_robust_list_args {
+	syscallarg(int) pid;
+	syscallarg(struct linux_robust_list_head **) head;
+	syscallarg(size_t *) len;
 };
 
 /*
@@ -846,6 +866,7 @@ int	linux_sys_flistxattr(struct proc *, void *, register_t *);
 int	linux_sys_removexattr(struct proc *, void *, register_t *);
 int	linux_sys_lremovexattr(struct proc *, void *, register_t *);
 int	linux_sys_fremovexattr(struct proc *, void *, register_t *);
+int	linux_sys_futex(struct proc *, void *, register_t *);
 int	linux_sys_set_thread_area(struct proc *, void *, register_t *);
 int	linux_sys_get_thread_area(struct proc *, void *, register_t *);
 int	linux_sys_fadvise64(struct proc *, void *, register_t *);
@@ -853,3 +874,5 @@ int	sys_exit(struct proc *, void *, register_t *);
 int	linux_sys_set_tid_address(struct proc *, void *, register_t *);
 int	linux_sys_clock_gettime(struct proc *, void *, register_t *);
 int	linux_sys_clock_getres(struct proc *, void *, register_t *);
+int	linux_sys_set_robust_list(struct proc *, void *, register_t *);
+int	linux_sys_get_robust_list(struct proc *, void *, register_t *);

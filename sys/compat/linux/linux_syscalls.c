@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_syscalls.c,v 1.64 2011/07/14 23:33:09 matthew Exp $	*/
+/*	$OpenBSD: linux_syscalls.c,v 1.65 2011/09/18 02:26:28 pirofti Exp $	*/
 
 /*
  * System call names.
@@ -268,7 +268,7 @@ char *linux_syscallnames[] = {
 	"fremovexattr",			/* 237 = fremovexattr */
 	"#238 (unimplemented linux_sys_tkill)",		/* 238 = unimplemented linux_sys_tkill */
 	"#239 (unimplemented linux_sys_sendfile64)",		/* 239 = unimplemented linux_sys_sendfile64 */
-	"#240 (unimplemented linux_sys_futex)",		/* 240 = unimplemented linux_sys_futex */
+	"futex",			/* 240 = futex */
 	"#241 (unimplemented linux_sys_sched_setaffinity)",		/* 241 = unimplemented linux_sys_sched_setaffinity */
 	"#242 (unimplemented linux_sys_sched_getaffinity)",		/* 242 = unimplemented linux_sys_sched_getaffinity */
 	"set_thread_area",			/* 243 = set_thread_area */
@@ -339,6 +339,6 @@ char *linux_syscallnames[] = {
 	"#308 (unimplemented linux_sys_pselect6)",		/* 308 = unimplemented linux_sys_pselect6 */
 	"#309 (unimplemented linux_sys_ppoll)",		/* 309 = unimplemented linux_sys_ppoll */
 	"#310 (unimplemented linux_sys_unshare)",		/* 310 = unimplemented linux_sys_unshare */
-	"#311 (unimplemented linux_sys_set_robust_list)",		/* 311 = unimplemented linux_sys_set_robust_list */
-	"#312 (unimplemented linux_sys_get_robust_list)",		/* 312 = unimplemented linux_sys_get_robust_list */
+	"set_robust_list",			/* 311 = set_robust_list */
+	"get_robust_list",			/* 312 = get_robust_list */
 };

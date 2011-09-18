@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_sysent.c,v 1.65 2011/07/14 23:33:09 matthew Exp $	*/
+/*	$OpenBSD: linux_sysent.c,v 1.66 2011/09/18 02:26:28 pirofti Exp $	*/
 
 /*
  * System call switch table.
@@ -526,8 +526,8 @@ struct sysent linux_sysent[] = {
 	    sys_nosys },			/* 238 = unimplemented linux_sys_tkill */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 239 = unimplemented linux_sys_sendfile64 */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 240 = unimplemented linux_sys_futex */
+	{ 6, s(struct linux_sys_futex_args), 0,
+	    linux_sys_futex },			/* 240 = futex */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 241 = unimplemented linux_sys_sched_setaffinity */
 	{ 0, 0, 0,
@@ -668,9 +668,9 @@ struct sysent linux_sysent[] = {
 	    sys_nosys },			/* 309 = unimplemented linux_sys_ppoll */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 310 = unimplemented linux_sys_unshare */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 311 = unimplemented linux_sys_set_robust_list */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 312 = unimplemented linux_sys_get_robust_list */
+	{ 2, s(struct linux_sys_set_robust_list_args), 0,
+	    linux_sys_set_robust_list },	/* 311 = set_robust_list */
+	{ 3, s(struct linux_sys_get_robust_list_args), 0,
+	    linux_sys_get_robust_list },	/* 312 = get_robust_list */
 };
 

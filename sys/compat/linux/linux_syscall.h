@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_syscall.h,v 1.64 2011/07/14 23:33:09 matthew Exp $	*/
+/*	$OpenBSD: linux_syscall.h,v 1.65 2011/09/18 02:26:28 pirofti Exp $	*/
 
 /*
  * System call numbers.
@@ -718,6 +718,9 @@
 /* syscall: "fremovexattr" ret: "int" args: */
 #define	LINUX_SYS_fremovexattr	237
 
+/* syscall: "futex" ret: "int" args: "int *" "int" "int" "const struct linux_timespec *" "int *" "int" */
+#define	LINUX_SYS_futex	240
+
 /* syscall: "set_thread_area" ret: "int" args: "struct l_segment_descriptor *" */
 #define	LINUX_SYS_set_thread_area	243
 
@@ -738,5 +741,11 @@
 
 /* syscall: "clock_getres" ret: "int" args: "clockid_t" "struct l_timespec *" */
 #define	LINUX_SYS_clock_getres	266
+
+/* syscall: "set_robust_list" ret: "int" args: "struct linux_robust_list_head *" "size_t" */
+#define	LINUX_SYS_set_robust_list	311
+
+/* syscall: "get_robust_list" ret: "int" args: "int" "struct linux_robust_list_head **" "size_t *" */
+#define	LINUX_SYS_get_robust_list	312
 
 #define	LINUX_SYS_MAXSYSCALL	313
