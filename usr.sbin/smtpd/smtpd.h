@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.239 2011/09/18 21:37:53 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.240 2011/09/19 13:10:47 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -86,7 +86,7 @@
 #define FAST_RESPONSES		2
 
 /* max len of any smtp line */
-#define	SMTP_LINE_MAX		16384
+#define	SMTP_LINE_MAX		1024
 
 #define F_STARTTLS		 0x01
 #define F_SMTPS			 0x02
@@ -395,7 +395,7 @@ struct delivery {
 
 	char				helo[MAXHOSTNAMELEN];
 	char				hostname[MAXHOSTNAMELEN];
-	char				errorline[MAX_LINE_SIZE];
+	char				errorline[MAX_LINE_SIZE + 1];
 	struct sockaddr_storage		ss;
 
 	struct mailaddr			from;
@@ -523,7 +523,7 @@ struct listener {
 struct auth {
 	u_int64_t	 id;
 	char		 user[MAXLOGNAME];
-	char		 pass[MAX_LINE_SIZE];
+	char		 pass[MAX_LINE_SIZE + 1];
 	int		 success;
 };
 
@@ -731,8 +731,8 @@ struct submit_status {
 		struct mailaddr		 maddr;
 		u_int32_t		 msgid;
 		u_int64_t		 evpid;
-		char			 errormsg[MAX_LINE_SIZE];
-		char			 dataline[MAX_LINE_SIZE];
+		char			 errormsg[MAX_LINE_SIZE + 1];
+		char			 dataline[MAX_LINE_SIZE + 1];
 	}				 u;
 	enum delivery_flags		 flags;
 	struct sockaddr_storage		 ss;
