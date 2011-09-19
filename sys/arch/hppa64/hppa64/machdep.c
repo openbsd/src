@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.41 2011/09/18 14:14:48 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.42 2011/09/19 13:21:15 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -382,7 +382,6 @@ cpu_startup(void)
 	    ptoa((psize_t)physmem) / 1024 / 1024);
 	printf("rsvd mem = %u (%uKB)\n", ptoa(resvmem), ptoa(resvmem) / 1024);
 
-printf("here3\n");
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -391,14 +390,12 @@ printf("here3\n");
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
-printf("here4\n");
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
-printf("here5\n");
 	printf("avail mem = %lu (%luMB)\n", ptoa(uvmexp.free),
 	    ptoa(uvmexp.free) / 1024 / 1024);
 
@@ -408,7 +405,6 @@ printf("here5\n");
 	bufinit();
 	vmmap = uvm_km_valloc_wait(kernel_map, NBPG);
 
-printf("here6\n");
 	/*
 	 * Configure the system.
 	 */
@@ -416,10 +412,9 @@ printf("here6\n");
 #ifdef BOOT_CONFIG
 		user_config();
 #else
-		printf("kernel does not support -c; continuing..\n");
+		printf("kernel does not support -c; continuing...\n");
 #endif
 	}
-printf("here7\n");
 }
 
 /*
@@ -446,7 +441,6 @@ delay_init(void)
 			mdelta = delta;
 		}
 	}
-printf("nom=%lu denom=%lu\n", cpu_ticksnum, cpu_ticksdenom);
 }
 
 void
