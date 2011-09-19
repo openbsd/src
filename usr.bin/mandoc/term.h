@@ -1,4 +1,4 @@
-/*	$Id: term.h,v 1.31 2011/09/18 10:25:28 schwarze Exp $ */
+/*	$Id: term.h,v 1.32 2011/09/19 22:36:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -64,7 +64,6 @@ struct	termp {
 	int		  flags;
 #define	TERMP_SENTENCE	 (1 << 1)	/* Space before a sentence. */
 #define	TERMP_NOSPACE	 (1 << 2)	/* No space before words. */
-#define	TERMP_NOLPAD	 (1 << 3)	/* See term_flushln(). */
 #define	TERMP_NOBREAK	 (1 << 4)	/* See term_flushln(). */
 #define	TERMP_IGNDELIM	 (1 << 6)	/* Delims like regulars. */
 #define	TERMP_NONOSPACE	 (1 << 7)	/* No space (no autounset). */
