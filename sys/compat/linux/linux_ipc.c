@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_ipc.c,v 1.12 2011/09/19 22:49:37 pirofti Exp $	*/
+/*	$OpenBSD: linux_ipc.c,v 1.13 2011/09/19 23:28:12 pirofti Exp $	*/
 /*	$NetBSD: linux_ipc.c,v 1.10 1996/04/05 00:01:44 christos Exp $	*/
 
 /*
@@ -728,12 +728,12 @@ linux_sys_pipe2(struct proc *p, void *v, register_t *retval)
 
 	/*
 	 * We don't really support pipe2, but glibc falls back to pipe
-	 * we return signal that.
+	 * if we signal that.
 	 * /
 	if (SCARG(uap, flags) != 0)
 		return ENOSYS;
 
-	/* If no flag is set then the this is a plain pipe call. */
+	/* If no flag is set then this is a plain pipe call. */
 	SCARG(&pargs, fdp) = SCARG(uap, fdp);
 	return sys_pipe(p, &pargs, retval);
 }
