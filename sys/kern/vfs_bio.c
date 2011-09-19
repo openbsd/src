@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.133 2011/07/06 20:50:05 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.134 2011/09/19 14:48:04 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -143,9 +143,9 @@ bremfree(struct buf *bp)
 		bcstats.numcleanpages -= atop(bp->b_bufsize);
 	} else {
 		bcstats.numdirtypages -= atop(bp->b_bufsize);
+		bcstats.delwribufs--;
 	}
 	TAILQ_REMOVE(dp, bp, b_freelist);
-	bcstats.freebufs--;
 }
 
 void
@@ -818,6 +818,7 @@ brelse(struct buf *bp)
 			bufq = &bufqueues[BQ_CLEAN];
 		} else {
 			bcstats.numdirtypages += atop(bp->b_bufsize);
+			bcstats.delwribufs++;
 			bufq = &bufqueues[BQ_DIRTY];
 		}
 		if (ISSET(bp->b_flags, B_AGE)) {
@@ -830,7 +831,6 @@ brelse(struct buf *bp)
 	}
 
 	/* Unlock the buffer. */
-	bcstats.freebufs++;
 	CLR(bp->b_flags, (B_AGE | B_ASYNC | B_NOCACHE | B_DEFERRED));
 	buf_release(bp);
 
@@ -1118,8 +1118,8 @@ buf_daemon(struct proc *p)
 				SET(bp->b_flags, B_DEFERRED);
 				s = splbio();
 				bcstats.numdirtypages += atop(bp->b_bufsize);
+				bcstats.delwribufs++;
 				binstailfree(bp, &bufqueues[BQ_DIRTY]);
-				bcstats.freebufs++;
 				buf_release(bp);
 				continue;
 			}
@@ -1231,10 +1231,12 @@ void
 bcstats_print(int (*pr)(const char *, ...))
 {
 	(*pr)("Current Buffer Cache status:\n");
-	(*pr)("numbufs %lld, freebufs %lld\n",
-	    bcstats.numbufs, bcstats.freebufs);
-    	(*pr)("bufpages %lld, freepages %lld, dirtypages %lld\n",
-	    bcstats.numbufpages, bcstats.numfreepages, bcstats.numdirtypages);
+	(*pr)("numbufs %lld busymapped %lld, delwri %lld\n",
+	    bcstats.numbufs, bcstats.busymapped, bcstats.delwribufs);
+	(*pr)("kvaslots %lld avail kva slots %lld\n",
+	    bcstats.kvaslots, bcstats.kvaslots_avail);
+    	(*pr)("bufpages %lld, dirtypages %lld\n",
+	    bcstats.numbufpages,  bcstats.numdirtypages);
 	(*pr)("pendingreads %lld, pendingwrites %lld\n",
 	    bcstats.pendingreads, bcstats.pendingwrites);
 }

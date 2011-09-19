@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.17 2011/04/07 19:07:42 beck Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.18 2011/09/19 14:48:04 beck Exp $ */
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -62,6 +62,9 @@ buf_mem_init(vsize_t size)
 		panic("bufinit: can't reserve VM for buffers");
 	buf_kva_end = buf_kva_start + size;
 
+	/* Contiguous mapping */
+	bcstats.kvaslots = bcstats.kvaslots_avail = size / MAXPHYS;
+
 	buf_object = &buf_object_store;
 
 	uvm_objinit(buf_object, NULL, 1);
@@ -118,6 +121,7 @@ buf_map(struct buf *bp)
 		if (buf_kva_start < buf_kva_end) {
 			va = buf_kva_start;
 			buf_kva_start += MAXPHYS;
+			bcstats.kvaslots_avail--;
 		} else {
 			struct buf *vbp;
 
@@ -145,6 +149,7 @@ buf_map(struct buf *bp)
 		bp->b_data = (caddr_t)va;
 	} else {
 		TAILQ_REMOVE(&buf_valist, bp, b_valist);
+		bcstats.kvaslots_avail--;
 	}
 
 	bcstats.busymapped++;
@@ -164,6 +169,7 @@ buf_release(struct buf *bp)
 	if (bp->b_data) {
 		bcstats.busymapped--;
 		TAILQ_INSERT_TAIL(&buf_valist, bp, b_valist);
+		bcstats.kvaslots_avail++;
 		if (buf_needva) {
 			buf_needva--;
 			wakeup_one(&buf_needva);
@@ -211,13 +217,14 @@ buf_dealloc_mem(struct buf *bp)
 	}
 
 	bp->b_data = data;
-	if (!(bp->b_flags & B_BUSY))		/* XXX - need better test */
+	if (!(bp->b_flags & B_BUSY)) {		/* XXX - need better test */
 		TAILQ_REMOVE(&buf_valist, bp, b_valist);
-	else
+		bcstats.kvaslots_avail--;
+	} else
 		CLR(bp->b_flags, B_BUSY);
 	SET(bp->b_flags, B_RELEASED);
 	TAILQ_INSERT_HEAD(&buf_valist, bp, b_valist);
-
+	bcstats.kvaslots_avail++;
 	splx(s);
 
 	return (1);
@@ -253,6 +260,7 @@ buf_unmap(struct buf *bp)
 
 	s = splbio();
 	TAILQ_REMOVE(&buf_valist, bp, b_valist);
+	bcstats.kvaslots_avail--;
 	va = (vaddr_t)bp->b_data;
 	bp->b_data = 0;
 	pmap_kremove(va, bp->b_bufsize);
