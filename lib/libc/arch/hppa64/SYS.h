@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.5 2011/09/19 08:10:13 kettenis Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.6 2011/09/19 13:01:28 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -46,7 +46,8 @@ EXIT(__CONCAT(_thread_sys_,x))
 	ble	4(%sr7, %r1)			!\
 	ldi	__CONCAT(SYS_,x), %r1		!\
 	.import	__cerror, code			!\
-	comb,<>	%r0, %r1, __cerror		!\
+	sub,*=	%r0, %r1, %r0			!\
+	b,l	__cerror, %rp			!\
 	ldd	HPPA_FRAME_RP(%sr0,%sp), %rp
 
 #define	PSEUDO(x,y)				!\
