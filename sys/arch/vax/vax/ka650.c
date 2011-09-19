@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka650.c,v 1.20 2011/09/15 00:48:24 miod Exp $	*/
+/*	$OpenBSD: ka650.c,v 1.21 2011/09/19 21:53:02 miod Exp $	*/
 /*	$NetBSD: ka650.c,v 1.25 2001/04/27 15:02:37 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -88,8 +88,6 @@ struct	cpu_dep	ka650_calls = {
 void
 uvaxIII_conf()
 {
-	int syssub = GETSYSSUBT(vax_siedata);
-
 	/*
 	 * MicroVAX III: We map in memory error registers,
 	 * cache control registers, SSC registers,
@@ -103,8 +101,8 @@ uvaxIII_conf()
 	    (KA650_CACHESIZE/VAX_NBPG));
 
 	printf("cpu: KA6%d%d, CVAX microcode rev %d Firmware rev %d\n",
-	    syssub == VAX_SIE_KA640 ? 4 : 5,
-	    syssub == VAX_SIE_KA655 ? 5 : 0,
+	    vax_cpustype == VAX_STYP_640 ? 4 : 5,
+	    vax_cpustype == VAX_STYP_655 ? 5 : 0,
 	    (vax_cpudata & 0xff), GETFRMREV(vax_siedata));
 	ka650setcache(CACHEON);
 	if (ptoa(physmem) > ka650merr_ptr->merr_qbmbr) {
@@ -229,14 +227,13 @@ uvaxIII_mchk(cmcf)
 void
 ka650setcache(int state)
 {
-	int syssub = GETSYSSUBT(vax_siedata);
 	int i;
 
 	/*
 	 * Before doing anything, disable the cache.
 	 */
 	mtpr(0, PR_CADR);
-	if (syssub != VAX_SIE_KA640)
+	if (vax_cpustype != VAX_STYP_640)
 		ka650cbd_ptr->cbd_cacr = CACR_CPE;
 
 	/*
@@ -244,7 +241,7 @@ ka650setcache(int state)
 	 */
 	if (state == CACHEON) {
 		mtpr(CADR_SEN2 | CADR_SEN1 | CADR_CENI | CADR_CEND, PR_CADR);
-		if (syssub != VAX_SIE_KA640) {
+		if (vax_cpustype != VAX_STYP_640) {
 			for (i = 0;
 			    i < (KA650_CACHESIZE / sizeof(KA650_CACHE_ptr[0]));
 			    i += 2)

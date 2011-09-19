@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.6 2008/08/18 23:20:44 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.7 2011/09/19 21:53:02 miod Exp $ */
 /*	$NetBSD: if_le.c,v 1.6 2000/05/20 13:30:03 ragge Exp $ */
 /*
  * Copyright (c) 1997, 1999 Ludd, University of Lule}, Sweden.
@@ -148,7 +148,7 @@ leopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 	next_rdesc = next_tdesc = 0;
 
 	if (vax_boardtype == VAX_BTYP_650 &&
-	    ((vax_siedata >> 8) & 0xff) == VAX_SIE_KA640) {
+	    vax_cpustype == VAX_STYP_640) {
 		lebufaddr = 0x20120000;
 		ea = (void *)0x20084200;
 		nireg = (void *)0x20084400;

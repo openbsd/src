@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka48.c,v 1.13 2011/09/15 00:48:24 miod Exp $	*/
+/*	$OpenBSD: ka48.c,v 1.14 2011/09/19 21:53:02 miod Exp $	*/
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -88,7 +88,7 @@ void
 ka48_conf()
 {
 	char *cpuname;
-	switch((vax_siedata >> 8) & 0xFF) {
+	switch (vax_cpustype) {
 	case VAX_STYP_45:
 		cpuname = "KA45";
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka53.c,v 1.9 2011/09/15 00:48:24 miod Exp $	*/
+/*	$OpenBSD: ka53.c,v 1.10 2011/09/19 21:53:02 miod Exp $	*/
 /*	$NetBSD: ka53.c,v 1.2 2000/06/04 02:19:27 matt Exp $	*/
 /*
  * Copyright (c) 2002 Hugh Graham.
@@ -82,7 +82,7 @@ ka53_conf()
 
 	cpmbx = (struct cpmbx *)vax_map_physmem(0x20140400, 1);
 
-	switch((vax_siedata >> 8) & 0xFF) {
+	switch (vax_cpustype) {
 	case VAX_STYP_50:
 		cpuname = "KA50";
 		break;

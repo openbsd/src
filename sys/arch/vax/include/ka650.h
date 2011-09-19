@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka650.h,v 1.11 2008/08/18 23:07:24 miod Exp $	*/
+/*	$OpenBSD: ka650.h,v 1.12 2011/09/19 21:53:02 miod Exp $	*/
 /*	$NetBSD: ka650.h,v 1.6 1997/07/26 10:12:43 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -171,7 +171,5 @@ struct ka650_ipcr {
 /*
  * Some useful macros
  */
-#define	GETCPUTYPE(x)	((x >> 24) & 0xff)
-#define	GETSYSSUBT(x)	((x >> 8) & 0xff)
 #define	GETFRMREV(x)	((x >> 16) & 0xff)
 #define	GETCODREV(x)	(x & 0xff)

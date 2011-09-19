@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzcons.c,v 1.5 2011/09/11 19:29:01 miod Exp $	*/
+/*	$OpenBSD: dzcons.c,v 1.6 2011/09/19 21:53:00 miod Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -124,7 +124,7 @@ dz_can_have_kbd()
 			return (1);
 		break;
 	case VAX_BTYP_48:
-		if (((vax_siedata >> 8) & 0xff) == VAX_STYP_48)
+		if (vax_cpustype == VAX_STYP_48)
 			return (1);
 		break;
 

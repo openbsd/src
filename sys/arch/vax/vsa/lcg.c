@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcg.c,v 1.18 2011/09/11 14:00:34 miod Exp $	*/
+/*	$OpenBSD: lcg.c,v 1.19 2011/09/19 21:53:02 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -176,7 +176,7 @@ lcg_match(struct device *parent, void *vcf, void *aux)
 			return (0);
 		break;
 	case VAX_BTYP_48:
-		if (((vax_siedata >> 8) & 0xff) != VAX_STYP_48)
+		if (vax_cpustype != VAX_STYP_48)
 			return (0);
 		/* KA48 can't boot without the frame buffer board */
 		break;
@@ -727,7 +727,7 @@ lcgcnprobe()
 			return (0);	/* no frame buffer */
 		break;
 	case VAX_BTYP_48:
-		if (((vax_siedata >> 8) & 0xff) != VAX_STYP_48)
+		if (vax_cpustype != VAX_STYP_48)
 			return (0);
 		break;
 	default:

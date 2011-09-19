@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.119 2011/07/09 00:47:18 henning Exp $ */
+/* $OpenBSD: machdep.c,v 1.120 2011/09/19 21:53:02 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -1109,7 +1109,7 @@ start(struct rpb *prpb)
 	case VAX_BTYP_420: /* They are very similar */
 		dep_call = &ka410_calls;
 		strlcat(cpu_model, "3100", sizeof cpu_model);
-		switch ((vax_siedata >> 8) & 0xff) {
+		switch (vax_cpustype) {
 		case 0x00:
 			strlcat(cpu_model, "/m{30,40}", sizeof cpu_model);
 			break;
@@ -1136,7 +1136,7 @@ start(struct rpb *prpb)
 #if VAX46
 	case VAX_BTYP_46:
 		dep_call = &ka46_calls;
-		switch(vax_siedata & 0xff) {
+		switch (vax_siedata & 0xff) {
 		case VAX_VTYP_47:
 			strlcpy(cpu_model, "MicroVAX 3100 m80", sizeof cpu_model);
 			break;
@@ -1157,7 +1157,7 @@ start(struct rpb *prpb)
 #if VAX48
 	case VAX_BTYP_48:
 		dep_call = &ka48_calls;
-		switch ((vax_siedata >> 8) & 0xff) {
+		switch (vax_cpustype) {
 		case VAX_STYP_45:
 			strlcpy(cpu_model, "MicroVAX 3100/m{30,40}", sizeof cpu_model);
 			break;
@@ -1178,7 +1178,7 @@ start(struct rpb *prpb)
 #if VAX53
 	case VAX_BTYP_1303:	
 		dep_call = &ka53_calls;
-		switch ((vax_siedata >> 8) & 0xff) {
+		switch (vax_cpustype) {
 		case VAX_STYP_50:
 			strlcpy(cpu_model, "MicroVAX 3100 model 85 or 90", sizeof cpu_model);
 			break;
@@ -1206,16 +1206,16 @@ start(struct rpb *prpb)
 	case VAX_BTYP_650:
 		dep_call = &ka650_calls;
 		strlcpy(cpu_model,"MicroVAX ", sizeof cpu_model);
-		switch ((vax_siedata >> 8) & 255) {
-		case VAX_SIE_KA640:
+		switch (vax_cpustype) {
+		case VAX_STYP_640:
 			strlcat(cpu_model, "3300/3400", sizeof cpu_model);
 			break;
 
-		case VAX_SIE_KA650:
+		case VAX_STYP_650:
 			strlcat(cpu_model, "3500/3600", sizeof cpu_model);
 			break;
 
-		case VAX_SIE_KA655:
+		case VAX_STYP_655:
 			strlcat(cpu_model, "3800/3900", sizeof cpu_model);
 			break;
 
@@ -1241,7 +1241,7 @@ start(struct rpb *prpb)
 	case VAX_BTYP_1301:
 		dep_call = &ka680_calls;
 		strlcpy(cpu_model,"VAX 4000 ", sizeof cpu_model);
-		switch ((vax_siedata >> 8) & 0xff) {
+		switch (vax_cpustype) {
 		case VAX_STYP_675:
 			strlcat(cpu_model,"400", sizeof cpu_model);
 			break;
@@ -1258,7 +1258,7 @@ start(struct rpb *prpb)
 	case VAX_BTYP_1305:
 		dep_call = &ka680_calls;
 		strlcpy(cpu_model,"VAX 4000 ", sizeof cpu_model);
-		switch ((vax_siedata >> 8) & 0xff) {
+		switch (vax_cpustype) {
 		case VAX_STYP_681:
 			strlcat(cpu_model,"500A", sizeof cpu_model);
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.20 2011/07/06 18:32:59 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.21 2011/09/19 21:53:02 miod Exp $ */
 /*	$NetBSD: boot.c,v 1.18 2002/05/31 15:58:26 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -99,7 +99,7 @@ Xmain(void)
 	if (((vax_boardtype == VAX_BTYP_46 &&
 	      (vax_siedata & 0xff) == VAX_VTYP_46) ||
 	     (vax_boardtype == VAX_BTYP_48 &&
-	      ((vax_siedata >> 8) & 0xff) == VAX_STYP_48)) &&
+	      vax_cpustype == VAX_STYP_48)) &&
 	    (vax_confdata & 0x100) == 0)
 		transition = ' ';
 

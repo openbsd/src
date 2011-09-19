@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibus.c,v 1.8 2006/07/20 19:55:20 miod Exp $	*/
+/*	$OpenBSD: ibus.c,v 1.9 2011/09/19 21:53:02 miod Exp $	*/
 /*	$NetBSD: ibus.c,v 1.7 2001/02/04 20:36:32 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
@@ -112,10 +112,9 @@ ibus_attach(parent, self, aux)
 	bp.type = "shac";
 	/*
 	 * XXX Clearly the address on Cheetah machines varies between models,
-	 * XXX but I could only check the address on a 4000 105A so far. -- miod
+	 * XXX but I could only check the address on a 4000 106 so far. -- miod
 	 */
-	if (vax_boardtype == VAX_BTYP_1303 &&
-	    ((vax_siedata >> 8) & 0xFF) != VAX_STYP_53)
+	if (vax_boardtype == VAX_BTYP_1303 && vax_cpustype != VAX_STYP_53)
 		va = vax_map_physmem(SHAC1303ADDR, 1);
 	else
 		va = vax_map_physmem(SHACADDR, 1);

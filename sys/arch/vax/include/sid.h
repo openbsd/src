@@ -1,4 +1,4 @@
-/*	$OpenBSD: sid.h,v 1.15 2006/07/19 20:22:36 miod Exp $	*/
+/*	$OpenBSD: sid.h,v 1.16 2011/09/19 21:53:02 miod Exp $	*/
 /*	$NetBSD: sid.h,v 1.12 1999/12/11 17:55:13 ragge Exp $	*/
 
 /*
@@ -30,15 +30,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/*
- * Board-Type (?_BTYP_?) and Sub-Type (?_STYP_?) are synonyms.
- * Michael Kukat changed this 01/27/2001, STYP is relly a subtype now.
- * other synonyms are:
- */
-#define cpudata	    vax_cpudata
-#define cputype	    vax_cputype
-#define cpusubtype  vax_boardtype
 
 /*
  * Chip CPU types / chip CPU Subtypes
@@ -78,7 +69,6 @@
  * MicroVAX I (1984)
  */
 #define VAX_TYP_UV1	7	/* MicroVAX I, VAXstation I */
-     /* VAX_TYP_610	7 */
  
 #define VAX_BTYP_610	0x07000000	/* generic MicroVAX-I */
  
@@ -86,7 +76,6 @@
  * MicroVAX II series (1985)
  */
 #define VAX_TYP_UV2	8
-     /* VAX_TYP_78032	8 */
  
 #define VAX_BTYP_630	0x08000001	/* MicroVAX II, VAXstation II */
 #define VAX_BTYP_410	0x08000004	/* MicroVAX 2000, VAXstation 2000 */
@@ -95,34 +84,24 @@
  * CVAX chip series (1987)
  */
 #define VAX_TYP_CVAX	10
-     /* VAX_TYP_650	10 */
 
- 
-#define VAX_BTYP_650	0x0A000001	/* MicroVAX 3500, 3600 */
-     /* VAX_BTYP_65D	0x0A000001	   VAXstation 3200, 3500 XXX */
-     /* VAX_BTYP_640	0x0A000001	   MicroVAX 3300, 3400 XXX */
-     /* VAX_BTYP_655	0x0A000001	   MicroVAX 3800, 3900 XXX */
+#define VAX_BTYP_650	0x0A000001	/* MicroVAX 3[345689]00 */
+#define	VAX_STYP_650	0x1		/* MicroVAX 3500, 3600 */
+#define	VAX_STYP_640	0x2		/* MicroVAX 3300, 3400 */
+#define	VAX_STYP_655	0x3		/* MicroVAX 3800, 3900 */
 #define VAX_BTYP_9CC	0x0A000002	/* VAX 6000 model 210/310 */
 #define VAX_BTYP_60	0x0A000003	/* VAXstation 3520, 3540 */
 #define VAX_BTYP_420	0x0A000004	/* VAXstation 3100 models 10 - 48 */
 #define	VAX_BTYP_IS1	0x0A000006	/* Infoserver 1000 */
-#define VAX_BTYP_510	0x0A000007	/* VAXft model 110 */
-     /* VAX_BTYP_520	0x0A000007	   VAXft model 310 */
+#define VAX_BTYP_5x0	0x0A000007	/* VAXft model 110, 310 */
 
-/*
- * SID Extension register definitions for CVAX series
- */
-#define	VAX_SIE_KA640	0x2		/* KA640 MicroVAX 3300, 3400 */
-#define	VAX_SIE_KA650	0x1		/* KA650 MicroVAX 3500, 3600 */
-#define	VAX_SIE_KA655	0x3		/* KA655 MicroVAX 3800, 3900 */
- 
 /*
  * Rigel chip series (1990)
  */
 #define VAX_TYP_RIGEL	11
-     /* VAX_TYP_9RR	11 */
  
-#define VAX_BTYP_670	0x0B000001	/* VAX 4000 model 300 */
+#define VAX_BTYP_670	0x0B000001	/* VAX 4000 300 */
+#define	VAX_STYP_670	0x4		/* VAX 4000 300 */
 #define VAX_BTYP_9RR	0x0B000002	/* VAX 6000 model 410-460 */
 #define VAX_BTYP_43	0x0B000004	/* VAXstation 3100 model 76 */
  
@@ -130,9 +109,6 @@
  * Aquarius series (1990)
  */
 #define VAX_TYP_9000	14
- 
-#define VAX_BTYP_9AR	0x0E00000?	/* VAX 9000 models 210, 410-440 */
-#define VAX_BTYP_9AQ	0x0E00000?	/* VAX 9000 models 400-800 */
  
 /*
  * Polarstar series (1988)
@@ -145,9 +121,7 @@
  * Mariah chip series (1991)
  */
 #define VAX_TYP_MARIAH	18
-#define VAX_TYP_V12	18
  
-#define VAX_BTYP_690	0x12000001	/* VAX 4000 model 400 */
 #define VAX_BTYP_1202	0x12000002	/* VAX 6000 model 510-560 */
 
 #define VAX_BTYP_46	0x12000004	/* VAXstation 4000/60, 3100/80 */
@@ -158,13 +132,11 @@
  * NVAX chip series (1991)
  */
 #define VAX_TYP_NVAX	19
-#define VAX_TYP_V13	19
  
-#define VAX_BTYP_1301	0x13000001	/* VAX 4000 model [4-6]00 */
+#define VAX_BTYP_1301	0x13000001	/* Omega machines */
 #define VAX_STYP_675	0x00000c	/* VAX 4000 model 400 */
 #define VAX_STYP_680	0x000006	/* VAX 4000 model 500 */
 #define VAX_STYP_690	0x000007	/* VAX 4000 model 600 */
-#define VAX_STYP_692	0x000010	/* VAX 4000 model 700? */
 
 #define VAX_BTYP_1302	0x13000002
 
@@ -177,7 +149,9 @@
 #define VAX_BTYP_1305	0x13000005	/* Legacy machines */
 #define VAX_STYP_681	0x00000e	/* VAX 4000 model 500A */
 #define VAX_STYP_691	0x00000f	/* VAX 4000 model 605A */
-#define VAX_STYP_694	0x000010	/* VAX 4000 model 705A */
+#define VAX_STYP_692	0x000010	/* VAX 4000 model 700 */
+#define VAX_STYP_694	0x000010	/* VAX 4000 model 705A
+					   (same value as 692) */
 
 #define VAX_BTYP_49	0x13000004	/* VaxStation 4000 model 90 */
 
@@ -185,14 +159,12 @@
  * SOC chip series (1991)
  */
 #define VAX_TYP_SOC	20
-#define VAX_TYP_V14	20
  
 #define VAX_BTYP_660	0x14000001	/* VAX 4000 model 200 */
+#define	VAX_STYP_660	0x5
 #define VAX_BTYP_48	0x14000004	/* VS4000/VLC and MV3100/{30,40} */
 #define VAX_STYP_45	0x000000	/* MicroVAX 3100 {30,40} */
-#define VAX_VTYP_45	0x00000001	/* MicroVAX 3100 {30,40} */
 #define VAX_STYP_48	0x000001	/* VAXstation 4000 VLC */
-#define VAX_VTYP_48	0x00000002	/* VAXstation 4000 VLC */
 #define VAX_BTYP_550	0x14000007	/* VAXft model 410, 610 */
 #define VAX_BTYP_VXT	0x14000008	/* VXT 2000+ */
  
@@ -200,28 +172,14 @@
  * NVAX+ chip series (1991)
  */
 #define VAX_TYP_NVPLUS	23
-#define VAX_TYP_V17	23
  
 #define VAX_BTYP_1701	0x17000001
- 
-/*
- * compatibility with old names:
- */
- 
-#define VAX_780		VAX_TYP_780
-#define VAX_750		VAX_TYP_750
-#define VAX_730		VAX_TYP_730
-#define VAX_8600	VAX_TYP_790
-#define VAX_8200	VAX_TYP_8SS
-#define VAX_8800	VAX_TYP_8NN
-#define VAX_610		VAX_TYP_UV1
-#define VAX_78032	VAX_TYP_UV2
-#define VAX_650		VAX_TYP_CVAX
  
 /*
  * Some common-used external variables.
  */
 extern	int vax_cputype;	/* general, highest byte of the SID-register */
+extern	int vax_cpustype;	/* general, second byte of the SIE-register */
 extern	int vax_cpudata;	/* general, the contents of the SID-register */
 extern	int vax_siedata;	/* contents of the SIE register */
 extern	int vax_bustype;	/* HW-dep., setup at consinit() in ka???.c */

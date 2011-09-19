@@ -1,4 +1,4 @@
-/*	$OpenBSD: findcpu.c,v 1.15 2011/07/06 18:32:59 miod Exp $	*/
+/*	$OpenBSD: findcpu.c,v 1.16 2011/09/19 21:53:02 miod Exp $	*/
 /*	$NetBSD: findcpu.c,v 1.5 1999/08/23 19:10:43 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -47,6 +47,7 @@
  * outside of this routine, they should be read only!
  */
 int vax_cputype;	/* highest byte of SID register */
+int vax_cpustype;	/* second byte of SIE register */
 int vax_bustype;	/* holds/defines the main bus type on this machine */
 int vax_boardtype;	/* machine dependent, combination of SID and SIE */
  
@@ -74,6 +75,7 @@ findcpu(void)
 	case VAX_TYP_NVAX:
 	case VAX_TYP_SOC:
 		vax_siedata = *(int *)(0x20040004);	/* SIE address */
+		vax_cpustype = (vax_siedata >> 8) & 0xff;
 		vax_boardtype |= vax_siedata >> 24;
 
 		switch (vax_boardtype) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka46.c,v 1.10 2011/07/06 20:42:05 miod Exp $	*/
+/*	$OpenBSD: ka46.c,v 1.11 2011/09/19 21:53:02 miod Exp $	*/
 /*	$NetBSD: ka46.c,v 1.12 2000/03/04 07:27:49 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -86,7 +86,7 @@ struct	cpu_dep ka46_calls = {
 void
 ka46_conf()
 {
-        switch(vax_siedata & 0xFF) {
+        switch (vax_siedata & 0xFF) {
 	case VAX_VTYP_47:
 		printf("cpu: KA47\n");
 		break;
