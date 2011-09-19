@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.63 2011/08/18 20:02:58 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.64 2011/09/19 11:15:18 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -1050,7 +1050,7 @@ sti_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 				    "sti_setcment(%d, %u, %u, %u): %d\n", i,
 				    (u_int)scr->scr_rcmap[i],
 				    (u_int)scr->scr_gcmap[i],
-				    (u_int)scr->scr_bcmap[i]);
+				    (u_int)scr->scr_bcmap[i], ret);
 #endif
 				ret = EINVAL;
 				break;
