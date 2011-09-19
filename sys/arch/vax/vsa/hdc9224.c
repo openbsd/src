@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.37 2011/07/06 04:49:36 matthew Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.38 2011/09/19 21:23:42 miod Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -372,7 +372,7 @@ hdattach(struct device *parent, struct device *self, void *aux)
 	dl = hd->sc_disk.dk_label;
 	error = hdgetdisklabel(MAKEDISKDEV(HDMAJOR, hd->sc_dev.dv_unit, RAW_PART),
 	    hd, dl, 0);
-	printf("%s: %luMB, %lu sectors\n",
+	printf("%s: %lluMB, %llu sectors\n",
 	    hd->sc_dev.dv_xname, DL_GETDSIZE(dl) / (1048576 / DEV_BSIZE),
 	    DL_GETDSIZE(dl));
 #ifdef HDDEBUG
