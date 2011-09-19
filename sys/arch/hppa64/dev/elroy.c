@@ -1,4 +1,4 @@
-/*	$OpenBSD: elroy.c,v 1.11 2011/01/02 13:36:09 jasper Exp $	*/
+/*	$OpenBSD: elroy.c,v 1.12 2011/09/19 11:14:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -1275,7 +1275,7 @@ elroy_attach(struct device *parent, struct device *self, void *aux)
 	    elroy_read32(&r->status) & htole32(ELROY_STATUS_RC); DELAY(10));
 	if (i < 0) {
 		printf(": reset failed; status %b\n",
-		    ELROY_STATUS_BITS, htole32(r->status));
+		    htole32(r->status), ELROY_STATUS_BITS);
 		return;
 	}
 
