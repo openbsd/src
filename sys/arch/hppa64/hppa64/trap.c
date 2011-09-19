@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.23 2011/09/19 08:49:19 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.24 2011/09/19 09:07:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -190,7 +190,8 @@ trap(int type, struct trapframe *frame)
 	opcode = frame->tf_iir;
 	if (trapnum <= T_EXCEPTION || trapnum == T_HIGHERPL ||
 	    trapnum == T_LOWERPL || trapnum == T_TAKENBR ||
-	    trapnum == T_IDEBUG || trapnum == T_PERFMON) {
+	    trapnum == T_IDEBUG || trapnum == T_PERFMON ||
+	    trapnum == T_IPROT) {
 		va = frame->tf_iioq[0];
 		space = frame->tf_iisq[0];
 		vftype = UVM_PROT_EXEC;
@@ -366,7 +367,6 @@ trap(int type, struct trapframe *frame)
 		trapsignal(p, SIGSEGV, vftype, SEGV_ACCERR, sv);
 		break;
 
-	case T_IPROT | T_USER:
 	case T_DPROT | T_USER:
 		sv.sival_int = va;
 		trapsignal(p, SIGSEGV, vftype, SEGV_ACCERR, sv);
@@ -414,6 +414,7 @@ trap(int type, struct trapframe *frame)
 	case T_TLB_DIRTY | T_USER:
 	case T_DATACC:
 	case T_DATACC | T_USER:
+	case T_IPROT | T_USER:
 		fault = VM_FAULT_PROTECT;
 	case T_ITLBMISS:
 	case T_ITLBMISS | T_USER:
