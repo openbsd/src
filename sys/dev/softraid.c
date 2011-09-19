@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.249 2011/09/19 14:55:10 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.250 2011/09/19 21:39:31 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1497,6 +1497,7 @@ sr_meta_native_probe(struct sr_softc *sc, struct sr_chunk *ch_entry)
 		    DEVNAME(sc), devname);
 		goto unwind;
 	}
+	bcopy(label.d_uid, ch_entry->src_duid, sizeof(ch_entry->src_duid));
 
 	/* make sure the partition is of the right type */
 	if (label.d_partitions[part].p_fstype != FS_RAID) {
@@ -3307,7 +3308,11 @@ sr_ioctl_installboot(struct sr_softc *sc, struct bioc_installboot *bb)
 	void			*bootblk = NULL, *bootldr = NULL;
 	struct sr_discipline	*sd = NULL;
 	struct sr_chunk		*chunk;
+	struct sr_meta_opt_item *omi;
+	struct sr_meta_boot	*sbm;
+	struct disk		*dk;
 	u_int32_t		bbs, bls;
+	u_char			duid[8];
 	int			rv = EINVAL;
 	int			i;
 
@@ -3326,6 +3331,18 @@ sr_ioctl_installboot(struct sr_softc *sc, struct bioc_installboot *bb)
 
 	if (sd == NULL)
 		goto done;
+
+	bzero(duid, sizeof(duid));
+	TAILQ_FOREACH(dk, &disklist,  dk_link)
+		if (!strncmp(dk->dk_name, bb->bb_dev, sizeof(bb->bb_dev)))
+			break;
+	if (dk == NULL || dk->dk_label == NULL ||
+	    bcmp(dk->dk_label->d_uid, &duid, sizeof(duid)) == 0) {
+		printf("%s: failed to get DUID for softraid volume!\n",
+		    DEVNAME(sd->sd_sc));
+		goto done;
+	}
+	bcopy(dk->dk_label->d_uid, duid, sizeof(duid));
 
 	/* Ensure that boot storage area is large enough. */
 	if (sd->sd_meta->ssd_data_offset < (SR_BOOT_OFFSET + SR_BOOT_SIZE)) {
@@ -3351,10 +3368,40 @@ sr_ioctl_installboot(struct sr_softc *sc, struct bioc_installboot *bb)
 	if (copyin(bb->bb_bootldr, bootldr, bb->bb_bootldr_size) != 0)
 		goto done;
 
+	/* Create or update optional meta for bootable volumes. */
+	SLIST_FOREACH(omi, &sd->sd_meta_opt, omi_link)
+		if (omi->omi_som->som_type == SR_OPT_BOOT)
+			break;
+	if (omi == NULL) {
+		omi = malloc(sizeof(struct sr_meta_opt_item), M_DEVBUF,
+		    M_WAITOK | M_ZERO);
+		omi->omi_som = malloc(sizeof(struct sr_meta_crypto), M_DEVBUF,
+		    M_WAITOK | M_ZERO);
+		omi->omi_som->som_type = SR_OPT_BOOT;
+		omi->omi_som->som_length = sizeof(struct sr_meta_boot);
+		SLIST_INSERT_HEAD(&sd->sd_meta_opt, omi, omi_link);
+		sd->sd_meta->ssdi.ssd_opt_no++;
+	}
+	sbm = (struct sr_meta_boot *)omi->omi_som;
+
+	bcopy(duid, sbm->sbm_root_duid, sizeof(sbm->sbm_root_duid));
+	sbm->sbm_bootblk_size = bbs;
+	sbm->sbm_bootldr_size = bls;
+
+	DNPRINTF(SR_D_IOCTL, "sr_ioctl_installboot: root duid is "
+	    "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx\n",
+	    sbm->sbm_root_duid[0], sbm->sbm_root_duid[1],
+	    sbm->sbm_root_duid[2], sbm->sbm_root_duid[3],
+	    sbm->sbm_root_duid[4], sbm->sbm_root_duid[5],
+	    sbm->sbm_root_duid[6], sbm->sbm_root_duid[7]);
+
 	/* Save boot block and boot loader to each chunk. */
 	for (i = 0; i < sd->sd_meta->ssdi.ssd_chunk_no; i++) {
 
 		chunk = sd->sd_vol.sv_chunks[i];
+		if (i < SR_MAX_BOOT_DISKS)
+			bcopy(chunk->src_duid, &sbm->sbm_boot_duid[i],
+			    sizeof(sbm->sbm_boot_duid[i]));
 
 		/* Save boot blocks. */
 		DNPRINTF(SR_D_IOCTL,
@@ -3383,12 +3430,8 @@ sr_ioctl_installboot(struct sr_softc *sc, struct bioc_installboot *bb)
 
 	/* XXX - Install boot block on disk - MD code. */
 
-	/* Save boot details in metadata. */
+	/* Mark volume as bootable and save metadata. */
 	sd->sd_meta->ssdi.ssd_vol_flags |= BIOC_SCBOOTABLE;
-
-	/* XXX - Store size of boot block/loader in optional metadata. */
-
-	/* Save metadata. */
 	if (sr_meta_save(sd, SR_META_DIRTY)) {
 		printf("%s: could not save metadata to %s\n",
 		    DEVNAME(sc), chunk->src_devname);

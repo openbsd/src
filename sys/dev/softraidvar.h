@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.108 2011/09/18 19:40:49 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.109 2011/09/19 21:39:31 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -174,11 +174,13 @@ struct sr_meta_crypto {
 #define	chk_hmac_sha1	_scm_chk.chk_hmac_sha1
 } __packed;
 
+#define SR_MAX_BOOT_DISKS 16
 struct sr_meta_boot {
 	struct sr_meta_opt_hdr	sbm_hdr;
-	u_int64_t		sbm_root_uid;
 	u_int32_t		sbm_bootblk_size;
 	u_int32_t		sbm_bootldr_size;
+	u_char			sbm_root_duid[8];
+	u_char			sbm_boot_duid[SR_MAX_BOOT_DISKS][8];
 } __packed;
 
 struct sr_meta_keydisk {
@@ -451,6 +453,7 @@ struct sr_chunk {
 	/* helper members before metadata makes it onto the chunk  */
 	int			src_meta_ondisk;/* set when meta is on disk */
 	char			src_devname[32];
+	u_char			src_duid[8];	/* Chunk disklabel UID. */
 	int64_t			src_size;	/* in blocks */
 
 	SLIST_ENTRY(sr_chunk)	src_link;
