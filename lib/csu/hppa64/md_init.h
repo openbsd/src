@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.2 2011/04/20 14:33:27 jsing Exp $ */
+/* $OpenBSD: md_init.h,v 1.3 2011/09/19 21:05:29 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -26,10 +26,17 @@
 
 
 #define MD_SECT_CALL_FUNC(section, func)			\
-	__asm (".section "#section",\"ax\",@progbits	\n"	\
-	"	bl	" #func ",%r2			\n"	\
-	"	std	%r19,-80(%r30)			\n"	\
-	"	ldd	-80(%r30),%r19			\n"	\
+	__asm (".section .rodata			\n"	\
+	"	.align 8				\n"	\
+	"L$" #func "					\n"	\
+	"	.dword "#func "				\n"	\
+	"	.previous				\n"	\
+	"	.section "#section",\"ax\",@progbits	\n"	\
+	"	addil	LR'L$" #func "-$global$, %dp	\n"	\
+	"	ldd	RR'L$" #func "-$global$(%r1), %r1\n"	\
+	"	bve,l	(%r1), %rp			\n"	\
+	"	std	%dp,-80(%sp)			\n"	\
+	"	ldd	-80(%sp),%dp			\n"	\
 	"	.previous")
 
 #define MD_SECTION_PROLOGUE(sect, entry_pt)			\
