@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.24 2011/09/19 09:07:13 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.25 2011/09/19 12:58:30 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -17,7 +17,7 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define TRAPDEBUG
+#undef TRAPDEBUG
 
 #include <sys/param.h>
 #include <sys/systm.h>
