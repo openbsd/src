@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvax.h,v 1.1 2008/08/18 23:07:24 miod Exp $	*/
+/*	$OpenBSD: cvax.h,v 1.2 2011/09/19 20:58:32 miod Exp $	*/
 /*	$NetBSD: ka650.h,v 1.6 1997/07/26 10:12:43 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -113,7 +113,7 @@ extern struct cvax_ssc *cvax_ssc_ptr;
  * Machine Check frame
  */
 struct cvax_mchk_frame {
-	int	cvax_bcnt;		/* byte count == 0xc */
+	int	cvax_bcnt;		/* byte count == 0x10 */
 	int	cvax_summary;		/* summary parameter */
 	int	cvax_mrvaddr;		/* most recent vad */
 	int	cvax_istate1;		/* internal state */
