@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.249 2011/08/21 06:28:31 haesbaert Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.250 2011/09/19 20:29:10 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -526,8 +526,6 @@ void	in6_status(int);
 void	in6_getaddr(const char *, int);
 void	in6_getprefix(const char *, int);
 #endif /* INET6 */
-void    at_status(int);
-void    at_getaddr(const char *, int);
 void	ieee80211_status(void);
 void	ieee80211_listchans(void);
 void	ieee80211_listnodes(void);
