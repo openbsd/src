@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.198 2011/07/03 15:47:16 matthew Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.199 2011/09/19 07:36:59 kettenis Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -355,6 +355,9 @@ static const char *line_colors[16] = {
 #define NVIDIA_HDA_ISTR_COH_REG		0x4d
 #define NVIDIA_HDA_OSTR_COH_REG		0x4c
 #define NVIDIA_HDA_STR_COH_ENABLE	0x01
+#define INTEL_PCIE_NOSNOOP_REG		0x79
+#define INTEL_PCIE_NOSNOOP_MASK		0xf7
+#define INTEL_PCIE_NOSNOOP_ENABLE	0x08
 
 uint8_t
 azalia_pci_read(pci_chipset_tag_t pc, pcitag_t pa, int reg)
@@ -446,7 +449,22 @@ azalia_configure_pci(azalia_t *az)
 		    NVIDIA_PCIE_SNOOP_ENABLE) {
 			printf(": could not enable PCIe cache snooping!\n");
 		}
-
+		break;
+	case PCI_PRODUCT_INTEL_82801FB_HDA:
+	case PCI_PRODUCT_INTEL_82801GB_HDA:
+	case PCI_PRODUCT_INTEL_82801H_HDA:
+	case PCI_PRODUCT_INTEL_82801I_HDA:
+	case PCI_PRODUCT_INTEL_82801JI_HDA:
+	case PCI_PRODUCT_INTEL_82801JD_HDA:
+	case PCI_PRODUCT_INTEL_6321ESB_HDA:
+	case PCI_PRODUCT_INTEL_3400_HDA:
+	case PCI_PRODUCT_INTEL_QS57_HDA:
+	case PCI_PRODUCT_INTEL_6SERIES_HDA:
+		reg = azalia_pci_read(az->pc, az->tag,
+		    INTEL_PCIE_NOSNOOP_REG);
+		reg &= INTEL_PCIE_NOSNOOP_MASK;
+		azalia_pci_write(az->pc, az->tag,
+		    INTEL_PCIE_NOSNOOP_REG, reg);
 		break;
 	}
 }
