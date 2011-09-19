@@ -1,8 +1,9 @@
 #!/bin/sh
 #
-# $OpenBSD: rarpd,v 1.2 2011/07/08 02:15:34 robert Exp $
+# $OpenBSD: rarpd,v 1.3 2011/09/19 20:42:24 ajacoutot Exp $
 
 daemon="/usr/sbin/rarpd"
+daemon_flags="-a"
 
 . /etc/rc.d/rc.subr
 
