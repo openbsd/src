@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.41 2011/07/09 00:47:18 henning Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.42 2011/09/19 22:37:03 pirofti Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/un.h>
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
@@ -1250,7 +1251,10 @@ linux_sa_get(p, sgp, sap, osa, osalen)
 		return (EINVAL);
 	}
 
-	alloclen = *osalen;
+	if (osa->sa_family == AF_UNIX && *osalen > sizeof(struct sockaddr_un))
+		alloclen = sizeof(struct sockaddr_un);
+	else
+		alloclen = *osalen;
 #ifdef INET6
 	oldv6size = 0;
 	/*
