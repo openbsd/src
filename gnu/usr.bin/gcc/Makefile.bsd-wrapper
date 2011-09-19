@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.60 2010/05/25 00:24:58 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.61 2011/09/19 19:36:32 naddy Exp $
 
 MAN=		gcc.1 cpp.1 gcov.1 protoize.1
 MLINKS+=	protoize.1 unprotoize.1
@@ -105,6 +105,7 @@ config.status: gcc/Makefile.in gcc/configure gcc/c-parse.in
 		${LANGUAGES} --enable-cpp --disable-nls \
 		--with-gxx-include-dir=${GXX_INCDIR} \
 		--enable-__cxa_atexit \
+		--enable-threads=posix \
 		${CONFIGTARGET} ${GCCARCH} && touch config.status
 
 .ifdef NOMAN
