@@ -62,8 +62,8 @@ LEAF_ENTRY(spcopy)
 	
 	comib,>=,n 15, %ret0, $spcopy.byte
 
-	extrd	%arg1, 63, 2, %r20
-	extrd	%arg3, 63, 2, %r19
+	extrd,u	%arg1, 63, 2, %r20
+	extrd,u	%arg3, 63, 2, %r19
 	add	%ret0, %r19, %ret0
 	comb,<> %r20, %r19, $spcopy.unaligned
 	depd	%r0, 63, 2, %arg1

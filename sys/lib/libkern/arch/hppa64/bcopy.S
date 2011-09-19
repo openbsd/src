@@ -40,8 +40,8 @@ ALTENTRY(bcopy)
 	
 	comib,>=,n 15, %arg2, $bcopy_f.byte
 
-	extrd	%arg0, 63, 2, %r20
-	extrd	%arg1, 63, 2, %r19
+	extrd,u	%arg0, 63, 2, %r20
+	extrd,u	%arg1, 63, 2, %r19
 	add	%arg2, %r19, %arg2
 	comb,<> %r20, %r19, $bcopy_f.unaligned
 	depd	%r0, 63, 2, %arg0
