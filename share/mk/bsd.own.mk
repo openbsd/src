@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.110 2011/07/10 17:03:38 miod Exp $
+#	$OpenBSD: bsd.own.mk,v 1.111 2011/09/19 08:06:22 okan Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -74,11 +74,6 @@ MANDIR?=	/usr/share/man/man
 MANGRP?=	bin
 MANOWN?=	root
 MANMODE?=	${NONBINMODE}
-
-PSDIR?=		/usr/share/man/ps
-PSGRP?=		bin
-PSOWN?=		root
-PSMODE?=	${NONBINMODE}
 
 LIBDIR?=	/usr/lib
 LINTLIBDIR?=	/usr/libdata/lint
