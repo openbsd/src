@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.4 2011/04/21 13:29:58 jsing Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.5 2011/09/19 08:10:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -42,10 +42,11 @@ EXIT(__CONCAT(_thread_sys_,x))
 #define	SYSCALL(x)				!\
 	std	%rp, HPPA_FRAME_RP(%sr0,%sp)	!\
 	ldil	L%SYSCALLGATE, %r1		!\
+	depd	%r0, 31, 32, %r1		!\
 	ble	4(%sr7, %r1)			!\
 	ldi	__CONCAT(SYS_,x), %r1		!\
 	.import	__cerror, code			!\
-	comb,<>	%r0, %t1, __cerror		!\
+	comb,<>	%r0, %r1, __cerror		!\
 	ldd	HPPA_FRAME_RP(%sr0,%sp), %rp
 
 #define	PSEUDO(x,y)				!\
@@ -59,6 +60,7 @@ SYSEXIT(x)
 SYSENTRY(x)					!\
 	std	%rp, HPPA_FRAME_RP(%sr0,%sp)	!\
 	ldil	L%SYSCALLGATE, %r1		!\
+	depd	%r0, 31, 32, %r1		!\
 	ble	4(%sr7, %r1)			!\
 	ldi	__CONCAT(SYS_,y), %r1		!\
 	ldd	HPPA_FRAME_RP(%sr0,%sp), %rp	!\
