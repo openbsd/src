@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.63 2011/09/19 14:33:14 pirofti Exp $
+	$OpenBSD: syscalls.master,v 1.64 2011/09/19 22:49:37 pirofti Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -479,7 +479,7 @@
 328	UNIMPL		eventfd2
 329	UNIMPL		epoll_create1
 330	UNIMPL		dup3
-331	UNIMPL		pipe2
+331	STD		{ int linux_sys_pipe2(int *fdp, int flags); }
 332	UNIMPL		inotify_init1
 333	UNIMPL		preadv
 334	UNIMPL		pwritev
