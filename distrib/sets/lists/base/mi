@@ -2440,7 +2440,6 @@
 ./usr/libexec/diff3prog
 ./usr/libexec/fingerd
 ./usr/libexec/ftpd
-./usr/libexec/getNAME
 ./usr/libexec/getty
 ./usr/libexec/hprop
 ./usr/libexec/hpropd

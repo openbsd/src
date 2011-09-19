@@ -2659,7 +2659,6 @@
 ./usr/share/man/man8/ftp-proxy.8
 ./usr/share/man/man8/ftpd.8
 ./usr/share/man/man8/genassym.sh.8
-./usr/share/man/man8/getNAME.8
 ./usr/share/man/man8/getty.8
 ./usr/share/man/man8/group.8
 ./usr/share/man/man8/groupadd.8
