@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.30 2011/09/18 09:31:25 claudio Exp $ */
+/*	$OpenBSD: mrt.h,v 1.31 2011/09/19 11:19:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -36,7 +36,7 @@
  * +--------+--------+--------+--------+
  *
  * ET types include an additional 32bit microsecond field coming after the
- * length field.
+ * length field. Which is accounted in the length field.
  */
 #define MRT_HEADER_SIZE		12
 
@@ -75,7 +75,7 @@ enum MRT_MSG_TYPES {
  * that are normaly saved as MSG_TABLE_DUMP.
  * In most cases this is the format to choose to dump updates et al.
  */
-enum MRT_BGP4MP_TYPES {
+enum MRT_BGP4MP_SUBTYPES {
 	BGP4MP_STATE_CHANGE,	/* state change */
 	BGP4MP_MESSAGE,		/* bgp message */
 	BGP4MP_ENTRY,		/* table dumps (deprecated) */
@@ -167,7 +167,7 @@ enum MRT_BGP4MP_TYPES {
  * sub-tables for peers and NLRI entries just use the index into the peer
  * table.
  */
-enum MRT_DUMP_V2_TYPES {
+enum MRT_DUMP_V2_SUBTYPES {
 	MRT_DUMP_V2_PEER_INDEX_TABLE=1,
 	MRT_DUMP_V2_RIB_IPV4_UNICAST=2,
 	MRT_DUMP_V2_RIB_IPV4_MULTICAST=3,
@@ -220,7 +220,7 @@ enum MRT_DUMP_V2_TYPES {
  * +--------+--------+--------+--------+
  * |  plen  |  prefix (variable)
  * +--------+--------+--------+--------+
- * | #entry |  rib entries (variable)
+ * |     #entry      | rib entries (variable)
  * +--------+--------+--------+--------+
  *
  * The RIB_GENERIC subtype is needed for the less common AFI/SAFI pairs
@@ -232,7 +232,7 @@ enum MRT_DUMP_V2_TYPES {
  * +--------+--------+--------+--------+
  *     NLRI (variable) ...
  * +--------+--------+--------+--------+
- * | #entry |  rib entries (variable)
+ * |     #entry      | rib entries (variable)
  * +--------+--------+--------+--------+
  */
 
@@ -271,7 +271,7 @@ enum MRT_DUMP_V2_TYPES {
  *       peer_ip     |     peer_as     |
  * +--------+--------+--------+--------+
  * |    attr_len     | bgp attributes
- 
+ * +--------+--------+--------+--------+
  *  bgp attributes, attr_len bytes long
  * +--------+--------+--------+--------+
  *   ...                      |
@@ -281,6 +281,11 @@ enum MRT_DUMP_V2_TYPES {
  * View is normaly 0 and seqnum just a simple counter for this dump.
  * The status field is unused and should be set to 1.
  */
+
+enum MRT_DUMP_SUBTYPES {
+	MRT_DUMP_AFI_IP=1,
+	MRT_DUMP_AFI_IPv6=2
+};
 
 /* size of the dump header until attr_len */
 #define MRT_DUMP_HEADER_SIZE	22
@@ -293,7 +298,7 @@ enum MRT_DUMP_V2_TYPES {
  * Only for bgp messages (type 5, 9 and 10)
  * Nota bene for bgp dumps MSG_PROTOCOL_BGP4MP should be used.
  */
-enum MRT_BGP_TYPES {
+enum MRT_BGP_SUBTYPES {
 	MSG_BGP_NULL,
 	MSG_BGP_UPDATE,		/* raw update packet (contains both withdraws
 				   and announcements) */
@@ -322,9 +327,7 @@ enum MRT_BGP_TYPES {
  *
  * For IPv6 the type is MSG_PROTOCOL_BGP4PLUS and the subtype remains
  * MSG_BGP_UPDATE. The source_ip and dest_ip are again extended to 16 bytes.
- */
-
-/*
+ *
  * For subtype MSG_BGP_STATE_CHANGE (for all BGP types or just for the
  * MSG_PROTOCOL_BGP4PLUS case? Unclear.)
  *
