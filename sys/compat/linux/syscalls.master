@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.62 2011/09/18 02:23:18 pirofti Exp $
+	$OpenBSD: syscalls.master,v 1.63 2011/09/19 14:33:14 pirofti Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -461,3 +461,28 @@
 312	STD		{ int linux_sys_get_robust_list(int pid, \
 			    struct linux_robust_list_head **head, \
 			    size_t *len); }   
+313	UNIMPL		splice
+314	UNIMPL		sync_file_range
+315	UNIMPL		tee
+316	UNIMPL		vmsplice
+317	UNIMPL		move_pages
+318	UNIMPL		getcpu
+319	UNIMPL		epoll_wait
+320	UNIMPL		utimensat
+321	UNIMPL		signalfd
+322	UNIMPL		timerfd_create
+323	UNIMPL		eventfd
+324	UNIMPL		fallocate
+325	UNIMPL		timerfd_settime
+326	UNIMPL		timerfd_gettime
+327	UNIMPL		signalfd4
+328	UNIMPL		eventfd2
+329	UNIMPL		epoll_create1
+330	UNIMPL		dup3
+331	UNIMPL		pipe2
+332	UNIMPL		inotify_init1
+333	UNIMPL		preadv
+334	UNIMPL		pwritev
+335	UNIMPL		rt_tgsigqueueinfo
+336	UNIMPL		perf_counter_open
+337	UNIMPL		recvmmsg
