@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.265 2011/09/18 09:31:25 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.266 2011/09/19 11:18:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -556,21 +556,11 @@ struct ctl_show_rib {
 	u_int32_t		remote_id;
 	u_int32_t		local_pref;
 	u_int32_t		med;
-	u_int32_t		prefix_cnt;
-	u_int32_t		active_cnt;
-	u_int32_t		rib_cnt;
 	u_int16_t		aspath_len;
 	u_int16_t		flags;
 	u_int8_t		prefixlen;
 	u_int8_t		origin;
 	/* plus a aspath_len bytes long aspath */
-};
-
-struct ctl_show_rib_prefix {
-	struct bgpd_addr	prefix;
-	time_t			lastchange;
-	u_int16_t		flags;
-	u_int8_t		prefixlen;
 };
 
 enum as_spec {
