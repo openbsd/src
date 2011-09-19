@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.62 2011/07/28 10:33:36 otto Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.63 2011/09/19 22:00:37 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #include <sys/shm.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
-#include <sys/socket.h>
+#include <sys/siginfo.h>
 #include <sys/un.h>
 #include <sys/vmmeter.h>
 #include <sys/stat.h>
@@ -1122,10 +1122,40 @@ ktrpsig(struct ktr_psig *psig)
 {
 	(void)printf("SIG%s ", sys_signame[psig->signo]);
 	if (psig->action == SIG_DFL)
-		(void)printf("SIG_DFL code %d", psig->code);
+		(void)printf("SIG_DFL");
 	else
 		(void)printf("caught handler=0x%lx mask=0x%x",
 		    (u_long)psig->action, psig->mask);
+	if (psig->code) {
+		printf(" code ");
+		if (fancy) {
+			switch (psig->signo) {
+			case SIGILL:
+				sigill_name(psig->code);
+				break;
+			case SIGTRAP:
+				sigtrap_name(psig->code);
+				break;
+			case SIGEMT:
+				sigemt_name(psig->code);
+				break;
+			case SIGFPE:
+				sigfpe_name(psig->code);
+				break;
+			case SIGBUS:
+				sigbus_name(psig->code);
+				break;
+			case SIGSEGV:
+				sigsegv_name(psig->code);
+				break;
+			case SIGCHLD:
+				sigchld_name(psig->code);
+				break;
+			}
+		}
+		printf("<%d>", psig->code);
+	}
+
 	switch (psig->signo) {
 	case SIGSEGV:
 	case SIGILL:
