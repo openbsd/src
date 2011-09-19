@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.43 2011/09/18 23:26:18 schwarze Exp $ */
+/*	$Id: roff.c,v 1.44 2011/09/19 07:53:54 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -552,7 +552,6 @@ again:
 static enum rofferr
 roff_parsetext(char *p)
 {
-	char		 l, r;
 	size_t		 sz;
 	const char	*start;
 	enum mandoc_esc	 esc;
@@ -579,14 +578,8 @@ roff_parsetext(char *p)
 			continue;
 		}
 
-		l = *(p - 1);
-		r = *(p + 1);
-		if ('\\' != l &&
-				'\t' != r && '\t' != l &&
-				' ' != r && ' ' != l &&
-				'-' != r && '-' != l &&
-				! isdigit((unsigned char)l) &&
-				! isdigit((unsigned char)r))
+		if (isalpha((unsigned char)p[-1]) &&
+		    isalpha((unsigned char)p[1]))
 			*p = ASCII_HYPH;
 		p++;
 	}
