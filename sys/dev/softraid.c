@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.248 2011/09/18 19:40:49 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.249 2011/09/19 14:55:10 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -296,7 +296,6 @@ sr_meta_probe(struct sr_discipline *sd, dev_t *dt, int no_chunk)
 
 	if (no_chunk == 0)
 		goto unwind;
-
 
 	cl = &sd->sd_vol.sv_chunk_list;
 
@@ -742,7 +741,6 @@ sr_meta_read(struct sr_discipline *sd)
 	struct sr_chunk		*ch_entry;
 	struct sr_meta_chunk	*cp;
 	struct sr_meta_driver	*s;
-	struct sr_meta_opt_item *omi;
 	void			*fm = NULL;
 	int			no_disk = 0, got_meta = 0;
 
@@ -788,21 +786,15 @@ sr_meta_read(struct sr_discipline *sd)
 
 		/* assume first chunk contains metadata */
 		if (got_meta == 0) {
+			sr_meta_opt_load(sc, sm, &sd->sd_meta_opt);
 			bcopy(sm, sd->sd_meta, sizeof(*sd->sd_meta));
 			got_meta = 1;
 		}
 
 		bcopy(cp, &ch_entry->src_meta, sizeof(ch_entry->src_meta));
 
-		/* Load and process optional metadata. */
-		sr_meta_opt_load(sc, sm, &sd->sd_meta_opt);
-		SLIST_FOREACH(omi, &sd->sd_meta_opt, omi_link)
-			if (sd->sd_meta_opt_handler == NULL ||
-			    sd->sd_meta_opt_handler(sd, omi->omi_som) != 0)
-				sr_meta_opt_handler(sd, omi->omi_som);
-
-		cp++;
 		no_disk++;
+		cp++;
 	}
 
 	free(sm, M_DEVBUF);
@@ -829,8 +821,8 @@ sr_meta_opt_load(struct sr_softc *sc, struct sr_metadata *sm,
 	    sizeof(struct sr_meta_chunk) * sm->ssdi.ssd_chunk_no);
 	for (i = 0; i < sm->ssdi.ssd_opt_no; i++) {
 
-		omi = malloc(sizeof(struct sr_meta_opt_item),
-		    M_DEVBUF, M_WAITOK | M_ZERO);
+		omi = malloc(sizeof(struct sr_meta_opt_item), M_DEVBUF,
+		    M_WAITOK | M_ZERO);
 		SLIST_INSERT_HEAD(som, omi, omi_link);
 
 		if (omh->som_length == 0) {
@@ -2945,15 +2937,16 @@ sr_roam_chunks(struct sr_discipline *sd)
 int
 sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 {
-	dev_t			*dt;
-	int			i, no_chunk, rv = EINVAL, target, vol;
-	int			no_meta, updatemeta = 0;
+	struct sr_meta_opt_item *omi;
 	struct sr_chunk_head	*cl;
 	struct sr_discipline	*sd = NULL;
 	struct sr_chunk		*ch_entry;
 	struct scsi_link	*link;
 	struct device		*dev;
 	char			devname[32];
+	dev_t			*dt;
+	int			i, no_chunk, rv = EINVAL, target, vol;
+	int			no_meta, updatemeta = 0;
 
 	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_createraid(%d)\n",
 	    DEVNAME(sc), user);
@@ -3027,7 +3020,12 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		}
 	}
 
-	if ((no_meta = sr_meta_read(sd)) == 0) {
+	no_meta = sr_meta_read(sd);
+	if (no_meta == -1) {
+		printf("%s: one of the chunks has corrupt metadata; aborting "
+		    "assembly\n", DEVNAME(sc));
+		goto unwind;
+	} else if (no_meta == 0) {
 		/* fill out all chunk metadata */
 		sr_meta_chunks_create(sc, cl);
 		ch_entry = SLIST_FIRST(cl);
@@ -3064,21 +3062,32 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 
 		sd->sd_meta_flags = bc->bc_flags & BIOC_SCNOAUTOASSEMBLE;
 		updatemeta = 1;
-	} else if (no_meta == no_chunk) {
+	} else {
+		if (no_meta != no_chunk)
+			printf("%s: trying to bring up %s degraded\n",
+			    DEVNAME(sc), sd->sd_meta->ssd_devname);
+
 		if (sd->sd_meta->ssd_meta_flags & SR_META_DIRTY)
 			printf("%s: %s was not shutdown properly\n",
 			    DEVNAME(sc), sd->sd_meta->ssd_devname);
+
 		if (user == 0 && sd->sd_meta_flags & BIOC_SCNOAUTOASSEMBLE) {
 			DNPRINTF(SR_D_META, "%s: disk not auto assembled from "
 			    "metadata\n", DEVNAME(sc));
 			goto unwind;
 		}
+
 		if (sr_already_assembled(sd)) {
 			printf("%s: disk ", DEVNAME(sc));
 			sr_uuid_print(&sd->sd_meta->ssdi.ssd_uuid, 0);
 			printf(" already assembled\n");
 			goto unwind;
 		}
+
+		SLIST_FOREACH(omi, &sd->sd_meta_opt, omi_link)
+			if (sd->sd_meta_opt_handler == NULL ||
+			    sd->sd_meta_opt_handler(sd, omi->omi_som) != 0)
+				sr_meta_opt_handler(sd, omi->omi_som);
 
 		if (sd->sd_assemble) {
 			if ((i = sd->sd_assemble(sd, bc, no_chunk))) {
@@ -3090,28 +3099,6 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		DNPRINTF(SR_D_META, "%s: disk assembled from metadata\n",
 		    DEVNAME(sc));
 		updatemeta = 0;
-	} else if (no_meta == -1) {
-		printf("%s: one of the chunks has corrupt metadata; aborting "
-		    "assembly\n", DEVNAME(sc));
-		goto unwind;
-	} else {
-		if (sr_already_assembled(sd)) {
-			printf("%s: disk ", DEVNAME(sc));
-			sr_uuid_print(&sd->sd_meta->ssdi.ssd_uuid, 0);
-			printf(" already assembled; will not partial "
-			    "assemble it\n");
-			goto unwind;
-		}
-
-		if (sd->sd_assemble) {
-			if ((i = sd->sd_assemble(sd, bc, no_chunk))) {
-				rv = i;
-				goto unwind;
-			}
-		}
-
-		printf("%s: trying to bring up %s degraded\n", DEVNAME(sc),
-		    sd->sd_meta->ssd_devname);
 	}
 
 	/* metadata SHALL be fully filled in at this point */
