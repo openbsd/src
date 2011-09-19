@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.45 2011/07/31 20:22:34 robert Exp $
+#	$OpenBSD: rc.subr,v 1.46 2011/09/19 20:41:50 robert Exp $
 #
 # Copyright (c) 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -79,7 +79,7 @@ rc_cmd() {
 	[ $(id -u) -eq 0 ] || \
 		rc_err "$0: need root privileges"
 
-	[ X"${daemon_flags}" = X"NO" ] && exit 1
+	[ -z "${RC_FORCE}" ] && [ X"${daemon_flags}" = X"NO" ] && exit 1
 
 	eval _enotsup=\${rc_${1}}
 	[ X"${_enotsup}" != X"NO" ] || rc_err "$0: $1 is not supported"
@@ -138,6 +138,14 @@ rc_cmd() {
 
 [ -n "${daemon}" ] || rc_err "$0: daemon is not set"
 
+while getopts "df" c; do
+	case "$c" in
+		d) RC_DEBUG=1;;
+		f) RC_FORCE=1;;
+	esac
+done
+shift $((OPTIND-1))
+
 _name=$(basename $0)
 eval _rcflags=\${${_name}_flags}
 eval _rcuser=\${${_name}_user}
@@ -148,6 +156,7 @@ getcap -f /etc/login.conf ${_name} 1>/dev/null 2>&1 && \
 [ -z "${daemon_class}" ] && daemon_class=daemon
 [ -z "${daemon_user}"  ] && daemon_user=root
 
+[ -n "${RC_FORCE}" ] && [ X"${_rcflags}" = X"NO" ] && unset _rcflags
 [ -n "${_rcflags}" ] && daemon_flags=${_rcflags}
 [ -n "${_rcuser}"  ] && daemon_user=${_rcuser}
 
