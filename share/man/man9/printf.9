@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.9,v 1.17 2008/06/26 05:42:08 ray Exp $
+.\"	$OpenBSD: printf.9,v 1.18 2011/09/19 10:25:37 miod Exp $
 .\"     $NetBSD: kprintf.9,v 1.6 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: September 19 2011 $
 .Dt PRINTF 9
 .Os
 .Sh NAME
@@ -116,13 +116,35 @@ Refer to
 .Xr printf 3
 for functional details.
 .Ss FORMAT OPTIONS
-The kernel functions don't support any floating point formatting
-specifiers.
-In addition to other formatting specifiers common with the user
-space functions, the kernel functions accept the following format specifiers
+The kernel functions don't support as many formatting specifiers as their
+user space counterparts.
+In addition to the floating point formatting specifiers,
+the following integer type specifiers are not supported in the format string
+.Fa format
+either :
+.Bl -tag -width 5n
+.It Li %hh
+Argument of
+.Li char
+type.
+This format specifier is accepted by the kernel but will be handled as
+.Li %h .
+.It Li %j
+Argument of
+.Li intmax_t
+or
+.Li uintmax_t
+type.
+.It Li %t
+Argument of
+.Li ptrdiff_t
+type.
+.El
+.Pp
+The kernel functions also accept the following format specifiers
 in the format string
 .Fa format :
-.Bl -tag -width "\e177"
+.Bl -tag -width 5n
 .It Li %b
 Bit field expansion.
 This format specifier is useful for decoding bit fields in device registers.
@@ -132,7 +154,9 @@ and an interpretation of
 the bits within that integer as though they were flags.
 It requires two arguments from the argument vector, the first argument being
 the bit field to be decoded
-.Pq "as an integer"
+(of type
+.Li int ,
+unless a width modifier has been specified)
 and the second being a decoding directive string.
 .Pp
 The decoding directive string describes how the bitfield is to be interpreted
@@ -175,18 +199,6 @@ encountered
 distinguishable by its value being \*(Le 32 or \*(Ge 128
 .Pc ,
 or the end of the decoding directive string itself.
-.It Li %r
-Displays an integer using the current
-.Tn DDB
-radix.
-This non-standard interpretation of
-.Li %r
-is only available to
-.Fn db_printf .
-.It Li %z
-Displays a signed integer using the C-style hexadecimal constant format.
-This format specifier is only available to
-.Fn db_printf .
 .El
 .Sh RETURN VALUES
 The
