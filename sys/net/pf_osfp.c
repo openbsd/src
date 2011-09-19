@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.21 2010/10/18 15:55:28 deraadt Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.22 2011/09/19 12:51:52 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -82,15 +82,15 @@ void				 pf_osfp_insert(struct pf_osfp_list *,
  * Returns the list of possible OSes.
  */
 struct pf_osfp_enlist *
-pf_osfp_fingerprint(struct pf_pdesc *pd, struct mbuf *m, int off,
-    const struct tcphdr *tcp)
+pf_osfp_fingerprint(struct pf_pdesc *pd, struct mbuf *m)
 {
+	struct tcphdr	*th = pd->hdr.tcp;
 	struct ip *ip;
 	struct ip6_hdr *ip6;
 	char hdr[60];
 
 	if ((pd->af != PF_INET && pd->af != PF_INET6) ||
-	    pd->proto != IPPROTO_TCP || (tcp->th_off << 2) < sizeof(*tcp))
+	    pd->proto != IPPROTO_TCP || (th->th_off << 2) < sizeof(*th))
 		return (NULL);
 
 	if (pd->af == PF_INET) {
@@ -100,8 +100,8 @@ pf_osfp_fingerprint(struct pf_pdesc *pd, struct mbuf *m, int off,
 		ip = (struct ip *)NULL;
 		ip6 = mtod(m, struct ip6_hdr *);
 	}
-	if (!pf_pull_hdr(m, off, hdr, tcp->th_off << 2, NULL, NULL,
-	    pd->af)) return (NULL);
+	if (!pf_pull_hdr(m, pd->off, hdr, th->th_off << 2, NULL, NULL, pd->af))
+		return (NULL);
 
 	return (pf_osfp_fingerprint_hdr(ip, ip6, (struct tcphdr *)hdr));
 }

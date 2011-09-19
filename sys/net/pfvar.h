@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.347 2011/09/18 13:50:13 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.348 2011/09/19 12:51:52 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1245,7 +1245,9 @@ struct pf_pdesc {
 	u_int16_t	 nsport;	/* src port after NAT */
 	u_int16_t	 ndport;	/* dst port after NAT */
 
-	u_int32_t	 p_len;		/* total length of payload */
+	u_int32_t	 off;		/* protocol header offset */
+	u_int32_t	 hdrlen;	/* protocol header length */
+	u_int32_t	 p_len;		/* length of protocol payload */
 	u_int32_t	 badopts;	/* v4 options or v6 routing headers */
 
 	u_int16_t	 rdomain;	/* original routing domain */
@@ -1771,7 +1773,7 @@ void				 pf_purge_rule(struct pf_ruleset *,
 struct pf_divert		*pf_find_divert(struct mbuf *);
 int				 pf_setup_pdesc(sa_family_t, int,
 				    struct pf_pdesc *, void *, struct mbuf **,
-				    u_short *, u_short *, int *, int *);
+				    u_short *, u_short *);
 
 int	pf_test(sa_family_t, int, struct ifnet *, struct mbuf **,
 	    struct ether_header *);
@@ -1802,14 +1804,14 @@ int	pf_refragment6(struct mbuf **, struct m_tag *mtag, int);
 void	pf_normalize_init(void);
 int	pf_normalize_ip(struct mbuf **, int, u_short *);
 int	pf_normalize_ip6(struct mbuf **, int, int, int, u_short *);
-int	pf_normalize_tcp(int, struct mbuf *, int, struct pf_pdesc *);
+int	pf_normalize_tcp(int, struct mbuf *, struct pf_pdesc *);
 void	pf_normalize_tcp_cleanup(struct pf_state *);
-int	pf_normalize_tcp_init(struct mbuf *, int, struct pf_pdesc *,
-	    struct tcphdr *, struct pf_state_peer *, struct pf_state_peer *);
-int	pf_normalize_tcp_stateful(struct mbuf *, int, struct pf_pdesc *,
-	    u_short *, struct tcphdr *, struct pf_state *,
+int	pf_normalize_tcp_init(struct mbuf *, struct pf_pdesc *,
+	    struct pf_state_peer *, struct pf_state_peer *);
+int	pf_normalize_tcp_stateful(struct mbuf *, struct pf_pdesc *,
+	    u_short *, struct pf_state *,
 	    struct pf_state_peer *, struct pf_state_peer *, int *);
-int	pf_normalize_mss(struct mbuf *, int, struct pf_pdesc *, u_int16_t);
+int	pf_normalize_mss(struct mbuf *, struct pf_pdesc *, u_int16_t);
 void	pf_scrub(struct mbuf *, u_int16_t, sa_family_t, u_int8_t, u_int8_t);
 u_int32_t
 	pf_state_expires(const struct pf_state *);
@@ -1945,8 +1947,7 @@ void			 pf_anchor_remove(struct pf_rule *);
 int	pf_osfp_add(struct pf_osfp_ioctl *);
 #ifdef _KERNEL
 struct pf_osfp_enlist *
-	pf_osfp_fingerprint(struct pf_pdesc *, struct mbuf *, int,
-	    const struct tcphdr *);
+	pf_osfp_fingerprint(struct pf_pdesc *, struct mbuf *);
 #endif /* _KERNEL */
 struct pf_osfp_enlist *
 	pf_osfp_fingerprint_hdr(const struct ip *, const struct ip6_hdr *,

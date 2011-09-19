@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.141 2011/09/18 11:17:57 miod Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.142 2011/09/19 12:51:52 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -808,7 +808,7 @@ pf_normalize_ip6(struct mbuf **m0, int dir, int off, int extoff,
 #endif /* INET6 */
 
 int
-pf_normalize_tcp(int dir, struct mbuf *m, int off, struct pf_pdesc *pd)
+pf_normalize_tcp(int dir, struct mbuf *m, struct pf_pdesc *pd)
 {
 	struct tcphdr	*th = pd->hdr.tcp;
 	u_short		 reason;
@@ -861,7 +861,7 @@ pf_normalize_tcp(int dir, struct mbuf *m, int off, struct pf_pdesc *pd)
 
 	/* copy back packet headers if we sanitized */
 	if (rewrite)
-		m_copyback(m, off, sizeof(*th), th, M_NOWAIT);
+		m_copyback(m, pd->off, sizeof(*th), th, M_NOWAIT);
 
 	return (PF_PASS);
 
@@ -871,9 +871,10 @@ pf_normalize_tcp(int dir, struct mbuf *m, int off, struct pf_pdesc *pd)
 }
 
 int
-pf_normalize_tcp_init(struct mbuf *m, int off, struct pf_pdesc *pd,
-    struct tcphdr *th, struct pf_state_peer *src, struct pf_state_peer *dst)
+pf_normalize_tcp_init(struct mbuf *m, struct pf_pdesc *pd,
+    struct pf_state_peer *src, struct pf_state_peer *dst)
 {
+	struct tcphdr	 *th = pd->hdr.tcp;
 	u_int32_t tsval, tsecr;
 	u_int8_t hdr[60];
 	u_int8_t *opt;
@@ -912,7 +913,7 @@ pf_normalize_tcp_init(struct mbuf *m, int off, struct pf_pdesc *pd,
 
 
 	if (th->th_off > (sizeof(struct tcphdr) >> 2) && src->scrub &&
-	    pf_pull_hdr(m, off, hdr, th->th_off << 2, NULL, NULL, pd->af)) {
+	    pf_pull_hdr(m, pd->off, hdr, th->th_off << 2, NULL, NULL, pd->af)) {
 		/* Diddle with TCP options */
 		int hlen;
 		opt = hdr + sizeof(struct tcphdr);
@@ -965,10 +966,11 @@ pf_normalize_tcp_cleanup(struct pf_state *state)
 }
 
 int
-pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
-    u_short *reason, struct tcphdr *th, struct pf_state *state,
+pf_normalize_tcp_stateful(struct mbuf *m, struct pf_pdesc *pd,
+    u_short *reason, struct pf_state *state,
     struct pf_state_peer *src, struct pf_state_peer *dst, int *writeback)
 {
+	struct tcphdr	 *th = pd->hdr.tcp;
 	struct timeval uptime;
 	u_int32_t tsval, tsecr;
 	u_int tsval_from_last;
@@ -1012,7 +1014,7 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 	if (th->th_off > (sizeof(struct tcphdr) >> 2) &&
 	    ((src->scrub && (src->scrub->pfss_flags & PFSS_TIMESTAMP)) ||
 	    (dst->scrub && (dst->scrub->pfss_flags & PFSS_TIMESTAMP))) &&
-	    pf_pull_hdr(m, off, hdr, th->th_off << 2, NULL, NULL, pd->af)) {
+	    pf_pull_hdr(m, pd->off, hdr, th->th_off << 2, NULL, NULL, pd->af)) {
 		/* Diddle with TCP options */
 		int hlen;
 		opt = hdr + sizeof(struct tcphdr);
@@ -1082,7 +1084,7 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 		if (copyback) {
 			/* Copyback the options, caller copys back header */
 			*writeback = 1;
-			m_copyback(m, off + sizeof(struct tcphdr),
+			m_copyback(m, pd->off + sizeof(struct tcphdr),
 			    (th->th_off << 2) - sizeof(struct tcphdr), hdr +
 			    sizeof(struct tcphdr), M_NOWAIT);
 		}
@@ -1364,7 +1366,7 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 }
 
 int
-pf_normalize_mss(struct mbuf *m, int off, struct pf_pdesc *pd, u_int16_t maxmss)
+pf_normalize_mss(struct mbuf *m, struct pf_pdesc *pd, u_int16_t maxmss)
 {
 	struct tcphdr	*th = pd->hdr.tcp;
 	u_int16_t	 mss;
@@ -1376,7 +1378,7 @@ pf_normalize_mss(struct mbuf *m, int off, struct pf_pdesc *pd, u_int16_t maxmss)
 	thoff = th->th_off << 2;
 	cnt = thoff - sizeof(struct tcphdr);
 
-	if (cnt > 0 && !pf_pull_hdr(m, off + sizeof(*th), opts, cnt,
+	if (cnt > 0 && !pf_pull_hdr(m, pd->off + sizeof(*th), opts, cnt,
 	    NULL, NULL, pd->af))
 		return (0);
 
@@ -1401,9 +1403,10 @@ pf_normalize_mss(struct mbuf *m, int off, struct pf_pdesc *pd, u_int16_t maxmss)
 				    mss, htons(maxmss), 0);
 				mss = htons(maxmss);
 				m_copyback(m,
-				    off + sizeof(*th) + optp + 2 - opts,
+				    pd->off + sizeof(*th) + optp + 2 - opts,
 				    2, &mss, M_NOWAIT);
-				m_copyback(m, off, sizeof(*th), th, M_NOWAIT);
+				m_copyback(m, pd->off, sizeof(*th), th,
+				    M_NOWAIT);
 			}
 			break;
 		default:
