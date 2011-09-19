@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.250 2011/09/19 21:39:31 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.251 2011/09/19 21:47:37 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -120,6 +120,7 @@ void			sr_uuid_get(struct sr_uuid *);
 void			sr_uuid_print(struct sr_uuid *, int);
 void			sr_checksum_print(u_int8_t *);
 int			sr_boot_assembly(struct sr_softc *);
+void			sr_map_root(struct sr_softc *);
 int			sr_already_assembled(struct sr_discipline *);
 int			sr_hotspare(struct sr_softc *, dev_t);
 void			sr_hotspare_rebuild(struct sr_discipline *);
@@ -1475,6 +1476,48 @@ unwind:
 	return (rv);
 }
 
+void
+sr_map_root(struct sr_softc *sc)
+{
+	struct sr_meta_opt_item	*omi;
+	struct sr_meta_boot	*sbm;
+	u_char			duid[8];
+	int			i, j;
+
+	DNPRINTF(SR_D_MISC, "%s: sr_map_root\n", DEVNAME(sc));
+	bzero(duid, sizeof(duid));
+	if (bcmp(rootduid, duid, sizeof(duid)) == 0) {
+		DNPRINTF(SR_D_MISC, "%s: root duid is zero\n", DEVNAME(sc));
+		return;
+	}
+
+	for (i = 0; i < SR_MAX_LD; i++) {
+		if (sc->sc_dis[i] == NULL)
+			continue;
+		SLIST_FOREACH(omi, &sc->sc_dis[i]->sd_meta_opt, omi_link) {
+			if (omi->omi_som->som_type != SR_OPT_BOOT)
+				continue;
+			sbm = (struct sr_meta_boot *)omi->omi_som;
+			for (j = 0; j < SR_MAX_BOOT_DISKS; j++) {
+				if (bcmp(rootduid, sbm->sbm_boot_duid[j],
+				    sizeof(rootduid)) == 0) {
+					bcopy(sbm->sbm_root_duid, rootduid,
+					    sizeof(rootduid));
+					DNPRINTF(SR_D_MISC, "%s: root duid "
+					    "mapped to %02hx%02hx%02hx%02hx"
+					    "%02hx%02hx%02hx%02hx\n",
+					    DEVNAME(sc), rootduid[0],
+					    rootduid[1], rootduid[2],
+					    rootduid[3], rootduid[4],
+					    rootduid[5], rootduid[6],
+					    rootduid[7]);
+					return;
+				}
+			}
+		}
+	}
+}
+
 int
 sr_meta_native_probe(struct sr_softc *sc, struct sr_chunk *ch_entry)
 {
@@ -1751,6 +1794,8 @@ sr_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_shutdownhook = shutdownhook_establish(sr_shutdownhook, sc);
 
 	sr_boot_assembly(sc);
+
+	sr_map_root(sc);
 }
 
 int
