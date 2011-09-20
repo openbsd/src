@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.180 2011/04/20 18:43:57 nicm Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.181 2011/09/20 12:43:45 nicm Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -285,7 +285,6 @@ extern struct cvsroot *current_cvsroot;
 extern char *cvs_tagname;
 extern char *cvs_editor;
 extern char *cvs_homedir;
-extern char *cvs_msg;
 extern char *cvs_rsh;
 extern char *cvs_tmpdir;
 extern char *import_repository;
