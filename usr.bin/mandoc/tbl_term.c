@@ -1,4 +1,4 @@
-/*	$Id: tbl_term.c,v 1.9 2011/09/18 15:54:48 schwarze Exp $ */
+/*	$Id: tbl_term.c,v 1.10 2011/09/20 23:05:46 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -30,14 +30,14 @@ static	void	tbl_char(struct termp *, char, size_t);
 static	void	tbl_data(struct termp *, const struct tbl *,
 			const struct tbl_dat *, 
 			const struct roffcol *);
-static	void	tbl_hframe(struct termp *, const struct tbl_span *);
+static	size_t	tbl_rulewidth(struct termp *, const struct tbl_head *);
+static	void	tbl_hframe(struct termp *, const struct tbl_span *, int);
 static	void	tbl_literal(struct termp *, const struct tbl_dat *, 
 			const struct roffcol *);
 static	void	tbl_number(struct termp *, const struct tbl *, 
 			const struct tbl_dat *, 
 			const struct roffcol *);
 static	void	tbl_hrule(struct termp *, const struct tbl_span *);
-static	void	tbl_vframe(struct termp *, const struct tbl *);
 static	void	tbl_vrule(struct termp *, const struct tbl_head *);
 
 
@@ -91,12 +91,19 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 
 	/* Horizontal frame at the start of boxed tables. */
 
-	if (TBL_SPAN_FIRST & sp->flags)
-		tbl_hframe(tp, sp);
+	if (TBL_SPAN_FIRST & sp->flags) {
+		if (TBL_OPT_DBOX & sp->tbl->opts)
+			tbl_hframe(tp, sp, 1);
+		if (TBL_OPT_DBOX & sp->tbl->opts ||
+		    TBL_OPT_BOX  & sp->tbl->opts)
+			tbl_hframe(tp, sp, 0);
+	}
 
 	/* Vertical frame at the start of each row. */
 
-	tbl_vframe(tp, sp->tbl);
+	if (TBL_OPT_BOX & sp->tbl->opts || TBL_OPT_DBOX & sp->tbl->opts)
+		term_word(tp, TBL_SPAN_HORIZ == sp->pos ||
+			TBL_SPAN_DHORIZ == sp->pos ? "+" : "|");
 
 	/*
 	 * Now print the actual data itself depending on the span type.
@@ -134,8 +141,30 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 			if (--spans >= 0)
 				continue;
 
+			/*
+			 * All cells get a leading blank, except the
+			 * first one and those after double rulers.
+			 */
+
+			if (hp->prev && TBL_HEAD_DVERT != hp->prev->pos)
+				tbl_char(tp, ASCII_NBRSP, 1);
+
 			col = &tp->tbl.cols[hp->ident];
 			tbl_data(tp, sp->tbl, dp, col);
+
+			/* No trailing blanks. */
+
+			if (NULL == hp->next)
+				break;
+
+			/*
+			 * Add another blank between cells,
+			 * or two when there is no vertical ruler.
+			 */
+
+			tbl_char(tp, ASCII_NBRSP,
+			    TBL_HEAD_VERT  == hp->next->pos ||
+			    TBL_HEAD_DVERT == hp->next->pos ? 1 : 2);
 
 			/* 
 			 * Go to the next data cell and assign the
@@ -150,7 +179,11 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 		break;
 	}
 
-	tbl_vframe(tp, sp->tbl);
+	/* Vertical frame at the end of each row. */
+
+	if (TBL_OPT_BOX & sp->tbl->opts || TBL_OPT_DBOX & sp->tbl->opts)
+		term_word(tp, TBL_SPAN_HORIZ == sp->pos ||
+			TBL_SPAN_DHORIZ == sp->pos ? "+" : " |");
 	term_flushln(tp);
 
 	/*
@@ -159,7 +192,11 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 	 */
 
 	if (TBL_SPAN_LAST & sp->flags) {
-		tbl_hframe(tp, sp);
+		if (TBL_OPT_DBOX & sp->tbl->opts ||
+		    TBL_OPT_BOX  & sp->tbl->opts)
+			tbl_hframe(tp, sp, 0);
+		if (TBL_OPT_DBOX & sp->tbl->opts)
+			tbl_hframe(tp, sp, 1);
 		assert(tp->tbl.cols);
 		free(tp->tbl.cols);
 		tp->tbl.cols = NULL;
@@ -171,86 +208,66 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 
 }
 
+/*
+ * Horizontal rules extend across the entire table.
+ * Calculate the width by iterating over columns.
+ */
+static size_t
+tbl_rulewidth(struct termp *tp, const struct tbl_head *hp)
+{
+	size_t		 width;
+
+	width = tp->tbl.cols[hp->ident].width;
+	if (TBL_HEAD_DATA == hp->pos) {
+		/* Account for leading blanks. */
+		if (hp->prev && TBL_HEAD_DVERT != hp->prev->pos)
+			width++;
+		/* Account for trailing blanks. */
+		width++;
+		if (hp->next &&
+		    TBL_HEAD_VERT  != hp->next->pos &&
+		    TBL_HEAD_DVERT != hp->next->pos)
+			width++;
+	}
+	return(width);
+}
+
+/*
+ * Rules inside the table can be single or double
+ * and have crossings with vertical rules marked with pluses.
+ */
 static void
 tbl_hrule(struct termp *tp, const struct tbl_span *sp)
 {
 	const struct tbl_head *hp;
 	char		 c;
-	size_t		 width;
-
-	/*
-	 * An hrule extends across the entire table and is demarked by a
-	 * standalone `_' or whatnot in lieu of a table row.  Spanning
-	 * headers are marked by a `+', as are table boundaries.
-	 */
 
 	c = '-';
 	if (TBL_SPAN_DHORIZ == sp->pos)
 		c = '=';
 
-	/* FIXME: don't use `+' between data and a spanner! */
-
-	for (hp = sp->head; hp; hp = hp->next) {
-		width = tp->tbl.cols[hp->ident].width;
-		switch (hp->pos) {
-		case (TBL_HEAD_DATA):
-			if (hp->next)
-				width += 2;
-			tbl_char(tp, c, width);
-			break;
-		case (TBL_HEAD_DVERT):
-			tbl_char(tp, '+', width);
-			/* FALLTHROUGH */
-		case (TBL_HEAD_VERT):
-			tbl_char(tp, '+', width);
-			break;
-		default:
-			abort();
-			/* NOTREACHED */
-		}
-	}
+	for (hp = sp->head; hp; hp = hp->next)
+		tbl_char(tp,
+		    TBL_HEAD_DATA == hp->pos ? c : '+',
+		    tbl_rulewidth(tp, hp));
 }
 
+/*
+ * Rules above and below the table are always single
+ * and have an additional plus at the beginning and end.
+ * For double frames, this function is called twice,
+ * and the outer one does not have crossings.
+ */
 static void
-tbl_hframe(struct termp *tp, const struct tbl_span *sp)
+tbl_hframe(struct termp *tp, const struct tbl_span *sp, int outer)
 {
 	const struct tbl_head *hp;
-	size_t		 width;
-
-	if ( ! (TBL_OPT_BOX & sp->tbl->opts || 
-			TBL_OPT_DBOX & sp->tbl->opts))
-		return;
-
-	/* 
-	 * Print out the horizontal part of a frame or double frame.  A
-	 * double frame has an unbroken `-' outer line the width of the
-	 * table, bordered by `+'.  The frame (or inner frame, in the
-	 * case of the double frame) is a `-' bordered by `+' and broken
-	 * by `+' whenever a span is encountered.
-	 */
-
-	if (TBL_OPT_DBOX & sp->tbl->opts) {
-		term_word(tp, "+");
-		for (hp = sp->head; hp; hp = hp->next) {
-			width = tp->tbl.cols[hp->ident].width;
-			tbl_char(tp, '-', width);
-		}
-		term_word(tp, "+");
-		term_flushln(tp);
-	}
 
 	term_word(tp, "+");
-	for (hp = sp->head; hp; hp = hp->next) {
-		width = tp->tbl.cols[hp->ident].width;
-		switch (hp->pos) {
-		case (TBL_HEAD_DATA):
-			tbl_char(tp, '-', width);
-			break;
-		default:
-			tbl_char(tp, '+', width);
-			break;
-		}
-	}
+	for (hp = sp->head; hp; hp = hp->next)
+		tbl_char(tp,
+		    outer || TBL_HEAD_DATA == hp->pos ? '-' : '+',
+		    tbl_rulewidth(tp, hp));
 	term_word(tp, "+");
 	term_flushln(tp);
 }
@@ -330,14 +347,6 @@ tbl_vrule(struct termp *tp, const struct tbl_head *hp)
 }
 
 static void
-tbl_vframe(struct termp *tp, const struct tbl *tbl)
-{
-
-	if (TBL_OPT_BOX & tbl->opts || TBL_OPT_DBOX & tbl->opts)
-		term_word(tp, "|");
-}
-
-static void
 tbl_char(struct termp *tp, char c, size_t len)
 {
 	size_t		i, sz;
@@ -356,37 +365,35 @@ static void
 tbl_literal(struct termp *tp, const struct tbl_dat *dp, 
 		const struct roffcol *col)
 {
-	size_t		 padl, padr, ssz;
-
-	padl = padr = 0;
+	size_t		 len, padl, padr;
 
 	assert(dp->string);
-
-	ssz = term_len(tp, 1);
+	len = term_strlen(tp, dp->string);
+	padr = col->width > len ? col->width - len : 0;
+	padl = 0;
 
 	switch (dp->layout->pos) {
 	case (TBL_CELL_LONG):
-		padl = ssz;
-		padr = col->width - term_strlen(tp, dp->string) - ssz;
+		padl = term_len(tp, 1);
+		padr = padr > padl ? padr - padl : 0;
 		break;
 	case (TBL_CELL_CENTRE):
-		padr = col->width - term_strlen(tp, dp->string);
-		if (3 > padr)
+		if (2 > padr)
 			break;
-		padl = (padr - 1) / 2;
+		padl = padr / 2;
 		padr -= padl;
 		break;
 	case (TBL_CELL_RIGHT):
-		padl = col->width - term_strlen(tp, dp->string);
+		padl = padr;
+		padr = 0;
 		break;
 	default:
-		padr = col->width - term_strlen(tp, dp->string);
 		break;
 	}
 
 	tbl_char(tp, ASCII_NBRSP, padl);
 	term_word(tp, dp->string);
-	tbl_char(tp, ASCII_NBRSP, padr + 2);
+	tbl_char(tp, ASCII_NBRSP, padr);
 }
 
 static void
@@ -423,13 +430,11 @@ tbl_number(struct termp *tp, const struct tbl *tbl,
 	} else
 		d = sz + psz;
 
-	sz += term_len(tp, 2);
-	d += term_len(tp, 1);
-
 	padl = col->decimal - d;
 
 	tbl_char(tp, ASCII_NBRSP, padl);
 	term_word(tp, dp->string);
-	tbl_char(tp, ASCII_NBRSP, col->width - sz - padl);
+	if (col->width > sz + padl)
+		tbl_char(tp, ASCII_NBRSP, col->width - sz - padl);
 }
 
