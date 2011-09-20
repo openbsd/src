@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.74 2010/07/01 05:33:32 jsing Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.75 2011/09/20 21:46:08 miod Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -157,7 +157,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	*(register_t*)(osp + HPPA_FRAME_CRP) = (register_t)&switch_trampoline;
 	*(register_t*)(osp) = (osp - HPPA_FRAME_SIZE);
 
-	sp = osp + HPPA_FRAME_SIZE + 20*4; /* frame + calee-save registers */
+	sp = osp + HPPA_FRAME_SIZE + 20*4; /* frame + callee-saved registers */
 	*HPPA_FRAME_CARG(0, sp) = (register_t)arg;
 	*HPPA_FRAME_CARG(1, sp) = KERNMODE(func);
 	pcbp->pcb_ksp = sp;
