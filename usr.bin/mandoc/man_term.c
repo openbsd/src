@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.74 2011/09/20 13:13:21 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.75 2011/09/20 14:20:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -636,7 +636,7 @@ pre_TP(DECL_ARGS)
 	/* Calculate offset. */
 
 	if (NULL != (nn = n->parent->head->child))
-		if (nn->parent->line == nn->line)
+		if (nn->string && nn->parent->line == nn->line)
 			if ((ival = a2width(p, nn->string)) >= 0)
 				len = (size_t)ival;
 
