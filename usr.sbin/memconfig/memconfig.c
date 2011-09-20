@@ -1,4 +1,4 @@
-/* $OpenBSD: memconfig.c,v 1.14 2011/06/06 14:59:16 tedu Exp $ */
+/* $OpenBSD: memconfig.c,v 1.15 2011/09/20 08:28:51 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
@@ -56,6 +56,7 @@ struct {
 	{"fixed-length",	MDF_FIXLEN,		0},
 	{"set-by-firmware",	MDF_FIRMWARE,		0},
 	{"active",		MDF_ACTIVE,		MDF_SETTABLE},
+	{"fix-active",		MDF_FIXACTIVE,		0},
 	{"bogus",		MDF_BOGUS,		0},
 	{NULL,			0,			0}
 };
@@ -152,7 +153,7 @@ mrgetall(int memfd, int *nmr)
 static void
 listfunc(int memfd, int argc, char *argv[])
 {
-	int	nd, i, j, ch, showall = 0;
+	int	nd, i, j, k, ch, showall = 0;
 	struct mem_range_desc	*mrd;
 	char	*owner;
 
@@ -179,9 +180,17 @@ listfunc(int memfd, int argc, char *argv[])
 			continue;
 		printf("%qx/%qx %.8s ", mrd[i].mr_base, mrd[i].mr_len,
 		       mrd[i].mr_owner[0] ? mrd[i].mr_owner : "-");
-		for (j = 0; attrnames[j].name != NULL; j++)
-			if (mrd[i].mr_flags & attrnames[j].val)
-				printf("%s ", attrnames[j].name);
+		for (j = 0; j < 32; j++) {
+			if ( ((1<<j) & mrd[i].mr_flags) == 0)
+				continue;
+			for (k = 0; attrnames[k].name != NULL; k++)
+				if (((1<<j) & mrd[i].mr_flags) & attrnames[k].val) {
+					printf("%s ", attrnames[k].name);
+					break;
+				}
+			if (attrnames[k].name == NULL)
+				printf("0x%x", (1<<j) & mrd[i].mr_flags);
+		}
 		printf("\n");
 	}
 	free(mrd);
