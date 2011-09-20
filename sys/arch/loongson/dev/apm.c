@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.10 2011/09/18 12:01:06 phessler Exp $	*/
+/*	$OpenBSD: apm.c,v 1.11 2011/09/20 14:06:26 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -358,6 +358,9 @@ apm_suspend()
 #if NSWDISPLAY > 0
 	wsdisplay_suspend();
 #endif
+
+	resettodr();
+
 	bufq_quiesce();
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_QUIESCE);
 
