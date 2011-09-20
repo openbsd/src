@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.88 2010/12/31 21:22:42 guenther Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.89 2011/09/20 21:19:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -921,67 +921,6 @@ aspath_prepend(struct aspath *asp, u_int32_t as, int quantum, u_int16_t *len)
 
 	*len = l;
 	return (p);
-}
-
-/* we need to be able to search more than one as */
-int
-aspath_match(struct aspath *a, enum as_spec type, u_int32_t as)
-{
-	u_int8_t	*seg;
-	int		 final;
-	u_int16_t	 len, seg_size;
-	u_int8_t	 i, seg_type, seg_len;
-
-	if (type == AS_EMPTY) {
-		if (a->len == 0)
-			return (1);
-		else
-			return (0);
-	}
-
-	final = 0;
-	seg = a->data;
-	for (len = a->len; len > 0; len -= seg_size, seg += seg_size) {
-		seg_type = seg[0];
-		seg_len = seg[1];
-		seg_size = 2 + sizeof(u_int32_t) * seg_len;
-
-		final = (len == seg_size);
-
-		/* just check the first (leftmost) AS */
-		if (type == AS_PEER) {
-			if (as == aspath_extract(seg, 0))
-				return (1);
-			else
-				return (0);
-		}
-		/* just check the final (rightmost) AS */
-		if (type == AS_SOURCE) {
-			/* not yet in the final segment */
-			if (!final)
-				continue;
-
-			if (as == aspath_extract(seg, seg_len - 1))
-				return (1);
-			else
-				return (0);
-		}
-
-		/* AS_TRANSIT or AS_ALL */
-		for (i = 0; i < seg_len; i++) {
-			if (as == aspath_extract(seg, i)) {
-				/*
-				 * the source (rightmost) AS is excluded from
-				 * AS_TRANSIT matches.
-				 */
-				if (final && i == seg_len - 1 &&
-				    type == AS_TRANSIT)
-					return (0);
-				return (1);
-			}
-		}
-	}
-	return (0);
 }
 
 int

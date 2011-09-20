@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.129 2011/09/17 16:29:44 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.130 2011/09/20 21:19:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -626,66 +626,6 @@ static void		 prefix_free(struct prefix *);
 static void		 prefix_link(struct prefix *, struct rib_entry *,
 			     struct rde_aspath *);
 static void		 prefix_unlink(struct prefix *);
-
-int
-prefix_compare(const struct bgpd_addr *a, const struct bgpd_addr *b,
-    int prefixlen)
-{
-	in_addr_t	mask, aa, ba;
-	int		i;
-	u_int8_t	m;
-
-	if (a->aid != b->aid)
-		return (a->aid - b->aid);
-
-	switch (a->aid) {
-	case AID_INET:
-		if (prefixlen > 32)
-			fatalx("prefix_cmp: bad IPv4 prefixlen");
-		mask = htonl(prefixlen2mask(prefixlen));
-		aa = ntohl(a->v4.s_addr & mask);
-		ba = ntohl(b->v4.s_addr & mask);
-		if (aa != ba)
-			return (aa - ba);
-		return (0);
-	case AID_INET6:
-		if (prefixlen > 128)
-			fatalx("prefix_cmp: bad IPv6 prefixlen");
-		for (i = 0; i < prefixlen / 8; i++)
-			if (a->v6.s6_addr[i] != b->v6.s6_addr[i])
-				return (a->v6.s6_addr[i] - b->v6.s6_addr[i]);
-		i = prefixlen % 8;
-		if (i) {
-			m = 0xff00 >> i;
-			if ((a->v6.s6_addr[prefixlen / 8] & m) !=
-			    (b->v6.s6_addr[prefixlen / 8] & m))
-				return ((a->v6.s6_addr[prefixlen / 8] & m) -
-				    (b->v6.s6_addr[prefixlen / 8] & m));
-		}
-		return (0);
-	case AID_VPN_IPv4:
-		if (prefixlen > 32)
-			fatalx("prefix_cmp: bad IPv4 VPN prefixlen");
-		if (betoh64(a->vpn4.rd) > betoh64(b->vpn4.rd))
-			return (1);
-		if (betoh64(a->vpn4.rd) < betoh64(b->vpn4.rd))
-			return (-1);
-		mask = htonl(prefixlen2mask(prefixlen));
-		aa = ntohl(a->vpn4.addr.s_addr & mask);
-		ba = ntohl(b->vpn4.addr.s_addr & mask);
-		if (aa != ba)
-			return (aa - ba);
-		if (a->vpn4.labellen > b->vpn4.labellen)
-			return (1);
-		if (a->vpn4.labellen < b->vpn4.labellen)
-			return (-1);
-		return (memcmp(a->vpn4.labelstack, b->vpn4.labelstack,
-		    a->vpn4.labellen));
-	default:
-		fatalx("prefix_cmp: unknown af");
-	}
-	return (-1);
-}
 
 /*
  * search for specified prefix of a peer. Returns NULL if not found.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.140 2011/09/18 09:31:25 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.141 2011/09/20 21:19:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -355,7 +355,6 @@ u_int32_t	 aspath_neighbor(struct aspath *);
 int		 aspath_loopfree(struct aspath *, u_int32_t);
 int		 aspath_compare(struct aspath *, struct aspath *);
 u_char		*aspath_prepend(struct aspath *, u_int32_t, int, u_int16_t *);
-int		 aspath_match(struct aspath *, enum as_spec, u_int32_t);
 int		 aspath_lenmatch(struct aspath *, enum aslen_spec, u_int);
 int		 community_match(struct rde_aspath *, int, int);
 int		 community_set(struct rde_aspath *, int, int);
@@ -434,8 +433,6 @@ struct rde_aspath *path_get(void);
 void		 path_put(struct rde_aspath *);
 
 #define	PREFIX_SIZE(x)	(((x) + 7) / 8 + 1)
-int		 prefix_compare(const struct bgpd_addr *,
-		    const struct bgpd_addr *, int);
 struct prefix	*prefix_get(struct rib *, struct rde_peer *,
 		    struct bgpd_addr *, int, u_int32_t);
 int		 prefix_add(struct rib *, struct rde_aspath *,
@@ -481,8 +478,5 @@ u_char		*up_dump_mp_unreach(u_char *, u_int16_t *, struct rde_peer *,
 		     u_int8_t);
 int		 up_dump_mp_reach(u_char *, u_int16_t *, struct rde_peer *,
 		     u_int8_t);
-
-/* util.c */
-u_int32_t	 aspath_extract(const void *, int);
 
 #endif /* __RDE_H__ */

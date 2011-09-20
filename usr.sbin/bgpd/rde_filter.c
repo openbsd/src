@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.66 2011/05/01 12:56:04 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.67 2011/09/20 21:19:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -277,7 +277,8 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 			pas = peer->conf.remote_as;
 		else
 			pas = f->match.as.as;
-		if (aspath_match(asp->aspath, f->match.as.type, pas) == 0)
+		if (aspath_match(asp->aspath->data, asp->aspath->len,
+		    f->match.as.type, pas) == 0)
 			return (0);
 	}
 

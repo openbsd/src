@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.266 2011/09/19 11:18:11 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.267 2011/09/20 21:19:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -986,6 +986,10 @@ const char	*log_ext_subtype(u_int8_t);
 int		 aspath_snprint(char *, size_t, void *, u_int16_t);
 int		 aspath_asprint(char **, void *, u_int16_t);
 size_t		 aspath_strlen(void *, u_int16_t);
+int		 aspath_match(void *, u_int16_t, enum as_spec, u_int32_t);
+u_int32_t	 aspath_extract(const void *, int);
+int		 prefix_compare(const struct bgpd_addr *,
+		    const struct bgpd_addr *, int);
 in_addr_t	 prefixlen2mask(u_int8_t);
 void		 inet6applymask(struct in6_addr *, const struct in6_addr *,
 		    int);
