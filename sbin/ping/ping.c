@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.90 2011/09/17 14:10:05 haesbaert Exp $	*/
+/*	$OpenBSD: ping.c,v 1.91 2011/09/20 09:46:19 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -596,7 +596,7 @@ catcher(int signo)
 	if (ntransmitted - nreceived - 1 > nmissedmax) {
 		nmissedmax = ntransmitted - nreceived - 1;
 		if (!(options & F_FLOOD) && (options & F_AUD_MISS))
-			(void)fputc('\a', stderr);
+			write(STDERR_FILENO, "\a", 1);
 	}
 	errno = save_errno;
 }
@@ -901,7 +901,7 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 		(void)putchar('\n');
 		(void)fflush(stdout);
 		if (options & F_AUD_RECV)
-			(void)fputc('\a', stderr);
+			write(STDERR_FILENO, "\a", 1);
 	}
 }
 
