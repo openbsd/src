@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.1 2011/09/17 14:45:22 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.2 2011/09/20 13:47:59 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -31,8 +31,8 @@ struct	manact {
 	int		(*cond)(DECL_ARGS);
 	int		(*pre)(DECL_ARGS);
 	void		(*post)(DECL_ARGS);
-	char		 *prefix;
-	char		 *suffix;
+	const char	 *prefix;
+	const char	 *suffix;
 };
 
 static	void	  print_word(const char *);
