@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.73 2011/09/18 19:40:49 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.74 2011/09/20 12:19:22 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -57,10 +57,9 @@
 #include <dev/rndvar.h>
 
 /*
- * the per-io data that we need to preallocate. We can't afford to allow io
- * to start failing when memory pressure kicks in.
- * We can store this in the WU because we assert that only one
- * ccb per WU will ever be active.
+ * The per-I/O data that we need to preallocate. We cannot afford to allow I/O
+ * to start failing when memory pressure kicks in. We can store this in the WU
+ * because we assert that only one ccb per WU will ever be active.
  */
 struct sr_crypto_wu {
 	TAILQ_ENTRY(sr_crypto_wu)	 cr_link;
@@ -250,7 +249,6 @@ done:
 	return (rv);
 }
 
-
 struct sr_crypto_wu *
 sr_crypto_wu_get(struct sr_workunit *wu, int encrypt)
 {
@@ -290,22 +288,16 @@ sr_crypto_wu_get(struct sr_workunit *wu, int encrypt)
 	n = xs->datalen >> DEV_BSHIFT;
 
 	/*
-	 * we preallocated enough crypto descs for up to MAXPHYS of io.
-	 * since ios may be less than that we need to tweak the linked list
+	 * We preallocated enough crypto descs for up to MAXPHYS of I/O.
+	 * Since there may be less than that we need to tweak the linked list
 	 * of crypto desc structures to be just long enough for our needs.
-	 * Otherwise crypto will get upset with us. So put n descs on the crp
-	 * and keep the rest.
 	 */
 	crd = crwu->cr_descs;
-	i = 0;
-	while (++i < n) {
+	for (i = 0; i < ((MAXPHYS >> DEV_BSHIFT) - n); i++) {
 		crd = crd->crd_next;
 		KASSERT(crd);
 	}
-	crwu->cr_crp->crp_desc = crwu->cr_descs;
-	crwu->cr_descs = crd->crd_next;
-	crd->crd_next = NULL;
-
+	crwu->cr_crp->crp_desc = crd;
 	flags = (encrypt ? CRD_F_ENCRYPT : 0) |
 	    CRD_F_IV_PRESENT | CRD_F_IV_EXPLICIT;
 
@@ -345,16 +337,11 @@ sr_crypto_wu_get(struct sr_workunit *wu, int encrypt)
 	crwu->cr_crp->crp_opaque = crwu;
 
 	return (crwu);
+
 unwind:
 	/* steal the descriptors back from the cryptop */
-	crd = crwu->cr_crp->crp_desc;
-	while (crd->crd_next != NULL)
-		crd = crd->crd_next;
-
-	/* join the lists back again */
-	crd->crd_next = crwu->cr_descs;
-	crwu->cr_descs = crwu->cr_crp->crp_desc;
 	crwu->cr_crp->crp_desc = NULL;
+
 	return (NULL);
 }
 
@@ -364,20 +351,11 @@ sr_crypto_wu_put(struct sr_crypto_wu *crwu)
 	struct cryptop		*crp = crwu->cr_crp;
 	struct sr_workunit	*wu = crwu->cr_wu;
 	struct sr_discipline	*sd = wu->swu_dis;
-	struct cryptodesc	*crd;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_wu_put crwu: %p\n",
 	    DEVNAME(wu->swu_dis->sd_sc), crwu);
 
-	/* steal the descrptions back from the cryptop */
-	crd = crp->crp_desc;
-	KASSERT(crd);
-	while (crd->crd_next != NULL)
-		crd = crd->crd_next;
-
-	/* join the lists back again */
-	crd->crd_next = crwu->cr_descs;
-	crwu->cr_descs = crp->crp_desc;
+	/* steal the descriptors back from the cryptop */
 	crp->crp_desc = NULL;
 
 	mtx_enter(&sd->mds.mdd_crypto.scr_mutex);
@@ -1087,8 +1065,8 @@ sr_crypto_free_resources(struct sr_discipline *sd)
 
 		if (crwu->cr_dmabuf != NULL)
 			dma_free(crwu->cr_dmabuf, MAXPHYS);
-		/* twiddle cryptoreq back */
 		if (crwu->cr_crp) {
+			/* twiddle cryptoreq back */
 			crwu->cr_crp->crp_desc = crwu->cr_descs;
 			crypto_freereq(crwu->cr_crp);
 		}
