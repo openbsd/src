@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.25 2011/09/19 12:58:30 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.26 2011/09/20 16:44:28 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -659,8 +659,8 @@ syscall(struct trapframe *frame)
 		frame->tf_r1 = 0;
 		break;
 	case ERESTART:
-		frame->tf_iioq[0] -= 12;
-		frame->tf_iioq[1] -= 12;
+		frame->tf_iioq[0] -= 16;
+		frame->tf_iioq[1] -= 16;
 	case EJUSTRETURN:
 		break;
 	default:
