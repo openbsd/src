@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.117 2011/09/20 14:25:14 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.118 2011/09/20 14:29:34 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -4229,6 +4229,10 @@ i915_gem_entervt_ioctl(struct drm_device *dev, void *data,
 {
 	struct inteldrm_softc *dev_priv = dev->dev_private;
 	int ret;
+
+	/* XXX until we have support for the rings on sandybridge */
+	if (IS_GEN6(dev_priv))
+		return (0);
 
 	if (dev_priv->mm.wedged) {
 		DRM_ERROR("Reenabling wedged hardware, good luck\n");
