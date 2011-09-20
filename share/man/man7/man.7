@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.22 2011/09/18 10:38:57 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.23 2011/09/20 22:46:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2011 $
+.Dd $Mdocdate: September 20 2011 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -588,6 +588,45 @@ are as mentioned in
 .Pp
 If a block macro is next-line scoped, it may only be followed by in-line
 macros for decorating text.
+.Sh MACRO OVERVIEW
+This overview is sorted such that macros of similar purpose are listed
+together, to help find the best macro for any given purpose.
+Deprecated macros are not included in the overview, but can be found
+in the alphabetical reference below.
+.Ss Page header and footer meta-data
+.Bl -column "PP, LP, P" description
+.It Sx TH Ta set the title: Ar title section date Op Ar source Op Ar volume
+.It Sx AT Ta display AT&T UNIX version in the page footer (<= 1 argument)
+.It Sx UC Ta display BSD version in the page footer (<= 1 argument)
+.El
+.Ss Sections and paragraphs
+.Bl -column "PP, LP, P" description
+.It Sx SH Ta section header (one line)
+.It Sx SS Ta subsection header (one line)
+.It Sx PP , LP , P Ta start an undecorated paragraph (no arguments)
+.It Sx RS , RE Ta reset the left margin: Op Ar width
+.It Sx IP Ta indented paragraph: Op Ar head Op Ar width
+.It Sx TP Ta tagged paragraph: Op Ar width
+.It Sx HP Ta hanged paragraph: Op Ar width
+.It Sx \&br Ta force output line break in text mode (no arguments)
+.It Sx \&sp Ta force vertical space: Op Ar height
+.It Sx fi , nf Ta fill mode and no-fill mode (no arguments)
+.It Sx in Ta additional indent: Op Ar width
+.El
+.Ss Physical markup
+.Bl -column "PP, LP, P" description
+.It Sx B Ta boldface font
+.It Sx I Ta italic font
+.It Sx R Ta roman (default) font
+.It Sx SB Ta small boldface font
+.It Sx SM Ta small roman font
+.It Sx BI Ta alternate between boldface and italic fonts
+.It Sx BR Ta alternate between boldface and roman fonts
+.It Sx IB Ta alternate between italic and boldface fonts
+.It Sx IR Ta alternate between italic and roman fonts
+.It Sx RB Ta alternate between roman and boldface fonts
+.It Sx RI Ta alternate between roman and italic fonts
+.El
 .Sh REFERENCE
 This section is a canonical reference to all macros, arranged
 alphabetically.
