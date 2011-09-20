@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.8,v 1.19 2011/09/20 15:48:29 ajacoutot Exp $
+.\"	$OpenBSD: intro.8,v 1.20 2011/09/20 21:48:35 ajacoutot Exp $
 .\"	$NetBSD: intro.8,v 1.3 1994/11/30 19:36:24 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -138,8 +138,7 @@ Alternatively, you can get your maps with YP.
 Relevant
 .Xr rc.conf 8
 variables:
-.Va amd ,
-.Va amd_dir ,
+.Va amd_flags
 and
 .Va amd_master .
 .Ss BIND name server (DNS)
@@ -172,9 +171,7 @@ and
 Relevant
 .Xr rc.conf 8
 variables:
-.Va ntpd_flags
-and
-.Va rdate_flags .
+.Va ntpd_flags .
 .Ss Concatenated disks (ccd)
 If you are using
 .Xr ccd 4
@@ -234,9 +231,10 @@ from the master so that the remote commands work.
 Relevant
 .Xr rc.conf 8
 variables:
-.Va krb5_master_kdc
+.Va kdc_flags ,
+.Va kadmind_flags ,
 and
-.Va krb5_slave_kdc .
+.Va kpasswdd_flags .
 .Ss NFS server
 If this is an NFS server,
 edit
@@ -245,7 +243,7 @@ edit
 Relevant
 .Xr rc.conf 8
 variables:
-.Va nfs_server
+.Va mountd_flags
 and
 .Va nfsd_flags .
 .Ss Relay Daemon
@@ -281,7 +279,7 @@ This includes YP and NFS exports, among other services.
 Relevant
 .Xr rc.conf 8
 variables:
-.Va portmap .
+.Va portmap_flags .
 .Ss YP setup
 Check the YP domain name with the
 .Xr domainname 1
@@ -296,10 +294,14 @@ script reads this file on boot to determine and set the domain name.
 You may also set the running system's domain name with the
 .Xr domainname 1
 command.
-To start YP client services, simply run
-.Ic ypbind ,
-then perform the remaining
-YP activation as described in
+.Pp
+Relevant
+.Xr rc.conf 8
+variables:
+.Va ypbind_flags .
+.Pp
+After starting YP client services, perform the remaining YP activation
+as described in
 .Xr passwd 5
 and
 .Xr group 5 .
