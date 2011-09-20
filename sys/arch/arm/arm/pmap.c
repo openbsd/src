@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.31 2011/05/14 19:19:32 matthew Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.32 2011/09/20 22:02:11 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -2891,20 +2891,6 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		PTE_SYNC(pl1pd);
 		rv = 1;
 	}
-
-#ifdef CPU_SA110
-	/*
-	 * There are bugs in the rev K SA110.  This is a check for one
-	 * of them.
-	 */
-	if (rv == 0 && curcpu()->ci_arm_cputype == CPU_ID_SA110 &&
-	    curcpu()->ci_arm_cpurev < 3) {
-		/* Always current pmap */
-		if (l2pte_valid(pte)) {
-			rv = 1;
-		}
-	}
-#endif /* CPU_SA110 */
 
 #ifdef DEBUG
 	/*

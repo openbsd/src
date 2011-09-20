@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.10 2007/05/15 16:02:18 drahn Exp $	*/
+/*	$OpenBSD: fault.c,v 1.11 2011/09/20 22:02:11 miod Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -112,12 +112,6 @@
 int last_fault_code;	/* For the benefit of pmap_fault_fixup() */
 #endif
 
-#if defined(CPU_ARM3) || defined(CPU_ARM6) || \
-    defined(CPU_ARM7) || defined(CPU_ARM7TDMI)
-/* These CPUs may need data/prefetch abort fixups */
-#define	CPU_ABORT_FIXUP_REQUIRED
-#endif
-
 struct sigdata {
 	int signo;
 	int code;
@@ -164,36 +158,6 @@ static const struct data_abort data_aborts[] = {
 #define	IS_PERMISSION_FAULT(x)					\
 	(((1 << ((x) & FAULT_TYPE_MASK)) &			\
 	  ((1 << FAULT_PERM_P) | (1 << FAULT_PERM_S))) != 0)
-
-static __inline int
-data_abort_fixup(trapframe_t *tf, u_int fsr, u_int far, struct proc *l)
-{
-#ifdef CPU_ABORT_FIXUP_REQUIRED
-	int error;
-
-	/* Call the cpu specific data abort fixup routine */
-	error = cpu_dataabt_fixup(tf);
-	if (__predict_true(error != ABORT_FIXUP_FAILED))
-		return (error);
-
-	/*
-	 * Oops, couldn't fix up the instruction
-	 */
-	printf("data_abort_fixup: fixup for %s mode data abort failed.\n",
-	    TRAP_USERMODE(tf) ? "user" : "kernel");
-	printf("pc = 0x%08x, opcode 0x%08x, insn = ", tf->tf_pc,
-	    *((u_int *)tf->tf_pc));
-	disassemble(tf->tf_pc);
-
-	/* Die now if this happened in kernel mode */
-	if (!TRAP_USERMODE(tf))
-		dab_fatal(tf, fsr, far, l, NULL);
-
-	return (error);
-#else
-	return (ABORT_FIXUP_OK);
-#endif /* CPU_ABORT_FIXUP_REQUIRED */
-}
 
 void
 data_abort_handler(trapframe_t *tf)
@@ -281,21 +245,6 @@ data_abort_handler(trapframe_t *tf)
 		printf("\ndata_abort_fault: Misaligned Kernel-mode "
 		    "Program Counter\n");
 		dab_fatal(tf, fsr, far, p, NULL);
-	}
-
-	/* See if the cpu state needs to be fixed up */
-	switch (data_abort_fixup(tf, fsr, far, p)) {
-	case ABORT_FIXUP_RETURN:
-		return;
-	case ABORT_FIXUP_FAILED:
-		/* Deliver a SIGILL to the process */
-		sd.signo = SIGILL;
-		sd.code = ILL_ILLOPC;
-		sd.addr = far;
-		sd.trap = fsr;
-		goto do_trapsignal;
-	default:
-		break;
 	}
 
 	va = trunc_page((vaddr_t)far);
@@ -522,9 +471,6 @@ dab_align(trapframe_t *tf, u_int fsr, u_int far, struct proc *p,
 	/* pcb_onfault *must* be NULL at this point */
 	KDASSERT(p->p_addr->u_pcb.pcb_onfault == NULL);
 
-	/* See if the cpu state needs to be fixed up */
-	(void) data_abort_fixup(tf, fsr, far, p);
-
 	/* Deliver a bus error signal to the process */
 	sd->signo = SIGBUS;
 	sd->code = BUS_ADRALN;
@@ -617,9 +563,6 @@ dab_buserr(trapframe_t *tf, u_int fsr, u_int far, struct proc *p,
 		return (0);
 	}
 
-	/* See if the cpu state needs to be fixed up */
-	(void) data_abort_fixup(tf, fsr, far, p);
-
 	/*
 	 * At this point, if the fault happened in kernel mode or user mode,
 	 * we're toast
@@ -627,37 +570,6 @@ dab_buserr(trapframe_t *tf, u_int fsr, u_int far, struct proc *p,
 	dab_fatal(tf, fsr, far, p, NULL);
 
 	return (1);
-}
-
-static __inline int
-prefetch_abort_fixup(trapframe_t *tf)
-{
-#ifdef CPU_ABORT_FIXUP_REQUIRED
-	int error;
-
-	/* Call the cpu specific prefetch abort fixup routine */
-	error = cpu_prefetchabt_fixup(tf);
-	if (__predict_true(error != ABORT_FIXUP_FAILED))
-		return (error);
-
-	/*
-	 * Oops, couldn't fix up the instruction
-	 */
-	printf(
-	    "prefetch_abort_fixup: fixup for %s mode prefetch abort failed.\n",
-	    TRAP_USERMODE(tf) ? "user" : "kernel");
-	printf("pc = 0x%08x, opcode 0x%08x, insn = ", tf->tf_pc,
-	    *((u_int *)tf->tf_pc));
-	disassemble(tf->tf_pc);
-
-	/* Die now if this happened in kernel mode */
-	if (!TRAP_USERMODE(tf))
-		dab_fatal(tf, 0, tf->tf_pc, NULL, NULL);
-
-	return (error);
-#else
-	return (ABORT_FIXUP_OK);
-#endif /* CPU_ABORT_FIXUP_REQUIRED */
 }
 
 /*
@@ -690,23 +602,6 @@ prefetch_abort_handler(trapframe_t *tf)
 	 */
 	if (__predict_true((tf->tf_spsr & I32_bit) == 0))
 		enable_interrupts(I32_bit);
-
-	/* See if the cpu state needs to be fixed up */
-	switch (prefetch_abort_fixup(tf)) {
-	case ABORT_FIXUP_RETURN:
-		return;
-	case ABORT_FIXUP_FAILED:
-		/* Deliver a SIGILL to the process */
-		sv.sival_ptr = (u_int32_t *) tf->tf_pc;
-		trapsignal(p, SIGILL, BUS_ADRERR, ILL_ILLOPC, sv);
-
-		p = curproc;
-		p->p_addr->u_pcb.pcb_tf = tf;
-
-		goto out;
-	default:
-		break;
-	}
 
 	/* Prefetch aborts cannot happen in kernel mode */
 	if (__predict_false(!TRAP_USERMODE(tf)))

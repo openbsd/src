@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.14 2010/11/28 20:44:20 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.15 2011/09/20 22:02:13 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
@@ -58,7 +58,6 @@
 #include <dev/cons.h>
 
 struct device *bootdv = NULL;
-extern char *boot_file;
 
 void dumpconf(void);
 

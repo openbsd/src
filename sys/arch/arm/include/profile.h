@@ -1,4 +1,4 @@
-/*	$OpenBSD: profile.h,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: profile.h,v 1.2 2011/09/20 22:02:13 miod Exp $	*/
 /*	$NetBSD: profile.h,v 1.5 2002/03/24 15:49:40 bjh21 Exp $	*/
 
 /*
@@ -62,22 +62,17 @@
 	 * Preserve registers that are trashed during mcount		\
 	 */								\
 	__asm__("stmfd	sp!, {r0-r3, ip, lr}");				\
-	/* Check what mode we're in.  EQ => 32, NE => 26 */		\
-	__asm__("teq	r0, r0");					\
-	__asm__("teq	pc, r15");					\
 	/*								\
 	 * find the return address for mcount,				\
 	 * and the return address for mcount's caller.			\
 	 *								\
 	 * frompcindex = pc pushed by call into self.			\
 	 */								\
-	__asm__("moveq	r0, ip");					\
-	__asm__("bicne	r0, ip, #0xfc000003");	       			\
+	__asm__("mov	r0, ip");					\
 	/*								\
 	 * selfpc = pc pushed by mcount call				\
 	 */								\
-	__asm__("moveq	r1, lr");					\
-	__asm__("bicne	r1, lr, #0xfc000003");				\
+	__asm__("mov	r1, lr");					\
 	/*								\
 	 * Call the real mcount code					\
 	 */								\
@@ -88,12 +83,6 @@
 	__asm__("ldmfd	sp!, {r0-r3, lr, pc}");
 
 #ifdef _KERNEL
-#ifdef __PROG26
-extern int int_off_save(void);
-extern void int_restore(int);
-#define	MCOUNT_ENTER	(s = int_off_save())
-#define	MCOUNT_EXIT	int_restore(s)
-#else
 #include <arm/cpufunc.h>
 /*
  * splhigh() and splx() are heavyweight, and call mcount().  Therefore
@@ -103,5 +92,4 @@ extern void int_restore(int);
  */
 #define	MCOUNT_ENTER	s = __set_cpsr_c(0x0080, 0x0080);	/* kill IRQ */
 #define	MCOUNT_EXIT	__set_cpsr_c(0xffffffff, s);	/* restore old value */
-#endif /* !acorn26 */
 #endif /* _KERNEL */

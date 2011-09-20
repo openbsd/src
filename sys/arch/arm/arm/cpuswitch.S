@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch.S,v 1.11 2010/11/28 20:45:46 miod Exp $	*/
+/*	$OpenBSD: cpuswitch.S,v 1.12 2011/09/20 22:02:10 miod Exp $	*/
 /*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
@@ -450,12 +450,6 @@ ENTRY(cpu_switchto)
 
 	/* rem: r6 = new proc */
 	/* rem: r7 = new pcb */
-
-#ifdef ARMFPE
-	add	r0, r7, #(USER_SIZE) & 0x00ff
-	add	r0, r0, #(USER_SIZE) & 0xff00 
-	bl	_C_LABEL(arm_fpe_core_changecontext)
-#endif
 
 	/* We can enable interrupts again */
 	IRQenableALL

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuconf.h,v 1.6 2009/05/24 04:56:19 drahn Exp $	*/
+/*	$OpenBSD: cpuconf.h,v 1.7 2011/09/20 22:02:13 miod Exp $	*/
 /*	$NetBSD: cpuconf.h,v 1.7 2003/05/23 00:57:24 ichiro Exp $	*/
 
 /*
@@ -48,20 +48,8 @@
 /*
  * Determine which ARM architecture versions are configured.
  */
-#if (defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3))
-#define	ARM_ARCH_2	1
-#else
-#define	ARM_ARCH_2	0
-#endif
-
-#if (defined(CPU_ARM6) || defined(CPU_ARM7))
-#define	ARM_ARCH_3	1
-#else
-#define	ARM_ARCH_3	0
-#endif
-
-#if (defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) ||	\
-     defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) || \
+#if (defined(CPU_ARM8) || defined(CPU_ARM9) ||	\
+     defined(CPU_SA1100) || defined(CPU_SA1110) || \
      defined(CPU_IXP12X0) || defined(CPU_XSCALE_IXP425))
 #define	ARM_ARCH_4	1
 #else
@@ -91,9 +79,6 @@
 /*
  * Define which MMU classes are configured:
  *
- *	ARM_MMU_MEMC		Prehistoric, external memory controller
- *				and MMU for ARMv2 CPUs.
- *
  *	ARM_MMU_GENERIC		Generic ARM MMU, compatible with ARM6.
  *
  *	ARM_MMU_SA1		StrongARM SA-1 MMU.  Compatible with generic
@@ -105,21 +90,15 @@
  *      ARM_MMU_V7		v6/v7 MMU with XP bit enabled subpage
  *				protection is not used, TEX/AP is used instead.
  */
-#if (defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3))
-#define	ARM_MMU_MEMC		1
-#else
-#define	ARM_MMU_MEMC		0
-#endif
 
-#if (defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) ||	\
-     defined(CPU_ARM8) || defined(CPU_ARM9) || defined(CPU_ARM9E) ||	\
+#if (defined(CPU_ARM8) || defined(CPU_ARM9) || defined(CPU_ARM9E) ||	\
      defined(CPU_ARM10) || defined(CPU_ARM11) || defined(CPU_ARMv7) )
 #define	ARM_MMU_GENERIC		1
 #else
 #define	ARM_MMU_GENERIC		0
 #endif
 
-#if (defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) ||\
+#if (defined(CPU_SA1100) || defined(CPU_SA1110) ||\
      defined(CPU_IXP12X0))
 #define	ARM_MMU_SA1		1
 #else
@@ -139,7 +118,7 @@
 #define ARM_MMU_V7		0
 #endif
 
-#define	ARM_NMMUS		(ARM_MMU_MEMC + ARM_MMU_GENERIC +	\
+#define	ARM_NMMUS		(ARM_MMU_GENERIC +	\
 				 ARM_MMU_SA1 + ARM_MMU_XSCALE + ARM_MMU_V7)
 
 /*

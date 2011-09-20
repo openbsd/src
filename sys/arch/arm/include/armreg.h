@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.9 2011/03/17 21:49:33 jasper Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.10 2011/09/20 22:02:13 miod Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -81,26 +81,6 @@
 #define PSR_32_MODE	0x00000010
 
 #define PSR_IN_USR_MODE(psr)	(!((psr) & 3))		/* XXX */
-#define PSR_IN_32_MODE(psr)	((psr) & PSR_32_MODE)
-
-/* In 26-bit modes, the PSR is stuffed into R15 along with the PC. */
-
-#define R15_MODE	0x00000003
-#define R15_MODE_USR	0x00000000
-#define R15_MODE_FIQ	0x00000001
-#define R15_MODE_IRQ	0x00000002
-#define R15_MODE_SVC	0x00000003
-
-#define R15_PC		0x03fffffc
-
-#define R15_FIQ_DISABLE	0x04000000
-#define R15_IRQ_DISABLE	0x08000000
-
-#define R15_FLAGS	0xf0000000
-#define R15_FLAG_N	0x80000000
-#define R15_FLAG_Z	0x40000000
-#define R15_FLAG_C	0x20000000
-#define R15_FLAG_V	0x10000000
 
 /*
  * Co-processor 15:  The system control co-processor.

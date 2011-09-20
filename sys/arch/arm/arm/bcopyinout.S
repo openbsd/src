@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopyinout.S,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
+/*	$OpenBSD: bcopyinout.S,v 1.2 2011/09/20 22:02:10 miod Exp $	*/
 /*	$NetBSD: bcopyinout.S,v 1.13 2003/10/31 16:54:05 scw Exp $	*/
 
 /*
@@ -55,14 +55,8 @@
 	.word _C_LABEL(curpcb)
 #endif
 
-#ifdef __PROG32
 #define SAVE_REGS	stmfd	sp!, {r4-r11}
 #define RESTORE_REGS	ldmfd	sp!, {r4-r11}
-#else
-/* Need to save R14_svc because it'll get trampled if we take a page fault. */
-#define SAVE_REGS	stmfd	sp!, {r4-r11, r14}
-#define RESTORE_REGS	ldmfd	sp!, {r4-r11, r14}
-#endif
 		
 #if defined(__XSCALE__)
 #define HELLOCPP #
@@ -710,7 +704,6 @@ ENTRY(kcopy)
 	mov	pc, lr
 #endif	/* !__XSCALE__ */
 
-#ifdef __PROG32
 /*
  * int badaddr_read_1(const uint8_t *src, uint8_t *dest)
  *
@@ -812,4 +805,3 @@ ENTRY(badaddr_read_4)
 	mov	r0, #0		/* No fault */
 1:	str	ip, [r2, #PCB_ONFAULT]
 	mov	pc, lr
-#endif /* __PROG32 */

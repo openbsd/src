@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.2 2004/02/01 06:10:33 drahn Exp $	*/
+/*	$OpenBSD: exception.S,v 1.3 2011/09/20 22:02:10 miod Exp $	*/
 /*	$NetBSD: exception.S,v 1.13 2003/10/31 16:30:15 scw Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
 	.text	
 	.align	0
 
-AST_ALIGNMENT_FAULT_LOCALS
+AST_LOCALS
 
 /*
  * reset_entry:
@@ -77,12 +77,11 @@ Lreset_panicmsg:
  */
 ASENTRY_NP(swi_entry)
 	PUSHFRAME
-	ENABLE_ALIGNMENT_FAULTS
 
 	mov	r0, sp			/* Pass the frame to any function */
 	bl	_C_LABEL(swi_handler)	/* It's a SWI ! */
 
-	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
+	DO_AST
 	PULLFRAME
 	movs	pc, lr			/* Exit */
 
@@ -99,7 +98,6 @@ ASENTRY_NP(prefetch_abort_entry)
         sub     lr, lr, #0x00000004     /* Adjust the lr */
 
 	PUSHFRAMEINSVC
-	ENABLE_ALIGNMENT_FAULTS
 
 	ldr	r1, Lprefetch_abort_handler_address
 	adr	lr, exception_exit
@@ -138,7 +136,6 @@ ASENTRY_NP(data_abort_entry)
 
 	PUSHFRAMEINSVC			/* Push trap frame and switch */
 					/* to SVC32 mode */
-	ENABLE_ALIGNMENT_FAULTS
 
 	ldr	r1, Ldata_abort_handler_address
 	adr	lr, exception_exit
@@ -191,14 +188,12 @@ Laddress_exception_msg:
  * Interrupts are disabled at suitable points to avoid ASTs
  * being posted between testing and exit to user mode.
  *
- * This function uses PULLFRAMEFROMSVCANDEXIT and
- * DO_AST_AND_RESTORE_ALIGNMENT_FAULTS thus should
- * only be called if the exception handler used PUSHFRAMEINSVC
- * followed by ENABLE_ALIGNMENT_FAULTS.
+ * This function uses PULLFRAMEFROMSVCANDEXIT and DO_AST thus should
+ * only be called if the exception handler used PUSHFRAMEINSVC.
  */
 
 exception_exit:
-	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
+	DO_AST
 	PULLFRAMEFROMSVCANDEXIT
 
 /*
@@ -351,7 +346,6 @@ Lundefined_handler_indirection:
 
 ENTRY_NP(undefinedinstruction_bounce)
 	PUSHFRAMEINSVC
-	ENABLE_ALIGNMENT_FAULTS
 
 	mov	r0, sp
 	adr	lr, exception_exit

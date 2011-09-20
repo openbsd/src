@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.3 2006/03/07 20:20:30 miod Exp $	*/
+/*	$OpenBSD: frame.h,v 1.4 2011/09/20 22:02:13 miod Exp $	*/
 /*	$NetBSD: frame.h,v 1.9 2003/12/01 08:48:33 scw Exp $	*/
 
 /*
@@ -56,7 +56,7 @@
  */
 
 typedef struct trapframe {
-	register_t tf_spsr; /* Zero on arm26 */
+	register_t tf_spsr;
 	register_t tf_r0;
 	register_t tf_r1;
 	register_t tf_r2;
@@ -72,8 +72,8 @@ typedef struct trapframe {
 	register_t tf_r12;
 	register_t tf_usr_sp;
 	register_t tf_usr_lr;
-	register_t tf_svc_sp; /* Not used on arm26 */
-	register_t tf_svc_lr; /* Not used on arm26 */
+	register_t tf_svc_sp;
+	register_t tf_svc_lr;
 	register_t tf_pc;
 } trapframe_t;
 
@@ -95,7 +95,7 @@ struct sigframe {
 	siginfo_t sf_si;
 };
 
-/* the pointers are use in the trampoline code to locate the ucontext */
+/* the pointers are used in the trampoline code to locate the ucontext */
 #if 0
 struct sigframe_siginfo {
 	siginfo_t	sf_si;		/* actual saved siginfo */
@@ -163,26 +163,13 @@ struct frame {
 	u_int	fr_pc;
 };
 
-#ifdef _KERNEL
-void validate_trapframe (trapframe_t *, int);
-#endif /* _KERNEL */
-
 #else /* _LOCORE */
 
-/*
- * AST_ALIGNMENT_FAULT_LOCALS and ENABLE_ALIGNMENT_FAULTS
- * These are used in order to support dynamic enabling/disabling of
- * alignment faults when executing old a.out ARM binaries (which we do
- * not support).
- */
-
-#define	AST_ALIGNMENT_FAULT_LOCALS					;\
+#define	AST_LOCALS							 \
 .Laflt_astpending:							;\
 	.word	_C_LABEL(astpending)
 
-#define	ENABLE_ALIGNMENT_FAULTS		/* nothing */
-
-#define	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS				\
+#define	DO_AST								 \
 	ldr	r0, [sp]		/* Get the SPSR from stack */	;\
 	mrs	r4, cpsr		/* save CPSR */			;\
 	and	r0, r0, #(PSR_MODE)	/* Returning to USR mode? */	;\
@@ -213,17 +200,12 @@ void validate_trapframe (trapframe_t *, int);
 /*
  * PUSHFRAME - macro to push a trap frame on the stack in the current mode
  * Since the current mode is used, the SVC lr field is not defined.
- *
- * NOTE: r13 and r14 are stored separately as a work around for the
- * SA110 rev 2 STM^ bug
  */
 
 #define PUSHFRAME							   \
 	str	lr, [sp, #-4]!;		/* Push the return address */	   \
 	sub	sp, sp, #(4*17);	/* Adjust the stack pointer */	   \
-	stmia	sp, {r0-r12};		/* Push the user mode registers */ \
-	add	r0, sp, #(4*13);	/* Adjust the stack pointer */	   \
-	stmia	r0, {r13-r14}^;		/* Push the user mode registers */ \
+	stmia	sp, {r0-r14}^;		/* Push the user mode registers */ \
         mov     r0, r0;                 /* NOP for previous instruction */ \
 	mrs	r0, spsr_all;		/* Put the SPSR on the stack */	   \
 	str	r0, [sp, #-4]!
@@ -247,9 +229,6 @@ void validate_trapframe (trapframe_t *, int);
  * mode. The processor mode is switched to SVC mode and the trap frame is
  * stored. The SVC lr field is used to store the previous value of
  * lr in SVC mode.  
- *
- * NOTE: r13 and r14 are stored separately as a work around for the
- * SA110 rev 2 STM^ bug
  */
 
 #define PUSHFRAMEINSVC							   \
@@ -268,9 +247,7 @@ void validate_trapframe (trapframe_t *, int);
 	msr     spsr_all, r3;		/* Restore correct spsr */	   \
 	ldmdb	r1, {r0-r3};		/* Restore 4 regs from xxx mode */ \
 	sub	sp, sp, #(4*15);	/* Adjust the stack pointer */	   \
-	stmia	sp, {r0-r12};		/* Push the user mode registers */ \
-	add	r0, sp, #(4*13);	/* Adjust the stack pointer */	   \
-	stmia	r0, {r13-r14}^;		/* Push the user mode registers */ \
+	stmia	sp, {r0-r14}^;		/* Push the user mode registers */ \
         mov     r0, r0;                 /* NOP for previous instruction */ \
 	mrs	r0, spsr_all;		/* Put the SPSR on the stack */	   \
 	str	r0, [sp, #-4]!

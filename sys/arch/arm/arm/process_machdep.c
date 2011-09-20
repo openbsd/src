@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.3 2005/12/16 21:36:31 miod Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.4 2011/09/20 22:02:11 miod Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.11 2003/08/07 16:26:52 agc Exp $	*/
 
 /*
@@ -114,10 +114,6 @@
 
 #include <arm/armreg.h>
 
-#ifdef ARMFPE
-#include <arm/fpe-arm/armfpe.h>
-#endif
-
 static __inline struct trapframe *
 process_frame(struct proc *p)
 {
@@ -149,14 +145,9 @@ process_read_regs(struct proc *p, struct reg *regs)
 int
 process_read_fpregs(struct proc *p, struct fpreg *regs)
 {
-#ifdef ARMFPE
-	arm_fpe_getcontext(p, regs);
-	return(0);
-#else	/* ARMFPE */
 	/* No hardware FP support */
 	memset(regs, 0, sizeof(struct fpreg));
 	return(0);
-#endif	/* ARMFPE */
 }
 
 #ifdef	PTRACE
@@ -170,7 +161,6 @@ process_write_regs(struct proc *p, struct reg *regs)
 	bcopy((caddr_t)regs->r, (caddr_t)&tf->tf_r0, sizeof(regs->r));
 	tf->tf_usr_sp = regs->r_sp;
 	tf->tf_usr_lr = regs->r_lr;
-#ifdef __PROG32
 	tf->tf_pc = regs->r_pc;
 	tf->tf_spsr &=  ~PSR_FLAGS;
 	tf->tf_spsr |= regs->r_cpsr & PSR_FLAGS;
@@ -179,12 +169,6 @@ process_write_regs(struct proc *p, struct reg *regs)
 	    && tf->tf_spsr & I32_bit)
 		panic("process_write_regs: Interrupts blocked in user process");
 #endif
-#else /* __PROG26 */
-	if ((regs->r_pc & (R15_MODE | R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)
-		return EPERM;
-
-	tf->tf_r15 = regs->r_pc;
-#endif
 
 	return(0);
 }
@@ -192,13 +176,8 @@ process_write_regs(struct proc *p, struct reg *regs)
 int
 process_write_fpregs(struct proc *p,  struct fpreg *regs)
 {
-#ifdef ARMFPE
-	arm_fpe_setcontext(p, regs);
-	return(0);
-#else	/* ARMFPE */
 	/* No hardware FP support */
 	return(0);
-#endif	/* ARMFPE */
 }
 
 int
@@ -215,14 +194,7 @@ process_set_pc(struct proc *p, caddr_t addr)
 	struct trapframe *tf = process_frame(p);
 
 	KASSERT(tf != NULL);
-#ifdef __PROG32
 	tf->tf_pc = (int)addr;
-#else /* __PROG26 */
-	/* Only set the PC, not the PSR */
-	if (((register_t)addr & R15_PC) != (register_t)addr)
-		return EINVAL;
-	tf->tf_r15 = (tf->tf_r15 & ~R15_PC) | (register_t)addr;
-#endif
 
 	return (0);
 }

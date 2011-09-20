@@ -1,10 +1,5 @@
-#	$OpenBSD: files.arm,v 1.16 2010/12/06 18:05:29 jasper Exp $
+#	$OpenBSD: files.arm,v 1.17 2011/09/20 22:02:12 miod Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
-
-# Floating point emulator
-#file	arch/arm/fpe-arm/armfpe_glue.S		armfpe
-#file	arch/arm/fpe-arm/armfpe_init.c		armfpe
-#file	arch/arm/fpe-arm/armfpe.S		armfpe
 
 # generic networking files
 file	arch/arm/arm/in_cksum_arm.S		inet
@@ -17,8 +12,8 @@ file	arch/arm/arm/db_machdep.c		ddb
 file	arch/arm/arm/kgdb_machdep.c		kgdb
 
 # FIQ support
-file	arch/arm/arm/fiq.c
-file	arch/arm/arm/fiq_subr.S
+file	arch/arm/arm/fiq.c			fiq
+file	arch/arm/arm/fiq_subr.S			fiq
 
 # mainbus files
 device	mainbus {[base = -1], [dack = -1], [irq = -1]}
@@ -43,14 +38,10 @@ file	arch/arm/arm/arm_machdep.c
 file	arch/arm/arm/ast.c
 file	arch/arm/arm/bcopyinout.S
 file	arch/arm/arm/blockio.S
-file	arch/arm/arm/bootconfig.c
 file	arch/arm/arm/compat_13_machdep.c	compat_13
 file	arch/arm/arm/copystr.S
 file	arch/arm/arm/cpufunc.c
 file	arch/arm/arm/cpufunc_asm.S
-file	arch/arm/arm/cpufunc_asm_arm3.S		cpu_arm3
-file	arch/arm/arm/cpufunc_asm_arm67.S	cpu_arm6 | cpu_arm7
-file	arch/arm/arm/cpufunc_asm_arm7tdmi.S	cpu_arm7tdmi
 file	arch/arm/arm/cpufunc_asm_arm8.S		cpu_arm8
 file	arch/arm/arm/cpufunc_asm_arm9.S		cpu_arm9
 file	arch/arm/arm/cpufunc_asm_arm10.S	cpu_arm9e | cpu_arm10
@@ -82,9 +73,7 @@ file	arch/arm/arm/sig_machdep.c
 file	arch/arm/arm/sigcode.S
 file	arch/arm/arm/syscall.c
 file	arch/arm/arm/undefined.c
-# vectors.S gets included manually by Makefile.acorn26, since it needs
-# to be at the start of the text segment on those machines.
-file	arch/arm/arm/vectors.S		
+file	arch/arm/arm/vectors.S
 file	arch/arm/arm/vm_machdep_arm.c
 
 # files common to arm implementations
@@ -102,7 +91,7 @@ file	arch/arm/arm/sys_machdep.c
 file	arch/arm/arm/vm_machdep.c
 
 # arm library functions
-file	arch/arm/arm/bcopy_page.S	
+file	arch/arm/arm/bcopy_page.S
 
 # machine-dependent libkern components
 file	lib/libkern/arch/arm/divsi3.S

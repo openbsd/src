@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.13 2011/03/17 21:49:33 jasper Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.14 2011/09/20 22:02:10 miod Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -56,11 +56,6 @@
 #include <arm/cpuconf.h>
 #include <arm/undefined.h>
 
-#ifdef ARMFPE
-#include <machine/bootconfig.h> /* For boot args */
-#include <arm/fpe-arm/armfpe.h>
-#endif
-
 char cpu_model[256];
 
 /* Prototypes */
@@ -73,12 +68,6 @@ void identify_arm_cpu(struct device *dv, struct cpu_info *);
 void
 cpu_attach(struct device *dv)
 {
-#ifdef ARMFPE
-	int usearmfpe;
-
-	usearmfpe = 1;	/* when compiled in, its enabled by default */
-#endif
-
 	curcpu()->ci_dev = dv;
 
 	/* Get the CPU ID from coprocessor 15 */
@@ -89,12 +78,6 @@ cpu_attach(struct device *dv)
 	    curcpu()->ci_arm_cpuid & CPU_ID_REVISION_MASK;
 
 	identify_arm_cpu(dv, curcpu());
-
-	if (curcpu()->ci_arm_cputype == CPU_ID_SA110 &&
-	    curcpu()->ci_arm_cpurev < 3) {
-		printf("%s: SA-110 with bugged STM^ instruction\n",
-		       dv->dv_xname);
-	}
 
 #ifdef CPU_ARM8
 	if ((curcpu()->ci_arm_cpuid & CPU_ID_CPU_MASK) == CPU_ID_ARM810) {
@@ -120,48 +103,10 @@ cpu_attach(struct device *dv)
 		aprint_normal(" fclk source=%s\n", fclk);
  	}
 #endif
-
-#ifdef ARMFPE
-	/*
-	 * Ok now we test for an FPA
-	 * At this point no floating point emulator has been installed.
-	 * This means any FP instruction will cause undefined exception.
-	 * We install a temporay coproc 1 handler which will modify
-	 * undefined_test if it is called.
-	 * We then try to read the FP status register. If undefined_test
-	 * has been decremented then the instruction was not handled by
-	 * an FPA so we know the FPA is missing. If undefined_test is
-	 * still 1 then we know the instruction was handled by an FPA.
-	 * We then remove our test handler and look at the
-	 * FP status register for identification.
-	 */
- 
-	/*
-	 * Ok if ARMFPE is defined and the boot options request the 
-	 * ARM FPE then it will be installed as the FPE.
-	 * This is just while I work on integrating the new FPE.
-	 * It means the new FPE gets installed if compiled int (ARMFPE
-	 * defined) and also gives me a on/off option when I boot in
-	 * case the new FPE is causing panics.
-	 */
-
-
-	if (boot_args)
-		get_bootconf_option(boot_args, "armfpe",
-		    BOOTOPT_TYPE_BOOLEAN, &usearmfpe);
-	if (usearmfpe)
-		initialise_arm_fpe();
-#endif
 }
 
 enum cpu_class {
 	CPU_CLASS_NONE,
-	CPU_CLASS_ARM2,
-	CPU_CLASS_ARM2AS,
-	CPU_CLASS_ARM3,
-	CPU_CLASS_ARM6,
-	CPU_CLASS_ARM7,
-	CPU_CLASS_ARM7TDMI,
 	CPU_CLASS_ARM8,
 	CPU_CLASS_ARM9TDMI,
 	CPU_CLASS_ARM9ES,
@@ -272,40 +217,6 @@ struct cpuidtab {
 };
 
 const struct cpuidtab cpuids[] = {
-	{ CPU_ID_ARM2,		CPU_CLASS_ARM2,		"ARM2",
-	  generic_steppings },
-	{ CPU_ID_ARM250,	CPU_CLASS_ARM2AS,	"ARM250",
-	  generic_steppings },
-
-	{ CPU_ID_ARM3,		CPU_CLASS_ARM3,		"ARM3",
-	  generic_steppings },
-
-	{ CPU_ID_ARM600,	CPU_CLASS_ARM6,		"ARM600",
-	  generic_steppings },
-	{ CPU_ID_ARM610,	CPU_CLASS_ARM6,		"ARM610",
-	  generic_steppings },
-	{ CPU_ID_ARM620,	CPU_CLASS_ARM6,		"ARM620",
-	  generic_steppings },
-
-	{ CPU_ID_ARM700,	CPU_CLASS_ARM7,		"ARM700",
-	  generic_steppings },
-	{ CPU_ID_ARM710,	CPU_CLASS_ARM7,		"ARM710",
-	  generic_steppings },
-	{ CPU_ID_ARM7500,	CPU_CLASS_ARM7,		"ARM7500",
-	  generic_steppings },
-	{ CPU_ID_ARM710A,	CPU_CLASS_ARM7,		"ARM710a",
-	  generic_steppings },
-	{ CPU_ID_ARM7500FE,	CPU_CLASS_ARM7,		"ARM7500FE",
-	  generic_steppings },
-	{ CPU_ID_ARM710T,	CPU_CLASS_ARM7TDMI,	"ARM710T",
-	  generic_steppings },
-	{ CPU_ID_ARM720T,	CPU_CLASS_ARM7TDMI,	"ARM720T",
-	  generic_steppings },
-	{ CPU_ID_ARM740T8K,	CPU_CLASS_ARM7TDMI, "ARM740T (8 KB cache)",
-	  generic_steppings },
-	{ CPU_ID_ARM740T4K,	CPU_CLASS_ARM7TDMI, "ARM740T (4 KB cache)",
-	  generic_steppings },
-
 	{ CPU_ID_ARM810,	CPU_CLASS_ARM8,		"ARM810",
 	  generic_steppings },
 
@@ -403,18 +314,12 @@ struct cpu_classtab {
 
 const struct cpu_classtab cpu_classes[] = {
 	{ "unknown",	NULL },			/* CPU_CLASS_NONE */
-	{ "ARM2",	"CPU_ARM2" },		/* CPU_CLASS_ARM2 */
-	{ "ARM2as",	"CPU_ARM250" },		/* CPU_CLASS_ARM2AS */
-	{ "ARM3",	"CPU_ARM3" },		/* CPU_CLASS_ARM3 */
-	{ "ARM6",	"CPU_ARM6" },		/* CPU_CLASS_ARM6 */
-	{ "ARM7",	"CPU_ARM7" },		/* CPU_CLASS_ARM7 */
-	{ "ARM7TDMI",	"CPU_ARM7TDMI" },	/* CPU_CLASS_ARM7TDMI */
 	{ "ARM8",	"CPU_ARM8" },		/* CPU_CLASS_ARM8 */
 	{ "ARM9TDMI",	NULL },			/* CPU_CLASS_ARM9TDMI */
 	{ "ARM9E-S",	"CPU_ARM9E" },		/* CPU_CLASS_ARM9ES */
 	{ "ARM9EJ-S",	"CPU_ARM9E" },		/* CPU_CLASS_ARM9EJS */
 	{ "ARM10E",	"CPU_ARM10" },		/* CPU_CLASS_ARM10E */
-	{ "SA-1",	"CPU_SA110" },		/* CPU_CLASS_SA1 */
+	{ "SA-1",	"CPU_SA1100" },		/* CPU_CLASS_SA1 */
 	{ "XScale",	"CPU_XSCALE_..." },	/* CPU_CLASS_XSCALE */
 	{ "ARM11J",	"CPU_ARM11" },		/* CPU_CLASS_ARM11J */
 	{ "ARMv7",	"CPU_ARMv7" }		/* CPU_CLASS_ARMv7 */
@@ -480,9 +385,6 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	printf("%s:", dv->dv_xname);
 
 	switch (cpu_class) {
-	case CPU_CLASS_ARM6:
-	case CPU_CLASS_ARM7:
-	case CPU_CLASS_ARM7TDMI:
 	case CPU_CLASS_ARM8:
 		if ((ci->ci_ctrl & CPU_CONTROL_IDC_ENABLE) == 0)
 			printf(" IDC disabled");
@@ -544,24 +446,6 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
  skip_pcache:
 
 	switch (cpu_class) {
-#ifdef CPU_ARM2
-	case CPU_CLASS_ARM2:
-#endif
-#ifdef CPU_ARM250
-	case CPU_CLASS_ARM2AS:
-#endif
-#ifdef CPU_ARM3
-	case CPU_CLASS_ARM3:
-#endif
-#ifdef CPU_ARM6
-	case CPU_CLASS_ARM6:
-#endif
-#ifdef CPU_ARM7
-	case CPU_CLASS_ARM7:
-#endif
-#ifdef CPU_ARM7TDMI
-	case CPU_CLASS_ARM7TDMI:
-#endif		
 #ifdef CPU_ARM8
 	case CPU_CLASS_ARM8:
 #endif
@@ -582,8 +466,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	case CPU_CLASS_ARMv7:
 #endif
 
-#if defined(CPU_SA110) || defined(CPU_SA1100) || \
-    defined(CPU_SA1110) || defined(CPU_IXP12X0)
+#if defined(CPU_SA1100) || defined(CPU_SA1110) || defined(CPU_IXP12X0)
 	case CPU_CLASS_SA1:
 #endif
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \

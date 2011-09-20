@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.6 2010/11/27 19:57:23 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.7 2011/09/20 22:02:13 miod Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.5 2001/11/22 18:00:00 thorpej Exp $	*/
 
 /*
@@ -51,13 +51,8 @@ typedef trapframe_t db_regs_t;
 extern db_regs_t		ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
-#ifdef __PROG26
-#define	PC_REGS(regs)	((db_addr_t)(regs)->tf_r15 & R15_PC)
-#define PC_ADVANCE(regs) ((regs)->tf_r15 += 4)
-#else
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_pc)
 #define	SET_PC_REGS(regs, value)	(regs)->tf_pc = (register_t)(value)
-#endif
 
 #define	BKPT_INST	(KERNEL_BREAKPOINT)	/* breakpoint instruction */
 #define	BKPT_SIZE	(INSN_SIZE)		/* size of breakpoint inst */

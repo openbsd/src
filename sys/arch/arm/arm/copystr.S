@@ -1,4 +1,4 @@
-/*	$OpenBSD: copystr.S,v 1.2 2006/11/15 19:48:29 miod Exp $	*/
+/*	$OpenBSD: copystr.S,v 1.3 2011/09/20 22:02:10 miod Exp $	*/
 /*	$NetBSD: copystr.S,v 1.8 2002/10/13 14:54:48 bjh21 Exp $	*/
 
 /*
@@ -85,14 +85,8 @@ ENTRY(copystr)
 	ldmfd	sp!, {r4-r5}			/* stack is 8 byte aligned */
 	mov	pc, lr
 
-#ifdef __PROG32
 #define SAVE_REGS	stmfd	sp!, {r4-r6}
 #define RESTORE_REGS	ldmfd	sp!, {r4-r6}
-#else
-/* Need to save R14_svc because it'll get trampled if we take a page fault. */
-#define SAVE_REGS	stmfd	sp!, {r4-r6, r14}
-#define RESTORE_REGS	ldmfd	sp!, {r4-r6, r14}
-#endif
 
 /*
  * r0 - user space address

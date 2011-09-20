@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.8 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.9 2011/09/20 22:02:13 miod Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -137,19 +137,12 @@ struct cpu_functions {
 
 	void	(*cf_flush_prefetchbuf)	(void);
 	void	(*cf_drain_writebuf)	(void);
-	void	(*cf_flush_brnchtgt_C)	(void);
-	void	(*cf_flush_brnchtgt_E)	(u_int va);
 
 	void	(*cf_sleep)		(int mode);
 
 	/* Soft functions */
-
-	int	(*cf_dataabt_fixup)	(void *arg);
-	int	(*cf_prefetchabt_fixup)	(void *arg);
-
 	void	(*cf_context_switch)	(u_int);
-
-	void	(*cf_setup)		(char *string);
+	void	(*cf_setup)		(void);
 };
 
 extern struct cpu_functions cpufuncs;
@@ -184,16 +177,8 @@ extern u_int cputype;
 
 #define	cpu_flush_prefetchbuf()	cpufuncs.cf_flush_prefetchbuf()
 #define	cpu_drain_writebuf()	cpufuncs.cf_drain_writebuf()
-#define	cpu_flush_brnchtgt_C()	cpufuncs.cf_flush_brnchtgt_C()
-#define	cpu_flush_brnchtgt_E(e)	cpufuncs.cf_flush_brnchtgt_E(e)
 
 #define cpu_sleep(m)		cpufuncs.cf_sleep(m)
-
-#define cpu_dataabt_fixup(a)		cpufuncs.cf_dataabt_fixup(a)
-#define cpu_prefetchabt_fixup(a)	cpufuncs.cf_prefetchabt_fixup(a)
-#define ABORT_FIXUP_OK		0	/* fixup succeeded */
-#define ABORT_FIXUP_FAILED	1	/* fixup failed */
-#define ABORT_FIXUP_RETURN	2	/* abort handler should return */
 
 #define cpu_context_switch(a)		cpufuncs.cf_context_switch(a)
 #define cpu_setup(a)			cpufuncs.cf_setup(a)
@@ -203,7 +188,6 @@ int	set_cpufuncs		(void);
 #define ARCHITECTURE_NOT_SUPPORTED	2	/* not known */
 
 void	cpufunc_nullop		(void);
-int	cpufunc_null_fixup	(void *);
 int	early_abort_fixup	(void *);
 int	late_abort_fixup	(void *);
 u_int	cpufunc_id		(void);
@@ -211,37 +195,6 @@ u_int	cpufunc_control		(u_int clear, u_int bic);
 void	cpufunc_domains		(u_int domains);
 u_int	cpufunc_faultstatus	(void);
 u_int	cpufunc_faultaddress	(void);
-
-#ifdef CPU_ARM3
-u_int	arm3_control		(u_int clear, u_int bic);
-void	arm3_cache_flush	(void);
-#endif	/* CPU_ARM3 */
-
-#if defined(CPU_ARM6) || defined(CPU_ARM7)
-void	arm67_setttb		(u_int ttb);
-void	arm67_tlb_flush		(void);
-void	arm67_tlb_purge		(u_int va);
-void	arm67_cache_flush	(void);
-void	arm67_context_switch	(u_int);
-#endif	/* CPU_ARM6 || CPU_ARM7 */
-
-#ifdef CPU_ARM6
-void	arm6_setup		(char *string);
-#endif	/* CPU_ARM6 */
-
-#ifdef CPU_ARM7
-void	arm7_setup		(char *string);
-#endif	/* CPU_ARM7 */
-
-#ifdef CPU_ARM7TDMI
-int	arm7_dataabt_fixup	(void *arg);
-void	arm7tdmi_setup		(char *string);
-void	arm7tdmi_setttb		(u_int ttb);
-void	arm7tdmi_tlb_flushID	(void);
-void	arm7tdmi_tlb_flushID_SE	(u_int va);
-void	arm7tdmi_cache_flushID	(void);
-void	arm7tdmi_context_switch	(u_int);
-#endif /* CPU_ARM7TDMI */
 
 #ifdef CPU_ARM8
 void	arm8_setttb		(u_int ttb);
@@ -263,15 +216,10 @@ void	arm8_cache_syncI_rng	(vaddr_t start, vsize_t end);
 
 void	arm8_context_switch	(u_int);
 
-void	arm8_setup		(char *string);
+void	arm8_setup		(void);
 
 u_int	arm8_clock_config	(u_int, u_int);
 #endif
-
-#ifdef CPU_SA110
-void	sa110_setup		(char *string);
-void	sa110_context_switch	(u_int);
-#endif	/* CPU_SA110 */
 
 #if defined(CPU_SA1100) || defined(CPU_SA1110)
 void	sa11x0_drain_readbuf	(void);
@@ -279,10 +227,10 @@ void	sa11x0_drain_readbuf	(void);
 void	sa11x0_context_switch	(u_int);
 void	sa11x0_cpu_sleep	(int mode);
  
-void	sa11x0_setup		(char *string);
+void	sa11x0_setup		(void);
 #endif
 
-#if defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110)
+#if defined(CPU_SA1100) || defined(CPU_SA1110)
 void	sa1_setttb		(u_int ttb);
 
 void	sa1_tlb_flushID_SE	(u_int va);
@@ -328,7 +276,7 @@ void	arm9_idcache_wbinv_range	(vaddr_t, vsize_t);
 
 void	arm9_context_switch		(u_int);
 
-void	arm9_setup			(char *string);
+void	arm9_setup			(void);
 
 extern unsigned arm9_dcache_sets_max;
 extern unsigned arm9_dcache_sets_inc;
@@ -342,7 +290,7 @@ void	arm10_tlb_flushI_SE	(u_int);
 
 void	arm10_context_switch	(u_int);
 
-void	arm10_setup		(char *string);
+void	arm10_setup		(void);
 #endif
 
 #if defined(CPU_ARM9E) || defined (CPU_ARM10)
@@ -368,7 +316,7 @@ void	arm11_tlb_flushI_SE	(u_int);
 
 void	arm11_context_switch	(u_int);
 
-void	arm11_setup		(char	*string);
+void	arm11_setup		(void);
 void	arm11_tlb_flushID	(void);
 void	arm11_tlb_flushI	(void);
 void	arm11_tlb_flushD	(void);
@@ -408,7 +356,7 @@ void	armv7_tlb_flushI_SE	(u_int);
 void	armv7_context_switch	(u_int);
 void	armv7_context_switch	(u_int);
 
-void	armv7_setup		(char *string);
+void	armv7_setup		(void);
 void	armv7_tlb_flushID	(void);
 void	armv7_tlb_flushI	(void);
 void	armv7_tlb_flushD	(void);
@@ -438,7 +386,7 @@ extern unsigned armv7_dcache_index_inc;
 
 
 #if defined(CPU_ARM9) || defined(CPU_ARM9E) || defined(CPU_ARM10) || \
-    defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) || \
+    defined(CPU_SA1100) || defined(CPU_SA1110) || \
     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
 
@@ -453,7 +401,7 @@ void	armv4_drain_writebuf	(void);
 #if defined(CPU_IXP12X0)
 void	ixp12x0_drain_readbuf	(void);
 void	ixp12x0_context_switch	(u_int);
-void	ixp12x0_setup		(char *string);
+void	ixp12x0_setup		(void);
 #endif
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
@@ -495,7 +443,7 @@ void	xscale_cache_flushD_rng	(vaddr_t start, vsize_t end);
 
 void	xscale_context_switch	(u_int);
 
-void	xscale_setup		(char *string);
+void	xscale_setup		(void);
 #endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || CPU_XSCALE_PXA2X0 || CPU_XSCALE_IXP425 */
 
 #define tlb_flush	cpu_tlb_flushID
@@ -505,7 +453,6 @@ void	xscale_setup		(char *string);
 /*
  * Macros for manipulating CPU interrupts
  */
-#ifdef __PROG32
 /* Functions to manipulate the CPSR. */
 static __inline u_int32_t __set_cpsr_c(u_int bic, u_int eor);
 static __inline u_int32_t __get_cpsr(void);
@@ -545,22 +492,6 @@ __get_cpsr()
 
 #define restore_interrupts(old_cpsr)					\
 	(__set_cpsr_c((I32_bit | F32_bit), (old_cpsr) & (I32_bit | F32_bit)))
-#else /* ! __PROG32 */
-#define	disable_interrupts(mask)					\
-	(set_r15((mask) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE),		\
-		 (mask) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)))
-
-#define	enable_interrupts(mask)						\
-	(set_r15((mask) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE), 0))
-
-#define	restore_interrupts(old_r15)					\
-	(set_r15((R15_IRQ_DISABLE | R15_FIQ_DISABLE),			\
-		 (old_r15) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)))
-
-/* Functions to manipulate the processor control bits in r15. */
-u_int	set_r15(u_int bic, u_int eor);
-u_int	get_r15(void);
-#endif /* __PROG32 */
 
 /*
  * Functions to manipulate cpu r13

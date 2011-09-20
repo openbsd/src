@@ -1,4 +1,4 @@
-/*	$OpenBSD: fiq_subr.S,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
+/*	$OpenBSD: fiq_subr.S,v 1.2 2011/09/20 22:02:11 miod Exp $	*/
 /*	$NetBSD: fiq_subr.S,v 1.3 2002/04/12 18:50:31 thorpej Exp $	*/
 
 /*
@@ -42,39 +42,15 @@
 #include <arm/asm.h>
 #include <arm/cpuconf.h>
 
-/*
- * MODE_CHANGE_NOP should be inserted between a mode change and a
- * banked register (R8--R15) access.
- */
-#if defined(CPU_ARM2) || defined(CPU_ARM250)
-#define	MODE_CHANGE_NOP	mov	r0, r0
-#else
-#define	MODE_CHANGE_NOP	/* Data sheet says ARM3 doesn't need it */
-#endif
-
-#ifdef __PROG32
 #define	SWITCH_TO_FIQ_MODE						\
 	mrs	r2, cpsr_all					;	\
 	mov	r3, r2						;	\
 	bic	r2, r2, #(PSR_MODE)				;	\
 	orr	r2, r2, #(PSR_FIQ32_MODE)			;	\
 	msr	cpsr_all, r2
-#else
-#define	SWITCH_TO_FIQ_MODE					;	\
-	mov	r1, r15						;	\
-	bic	r2, r1, #(R15_MODE)				;	\
-	teqp	r2, #(R15_MODE_FIQ)				;	\
-	MODE_CHANGE_NOP
-#endif /* __PROG32 */
 
-#ifdef __PROG32
 #define	BACK_TO_SVC_MODE						\
 	msr	cpsr_all, r3
-#else
-#define	BACK_TO_SVC_MODE					;	\
-	teqp	r1, #0						;	\
-	MODE_CHANGE_NOP
-#endif /* __PROG32 */
 
 /*
  * fiq_getregs:

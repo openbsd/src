@@ -1,4 +1,4 @@
-/*	$OpenBSD: undefined.c,v 1.4 2008/05/19 18:42:11 miod Exp $	*/
+/*	$OpenBSD: undefined.c,v 1.5 2011/09/20 22:02:11 miod Exp $	*/
 /*	$NetBSD: undefined.c,v 1.22 2003/11/29 22:21:29 bjh21 Exp $	*/
 
 /*
@@ -64,10 +64,6 @@
 #include <arm/undefined.h>
 #include <machine/trap.h>
 
-
-#ifdef acorn26
-#include <machine/machdep.h>
-#endif
 
 static int gdb_trapper(u_int, u_int, struct trapframe *, int);
 
@@ -158,23 +154,11 @@ undefinedinstruction(trapframe_t *frame)
 	union sigval sv;
 
 	/* Enable interrupts if they were enabled before the exception. */
-#ifdef acorn26
-	if ((frame->tf_r15 & R15_IRQ_DISABLE) == 0)
-		int_on();
-#else
 	if (!(frame->tf_spsr & I32_bit))
 		enable_interrupts(I32_bit);
-#endif
 
-#ifndef acorn26
 	frame->tf_pc -= INSN_SIZE;
-#endif
-
-#ifdef __PROG26
-	fault_pc = frame->tf_r15 & R15_PC;
-#else
 	fault_pc = frame->tf_pc;
-#endif
 
 	/* Get the current proc structure or proc0 if there is none. */
 	p = (curproc == NULL) ? &proc0 : curproc;
@@ -192,11 +176,11 @@ undefinedinstruction(trapframe_t *frame)
 	}
 
 	/*
-	 * Should use fuword() here .. but in the interests of squeezing every
-	 * bit of speed we will just use ReadWord(). We know the instruction
+	 * Should use copyin() here .. but in the interests of squeezing every
+	 * bit of speed we will just read it directly. We know the instruction
 	 * can be read as was just executed so this will never fail unless the
 	 * kernel is screwed up in which case it does not really matter does
-	 * it ?
+	 * it?
 	 */
 
 	fault_instruction = *(u_int32_t *)fault_pc;
@@ -218,12 +202,7 @@ undefinedinstruction(trapframe_t *frame)
 	else
 		coprocessor = 0;
 
-#ifdef __PROG26
-	if ((frame->tf_r15 & R15_MODE) == R15_MODE_USR)
-#else
-	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE)
-#endif
-	{
+	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
 		/*
 		 * Modify the fault_code to reflect the USR/SVC state at
 		 * time of fault.

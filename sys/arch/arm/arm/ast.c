@@ -1,4 +1,4 @@
-/*	$OpenBSD: ast.c,v 1.8 2007/05/14 07:07:09 art Exp $	*/
+/*	$OpenBSD: ast.c,v 1.9 2011/09/20 22:02:10 miod Exp $	*/
 /*	$NetBSD: ast.c,v 1.6 2003/10/31 16:44:34 cl Exp $	*/
 
 /*
@@ -59,10 +59,6 @@
 
 #include <uvm/uvm_extern.h>
 
-#ifdef acorn26
-#include <machine/machdep.h>
-#endif
-
 /*
  * Prototypes
  */
@@ -95,13 +91,7 @@ ast(struct trapframe *tf)
 {
 	struct proc *p = curproc;
 
-#ifdef acorn26
-	/* Enable interrupts if they were enabled before the trap. */
-	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
-		int_on();
-#else
 	/* Interrupts were restored by exception_exit. */
-#endif
 
 	uvmexp.traps++;
 	uvmexp.softs++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.12 2011/04/03 14:56:28 guenther Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.13 2011/09/20 22:02:11 miod Exp $	*/
 /*	$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $	*/
 
 /*-
@@ -94,10 +94,6 @@
 #include <machine/frame.h>
 #include <machine/pcb.h>
 #include <arm/swi.h>
-
-#ifdef acorn26
-#include <machine/machdep.h>
-#endif
 
 #define MAXARGS 8
 

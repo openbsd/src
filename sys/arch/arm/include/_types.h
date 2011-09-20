@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.8 2011/09/08 03:40:32 guenther Exp $	*/
+/*	$OpenBSD: _types.h,v 1.9 2011/09/20 22:02:13 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -141,10 +141,5 @@ typedef int			__wint_t;
 typedef	int			__rune_t;
 typedef	void *			__wctrans_t;
 typedef	void *			__wctype_t;
-
-/* OpenBSD only supports arm32 */
-#ifdef _KERNEL
-#define	__PROG32		/* indicate 32-bit mode */
-#endif
 
 #endif	/* _ARM__TYPES_H_ */

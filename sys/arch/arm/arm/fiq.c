@@ -1,4 +1,4 @@
-/*	$OpenBSD: fiq.c,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
+/*	$OpenBSD: fiq.c,v 1.2 2011/09/20 22:02:11 miod Exp $	*/
 /*	$NetBSD: fiq.c,v 1.5 2002/04/03 23:33:27 thorpej Exp $	*/
 
 /*
@@ -44,9 +44,7 @@
 #include <arm/cpufunc.h>
 #include <arm/fiq.h>
 
-#ifdef __PROG32
 #include <uvm/uvm.h>
-#endif
 
 TAILQ_HEAD(, fiqhandler) fiqhandler_stack =
     TAILQ_HEAD_INITIALIZER(fiqhandler_stack);
@@ -54,13 +52,8 @@ TAILQ_HEAD(, fiqhandler) fiqhandler_stack =
 extern char fiqvector[];
 extern char fiq_nullhandler[], fiq_nullhandler_end[];
 
-#ifdef __PROG32
 #define	IRQ_BIT		I32_bit
 #define	FIQ_BIT		F32_bit
-#else
-#define	IRQ_BIT		R15_IRQ_DISABLE
-#define	FIQ_BIT		R15_FIQ_DISABLE
-#endif /* __PROG32 */
 
 /*
  * fiq_installhandler:
@@ -75,18 +68,16 @@ extern char fiq_nullhandler[], fiq_nullhandler_end[];
 static void
 fiq_installhandler(void *func, size_t size)
 {
-#if defined(__PROG32) && !defined(__ARM_FIQ_INDIRECT)
+#if !defined(__ARM_FIQ_INDIRECT)
 	vector_page_setprot(VM_PROT_READ|VM_PROT_WRITE);
 #endif
 
 	memcpy(fiqvector, func, size);
 
-#ifdef __PROG32
 #if !defined(__ARM_FIQ_INDIRECT)
 	vector_page_setprot(VM_PROT_READ);
 #endif
 	cpu_icache_sync_range((vaddr_t) fiqvector, size);
-#endif
 }
 
 /*

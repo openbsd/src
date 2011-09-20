@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.6 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: signal.h,v 1.7 2011/09/20 22:02:13 miod Exp $	*/
 /*	$NetBSD: signal.h,v 1.5 2003/10/18 17:57:21 briggs Exp $	*/
 
 /*
@@ -82,10 +82,6 @@ struct sigcontext {
 	unsigned int sc_usr_lr;
 	unsigned int sc_svc_lr;
 	unsigned int sc_pc;
-	
-#if 0
-	sigset_t sc_mask;		/* signal mask to restore (new style) */
-#endif
 };
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
 #endif /* !_LOCORE */

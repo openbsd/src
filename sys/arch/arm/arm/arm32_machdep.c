@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.38 2011/06/24 19:47:48 naddy Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.39 2011/09/20 22:02:10 miod Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -60,7 +60,6 @@
 #include <dev/cons.h>
 
 #include <arm/machdep.h>
-#include <machine/bootconfig.h>
 #include <machine/conf.h>
 
 #ifdef CONF_HAVE_APM
@@ -236,7 +235,7 @@ cpu_startup()
 	proc0.p_addr = proc0paddr;
 
 	/* Set the cpu control register */
-	cpu_setup(boot_args);
+	cpu_setup();
 
 	/* Lock down zero page */
 	vector_page_setprot(VM_PROT_READ);

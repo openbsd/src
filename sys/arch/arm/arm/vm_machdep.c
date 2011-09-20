@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.9 2009/01/28 08:02:02 grange Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.10 2011/09/20 22:02:11 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $	*/
 
 /*
@@ -63,10 +63,6 @@
 #include <machine/pmap.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
-
-#ifdef ARMFPE
-#include <arm/fpe-arm/armfpe.h>
-#endif
 
 extern pv_addr_t systempage;
 
@@ -158,12 +154,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 #endif	/* PMAP_DEBUG */
 
 	pmap_activate(p2);
-
-#ifdef ARMFPE
-	/* Initialise a new FP context for p2 and copy the context from p1 */
-	arm_fpe_core_initcontext(FP_CONTEXT(p2));
-	arm_fpe_copycontext(FP_CONTEXT(p1), FP_CONTEXT(p2));
-#endif	/* ARMFPE */
 
 	p2->p_addr->u_pcb.pcb_tf = tf =
 	    (struct trapframe *)pcb->pcb_un.un_32.pcb32_sp - 1;

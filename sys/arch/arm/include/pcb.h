@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.3 2006/05/27 20:36:05 miod Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.4 2011/09/20 22:02:13 miod Exp $	*/
 /*	$NetBSD: pcb.h,v 1.10 2003/10/13 21:46:39 scw Exp $	*/
 
 /*
@@ -71,11 +71,6 @@ struct pcb_arm32 {
 #define	pcb_dacr	pcb_un.un_32.pcb32_dacr
 #define	pcb_cstate	pcb_un.un_32.pcb32_cstate
 
-struct pcb_arm26 {
-	struct	switchframe *pcb26_sf;
-};
-#define	pcb_sf	pcb_un.un_26.pcb26_sf
-
 /*
  * WARNING!
  * See warning for struct pcb_arm32, above, before changing struct pcb!
@@ -87,11 +82,9 @@ struct pcb {
 	caddr_t	pcb_onfault;			/* On fault handler */
 	union	{
 		struct	pcb_arm32 un_32;
-		struct	pcb_arm26 un_26;
 	} pcb_un;
 	struct	fpe_sp_state pcb_fpstate;	/* Floating Point state */
 };
-#define	pcb_ff	pcb_fpstate			/* for arm26 */
 
 /*
  * No additional data for core dumps.

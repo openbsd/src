@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.27 2011/06/24 19:47:48 naddy Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.28 2011/09/20 22:02:13 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -108,7 +108,6 @@
 extern int cpu_do_powersave;
 #endif
 
-#ifdef __PROG32
 #ifdef _LOCORE
 #define IRQdisable \
 	stmfd	sp!, {r0} ; \
@@ -128,7 +127,6 @@ extern int cpu_do_powersave;
 #define IRQdisable __set_cpsr_c(I32_bit, I32_bit);
 #define IRQenable __set_cpsr_c(I32_bit, 0);
 #endif	/* _LOCORE */
-#endif
 
 #ifndef _LOCORE
 
@@ -138,47 +136,27 @@ extern int cpu_do_powersave;
  * CLKF_USERMODE: Return TRUE/FALSE (1/0) depending on whether the
  * frame came from USR mode or not.
  */
-#ifdef __PROG32
 #define CLKF_USERMODE(frame)	((frame->if_spsr & PSR_MODE) == PSR_USR32_MODE)
-#else
-#define CLKF_USERMODE(frame)	((frame->if_r15 & R15_MODE) == R15_MODE_USR)
-#endif
 
 /*
  * CLKF_INTR: True if we took the interrupt from inside another
  * interrupt handler.
  */
 extern int current_intr_depth;
-#ifdef __PROG32
-/* Hack to treat FPE time as interrupt time so we can measure it */
-#define CLKF_INTR(frame)						\
-	((current_intr_depth > 1) ||					\
-	    (frame->if_spsr & PSR_MODE) == PSR_UND32_MODE)
-#else
 #define CLKF_INTR(frame)	(current_intr_depth > 1) 
-#endif
 
 /*
  * CLKF_PC: Extract the program counter from a clockframe
  */
-#ifdef __PROG32
 #define CLKF_PC(frame)		(frame->if_pc)
-#else
-#define CLKF_PC(frame)		(frame->if_r15 & R15_PC)
-#endif
 
 /*
  * PROC_PC: Find out the program counter for the given process.
  */
-#ifdef __PROG32
 #define PROC_PC(p)	((p)->p_addr->u_pcb.pcb_tf->tf_pc)
-#else
-#define PROC_PC(p)	((p)->p_addr->u_pcb.pcb_tf->tf_r15 & R15_PC)
-#endif
 
 /* The address of the vector page. */
 extern vaddr_t vector_page;
-#ifdef __PROG32
 void	arm32_vector_init(vaddr_t, int);
 
 #define	ARM_VEC_RESET			(1 << 0)
@@ -192,7 +170,6 @@ void	arm32_vector_init(vaddr_t, int);
 
 #define	ARM_NVEC			8
 #define	ARM_VEC_ALL			0xffffffff
-#endif
 
 /*
  * Per-CPU information.  For now we assume one CPU.
@@ -216,9 +193,6 @@ struct cpu_info {
 	u_int32_t ci_arm_cputype;	/* CPU type */
 	u_int32_t ci_arm_cpurev;	/* CPU revision */
 	u_int32_t ci_ctrl;		/* The CPU control register */
-#ifdef MULTIPROCESSOR
-	MP_CPU_INFO_MEMBERS
-#endif
 	u_int32_t ci_randseed;
 };
 
@@ -233,12 +207,6 @@ extern struct cpu_info cpu_info_store;
 #define CPU_INFO_UNIT(ci)	0
 #define MAXCPUS	1
 #define cpu_unidle(ci)
-#endif
-
-#ifdef __PROG32
-void	cpu_proc_fork(struct proc *, struct proc *);
-#else
-#define	cpu_proc_fork(p1, p2)
 #endif
 
 /*
@@ -270,7 +238,6 @@ extern int want_resched;	/* resched() was called */
  */
 #define	need_proftick(p)	setsoftast()
 
-#ifndef acorn26
 /*
  * cpu device glue (belongs in cpuvar.h)
  */
@@ -278,16 +245,10 @@ extern int want_resched;	/* resched() was called */
 struct device;
 void	cpu_attach	(struct device *);
 int	cpu_alloc_idlepcb	(struct cpu_info *);
-#endif
-
 
 /*
  * Random cruft
  */
-
-/* locore.S */
-void atomic_set_bit	(u_int *address, u_int setmask);
-void atomic_clear_bit	(u_int *address, u_int clearmask);
 
 /* cpuswitch.S */
 struct pcb;

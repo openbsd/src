@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.16 2011/09/08 03:40:32 guenther Exp $	*/
+/*	$OpenBSD: param.h,v 1.17 2011/09/20 22:02:13 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.9 2002/03/24 03:37:23 thorpej Exp $	*/
 
 /*
@@ -86,12 +86,12 @@
  * in use and whether there is hardware FP support. However we can put
  * an upper limit on it.
  * The undefined stack needs to be at least 512 bytes. This is a requirement
- * if the FP emulators
- * The kernel stack should be at least 4K is size.
+ * of the FP emulators
+ * The kernel stack should be at least 4K in size.
  *
  * The stack top addresses are used to set the stack pointers. The stack bottom
- * addresses at the addresses monitored by the diagnostic code for stack overflows
- *
+ * addresses are the addresses monitored by the diagnostic code for stack
+ * overflows.
  */
 
 #define FPCONTEXTSIZE			(0x100)

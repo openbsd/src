@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.4 2010/11/27 20:46:39 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.5 2011/09/20 22:02:10 miod Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /* 
@@ -114,11 +114,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				return;
 			}	
 			u = p->p_addr;
-#ifdef acorn26
-			frame = (u_int32_t *)(u->u_pcb.pcb_sf->sf_r11);
-#else
 			frame = (u_int32_t *)(u->u_pcb.pcb_un.un_32.pcb32_r11);
-#endif
 			(*pr)("at %p\n", frame);
 		} else
 			frame = (u_int32_t *)(addr);
@@ -137,24 +133,13 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		 * In theory, the SCP isn't guaranteed to be in the function
 		 * that generated the stack frame.  We hope for the best.
 		 */
-#ifdef __PROG26
-		scp = frame[FR_SCP] & R15_PC;
-#else
 		scp = frame[FR_SCP];
-#endif
 
 		db_printsym(scp, DB_STGY_PROC, pr);
-		(*pr)("\n\t");
-#ifdef __PROG26
-		(*pr)("scp=0x%08x rlv=0x%08x (", scp, frame[FR_RLV] & R15_PC);
-		db_printsym(frame[FR_RLV] & R15_PC, DB_STGY_PROC, pr);
-		(*pr)(")\n");
-#else
-		(*pr)("scp=0x%08x rlv=0x%08x (", scp, frame[FR_RLV]);
+		(*pr)("\n\tscp=0x%08x rlv=0x%08x (", scp, frame[FR_RLV]);
 		db_printsym(frame[FR_RLV], DB_STGY_PROC, pr);
-		(*pr)(")\n");
-#endif
-		(*pr)("\trsp=0x%08x rfp=0x%08x", frame[FR_RSP], frame[FR_RFP]);
+		(*pr)(")\n\trsp=0x%08x rfp=0x%08x",
+		    frame[FR_RSP], frame[FR_RFP]);
 
 		savecode = ((u_int32_t *)scp)[scp_offset];
 		if ((savecode & 0x0e100000) == 0x08000000) {

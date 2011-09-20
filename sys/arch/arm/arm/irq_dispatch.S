@@ -1,4 +1,4 @@
-/*	$OpenBSD: irq_dispatch.S,v 1.6 2005/12/27 20:05:34 drahn Exp $	*/
+/*	$OpenBSD: irq_dispatch.S,v 1.7 2011/09/20 22:02:11 miod Exp $	*/
 /*	$NetBSD: irq_dispatch.S,v 1.5 2003/10/30 08:57:24 scw Exp $	*/
 
 /*
@@ -89,13 +89,12 @@
 .Lcurrent_intr_depth:
 	.word	_C_LABEL(current_intr_depth)
 
-AST_ALIGNMENT_FAULT_LOCALS
+AST_LOCALS
 
 ASENTRY_NP(irq_entry)
 	sub	lr, lr, #0x00000004	/* Adjust the lr */
 
 	PUSHFRAMEINSVC			/* Push an interrupt frame */
-	ENABLE_ALIGNMENT_FAULTS
 
 	/*
 	 * Increment the interrupt nesting depth and call the interrupt
@@ -120,7 +119,7 @@ ASENTRY_NP(irq_entry)
 	 */
 	str	r6, [r5]
 
-	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
+	DO_AST
 	PULLFRAMEFROMSVCANDEXIT
 	movs	pc, lr			/* Exit */
 

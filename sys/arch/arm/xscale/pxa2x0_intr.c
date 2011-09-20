@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.c,v 1.21 2010/09/20 06:33:47 matthew Exp $ */
+/*	$OpenBSD: pxa2x0_intr.c,v 1.22 2011/09/20 22:02:13 miod Exp $ */
 /*	$NetBSD: pxa2x0_intr.c,v 1.5 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -688,11 +688,7 @@ pxa2x0_spllower(int ipl)
 void
 pxa2x0_setsoftintr(int si)
 {
-#if 0
-	atomic_set_bit( (u_int *)&softint_pending, SI_TO_IRQBIT(si) );
-#else
 	softint_pending |=  SI_TO_IRQBIT(si);
-#endif
 
 	/* Process unmasked pending soft interrupts. */
 	if ( softint_pending & pxa2x0_imask[current_spl_level] )
