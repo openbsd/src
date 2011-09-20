@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.48 2010/06/07 09:41:16 sthen Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.49 2011/09/20 16:42:01 pirofti Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -191,10 +191,14 @@ typedef struct {
 #define EM_ALPHA	41		/* DEC ALPHA */
 #define	EM_SH		42		/* Hitachi/Renesas Super-H */
 #define EM_SPARCV9	43		/* SPARC version 9 */
-#define EM_ALPHA_EXP	0x9026		/* DEC ALPHA */
+#define EM_IA_64	50		/* Intel IA-64 Processor */
 #define EM_AMD64	62		/* AMD64 architecture */
 #define EM_VAX		75		/* DEC VAX */
-#define EM_NUM		15		/* number of machine types */
+
+/* Non-standard */
+#define EM_ALPHA_EXP	0x9026		/* DEC ALPHA */
+
+#define EM_NUM		22		/* number of machine types */
 
 /* Version */
 #define EV_NONE		0		/* Invalid */
