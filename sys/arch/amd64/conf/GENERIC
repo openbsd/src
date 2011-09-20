@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.325 2011/08/02 00:53:48 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.326 2011/09/20 20:25:45 matthieu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -299,20 +299,8 @@ agp*		at intagp?
 #option		DRM_DEBUG
 inteldrm*	at vga? 	# Intel i915, i945 DRM driver
 drm*		at inteldrm?
-#machdrm*	at vga?		# mach64 (3D Rage Pro, Rage) DRM driver
-#drm*		at machdrm?
-#mgadrm*	at vga?		# Matrox G[24]00, G[45]50 DRM driver
-#drm*		at mgadrm?
-#ragedrm*	at vga?		# ATI Rage 128 DRM driver
-#drm*		at ragedrm?
 radeondrm*	at vga? 	# ATI Radeon DRM driver
 drm*		at radeondrm?
-#savagedrm*	at vga?		# S3 Savage DRM driver
-#drm*		at savagedrm?
-#sisdrm*	at vga?		# SiS DRM driver
-#drm*		at sisdrm?
-#tdfxdrm*	at vga?		# 3dfx (voodoo) DRM driver
-#drm*		at tdfxdrm?
 
 pcppi0		at isa?
 
