@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.133 2011/08/18 19:54:18 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.134 2011/09/20 09:49:38 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -576,6 +576,14 @@ boot(howto)
 	/* take a snap shot before clobbering any registers */
 	if (curproc && curproc->p_addr)
 		savectx(&curproc->p_addr->u_pcb);
+
+	/*
+	 * Prevent mi code from spinning disks off, in case the operator
+	 * changes his mind and prefers to reboot - we can't power down
+	 * the machine, and it will not send a spin up command to the
+	 * disks.
+	 */
+	howto &= ~RB_POWERDOWN;
 
 	/* If system is cold, just halt. */
 	if (cold) {
