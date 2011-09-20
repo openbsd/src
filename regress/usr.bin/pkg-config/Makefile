@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2011/09/17 18:07:17 jasper Exp $
+#	$OpenBSD: Makefile,v 1.25 2011/09/20 14:08:17 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -42,9 +42,7 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		static-libs3 \
 		static-libs4 \
 		variable-get-1 \
-		variable-get-2 \
 		variable-set \
-		variable-requires \
 		missing-req-1 \
 		missing-req-2 \
 		missing-req-3 \
@@ -366,26 +364,12 @@ variable-get-1:
 		--print-errors --variable prefix sysroot > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
-variable-get-2:
-	# Test --variable (expansion to multiple values)
-	@echo "alpha beta" > ${WANT}
-	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --errors-to-stdout \
-		--print-errors --variable requires requires-test3 > ${GOT}
-	@diff -u ${WANT} ${GOT}
-
 variable-set:
 	# Test --define-variable
 	@echo "-I/usr/local2/include -I/usr/local2/include/foo" > ${WANT}
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --errors-to-stdout \
 		--print-errors --define-variable=prefix=/usr/local2 \
 		--cflags sysroot > ${GOT}
-	@diff -u ${WANT} ${GOT}
-
-variable-requires:
-	# Test variable expansion in non-variable fields, to multiple values
-	@echo " -lalpha2" > ${WANT}
-	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --errors-to-stdout \
-		--print-errors --libs requires-test3 > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 # This fails as we read and check Requires as well as Requires.private where
