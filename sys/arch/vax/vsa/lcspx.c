@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcspx.c,v 1.16 2010/12/26 15:41:00 miod Exp $	*/
+/*	$OpenBSD: lcspx.c,v 1.17 2011/09/20 21:11:33 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -177,7 +177,6 @@ lcspx_vsbus_match(struct device *parent, void *vcf, void *aux)
 	default:
 		return (0);
 
-	case VAX_BTYP_410:
 	case VAX_BTYP_420:
 	case VAX_BTYP_43:
 		/* not present on microvaxes */
@@ -264,7 +263,6 @@ lcspx_attach(struct device *parent, struct device *self, void *aux)
 
 	if (cn_tab == &wsdisplay_cons) {
 		switch (vax_boardtype) {
-		case VAX_BTYP_410:
 		case VAX_BTYP_420:
 		case VAX_BTYP_43:
 			console = (vax_confdata & KA420_CFG_L3CON) == 0;
@@ -289,7 +287,6 @@ lcspx_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 		switch (vax_boardtype) {
-		case VAX_BTYP_410:
 		case VAX_BTYP_420:
 		case VAX_BTYP_43:
 			/*
@@ -631,7 +628,6 @@ lcspxcnprobe()
 	int rc;
 
 	switch (vax_boardtype) {
-	case VAX_BTYP_410:
 	case VAX_BTYP_420:
 	case VAX_BTYP_43:
 		if ((vax_confdata & KA420_CFG_L3CON) != 0)
@@ -720,7 +716,6 @@ lcspxcninit()
 	ova = virtual_avail;
 
 	switch (vax_boardtype) {
-	case VAX_BTYP_410:
 	case VAX_BTYP_420:
 	case VAX_BTYP_43:
 		/*
