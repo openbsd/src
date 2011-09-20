@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.116 2011/09/14 10:26:16 oga Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.117 2011/09/20 14:25:14 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -5464,6 +5464,10 @@ i915_restore_modeset_reg(struct inteldrm_softc *dev_priv)
 {
 	bus_size_t	dpll_a_reg, fpa0_reg, fpa1_reg;
 	bus_size_t	dpll_b_reg, fpb0_reg, fpb1_reg;
+
+	/* XXX until we have FDI link training */
+	if (IS_GEN6(dev_priv))
+		return;
 
 	if (HAS_PCH_SPLIT(dev_priv)) {
 		dpll_a_reg = PCH_DPLL_A;
