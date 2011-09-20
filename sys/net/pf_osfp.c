@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.22 2011/09/19 12:51:52 bluhm Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.23 2011/09/20 15:17:26 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -85,20 +85,20 @@ struct pf_osfp_enlist *
 pf_osfp_fingerprint(struct pf_pdesc *pd, struct mbuf *m)
 {
 	struct tcphdr	*th = pd->hdr.tcp;
-	struct ip *ip;
-	struct ip6_hdr *ip6;
-	char hdr[60];
+	struct ip	*ip = NULL;
+	struct ip6_hdr	*ip6 = NULL;
+	char		 hdr[60];
 
-	if ((pd->af != PF_INET && pd->af != PF_INET6) ||
-	    pd->proto != IPPROTO_TCP || (th->th_off << 2) < sizeof(*th))
+	if (pd->proto != IPPROTO_TCP || (th->th_off << 2) < sizeof(*th))
 		return (NULL);
 
-	if (pd->af == PF_INET) {
+	switch (pd->af) {
+	case AF_INET:
 		ip = mtod(m, struct ip *);
-		ip6 = (struct ip6_hdr *)NULL;
-	} else {
-		ip = (struct ip *)NULL;
+		break;
+	case AF_INET6:
 		ip6 = mtod(m, struct ip6_hdr *);
+		break;
 	}
 	if (!pf_pull_hdr(m, pd->off, hdr, th->th_off << 2, NULL, NULL, pd->af))
 		return (NULL);

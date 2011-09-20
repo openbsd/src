@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.778 2011/09/20 10:51:18 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.779 2011/09/20 15:17:26 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1776,11 +1776,6 @@ pf_icmp_mapping(struct pf_pdesc *pd, u_int8_t type,
 		}
 		break;
 #endif /* INET6 */
-	default:
-		*icmp_dir = PF_IN;
-		*virtual_type = type;
-		*virtual_id = 0;
-		break;
 	}
 	HTONS(*virtual_type);
 	return (0);  /* These types match to their own state */
@@ -2497,9 +2492,6 @@ pf_socket_lookup(struct pf_pdesc *pd)
 		}
 		break;
 #endif /* INET6 */
-
-	default:
-		return (-1);
 	}
 	pd->lookup.uid = inp->inp_socket->so_euid;
 	pd->lookup.gid = inp->inp_socket->so_egid;
@@ -2687,12 +2679,15 @@ pf_tcp_iss(struct pf_pdesc *pd)
 
 	MD5Update(&ctx, (char *)&pd->hdr.tcp->th_sport, sizeof(u_short));
 	MD5Update(&ctx, (char *)&pd->hdr.tcp->th_dport, sizeof(u_short));
-	if (pd->af == AF_INET6) {
-		MD5Update(&ctx, (char *)&pd->src->v6, sizeof(struct in6_addr));
-		MD5Update(&ctx, (char *)&pd->dst->v6, sizeof(struct in6_addr));
-	} else {
+	switch (pd->af) {
+	case AF_INET:
 		MD5Update(&ctx, (char *)&pd->src->v4, sizeof(struct in_addr));
 		MD5Update(&ctx, (char *)&pd->dst->v4, sizeof(struct in_addr));
+		break;
+	case AF_INET6:
+		MD5Update(&ctx, (char *)&pd->src->v6, sizeof(struct in6_addr));
+		MD5Update(&ctx, (char *)&pd->dst->v6, sizeof(struct in6_addr));
+		break;
 	}
 	MD5Final((u_char *)digest, &ctx);
 	pf_tcp_iss_off += 4096;
@@ -4879,8 +4874,6 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 			check_mpath = 1;
 		break;
 #endif /* INET6 */
-	default:
-		return (0);
 	}
 
 	/* Skip checks for ipsec interfaces */
@@ -4951,8 +4944,6 @@ pf_rtlabel_match(struct pf_addr *addr, sa_family_t af, struct pf_addr_wrap *aw,
 		dst6->sin6_addr = addr->v6;
 		break;
 #endif /* INET6 */
-	default:
-		return (0);
 	}
 
 	rtalloc_noclone((struct route *)&ro);
@@ -5331,8 +5322,6 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
 		sum = in6_cksum(m, p, off, len);
 		break;
 #endif /* INET6 */
-	default:
-		return (1);
 	}
 	if (sum) {
 		m->m_pkthdr.csum_flags |= flag_bad;
@@ -6121,24 +6110,32 @@ done:
 		action = PF_PASS;
 		break;
 	case PF_DIVERT:
-		if (pd.af == AF_INET)
+		switch (pd.af) {
+		case AF_INET:
 			divert_packet(m, pd.dir);
+			break;
 #ifdef INET6
-		if (pd.af == AF_INET6)
+		case AF_INET6:
 			divert6_packet(m, pd.dir);
-#endif
+			break;
+#endif /* INET6 */
+		}
 		*m0 = NULL;
 		action = PF_PASS;
 		break;
 	default:
 		/* pf_route can free the mbuf causing *m0 to become NULL */
 		if (r->rt) {
-			if (pd.af == AF_INET)
+			switch (pd.af) {
+			case AF_INET:
 				pf_route(m0, r, pd.dir, pd.kif->pfik_ifp, s);
+				break;
 #ifdef INET6
-			if (pd.af == AF_INET6)
+			case AF_INET6:
 				pf_route6(m0, r, pd.dir, pd.kif->pfik_ifp, s);
-#endif
+				break;
+#endif /* INET6 */
+			}
 		}
 		break;
 	}
