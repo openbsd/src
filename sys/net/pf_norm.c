@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.142 2011/09/19 12:51:52 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.143 2011/09/20 10:51:18 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -808,7 +808,7 @@ pf_normalize_ip6(struct mbuf **m0, int dir, int off, int extoff,
 #endif /* INET6 */
 
 int
-pf_normalize_tcp(int dir, struct mbuf *m, struct pf_pdesc *pd)
+pf_normalize_tcp(struct mbuf *m, struct pf_pdesc *pd)
 {
 	struct tcphdr	*th = pd->hdr.tcp;
 	u_short		 reason;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.41 2011/09/19 12:51:52 bluhm Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.42 2011/09/20 10:51:18 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -210,15 +210,14 @@ pflogioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 int
-pflog_packet(struct pfi_kif *kif, struct mbuf *m, u_int8_t dir,
-    u_int8_t reason, struct pf_rule *rm, struct pf_rule *am,
-    struct pf_ruleset *ruleset, struct pf_pdesc *pd)
+pflog_packet(struct mbuf *m, u_int8_t reason, struct pf_rule *rm,
+    struct pf_rule *am, struct pf_ruleset *ruleset, struct pf_pdesc *pd)
 {
 #if NBPFILTER > 0
 	struct ifnet *ifn;
 	struct pfloghdr hdr;
 
-	if (kif == NULL || m == NULL || rm == NULL || pd == NULL)
+	if (m == NULL || rm == NULL || pd == NULL || pd->kif == NULL)
 		return (-1);
 
 	if ((ifn = pflogifs[rm->logif]) == NULL || !ifn->if_bpf)
@@ -229,7 +228,7 @@ pflog_packet(struct pfi_kif *kif, struct mbuf *m, u_int8_t dir,
 	hdr.af = pd->af;
 	hdr.action = rm->action;
 	hdr.reason = reason;
-	memcpy(hdr.ifname, kif->pfik_name, sizeof(hdr.ifname));
+	memcpy(hdr.ifname, pd->kif->pfik_name, sizeof(hdr.ifname));
 
 	if (am == NULL) {
 		hdr.rulenr = htonl(rm->nr);
@@ -242,7 +241,7 @@ pflog_packet(struct pfi_kif *kif, struct mbuf *m, u_int8_t dir,
 			    sizeof(hdr.ruleset));
 	}
 	if (rm->log & PF_LOG_SOCKET_LOOKUP && !pd->lookup.done)
-		pd->lookup.done = pf_socket_lookup(dir, pd);
+		pd->lookup.done = pf_socket_lookup(pd);
 	if (pd->lookup.done > 0) {
 		hdr.uid = pd->lookup.uid;
 		hdr.pid = pd->lookup.pid;
@@ -252,7 +251,7 @@ pflog_packet(struct pfi_kif *kif, struct mbuf *m, u_int8_t dir,
 	}
 	hdr.rule_uid = rm->cuid;
 	hdr.rule_pid = rm->cpid;
-	hdr.dir = dir;
+	hdr.dir = pd->dir;
 
 	PF_ACPY(&hdr.saddr, &pd->nsaddr, pd->af);
 	PF_ACPY(&hdr.daddr, &pd->ndaddr, pd->af);
@@ -333,8 +332,8 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 		mfake->m_pkthdr.len = min(mfake->m_pkthdr.len, mfake->m_len);
 
 	/* rewrite addresses if needed */
-	if (pf_setup_pdesc(pfloghdr->af, pfloghdr->dir, &pd, &pdhdrs, &mfake,
-	    &action, &reason) == -1)
+	if (pf_setup_pdesc(pfloghdr->af, pfloghdr->dir, NULL, &pd, &pdhdrs,
+	    &mfake, &action, &reason) == -1)
 		return;
 
 	PF_ACPY(&osaddr, pd.src, pd.af);
