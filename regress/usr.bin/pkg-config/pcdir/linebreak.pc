@@ -1,5 +1,5 @@
 Name: Linebreak test
-Description: Descriptive
+Description: Descriptive \
 stuff
 Version: 0.0.0
 Libs: -lc

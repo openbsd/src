@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2011/09/20 14:08:17 jasper Exp $
+#	$OpenBSD: Makefile,v 1.26 2011/09/20 16:26:15 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -411,7 +411,7 @@ whitespace-libs:
 
 whitespace-linebreak:
 	# Test linebreak in Description field
-	@echo "-lc  " > ${WANT}
+	@echo " -lc" > ${WANT}
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --errors-to-stdout \
 		--print-errors --libs linebreak > ${GOT}
 	@diff -u ${WANT} ${GOT}
