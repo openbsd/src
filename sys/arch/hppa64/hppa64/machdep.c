@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.42 2011/09/19 13:21:15 jsing Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.43 2011/09/20 13:56:44 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -954,10 +954,10 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 		tf->tf_iisq[0] = HPPA_SID_KERNEL;
 	else
 		tf->tf_iisq[0] = p->p_addr->u_pcb.pcb_space;
-	if ((tf->tf_iioq[0] & ~PAGE_MASK) == SYSCALLGATE)
-		tf->tf_iisq[0] = HPPA_SID_KERNEL;
+	if ((tf->tf_iioq[1] & ~PAGE_MASK) == SYSCALLGATE)
+		tf->tf_iisq[1] = HPPA_SID_KERNEL;
 	else
-		tf->tf_iisq[0] = p->p_addr->u_pcb.pcb_space;
+		tf->tf_iisq[1] = p->p_addr->u_pcb.pcb_space;
 	tf->tf_ipsw = ksc.sc_ps | (curcpu()->ci_psw & PSL_O);
 
 #ifdef DEBUG
