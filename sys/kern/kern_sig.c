@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.126 2011/07/11 15:40:47 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.127 2011/09/20 10:07:37 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -679,7 +679,7 @@ pgsignal(struct pgrp *pgrp, int signum, int checkctty)
  * Otherwise, post it normally.
  */
 void
-trapsignal(struct proc *p, int signum, u_long code, int type,
+trapsignal(struct proc *p, int signum, u_long trapno, int code,
     union sigval sigval)
 {
 	struct sigacts *ps = p->p_sigacts;
@@ -692,14 +692,14 @@ trapsignal(struct proc *p, int signum, u_long code, int type,
 		if (KTRPOINT(p, KTR_PSIG)) {
 			siginfo_t si;
 
-			initsiginfo(&si, signum, code, type, sigval);
+			initsiginfo(&si, signum, trapno, code, sigval);
 			ktrpsig(p, signum, ps->ps_sigact[signum],
-			    p->p_sigmask, type, &si);
+			    p->p_sigmask, code, &si);
 		}
 #endif
 		p->p_stats->p_ru.ru_nsignals++;
 		(*p->p_emul->e_sendsig)(ps->ps_sigact[signum], signum,
-		    p->p_sigmask, code, type, sigval);
+		    p->p_sigmask, trapno, code, sigval);
 		p->p_sigmask |= ps->ps_catchmask[signum];
 		if ((ps->ps_sigreset & mask) != 0) {
 			ps->ps_sigcatch &= ~mask;
@@ -709,8 +709,8 @@ trapsignal(struct proc *p, int signum, u_long code, int type,
 		}
 	} else {
 		p->p_sisig = signum;
-		p->p_sicode = code;	/* XXX for core dump/debugger */
-		p->p_sitype = type;
+		p->p_sitrapno = trapno;	/* XXX for core dump/debugger */
+		p->p_sicode = code;
 		p->p_sigval = sigval;
 		ptsignal(p, signum, STHREAD);
 	}
@@ -1195,10 +1195,10 @@ postsig(int signum)
 	struct proc *p = curproc;
 	struct sigacts *ps = p->p_sigacts;
 	sig_t action;
-	u_long code;
+	u_long trapno;
 	int mask, returnmask;
 	union sigval sigval;
-	int s, type;
+	int s, code;
 
 #ifdef DIAGNOSTIC
 	if (signum == 0)
@@ -1211,15 +1211,14 @@ postsig(int signum)
 	atomic_clearbits_int(&p->p_siglist, mask);
 	action = ps->ps_sigact[signum];
 	sigval.sival_ptr = 0;
-	type = SI_USER;
 
 	if (p->p_sisig != signum) {
-		code = 0;
-		type = SI_USER;
+		trapno = 0;
+		code = SI_USER;
 		sigval.sival_ptr = 0;
 	} else {
+		trapno = p->p_sitrapno;
 		code = p->p_sicode;
-		type = p->p_sitype;
 		sigval = p->p_sigval;
 	}
 
@@ -1227,9 +1226,9 @@ postsig(int signum)
 	if (KTRPOINT(p, KTR_PSIG)) {
 		siginfo_t si;
 		
-		initsiginfo(&si, signum, code, type, sigval);
+		initsiginfo(&si, signum, trapno, code, sigval);
 		ktrpsig(p, signum, action, p->p_flag & P_SIGSUSPEND ?
-		    p->p_oldmask : p->p_sigmask, type, &si);
+		    p->p_oldmask : p->p_sigmask, code, &si);
 	}
 #endif
 	if (action == SIG_DFL) {
@@ -1277,13 +1276,13 @@ postsig(int signum)
 		p->p_stats->p_ru.ru_nsignals++;
 		if (p->p_sisig == signum) {
 			p->p_sisig = 0;
-			p->p_sicode = 0;
-			p->p_sitype = SI_USER;
+			p->p_sitrapno = 0;
+			p->p_sicode = SI_USER;
 			p->p_sigval.sival_ptr = NULL;
 		}
 
-		(*p->p_emul->e_sendsig)(action, signum, returnmask, code,
-		    type, sigval);
+		(*p->p_emul->e_sendsig)(action, signum, returnmask, trapno,
+		    code, sigval);
 	}
 
 	KERNEL_UNLOCK();
@@ -1431,7 +1430,7 @@ coredump_trad(struct proc *p, void *cookie)
 	strlcpy(core.c_name, p->p_comm, sizeof(core.c_name));
 	core.c_nseg = 0;
 	core.c_signo = p->p_sisig;
-	core.c_ucode = p->p_sicode;
+	core.c_ucode = p->p_sitrapno;
 	core.c_cpusize = 0;
 	core.c_tsize = (u_long)ptoa(vm->vm_tsize);
 	core.c_dsize = (u_long)ptoa(vm->vm_dsize);
@@ -1561,13 +1560,13 @@ sys_thrsigdivert(struct proc *p, void *v, register_t *retval)
 }
 
 void
-initsiginfo(siginfo_t *si, int sig, u_long code, int type, union sigval val)
+initsiginfo(siginfo_t *si, int sig, u_long trapno, int code, union sigval val)
 {
 	bzero(si, sizeof *si);
 
 	si->si_signo = sig;
-	si->si_code = type;
-	if (type == SI_USER) {
+	si->si_code = code;
+	if (code == SI_USER) {
 		si->si_value = val;
 	} else {
 		switch (sig) {
@@ -1576,7 +1575,7 @@ initsiginfo(siginfo_t *si, int sig, u_long code, int type, union sigval val)
 		case SIGBUS:
 		case SIGFPE:
 			si->si_addr = val.sival_ptr;
-			si->si_trapno = code;
+			si->si_trapno = trapno;
 			break;
 		case SIGXFSZ:
 			break;
