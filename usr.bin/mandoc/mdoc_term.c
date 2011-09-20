@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.136 2011/09/19 22:36:11 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.137 2011/09/20 09:02:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -454,12 +454,10 @@ static void
 print_mdoc_head(struct termp *p, const void *arg)
 {
 	char		buf[BUFSIZ], title[BUFSIZ];
+	size_t		buflen, titlen;
 	const struct mdoc_meta *m;
 
 	m = (const struct mdoc_meta *)arg;
-
-	p->rmargin = p->maxrmargin;
-	p->offset = 0;
 
 	/*
 	 * The header is strange.  It has three components, which are
@@ -474,8 +472,12 @@ print_mdoc_head(struct termp *p, const void *arg)
 	 * switches on the manual section.
 	 */
 
+	p->offset = 0;
+	p->rmargin = p->maxrmargin;
+
 	assert(m->vol);
 	strlcpy(buf, m->vol, BUFSIZ);
+	buflen = term_strlen(p, buf);
 
 	if (m->arch) {
 		strlcat(buf, " (", BUFSIZ);
@@ -484,33 +486,38 @@ print_mdoc_head(struct termp *p, const void *arg)
 	}
 
 	snprintf(title, BUFSIZ, "%s(%s)", m->title, m->msec);
+	titlen = term_strlen(p, title);
 
-	p->offset = 0;
-	p->rmargin = (p->maxrmargin - 
-			term_strlen(p, buf) + term_len(p, 1)) / 2;
 	p->flags |= TERMP_NOBREAK | TERMP_NOSPACE;
+	p->offset = 0;
+	p->rmargin = 2 * (titlen+1) + buflen < p->maxrmargin ?
+	    (p->maxrmargin -
+	     term_strlen(p, buf) + term_len(p, 1)) / 2 :
+	    p->maxrmargin - buflen;
 
 	term_word(p, title);
 	term_flushln(p);
 
-	p->offset = p->rmargin;
-	p->rmargin = p->maxrmargin - term_strlen(p, title);
 	p->flags |= TERMP_NOSPACE;
+	p->offset = p->rmargin;
+	p->rmargin = p->offset + buflen + titlen < p->maxrmargin ?
+	    p->maxrmargin - titlen : p->maxrmargin;
 
 	term_word(p, buf);
 	term_flushln(p);
 
-	p->offset = p->rmargin;
-	p->rmargin = p->maxrmargin;
 	p->flags &= ~TERMP_NOBREAK;
-	p->flags |= TERMP_NOSPACE;
+	if (p->rmargin + titlen <= p->maxrmargin) {
+		p->flags |= TERMP_NOSPACE;
+		p->offset = p->rmargin;
+		p->rmargin = p->maxrmargin;
+		term_word(p, title);
+		term_flushln(p);
+	}
 
-	term_word(p, title);
-	term_flushln(p);
-
+	p->flags &= ~TERMP_NOSPACE;
 	p->offset = 0;
 	p->rmargin = p->maxrmargin;
-	p->flags &= ~TERMP_NOSPACE;
 }
 
 
