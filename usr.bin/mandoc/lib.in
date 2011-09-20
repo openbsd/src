@@ -1,4 +1,4 @@
-/*	$Id: lib.in,v 1.5 2010/06/26 17:56:43 schwarze Exp $ */
+/*	$Id: lib.in,v 1.6 2011/09/20 23:36:22 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -40,8 +40,9 @@ LINE("libcurses",	"Curses Library (libcurses, \\-lcurses)")
 LINE("libdevinfo",	"Device and Resource Information Utility Library (libdevinfo, \\-ldevinfo)")
 LINE("libdevstat",	"Device Statistics Library (libdevstat, \\-ldevstat)")
 LINE("libdisk",		"Interface to Slice and Partition Labels Library (libdisk, \\-ldisk)")
+LINE("libdwarf",	"DWARF Access Library (libdwarf, \\-ldwarf)")
 LINE("libedit",		"Command Line Editor Library (libedit, \\-ledit)")
-LINE("libelf",		"ELF Parsing Library (libelf, \\-lelf)")
+LINE("libelf",		"ELF Access Library (libelf, \\-lelf)")
 LINE("libevent",	"Event Notification Library (libevent, \\-levent)")
 LINE("libfetch",	"File Transfer Library for URLs (libfetch, \\-lfetch)")
 LINE("libform",		"Curses Form Library (libform, \\-lform)")
