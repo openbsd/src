@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg-config.1,v 1.23 2011/06/25 14:36:19 jasper Exp $
+.\"	$OpenBSD: pkg-config.1,v 1.24 2011/09/20 14:12:13 jasper Exp $
 .\"
 .\"	Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\"	ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"	OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 25 2011 $
+.Dd $Mdocdate: September 20 2011 $
 .Dt PKG-CONFIG 1
 .Os
 .Sh NAME
@@ -215,6 +215,15 @@ The
 flag that can be encountered in Cflags is not treated differently from
 .Fl I
 in this implementation.
+.It Ev Variables
+Due to the way variables are retrieved and expanded, in this version of
+.Nm
+certain syntax that is valid in the original implementation is not
+allowed in this
+.Nm .
+For example storing requirements in a variable, and only using this
+variable in the Requires field is not allowed.
+Otherwise all the variable values can be treated as a (valid) package.
 .It Ev Whitespace
 .Nm
 does not go to great lengths to try to fix whitespace abuse.
