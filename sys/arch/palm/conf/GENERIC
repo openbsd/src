@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.13 2011/07/07 23:41:09 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.14 2011/09/20 22:11:42 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -15,8 +15,6 @@ maxusers	32			# estimated number of users
 
 options		ARM32
 options		PXAGPIO_HAS_GPION_INTRS
-
-options		CACHE_CLEAN_BLOCK_INTR
 
 makeoptions	KERNEL_BASE_PHYS="0xa0200000"
 makeoptions	KERNEL_BASE_VIRT="0xc0200000"

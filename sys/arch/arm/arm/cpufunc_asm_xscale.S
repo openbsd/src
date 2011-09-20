@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc_asm_xscale.S,v 1.3 2009/11/08 13:50:14 miod Exp $ */
+/*	$OpenBSD: cpufunc_asm_xscale.S,v 1.4 2011/09/20 22:11:40 miod Exp $ */
 /*	$NetBSD: cpufunc_asm_xscale.S,v 1.16 2002/08/17 16:36:32 thorpej Exp $	*/
 
 /*
@@ -80,11 +80,6 @@
  */
 #define	CACHE_SIZE		0x8000
 
-#ifndef CACHE_CLEAN_BLOCK_INTR
-.Lblock_userspace_access:
-	.word	_C_LABEL(block_userspace_access)
-#endif
-
 /*
  * CPWAIT -- Canonical method to wait for CP15 update.
  * From: Intel 80200 manual, section 2.3.3.
@@ -133,16 +128,10 @@ ENTRY(xscale_control)
  * addresses that are about to change.
  */
 ENTRY(xscale_setttb)
-#ifdef CACHE_CLEAN_BLOCK_INTR
 	mrs	r3, cpsr_all
 	orr	r1, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all, r1
-#else
-	ldr	r3, .Lblock_userspace_access
-	ldr	r2, [r3]
-	orr	r1, r2, #1 
-	str	r1, [r3]
-#endif
+
 	stmfd	sp!, {r0-r3, lr}
 	bl	_C_LABEL(xscale_cache_cleanID)
 	mcr	p15, 0, r0, c7, c5, 0	/* invalidate I$ and BTB */
@@ -163,11 +152,7 @@ ENTRY(xscale_setttb)
 
 	CPWAIT(r0)
 
-#ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all, r3
-#else
-	str	r2, [r3]
-#endif
 	mov	pc, lr
 
 /*
@@ -258,7 +243,6 @@ _C_LABEL(xscale_cache_clean_size):
 .Lxscale_minidata_clean_size:
 	.word	_C_LABEL(xscale_minidata_clean_size)
 
-#ifdef CACHE_CLEAN_BLOCK_INTR
 #define	XSCALE_CACHE_CLEAN_BLOCK					\
 	mrs	r3, cpsr_all					;	\
 	orr	r0, r3, #(I32_bit | F32_bit)			;	\
@@ -266,16 +250,6 @@ _C_LABEL(xscale_cache_clean_size):
 
 #define	XSCALE_CACHE_CLEAN_UNBLOCK					\
 	msr	cpsr_all, r3
-#else
-#define	XSCALE_CACHE_CLEAN_BLOCK					\
-	ldr	r3, .Lblock_userspace_access			;	\
-	ldr	ip, [r3]					;	\
-	orr	r0, ip, #1					;	\
-	str	r0, [r3]
-
-#define	XSCALE_CACHE_CLEAN_UNBLOCK					\
-	str	ip, [r3]
-#endif /* CACHE_CLEAN_BLOCK_INTR */
 
 #define	XSCALE_CACHE_CLEAN_PROLOGUE					\
 	XSCALE_CACHE_CLEAN_BLOCK				;	\

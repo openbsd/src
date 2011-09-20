@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.8 2011/06/29 20:52:09 matthew Exp $
+#	$OpenBSD: RAMDISK,v 1.9 2011/09/20 22:11:42 miod Exp $
 
 machine	palm	arm
 
@@ -15,8 +15,6 @@ options	CRYPTO		# Cryptographic framework
 
 options		ARM32
 options		PXAGPIO_HAS_GPION_INTRS
-
-options		CACHE_CLEAN_BLOCK_INTR
 
 makeoptions	KERNEL_BASE_PHYS="0xa0200000"
 makeoptions	KERNEL_BASE_VIRT="0xc0200000"

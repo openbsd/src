@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc_asm_sa1.S,v 1.2 2004/08/04 20:20:18 miod Exp $	*/
+/*	$OpenBSD: cpufunc_asm_sa1.S,v 1.3 2011/09/20 22:11:40 miod Exp $	*/
 /*	$NetBSD: cpufunc_asm_sa1.S,v 1.8 2002/08/17 16:36:32 thorpej Exp $	*/
 
 /*
@@ -46,11 +46,10 @@
  * addresses that are about to change.
  */
 ENTRY(sa1_setttb)
-#ifdef CACHE_CLEAN_BLOCK_INTR
 	mrs	r3, cpsr_all
 	orr	r1, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all, r1
-#endif
+
 	stmfd	sp!, {r0-r3, lr}
 	bl	_C_LABEL(sa1_cache_cleanID)
 	ldmfd	sp!, {r0-r3, lr}
@@ -69,9 +68,8 @@ ENTRY(sa1_setttb)
 	/* Make sure that pipeline is emptied */
 	mov	r0, r0
 	mov	r0, r0
-#ifdef CACHE_CLEAN_BLOCK_INTR
+
 	msr	cpsr_all, r3
-#endif
 	mov	pc, lr
 
 /*
@@ -132,7 +130,6 @@ _C_LABEL(sa1_cache_clean_size):
 .Lsa1_cache_clean_size:
 	.word	_C_LABEL(sa1_cache_clean_size)
 
-#ifdef CACHE_CLEAN_BLOCK_INTR
 #define	SA1_CACHE_CLEAN_BLOCK						\
 	mrs	r3, cpsr_all					;	\
 	orr	r0, r3, #(I32_bit | F32_bit)			;	\
@@ -140,10 +137,6 @@ _C_LABEL(sa1_cache_clean_size):
 
 #define	SA1_CACHE_CLEAN_UNBLOCK						\
 	msr	cpsr_all, r3
-#else
-#define	SA1_CACHE_CLEAN_BLOCK
-#define	SA1_CACHE_CLEAN_UNBLOCK
-#endif /* CACHE_CLEAN_BLOCK_INTR */
 
 #ifdef DOUBLE_CACHE_CLEAN_BANK
 #define	SA1_DOUBLE_CACHE_CLEAN_BANK					\
