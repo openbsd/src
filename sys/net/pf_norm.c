@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.143 2011/09/20 10:51:18 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.144 2011/09/21 19:07:30 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -834,10 +834,6 @@ pf_normalize_tcp(struct mbuf *m, struct pf_pdesc *pd)
 		if ((flags & TH_FIN) || (flags & TH_PUSH) || (flags & TH_URG))
 			goto tcp_drop;
 	}
-
-	/* Check for illegal header length */
-	if (th->th_off < (sizeof(struct tcphdr) >> 2))
-		goto tcp_drop;
 
 	/* If flags changed, or reserved data set, then adjust */
 	if (flags != th->th_flags || th->th_x2 != 0) {

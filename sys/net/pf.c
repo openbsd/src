@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.779 2011/09/20 15:17:26 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.780 2011/09/21 19:07:30 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5718,6 +5718,12 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pfi_kif *kif,
 		    action, reason, pd->af))
 			return (-1);
 		pd->hdrlen = sizeof(*th);
+		if (pd->off + (th->th_off << 2) > pd->tot_len ||
+		    (th->th_off << 2) < sizeof(struct tcphdr)) {
+			*action = PF_DROP;
+			REASON_SET(reason, PFRES_SHORT);
+			return (-1);
+		}
 		pd->p_len = pd->tot_len - pd->off - (th->th_off << 2);
 		pd->sport = &th->th_sport;
 		pd->dport = &th->th_dport;
@@ -5731,7 +5737,7 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pfi_kif *kif,
 			return (-1);
 		pd->hdrlen = sizeof(*uh);
 		if (uh->uh_dport == 0 ||
-		    ntohs(uh->uh_ulen) > m->m_pkthdr.len - pd->off ||
+		    pd->off + ntohs(uh->uh_ulen) > pd->tot_len ||
 		    ntohs(uh->uh_ulen) < sizeof(struct udphdr)) {
 			*action = PF_DROP;
 			REASON_SET(reason, PFRES_SHORT);
@@ -5746,6 +5752,11 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pfi_kif *kif,
 		    action, reason, pd->af))
 			return (-1);
 		pd->hdrlen = ICMP_MINLEN;
+		if (pd->off + pd->hdrlen > pd->tot_len) {
+			*action = PF_DROP;
+			REASON_SET(reason, PFRES_SHORT);
+			return (-1);
+		}
 		break;
 	}
 #ifdef INET6
@@ -5771,6 +5782,11 @@ pf_setup_pdesc(sa_family_t af, int dir, struct pfi_kif *kif,
 		    action, reason, pd->af))
 			return (-1);
 		pd->hdrlen = icmp_hlen;
+		if (pd->off + pd->hdrlen > pd->tot_len) {
+			*action = PF_DROP;
+			REASON_SET(reason, PFRES_SHORT);
+			return (-1);
+		}
 		break;
 	}
 #endif	/* INET6 */

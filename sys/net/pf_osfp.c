@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.23 2011/09/20 15:17:26 bluhm Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.24 2011/09/21 19:07:30 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -89,7 +89,7 @@ pf_osfp_fingerprint(struct pf_pdesc *pd, struct mbuf *m)
 	struct ip6_hdr	*ip6 = NULL;
 	char		 hdr[60];
 
-	if (pd->proto != IPPROTO_TCP || (th->th_off << 2) < sizeof(*th))
+	if (pd->proto != IPPROTO_TCP)
 		return (NULL);
 
 	switch (pd->af) {
