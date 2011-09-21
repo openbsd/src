@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.62 2010/05/03 13:11:41 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.63 2011/09/21 10:37:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -21,6 +21,7 @@
 
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -53,7 +54,8 @@ enum token_type {
 	WEIGHT,
 	FAMILY,
 	GETOPT,
-	RTABLE
+	RTABLE,
+	FILENAME
 };
 
 enum getopts {
@@ -73,14 +75,18 @@ static const struct token t_show[];
 static const struct token t_show_summary[];
 static const struct token t_show_fib[];
 static const struct token t_show_rib[];
+static const struct token t_show_mrt[];
+static const struct token t_show_mrt_file[];
 static const struct token t_show_rib_neigh[];
+static const struct token t_show_mrt_neigh[];
 static const struct token t_show_rib_rib[];
 static const struct token t_show_neighbor[];
 static const struct token t_show_neighbor_modifiers[];
 static const struct token t_fib[];
 static const struct token t_neighbor[];
 static const struct token t_neighbor_modifiers[];
-static const struct token t_show_as[];
+static const struct token t_show_rib_as[];
+static const struct token t_show_mrt_as[];
 static const struct token t_show_prefix[];
 static const struct token t_show_ip[];
 static const struct token t_show_community[];
@@ -124,6 +130,7 @@ static const struct token t_show[] = {
 	{ KEYWORD,	"tables",	SHOW_FIB_TABLES, NULL},
 	{ KEYWORD,	"ip",		NONE,		t_show_ip},
 	{ KEYWORD,	"summary",	SHOW_SUMMARY,	t_show_summary},
+	{ KEYWORD,	"mrt",		SHOW_MRT,	t_show_mrt},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -147,10 +154,10 @@ static const struct token t_show_fib[] = {
 
 static const struct token t_show_rib[] = {
 	{ NOTOKEN,	"",		NONE,		NULL},
-	{ ASTYPE,	"as",		AS_ALL,		t_show_as},
-	{ ASTYPE,	"source-as",	AS_SOURCE,	t_show_as},
-	{ ASTYPE,	"transit-as",	AS_TRANSIT,	t_show_as},
-	{ ASTYPE,	"peer-as",	AS_PEER,	t_show_as},
+	{ ASTYPE,	"as",		AS_ALL,		t_show_rib_as},
+	{ ASTYPE,	"source-as",	AS_SOURCE,	t_show_rib_as},
+	{ ASTYPE,	"transit-as",	AS_TRANSIT,	t_show_rib_as},
+	{ ASTYPE,	"peer-as",	AS_PEER,	t_show_rib_as},
 	{ ASTYPE,	"empty-as",	AS_EMPTY,	t_show_rib},
 	{ KEYWORD,	"community",	NONE,		t_show_community},
 	{ FLAG,		"detail",	F_CTL_DETAIL,	t_show_rib},
@@ -165,9 +172,35 @@ static const struct token t_show_rib[] = {
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
+
+static const struct token t_show_mrt[] = {
+	{ NOTOKEN,	"",		NONE,		NULL},
+	{ ASTYPE,	"as",		AS_ALL,		t_show_mrt_as},
+	{ ASTYPE,	"source-as",	AS_SOURCE,	t_show_mrt_as},
+	{ ASTYPE,	"transit-as",	AS_TRANSIT,	t_show_mrt_as},
+	{ ASTYPE,	"peer-as",	AS_PEER,	t_show_mrt_as},
+	{ ASTYPE,	"empty-as",	AS_EMPTY,	t_show_mrt},
+	{ FLAG,		"detail",	F_CTL_DETAIL,	t_show_mrt},
+	{ KEYWORD,	"neighbor",	NONE,		t_show_mrt_neigh},
+	{ KEYWORD,	"file",		NONE,		t_show_mrt_file},
+	{ FAMILY,	"",		NONE,		t_show_mrt},
+	{ PREFIX,	"",		NONE,		t_show_prefix},
+	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_show_mrt_file[] = {
+	{ FILENAME,	"",		NONE,		t_show_mrt},
+	{ ENDTOKEN,	"",		NONE,	NULL}
+};
+
 static const struct token t_show_rib_neigh[] = {
 	{ PEERADDRESS,	"",		NONE,	t_show_rib},
 	{ PEERDESC,	"",		NONE,	t_show_rib},
+	{ ENDTOKEN,	"",		NONE,	NULL}
+};
+
+static const struct token t_show_mrt_neigh[] = {
+	{ PEERADDRESS,	"",		NONE,	t_show_mrt},
 	{ ENDTOKEN,	"",		NONE,	NULL}
 };
 
@@ -212,8 +245,13 @@ static const struct token t_neighbor_modifiers[] = {
 	{ ENDTOKEN,	"",		NONE,			NULL}
 };
 
-static const struct token t_show_as[] = {
+static const struct token t_show_rib_as[] = {
 	{ ASNUM,	"",		NONE,		t_show_rib},
+	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_show_mrt_as[] = {
+	{ ASNUM,	"",		NONE,		t_show_mrt},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -550,6 +588,23 @@ match_token(int *argc, char **argv[], const struct token table[])
 				t = &table[i];
 			}
 			break;
+		case FILENAME:
+			if (word != NULL && strlen(word) > 0) {
+				if ((res.mrtfd = open(word, O_RDONLY)) == -1) {
+					/*
+					 * ignore error if path has no / and
+					 * does not exist. In hope to print
+					 * usage.
+					 */
+					if (errno == ENOENT &&
+					    !strchr(word, '/'))
+						break;
+					err(1, "mrt open(%s)", word);
+				}
+				match++;
+				t = &table[i];
+			}
+			break;
 		case ENDTOKEN:
 			break;
 		}
@@ -624,6 +679,9 @@ show_valid_args(const struct token table[])
 		case GETOPT:
 			fprintf(stderr, "  <options>\n");
 			break;
+		case FILENAME:
+			fprintf(stderr, "  <filename>\n");
+			break;
 		case ENDTOKEN:
 			break;
 		}
@@ -676,7 +734,7 @@ parse_prefix(const char *word, struct bgpd_addr *addr, u_int8_t *prefixlen)
 	if ((p = strrchr(word, '/')) != NULL) {
 		mask = strtonum(p + 1, 0, 128, &errstr);
 		if (errstr)
-			errx(1, "invalid netmask: %s", errstr);
+			errx(1, "netmask %s", errstr);
 
 		if ((ps = malloc(strlen(word) - strlen(p) + 1)) == NULL)
 			err(1, "parse_prefix: malloc");
