@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.20 2011/09/13 08:15:35 kevlo Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.21 2011/09/21 07:09:19 kevlo Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1020,12 +1020,12 @@ ale_start(struct ifnet *ifp)
 		 * for the NIC to drain the ring.
 		 */
 		if (ale_encap(sc, &m_head)) {
-			if (m_head == NULL) {
+			if (m_head == NULL)
 				ifp->if_oerrors++;
-				break; 
+			else {
+				IF_PREPEND(&ifp->if_snd, m_head);
+				ifp->if_flags |= IFF_OACTIVE;
 			}
-			IF_PREPEND(&ifp->if_snd, m_head);
-			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 

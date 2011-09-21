@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.19 2011/09/13 08:12:51 kevlo Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.20 2011/09/21 07:09:19 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1398,12 +1398,12 @@ alc_start(struct ifnet *ifp)
 		 * for the NIC to drain the ring.
 		 */
 		if (alc_encap(sc, &m_head)) {
-			if (m_head == NULL) {
+			if (m_head == NULL)
 				ifp->if_oerrors++;
-				break;
+			else {
+				IF_PREPEND(&ifp->if_snd, m_head);
+				ifp->if_flags |= IFF_OACTIVE;
 			}
-			IF_PREPEND(&ifp->if_snd, m_head);
-			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 		enq++;
