@@ -1,4 +1,4 @@
-/*	$OpenBSD: os.h,v 1.6 2003/08/19 22:19:08 itojun Exp $ */
+/*	$OpenBSD: os.h,v 1.7 2011/09/21 20:56:40 jsg Exp $ */
 
 /*
  * Copyright (c) 1994-95 Mats O Jansson.  All rights reserved.
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$OpenBSD: os.h,v 1.6 2003/08/19 22:19:08 itojun Exp $
+ *	$OpenBSD: os.h,v 1.7 2011/09/21 20:56:40 jsg Exp $
  *
  */
 
@@ -49,6 +49,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <ifaddrs.h>
+#include <err.h>
 
 #define  DEV_NEW_CONF
 
