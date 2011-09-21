@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.132 2011/09/18 13:23:38 miod Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.133 2011/09/21 21:43:57 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -83,7 +83,6 @@ u_char	rootduid[8];		/* DUID of root disk. */
 /* softraid callback, do not use! */
 void (*softraid_disk_attach)(struct disk *, int);
 
-char *disk_readlabel(struct disklabel *, dev_t, char *, size_t);
 void disk_attach_callback(void *, void *);
 
 /*
