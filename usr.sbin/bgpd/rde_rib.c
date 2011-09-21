@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.130 2011/09/20 21:19:06 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.131 2011/09/21 08:59:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1106,31 +1106,34 @@ nexthop_modify(struct rde_aspath *asp, struct bgpd_addr *nexthop,
 {
 	struct nexthop	*nh;
 
-	if (type == ACTION_SET_NEXTHOP_REJECT) {
-		asp->flags |= F_NEXTHOP_REJECT;
-		return;
-	}
-	if (type  == ACTION_SET_NEXTHOP_BLACKHOLE) {
-		asp->flags |= F_NEXTHOP_BLACKHOLE;
-		return;
-	}
-	if (type == ACTION_SET_NEXTHOP_NOMODIFY) {
-		asp->flags |= F_NEXTHOP_NOMODIFY;
-		return;
-	}
-	if (type == ACTION_SET_NEXTHOP_SELF) {
-		asp->flags |= F_NEXTHOP_SELF;
-		return;
-	}
-	if (aid != nexthop->aid)
+	if (type == ACTION_SET_NEXTHOP && aid != nexthop->aid)
 		return;
 
-	nh = nexthop_get(nexthop);
-	if (asp->flags & F_ATTR_LINKED)
-		nexthop_unlink(asp);
-	asp->nexthop = nh;
-	if (asp->flags & F_ATTR_LINKED)
-		nexthop_link(asp);
+	asp->flags &= ~F_NEXTHOP_MASK;
+	switch (type) {
+	case ACTION_SET_NEXTHOP_REJECT:
+		asp->flags |= F_NEXTHOP_REJECT;
+		break;
+	case ACTION_SET_NEXTHOP_BLACKHOLE:
+		asp->flags |= F_NEXTHOP_BLACKHOLE;
+		break;
+	case ACTION_SET_NEXTHOP_NOMODIFY:
+		asp->flags |= F_NEXTHOP_NOMODIFY;
+		break;
+	case ACTION_SET_NEXTHOP_SELF:
+		asp->flags |= F_NEXTHOP_SELF;
+		break;
+	case ACTION_SET_NEXTHOP:
+		nh = nexthop_get(nexthop);
+		if (asp->flags & F_ATTR_LINKED)
+			nexthop_unlink(asp);
+		asp->nexthop = nh;
+		if (asp->flags & F_ATTR_LINKED)
+			nexthop_link(asp);
+		break;
+	default:
+		break;
+	}
 }
 
 void
