@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.104 2011/09/21 15:41:30 phessler Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.105 2011/09/21 16:38:05 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -200,7 +200,7 @@ void		 log_info(const char *, ...);
 void		 log_debug(const char *, ...);
 void		 fatal(const char *);
 void		 fatalx(const char *);
-const char *	 log_sockaddr(struct sockaddr *);
+const char	*log_sockaddr(struct sockaddr *);
 
 /* ntp.c */
 pid_t	 ntp_main(int[2], struct ntpd_conf *, struct passwd *);
@@ -241,15 +241,15 @@ void	client_log_error(struct ntp_peer *, const char *, int);
 void	set_next(struct ntp_peer *, time_t);
 
 /* util.c */
-double			gettime_corrected(void);
-double			getoffset(void);
-double			gettime(void);
-time_t			getmonotime(void);
-void			d_to_tv(double, struct timeval *);
-double			lfp_to_d(struct l_fixedpt);
-struct l_fixedpt	d_to_lfp(double);
-double			sfp_to_d(struct s_fixedpt);
-struct s_fixedpt	d_to_sfp(double);
+double			 gettime_corrected(void);
+double			 getoffset(void);
+double			 gettime(void);
+time_t			 getmonotime(void);
+void			 d_to_tv(double, struct timeval *);
+double			 lfp_to_d(struct l_fixedpt);
+struct l_fixedpt	 d_to_lfp(double);
+double			 sfp_to_d(struct s_fixedpt);
+struct s_fixedpt	 d_to_sfp(double);
 char			*print_rtable(int);
 
 /* sensors.c */
