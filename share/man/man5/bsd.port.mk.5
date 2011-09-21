@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.286 2011/09/03 15:09:10 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.287 2011/09/21 09:07:47 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 3 2011 $
+.Dd $Mdocdate: September 21 2011 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1187,7 +1187,7 @@ to link distribution files off
 instead of copying them.
 .It Ev FILESDIR
 Location of other files related to the current ports.
-(default: files.${ARCH} or files).
+(default: files).
 .It Ev FLAVOR
 The port's current options.
 Set by the user, and tested by the port to activate wanted functionalities.
@@ -1576,8 +1576,7 @@ do
 done
 .Ed
 .It Ev PATCHDIR
-Location for patches applied by patch target (default: patches.${ARCH} or
-patches).
+Location for patches applied by patch target (default: patches).
 .It Ev PATCHFILES
 Files to fetch from the master sites like
 .Ev DISTFILES ,
@@ -1677,7 +1676,7 @@ Defaults to
 .Pa ${PORTSDIR}:${PORTSDIR}/mystuff .
 .It Ev PKGDIR
 Location for packaging information (packing list, port description, messages).
-Default: pkg.${ARCH} or pkg.
+Default: pkg.
 .It Ev PKGNAME
 Name of the created package.
 Default is ${DISTNAME}.
@@ -2178,8 +2177,6 @@ Set to bison if needed.
 Common Makefile fragment for a set of ports, included automatically.
 .It Pa /cdrom/distfiles
 Default path to a CD-ROM (or other media) full of distribution files.
-.It Pa Makefile.${ARCH}
-Arch-dependent Makefile fragment, included automatically.
 .It Pa ${DISTDIR}
 cache of all distribution files.
 .It Pa distinfo
@@ -2590,6 +2587,16 @@ This information is now built on the fly by
 .El
 .Sh OBSOLETE FILES
 .Bl -tag -width files/md5
+.It Pa {files,patches,pkg}.${ARCH}
+Offensive to introspection, makes it impossible to build a decent sqlports
+on a given arch.
+Hasn't been used for a long time, and there are lots of mechanisms such as
+.Ev PKG_ARGS
+and fragment substitution, or
+.Ev PATCH_LIST
+to achieve similar results.
+.It Pa Makefile.${ARCH}
+Likewise, offensive to introspection too.
 .It Pa ${FILESDIR}/md5
 Renamed to
 .Pa distinfo
