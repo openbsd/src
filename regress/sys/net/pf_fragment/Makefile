@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2011/09/19 22:45:32 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2011/09/21 23:48:23 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -162,7 +162,7 @@ run-regress-ping6-mtu: addr.py
 .endfor
 
 # Send packet to big to get to destination.
-# Chek that checksum of the quoted original packet in icmp is correct.
+# Check that checksum of the quoted original packet in icmp is correct.
 TARGETS +=	ping-cksum ping6-cksum udp-cksum udp6-cksum
 
 run-regress-ping-cksum: addr.py
@@ -191,6 +191,96 @@ run-regress-udp6-cksum: addr.py
 .for ip in DST_IN RDR_IN
 	@echo Check udp6 chksum in packet too big to ${ip}6
 	${SUDO} python2.7 udp6_cksum.py ${${ip}6}
+.endfor
+
+# Send handcrafted fragmented packets with overlaps
+TARGETS +=	frag frag6
+
+run-regress-frag: addr.py
+	@echo '\n======== $@ ========'
+.for ip in DST_IN RDR_IN
+	@echo Check ping reassembly ${ip}
+	${SUDO} python2.7 frag.py ${${ip}}
+.endfor
+
+run-regress-frag6: addr.py
+	@echo '\n======== $@ ========'
+.for ip in DST_IN RDR_IN
+	@echo Check ping6 reassembly ${ip}6
+	${SUDO} python2.7 frag6.py ${${ip}6}
+.endfor
+
+TARGETS +=	frag6-ext
+
+run-regress-frag6-ext: addr.py
+	@echo '\n======== $@ ========'
+.for ip in DST_IN RDR_IN
+	@echo Check ping6 extension header reassembly ${ip}6
+	${SUDO} python2.7 frag6_ext.py ${${ip}6}
+.endfor
+
+TARGETS +=	frag-cutnew frag6-cutnew
+
+run-regress-frag-cutnew: addr.py
+	@echo '\n======== $@ ========'
+.for ip in DST_IN RDR_IN
+	@echo Check ping head overlap reassembly ${ip}
+	${SUDO} python2.7 frag_cutnew.py ${${ip}}
+.endfor
+
+run-regress-frag6-cutnew: addr.py
+	@echo '\n======== $@ ========'
+.for ip in DST_IN RDR_IN
+	@echo Check ping6 head overlap reassembly ${ip}6
+	${SUDO} python2.7 frag6_cutnew.py ${${ip}6}
+.endfor
+
+TARGETS +=	frag-cutold frag6-cutold
+
+run-regress-frag-cutold: addr.py
+	@echo '\n======== $@ ========'
+.for ip in DST_IN RDR_IN
+	@echo Check ping tail overlap reassembly ${ip}
+	${SUDO} python2.7 frag_cutold.py ${${ip}}
+.endfor
+
+run-regress-frag6-cutold: addr.py
+	@echo '\n======== $@ ========'
+.for ip in DST_IN RDR_IN
+	@echo Check ping6 tail overlap reassembly ${ip}6
+	${SUDO} python2.7 frag6_cutold.py ${${ip}6}
+.endfor
+
+TARGETS +=	frag-dropold frag6-dropold
+
+run-regress-frag-dropold: addr.py
+	@echo '\n======== $@ ========'
+.for ip in DST_IN RDR_IN
+	@echo Check ping total overlapping reassembly ${ip}
+	${SUDO} python2.7 frag_dropold.py ${${ip}}
+.endfor
+
+run-regress-frag6-dropold: addr.py
+	@echo '\n======== $@ ========'
+.for ip in DST_IN RDR_IN
+	@echo Check ping6 total overlapping reassembly ${ip}6
+	${SUDO} python2.7 frag6_dropold.py ${${ip}6}
+.endfor
+
+TARGETS +=	frag-dropnew frag6-dropnew
+
+run-regress-frag-dropnew: addr.py
+	@echo '\n======== $@ ========'
+.for ip in DST_IN RDR_IN
+	@echo Check ping total overlaped reassembly ${ip}
+	${SUDO} python2.7 frag_dropnew.py ${${ip}}
+.endfor
+
+run-regress-frag6-dropnew: addr.py
+	@echo '\n======== $@ ========'
+.for ip in DST_IN RDR_IN
+	@echo Check ping6 total overlaped reassembly ${ip}6
+	${SUDO} python2.7 frag6_dropnew.py ${${ip}6}
 .endfor
 
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
