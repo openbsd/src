@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.32 2011/09/20 22:02:11 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.33 2011/09/21 10:12:58 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -2962,14 +2962,14 @@ pmap_collect(pmap_t pm)
 }
 
 /*
- * Routine:	pmap_procwr
+ * Routine:	pmap_proc_iflush
  *
  * Function:
  *	Synchronize caches corresponding to [addr, addr+len) in p.
  *
  */
 void
-pmap_procwr(struct proc *p, vaddr_t va, int len)
+pmap_proc_iflush(struct proc *p, vaddr_t va, vsize_t len)
 {
 	/* We only need to do anything if it is the current process. */
 	if (p == curproc)

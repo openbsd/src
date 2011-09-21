@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.19 2011/09/20 22:02:13 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.20 2011/09/21 10:12:59 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -243,19 +243,15 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 #define	pmap_deactivate(p)		do { /* nothing */ } while (0)
 #define	pmap_copy(dp, sp, da, l, sa)	do { /* nothing */ } while (0)
 
-#define pmap_proc_iflush(p, va, len)	do { /* nothing */ } while (0)
 #define pmap_unuse_final(p)		do { /* nothing */ } while (0)
 #define	pmap_remove_holes(map)		do { /* nothing */ } while (0)
 
 /*
  * Functions that we need to export
  */
-void	pmap_procwr(struct proc *, vaddr_t, int);
 void	pmap_remove_all(pmap_t);
-boolean_t pmap_extract(pmap_t, vaddr_t, paddr_t *);
 void	pmap_uncache_page(paddr_t, vaddr_t);
 
-#define	PMAP_NEED_PROCWR
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 
 /* Functions we use internally. */
