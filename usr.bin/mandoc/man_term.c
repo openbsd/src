@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.75 2011/09/20 14:20:47 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.76 2011/09/21 09:57:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -247,7 +247,7 @@ pre_literal(DECL_ARGS)
 	 * indentation has to be set up explicitly.
 	 */
 	if (MAN_HP == n->parent->tok && p->rmargin < p->maxrmargin) {
-		p->offset = p->rmargin + 1;
+		p->offset = p->rmargin;
 		p->rmargin = p->maxrmargin;
 		p->flags &= ~(TERMP_NOBREAK | TERMP_TWOSPACE);
 		p->flags |= TERMP_NOSPACE;
@@ -465,9 +465,7 @@ pre_HP(DECL_ARGS)
 			len = (size_t)ival;
 
 	one = term_len(p, 1);
-	if (len > one)
-		len -= one;
-	else
+	if (len < one)
 		len = one;
 
 	p->offset = mt->offset;
