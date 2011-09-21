@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlint.c,v 1.35 2011/06/09 15:19:03 jsg Exp $	*/
+/*	$OpenBSD: xlint.c,v 1.36 2011/09/21 18:08:07 jsg Exp $	*/
 /*	$NetBSD: xlint.c,v 1.3 1995/10/23 14:29:30 jpo Exp $	*/
 
 /*
@@ -31,10 +31,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: xlint.c,v 1.35 2011/06/09 15:19:03 jsg Exp $";
-#endif
 
 #include <sys/param.h>
 #include <sys/wait.h>

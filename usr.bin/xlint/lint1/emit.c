@@ -1,4 +1,4 @@
-/*	$OpenBSD: emit.c,v 1.9 2005/12/10 18:58:50 martin Exp $	*/
+/*	$OpenBSD: emit.c,v 1.10 2011/09/21 18:08:07 jsg Exp $	*/
 /*	$NetBSD: emit.c,v 1.2 1995/07/03 21:24:00 cgd Exp $	*/
 
 /*
@@ -31,10 +31,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: emit.c,v 1.9 2005/12/10 18:58:50 martin Exp $";
-#endif
 
 #include <stdio.h>
 #include <string.h>

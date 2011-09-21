@@ -1,4 +1,4 @@
-/*	$OpenBSD: err.c,v 1.27 2011/05/31 22:00:07 martynas Exp $	*/
+/*	$OpenBSD: err.c,v 1.28 2011/09/21 18:08:07 jsg Exp $	*/
 /*	$NetBSD: err.c,v 1.8 1995/10/02 17:37:00 jpo Exp $	*/
 
 /*
@@ -31,10 +31,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: err.c,v 1.27 2011/05/31 22:00:07 martynas Exp $";
-#endif
 
 /* number of errors found */
 int	nerr;
