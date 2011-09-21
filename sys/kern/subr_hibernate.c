@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.16 2011/09/21 02:51:23 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.17 2011/09/21 06:13:39 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1143,10 +1143,12 @@ hibernate_unpack_image(union hibernate_info *hiber_info)
 	paddr_t image_cur;
 	vaddr_t tempva;
 	struct hibernate_disk_chunk *chunks;
-	u_int8_t *fchunks;
+	char *pva;
+	int *fchunks;
 
-	fchunks = (u_int8_t *)((char *)(hiber_info->piglet_va) +
-			(4 * PAGE_SIZE));
+	pva = (char *)hiber_info->piglet_va;
+
+	fchunks = (int *)(pva + (4 * PAGE_SIZE));
 
 	/* Copy temporary chunktable to piglet */
 	tempva = (vaddr_t)km_alloc(HIBERNATE_CHUNK_TABLE_SIZE, &kv_any,
@@ -1158,8 +1160,7 @@ hibernate_unpack_image(union hibernate_info *hiber_info)
 	bcopy((caddr_t)hibernate_chunktable_area, (caddr_t)tempva,
 		HIBERNATE_CHUNK_TABLE_SIZE);
 
-	chunks = (struct hibernate_disk_chunk *)((char *)(hiber_info->piglet_va)) +
-			HIBERNATE_CHUNK_SIZE;
+	chunks = (struct hibernate_disk_chunk *)(pva +  HIBERNATE_CHUNK_SIZE);
 
 	hibernate_activate_resume_pt_machdep();
 
