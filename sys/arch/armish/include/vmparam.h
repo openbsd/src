@@ -1,4 +1,4 @@
-/* 	$OpenBSD: vmparam.h,v 1.7 2011/05/30 22:25:20 oga Exp $	*/
+/* 	$OpenBSD: vmparam.h,v 1.8 2011/09/21 10:09:52 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.23 2003/05/22 05:47:07 thorpej Exp $	*/
 
 /*
@@ -85,12 +85,6 @@
 
 #define	VM_PHYSSEG_NOADD
 
-/*
- * we support 2 free lists:
- *
- *	- DEFAULT for all systems
- *	- ISADMA for the ISA DMA range on Sharks only
- */
 #endif /* _KERNEL */
 
 #endif	/* _MACHINE_VMPARAM_H_ */
