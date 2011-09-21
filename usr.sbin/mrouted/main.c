@@ -23,6 +23,7 @@
 #include <stdarg.h>
 #include <fcntl.h>
 #include <util.h>
+#include <err.h>
 
 extern char *configfilename;
 char versionstring[100];

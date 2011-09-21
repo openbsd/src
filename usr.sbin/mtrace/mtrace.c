@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrace.c,v 1.28 2009/10/27 23:59:53 deraadt Exp $	*/
+/*	$OpenBSD: mtrace.c,v 1.29 2011/09/21 21:05:40 jsg Exp $	*/
 /*	$NetBSD: mtrace.c,v 1.5 1995/12/10 10:57:15 mycroft Exp $	*/
 
 /*
@@ -65,6 +65,7 @@
 #include <sys/systeminfo.h>
 #endif
 #include <ifaddrs.h>
+#include <err.h>
 
 #define DEFAULT_TIMEOUT	3	/* How long to wait before retrying requests */
 #define DEFAULT_RETRIES 3	/* How many times to try */

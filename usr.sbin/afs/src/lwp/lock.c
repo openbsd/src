@@ -41,6 +41,7 @@ RCSID("$arla: lock.c,v 1.11 2002/06/01 17:47:47 lha Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <err.h>
 
 
 #define FALSE	0
