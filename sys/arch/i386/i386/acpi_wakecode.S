@@ -53,7 +53,10 @@
 #define _ACPI_TRMP_LABEL(a) a = . - _C_LABEL(acpi_real_mode_resume) + ACPI_TRAMPOLINE
 #define _ACPI_TRMP_OFFSET(a) a = . - _C_LABEL(acpi_real_mode_resume)
 #define _ACPI_RM_SEGMENT (ACPI_TRAMPOLINE >> 4)
+
+#ifdef HIBERNATE
 #define HIBERNATE_STACK_OFFSET 0x0F00
+#endif
 
 /*
  * On wakeup, we'll start executing at acpi_real_mode_resume.
@@ -320,12 +323,13 @@ _C_LABEL(acpi_protected_mode_resume):
 	xorl  %eax, %eax
 	jmp	*acpi_saved_ret
 
+#ifdef HIBERNATE
 	/*
-	 * hibernate_resume_machine drops to real mode and
+	 * hibernate_resume_machdep drops to real mode and
 	 * restarts the OS using the saved S3 resume vector
 	 */
 	.code32
-NENTRY(hibernate_resume_machine)
+NENTRY(hibernate_resume_machdep)
 	cli
 	/* Jump to the identity mapped version of ourself */
 	mov	$hibernate_resume_vector_2, %eax
@@ -363,32 +367,37 @@ _ACPI_TRMP_LABEL(hibernate_resume_vector_3)
 
 	.code32
 	/* Switch to hibernate resume pagetable */
-NENTRY(hibernate_activate_resume_pt)
+NENTRY(hibernate_activate_resume_pt_machdep)
 	/* Enable large pages */
 	movl	%eax, %cr4
 	orl	$(CR4_PSE), %eax
 	movl	%eax, %cr4
 
-	movl	$HIBERNATE_PT_PAGE, %eax
+	movl	$HIBERNATE_PD_PAGE, %eax
 	movl	%eax,	%cr3
 	jmp	1f
 
 1:	nop
 	ret
 
-NENTRY(hibernate_switch_stack)
+	/*
+	 * Switch to the private resume-time hibernate stack
+	 */
+NENTRY(hibernate_switch_stack_machdep)
 	movl	(%esp), %eax
-	movl	%eax, HIBERNATE_STACK_PAGE + HIBERNATE_STACK_OFFSET
-	movl	$(HIBERNATE_STACK_PAGE + HIBERNATE_STACK_OFFSET), %eax
-	movl	%eax, %esp
+	movl    %eax, HIBERNATE_STACK_PAGE + HIBERNATE_STACK_OFFSET
+	movl    $(HIBERNATE_STACK_PAGE + HIBERNATE_STACK_OFFSET), %eax
+	movl    %eax, %esp
 
 	/* On our own stack from here onward */
 	ret
 
 NENTRY(hibernate_flush)
 	wbinvd
-	invlpg  HIBERNATE_TEMP_PAGE
+	movl	$hibernate_inflate_page, %eax
+	invlpg  (%eax)
 	ret
+#endif /* HIBERNATE */
 
 	.code16
 	.align 8
