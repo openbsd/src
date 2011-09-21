@@ -1,4 +1,4 @@
-/* $OpenBSD: ncurses_cfg.h,v 1.26 2011/04/23 22:08:15 nicm Exp $ */
+/* $OpenBSD: ncurses_cfg.h,v 1.27 2011/09/21 06:26:51 nicm Exp $ */
 
 /* include/ncurses_cfg.h.  Generated automatically by configure.  */
 /****************************************************************************
@@ -33,7 +33,7 @@
  *  Author: Thomas E. Dickey <dickey@clark.net> 1997                        *
  ****************************************************************************/
 /*
- * $Id: ncurses_cfg.h,v 1.26 2011/04/23 22:08:15 nicm Exp $
+ * $Id: ncurses_cfg.h,v 1.27 2011/09/21 06:26:51 nicm Exp $
  *
  * This is a template-file used to generate the "ncurses_cfg.h" file.
  *
@@ -160,7 +160,7 @@
 #define STDC_HEADERS 1
 #define SYSTEM_NAME "openbsd"
 #define TERMINFO "/usr/share/terminfo"
-#define TERMINFO_DIRS "/usr/share/terminfo"
+#define TERMINFO_DIRS "/usr/share/terminfo:/usr/local/share/terminfo"
 #define TIME_WITH_SYS_TIME 1
 #define TYPEOF_CHTYPE long
 #define USE_ASSUMED_COLOR 1
