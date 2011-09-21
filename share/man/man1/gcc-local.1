@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.24 2011/07/25 19:24:03 tedu Exp $
+.\" $OpenBSD: gcc-local.1,v 1.25 2011/09/21 21:26:04 jsg Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 25 2011 $
+.Dd $Mdocdate: September 21 2011 $
 .Dt GCC-LOCAL 1
 .Os
 .Sh NAME
@@ -88,6 +88,13 @@ as this option causes issues on some legacy code.
 .Fl fstrict-overflow
 can cause surprising optimizations to occur, possibly deleting security
 critical overflow checks.
+.It
+The
+.Fl ftree-vrp
+optimization is not included in the
+.Fl O2
+option as it is known to be broken in
+.Nm gcc 4.2.1 .
 .It
 The option
 .Fl fno-builtin-<function>
