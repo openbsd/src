@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.161 2010/09/02 14:03:21 sobrado Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.162 2011/09/21 08:52:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1521,4 +1521,10 @@ void
 fatal(const char *emsg)
 {
 	err(1, emsg);
+}
+
+void
+fatalx(const char *emsg)
+{
+	errx(1, emsg);
 }
