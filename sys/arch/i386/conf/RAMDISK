@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.177 2011/06/29 20:52:09 matthew Exp $
+#	$OpenBSD: RAMDISK,v 1.178 2011/09/21 16:59:27 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -153,7 +153,7 @@ siop*	at pci?			# NCR 538XX SCSI controllers(new)
 
 scsibus* at scsi?
 sd*	at scsibus?		# SCSI disk drives
-st*	at scsibus?		# SCSI tape drives
+#st*	at scsibus?		# SCSI tape drives
 cd*	at scsibus?		# SCSI CD-ROM drives
 #ch*	at scsibus?		# SCSI autochangers
 #uk*	at scsibus?		# SCSI unknown devices
