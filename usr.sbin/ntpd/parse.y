@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.47 2010/08/03 18:42:40 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.48 2011/09/21 15:41:30 phessler Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -60,6 +60,7 @@ struct ntpd_conf		*conf;
 struct opts {
 	int		weight;
 	int		correction;
+	int		rtable;
 	char		*refstr;
 } opts;
 void		opts_default(void);
@@ -77,14 +78,16 @@ typedef struct {
 %}
 
 %token	LISTEN ON
-%token	SERVER SERVERS SENSOR CORRECTION REFID WEIGHT
+%token	SERVER SERVERS SENSOR CORRECTION RTABLE REFID WEIGHT
 %token	ERROR
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.addr>		address
+%type	<v.opts>		listen_opts listen_opts_l listen_opt
 %type	<v.opts>		server_opts server_opts_l server_opt
 %type	<v.opts>		sensor_opts sensor_opts_l sensor_opt
 %type	<v.opts>		correction
+%type	<v.opts>		rtable
 %type	<v.opts>		refid
 %type	<v.opts>		weight
 %%
@@ -95,11 +98,11 @@ grammar		: /* empty */
 		| grammar error '\n'		{ file->errors++; }
 		;
 
-main		: LISTEN ON address	{
+main		: LISTEN ON address listen_opts	{
 			struct listen_addr	*la;
 			struct ntp_addr		*h, *next;
 
-			if ((h = $3->a) == NULL &&
+			if ((h = $3->a) == NULL && (h->rtable = $4.rtable) &&
 			    (host_dns($3->name, &h) == -1 || !h)) {
 				yyerror("could not resolve \"%s\"", $3->name);
 				free($3->name);
@@ -109,15 +112,11 @@ main		: LISTEN ON address	{
 
 			for (; h != NULL; h = next) {
 				next = h->next;
-				if (h->ss.ss_family == AF_UNSPEC) {
-					conf->listen_all = 1;
-					free(h);
-					continue;
-				}
 				la = calloc(1, sizeof(struct listen_addr));
 				if (la == NULL)
 					fatal("listen on calloc");
 				la->fd = -1;
+				la->rtable = $4.rtable;
 				memcpy(&la->sa, &h->ss,
 				    sizeof(struct sockaddr_storage));
 				TAILQ_INSERT_TAIL(&conf->listen_addrs, la,
@@ -150,6 +149,7 @@ main		: LISTEN ON address	{
 
 				p = new_peer();
 				p->weight = $3.weight;
+				p->rtable = $3.rtable;
 				p->addr = h;
 				p->addr_head.a = h;
 				p->addr_head.pool = 1;
@@ -158,8 +158,10 @@ main		: LISTEN ON address	{
 					fatal(NULL);
 				if (p->addr != NULL)
 					p->state = STATE_DNS_DONE;
-				TAILQ_INSERT_TAIL(&conf->ntp_peers, p, entry);
-
+				if (!(p->rtable > 0 && p->addr &&
+				    p->addr->ss.ss_family != AF_INET))
+					TAILQ_INSERT_TAIL(&conf->ntp_peers,
+					    p, entry);
 				h = next;
 			} while (h != NULL);
 
@@ -188,6 +190,7 @@ main		: LISTEN ON address	{
 			}
 
 			p->weight = $3.weight;
+			p->rtable = $3.rtable;
 			p->addr_head.a = p->addr;
 			p->addr_head.pool = 0;
 			p->addr_head.name = strdup($2->name);
@@ -195,7 +198,9 @@ main		: LISTEN ON address	{
 				fatal(NULL);
 			if (p->addr != NULL)
 				p->state = STATE_DNS_DONE;
-			TAILQ_INSERT_TAIL(&conf->ntp_peers, p, entry);
+			if (!(p->rtable > 0 && p->addr &&
+			    p->addr->ss.ss_family != AF_INET))
+				TAILQ_INSERT_TAIL(&conf->ntp_peers, p, entry);
 			free($2->name);
 			free($2);
 		}
@@ -226,6 +231,17 @@ address		: STRING		{
 		}
 		;
 
+listen_opts	:	{ opts_default(); }
+		  listen_opts_l
+			{ $$ = opts; }
+		|	{ opts_default(); $$ = opts; }
+		;
+listen_opts_l	: listen_opts_l listen_opt
+		| listen_opt
+		;
+listen_opt	: rtable
+		;
+
 server_opts	:	{ opts_default(); }
 		  server_opts_l
 			{ $$ = opts; }
@@ -235,6 +251,7 @@ server_opts_l	: server_opts_l server_opt
 		| server_opt
 		;
 server_opt	: weight
+		| rtable
 		;
 
 sensor_opts	:	{ opts_default(); }
@@ -279,6 +296,13 @@ weight		: WEIGHT NUMBER	{
 			}
 			opts.weight = $2;
 		}
+rtable		: RTABLE NUMBER {
+			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
+				yyerror("rtable must be between 1 and RT_TABLEID_MAX");
+				YYERROR;
+			}
+			opts.rtable = $2;
+		}
 		;
 
 %%
@@ -288,6 +312,7 @@ opts_default(void)
 {
 	bzero(&opts, sizeof opts);
 	opts.weight = 1;
+	opts.rtable = -1;
 }
 
 struct keywords {
@@ -326,6 +351,7 @@ lookup(char *s)
 		{ "listen",		LISTEN},
 		{ "on",			ON},
 		{ "refid",		REFID},
+		{ "rtable",		RTABLE},
 		{ "sensor",		SENSOR},
 		{ "server",		SERVER},
 		{ "servers",		SERVERS},

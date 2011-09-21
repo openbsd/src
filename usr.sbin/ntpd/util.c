@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.13 2007/03/27 18:22:02 otto Exp $ */
+/*	$OpenBSD: util.c,v 1.14 2011/09/21 15:41:30 phessler Exp $ */
 
 /*
  * Copyright (c) 2004 Alexander Guy <alexander.guy@andern.org>
@@ -18,6 +18,7 @@
 
 #include <sys/time.h>
 #include <limits.h>
+#include <stdio.h>
 
 #include "ntpd.h"
 
@@ -116,4 +117,16 @@ d_to_sfp(double d)
 	sfp.fractions = htons((u_int16_t)((d - (u_int16_t)d) * USHRT_MAX));
 
 	return (sfp);
+}
+
+char *
+print_rtable(int r)
+{
+	static char b[11];
+
+	b[0] = 0;
+	if (r > 0)
+		snprintf(b, sizeof(b), "rtable %d", r);
+
+	return(b);
 }

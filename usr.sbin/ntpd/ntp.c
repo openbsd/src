@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.116 2011/06/17 18:12:05 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.117 2011/09/21 15:41:30 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -245,8 +245,9 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf, struct passwd *pw)
 			if (p->deadline > 0 && p->deadline <= getmonotime()) {
 				timeout = 300;
 				log_debug("no reply from %s received in time, "
-				    "next query %ds", log_sockaddr(
-				    (struct sockaddr *)&p->addr->ss), timeout);
+				    "next query %ds %s", log_sockaddr(
+				    (struct sockaddr *)&p->addr->ss), timeout,
+				    print_rtable(p->rtable));
 				if (p->trustlevel >= TRUSTLEVEL_BADPEER &&
 				    (p->trustlevel /= 2) < TRUSTLEVEL_BADPEER)
 					log_info("peer %s now invalid",
@@ -482,6 +483,7 @@ ntp_dispatch_imsg_dns(void)
 					npeer->addr_head.name =
 					    peer->addr_head.name;
 					npeer->addr_head.pool = 1;
+					npeer->rtable = peer->rtable;
 					client_peer_init(npeer);
 					npeer->state = STATE_DNS_DONE;
 					peer_add(npeer);
@@ -770,8 +772,9 @@ report_peers(int always)
 					    (struct sockaddr *)&p->addr->ss);
 				if (p->addr_head.pool)
 					pool = "from pool ";
-				log_warnx("bad peer %s%s (%s)",  pool,
-				    p->addr_head.name, a);
+				log_warnx("bad peer %s%s (%s) %s",
+				    pool, p->addr_head.name, a,
+				    print_rtable(p->rtable));
 			}
 		}
 	}

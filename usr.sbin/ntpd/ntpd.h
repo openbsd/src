@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.103 2009/06/06 18:45:01 ckuethe Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.104 2011/09/21 15:41:30 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -81,11 +81,13 @@ struct listen_addr {
 	TAILQ_ENTRY(listen_addr)	 entry;
 	struct sockaddr_storage		 sa;
 	int				 fd;
+	int				 rtable;
 };
 
 struct ntp_addr {
 	struct ntp_addr		*next;
 	struct sockaddr_storage	 ss;
+	int			 rtable;
 };
 
 struct ntp_addr_wrap {
@@ -132,6 +134,7 @@ struct ntp_peer {
 	u_int8_t			 weight;
 	int				 lasterror;
 	int				 senderrors;
+	int				 rtable;
 };
 
 struct ntp_sensor {
@@ -247,6 +250,7 @@ double			lfp_to_d(struct l_fixedpt);
 struct l_fixedpt	d_to_lfp(double);
 double			sfp_to_d(struct s_fixedpt);
 struct s_fixedpt	d_to_sfp(double);
+char			*print_rtable(int);
 
 /* sensors.c */
 void			sensor_init(void);

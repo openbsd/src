@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.88 2009/06/24 17:34:32 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.89 2011/09/21 15:41:30 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -134,12 +134,20 @@ client_query(struct ntp_peer *p)
 	if (p->state < STATE_DNS_DONE || p->addr == NULL)
 		return (-1);
 
+	if (p->addr->ss.ss_family != AF_INET && p->rtable != -1)
+		return (-1);
+
 	if (p->query->fd == -1) {
 		struct sockaddr *sa = (struct sockaddr *)&p->addr->ss;
 
 		if ((p->query->fd = socket(p->addr->ss.ss_family, SOCK_DGRAM,
 		    0)) == -1)
 			fatal("client_query socket");
+
+		if (p->addr->ss.ss_family == AF_INET && p->rtable != -1 &&
+		    setsockopt(p->query->fd, IPPROTO_IP, SO_RTABLE,
+		    &p->rtable, sizeof(p->rtable)) == -1)
+			fatal("client_query setsockopt SO_RTABLE");
 		if (connect(p->query->fd, sa, SA_LEN(sa)) == -1) {
 			if (errno == ECONNREFUSED || errno == ENETUNREACH ||
 			    errno == EHOSTUNREACH || errno == EADDRNOTAVAIL) {
@@ -242,6 +250,11 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 		set_next(p, error_interval());
 		return (0);
 	}
+
+	if (p->rtable != -1 &&
+	    setsockopt(p->query->fd, IPPROTO_IP, SO_RTABLE, &p->rtable,
+	    sizeof(p->rtable)) == -1)
+		fatal("client_dispatch setsockopt SO_RTABLE");
 
 	for (cmsg = CMSG_FIRSTHDR(&somsg); cmsg != NULL;
 	    cmsg = CMSG_NXTHDR(&somsg, cmsg)) {
@@ -374,8 +387,10 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 	}
 
 	log_debug("reply from %s: offset %f delay %f, "
-	    "next query %ds", log_sockaddr((struct sockaddr *)&p->addr->ss),
-	    p->reply[p->shift].offset, p->reply[p->shift].delay, interval);
+	    "next query %ds %s",
+	    log_sockaddr((struct sockaddr *)&p->addr->ss),
+	    p->reply[p->shift].offset, p->reply[p->shift].delay, interval,
+	    print_rtable(p->rtable));
 
 	client_update(p);
 	if (settime)

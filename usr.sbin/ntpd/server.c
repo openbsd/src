@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.35 2009/05/20 14:55:59 henning Exp $ */
+/*	$OpenBSD: server.c,v 1.36 2011/09/21 15:41:30 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -17,8 +17,10 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <net/if.h>
 #include <errno.h>
 #include <ifaddrs.h>
 #include <stdlib.h>
@@ -30,50 +32,72 @@
 int
 setup_listeners(struct servent *se, struct ntpd_conf *lconf, u_int *cnt)
 {
-	struct listen_addr	*la;
+	struct listen_addr	*la, *nla, *lap;
 	struct ifaddrs		*ifa, *ifap;
 	struct sockaddr		*sa;
+	struct ifreq		 ifr;
 	u_int8_t		*a6;
 	size_t			 sa6len = sizeof(struct in6_addr);
 	u_int			 new_cnt = 0;
-	int			 tos = IPTOS_LOWDELAY;
+	int			 tos = IPTOS_LOWDELAY, rdomain, fd;
 
-	if (lconf->listen_all) {
-		if (getifaddrs(&ifa) == -1)
-			fatal("getifaddrs");
+	TAILQ_FOREACH(lap, &lconf->listen_addrs, entry) {
+		switch (lap->sa.ss_family) {
+		case AF_UNSPEC:
+			if (getifaddrs(&ifa) == -1)
+				fatal("getifaddrs");
 
-		for (ifap = ifa; ifap != NULL; ifap = ifap->ifa_next) {
-			sa = ifap->ifa_addr;
-
-			if (sa == NULL ||
-			    (sa->sa_family != AF_INET &&
-			    sa->sa_family != AF_INET6))
-				continue;
-			if (SA_LEN(sa) == 0)
-				continue;
-
-			if (sa->sa_family == AF_INET &&
-			    ((struct sockaddr_in *)sa)->sin_addr.s_addr ==
-			    INADDR_ANY)
-				continue;
-
-			if (sa->sa_family == AF_INET6) {
-				a6 = ((struct sockaddr_in6 *)sa)->
-				    sin6_addr.s6_addr;
-				if (memcmp(a6, &in6addr_any, sa6len) == 0)
+			for (ifap = ifa; ifap != NULL; ifap = ifap->ifa_next) {
+				sa = ifap->ifa_addr;
+				if (sa == NULL ||
+				    (sa->sa_family != AF_INET &&
+				    sa->sa_family != AF_INET6))
 					continue;
+				if (SA_LEN(sa) == 0)
+					continue;
+
+				strlcpy(ifr.ifr_name, ifap->ifa_name,
+				    sizeof(ifr.ifr_name));
+
+				fd = socket(AF_INET, SOCK_DGRAM, 0);
+				if (ioctl(fd, SIOCGIFRDOMAIN,
+				    (caddr_t)&ifr) == -1)
+			                rdomain = 0;
+			        else
+			                rdomain = ifr.ifr_rdomainid;
+				close(fd);
+
+				if (lap->rtable != -1 && rdomain != lap->rtable)
+					continue;
+
+				if (sa->sa_family == AF_INET &&
+				    ((struct sockaddr_in *)sa)->sin_addr.s_addr ==
+				    INADDR_ANY)
+					continue;
+
+				if (sa->sa_family == AF_INET6) {
+					a6 = ((struct sockaddr_in6 *)sa)->
+					    sin6_addr.s6_addr;
+					if (memcmp(a6, &in6addr_any, sa6len) == 0)
+						continue;
+				}
+
+				if ((la = calloc(1, sizeof(struct listen_addr))) ==
+				    NULL)
+					fatal("setup_listeners calloc");
+
+				memcpy(&la->sa, sa, SA_LEN(sa));
+				la->rtable = rdomain;
+
+				TAILQ_INSERT_TAIL(&lconf->listen_addrs, la, entry);
 			}
 
-			if ((la = calloc(1, sizeof(struct listen_addr))) ==
-			    NULL)
-				fatal("setup_listeners calloc");
-
-			memcpy(&la->sa, sa, SA_LEN(sa));
-			TAILQ_INSERT_TAIL(&lconf->listen_addrs, la, entry);
+			freeifaddrs(ifa);
+		default:
+			continue;
 		}
-
-		freeifaddrs(ifa);
 	}
+
 
 	for (la = TAILQ_FIRST(&lconf->listen_addrs); la; ) {
 		switch (la->sa.ss_family) {
@@ -87,12 +111,19 @@ setup_listeners(struct servent *se, struct ntpd_conf *lconf, u_int *cnt)
 				((struct sockaddr_in6 *)&la->sa)->sin6_port =
 				    se->s_port;
 			break;
+		case AF_UNSPEC:
+			nla = TAILQ_NEXT(la, entry);
+			TAILQ_REMOVE(&lconf->listen_addrs, la, entry);
+			free(la);
+			la = nla;
+			continue;
 		default:
 			fatalx("king bula sez: af borked");
 		}
 
-		log_info("listening on %s",
-		    log_sockaddr((struct sockaddr *)&la->sa));
+		log_info("listening on %s %s",
+		    log_sockaddr((struct sockaddr *)&la->sa),
+		    print_rtable(la->rtable));
 
 		if ((la->fd = socket(la->sa.ss_family, SOCK_DGRAM, 0)) == -1)
 			fatal("socket");
@@ -101,10 +132,13 @@ setup_listeners(struct servent *se, struct ntpd_conf *lconf, u_int *cnt)
 		    IPPROTO_IP, IP_TOS, &tos, sizeof(tos)) == -1)
 			log_warn("setsockopt IPTOS_LOWDELAY");
 
+		if (la->sa.ss_family == AF_INET && la->rtable != -1 &&
+		    setsockopt(la->fd, IPPROTO_IP, SO_RTABLE, &la->rtable,
+		    sizeof(la->rtable)) == -1)
+			fatal("setup_listeners setsockopt SO_RTABLE");
+
 		if (bind(la->fd, (struct sockaddr *)&la->sa,
 		    SA_LEN((struct sockaddr *)&la->sa)) == -1) {
-			struct listen_addr	*nla;
-
 			log_warn("bind on %s failed, skipping",
 			    log_sockaddr((struct sockaddr *)&la->sa));
 			close(la->fd);
