@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.142 2011/09/16 14:29:26 bluhm Exp $	*/
+/*	$OpenBSD: relay.c,v 1.143 2011/09/21 18:45:40 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -77,9 +77,11 @@ u_int32_t	 relay_hash_addr(struct sockaddr_storage *, u_int32_t);
 
 void		 relay_write(struct bufferevent *, void *);
 void		 relay_read(struct bufferevent *, void *);
-int		 relay_splicelen(struct ctl_relay_event *);
 void		 relay_error(struct bufferevent *, short, void *);
 void		 relay_dump(struct ctl_relay_event *, const void *, size_t);
+
+int		 relay_splice(struct ctl_relay_event *);
+int		 relay_splicelen(struct ctl_relay_event *);
 
 int		 relay_resolve(struct ctl_relay_event *,
 		    struct protonode *, struct protonode *);
@@ -675,26 +677,10 @@ relay_connected(int fd, short sig, void *arg)
 		}
 		break;
 	case RELAY_PROTO_TCP:
-		if ((proto->tcpflags & TCPFLAG_NSPLICE) ||
-		    (rlay->rl_conf.flags & (F_SSL|F_SSLCLIENT)))
-			break;
-		if (setsockopt(con->se_in.s, SOL_SOCKET, SO_SPLICE,
-		    &con->se_out.s, sizeof(int)) == -1) {
-			log_debug("%s: session %d: splice forward failed: %s",
-			    __func__, con->se_id, strerror(errno));
-			return;
-		}
-		con->se_in.splicelen = 0;
-		if (setsockopt(con->se_out.s, SOL_SOCKET, SO_SPLICE,
-		    &con->se_in.s, sizeof(int)) == -1) {
-			log_debug("%s: session %d: splice backward failed: %s",
-			    __func__, con->se_id, strerror(errno));
-			return;
-		}
-		con->se_out.splicelen = 0;
+		/* Use defaults */
 		break;
 	default:
-		fatalx("relay_input: unknown protocol");
+		fatalx("relay_connected: unknown protocol");
 	}
 
 	/*
@@ -719,6 +705,9 @@ relay_connected(int fd, short sig, void *arg)
 	bufferevent_settimeout(bev,
 	    rlay->rl_conf.timeout.tv_sec, rlay->rl_conf.timeout.tv_sec);
 	bufferevent_enable(bev, EV_READ|EV_WRITE);
+
+	if (relay_splice(&con->se_out) == -1)
+		relay_close(con, strerror(errno));
 }
 
 void
@@ -766,6 +755,9 @@ relay_input(struct rsession *con)
 	bufferevent_settimeout(con->se_in.bev,
 	    rlay->rl_conf.timeout.tv_sec, rlay->rl_conf.timeout.tv_sec);
 	bufferevent_enable(con->se_in.bev, EV_READ|EV_WRITE);
+
+	if (relay_splice(&con->se_in) == -1)
+		relay_close(con, strerror(errno));
 }
 
 void
@@ -1841,16 +1833,46 @@ relay_close_http(struct rsession *con, u_int code, const char *msg,
 }
 
 int
+relay_splice(struct ctl_relay_event *cre)
+{
+	struct rsession		*con = cre->con;
+	struct relay		*rlay = (struct relay *)con->se_relay;
+	struct protocol		*proto = rlay->rl_proto;
+	struct splice		 sp;
+
+	if ((rlay->rl_conf.flags & (F_SSL|F_SSLCLIENT)) ||
+	    (proto->tcpflags & TCPFLAG_NSPLICE))
+		return (0);
+
+	if (cre->bev->readcb != relay_read)
+		return (0);
+
+	bzero(&sp, sizeof(sp));
+	sp.sp_fd = cre->dst->s;
+	sp.sp_idle = rlay->rl_conf.timeout;
+	if (setsockopt(cre->s, SOL_SOCKET, SO_SPLICE, &sp, sizeof(sp)) == -1) {
+		log_debug("%s: session %d: splice dir %d failed: %s",
+		    __func__, con->se_id, cre->dir, strerror(errno));
+		return (-1);
+	}
+	cre->splicelen = 0;
+	DPRINTF("%s: session %d: splice dir %d successful",
+	    __func__, con->se_id, cre->dir);
+	return (1);
+}
+
+int
 relay_splicelen(struct ctl_relay_event *cre)
 {
-	struct rsession *con = cre->con;
-	off_t len;
-	socklen_t optlen;
+	struct rsession		*con = cre->con;
+	off_t			 len;
+	socklen_t		 optlen;
 
 	optlen = sizeof(len);
 	if (getsockopt(cre->s, SOL_SOCKET, SO_SPLICE, &len, &optlen) == -1) {
-		relay_close(con, strerror(errno));
-		return (0);
+		log_debug("%s: session %d: splice dir %d get length failed: %s",
+		    __func__, con->se_id, cre->dir, strerror(errno));
+		return (-1);
 	}
 	if (len > cre->splicelen) {
 		cre->splicelen = len;
@@ -1865,22 +1887,41 @@ relay_error(struct bufferevent *bev, short error, void *arg)
 	struct ctl_relay_event *cre = (struct ctl_relay_event *)arg;
 	struct rsession *con = cre->con;
 	struct evbuffer *dst;
-	struct timeval tv, tv_now;
 
 	if (error & EVBUFFER_TIMEOUT) {
-		if (gettimeofday(&tv_now, NULL) == -1) {
-			relay_close(con, strerror(errno));
-			return;
-		}
-		if (cre->splicelen >= 0 && relay_splicelen(cre))
-			con->se_tv_last = tv_now;
-		if (cre->dst->splicelen >= 0 && relay_splicelen(cre->dst))
-			con->se_tv_last = tv_now;
-		timersub(&tv_now, &con->se_tv_last, &tv);
-		if (timercmp(&tv, &con->se_relay->rl_conf.timeout, >=))
+		if (cre->splicelen >= 0) {
+			bufferevent_enable(bev, EV_READ);
+		} else if (cre->dst->splicelen >= 0) {
+			switch (relay_splicelen(cre->dst)) {
+			case -1:
+				goto fail;
+			case 0:
+				relay_close(con, "buffer event timeout");
+				break;
+			case 1:
+				bufferevent_enable(bev, EV_READ);
+				break;
+			}
+		} else {
 			relay_close(con, "buffer event timeout");
-		else
-			bufferevent_enable(cre->bev, EV_READ);
+		}
+		return;
+	}
+	if (error & EVBUFFER_ERROR && errno == ETIMEDOUT) {
+		if (cre->dst->splicelen >= 0) {
+			switch (relay_splicelen(cre->dst)) {
+			case -1:
+				goto fail;
+			case 0:
+				relay_close(con, "splice timeout");
+				return;
+			case 1:
+				bufferevent_enable(bev, EV_READ);
+				break;
+			}
+		}
+		if (relay_splice(cre) == -1)
+			goto fail;
 		return;
 	}
 	if (error & (EVBUFFER_READ|EVBUFFER_WRITE|EVBUFFER_EOF)) {
@@ -1898,6 +1939,9 @@ relay_error(struct bufferevent *bev, short error, void *arg)
 		return;
 	}
 	relay_close(con, "buffer event error");
+	return;
+ fail:
+	relay_close(con, strerror(errno));
 }
 
 void

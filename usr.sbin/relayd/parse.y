@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.158 2011/05/26 14:48:20 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.159 2011/09/21 18:45:40 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Reyk Floeter <reyk@openbsd.org>
@@ -833,13 +833,6 @@ proto		: relay_proto PROTO STRING	{
 			p->type = $1;
 			p->cache = RELAY_CACHESIZE;
 			p->tcpflags = TCPFLAG_DEFAULT;
-			if (p->type != RELAY_PROTO_TCP) {
-				/*
-				 * Splicing is currently only supported
-				 * for plain TCP relays.
-				 */
-				p->tcpflags |= TCPFLAG_NSPLICE;
-			}
 			p->sslflags = SSLFLAG_DEFAULT;
 			p->tcpbacklog = RELAY_BACKLOG;
 			(void)strlcpy(p->sslciphers, SSLCIPHERS_DEFAULT,
