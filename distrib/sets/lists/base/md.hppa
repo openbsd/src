@@ -93,7 +93,7 @@
 ./usr/lib/libc.so.60.1
 ./usr/lib/libcom_err.so.18.0
 ./usr/lib/libcrypto.so.19.0
-./usr/lib/libcurses.so.12.0
+./usr/lib/libcurses.so.12.1
 ./usr/lib/libedit.so.4.1
 ./usr/lib/libevent.so.3.0
 ./usr/lib/libexpat.so.9.0
@@ -108,8 +108,8 @@
 ./usr/lib/libmenu.so.5.0
 ./usr/lib/libmenuw.so.5.0
 ./usr/lib/libmilter.so.2.1
-./usr/lib/libncurses.so.12.0
-./usr/lib/libncursesw.so.12.0
+./usr/lib/libncurses.so.12.1
+./usr/lib/libncursesw.so.12.1
 ./usr/lib/libobjc.so.5.0
 ./usr/lib/libocurses.so.5.0
 ./usr/lib/libossaudio.so.3.1
@@ -125,8 +125,8 @@
 ./usr/lib/libsndio.so.4.0
 ./usr/lib/libssl.so.16.0
 ./usr/lib/libstdc++.so.52.0
-./usr/lib/libtermcap.so.12.0
-./usr/lib/libtermlib.so.12.0
+./usr/lib/libtermcap.so.12.1
+./usr/lib/libtermlib.so.12.1
 ./usr/lib/libusbhid.so.3.0
 ./usr/lib/libutil.so.11.2
 ./usr/lib/libwrap.so.4.0
