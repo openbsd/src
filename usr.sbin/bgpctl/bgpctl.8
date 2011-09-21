@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.54 2010/05/10 18:46:05 sthen Exp $
+.\" $OpenBSD: bgpctl.8,v 1.55 2011/09/21 12:01:38 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 10 2010 $
+.Dd $Mdocdate: September 21 2011 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -161,6 +161,70 @@ instead of the default routing table with ID 0.
 .El
 .It Cm show interfaces
 Show the interface states.
+.It Xo
+.Cm show mrt
+.Op Ar options
+.Ar filter
+.Xc
+Show routes from a MRT table dump file.
+.Ar filter
+can be an IP address, a CIDR prefix, an AS filter, a combination or nothing:
+.Pp
+.Bl -tag -width "address/len all" -compact
+.It Ar address
+Show best matching route for address.
+.It Ar address Ns Li / Ns Ar len
+Show RIB entry for this CIDR prefix.
+.It Xo
+.Ar address Ns Li / Ns Ar len
+.Cm all
+.Xc
+Show all entries in the specified range.
+.\".It Ar address/len Cm longer-prefixes
+.It Cm as Ar as
+Show all entries with
+.Ar as
+anywhere in the AS path.
+.It Cm empty-as
+Show all entries that are internal routes with no AS's in the AS path.
+.It Cm neighbor Ar ip
+Show only entries from the specified peer.
+.It Cm peer-as Ar as
+Show all entries with
+.Ar as
+as leftmost AS.
+.It Cm source-as Ar as
+Show all entries with
+.Ar as
+as rightmost AS.
+.It Cm transit-as Ar as
+Show all entries with
+.Ar as
+anywhere but rightmost.
+.El
+.Pp
+Additionally, the following
+.Ar options
+are defined:
+.Pp
+.Bl -tag -width "file name" -compact
+.It Cm detail
+Show more detailed output for matched routes.
+.It Ar family
+Limit the output to the given address family.
+.It Cm file Ar name
+Read the MRT dump from file
+.Ar name
+instead of using stdin.
+.El
+.Pp
+Multiple options and filters can be used at the same time.
+.It Cm show summary
+Show a list of all neighbors, including information about the session state
+and message counters.
+.It Cm show summary terse
+Show a list of all neighbors, including information about the session state,
+in a terse format.
 .It Cm show neighbor Ar peer modifier
 Show detailed information about the neighbor identified by
 .Ar peer ,
@@ -208,33 +272,33 @@ Show all entries in the specified range.
 Show all entries with
 .Ar as
 anywhere in the AS path.
-.It Cm source-as Ar as
-Show all entries with
-.Ar as
-as rightmost AS.
-.It Cm transit-as Ar as
-Show all entries with
-.Ar as
-anywhere but rightmost.
+.It Cm community Ar community
+Show all entries with community
+.Ar community .
+.It Cm empty-as
+Show all entries that are internal routes with no AS's in the AS path.
+.It Cm memory
+Show RIB memory statistics.
+.It Cm neighbor Ar peer
+Show only entries from the specified peer.
 .It Cm peer-as Ar as
 Show all entries with
 .Ar as
 as leftmost AS.
-.It Cm empty-as
-Show all entries that are internal routes with no AS's in the AS path.
-.It Cm community Ar community
-Show all entries with community
-.Ar community .
-.It Cm neighbor Ar peer
-Show only entries from the specified peer.
-.It Cm table Ar rib
-Show only entries from the specified RIB table.
+.It Cm source-as Ar as
+Show all entries with
+.Ar as
+as rightmost AS.
 .It Cm summary
 This is the same as the
 .Ic show summary
 command.
-.It Cm memory
-Show RIB memory statistics.
+.It Cm table Ar rib
+Show only entries from the specified RIB table.
+.It Cm transit-as Ar as
+Show all entries with
+.Ar as
+anywhere but rightmost.
 .El
 .Pp
 Additionally, the following
