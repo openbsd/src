@@ -228,7 +228,7 @@ extern int no_back_scroll;
 extern int swindow;
 extern int no_init;
 extern int no_keypad;
-extern int sigs;
+extern volatile sig_atomic_t sigs;
 extern int wscroll;
 extern int screen_trashed;
 extern int tty;

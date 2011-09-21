@@ -21,7 +21,7 @@
 #define	MINPOS(a,b)	(((a) < (b)) ? (a) : (b))
 #define	MAXPOS(a,b)	(((a) > (b)) ? (a) : (b))
 
-extern int sigs;
+extern volatile sig_atomic_t sigs;
 extern int how_search;
 extern int caseless;
 extern int linenums;

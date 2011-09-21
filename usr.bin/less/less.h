@@ -83,6 +83,7 @@
 #if HAVE_STRING_H
 #include <string.h>
 #endif
+#include <signal.h>
 
 /* OS-specific includes */
 #ifdef _OSK

@@ -126,7 +126,7 @@ static int ch_ungotchar = -1;
 static int maxbufs = -1;
 
 extern int autobuf;
-extern int sigs;
+extern volatile sig_atomic_t sigs;
 extern int secure;
 extern int screen_trashed;
 extern int follow_mode;

@@ -23,7 +23,7 @@
 /*
  * "sigs" contains bits indicating signals which need to be processed.
  */
-public int sigs;
+public volatile sig_atomic_t sigs;
 
 extern int sc_width, sc_height;
 extern int screen_trashed;
@@ -41,7 +41,6 @@ extern long jump_sline_fraction;
 u_interrupt(type)
 	int type;
 {
-	bell();
 #if OS2
 	LSIGNAL(SIGINT, SIG_ACK);
 #endif
@@ -236,6 +235,7 @@ psignals()
 #endif
 	if (tsignals & S_INTERRUPT)
 	{
+		bell();
 		if (quit_on_intr)
 			quit(QUIT_INTERRUPT);
 	}

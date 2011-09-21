@@ -46,7 +46,7 @@ static int attr_swidth();
 static int attr_ewidth();
 static int do_append();
 
-extern int sigs;
+extern volatile sig_atomic_t sigs;
 extern int bs_mode;
 extern int linenums;
 extern int ctldisp;

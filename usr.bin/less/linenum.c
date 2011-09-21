@@ -66,7 +66,7 @@ static struct linenum_info pool[NPOOL];	/* The pool itself */
 static struct linenum_info *spare;		/* We always keep one spare entry */
 
 extern int linenums;
-extern int sigs;
+extern volatile sig_atomic_t sigs;
 extern int sc_height;
 extern int screen_trashed;
 

@@ -22,7 +22,7 @@
 #include "cmd.h"
 
 extern int erase_char, erase2_char, kill_char;
-extern int sigs;
+extern volatile sig_atomic_t sigs;
 extern int quit_if_one_screen;
 extern int squished;
 extern int sc_width;

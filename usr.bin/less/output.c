@@ -23,7 +23,7 @@ public int need_clr;
 public int final_attr;
 public int at_prompt;
 
-extern int sigs;
+extern volatile sig_atomic_t sigs;
 extern int sc_width;
 extern int so_s_width, so_e_width;
 extern int screen_trashed;

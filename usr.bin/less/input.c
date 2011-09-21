@@ -25,7 +25,7 @@ extern int squeeze;
 extern int chopline;
 extern int hshift;
 extern int quit_if_one_screen;
-extern int sigs;
+extern volatile sig_atomic_t sigs;
 extern int ignore_eoi;
 extern int status_col;
 extern POSITION start_attnpos;

@@ -39,7 +39,7 @@
 #define	time_type	long
 #endif
 
-extern int sigs;
+extern volatile sig_atomic_t sigs;
 
 /*
  * Like read() system call, but is deliberately interruptible.

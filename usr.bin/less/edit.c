@@ -23,7 +23,7 @@ extern char *every_first_cmd;
 extern int any_display;
 extern int force_open;
 extern int is_tty;
-extern int sigs;
+extern volatile sig_atomic_t sigs;
 extern IFILE curr_ifile;
 extern IFILE old_ifile;
 extern struct scrpos initial_scrpos;
