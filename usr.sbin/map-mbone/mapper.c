@@ -1,4 +1,4 @@
-/*	$OpenBSD: mapper.c,v 1.19 2007/02/18 20:57:53 jmc Exp $	*/
+/*	$OpenBSD: mapper.c,v 1.20 2011/09/21 18:48:43 jsg Exp $	*/
 /*	$NetBSD: mapper.c,v 1.3 1995/12/10 11:12:04 mycroft Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
@@ -42,6 +42,7 @@
 #include <arpa/inet.h>
 #include <stdarg.h>
 #include <poll.h>
+#include <err.h>
 
 #define DEFAULT_TIMEOUT	2	/* How long to wait before retrying requests */
 #define DEFAULT_RETRIES 1	/* How many times to ask each router */
