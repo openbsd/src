@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.6 2011/08/07 15:47:39 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.7 2011/09/22 12:53:00 jsing Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -237,7 +237,7 @@ cpu_intr(void *v)
 	struct trapframe *frame = v;
 	struct hppa_iv *iv;
 	int pri, r, s, bit;
-	u_long mask;
+	u_long mask, tmp;
 	void *arg;
 
 	ci->ci_ipending |= mfctl(CR_EIRR);
@@ -256,6 +256,12 @@ cpu_intr(void *v)
 			bit = fls(ci->ci_ipending & mask) - 1;
 			iv = &intr_table[bit];
 
+#ifdef INTRDEBUG
+			if (iv->pri <= s)
+				panic("irq %i: handler pri %i <= ipl %i\n",
+				    bit, iv->pri, s);
+#endif
+
 			ci->ci_ipending &= ~(1UL << bit);
 			mtctl(1UL << bit, CR_EIRR);
 			ci->ci_ipending |= mfctl(CR_EIRR);
@@ -266,7 +272,7 @@ cpu_intr(void *v)
 
 			ci->ci_cpl = iv->pri;
 			mtctl(imask[ci->ci_cpl], CR_EIEM);
-		       	ssm(PSL_I, mask);
+		       	ssm(PSL_I, tmp);
 
 			for (r = iv->flags & HPPA_IV_SOFT;
 			     iv && iv->handler; iv = iv->next) {
@@ -279,14 +285,14 @@ cpu_intr(void *v)
 				}
 			}
 
-			rsm(PSL_I, mask);
+			rsm(PSL_I, tmp);
 		}
 	}
 	ci->ci_in_intr--;
 	ci->ci_cpl = s;
 
 	mtctl(imask[ci->ci_cpl], CR_EIEM);
-	ssm(PSL_I, mask);
+	ssm(PSL_I, tmp);
 }
 
 void *
