@@ -1,4 +1,4 @@
-/*	$OpenBSD: zopen.c,v 1.17 2005/08/25 17:07:56 millert Exp $	*/
+/*	$OpenBSD: zopen.c,v 1.18 2011/09/22 10:41:04 deraadt Exp $	*/
 /*	$NetBSD: zopen.c,v 1.5 1995/03/26 09:44:53 glass Exp $	*/
 
 /*-
@@ -35,13 +35,6 @@
  *
  *	From: @(#)zopen.c	8.1 (Berkeley) 6/27/93
  */
-
-#if 0
-static char sccsid[] = "@(#)zopen.c	8.1 (Berkeley) 6/27/93";
-#else
-const char z_rcsid[] =
-	"$OpenBSD: zopen.c,v 1.17 2005/08/25 17:07:56 millert Exp $";
-#endif
 
 /*-
  * fcompress.c - File compression ala IEEE Computer, June 1984.

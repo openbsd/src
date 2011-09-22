@@ -1,4 +1,4 @@
-/*	$OpenBSD: nullopen.c,v 1.3 2005/06/26 18:20:26 otto Exp $	*/
+/*	$OpenBSD: nullopen.c,v 1.4 2011/09/22 10:41:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -27,9 +27,6 @@
  * SUCH DAMAGE.
  *
  */
-
-const char null_rcsid[] =
-    "$OpenBSD: nullopen.c,v 1.3 2005/06/26 18:20:26 otto Exp $";
 
 #include <sys/types.h>
 #include <stdio.h>

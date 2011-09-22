@@ -1,43 +1,34 @@
-/*	$OpenBSD: main.c,v 1.77 2011/03/05 20:12:42 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.78 2011/09/22 10:41:04 deraadt Exp $	*/
 
-#ifndef SMALL
-static const char copyright[] =
-"@(#) Copyright (c) 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n"
-"Copyright (c) 1997-2002 Michael Shalayeff\n";
-#endif
-
-#ifndef SMALL
-static const char license[] =
-"\n"
-" Redistribution and use in source and binary forms, with or without\n"
-" modification, are permitted provided that the following conditions\n"
-" are met:\n"
-" 1. Redistributions of source code must retain the above copyright\n"
-"    notice, this list of conditions and the following disclaimer.\n"
-" 2. Redistributions in binary form must reproduce the above copyright\n"
-"    notice, this list of conditions and the following disclaimer in the\n"
-"    documentation and/or other materials provided with the distribution.\n"
-" 3. Neither the name of the University nor the names of its contributors\n"
-"    may be used to endorse or promote products derived from this software\n"
-"    without specific prior written permission.\n"
-"\n"
-" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR\n"
-" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES\n"
-" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.\n"
-" IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,\n"
-" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\n"
-" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\n"
-" SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)\n"
-" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,\n"
-" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING\n"
-" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF\n"
-" THE POSSIBILITY OF SUCH DAMAGE.\n";
-#endif /* SMALL */
-
-#ifndef SMALL
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.77 2011/03/05 20:12:42 millert Exp $";
-#endif
+/*
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1997-2002 Michael Shalayeff
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -206,7 +197,7 @@ main(int argc, char *argv[])
 	}
 
 	while ((ch = getopt_long(argc, argv, optstr[pmode], longopts, NULL)) != -1)
-		switch(ch) {
+		switch (ch) {
 		case '1':
 		case '2':
 		case '3':
@@ -284,20 +275,12 @@ main(int argc, char *argv[])
 			testmode = 1;
 			decomp++;
 			break;
-#ifndef SMALL
 		case 'V':
-			printf("%s\n%s\n", main_rcsid, gz_rcsid);
-			printf("%s\n%s\n", z_rcsid, null_rcsid);
-#endif
 			exit (0);
 		case 'v':
 			verbose++;
 			break;
-#ifndef SMALL
 		case 'L':
-			fputs(copyright, stderr);
-			fputs(license, stderr);
-#endif
 			exit (0);
 		case 'r':
 			recurse++;

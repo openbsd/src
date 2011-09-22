@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.26 2009/11/11 18:04:35 deraadt Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.27 2011/09/22 10:41:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -57,11 +57,6 @@
   Comments) 1950 to 1952 in the files ftp://ds.internic.net/rfc/rfc1950.txt
   (zlib format), rfc1951.txt (deflate format) and rfc1952.txt (gzip format).
 */
-
-#ifndef SMALL
-const char gz_rcsid[] =
-    "$OpenBSD: gzopen.c,v 1.26 2009/11/11 18:04:35 deraadt Exp $";
-#endif
 
 #include <sys/param.h>
 #include <sys/stat.h>

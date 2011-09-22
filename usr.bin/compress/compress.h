@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress.h,v 1.11 2008/08/07 17:37:37 sobrado Exp $	*/
+/*	$OpenBSD: compress.h,v 1.12 2011/09/22 10:41:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -56,8 +56,6 @@ enum program_mode {
 #define	FAILURE	1
 #define	WARNING	2
 
-extern const char main_rcsid[], z_rcsid[], gz_rcsid[], pkzip_rcsid[],
-    pack_rcsid[], lzh_rcsid[], null_rcsid[];
 extern char null_magic[];
 
 extern void *z_open(int, const char *, char *, int, u_int32_t, int);

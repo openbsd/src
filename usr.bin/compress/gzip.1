@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gzip.1,v 1.6 2009/04/18 18:21:54 naddy Exp $
+.\"	$OpenBSD: gzip.1,v 1.7 2011/09/22 10:41:04 deraadt Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)compress.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: April 18 2009 $
+.Dd $Mdocdate: September 22 2011 $
 .Dt GZIP 1
 .Os
 .Sh NAME
@@ -189,7 +189,7 @@ Use the deflate scheme, which reportedly provides better compression rates
 .It Fl h
 Print a short help message.
 .It Fl L
-Print the license.
+In other compatible programs, this displays program license.
 .It Fl l
 List information for the specified compressed files.
 The following information is listed:
@@ -248,9 +248,7 @@ Set the suffix for compressed files.
 .It Fl t
 Test the integrity of each file leaving any files intact.
 .It Fl V
-Display the program version
-.Pq RCS IDs of the source files
-and exit.
+In other compatible programs, this displays version information.
 .It Fl v
 Print the percentage reduction of each file and other information.
 .El
