@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.181 2011/09/02 01:19:12 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.182 2011/09/22 21:36:00 jsing Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -1285,7 +1285,7 @@ scsi_devid_pg80(struct scsi_link *link)
 		goto free;
 
 	id = malloc(sizeof(link->inqdata.vendor) +
-	    sizeof(link->inqdata.product) + len, M_WAITOK, M_TEMP);
+	    sizeof(link->inqdata.product) + len, M_TEMP, M_WAITOK);
 	memcpy(id, link->inqdata.vendor, sizeof(link->inqdata.vendor));
 	memcpy(id + sizeof(link->inqdata.vendor), link->inqdata.product,
 	    sizeof(link->inqdata.product));
