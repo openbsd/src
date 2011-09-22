@@ -1,21 +1,21 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.21 2011/05/30 21:50:46 oga Exp $
+# $OpenBSD: files.drm,v 1.22 2011/09/22 12:24:19 matthieu Exp $
 
 # direct rendering modules
 define drmbase {}
 device drm: drmbase
 attach drm at drmbase
-file   dev/pci/drm/drm_agpsupport.c    drm
-file   dev/pci/drm/drm_bufs.c          drm
-file   dev/pci/drm/drm_context.c       drm
-file   dev/pci/drm/drm_drv.c           drm	needs-flag
-file   dev/pci/drm/drm_irq.c           drm
-file   dev/pci/drm/drm_lock.c          drm
-file   dev/pci/drm/drm_memory.c        drm
-file   dev/pci/drm/drm_scatter.c       drm
+file   dev/pci/drm/drm_agpsupport.c	drm
+file   dev/pci/drm/drm_bufs.c		drm
+file   dev/pci/drm/drm_context.c	drm
+file   dev/pci/drm/drm_drv.c		drm	needs-flag
+file   dev/pci/drm/drm_irq.c		drm
+file   dev/pci/drm/drm_lock.c		drm
+file   dev/pci/drm/drm_memory.c		drm
+file   dev/pci/drm/drm_scatter.c	drm
 
 device	inteldrm: drmbase
-attach	inteldrm at drmdev 
+attach	inteldrm at drmdev
 file	dev/pci/drm/i915_drv.c		inteldrm
 file	dev/pci/drm/i915_irq.c		inteldrm
 
