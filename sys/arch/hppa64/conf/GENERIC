@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.26 2011/08/07 20:39:39 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.27 2011/09/22 09:18:49 jsing Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -13,7 +13,7 @@ machine		hppa64
 include		"../../../conf/GENERIC"
 maxusers	80			# estimated number of users
 
-option		DEBUG
+#option		DEBUG
 option		USER_PCICONF	# user-space PCI configuration
 
 config	bsd swap generic
