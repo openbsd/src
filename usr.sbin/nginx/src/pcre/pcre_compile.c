@@ -4025,7 +4025,7 @@ for (;; ptr++)
         if ((options & PCRE_CASELESS) != 0)
           {
           unsigned int othercase;
-          if ((othercase = UCD_OTHERCASE(c)) != c)
+          if ((othercase = UCD_OTHERCASE(c)) != (unsigned int)c)
             {
             *class_utf8data++ = XCL_SINGLE;
             class_utf8data += _pcre_ord2utf8(othercase, class_utf8data);

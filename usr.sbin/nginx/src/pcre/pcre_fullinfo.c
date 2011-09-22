@@ -126,7 +126,7 @@ switch (what)
   case PCRE_INFO_MINLENGTH:
   *((int *)where) =
     (study != NULL && (study->flags & PCRE_STUDY_MINLEN) != 0)?
-      study->minlength : -1;
+      (int)study->minlength : -1;
   break;
 
   case PCRE_INFO_LASTLITERAL:
