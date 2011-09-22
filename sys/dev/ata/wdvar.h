@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdvar.h,v 1.17 2011/06/06 01:59:49 matthew Exp $	*/
+/*	$OpenBSD: wdvar.h,v 1.18 2011/09/22 22:12:45 deraadt Exp $	*/
 /*	$NetBSD: wdvar.h,v 1.3 1998/11/11 19:38:27 bouyer Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ struct wd_softc {
 #define READY          10
 
 int wdc_ata_bio(struct ata_drive_datas*, struct ata_bio*);
-int wd_hibernate_io(dev_t dev, daddr_t blkno, caddr_t addr, size_t size,
+int wd_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 	    int wr, void *page);
 
 void wddone(void *);

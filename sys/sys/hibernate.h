@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.13 2011/09/21 02:51:23 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.14 2011/09/22 22:12:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -31,19 +31,13 @@
 struct hiballoc_entry;
 
 /*
- * Hibernate allocator.
- *
  * Allocator operates from an arena, that is pre-allocated by the caller.
  */
-struct hiballoc_arena
-{
-	RB_HEAD(hiballoc_addr, hiballoc_entry)
-				hib_addrs;
+struct hiballoc_arena {
+	RB_HEAD(hiballoc_addr, hiballoc_entry)	hib_addrs;
 };
 
 /*
- * struct hibernate_zlib_state
- *
  * Describes a zlib compression stream and its associated hiballoc area
  */
 struct hibernate_zlib_state {
@@ -52,8 +46,6 @@ struct hibernate_zlib_state {
 };
 
 /*
- * struct hibernate_memory_range
- *
  * Describes a range of physical memory on the machine
  */
 struct hibernate_memory_range {
@@ -62,29 +54,27 @@ struct hibernate_memory_range {
 };
 
 /*
- * struct hibernate_disk_chunk
- *
  * Describes a hibernate chunk structure, used when splitting the memory
  * image of the machine into easy-to-manage pieces.
  */
 struct hibernate_disk_chunk {
 	paddr_t		base;		/* Base of chunk */
-	paddr_t		end; 		/* End of chunk */		
+	paddr_t		end;		/* End of chunk */		
 	daddr_t		offset;		/* Abs. disk block locating chunk */
 	size_t		compressed_size; /* Compressed size on disk */
 	short		flags;		/* Flags */
 };
 
+typedef	int (*hibio_fn)(dev_t, daddr_t, vaddr_t, size_t, int, void *);
+
 /*
- * union hibernate_info
- *
- * Used to store information about the hibernation state of the machine, 
+ * Used to store information about the hibernation state of the machine,
  * such as memory range count and extents, disk sector size, and various
  * offsets where things are located on disk.
  */
 union hibernate_info {
 	struct {
-		size_t 				nranges;		
+		size_t				nranges;
 		struct hibernate_memory_range	ranges[VM_PHYSSEG_MAX];
 		size_t				image_size;
 		size_t				chunk_ctr;
@@ -96,7 +86,7 @@ union hibernate_info {
 		paddr_t				piglet_pa;
 		vaddr_t				piglet_va;
 		char				kernel_version[128];
-		int (*io_func)(dev_t, daddr_t, vaddr_t, size_t, int, void *);
+		hibio_fn			io_func;
 	};
 
 	/* XXX - remove restriction to have this union fit in a single block */
@@ -113,7 +103,7 @@ int	 uvm_pmr_alloc_piglet(vaddr_t*, paddr_t*, vsize_t, paddr_t);
 void	 uvm_pmr_free_piglet(vaddr_t, vsize_t);
 psize_t	 uvm_page_rle(paddr_t);
 
-void	*get_hibernate_io_function(void);
+hibio_fn get_hibernate_io_function(void);
 int	get_hibernate_info(union hibernate_info *, int);
 
 int	hibernate_zlib_reset(union hibernate_info *, int);

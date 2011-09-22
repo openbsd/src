@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.40 2011/07/15 16:44:18 deraadt Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.41 2011/09/22 22:12:45 deraadt Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ int   wdc_ata_err(struct ata_drive_datas *, struct ata_bio *);
 #define WDC_ATA_ERR   0x02 /* Drive reports an error */
 
 int
-wd_hibernate_io(dev_t dev, daddr_t blkno, caddr_t addr, size_t size, int wr, void *page)
+wd_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size, int wr, void *page)
 {
 	struct {
 		struct wd_softc wd;
@@ -147,7 +147,7 @@ wd_hibernate_io(dev_t dev, daddr_t blkno, caddr_t addr, size_t size, int wr, voi
 	if (wr == 0)
 		wd->sc_wdc_bio.flags |= ATA_READ;
 	wd->sc_wdc_bio.bcount = size;
-	wd->sc_wdc_bio.databuf = addr;
+	wd->sc_wdc_bio.databuf = (caddr_t)addr;
 	wd->sc_wdc_bio.wd = wd;
 
 	bzero(&my->xfer, sizeof my->xfer);
