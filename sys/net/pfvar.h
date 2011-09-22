@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.349 2011/09/20 10:51:18 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.350 2011/09/22 14:57:12 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -196,7 +196,7 @@ struct pfi_dynaddr {
 #ifndef PF_DEBUGNAME
 #define PF_DEBUGNAME "pf: "
 #endif
- 
+
 #ifdef _KERNEL
 #define	DPFPRINTF(n, format, x...)					\
 	do {								\
@@ -410,12 +410,12 @@ struct pf_poolhashkey {
 struct pf_pool {
 	struct pf_addr_wrap	 addr;
 	struct pf_poolhashkey	 key;
-	struct pf_addr	 	 counter;
+	struct pf_addr		 counter;
 	char			 ifname[IFNAMSIZ];
 	struct pfi_kif		*kif;
 	int			 tblidx;
 	u_int64_t		 states;
-	int		 	 curweight;
+	int			 curweight;
 	u_int16_t		 weight;
 	u_int16_t		 proxy_port[2];
 	u_int8_t		 port_op;
@@ -821,7 +821,7 @@ struct pf_state {
 	u_int64_t		 packets[2];
 	u_int64_t		 bytes[2];
 	u_int32_t		 creation;
-	u_int32_t	 	 expire;
+	u_int32_t		 expire;
 	u_int32_t		 pfsync_time;
 	u_int16_t		 qid;
 	u_int16_t		 pqid;
@@ -928,7 +928,7 @@ struct pfsync_state {
 	(d)->state = (s)->state;		\
 	(d)->wscale = (s)->wscale;		\
 	if ((s)->scrub) {						\
-		(d)->scrub.pfss_flags = 				\
+		(d)->scrub.pfss_flags =					\
 		    htons((s)->scrub->pfss_flags & PFSS_TIMESTAMP);	\
 		(d)->scrub.pfss_ttl = (s)->scrub->pfss_ttl;		\
 		(d)->scrub.pfss_ts_mod = htonl((s)->scrub->pfss_ts_mod);\
@@ -944,7 +944,7 @@ struct pfsync_state {
 	(d)->mss = ntohs((s)->mss);		\
 	(d)->state = (s)->state;		\
 	(d)->wscale = (s)->wscale;		\
-	if ((s)->scrub.scrub_flag == PFSYNC_SCRUB_FLAG_VALID && 	\
+	if ((s)->scrub.scrub_flag == PFSYNC_SCRUB_FLAG_VALID &&		\
 	    (d)->scrub != NULL) {					\
 		(d)->scrub->pfss_flags =				\
 		    ntohs((s)->scrub.pfss_flags) & PFSS_TIMESTAMP;	\
@@ -1099,7 +1099,7 @@ enum { PFRKE_PLAIN, PFRKE_ROUTE, PFRKE_COST, PFRKE_MAX };
 
 struct pfr_kentry {
 	union {
-		struct _pfr_kentry	_ke;	
+		struct _pfr_kentry	_ke;
 	} u;
 };
 #define pfrke_node	u._ke._pfrke_node
@@ -1480,7 +1480,7 @@ struct pf_divert {
 
 #define PFR_KTABLE_HIWAT	1000	/* Number of tables */
 #define PFR_KENTRY_HIWAT	200000	/* Number of table entries */
-#define PFR_KENTRY_HIWAT_SMALL	100000	/* Number of table entries (tiny hosts) */
+#define PFR_KENTRY_HIWAT_SMALL	100000	/* Number of entries for tiny hosts */
 
 /*
  * ioctl parameter structures

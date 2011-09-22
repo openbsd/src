@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.144 2011/09/21 19:07:30 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.145 2011/09/22 14:57:12 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -870,10 +870,10 @@ int
 pf_normalize_tcp_init(struct mbuf *m, struct pf_pdesc *pd,
     struct pf_state_peer *src, struct pf_state_peer *dst)
 {
-	struct tcphdr	 *th = pd->hdr.tcp;
-	u_int32_t tsval, tsecr;
-	u_int8_t hdr[60];
-	u_int8_t *opt;
+	struct tcphdr	*th = pd->hdr.tcp;
+	u_int32_t	 tsval, tsecr;
+	u_int8_t	 hdr[60];
+	u_int8_t	*opt;
 
 	KASSERT(src->scrub == NULL);
 
@@ -966,14 +966,14 @@ pf_normalize_tcp_stateful(struct mbuf *m, struct pf_pdesc *pd,
     u_short *reason, struct pf_state *state,
     struct pf_state_peer *src, struct pf_state_peer *dst, int *writeback)
 {
-	struct tcphdr	 *th = pd->hdr.tcp;
-	struct timeval uptime;
-	u_int32_t tsval, tsecr;
-	u_int tsval_from_last;
-	u_int8_t hdr[60];
-	u_int8_t *opt;
-	int copyback = 0;
-	int got_ts = 0;
+	struct tcphdr	*th = pd->hdr.tcp;
+	struct timeval	 uptime;
+	u_int32_t	 tsval, tsecr;
+	u_int		 tsval_from_last;
+	u_int8_t	 hdr[60];
+	u_int8_t	*opt;
+	int		 copyback = 0;
+	int		 got_ts = 0;
 
 	KASSERT(src->scrub || dst->scrub);
 
@@ -1128,7 +1128,7 @@ pf_normalize_tcp_stateful(struct mbuf *m, struct pf_pdesc *pd,
 		 * measurement of RTT (round trip time) and PAWS
 		 * (protection against wrapped sequence numbers).  PAWS
 		 * gives us a set of rules for rejecting packets on
-		 * long fat pipes (packets that were somehow delayed 
+		 * long fat pipes (packets that were somehow delayed
 		 * in transit longer than the time it took to send the
 		 * full TCP sequence space of 4Gb).  We can use these
 		 * rules and infer a few others that will let us treat

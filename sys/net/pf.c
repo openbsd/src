@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.780 2011/09/21 19:07:30 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.781 2011/09/22 14:57:12 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1860,7 +1860,6 @@ pf_change_icmp(struct pf_addr *ia, u_int16_t *ip, struct pf_addr *oa,
 	}
 }
 
-
 /*
  * Need to modulate the sequence numbers in the TCP SACK option
  * (credits to Krzysztof Pfaff for report and patch)
@@ -1868,11 +1867,12 @@ pf_change_icmp(struct pf_addr *ia, u_int16_t *ip, struct pf_addr *oa,
 int
 pf_modulate_sack(struct mbuf *m, struct pf_pdesc *pd, struct pf_state_peer *dst)
 {
-	struct tcphdr	 *th = pd->hdr.tcp;
-	int hlen = (th->th_off << 2) - sizeof(*th), thoptlen = hlen;
-	u_int8_t opts[MAX_TCPOPTLEN], *opt = opts;
-	int copyback = 0, i, olen;
-	struct sackblk sack;
+	struct tcphdr	*th = pd->hdr.tcp;
+	int		 hlen = (th->th_off << 2) - sizeof(*th);
+	int		 thoptlen = hlen;
+	u_int8_t	 opts[MAX_TCPOPTLEN], *opt = opts;
+	int		 copyback = 0, i, olen;
+	struct sackblk	 sack;
 
 #define TCPOLEN_SACKLEN	(TCPOLEN_SACK + 2)
 	if (hlen < TCPOLEN_SACKLEN || !pf_pull_hdr(m, pd->off + sizeof(*th),
@@ -2718,7 +2718,7 @@ pf_rule_to_actions(struct pf_rule *r, struct pf_rule_actions *a)
 		a->prio[1] = r->prio[1];
 }
 
-#define PF_TEST_ATTRIB(t, a) 			\
+#define PF_TEST_ATTRIB(t, a)			\
 	do {					\
 		if (t) {			\
 			r = a;			\
@@ -2840,11 +2840,12 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, struct mbuf *m,
 			break;
 
 		case IPPROTO_TCP:
-			PF_TEST_ATTRIB(((r->flagset & th->th_flags) != r->flags),
+			PF_TEST_ATTRIB(((r->flagset & th->th_flags) !=
+			    r->flags),
 				TAILQ_NEXT(r, entries));
 			PF_TEST_ATTRIB((r->os_fingerprint != PF_OSFP_ANY &&
 			    !pf_osfp_match(pf_osfp_fingerprint(pd, m),
-		    	    r->os_fingerprint)),
+			    r->os_fingerprint)),
 				TAILQ_NEXT(r, entries));
 			/* FALLTHROUGH */
 
@@ -2886,7 +2887,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, struct mbuf *m,
 
 		default:
 			break;
-		} 
+		}
 
 		PF_TEST_ATTRIB((r->rule_flag & PFRULE_FRAGMENT &&
 		    pd->virtual_proto != PF_VPROTO_FRAGMENT),
@@ -4202,18 +4203,17 @@ pf_test_state_icmp(struct pf_state **state, struct mbuf *m,
 		 * ICMP error message in response to a TCP/UDP packet.
 		 * Extract the inner TCP/UDP header and search for that state.
 		 */
-
-		struct pf_pdesc	pd2;
+		struct pf_pdesc	 pd2;
 #ifdef INET
-		struct ip	h2;
+		struct ip	 h2;
 #endif /* INET */
 #ifdef INET6
-		struct ip6_hdr	h2_6;
-		int		fragoff2, extoff2;
-		u_int32_t	jumbolen;
+		struct ip6_hdr	 h2_6;
+		int		 fragoff2, extoff2;
+		u_int32_t	 jumbolen;
 #endif /* INET6 */
 		u_int16_t	*ipsum2;
-		int		ipoff2;
+		int		 ipoff2;
 
 		/* Initialize pd2 fields valid for both packets with pd. */
 		bzero(&pd2, sizeof(pd2));
@@ -4330,8 +4330,8 @@ pf_test_state_icmp(struct pf_state **state, struct mbuf *m,
 			}
 
 			if (!((*state)->state_flags & PFSTATE_SLOPPY) &&
-			    (!SEQ_GEQ(src->seqhi, seq) ||
-			    !SEQ_GEQ(seq, src->seqlo - (dst->max_win << dws)))) {
+			    (!SEQ_GEQ(src->seqhi, seq) || !SEQ_GEQ(seq,
+			    src->seqlo - (dst->max_win << dws)))) {
 				if (pf_status.debug >= LOG_NOTICE) {
 					log(LOG_NOTICE,
 					    "pf: BAD ICMP %d:%d ",

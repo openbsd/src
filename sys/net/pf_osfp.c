@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.24 2011/09/21 19:07:30 bluhm Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.25 2011/09/22 14:57:12 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -108,7 +108,8 @@ pf_osfp_fingerprint(struct pf_pdesc *pd, struct mbuf *m)
 #endif /* _KERNEL */
 
 struct pf_osfp_enlist *
-pf_osfp_fingerprint_hdr(const struct ip *ip, const struct ip6_hdr *ip6, const struct tcphdr *tcp)
+pf_osfp_fingerprint_hdr(const struct ip *ip, const struct ip6_hdr *ip6,
+    const struct tcphdr *tcp)
 {
 	struct pf_os_fingerprint fp, *fpresult;
 	int cnt, optlen = 0;
@@ -275,7 +276,7 @@ pf_osfp_match(struct pf_osfp_enlist *list, pf_osfp_t os)
 		if ((os_class == PF_OSFP_ANY || en_class == os_class) &&
 		    (os_version == PF_OSFP_ANY || en_version == os_version) &&
 		    (os_subtype == PF_OSFP_ANY || en_subtype == os_subtype)) {
-			DPFPRINTF(LOG_NOTICE, 
+			DPFPRINTF(LOG_NOTICE,
 			    "osfp matched %s %s %s  %x==%x",
 			    entry->fp_class_nm, entry->fp_version_nm,
 			    entry->fp_subtype_nm, os, entry->fp_os);
