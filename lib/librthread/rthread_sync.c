@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.23 2010/04/12 03:34:31 guenther Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.24 2011/09/22 04:54:38 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -277,7 +277,7 @@ _rthread_mutex_lock(pthread_mutex_t *mutexp, int trywait)
 			return (0);
 		}
 		if (mutex->type == PTHREAD_MUTEX_ERRORCHECK)
-			return (EDEADLK);
+			return (trywait ? EBUSY : EDEADLK);
 	}
 	if (!_sem_wait((void *)&mutex->sem, trywait))
 		return (EBUSY);
