@@ -72,6 +72,18 @@ CORE_SRCS="src/core/nginx.c \
 REGEX_DEPS=src/core/ngx_regex.h
 REGEX_SRCS=src/core/ngx_regex.c
 
+PCRE_SRCS="src/pcre/pcre_chartables.c \
+           src/pcre/pcre_compile.c \
+           src/pcre/pcre_exec.c \
+           src/pcre/pcre_fullinfo.c \
+           src/pcre/pcre_globals.c \
+           src/pcre/pcre_newline.c \
+           src/pcre/pcre_ord2utf8.c \
+           src/pcre/pcre_tables.c \
+           src/pcre/pcre_try_flipped.c \
+           src/pcre/pcre_ucd.c \
+           src/pcre/pcre_valid_utf8.c \
+           src/pcre/pcre_xclass.c"
 
 OPENSSL_MODULE=ngx_openssl_module
 OPENSSL_DEPS=src/event/ngx_event_openssl.h
