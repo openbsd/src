@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.89 2011/06/06 17:10:23 ariane Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.90 2011/09/22 21:52:36 jsing Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -187,7 +187,7 @@ malloc(unsigned long size, int type, int flags)
 #ifdef KMEMSTATS
 	struct kmemstats *ksp = &kmemstats[type];
 
-	if (((unsigned long)type) >= M_LAST)
+	if (((unsigned long)type) <= 1 || ((unsigned long)type) >= M_LAST)
 		panic("malloc - bogus type");
 #endif
 
