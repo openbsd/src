@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.5 2010/08/30 21:35:57 deraadt Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.6 2011/09/22 17:45:59 miod Exp $	*/
 /* $NetBSD: mainbus.c,v 1.3 2001/06/13 17:52:43 nathanw Exp $ */
 
 /*
@@ -45,27 +45,16 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
 #include <arm/mainbus/mainbus.h>
-
-/*
- * mainbus is a root device so we a bus space tag to pass to children
- *
- * The tag is provided by mainbus_io.c and mainbus_io_asm.S
- */
-
-extern struct bus_space mainbus_bs_tag;
 
 /* Prototypes for functions provided */
 
-int  mainbusmatch  (struct device *, void *, void *);
-void mainbusattach (struct device *, struct device *, void *);
-int  mainbusprint  (void *aux, const char *mainbus);
-int mainbussearch (struct device *,  void *, void *);
+int  mainbusmatch(struct device *, void *, void *);
+void mainbusattach(struct device *, struct device *, void *);
+int  mainbusprint(void *aux, const char *mainbus);
+int mainbussearch(struct device *,  void *, void *);
 
 /* attach and device structures for the device */
 
@@ -80,8 +69,6 @@ struct cfdriver mainbus_cd = {
 
 /*
  * int mainbusmatch(struct device *parent, struct cfdata *cf, void *aux)
- *
- * Always match for unit 0
  */
 
 int
@@ -101,21 +88,22 @@ mainbusattach(struct device *parent, struct device *self, void *aux)
 {
 	printf("\n");
 
-	config_search(mainbussearch, self, self);
+	config_search(mainbussearch, self, aux);
 }
 
 int
-mainbussearch(struct device *parent, void *c, void *aux)
+mainbussearch(struct device *parent, void *vcf, void *aux)
 {
 	struct mainbus_attach_args ma;
-	struct cfdata *cf = c;
+	struct cfdata *cf = vcf;
 
-
-	ma.ma_iot = &mainbus_bs_tag;
 	ma.ma_name = cf->cf_driver->cd_name;
 
-	config_found(parent, &ma, mainbusprint);
+	/* allow for devices to be disabled in UKC */
+	if ((*cf->cf_attach->ca_match)(parent, cf, &ma) == 0)
+		return 0;
 
+	config_attach(parent, cf, &ma, mainbusprint);
 	return 1;
 }
 
@@ -128,6 +116,10 @@ mainbussearch(struct device *parent, void *c, void *aux)
 int
 mainbusprint(void *aux, const char *mainbus)
 {
-/* XXXX print flags */
-	return (QUIET);
+	struct mainbus_attach_args *ma = aux;
+
+	if (mainbus != NULL)
+		printf("%s at %s", ma->ma_name, mainbus);
+
+	return (UNCONF);
 }

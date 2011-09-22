@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.17 2011/09/20 22:02:12 miod Exp $
+#	$OpenBSD: files.arm,v 1.18 2011/09/22 17:45:59 miod Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # generic networking files
@@ -16,11 +16,9 @@ file	arch/arm/arm/fiq.c			fiq
 file	arch/arm/arm/fiq_subr.S			fiq
 
 # mainbus files
-device	mainbus {[base = -1], [dack = -1], [irq = -1]}
+device	mainbus {}
 attach	mainbus at root
 file	arch/arm/mainbus/mainbus.c		mainbus
-file	arch/arm/mainbus/mainbus_io.c		mainbus
-file	arch/arm/mainbus/mainbus_io_asm.S	mainbus
 
 device	cpu {}
 attach	cpu at mainbus with cpu_mainbus
@@ -37,7 +35,6 @@ file	arch/arm/arm/bus_space_notimpl.S
 file	arch/arm/arm/arm_machdep.c
 file	arch/arm/arm/ast.c
 file	arch/arm/arm/bcopyinout.S
-file	arch/arm/arm/blockio.S
 file	arch/arm/arm/compat_13_machdep.c	compat_13
 file	arch/arm/arm/copystr.S
 file	arch/arm/arm/cpufunc.c
