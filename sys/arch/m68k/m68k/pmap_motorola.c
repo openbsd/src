@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.62 2011/05/27 20:10:18 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.63 2011/09/22 17:41:00 jasper Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -391,7 +391,7 @@ pmap_virtual_space(vstartp, vendp)
 /*
  * pmap_init:			[ INTERFACE ]
  *
- *	Initialize the pmap module.  Called by vm_init(), to initialize any
+ *	Initialize the pmap module.  Called by uvm_init(), to initialize any
  *	structures that the pmap system needs to map virtual memory.
  *
  *	Note: no locking is necessary in this function.

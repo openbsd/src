@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.74 2011/05/30 22:25:22 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.75 2011/09/22 17:41:00 jasper Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -1564,7 +1564,7 @@ sun4v_bootstrap_cpu(paddr_t intstack)
 
 /*
  * Initialize anything else for pmap handling.
- * Called during vm_init().
+ * Called during uvm_init().
  */
 void
 pmap_init()

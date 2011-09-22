@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.53 2011/04/07 18:11:52 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.54 2011/09/22 17:41:00 jasper Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -458,7 +458,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 
 /*
  *	Initialize the pmap module.
- *	Called by vm_init, to initialize any structures that the pmap
+ *	Called by uvm_init, to initialize any structures that the pmap
  *	system needs to map virtual memory.
  */
 void

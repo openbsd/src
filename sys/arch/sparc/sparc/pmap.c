@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.160 2011/05/30 22:25:22 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.161 2011/09/22 17:41:00 jasper Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -2836,7 +2836,7 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 	TAILQ_INIT(&segm_locked);
 
 	/*
-	 * Set up the `constants' for the call to vm_init()
+	 * Set up the `constants' for the call to uvm_init()
 	 * in main().  All pages beginning at p (rounded up to
 	 * the next whole page) and continuing through the number
 	 * of available pages are free, but they start at a higher
@@ -3158,7 +3158,7 @@ pmap_bootstrap4m(void *top)
 #endif
 
 	/*
-	 * Set up the `constants' for the call to vm_init()
+	 * Set up the `constants' for the call to uvm_init()
 	 * in main().  All pages beginning at p (rounded up to
 	 * the next whole page) and continuing through the number
 	 * of available pages are free.
