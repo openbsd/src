@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.s,v 1.15 2011/04/16 00:40:58 deraadt Exp $	*/
+/*	$OpenBSD: vector.s,v 1.16 2011/09/22 12:17:04 deraadt Exp $	*/
 /*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
 
 /*
@@ -32,8 +32,6 @@
 
 #include <machine/i8259.h>
 #include <dev/isa/isareg.h>
-
-#define MY_COUNT _C_LABEL(uvmexp)
 
 /*
  * Macros for interrupt entry, call to handler, and exit.
@@ -109,7 +107,7 @@ _C_LABEL(Xintr_##name##num):						;\
 	MAKE_FRAME							;\
 	mask(num)			/* mask it in hardware */	;\
 	early_ack(num)			/* and allow other intrs */	;\
-	incl	MY_COUNT+V_INTR		/* statistical info */		;\
+	incl	_C_LABEL(uvmexp)+V_INTR	/* statistical info */		;\
 	movl	_C_LABEL(iminlevel) + (num) * 4, %eax			;\
 	movl	CPL,%ebx						;\
 	cmpl	%eax,%ebx						;\

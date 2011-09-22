@@ -1,4 +1,4 @@
-/* $OpenBSD: apicvec.s,v 1.24 2011/07/05 17:11:07 oga Exp $ */
+/* $OpenBSD: apicvec.s,v 1.25 2011/09/22 12:17:04 deraadt Exp $ */
 /* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */
 
 /*-
@@ -273,7 +273,7 @@ _C_LABEL(Xintr_##name##num):						\
 	movl	%ebx,CPL						;\
 	mask(num)			/* mask it in hardware */	;\
 	early_ack(num)			/* and allow other intrs */	;\
-	incl	MY_COUNT+V_INTR		/* statistical info */		;\
+	incl	_C_LABEL(uvmexp)+V_INTR	/* statistical info */		;\
 	sti								;\
 	incl	_C_LABEL(apic_intrcount)(,%eax,4)			;\
 	movl	_C_LABEL(apic_intrhand)(,%eax,4),%ebx /* chain head */	;\
