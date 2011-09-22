@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.18 2011/01/14 19:04:08 jasper Exp $	*/
+/*	$OpenBSD: conf.c,v 1.19 2011/09/22 13:50:30 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -70,13 +70,12 @@ struct bdevsw   bdevsw[] =
 	bdev_disk_init(NCD,cd),		/*  6: SCSI CD-ROM */
 	bdev_disk_init(NFD,fd),		/*  7: floppy drive */
 	bdev_disk_init(NWD,wd),		/*  8: ST506 drive */
-					/*  9: */
-	bdev_lkm_dummy(),
-	bdev_lkm_dummy(),
-	bdev_lkm_dummy(),
-	bdev_lkm_dummy(),
-	bdev_lkm_dummy(),
-	bdev_lkm_dummy(),
+	bdev_lkm_dummy(),		/*  9: */
+	bdev_lkm_dummy(),		/* 10: */
+	bdev_lkm_dummy(),		/* 11: */
+	bdev_lkm_dummy(),		/* 12: */
+	bdev_lkm_dummy(),		/* 13: */
+	bdev_lkm_dummy(),		/* 14: */
 };
 int	nblkdev = nitems(bdevsw);
 
@@ -127,7 +126,6 @@ cdev_decl(pci);
 
 #include "bthub.h"
 
-
 struct cdevsw   cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/*  0: virtual console */
@@ -144,7 +142,7 @@ struct cdevsw   cdevsw[] =
 	cdev_tape_init(NST,st),		/* 11: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 12: SCSI cd-rom */
 	cdev_ch_init(NCH,ch),		/* 13: SCSI changer */
-	cdev_notdef(),			/* 14 */
+	cdev_notdef(),			/* 14: */
 	cdev_uk_init(NUK,uk),		/* 15: SCSI unknown */
 	cdev_fd_init(1,filedesc),	/* 16: file descriptor pseudo-device */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 17: Berkeley packet filter */
@@ -165,7 +163,7 @@ struct cdevsw   cdevsw[] =
 #ifdef USER_PCICONF
 	cdev_pci_init(NPCI,pci),	/* 31: PCI user */
 #else
-	cdev_notdef(),
+	cdev_notdef(),			/* 31: */
 #endif
 #ifdef NNPFS
 	cdev_nnpfs_init(NNNPFS,nnpfs_dev),	/* 32: nnpfs communication device */

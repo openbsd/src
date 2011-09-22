@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.16 2011/09/20 21:46:08 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.17 2011/09/22 13:50:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -43,11 +43,8 @@ extern struct pool hppa_fppl;
  * Dump the machine specific header information at the start of a core dump.
  */
 int
-cpu_coredump(p, vp, cred, core)
-	struct proc *p;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *core;
+cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
+    struct core *core)
 {
 	struct md_coredump md_core;
 	struct coreseg cseg;
@@ -84,12 +81,8 @@ cpu_coredump(p, vp, cred, core)
 }
 
 void
-cpu_fork(p1, p2, stack, stacksize, func, arg)
-	struct proc *p1, *p2;
-	void *stack;
-	size_t stacksize;
-	void (*func)(void *);
-	void *arg;
+cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
+    void (*func)(void *), void *arg)
 {
 	extern register_t switch_tramp_p;
 
@@ -146,7 +139,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		tf->tf_sp = (register_t)stack;
 
 	/*
-	 * Build stack frames for the cpu_switch & co.
+	 * Build stack frames for the cpu_switchto & co.
 	 */
 	osp = sp + HPPA_FRAME_SIZE;
 	*(register_t*)(osp - HPPA_FRAME_SIZE) = 0;
@@ -177,9 +170,7 @@ cpu_exit(struct proc *p)
  * Map an IO request into kernel virtual address space.
  */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	struct pmap *pm = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	vaddr_t kva, uva;
@@ -214,9 +205,7 @@ vmapbuf(bp, len)
  * Unmap IO request from the kernel virtual address space.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t addr, off;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.43 2011/09/20 13:56:44 jsing Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.44 2011/09/22 13:50:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -412,7 +412,7 @@ cpu_startup(void)
 #ifdef BOOT_CONFIG
 		user_config();
 #else
-		printf("kernel does not support -c; continuing...\n");
+		printf("kernel does not support -c; continuing..\n");
 #endif
 	}
 }
@@ -545,6 +545,7 @@ boot(int howto)
 		boothowto = howto | (boothowto & RB_HALT);
 
 		if (!(howto & RB_NOSYNC)) {
+			waittime = 0;
 			vfs_shutdown();
 			/*
 			 * If we've been adjusting the clock, the todr
@@ -592,13 +593,14 @@ boot(int howto)
 		/* ask firmware to reset */
                 pdc_call((iodcio_t)pdc, 0, PDC_BROADCAST_RESET, PDC_DO_RESET);
 
+		/* forcably reset module if that fails */
 		__asm __volatile(".export hppa_reset, entry\n\t"
 		    ".label hppa_reset");
 		__asm __volatile("stwas %0, 0(%1)"
 		    :: "r" (CMD_RESET), "r" (HPPA_LBCAST + iomod_command));
 	}
 
-	for(;;); /* loop while bus reset is comming up */
+	for (;;) ; /* loop while bus reset is comming up */
 	/* NOTREACHED */
 }
 

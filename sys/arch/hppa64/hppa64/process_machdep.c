@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.2 2011/04/16 22:02:32 kettenis Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.3 2011/09/22 13:50:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -17,7 +17,6 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -25,9 +24,7 @@
 #include <sys/user.h>
 
 int
-process_read_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_read_regs(struct proc *p, struct reg *regs)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 
@@ -52,9 +49,7 @@ process_read_fpregs(struct proc *p, struct fpreg *fpregs)
 #ifdef PTRACE
 
 int
-process_write_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_write_regs(struct proc *p, struct reg *regs)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 
@@ -77,9 +72,7 @@ process_write_fpregs(struct proc *p, struct fpreg *fpregs)
 }
 
 int
-process_sstep(p, sstep)
-	struct proc *p;
-	int sstep;
+process_sstep(struct proc *p, int sstep)
 {
 	if (sstep)
 		return (EINVAL);
@@ -88,9 +81,7 @@ process_sstep(p, sstep)
 }
 
 int
-process_set_pc(p, addr)
-	struct proc *p;
-	caddr_t addr;
+process_set_pc(struct proc *p, caddr_t addr)
 {
 	p->p_md.md_regs->tf_iioq[1] = 4 +
 	    (p->p_md.md_regs->tf_iioq[0] = (register_t)addr | 3);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.14 2011/04/07 13:13:01 jsing Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.15 2011/09/22 13:50:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 Michael Shalayeff
@@ -66,13 +66,12 @@
 #include <dev/pci/pcireg.h>
 #endif
 
-void	dumpconf(void);
-void	print_devpath(const char *, struct pz_device *);
-
-void (*cold_hook)(int); /* see below */
-
 /* device we booted from */
 struct device *bootdv;
+void	dumpconf(void);
+void	print_devpath(const char *label, struct pz_device *pz);
+
+void (*cold_hook)(int); /* see below */
 
 /*
  * LED blinking thing
@@ -123,7 +122,7 @@ cpu_configure(void)
 void
 diskconf(void)
 {
-	print_devpath("boot path", &PAGE0->mem_boot);
+	print_devpath("bootpath", &PAGE0->mem_boot);
 	setroot(bootdv, 0, RB_USERREQ);
 	dumpconf();
 }
@@ -208,9 +207,6 @@ dumpconf(void)
 	/* dumpsize is in page units, and doesn't include headers. */
 	dumpsize = physmem;
 }
-
-
-void	print_devpath(const char *label, struct pz_device *pz);
 
 void
 print_devpath(const char *label, struct pz_device *pz)
@@ -502,8 +498,6 @@ device_register(struct device *dev, void *aux)
 	 * matched a block device.
 	 */
 	basename = dev->dv_cfdata->cf_driver->cd_name;
-
-	/* TODO wd detect */
 
 	/*
 	 * We only grok SCSI boot currently. Match on proper device hierarchy,
