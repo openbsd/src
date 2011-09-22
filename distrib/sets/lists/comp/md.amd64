@@ -723,6 +723,3 @@
 ./usr/libdata/ldscripts/elf_x86_64_obsd.xu
 ./usr/libdata/ldscripts/elf_x86_64_obsd.xz
 ./usr/libdata/lint/llib-lamd64.ln
-./usr/share/man/man1/addr2line.1
-./usr/share/man/man1/objcopy.1
-./usr/share/man/man1/readelf.1

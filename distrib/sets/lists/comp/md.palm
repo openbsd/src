@@ -720,6 +720,3 @@
 ./usr/libdata/ldscripts/armelfb_obsd.xu
 ./usr/libdata/ldscripts/armelfb_obsd.xz
 ./usr/libdata/lint/llib-larm.ln
-./usr/share/man/man1/addr2line.1
-./usr/share/man/man1/objcopy.1
-./usr/share/man/man1/readelf.1

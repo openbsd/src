@@ -712,6 +712,3 @@
 ./usr/libdata/ldscripts/elf64ltsmip.xsc
 ./usr/libdata/ldscripts/elf64ltsmip.xu
 ./usr/libdata/ldscripts/elf64ltsmip.xz
-./usr/share/man/man1/addr2line.1
-./usr/share/man/man1/objcopy.1
-./usr/share/man/man1/readelf.1

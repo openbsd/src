@@ -223,5 +223,3 @@
 ./usr/lib/gcc-lib/m88k-unknown-openbsd5.0/2.95.3/libgcc.a
 ./usr/lib/libstdc++_p.a
 ./usr/lib/scrt0.o
-./usr/share/man/man1/protoize.1
-./usr/share/man/man1/unprotoize.1

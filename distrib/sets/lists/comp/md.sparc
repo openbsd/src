@@ -673,6 +673,3 @@
 ./usr/libdata/ldscripts/elf32_sparc_obsd.xsc
 ./usr/libdata/ldscripts/elf32_sparc_obsd.xu
 ./usr/libdata/ldscripts/elf32_sparc_obsd.xz
-./usr/share/man/man1/addr2line.1
-./usr/share/man/man1/objcopy.1
-./usr/share/man/man1/readelf.1

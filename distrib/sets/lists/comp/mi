@@ -1851,6 +1851,7 @@
 ./usr/share/lkm/syscall/module/newsyscall.c
 ./usr/share/lkm/syscall/test/Makefile
 ./usr/share/lkm/syscall/test/testsyscall.c
+./usr/share/man/man1/addr2line.1
 ./usr/share/man/man1/ar.1
 ./usr/share/man/man1/as.1
 ./usr/share/man/man1/asa.1
@@ -1870,11 +1871,15 @@
 ./usr/share/man/man1/lint.1
 ./usr/share/man/man1/lorder.1
 ./usr/share/man/man1/mkstr.1
+./usr/share/man/man1/objcopy.1
 ./usr/share/man/man1/objdump.1
 ./usr/share/man/man1/pmdb.1
+./usr/share/man/man1/protoize.1
 ./usr/share/man/man1/ranlib.1
+./usr/share/man/man1/readelf.1
 ./usr/share/man/man1/rpcgen.1
 ./usr/share/man/man1/strip.1
+./usr/share/man/man1/unprotoize.1
 ./usr/share/man/man1/xstr.1
 ./usr/share/man/man1/yacc.1
 ./usr/share/man/man2/EV_SET.2
