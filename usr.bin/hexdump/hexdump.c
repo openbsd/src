@@ -1,4 +1,4 @@
-/*	$OpenBSD: hexdump.c,v 1.15 2011/04/03 21:10:45 stsp Exp $	*/
+/*	$OpenBSD: hexdump.c,v 1.16 2011/09/22 09:09:42 stsp Exp $	*/
 /*	$NetBSD: hexdump.c,v 1.7 1997/10/19 02:34:06 lukem Exp $	*/
 
 /*
@@ -32,7 +32,6 @@
 
 #include <sys/param.h>
 #include <err.h>
-#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -74,7 +73,6 @@ main(int argc, char *argv[])
 		rewrite(tfs);
 
 	(void)next(argv);
-	(void)setlocale(LC_CTYPE, "");
 	display();
 	exit(exitval);
 }
