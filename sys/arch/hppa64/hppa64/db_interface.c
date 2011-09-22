@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.1 2005/04/01 10:40:47 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.2 2011/09/22 21:51:24 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -111,17 +111,14 @@ struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 int db_active = 0;
 
 void
-Debugger()
+Debugger(void)
 {
 	__asm __volatile ("break %0, %1"
 	    :: "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_KGDB));
 }
 
 void
-db_read_bytes(addr, size, data)
-	vaddr_t addr;
-	size_t size;
-	char *data;
+db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
 	register char *src = (char *)addr;
 
@@ -130,10 +127,7 @@ db_read_bytes(addr, size, data)
 }
 
 void
-db_write_bytes(addr, size, data)
-	vaddr_t addr;
-	size_t size;
-	char *data;
+db_write_bytes(vaddr_t addr, size_t size, char *data)
 {
 	register char *dst = (char *)addr;
 
@@ -150,8 +144,7 @@ db_write_bytes(addr, size, data)
  * Print trap reason.
  */
 void
-kdbprinttrap(type, code)
-	int type, code;
+kdbprinttrap(int type, int code)
 {
 	type &= ~T_USER;	/* just in case */
 	db_printf("kernel: ");
@@ -166,9 +159,7 @@ kdbprinttrap(type, code)
  *  kdb_trap - field a BPT trap
  */
 int
-kdb_trap(type, code, regs)
-	int type, code;
-	db_regs_t *regs;
+kdb_trap(int type, int code, db_regs_t *regs)
 {
 	extern label_t *db_recover;
 	int s;
@@ -209,19 +200,14 @@ kdb_trap(type, code, regs)
  *  Any address is allowed for now.
  */
 int
-db_valid_breakpoint(addr)
-	db_addr_t addr;
+db_valid_breakpoint(db_addr_t addr)
 {
 	return (1);
 }
 
 void
-db_stack_trace_print(addr, have_addr, count, modif, pr)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char		*modif;
-	int		(*pr)(const char *, ...);
+db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
+    char *modif, int (*pr)(const char *, ...))
 {
 	register_t *fp, pc, rp, *argp;
 	db_sym_t sym;

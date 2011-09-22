@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.19 2011/09/22 13:50:30 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.20 2011/09/22 21:51:24 jsing Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -261,14 +261,13 @@ int nchrtoblktbl = nitems(chrtoblktbl);
  * Returns true if dev is /dev/zero.
  */
 int
-iszerodev(dev)
-	dev_t dev;
+iszerodev(dev_t dev)
 {
 	return (major(dev) == mem_no && minor(dev) == 12);
 }
 
 dev_t
-getnulldev()
+getnulldev(void)
 {
 	return makedev(mem_no, 2);
 }
@@ -277,8 +276,7 @@ getnulldev()
  * Returns true if dev is /dev/mem or /dev/kmem.
  */
 int
-iskmemdev(dev)
-	dev_t dev;
+iskmemdev(dev_t dev)
 {
 	return (major(dev) == mem_no && minor(dev) < 2);
 }

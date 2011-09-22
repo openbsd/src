@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.15 2011/09/22 13:50:30 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.16 2011/09/22 21:51:24 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 Michael Shalayeff
@@ -137,8 +137,7 @@ diskconf(void)
  * to ponder in even more.
  */
 void
-heartbeat(v)
-	void *v;
+heartbeat(void *v)
 {
 	static u_int hbcnt = 0, ocp_total, ocp_idle;
 	int toggle, cp_mask, cp_total, cp_idle;
@@ -401,8 +400,7 @@ const struct hppa_mod_info hppa_knownmods[] = {
 };
 
 const char *
-hppa_mod_info(type, sv)
-	int type, sv;
+hppa_mod_info(int type, int sv)
 {
 	const struct hppa_mod_info *mi;
 	static char fakeid[32];
