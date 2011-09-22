@@ -6074,6 +6074,7 @@
 ./usr/share/man/man3/valloc.3
 ./usr/share/man/man3/varargs.3
 ./usr/share/man/man3/vasprintf.3
+./usr/share/man/man3/vax/infnan.3
 ./usr/share/man/man3/verr.3
 ./usr/share/man/man3/verrx.3
 ./usr/share/man/man3/vfprintf.3

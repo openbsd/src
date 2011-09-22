@@ -185,4 +185,3 @@
 ./usr/lib/scrt0.o
 ./usr/share/man/man1/protoize.1
 ./usr/share/man/man1/unprotoize.1
-./usr/share/man/man3/infnan.3
