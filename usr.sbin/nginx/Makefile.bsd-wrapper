@@ -1,0 +1,88 @@
+# Build wrapper for Nginx
+# $OpenBSD: Makefile.bsd-wrapper,v 1.1.1.1 2011/09/22 23:32:10 robert Exp $
+
+LNDIR=	/usr/bin/lndir
+
+.include <bsd.own.mk>
+
+CONFIGURE_ARGS=	--prefix=/etc/nginx \
+		--conf-path=/etc/nginx/nginx.conf \
+		--sbin-path=/usr/sbin/nginx \
+		--pid-path=/var/run/nginx.pid \
+		--lock-path=/var/run/nginx.lock \
+		--http-log-path=/var/www/logs/access.log \
+		--error-log-path=/var/www/logs/error.log \
+		--http-client-body-temp-path=/tmp/client_body_temp \
+		--http-proxy-temp-path=/tmp/proxy_temp \
+		--http-fastcgi-temp-path=/tmp/fastcgi_temp \
+		--http-scgi-temp-path=/tmp/scgi_temp \
+		--http-uwsgi-temp-path=/tmp/uwsgi_temp \
+		--user=www \
+		--group=www \
+		--with-http_gzip_static_module \
+		--with-http_ssl_module \
+		--with-http_stub_status_module \
+		--with-ipv6 \
+		--without-mail_pop3_module \
+		--without-mail_imap_module \
+		--without-mail_smtp_module
+
+MAN+=	man/nginx.8
+
+.include <bsd.own.mk>
+
+all: 	${.OBJDIR}/objs/ngx_auto_config.h
+	@cd ${.OBJDIR} && ${MAKE}
+
+BEFOREMAN=${.OBJDIR}/objs/ngx_auto_config.h
+
+${.OBJDIR}/objs/ngx_auto_config.h: ${.OBJDIR}/configure
+	@cd ${.OBJDIR} && CC="${CC}" LD_SHLIB="${CC}" \
+		OPTIM="${CFLAGS} ${COPTS}" \
+		PATH="/sbin:/usr/sbin:/bin:/usr/bin" \
+			sh configure ${CONFIGURE_ARGS}
+
+.if !exists(${.OBJDIR}/configure)
+${.OBJDIR}/configure: ${.CURDIR}/configure
+	${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper ${.CURDIR}
+.endif
+
+.if ${.OBJDIR} == ${.CURDIR}
+clean:
+	-@cd ${.OBJDIR} && ${MAKE} clean
+.else
+clean:
+	@cd ${.OBJDIR} && find . \! -type d -print0 | xargs -0r rm
+.endif
+
+cleandir: clean
+
+prereq:
+# nothing left
+
+test:
+	# Nothing here so far...
+
+depend:
+	# Nothing here so far...
+
+lint:
+	# Nothing here so far...
+
+tags:
+	# Nothing here so far...
+
+.ifdef NOMAN
+maninstall:
+	@echo NOMAN is set
+.endif
+
+install: maninstall
+	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} \
+		-g ${BINGRP} -m ${BINMODE} objs/nginx ${DESTDIR}/usr/sbin/nginx
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+.ifndef NOMAN
+.include <bsd.man.mk>
+.endif

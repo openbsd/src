@@ -1,0 +1,4 @@
+Modified files by OpenBSD:
+- src/os/unix/ngx_process_cycle.c
+- src/pcre/pcre_compile.c
+- src/pcre/pcre_fullinfo.c
