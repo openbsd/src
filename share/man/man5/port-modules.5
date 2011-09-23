@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.99 2011/09/21 09:11:54 jasper Exp $
+.\"	$OpenBSD: port-modules.5,v 1.100 2011/09/23 10:42:19 jasper Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 21 2011 $
+.Dd $Mdocdate: September 23 2011 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -618,9 +618,9 @@ to RUN_DEPENDS and also sets NO_REGRESS to Yes.
 If both GNOME_PROJECT and GNOME_VERSION are set, this module defines
 DISTNAME, VERSION, MASTER_SITES, adds x11/gnome to CATEGORIES and
 EXTRACT_SUFX will default to .tar.xz if unset.
-Appends to FAKE_FLAGS.
-Unconditionally sets MODGNOME_DESKTOP_FILE, MODGNOME_BUILD_DEPENDS,
-MODGNOME_CONFIGURE_ARGS, MODGNOME_RUN_DEPENDS and USE_GMAKE.
+Unconditionally appends itlocaledir to FAKE_FLAGS.
+Also unconditionally sets MODGNOME_BUILD_DEPENDS, MODGNOME_CONFIGURE_ARGS,
+MODGNOME_RUN_DEPENDS and USE_GMAKE.
 If MODGNOME_DESKTOP_FILE=Yes, a dependency on
 .Pa devel/desktop-file-utils
 is appended to MODGNOME_RUN_DEPENDS.
