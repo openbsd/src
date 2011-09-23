@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.47 2011/09/18 09:02:18 kettenis Exp $
+# $OpenBSD: Makefile.cross,v 1.48 2011/09/23 08:09:20 guenther Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -31,6 +31,21 @@ TARGET_ARCH=	sh
 TARGET_ARCH=	${TARGET}
 .endif
 TARGET_CPU?=	${TARGET_ARCH}
+
+# List of LP64 archs
+# XXX move to bsd.*.mk?
+LP64_ARCH = amd64 alpha hppa64 ia64 mips64 sparc64 vax64
+
+TARGET_IS_LP64 =
+MACHINE_IS_LP64 =
+.for _ in ${LP64_ARCH}
+. if !empty(TARGET_ARCH:M$_)
+    TARGET_IS_LP64 = yes
+. endif
+. if !empty(MACHINE_ARCH:M$_)
+    MACHINE_IS_LP64 = yes
+. endif
+.endfor
 
 #CROSSCPPFLAGS?=	-nostdinc -I${CROSSDIR}/usr/include
 #CROSSLDFLAGS?=	-nostdlib -L${CROSSDIR}/usr/lib -static
@@ -134,6 +149,10 @@ cross-env:
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET}
 
 ${CROSSDIRS}:
+.if ${TARGET_IS_LP64} != ${MACHINE_IS_LP64}
+	@echo "host and target have different size longs"
+	@echo "cross compiler generates bad code; aborting"; exit 1
+.endif
 	@-mkdir -p ${CROSSDIR}
 	@echo ${TARGET_ARCH} > ${CROSSDIR}/TARGET_ARCH
 	@echo TARGET_ARCH is `cat ${CROSSDIR}/TARGET_ARCH`
