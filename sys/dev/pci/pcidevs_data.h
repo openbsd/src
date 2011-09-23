@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1622 2011/09/16 20:07:20 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1623 2011/09/23 08:54:25 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1476,6 +1476,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Hudson AHCI",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON_AHCI_2,
+	    "Hudson AHCI",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON_OHCI,
 	    "Hudson USB",
 	},
@@ -1502,6 +1506,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON_PCI,
 	    "Hudson PCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON_XHCI,
+	    "Hudson xHCI",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_RS780_HB,
@@ -1921,7 +1929,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ASMEDIA, PCI_PRODUCT_ASMEDIA_ASM1042,
-	    "ASM1042 XHCI",
+	    "ASM1042 xHCI",
 	},
 	{
 	    PCI_VENDOR_ASUSTEK, PCI_PRODUCT_ASUSTEK_HFCPCI,
@@ -6217,7 +6225,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ETRON, PCI_PRODUCT_ETRON_XHCI,
-	    "XHCI",
+	    "xHCI",
 	},
 	{
 	    PCI_VENDOR_ES, PCI_PRODUCT_ES_FREEDOM,
@@ -6310,6 +6318,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_FREESCALE, PCI_PRODUCT_FREESCALE_MPC8343,
 	    "MPC8343",
+	},
+	{
+	    PCI_VENDOR_FRESCO, PCI_PRODUCT_FRESCO_FL1000,
+	    "FL1000 xHCI",
+	},
+	{
+	    PCI_VENDOR_FRESCO, PCI_PRODUCT_FRESCO_FL1009,
+	    "FL1009 xHCI",
 	},
 	{
 	    PCI_VENDOR_FUJITSU, PCI_PRODUCT_FUJITSU_PW008GE5,
@@ -7994,6 +8010,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOAT,
 	    "I/OAT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_XHCI,
+	    "7 Series xHCI",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82597EX_SR,
@@ -12617,7 +12637,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_uPD720200,
-	    "PCIE-XHCI",
+	    "xHCI",
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VERSAMAESTRO,
@@ -17824,6 +17844,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "XIO3130 PCIE-PCIE downstream",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_XHCI,
+	    "xHCI",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100A,
 	    "ACX100A",
 	},
@@ -20926,6 +20950,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_ETRON,
 	    "Etron",
+	},
+	{
+	    PCI_VENDOR_FRESCO,
+	    "Fresco Logic",
 	},
 	{
 	    PCI_VENDOR_SYMPHONY2,

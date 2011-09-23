@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1622 2011/09/16 20:07:20 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1623 2011/09/23 08:54:25 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -321,6 +321,7 @@
 #define	PCI_VENDOR_ASMEDIA	0x1b21		/* ASMedia */
 #define	PCI_VENDOR_MARVELL2	0x1b4b		/* Marvell */
 #define	PCI_VENDOR_ETRON	0x1b6f		/* Etron */
+#define	PCI_VENDOR_FRESCO	0x1b73		/* Fresco Logic */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram */
 #define	PCI_VENDOR_TEHUTI	0x1fc9		/* Tehuti Networks */
@@ -765,6 +766,7 @@
 #define	PCI_PRODUCT_AMD_8111_ACA	0x746d		/* 8111 AC97 */
 #define	PCI_PRODUCT_AMD_HUDSON2_SATA	0x7800		/* Hudson-2 SATA */
 #define	PCI_PRODUCT_AMD_HUDSON_AHCI_1	0x7801		/* Hudson AHCI */
+#define	PCI_PRODUCT_AMD_HUDSON_AHCI_2	0x7804		/* Hudson AHCI */
 #define	PCI_PRODUCT_AMD_HUDSON_OHCI	0x7807		/* Hudson USB */
 #define	PCI_PRODUCT_AMD_HUDSON_EHCI	0x7808		/* Hudson USB */
 #define	PCI_PRODUCT_AMD_HUDSON2_SMB	0x780b		/* Hudson-2 SMBus */
@@ -772,6 +774,7 @@
 #define	PCI_PRODUCT_AMD_HUDSON_HDA	0x780d		/* Hudson HD Audio */
 #define	PCI_PRODUCT_AMD_HUDSON_LPC	0x780e		/* Hudson LPC */
 #define	PCI_PRODUCT_AMD_HUDSON_PCI	0x780f		/* Hudson PCI */
+#define	PCI_PRODUCT_AMD_HUDSON_XHCI	0x7812		/* Hudson xHCI */
 #define	PCI_PRODUCT_AMD_RS780_HB	0x9600		/* RS780 Host */
 #define	PCI_PRODUCT_AMD_RS880_HB	0x9601		/* RS880 Host */
 #define	PCI_PRODUCT_AMD_RS780_PCIE_1	0x9602		/* RS780 PCIE */
@@ -894,7 +897,7 @@
 #define	PCI_PRODUCT_ASIX_AX88140A	0x1400		/* AX88140A/88141 */
 
 /* ASMedia products */
-#define	PCI_PRODUCT_ASMEDIA_ASM1042	0x1042		/* ASM1042 XHCI */
+#define	PCI_PRODUCT_ASMEDIA_ASM1042	0x1042		/* ASM1042 xHCI */
 
 /* Asustek products */
 #define	PCI_PRODUCT_ASUSTEK_HFCPCI	0x0675		/* ISDN */
@@ -2091,7 +2094,7 @@
 #define	PCI_PRODUCT_ESSENTIAL_RR_GIGE	0x0005		/* RoadRunner Gig-E */
 
 /* Etron products */
-#define	PCI_PRODUCT_ETRON_XHCI	0x7023		/* XHCI */
+#define	PCI_PRODUCT_ETRON_XHCI	0x7023		/* xHCI */
 
 /* Evans & Sutherland products */
 #define	PCI_PRODUCT_ES_FREEDOM	0x0001		/* Freedom GBus */
@@ -2129,6 +2132,10 @@
 #define	PCI_PRODUCT_FREESCALE_MPC8347_PBGA	0x0085		/* MPC8347 PBGA */
 #define	PCI_PRODUCT_FREESCALE_MPC8343E	0x0086		/* MPC8343E */
 #define	PCI_PRODUCT_FREESCALE_MPC8343	0x0087		/* MPC8343 */
+
+/* Fresco Logic products */
+#define	PCI_PRODUCT_FRESCO_FL1000	0x1000		/* FL1000 xHCI */
+#define	PCI_PRODUCT_FRESCO_FL1009	0x1009		/* FL1009 xHCI */
 
 /* Fujitsu products */
 #define	PCI_PRODUCT_FUJITSU_PW008GE5	0x11a1		/* PW008GE5 */
@@ -2592,6 +2599,7 @@
 #define	PCI_PRODUCT_INTEL_82845_HB	0x1a30		/* 82845 Host */
 #define	PCI_PRODUCT_INTEL_82845_AGP	0x1a31		/* 82845 AGP */
 #define	PCI_PRODUCT_INTEL_IOAT	0x1a38		/* I/OAT */
+#define	PCI_PRODUCT_INTEL_7SERIES_XHCI	0x1e31		/* 7 Series xHCI */
 #define	PCI_PRODUCT_INTEL_82597EX_SR	0x1a48		/* PRO/10GbE SR (82597EX) */
 #define	PCI_PRODUCT_INTEL_82597EX_LR	0x1b48		/* PRO/10GbE LR (82597EX) */
 #define	PCI_PRODUCT_INTEL_6SERIES_SATA_1	0x1c00		/* 6 Series SATA */
@@ -3837,7 +3845,7 @@
 #define	PCI_PRODUCT_NEC_uPD72874	0x00f2		/* Firewire */
 #define	PCI_PRODUCT_NEC_USB2	0x00e0		/* USB */
 #define	PCI_PRODUCT_NEC_uPD720400	0x0125		/* PCIE-PCIX */
-#define	PCI_PRODUCT_NEC_uPD720200	0x0194		/* PCIE-XHCI */
+#define	PCI_PRODUCT_NEC_uPD720200	0x0194		/* xHCI */
 #define	PCI_PRODUCT_NEC_VERSAMAESTRO	0x8058		/* Versa Maestro */
 #define	PCI_PRODUCT_NEC_VERSAPRONXVA26D	0x803c		/* Versa Va26D Maestro */
 
@@ -5305,6 +5313,7 @@
 #define	PCI_PRODUCT_TI_XIO2000A	0x8231		/* XIO2000A PCIE-PCI */
 #define	PCI_PRODUCT_TI_XIO3130U	0x8232		/* XIO3130 PCIE-PCIE upstream */
 #define	PCI_PRODUCT_TI_XIO3130D	0x8233		/* XIO3130 PCIE-PCIE downstream */
+#define	PCI_PRODUCT_TI_XHCI	0x8241		/* xHCI */
 #define	PCI_PRODUCT_TI_ACX100A	0x8400		/* ACX100A */
 #define	PCI_PRODUCT_TI_ACX100B	0x8401		/* ACX100B */
 #define	PCI_PRODUCT_TI_ACX111	0x9066		/* ACX111 */
