@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.85 2011/07/03 15:25:10 schwarze Exp $
+.\" $OpenBSD: ports.7,v 1.86 2011/09/23 18:59:38 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: July 3 2011 $
+.Dd $Mdocdate: September 23 2011 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -419,40 +419,15 @@ This shows up as undefined references in libraries, in which case there
 is no choice but to proceed the old way: deinstall the offending package
 and everything built on top of it, build and install new packages.
 .Sh BULK PACKAGE BUILDING
-The ports tree contains some mechanisms to save space when building
-large collections of packages.
-If
-.Ev TRUST_PACKAGES
-and
-.Ev BULK
-are set to
-.Sq Yes
-for a package build, some shortcuts are taken to allow cleaning up working
-directories on the fly.
-.Pp
-Some important caveats apply:
-the packages already built in the package repository are assumed to be
-up-to-date, the database of installed packages is assumed
-to be accurate (TRUST_PACKAGES), and the bulk cookies are assumed to be
-up-to-date (BULK).
-.Pp
-This means that newer iterations of package buildings should make sure
-those conditions are met, which entails erasing old package repository,
-removing packages that need to be rebuilt from the base of installed
-packages, and cleaning up old bulk cookies.
-.Pp
-If any of these conditions is not met, the package build may run into weird
-problems.
-.Pp
-Some experimental framework allows for building a new set of packages
-without first uninstalling the old ones: move the old packages away,
-remove all bulk cookies and update cookies, and use the
-.Ar update
-target with
-.Ev FORCE_UPDATE
-set to
-.Sq Yes
-for the build.
+Building any significant number of packages from the ports tree should use
+.Xr dpb 1 ,
+a tool located inside the ports tree proper
+.Po
+normally as
+.Pa /usr/ports/infrastructure/bin/dpb
+.Pc .
+In particular, it can take advantage of machine clusters (same architecture
+and same installation), and of multi-core machines.
 .Sh NETWORK CONFIGURATION
 The variables pertaining to network access have been marshalled into
 .Pa ${PORTSDIR}/infrastructure/templates/network.conf.template .
@@ -691,6 +666,7 @@ Filter list for systrace.
 List of users and groups created by ports.
 .El
 .Sh SEE ALSO
+.Xr dpb 1 ,
 .Xr make 1 ,
 .Xr pkg_add 1 ,
 .Xr pkg_create 1 ,
