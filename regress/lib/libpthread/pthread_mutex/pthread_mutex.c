@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_mutex.c,v 1.6 2005/12/19 05:22:57 tedu Exp $	*/
+/*	$OpenBSD: pthread_mutex.c,v 1.7 2011/09/23 10:39:08 uwe Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -160,25 +160,48 @@ test_mutex_debug(void)
 }
 
 static void
+test_mutex_recursive_lock(pthread_mutex_t *mutex)
+{
+	int i;
+	int j = 9;
+
+	printf("  %s()\n", __func__);
+	CHECKr(pthread_mutex_lock(mutex));
+	for (i = 0; i < j; i++)
+		CHECKr(pthread_mutex_lock(mutex));
+	for (i = 0; i < j; i++)
+		CHECKr(pthread_mutex_unlock(mutex));
+	CHECKr(pthread_mutex_unlock(mutex));
+}
+
+static void
+test_mutex_recursive_trylock(pthread_mutex_t *mutex)
+{
+	int i;
+	int j = 9;
+
+	printf("  %s()\n", __func__);
+	CHECKr(pthread_mutex_trylock(mutex));
+	for (i = 0; i < j; i++)
+		CHECKr(pthread_mutex_trylock(mutex));
+	for (i = 0; i < j; i++)
+		CHECKr(pthread_mutex_unlock(mutex));
+	CHECKr(pthread_mutex_unlock(mutex));
+}
+
+static void
 test_mutex_recursive(void)
 {
 	pthread_mutexattr_t mutex_recursive_attr; 
 	pthread_mutex_t mutex_recursive; 
-	int i;
-	int j = 9;
 
 	printf("test_mutex_recursive()\n");
 	CHECKr(pthread_mutexattr_init(&mutex_recursive_attr));
 	CHECKr(pthread_mutexattr_settype(&mutex_recursive_attr, 
 	    PTHREAD_MUTEX_RECURSIVE));
 	CHECKr(pthread_mutex_init(&mutex_recursive, &mutex_recursive_attr));
-
-	CHECKr(pthread_mutex_lock(&mutex_recursive));
-	for (i = 0; i < j; i++)
-		CHECKr(pthread_mutex_lock(&mutex_recursive));
-	for (i = 0; i < j; i++)
-		CHECKr(pthread_mutex_unlock(&mutex_recursive));
-	CHECKr(pthread_mutex_unlock(&mutex_recursive));
+	test_mutex_recursive_lock(&mutex_recursive);
+	test_mutex_recursive_trylock(&mutex_recursive);
 	/* Posix D10 says undefined behaviour? */
 	ASSERTe(pthread_mutex_unlock(&mutex_recursive), != 0);
 	CHECKr(pthread_mutex_destroy(&mutex_recursive));
