@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar.h,v 1.16 2011/04/05 22:37:39 dlg Exp $ */
+/*	$OpenBSD: siopvar.h,v 1.17 2011/09/23 10:40:06 miod Exp $ */
 /*	$NetBSD: siopvar.h,v 1.22 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -51,8 +51,8 @@ struct siop_dmamem {
 struct siop_xfer {
 	struct siop_common_xfer siop_tables;
 	/* u_int32_t resel[sizeof(load_dsa) / sizeof(load_dsa[0])]; */
-	/* Add some entries to make size 384 bytes (256+128) */
-	u_int32_t resel[36];
+	/* Add some entries to make size 384 bytes (244+140) */
+	u_int32_t resel[35];
 } __packed;
 
 /*
