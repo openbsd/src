@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1622 2011/09/16 20:07:20 jsg Exp $
+$OpenBSD: pcidevs,v 1.1623 2011/09/23 08:54:25 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -316,6 +316,7 @@ vendor	QUMRANET	0x1af4	Qumranet
 vendor	ASMEDIA		0x1b21	ASMedia
 vendor	MARVELL2	0x1b4b	Marvell
 vendor	ETRON		0x1b6f	Etron
+vendor	FRESCO		0x1b73	Fresco Logic
 vendor	SYMPHONY2	0x1c1c	Symphony Labs
 vendor	TEKRAM2		0x1de1	Tekram
 vendor	TEHUTI		0x1fc9	Tehuti Networks
@@ -760,6 +761,7 @@ product AMD 8111_PMC		0x746b	8111 Power
 product AMD 8111_ACA		0x746d	8111 AC97
 product AMD HUDSON2_SATA	0x7800	Hudson-2 SATA
 product AMD HUDSON_AHCI_1	0x7801	Hudson AHCI
+product AMD HUDSON_AHCI_2	0x7804	Hudson AHCI
 product AMD HUDSON_OHCI		0x7807	Hudson USB
 product AMD HUDSON_EHCI		0x7808	Hudson USB
 product AMD HUDSON2_SMB		0x780b	Hudson-2 SMBus
@@ -767,6 +769,7 @@ product AMD HUDSON2_IDE		0x780c	Hudson-2 IDE
 product AMD HUDSON_HDA		0x780d	Hudson HD Audio
 product AMD HUDSON_LPC		0x780e	Hudson LPC
 product AMD HUDSON_PCI		0x780f	Hudson PCI
+product AMD HUDSON_XHCI		0x7812	Hudson xHCI
 product AMD RS780_HB		0x9600	RS780 Host
 product AMD RS880_HB		0x9601	RS880 Host
 product AMD RS780_PCIE_1	0x9602	RS780 PCIE
@@ -889,7 +892,7 @@ product ARECA ARC1880		0x1880	ARC-1880
 product ASIX AX88140A		0x1400	AX88140A/88141
 
 /* ASMedia products */
-product ASMEDIA ASM1042		0x1042	ASM1042 XHCI
+product ASMEDIA ASM1042		0x1042	ASM1042 xHCI
 
 /* Asustek products */
 product ASUSTEK HFCPCI		0x0675	ISDN
@@ -2086,7 +2089,7 @@ product ESSENTIAL RR_HIPPI	0x0001	RoadRunner HIPPI
 product ESSENTIAL RR_GIGE	0x0005	RoadRunner Gig-E
 
 /* Etron products */
-product ETRON XHCI		0x7023	XHCI
+product ETRON XHCI		0x7023	xHCI
 
 /* Evans & Sutherland products */
 product ES FREEDOM		0x0001	Freedom GBus
@@ -2124,6 +2127,10 @@ product FREESCALE MPC8347E_PBGA	0x0084	MPC8347E PBGA
 product FREESCALE MPC8347_PBGA	0x0085	MPC8347 PBGA
 product FREESCALE MPC8343E	0x0086	MPC8343E
 product FREESCALE MPC8343	0x0087	MPC8343
+
+/* Fresco Logic products */
+product FRESCO FL1000		0x1000	FL1000 xHCI
+product FRESCO FL1009		0x1009	FL1009 xHCI
 
 /* Fujitsu products */
 product FUJITSU PW008GE5	0x11a1	PW008GE5
@@ -2587,6 +2594,7 @@ product INTEL 82840_PCI		0x1a24	82840 PCI
 product INTEL 82845_HB		0x1a30	82845 Host
 product INTEL 82845_AGP		0x1a31	82845 AGP
 product INTEL IOAT		0x1a38	I/OAT
+product INTEL 7SERIES_XHCI	0x1e31	7 Series xHCI
 product INTEL 82597EX_SR	0x1a48	PRO/10GbE SR (82597EX)
 product INTEL 82597EX_LR	0x1b48	PRO/10GbE LR (82597EX)
 product INTEL 6SERIES_SATA_1	0x1c00	6 Series SATA
@@ -3832,7 +3840,7 @@ product NEC PKUG		0x007d	I/O
 product NEC uPD72874		0x00f2	Firewire
 product NEC USB2		0x00e0	USB
 product NEC uPD720400		0x0125	PCIE-PCIX
-product NEC uPD720200		0x0194	PCIE-XHCI
+product NEC uPD720200		0x0194	xHCI
 product NEC VERSAMAESTRO	0x8058	Versa Maestro
 product NEC VERSAPRONXVA26D	0x803c	Versa Va26D Maestro
 
@@ -5300,6 +5308,7 @@ product TI PCI1620_MISC		0x8201	PCI1620 Misc
 product TI XIO2000A		0x8231	XIO2000A PCIE-PCI
 product TI XIO3130U		0x8232	XIO3130 PCIE-PCIE upstream
 product TI XIO3130D		0x8233	XIO3130 PCIE-PCIE downstream
+product TI XHCI			0x8241	xHCI
 product TI ACX100A		0x8400	ACX100A
 product TI ACX100B		0x8401	ACX100B
 product TI ACX111		0x9066	ACX111
