@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.47 2011/09/22 08:15:01 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.48 2011/09/24 17:35:15 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -45,7 +45,7 @@ rc_stop() {
 }
 
 rc_do() {
-	if [ -n "${RC_DEBUG}" ]; then
+	if [ -n "${_RC_DEBUG}" ]; then
 		echo "doing $@" && "$@"
 	else
 		"$@" >/dev/null 2>&1
@@ -83,13 +83,13 @@ rc_cmd() {
 	[ $(id -u) -eq 0 ] || \
 		rc_err "$0: need root privileges"
 
-	[ -z "${RC_FORCE}" ] && [ X"${daemon_flags}" = X"NO" ] && exit 1
+	[ -z "${_RC_FORCE}" ] && [ X"${daemon_flags}" = X"NO" ] && exit 1
 
 	eval _enotsup=\${rc_${1}}
 	[ X"${_enotsup}" != X"NO" ] || rc_err "$0: $1 is not supported"
 
 	[ X"${rc_bg}" = X"YES" ] && local _bg="&"
-	[ -n "${RC_DEBUG}" ] || local _n="-n"
+	[ -n "${_RC_DEBUG}" ] || local _n="-n"
 
 	case "$1" in
 	check)
@@ -143,11 +143,10 @@ rc_cmd() {
 
 [ -n "${daemon}" ] || rc_err "$0: daemon is not set"
 
-unset RC_DEBUG RC_FORCE
 while getopts "df" c; do
 	case "$c" in
-		d) RC_DEBUG=1;;
-		f) RC_FORCE=1;;
+		d) export _RC_DEBUG=1;;
+		f) export _RC_FORCE=1;;
 		*) rc_usage;;
 	esac
 done
@@ -163,7 +162,7 @@ getcap -f /etc/login.conf ${_name} 1>/dev/null 2>&1 && \
 [ -z "${daemon_class}" ] && daemon_class=daemon
 [ -z "${daemon_user}"  ] && daemon_user=root
 
-[ -n "${RC_FORCE}" ] && [ X"${_rcflags}" = X"NO" ] && unset _rcflags
+[ -n "${_RC_FORCE}" ] && [ X"${_rcflags}" = X"NO" ] && unset _rcflags
 [ -n "${_rcflags}" ] && daemon_flags=${_rcflags}
 [ -n "${_rcuser}"  ] && daemon_user=${_rcuser}
 
