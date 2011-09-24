@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.85 2011/06/23 22:46:12 schwarze Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.86 2011/09/24 12:23:09 millert Exp $
 #
 # Build wrapper for Perl 5.10.0
 #
@@ -19,7 +19,7 @@ CFLAGS+= -fno-strict-aliasing
 CFLAGS+= -fno-delete-null-pointer-checks
 .endif
 
-CONFIGURE_ARGS= -dsE -Dopenbsd_distribution=defined
+CONFIGURE_ARGS= -dsE -Dopenbsd_distribution=defined -Dccflags='-DNO_LOCALE_NUMERIC -DNO_LOCALE_COLLATE'
 .if defined(THREADED_PERL) && ($(THREADED_PERL) == true)
 CONFIGURE_ARGS+= -Dusethreads
 CFLAGS+= -pthread
@@ -52,7 +52,7 @@ DYNALOADER=ext/DynaLoader/dl_dlopen.xs
 
 # Arguments passed to Configure...
 
-CPPFLAGS+= -DPERL_CORE -DPERL_RANDOM_DEVICE=\"/dev/arandom\" -I.
+CPPFLAGS+= -DPERL_CORE -DNO_LOCALE_NUMERIC -DNO_LOCALE_COLLATE -DPERL_RANDOM_DEVICE=\"/dev/arandom\" -I.
 
 .if defined (INSTALL_STRIP) && ${INSTALL_STRIP} == "-s"
 STRIPFLAGS='-s'
