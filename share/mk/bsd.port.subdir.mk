@@ -1,5 +1,5 @@
-.include <bsd.own.mk>
+.if !defined(BSD_OWN_MK)
+.  include <bsd.own.mk>
+.endif
 PORTSDIR?=	/usr/ports
 .include	"${PORTSDIR}/infrastructure/mk/bsd.port.subdir.mk"
-
-# if you can't find this file, cvs update your ports tree as well.

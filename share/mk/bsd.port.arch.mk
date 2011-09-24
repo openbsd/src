@@ -2,4 +2,4 @@
 .  include <bsd.own.mk>
 .endif
 PORTSDIR?=	/usr/ports
-.include	"${PORTSDIR}/infrastructure/mk/bsd.port.mk"
+.include	"${PORTSDIR}/infrastructure/mk/bsd.port.arch.mk"

@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.45 2011/06/23 22:46:12 schwarze Exp $
+#	$OpenBSD: bsd.README,v 1.46 2011/09/24 07:26:01 espie Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -14,6 +14,7 @@ bsd.nls.mk		- National Language Support
 bsd.obj.mk		- creating 'obj' directories and cleaning up
 bsd.own.mk		- define common variables
 bsd.port.mk		- building ports
+bsd.port.arch.mk	- glue for building ports with MD stuff
 bsd.port.subdir.mk	- targets for building subdirectories for ports
 bsd.prog.mk		- building programs from source files
 bsd.regress.mk		- regression tests
