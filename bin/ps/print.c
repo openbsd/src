@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.48 2011/04/10 03:20:58 guenther Exp $	*/
+/*	$OpenBSD: print.c,v 1.49 2011/09/25 00:32:47 guenther Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -245,7 +245,7 @@ state(const struct kinfo_proc *kp, VARENT *ve)
 		*cp++ = 'x';
 	if (flag & P_WEXIT && kp->p_stat != SZOMB)
 		*cp++ = 'E';
-	if (flag & P_PPWAIT)
+	if (flag & PS_ISPWAIT)
 		*cp++ = 'V';
 	if (flag & P_SYSTEM)
 		*cp++ = 'K';
