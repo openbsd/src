@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.arch.mk.5,v 1.1 2011/09/25 08:00:32 espie Exp $
+.\" $OpenBSD: bsd.port.arch.mk.5,v 1.2 2011/09/25 18:12:12 jmc Exp $
 .\"
 .\" Copyright (c) 2011 Marc Espie
 .\"
@@ -38,7 +38,6 @@ ONLY_FOR_ARCHS-special = i386
 .Ed
 .Pp
 .Fd .include <bsd.port.arch.mk>
-.Pp
 .Bd -literal
 #some more lines such as
 \&.if ${BUILD_PACKAGES:M-special}
@@ -55,21 +54,21 @@ It is normally included as part of the larger
 but it is also available separately for ports that require it.
 .Nm
 assumes the following variables are already defined:
-.Bl -offset indent -tag -compact -width ONLY_FOR_ARCH-<sub>
+.Bl -tag -offset indent -compact -width ONLY_FOR_ARCH-<sub>
 .It MULTI_PACKAGES
 .It FLAVOR
 .It Ev NOT_FOR_ARCHS-<sub>
 .It Ev ONLY_FOR_ARCHS-<sub>
 .El
 and optionally, if the default won't be appropriate
-.Bl -offset indent -tag -compact -width ONLY_FOR_ARCH-<sub>
+.Bl -tag -offset indent -compact -width ONLY_FOR_ARCH-<sub>
 .It Ev NO_SHARED_LIBS
 .It Ev IGNORE-<sub>
 .El
 .Pp
 It will set up the following variables for use in the rest of the
 .Pa Makefile :
-.Bl -offset indent -tag -compact -width ONLY_FOR_ARCH-<sub>
+.Bl -tag -offset indent -compact -width ONLY_FOR_ARCH-<sub>
 .It Ev ARCH
 .It Ev ALL_ARCHS
 .It Ev APM_ARCHS
@@ -82,11 +81,11 @@ It will set up the following variables for use in the rest of the
 .It Ev NO_SHARED_LIBS
 .It Ev IGNORE-<sub>
 .It Ev BUILD_PACKAGES
-.El 
+.El
 .Pp
 Most importantly,
 .Ev BUILD_PACKAGES
-will be correctly setup, taking
+will be correctly set up, taking
 .Ev ONLY_FOR_ARCHS-<sub>
 and
 .Ev NOT_FOR_ARCHS-<sub>
