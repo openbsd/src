@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.67 2011/08/24 10:29:57 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.68 2011/09/25 18:53:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -697,7 +697,7 @@ window_pane_spawn(struct window_pane *wp, const char *cmd, const char *shell,
 		if (*wp->cmd != '\0') {
 			/* Set SHELL but only if it is currently not useful. */
 			shell = getenv("SHELL");
-			if (shell == NULL || *shell == '\0' || areshell(shell))
+			if (checkshell(shell))
 				setenv("SHELL", wp->shell, 1);
 
 			execl(_PATH_BSHELL, "sh", "-c", wp->cmd, (char *) NULL);
