@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.43 2010/06/29 17:17:53 nicm Exp $
+#	$OpenBSD: Makefile,v 1.44 2011/09/25 08:00:32 espie Exp $
 #	$NetBSD: Makefile,v 1.14 1995/05/11 23:13:15 cgd Exp $
 
 # missing: dump.5 plot.5
 
-MAN=	a.out.5 acct.5 bsd.port.mk.5 bsd.regress.mk.5 changelist.5 core.5 \
+MAN=	a.out.5 acct.5 bsd.port.mk.5 bsd.port.arch.mk.5 bsd.regress.mk.5 \
+	changelist.5 core.5 \
 	defaultdomain.5 dir.5 disktab.5 elf.5 ethers.5 fbtab.5 files.conf.5 \
 	forward.5 fs.5 fstab.5 genassym.cf.5 group.5 hostname.if.5 \
 	hosts.equiv.5 hosts.5 intro.5 link.5 login.conf.5 mixerctl.conf.5 \

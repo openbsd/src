@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.287 2011/09/21 09:07:47 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.288 2011/09/25 08:00:32 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 21 2011 $
+.Dd $Mdocdate: September 25 2011 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -723,6 +723,11 @@ Use in conjunction with
 .Ev INTERACTIVE
 to simplify bulk-package builds.
 .Pq See IGNORE .
+.It Ev BUILD_PACKAGES
+The actual list of packages that will be built, once architecture problems
+and pseudo-flavors have been taken into account.
+See
+.Qq Flavors and multi-packages .
 .It Ev BROKEN
 Define only for broken ports, set to reason the port is broken.
 See also
@@ -1492,6 +1497,8 @@ Set to
 if platform does not support shared libraries.
 To be tested after including
 .Nm bsd.port.mk ,
+or
+.Xr bsd.port.arch.mk 5 ,
 if neither PFRAG.shared nor CONFIGURE_SHARED are enough.
 .It Ev NO_SYSTRACE
 Port does not build with systrace enabled build targets.
@@ -1746,12 +1753,42 @@ to use their progress-meter even in the absence of a terminal.
 .It Ev PSEUDO_FLAVORS
 Extra list of flavors that do not register in package names, but are still
 used to control build logic, and e.g., working directory names.
-Its main use is for disabling part of a multi-packages build, for instance:
+Its only use should be for disabling part of a multi-packages build, 
+for instance:
 .Bd -literal
 FLAVOR=no_gnome make package
 .Ed
 .Pp
-Creation of a separate working directory is mandatory.
+Pseudo-flavors should be named as
+.Sq no_something
+to disable the build of subpackage
+.Sq -something
+.Po
+and possibly some others, by restricting
+.Ev BUILD_PACKAGES 
+.Pc .
+Pseudo-flavors should always be handled through
+.Xr bsd.port.arch.mk 5 .
+A pseudo-flavor can remove several subpackages through the following
+construct.
+.Bd -literal -offset indent
+# pseudo-flavor no_gui will also remove gtk and gtk3
+MULTI_PACKAGES = -main -gtk -gtk3 -gui
+# ...
+\&.include <bsd.port.arch.mk>
+
+# remove extra build components
+\&.if !${BUILD_PACKAGES:M-gui}
+BUILD_PACKAGES := ${BUILD_PACKAGES:N-gtk:N-gtk3}
+\&.endif
+
+# normal configure setup, e.g.,
+\&.if ${BUILD_PACKAGES:M-gtk}
+# ...
+.Ed
+.Pp
+Caveat: creation of a separate working directory is mandatory for a
+pseudo-flavor.  
 If, at a later time, a full build with all subpackages is required,
 all the work will need to be done again.
 .It Ev RCDIR
@@ -2727,6 +2764,9 @@ FLAVORS and MULTI_PACKAGES.
 The current MULTI_PACKAGES mechanism was introduced after
 .Ox 4.0 .
 .Pp
+The arch-dependent part was refined after
+.Ox 5.0 .
+.Pp
 If a port can be compiled with several options, these options
 should be turned into FLAVORS.
 The port maintainer will set FLAVORS to be the list of possible options in
@@ -2890,6 +2930,44 @@ Thus,
 should always list all subpackages,
 even things not buildable on the current architecture,
 for indexing purposes.
+.Pp
+Starting with
+.Ox 5.1 ,
+.Xr bsd.port.arch.mk 5
+should be used to simplify the handling of
+.Ev MULTI_PACKAGES
+in arch-dependent setups:
+.Pp
+Make sure
+.Ev MULTI_PACKAGES ,
+.Ev ONLY_FOR_ARCHS* ,
+and
+.Ev PSEUDO_FLAVORS
+are defined correctly, then 
+.Bd -literal -offset indent
+\&.include <bsd.port.arch.mk>
+.Ed
+.Pp
+This will compute
+.Ev BUILD_PACKAGES ,
+the list of actual subpackages to build with the current setup,
+by taking arch constraints and pseudo-flavors into account.
+Then test
+.Ev BUILD_PACKAGES
+to set up the right configuration, e.g., to check if
+.Ev SUBPACKAGE
+.Ar -mono
+should be built:
+.Bd -literal -offset indent
+\&.if ${BUILD_PACKAGES:M-mono}
+.Ed
+.Pp
+The
+.Pa lang/gcc/4.2
+or
+.Pa print/poppler
+ports should provide examples of proper use.
+.Pp
 Note that
 .Xr dpb 1
 will break if all subpackages are not properly listed.
@@ -3002,6 +3080,7 @@ non-flavor version if there is no flavor-specific file around.
 .Xr pkg_add 1 ,
 .Xr pkg_create 1 ,
 .Xr OpenBSD::Intro 3p ,
+.Xr bsd.port.arch.mk 5 ,
 .Xr port-modules 5 ,
 .Xr library-specs 7 ,
 .Xr mirroring-ports 7 ,
