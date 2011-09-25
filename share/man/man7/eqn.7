@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eqn.7,v 1.1 2011/09/18 10:38:57 schwarze Exp $
+.\"	$OpenBSD: eqn.7,v 1.2 2011/09/25 18:25:43 jmc Exp $
 .\"
 .\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2011 $
+.Dd $Mdocdate: September 25 2011 $
 .Dt EQN 7
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh DESCRIPTION
 The
 .Nm eqn
-language is a equation-formatting language.
+language is an equation-formatting language.
 It is used within
 .Xr mdoc 7
 and
@@ -37,7 +37,7 @@ This manual describes the
 .Nm
 language accepted by the
 .Xr mandoc 1
-utility, which correspond to the Second Edition eqn specification (see
+utility, which corresponds to the Second Edition eqn specification (see
 .Sx SEE ALSO
 for references).
 .Pp
@@ -132,7 +132,8 @@ This allows for arbitrary enclosure of terms (not just quotes), such as
 .D1 define Ar foo cbar bazc
 .Pp
 It is an error to have an empty
-.Ar key or
+.Ar key
+or
 .Ar val .
 Note that a quoted
 .Ar key
