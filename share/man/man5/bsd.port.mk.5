@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.288 2011/09/25 08:00:32 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.289 2011/09/25 16:53:13 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1753,7 +1753,7 @@ to use their progress-meter even in the absence of a terminal.
 .It Ev PSEUDO_FLAVORS
 Extra list of flavors that do not register in package names, but are still
 used to control build logic, and e.g., working directory names.
-Its only use should be for disabling part of a multi-packages build, 
+Its only use should be for disabling part of a multi-packages build,
 for instance:
 .Bd -literal
 FLAVOR=no_gnome make package
@@ -1765,7 +1765,7 @@ to disable the build of subpackage
 .Sq -something
 .Po
 and possibly some others, by restricting
-.Ev BUILD_PACKAGES 
+.Ev BUILD_PACKAGES
 .Pc .
 Pseudo-flavors should always be handled through
 .Xr bsd.port.arch.mk 5 .
@@ -1788,7 +1788,7 @@ BUILD_PACKAGES := ${BUILD_PACKAGES:N-gtk:N-gtk3}
 .Ed
 .Pp
 Caveat: creation of a separate working directory is mandatory for a
-pseudo-flavor.  
+pseudo-flavor.
 If, at a later time, a full build with all subpackages is required,
 all the work will need to be done again.
 .It Ev RCDIR
@@ -2943,7 +2943,7 @@ Make sure
 .Ev ONLY_FOR_ARCHS* ,
 and
 .Ev PSEUDO_FLAVORS
-are defined correctly, then 
+are defined correctly, then
 .Bd -literal -offset indent
 \&.include <bsd.port.arch.mk>
 .Ed
