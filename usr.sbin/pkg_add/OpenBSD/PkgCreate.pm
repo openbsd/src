@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.48 2011/09/17 09:49:55 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.49 2011/09/25 08:26:28 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -640,11 +640,8 @@ sub ask_tree
 	if ($pid == 0) {
 		chdir $portsdir or exit 2;
 		open STDERR, '>', '/dev/null';
-		my ($dir, @parts) = split(/\,/, $dep->{pkgpath});
-		if (@parts == 0 || @parts == 1 && $parts[0] =~ m/^\-/) {
-			unshift(@parts, '');
-		}
-		$ENV{SUBDIR} = join(',', $dir, @parts);
+		$ENV{FULLPATH} = 'Yes';
+		$ENV{SUBDIR} = $dep->{pkgpath};
 		$ENV{ECHO_MSG} = ':';
 		exec $make ('make', @action);
 	}
