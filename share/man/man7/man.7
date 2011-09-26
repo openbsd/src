@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.23 2011/09/20 22:46:45 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.24 2011/09/26 21:30:03 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 20 2011 $
+.Dd $Mdocdate: September 26 2011 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -975,6 +975,10 @@ Begin literal mode: all subsequent free-form lines have their end of
 line boundaries preserved.
 May be ended by
 .Sx \&fi .
+Literal mode is implicitly ended by
+.Sx \&SH
+or
+.Sx \&SS .
 .Ss \&sp
 Insert vertical spaces into output with the following syntax:
 .Bd -filled -offset indent
