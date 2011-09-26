@@ -1,6 +1,7 @@
-.\"	$OpenBSD: man.7,v 1.24 2011/09/26 21:30:03 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.25 2011/09/26 23:07:20 schwarze Exp $
 .\"
-.\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -19,276 +20,63 @@
 .Os
 .Sh NAME
 .Nm man
-.Nd man language reference
+.Nd legacy formatting language for manual pages
 .Sh DESCRIPTION
-The
+Traditionally, the
 .Nm man
-language was historically used to format
+language has been used to write
 .Ux
-manuals.
-This reference document describes its syntax, structure, and usage.
+manuals for the
+.Xr man 1
+utility.
+It supports limited control of presentational details like fonts,
+indentation and spacing.
+This reference document describes the structure of manual pages
+and the syntax and usage of the man language.
 .Pp
 .Bf -emphasis
 Do not use
 .Nm
-to write your manuals.
+to write your manuals:
 .Ef
+It lacks support for semantic markup.
 Use the
 .Xr mdoc 7
 language, instead.
 .Pp
-A
+In a
 .Nm
-document follows simple rules: lines beginning with the control
-character
+document, lines beginning with the control character
 .Sq \&.
-are parsed for macros.
-Lines not beginning with the control character are
-interpreted within the scope of prior macros:
+are called
+.Dq macro lines .
+The first word is the macro name.
+It usually consists of two capital letters.
+For a list of available macros, see
+.Sx MACRO OVERVIEW .
+The words following the macro name are arguments to the macro.
+.Pp
+Lines not beginning with the control character are called
+.Dq text lines .
+They provide free-form text to be printed; the formatting of the text
+depends on the respective processing context:
 .Bd -literal -offset indent
 \&.SH Macro lines change control state.
 Text lines are interpreted within the current state.
 .Ed
-.Sh LANGUAGE SYNTAX
+.Pp
+Many aspects of the basic syntax of the
 .Nm
-documents may contain only graphable 7-bit ASCII characters, the
-space character, and the tab character.
-The back-space character
-.Sq \e
-indicates the start of an escape sequence for
-.Sx Comments ,
-.Sx Predefined Strings ,
+language are based on the
+.Xr roff 7
+language; see the
+.Em LANGUAGE SYNTAX
 and
-.Sx Special Characters .
-.Ss Comments
-Text following an escaped double-quote
-.Sq \e\(dq ,
-whether in a macro or text line, is ignored to the end of
-line.
-A macro line beginning with a control character and comment escape
-.Sq \&.\e\(dq
-is also ignored.
-Furthermore,
-macro lines with only a control character and optional trailing
-whitespace are
-stripped from input.
-.Pp
-Examples:
-.Bd -literal -offset indent -compact
-\&.\e\(dq This is a comment line.
-\&.\e\(dq The next line is ignored:
-\&.
-\&.Em Emphasis \e\(dq This is also a comment.
-.Ed
-.Ss Special Characters
-Special characters are used to encode special glyphs and are rendered
-differently across output media.
-They may occur in both macro and text lines.
-Sequences begin with the escape character
-.Sq \e
-followed by either an open-parenthesis
-.Sq \&(
-for two-character sequences; an open-bracket
-.Sq \&[
-for n-character sequences (terminated at a close-bracket
-.Sq \&] ) ;
-or a single one character sequence.
-.Pp
-Examples:
-.Bl -tag -width Ds -offset indent -compact
-.It Li \e(em
-Two-letter em dash escape.
-.It Li \ee
-One-letter backslash escape.
-.El
-.Pp
-See
-.Xr mandoc_char 7
-for a complete list.
-.Ss Text Decoration
-Terms may be text-decorated using the
-.Sq \ef
-escape followed by an indicator: B (bold), I (italic), R (regular), or P
-(revert to previous mode).
-A numerical representation 3, 2, or 1 (bold, italic, and regular,
-respectively) may be used instead.
-A text decoration is only valid, if specified in free-form text, until
-the next macro invocation; if specified within a macro, it's only valid
-until the macro closes scope.
-Note that macros like
-.Sx \&BR
-open and close a font scope with each argument.
-.Pp
-The
-.Sq \ef
-attribute is forgotten when entering or exiting a macro block.
-.Pp
-Examples:
-.Bl -tag -width Ds -offset indent -compact
-.It Li \efBbold\efR
-Write in bold, then switch to regular font mode.
-.It Li \efIitalic\efP
-Write in italic, then return to previous font mode.
-.El
-.Ss Predefined Strings
-Predefined strings, like
-.Sx Special Characters ,
-mark special output glyphs.
-Predefined strings are escaped with the slash-asterisk,
-.Sq \e* :
-single-character
-.Sq \e*X ,
-two-character
-.Sq \e*(XX ,
-and N-character
-.Sq \e*[N] .
-.Pp
-Examples:
-.Bl -tag -width Ds -offset indent -compact
-.It Li \e*(Am
-Two-letter ampersand predefined string.
-.It Li \e*q
-One-letter double-quote predefined string.
-.El
-.Pp
-These strings are set using
-.Xr roff 7 ,
-although
-.Nm
-consists of several pre-set escapes listed in
-.Xr mandoc_char 7 .
-.Ss Whitespace
-Whitespace consists of the space character.
-In text lines, whitespace is preserved within a line.
-In macro lines, whitespace delimits arguments and is discarded.
-.Pp
-Unescaped trailing spaces are stripped from text line input unless in a
-literal context.
-In general, trailing whitespace on any input line is discouraged for
-reasons of portability.
-In the rare case that a blank character is needed at the end of an
-input line, it may be forced by
-.Sq \e\ \e& .
-.Pp
-In general, space characters can be rendered as literal
-characters by using non-breaking space escapes or
-.Sx Quotation .
-If the first character of a text line is a space, that line is printed
-with a leading newline.
-.Ss Quotation
-Macro arguments may be quoted with double-quotes to so that the
-enclosed text is one literal term.
-Quoted text, even if whitespace or if it would cause a macro invocation
-when unquoted, is considered literal text.
-.Pp
-A quoted argument begins with a double-quote preceded by whitespace.
-The next double-quote not pairwise adjacent to another double-quote
-terminates the literal, regardless of surrounding whitespace.
-.Pp
-Examples:
-.Bl -tag -width Ds -offset indent -compact
-.It Li .BR a \(dqb c\(dq d
-Group arguments
-.Qq b c
-into one un-bolded argument.
-If unspecified,
-.Qq a
-and
-.Qq c
-will be in bold,
-.Qq b
-and
-.Qq d
-in regular font mode.
-Furthermore, will be preserved between
-.Qq b
-and
-.Qq c .
-.El
-.Ss Scaling Widths
-Many macros support scaled widths for their arguments.
-The syntax for a scaled width is
-.Sq Li [+-]?[0-9]*.[0-9]*[:unit:] ,
-where a decimal must be preceded or proceeded by at least one digit.
-Negative numbers, while accepted, are truncated to zero.
-.Pp
-The following scaling units are accepted:
-.Pp
-.Bl -tag -width Ds -offset indent -compact
-.It c
-centimetre
-.It i
-inch
-.It P
-pica (~1/6 inch)
-.It p
-point (~1/72 inch)
-.It f
-synonym for
-.Sq u
-.It v
-default vertical span
-.It m
-width of rendered
-.Sq m
-.Pq em
-character
-.It n
-width of rendered
-.Sq n
-.Pq en
-character
-.It u
-default horizontal span
-.It M
-mini-em (~1/100 em)
-.El
-.Pp
-Using anything other than
-.Sq m ,
-.Sq n ,
-.Sq u ,
-or
-.Sq v
-is necessarily non-portable across output media.
-See
-.Sx COMPATIBILITY .
-.Pp
-If a scaling unit is not provided, the numerical value is interpreted
-under the default rules of
-.Sq v
-for vertical spaces and
-.Sq u
-for horizontal ones.
-.Pp
-Examples:
-.Bl -tag -width Ds -offset indent -compact
-.It \&.HP 2i
-two-inch tagged list indentation
-.Pq see Sx \&HP
-.It \&.sp 2v
-two vertical spaces
-.Pq see Sx \&sp
-.El
-.Ss Sentence Spacing
-Sentences should terminate at the end of an input line.
-By doing this, a formatter will be able to apply the proper amount of
-spacing after the end of sentence (unescaped) period, exclamation mark,
-or question mark followed by zero or more non-sentence closing
-delimiters
-.Po
-.Sq \&) ,
-.Sq \&] ,
-.Sq \&' ,
-.Sq \&"
-.Pc .
-.Pp
-Examples:
-.Bd -literal -offset indent -compact
-Do not end sentences mid-line like this.  Instead,
-end a sentence like this.
-A new sentence gets a new line.
-.Ed
+.Em MACRO SYNTAX
+sections in the
+.Xr roff 7
+manual for details, in particular regarding
+comments, escape sequences, whitespace, and quoting.
 .Sh MANUAL STRUCTURE
 Each
 .Nm
@@ -300,7 +88,7 @@ appears as the first macro.
 .Pp
 Beyond
 .Sx \&TH ,
-at least one macro or text node must appear in the document.
+at least one macro or text line must appear in the document.
 .Pp
 The following is a well-formed skeleton
 .Nm
@@ -445,149 +233,6 @@ in this section.
 .It Em SECURITY CONSIDERATIONS
 Documents any security precautions that operators should consider.
 .El
-.Sh MACRO SYNTAX
-Macros are one to three characters in length and begin with a
-control character,
-.Sq \&. ,
-at the beginning of the line.
-The
-.Sq \(aq
-macro control character is also accepted.
-An arbitrary amount of whitespace (spaces or tabs) may sit between the
-control character and the macro name.
-Thus, the following are equivalent:
-.Bd -literal -offset indent
-\&.PP
-\&.\ \ \ PP
-.Ed
-.Pp
-To include space characters in macro arguments, arguments may be quoted;
-see the
-.Sq MACRO SYNTAX
-section in the
-.Xr roff 7
-manual for details.
-.Pp
-The
-.Nm
-macros are classified by scope: line scope or block scope.
-Line macros are only scoped to the current line (and, in some
-situations, the subsequent line).
-Block macros are scoped to the current line and subsequent lines until
-closed by another block macro.
-.Ss Line Macros
-Line macros are generally scoped to the current line, with the body
-consisting of zero or more arguments.
-If a macro is scoped to the next line and the line arguments are empty,
-the next line, which must be text, is used instead.
-Thus:
-.Bd -literal -offset indent
-\&.I
-foo
-.Ed
-.Pp
-is equivalent to
-.Sq \&.I foo .
-If next-line macros are invoked consecutively, only the last is used.
-If a next-line macro is followed by a non-next-line macro, an error is
-raised, except for
-.Sx \&br ,
-.Sx \&sp ,
-and
-.Sx \&na .
-.Pp
-The syntax is as follows:
-.Bd -literal -offset indent
-\&.YO \(lBbody...\(rB
-\(lBbody...\(rB
-.Ed
-.Bl -column "MacroX" "ArgumentsX" "ScopeXXXXX" "CompatX" -offset indent
-.It Em Macro Ta Em Arguments Ta Em Scope     Ta Em Notes
-.It Sx \&AT  Ta    <=1       Ta    current   Ta    \&
-.It Sx \&B   Ta    n         Ta    next-line Ta    \&
-.It Sx \&BI  Ta    n         Ta    current   Ta    \&
-.It Sx \&BR  Ta    n         Ta    current   Ta    \&
-.It Sx \&DT  Ta    0         Ta    current   Ta    \&
-.It Sx \&I   Ta    n         Ta    next-line Ta    \&
-.It Sx \&IB  Ta    n         Ta    current   Ta    \&
-.It Sx \&IR  Ta    n         Ta    current   Ta    \&
-.It Sx \&R   Ta    n         Ta    next-line Ta    \&
-.It Sx \&RB  Ta    n         Ta    current   Ta    \&
-.It Sx \&RI  Ta    n         Ta    current   Ta    \&
-.It Sx \&SB  Ta    n         Ta    next-line Ta    \&
-.It Sx \&SM  Ta    n         Ta    next-line Ta    \&
-.It Sx \&TH  Ta    >1, <6    Ta    current   Ta    \&
-.It Sx \&UC  Ta    <=1       Ta    current   Ta    \&
-.It Sx \&br  Ta    0         Ta    current   Ta    compat
-.It Sx \&fi  Ta    0         Ta    current   Ta    compat
-.It Sx \&in  Ta    1         Ta    current   Ta    compat
-.It Sx \&na  Ta    0         Ta    current   Ta    compat
-.It Sx \&nf  Ta    0         Ta    current   Ta    compat
-.It Sx \&sp  Ta    1         Ta    current   Ta    compat
-.El
-.Pp
-Macros marked as
-.Qq compat
-are included for compatibility with the significant corpus of existing
-manuals that mix dialects of roff.
-These macros should not be used for portable
-.Nm
-manuals.
-.Ss Block Macros
-Block macros comprise a head and body.
-As with in-line macros, the head is scoped to the current line and, in
-one circumstance, the next line (the next-line stipulations as in
-.Sx Line Macros
-apply here as well).
-.Pp
-The syntax is as follows:
-.Bd -literal -offset indent
-\&.YO \(lBhead...\(rB
-\(lBhead...\(rB
-\(lBbody...\(rB
-.Ed
-.Pp
-The closure of body scope may be to the section, where a macro is closed
-by
-.Sx \&SH ;
-sub-section, closed by a section or
-.Sx \&SS ;
-part, closed by a section, sub-section, or
-.Sx \&RE ;
-or paragraph, closed by a section, sub-section, part,
-.Sx \&HP ,
-.Sx \&IP ,
-.Sx \&LP ,
-.Sx \&P ,
-.Sx \&PP ,
-or
-.Sx \&TP .
-No closure refers to an explicit block closing macro.
-.Pp
-As a rule, block macros may not be nested; thus, calling a block macro
-while another block macro scope is open, and the open scope is not
-implicitly closed, is syntactically incorrect.
-.Bl -column "MacroX" "ArgumentsX" "Head ScopeX" "sub-sectionX" "compatX" -offset indent
-.It Em Macro Ta Em Arguments Ta Em Head Scope Ta Em Body Scope  Ta Em Notes
-.It Sx \&HP  Ta    <2        Ta    current    Ta    paragraph   Ta    \&
-.It Sx \&IP  Ta    <3        Ta    current    Ta    paragraph   Ta    \&
-.It Sx \&LP  Ta    0         Ta    current    Ta    paragraph   Ta    \&
-.It Sx \&P   Ta    0         Ta    current    Ta    paragraph   Ta    \&
-.It Sx \&PP  Ta    0         Ta    current    Ta    paragraph   Ta    \&
-.It Sx \&RE  Ta    0         Ta    current    Ta    none        Ta    compat
-.It Sx \&RS  Ta    1         Ta    current    Ta    part        Ta    compat
-.It Sx \&SH  Ta    >0        Ta    next-line  Ta    section     Ta    \&
-.It Sx \&SS  Ta    >0        Ta    next-line  Ta    sub-section Ta    \&
-.It Sx \&TP  Ta    n         Ta    next-line  Ta    paragraph   Ta    \&
-.El
-.Pp
-Macros marked
-.Qq compat
-are as mentioned in
-.Sx Line Macros .
-.Pp
-If a block macro is next-line scoped, it may only be followed by in-line
-macros for decorating text.
 .Sh MACRO OVERVIEW
 This overview is sorted such that macros of similar purpose are listed
 together, to help find the best macro for any given purpose.
@@ -627,7 +272,7 @@ in the alphabetical reference below.
 .It Sx RB Ta alternate between roman and boldface fonts
 .It Sx RI Ta alternate between roman and italic fonts
 .El
-.Sh REFERENCE
+.Sh MACRO REFERENCE
 This section is a canonical reference to all macros, arranged
 alphabetically.
 For the scoping of individual macros, see
@@ -997,6 +642,142 @@ Defaults to 1, if unspecified.
 .Pp
 See also
 .Sx \&br .
+.Sh MACRO SYNTAX
+The
+.Nm
+macros are classified by scope: line scope or block scope.
+Line macros are only scoped to the current line (and, in some
+situations, the subsequent line).
+Block macros are scoped to the current line and subsequent lines until
+closed by another block macro.
+.Ss Line Macros
+Line macros are generally scoped to the current line, with the body
+consisting of zero or more arguments.
+If a macro is scoped to the next line and the line arguments are empty,
+the next line, which must be text, is used instead.
+Thus:
+.Bd -literal -offset indent
+\&.I
+foo
+.Ed
+.Pp
+is equivalent to
+.Sq \&.I foo .
+If next-line macros are invoked consecutively, only the last is used.
+If a next-line macro is followed by a non-next-line macro, an error is
+raised, except for
+.Sx \&br ,
+.Sx \&sp ,
+and
+.Sx \&na .
+.Pp
+The syntax is as follows:
+.Bd -literal -offset indent
+\&.YO \(lBbody...\(rB
+\(lBbody...\(rB
+.Ed
+.Bl -column "MacroX" "ArgumentsX" "ScopeXXXXX" "CompatX" -offset indent
+.It Em Macro Ta Em Arguments Ta Em Scope     Ta Em Notes
+.It Sx \&AT  Ta    <=1       Ta    current   Ta    \&
+.It Sx \&B   Ta    n         Ta    next-line Ta    \&
+.It Sx \&BI  Ta    n         Ta    current   Ta    \&
+.It Sx \&BR  Ta    n         Ta    current   Ta    \&
+.It Sx \&DT  Ta    0         Ta    current   Ta    \&
+.It Sx \&I   Ta    n         Ta    next-line Ta    \&
+.It Sx \&IB  Ta    n         Ta    current   Ta    \&
+.It Sx \&IR  Ta    n         Ta    current   Ta    \&
+.It Sx \&R   Ta    n         Ta    next-line Ta    \&
+.It Sx \&RB  Ta    n         Ta    current   Ta    \&
+.It Sx \&RI  Ta    n         Ta    current   Ta    \&
+.It Sx \&SB  Ta    n         Ta    next-line Ta    \&
+.It Sx \&SM  Ta    n         Ta    next-line Ta    \&
+.It Sx \&TH  Ta    >1, <6    Ta    current   Ta    \&
+.It Sx \&UC  Ta    <=1       Ta    current   Ta    \&
+.It Sx \&br  Ta    0         Ta    current   Ta    compat
+.It Sx \&fi  Ta    0         Ta    current   Ta    compat
+.It Sx \&in  Ta    1         Ta    current   Ta    compat
+.It Sx \&na  Ta    0         Ta    current   Ta    compat
+.It Sx \&nf  Ta    0         Ta    current   Ta    compat
+.It Sx \&sp  Ta    1         Ta    current   Ta    compat
+.El
+.Pp
+Macros marked as
+.Qq compat
+are included for compatibility with the significant corpus of existing
+manuals that mix dialects of roff.
+These macros should not be used for portable
+.Nm
+manuals.
+.Ss Block Macros
+Block macros comprise a head and body.
+As with in-line macros, the head is scoped to the current line and, in
+one circumstance, the next line (the next-line stipulations as in
+.Sx Line Macros
+apply here as well).
+.Pp
+The syntax is as follows:
+.Bd -literal -offset indent
+\&.YO \(lBhead...\(rB
+\(lBhead...\(rB
+\(lBbody...\(rB
+.Ed
+.Pp
+The closure of body scope may be to the section, where a macro is closed
+by
+.Sx \&SH ;
+sub-section, closed by a section or
+.Sx \&SS ;
+part, closed by a section, sub-section, or
+.Sx \&RE ;
+or paragraph, closed by a section, sub-section, part,
+.Sx \&HP ,
+.Sx \&IP ,
+.Sx \&LP ,
+.Sx \&P ,
+.Sx \&PP ,
+or
+.Sx \&TP .
+No closure refers to an explicit block closing macro.
+.Pp
+As a rule, block macros may not be nested; thus, calling a block macro
+while another block macro scope is open, and the open scope is not
+implicitly closed, is syntactically incorrect.
+.Bl -column "MacroX" "ArgumentsX" "Head ScopeX" "sub-sectionX" "compatX" -offset indent
+.It Em Macro Ta Em Arguments Ta Em Head Scope Ta Em Body Scope  Ta Em Notes
+.It Sx \&HP  Ta    <2        Ta    current    Ta    paragraph   Ta    \&
+.It Sx \&IP  Ta    <3        Ta    current    Ta    paragraph   Ta    \&
+.It Sx \&LP  Ta    0         Ta    current    Ta    paragraph   Ta    \&
+.It Sx \&P   Ta    0         Ta    current    Ta    paragraph   Ta    \&
+.It Sx \&PP  Ta    0         Ta    current    Ta    paragraph   Ta    \&
+.It Sx \&RE  Ta    0         Ta    current    Ta    none        Ta    compat
+.It Sx \&RS  Ta    1         Ta    current    Ta    part        Ta    compat
+.It Sx \&SH  Ta    >0        Ta    next-line  Ta    section     Ta    \&
+.It Sx \&SS  Ta    >0        Ta    next-line  Ta    sub-section Ta    \&
+.It Sx \&TP  Ta    n         Ta    next-line  Ta    paragraph   Ta    \&
+.El
+.Pp
+Macros marked
+.Qq compat
+are as mentioned in
+.Sx Line Macros .
+.Pp
+If a block macro is next-line scoped, it may only be followed by in-line
+macros for decorating text.
+.Ss Font handling
+In
+.Nm
+documents, both
+.Sx Physical markup
+macros and
+.Xr roff 7
+.Ql \ef
+font escape sequences can be used to choose fonts.
+In text lines, the effect of manual font selection by escape sequences
+only lasts until the next macro invocation; in macro lines, it only lasts
+until the end of the macro scope.
+Note that macros like
+.Sx \&BR
+open and close a font scope for each argument.
 .Sh COMPATIBILITY
 This section documents areas of questionable portability between
 implementations of the

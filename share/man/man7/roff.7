@@ -1,7 +1,7 @@
-.\"	$OpenBSD: roff.7,v 1.14 2011/09/18 15:54:48 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.15 2011/09/26 23:07:20 schwarze Exp $
 .\"
-.\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2011 $
+.Dd $Mdocdate: September 26 2011 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -25,38 +25,279 @@
 The
 .Nm roff
 language is a general purpose text formatting language.
-In particular, it serves as the basis for the
+Since traditional implementations of the
 .Xr mdoc 7
 and
 .Xr man 7
-manual formatting macro languages.
-This manual describes the subset of the
+manual formatting languages are based on it,
+many real-world manuals use small numbers of
 .Nm
-language accepted by the
-.Xr mandoc 1
-utility.
-.Pp
-Input lines beginning with the control characters
-.Sq \&.
+requests intermixed with their
+.Xr mdoc 7
 or
-.Sq \(aq
-are parsed for requests and macros.
-These define the document structure, change the processing state
-and manipulate the formatting.
-Some requests and macros also produce formatted output,
-while others do not.
+.Xr man 7
+code.
+To properly format such manuals, the
+.Xr mandoc 1
+utility supports a tiny subset of
+.Nm
+requests.
+Only these requests supported by
+.Xr mandoc 1
+are documented in the present manual,
+together with the basic language syntax shared by
+.Nm ,
+.Xr mdoc 7 ,
+and
+.Xr man 7 .
+For complete
+.Nm
+manuals, consult the
+.Sx SEE ALSO
+section.
 .Pp
-All other input lines provide free-form text to be printed;
-the formatting of free-form text depends on the respective
-processing context.
+Input lines beginning with the control character
+.Sq \&.
+are parsed for requests and macros.
+Such lines are called
+.Dq request lines
+or
+.Dq macro lines ,
+respectively.
+Requests change the processing state and manipulate the formatting;
+some macros also define the document structure and produce formatted
+output.
+The single quote
+.Pq Qq \(aq
+is accepted as an alternative control character,
+treated by
+.Xr mandoc 1
+just like
+.Ql \&.
+.Pp
+Lines not beginning with control characters are called
+.Dq text lines .
+They provide free-form text to be printed; the formatting of the text
+depends on the respective processing context.
 .Sh LANGUAGE SYNTAX
 .Nm
 documents may contain only graphable 7-bit ASCII characters, the space
 character, and, in certain circumstances, the tab character.
-To produce other characters in the output, use the escape sequences
-documented in the
+The back-space character
+.Sq \e
+indicates the start of an escape sequence for
+.Sx Comments ,
+.Sx Special Characters ,
+.Sx Predefined Strings ,
+and
+user-defined strings defined using the
+.Sx ds
+request.
+.Ss Comments
+Text following an escaped double-quote
+.Sq \e\(dq ,
+whether in a request, macro, or text line, is ignored to the end of the line.
+A request line beginning with a control character and comment escape
+.Sq \&.\e\(dq
+is also ignored.
+Furthermore, request lines with only a control character and optional
+trailing whitespace are stripped from input.
+.Pp
+Examples:
+.Bd -literal -offset indent -compact
+\&.\e\(dq This is a comment line.
+\&.\e\(dq The next line is ignored:
+\&.
+\&.Sh EXAMPLES \e\(dq This is a comment, too.
+\&example text \e\(dq And so is this.
+.Ed
+.Ss Special Characters
+Special characters are used to encode special glyphs and are rendered
+differently across output media.
+They may occur in request, macro, and text lines.
+Sequences begin with the escape character
+.Sq \e
+followed by either an open-parenthesis
+.Sq \&(
+for two-character sequences; an open-bracket
+.Sq \&[
+for n-character sequences (terminated at a close-bracket
+.Sq \&] ) ;
+or a single one character sequence.
+.Pp
+Examples:
+.Bl -tag -width Ds -offset indent -compact
+.It Li \e(em
+Two-letter em dash escape.
+.It Li \ee
+One-letter backslash escape.
+.El
+.Pp
+See
 .Xr mandoc_char 7
-manual.
+for a complete list.
+.Ss Text Decoration
+Terms may be text-decorated using the
+.Sq \ef
+escape followed by an indicator: B (bold), I (italic), R (regular), or P
+(revert to previous mode).
+A numerical representation 3, 2, or 1 (bold, italic, and regular,
+respectively) may be used instead.
+.Pp
+Examples:
+.Bl -tag -width Ds -offset indent -compact
+.It Li \efBbold\efR
+Write in bold, then switch to regular font mode.
+.It Li \efIitalic\efP
+Write in italic, then return to previous font mode.
+.El
+.Pp
+Text decoration is
+.Em not
+recommended for
+.Xr mdoc 7 ,
+which encourages semantic annotation.
+.Ss Predefined Strings
+Predefined strings, like
+.Sx Special Characters ,
+mark special output glyphs.
+Predefined strings are escaped with the slash-asterisk,
+.Sq \e* :
+single-character
+.Sq \e*X ,
+two-character
+.Sq \e*(XX ,
+and N-character
+.Sq \e*[N] .
+.Pp
+Examples:
+.Bl -tag -width Ds -offset indent -compact
+.It Li \e*(Am
+Two-letter ampersand predefined string.
+.It Li \e*q
+One-letter double-quote predefined string.
+.El
+.Pp
+Predefined strings are not recommended for use,
+as they differ across implementations.
+Those supported by
+.Xr mandoc 1
+are listed in
+.Xr mandoc_char 7 .
+Manuals using these predefined strings are almost certainly not portable.
+.Ss Whitespace
+Whitespace consists of the space character.
+In text lines, whitespace is preserved within a line.
+In request and macro lines, whitespace delimits arguments and is discarded.
+.Pp
+Unescaped trailing spaces are stripped from text line input unless in a
+literal context.
+In general, trailing whitespace on any input line is discouraged for
+reasons of portability.
+In the rare case that a blank character is needed at the end of an
+input line, it may be forced by
+.Sq \e\ \e& .
+.Pp
+Literal space characters can be produced in the output
+using escape sequences.
+In macro lines, they can also be included in arguments using quotation; see
+.Sx MACRO SYNTAX
+for details.
+.Pp
+Blank text lines, which may include whitespace, are only permitted
+within literal contexts.
+If the first character of a text line is a space, that line is printed
+with a leading newline.
+.Ss Scaling Widths
+Many requests and macros support scaled widths for their arguments.
+The syntax for a scaled width is
+.Sq Li [+-]?[0-9]*.[0-9]*[:unit:] ,
+where a decimal must be preceded or followed by at least one digit.
+Negative numbers, while accepted, are truncated to zero.
+.Pp
+The following scaling units are accepted:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It c
+centimetre
+.It i
+inch
+.It P
+pica (~1/6 inch)
+.It p
+point (~1/72 inch)
+.It f
+synonym for
+.Sq u
+.It v
+default vertical span
+.It m
+width of rendered
+.Sq m
+.Pq em
+character
+.It n
+width of rendered
+.Sq n
+.Pq en
+character
+.It u
+default horizontal span
+.It M
+mini-em (~1/100 em)
+.El
+.Pp
+Using anything other than
+.Sq m ,
+.Sq n ,
+.Sq u ,
+or
+.Sq v
+is necessarily non-portable across output media.
+See
+.Sx COMPATIBILITY .
+.Pp
+If a scaling unit is not provided, the numerical value is interpreted
+under the default rules of
+.Sq v
+for vertical spaces and
+.Sq u
+for horizontal ones.
+.Pp
+Examples:
+.Bl -tag -width ".Bl -tag -width 2i" -offset indent -compact
+.It Li \&.Bl -tag -width 2i
+two-inch tagged list indentation in
+.Xr mdoc 7
+.It Li \&.HP 2i
+two-inch tagged list indentation in
+.Xr man 7
+.It Li \&.sp 2v
+two vertical spaces
+.El
+.Ss Sentence Spacing
+Each sentence should terminate at the end of an input line.
+By doing this, a formatter will be able to apply the proper amount of
+spacing after the end of sentence (unescaped) period, exclamation mark,
+or question mark followed by zero or more non-sentence closing
+delimiters
+.Po
+.Sq \&) ,
+.Sq \&] ,
+.Sq \&' ,
+.Sq \&"
+.Pc .
+.Pp
+The proper spacing is also intelligently preserved if a sentence ends at
+the boundary of a macro line.
+.Pp
+Examples:
+.Bd -literal -offset indent -compact
+Do not end sentences mid-line like this.  Instead,
+end a sentence like this.
+A macro would end like this:
+\&.Xr mandoc 1 \&.
+.Ed
 .Sh REQUEST SYNTAX
 A request or macro line consists of:
 .Pp
@@ -83,20 +324,25 @@ Thus, the following request lines are all equivalent:
 \&.   ig end
 .Ed
 .Sh MACRO SYNTAX
-Macros can be defined by the
+Macros are provided by the
+.Xr mdoc 7
+and
+.Xr man 7
+languages and can be defined by the
 .Sx \&de
 request.
 When called, they follow the same syntax as requests, except that
 macro arguments may optionally be quoted by enclosing them
 in double quote characters
 .Pq Sq \(dq .
-To be recognised as the beginning of a quoted argument, the opening
-quote character must be preceded by a space character.
-.Pp
-A quoted argument may contain whitespace, and pairs of double quote
-characters
+Quoted text, even if it contains whitespace or would cause
+a macro invocation when unquoted, is always considered literal text.
+Inside quoted text, pairs of double quote characters
 .Pq Sq Qq
 resolve to single double quote characters.
+.Pp
+To be recognised as the beginning of a quoted argument, the opening
+quote character must be preceded by a space character.
 A quoted argument extends to the next double quote character that is not
 part of a pair, or to the end of the input line, whichever comes earlier.
 Leaving out the terminating double quote character at the end of the line
@@ -114,6 +360,24 @@ In unquoted arguments, space characters can alternatively be included
 by preceding them with a backslash
 .Pq Sq \e\~ ,
 but quoting is usually better for clarity.
+.Pp
+Examples:
+.Bl -tag -width Ds -offset indent -compact
+.It Li .Fn strlen \(dqconst char *s\(dq
+Group arguments
+.Qq const char *s
+into one function argument.
+If unspecified,
+.Qq const ,
+.Qq char ,
+and
+.Qq *s
+would be considered separate arguments.
+.It Li .Op \(dqFl a\(dq
+Consider
+.Qq \&Fl a
+as literal text instead of a flag macro.
+.El
 .Sh REQUEST REFERENCE
 The
 .Xr mandoc 1

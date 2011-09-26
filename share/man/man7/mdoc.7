@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mdoc.7,v 1.87 2011/09/26 21:21:27 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.88 2011/09/26 23:07:20 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -20,280 +20,73 @@
 .Os
 .Sh NAME
 .Nm mdoc
-.Nd mdoc language reference
+.Nd semantic markup language for formatting manual pages
 .Sh DESCRIPTION
 The
 .Nm mdoc
-language is used to format
-.Bx
-.Ux
-manuals.
-This reference document describes its syntax, structure, and
-usage.
-The reference implementation for
+language supports authoring of manual pages for the
+.Xr man 1
+utility by allowing semantic annotations of words, phrases,
+page sections and complete manual pages.
+Such annotations are used by formatting tools to achieve a uniform
+presentation across all manuals written in
+.Nm ,
+and to support hyperlinking if supported by the output medium.
+.Pp
+This reference document describes the structure of manual pages
+and the syntax and usage of the
 .Nm
-formatting is
+language.
+The reference implementation of a parsing and formatting tool is
 .Xr mandoc 1 ;
 the
 .Sx COMPATIBILITY
 section describes compatibility with other implementations.
 .Pp
-An
+In an
 .Nm
-document follows simple rules: lines beginning with the control
-character
+document, lines beginning with the control character
 .Sq \&.
-are parsed for macros.
-Lines not beginning with the control character are
-interpreted within the scope of prior macros:
+are called
+.Dq macro lines .
+The first word is the macro name.
+It consists of two or three letters.
+Most macro names begin with a capital letter.
+For a list of available macros, see
+.Sx MACRO OVERVIEW .
+The words following the macro name are arguments to the macro, optionally
+including the names of other, callable macros; see
+.Sx MACRO SYNTAX
+for details.
+.Pp
+Lines not beginning with the control character are called
+.Dq text lines .
+They provide free-form text to be printed; the formatting of the text
+depends on the respective processing context:
 .Bd -literal -offset indent
 \&.Sh Macro lines change control state.
 Text lines are interpreted within the current state.
 .Ed
-.Sh LANGUAGE SYNTAX
+.Pp
+Many aspects of the basic syntax of the
 .Nm
-documents may contain only graphable 7-bit ASCII characters, the space
-character, and, in certain circumstances, the tab character.
-The back-space character
-.Sq \e
-indicates the start of an escape sequence for
-.Sx Comments ,
-.Sx Predefined Strings ,
+language are based on the
+.Xr roff 7
+language; see the
+.Em LANGUAGE SYNTAX
 and
-.Sx Special Characters .
-.Ss Comments
-Text following an escaped double-quote
-.Sq \e\(dq ,
-whether in a macro or text line, is ignored to the end of
-line.
-A macro line beginning with a control character and comment escape
-.Sq \&.\e\(dq
-is also ignored.
-Furthermore,
-macro lines with only a control character and optional trailing
-whitespace are
-stripped from input.
-.Pp
-Examples:
-.Bd -literal -offset indent -compact
-\&.\e\(dq This is a comment line.
-\&.\e\(dq The next line is ignored:
-\&.
-\&.Em Emphasis \e\(dq This is also a comment.
-.Ed
-.Ss Special Characters
-Special characters are used to encode special glyphs and are rendered
-differently across output media.
-They may occur in both macro and text lines.
-Sequences begin with the escape character
-.Sq \e
-followed by either an open-parenthesis
-.Sq \&(
-for two-character sequences; an open-bracket
-.Sq \&[
-for n-character sequences (terminated at a close-bracket
-.Sq \&] ) ;
-or a single one character sequence.
-.Pp
-Examples:
-.Bl -tag -width Ds -offset indent -compact
-.It Li \e(em
-Two-letter em dash escape.
-.It Li \ee
-One-letter backslash escape.
-.El
-.Pp
-See
-.Xr mandoc_char 7
-for a complete list.
-.Ss Text Decoration
-Terms may be text-decorated using the
-.Sq \ef
-escape followed by an indicator: B (bold), I (italic), R (regular), or P
-(revert to previous mode).
-A numerical representation 3, 2, or 1 (bold, italic, and regular,
-respectively) may be used instead.
-If a macro opens a font scope after calling
-.Sq \ef ,
-such as with
-.Sx \&Bf ,
-the
-.Sq \ef
-mode will be restored upon exiting the
-.Sx \&Bf
-scope.
-.Pp
-Examples:
-.Bl -tag -width Ds -offset indent -compact
-.It Li \efBbold\efR
-Write in bold, then switch to regular font mode.
-.It Li \efIitalic\efP
-Write in italic, then return to previous font mode.
-.El
-.Pp
-Text decoration is
-.Em not
-recommended for
-.Nm ,
-which encourages semantic annotation.
-.Ss Predefined Strings
-Predefined strings, like
-.Sx Special Characters ,
-mark special output glyphs.
-Predefined strings are escaped with the slash-asterisk,
-.Sq \e* :
-single-character
-.Sq \e*X ,
-two-character
-.Sq \e*(XX ,
-and N-character
-.Sq \e*[N] .
-.Pp
-Examples:
-.Bl -tag -width Ds -offset indent -compact
-.It Li \e*(Am
-Two-letter ampersand predefined string.
-.It Li \e*q
-One-letter double-quote predefined string.
-.El
-.Pp
-These strings are set using
-.Xr roff 7 ,
-although
+.Em MACRO SYNTAX
+sections in the
+.Xr roff 7
+manual for details, in particular regarding
+comments, escape sequences, whitespace, and quoting.
+However, using
+.Xr roff 7
+requests in
 .Nm
-consists of several pre-set escapes listed in
-.Xr mandoc_char 7 .
-.Ss Whitespace
-Whitespace consists of the space character.
-In text lines, whitespace is preserved within a line.
-In macro lines, whitespace delimits arguments and is discarded.
-.Pp
-Unescaped trailing spaces are stripped from text line input unless in a
-literal context.
-In general, trailing whitespace on any input line is discouraged for
-reasons of portability.
-In the rare case that a blank character is needed at the end of an
-input line, it may be forced by
-.Sq \e\ \e& .
-.Pp
-In general, space characters can be rendered as literal
-characters by using non-breaking space escapes or
-.Sx Quotation .
-.Pp
-Blank text lines, which may include whitespace, are only permitted
-within literal contexts.
-If the first character of a text line is a space, that line is printed
-with a leading newline.
-.Ss Quotation
-Macro arguments may be quoted with double-quotes to so that the
-enclosed text is one literal term.
-Quoted text, even if whitespace or if it would cause a macro invocation
-when unquoted, is considered literal text.
-.Pp
-A quoted argument begins with a double-quote preceded by whitespace.
-The next double-quote not pairwise adjacent to another double-quote
-terminates the literal, regardless of surrounding whitespace.
-.Pp
-Examples:
-.Bl -tag -width Ds -offset indent -compact
-.It Li .Fn strlen \(dqconst char *s\(dq
-Group arguments
-.Qq const char *s
-into one function argument.
-If unspecified,
-.Qq const ,
-.Qq char ,
-and
-.Qq *s
-would be considered separate arguments.
-.Pq See Sx \&Fn .
-.It Li .Op \(dqFl a\(dq
-Consider
-.Qq \&Fl a
-as literal text instead of a flag macro.
-.Pq Aee Sx \&Op , \&Fl .
-.El
-.Ss Scaling Widths
-Many macros support scaled widths for their arguments.
-The syntax for a scaled width is
-.Sq Li [+-]?[0-9]*.[0-9]*[:unit:] ,
-where a decimal must be preceded or proceeded by at least one digit.
-Negative numbers, while accepted, are truncated to zero.
-.Pp
-The following scaling units are accepted:
-.Pp
-.Bl -tag -width Ds -offset indent -compact
-.It c
-centimetre
-.It i
-inch
-.It P
-pica (~1/6 inch)
-.It p
-point (~1/72 inch)
-.It f
-synonym for
-.Sq u
-.It v
-default vertical span
-.It m
-width of rendered
-.Sq m
-.Pq em
-character
-.It n
-width of rendered
-.Sq n
-.Pq en
-character
-.It u
-default horizontal span
-.It M
-mini-em (~1/100 em)
-.El
-.Pp
-Using anything other than
-.Sq m ,
-.Sq n ,
-.Sq u ,
-or
-.Sq v
-is necessarily non-portable across output media.
-See
-.Sx COMPATIBILITY .
-.Pp
-Examples:
-.Bl -tag -width Ds -offset indent -compact
-.It Li \&.Bl -tag -width 2i
-two-inch tagged list indentation
-.Pq see Sx \&Bl
-.It Li \&.sp 2v
-two vertical spaces
-.Pq see Sx \&sp
-.El
-.Ss Sentence Spacing
-Sentences should terminate at the end of an input line.
-By doing this, a formatter will be able to apply the proper amount of
-spacing after the end of sentence (unescaped) period, exclamation mark,
-or question mark followed by zero or more non-sentence closing
-delimiters
-.Po
-.Sq \&) ,
-.Sq \&] ,
-.Sq \&' ,
-.Sq \&"
-.Pc .
-.Pp
-The proper spacing is also intelligently preserved if a sentence ends at
-the boundary of a macro line.
-.Pp
-Examples:
-.Bd -literal -offset indent -compact
-Do not end sentences mid-line like this.  Instead,
-end a sentence like this.
-A macro would end like this:
-\&.Xr mandoc 1 \&.
-.Ed
+documents is discouraged;
+.Xr mandoc 1
+supports some of them merely for backward compatibility.
 .Sh MANUAL STRUCTURE
 A well-formed
 .Nm
@@ -620,397 +413,15 @@ in this section.
 .It Em SECURITY CONSIDERATIONS
 Documents any security precautions that operators should consider.
 .El
-.Sh MACRO SYNTAX
-Macros are one to three three characters in length and begin with a
-control character,
-.Sq \&. ,
-at the beginning of the line.
-An arbitrary amount of whitespace may sit between the control character
-and the macro name.
-Thus, the following are equivalent:
-.Bd -literal -offset indent
-\&.Pp
-\&.\ \ \ \&Pp
-.Ed
-.Pp
-The syntax of a macro depends on its classification.
-In this section,
-.Sq \-arg
-refers to macro arguments, which may be followed by zero or more
-.Sq parm
-parameters;
-.Sq \&Yo
-opens the scope of a macro; and if specified,
-.Sq \&Yc
-closes it out.
-.Pp
-The
-.Em Callable
-column indicates that the macro may also be called by passing its name
-as an argument to another macro.
-For example,
-.Sq \&.Op \&Fl O \&Ar file
-produces
-.Sq Op Fl O Ar file .
-To prevent a macro call and render the macro name literally,
-escape it by prepending a zero-width space,
-.Sq \e& .
-For example,
-.Sq \&Op \e&Fl O
-produces
-.Sq Op \&Fl O .
-If a macro is not callable but its name appears as an argument
-to another macro, it is interpreted as opaque text.
-For example,
-.Sq \&.Fl \&Sh
-produces
-.Sq Fl \&Sh .
-.Pp
-The
-.Em Parsed
-column indicates whether the macro may call other macros by receiving
-their names as arguments.
-If a macro is not parsed but the name of another macro appears
-as an argument, it is interpreted as opaque text.
-.Pp
-The
-.Em Scope
-column, if applicable, describes closure rules.
-.Ss Block full-explicit
-Multi-line scope closed by an explicit closing macro.
-All macros contains bodies; only
-.Sx \&Bf
-and
-.Pq optionally
-.Sx \&Bl
-contain a head.
-.Bd -literal -offset indent
-\&.Yo \(lB\-arg \(lBparm...\(rB\(rB \(lBhead...\(rB
-\(lBbody...\(rB
-\&.Yc
-.Ed
-.Bl -column "MacroX" "CallableX" "ParsedX" "closed by XXX" -offset indent
-.It Em Macro Ta Em Callable Ta Em Parsed Ta Em Scope
-.It Sx \&Bd  Ta    \&No     Ta    \&No     Ta    closed by Sx \&Ed
-.It Sx \&Bf  Ta    \&No     Ta    \&No     Ta    closed by Sx \&Ef
-.It Sx \&Bk  Ta    \&No     Ta    \&No     Ta    closed by Sx \&Ek
-.It Sx \&Bl  Ta    \&No     Ta    \&No     Ta    closed by Sx \&El
-.It Sx \&Ed  Ta    \&No     Ta    \&No     Ta    opened by Sx \&Bd
-.It Sx \&Ef  Ta    \&No     Ta    \&No     Ta    opened by Sx \&Bf
-.It Sx \&Ek  Ta    \&No     Ta    \&No     Ta    opened by Sx \&Bk
-.It Sx \&El  Ta    \&No     Ta    \&No     Ta    opened by Sx \&Bl
-.El
-.Ss Block full-implicit
-Multi-line scope closed by end-of-file or implicitly by another macro.
-All macros have bodies; some
-.Po
-.Sx \&It Fl bullet ,
-.Fl hyphen ,
-.Fl dash ,
-.Fl enum ,
-.Fl item
-.Pc
-don't have heads; only one
-.Po
-.Sx \&It
-in
-.Sx \&Bl Fl column
-.Pc
-has multiple heads.
-.Bd -literal -offset indent
-\&.Yo \(lB\-arg \(lBparm...\(rB\(rB \(lBhead... \(lBTa head...\(rB\(rB
-\(lBbody...\(rB
-.Ed
-.Bl -column "MacroX" "CallableX" "ParsedX" "closed by XXXXXXXXXXX" -offset indent
-.It Em Macro Ta Em Callable Ta Em Parsed Ta Em Scope
-.It Sx \&It Ta \&No Ta Yes  Ta closed by Sx \&It , Sx \&El
-.It Sx \&Nd Ta \&No Ta \&No Ta closed by Sx \&Sh
-.It Sx \&Nm Ta \&No Ta Yes  Ta closed by Sx \&Nm , Sx \&Sh , Sx \&Ss
-.It Sx \&Sh Ta \&No Ta Yes  Ta closed by Sx \&Sh
-.It Sx \&Ss Ta \&No Ta Yes  Ta closed by Sx \&Sh , Sx \&Ss
-.El
-.Pp
-Note that the
-.Sx \&Nm
-macro is a
-.Sx Block full-implicit
-macro only when invoked as the first macro
-in a
-.Em SYNOPSIS
-section line, else it is
-.Sx In-line .
-.Ss Block partial-explicit
-Like block full-explicit, but also with single-line scope.
-Each has at least a body and, in limited circumstances, a head
-.Po
-.Sx \&Fo ,
-.Sx \&Eo
-.Pc
-and/or tail
-.Pq Sx \&Ec .
-.Bd -literal -offset indent
-\&.Yo \(lB\-arg \(lBparm...\(rB\(rB \(lBhead...\(rB
-\(lBbody...\(rB
-\&.Yc \(lBtail...\(rB
-
-\&.Yo \(lB\-arg \(lBparm...\(rB\(rB \(lBhead...\(rB \
-\(lBbody...\(rB \&Yc \(lBtail...\(rB
-.Ed
-.Bl -column "MacroX" "CallableX" "ParsedX" "closed by XXXX" -offset indent
-.It Em Macro Ta Em Callable Ta Em Parsed Ta Em Scope
-.It Sx \&Ac  Ta    Yes      Ta    Yes      Ta    opened by Sx \&Ao
-.It Sx \&Ao  Ta    Yes      Ta    Yes      Ta    closed by Sx \&Ac
-.It Sx \&Bc  Ta    Yes      Ta    Yes      Ta    closed by Sx \&Bo
-.It Sx \&Bo  Ta    Yes      Ta    Yes      Ta    opened by Sx \&Bc
-.It Sx \&Brc Ta    Yes      Ta    Yes      Ta    opened by Sx \&Bro
-.It Sx \&Bro Ta    Yes      Ta    Yes      Ta    closed by Sx \&Brc
-.It Sx \&Dc  Ta    Yes      Ta    Yes      Ta    opened by Sx \&Do
-.It Sx \&Do  Ta    Yes      Ta    Yes      Ta    closed by Sx \&Dc
-.It Sx \&Ec  Ta    Yes      Ta    Yes      Ta    opened by Sx \&Eo
-.It Sx \&Eo  Ta    Yes      Ta    Yes      Ta    closed by Sx \&Ec
-.It Sx \&Fc  Ta    Yes      Ta    Yes      Ta    opened by Sx \&Fo
-.It Sx \&Fo  Ta    \&No     Ta    \&No     Ta    closed by Sx \&Fc
-.It Sx \&Oc  Ta    Yes      Ta    Yes      Ta    closed by Sx \&Oo
-.It Sx \&Oo  Ta    Yes      Ta    Yes      Ta    opened by Sx \&Oc
-.It Sx \&Pc  Ta    Yes      Ta    Yes      Ta    closed by Sx \&Po
-.It Sx \&Po  Ta    Yes      Ta    Yes      Ta    opened by Sx \&Pc
-.It Sx \&Qc  Ta    Yes      Ta    Yes      Ta    opened by Sx \&Oo
-.It Sx \&Qo  Ta    Yes      Ta    Yes      Ta    closed by Sx \&Oc
-.It Sx \&Re  Ta    \&No     Ta    \&No     Ta    opened by Sx \&Rs
-.It Sx \&Rs  Ta    \&No     Ta    \&No     Ta    closed by Sx \&Re
-.It Sx \&Sc  Ta    Yes      Ta    Yes      Ta    opened by Sx \&So
-.It Sx \&So  Ta    Yes      Ta    Yes      Ta    closed by Sx \&Sc
-.It Sx \&Xc  Ta    Yes      Ta    Yes      Ta    opened by Sx \&Xo
-.It Sx \&Xo  Ta    Yes      Ta    Yes      Ta    closed by Sx \&Xc
-.El
-.Ss Block partial-implicit
-Like block full-implicit, but with single-line scope closed by the
-end of the line.
-.Bd -literal -offset indent
-\&.Yo \(lB\-arg \(lBval...\(rB\(rB \(lBbody...\(rB \(lBres...\(rB
-.Ed
-.Bl -column "MacroX" "CallableX" "ParsedX" -offset indent
-.It Em Macro Ta Em Callable Ta Em Parsed
-.It Sx \&Aq  Ta    Yes      Ta    Yes
-.It Sx \&Bq  Ta    Yes      Ta    Yes
-.It Sx \&Brq Ta    Yes      Ta    Yes
-.It Sx \&D1  Ta    \&No     Ta    \&Yes
-.It Sx \&Dl  Ta    \&No     Ta    Yes
-.It Sx \&Dq  Ta    Yes      Ta    Yes
-.It Sx \&Op  Ta    Yes      Ta    Yes
-.It Sx \&Pq  Ta    Yes      Ta    Yes
-.It Sx \&Ql  Ta    Yes      Ta    Yes
-.It Sx \&Qq  Ta    Yes      Ta    Yes
-.It Sx \&Sq  Ta    Yes      Ta    Yes
-.It Sx \&Vt  Ta    Yes      Ta    Yes
-.El
-.Pp
-Note that the
-.Sx \&Vt
-macro is a
-.Sx Block partial-implicit
-only when invoked as the first macro
-in a
-.Em SYNOPSIS
-section line, else it is
-.Sx In-line .
-.Ss Special block macro
-The
-.Sx \&Ta
-macro can only be used below
-.Sx \&It
-in
-.Sx \&Bl Fl column
-lists.
-It delimits blocks representing table cells;
-these blocks have bodies, but no heads.
-.Bl -column "MacroX" "CallableX" "ParsedX" "closed by XXXX" -offset indent
-.It Em Macro Ta Em Callable Ta Em Parsed Ta Em Scope
-.It Sx \&Ta  Ta    Yes      Ta    Yes    Ta closed by Sx \&Ta , Sx \&It
-.El
-.Ss In-line
-Closed by the end of the line, fixed argument lengths,
-and/or subsequent macros.
-In-line macros have only text children.
-If a number (or inequality) of arguments is
-.Pq n ,
-then the macro accepts an arbitrary number of arguments.
-.Bd -literal -offset indent
-\&.Yo \(lB\-arg \(lBval...\(rB\(rB \(lBargs...\(rB \(lBres...\(rB
-
-\&.Yo \(lB\-arg \(lBval...\(rB\(rB \(lBargs...\(rB Yc...
-
-\&.Yo \(lB\-arg \(lBval...\(rB\(rB arg0 arg1 argN
-.Ed
-.Bl -column "MacroX" "CallableX" "ParsedX" "Arguments" -offset indent
-.It Em Macro Ta Em Callable Ta Em Parsed Ta Em Arguments
-.It Sx \&%A  Ta    \&No     Ta    \&No     Ta    >0
-.It Sx \&%B  Ta    \&No     Ta    \&No     Ta    >0
-.It Sx \&%C  Ta    \&No     Ta    \&No     Ta    >0
-.It Sx \&%D  Ta    \&No     Ta    \&No     Ta    >0
-.It Sx \&%I  Ta    \&No     Ta    \&No     Ta    >0
-.It Sx \&%J  Ta    \&No     Ta    \&No     Ta    >0
-.It Sx \&%N  Ta    \&No     Ta    \&No     Ta    >0
-.It Sx \&%O  Ta    \&No     Ta    \&No     Ta    >0
-.It Sx \&%P  Ta    \&No     Ta    \&No     Ta    >0
-.It Sx \&%Q  Ta    \&No     Ta    \&No     Ta    >0
-.It Sx \&%R  Ta    \&No     Ta    \&No     Ta    >0
-.It Sx \&%T  Ta    \&No     Ta    \&No     Ta    >0
-.It Sx \&%U  Ta    \&No     Ta    \&No     Ta    >0
-.It Sx \&%V  Ta    \&No     Ta    \&No     Ta    >0
-.It Sx \&Ad  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&An  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&Ap  Ta    Yes      Ta    Yes      Ta    0
-.It Sx \&Ar  Ta    Yes      Ta    Yes      Ta    n
-.It Sx \&At  Ta    Yes      Ta    Yes      Ta    1
-.It Sx \&Bsx Ta    Yes      Ta    Yes      Ta    n
-.It Sx \&Bt  Ta    \&No     Ta    \&No     Ta    0
-.It Sx \&Bx  Ta    Yes      Ta    Yes      Ta    n
-.It Sx \&Cd  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&Cm  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&Db  Ta    \&No     Ta    \&No     Ta    1
-.It Sx \&Dd  Ta    \&No     Ta    \&No     Ta    n
-.It Sx \&Dt  Ta    \&No     Ta    \&No     Ta    n
-.It Sx \&Dv  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&Dx  Ta    Yes      Ta    Yes      Ta    n
-.It Sx \&Em  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&En  Ta    \&No     Ta    \&No     Ta    0
-.It Sx \&Er  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&Es  Ta    \&No     Ta    \&No     Ta    0
-.It Sx \&Ev  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&Ex  Ta    \&No     Ta    \&No     Ta    n
-.It Sx \&Fa  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&Fd  Ta    \&No     Ta    \&No     Ta    >0
-.It Sx \&Fl  Ta    Yes      Ta    Yes      Ta    n
-.It Sx \&Fn  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&Fr  Ta    \&No     Ta    \&No     Ta    n
-.It Sx \&Ft  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&Fx  Ta    Yes      Ta    Yes      Ta    n
-.It Sx \&Hf  Ta    \&No     Ta    \&No     Ta    n
-.It Sx \&Ic  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&In  Ta    \&No     Ta    \&No     Ta    1
-.It Sx \&Lb  Ta    \&No     Ta    \&No     Ta    1
-.It Sx \&Li  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&Lk  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&Lp  Ta    \&No     Ta    \&No     Ta    0
-.It Sx \&Ms  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&Mt  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&Nm  Ta    Yes      Ta    Yes      Ta    n
-.It Sx \&No  Ta    Yes      Ta    Yes      Ta    0
-.It Sx \&Ns  Ta    Yes      Ta    Yes      Ta    0
-.It Sx \&Nx  Ta    Yes      Ta    Yes      Ta    n
-.It Sx \&Os  Ta    \&No     Ta    \&No     Ta    n
-.It Sx \&Ot  Ta    \&No     Ta    \&No     Ta    n
-.It Sx \&Ox  Ta    Yes      Ta    Yes      Ta    n
-.It Sx \&Pa  Ta    Yes      Ta    Yes      Ta    n
-.It Sx \&Pf  Ta    Yes      Ta    Yes      Ta    1
-.It Sx \&Pp  Ta    \&No     Ta    \&No     Ta    0
-.It Sx \&Rv  Ta    \&No     Ta    \&No     Ta    n
-.It Sx \&Sm  Ta    \&No     Ta    \&No     Ta    1
-.It Sx \&St  Ta    \&No     Ta    Yes      Ta    1
-.It Sx \&Sx  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&Sy  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&Tn  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&Ud  Ta    \&No     Ta    \&No     Ta    0
-.It Sx \&Ux  Ta    Yes      Ta    Yes      Ta    n
-.It Sx \&Va  Ta    Yes      Ta    Yes      Ta    n
-.It Sx \&Vt  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&Xr  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&br  Ta    \&No     Ta    \&No     Ta    0
-.It Sx \&sp  Ta    \&No     Ta    \&No     Ta    1
-.El
-.Ss Delimiters
-When a macro argument consists of one single input character
-considered as a delimiter, the argument gets special handling.
-This does not apply when delimiters appear in arguments containing
-more than one character.
-Consequently, to prevent special handling and just handle it
-like any other argument, a delimiter can be escaped by prepending
-a zero-width space
-.Pq Sq \e& .
-In text lines, delimiters never need escaping, but may be used
-as normal punctuation.
-.Pp
-For many macros, when the leading arguments are opening delimiters,
-these delimiters are put before the macro scope,
-and when the trailing arguments are closing delimiters,
-these delimiters are put after the macro scope.
-For example,
-.Pp
-.D1 Pf \. \&Aq "( [ word ] ) ."
-.Pp
-renders as:
-.Pp
-.D1 Aq ( [ word ] ) .
-.Pp
-Opening delimiters are:
-.Pp
-.Bl -tag -width Ds -offset indent -compact
-.It \&(
-left parenthesis
-.It \&[
-left bracket
-.El
-.Pp
-Closing delimiters are:
-.Pp
-.Bl -tag -width Ds -offset indent -compact
-.It \&.
-period
-.It \&,
-comma
-.It \&:
-colon
-.It \&;
-semicolon
-.It \&)
-right parenthesis
-.It \&]
-right bracket
-.It \&?
-question mark
-.It \&!
-exclamation mark
-.El
-.Pp
-Note that even a period preceded by a backslash
-.Pq Sq \e.\&
-gets this special handling; use
-.Sq \e&.
-to prevent that.
-.Pp
-Many in-line macros interrupt their scope when they encounter
-delimiters, and resume their scope when more arguments follow that
-are not delimiters.
-For example,
-.Pp
-.D1 Pf \. \&Fl "a ( b | c \e*(Ba d ) e"
-.Pp
-renders as:
-.Pp
-.D1 Fl a ( b | c \*(Ba d ) e
-.Pp
-This applies to both opening and closing delimiters,
-and also to the middle delimiter:
-.Pp
-.Bl -tag -width Ds -offset indent -compact
-.It \&|
-vertical bar
-.El
-.Pp
-As a special case, the predefined string \e*(Ba is handled and rendered
-in the same way as a plain
-.Sq \&|
-character.
-Using this predefined string is not recommended in new manuals.
 .Sh MACRO OVERVIEW
 This overview is sorted such that macros of similar purpose are listed
 together, to help find the best macro for any given purpose.
-Deprecated macros are not included in the overview, but can be found
-in the alphabetical reference below.
+Deprecated macros are not included in the overview, but can be found below
+in the alphabetical
+.Sx MACRO REFERENCE .
 .Ss Document preamble and NAME section macros
 .Bl -column "Brq, Bro, Brc" description
-.It Sx \&Dd Ta document date: Cm $Mdocdate: September 26 2011 $ | Ar month day , year
+.It Sx \&Dd Ta document date: Cm $\&Mdocdate$ | Ar month day , year
 .It Sx \&Dt Ta document title: Ar TITLE section Op Ar volume | arch
 .It Sx \&Os Ta operating system version: Op Ar system Op Ar version
 .It Sx \&Nm Ta document name (one argument)
@@ -1127,7 +538,7 @@ in the alphabetical reference below.
 .It Sx \&Ox Ta Ox
 .It Sx \&Dx Ta Dx
 .El
-.Sh REFERENCE
+.Sh MACRO REFERENCE
 This section is a canonical reference of all macros, arranged
 alphabetically.
 For the scoping of individual macros, see
@@ -3182,6 +2593,395 @@ argument must be formatted as described in
 If unspecified,
 .Sx \&sp
 asserts a single vertical space.
+.Sh MACRO SYNTAX
+The syntax of a macro depends on its classification.
+In this section,
+.Sq \-arg
+refers to macro arguments, which may be followed by zero or more
+.Sq parm
+parameters;
+.Sq \&Yo
+opens the scope of a macro; and if specified,
+.Sq \&Yc
+closes it out.
+.Pp
+The
+.Em Callable
+column indicates that the macro may also be called by passing its name
+as an argument to another macro.
+For example,
+.Sq \&.Op \&Fl O \&Ar file
+produces
+.Sq Op Fl O Ar file .
+To prevent a macro call and render the macro name literally,
+escape it by prepending a zero-width space,
+.Sq \e& .
+For example,
+.Sq \&Op \e&Fl O
+produces
+.Sq Op \&Fl O .
+If a macro is not callable but its name appears as an argument
+to another macro, it is interpreted as opaque text.
+For example,
+.Sq \&.Fl \&Sh
+produces
+.Sq Fl \&Sh .
+.Pp
+The
+.Em Parsed
+column indicates whether the macro may call other macros by receiving
+their names as arguments.
+If a macro is not parsed but the name of another macro appears
+as an argument, it is interpreted as opaque text.
+.Pp
+The
+.Em Scope
+column, if applicable, describes closure rules.
+.Ss Block full-explicit
+Multi-line scope closed by an explicit closing macro.
+All macros contains bodies; only
+.Sx \&Bf
+and
+.Pq optionally
+.Sx \&Bl
+contain a head.
+.Bd -literal -offset indent
+\&.Yo \(lB\-arg \(lBparm...\(rB\(rB \(lBhead...\(rB
+\(lBbody...\(rB
+\&.Yc
+.Ed
+.Bl -column "MacroX" "CallableX" "ParsedX" "closed by XXX" -offset indent
+.It Em Macro Ta Em Callable Ta Em Parsed Ta Em Scope
+.It Sx \&Bd  Ta    \&No     Ta    \&No     Ta    closed by Sx \&Ed
+.It Sx \&Bf  Ta    \&No     Ta    \&No     Ta    closed by Sx \&Ef
+.It Sx \&Bk  Ta    \&No     Ta    \&No     Ta    closed by Sx \&Ek
+.It Sx \&Bl  Ta    \&No     Ta    \&No     Ta    closed by Sx \&El
+.It Sx \&Ed  Ta    \&No     Ta    \&No     Ta    opened by Sx \&Bd
+.It Sx \&Ef  Ta    \&No     Ta    \&No     Ta    opened by Sx \&Bf
+.It Sx \&Ek  Ta    \&No     Ta    \&No     Ta    opened by Sx \&Bk
+.It Sx \&El  Ta    \&No     Ta    \&No     Ta    opened by Sx \&Bl
+.El
+.Ss Block full-implicit
+Multi-line scope closed by end-of-file or implicitly by another macro.
+All macros have bodies; some
+.Po
+.Sx \&It Fl bullet ,
+.Fl hyphen ,
+.Fl dash ,
+.Fl enum ,
+.Fl item
+.Pc
+don't have heads; only one
+.Po
+.Sx \&It
+in
+.Sx \&Bl Fl column
+.Pc
+has multiple heads.
+.Bd -literal -offset indent
+\&.Yo \(lB\-arg \(lBparm...\(rB\(rB \(lBhead... \(lBTa head...\(rB\(rB
+\(lBbody...\(rB
+.Ed
+.Bl -column "MacroX" "CallableX" "ParsedX" "closed by XXXXXXXXXXX" -offset indent
+.It Em Macro Ta Em Callable Ta Em Parsed Ta Em Scope
+.It Sx \&It Ta \&No Ta Yes  Ta closed by Sx \&It , Sx \&El
+.It Sx \&Nd Ta \&No Ta \&No Ta closed by Sx \&Sh
+.It Sx \&Nm Ta \&No Ta Yes  Ta closed by Sx \&Nm , Sx \&Sh , Sx \&Ss
+.It Sx \&Sh Ta \&No Ta Yes  Ta closed by Sx \&Sh
+.It Sx \&Ss Ta \&No Ta Yes  Ta closed by Sx \&Sh , Sx \&Ss
+.El
+.Pp
+Note that the
+.Sx \&Nm
+macro is a
+.Sx Block full-implicit
+macro only when invoked as the first macro
+in a
+.Em SYNOPSIS
+section line, else it is
+.Sx In-line .
+.Ss Block partial-explicit
+Like block full-explicit, but also with single-line scope.
+Each has at least a body and, in limited circumstances, a head
+.Po
+.Sx \&Fo ,
+.Sx \&Eo
+.Pc
+and/or tail
+.Pq Sx \&Ec .
+.Bd -literal -offset indent
+\&.Yo \(lB\-arg \(lBparm...\(rB\(rB \(lBhead...\(rB
+\(lBbody...\(rB
+\&.Yc \(lBtail...\(rB
+
+\&.Yo \(lB\-arg \(lBparm...\(rB\(rB \(lBhead...\(rB \
+\(lBbody...\(rB \&Yc \(lBtail...\(rB
+.Ed
+.Bl -column "MacroX" "CallableX" "ParsedX" "closed by XXXX" -offset indent
+.It Em Macro Ta Em Callable Ta Em Parsed Ta Em Scope
+.It Sx \&Ac  Ta    Yes      Ta    Yes      Ta    opened by Sx \&Ao
+.It Sx \&Ao  Ta    Yes      Ta    Yes      Ta    closed by Sx \&Ac
+.It Sx \&Bc  Ta    Yes      Ta    Yes      Ta    closed by Sx \&Bo
+.It Sx \&Bo  Ta    Yes      Ta    Yes      Ta    opened by Sx \&Bc
+.It Sx \&Brc Ta    Yes      Ta    Yes      Ta    opened by Sx \&Bro
+.It Sx \&Bro Ta    Yes      Ta    Yes      Ta    closed by Sx \&Brc
+.It Sx \&Dc  Ta    Yes      Ta    Yes      Ta    opened by Sx \&Do
+.It Sx \&Do  Ta    Yes      Ta    Yes      Ta    closed by Sx \&Dc
+.It Sx \&Ec  Ta    Yes      Ta    Yes      Ta    opened by Sx \&Eo
+.It Sx \&Eo  Ta    Yes      Ta    Yes      Ta    closed by Sx \&Ec
+.It Sx \&Fc  Ta    Yes      Ta    Yes      Ta    opened by Sx \&Fo
+.It Sx \&Fo  Ta    \&No     Ta    \&No     Ta    closed by Sx \&Fc
+.It Sx \&Oc  Ta    Yes      Ta    Yes      Ta    closed by Sx \&Oo
+.It Sx \&Oo  Ta    Yes      Ta    Yes      Ta    opened by Sx \&Oc
+.It Sx \&Pc  Ta    Yes      Ta    Yes      Ta    closed by Sx \&Po
+.It Sx \&Po  Ta    Yes      Ta    Yes      Ta    opened by Sx \&Pc
+.It Sx \&Qc  Ta    Yes      Ta    Yes      Ta    opened by Sx \&Oo
+.It Sx \&Qo  Ta    Yes      Ta    Yes      Ta    closed by Sx \&Oc
+.It Sx \&Re  Ta    \&No     Ta    \&No     Ta    opened by Sx \&Rs
+.It Sx \&Rs  Ta    \&No     Ta    \&No     Ta    closed by Sx \&Re
+.It Sx \&Sc  Ta    Yes      Ta    Yes      Ta    opened by Sx \&So
+.It Sx \&So  Ta    Yes      Ta    Yes      Ta    closed by Sx \&Sc
+.It Sx \&Xc  Ta    Yes      Ta    Yes      Ta    opened by Sx \&Xo
+.It Sx \&Xo  Ta    Yes      Ta    Yes      Ta    closed by Sx \&Xc
+.El
+.Ss Block partial-implicit
+Like block full-implicit, but with single-line scope closed by the
+end of the line.
+.Bd -literal -offset indent
+\&.Yo \(lB\-arg \(lBval...\(rB\(rB \(lBbody...\(rB \(lBres...\(rB
+.Ed
+.Bl -column "MacroX" "CallableX" "ParsedX" -offset indent
+.It Em Macro Ta Em Callable Ta Em Parsed
+.It Sx \&Aq  Ta    Yes      Ta    Yes
+.It Sx \&Bq  Ta    Yes      Ta    Yes
+.It Sx \&Brq Ta    Yes      Ta    Yes
+.It Sx \&D1  Ta    \&No     Ta    \&Yes
+.It Sx \&Dl  Ta    \&No     Ta    Yes
+.It Sx \&Dq  Ta    Yes      Ta    Yes
+.It Sx \&Op  Ta    Yes      Ta    Yes
+.It Sx \&Pq  Ta    Yes      Ta    Yes
+.It Sx \&Ql  Ta    Yes      Ta    Yes
+.It Sx \&Qq  Ta    Yes      Ta    Yes
+.It Sx \&Sq  Ta    Yes      Ta    Yes
+.It Sx \&Vt  Ta    Yes      Ta    Yes
+.El
+.Pp
+Note that the
+.Sx \&Vt
+macro is a
+.Sx Block partial-implicit
+only when invoked as the first macro
+in a
+.Em SYNOPSIS
+section line, else it is
+.Sx In-line .
+.Ss Special block macro
+The
+.Sx \&Ta
+macro can only be used below
+.Sx \&It
+in
+.Sx \&Bl Fl column
+lists.
+It delimits blocks representing table cells;
+these blocks have bodies, but no heads.
+.Bl -column "MacroX" "CallableX" "ParsedX" "closed by XXXX" -offset indent
+.It Em Macro Ta Em Callable Ta Em Parsed Ta Em Scope
+.It Sx \&Ta  Ta    Yes      Ta    Yes    Ta closed by Sx \&Ta , Sx \&It
+.El
+.Ss In-line
+Closed by the end of the line, fixed argument lengths,
+and/or subsequent macros.
+In-line macros have only text children.
+If a number (or inequality) of arguments is
+.Pq n ,
+then the macro accepts an arbitrary number of arguments.
+.Bd -literal -offset indent
+\&.Yo \(lB\-arg \(lBval...\(rB\(rB \(lBargs...\(rB \(lBres...\(rB
+
+\&.Yo \(lB\-arg \(lBval...\(rB\(rB \(lBargs...\(rB Yc...
+
+\&.Yo \(lB\-arg \(lBval...\(rB\(rB arg0 arg1 argN
+.Ed
+.Bl -column "MacroX" "CallableX" "ParsedX" "Arguments" -offset indent
+.It Em Macro Ta Em Callable Ta Em Parsed Ta Em Arguments
+.It Sx \&%A  Ta    \&No     Ta    \&No     Ta    >0
+.It Sx \&%B  Ta    \&No     Ta    \&No     Ta    >0
+.It Sx \&%C  Ta    \&No     Ta    \&No     Ta    >0
+.It Sx \&%D  Ta    \&No     Ta    \&No     Ta    >0
+.It Sx \&%I  Ta    \&No     Ta    \&No     Ta    >0
+.It Sx \&%J  Ta    \&No     Ta    \&No     Ta    >0
+.It Sx \&%N  Ta    \&No     Ta    \&No     Ta    >0
+.It Sx \&%O  Ta    \&No     Ta    \&No     Ta    >0
+.It Sx \&%P  Ta    \&No     Ta    \&No     Ta    >0
+.It Sx \&%Q  Ta    \&No     Ta    \&No     Ta    >0
+.It Sx \&%R  Ta    \&No     Ta    \&No     Ta    >0
+.It Sx \&%T  Ta    \&No     Ta    \&No     Ta    >0
+.It Sx \&%U  Ta    \&No     Ta    \&No     Ta    >0
+.It Sx \&%V  Ta    \&No     Ta    \&No     Ta    >0
+.It Sx \&Ad  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&An  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&Ap  Ta    Yes      Ta    Yes      Ta    0
+.It Sx \&Ar  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&At  Ta    Yes      Ta    Yes      Ta    1
+.It Sx \&Bsx Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Bt  Ta    \&No     Ta    \&No     Ta    0
+.It Sx \&Bx  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Cd  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&Cm  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&Db  Ta    \&No     Ta    \&No     Ta    1
+.It Sx \&Dd  Ta    \&No     Ta    \&No     Ta    n
+.It Sx \&Dt  Ta    \&No     Ta    \&No     Ta    n
+.It Sx \&Dv  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&Dx  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Em  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&En  Ta    \&No     Ta    \&No     Ta    0
+.It Sx \&Er  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&Es  Ta    \&No     Ta    \&No     Ta    0
+.It Sx \&Ev  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&Ex  Ta    \&No     Ta    \&No     Ta    n
+.It Sx \&Fa  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&Fd  Ta    \&No     Ta    \&No     Ta    >0
+.It Sx \&Fl  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Fn  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&Fr  Ta    \&No     Ta    \&No     Ta    n
+.It Sx \&Ft  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&Fx  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Hf  Ta    \&No     Ta    \&No     Ta    n
+.It Sx \&Ic  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&In  Ta    \&No     Ta    \&No     Ta    1
+.It Sx \&Lb  Ta    \&No     Ta    \&No     Ta    1
+.It Sx \&Li  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&Lk  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&Lp  Ta    \&No     Ta    \&No     Ta    0
+.It Sx \&Ms  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&Mt  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&Nm  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&No  Ta    Yes      Ta    Yes      Ta    0
+.It Sx \&Ns  Ta    Yes      Ta    Yes      Ta    0
+.It Sx \&Nx  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Os  Ta    \&No     Ta    \&No     Ta    n
+.It Sx \&Ot  Ta    \&No     Ta    \&No     Ta    n
+.It Sx \&Ox  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Pa  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Pf  Ta    Yes      Ta    Yes      Ta    1
+.It Sx \&Pp  Ta    \&No     Ta    \&No     Ta    0
+.It Sx \&Rv  Ta    \&No     Ta    \&No     Ta    n
+.It Sx \&Sm  Ta    \&No     Ta    \&No     Ta    1
+.It Sx \&St  Ta    \&No     Ta    Yes      Ta    1
+.It Sx \&Sx  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&Sy  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&Tn  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&Ud  Ta    \&No     Ta    \&No     Ta    0
+.It Sx \&Ux  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Va  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Vt  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&Xr  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&br  Ta    \&No     Ta    \&No     Ta    0
+.It Sx \&sp  Ta    \&No     Ta    \&No     Ta    1
+.El
+.Ss Delimiters
+When a macro argument consists of one single input character
+considered as a delimiter, the argument gets special handling.
+This does not apply when delimiters appear in arguments containing
+more than one character.
+Consequently, to prevent special handling and just handle it
+like any other argument, a delimiter can be escaped by prepending
+a zero-width space
+.Pq Sq \e& .
+In text lines, delimiters never need escaping, but may be used
+as normal punctuation.
+.Pp
+For many macros, when the leading arguments are opening delimiters,
+these delimiters are put before the macro scope,
+and when the trailing arguments are closing delimiters,
+these delimiters are put after the macro scope.
+For example,
+.Pp
+.D1 Pf \. \&Aq "( [ word ] ) ."
+.Pp
+renders as:
+.Pp
+.D1 Aq ( [ word ] ) .
+.Pp
+Opening delimiters are:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It \&(
+left parenthesis
+.It \&[
+left bracket
+.El
+.Pp
+Closing delimiters are:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It \&.
+period
+.It \&,
+comma
+.It \&:
+colon
+.It \&;
+semicolon
+.It \&)
+right parenthesis
+.It \&]
+right bracket
+.It \&?
+question mark
+.It \&!
+exclamation mark
+.El
+.Pp
+Note that even a period preceded by a backslash
+.Pq Sq \e.\&
+gets this special handling; use
+.Sq \e&.
+to prevent that.
+.Pp
+Many in-line macros interrupt their scope when they encounter
+delimiters, and resume their scope when more arguments follow that
+are not delimiters.
+For example,
+.Pp
+.D1 Pf \. \&Fl "a ( b | c \e*(Ba d ) e"
+.Pp
+renders as:
+.Pp
+.D1 Fl a ( b | c \*(Ba d ) e
+.Pp
+This applies to both opening and closing delimiters,
+and also to the middle delimiter:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It \&|
+vertical bar
+.El
+.Pp
+As a special case, the predefined string \e*(Ba is handled and rendered
+in the same way as a plain
+.Sq \&|
+character.
+Using this predefined string is not recommended in new manuals.
+.Ss Font handling
+In
+.Nm
+documents, usage of semantic markup is recommended in order to have
+proper fonts automatically selected; only when no fitting semantic markup
+is available, consider falling back to
+.Sx Physical markup
+macros.
+Whenever any
+.Nm
+macro switches the
+.Xr roff 7
+font mode, it will automatically restore the previous font when exiting
+its scope.
+Manually switching the font using the
+.Xr roff 7
+.Ql \ef
+font escape sequences is never required.
 .Sh COMPATIBILITY
 This section documents compatibility between mandoc and other other
 troff implementations, at this time limited to GNU troff
