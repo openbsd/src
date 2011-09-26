@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.55 2011/09/21 12:01:38 claudio Exp $
+.\" $OpenBSD: bgpctl.8,v 1.56 2011/09/26 08:32:31 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 21 2011 $
+.Dd $Mdocdate: September 26 2011 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -166,7 +166,7 @@ Show the interface states.
 .Op Ar options
 .Ar filter
 .Xc
-Show routes from a MRT table dump file.
+Show routes from an MRT table dump file.
 .Ar filter
 can be an IP address, a CIDR prefix, an AS filter, a combination or nothing:
 .Pp
@@ -209,7 +209,7 @@ are defined:
 .Pp
 .Bl -tag -width "file name" -compact
 .It Cm detail
-Show more detailed output for matched routes.
+Show more detailed output for matching routes.
 .It Ar family
 Limit the output to the given address family.
 .It Cm file Ar name
@@ -307,7 +307,7 @@ are defined:
 .Pp
 .Bl -tag -width "detail" -compact
 .It Cm detail
-Show more detailed output for matched routes.
+Show more detailed output for matching routes.
 .It Ar family
 Limit the output to the given address family.
 .It Cm in
