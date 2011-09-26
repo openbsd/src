@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.48 2011/09/16 19:36:07 jmc Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.49 2011/09/26 19:41:56 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -41,7 +41,7 @@
 .\" the suitability of this software for any purpose.  It is
 .\" provided "as is" without express or implied warranty.
 .\"
-.Dd $Mdocdate: September 16 2011 $
+.Dd $Mdocdate: September 26 2011 $
 .Dt NEWSYSLOG 8
 .Os
 .Sh NAME
@@ -272,10 +272,10 @@ is:
 .Va \&yy Oc
 .Va \&mm Oc
 .Va \&dd Oc
-.Oo Li \&T
-.Oo Va \&hh
-.Oo Va \&mm
-.Oo Va \&ss
+.Oo Va \&T
+.Oo Va \&HH
+.Oo Va \&MM
+.Oo Va \&SS
 .Oc Oc Oc Oc Oc .
 .Sm on
 Optional date fields default to the appropriate component of the
@@ -308,18 +308,19 @@ are all equivalent:
 .Pp
 .Sy Day, week and month time format:
 The lead-in character for day, week and month specification is a
-.So Li \&$ Sc Ns -sign .
+dollar sign
+.Pq $ .
 The particular format of day, week and month specification is:
-.Op Va D\&hh ,
-.Op Va W\&w Ns Op Va D\&hh
+.Op Li D Ns Ar HH ,
+.Op Li W Ns Ar w Ns Op Li D Ns Ar HH ,
 and
-.Op Va M\&dd Ns Op Va D\&hh ,
+.Op Li M Ns Ar dd Ns Op Li D Ns Ar HH ,
 respectively.
 Optional time fields default to midnight.
 The ranges for day and hour specifications are:
 .Pp
 .Bl -tag -width Ds -compact -offset indent
-.It Ar hh
+.It Ar HH
 hours, range 0 ... 23
 .It Ar w
 day of week, range 0 ... 6, 0 = Sunday
@@ -333,26 +334,26 @@ to specify the last day of the month.
 .Pp
 .Sy Some examples:
 .Bl -tag -width Ds -compact -offset indent
-.It Ar $D0
+.It Li $D0
 rotate every night at midnight
 (same as
-.Ar @T00 )
-.It Ar $D23
+.Li @T00 )
+.It Li $D23
 rotate every day at 23:00 hr
 (same as
-.Ar @T23 )
-.It Ar $W0D23
+.Li @T23 )
+.It Li $W0D23
 rotate every week on Sunday at 23:00 hr
-.It Ar $W5D16
+.It Li $W5D16
 rotate every week on Friday at 16:00 hr
-.It Ar $M1D0
+.It Li $M1D0
 rotate on the first day of every month at midnight
 (i.e., the start of the day; same as
-.Ar @01T00 )
-.It Ar $M5D6
+.Li @01T00 )
+.It Li $M5D6
 rotate on every 5th day of the month at 6:00 hr
 (same as
-.Ar @05T06 )
+.Li @05T06 )
 .El
 .Pp
 .It Ar flags
