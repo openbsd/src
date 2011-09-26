@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgec.c,v 1.19 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: sgec.c,v 1.20 2011/09/26 21:44:04 miod Exp $	*/
 /*      $NetBSD: sgec.c,v 1.5 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -223,6 +223,7 @@ sgec_attach(sc)
 	    ze_ifmedia_status);
 	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_5, 0, 0);
 	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER | IFM_10_5);
+	/* supposedly connected, and the first Tx attempt will let us know */
 	sc->sc_flags |= SGECF_LINKUP;
 	return;
 
@@ -527,9 +528,9 @@ sgec_txintr(struct ze_softc *sc)
 {
 	struct ze_cdata *zc = sc->sc_zedata;
 	struct ifnet *ifp = &sc->sc_if;
+	int oldlink = sc->sc_flags & SGECF_LINKUP;
 	u_short tdes0;
 
-	sc->sc_flags |= SGECF_LINKUP;
 	while ((zc->zc_xmit[sc->sc_lastack].ze_tdr & ZE_TDR_OW) == 0) {
 		int idx = sc->sc_lastack;
 
@@ -551,6 +552,8 @@ sgec_txintr(struct ze_softc *sc)
 				    sc->sc_dev.dv_xname);
 			if (tdes0 & (ZE_TDES0_LO | ZE_TDES0_NC))
 				sc->sc_flags &= ~SGECF_LINKUP;
+			else
+				sc->sc_flags |= SGECF_LINKUP;
 			if (tdes0 & ZE_TDES0_EC) {
 				printf("%s: excessive collisions, tdr %d\n",
 				    sc->sc_dev.dv_xname,
@@ -565,6 +568,7 @@ sgec_txintr(struct ze_softc *sc)
 			if (tdes0 & (ZE_TDES0_TO | ZE_TDES0_UF))
 				zeinit(sc);
 		} else {
+			sc->sc_flags |= SGECF_LINKUP;
 			if (zc->zc_xmit[idx].ze_tdes1 & ZE_TDES1_LS)
 				ifp->if_opackets++;
 			bus_dmamap_unload(sc->sc_dmat, sc->sc_xmtmap[idx]);
@@ -574,6 +578,19 @@ sgec_txintr(struct ze_softc *sc)
 			}
 		}
 	}
+
+	/* Notify link status change */
+	if ((sc->sc_flags & SGECF_LINKUP) != oldlink) {
+		if (oldlink != 0) {
+			ifp->if_link_state = LINK_STATE_DOWN;
+			ifp->if_baudrate = 0;
+		} else {
+			ifp->if_link_state = LINK_STATE_UP;
+			ifp->if_baudrate = IF_Mbps(10);
+		}
+		if_link_state_change(ifp);
+	}
+
 	if (sc->sc_inq == 0)
 		ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
