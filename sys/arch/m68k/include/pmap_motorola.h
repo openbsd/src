@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.h,v 1.24 2011/05/24 15:27:36 ariane Exp $	*/
+/*	$OpenBSD: pmap_motorola.h,v 1.25 2011/09/27 20:35:44 miod Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -87,29 +87,6 @@ typedef struct pmap	*pmap_t;
 }
 
 /* XXX - struct pv_entry moved to vmparam.h because of include ordering issues */
-
-struct pv_page;
-
-struct pv_page_info {
-	TAILQ_ENTRY(pv_page) pgi_list;
-	struct pv_entry *pgi_freelist;
-	int pgi_nfree;
-};
-
-/*
- * This is basically:
- * ((PAGE_SIZE - sizeof(struct pv_page_info)) / sizeof(struct pv_entry))
- */
-#if PAGE_SHIFT == 13
-#define	NPVPPG	340
-#elif PAGE_SHIFT == 12
-#define	NPVPPG	170
-#endif
-
-struct pv_page {
-	struct pv_page_info pvp_pgi;
-	struct pv_entry pvp_pv[NPVPPG];
-};
 
 extern struct pmap	kernel_pmap_store;
 

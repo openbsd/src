@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.63 2011/09/22 17:41:00 jasper Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.64 2011/09/27 20:35:44 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -273,14 +273,12 @@ vsize_t		mem_size;	/* memory size in bytes */
 vaddr_t		virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vaddr_t		virtual_end;	/* VA of last avail page (end of kernel AS) */
 
-TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
-int		pv_nfree;
-
 #if defined(M68040) || defined(M68060)
 int		protostfree;	/* prototype (default) free ST map */
 #endif
 
 struct pool	pmap_pmap_pool;	/* memory pool for pmap structures */
+struct pool	pmap_pv_pool;	/* memory pool for pv pages */
 
 /*
  * Internal routines
@@ -405,8 +403,6 @@ pmap_init()
 	int		npages;
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_init()\n"));
-
-	TAILQ_INIT(&pv_page_freelist);
 
 #ifndef __HAVE_PMAP_DIRECT
 	/*
@@ -549,7 +545,9 @@ pmap_init()
 	 * Initialize the pmap pools.
 	 */
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr);
+	    NULL);
+	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
+	    NULL);
 }
 
 /*
@@ -560,35 +558,7 @@ pmap_init()
 struct pv_entry *
 pmap_alloc_pv()
 {
-	struct pv_page *pvp;
-	struct pv_entry *pv;
-	int i;
-
-	if (pv_nfree == 0) {
-		pvp = (struct pv_page *)uvm_km_kmemalloc(kernel_map,
-		    uvm.kernel_object, PAGE_SIZE, UVM_KMF_NOWAIT);
-		if (pvp == NULL)
-			return NULL;
-		pvp->pvp_pgi.pgi_freelist = pv = &pvp->pvp_pv[1];
-		for (i = NPVPPG - 2; i; i--, pv++)
-			pv->pv_next = pv + 1;
-		pv->pv_next = NULL;
-		pv_nfree += pvp->pvp_pgi.pgi_nfree = NPVPPG - 1;
-		TAILQ_INSERT_HEAD(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-		pv = &pvp->pvp_pv[0];
-	} else {
-		--pv_nfree;
-		pvp = TAILQ_FIRST(&pv_page_freelist);
-		if (--pvp->pvp_pgi.pgi_nfree == 0) {
-			TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-		}
-		pv = pvp->pvp_pgi.pgi_freelist;
-#ifdef DIAGNOSTIC
-		if (pv == NULL)
-			panic("pmap_alloc_pv: pgi_nfree inconsistent");
-#endif
-		pvp->pvp_pgi.pgi_freelist = pv->pv_next;
-	}
+	pv = (struct pv_entry *)pool_get(&pmap_pv_pool, PR_NOWAIT);
 	return pv;
 }
 
@@ -601,23 +571,7 @@ void
 pmap_free_pv(pv)
 	struct pv_entry *pv;
 {
-	struct pv_page *pvp;
-
-	pvp = (struct pv_page *) trunc_page((vaddr_t)pv);
-	switch (++pvp->pvp_pgi.pgi_nfree) {
-	case 1:
-		TAILQ_INSERT_TAIL(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-	default:
-		pv->pv_next = pvp->pvp_pgi.pgi_freelist;
-		pvp->pvp_pgi.pgi_freelist = pv;
-		++pv_nfree;
-		break;
-	case NPVPPG:
-		pv_nfree -= NPVPPG - 1;
-		TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-		uvm_km_free(kernel_map, (vaddr_t)pvp, PAGE_SIZE);
-		break;
-	}
+	pool_put(&pmap_pv_pool, pv);
 }
 
 /*
