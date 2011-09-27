@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.26 2011/03/23 16:54:37 pirofti Exp $	*/
+/*	$OpenBSD: bus.h,v 1.27 2011/09/27 20:47:30 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.31 2001/09/21 15:30:41 wiz Exp $	*/
 
 /*-
@@ -139,8 +139,8 @@ enum bus_type {
  * Bus address and size types
  */
 typedef const struct sparc_bus_space_tag	*bus_space_tag_t;
-typedef u_int64_t	bus_addr_t;
-typedef u_int64_t	bus_size_t;
+typedef u_long	bus_addr_t;
+typedef u_long	bus_size_t;
 
 
 typedef struct _bus_space_handle {

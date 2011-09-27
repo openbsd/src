@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.4 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: bus.h,v 1.5 2011/09/27 20:47:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -42,12 +42,12 @@
  * bus_space implementation
  */
 
-typedef uint32_t bus_addr_t;
-typedef uint32_t bus_size_t;
+typedef u_long bus_addr_t;
+typedef u_long bus_size_t;
 
 struct aviion_bus_space_tag;
 typedef const struct aviion_bus_space_tag *bus_space_tag_t;
-typedef uint32_t bus_space_handle_t;
+typedef u_long bus_space_handle_t;
 
 struct aviion_bus_space_tag {
 	int		(*_space_map)(bus_space_tag_t, bus_addr_t,

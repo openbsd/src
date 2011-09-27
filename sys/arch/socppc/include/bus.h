@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.6 2010/04/04 12:49:30 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.7 2011/09/27 20:47:30 miod Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -47,9 +47,9 @@
 /*
  * Bus access types.
  */
-typedef u_long    bus_addr_t;
-typedef u_int32_t bus_size_t;
-typedef u_int32_t bus_space_handle_t;
+typedef u_long bus_addr_t;
+typedef u_long bus_size_t;
+typedef u_long bus_space_handle_t;
 typedef struct ppc_bus_space *bus_space_tag_t;
 
 struct ppc_bus_space {
