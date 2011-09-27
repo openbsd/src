@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.5 2010/12/21 14:56:24 claudio Exp $   */
+/*	$OpenBSD: locore.S,v 1.6 2011/09/27 15:15:35 miod Exp $   */
 /*	$NetBSD: intvec.s,v 1.39 1999/06/28 08:20:48 itojun Exp $   */
 
 /*
@@ -150,11 +150,11 @@ _rpb:
 #
 # mcheck is the badaddress trap, also called when referencing
 # a invalid address (busserror)
-# _memtest (memtest in C) holds the address to continue execution
-# at when returning from a intentional test.
+# memtest holds the address to continue execution at when returning
+# from a intentional test.
 #
 mcheck: .globl	mcheck
-	tstl	_cold		# Are we still in coldstart?
+	tstl	_ASM_LABEL(memtest)	# Are we expecting a machine check?
 	bneq	L4		# Yes.
 
 	pushr	$0x7f
@@ -173,20 +173,14 @@ mcheck: .globl	mcheck
 	rei
 
 L4:	addl2	(sp)+,sp	# remove info pushed on stack
-	cmpl	_vax_cputype,$1 # Is it a 11/780?
-	bneq	1f		# No...
-
-	mtpr	$0, $PR_SBIFS	# Clear SBI fault register
-	brb	2f
-
-1:	cmpl	_vax_cputype,$4 # Is it a 8600?
-	bneq	3f
-
-	mtpr	$0, $PR_EHSR	# Clear Error status register
-	brb	2f
-
-3:	mtpr	$0xF,$PR_MCESR	# clear the bus error bit
-2:	movl	_memtest,(sp)	# REI to new address
+	# Clear the machine check condition by writing to the
+	# MCESR register if available.
+	cmpl	$VAX_TYP_UV2, _C_LABEL(vax_cputype)
+	beql	2f
+	cmpl	$VAX_TYP_SOC, _C_LABEL(vax_cputype)
+	beql	2f
+  	mtpr	$0,$PR_MCESR	# clear the bus error bit
+2:	movl	_ASM_LABEL(memtest),(sp)	# REI to new address
 	rei
 
 TRAPCALL(invkstk, T_KSPNOTVAL)
@@ -500,7 +494,7 @@ ENTRY_NOPROFILE(badaddr,R2|R3)		# Called with addr,b/w/l
 		movl	8(ap),r1	# Sec arg, b,w,l
 		pushl	r0		# Save old IPL
 		clrl	r3
-		movab	4f,_memtest	# Set the return address
+		movab	4f,_ASM_LABEL(memtest)	# Set the return address
 
 		caseb	r1,$1,$4	# What is the size
 1:		.word	1f-1b		
@@ -518,7 +512,8 @@ ENTRY_NOPROFILE(badaddr,R2|R3)		# Called with addr,b/w/l
 		brb	5f
 
 4:		incl	r3		# Got machine chk => addr bad
-5:		mtpr	(sp)+,$0x12
+5:		clrl	_ASM_LABEL(memtest)	# do not ignore further mchk
+		mtpr	(sp)+,$0x12
 		movl	r3,r0
 		ret
 
@@ -721,6 +716,7 @@ ENTRY_NOPROFILE(copystr,0)
 #
 	.data
 
-_memtest:	.long 0 ; .globl _memtest	# Memory test in progress.
+_ASM_LABEL(memtest):			# badaddr() in progress
+	.long 0
 pcbtrap:	.long 0x800001fc; .globl pcbtrap	# Safe place
 _bootdev:	.long 0; .globl _bootdev

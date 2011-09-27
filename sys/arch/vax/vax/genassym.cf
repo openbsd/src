@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.10 2008/08/18 23:05:38 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.11 2011/09/27 15:15:35 miod Exp $
 #	$NetBSD: genassym.cf,v 1.10 1999/11/19 22:09:55 ragge Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
@@ -112,4 +112,5 @@ member	ec_count
 export	SYS_sigreturn
 export	SYS_exit
 
+export	VAX_TYP_SOC
 export	VAX_TYP_UV2
