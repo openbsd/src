@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.42 2011/09/20 10:51:18 bluhm Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.43 2011/09/28 17:15:45 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -210,14 +210,14 @@ pflogioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 int
-pflog_packet(struct mbuf *m, u_int8_t reason, struct pf_rule *rm,
-    struct pf_rule *am, struct pf_ruleset *ruleset, struct pf_pdesc *pd)
+pflog_packet(struct pf_pdesc *pd, u_int8_t reason, struct pf_rule *rm,
+    struct pf_rule *am, struct pf_ruleset *ruleset)
 {
 #if NBPFILTER > 0
 	struct ifnet *ifn;
 	struct pfloghdr hdr;
 
-	if (m == NULL || rm == NULL || pd == NULL || pd->kif == NULL)
+	if (rm == NULL || pd == NULL || pd->kif == NULL || pd->m == NULL)
 		return (-1);
 
 	if ((ifn = pflogifs[rm->logif]) == NULL || !ifn->if_bpf)
@@ -259,9 +259,9 @@ pflog_packet(struct mbuf *m, u_int8_t reason, struct pf_rule *rm,
 	hdr.dport = pd->ndport;
 
 	ifn->if_opackets++;
-	ifn->if_obytes += m->m_pkthdr.len;
+	ifn->if_obytes += pd->m->m_pkthdr.len;
 
-	bpf_mtap_pflog(ifn->if_bpf, (caddr_t)&hdr, m);
+	bpf_mtap_pflog(ifn->if_bpf, (caddr_t)&hdr, pd->m);
 #endif
 
 	return (0);
@@ -332,7 +332,7 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 		mfake->m_pkthdr.len = min(mfake->m_pkthdr.len, mfake->m_len);
 
 	/* rewrite addresses if needed */
-	if (pf_setup_pdesc(pfloghdr->af, pfloghdr->dir, NULL, &pd, &pdhdrs,
+	if (pf_setup_pdesc(&pd, &pdhdrs, pfloghdr->af, pfloghdr->dir, NULL,
 	    &mfake, &action, &reason) == -1)
 		return;
 
@@ -346,7 +346,7 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	if ((pfloghdr->rewritten = pf_translate(&pd, &pfloghdr->saddr,
 	    pfloghdr->sport, &pfloghdr->daddr, pfloghdr->dport, 0,
 	    pfloghdr->dir))) {
-		m_copyback(mfake, pd.off, min(mfake->m_len - pd.off,
+		m_copyback(pd.m, pd.off, min(pd.m->m_len - pd.off,
 		    pd.hdrlen), pd.hdr.any, M_NOWAIT);
 		PF_ACPY(&pfloghdr->saddr, &osaddr, pd.af);
 		PF_ACPY(&pfloghdr->daddr, &odaddr, pd.af);

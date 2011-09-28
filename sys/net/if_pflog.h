@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pflog.h,v 1.20 2011/09/20 10:51:18 bluhm Exp $ */
+/* $OpenBSD: if_pflog.h,v 1.21 2011/09/28 17:15:45 bluhm Exp $ */
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -70,9 +70,9 @@ struct pfloghdr {
 void	pflog_bpfcopy(const void *, void *, size_t);
 
 #if NPFLOG > 0
-#define	PFLOG_PACKET(b,d,e,f,g,h) pflog_packet(b,d,e,f,g,h)
+#define	PFLOG_PACKET(a,b,c,d,e) pflog_packet(a,b,c,d,e)
 #else
-#define	PFLOG_PACKET(b,d,e,f,g,h) ((void)0)
+#define	PFLOG_PACKET(a,b,c,d,e) ((void)0)
 #endif /* NPFLOG > 0 */
 #endif /* _KERNEL */
 #endif /* _NET_IF_PFLOG_H_ */

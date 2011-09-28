@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.25 2011/09/22 14:57:12 bluhm Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.26 2011/09/28 17:15:45 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -82,7 +82,7 @@ void				 pf_osfp_insert(struct pf_osfp_list *,
  * Returns the list of possible OSes.
  */
 struct pf_osfp_enlist *
-pf_osfp_fingerprint(struct pf_pdesc *pd, struct mbuf *m)
+pf_osfp_fingerprint(struct pf_pdesc *pd)
 {
 	struct tcphdr	*th = pd->hdr.tcp;
 	struct ip	*ip = NULL;
@@ -94,13 +94,14 @@ pf_osfp_fingerprint(struct pf_pdesc *pd, struct mbuf *m)
 
 	switch (pd->af) {
 	case AF_INET:
-		ip = mtod(m, struct ip *);
+		ip = mtod(pd->m, struct ip *);
 		break;
 	case AF_INET6:
-		ip6 = mtod(m, struct ip6_hdr *);
+		ip6 = mtod(pd->m, struct ip6_hdr *);
 		break;
 	}
-	if (!pf_pull_hdr(m, pd->off, hdr, th->th_off << 2, NULL, NULL, pd->af))
+	if (!pf_pull_hdr(pd->m, pd->off, hdr, th->th_off << 2, NULL, NULL,
+	    pd->af))
 		return (NULL);
 
 	return (pf_osfp_fingerprint_hdr(ip, ip6, (struct tcphdr *)hdr));
