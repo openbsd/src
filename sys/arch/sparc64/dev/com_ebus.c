@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_ebus.c,v 1.20 2009/01/12 22:17:36 kettenis Exp $	*/
+/*	$OpenBSD: com_ebus.c,v 1.21 2011/09/28 11:02:37 dlg Exp $	*/
 /*	$NetBSD: com_ebus.c,v 1.6 2001/07/24 19:27:10 eeh Exp $	*/
 
 /*
@@ -212,7 +212,7 @@ com_ebus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (OF_getprop(ea->ea_node, "compatible", buf, sizeof(buf)) > 0 &&
 	    strcmp(buf, "FJSV,su") == 0)
-		sc->sc_fifolen = 1;
+		sc->sc_uarttype = COM_UART_16550;
 
         if (OF_getproplen(ea->ea_node, "keyboard") == 0)
 		printf(": keyboard");
