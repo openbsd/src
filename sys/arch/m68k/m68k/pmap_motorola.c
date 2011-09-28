@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.64 2011/09/27 20:35:44 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.65 2011/09/28 18:36:01 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -558,6 +558,8 @@ pmap_init()
 struct pv_entry *
 pmap_alloc_pv()
 {
+	struct pv_entry *pv;
+
 	pv = (struct pv_entry *)pool_get(&pmap_pv_pool, PR_NOWAIT);
 	return pv;
 }
