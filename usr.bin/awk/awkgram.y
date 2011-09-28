@@ -1,4 +1,4 @@
-/*	$OpenBSD: awkgram.y,v 1.8 2008/10/06 20:38:33 millert Exp $	*/
+/*	$OpenBSD: awkgram.y,v 1.9 2011/09/28 19:27:18 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -175,8 +175,8 @@ pa_pat:
 pa_stat:
 	  pa_pat			{ $$ = stat2(PASTAT, $1, stat2(PRINT, rectonode(), NIL)); }
 	| pa_pat lbrace stmtlist '}'	{ $$ = stat2(PASTAT, $1, $3); }
-	| pa_pat ',' pa_pat		{ $$ = pa2stat($1, $3, stat2(PRINT, rectonode(), NIL)); }
-	| pa_pat ',' pa_pat lbrace stmtlist '}'	{ $$ = pa2stat($1, $3, $5); }
+	| pa_pat ',' opt_nl pa_pat		{ $$ = pa2stat($1, $4, stat2(PRINT, rectonode(), NIL)); }
+	| pa_pat ',' opt_nl pa_pat lbrace stmtlist '}'	{ $$ = pa2stat($1, $4, $6); }
 	| lbrace stmtlist '}'		{ $$ = stat2(PASTAT, NIL, $2); }
 	| XBEGIN lbrace stmtlist '}'
 		{ beginloc = linkum(beginloc, $3); $$ = 0; }

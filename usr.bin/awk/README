@@ -1,4 +1,4 @@
-/*	$OpenBSD: README,v 1.6 2004/12/30 01:52:48 millert Exp $	*/
+/*	$OpenBSD: README,v 1.7 2011/09/28 19:27:18 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -30,7 +30,7 @@ by Al Aho, Brian Kernighan, and Peter Weinberger
 Changes, mostly bug fixes and occasional enhancements, are listed
 in FIXES.  If you distribute this code further, please please please
 distribute FIXES with it.  If you find errors, please report them
-to bwk@bell-labs.com.  Thanks.
+to bwk@cs.princeton.edu.  Thanks.
 
 The program itself is created by
 	make

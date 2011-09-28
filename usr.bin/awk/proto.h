@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.8 2010/06/13 17:58:19 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.9 2011/09/28 19:27:18 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -44,8 +44,8 @@ extern	fa	*mkdfa(const char *, int);
 extern	int	makeinit(fa *, int);
 extern	void	penter(Node *);
 extern	void	freetr(Node *);
-extern	int	hexstr(char **);
-extern	int	quoted(char **);
+extern	int	hexstr(uschar **);
+extern	int	quoted(uschar **);
 extern	char	*cclenter(const char *);
 extern	void	overflo(const char *);
 extern	void	cfoll(fa *, Node *);

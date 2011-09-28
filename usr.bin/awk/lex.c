@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.11 2008/10/06 20:38:33 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.12 2011/09/28 19:27:18 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -422,7 +422,7 @@ int string(void)
 				}
 				*px = 0;
 				unput(c);
-	  			sscanf(xbuf, "%x", &n);
+	  			sscanf(xbuf, "%x", (unsigned int *) &n);
 				*bp++ = n;
 				break;
 			    }
