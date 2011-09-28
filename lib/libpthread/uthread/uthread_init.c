@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.45 2010/06/27 03:14:28 guenther Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.46 2011/09/28 18:52:47 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -76,7 +76,7 @@ extern int _thread_autoinit_dummy_decl;
  * MUST be in this table.   This is necessary to force the proper version to
  * be used when linking -static.
  */
-static void *references[] = {
+static void *references[] __used = {
 	&_exit,
 	&accept,
 	&bind,
