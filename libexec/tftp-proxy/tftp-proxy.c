@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.7 2011/05/05 12:25:51 sthen Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.8 2011/09/28 12:38:59 dlg Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -84,12 +84,11 @@ main(int argc, char *argv[])
 	struct msghdr msg;
 	struct iovec iov;
 
-	struct sockaddr_storage from, server, proxy_to_server;
-	socklen_t j;
+	struct sockaddr_storage from, server;
 
 	openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
 
-	while ((c = getopt(argc, argv, "vw:")) != -1)
+	while ((c = getopt(argc, argv, "vw:")) != -1) {
 		switch (c) {
 		case 'v':
 			verbose++;
@@ -105,26 +104,6 @@ main(int argc, char *argv[])
 			usage();
 			break;
 		}
-
-	/* open /dev/pf */
-	init_filter(NULL, verbose);
-
-	tzset();
-
-	pw = getpwnam(NOPRIV_USER);
-	if (!pw) {
-		syslog(LOG_ERR, "no such user %s: %m", NOPRIV_USER);
-		exit(1);
-	}
-	if (chroot(CHROOT_DIR) || chdir("/")) {
-		syslog(LOG_ERR, "chroot %s: %m", CHROOT_DIR);
-		exit(1);
-	}
-	if (setgroups(1, &pw->pw_gid) ||
-	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
-	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid)) {
-		syslog(LOG_ERR, "can't revoke privs: %m");
-		exit(1);
 	}
 
 	/* non-blocking io */
@@ -158,12 +137,55 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	close(fd);
-	close(1);
-
 	memset(&server, 0, sizeof(server));
 	server.ss_family = from.ss_family;
 	server.ss_len = from.ss_len;
+
+	close(fd);
+	close(1);
+
+	switch (fork()) {
+	case -1:
+		syslog(LOG_ERR, "couldn't fork");
+	case 0:
+		break;
+	default:
+		exit(0);
+	}
+
+	/* establish a new outbound connection to the remote server */
+	if ((out_fd = socket(((struct sockaddr *)&from)->sa_family,
+	    SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+		syslog(LOG_ERR, "couldn't create new socket");
+		exit(1);
+	}
+
+	if (setsockopt(out_fd, SOL_SOCKET, SO_BINDANY, &on, sizeof(on)) == -1) {
+		syslog(LOG_ERR, "couldn't enable BINDANY");
+		exit(1);
+	}
+
+	/* open /dev/pf */
+	init_filter(NULL, verbose);
+
+	tzset();
+
+	/* revoke privs */
+	pw = getpwnam(NOPRIV_USER);
+	if (!pw) {
+		syslog(LOG_ERR, "no such user %s: %m", NOPRIV_USER);
+		exit(1);
+	}
+	if (chroot(CHROOT_DIR) || chdir("/")) {
+		syslog(LOG_ERR, "chroot %s: %m", CHROOT_DIR);
+		exit(1);
+	}
+	if (setgroups(1, &pw->pw_gid) ||
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid)) {
+		syslog(LOG_ERR, "can't revoke privs: %m");
+		exit(1);
+	}
 
 	/* get server address and port */
 	for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL;
@@ -191,10 +213,9 @@ main(int argc, char *argv[])
 			exit(0);
 	}
 
-	/* establish a new outbound connection to the remote server */
-	if ((out_fd = socket(((struct sockaddr *)&from)->sa_family,
-	    SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-		syslog(LOG_ERR, "couldn't create new socket");
+	/* bind ourselves to the clients IP for the connection to the server */
+	if (bind(out_fd, (struct sockaddr *)&from, from.ss_len) == -1) {
+		syslog(LOG_ERR, "couldn't bind to client address: %m");
 		exit(1);
 	}
 
@@ -204,38 +225,19 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	j = sizeof(struct sockaddr_storage);
-	if ((getsockname(out_fd, (struct sockaddr *)&proxy_to_server,
-	    &j)) < 0) {
-		syslog(LOG_ERR, "getsockname: %m");
-		exit(1);
-	}
-
-	if (verbose)
-		syslog(LOG_INFO, "%s:%d -> %s:%d -> %s:%d \"%s %s\"",
+	if (verbose) {
+		syslog(LOG_INFO, "%s:%d -> %s:%d \"%s %s\"",
 			sock_ntop((struct sockaddr *)&from),
 			ntohs(((struct sockaddr_in *)&from)->sin_port),
-			sock_ntop((struct sockaddr *)&proxy_to_server),
-			ntohs(((struct sockaddr_in *)&proxy_to_server)->sin_port),
 			sock_ntop((struct sockaddr *)&server),
 			ntohs(((struct sockaddr_in *)&server)->sin_port),
 			opcode(ntohs(tp->th_opcode)),
 			tp->th_stuff);
+	}
 
 	/* get ready to add rdr and pass rules */
 	if (prepare_commit(1) == -1) {
 		syslog(LOG_ERR, "couldn't prepare pf commit");
-		exit(1);
-	}
-
-	/* rdr from server to us on our random port -> client on its port */
-	if (add_rdr(1, (struct sockaddr *)&server,
-	    (struct sockaddr *)&proxy_to_server,
-	    ntohs(((struct sockaddr_in *)&proxy_to_server)->sin_port),
-	    (struct sockaddr *)&from,
-	    ntohs(((struct sockaddr_in *)&from)->sin_port),
-	    IPPROTO_UDP) == -1) {
-		syslog(LOG_ERR, "couldn't add rdr");
 		exit(1);
 	}
 
@@ -256,15 +258,6 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	/* and just in case, to pass out from us to the server */
-	if (add_filter(1, PF_OUT, (struct sockaddr *)&proxy_to_server,
-	    (struct sockaddr *)&server,
-	    ntohs(((struct sockaddr_in *)&server)->sin_port),
-	    IPPROTO_UDP) == -1) {
-		syslog(LOG_ERR, "couldn't add pass out");
-		exit(1);
-	}
-
 	if (do_commit() == -1) {
 		syslog(LOG_ERR, "couldn't commit pf rules");
 		exit(1);
@@ -275,6 +268,8 @@ main(int argc, char *argv[])
 		syslog(LOG_ERR, "couldn't forward tftp packet: %m");
 		exit(1);
 	}
+
+	close(out_fd);
 
 	/* allow the transfer to start to establish a state */
 	sleep(transwait);

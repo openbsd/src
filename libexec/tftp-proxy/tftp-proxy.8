@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tftp-proxy.8,v 1.5 2011/06/22 08:39:15 sthen Exp $
+.\"	$OpenBSD: tftp-proxy.8,v 1.6 2011/09/28 12:38:59 dlg Exp $
 .\"
 .\" Copyright (c) 2005 joshua stein <jcs@openbsd.org>
 .\"
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 22 2011 $
+.Dd $Mdocdate: September 28 2011 $
 .Dt TFTP-PROXY 8
 .Os
 .Sh NAME
@@ -47,34 +47,25 @@ rule using the
 .Ar divert-to
 option, after which the proxy connects to the server on behalf of
 the client.
+The connection from the proxy to the server needs to be passed by
+a rule with divert-reply set.
 .Pp
-The proxy establishes a
+The proxy inserts a
 .Xr pf 4
-.Ar rdr-to
-pass rule using the
+pass rules using the
 .Ar anchor
-facility to rewrite packets between the client and the server.
-Once the rule is established,
+facility to allow payload packets between the client and the server.
+Once the rules are inserted,
 .Nm
 forwards the initial request from the client to the server to begin the
 transfer.
 After
 .Ar transwait
-seconds, the NAT state is assumed to have been established and the
+seconds, the states are assumed to have been established and the
 .Xr pf 4
-rule is deleted and the program exits.
-Once the transfer between the client and the server is completed, the
-NAT state will naturally expire.
-.Pp
-Assuming the TFTP command request is from $client to $server, the
-proxy connected to the server using the $proxy source address, and
-$port is negotiated,
-.Nm
-adds the following rule to the anchor:
-.Bd -literal -offset indent
-pass in quick proto udp from $server to $proxy \e
-    port $port rdr-to $client
-.Ed
+rules are deleted and the program exits.
+Once the transfer between the client and the server is completed the
+states will naturally expire.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -96,8 +87,10 @@ The anchor is mandatory.
 Adjust the rule as needed for your configuration.
 .Bd -literal -offset indent
 anchor "tftp-proxy/*"
-pass in quick on $int_if inet proto udp from $lan to any port tftp \e
+pass in quick on $int_if inet proto udp from $lan to port tftp \e
     divert-to 127.0.0.1 port 6969
+pass out quick on $ext_if inet proto udp from $lan to port tftp \e
+    group proxy divert-reply
 .Ed
 .Pp
 .Xr inetd 8
@@ -108,7 +101,7 @@ An example
 .Xr inetd.conf 5
 entry follows:
 .Bd -literal -offset indent
-127.0.0.1:6969	dgram	udp	wait	root \e
+127.0.0.1:6969	dgram	udp	wait	root:proxy \e
 	/usr/libexec/tftp-proxy	tftp-proxy
 .Ed
 .Sh SEE ALSO
