@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.19 2009/10/27 23:59:41 deraadt Exp $	*/
+/*	$OpenBSD: elf.c,v 1.20 2011/09/28 19:58:14 uwe Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -90,7 +90,9 @@
 #endif
 
 #define	ELF_SDATA	".sdata"
+#define	ELF_TDATA	".tdata"
 #define	ELF_SBSS	".sbss"
+#define	ELF_TBSS	".tbss"
 #define	ELF_PLT		".plt"
 
 #ifndef	SHN_MIPS_ACOMMON
@@ -293,7 +295,7 @@ elf_shn2type(Elf_Ehdr *eh, u_int shn, const char *sn)
 		break;
 
 	default:
-		/* beyond 8 a table-driven binsearch shall be used */
+		/* TODO: beyond 8 a table-driven binsearch should be used */
 		if (sn == NULL)
 			return (-1);
 		else if (!strcmp(sn, ELF_TEXT))
@@ -304,9 +306,13 @@ elf_shn2type(Elf_Ehdr *eh, u_int shn, const char *sn)
 			return (N_DATA);
 		else if (!strcmp(sn, ELF_SDATA))
 			return (N_DATA);
+		else if (!strcmp(sn, ELF_TDATA))
+			return (N_DATA);
 		else if (!strcmp(sn, ELF_BSS))
 			return (N_BSS);
 		else if (!strcmp(sn, ELF_SBSS))
+			return (N_BSS);
+		else if (!strcmp(sn, ELF_TBSS))
 			return (N_BSS);
 		else if (!strncmp(sn, ELF_GOT, sizeof(ELF_GOT) - 1))
 			return (N_DATA);
@@ -343,6 +349,7 @@ elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr, struct nlist 
 	switch (stt = ELF_ST_TYPE(sym->st_info)) {
 	case STT_NOTYPE:
 	case STT_OBJECT:
+	case STT_TLS:
 		type = elf_shn2type(eh, sym->st_shndx, sn);
 		if (type < 0) {
 			if (sn == NULL)
