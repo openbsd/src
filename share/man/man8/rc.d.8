@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.d.8,v 1.18 2011/09/20 07:48:20 schwarze Exp $
+.\" 	$OpenBSD: rc.d.8,v 1.19 2011/09/29 17:58:31 jmc Exp $
 .\"
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 20 2011 $
+.Dd $Mdocdate: September 29 2011 $
 .Dt RC.D 8
 .Os
 .Sh NAME
@@ -64,9 +64,9 @@ This is used to allow debugging of failed
 .Ar actions .
 .It Fl f
 Setting this option will force operations with the given action.
-In case
+If
 .Ar daemon Ns _flags
-if set to
+is set to
 .Dq NO ,
 execution will continue with the script's own defaults unless other
 flags are specified.
