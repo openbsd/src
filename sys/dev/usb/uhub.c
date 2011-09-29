@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.58 2011/07/03 15:47:17 matthew Exp $ */
+/*	$OpenBSD: uhub.c,v 1.59 2011/09/29 11:18:01 stsp Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -331,10 +331,11 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
  bad:
 	if (sc->sc_statusbuf)
 		free(sc->sc_statusbuf, M_USBDEV);
-	if (hub->ports)
-		free(hub->ports, M_USBDEV);
-	if (hub)
+	if (hub) {
+		if (hub->ports)
+			free(hub->ports, M_USBDEV);
 		free(hub, M_USBDEV);
+	}
 	dev->hub = NULL;
 }
 
