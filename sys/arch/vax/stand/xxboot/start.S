@@ -1,4 +1,4 @@
-/*	$OpenBSD: start.S,v 1.3 2011/07/06 18:32:59 miod Exp $ */
+/*	$OpenBSD: start.S,v 1.4 2011/09/29 18:02:41 miod Exp $ */
 /*	$NetBSD: start.S,v 1.1 2002/02/24 01:04:26 matt Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -37,12 +37,10 @@
  /* All bugs are subject to removal without further notice */
 		
 
-#define _LOCORE
-
-#include "sys/disklabel.h"
-
 #include "../include/mtpr.h"
 #include "../include/asm.h"		
+
+#include "assym.h"
 
 _C_LABEL(_start):
 _C_LABEL(start):
@@ -84,7 +82,7 @@ from_0x08:			# Any machine from VMB
 _C_LABEL(romlabel):
 	.long	0
 
-.org	LABELOFFSET + d_end_
+.org	LABELOFFSET + DISKLABEL_SIZEOF
 start_vmb:
 	/*
 	 * Read in block 1-15.
