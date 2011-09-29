@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.51 2011/06/03 21:14:11 matthew Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.52 2011/09/29 18:03:44 miod Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -158,18 +158,6 @@ struct	__partitionv0 {		/* the partition table */
 		u_int16_t sgs;	/* LFS: FS segment shift */
 	} __partitionv0_u1;
 };
-
-#else /* _LOCORE */
-	/*
-	 * offsets for asm boot files.
-	 */
-	.set	d_secsize,40
-	.set	d_nsectors,44
-	.set	d_ntracks,48
-	.set	d_ncylinders,52
-	.set	d_secpercyl,56
-	.set	d_secperunit,60
-	.set	d_end_,404		/* size of disk label */
 #endif /* _LOCORE */
 
 
