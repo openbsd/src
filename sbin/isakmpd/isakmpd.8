@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.108 2011/06/06 08:05:05 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.109 2011/09/29 17:57:09 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: June 6 2011 $
+.Dd $Mdocdate: September 29 2011 $
 .Dt ISAKMPD 8
 .Os
 .Sh NAME
@@ -556,10 +556,10 @@ Public keys are used to authenticate.
 See
 .Sx PUBLIC KEY AUTHENTICATION
 below.
-.It X509 Certificates:
-X509 Certificates are used to authenticate.
+.It X.509 Certificates:
+X.509 Certificates are used to authenticate.
 See
-.Sx X509 AUTHENTICATION
+.Sx X.509 AUTHENTICATION
 below.
 .It Keynote Certificates:
 Keynote Certificates are used to authenticate.
@@ -628,8 +628,8 @@ In this example,
 would also have to be set to IPV4_ADDR or IPV4_ADDR_SUBNET
 in
 .Xr isakmpd.conf 5 .
-.Sh X509 AUTHENTICATION
-X509 is a framework for public key certificates.
+.Sh X.509 AUTHENTICATION
+X.509 is a framework for public key certificates.
 Certificates can be generated using
 .Xr openssl 1
 and provide a means for PKI authentication.
@@ -645,7 +645,7 @@ The CA certificate is named
 and its private key
 .Pa ca.key :
 .Bd -literal -offset indent
-# openssl req -x509 -days 365 -newkey rsa:1024 \e
+# openssl req -x509 -days 365 -newkey rsa:2048 \e
 	-keyout /etc/ssl/private/ca.key \e
 	-out /etc/ssl/ca.crt
 .Ed

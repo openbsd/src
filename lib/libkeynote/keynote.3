@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.42 2010/12/22 16:40:38 jmc Exp $
+.\" $OpenBSD: keynote.3,v 1.43 2011/09/29 17:57:09 jmc Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -20,7 +20,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: December 22 2010 $
+.Dd $Mdocdate: September 29 2011 $
 .Dt KEYNOTE 3
 .\" .TH KeyNote 3 local
 .Os
@@ -31,7 +31,6 @@
 .Fd #include <sys/types.h>
 .Fd #include <regex.h>
 .Fd #include <keynote.h>
-.Pp
 .Bd -literal
 struct environment {
 	char               *env_name;
@@ -759,7 +758,7 @@ In this implementation, this is an SSLeay/OpenSSL-defined
 .Fa DSA *
 for DSA keys,
 .Fa RSA *
-for RSA and X509-based keys, and a
+for RSA and X.509-based keys, and a
 .Fa keynote_binary *
 for BINARY keys.
 .Fa keytype
@@ -800,7 +799,7 @@ for DSA keys,
 .Dv SIG_X509_SHA1_HEX
 and
 .Dv SIG_X509_SHA1_BASE64
-for X509-based keys.
+for X.509-based keys.
 No other cryptographic signatures are currently
 supported by this implementation.
 If

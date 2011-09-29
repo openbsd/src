@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.86 2011/09/07 09:30:16 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.87 2011/09/29 17:57:09 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: September 7 2011 $
+.Dd $Mdocdate: September 29 2011 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -9253,7 +9253,7 @@ certificate must have extensions compatible with the supplied purpose
 and all other certificates must also be valid CA certificates.
 The precise extensions required are described in more detail in
 the
-.Sx X509 CERTIFICATE EXTENSIONS
+.Sx X.509 CERTIFICATE EXTENSIONS
 section below.
 .Pp
 The third operation is to check the trust settings on the root CA.
@@ -9563,7 +9563,7 @@ This specifies the input
 to read a certificate from, or standard input if this option is not specified.
 .It Fl inform Ar DER | NET | PEM
 This specifies the input format.
-Normally, the command will expect an X509 certificate,
+Normally, the command will expect an X.509 certificate,
 but this can change if other options such as
 .Fl req
 are present.
@@ -9766,7 +9766,7 @@ Clears all the permitted or trusted uses of the certificate.
 This option performs tests on the certificate extensions and outputs
 the results.
 For a more complete description, see the
-.Sx X509 CERTIFICATE EXTENSIONS
+.Sx X.509 CERTIFICATE EXTENSIONS
 section.
 .It Fl setalias Ar arg
 Sets the alias of the certificate.
@@ -10260,7 +10260,7 @@ option searches the subject name and the subject alternative
 name extension.
 Only unique email addresses will be printed out: it will
 not print the same address more than once.
-.Sh X509 CERTIFICATE EXTENSIONS
+.Sh X.509 CERTIFICATE EXTENSIONS
 The
 .Fl purpose
 option checks the certificate extensions and determines

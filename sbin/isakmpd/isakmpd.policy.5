@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.44 2010/06/07 08:38:09 jmc Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.45 2011/09/29 17:57:09 jmc Exp $
 .\" $EOM: isakmpd.policy.5,v 1.24 2000/11/23 12:55:25 niklas Exp $
 .\"
 .\" Copyright (c) 1999-2001, Angelos D. Keromytis.  All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: June 7 2010 $
+.Dd $Mdocdate: September 29 2011 $
 .Dt ISAKMPD.POLICY 5
 .Os
 .Sh NAME
@@ -124,7 +124,7 @@ to the remote IKE daemon, the KeyNote system is consulted as to
 whether the proposal is acceptable based on local policy (contained in
 .Nm ,
 in the form of policy assertions) and remote credentials (e.g.,
-KeyNote credentials or X509 certificates provided by the remote IKE
+KeyNote credentials or X.509 certificates provided by the remote IKE
 daemon).
 .Pp
 .Nm
@@ -154,7 +154,7 @@ below, for use of policy delegation).
 .It
 The Licensees field can be an expression of passphrases used for
 authentication of the Main Mode exchanges, and/or public keys
-(typically, X509 certificates), and/or X509 distinguished names.
+(typically, X.509 certificates), and/or X.509 distinguished names.
 .It
 The Conditions field contains an expression of attributes from the
 IPsec policy action set (see below as well as the keynote syntax man
@@ -177,7 +177,7 @@ For example, the following policy assertion:
 .Ed
 .Pp
 says that any proposal from a remote host that authenticates using the
-passphrase "foobar" or the public key contained in the X509
+passphrase "foobar" or the public key contained in the X.509
 certificate encoded as "abcd==" will be accepted, as long as it
 contains ESP with a non-null algorithm (i.e., the packet will be
 encrypted).
@@ -196,7 +196,7 @@ The following policy assertion:
 .Ed
 .Pp
 is similar to the previous one, but instead of including a complete
-X509 credential in the Licensees field, only the X509 certificate's
+X.509 credential in the Licensees field, only the X.509 certificate's
 Subject Canonical Name needs to be specified (note that the "DN:"
 prefix is necessary).
 .Pp
@@ -224,16 +224,16 @@ or
 hash of the passphrase itself, encoded as a hexadecimal string (using
 lower-case letters only).
 .Pp
-When X509-based authentication is performed in Main Mode, any X509
+When X.509-based authentication is performed in Main Mode, any X.509
 certificates received from the remote IKE daemon are converted to very
 simple KeyNote credentials.
 The conversion is straightforward: the
-issuer of the X509 certificate becomes the Authorizer of the KeyNote
+issuer of the X.509 certificate becomes the Authorizer of the KeyNote
 credential, the subject becomes the only Licensees entry, while the
 Conditions field simply asserts that the credential is only valid for
 "IPsec policy" use (see the app_domain action attribute below).
 .Pp
-Similarly, any X509 CA certificates present in the directory pointed
+Similarly, any X.509 CA certificates present in the directory pointed
 to by the appropriate
 .Xr isakmpd.conf 5
 entry are converted to such pseudo-credentials.

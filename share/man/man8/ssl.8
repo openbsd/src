@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ssl.8,v 1.47 2011/09/07 09:30:15 jmc Exp $
+.\"	$OpenBSD: ssl.8,v 1.48 2011/09/29 17:57:08 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Theo de Raadt, Bob Beck
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 7 2011 $
+.Dd $Mdocdate: September 29 2011 $
 .Dt SSL 8
 .Os
 .Sh NAME
@@ -123,7 +123,7 @@ The next step is to generate a
 .Ar Certificate Signing Request
 which is used
 to get a
-.Ar Certifying Authority (CA)
+.Ar Certificate Authority (CA)
 to sign your certificate.
 To do this use the command:
 .Bd -literal -offset indent
@@ -133,8 +133,8 @@ To do this use the command:
 .Pp
 This
 .Pa server.csr
-file can then be given to
-.Ar Certifying Authority
+file can then be given to a
+.Ar Certificate Authority
 who will sign the key.
 .Pp
 You can also sign the key yourself, using the command:
@@ -158,11 +158,11 @@ transactions with your machine on port 443.
 You will most likely want to generate a self-signed certificate in the
 manner above along with your certificate signing request to test your
 server's functionality even if you are going to have the certificate
-signed by another Certifying Authority.
-Once your Certifying Authority returns the signed certificate to you,
+signed by another Certificate Authority.
+Once your Certificate Authority returns the signed certificate to you,
 you can switch to using the new certificate by replacing the self-signed
 .Pa /etc/ssl/server.crt
-with the certificate signed by your Certifying Authority, and then
+with the certificate signed by your Certificate Authority, and then
 restarting
 .Xr httpd 8
 .Sh GENERATING DSA SERVER CERTIFICATES

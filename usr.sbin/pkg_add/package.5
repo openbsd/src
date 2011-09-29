@@ -1,4 +1,4 @@
-.\"	$OpenBSD: package.5,v 1.11 2011/08/26 13:00:41 jmc Exp $
+.\"	$OpenBSD: package.5,v 1.12 2011/09/29 17:57:09 jmc Exp $
 .\" Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -12,7 +12,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: August 26 2011 $
+.Dd $Mdocdate: September 29 2011 $
 .Dt PACKAGE 5
 .Os
 .Sh NAME
@@ -89,7 +89,7 @@ Packing-lists can be signed.
 If a signature is found, then it will be checked
 during installation, and failure to verify will prevent the package from
 installing correctly.
-Currently, only x509-style signatures are supported.
+Currently, only X.509-style signatures are supported.
 They rely on a certificate authority file being present as
 .Pa /etc/ssl/pkgca.pem
 and all signatures will be checked against it.
