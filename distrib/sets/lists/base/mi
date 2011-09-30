@@ -3025,6 +3025,7 @@
 ./usr/share/mk/bsd.obj.mk
 ./usr/share/mk/bsd.own.mk
 ./usr/share/mk/bsd.port.mk
+./usr/share/mk/bsd.port.arch.mk
 ./usr/share/mk/bsd.port.subdir.mk
 ./usr/share/mk/bsd.prog.mk
 ./usr/share/mk/bsd.regress.mk
@@ -3547,6 +3548,7 @@
 ./usr/share/zoneinfo/Asia/Dushanbe
 ./usr/share/zoneinfo/Asia/Gaza
 ./usr/share/zoneinfo/Asia/Harbin
+./usr/share/zoneinfo/Asia/Hebron
 ./usr/share/zoneinfo/Asia/Ho_Chi_Minh
 ./usr/share/zoneinfo/Asia/Hong_Kong
 ./usr/share/zoneinfo/Asia/Hovd
@@ -4149,6 +4151,7 @@
 ./usr/share/zoneinfo/posix/Asia/Dushanbe
 ./usr/share/zoneinfo/posix/Asia/Gaza
 ./usr/share/zoneinfo/posix/Asia/Harbin
+./usr/share/zoneinfo/posix/Asia/Hebron
 ./usr/share/zoneinfo/posix/Asia/Ho_Chi_Minh
 ./usr/share/zoneinfo/posix/Asia/Hong_Kong
 ./usr/share/zoneinfo/posix/Asia/Hovd
@@ -4752,6 +4755,7 @@
 ./usr/share/zoneinfo/right/Asia/Dushanbe
 ./usr/share/zoneinfo/right/Asia/Gaza
 ./usr/share/zoneinfo/right/Asia/Harbin
+./usr/share/zoneinfo/right/Asia/Hebron
 ./usr/share/zoneinfo/right/Asia/Ho_Chi_Minh
 ./usr/share/zoneinfo/right/Asia/Hong_Kong
 ./usr/share/zoneinfo/right/Asia/Hovd
