@@ -1,4 +1,4 @@
-/ $OpenBSD: units.lib,v 1.13 2011/09/30 16:21:00 jmc Exp $
+/ $OpenBSD: units.lib,v 1.14 2011/09/30 16:34:20 jmc Exp $
 / $NetBSD: units.lib,v 1.3 1996/04/06 06:01:04 thorpej Exp $
 
 / primitive units
@@ -348,26 +348,26 @@ netherlandsguilder	1|2.20371 euro
 portugalescudo		1|200.482 euro
 spainpeseta		1|166.386 euro
 
+chinarenminbi		chinayuan
+sucre			ecuadorsucre
+markka			finlandmarkka
+franc			francefranc
 mark			germanymark
-bolivar			venezuelabolivar
-peseta			spainpeseta
-rand			southafricarand
-escudo			portugalescudo
-sol			perusol
+drachma			greecedrachma
+rupee			indiarupee
+lira			italylira
+yen			japanyen
+peso			mexicopeso
 guilder			netherlandsguilder
 hollandguilder		netherlandsguilder
-peso			mexicopeso
-yen			japanyen
-lira			italylira
-rupee			indiarupee
-drachma			greecedrachma
-franc			francefranc
-markka			finlandmarkka
-sucre			ecuadorsucre
+sol			perusol
+escudo			portugalescudo
+rand			southafricarand
+peseta			spainpeseta
 poundsterling		unitedkingdompound
 greatbritainpound	unitedkingdompound
 britainpound		unitedkingdompound
-chinarenminbi		chinayuan
+bolivar			venezuelabolivar
 
 / ISO 4217 and then some
 AED			unitedarabdirham
