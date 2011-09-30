@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.2 2011/09/20 13:47:59 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.3 2011/09/30 00:13:21 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -43,33 +43,40 @@ static	int	  cond_body(DECL_ARGS);
 static	int	  pre_enc(DECL_ARGS);
 static	void	  post_enc(DECL_ARGS);
 static	void	  post_percent(DECL_ARGS);
+static	int	  pre_sect(DECL_ARGS);
+static	void	  post_sect(DECL_ARGS);
 
+static	int	  pre_ap(DECL_ARGS);
+static	int	  pre_bd(DECL_ARGS);
+static	void	  post_bd(DECL_ARGS);
+static	int	  pre_br(DECL_ARGS);
 static	int	  pre_dl(DECL_ARGS);
 static	void	  post_dl(DECL_ARGS);
 static	int	  pre_it(DECL_ARGS);
 static	int	  pre_nm(DECL_ARGS);
 static	void	  post_nm(DECL_ARGS);
 static	int	  pre_ns(DECL_ARGS);
+static	void	  post_pf(DECL_ARGS);
 static	int	  pre_pp(DECL_ARGS);
-static	int	  pre_sh(DECL_ARGS);
-static	void	  post_sh(DECL_ARGS);
+static	int	  pre_sp(DECL_ARGS);
+static	void	  post_sp(DECL_ARGS);
 static	int	  pre_xr(DECL_ARGS);
 
 
-static	const struct manact manacts[MDOC_MAX] = {
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Ap */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Dd */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Dt */
+static	const struct manact manacts[MDOC_MAX + 1] = {
+	{ NULL, pre_ap, NULL, NULL, NULL }, /* Ap */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Dd */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Dt */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Os */
-	{ NULL, pre_sh, post_sh, NULL, NULL }, /* Sh */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Ss */
+	{ NULL, pre_sect, post_sect, ".SH", NULL }, /* Sh */
+	{ NULL, pre_sect, post_sect, ".SS", NULL }, /* Ss */
 	{ NULL, pre_pp, NULL, NULL, NULL }, /* Pp */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _D1 */
+	{ cond_body, pre_dl, post_dl, NULL, NULL }, /* D1 */
 	{ cond_body, pre_dl, post_dl, NULL, NULL }, /* Dl */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Bd */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Ed */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Bl */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _El */
+	{ cond_body, pre_bd, post_bd, NULL, NULL }, /* Bd */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Ed */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Bl */
+	{ NULL, NULL, NULL, NULL, NULL }, /* El */
 	{ NULL, pre_it, NULL, NULL, NULL }, /* _It */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ad */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _An */
@@ -87,7 +94,7 @@ static	const struct manact manacts[MDOC_MAX] = {
 	{ NULL, pre_enc, post_enc, "\\fB-", "\\fP" }, /* Fl */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Fn */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ft */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Ic */
+	{ NULL, pre_enc, post_enc, "\\fB", "\\fP" }, /* Ic */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _In */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Li */
 	{ cond_head, pre_enc, NULL, "\\- ", NULL }, /* Nd */
@@ -115,10 +122,10 @@ static	const struct manact manacts[MDOC_MAX] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ao */
 	{ cond_body, pre_enc, post_enc, "<", ">" }, /* Aq */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _At */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Bc */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Bc */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Bf */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Bo */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Bq */
+	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Bo */
+	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Bq */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Bsx */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Bx */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Db */
@@ -127,7 +134,7 @@ static	const struct manact manacts[MDOC_MAX] = {
 	{ cond_body, pre_enc, post_enc, "``", "''" }, /* Dq */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ec */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ef */
-	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* _Em */
+	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Em */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Eo */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Fx */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ms */
@@ -135,10 +142,10 @@ static	const struct manact manacts[MDOC_MAX] = {
 	{ NULL, pre_ns, NULL, NULL, NULL }, /* Ns */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Nx */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ox */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Pc */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Pf */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Po */
-	{ cond_body, pre_enc, post_enc, "(", ")" }, /* _Pq */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Pc */
+	{ NULL, NULL, post_pf, NULL, NULL }, /* Pf */
+	{ cond_body, pre_enc, post_enc, "(", ")" }, /* Po */
+	{ cond_body, pre_enc, post_enc, "(", ")" }, /* Pq */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Qc */
 	{ cond_body, pre_enc, post_enc, "`", "'" }, /* Ql */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Qo */
@@ -149,15 +156,15 @@ static	const struct manact manacts[MDOC_MAX] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* _So */
 	{ cond_body, pre_enc, post_enc, "`", "'" }, /* Sq */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Sm */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Sx */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Sy */
+	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Sx */
+	{ NULL, pre_enc, post_enc, "\\fB", "\\fP" }, /* Sy */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Tn */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ux */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Xc */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Xo */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Fo */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Fc */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Oo */
+	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Oo */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Oc */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Bk */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ek */
@@ -166,7 +173,7 @@ static	const struct manact manacts[MDOC_MAX] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Fr */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ud */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Lb */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Lp */
+	{ NULL, pre_pp, NULL, NULL, NULL }, /* Lp */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Lk */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Mt */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Brq */
@@ -177,10 +184,11 @@ static	const struct manact manacts[MDOC_MAX] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* _En */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Dx */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _%Q */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _br */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _sp */
+	{ NULL, pre_br, NULL, NULL, NULL }, /* br */
+	{ NULL, pre_sp, post_sp, NULL, NULL }, /* sp */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _%U */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ta */
+	{ NULL, NULL, NULL, NULL, NULL }, /* ROOT */
 };
 
 
@@ -219,11 +227,13 @@ man_mdoc(void *arg, const struct mdoc *mdoc)
 	m = mdoc_meta(mdoc);
 	n = mdoc_node(mdoc);
 
-	printf(".TH \"%s\" \"%s\" \"%s\"", m->title, m->msec, m->date);
+	printf(".TH \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"",
+	    m->title, m->msec, m->date, m->os, m->vol);
 	need_nl = 1;
 	need_space = 0;
 
 	print_node(m, n);
+	putchar('\n');
 }
 
 static void
@@ -240,6 +250,10 @@ print_node(DECL_ARGS)
 	cond = 0;
 	do_sub = 1;
 	if (MDOC_TEXT == n->type) {
+		if (need_nl && ('.' == *n->string || '\'' == *n->string)) {
+			print_word("\\&");
+			need_space = 0;
+		}
 		print_word(n->string);
 	} else {
 		act = manacts + n->tok;
@@ -307,6 +321,75 @@ post_percent(DECL_ARGS)
 }
 
 static int
+pre_sect(DECL_ARGS)
+{
+
+	if (MDOC_HEAD != n->type)
+		return(1);
+	need_nl = 1;
+	print_word(manacts[n->tok].prefix);
+	print_word("\"");
+	need_space = 0;
+	return(1);
+}
+
+static void
+post_sect(DECL_ARGS)
+{
+
+	if (MDOC_HEAD != n->type)
+		return;
+	need_space = 0;
+	print_word("\"");
+	need_nl = 1;
+}
+
+static int
+pre_ap(DECL_ARGS)
+{
+
+	need_space = 0;
+	print_word("'");
+	need_space = 0;
+	return(0);
+}
+
+static int
+pre_bd(DECL_ARGS)
+{
+
+	if (DISP_unfilled == n->norm->Bd.type ||
+	    DISP_literal  == n->norm->Bd.type) {
+		need_nl = 1;
+		print_word(".nf");
+	}
+	need_nl = 1;
+	return(1);
+}
+
+static void
+post_bd(DECL_ARGS)
+{
+
+	if (DISP_unfilled == n->norm->Bd.type ||
+	    DISP_literal  == n->norm->Bd.type) {
+		need_nl = 1;
+		print_word(".fi");
+	}
+	need_nl = 1;
+}
+
+static int
+pre_br(DECL_ARGS)
+{
+
+	need_nl = 1;
+	print_word(".br");
+	need_nl = 1;
+	return(0);
+}
+
+static int
 pre_dl(DECL_ARGS)
 {
 
@@ -334,7 +417,17 @@ pre_it(DECL_ARGS)
 		need_nl = 1;
 		print_word(".TP");
 		bln = n->parent->parent->prev;
-		print_word(bln->norm->Bl.width);
+		switch (bln->norm->Bl.type) {
+		case (LIST_bullet):
+			print_word("4n");
+			need_nl = 1;
+			print_word("\\fBo\\fP");
+			break;
+		default:
+			if (bln->norm->Bl.width)
+				print_word(bln->norm->Bl.width);
+			break;
+		}
 		need_nl = 1;
 	}
 	return(1);
@@ -371,6 +464,13 @@ pre_ns(DECL_ARGS)
 	return(0);
 }
 
+static void
+post_pf(DECL_ARGS)
+{
+
+	need_space = 0;
+}
+
 static int
 pre_pp(DECL_ARGS)
 {
@@ -385,25 +485,18 @@ pre_pp(DECL_ARGS)
 }
 
 static int
-pre_sh(DECL_ARGS)
+pre_sp(DECL_ARGS)
 {
 
-	if (MDOC_HEAD != n->type)
-		return(1);
 	need_nl = 1;
-	print_word(".SH \"");
-	need_space = 0;
+	print_word(".sp");
 	return(1);
 }
 
 static void
-post_sh(DECL_ARGS)
+post_sp(DECL_ARGS)
 {
 
-	if (MDOC_HEAD != n->type)
-		return;
-	need_space = 0;
-	print_word("\"");
 	need_nl = 1;
 }
 
