@@ -1,4 +1,4 @@
-/ $OpenBSD: units.lib,v 1.14 2011/09/30 16:34:20 jmc Exp $
+/ $OpenBSD: units.lib,v 1.15 2011/09/30 18:32:26 jmc Exp $
 / $NetBSD: units.lib,v 1.3 1996/04/06 06:01:04 thorpej Exp $
 
 / primitive units
@@ -375,11 +375,11 @@ ARP			argentinapeso
 ATS			austriaschilling
 AUD			australiadollar
 BEF			belgiumfranc
-BRR			brazilreal
+BRL			brazilreal
 CAD			canadadollar
 CHF			switzerlandfranc
 CLP			chilepeso
-CNY			chinarenminbi
+CNY			chinayuan
 COP			colombiapeso
 CSK			czechkoruna
 DEM			germanymark
@@ -388,7 +388,7 @@ ECS			ecuadorsucre
 EUR			euro
 FIM			finlandmarkka
 FRF			francefranc
-GBP			britainpound
+GBP			unitedkingdompound
 GRD			greecedrachma
 HKD			hongkongdollar
 HUF			hungaryforint
@@ -401,8 +401,9 @@ JPY			japanyen
 KRW			southkoreawon
 KWD			kuwaitdinar
 LBP			lebanonpound
+LKR			srilankarupee
 MTL			maltalira
-MXP			mexicopeso
+MXN			mexicopeso
 MYR			malaysiaringgit
 NLG			netherlandsguilder
 NOK			norwaykrone
@@ -418,6 +419,7 @@ THB			thailandbaht
 TRL			turkeylira
 TWD			taiwandollar
 USD			dollar
+VEF			venezuelabolivar
 ZAR			southafricarand
 
 / computer
