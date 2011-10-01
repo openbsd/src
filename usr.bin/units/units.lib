@@ -1,4 +1,4 @@
-/ $OpenBSD: units.lib,v 1.18 2011/10/01 14:55:37 jmc Exp $
+/ $OpenBSD: units.lib,v 1.19 2011/10/01 20:31:14 jmc Exp $
 / $NetBSD: units.lib,v 1.3 1996/04/06 06:01:04 thorpej Exp $
 
 / primitive units
@@ -310,27 +310,28 @@ thailandbaht		1|30.9100 $
 unitedkingdompound	1.5475 $
 venezuelabolivar	1|4.2893 $
 
-/ Wall Street Journal, May 30 2002
+/ The Economist, October 1st, 2011
 
-/ argentinapeso		$  XXX not stable
-bahraindinar		2.6525 $
-chilepeso		.0015 $
-colombiapeso		.000430 $
-czechkoruna		.0306 $
-hungaryforint		.00384 $
-indonesiarupiah		.000113 $
-israelshekel		.202 $
-jordandinar		1.41 $
-kuwaitdinar		3.28 $
-lebanonpound		.000661 $
-pakistanrupee		.0167 $
-perunewsol		.288 $
-philippinespeso		.0200 $
-polandzloty		.248 $
-saudiarabiariyal	.2666 $
-turkeylira		.00000070 $
-unitedarabdirham	.2723 $
-uruguaypeso		.0599 $
+argentinapeso		1|4.20 $
+chilepeso		1|508 $
+colombiapeso		1|1.903 $
+czechkoruna		1|18.0 $
+egyptpound		1|5.97 $
+hungaryforint		1|213 $
+icelandkrona		1|118 $
+indonesiarupiah		1|8.890 $
+israelshekel		1|3.72 $
+latvialats		1|0.52 $
+lithuanialitas		1|2.54 $
+pakistanrupee		1|87.4 $
+perunuevosol		1|2.76 $
+philippinespeso		1|43.5 $
+polandzloty		1|3.26 $
+russiarouble		1|31.7 $
+saudiarabiariyal	1|3.75 $
+turkeylira		1|1.85 $
+ukrainehryvnia		1|8.00 $
+vietnamdong		1|20.832 $
 
 / EMU currencies have constant exchange rate against Euro since 1.1.1999
 austriaschilling	1|13.7603 euro
