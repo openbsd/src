@@ -1,4 +1,4 @@
-/ $OpenBSD: units.lib,v 1.20 2011/10/01 20:57:26 jmc Exp $
+/ $OpenBSD: units.lib,v 1.21 2011/10/01 21:10:29 jmc Exp $
 / $NetBSD: units.lib,v 1.3 1996/04/06 06:01:04 thorpej Exp $
 
 / primitive units
@@ -361,13 +361,13 @@ yen			japanyen
 peso			mexicopeso
 guilder			netherlandsguilder
 hollandguilder		netherlandsguilder
-sol			perusol
+sol			perunuevosol
 escudo			portugalescudo
 rand			southafricarand
 peseta			spainpeseta
-poundsterling		unitedkingdompound
-greatbritainpound	unitedkingdompound
 britainpound		unitedkingdompound
+greatbritainpound	unitedkingdompound
+poundsterling		unitedkingdompound
 bolivar			venezuelabolivar
 
 / ISO 4217
