@@ -1,4 +1,4 @@
-/ $OpenBSD: units.lib,v 1.19 2011/10/01 20:31:14 jmc Exp $
+/ $OpenBSD: units.lib,v 1.20 2011/10/01 20:57:26 jmc Exp $
 / $NetBSD: units.lib,v 1.3 1996/04/06 06:01:04 thorpej Exp $
 
 / primitive units
@@ -284,7 +284,6 @@ lux			cd sr/m2
 
 / http://www.federalreserve.gov/releases/h10/current/
 / as of September 23, 2011
-
 $			dollar
 australiadollar		.9784 $
 brazilreal		1|1.8585 $
@@ -311,7 +310,6 @@ unitedkingdompound	1.5475 $
 venezuelabolivar	1|4.2893 $
 
 / The Economist, October 1st, 2011
-
 argentinapeso		1|4.20 $
 chilepeso		1|508 $
 colombiapeso		1|1.903 $
@@ -351,8 +349,8 @@ spainpeseta		1|166.386 euro
 slovakiakoruna		1|30.1260 euro
 sloveniatolar		1|239.640 euro
 
+/ currency aliases
 chinarenminbi		chinayuan
-sucre			ecuadorsucre
 markka			finlandmarkka
 franc			francefranc
 mark			germanymark
@@ -372,57 +370,50 @@ greatbritainpound	unitedkingdompound
 britainpound		unitedkingdompound
 bolivar			venezuelabolivar
 
-/ ISO 4217 and then some
-AED			unitedarabdirham
-ARP			argentinapeso
-ATS			austriaschilling
+/ ISO 4217
+ARS			argentinapeso
 AUD			australiadollar
-BEF			belgiumfranc
 BRL			brazilreal
 CAD			canadadollar
 CHF			switzerlandfranc
 CLP			chilepeso
 CNY			chinayuan
 COP			colombiapeso
-CSK			czechkoruna
-DEM			germanymark
+CZK			czechkoruna
 DKK			denmarkkrone
-ECS			ecuadorsucre
+EGP			egyptpound
 EUR			euro
-FIM			finlandmarkka
-FRF			francefranc
 GBP			unitedkingdompound
-GRD			greecedrachma
 HKD			hongkongdollar
 HUF			hungaryforint
 IDR			indonesiarupiah
 INR			indiarupee
 ILS			israelshekel
-ITL			italylira
-JOD			jordandinar
+ISK			icelandkrona
 JPY			japanyen
 KRW			southkoreawon
-KWD			kuwaitdinar
-LBP			lebanonpound
 LKR			srilankarupee
-MTL			maltalira
+LTL			lithuanialitas
+LVL			latvialats
 MXN			mexicopeso
 MYR			malaysiaringgit
-NLG			netherlandsguilder
 NOK			norwaykrone
 NZD			newzealanddollar
-PEN			perunewsol
+PEN			perunuevosol
 PHP			philippinespeso
 PKR			pakistanrupee
-PLZ			polandzloty
+PLN			polandzloty
+RUB			russiarouble
 SAR			saudiarabiariyal
 SEK			swedenkrona
 SGD			singaporedollar
 THB			thailandbaht
-TRL			turkeylira
+TRY			turkeylira
 TWD			taiwandollar
+UAH			ukrainehryvnia
 USD			dollar
 VEF			venezuelabolivar
+VND			vietnamdong
 ZAR			southafricarand
 
 / computer
