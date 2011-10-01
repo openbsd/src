@@ -1,4 +1,4 @@
-/* $OpenBSD: sigmask.c,v 1.3 2008/04/24 03:31:33 kurt Exp $ */
+/* $OpenBSD: sigmask.c,v 1.4 2011/10/01 11:00:38 fgsch Exp $ */
 /* PUBLIC DOMAIN July 2003 Marco S Hyman <marc@snafu.org> */
 
 #include <sys/time.h>
@@ -32,7 +32,7 @@ int main (int argc, char *argv[])
 	CHECKr(pthread_sigmask(SIG_BLOCK, &mask, NULL));
 
 	/* make sure pthread_sigmask() returns the right value on failure */
-	CHECKe(pthread_sigmask(-1, &mask, NULL));
+	CHECKr(pthread_sigmask(-1, &mask, NULL));
 
 	/* now trigger sigalrm and wait for it */
 	printf("trigger sigalrm[2] [masked, test should not die]\n");

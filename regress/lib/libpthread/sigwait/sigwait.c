@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigwait.c,v 1.3 2002/10/12 03:00:11 marc Exp $	*/
+/*	$OpenBSD: sigwait.c,v 1.4 2011/10/01 11:00:38 fgsch Exp $	*/
 /*
  * Copyright (c) 1998 Daniel M. Eischen <eischen@vigrid.com>
  * All rights reserved.
@@ -247,7 +247,7 @@ int main (int argc, char *argv[])
 	/* Add SIGUSR1 to the waiters pending signals. */
 	CHECKr(pthread_kill (tid, SIGUSR1));
 	/* Release the waiter thread and allow him to run. */
-	CHECKe(pthread_mutex_unlock (&waiter_mutex));
+	CHECKr(pthread_mutex_unlock (&waiter_mutex));
 	sleep (1);
 	/* sigwait should return for pending SIGUSR1 */
 	ASSERT(sigcounts[SIGUSR1] == 2);
