@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.c,v 1.16 2009/12/10 22:07:19 kettenis Exp $ */
+/*	$OpenBSD: ukc.c,v 1.17 2011/10/02 10:10:30 edd Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -114,10 +114,8 @@ ukc(char *file, char *outfile, int uflag, int force)
 		}
 	}
 
-	printf("%s", adjust((caddr_t)nl[P_VERSION].n_value));
-
 	if (force == 0 && outfile == NULL)
-		printf("warning: no output file specified\n");
+		printf("WARNING no output file specified\n");
 
 	if (nl[IA_EXTRALOC].n_type == 0 || nl[I_NEXTRALOC].n_type == 0 ||
 	    nl[I_UEXTRALOC].n_type == 0 || nl[I_HISTLEN].n_type == 0 ||
@@ -155,6 +153,8 @@ WARNING this kernel doesn't support pseudo devices.\n");
 			process_history(histlen, history);
 	}
 
+	printf("%s", adjust((caddr_t)nl[P_VERSION].n_value));
+
 	if (config()) {
 		if (force == 0 && outfile == NULL) {
 			fprintf(stderr, "not forced\n");
@@ -184,7 +184,9 @@ init(void)
 	struct winsize w;
 #endif
 
-	cd = get_cfdata(0);			/* get first item */
+	if ((cd = get_cfdata(0)) == NULL)	/* get first item */
+		errx(1, "failed to get first cfdata");
+
 	while (cd->cf_attach != 0) {
 		maxdev = i;
 		totdev = i;

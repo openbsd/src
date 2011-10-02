@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.7 2009/10/27 23:59:51 deraadt Exp $ */
+/*	$OpenBSD: exec.c,v 1.8 2011/10/02 10:10:30 edd Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -26,6 +26,8 @@
 
 #include <err.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <stdio.h>
 
 #ifdef AOUT_SUPPORT
@@ -109,6 +111,11 @@ readjust(caddr_t x)
 void
 loadkernel(char *file)
 {
+	struct stat			st;
+
+	if (stat(file, &st) == -1)
+		err(1, "cannot stat '%s'", file);
+
 	current_exec = -1;
 
 #ifdef AOUT_SUPPORT
