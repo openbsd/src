@@ -1,4 +1,4 @@
-/*	$OpenBSD: files.c,v 1.17 2010/06/02 20:42:17 chl Exp $	*/
+/*	$OpenBSD: files.c,v 1.18 2011/10/02 22:20:49 edd Exp $	*/
 /*	$NetBSD: files.c,v 1.6 1996/03/17 13:18:17 cgd Exp $	*/
 
 /*
@@ -42,10 +42,12 @@
  */
 
 #include <sys/param.h>
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "config.h"
 
 extern const char *yyfile;
@@ -71,6 +73,10 @@ static int	fixsel(const char *, void *);
 static int	expr_eval(struct nvlist *,
 		    int (*)(const char *, void *), void *);
 static void	expr_free(struct nvlist *);
+
+#ifdef DEBUG
+static void	pr0();
+#endif
 
 void
 initfiles(void)
@@ -453,8 +459,6 @@ expr_free(struct nvlist *expr)
 void
 prexpr(struct nvlist *expr)
 {
-	static void pr0();
-
 	printf("expr =");
 	pr0(expr);
 	printf("\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.18 2009/12/10 22:07:19 kettenis Exp $ */
+/*	$OpenBSD: cmd.c,v 1.19 2011/10/02 22:20:49 edd Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -27,11 +27,13 @@
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/time.h>
+
 #include <ctype.h>
-#include <stdio.h>
 #include <limits.h>
 #include <nlist.h>
+#include <stdio.h>
 #include <string.h>
+
 #include "misc.h"
 #define	CMD_NOEXTERN
 #include "cmd.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.14 2004/01/04 18:30:05 deraadt Exp $	*/
+/*	$OpenBSD: hash.c,v 1.15 2011/10/02 22:20:49 edd Exp $	*/
 /*	$NetBSD: hash.c,v 1.4 1996/11/07 22:59:43 gwr Exp $	*/
 
 /*
@@ -42,8 +42,10 @@
  */
 
 #include <sys/param.h>
+
 #include <stdlib.h>
 #include <string.h>
+
 #include "config.h"
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.8 2011/10/02 10:10:30 edd Exp $ */
+/*	$OpenBSD: exec.c,v 1.9 2011/10/02 22:20:49 edd Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -24,9 +24,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <err.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
 

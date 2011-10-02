@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.12 2009/10/27 23:59:51 deraadt Exp $ */
+/*	$OpenBSD: exec_elf.c,v 1.13 2011/10/02 22:20:49 edd Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -24,16 +24,17 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/exec.h>
+#include <sys/exec_elf.h>
+
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <nlist.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
-#include <sys/exec.h>
-#include <sys/exec_elf.h>
-#include <sys/types.h>
 
 #include "ukc.h"
 #include "config.h"

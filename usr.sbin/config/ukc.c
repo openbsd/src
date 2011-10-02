@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.c,v 1.17 2011/10/02 10:10:30 edd Exp $ */
+/*	$OpenBSD: ukc.c,v 1.18 2011/10/02 22:20:50 edd Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -29,8 +29,8 @@
 #include <sys/ioctl.h>
 
 #include <err.h>
-#include <kvm.h>
 #include <fcntl.h>
+#include <kvm.h>
 #include <limits.h>
 #include <nlist.h>
 #include <stdio.h>

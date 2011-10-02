@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.42 2011/04/15 02:48:14 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.43 2011/10/02 22:20:49 edd Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -44,13 +44,15 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
+
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
-#include <err.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include "config.h"
 
 int	firstfile(const char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_aout.c,v 1.10 2009/10/27 23:59:51 deraadt Exp $ */
+/*	$OpenBSD: exec_aout.c,v 1.11 2011/10/02 22:20:49 edd Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -24,15 +24,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/exec.h>
+
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <nlist.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
-#include <sys/exec.h>
-#include <sys/types.h>
 
 #include "config.h"
 #include "ukc.h"
@@ -80,8 +81,7 @@ aout_adjust(caddr_t x)
 
 /* in-memory address -> ``kernel'' vaddr */
 caddr_t
-aout_readjust(x)
-	caddr_t x;
+aout_readjust(caddr_t x)
 {
 	caddr_t y;
 
@@ -99,8 +99,7 @@ aout_readjust(x)
 }
 
 int
-aout_check(file)
-	char *file;
+aout_check(char *file)
 {
 	int fd, ret = 1;
 

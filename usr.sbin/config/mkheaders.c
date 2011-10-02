@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkheaders.c,v 1.18 2003/06/28 04:55:07 deraadt Exp $	*/
+/*	$OpenBSD: mkheaders.c,v 1.19 2011/10/02 22:20:49 edd Exp $	*/
 /*	$NetBSD: mkheaders.c,v 1.12 1997/02/02 21:12:34 thorpej Exp $	*/
 
 /*
@@ -42,11 +42,13 @@
  */
 
 #include <sys/param.h>
+
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "config.h"
 
 static int emitcnt(struct nvlist *);

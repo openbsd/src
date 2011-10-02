@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.12 2003/06/28 04:55:07 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.13 2011/10/02 22:20:50 edd Exp $	*/
 /*	$NetBSD: util.c,v 1.5 1996/08/31 20:58:29 mycroft Exp $	*/
 
 /*
@@ -42,11 +42,13 @@
  */
 
 #include <sys/types.h>
+
 #include <ctype.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
+
 #include "config.h"
 
 static void nomem(void);
