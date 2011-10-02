@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.1 2011/08/26 10:53:16 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.2 2011/10/02 06:55:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -343,4 +343,10 @@ format_window_pane(struct format_tree *ft, struct window_pane *wp)
 	format_add(ft, "pane_id", "%%%u", wp->id);
 	format_add(ft, "pane_active", "%d", wp == wp->window->active);
 	format_add(ft, "pane_dead", "%d", wp->fd == -1);
+	if (wp->cmd != NULL)
+		format_add(ft, "pane_start_command", "%s", wp->cmd);
+	if (wp->cwd != NULL)
+		format_add(ft, "pane_start_path", "%s", wp->cwd);
+	format_add(ft, "pane_pid", "%ld", (long) wp->pid);
+	format_add(ft, "pane_tty", "%s", wp->tty);
 }
