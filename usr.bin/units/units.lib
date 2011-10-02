@@ -1,8 +1,7 @@
-/ $OpenBSD: units.lib,v 1.21 2011/10/01 21:10:29 jmc Exp $
+/ $OpenBSD: units.lib,v 1.22 2011/10/02 16:33:35 jmc Exp $
 / $NetBSD: units.lib,v 1.3 1996/04/06 06:01:04 thorpej Exp $
 
 / primitive units
-
 m			!a!
 kg			!b!
 sec			!c!
@@ -13,8 +12,7 @@ bit			!h!
 erlang			!i!
 K			!j!
 
-/ prefixes
-
+/ International System of Units (SI) prefixes
 yotta-			1e24
 zetta-			1e21
 exa-			1e18
@@ -22,11 +20,10 @@ peta-			1e15
 tera-			1e12
 giga-			1e9
 mega-			1e6
-myria-			1e4
 kilo-			1e3
 hecto-			1e2
-deka-			1e1
-deca-			deka
+deca-			1e1
+deka-			deca
 deci-			1e-1
 centi-			1e-2
 milli-			1e-3
@@ -35,13 +32,10 @@ nano-			1e-9
 pico-			1e-12
 femto-			1e-15
 atto-			1e-18
-zopto-			1e-21
-zepto-			zopto
+zepto-			1e-21
 yocto-			1e-24
 
-semi-			.5
-demi-			.5
-
+/ SI symbols
 Y-			yotta
 Z-			zetta
 E-			exa
@@ -51,16 +45,20 @@ G-			giga
 M-			mega
 k-			kilo
 h-			hecto
-da-			deka
+da-			deca
 d-			deci
 c-			centi
 m-			milli
-p-			pico
+µ-			micro
 n-			nano
+p-			pico
 f-			femto
 a-			atto
-z-			zopto
+z-			zepto
 y-			yocto
+
+semi-			.5
+demi-			.5
 
 / constants
 
