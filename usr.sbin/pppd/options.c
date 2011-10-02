@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.24 2009/10/27 23:59:53 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.25 2011/10/02 06:25:53 nicm Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -112,8 +112,6 @@ int	maxconnect = 0;		/* Maximum connect time */
 char	user[MAXNAMELEN];	/* Username for PAP */
 char	passwd[MAXSECRETLEN];	/* Password for PAP */
 int	auth_required = 0;	/* Peer is required to authenticate */
-int	defaultroute = 0;	/* assign default route through interface */
-int	proxyarp = 0;		/* Set up proxy ARP entry for peer */
 int	persist = 0;		/* Reopen link after it goes down */
 int	uselogin = 0;		/* Use /etc/passwd for checking PAP */
 int	lcp_echo_interval = 0; 	/* Interval between LCP echo-requests */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.31 2009/10/27 23:59:53 deraadt Exp $	*/
+/*	$OpenBSD: auth.c,v 1.32 2011/10/02 06:25:53 nicm Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -1038,11 +1038,9 @@ get_pap_passwd(passwd)
     char *filename;
     FILE *f;
     int ret;
-    struct wordlist *addrs;
     char secret[MAXWORDLEN];
 
     filename = _PATH_UPAPFILE;
-    addrs = NULL;
     f = fopen(filename, "r");
     if (f == NULL)
 	return 0;
