@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.30 2010/03/21 23:09:30 schwarze Exp $ */
+/*	$OpenBSD: mktemp.c,v 1.31 2011/10/02 07:41:56 dtucker Exp $ */
 /*
  * Copyright (c) 1996-1998, 2008 Theo de Raadt
  * Copyright (c) 1997, 2008-2009 Todd C. Miller
@@ -45,7 +45,7 @@ mktemp_internal(char *path, int slen, int mode)
 	int fd;
 
 	len = strlen(path);
-	if (len == 0 || slen >= len) {
+	if (len == 0 || slen < 0 || (size_t)slen >= len) {
 		errno = EINVAL;
 		return(-1);
 	}
