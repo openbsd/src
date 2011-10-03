@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.105 2011/10/03 10:35:06 ajacoutot Exp $
+.\"	$OpenBSD: port-modules.5,v 1.106 2011/10/03 11:01:32 jasper Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -482,11 +482,12 @@ MODMONO_BUILD_DEPENDS and MODMONO_RUN_DEPENDS.
 If MODMONO_DEPS is set to Yes,
 .Pa lang/mono
 is appended to BUILD_DEPENDS and RUN_DEPENDS.
-If USE_NANT is defined, NANT and NANT_FLAGS are set,
+If MODMONO_NANT is set to Yes, NANT and NANT_FLAGS are set,
 .Pa devel/nant
 is appended to BUILD_DEPENDS and the do-build and do-install targets are
-provided to use nant for building
-.Pq can be overridden in the port Makefile .
+provided to use nant for building.
+If these target are already defined, one can use MODMONO_BUILD_TARGET
+and MODMONO_INSTAlL_TARGET instead in the corresponding target.
 DLLMAP_FILES defines in which files the module will substitute hardcoded
 shared library versions using a post-configure target.
 .It lang/ocaml
