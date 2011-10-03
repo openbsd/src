@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.44 2011/06/23 20:35:22 sthen Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.45 2011/10/03 17:57:43 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: June 23 2011 $
+.Dd $Mdocdate: October 3 2011 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -218,7 +218,8 @@ This is the default,
 and may be omitted.
 .It Ic from Ar network
 The rule matches if the connection is made from the specified
-.Ar network .
+.Ar network ,
+specified in CIDR notation.
 .El
 .Pp
 Next comes the selection based on the domain the message is sent to:
