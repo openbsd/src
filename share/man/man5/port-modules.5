@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.104 2011/10/03 06:43:28 ajacoutot Exp $
+.\"	$OpenBSD: port-modules.5,v 1.105 2011/10/03 10:35:06 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -618,12 +618,13 @@ to RUN_DEPENDS and also sets NO_REGRESS to Yes.
 If both GNOME_PROJECT and GNOME_VERSION are set, this module defines
 DISTNAME, VERSION, MASTER_SITES, adds x11/gnome to CATEGORIES and
 EXTRACT_SUFX will default to .tar.xz if unset.
-Also unconditionally sets MODGNOME_BUILD_DEPENDS, MODGNOME_CONFIGURE_ARGS,
-MODGNOME_RUN_DEPENDS and USE_GMAKE.
+Also unconditionally sets USE_GMAKE.
 If MODGNOME_DESKTOP_FILE=Yes, a dependency on
 .Pa devel/desktop-file-utils
 is appended to MODGNOME_RUN_DEPENDS.
 Unless NO_BUILD=Yes, CONFIGURE_SHARED is appended to CONFIGURE_ARGS,
+CPPFLAGS="-I${LOCALBASE}/include" and LDFLAGS="-L${LOCALBASE}/lib" are
+appended to CONFIGURE_ENV,
 USE_LIBTOOL is set to Yes and
 .Pa textproc/intltool
 is appended to MODULES.
@@ -641,6 +642,8 @@ is appended to MODGNOME_RUN_DEPENDS, and MODGNOME_RUN_DEPENDS_yelp is
 set for use with multi packaged ports.
 This option is to be used when any files are installed into
 .Pa share/gnome/help/ .
+MODGNOME_BUILD_DEPENDS and MODGNOME_BUILD_DEPENDS are appended to the
+corresponding BUILD_DEPENDS and RUN_DEPENDS.
 .Pp
 .It x11/gnustep
 .It x11/kde
