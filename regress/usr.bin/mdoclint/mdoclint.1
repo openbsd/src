@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoclint.1,v 1.11 2011/09/17 08:38:26 schwarze Exp $
+.\"	$OpenBSD: mdoclint.1,v 1.12 2011/10/03 06:58:16 jmc Exp $
 .\"	$NetBSD: mdoclint.1,v 1.2 2009/04/13 22:18:13 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2010 Thomas Klausner
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 17 2011 $
+.Dd $Mdocdate: October 3 2011 $
 .Dt MDOCLINT 1
 .Os
 .Sh NAME
@@ -135,10 +135,9 @@ to itself, or plain bogus cross-references.
 For
 .Dq .Xr name X ,
 the following files are checked:
-.Pa /usr/share/man/catX/name.0 ,
-.Pa /usr/share/man/catX/`uname -m`/name.0 ,
+.Pa /usr/share/man/manX/name.X ,
+.Pa /usr/share/man/manX/`uname -m`/name.X ,
 .Pa ./name.X ,
-.Pa /usr/X11R6/man/catX/name.0 ,
 and
 .Pa /usr/X11R6/man/manX/name.X .
 .El
