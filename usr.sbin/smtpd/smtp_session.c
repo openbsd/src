@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.148 2011/09/28 18:19:10 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.149 2011/10/03 19:20:51 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -820,11 +820,13 @@ session_read(struct bufferevent *bev, void *p)
 			if (strlcpy(ss.u.dataline, line,
 				sizeof(ss.u.dataline)) >= sizeof(ss.u.dataline))
 				fatal("session_read: data truncation");
-			free(line);
 
-			if (env->filtermask & FILTER_DATALINE)
+			if (env->filtermask & FILTER_DATALINE) {
 				session_imsg(s, PROC_MFA, IMSG_MFA_DATALINE,
 				    0, 0, -1, &ss, sizeof(ss));
+				free(line);
+				return;
+			}
 			else {
 				/* no filtering, let's pretend that filtering
 				 * succeeded ;-)
@@ -834,7 +836,7 @@ session_read(struct bufferevent *bev, void *p)
 				ss.code = 250;
 				session_pickup(s, &ss);
 			}
-			return;
+			break;
 		}
 
 		default:
@@ -915,7 +917,6 @@ session_read_data(struct session *s, char *line)
 
 end:
 	bufferevent_enable(s->s_bev, EV_READ);
-	session_read(s->s_bev, s);
 }
 
 static void
