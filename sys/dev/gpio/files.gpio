@@ -1,6 +1,6 @@
-# $OpenBSD: files.gpio,v 1.8 2008/11/28 17:42:43 mbalmer Exp $
+# $OpenBSD: files.gpio,v 1.9 2011/10/03 20:24:51 matthieu Exp $
 
-define	gpio {[offset = -1], [mask = 0]}
+define	gpio {[offset = -1], [mask = 0], [flag = 0]}
 
 device	gpio: gpio
 attach	gpio at gpiobus

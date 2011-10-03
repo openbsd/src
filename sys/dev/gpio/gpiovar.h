@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpiovar.h,v 1.5 2008/11/26 14:51:20 mbalmer Exp $	*/
+/*	$OpenBSD: gpiovar.h,v 1.6 2011/10/03 20:24:51 matthieu Exp $	*/
 
 /*
  * Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -61,6 +61,7 @@ struct gpio_attach_args {
 	int			ga_offset;
 	u_int32_t		ga_mask;
 	char			*ga_dvname;
+	u_int32_t		ga_flags;
 };
 
 /* GPIO pin map */

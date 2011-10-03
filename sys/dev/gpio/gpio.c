@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpio.c,v 1.11 2009/08/29 11:04:56 miod Exp $	*/
+/*	$OpenBSD: gpio.c,v 1.12 2011/10/03 20:24:51 matthieu Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -131,6 +131,7 @@ gpio_search(struct device *parent, void *arg, void *aux)
 	ga.ga_gpio = aux;
 	ga.ga_offset = cf->cf_loc[0];
 	ga.ga_mask = cf->cf_loc[1];
+	ga.ga_flags = cf->cf_loc[2];
 
 	if (cf->cf_attach->ca_match(parent, cf, &ga) > 0)
 		config_attach(parent, cf, &ga, gpio_print);
@@ -406,6 +407,7 @@ gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		ga.ga_dvname = attach->ga_dvname;
 		ga.ga_offset = attach->ga_offset;
 		ga.ga_mask = attach->ga_mask;
+		ga.ga_flags = attach->ga_flags;
 		dv = config_found_sm((struct device *)sc, &ga, gpiobus_print,
 		    gpio_submatch);
 		if (dv != NULL) {

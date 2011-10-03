@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpioiic.4,v 1.6 2008/11/24 15:30:21 jmc Exp $
+.\"	$OpenBSD: gpioiic.4,v 1.7 2011/10/03 20:24:51 matthieu Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,22 +14,24 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 24 2008 $
+.Dd $Mdocdate: October 3 2011 $
 .Dt GPIOIIC 4
 .Os
 .Sh NAME
 .Nm gpioiic
 .Nd GPIO I2C controller
 .Sh SYNOPSIS
-.Cd "gpioiic* at gpio? offset 0 mask 0x3"
+.Cd "gpioiic* at gpio? offset 0 mask 0x3 flag 0x0"
 .Cd "gpioiic* at gpio?"
 .Cd "iic* at gpioiic?"
 .Sh DESCRIPTION
 The
 .Nm
 driver allows bit-banging an I2C bus as a master using two GPIO pins.
-The first pin is used as a serial data (SDA) signal and the second as
-a serial clock (SCL).
+By default the first pin is used as a serial data (SDA) signal and the
+second as a serial clock (SCL).
+If the flag locator is set to 0x01, the order of the SDA and SCL signals
+is reversed.
 Both GPIO pins must be able to drive an output and the SDA pin must be
 also able to read an input.
 .Pp

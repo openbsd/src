@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioctl.c,v 1.14 2008/12/03 20:12:44 stevesk Exp $	*/
+/*	$OpenBSD: gpioctl.c,v 1.15 2011/10/03 20:24:51 matthieu Exp $	*/
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -44,7 +44,7 @@ void	pinread(int, char *);
 void	pinwrite(int, char *, int);
 void	pinset(int pin, char *name, int flags, char *alias);
 void	unset(int pin, char *name);
-void	devattach(char *, int, u_int32_t);
+void	devattach(char *, int, u_int32_t, u_int32_t);
 void	devdetach(char *);
 
 __dead void usage(void);
@@ -71,10 +71,10 @@ main(int argc, char *argv[])
 {
 	const struct bitstr *bs;
 	long lval;
-	u_int32_t ga_mask = 0;
+	u_int32_t ga_mask = 0, ga_flags = 0;
 	int pin, ch, ga_offset = -1, n, fl = 0, value = 0;
 	const char *errstr;
-	char *ep, *nam = NULL;
+	char *ep, *flags, *nam = NULL;
 	char devn[32];
 
 	while ((ch = getopt(argc, argv, "q")) != -1)
@@ -109,12 +109,13 @@ main(int argc, char *argv[])
 	if (!strcmp(argv[1], "attach")) {
 		char *driver, *offset, *mask;
 
-		if (argc != 5)
+		if (argc != 5 && argc != 6)
 			usage();
 
 		driver = argv[2];
 		offset = argv[3];
 		mask = argv[4];
+		flags = argc == 6 ? argv[5] : NULL;
 
 		ga_offset = strtonum(offset, 0, INT_MAX, &errstr);
 		if (errstr)
@@ -127,7 +128,13 @@ main(int argc, char *argv[])
 		    || lval == LONG_MIN)) || lval > UINT_MAX)
 			errx(1, "mask out of range");
 		ga_mask = lval;
-		devattach(driver, ga_offset, ga_mask);
+		if (flags != NULL) {
+			lval = strtonum(flags, 0, UINT_MAX, &errstr);
+			if (errstr)
+				errx(1, "flags is %s: %s", errstr, flags);
+			ga_flags = lval;
+		}
+		devattach(driver, ga_offset, ga_mask, ga_flags);
 		return 0;
 	} else if (!strcmp(argv[1], "detach")) {
 		if (argc != 3)
@@ -135,12 +142,12 @@ main(int argc, char *argv[])
 		devdetach(argv[2]);
 	} else {
 		char *nm = NULL;
-	
+
 		/* expecting a pin number or name */
 		pin = strtonum(argv[1], 0, INT_MAX, &errstr);
 		if (errstr)
 			nm = argv[1];	/* try named pin */
-		if (argc > 2) { 
+		if (argc > 2) {
 			if (!strcmp(argv[2], "set")) {
 				for (n = 3; n < argc; n++) {
 					for (bs = pinflags; bs->string != NULL;
@@ -309,7 +316,7 @@ unset(int pin, char *name)
 }
 
 void
-devattach(char *dvname, int offset, u_int32_t mask)
+devattach(char *dvname, int offset, u_int32_t mask, u_int32_t flags)
 {
 	struct gpio_attach attach;
 
@@ -317,6 +324,7 @@ devattach(char *dvname, int offset, u_int32_t mask)
 	strlcpy(attach.ga_dvname, dvname, sizeof(attach.ga_dvname));
 	attach.ga_offset = offset;
 	attach.ga_mask = mask;
+	attach.ga_flags = flags;
 	if (ioctl(devfd, GPIOATTACH, &attach) == -1)
 		err(1, "GPIOATTACH");
 }
@@ -341,8 +349,8 @@ usage(void)
 	fprintf(stderr, "       %s [-q] device pin set [flags] [name]\n",
 	    __progname);
 	fprintf(stderr, "       %s [-q] device pin unset\n", __progname);
-	fprintf(stderr, "       %s [-q] device attach device offset mask\n",
-	    __progname);
+	fprintf(stderr, "       %s [-q] device attach device offset mask "
+	    "[flag]\n", __progname);
 	fprintf(stderr, "       %s [-q] device detach device\n", __progname);
 
 	exit(1);

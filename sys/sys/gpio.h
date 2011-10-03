@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpio.h,v 1.7 2008/11/26 14:51:20 mbalmer Exp $	*/
+/*	$OpenBSD: gpio.h,v 1.8 2011/10/03 20:24:51 matthieu Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -65,6 +65,7 @@ struct gpio_attach {
 	char ga_dvname[16];	/* device name */
 	int ga_offset;		/* pin number */
 	u_int32_t ga_mask;	/* binary mask */
+	u_int32_t ga_flags;	/* flags */
 };
 
 #define GPIOINFO		_IOR('G', 0, struct gpio_info)
