@@ -1,5 +1,62 @@
 
-Changes with nginx 1.0.6                                         29 Jul 2011
+Changes with nginx 1.0.8                                         01 Oct 2011
+
+    *) Bugfix: nginx could not be built --with-http_mp4_module and without
+       --with-debug option.
+
+
+Changes with nginx 1.0.7                                         30 Sep 2011
+
+    *) Change: now if total size of all ranges is greater than source
+       response size, then nginx disables ranges and returns just the source
+       response.
+
+    *) Feature: the "max_ranges" directive.
+
+    *) Feature: the module ngx_http_mp4_module.
+
+    *) Feature: the "worker_aio_requests" directive.
+
+    *) Bugfix: if nginx was built --with-file-aio it could not be run on
+       Linux kernel which did not support AIO.
+
+    *) Bugfix: in Linux AIO error processing.
+       Thanks to Hagai Avrahami.
+
+    *) Bugfix: in Linux AIO combined with open_file_cache.
+
+    *) Bugfix: open_file_cache did not update file info on retest if file
+       was not atomically changed.
+
+    *) Bugfix: reduced memory consumption for long-lived requests.
+
+    *) Bugfix: in the "proxy/fastcgi/scgi/uwsgi_ignore_client_abort"
+       directives.
+
+    *) Bugfix: nginx could not be built on MacOSX 10.7.
+
+    *) Bugfix: in the "proxy/fastcgi/scgi/uwsgi_ignore_client_abort"
+       directives.
+
+    *) Bugfix: request body might be processed incorrectly if client used
+       pipelining.
+
+    *) Bugfix: in the "request_body_in_single_buf" directive.
+
+    *) Bugfix: in "proxy_set_body" and "proxy_pass_request_body" directives
+       if SSL connection to backend was used.
+
+    *) Bugfix: nginx hogged CPU if all servers in an upstream were marked as
+       "down".
+
+    *) Bugfix: a segmentation fault might occur during reconfiguration if
+       ssl_session_cache was defined but not used in previous configuration.
+
+    *) Bugfix: a segmentation fault might occur in a worker process if many
+       backup servers were used in an upstream.
+
+
+Changes with nginx 1.0.6                                         29 Aug 2011
 
     *) Feature: cache loader run time decrease.
 
