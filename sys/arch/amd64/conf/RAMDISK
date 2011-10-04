@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.52 2011/06/29 20:52:08 matthew Exp $
+#	$OpenBSD: RAMDISK,v 1.53 2011/10/04 15:44:17 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -75,6 +75,7 @@ pci*	at pchb?
 #pcmcia*	at pcic?
 
 # PCI USB Controllers
+ehci*	at pci?			# Enhanced Host Controller
 uhci*	at pci?			# Universal Host Controller (Intel)
 ohci*	at pci?			# Open Host Controller
 
@@ -199,15 +200,15 @@ re*	at pci?			# Realtek 8169/8169S/8110S
 #sis*	at pci?			# SiS 900/7016 ethernet
 #wb*	at pci?			# Winbond W89C840F ethernet
 #ti*	at pci?			# Alteon Tigon 1Gb ethernet
-skc*	at pci?			# SysKonnect GEnesis 984x
-sk*	at skc?			#  each port of above
+#skc*	at pci?			# SysKonnect GEnesis 984x
+#sk*	at skc?			#  each port of above
 em*	at pci?			# Intel Pro/1000 ethernet
 #txp*	at pci?			# 3com 3CR990
 #nge*	at pci?			# NS DP83820/DP83821 GigE
 bge*	at pci?			# Broadcom BCM570x (aka Tigon3)
 #lge*	at pci?			# Level1 LXT1001 GigE
 #mtd*	at pci?			# Myson MTD803
-vge*	at pci?			# VIA VT612x
+#vge*	at pci?			# VIA VT612x
 nfe*	at pci?			# NVIDIA nForce Ethernet
 #pcn*	at pci?			# AMD PCnet-PCI Ethernet
 
