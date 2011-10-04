@@ -1,7 +1,7 @@
 /*
  * OpenBSD-related dates to celebrate
  *
- * $OpenBSD: calendar.openbsd,v 1.33 2007/02/16 13:16:06 mickey Exp $
+ * $OpenBSD: calendar.openbsd,v 1.34 2011/10/04 19:48:26 schwarze Exp $
  */
 
 #ifndef _calendar_openbsd_
@@ -9,8 +9,10 @@
 
 Jan 06	IPF gets integrated into the OpenBSD kernel, 1996
 Jan 06	NRL IPv6 addition to OpenBSD, 1999
+Jan 09	n2k10: Network hackathon, Melbourne, Australia, 17 developers, 2010
 Jan 20	Bind 9 goes into the tree, 2003
 Jan 26	Anoncvs service inaugurated, 1996
+Jan 26	n2k9: Network hackathon, Basel, Switzerland, 19 developers, 2009
 Jan 27	OpenBSD/amd64 port is added, from NetBSD, 2004
 Jan 29	``second anoncvs server is 100 miles from the first'', 1996
 Jan 31	OpenBSD/cats port is added, from NetBSD, 2004
@@ -23,51 +25,76 @@ Feb 26	bridge(4) transparent firewall added to OpenBSD, 1999
 Feb 28	Cryptographic services framework in OpenBSD, 2000
 Mar 10	OpenBSD/WWW translation started -- German, Spanish, Dutch, 2000
 Apr 01	OpenBSD/hppa64 port is added, 2005
+Apr 01	k2k11: Kernel hackathon, Hafnarfjordur, Iceland, 15 developers, 2011
+Apr 10	f2k7: First filesystem hackathon, Vienna, Austria, 14 developers, 2007
 Apr 16	OpenBSD/i386 is ELF, 2003
 Apr 19	OpenBSD/solbourne port is added, 2005
 Apr 21	OpenBSD/luna88k port is added, 2004
+Apr 24	pf2k4: PF hackathon, Sechelt, BC, 12 developers, 2004
 Apr 27	i386/PAE work integrated, 2006
 May 01	OpenBSD 3.3 released, exploiting W^X, 2003
+May 05	n2k8: Network hackathon, Ito, Japan, 18 developers, 2008
+May 08	c2k3 General hackathon, Calgary, Alberta, 51 developers, 2003
 May 09	First commit to OpenBSD stable branch, OPENBSD_2_7, 2000
-May 09  OpenBSD/aviion port is added, 2006
-May 10	c2k3 hackathon, Calgary, Canada, 51 developers, 2003
+May 09	OpenBSD/aviion port is added, 2006
 May 19	OpenBSD 2.3 released, including ``ports'' system, 1998
-May 21	c2k5 hackathon, 60 developers and Sitting Idol, 2005
+May 21	c2k5: General hackathon, Calgary, Alberta, 60 developers, 2005
+May 21	c2k6: General hackathon, Calgary, Alberta, 47 developers, 2006
 May 24	OpenBSD gets a trunk(4), 2005
+May 25	c2k7: General hackathon, Calgary, Alberta, 50 developers, 2007
 May 29	IPF is removed for license incompatibility, 2001
 May 29	OpenBSD/armish port is added, 2006
+May 30	c2k9: General hackathon, Edmonton, Alberta, 46 developers, 2009
 May 31	Initial cut at OpenNTP, 2004
 Jun 01	OpenBSD 2.1 released, first time on CD (double set), 1997
-Jun 04	First hackathon, Calgary, Canada, 10 developers, 1999
-Jun 04	c2k2 hackathon, "Shutup and Hack", Calgary, Canada, 42 developers, 2002
-Jun 15	c2k hackathon, Calgary, Canada, 18 developers, 2000
+Jun 04	c99: First hackathon (IPSec), Calgary, Alberta, 10 developers, 1999
+Jun 04	c2k2: General hackathon, Calgary, Alberta, 42 developers, 2002
+Jun 06	c2k8: General hackathon, Edmonton, Alberta, 55 developers, 2008
+Jun 14	r2k6: First network hackathon, Hamburg, Germany, 6 developers, 2006
 Jun 15	OpenBSD 2.7 released, including OpenSSH, 2000
-Jun 19	c2k4 hackathon, Calgary, Canada, 46 developers, 2004
-Jun 21	!c2k1 hackathon, Cambridge, MA, 35 developers, 2001
+Jun 15	c2k: First general hackathon, Calgary, Alberta, 18 developers, 2000
+Jun 19	c2k4: General hackathon, Calgary, Alberta, 46 developers, 2004
+Jun 21	c2k1: Birth of PF hackathon, Cambridge, MA, 35 developers, 2001
 Jun 23	OpenBSD/hppa started, based on Utah Lites and OSF MkLinux, 1998
 Jun 24	PF added. Insane amounts of work done by dhartmei@, 2001
+Jun 25	c2k10: General hackathon, Edmonton, Alberta, 46 developers, 2010
 Jul 01	OpenBSD 1.2 released on ftp, 1996
 Jul 01	add strlcpy/strlcat, safe and sensible string copy/append, 1998
+Jul 02	c2k11: General hackathon, Edmonton, Alberta, Canada, 36 developers, 2011
 Jul 11	OpenBSD goes wireless w/ if_wi addition, 1999
 Jul 23	OpenBSD goes multimedia with Brooktree 848 support, 1998
 Jul 24	Non-executable stack on most architectures, 2002
 Jul 25	Gigabit speed to OpenBSD with the addition of if_ti, 1999
+Aug 07	f2k9: Filesystem/uvm hackathon, Stockholm, Sweden, 14 developers, 2009
 Aug 11	OpenBSD/sparc is ELF, 2002
 Aug 12	OpenBSD/sparc is switched to wscons, 2002
 Aug 16	IPX network stack added to OpenBSD, from FreeBSD, 1996
-Aug 17	c2k1-II hackathon, Washington D.C., 12 developers, 2001
+Aug 17	c2k1-2: Sparc64 hackathon, Washington D.C., 12 developers, 2001
 Aug 17	OpenBSD/sparc64 port is added, from NetBSD, 2001
+Aug 28	k2k6: IPSec hackathon, Schloss Kransberg, Germany, 14 developers, 2006
+Sep 16	s2k11: General hackathon, Ljubljana, Slovenia, 25 developers, 2011
+Sep 19	j2k10: Mini-hackathon, Sake Mura, Nagano, Japan, 19 developers, 2010
 Sep 26	OpenSSH born, Sunday 11:56 MST, 1999
 Sep 29	OpenBSD/hppa gets PCI bus support, 2003
 Oct 06	OpenBSD/landisk port added, 2006
+Oct 09	p2k9: Ports hackathon, Budapest, Hungary, 14 developers, 2009
 Oct 17	CARP added, introducing OpenBSD into High Availability market, 2003
 Oct 18	OpenBSD born, Wednesday 08:37:01 GMT, 1995
 Oct 18	OpenBSD/mvme88k port added, from nivas, based on MACH/luna88k, 1995
+Oct 18	p2k6: Ports hackathon, Budapest, Hungary, 14 developers, 2006
+Oct 22	p2k7: Ports hackathon, Budapest, Hungary, 13 developers, 2007
+Oct 23	p2k10: Ports hackathon, Budapest, Hungary, 19 developers, 2010
+Oct 24	p2k8: Ports hackathon, Budapest, Hungary, 13 developers, 2008
 Oct 29	OpenBSD 3.6 released, featuring i386 and amd64 SMP, 2004
 Oct 30	OpenBSD 3.4 released, implementing W^X on i386 and AES in VIA C3, 2003
 Nov 01	OpenBSD 3.2 released, ftp mirrors preload for the first time, 2002
+Nov 01	v2k5: First ports hackathon, Venice, Italy, 12 developers, 2005
 Nov 11	want.html added to OpenBSD/www, 1998
 Nov 18	altq merged into pf, 2002
+Nov 20	h2k8: Hardware hackathon, Coimbra, Portugal, 18 developers, 2008
+Nov 21	h2k9: Hardware hackathon, Coimbra, Portugal, 15 developers, 2009
+Nov 22	h2k7: Hardware hackathon, Coimbra, Portugal, 11 developers, 2007
+Nov 25	h2k6: Hardware driver hackathon, Coimbra, Portugal, 14 developers, 2006
 Nov 27	Unified buffer & VM cache enters OpenBSD, 2001
 Nov 30	OpenBSD gets RAID support w/ a dpt(4) addition, 1999
 Dec 01	OpenBSD 3.0 released, including PF, triple set, 2001
