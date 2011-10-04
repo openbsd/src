@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.21 2011/08/24 15:34:25 shadchin Exp $ */
+/* $OpenBSD: pms.c,v 1.22 2011/10/04 06:30:40 mpi Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -39,6 +39,12 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 
+#ifdef DEBUG
+#define DPRINTF(x...)	do { printf(x); } while (0);
+#else
+#define DPRINTF(x...)
+#endif
+
 #define DEVNAME(sc)	((sc)->sc_dev.dv_xname)
 
 #define WSMOUSE_BUTTON(x)	(1 << ((x) - 1))
@@ -50,6 +56,7 @@ struct pms_protocol {
 #define PMS_STANDARD	0
 #define PMS_INTELLI	1
 #define PMS_SYNAPTICS	2
+#define PMS_ALPS	3
 	u_int packetsize;
 	int (*enable)(struct pms_softc *);
 	int (*ioctl)(struct pms_softc *, u_long, caddr_t, int, struct proc *);
@@ -78,6 +85,21 @@ struct synaptics_softc {
 #define SYNAPTICS_PRESSURE	30
 };
 
+struct alps_softc {
+	int model;
+	int version;
+
+	int min_x, min_y;
+	int max_x, max_y;
+	int old_fin;
+
+	/* Compat mode */
+	int wsmode;
+	int old_x, old_y;
+	u_int old_buttons;
+#define ALPS_PRESSURE	40
+};
+
 struct pms_softc {		/* driver status information */
 	struct device sc_dev;
 
@@ -98,6 +120,7 @@ struct pms_softc {		/* driver status information */
 
 	const struct pms_protocol *protocol;
 	struct synaptics_softc *synaptics;
+	struct alps_softc *alps;
 
 	u_char packet[8];
 
@@ -114,6 +137,35 @@ static const u_int butmap[8] = {
 	WSMOUSE_BUTTON(1) | WSMOUSE_BUTTON(2),
 	WSMOUSE_BUTTON(2) | WSMOUSE_BUTTON(3),
 	WSMOUSE_BUTTON(1) | WSMOUSE_BUTTON(2) | WSMOUSE_BUTTON(3)
+};
+
+static const struct alps_model {
+	int version;
+	int model;
+} alps_models[] = {
+	{ 0x2021, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
+	{ 0x2221, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
+	{ 0x2222, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
+	{ 0x3222, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
+	{ 0x5212, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
+	{ 0x5321, ALPS_GLIDEPOINT },
+	{ 0x5322, ALPS_GLIDEPOINT },
+	{ 0x603b, ALPS_GLIDEPOINT },
+	{ 0x6222, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
+	{ 0x6321, ALPS_GLIDEPOINT },
+	{ 0x6322, ALPS_GLIDEPOINT },
+	{ 0x6323, ALPS_GLIDEPOINT },
+	{ 0x6324, ALPS_GLIDEPOINT },
+	{ 0x6325, ALPS_GLIDEPOINT },
+	{ 0x6326, ALPS_GLIDEPOINT },
+	{ 0x633b, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
+	{ 0x7301, ALPS_DUALPOINT },
+	{ 0x7321, ALPS_GLIDEPOINT },
+	{ 0x7322, ALPS_GLIDEPOINT },
+	{ 0x7325, ALPS_GLIDEPOINT },
+#if 0
+	{ 0x7326, 0 },	/* XXX Uses unknown v3 protocol */
+#endif
 };
 
 int	pmsprobe(struct device *, void *, void *);
@@ -150,6 +202,11 @@ int	pms_sync_synaptics(struct pms_softc *, int);
 void	pms_proc_synaptics(struct pms_softc *);
 void	pms_disable_synaptics(struct pms_softc *);
 
+int	pms_enable_alps(struct pms_softc *);
+int	pms_ioctl_alps(struct pms_softc *, u_long, caddr_t, int, struct proc *);
+int	pms_sync_alps(struct pms_softc *, int);
+void	pms_proc_alps(struct pms_softc *);
+
 int	synaptics_set_mode(struct pms_softc *, int);
 int	synaptics_query(struct pms_softc *, int, int *);
 int	synaptics_get_hwinfo(struct pms_softc *);
@@ -159,6 +216,8 @@ void	synaptics_pt_proc(struct pms_softc *);
 int	synaptics_pt_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int	synaptics_pt_enable(void *);
 void	synaptics_pt_disable(void *);
+
+int	alps_get_hwinfo(struct pms_softc *);
 
 struct cfattach pms_ca = {
 	sizeof(struct pms_softc), pmsprobe, pmsattach, NULL,
@@ -208,7 +267,16 @@ const struct pms_protocol pms_protocols[] = {
 		pms_sync_synaptics,
 		pms_proc_synaptics,
 		pms_disable_synaptics
-	}
+	},
+	/* ALPS touchpad */
+	{
+		PMS_ALPS, 6,
+		pms_enable_alps,
+		pms_ioctl_alps,
+		pms_sync_alps,
+		pms_proc_alps,
+		NULL
+	},
 };
 
 int
@@ -482,6 +550,8 @@ pmsattach(struct device *parent, struct device *self, void *aux)
 		if (pms_protocols[i].enable(sc))
 			sc->protocol = &pms_protocols[i];
 	}
+
+	DPRINTF("%s: protocol type %d\n", DEVNAME(sc), sc->protocol->type);
 
 	/* no interrupts until enabled */
 	pms_change_state(sc, PMS_STATE_DISABLED, PMS_DEV_IGNORE);
@@ -965,4 +1035,237 @@ pms_disable_synaptics(struct pms_softc *sc)
 	if (syn->capabilities & SYNAPTICS_CAP_SLEEP)
 		synaptics_set_mode(sc, SYNAPTICS_SLEEP_MODE |
 		    SYNAPTICS_DISABLE_GESTURE);
+}
+
+int
+alps_get_hwinfo(struct pms_softc *sc)
+{
+	struct alps_softc *alps = sc->alps;
+	u_char resp[3];
+	int i;
+
+	if (pms_set_resolution(sc, 0) ||
+	    pms_set_scaling(sc, 2) ||
+	    pms_set_scaling(sc, 2) ||
+	    pms_set_scaling(sc, 2) ||
+	    pms_get_status(sc, resp)) {
+		DPRINTF("%s: alps: model query error\n", DEVNAME(sc));
+		return (-1);
+	}
+
+	alps->version = (resp[0] << 8) | (resp[1] << 4) | (resp[2] / 20 + 1);
+
+	for (i = 0; i < nitems(alps_models); i++)
+		if (alps->version == alps_models[i].version) {
+			alps->model = alps_models[i].model;
+			return (0);
+		}
+
+	return (-1);
+
+}
+
+int
+pms_enable_alps(struct pms_softc *sc)
+{
+	struct alps_softc *alps = sc->alps;
+	u_char resp[3];
+
+	if (pms_set_resolution(sc, 0) ||
+	    pms_set_scaling(sc, 1) ||
+	    pms_set_scaling(sc, 1) ||
+	    pms_set_scaling(sc, 1) ||
+	    pms_get_status(sc, resp) ||
+	    resp[0] != PMS_ALPS_MAGIC1 ||
+	    resp[1] != PMS_ALPS_MAGIC2 ||
+	    (resp[2] != PMS_ALPS_MAGIC3_1 && resp[2] != PMS_ALPS_MAGIC3_2))
+		return (0);
+
+	if (sc->alps == NULL) {
+		sc->alps = alps = malloc(sizeof(struct alps_softc),
+		    M_DEVBUF, M_WAITOK | M_ZERO);
+		if (alps == NULL) {
+			printf("%s: alps: not enough memory\n", DEVNAME(sc));
+			goto err;
+		}
+
+		if (alps_get_hwinfo(sc))
+			goto err;
+
+		printf("%s: ALPS %s, version 0x%04x\n", DEVNAME(sc),
+		    (alps->model & ALPS_DUALPOINT ? "Dualpoint" : "Glidepoint"),
+		    alps->version);
+
+		alps->min_x = ALPS_XMIN_BEZEL;
+		alps->min_y = ALPS_YMIN_BEZEL;
+		alps->max_x = ALPS_XMAX_BEZEL;
+		alps->max_y = ALPS_YMAX_BEZEL;
+
+		alps->wsmode = WSMOUSE_COMPAT;
+	}
+
+	if (alps->model == 0)
+		goto err;
+
+	if ((alps->model & ALPS_PASSTHROUGH) &&
+	   (pms_set_scaling(sc, 2) ||
+	    pms_set_scaling(sc, 2) ||
+	    pms_set_scaling(sc, 2) ||
+	    pms_dev_disable(sc))) {
+		DPRINTF("%s: alps: passthrough on error\n", DEVNAME(sc));
+		goto err;
+	}
+
+	if (pms_dev_disable(sc) ||
+	    pms_dev_disable(sc) ||
+	    pms_set_rate(sc, 0x0a)) {
+		DPRINTF("%s: alps: tapping error\n", DEVNAME(sc));
+		goto err;
+	}
+
+	if (pms_dev_disable(sc) ||
+	    pms_dev_disable(sc) ||
+	    pms_dev_disable(sc) ||
+	    pms_dev_disable(sc) ||
+	    pms_dev_enable(sc)) {
+		DPRINTF("%s: alps: absolute mode error\n", DEVNAME(sc));
+		goto err;
+	}
+
+	if ((alps->model & ALPS_PASSTHROUGH) &&
+	   (pms_set_scaling(sc, 1) ||
+	    pms_set_scaling(sc, 1) ||
+	    pms_set_scaling(sc, 1) ||
+	    pms_dev_disable(sc))) {
+		DPRINTF("%s: alps: passthrough off error\n", DEVNAME(sc));
+		goto err;
+	}
+
+	return (1);
+
+err:
+	pms_reset(sc);
+
+	return (0);
+}
+
+int
+pms_ioctl_alps(struct pms_softc *sc, u_long cmd, caddr_t data, int flag,
+    struct proc *p)
+{
+	struct alps_softc *alps = sc->alps;
+	struct wsmouse_calibcoords *wsmc = (struct wsmouse_calibcoords *)data;
+	int wsmode;
+
+	switch (cmd) {
+	case WSMOUSEIO_GTYPE:
+		*(u_int *)data = WSMOUSE_TYPE_ALPS;
+		break;
+	case WSMOUSEIO_GCALIBCOORDS:
+		wsmc->minx = alps->min_x;
+		wsmc->maxx = alps->max_x;
+		wsmc->miny = alps->min_y;
+		wsmc->maxy = alps->max_y;
+		wsmc->swapxy = 0;
+		break;
+	case WSMOUSEIO_SETMODE:
+		wsmode = *(u_int *)data;
+		if (wsmode != WSMOUSE_COMPAT && wsmode != WSMOUSE_NATIVE)
+			return (EINVAL);
+		alps->wsmode = wsmode;
+		break;
+	default:
+		return (-1);
+	}
+	return (0);
+}
+
+int
+pms_sync_alps(struct pms_softc *sc, int data)
+{
+	switch (sc->inputstate) {
+	case 0:
+		if ((data & 0xf8) != 0xf8)	/* XXX model dependant? */
+			return (-1);
+		break;
+	case 1:
+	case 2:
+	case 3:
+	case 4:
+	case 5:
+		if ((data & 0x80) != 0)
+			return (-1);
+		break;
+	}
+
+	return (0);
+}
+
+void
+pms_proc_alps(struct pms_softc *sc)
+{
+	struct alps_softc *alps = sc->alps;
+	int x, y, z, dx, dy;
+	u_int buttons;
+	int fin, ges;
+
+	x = sc->packet[1] | ((sc->packet[2] & 0x78) << 4);
+	y = sc->packet[4] | ((sc->packet[3] & 0x70) << 3);
+	z = sc->packet[5];
+
+	/*
+	 * XXX The Y-axis is in the oposit direction compared to
+	 * Synaptics touchpads and PS/2 mouses.
+	 * It's why we need to translate the y value here for both
+	 * NATIVE and COMPAT modes.
+	 */
+	y = ALPS_YMAX_BEZEL - y + ALPS_YMIN_BEZEL;
+
+	buttons = ((sc->packet[3] & 1) ? WSMOUSE_BUTTON(1) : 0) |
+	    ((sc->packet[3] & 2) ? WSMOUSE_BUTTON(3) : 0) |
+	    ((sc->packet[3] & 4) ? WSMOUSE_BUTTON(2) : 0);
+
+	if (alps->wsmode == WSMOUSE_NATIVE) {
+		if (z == 127) {
+			/* DualPoint touchpads are not absolute. */
+			wsmouse_input(sc->sc_wsmousedev, buttons, x, y, 0, 0,
+			    WSMOUSE_INPUT_DELTA);
+			return;
+		}
+
+		ges = sc->packet[2] & 0x01;
+		fin = sc->packet[2] & 0x02;
+
+		/* Simulate click (tap) */
+		if (ges && !fin)
+			z = 35;
+
+		/* Generate a null pressure event (needed for tap & drag) */
+		if (ges && fin && !alps->old_fin)
+			z = 0;
+
+		wsmouse_input(sc->sc_wsmousedev, buttons, x, y, z, 0,
+		    WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |
+		    WSMOUSE_INPUT_ABSOLUTE_Z);
+
+		alps->old_fin = fin;
+	} else {
+		dx = dy = 0;
+		if (z > ALPS_PRESSURE) {
+			dx = x - alps->old_x;
+			dy = y - alps->old_y;
+
+			/* Prevent jump */
+			dx = abs(dx) > 50 ? 0 : dx;
+			dy = abs(dy) > 50 ? 0 : dy;
+		}
+
+		if (dx || dy || buttons != alps->old_buttons)
+			wsmouse_input(sc->sc_wsmousedev, buttons, dx, dy, 0, 0,
+			    WSMOUSE_INPUT_DELTA);
+
+		alps->old_x = x;
+		alps->old_y = y;
+		alps->old_buttons = buttons;
+	}
 }

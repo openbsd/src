@@ -1,4 +1,4 @@
-/* $OpenBSD: pmsreg.h,v 1.4 2011/08/24 15:34:25 shadchin Exp $ */
+/* $OpenBSD: pmsreg.h,v 1.5 2011/10/04 06:30:40 mpi Exp $ */
 /* $NetBSD: psmreg.h,v 1.1 1998/03/22 15:41:28 drochner Exp $ */
 
 #ifndef SYS_DEV_PCKBC_PMSREG_H
@@ -36,6 +36,11 @@
 #define PMS_INTELLI_MAGIC2	100
 #define PMS_INTELLI_MAGIC3	80
 #define PMS_INTELLI_ID		0x03
+
+#define PMS_ALPS_MAGIC1		0
+#define PMS_ALPS_MAGIC2		0
+#define PMS_ALPS_MAGIC3_1	10
+#define PMS_ALPS_MAGIC3_2	100
 
 /* Synaptics queries */
 #define SYNAPTICS_QUE_IDENTIFY			0x00
@@ -88,6 +93,10 @@
 #define SYNAPTICS_MODEL_SIMPLC			(1 << 5)
 #define SYNAPTICS_MODEL_GEOMETRY(m)		((m) & 0x0f)
 
+#define ALPS_GLIDEPOINT				(1 << 1)
+#define ALPS_DUALPOINT				(1 << 2)
+#define ALPS_PASSTHROUGH			(1 << 3)
+
 /* Resolutions */
 #define SYNAPTICS_RESOLUTION_X(r)		(((r) >> 16) & 0xff)
 #define SYNAPTICS_RESOLUTION_Y(r)		((r) & 0xff)
@@ -120,5 +129,10 @@
 #define SYNAPTICS_XMAX_BEZEL			5472
 #define SYNAPTICS_YMIN_BEZEL			1408
 #define SYNAPTICS_YMAX_BEZEL			4448
+
+#define ALPS_XMIN_BEZEL				130
+#define ALPS_XMAX_BEZEL				840
+#define ALPS_YMIN_BEZEL				130
+#define ALPS_YMAX_BEZEL				640
 
 #endif /* SYS_DEV_PCKBC_PMSREG_H */
