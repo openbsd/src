@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioctl.c,v 1.15 2011/10/03 20:24:51 matthieu Exp $	*/
+/*	$OpenBSD: gpioctl.c,v 1.16 2011/10/04 07:19:13 jmc Exp $	*/
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -344,7 +344,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-q] device [pin] [0 | 1 | 2 | "
+	fprintf(stderr, "usage: %s [-q] device pin [0 | 1 | 2 | "
 	    "on | off | toggle]\n", __progname);
 	fprintf(stderr, "       %s [-q] device pin set [flags] [name]\n",
 	    __progname);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpioctl.8,v 1.20 2011/10/03 20:24:51 matthieu Exp $
+.\"	$OpenBSD: gpioctl.8,v 1.21 2011/10/04 07:19:13 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,13 +14,30 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 3 2011 $
+.Dd $Mdocdate: October 4 2011 $
 .Dt GPIOCTL 8
 .Os
 .Sh NAME
 .Nm gpioctl
 .Nd control GPIO devices
 .Sh SYNOPSIS
+.Nm gpioctl
+.Op Fl q
+.Ar device
+.Ar pin
+.Op Ar 0 | 1 | 2 | on | off | toggle
+.Nm gpioctl
+.Op Fl q
+.Ar device
+.Ar pin
+set
+.Op Ar flags
+.Op Ar name
+.Nm gpioctl
+.Op Fl q
+.Ar device
+.Ar pin
+unset
 .Nm gpioctl
 .Op Fl q
 .Ar device
@@ -34,28 +51,6 @@ attach
 .Ar device
 detach
 .Ar device
-.Nm gpioctl
-.Op Fl q
-.Ar device
-.Ar pin
-.Op Ar 0 | 1 | 2
-.Nm gpioctl
-.Op Fl q
-.Ar device
-.Ar pin
-.Op Ar on | off | toggle
-.Nm gpioctl
-.Op Fl q
-.Ar device
-.Ar pin
-set
-.Op Ar flags
-.Op Ar name
-.Nm gpioctl
-.Op Fl q
-.Ar device
-.Ar pin
-unset
 .Sh DESCRIPTION
 The
 .Nm
@@ -114,7 +109,8 @@ command.
 .Pp
 The following configuration
 .Ar flags
-are supported by the GPIO framework:
+are supported by the GPIO framework.
+Note that not all the flags can be supported by the particular GPIO controller.
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It in
@@ -139,7 +135,13 @@ invert input
 invert output
 .El
 .Pp
-Note that not all the flags can be supported by the particular GPIO controller.
+When attaching an I2C device,
+if the
+.Ar flag
+argument is set to 0x01,
+the order of the SDA and SCL signals is reversed
+(see
+.Xr gpioiic 4 ) .
 .Pp
 When executed with only the
 .Xr gpio 4
