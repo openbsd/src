@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.102 2011/09/17 14:10:05 haesbaert Exp $ */
+/* $OpenBSD: netcat.c,v 1.103 2011/10/04 08:34:34 fgsch Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -98,6 +98,7 @@ void	help(void);
 int	local_listen(char *, char *, struct addrinfo);
 void	readwrite(int);
 int	remote_connect(const char *, const char *, struct addrinfo);
+int	timeout_connect(int, const struct sockaddr *, socklen_t);
 int	socks_connect(const char *, const char *, struct addrinfo,
 	    const char *, const char *, struct addrinfo, int, const char *);
 int	udptest(int);
@@ -590,7 +591,7 @@ remote_connect(const char *host, const char *port, struct addrinfo hints)
 
 		set_common_sockopts(s);
 
-		if (connect(s, res0->ai_addr, res0->ai_addrlen) == 0)
+		if (timeout_connect(s, res0->ai_addr, res0->ai_addrlen) == 0)
 			break;
 		else if (vflag)
 			warn("connect to %s port %s (%s) failed", host, port,
@@ -603,6 +604,43 @@ remote_connect(const char *host, const char *port, struct addrinfo hints)
 	freeaddrinfo(res);
 
 	return (s);
+}
+
+int
+timeout_connect(int s, const struct sockaddr *name, socklen_t namelen)
+{
+	struct pollfd pfd;
+	socklen_t optlen;
+	int flags, optval;
+	int ret;
+
+	if (timeout != -1) {
+		flags = fcntl(s, F_GETFL, 0);
+		if (fcntl(s, F_SETFL, flags | O_NONBLOCK) == -1)
+			err(1, "set non-blocking mode");
+	}
+
+	if ((ret = connect(s, name, namelen)) != 0 && errno == EINPROGRESS) {
+		pfd.fd = s;
+		pfd.events = POLLOUT;
+		if ((ret = poll(&pfd, 1, timeout)) == 1) {
+			optlen = sizeof(optval);
+			if ((ret = getsockopt(s, SOL_SOCKET, SO_ERROR,
+			    &optval, &optlen)) == 0) {
+				errno = optval;
+				ret = optval == 0 ? 0 : -1;
+			}
+		} else if (ret == 0) {
+			errno = ETIMEDOUT;
+			ret = -1;
+		} else
+			err(1, "poll failed");
+	}
+
+	if (timeout != -1 && fcntl(s, F_SETFL, flags) == -1)
+		err(1, "restoring flags");
+
+	return (ret);
 }
 
 /*

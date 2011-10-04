@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.58 2011/09/17 14:10:05 haesbaert Exp $
+.\"     $OpenBSD: nc.1,v 1.59 2011/10/04 08:34:34 fgsch Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 17 2011 $
+.Dd $Mdocdate: October 4 2011 $
 .Dt NC 1
 .Os
 .Sh NAME
@@ -210,9 +210,9 @@ Have
 .Nm
 give more verbose output.
 .It Fl w Ar timeout
-If a connection and stdin are idle for more than
+Connections which cannot be established or are idle timeout after
 .Ar timeout
-seconds, then the connection is silently closed.
+seconds.
 The
 .Fl w
 flag has no effect on the
