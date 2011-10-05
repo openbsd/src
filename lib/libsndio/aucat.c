@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.49 2011/05/03 20:15:23 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.50 2011/10/05 16:15:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -311,7 +311,10 @@ aucat_connect_tcp(struct aucat *hdl, char *host, char *unit, int isaudio)
 			DPERROR("socket");
 			continue;
 		}
+	restart:
 		if (connect(s, ai->ai_addr, ai->ai_addrlen) < 0) {
+			if (errno == EINTR)
+				goto restart;
 			DPERROR("connect");
 			close(s);
 			s = -1;
