@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.220 2011/07/17 22:46:48 matthew Exp $	*/
+/*	$OpenBSD: ami.c,v 1.221 2011/10/05 06:41:30 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -59,6 +59,7 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/rwlock.h>
+#include <sys/pool.h>
 
 #include <machine/bus.h>
 
@@ -1843,7 +1844,7 @@ int
 ami_ioctl_inq(struct ami_softc *sc, struct bioc_inq *bi)
 {
 	struct ami_big_diskarray *p; /* struct too large for stack */
-	struct scsi_inquiry_data inqbuf;
+	struct scsi_inquiry_data *inqbuf;
 	struct ami_fc_einquiry einq;
 	int ch, tg;
 	int i, s, t, off;
@@ -1853,6 +1854,8 @@ ami_ioctl_inq(struct ami_softc *sc, struct bioc_inq *bi)
 	    AMI_FC_EINQ3_SOLICITED_FULL, 0, sizeof einq, &einq)))
 		return (EINVAL);
 
+	inqbuf = dma_alloc(sizeof(*inqbuf), PR_WAITOK);
+
 	if (einq.ain_drvinscnt == sc->sc_drvinscnt) {
 		/* poke existing known drives to make sure they aren't gone */
 		for(i = 0; i < sc->sc_channels * 16; i++) {
@@ -1861,7 +1864,7 @@ ami_ioctl_inq(struct ami_softc *sc, struct bioc_inq *bi)
 
 			ch = (i & 0xf0) >> 4;
 			tg = i & 0x0f;
-			if (ami_drv_inq(sc, ch, tg, 0, &inqbuf)) {
+			if (ami_drv_inq(sc, ch, tg, 0, inqbuf)) {
 				/* drive is gone, force rescan */
 				changes = 1;
 				break;
@@ -1869,15 +1872,17 @@ ami_ioctl_inq(struct ami_softc *sc, struct bioc_inq *bi)
 		}
 		if (changes == 0) {
 			bcopy(&sc->sc_bi, bi, sizeof *bi);
-			return (0);
+			goto done;
 		}
 	}
 
 	sc->sc_drvinscnt = einq.ain_drvinscnt;
 
 	p = malloc(sizeof *p, M_DEVBUF, M_NOWAIT);
-	if (!p)
-		return (ENOMEM);
+	if (!p) {
+		error = ENOMEM;
+		goto done;
+	}
 
 	if ((error = ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, 0, sizeof *p,
 	    p))) {
@@ -1916,12 +1921,12 @@ ami_ioctl_inq(struct ami_softc *sc, struct bioc_inq *bi)
 		 * on an unconnected channel.
 		 * XXX find out if we can determine this differently
 		 */
-		memset(&inqbuf, 0xff, sizeof inqbuf);
+		memset(inqbuf, 0xff, sizeof(*inqbuf));
 
 		ch = (i & 0xf0) >> 4;
 		tg = i & 0x0f;
-		if (!ami_drv_inq(sc, ch, tg, 0, &inqbuf)) {
-			if ((inqbuf.device & SID_TYPE) != T_DIRECT)
+		if (!ami_drv_inq(sc, ch, tg, 0, inqbuf)) {
+			if ((inqbuf->device & SID_TYPE) != T_DIRECT)
 				continue;
 			bi->bi_novol++;
 			bi->bi_nodisk++;
@@ -1934,6 +1939,8 @@ ami_ioctl_inq(struct ami_softc *sc, struct bioc_inq *bi)
 	error = 0;
 bail:
 	free(p, M_DEVBUF);
+done:
+	dma_free(inqbuf, sizeof(*inqbuf));
 	return (error);
 }
 
@@ -1981,11 +1988,14 @@ ami_disk(struct ami_softc *sc, struct bioc_disk *bd,
 {
 	char vend[8+16+4+1], *vendp;
 	char ser[32 + 1];
-	struct scsi_inquiry_data inqbuf;
-	struct scsi_vpd_serial vpdbuf;
+	struct scsi_inquiry_data *inqbuf;
+	struct scsi_vpd_serial *vpdbuf;
 	int i, ld = p->ada_nld, error = EINVAL;
 	u_int8_t ch, tg;
 	daddr64_t sz = 0;
+
+	inqbuf = dma_alloc(sizeof(*inqbuf), PR_WAITOK);
+	vpdbuf = dma_alloc(sizeof(*vpdbuf), PR_WAITOK);
 
 	for(i = 0; i < sc->sc_channels * 16; i++) {
 	    	/* skip claimed/unused drives */
@@ -2000,20 +2010,20 @@ ami_disk(struct ami_softc *sc, struct bioc_disk *bd,
 
 		ch = (i & 0xf0) >> 4;
 		tg = i & 0x0f;
-		if (ami_drv_inq(sc, ch, tg, 0, &inqbuf)) 
+		if (ami_drv_inq(sc, ch, tg, 0, inqbuf)) 
 			goto bail;
 		
-		vendp = inqbuf.vendor;
+		vendp = inqbuf->vendor;
 		bcopy(vendp, vend, sizeof vend - 1);
 
 		vend[sizeof vend - 1] = '\0';
 		strlcpy(bd->bd_vendor, vend, sizeof(bd->bd_vendor));
 
-		if (!ami_drv_inq(sc, ch, tg, 0x80, &vpdbuf)) {
-			bcopy(vpdbuf.serial, ser, sizeof ser - 1);
+		if (!ami_drv_inq(sc, ch, tg, 0x80, vpdbuf)) {
+			bcopy(vpdbuf->serial, ser, sizeof ser - 1);
 			ser[sizeof ser - 1] = '\0';
-			if (_2btol(vpdbuf.hdr.page_length) < sizeof ser)
-				ser[_2btol(vpdbuf.hdr.page_length)] = '\0';
+			if (_2btol(vpdbuf->hdr.page_length) < sizeof ser)
+				ser[_2btol(vpdbuf->hdr.page_length)] = '\0';
 			strlcpy(bd->bd_serial, ser, sizeof(bd->bd_serial));
 		}
 
@@ -2036,7 +2046,7 @@ ami_disk(struct ami_softc *sc, struct bioc_disk *bd,
 #ifdef AMI_DEBUG
 		if (p->apd[i].adp_type != 0)
 			printf("invalid disk type: %d %d %x inquiry type: %x\n",
-			    ch, tg, p->apd[i].adp_type, inqbuf.device);
+			    ch, tg, p->apd[i].adp_type, inqbuf->device);
 #endif /* AMI_DEBUG */
 
 		error = 0;
@@ -2044,6 +2054,8 @@ ami_disk(struct ami_softc *sc, struct bioc_disk *bd,
 	}
 
 bail:
+	dma_free(inqbuf, sizeof(*inqbuf));
+	dma_free(vpdbuf, sizeof(*vpdbuf));
 	return (error);
 }
 
@@ -2167,8 +2179,8 @@ bail:
 int
 ami_ioctl_disk(struct ami_softc *sc, struct bioc_disk *bd)
 {
-	struct scsi_inquiry_data inqbuf;
-	struct scsi_vpd_serial vpdbuf;
+	struct scsi_inquiry_data *inqbuf;
+	struct scsi_vpd_serial *vpdbuf;
 	struct ami_big_diskarray *p; /* struct too large for stack */
 	int i, s, t, d;
 	int off;
@@ -2177,9 +2189,9 @@ ami_ioctl_disk(struct ami_softc *sc, struct bioc_disk *bd)
 	char vend[8+16+4+1], *vendp;
 	char ser[32 + 1];
 
-	p = malloc(sizeof *p, M_DEVBUF, M_NOWAIT);
-	if (!p)
-		return (ENOMEM);
+	inqbuf = dma_alloc(sizeof(*inqbuf), PR_WAITOK);
+	vpdbuf = dma_alloc(sizeof(*inqbuf), PR_WAITOK);
+	p = malloc(sizeof *p, M_DEVBUF, M_WAITOK);
 
 	if ((error = ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, 0, sizeof *p, p)))
 		goto bail;
@@ -2247,19 +2259,20 @@ ami_ioctl_disk(struct ami_softc *sc, struct bioc_disk *bd)
 				goto done;
 			}
 
-			if (!ami_drv_inq(sc, ch, tg, 0, &inqbuf)) {
-				vendp = inqbuf.vendor;
+			if (!ami_drv_inq(sc, ch, tg, 0, inqbuf)) {
+				vendp = inqbuf->vendor;
 				bcopy(vendp, vend, sizeof vend - 1);
 				vend[sizeof vend - 1] = '\0';
 				strlcpy(bd->bd_vendor, vend,
 				    sizeof(bd->bd_vendor));
 			}
 
-			if (!ami_drv_inq(sc, ch, tg, 0x80, &vpdbuf)) {
-				bcopy(vpdbuf.serial, ser, sizeof ser - 1);
+			if (!ami_drv_inq(sc, ch, tg, 0x80, vpdbuf)) {
+				bcopy(vpdbuf->serial, ser, sizeof ser - 1);
 				ser[sizeof ser - 1] = '\0';
-				if (_2btol(vpdbuf.hdr.page_length) < sizeof ser)
-					ser[_2btol(vpdbuf.hdr.page_length)] =
+				if (_2btol(vpdbuf->hdr.page_length) <
+				    sizeof(ser))
+					ser[_2btol(vpdbuf->hdr.page_length)] =
 					    '\0';
 				strlcpy(bd->bd_serial, ser,
 				    sizeof(bd->bd_serial));
@@ -2271,6 +2284,8 @@ done:
 	error = 0;
 bail:
 	free(p, M_DEVBUF);
+	dma_free(vpdbuf, sizeof(*vpdbuf));
+	dma_free(inqbuf, sizeof(*inqbuf));
 
 	return (error);
 }
@@ -2321,8 +2336,10 @@ int ami_ioctl_alarm(struct ami_softc *sc, struct bioc_alarm *ba)
 int
 ami_ioctl_setstate(struct ami_softc *sc, struct bioc_setstate *bs)
 {
-	struct scsi_inquiry_data inqbuf;
-	int func, error;
+	struct scsi_inquiry_data *inqbuf;
+	int func, error = 0;
+
+	inqbuf = dma_alloc(sizeof(*inqbuf), PR_WAITOK);
 
 	switch (bs->bs_status) {
 	case BIOC_SSONLINE:
@@ -2335,8 +2352,10 @@ ami_ioctl_setstate(struct ami_softc *sc, struct bioc_setstate *bs)
 
 	case BIOC_SSHOTSPARE:
 		if (ami_drv_inq(sc, bs->bs_channel, bs->bs_target, 0,
-		    &inqbuf))
-			return (EINVAL);
+		    inqbuf)) {
+			error = EINVAL;
+			goto done;
+		}
 
 		func = AMI_STATE_SPARE;
 		break;
@@ -2344,14 +2363,17 @@ ami_ioctl_setstate(struct ami_softc *sc, struct bioc_setstate *bs)
 	default:
 		AMI_DPRINTF(AMI_D_IOCTL, ("%s: biocsetstate invalid opcode %x\n"
 		    , DEVNAME(sc), bs->bs_status));
-		return (EINVAL);
+		error = EINVAL;
+		goto done;
 	}
 
 	if ((error = ami_mgmt(sc, AMI_CHSTATE, bs->bs_channel, bs->bs_target,
 	    func, 0, NULL)))
-		return (error);
+		goto done;
 
-	return (0);
+done:
+	dma_free(inqbuf, sizeof(*inqbuf));
+	return (error);
 }
 
 #ifndef SMALL_KERNEL
