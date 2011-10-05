@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.65 2011/05/02 18:16:58 dhill Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.66 2011/10/05 02:52:10 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -955,6 +955,26 @@ em_reset_hw(struct em_hw *hw)
 		kab |= E1000_KABGTXD_BGSQLBIAS;
 		E1000_WRITE_REG(hw, KABGTXD, kab);
 	}
+
+	if (hw->mac_type == em_82580) {
+		uint32_t mdicnfg;
+		uint16_t nvm_data;
+
+		/* clear global device reset status bit */
+		EM_WRITE_REG(hw, E1000_STATUS, E1000_STATUS_DEV_RST_SET);
+
+		em_read_eeprom(hw, EEPROM_INIT_CONTROL3_PORT_A +
+		    NVM_82580_LAN_FUNC_OFFSET(hw->bus_func), 1,
+		    &nvm_data);
+
+		mdicnfg = EM_READ_REG(hw, E1000_MDICNFG);
+		if (nvm_data & NVM_WORD24_EXT_MDIO)
+			mdicnfg |= E1000_MDICNFG_EXT_MDIO;
+		if (nvm_data & NVM_WORD24_COM_MDIO)
+			mdicnfg |= E1000_MDICNFG_COM_MDIO;
+		EM_WRITE_REG(hw, E1000_MDICNFG, mdicnfg);
+	}
+
 	return E1000_SUCCESS;
 }
 
@@ -4575,20 +4595,13 @@ int32_t
 em_write_phy_reg(struct em_hw *hw, uint32_t reg_addr, uint16_t phy_data)
 {
 	uint32_t ret_val;
-	uint16_t swfw;
 	DEBUGFUNC("em_write_phy_reg");
 
 	if (hw->mac_type == em_pchlan ||
 		hw->mac_type == em_pch2lan)
 		return (em_access_phy_reg_hv(hw, reg_addr, &phy_data, FALSE));
 
-	if (((hw->mac_type == em_80003es2lan) || (hw->mac_type == em_82575)) &&
-	    (E1000_READ_REG(hw, STATUS) & E1000_STATUS_FUNC_1)) {
-		swfw = E1000_SWFW_PHY1_SM;
-	} else {
-		swfw = E1000_SWFW_PHY0_SM;
-	}
-	if (em_swfw_sync_acquire(hw, swfw))
+	if (em_swfw_sync_acquire(hw, hw->swfw))
 		return -E1000_ERR_SWFW_SYNC;
 
 	if ((hw->phy_type == em_phy_igp ||
@@ -4598,7 +4611,7 @@ em_write_phy_reg(struct em_hw *hw, uint32_t reg_addr, uint16_t phy_data)
 		ret_val = em_write_phy_reg_ex(hw, IGP01E1000_PHY_PAGE_SELECT,
 		    (uint16_t) reg_addr);
 		if (ret_val) {
-			em_swfw_sync_release(hw, swfw);
+			em_swfw_sync_release(hw, hw->swfw);
 			return ret_val;
 		}
 	} else if (hw->phy_type == em_phy_gg82563) {
@@ -4623,7 +4636,7 @@ em_write_phy_reg(struct em_hw *hw, uint32_t reg_addr, uint16_t phy_data)
 			}
 
 			if (ret_val) {
-				em_swfw_sync_release(hw, swfw);
+				em_swfw_sync_release(hw, hw->swfw);
 				return ret_val;
 			}
 		}
@@ -4639,7 +4652,7 @@ em_write_phy_reg(struct em_hw *hw, uint32_t reg_addr, uint16_t phy_data)
 	ret_val = em_write_phy_reg_ex(hw, MAX_PHY_REG_ADDRESS & reg_addr,
 	    phy_data);
 
-	em_swfw_sync_release(hw, swfw);
+	em_swfw_sync_release(hw, hw->swfw);
 	return ret_val;
 }
 
@@ -4719,16 +4732,9 @@ STATIC int32_t
 em_read_kmrn_reg(struct em_hw *hw, uint32_t reg_addr, uint16_t *data)
 {
 	uint32_t reg_val;
-	uint16_t swfw;
 	DEBUGFUNC("em_read_kmrn_reg");
 
-	if ((hw->mac_type == em_80003es2lan) &&
-	    (E1000_READ_REG(hw, STATUS) & E1000_STATUS_FUNC_1)) {
-		swfw = E1000_SWFW_PHY1_SM;
-	} else {
-		swfw = E1000_SWFW_PHY0_SM;
-	}
-	if (em_swfw_sync_acquire(hw, swfw))
+	if (em_swfw_sync_acquire(hw, hw->swfw))
 		return -E1000_ERR_SWFW_SYNC;
 
 	/* Write register address */
@@ -4743,7 +4749,7 @@ em_read_kmrn_reg(struct em_hw *hw, uint32_t reg_addr, uint16_t *data)
 	reg_val = E1000_READ_REG(hw, KUMCTRLSTA);
 	*data = (uint16_t) reg_val;
 
-	em_swfw_sync_release(hw, swfw);
+	em_swfw_sync_release(hw, hw->swfw);
 	return E1000_SUCCESS;
 }
 
@@ -4751,17 +4757,9 @@ STATIC int32_t
 em_write_kmrn_reg(struct em_hw *hw, uint32_t reg_addr, uint16_t data)
 {
 	uint32_t reg_val;
-	uint16_t swfw;
 	DEBUGFUNC("em_write_kmrn_reg");
 
-	if ((hw->mac_type == em_80003es2lan) &&
-	    (E1000_READ_REG(hw, STATUS) & E1000_STATUS_FUNC_1)) {
-		swfw = E1000_SWFW_PHY1_SM;
-	} else {
-		swfw = E1000_SWFW_PHY0_SM;
-	}
-
-	if (em_swfw_sync_acquire(hw, swfw))
+	if (em_swfw_sync_acquire(hw, hw->swfw))
 		return -E1000_ERR_SWFW_SYNC;
 
 	reg_val = ((reg_addr << E1000_KUMCTRLSTA_OFFSET_SHIFT) &
@@ -4770,7 +4768,7 @@ em_write_kmrn_reg(struct em_hw *hw, uint32_t reg_addr, uint16_t data)
 	E1000_WRITE_REG(hw, KUMCTRLSTA, reg_val);
 	usec_delay(2);
 
-	em_swfw_sync_release(hw, swfw);
+	em_swfw_sync_release(hw, hw->swfw);
 	return E1000_SUCCESS;
 }
 
@@ -4785,7 +4783,6 @@ em_phy_hw_reset(struct em_hw *hw)
 	uint32_t ctrl, ctrl_ext;
 	uint32_t led_ctrl;
 	int32_t  ret_val;
-	uint16_t swfw;
 	DEBUGFUNC("em_phy_hw_reset");
 	/*
 	 * In the case of the phy reset being blocked, it's not an error, we
@@ -4798,14 +4795,7 @@ em_phy_hw_reset(struct em_hw *hw)
 	DEBUGOUT("Resetting Phy...\n");
 
 	if (hw->mac_type > em_82543 && hw->mac_type != em_icp_xxxx) {
-		if (((hw->mac_type == em_80003es2lan) ||
-			(hw->mac_type == em_82575)) &&
-		    (E1000_READ_REG(hw, STATUS) & E1000_STATUS_FUNC_1)) {
-			swfw = E1000_SWFW_PHY1_SM;
-		} else {
-			swfw = E1000_SWFW_PHY0_SM;
-		}
-		if (em_swfw_sync_acquire(hw, swfw)) {
+		if (em_swfw_sync_acquire(hw, hw->swfw)) {
 			DEBUGOUT("Unable to acquire swfw sync\n");
 			return -E1000_ERR_SWFW_SYNC;
 		}
@@ -4831,7 +4821,7 @@ em_phy_hw_reset(struct em_hw *hw)
 
 		if (hw->mac_type >= em_82571)
 			msec_delay_irq(10);
-		em_swfw_sync_release(hw, swfw);
+		em_swfw_sync_release(hw, hw->swfw);
 		/*
 		 * the M88E1141_E_PHY_ID might need reset here, but nothing
 		 * proves it
@@ -5130,8 +5120,16 @@ em_match_gig_phy(struct em_hw *hw)
 			match = TRUE;
 		break;
 	case em_82580:
-		if (hw->phy_id == I82580_I_PHY_ID)
+		if (hw->phy_id == I82580_I_PHY_ID) {
+			uint32_t mdic;
+
+			mdic = EM_READ_REG(hw, E1000_MDICNFG);
+			mdic &= E1000_MDICNFG_PHY_MASK;
+			hw->phy_addr = mdic >> E1000_MDICNFG_PHY_SHIFT;
+			DEBUGOUT1("MDICNFG PHY ADDR %d",
+			    mdic >> E1000_MDICNFG_PHY_SHIFT);
 			match = TRUE;
+		}
 		break;
 	case em_80003es2lan:
 		if (hw->phy_id == GG82563_E_PHY_ID)
@@ -5251,6 +5249,14 @@ em_detect_gig_phy(struct em_hw *hw)
 	 */
 	if (hw->mac_type == em_80003es2lan)
 		hw->phy_type = em_phy_gg82563;
+
+	/* Power on SGMII phy if it is disabled */
+	if (hw->mac_type == em_82580) {
+		uint32_t ctrl_ext = EM_READ_REG(hw, E1000_CTRL_EXT);
+		EM_WRITE_REG(hw, E1000_CTRL_EXT,
+		    ctrl_ext & ~E1000_CTRL_EXT_SDP3_DATA);
+		delay(300);
+	}
 
 	/* Read the PHY ID Registers to identify which PHY is onboard. */
 	for (hw->phy_addr = 1; (hw->phy_addr < 4); hw->phy_addr++) {
@@ -6641,6 +6647,8 @@ em_read_mac_addr(struct em_hw *hw)
 	if (hw->mac_type == em_icp_xxxx) {
 		ia_base_addr = (uint16_t)
 		EEPROM_IA_START_ICP_xxxx(hw->icp_xxxx_port_num);
+	} else if (hw->mac_type == em_82580) {
+		ia_base_addr = NVM_82580_LAN_FUNC_OFFSET(hw->bus_func);
 	}
 	for (i = 0; i < NODE_ADDRESS_SIZE; i += 2) {
 		offset = i >> 1;
@@ -6660,7 +6668,6 @@ em_read_mac_addr(struct em_hw *hw)
 	case em_82546_rev_3:
 	case em_82571:
 	case em_82575:
-	case em_82580:
 	case em_80003es2lan:
 		if (E1000_READ_REG(hw, STATUS) & E1000_STATUS_FUNC_1)
 			hw->perm_mac_addr[5] ^= 0x01;
@@ -8674,7 +8681,7 @@ STATIC int32_t
 em_get_phy_cfg_done(struct em_hw *hw)
 {
 	int32_t  timeout = PHY_CFG_TIMEOUT;
-	uint32_t cfg_mask = E1000_EEPROM_CFG_DONE;
+	uint32_t cfg_mask = E1000_NVM_CFG_DONE_PORT_0;
 	DEBUGFUNC("em_get_phy_cfg_done");
 
 	switch (hw->mac_type) {
@@ -8683,9 +8690,18 @@ em_get_phy_cfg_done(struct em_hw *hw)
 		break;
 	case em_80003es2lan:
 	case em_82575:
-		/* Separate *_CFG_DONE_* bit for each port */
-		if (E1000_READ_REG(hw, STATUS) & E1000_STATUS_FUNC_1)
-			cfg_mask = E1000_EEPROM_CFG_DONE_PORT_1;
+	case em_82580:
+		switch (hw->bus_func) {
+		case 1:
+			cfg_mask = E1000_NVM_CFG_DONE_PORT_1;
+			break;
+		case 2:
+			cfg_mask = E1000_NVM_CFG_DONE_PORT_2;
+			break;
+		case 3:
+			cfg_mask = E1000_NVM_CFG_DONE_PORT_3;
+			break;
+		}
 		/* FALLTHROUGH */
 	case em_82571:
 	case em_82572:

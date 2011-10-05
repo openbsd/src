@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.51 2011/05/02 12:25:42 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.52 2011/10/05 02:52:10 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -949,6 +949,7 @@ struct em_ffvt_entry {
 #define E1000_CTRL_EXT 0x00018  /* Extended Device Control - RW */
 #define E1000_FLA      0x0001C  /* Flash Access - RW */
 #define E1000_MDIC     0x00020  /* MDI Control - RW */
+#define E1000_MDICNFG  0x00E04  /* MDI Config - RW */
 #define E1000_SCTL     0x00024  /* SerDes Control - RW */
 #define E1000_FEXTNVM4 0x00024  /* Future Extended NVM 4 - RW */
 #define E1000_FEXTNVM  0x00028  /* Future Extended NVM register */
@@ -1543,6 +1544,8 @@ struct em_hw {
     boolean_t icp_xxxx_is_link_up;
     uint32_t  icp_xxxx_port_num;
     struct gcu_softc * gcu;
+    uint8_t bus_func;
+    uint16_t swfw;
 };
 
 #define E1000_EEPROM_SWDPIN0   0x0001   /* SWDPIN 0 EEPROM Value */
@@ -1590,6 +1593,7 @@ struct em_hw {
 #define E1000_CTRL_RFCE     0x08000000  /* Receive Flow Control enable */
 #define E1000_CTRL_TFCE     0x10000000  /* Transmit flow control enable */
 #define E1000_CTRL_RTE      0x20000000  /* Routing tag enable */
+#define E1000_CTRL_DEV_RST  0x20000000	/* Device Reset */
 #define E1000_CTRL_VME      0x40000000  /* IEEE VLAN mode enable */
 #define E1000_CTRL_PHY_RST  0x80000000  /* PHY Reset */
 #define E1000_CTRL_SW2FW_INT 0x02000000  /* Initiate an interrupt to manageability engine */
@@ -1632,6 +1636,7 @@ struct em_hw {
 #define E1000_STATUS_PCIX_MODE  0x00002000      /* PCI-X mode */
 #define E1000_STATUS_PCIX_SPEED 0x0000C000      /* PCI-X bus speed */
 #define E1000_STATUS_BMC_SKU_0  0x00100000 /* BMC USB redirect disabled */
+#define E1000_STATUS_DEV_RST_SET  0x00100000
 #define E1000_STATUS_BMC_SKU_1  0x00200000 /* BMC SRAM disabled */
 #define E1000_STATUS_BMC_SKU_2  0x00400000 /* BMC SDRAM disabled */
 #define E1000_STATUS_BMC_CRYPTO 0x00800000 /* BMC crypto disabled */
@@ -1750,6 +1755,7 @@ struct em_hw {
 #define E1000_MDIC_READY     0x10000000
 #define E1000_MDIC_INT_EN    0x20000000
 #define E1000_MDIC_ERROR     0x40000000
+#define E1000_MDIC_DEST      0x80000000
 
 #define E1000_KUMCTRLSTA_MASK           0x0000FFFF
 #define E1000_KUMCTRLSTA_OFFSET         0x001F0000
@@ -1869,6 +1875,7 @@ struct em_hw {
 #define E1000_ICR_DSW           0x00000020 /* FW changed the status of DISSW bit in the FWSM */
 #define E1000_ICR_PHYINT        0x00001000 /* LAN connected device generates an interrupt */
 #define E1000_ICR_EPRST         0x00100000 /* ME handware reset occurs */
+#define E1000_ICR_DRSTA         0x40000000 /* Device Reset Asserted */
 
 /* Interrupt Cause Set */
 #define E1000_ICS_TXDW      E1000_ICR_TXDW      /* Transmit desc written back */
@@ -1898,6 +1905,7 @@ struct em_hw {
 #define E1000_ICS_DSW       E1000_ICR_DSW
 #define E1000_ICS_PHYINT    E1000_ICR_PHYINT
 #define E1000_ICS_EPRST     E1000_ICR_EPRST
+#define E1000_ICS_DRSTA     E1000_ICR_DRSTA
 
 /* Interrupt Mask Set */
 #define E1000_IMS_TXDW      E1000_ICR_TXDW      /* Transmit desc written back */
@@ -1927,6 +1935,7 @@ struct em_hw {
 #define E1000_IMS_DSW       E1000_ICR_DSW
 #define E1000_IMS_PHYINT    E1000_ICR_PHYINT
 #define E1000_IMS_EPRST     E1000_ICR_EPRST
+#define E1000_IMS_DRSTA     E1000_ICR_DRSTA
 
 /* Interrupt Mask Clear */
 #define E1000_IMC_TXDW      E1000_ICR_TXDW      /* Transmit desc written back */
@@ -1956,6 +1965,7 @@ struct em_hw {
 #define E1000_IMC_DSW       E1000_ICR_DSW
 #define E1000_IMC_PHYINT    E1000_ICR_PHYINT
 #define E1000_IMC_EPRST     E1000_ICR_EPRST
+#define E1000_IMC_DRSTA     E1000_ICR_DRSTA
 
 /* Receive Control */
 #define E1000_RCTL_RST            0x00000001    /* Software reset */
@@ -2030,6 +2040,8 @@ struct em_hw {
 #define E1000_SWFW_PHY0_SM    0x0002
 #define E1000_SWFW_PHY1_SM    0x0004
 #define E1000_SWFW_MAC_CSR_SM 0x0008
+#define E1000_SWFW_PHY2_SM    0x0020
+#define E1000_SWFW_PHY3_SM    0x0040
 
 /* Receive Descriptor */
 #define E1000_RDT_DELAY 0x0000ffff      /* Delay timer (1=1024us) */
@@ -2073,6 +2085,7 @@ struct em_hw {
 #define E1000_RXDCTL_HTHRESH 0x00003F00 /* RXDCTL Host Threshold */
 #define E1000_RXDCTL_WTHRESH 0x003F0000 /* RXDCTL Writeback Threshold */
 #define E1000_RXDCTL_GRAN    0x01000000 /* RXDCTL Granularity */
+#define E1000_RXDCTL_QUEUE_ENABLE 0x2000000
 
 /* Transmit Descriptor Control */
 #define E1000_TXDCTL_PTHRESH 0x000000FF /* TXDCTL Prefetch Threshold */
@@ -2296,6 +2309,11 @@ struct em_host_command_info {
 
 #define E1000_MDALIGN          4096
 
+#define E1000_MDICNFG_EXT_MDIO    0x80000000      /* MDI ext/int destination */ 
+#define E1000_MDICNFG_COM_MDIO    0x40000000      /* MDI shared w/ lan 0 */ 
+#define E1000_MDICNFG_PHY_MASK    0x03E00000 
+#define E1000_MDICNFG_PHY_SHIFT   21   
+
 /* PCI-Ex registers*/
 
 /* PCI-Ex Control Register */
@@ -2396,8 +2414,16 @@ struct em_host_command_info {
 #define EEPROM_FLASH_VERSION          0x0032
 #define EEPROM_CHECKSUM_REG           0x003F
 
-#define E1000_EEPROM_CFG_DONE         0x00040000   /* MNG config cycle done */
-#define E1000_EEPROM_CFG_DONE_PORT_1  0x00080000   /* ...for second port */
+#define E1000_NVM_CFG_DONE_PORT_0  0x040000 /* MNG config cycle done */
+#define E1000_NVM_CFG_DONE_PORT_1  0x080000 /* ...for second port */
+#define E1000_NVM_CFG_DONE_PORT_2  0x100000 /* ...for third port */
+#define E1000_NVM_CFG_DONE_PORT_3  0x200000 /* ...for fourth port */
+
+#define NVM_82580_LAN_FUNC_OFFSET(a) (a ? (0x40 + (0x40 * a)) : 0)
+
+/* Mask bits for fields in Word 0x24 of the NVM */
+#define NVM_WORD24_COM_MDIO         0x0008 /* MDIO interface shared */
+#define NVM_WORD24_EXT_MDIO         0x0004 /* MDIO accesses routed external */
 
 /* Word definitions for ID LED Settings */
 #define ID_LED_RESERVED_0000 0x0000

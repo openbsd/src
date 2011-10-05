@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em_osdep.h,v 1.11 2011/07/26 14:57:57 deraadt Exp $ */
+/* $OpenBSD: if_em_osdep.h,v 1.12 2011/10/05 02:52:10 jsg Exp $ */
 /* $FreeBSD: if_em_osdep.h,v 1.11 2003/05/02 21:17:08 pdeuskar Exp $ */
 
 #ifndef _EM_OPENBSD_OS_H_
@@ -110,6 +110,17 @@ struct em_osdep
 			  ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
 			   ((hw)->mac_type >= em_82543 ? E1000_##reg : E1000_82542_##reg), \
 			   value)
+
+#define EM_READ_REG(hw, reg) \
+	bus_space_read_4(((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
+			 ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
+			  reg)
+
+#define EM_WRITE_REG(hw, reg, value) \
+	bus_space_write_4(((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
+			  ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
+			   reg, value)
+
 
 #define E1000_READ_REG_ARRAY(hw, reg, index) \
 	bus_space_read_4(((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
