@@ -1136,6 +1136,10 @@ ngx_reopen_files(ngx_cycle_t *cycle, ngx_uid_t user)
 
         len = file[i].pos - file[i].buffer;
 
+	if (ngx_process == NGX_PROCESS_WORKER)
+		ngx_cpystrn(file[i].name.data, file[i].name.data + strlen(NGX_PREFIX),
+				file[i].name.len);
+
         if (file[i].buffer && len != 0) {
 
             n = ngx_write_fd(file[i].fd, file[i].buffer, len);

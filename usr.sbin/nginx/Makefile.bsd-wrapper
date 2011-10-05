@@ -1,17 +1,17 @@
 # Build wrapper for Nginx
-# $OpenBSD: Makefile.bsd-wrapper,v 1.2 2011/09/24 20:13:57 robert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.3 2011/10/05 18:04:18 robert Exp $
 
 LNDIR=	/usr/bin/lndir
 
 .include <bsd.own.mk>
 
-CONFIGURE_ARGS=	--prefix=/etc/nginx \
+CONFIGURE_ARGS=	--prefix=/var/www \
 		--conf-path=/etc/nginx/nginx.conf \
 		--sbin-path=/usr/sbin/nginx \
 		--pid-path=/var/run/nginx.pid \
 		--lock-path=/var/run/nginx.lock \
-		--http-log-path=/var/www/logs/access.log \
-		--error-log-path=/var/www/logs/error.log \
+		--http-log-path=logs/access.log \
+		--error-log-path=logs/error.log \
 		--http-client-body-temp-path=/tmp/client_body_temp \
 		--http-proxy-temp-path=/tmp/proxy_temp \
 		--http-fastcgi-temp-path=/tmp/fastcgi_temp \
