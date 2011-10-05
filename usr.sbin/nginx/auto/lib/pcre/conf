@@ -83,7 +83,7 @@ if [ $PCRE != NONE ]; then
 
 else
 
-    if [ "$NGX_PLATFORM" != win32 ]; then
+    if [ "$NGX_PLATFORM" != win32 -a `uname -s` != OpenBSD ]; then
 
         PCRE=NO
 
@@ -165,7 +165,7 @@ else
     fi
 
     have=NGX_PCRE . auto/have
-    CORE_SRCS="$CORE_SRCS $PCRE_SRCS"
+    CORE_SRCS="$CORE_SRCS $PCRE_SRCS $REGEX_SRCS"
     CORE_INCS="$CORE_INCS src/pcre"
     CFLAGS="$CFLAGS -DHAVE_CONFIG_H -DPCRE_STATIC -DPOSIX_MALLOC_THRESHOLD=10"
     PCRE=YES
