@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78.c,v 1.21 2011/07/26 18:43:35 deraadt Exp $	*/
+/*	$OpenBSD: lm78.c,v 1.22 2011/10/05 15:05:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -582,20 +582,6 @@ void
 lm_refresh(void *arg)
 {
 	struct lm_softc *sc = arg;
-
-	if (sc->flags & LM78_DEAD) {
-		/* Remove sensors */
-		int i;
-
-		printf("%s: disabling sensors\n", sc->sc_dev.dv_xname);
-		sensordev_deinstall(&sc->sensordev);
-		for (i = 0; i < sc->numsensors; i++)
-			sensor_detach(&sc->sensordev, &sc->sensors[i]);
-		if (sc->sensortask != NULL)
-			sensor_task_unregister(sc->sensortask);
-		sc->sensortask = NULL;
-		return;
-	}
 
 	sc->refresh_sensor_data(sc);
 }

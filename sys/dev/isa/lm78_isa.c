@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78_isa.c,v 1.5 2011/07/26 18:43:36 deraadt Exp $	*/
+/*	$OpenBSD: lm78_isa.c,v 1.6 2011/10/05 15:05:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -20,6 +20,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/sensors.h>
+#include <sys/workq.h>
 #include <machine/bus.h>
 
 #include <dev/isa/isareg.h>
@@ -50,6 +51,7 @@ int  lm_isa_match(struct device *, void *, void *);
 void lm_isa_attach(struct device *, struct device *, void *);
 u_int8_t lm_isa_readreg(struct lm_softc *, int);
 void lm_isa_writereg(struct lm_softc *, int, int);
+void lm_isa_remove_alias(void *, void *);
 
 struct cfattach lm_isa_ca = {
 	sizeof(struct lm_isa_softc),
@@ -177,8 +179,27 @@ lm_isa_attach(struct device *parent, struct device *self, void *aux)
 			continue;
 		if (lmsc && lmsc->sbusaddr == sbusaddr &&
 		    lmsc->chipid == sc->sc_lmsc.chipid)
-			lmsc->flags = LM78_DEAD;
+			workq_add_task(NULL, 0, lm_isa_remove_alias, lmsc,
+			    sc->sc_lmsc.sc_dev.dv_xname);
 	}
+}
+
+/* Remove sensors of the i2c alias, since we prefer to use the isa access */
+void
+lm_isa_remove_alias(void *v, void *arg)
+{
+	struct lm_softc *sc = v;
+	char *iic = arg;
+	int i;
+
+	printf("%s: disabling sensors due to alias with %s\n",
+	    sc->sc_dev.dv_xname, iic);
+	sensordev_deinstall(&sc->sensordev);
+	for (i = 0; i < sc->numsensors; i++)
+		sensor_detach(&sc->sensordev, &sc->sensors[i]);
+	if (sc->sensortask != NULL)
+		sensor_task_unregister(sc->sensortask);
+	sc->sensortask = NULL;
 }
 
 u_int8_t
