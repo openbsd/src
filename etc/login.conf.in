@@ -1,4 +1,4 @@
-# $OpenBSD: login.conf.in,v 1.4 2011/07/26 15:16:12 sthen Exp $
+# $OpenBSD: login.conf.in,v 1.5 2011/10/05 13:37:49 ajacoutot Exp $
 
 #
 # Sample login.conf file.  See login.conf(5) for details.
@@ -38,7 +38,7 @@ auth-ftp-defaults:auth-ftp=passwd:
 # class.
 #
 default:\
-	:path=/usr/bin /bin /usr/sbin /sbin /usr/X11R6/bin /usr/local/bin:\
+	:path=/usr/bin /bin /usr/sbin /sbin /usr/X11R6/bin /usr/local/bin /usr/local/sbin:\
 	:umask=022:\
 	:datasize-max=@DEF_DATASIZE_MAX@:\
 	:datasize-cur=@DEF_DATASIZE_CUR@:\
