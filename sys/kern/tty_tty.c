@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_tty.c,v 1.11 2010/07/26 01:56:27 guenther Exp $	*/
+/*	$OpenBSD: tty_tty.c,v 1.12 2011/10/06 09:14:35 mikeb Exp $	*/
 /*	$NetBSD: tty_tty.c,v 1.13 1996/03/30 22:24:46 christos Exp $	*/
 
 /*-
@@ -138,4 +138,15 @@ cttypoll(dev_t dev, int events, struct proc *p)
 	if (ttyvp == NULL)	/* try operation to get EOF/failure */
 		return (seltrue(dev, events, p));
 	return (VOP_POLL(ttyvp, events, p));
+}
+
+/*ARGSUSED*/
+int
+cttykqfilter(dev_t dev, struct knote *kn)
+{
+	struct vnode *ttyvp = cttyvp(curproc);
+
+	if (ttyvp == NULL)
+		return (ENXIO);
+	return (VOP_KQFILTER(ttyvp, kn));
 }
