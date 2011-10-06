@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.16 2010/10/18 04:07:50 deraadt Exp $
+#	$OpenBSD: list,v 1.17 2011/10/06 15:29:44 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -28,7 +28,6 @@ LINK	instbin					bin/sha256
 LINK	instbin					bin/sleep
 LINK	instbin					bin/stty
 LINK	instbin					bin/sync
-LINK	instbin					sbin/ccdconfig
 LINK	instbin					sbin/dhclient
 LINK	instbin					sbin/dmesg
 LINK	instbin					sbin/fsck
