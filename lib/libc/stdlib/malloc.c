@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.139 2011/07/12 14:43:42 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.140 2011/10/06 14:37:04 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -109,8 +109,8 @@ struct dir_info {
 	struct region_info *r;		/* region slots */
 	size_t regions_total;		/* number of region slots */
 	size_t regions_free;		/* number of free slots */
-					/* list of free chunk info structs */
-	struct chunk_head chunk_info_list;
+					/* lists of free chunk info structs */
+	struct chunk_head chunk_info_list[MALLOC_MAXSHIFT + 1];
 					/* lists of chunks with free slots */
 	struct chunk_head chunk_dir[MALLOC_MAXSHIFT + 1];
 	size_t free_regions_size;	/* free pages cached */
@@ -156,7 +156,7 @@ struct chunk_info {
 	u_short free;			/* how many free chunks */
 	u_short total;			/* how many chunk */
 					/* which chunks are free */
-	u_short bits[(MALLOC_PAGESIZE / MALLOC_MINSIZE) / MALLOC_BITS];
+	u_short bits[1];
 };
 
 struct malloc_readonly {
@@ -622,9 +622,10 @@ omalloc_init(struct dir_info **dp)
 		d->regions_total = 0;
 		return 1;
 	}
-	LIST_INIT(&d->chunk_info_list);
-	for (i = 0; i <= MALLOC_MAXSHIFT; i++)
+	for (i = 0; i <= MALLOC_MAXSHIFT; i++) {
+		LIST_INIT(&d->chunk_info_list[i]);
 		LIST_INIT(&d->chunk_dir[i]);
+	}
 	malloc_used += regioninfo_size;
 	d->canary1 = mopts.malloc_canary ^ (u_int32_t)(uintptr_t)d;
 	d->canary2 = ~d->canary1;
@@ -689,22 +690,36 @@ omalloc_grow(struct dir_info *d)
 }
 
 static struct chunk_info *
-alloc_chunk_info(struct dir_info *d)
+alloc_chunk_info(struct dir_info *d, int bits)
 {
 	struct chunk_info *p;
-	int i;
-	
-	if (LIST_EMPTY(&d->chunk_info_list)) {
-		p = MMAP(MALLOC_PAGESIZE);
-		if (p == MAP_FAILED)
+	size_t size, count;
+
+	if (bits == 0)
+		count = MALLOC_PAGESIZE / MALLOC_MINSIZE;
+	else
+		count = MALLOC_PAGESIZE >> bits;
+
+	size = howmany(count, MALLOC_BITS);
+	size = sizeof(struct chunk_info) + (size - 1) * sizeof(u_short);
+	size = ALIGN(size);
+
+	if (LIST_EMPTY(&d->chunk_info_list[bits])) {
+		void *q;
+		int i;
+
+		q = MMAP(MALLOC_PAGESIZE);
+		if (q == MAP_FAILED)
 			return NULL;
 		malloc_used += MALLOC_PAGESIZE;
-		for (i = 0; i < MALLOC_PAGESIZE / sizeof(*p); i++)
-			LIST_INSERT_HEAD(&d->chunk_info_list, &p[i], entries);
+		count = MALLOC_PAGESIZE / size;
+		for (i = 0; i < count; i++, q += size)
+			LIST_INSERT_HEAD(&d->chunk_info_list[bits],
+			    (struct chunk_info *)q, entries);
 	}
-	p = LIST_FIRST(&d->chunk_info_list);
+	p = LIST_FIRST(&d->chunk_info_list[bits]);
 	LIST_REMOVE(p, entries);
-	memset(p, 0, sizeof *p);
+	memset(p, 0, size);
 	p->canary = d->canary1;
 	return p;
 }
@@ -803,14 +818,14 @@ omalloc_make_chunks(struct dir_info *d, int bits)
 {
 	struct chunk_info *bp;
 	void		*pp;
-	long		i, k;
+	int		i, k;
 
 	/* Allocate a new bucket */
 	pp = map(d, MALLOC_PAGESIZE, 0);
 	if (pp == MAP_FAILED)
 		return NULL;
 
-	bp = alloc_chunk_info(d);
+	bp = alloc_chunk_info(d, bits);
 	if (bp == NULL) {
 		unmap(d, pp, MALLOC_PAGESIZE);
 		return NULL;
@@ -829,7 +844,7 @@ omalloc_make_chunks(struct dir_info *d, int bits)
 		k = mprotect(pp, MALLOC_PAGESIZE, PROT_NONE);
 		if (k < 0) {
 			unmap(d, pp, MALLOC_PAGESIZE);
-			LIST_INSERT_HEAD(&d->chunk_info_list, bp, entries);
+			LIST_INSERT_HEAD(&d->chunk_info_list[0], bp, entries);
 			return NULL;
 		}
 	} else {
@@ -956,7 +971,7 @@ free_bytes(struct dir_info *d, struct region_info *r, void *ptr)
 {
 	struct chunk_head *mp;
 	struct chunk_info *info;
-	long i;
+	int i;
 
 	info = (struct chunk_info *)r->size;
 	if (info->canary != d->canary1)
@@ -997,7 +1012,11 @@ free_bytes(struct dir_info *d, struct region_info *r, void *ptr)
 	unmap(d, info->page, MALLOC_PAGESIZE);
 
 	delete(d, r);
-	LIST_INSERT_HEAD(&d->chunk_info_list, info, entries);
+	if (info->size != 0)
+		mp = &d->chunk_info_list[info->shift];
+	else
+		mp = &d->chunk_info_list[0];
+	LIST_INSERT_HEAD(mp, info, entries);
 }
 
 
@@ -1521,7 +1540,7 @@ dump_chunk(int fd, struct chunk_info *p, void *f, int fromfreelist)
 		}
 		p = LIST_NEXT(p, entries);
 		if (p != NULL) {
-			snprintf(buf, sizeof(buf), "    ");
+			snprintf(buf, sizeof(buf), "        ");
 			write(fd, buf, strlen(buf));
 		}
 	}
@@ -1531,17 +1550,25 @@ static void
 dump_free_chunk_info(int fd, struct dir_info *d)
 {
 	char buf[64];
-	int i;
+	int i, count;
 
 	snprintf(buf, sizeof(buf), "Free chunk structs:\n");
 	write(fd, buf, strlen(buf));
 	for (i = 0; i <= MALLOC_MAXSHIFT; i++) {
-		struct chunk_info *p = LIST_FIRST(&d->chunk_dir[i]);
-		if (p != NULL) {
-			snprintf(buf, sizeof(buf), "%2d) ", i);
-			write(fd, buf, strlen(buf));
+		struct chunk_info *p;
+
+		count = 0;
+		LIST_FOREACH(p, &d->chunk_info_list[i], entries)
+			count++;
+		p = LIST_FIRST(&d->chunk_dir[i]);
+		if (p == NULL && count == 0)
+			continue;
+		snprintf(buf, sizeof(buf), "%2d) %3d ", i, count);
+		write(fd, buf, strlen(buf));
+		if (p != NULL)
 			dump_chunk(fd, p, NULL, 1);
-		}
+		else
+			write(fd, "\n", 1);
 	}
 
 }
