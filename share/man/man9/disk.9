@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disk.9,v 1.29 2010/11/17 15:01:05 bluhm Exp $
+.\"	$OpenBSD: disk.9,v 1.30 2011/10/06 22:22:11 jmc Exp $
 .\"	$NetBSD: disk.9,v 1.2 1996/04/08 20:41:25 jtc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 17 2010 $
+.Dd $Mdocdate: October 6 2011 $
 .Dt DISK 9
 .Os
 .Sh NAME
@@ -108,12 +108,10 @@ This list, called
 .Nm disklist ,
 may grow or shrink over time as disks are dynamically added and removed
 from the system.
-Drivers which currently make use of the detachment
-capability of the framework are the
-.Xr ccd 4
-and
+An example of a driver which currently makes use of the detachment
+capability of the framework is the
 .Xr vnd 4
-pseudo-device drivers.
+pseudo-device driver.
 .Pp
 The following is a brief description of each function in the framework:
 .Bl -tag -width "disk_unbusy()"
@@ -347,18 +345,15 @@ and
 .Pp
 The
 .Ox
-.Xr ccd 4 ,
 .Xr raid 4
 and
 .Xr vnd 4
 drivers utilize the detachment capability of the framework.
 They are located in
-.Pa sys/dev/ccd.c ,
-.Pa sys/dev/raidframe/ ,
+.Pa sys/dev/raidframe/
 and
 .Pa sys/dev/vnd.c .
 .Sh SEE ALSO
-.Xr ccd 4 ,
 .Xr raid 4 ,
 .Xr vnd 4 ,
 .Xr spl 9

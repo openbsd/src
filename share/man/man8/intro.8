@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.8,v 1.20 2011/09/20 21:48:35 ajacoutot Exp $
+.\"	$OpenBSD: intro.8,v 1.21 2011/10/06 22:22:11 jmc Exp $
 .\"	$NetBSD: intro.8,v 1.3 1994/11/30 19:36:24 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)intro.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: September 20 2011 $
+.Dd $Mdocdate: October 6 2011 $
 .Dt INTRO 8
 .Os
 .Sh NAME
@@ -172,22 +172,6 @@ Relevant
 .Xr rc.conf 8
 variables:
 .Va ntpd_flags .
-.Ss Concatenated disks (ccd)
-If you are using
-.Xr ccd 4
-concatenated disks, edit
-.Pa /etc/ccd.conf .
-Use the
-.Ic ccdconfig -U
-command to unload and the
-.Ic ccdconfig -C
-command to create tables internal to the kernel for the concatenated disks.
-You then
-.Xr mount 8 ,
-.Xr umount 8 ,
-and edit
-.Pa /etc/fstab
-as needed.
 .Ss BOOTP/DHCP server
 If this is a
 BOOTP or DHCP
