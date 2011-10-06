@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.44 2011/01/14 19:04:08 jasper Exp $	*/
+/*	$OpenBSD: conf.c,v 1.45 2011/10/06 19:50:59 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -119,6 +119,8 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NCCD,ccd),	/* 9: concatenated disk driver */
 #if notyet
 	bdev_disk_init(NXD,xd),		/* 10: XD disk */
+#else
+	bdev_notdef(),			/* 10 */
 #endif /* notyet */
 	bdev_notdef(),			/* 11 */
 	bdev_notdef(),			/* 12 */
