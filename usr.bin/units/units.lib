@@ -1,4 +1,4 @@
-/ $OpenBSD: units.lib,v 1.23 2011/10/06 18:03:52 jmc Exp $
+/ $OpenBSD: units.lib,v 1.24 2011/10/06 18:07:37 jmc Exp $
 / $NetBSD: units.lib,v 1.3 1996/04/06 06:01:04 thorpej Exp $
 
 / primitive units
@@ -264,8 +264,6 @@ desyatina_state		109.3 are
 desyatina_farmery	0.75 desyatina_state
 sqverst			104.2 desyatina_state
 sqarshin		1|21600 desyatina_state
-sqfoot			1|117600 desyatina_state
-
 
 / Energy Work
 
