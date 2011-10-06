@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.4,v 1.34 2011/04/28 03:03:41 dlg Exp $
+.\"	$OpenBSD: scsi.4,v 1.35 2011/10/06 20:17:22 sobrado Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -25,12 +25,12 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 28 2011 $
+.Dd $Mdocdate: October 6 2011 $
 .Dt SCSI 4
 .Os
 .Sh NAME
 .Nm scsi
-.Nd scsi system
+.Nd SCSI system
 .Sh SYNOPSIS
 .Cd "scsibus at ..."
 .Pp
@@ -52,14 +52,14 @@
 The
 .Em SCSI
 system provides a uniform and modular system for the implementation
-of drivers to control various scsi devices, and to utilize different
-scsi host adapters through host adapter drivers.
+of drivers to control various SCSI devices, and to utilize different
+SCSI host adapters through host adapter drivers.
 When the system probes the
 .Em SCSI
 buses, it attaches any devices it finds to the appropriate
 drivers.
 If no driver seems appropriate, then it attaches the device to the
-uk (unknown) driver so that user level scsi ioctls may
+uk (unknown) driver so that user level SCSI ioctls may
 still be performed against the device.
 .Sh KERNEL CONFIGURATION
 The option SCSIDEBUG enables the debug ioctl.
@@ -87,7 +87,7 @@ SCSI logical unit 0 on SCSI bus 0.
 Individual scsibuses can be wired down to specific controllers with
 a config line similar to
 .Cd "scsibus0 at ahc0"
-which assigns scsi bus 0 to the first unit using the ahc driver.
+which assigns SCSI bus 0 to the first unit using the ahc driver.
 For controllers supporting more than one bus,
 the particular bus can be specified as in
 .Cd "scsibus3 at ahc1 bus 1"
@@ -106,17 +106,17 @@ There are a number of ioctls that work on any
 device.
 They are defined in
 .Aq Pa sys/scsiio.h
-and can be applied against any scsi device that permits them.
+and can be applied against any SCSI device that permits them.
 For the tape, it must be applied against the control
 device.
 See the manual page for each device type for more information about
-how generic scsi ioctls may be applied to a specific device.
+how generic SCSI ioctls may be applied to a specific device.
 .Bl -tag -width DIOCSDINFO____
 .It Dv SCIOCRESET*
 Reset a device.
 .It Dv SCIOCDEBUG
 Turn on debugging.
-All scsi operations originating from this device's driver
+All SCSI operations originating from this device's driver
 will be traced to the console, along with other information.
 Debugging is controlled by four bits, described in the header file.
 If no debugging is configured into the kernel, debugging will have
@@ -125,7 +125,7 @@ no effect.
 debugging is controlled by the configuration option
 .Em SCSIDEBUG .
 .It Dv SCIOCCOMMAND
-Take a scsi command and data from a user process and apply them to the scsi
+Take a SCSI command and data from a user process and apply them to the SCSI
 device.
 Return all status information and return data to the process.
 The ioctl will return a successful status even if the device rejected the
@@ -154,7 +154,7 @@ The four bits that make up the debug level each control certain types
 of debugging information.
 .Bl -tag -width "Bit 0"
 .It Dv Bit 0
-shows all scsi bus operations including scsi commands,
+shows all SCSI bus operations including SCSI commands,
 error information and the first 48 bytes of any data transferred.
 .It Dv Bit 1
 shows routines called.
