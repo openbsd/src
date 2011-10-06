@@ -1,4 +1,4 @@
-/ $OpenBSD: units.lib,v 1.22 2011/10/02 16:33:35 jmc Exp $
+/ $OpenBSD: units.lib,v 1.23 2011/10/06 18:03:52 jmc Exp $
 / $NetBSD: units.lib,v 1.3 1996/04/06 06:01:04 thorpej Exp $
 
 / primitive units
@@ -49,7 +49,6 @@ da-			deca
 d-			deci
 c-			centi
 m-			milli
-µ-			micro
 n-			nano
 p-			pico
 f-			femto
@@ -57,6 +56,28 @@ a-			atto
 z-			zepto
 y-			yocto
 
+/ ISO/IEC 80000 binary prefixes
+yobi-			1208925819614629174706176
+zebi-			1180591620717411303424
+exbi-			1152921504606846976
+pebi-			1125899906842624
+tebi-			1099511627776
+gibi-			1073741824
+mebi-			1048576
+kibi-			1024
+
+/ ISO/IEC 80000 symbols
+Yi-			yobi
+Zi-			zebi
+Ei-			exbi
+Pi-			pebi
+Ti-			tebi
+Gi-			gibi
+Mi-			mebi
+Ki-			kibi
+
+/ Other prefixes
+myria-			1e4
 semi-			.5
 demi-			.5
 
@@ -451,6 +472,7 @@ barn			1e-28 m2
 barrel			42 gal
 barye			1e-1 nt/m2
 baryl			microbar
+becquerel		/s
 bev			1e+9 e-volt
 biot			10 amp
 blondel			cd/pi-m2
@@ -458,6 +480,7 @@ boardfoot		144 in3
 / Defn of bolt is also an area, but depends on type of cloth
 bolt			40 yd
 bottommeasure		1|40 in
+Bq			becquerel
 britishthermalunit	1.05506e+3 joule fuzz
 btu			britishthermalunit
 refrigeration		12000 btu/ton-hour
@@ -474,6 +497,7 @@ centesimalsecond	1e-4 grade
 century			100 year
 cfs			ft3/sec
 chain			66 ft
+Ci			curie
 circularinch		1|4 pi-in2
 circularmil		1e-6|4 pi-in2
 clusec			1e-8 mm-hg m3/s
@@ -486,7 +510,8 @@ cup			1|2 pt
 curie			3.7e+10 /sec
 dalton			amu
 decade			10 yr
-dipotre			/m
+diopter			dioptre
+dioptre			/m
 displacementton		35 ft3
 doppelzentner		100 kg
 dozen			12
@@ -522,8 +547,10 @@ geodeticfoot		british-ft
 geographicalmile	1852 m
 gilbert			2.5 amp/pi
 gill			1|4 pt
+gray			J/kg
 gross			144
 gunterschain		22 yd
+Gy			gray
 hand			4 in
 hartree			2 rydberg
 hectare			1e+4 m2
@@ -618,6 +645,9 @@ quarter			9 in
 quartersection		1|4 mi2
 quintal			100 kg
 quire			25
+r_earth			6378.1370 km
+r_moon			0.2725076 r_earth
+rackunit		1.75 in
 rad			100 erg/gm
 ream			500
 registerton		100 ft3
@@ -629,6 +659,7 @@ roentgen		rontgen
 R			roentgen
 rood			1.21e+3 yd
 rope			20 ft
+RU			rackunit
 rutherford		1e+6 /sec
 rydbergconst		0.5 electronmass-c-alpha2/planck
 rydberg			rydbergconst-planck-c
@@ -641,6 +672,7 @@ shippington		40 ft3
 shorthundredweight	100 lb
 shortquarter		25 lb
 siemens			/ohm
+sievert			J/kg
 sigma			microsec
 skein			120 yd
 skot			1e-3 apostilb
@@ -661,6 +693,7 @@ surveyfoot		british-ft
 surveyyard		3 surveyfoot
 surveyorschain		66 ft
 surveyorslink		66|100 ft
+Sv			sievert	   
 tablespoon		4 fldr
 teaspoon		4|3 fldr
 tesla			weber/m2
@@ -698,9 +731,8 @@ englishell		45 inch
 scottishell		37.2 inch
 flemishell		27 inch
 V			volt
-eV			e V
-bohrradius		hbar2-C2/8.988e9 N m2-e2-electronmass
-becquerel		1|3.7e10 curie
+eV			ev
+bohrradius		ao
 fresnel			1e12 hertz
 statcoul		1|2.99792458e9 coul
 statamp			1|2.99792458e9 amp
@@ -727,7 +759,6 @@ kip			1000 lbf
 frenchfoot		16|15 ft
 frenchfeet		frenchfoot
 toise			6 frenchfeet
-sievert			8.4 rontgen
 candle			1.02 candela
 militarypace		2.5 feet
 metre			meter
