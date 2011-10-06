@@ -1,0 +1,169 @@
+.\"	$Id: apropos.1,v 1.1 2011/10/06 23:04:16 schwarze Exp $
+.\"
+.\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: October 6 2011 $
+.Dt APROPOS 1
+.Os
+.Sh NAME
+.Nm apropos
+.Nd search the manual page database
+.Sh SYNOPSIS
+.Nm
+.Op Fl eIr
+.Op Fl a Ar arch
+.Op Fl c Ar cat
+.Op Fl s Ar sort
+.Op Fl t Ar types
+.Ar key
+.Sh DESCRIPTION
+The
+.Nm
+utility queries the manual page database.
+Its arguments are as follows:
+.Bl -tag -width Ds
+.It Fl a Ar arch
+Search only for a particular architecture.
+.It Fl c Ar cat
+Search only for a category (manual section).
+See
+.Xr man 1
+for a listing of categories.
+.It Fl e
+Search only for exact matches (subject to
+.Fl I ) .
+.It Fl I
+Case-insensitive matching.
+.It Fl r
+Consider
+.Ar key
+to be a POSIX regular expression (subject to
+.Fl I ) .
+See
+.Xr re_format 7
+for a description of regular expressions.
+.It Fl s Ar sort
+Sorting type.
+Accepts
+.Ar cat
+to sort by category and then by title or
+.Ar title
+to sort by title (which is the default).
+.It Fl t Ar types
+Consider only types of keyword match, where
+.Ar types
+is a comma-separated list consisting of the following:
+.Ar name ,
+manual names;
+.Ar func ,
+function names;
+.Ar utility ,
+utility names;
+.Ar incl ,
+include files;
+.Ar var ,
+variable names;
+.Ar stand ,
+standards ;
+.Ar auth ,
+authors;
+.Ar conf ,
+configuration strings;
+.Ar desc ,
+descriptive text;
+.Ar xref ,
+cross-references.
+.Ar path ,
+file pathnames;
+.Ar env ,
+environment variables; or
+.Ar err ,
+error codes.
+Specifying
+.Ar all
+will search for all types.
+.It Ar key
+The search key.
+.El
+.Pp
+By default,
+.Nm
+searches for substring matches of
+.Ar key
+in manual names and descriptions
+and displays results by manual title.
+Output is formatted as
+.Pp
+.D1 title(cat) \- description
+.Pp
+Where
+.Qq title
+is the manual's title (note multiple manual names may exist for one
+title),
+.Qq cat
+is the category, and
+.Qq description
+is the manual's short description.
+If an architecture is specified for the manual, it is displayed as
+.Pp
+.D1 title(cat/arch) \- description
+.Pp
+Resulting manuals may be accessed as
+.Pp
+.Dl $ man -s cat title
+.Pp
+If an architecture is specified in the output, use
+.Pp
+.Dl $ man -s cat -S arch title
+.\" .Sh IMPLEMENTATION NOTES
+.\" Not used in OpenBSD.
+.\" .Sh RETURN VALUES
+.\" For sections 2, 3, & 9 only.
+.\" .Sh ENVIRONMENT
+.\" For sections 1, 6, 7, & 8 only.
+.\" .Sh FILES
+.Sh EXIT STATUS
+.Ex -std
+.Sh EXAMPLES
+Search for
+.Qq optind
+as a variable name in the library category:
+.Pp
+.Dl $ apropos -tvar -c 3 optind
+.Pp
+Search for all manuals referencing the term
+.Qq POSIX
+in any letter case:
+.Pp
+.Dl $ apropos -tall -I posix
+.\" .Sh DIAGNOSTICS
+.\" For sections 1, 4, 6, 7, & 8 only.
+.\" .Sh ERRORS
+.\" For sections 2, 3, & 9 only.
+.Sh SEE ALSO
+.Xr man 1 ,
+.Xr mandoc 1 ,
+.Xr re_format 7
+.\" .Sh STANDARDS
+.\" .Sh HISTORY
+.Sh AUTHORS
+The
+.Nm
+utility was written by
+.An Kristaps Dzonsons Aq kristaps@bsd.lv .
+.\" .Sh CAVEATS
+.\" .Sh BUGS
+.\" .Sh SECURITY CONSIDERATIONS
+.\" Not used in OpenBSD.

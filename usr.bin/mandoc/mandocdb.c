@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.2 2011/09/17 13:45:28 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.3 2011/10/06 23:04:16 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -252,7 +252,7 @@ static	const pmdoc_nf	  mdocs[MDOC_MAX] = {
 static	const char	 *progname;
 
 int
-main(int argc, char *argv[])
+mandocdb(int argc, char *argv[])
 {
 	struct mparse	*mp; /* parse sequence */
 	enum op		 op; /* current operation */

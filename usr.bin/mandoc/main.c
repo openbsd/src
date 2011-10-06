@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.78 2011/09/17 14:45:22 schwarze Exp $ */
+/*	$Id: main.c,v 1.79 2011/10/06 23:04:16 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -57,6 +57,9 @@ struct	curparse {
 	char		  outopts[BUFSIZ]; /* buf of output opts */
 };
 
+int			  apropos(int, char**);
+int			  mandocdb(int, char**);
+
 static	int		  moptions(enum mparset *, char *);
 static	void		  mmsg(enum mandocerr, enum mandoclevel,
 				const char *, int, int, const char *);
@@ -82,6 +85,11 @@ main(int argc, char *argv[])
 		progname = argv[0];
 	else
 		++progname;
+
+	if (0 == strncmp(progname, "apropos", 7))
+		return(apropos(argc, argv));
+	if (0 == strncmp(progname, "mandocdb", 8))
+		return(mandocdb(argc, argv));
 
 	memset(&curp, 0, sizeof(struct curparse));
 
