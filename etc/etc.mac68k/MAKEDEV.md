@@ -1,6 +1,6 @@
 define(MACHINE,mac68k)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.35 2010/09/30 15:27:54 claudio Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.36 2011/10/06 20:49:27 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -28,7 +28,6 @@ _DEV(ramd)
 _DEV(std)
 _DEV(local)
 _TITLE(dis)
-_DEV(ccd, 20, 9)
 _DEV(cd, 15, 6)
 _DEV(rd, 18, 13)
 _DEV(sd, 13, 4)
@@ -114,7 +113,6 @@ target(all, tun, 0, 1, 2, 3)dnl
 target(all, xy, 0, 1, 2, 3)dnl
 target(all, rd, 0)dnl
 target(all, cd, 0, 1)dnl
-target(all, ccd, 0, 1, 2, 3)dnl
 target(ramd, asc, 0)dnl
 twrget(ramd, mac_tty0, tty0, 0, 1)dnl
 target(ramd, pty, 0)dnl

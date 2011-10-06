@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2011/06/25 19:00:41 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.21 2011/10/06 20:49:28 deraadt Exp $
 
 LDSTATIC=${STATIC}
 PROG=	kdump
@@ -13,7 +13,6 @@ ioctl.c: ${.CURDIR}/Makefile ${.CURDIR}/mkioctls
 	    /usr/include/sys/ioctl_compat.h \
 	    /usr/include/crypto/cryptodev.h \
 	    /usr/include/dev/biovar.h \
-	    /usr/include/dev/ccdvar.h \
 	    /usr/include/dev/systrace.h \
 	    /usr/include/dev/wscons/wsconsio.h \
 	    /usr/include/dev/vndioctl.h \

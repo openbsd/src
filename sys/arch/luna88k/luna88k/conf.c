@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.16 2011/01/14 19:04:08 jasper Exp $	*/
+/*	$OpenBSD: conf.c,v 1.17 2011/10/06 20:49:28 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -45,7 +45,6 @@
 #include "bpfilter.h"
 #include "tun.h"
 #include "vnd.h"
-#include "ccd.h"
 #include "rd.h"
 #include "cd.h"
 #include "ch.h"
@@ -83,7 +82,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NCD,cd),		/* 6: SCSI CD-ROM */
 	bdev_disk_init(NRD,rd),		/* 7: ramdisk */
 	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver */
-	bdev_disk_init(NCCD,ccd),	/* 9: concatenated disk driver */
+	bdev_notdef(),			/* 9: was: concatenated disk driver */
 	bdev_notdef(),			/* 10 */
 	bdev_notdef(),			/* 11 */
 	bdev_notdef(),			/* 12 */
@@ -117,7 +116,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSMOUSE,	/* 15: mouse */
 		wsmouse),
 	cdev_mouse_init(NWSMUX,wsmux),	/* 16: ws multiplexor */
-	cdev_disk_init(NCCD,ccd),	/* 17: concatenated disk */
+	cdev_notdef(),			/* 17: was: concatenated disk */
 	cdev_disk_init(NRD,rd),		/* 18: ramdisk disk */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk */
 	cdev_tape_init(NST,st),		/* 20: SCSI tape */
@@ -224,7 +223,7 @@ int chrtoblktbl[] = {
 	/* 14 */	NODEV,
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
-	/* 17 */	9,	/* ccd */
+	/* 17 */	NODEV,
 	/* 18 */	7,	/* rd */
 	/* 19 */	8,	/* vnd */
 	/* 20 */	5,	/* st */

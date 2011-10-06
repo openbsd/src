@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.30 2011/09/16 21:01:45 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.31 2011/10/06 20:49:27 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -87,7 +87,6 @@
 /*
  * Disk/Filesystem pseudo-devices
  */
-#include "ccd.h"			/* concatenated disk driver */
 #include "rd.h"				/* memory disk driver */
 #include "raid.h"			/* RAIDframe */
 #include "vnd.h"			/* vnode disk driver */
@@ -181,7 +180,7 @@ struct bdevsw bdevsw[] = {
 	bdev_disk_init(NRD,rd),		/* 18: memory disk */
 	bdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
 	bdev_lkm_dummy(),		/* 20: */
- 	bdev_disk_init(NCCD,ccd),	/* 21: concatenated disk driver */
+ 	bdev_notdef(),			/* 21: was: concatenated disk driver */
 	bdev_lkm_dummy(),		/* 22: */
 	bdev_lkm_dummy(),		/* 23: */
 	bdev_disk_init(NSD,sd),		/* 24: SCSI disk */
@@ -309,7 +308,7 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(NRD,rd),			/* 18: ram disk driver */
 	cdev_disk_init(NVND,vnd),		/* 19: vnode disk driver */
 	cdev_lkm_dummy(),			/* 20: */
-	cdev_disk_init(NCCD,ccd),		/* 21: concatenated disk driver */
+	cdev_notdef(),				/* 21: was: concatenated disk driver */
 	cdev_bpf_init(NBPFILTER,bpf),		/* 22: Berkeley packet filter */
 	cdev_lkm_dummy(),			/* 23: */
 	cdev_disk_init(NSD,sd),			/* 24: SCSI disk */
@@ -463,7 +462,7 @@ int chrtoblktbl[] = {
     /* 18 */        18,		/* rd */
     /* 19 */        19,		/* vnd */
     /* 20 */        NODEV,
-    /* 21 */        21,		/* ccd */
+    /* 21 */        NODEV,
     /* 22 */        NODEV,
     /* 23 */        NODEV,
     /* 24 */        24,		/* sd */

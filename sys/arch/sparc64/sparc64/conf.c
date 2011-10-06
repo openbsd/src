@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.60 2011/07/04 22:53:53 tedu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.61 2011/10/06 20:49:28 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -59,7 +59,6 @@
 #include "audio.h"
 #include "video.h"
 #include "vnd.h"
-#include "ccd.h"
 #include "ch.h"
 #include "sd.h"
 #include "st.h"
@@ -134,7 +133,7 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 6 */
 	bdev_disk_init(NSD,sd),		/* 7: SCSI disk */
 	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver */
-	bdev_disk_init(NCCD,ccd),	/* 9: concatenated disk driver */
+	bdev_notdef(),			/* 9: was: concatenated disk driver */
 	bdev_notdef(),			/* 10: SMD disk -- not this arch */
 	bdev_tape_init(NST,st),		/* 11: SCSI tape */
 	bdev_disk_init(NWD,wd),		/* 12: IDE disk */
@@ -179,7 +178,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
 	cdev_notdef(),			/* 22 */
-	cdev_disk_init(NCCD,ccd),	/* 23: concatenated disk driver */
+	cdev_notdef(),			/* 23: was: concatenated disk driver */
 	cdev_fd_init(1,filedesc),	/* 24: file descriptor pseudo-device */
 	cdev_uperf_init(NUPERF,uperf),	/* 25: performance counters */
 	cdev_disk_init(NWD,wd),		/* 26: IDE disk */

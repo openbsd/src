@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.309 2011/07/22 09:30:54 espie Exp $
+#	$OpenBSD: Makefile,v 1.310 2011/10/06 20:49:25 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -30,7 +30,7 @@ kernels: bootblocks ${ALL_KERNELS}
 # -rw-r--r--
 BINOWN= root
 BINGRP= wheel
-BIN1=	changelist ccd.conf csh.cshrc csh.login csh.logout daily dhcpd.conf \
+BIN1=	changelist csh.cshrc csh.login csh.logout daily dhcpd.conf \
 	exports ftpusers ftpchroot gettytab group hosts hosts.lpd inetd.conf \
 	ksh.kshrc locate.rc man.conf monthly motd mrouted.conf myname \
 	netstart networks newsyslog.conf printcap protocols \

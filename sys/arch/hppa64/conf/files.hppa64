@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa64,v 1.15 2011/08/07 20:39:39 kettenis Exp $
+#	$OpenBSD: files.hppa64,v 1.16 2011/10/06 20:49:28 deraadt Exp $
 #
 # hppa64-specific configuration info
 
@@ -114,7 +114,6 @@ file	arch/hppa64/dev/com_ssio.c		com_ssio
 
 ###
 
-major	{ccd = 1}
 major	{vnd = 2}
 major	{rd = 3}
 

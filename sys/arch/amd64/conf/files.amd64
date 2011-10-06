@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.63 2011/07/07 02:57:24 deraadt Exp $
+#	$OpenBSD: files.amd64,v 1.64 2011/10/06 20:49:28 deraadt Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -250,7 +250,6 @@ attach	vmt at mainbus
 # device major numbers
 #
 
-major	{ccd = 16}
 major	{vnd = 14}
 major	{sd = 4}
 major	{st = 5}

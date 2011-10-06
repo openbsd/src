@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.207 2011/07/08 20:15:09 ariane Exp $
+#	$OpenBSD: files.i386,v 1.208 2011/10/06 20:49:28 deraadt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -7,8 +7,6 @@
 maxpartitions 16
 
 maxusers 2 16 100
-
-major	{ccd = 16}
 
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/bus_space.c

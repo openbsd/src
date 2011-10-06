@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.393 2011/09/16 10:11:20 robert Exp $
+#	$OpenBSD: rc,v 1.394 2011/10/06 20:49:25 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -257,11 +257,6 @@ if [ X"$1" = X"shutdown" ]; then
 		echo single user: not running /etc/rc.shutdown
 	fi
 	exit 0
-fi
-
-# Configure ccd devices.
-if [ -f /etc/ccd.conf ]; then
-	ccdconfig -C
 fi
 
 # Configure raid devices.

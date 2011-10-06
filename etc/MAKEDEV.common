@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.56 2011/07/06 18:34:20 miod Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.57 2011/10/06 20:49:25 deraadt Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -265,7 +265,6 @@ _mkdev(flo, fd*,
 __devitem(iop, iop*, I2O controller devices)dnl
 _mcdev(iop, iop*, iop, {-major_iop_c-}, 660)dnl
 __devitem(wd, {-wd*-}, {-quote(winchester)disk drives (ST506{-,-} IDE{-,-} ESDI{-,-} RLL{-,-} ...)-})dnl
-__devitem(ccd, ccd*, Concatenated disk devices)dnl
 __devitem(raid, raid*, RAIDframe disk devices)dnl
 __devitem(vnd, vnd*, quote(file)pseudo-disk devices)dnl
 _mkdev(vnd, vnd*, {-dodisk vnd $U major_vnd_b major_vnd_c $U 0{--}ifstep(vnd)-})dnl
@@ -275,7 +274,6 @@ dnl
 dnl For normal disk devices, add a disk_q entry; anything else define like
 dnl the rest (such as vnd above).
 dnl
-disk_q({-ccd-})dnl
 disk_q({-hd-})dnl
 disk_q({-ra-})dnl
 disk_q({-raid-})dnl

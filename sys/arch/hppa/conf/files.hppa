@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.88 2011/04/10 02:54:46 deraadt Exp $
+#	$OpenBSD: files.hppa,v 1.89 2011/10/06 20:49:28 deraadt Exp $
 #
 # hppa-specific configuration info
 
@@ -212,7 +212,6 @@ file	arch/hppa/dev/lpt_ssio.c		lpt_ssio
 
 ###
 
-major	{ccd = 1}
 major	{vnd = 2}
 major	{rd = 3}
 

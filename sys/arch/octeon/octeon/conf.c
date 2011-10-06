@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 2011/01/14 19:04:08 jasper Exp $ */
+/*	$OpenBSD: conf.c,v 1.7 2011/10/06 20:49:28 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,6 @@
 #include "st.h"
 #include "wd.h"
 bdev_decl(wd);
-#include "ccd.h"
 #include "rd.h"
 #include "hotplug.h"
 
@@ -71,7 +70,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NCD,cd),		/* 3: SCSI CD-ROM */
 	bdev_disk_init(NWD,wd),		/* 4: ST506/ESDI/IDE disk */
 	bdev_notdef(),			/* 5:  */
-	bdev_disk_init(NCCD,ccd),	/* 6: concatenated disk driver */
+	bdev_notdef(),			/* 6: was: concatenated disk driver */
 	bdev_notdef(),			/* 7:  */
 	bdev_disk_init(NRD,rd),		/* 8: RAM disk (for install) */
 	bdev_notdef(),			/* 9:  */
@@ -172,7 +171,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 20: */
 	cdev_notdef(),			/* 21: */
 	cdev_disk_init(NRD,rd),		/* 22: ramdisk device */
-	cdev_disk_init(NCCD,ccd),	/* 23: concatenated disk driver */
+	cdev_notdef(),			/* 23: was: concatenated disk driver */
 	cdev_notdef(),			/* 24: */
 	cdev_wsdisplay_init(NWSDISPLAY, wsdisplay),	/* 25: */
 	cdev_mouse_init(NWSKBD, wskbd),	/* 26: */
@@ -301,8 +300,7 @@ int chrtoblktbl[] =  {
 	/* 19 */	NODEV,
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,
-	/* 22 */	8,		/* rd */
-	/* 23 */	6		/* ccd */
+	/* 22 */	8		/* rd */
 };
 
 int nchrtoblktbl = nitems(chrtoblktbl);

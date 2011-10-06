@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.51 2011/01/14 19:04:08 jasper Exp $	*/
+/*	$OpenBSD: conf.c,v 1.52 2011/10/06 20:49:27 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.39 1997/05/12 08:17:53 thorpej Exp $	*/
 
 /*-
@@ -40,7 +40,6 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
-#include "ccd.h"
 #include "cd.h"
 #include "ch.h"
 #include "ct.h"
@@ -62,7 +61,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NHD,hd),		/* 2: HPIB disk */
 	bdev_swap_init(1,sw),		/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
-	bdev_disk_init(NCCD,ccd),	/* 5: concatenated disk driver */
+	bdev_notdef(),			/* 5: was: concatenated disk driver */
 	bdev_disk_init(NVND,vnd),	/* 6: vnode disk driver */
 	bdev_tape_init(NST,st),		/* 7: SCSI tape */
 	bdev_disk_init(NRD,rd),		/* 8: RAM disk */
@@ -135,7 +134,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 14: was human interface loop */
 	cdev_tty_init(NDCM,dcm),	/* 15: 4-port serial */
 	cdev_tape_init(NMT,mt),		/* 16: magnetic reel tape */
-	cdev_disk_init(NCCD,ccd),	/* 17: concatenated disk */
+	cdev_notdef(),			/* 17: was: concatenated disk */
 	cdev_disk_init(NCD,cd),		/* 18: SCSI CD-ROM */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
 	cdev_tape_init(NST,st),		/* 20: SCSI tape */
@@ -243,7 +242,7 @@ int chrtoblktbl[] = {
 	/* 14 */	NODEV,
 	/* 15 */	NODEV,
 	/* 16 */	1,		/* mt */
-	/* 17 */	5,		/* ccd */
+	/* 17 */	NODEV,
 	/* 18 */	9,		/* cd */
 	/* 19 */	6,		/* vnd */
 	/* 20 */	7,		/* st */

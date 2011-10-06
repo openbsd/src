@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.53 2011/01/14 19:04:08 jasper Exp $	*/
+/*	$OpenBSD: conf.c,v 1.54 2011/10/06 20:49:28 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -40,7 +40,6 @@
 
 #include <machine/conf.h>
 
-#include "ccd.h"
 #include "vnd.h"
 #include "rd.h"
 #include "sd.h"
@@ -62,7 +61,7 @@ cdev_decl(fd);
 struct bdevsw   bdevsw[] =
 {
 	bdev_swap_init(1,sw),		/*  0: swap pseudo-device */
-	bdev_disk_init(NCCD,ccd),	/*  1: concatenated disk driver */
+	bdev_notdef(),			/*  1: was: concatenated disk driver */
 	bdev_disk_init(NVND,vnd),	/*  2: vnode disk driver */
 	bdev_disk_init(NRD,rd),		/*  3: RAM disk */
 	bdev_disk_init(NSD,sd),		/*  4: SCSI disk */
@@ -135,7 +134,7 @@ struct cdevsw   cdevsw[] =
 	cdev_tty_init(NPTY,pts),	/*  4: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/*  5: pseudo-tty master */
 	cdev_log_init(1,log),		/*  6: /dev/klog */
-	cdev_disk_init(NCCD,ccd),	/*  7: concatenated disk */
+	cdev_notdef(),			/*  7: was: concatenated disk */
 	cdev_disk_init(NVND,vnd),	/*  8: vnode disk driver */
 	cdev_disk_init(NRD,rd),		/*  9: RAM disk */
 	cdev_disk_init(NSD,sd),		/* 10: SCSI disk */
@@ -221,7 +220,7 @@ int chrtoblktbl[] = {
 	/*  4 */	NODEV,
 	/*  5 */	NODEV,
 	/*  6 */	NODEV,
-	/*  7 */	1,		/* ccd */
+	/*  7 */	NODEV,
 	/*  8 */	2,		/* vnd */
 	/*  9 */	3,		/* rd */
 	/* 10 */	4,		/* sd */

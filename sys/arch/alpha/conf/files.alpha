@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.91 2010/12/06 20:10:17 jasper Exp $
+#	$OpenBSD: files.alpha,v 1.92 2011/10/06 20:49:28 deraadt Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -29,7 +29,6 @@ device	cpu {}				# not really optional
 attach	cpu at mainbus
 file	arch/alpha/alpha/cpu.c			cpu
 
-major	{ccd = 7}
 major	{vnd = 9}
 
 #

@@ -1,6 +1,6 @@
 define(MACHINE,sgi)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.33 2010/11/19 20:55:48 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.34 2011/10/06 20:49:27 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -32,7 +32,6 @@ _DEV(ramd)
 _DEV(std)
 _DEV(local)
 _TITLE(dis)
-_DEV(ccd, 23, 6)
 _DEV(cd, 8, 3)
 _DEV(rd, 22, 8)
 _DEV(sd, 9, 0)
@@ -104,7 +103,6 @@ target(all, rd, 0)dnl
 target(all, cd, 0, 1)dnl
 target(all, sd, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
 target(all, vnd, 0, 1, 2, 3)dnl
-target(all, ccd, 0, 1, 2, 3)dnl
 twrget(wscons, wscons, ttyD, cfg, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b)dnl
 twrget(wscons, wscons, ttyE, cfg, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b)dnl
 twrget(wscons, wscons, ttyF, cfg, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b)dnl

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.65 2011/09/03 20:41:31 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.66 2011/10/06 20:49:28 deraadt Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -49,8 +49,6 @@ bdev_decl(mt);
 bdev_decl(ra);
 bdev_decl(rx);
 
-#include "ccd.h"
-
 #include "raid.h"
 
 #include "vnd.h"
@@ -84,7 +82,7 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 14 */
 	bdev_tape_init(NMT,mt),		/* 15: MSCP tape */
 	bdev_notdef(),			/* 16: was: KDB50/RA?? */
-	bdev_disk_init(NCCD,ccd),	/* 17: concatenated disk driver */
+	bdev_notdef(),			/* 17: was: concatenated disk driver */
 	bdev_disk_init(NVND,vnd),	/* 18: vnode disk driver */
 	bdev_disk_init(NHD,hd),		/* 19: VS3100 ST506 disk */
 	bdev_disk_init(NSD,sd),		/* 20: SCSI disk */
@@ -241,7 +239,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 51 */
 	cdev_notdef(),			/* 52: was: KDB50/RA?? */
 	cdev_fd_init(1,filedesc),	/* 53: file descriptor pseudo-device */
-	cdev_disk_init(NCCD,ccd),	/* 54: concatenated disk driver */
+	cdev_notdef(),			/* 54: was: concatenated disk driver */
 	cdev_disk_init(NVND,vnd),	/* 55: vnode disk driver */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 56: berkeley packet filter */
 	cdev_tun_init(NTUN,tun),	/* 57: tunnel filter */
@@ -344,7 +342,7 @@ int	chrtoblktbl[] = {
 	NODEV,	/* 51 */
 	NODEV,	/* 52 */
 	NODEV,	/* 53 */
-	17,	/* 54 ccd */
+	NODEV,	/* 54 */
 	18,	/* 55 vnd */
 	NODEV,	/* 56 */
 	NODEV,	/* 57 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.48 2011/01/14 19:04:08 jasper Exp $	*/
+/*	$OpenBSD: conf.c,v 1.49 2011/10/06 20:49:28 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.41 1997/02/11 07:35:49 scottr Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 #include "cd.h"
 #include "ch.h"
 #include "vnd.h"
-#include "ccd.h"
 #include "rd.h"
 
 struct bdevsw	bdevsw[] =
@@ -62,7 +61,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NCD,cd),		/* 6: SCSI CD-ROM */
 	bdev_notdef(),        	 	/* 7 */
 	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver */
-	bdev_disk_init(NCCD,ccd),	/* 9: concatenated disk driver */
+	bdev_notdef(),			/* 9: was: concatenated disk driver */
 	bdev_notdef(),        	 	/* 10 */
 	bdev_notdef(),        	 	/* 11 */
 	bdev_notdef(),        	 	/* 12 */
@@ -130,7 +129,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ch_init(NCH,ch),		/* 17: SCSI autochanger */
         cdev_disk_init(NRD,rd),         /* 18: ramdisk device */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
-	cdev_disk_init(NCCD,ccd),	/* 20: concatenated disk driver */
+	cdev_notdef(),			/* 20: was: concatenated disk driver */
 	cdev_fd_init(1,filedesc),	/* 21: file descriptor pseudo-device */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 22: Berkeley packet filter */
 	cdev_notdef(),			/* 23 was ADB */
@@ -236,8 +235,7 @@ int chrtoblktbl[] = {
 	/* 16 */	NODEV,
 	/* 17 */	NODEV,
 	/* 18 */	13,		/* rd */
-	/* 19 */	8,		/* vnd */
-	/* 20 */	9,		/* ccd */
+	/* 19 */	8		/* vnd */
 };
 int nchrtoblktbl = nitems(chrtoblktbl);
 

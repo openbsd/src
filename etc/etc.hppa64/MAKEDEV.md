@@ -1,6 +1,6 @@
 define(MACHINE,hppa64)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.22 2010/11/19 20:55:48 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.23 2011/10/06 20:49:27 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -24,7 +24,6 @@ _DEV(ramdisk)
 _DEV(std)
 _DEV(local)
 _TITLE(dis)
-_DEV(ccd, 7, 1)
 _DEV(cd, 12, 6)
 _DEV(flo, 24, 7)
 _DEV(sd, 10, 4)
@@ -107,7 +106,6 @@ target(all, rd, 0)dnl
 target(all, cd, 0, 1)dnl
 target(all, sd, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
 target(all, vnd, 0, 1, 2, 3)dnl
-target(all, ccd, 0, 1, 2, 3)dnl
 target(ramd, pty, 0)dnl
 target(ramd, hil)dnl
 target(ramd, tun, 0, 1)dnl

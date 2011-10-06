@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.14 2011/01/14 19:04:08 jasper Exp $ */
+/*	$OpenBSD: conf.c,v 1.15 2011/10/06 20:49:28 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -48,7 +48,6 @@ bdev_decl(wd);
 cdev_decl(wd);
 
 #include "vnd.h"
-#include "ccd.h"
 #include "raid.h"
 #include "video.h"
 
@@ -69,7 +68,7 @@ struct bdevsw bdevsw[] = {
 	bdev_lkm_dummy(),		/* 13 */
 	bdev_disk_init(NVND,vnd),	/* 14 vnode disk driver*/
 	bdev_notdef(),			/* 15 unknown*/
-	bdev_disk_init(NCCD,ccd),	/* 16 concatenated disk driver */
+	bdev_notdef(),			/* 16: was: concatenated disk driver */
 	bdev_disk_init(NRD,rd),		/* 17 ram disk driver*/
 	bdev_notdef(),			/* 18 unknown*/
 	bdev_disk_init(NRAID,raid),	/* 19 RAIDframe disk driver */
@@ -141,7 +140,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),			/* 15 */
 	cdev_notdef(),			/* 16 */
 	cdev_disk_init(NRD,rd),		/* 17 ram disk driver*/
-	cdev_disk_init(NCCD,ccd),	/* 18 concatenated disk driver */
+	cdev_notdef(),			/* 18 was: concatenated disk driver */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk */
 	cdev_tape_init(NST,st),		/* 20: SCSI tape */
 	cdev_fd_init(1,filedesc),	/* 21: file descriptor pseudo-dev */
@@ -269,7 +268,7 @@ int chrtoblktbl[] = {
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
 	/* 17 */	17,		/* rd */
-	/* 18 */	16,		/* ccd */
+	/* 18 */	NODEV,
 	/* 19 */	14,		/* vnd */
 	/* 20 */	5,		/* st */
 	/* 21 */	NODEV,

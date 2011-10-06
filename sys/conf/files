@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.527 2011/09/03 20:03:27 miod Exp $
+#	$OpenBSD: files,v 1.528 2011/10/06 20:49:28 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -494,7 +494,6 @@ file	dev/spdmem.c			spdmem
 
 # legitimate pseudo-devices
 pseudo-device vnd: disk
-pseudo-device ccd: disk
 pseudo-device raid: disk
 pseudo-device rd: disk
 file	dev/rd.c			rd needs-flag
@@ -586,7 +585,6 @@ file ddb/db_write_cmd.c			ddb
 file ddb/db_usrreq.c			ddb
 file dev/auconv.c			auconv
 file dev/audio.c			audio			needs-flag
-file dev/ccd.c				ccd			needs-flag
 file dev/cons.c
 file dev/diskmap.c
 file dev/firmload.c			firmload

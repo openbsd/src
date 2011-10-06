@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.138 2011/07/04 22:53:53 tedu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.139 2011/10/06 20:49:28 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -53,7 +53,6 @@ bdev_decl(fd);
 #include "cd.h"
 #include "uk.h"
 #include "vnd.h"
-#include "ccd.h"
 #include "raid.h"
 #include "rd.h"
 
@@ -75,7 +74,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 13 */
 	bdev_disk_init(NVND,vnd),	/* 14: vnode disk driver */
 	bdev_notdef(),			/* 15 */
-	bdev_disk_init(NCCD,ccd),	/* 16: concatenated disk driver */
+	bdev_notdef(),			/* 16: was: concatenated disk driver */
 	bdev_disk_init(NRD,rd),		/* 17: ram disk driver */
 	bdev_notdef(),			/* 18 */
 	bdev_disk_init(NRAID,raid),	/* 19: RAIDframe disk driver */
@@ -213,7 +212,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCD,cd),		/* 15: SCSI CD-ROM */
 	cdev_lpt_init(NLPT,lpt),	/* 16: parallel printer */
 	cdev_ch_init(NCH,ch),		/* 17: SCSI autochanger */
-	cdev_disk_init(NCCD,ccd),	/* 18: concatenated disk driver */
+	cdev_notdef(),			/* 18: was: concatenated disk driver */
 	cdev_notdef(),			/* 19 */
 	cdev_uk_init(NUK,uk),		/* 20: unknown SCSI */
 	cdev_acpiapm_init(1,acpiapm),	/* 21: Power Management stuff */
@@ -364,7 +363,7 @@ int chrtoblktbl[] = {
 	/* 15 */	6,		/* cd */
 	/* 16 */	NODEV,
 	/* 17 */	NODEV,
-	/* 18 */	16,		/* ccd */
+	/* 18 */	NODEV,
 	/* 19 */	NODEV,
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,

@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.74 2011/07/07 06:15:53 schwarze Exp $
+#	$OpenBSD: changelist,v 1.75 2011/10/06 20:49:25 deraadt Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -13,7 +13,6 @@
 /etc/bgpd.conf
 /etc/boot.conf
 /etc/bootparams
-/etc/ccd.conf
 /etc/changelist
 /etc/chio.conf
 /etc/crontab
