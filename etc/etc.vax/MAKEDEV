@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.vax/MAKEDEV.md,v 1.45 2011/09/03 20:45:17 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.56 2011/07/06 18:34:20 miod Exp 
+#	OpenBSD: etc.vax/MAKEDEV.md,v 1.46 2011/10/06 20:49:27 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.57 2011/10/06 20:49:25 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -30,7 +30,6 @@
 #	std	Standard devices
 #	local	Configuration specific devices
 # Disks:
-#	ccd*	Concatenated disk devices
 #	cd*	ATAPI and SCSI CD-ROM drives
 #	hd*	HDC9224 disks
 #	ra*	MSCP disks
@@ -472,21 +471,20 @@ local)
 	;;
 
 all)
-	R qsc0 dl0 dz0 dhu0 mt0 mt1 hd0 hd1 hd2 ccd0 vnd0 sd0 sd1 sd2
-	R sd3 cd0 tun0 tun1 bio bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6
-	R bpf7 pty0 diskmap vscsi0 nnpfs0 ch0 ptm local wscons audio0
+	R qsc0 dl0 dz0 dhu0 mt0 mt1 hd0 hd1 hd2 vnd0 sd0 sd1 sd2 sd3
+	R cd0 tun0 tun1 bio bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
+	R pty0 diskmap vscsi0 nnpfs0 ch0 ptm local wscons audio0
 	R audio1 audio2 uk0 random lkm pf systrace rx0 rx1 ra0 ra1 ra2
 	R ra3 raid0 raid1 raid2 raid3 std st0 st1 fd
 	;;
 
-sd*|rx*|raid*|ra*|hd*|ccd*)
+sd*|rx*|raid*|ra*|hd*)
 	case $i in
 	sd*) dodisk sd $U 20 59 $U 0;;
 	rx*) dodisk rx $U 12 30 $U 0;;
 	raid*) dodisk raid $U 25 73 $U 0;;
 	ra*) dodisk ra $U 9 9 $U 0;;
 	hd*) dodisk hd $U 19 58 $U 0;;
-	ccd*) dodisk ccd $U 17 54 $U 0;;
 	esac
 	;;
 

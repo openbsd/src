@@ -7,7 +7,6 @@
 ./etc/amd/master.sample
 ./etc/authpf
 ./etc/bgpd.conf
-./etc/ccd.conf
 ./etc/changelist
 ./etc/chio.conf
 ./etc/csh.cshrc

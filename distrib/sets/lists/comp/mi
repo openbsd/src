@@ -130,7 +130,6 @@
 ./usr/include/dev/cardbus/cardbusvar.h
 ./usr/include/dev/cardbus/cardslotvar.h
 ./usr/include/dev/cardbus/rbus.h
-./usr/include/dev/ccdvar.h
 ./usr/include/dev/clock_subr.h
 ./usr/include/dev/cons.h
 ./usr/include/dev/dec

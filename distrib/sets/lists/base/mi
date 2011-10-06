@@ -106,7 +106,6 @@
 ./sbin/atactl
 ./sbin/badsect
 ./sbin/bioctl
-./sbin/ccdconfig
 ./sbin/chown
 ./sbin/clri
 ./sbin/dhclient

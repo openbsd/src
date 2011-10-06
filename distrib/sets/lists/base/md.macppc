@@ -821,7 +821,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/cardbus/cardbusvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/cardbus/cardslotvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/cardbus/rbus.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ccdvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/clock_subr.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/cons.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/dec

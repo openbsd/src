@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sgi/MAKEDEV.md,v 1.33 2010/11/19 20:55:48 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.54 2011/04/18 16:52:10 thib Exp 
+#	OpenBSD: etc.sgi/MAKEDEV.md,v 1.34 2011/10/06 20:49:27 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.57 2011/10/06 20:49:25 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -30,7 +30,6 @@
 #	std	Standard devices
 #	local	Configuration specific devices
 # Disks:
-#	ccd*	Concatenated disk devices
 #	cd*	ATAPI and SCSI CD-ROM drives
 #	rd*	"rd" pseudo-disks
 #	sd*	SCSI disks, including flopticals
@@ -455,20 +454,19 @@ ramdisk)
 	;;
 
 all)
-	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
-	R sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0
-	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2
-	R diskmap vscsi0 nnpfs0 ch0 hotplug ptm local wscons pci0 pci1
-	R pci2 pci3 uall video0 video1 audio0 audio1 audio2 uk0 random
-	R tty00 tty01 tty02 tty03 crypto pf systrace wd0 wd1 wd2 wd3
-	R std st0 st1 fd
+	R vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
+	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4
+	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 diskmap vscsi0
+	R nnpfs0 ch0 hotplug ptm local wscons pci0 pci1 pci2 pci3 uall
+	R video0 video1 audio0 audio1 audio2 uk0 random tty00 tty01
+	R tty02 tty03 crypto pf systrace wd0 wd1 wd2 wd3 std st0 st1
+	R fd
 	;;
 
-wd*|sd*|ccd*)
+wd*|sd*)
 	case $i in
 	wd*) dodisk wd $U 4 18 $U 0;;
 	sd*) dodisk sd $U 0 9 $U 0;;
-	ccd*) dodisk ccd $U 6 23 $U 0;;
 	esac
 	;;
 

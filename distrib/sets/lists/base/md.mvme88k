@@ -744,7 +744,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/cardbus/cardbusvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/cardbus/cardslotvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/cardbus/rbus.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ccdvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/clock_subr.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/cons.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/dec

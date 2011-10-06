@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.zaurus/MAKEDEV.md,v 1.28 2010/09/30 15:27:54 claudio Exp 
-#	OpenBSD: MAKEDEV.common,v 1.54 2011/04/18 16:52:10 thib Exp 
+#	OpenBSD: etc.zaurus/MAKEDEV.md,v 1.29 2011/10/06 20:49:27 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.57 2011/10/06 20:49:25 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -30,7 +30,6 @@
 #	std	Standard devices
 #	local	Configuration specific devices
 # Disks:
-#	ccd*	Concatenated disk devices
 #	cd*	ATAPI and SCSI CD-ROM drives
 #	ch*	SCSI media changers
 #	raid*	RAIDframe disk devices
@@ -490,23 +489,21 @@ local)
 	;;
 
 all)
-	R bthub0 bthub1 bthub2 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2
-	R vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0
-	R tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	R bpf8 bpf9 pty0 bio diskmap vscsi0 nnpfs0 ch0 hotplug ptm
-	R local wscons uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5
-	R rmidi6 rmidi7 tuner0 radio0 music0 video0 video1 audio0
-	R audio1 audio2 uk0 random lkm tty00 tty01 tty02 tty03 apm
-	R crypto pf systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3
-	R std st0 st1 fd
+	R bthub0 bthub1 bthub2 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3
+	R sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0
+	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 bio
+	R diskmap vscsi0 nnpfs0 ch0 hotplug ptm local wscons uall
+	R rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
+	R tuner0 radio0 music0 video0 video1 audio0 audio1 audio2 uk0
+	R random lkm tty00 tty01 tty02 tty03 apm crypto pf systrace
+	R wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
 	;;
 
-wd*|sd*|raid*|ccd*)
+wd*|sd*|raid*)
 	case $i in
 	wd*) dodisk wd $U 16 16 $U 0;;
 	sd*) dodisk sd $U 24 24 $U 0;;
 	raid*) dodisk raid $U 71 71 $U 0;;
-	ccd*) dodisk ccd $U 21 21 $U 0;;
 	esac
 	;;
 

@@ -897,7 +897,6 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/cardbus/cardbusvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/cardbus/cardslotvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/cardbus/rbus.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ccdvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/clock_subr.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/cons.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/dec

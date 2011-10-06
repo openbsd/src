@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.aviion/MAKEDEV.md,v 1.13 2010/09/30 15:27:54 claudio Exp 
-#	OpenBSD: MAKEDEV.common,v 1.54 2011/04/18 16:52:10 thib Exp 
+#	OpenBSD: etc.aviion/MAKEDEV.md,v 1.14 2011/10/06 20:49:27 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.57 2011/10/06 20:49:25 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -30,7 +30,6 @@
 #	std	Standard devices
 #	local	Configuration specific devices
 # Disks:
-#	ccd*	Concatenated disk devices
 #	cd*	ATAPI and SCSI CD-ROM drives
 #	rd*	"rd" pseudo-disks
 #	sd*	SCSI disks, including flopticals
@@ -340,17 +339,15 @@ ramdisk)
 	;;
 
 all)
-	R ttya ttyb ttyc ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0
-	R sd1 sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0
-	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 diskmap
-	R vscsi0 nnpfs0 ch0 nvram0 ptm local uk0 random lkm pf
-	R systrace std st0 st1 fd
+	R ttya ttyb ttyc vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0
+	R cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4
+	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 diskmap vscsi0 nnpfs0 ch0
+	R nvram0 ptm local uk0 random lkm pf systrace std st0 st1 fd
 	;;
 
-sd*|ccd*)
+sd*)
 	case $i in
 	sd*) dodisk sd $U 4 8 $U 0;;
-	ccd*) dodisk ccd $U 9 17 $U 0;;
 	esac
 	;;
 

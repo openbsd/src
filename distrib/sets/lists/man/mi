@@ -1529,7 +1529,6 @@
 ./usr/share/man/man4/carp.4
 ./usr/share/man/man4/cas.4
 ./usr/share/man/man4/cbb.4
-./usr/share/man/man4/ccd.4
 ./usr/share/man/man4/cd.4
 ./usr/share/man/man4/cdce.4
 ./usr/share/man/man4/cdcef.4
@@ -2617,7 +2616,6 @@
 ./usr/share/man/man8/boot_config.8
 ./usr/share/man/man8/bootparamd.8
 ./usr/share/man/man8/bos.8
-./usr/share/man/man8/ccdconfig.8
 ./usr/share/man/man8/chat.8
 ./usr/share/man/man8/chown.8
 ./usr/share/man/man8/chroot.8

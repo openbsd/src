@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.46 2010/11/19 20:55:48 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.54 2011/04/18 16:52:10 thib Exp 
+#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.47 2011/10/06 20:49:27 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.57 2011/10/06 20:49:25 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -30,7 +30,6 @@
 #	std	Standard devices
 #	local	Configuration specific devices
 # Disks:
-#	ccd*	Concatenated disk devices
 #	cd*	ATAPI and SCSI CD-ROM drives
 #	fd*	Floppy disk drives (3 1/2", 5 1/4")
 #	presto*	Prestoserve NVRAM memory
@@ -520,25 +519,23 @@ local)
 	;;
 
 all)
-	R presto0 bpp0 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0
-	R sd1 sd2 sd3 sd4 cd0 cd1 rd0 xy0 xy1 xy2 xy3 tun0 tun1 tun2
-	R tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0
-	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D
-	R fd0E fd0F fd0G fd0H diskmap vscsi0 nnpfs0 ch0 bio cuaa cuab
-	R cuac cuad ttya ttyb ttyc ttyd hotplug ptm local wscons
-	R audio0 audio1 audio2 uk0 random lkm tty00 tty01 tty02 tty03
-	R apm pf systrace xd0 xd1 xd2 xd3 raid0 raid1 raid2 raid3 std
-	R st0 st1 fd
+	R presto0 bpp0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0
+	R cd1 rd0 xy0 xy1 xy2 xy3 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2
+	R bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1 fd1B fd1C fd1D
+	R fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
+	R diskmap vscsi0 nnpfs0 ch0 bio cuaa cuab cuac cuad ttya ttyb
+	R ttyc ttyd hotplug ptm local wscons audio0 audio1 audio2 uk0
+	R random lkm tty00 tty01 tty02 tty03 apm pf systrace xd0 xd1
+	R xd2 xd3 raid0 raid1 raid2 raid3 std st0 st1 fd
 	;;
 
-presto*|xd*|xy*|sd*|raid*|ccd*)
+presto*|xd*|xy*|sd*|raid*)
 	case $i in
 	presto*) dodisk presto $U 26 25 $U 0;;
 	xd*) dodisk xd $U 10 42 $U 0;;
 	xy*) dodisk xy $U 3 9 $U 0;;
 	sd*) dodisk sd $U 7 17 $U 0;;
 	raid*) dodisk raid $U 25 123 $U 0;;
-	ccd*) dodisk ccd $U 9 23 $U 0;;
 	esac
 	;;
 

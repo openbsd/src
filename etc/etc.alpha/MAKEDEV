@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.51 2010/11/19 20:55:46 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.54 2011/04/18 16:52:10 thib Exp 
+#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.52 2011/10/06 20:49:27 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.57 2011/10/06 20:49:25 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -30,7 +30,6 @@
 #	std	Standard devices
 #	local	Configuration specific devices
 # Disks:
-#	ccd*	Concatenated disk devices
 #	cd*	ATAPI and SCSI CD-ROM drives
 #	fd*	Floppy disk drives (3 1/2", 5 1/4")
 #	raid*	RAIDframe disk devices
@@ -556,26 +555,25 @@ local)
 	;;
 
 all)
-	R bthub0 bthub1 bthub2 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2
-	R vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0
-	R tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	R bpf8 bpf9 pty0 fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0
-	R fd0B fd0C fd0D fd0E fd0F fd0G fd0H diskmap vscsi0 nnpfs0 ch0
-	R bio hotplug ptm local wscons pci0 pci1 pci2 pci3 iop0 iop1
-	R uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
-	R tuner0 radio0 music0 speaker video0 video1 audio0 audio1
-	R audio2 uk0 random lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00
-	R tty01 tty02 tty03 ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6
-	R ttyc7 ttyB0 ttyB1 ttyB2 ttyB3 ttyB4 ttyB5 crypto pf systrace
-	R wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
+	R bthub0 bthub1 bthub2 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3
+	R sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0
+	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1 fd1B
+	R fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F
+	R fd0G fd0H diskmap vscsi0 nnpfs0 ch0 bio hotplug ptm local
+	R wscons pci0 pci1 pci2 pci3 iop0 iop1 uall rmidi0 rmidi1
+	R rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7 tuner0 radio0
+	R music0 speaker video0 video1 audio0 audio1 audio2 uk0 random
+	R lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03
+	R ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7 ttyB0 ttyB1
+	R ttyB2 ttyB3 ttyB4 ttyB5 crypto pf systrace wd0 wd1 wd2 wd3
+	R raid0 raid1 raid2 raid3 std st0 st1 fd
 	;;
 
-wd*|sd*|raid*|ccd*)
+wd*|sd*|raid*)
 	case $i in
 	wd*) dodisk wd $U 0 36 $U 0;;
 	sd*) dodisk sd $U 8 8 $U 0;;
 	raid*) dodisk raid $U 16 43 $U 0;;
-	ccd*) dodisk ccd $U 7 27 $U 0;;
 	esac
 	;;
 
