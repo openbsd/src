@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.258 2011/07/05 21:39:08 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.259 2011/10/06 21:16:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1534,7 +1534,7 @@ getdisktype(struct disklabel *lp, char *banner, char *dev)
 		{ "xd",   "SMD" },
 		{ "xy",   "SMD" },
 		{ "hd",   "HP-IB" },
-		{ "ccd",  "CCD" },
+		{ "ccd",  "CCD" },		/* deprecated */
 		{ "vnd",  "VND" },
 		{ "svnd", "VND" },
 		{ NULL,   NULL }
@@ -1568,7 +1568,7 @@ getdisktype(struct disklabel *lp, char *banner, char *dev)
 		for (;;) {
 			s = getstring("Disk type",
 			    "What kind of disk is this?  Usually SCSI, IDE, "
-			    "ESDI, CCD, ST506, or floppy.", def);
+			    "ESDI, ST506, or floppy.", def);
 			if (s == NULL)
 				continue;
 			if (strcasecmp(s, "IDE") == 0) {

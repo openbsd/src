@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.52 2011/09/29 18:03:44 miod Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.53 2011/10/06 21:16:01 deraadt Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -220,7 +220,7 @@ struct	__partitionv0 {		/* the partition table */
 #define	DTYPE_HPIB		7		/* CS/80 on HP-IB */
 #define	DTYPE_HPFL		8		/* HP Fiber-link */
 #define	DTYPE_FLOPPY		10		/* floppy */
-#define	DTYPE_CCD		11		/* concatenated disk device */
+#define	DTYPE_CCD		11		/* was: concatenated disk device */
 #define	DTYPE_VND		12		/* vnode pseudo-disk */
 #define	DTYPE_ATAPI		13		/* ATAPI */
 #define DTYPE_RAID		14		/* RAIDframe */
@@ -238,7 +238,7 @@ static char *dktypenames[] = {
 	"HP-FL",
 	"type 9",
 	"floppy",
-	"ccd",
+	"ccd",			/* deprecated */
 	"vnd",
 	"ATAPI",
 	"RAID",
