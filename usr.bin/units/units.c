@@ -1,4 +1,4 @@
-/*	$OpenBSD: units.c,v 1.14 2007/03/29 20:13:57 jmc Exp $	*/
+/*	$OpenBSD: units.c,v 1.15 2011/10/06 17:58:04 jmc Exp $	*/
 /*	$NetBSD: units.c,v 1.6 1996/04/06 06:01:03 thorpej Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 #endif
 
 #define MAXUNITS 1000
-#define MAXPREFIXES 50
+#define MAXPREFIXES 100
 
 #define MAXSUBUNITS 500
 
@@ -59,17 +59,12 @@ struct {
 
 char *NULLUNIT = "";
 
-#ifdef DOS
-#define SEPERATOR	";"
-#else
 #define SEPERATOR	":"
-#endif
 
 int unitcount;
 int prefixcount;
 
 char *dupstr(char *);
-void readerror(int);
 void readunits(char *);
 void initializeunit(struct unittype *);
 int addsubunit(char *[], char *);
@@ -103,17 +98,9 @@ dupstr(char *str)
 
 
 void
-readerror(int linenum)
-{
-	fprintf(stderr, "Error in units file '%s' line %d\n", UNITSFILE,
-	    linenum);
-}
-
-
-void
 readunits(char *userfile)
 {
-	char line[80], *lineptr;
+	char line[512], *lineptr;
 	int len, linenum, i;
 	FILE *unitfile;
 
@@ -121,14 +108,14 @@ readunits(char *userfile)
 	linenum = 0;
 
 	if (userfile) {
-		unitfile = fopen(userfile, "rt");
+		unitfile = fopen(userfile, "r");
 		if (!unitfile) {
 			fprintf(stderr, "Unable to open units file '%s'\n",
 			    userfile);
 			exit(1);
 		}
 	} else {
-		unitfile = fopen(UNITSFILE, "rt");
+		unitfile = fopen(UNITSFILE, "r");
 		if (!unitfile) {
 			char filename[1000], separator[2] = SEPERATOR;
 			char *direc, *env;
@@ -139,7 +126,7 @@ readunits(char *userfile)
 				while (direc) {
 					snprintf(filename, sizeof(filename),
 					    "%s/%s", direc, UNITSFILE);
-					unitfile = fopen(filename, "rt");
+					unitfile = fopen(filename, "r");
 					if (unitfile)
 						break;
 					direc = strtok(NULL, separator);
@@ -185,13 +172,14 @@ readunits(char *userfile)
 
 			prefixtable[prefixcount].prefixname = dupstr(lineptr);
 			lineptr += len + 1;
-			if (!strlen(lineptr)) {
-				readerror(linenum);
+			lineptr += strspn(lineptr, " \n\t");
+			len = strcspn(lineptr, "\n\t");
+			if (len == 0) {
+				fprintf(stderr, "Unexpected end of prefix on "
+				    "line %d\n", linenum);
 				free(prefixtable[prefixcount].prefixname);
 				continue;
 			}
-			lineptr += strspn(lineptr, " \n\t");
-			len = strcspn(lineptr, "\n\t");
 			lineptr[len] = 0;
 			prefixtable[prefixcount++].prefixval = dupstr(lineptr);
 		} else {		/* it's not a prefix */
@@ -216,7 +204,8 @@ readunits(char *userfile)
 			lineptr += len + 1;
 			lineptr += strspn(lineptr, " \n\t");
 			if (!strlen(lineptr)) {
-				readerror(linenum);
+				fprintf(stderr, "Unexpected end of unit on "
+				    "line %d\n", linenum);
 				free(unittable[unitcount].uname);
 				continue;
 			}
@@ -433,12 +422,6 @@ cancelunit(struct unittype *theunit)
 	while (*num && *den) {
 		comp = strcmp(*den, *num);
 		if (!comp) {
-#if 0
-			if (*den!=NULLUNIT)
-				free(*den);
-			if (*num!=NULLUNIT)
-				free(*num);
-#endif
 			*den++ = NULLUNIT;
 			*num++ = NULLUNIT;
 		} else if (comp < 0)
@@ -457,7 +440,7 @@ cancelunit(struct unittype *theunit)
    if the specified unit does not appear in the units table.
 */
 
-static char buffer[100];	/* buffer for lookupunit answers with
+static char buffer[500];	/* buffer for lookupunit answers with
 				   prefixes */
 
 char *
@@ -513,10 +496,9 @@ lookupunit(char *unit)
 	for (i = 0; i < prefixcount; i++) {
 		len = strlen(prefixtable[i].prefixname);
 		if (!strncmp(prefixtable[i].prefixname, unit, len)) {
-			unit += len;
-			if (!strlen(unit) || lookupunit(unit)) {
-				snprintf(buffer, sizeof(buffer),
-				    "%s %s", prefixtable[i].prefixval, unit);
+			if (!strlen(unit + len) || lookupunit(unit + len)) {
+				snprintf(buffer, sizeof(buffer), "%s %s",
+				    prefixtable[i].prefixval, unit + len);
 				return buffer;
 			}
 		}
