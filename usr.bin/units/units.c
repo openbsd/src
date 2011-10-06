@@ -1,4 +1,4 @@
-/*	$OpenBSD: units.c,v 1.15 2011/10/06 17:58:04 jmc Exp $	*/
+/*	$OpenBSD: units.c,v 1.16 2011/10/06 23:27:04 jmc Exp $	*/
 /*	$NetBSD: units.c,v 1.6 1996/04/06 06:01:03 thorpej Exp $	*/
 
 /*
@@ -23,13 +23,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "pathnames.h"
+#define UNITSFILE "/usr/share/misc/units.lib"
 
 #define VERSION "1.0"
-
-#ifndef UNITSFILE
-#define UNITSFILE _PATH_UNITSLIB
-#endif
 
 #define MAXUNITS 1000
 #define MAXPREFIXES 100
