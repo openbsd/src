@@ -1,4 +1,4 @@
-/*	$OpenBSD: units.c,v 1.16 2011/10/06 23:27:04 jmc Exp $	*/
+/*	$OpenBSD: units.c,v 1.17 2011/10/07 20:07:25 jmc Exp $	*/
 /*	$NetBSD: units.c,v 1.6 1996/04/06 06:01:03 thorpej Exp $	*/
 
 /*
@@ -54,8 +54,6 @@ struct {
 
 
 char *NULLUNIT = "";
-
-#define SEPERATOR	":"
 
 int unitcount;
 int prefixcount;
@@ -113,26 +111,9 @@ readunits(char *userfile)
 	} else {
 		unitfile = fopen(UNITSFILE, "r");
 		if (!unitfile) {
-			char filename[1000], separator[2] = SEPERATOR;
-			char *direc, *env;
-
-			env = getenv("PATH");
-			if (env) {
-				direc = strtok(env, separator);
-				while (direc) {
-					snprintf(filename, sizeof(filename),
-					    "%s/%s", direc, UNITSFILE);
-					unitfile = fopen(filename, "r");
-					if (unitfile)
-						break;
-					direc = strtok(NULL, separator);
-				}
-			}
-			if (!unitfile) {
-				fprintf(stderr, "Can't find units file '%s'\n",
-				    UNITSFILE);
-				exit(1);
-			}
+			fprintf(stderr, "Can't find units file '%s'\n",
+			    UNITSFILE);
+			exit(1);
 		}
 	}
 	while (!feof(unitfile)) {
