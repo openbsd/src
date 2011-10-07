@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.351 2011/09/28 17:15:45 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.352 2011/10/07 14:02:48 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1715,7 +1715,6 @@ RB_PROTOTYPE(pf_state_tree_id, pf_state,
 extern struct pf_state_tree_id tree_id;
 extern struct pf_state_queue state_list;
 
-TAILQ_HEAD(pf_poolqueue, pf_pool);
 TAILQ_HEAD(pf_altqqueue, pf_altq);
 extern struct pf_altqqueue		  pf_altqs[2];
 
@@ -1725,8 +1724,6 @@ extern int			 altqs_inactive_open;
 extern u_int32_t		 ticket_pabuf;
 extern struct pf_altqqueue	*pf_altqs_active;
 extern struct pf_altqqueue	*pf_altqs_inactive;
-extern struct pf_poolqueue	*pf_pools_active;
-extern struct pf_poolqueue	*pf_pools_inactive;
 extern int			 pf_tbladdr_setup(struct pf_ruleset *,
 				    struct pf_addr_wrap *);
 extern void			 pf_tbladdr_remove(struct pf_addr_wrap *);
