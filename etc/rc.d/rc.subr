@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.50 2011/10/07 07:17:25 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.51 2011/10/07 07:26:49 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -80,9 +80,6 @@ rc_wait() {
 }
 
 rc_cmd() {
-	[ $(id -u) -eq 0 ] || \
-		rc_err "$0: need root privileges"
-
 	[ -z "${_RC_FORCE}" ] && [ X"${daemon_flags}" = X"NO" ] && exit 1
 
 	eval _enotsup=\${rc_${1}}
@@ -141,6 +138,8 @@ rc_cmd() {
 		;;
 	esac
 }
+
+[ $(id -u) -eq 0 ] || rc_err "$0: need root privileges"
 
 [ -z "${local_rcconf}" ] && . /etc/rc.conf
 
