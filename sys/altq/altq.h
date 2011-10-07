@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq.h,v 1.8 2011/07/03 23:47:04 henning Exp $	*/
+/*	$OpenBSD: altq.h,v 1.9 2011/10/07 17:10:08 henning Exp $	*/
 /*	$KAME: altq.h,v 1.6 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #define	ALTQT_MAX		12	/* should be max discipline type + 1 */
 
 /* simple token bucket meter profile */
-struct tb_profile {
+struct oldtb_profile {
 	u_int	rate;	/* rate in bit-per-sec */
 	u_int	depth;	/* depth in bytes */
 };

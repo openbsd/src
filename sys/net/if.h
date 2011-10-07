@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.128 2011/07/08 18:48:51 henning Exp $	*/
+/*	$OpenBSD: if.h,v 1.129 2011/10/07 17:10:08 henning Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -724,8 +724,8 @@ do {									\
 
 #define	IFQ_DEQUEUE(ifq, m)						\
 do {									\
-	if (TBR_IS_ENABLED((ifq)))					\
-		(m) = tbr_dequeue((ifq), ALTDQ_REMOVE);			\
+	if (OLDTBR_IS_ENABLED((ifq)))					\
+		(m) = oldtbr_dequeue((ifq), ALTDQ_REMOVE);			\
 	else if (ALTQ_IS_ENABLED((ifq)))				\
 		ALTQ_DEQUEUE((ifq), (m));				\
 	else								\
@@ -735,7 +735,7 @@ do {									\
 #define	IFQ_POLL(ifq, m)						\
 do {									\
 	if (TBR_IS_ENABLED((ifq)))					\
-		(m) = tbr_dequeue((ifq), ALTDQ_POLL);			\
+		(m) = oldtbr_dequeue((ifq), ALTDQ_POLL);			\
 	else if (ALTQ_IS_ENABLED((ifq)))				\
 		ALTQ_POLL((ifq), (m));					\
 	else								\

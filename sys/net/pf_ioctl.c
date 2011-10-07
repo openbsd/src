@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.242 2011/08/30 00:40:47 mikeb Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.243 2011/10/07 17:10:08 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -114,6 +114,9 @@ void			 pf_trans_set_commit(void);
 void			 pf_pool_copyin(struct pf_pool *, struct pf_pool *);
 int			 pf_rule_copyin(struct pf_rule *, struct pf_rule *,
 			    struct pf_ruleset *);
+u_int32_t		 pf_oqname2qid(char *);
+void			 pf_oqid2qname(u_int32_t, char *);
+void			 pf_oqid_unref(u_int32_t);
 
 struct pf_rule		 pf_default_rule, pf_default_rule_new;
 struct rwlock		 pf_consistency_lock = RWLOCK_INITIALIZER("pfcnslk");
@@ -136,7 +139,7 @@ struct {
 
 #define	TAGID_MAX	 50000
 TAILQ_HEAD(pf_tags, pf_tagname)	pf_tags = TAILQ_HEAD_INITIALIZER(pf_tags),
-				pf_qids = TAILQ_HEAD_INITIALIZER(pf_qids);
+				pf_oqids = TAILQ_HEAD_INITIALIZER(pf_oqids);
 
 #if (PF_QNAME_SIZE != PF_TAG_NAME_SIZE)
 #error PF_QNAME_SIZE must be equal to PF_TAG_NAME_SIZE
@@ -289,8 +292,8 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 	pf_tag_unref(rule->match_tag);
 #ifdef ALTQ
 	if (rule->pqid != rule->qid)
-		pf_qid_unref(rule->pqid);
-	pf_qid_unref(rule->qid);
+		pf_oqid_unref(rule->pqid);
+	pf_oqid_unref(rule->qid);
 #endif
 	pf_rtlabel_remove(&rule->src.addr);
 	pf_rtlabel_remove(&rule->dst.addr);
@@ -473,21 +476,21 @@ pf_rtlabel_copyout(struct pf_addr_wrap *a)
 
 #ifdef ALTQ
 u_int32_t
-pf_qname2qid(char *qname)
+pf_oqname2qid(char *qname)
 {
-	return ((u_int32_t)tagname2tag(&pf_qids, qname));
+	return ((u_int32_t)tagname2tag(&pf_oqids, qname));
 }
 
 void
-pf_qid2qname(u_int32_t qid, char *p)
+pf_oqid2qname(u_int32_t qid, char *p)
 {
-	tag2tagname(&pf_qids, (u_int16_t)qid, p);
+	tag2tagname(&pf_oqids, (u_int16_t)qid, p);
 }
 
 void
-pf_qid_unref(u_int32_t qid)
+pf_oqid_unref(u_int32_t qid)
 {
-	tag_unref(&pf_qids, (u_int16_t)qid);
+	tag_unref(&pf_oqids, (u_int16_t)qid);
 }
 
 int
@@ -503,7 +506,7 @@ pf_begin_altq(u_int32_t *ticket)
 			/* detach and destroy the discipline */
 			error = altq_remove(altq);
 		} else
-			pf_qid_unref(altq->qid);
+			pf_oqid_unref(altq->qid);
 		pool_put(&pf_altq_pl, altq);
 	}
 	if (error)
@@ -528,7 +531,7 @@ pf_rollback_altq(u_int32_t ticket)
 			/* detach and destroy the discipline */
 			error = altq_remove(altq);
 		} else
-			pf_qid_unref(altq->qid);
+			pf_oqid_unref(altq->qid);
 		pool_put(&pf_altq_pl, altq);
 	}
 	altqs_inactive_open = 0;
@@ -580,7 +583,7 @@ pf_commit_altq(u_int32_t ticket)
 			if (err != 0 && error == 0)
 				error = err;
 		} else
-			pf_qid_unref(altq->qid);
+			pf_oqid_unref(altq->qid);
 		pool_put(&pf_altq_pl, altq);
 	}
 	splx(s);
@@ -593,7 +596,7 @@ int
 pf_enable_altq(struct pf_altq *altq)
 {
 	struct ifnet		*ifp;
-	struct tb_profile	 tb;
+	struct oldtb_profile	 tb;
 	int			 s, error = 0;
 
 	if ((ifp = ifunit(altq->ifname)) == NULL)
@@ -607,7 +610,7 @@ pf_enable_altq(struct pf_altq *altq)
 		tb.rate = altq->ifbandwidth;
 		tb.depth = altq->tbrsize;
 		s = splnet();
-		error = tbr_set(&ifp->if_snd, &tb);
+		error = oldtbr_set(&ifp->if_snd, &tb);
 		splx(s);
 	}
 
@@ -618,7 +621,7 @@ int
 pf_disable_altq(struct pf_altq *altq)
 {
 	struct ifnet		*ifp;
-	struct tb_profile	 tb;
+	struct oldtb_profile	 tb;
 	int			 s, error;
 
 	if ((ifp = ifunit(altq->ifname)) == NULL)
@@ -637,7 +640,7 @@ pf_disable_altq(struct pf_altq *altq)
 		/* clear tokenbucket regulator */
 		tb.rate = 0;
 		s = splnet();
-		error = tbr_set(&ifp->if_snd, &tb);
+		error = oldtbr_set(&ifp->if_snd, &tb);
 		splx(s);
 	}
 
@@ -1673,7 +1676,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		 * copy the necessary fields
 		 */
 		if (altq->qname[0] != 0) {
-			if ((altq->qid = pf_qname2qid(altq->qname)) == 0) {
+			if ((altq->qid = pf_oqname2qid(altq->qname)) == 0) {
 				error = EBUSY;
 				pool_put(&pf_altq_pl, altq);
 				break;
@@ -2560,10 +2563,10 @@ pf_rule_copyin(struct pf_rule *from, struct pf_rule *to,
 #ifdef ALTQ
 	/* set queue IDs */
 	if (to->qname[0] != 0) {
-		if ((to->qid = pf_qname2qid(to->qname)) == 0)
+		if ((to->qid = pf_oqname2qid(to->qname)) == 0)
 			return (EBUSY);
 		else if (to->pqname[0] != 0) {
-			if ((to->pqid = pf_qname2qid(to->pqname)) == 0)
+			if ((to->pqid = pf_oqname2qid(to->pqname)) == 0)
 				return (EBUSY);
 		} else
 			to->pqid = to->qid;

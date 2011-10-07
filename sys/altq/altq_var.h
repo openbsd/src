@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_var.h,v 1.16 2011/07/03 23:48:41 henning Exp $	*/
+/*	$OpenBSD: altq_var.h,v 1.17 2011/10/07 17:10:08 henning Exp $	*/
 /*	$KAME: altq_var.h,v 1.8 2001/02/09 09:44:41 kjc Exp $	*/
 
 /*
@@ -99,8 +99,8 @@ struct pf_altq; struct pf_qstats;
 void	*altq_lookup(char *, int);
 void	write_dsfield(struct mbuf *, struct altq_pktattr *, u_int8_t);
 void	altq_assert(const char *, int, const char *);
-int	tbr_set(struct ifaltq *, struct tb_profile *);
-int	tbr_get(struct ifaltq *, struct tb_profile *);
+int	oldtbr_set(struct ifaltq *, struct oldtb_profile *);
+int	oldtbr_get(struct ifaltq *, struct oldtb_profile *);
 int	altq_pfattach(struct pf_altq *);
 
 int	altq_pfdetach(struct pf_altq *);
