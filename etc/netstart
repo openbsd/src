@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.133 2011/07/07 23:09:46 guenther Exp $
+#	$OpenBSD: netstart,v 1.134 2011/10/07 16:36:26 deraadt Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -193,10 +193,6 @@ if [ -f /etc/myname ]; then
 	hostname $hostname
 else
 	hostname=`hostname`
-fi
-
-if [ -f /etc/defaultdomain ]; then
-	domainname `stripcom /etc/defaultdomain`
 fi
 
 # Set the address for the loopback interface.  Bringing the interface up,

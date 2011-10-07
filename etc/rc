@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.394 2011/10/06 20:49:25 deraadt Exp $
+#	$OpenBSD: rc,v 1.395 2011/10/07 16:36:26 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -220,6 +220,11 @@ HOME=/; export HOME
 INRC=1; export INRC
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 export PATH
+
+# must set the domainname before rc.conf, so YP startup choices can be made
+if [ -f /etc/defaultdomain ]; then
+	domainname `stripcom /etc/defaultdomain`
+fi
 
 # pick up option configuration
 . /etc/rc.conf
