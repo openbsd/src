@@ -911,8 +911,6 @@ client_init(struct addrinfo *aitop, int nconn, struct statctx *udp_sc,
 		TAILQ_INSERT_TAIL(&sc_queue, sc, entry);
 		mainstats.nconns++;
 		set_slice_timer(mainstats.nconns > 0);
-		if (UDP_MODE)
-			break;
 	}
 	freeaddrinfo(aitop);
 
@@ -1100,8 +1098,7 @@ main(int argc, char **argv)
 	if (UDP_MODE) {
 		hints.ai_socktype = SOCK_DGRAM;
 		hints.ai_protocol = IPPROTO_UDP;
-	}
-	else {
+	} else {
 		hints.ai_socktype = SOCK_STREAM;
 		hints.ai_protocol = IPPROTO_TCP;
 	}
@@ -1150,13 +1147,6 @@ main(int argc, char **argv)
 		err(1, "malloc");
 	arc4random_buf(ptb->dummybuf, ptb->dummybuf_len);
 
-	if (UDP_MODE) {
-		if ((udp_sc = calloc(1, sizeof(*udp_sc))) == NULL)
-			err(1, "calloc");
-		udp_sc->fd = -1;
-		stats_prepare(udp_sc);
-	}
-
 	/* Setup libevent and signals */
 	event_init();
 	signal_set(&ev_sigterm, SIGTERM, signal_handler, NULL);
@@ -1167,17 +1157,20 @@ main(int argc, char **argv)
 	signal_add(&ev_sighup, NULL);
 	signal(SIGPIPE, SIG_IGN);
 	
-	if (TCP_MODE)
-		print_tcp_header();
-	
-	if (UDP_MODE)
+	if (UDP_MODE) {
+		if ((udp_sc = calloc(1, sizeof(*udp_sc))) == NULL)
+			err(1, "calloc");
+		udp_sc->fd = -1;
+		stats_prepare(udp_sc);
 		evtimer_set(&mainstats.timer, udp_process_slice, udp_sc);
-	else
+	} else {
+		print_tcp_header();
 		evtimer_set(&mainstats.timer, tcp_process_slice, NULL);
+	}
 
-	if (ptb->sflag) {
+	if (ptb->sflag)
 		server_init(aitop, udp_sc);
-	} else
+	else
 		client_init(aitop, nconn, udp_sc, aib);
 	
 	/* libevent main loop*/
