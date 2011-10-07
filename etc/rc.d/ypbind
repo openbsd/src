@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: ypbind,v 1.3 2011/07/08 02:15:34 robert Exp $
+# $OpenBSD: ypbind,v 1.4 2011/10/07 05:54:48 ajacoutot Exp $
 
 daemon="/usr/sbin/ypbind"
 
@@ -10,7 +10,7 @@ rc_bg=YES
 rc_reload=NO
 
 rc_pre() {
-	[ X"`domainname`" != X"" -a -d /var/yp/binding ]
+	[ X"`domainname`" != X"" ]
 }
 
 rc_cmd $1
