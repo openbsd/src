@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.557 2011/09/16 13:36:18 yuo Exp $
+$OpenBSD: usbdevs,v 1.558 2011/10/07 06:01:49 ckuethe Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -577,6 +577,7 @@ vendor PLANEX2		0x2019	Planex Communications
 vendor ENCORE		0x203d	Encore
 vendor PARA		0x20b8	PARA Industrial
 vendor TRENDNET		0x20f4	TRENDnet
+vendor RTSYSTEMS	0x2100	RT Systems
 vendor DLINK3		0x2101	D-Link
 vendor MOTOROLA2	0x22b8	Motorola
 vendor TRIPPLITE	0x2478	Tripp-Lite
@@ -3260,6 +3261,9 @@ product ROLAND UA700		0x002b	UA-700 Audio I/F
 
 /* Rockfire products */
 product ROCKFIRE GAMEPAD	0x2033	Gamepad 203USB
+
+/* RT Systems */
+product	RTSYSTEMS CT57B		0x9e52	CT57B Radio Cable
 
 /* Sagem products */
 product SAGEM SERIAL		0x0027	Serial
