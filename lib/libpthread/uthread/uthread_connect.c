@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_connect.c,v 1.8 2007/05/01 18:16:37 kurt Exp $	*/
+/*	$OpenBSD: uthread_connect.c,v 1.9 2011/10/07 08:59:43 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -64,7 +64,8 @@ connect(int fd, const struct sockaddr * name, socklen_t namelen)
 
 				/* Set the timeout: */
 				_thread_kern_set_timeout(NULL);
-				_thread_kern_sched_state(PS_FDW_WAIT, __FILE__, __LINE__);
+				_thread_kern_sched_state(PS_CONNECT_WAIT,
+				    __FILE__, __LINE__);
 
 				/*
 				 * Check if the operation was

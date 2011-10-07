@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_cancel.c,v 1.17 2011/09/13 23:56:00 fgsch Exp $	*/
+/*	$OpenBSD: uthread_cancel.c,v 1.18 2011/10/07 08:59:43 fgsch Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  */
@@ -39,6 +39,7 @@ pthread_cancel(pthread_t pthread)
 				break;
 
 			case PS_SPINBLOCK:
+			case PS_CONNECT_WAIT:
 			case PS_FDR_WAIT:
 			case PS_FDW_WAIT:
 			case PS_KEVENT_WAIT:

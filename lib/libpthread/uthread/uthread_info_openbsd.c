@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_info_openbsd.c,v 1.16 2011/09/13 23:56:00 fgsch Exp $	*/
+/*	$OpenBSD: uthread_info_openbsd.c,v 1.17 2011/10/07 08:59:43 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
@@ -57,6 +57,7 @@ static const struct s_thread_info thread_info[] = {
 	{PS_SIGTHREAD	, "sigthread"},
 	{PS_MUTEX_WAIT	, "mutex_wait"},
 	{PS_COND_WAIT	, "cond_wait"},
+	{PS_CONNECT_WAIT, "connect_wait"},
 	{PS_FDLR_WAIT	, "fdlr_wait"},
 	{PS_FDLW_WAIT	, "fdlw_wait"},
 	{PS_FDR_WAIT	, "fdr_wait"},
@@ -174,6 +175,7 @@ _thread_dump_entry(pthread_t pthread, int fd, int verbose)
 	/* Process according to thread state: */
 	switch (pthread->state) {
 	/* File descriptor read lock wait: */
+	case PS_CONNECT_WAIT:
 	case PS_FDLR_WAIT:
 	case PS_FDLW_WAIT:
 	case PS_FDR_WAIT:

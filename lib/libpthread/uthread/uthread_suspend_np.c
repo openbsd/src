@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_suspend_np.c,v 1.11 2011/09/13 23:56:00 fgsch Exp $	*/
+/*	$OpenBSD: uthread_suspend_np.c,v 1.12 2011/10/07 08:59:43 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -106,6 +106,7 @@ suspend_common(struct pthread *thread)
 		PTHREAD_SET_STATE(thread, PS_SUSPENDED);
 		break;
 
+	case PS_CONNECT_WAIT:
 	case PS_FDR_WAIT:
 	case PS_FDW_WAIT:
 	case PS_KEVENT_WAIT:

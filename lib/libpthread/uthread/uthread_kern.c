@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.40 2011/09/13 23:56:00 fgsch Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.41 2011/10/07 08:59:43 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -225,6 +225,7 @@ _thread_kern_sched(struct sigcontext * scp)
 				_spinblock_count++;
 
 				/* FALLTHROUGH */
+			case PS_CONNECT_WAIT:
 			case PS_FDR_WAIT:
 			case PS_FDW_WAIT:
 			case PS_KEVENT_WAIT:
@@ -734,6 +735,7 @@ _thread_kern_poll(int wait_reqd)
 			break;
 
 		/* File descriptor write wait: */
+		case PS_CONNECT_WAIT:
 		case PS_FDW_WAIT:
 			/* if fd is closing then reschedule this thread */
 			if (_thread_fd_table[pthread->data.fd.fd]->state == FD_ENTRY_CLOSING) {
@@ -860,6 +862,7 @@ _thread_kern_poll(int wait_reqd)
 				break;
 
 			/* File descriptor write wait: */
+			case PS_CONNECT_WAIT:
 			case PS_FDW_WAIT:
 				if ((nfds < _thread_max_pfdtsize) &&
 				    (_thread_pfd_table[nfds].revents
