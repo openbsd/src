@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.782 2011/09/28 17:15:45 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.783 2011/10/07 14:24:10 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -99,8 +99,6 @@
 /*
  * Global variables
  */
-
-/* state tables */
 struct pf_state_tree	 pf_statetbl;
 
 struct pf_altqqueue	 pf_altqs[2];
