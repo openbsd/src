@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdtemp.c,v 1.12 2010/07/09 08:05:45 deraadt Exp $	*/
+/*	$OpenBSD: sdtemp.c,v 1.13 2011/10/07 06:29:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Theo de Raadt
@@ -65,6 +65,8 @@ sdtemp_match(struct device *parent, void *match, void *aux)
 	    strcmp(ia->ia_name, "adt7408") == 0 ||
 	    strcmp(ia->ia_name, "stts424e02") == 0 ||
 	    strcmp(ia->ia_name, "stts424") == 0 ||
+	    strcmp(ia->ia_name, "stts2002") == 0 ||
+	    strcmp(ia->ia_name, "ts3000b3") == 0 ||
 	    strcmp(ia->ia_name, "cat34ts02") == 0)
 		return (1);
 	return (0);
