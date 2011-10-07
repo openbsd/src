@@ -2790,6 +2790,7 @@
 ./usr/share/man/man8/makekey.8
 ./usr/share/man/man8/makemap.8
 ./usr/share/man/man8/makewhatis.8
+./usr/share/man/man8/mandocdb.8
 ./usr/share/man/man8/map-mbone.8
 ./usr/share/man/man8/mfs.8
 ./usr/share/man/man8/mkalias.8
