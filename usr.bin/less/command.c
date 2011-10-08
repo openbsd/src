@@ -55,6 +55,8 @@ extern int shift_count;
 extern int oldbot;
 extern int forw_prompt;
 extern int be_helpful;
+extern int less_is_more;
+extern int quit_at_eof;
 
 #if SHELL_ESCAPE
 static char *shellcmd = NULL;	/* For holding last shell command for "!!" */
@@ -1232,6 +1234,8 @@ commands()
 			 */
 			if (sigs && !ABORT_SIGS())
 				newaction = A_F_FOREVER;
+			if (less_is_more)
+				quit_at_eof = OPT_ON;
 			break;
 
 		case A_F_SCROLL:
