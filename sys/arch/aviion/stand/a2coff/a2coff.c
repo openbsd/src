@@ -1,4 +1,4 @@
-/*	$OpenBSD: a2coff.c,v 1.3 2008/01/29 13:02:31 krw Exp $	*/
+/*	$OpenBSD: a2coff.c,v 1.4 2011/10/09 17:10:39 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -47,6 +47,8 @@
 #undef	__LDPGSZ
 #define	__LDPGSZ	0x1000
 #endif	/* m88k */
+
+#define	ECOFF_ALIGN	0x200
 
 /*
  * We can't use the standard ecoff defines, first, because the system
@@ -129,6 +131,8 @@ main(int argc, char *argv[])
 	struct ecoff_exechdr ehead;
 	struct ecoff_scnhdr escn[3];
 	int infd, outfd;
+	off_t outpos;
+	uint32_t chunk;
 	int n;
 
 	if (argc != 3)
@@ -248,8 +252,10 @@ main(int argc, char *argv[])
 	    escn[1].s_name, N_DATOFF(head), escn[1].s_scnptr, head.a_data);
 #endif
 	lseek(outfd, escn[1].s_scnptr, SEEK_SET);
+	outpos = escn[1].s_scnptr;
 	lseek(infd, N_DATOFF(head), SEEK_SET);
 	copybits(infd, outfd, head.a_data);
+	outpos += head.a_data;
 
 	/*
 	 * ``Copy'' bss section
@@ -259,7 +265,17 @@ main(int argc, char *argv[])
 	printf("copying %s: size %lx\n",
 	    escn[2].s_name, round(head.a_data + head.a_bss, 8) - head.a_data);
 #endif
-	zerobits(outfd, round(head.a_data + head.a_bss, 8) - head.a_data);
+	chunk = round(head.a_data + head.a_bss, 8) - head.a_data;
+	zerobits(outfd, chunk);
+	outpos += chunk;
+
+	/*
+	 * Round file to a multiple of 512 bytes, since older PROM
+	 * (at least rev 1.20 on AV530) will reject files not being
+	 * properly rounded.
+	 */
+	if ((outpos % ECOFF_ALIGN) != 0)
+		zerobits(outfd, ECOFF_ALIGN - (outpos % ECOFF_ALIGN));
 
 	close(infd);
 	close(outfd);
