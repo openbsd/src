@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1623 2011/09/23 08:54:25 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1624 2011/10/09 21:39:11 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -12468,6 +12468,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MV1000",
 	},
 	{
+	    PCI_VENDOR_WCH, PCI_PRODUCT_WCH_CH352,
+	    "CH352",
+	},
+	{
 	    PCI_VENDOR_NDC, PCI_PRODUCT_NDC_NCP130,
 	    "NCP130",
 	},
@@ -20986,6 +20990,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_NETXEN,
 	    "NetXen",
+	},
+	{
+	    PCI_VENDOR_WCH,
+	    "Nanjing QinHeng Electronics",
 	},
 	{
 	    PCI_VENDOR_INDCOMPSRC,

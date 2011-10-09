@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1623 2011/09/23 08:54:25 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1624 2011/10/09 21:39:11 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -330,6 +330,7 @@
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic */
 #define	PCI_VENDOR_ADDTRON	0x4033		/* Addtron */
 #define	PCI_VENDOR_NETXEN	0x4040		/* NetXen */
+#define	PCI_VENDOR_WCH	0x4348		/* Nanjing QinHeng Electronics */
 #define	PCI_VENDOR_INDCOMPSRC	0x494f		/* Industrial Computer Source */
 #define	PCI_VENDOR_NETVIN	0x4a14		/* NetVin */
 #define	PCI_VENDOR_GEMTEK	0x5046		/* Gemtek */
@@ -3791,6 +3792,9 @@
 
 /* Mutech products */
 #define	PCI_PRODUCT_MUTECH_MV1000	0x0001		/* MV1000 */
+
+/* Nanjing QinHeng Electronics products */
+#define	PCI_PRODUCT_WCH_CH352	0x3253		/* CH352 */
 
 /* National Datacomm Corp products */
 #define	PCI_PRODUCT_NDC_NCP130	0x0130		/* NCP130 */
