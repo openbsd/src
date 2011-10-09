@@ -1,4 +1,4 @@
-/*	$Id: man.h,v 1.37 2011/04/24 16:22:02 schwarze Exp $ */
+/*	$Id: man.h,v 1.38 2011/10/09 17:59:56 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -105,6 +105,7 @@ struct	man;
 
 const struct man_node *man_node(const struct man *);
 const struct man_meta *man_meta(const struct man *);
+const struct mparse   *man_mparse(const struct man *);
 
 __END_DECLS
 

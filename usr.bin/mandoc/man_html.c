@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.42 2011/09/18 15:54:48 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.43 2011/10/09 17:59:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -137,33 +137,32 @@ print_bvspace(struct html *h, const struct man_node *n)
 void
 html_man(void *arg, const struct man *m)
 {
-	struct html	*h;
-	struct tag	*t;
 	struct mhtml	 mh;
 
-	h = (struct html *)arg;
-
-	print_gen_decls(h);
-
 	memset(&mh, 0, sizeof(struct mhtml));
-
-	t = print_otag(h, TAG_HTML, 0, NULL);
-	print_man(man_meta(m), man_node(m), &mh, h);
-	print_tagq(h, t);
-
-	printf("\n");
+	print_man(man_meta(m), man_node(m), &mh, (struct html *)arg);
+	putchar('\n');
 }
 
 static void
 print_man(MAN_ARGS) 
 {
-	struct tag	*t;
+	struct tag	*t, *tt;
+	struct htmlpair	 tag;
 
-	t = print_otag(h, TAG_HEAD, 0, NULL);
-	print_man_head(m, n, mh, h);
-	print_tagq(h, t);
+	PAIR_CLASS_INIT(&tag, "mandoc");
 
-	t = print_otag(h, TAG_BODY, 0, NULL);
+	if ( ! (HTML_FRAGMENT & h->oflags)) {
+		print_gen_decls(h);
+		t = print_otag(h, TAG_HTML, 0, NULL);
+		tt = print_otag(h, TAG_HEAD, 0, NULL);
+		print_man_head(m, n, mh, h);
+		print_tagq(h, tt);
+		print_otag(h, TAG_BODY, 0, NULL);
+		print_otag(h, TAG_DIV, 1, &tag);
+	} else 
+		t = print_otag(h, TAG_DIV, 1, &tag);
+
 	print_man_nodelist(m, n, mh, h);
 	print_tagq(h, t);
 }

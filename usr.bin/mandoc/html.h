@@ -1,4 +1,4 @@
-/*	$Id: html.h,v 1.17 2011/09/18 10:25:28 schwarze Exp $ */
+/*	$Id: html.h,v 1.18 2011/10/09 17:59:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -104,7 +104,7 @@ struct	htmlpair {
 #define	PAIR_STYLE_INIT(p, h)	PAIR_INIT(p, ATTR_STYLE, (h)->buf)
 #define	PAIR_SUMMARY_INIT(p, v)	PAIR_INIT(p, ATTR_SUMMARY, v)
 
-enum	htmltype {
+enum	htmltype { 
 	HTML_HTML_4_01_STRICT,
 	HTML_XHTML_1_0_STRICT
 };
@@ -125,11 +125,13 @@ struct	html {
 	char		 *base_includes; /* base for include href */
 	char		 *style; /* style-sheet URI */
 	char		  buf[BUFSIZ]; /* see bufcat and friends */
-	size_t		  buflen;
+	size_t		  buflen; 
 	struct tag	 *metaf; /* current open font scope */
 	enum htmlfont	  metal; /* last used font */
 	enum htmlfont	  metac; /* current font mode */
-	enum htmltype	  type;
+	enum htmltype	  type; /* output media type */
+	int		  oflags; /* output options */
+#define	HTML_FRAGMENT	 (1 << 0) /* don't emit HTML/HEAD/BODY */
 };
 
 void		  print_gen_decls(struct html *);

@@ -1,4 +1,4 @@
-/*	$Id: apropos.c,v 1.1 2011/10/06 23:04:16 schwarze Exp $ */
+/*	$Id: apropos.c,v 1.2 2011/10/09 17:59:56 schwarze Exp $ */
 /*
 * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -32,21 +32,23 @@
 
 #include "mandoc.h"
 
-#define	MAXRESULTS	 100
+#define	MAXRESULTS	 256
 
-#define TYPE_NAME	0x01
-#define TYPE_FUNCTION	0x02
-#define TYPE_UTILITY	0x04
-#define TYPE_INCLUDES	0x08
-#define TYPE_VARIABLE	0x10
-#define TYPE_STANDARD	0x20
-#define TYPE_AUTHOR	0x40
-#define TYPE_CONFIG	0x80
-#define TYPE_DESC	0x100
-#define TYPE_XREF	0x200
-#define TYPE_PATH	0x400
-#define	TYPE_ENV	0x800
-#define	TYPE_ERR	0x1000
+/* Bit-fields.  See mandocdb.8. */
+
+#define TYPE_NAME	  0x01
+#define TYPE_FUNCTION	  0x02
+#define TYPE_UTILITY	  0x04
+#define TYPE_INCLUDES	  0x08
+#define TYPE_VARIABLE	  0x10
+#define TYPE_STANDARD	  0x20
+#define TYPE_AUTHOR	  0x40
+#define TYPE_CONFIG	  0x80
+#define TYPE_DESC	  0x100
+#define TYPE_XREF	  0x200
+#define TYPE_PATH	  0x400
+#define TYPE_ENV	  0x800
+#define TYPE_ERR	  0x1000
 
 enum	match {
 	MATCH_SUBSTR = 0,
@@ -71,16 +73,16 @@ struct	opts {
 
 struct	type {
 	int		 mask;
-	const char	*name;
+	const char	*name; /* command-line type name */
 };
 
 struct	rec {
-	char		*file;
-	char		*cat;
-	char		*title;
-	char		*arch;
-	char		*desc;
-	recno_t		 rec;
+	char		*file; /* file in file-system */
+	char		*cat; /* category (3p, 3, etc.) */
+	char		*title; /* title (FOO, etc.) */
+	char		*arch; /* arch (or empty string) */
+	char		*desc; /* description (from Nd) */
+	recno_t		 rec; /* record in index */
 };
 
 struct	res {
@@ -92,6 +94,14 @@ struct	res {
 	char		*title; /* manual section */
 	char		*uri; /* formatted uri of file */
 	recno_t		 rec; /* unique id of underlying manual */
+	/*
+	 * Maintain a binary tree for checking the uniqueness of `rec'
+	 * when adding elements to the results array.
+	 * Since the results array is dynamic, use offset in the array
+	 * instead of a pointer to the structure.
+	 */
+	int		 lhs;
+	int		 rhs;
 };
 
 struct	state {
@@ -99,8 +109,6 @@ struct	state {
 	DB		 *idx; /* index */
 	const char	 *dbf; /* database name */
 	const char	 *idxf; /* index name */
-	void		(*err)(const char *);
-	void		(*errx)(const char *, ...);
 };
 
 static	const char * const sorts[SORT__MAX] = {
@@ -130,27 +138,22 @@ static	void	 buf_alloc(char **, size_t *, size_t);
 static	void	 buf_dup(struct mchars *, char **, const char *);
 static	void	 buf_redup(struct mchars *, char **, 
 			size_t *, const char *);
-static	void	 error(const char *, ...);
 static	int	 sort_cat(const void *, const void *);
 static	int	 sort_title(const void *, const void *);
-static	void	 state_destroy(struct state *);
-static	int	 state_getrecord(struct state *, recno_t, struct rec *);
-static	int	 state_init(struct state *, 
-			const char *, const char *,
-			void (*err)(const char *),
-			void (*errx)(const char *, ...));
+static	int	 state_getrecord(struct state *, 
+			recno_t, struct rec *);
 static	void	 state_output(const struct res *, int);
-static	void	 state_search(struct state *, 
+static	int	 state_search(struct state *, 
 			const struct opts *, char *);
-
 static	void	 usage(void);
 
-static	const char	 *progname;
+static	char	*progname;
 
 int
 apropos(int argc, char *argv[])
 {
-	int		 ch, i;
+	BTREEINFO	 info;
+	int		 ch, i, rc;
 	const char	*dbf, *idxf;
 	struct state	 state;
 	char		*q, *v;
@@ -159,10 +162,12 @@ apropos(int argc, char *argv[])
 	extern char	*optarg;
 
 	memset(&opts, 0, sizeof(struct opts));
+	memset(&state, 0, sizeof(struct state));
 
 	dbf = "mandoc.db";
 	idxf = "mandoc.index";
 	q = NULL;
+	rc = EXIT_FAILURE;
 
 	progname = strrchr(argv[0], '/');
 	if (progname == NULL)
@@ -200,7 +205,7 @@ apropos(int argc, char *argv[])
 			if (i < SORT__MAX)
 				break;
 
-			error("%s: Bad sort\n", optarg);
+			fprintf(stderr, "%s: Bad sort\n", optarg);
 			return(EXIT_FAILURE);
 		case ('t'):
 			while (NULL != (v = strsep(&optarg, ","))) {
@@ -218,7 +223,7 @@ apropos(int argc, char *argv[])
 			if (NULL == v)
 				break;
 			
-			error("%s: Bad type\n", v);
+			fprintf(stderr, "%s: Bad type\n", v);
 			return(EXIT_FAILURE);
 		default:
 			usage();
@@ -230,54 +235,85 @@ apropos(int argc, char *argv[])
 
 	if (0 == argc || '\0' == **argv) {
 		usage();
-		return(EXIT_FAILURE);
+		goto out;
 	} else
 		q = *argv;
 
 	if (0 == opts.types)
 		opts.types = TYPE_NAME | TYPE_DESC;
 
-	if ( ! state_init(&state, dbf, idxf, perror, error)) {
-		state_destroy(&state);
-		return(EXIT_FAILURE);
+	/*
+	 * Configure databases.
+	 * The keyword database is a btree that allows for duplicate
+	 * entries.
+	 * The index database is a recno.
+	 */
+
+	memset(&info, 0, sizeof(BTREEINFO));
+	info.flags = R_DUP;
+
+	state.db = dbopen(dbf, O_RDONLY, 0, DB_BTREE, &info);
+	if (NULL == state.db) {
+		perror(dbf);
+		goto out;
 	}
 
-	state_search(&state, &opts, q);
-	state_destroy(&state);
+	state.idx = dbopen(idxf, O_RDONLY, 0, DB_RECNO, NULL);
+	if (NULL == state.idx) {
+		perror(idxf);
+		goto out;
+	}
 
-	return(EXIT_SUCCESS);
+	/* Main search function. */
+
+	rc = state_search(&state, &opts, q) ?
+		EXIT_SUCCESS : EXIT_FAILURE;
+out:
+	if (state.db)
+		(*state.db->close)(state.db);
+	if (state.idx)
+		(*state.idx->close)(state.idx);
+
+	return(rc);
 }
 
-static void
+static int
 state_search(struct state *p, const struct opts *opts, char *q)
 {
-	int		 i, len, ch, rflags, dflag;
+	int		 leaf, root, len, ch, dflag, rc;
 	struct mchars	*mc;
 	char		*buf;
 	size_t		 bufsz;
 	recno_t		 rec;
 	uint32_t	 fl;
 	DBT		 key, val;
-	struct res	 res[MAXRESULTS];
+	struct res	*res;
 	regex_t		 reg;
 	regex_t		*regp;
 	char		 filebuf[10];
 	struct rec	 record;
 
+	rc = 0;
+	root = leaf = -1;
+	res = NULL;
 	len = 0;
 	buf = NULL;
 	bufsz = 0;
-	ch = 0;
 	regp = NULL;
+
+	/*
+	 * Configure how we scan through results to see if we match:
+	 * whether by regexp or exact matches.
+	 */
 
 	switch (opts->match) {
 	case (MATCH_REGEX):
-		rflags = REG_EXTENDED | REG_NOSUB | 
+		ch = REG_EXTENDED | REG_NOSUB | 
 			(opts->insens ? REG_ICASE : 0);
 
-		if (0 != regcomp(&reg, q, rflags)) {
-			error("%s: Bad pattern\n", q);
-			return;
+		if (0 != regcomp(&reg, q, ch)) {
+			fprintf(stderr, "%s: Bad pattern\n", q);
+			return(0);
 		}
 
 		regp = &reg;
@@ -293,10 +329,7 @@ state_search(struct state *p, const struct opts *opts, char *q)
 		break;
 	}
 
-	if (NULL == (mc = mchars_alloc())) {
-		perror(NULL);
-		exit(EXIT_FAILURE);
-	}
+	mc = mchars_alloc();
 
 	/*
 	 * Iterate over the entire keyword database.
@@ -305,10 +338,7 @@ state_search(struct state *p, const struct opts *opts, char *q)
 	 * Lastly, add it to the available records.
 	 */
 
-	while (len < MAXRESULTS) {
-		if ((ch = (*p->db->seq)(p->db, &key, &val, dflag)))
-			break;
-
+	while (0 == (ch = (*p->db->seq)(p->db, &key, &val, dflag))) {
 		dflag = R_NEXT;
 
 		/* 
@@ -319,8 +349,8 @@ state_search(struct state *p, const struct opts *opts, char *q)
 		 */
 
 		if (key.size < 2 || 8 != val.size) {
-			error("%s: Corrupt database\n", p->dbf);
-			exit(EXIT_FAILURE);
+			fprintf(stderr, "%s: Bad database\n", p->dbf);
+			goto out;
 		}
 
 		buf_redup(mc, &buf, &bufsz, (char *)key.data);
@@ -357,7 +387,7 @@ state_search(struct state *p, const struct opts *opts, char *q)
 		memcpy(&rec, val.data + 4, sizeof(recno_t));
 
 		if ( ! state_getrecord(p, rec, &record))
-			exit(EXIT_FAILURE);
+			goto out;
 
 		/* If we're in a different section, skip... */
 
@@ -366,14 +396,24 @@ state_search(struct state *p, const struct opts *opts, char *q)
 		if (opts->arch && strcasecmp(opts->arch, record.arch))
 			continue;
 
-		/* FIXME: this needs to be changed.  Ugh.  Linear. */
+		/* 
+		 * Do a binary search to dedupe the results tree of the
+		 * same record: we don't print the same file.
+		 */
 
-		for (i = 0; i < len; i++)
-			if (res[i].rec == record.rec)
+		for (leaf = root; leaf >= 0; )
+			if (rec > res[leaf].rec && res[leaf].rhs >= 0)
+				leaf = res[leaf].rhs;
+			else if (rec < res[leaf].rec && res[leaf].lhs >= 0)
+				leaf = res[leaf].lhs;
+			else 
 				break;
 
-		if (i < len)
+		if (leaf >= 0 && res[leaf].rec == rec)
 			continue;
+
+		res = mandoc_realloc
+			(res, (len + 1) * sizeof(struct res));
 
 		/*
 		 * Now we have our filename, keywords, types, and all
@@ -387,6 +427,7 @@ state_search(struct state *p, const struct opts *opts, char *q)
 
 		res[len].rec = record.rec;
 		res[len].types = fl;
+		res[len].lhs = res[len].rhs = -1;
 
 		buf_dup(mc, &res[len].keyword, buf);
 		buf_dup(mc, &res[len].uri, filebuf);
@@ -394,26 +435,33 @@ state_search(struct state *p, const struct opts *opts, char *q)
 		buf_dup(mc, &res[len].arch, record.arch);
 		buf_dup(mc, &res[len].title, record.title);
 		buf_dup(mc, &res[len].desc, record.desc);
+
+		if (leaf >= 0) {
+			if (record.rec > res[leaf].rec)
+				res[leaf].rhs = len;
+			else
+				res[leaf].lhs = len;
+		} else
+			root = len;
+
 		len++;
 	}
 
-send:
 	if (ch < 0) {
 		perror(p->dbf);
-		exit(EXIT_FAILURE);
+		goto out;
 	} 
+send:
+	/* Sort our results. */
 
-	switch (opts->sort) {
-	case (SORT_CAT):
+	if (SORT_CAT == opts->sort)
 		qsort(res, len, sizeof(struct res), sort_cat);
-		break;
-	default:
+	else
 		qsort(res, len, sizeof(struct res), sort_title);
-		break;
-	}
 
 	state_output(res, len);
-
+	rc = 1;
+out:
 	for (len-- ; len >= 0; len--) {
 		free(res[len].keyword);
 		free(res[len].title);
@@ -423,11 +471,14 @@ send:
 		free(res[len].uri);
 	}
 
+	free(res);
 	free(buf);
 	mchars_free(mc);
 
 	if (regp)
 		regfree(regp);
+
+	return(rc);
 }
 
 /*
@@ -441,10 +492,7 @@ buf_alloc(char **buf, size_t *bufsz, size_t sz)
 		return;
 
 	*bufsz = sz + 1024;
-	if (NULL == (*buf = realloc(*buf, *bufsz))) {
-		perror(NULL);
-		exit(EXIT_FAILURE);
-	}
+	*buf = mandoc_realloc(*buf, *bufsz);
 }
 
 /*
@@ -535,16 +583,6 @@ buf_redup(struct mchars *mc, char **buf,
 }
 
 static void
-error(const char *fmt, ...)
-{
-	va_list		 ap;
-
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-}
-
-static void
 state_output(const struct res *res, int sz)
 {
 	int		 i;
@@ -571,48 +609,6 @@ usage(void)
 }
 
 static int
-state_init(struct state *p, 
-		const char *dbf, const char *idxf,
-		void (*err)(const char *),
-		void (*errx)(const char *, ...))
-{
-	BTREEINFO	 info;
-
-	memset(p, 0, sizeof(struct state));
-	memset(&info, 0, sizeof(BTREEINFO));
-
-	info.flags = R_DUP;
-
-	p->dbf = dbf;
-	p->idxf = idxf;
-	p->err = err;
-
-	p->db = dbopen(p->dbf, O_RDONLY, 0, DB_BTREE, &info);
-	if (NULL == p->db) {
-		(*err)(p->dbf);
-		return(0);
-	}
-
-	p->idx = dbopen(p->idxf, O_RDONLY, 0, DB_RECNO, NULL);
-	if (NULL == p->idx) {
-		(*err)(p->idxf);
-		return(0);
-	}
-
-	return(1);
-}
-
-static void
-state_destroy(struct state *p)
-{
-
-	if (p->db)
-		(*p->db->close)(p->db);
-	if (p->idx)
-		(*p->idx->close)(p->idx);
-}
-
-static int
 state_getrecord(struct state *p, recno_t rec, struct rec *rp)
 {
 	DBT		key, val;
@@ -624,40 +620,33 @@ state_getrecord(struct state *p, recno_t rec, struct rec *rp)
 
 	rc = (*p->idx->get)(p->idx, &key, &val, 0);
 	if (rc < 0) {
-		(*p->err)(p->idxf);
+		perror(p->idxf);
 		return(0);
-	} else if (rc > 0) {
-		(*p->errx)("%s: Corrupt index\n", p->idxf);
-		return(0);
-	}
+	} else if (rc > 0)
+		goto err;
 
 	rp->file = (char *)val.data;
-	if ((sz = strlen(rp->file) + 1) >= val.size) {
-		(*p->errx)("%s: Corrupt index\n", p->idxf);
-		return(0);
-	}
+	if ((sz = strlen(rp->file) + 1) >= val.size)
+		goto err;
 
 	rp->cat = (char *)val.data + (int)sz;
-	if ((sz += strlen(rp->cat) + 1) >= val.size) {
-		(*p->errx)("%s: Corrupt index\n", p->idxf);
-		return(0);
-	}
+	if ((sz += strlen(rp->cat) + 1) >= val.size)
+		goto err;
 
 	rp->title = (char *)val.data + (int)sz;
-	if ((sz += strlen(rp->title) + 1) >= val.size) {
-		(*p->errx)("%s: Corrupt index\n", p->idxf);
-		return(0);
-	}
+	if ((sz += strlen(rp->title) + 1) >= val.size)
+		goto err;
 
 	rp->arch = (char *)val.data + (int)sz;
-	if ((sz += strlen(rp->arch) + 1) >= val.size) {
-		(*p->errx)("%s: Corrupt index\n", p->idxf);
-		return(0);
-	}
+	if ((sz += strlen(rp->arch) + 1) >= val.size)
+		goto err;
 
 	rp->desc = (char *)val.data + (int)sz;
 	rp->rec = rec;
 	return(1);
+err:
+	fprintf(stderr, "%s: Corrupt index\n", p->idxf);
+	return(0);
 }
 
 static int

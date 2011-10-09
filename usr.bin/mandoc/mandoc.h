@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.40 2011/09/18 10:25:28 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.41 2011/10/09 17:59:56 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -400,30 +400,31 @@ struct	man;
 
 __BEGIN_DECLS
 
-void		  mparse_free(struct mparse *);
-void		  mparse_reset(struct mparse *);
-struct mparse	 *mparse_alloc(enum mparset, 
-			enum mandoclevel, mandocmsg, void *);
-enum mandoclevel  mparse_readfd(struct mparse *, int, const char *);
-void		  mparse_result(struct mparse *, struct mdoc **, struct man **);
-const char	 *mparse_strerror(enum mandocerr);
-const char	 *mparse_strlevel(enum mandoclevel);
-
 void		 *mandoc_calloc(size_t, size_t);
+enum mandoc_esc	  mandoc_escape(const char **, const char **, int *);
 void		 *mandoc_malloc(size_t);
 void		 *mandoc_realloc(void *, size_t);
 char		 *mandoc_strdup(const char *);
 char		 *mandoc_strndup(const char *, size_t);
-
-enum mandoc_esc	  mandoc_escape(const char **, const char **, int *);
-
 struct mchars	 *mchars_alloc(void);
+void		  mchars_free(struct mchars *);
 char	 	  mchars_num2char(const char *, size_t);
 int		  mchars_num2uc(const char *, size_t);
-const char	 *mchars_spec2str(struct mchars *, const char *, size_t, size_t *);
-int		  mchars_spec2cp(struct mchars *, const char *, size_t);
-void		  mchars_free(struct mchars *);
-
+int		  mchars_spec2cp(struct mchars *, 
+			const char *, size_t);
+const char	 *mchars_spec2str(struct mchars *, 
+			const char *, size_t, size_t *);
+struct mparse	 *mparse_alloc(enum mparset, 
+			enum mandoclevel, mandocmsg, void *);
+void		  mparse_free(struct mparse *);
+void		  mparse_keep(struct mparse *);
+enum mandoclevel  mparse_readfd(struct mparse *, int, const char *);
+void		  mparse_reset(struct mparse *);
+void		  mparse_result(struct mparse *, 
+			struct mdoc **, struct man **);
+const char	 *mparse_getkeep(const struct mparse *);
+const char	 *mparse_strerror(enum mandocerr);
+const char	 *mparse_strlevel(enum mandoclevel);
 
 __END_DECLS
 

@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.61 2011/10/06 23:04:16 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.62 2011/10/09 17:59:56 schwarze Exp $
 
 .include <bsd.own.mk>
 
-CFLAGS+=-DVERSION=\"1.11.7\"
+CFLAGS+=-DVERSION=\"1.12.0\"
 CFLAGS+=-W -Wall -Wstrict-prototypes
 
 .if ${COMPILER_VERSION:L} == "gcc3" || ${COMPILER_VERSION:L} == "gcc4" 

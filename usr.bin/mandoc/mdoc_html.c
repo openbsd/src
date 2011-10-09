@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.61 2011/09/18 15:54:48 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.62 2011/10/09 17:59:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -258,17 +258,9 @@ static	const char * const lists[LIST_MAX] = {
 void
 html_mdoc(void *arg, const struct mdoc *m)
 {
-	struct html 	*h;
-	struct tag	*t;
 
-	h = (struct html *)arg;
-
-	print_gen_decls(h);
-	t = print_otag(h, TAG_HTML, 0, NULL);
-	print_mdoc(mdoc_meta(m), mdoc_node(m), h);
-	print_tagq(h, t);
-
-	printf("\n");
+	print_mdoc(mdoc_meta(m), mdoc_node(m), (struct html *)arg);
+	putchar('\n');
 }
 
 
@@ -356,13 +348,22 @@ a2offs(const char *p, struct roffsu *su)
 static void
 print_mdoc(MDOC_ARGS)
 {
-	struct tag	*t;
+	struct tag	*t, *tt;
+	struct htmlpair	 tag;
 
-	t = print_otag(h, TAG_HEAD, 0, NULL);
-	print_mdoc_head(m, n, h);
-	print_tagq(h, t);
+	PAIR_CLASS_INIT(&tag, "mandoc");
 
-	t = print_otag(h, TAG_BODY, 0, NULL);
+	if ( ! (HTML_FRAGMENT & h->oflags)) {
+		print_gen_decls(h);
+		t = print_otag(h, TAG_HTML, 0, NULL);
+		tt = print_otag(h, TAG_HEAD, 0, NULL);
+		print_mdoc_head(m, n, h);
+		print_tagq(h, tt);
+		print_otag(h, TAG_BODY, 0, NULL);
+		print_otag(h, TAG_DIV, 1, &tag);
+	} else 
+		t = print_otag(h, TAG_DIV, 1, &tag);
+
 	print_mdoc_nodelist(m, n, h);
 	print_tagq(h, t);
 }

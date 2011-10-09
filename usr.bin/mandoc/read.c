@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.3 2011/09/18 10:25:28 schwarze Exp $ */
+/*	$Id: read.c,v 1.4 2011/10/09 17:59:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -53,6 +53,7 @@ struct	mparse {
 	mandocmsg	  mmsg; /* warning/error message handler */
 	void		 *arg; /* argument to mmsg */
 	const char	 *file; 
+	struct buf	 *secondary;
 };
 
 static	void	  resize_buf(struct buf *, size_t);
@@ -401,6 +402,27 @@ mparse_buf_r(struct mparse *curp, struct buf blk, int start)
 
 		of = 0;
 
+		/*
+		 * Maintain a lookaside buffer of all parsed lines.  We
+		 * only do this if mparse_keep() has been invoked (the
+		 * buffer may be accessed with mparse_getkeep()).
+		 */
+
+		if (curp->secondary) {
+			curp->secondary->buf = 
+				mandoc_realloc
+				(curp->secondary->buf, 
+				 curp->secondary->sz + pos + 2);
+			memcpy(curp->secondary->buf + 
+					curp->secondary->sz, 
+					ln.buf, pos);
+			curp->secondary->sz += pos;
+			curp->secondary->buf
+				[curp->secondary->sz] = '\n';
+			curp->secondary->sz++;
+			curp->secondary->buf
+				[curp->secondary->sz] = '\0';
+		}
 rerun:
 		rr = roff_parseln
 			(curp->roff, curp->line, 
@@ -427,6 +449,13 @@ rerun:
 			assert(MANDOCLEVEL_FATAL <= curp->file_status);
 			break;
 		case (ROFF_SO):
+			/*
+			 * We remove `so' clauses from our lookaside
+			 * buffer because we're going to descend into
+			 * the file recursively.
+			 */
+			if (curp->secondary) 
+				curp->secondary->sz -= pos + 1;
 			mparse_readfd_r(curp, -1, ln.buf + of, 1);
 			if (MANDOCLEVEL_FATAL <= curp->file_status)
 				break;
@@ -690,6 +719,8 @@ mparse_reset(struct mparse *curp)
 		mdoc_reset(curp->mdoc);
 	if (curp->man)
 		man_reset(curp->man);
+	if (curp->secondary)
+		curp->secondary->sz = 0;
 
 	curp->file_status = MANDOCLEVEL_OK;
 	curp->mdoc = NULL;
@@ -706,7 +737,10 @@ mparse_free(struct mparse *curp)
 		man_free(curp->pman);
 	if (curp->roff)
 		roff_free(curp->roff);
+	if (curp->secondary)
+		free(curp->secondary->buf);
 
+	free(curp->secondary);
 	free(curp);
 }
 
@@ -765,4 +799,20 @@ const char *
 mparse_strlevel(enum mandoclevel lvl)
 {
 	return(mandoclevels[lvl]);
+}
+
+void
+mparse_keep(struct mparse *p)
+{
+
+	assert(NULL == p->secondary);
+	p->secondary = mandoc_calloc(1, sizeof(struct buf));
+}
+
+const char *
+mparse_getkeep(const struct mparse *p)
+{
+
+	assert(p->secondary);
+	return(p->secondary->sz ? p->secondary->buf : NULL);
 }

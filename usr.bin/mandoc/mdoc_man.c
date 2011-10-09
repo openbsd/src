@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.3 2011/09/30 00:13:21 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.4 2011/10/09 17:59:56 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -18,50 +18,51 @@
 #include <string.h>
 
 #include "mandoc.h"
+#include "man.h"
 #include "mdoc.h"
 #include "main.h"
 
-static	int	  need_space = 0;
-static	int	  need_nl = 0;
-
 #define	DECL_ARGS const struct mdoc_meta *m, \
-		  const struct mdoc_node *n
+		  const struct mdoc_node *n, \
+		  struct mman *mm
 
-struct	manact {
-	int		(*cond)(DECL_ARGS);
-	int		(*pre)(DECL_ARGS);
-	void		(*post)(DECL_ARGS);
-	const char	 *prefix;
-	const char	 *suffix;
+struct	mman {
+	int		  need_space; /* next word needs prior ws */
+	int		  need_nl; /* next word needs prior nl */
 };
 
-static	void	  print_word(const char *);
-static	void	  print_node(DECL_ARGS);
+struct	manact {
+	int		(*cond)(DECL_ARGS); /* DON'T run actions */
+	int		(*pre)(DECL_ARGS); /* pre-node action */
+	void		(*post)(DECL_ARGS); /* post-node action */
+	const char	 *prefix; /* pre-node string constant */
+	const char	 *suffix; /* post-node string constant */
+};
 
-static	int	  cond_head(DECL_ARGS);
 static	int	  cond_body(DECL_ARGS);
-static	int	  pre_enc(DECL_ARGS);
+static	int	  cond_head(DECL_ARGS);
+static	void	  post_bd(DECL_ARGS);
+static	void	  post_dl(DECL_ARGS);
 static	void	  post_enc(DECL_ARGS);
+static	void	  post_nm(DECL_ARGS);
 static	void	  post_percent(DECL_ARGS);
-static	int	  pre_sect(DECL_ARGS);
+static	void	  post_pf(DECL_ARGS);
 static	void	  post_sect(DECL_ARGS);
-
+static	void	  post_sp(DECL_ARGS);
 static	int	  pre_ap(DECL_ARGS);
 static	int	  pre_bd(DECL_ARGS);
-static	void	  post_bd(DECL_ARGS);
 static	int	  pre_br(DECL_ARGS);
 static	int	  pre_dl(DECL_ARGS);
-static	void	  post_dl(DECL_ARGS);
+static	int	  pre_enc(DECL_ARGS);
 static	int	  pre_it(DECL_ARGS);
 static	int	  pre_nm(DECL_ARGS);
-static	void	  post_nm(DECL_ARGS);
 static	int	  pre_ns(DECL_ARGS);
-static	void	  post_pf(DECL_ARGS);
 static	int	  pre_pp(DECL_ARGS);
 static	int	  pre_sp(DECL_ARGS);
-static	void	  post_sp(DECL_ARGS);
+static	int	  pre_sect(DECL_ARGS);
 static	int	  pre_xr(DECL_ARGS);
-
+static	void	  print_word(struct mman *, const char *);
+static	void	  print_node(DECL_ARGS);
 
 static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, pre_ap, NULL, NULL, NULL }, /* Ap */
@@ -102,7 +103,11 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Op */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ot */
 	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* _Pa */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Rv */
+	{ NULL, pre_enc, post_enc, "The \\fB",
+		"\\fP\nfunction returns the value 0 if successful;\n"
+		"otherwise the value -1 is returned and the global\n"
+		"variable \\fIerrno\\fP is set to indicate the error."
+		}, /* Rv */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _St */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Va */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Vt */
@@ -191,18 +196,34 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* ROOT */
 };
 
-
 static void
-print_word(const char *s)
+print_word(struct mman *mm, const char *s)
 {
-	if (need_nl) {
+
+	if (mm->need_nl) {
+		/* 
+		 * If we need a newline, print it now and start afresh.
+		 */
 		putchar('\n');
-		need_space = 0;
-		need_nl = 0;
-	} else if (need_space &&
-	    (NULL == strchr(".,:;)]?!", s[0]) || '\0' != s[1]))
-		putchar(' ');
-	need_space = ('(' != s[0] && '[' != s[0]) || '\0' != s[1];
+		mm->need_space = 0;
+		mm->need_nl = 0;
+	} else if (mm->need_space && '\0' != s[0])
+		/*
+		 * If we need a space, only print it before
+		 * (1) a nonzero length word;
+		 * (2) a word that is non-punctuation; and
+		 * (3) if punctuation, non-terminating puncutation.
+		 */
+		if (NULL == strchr(".,:;)]?!", s[0]) || '\0' != s[1])
+			putchar(' ');
+
+	/*
+	 * Reassign needing space if we're not following opening
+	 * punctuation.
+	 */
+	mm->need_space = 
+		('(' != s[0] && '[' != s[0]) || '\0' != s[1];
+
 	for ( ; *s; s++) {
 		switch (*s) {
 		case (ASCII_NBRSP):
@@ -212,10 +233,23 @@ print_word(const char *s)
 			putchar('-');
 			break;
 		default:
-			putchar(*s);
+			putchar((unsigned char)*s);
 			break;
 		}
 	}
+}
+
+void
+man_man(void *arg, const struct man *man)
+{
+
+	/*
+	 * Dump the keep buffer.
+	 * We're guaranteed by now that this exists (is non-NULL).
+	 * Flush stdout afterward, just in case.
+	 */
+	fputs(mparse_getkeep(man_mparse(man)), stdout);
+	fflush(stdout);
 }
 
 void
@@ -223,16 +257,18 @@ man_mdoc(void *arg, const struct mdoc *mdoc)
 {
 	const struct mdoc_meta *m;
 	const struct mdoc_node *n;
+	struct mman	        mm;
 
 	m = mdoc_meta(mdoc);
 	n = mdoc_node(mdoc);
 
 	printf(".TH \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"",
-	    m->title, m->msec, m->date, m->os, m->vol);
-	need_nl = 1;
-	need_space = 0;
+			m->title, m->msec, m->date, m->os, m->vol);
 
-	print_node(m, n);
+	memset(&mm, 0, sizeof(struct mman));
+
+	mm.need_nl = 1;
+	print_node(m, n, &mm);
 	putchar('\n');
 }
 
@@ -240,61 +276,93 @@ static void
 print_node(DECL_ARGS)
 {
 	const struct mdoc_node	*prev, *sub;
-	const struct manact	*act = NULL;
+	const struct manact	*act;
 	int			 cond, do_sub;
-
+	
+	/*
+	 * Break the line if we were parsed subsequent the current node.
+	 * This makes the page structure be more consistent.
+	 */
 	prev = n->prev ? n->prev : n->parent;
 	if (prev && prev->line < n->line)
-		need_nl = 1;
+		mm->need_nl = 1;
 
+	act = NULL;
 	cond = 0;
 	do_sub = 1;
+
 	if (MDOC_TEXT == n->type) {
-		if (need_nl && ('.' == *n->string || '\'' == *n->string)) {
-			print_word("\\&");
-			need_space = 0;
+		/*
+		 * Make sure that we don't happen to start with a
+		 * control character at the start of a line.
+		 */
+		if (mm->need_nl && ('.' == *n->string || 
+					'\'' == *n->string)) {
+			print_word(mm, "\\&");
+			mm->need_space = 0;
 		}
-		print_word(n->string);
+		print_word(mm, n->string);
 	} else {
+		/*
+		 * Conditionally run the pre-node action handler for a
+		 * node.
+		 */
 		act = manacts + n->tok;
-		cond = NULL == act->cond || (*act->cond)(m, n);
+		cond = NULL == act->cond || (*act->cond)(m, n, mm);
 		if (cond && act->pre)
-			do_sub = (*act->pre)(m, n);
+			do_sub = (*act->pre)(m, n, mm);
 	}
 
+	/* 
+	 * Conditionally run all child nodes.
+	 * Note that this iterates over children instead of using
+	 * recursion.  This prevents unnecessary depth in the stack.
+	 */
 	if (do_sub)
 		for (sub = n->child; sub; sub = sub->next)
-			print_node(m, sub);
+			print_node(m, sub, mm);
 
+	/*
+	 * Lastly, conditionally run the post-node handler.
+	 */
 	if (cond && act->post)
-		(*act->post)(m, n);
+		(*act->post)(m, n, mm);
 }
 
 static int
 cond_head(DECL_ARGS)
 {
+
 	return(MDOC_HEAD == n->type);
 }
 
 static int
 cond_body(DECL_ARGS)
 {
+
 	return(MDOC_BODY == n->type);
 }
 
+/*
+ * Output a font encoding before a node, e.g., \fR.
+ * This obviously has no trailing space.
+ */
 static int
 pre_enc(DECL_ARGS)
 {
-	const char *prefix;
+	const char	*prefix;
 
 	prefix = manacts[n->tok].prefix;
 	if (NULL == prefix)
 		return(1);
-	print_word(prefix);
-	need_space = 0;
+	print_word(mm, prefix);
+	mm->need_space = 0;
 	return(1);
 }
 
+/*
+ * Output a font encoding subsequent a node, e.g., \fP.
+ */
 static void
 post_enc(DECL_ARGS)
 {
@@ -303,54 +371,65 @@ post_enc(DECL_ARGS)
 	suffix = manacts[n->tok].suffix;
 	if (NULL == suffix)
 		return;
-	need_space = 0;
-	print_word(suffix);
+	mm->need_space = 0;
+	print_word(mm, suffix);
 }
 
+/*
+ * Used in listings (percent = %A, e.g.).
+ * FIXME: this is incomplete. 
+ * It doesn't print a nice ", and" for lists.
+ */
 static void
 post_percent(DECL_ARGS)
 {
 
-	post_enc(m, n);
+	post_enc(m, n, mm);
 	if (n->next)
-		print_word(",");
+		print_word(mm, ",");
 	else {
-		print_word(".");
-		need_nl = 1;
+		print_word(mm, ".");
+		mm->need_nl = 1;
 	}
 }
 
+/*
+ * Print before a section header.
+ */
 static int
 pre_sect(DECL_ARGS)
 {
 
 	if (MDOC_HEAD != n->type)
 		return(1);
-	need_nl = 1;
-	print_word(manacts[n->tok].prefix);
-	print_word("\"");
-	need_space = 0;
+	mm->need_nl = 1;
+	print_word(mm, manacts[n->tok].prefix);
+	print_word(mm, "\"");
+	mm->need_space = 0;
 	return(1);
 }
 
+/*
+ * Print subsequent a section header.
+ */
 static void
 post_sect(DECL_ARGS)
 {
 
 	if (MDOC_HEAD != n->type)
 		return;
-	need_space = 0;
-	print_word("\"");
-	need_nl = 1;
+	mm->need_space = 0;
+	print_word(mm, "\"");
+	mm->need_nl = 1;
 }
 
 static int
 pre_ap(DECL_ARGS)
 {
 
-	need_space = 0;
-	print_word("'");
-	need_space = 0;
+	mm->need_space = 0;
+	print_word(mm, "'");
+	mm->need_space = 0;
 	return(0);
 }
 
@@ -360,10 +439,10 @@ pre_bd(DECL_ARGS)
 
 	if (DISP_unfilled == n->norm->Bd.type ||
 	    DISP_literal  == n->norm->Bd.type) {
-		need_nl = 1;
-		print_word(".nf");
+		mm->need_nl = 1;
+		print_word(mm, ".nf");
 	}
-	need_nl = 1;
+	mm->need_nl = 1;
 	return(1);
 }
 
@@ -373,19 +452,19 @@ post_bd(DECL_ARGS)
 
 	if (DISP_unfilled == n->norm->Bd.type ||
 	    DISP_literal  == n->norm->Bd.type) {
-		need_nl = 1;
-		print_word(".fi");
+		mm->need_nl = 1;
+		print_word(mm, ".fi");
 	}
-	need_nl = 1;
+	mm->need_nl = 1;
 }
 
 static int
 pre_br(DECL_ARGS)
 {
 
-	need_nl = 1;
-	print_word(".br");
-	need_nl = 1;
+	mm->need_nl = 1;
+	print_word(mm, ".br");
+	mm->need_nl = 1;
 	return(0);
 }
 
@@ -393,9 +472,9 @@ static int
 pre_dl(DECL_ARGS)
 {
 
-	need_nl = 1;
-	print_word(".RS 6n");
-	need_nl = 1;
+	mm->need_nl = 1;
+	print_word(mm, ".RS 6n");
+	mm->need_nl = 1;
 	return(1);
 }
 
@@ -403,9 +482,9 @@ static void
 post_dl(DECL_ARGS)
 {
 
-	need_nl = 1;
-	print_word(".RE");
-	need_nl = 1;
+	mm->need_nl = 1;
+	print_word(mm, ".RE");
+	mm->need_nl = 1;
 }
 
 static int
@@ -414,21 +493,21 @@ pre_it(DECL_ARGS)
 	const struct mdoc_node *bln;
 
 	if (MDOC_HEAD == n->type) {
-		need_nl = 1;
-		print_word(".TP");
+		mm->need_nl = 1;
+		print_word(mm, ".TP");
 		bln = n->parent->parent->prev;
 		switch (bln->norm->Bl.type) {
 		case (LIST_bullet):
-			print_word("4n");
-			need_nl = 1;
-			print_word("\\fBo\\fP");
+			print_word(mm, "4n");
+			mm->need_nl = 1;
+			print_word(mm, "\\fBo\\fP");
 			break;
 		default:
 			if (bln->norm->Bl.width)
-				print_word(bln->norm->Bl.width);
+				print_word(mm, bln->norm->Bl.width);
 			break;
 		}
-		need_nl = 1;
+		mm->need_nl = 1;
 	}
 	return(1);
 }
@@ -439,10 +518,10 @@ pre_nm(DECL_ARGS)
 
 	if (MDOC_ELEM != n->type && MDOC_HEAD != n->type)
 		return(1);
-	print_word("\\fB");
-	need_space = 0;
+	print_word(mm, "\\fB");
+	mm->need_space = 0;
 	if (NULL == n->child)
-		print_word(m->name);
+		print_word(mm, m->name);
 	return(1);
 }
 
@@ -452,15 +531,15 @@ post_nm(DECL_ARGS)
 
 	if (MDOC_ELEM != n->type && MDOC_HEAD != n->type)
 		return;
-	need_space = 0;
-	print_word("\\fP");
+	mm->need_space = 0;
+	print_word(mm, "\\fP");
 }
 
 static int
 pre_ns(DECL_ARGS)
 {
 
-	need_space = 0;
+	mm->need_space = 0;
 	return(0);
 }
 
@@ -468,19 +547,19 @@ static void
 post_pf(DECL_ARGS)
 {
 
-	need_space = 0;
+	mm->need_space = 0;
 }
 
 static int
 pre_pp(DECL_ARGS)
 {
 
-	need_nl = 1;
+	mm->need_nl = 1;
 	if (MDOC_It == n->parent->tok)
-		print_word(".sp");
+		print_word(mm, ".sp");
 	else
-		print_word(".PP");
-	need_nl = 1;
+		print_word(mm, ".PP");
+	mm->need_nl = 1;
 	return(1);
 }
 
@@ -488,8 +567,8 @@ static int
 pre_sp(DECL_ARGS)
 {
 
-	need_nl = 1;
-	print_word(".sp");
+	mm->need_nl = 1;
+	print_word(mm, ".sp");
 	return(1);
 }
 
@@ -497,7 +576,7 @@ static void
 post_sp(DECL_ARGS)
 {
 
-	need_nl = 1;
+	mm->need_nl = 1;
 }
 
 static int
@@ -507,13 +586,13 @@ pre_xr(DECL_ARGS)
 	n = n->child;
 	if (NULL == n)
 		return(0);
-	print_node(m, n);
+	print_node(m, n, mm);
 	n = n->next;
 	if (NULL == n)
 		return(0);
-	need_space = 0;
-	print_word("(");
-	print_node(m, n);
-	print_word(")");
+	mm->need_space = 0;
+	print_word(mm, "(");
+	print_node(m, n, mm);
+	print_word(mm, ")");
 	return(0);
 }
