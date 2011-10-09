@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.48 2011/10/09 17:01:34 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.49 2011/10/09 17:02:14 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, 2010, 2011, Miodrag Vallat.
  *
@@ -839,12 +839,29 @@ m8820x_dma_cachectl(paddr_t _pa, psize_t _size, int op)
 
 	/*
 	 * Restore data from incomplete cache lines having been invalidated,
-	 * if necessary.
+	 * if necessary, write them back, and invalidate them again.
+	 * (Note that these lines have been invalidated from all processors
+	 *  in the loop above, so there is no need to remote invalidate them
+	 *  again.)
 	 */
 	if (sz1 != 0)
 		bcopy(lines, (void *)pa1, sz1);
 	if (sz2 != 0)
 		bcopy(lines + MC88200_CACHE_LINE, (void *)pa2, sz2);
+	if (sz1 != 0) {
+#ifdef MULTIPROCESSOR
+		m8820x_cmmu_wbinv_locked(ci->ci_cpuid, pa1, MC88200_CACHE_LINE);
+#else
+		m8820x_cmmu_wbinv_locked(cpu, pa1, MC88200_CACHE_LINE);
+#endif
+	}
+	if (sz2 != 0) {
+#ifdef MULTIPROCESSOR
+		m8820x_cmmu_wbinv_locked(ci->ci_cpuid, pa2, MC88200_CACHE_LINE);
+#else
+		m8820x_cmmu_wbinv_locked(cpu, pa2, MC88200_CACHE_LINE);
+#endif
+	}
 
 	CMMU_UNLOCK;
 	set_psr(psr);
