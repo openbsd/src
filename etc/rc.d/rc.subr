@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.52 2011/10/09 08:48:53 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.53 2011/10/09 16:46:55 schwarze Exp $
 #
 # Copyright (c) 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -34,7 +34,8 @@ rc_write_runfile() {
 }
 
 rc_read_runfile() {
-	[ -f ${_RC_RUNFILE} ] && pexp=$(< ${_RC_RUNFILE})
+	[ -f ${_RC_RUNFILE} ] && local _new_pexp=$(< ${_RC_RUNFILE})
+	[ -n "${_new_pexp}" ] && pexp="${_new_pexp}"
 }
 
 rc_rm_runfile() {
