@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.46 2011/10/09 17:01:32 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.47 2011/10/09 17:09:27 miod Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -765,7 +765,10 @@ aviion_bootstrap()
 	initmsgbuf((caddr_t)pmap_steal_memory(MSGBUFSIZE, NULL, NULL),
 	    MSGBUFSIZE);
 
-	pmap_bootstrap(0, 0);	/* ROM image is on top of physical memory */
+	/* ROM work area is on top of physical memory */
+	/* but we need to make VBR page readable */
+	/* XXX relocate VBR as done on mvme88k */
+	pmap_bootstrap(0, PAGE_SIZE);
 
 	/* Initialize the "u-area" pages. */
 	bzero((caddr_t)curpcb, USPACE);
@@ -965,11 +968,6 @@ myetheraddr(u_char *cp)
 
 /*
  * Attempt to identify which AViiON flavour we are running on.
- * The only thing we can do at this point is peek at random addresses and
- * see if they cause bus errors, or not.
- *
- * These heuristics are probably not the best; feel free to come with better
- * ones...
  */
 
 struct aviion_system {
@@ -1056,11 +1054,10 @@ aviion_identify()
 		if (system->cpuid != 0 && system->cpuid != cpuid)
 			continue;
 
-		hw_vendor = "Data General";
-		hw_prod = "AViiON";
-		strlcpy(cpu_model, system->model, sizeof cpu_model);
-
 		if (system->platform != NULL) {
+			hw_vendor = "Data General";
+			hw_prod = "AViiON";
+			strlcpy(cpu_model, system->model, sizeof cpu_model);
 			platform = system->platform;
 			return;
 		}
@@ -1090,8 +1087,9 @@ aviion_identify()
 			    "Please contact <m88k@openbsd.org>\n",
 			    cpuid);
 		}
-	}
 
-	scm_printf(excuse);
-	scm_halt();
+		scm_printf(excuse);
+		scm_halt();
+	}
+	/* NOTREACHED */
 }
