@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.82 2011/09/01 07:52:46 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.83 2011/10/09 15:02:22 sthen Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -201,6 +201,8 @@ mm_install() {
 		if [ -f ${DESTDIR}/etc/login.conf.db ]; then
 			echo " (running cap_mkdb(1))"
 			cap_mkdb ${DESTDIR}/etc/login.conf
+		else
+			echo ""
 		fi
 		export NEED_REBOOT=1
 		;;
