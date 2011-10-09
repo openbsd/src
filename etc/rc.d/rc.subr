@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.51 2011/10/07 07:26:49 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.52 2011/10/09 08:48:53 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -26,6 +26,19 @@ rc_err() {
 
 rc_usage() {
 	rc_err "usage: $0 [-df] {start|check|reload|restart|stop}"
+}
+
+rc_write_runfile() {
+	[ -d ${_RC_RUNDIR} ] || mkdir -p ${_RC_RUNDIR} && \
+		print -rn -- "${pexp}" > ${_RC_RUNFILE}
+}
+
+rc_read_runfile() {
+	[ -f ${_RC_RUNFILE} ] && pexp=$(< ${_RC_RUNFILE})
+}
+
+rc_rm_runfile() {
+	[ -f ${_RC_RUNFILE} ] && rm ${_RC_RUNFILE}
 }
 
 rc_start() {
@@ -88,6 +101,8 @@ rc_cmd() {
 	[ X"${rc_bg}" = X"YES" ] && local _bg="&"
 	[ -n "${_RC_DEBUG}" ] || local _n="-n"
 
+	rc_do rc_read_runfile
+
 	case "$1" in
 	check)
 		rc_do rc_check
@@ -106,10 +121,12 @@ rc_cmd() {
 				sleep 1
 				rc_do rc_wait start || break
 			fi
+			rc_do rc_write_runfile
 			rc_exit ok
 		done
 		# handle failure
 		type rc_post >/dev/null && rc_do rc_post
+		rc_do rc_rm_runfile
 		rc_exit failed
 		;;
 	stop)
@@ -120,6 +137,7 @@ rc_cmd() {
 		if type rc_post >/dev/null; then \
 			rc_do rc_post || rc_exit failed
 		fi
+		rc_do rc_rm_runfile
 		rc_exit ok
 		;;
 	reload)
@@ -156,6 +174,9 @@ done
 shift $((OPTIND-1))
 
 _name=$(basename $0)
+_RC_RUNDIR=/var/run/rc.d
+_RC_RUNFILE=${_RC_RUNDIR}/${_name}
+
 eval _rcflags=\${${_name}_flags}
 eval _rcuser=\${${_name}_user}
 
