@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus_dma.c,v 1.17 2011/06/23 20:44:39 ariane Exp $	*/
+/*      $OpenBSD: bus_dma.c,v 1.18 2011/10/09 17:08:22 miod Exp $	*/
 /*      $NetBSD: bus_dma.c,v 1.2 2001/06/10 02:31:25 briggs Exp $        */
 
 /*-
@@ -548,6 +548,8 @@ bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
                                uvm_km_free(kernel_map, sva, ssize);
                                return (error);
                         }
+			if (flags & BUS_DMA_COHERENT)
+				pmap_page_uncache(addr);
                 }
         }
 	pmap_update(pmap_kernel());

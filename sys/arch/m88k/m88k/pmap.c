@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.66 2011/10/09 17:07:37 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.67 2011/10/09 17:08:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -1882,4 +1882,53 @@ pmap_cache_ctrl(vaddr_t sva, vaddr_t eva, u_int mode)
 		tlb_kflush(va, npte);
 	}
 	splx(s);
+}
+
+/*
+ * [MD PUBLIC]
+ * Change the cache control bits of all mappings of the given physical page to
+ * disable cached accesses.
+ */
+void
+pmap_page_uncache(paddr_t pa)
+{
+	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
+	struct pmap *pmap;
+	pv_entry_t pvl, pvep;
+	pt_entry_t *pte, opte, npte;
+	vaddr_t va;
+	int s;
+
+	s = splvm();
+	pvl = pg_to_pvh(pg);
+	if (pvl->pv_pmap != NULL) {
+		for (pvep = pvl; pvep != NULL; pvep = pvep->pv_next) {
+			pmap = pvep->pv_pmap;
+			va = pvep->pv_va;
+			pte = pmap_pte(pmap, va);
+
+			if (pte == NULL || !PDT_VALID(pte))
+				continue;	 /* no page mapping */
+			opte = *pte;
+			if ((opte & CACHE_MASK) != CACHE_INH) {
+				/*
+				 * Skip the direct mapping; it will be changed
+				 * by the pmap_cache_ctrl() call below.
+				 */
+				if (pmap == pmap_kernel() && va == pa)
+					continue;
+				/*
+				 * Invalidate pte temporarily to avoid the
+				 * specified bit being written back by any
+				 * other cpu.
+				 */
+				invalidate_pte(pte);
+				npte = (opte & ~CACHE_MASK) | CACHE_INH;
+				*pte = npte;
+				tlb_flush(pmap, va, npte);
+			}
+		}
+	}
+	splx(s);
+	pmap_cache_ctrl(pa, pa + PAGE_SIZE, CACHE_INH);
 }
