@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.127 2011/05/16 21:05:51 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.128 2011/10/09 18:39:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -60,6 +60,8 @@ lka_imsg(struct imsgev *iev, struct imsg *imsg)
 	struct rule		*rule;
 	struct map		*map;
 	void			*tmp;
+
+	log_imsg(PROC_LKA, iev->proc, imsg);
 
 	if (imsg->hdr.type == IMSG_DNS_HOST || imsg->hdr.type == IMSG_DNS_MX ||
 	    imsg->hdr.type == IMSG_DNS_PTR) {

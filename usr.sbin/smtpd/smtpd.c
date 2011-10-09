@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.130 2011/09/01 19:56:49 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.131 2011/10/09 18:39:54 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -88,6 +88,8 @@ parent_imsg(struct imsgev *iev, struct imsg *imsg)
 	struct auth		*auth;
 	struct auth_backend	*auth_backend;
 	int			 fd;
+
+	log_imsg(PROC_PARENT, iev->proc, imsg);
 
 	if (iev->proc == PROC_SMTP) {
 		switch (imsg->hdr.type) {
@@ -1111,3 +1113,113 @@ imsg_dispatch(int fd, short event, void *p)
 }
 
 SPLAY_GENERATE(childtree, child, entry, child_cmp);
+
+const char * proc_to_str(int);
+const char * imsg_to_str(int);
+
+void
+log_imsg(int to, int from, struct imsg *imsg)
+{
+	log_debug("imsg: %s <- %s: %s (len=%zu)",
+		proc_to_str(to),
+		proc_to_str(from),
+		imsg_to_str(imsg->hdr.type),
+		imsg->hdr.len - IMSG_HEADER_SIZE);
+}
+
+#define CASE(x) case x : return #x
+
+const char *
+proc_to_str(int proc)
+{
+	switch (proc) {
+	CASE(PROC_PARENT);
+	CASE(PROC_SMTP);
+	CASE(PROC_MFA);
+	CASE(PROC_LKA);
+	CASE(PROC_QUEUE);
+	CASE(PROC_MDA);
+	CASE(PROC_MTA);
+	CASE(PROC_CONTROL);
+	CASE(PROC_RUNNER);
+	default:
+		return "PROC_???";
+	}
+}
+
+const char *
+imsg_to_str(int type)
+{
+	switch(type) {
+	CASE(IMSG_NONE);
+	CASE(IMSG_CTL_OK);
+	CASE(IMSG_CTL_FAIL);
+	CASE(IMSG_CTL_SHUTDOWN);
+	CASE(IMSG_CTL_VERBOSE);
+	CASE(IMSG_CONF_START);
+	CASE(IMSG_CONF_SSL);
+	CASE(IMSG_CONF_LISTENER);
+	CASE(IMSG_CONF_MAP);
+	CASE(IMSG_CONF_MAP_CONTENT);
+	CASE(IMSG_CONF_RULE);
+	CASE(IMSG_CONF_RULE_SOURCE);
+	CASE(IMSG_CONF_FILTER);
+	CASE(IMSG_CONF_END);
+	CASE(IMSG_CONF_RELOAD);
+	CASE(IMSG_LKA_MAIL);
+	CASE(IMSG_LKA_RCPT);
+	CASE(IMSG_LKA_SECRET);
+	CASE(IMSG_LKA_RULEMATCH);
+	CASE(IMSG_MDA_SESS_NEW);
+	CASE(IMSG_MDA_DONE);
+
+	CASE(IMSG_MFA_HELO);
+	CASE(IMSG_MFA_MAIL);
+	CASE(IMSG_MFA_RCPT);
+	CASE(IMSG_MFA_DATALINE);
+
+	CASE(IMSG_QUEUE_CREATE_MESSAGE);
+	CASE(IMSG_QUEUE_SUBMIT_ENVELOPE);
+	CASE(IMSG_QUEUE_COMMIT_ENVELOPES);
+	CASE(IMSG_QUEUE_REMOVE_MESSAGE);
+	CASE(IMSG_QUEUE_COMMIT_MESSAGE);
+	CASE(IMSG_QUEUE_TEMPFAIL);
+	CASE(IMSG_QUEUE_PAUSE_LOCAL);
+	CASE(IMSG_QUEUE_PAUSE_OUTGOING);
+	CASE(IMSG_QUEUE_RESUME_LOCAL);
+	CASE(IMSG_QUEUE_RESUME_OUTGOING);
+
+	CASE(IMSG_QUEUE_MESSAGE_UPDATE);
+	CASE(IMSG_QUEUE_MESSAGE_FD);
+	CASE(IMSG_QUEUE_MESSAGE_FILE);
+	CASE(IMSG_QUEUE_SCHEDULE);
+	CASE(IMSG_QUEUE_REMOVE);
+
+	CASE(IMSG_RUNNER_REMOVE);
+	CASE(IMSG_RUNNER_SCHEDULE);
+
+	CASE(IMSG_BATCH_CREATE);
+	CASE(IMSG_BATCH_APPEND);
+	CASE(IMSG_BATCH_CLOSE);
+	CASE(IMSG_BATCH_DONE);
+
+	CASE(IMSG_PARENT_ENQUEUE_OFFLINE);
+	CASE(IMSG_PARENT_FORWARD_OPEN);
+	CASE(IMSG_PARENT_FORK_MDA);
+
+	CASE(IMSG_PARENT_AUTHENTICATE);
+	CASE(IMSG_PARENT_SEND_CONFIG);
+
+	CASE(IMSG_STATS);
+	CASE(IMSG_SMTP_ENQUEUE);
+	CASE(IMSG_SMTP_PAUSE);
+	CASE(IMSG_SMTP_RESUME);
+
+	CASE(IMSG_DNS_HOST);
+	CASE(IMSG_DNS_HOST_END);
+	CASE(IMSG_DNS_MX);
+	CASE(IMSG_DNS_PTR);
+	default:
+		return "IMSG_???";
+	}
+}

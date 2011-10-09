@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.91 2011/09/01 20:17:47 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.92 2011/10/09 18:39:54 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -61,6 +61,8 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 	struct ssl		*ssl;
 	struct dns		*dns;
 
+	log_imsg(PROC_SMTP, iev->proc, imsg);
+
 	if (iev->proc == PROC_LKA) {
 		switch (imsg->hdr.type) {
 		case IMSG_DNS_PTR:
@@ -83,7 +85,6 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 		case IMSG_MFA_HELO:
 		case IMSG_MFA_MAIL:
 		case IMSG_MFA_RCPT:
-			log_debug("smtp: got imsg_mfa_helo/mail/rcpt");
 		case IMSG_MFA_DATALINE:
 			ss = imsg->data;
 			s = session_lookup(ss->id);
@@ -99,7 +100,6 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 
 		switch (imsg->hdr.type) {
 		case IMSG_QUEUE_CREATE_MESSAGE:
-			log_debug("smtp: imsg_queue_create_message returned");
 			s = session_lookup(ss->id);
 			if (s == NULL)
 				return;
@@ -108,7 +108,6 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 			return;
 
 		case IMSG_QUEUE_MESSAGE_FILE:
-			log_debug("smtp: imsg_queue_message_file returned");
 			s = session_lookup(ss->id);
 			if (s == NULL) {
 				close(imsg->fd);
@@ -125,7 +124,6 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 			return;
 
 		case IMSG_QUEUE_TEMPFAIL:
-			log_debug("smtp: got imsg_queue_tempfail");
 			skey.s_id = ss->id;
 			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &skey);
 			if (s == NULL)
@@ -138,7 +136,6 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 			return;
 
 		case IMSG_QUEUE_COMMIT_ENVELOPES:
-			log_debug("smtp: got imsg_queue_commit_envelopes");
 			s = session_lookup(ss->id);
 			if (s == NULL)
 				return;
@@ -146,7 +143,6 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 			return;
 
 		case IMSG_QUEUE_COMMIT_MESSAGE:
-			log_debug("smtp: got imsg_queue_commit_message");
 			s = session_lookup(ss->id);
 			if (s == NULL)
 				return;
