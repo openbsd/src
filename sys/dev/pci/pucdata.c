@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.74 2011/04/20 04:58:29 mlarkin Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.75 2011/10/09 21:46:32 jsg Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -1732,6 +1732,14 @@ const struct puc_device_description puc_devs[] = {
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+	{   /* "WinChipHead CH352", */
+	    {	PCI_VENDOR_WCH, PCI_PRODUCT_WCH_CH352,		0, 0	},
+	    {	0xffff,	0xffff,					0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
 	    },
 	},
 
