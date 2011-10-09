@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.52 2011/08/17 10:48:27 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.53 2011/10/09 16:43:50 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -179,6 +179,14 @@ sub handle_options
 	$state->{dont_run_scripts} = $state->opt('I');
 	$state->{automatic} = $state->opt('a') // 0;
 	$ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
+	if ($state->{not}) {
+		$state->{loglevel} = 0;
+	}
+	$state->{loglevel} //= $state->config->value("loglevel") // 1;
+	if ($state->{loglevel}) {
+		require Sys::Syslog;
+		Sys::Syslog::openlog($state->{cmd}, "nofatal");
+	}
 }
 
 sub init
@@ -190,14 +198,6 @@ sub init
 	$self->{recorder} = OpenBSD::SharedItemsRecorder->new;
 	$self->{v} = 0;
 	$self->{wantntogo} = $self->config->istrue("ntogo");
-	if ($self->{not}) {
-		$self->{loglevel} = 0;
-	}
-	$self->{loglevel} //= $self->config->value("loglevel") // 1;
-	if ($self->{loglevel}) {
-		require Sys::Syslog;
-		Sys::Syslog::openlog($self->{cmd}, "nofatal");
-	}
 	$self->SUPER::init(@_);
 	$self->{export_level}++;
 }
