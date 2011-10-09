@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.65 2011/10/09 17:04:07 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.66 2011/10/09 17:07:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -129,8 +129,20 @@ do { \
 struct pool pmappool, pvpool;
 struct pmap kernel_pmap_store;
 
-apr_t	kernel_apr_cmode = CACHE_WT;	/* XXX CACHE_DFL does not work yet */
-apr_t	userland_apr_cmode = CACHE_DFL;
+/*
+ * Cacheability settings for page tables and kernel data.
+ */
+
+/* #define	CACHE_PT	(CPU_IS88100 ? CACHE_INH : CACHE_WT) */
+#define	CACHE_PT	CACHE_WT
+
+#if defined(M88110) && defined(MULTIPROCESSOR)
+apr_t	kernel_apr_cmode = CACHE_DFL;		/* might be downgraded to WT */
+#define	KERNEL_APR_CMODE	kernel_apr_cmode
+#else
+#define	KERNEL_APR_CMODE	CACHE_DFL
+#endif
+#define	USERLAND_APR_CMODE	CACHE_DFL
 apr_t	default_apr = CACHE_GLOBAL | APR_V;
 
 /*
@@ -512,7 +524,7 @@ pmap_expand_kmap(vaddr_t va, int canfail)
 	}
 
 	/* memory for page tables should not be writeback */
-	pmap_cache_ctrl(pa, pa + PAGE_SIZE, CPU_IS88100 ? CACHE_INH : CACHE_WT);
+	pmap_cache_ctrl(pa, pa + PAGE_SIZE, CACHE_PT);
 	sdt = SDTENT(pmap_kernel(), va);
 	*sdt = pa | SG_SO | SG_RW | PG_M | SG_V;
 	return sdt_pte(sdt, va);
@@ -548,7 +560,7 @@ pmap_expand(pmap_t pmap, vaddr_t va, int canfail)
 
 	pa = VM_PAGE_TO_PHYS(pg);
 	/* memory for page tables should not be writeback */
-	pmap_cache_ctrl(pa, pa + PAGE_SIZE, CPU_IS88100 ? CACHE_INH : CACHE_WT);
+	pmap_cache_ctrl(pa, pa + PAGE_SIZE, CACHE_PT);
 
 	*sdt = pa | SG_RW | PG_M | SG_V;
 
@@ -706,14 +718,17 @@ pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 		*pdt++ = pa | PG_SO | PG_RO | PG_W | PG_V;
 		pa += PAGE_SIZE;
 	}
-	/* kernel data */
+	/* kernel data and symbols */
 	for (i = atop(sptpa) - atop(pa); i != 0; i--) {
+#ifdef MULTIPROCESSOR
+		*pdt++ = pa | PG_SO | PG_RW | PG_M_U | PG_W | PG_V | CACHE_WT;
+#else
 		*pdt++ = pa | PG_SO | PG_RW | PG_M_U | PG_W | PG_V;
+#endif
 		pa += PAGE_SIZE;
 	}
 	/* kernel page tables */
-	template = PG_SO | PG_RW | PG_M_U | PG_W | PG_V |
-	    (CPU_IS88100 ? CACHE_INH : CACHE_WT);
+	template = PG_SO | PG_RW | PG_M_U | PG_W | PG_V | CACHE_PT;
 	for (i = atop(eptpa) - atop(pa); i != 0; i--) {
 		*pdt++ = pa | template;
 		pa += PAGE_SIZE;
@@ -745,12 +760,19 @@ pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 	 * Switch to using new page tables
 	 */
 
-#if !defined(MULTIPROCESSOR) && defined(M88110)
-	if (CPU_IS88110)
+#if defined(M88110)
+	if (CPU_IS88110) {
+#ifdef MULTIPROCESSOR
+		/* XXX until whatever causes the kernel to hang without
+		   XXX is understood and fixed */
+		kernel_apr_cmode = CACHE_WT;
+#else
 		default_apr &= ~CACHE_GLOBAL;
 #endif
+	}
+#endif
 	pmap_kernel()->pm_count = 1;
-	pmap_kernel()->pm_apr = sptpa | default_apr | kernel_apr_cmode;
+	pmap_kernel()->pm_apr = sptpa | default_apr | KERNEL_APR_CMODE;
 
 	DPRINTF(CD_BOOT, ("default apr %08x kernel apr %08x\n",
 	    default_apr, sptpa));
@@ -814,10 +836,10 @@ pmap_create(void)
 
 	pa = VM_PAGE_TO_PHYS(pg);
 	/* memory for page tables should not be writeback */
-	pmap_cache_ctrl(pa, pa + PAGE_SIZE, CPU_IS88100 ? CACHE_INH : CACHE_WT);
+	pmap_cache_ctrl(pa, pa + PAGE_SIZE, CACHE_PT);
 
 	pmap->pm_stab = (sdt_entry_t *)pa;
-	pmap->pm_apr = pa | default_apr | userland_apr_cmode;
+	pmap->pm_apr = pa | default_apr | USERLAND_APR_CMODE;
 	pmap->pm_count = 1;
 
 	DPRINTF(CD_CREAT, ("pmap_create() -> pmap %p, pm_stab %p\n", pmap, pa));
@@ -1183,18 +1205,17 @@ pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte, struct vm_page *pg,
 			pool_put(&pvpool, cur);
 		} else {
 			pvl->pv_pmap = NULL;
-#ifdef M88100
-			if (CPU_IS88100 &&
-			    kernel_apr_cmode != userland_apr_cmode) {
-				/* XXX Why isn't cmmu_dcache_wb() enough? */
-				if (0)
-					cmmu_dcache_wb(cpu_number(),
-					    pa, PAGE_SIZE);
-				else
-					cmmu_cache_wbinv(cpu_number(),
-					    pa, PAGE_SIZE);
-			}
-#endif
+			/*
+			 * This page is no longer in use, and is likely
+			 * to be reused soon; since it may still have
+			 * dirty cache lines and may be used for I/O
+			 * (and risk being invalidated by the bus_dma
+			 * code without getting a chance of writeback),
+			 * we make sure the page gets written back.
+			 */
+			if (KERNEL_APR_CMODE == CACHE_DFL ||
+			    USERLAND_APR_CMODE == CACHE_DFL)
+				cmmu_dcache_wb(cpu_number(), pa, PAGE_SIZE);
 		}
 	} else {
 		prev->pv_next = cur->pv_next;
@@ -1294,6 +1315,18 @@ pmap_kremove(vaddr_t va, vsize_t len)
 
 					opte = invalidate_pte(pte);
 					tlb_kflush(va, PG_NV);
+
+					/*
+					 * Make sure the page is written back
+					 * if it was cached.
+					 */
+					if (KERNEL_APR_CMODE == CACHE_DFL &&
+					    (opte & (CACHE_INH | CACHE_WT)) ==
+					    0) {
+						cmmu_dcache_wb(cpu_number(),
+						    ptoa(PG_PFNUM(opte)),
+						    PAGE_SIZE);
+					}
 				}
 				va += PAGE_SIZE;
 				pte++;
@@ -1435,12 +1468,10 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 
 	DPRINTF(CD_COPY, ("pmap_copy_page(%p,%p) pa %p %p\n",
 	    srcpg, dstpg, src, dst));
-#ifdef M88100
-	if (CPU_IS88100 &&
-	    kernel_apr_cmode != userland_apr_cmode)
-		cmmu_dcache_wb(cpu_number(), src, PAGE_SIZE);
-#endif
 	curcpu()->ci_copypage((vaddr_t)src, (vaddr_t)dst);
+
+	if (KERNEL_APR_CMODE == CACHE_DFL)
+		cmmu_dcache_wb(cpu_number(), dst, PAGE_SIZE);
 }
 
 /*
@@ -1454,6 +1485,9 @@ pmap_zero_page(struct vm_page *pg)
 
 	DPRINTF(CD_ZERO, ("pmap_zero_page(%p) pa %p\n", pg, pa));
 	curcpu()->ci_zeropage((vaddr_t)pa);
+
+	if (KERNEL_APR_CMODE == CACHE_DFL)
+		cmmu_dcache_wb(cpu_number(), pa, PAGE_SIZE);
 }
 
 /*
@@ -1829,7 +1863,7 @@ pmap_cache_ctrl(vaddr_t sva, vaddr_t eva, u_int mode)
 					if (mode & CACHE_INH)
 						cmmu_cache_wbinv(cpu,
 						    pa, PAGE_SIZE);
-					else
+					else if (KERNEL_APR_CMODE == CACHE_DFL)
 						cmmu_dcache_wb(cpu,
 						    pa, PAGE_SIZE);
 #ifdef MULTIPROCESSOR
