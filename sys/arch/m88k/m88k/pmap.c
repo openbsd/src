@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.63 2011/01/05 22:20:22 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.64 2011/10/09 17:01:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -763,12 +763,6 @@ pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 void
 pmap_bootstrap_cpu(cpuid_t cpu)
 {
-	/* Invalidate entire kernel TLB and get ready for address translation */
-#ifdef MULTIPROCESSOR
-	if (cpu != master_cpu)
-		cmmu_initialize_cpu(cpu);
-#endif
-
 	/* Load supervisor pointer to segment table. */
 	cmmu_set_sapr(pmap_kernel()->pm_apr);
 #ifdef PMAPDEBUG

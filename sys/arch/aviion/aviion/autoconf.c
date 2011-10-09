@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.12 2010/11/18 21:13:19 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.13 2011/10/09 17:01:32 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -85,12 +85,15 @@ cpu_configure()
 	if (config_rootfound("mainbus", "mainbus") == 0)
 		panic("no mainbus found");
 
+	/* NO PROM CALLS FROM NOW ON */
+
+	cold = 0;
+
 	/*
 	 * Turn external interrupts on.
 	 */
 	set_psr(get_psr() & ~PSR_IND);
 	spl0();
-	cold = 0;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.14 2010/12/23 20:05:07 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.15 2011/10/09 17:01:32 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -191,17 +191,6 @@ ASLOCAL(main_start)
 	bsr.n	_C_LABEL(main)
 	 addu	r31, r31, USPACE
 
-	or.u	r2, r0, hi16(_ASM_LABEL(main_panic))
-	bsr.n	_C_LABEL(panic)
-	 or	r2, r2, lo16(_ASM_LABEL(main_panic))
-
-	data
-	.align	4
-ASLOCAL(main_panic)
-	string	"main() returned\0"
-	text
-	.align	8
-
 #ifdef MULTIPROCESSOR
 
 	/*
@@ -221,11 +210,11 @@ GLOBAL(secondary_start)
 	xmem	r22, r11, r0	/* if r22 becomes zero, we own the lock... */
 	bcnd	eq0, r22, 4f	/* ... but if not, we must wait */
 2:
-	/* just watch the lock until it looks clear */
+	/* just watch the lock until it clears */
 	ld	r22, r11, r0
 	bcnd	eq0, r22, 1b
 	/* wait a bit to avoid overloading the bus */
-	or.u	r2,  r0,  1
+	or.u	r2,  r0,  100
 3:
 	subu	r2,  r2,  1
 	bcnd	ne0, r2,  3b
@@ -234,9 +223,9 @@ GLOBAL(secondary_start)
 
 	/*
 	 * We are now running free with cpu_hatch_mutex held; other
-	 * secondary processors are waiting for the lock, and the main
-	 * processor is waiting for us to decrease the hatch counter,
-	 * which we'll do in secondary_main() later.
+	 * secondary processors (if any) are waiting for the lock,
+	 * and the main processor is waiting for us to decrease the
+	 * hatch counter, which we'll do later in secondary_main().
 	 */
 
 	or.u	r31, r0,  hi16(_ASM_LABEL(slavestack_end))
@@ -254,6 +243,7 @@ GLOBAL(secondary_start)
 	 */
 	or.u	r11, r0,  hi16(_ASM_LABEL(dummy_cpu))
 	or	r11, r11, lo16(_ASM_LABEL(dummy_cpu))
+	st	r0,  r11, CI_FLAGS			/* reset CIF_PRIMARY */
 	stcr	r11, CPU
 
 	/*

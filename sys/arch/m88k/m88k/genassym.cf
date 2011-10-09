@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.22 2010/09/28 20:27:55 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.23 2011/10/09 17:01:34 miod Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -28,7 +28,7 @@
 # SUCH DAMAGE.
 #
 #	@(#)genassym.c	7.8 (Berkeley) 5/7/91
-#	$Id: genassym.cf,v 1.22 2010/09/28 20:27:55 miod Exp $
+#	$Id: genassym.cf,v 1.23 2011/10/09 17:01:34 miod Exp $
 #
 
 include <sys/param.h>
@@ -61,6 +61,7 @@ export	SONPROC
 
 # cpu fields
 struct	cpu_info
+member	ci_flags
 member	ci_curproc
 member	ci_curpcb
 member	ci_curpmap

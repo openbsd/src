@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.47 2011/01/05 22:16:16 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.48 2011/10/09 17:01:34 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, 2010, 2011, Miodrag Vallat.
  *
@@ -396,8 +396,7 @@ m8820x_initialize_cpu(cpuid_t cpu)
 	int cssp, type;
 	apr_t apr;
 
-	apr = ((0x00000 << PG_BITS) | CACHE_WT | CACHE_GLOBAL | CACHE_INH) &
-	    ~APR_V;
+	apr = ((0x00000 << PG_BITS) | CACHE_GLOBAL | CACHE_INH) & ~APR_V;
 
 	cmmu = m8820x_cmmu + (cpu << cmmu_shift);
 
@@ -480,10 +479,21 @@ m8820x_initialize_cpu(cpuid_t cpu)
 
 	/*
 	 * Enable instruction cache.
-	 * Data cache will be enabled later.
 	 */
 	apr &= ~CACHE_INH;
 	m8820x_cmmu_set_reg(CMMU_SAPR, apr, MODE_VAL, cpu, INST_CMMU);
+
+	/*
+	 * Data cache will be enabled at pmap_bootstrap_cpu() time,
+	 * because the PROM won't likely expect its work area in memory
+	 * to be cached. On at least aviion, starting secondary processors
+	 * returns an error code although the processor has correctly spun
+	 * up, if the PROM work area is cached.
+	 */
+#ifdef dont_do_this_at_home
+	apr |= CACHE_WT;
+	m8820x_cmmu_set_reg(CMMU_SAPR, apr, MODE_VAL, cpu, DATA_CMMU);
+#endif
 
 	ci->ci_zeropage = m8820x_zeropage;
 	ci->ci_copypage = m8820x_copypage;

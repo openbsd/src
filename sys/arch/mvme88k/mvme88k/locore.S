@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.67 2010/12/23 20:05:08 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.68 2011/10/09 17:01:34 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -115,7 +115,6 @@ ASGLOBAL(start)
 	NOP
 #endif
 
-
 	/*
 	 * Startup code for main processor.
 	 */
@@ -230,10 +229,10 @@ GLOBAL(secondary_start)
 	bsr.n	_ASM_LABEL(setup_psr)
 	 or	r31, r31, lo16(_ASM_LABEL(slavestack_end))
 
-	/*
-	 * We expect secondary processors to start running with the same 
-	 * VBR value as the primary one.
-	 */
+	or.u	r3,  r0,  hi16(_C_LABEL(kernel_vbr))
+	ld	r2,  r3,  lo16(_C_LABEL(kernel_vbr))
+	stcr	r2,  VBR
+	FLUSH_PIPELINE
 
 	/*
 	 * Have curcpu() point at the dummy cpuinfo structure,
@@ -243,6 +242,7 @@ GLOBAL(secondary_start)
 	 */
 	or.u	r11, r0,  hi16(_ASM_LABEL(dummy_cpu))
 	or	r11, r11, lo16(_ASM_LABEL(dummy_cpu))
+	st	r0,  r11, CI_FLAGS		/* reset CIF_PRIMARY */
 	stcr	r11, CPU
 
 	/*

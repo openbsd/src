@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.244 2011/06/26 22:40:00 deraadt Exp $	*/
+/* $OpenBSD: machdep.c,v 1.245 2011/10/09 17:01:34 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -624,7 +624,17 @@ secondary_pre_main()
 	struct cpu_info *ci;
 	vaddr_t init_stack;
 
-	set_cpu_number(cmmu_cpu_number()); /* Determine cpu number by CMMU */
+	/*
+	 * Invoke the CMMU initialization routine as early as possible,
+	 * so that we do not risk any memory writes to be lost during
+	 * cache setup.
+	 */
+	cmmu_initialize_cpu(cmmu_cpu_number());
+
+	/*
+	 * Now initialize your cpu_info structure.
+	 */
+	set_cpu_number(cmmu_cpu_number());
 	ci = curcpu();
 	ci->ci_curproc = &proc0;
 	(*md_smp_setup)(ci);
@@ -632,7 +642,7 @@ secondary_pre_main()
 	splhigh();
 
 	/*
-	 * Setup CMMUs and translation tables (shared with the master cpu).
+	 * Enable MMU on this processor.
 	 */
 	pmap_bootstrap_cpu(ci->ci_cpuid);
 
@@ -675,8 +685,6 @@ secondary_main()
 	/* wait for cpu_boot_secondary_processors() */
 	__cpu_simple_lock(&cpu_boot_mutex);
 	__cpu_simple_unlock(&cpu_boot_mutex);
-
-	set_vbr(kernel_vbr);
 
 	spl0();
 	SCHED_LOCK(s);

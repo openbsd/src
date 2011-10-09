@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.47 2010/12/23 20:05:08 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.48 2011/10/09 17:01:34 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -91,13 +91,9 @@ cpu_configure()
 #ifdef MULTIPROCESSOR
 	/*
 	 * Spin up the other processors, but do not give them work to
-	 * do yet. This is normally done when attaching mainbus, but
-	 * on MVME188 boards, the system hangs if secondary processors
-	 * try to issue BUG calls (i.e. when printing their information
-	 * on console), so this has been postponed until now.
+	 * do yet.
 	 */
-	if (brdtyp == BRD_188)
-		cpu_hatch_secondary_processors(NULL);
+	cpu_hatch_secondary_processors(NULL);
 #endif
 
 	/* NO BUG CALLS FROM NOW ON */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.50 2009/04/19 17:56:13 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.51 2011/10/09 17:01:34 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -84,10 +84,10 @@ m8820x_setup_board_config()
 {
 	extern u_int32_t pfsr_save[];
 	int num;
-	int vme188_config;
 	u_int32_t *m8820x_pfsr;
 #ifdef MVME188
 	u_int32_t whoami;
+	int vme188_config;
 	struct m8820x_cmmu *cmmu;
 	int cmmu_num;
 #endif
@@ -96,8 +96,10 @@ m8820x_setup_board_config()
 #ifdef MVME187
 	case BRD_187:
 	case BRD_8120:
+#ifdef MVME188
 		/* There is no WHOAMI reg on MVME187 - fake it... */
 		vme188_config = 0x0a;
+#endif
 		m8820x_cmmu[0].cmmu_regs = (void *)SBC_CMMU_I;
 		m8820x_cmmu[1].cmmu_regs = (void *)SBC_CMMU_D;
 		ncpusfound = 1;
