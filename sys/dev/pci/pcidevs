@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1623 2011/09/23 08:54:25 jsg Exp $
+$OpenBSD: pcidevs,v 1.1624 2011/10/09 21:39:11 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -325,6 +325,7 @@ vendor	3DLABS		0x3d3d	3D Labs
 vendor	AVANCE2		0x4005	Avance Logic
 vendor	ADDTRON		0x4033	Addtron
 vendor	NETXEN		0x4040	NetXen
+vendor	WCH		0x4348	Nanjing QinHeng Electronics
 vendor	INDCOMPSRC	0x494f	Industrial Computer Source
 vendor	NETVIN		0x4a14	NetVin
 vendor	GEMTEK		0x5046	Gemtek
@@ -3786,6 +3787,9 @@ product MYSON MTD891		0x0891	MTD891 10/100/1000
 
 /* Mutech products */
 product MUTECH MV1000		0x0001	MV1000
+
+/* Nanjing QinHeng Electronics products */
+product WCH CH352		0x3253	CH352
 
 /* National Datacomm Corp products */
 product NDC NCP130		0x0130	NCP130
