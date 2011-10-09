@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whereis.1,v 1.13 2010/09/29 07:44:57 jmc Exp $
+.\"	$OpenBSD: whereis.1,v 1.14 2011/10/09 02:20:39 schwarze Exp $
 .\"	$NetBSD: whereis.1,v 1.4 1995/08/31 21:54:51 jtc Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)whereis.1	8.3 (Berkeley) 4/27/95
 .\"
-.Dd $Mdocdate: September 29 2010 $
+.Dd $Mdocdate: October 9 2011 $
 .Dt WHEREIS 1
 .Os
 .Sh NAME
@@ -77,12 +77,20 @@ No names were resolved.
 .Xr locate 1 ,
 .Xr which 1 ,
 .Xr sysctl 8
-.Sh STANDARDS
-The historic flags and arguments for the
-.Nm
-utility are no longer available in this version.
 .Sh HISTORY
 The
 .Nm
-command appeared in
-.Bx 3.0 .
+command first appeared in
+.Bx 2 ,
+but the original version was legally tainted
+and was not included as part of the
+.Bx 4.4
+release, such that most of the original functionality was lost.
+.Pp
+The
+.Fl a
+option first appeared in
+.Ox 2.3 .
+.Sh AUTHORS
+The original version was written by
+.An Bill Joy .
