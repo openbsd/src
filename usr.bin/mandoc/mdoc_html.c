@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.62 2011/10/09 17:59:56 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.63 2011/10/09 22:10:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -493,14 +493,11 @@ mdoc_root_post(MDOC_ARGS)
 
 	PAIR_SUMMARY_INIT(&tag[0], "Document Footer");
 	PAIR_CLASS_INIT(&tag[1], "foot");
-	if (NULL == h->style) {
-		PAIR_INIT(&tag[2], ATTR_WIDTH, "100%");
-		t = print_otag(h, TAG_TABLE, 3, tag);
-		PAIR_INIT(&tag[0], ATTR_WIDTH, "50%");
-		print_otag(h, TAG_COL, 1, tag);
-		print_otag(h, TAG_COL, 1, tag);
-	} else
-		t = print_otag(h, TAG_TABLE, 2, tag);
+	PAIR_INIT(&tag[2], ATTR_WIDTH, "100%");
+	t = print_otag(h, TAG_TABLE, 3, tag);
+	PAIR_INIT(&tag[0], ATTR_WIDTH, "50%");
+	print_otag(h, TAG_COL, 1, tag);
+	print_otag(h, TAG_COL, 1, tag);
 
 	t = print_otag(h, TAG_TBODY, 0, NULL);
 
@@ -508,17 +505,12 @@ mdoc_root_post(MDOC_ARGS)
 
 	PAIR_CLASS_INIT(&tag[0], "foot-date");
 	print_otag(h, TAG_TD, 1, tag);
-
 	print_text(h, m->date);
 	print_stagq(h, tt);
 
 	PAIR_CLASS_INIT(&tag[0], "foot-os");
-	if (NULL == h->style) {
-		PAIR_INIT(&tag[1], ATTR_ALIGN, "right");
-		print_otag(h, TAG_TD, 2, tag);
-	} else 
-		print_otag(h, TAG_TD, 1, tag);
-
+	PAIR_INIT(&tag[1], ATTR_ALIGN, "right");
+	print_otag(h, TAG_TD, 2, tag);
 	print_text(h, m->os);
 	print_tagq(h, t);
 }
@@ -544,15 +536,12 @@ mdoc_root_pre(MDOC_ARGS)
 
 	PAIR_SUMMARY_INIT(&tag[0], "Document Header");
 	PAIR_CLASS_INIT(&tag[1], "head");
-	if (NULL == h->style) {
-		PAIR_INIT(&tag[2], ATTR_WIDTH, "100%");
-		t = print_otag(h, TAG_TABLE, 3, tag);
-		PAIR_INIT(&tag[0], ATTR_WIDTH, "30%");
-		print_otag(h, TAG_COL, 1, tag);
-		print_otag(h, TAG_COL, 1, tag);
-		print_otag(h, TAG_COL, 1, tag);
-	} else
-		t = print_otag(h, TAG_TABLE, 2, tag);
+	PAIR_INIT(&tag[2], ATTR_WIDTH, "100%");
+	t = print_otag(h, TAG_TABLE, 3, tag);
+	PAIR_INIT(&tag[0], ATTR_WIDTH, "30%");
+	print_otag(h, TAG_COL, 1, tag);
+	print_otag(h, TAG_COL, 1, tag);
+	print_otag(h, TAG_COL, 1, tag);
 
 	print_otag(h, TAG_TBODY, 0, NULL);
 
@@ -560,27 +549,18 @@ mdoc_root_pre(MDOC_ARGS)
 
 	PAIR_CLASS_INIT(&tag[0], "head-ltitle");
 	print_otag(h, TAG_TD, 1, tag);
-
 	print_text(h, title);
 	print_stagq(h, tt);
 
 	PAIR_CLASS_INIT(&tag[0], "head-vol");
-	if (NULL == h->style) {
-		PAIR_INIT(&tag[1], ATTR_ALIGN, "center");
-		print_otag(h, TAG_TD, 2, tag);
-	} else 
-		print_otag(h, TAG_TD, 1, tag);
-
+	PAIR_INIT(&tag[1], ATTR_ALIGN, "center");
+	print_otag(h, TAG_TD, 2, tag);
 	print_text(h, b);
 	print_stagq(h, tt);
 
 	PAIR_CLASS_INIT(&tag[0], "head-rtitle");
-	if (NULL == h->style) {
-		PAIR_INIT(&tag[1], ATTR_ALIGN, "right");
-		print_otag(h, TAG_TD, 2, tag);
-	} else 
-		print_otag(h, TAG_TD, 1, tag);
-
+	PAIR_INIT(&tag[1], ATTR_ALIGN, "right");
+	print_otag(h, TAG_TD, 2, tag);
 	print_text(h, title);
 	print_tagq(h, t);
 	return(1);
