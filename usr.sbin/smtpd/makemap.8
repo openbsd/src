@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makemap.8,v 1.14 2010/09/03 11:22:36 jmc Exp $
+.\"	$OpenBSD: makemap.8,v 1.15 2011/10/10 21:06:06 gilles Exp $
 .\"
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@openbsd.org>
 .\" Copyright (c) 2008-2009 Gilles Chechade <gilles@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: October 10 2011 $
 .Dt MAKEMAP 8
 .Os
 .Sh NAME
@@ -90,6 +90,9 @@ accept for domain map "primary" deliver to mbox
 .Ed
 .Sh VIRTUAL DOMAINS
 Virtual domains are kept in maps.
+To add support for a virtual domain, add a domain key
+.Dq example.com		whatever
+to the virtual map.
 To create single virtual address, add
 .Dq user@example.com	user
 to the virtual map.
