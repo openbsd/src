@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.83 2011/10/10 19:42:36 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.84 2011/10/10 19:49:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011  Miodrag Vallat.
@@ -124,7 +124,9 @@ struct xbpci_softc {
 	bus_space_handle_t xb_regh;
 
 	struct mips_bus_space *xb_mem_bus_space;
+	struct mips_bus_space *xb_mem_bus_space_sw;
 	struct mips_bus_space *xb_io_bus_space;
+	struct mips_bus_space *xb_io_bus_space_sw;
 	struct machine_bus_dma_tag *xb_dmat;
 
 	struct xbridge_intr	*xb_intr[BRIDGE_NINTRS];
@@ -307,7 +309,7 @@ xbridge_wbflush(struct xbpci_softc *xb, uint d)
 	while (xbridge_read_reg(xb, BRIDGE_DEVICE_WBFLUSH(d)) != 0) ;
 }
 
-const struct machine_bus_dma_tag xbridge_dma_tag = {
+static const struct machine_bus_dma_tag xbridge_dma_tag = {
 	NULL,			/* _cookie */
 	_dmamap_create,
 	_dmamap_destroy,
@@ -326,6 +328,29 @@ const struct machine_bus_dma_tag xbridge_dma_tag = {
 	xbridge_pa_to_device,
 	xbridge_device_to_pa,
 	BRIDGE_DMA_DIRECT_LENGTH - 1
+};
+
+static const struct mips_pci_chipset xbridge_pci_chipset = {
+	.pc_attach_hook = xbridge_attach_hook,
+	.pc_bus_maxdevs = xbridge_bus_maxdevs,
+	.pc_make_tag = xbridge_make_tag,
+	.pc_decompose_tag = xbridge_decompose_tag,
+	.pc_conf_size = xbridge_conf_size,
+	.pc_conf_read = xbridge_conf_read,
+	.pc_conf_write = xbridge_conf_write,
+	.pc_probe_device_hook = xbridge_probe_device_hook,
+	.pc_get_widget = xbridge_get_widget,
+	.pc_get_dl = xbridge_get_dl,
+	.pc_intr_map = xbridge_intr_map,
+	.pc_intr_string = xbridge_intr_string,
+	.pc_intr_establish = xbridge_intr_establish,
+	.pc_intr_disestablish = xbridge_intr_disestablish,
+	.pc_intr_line = xbridge_intr_line,
+	.pc_ppb_setup = xbridge_ppb_setup,
+#if NCARDBUS > 0
+	.pc_rbus_parent_io = xbridge_rbus_parent_io,
+	.pc_rbus_parent_mem = xbridge_rbus_parent_mem
+#endif
 };
 
 /*
@@ -507,54 +532,63 @@ xbpci_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Create bus_space accessors... we inherit them from xbow, but
-	 * it is necessary to perform endianness conversion for the
-	 * low-order address bits.
+	 * need to overwrite mapping routines, and set up byteswapping
+	 * versions.
 	 */
 
 	xb->xb_mem_bus_space = malloc(sizeof (*xb->xb_mem_bus_space),
 	    M_DEVBUF, M_NOWAIT);
-	if (xb->xb_mem_bus_space == NULL)
-		goto fail1;
+	xb->xb_mem_bus_space_sw = malloc(sizeof (*xb->xb_mem_bus_space_sw),
+	    M_DEVBUF, M_NOWAIT);
 	xb->xb_io_bus_space = malloc(sizeof (*xb->xb_io_bus_space),
 	    M_DEVBUF, M_NOWAIT);
-	if (xb->xb_io_bus_space == NULL)
-		goto fail2;
+	xb->xb_io_bus_space_sw = malloc(sizeof (*xb->xb_io_bus_space_sw),
+	    M_DEVBUF, M_NOWAIT);
+	if (xb->xb_mem_bus_space == NULL || xb->xb_mem_bus_space_sw == NULL ||
+	    xb->xb_io_bus_space == NULL || xb->xb_io_bus_space_sw == NULL)
+		goto fail1;
 
 	bcopy(xb->xb_regt, xb->xb_mem_bus_space, sizeof(*xb->xb_mem_bus_space));
 	xb->xb_mem_bus_space->bus_private = xb;
 	xb->xb_mem_bus_space->_space_map = xbridge_space_map_devio;
 	xb->xb_mem_bus_space->_space_subregion = xbridge_space_region_devio;
-	xb->xb_mem_bus_space->_space_read_1 = xbridge_read_1;
-	xb->xb_mem_bus_space->_space_write_1 = xbridge_write_1;
-	xb->xb_mem_bus_space->_space_read_2 = xbridge_read_2;
-	xb->xb_mem_bus_space->_space_write_2 = xbridge_write_2;
-	xb->xb_mem_bus_space->_space_read_raw_2 = xbridge_read_raw_2;
-	xb->xb_mem_bus_space->_space_write_raw_2 = xbridge_write_raw_2;
-	xb->xb_mem_bus_space->_space_read_raw_4 = xbridge_read_raw_4;
-	xb->xb_mem_bus_space->_space_write_raw_4 = xbridge_write_raw_4;
-	xb->xb_mem_bus_space->_space_read_raw_8 = xbridge_read_raw_8;
-	xb->xb_mem_bus_space->_space_write_raw_8 = xbridge_write_raw_8;
 	xb->xb_mem_bus_space->_space_barrier = xbridge_space_barrier;
+
+	bcopy(xb->xb_mem_bus_space, xb->xb_mem_bus_space_sw,
+	    sizeof(*xb->xb_mem_bus_space));
+	xb->xb_mem_bus_space_sw->_space_read_1 = xbridge_read_1;
+	xb->xb_mem_bus_space_sw->_space_write_1 = xbridge_write_1;
+	xb->xb_mem_bus_space_sw->_space_read_2 = xbridge_read_2;
+	xb->xb_mem_bus_space_sw->_space_write_2 = xbridge_write_2;
+	xb->xb_mem_bus_space_sw->_space_read_raw_2 = xbridge_read_raw_2;
+	xb->xb_mem_bus_space_sw->_space_write_raw_2 = xbridge_write_raw_2;
+	xb->xb_mem_bus_space_sw->_space_read_raw_4 = xbridge_read_raw_4;
+	xb->xb_mem_bus_space_sw->_space_write_raw_4 = xbridge_write_raw_4;
+	xb->xb_mem_bus_space_sw->_space_read_raw_8 = xbridge_read_raw_8;
+	xb->xb_mem_bus_space_sw->_space_write_raw_8 = xbridge_write_raw_8;
 
 	bcopy(xb->xb_regt, xb->xb_io_bus_space, sizeof(*xb->xb_io_bus_space));
 	xb->xb_io_bus_space->bus_private = xb;
 	xb->xb_io_bus_space->_space_map = xbridge_space_map_devio;
 	xb->xb_io_bus_space->_space_subregion = xbridge_space_region_devio;
-	xb->xb_io_bus_space->_space_read_1 = xbridge_read_1;
-	xb->xb_io_bus_space->_space_write_1 = xbridge_write_1;
-	xb->xb_io_bus_space->_space_read_2 = xbridge_read_2;
-	xb->xb_io_bus_space->_space_write_2 = xbridge_write_2;
-	xb->xb_io_bus_space->_space_read_raw_2 = xbridge_read_raw_2;
-	xb->xb_io_bus_space->_space_write_raw_2 = xbridge_write_raw_2;
-	xb->xb_io_bus_space->_space_read_raw_4 = xbridge_read_raw_4;
-	xb->xb_io_bus_space->_space_write_raw_4 = xbridge_write_raw_4;
-	xb->xb_io_bus_space->_space_read_raw_8 = xbridge_read_raw_8;
-	xb->xb_io_bus_space->_space_write_raw_8 = xbridge_write_raw_8;
 	xb->xb_io_bus_space->_space_barrier = xbridge_space_barrier;
+
+	bcopy(xb->xb_io_bus_space, xb->xb_io_bus_space_sw,
+	    sizeof(*xb->xb_io_bus_space));
+	xb->xb_io_bus_space_sw->_space_read_1 = xbridge_read_1;
+	xb->xb_io_bus_space_sw->_space_write_1 = xbridge_write_1;
+	xb->xb_io_bus_space_sw->_space_read_2 = xbridge_read_2;
+	xb->xb_io_bus_space_sw->_space_write_2 = xbridge_write_2;
+	xb->xb_io_bus_space_sw->_space_read_raw_2 = xbridge_read_raw_2;
+	xb->xb_io_bus_space_sw->_space_write_raw_2 = xbridge_write_raw_2;
+	xb->xb_io_bus_space_sw->_space_read_raw_4 = xbridge_read_raw_4;
+	xb->xb_io_bus_space_sw->_space_write_raw_4 = xbridge_write_raw_4;
+	xb->xb_io_bus_space_sw->_space_read_raw_8 = xbridge_read_raw_8;
+	xb->xb_io_bus_space_sw->_space_write_raw_8 = xbridge_write_raw_8;
 
 	xb->xb_dmat = malloc(sizeof (*xb->xb_dmat), M_DEVBUF, M_NOWAIT);
 	if (xb->xb_dmat == NULL)
-		goto fail3;
+		goto fail1;
 	memcpy(xb->xb_dmat, &xbridge_dma_tag, sizeof(*xb->xb_dmat));
 	xb->xb_dmat->_cookie = xb;
 
@@ -562,28 +596,9 @@ xbpci_attach(struct device *parent, struct device *self, void *aux)
 	 * Initialize PCI methods.
 	 */
 
+	bcopy(&xbridge_pci_chipset, &xb->xb_pc, sizeof(xbridge_pci_chipset));
 	xb->xb_pc.pc_conf_v = xb;
-	xb->xb_pc.pc_attach_hook = xbridge_attach_hook;
-	xb->xb_pc.pc_make_tag = xbridge_make_tag;
-	xb->xb_pc.pc_decompose_tag = xbridge_decompose_tag;
-	xb->xb_pc.pc_bus_maxdevs = xbridge_bus_maxdevs;
-	xb->xb_pc.pc_conf_size = xbridge_conf_size;
-	xb->xb_pc.pc_conf_read = xbridge_conf_read;
-	xb->xb_pc.pc_conf_write = xbridge_conf_write;
-	xb->xb_pc.pc_probe_device_hook = xbridge_probe_device_hook;
-	xb->xb_pc.pc_get_widget = xbridge_get_widget;
-	xb->xb_pc.pc_get_dl = xbridge_get_dl;
 	xb->xb_pc.pc_intr_v = xb;
-	xb->xb_pc.pc_intr_map = xbridge_intr_map;
-	xb->xb_pc.pc_intr_string = xbridge_intr_string;
-	xb->xb_pc.pc_intr_establish = xbridge_intr_establish;
-	xb->xb_pc.pc_intr_disestablish = xbridge_intr_disestablish;
-	xb->xb_pc.pc_intr_line = xbridge_intr_line;
-	xb->xb_pc.pc_ppb_setup = xbridge_ppb_setup;
-#if NCARDBUS > 0
-	xb->xb_pc.pc_rbus_parent_io = xbridge_rbus_parent_io;
-	xb->xb_pc.pc_rbus_parent_mem = xbridge_rbus_parent_mem;
-#endif
 
 	/*
 	 * Configure Bridge for proper operation (DMA, I/O mappings,
@@ -591,7 +606,7 @@ xbpci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 
 	if ((errmsg = xbridge_setup(xb)) != NULL)
-		goto fail4;
+		goto fail2;
 	printf("\n");
 
 	/*
@@ -602,8 +617,18 @@ xbpci_attach(struct device *parent, struct device *self, void *aux)
 
 	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
-	pba.pba_iot = xb->xb_io_bus_space;
-	pba.pba_memt = xb->xb_mem_bus_space;
+	/*
+	 * XXX pba_iot and pba_memt ought to be irrelevant, since we
+	 * XXX return the tags a device needs in probe_device_hook();
+	 * XXX however the pci(4) device needs a valid pba_memt for the
+	 * XXX PCIOCGETROM* ioctls.
+	 * XXX
+	 * XXX Since most devices will need the byteswap tags, and those
+	 * XXX which don't do not have PCI roms, let's pass the byteswap
+	 * XXX versions by default.
+	 */
+	pba.pba_iot = xb->xb_io_bus_space_sw;
+	pba.pba_memt = xb->xb_mem_bus_space_sw;
 	pba.pba_dmat = xb->xb_dmat;
 	pba.pba_ioex = xb->xb_ioex;
 	pba.pba_memex = xb->xb_memex;
@@ -620,13 +645,17 @@ xbpci_attach(struct device *parent, struct device *self, void *aux)
 	config_found(self, &pba, xbpci_print);
 	return;
 
-fail4:
-	free(xb->xb_dmat, M_DEVBUF);
-fail3:
-	free(xb->xb_io_bus_space, M_DEVBUF);
 fail2:
-	free(xb->xb_mem_bus_space, M_DEVBUF);
+	free(xb->xb_dmat, M_DEVBUF);
 fail1:
+	if (xb->xb_io_bus_space_sw != NULL)
+		free(xb->xb_io_bus_space_sw, M_DEVBUF);
+	if (xb->xb_io_bus_space != NULL)
+		free(xb->xb_io_bus_space, M_DEVBUF);
+	if (xb->xb_mem_bus_space_sw != NULL)
+		free(xb->xb_mem_bus_space_sw, M_DEVBUF);
+	if (xb->xb_mem_bus_space != NULL)
+		free(xb->xb_mem_bus_space, M_DEVBUF);
 	if (errmsg == NULL)
 		errmsg = "not enough memory to build bus access structures";
 	printf("%s\n", errmsg);
@@ -872,9 +901,22 @@ xbridge_conf_write(void *cookie, pcitag_t tag, int offset, pcireg_t data)
 int
 xbridge_probe_device_hook(void *cookie, struct pci_attach_args *pa)
 {
-#if 0
 	struct xbpci_softc *xb = cookie;
-#endif
+
+	/*
+	 * Check for the hardware byteswap setting of the device we are
+	 * interested in, and pick bus_space_tag accordingly.
+	 * Note that the device list here must match xbridge_resource_setup().
+	 */
+	if (pa->pa_id == PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3) ||
+	    pa->pa_id == PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC4) ||
+	    pa->pa_id == PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_RAD1)) {
+		pa->pa_iot = xb->xb_io_bus_space;
+		pa->pa_memt = xb->xb_mem_bus_space;
+	} else {
+		pa->pa_iot = xb->xb_io_bus_space_sw;
+		pa->pa_memt = xb->xb_mem_bus_space_sw;
+	}
 
 	return 0;
 }
@@ -2605,6 +2647,12 @@ xbridge_mapping_setup(struct xbpci_softc *xb, int io)
 				xb->xb_io_bus_space->_space_subregion =
 				    xbridge_space_region_io;
 
+				xb->xb_io_bus_space_sw->bus_base = base - offs;
+				xb->xb_io_bus_space_sw->_space_map =
+				    xbridge_space_map_io;
+				xb->xb_io_bus_space_sw->_space_subregion =
+				    xbridge_space_region_io;
+
 				xb->xb_iostart = offs;
 				xb->xb_ioend = offs + len - 1;
 			}
@@ -2653,6 +2701,12 @@ xbridge_mapping_setup(struct xbpci_softc *xb, int io)
 				xb->xb_mem_bus_space->_space_map =
 				    xbridge_space_map_mem;
 				xb->xb_mem_bus_space->_space_subregion =
+				    xbridge_space_region_mem;
+
+				xb->xb_mem_bus_space_sw->bus_base = base - offs;
+				xb->xb_mem_bus_space_sw->_space_map =
+				    xbridge_space_map_mem;
+				xb->xb_mem_bus_space_sw->_space_subregion =
 				    xbridge_space_region_mem;
 
 				xb->xb_memstart = offs;

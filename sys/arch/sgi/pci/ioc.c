@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.36 2010/09/20 06:33:47 matthew Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.37 2011/10/10 19:49:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -49,8 +49,6 @@
 #include <sgi/dev/owmacvar.h>
 #include <sgi/dev/owserialvar.h>
 
-#include <sgi/xbow/xbow.h>
-
 int	ioc_match(struct device *, void *, void *);
 void	ioc_attach(struct device *, struct device *, void *);
 
@@ -66,8 +64,6 @@ struct ioc_intr {
 
 struct ioc_softc {
 	struct device		 sc_dev;
-
-	struct mips_bus_space	*sc_mem_bus_space;
 
 	bus_space_tag_t		 sc_memt;
 	bus_space_handle_t	 sc_memh;
@@ -185,30 +181,7 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	/*
-	 * Build a suitable bus_space_handle by restoring the original
-	 * non-swapped subword access methods.
-	 *
-	 * XXX This is horrible and will need to be rethought if
-	 * XXX we ever support ioc3 cards not plugged to xbridges.
-	 */
-
-	sc->sc_mem_bus_space = malloc(sizeof (*sc->sc_mem_bus_space),
-	    M_DEVBUF, M_NOWAIT);
-	if (sc->sc_mem_bus_space == NULL) {
-		printf("%s: can't allocate bus_space\n", self->dv_xname);
-		goto unmap;
-	}
-
-	bcopy(memt, sc->sc_mem_bus_space, sizeof(*sc->sc_mem_bus_space));
-	sc->sc_mem_bus_space->_space_read_1 = xbow_read_1;
-	sc->sc_mem_bus_space->_space_read_2 = xbow_read_2;
-	sc->sc_mem_bus_space->_space_read_raw_2 = xbow_read_raw_2;
-	sc->sc_mem_bus_space->_space_write_1 = xbow_write_1;
-	sc->sc_mem_bus_space->_space_write_2 = xbow_write_2;
-	sc->sc_mem_bus_space->_space_write_raw_2 = xbow_write_raw_2;
-
-	sc->sc_memt = sc->sc_mem_bus_space;
+	sc->sc_memt = memt;
 	sc->sc_memh = memh;
 
 	/*

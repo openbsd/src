@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.42 2011/10/10 19:42:36 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.43 2011/10/10 19:49:16 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -152,6 +152,29 @@ bus_space_t mace_pcibbus_io_tag = {
 	NULL
 };
 
+static const struct mips_pci_chipset mace_pci_chipset = {
+	.pc_attach_hook = mace_pcibr_attach_hook,
+	.pc_bus_maxdevs = mace_pcibr_bus_maxdevs,
+	.pc_make_tag = mace_pcibr_make_tag,
+	.pc_decompose_tag = mace_pcibr_decompose_tag,
+	.pc_conf_size = mace_pcibr_conf_size,
+	.pc_conf_read = mace_pcibr_conf_read,
+	.pc_conf_write = mace_pcibr_conf_write,
+	.pc_probe_device_hook = mace_pcibr_probe_device_hook,
+	.pc_get_widget = mace_pcibr_get_widget,
+	.pc_get_dl = mace_pcibr_get_dl,
+	.pc_intr_map = mace_pcibr_intr_map,
+	.pc_intr_string = mace_pcibr_intr_string,
+	.pc_intr_establish = mace_pcibr_intr_establish,
+	.pc_intr_disestablish = mace_pcibr_intr_disestablish,
+	.pc_intr_line = mace_pcibr_intr_line,
+	.pc_ppb_setup = mace_pcibr_ppb_setup,
+#if NCARDBUS > 0
+	.pc_rbus_parent_io = mace_pcibr_rbus_parent_io,
+	.pc_rbus_parent_mem = mace_pcibr_rbus_parent_mem
+#endif
+};
+
 /*
  * PCI doesn't have any special needs; just use the generic versions
  * of these functions.
@@ -236,28 +259,9 @@ mace_pcibrattach(struct device *parent, struct device *self, void *aux)
 	macebus_intr_establish(maa->maa_intr, maa->maa_mace_intr,
 	    IST_LEVEL, IPL_HIGH, mace_pcibr_errintr, sc, sc->sc_dev.dv_xname);
 
+	bcopy(&mace_pci_chipset, &sc->sc_pc, sizeof(mace_pci_chipset));
 	sc->sc_pc.pc_conf_v = sc;
-	sc->sc_pc.pc_attach_hook = mace_pcibr_attach_hook;
-	sc->sc_pc.pc_make_tag = mace_pcibr_make_tag;
-	sc->sc_pc.pc_decompose_tag = mace_pcibr_decompose_tag;
-	sc->sc_pc.pc_bus_maxdevs = mace_pcibr_bus_maxdevs;
-	sc->sc_pc.pc_conf_size = mace_pcibr_conf_size;
-	sc->sc_pc.pc_conf_read = mace_pcibr_conf_read;
-	sc->sc_pc.pc_conf_write = mace_pcibr_conf_write;
-	sc->sc_pc.pc_get_widget = mace_pcibr_get_widget;
-	sc->sc_pc.pc_probe_device_hook = mace_pcibr_probe_device_hook;
-	sc->sc_pc.pc_get_dl = mace_pcibr_get_dl;
 	sc->sc_pc.pc_intr_v = NULL;
-	sc->sc_pc.pc_intr_map = mace_pcibr_intr_map;
-	sc->sc_pc.pc_intr_string = mace_pcibr_intr_string;
-	sc->sc_pc.pc_intr_establish = mace_pcibr_intr_establish;
-	sc->sc_pc.pc_intr_disestablish = mace_pcibr_intr_disestablish;
-	sc->sc_pc.pc_intr_line = mace_pcibr_intr_line;
-	sc->sc_pc.pc_ppb_setup = mace_pcibr_ppb_setup;
-#if NCARDBUS > 0
-	sc->sc_pc.pc_rbus_parent_io = mace_pcibr_rbus_parent_io;
-	sc->sc_pc.pc_rbus_parent_mem = mace_pcibr_rbus_parent_mem;
-#endif
 
 	/*
 	 * The O2 firmware sucks.  It makes a mess of I/O BARs and

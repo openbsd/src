@@ -1,4 +1,4 @@
-/*	$OpenBSD: iof.c,v 1.7 2010/09/20 06:33:47 matthew Exp $	*/
+/*	$OpenBSD: iof.c,v 1.8 2011/10/10 19:49:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -36,8 +36,6 @@
 #include <sgi/pci/iofreg.h>
 #include <sgi/pci/iofvar.h>
 
-#include <sgi/xbow/xbow.h>
-
 int	iof_match(struct device *, void *, void *);
 void	iof_attach(struct device *, struct device *, void *);
 void	iof_attach_child(struct device *, const char *, bus_addr_t, uint);
@@ -56,8 +54,6 @@ struct iof_intr {
 
 struct iof_softc {
 	struct device		 sc_dev;
-
-	struct mips_bus_space	*sc_mem_bus_space;
 
 	bus_space_tag_t		 sc_memt;
 	bus_space_handle_t	 sc_memh;
@@ -130,31 +126,7 @@ iof_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
 
-	/*
-	 * Build a suitable bus_space_handle by restoring the original
-	 * non-swapped subword access methods.
-	 *
-	 * XXX This is horrible and will need to be rethought if
-	 * XXX IOC4 exist as real, removable PCI cards and
-	 * XXX we ever support them cards not plugged to xbridges.
-	 */
-
-	sc->sc_mem_bus_space = malloc(sizeof (*sc->sc_mem_bus_space),
-	    M_DEVBUF, M_NOWAIT);
-	if (sc->sc_mem_bus_space == NULL) {
-		printf("can't allocate bus_space\n");
-		goto unmap;
-	}
-
-	bcopy(memt, sc->sc_mem_bus_space, sizeof(*sc->sc_mem_bus_space));
-	sc->sc_mem_bus_space->_space_read_1 = xbow_read_1;
-	sc->sc_mem_bus_space->_space_read_2 = xbow_read_2;
-	sc->sc_mem_bus_space->_space_read_raw_2 = xbow_read_raw_2;
-	sc->sc_mem_bus_space->_space_write_1 = xbow_write_1;
-	sc->sc_mem_bus_space->_space_write_2 = xbow_write_2;
-	sc->sc_mem_bus_space->_space_write_raw_2 = xbow_write_raw_2;
-
-	sc->sc_memt = sc->sc_mem_bus_space;
+	sc->sc_memt = memt;
 	sc->sc_memh = memh;
 
 	sc->sc_mcr = bus_space_read_4(sc->sc_memt, sc->sc_memh, IOC4_MCR);
