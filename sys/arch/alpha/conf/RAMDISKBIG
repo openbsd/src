@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.84 2011/06/29 20:52:08 matthew Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.85 2011/10/10 12:34:23 jsg Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -222,6 +222,7 @@ nsphyter* at mii?			# NS and compatible PHYs
 qsphy*	at mii?				# Quality Semi QS6612 PHYs
 luphy*	at mii?				# Lucent LU6612 PHY
 sqphy*	at mii?				# Seeq 8x220 PHYs
+tlphy*	at mii?				# ThunderLAN PHYs
 rlphy*	at mii?				# RealTek 8139 internal PHYs
 mtdphy*	at mii?				# Myson MTD972 PHYs
 dcphy*	at mii?				# Digital Clone PHYs

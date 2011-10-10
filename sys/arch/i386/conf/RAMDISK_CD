@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.191 2011/10/06 20:49:28 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.192 2011/10/10 12:34:23 jsg Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -381,6 +381,7 @@ nsphyter*	at mii?			# NS and compatible PHYs
 qsphy*	at mii?				# Quality Semi QS6612 PHYs
 luphy*	at mii?				# Lucent LU6612 PHY
 sqphy*	at mii?				# Seeq 8x220 PHYs
+tlphy*	at mii?				# ThunderLAN PHYs
 rlphy* at mii?				# RealTek 8139 internal PHYs
 mtdphy*	at mii?				# Myson MTD972 PHYs
 dcphy*	at mii?				# Digital Clone PHYs

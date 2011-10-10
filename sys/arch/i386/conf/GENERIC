@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.728 2011/09/20 20:25:45 matthieu Exp $
+#	$OpenBSD: GENERIC,v 1.729 2011/10/10 12:34:23 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -629,6 +629,7 @@ nsphyter*	at mii?			# NS and compatible PHYs
 qsphy*	at mii?				# Quality Semi QS6612 PHYs
 luphy*	at mii?				# Lucent LU6612 PHY
 sqphy*	at mii?				# Seeq 8x220 PHYs
+tlphy*	at mii?				# ThunderLAN PHYs
 rlphy* at mii?				# RealTek 8139 internal PHYs
 mtdphy* at mii?				# Myson MTD972 PHYs
 dcphy*	at mii?				# Digital Clone PHYs
