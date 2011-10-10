@@ -1,4 +1,4 @@
-/*	$OpenBSD: ignore_sigchild.c,v 1.1 2011/10/09 23:46:50 fgsch Exp $	*/
+/*	$OpenBSD: ignore_sigchild.c,v 1.2 2011/10/10 08:21:06 fgsch Exp $	*/
 /*
  * Federico G. Schwindt <fgsch@openbsd.org>, 2011. Public Domain.
  */
@@ -26,6 +26,7 @@ main(int argc, char **argv)
 		break;
 	}
 
+	CHECKe(alarm(2));
 	ASSERT(wait(&status) == -1);
 	ASSERT(errno == ECHILD);
 	SUCCEED;
