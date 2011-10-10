@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.41 2010/12/04 17:06:31 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.42 2011/10/10 19:42:36 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -85,6 +85,7 @@ void	 mace_pcibr_decompose_tag(void *, pcitag_t, int *, int *, int *);
 int	 mace_pcibr_conf_size(void *, pcitag_t);
 pcireg_t mace_pcibr_conf_read(void *, pcitag_t, int);
 void	 mace_pcibr_conf_write(void *, pcitag_t, int, pcireg_t);
+int	 mace_pcibr_probe_device_hook(void *, struct pci_attach_args *);
 int	 mace_pcibr_get_widget(void *);
 int	 mace_pcibr_get_dl(void *, pcitag_t, struct sgi_device_location *);
 int	 mace_pcibr_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
@@ -244,6 +245,7 @@ mace_pcibrattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc.pc_conf_read = mace_pcibr_conf_read;
 	sc->sc_pc.pc_conf_write = mace_pcibr_conf_write;
 	sc->sc_pc.pc_get_widget = mace_pcibr_get_widget;
+	sc->sc_pc.pc_probe_device_hook = mace_pcibr_probe_device_hook;
 	sc->sc_pc.pc_get_dl = mace_pcibr_get_dl;
 	sc->sc_pc.pc_intr_v = NULL;
 	sc->sc_pc.pc_intr_map = mace_pcibr_intr_map;
@@ -426,6 +428,12 @@ mace_pcibr_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, MACE_PCI_CFGADDR, 0);
 
 	splx(s);
+}
+
+int
+mace_pcibr_probe_device_hook(void *unused, struct pci_attach_args *notused)
+{
+	return 0;
 }
 
 int

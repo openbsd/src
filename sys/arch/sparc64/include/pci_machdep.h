@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.29 2011/07/06 05:08:50 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.30 2011/10/10 19:42:36 miod Exp $	*/
 /* $NetBSD: pci_machdep.h,v 1.7 2001/07/20 00:07:14 eeh Exp $ */
 
 /*
@@ -101,6 +101,8 @@ int		sparc64_pci_enumerate_bus(struct pci_softc *,
 		    struct pci_attach_args *);
 
 #define PCI_MACHDEP_ENUMERATE_BUS sparc64_pci_enumerate_bus
+
+#define	pci_probe_device_hook(c, a)	(0)
 
 #define pciide_machdep_compat_intr_establish(a, b, c, d, e) (NULL)
 #define pciide_machdep_compat_intr_disestablish(a, b) do { } while (0)

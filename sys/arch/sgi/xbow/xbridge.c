@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.82 2011/04/17 17:44:24 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.83 2011/10/10 19:42:36 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011  Miodrag Vallat.
@@ -205,6 +205,7 @@ void	xbridge_intr_disestablish(void *, void *);
 int	xbridge_intr_line(void *, pci_intr_handle_t);
 int	xbridge_ppb_setup(void *, pcitag_t, bus_addr_t *, bus_addr_t *,
 	    bus_addr_t *, bus_addr_t *);
+int	xbridge_probe_device_hook(void *, struct pci_attach_args *);
 void	*xbridge_rbus_parent_io(struct pci_attach_args *);
 void	*xbridge_rbus_parent_mem(struct pci_attach_args *);
 int	xbridge_get_widget(void *);
@@ -569,6 +570,7 @@ xbpci_attach(struct device *parent, struct device *self, void *aux)
 	xb->xb_pc.pc_conf_size = xbridge_conf_size;
 	xb->xb_pc.pc_conf_read = xbridge_conf_read;
 	xb->xb_pc.pc_conf_write = xbridge_conf_write;
+	xb->xb_pc.pc_probe_device_hook = xbridge_probe_device_hook;
 	xb->xb_pc.pc_get_widget = xbridge_get_widget;
 	xb->xb_pc.pc_get_dl = xbridge_get_dl;
 	xb->xb_pc.pc_intr_v = xb;
@@ -865,6 +867,16 @@ xbridge_conf_write(void *cookie, pcitag_t tag, int offset, pcireg_t data)
 		(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
 		splx(s);
 	}
+}
+
+int
+xbridge_probe_device_hook(void *cookie, struct pci_attach_args *pa)
+{
+#if 0
+	struct xbpci_softc *xb = cookie;
+#endif
+
+	return 0;
 }
 
 int

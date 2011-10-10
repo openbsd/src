@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.25 2011/05/21 21:36:39 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.26 2011/10/10 19:42:34 miod Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.6 1996/11/19 04:49:21 cgd Exp $	*/
 
 /*
@@ -114,6 +114,7 @@ int alpha_sysctl_chipset(int *, u_int, char *, size_t *);
     (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a), (nm))
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
+#define	pci_probe_device_hook(c, a)	(0)
 
 /*
  * alpha-specific PCI functions.

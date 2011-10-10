@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.93 2011/06/12 11:13:28 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.94 2011/10/10 19:42:37 miod Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -461,6 +461,13 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 				pa.pa_flags |= PCI_FLAGS_MSI_ENABLED;
 		}
 	}
+
+	/*
+	 * Give the MD code a chance to alter pci_attach_args and/or
+	 * skip devices.
+	 */
+	if (pci_probe_device_hook(pc, &pa) != 0)
+		return (0);
 
 	if (match != NULL) {
 		ret = (*match)(&pa);

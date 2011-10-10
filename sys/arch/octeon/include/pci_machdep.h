@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.3 2011/05/21 21:36:40 kettenis Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.4 2011/10/10 19:42:36 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -110,6 +110,7 @@ static inline void pci_conf_write_db(void * c, pcitag_t t, int r, pcireg_t v,
     (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a), (nm))
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
+#define	pci_probe_device_hook(c, a)	(0)
 
 /* PCI view of CPU memory */
 extern paddr_t loongson_dma_base;
