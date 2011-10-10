@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.238 2011/07/18 00:13:16 matthew Exp $	*/
+/*	$OpenBSD: sd.c,v 1.239 2011/10/10 20:39:20 kettenis Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -68,6 +68,7 @@
 #include <sys/conf.h>
 #include <sys/scsiio.h>
 #include <sys/dkio.h>
+#include <sys/reboot.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
@@ -1127,6 +1128,9 @@ sd_shutdown(void *arg)
 	 */
 	if ((sc->flags & SDF_DIRTY) != 0)
 		sd_flush(sc, SCSI_AUTOCONF);
+	if (boothowto & RB_POWERDOWN)
+		scsi_start(sc->sc_link, SSS_STOP,
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_AUTOCONF);
 
 	/*
 	 * There should be no outstanding IO at this point, but lets stop
