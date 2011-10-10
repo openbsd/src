@@ -1,4 +1,4 @@
-/*	$OpenBSD: private.h,v 1.23 2011/07/01 13:34:18 millert Exp $	*/
+/*	$OpenBSD: private.h,v 1.24 2011/10/10 13:53:24 ajacoutot Exp $	*/
 #ifndef PRIVATE_H
 
 #define PRIVATE_H
@@ -12,7 +12,6 @@
 #define TM_GMTOFF		tm_gmtoff
 #define TM_ZONE			tm_zone
 #define PCTS			1
-#define XPG4_1994_04_09		1
 #define ALL_STATE		1
 #define STD_INSPIRED		1
 #define HAVE_STRERROR		1
