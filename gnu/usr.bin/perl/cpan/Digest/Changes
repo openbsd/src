@@ -1,3 +1,24 @@
+2011-10-02   Gisle Aas <gisle@ActiveState.com>
+
+   Release 1.17.
+
+   Gisle Aas (6):
+      Less noisy 'git status' output
+      Merge pull request #1 from schwern/bug/require_eval
+      Don't clobber $@ in Digest->new [RT#50663]
+      More meta info added to Makefile.PL
+      Fix typo in RIPEMD160 [RT#50629]
+      Add schwern's test files
+
+   Michael G. Schwern (5):
+      Turn on strict.
+      Convert tests to use Test::More
+      Untabify
+      Turn Digest::Dummy into a real file which exercises the Digest->new() require logic.
+      Close the eval "require $module" security hole in Digest->new($algorithm)
+
+
+
 2009-06-09   Gisle Aas <gisle@ActiveState.com>
 
    Release 1.16.

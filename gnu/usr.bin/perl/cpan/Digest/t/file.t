@@ -1,7 +1,6 @@
 #!perl -w
 
-use Test qw(plan ok);
-plan tests => 5;
+use Test::More tests => 5;
 
 {
    package Digest::Foo;
@@ -36,17 +35,17 @@ binmode(F);
 print F "foo\0\n";
 close(F) || die "Can't write '$file': $!";
 
-ok(digest_file($file, "Foo"), "0005");
+is(digest_file($file, "Foo"), "0005");
 
 if (ord('A') == 193) { # EBCDIC.
-    ok(digest_file_hex($file, "Foo"), "f0f0f0f5");
-    ok(digest_file_base64($file, "Foo"), "8PDw9Q");
+    is(digest_file_hex($file, "Foo"), "f0f0f0f5");
+    is(digest_file_base64($file, "Foo"), "8PDw9Q");
 } else {
-    ok(digest_file_hex($file, "Foo"), "30303035");
-    ok(digest_file_base64($file, "Foo"), "MDAwNQ");
+    is(digest_file_hex($file, "Foo"), "30303035");
+    is(digest_file_base64($file, "Foo"), "MDAwNQ");
 }
 
 unlink($file) || warn "Can't unlink '$file': $!";
 
-ok(eval { digest_file("not-there.txt", "Foo") }, undef);
-ok($@);
+ok !eval { digest_file("not-there.txt", "Foo") };
+ok $@;
