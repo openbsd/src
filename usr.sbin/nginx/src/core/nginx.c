@@ -238,6 +238,7 @@ main(int argc, char *const *argv)
                                    NGX_CONF_PATH ")" CRLF
                 "  -g directives : set global directives out of configuration "
                                    "file" CRLF
+                "  -u            : disable chroot(2)" CRLF
                 );
         }
 
@@ -763,6 +764,10 @@ ngx_get_options(int argc, char *const *argv)
 
                 ngx_log_stderr(0, "invalid option: \"-s %s\"", ngx_signal);
                 return NGX_ERROR;
+
+	    case 'u':
+    		ngx_chrooted = 0;
+		break;
 
             default:
                 ngx_log_stderr(0, "invalid option: \"%c\"", *(p - 1));

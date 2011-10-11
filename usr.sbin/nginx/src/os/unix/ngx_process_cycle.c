@@ -48,6 +48,7 @@ sig_atomic_t  ngx_reopen;
 sig_atomic_t  ngx_change_binary;
 ngx_pid_t     ngx_new_binary;
 ngx_uint_t    ngx_inherited;
+ngx_uint_t    ngx_chrooted = 1;
 ngx_uint_t    ngx_daemonized;
 
 sig_atomic_t  ngx_noaccept;
@@ -888,6 +889,10 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_uint_t priority)
 #endif
 
     if (geteuid() == 0) {
+        if (!ngx_chrooted) {
+            goto nochroot;
+        }
+
 	if ((pw = getpwnam(ccf->username)) == NULL) {
             ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_errno,
                           "getpwnam(%s) failed", ccf->username);
@@ -922,7 +927,8 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_uint_t priority)
             /* fatal */
             exit(2);
 	}
-	
+
+nochroot:
         if (setgid(ccf->group) == -1) {
             ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_errno,
                           "setgid(%d) failed", ccf->group);

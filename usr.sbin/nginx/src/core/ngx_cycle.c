@@ -1115,6 +1115,7 @@ ngx_reopen_files(ngx_cycle_t *cycle, ngx_uid_t user)
     ngx_uint_t        i;
     ngx_list_part_t  *part;
     ngx_open_file_t  *file;
+    char             *buf;
 
     part = &cycle->open_files.part;
     file = part->elts;
@@ -1136,12 +1137,15 @@ ngx_reopen_files(ngx_cycle_t *cycle, ngx_uid_t user)
 
         len = file[i].pos - file[i].buffer;
 
-	if ((ngx_process == NGX_PROCESS_WORKER) && file[i].name.data[0] == '/') {
-            ngx_cpystrn(file[i].name.data, file[i].name.data + strlen(NGX_PREFIX),
+        if ((ngx_process == NGX_PROCESS_WORKER) && ngx_chrooted && file[i].name.data[0] == '/') {
+            buf = malloc(file[i].name.len);
+            ngx_cpystrn(buf, file[i].name.data + strlen(NGX_PREFIX),
                 file[i].name.len);
-            while (file[i].name.data[0] == '/') {
-                file[i].name.data++;
+            while (buf[0] == '/') {
+                buf++;
             }
+            ngx_str_set(&file[i].name, buf);
+            free(buf);
 	}
 
         if (file[i].buffer && len != 0) {
