@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.43 2011/05/16 21:05:51 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.44 2011/10/11 17:57:10 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -365,10 +365,16 @@ alias_is_filename(struct expandnode *alias, char *line, size_t len)
 int
 alias_is_include(struct expandnode *alias, char *line, size_t len)
 {
-	if (strncasecmp(":include:", line, 9) != 0)
+	size_t skip;
+	
+	if (strncasecmp(":include:", line, 9) == 0)
+		skip = 9;
+	else if (strncasecmp("include:", line, 8) == 0)
+		skip = 8;
+	else
 		return 0;
 
-	if (! alias_is_filename(alias, line + 9, len - 9))
+	if (! alias_is_filename(alias, line + skip, len - skip))
 		return 0;
 
 	alias->type = EXPAND_INCLUDE;
