@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.13 2007/09/03 14:26:54 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.14 2011/10/11 23:41:51 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -112,7 +112,7 @@ server_mode(int bpffd, u_int8_t *sysname, u_int8_t *srvname,
 			if (errno == EINTR)
 				continue;
 			err(EX_IOERR, "select");
-			break;
+			/* NOTREACHED */
 		}
 		if (n == 0)
 			continue;
