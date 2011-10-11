@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.6 2011/09/05 02:56:44 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.7 2011/10/11 01:54:41 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -33,10 +33,6 @@
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
  *	$NetBSD: SYS.h,v 1.5 2002/06/03 18:30:32 fvdl Exp $
- */
-
-/*
- * XXXfvdl change to use syscall/sysret.
  */
 
 #include <machine/asm.h>
