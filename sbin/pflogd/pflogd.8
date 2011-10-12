@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pflogd.8,v 1.42 2011/05/06 18:30:43 jmc Exp $
+.\"	$OpenBSD: pflogd.8,v 1.43 2011/10/12 10:33:29 henning Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 6 2011 $
+.Dd $Mdocdate: October 12 2011 $
 .Dt PFLOGD 8
 .Os
 .Sh NAME
@@ -126,8 +126,8 @@ will use
 .It Fl s Ar snaplen
 Analyze at most the first
 .Ar snaplen
-bytes of data from each packet rather than the default of 116.
-The default of 116 is adequate for IP, ICMP, TCP, and UDP headers but may
+bytes of data from each packet rather than the default of 160.
+The default of 160 is adequate for IP, ICMP, TCP, and UDP headers but may
 truncate protocol information for other protocols.
 Other file parsers may desire a higher snaplen.
 .It Fl x
