@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.87 2011/10/12 07:20:03 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.88 2011/10/12 12:16:10 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -629,7 +629,8 @@ $ aucat -j off -r 96000 -C 2:3 -o file1.raw -C 6:7 -o file2.raw
 .Pp
 Split a stereo file into two mono files:
 .Bd -literal -offset indent
-$ aucat -n -j off -i stereo.wav -C 0:0 -o left.wav -C 1:1 -o right.wav
+$ aucat -n -j off -i stereo.wav -C 0:0 -o left.wav -C 1:1 \e
+	-o right.wav
 .Ed
 .Pp
 Start

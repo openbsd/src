@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.120 2011/10/12 07:20:03 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.121 2011/10/12 12:16:10 jmc Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -85,8 +85,8 @@ char aucat_usage[] = "usage: " PROG_AUCAT " [-dlMn] [-a flag] [-b nframes] "
     "[-w flag] [-x policy] [-z nframes]\n";
 
 char midicat_usage[] = "usage: " PROG_MIDICAT " [-dlM] [-a flag] "
-    "[-i file] [-L addr] [-s name] [-o file]\n\t"
-    "[-q port] [-U unit]\n";
+    "[-i file] [-L addr] [-o file] [-q port]\n\t"
+    "[-s name] [-U unit]\n";
 
 /*
  * SIGINT handler, it raises the quit flag. If the flag is already set,
