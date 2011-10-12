@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.139 2011/07/09 01:49:16 pirofti Exp $	*/
+/*	$OpenBSD: locore.s,v 1.140 2011/10/12 18:30:09 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1160,21 +1160,6 @@ ENTRY(longjmp)
 
 /*****************************************************************************/
 		
-#ifdef DIAGNOSTIC
-NENTRY(switch_error1)
-	pushl	%edi
-	pushl	$1f
-	call	_C_LABEL(panic)
-	/* NOTREACHED */
-1:	.asciz	"cpu_switch1 %p"
-NENTRY(switch_error2)
-	pushl	%edi
-	pushl	$1f
-	call	_C_LABEL(panic)
-	/* NOTREACHED */
-1:	.asciz	"cpu_switch2 %p"
-#endif /* DIAGNOSTIC */
-
 /*
  * cpu_switchto(struct proc *old, struct proc *new)
  * Switch from the "old" proc to the "new" proc. If "old" is NULL, we
@@ -1187,14 +1172,6 @@ ENTRY(cpu_switchto)
 
 	movl	16(%esp), %esi
 	movl	20(%esp), %edi
-
-#ifdef	DIAGNOSTIC
-	xorl	%eax, %eax
-	cmpl	%eax,P_WCHAN(%edi)	# Waiting for something?
-	jne	_C_LABEL(switch_error1)	# Yes; shouldn't be queued.
-	cmpb	$SRUN,P_STAT(%edi)	# In run state?
-	jne	_C_LABEL(switch_error2)	# No; shouldn't be queued.
-#endif /* DIAGNOSTIC */
 
 	/* If old process exited, don't bother. */
 	testl	%esi,%esi

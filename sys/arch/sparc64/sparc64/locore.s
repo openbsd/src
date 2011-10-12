@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.163 2010/11/27 18:04:23 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.164 2011/10/12 18:30:09 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -6019,19 +6019,6 @@ Lcopyfault:
 	retl
 	 mov	EFAULT, %o0
 
-Lsw_panic_wchan:
-        sethi   %hi(1f), %o0
-        call    _C_LABEL(panic)
-         or     %lo(1f), %o0, %o0
-Lsw_panic_srun:
-        sethi   %hi(2f), %o0
-        call    _C_LABEL(panic)
-         or     %lo(2f), %o0, %o0
-        .data
-1:      .asciz  "switch wchan"
-2:      .asciz  "switch SRUN"
-
-	.text
 /*
  * cpu_switchto(struct proc *old, struct proc *new)
  *
@@ -6059,15 +6046,6 @@ ENTRY(cpu_switchto)
 	 *	%o4 = sswap
 	 *	%o5 = <free>
 	 */
-
-	/* firewalls */
-	ldx	[%i1 + P_WCHAN], %o0	! if (newproc->p_wchan)
-	brnz,pn	%o0, Lsw_panic_wchan	!	panic("switch wchan");
-!	 XXX check no delay slot
-	ldsb	[%i1 + P_STAT], %o0	! if (newproc->p_stat != SRUN)
-	cmp	%o0, SRUN
-	bne	Lsw_panic_srun		!	panic("switch SRUN");
-!	 XXX check no delay slot
 
 	/*
 	 * Committed to running process p.

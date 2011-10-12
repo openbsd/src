@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.23 2011/07/06 21:41:37 art Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.24 2011/10/12 18:30:09 miod Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -265,6 +265,7 @@ sched_chooseproc(void)
 		}
 		p = spc->spc_idleproc;
 		KASSERT(p);
+		KASSERT(p->p_wchan == NULL);
 		p->p_stat = SRUN;
 		return (p);
 	}
@@ -274,6 +275,7 @@ again:
 		queue = ffs(spc->spc_whichqs) - 1;
 		p = TAILQ_FIRST(&spc->spc_qs[queue]);
 		remrunqueue(p);
+		KASSERT(p->p_stat == SRUN);
 	} else if ((p = sched_steal_proc(curcpu())) == NULL) {
 		p = spc->spc_idleproc;
 		if (p == NULL) {
@@ -295,6 +297,7 @@ again:
 		p->p_stat = SRUN;
 	} 
 
+	KASSERT(p->p_wchan == NULL);
 	return (p);	
 }
 

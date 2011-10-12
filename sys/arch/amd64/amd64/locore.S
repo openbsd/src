@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.49 2011/09/03 01:21:00 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.50 2011/10/12 18:30:07 miod Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -724,14 +724,6 @@ ENTRY(cpu_switchto)
 	movq	%rdi, %r13
 	movq	%rsi, %r12
 
-#ifdef DIAGNOSTIC
-	xorq	%rax,%rax
-	cmpq	%rax,P_WCHAN(%r12)
-	jne	_C_LABEL(switch_error2)
-	cmpb	$SRUN,P_STAT(%r12)
-	jne	_C_LABEL(switch_error3)
-#endif
-
 	/* Record new proc. */
 	movb	$SONPROC,P_STAT(%r12)	# p->p_stat = SONPROC
 	SET_CURPROC(%r12,%rcx)
@@ -858,21 +850,6 @@ ENTRY(cpu_idle_leave)
 	.globl	_C_LABEL(panic)
 
 #ifdef DIAGNOSTIC
-NENTRY(switch_error1)
-	movabsq	$1f,%rdi
-	call	_C_LABEL(panic)
-	/* NOTREACHED */
-1:	.asciz	"cpu_switch 1"
-NENTRY(switch_error2)
-	movabsq	$1f,%rdi
-	call	_C_LABEL(panic)
-	/* NOTREACHED */
-1:	.asciz	"cpu_switch 2"
-NENTRY(switch_error3)
-	movabsq	$1f,%rdi
-	call	_C_LABEL(panic)
-	/* NOTREACHED */
-1:	.asciz	"cpu_switch 3"
 NENTRY(switch_pmcpu_set)
 	movabsq	$1f,%rdi
 	call	_C_LABEL(panic)

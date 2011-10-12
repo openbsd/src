@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.186 2011/05/05 20:50:43 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.187 2011/10/12 18:30:09 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -2769,12 +2769,6 @@ Lcspstr
 	.asciz	"cpu_switch:old=%p, new=%p"
 	.align	8
 kstack_check
-	ldw	P_WCHAN(arg1), t1
-	comb,<>,n r0, t1, switch_error
-	nop
-	ldb	P_STAT(arg1), t1
-	comib,<>,n SRUN, t1, switch_error
-	nop
 	/*
 	 * The new process' kernel stack must be reasonable.
 	 */
