@@ -1,4 +1,4 @@
-/*	$OpenBSD: wav.h,v 1.11 2010/07/31 08:48:01 ratchov Exp $	*/
+/*	$OpenBSD: wav.h,v 1.12 2011/10/12 07:20:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -24,6 +24,7 @@
 
 struct wav {
 	struct pipe pipe;
+	struct wav *next;
 #define HDR_AUTO	0	/* guess by looking at the file name */
 #define HDR_RAW		1	/* no headers, ie openbsd native ;-) */
 #define HDR_WAV		2	/* microsoft riff wave */
@@ -41,17 +42,19 @@ struct wav {
 	int join;		/* join/expand channels */
 	unsigned vol;		/* current volume */
 	unsigned maxweight;	/* dynamic range when vol == 127 */
-#define WAV_INIT	0	/* not trying to do anything */
-#define WAV_START	1	/* buffer allocated */
-#define WAV_READY	2	/* buffer filled enough */
-#define WAV_RUN		3	/* buffer attached to device */
-#define WAV_FAILED	4	/* failed to seek */
+#define WAV_CFG		0	/* parameters read from headers */
+#define WAV_INIT	1	/* not trying to do anything */
+#define WAV_START	2	/* buffer allocated */
+#define WAV_READY	3	/* buffer filled enough */
+#define WAV_RUN		4	/* buffer attached to device */
+#define WAV_MIDI	5	/* midi "syx" file */
 	unsigned pstate;	/* one of above */
 	unsigned mode;		/* bitmap of MODE_* */
 	struct dev *dev;	/* device playing or recording */
 };
 
 extern struct fileops wav_ops;
+struct wav *wav_list;
 
 struct wav *wav_new_in(struct fileops *, struct dev *,
     unsigned, char *, unsigned, struct aparams *, unsigned, unsigned, int, int);
@@ -63,6 +66,7 @@ void wav_close(struct file *);
 int wav_readhdr(int, struct aparams *, off_t *, off_t *, short **);
 int wav_writehdr(int, struct aparams *, off_t *, off_t);
 void wav_conv(unsigned char *, unsigned, short *);
+int wav_init(struct wav *);
 
 extern short wav_ulawmap[256];
 extern short wav_alawmap[256];

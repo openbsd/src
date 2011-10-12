@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.36 2011/06/27 07:57:38 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.37 2011/10/12 07:20:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -784,7 +784,7 @@ ctl_trystart(struct aproc *p, int caller)
  * allocate a new slot and register the given call-backs
  */
 int
-ctl_slotnew(struct aproc *p, char *who, struct ctl_ops *ops, void *arg, int tr)
+ctl_slotnew(struct aproc *p, char *who, struct ctl_ops *ops, void *arg, int mmc)
 {
 	int idx;
 	struct ctl_slot *s;
@@ -792,7 +792,7 @@ ctl_slotnew(struct aproc *p, char *who, struct ctl_ops *ops, void *arg, int tr)
 
 	if (!APROC_OK(p)) {
 #ifdef DEBUG
-		if (debug_level >= 1) {
+		if (debug_level >= 2) {
 			dbg_puts(who);
 			dbg_puts(": MIDI control not available\n");
 		}
@@ -806,7 +806,7 @@ ctl_slotnew(struct aproc *p, char *who, struct ctl_ops *ops, void *arg, int tr)
 	s = p->u.ctl.slot + idx;
 	s->ops = ops;
 	s->arg = arg;
-	s->tstate = tr ? CTL_STOP : CTL_OFF;
+	s->tstate = mmc ? CTL_STOP : CTL_OFF;
 	s->ops->vol(s->arg, s->vol);
 	ctl_msg_info(p, idx, msg);
 	ctl_sendmsg(p, NULL, msg, SYSEX_SIZE(mixinfo));

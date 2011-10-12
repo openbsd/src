@@ -121,6 +121,8 @@ struct fileops wav_ops = {
 	pipe_revents
 };
 
+struct wav *wav_list = NULL;
+
 int rwav_in(struct aproc *, struct abuf *);
 int rwav_out(struct aproc *, struct abuf *);
 void rwav_eof(struct aproc *, struct abuf *);
@@ -182,7 +184,7 @@ struct aproc_ops wwav_ops = {
 void
 wav_dbg(struct wav *f)
 {
-	static char *pstates[] = { "ini", "sta", "rdy", "run", "fai" };
+	static char *pstates[] = { "cfg", "ini", "sta", "rdy", "run", "mid" };
 	struct aproc *midi = f->dev ? f->dev->midi : NULL;
 
 	dbg_puts("wav(");
@@ -287,7 +289,7 @@ wav_write(struct file *file, unsigned char *data, unsigned count)
 void
 wav_close(struct file *file)
 {
-	struct wav *f = (struct wav *)file;
+	struct wav *f = (struct wav *)file, **pf;
 
 	if (f->mode & MODE_RECMASK) {
 		pipe_trunc(&f->pipe.file, f->endpos);
@@ -299,10 +301,17 @@ wav_close(struct file *file)
 		}
 	}
 	pipe_close(file);
-	if (f->dev) {
+	if (f->pstate != WAV_CFG)
 		dev_unref(f->dev);
-		f->dev = NULL;
+	for (pf = &wav_list; *pf != f; pf = &(*pf)->next) {
+#ifdef DEBUG
+		if (*pf == NULL) {
+			dbg_puts("wav_close: not on list\n");
+			dbg_panic();
+		}
+#endif
 	}
+	*pf = f->next;
 }
 
 /*
@@ -340,6 +349,26 @@ wav_attach(struct wav *f, int force)
 	if (f->mode & MODE_PLAY)
 		dev_setvol(d, rbuf, MIDI_TO_ADATA(f->vol));
 	return 1;
+}
+
+/*
+ * allocate buffers, so client can start filling write-end.
+ */
+void
+wav_midiattach(struct wav *f)
+{
+	struct abuf *rbuf = NULL, *wbuf = NULL;
+	
+	if (f->mode & MODE_MIDIOUT) {
+		rbuf = abuf_new(MIDI_BUFSZ, &aparams_none);
+		aproc_setout(f->pipe.file.rproc, rbuf);
+	}
+	if (f->mode & MODE_MIDIIN) {
+		wbuf = abuf_new(MIDI_BUFSZ, &aparams_none);
+		aproc_setin(f->pipe.file.wproc, wbuf);
+	}
+	f->pstate = WAV_MIDI;
+	dev_midiattach(f->dev, rbuf, wbuf);
 }
 
 /*
@@ -424,12 +453,13 @@ wav_reset(struct wav *f)
 		/* PASSTHROUGH */
 	case WAV_RUN:
 		wav_freebuf(f);
-		f->pstate = WAV_INIT;
 		/* PASSTHROUGH */
 	case WAV_INIT:
-	case WAV_FAILED:
 		/* nothing yet */
 		break;
+	case WAV_MIDI:
+		dbg_puts("wav_reset: in midi mode\n");
+		dbg_panic();
 	}
 }
 
@@ -440,11 +470,44 @@ void
 wav_exit(struct wav *f)
 {
 	/* XXX: call file_close() ? */
-	if (f->mode & MODE_PLAY) {
+	if (f->mode & (MODE_PLAY | MODE_MIDIOUT)) {
 		aproc_del(f->pipe.file.rproc);
-	} else if (f->mode & MODE_RECMASK) {
+	} else if (f->mode & (MODE_RECMASK | MODE_MIDIIN)) {
 		aproc_del(f->pipe.file.wproc);
 	}
+}
+
+/*
+ * allocate the device
+ */
+int
+wav_init(struct wav *f)
+{
+	if (!dev_ref(f->dev)) {
+		wav_exit(f);
+		return 0;
+	}
+	if (!f->mmc)
+		f->dev->autostart = 1;
+	if (f->mode & MODE_MIDIMASK) {
+		wav_midiattach(f);
+		return 1;
+	}
+	f->slot = ctl_slotnew(f->dev->midi, "wav", &ctl_wavops, f, 1);
+	f->pstate = WAV_INIT;
+	if ((f->mode & f->dev->mode) != f->mode) {
+#ifdef DEBUG
+		if (debug_level >= 1) {
+			wav_dbg(f);
+			dbg_puts(": ");
+			dbg_puts(": operation not supported by device\n");
+		}
+#endif
+		wav_exit(f);
+		return 0;
+	}
+	wav_allocbuf(f);
+	return 1;
 }
 
 /*
@@ -458,9 +521,8 @@ wav_seekmmc(struct wav *f)
 	 * don't go beyond the end-of-file, if so
 	 * put it in INIT state so it dosn't start
 	 */
-	if (f->mmcpos > f->endpos) {
+	if (f->mmcpos > f->endpos && !(f->mode & MODE_RECMASK)) {
 		wav_reset(f);
-		f->pstate = WAV_FAILED;
 		/*
 		 * don't make other stream wait for us
 		 */
@@ -472,6 +534,8 @@ wav_seekmmc(struct wav *f)
 		wav_exit(f);
 		return 0;
 	}
+	if (f->mode & MODE_RECMASK)
+		f->endpos = f->mmcpos;
 	if (f->hdr == HDR_WAV)
 		f->wbytes = WAV_DATAMAX - f->mmcpos;
 	f->rbytes = f->endpos - f->mmcpos;
@@ -506,9 +570,11 @@ wav_rdata(struct wav *f)
 		if (ctl_slotstart(f->dev->midi, f->slot))
 			(void)wav_attach(f, 0);
 		break;
-#ifdef DEBUG
 	case WAV_RUN:
 		break;
+	case WAV_MIDI:
+		return 1;
+#ifdef DEBUG
 	default:
 		wav_dbg(f);
 		dbg_puts(": bad state\n");
@@ -572,7 +638,7 @@ wav_startreq(void *arg)
 	struct wav *f = (struct wav *)arg;
 
 	switch (f->pstate) {
-	case WAV_FAILED:
+	case WAV_INIT:
 #ifdef DEBUG
 		if (debug_level >= 2) {
 			wav_dbg(f);
@@ -582,7 +648,7 @@ wav_startreq(void *arg)
 		return;
 	case WAV_READY:
 		if (f->mode & MODE_RECMASK)
-			f->endpos = f->startpos;
+			f->endpos = f->mmcpos + f->startpos;
 		(void)wav_attach(f, 0);
 		break;
 #ifdef DEBUG
@@ -607,7 +673,7 @@ wav_stopreq(void *arg)
 	if (debug_level >= 2) {
 		wav_dbg(f);
 		dbg_puts(": stopping");
-		if (f->pstate != WAV_FAILED && (f->mode & MODE_RECMASK)) {
+		if (f->pstate != WAV_INIT && (f->mode & MODE_RECMASK)) {
 			dbg_puts(", ");
 			dbg_putu(f->endpos);
 			dbg_puts(" bytes recorded");
@@ -664,67 +730,74 @@ wav_quitreq(void *arg)
 /*
  * determine the header by the file name
  */
-unsigned
-wav_autohdr(char *name, unsigned hdr)
+int
+wav_autohdr(char *name, struct dev *dev, unsigned *hdr, unsigned *mode)
 {
-	size_t len;
+	char *ext;
 
-	if (hdr != HDR_AUTO)
-		return hdr;
-	if (name == NULL)
-		return HDR_RAW;
-	len = strlen(name);
-	if (len >= 4 && strcasecmp(name + len - 4, ".wav") == 0)
-		return HDR_WAV;
-	else
-		return HDR_RAW;
+	if (dev->reqmode & MODE_THRU)
+		*mode &= MODE_MIDIMASK;
+	if (*hdr == HDR_AUTO) {
+		ext = strrchr(name, '.');
+		if (ext != NULL) {
+			ext++;
+			if (strcasecmp(ext, "wav") == 0) {
+				*hdr = HDR_WAV;
+				*mode &= ~MODE_MIDIMASK;
+			} else if (strcasecmp(ext, "syx") == 0) {
+				*hdr = HDR_WAV;
+				*mode &= ~MODE_AUDIOMASK;
+			}
+		} else
+			*hdr = HDR_RAW;
+	}
+	if (*mode & MODE_AUDIOMASK)
+		*mode &= ~MODE_MIDIMASK;
+	if (*mode == 0) {
+#ifdef DEBUG
+		if (debug_level >= 1) {
+			dbg_puts(name);
+			dbg_puts(": requested mode not supported\n");
+		}
+#endif
+		return 0;
+	}
+	return 1;
 }
 
 /*
  * create a file reader in the ``INIT'' state
  */
 struct wav *
-wav_new_in(struct fileops *ops,
-    struct dev *dev, unsigned mode, char *name, unsigned hdr,
-    struct aparams *par, unsigned xrun, unsigned volctl, int tr, int join)
+wav_new_in(struct fileops *ops, struct dev *dev,
+    unsigned mode, char *name, unsigned hdr,
+    struct aparams *par, unsigned xrun, unsigned volctl, int mmc, int join)
 {
 	int fd;
 	struct wav *f;
 
-	hdr = wav_autohdr(name, hdr);
-	if (name != NULL) {
+	if (!wav_autohdr(name, dev, &hdr, &mode))
+		return NULL;
+	if (strcmp(name, "-") == 0) {
+		fd = STDIN_FILENO;
+		if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
+			perror(name);
+	} else {
 		fd = open(name, O_RDONLY | O_NONBLOCK, 0666);
 		if (fd < 0) {
 			perror(name);
 			return NULL;
 		}
-	} else {
-		name = "stdin";
-		fd = STDIN_FILENO;
-		if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
-			perror(name);
 	}
 	f = (struct wav *)pipe_new(ops, fd, name);
 	if (f == NULL) {
 		close(fd);
 		return NULL;
 	}
-	if (!dev_ref(dev)) {
-		close(fd);
-		return NULL;
-	}
-	if (!(dev->mode & MODE_PLAY)) {
-#ifdef DEBUG
-		dbg_puts(name);
-		dbg_puts(": device can't play\n");
-#endif
-		close(fd);
-		dev_unref(dev);
-		return NULL;
-	}
-	f->dev = dev;
+	f->pstate = WAV_CFG;
 	if (hdr == HDR_WAV) {
-		if (!wav_readhdr(f->pipe.fd, par, &f->startpos, &f->rbytes, &f->map)) {
+		if (!wav_readhdr(f->pipe.fd, par,
+			&f->startpos, &f->rbytes, &f->map)) {
 			file_del((struct file *)f);
 			return NULL;
 		}
@@ -742,31 +815,37 @@ wav_new_in(struct fileops *ops,
 			f->rbytes = -1;
 		f->map = NULL;
 	}
-	f->pstate = WAV_INIT;
-	f->mmc = tr;
+	f->dev = dev;
+	f->mmc = mmc;
 	f->join = join;
 	f->mode = mode;
 	f->hpar = *par;
 	f->hdr = hdr;
 	f->xrun = xrun;
 	f->maxweight = MIDI_TO_ADATA(volctl);
-	f->slot = ctl_slotnew(f->dev->midi, "play", &ctl_wavops, f, 1);
+	f->slot = -1;
 	rwav_new((struct file *)f);
-	wav_allocbuf(f);
 #ifdef DEBUG
 	if (debug_level >= 2) {
 		dbg_puts(name);
-		dbg_puts(": playing ");
-		dbg_putu(f->startpos);
-		dbg_puts("..");
-		dbg_putu(f->endpos);
-		dbg_puts(": playing ");
-		aparams_dbg(par);
-		if (f->mmc)
-			dbg_puts(", mmc");
+		dbg_puts(":");
+		if (f->mode & MODE_PLAY) {
+			dbg_puts(" playing ");
+			aparams_dbg(par);
+			dbg_puts(" ");
+			dbg_putu(f->startpos);
+			dbg_puts("..");
+			dbg_putu(f->endpos);
+			if (f->mmc)
+				dbg_puts(", mmc");
+		}
+		if (f->mode & MODE_MIDIOUT)
+			dbg_puts(" midi/out");
 		dbg_puts("\n");
 	}
 #endif
+	f->next = wav_list;
+	wav_list = f;
 	return f;
 }
 
@@ -774,16 +853,16 @@ wav_new_in(struct fileops *ops,
  * create a file writer in the ``INIT'' state
  */
 struct wav *
-wav_new_out(struct fileops *ops,
-    struct dev *dev, unsigned mode, char *name, unsigned hdr,
-    struct aparams *par, unsigned xrun, int tr, int join)
+wav_new_out(struct fileops *ops, struct dev *dev,
+    unsigned mode, char *name, unsigned hdr,
+    struct aparams *par, unsigned xrun, int mmc, int join)
 {
 	int fd;
 	struct wav *f;
 
-	hdr = wav_autohdr(name, hdr);
-	if (name == NULL) {
-		name = "stdout";
+	if (!wav_autohdr(name, dev, &hdr, &mode))
+		return NULL;
+	if (strcmp(name, "-") == 0) {
 		fd = STDOUT_FILENO;
 		if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
 			perror(name);
@@ -800,20 +879,7 @@ wav_new_out(struct fileops *ops,
 		close(fd);
 		return NULL;
 	}
-	if (!dev_ref(dev)) {
-		close(fd);
-		return NULL;
-	}
-	if (!(dev->mode & MODE_RECMASK)) {
-#ifdef DEBUG
-		dbg_puts(name);
-		dbg_puts(": device can't record\n");
-#endif
-		close(fd);
-		dev_unref(dev);
-		return NULL;
-	}
-	f->dev = dev;
+	f->pstate = WAV_CFG;
 	if (hdr == HDR_WAV) {
 		par->le = 1;
 		par->sig = (par->bits <= 8) ? 0 : 1;
@@ -828,24 +894,31 @@ wav_new_out(struct fileops *ops,
 		f->wbytes = -1;
 		f->startpos = f->endpos = 0;
 	}
-	f->pstate = WAV_INIT;
-	f->mmc = tr;
+	f->dev = dev;
+	f->mmc = mmc;
 	f->join = join;
 	f->mode = mode;
 	f->hpar = *par;
 	f->hdr = hdr;
 	f->xrun = xrun;
-	f->slot = ctl_slotnew(f->dev->midi, "rec", &ctl_wavops, f, 1);
 	wwav_new((struct file *)f);
-	wav_allocbuf(f);
 #ifdef DEBUG
 	if (debug_level >= 2) {
 		dbg_puts(name);
-		dbg_puts(": recording ");
-		aparams_dbg(par);
+		dbg_puts(":");
+		if (f->mode & MODE_RECMASK) {
+			dbg_puts(" recording ");
+			aparams_dbg(par);
+			if (f->mmc)
+				dbg_puts(", mmc");
+		}
+		if (f->mode & MODE_MIDIIN)
+			dbg_puts(" midi/in");
 		dbg_puts("\n");
 	}
 #endif
+	f->next = wav_list;
+	wav_list = f;
 	return f;
 }
 
@@ -953,4 +1026,3 @@ wwav_new(struct file *f)
 	f->wproc = p;
 	return p;
 }
-

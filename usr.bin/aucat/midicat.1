@@ -1,4 +1,4 @@
-.\"	$OpenBSD: midicat.1,v 1.17 2011/06/20 20:18:44 ratchov Exp $
+.\"	$OpenBSD: midicat.1,v 1.18 2011/10/12 07:20:04 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 20 2011 $
+.Dd $Mdocdate: October 12 2011 $
 .Dt MIDICAT 1
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd MIDI server and manipulation tool
 .Sh SYNOPSIS
 .Nm midicat
-.Op Fl dl
+.Op Fl dlM
 .Op Fl a Ar flag
 .Op Fl i Ar file
 .Op Fl L Ar addr
@@ -90,8 +90,32 @@ If the option argument is
 then
 .Nm
 will accept connections from any address.
+.It Fl M
+Create a MIDI thru box.
+It merges any number of MIDI inputs and broadcasts the result
+to any number of MIDI outputs, similarly to a hardware MIDI thru box.
+Following MIDI ports
+.Pq Fl q
+and MIDI files
+.Pq Fl io
+will be subscribed to this thru box.
+If sub-devices are exposed
+.Pq Fl s
+they behave like software MIDI ports,
+allowing any MIDI-capable application to send MIDI messages to
+MIDI hardware or to another application in a uniform way.
 .It Fl l
 Detach and become a daemon.
+.It Fl s Ar name
+Expose a MIDI thru box to which MIDI programs
+can connect.
+The given
+.Ar name
+corresponds to the
+.Dq option
+part of the
+.Xr sndio 7
+device name string.
 .It Fl o Ar file
 Write received data into this file.
 If the option argument is
@@ -101,19 +125,6 @@ then standard output will be used.
 Send and receive data from this
 .Xr sndio 7
 MIDI port.
-.It Fl s Ar name
-Expose a MIDI thru box to which MIDI programs
-can connect.
-Preceding streams
-.Pq Fl ioq
-are subscribed to this thru box.
-The given
-.Ar name
-corresponds to the
-.Dq option
-part of the
-.Xr sndio 7
-device name string.
 .It Fl U Ar unit
 Unit number to use when running in server mode.
 Each
@@ -123,6 +134,9 @@ used in
 .Xr sndio 7
 device names.
 The default is 0.
+The unit number must be set before any server-specific
+options are used
+.Pq Fl Ls .
 .El
 .Pp
 If files
@@ -189,7 +203,7 @@ The following creates a MIDI thru box and subscribes the
 port, allowing multiple MIDI programs to use the port
 simultaneously:
 .Bd -literal -offset indent
-$ midicat -q rmidi:5 -s default
+$ midicat -q rmidi:5
 .Ed
 .Sh SEE ALSO
 .Xr aucat 1 ,

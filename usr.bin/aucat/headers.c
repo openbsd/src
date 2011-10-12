@@ -1,4 +1,4 @@
-/*	$OpenBSD: headers.c,v 1.19 2010/11/05 15:23:18 ratchov Exp $	*/
+/*	$OpenBSD: headers.c,v 1.20 2011/10/12 07:20:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -240,7 +240,7 @@ wav_writehdr(int fd, struct aparams *par, off_t *startpos, off_t datasz)
 		struct wavchunk fmt_hdr;
 		struct wavfmt fmt;
 		struct wavchunk data_hdr;
-	} hdr;
+	} __packed hdr;
 
 	/*
 	 * Check that encoding is supported by .wav file format.
@@ -273,8 +273,8 @@ wav_writehdr(int fd, struct aparams *par, off_t *startpos, off_t datasz)
 	hdr.fmt.nch = htole16(nch);
 	hdr.fmt.rate = htole32(par->rate);
 	hdr.fmt.byterate = htole32(par->rate * par->bps * nch);
-	hdr.fmt.bits = htole16(par->bits);
 	hdr.fmt.blkalign = par->bps * nch;
+	hdr.fmt.bits = htole16(par->bits);
 
 	memcpy(hdr.data_hdr.id, wav_id_data, 4);
 	hdr.data_hdr.size = htole32(datasz);

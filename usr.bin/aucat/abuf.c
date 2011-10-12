@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.c,v 1.22 2010/06/04 06:15:28 ratchov Exp $	*/
+/*	$OpenBSD: abuf.c,v 1.23 2011/10/12 07:20:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -127,7 +127,7 @@ abuf_del(struct abuf *buf)
 	}
 	if (ABUF_ROK(buf)) {
 		/*
-		 * XXX : we should call abort(), here.
+		 * XXX: we should call abort(), here.
 		 * However, poll() doesn't seem to return POLLHUP,
 		 * so the reader is never destroyed; instead it appears	
 		 * as blocked. Fix file_poll(), if fixable, and add

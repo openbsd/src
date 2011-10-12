@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.22 2011/04/27 21:32:40 ratchov Exp $	*/
+/*	$OpenBSD: conf.h,v 1.23 2011/10/12 07:20:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -52,8 +52,10 @@ extern volatile sig_atomic_t debug_level;
 #define MODE_MIDIIN	0x08	/* allowed to write midi */
 #define MODE_MON	0x10	/* allowed to monitor */
 #define MODE_LOOP	0x20	/* deviceless mode */
+#define MODE_THRU	0x40	/* pass thru insted of device control */
+#define MODE_PLAYREC	(MODE_PLAY | MODE_REC)
 #define MODE_RECMASK	(MODE_REC | MODE_MON)
-#define MODE_AUDIOMASK	(MODE_REC | MODE_MON | MODE_PLAY)
+#define MODE_AUDIOMASK	(MODE_PLAY | MODE_REC | MODE_MON)
 #define MODE_MIDIMASK	(MODE_MIDIIN | MODE_MIDIOUT)
 
 /*

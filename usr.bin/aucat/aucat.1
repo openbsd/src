@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.86 2011/06/29 07:39:02 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.87 2011/10/12 07:20:03 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,16 +14,16 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 29 2011 $
+.Dd $Mdocdate: October 12 2011 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
 .Nm aucat
-.Nd audio server and stream manipulation tool
+.Nd audio/MIDI server and stream manipulation tool
 .Sh SYNOPSIS
 .Nm aucat
 .Bk -words
-.Op Fl dln
+.Op Fl dlMn
 .Op Fl a Ar flag
 .Op Fl b Ar nframes
 .Op Fl C Ar min : Ns Ar max
@@ -36,12 +36,11 @@
 .Op Fl L Ar addr
 .Op Fl m Ar mode
 .Op Fl o Ar file
-.Op Fl q Ar device
+.Op Fl q Ar port
 .Op Fl r Ar rate
 .Op Fl s Ar name
 .Op Fl t Ar mode
 .Op Fl U Ar unit
-.Op Fl u Ar flag
 .Op Fl v Ar volume
 .Op Fl w Ar flag
 .Op Fl x Ar policy
@@ -112,13 +111,14 @@ The default is signed, 16-bit, native byte order.
 Add this
 .Xr sndio 7
 audio device to devices used for playing and/or recording.
-Preceding streams
-.Pq Fl ios ,
-control MIDI ports
-.Pq Fl q ,
-and per-device options
-.Pq Fl abuwz
+Preceding per-device options
+.Pq Fl abwz
 apply to this device.
+Streams
+.Pq Fl ios
+and control MIDI ports
+.Pq Fl q
+that are applied after will be attached to this device.
 Device mode and parameters are determined from streams
 attached to it.
 .It Fl h Ar fmt
@@ -162,33 +162,61 @@ then
 will accept connections from any address.
 .It Fl l
 Detach and become a daemon.
+.It Fl M
+Create a MIDI thru box
+.Pq i.e. MIDI-only pseudo device .
+It merges any number of MIDI inputs and broadcasts the result
+to any number of MIDI outputs, similarly to a hardware MIDI thru box.
+Only MIDI ports
+.Pq Fl q
+and MIDI files
+.Po
+.Fl io
+preceded by
+.Fl m Ar midi
+.Pc
+can be attached to it.
+If sub-devices are exposed
+.Pq Fl s
+they behave like software MIDI ports,
+allowing any MIDI-capable application to send MIDI messages to
+MIDI hardware or to another application in a uniform way.
 .It Fl m Ar mode
 Set the stream mode.
 Valid modes are
 .Ar play ,
 .Ar rec ,
-and
 .Ar mon ,
-corresponding to playback, recording and monitoring.
+and
+.Ar midi ,
+corresponding to playback, recording, monitoring and MIDI control.
 A monitoring stream is a fake recording stream corresponding to
 the mix of all playback streams.
 Multiple modes can be specified, separated by commas,
 but the same stream cannot be used for both recording and monitoring.
 The default is
-.Ar play , Ns Ar rec
-(i.e. full-duplex).
+.Ar play , Ns Ar rec , Ns Ar midi
+(i.e. full-duplex with MIDI control enabled).
 .It Fl n
-Loopback mode.
-Instead of using audio devices, send input streams
+Create a loopback pseudo audio device.
+Send input streams
 to the output, processing them on the fly.
-This mode is useful to mix, demultiplex, resample or reencode
+This pseudo-device is useful to mix, demultiplex, resample or re-encode
 audio files offline.
+It requires at least one input
+.Pq Fl i
+and one output
+.Pq Fl o .
+It doesn't support MIDI control
+.Pq Fl q
+and can't expose sub-devices
+.Pq Fl s .
 .It Fl o Ar file
 Add this file to the list of recording streams.
 If the option argument is
 .Sq -
 then standard output will be used.
-.It Fl q Ar device
+.It Fl q Ar port
 Expose the audio device clock on this
 .Xr sndio 7
 MIDI port and allow audio device properties to be controlled
@@ -239,21 +267,9 @@ used in
 .Xr sndio 7
 device names.
 The default is 0.
-.It Fl u Ar flag
-Control how parameters of the audio device are chosen.
-If the flag is
-.Va on
-then
-.Nm
-tries to automatically determine the optimal parameters to
-match stream parameters and avoid conversions if possible.
-If the flag is
-.Va off
-it will instead use the parameters specified by the
-.Fl Ccer
-options.
-The default is
-.Va on .
+The unit number must be set before any server-specific
+options are used
+.Pq Fl Ls .
 .It Fl v Ar volume
 Software volume attenuation of the playback stream.
 The value must be between 1 and 127,
@@ -326,9 +342,9 @@ to a 400 frame block size.
 .Pp
 On the command line,
 per-device parameters
-.Pq Fl abuwz
+.Pq Fl abwz
 must precede the device definition
-.Pq Fl f ,
+.Pq Fl fMn ,
 and per-stream parameters
 .Pq Fl Ccehjmrtvx
 must precede the stream definition
@@ -337,24 +353,32 @@ MIDI ports
 .Pq Fl q
 and stream definitions
 .Pq Fl ios
-must precede the definition of the device
-.Pq Fl f
+must follow the definition of the device
+.Pq Fl fMn
 to which they are attached.
 Global parameters
-.Pq Fl dlnUu
+.Pq Fl dl
 are position-independent.
 .Pp
 If no audio devices
-.Pq Fl f
+.Pq Fl fMn
 are specified,
 settings are applied as if
-the default device is specified as the last argument.
+the default device is specified.
 If no streams
 .Pq Fl ios
 are specified for a device, a default server sub-device is
 created attached to it, meaning that
 .Nm
 behaves as an audio server.
+If a device
+.Pq Fl fMn
+is defined twice, both definitions are merged:
+parameters of the first one are used but streams
+.Pq Fl ios
+and MIDI control ports
+.Pq Fl q
+of both definitions are created.
 The default
 .Xr sndio 7
 device is
@@ -569,7 +593,7 @@ connected to the
 .Va midithru:0
 MIDI device:
 .Bd -literal -offset indent
-$ aucat -t slave -q midithru:0 -i file.wav -f aucat:0.mmc
+$ aucat -f aucat:0.mmc -t slave -q midithru:0 -i file.wav
 .Ed
 .Pp
 At this stage,
@@ -682,3 +706,7 @@ To avoid this,
 .Fl a Ar off
 is disabled for the default audio device, but nothing prevents the user
 from shooting himself in the foot by creating a similar deadlock.
+.Pp
+The ability to merge multiple inputs is provided to allow multiple
+applications producing MIDI data to keep their connection open while
+idling; it does not replace a fully featured MIDI merger.

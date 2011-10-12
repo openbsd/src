@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.h,v 1.9 2010/10/21 18:57:42 ratchov Exp $	*/
+/*	$OpenBSD: opt.h,v 1.10 2011/10/12 07:20:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -23,7 +23,7 @@
 struct dev;
 
 struct opt {
-	SLIST_ENTRY(opt) entry;
+	struct opt *next;
 #define OPT_NAMEMAX 11
 	char name[OPT_NAMEMAX + 1];
 	int maxweight;		/* max dynamic range for clients */
@@ -35,10 +35,11 @@ struct opt {
 	struct dev *dev;	/* device to which we're attached */
 };
 
-SLIST_HEAD(optlist,opt);
+extern struct opt *opt_list;
 
-void opt_new(char *, struct dev *, struct aparams *, struct aparams *,
+struct opt *opt_new(char *, struct dev *, struct aparams *, struct aparams *,
     int, int, int, unsigned);
+int opt_bind(struct opt *);
 struct opt *opt_byname(char *);
 
 #endif /* !defined(OPT_H) */

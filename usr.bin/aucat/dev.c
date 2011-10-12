@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.66 2011/06/20 20:18:44 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.67 2011/10/12 07:20:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -113,8 +113,7 @@ struct dev *dev_list = NULL;
  * Create a sndio device
  */
 struct dev *
-dev_new_sio(char *path,
-    unsigned mode, struct aparams *dipar, struct aparams *dopar,
+dev_new(char *path, unsigned mode,
     unsigned bufsz, unsigned round, unsigned hold, unsigned autovol)
 {
 	struct dev *d;
@@ -127,79 +126,51 @@ dev_new_sio(char *path,
 	d->ctl_list = NULL;
 	d->path = path;
 	d->reqmode = mode;
-	if (mode & MODE_PLAY)
-		d->reqopar = *dopar;
-	if (mode & MODE_RECMASK)
-		d->reqipar = *dipar;
+	aparams_init(&d->reqopar, NCHAN_MAX, 0, 0);
+	aparams_init(&d->reqipar, NCHAN_MAX, 0, 0);
 	d->reqbufsz = bufsz;
 	d->reqround = round;
 	d->hold = hold;
 	d->autovol = autovol;
+	d->autostart = 0;
 	d->pstate = DEV_CLOSED;
 	d->next = dev_list;
 	dev_list = d;
-	if (d->hold && !dev_open(d)) {
+	return d;
+}
+
+/*
+ * adjust device parameters and mode
+ */
+void
+dev_adjpar(struct dev *d, unsigned mode,
+    struct aparams *ipar, struct aparams *opar)
+{
+	d->reqmode |= (mode | MODE_MIDIMASK);
+	if (mode & MODE_REC)
+		aparams_grow(&d->reqipar, ipar);
+	if (mode & MODE_PLAY)
+		aparams_grow(&d->reqopar, opar);
+}
+
+/*
+ * Initialize the device with the current parameters
+ */
+int
+dev_init(struct dev *d)
+{
+	if ((d->reqmode & (MODE_AUDIOMASK | MODE_MIDIMASK)) == 0) {
+#ifdef DEBUG
+		    dbg_puts(d->path);
+		    dbg_puts(": has no streams, skipped\n");
+#endif		    		    
+		    return 1;
+	}
+	if (d->hold && d->pstate == DEV_CLOSED && !dev_open(d)) {
 		dev_del(d);
-		return NULL;
+		return 0;
 	}
-	return d;
-}
-
-/*
- * Create a loopback synchronous device
- */
-struct dev *
-dev_new_loop(struct aparams *dipar, struct aparams *dopar, unsigned bufsz)
-{
-	struct aparams par;
-	unsigned cmin, cmax, rate;
-	struct dev *d;
-
-	d = malloc(sizeof(struct dev));
-	if (d == NULL) {
-		perror("malloc");
-		exit(1);
-	}
-	d->ctl_list = NULL;
-	cmin = (dipar->cmin < dopar->cmin) ? dipar->cmin : dopar->cmin;
-	cmax = (dipar->cmax > dopar->cmax) ? dipar->cmax : dopar->cmax;
-	rate = (dipar->rate > dopar->rate) ? dipar->rate : dopar->rate;
-	aparams_init(&par, cmin, cmax, rate);
-	d->reqipar = par;
-	d->reqopar = par;
-	d->rate = rate;
-	d->reqround = (bufsz + 1) / 2;
-	d->reqbufsz = d->reqround * 2;
-	d->reqmode = MODE_PLAY | MODE_REC | MODE_LOOP | MODE_MIDIMASK;
-	d->pstate = DEV_CLOSED;
-	d->hold = 0;
-	d->path = "loop";
-	d->next = dev_list;
-	dev_list = d;
-	return d;
-}
-
-/*
- * Create a MIDI thru box device
- */
-struct dev *
-dev_new_thru(int hold)
-{
-	struct dev *d;
-
-	d = malloc(sizeof(struct dev));
-	if (d == NULL) {
-		perror("malloc");
-		exit(1);
-	}
-	d->ctl_list = NULL;
-	d->reqmode = MODE_MIDIMASK;
-	d->pstate = DEV_CLOSED;
-	d->hold = hold;
-	d->path = "midithru";
-	d->next = dev_list;
-	dev_list = d;
-	return d;
+	return 1;
 }
 
 /*
@@ -219,10 +190,8 @@ devctl_add(struct dev *d, char *name, unsigned mode)
 	c->mode = mode;
 	c->next = d->ctl_list;
 	d->ctl_list = c;
-	if (d->pstate != DEV_CLOSED) {
-		if (!devctl_open(d, c))
-			return 0;
-	}
+	if (d->pstate != DEV_CLOSED && !devctl_open(d, c))
+		return 0;
 	return 1;
 }
 
@@ -265,7 +234,7 @@ dev_open(struct dev *d)
 	struct aparams par;
 	struct aproc *conv;
 	struct abuf *buf;
-	unsigned siomode;
+	unsigned siomode, cmin, cmax, rate;
 	
 	d->mode = d->reqmode;
 	d->round = d->reqround;
@@ -280,6 +249,24 @@ dev_open(struct dev *d)
 	d->submon = NULL;
 	d->midi = NULL;
 	d->rate = 0;
+
+	if (d->opar.cmin > d->opar.cmax) {
+		d->opar.cmin = 0;
+		d->opar.cmax = 1;
+	}
+	if (d->ipar.cmin > d->ipar.cmax) {
+		d->ipar.cmin = 0;
+		d->ipar.cmax = 1;
+	}
+	if (d->opar.rate > d->ipar.rate)
+		d->ipar.rate = d->opar.rate;
+	else
+		d->opar.rate = d->ipar.rate;
+	if (d->opar.rate == 0)
+		d->opar.rate = d->ipar.rate = 44100; /* XXX */
+
+	if (d->mode & MODE_THRU)
+		d->mode &= ~MODE_AUDIOMASK;
 
 	/*
 	 * If needed, open the device (ie create dev_rec and dev_play)
@@ -316,22 +303,6 @@ dev_open(struct dev *d)
 			return 0;
 		}
 		d->rate = d->mode & MODE_REC ? d->ipar.rate : d->opar.rate;
-#ifdef DEBUG
-		if (debug_level >= 2) {
-			if (d->mode & MODE_REC) {
-				dbg_puts(d->path);
-				dbg_puts(": recording ");
-				aparams_dbg(&d->ipar);
-				dbg_puts("\n");
-			}
-			if (d->mode & MODE_PLAY) {
-				dbg_puts(d->path);
-				dbg_puts(": playing ");
-				aparams_dbg(&d->opar);
-				dbg_puts("\n");
-			}
-		}
-#endif
 		if (d->mode & MODE_REC) {
 			d->rec = rsio_new(f);
 			d->rec->refs++;
@@ -341,14 +312,70 @@ dev_open(struct dev *d)
 			d->play->refs++;
 		}
 	}
-
+	if (d->mode & MODE_LOOP) {
+		if (d->mode & MODE_MON) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				dbg_puts("monitoring not allowed "
+				    "in loopback mode\n");
+			}
+#endif
+			return 0;
+		}
+		if ((d->mode & MODE_PLAYREC) != MODE_PLAYREC) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				dbg_puts("both play and record streams "
+				    "required in loopback mode\n");
+			}
+#endif
+			return 0;
+		}
+		if (d->ctl_list) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				dbg_puts("MIDI control not allowed "
+				    "in loopback mode\n");
+			}
+#endif
+			return 0;
+		}
+		cmin = (d->ipar.cmin < d->opar.cmin) ?
+		    d->ipar.cmin : d->opar.cmin;
+		cmax = (d->ipar.cmax > d->opar.cmax) ?
+		    d->ipar.cmax : d->opar.cmax;
+		rate = (d->ipar.rate > d->opar.rate) ?
+		    d->ipar.rate : d->opar.rate;
+		aparams_init(&par, cmin, cmax, rate);
+		d->ipar = par;
+		d->opar = par;
+		d->rate = rate;
+		d->round = rate;
+		d->bufsz = 2 * d->round;
+	}
+#ifdef DEBUG
+	if (debug_level >= 2) {
+		if (d->mode & MODE_REC) {
+			dbg_puts(d->path);
+			dbg_puts(": recording ");
+			aparams_dbg(&d->ipar);
+			dbg_puts("\n");
+		}
+		if (d->mode & MODE_PLAY) {
+			dbg_puts(d->path);
+			dbg_puts(": playing ");
+			aparams_dbg(&d->opar);
+			dbg_puts("\n");
+		}
+	}
+#endif
 	/*
 	 * Create the midi control end, or a simple thru box
 	 * if there's no device
 	 */
 	if (d->mode & MODE_MIDIMASK) {
-		d->midi = (d->mode & (MODE_PLAY | MODE_RECMASK)) ?
-		    ctl_new("ctl", d) : thru_new("thru");
+		d->midi = (d->mode & MODE_THRU) ?
+		    thru_new("thru") : ctl_new("ctl", d);
 		d->midi->refs++;
 	}
 
@@ -379,7 +406,6 @@ dev_open(struct dev *d)
 
 		d->mix->flags |= APROC_QUIT;
 		d->sub->flags |= APROC_QUIT;
-		d->rate = d->opar.rate;
 	}
 	if (d->rec) {
 		aparams_init(&par, d->ipar.cmin, d->ipar.cmax, d->rate);
