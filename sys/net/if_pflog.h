@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pflog.h,v 1.21 2011/09/28 17:15:45 bluhm Exp $ */
+/* $OpenBSD: if_pflog.h,v 1.22 2011/10/13 18:23:39 claudio Exp $ */
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -54,7 +54,8 @@ struct pfloghdr {
 	pid_t		rule_pid;
 	u_int8_t	dir;
 	u_int8_t	rewritten;
-	u_int8_t	pad[2];
+	sa_family_t	naf;
+	u_int8_t	pad[1];
 	struct pf_addr	saddr;
 	struct pf_addr	daddr;
 	u_int16_t	sport;

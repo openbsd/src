@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.167 2011/08/03 00:01:30 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.168 2011/10/13 18:23:39 claudio Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -426,11 +426,13 @@ pfsync_state_export(struct pfsync_state *sp, struct pf_state *st)
 	sp->key[PF_SK_WIRE].port[0] = st->key[PF_SK_WIRE]->port[0];
 	sp->key[PF_SK_WIRE].port[1] = st->key[PF_SK_WIRE]->port[1];
 	sp->key[PF_SK_WIRE].rdomain = htons(st->key[PF_SK_WIRE]->rdomain);
+	sp->key[PF_SK_WIRE].af = st->key[PF_SK_WIRE]->af;
 	sp->key[PF_SK_STACK].addr[0] = st->key[PF_SK_STACK]->addr[0];
 	sp->key[PF_SK_STACK].addr[1] = st->key[PF_SK_STACK]->addr[1];
 	sp->key[PF_SK_STACK].port[0] = st->key[PF_SK_STACK]->port[0];
 	sp->key[PF_SK_STACK].port[1] = st->key[PF_SK_STACK]->port[1];
 	sp->key[PF_SK_STACK].rdomain = htons(st->key[PF_SK_STACK]->rdomain);
+	sp->key[PF_SK_STACK].af = st->key[PF_SK_STACK]->af;
 	sp->rtableid[PF_SK_WIRE] = htonl(st->rtableid[PF_SK_WIRE]);
 	sp->rtableid[PF_SK_STACK] = htonl(st->rtableid[PF_SK_STACK]);
 	sp->proto = st->key[PF_SK_WIRE]->proto;
@@ -532,7 +534,9 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 	if ((skw = pf_alloc_state_key(pool_flags)) == NULL)
 		goto cleanup;
 
-	if (PF_ANEQ(&sp->key[PF_SK_WIRE].addr[0],
+	if ((sp->key[PF_SK_WIRE].af &&
+	    (sp->key[PF_SK_WIRE].af != sp->key[PF_SK_STACK].af)) ||
+	    PF_ANEQ(&sp->key[PF_SK_WIRE].addr[0],
 	    &sp->key[PF_SK_STACK].addr[0], sp->af) ||
 	    PF_ANEQ(&sp->key[PF_SK_WIRE].addr[1],
 	    &sp->key[PF_SK_STACK].addr[1], sp->af) ||
@@ -556,7 +560,8 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 	skw->port[1] = sp->key[PF_SK_WIRE].port[1];
 	skw->rdomain = ntohs(sp->key[PF_SK_WIRE].rdomain);
 	skw->proto = sp->proto;
-	skw->af = sp->af;
+	if (!(skw->af = sp->key[PF_SK_WIRE].af))
+		skw->af = sp->af;
 	if (sks != skw) {
 		sks->addr[0] = sp->key[PF_SK_STACK].addr[0];
 		sks->addr[1] = sp->key[PF_SK_STACK].addr[1];
@@ -564,7 +569,8 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 		sks->port[1] = sp->key[PF_SK_STACK].port[1];
 		sks->rdomain = ntohs(sp->key[PF_SK_STACK].rdomain);
 		sks->proto = sp->proto;
-		sks->af = sp->af;
+		if (!(sks->af = sp->key[PF_SK_STACK].af))
+			sks->af = sp->af;
 	}
 	st->rtableid[PF_SK_WIRE] = ntohl(sp->rtableid[PF_SK_WIRE]);
 	st->rtableid[PF_SK_STACK] = ntohl(sp->rtableid[PF_SK_STACK]);
@@ -793,17 +799,23 @@ int
 pfsync_in_ins(caddr_t buf, int len, int count, int flags)
 {
 	struct pfsync_state *sp;
+	sa_family_t af1, af2;
 	int i;
 
 	for (i = 0; i < count; i++) {
 		sp = (struct pfsync_state *)(buf + len * i);
+		af1 = sp->key[0].af;
+		af2 = sp->key[1].af;
 
 		/* check for invalid values */
 		if (sp->timeout >= PFTM_MAX ||
 		    sp->src.state > PF_TCPS_PROXY_DST ||
 		    sp->dst.state > PF_TCPS_PROXY_DST ||
 		    sp->direction > PF_OUT ||
-		    (sp->af != AF_INET && sp->af != AF_INET6)) {
+		    (((af1 || af2) &&
+		     ((af1 != AF_INET && af1 != AF_INET6) ||
+		      (af2 != AF_INET && af2 != AF_INET6))) ||
+		    (sp->af != AF_INET && sp->af != AF_INET6))) {
 			DPFPRINTF(LOG_NOTICE,
 			    "pfsync_input: PFSYNC5_ACT_INS: invalid value");
 			pfsyncstats.pfsyncs_badval++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.243 2011/10/07 17:10:08 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.244 2011/10/13 18:23:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2519,6 +2519,8 @@ pf_rule_copyin(struct pf_rule *from, struct pf_rule *to,
 	pf_pool_copyin(&from->nat, &to->nat);
 	pf_pool_copyin(&from->rdr, &to->rdr);
 	pf_pool_copyin(&from->route, &to->route);
+
+	to->naf = from->naf;
 
 	if (pf_kif_setup(to->ifname, &to->kif))
 		return (EINVAL);

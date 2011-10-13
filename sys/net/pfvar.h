@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.353 2011/10/07 17:10:08 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.354 2011/10/13 18:23:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -61,7 +61,7 @@ struct ip6_hdr;
 enum	{ PF_INOUT, PF_IN, PF_OUT, PF_FWD };
 enum	{ PF_PASS, PF_DROP, PF_SCRUB, PF_NOSCRUB, PF_NAT, PF_NONAT,
 	  PF_BINAT, PF_NOBINAT, PF_RDR, PF_NORDR, PF_SYNPROXY_DROP, PF_DEFER,
-	  PF_MATCH, PF_DIVERT, PF_RT };
+	  PF_MATCH, PF_DIVERT, PF_RT, PF_AFRT };
 enum	{ PF_TRANS_RULESET, PF_TRANS_ALTQ, PF_TRANS_TABLE };
 enum	{ PF_OP_NONE, PF_OP_IRG, PF_OP_EQ, PF_OP_NE, PF_OP_LT,
 	  PF_OP_LE, PF_OP_GT, PF_OP_GE, PF_OP_XRG, PF_OP_RRG };
@@ -651,7 +651,7 @@ struct pf_rule {
 	u_int8_t		 flush;
 #define PF_PRIO_NOTSET		0xff
 	u_int8_t		 prio[2];
-	u_int8_t		 pad;
+	sa_family_t		 naf;
 
 	struct {
 		struct pf_addr		addr;
@@ -712,6 +712,7 @@ struct pf_src_node {
 	u_int32_t		 creation;
 	u_int32_t		 expire;
 	sa_family_t		 af;
+	sa_family_t		 naf;
 	u_int8_t		 type;
 };
 
@@ -789,6 +790,9 @@ struct pf_state_key {
 	struct pf_state_key	*reverse;
 	struct inpcb		*inp;
 };
+#define PF_REVERSED_KEY(key, family)				\
+	((key[PF_SK_WIRE]->af != key[PF_SK_STACK]->af) &&	\
+	 (key[PF_SK_WIRE]->af != (family)))
 
 /* keep synced with struct pf_state, used in RB_FIND */
 struct pf_state_cmp {
@@ -1256,8 +1260,10 @@ struct pf_pdesc {
 	u_int16_t	 virtual_proto;
 #define PF_VPROTO_FRAGMENT	256
 	sa_family_t	 af;
+	sa_family_t	 naf;
 	u_int8_t	 proto;
 	u_int8_t	 tos;
+	u_int8_t	 ttl;
 	u_int8_t	 dir;		/* direction */
 	u_int8_t	 sidx;		/* key index for source */
 	u_int8_t	 didx;		/* key index for destination */
@@ -1824,6 +1830,7 @@ void	pf_pkt_addr_changed(struct mbuf *);
 int	pf_state_key_attach(struct pf_state_key *, struct pf_state *, int);
 int	pf_translate(struct pf_pdesc *, struct pf_addr *, u_int16_t,
 	    struct pf_addr *, u_int16_t, u_int16_t, int);
+int	pf_translate_af(struct pf_pdesc *);
 
 void	pfr_initialize(void);
 int	pfr_match_addr(struct pfr_ktable *, struct pf_addr *, sa_family_t);

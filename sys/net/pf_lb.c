@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.18 2011/09/18 11:17:57 miod Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.19 2011/10/13 18:23:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -103,6 +103,8 @@ void			 pf_hash(struct pf_addr *, struct pf_addr *,
 int			 pf_get_sport(struct pf_pdesc *, struct pf_rule *,
 			    struct pf_addr *, u_int16_t *, u_int16_t,
 			    u_int16_t, struct pf_src_node **);
+int			 pf_get_transaddr_af(struct pf_rule *,
+			    struct pf_pdesc *, struct pf_src_node **);
 int			 pf_islinklocal(sa_family_t, struct pf_addr *);
 
 #define mix(a,b,c) \
@@ -172,7 +174,7 @@ pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
 	u_int16_t		cut;
 
 	bzero(&init_addr, sizeof(init_addr));
-	if (pf_map_addr(pd->af, r, &pd->nsaddr, naddr, &init_addr, sn, &r->nat,
+	if (pf_map_addr(pd->naf, r, &pd->nsaddr, naddr, &init_addr, sn, &r->nat,
 	    PF_SN_NAT))
 		return (1);
 
@@ -186,7 +188,7 @@ pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
 	}
 
 	do {
-		key.af = pd->af;
+		key.af = pd->naf;
 		key.proto = pd->proto;
 		key.rdomain = pd->rdomain;
 		PF_ACPY(&key.addr[0], &pd->ndaddr, key.af);
@@ -251,7 +253,7 @@ pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
 		case PF_POOL_RANDOM:
 		case PF_POOL_ROUNDROBIN:
 		case PF_POOL_LEASTSTATES:
-			if (pf_map_addr(pd->af, r, &pd->nsaddr, naddr,
+			if (pf_map_addr(pd->naf, r, &pd->nsaddr, naddr,
 			    &init_addr, sn, &r->nat, PF_SN_NAT))
 				return (1);
 			break;
@@ -261,7 +263,7 @@ pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
 		default:
 			return (1);
 		}
-	} while (! PF_AEQ(&init_addr, naddr, pd->af) );
+	} while (! PF_AEQ(&init_addr, naddr, pd->naf) );
 	return (1);					/* none available */
 }
 
@@ -580,6 +582,9 @@ pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd,
 	struct pf_addr	naddr;
 	u_int16_t	nport = 0;
 
+	if (pd->af != pd->naf)
+		return (pf_get_transaddr_af(r, pd, sns));
+
 	if (r->nat.addr.type != PF_ADDR_NONE) {
 		/* XXX is this right? what if rtable is changed at the same
 		 * XXX time? where do I need to figure out the sport? */
@@ -622,6 +627,135 @@ pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd,
 		PF_ACPY(&pd->ndaddr, &naddr, pd->af);
 		if (nport)
 			pd->ndport = nport;
+	}
+
+	return (0);
+}
+
+int
+pf_get_transaddr_af(struct pf_rule *r, struct pf_pdesc *pd,
+    struct pf_src_node **sns)
+{
+	struct pf_addr	ndaddr, nsaddr, naddr;
+	u_int16_t	nport = 0;
+	int		prefixlen = 96;
+
+	if (pf_status.debug >= LOG_NOTICE) {
+		log(LOG_NOTICE, "pf: af-to %s %s, ",
+		    pd->naf == AF_INET ? "inet" : "inet6",
+		    r->rdr.addr.type == PF_ADDR_NONE ? "nat" : "rdr");
+		pf_print_host(&pd->nsaddr, pd->nsport, pd->af);
+		addlog(" -> ");
+		pf_print_host(&pd->ndaddr, pd->ndport, pd->af);
+		addlog("\n");
+	}
+
+	if (r->nat.addr.type == PF_ADDR_NONE)
+		panic("pf_get_transaddr_af: no nat pool for source address");
+
+	/* get source address and port */
+	if (pf_get_sport(pd, r, &nsaddr, &nport,
+	    r->nat.proxy_port[0], r->nat.proxy_port[1], sns)) {
+		DPFPRINTF(LOG_NOTICE,
+		    "pf: af-to NAT proxy port allocation (%u-%u) failed",
+		    r->nat.proxy_port[0],
+		    r->nat.proxy_port[1]);
+		return (-1);
+	}
+	pd->nsport = nport;
+
+	if (pd->proto == IPPROTO_ICMPV6 && pd->naf == AF_INET) {
+		if (pd->dir == PF_IN) {
+			NTOHS(pd->ndport);
+			if (pd->ndport == ICMP6_ECHO_REQUEST)
+				pd->ndport = ICMP_ECHO;
+			else if (pd->ndport == ICMP6_ECHO_REPLY)
+				pd->ndport = ICMP_ECHOREPLY;
+			HTONS(pd->ndport);
+		} else {
+			NTOHS(pd->nsport);
+			if (pd->nsport == ICMP6_ECHO_REQUEST)
+				pd->nsport = ICMP_ECHO;
+			else if (pd->nsport == ICMP6_ECHO_REPLY)
+				pd->nsport = ICMP_ECHOREPLY;
+			HTONS(pd->nsport);
+		}
+	} else if (pd->proto == IPPROTO_ICMP && pd->naf == AF_INET6) {
+		if (pd->dir == PF_IN) {
+			NTOHS(pd->ndport);
+			if (pd->ndport == ICMP_ECHO)
+				pd->ndport = ICMP6_ECHO_REQUEST;
+			else if (pd->ndport == ICMP_ECHOREPLY)
+				pd->ndport = ICMP6_ECHO_REPLY;
+			HTONS(pd->ndport);
+		} else {
+			NTOHS(pd->nsport);
+			if (pd->nsport == ICMP_ECHO)
+				pd->nsport = ICMP6_ECHO_REQUEST;
+			else if (pd->nsport == ICMP_ECHOREPLY)
+				pd->nsport = ICMP6_ECHO_REPLY;
+			HTONS(pd->nsport);
+		}
+	}
+
+	/* get the destination address and port */
+	if (r->rdr.addr.type != PF_ADDR_NONE) {
+		if (pf_map_addr(pd->naf, r, &nsaddr, &naddr, NULL, sns,
+		    &r->rdr, PF_SN_RDR))
+			return (-1);
+		if (r->rdr.proxy_port[0])
+			pd->ndport = htons(r->rdr.proxy_port[0]);
+
+		if (pd->naf == AF_INET) {
+			/* The prefix is the IPv4 rdr address */
+			prefixlen = in_mask2len((struct in_addr *)
+			    &r->rdr.addr.v.a.mask);
+			inet_nat46(pd->naf, &pd->ndaddr,
+			    &ndaddr, &naddr, prefixlen);
+		} else {
+			/* The prefix is the IPv6 rdr address */
+			prefixlen =
+			    in6_mask2len((struct in6_addr *)
+			    &r->rdr.addr.v.a.mask, NULL);
+			inet_nat64(pd->naf, &pd->ndaddr,
+			    &ndaddr, &naddr, prefixlen);
+		}
+	} else {
+		if (pd->naf == AF_INET) {
+			/* The prefix is the IPv6 dst address */
+			prefixlen =
+			    in6_mask2len((struct in6_addr *)
+			    &r->dst.addr.v.a.mask, NULL);
+			if (prefixlen < 32)
+				prefixlen = 96;
+			inet_nat64(pd->naf, &pd->ndaddr,
+			    &ndaddr, &pd->ndaddr, prefixlen);
+		} else {
+			/*
+			 * The prefix is the IPv6 nat address
+			 * (that was stored in pd->nsaddr)
+			 */
+			prefixlen = in6_mask2len((struct in6_addr *)
+			    &r->nat.addr.v.a.mask, NULL);
+			if (prefixlen > 96)
+				prefixlen = 96;
+			inet_nat64(pd->naf, &pd->ndaddr,
+			    &ndaddr, &nsaddr, prefixlen);
+		}
+	}
+
+	PF_ACPY(&pd->nsaddr, &nsaddr, pd->naf);
+	PF_ACPY(&pd->ndaddr, &ndaddr, pd->naf);
+
+	if (pf_status.debug >= LOG_NOTICE) {
+		log(LOG_NOTICE, "pf: af-to %s %s done, prefixlen %d, ",
+		    pd->naf == AF_INET ? "inet" : "inet6",
+		    r->rdr.addr.type == PF_ADDR_NONE ? "nat" : "rdr",
+		    prefixlen);
+		pf_print_host(&pd->nsaddr, pd->nsport, pd->naf);
+		addlog(" -> ");
+		pf_print_host(&pd->ndaddr, pd->ndport, pd->naf);
+		addlog("\n");
 	}
 
 	return (0);
