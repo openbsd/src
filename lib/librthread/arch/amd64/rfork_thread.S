@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork_thread.S,v 1.3 2009/09/24 19:47:35 guenther Exp $ */
+/*	$OpenBSD: rfork_thread.S,v 1.4 2011/10/13 01:07:01 guenther Exp $ */
 /*-
  * Copyright (c) 2000 Peter Wemm <peter@FreeBSD.org>
  * Copyright (c) 2003 Alan L. Cox <alc@cs.rice.edu>
@@ -48,16 +48,14 @@ __FBSDID("$FreeBSD: /repoman/r/ncvs/src/lib/libc/amd64/gen/rfork_thread.S,v 1.1 
  */
 
 ENTRY(rfork_thread)
-	pushq	%rbx
-	pushq	%r12
-	movq	%rdx, %rbx
-	movq	%rcx, %r12
+	movq	%rdx, %r8
+	movq	%rcx, %r9
 
 	/*
 	 * Prepare and execute the thread creation syscall
 	 */
-	movq	$SYS_rfork, %rax
-	int	$0x80
+	movl	$SYS_rfork, %eax
+	syscall
 	jb 	2f
 
 	/*
@@ -65,33 +63,29 @@ ENTRY(rfork_thread)
 	 */
 	cmpl	$0, %edx
 	jnz	1f
-	popq	%r12
-	popq	%rbx
 	ret
 
 	/*
 	 * If we are in the child (new thread), then
 	 * set-up the call to the internal subroutine.  If it
-	 * returns, then call __exit.
+	 * returns, then call threxit.
 	 */
 1:
 	movq	%rsi, %rsp
-	movq	%r12, %rdi 
-	call	*%rbx
-	movl	%eax, %edi
+	movq	%r9, %rdi
+	call	*%r8
 
 	/*
-	 * Exit system call
+	 * Thread exit system call
 	 */
-	movq	$SYS_threxit, %rax
-	int	$0x80
+	movl	$SYS_threxit, %eax
+	xorl	%edi, %edi
+	syscall
 
 	/*
 	 * Branch here if the thread creation fails:
 	 */
 2:
-	popq	%r12
-	popq	%rbx
 #ifdef PIC
 	movq	PIC_GOT(CERROR), %rcx
 	jmp	*%rcx
