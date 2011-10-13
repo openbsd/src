@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork_thread.S,v 1.1 2005/12/25 16:21:01 miod Exp $	*/
+/*	$OpenBSD: rfork_thread.S,v 1.2 2011/10/13 05:29:51 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -57,9 +57,10 @@ ENTRY(rfork_thread)
 	 * In child process: switch stack, invoke function, then exit.
 	 */
 
-	sub	%o4, (BIAS + 128), %sp	/* stack */
-	call	%o2			/* func */
-	 mov	%o3, %o0		/* arg */
+	mov	%g0, %fp			/* clear frame pointer */
+	sub	%o4, (BIAS + CC64FSZ), %sp	/* stack */
+	call	%o2				/* func */
+	 mov	%o3, %o0			/* arg */
 
 	mov	SYS_threxit, %g1
 	clr	%o0
