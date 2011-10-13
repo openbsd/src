@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlreg.h,v 1.27 2011/04/17 20:52:43 stsp Exp $	*/
+/*	$OpenBSD: xlreg.h,v 1.28 2011/10/13 13:07:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -747,7 +747,7 @@ struct xl_stats {
 #define XL_PSTATE_D1		0x0002
 #define XL_PSTATE_D2		0x0002
 #define XL_PSTATE_D3		0x0003
-#define XL_PME_EN		0x0010
+#define XL_PME_EN		0x0100
 #define XL_PME_STATUS		0x8000
 
 /* Bits in the XL_PCI_PWRMGMTCAP register */
