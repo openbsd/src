@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.3 2008/10/02 23:29:26 deraadt Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.4 2011/10/13 05:41:06 guenther Exp $	*/
 /* David Leonard, <d@csee.uq.edu.au>. Public domain. */
 
 /*
@@ -35,9 +35,7 @@ _atomic_lock(volatile _spinlock_lock_t * lock)
 	 *
 	 * (No change to the condition codes are documented.)
 	 */
-	__asm__("ldstub %0,%1"
-		: "=m" (*lock), "=r" (old)
-		: "0" (*lock));
+	__asm__("ldstub [%1], %0" : "=&r" (old) : "r" (lock) : "memory");
 
 	return (old == _SPINLOCK_LOCKED);
 }
