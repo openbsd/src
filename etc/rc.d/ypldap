@@ -1,9 +1,11 @@
 #!/bin/sh
 #
-# $OpenBSD: ypldap,v 1.1 2011/07/07 01:52:58 robert Exp $
+# $OpenBSD: ypldap,v 1.2 2011/10/13 07:54:06 ajacoutot Exp $
 
 daemon="/usr/sbin/ypldap"
 
 . /etc/rc.d/rc.subr
+
+pexp="ypldap: ldap client"
 
 rc_cmd $1

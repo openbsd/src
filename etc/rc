@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.395 2011/10/07 16:36:26 deraadt Exp $
+#	$OpenBSD: rc,v 1.396 2011/10/13 07:54:06 ajacoutot Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -397,6 +397,7 @@ make_keys
 
 echo -n 'starting early daemons:'
 start_daemon syslogd ldattach pflogd named nsd ntpd isakmpd iked sasyncd
+start_daemon ldapd
 echo '.'
 
 if [ X"${ipsec}" != X"NO" ]; then
@@ -502,9 +503,9 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	fi
 fi
 
-start_daemon hostapd rwhod lpd ldapd sendmail smtpd httpd ftpd
-start_daemon ftpproxy identd inetd rarpd bootparamd rbootd mopd
-start_daemon popa3d spamd spamlogd kdc kadmind kpasswdd aucat
+start_daemon hostapd rwhod lpd sendmail smtpd httpd ftpd ftpproxy
+start_daemon identd inetd rarpd bootparamd rbootd mopd popa3d
+start_daemon spamd spamlogd kdc kadmind kpasswdd aucat
 echo '.'
 
 if [ X"${spamd_flags}" != X"NO" ]; then
