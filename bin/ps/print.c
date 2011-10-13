@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.49 2011/09/25 00:32:47 guenther Exp $	*/
+/*	$OpenBSD: print.c,v 1.50 2011/10/13 01:15:04 guenther Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -197,7 +197,6 @@ logname(const struct kinfo_proc *kp, VARENT *ve)
 void
 state(const struct kinfo_proc *kp, VARENT *ve)
 {
-	extern int ncpu;
 	int flag;
 	char *cp, state = '\0';
 	VAR *v;
@@ -258,7 +257,7 @@ state(const struct kinfo_proc *kp, VARENT *ve)
 		*cp++ = '+';
 	*cp = '\0';
 
-	if (state == 'R' && ncpu && kp->p_cpuid != KI_NOCPU) {
+	if (state == 'R' && kp->p_cpuid != KI_NOCPU) {
 		char pbuf[16];
 
 		snprintf(pbuf, sizeof pbuf, "/%llu", kp->p_cpuid);

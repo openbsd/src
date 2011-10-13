@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.50 2011/09/25 00:29:59 guenther Exp $	*/
+/*	$OpenBSD: ps.c,v 1.51 2011/10/13 01:15:04 guenther Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -37,8 +37,6 @@
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <sys/sysctl.h>
-#include <sys/types.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -65,8 +63,6 @@ int	rawcpu;			/* -C */
 int	sumrusage;		/* -S */
 int	termwidth;		/* width of screen (0 == infinity) */
 int	totwidth;		/* calculated width of requested variables */
-
-int	ncpu = 1;
 
 int	needcomm, needenv, neednlist, commandonly;
 
@@ -98,10 +94,9 @@ main(int argc, char *argv[])
 	dev_t ttydev;
 	pid_t pid;
 	uid_t uid;
-	int all, ch, flag, i, fmt, lineno, nentries, mib[6];
+	int all, ch, flag, i, fmt, lineno, nentries;
 	int prtheader, showthreads, wflag, kflag, what, Uflag, xflg;
 	char *nlistf, *memf, *swapf, errbuf[_POSIX2_LINE_MAX];
-	size_t size;
 
 	if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1 &&
 	    ioctl(STDERR_FILENO, TIOCGWINSZ, &ws) == -1 &&
@@ -307,11 +302,6 @@ main(int argc, char *argv[])
 		what = KERN_PROC_ALL;
 		flag = 0;
 	}
-
-	mib[0] = CTL_HW;
-	mib[1] = HW_NCPU;
-	size = sizeof(ncpu);
-	(void) sysctl(mib, 2, &ncpu, &size, NULL, 0);
 
 	/*
 	 * select procs
