@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.19 2011/04/05 15:07:46 sthen Exp $	 */
+/* $OpenBSD: pftop.c,v 1.20 2011/10/13 18:32:30 claudio Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -450,36 +450,56 @@ sort_addr_callback(const struct pfsync_state *s1,
 {
 	const struct pf_addr *aa, *ab;
 	u_int16_t pa, pb;
-	int af, ret, ii, io;
+	int af, side, ret, ii, io;
 
-	af = s1->af;
+	side = s1->direction == PF_IN ? PF_SK_STACK : PF_SK_WIRE;
 
-	if (af > s2->af)
+	if (s1->key[side].af > s2->key[side].af)
 		return sortdir;
-	if (af < s2->af)
+	if (s1->key[side].af < s2->key[side].af)
 		return -sortdir;
-	
+
        	ii = io = 0;
 
 	if (dir == PF_OUT)	/* looking for source addr */
 		io = 1;
 	else			/* looking for dest addr */
 		ii = 1;
-	
-	if (s1->direction == PF_IN) {
-		aa = &s1->key[PF_SK_STACK].addr[ii];
-		pa =  s1->key[PF_SK_STACK].port[ii];
+
+	if (s1->key[PF_SK_STACK].af != s1->key[PF_SK_WIRE].af) {
+		dir = PF_OUT;
+		side = PF_SK_STACK;
 	} else {
-		aa = &s1->key[PF_SK_WIRE].addr[io];
-		pa =  s1->key[PF_SK_WIRE].port[io];
+		dir = s1->direction;
+		side = PF_SK_WIRE;
 	}
 
-	if (s2->direction == PF_IN) {
+	if (dir == PF_IN) {
+		aa = &s1->key[PF_SK_STACK].addr[ii];
+		pa =  s1->key[PF_SK_STACK].port[ii];
+		af = s1->key[PF_SK_STACK].af;
+	} else {
+		aa = &s1->key[side].addr[io];
+		pa =  s1->key[side].port[io];
+		af = s1->key[side].af;
+	}
+
+	if (s2->key[PF_SK_STACK].af != s2->key[PF_SK_WIRE].af) {
+		dir = PF_OUT;
+		side = PF_SK_STACK;
+	} else {
+		dir = s2->direction;
+		side = PF_SK_WIRE;
+	}
+
+	if (dir == PF_IN) {
 		ab = &s2->key[PF_SK_STACK].addr[ii];
 		pb =  s2->key[PF_SK_STACK].port[ii];
+		af = s1->key[PF_SK_STACK].af;
 	} else {
-		ab = &s2->key[PF_SK_WIRE].addr[io];
-		pb =  s2->key[PF_SK_WIRE].port[io];
+		ab = &s2->key[side].addr[io];
+		pb =  s2->key[side].port[io];
+		af = s1->key[side].af;
 	}
 
 	ret = compare_addr(af, aa, ab);
@@ -497,37 +517,56 @@ sort_port_callback(const struct pfsync_state *s1,
 {
 	const struct pf_addr *aa, *ab;
 	u_int16_t pa, pb;
-	int af, ret, ii, io;
+	int af, side, ret, ii, io;
 
-	af = s1->af;
+	side = s1->direction == PF_IN ? PF_SK_STACK : PF_SK_WIRE;
 
-
-	if (af > s2->af)
+	if (s1->key[side].af > s2->key[side].af)
 		return sortdir;
-	if (af < s2->af)
+	if (s1->key[side].af < s2->key[side].af)
 		return -sortdir;
-	
+
        	ii = io = 0;
 
 	if (dir == PF_OUT)	/* looking for source addr */
 		io = 1;
 	else			/* looking for dest addr */
 		ii = 1;
-	
-	if (s1->direction == PF_IN) {
-		aa = &s1->key[PF_SK_STACK].addr[ii];
-		pa =  s1->key[PF_SK_STACK].port[ii];
+
+	if (s1->key[PF_SK_STACK].af != s1->key[PF_SK_WIRE].af) {
+		dir = PF_OUT;
+		side = PF_SK_STACK;
 	} else {
-		aa = &s1->key[PF_SK_WIRE].addr[io];
-		pa =  s1->key[PF_SK_WIRE].port[io];
+		dir = s1->direction;
+		side = PF_SK_WIRE;
 	}
 
-	if (s2->direction == PF_IN) {
+	if (dir == PF_IN) {
+		aa = &s1->key[PF_SK_STACK].addr[ii];
+		pa =  s1->key[PF_SK_STACK].port[ii];
+		af = s1->key[PF_SK_STACK].af;
+	} else {
+		aa = &s1->key[side].addr[io];
+		pa =  s1->key[side].port[io];
+		af = s1->key[side].af;
+	}
+
+	if (s2->key[PF_SK_STACK].af != s2->key[PF_SK_WIRE].af) {
+		dir = PF_OUT;
+		side = PF_SK_STACK;
+	} else {
+		dir = s2->direction;
+		side = PF_SK_WIRE;
+	}
+
+	if (dir == PF_IN) {
 		ab = &s2->key[PF_SK_STACK].addr[ii];
 		pb =  s2->key[PF_SK_STACK].port[ii];
+		af = s1->key[PF_SK_STACK].af;
 	} else {
-		ab = &s2->key[PF_SK_WIRE].addr[io];
-		pb =  s2->key[PF_SK_WIRE].port[io];
+		ab = &s2->key[side].addr[io];
+		pb =  s2->key[side].port[io];
+		af = s1->key[side].af;
 	}
 
 
@@ -722,13 +761,16 @@ tb_print_addr(struct pf_addr * addr, struct pf_addr * mask, int af)
 
 void
 print_fld_host2(field_def *fld, struct pfsync_state_key *ks,
-		struct pfsync_state_key *kn, int idx, int af)
+		struct pfsync_state_key *kn, int idx)
 {
 	struct pf_addr *as = &ks->addr[idx];
 	struct pf_addr *an = &kn->addr[idx];
 
 	u_int16_t ps = ntohs(ks->port[idx]);
 	u_int16_t pn = ntohs(kn->port[idx]);
+
+	int asf = ks->af;
+	int anf = kn->af;
 
 	if (fld == NULL)
 		return;
@@ -739,20 +781,20 @@ print_fld_host2(field_def *fld, struct pfsync_state_key *ks,
 	}
 
 	tb_start();
-	tb_print_addr(as, NULL, af);
+	tb_print_addr(as, NULL, asf);
 
-	if (af == AF_INET)
+	if (asf == AF_INET)
 		tbprintf(":%u", ps);
 	else
 		tbprintf("[%u]", ps);
 
 	print_fld_tb(fld);
 
-	if (PF_ANEQ(as, an, af) || ps != pn) {
+	if (asf != anf || PF_ANEQ(as, an, asf) || ps != pn) {
 		tb_start();
-		tb_print_addr(an, NULL, af);
+		tb_print_addr(an, NULL, anf);
 
-		if (af == AF_INET)
+		if (anf == AF_INET)
 			tbprintf(":%u", pn);
 		else
 			tbprintf("[%u]", pn);
@@ -816,8 +858,12 @@ print_state(struct pfsync_state * s, struct sc_ent * ent)
 	struct pfsync_state_peer *src, *dst;
 	struct protoent *p;
 	u_int64_t sz;
+	int afto, dir;
 
-	if (s->direction == PF_OUT) {
+	afto = s->key[PF_SK_STACK].af == s->key[PF_SK_WIRE].af ? 0 : 1;
+	dir = afto ? PF_OUT : s->direction;
+
+	if (dir == PF_OUT) {
 		src = &s->src;
 		dst = &s->dst;
 	} else {
@@ -832,19 +878,21 @@ print_state(struct pfsync_state * s, struct sc_ent * ent)
 	else
 		print_fld_uint(FLD_PROTO, s->proto);
 
-	if (s->direction == PF_OUT) {
-		print_fld_host2(FLD_SRC, &s->key[PF_SK_WIRE],
-		    &s->key[PF_SK_STACK], 1, s->af);
-		print_fld_host2(FLD_DEST, &s->key[PF_SK_WIRE],
-		    &s->key[PF_SK_STACK], 0, s->af);
+	if (dir == PF_OUT) {
+		print_fld_host2(FLD_SRC,
+		    &s->key[afto ? PF_SK_STACK : PF_SK_WIRE],
+		    &s->key[PF_SK_STACK], 1);
+		print_fld_host2(FLD_DEST,
+		    &s->key[afto ? PF_SK_STACK : PF_SK_WIRE],
+		    &s->key[afto ? PF_SK_WIRE : PF_SK_STACK], 0);
 	} else {
 		print_fld_host2(FLD_SRC, &s->key[PF_SK_STACK],
-		    &s->key[PF_SK_WIRE], 0, s->af);
+		    &s->key[PF_SK_WIRE], 0);
 		print_fld_host2(FLD_DEST, &s->key[PF_SK_STACK],
-		    &s->key[PF_SK_WIRE], 1, s->af);
+		    &s->key[PF_SK_WIRE], 1);
 	}
 
-	if (s->direction == PF_OUT)
+	if (dir == PF_OUT)
 		print_fld_str(FLD_DIR, "Out");
 	else
 		print_fld_str(FLD_DIR, "In");

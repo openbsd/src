@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pflog.c,v 1.23 2010/10/09 08:22:26 canacar Exp $	*/
+/*	$OpenBSD: print-pflog.c,v 1.24 2011/10/13 18:32:30 claudio Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -172,7 +172,7 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 				    ntohs(hdr->dport));
 		}
 	}
-	af = hdr->af;
+	af = hdr->naf;
 	length -= hdrlen;
 	if (af == AF_INET) {
 		ip = (struct ip *)(p + hdrlen);
