@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.37 2011/09/01 19:56:49 eric Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.38 2011/10/13 10:54:40 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -608,6 +608,7 @@ ssl_client_init(int fd, char *cert, size_t certsz, char *key, size_t keysz)
 
 	if ((ssl = SSL_new(ctx)) == NULL)
 		goto done;
+	SSL_CTX_free(ctx);
 
 	if (!SSL_set_ssl_method(ssl, SSLv23_client_method()))
 		goto done;
