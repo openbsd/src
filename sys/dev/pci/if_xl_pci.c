@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.37 2011/07/08 18:56:47 stsp Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.38 2011/10/13 13:09:29 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -268,14 +268,16 @@ xl_pci_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 #ifndef SMALL_KERNEL
-		/* The card is WOL-capable if it supports PME# assertion
+		/*
+		 * The card is WOL-capable if it supports PME# assertion
 		 * from D3hot power state. Install a callback to configure
 		 * PCI power state for WOL. It will be invoked when the
-		 * interface stops and WOL was enabled. */
-		command = pci_conf_read(pc, pa->pa_tag, XL_PCI_PWRMGMTCAP);
+		 * interface stops and WOL was enabled.
+		 */
+		command = pci_conf_read(pc, pa->pa_tag, XL_PCI_CAPID);
 		if ((command >> 16) & XL_PME_CAP_D3_HOT) {
 			sc->wol_power = xl_pci_wol_power;
-			sc->wol_power_arg = psc; 
+			sc->wol_power_arg = psc;
 		}
 #endif
 	}
@@ -366,6 +368,12 @@ void
 xl_pci_wol_power(void *ppsc)
 {
 	struct xl_pci_softc *psc = (struct xl_pci_softc*)ppsc;
+	u_int32_t command;
+
+	/* Make sure wake-up generation is enabled. */
+	command = pci_conf_read(psc->psc_pc, psc->psc_tag, XL_PCI_PWRMGMTCTRL);
+	command |= XL_PME_EN;
+	pci_conf_write(psc->psc_pc, psc->psc_tag, XL_PCI_PWRMGMTCTRL, command);
 
 	pci_set_powerstate(psc->psc_pc, psc->psc_tag, PCI_PMCSR_STATE_D3);
 }
