@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.280 2011/08/30 00:43:57 mikeb Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.281 2011/10/13 18:30:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -644,7 +644,8 @@ print_src_node(struct pf_src_node *sn, int opts)
 		else
 			printf(" ??? (%u) ", sn->type);
 		aw.v.a.addr = sn->raddr;
-		print_addr(&aw, sn->af, opts & PF_OPT_VERBOSE2);
+		print_addr(&aw, sn->naf ? sn->naf : sn->af,
+		    opts & PF_OPT_VERBOSE2);
 	}
 
 	printf(" ( states %u, connections %u, rate %u.%u/%us )\n", sn->states,
@@ -1052,12 +1053,25 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 	}
 	if (r->divert_packet.port)
 		printf(" divert-packet port %u", ntohs(r->divert_packet.port));
-	if (!anchor_call[0] && r->nat.addr.type != PF_ADDR_NONE) {
+
+	if (!anchor_call[0] && r->nat.addr.type != PF_ADDR_NONE &&
+	    r->naf != r->af) {
+		printf(" af-to %s from ", r->naf == AF_INET ? "inet" : "inet6");
+		print_pool(&r->nat, r->nat.proxy_port[0],
+		    r->nat.proxy_port[1], r->naf ? r->naf : r->af,
+		    PF_POOL_NAT, verbose);
+		if (r->rdr.addr.type != PF_ADDR_NONE) {
+			printf(" to ");
+			print_pool(&r->rdr, r->rdr.proxy_port[0],
+			    r->rdr.proxy_port[1], r->naf ? r->naf : r->af,
+			    PF_POOL_RDR, verbose);
+		}
+	} else if (!anchor_call[0] && r->nat.addr.type != PF_ADDR_NONE) {
 		printf (" nat-to ");
 		print_pool(&r->nat, r->nat.proxy_port[0],
-		    r->nat.proxy_port[1], r->af, PF_POOL_NAT, verbose);
-	}
-	if (!anchor_call[0] && r->rdr.addr.type != PF_ADDR_NONE) {
+		    r->nat.proxy_port[1], r->naf ? r->naf : r->af,
+		    PF_POOL_NAT, verbose);
+	} else if (!anchor_call[0] && r->rdr.addr.type != PF_ADDR_NONE) {
 		printf (" rdr-to ");
 		print_pool(&r->rdr, r->rdr.proxy_port[0],
 		    r->rdr.proxy_port[1], r->af, PF_POOL_RDR, verbose);

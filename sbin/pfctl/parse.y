@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.609 2011/09/07 23:40:52 haesbaert Exp $	*/
+/*	$OpenBSD: parse.y,v 1.610 2011/10/13 18:30:54 claudio Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -217,6 +217,7 @@ struct redirspec {
 	struct redirection      *rdr;
 	struct pool_opts         pool_opts;
 	int			 binat;
+	int			 af;
 };
 
 struct filter_opts {
@@ -228,6 +229,7 @@ struct filter_opts {
 #define FOM_SRCTRACK	0x0010
 #define FOM_MINTTL	0x0020
 #define FOM_MAXMSS	0x0040
+#define FOM_AFTO	0x0080
 #define FOM_SETTOS	0x0100
 #define FOM_SCRUB_TCP	0x0200
 #define FOM_PRIO	0x0400
@@ -460,7 +462,7 @@ int	parseport(char *, struct range *r, int);
 %token	STICKYADDRESS MAXSRCSTATES MAXSRCNODES SOURCETRACK GLOBAL RULE
 %token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH SLOPPY PFLOW
 %token	TAGGED TAG IFBOUND FLOATING STATEPOLICY STATEDEFAULTS ROUTE SETTOS
-%token	DIVERTTO DIVERTREPLY DIVERTPACKET NATTO RDRTO RECEIVEDON NE LE GE
+%token	DIVERTTO DIVERTREPLY DIVERTPACKET NATTO AFTO RDRTO RECEIVEDON NE LE GE
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %token	<v.i>			PORTBINARY
@@ -897,6 +899,7 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 
 			decide_address_family($8.src.host, &r.af);
 			decide_address_family($8.dst.host, &r.af);
+			r.naf = r.af;
 
 			expand_rule(&r, 0, $5, NULL, NULL, NULL, $7, $8.src_os,
 			    $8.src.host, $8.src.port, $8.dst.host, $8.dst.port,
@@ -1715,7 +1718,20 @@ pfrule		: action dir logquick interface af proto fromto
 			if ($8.marker & FOM_ONCE)
 				r.rule_flag |= PFRULE_ONCE;
 
+			if ($8.marker & FOM_AFTO) {
+				if (!$5) {
+					yyerror("must indicate source address "
+					    "family with af-to");
+					YYERROR;
+				}
+				if ($5 == $8.nat.af) {
+					yyerror("incorrect address family "
+					    "translation");
+					YYERROR;
+				}
+			}
 			r.af = $5;
+
 			if ($8.tag)
 				if (strlcpy(r.tagname, $8.tag,
 				    PF_TAG_NAME_SIZE) >= PF_TAG_NAME_SIZE) {
@@ -1999,6 +2015,7 @@ pfrule		: action dir logquick interface af proto fromto
 
 			decide_address_family($7.src.host, &r.af);
 			decide_address_family($7.dst.host, &r.af);
+			r.naf = r.af;
 
 			if ($8.route.rt) {
 				if (!r.direction) {
@@ -2264,6 +2281,55 @@ filter_opt	: USER uids {
 			filter_opts.nat.rdr = $2;
 			memcpy(&filter_opts.nat.pool_opts, &$3,
 			    sizeof(filter_opts.nat.pool_opts));
+		}
+		| AFTO af FROM redirpool pool_opts {
+			if (filter_opts.nat.rdr) {
+				yyerror("cannot respecify af-to");
+				YYERROR;
+			}
+			if ($2 == 0) {
+				yyerror("no address family specified");
+				YYERROR;
+			}
+			if ($4->host->af && $4->host->af != $2) {
+				yyerror("af-to addresses must be in the "
+				    "target address family");
+				YYERROR;
+			}
+			filter_opts.nat.af = $2;
+			filter_opts.nat.rdr = $4;
+			memcpy(&filter_opts.nat.pool_opts, &$5,
+			    sizeof(filter_opts.nat.pool_opts));
+			filter_opts.rdr.rdr =
+			    calloc(1, sizeof(struct redirection));
+			bzero(&filter_opts.rdr.pool_opts,
+			    sizeof(filter_opts.rdr.pool_opts));
+			filter_opts.marker |= FOM_AFTO;
+		}
+		| AFTO af FROM redirpool pool_opts TO redirpool pool_opts {
+			if (filter_opts.nat.rdr) {
+				yyerror("cannot respecify af-to");
+				YYERROR;
+			}
+			if ($2 == 0) {
+				yyerror("no address family specified");
+				YYERROR;
+			}
+			if (($4->host->af && $4->host->af != $2) ||
+			    ($7->host->af && $7->host->af != $2)) {
+				yyerror("af-to addresses must be in the "
+				    "target address family");
+				YYERROR;
+			}
+			filter_opts.nat.af = $2;
+			filter_opts.nat.rdr = $4;
+			memcpy(&filter_opts.nat.pool_opts, &$5,
+			    sizeof(filter_opts.nat.pool_opts));
+			filter_opts.rdr.af = $2;
+			filter_opts.rdr.rdr = $7;
+			memcpy(&filter_opts.nat.pool_opts, &$8,
+			    sizeof(filter_opts.nat.pool_opts));
+			filter_opts.marker |= FOM_AFTO;
 		}
 		| RDRTO redirpool pool_opts {
 			if (filter_opts.rdr.rdr) {
@@ -4131,6 +4197,10 @@ rule_consistent(struct pf_rule *r, int anchor_call)
 			   "must not be used on match rules");
 			problems++;
 		}
+		if (r->nat.addr.type != PF_ADDR_NONE && r->naf != r->af) {
+			yyerror("af-to is not supported on match rules");
+			problems++;
+		}
 	}
 	return (-problems);
 }
@@ -4630,6 +4700,9 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 	struct pf_rule_addr ra;
 	int	i = 0;
 
+	if (rs && rs->af)
+		r->naf = rs->af;
+
 	if (!rs || !rs->rdr || rs->rdr->host == NULL) {
 		rpool->addr.type = PF_ADDR_NONE;
 		return (0);
@@ -4637,7 +4710,7 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 
 	/* count matching addresses */
 	for (h = rs->rdr->host; h != NULL; h = h->next) {
-		if (!r->af || !h->af || h->af == r->af) {
+		if (!r->af || !h->af || rs->af || h->af == r->af) {
 			i++;
 			if (h->af && !r->af)
 				r->af = h->af;
@@ -4650,7 +4723,7 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 		return (1);
 	} else if (i == 1) {	/* only one address */
 		for (h = rs->rdr->host; h != NULL; h = h->next)
-			if (!h->af || !r->af || r->af == h->af)
+			if (!h->af || !r->af || rs->af || r->af == h->af)
 				break;
 		rpool->addr = h->addr;
 		if (!allow_if && h->ifname) {
@@ -4672,7 +4745,7 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 			return (1);
 		}
 		for (h = rs->rdr->host; h != NULL; h = h->next) {
-			if (r->af != h->af)
+			if (!rs->af && r->af != h->af)
 				continue;
 			if (h->addr.type != PF_ADDR_ADDRMASK &&
 			    h->addr.type != PF_ADDR_NONE) {
@@ -5117,6 +5190,7 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
+		{ "af-to",		AFTO},
 		{ "all",		ALL},
 		{ "allow-opts",		ALLOWOPTS},
 		{ "altq",		ALTQ},

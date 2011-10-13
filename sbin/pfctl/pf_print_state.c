@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.58 2010/11/12 13:14:41 claudio Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.59 2011/10/13 18:30:54 claudio Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -213,6 +213,8 @@ print_state(struct pfsync_state *s, int opts)
 	struct pfsync_state_key *sk, *nk;
 	struct protoent *p;
 	int min, sec;
+	int afto = (s->key[PF_SK_STACK].af != s->key[PF_SK_WIRE].af);
+	int idx;
 
 	if (s->direction == PF_OUT) {
 		src = &s->src;
@@ -235,24 +237,28 @@ print_state(struct pfsync_state *s, int opts)
 	else
 		printf("%u ", s->proto);
 
-	print_host(&nk->addr[1], nk->port[1], s->af, nk->rdomain, opts);
-	if (PF_ANEQ(&nk->addr[1], &sk->addr[1], s->af) ||
+	print_host(&nk->addr[1], nk->port[1], nk->af, nk->rdomain, opts);
+	if (nk->af != sk->af || PF_ANEQ(&nk->addr[1], &sk->addr[1], nk->af) ||
 	    nk->port[1] != sk->port[1] ||
 	    nk->rdomain != sk->rdomain) {
+		idx = afto ? 0 : 1;
 		printf(" (");
-		print_host(&sk->addr[1], sk->port[1], s->af, sk->rdomain, opts);
+		print_host(&sk->addr[idx], sk->port[idx], sk->af,
+		    sk->rdomain, opts);
 		printf(")");
 	}
-	if (s->direction == PF_OUT)
+	if (s->direction == PF_OUT || (afto && s->direction == PF_IN))
 		printf(" -> ");
 	else
 		printf(" <- ");
-	print_host(&nk->addr[0], nk->port[0], s->af, nk->rdomain, opts);
-	if (PF_ANEQ(&nk->addr[0], &sk->addr[0], s->af) ||
+	print_host(&nk->addr[0], nk->port[0], nk->af, nk->rdomain, opts);
+	if (nk->af != sk->af || PF_ANEQ(&nk->addr[0], &sk->addr[0], nk->af) ||
 	    nk->port[0] != sk->port[0] ||
 	    nk->rdomain != sk->rdomain) {
+		idx = afto ? 1 : 0;
 		printf(" (");
-		print_host(&sk->addr[0], sk->port[0], s->af, sk->rdomain, opts);
+		print_host(&sk->addr[idx], sk->port[idx], sk->af,
+		    sk->rdomain, opts);
 		printf(")");
 	}
 
