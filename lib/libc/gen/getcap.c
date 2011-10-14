@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcap.c,v 1.29 2011/07/10 13:31:02 millert Exp $	*/
+/*	$OpenBSD: getcap.c,v 1.30 2011/10/14 16:33:53 millert Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -658,11 +658,12 @@ cgetclose(void)
 int
 cgetnext(char **cap, char **db_array)
 {
-	size_t len;
+	size_t len, otopreclen = topreclen;
 	int c, serrno, status = -1;
 	char buf[BUFSIZ], nbuf[BSIZE];
 	char *b_end, *bp, *r_end, *rp;
 	char *record = NULL;
+	char *otoprec = toprec;
 	u_int dummy;
 	off_t pos;
 
@@ -677,6 +678,7 @@ cgetnext(char **cap, char **db_array)
 	 */
 	if (toprec && !gottoprec) {
 		gottoprec = 1;
+		record = toprec;
 		goto lookup;
 	}
 
@@ -770,7 +772,6 @@ cgetnext(char **cap, char **db_array)
 			fseeko(pfp, (off_t)(bp - b_end), SEEK_CUR);
 			toprec = record;
 			topreclen = rp - record;
-			gottoprec = 1;
 			break;
 		}
 	}
@@ -787,7 +788,11 @@ lookup:
 		fseeko(pfp, pos, SEEK_SET);
 done:
 	serrno = errno;
-	free(record);
+	if (toprec != otoprec) {
+		toprec = otoprec;
+		topreclen = otopreclen;
+		free(record);
+	}
 	if (status <= 0)
 		(void)cgetclose();
 	errno = serrno;
