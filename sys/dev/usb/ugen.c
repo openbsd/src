@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.66 2011/07/03 15:47:17 matthew Exp $ */
+/*	$OpenBSD: ugen.c,v 1.67 2011/10/14 12:50:44 mpi Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1169,6 +1169,8 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		int error;
 
 		cdesc = ugen_get_cdesc(sc, fd->ufd_config_index, &len);
+		if (cdesc == NULL)
+			return (EINVAL);
 		if (len > fd->ufd_size)
 			len = fd->ufd_size;
 		iov.iov_base = (caddr_t)fd->ufd_data;
