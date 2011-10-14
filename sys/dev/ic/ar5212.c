@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.51 2009/06/02 12:39:02 reyk Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.52 2011/10/14 17:08:09 stsp Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1353,8 +1353,7 @@ ar5k_ar5212_setup_tx_desc(struct ath_hal *hal, struct ath_desc *desc,
 	tx_desc->tx_control_1 =
 	    AR5K_REG_SM(type, AR5K_AR5212_DESC_TX_CTL1_FRAME_TYPE);
 	tx_desc->tx_control_2 =
-	    AR5K_REG_SM(tx_tries0 + AR5K_TUNE_HWTXTRIES,
-	    AR5K_AR5212_DESC_TX_CTL2_XMIT_TRIES0);
+	    AR5K_REG_SM(tx_tries0, AR5K_AR5212_DESC_TX_CTL2_XMIT_TRIES0);
 	tx_desc->tx_control_3 =
 	    tx_rate0 & AR5K_AR5212_DESC_TX_CTL3_XMIT_RATE0;
 

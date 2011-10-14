@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.48 2010/04/20 22:05:41 tedu Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.49 2011/10/14 17:08:09 stsp Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1328,7 +1328,6 @@ typedef HAL_BOOL (ar5k_rfgain_t)
 #define AR5K_TUNE_DEFAULT_TXPOWER		30
 #define AR5K_TUNE_TPC_TXPOWER			AH_TRUE
 #define AR5K_TUNE_ANT_DIVERSITY			AH_TRUE
-#define AR5K_TUNE_HWTXTRIES			4
 
 /* Default regulation domain if stored value EEPROM value is invalid */
 #define AR5K_TUNE_REGDOMAIN	DMN_FCC2_FCCA	/* Canada */

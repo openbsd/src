@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.92 2011/04/17 20:38:10 stsp Exp $  */
+/*      $OpenBSD: ath.c,v 1.93 2011/10/14 17:08:10 stsp Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -2068,7 +2068,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni,
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ath_hal *ah = sc->sc_ah;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	int i, error, iswep, hdrlen, pktlen, len, s;
+	int i, error, iswep, hdrlen, pktlen, len, s, tries;
 	u_int8_t rix, cix, txrate, ctsrate;
 	struct ath_desc *ds;
 	struct ieee80211_frame *wh;
@@ -2376,13 +2376,14 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni,
 	/*
 	 * Formulate first tx descriptor with tx controls.
 	 */
+	tries = IEEE80211_IS_MULTICAST(wh->i_addr1) ? 1 : 15;
 	/* XXX check return value? */
 	ath_hal_setup_tx_desc(ah, ds
 		, pktlen		/* packet length */
 		, hdrlen		/* header length */
 		, atype			/* Atheros packet type */
 		, 60			/* txpower XXX */
-		, txrate, 1+10		/* series 0 rate/tries */
+		, txrate, tries		/* series 0 rate/tries */
 		, iswep ? sc->sc_ic.ic_wep_txkey : HAL_TXKEYIX_INVALID
 		, antenna		/* antenna mode */
 		, flags			/* flags */
