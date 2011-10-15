@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe.h,v 1.9 2011/07/04 16:29:35 sthen Exp $	*/
+/*	$OpenBSD: pppoe.h,v 1.10 2011/10/15 02:05:07 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -110,7 +110,6 @@ struct pppoe_session {
 	struct ether_addr s_ea;		/* remote ethernet mac */
 	u_int16_t s_id;			/* session id */
 	int s_fd;			/* ttyfd */
-	int s_first;
 };
 
 struct pppoe_session_master {
