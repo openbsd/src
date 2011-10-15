@@ -1,4 +1,4 @@
-/* $OpenBSD: mppe.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: mppe.c,v 1.5 2011/10/15 03:24:11 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: mppe.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: mppe.c,v 1.5 2011/10/15 03:24:11 yasuoka Exp $ */
 /**@file
  *
  * The implementation of MPPE(Microsoft Point-To-Point Encryption Protocol)
@@ -73,11 +73,24 @@
 
 #define	SESS_KEY_LEN(len)	(len < 16)?		8 : 16
 
+#define COHER_EQ(a, b) ((((a) - (b)) & 0xfff) == 0)
+#define COHER_LT(a, b) (((int16_t)(((a) - (b)) << 4)) < 0)
+#define COHER_GT(a, b) COHER_LT((b), (a))
+#define COHER_NE(a, b) (!COHER_EQ((a), (b)))
+#define COHER_LE(a, b) (!COHER_GE((b), (a)))
+#define COHER_GE(a, b) (!COHER_LT((a), (b)))
+
+
 static const char  *mppe_bits_to_string __P((uint32_t));
 static void        mppe_log __P((mppe *, uint32_t, const char *, ...)) __printflike(3,4);
-static int         rc4_key __P((mppe *, mppe_rc4_t *, int, u_char *));
-static void        rc4_destroy __P((mppe *, mppe_rc4_t *));
-static void        rc4 __P((mppe *, mppe_rc4_t *, int, u_char *, u_char *));
+static int         mppe_rc4_init __P((mppe *, mppe_rc4_t *, int));
+static int         mppe_rc4_setkey __P((mppe *, mppe_rc4_t *));
+static int         mppe_rc4_setoldkey __P((mppe *, mppe_rc4_t *, uint16_t));
+static void        mppe_rc4_destroy __P((mppe *, mppe_rc4_t *));
+static void        mppe_rc4_encrypt __P((mppe *, mppe_rc4_t *, int, u_char *, u_char *));
+static void        *rc4_create_ctx __P((void));
+static int         rc4_key __P((void *, int, u_char *));
+static void        rc4 __P((void *, int, u_char *, u_char *));
 static void        GetNewKeyFromSHA __P((u_char *, u_char *, int, u_char *));
 
 /**
@@ -159,9 +172,8 @@ mppe_config_done:
 void
 mppe_fini(mppe *_this)
 {
-	rc4_destroy(_this, &_this->send);
-	rc4_destroy(_this, &_this->recv);
-	rc4_destroy(_this, &_this->keychg);
+	mppe_rc4_destroy(_this, &_this->send);
+	mppe_rc4_destroy(_this, &_this->recv);
 }
 
 static void
@@ -180,13 +192,24 @@ static void
 mppe_key_change(mppe *_mppe, mppe_rc4_t *_this)
 {
 	u_char interim[16];
+	void *keychg;
+
+	keychg = rc4_create_ctx();
 
 	GetNewKeyFromSHA(_this->master_key, _this->session_key,
 	    _this->keylen, interim);
 
-	rc4_key(_mppe, &_mppe->keychg, _this->keylen, interim);
-	rc4(_mppe, &_mppe->keychg, _this->keylen, interim, _this->session_key);
+	rc4_key(keychg, _this->keylen, interim);
+	rc4(keychg, _this->keylen, interim, _this->session_key);
 	mppe_reduce_key(_this);
+
+	if (_this->old_session_keys) {
+		int idx = _this->coher_cnt % MPPE_NOLDKEY;
+		memcpy(_this->old_session_keys[idx],
+		    _this->session_key, MPPE_KEYLEN);
+	}
+
+	free(keychg);
 }
 
 /**
@@ -232,6 +255,9 @@ mppe_start(mppe *_this)
 		_this->recv.keybits = 128;
 	}
 
+	mppe_rc4_init(_this, &_this->send, 0);
+	mppe_rc4_init(_this, &_this->recv, _this->recv.stateless);
+
 	GetNewKeyFromSHA(_this->recv.master_key, _this->recv.master_key,
 	    _this->recv.keylen, _this->recv.session_key);
 	GetNewKeyFromSHA(_this->send.master_key, _this->send.master_key,
@@ -240,10 +266,8 @@ mppe_start(mppe *_this)
 	mppe_reduce_key(&_this->recv);
 	mppe_reduce_key(&_this->send);
 
-	rc4_key(_this, &_this->recv, _this->recv.keylen,
-	    _this->recv.session_key);
-	rc4_key(_this, &_this->send, _this->send.keylen,
-	    _this->send.session_key);
+	mppe_rc4_setkey(_this, &_this->recv);
+	mppe_rc4_setkey(_this, &_this->send);
 }
 
 
@@ -321,9 +345,7 @@ mppe_create_our_bits(mppe *_this, uint32_t peer_bits)
 	return our_bits;
 }
 
-#define	RESET_REQ	0x0e
-#define	RESET_ACK	0x0f
-#define	COHRENCY_CNT_MASK	0x0fff;
+#define	COHERENCY_CNT_MASK	0x0fff;
 
 /**
  * receiving packets via MPPE.
@@ -334,6 +356,8 @@ mppe_input(mppe *_this, u_char *pktp, int len)
 	int pktloss, encrypt, flushed, m, n;
 	uint16_t coher_cnt;
 	u_char *pktp0, *opktp, *opktp0;
+	uint16_t proto;
+	int delayed = 0;
 
 	encrypt = 0;
 	flushed = 0;
@@ -345,7 +369,7 @@ mppe_input(mppe *_this, u_char *pktp, int len)
 
 	flushed = (coher_cnt & 0x8000)? 1 : 0;
 	encrypt = (coher_cnt & 0x1000)? 1 : 0;
-	coher_cnt &= COHRENCY_CNT_MASK;
+	coher_cnt &= COHERENCY_CNT_MASK;
 	pktloss = 0;
 
 	MPPE_DBG((_this, DEBUG_LEVEL_2, "in coher_cnt=%03x/%03x %s%s",
@@ -357,7 +381,7 @@ mppe_input(mppe *_this, u_char *pktp, int len)
 		    "Received unexpected MPPE packet.  (no ecrypt)");
 		return;
 	}
-#ifdef	WORKAROUND_OUT_OF_SEQUENCE_PPP_FRAMING
+
 	/*
 	 * In L2TP/IPsec implementation, in case that the ppp frame sequence
 	 * is not able to reconstruct and the ppp frame is out of sequence, it
@@ -374,21 +398,29 @@ mppe_input(mppe *_this, u_char *pktp, int len)
 	if (coher_cnt < _this->recv.coher_cnt)
 		coher_cnt0 += 0x1000;
 	if (coher_cnt0 - _this->recv.coher_cnt > 0x0f00) {
-		mppe_log(_this, LOG_INFO,
-		    "Workaround the out-of-sequence PPP framing problem: "
-		    "%d => %d", _this->recv.coher_cnt, coher_cnt);
-		return;
+		if (!_this->recv.stateless ||
+		    coher_cnt0 - _this->recv.coher_cnt
+		    <= 0x1000 - MPPE_NOLDKEY) {
+			mppe_log(_this, LOG_INFO,
+			    "Workaround the out-of-sequence PPP framing problem: "
+			    "%d => %d", _this->recv.coher_cnt, coher_cnt);
+			return;
+		}
+		delayed = 1;
 	}
     }
-#endif
+
 	if (_this->recv.stateless != 0) {
-		mppe_key_change(_this, &_this->recv);
-		while (_this->recv.coher_cnt != coher_cnt) {
+		if (!delayed) {
 			mppe_key_change(_this, &_this->recv);
-			_this->recv.coher_cnt++;
-			_this->recv.coher_cnt &= COHRENCY_CNT_MASK;
-			pktloss++;
+			while (_this->recv.coher_cnt != coher_cnt) {
+				_this->recv.coher_cnt++;
+				_this->recv.coher_cnt &= COHERENCY_CNT_MASK;
+				mppe_key_change(_this, &_this->recv);
+				pktloss++;
+			}
 		}
+		mppe_rc4_setoldkey(_this, &_this->recv, coher_cnt);
 		flushed = 1;
 	} else {
 		if (flushed) {
@@ -402,7 +434,7 @@ mppe_input(mppe *_this, u_char *pktp, int len)
 			while (m++ < n)
 				mppe_key_change(_this, &_this->recv);
 
-			coher_cnt &= COHRENCY_CNT_MASK;
+			coher_cnt &= COHERENCY_CNT_MASK;
 			_this->recv.coher_cnt = coher_cnt;
 		} else if (_this->recv.coher_cnt != coher_cnt) {
 			_this->recv.resetreq = 1;
@@ -414,7 +446,7 @@ mppe_input(mppe *_this, u_char *pktp, int len)
 			PUTLONG(_this->ppp->ccp.mppe_p_bits, opktp);
 
 			ppp_output(_this->ppp, PPP_PROTO_NCP | NCP_CCP,
-			    RESET_REQ, _this->recv.resetreq, opktp0,
+			    RESETREQ, _this->recv.resetreq, opktp0,
 				opktp - opktp0);
 			return;
 		}
@@ -422,8 +454,11 @@ mppe_input(mppe *_this, u_char *pktp, int len)
 			mppe_key_change(_this, &_this->recv);
 			flushed = 1;
 		}
+		if (flushed) {
+			mppe_rc4_setkey(_this, &_this->recv);
+		}
 	}
-#ifndef	WORKAROUND_OUT_OF_SEQUENCE_PPP_FRAMING
+
 	if (pktloss > 1000) {
 		/*
 		 * In case of many packets losing or out of sequence.
@@ -433,16 +468,28 @@ mppe_input(mppe *_this, u_char *pktp, int len)
 		 */
 		mppe_log(_this, LOG_WARNING, "%d packets loss", pktloss);
 	}
-#endif
-	if (flushed) {
-		rc4_key(_this, &_this->recv, _this->recv.keylen,
-		    _this->recv.session_key);
+
+	mppe_rc4_encrypt(_this, &_this->recv, len - 2, pktp, pktp);
+
+	if (!delayed) {
+		_this->recv.coher_cnt++;
+		_this->recv.coher_cnt &= COHERENCY_CNT_MASK;
 	}
 
-	rc4(_this, &_this->recv, len - 2, pktp, pktp);
-
-	_this->recv.coher_cnt++;
-	_this->recv.coher_cnt &= COHRENCY_CNT_MASK;
+	if (pktp[0] & 1)
+		proto = pktp[0];
+	else
+		proto = pktp[0] << 8 | pktp[1];
+	/*
+	 * According to RFC3078 section 3,
+	 * MPPE only accept protocol number 0021-00FA.
+	 * If decrypted protocol number is out of range,
+	 * it indicates loss of coherency.
+	 */
+	if (!(proto & 1) || proto < 0x21 || proto > 0xfa) {
+		mppe_log(_this, LOG_INFO, "MPPE coherency is lost");
+		return; /* drop frame */
+	}
 
 	_this->ppp->recv_packet(_this->ppp, pktp, len - 2,
 	    PPP_IO_FLAGS_MPPE_ENCRYPTED);
@@ -491,15 +538,14 @@ mppe_pkt_output(mppe *_this, uint16_t proto, u_char *pktp, int len)
 	}
 
 	if (flushed) {
-		rc4_key(_this, &_this->send, _this->send.keylen,
-		    _this->send.session_key);
+		mppe_rc4_setkey(_this, &_this->send);
 	}
 
 	MPPE_DBG((_this, DEBUG_LEVEL_2, "out coher_cnt=%03x %s%s",
 	    _this->send.coher_cnt, (flushed)? "[flushed]" : "",
 	    (encrypt)? "[encrypt]" : ""));
 
-	coher_cnt = _this->send.coher_cnt & COHRENCY_CNT_MASK;
+	coher_cnt = _this->send.coher_cnt & COHERENCY_CNT_MASK;
 	if (flushed)
 		coher_cnt |= 0x8000;
 	if (encrypt)
@@ -507,12 +553,12 @@ mppe_pkt_output(mppe *_this, uint16_t proto, u_char *pktp, int len)
 
 	PUTSHORT(coher_cnt, outp);
 	proto = htons(proto);
-	rc4(_this, &_this->send, 2, (u_char *)&proto, outp);
-	rc4(_this, &_this->send, len, pktp, outp + 2);
+	mppe_rc4_encrypt(_this, &_this->send, 2, (u_char *)&proto, outp);
+	mppe_rc4_encrypt(_this, &_this->send, len, pktp, outp + 2);
 
 	ppp_output(_this->ppp, PPP_PROTO_MPPE, 0, 0, outp0, len + 4);
 	_this->send.coher_cnt++;
-	_this->send.coher_cnt &= COHRENCY_CNT_MASK;
+	_this->send.coher_cnt &= COHERENCY_CNT_MASK;
 }
 
 static void
@@ -577,35 +623,25 @@ static u_char SHAPad1[] = {
 /************************************************************************
  * implementations of OpenSSL version
  ************************************************************************/
+static void *
+rc4_create_ctx(void)
+{
+	return malloc(sizeof(RC4_KEY));
+}
 
 static int
-rc4_key(mppe *_mppe, mppe_rc4_t *_this, int lkey, u_char *key)
+rc4_key(void *rc4ctx, int lkey, u_char *key)
 {
-	if (_this->rc4ctx == NULL) {
-		if ((_this->rc4ctx = malloc(sizeof(RC4_KEY))) == NULL) {
-			mppe_log(_mppe, LOG_ERR, "malloc() failed at %s: %m",
-			    __func__);
-			return 1;
-		}
-	}
 
-	RC4_set_key((RC4_KEY *)_this->rc4ctx, lkey, key);
+	RC4_set_key(rc4ctx, lkey, key);
 
 	return 0;
 }
 
 static void
-rc4(mppe *_mppe, mppe_rc4_t *_this, int len, u_char *indata, u_char *outdata)
+rc4(void *rc4ctx, int len, u_char *indata, u_char *outdata)
 {
-	RC4((RC4_KEY *)_this->rc4ctx, len, indata, outdata);
-}
-
-static void
-rc4_destroy(mppe *_mppe, mppe_rc4_t *_this)
-{
-	if (_this->rc4ctx != NULL)
-		free(_this->rc4ctx);
-	_this->rc4ctx = NULL;
+	RC4(rc4ctx, len, indata, outdata);
 }
 
 static void
@@ -625,4 +661,51 @@ GetNewKeyFromSHA(u_char *StartKey, u_char *SessionKey, int SessionKeyLength,
 	SHAFinal(&Context, Digest);
 
 	MoveMemory(InterimKey, Digest, SessionKeyLength);
+}
+
+static int
+mppe_rc4_init(mppe *_mppe, mppe_rc4_t *_this, int has_oldkey)
+{
+	if ((_this->rc4ctx = rc4_create_ctx()) == NULL) {
+		mppe_log(_mppe, LOG_ERR, "malloc() failed at %s: %m",
+		    __func__);
+		return 1;
+	}
+
+	if (has_oldkey)
+		_this->old_session_keys =
+		    malloc(MPPE_KEYLEN * MPPE_NOLDKEY);
+	else
+		_this->old_session_keys = NULL;
+
+	return 0;
+}
+
+static int
+mppe_rc4_setkey(mppe *_mppe, mppe_rc4_t *_this)
+{
+	return rc4_key(_this->rc4ctx, _this->keylen, _this->session_key);
+}
+
+static int
+mppe_rc4_setoldkey(mppe *_mppe, mppe_rc4_t *_this, uint16_t coher_cnt)
+{
+	return rc4_key(_this->rc4ctx, _this->keylen,
+	    _this->old_session_keys[coher_cnt % MPPE_NOLDKEY]);
+}
+
+static void
+mppe_rc4_encrypt(mppe *_mppe, mppe_rc4_t *_this, int len, u_char *indata, u_char *outdata)
+{
+	rc4(_this->rc4ctx, len, indata, outdata);
+}
+
+static void
+mppe_rc4_destroy(mppe *_mppe, mppe_rc4_t *_this)
+{
+	if (_this->rc4ctx != NULL)
+		free(_this->rc4ctx);
+	if (_this->old_session_keys != NULL)
+		free(_this->old_session_keys);
+	_this->rc4ctx = NULL;
 }

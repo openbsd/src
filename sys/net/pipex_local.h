@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.12 2011/07/08 19:34:04 yasuoka Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.13 2011/10/15 03:24:11 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -37,6 +37,8 @@
 #define	PIPEX_PPPOE	1
 #define	PIPEX_MPPE	1
 
+#define PIPEX_REWIND_LIMIT		64
+
 #define PIPEX_ENABLED			0x0001
 
 #ifndef	LOG_PPPAC
@@ -59,6 +61,9 @@
 #define	NNBY	8	/* number of bits of a byte */
 #endif
 
+#define PIPEX_MPPE_NOLDKEY		64 /* should be power of two */
+#define PIPEX_MPPE_OLDKEYMASK		(PIPEX_MPPE_NOLDKEY - 1)
+
 #ifdef PIPEX_MPPE
 /* mppe rc4 key */
 struct pipex_mppe {
@@ -71,6 +76,7 @@ struct pipex_mppe {
 	struct  rc4_ctx rc4ctx;
 	u_char master_key[PIPEX_MPPE_KEYLEN];	/* master key of MPPE */
 	u_char session_key[PIPEX_MPPE_KEYLEN];	/* session key of MPPE */
+	u_char (*old_session_keys)[PIPEX_MPPE_KEYLEN];	/* old session keys */
 };
 #endif /* PIPEX_MPPE */
 
@@ -402,7 +408,7 @@ Static struct pipex_session  *pipex_l2tp_userland_lookup_session(struct mbuf *, 
 #endif
 
 #ifdef PIPEX_MPPE
-Static void                  pipex_mppe_req_init (struct pipex_mppe_req *, struct pipex_mppe *);
+Static void                  pipex_mppe_init (struct pipex_mppe *, int, int, u_char *, int);
 Static void                  GetNewKeyFromSHA (u_char *, u_char *, int, u_char *);
 Static void                  pipex_mppe_reduce_key (struct pipex_mppe *);
 Static void                  mppe_key_change (struct pipex_mppe *);
@@ -410,8 +416,9 @@ Static void                  pipex_mppe_input (struct mbuf *, struct pipex_sessi
 Static void                  pipex_mppe_output (struct mbuf *, struct pipex_session *, uint16_t);
 Static void                  pipex_ccp_input (struct mbuf *, struct pipex_session *);
 Static int                   pipex_ccp_output (struct pipex_session *, int, int);
-Static inline int            rc4_key(struct pipex_mppe *, int, u_char *);
-Static inline void           rc4(struct pipex_mppe *, int, u_char *, u_char *);
+Static inline int            pipex_mppe_setkey(struct pipex_mppe *);
+Static inline int            pipex_mppe_setoldkey(struct pipex_mppe *, uint16_t);
+Static inline void           pipex_mppe_crypt(struct pipex_mppe *, int, u_char *, u_char *);
 #endif
 
 Static struct mbuf           *adjust_tcp_mss (struct mbuf *, int);

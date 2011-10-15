@@ -1,4 +1,4 @@
-/* $OpenBSD: l2tp.h,v 1.4 2010/09/24 14:50:30 yasuoka Exp $	*/
+/* $OpenBSD: l2tp.h,v 1.5 2011/10/15 03:24:11 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -30,7 +30,7 @@
 /*@file
  * header file for the L2TP module
  */
-/* $Id: l2tp.h,v 1.4 2010/09/24 14:50:30 yasuoka Exp $ */
+/* $Id: l2tp.h,v 1.5 2011/10/15 03:24:11 yasuoka Exp $ */
 
 /************************************************************************
  * Protocol Constants
@@ -283,6 +283,7 @@
 	((l2tpd_listener *)slist_get(&(ctrl)->l2tpd->listener, \
 	    (ctrl)->listener_index))->phy_label
 
+#define L2TP_CALL_DELAY_LIMIT 64
 
 /** datatype represents L2TP daemon */
 struct _l2tpd;
@@ -457,7 +458,7 @@ int              l2tp_call_init (l2tp_call *, l2tp_ctrl *);
 void             l2tp_call_destroy (l2tp_call *, int);
 void             l2tp_call_admin_disconnect(l2tp_call *);
 int              l2tp_call_recv_packet (l2tp_ctrl *, l2tp_call *, int, u_char *, int);
-void             l2tp_call_ppp_input (l2tp_call *, u_char *, int);
+void             l2tp_call_ppp_input (l2tp_call *, u_char *, int, int);
 
 void             l2tp_ctrl_destroy (l2tp_ctrl *);
 l2tp_ctrl        *l2tp_ctrl_create (void);

@@ -1,4 +1,4 @@
-/* $OpenBSD: l2tp_ctrl.c,v 1.6 2011/01/20 23:12:33 jasper Exp $	*/
+/* $OpenBSD: l2tp_ctrl.c,v 1.7 2011/10/15 03:24:11 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file Control connection processing functions for L2TP LNS */
-/* $Id: l2tp_ctrl.c,v 1.6 2011/01/20 23:12:33 jasper Exp $ */
+/* $Id: l2tp_ctrl.c,v 1.7 2011/10/15 03:24:11 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
@@ -903,6 +903,8 @@ l2tp_ctrl_input(l2tpd *_this, int listener_index, struct sockaddr *peer,
 		}
 	}
 	if (!is_ctrl) {
+		int delayed = 0;
+
 		/* L2TP data */
 		if (ctrl->state != L2TP_CTRL_STATE_ESTABLISHED) {
 			l2tp_ctrl_log(ctrl, LOG_WARNING,
@@ -929,16 +931,23 @@ l2tp_ctrl_input(l2tpd *_this, int listener_index, struct sockaddr *peer,
 
 		if (hdr.s != 0) {
 			if (SEQ_LT(hdr.ns, call->rcv_nxt)) {
-				/* sequence number seems to rewind */
-				/* XXX: need to log? */
-				L2TP_CTRL_DBG((ctrl, LOG_DEBUG,
-				    "receive a out of sequence data packet: "
-				    "%u < %u.  ", hdr.ns, call->rcv_nxt));
-				return;
+				if (SEQ_LT(hdr.ns,
+				    call->rcv_nxt - L2TP_CALL_DELAY_LIMIT)) {
+					/* sequence number seems to be delayed */
+					/* XXX: need to log? */
+					L2TP_CTRL_DBG((ctrl, LOG_DEBUG,
+					    "receive a out of sequence "
+					    "data packet: %u < %u.",
+					    hdr.ns, call->rcv_nxt));
+					return;
+				}
+				delayed = 1;
+			} else {
+				call->rcv_nxt = hdr.ns + 1;
 			}
-			call->rcv_nxt = hdr.ns + 1;
 		}
-		l2tp_call_ppp_input(call, pkt, pktlen);
+
+		l2tp_call_ppp_input(call, pkt, pktlen, delayed);
 
 		return;
 	}

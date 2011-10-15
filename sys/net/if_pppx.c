@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.11 2011/08/21 09:00:15 jmatthew Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.12 2011/10/15 03:24:11 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -805,9 +805,13 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 #endif
 #ifdef PIPEX_MPPE
 	if ((req->pr_ppp_flags & PIPEX_PPP_MPPE_ACCEPTED) != 0)
-		pipex_mppe_req_init(&req->pr_mppe_recv, &session->mppe_recv);
+		pipex_session_init_mppe_recv(session,
+		    req->pr_mppe_recv.stateless, req->pr_mppe_recv.keylenbits,
+		    req->pr_mppe_recv.master_key);
 	if ((req->pr_ppp_flags & PIPEX_PPP_MPPE_ENABLED) != 0)
-		pipex_mppe_req_init(&req->pr_mppe_send, &session->mppe_send);
+		pipex_session_init_mppe_send(session,
+		    req->pr_mppe_send.stateless, req->pr_mppe_send.keylenbits,
+		    req->pr_mppe_send.master_key);
 
 	if (pipex_session_is_mppe_required(session)) {
 		if (!pipex_session_is_mppe_enabled(session) ||

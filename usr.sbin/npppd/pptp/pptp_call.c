@@ -1,4 +1,4 @@
-/* $OpenBSD: pptp_call.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $	*/
+/* $OpenBSD: pptp_call.c,v 1.4 2011/10/15 03:24:11 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptp_call.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: pptp_call.c,v 1.4 2011/10/15 03:24:11 yasuoka Exp $ */
 /**@file PPTP Call */
 /* currently it supports PAC mode only */
 #include <sys/types.h>
@@ -80,7 +80,7 @@ static int   pptp_call_bind_ppp (pptp_call *);
 static void  pptp_call_log (pptp_call *, int, const char *, ...);
 static void  pptp_call_OCRQ_string (struct pptp_ocrq *, char *, int);
 static void  pptp_call_OCRP_string (struct pptp_ocrp *, char *, int);
-static void   pptp_call_ppp_input (pptp_call *, unsigned char *, int);
+static void   pptp_call_ppp_input (pptp_call *, unsigned char *, int, int);
 static char * pptp_call_state_string(int);
 
 static int   pptp_call_ppp_output (npppd_ppp *, unsigned char *, int, int);
@@ -474,6 +474,7 @@ pptp_call_gre_input(pptp_call *_this, uint32_t seq, uint32_t ack,
 {
 	int log_prio;
 	const char *reason;
+	int delayed = 0;
 
 	PPTP_CALL_ASSERT(_this != NULL);
 
@@ -500,14 +501,7 @@ pptp_call_gre_input(pptp_call *_this, uint32_t seq, uint32_t ack,
 		if (ack + 1 == _this->snd_una) {
 			/* nothing to do */
 		} else if (SEQ_LT(ack, _this->snd_una)) {
-			/* ack sequence# was rewinded */
-			if (abs(ack - _this->snd_una) < PPTP_CALL_NMAX_INSEQ) {
-				/* packet reordered ? */
-				log_prio = LOG_DEBUG;
-			}
-			reason = "ack out of sequence";
-			goto bad_pkt;
-			/* FALLTHROUGH */
+			delayed = 1;
 		} else if (SEQ_GT(ack, _this->snd_nxt)) {
 			reason = "ack for unknown sequence.";
 			goto bad_pkt;
@@ -522,11 +516,12 @@ pptp_call_gre_input(pptp_call *_this, uint32_t seq, uint32_t ack,
 
 	/* check sequence# */
 	if (SEQ_LT(seq, _this->rcv_nxt)) {
-		/* reorderd, delayed delivery? */
-		if (abs(seq - _this->rcv_nxt) < PPTP_CALL_NMAX_INSEQ)
-			log_prio = LOG_DEBUG;
-		reason = "out of sequence";
-		goto bad_pkt;
+		/* delayed delivery? */
+		if (SEQ_LT(seq, _this->rcv_nxt - PPTP_CALL_DELAY_LIMIT)) {
+			reason = "out of sequence";
+			goto bad_pkt;
+		}
+		delayed = 1;
 	} else if (SEQ_GE(seq, _this->rcv_nxt + _this->maxwinsz)){
 		/* MUST Process them */
 		/* XXX FIXME: if over 4096 packets lost, it can not
@@ -537,21 +532,27 @@ pptp_call_gre_input(pptp_call *_this, uint32_t seq, uint32_t ack,
 		    _this->rcv_nxt + _this->maxwinsz - 1,
 		    SEQ_SUB(seq, _this->rcv_nxt));
 	}
-	seq++;
-	/* XXX : TODO: should it counts lost packets  ppp->ierrors
-	 * and update ppp->ierrors counter? */
-	_this->rcv_nxt = seq;
 
-	if (SEQ_SUB(seq, _this->rcv_acked) > RUPDIV(_this->winsz, 2)) {
-		/*
-		 * Multi-packet acknowledgement.
-		 * send ack when it reachs to half of window size
-		 */
-		PPTP_CALL_DBG((_this, LOG_DEBUG, "rcv window size=%u %u %u\n",
-		    SEQ_SUB(seq, _this->rcv_acked), seq, _this->rcv_acked));
-		pptp_call_gre_output(_this, 0, 1, NULL, 0);
+	if (!delayed) {
+		seq++;
+		/* XXX : TODO: should it counts lost packets  ppp->ierrors
+		 * and update ppp->ierrors counter? */
+		_this->rcv_nxt = seq;
+
+		if (SEQ_SUB(seq, _this->rcv_acked) > RUPDIV(_this->winsz, 2)) {
+			/*
+			 * Multi-packet acknowledgement.
+			 * send ack when it reachs to half of window size
+			 */
+			PPTP_CALL_DBG((_this, LOG_DEBUG,
+			    "rcv window size=%u %u %u\n",
+			    SEQ_SUB(seq, _this->rcv_acked), seq,
+			    _this->rcv_acked));
+			pptp_call_gre_output(_this, 0, 1, NULL, 0);
+		}
 	}
-	pptp_call_ppp_input(_this, pkt, pktlen);
+
+	pptp_call_ppp_input(_this, pkt, pktlen, delayed);
 
 	return;
 bad_pkt:
@@ -658,7 +659,7 @@ pptp_call_notify_down(pptp_call *_this)
 
 /* input packet to ppp */
 static void
-pptp_call_ppp_input(pptp_call *_this, u_char *pkt, int pktlen)
+pptp_call_ppp_input(pptp_call *_this, u_char *pkt, int pktlen, int delayed)
 {
 	int rval;
 	npppd_ppp *ppp;
@@ -669,7 +670,7 @@ pptp_call_ppp_input(pptp_call *_this, u_char *pkt, int pktlen)
 		    "Received ppp frame but ppp is not assigned yet");
 		return;
 	}
-	rval = ppp->recv_packet(ppp, pkt, pktlen, 0);
+	rval = ppp->recv_packet(ppp, pkt, pktlen, delayed ? PPP_IO_FLAGS_DELAYED : 0);
 	if (_this->ppp == NULL)		/* ppp is freed */
 		return;
 

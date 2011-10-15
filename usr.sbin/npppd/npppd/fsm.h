@@ -1,4 +1,4 @@
-/* $OpenBSD: fsm.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: fsm.h,v 1.4 2011/10/15 03:24:11 yasuoka Exp $ */
 /*	$NetBSD: fsm.h,v 1.10 2000/09/23 22:39:35 christos Exp $	*/
 
 /*
@@ -40,6 +40,8 @@
 #define TERMREQ		5	/* Termination Request */
 #define TERMACK		6	/* Termination Ack */
 #define CODEREJ		7	/* Code Reject */
+#define RESETREQ	14	/* Reset Request */
+#define RESETACK	15	/* Reset Ack */
 
 struct evtimer_wrap {
 	void *ctx;

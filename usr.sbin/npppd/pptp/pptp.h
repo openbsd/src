@@ -1,4 +1,4 @@
-/* $OpenBSD: pptp.h,v 1.5 2011/01/20 23:12:33 jasper Exp $	*/
+/* $OpenBSD: pptp.h,v 1.6 2011/10/15 03:24:11 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -180,11 +180,11 @@
 #define PPTP_CALL_INITIAL_PPD			0
 #endif
 
-/* PPTP_CALL_NMAX_INSEQ specifies N packets was backwarded,
- * when sequence# backwarded */
-#ifndef	PPTP_CALL_NMAX_INSEQ
-#define	PPTP_CALL_NMAX_INSEQ	64
-#endif
+/**
+ * PPTP_CALL_DELAY_LIMIT indicates how many sequence number can be rewinded
+ * by reordering.
+ */
+#define	PPTP_CALL_DELAY_LIMIT			64
 
 /* pptp call state machine */
 #define	PPTP_CALL_STATE_IDLE			0

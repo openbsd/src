@@ -1,4 +1,4 @@
-/* $OpenBSD: l2tp_call.c,v 1.7 2011/01/20 23:12:33 jasper Exp $	*/
+/* $OpenBSD: l2tp_call.c,v 1.8 2011/10/15 03:24:11 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: l2tp_call.c,v 1.7 2011/01/20 23:12:33 jasper Exp $ */
+/* $Id: l2tp_call.c,v 1.8 2011/10/15 03:24:11 yasuoka Exp $ */
 /**@file L2TP LNS call */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -860,13 +860,14 @@ l2tp_call_state_string(l2tp_call *_this)
 
 /* input packet to ppp */
 void
-l2tp_call_ppp_input(l2tp_call *_this, u_char *pkt, int pktlen)
+l2tp_call_ppp_input(l2tp_call *_this, u_char *pkt, int pktlen, int delayed)
 {
 	int rval;
 	npppd_ppp *ppp;
 
 	ppp = _this->ppp;
-	rval = ppp->recv_packet(ppp, pkt, pktlen, 0);
+	rval = ppp->recv_packet(ppp, pkt, pktlen,
+	    delayed ? PPP_IO_FLAGS_DELAYED : 0);
 
 	if (_this->ppp == NULL)		/* ppp is freed */
 		return;

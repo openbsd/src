@@ -1,4 +1,4 @@
-/* $OpenBSD: ppp.c,v 1.8 2011/07/06 20:52:28 yasuoka Exp $ */
+/* $OpenBSD: ppp.c,v 1.9 2011/10/15 03:24:11 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.8 2011/07/06 20:52:28 yasuoka Exp $ */
+/* $Id: ppp.c,v 1.9 2011/10/15 03:24:11 yasuoka Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -716,11 +716,14 @@ ppp_ccp_opened(npppd_ppp *_this)
 void
 ppp_ccp_stopped(npppd_ppp *_this)
 {
-       if (_this->mppe.required)
-               ppp_stop(_this, NULL);
+#ifdef USE_NPPPD_MPPE
+	if (_this->mppe.required) {
+		ppp_stop(_this, NULL);
+		return;
+	}
+#endif
 #ifdef USE_NPPPD_PIPEX
-       else
-               ppp_on_network_pipex(_this);
+	ppp_on_network_pipex(_this);
 #endif
 }
 
@@ -730,7 +733,8 @@ ppp_ccp_stopped(npppd_ppp *_this)
 /**
  * Receive the PPP packet.
  * @param	flags	Indicate information of received packet by bit flags.
- *			{@link ::PPP_IO_FLAGS_MPPE_ENCRYPTED} may be used.
+ *			{@link ::PPP_IO_FLAGS_MPPE_ENCRYPTED} and
+ *			{@link ::PPP_IO_FLAGS_DELAYED} may be used.
  * @return	return 0 on success.  return 1 on failure.
  */
 static int
@@ -791,6 +795,13 @@ ppp_recv_packet(npppd_ppp *_this, unsigned char *pkt, int lpkt, int flags)
 	} else {
 		GETSHORT(proto, inp);
 	}
+
+	/*
+	 * if the PPP frame is reordered, drop it
+	 * unless proto is reorder-tolerant
+	 */
+	if (flags & PPP_IO_FLAGS_DELAYED && proto != PPP_PROTO_IP)
+		return 1;
 
 	if (_this->log_dump_in != 0 && debug_get_debugfp() != NULL) {
 		char buf[256];

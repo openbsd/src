@@ -1,4 +1,4 @@
-/* $OpenBSD: ppp.h,v 1.6 2011/07/06 20:52:28 yasuoka Exp $ */
+/* $OpenBSD: ppp.h,v 1.7 2011/10/15 03:24:11 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -380,12 +380,16 @@ typedef int (*npppd_iofunc) (
 
 /** Flag indicates the orignal packet was encrypted by MPPE */
 #define	PPP_IO_FLAGS_MPPE_ENCRYPTED			0x0001
+/** Flag indicates the orignal packet was delayed */
+#define	PPP_IO_FLAGS_DELAYED				0x0002
 
 typedef void (*npppd_voidfunc) (
 	npppd_ppp 	*ppp
 );
 
 #ifdef	USE_NPPPD_MPPE
+
+#define MPPE_NOLDKEY		64
 
 typedef struct _mppe_rc4 {
 	void		*rc4ctx;
@@ -403,6 +407,7 @@ typedef struct _mppe_rc4 {
 
 	uint8_t		master_key[MPPE_KEYLEN];
 	uint8_t		session_key[MPPE_KEYLEN];
+	uint8_t		(*old_session_keys)[MPPE_KEYLEN];
 } mppe_rc4_t;
 
 /** Type for MPPE */
@@ -423,7 +428,7 @@ typedef struct _mppe {
 			reserved	:11;
 	uint16_t	keylenbits;
 
-	mppe_rc4_t	send, recv, keychg;
+	mppe_rc4_t	send, recv;
 } mppe;
 #endif
 
