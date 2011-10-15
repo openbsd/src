@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.58 2011/10/14 16:16:43 stsp Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.59 2011/10/15 10:29:06 nigel Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -869,7 +869,9 @@ nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6,
 	int icmp6len, maxlen, error;
 	caddr_t mac;
 	struct route_in6 ro;
+#if NCARP > 0
 	struct sockaddr_dl *proxydl = NULL;
+#endif
 
 	mac = NULL;
 	bzero(&ro, sizeof(ro));
