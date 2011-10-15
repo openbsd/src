@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.128 2011/07/07 18:00:33 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.129 2011/10/15 23:35:29 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -65,12 +65,17 @@
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
 
+#ifdef __HAVE_MD_TCB
+# include <machine/tcb.h>
+#endif
+
 int	nprocs = 1;		/* process 0 */
 int	randompid;		/* when set to 1, pid's go random */
 pid_t	lastpid;
 struct	forkstat forkstat;
 
 void fork_return(void *);
+void tfork_child_return(void *);
 int pidtaken(pid_t);
 
 void process_new(struct proc *, struct proc *);
@@ -148,6 +153,39 @@ sys_rfork(struct proc *p, void *v, register_t *retval)
 	return (fork1(p, SIGCHLD, flags, NULL, 0, NULL, NULL, retval, NULL));
 }
 
+int
+sys___tfork(struct proc *p, void *v, register_t *retval)
+{
+	struct sys___tfork_args /* {
+		syscallarg(struct __tfork) *param;
+	} */ *uap = v;
+	struct __tfork param;
+	int flags;
+	int error;
+
+	if ((error = copyin(SCARG(uap, param), &param, sizeof(param))))
+		return (error);
+
+	/* XXX will supersede rfork at some point... */
+	if (param.tf_flags != 0)
+		return (EINVAL);
+
+	flags = FORK_TFORK | FORK_THREAD | FORK_SIGHAND | FORK_SHAREVM
+	    | FORK_NOZOMBIE | FORK_SHAREFILES;
+
+	return (fork1(p, 0, flags, NULL, param.tf_tid, tfork_child_return,
+	    param.tf_tcb, retval, NULL));
+}
+
+void
+tfork_child_return(void *arg)
+{
+	struct proc *p = curproc;
+
+	TCB_SET(p, arg);
+	child_return(p);
+}
+
 /*
  * Allocate and initialize a new process.
  */
@@ -196,7 +234,7 @@ process_new(struct proc *newproc, struct proc *parentproc)
 struct timeval fork_tfmrate = { 10, 0 };
 
 int
-fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
+fork1(struct proc *p1, int exitsig, int flags, void *stack, pid_t *tidptr,
     void (*func)(void *), void *arg, register_t *retval,
     struct proc **rnewprocp)
 {
@@ -364,7 +402,7 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	 * different path later.
 	 */
 	uvm_fork(p1, p2, ((flags & FORK_SHAREVM) ? TRUE : FALSE), stack,
-	    stacksize, func ? func : child_return, arg ? arg : p2);
+	    0, func ? func : child_return, arg ? arg : p2);
 
 	timeout_set(&p2->p_stats->p_virt_to, virttimer_trampoline, p2);
 	timeout_set(&p2->p_stats->p_prof_to, proftimer_trampoline, p2);
@@ -377,6 +415,10 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	} else if (flags & FORK_VFORK) {
 		forkstat.cntvfork++;
 		forkstat.sizvfork += vm->vm_dsize + vm->vm_ssize;
+#if 0
+	} else if (flags & FORK_TFORK) {
+		forkstat.cnttfork++;
+#endif
 	} else if (flags & FORK_RFORK) {
 		forkstat.cntrfork++;
 		forkstat.sizrfork += vm->vm_dsize + vm->vm_ssize;
@@ -424,6 +466,13 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	if (newstrp)
 		systrace_fork(p1, p2, newstrp);
 #endif
+
+	if (tidptr != NULL) {
+		pid_t	pid = p2->p_pid + THREAD_PID_OFFSET;
+
+		if (copyout(&pid, tidptr, sizeof(pid)))
+			psignal(p1, SIGSEGV);
+	}
 
 	/*
 	 * Make child runnable, set start time, and add to run queue.

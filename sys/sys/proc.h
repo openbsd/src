@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.143 2011/09/20 10:07:37 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.144 2011/10/15 23:35:29 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -235,6 +235,11 @@ struct proc {
 	long 	p_thrslpid;	/* for thrsleep syscall */
 	int	p_sigwait;	/* signal handled by sigwait() */
 
+#ifndef	__HAVE_MD_TCB
+	void	*p_tcb;		/* user-space thread-control-block address */
+# define TCB_SET(p, addr)	((p)->p_tcb = (addr))
+# define TCB_GET(p)		((p)->p_tcb)
+#endif
 
 	/* scheduling */
 	u_int	p_estcpu;	 /* Time averaged value of p_cpticks. */
@@ -425,6 +430,7 @@ struct uidinfo *uid_find(uid_t);
 #define FORK_CLEANFILES	0x00000020
 #define FORK_NOZOMBIE	0x00000040
 #define FORK_SHAREVM	0x00000080
+#define FORK_TFORK	0x00000100
 #define FORK_SIGHAND	0x00000200
 #define FORK_PTRACE	0x00000400
 #define FORK_THREAD	0x00000800
@@ -483,7 +489,7 @@ void	reaper(void);
 void	exit1(struct proc *, int, int);
 void	exit2(struct proc *);
 void	cpu_exit(struct proc *);
-int	fork1(struct proc *, int, int, void *, size_t, void (*)(void *),
+int	fork1(struct proc *, int, int, void *, pid_t *, void (*)(void *),
 	    void *, register_t *, struct proc **);
 int	groupmember(gid_t, struct ucred *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.6 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: proc.h,v 1.7 2011/10/15 23:35:29 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -35,11 +35,10 @@
 #ifndef _MACHINE_PROC_H_
 #define _MACHINE_PROC_H_
 
-#include <machine/frame.h>
-
 /*
  * Machine-dependent part of the proc structure for amd64.
  */
+struct trapframe;
 struct mdproc {
 	struct	trapframe *md_regs;	/* registers on current frame */
 	int	md_flags;
@@ -49,5 +48,8 @@ struct mdproc {
 /* md_flags */
 #define	MDP_USEDFPU	0x0001	/* has used the FPU */
 #define MDP_IRET	0x0002	/* return via iret, not sysret */
+				/* (iret can restore r11 and rcx) */
+
+#define __HAVE_MD_TCB
 
 #endif /* _MACHINE_PROC_H_ */

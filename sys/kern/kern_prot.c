@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.50 2011/07/25 20:32:06 tedu Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.51 2011/10/15 23:35:29 guenther Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -53,6 +53,10 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#ifdef	__HAVE_MD_TCB
+# include <machine/tcb.h>
+#endif
 
 /* ARGSUSED */
 int
@@ -889,4 +893,28 @@ proc_cansugid(struct proc *p)
 
 	/* Allow. */
 	return (1);
+}
+
+/*
+ * Set address of the proc's thread-control-block
+ */
+int
+sys___set_tcb(struct proc *p, void *v, register_t *retval)
+{
+	struct sys___set_tcb_args /* {
+		syscallarg(void *) tcb;
+	} */ *uap = v;
+
+	TCB_SET(p, SCARG(uap, tcb));
+	return (0);
+}
+
+/*
+ * Get address of the proc's thread-control-block
+ */
+int
+sys___get_tcb(struct proc *p, void *v, register_t *retval)
+{
+	*retval = (register_t)TCB_GET(p);
+	return (0);
 }

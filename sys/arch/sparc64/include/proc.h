@@ -48,3 +48,5 @@ struct mdproc {
 	struct	fpstate64 *md_fpstate;	/* fpu state, if any; always resident */
 	__volatile int md_astpending;
 };
+
+#define	__HAVE_MD_TCB

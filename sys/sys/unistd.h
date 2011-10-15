@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.18 2010/10/28 02:05:59 deraadt Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.19 2011/10/15 23:35:29 guenther Exp $	*/
 /*	$NetBSD: unistd.h,v 1.10 1994/06/29 06:46:06 cgd Exp $	*/
 
 /*
@@ -72,6 +72,13 @@
 #define	L_SET		SEEK_SET
 #define	L_INCR		SEEK_CUR
 #define	L_XTND		SEEK_END
+
+/* the parameters argument passed to the __tfork() syscall */
+struct __tfork {
+	void	*tf_tcb;
+	pid_t	*tf_tid;
+	int	tf_flags;
+};
 #endif
 
 /* configurable pathname variables */
