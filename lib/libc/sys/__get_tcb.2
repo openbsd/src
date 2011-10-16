@@ -1,4 +1,4 @@
-.\" $OpenBSD: __get_tcb.2,v 1.1 2011/10/16 06:21:52 guenther Exp $
+.\" $OpenBSD: __get_tcb.2,v 1.2 2011/10/16 06:54:47 guenther Exp $
 .\"
 .\" Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
 .\"
@@ -20,7 +20,7 @@
 .Sh NAME
 .Nm __get_tcb ,
 .Nm __set_tcb
-.Nd "get and set the address of the thread-control-block of the current thread"
+.Nd get and set the address of the thread control block of the current thread
 .Sh SYNOPSIS
 .Ft void *
 .Fn __get_tcb "void"
@@ -31,13 +31,13 @@ The
 .Fn __get_tcb
 and
 .Fn __set_tcb
-are for use by librthread and other parts of the system runtime to
-retrieve and set the address of the current thread's TCB
-(thread-control-block).
+functions are for use by librthread and other parts of the system
+runtime to retrieve and set the address of the current thread's
+thread control block (TCB).
 This is used to locate per-thread data such as
 .Va errno .
 Each kernel-level thread in a process has a separate value for this
-address which can be obtained and changed via these system calls.
+address, which can be obtained and changed via these system calls.
 New threads (including the first thread of a new process) created using
 .Xr fork 2 ,
 .Xr vfork 2 ,
@@ -52,7 +52,7 @@ On some platforms, this address is also directly mapped to a CPU
 register which can be accessed from userspace.
 .Sh RETURN VALUES
 .Fn __get_tcb
-returns the address of the thread-control-block of the current thread.
+returns the address of the thread control block of the current thread.
 .Sh SEE ALSO
 .Xr rfork 2
 .Sh HISTORY
