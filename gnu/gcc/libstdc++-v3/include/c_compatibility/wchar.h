@@ -45,32 +45,24 @@ using std::fgetws;
 using std::fputwc;
 using std::fputws;
 using std::fwide;
-#if !defined(__OpenBSD__)
 using std::fwprintf;
 using std::fwscanf;
 using std::swprintf;
 using std::swscanf;
 using std::vfwprintf;
-#endif
 #if _GLIBCXX_HAVE_VFWSCANF
 using std::vfwscanf;
 #endif
-#if !defined(__OpenBSD__)
 using std::vswprintf;
-#endif
 #if _GLIBCXX_HAVE_VSWSCANF
 using std::vswscanf;
 #endif
-#if !defined(__OpenBSD__)
 using std::vwprintf;
-#endif
 #if _GLIBCXX_HAVE_VWSCANF
 using std::vwscanf;
 #endif
-#if !defined(__OpenBSD__)
 using std::wprintf;
 using std::wscanf;
-#endif
 using std::getwc;
 using std::getwchar;
 using std::mbsinit;

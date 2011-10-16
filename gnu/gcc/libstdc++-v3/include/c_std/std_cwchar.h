@@ -152,9 +152,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
   using ::fputws;
   using ::fwide;
   using ::fwprintf;
-#if !defined(__OpenBSD__)
   using ::fwscanf;
-#endif
   using ::getwc;
   using ::getwchar;
   using ::mbrlen;
@@ -164,9 +162,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
   using ::putwc;
   using ::putwchar;
   using ::swprintf;
-#if !defined(__OpenBSD__)
   using ::swscanf;
-#endif
   using ::ungetwc;
   using ::vfwprintf;
 #if _GLIBCXX_HAVE_VFWSCANF
@@ -209,9 +205,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
   using ::wmemmove;
   using ::wmemset;
   using ::wprintf;
-#if !defined(__OpenBSD__)
   using ::wscanf;
-#endif
 
   using ::wcschr;
 
