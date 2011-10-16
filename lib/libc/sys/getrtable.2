@@ -1,4 +1,4 @@
-.\" $OpenBSD: getrtable.2,v 1.1 2010/07/03 04:44:51 guenther Exp $
+.\" $OpenBSD: getrtable.2,v 1.2 2011/10/16 08:50:34 guenther Exp $
 .\"
 .\" Copyright (c) 2009 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,13 +14,13 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 3 2010 $
+.Dd $Mdocdate: October 16 2011 $
 .Dt GETRTABLE 2
 .Os
 .Sh NAME
 .Nm getrtable ,
 .Nm setrtable
-.Nd "get and set the default routing domain of the current process"
+.Nd get and set the default routing table of the current process
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
@@ -35,10 +35,14 @@ and
 manipulate the routing table and routing domain associated with the current
 process.
 .Pp
-Only the superuser is allowed to change the process routing domain if
+Only the superuser is allowed to change the process routing table if
 it is already set to a non-zero value.
 .Sh RETURN VALUES
-A 0 is returned if the call succeeds, \-1 if it fails.
+.Fn getrtable
+returns the routing table of the current process.
+Upon successful completion,
+.Fn setrtable
+returns 0 if the call succeeds, \-1 if it fails.
 .Sh ERRORS
 The call succeeds unless:
 .Bl -tag -width Er
@@ -47,7 +51,7 @@ The value of the
 .Fa rtableid
 argument is not a valid routing table.
 .It Bq Er EPERM
-The user is not the superuser and the routing domain of the
+The user is not the superuser and the routing table of the
 calling process is already set to a non-zero value.
 .El
 .Sh SEE ALSO
