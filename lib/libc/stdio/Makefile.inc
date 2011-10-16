@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.18 2011/07/06 19:53:52 stsp Exp $
+#	$OpenBSD: Makefile.inc,v 1.19 2011/10/16 13:20:51 stsp Exp $
 
 # stdio sources
 .PATH: ${LIBCSRCDIR}/stdio
@@ -17,12 +17,13 @@ SRCS+=	asprintf.c clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c fgetc.c \
 	wbuf.c wsetup.c flockfile.c __svfscanf.c \
 	fgetwc.c fgetws.c fputwc.c fputws.c fwide.c getwc.c getwchar.c \
 	putwc.c putwchar.c ungetwc.c \
-	fwprintf.c swprintf.c vfwprintf.c vswprintf.c vwprintf.c wprintf.c
+	fwprintf.c swprintf.c vfwprintf.c vswprintf.c vwprintf.c wprintf.c \
+	fwscanf.c swscanf.c vfwscanf.c vswscanf.c vwscanf.c wscanf.c
 
 MAN+=	fclose.3 ferror.3 fflush.3 fgetln.3 fgets.3 fopen.3 fputs.3 \
 	fread.3 fseek.3 funopen.3 getc.3 mktemp.3 perror.3 printf.3 putc.3 \
 	remove.3 scanf.3 setbuf.3 stdio.3 tmpnam.3 ungetc.3 \
-	fgetws.3 fputws.3 fwide.3 getwc.3 putwc.3 ungetwc.3 wprintf.3
+	fgetws.3 fputws.3 fwide.3 getwc.3 putwc.3 ungetwc.3 wprintf.3 wscanf.3
 
 MLINKS+=ferror.3 clearerr.3 ferror.3 feof.3 ferror.3 fileno.3
 MLINKS+=fflush.3 fpurge.3
@@ -47,6 +48,8 @@ MLINKS+=setbuf.3 setbuffer.3 setbuf.3 setlinebuf.3 setbuf.3 setvbuf.3
 MLINKS+=tmpnam.3 tempnam.3 tmpnam.3 tmpfile.3
 MLINKS+=wprintf.3 fwprintf.3 wprintf.3 swprintf.3 wprintf.3 vwprintf.3 \
 	wprintf.3 vfwprintf.3 wprintf.3 vswprintf.3
+MLINKS+=wscanf.3 fwscanf.3 wscanf.3 swscanf.3 wscanf.3 vfwscanf.3 wscanf.3 \
+	vswscanf.3 wscanf.3 vwscanf.3
 
 MLINKS+=getwc.3 fgetwc.3 getwc.3 getwchar.3
 MLINKS+=putwc.3 fputwc.3 putwc.3 putwchar.3

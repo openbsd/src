@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.19 2011/07/04 04:37:34 nicm Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.20 2011/10/16 13:20:51 stsp Exp $	*/
 /*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
 
 /*-
@@ -187,6 +187,13 @@ int vswprintf(wchar_t * __restrict, size_t, const wchar_t * __restrict,
 	__va_list);
 int vwprintf(const wchar_t * __restrict, __va_list);
 int wprintf(const wchar_t * __restrict, ...);
+
+int fwscanf(FILE * __restrict, const wchar_t * __restrict, ...);
+int swscanf(const wchar_t * __restrict, const wchar_t * __restrict, ...);
+int vfwscanf(FILE * __restrict, const wchar_t * __restrict, __va_list);
+int vswscanf(const wchar_t * __restrict, const wchar_t * __restrict, __va_list);
+int vwscanf(const wchar_t * __restrict, __va_list);
+int wscanf(const wchar_t * __restrict, ...);
 
 #define getwc(f) fgetwc(f)
 #define getwchar() getwc(stdin)

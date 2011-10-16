@@ -1,8 +1,7 @@
-/*	$OpenBSD: ungetwc.c,v 1.5 2011/10/16 13:20:51 stsp Exp $	*/
-/* $NetBSD: ungetwc.c,v 1.2 2003/01/18 11:29:59 thorpej Exp $ */
+/* $OpenBSD: vwscanf.c,v 1.1 2011/10/16 13:20:51 stsp Exp $ */
 
 /*-
- * Copyright (c)2001 Citrus Project,
+ * Copyright (c) 2002 Tim J. Robbins
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,53 +24,17 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Citrus$
  */
 
-#include <errno.h>
+#include <sys/cdefs.h>
+
+#include <stdarg.h>
 #include <stdio.h>
 #include <wchar.h>
-#include "local.h"
 
-wint_t
-__ungetwc(wint_t wc, FILE *fp)
+int
+vwscanf(const wchar_t * __restrict fmt, __va_list ap)
 {
-	struct wchar_io_data *wcio;
 
-	if (wc == WEOF)
-		return WEOF;
-
-	_SET_ORIENTATION(fp, 1);
-	/*
-	 * XXX since we have no way to transform a wchar string to
-	 * a char string in reverse order, we can't use ungetc.
-	 */
-	/* XXX should we flush ungetc buffer? */
-
-	wcio = WCIO_GET(fp);
-	if (wcio == 0) {
-		errno = ENOMEM; /* XXX */
-		return WEOF;
-	}
-
-	if (wcio->wcio_ungetwc_inbuf >= WCIO_UNGETWC_BUFSIZE) {
-		return WEOF;
-	}
-
-	wcio->wcio_ungetwc_buf[wcio->wcio_ungetwc_inbuf++] = wc;
-	__sclearerr(fp);
-
-	return wc;
-}
-
-wint_t
-ungetwc(wint_t wc, FILE *fp)
-{
-	wint_t r;
-
-	FLOCKFILE(fp);
-	r = __ungetwc(wc, fp);
-	FUNLOCKFILE(fp);
-	return (r);
+	return (vfwscanf(stdin, fmt, ap));
 }
