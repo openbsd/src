@@ -1,4 +1,4 @@
-/*	$OpenBSD: preadv.c,v 1.8 2005/08/08 08:05:37 espie Exp $	*/
+/*	$OpenBSD: preadv.c,v 1.9 2011/10/16 06:29:56 guenther Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -33,15 +33,22 @@
 #include <sys/syscall.h>
 #include <sys/uio.h>
 #include <unistd.h>
+#include "thread_private.h"
 
 register_t __syscall(quad_t, ...);
+
+/* preadv is weak to support libpthread cancellation */
+
+STUB_PROTOTYPE(preadv);
+
+STUB_ALIAS(preadv);
 
 /*
  * This function provides 64-bit offset padding that
  * is not supplied by GCC 1.X but is supplied by GCC 2.X.
  */
 ssize_t
-preadv(int fd, const struct iovec *iovp, int iovcnt, off_t offset)
+STUB_NAME(preadv)(int fd, const struct iovec *iovp, int iovcnt, off_t offset)
 {
 
 	return (__syscall((quad_t)SYS_preadv, fd, iovp, iovcnt, 0, offset));

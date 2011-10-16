@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwrite.c,v 1.8 2005/08/08 08:05:37 espie Exp $	 */
+/*	$OpenBSD: pwrite.c,v 1.9 2011/10/16 06:29:56 guenther Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993
@@ -32,15 +32,22 @@
 #include <sys/types.h>
 #include <sys/syscall.h>
 #include <unistd.h>
+#include "thread_private.h"
 
 register_t __syscall(quad_t, ...);
+
+/* pread is weak to support libpthread cancellation */
+
+STUB_PROTOTYPE(pwrite);
+
+STUB_ALIAS(pwrite);
 
 /*
  * This function provides 64-bit offset padding that
  * is not supplied by GCC 1.X but is supplied by GCC 2.X.
  */
 ssize_t
-pwrite(int fd, const void *buf, size_t nbyte, off_t offset)
+STUB_NAME(pwrite)(int fd, const void *buf, size_t nbyte, off_t offset)
 {
 
 	return (__syscall((quad_t)SYS_pwrite, fd, buf, nbyte, 0, offset));

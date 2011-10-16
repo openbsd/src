@@ -1,4 +1,4 @@
-/* $OpenBSD: thread_private.h,v 1.24 2008/06/14 15:43:43 otto Exp $ */
+/* $OpenBSD: thread_private.h,v 1.25 2011/10/16 06:29:56 guenther Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -31,6 +31,21 @@ extern int __isthreaded;
 #define WEAK_PROTOTYPE(name)	__typeof__(name) WEAK_NAME(name)
 #else
 #define WEAK_PROTOTYPE(name)	/* typeof() only in gcc */
+#endif
+
+/*
+ * Ditto for hand-written syscall stubs:
+ * 
+ * Use STUB_NAME(n) to get the strong name of the stub: _thread_sys_n
+ *     STUB_ALIAS(n) to generate the weak symbol n pointing to _thread_sys_n,
+ *     STUB_PROTOTYPE(n) to generate a prototype for _thread_sys_n (based on n).
+ */
+#define STUB_NAME(name)		__CONCAT(_thread_sys_,name)
+#define STUB_ALIAS(name)	__weak_alias(name, STUB_NAME(name))
+#ifdef __GNUC__
+#define STUB_PROTOTYPE(name)	__typeof__(name) STUB_NAME(name)
+#else
+#define STUB_PROTOTYPE(name)	/* typeof() only in gcc */
 #endif
 
 /*

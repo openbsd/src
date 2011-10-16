@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftruncate.c,v 1.15 2007/06/05 18:11:48 kurt Exp $ */
+/*	$OpenBSD: ftruncate.c,v 1.16 2011/10/16 06:29:56 guenther Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,16 +36,16 @@ register_t __syscall(quad_t, ...);
 
 /* ftruncate is weak to support libpthread locking */
 
-WEAK_PROTOTYPE(ftruncate);
+STUB_PROTOTYPE(ftruncate);
 
-WEAK_ALIAS(ftruncate);
+STUB_ALIAS(ftruncate);
 
 /*
  * This function provides 64-bit offset padding that
  * is not supplied by GCC 1.X but is supplied by GCC 2.X.
  */
 int
-WEAK_NAME(ftruncate)(int fd, off_t length)
+STUB_NAME(ftruncate)(int fd, off_t length)
 {
 	return (__syscall((quad_t)SYS_ftruncate, fd, 0, length));
 }
