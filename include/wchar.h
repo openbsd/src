@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.20 2011/10/16 13:20:51 stsp Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.21 2011/10/16 13:22:06 stsp Exp $	*/
 /*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
 
 /*-
@@ -156,6 +156,8 @@ int wcsncasecmp(const wchar_t *, const wchar_t *, size_t);
 #if __ISO_C_VISIBLE >= 1999
 float	wcstof(const wchar_t * __restrict, wchar_t ** __restrict);
 long double wcstold(const wchar_t * __restrict, wchar_t ** __restrict);
+size_t wcsftime(wchar_t * __restrict, size_t, const wchar_t *__restrict,
+	const struct tm *__restrict);
 #endif
 
 #if (defined(__GNUC__) && __GNUC__ >= 2 && !defined(__STRICT_ANSI__)) || \
