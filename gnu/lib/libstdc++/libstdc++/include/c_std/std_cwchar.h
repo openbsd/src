@@ -140,25 +140,8 @@ namespace std
   using ::fputwc;
   using ::fputws;
   using ::fwide;
-#if defined(_GLIBCPP_USE_WCHAR_T)
-  using ::fwscanf;
-  using ::swscanf;
-  using ::vfwscanf;
-  using ::vswscanf;
-  using ::vwscanf;
-  using ::wcsftime;
-  using ::wcstod;
-  using ::wcstof;
-  using ::wcstol;
-  using ::wcstoul;
-  using ::wscanf;
-#endif
   using ::fwprintf;
-  using ::swprintf;
-  using ::vfwprintf;
-  using ::vswprintf;
-  using ::vwprintf;
-  using ::wprintf;
+  using ::fwscanf;
   using ::getwc;
   using ::getwchar;
   using ::mbrlen;
@@ -167,26 +150,41 @@ namespace std
   using ::mbsrtowcs;
   using ::putwc;
   using ::putwchar;
+  using ::swprintf;
+  using ::swscanf;
   using ::ungetwc;
+  using ::vfwprintf;
+  using ::vfwscanf;
+  using ::vswprintf;
+  using ::vswscanf;
+  using ::vwprintf;
+  using ::vwscanf;
   using ::wcrtomb;
   using ::wcscat;
   using ::wcscmp;
   using ::wcscoll;
   using ::wcscpy;
   using ::wcscspn;
+  using ::wcsftime;
   using ::wcslen;
   using ::wcsncat;
   using ::wcsncmp;
   using ::wcsncpy;
   using ::wcsrtombs;
   using ::wcsspn;
+  using ::wcstod;
+  using ::wcstof;
   using ::wcstok;
+  using ::wcstol;
+  using ::wcstoul;
   using ::wcsxfrm;
   using ::wctob;
   using ::wmemcmp;
   using ::wmemcpy;
   using ::wmemmove;
   using ::wmemset;
+  using ::wprintf;
+  using ::wscanf;
 
   using ::wcschr;
 

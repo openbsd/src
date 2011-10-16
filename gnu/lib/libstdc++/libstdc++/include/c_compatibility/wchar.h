@@ -45,7 +45,6 @@ using std::fgetws;
 using std::fputwc;
 using std::fputws;
 using std::fwide;
-#if defined(_GLIBCPP_USE_WCHAR_T)
 using std::fwprintf;
 using std::fwscanf;
 using std::swprintf;
@@ -58,7 +57,6 @@ using std::vwprintf;
 using std::vwscanf;
 using std::wprintf;
 using std::wscanf;
-#endif
 using std::getwc;
 using std::getwchar;
 using std::mbsinit;
