@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.119 2011/06/06 17:10:23 ariane Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.120 2011/10/16 05:29:51 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -63,6 +63,10 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+
+#ifdef __HAVE_MD_TCB
+# include <machine/tcb.h>
+#endif
 
 #include <dev/rndvar.h>
 
@@ -454,6 +458,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	stopprofclock(p);	/* stop profiling */
 	fdcloseexec(p);		/* handle close on exec */
 	execsigs(p);		/* reset caught signals */
+	TCB_SET(p, NULL);	/* reset the TCB address */
 
 	/* set command name & other accounting info */
 	len = min(nid.ni_cnd.cn_namelen, MAXCOMLEN);
