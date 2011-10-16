@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpreg.h,v 1.13 2011/09/14 10:26:16 oga Exp $	*/
+/*	$OpenBSD: agpreg.h,v 1.14 2011/10/16 01:11:31 dhill Exp $	*/
 /*	$NetBSD: agpreg.h,v 1.1 2001/09/10 10:01:02 fvdl Exp $	*/
 
 /*-
@@ -101,6 +101,7 @@
 #define AGP3_VIA_GARTCTRL		0x90
 #define AGP3_VIA_APSIZE			0x94
 #define AGP3_VIA_ATTBASE		0x98
+#define AGP_VIA_AGPSEL_REG		0xfc
 #define AGP_VIA_AGPSEL			0xfd
 
 /*

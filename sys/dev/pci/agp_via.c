@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_via.c,v 1.16 2010/08/07 19:31:23 oga Exp $	*/
+/*	$OpenBSD: agp_via.c,v 1.17 2011/10/16 01:11:31 dhill Exp $	*/
 /*	$NetBSD: agp_via.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -133,8 +133,9 @@ agp_via_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (AGP_CAPID_GET_MAJOR(capval) >= 3) {
-		agpsel = pci_conf_read(pa->pa_pc, pa->pa_tag, AGP_VIA_AGPSEL);
-		if ((agpsel & (1 << 1)) == 0) {
+		agpsel = pci_conf_read(pa->pa_pc, pa->pa_tag,
+				AGP_VIA_AGPSEL_REG);
+		if ((agpsel & (1 << 9)) == 0) {
 			vsc->regs = via_v3_regs;
 			printf(": v3");
 		} else {
