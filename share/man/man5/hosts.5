@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts.5,v 1.18 2008/01/29 10:03:44 jmc Exp $
+.\"	$OpenBSD: hosts.5,v 1.19 2011/10/16 15:07:28 lum Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: January 29 2008 $
+.Dd $Mdocdate: October 16 2011 $
 .Dt HOSTS 5
 .Os
 .Sh NAME
@@ -73,17 +73,6 @@ These include addresses for the local interfaces that
 .Xr ifconfig 8
 needs at boot time and a few machines on the local network.
 .Pp
-This file may be created from the official host database maintained at the
-Network Information Control Center
-.Pq Tn NIC ,
-though local changes may be required to bring it up to date regarding
-unofficial aliases and/or unknown hosts.
-As the database maintained at
-.Tn NIC
-is incomplete, use of the name server is recommended for sites on the
-.Tn DARPA
-Internet.
-.Pp
 Internet addresses are specified using either
 dot notation (IPv4)
 or colon separated notation (IPv6).
@@ -111,6 +100,10 @@ The
 .Nm
 file format appeared in
 .Bx 4.2 .
+.Pp
+An official host database used to be maintained at
+the Network Information Control Center
+.Pq Tn NIC .
 .Sh BUGS
 A name server should be used instead of a static file.
 .Pp
