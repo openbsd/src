@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.94 2011/07/18 23:04:40 matthew Exp $
+#	$OpenBSD: Makefile.inc,v 1.95 2011/10/16 06:21:52 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -67,7 +67,7 @@ ASM=	accept.o access.o acct.o adjfreq.o adjtime.o bind.o chdir.o chflags.o \
 	utimes.o wait4.o write.o writev.o nnpfspioctl.o __semctl.o \
 	__syscall.o __sysctl.o __getcwd.o sched_yield.o getthrid.o \
 	thrsleep.o thrwakeup.o threxit.o thrsigdivert.o \
-	setrtable.o getrtable.o \
+	setrtable.o getrtable.o __set_tcb.o __get_tcb.o \
 	openat.o fchmodat.o fstatat.o mkdirat.o mkfifoat.o mknodat.o \
 	faccessat.o fchownat.o linkat.o readlinkat.o renameat.o symlinkat.o \
 	unlinkat.o utimensat.o futimens.o
@@ -222,7 +222,7 @@ MAN+=	accept.2 access.2 acct.2 adjfreq.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	dup.2 execve.2 _exit.2 fcntl.2 fhopen.2 \
 	flock.2 fork.2 fsync.2 getdirentries.2 \
 	getfh.2 getfsstat.2 getgid.2 getgroups.2 getitimer.2 getlogin.2 \
-	getpeername.2 getpgrp.2 getrtable.2 \
+	getpeername.2 getpgrp.2 getrtable.2 __get_tcb.2 \
 	getpid.2 getpriority.2 getrlimit.2 getrusage.2 getsid.2 getsockname.2 \
 	getsockopt.2 gettimeofday.2 getuid.2 intro.2 issetugid.2 ioctl.2 \
 	kill.2 kqueue.2 ktrace.2 link.2 \
@@ -266,6 +266,7 @@ MLINKS+=getpriority.2 setpriority.2
 MLINKS+=getrlimit.2 setrlimit.2
 MLINKS+=getsockopt.2 setsockopt.2
 MLINKS+=getrtable.2 setrtable.2
+MLINKS+=__get_tcb.2 __set_tcb.2
 MLINKS+=gettimeofday.2 settimeofday.2
 MLINKS+=getuid.2 geteuid.2
 MLINKS+=kqueue.2 kevent.2 kqueue.2 EV_SET.2
