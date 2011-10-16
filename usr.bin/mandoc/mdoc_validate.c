@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.95 2011/09/18 15:54:48 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.96 2011/10/16 12:18:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -541,12 +541,11 @@ check_text(struct mdoc *m, int ln, int pos, char *p)
 {
 	char		*cp;
 
-	cp = p;
-	for (cp = p; NULL != (p = strchr(p, '\t')); p++) {
-		if (MDOC_LITERAL & m->flags)
-			continue;
+	if (MDOC_LITERAL & m->flags)
+		return;
+
+	for (cp = p; NULL != (p = strchr(p, '\t')); p++)
 		mdoc_pmsg(m, ln, pos + (int)(p - cp), MANDOCERR_BADTAB);
-	}
 }
 
 static int

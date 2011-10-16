@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.137 2011/09/20 09:02:18 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.138 2011/10/16 12:18:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -579,6 +579,8 @@ print_bvspace(struct termp *p,
 		const struct mdoc_node *n)
 {
 	const struct mdoc_node	*nn;
+
+	assert(n);
 
 	term_newln(p);
 

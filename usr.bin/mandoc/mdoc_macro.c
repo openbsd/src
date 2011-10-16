@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.69 2011/09/18 15:54:48 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.70 2011/10/16 12:18:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -1428,18 +1428,15 @@ blk_part_exp(MACRO_PROT_ARGS)
 
 	/* Clean-up to leave in a consistent state. */
 
-	if (NULL == head) {
+	if (NULL == head)
 		if ( ! mdoc_head_alloc(m, line, ppos, tok))
 			return(0);
-		head = m->last;
-	}
 
 	if (NULL == body) {
 		if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))
 			return(0);
 		if ( ! mdoc_body_alloc(m, line, ppos, tok))
 			return(0);
-		body = m->last;
 	}
 
 	/* Standard appending of delimiters. */

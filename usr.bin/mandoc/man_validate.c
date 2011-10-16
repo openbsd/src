@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.47 2011/09/18 15:54:48 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.48 2011/10/16 12:18:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -209,12 +209,12 @@ check_text(CHKARGS)
 {
 	char		*cp, *p;
 
-	cp = p = n->string;
-	for (cp = p; NULL != (p = strchr(p, '\t')); p++) {
-		if (MAN_LITERAL & m->flags)
-			continue;
+	if (MAN_LITERAL & m->flags)
+		return;
+
+	cp = n->string;
+	for (p = cp; NULL != (p = strchr(p, '\t')); p++)
 		man_pmsg(m, n->line, (int)(p - cp), MANDOCERR_BADTAB);
-	}
 }
 
 #define	INEQ_DEFINE(x, ineq, name) \
@@ -470,7 +470,6 @@ post_UC(CHKARGS)
 	const char	*p, *s;
 
 	n = n->child;
-	n = m->last->child;
 
 	if (NULL == n || MAN_TEXT != n->type)
 		p = bsd_versions[0];

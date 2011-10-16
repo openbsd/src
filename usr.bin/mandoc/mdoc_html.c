@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.63 2011/10/09 22:10:51 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.64 2011/10/16 12:18:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -499,7 +499,7 @@ mdoc_root_post(MDOC_ARGS)
 	print_otag(h, TAG_COL, 1, tag);
 	print_otag(h, TAG_COL, 1, tag);
 
-	t = print_otag(h, TAG_TBODY, 0, NULL);
+	print_otag(h, TAG_TBODY, 0, NULL);
 
 	tt = print_otag(h, TAG_TR, 0, NULL);
 

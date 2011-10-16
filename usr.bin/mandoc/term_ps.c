@@ -1,4 +1,4 @@
-/*	$Id: term_ps.c,v 1.18 2011/09/18 15:54:48 schwarze Exp $ */
+/*	$Id: term_ps.c,v 1.19 2011/10/16 12:18:32 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -488,8 +488,7 @@ pspdf_alloc(char *outopts)
 			pagey = 356;
 		} else if (2 != sscanf(pp, "%ux%u", &pagex, &pagey))
 			fprintf(stderr, "%s: Unknown paper\n", pp);
-	} else if (NULL == pp)
-		pp = "letter";
+	}
 
 	/* 
 	 * This MUST be defined before any PNT2AFM or AFM2PNT
@@ -576,7 +575,7 @@ ps_printf(struct termp *p, const char *fmt, ...)
 	ps_growbuf(p, PS_BUFSLOP);
 
 	pos = (int)p->ps->psmargcur;
-	len = vsnprintf(&p->ps->psmarg[pos], PS_BUFSLOP, fmt, ap);
+	vsnprintf(&p->ps->psmarg[pos], PS_BUFSLOP, fmt, ap);
 
 	va_end(ap);
 
