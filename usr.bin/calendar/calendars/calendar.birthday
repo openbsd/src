@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.51 2008/12/05 02:40:12 jakemsr Exp $
+ * $OpenBSD: calendar.birthday,v 1.52 2011/10/16 06:38:35 jmc Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -281,6 +281,7 @@
 10/05	Ray Kroc (founder of McDonald's) born, 1902
 10/09	Comandante Che Guevara "an artist of revolutionary warfare" executed
 	by CIA-supervised forces near Villagrande, Bolivia, 1967
+10/12	Dennis Ritchie died, 2011
 10/13	Lenny Bruce is born in New York City, 1925
 10/14	William Penn born in London, 1644
 10/14	Dwight David Eisenhower born, 1890
