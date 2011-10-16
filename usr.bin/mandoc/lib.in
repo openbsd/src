@@ -1,4 +1,4 @@
-/*	$Id: lib.in,v 1.6 2011/09/20 23:36:22 schwarze Exp $ */
+/*	$Id: lib.in,v 1.7 2011/10/16 16:24:04 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -81,6 +81,7 @@ LINE("librpcsvc",	"RPC Service Library (librpcsvc, \\-lrpcsvc)")
 LINE("librt",		"POSIX Real\\-time Library (librt, -lrt)")
 LINE("libsdp",		"Bluetooth Service Discovery Protocol User Library (libsdp, \\-lsdp)")
 LINE("libssp",		"Buffer Overflow Protection Library (libssp, \\-lssp)")
+LINE("libSystem",	"System Library (libSystem, \\-lSystem)")
 LINE("libtermcap",	"Termcap Access Library (libtermcap, \\-ltermcap)")
 LINE("libterminfo",	"Terminal Information Library (libterminfo, \\-lterminfo)")
 LINE("libthr",		"1:1 Threading Library (libthr, \\-lthr)")
