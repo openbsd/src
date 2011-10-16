@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.58 2010/11/10 21:40:55 kettenis Exp $ */
+/* $OpenBSD: acpibat.c,v 1.59 2011/10/16 11:59:21 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -146,9 +146,10 @@ acpibat_monitor(struct acpibat_softc *sc)
 	sc->sc_sens[4].value = sc->sc_bst.bst_state;
 
 	strlcpy(sc->sc_sens[5].desc, "rate", sizeof(sc->sc_sens[5].desc));
-	sc->sc_sens[5].type = SENSOR_INTEGER;
+	sc->sc_sens[5].type =
+		sc->sc_bif.bif_power_unit ? SENSOR_AMPS : SENSOR_WATTS;
 	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[5]);
-	sc->sc_sens[5].value = sc->sc_bst.bst_rate;
+	sc->sc_sens[5].value = sc->sc_bst.bst_rate * 1000;
 
 	strlcpy(sc->sc_sens[6].desc, "remaining capacity",
 	    sizeof(sc->sc_sens[6].desc));
@@ -242,7 +243,7 @@ acpibat_refresh(void *arg)
 		sc->sc_sens[5].status = SENSOR_S_UNKNOWN;
 		sc->sc_sens[5].flags = SENSOR_FUNKNOWN;
 	} else {
-		sc->sc_sens[5].value = sc->sc_bst.bst_rate;
+		sc->sc_sens[5].value = sc->sc_bst.bst_rate * 1000;
 		sc->sc_sens[5].status = SENSOR_S_UNSPEC;
 		sc->sc_sens[5].flags = 0;
 	}
