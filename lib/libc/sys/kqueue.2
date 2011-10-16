@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.22 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: kqueue.2,v 1.23 2011/10/16 08:07:23 guenther Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.18 2001/02/14 08:48:35 guido Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 16 2011 $
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -81,6 +81,7 @@ is called without the
 .Dv RFFDG
 flag, then the descriptor table is shared,
 which will allow sharing of the kqueue between two processes.
+Similarly, kqueues cannot be passed across UNIX-domain sockets.
 .Pp
 .Fn kevent
 is used to register events with the queue, and return any pending
