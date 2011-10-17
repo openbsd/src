@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.7 2011/09/20 22:11:42 miod Exp $
+# $OpenBSD: GENERIC,v 1.8 2011/10/17 03:03:59 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -78,6 +78,8 @@ ommmc0		at ahb? addr 0x4809c000 intr 83
 
 #omkbd0		at ahb? addr 0x48022000 		
 #wskbd*		at omkbd? mux 1
+
+omusbtll0	at ahb? addr 0x48062000
 
 #ohci0		at ahb? addr 0x4805E000 size 0x400 intr 78	# ohci (shim)
 ehci0          at ahb? addr 0x48064800 size 0x400 intr 77      # ehci (shim)
