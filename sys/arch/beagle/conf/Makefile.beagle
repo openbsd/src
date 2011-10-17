@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.beagle,v 1.35 2011/07/07 22:28:18 guenther Exp $
+#	$OpenBSD: Makefile.beagle,v 1.36 2011/10/17 02:59:48 drahn Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -173,5 +173,23 @@ install-kernel-${MACHINE_NAME}:
 .  endif
 . endfor
 .endif
+
+
+# until we get native booting working, put this in the tree.
+bsdrd.img: bsd.rd
+	${OBJCOPY} -O binary bsd.rd bsdrd.img
+
+bsd.img: bsd
+	${OBJCOPY} -O binary bsd bsd.img
+
+bsdrd.umg: bsdrd.img
+	mkuboot -a arm -o linux -e ${KERNEL_BASE_PHYS} -l ${KERNEL_BASE_PHYS} bsdrd.img bsdrd.umg
+
+bsd.umg: bsd.img
+	mkuboot -a arm -o linux -e ${KERNEL_BASE_PHYS} -l ${KERNEL_BASE_PHYS} bsd.img bsd.umg
+
+bsd.rd: bsd
+	cp bsd bsd.rd
+	$S/../distrib/${_mach}/ramdisk/rdsetroot < $S/../distrib/${_mach}/ramdisk/mr.fs bsd.rd
 
 %RULES
