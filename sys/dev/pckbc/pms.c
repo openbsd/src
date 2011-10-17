@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.23 2011/10/17 09:15:22 mpi Exp $ */
+/* $OpenBSD: pms.c,v 1.24 2011/10/17 17:12:01 mpi Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -145,23 +145,26 @@ static const struct alps_model {
 	int mask;
 	int model;
 } alps_models[] = {
+#if 0
+	/* FIXME some clipads are not working yet */
 	{ 0x2021, 0xf8, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
 	{ 0x2221, 0xf8, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
 	{ 0x2222, 0xff, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
 	{ 0x3222, 0xf8, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
 	{ 0x5212, 0xff, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
+	{ 0x6222, 0xcf, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
+	{ 0x633b, 0xf8, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
+	{ 0x7301, 0xf8, ALPS_DUALPOINT },
+#endif
 	{ 0x5321, 0xf8, ALPS_GLIDEPOINT },
 	{ 0x5322, 0xf8, ALPS_GLIDEPOINT },
 	{ 0x603b, 0xf8, ALPS_GLIDEPOINT },
-	{ 0x6222, 0xcf, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
 	{ 0x6321, 0xf8, ALPS_GLIDEPOINT },
 	{ 0x6322, 0xf8, ALPS_GLIDEPOINT },
 	{ 0x6323, 0xf8, ALPS_GLIDEPOINT },
 	{ 0x6324, 0x8f, ALPS_GLIDEPOINT },
 	{ 0x6325, 0xef, ALPS_GLIDEPOINT },
 	{ 0x6326, 0xf8, ALPS_GLIDEPOINT },
-	{ 0x633b, 0xf8, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
-	{ 0x7301, 0xf8, ALPS_DUALPOINT },
 	{ 0x7321, 0xf8, ALPS_GLIDEPOINT },
 	{ 0x7322, 0xf8, ALPS_GLIDEPOINT },
 	{ 0x7325, 0xcf, ALPS_GLIDEPOINT },
