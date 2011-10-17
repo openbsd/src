@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.22 2011/10/04 06:30:40 mpi Exp $ */
+/* $OpenBSD: pms.c,v 1.23 2011/10/17 09:15:22 mpi Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -87,6 +87,7 @@ struct synaptics_softc {
 
 struct alps_softc {
 	int model;
+	int mask;
 	int version;
 
 	int min_x, min_y;
@@ -141,30 +142,31 @@ static const u_int butmap[8] = {
 
 static const struct alps_model {
 	int version;
+	int mask;
 	int model;
 } alps_models[] = {
-	{ 0x2021, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
-	{ 0x2221, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
-	{ 0x2222, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
-	{ 0x3222, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
-	{ 0x5212, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
-	{ 0x5321, ALPS_GLIDEPOINT },
-	{ 0x5322, ALPS_GLIDEPOINT },
-	{ 0x603b, ALPS_GLIDEPOINT },
-	{ 0x6222, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
-	{ 0x6321, ALPS_GLIDEPOINT },
-	{ 0x6322, ALPS_GLIDEPOINT },
-	{ 0x6323, ALPS_GLIDEPOINT },
-	{ 0x6324, ALPS_GLIDEPOINT },
-	{ 0x6325, ALPS_GLIDEPOINT },
-	{ 0x6326, ALPS_GLIDEPOINT },
-	{ 0x633b, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
-	{ 0x7301, ALPS_DUALPOINT },
-	{ 0x7321, ALPS_GLIDEPOINT },
-	{ 0x7322, ALPS_GLIDEPOINT },
-	{ 0x7325, ALPS_GLIDEPOINT },
+	{ 0x2021, 0xf8, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
+	{ 0x2221, 0xf8, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
+	{ 0x2222, 0xff, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
+	{ 0x3222, 0xf8, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
+	{ 0x5212, 0xff, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
+	{ 0x5321, 0xf8, ALPS_GLIDEPOINT },
+	{ 0x5322, 0xf8, ALPS_GLIDEPOINT },
+	{ 0x603b, 0xf8, ALPS_GLIDEPOINT },
+	{ 0x6222, 0xcf, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
+	{ 0x6321, 0xf8, ALPS_GLIDEPOINT },
+	{ 0x6322, 0xf8, ALPS_GLIDEPOINT },
+	{ 0x6323, 0xf8, ALPS_GLIDEPOINT },
+	{ 0x6324, 0x8f, ALPS_GLIDEPOINT },
+	{ 0x6325, 0xef, ALPS_GLIDEPOINT },
+	{ 0x6326, 0xf8, ALPS_GLIDEPOINT },
+	{ 0x633b, 0xf8, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
+	{ 0x7301, 0xf8, ALPS_DUALPOINT },
+	{ 0x7321, 0xf8, ALPS_GLIDEPOINT },
+	{ 0x7322, 0xf8, ALPS_GLIDEPOINT },
+	{ 0x7325, 0xcf, ALPS_GLIDEPOINT },
 #if 0
-	{ 0x7326, 0 },	/* XXX Uses unknown v3 protocol */
+	{ 0x7326, 0, 0 },	/* XXX Uses unknown v3 protocol */
 #endif
 };
 
@@ -1058,6 +1060,7 @@ alps_get_hwinfo(struct pms_softc *sc)
 	for (i = 0; i < nitems(alps_models); i++)
 		if (alps->version == alps_models[i].version) {
 			alps->model = alps_models[i].model;
+			alps->mask = alps_models[i].mask;
 			return (0);
 		}
 
@@ -1183,9 +1186,11 @@ pms_ioctl_alps(struct pms_softc *sc, u_long cmd, caddr_t data, int flag,
 int
 pms_sync_alps(struct pms_softc *sc, int data)
 {
+	struct alps_softc *alps = sc->alps;
+
 	switch (sc->inputstate) {
 	case 0:
-		if ((data & 0xf8) != 0xf8)	/* XXX model dependant? */
+		if ((data & alps->mask) != alps->mask)
 			return (-1);
 		break;
 	case 1:
