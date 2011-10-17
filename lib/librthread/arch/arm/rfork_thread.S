@@ -1,4 +1,4 @@
-/* $OpenBSD: rfork_thread.S,v 1.2 2005/12/31 21:11:49 drahn Exp $ */
+/* $OpenBSD: rfork_thread.S,v 1.3 2011/10/17 06:39:20 guenther Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -19,16 +19,16 @@
 #include "../../../libc/arch/arm/SYS.h"
 
 /*
- *              r0     r1          r2         r3
- * rfork_thread(flags, stack_addr, start_fnc, start_arg);
+ *                r0     r1          r2         r3
+ * __tfork_thread(param, stack_addr, start_fnc, start_arg);
  */
 
-ENTRY(rfork_thread)
+ENTRY(__tfork_thread)
 	stmdb   sp!, {r4}
 	mov	r4, r1
 
 
-	SYSTRAP(rfork)
+	SYSTRAP(__tfork)
 	bcs	1f
 
 	/* check if we are parent or child */

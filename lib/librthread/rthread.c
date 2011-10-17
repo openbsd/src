@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.42 2009/11/27 19:45:54 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.43 2011/10/17 06:39:20 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -41,6 +41,7 @@
 
 #include "thread_private.h"	/* in libc/include */
 #include "rthread.h"
+#include "tcb.h"
 
 static int concurrency_level;	/* not used */
 
@@ -51,8 +52,9 @@ static struct pthread_queue _thread_gc_list
     = TAILQ_HEAD_INITIALIZER(_thread_gc_list);
 static _spinlock_lock_t _thread_gc_lock = _SPINLOCK_UNLOCKED;
 struct pthread _initial_thread;
+struct thread_control_block _initial_thread_tcb;
 
-int rfork_thread(int, void *, void (*)(void *), void *);
+int __tfork_thread(const struct __tfork *, void *, void (*)(void *), void *);
 
 /*
  * internal support functions
@@ -71,6 +73,28 @@ _spinunlock(_spinlock_lock_t *lock)
 
 	*lock = _SPINLOCK_UNLOCKED;
 }
+
+/*
+ * This sets up the thread base for the initial thread so that it
+ * references the errno location provided by libc.  For other threads
+ * this is handled by the block in _rthread_start().
+ */
+void _rthread_initlib(void) __attribute__((constructor));
+void _rthread_initlib(void)
+{
+	struct thread_control_block *tcb = &_initial_thread_tcb;
+
+	/* use libc's errno for the main thread */
+	TCB_INIT(tcb, &_initial_thread, ___errno());
+	TCB_SET(tcb);
+}
+
+int *
+__errno(void)
+{
+	return (TCB_ERRNOPTR());
+}
+
 
 static pthread_t
 _rthread_findself(void)
@@ -92,9 +116,6 @@ _rthread_start(void *v)
 	pthread_t thread = v;
 	void *retval;
 
-	/* ensure parent returns from rfork, sets up tid */
-	_spinlock(&_thread_lock);
-	_spinunlock(&_thread_lock);
 	retval = thread->fn(thread->arg);
 	pthread_exit(retval);
 }
@@ -141,11 +162,13 @@ _rthread_free(pthread_t thread)
 	if (thread != &_initial_thread) {
 		struct stack *stack = thread->stack;
 		pid_t tid = thread->tid;
+		void *arg = thread->arg;
 
 		/* catch wrongdoers for the moment */
 		memset(thread, 0xd0, sizeof(*thread));
 		thread->stack = stack;
 		thread->tid = tid;
+		thread->arg = arg;
 		_spinlock(&_thread_gc_lock);
 		TAILQ_INSERT_TAIL(&_thread_gc_list, thread, waiting);
 		_spinunlock(&_thread_gc_lock);
@@ -201,6 +224,8 @@ restart:_spinlock(&_thread_gc_lock);
 		_rthread_debug(3, "rthread reaping %p stack %p\n",
 		    (void *)thread, (void *)thread->stack);
 		_rthread_free_stack(thread->stack);
+		_rtld_free_tls(thread->arg,
+		    sizeof(struct thread_control_block), sizeof(void *));
 		free(thread);
 		goto restart;
 	}
@@ -211,8 +236,6 @@ void
 pthread_exit(void *retval)
 {
 	struct rthread_cleanup_fn *clfn;
-	pid_t tid;
-	struct stack *stack;
 	pthread_t thread = pthread_self();
 
 	thread->retval = retval;
@@ -228,8 +251,11 @@ pthread_exit(void *retval)
 	LIST_REMOVE(thread, threads);
 	_spinunlock(&_thread_lock);
 
-	stack = thread->stack;
-	tid = thread->tid;
+#ifdef TCB_GET
+	thread->arg = TCB_GET();
+#else
+	thread->arg = __get_tcb();
+#endif
 	if (thread->flags & THREAD_DETACHED)
 		_rthread_free(thread);
 	else {
@@ -292,8 +318,9 @@ int
 pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
     void *(*start_routine)(void *), void *arg)
 {
+	struct thread_control_block *tcb;
 	pthread_t thread;
-	pid_t tid;
+	struct __tfork param;
 	int rc = 0;
 
 	if (!_threads_ready)
@@ -309,6 +336,8 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 	thread->flags_lock = _SPINLOCK_UNLOCKED;
 	thread->fn = start_routine;
 	thread->arg = arg;
+	thread->tid = -1;
+
 	if (attr)
 		thread->attr = *(*attr);
 	else {
@@ -318,43 +347,45 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 	}
 	if (thread->attr.detach_state == PTHREAD_CREATE_DETACHED)
 		thread->flags |= THREAD_DETACHED;
-
-	_spinlock(&_thread_lock);
+	thread->flags |= THREAD_CANCEL_ENABLE|THREAD_CANCEL_DEFERRED;
 
 	thread->stack = _rthread_alloc_stack(thread);
 	if (!thread->stack) {
 		rc = errno;
 		goto fail1;
 	}
-	LIST_INSERT_HEAD(&_thread_list, thread, threads);
 
-	tid = rfork_thread(RFPROC | RFTHREAD | RFMEM | RFNOWAIT,
-	    thread->stack->sp, _rthread_start, thread);
-	if (tid == -1) {
+	tcb = _rtld_allocate_tls(NULL, sizeof(*tcb), sizeof(void *));
+	if (tcb == NULL) {
 		rc = errno;
 		goto fail2;
 	}
-	/* new thread will appear _rthread_start */
-	thread->tid = tid;
-	thread->flags |= THREAD_CANCEL_ENABLE|THREAD_CANCEL_DEFERRED;
-	*threadp = thread;
+	TCB_INIT(tcb, thread, &thread->myerrno);
 
-	/*
-	 * Since _rthread_start() aquires the thread lock and due to the way
-	 * signal delivery is implemented, this is not a race.
-	 */
-	if (thread->attr.create_suspended)
-		kill(thread->tid, SIGSTOP);
+	param.tf_tcb = tcb;
+	param.tf_tid = &thread->tid;
+	param.tf_flags = 0;
 
+	_spinlock(&_thread_lock);
+	LIST_INSERT_HEAD(&_thread_list, thread, threads);
 	_spinunlock(&_thread_lock);
 
-	return (0);
+	rc = __tfork_thread(&param, thread->stack->sp, _rthread_start, thread);
+	if (rc != -1) {
+		/* success */
+		*threadp = thread;
+		return (0);
+	}
+		
+	rc = errno;
 
+	_spinlock(&_thread_lock);
+	LIST_REMOVE(thread, threads);
+	_spinunlock(&_thread_lock);
+	_rtld_free_tls(tcb, sizeof(*tcb), sizeof(void *));
 fail2:
 	_rthread_free_stack(thread->stack);
-	LIST_REMOVE(thread, threads);
 fail1:
-	_spinunlock(&_thread_lock);
 	_rthread_free(thread);
 
 	return (rc);

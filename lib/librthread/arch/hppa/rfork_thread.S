@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork_thread.S,v 1.1 2005/12/28 19:11:25 miod Exp $	*/
+/*	$OpenBSD: rfork_thread.S,v 1.2 2011/10/17 06:39:20 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -28,10 +28,10 @@
 #include "../../../libc/arch/hppa/SYS.h"
 
 /*
- * int rfork_thread(int flags, void *stack, void (*func)(void *), void *arg);
+ * int __tfork_thread(param, void *stack, void (*func)(void *), void *arg);
  */
-ENTRY(rfork_thread, 0)
-	SYSCALL(rfork)
+ENTRY(__tfork_thread, 0)
+	SYSCALL(__tfork)
 	comb,<>	r0, ret0, 1f
 	 nop
 
@@ -62,4 +62,4 @@ ENTRY(rfork_thread, 0)
 	bv	r0(rp)
 	 nop
 
-EXIT(rfork_thread)
+EXIT(__tfork_thread)

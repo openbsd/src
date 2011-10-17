@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.25 2009/11/27 19:45:54 guenther Exp $ */
+/*	$OpenBSD: rthread.h,v 1.26 2011/10/17 06:39:20 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -27,6 +27,7 @@
 
 #include <sys/queue.h>
 #include <semaphore.h>
+#include <machine/tcb.h>		/* for TLS_VARIANT */
 
 #ifdef __LP64__
 #define RTHREAD_STACK_SIZE_DEF (512 * 1024)
@@ -112,6 +113,9 @@ struct rthread_cleanup_fn {
 
 struct pthread {
 	struct sem donesem;
+#if TLS_VARIANT == 1
+	int *errno_ptr;
+#endif
 	pid_t tid;
 	unsigned int flags;
 	_spinlock_lock_t flags_lock;
@@ -127,6 +131,7 @@ struct pthread {
 	struct sched_param sched_param;
 	struct rthread_storage *local_storage;
 	struct rthread_cleanup_fn *cleanup_fns;
+	int myerrno;
 };
 #define	THREAD_DONE		0x001
 #define	THREAD_DETACHED		0x002

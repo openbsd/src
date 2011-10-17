@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork_thread.S,v 1.1 2005/12/24 12:01:26 miod Exp $	*/
+/*	$OpenBSD: rfork_thread.S,v 1.2 2011/10/17 06:39:20 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -28,17 +28,17 @@
 #include "../../../libc/arch/mips64/SYS.h"
 
 /*
- * int rfork_thread(int flags, void *stack, void (*func)(void *), void *arg);
+ * int __tfork_thread(const struct __tfork *param, void *stack, void (*func)(void *), void *arg);
  */
-LEAF(rfork_thread, 32)
+LEAF(__tfork_thread, 32)
 	/* a0 = flags, a1 = stack, a2 = func, a3 = arg */
 	PTR_SUBU sp, 32
-	SETUP_GP64(16, _C_LABEL(rfork_thread))
+	SETUP_GP64(16, _C_LABEL(__tfork_thread))
 
 	move	t0, a1		/* stack */
 	move	t1, a3		/* arg */
 
-	__DO_SYSCALL(rfork)
+	__DO_SYSCALL(__tfork)
 	bnez	a3, 9f
 
 	RESTORE_GP64
@@ -76,4 +76,4 @@ LEAF(rfork_thread, 32)
 	PTR_ADDU sp, 32
 	jr	t9
 	 nop
-END(rfork_thread)
+END(__tfork_thread)

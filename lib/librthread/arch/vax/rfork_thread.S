@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork_thread.S,v 1.2 2008/05/21 20:39:32 miod Exp $	*/
+/*	$OpenBSD: rfork_thread.S,v 1.3 2011/10/17 06:39:20 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -28,9 +28,9 @@
 #include "../../../libc/arch/vax/SYS.h"
 
 /*
- * int rfork_thread(int flags, void *stack, void (*func)(void *), void *arg);
+ * int __tfork_thread(const struct __tfork *param, void *stack, void (*func)(void *), void *arg);
  */
-ENTRY(rfork_thread, R2|R3|R4)
+ENTRY(__tfork_thread, R2|R3|R4)
 	/*
 	 * Save thread creation arguments into registers.
 	 */
@@ -38,7 +38,7 @@ ENTRY(rfork_thread, R2|R3|R4)
 	movl	12(ap), r3	/* func */
 	movl	16(ap), r4	/* arg */
 
-	__DO_SYSCALL(rfork)
+	__DO_SYSCALL(__tfork)
 	jcs	9f
 
 	cmpl	r0, $0

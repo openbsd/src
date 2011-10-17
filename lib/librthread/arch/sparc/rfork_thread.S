@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork_thread.S,v 1.1 2005/12/25 16:00:02 miod Exp $	*/
+/*	$OpenBSD: rfork_thread.S,v 1.2 2011/10/17 06:39:20 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -28,16 +28,16 @@
 #include "../../../libc/arch/sparc/SYS.h"
 
 /*
- * int rfork_thread(int flags, void *stack, void (*func)(void *), void *arg);
+ * int __tfork_thread(const struct __tfork *param, void *stack, void (*func)(void *), void *arg);
  */
-ENTRY(rfork_thread)
+ENTRY(__tfork_thread)
 	mov	%o1, %o4	/* save stack */
 
 	/*
-	 * We can not invoke rfork as a G2-style system call since we want
+	 * We can not invoke __tfork as a G2-style system call since we want
 	 * different return paths.
-	  */
-	mov	SYS_rfork, %g1
+	 */
+	mov	SYS___tfork, %g1
 	t	ST_SYSCALL
 	bcs	9f
 	 nop
@@ -58,7 +58,8 @@ ENTRY(rfork_thread)
 	 * Don't forget to allocate room for a window save on the new
 	 * stack!
 	 */
-	sub	%o4, 64, %sp	/* stack */
+	sub	%g0, %g0, %fp
+	sub	%o4, 96, %sp	/* stack */
 	call	%o2		/* func */
 	 mov	%o3, %o0	/* arg */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork_thread.S,v 1.4 2011/10/13 01:07:01 guenther Exp $ */
+/*	$OpenBSD: rfork_thread.S,v 1.5 2011/10/17 06:39:20 guenther Exp $ */
 /*-
  * Copyright (c) 2000 Peter Wemm <peter@FreeBSD.org>
  * Copyright (c) 2003 Alan L. Cox <alc@cs.rice.edu>
@@ -38,23 +38,23 @@ __FBSDID("$FreeBSD: /repoman/r/ncvs/src/lib/libc/amd64/gen/rfork_thread.S,v 1.1 
 #include "../../../libc/arch/amd64/SYS.h"
 
 /*
- *              %edi   %rsi        %rdx       %rcx
- * rfork_thread(flags, stack_addr, start_fnc, start_arg);
+ *                %rdi   %rsi        %rdx       %rcx
+ * __tfork_thread(param, stack_addr, start_fnc, start_arg);
  *
- * flags:		Flags to rfork system call.  See rfork(2).
+ * param:		Argument to pass to the actual kernel call.
  * stack_addr:		Top of stack for thread.
  * start_fnc:		Address of thread function to call in child.
  * start_arg:		Argument to pass to the thread function in child.
  */
 
-ENTRY(rfork_thread)
+ENTRY(__tfork_thread)
 	movq	%rdx, %r8
 	movq	%rcx, %r9
 
 	/*
 	 * Prepare and execute the thread creation syscall
 	 */
-	movl	$SYS_rfork, %eax
+	movl	$SYS___tfork, %eax
 	syscall
 	jb 	2f
 

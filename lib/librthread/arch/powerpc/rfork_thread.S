@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork_thread.S,v 1.3 2006/01/05 16:09:39 otto Exp $	*/
+/*	$OpenBSD: rfork_thread.S,v 1.4 2011/10/17 06:39:20 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005 Tim Wiess <tim@nop.cx>
@@ -19,7 +19,7 @@
 #include <sys/syscall.h>
 #include <machine/asm.h>
 
-ENTRY(rfork_thread)
+ENTRY(__tfork_thread)
 	/* sanity check */
 	cmpwi	%r4, 0
 	beq	1f
@@ -28,8 +28,8 @@ ENTRY(rfork_thread)
 	
 	mr	%r7,%r4
 	
-	/* call rfork */
-	li	%r0, SYS_rfork
+	/* call __tfork */
+	li	%r0, SYS___tfork
 	sc
 	cmpwi	%r0, 0
 	bne	2f

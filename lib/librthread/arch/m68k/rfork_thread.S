@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork_thread.S,v 1.1 2005/12/23 18:50:23 miod Exp $	*/
+/*	$OpenBSD: rfork_thread.S,v 1.2 2011/10/17 06:39:20 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -28,9 +28,9 @@
 #include "../../../libc/arch/m68k/SYS.h"
 
 /*
- * int rfork_thread(int flags, void *stack, void (*func)(void *), void *arg);
+ * int __tfork_thread(const struct __tfork *param, void *stack, void (*func)(void *), void *arg);
  */
-ENTRY(rfork_thread)
+ENTRY(__tfork_thread)
 	/*
 	 * Set up the new thread's stack.
 	 */
@@ -42,7 +42,7 @@ ENTRY(rfork_thread)
 	 * We did not create a frame, so the stack is ready for an immediate
 	 * system call invocation.
 	 */
-	__DO_SYSCALL(rfork)
+	__DO_SYSCALL(__tfork)
 	jcs	9f
 
 	tstl	d0
