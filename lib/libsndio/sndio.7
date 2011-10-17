@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndio.7,v 1.5 2011/06/03 18:57:51 ratchov Exp $
+.\" $OpenBSD: sndio.7,v 1.6 2011/10/17 21:09:11 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 3 2011 $
+.Dd $Mdocdate: October 17 2011 $
 .Dt SNDIO 7
 .Os
 .Sh NAME
@@ -25,9 +25,7 @@ The
 .Nm sndio
 audio and MIDI system provides access to audio and MIDI hardware and
 to services provided by
-.Xr aucat 1
-and
-.Xr midicat 1 ,
+.Xr aucat 1 ,
 summarized below.
 .Pp
 Hardware
@@ -59,27 +57,25 @@ Software MIDI thru boxes allow one application to send MIDI data to other
 applications connected to the thru box (for instance a software sequencer
 can send events to multiple software synthesizers).
 There's no hardware involved: thru boxes are created by
-.Xr midicat 1 .
+.Xr aucat 1 .
 .Pp
 Additionally,
 .Xr aucat 1
-exposes a MIDI device used to control and monitor audio streams
+exposes a MIDI port used to control and monitor audio streams
 in real time using MIDI.
 .Sh DEVICE NAMES
 From the user's perspective every audio interface, MIDI port,
 .Xr aucat 1
-or
-.Xr midicat 1
 service has a name of the form:
 .Bd -literal -offset center
 type:[hostname/]unit[.option]
 .Ed
 .Pp
 This information is used by audio and MIDI applications to determine
-how to access the audio or MIDI device or service.
+how to access the audio device or MIDI port.
 .Bl -tag -width "option"
 .It Pa type
-The type of the audio or MIDI device.
+The type of the audio device or MIDI port.
 Possible values for audio devices are
 .Pa aucat
 and
@@ -89,31 +85,24 @@ corresponding to
 sockets and hardware
 .Xr audio 4
 devices.
-Possible values for MIDI devices are
-.Pa midithru ,
-.Pa rmidi ,
-and
+Possible values for MIDI ports are
 .Pa aucat
+and
+.Pa rmidi
 corresponding to
-.Xr midicat 1
-software MIDI thru boxes, hardware
-.Xr midi 4
-ports and
 .Xr aucat 1
-control through MIDI respectively.
+software MIDI thru boxes or control ports and hardware
+.Xr midi 4
+ports respectively.
 .It Pa hostname
 The hostname where the remote
 .Xr aucat 1
-or
-.Xr midicat 1
 server to connect to is running.
 .It Pa unit
-For hardware audio or MIDI devices, this corresponds to
+For hardware audio or MIDI ports, this corresponds to
 the character device minor number.
-For audio or MIDI devices created with
+For audio devices or MIDI ports created with
 .Xr aucat 1
-or
-.Xr midicat 1
 it corresponds to the server
 .Em unit
 number, typically 0.
@@ -121,13 +110,9 @@ number, typically 0.
 Corresponds to the profile string registered using the
 .Fl s
 option of
-.Xr aucat 1
-or
-.Xr midicat 1 .
+.Xr aucat 1 .
 Only meaningful for
 .Pa aucat
-and
-.Pa midithru
 device types.
 .El
 .Pp
@@ -148,19 +133,13 @@ device registered with
 .Fl s Fa rear .
 .It Pa rmidi:5
 Hardware MIDI port number 5.
-.It Pa midithru:0
-First software MIDI thru box created with
-.Xr midicat 1 .
 .It Pa aucat:0
-MIDI port controlling the first
-.Xr aucat 1
-audio server.
+First software MIDI thru box or control port created with
+.Xr aucat 1 .
 .El
 .Sh AUTHENTICATION
 If a shared
 .Xr aucat 1
-or
-.Xr midicat 1
 server is running, for privacy reasons only one user may have
 connections to it at a given time
 (though the same user could have multiple connections to it).
@@ -179,9 +158,7 @@ can connect to the server using the same cookie.
 .It AUCAT_COOKIE
 Path to file containing the session cookie to be used
 when connecting to
-.Xr aucat
-or
-.Xr midicat .
+.Xr aucat .
 .It Ev AUDIODEVICE
 Audio device to use if the application provides
 no device chooser.
@@ -201,7 +178,6 @@ MIDI ports.
 .El
 .Sh SEE ALSO
 .Xr aucat 1 ,
-.Xr midicat 1 ,
 .Xr mio_open 3 ,
 .Xr sio_open 3 ,
 .Xr audio 4 ,

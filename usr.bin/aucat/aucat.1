@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.88 2011/10/12 12:16:10 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.89 2011/10/17 21:09:11 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 12 2011 $
+.Dd $Mdocdate: October 17 2011 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -590,10 +590,10 @@ For instance, the following command will play a file on the
 .Va aucat:0.mmc
 audio device, and give full control to MIDI software or hardware
 connected to the
-.Va midithru:0
-MIDI device:
+.Va aucat:0.thru
+MIDI port:
 .Bd -literal -offset indent
-$ aucat -f aucat:0.mmc -t slave -q midithru:0 -i file.wav
+$ aucat -f aucat:0.mmc -t slave -q aucat:0.thru -i file.wav
 .Ed
 .Pp
 At this stage,

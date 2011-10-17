@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.121 2011/10/12 12:16:10 jmc Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.122 2011/10/17 21:09:11 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -56,7 +56,6 @@
 #define SNDIO_PRIO	(-20)
 
 #define PROG_AUCAT	"aucat"
-#define PROG_MIDICAT	"midicat"
 
 /*
  * sample rate if no ``-r'' is used
@@ -83,10 +82,6 @@ char aucat_usage[] = "usage: " PROG_AUCAT " [-dlMn] [-a flag] [-b nframes] "
     "[-o file]\n\t"
     "[-q port] [-r rate] [-s name] [-t mode] [-U unit] [-v volume]\n\t"
     "[-w flag] [-x policy] [-z nframes]\n";
-
-char midicat_usage[] = "usage: " PROG_MIDICAT " [-dlM] [-a flag] "
-    "[-i file] [-L addr] [-o file] [-q port]\n\t"
-    "[-s name] [-U unit]\n";
 
 /*
  * SIGINT handler, it raises the quit flag. If the flag is already set,
@@ -367,8 +362,8 @@ mkopt(char *path, struct dev *d, struct aparams *rpar, struct aparams *ppar,
 int
 main(int argc, char **argv)
 {
-	char *prog, *un_path, *optstr, *usagestr;
-	int c, background, unit, server, tcp_port, active;
+	char *prog, *optstr, *usagestr;
+	int c, background, unit, server, active;
 	char base[PATH_MAX], path[PATH_MAX];
 	unsigned mode, hdr, xrun, rate, join, mmc, vol;
 	unsigned hold, autovol, bufsz, round;
@@ -409,20 +404,10 @@ main(int argc, char **argv)
 		mode = MODE_MIDIMASK | MODE_PLAY | MODE_REC;
 		optstr = "a:b:c:C:de:f:h:i:j:lL:m:Mno:q:r:s:t:U:v:w:x:z:t:j:z:";
 		usagestr = aucat_usage;
-		un_path = AUCAT_PATH;
-		tcp_port = AUCAT_PORT;
-	} else if (strcmp(prog, PROG_MIDICAT) == 0) {
-		mode = MODE_MIDIMASK | MODE_THRU;
-		optstr = "a:di:lL:Mo:q:s:U:";
-		usagestr = midicat_usage;
-		un_path = MIDICAT_PATH;
-		tcp_port = MIDICAT_PORT;
-		mkdev("midithru", MODE_THRU, 0, 0, 1, 0);
 	} else {
 		fprintf(stderr, "%s: can't determine program to run\n", prog);
 		return 1;
 	}
-
 
 	while ((c = getopt(argc, argv, optstr)) != -1) {
 		switch (c) {
@@ -441,7 +426,7 @@ main(int argc, char **argv)
 			server = 1;
 			break;
 		case 'L':
-			listen_new_tcp(optarg, tcp_port + unit);
+			listen_new_tcp(optarg, AUCAT_PORT + unit);
 			server = 1;
 			break;
 		case 'm':
@@ -567,7 +552,7 @@ main(int argc, char **argv)
 	}
 	if (server) {
 		getbasepath(base, sizeof(base));
-		snprintf(path, PATH_MAX, "%s/%s%u", base, un_path, unit);
+		snprintf(path, PATH_MAX, "%s/%s%u", base, AUCAT_PATH, unit);
 		listen_new_un(path);
 		if (geteuid() == 0)
 			privdrop();

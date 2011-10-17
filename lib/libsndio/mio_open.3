@@ -1,4 +1,4 @@
-.\" $OpenBSD: mio_open.3,v 1.4 2011/04/16 10:52:22 ratchov Exp $
+.\" $OpenBSD: mio_open.3,v 1.5 2011/10/17 21:09:11 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 16 2011 $
+.Dd $Mdocdate: October 17 2011 $
 .Dt MIO_OPEN 3
 .Os
 .Sh NAME
@@ -51,8 +51,8 @@ The
 library allows user processes to access
 .Xr midi 4
 hardware and
-.Xr midicat 1
-MIDI thru boxes in a uniform way.
+.Xr aucat 1
+MIDI thru boxes and control ports in a uniform way.
 .Ss Opening and closing an MIDI stream
 First the application must call the
 .Fn mio_open
@@ -63,10 +63,10 @@ argument of most other functions.
 The
 .Fn mio_open
 function tries to connect to the
-.Xr midicat 1
-software MIDI thru box or to use the
+.Xr aucat 1
+MIDI thru box or to use the
 .Xr midi 4
-hardware device.
+hardware port.
 The
 .Ar name
 parameter gives the device string discussed in
@@ -232,22 +232,22 @@ and
 .Fn mio_write
 functions return the number of bytes transferred.
 .Sh ENVIRONMENT
-.Bl -tag -width "MIO_DEBUGXXX" -compact
+.Bl -tag -width "SNDIO_DEBUGXXX" -compact
 .It Ev SNDIO_DEBUG
 The debug level:
 may be a value between 0 and 2.
 .El
 .Sh FILES
-.Bl -tag -width "/tmp/aucat-<uid>/midithru0" -compact
-.It Pa /tmp/aucat-<uid>/midithru0
+.Bl -tag -width "/tmp/aucat-<uid>/aucat0" -compact
+.It Pa /tmp/aucat-<uid>/aucat0
 Default path to
-.Xr midicat 1
+.Xr aucat 1
 socket to connect to.
 .It Pa /dev/rmidiX
 .Xr midi 4
 devices.
 .El
 .Sh SEE ALSO
-.Xr midicat 1 ,
+.Xr aucat 1 ,
 .Xr midi 4 ,
 .Xr sndio 7

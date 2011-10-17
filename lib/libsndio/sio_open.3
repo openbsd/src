@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.28 2011/10/04 20:58:27 jmc Exp $
+.\" $OpenBSD: sio_open.3,v 1.29 2011/10/17 21:09:11 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 4 2011 $
+.Dd $Mdocdate: October 17 2011 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -722,7 +722,7 @@ and
 .Fn sio_write
 functions return the number of bytes transferred.
 .Sh ENVIRONMENT
-.Bl -tag -width "AUDIODEVICEXXX" -compact
+.Bl -tag -width "SNDIO_DEBUGXXX" -compact
 .It Ev AUDIODEVICE
 Device to use if
 .Fn sio_open
@@ -734,8 +734,8 @@ The debug level:
 may be a value between 0 and 2.
 .El
 .Sh FILES
-.Bl -tag -width "/tmp/aucat-<uid>/softaudio0" -compact
-.It Pa /tmp/aucat-<uid>/softaudio0
+.Bl -tag -width "/tmp/aucat-<uid>/aucat0" -compact
+.It Pa /tmp/aucat-<uid>/aucat0
 Default path to
 .Xr aucat 1
 socket to connect to.

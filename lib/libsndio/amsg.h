@@ -1,4 +1,4 @@
-/*	$OpenBSD: amsg.h,v 1.2 2011/04/28 06:19:57 ratchov Exp $	*/
+/*	$OpenBSD: amsg.h,v 1.3 2011/10/17 21:09:11 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -24,8 +24,6 @@
  */
 #define AUCAT_PATH		"aucat"
 #define AUCAT_PORT		11025
-#define MIDICAT_PATH		"midicat"
-#define MIDICAT_PORT		11041
 #define DEFAULT_OPT		"default"
 
 /*
