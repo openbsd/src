@@ -182,9 +182,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
   using ::wcscoll;
   using ::wcscpy;
   using ::wcscspn;
-#if !defined(__OpenBSD__)
   using ::wcsftime;
-#endif
   using ::wcslen;
   using ::wcsncat;
   using ::wcsncmp;

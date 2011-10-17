@@ -101,9 +101,7 @@ using std::wmemcmp;
 using std::wmemcpy;
 using std::wmemmove;
 using std::wmemset;
-#if !defined(__OpenBSD__)
 using std::wcsftime;
-#endif
 
 #if _GLIBCXX_USE_C99
 using std::wcstold;
