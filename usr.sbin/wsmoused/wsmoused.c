@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.26 2011/03/22 10:16:23 okan Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.27 2011/10/18 20:07:46 djm Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -607,22 +607,6 @@ main(int argc, char **argv)
 	if (mouse.ttyname == NULL)
 		mouse.ttyname = DEFAULT_TTY;
 
-	if (!nodaemon) {
-		openlog(__progname, LOG_PID, LOG_DAEMON);
-		if (daemon(0, 0)) {
-			logerr(1, "failed to become a daemon");
-		} else {
-			background = TRUE;
-			if (pidfile != NULL) {
-				fp = fopen(pidfile, "w");
-				if (fp != NULL) {
-					fprintf(fp, "%ld\n", (long)getpid());
-					fclose(fp);
-				}
-			}
-		}
-	}
-
 	if (identify == FALSE) {
 		if ((mouse.cfd = open(mouse.ttyname, O_RDWR, 0)) == -1)
 			logerr(1, "cannot open %s", mouse.ttyname);
@@ -663,6 +647,22 @@ main(int argc, char **argv)
 		wsmouse_init();
 	else
 		mouse_init();
+
+	if (!nodaemon) {
+		openlog(__progname, LOG_PID, LOG_DAEMON);
+		if (daemon(0, 0)) {
+			logerr(1, "failed to become a daemon");
+		} else {
+			background = TRUE;
+			if (pidfile != NULL) {
+				fp = fopen(pidfile, "w");
+				if (fp != NULL) {
+					fprintf(fp, "%ld\n", (long)getpid());
+					fclose(fp);
+				}
+			}
+		}
+	}
 
 	wsmoused();
 	exit(0);
