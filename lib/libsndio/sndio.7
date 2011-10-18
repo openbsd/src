@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndio.7,v 1.6 2011/10/17 21:09:11 ratchov Exp $
+.\" $OpenBSD: sndio.7,v 1.7 2011/10/18 07:07:25 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 17 2011 $
+.Dd $Mdocdate: October 18 2011 $
 .Dt SNDIO 7
 .Os
 .Sh NAME
@@ -64,7 +64,7 @@ Additionally,
 exposes a MIDI port used to control and monitor audio streams
 in real time using MIDI.
 .Sh DEVICE NAMES
-From the user's perspective every audio interface, MIDI port,
+From the user's perspective every audio interface, MIDI port, and
 .Xr aucat 1
 service has a name of the form:
 .Bd -literal -offset center
@@ -158,7 +158,7 @@ can connect to the server using the same cookie.
 .It AUCAT_COOKIE
 Path to file containing the session cookie to be used
 when connecting to
-.Xr aucat .
+.Xr aucat 1 .
 .It Ev AUDIODEVICE
 Audio device to use if the application provides
 no device chooser.
