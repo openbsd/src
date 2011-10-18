@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dd.1,v 1.24 2010/09/03 09:53:20 jmc Exp $
+.\"	$OpenBSD: dd.1,v 1.25 2011/10/18 09:37:35 nicm Exp $
 .\"	$NetBSD: dd.1,v 1.5 1995/03/21 09:04:04 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)dd.1	8.2 (Berkeley) 1/13/94
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: October 18 2011 $
 .Dt DD 1
 .Os
 .Sh NAME
@@ -279,8 +279,12 @@ appended.
 Where sizes are specified, a decimal number of bytes is expected.
 If the number ends with a
 .Sq b ,
-.Sq k ,
-.Sq m ,
+.Sq k
+or
+.Sq K ,
+.Sq m
+or
+.Sq M ,
 or
 .Sq w ,
 the number
@@ -375,7 +379,9 @@ the conversions
 and
 .Cm osync ,
 and the size multipliers
-.Sq m
+.Sq K ,
+.Sq m ,
+.Sq M ,
 and
 .Sq w
 are all extensions to those specifications.
