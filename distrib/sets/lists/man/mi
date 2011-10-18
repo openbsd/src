@@ -465,7 +465,6 @@
 ./usr/share/man/man1/merge.1
 ./usr/share/man/man1/mesg.1
 ./usr/share/man/man1/mg.1
-./usr/share/man/man1/midicat.1
 ./usr/share/man/man1/midiplay.1
 ./usr/share/man/man1/mixerctl.1
 ./usr/share/man/man1/mkdep.1

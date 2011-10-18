@@ -1897,6 +1897,8 @@
 ./usr/share/man/man2/WIFSTOPPED.2
 ./usr/share/man/man2/WSTOPSIG.2
 ./usr/share/man/man2/WTERMSIG.2
+./usr/share/man/man2/__get_tcb.2
+./usr/share/man/man2/__set_tcb.2
 ./usr/share/man/man2/__syscall.2
 ./usr/share/man/man2/_exit.2
 ./usr/share/man/man2/accept.2
@@ -4019,6 +4021,7 @@
 ./usr/share/man/man3/fwopen.3
 ./usr/share/man/man3/fwprintf.3
 ./usr/share/man/man3/fwrite.3
+./usr/share/man/man3/fwscanf.3
 ./usr/share/man/man3/gai_strerror.3
 ./usr/share/man/man3/gamma.3
 ./usr/share/man/man3/gammaf.3
@@ -5948,6 +5951,7 @@
 ./usr/share/man/man3/swap32.3
 ./usr/share/man/man3/swap64.3
 ./usr/share/man/man3/swprintf.3
+./usr/share/man/man3/swscanf.3
 ./usr/share/man/man3/syncok.3
 ./usr/share/man/man3/sys_siglist.3
 ./usr/share/man/man3/sys_signame.3
@@ -6084,6 +6088,7 @@
 ./usr/share/man/man3/vfprintf.3
 ./usr/share/man/man3/vfscanf.3
 ./usr/share/man/man3/vfwprintf.3
+./usr/share/man/man3/vfwscanf.3
 ./usr/share/man/man3/vidattr.3
 ./usr/share/man/man3/vidputs.3
 ./usr/share/man/man3/vis.3
@@ -6095,6 +6100,7 @@
 ./usr/share/man/man3/vsprintf.3
 ./usr/share/man/man3/vsscanf.3
 ./usr/share/man/man3/vswprintf.3
+./usr/share/man/man3/vswscanf.3
 ./usr/share/man/man3/vsyslog.3
 ./usr/share/man/man3/vsyslog_r.3
 ./usr/share/man/man3/vw_printw.3
@@ -6103,6 +6109,7 @@
 ./usr/share/man/man3/vwarnx.3
 ./usr/share/man/man3/vwprintf.3
 ./usr/share/man/man3/vwprintw.3
+./usr/share/man/man3/vwscanf.3
 ./usr/share/man/man3/vwscanw.3
 ./usr/share/man/man3/wadd_wch.3
 ./usr/share/man/man3/wadd_wchnstr.3
@@ -6142,6 +6149,7 @@
 ./usr/share/man/man3/wcscpy.3
 ./usr/share/man/man3/wcscspn.3
 ./usr/share/man/man3/wcsdup.3
+./usr/share/man/man3/wcsftime.3
 ./usr/share/man/man3/wcslcat.3
 ./usr/share/man/man3/wcslcpy.3
 ./usr/share/man/man3/wcslen.3
@@ -6220,6 +6228,7 @@
 ./usr/share/man/man3/wredrawln.3
 ./usr/share/man/man3/wrefresh.3
 ./usr/share/man/man3/wresize.3
+./usr/share/man/man3/wscanf.3
 ./usr/share/man/man3/wscanw.3
 ./usr/share/man/man3/wscrl.3
 ./usr/share/man/man3/wsetscrreg.3

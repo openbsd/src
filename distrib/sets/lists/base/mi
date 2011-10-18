@@ -340,7 +340,6 @@
 ./usr/bin/merge
 ./usr/bin/mesg
 ./usr/bin/mg
-./usr/bin/midicat
 ./usr/bin/midiplay
 ./usr/bin/mixerctl
 ./usr/bin/mkdep

@@ -57,7 +57,7 @@
 ./usr/lib/apache/modules/mod_vhost_alias.so
 ./usr/lib/gcc-lib/mips64el-unknown-openbsd5.0
 ./usr/lib/libasn1.so.18.0
-./usr/lib/libc.so.60.1
+./usr/lib/libc.so.61.0
 ./usr/lib/libcom_err.so.18.0
 ./usr/lib/libcrypto.so.19.0
 ./usr/lib/libcurses.so.12.1
@@ -91,7 +91,7 @@
 ./usr/lib/libskey.so.5.1
 ./usr/lib/libsndio.so.4.0
 ./usr/lib/libssl.so.16.0
-./usr/lib/libstdc++.so.52.0
+./usr/lib/libstdc++.so.53.0
 ./usr/lib/libtermcap.so.12.1
 ./usr/lib/libtermlib.so.12.1
 ./usr/lib/libusbhid.so.3.0
