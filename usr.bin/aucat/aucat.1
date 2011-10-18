@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.89 2011/10/17 21:09:11 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.90 2011/10/18 21:04:26 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 17 2011 $
+.Dd $Mdocdate: October 18 2011 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -85,7 +85,7 @@ If the flag is
 then it's automatically closed, allowing other programs to have direct
 access to the device, or the device to be disconnected.
 The default is
-.Va on .
+.Va off .
 .It Fl b Ar nframes
 The buffer size of the audio device in frames.
 A frame consists of one sample for each channel in the stream.
