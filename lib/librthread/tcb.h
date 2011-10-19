@@ -30,7 +30,7 @@
  *		its first argument
  *
  * <machine/tcb.h> must define the TLS_VARIANT macro.  If it defines
- * that to 1, then it must also defined the macro
+ * that to 1, then may also defined the macro
  *	THREAD_ERRNOPTR_OFFSET
  *		Byte offset in struct pthread of the pointer to the
  *		thread's errno
@@ -64,7 +64,7 @@ void	__set_tcb(void *);
 
 #if TLS_VARIANT == 1
 /*
- * Small TCB, with TLS data after the TCB.  Used on IA64 and PowerPC
+ * Small TCB, with TLS data after the TCB.
  * Errno pointer stored in struct pthread
  */
 
@@ -73,6 +73,9 @@ struct thread_control_block {
 	struct	pthread *tcb_thread;
 };
 
+#ifndef THREAD_ERRNOPTR_OFFSET
+# define THREAD_ERRNOPTR_OFFSET	offsetof(struct pthread, errno_ptr)
+#endif
 #define __ERRNOPTR(thread)	\
 	(((int **)(thread))[THREAD_ERRNOPTR_OFFSET / sizeof(int *)])
 #define TCB_ERRNOPTR()	\
@@ -88,7 +91,6 @@ struct thread_control_block {
 #elif TLS_VARIANT == 2
 /*
  * Large TCB, with TLS data before the TCB (i.e., negative offsets)
- * Used everywhere but IA64 and PowerPC
  * Errno pointer stored in the TCB
  */
 
