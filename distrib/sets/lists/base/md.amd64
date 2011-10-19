@@ -799,6 +799,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/spinlock.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/stdarg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/sysarch.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/tcb.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/trap.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/tss.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/userret.ph
