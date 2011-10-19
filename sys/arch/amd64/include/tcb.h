@@ -1,3 +1,5 @@
+/*	$OpenBSD: tcb.h,v 1.2 2011/10/19 06:48:56 guenther Exp $	*/
+
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
  *
