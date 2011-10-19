@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.18 2011/09/21 07:09:19 kevlo Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.19 2011/10/19 05:23:44 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -458,18 +458,18 @@ age_intr(void *arg)
         struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct cmb *cmb;
         uint32_t status;
-	
+
 	status = CSR_READ_4(sc, AGE_INTR_STATUS);
 	if (status == 0 || (status & AGE_INTRS) == 0)
 		return (0);
 
 	/* Disable interrupts. */
 	CSR_WRITE_4(sc, AGE_INTR_STATUS, status | INTR_DIS_INT);
-		
-	cmb = sc->age_rdata.age_cmb_block;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->age_cdata.age_cmb_block_map, 0,
-	    sc->age_cdata.age_cmb_block_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+	    sc->age_cdata.age_cmb_block_map->dm_mapsize,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	cmb = sc->age_rdata.age_cmb_block;
 	status = letoh32(cmb->intr_status);
 	if ((status & AGE_INTRS) == 0)
 		goto back;
@@ -478,7 +478,6 @@ age_intr(void *arg)
 	    TPD_CONS_SHIFT;
 	sc->age_rr_prod = (letoh32(cmb->rprod_cons) & RRD_PROD_MASK) >>
 	    RRD_PROD_SHIFT;
-
 	/* Let hardware know CMB was served. */
 	cmb->intr_status = 0;
 	bus_dmamap_sync(sc->sc_dmat, sc->age_cdata.age_cmb_block_map, 0,
@@ -511,7 +510,7 @@ age_intr(void *arg)
 	/* Check whether CMB was updated while serving Tx/Rx/SMB handler. */
 	bus_dmamap_sync(sc->sc_dmat, sc->age_cdata.age_cmb_block_map, 0,
 	    sc->age_cdata.age_cmb_block_map->dm_mapsize,
-	    BUS_DMASYNC_POSTREAD);
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 back:
 	/* Re-enable interrupts. */
@@ -1219,7 +1218,8 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 	bus_dmamap_sync(sc->sc_dmat, sc->age_cdata.age_tx_ring_map, 0,
-	    sc->age_cdata.age_tx_ring_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	    sc->age_cdata.age_tx_ring_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	return (0);
 
@@ -1237,7 +1237,8 @@ age_txintr(struct age_softc *sc, int tpd_cons)
 	int cons, prog;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->age_cdata.age_tx_ring_map, 0,
-	    sc->age_cdata.age_tx_ring_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+	    sc->age_cdata.age_tx_ring_map->dm_mapsize,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	/*
 	 * Go through our Tx list and free mbufs for those
@@ -1262,6 +1263,8 @@ age_txintr(struct age_softc *sc, int tpd_cons)
 		if (txd->tx_m == NULL)
 			continue;
 		/* Reclaim transmitted mbufs. */
+		bus_dmamap_sync(sc->sc_dmat, txd->tx_dmamap, 0,
+		    txd->tx_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, txd->tx_dmamap);
 		m_freem(txd->tx_m);
 		txd->tx_m = NULL;
@@ -1279,7 +1282,7 @@ age_txintr(struct age_softc *sc, int tpd_cons)
 
 		bus_dmamap_sync(sc->sc_dmat, sc->age_cdata.age_tx_ring_map, 0,
 		    sc->age_cdata.age_tx_ring_map->dm_mapsize,
-		    BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 }
 
@@ -1450,7 +1453,10 @@ age_rxintr(struct age_softc *sc, int rr_prod)
 
 	bus_dmamap_sync(sc->sc_dmat, sc->age_cdata.age_rr_ring_map, 0,
 	    sc->age_cdata.age_rr_ring_map->dm_mapsize, 
-	    BUS_DMASYNC_POSTREAD);
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_sync(sc->sc_dmat, sc->age_cdata.age_rx_ring_map, 0,
+	    sc->age_cdata.age_rx_ring_map->dm_mapsize,
+	    BUS_DMASYNC_POSTWRITE);
 
 	for (prog = 0; rr_cons != rr_prod; prog++) {
 		rxrd = &sc->age_rdata.age_rr_ring[rr_cons];
@@ -1480,10 +1486,13 @@ age_rxintr(struct age_softc *sc, int rr_prod)
 		/* Update the consumer index. */
 		sc->age_cdata.age_rr_cons = rr_cons;
 
+		bus_dmamap_sync(sc->sc_dmat, sc->age_cdata.age_rx_ring_map, 0,
+		    sc->age_cdata.age_rx_ring_map->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
 		/* Sync descriptors. */
 		bus_dmamap_sync(sc->sc_dmat, sc->age_cdata.age_rr_ring_map, 0,
 		    sc->age_cdata.age_rr_ring_map->dm_mapsize,
-		    BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Notify hardware availability of new Rx buffers. */
 		AGE_COMMIT_MBOX(sc);
@@ -1865,6 +1874,8 @@ age_stop(struct age_softc *sc)
 	for (i = 0; i < AGE_RX_RING_CNT; i++) {
 		rxd = &sc->age_cdata.age_rxdesc[i];
 		if (rxd->rx_m != NULL) {
+			bus_dmamap_sync(sc->sc_dmat, rxd->rx_dmamap, 0,
+			    rxd->rx_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->sc_dmat, rxd->rx_dmamap);
 			m_freem(rxd->rx_m);
 			rxd->rx_m = NULL;
@@ -1873,6 +1884,8 @@ age_stop(struct age_softc *sc)
 	for (i = 0; i < AGE_TX_RING_CNT; i++) {
 		txd = &sc->age_cdata.age_txdesc[i];
 		if (txd->tx_m != NULL) {
+			bus_dmamap_sync(sc->sc_dmat, txd->tx_dmamap, 0,
+			    txd->tx_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmat, txd->tx_dmamap);
 			m_freem(txd->tx_m);
 			txd->tx_m = NULL;
@@ -1890,7 +1903,7 @@ age_stats_update(struct age_softc *sc)
 	stat = &sc->age_stat;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->age_cdata.age_smb_block_map, 0,
-	    sc->age_cdata.age_smb_block_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+	    sc->age_cdata.age_smb_block_map->dm_mapsize, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	smb = sc->age_rdata.age_smb_block;
 	if (smb->updated == 0)
@@ -1971,7 +1984,8 @@ age_stats_update(struct age_softc *sc)
 	smb->updated = 0;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->age_cdata.age_smb_block_map, 0,
-	    sc->age_cdata.age_smb_block_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	    sc->age_cdata.age_smb_block_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
 void
@@ -2046,8 +2060,10 @@ age_init_tx_ring(struct age_softc *sc)
 		txd->tx_desc = &rd->age_tx_ring[i];
 		txd->tx_m = NULL;
 	}
+
 	bus_dmamap_sync(sc->sc_dmat, sc->age_cdata.age_tx_ring_map, 0,
-	    sc->age_cdata.age_tx_ring_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	    sc->age_cdata.age_tx_ring_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
 int
@@ -2085,7 +2101,8 @@ age_init_rr_ring(struct age_softc *sc)
 	rd = &sc->age_rdata;
 	bzero(rd->age_rr_ring, AGE_RR_RING_SZ);
 	bus_dmamap_sync(sc->sc_dmat, sc->age_cdata.age_rr_ring_map, 0,
-	    sc->age_cdata.age_rr_ring_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	    sc->age_cdata.age_rr_ring_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
 void
@@ -2096,7 +2113,8 @@ age_init_cmb_block(struct age_softc *sc)
 	rd = &sc->age_rdata;
 	bzero(rd->age_cmb_block, AGE_CMB_BLOCK_SZ);
 	bus_dmamap_sync(sc->sc_dmat, sc->age_cdata.age_cmb_block_map, 0,
-	    sc->age_cdata.age_cmb_block_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	    sc->age_cdata.age_cmb_block_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
 void
@@ -2107,7 +2125,8 @@ age_init_smb_block(struct age_softc *sc)
 	rd = &sc->age_rdata;
 	bzero(rd->age_smb_block, AGE_SMB_BLOCK_SZ);
 	bus_dmamap_sync(sc->sc_dmat, sc->age_cdata.age_smb_block_map, 0,
-	    sc->age_cdata.age_smb_block_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	    sc->age_cdata.age_smb_block_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
 int
@@ -2147,6 +2166,8 @@ age_newbuf(struct age_softc *sc, struct age_rxdesc *rxd)
 	map = rxd->rx_dmamap;
 	rxd->rx_dmamap = sc->age_cdata.age_rx_sparemap;
 	sc->age_cdata.age_rx_sparemap = map;
+	bus_dmamap_sync(sc->sc_dmat, rxd->rx_dmamap, 0,
+	    rxd->rx_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 	rxd->rx_m = m;
 
 	desc = rxd->rx_desc;

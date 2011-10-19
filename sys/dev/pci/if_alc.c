@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.20 2011/09/21 07:09:19 kevlo Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.21 2011/10/19 05:23:44 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1550,13 +1550,13 @@ alc_stats_clear(struct alc_softc *sc)
 	if ((sc->alc_flags & ALC_FLAG_SMB_BUG) == 0) {
 		bus_dmamap_sync(sc->sc_dmat, sc->alc_cdata.alc_smb_map, 0,
 		    sc->alc_cdata.alc_smb_map->dm_mapsize, 
-		    BUS_DMASYNC_POSTREAD);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		smb = sc->alc_rdata.alc_smb;
 		/* Update done, clear. */
 		smb->updated = 0;
 		bus_dmamap_sync(sc->sc_dmat, sc->alc_cdata.alc_smb_map, 0,
 		    sc->alc_cdata.alc_smb_map->dm_mapsize, 
-		    BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	} else {
 		for (reg = &sb.rx_frames, i = 0; reg <= &sb.rx_pkts_filtered;
 		    reg++) {
@@ -1585,7 +1585,7 @@ alc_stats_update(struct alc_softc *sc)
 	if ((sc->alc_flags & ALC_FLAG_SMB_BUG) == 0) {
 		bus_dmamap_sync(sc->sc_dmat, sc->alc_cdata.alc_smb_map, 0,
 		    sc->alc_cdata.alc_smb_map->dm_mapsize,
-		    BUS_DMASYNC_POSTREAD);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		smb = sc->alc_rdata.alc_smb;
 		if (smb->updated == 0)
 			return;
@@ -1687,7 +1687,8 @@ alc_stats_update(struct alc_softc *sc)
 		/* Update done, clear. */
 		smb->updated = 0;
 		bus_dmamap_sync(sc->sc_dmat, sc->alc_cdata.alc_smb_map, 0,
-		sc->alc_cdata.alc_smb_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+		    sc->alc_cdata.alc_smb_map->dm_mapsize,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 }
 
@@ -1783,6 +1784,8 @@ alc_txeof(struct alc_softc *sc)
 		txd = &sc->alc_cdata.alc_txdesc[cons];
 		if (txd->tx_m != NULL) {
 			/* Reclaim transmitted mbufs. */
+			bus_dmamap_sync(sc->sc_dmat, txd->tx_dmamap, 0,
+			    txd->tx_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmat, txd->tx_dmamap);
 			m_freem(txd->tx_m);
 			txd->tx_m = NULL;
@@ -1791,7 +1794,7 @@ alc_txeof(struct alc_softc *sc)
 
 	if ((sc->alc_flags & ALC_FLAG_CMB_BUG) == 0)
 	    bus_dmamap_sync(sc->sc_dmat, sc->alc_cdata.alc_cmb_map, 0,
-	        sc->alc_cdata.alc_cmb_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	        sc->alc_cdata.alc_cmb_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 	sc->alc_cdata.alc_tx_cons = cons;
 	/*
 	 * Unarm watchdog timer only when there is no pending
@@ -1836,6 +1839,8 @@ alc_newbuf(struct alc_softc *sc, struct alc_rxdesc *rxd)
 	map = rxd->rx_dmamap;
 	rxd->rx_dmamap = sc->alc_cdata.alc_rx_sparemap;
 	sc->alc_cdata.alc_rx_sparemap = map;
+	bus_dmamap_sync(sc->sc_dmat, rxd->rx_dmamap, 0, rxd->rx_dmamap->dm_mapsize,
+	    BUS_DMASYNC_PREREAD);
 	rxd->rx_m = m;
 	rxd->rx_desc->addr = htole64(rxd->rx_dmamap->dm_segs[0].ds_addr);
 	return (0);
@@ -1850,9 +1855,11 @@ alc_rxintr(struct alc_softc *sc)
 	int rr_cons, prog;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->alc_cdata.alc_rr_ring_map, 0,
-	    sc->alc_cdata.alc_rr_ring_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+	    sc->alc_cdata.alc_rr_ring_map->dm_mapsize,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_sync(sc->sc_dmat, sc->alc_cdata.alc_rx_ring_map, 0,
-	    sc->alc_cdata.alc_rx_ring_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+	    sc->alc_cdata.alc_rx_ring_map->dm_mapsize,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	rr_cons = sc->alc_cdata.alc_rr_cons;
 	for (prog = 0; (ifp->if_flags & IFF_RUNNING) != 0;) {
 		rrd = &sc->alc_rdata.alc_rr_ring[rr_cons];
@@ -1882,7 +1889,7 @@ alc_rxintr(struct alc_softc *sc)
 		/* Sync Rx return descriptors. */
 		bus_dmamap_sync(sc->sc_dmat, sc->alc_cdata.alc_rr_ring_map, 0,
 		    sc->alc_cdata.alc_rr_ring_map->dm_mapsize,
-		    BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		/*
 		 * Sync updated Rx descriptors such that controller see
 		 * modified buffer addresses.
@@ -2427,6 +2434,8 @@ alc_stop(struct alc_softc *sc)
 	for (i = 0; i < ALC_RX_RING_CNT; i++) {
 		rxd = &sc->alc_cdata.alc_rxdesc[i];
 		if (rxd->rx_m != NULL) {
+			bus_dmamap_sync(sc->sc_dmat, rxd->rx_dmamap, 0,
+			    rxd->rx_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->sc_dmat, rxd->rx_dmamap);
 			m_freem(rxd->rx_m);
 			rxd->rx_m = NULL;
@@ -2435,6 +2444,8 @@ alc_stop(struct alc_softc *sc)
 	for (i = 0; i < ALC_TX_RING_CNT; i++) {
 		txd = &sc->alc_cdata.alc_txdesc[i];
 		if (txd->tx_m != NULL) {
+			bus_dmamap_sync(sc->sc_dmat, txd->tx_dmamap, 0,
+			    txd->tx_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmat, txd->tx_dmamap);
 			m_freem(txd->tx_m);
 			txd->tx_m = NULL;
@@ -2581,7 +2592,8 @@ alc_init_rr_ring(struct alc_softc *sc)
 	rd = &sc->alc_rdata;
 	bzero(rd->alc_rr_ring, ALC_RR_RING_SZ);
 	bus_dmamap_sync(sc->sc_dmat, sc->alc_cdata.alc_rr_ring_map, 0,
-	    sc->alc_cdata.alc_rr_ring_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	    sc->alc_cdata.alc_rr_ring_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
 void
@@ -2592,7 +2604,8 @@ alc_init_cmb(struct alc_softc *sc)
 	rd = &sc->alc_rdata;
 	bzero(rd->alc_cmb, ALC_CMB_SZ);
 	bus_dmamap_sync(sc->sc_dmat, sc->alc_cdata.alc_cmb_map, 0,
-	    sc->alc_cdata.alc_cmb_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	    sc->alc_cdata.alc_cmb_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
 void
@@ -2603,7 +2616,8 @@ alc_init_smb(struct alc_softc *sc)
 	rd = &sc->alc_rdata;
 	bzero(rd->alc_smb, ALC_SMB_SZ);
 	bus_dmamap_sync(sc->sc_dmat, sc->alc_cdata.alc_smb_map, 0,
-	    sc->alc_cdata.alc_smb_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	    sc->alc_cdata.alc_smb_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
 void

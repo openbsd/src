@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.21 2011/09/21 07:09:19 kevlo Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.22 2011/10/19 05:23:44 kevlo Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -980,7 +980,8 @@ ale_encap(struct ale_softc *sc, struct mbuf **m_head)
 
 	/* Sync descriptors. */
 	bus_dmamap_sync(sc->sc_dmat, sc->ale_cdata.ale_tx_ring_map, 0,
-	    sc->ale_cdata.ale_tx_ring_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	    sc->ale_cdata.ale_tx_ring_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	return (0);
 
@@ -1353,6 +1354,8 @@ ale_txeof(struct ale_softc *sc)
 		txd = &sc->ale_cdata.ale_txdesc[cons];
 		if (txd->tx_m != NULL) {
 			/* Reclaim transmitted mbufs. */
+			bus_dmamap_sync(sc->sc_dmat, txd->tx_dmamap, 0,
+			    txd->tx_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmat, txd->tx_dmamap);
 			m_freem(txd->tx_m);
 			txd->tx_m = NULL;
@@ -1388,7 +1391,8 @@ ale_rx_update_page(struct ale_softc *sc, struct ale_rx_page **page,
 		rx_page->cons = 0;
 		*rx_page->cmb_addr = 0;
 		bus_dmamap_sync(sc->sc_dmat, rx_page->cmb_map, 0,
-		    rx_page->cmb_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+		    rx_page->cmb_map->dm_mapsize,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		CSR_WRITE_1(sc, ALE_RXF0_PAGE0 + sc->ale_cdata.ale_rx_curp,
 		    RXF_VALID);
 		/* Switch to alternate Rx page. */
@@ -1397,9 +1401,11 @@ ale_rx_update_page(struct ale_softc *sc, struct ale_rx_page **page,
 		    &sc->ale_cdata.ale_rx_page[sc->ale_cdata.ale_rx_curp];
 		/* Page flipped, sync CMB and Rx page. */
 		bus_dmamap_sync(sc->sc_dmat, rx_page->page_map, 0,
-		    rx_page->page_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		    rx_page->page_map->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_sync(sc->sc_dmat, rx_page->cmb_map, 0,
-		    rx_page->cmb_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		    rx_page->cmb_map->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		/* Sync completed, cache updated producer index. */
 		*prod = *rx_page->cmb_addr;
 	}
@@ -1471,9 +1477,11 @@ ale_rxeof(struct ale_softc *sc)
 
 	rx_page = &sc->ale_cdata.ale_rx_page[sc->ale_cdata.ale_rx_curp];
 	bus_dmamap_sync(sc->sc_dmat, rx_page->cmb_map, 0,
-	    rx_page->cmb_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+	    rx_page->cmb_map->dm_mapsize,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_sync(sc->sc_dmat, rx_page->page_map, 0,
-	    rx_page->page_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+	    rx_page->page_map->dm_mapsize,
+	    BUS_DMASYNC_POSTREAD) | BUS_DMASYNC_POSTWRITE;
 	/*
 	 * Don't directly access producer index as hardware may
 	 * update it while Rx handler is in progress. It would
@@ -1903,6 +1911,8 @@ ale_stop(struct ale_softc *sc)
 	for (i = 0; i < ALE_TX_RING_CNT; i++) {
 		txd = &sc->ale_cdata.ale_txdesc[i];
 		if (txd->tx_m != NULL) {
+			bus_dmamap_sync(sc->sc_dmat, txd->tx_dmamap, 0,
+			    txd->tx_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmat, txd->tx_dmamap);
 			m_freem(txd->tx_m);
 			txd->tx_m = NULL;
@@ -1951,9 +1961,11 @@ ale_init_tx_ring(struct ale_softc *sc)
 	}
 	*sc->ale_cdata.ale_tx_cmb = 0;
 	bus_dmamap_sync(sc->sc_dmat, sc->ale_cdata.ale_tx_cmb_map, 0,
-	    sc->ale_cdata.ale_tx_cmb_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	    sc->ale_cdata.ale_tx_cmb_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	bus_dmamap_sync(sc->sc_dmat, sc->ale_cdata.ale_tx_ring_map, 0,
-	    sc->ale_cdata.ale_tx_ring_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	    sc->ale_cdata.ale_tx_ring_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
 void
@@ -1972,9 +1984,11 @@ ale_init_rx_pages(struct ale_softc *sc)
 		rx_page->cons = 0;
 		*rx_page->cmb_addr = 0;
 		bus_dmamap_sync(sc->sc_dmat, rx_page->page_map, 0,
-		    rx_page->page_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+		    rx_page->page_map->dm_mapsize,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		bus_dmamap_sync(sc->sc_dmat, rx_page->cmb_map, 0,
-		    rx_page->cmb_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+		    rx_page->cmb_map->dm_mapsize,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 }
 
