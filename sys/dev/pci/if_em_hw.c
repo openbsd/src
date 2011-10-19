@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.66 2011/10/05 02:52:10 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.67 2011/10/19 07:29:42 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -1374,18 +1374,18 @@ em_init_hw(struct em_hw *hw)
 	 * ICH8 No-snoop bits are opposite polarity. Set to snoop by default
 	 * after reset.
 	 */
-	if (hw->mac_type == em_ich8lan)
-		snoop = PCI_EX_82566_SNOOP_ALL;
-	else if (hw->mac_type == em_ich9lan ||
-		 hw->mac_type == em_ich10lan ||
-		 hw->mac_type == em_pchlan)
-		snoop = (u_int32_t) ~ (PCI_EX_NO_SNOOP_ALL);
 	if (hw->mac_type == em_ich8lan ||
 	    hw->mac_type == em_ich9lan ||
 	    hw->mac_type == em_ich10lan ||
 	    hw->mac_type == em_pchlan ||
-	    hw->mac_type == em_pch2lan)
+	    hw->mac_type == em_pch2lan) {
+		if (hw->mac_type == em_ich8lan)
+			snoop = PCI_EX_82566_SNOOP_ALL;
+		else
+			snoop = (u_int32_t) ~ (PCI_EX_NO_SNOOP_ALL);
+			
 		em_set_pci_ex_no_snoop(hw, snoop);
+	}
 
 	if (hw->device_id == E1000_DEV_ID_82546GB_QUAD_COPPER ||
 	    hw->device_id == E1000_DEV_ID_82546GB_QUAD_COPPER_KSP3) {
