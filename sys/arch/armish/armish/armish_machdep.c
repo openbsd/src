@@ -1,4 +1,4 @@
-/*	$OpenBSD: armish_machdep.c,v 1.17 2011/05/30 22:25:20 oga Exp $ */
+/*	$OpenBSD: armish_machdep.c,v 1.18 2011/10/19 20:18:31 drahn Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -335,7 +335,7 @@ const struct pmap_devmap iq80321_devmap[] = {
  *   Relocating the kernel to the bottom of physical memory
  */
 u_int
-initarm(void *arg)
+initarm(void *arg0, void *arg1, void *arg2)
 {
 	extern vaddr_t xscale_cache_clean_addr;
 	extern cpu_kcore_hdr_t cpu_kcore_hdr;
