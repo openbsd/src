@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.22 2011/10/19 05:23:44 kevlo Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.23 2011/10/19 07:49:55 kevlo Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1481,7 +1481,7 @@ ale_rxeof(struct ale_softc *sc)
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_sync(sc->sc_dmat, rx_page->page_map, 0,
 	    rx_page->page_map->dm_mapsize,
-	    BUS_DMASYNC_POSTREAD) | BUS_DMASYNC_POSTWRITE;
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	/*
 	 * Don't directly access producer index as hardware may
 	 * update it while Rx handler is in progress. It would
