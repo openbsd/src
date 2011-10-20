@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.4 2011/10/09 17:59:56 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.5 2011/10/20 01:11:41 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -52,6 +52,7 @@ static	void	  post_sp(DECL_ARGS);
 static	int	  pre_ap(DECL_ARGS);
 static	int	  pre_bd(DECL_ARGS);
 static	int	  pre_br(DECL_ARGS);
+static	int	  pre_bx(DECL_ARGS);
 static	int	  pre_dl(DECL_ARGS);
 static	int	  pre_enc(DECL_ARGS);
 static	int	  pre_it(DECL_ARGS);
@@ -60,6 +61,7 @@ static	int	  pre_ns(DECL_ARGS);
 static	int	  pre_pp(DECL_ARGS);
 static	int	  pre_sp(DECL_ARGS);
 static	int	  pre_sect(DECL_ARGS);
+static	int	  pre_ux(DECL_ARGS);
 static	int	  pre_xr(DECL_ARGS);
 static	void	  print_word(struct mman *, const char *);
 static	void	  print_node(DECL_ARGS);
@@ -68,7 +70,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, pre_ap, NULL, NULL, NULL }, /* Ap */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Dd */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Dt */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Os */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Os */
 	{ NULL, pre_sect, post_sect, ".SH", NULL }, /* Sh */
 	{ NULL, pre_sect, post_sect, ".SS", NULL }, /* Ss */
 	{ NULL, pre_pp, NULL, NULL, NULL }, /* Pp */
@@ -101,17 +103,17 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ cond_head, pre_enc, NULL, "\\- ", NULL }, /* Nd */
 	{ NULL, pre_nm, post_nm, NULL, NULL }, /* Nm */
 	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Op */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Ot */
-	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* _Pa */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Ot */
+	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Pa */
 	{ NULL, pre_enc, post_enc, "The \\fB",
 		"\\fP\nfunction returns the value 0 if successful;\n"
 		"otherwise the value -1 is returned and the global\n"
 		"variable \\fIerrno\\fP is set to indicate the error."
 		}, /* Rv */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _St */
+	{ NULL, NULL, NULL, NULL, NULL }, /* St */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Va */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Vt */
-	{ NULL, pre_xr, NULL, NULL, NULL }, /* _Xr */
+	{ NULL, pre_xr, NULL, NULL, NULL }, /* Xr */
 	{ NULL, NULL, post_percent, NULL, NULL }, /* _%A */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _%B */
 	{ NULL, NULL, post_percent, NULL, NULL }, /* _%D */
@@ -126,14 +128,14 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ac */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ao */
 	{ cond_body, pre_enc, post_enc, "<", ">" }, /* Aq */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _At */
+	{ NULL, NULL, NULL, NULL, NULL }, /* At */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Bc */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Bf */
 	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Bo */
 	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Bq */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Bsx */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Bx */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Db */
+	{ NULL, pre_ux, NULL, "BSD/OS", NULL }, /* Bsx */
+	{ NULL, pre_bx, NULL, NULL, NULL }, /* Bx */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Db */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Dc */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Do */
 	{ cond_body, pre_enc, post_enc, "``", "''" }, /* Dq */
@@ -141,12 +143,12 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ef */
 	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Em */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Eo */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Fx */
+	{ NULL, pre_ux, NULL, "FreeBSD", NULL }, /* Fx */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ms */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _No */
 	{ NULL, pre_ns, NULL, NULL, NULL }, /* Ns */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Nx */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Ox */
+	{ NULL, pre_ux, NULL, "NetBSD", NULL }, /* Nx */
+	{ NULL, pre_ux, NULL, "OpenBSD", NULL }, /* Ox */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Pc */
 	{ NULL, NULL, post_pf, NULL, NULL }, /* Pf */
 	{ cond_body, pre_enc, post_enc, "(", ")" }, /* Po */
@@ -164,7 +166,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Sx */
 	{ NULL, pre_enc, post_enc, "\\fB", "\\fP" }, /* Sy */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Tn */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Ux */
+	{ NULL, pre_ux, NULL, "UNIX", NULL }, /* Ux */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Xc */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Xo */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Fo */
@@ -173,10 +175,10 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Oc */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Bk */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ek */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Bt */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Hf */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Fr */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Ud */
+	{ NULL, pre_ux, NULL, "is currently in beta test.", NULL }, /* Bt */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Hf */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Fr */
+	{ NULL, pre_ux, NULL, "currently under development.", NULL }, /* Ud */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Lb */
 	{ NULL, pre_pp, NULL, NULL, NULL }, /* Lp */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Lk */
@@ -187,7 +189,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* _%C */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Es */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _En */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Dx */
+	{ NULL, pre_ux, NULL, "DragonFly", NULL }, /* Dx */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _%Q */
 	{ NULL, pre_br, NULL, NULL, NULL }, /* br */
 	{ NULL, pre_sp, post_sp, NULL, NULL }, /* sp */
@@ -469,6 +471,26 @@ pre_br(DECL_ARGS)
 }
 
 static int
+pre_bx(DECL_ARGS)
+{
+
+	n = n->child;
+	if (n) {
+		print_word(mm, n->string);
+		mm->need_space = 0;
+		n = n->next;
+	}
+	print_word(mm, "BSD");
+	if (NULL == n)
+		return(0);
+	mm->need_space = 0;
+	print_word(mm, "-");
+	mm->need_space = 0;
+	print_word(mm, n->string);
+	return(0);
+}
+
+static int
 pre_dl(DECL_ARGS)
 {
 
@@ -595,4 +617,17 @@ pre_xr(DECL_ARGS)
 	print_node(m, n, mm);
 	print_word(mm, ")");
 	return(0);
+}
+
+static int
+pre_ux(DECL_ARGS)
+{
+
+	print_word(mm, manacts[n->tok].prefix);
+	if (NULL == n->child)
+		return(0);
+	mm->need_space = 0;
+	print_word(mm, "\\~");
+	mm->need_space = 0;
+	return(1);
 }
