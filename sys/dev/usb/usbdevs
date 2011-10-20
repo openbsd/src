@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.558 2011/10/07 06:01:49 ckuethe Exp $
+$OpenBSD: usbdevs,v 1.559 2011/10/20 10:42:05 dcoppa Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3643,6 +3643,7 @@ product SYNTECH SERIAL		0x0001	Serial
 
 /* TCT Mobile products */
 product TCTMOBILE UMSM		0x0000	Modem mode
+product TCTMOBILE UMSM_2	0x0017	Modem mode
 product TCTMOBILE UMASS		0xf000	Storage mode
 
 /* Tangtop products */
