@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.168 2011/10/13 18:23:39 claudio Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.169 2011/10/20 08:57:26 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -905,27 +905,6 @@ pfsync_in_upd(caddr_t buf, int len, int count, int flags)
 		if (sp->timeout >= PFTM_MAX ||
 		    sp->src.state > PF_TCPS_PROXY_DST ||
 		    sp->dst.state > PF_TCPS_PROXY_DST) {
-			DPFPRINTF(LOG_NOTICE,
-			    "pfsync_input: PFSYNC_ACT_UPD: invalid value");
-			pfsyncstats.pfsyncs_badval++;
-			continue;
-		}
-
-		bcopy(sp->id, &id_key.id, sizeof(id_key.id));
-		id_key.creatorid = sp->creatorid;
-
-		st = pf_find_state_byid(&id_key);
-		if (st == NULL) {
-			/* insert the update */
-			if (pfsync_state_import(sp, 0))
-				pfsyncstats.pfsyncs_badstate++;
-			continue;
-		}
-
-		if (ISSET(st->state_flags, PFSTATE_ACK))
-			pfsync_deferred(st, 1);
-
-		if (st->key[PF_SK_WIRE]->proto == IPPROTO_TCP) {
 			DPFPRINTF(LOG_NOTICE,
 			    "pfsync_input: PFSYNC_ACT_UPD: invalid value");
 			pfsyncstats.pfsyncs_badval++;
