@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.136 2010/09/22 13:45:15 mikeb Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.137 2011/10/20 00:28:06 yasuoka Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -119,7 +119,7 @@ static int      ipsec_initiator(struct message *);
 static void     ipsec_proto_init(struct proto *, char *);
 static int      ipsec_responder(struct message *);
 static void     ipsec_setup_situation(u_int8_t *);
-static int      ipsec_set_network(u_int8_t *, u_int8_t *, struct ipsec_sa *);
+static int      ipsec_set_network(u_int8_t *, u_int8_t *, struct sa *);
 static size_t   ipsec_situation_size(void);
 static u_int8_t ipsec_spi_size(u_int8_t);
 static int      ipsec_validate_attribute(u_int16_t, u_int8_t *, u_int16_t,
@@ -422,7 +422,7 @@ ipsec_finalize_exchange(struct message *msg)
 					 * destination.
 					 */
 					if (ipsec_set_network(ie->id_ci,
-					    ie->id_cr, isa)) {
+					    ie->id_cr, sa)) {
 						log_print(
 						    "ipsec_finalize_exchange: "
 						    "ipsec_set_network "
@@ -435,7 +435,7 @@ ipsec_finalize_exchange(struct message *msg)
 					 * destination.
 					 */
 					if (ipsec_set_network(ie->id_cr,
-					    ie->id_ci, isa)) {
+					    ie->id_ci, sa)) {
 						log_print(
 						    "ipsec_finalize_exchange: "
 						    "ipsec_set_network "
@@ -519,12 +519,19 @@ ipsec_finalize_exchange(struct message *msg)
 
 /* Set the client addresses in ISA from SRC_ID and DST_ID.  */
 static int
-ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
+ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct sa *sa)
 {
-	int	id;
-	char *name, *nat = NULL;
-	u_int8_t *nat_id = NULL;
-	size_t nat_sz;
+	void               *src_net, *dst_net;
+	void               *src_mask = NULL, *dst_mask = NULL;
+	struct sockaddr    *addr;
+	struct proto       *proto;
+	struct ipsec_proto *iproto;
+	struct ipsec_sa    *isa = sa->data;
+	int                 src_af, dst_af;
+	int                 id;
+	char               *name, *nat = NULL;
+	u_int8_t           *nat_id = NULL;
+	size_t              nat_sz;
 
 	if ((name = connection_passive_lookup_by_ids(src_id, dst_id)))
 		nat = conf_get_str(name, "NAT-ID");
@@ -539,11 +546,76 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 			    " failed for NAT-ID: %s", nat);
 	}
 
+	if (((proto = TAILQ_FIRST(&sa->protos)) != NULL) &&
+	    ((iproto = proto->data) != NULL) && 
+	    (iproto->encap_mode == IPSEC_ENCAP_UDP_ENCAP_TRANSPORT ||
+	    iproto->encap_mode == IPSEC_ENCAP_UDP_ENCAP_TRANSPORT_DRAFT)) {
+		/*
+		 * For NAT-T with transport mode, we need to use the ISAKMP's
+		 * SA addresses for the flow.
+		 */
+		sa->transport->vtbl->get_src(sa->transport, &addr);
+		src_af = addr->sa_family;
+		src_net = sockaddr_addrdata(addr);
+
+		sa->transport->vtbl->get_dst(sa->transport, &addr);
+		dst_af = addr->sa_family;
+		dst_net = sockaddr_addrdata(addr);
+	} else {
+		id = GET_ISAKMP_ID_TYPE(src_id);
+		src_net = src_id + ISAKMP_ID_DATA_OFF;
+		switch (id) {
+		case IPSEC_ID_IPV4_ADDR_SUBNET:
+			src_mask = (u_int8_t *)src_net + sizeof(struct in_addr);
+			/* FALLTHROUGH */
+		case IPSEC_ID_IPV4_ADDR:
+			src_af = AF_INET;
+			break;
+
+		case IPSEC_ID_IPV6_ADDR_SUBNET:
+			src_mask = (u_int8_t *)src_net +
+			    sizeof(struct in6_addr);
+			/* FALLTHROUGH */
+		case IPSEC_ID_IPV6_ADDR:
+			src_af = AF_INET6;
+			break;
+
+		default:
+			log_print(
+			    "ipsec_set_network: ID type %d (%s) not supported",
+			    id, constant_name(ipsec_id_cst, id));
+			return -1;
+		}
+
+		id = GET_ISAKMP_ID_TYPE(dst_id);
+		dst_net = dst_id + ISAKMP_ID_DATA_OFF;
+		switch (id) {
+		case IPSEC_ID_IPV4_ADDR_SUBNET:
+			dst_mask = (u_int8_t *)dst_net + sizeof(struct in_addr);
+			/* FALLTHROUGH */
+		case IPSEC_ID_IPV4_ADDR:
+			dst_af = AF_INET;
+			break;
+
+		case IPSEC_ID_IPV6_ADDR_SUBNET:
+			dst_mask = (u_int8_t *)dst_net +
+			    sizeof(struct in6_addr);
+			/* FALLTHROUGH */
+		case IPSEC_ID_IPV6_ADDR:
+			dst_af = AF_INET6;
+			break;
+
+		default:
+			log_print(
+			    "ipsec_set_network: ID type %d (%s) not supported",
+			    id, constant_name(ipsec_id_cst, id));
+			return -1;
+		}
+	}
+
 	/* Set source address/mask.  */
-	id = GET_ISAKMP_ID_TYPE(src_id);
-	switch (id) {
-	case IPSEC_ID_IPV4_ADDR:
-	case IPSEC_ID_IPV4_ADDR_SUBNET:
+	switch (src_af) {
+	case AF_INET:
 		isa->src_net = (struct sockaddr *)calloc(1,
 		    sizeof(struct sockaddr_in));
 		if (!isa->src_net)
@@ -559,8 +631,7 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 		isa->src_mask->sa_len = sizeof(struct sockaddr_in);
 		break;
 
-	case IPSEC_ID_IPV6_ADDR:
-	case IPSEC_ID_IPV6_ADDR_SUBNET:
+	case AF_INET6:
 		isa->src_net = (struct sockaddr *)calloc(1,
 		    sizeof(struct sockaddr_in6));
 		if (!isa->src_net)
@@ -575,37 +646,19 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 		isa->src_mask->sa_family = AF_INET6;
 		isa->src_mask->sa_len = sizeof(struct sockaddr_in6);
 		break;
-
-	case IPSEC_ID_IPV4_RANGE:
-	case IPSEC_ID_IPV6_RANGE:
-	case IPSEC_ID_DER_ASN1_DN:
-	case IPSEC_ID_DER_ASN1_GN:
-	case IPSEC_ID_FQDN:
-	case IPSEC_ID_KEY_ID:
-	default:
-		log_print("ipsec_set_network: ID type %d (%s) not supported",
-		    id, constant_name(ipsec_id_cst, id));
-		return -1;
 	}
 
 	/* Net */
-	memcpy(sockaddr_addrdata(isa->src_net), src_id + ISAKMP_ID_DATA_OFF,
+	memcpy(sockaddr_addrdata(isa->src_net), src_net,
 	    sockaddr_addrlen(isa->src_net));
 
 	/* Mask */
-	switch (id) {
-	case IPSEC_ID_IPV4_ADDR:
-	case IPSEC_ID_IPV6_ADDR:
+	if (src_mask == NULL)
 		memset(sockaddr_addrdata(isa->src_mask), 0xff,
 		    sockaddr_addrlen(isa->src_mask));
-		break;
-	case IPSEC_ID_IPV4_ADDR_SUBNET:
-	case IPSEC_ID_IPV6_ADDR_SUBNET:
-		memcpy(sockaddr_addrdata(isa->src_mask), src_id +
-		    ISAKMP_ID_DATA_OFF + sockaddr_addrlen(isa->src_net),
+	else
+		memcpy(sockaddr_addrdata(isa->src_mask), src_mask,
 		    sockaddr_addrlen(isa->src_mask));
-		break;
-	}
 
 	memcpy(&isa->sport,
 	    src_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PORT_OFF,
@@ -615,10 +668,8 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 		free(nat_id);
 
 	/* Set destination address.  */
-	id = GET_ISAKMP_ID_TYPE(dst_id);
-	switch (id) {
-	case IPSEC_ID_IPV4_ADDR:
-	case IPSEC_ID_IPV4_ADDR_SUBNET:
+	switch (dst_af) {
+	case AF_INET:
 		isa->dst_net = (struct sockaddr *)calloc(1,
 		    sizeof(struct sockaddr_in));
 		if (!isa->dst_net)
@@ -634,8 +685,7 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 		isa->dst_mask->sa_len = sizeof(struct sockaddr_in);
 		break;
 
-	case IPSEC_ID_IPV6_ADDR:
-	case IPSEC_ID_IPV6_ADDR_SUBNET:
+	case AF_INET6:
 		isa->dst_net = (struct sockaddr *)calloc(1,
 		    sizeof(struct sockaddr_in6));
 		if (!isa->dst_net)
@@ -650,37 +700,19 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 		isa->dst_mask->sa_family = AF_INET6;
 		isa->dst_mask->sa_len = sizeof(struct sockaddr_in6);
 		break;
-
-	case IPSEC_ID_IPV4_RANGE:
-	case IPSEC_ID_IPV6_RANGE:
-	case IPSEC_ID_DER_ASN1_DN:
-	case IPSEC_ID_DER_ASN1_GN:
-	case IPSEC_ID_FQDN:
-	case IPSEC_ID_KEY_ID:
-	default:
-		log_print("ipsec_set_network: ID type %d (%s) not supported",
-		    id, constant_name(ipsec_id_cst, id));
-		return -1;
 	}
 
 	/* Net */
-	memcpy(sockaddr_addrdata(isa->dst_net), dst_id + ISAKMP_ID_DATA_OFF,
+	memcpy(sockaddr_addrdata(isa->dst_net), dst_net,
 	    sockaddr_addrlen(isa->dst_net));
 
 	/* Mask */
-	switch (id) {
-	case IPSEC_ID_IPV4_ADDR:
-	case IPSEC_ID_IPV6_ADDR:
+	if (dst_mask == NULL)
 		memset(sockaddr_addrdata(isa->dst_mask), 0xff,
 		    sockaddr_addrlen(isa->dst_mask));
-		break;
-	case IPSEC_ID_IPV4_ADDR_SUBNET:
-	case IPSEC_ID_IPV6_ADDR_SUBNET:
-		memcpy(sockaddr_addrdata(isa->dst_mask), dst_id +
-		    ISAKMP_ID_DATA_OFF + sockaddr_addrlen(isa->dst_net),
+	else
+		memcpy(sockaddr_addrdata(isa->dst_mask), dst_mask,
 		    sockaddr_addrlen(isa->dst_mask));
-		break;
-	}
 
 	memcpy(&isa->tproto, dst_id + ISAKMP_ID_DOI_DATA_OFF +
 	    IPSEC_ID_PROTO_OFF, IPSEC_ID_PROTO_LEN);
