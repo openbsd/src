@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.559 2011/10/20 10:42:05 dcoppa Exp $
+$OpenBSD: usbdevs,v 1.560 2011/10/20 16:35:52 mpf Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -272,6 +272,7 @@ vendor MCT		0x0711	MCT
 vendor IMATION		0x0718	Imation
 vendor SUSTEEN		0x0731	Susteen
 vendor EICON		0x0734	Eicon Networks
+vendor STOLLMANN	0x0742	Stollmann
 vendor SYNTECH		0x0745	Syntech Information
 vendor DIGITALSTREAM	0x074e	Digital Stream
 vendor AUREAL		0x0755	Aureal Semiconductor
@@ -3594,6 +3595,9 @@ product	STARTECH ICUSB232X	0x3410	ICUSB2321X/2X/4X
 /* STMicroelectronics products */
 product STMICRO BIOMETRIC_COPR	0x2016	Biometric Coprocessor
 product STMICRO COMMUNICATOR	0x7554	Communicator
+
+/* Stollmann products */
+product STOLLMANN ISDN_TA_USBA	0x4001	ISDN TA+USBA
 
 /* Strawberry Linux products */
 product STRAWBERRYLINUX USBRH 	0x1001	USBRH sensor
