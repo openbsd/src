@@ -1,4 +1,4 @@
-.\" $OpenBSD: em.4,v 1.46 2011/10/19 15:46:16 jmc Exp $
+.\" $OpenBSD: em.4,v 1.47 2011/10/20 02:29:40 jsg Exp $
 .\" Copyright (c) 2002 Intel Corporation
 .\" All rights reserved.
 .\" Redistribution and use in source and binary forms of the Software, with or without
@@ -28,7 +28,7 @@
 .\" * Other names and brands may be claimed as the property of others.
 .\"
 .\" $FreeBSD: em.4,v 1.18 2005/01/30 12:29:06 yar Exp $
-.Dd $Mdocdate: October 19 2011 $
+.Dd $Mdocdate: October 20 2011 $
 .Dt EM 4
 .Os
 .Sh NAME
@@ -43,7 +43,8 @@ driver provides support for PCI, PCI-X and PCI Express Gigabit Ethernet adapters
 based on the Intel 82540EM, 82540EP, 82541EI, 82541ER, 82541GI, 82541PI, 82542,
 82543GC, 82544EI, 82544GC, 82545EM, 82545GM, 82546EB, 82546GB, 82547EI, 82547GI,
 82562V, 82563EB, 82564EB, 82566DC, 82566DM, 82571EB, 82571GB, 82572EI, 82572GI,
-82573E, 82573L, 82573V, 82574L, 82575EB, 82575GB, 82576EB, 82583V
+82573E, 82573L, 82573V, 82574L, 82575EB, 82575GB, 82576EB, 82577LC, 82577LM,
+82578DC, 82578DM, 82579LM, 82579V, 82580DB, 82580EB, 82583V
 Ethernet controller chips and the embedded chips found on EP80579 platform,
 including the following:
 .Pp
@@ -62,6 +63,8 @@ HP ProLiant NC340T PCI-X Quad Port Gigabit NIC
 HP ProLiant NC360T PCI Express Dual Port Gigabit NIC
 .It
 HP ProLiant NC364T PCI Express Quad Port Gigabit NIC
+.It
+HP ProLiant NC365T PCI Express Quad Port Gigabit NIC
 .It
 HP ProLiant NC6132 Upgrade Module (SX Fiber)
 .It
@@ -128,6 +131,8 @@ Intel PRO/1000ET Dual Port Server Adapter
 Intel PRO/1000ET Quad Port Server Adapter
 .It
 Intel PRO/1000EF Quad Port Server Adapter (SX Fiber)
+.It
+Intel I340-T4 PCI Express Quad Port Gigabit NIC
 .It
 Sun PCI-E Dual Gigabit Ethernet LP UTP Adapter
 .It
