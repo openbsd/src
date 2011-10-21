@@ -1,4 +1,4 @@
-/*	$OpenBSD: uname.c,v 1.11 2009/10/27 23:59:46 deraadt Exp $	*/
+/*	$OpenBSD: uname.c,v 1.12 2011/10/21 14:48:02 ajacoutot Exp $	*/
 
 /*
  * Copyright (c) 1994 Winning Strategies, Inc.
@@ -37,18 +37,17 @@
 #include <locale.h>
 #include <unistd.h>
 #include <sys/utsname.h>
-#include <sys/sysctl.h>
 #include <err.h>
 
 static void usage(void);
 
-#define	PRINT_SYSNAME	0x01
-#define	PRINT_NODENAME	0x02
-#define	PRINT_RELEASE	0x04
-#define	PRINT_VERSION	0x08
-#define	PRINT_MACHINE	0x10
-#define	PRINT_ALL	0x1f
-#define PRINT_PROCESSOR	0x20
+#define	PRINT_SYSNAME		0x01
+#define	PRINT_NODENAME		0x02
+#define	PRINT_RELEASE		0x04
+#define	PRINT_VERSION		0x08
+#define	PRINT_MACHINE		0x10
+#define	PRINT_ALL		0x1f
+#define PRINT_MACHINE_ARCH	0x20
 
 int
 main(int argc, char *argv[])
@@ -81,7 +80,7 @@ main(int argc, char *argv[])
 			print_mask |= PRINT_VERSION;
 			break;
 		case 'p':
-			print_mask |= PRINT_PROCESSOR;
+			print_mask |= PRINT_MACHINE_ARCH;
 			break;
 		default:
 			usage();
@@ -123,18 +122,9 @@ main(int argc, char *argv[])
 		if (space++) putchar(' ');
 		fputs(u.machine, stdout);
 	}
-	if (print_mask & PRINT_PROCESSOR) {
-		char buf[1024];
-		size_t len;
-		int mib[2];
-
+	if (print_mask & PRINT_MACHINE_ARCH) {
 		if (space++) putchar(' ');
-		mib[0] = CTL_HW;
-		mib[1] = HW_MODEL;
-		len = sizeof(buf);
-		if (sysctl(mib, 2, buf, &len, NULL, 0) == -1)
-			err(1, "sysctl");
-		printf("%.*s", (int)len, buf);
+		fputs(MACHINE_ARCH, stdout);
 	}		
 	putchar('\n');
 
