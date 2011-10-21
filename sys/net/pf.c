@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.784 2011/10/13 18:23:39 claudio Exp $ */
+/*	$OpenBSD: pf.c,v 1.785 2011/10/21 09:21:44 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4742,6 +4742,10 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 					    &nk->addr[didx], 0);
 					pd->destchg = 1;
 				}
+
+				if (nk->port[iidx] != pd->hdr.icmp6->icmp6_id)
+					pd->hdr.icmp6->icmp6_id =
+					    nk->port[iidx];
 
 				m_copyback(pd->m, pd->off,
 				    sizeof(struct icmp6_hdr), pd->hdr.icmp6,
