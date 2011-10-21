@@ -1,4 +1,4 @@
-/* $OpenBSD: acpimadt.c,v 1.24 2011/03/06 22:40:05 deraadt Exp $ */
+/* $OpenBSD: acpimadt.c,v 1.25 2011/10/21 20:49:39 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -212,6 +212,7 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	mp_busses = acpimadt_busses;
+	mp_nbusses = nitems(acpimadt_busses);
 	mp_isa_bus = &acpimadt_isa_bus;
 
 	lapic_boot_init(madt->local_apic_address);
