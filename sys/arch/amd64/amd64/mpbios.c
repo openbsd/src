@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.20 2011/04/02 22:51:53 marco Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.21 2011/10/21 20:48:11 kettenis Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.7 2003/05/15 16:32:50 fvdl Exp $	*/
 
 /*-
@@ -581,8 +581,8 @@ mpbios_scan(struct device *self)
 			if (type == MPS_MCT_BUS) {
 				const struct mpbios_bus *bp =
 				    (const struct mpbios_bus *)position;
-				if (bp->bus_id >= mp_nbus)
-					mp_nbus = bp->bus_id + 1;
+				if (bp->bus_id >= mp_nbusses)
+					mp_nbusses = bp->bus_id + 1;
 			}
 			/*
 			 * Count actual interrupt instances.
@@ -601,7 +601,7 @@ mpbios_scan(struct device *self)
 			position += mp_conf[type].length;
 		}
 
-		mp_busses = malloc(sizeof(struct mp_bus) * mp_nbus,
+		mp_busses = malloc(sizeof(struct mp_bus) * mp_nbusses,
 		    M_DEVBUF, M_NOWAIT|M_ZERO);
 		mp_intrs = malloc(sizeof(struct mp_intr_map) * intr_cnt,
 		    M_DEVBUF, M_NOWAIT);
@@ -924,7 +924,7 @@ mpbios_bus(const u_int8_t *ent, struct device *self)
 	 * This "should not happen" unless the table changes out
 	 * from underneath us
 	 */
-	if (bus_id >= mp_nbus) {
+	if (bus_id >= mp_nbusses) {
 		panic("%s: bus number %d out of range?? (type %6.6s)",
 		    self->dv_xname, bus_id, entry->bus_type);
 	}

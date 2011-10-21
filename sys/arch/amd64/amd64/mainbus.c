@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.23 2010/11/03 10:15:22 dlg Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.24 2011/10/21 20:48:11 kettenis Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ struct isabus_attach_args mba_iba = {
 
 #if NMPBIOS > 0 || NACPI > 0
 struct mp_bus *mp_busses;
-int mp_nbus;
+int mp_nbusses;
 struct mp_intr_map *mp_intrs;
 int mp_nintrs;
 

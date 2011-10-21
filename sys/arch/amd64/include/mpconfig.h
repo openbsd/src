@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpconfig.h,v 1.7 2011/03/06 22:40:05 deraadt Exp $	*/
+/*	$OpenBSD: mpconfig.h,v 1.8 2011/10/21 20:48:11 kettenis Exp $	*/
 /*	$NetBSD: mpconfig.h,v 1.2 2003/05/11 00:05:52 fvdl Exp $	*/
 
 /*
@@ -38,11 +38,11 @@ struct mp_intr_map {
 #if defined(_KERNEL)
 extern int mp_verbose;
 extern struct mp_bus *mp_busses;
+extern int mp_nbusses;
 extern struct mp_intr_map *mp_intrs;
 extern int mp_nintrs;
 extern struct mp_bus *mp_isa_bus;
 extern struct mp_bus *mp_eisa_bus;
-extern int mp_nbus;
 #endif
 #endif
 
