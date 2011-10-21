@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.49 2011/09/25 08:26:28 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.50 2011/10/21 18:19:34 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -784,6 +784,7 @@ sub read_fragments
 	my $stack = [];
 	my $subst = $state->{subst};
 	push(@$stack, MyFile->new($filename));
+	my $fast = $subst->value("LIBS_ONLY");
 
 	return $plist->read($stack,
 	    sub {
@@ -802,12 +803,15 @@ sub read_fragments
 					$file = handle_fragment($state, $stack,
 					    $file, $not, $frag);
 				} else {
-					&$cont($subst->do($_));
+					$_ = $subst->do($_);
+					if ($fast) {
+						next unless m/^\@(?:cwd|lib)\b/o || m/lib.*\.a$/o;
+					}
+					&$cont($_);
 				}
 			}
 		}
-	    }
-	);
+	    });
 }
 
 sub add_special_file
