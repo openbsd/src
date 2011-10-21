@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.arch.mk.5,v 1.3 2011/10/16 07:13:12 espie Exp $
+.\" $OpenBSD: bsd.port.arch.mk.5,v 1.4 2011/10/21 17:26:02 espie Exp $
 .\"
 .\" Copyright (c) 2011 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 16 2011 $
+.Dd $Mdocdate: October 21 2011 $
 .Dt BSD.PORT.ARCH.MK 5
 .Os
 .Sh NAME
@@ -57,6 +57,8 @@ assumes the following variables are already defined:
 .Bl -tag -offset indent -compact -width ONLY_FOR_ARCH-<sub>
 .It MULTI_PACKAGES
 .It FLAVOR
+.It FLAVORS
+.It PSEUDO_FLAVORS
 .It Ev NOT_FOR_ARCHS-<sub>
 .It Ev ONLY_FOR_ARCHS-<sub>
 .El
