@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.292 2011/10/21 17:27:00 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.293 2011/10/21 17:28:34 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2381,6 +2381,18 @@ Base location where packages suitable for a CD-ROM (see
 PERMIT_PACKAGE_CDROM) will be placed.
 Now hardwired to
 .Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cdrom .
+.It Ev CHMOD
+Full path to
+.Xr chmod 1 ,
+use
+.Xr chmod 1
+directly.
+.It Ev CHOWN
+Full path to
+.Xr chmod 1 ,
+use
+.Xr chmod 1
+directly.
 .It Ev COMMENT
 Used to be the name of the comment file for a package.
 It now holds the comment itself.
