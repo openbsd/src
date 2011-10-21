@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.8 2010/09/06 19:20:19 deraadt Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.9 2011/10/21 22:55:01 drahn Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -353,14 +353,21 @@ ommmc_match(struct device *parent, void *v, void *aux)
 {
         struct ahb_attach_args *aa = aux;
 	/* XXX */
-	if (aa->aa_addr == MMCHS1_ADDR && aa->aa_intr == 83)
-		return 1;
-	else if (aa->aa_addr == MMCHS2_ADDR && aa->aa_intr == 86)
-		return 1;
-	else if (aa->aa_addr == MMCHS3_ADDR && aa->aa_intr == 94)
-		return 1;
-	else 
-		return (0);
+	switch (board_id) {
+	case BOARD_ID_OMAP3_BEAGLE:
+		if (aa->aa_addr == MMCHS1_ADDR && aa->aa_intr == 83)
+			return 1;
+		else if (aa->aa_addr == MMCHS2_ADDR && aa->aa_intr == 86)
+			return 1;
+		else if (aa->aa_addr == MMCHS3_ADDR && aa->aa_intr == 94)
+			return 1;
+		break; 
+	case BOARD_ID_OMAP4_PANDA:
+		return 0; /* not ported yet ??? - different */
+	default:
+		return 0; /* unknown */
+	}
+	return (0);
 }
 
 void

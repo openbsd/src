@@ -1,4 +1,4 @@
-/* $OpenBSD: omgpio.c,v 1.4 2010/09/20 06:33:48 matthew Exp $ */
+/* $OpenBSD: omgpio.c,v 1.5 2011/10/21 22:55:01 drahn Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -102,6 +102,14 @@ struct cfdriver omgpio_cd = {
 int
 omgpio_match(struct device *parent, void *v, void *aux)
 {
+	switch (board_id) {
+	case BOARD_ID_OMAP3_BEAGLE:
+		break; /* continue trying */
+	case BOARD_ID_OMAP4_PANDA:
+		return 0; /* not ported yet ??? - different */
+	default:
+		return 0; /* unknown */
+	}
 	return (1);
 }
 

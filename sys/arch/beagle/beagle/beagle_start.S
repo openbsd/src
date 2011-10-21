@@ -1,4 +1,4 @@
-/*	$OpenBSD: beagle_start.S,v 1.2 2011/10/17 03:06:05 drahn Exp $	*/
+/*	$OpenBSD: beagle_start.S,v 1.3 2011/10/21 22:55:01 drahn Exp $	*/
 /*	$NetBSD: lubbock_start.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -62,6 +62,11 @@
 
 	.global	_C_LABEL(bootstrap_start)
 _C_LABEL(bootstrap_start):
+	/* Save U-Boot arguments */
+	mov	r6, r0
+	mov	r7, r1
+	mov	r8, r2
+
 	/* Are we running on ROM ? */
 	cmp     pc, #0x06000000
 	bhi     bootstrap_start_ram
@@ -69,32 +74,32 @@ _C_LABEL(bootstrap_start):
 	/* move me to RAM
 	 * XXX: we can use memcpy if it is PIC
 	 */
-	ldr r9, Lcopy_size
-	adr r8, _C_LABEL(bootstrap_start)
-	add r9, r9, #3
-	mov r9, r9, LSR #2
-	mov r10, #SDRAM_START
-	add r10, r10, #0x00200000
-	mov r4, r10
+	ldr r1, Lcopy_size
+	adr r0, _C_LABEL(bootstrap_start)
+	add r1, r1, #3
+	mov r1, r1, LSR #2
+	mov r2, #SDRAM_START
+	add r2, r2, #0x00200000
+	mov r4, r2
 
-5:	ldr r3,[r8],#4
-	str r3,[r10],#4
-	subs r9,r9,#1
+5:	ldr r3,[r0],#4
+	str r3,[r2],#4
+	subs r1,r1,#1
 	bhi 5b
 
 	cmp	pc, r5
 	/* Jump to RAM */
-	ldr r8, Lstart_off
+	ldr r0, Lstart_off
 
 	blo 1f
 	/* if we were running out of virtual mapped space, disable mmu */
-	mov	r10, #0
-	mov     r9, #(CPU_CONTROL_32BP_ENABLE | CPU_CONTROL_32BD_ENABLE)
-	mcr     15, 0, r9, c1, c0, 0
-	mcrne   15, 0, r10, c8, c7, 0    /* nail I+D TLB on ARMv4 and greater */
+	mov	r2, #0
+	mov     r1, #(CPU_CONTROL_32BP_ENABLE | CPU_CONTROL_32BD_ENABLE)
+	mcr     15, 0, r1, c1, c0, 0
+	mcrne   15, 0, r2, c8, c7, 0    /* nail I+D TLB on ARMv4 and greater */
 	
 1:
-	add pc, r4, r8
+	add pc, r4, r0
 
 Lcopy_size:	.word _edata-_C_LABEL(bootstrap_start)
 Lstart_off:	.word bootstrap_start_ram-_C_LABEL(bootstrap_start)
@@ -105,51 +110,56 @@ bootstrap_start_ram:
 	 *  in VA 0xc0200000..  
 	 */
 
-	mrc	p15, 0, r8, c2, c0, 0	/* get ttb prepared by redboot */
+	mrc	p15, 0, r0, c2, c0, 0	/* get ttb prepared by redboot */
 	adr	r4, mmu_init_table2
 	
 /*
 #define BUILD_STARTUP_PAGETABLE
 */
 #ifdef BUILD_STARTUP_PAGETABLE
-	mrc	p15, 0, r10, c1, c0, 0
-	mov	r10, #0
-	tst	r10, #CPU_CONTROL_MMU_ENABLE /* we already have a page table? */
+	mrc	p15, 0, r2, c1, c0, 0
+	mov	r2, #0
+	tst	r2, #CPU_CONTROL_MMU_ENABLE /* we already have a page table? */
 	bne	3f
 
 	/* build page table from scratch */
-	ldr	r8, Lstartup_pagetable
+	ldr	r0, Lstartup_pagetable
 	adr	r4, mmu_init_table
 	b	3f
 
 2:
-	str	r3, [r8, r10]
-	add	r10, r10, #4
+	str	r3, [r0, r2]
+	add	r2, r2, #4
 	add	r3, r3, #(L1_S_SIZE)
-	adds	r9, r9, #-1
+	adds	r1, r1, #-1
 	bhi	2b
 3:	
-	ldmia	r4!, {r9,r10,r3}   /* # of sections, PA|attr, VA */
-	cmp	r9, #0
+	ldmia	r4!, {r1,r2,r3}   /* # of sections, PA|attr, VA */
+	cmp	r1, #0
 	bne	2b	
 #endif
 
-	mcr	p15, 0, r8, c2, c0, 0	/* Set TTB */
-	mcr	p15, 0, r8, c8, c7, 0	/* Flush TLB */
+	mcr	p15, 0, r0, c2, c0, 0	/* Set TTB */
+	mcr	p15, 0, r0, c8, c7, 0	/* Flush TLB */
 
 	/* Set the Domain Access register.  Very important! */
-        mov     r8, #((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT)
-	mcr	p15, 0, r8, c3, c0, 0
+        mov     r0, #((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT)
+	mcr	p15, 0, r0, c3, c0, 0
 
 	/* Enable MMU */
-	mrc	p15, 0, r8, c1, c0, 0
-	orr	r8, r8, #CPU_CONTROL_MMU_ENABLE
-	mcr	p15, 0, r8, c1, c0, 0
-	CPWAIT(r8)
+	mrc	p15, 0, r0, c1, c0, 0
+	orr	r0, r0, #CPU_CONTROL_MMU_ENABLE
+	mcr	p15, 0, r0, c1, c0, 0
+	CPWAIT(r0)
+
+	/* Restore U-Boot arguments */
+	mov	r0, r6
+	mov	r1, r7
+	mov	r2, r8
 
 	/* Jump to kernel code in TRUE VA */
-	adr	r8, Lstart
-	ldr	pc, [r8]
+	adr	r6, Lstart
+	ldr	pc, [r6]
 
 Lstart:
 	.word	start

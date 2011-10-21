@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.8 2011/10/17 03:03:59 drahn Exp $
+# $OpenBSD: GENERIC,v 1.9 2011/10/21 22:55:01 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -89,9 +89,6 @@ usb*           at ehci?
 #mcspi0		at ahb? addr 0x48098000 intr 65
 #mcspi1		at ahb? addr 0x4809A000 intr 66
 
-#atlas0		at ahb? intr 85	# really a spi device, not ahb
-#wskbd*		at atlas? mux 1 
-
 #usbotg0	at ahb? addr 0x4c000000 size 0x70 intr 3
 #usb*		at ohci?
 
@@ -156,6 +153,7 @@ ch*		at scsibus?
 uk*		at scsibus?
 
 # onboard uarts
+com0	at ahb?	addr	0x48020000	size 0x400 intr 74 # UART3
 com0	at ahb?	addr	0x49020000	size 0x400 intr 74 # UART3
 
 #com1	at ahb?	addr	0xXXXXXX00	size 0x400 intr 73

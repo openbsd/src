@@ -1,4 +1,4 @@
-#	$OpenBSD: files.beagle,v 1.7 2011/05/15 08:52:48 matthieu Exp $
+#	$OpenBSD: files.beagle,v 1.8 2011/10/21 22:55:01 drahn Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -24,6 +24,9 @@ file	arch/arm/armv7/armv7_space.c	ahb
 file	arch/arm/armv7/armv7_a4x_space.c	ahb	# XXX
 file	arch/arm/armv7/armv7_a4x_io.S		ahb	# XXX
 file	arch/arm/armv7/armv7_mutex.c
+
+# u-boot argument support
+file	arch/beagle/beagle/uboot_tags.c
 
 # note that the order of the devices in _this_ file
 # affects the order that the devices will configure.

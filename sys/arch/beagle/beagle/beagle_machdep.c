@@ -1,4 +1,4 @@
-/*	$OpenBSD: beagle_machdep.c,v 1.8 2011/10/19 20:18:31 drahn Exp $ */
+/*	$OpenBSD: beagle_machdep.c,v 1.9 2011/10/21 22:55:01 drahn Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -145,6 +145,7 @@
 #include <arm/armv7/armv7var.h>
 
 #include <machine/machine_reg.h>
+#include "ahb.h"
 
 
 #include "wsdisplay.h"
@@ -215,6 +216,8 @@ extern u_int undefined_handler_address;
 extern int pmap_debug_level;
 #endif
 
+uint32_t	board_id;
+
 #define KERNEL_PT_SYS		0	/* Page table for mapping proc0 zero page */
 #define KERNEL_PT_KERNEL	1	/* Page table for mapping kernel */
 #define	KERNEL_PT_KERNEL_NUM	32
@@ -265,7 +268,6 @@ bs_protos(bs_notimpl);
 
 int comcnspeed = CONSPEED;
 int comcnmode = CONMODE;
-
 
 /*
  *
@@ -428,6 +430,8 @@ copy_io_area_map(pd_entry_t *new_pd)
 	}
 }
 
+void parse_uboot_tags(void *);
+
 /*
  * u_int initarm(...)
  *
@@ -451,6 +455,8 @@ initarm(void *arg0, void *arg1, void *arg2)
 	paddr_t memstart;
 	psize_t memsize;
 
+	board_id = (uint32_t)arg1;
+
 #if 0
 	int led_data = 0;
 #endif
@@ -465,7 +471,8 @@ initarm(void *arg0, void *arg1, void *arg2)
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
 
-	intc_intr_bootstrap(0x48200000); /* XXX - constant */
+	if (board_id == BOARD_ID_OMAP3_BEAGLE)
+		intc_intr_bootstrap(0x48200000); /* XXX - constant */
 
 #if 0
 	/* Calibrate the delay loop. */
@@ -493,6 +500,9 @@ initarm(void *arg0, void *arg1, void *arg2)
 	/* Talk to the user */
 	printf("\nOpenBSD/beagle booting ...\n");
 
+	printf("arg0 %p arg1 %p arg2 %p\n", arg0, arg1, arg2);
+	parse_uboot_tags(arg2);
+
 	/*
 	 * Examine the boot args string for options we need to know about
 	 * now.
@@ -502,14 +512,9 @@ initarm(void *arg0, void *arg1, void *arg2)
         boothowto |= RB_DFLTROOT;
 #endif /* RAMDISK_HOOKS */
 
-#define DEBUG
-#ifdef DEBUG
-	printf("probing memory\n");
-	printf("sdrc_mcfg_0 %08x\n", *(uint32_t *)0x6d000080);
-	printf("sdrc_mcfg_1 %08x\n", *(uint32_t *)0x6d0000b0);
-#endif /* DEBUG */
 
-	{
+	/* normally u-boot will set up bootconfig.dramblocks */
+	if (bootconfig.dramblocks == 0) {
 		uint32_t sdrc_mcfg_0, sdrc_mcfg_1, memsize0, memsize1;
 		sdrc_mcfg_0 = *(uint32_t *)0x6d000080;
 		sdrc_mcfg_1 = *(uint32_t *)0x6d0000b0;
@@ -517,7 +522,6 @@ initarm(void *arg0, void *arg1, void *arg2)
 		memsize1 = (((sdrc_mcfg_1 >> 8))&0x3ff) * (2 * 1024 * 1024);
 		memsize = memsize0 + memsize1;
 
-		/* XXX - scma11 for now, fix memory sizing */
 		memstart = SDRAM_START;
 		memsize =  0x02000000; /* 32MB */
 		/* Fake bootconfig structure for the benefit of pmap.c */
@@ -531,54 +535,18 @@ initarm(void *arg0, void *arg1, void *arg2)
 			bootconfig.dram[1].pages = memsize1 / PAGE_SIZE;
 			bootconfig.dramblocks++; /* both banks populated */
 		}
+	} else {
+		/* doesn't deal with multiple segments, hopefully u-boot collaped them into one */
+		memstart = bootconfig.dram[0].address;
+		memsize = bootconfig.dram[0].pages * PAGE_SIZE;
+		memsize =  0x02000000; /* 32MB */ /* WTF? */
+		printf("memory size derived from u-boot\n");
+		for (loop = 0; loop < bootconfig.dramblocks; loop++) {
+			printf("bootconf.mem[%d].address = %08x pages %d/0x%08x\n",
+			    loop, bootconfig.dram[0].address, bootconfig.dram[0].pages,
+			        bootconfig.dram[0].pages * PAGE_SIZE);
+		}
 	}
-
-
-#ifdef DEBUG
-	printf("initarm: Configuring system ...\n");
-	{
-		uint32_t reg;
-		asm volatile ("MRC p15, 0, %0, c0, c1, 0\n": "=r" (reg));
-		printf("ID_PFR0  0x%08x\n", reg);
-		asm volatile ("MRC p15, 0, %0, c0, c1, 1\n": "=r" (reg));
-		printf("ID_PFR1  0x%08x\n", reg);
-		asm volatile ("MRC p15, 0, %0, c0, c1, 2\n": "=r" (reg));
-		printf("ID_DFR0  0x%08x\n", reg);
-		asm volatile ("MRC p15, 0, %0, c0, c1, 3\n": "=r" (reg));
-		printf("ID_AFR0  0x%08x\n", reg);
-		asm volatile ("MRC p15, 0, %0, c0, c1, 4\n": "=r" (reg));
-		printf("ID_MMFR0 0x%08x\n", reg);
-		asm volatile ("MRC p15, 0, %0, c0, c1, 5\n": "=r" (reg));
-		printf("ID_MMFR1 0x%08x\n", reg);
-		asm volatile ("MRC p15, 0, %0, c0, c1, 6\n": "=r" (reg));
-		printf("ID_MMFR2 0x%08x\n", reg);
-		asm volatile ("MRC p15, 0, %0, c0, c1, 7\n": "=r" (reg));
-		printf("ID_MMFR3 0x%08x\n", reg);
-
-		asm volatile ("MRC p15, 0, %0, c0, c2, 0\n": "=r" (reg));
-		printf("ID_ISAR0 0x%08x\n", reg);
-		asm volatile ("MRC p15, 0, %0, c0, c2, 1\n": "=r" (reg));
-		printf("ID_ISAR1 0x%08x\n", reg);
-		asm volatile ("MRC p15, 0, %0, c0, c2, 2\n": "=r" (reg));
-		printf("ID_ISAR2 0x%08x\n", reg);
-		asm volatile ("MRC p15, 0, %0, c0, c2, 3\n": "=r" (reg));
-		printf("ID_ISAR3 0x%08x\n", reg);
-		asm volatile ("MRC p15, 0, %0, c0, c2, 4\n": "=r" (reg));
-		printf("ID_ISAR4 0x%08x\n", reg);
-		asm volatile ("MRC p15, 0, %0, c0, c2, 5\n": "=r" (reg));
-		printf("ID_ISAR5 0x%08x\n", reg);
-
-
-	}
-#endif
-	{
-		static int foo = 0;
-		int tmp=1;
-		printf("about to SWP 0x1234 -> 0 \n");
-		asm volatile (" SWP %0, %2, [%1]": "=&r"(tmp): "r"(&foo), "r"(0x1234));
-		printf("mem %x reg %x\n", foo, tmp);
-	}
-
 
 	/*
 	 * Set up the variables that define the availablilty of
@@ -925,11 +893,20 @@ initarm(void *arg0, void *arg1, void *arg2)
 		Debugger();
 #endif
 
+	switch (board_id) {
+	case BOARD_ID_OMAP3_BEAGLE:
+		printf("board type: beagle\n");
+		break;
+	case BOARD_ID_OMAP4_PANDA:
+		printf("board type: panda\n");
+		break;
+	default:
+		printf("board type %x unknown", board_id);
+	}
+
 	/* We return the new stack pointer address */
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
-
-const char *console = "ffuart";
 
 
 void
@@ -991,19 +968,6 @@ process_kernel_args(char *args)
 		case 's':
 			fl |= RB_SINGLE;
 			break;
-		/* XXX undocumented console switching flags */
-		case '0':
-			console = "ffuart";
-			break;
-		case '1':
-			console = "btuart";
-			break;
-		case '2':
-			console = "stuart";
-			break;
-		case 'g':
-			console = "glass";
-			break;
 		default:
 			printf("unknown option `%c'\n", *cp);
 			break;
@@ -1027,14 +991,24 @@ consinit(void)
 	consinit_called = 1;
 
 #if NCOM > 0
-	paddr = 0x49020000; /* XXX - addr */
+	switch (board_id) {
+	case BOARD_ID_OMAP3_BEAGLE:
+		paddr = 0x49020000; 
+		break;
+	case BOARD_ID_OMAP4_PANDA:
+		paddr = 0x48020000; 
+		break;
+	default:
+		printf("board type %x unknown", board_id);
+		/* XXX - HELP */
+	}
 	comcnattach(&armv7_a4x_bs_tag, paddr, comcnspeed, 48000000, comcnmode);
 	comdefaultrate = comcnspeed;
 #endif /* NCOM */
 }
 
 
-int glass_console = 0;
+//int glass_console = 0;
 
 void
 board_startup(void)

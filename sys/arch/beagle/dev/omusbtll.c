@@ -1,4 +1,4 @@
-/* $OpenBSD: omusbtll.c,v 1.1 2011/03/14 15:09:28 drahn Exp $ */
+/* $OpenBSD: omusbtll.c,v 1.2 2011/10/21 22:55:01 drahn Exp $ */
 /*
  * Copyright (c) 2010 Dale Rahn <drahn@openbsd.org>
  *
@@ -110,6 +110,14 @@ struct cfdriver omusbtll_cd = {
 int
 omusbtll_match(struct device *parent, void *v, void *aux)
 {
+	switch (board_id) {
+	case BOARD_ID_OMAP3_BEAGLE:
+		break; /* continue trying */
+	case BOARD_ID_OMAP4_PANDA:
+		return 0; /* not ported yet ??? - different */
+	default:
+		return 0; /* unknown */
+	}
 	return (1);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: omap_com.c,v 1.5 2011/03/22 17:46:02 deraadt Exp $ */
+/* $OpenBSD: omap_com.c,v 1.6 2011/10/21 22:55:01 drahn Exp $ */
 /*
  * Copyright 2003 Wasabi Systems, Inc.
  * All rights reserved.
@@ -68,32 +68,46 @@ int
 omapuart_match(struct device *parent, void *cf, void *aux)
 {
         struct ahb_attach_args *aa = aux;
-	bus_space_tag_t bt = &armv7_a4x_bs_tag;	/* XXX: This sucks */
-	bus_space_handle_t bh;
-	int rv;
+	extern uint32_t board_id;
+	int rv = 0;
 
 	/* XXX */
-	if (aa->aa_addr == 0x4806A000 && aa->aa_intr == 72)
-		return 1;
-	if (aa->aa_addr == 0x4806C000 && aa->aa_intr == 73)
-		return 1;
-	if (aa->aa_addr == 0x4806E000 && aa->aa_intr == 74)
-		return 1;
-	{
-		extern bus_addr_t comconsaddr;
-
-		if (comconsaddr == aa->aa_addr)
-			return (1);
+	switch (board_id) {
+	case BOARD_ID_OMAP3_BEAGLE:
+		if (aa->aa_addr == 0x4806A000 && aa->aa_intr == 72) {
+			rv = 1;
+			break;
+		}
+		if (aa->aa_addr == 0x4806C000 && aa->aa_intr == 73) {
+			rv = 1;
+			break;
+		}
+		if (aa->aa_addr == 0x49020000 && aa->aa_intr == 74) {
+			rv = 1;
+			break;
+		}
+		break;
+	case BOARD_ID_OMAP4_PANDA:
+		if (aa->aa_addr == 0x4806A000 && aa->aa_intr == 72) {
+			rv = 1;
+			break;
+		}
+		if (aa->aa_addr == 0x4806C000 && aa->aa_intr == 73) {
+			rv = 1;
+			break;
+		}
+		if (aa->aa_addr == 0x48020000 && aa->aa_intr == 74) {
+			rv = 1;
+			break;
+		}
+		if (aa->aa_addr == 0x4806E000 && aa->aa_intr == 70) {
+			rv = 1;
+			break;
+		}
+		break;
+	default:
+		printf("unknown boardid %d", board_id);
 	}
-
-	if (bus_space_map(bt, aa->aa_addr, aa->aa_size, 0, &bh))
-		return (0);
-
-	/* Make sure the UART is enabled - XXX */
-	bus_space_write_1(bt, bh, com_ier, IER_EUART);
-
-	rv = comprobe1(bt, bh);
-	bus_space_unmap(bt, bh, aa->aa_size);
 
 	return (rv);
 }

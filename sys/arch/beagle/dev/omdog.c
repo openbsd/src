@@ -1,4 +1,4 @@
-/* $OpenBSD: omdog.c,v 1.1 2009/05/08 03:13:26 drahn Exp $ */
+/* $OpenBSD: omdog.c,v 1.2 2011/10/21 22:55:01 drahn Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -73,6 +73,14 @@ struct cfdriver omdog_cd = {
 int
 omdog_match(struct device *parent, void *v, void *aux)
 {
+	switch (board_id) {
+	case BOARD_ID_OMAP3_BEAGLE:
+		break; /* continue trying */
+	case BOARD_ID_OMAP4_PANDA:
+		return 0; /* not ported yet */
+	default:
+		return 0; /* unknown */
+	}
 	return (1);
 }
 
