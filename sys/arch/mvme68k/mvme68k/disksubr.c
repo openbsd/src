@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.72 2011/04/16 03:21:15 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.73 2011/10/21 13:08:01 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -136,7 +136,7 @@ done:
 void
 bsdtocpulabel(struct disklabel *lp, struct mvmedisklabel *clp)
 {
-	char *tmot = "MOTOROLA", *id = "M68K", *mot;
+	char *tmot = "MOTOROLA", *id = "M88K", *mot;
 	int i;
 	u_short osa_u, osa_l, osl;
 	u_int oss;
@@ -187,6 +187,7 @@ bsdtocpulabel(struct disklabel *lp, struct mvmedisklabel *clp)
 	bcopy(&lp->d_partitions[0], clp->vid_4, sizeof(struct partition) * 4);
 	bcopy(&lp->d_partitions[4], clp->cfg_4, sizeof(struct partition) * 12);
 	clp->version = 2;
+	bcopy(&lp->d_uid, clp->vid_4_1, sizeof(lp->d_uid));
 
 	/* Put "MOTOROLA" in the VID. This makes it a valid boot disk. */
 	for (mot = clp->vid_mot, i = 0; i < 8; i++)
@@ -232,6 +233,7 @@ cputobsdlabel(struct disklabel *lp, struct mvmedisklabel *clp)
 
 	bcopy(clp->vid_4, &lp->d_partitions[0], sizeof(struct partition) * 4);
 	bcopy(clp->cfg_4, &lp->d_partitions[4], sizeof(struct partition) * 12);
+	bcopy(clp->vid_4_1, &lp->d_uid, sizeof(lp->d_uid));
 
 	if (clp->version < 2) {
 		struct __partitionv0 *v0pp = (struct __partitionv0 *)lp->d_partitions;
