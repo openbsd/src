@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.293 2011/10/21 17:28:34 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.294 2011/10/21 17:31:23 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -111,9 +111,7 @@ Specialization hooks exist for
 .Ar distpatch ,
 .Ar extract ,
 .Ar fake ,
-.Ar fetch ,
 .Ar install ,
-.Ar package ,
 .Ar patch ,
 .Ar regress .
 See individual targets for exceptions.
@@ -2336,6 +2334,13 @@ Set
 to nothing and override
 .Ar post-extract
 instead.
+.It Ar {pre,do,post}-fetch
+These prevented bulk mechanisms from running properly.
+.It Ar {pre,do,post}-package
+There is no port that requires special treatment during packaging,
+as
+.Ar {pre,do,post}-install
+should take care of every necessity.
 .It Ar fetch-all , Ar fetch-list , Ar mirror-distfiles
 See
 .Xr mirroring-ports 7
