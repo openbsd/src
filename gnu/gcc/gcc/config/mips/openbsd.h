@@ -132,6 +132,7 @@ Boston, MA 02110-1301, USA.  */
    %{shared:-shared} %{R*} \
    %{static:-Bstatic} \
    %{!static:-Bdynamic} \
+   %{rdynamic:-export-dynamic} \
    %{assert*} \
    %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so}"
 

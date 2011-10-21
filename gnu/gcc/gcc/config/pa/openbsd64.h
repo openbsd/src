@@ -149,7 +149,8 @@ Boston, MA 02111-1307, USA.  */
    %{!shared: %{!non_shared: %{!call_shared: -non_shared}}} \
    %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so} \
    %{!nostdlib:%{!r*:%{!e*:-e __start}}} -dc -dp \
-   %{static:-Bstatic} %{!static:-Bdynamic} %{assert*}"
+   %{static:-Bstatic} %{!static:-Bdynamic} %{rdynamic:-export-dynamic} \
+   %{assert*}"
 
 /* Layout of source language data types. */
 
