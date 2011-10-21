@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbiosvar.h,v 1.9 2011/03/23 16:54:35 pirofti Exp $	*/
+/*	$OpenBSD: mpbiosvar.h,v 1.10 2011/10/21 18:16:13 kettenis Exp $	*/
 /* $NetBSD: mpbiosvar.h,v 1.1.2.3 2000/02/29 13:17:20 sommerfeld Exp $ */
 
 /*-
@@ -69,6 +69,7 @@ struct mp_intr_map
 #if defined(_KERNEL)
 extern int mp_verbose;
 extern struct mp_bus *mp_busses;
+extern int mp_nbusses;
 extern struct mp_intr_map *mp_intrs;
 extern int mp_nintrs;
 extern struct mp_bus *mp_isa_bus;

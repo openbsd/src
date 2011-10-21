@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.64 2011/10/13 18:09:33 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.65 2011/10/21 18:16:13 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -639,10 +639,16 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		 */
 		int mpspec_pin = (dev<<2)|(pin-1);
 
-		for (mip = mp_busses[bus].mb_intrs; mip != NULL; mip=mip->next) {
-			if (mip->bus_pin == mpspec_pin) {
-				ihp->line = mip->ioapic_ih | line;
-				return 0;
+		if (bus < mp_nbusses) {
+			for (mip = mp_busses[bus].mb_intrs;
+			     mip != NULL; mip = mip->next) {
+				if (&mp_busses[bus] == mp_isa_bus ||
+				    &mp_busses[bus] == mp_eisa_bus)
+					continue;
+				if (mip->bus_pin == mpspec_pin) {
+					ihp->line = mip->ioapic_ih | line;
+					return 0;
+				}
 			}
 		}
 
