@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.44 2011/10/13 18:23:39 claudio Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.45 2011/10/21 15:45:55 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -296,6 +296,7 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	struct pf_pdesc		 pd;
 	struct pf_addr		 osaddr, odaddr;
 	u_int16_t		 osport = 0, odport = 0;
+	u_int8_t		 proto = 0;
 
 	m = (struct mbuf *)src_arg;
 	dst = dst_arg;
@@ -340,33 +341,46 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	case AF_INET: {
 		struct ip	*h;
 
+		if (m->m_pkthdr.len < sizeof(*h))
+			return;
 		m_copydata(m, 0, sizeof(*h), mdst);
 		h = (struct ip *)mdst;
 		hlen = h->ip_hl << 2;
-		if (hlen > sizeof(*h))
+		if (hlen > sizeof(*h) && (m->m_pkthdr.len >= hlen))
 			m_copydata(m, sizeof(*h), hlen - sizeof(*h),
 			    mdst + sizeof(*h));
 		break;
 	    }
 	case AF_INET6: {
+		struct ip6_hdr	*h;
+
+		if (m->m_pkthdr.len < sizeof(*h))
+			return;
 		hlen = sizeof(struct ip6_hdr);
 		m_copydata(m, 0, hlen, mdst);
+		h = (struct ip6_hdr *)mdst;
+		proto = h->ip6_nxt;
 		break;
 	    }
 	default:
 		/* shouldn't happen ever :-) */
-		m_copydata(m, 0, len, dst);
+		m_copydata(m, 0, min(len, m->m_pkthdr.len), dst);
 		return;
 	}
 
-	/* copy 8 bytes of the protocol header */
-	m_copydata(m, hlen, 8, mdst + hlen);
+	if (m->m_pkthdr.len < hlen + 8 && proto != IPPROTO_NONE)
+		return;
+	else if (proto != IPPROTO_NONE) {
+		/* copy 8 bytes of the protocol header */
+		m_copydata(m, hlen, 8, mdst + hlen);
+		hlen += 8;
+	}
 
-	mhdr->m_len += hlen + 8;
+	mhdr->m_len += hlen;
 	mhdr->m_pkthdr.len = mhdr->m_len;
 
-	/* create a chain mhdr -> mptr, mptr->m_data = (m->m_data+hlen+8) */
-	mp = m_getptr(m, hlen + 8, &off);
+	/* create a chain mhdr -> mptr, mptr->m_data = (m->m_data+hlen) */
+	mp = m_getptr(m, hlen, &off);
 	if (mp != NULL) {
 		bcopy(mp, mptr, sizeof(*mptr));
 		cp = mtod(mp, char *);
@@ -374,7 +388,7 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 		mptr->m_len -= off;
 		mptr->m_flags &= ~M_PKTHDR;
 		mhdr->m_next = mptr;
-		mhdr->m_pkthdr.len += m->m_pkthdr.len - (hlen + 8);
+		mhdr->m_pkthdr.len += m->m_pkthdr.len - hlen;
 	}
 
 	/* rewrite addresses if needed */
@@ -405,9 +419,15 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 		pfloghdr->dport = odport;
 	}
 
+	pd.tot_len = min(pd.tot_len, len);
+	pd.tot_len -= pd.m->m_data - pd.m->m_pktdat;
+
 	if (afto)
 		pf_translate_af(&pd);
 
 	mlen = min(pd.m->m_pkthdr.len, len);
 	m_copydata(pd.m, 0, mlen, dst);
+	len -= mlen;
+	if (len > 0)
+		bzero(dst + mlen, len);
 }
