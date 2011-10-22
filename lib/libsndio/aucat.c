@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.51 2011/10/17 21:09:11 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.52 2011/10/22 10:23:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -157,16 +157,18 @@ size_t
 aucat_wdata(struct aucat *hdl, const void *buf, size_t len, unsigned wbpf, int *eof)
 {
 	ssize_t n;
+	size_t datasize;
 
 	switch (hdl->wstate) {
 	case WSTATE_IDLE:
-		if (len > AMSG_DATAMAX)
-			len = AMSG_DATAMAX;
-		len -= len % wbpf;
-		if (len == 0)
-			len = wbpf;
+		datasize = len;
+		if (datasize > AMSG_DATAMAX)
+			datasize = AMSG_DATAMAX;
+		datasize -= datasize % wbpf;
+		if (datasize == 0)
+			datasize = wbpf;
 		hdl->wmsg.cmd = htonl(AMSG_DATA);
-		hdl->wmsg.u.data.size = htonl(len);
+		hdl->wmsg.u.data.size = htonl(datasize);
 		hdl->wtodo = sizeof(struct amsg);
 		hdl->wstate = WSTATE_MSG;
 		/* FALLTHROUGH */
