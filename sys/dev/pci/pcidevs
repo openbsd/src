@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1624 2011/10/09 21:39:11 jsg Exp $
+$OpenBSD: pcidevs,v 1.1625 2011/10/22 19:03:05 camield Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -320,6 +320,7 @@ vendor	FRESCO		0x1b73	Fresco Logic
 vendor	SYMPHONY2	0x1c1c	Symphony Labs
 vendor	TEKRAM2		0x1de1	Tekram
 vendor	TEHUTI		0x1fc9	Tehuti Networks
+vendor	SUNIX2		0x1fd4	Sunix
 vendor	HINT		0x3388	Hint
 vendor	3DLABS		0x3d3d	3D Labs
 vendor	AVANCE2		0x4005	Avance Logic
@@ -5230,6 +5231,7 @@ product SUNDANCE TC9021_ALT	0x9021	TC9021
 /* Sunix */
 product SUNIX 40XX		0x7168	40XX
 product SUNIX 4018A		0x7268	4018A
+product SUNIX2 50XX		0x1999	50XX
 
 /* Surecom products */
 product SURECOM NE34		0x0e34	NE-34
