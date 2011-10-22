@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_target.h,v 1.14 2009/06/24 11:00:53 krw Exp $	*/
+/*	$OpenBSD: isp_target.h,v 1.15 2011/10/22 19:34:06 miod Exp $	*/
 /* $FreeBSD: src/sys/dev/isp/isp_target.h,v 1.30 2007/03/10 02:39:54 mjacob Exp $ */
 /*-
  *  Copyright (c) 1997-2007 by Matthew Jacob
@@ -888,8 +888,13 @@ typedef struct {
  * Debug macros
  */
 
+#ifdef SMALL_KERNEL
+#define	ISP_TDQE(isp, msg, idx, arg)	\
+    do { } while (0)
+#else
 #define	ISP_TDQE(isp, msg, idx, arg)	\
     if (isp->isp_dblev & ISP_LOGTDEBUG2) isp_print_qentry(isp, msg, idx, arg)
+#endif
 
 #ifndef	ISP_TOOLS
 /*

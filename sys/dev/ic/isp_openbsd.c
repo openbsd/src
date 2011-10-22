@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.46 2011/04/05 12:09:20 dlg Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.47 2011/10/22 19:34:06 miod Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for QLogic adapters.
  *
@@ -341,7 +341,9 @@ ispcmd(XS_T *xs)
 		if (isp->isp_osinfo.blocked) {
 			isp_add2_blocked_queue(isp, xs);
 			ISP_UNLOCK(isp);
+#ifndef SMALL_KERNEL
 			isp_prt(isp, ISP_LOGDEBUG0, "added to blocked queue");
+#endif
 			return;
 		}
 	}
@@ -365,18 +367,24 @@ ispcmd(XS_T *xs)
 		}
 		if (isp->isp_osinfo.hiwater < isp->isp_nactive) {
 			isp->isp_osinfo.hiwater = isp->isp_nactive;
+#ifndef SMALL_KERNEL
 			isp_prt(isp, ISP_LOGDEBUG0,
 			    "Active Hiwater Mark=%d", isp->isp_nactive);
+#endif
 		}
 		break;
 	case CMD_EAGAIN:
 		isp->isp_osinfo.blocked |= 2;
+#ifndef SMALL_KERNEL
 		isp_prt(isp, ISP_LOGDEBUG0, "blocking queue");
+#endif
 		isp_add2_blocked_queue(isp, xs);
 		break;
 	case CMD_RQLATER:
+#ifndef SMALL_KERNEL
 		isp_prt(isp, ISP_LOGDEBUG1, "retrying later for %d.%d",
 		    XS_TGT(xs), XS_LUN(xs));
+#endif
 		timeout_set(&xs->stimeout, isp_requeue, xs);
 		timeout_add_sec(&xs->stimeout, 1);
 		XS_CMD_S_TIMER(xs);
@@ -460,7 +468,9 @@ isp_done(XS_T *xs)
 		scsi_done(xs);
 		if (isp->isp_osinfo.blocked == 2) {
 			isp->isp_osinfo.blocked = 0;
+#ifndef SMALL_KERNEL
 			isp_prt(isp, ISP_LOGDEBUG0, "restarting blocked queue");
+#endif
 			isp_restart(isp);
 		}
 	}
@@ -485,17 +495,21 @@ isp_wdog(void *arg)
 		u_int16_t sema, mbox;
 
 		if (XS_CMD_DONE_P(xs)) {
+#ifndef SMALL_KERNEL
 			isp_prt(isp, ISP_LOGDEBUG1,
 			    "watchdog found done cmd (handle 0x%x)",
 			    handle);
+#endif
 			ISP_UNLOCK(isp);
 			return;
 		}
 
 		if (XS_CMD_WDOG_P(xs)) {
+#ifndef SMALL_KERNEL
 			isp_prt(isp, ISP_LOGDEBUG1,
 			    "recursive watchdog (handle 0x%x)",
 			    handle);
+#endif
 			ISP_UNLOCK(isp);
 			return;
 		}
@@ -553,9 +567,12 @@ isp_wdog(void *arg)
 			isp_put_request(isp, mp, qe);
 			ISP_ADD_REQUEST(isp, nxti);
 		}
-	} else if (isp->isp_dblev) {
+	}
+#ifndef SMALL_KERNEL
+	  else if (isp->isp_dblev) {
 		isp_prt(isp, ISP_LOGDEBUG1, "watchdog with no command");
 	}
+#endif
 	ISP_UNLOCK(isp);
 }
 
@@ -603,8 +620,10 @@ isp_requeue(void *arg)
 	r = isp_start(xs);
 	switch (r) {
 	case CMD_QUEUED:
+#ifndef SMALL_KERNEL
 		isp_prt(isp, ISP_LOGDEBUG1, "restarted command for %d.%d",
 		    XS_TGT(xs), XS_LUN(xs));
+#endif
 		if (xs->timeout) {
 			timeout_set(&xs->stimeout, isp_wdog, xs);
 			timeout_add(&xs->stimeout, _XT(xs));
@@ -612,14 +631,18 @@ isp_requeue(void *arg)
 		}
 		break;
 	case CMD_EAGAIN:
+#ifndef SMALL_KERNEL
 		isp_prt(isp, ISP_LOGDEBUG0, "blocked cmd again");
+#endif
 		isp->isp_osinfo.blocked |= 2;
 		isp_add2_blocked_queue(isp, xs);
 		break;
 	case CMD_RQLATER:
+#ifndef SMALL_KERNEL
 		isp_prt(isp, ISP_LOGDEBUG0, "%s for %d.%d",
 		    (r == CMD_EAGAIN)? "CMD_EAGAIN" : "CMD_RQLATER",
 		    XS_TGT(xs), XS_LUN(xs));
+#endif
 		timeout_set(&xs->stimeout, isp_requeue, xs);
 		timeout_add_sec(&xs->stimeout, 1);
 		XS_CMD_S_TIMER(xs);
@@ -660,7 +683,9 @@ isp_trestart(void *arg)
 			if (isp->isp_osinfo.wqf == NULL)
 				nrestarted++;
 		} while (list != NULL);
+#ifndef SMALL_KERNEL
 		isp_prt(isp, ISP_LOGDEBUG0, "requeued %d commands", nrestarted);
+#endif
 	} else {
 		ISP_UNLOCK(isp);
 	}
@@ -684,7 +709,9 @@ isp_restart(struct ispsoftc *isp)
 			if (isp->isp_osinfo.wqf == NULL)
 				nrestarted++;
 		} while (list != NULL);
+#ifndef SMALL_KERNEL
 		isp_prt(isp, ISP_LOGDEBUG0, "requeued %d commands", nrestarted);
+#endif
 	}
 }
 

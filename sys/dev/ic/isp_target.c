@@ -1,4 +1,4 @@
-/* $OpenBSD: isp_target.c,v 1.17 2010/02/18 10:40:53 sobrado Exp $ */
+/* $OpenBSD: isp_target.c,v 1.18 2011/10/22 19:34:06 miod Exp $ */
 /*-
  *  Copyright (c) 1997-2007 by Matthew Jacob
  *  All rights reserved.
@@ -261,9 +261,11 @@ isp_target_notify(ispsoftc_t *isp, void *vptr, uint32_t *optrp)
 			inot_24xx = (in_fcentry_24xx_t *) local;
 			status = inot_24xx->in_status;
 			seqid = inot_24xx->in_rxid;
+#ifndef SMALL_KERNEL
 			isp_prt(isp, ISP_LOGTDEBUG0,
 			    "Immediate Notify status=0x%x seqid=0x%x",
 			    status, seqid);
+#endif
 			switch (status) {
 			case IN24XX_LIP_RESET:
 			case IN24XX_LINK_RESET:
@@ -305,9 +307,11 @@ isp_target_notify(ispsoftc_t *isp, void *vptr, uint32_t *optrp)
 			}
 		}
 
+#ifndef SMALL_KERNEL
 		isp_prt(isp, ISP_LOGTDEBUG0,
 		    "Immediate Notify On Bus %d, status=0x%x seqid=0x%x",
 		    bus, status, seqid);
+#endif
 
 		switch (status) {
 		case IN_MSG_RECEIVED:
@@ -1091,9 +1095,11 @@ isp_notify_ack(ispsoftc_t *isp, void *arg)
 		} else {
 			isp_put_notify_ack_fc(isp, na, (na_fcentry_t *)outp);
 		}
+#ifndef SMALL_KERNEL
 		isp_prt(isp, ISP_LOGTDEBUG0, "notify ack loopid %u seqid %x "
 		    "flags %x tflags %x response %x", iid, na->na_seqid,
 		    na->na_flags, na->na_task_flags, na->na_response);
+#endif
 	} else {
 		na_entry_t *na = (na_entry_t *) storage;
 		if (arg) {
@@ -1112,9 +1118,11 @@ isp_notify_ack(ispsoftc_t *isp, void *arg)
 		na->na_header.rqs_entry_type = RQSTYPE_NOTIFY_ACK;
 		na->na_header.rqs_entry_count = 1;
 		isp_put_notify_ack(isp, na, (na_entry_t *)outp);
+#ifndef SMALL_KERNEL
 		isp_prt(isp, ISP_LOGTDEBUG0, "notify ack loopid %u lun %u tgt "
 		    "%u seqid %x event %x", na->na_iid, na->na_lun, na->na_tgt,
 		    na->na_seqid, na->na_event);
+#endif
 	}
 	ISP_TDQE(isp, "isp_notify_ack", (int) optr, storage);
 	ISP_ADD_REQUEST(isp, nxti);
@@ -1353,7 +1361,9 @@ isp_handle_ctio(ispsoftc_t *isp, ct_entry_t *ct)
 		if (fmsg == NULL)
 			fmsg = "ABORT TAG message sent by Initiator";
 
+#ifndef SMALL_KERNEL
 		isp_prt(isp, ISP_LOGTDEBUG0, "CTIO destroyed by %s", fmsg);
+#endif
 		break;
 
 	case CT_INVAL:
@@ -1508,8 +1518,10 @@ isp_handle_ctio2(ispsoftc_t *isp, ct2_entry_t *ct)
 			fmsg = "ABORT";
 		}
 
+#ifndef SMALL_KERNEL
 		isp_prt(isp, ISP_LOGTDEBUG0,
 		    "CTIO2 destroyed by %s: RX_ID=0x%x", fmsg, ct->ct_rxid);
+#endif
 		break;
 
 	case CT_INVAL:
@@ -1659,8 +1671,10 @@ isp_handle_ctio7(ispsoftc_t *isp, ct7_entry_t *ct)
 		if (fmsg == NULL) {
 			fmsg = "ABORT";
 		}
+#ifndef SMALL_KERNEL
 		isp_prt(isp, ISP_LOGTDEBUG0,
 		    "CTIO7 destroyed by %s: RX_ID=0x%x", fmsg, ct->ct_rxid);
+#endif
 		break;
 
 	case CT7_TIMEOUT:
