@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.65 2011/08/29 20:21:44 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.66 2011/10/22 01:16:39 drahn Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -111,7 +111,6 @@ struct openpic_softc {
 int	openpic_match(struct device *parent, void *cf, void *aux);
 void	openpic_attach(struct device *, struct device *, void *);
 void	openpic_do_pending_int(int pcpl);
-void	openpic_do_pending_int_dis(int pcpl, int s);
 void	openpic_collect_preconf_intr(void);
 void	openpic_ext_intr(void);
 
@@ -442,51 +441,29 @@ openpic_calc_mask()
 void
 openpic_do_pending_int(int pcpl)
 {
-	int s;
-	s = ppc_intr_disable();
-	openpic_do_pending_int_dis(pcpl, s);
-	ppc_intr_enable(s);
-
-}
-
-/*
- * This function expect interrupts disabled on entry and exit,
- * the s argument indicates if interrupts may be enabled during
- * the processing of off level interrupts, s 'should' always be 1.
- */
-void
-openpic_do_pending_int_dis(int pcpl, int s)
-{
 	struct cpu_info *ci = curcpu();
 
-	if (ci->ci_iactive & CI_IACTIVE_PROCESSING_SOFT) {
-		/* soft interrupts are being processed, just set ipl/return */
-		openpic_setipl(pcpl);
-		return;
-	}
-
-	atomic_setbits_int(&ci->ci_iactive, CI_IACTIVE_PROCESSING_SOFT);
-
 	do {
-		if((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTCLOCK)) &&
+		if ((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTCLOCK)) &&
 		    (pcpl < IPL_SOFTCLOCK)) {
  			ci->ci_ipending &= ~SI_TO_IRQBIT(SI_SOFTCLOCK);
+			openpic_setipl(IPL_SOFTCLOCK);
 			softintr_dispatch(SI_SOFTCLOCK);
  		}
-		if((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTNET)) &&
+		if ((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTNET)) &&
 		    (pcpl < IPL_SOFTNET)) {
 			ci->ci_ipending &= ~SI_TO_IRQBIT(SI_SOFTNET);
+			openpic_setipl(IPL_SOFTNET);
 			softintr_dispatch(SI_SOFTNET);
 		}
-		if((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTTTY)) &&
+		if ((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTTTY)) &&
 		    (pcpl < IPL_SOFTTTY)) {
 			ci->ci_ipending &= ~SI_TO_IRQBIT(SI_SOFTTTY);
+			openpic_setipl(IPL_SOFTTTY);
 			softintr_dispatch(SI_SOFTTTY);
 		}
 	} while (ci->ci_ipending & ppc_smask[pcpl]);
 	openpic_setipl(pcpl);	/* Don't use splx... we are here already! */
-
-	atomic_clearbits_int(&ci->ci_iactive, CI_IACTIVE_PROCESSING_SOFT);
 }
 
 void
@@ -647,7 +624,7 @@ openpic_ext_intr()
 				 */
 				break;
 			} else {
-				openpic_do_pending_int_dis(pcpl, 1);
+				openpic_do_pending_int(pcpl);
 			}
 		} while (ci->ci_ipending & ppc_smask[pcpl]);
 	}
