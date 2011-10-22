@@ -1,4 +1,4 @@
-.\" $OpenBSD: uath.4,v 1.24 2011/09/03 22:59:08 jmc Exp $
+.\" $OpenBSD: uath.4,v 1.25 2011/10/22 20:05:54 jmc Exp $
 .\"
 .\" Copyright (c) 2006
 .\"     Damien Bergamini <damien.bergamini@free.fr>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 3 2011 $
+.Dd $Mdocdate: October 22 2011 $
 .Dt UATH 4
 .Os
 .Sh NAME
@@ -61,14 +61,12 @@ or to scan for access points.
 .Pp
 .Nm
 supports hardware WEP.
-Wired Equivalent Privacy (WEP) is the de facto encryption standard
-for wireless networks.
 It can be typically configured in one of three modes:
 no encryption; 40-bit encryption; or 104-bit encryption.
-Unfortunately, due to serious weaknesses in WEP protocol
-it is strongly recommended that it not be used as the
-sole mechanism to secure wireless communication.
-WEP is not enabled by default.
+It is strongly recommended that WEP
+not be used as the sole mechanism
+to secure wireless communication,
+due to serious weaknesses in it.
 .Pp
 The
 .Nm
