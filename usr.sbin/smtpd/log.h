@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.1 2010/11/28 13:56:43 gilles Exp $	*/
+/*	$OpenBSD: log.h,v 1.2 2011/10/22 00:16:33 eric Exp $	*/
 
 /*
  * Copyright (c) 2010 Gilles Chehade <gilles@openbsd.org>
@@ -26,5 +26,7 @@ void		log_info(const char *, ...)
     __attribute__ ((format (printf, 1, 2)));
 void		log_debug(const char *, ...)
     __attribute__ ((format (printf, 1, 2)));
+void		log_trace(int, const char *, ...)
+    __attribute__ ((format (printf, 2, 3)));
 __dead void	fatal(const char *);
 __dead void	fatalx(const char *);

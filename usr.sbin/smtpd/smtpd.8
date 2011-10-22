@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.8,v 1.12 2010/05/24 19:44:23 jmc Exp $
+.\"	$OpenBSD: smtpd.8,v 1.13 2011/10/22 00:16:33 eric Exp $
 .\"
 .\" Copyright (c) 2008, Gilles Chehade <gilles@openbsd.org>
 .\" Copyright (c) 2008, Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 24 2010 $
+.Dd $Mdocdate: October 22 2011 $
 .Dt SMTPD 8
 .Os
 .Sh NAME
@@ -67,6 +67,15 @@ Specify an alternative configuration file.
 .It Fl n
 Configtest mode.
 Only check the configuration file for validity.
+.It Fl T Ar trace
+Show additionnal debug traces when one of the
+.Fl v
+or
+.Fl d
+flags is specified. The only accepted value is
+.Ar imsg ,
+which displays the messages exchanged between the various
+smtpd processes.
 .It Fl v
 Produce more verbose output.
 .El

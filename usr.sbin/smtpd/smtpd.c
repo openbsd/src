@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.131 2011/10/09 18:39:54 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.132 2011/10/22 00:16:33 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -442,11 +442,11 @@ main(int argc, char *argv[])
 
 	TAILQ_INIT(&queueing_q);
 
-	while ((c = getopt(argc, argv, "dD:nf:v")) != -1) {
+	while ((c = getopt(argc, argv, "dD:nf:T:v")) != -1) {
 		switch (c) {
 		case 'd':
 			debug = 2;
-			verbose = 1;
+			verbose |= TRACE_VERBOSE;
 			break;
 		case 'D':
 			if (cmdline_symset(optarg) < 0)
@@ -460,14 +460,22 @@ main(int argc, char *argv[])
 		case 'f':
 			conffile = optarg;
 			break;
+		case 'T':
+			if (!strcmp(optarg, "imsg"))
+				verbose |= TRACE_IMSG;
+			else
+				log_warnx("unknown trace flag \"%s\"", optarg);
+			break;
 		case 'v':
-			verbose = 1;
-			opts |= SMTPD_OPT_VERBOSE;
+			verbose |=  TRACE_VERBOSE;
 			break;
 		default:
 			usage();
 		}
 	}
+
+	if (!(verbose & TRACE_VERBOSE))
+		verbose = 0;
 
 	argv += optind;
 	argc -= optind;
@@ -1120,11 +1128,11 @@ const char * imsg_to_str(int);
 void
 log_imsg(int to, int from, struct imsg *imsg)
 {
-	log_debug("imsg: %s <- %s: %s (len=%zu)",
-		proc_to_str(to),
-		proc_to_str(from),
-		imsg_to_str(imsg->hdr.type),
-		imsg->hdr.len - IMSG_HEADER_SIZE);
+	log_trace(TRACE_IMSG, "imsg: %s <- %s: %s (len=%zu)",
+	    proc_to_str(to),
+	    proc_to_str(from),
+	    imsg_to_str(imsg->hdr.type),
+	    imsg->hdr.len - IMSG_HEADER_SIZE);
 }
 
 #define CASE(x) case x : return #x
