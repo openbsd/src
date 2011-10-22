@@ -1,6 +1,6 @@
 define(MACHINE,palm)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.9 2011/10/06 20:49:27 deraadt Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.10 2011/10/22 19:31:23 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -103,6 +103,7 @@ _std(1, 2, 8, 6)
 dnl
 dnl *** palm specific targets
 dnl
+twrget(all, au, audio, 0, 1, 2)dnl
 target(all, ch, 0)dnl
 target(all, nnpfs, 0)dnl
 target(all, vscsi, 0)dnl

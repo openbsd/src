@@ -1,6 +1,6 @@
 define(MACHINE,socppc)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.15 2011/10/06 20:49:27 deraadt Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.16 2011/10/22 19:31:23 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -91,6 +91,7 @@ _std(1, 2, 43, 6)
 dnl
 dnl *** socppc specific targets
 dnl
+twrget(all, au, audio, 0, 1, 2)dnl
 target(all, ch, 0)dnl
 dnl target(all, nnpfs, 0)dnl
 target(all, vscsi, 0)dnl
