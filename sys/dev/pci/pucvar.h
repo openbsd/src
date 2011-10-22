@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucvar.h,v 1.10 2010/07/22 17:16:10 pirofti Exp $	*/
+/*	$OpenBSD: pucvar.h,v 1.11 2011/10/22 19:06:21 camield Exp $	*/
 /*	$NetBSD: pucvar.h,v 1.2 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  * Author: Christopher G. Demetriou, May 14, 1998.
  */
 
-#define	PUC_MAX_PORTS		8
+#define	PUC_MAX_PORTS		16
 
 struct puc_device_description {
 	u_int16_t	rval[4];
