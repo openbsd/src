@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1624 2011/10/09 21:39:11 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1625 2011/10/22 19:03:05 camield Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -17616,6 +17616,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "4018A",
 	},
 	{
+	    PCI_VENDOR_SUNIX2, PCI_PRODUCT_SUNIX2_50XX,
+	    "50XX",
+	},
+	{
 	    PCI_VENDOR_SURECOM, PCI_PRODUCT_SURECOM_NE34,
 	    "NE-34",
 	},
@@ -20970,6 +20974,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_TEHUTI,
 	    "Tehuti Networks",
+	},
+	{
+	    PCI_VENDOR_SUNIX2,
+	    "Sunix",
 	},
 	{
 	    PCI_VENDOR_HINT,

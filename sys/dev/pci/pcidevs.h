@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1624 2011/10/09 21:39:11 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1625 2011/10/22 19:03:05 camield Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -325,6 +325,7 @@
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram */
 #define	PCI_VENDOR_TEHUTI	0x1fc9		/* Tehuti Networks */
+#define	PCI_VENDOR_SUNIX2	0x1fd4		/* Sunix */
 #define	PCI_VENDOR_HINT	0x3388		/* Hint */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic */
@@ -5235,6 +5236,7 @@
 /* Sunix */
 #define	PCI_PRODUCT_SUNIX_40XX	0x7168		/* 40XX */
 #define	PCI_PRODUCT_SUNIX_4018A	0x7268		/* 4018A */
+#define	PCI_PRODUCT_SUNIX2_50XX	0x1999		/* 50XX */
 
 /* Surecom products */
 #define	PCI_PRODUCT_SURECOM_NE34	0x0e34		/* NE-34 */
