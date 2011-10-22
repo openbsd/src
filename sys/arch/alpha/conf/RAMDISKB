@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.37 2011/06/29 20:52:08 matthew Exp $
+#	$OpenBSD: RAMDISKB,v 1.38 2011/10/22 19:33:04 miod Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -150,4 +150,4 @@ wskbd*		at pckbd? mux 1
 #pseudo-device	bpfilter	1
 pseudo-device	loop
 pseudo-device	rd		1
-pseudo-device	wsmux		2	# mouse & keyboard multiplexor
+#pseudo-device	wsmux		2	# mouse & keyboard multiplexor
