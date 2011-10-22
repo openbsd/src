@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.5 2011/10/20 01:11:41 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.6 2011/10/22 20:54:52 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -81,14 +81,14 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* Bl */
 	{ NULL, NULL, NULL, NULL, NULL }, /* El */
 	{ NULL, pre_it, NULL, NULL, NULL }, /* _It */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Ad */
+	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Ad */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _An */
 	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Ar */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Cd */
+	{ NULL, pre_enc, post_enc, "\\fB", "\\fP" }, /* Cd */
 	{ NULL, pre_enc, post_enc, "\\fB", "\\fP" }, /* Cm */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Dv */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Er */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Ev */
+	{ NULL, pre_enc, post_enc, "\\fR", "\\fP" }, /* Dv */
+	{ NULL, pre_enc, post_enc, "\\fR", "\\fP" }, /* Er */
+	{ NULL, pre_enc, post_enc, "\\fR", "\\fP" }, /* Ev */
 	{ NULL, pre_enc, post_enc, "The \\fB",
 	    "\\fP\nutility exits 0 on success, and >0 if an error occurs."
 	    }, /* Ex */
@@ -99,7 +99,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ft */
 	{ NULL, pre_enc, post_enc, "\\fB", "\\fP" }, /* Ic */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _In */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Li */
+	{ NULL, pre_enc, post_enc, "\\fR", "\\fP" }, /* Li */
 	{ cond_head, pre_enc, NULL, "\\- ", NULL }, /* Nd */
 	{ NULL, pre_nm, post_nm, NULL, NULL }, /* Nm */
 	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Op */
@@ -125,8 +125,8 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* _%R */
 	{ NULL, pre_enc, post_percent, "\"", "\"" }, /* %T */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _%V */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Ac */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Ao */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Ac */
+	{ cond_body, pre_enc, post_enc, "<", ">" }, /* Ao */
 	{ cond_body, pre_enc, post_enc, "<", ">" }, /* Aq */
 	{ NULL, NULL, NULL, NULL, NULL }, /* At */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Bc */
@@ -136,16 +136,16 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, pre_ux, NULL, "BSD/OS", NULL }, /* Bsx */
 	{ NULL, pre_bx, NULL, NULL, NULL }, /* Bx */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Db */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Dc */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Do */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Dc */
+	{ cond_body, pre_enc, post_enc, "``", "''" }, /* Do */
 	{ cond_body, pre_enc, post_enc, "``", "''" }, /* Dq */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ec */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ef */
 	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Em */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Eo */
 	{ NULL, pre_ux, NULL, "FreeBSD", NULL }, /* Fx */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Ms */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _No */
+	{ NULL, pre_enc, post_enc, "\\fB", "\\fP" }, /* Ms */
+	{ NULL, NULL, NULL, NULL, NULL }, /* No */
 	{ NULL, pre_ns, NULL, NULL, NULL }, /* Ns */
 	{ NULL, pre_ux, NULL, "NetBSD", NULL }, /* Nx */
 	{ NULL, pre_ux, NULL, "OpenBSD", NULL }, /* Ox */
@@ -153,26 +153,26 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, post_pf, NULL, NULL }, /* Pf */
 	{ cond_body, pre_enc, post_enc, "(", ")" }, /* Po */
 	{ cond_body, pre_enc, post_enc, "(", ")" }, /* Pq */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Qc */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Qc */
 	{ cond_body, pre_enc, post_enc, "`", "'" }, /* Ql */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Qo */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Qq */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Re */
+	{ cond_body, pre_enc, post_enc, "\"", "\"" }, /* Qo */
+	{ cond_body, pre_enc, post_enc, "\"", "\"" }, /* Qq */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Re */
 	{ cond_body, pre_pp, NULL, NULL, NULL }, /* Rs */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Sc */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _So */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Sc */
+	{ cond_body, pre_enc, post_enc, "`", "'" }, /* So */
 	{ cond_body, pre_enc, post_enc, "`", "'" }, /* Sq */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Sm */
 	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Sx */
 	{ NULL, pre_enc, post_enc, "\\fB", "\\fP" }, /* Sy */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Tn */
+	{ NULL, pre_enc, post_enc, "\\fR", "\\fP" }, /* Tn */
 	{ NULL, pre_ux, NULL, "UNIX", NULL }, /* Ux */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Xc */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Xo */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Fo */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Fc */
 	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Oo */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Oc */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Oc */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Bk */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ek */
 	{ NULL, pre_ux, NULL, "is currently in beta test.", NULL }, /* Bt */
@@ -183,9 +183,9 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, pre_pp, NULL, NULL, NULL }, /* Lp */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Lk */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Mt */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Brq */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Bro */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Brc */
+	{ cond_body, pre_enc, post_enc, "{", "}" }, /* Brq */
+	{ cond_body, pre_enc, post_enc, "{", "}" }, /* Bro */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Brc */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _%C */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Es */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _En */
