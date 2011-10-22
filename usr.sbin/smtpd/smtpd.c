@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.132 2011/10/22 00:16:33 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.133 2011/10/22 06:42:44 jmc Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -176,7 +176,7 @@ usage(void)
 	extern char	*__progname;
 
 	fprintf(stderr, "usage: %s [-dnv] [-D macro=value] "
-	    "[-f file]\n", __progname);
+	    "[-f file] [-T trace]\n", __progname);
 	exit(1);
 }
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.8,v 1.13 2011/10/22 00:16:33 eric Exp $
+.\"	$OpenBSD: smtpd.8,v 1.14 2011/10/22 06:42:44 jmc Exp $
 .\"
 .\" Copyright (c) 2008, Gilles Chehade <gilles@openbsd.org>
 .\" Copyright (c) 2008, Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -26,6 +26,7 @@
 .Op Fl dnv
 .Op Fl D Ar macro Ns = Ns Ar value
 .Op Fl f Ar file
+.Op Fl T Ar trace
 .Sh DESCRIPTION
 .Nm
 is a Simple Mail Transfer Protocol
@@ -68,14 +69,16 @@ Specify an alternative configuration file.
 Configtest mode.
 Only check the configuration file for validity.
 .It Fl T Ar trace
-Show additionnal debug traces when one of the
+Show additional debug traces when one of the
 .Fl v
 or
 .Fl d
-flags is specified. The only accepted value is
+flags are specified.
+The only accepted value is
 .Ar imsg ,
 which displays the messages exchanged between the various
-smtpd processes.
+.Nm
+processes.
 .It Fl v
 Produce more verbose output.
 .El
