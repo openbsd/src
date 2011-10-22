@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.vax/MAKEDEV.md,v 1.46 2011/10/06 20:49:27 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.57 2011/10/06 20:49:25 deraadt Exp 
+#	OpenBSD: etc.vax/MAKEDEV.md,v 1.47 2011/10/22 19:31:23 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.58 2011/10/22 19:31:20 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -247,6 +247,7 @@ mt*)
 	umask 77
 	;;
 
+
 vscsi*)
 	M vscsi$U c 78 $U 600
 	;;
@@ -473,9 +474,9 @@ local)
 all)
 	R qsc0 dl0 dz0 dhu0 mt0 mt1 hd0 hd1 hd2 vnd0 sd0 sd1 sd2 sd3
 	R cd0 tun0 tun1 bio bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	R pty0 diskmap vscsi0 nnpfs0 ch0 ptm local wscons audio0
-	R audio1 audio2 uk0 random lkm pf systrace rx0 rx1 ra0 ra1 ra2
-	R ra3 raid0 raid1 raid2 raid3 std st0 st1 fd
+	R pty0 diskmap vscsi0 nnpfs0 ch0 audio0 ptm local wscons uk0
+	R random lkm pf systrace rx0 rx1 ra0 ra1 ra2 ra3 raid0 raid1
+	R raid2 raid3 std st0 st1 fd
 	;;
 
 sd*|rx*|raid*|ra*|hd*)

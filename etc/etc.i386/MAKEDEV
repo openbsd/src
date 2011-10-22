@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.i386/MAKEDEV.md,v 1.60 2011/10/06 20:49:27 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.57 2011/10/06 20:49:25 deraadt Exp 
+#	OpenBSD: etc.i386/MAKEDEV.md,v 1.61 2011/10/22 19:31:23 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.58 2011/10/22 19:31:20 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -601,10 +601,10 @@ all)
 	R sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1
 	R bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1 fd1B fd1C
 	R fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G
-	R fd0H diskmap vscsi0 nnpfs0 ch0 hotplug ptm gpr0 local wscons
-	R pci0 pci1 pci2 pci3 iop0 iop1 uall rmidi0 rmidi1 rmidi2
-	R rmidi3 rmidi4 rmidi5 rmidi6 rmidi7 tuner0 radio0 music0
-	R speaker video0 video1 audio0 audio1 audio2 uk0 random joy0
+	R fd0H diskmap vscsi0 nnpfs0 ch0 audio0 audio1 audio2 hotplug
+	R ptm gpr0 local wscons pci0 pci1 pci2 pci3 iop0 iop1 uall
+	R rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
+	R tuner0 radio0 music0 speaker video0 video1 uk0 random joy0
 	R joy1 lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02
 	R tty03 ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7 apm
 	R crypto pf pctr systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2

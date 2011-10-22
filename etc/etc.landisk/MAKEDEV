@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.landisk/MAKEDEV.md,v 1.24 2011/10/06 20:49:27 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.57 2011/10/06 20:49:25 deraadt Exp 
+#	OpenBSD: etc.landisk/MAKEDEV.md,v 1.25 2011/10/22 19:31:23 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.58 2011/10/22 19:31:20 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -479,10 +479,10 @@ all)
 	R bthub0 bthub1 bthub2 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3
 	R sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio
 	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0
-	R diskmap vscsi0 nnpfs0 ch0 ttya hotplug ptm local wscons pci0
-	R pci1 pci2 pci3 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4
-	R rmidi5 rmidi6 rmidi7 radio0 music0 video0 video1 audio0
-	R audio1 audio2 uk0 random lkm crypto pf systrace wd0 wd1 wd2
+	R diskmap vscsi0 nnpfs0 ch0 ttya audio0 audio1 audio2 hotplug
+	R ptm local wscons pci0 pci1 pci2 pci3 uall rmidi0 rmidi1
+	R rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7 radio0 music0
+	R video0 video1 uk0 random lkm crypto pf systrace wd0 wd1 wd2
 	R wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
 	;;
 

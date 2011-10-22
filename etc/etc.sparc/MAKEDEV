@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.47 2011/10/06 20:49:27 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.57 2011/10/06 20:49:25 deraadt Exp 
+#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.48 2011/10/22 19:31:23 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.58 2011/10/22 19:31:20 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -524,7 +524,7 @@ all)
 	R bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1 fd1B fd1C fd1D
 	R fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
 	R diskmap vscsi0 nnpfs0 ch0 bio cuaa cuab cuac cuad ttya ttyb
-	R ttyc ttyd hotplug ptm local wscons audio0 audio1 audio2 uk0
+	R ttyc ttyd audio0 audio1 audio2 hotplug ptm local wscons uk0
 	R random lkm tty00 tty01 tty02 tty03 apm pf systrace xd0 xd1
 	R xd2 xd3 raid0 raid1 raid2 raid3 std st0 st1 fd
 	;;
