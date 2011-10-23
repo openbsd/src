@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-buffer.c,v 1.9 2011/05/25 17:51:31 nicm Exp $ */
+/* $OpenBSD: cmd-set-buffer.c,v 1.10 2011/10/23 00:49:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -23,7 +23,7 @@
 #include "tmux.h"
 
 /*
- * Add or set a session paste buffer.
+ * Add or set a paste buffer.
  */
 
 int	cmd_set_buffer_exec(struct cmd *, struct cmd_ctx *);

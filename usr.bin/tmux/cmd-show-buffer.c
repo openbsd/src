@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-buffer.c,v 1.11 2011/04/05 19:37:01 nicm Exp $ */
+/* $OpenBSD: cmd-show-buffer.c,v 1.12 2011/10/23 00:49:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -23,7 +23,7 @@
 #include "tmux.h"
 
 /*
- * Show a session paste buffer.
+ * Show a paste buffer.
  */
 
 int	cmd_show_buffer_exec(struct cmd *, struct cmd_ctx *);
