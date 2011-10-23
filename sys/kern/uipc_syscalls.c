@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.82 2011/07/08 20:54:03 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.83 2011/10/23 15:11:14 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -75,24 +75,27 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 	int fd, error;
 
 	fdplock(fdp);
-
-	if ((error = falloc(p, &fp, &fd)) != 0)
+	error = falloc(p, &fp, &fd);
+	fdpunlock(fdp);
+	if (error != 0)
 		goto out;
+
 	fp->f_flag = FREAD|FWRITE;
 	fp->f_type = DTYPE_SOCKET;
 	fp->f_ops = &socketops;
 	error = socreate(SCARG(uap, domain), &so, SCARG(uap, type),
 			 SCARG(uap, protocol));
 	if (error) {
+		fdplock(fdp);
 		fdremove(fdp, fd);
 		closef(fp, p);
+		fdpunlock(fdp);
 	} else {
 		fp->f_data = so;
 		FILE_SET_MATURE(fp);
 		*retval = fd;
 	}
 out:
-	fdpunlock(fdp);
 	return (error);
 }
 
@@ -208,7 +211,9 @@ sys_accept(struct proc *p, void *v, register_t *retval)
 	nflag = (fp->f_flag & FNONBLOCK);
 
 	fdplock(p->p_fd);
-	if ((error = falloc(p, &fp, &tmpfd)) != 0) {
+	error = falloc(p, &fp, &tmpfd);
+	fdpunlock(p->p_fd);
+	if (error != 0) {
 		/*
 		 * Probably ran out of file descriptors. Put the
 		 * unaccepted connection back onto the queue and
@@ -217,9 +222,8 @@ sys_accept(struct proc *p, void *v, register_t *retval)
 		 */
 		soqinsque(head, so, 1);
 		wakeup_one(&head->so_timeo);
-		goto unlock;
+		goto bad;
 	}
-	*retval = tmpfd;
 
 	/* connection has been removed from the listen queue */
 	KNOTE(&head->so_rcv.sb_sel.si_note, 0);
@@ -244,16 +248,18 @@ sys_accept(struct proc *p, void *v, register_t *retval)
 			    sizeof (*SCARG(uap, anamelen)));
 		}
 	}
-	/* if an error occurred, free the file descriptor */
+
 	if (error) {
+		/* if an error occurred, free the file descriptor */
+		fdplock(p->p_fd);
 		fdremove(p->p_fd, tmpfd);
 		closef(fp, p);
+		fdpunlock(p->p_fd);
 	} else {
 		FILE_SET_MATURE(fp);
+		*retval = tmpfd;
 	}
 	m_freem(nam);
-unlock:
-	fdpunlock(p->p_fd);
 bad:
 	splx(s);
 	FRELE(headfp);
