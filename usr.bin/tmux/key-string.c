@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.20 2011/01/23 11:04:25 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.21 2011/10/23 10:19:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -55,7 +55,11 @@ const struct {
 	{ "Home",	KEYC_HOME },
 	{ "End",	KEYC_END },
 	{ "NPage",	KEYC_NPAGE },
+	{ "PageDown",	KEYC_NPAGE },
+	{ "PgDn",	KEYC_NPAGE },
 	{ "PPage",	KEYC_PPAGE },
+	{ "PageUp",	KEYC_PPAGE },
+	{ "PgUp",	KEYC_PPAGE },
 	{ "Tab",	'\011' },
 	{ "BTab",	KEYC_BTAB },
 	{ "Space",	' ' },
