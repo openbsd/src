@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.22 2011/10/23 17:12:41 gilles Exp $
+.\" $OpenBSD: smtpctl.8,v 1.23 2011/10/23 18:37:34 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -55,11 +55,11 @@ Resume accepting incoming sessions.
 Resume deliveries to local users.
 .It Cm resume outgoing
 Resume relaying and deliveries to remote users.
+.It Cm schedule-all
+Marks all envelopes as ready for immediate delivery.
 .It Cm schedule-id Ar envelope-id | message-id
 Marks a single envelope, or all envelopes with the same message ID,
 as ready for immediate delivery.
-.It Cm schedule-all
-Marks all envelopes as ready for immediate delivery.
 .It Cm show queue
 Displays information concerning envelopes
 that are currently in a queue.
