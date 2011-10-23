@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.80 2011/09/01 16:23:33 chl Exp $	*/
+/*	$OpenBSD: parse.y,v 1.81 2011/10/23 15:36:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -128,12 +128,12 @@ typedef struct {
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.map>		map
-%type	<v.number>	quantifier decision port from auth ssl size expire credentials
+%type	<v.number>	quantifier decision port from auth ssl size expire
 %type	<v.cond>	condition
 %type	<v.tv>		interval
 %type	<v.object>	mapref
 %type	<v.maddr>	relay_as
-%type	<v.string>	certname user tag on alias
+%type	<v.string>	certname user tag on alias credentials
 
 %%
 
@@ -291,8 +291,7 @@ credentials	: AUTH STRING	{
 				free($2);
 				YYERROR;
 			}
-			free($2);
-			$$ = m->m_id;
+			$$ = $2;
 		}
 		| /* empty */	{ $$ = 0; }
 		;
@@ -1022,7 +1021,9 @@ action		: DELIVER TO MAILDIR user		{
 
 			if ($7) {
 				rule->r_value.relayhost.flags |= F_AUTH;
-				rule->r_value.relayhost.secmapid = $7;
+				strlcpy(rule->r_value.relayhost.authmap, $7,
+				    sizeof(rule->r_value.relayhost.authmap));
+				free($7);
 			}
 
 			if ($6 != NULL) {

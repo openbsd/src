@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue_ascii.c,v 1.3 2011/10/23 13:08:18 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue_ascii.c,v 1.4 2011/10/23 15:36:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -69,6 +69,7 @@
 #define	KW_MTA_RELAY_PORT	"mta-relay-port"
 #define	KW_MTA_RELAY_FLAGS	"mta-relay-flags"
 #define	KW_MTA_RELAY_CERT	"mta-relay-cert"
+#define	KW_MTA_RELAY_AUTHMAP	"mta-relay-authmap"
 
 int	fsqueue_load_envelope_ascii(FILE *, struct envelope *);
 int	fsqueue_dump_envelope_ascii(FILE *, struct envelope *);
@@ -391,7 +392,7 @@ ascii_load_mta_relay_port(struct envelope *ep, char *buf)
 {
 	const char *errstr;
 
-	ep->agent.mta.relay.port = strtonum(buf, 0, 0xffff, &errstr);
+	ep->agent.mta.relay.port = htons(strtonum(buf, 0, 0xffff, &errstr));
 	if (errstr)
 		return 0;
 	return 1;
@@ -402,7 +403,7 @@ ascii_dump_mta_relay_port(struct envelope *ep, FILE *fp)
 {
 	if (ep->agent.mta.relay.port)
 		fprintf(fp, "%s: %d\n", KW_MTA_RELAY_PORT,
-		    ep->agent.mta.relay.port);
+		    ntohs(ep->agent.mta.relay.port));
 	return 1;
 }
 
@@ -426,21 +427,36 @@ ascii_dump_mta_relay_cert(struct envelope *ep, FILE *fp)
 }
 
 static int
+ascii_load_mta_relay_authmap(struct envelope *ep, char *buf)
+{
+	if (strlcpy(ep->agent.mta.relay.authmap, buf,
+		sizeof(ep->agent.mta.relay.authmap))
+	    >= sizeof(ep->agent.mta.relay.authmap))
+		return 0;
+	return 1;
+}
+
+static int
+ascii_dump_mta_relay_authmap(struct envelope *ep, FILE *fp)
+{
+	if (ep->agent.mta.relay.authmap[0])
+		fprintf(fp, "%s: %s\n", KW_MTA_RELAY_AUTHMAP,
+		    ep->agent.mta.relay.authmap);
+	return 1;
+}
+
+static int
 ascii_load_mta_relay_flags(struct envelope *ep, char *buf)
 {
 	char *flag;
 
 	while ((flag = strsep(&buf, " ,|")) != NULL) {
-		if (strcasecmp(flag, "force-anyssl") == 0)
-			ep->agent.mta.relay.flags |= MTA_FORCE_ANYSSL;
-		else if (strcasecmp(flag, "force-smtps") == 0)
-			ep->agent.mta.relay.flags |= MTA_FORCE_SMTPS;
-		else if (strcasecmp(flag, "allow-plain") == 0)
-			ep->agent.mta.relay.flags |= MTA_ALLOW_PLAIN;
-		else if (strcasecmp(flag, "use-auth") == 0)
-			ep->agent.mta.relay.flags |= MTA_USE_AUTH;
-		else if (strcasecmp(flag, "force-mx") == 0)
-			ep->agent.mta.relay.flags |= MTA_FORCE_MX;
+		if (strcasecmp(flag, "smtps") == 0)
+			ep->agent.mta.relay.flags |= F_SMTPS;
+		else if (strcasecmp(flag, "tls") == 0)
+			ep->agent.mta.relay.flags |= F_STARTTLS;
+		else if (strcasecmp(flag, "auth") == 0)
+			ep->agent.mta.relay.flags |= F_AUTH;
 		else
 			return 0;
 	}
@@ -453,16 +469,12 @@ ascii_dump_mta_relay_flags(struct envelope *ep, FILE *fp)
 {
 	if (ep->agent.mta.relay.flags) {
 		fprintf(fp, "%s:", KW_MTA_RELAY_FLAGS);
-		if (ep->agent.mta.relay.flags & MTA_FORCE_ANYSSL)
-			fprintf(fp, " force-anyssl");
-		if (ep->agent.mta.relay.flags & MTA_FORCE_SMTPS)
-			fprintf(fp, " force-smtps");
-		if (ep->agent.mta.relay.flags & MTA_ALLOW_PLAIN)
-			fprintf(fp, " allow-plain");
-		if (ep->agent.mta.relay.flags & MTA_USE_AUTH)
-			fprintf(fp, " use-auth");
-		if (ep->agent.mta.relay.flags & MTA_FORCE_MX)
-			fprintf(fp, " force-mx");
+		if (ep->agent.mta.relay.flags & F_SMTPS)
+			fprintf(fp, " smtps");
+		if (ep->agent.mta.relay.flags & F_STARTTLS)
+			fprintf(fp, " tls");
+		if (ep->agent.mta.relay.flags & F_AUTH)
+			fprintf(fp, " auth");
 		fprintf(fp, "\n");
 	}
 	return 1;
@@ -623,6 +635,7 @@ ascii_dump_agent(struct envelope *ep, FILE *fp)
 		if (! ascii_dump_mta_relay_host(ep, fp)  ||
 		    ! ascii_dump_mta_relay_port(ep, fp)  ||
 		    ! ascii_dump_mta_relay_cert(ep, fp)  ||
+		    ! ascii_dump_mta_relay_authmap(ep, fp)  ||
 		    ! ascii_dump_mta_relay_flags(ep, fp))
 			return 0;
 		break;
@@ -677,6 +690,7 @@ fsqueue_load_envelope_ascii(FILE *fp, struct envelope *ep)
 		{ KW_MTA_RELAY_PORT,   	ascii_load_mta_relay_port },
 		{ KW_MTA_RELAY_FLAGS,  	ascii_load_mta_relay_flags },
 		{ KW_MTA_RELAY_CERT,  	ascii_load_mta_relay_cert },
+		{ KW_MTA_RELAY_AUTHMAP,	ascii_load_mta_relay_authmap },
 	};
 	int	i;
 	int	n;

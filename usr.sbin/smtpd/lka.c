@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.129 2011/10/23 09:30:06 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.130 2011/10/23 15:36:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -112,7 +112,7 @@ lka_imsg(struct imsgev *iev, struct imsg *imsg)
 			struct map_secret *map_secret;
 
 			secret = imsg->data;
-			map = map_find(secret->secmapid);
+			map = map_findbyname(secret->mapname);
 			if (map == NULL)
 				fatalx("lka: secrets map not found");
 			map_secret = map_lookup(map->m_id, secret->host, K_SECRET);

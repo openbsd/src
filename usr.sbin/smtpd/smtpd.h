@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.245 2011/10/23 13:08:18 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.246 2011/10/23 15:36:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -118,7 +118,7 @@ struct relayhost {
 	char hostname[MAXHOSTNAMELEN];
 	u_int16_t port;
 	char cert[PATH_MAX];
-	objid_t secmapid;
+	char authmap[MAX_PATH_SIZE];
 };
 
 enum imsg_type {
@@ -574,7 +574,7 @@ struct ramqueue_batch {
 	u_int64_t			h_id;
 	u_int64_t			b_id;
 	u_int32_t      			msgid;
-	struct rule			rule;
+	struct relayhost		relay;
 };
 struct ramqueue_envelope {
 	TAILQ_ENTRY(ramqueue_envelope)	 queue_entry;
@@ -763,7 +763,7 @@ struct dns {
 
 struct secret {
 	u_int64_t		 id;
-	objid_t			 secmapid;
+	char			 mapname[MAX_PATH_SIZE];
 	char			 host[MAXHOSTNAMELEN];
 	char			 secret[MAX_LINE_SIZE];
 };
@@ -859,7 +859,7 @@ struct mta_session {
 	int			 flags;
 	TAILQ_HEAD(,envelope)	 recipients;
 	TAILQ_HEAD(,mta_relay)	 relays;
-	objid_t			 secmapid;
+	char			*authmap;
 	char			*secret;
 	int			 fd;
 	FILE			*datafp;

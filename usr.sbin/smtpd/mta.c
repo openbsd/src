@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.115 2011/10/23 09:30:07 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.116 2011/10/23 15:36:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -80,18 +80,18 @@ mta_imsg(struct imsgev *iev, struct imsg *imsg)
 			s->batch = rq_batch;
 
 			/* establish host name */
-			if (rq_batch->rule.r_action == A_RELAYVIA) {
-				s->host = strdup(rq_batch->rule.r_value.relayhost.hostname);
+			if (rq_batch->relay.hostname[0]) {
+				s->host = strdup(rq_batch->relay.hostname);
 				s->flags |= MTA_FORCE_MX;
 			}
 			else
 				s->host = NULL;
 
 			/* establish port */
-			s->port = ntohs(rq_batch->rule.r_value.relayhost.port); /* XXX */
+			s->port = ntohs(rq_batch->relay.port); /* XXX */
 
 			/* have cert? */
-			s->cert = strdup(rq_batch->rule.r_value.relayhost.cert);
+			s->cert = strdup(rq_batch->relay.cert);
 			if (s->cert == NULL)
 				fatal(NULL);
 			else if (s->cert[0] == '\0') {
@@ -100,14 +100,16 @@ mta_imsg(struct imsgev *iev, struct imsg *imsg)
 			}
 
 			/* use auth? */
-			if ((rq_batch->rule.r_value.relayhost.flags & F_SSL) &&
-			    (rq_batch->rule.r_value.relayhost.flags & F_AUTH)) {
+			if ((rq_batch->relay.flags & F_SSL) &&
+			    (rq_batch->relay.flags & F_AUTH)) {
 				s->flags |= MTA_USE_AUTH;
-				s->secmapid = rq_batch->rule.r_value.relayhost.secmapid;
+				s->authmap = strdup(rq_batch->relay.authmap);
+				if (s->authmap == NULL)
+					fatalx("mta: strdup authmap");
 			}
 
 			/* force a particular SSL mode? */
-			switch (rq_batch->rule.r_value.relayhost.flags & F_SSL) {
+			switch (rq_batch->relay.flags & F_SSL) {
 			case F_SSL:
 				s->flags |= MTA_FORCE_ANYSSL;
 				break;
@@ -354,7 +356,7 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 		 */
 		bzero(&secret, sizeof(secret));
 		secret.id = s->id;
-		secret.secmapid = s->secmapid;
+		strlcpy(secret.mapname, s->authmap, sizeof(secret.mapname));
 		strlcpy(secret.host, s->host, sizeof(secret.host));
 		imsg_compose_event(env->sc_ievs[PROC_LKA], IMSG_LKA_SECRET,
 		    0, 0, -1, &secret, sizeof(secret));  
