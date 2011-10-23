@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.63 2011/10/09 18:39:53 eric Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.64 2011/10/23 09:30:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -245,7 +245,7 @@ mfa_test_mail(struct envelope *e)
 
 	ss.id = e->session_id;
 	ss.code = 530;
-	ss.u.maddr = e->delivery.from;
+	ss.u.maddr = e->sender;
 
 	if (mfa_strip_source_route(ss.u.maddr.user, sizeof(ss.u.maddr.user)))
 		goto refuse;
@@ -275,11 +275,11 @@ mfa_test_rcpt(struct envelope *e)
 
 	ss.id = e->session_id;
 	ss.code = 530;
-	ss.u.maddr = e->delivery.rcpt_orig;
-	ss.ss = e->delivery.ss;
+	ss.u.maddr = e->rcpt;
+	ss.ss = e->ss;
 	ss.envelope = *e;
-	ss.envelope.delivery.rcpt = e->delivery.rcpt_orig;
-	ss.flags = e->delivery.flags;
+	ss.envelope.dest = e->rcpt;
+	ss.flags = e->flags;
 
 	mfa_strip_source_route(ss.u.maddr.user, sizeof(ss.u.maddr.user));
 	
@@ -303,8 +303,8 @@ mfa_test_rcpt_resume(struct submit_status *ss) {
 		return;
 	}
 
-	ss->envelope.delivery.rcpt = ss->u.maddr;
-	ss->envelope.delivery.expire = ss->envelope.rule.r_qexpire;
+	ss->envelope.dest = ss->u.maddr;
+	ss->envelope.expire = ss->envelope.rule.r_qexpire;
 	imsg_compose_event(env->sc_ievs[PROC_LKA], IMSG_LKA_RCPT, 0, 0, -1,
 	    ss, sizeof(*ss));
 }

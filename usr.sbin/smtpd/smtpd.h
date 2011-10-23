@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.242 2011/10/22 00:16:34 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.243 2011/10/23 09:30:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -355,21 +355,14 @@ enum delivery_status {
 	DS_PERMFAILURE	= 0x2,
 	DS_TEMPFAILURE	= 0x4,
 	DS_REJECTED	= 0x8,
-	DS_ACCEPTED	= 0x10,
-	DS_RETRY       	= 0x20,
-	DS_EDNS		= 0x40,
-	DS_ECONNECT	= 0x80
+	DS_ACCEPTED	= 0x10
 };
 
 enum delivery_flags {
-	DF_RESOLVED		= 0x1,
-	DF_SCHEDULED		= 0x2,
-	DF_PROCESSING		= 0x4,
-	DF_AUTHENTICATED	= 0x8,
-	DF_ENQUEUED		= 0x10,
-	DF_FORCESCHEDULE	= 0x20,
-	DF_BOUNCE		= 0x40,
-	DF_INTERNAL		= 0x80 /* internal expansion forward */
+	DF_AUTHENTICATED	= 0x1,
+	DF_ENQUEUED		= 0x2,
+	DF_BOUNCE		= 0x4,
+	DF_INTERNAL		= 0x8 /* internal expansion forward */
 };
 
 union delivery_data {
@@ -387,32 +380,6 @@ struct delivery_mda {
 struct delivery_mta {
 	struct relayhost relay;
 	struct mailaddr	relay_as;
-};
-
-struct delivery {
-	u_int64_t			id;
-	enum delivery_type		type;
-
-	char				helo[MAXHOSTNAMELEN];
-	char				hostname[MAXHOSTNAMELEN];
-	char				errorline[MAX_LINE_SIZE + 1];
-	struct sockaddr_storage		ss;
-
-	struct mailaddr			from;
-	struct mailaddr			rcpt;
-	struct mailaddr			rcpt_orig;
-
-	union delivery_method {
-		struct delivery_mda	mda;
-		struct delivery_mta	mta;
-	} agent;
-
-	time_t				 creation;
-	time_t				 lasttry;
-	time_t				 expire;
-	u_int8_t			 retry;
-	enum delivery_flags		 flags;
-	enum delivery_status		 status;
 };
 
 enum expand_type {
@@ -440,7 +407,7 @@ struct expandnode {
 
 RB_HEAD(expandtree, expandnode);
 
-
+#define	SMTPD_ENVELOPE_VERSION		1
 struct envelope {
 	TAILQ_ENTRY(envelope)		entry;
 
@@ -450,7 +417,33 @@ struct envelope {
 	u_int64_t			session_id;
 	u_int64_t			batch_id;
 
-	struct delivery			delivery;
+//	struct delivery			delivery;
+
+	u_int32_t			version;
+	u_int64_t			id;
+	enum delivery_type		type;
+
+	char				helo[MAXHOSTNAMELEN];
+	char				hostname[MAXHOSTNAMELEN];
+	char				errorline[MAX_LINE_SIZE + 1];
+	struct sockaddr_storage		ss;
+
+	struct mailaddr			sender;
+	struct mailaddr			rcpt;
+	struct mailaddr			dest;
+
+	union delivery_method {
+		struct delivery_mda	mda;
+		struct delivery_mta	mta;
+	} agent;
+
+	time_t				 creation;
+	time_t				 lasttry;
+	time_t				 expire;
+	u_int8_t			 retry;
+	enum delivery_flags		 flags;
+	enum delivery_status		 status;
+
 };
 TAILQ_HEAD(deliverylist, envelope);
 
@@ -1224,6 +1217,8 @@ void sa_set_port(struct sockaddr *, int);
 u_int64_t generate_uid(void);
 void fdlimit(double);
 int availdesc(void);
+u_int32_t msgid_generate(void);
+u_int64_t evpid_generate(u_int32_t);
 u_int32_t evpid_to_msgid(u_int64_t);
 u_int64_t msgid_to_evpid(u_int32_t);
 u_int32_t filename_to_msgid(char *);

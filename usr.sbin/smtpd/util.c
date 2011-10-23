@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.47 2011/05/17 18:54:32 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.48 2011/10/23 09:30:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -352,9 +352,9 @@ envelope_set_errormsg(struct envelope *e, char *fmt, ...)
 
 	va_start(ap, fmt);
 
-	ret = vsnprintf(e->delivery.errorline, MAX_LINE_SIZE, fmt, ap);
+	ret = vsnprintf(e->errorline, MAX_LINE_SIZE, fmt, ap);
 	if (ret >= MAX_LINE_SIZE)
-		strlcpy(e->delivery.errorline + (MAX_LINE_SIZE - 4), "...", 4);
+		strlcpy(e->errorline + (MAX_LINE_SIZE - 4), "...", 4);
 
 	/* this should not happen */
 	if (ret == -1)
@@ -366,7 +366,7 @@ envelope_set_errormsg(struct envelope *e, char *fmt, ...)
 char *
 envelope_get_errormsg(struct envelope *e)
 {
-	return e->delivery.errorline;
+	return e->errorline;
 }
 
 void
@@ -544,6 +544,38 @@ filename_to_evpid(char *filename)
 		return 0;
 
 	return ullval;
+}
+
+u_int32_t
+msgid_generate(void)
+{
+	u_int32_t ret;
+
+	do {
+		ret = arc4random();
+	} while (ret == 0);
+
+	log_debug("msgid_generate: %08x", ret);
+
+	return ret;
+}
+
+u_int64_t
+evpid_generate(u_int32_t msgid)
+{
+	u_int64_t ret;
+
+	ret = msgid;
+	log_debug("evpid_generate: %016llx", ret);
+	ret <<= 32;
+	log_debug("evpid_generate: %016llx", ret);
+	do {
+		ret |= arc4random();
+	} while ((ret & 0xffffffff) == 0);
+
+	log_debug("evpid_generate: %016llx", ret);
+
+	return ret;
 }
 
 u_int32_t

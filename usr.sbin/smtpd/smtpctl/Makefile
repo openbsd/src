@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2011/09/01 19:56:49 eric Exp $
+#	$OpenBSD: Makefile,v 1.19 2011/10/23 09:30:07 gilles Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -17,7 +17,7 @@ CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+=	-Wsign-compare -Wbounded
 CFLAGS+=	-DCLIENT_NO_SSL
 
-SRCS=	smtpctl.c parser.c log.c enqueue.c queue_shared.c util.c client.c queue_backend.c queue_fsqueue.c stats.c
+SRCS=	smtpctl.c parser.c log.c enqueue.c queue_shared.c util.c client.c queue_backend.c queue_fsqueue.c queue_fsqueue_ascii.c stats.c
 LDADD+=	-lutil -levent
 DPADD+=	${LIBUTIL} ${LIBEVENT}
 .include <bsd.prog.mk>

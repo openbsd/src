@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.107 2011/10/09 18:39:53 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.108 2011/10/23 09:30:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -61,7 +61,7 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 			ss.id = e->session_id;
 			ss.code = 250;
 			ss.u.msgid = 0;
-			if (e->delivery.flags & DF_ENQUEUED)
+			if (e->flags & DF_ENQUEUED)
 				ret = queue_message_create(Q_ENQUEUE, &ss.u.msgid);
 			else
 				ret = queue_message_create(Q_INCOMING, &ss.u.msgid);
@@ -72,21 +72,21 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 			return;
 
 		case IMSG_QUEUE_REMOVE_MESSAGE:
-			if (e->delivery.flags & DF_ENQUEUED)
-				queue_message_purge(Q_ENQUEUE, evpid_to_msgid(e->delivery.id));
+			if (e->flags & DF_ENQUEUED)
+				queue_message_purge(Q_ENQUEUE, evpid_to_msgid(e->id));
 			else
-				queue_message_purge(Q_INCOMING, evpid_to_msgid(e->delivery.id));
+				queue_message_purge(Q_INCOMING, evpid_to_msgid(e->id));
 			return;
 
 		case IMSG_QUEUE_COMMIT_MESSAGE:
 			ss.id = e->session_id;
-			if (e->delivery.flags & DF_ENQUEUED) {
-				if (queue_message_commit(Q_ENQUEUE, evpid_to_msgid(e->delivery.id)))
+			if (e->flags & DF_ENQUEUED) {
+				if (queue_message_commit(Q_ENQUEUE, evpid_to_msgid(e->id)))
 					stat_increment(STATS_QUEUE_LOCAL);
 				else
 					ss.code = 421;
 			} else {
-				if (queue_message_commit(Q_INCOMING, evpid_to_msgid(e->delivery.id)))
+				if (queue_message_commit(Q_INCOMING, evpid_to_msgid(e->id)))
 					stat_increment(STATS_QUEUE_REMOTE);
 				else
 					ss.code = 421;
@@ -101,10 +101,10 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 
 		case IMSG_QUEUE_MESSAGE_FILE:
 			ss.id = e->session_id;
-			if (e->delivery.flags & DF_ENQUEUED)
-				fd = queue_message_fd_rw(Q_ENQUEUE, evpid_to_msgid(e->delivery.id));
+			if (e->flags & DF_ENQUEUED)
+				fd = queue_message_fd_rw(Q_ENQUEUE, evpid_to_msgid(e->id));
 			else
-				fd = queue_message_fd_rw(Q_INCOMING, evpid_to_msgid(e->delivery.id));
+				fd = queue_message_fd_rw(Q_INCOMING, evpid_to_msgid(e->id));
 			if (fd == -1)
 				ss.code = 421;
 			imsg_compose_event(iev, IMSG_QUEUE_MESSAGE_FILE, 0, 0, fd,
@@ -125,7 +125,7 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 			ss.id = e->session_id;
 
 			/* Write to disk */
-			if (e->delivery.flags & DF_ENQUEUED)
+			if (e->flags & DF_ENQUEUED)
 				ret = queue_envelope_create(Q_ENQUEUE, e);
 			else
 				ret = queue_envelope_create(Q_INCOMING, e);

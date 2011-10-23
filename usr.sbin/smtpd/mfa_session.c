@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa_session.c,v 1.4 2011/09/01 09:42:15 chl Exp $	*/
+/*	$OpenBSD: mfa_session.c,v 1.5 2011/10/23 09:30:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -98,7 +98,7 @@ mfa_session_proceed(struct mfa_session *ms)
 	switch (ms->state) {
 	case S_HELO:
 		fm.type = FILTER_HELO;
-		if (strlcpy(fm.u.helo.buffer, ms->ss.envelope.delivery.helo,
+		if (strlcpy(fm.u.helo.buffer, ms->ss.envelope.helo,
 			sizeof(fm.u.helo.buffer)) >= sizeof(fm.u.helo.buffer))
 			fatalx("mfa_session_proceed: HELO: truncation");
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.33 2011/09/01 19:56:49 eric Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.34 2011/10/23 09:30:06 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -54,7 +54,7 @@ bounce_session(int fd, struct envelope *m)
 	FILE			*msgfp = NULL;
 	u_int32_t		 msgid;
 
-	msgid = evpid_to_msgid(m->delivery.id);
+	msgid = evpid_to_msgid(m->id);
 
 	/* get message content */
 	if ((msgfd = queue_message_fd_r(Q_QUEUE, msgid)) == -1)
@@ -72,11 +72,11 @@ bounce_session(int fd, struct envelope *m)
 
 	client_ssl_optional(cc->pcb);
 	client_sender(cc->pcb, "");
-	client_rcpt(cc->pcb, NULL, "%s@%s", m->delivery.from.user,
-	    m->delivery.from.domain);
+	client_rcpt(cc->pcb, NULL, "%s@%s", m->sender.user,
+	    m->sender.domain);
 
 	/* Construct an appropriate reason line. */
-	reason = m->delivery.errorline;
+	reason = m->errorline;
 	if (strlen(reason) > 4 && (*reason == '1' || *reason == '6'))
 		reason += 4;
 	
@@ -100,9 +100,9 @@ bounce_session(int fd, struct envelope *m)
 	    "Below is a copy of the original message:\n"
 	    "\n",
 	    env->sc_hostname,
-	    m->delivery.from.user, m->delivery.from.domain,
+	    m->sender.user, m->sender.domain,
 	    time_to_text(time(NULL)),
-	    m->delivery.rcpt.user, m->delivery.rcpt.domain,
+	    m->dest.user, m->dest.domain,
 	    reason);
 
 	/* setup event */
@@ -147,13 +147,16 @@ bounce_event(int fd, short event, void *p)
 	}
 
 out:
-	if (*ep == '2')
+	if (*ep == '2') {
+		log_debug("#### %s: queue_envelope_delete: %016llx",
+		    __func__, cc->m.id);
 		queue_envelope_delete(Q_QUEUE, &cc->m);
+	}
 	else {
 		if (*ep == '5' || *ep == '6')
-			cc->m.delivery.status = DS_PERMFAILURE;
+			cc->m.status = DS_PERMFAILURE;
 		else
-			cc->m.delivery.status = DS_TEMPFAILURE;
+			cc->m.status = DS_TEMPFAILURE;
 		envelope_set_errormsg(&cc->m, "%s", ep);
 		queue_message_update(&cc->m);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.11 2011/05/16 21:05:52 gilles Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.12 2011/10/23 09:30:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 
+#include <ctype.h>
 #include <event.h>
 #include <imsg.h>
 #include <libgen.h>
@@ -35,11 +36,12 @@
 #include "smtpd.h"
 #include "log.h"
 
+static int envelope_validate(struct envelope *);
+
 /* fsqueue backend */
 int	fsqueue_init(void);
 int	fsqueue_message(enum queue_kind, enum queue_op, u_int32_t *);
 int	fsqueue_envelope(enum queue_kind, enum queue_op , struct envelope *);
-
 
 struct queue_backend queue_backends[] = {
 	{ QT_FS,
@@ -114,12 +116,41 @@ queue_envelope_delete(enum queue_kind qkind, struct envelope *ep)
 int
 queue_envelope_load(enum queue_kind qkind, u_int64_t evpid, struct envelope *ep)
 {
-	ep->delivery.id = evpid;
-	return env->sc_queue->envelope(qkind, QOP_LOAD, ep);
+	ep->id = evpid;
+	if (env->sc_queue->envelope(qkind, QOP_LOAD, ep))
+		return envelope_validate(ep);
+	return 0;
 }
 
 int
 queue_envelope_update(enum queue_kind qkind, struct envelope *ep)
 {
 	return env->sc_queue->envelope(qkind, QOP_UPDATE, ep);
+}
+
+static int
+envelope_validate(struct envelope *ep)
+{
+	if (ep->version != SMTPD_ENVELOPE_VERSION)
+		return 0;
+
+	if ((ep->id & 0xffffffff) == 0 ||
+	    ((ep->id >> 32) & 0xffffffff) == 0)
+		return 0;
+
+	if (ep->helo[0] == '\0')
+		return 0;
+
+	if (ep->hostname[0] == '\0')
+		return 0;
+
+	if (ep->errorline[0] != '\0') {
+		if (! isdigit(ep->errorline[0]) ||
+		    ! isdigit(ep->errorline[1]) ||
+		    ! isdigit(ep->errorline[2]) ||
+		    ep->errorline[3] != ' ')
+			return 0;
+	}
+
+	return 1;
 }

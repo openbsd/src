@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramqueue.c,v 1.19 2011/09/18 21:37:53 gilles Exp $	*/
+/*	$OpenBSD: ramqueue.c,v 1.20 2011/10/23 09:30:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -181,7 +181,7 @@ ramqueue_insert(struct ramqueue *rqueue, struct envelope *envelope, time_t curtm
 	struct ramqueue_envelope *evp;
 	struct ramqueue_message  *rq_msg, msgkey;
 
-	msgkey.msgid = evpid_to_msgid(envelope->delivery.id);
+	msgkey.msgid = evpid_to_msgid(envelope->id);
 	rq_msg = RB_FIND(msgtree, &rqueue->msgtree, &msgkey);
 	if (rq_msg == NULL) {
 		rq_msg = calloc(1, sizeof (*rq_msg));
@@ -196,9 +196,9 @@ ramqueue_insert(struct ramqueue *rqueue, struct envelope *envelope, time_t curtm
 	rq_evp = calloc(1, sizeof (*rq_evp));
 	if (rq_evp == NULL)
 		fatal("calloc");
-	rq_evp->evpid = envelope->delivery.id;
+	rq_evp->evpid = envelope->id;
 	rq_evp->sched = ramqueue_next_schedule(envelope, curtm);
-	rq_evp->rq_host = ramqueue_get_host(rqueue, envelope->delivery.rcpt.domain);
+	rq_evp->rq_host = ramqueue_get_host(rqueue, envelope->dest.domain);
 	rq_evp->rq_batch = ramqueue_get_batch(rqueue, rq_evp->rq_host, envelope);
 	RB_INSERT(evptree, &rq_msg->evptree, rq_evp);
 	rq_evp->rq_msg = rq_msg;
@@ -224,12 +224,14 @@ ramqueue_expire(struct envelope *envelope, time_t curtm)
 {
 	struct envelope bounce;
 
-	if (curtm - envelope->delivery.creation >= envelope->delivery.expire) {
+	if (curtm - envelope->creation >= envelope->expire) {
 		envelope_set_errormsg(envelope,
 		    "message expired after sitting in queue for %d days",
-		    envelope->delivery.expire / 60 / 60 / 24);
+		    envelope->expire / 60 / 60 / 24);
 		bounce_record_message(envelope, &bounce);
 		ramqueue_insert(&env->sc_rqueue, &bounce, time(NULL));
+		log_debug("#### %s: queue_envelope_delete: %016llx",
+		    __func__, envelope->id);
 		queue_envelope_delete(Q_QUEUE, envelope);
 		return 1;
 	}
@@ -241,31 +243,31 @@ ramqueue_next_schedule(struct envelope *envelope, time_t curtm)
 {
 	time_t delay;
 
-	if (envelope->delivery.lasttry == 0)
+	if (envelope->lasttry == 0)
 		return curtm;
 
 	delay = SMTPD_QUEUE_MAXINTERVAL;
 	
-	if (envelope->delivery.type == D_MDA ||
-	    envelope->delivery.type == D_BOUNCE) {
-		if (envelope->delivery.retry < 5)
+	if (envelope->type == D_MDA ||
+	    envelope->type == D_BOUNCE) {
+		if (envelope->retry < 5)
 			return curtm;
 			
-		if (envelope->delivery.retry < 15)
-			delay = (envelope->delivery.retry * 60) + arc4random_uniform(60);
+		if (envelope->retry < 15)
+			delay = (envelope->retry * 60) + arc4random_uniform(60);
 	}
 
-	if (envelope->delivery.type == D_MTA) {
-		if (envelope->delivery.retry < 3)
+	if (envelope->type == D_MTA) {
+		if (envelope->retry < 3)
 			delay = SMTPD_QUEUE_INTERVAL;
-		else if (envelope->delivery.retry <= 7) {
-			delay = SMTPD_QUEUE_INTERVAL * (1 << (envelope->delivery.retry - 3));
+		else if (envelope->retry <= 7) {
+			delay = SMTPD_QUEUE_INTERVAL * (1 << (envelope->retry - 3));
 			if (delay > SMTPD_QUEUE_MAXINTERVAL)
 				delay = SMTPD_QUEUE_MAXINTERVAL;
 		}
 	}
 
-	if (curtm >= envelope->delivery.lasttry + delay)
+	if (curtm >= envelope->lasttry + delay)
 		return curtm;
 
 	return curtm + delay;
@@ -306,7 +308,7 @@ ramqueue_get_batch(struct ramqueue *rqueue, struct ramqueue_host *host,
 	struct ramqueue_batch *rq_batch;
 
 	TAILQ_FOREACH(rq_batch, &host->batch_queue, batch_entry) {
-		if (rq_batch->msgid == (u_int32_t)(envelope->delivery.id >> 32))
+		if (rq_batch->msgid == evpid_to_msgid(envelope->id))
 			return rq_batch;
 	}
 
@@ -315,8 +317,8 @@ ramqueue_get_batch(struct ramqueue *rqueue, struct ramqueue_host *host,
 		fatal("calloc");
 	rq_batch->b_id = generate_uid();
 	rq_batch->rule = envelope->rule;
-	rq_batch->type = envelope->delivery.type;
-	rq_batch->msgid = envelope->delivery.id >> 32;
+	rq_batch->type = envelope->type;
+	rq_batch->msgid = evpid_to_msgid(envelope->id);
 
 	TAILQ_INIT(&rq_batch->envelope_queue);
 	TAILQ_INSERT_TAIL(&host->batch_queue, rq_batch, batch_entry);

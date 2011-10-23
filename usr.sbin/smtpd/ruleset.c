@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.19 2011/05/21 18:39:03 gilles Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.20 2011/10/23 09:30:07 gilles Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -47,10 +47,10 @@ ruleset_match(struct envelope *evp)
 	struct rule *r;
 	struct map *map;
 	struct mapel *me;
-	struct mailaddr *maddr = &evp->delivery.rcpt;
-	struct sockaddr_storage *ss = &evp->delivery.ss;
+	struct mailaddr *maddr = &evp->dest;
+	struct sockaddr_storage *ss = &evp->ss;
 
-	if (evp->delivery.flags & DF_INTERNAL)
+	if (evp->flags & DF_INTERNAL)
 		ss = NULL;
 
 	TAILQ_FOREACH(r, env->sc_rules, r_entry) {
@@ -59,7 +59,7 @@ ruleset_match(struct envelope *evp)
 			continue;
 
 		if (ss != NULL &&
-		    (!(evp->delivery.flags & DF_AUTHENTICATED) &&
+		    (!(evp->flags & DF_AUTHENTICATED) &&
 			! ruleset_check_source(r->r_sources, ss)))
 			continue;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.51 2011/08/29 21:43:09 chl Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.52 2011/10/23 09:30:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -43,6 +43,8 @@
 #define	QWALK_RECURSE	0x2
 #define	QWALK_RETURN	0x3
 
+int	fsqueue_load_envelope_ascii(FILE *, struct envelope *);
+
 struct qwalk {
 	char	  path[MAXPATHLEN];
 	DIR	 *dirs[3];
@@ -65,20 +67,20 @@ bounce_record_message(struct envelope *e, struct envelope *bounce)
 
 	bzero(bounce, sizeof(*bounce));
 
-	if (e->delivery.type == D_BOUNCE) {
+	if (e->type == D_BOUNCE) {
 		log_debug("mailer daemons loop detected !");
 		return 0;
 	}
 
 	*bounce = *e;
-	 bounce->delivery.type = D_BOUNCE;
-	 bounce->delivery.status &= ~DS_PERMFAILURE;
+	 bounce->type = D_BOUNCE;
+	 bounce->status &= ~DS_PERMFAILURE;
 
-	msgid = evpid_to_msgid(e->delivery.id);
+	msgid = evpid_to_msgid(e->id);
 	if (! queue_message_create(Q_BOUNCE, &msgid))
 		return 0;
 
-	bounce->delivery.id = msgid_to_evpid(msgid);
+	bounce->id = msgid_to_evpid(msgid);
 	if (! queue_envelope_create(Q_BOUNCE, bounce))
 		return 0;
 
@@ -89,14 +91,13 @@ void
 queue_message_update(struct envelope *e)
 {
 	e->batch_id = 0;
-	e->delivery.flags &= ~DF_PROCESSING;
-	e->delivery.status &= ~(DS_ACCEPTED|DS_REJECTED);
-	e->delivery.retry++;
+	e->status &= ~(DS_ACCEPTED|DS_REJECTED);
+	e->retry++;
 
 
-	if (e->delivery.status & DS_PERMFAILURE) {
-		if (e->delivery.type != D_BOUNCE &&
-		    e->delivery.from.user[0] != '\0') {
+	if (e->status & DS_PERMFAILURE) {
+		if (e->type != D_BOUNCE &&
+		    e->sender.user[0] != '\0') {
 			struct envelope bounce;
 
 			bounce_record_message(e, &bounce);
@@ -105,8 +106,8 @@ queue_message_update(struct envelope *e)
 		return;
 	}
 
-	if (e->delivery.status & DS_TEMPFAILURE) {
-		e->delivery.status &= ~DS_TEMPFAILURE;
+	if (e->status & DS_TEMPFAILURE) {
+		e->status &= ~DS_TEMPFAILURE;
 		queue_envelope_update(Q_QUEUE, e);
 		return;
 	}
@@ -230,13 +231,13 @@ walk_queue(struct qwalk *q, char *fname)
 			log_warnx("walk_queue: invalid bucket: %s", fname);
 			return (QWALK_AGAIN);
 		}
-		if (! bsnprintf(q->path, sizeof(q->path), "%s/%04x", PATH_QUEUE,
-			q->bucket))
+		if (! bsnprintf(q->path, sizeof(q->path), "%s/%03x", PATH_QUEUE,
+			q->bucket & 0xfff))
 			fatalx("walk_queue: snprintf");
 		return (QWALK_RECURSE);
 	case 1:
-		if (! bsnprintf(q->path, sizeof(q->path), "%s/%04x/%s%s",
-			PATH_QUEUE, q->bucket, fname, PATH_ENVELOPES))
+		if (! bsnprintf(q->path, sizeof(q->path), "%s/%03x/%s%s",
+			PATH_QUEUE, q->bucket & 0xfff, fname, PATH_ENVELOPES))
 			fatalx("walk_queue: snprintf");
 		return (QWALK_RECURSE);
 	case 2:
@@ -270,7 +271,7 @@ show_queue(char *queuepath, int flags)
 		}
 
 		errno = 0;
-		if (fread(&message, sizeof(message), 1, fp) != 1)
+		if (! fsqueue_load_envelope_ascii(fp, &message))
 			err(1, "%s", path);
 		fclose(fp);
 
@@ -287,36 +288,32 @@ display_envelope(struct envelope *e, int flags)
 
 	status[0] = '\0';
 
-	getflag(&e->delivery.status, DS_TEMPFAILURE, "TEMPFAIL",
+	getflag(&e->status, DS_TEMPFAILURE, "TEMPFAIL",
 	    status, sizeof(status));
 
-	if (e->delivery.status)
-		errx(1, "%016llx: unexpected status 0x%04x", e->delivery.id,
-		    e->delivery.status);
+	if (e->status)
+		errx(1, "%016llx: unexpected status 0x%04x", e->id,
+		    e->status);
 
-	getflag(&e->delivery.flags, DF_BOUNCE, "BOUNCE",
+	getflag(&e->flags, DF_BOUNCE, "BOUNCE",
 	    status, sizeof(status));
-	getflag(&e->delivery.flags, DF_AUTHENTICATED, "AUTH",
+	getflag(&e->flags, DF_AUTHENTICATED, "AUTH",
 	    status, sizeof(status));
-	getflag(&e->delivery.flags, DF_PROCESSING, "PROCESSING",
+	getflag(&e->flags, DF_ENQUEUED, "ENQUEUED",
 	    status, sizeof(status));
-	getflag(&e->delivery.flags, DF_SCHEDULED, "SCHEDULED",
-	    status, sizeof(status));
-	getflag(&e->delivery.flags, DF_ENQUEUED, "ENQUEUED",
-	    status, sizeof(status));
-	getflag(&e->delivery.flags, DF_FORCESCHEDULE, "SCHEDULED_MANUAL",
+	getflag(&e->flags, DF_INTERNAL, "INTERNAL",
 	    status, sizeof(status));
 
-	if (e->delivery.flags)
-		errx(1, "%016llx: unexpected flags 0x%04x", e->delivery.id,
-		    e->delivery.flags);
+	if (e->flags)
+		errx(1, "%016llx: unexpected flags 0x%04x", e->id,
+		    e->flags);
 	
 	if (status[0])
 		status[strlen(status) - 1] = '\0';
 	else
 		strlcpy(status, "-", sizeof(status));
 
-	switch (e->delivery.type) {
+	switch (e->type) {
 	case D_MDA:
 		printf("MDA");
 		break;
@@ -331,16 +328,16 @@ display_envelope(struct envelope *e, int flags)
 	}
 	
 	printf("|%016llx|%s|%s@%s|%s@%s|%lld|%lld|%u",
-	    e->delivery.id,
+	    e->id,
 	    status,
-	    e->delivery.from.user, e->delivery.from.domain,
-	    e->delivery.rcpt.user, e->delivery.rcpt.domain,
-	    (long long int) e->delivery.lasttry,
-	    (long long int) e->delivery.expire,
-	    e->delivery.retry);
+	    e->sender.user, e->sender.domain,
+	    e->dest.user, e->dest.domain,
+	    (long long int) e->lasttry,
+	    (long long int) e->expire,
+	    e->retry);
 	
-	if (e->delivery.errorline[0] != '\0')
-		printf("|%s", e->delivery.errorline);
+	if (e->errorline[0] != '\0')
+		printf("|%s", e->errorline);
 
 	printf("\n");
 }
