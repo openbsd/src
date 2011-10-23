@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-save-buffer.c,v 1.11 2011/10/23 00:49:25 nicm Exp $ */
+/* $OpenBSD: cmd-save-buffer.c,v 1.12 2011/10/23 08:34:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -45,8 +45,9 @@ cmd_save_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct args		*args = self->args;
 	struct client		*c = ctx->cmdclient;
+	struct session          *s;
 	struct paste_buffer	*pb;
-	const char		*path;
+	const char		*path, *newpath, *wd;
 	char			*cause;
 	int			 buffer;
 	mode_t			 mask;
@@ -80,6 +81,20 @@ cmd_save_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 		}
 		bufferevent_write(c->stdout_event, pb->data, pb->size);
 	} else {
+		if (c != NULL)
+			wd = c->cwd;
+		else if ((s = cmd_current_session(ctx, 0)) != NULL) {
+			wd = options_get_string(&s->options, "default-path");
+			if (*wd == '\0')
+				wd = s->cwd;
+		} else
+			wd = NULL;
+		if (wd != NULL && *wd != '\0') {
+			newpath = get_full_path(wd, path);
+			if (newpath != NULL)
+				path = newpath;
+		}
+
 		mask = umask(S_IRWXG | S_IRWXO);
 		if (args_has(self->args, 'a'))
 			f = fopen(path, "ab");
