@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.294 2011/08/26 10:53:16 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.295 2011/10/23 01:12:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1364,6 +1364,7 @@ void		 format_add(
 const char	*format_find(struct format_tree *, const char *);
 char		*format_expand(struct format_tree *, const char *);
 void		 format_session(struct format_tree *, struct session *);
+void		 format_client(struct format_tree *, struct client *);
 void		 format_winlink(
 		     struct format_tree *, struct session *, struct winlink *);
 void		 format_window_pane(struct format_tree *, struct window_pane *);
