@@ -1728,6 +1728,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/sparc64.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/spinlock.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/stdarg.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/tcb.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/trap.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/varargs.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/vmparam.ph
