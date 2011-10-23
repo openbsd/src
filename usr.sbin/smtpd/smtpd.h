@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.243 2011/10/23 09:30:07 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.244 2011/10/23 13:03:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -69,6 +69,7 @@
 #define PATH_INCOMING		"/incoming"
 #define PATH_QUEUE		"/queue"
 #define PATH_PURGE		"/purge"
+#define PATH_CORRUPT		"/corrupt"
 
 #define PATH_MESSAGE		"/message"
 #define PATH_ENVELOPES		"/envelopes"
@@ -900,7 +901,8 @@ enum queue_kind {
 	Q_QUEUE,
 	Q_PURGE,
 	Q_OFFLINE,
-	Q_BOUNCE
+	Q_BOUNCE,
+	Q_CORRUPT
 };
 
 enum queue_op {
@@ -912,7 +914,8 @@ enum queue_op {
 	QOP_LOAD,
 	QOP_FD_R,
 	QOP_FD_RW,
-	QOP_PURGE
+	QOP_PURGE,
+	QOP_CORRUPT,
 };
 
 struct queue_backend {
@@ -1079,6 +1082,7 @@ int queue_message_commit(enum queue_kind, u_int32_t);
 int queue_message_fd_r(enum queue_kind, u_int32_t);
 int queue_message_fd_rw(enum queue_kind, u_int32_t);
 int queue_message_purge(enum queue_kind, u_int32_t);
+int queue_message_corrupt(enum queue_kind, u_int32_t);
 int queue_envelope_create(enum queue_kind, struct envelope *);
 int queue_envelope_delete(enum queue_kind, struct envelope *);
 int queue_envelope_load(enum queue_kind, u_int64_t, struct envelope *);

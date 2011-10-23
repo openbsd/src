@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.12 2011/10/23 09:30:07 gilles Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.13 2011/10/23 13:03:04 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -87,6 +87,12 @@ int
 queue_message_purge(enum queue_kind qkind, u_int32_t msgid)
 {
 	return env->sc_queue->message(qkind, QOP_PURGE, &msgid);
+}
+
+int
+queue_message_corrupt(enum queue_kind qkind, u_int32_t msgid)
+{
+	return env->sc_queue->message(qkind, QOP_CORRUPT, &msgid);
 }
 
 int

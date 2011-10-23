@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue_ascii.c,v 1.1 2011/10/23 09:30:07 gilles Exp $	*/
+/*	$OpenBSD: queue_fsqueue_ascii.c,v 1.2 2011/10/23 13:03:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -729,19 +729,15 @@ fsqueue_load_envelope_ascii(FILE *fp, struct envelope *ep)
 				    buf++;
 
 				ret = ascii_load_handlers[i].hdl(ep, buf);
-				if (ret == 0) {
-					log_debug("### CHOKED ON: %s", buf);
+				if (ret == 0)
 					goto err;
-				}
 				break;
 			}
 		}
 
 		/* unknown keyword */
-		if (i == n) {
-			log_debug("### CHOKED ON: %s", buf);
+		if (i == n)
 			goto err;
-		}
 	}
 	free(lbuf);
 

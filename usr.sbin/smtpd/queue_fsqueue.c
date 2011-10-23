@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.14 2011/10/23 09:30:07 gilles Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.15 2011/10/23 13:03:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -51,6 +51,7 @@ static int	fsqueue_message_fd_r(enum queue_kind, u_int32_t);
 static int	fsqueue_message_fd_rw(enum queue_kind, u_int32_t);
 static int	fsqueue_message_delete(enum queue_kind, u_int32_t);
 static int	fsqueue_message_purge(enum queue_kind, u_int32_t);
+static int	fsqueue_message_corrupt(enum queue_kind, u_int32_t);
 
 int	fsqueue_init(void);
 int	fsqueue_message(enum queue_kind, enum queue_op, u_int32_t *);
@@ -80,6 +81,9 @@ fsqueue_getpath(enum queue_kind kind)
 
         case Q_BOUNCE:
                 return (PATH_BOUNCE);
+
+        case Q_CORRUPT:
+                return (PATH_CORRUPT);
 
         default:
 		fatalx("queue_fsqueue_getpath: unsupported queue kind.");
@@ -162,6 +166,7 @@ fsqueue_envelope_load(enum queue_kind qkind, struct envelope *ep)
 {
 	char pathname[MAXPATHLEN];
 	FILE *fp;
+	int  ret;
 
 	if (! bsnprintf(pathname, sizeof(pathname), "%s/%03x/%08x%s/%016llx",
 		fsqueue_getpath(qkind),
@@ -176,10 +181,11 @@ fsqueue_envelope_load(enum queue_kind qkind, struct envelope *ep)
 			return 0;
 		fatal("fsqueue_envelope_load: fopen");
 	}
-	if (! fsqueue_load_envelope_ascii(fp, ep))
-		fatal("fsqueue_load_envelope_ascii: fread");
+	ret = fsqueue_load_envelope_ascii(fp, ep);
+
 	fclose(fp);
-	return 1;
+
+	return ret;
 }
 
 static int
@@ -457,13 +463,34 @@ fsqueue_message_purge(enum queue_kind qkind, u_int32_t msgid)
 	return 1;
 }
 
+static int
+fsqueue_message_corrupt(enum queue_kind qkind, u_int32_t msgid)
+{
+	char rootdir[MAXPATHLEN];
+	char corruptdir[MAXPATHLEN];
+
+	if (! bsnprintf(rootdir, sizeof(rootdir), "%s/%03x/%08x",
+		fsqueue_getpath(qkind), msgid & 0xfff, msgid))
+		fatalx("fsqueue_message_corrupt: snprintf");
+
+	if (! bsnprintf(corruptdir, sizeof(corruptdir), "%s/%08x",
+		fsqueue_getpath(Q_CORRUPT), msgid))
+		fatalx("fsqueue_message_corrupt: snprintf");
+
+	if (rename(rootdir, corruptdir) == -1)
+		fatalx("fsqueue_message_corrupt: rename");
+
+	return 1;
+}
+
 
 int
 fsqueue_init(void)
 {
 	unsigned int	 n;
 	char		*paths[] = { PATH_INCOMING, PATH_ENQUEUE, PATH_QUEUE,
-				     PATH_PURGE, PATH_OFFLINE, PATH_BOUNCE };
+				     PATH_PURGE, PATH_OFFLINE, PATH_BOUNCE,
+				     PATH_CORRUPT };
 	char		 pathname[MAXPATHLEN];
 	struct stat	 sb;
 	int		 ret;
@@ -608,6 +635,9 @@ fsqueue_message(enum queue_kind qkind, enum queue_op qop, u_int32_t *msgid)
 
 	case QOP_PURGE:
 		return fsqueue_message_purge(qkind, *msgid);
+
+	case QOP_CORRUPT:
+		return fsqueue_message_corrupt(qkind, *msgid);
 
         default:
 		fatalx("queue_fsqueue_message: unsupported operation.");

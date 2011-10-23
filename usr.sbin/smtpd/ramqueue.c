@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramqueue.c,v 1.20 2011/10/23 09:30:07 gilles Exp $	*/
+/*	$OpenBSD: ramqueue.c,v 1.21 2011/10/23 13:03:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -154,8 +154,11 @@ ramqueue_load(struct ramqueue *rqueue, time_t *nsched)
 		if ((evpid = filename_to_evpid(basename(path))) == 0)
 			continue;
 
-		if (! queue_envelope_load(Q_QUEUE, evpid, &envelope))
+		if (! queue_envelope_load(Q_QUEUE, evpid, &envelope)) {
+			log_debug("failed to load envelope");
+			queue_message_corrupt(Q_QUEUE, evpid_to_msgid(evpid));
 			continue;
+		}
 		if (ramqueue_expire(&envelope, curtm))
 			continue;
 		ramqueue_insert(rqueue, &envelope, curtm);
