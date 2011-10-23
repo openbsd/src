@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue_ascii.c,v 1.2 2011/10/23 13:03:05 gilles Exp $	*/
+/*	$OpenBSD: queue_fsqueue_ascii.c,v 1.3 2011/10/23 13:08:18 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -69,7 +69,6 @@
 #define	KW_MTA_RELAY_PORT	"mta-relay-port"
 #define	KW_MTA_RELAY_FLAGS	"mta-relay-flags"
 #define	KW_MTA_RELAY_CERT	"mta-relay-cert"
-#define	KW_MTA_RELAY_AS		"mta-relay-as"
 
 int	fsqueue_load_envelope_ascii(FILE *, struct envelope *);
 int	fsqueue_dump_envelope_ascii(FILE *, struct envelope *);
@@ -470,18 +469,6 @@ ascii_dump_mta_relay_flags(struct envelope *ep, FILE *fp)
 }
 
 static int
-ascii_dump_mta_relay_as(struct envelope *ep, FILE *fp)
-{
-	if (ep->agent.mta.relay_as.user[0] ||
-	    ep->agent.mta.relay_as.domain[0])
-		fprintf(fp, "%s: %s@%s\n", KW_MTA_RELAY_AS,
-		    ep->agent.mta.relay_as.user,
-		    ep->agent.mta.relay_as.domain);
-	return 1;
-}
-
-
-static int
 ascii_load_ctime(struct envelope *ep, char *buf)
 {
 	const char *errstr;
@@ -636,8 +623,7 @@ ascii_dump_agent(struct envelope *ep, FILE *fp)
 		if (! ascii_dump_mta_relay_host(ep, fp)  ||
 		    ! ascii_dump_mta_relay_port(ep, fp)  ||
 		    ! ascii_dump_mta_relay_cert(ep, fp)  ||
-		    ! ascii_dump_mta_relay_flags(ep, fp) ||
-		    ! ascii_dump_mta_relay_as(ep, fp))
+		    ! ascii_dump_mta_relay_flags(ep, fp))
 			return 0;
 		break;
 
