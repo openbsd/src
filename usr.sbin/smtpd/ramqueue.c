@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramqueue.c,v 1.22 2011/10/23 15:36:53 eric Exp $	*/
+/*	$OpenBSD: ramqueue.c,v 1.23 2011/10/23 17:12:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -375,6 +375,13 @@ ramqueue_schedule(struct ramqueue *rq, u_int64_t id)
 {
 	struct ramqueue_message *rq_msg;
 	struct ramqueue_envelope *rq_evp;
+
+	/* schedule *all* */
+	if (id == 0) {
+		TAILQ_FOREACH(rq_evp, &rq->queue, queue_entry) {
+			ramqueue_schedule_envelope(rq, rq_evp);
+		}
+	}
 
 	/* scheduling by evpid */
 	if (id > 0xffffffffL) {

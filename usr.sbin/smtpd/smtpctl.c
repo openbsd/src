@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.68 2011/10/23 09:30:07 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.69 2011/10/23 17:12:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -146,6 +146,8 @@ connected:
 			errx(1, "invalid msgid/evpid");
 		if (errno == ERANGE && ulval == ULLONG_MAX)
 			errx(1, "invalid msgid/evpid");
+		if (ulval == 0)
+			errx(1, "invalid msgid/evpid");
 
 		if (res->action == SCHEDULE)
 			imsg_compose(ibuf, IMSG_RUNNER_SCHEDULE, 0, 0, -1, &ulval,
@@ -153,6 +155,14 @@ connected:
 		if (res->action == REMOVE)
 			imsg_compose(ibuf, IMSG_RUNNER_REMOVE, 0, 0, -1, &ulval,
 			    sizeof(ulval));
+		break;
+	}
+
+	case SCHEDULE_ALL: {
+		u_int64_t ulval = 0;
+
+		imsg_compose(ibuf, IMSG_RUNNER_SCHEDULE, 0, 0, -1, &ulval,
+		    sizeof(ulval));
 		break;
 	}
 
@@ -215,6 +225,7 @@ connected:
 			/* case RELOAD: */
 			case REMOVE:
 			case SCHEDULE:
+			case SCHEDULE_ALL:
 			case SHUTDOWN:
 			case PAUSE_MDA:
 			case PAUSE_MTA:
