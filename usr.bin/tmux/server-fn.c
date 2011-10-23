@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.51 2011/09/05 23:40:51 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.52 2011/10/23 10:16:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -237,6 +237,7 @@ server_lock_client(struct client *c)
 	tty_stop_tty(&c->tty);
 	tty_raw(&c->tty, tty_term_string(c->tty.term, TTYC_SMCUP));
 	tty_raw(&c->tty, tty_term_string(c->tty.term, TTYC_CLEAR));
+	tty_raw(&c->tty, tty_term_string(c->tty.term, TTYC_E3));
 
 	c->flags |= CLIENT_SUSPENDED;
 	server_write_client(c, MSG_LOCK, &lockdata, sizeof lockdata);

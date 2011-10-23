@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.40 2011/07/08 06:28:05 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.41 2011/10/23 10:16:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1125,6 +1125,17 @@ input_csi_dispatch(struct input_ctx *ictx)
 			break;
 		case 2:
 			screen_write_clearscreen(sctx);
+			break;
+		case 3:
+			switch (input_get(ictx, 1, 0, 0)) {
+			case 0:
+				/*
+				 * Linux console extension to clear history
+				 * (for example before locking the screen).
+				 */
+				screen_write_clearhistory(sctx);
+				break;
+			}
 			break;
 		default:
 			log_debug("%s: unknown '%c'", __func__, ictx->ch);
