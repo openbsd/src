@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbdmap.h,v 1.5 2011/10/09 12:41:39 mpi Exp $	*/
+/*	$OpenBSD: akbdmap.h,v 1.6 2011/10/23 19:16:31 mpi Exp $ */
 /*	$NetBSD: akbdmap.h,v 1.7 2005/05/05 22:29:41 abs Exp $	*/
 
 /*-
@@ -44,7 +44,11 @@ unsigned char keyboard[128] = {
 	RAWKEY_x,
 	RAWKEY_c,
 	RAWKEY_v,
+#ifdef FIX_SV_X_KBDBUG
+	RAWKEY_grave,
+#else
 	RAWKEY_less,
+#endif
 	RAWKEY_b,
 	RAWKEY_q,
 	RAWKEY_w,
@@ -84,15 +88,19 @@ unsigned char keyboard[128] = {
 	RAWKEY_period,
 	RAWKEY_Tab,
 	RAWKEY_space,
+#ifdef FIX_SV_X_KBDBUG
+	RAWKEY_less,
+#else
 	RAWKEY_grave,
-	RAWKEY_BackSpace,
+#endif
+	RAWKEY_Delete,
 	RAWKEY_KP_Enter,
 	RAWKEY_Escape,
 	RAWKEY_Control_L,
-	RAWKEY_Alt_L,		/* Command */
+	219,			/* XXX */
 	RAWKEY_Shift_L,
 	RAWKEY_Caps_Lock,
-	RAWKEY_Alt_R,		/* Option */
+	RAWKEY_Alt_L,
 	RAWKEY_Left,
 	RAWKEY_Right,
 	RAWKEY_Down,
@@ -225,11 +233,11 @@ static const keysym_t akbd_keydesc_us[] = {
     KC(51),			KS_Delete,
     KC(52),			KS_KP_Enter,
     KC(53),			KS_Escape,
-    KC(54),  KS_Cmd1,		KS_Control_L,
-    KC(55),  KS_Cmd2,		KS_Alt_L,	/* Command */
+    KC(54),			KS_Control_L,
+    KC(55),  KS_Cmd,				/* Command */
     KC(56),			KS_Shift_L,
     KC(57),			KS_Caps_Lock,
-    KC(58),  KS_Cmd2,		KS_Alt_R,	/* Option */
+    KC(58),  KS_Cmd1,				/* Option */
     KC(59),			KS_Left,
     KC(60),			KS_Right,
     KC(61),			KS_Down,
@@ -332,6 +340,8 @@ static const keysym_t akbd_keydesc_fr[] = {
     KC(46),	KS_comma,	KS_question,	KS_voidSymbol,	KS_questiondown,
     KC(47),	KS_colon,	KS_slash,	KS_division,	KS_backslash,
     KC(50),	KS_less,	KS_greater,
+    KC(52),	KS_Alt_R,
+    KC(55),	KS_Meta_L,				/* Command */
     KC(58),	KS_Mode_switch,	KS_Multi_key,		/* Option */
 };
 
@@ -366,6 +376,7 @@ static const keysym_t akbd_keydesc_uk[] = {
 /*  pos		normal		shifted		altgr		shift-altgr */
     KC(10),	KS_section,	KS_plusminus,
     KC(20),	KS_3,		KS_sterling,	KS_numbersign,
+    KC(52),	KS_KP_Enter,
     KC(58),	KS_Mode_switch,	KS_Multi_key,		/* Option */
 };
 
@@ -390,7 +401,7 @@ static const keysym_t akbd_keydesc_sv[] = {
     KC(44),	KS_minus,	KS_underscore,
     KC(47),	KS_period,	KS_colon,
     KC(50),	KS_less,	KS_greater,	KS_bar,
-    KC(58),	KS_Mode_switch,	KS_Multi_key,		/* Option */
+    KC(58),	KS_Mode_switch,KS_Multi_key,
 };
 
 static const keysym_t akbd_keydesc_sv_nodead[] = {
@@ -441,7 +452,8 @@ static const keysym_t akbd_keydesc_de[] = {
     KC(46),	KS_m,		KS_M,		KS_mu,
     KC(47),	KS_period,	KS_colon,
     KC(50),	KS_less,	KS_greater,
-    KC(58),	KS_Mode_switch,	KS_Multi_key,		/* Option */
+    KC(52),	KS_Multi_key,
+    KC(58),	KS_Mode_switch,
 };
 
 static const keysym_t akbd_keydesc_de_nodead[] = {
@@ -505,6 +517,7 @@ static const keysym_t akbd_keydesc_es[] = {
     KC(44),	KS_minus,	KS_underscore,
     KC(47),	KS_period,	KS_colon,
     KC(50),	KS_less,	KS_greater,
+    KC(55),	KS_Alt_L,				/* Command */
     KC(58),	KS_Mode_switch, KS_Multi_key,		/* Option */
 };
 
@@ -611,7 +624,8 @@ static const keysym_t akbd_keydesc_sg[] = {
     KC(46),	KS_m,		KS_M,		KS_mu,
     KC(47),	KS_period,	KS_colon,	KS_voidSymbol,	KS_division,
     KC(50),	KS_less,	KS_greater,
-    KC(58),	KS_Mode_switch,	KS_Multi_key,		/* Option */
+    KC(52),	KS_Multi_key,
+    KC(58),	KS_Mode_switch,
 };
 
 static const keysym_t akbd_keydesc_sg_nodead[] = {
