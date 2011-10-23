@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.65 2011/10/21 18:16:13 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.66 2011/10/23 21:18:14 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -632,12 +632,7 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	pci_decompose_tag (pa->pa_pc, pa->pa_tag, &bus, &dev, &func);
 
 	if (!(ihp->line & PCI_INT_VIA_ISA) && mp_busses != NULL) {
-		/*
-		 * Assumes 1:1 mapping between PCI bus numbers and
-		 * the numbers given by the MP bios.
-		 * XXX Is this a valid assumption?
-		 */
-		int mpspec_pin = (dev<<2)|(pin-1);
+		int mpspec_pin = (dev << 2) | (pin - 1);
 
 		if (bus < mp_nbusses) {
 			for (mip = mp_busses[bus].mb_intrs;
