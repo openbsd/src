@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.191 2011/10/16 21:07:19 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.192 2011/10/24 17:48:31 camield Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -980,7 +980,7 @@ carpdetach(struct carp_softc *sc)
 	carp_del_all_timeouts(sc);
 
 	if (sc->sc_demote_cnt)
-		carp_group_demote_adj(&sc->sc_if, sc->sc_demote_cnt, "detach");
+		carp_group_demote_adj(&sc->sc_if, -sc->sc_demote_cnt, "detach");
 	sc->sc_suppress = 0;
 	sc->sc_sendad_errors = 0;
 
