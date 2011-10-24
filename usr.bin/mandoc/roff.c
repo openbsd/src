@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.44 2011/09/19 07:53:54 schwarze Exp $ */
+/*	$Id: roff.c,v 1.45 2011/10/24 21:38:56 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -182,7 +182,7 @@ static	void		 roff_openeqn(struct roff *, const char *,
 				int, int, const char *);
 static	enum rofft	 roff_parse(struct roff *, const char *, int *);
 static	enum rofferr	 roff_parsetext(char *);
-static	void		 roff_res(struct roff *, 
+static	enum rofferr	 roff_res(struct roff *, 
 				char **, size_t *, int, int);
 static	enum rofferr	 roff_rm(ROFF_ARGS);
 static	void		 roff_setstr(struct roff *,
@@ -428,7 +428,7 @@ roff_alloc(struct mparse *parse)
  * is processed. 
  * This also checks the syntax of regular escapes.
  */
-static void
+static enum rofferr
 roff_res(struct roff *r, char **bufp, size_t *szp, int ln, int pos)
 {
 	enum mandoc_esc	 esc;
@@ -454,7 +454,7 @@ again:
 		 */
 
 		if ('\0' == *cp)
-			return;
+			return(ROFF_CONT);
 
 		if ('*' != *cp) {
 			res = cp;
@@ -465,7 +465,7 @@ again:
 			mandoc_msg
 				(MANDOCERR_BADESCAPE, r->parse, 
 				 ln, (int)(stesc - *bufp), NULL);
-			return;
+			return(ROFF_CONT);
 		}
 
 		cp++;
@@ -478,7 +478,7 @@ again:
 
 		switch (*cp) {
 		case ('\0'):
-			return;
+			return(ROFF_CONT);
 		case ('('):
 			cp++;
 			maxl = 2;
@@ -501,7 +501,7 @@ again:
 					(MANDOCERR_BADESCAPE, 
 					 r->parse, ln, 
 					 (int)(stesc - *bufp), NULL);
-				return;
+				return(ROFF_CONT);
 			}
 			if (0 == maxl && ']' == *cp)
 				break;
@@ -542,8 +542,9 @@ again:
 
 		/* Just leave the string unexpanded. */
 		mandoc_msg(MANDOCERR_ROFFLOOP, r->parse, ln, pos, NULL);
-		return;
+		return(ROFF_IGN);
 	}
+	return(ROFF_CONT);
 }
 
 /*
@@ -600,7 +601,10 @@ roff_parseln(struct roff *r, int ln, char **bufp,
 	 * words to fill in.
 	 */
 
-	roff_res(r, bufp, szp, ln, pos);
+	e = roff_res(r, bufp, szp, ln, pos);
+	if (ROFF_IGN == e)
+		return(e);
+	assert(ROFF_CONT == e);
 
 	ppos = pos;
 	ctl = mandoc_getcontrol(*bufp, &pos);
