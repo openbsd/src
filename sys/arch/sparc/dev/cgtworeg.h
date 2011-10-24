@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtworeg.h,v 1.3 2006/07/20 11:23:49 martin Exp $	*/
+/*	$OpenBSD: cgtworeg.h,v 1.4 2011/10/24 18:32:47 miod Exp $	*/
 /*	$NetBSD: cgtworeg.h,v 1.3 1995/10/04 00:21:27 pk Exp $ */
 
 /*
@@ -88,16 +88,16 @@ struct cg2memfb {
  * and video_enab.
  */
 struct cg2statusreg {
-	u_int reserved : 2;	/* not used */
-        u_int fastread : 1;	/* r/o: has some feature I don't understand */
-        u_int id : 1;		/* r/o: ext status and ID registers exist */
-        u_int resolution : 4;	/* screen resolution, 0 means 1152x900 */
-        u_int retrace : 1;	/* r/o: retrace in progress */
-        u_int inpend : 1;	/* r/o: interrupt request */
-        u_int ropmode : 3;	/* ?? */
-        u_int inten : 1;	/* interrupt enable (for end of retrace) */
-        u_int update_cmap : 1;	/* copy/use shadow colour map */
-        u_int video_enab : 1;	/* enable video */
+	uint16_t reserved:2;	/* not used */
+        uint16_t fastread:1;	/* r/o: has some feature I don't understand */
+        uint16_t id:1;		/* r/o: ext status and ID registers exist */
+        uint16_t resolution:4;	/* screen resolution, 0 means 1152x900 */
+        uint16_t retrace:1;	/* r/o: retrace in progress */
+        uint16_t inpend:1;	/* r/o: interrupt request */
+        uint16_t ropmode:3;	/* ?? */
+        uint16_t inten:1;	/* interrupt enable (for end of retrace) */
+        uint16_t update_cmap:1;	/* copy/use shadow colour map */
+        uint16_t video_enab:1;	/* enable video */
 };
 
 
@@ -105,10 +105,10 @@ struct cg2statusreg {
  * Extended status register.  Unused by X server
  */
 struct cg2_extstatus {
-	u_int gpintreq : 1;	/* interrupt request */
-	u_int gpintdis : 1;	/* interrupt disable */
-	u_int reserved : 13;	/* unused */
-	u_int gpbus : 1;	/* bus enabled */
+	uint16_t gpintreq:1;	/* interrupt request */
+	uint16_t gpintdis:1;	/* interrupt disable */
+	uint16_t reserved:13;	/* unused */
+	uint16_t gpbus:1;	/* bus enabled */
 };
 
 
@@ -119,15 +119,15 @@ struct cg2_extstatus {
  * controls them.
  */
 struct dblbufreg {
-	u_int display_b : 1;	/* display memory B (set) or A (reset) */
-	u_int read_b : 1;	/* access memory B (set) or A (reset) */
-	u_int nowrite_b : 1;	/* when set, writes don't update memory B */
-	u_int nowrite_a : 1;	/* when set, writes don't update memory A */
-	u_int read_ecmap : 1;	/* copy from(clear)/to(set) shadow colour map */
-	u_int fast_read : 1;	/* fast reads, but wrong data */
-	u_int wait : 1;		/* when set, remains so to end up v. retrace */
-	u_int update_ecmap : 1;	/* copy/use shadow colour map */
-        u_int reserved : 8;
+	uint16_t display_b:1;	/* display memory B (set) or A (reset) */
+	uint16_t read_b:1;	/* access memory B (set) or A (reset) */
+	uint16_t nowrite_b:1;	/* when set, writes don't update memory B */
+	uint16_t nowrite_a:1;	/* when set, writes don't update memory A */
+	uint16_t read_ecmap:1;	/* copy from(clear)/to(set) shadow colour map */
+	uint16_t fast_read:1;	/* fast reads, but wrong data */
+	uint16_t wait:1;	/* when set, remains so to end up v. retrace */
+	uint16_t update_ecmap:1;	/* copy/use shadow colour map */
+        uint16_t reserved:8;
 };
 
 
@@ -142,18 +142,18 @@ struct cg2_zoom {
 	} wordpan;
 	union {
 		struct {
-			u_int unused  : 8;
-			u_int lineoff : 4;
-			u_int pixzoom : 4;
+			uint16_t unused:8;
+			uint16_t lineoff:4;
+			uint16_t pixzoom:4;
 		} reg;
 		u_short word;
 		u_char reg_pad[4096];
 	} zoom;
         union {
 		struct {
-			u_int unused   : 8;
-			u_int lorigin  : 4;
-			u_int pixeloff : 4;
+			uint16_t unused:8;
+			uint16_t lorigin:4;
+			uint16_t pixeloff:4;
 		} reg;
 		u_short word;
 		u_char reg_pad[4096];
