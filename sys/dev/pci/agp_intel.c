@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_intel.c,v 1.18 2010/08/07 20:47:24 deraadt Exp $	*/
+/*	$OpenBSD: agp_intel.c,v 1.19 2011/10/24 15:42:33 oga Exp $	*/
 /*	$NetBSD: agp_intel.c,v 1.3 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -260,7 +260,11 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 		break;
 
 	default:
-		pci_conf_write(pa->pa_pc, pa->pa_tag, AGP_INTEL_ERRSTS, 0x70);
+		reg = pci_conf_read(isc->isc_pc, isc->isc_tag,
+		    AGP_INTEL_ERRCMD);
+		reg |= 0x7000; /* Ack ERRSTS bits 8-10*/
+		pci_conf_write(isc->isc_pc, isc->isc_tag,
+		    AGP_INTEL_ERRCMD, reg);
 	}
 	
 	isc->agpdev = (struct agp_softc *)agp_attach_bus(pa, &agp_intel_methods,
@@ -319,6 +323,7 @@ agp_intel_save(struct agp_intel_softc *isc)
 void
 agp_intel_restore(struct agp_intel_softc *isc)
 {
+	pcireg_t	tmp;
 	/*
 	 * reset size now just in case, if it worked before then sanity
 	 * checking will not fail
@@ -374,8 +379,11 @@ agp_intel_restore(struct agp_intel_softc *isc)
 		    AGP_INTEL_I8XX_ERRSTS, 0x00ff);
 		break;
 	default:
+		tmp = pci_conf_read(isc->isc_pc, isc->isc_tag,
+		    AGP_INTEL_ERRCMD);
+		tmp |= 0x7000; /* Ack ERRSTS bits 8-10*/
 		pci_conf_write(isc->isc_pc, isc->isc_tag,
-		    AGP_INTEL_ERRSTS, 0x70);
+		    AGP_INTEL_ERRCMD, tmp);
 		break;
 	}
 }

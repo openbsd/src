@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpreg.h,v 1.14 2011/10/16 01:11:31 dhill Exp $	*/
+/*	$OpenBSD: agpreg.h,v 1.15 2011/10/24 15:42:33 oga Exp $	*/
 /*	$NetBSD: agpreg.h,v 1.1 2001/09/10 10:01:02 fvdl Exp $	*/
 
 /*-
@@ -52,10 +52,6 @@
 /*
  * Config offsets for Intel AGP chipsets.
  */
-/* i845/855PM */
-#define	AGP_I845_AGPMISC		0x51
-#define AGPMISC_AAGN			(1U << 1)  /* Aperture AccessEN */
-
 /* i840/850/850E */
 #define AGP_I840_MCHCFG			0x50
 #define MCHCFG_AAGN			(1U << 9)  /* Aperture AccessEN */
@@ -70,7 +66,9 @@
 #define	AGP_INTEL_I8XX_ERRSTS		0xc8
 
 /* Common register */
-#define	AGP_INTEL_ERRSTS		0x91	/* Not i8XX */
+#define	AGP_INTEL_ERRCMD		0x90	/* Not i8XX, 8 bits
+						 * ERRSTS is at + 1 and is 16
+						 */
 #define AGP_INTEL_AGPCMD		0xa8
 #define AGPCMD_SBA			(1U << 9)
 #define AGPCMD_AGPEN			(1U << 8)
