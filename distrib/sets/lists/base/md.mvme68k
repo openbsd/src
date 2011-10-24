@@ -60,7 +60,7 @@
 ./usr/lib/libskey.so.5.1
 ./usr/lib/libsndio.so.4.0
 ./usr/lib/libssl.so.16.0
-./usr/lib/libstdc++.so.45.0
+./usr/lib/libstdc++.so.46.0
 ./usr/lib/libtermcap.so.12.1
 ./usr/lib/libtermlib.so.12.1
 ./usr/lib/libusbhid.so.3.0
