@@ -1,4 +1,4 @@
-/* $OpenBSD: omdisplay.c,v 1.5 2010/09/07 16:21:37 deraadt Exp $ */
+/* $OpenBSD: omdisplay.c,v 1.6 2011/10/24 22:49:07 drahn Exp $ */
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
  *
@@ -540,7 +540,7 @@ omdisplay_attach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_dma_tag = aa->aa_dmat;
 
-	sc->sc_ih = intc_intr_establish(aa->aa_intr, IPL_BIO /* XXX */,
+	sc->sc_ih = arm_intr_establish(aa->aa_intr, IPL_BIO /* XXX */,
 	    omdisplay_intr, sc, sc->sc_dev.dv_xname);
 
 	printf ("\n");

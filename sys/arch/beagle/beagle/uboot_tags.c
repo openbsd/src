@@ -1,4 +1,4 @@
-/* $OpenBSD: uboot_tags.c,v 1.1 2011/10/21 22:55:01 drahn Exp $ */
+/* $OpenBSD: uboot_tags.c,v 1.2 2011/10/24 22:49:07 drahn Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -88,13 +88,17 @@ parse_uboot_tags(void *handle)
 			    tag->u.mem.size);
 
 			i = bootconfig.dramblocks -1;
-			if (bootconfig.dramblocks != 0 && (tag->u.mem.start == bootconfig.dram[i].address +
+			if (bootconfig.dramblocks != 0 &&
+			    (tag->u.mem.start == bootconfig.dram[i].address +
 			    (bootconfig.dram[i].pages * PAGE_SIZE))) {
-				bootconfig.dram[i].pages = bootconfig.dram[i].pages + tag->u.mem.size / PAGE_SIZE;
+				bootconfig.dram[i].pages =
+				    bootconfig.dram[i].pages +
+				    tag->u.mem.size / PAGE_SIZE;
 			} else { 
 				i = bootconfig.dramblocks;
 				bootconfig.dram[i].address = tag->u.mem.start;
-				bootconfig.dram[i].pages = tag->u.mem.size / PAGE_SIZE;
+				bootconfig.dram[i].pages = tag->u.mem.size
+				    / PAGE_SIZE;
 				bootconfig.dramblocks = i + 1;
 			}
 

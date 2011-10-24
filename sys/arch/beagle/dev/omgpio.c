@@ -1,4 +1,4 @@
-/* $OpenBSD: omgpio.c,v 1.5 2011/10/21 22:55:01 drahn Exp $ */
+/* $OpenBSD: omgpio.c,v 1.6 2011/10/24 22:49:07 drahn Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -21,8 +21,12 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/evcount.h>
+
+#include <arm/cpufunc.h>
+
 #include <machine/bus.h>
 #include <machine/intr.h>
+
 #include <arch/beagle/beagle/ahb.h>
 #include <arch/beagle/dev/omgpiovar.h>
 #include "omgpio.h"
@@ -335,7 +339,7 @@ omgpio_intr_establish(unsigned int gpio, int level, int spl,
 	ih->ih_arg = arg;
 	ih->ih_ipl = level;
 	ih->ih_gpio = gpio;
-	ih->ih_irq = gpio + INTC_NUM_IRQ;
+	ih->ih_irq = gpio + 512;
 	ih->ih_name = name;
 
 	sc->sc_handlers[GPIO_PIN_TO_OFFSET(gpio)] = ih;
@@ -436,18 +440,18 @@ omgpio_recalc_interrupts(struct omgpio_softc *sc)
 
 #if 0
 	if ((max == IPL_NONE || max != sc->sc_max_il) && sc->sc_ih_h != NULL)
-		intc_intr_disestablish(sc->sc_ih_h);
+		arm_intr_disestablish(sc->sc_ih_h);
 
 	if (max != IPL_NONE && max != sc->sc_max_il) {
-		sc->sc_ih_h = intc_intr_establish(sc->sc_irq, max, omgpio_irq,
+		sc->sc_ih_h = arm_intr_establish(sc->sc_irq, max, omgpio_irq,
 		    sc, NULL);
 	}
 #else
 	if (sc->sc_ih_h != NULL)
-		intc_intr_disestablish(sc->sc_ih_h);
+		arm_intr_disestablish(sc->sc_ih_h);
 
 	if (max != IPL_NONE) {
-		sc->sc_ih_h = intc_intr_establish(sc->sc_irq, max, omgpio_irq,
+		sc->sc_ih_h = arm_intr_establish(sc->sc_irq, max, omgpio_irq,
 		    sc, NULL);
 	}
 #endif
@@ -455,10 +459,10 @@ omgpio_recalc_interrupts(struct omgpio_softc *sc)
 	sc->sc_max_il = max;
 
 	if (sc->sc_ih_l != NULL)
-		intc_intr_disestablish(sc->sc_ih_l);
+		arm_intr_disestablish(sc->sc_ih_l);
 
 	if (max != min) {
-		sc->sc_ih_h = intc_intr_establish(sc->sc_irq, min,
+		sc->sc_ih_h = arm_intr_establish(sc->sc_irq, min,
 		    omgpio_irq_dummy, sc, NULL);
 	}
 	sc->sc_min_il = min;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intc.h,v 1.1 2009/05/08 03:13:26 drahn Exp $ */
+/*	$OpenBSD: intc.h,v 1.2 2011/10/24 22:49:07 drahn Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -17,8 +17,6 @@
 
 #ifndef _OMAPINTC_INTR_H_
 #define _OMAPINTC_INTR_H_
-
-#define	ARM_IRQ_HANDLER	_C_LABEL(intc_irq_handler)
 
 #ifndef _LOCORE
 
@@ -56,11 +54,6 @@ find_first_bit( uint32_t bits )
 	return 31-count;
 }
 
-
-int	_splraise(int);
-int	_spllower(int);
-void	splx(int);
-void	_setsoftintr(int);
 
 /*
  * This function *MUST* be called very early on in a port's

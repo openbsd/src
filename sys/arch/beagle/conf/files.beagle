@@ -1,4 +1,4 @@
-#	$OpenBSD: files.beagle,v 1.8 2011/10/21 22:55:01 drahn Exp $
+#	$OpenBSD: files.beagle,v 1.9 2011/10/24 22:49:07 drahn Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -24,6 +24,9 @@ file	arch/arm/armv7/armv7_space.c	ahb
 file	arch/arm/armv7/armv7_a4x_space.c	ahb	# XXX
 file	arch/arm/armv7/armv7_a4x_io.S		ahb	# XXX
 file	arch/arm/armv7/armv7_mutex.c
+
+#interrupt API layer
+file	arch/beagle/beagle/intr.c
 
 # u-boot argument support
 file	arch/beagle/beagle/uboot_tags.c

@@ -1,4 +1,4 @@
-/*	$OpenBSD: beagle_machdep.c,v 1.9 2011/10/21 22:55:01 drahn Exp $ */
+/*	$OpenBSD: beagle_machdep.c,v 1.10 2011/10/24 22:49:07 drahn Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -455,8 +455,6 @@ initarm(void *arg0, void *arg1, void *arg2)
 	paddr_t memstart;
 	psize_t memsize;
 
-	board_id = (uint32_t)arg1;
-
 #if 0
 	int led_data = 0;
 #endif
@@ -465,19 +463,17 @@ initarm(void *arg0, void *arg1, void *arg2)
 	int	(*map_func_save)(void *, bus_addr_t, bus_size_t, int, 
 	    bus_space_handle_t *);
 
+	board_id = (uint32_t)arg1;
+
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
 	 */
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
 
-	if (board_id == BOARD_ID_OMAP3_BEAGLE)
-		intc_intr_bootstrap(0x48200000); /* XXX - constant */
-
 #if 0
 	/* Calibrate the delay loop. */
 #endif
-
 
 	/*
 	 * Temporarily replace bus_space_map() functions so that
@@ -794,10 +790,6 @@ initarm(void *arg0, void *arg1, void *arg2)
 	/* be a client to all domains */
 	cpu_domains(0x55555555);
 	/* Switch tables */
-
-	/* set new intc register address so that splfoo() doesn't
-	   touch illegal address.  */
-	intc_intr_bootstrap(0x48200000); /* XXX - constant */
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 	setttb(kernel_l1pt.pv_pa);

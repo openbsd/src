@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.3 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: intr.h,v 1.4 2011/10/24 22:49:07 drahn Exp $	*/
 /*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:59 thorpej Exp $	*/
 
 /*
@@ -47,9 +47,9 @@
 #define	IPL_SOFT	1	/* generic software interrupts */
 #define	IPL_SOFTCLOCK	2	/* software clock interrupt */
 #define	IPL_SOFTNET	3	/* software network interrupt */
-#define	IPL_BIO		4	/* block I/O */
-#define	IPL_NET		5	/* network */
-#define	IPL_SOFTTTY	6	/* software serial interrupt */
+#define	IPL_SOFTTTY	4	/* software serial interrupt */
+#define	IPL_BIO		5	/* block I/O */
+#define	IPL_NET		6	/* network */
 #define	IPL_TTY		7	/* terminals */
 #define	IPL_VM		8	/* memory allocation */
 #define	IPL_AUDIO	9	/* audio device */
@@ -73,30 +73,92 @@
 #define IST_EDGE_BOTH    6
 
 #ifndef _LOCORE
-
 #include <sys/device.h>
 #include <sys/queue.h>
 
-#define	splhigh()	_splraise(IPL_HIGH)
-#define	splsoft()	_splraise(IPL_SOFT)
-#define	splsoftclock()	_splraise(IPL_SOFTCLOCK)
-#define	splsoftnet()	_splraise(IPL_SOFTNET)
-#define	splbio()	_splraise(IPL_BIO)
-#define	splnet()	_splraise(IPL_NET)
-#define	spltty()	_splraise(IPL_TTY)
-#define	splvm()		_splraise(IPL_VM)
-#define	splaudio()	_splraise(IPL_AUDIO)
-#define	splclock()	_splraise(IPL_CLOCK)
-#define	splstatclock()	_splraise(IPL_STATCLOCK)
+int     splraise(int);
+int     spllower(int);
+void    splx(int);
 
-#define	spl0()		_spllower(IPL_NONE)
+void	arm_do_pending_intr(int);
+void	arm_set_intr_handler(int (*raise)(int), int (*lower)(int),
+	void (*x)(int), void (*setipl)(int),
+	void *(*intr_establish)(int irqno, int level, int (*func)(void *),
+	    void *cookie, char *name),
+	void (*intr_disestablish)(void *cookie),
+	const char *(*intr_string)(void *cookie),
+	void (*intr_handle)(void *));
+
+struct arm_intr_func {
+	int (*raise)(int);
+	int (*lower)(int);
+	void (*x)(int);
+	void (*setipl)(int);
+	void *(*intr_establish)(int irqno, int level, int (*func)(void *),
+	    void *cookie, char *name);
+	void (*intr_disestablish)(void *cookie);
+	const char *(*intr_string)(void *cookie);
+};
+
+extern struct arm_intr_func arm_intr_func;
+
+#define splraise(cpl)		(arm_intr_func.raise(cpl))
+#define _splraise(cpl)		(arm_intr_func.raise(cpl))
+#define spllower(cpl)		(arm_intr_func.lower(cpl))
+#define splx(cpl)		(arm_intr_func.x(cpl))
+
+#define	splhigh()	splraise(IPL_HIGH)
+#define	splsoft()	splraise(IPL_SOFT)
+#define	splsoftclock()	splraise(IPL_SOFTCLOCK)
+#define	splsoftnet()	splraise(IPL_SOFTNET)
+#define	splbio()	splraise(IPL_BIO)
+#define	splnet()	splraise(IPL_NET)
+#define	spltty()	splraise(IPL_TTY)
+#define	splvm()		splraise(IPL_VM)
+#define	splaudio()	splraise(IPL_AUDIO)
+#define	splclock()	splraise(IPL_CLOCK)
+#define	splstatclock()	splraise(IPL_STATCLOCK)
+
+#define	spl0()		spllower(IPL_NONE)
 
 #define	splsched()	splhigh()
 #define	spllock()	splhigh()
 
+void arm_init_smask(void); /* XXX */
+extern uint32_t arm_smask[NIPL];
+void arm_setsoftintr(int si);
+
+#define _setsoftintr arm_setsoftintr
+
+#include <arm/softintr.h>
+    
+void *arm_intr_establish(int irqno, int level, int (*func)(void *),
+    void *cookie, char *name);
+void arm_intr_disestablish(void *cookie);
+const char *arm_intr_string(void *cookie);
+
+#ifdef DIAGNOSTIC
+/*
+ * Although this function is implemented in MI code, it must be in this MD
+ * header because we don't want this header to include MI includes.
+ */
+void splassert_fail(int, int, const char *);
+extern int splassert_ctl;
+void arm_splassert_check(int, const char *);
+#define splassert(__wantipl) do {                               \
+	if (splassert_ctl > 0) {                                \
+		arm_splassert_check(__wantipl, __func__);    \
+	}                                                       \
+} while (0)
+#define splsoftassert(wantipl) splassert(wantipl)
+#else
+#define splassert(wantipl)      do { /* nothing */ } while (0)
+#define splsoftassert(wantipl)  do { /* nothing */ } while (0)
+#endif
+
 #endif /* ! _LOCORE */
 
-#include "machine/beagle_intr.h"
+#define ARM_IRQ_HANDLER arm_intr
 
 #endif /* _KERNEL */
 

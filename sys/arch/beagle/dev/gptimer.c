@@ -1,4 +1,4 @@
-/* $OpenBSD: gptimer.c,v 1.6 2011/10/21 22:55:01 drahn Exp $ */
+/* $OpenBSD: gptimer.c,v 1.7 2011/10/24 22:49:07 drahn Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -307,7 +307,7 @@ cpu_initclocks()
 	prcm_setclock(1, PRCM_CLK_SPEED_32);
 	prcm_setclock(2, PRCM_CLK_SPEED_32);
 	/* establish interrupts */
-	intc_intr_establish(gptimer_irq, IPL_CLOCK, gptimer_intr,
+	arm_intr_establish(gptimer_irq, IPL_CLOCK, gptimer_intr,
 	    NULL, "tick");
 
 	/* setup timer 0 (hardware timer 2) */

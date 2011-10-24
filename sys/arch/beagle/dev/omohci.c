@@ -1,4 +1,4 @@
-/*	$OpenBSD: omohci.c,v 1.4 2010/09/07 16:21:37 deraadt Exp $ */
+/*	$OpenBSD: omohci.c,v 1.5 2011/10/24 22:49:07 drahn Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -165,17 +165,17 @@ omohci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
 	    OHCI_MIE);
 
-	sc->sc_ihc0 = intc_intr_establish(aa->aa_intr, IPL_USB,
+	sc->sc_ihc0 = arm_intr_establish(aa->aa_intr, IPL_USB,
 	    ohci_intr, &sc->sc, sc->sc.sc_bus.bdev.dv_xname);
-	sc->sc_ihc1 = intc_intr_establish(aa->aa_intr+1, IPL_USB,
+	sc->sc_ihc1 = arm_intr_establish(aa->aa_intr+1, IPL_USB,
 	    ohci_intr, &sc->sc, sc->sc.sc_bus.bdev.dv_xname);
-	sc->sc_ihc2 = intc_intr_establish(aa->aa_intr+2, IPL_USB,
+	sc->sc_ihc2 = arm_intr_establish(aa->aa_intr+2, IPL_USB,
 	    ohci_intr, &sc->sc, sc->sc.sc_bus.bdev.dv_xname);
-	sc->sc_ih0 = intc_intr_establish(aa->aa_intr+3, IPL_USB,
+	sc->sc_ih0 = arm_intr_establish(aa->aa_intr+3, IPL_USB,
 	    ohci_intr, &sc->sc, sc->sc.sc_bus.bdev.dv_xname);
-	sc->sc_ih1 = intc_intr_establish(aa->aa_intr+4, IPL_USB,
+	sc->sc_ih1 = arm_intr_establish(aa->aa_intr+4, IPL_USB,
 	    ohci_intr, &sc->sc, sc->sc.sc_bus.bdev.dv_xname);
-	sc->sc_ihotg = intc_intr_establish(aa->aa_intr+5, IPL_USB,
+	sc->sc_ihotg = arm_intr_establish(aa->aa_intr+5, IPL_USB,
 	    ohci_intr, &sc->sc, sc->sc.sc_bus.bdev.dv_xname);
 	if (sc->sc_ih0 == NULL ||
 	    sc->sc_ih1 == NULL ||
@@ -203,12 +203,12 @@ omohci_attach(struct device *parent, struct device *self, void *aux)
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: init failed, error=%d\n",
 		    sc->sc.sc_bus.bdev.dv_xname, r);
-		intc_intr_disestablish(sc->sc_ih0);
-		intc_intr_disestablish(sc->sc_ih1);
-		intc_intr_disestablish(sc->sc_ihc0);
-		intc_intr_disestablish(sc->sc_ihc1);
-		intc_intr_disestablish(sc->sc_ihc2);
-		intc_intr_disestablish(sc->sc_ihotg);
+		arm_intr_disestablish(sc->sc_ih0);
+		arm_intr_disestablish(sc->sc_ih1);
+		arm_intr_disestablish(sc->sc_ihc0);
+		arm_intr_disestablish(sc->sc_ihc1);
+		arm_intr_disestablish(sc->sc_ihc2);
+		arm_intr_disestablish(sc->sc_ihotg);
 		sc->sc_ih0 = NULL;
 		sc->sc_ih1 = NULL;
 		sc->sc_ihc0 = NULL;
@@ -239,12 +239,12 @@ omohci_detach(struct device *self, int flags)
 		return (rv);
 
 	if (sc->sc_ih0 != NULL) {
-		intc_intr_disestablish(sc->sc_ih0);
-		intc_intr_disestablish(sc->sc_ih1);
-		intc_intr_disestablish(sc->sc_ihc0);
-		intc_intr_disestablish(sc->sc_ihc1);
-		intc_intr_disestablish(sc->sc_ihc2);
-		intc_intr_disestablish(sc->sc_ihotg);
+		arm_intr_disestablish(sc->sc_ih0);
+		arm_intr_disestablish(sc->sc_ih1);
+		arm_intr_disestablish(sc->sc_ihc0);
+		arm_intr_disestablish(sc->sc_ihc1);
+		arm_intr_disestablish(sc->sc_ihc2);
+		arm_intr_disestablish(sc->sc_ihotg);
 		sc->sc_ih0 = NULL;
 		sc->sc_ih1 = NULL;
 		sc->sc_ihc0 = NULL;
