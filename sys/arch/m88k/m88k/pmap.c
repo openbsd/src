@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.67 2011/10/09 17:08:22 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.68 2011/10/25 18:38:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -285,36 +285,16 @@ pmap_translation_info(pmap_t pmap, vaddr_t va, paddr_t *pap, uint32_t *ti)
  * TLB (ATC) routines
  */
 
-#ifdef M88100
-void		 tlb_flush_88100(pmap_t, vaddr_t, pt_entry_t);
-void		 tlb_kflush_88100(vaddr_t, pt_entry_t);
-#endif
-#ifdef M88110
-void		 tlb_flush_88110(pmap_t, vaddr_t, pt_entry_t);
-void		 tlb_kflush_88110(vaddr_t, pt_entry_t);
-#endif
-#if defined(M88100) && defined(M88110)
-void		 (*tlb_flush_fnptr)(pmap_t, vaddr_t, pt_entry_t);
-void		 (*tlb_kflush_fnptr)(vaddr_t, pt_entry_t);
-#define		tlb_flush(pm,va,pte)	(*tlb_flush_fnptr)(pm,va,pte)
-#define		tlb_kflush(va,pte)	(*tlb_kflush_fnptr)(va,pte)
-#else
-#ifdef M88100
-#define		tlb_flush	tlb_flush_88100
-#define		tlb_kflush	tlb_kflush_88100
-#else
-#define		tlb_flush	tlb_flush_88110
-#define		tlb_kflush	tlb_kflush_88110
-#endif
-#endif
+void		 tlb_flush(pmap_t, vaddr_t, pt_entry_t);
+void		 tlb_kflush(vaddr_t, pt_entry_t);
 
 /*
  * [INTERNAL]
- * Flush translation cache entry for `va' in `pmap'. May act lazily.
+ * Update translation cache entry for `va' in `pmap' to `pte'. May flush
+ * instead of updating.
  */
-#ifdef M88100
 void
-tlb_flush_88100(pmap_t pmap, vaddr_t va, pt_entry_t pte)
+tlb_flush(pmap_t pmap, vaddr_t va, pt_entry_t pte)
 {
 	struct cpu_info *ci;
 	boolean_t kernel = pmap == pmap_kernel();
@@ -322,77 +302,26 @@ tlb_flush_88100(pmap_t pmap, vaddr_t va, pt_entry_t pte)
 	CPU_INFO_ITERATOR cpu;
 #endif
 
-	/*
-	 * On 88100, we take action immediately.
-	 */
 #ifdef MULTIPROCESSOR
 	CPU_INFO_FOREACH(cpu, ci)
 #else
 	ci = curcpu();
 #endif
 	{
-		if (kernel || pmap == ci->ci_curpmap)
-			cmmu_tlb_inv(ci->ci_cpuid, kernel, va);
-	}
-}
-#endif
-#ifdef M88110
-void
-tlb_flush_88110(pmap_t pmap, vaddr_t va, pt_entry_t pte)
-{
-	struct cpu_info *ci;
-	boolean_t kernel = pmap == pmap_kernel();
-#ifdef MULTIPROCESSOR
-	CPU_INFO_ITERATOR cpu;
-#endif
-
-	/*
-	 * On 88110, we only remember which tlb need to be invalidated,
-	 * and wait for pmap_update() to do it.
-	 */
-#ifdef MULTIPROCESSOR		/* { */
-	CPU_INFO_FOREACH(cpu, ci) {
 		if (kernel)
-			ci->ci_pmap_ipi |= CI_IPI_TLB_FLUSH_KERNEL;
+			cmmu_tlbis(ci->ci_cpuid, va, pte);
 		else if (pmap == ci->ci_curpmap)
-			ci->ci_pmap_ipi |= CI_IPI_TLB_FLUSH_USER;
+			cmmu_tlbiu(ci->ci_cpuid, va, pte);
 	}
-#else	/* MULTIPROCESSOR */	/* } { */
-	ci = curcpu();
-	if (kernel)
-		ci->ci_pmap_ipi |= CI_IPI_TLB_FLUSH_KERNEL;
-	else if (pmap == ci->ci_curpmap)
-		ci->ci_pmap_ipi |= CI_IPI_TLB_FLUSH_USER;
-#endif	/* MULTIPROCESSOR */	/* } */
 }
-#endif
 
 /*
  * [INTERNAL]
- * Flush translation cache entry for `va' in pmap_kernel(). Acts immediately.
+ * Update translation cache entry for `va' in pmap_kernel() to `pte'. May
+ * flush insteai of updating.
  */
-#ifdef M88100
 void
-tlb_kflush_88100(vaddr_t va, pt_entry_t pte)
-{
-	struct cpu_info *ci;
-#ifdef MULTIPROCESSOR
-	CPU_INFO_ITERATOR cpu;
-#endif
-
-#ifdef MULTIPROCESSOR
-	CPU_INFO_FOREACH(cpu, ci)
-#else
-	ci = curcpu();
-#endif
-	{
-		cmmu_tlb_inv(ci->ci_cpuid, TRUE, va);
-	}
-}
-#endif
-#ifdef M88110
-void
-tlb_kflush_88110(vaddr_t va, pt_entry_t pte)
+tlb_kflush(vaddr_t va, pt_entry_t pte)
 {
 	struct cpu_info *ci;
 #ifdef MULTIPROCESSOR
@@ -401,52 +330,13 @@ tlb_kflush_88110(vaddr_t va, pt_entry_t pte)
 
 #ifdef MULTIPROCESSOR		/* { */
 	CPU_INFO_FOREACH(cpu, ci) {
-		cmmu_tlb_inv(ci->ci_cpuid, TRUE, 0);
+		cmmu_tlbis(ci->ci_cpuid, va, pte);
 	}
 #else	/* MULTIPROCESSOR */	/* } { */
 	ci = curcpu();
-	cmmu_tlb_inv(ci->ci_cpuid, TRUE, 0);
+	cmmu_tlbis(ci->ci_cpuid, va, pte);
 #endif	/* MULTIPROCESSOR */	/* } */
 }
-#endif
-
-#ifdef M88110
-/*
- * [MI]
- * Perform pending lazy tlb invalidates.
- */
-void
-pmap_update(pmap_t pm)
-{
-	/*
-	 * Time to perform all necessary TLB invalidations.
-	 */
-#ifdef M88100
-	if (CPU_IS88110) {
-#endif
-		u_int ipi;
-		struct cpu_info *ci;
-#ifdef MULTIPROCESSOR
-		CPU_INFO_ITERATOR cpu;
-#endif
-
-#ifdef MULTIPROCESSOR
-		CPU_INFO_FOREACH(cpu, ci)
-#else
-		ci = curcpu();
-#endif
-		{
-			ipi = atomic_clear_int(&ci->ci_pmap_ipi);
-			if (ipi & CI_IPI_TLB_FLUSH_KERNEL)
-				cmmu_tlb_inv(ci->ci_cpuid, TRUE, 0);
-			if (ipi & CI_IPI_TLB_FLUSH_USER)
-				cmmu_tlb_inv(ci->ci_cpuid, FALSE, 0);
-		}
-#ifdef M88100
-	}
-#endif
-}
-#endif
 
 /*
  * [MI]
@@ -465,7 +355,7 @@ pmap_activate(struct proc *p)
 	} else {
 		if (pmap != ci->ci_curpmap) {
 			cmmu_set_uapr(pmap->pm_apr);
-			cmmu_tlb_inv_all(ci->ci_cpuid);
+			cmmu_tlbia(ci->ci_cpuid);
 			ci->ci_curpmap = pmap;
 		}
 	}
@@ -658,19 +548,6 @@ pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 	const struct pmap_table *ptable;
 	extern void *kernelstart;
 	extern void *etext;
-
-	/*
-	 * Initialize function pointers depending on the CPU type
-	 */
-#if defined(M88100) && defined(M88110)
-	if (CPU_IS88100) {
-		tlb_flush_fnptr = tlb_flush_88100;
-		tlb_kflush_fnptr = tlb_kflush_88100;
-	} else {
-		tlb_flush_fnptr = tlb_flush_88110;
-		tlb_kflush_fnptr = tlb_kflush_88110;
-	}
-#endif
 
 	virtual_avail = (vaddr_t)avail_end;
 

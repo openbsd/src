@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.26 2011/01/05 22:14:28 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.27 2011/10/25 18:38:06 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -39,15 +39,21 @@ struct cmmu_p {
 	void (*setup_board_config)(void);
 	void (*cpu_configuration_print)(int);
 	void (*shutdown)(void);
+
 	cpuid_t (*cpu_number)(void);
+
 	void (*set_sapr)(apr_t);
 	void (*set_uapr)(apr_t);
-	void (*tlb_inv)(cpuid_t, u_int, vaddr_t);
+
+	void (*tlb_inv_s)(cpuid_t, vaddr_t, pt_entry_t);
+	void (*tlb_inv_u)(cpuid_t, vaddr_t, pt_entry_t);
 	void (*tlb_inv_all)(cpuid_t);
+
 	void (*cache_wbinv)(cpuid_t, paddr_t, psize_t);
 	void (*dcache_wb)(cpuid_t, paddr_t, psize_t);
 	void (*icache_inv)(cpuid_t, paddr_t, psize_t);
 	void (*dma_cachectl)(paddr_t, psize_t, int);
+
 #ifdef MULTIPROCESSOR
 	void (*dma_cachectl_local)(paddr_t, psize_t, int);
 	void (*initialize_cpu)(cpuid_t);
@@ -78,8 +84,9 @@ extern __cpu_simple_lock_t cmmu_cpu_lock;
 #define	cmmu_cpu_number			(cmmu->cpu_number)
 #define	cmmu_set_sapr(apr)		(cmmu->set_sapr)(apr)
 #define	cmmu_set_uapr(apr)		(cmmu->set_uapr)(apr)
-#define	cmmu_tlb_inv(cpu, k, va) 	(cmmu->tlb_inv)(cpu, k, va)
-#define	cmmu_tlb_inv_all(cpu) 		(cmmu->tlb_inv_all)(cpu)
+#define	cmmu_tlbis(cpu, va, pte) 	(cmmu->tlb_inv_s)(cpu, va, pte)
+#define	cmmu_tlbiu(cpu, va, pte) 	(cmmu->tlb_inv_u)(cpu, va, pte)
+#define	cmmu_tlbia(cpu) 		(cmmu->tlb_inv_all)(cpu)
 #define	cmmu_cache_wbinv(cpu, pa, s)	(cmmu->cache_wbinv)(cpu, pa, s)
 #define	cmmu_dcache_wb(cpu, pa, s)	(cmmu->dcache_wb)(cpu, pa, s)
 #define	cmmu_icache_inv(cpu,pa,s)	(cmmu->icache_inv)(cpu, pa, s)

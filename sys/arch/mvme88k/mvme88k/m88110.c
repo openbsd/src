@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.75 2011/10/09 17:02:15 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.76 2011/10/25 18:38:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011, Miodrag Vallat.
@@ -102,8 +102,9 @@ void	m88110_shutdown(void);
 cpuid_t	m88110_cpu_number(void);
 void	m88110_set_sapr(apr_t);
 void	m88110_set_uapr(apr_t);
-void	m88110_tlb_inv(cpuid_t, u_int, vaddr_t);
-void	m88110_tlb_inv_all(cpuid_t);
+void	m88110_tlbis(cpuid_t, vaddr_t, pt_entry_t);
+void	m88110_tlbiu(cpuid_t, vaddr_t, pt_entry_t);
+void	m88110_tlbia(cpuid_t);
 void	m88110_cache_wbinv(cpuid_t, paddr_t, psize_t);
 void	m88410_cache_wbinv(cpuid_t, paddr_t, psize_t);
 void	m88110_dcache_wb(cpuid_t, paddr_t, psize_t);
@@ -129,8 +130,9 @@ struct cmmu_p cmmu88110 = {
 	m88110_cpu_number,
 	m88110_set_sapr,
 	m88110_set_uapr,
-	m88110_tlb_inv,
-	m88110_tlb_inv_all,
+	m88110_tlbis,
+	m88110_tlbiu,
+	m88110_tlbia,
 	m88110_cache_wbinv,
 	m88110_dcache_wb,
 	m88110_icache_inv,
@@ -153,8 +155,9 @@ struct cmmu_p cmmu88410 = {
 	m88110_cpu_number,
 	m88110_set_sapr,
 	m88110_set_uapr,
-	m88110_tlb_inv,
-	m88110_tlb_inv_all,
+	m88110_tlbis,
+	m88110_tlbiu,
+	m88110_tlbia,
 	m88410_cache_wbinv,
 	m88410_dcache_wb,
 	m88410_icache_inv,
@@ -479,19 +482,19 @@ m88110_set_uapr(apr_t ap)
 }
 
 /*
- *	Functions that invalidate TLB entries.
+ *	Functions that invalidate or update TLB entries.
  */
 
 void
-m88110_tlb_inv(cpuid_t cpu, u_int kernel, vaddr_t vaddr)
+m88110_tlbis(cpuid_t cpu, vaddr_t va, pt_entry_t pte)
 {
-	u_int32_t psr;
+	uint32_t psr, isr, dsr;
+
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci = curcpu();
 
 	if (cpu != ci->ci_cpuid) {
-		m197_send_ipi(kernel ?
-		    CI_IPI_TLB_FLUSH_KERNEL : CI_IPI_TLB_FLUSH_USER, cpu);
+		m197_send_complex_ipi(CI_IPI_TLB_FLUSH_KERNEL, cpu, va, pte);
 		return;
 	}
 #endif
@@ -499,19 +502,80 @@ m88110_tlb_inv(cpuid_t cpu, u_int kernel, vaddr_t vaddr)
 	psr = get_psr();
 	set_psr(psr | PSR_IND);
 
-	if (kernel) {
-		set_icmd(CMMU_ICMD_INV_SATC);
-		set_dcmd(CMMU_DCMD_INV_SATC);
-	} else {
-		set_icmd(CMMU_ICMD_INV_UATC);
-		set_dcmd(CMMU_DCMD_INV_UATC);
+	/*
+	 * Probe for an existing TLB entry for the given page, in both
+	 * ITLB and DTLB.
+	 */
+
+	set_isar(va);
+	set_dsar(va);
+	set_icmd(CMMU_ICMD_PRB_SUPR);
+	set_dcmd(CMMU_DCMD_PRB_SUPR);
+	isr = get_isr();
+	dsr = get_dsr();
+
+	/*
+	 * Update entries with the new PTE, if found.
+	 */
+
+	if (isr & CMMU_ISR_PH) {
+		set_ippu((va & PATC_VA_MASK) | PATC_SO);
+		set_ippl(pte);
+	}
+	if (dsr & CMMU_DSR_PH) {
+		set_dppu((va & PATC_VA_MASK) | PATC_SO);
+		set_dppl(pte);
 	}
 
 	set_psr(psr);
 }
 
 void
-m88110_tlb_inv_all(cpuid_t cpu)
+m88110_tlbiu(cpuid_t cpu, vaddr_t va, pt_entry_t pte)
+{
+	u_int32_t psr, isr, dsr;
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci = curcpu();
+
+	if (cpu != ci->ci_cpuid) {
+		m197_send_complex_ipi(CI_IPI_TLB_FLUSH_USER, cpu, va, pte);
+		return;
+	}
+#endif
+
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
+
+	/*
+	 * Probe for an existing TLB entry for the given page, in both
+	 * ITLB and DTLB.
+	 */
+
+	set_isar(va);
+	set_dsar(va);
+	set_icmd(CMMU_ICMD_PRB_USER);
+	set_dcmd(CMMU_DCMD_PRB_USER);
+	isr = get_isr();
+	dsr = get_dsr();
+
+	/*
+	 * Update entries with the new PTE, if found.
+	 */
+
+	if (isr & CMMU_ISR_PH) {
+		set_ippu(va & PATC_VA_MASK);
+		set_ippl(pte);
+	}
+	if (dsr & CMMU_DSR_PH) {
+		set_dppu(va & PATC_VA_MASK);
+		set_dppl(pte);
+	}
+
+	set_psr(psr);
+}
+
+void
+m88110_tlbia(cpuid_t cpu)
 {
 	u_int32_t psr;
 

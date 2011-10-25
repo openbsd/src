@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.45 2011/01/05 22:14:39 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.46 2011/10/25 18:38:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -414,7 +414,7 @@ m197_bootstrap()
  *	sender will wait for completion before resuming normal operations.
  *	This is done for so-called complex IPIs (those which take arguments),
  *	so that it isn't necessary to maintain a list of pending IPI work.
- *	However it is better to make tlb shootdowns synchronous as well.
+ *	However it is better to make tlb updates synchronous as well.
  *
  *	Handling of synchronous exceptions makes sure they can not be
  *	interrupted by another NMI; upon returning from the exception,
@@ -447,18 +447,16 @@ m197_send_ipi(int ipi, cpuid_t cpu)
 {
 	struct cpu_info *ci = &m88k_cpus[cpu];
 
-	if (ipi & CI_IPI_SYNCHRONOUS) {
-		m197_send_complex_ipi(ipi, cpu, 0, 0);
-	} else {
-		if ((ci->ci_flags & CIF_ALIVE) == 0)
-			return;			/* XXX not ready yet */
+	KASSERT((ipi & CI_IPI_SYNCHRONOUS) == 0);
 
-		if (ci->ci_ddb_state == CI_DDB_PAUSE)
-			return;			/* XXX skirting deadlock */
+	if ((ci->ci_flags & CIF_ALIVE) == 0)
+		return;			/* XXX not ready yet */
 
-		atomic_setbits_int(&ci->ci_ipi, ipi);
-		*(volatile u_int8_t *)(BS_BASE + BS_CPINT) |= BS_CPI_SCPI;
-	}
+	if (ci->ci_ddb_state == CI_DDB_PAUSE)
+		return;			/* XXX skirting deadlock */
+
+	atomic_setbits_int(&ci->ci_ipi, ipi);
+	*(volatile u_int8_t *)(BS_BASE + BS_CPINT) |= BS_CPI_SCPI;
 }
 
 void
@@ -573,10 +571,10 @@ m197_ipi_handler(struct trapframe *eframe)
 		arg2 = ci->ci_ipi_arg2;
 
 		if (ipi & CI_IPI_TLB_FLUSH_KERNEL) {
-			cmmu_tlb_inv(ci->ci_cpuid, 1, 0);
+			cmmu_tlbis(ci->ci_cpuid, arg1, arg2);
 		}
 		else if (ipi & CI_IPI_TLB_FLUSH_USER) {
-			cmmu_tlb_inv(ci->ci_cpuid, 0, 0);
+			cmmu_tlbiu(ci->ci_cpuid, arg1, arg2);
 		}
 		else if (ipi & CI_IPI_CACHE_FLUSH) {
 			cmmu_cache_wbinv(ci->ci_cpuid, arg1, arg2);

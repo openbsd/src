@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.h,v 1.24 2011/03/23 16:54:36 pirofti Exp $ */
+/*	$OpenBSD: m88110.h,v 1.25 2011/10/25 18:38:06 miod Exp $ */
 
 #ifndef	_MACHINE_M88110_H_
 #define	_MACHINE_M88110_H_
@@ -91,6 +91,13 @@
 #define	BATC_64M		(0x7f << BATC_BLKSHIFT)
 
 /*
+ * PATC fields
+ */
+
+#define	PATC_VA_MASK		0xfffff000
+#define	PATC_SO			0x00000001
+
+/*
  * Cache line information
  */
 #define	MC88110_CACHE_SHIFT	5
@@ -98,29 +105,31 @@
 
 #ifndef	_LOCORE
 
-void	set_icmd(u_int value);
-void	set_ictl(u_int value);
-void	set_isar(u_int value);
-void	set_isap(u_int value);
-void	set_iuap(u_int value);
-void	set_iir(u_int value);
-void	set_ibp(u_int value);
-void	set_ippu(u_int value);
-void	set_ippl(u_int value);
-void	set_isr(u_int value);
-void	set_dcmd(u_int value);
-void	set_dctl(u_int value);
-void	set_dsar(u_int value);
-void	set_dsap(u_int value);
-void	set_duap(u_int value);
-void	set_dir(u_int value);
-void	set_dbp(u_int value);
-void	set_dppu(u_int value);
-void	set_dppl(u_int value);
-void	set_dsr(u_int value);
+void	 set_icmd(uint32_t);
+void	 set_ictl(uint32_t);
+void	 set_isar(uint32_t);
+void	 set_isap(uint32_t);
+void	 set_iuap(uint32_t);
+void	 set_iir(uint32_t);
+void	 set_ibp(uint32_t);
+void	 set_ippu(uint32_t);
+void	 set_ippl(uint32_t);
+void	 set_isr(uint32_t);
+void	 set_dcmd(uint32_t);
+void	 set_dctl(uint32_t);
+void	 set_dsar(uint32_t);
+void	 set_dsap(uint32_t);
+void	 set_duap(uint32_t);
+void	 set_dir(uint32_t);
+void	 set_dbp(uint32_t);
+void	 set_dppu(uint32_t);
+void	 set_dppl(uint32_t);
+void	 set_dsr(uint32_t);
 
-u_int	get_ictl(void);
-u_int	get_dctl(void);
+uint32_t get_dctl(void);
+uint32_t get_dsr(void);
+uint32_t get_ictl(void);
+uint32_t get_isr(void);
 
 /*
  * The following inlines expect their address to be line-aligned for line

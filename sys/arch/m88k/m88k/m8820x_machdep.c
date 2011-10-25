@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.49 2011/10/09 17:02:14 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.50 2011/10/25 18:38:06 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, 2010, 2011, Miodrag Vallat.
  *
@@ -92,8 +92,9 @@ void	m8820x_cpu_configuration_print(int);
 void	m8820x_shutdown(void);
 void	m8820x_set_sapr(apr_t);
 void	m8820x_set_uapr(apr_t);
-void	m8820x_tlb_inv(cpuid_t, u_int, vaddr_t);
-void	m8820x_tlb_inv_all(cpuid_t);
+void	m8820x_tlbis(cpuid_t, vaddr_t, pt_entry_t);
+void	m8820x_tlbiu(cpuid_t, vaddr_t, pt_entry_t);
+void	m8820x_tlbia(cpuid_t);
 void	m8820x_cache_wbinv(cpuid_t, paddr_t, psize_t);
 void	m8820x_dcache_wb(cpuid_t, paddr_t, psize_t);
 void	m8820x_icache_inv(cpuid_t, paddr_t, psize_t);
@@ -109,8 +110,9 @@ struct cmmu_p cmmu8820x = {
 	m8820x_cpu_number,
 	m8820x_set_sapr,
 	m8820x_set_uapr,
-	m8820x_tlb_inv,
-	m8820x_tlb_inv_all,
+	m8820x_tlbis,
+	m8820x_tlbiu,
+	m8820x_tlbia,
 	m8820x_cache_wbinv,
 	m8820x_dcache_wb,
 	m8820x_icache_inv,
@@ -557,21 +559,33 @@ m8820x_set_uapr(apr_t ap)
  */
 
 void
-m8820x_tlb_inv(cpuid_t cpu, u_int kernel, vaddr_t vaddr)
+m8820x_tlbis(cpuid_t cpu, vaddr_t va, pt_entry_t pte)
 {
 	u_int32_t psr;
 
 	psr = get_psr();
 	set_psr(psr | PSR_IND);
 	CMMU_LOCK;
-	m8820x_cmmu_set_cmd(kernel ? CMMU_FLUSH_SUPER_PAGE :
-	    CMMU_FLUSH_USER_PAGE, ADDR_VAL, cpu, 0, vaddr);
+	m8820x_cmmu_set_cmd(CMMU_FLUSH_SUPER_PAGE, ADDR_VAL, cpu, 0, va);
 	CMMU_UNLOCK;
 	set_psr(psr);
 }
 
 void
-m8820x_tlb_inv_all(cpuid_t cpu)
+m8820x_tlbiu(cpuid_t cpu, vaddr_t va, pt_entry_t pte)
+{
+	u_int32_t psr;
+
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
+	CMMU_LOCK;
+	m8820x_cmmu_set_cmd(CMMU_FLUSH_USER_PAGE, ADDR_VAL, cpu, 0, va);
+	CMMU_UNLOCK;
+	set_psr(psr);
+}
+
+void
+m8820x_tlbia(cpuid_t cpu)
 {
 	u_int32_t psr;
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: m88110_mmu.S,v 1.5 2008/07/28 17:49:38 miod Exp $
+#	$OpenBSD: m88110_mmu.S,v 1.6 2011/10/25 18:38:06 miod Exp $
 /*
  * Copyright (c) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -183,4 +183,14 @@ ENTRY(get_ictl)
 	align 32
 ENTRY(get_dctl)
 	ldcr	r2, DCTL
+	jmp	r1
+
+	align 32
+ENTRY(get_dsr)
+	ldcr	r2, DSR
+	jmp	r1
+
+	align 32
+ENTRY(get_isr)
+	ldcr	r2, ISR
 	jmp	r1
