@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_puc.c,v 1.5 2009/07/15 17:18:14 deraadt Exp $	*/
+/*	$OpenBSD: lpt_puc.c,v 1.6 2011/10/25 20:02:20 deraadt Exp $	*/
 /*	$NetBSD: lpt_puc.c,v 1.1 1998/06/26 18:52:41 cgd Exp $	*/
 
 /*
@@ -67,10 +67,10 @@ lpt_puc_probe(parent, match, aux)
 	/*
 	 * Locators already matched, just check the type.
 	 */
-	if (aa->type != PUC_PORT_TYPE_LPT)
-		return (0);
+	if (PUC_IS_LPT(aa->type))
+		return (1);
 
-	return (1);
+	return (0);
 }
 
 void

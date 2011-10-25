@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucvar.h,v 1.11 2011/10/22 19:06:21 camield Exp $	*/
+/*	$OpenBSD: pucvar.h,v 1.12 2011/10/25 20:02:21 deraadt Exp $	*/
 /*	$NetBSD: pucvar.h,v 1.2 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -47,21 +47,25 @@ struct puc_device_description {
 		u_char	type;
 		u_char	bar;
 		u_short	offset;
-		int	flags;
 	}			ports[PUC_MAX_PORTS];
 };
 
-#define	PUC_PORT_TYPE_NONE	0
-#define	PUC_PORT_TYPE_COM	1
-#define	PUC_PORT_TYPE_LPT	2
+/*
+ * For serial ports, the type field also encodes a multiplier
+ * of the speed.
+ */
+#define PUC_LPT			(0x00 | 0x40)
+#define PUC_COM_MUL(mul)	(0x80 | 0x40 | (mul))
+#define PUC_COM_POW2(pow2)	(0x80 |        (pow2))
 
-#define	PUC_PORT_VALID(desc, port) \
-  ((port) < PUC_MAX_PORTS && (desc)->ports[(port)].type != PUC_PORT_TYPE_NONE)
+#define PUC_IS_LPT(type)	(((type) & 0xc0) == 0x40)
+#define PUC_IS_COM(type)	(((type) & 0x80) == 0x80)
+
+#define PUC_IS_COM_MUL(type)	((type) & 0x40)
+#define PUC_COM_GET_MUL(type)	((type) & 0x3f)
+#define PUC_COM_GET_POW2(type)	((type) & 0x3f)
+
 #define PUC_PORT_BAR_INDEX(bar)	(((bar) - PCI_MAPREG_START) / 4)
-
-/* Flags for PUC_PORT_TYPE_COM */
-/* * assume all clock rates have 8 lower bits to 0 - this leaves us 8 flags */
-#define PUC_COM_CLOCKMASK 0xffffff00
 
 struct puc_attach_args {
 	int			port;
@@ -72,7 +76,6 @@ struct puc_attach_args {
 	bus_addr_t		a;
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
-	int			flags;
 
 	const char *(*intr_string)(struct puc_attach_args *);
 	void *(*intr_establish)(struct puc_attach_args *, int, int (*)(void *),
@@ -81,6 +84,7 @@ struct puc_attach_args {
 };
 
 extern const struct puc_device_description puc_devs[];
+extern int puc_ndevs;
 
 #define	PUC_NBARS	6
 struct puc_softc {

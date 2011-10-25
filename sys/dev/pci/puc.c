@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc.c,v 1.18 2010/08/06 21:04:14 kettenis Exp $	*/
+/*	$OpenBSD: puc.c,v 1.19 2011/10/25 20:02:21 deraadt Exp $	*/
 /*	$NetBSD: puc.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -251,10 +251,8 @@ puc_common_attach(struct puc_softc *sc, struct puc_attach_args *paa)
 	 */
 
 	/* Configure each port. */
-	for (i = 0; PUC_PORT_VALID(sc->sc_desc, i); i++) {
-		/* Skip unknown ports */
-		if (sc->sc_desc->ports[i].type != PUC_PORT_TYPE_COM &&
-		    sc->sc_desc->ports[i].type != PUC_PORT_TYPE_LPT)
+	for (i = 0; i < PUC_MAX_PORTS; i++) {
+		if (sc->sc_desc->ports[i].type == 0)	/* neither com or lpt */
 			continue;
 		/* make sure the base address register is mapped */
 		bar = PUC_PORT_BAR_INDEX(sc->sc_desc->ports[i].bar);
@@ -268,10 +266,10 @@ puc_common_attach(struct puc_softc *sc, struct puc_attach_args *paa)
 
 		/* set up to configure the child device */
 		paa->port = i;
-		paa->type = sc->sc_desc->ports[i].type;
-		paa->flags = sc->sc_desc->ports[i].flags;
 		paa->a = sc->sc_bar_mappings[bar].a;
 		paa->t = sc->sc_bar_mappings[bar].t;
+
+		paa->type = sc->sc_desc->ports[i].type;
 
 		if (bus_space_subregion(sc->sc_bar_mappings[bar].t,
 		    sc->sc_bar_mappings[bar].h, sc->sc_desc->ports[i].offset,
@@ -349,8 +347,7 @@ puc_find_description(u_int16_t vend, u_int16_t prod,
 {
 	int i;
 
-	for (i = 0; !(puc_devs[i].rval[0] == 0 && puc_devs[i].rval[1] == 0 &&
-	    puc_devs[i].rval[2] == 0 && puc_devs[i].rval[3] == 0); i++)
+	for (i = 0; i < puc_ndevs; i++)
 		if ((vend & puc_devs[i].rmask[0]) == puc_devs[i].rval[0] &&
 		    (prod & puc_devs[i].rmask[1]) == puc_devs[i].rval[1] &&
 		    (svend & puc_devs[i].rmask[2]) == puc_devs[i].rval[2] &&
@@ -364,14 +361,11 @@ const char *
 puc_port_type_name(int type)
 {
 
-	switch (type) {
-	case PUC_PORT_TYPE_COM:
+	if (PUC_IS_COM(type))
 		return "com";
-	case PUC_PORT_TYPE_LPT:
+	if (PUC_IS_LPT(type))
 		return "lpt";
-	default:
-		return "unknown";
-	}
+	return (NULL);
 }
 
 void
@@ -380,18 +374,11 @@ puc_print_ports(const struct puc_device_description *desc)
 	int i, ncom, nlpt;
 
 	printf(": ports: ");
-	for (i = ncom = nlpt = 0; PUC_PORT_VALID(desc, i); i++) {
-		switch (desc->ports[i].type) {
-		case PUC_PORT_TYPE_COM:
+	for (i = ncom = nlpt = 0; i < PUC_MAX_PORTS; i++) {
+		if (PUC_IS_COM(desc->ports[i].type))
 			ncom++;
-		break;
-		case PUC_PORT_TYPE_LPT:
+		else if (PUC_IS_LPT(desc->ports[i].type))
 			nlpt++;
-		break;
-		default:
-			printf("port %d unknown type %d ", i,
-			    desc->ports[i].type);
-		}
 	}
 	if (ncom)
 		printf("%d com", ncom);
