@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.11 2011/10/23 09:30:07 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.12 2011/10/25 10:25:51 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -395,8 +395,18 @@ lka_session_deliver(struct lka_session *lks, struct envelope *ep)
 	else if (new_ep->type == D_MTA) {
 		if (ep->rule.r_action == A_RELAYVIA)
 			new_ep->agent.mta.relay = ep->rule.r_value.relayhost;
-		if (ep->rule.r_as)
-			new_ep->sender = *ep->rule.r_as;
+		if (ep->rule.r_as) {
+			if (ep->rule.r_as->user[0]) {
+				strlcpy(new_ep->sender.user,
+				    ep->rule.r_as->user,
+				    sizeof new_ep->sender.user);
+			}
+			if (ep->rule.r_as->domain[0]) {
+				strlcpy(new_ep->sender.domain,
+				    ep->rule.r_as->domain,
+				    sizeof new_ep->sender.domain);
+			}
+		}
 	}
 	TAILQ_INSERT_TAIL(&lks->deliverylist, new_ep, entry);
 }
