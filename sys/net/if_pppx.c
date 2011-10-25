@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.12 2011/10/15 03:24:11 yasuoka Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.13 2011/10/25 23:54:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -281,8 +281,8 @@ pppxread(dev_t dev, struct uio *uio, int ioflag)
 
 	s = splnet();
 	for (;;) {
-		IF_DEQUEUE(&pxd->pxd_svcq, m);
-		if (m != NULL)
+		IF_DEQUEUE(&pxd->pxd_svcq, m0);
+		if (m0 != NULL)
 			break;
 
 		if (ISSET(ioflag, IO_NDELAY)) {
