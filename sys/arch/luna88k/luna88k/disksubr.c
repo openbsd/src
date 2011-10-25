@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.51 2011/10/21 09:36:52 miod Exp $ */
+/* $OpenBSD: disksubr.c,v 1.52 2011/10/25 18:34:37 miod Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -90,6 +90,7 @@
 
 int disklabel_om_to_bsd(struct sun_disklabel *, struct disklabel *);
 int disklabel_bsd_to_om(struct disklabel *, struct sun_disklabel *);
+static __inline u_int sun_extended_sum(struct sun_disklabel *, void *);
 
 /*
  * Attempt to read a disk label from a device
@@ -103,6 +104,7 @@ int
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, int spoofonly)
 {
+	struct sun_disklabel *slp;
 	struct buf *bp = NULL;
 	int error;
 
@@ -118,7 +120,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 		goto done;
 
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
 	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
@@ -128,9 +129,11 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 		goto done;
 	}
 
-	error = disklabel_om_to_bsd((struct sun_disklabel *)bp->b_data, lp);
-	if (error == 0)
+	slp = (struct sun_disklabel *)bp->b_data;
+	if (sl->sl_magic == SUN_DKMAGIC) {
+		error = disklabel_om_to_bsd(slp, lp);
 		goto done;
+	}
 
 	error = checkdisklabel(bp->b_data + LABELOFFSET, lp, 0,
 	    DL_GETDSIZE(lp));
@@ -170,23 +173,13 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	/* Read the on disk label. */
-	bp->b_blkno = LABELSECTOR;
-	bp->b_cylinder = 0;
-	bp->b_bcount = lp->d_secsize;
-	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
-	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
-
-	(*strat)(bp);
-	error = biowait(bp);
-	if (error)
-		goto done;
-
-	/* Write out the updated label. */
 	error = disklabel_bsd_to_om(lp, (struct sun_disklabel *)bp->b_data);
 	if (error)
 		goto done;
 
+	/* Write out the updated label. */
+	bp->b_blkno = LABELSECTOR;
+	bp->b_bcount = lp->d_secsize;
 	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
 	SET(bp->b_flags, B_BUSY | B_WRITE | B_RAW);
 	(*strat)(bp);
@@ -210,16 +203,42 @@ done:
 
 /* What partition types to assume for Sun disklabels: */
 static const u_char
-sun_fstypes[8] = {
+sun_fstypes[16] = {
 	FS_BSDFFS,	/* a */
 	FS_SWAP,	/* b */
-	FS_OTHER,	/* c - whole disk */
+	FS_UNUSED,	/* c - whole disk */
 	FS_BSDFFS,	/* d */
 	FS_BSDFFS,	/* e */
 	FS_BSDFFS,	/* f */
 	FS_BSDFFS,	/* g */
 	FS_BSDFFS,	/* h */
+	FS_BSDFFS,	/* i */
+	FS_BSDFFS,	/* j */
+	FS_BSDFFS,	/* k */
+	FS_BSDFFS,	/* l */
+	FS_BSDFFS,	/* m */
+	FS_BSDFFS,	/* n */
+	FS_BSDFFS,	/* o */
+	FS_BSDFFS	/* p */
 };
+
+/*
+ * Given a struct sun_disklabel, assume it has an extended partition
+ * table and compute the correct value for sl_xpsum.
+ */
+static __inline u_int
+sun_extended_sum(struct sun_disklabel *sl, void *end)
+{
+	u_int sum, *xp, *ep;
+
+	xp = (u_int *)&sl->sl_xpmag;
+	ep = (u_int *)end;
+
+	sum = 0;
+	for (; xp < ep; xp++)
+		sum += *xp;
+	return (sum);
+}
 
 /*
  * Given a UniOS/ISI disk label, set lp to a BSD disk label.
@@ -234,9 +253,6 @@ disklabel_om_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 	int i, secpercyl;
 	u_short cksum = 0, *sp1, *sp2;
 
-	if (sl->sl_magic != SUN_DKMAGIC)
-		return (EINVAL);
-
 	/* Verify the XOR check. */
 	sp1 = (u_short *)sl;
 	sp2 = (u_short *)(sl + 1);
@@ -245,7 +261,6 @@ disklabel_om_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 	if (cksum != 0)
 		return (EINVAL);	/* UniOS disk label, bad checksum */
 
-	memset((caddr_t)lp, 0, sizeof(struct disklabel));
 	/* Format conversion. */
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
@@ -267,11 +282,6 @@ disklabel_om_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 
 	lp->d_acylinders = sl->sl_acylinders;
 
-	if (sl->sl_rpm == 0) {
-		/* UniOS label has blkoffset, not cyloffset */
-		secpercyl = 1;
-	}
-
 	lp->d_npartitions = MAXPARTITIONS;
 	/* These are as defined in <ufs/ffs/fs.h> */
 	lp->d_bbsize = 8192;	/* XXX */
@@ -280,7 +290,11 @@ disklabel_om_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 	for (i = 0; i < 8; i++) {
 		spp = &sl->sl_part[i];
 		npp = &lp->d_partitions[i];
-		DL_SETPOFFSET(npp, spp->sdkp_cyloffset * secpercyl);
+		/* UniOS label uses blkoffset, not cyloffset */
+		if (sl->sl_rpm == 0)
+			DL_SETPOFFSET(npp, spp->sdkp_cyloffset);
+		else
+			DL_SETPOFFSET(npp, spp->sdkp_cyloffset * secpercyl);
 		DL_SETPSIZE(npp, spp->sdkp_nsectors);
 		if (DL_GETPSIZE(npp) == 0) {
 			npp->p_fstype = FS_UNUSED;
@@ -292,7 +306,7 @@ disklabel_om_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 				 * so just set them with default values here.
 				 */
 				npp->p_fragblock =
-				    DISKLABELV1_FFS_FRAGBLOCK(1024, 8);
+				    DISKLABELV1_FFS_FRAGBLOCK(2048, 8);
 				npp->p_cpg = 16;
 			}
 		}
@@ -302,10 +316,59 @@ disklabel_om_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 	 * XXX BandAid XXX
 	 * UniOS rootfs sits on part c which don't begin at sect 0,
 	 * and impossible to mount.  Thus, make it usable as part b.
+	 * XXX how to setup a swap partition on disks shared with UniOS???
 	 */
 	if (sl->sl_rpm == 0 && DL_GETPOFFSET(&lp->d_partitions[2]) != 0) {
 		lp->d_partitions[1] = lp->d_partitions[2];
 		lp->d_partitions[1].p_fstype = FS_BSDFFS;
+	}
+
+	/* Clear "extended" partition info, tentatively */
+	for (i = 0; i < SUNXPART; i++) {
+		npp = &lp->d_partitions[i+8];
+		DL_SETPOFFSET(npp, 0);
+		DL_SETPSIZE(npp, 0);
+		npp->p_fstype = FS_UNUSED;
+	}
+
+	/* Check to see if there's an "extended" partition table
+	 * SL_XPMAG partitions had checksums up to just before the
+	 * (new) sl_types variable, while SL_XPMAGTYP partitions have
+	 * checksums up to the just before the (new) sl_xxx1 variable.
+	 */
+	if ((sl->sl_xpmag == SL_XPMAG &&
+	    sun_extended_sum(sl, &sl->sl_types) == sl->sl_xpsum) ||
+	    (sl->sl_xpmag == SL_XPMAGTYP &&
+	    sun_extended_sum(sl, &sl->sl_xxx1) == sl->sl_xpsum)) {
+		/*
+		 * There is.  Copy over the "extended" partitions.
+		 * This code parallels the loop for partitions a-h.
+		 */
+		for (i = 0; i < SUNXPART; i++) {
+			spp = &sl->sl_xpart[i];
+			npp = &lp->d_partitions[i+8];
+			/* no need to be UniOS compatible here */
+			DL_SETPOFFSET(npp, spp->sdkp_cyloffset * secpercyl);
+			DL_SETPSIZE(npp, spp->sdkp_nsectors);
+			if (DL_GETPSIZE(npp) == 0) {
+				npp->p_fstype = FS_UNUSED;
+				continue;
+			}
+			npp->p_fstype = sun_fstypes[i+8];
+			if (npp->p_fstype == FS_BSDFFS) {
+				npp->p_fragblock =
+				    DISKLABELV1_FFS_FRAGBLOCK(2048, 8);
+				npp->p_cpg = 16;
+			}
+		}
+		if (sl->sl_xpmag == SL_XPMAGTYP) {
+			for (i = 0; i < MAXPARTITIONS; i++) {
+				npp = &lp->d_partitions[i];
+				npp->p_fstype = sl->sl_types[i];
+				npp->p_fragblock = sl->sl_fragblock[i];
+				npp->p_cpg = sl->sl_cpg[i];
+			}
+		}
 	}
 
 	lp->d_checksum = 0;
@@ -323,18 +386,19 @@ disklabel_bsd_to_om(struct disklabel *lp, struct sun_disklabel *sl)
 {
 	struct partition *npp;
 	struct sun_dkpart *spp;
-	int i;
+	int i, secpercyl;
 	u_short cksum, *sp1, *sp2;
 
-	if (lp->d_secsize != DEV_BSIZE)
+	if (lp->d_secsize != DEV_BSIZE || lp->d_nsectors == 0 ||
+	    lp->d_ntracks == 0)
 		return (EINVAL);
 
 	/* Format conversion. */
 	bzero(sl, sizeof(*sl));
 	memcpy(sl->sl_text, lp->d_packname, sizeof(lp->d_packname));
-	sl->sl_rpm = 0;					/* UniOS */
+	sl->sl_rpm = 0;					/* UniOS compatible */
 #if 0 /* leave as was */
-	sl->sl_pcyl = lp->d_ncylinders + lp->d_acylinders;	/* XXX */
+	sl->sl_pcylinders = lp->d_ncylinders + lp->d_acylinders; /* XXX */
 #endif
 	sl->sl_interleave = 1;
 	sl->sl_ncylinders = lp->d_ncylinders;
@@ -347,11 +411,37 @@ disklabel_bsd_to_om(struct disklabel *lp, struct sun_disklabel *sl)
 	for (i = 0; i < 8; i++) {
 		spp = &sl->sl_part[i];
 		npp = &lp->d_partitions[i];
-
-		spp->sdkp_cyloffset = DL_GETPOFFSET(npp);	/* UniOS */
-		spp->sdkp_nsectors = DL_GETPSIZE(npp);
+		spp->sdkp_cyloffset = 0;
+		spp->sdkp_nsectors = 0;
+		if (DL_GETPSIZE(npp)) {
+			spp->sdkp_cyloffset = DL_GETPOFFSET(npp); /* UniOS */
+			spp->sdkp_nsectors = DL_GETPSIZE(npp);
+		}
 	}
 	sl->sl_magic = SUN_DKMAGIC;
+
+	secpercyl = sl->sl_nsectors * sl->sl_ntracks;
+	for (i = 0; i < SUNXPART; i++) {
+		spp = &sl->sl_xpart[i];
+		npp = &lp->d_partitions[i+8];
+		spp->sdkp_cyloffset = 0;
+		spp->sdkp_nsectors = 0;
+		if (DL_GETPSIZE(npp)) {
+			/* no need to be UniOS compatible here */
+			if (DL_GETPOFFSET(npp) % secpercyl)
+				return (EINVAL);
+			spp->sdkp_cyloffset = DL_GETPOFFSET(npp) / secpercyl;
+			spp->sdkp_nsectors = DL_GETPSIZE(npp);
+		}
+	}
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		npp = &lp->d_partitions[i];
+		sl->sl_types[i] = npp->p_fstype;
+		sl->sl_fragblock[i] = npp->p_fragblock;
+		sl->sl_cpg[i] = npp->p_cpg;
+	}
+	sl->sl_xpmag = SL_XPMAGTYP;
+	sl->sl_xpsum = sun_extended_sum(sl, &sl->sl_xxx1);
 
 	/* Correct the XOR check. */
 	sp1 = (u_short *)sl;
