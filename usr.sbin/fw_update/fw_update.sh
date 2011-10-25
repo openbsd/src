@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $OpenBSD: fw_update.sh,v 1.8 2011/08/02 15:52:26 deraadt Exp $
+# $OpenBSD: fw_update.sh,v 1.9 2011/10/25 20:48:32 halex Exp $
 # Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -76,11 +76,11 @@ fi
 # Install missing firmware
 if [ "$install" ]; then
 	verbose "Installing firmware files:$install."
-	$PKG_ADD $nop $verbose $install
+	$PKG_ADD $nop $verbose $install 2>&-
 fi
 
 # Update installed firmware
 if [ "$update" ]; then
 	verbose "Updating firmware files:$update."
-	$PKG_ADD $nop $verbose -u $update
+	$PKG_ADD $nop $verbose -u $update 2>&-
 fi
