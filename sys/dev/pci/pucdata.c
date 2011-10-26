@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.77 2011/10/25 20:02:21 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.78 2011/10/26 14:20:25 jsg Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -50,6 +50,34 @@ const struct puc_device_description puc_devs[] = {
 
 	{   /* Intel GM45 SOL */
 	    {   PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM45_AMT_SOL, 0x0000, 0x0000 },
+	    {	0xffff,	0xffff,				      0x0000, 0x0000 },
+	    {
+		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+	    },
+	},
+	{   /* Intel EG20T */
+	    {   PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_SERIAL_1, 0x0000, 0x0000 },
+	    {	0xffff,	0xffff,				      0x0000, 0x0000 },
+	    {
+		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+	    },
+	},
+	{   /* Intel EG20T */
+	    {   PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_SERIAL_2, 0x0000, 0x0000 },
+	    {	0xffff,	0xffff,				      0x0000, 0x0000 },
+	    {
+		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+	    },
+	},
+	{   /* Intel EG20T */
+	    {   PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_SERIAL_3, 0x0000, 0x0000 },
+	    {	0xffff,	0xffff,				      0x0000, 0x0000 },
+	    {
+		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+	    },
+	},
+	{   /* Intel EG20T */
+	    {   PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_SERIAL_4, 0x0000, 0x0000 },
 	    {	0xffff,	0xffff,				      0x0000, 0x0000 },
 	    {
 		{ PUC_COM_POW2(0), 0x10, 0x0000 },
