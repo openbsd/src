@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.24 2011/10/26 20:47:31 gilles Exp $
+.\" $OpenBSD: smtpctl.8,v 1.25 2011/10/26 21:41:18 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -40,13 +40,13 @@ The following commands are available:
 Disable verbose debug logging.
 .It Cm log verbose
 Enable verbose debug logging.
-.It Cm pause smtp
-Temporarily stop accepting incoming sessions.
 .It Cm pause mda
 Temporarily stop deliveries to local users.
 .It Cm pause mta
 Temporarily stop relaying and deliveries to
 remote users.
+.It Cm pause smtp
+Temporarily stop accepting incoming sessions.
 .It Cm remove Ar envelope-id | message-id
 Removes a single envelope, or all envelopes with the same message ID.
 .It Cm resume incoming
