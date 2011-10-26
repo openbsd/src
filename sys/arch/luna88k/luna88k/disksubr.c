@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.52 2011/10/25 18:34:37 miod Exp $ */
+/* $OpenBSD: disksubr.c,v 1.53 2011/10/26 04:17:23 miod Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -130,7 +130,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	}
 
 	slp = (struct sun_disklabel *)bp->b_data;
-	if (sl->sl_magic == SUN_DKMAGIC) {
+	if (slp->sl_magic == SUN_DKMAGIC) {
 		error = disklabel_om_to_bsd(slp, lp);
 		goto done;
 	}
