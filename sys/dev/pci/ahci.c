@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.182 2011/08/20 20:16:01 kettenis Exp $ */
+/*	$OpenBSD: ahci.c,v 1.183 2011/10/26 10:59:00 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1721,7 +1721,7 @@ ahci_pmp_port_softreset(struct ahci_port *ap, int pmp_port)
 
 	s = splbio();
 	/* ignore spurious IFS errors while resetting */
-	printf("%s: now ignoring IFS\n", PORTNAME(ap));
+	DPRINTF(AHCI_D_VERBOSE, "%s: now ignoring IFS\n", PORTNAME(ap));
 	ap->ap_pmp_ignore_ifs = 1;
 
 	count = 2;
@@ -1812,7 +1812,7 @@ ahci_pmp_port_softreset(struct ahci_port *ap, int pmp_port)
 	ahci_pwrite(ap, AHCI_PREG_SERR, -1);
 	ahci_pwrite(ap, AHCI_PREG_IS, AHCI_PREG_IS_IFS);
 	ap->ap_pmp_ignore_ifs = 0;
-	printf("%s: no longer ignoring IFS\n", PORTNAME(ap));
+	DPRINTF(AHCI_D_VERBOSE, "%s: no longer ignoring IFS\n", PORTNAME(ap));
 	splx(s);
 
 	return (rc);
@@ -1825,7 +1825,8 @@ ahci_pmp_port_probe(struct ahci_port *ap, int pmp_port)
 	
 	ap->ap_state = AP_S_PMP_PORT_PROBE;
 
-	printf("%s.%d: probing pmp port\n", PORTNAME(ap), pmp_port);
+	DPRINTF(AHCI_D_VERBOSE, "%s.%d: probing pmp port\n", PORTNAME(ap),
+	    pmp_port);
 	if (ahci_pmp_port_portreset(ap, pmp_port)) {
 		printf("%s.%d: unable to probe PMP port; portreset failed\n",
 		    PORTNAME(ap), pmp_port);
@@ -1841,8 +1842,8 @@ ahci_pmp_port_probe(struct ahci_port *ap, int pmp_port)
 	}
 
 	sig = ahci_port_signature(ap);
-	printf("%s.%d: port signature returned %d\n", PORTNAME(ap), pmp_port,
-	    sig);
+	DPRINTF(AHCI_D_VERBOSE, "%s.%d: port signature returned %d\n",
+	    PORTNAME(ap), pmp_port, sig);
 	ap->ap_state = AP_S_NORMAL;
 	return (sig);
 }
@@ -2009,7 +2010,8 @@ ahci_pmp_port_portreset(struct ahci_port *ap, int pmp_port)
 	}
 
 	/* device detected */
-	printf("%s.%d: device detected\n", PORTNAME(ap), pmp_port);
+	DPRINTF(AHCI_D_VERBOSE, "%s.%d: device detected\n", PORTNAME(ap),
+	    pmp_port);
 
 	/* clean up a bit */
 	delay(100000);
