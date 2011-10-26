@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.69 2011/10/23 17:12:41 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.70 2011/10/26 20:47:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -170,19 +170,19 @@ connected:
 		imsg_compose(ibuf, IMSG_CTL_SHUTDOWN, 0, 0, -1, NULL, 0);
 		break;
 	case PAUSE_MDA:
-		imsg_compose(ibuf, IMSG_QUEUE_PAUSE_LOCAL, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_QUEUE_PAUSE_MDA, 0, 0, -1, NULL, 0);
 		break;
 	case PAUSE_MTA:
-		imsg_compose(ibuf, IMSG_QUEUE_PAUSE_OUTGOING, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_QUEUE_PAUSE_MTA, 0, 0, -1, NULL, 0);
 		break;
 	case PAUSE_SMTP:
 		imsg_compose(ibuf, IMSG_SMTP_PAUSE, 0, 0, -1, NULL, 0);
 		break;
 	case RESUME_MDA:
-		imsg_compose(ibuf, IMSG_QUEUE_RESUME_LOCAL, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_QUEUE_RESUME_MDA, 0, 0, -1, NULL, 0);
 		break;
 	case RESUME_MTA:
-		imsg_compose(ibuf, IMSG_QUEUE_RESUME_OUTGOING, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_QUEUE_RESUME_MTA, 0, 0, -1, NULL, 0);
 		break;
 	case RESUME_SMTP:
 		imsg_compose(ibuf, IMSG_SMTP_RESUME, 0, 0, -1, NULL, 0);

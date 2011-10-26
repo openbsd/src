@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.23 2011/10/23 18:37:34 jmc Exp $
+.\" $OpenBSD: smtpctl.8,v 1.24 2011/10/26 20:47:31 gilles Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 23 2011 $
+.Dd $Mdocdate: October 26 2011 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -40,11 +40,11 @@ The following commands are available:
 Disable verbose debug logging.
 .It Cm log verbose
 Enable verbose debug logging.
-.It Cm pause incoming
+.It Cm pause smtp
 Temporarily stop accepting incoming sessions.
-.It Cm pause local
+.It Cm pause mda
 Temporarily stop deliveries to local users.
-.It Cm pause outgoing
+.It Cm pause mta
 Temporarily stop relaying and deliveries to
 remote users.
 .It Cm remove Ar envelope-id | message-id

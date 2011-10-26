@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.108 2011/10/23 09:30:07 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.109 2011/10/26 20:47:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -183,10 +183,10 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 
 	if (iev->proc == PROC_CONTROL) {
 		switch (imsg->hdr.type) {
-		case IMSG_QUEUE_PAUSE_LOCAL:
-		case IMSG_QUEUE_PAUSE_OUTGOING:
-		case IMSG_QUEUE_RESUME_LOCAL:
-		case IMSG_QUEUE_RESUME_OUTGOING:
+		case IMSG_QUEUE_PAUSE_MDA:
+		case IMSG_QUEUE_PAUSE_MTA:
+		case IMSG_QUEUE_RESUME_MDA:
+		case IMSG_QUEUE_RESUME_MTA:
 		case IMSG_QUEUE_SCHEDULE:
 		case IMSG_QUEUE_REMOVE:
 			queue_pass_to_runner(iev, imsg);

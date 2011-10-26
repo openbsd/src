@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.22 2011/10/23 17:12:41 gilles Exp $	*/
+/*	$OpenBSD: parser.c,v 1.23 2011/10/26 20:47:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -88,16 +88,16 @@ static const struct token t_show[] = {
 };
 
 static const struct token t_pause[] = {
-	{KEYWORD,	"local",		PAUSE_MDA,	NULL},
-	{KEYWORD,	"outgoing",	        PAUSE_MTA,	NULL},
-	{KEYWORD,	"incoming",	        PAUSE_SMTP,	NULL},
+	{KEYWORD,	"mda",			PAUSE_MDA,	NULL},
+	{KEYWORD,	"mta",		        PAUSE_MTA,	NULL},
+	{KEYWORD,	"smtp",		        PAUSE_SMTP,	NULL},
 	{ENDTOKEN,	"",			NONE,      	NULL}
 };
 
 static const struct token t_resume[] = {
-	{KEYWORD,	"local",		RESUME_MDA,	NULL},
-	{KEYWORD,	"outgoing",	        RESUME_MTA,	NULL},
-	{KEYWORD,	"incoming",	        RESUME_SMTP,	NULL},
+	{KEYWORD,	"mda",			RESUME_MDA,	NULL},
+	{KEYWORD,	"mta",		        RESUME_MTA,	NULL},
+	{KEYWORD,	"smtp",		        RESUME_SMTP,	NULL},
 	{ENDTOKEN,	"",			NONE,      	NULL}
 };
 

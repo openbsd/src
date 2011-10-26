@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.120 2011/10/23 09:30:07 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.121 2011/10/26 20:47:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -142,20 +142,22 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 		}
 		return;
 
-	case IMSG_QUEUE_PAUSE_LOCAL:
+	case IMSG_QUEUE_PAUSE_MDA:
 		env->sc_opts |= SMTPD_MDA_PAUSED;
 		return;
 
-	case IMSG_QUEUE_RESUME_LOCAL:
+	case IMSG_QUEUE_RESUME_MDA:
 		env->sc_opts &= ~SMTPD_MDA_PAUSED;
+		runner_reset_events();
 		return;
 
-	case IMSG_QUEUE_PAUSE_OUTGOING:
+	case IMSG_QUEUE_PAUSE_MTA:
 		env->sc_opts |= SMTPD_MTA_PAUSED;
 		return;
 
-	case IMSG_QUEUE_RESUME_OUTGOING:
+	case IMSG_QUEUE_RESUME_MTA:
 		env->sc_opts &= ~SMTPD_MTA_PAUSED;
+		runner_reset_events();
 		return;
 
 	case IMSG_CTL_VERBOSE:
@@ -334,14 +336,17 @@ runner_timeout(int fd, short event, void *p)
 	curtm = time(NULL);
 	rq_evp = ramqueue_next_envelope(rqueue);
 	while (rq_evp) {
-		if (rq_evp->sched > curtm)
+		if (rq_evp->sched > curtm) {
+			nsched = rq_evp->sched;
 			break;
+		}
 		runner_process_envelope(rq_evp, curtm);
 		rq_evp = ramqueue_next_envelope(rqueue);
 	}
 
-	if (rq_done && rq_off_done && ramqueue_is_empty(rqueue)) {
-		log_debug("runner: ramqueue is empty, wake me up. zZzZzZ");
+	if (rq_evp == NULL ||
+	    (rq_done && rq_off_done && ramqueue_is_empty(rqueue))) {
+		log_debug("runner: nothing to schedule, wake me up. zZzZzZ");
 		return;
 	}
 
@@ -372,29 +377,29 @@ runner_process_envelope(struct ramqueue_envelope *rq_evp, time_t curtm)
 	mda_av = env->sc_maxconn - stat_get(STATS_MDA_SESSION, STAT_ACTIVE);
 	bnc_av = env->sc_maxconn - stat_get(STATS_RUNNER_BOUNCES, STAT_ACTIVE);
 	
-	if (! queue_envelope_load(Q_QUEUE, rq_evp->evpid, &envelope))
-		return 0;
-
-	if (envelope.type & D_MDA) {
+	if (rq_evp->rq_batch->type == D_MDA) {
 		if (env->sc_opts & SMTPD_MDA_PAUSED)
 			return 0;
 		if (mda_av == 0)
 			return 0;
 	}
 
-	if (envelope.type & D_MTA) {
+	if (rq_evp->rq_batch->type == D_MTA) {
 		if (env->sc_opts & SMTPD_MTA_PAUSED)
 			return 0;
 		if (mta_av == 0)
 			return 0;
 	}
 
-	if (envelope.type & D_BOUNCE) {
+	if (rq_evp->rq_batch->type == D_BOUNCE) {
 		if (env->sc_opts & (SMTPD_MDA_PAUSED|SMTPD_MTA_PAUSED))
 			return 0;
 		if (bnc_av == 0)
 			return 0;
 	}
+
+	if (! queue_envelope_load(Q_QUEUE, rq_evp->evpid, &envelope))
+		return 0;
 
 	if (runner_check_loop(&envelope)) {
 		struct envelope bounce;
