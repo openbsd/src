@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.183 2011/10/26 10:59:00 jmatthew Exp $ */
+/*	$OpenBSD: ahci.c,v 1.184 2011/10/27 08:03:50 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -606,6 +606,7 @@ int			ahci_pwait_eq(struct ahci_port *, bus_size_t,
 			    u_int32_t, u_int32_t, int);
 void			ahci_flush_tfd(struct ahci_port *ap);
 u_int32_t		ahci_active_mask(struct ahci_port *);
+int			ahci_port_detect_pmp(struct ahci_port *);
 void			ahci_pmp_probe_timeout(void *);
 
 /* pmp operations */
@@ -2030,10 +2031,7 @@ int
 ahci_port_portreset(struct ahci_port *ap, int pmp)
 {
 	u_int32_t			cmd, r;
-	int				rc, count, pmp_rc, s;
-	struct ahci_cmd_hdr		*cmd_slot;
-	struct ahci_ccb			*ccb = NULL;
-	u_int8_t			*fis = NULL;
+	int				rc, s;
 
 	s = splbio();
 	DPRINTF(AHCI_D_VERBOSE, "%s: port reset\n", PORTNAME(ap));
@@ -2087,12 +2085,35 @@ ahci_port_portreset(struct ahci_port *ap, int pmp)
 		}
 	}
 
-	if (pmp == 0 ||
-	    (ap->ap_sc->sc_flags & AHCI_F_NO_PMP) ||
-	    !ISSET(ahci_read(ap->ap_sc, AHCI_REG_CAP), AHCI_REG_CAP_SPM)) {
-		goto err;
+	if (pmp != 0) {
+		if (ahci_port_detect_pmp(ap) != 0) {
+			rc = EBUSY;
+		}
 	}
 
+err:
+	/* Restore preserved port state */
+	ahci_pwrite(ap, AHCI_PREG_CMD, cmd);
+	splx(s);
+
+	return (rc);
+}
+
+int
+ahci_port_detect_pmp(struct ahci_port *ap)
+{
+	int				 count, pmp_rc, rc;
+	u_int32_t			 r, cmd;
+	struct ahci_cmd_hdr		*cmd_slot;
+	struct ahci_ccb			*ccb = NULL;
+	u_int8_t			*fis = NULL;
+
+	if ((ap->ap_sc->sc_flags & AHCI_F_NO_PMP) ||
+	    !ISSET(ahci_read(ap->ap_sc, AHCI_REG_CAP), AHCI_REG_CAP_SPM)) {
+		return 0;
+	}
+
+	rc = 0;
 	pmp_rc = 0;
 	count = 2;
 	do {
@@ -2133,7 +2154,7 @@ ahci_port_portreset(struct ahci_port *ap, int pmp)
 		 */
 		/* Restart port */
 		if (ahci_port_start(ap, 0)) {
-			rc = 1;
+			rc = EBUSY;
 			printf("%s: failed to start port, cannot probe PMP\n",
 			    PORTNAME(ap));
 			break;
@@ -2279,11 +2300,6 @@ ahci_port_portreset(struct ahci_port *ap, int pmp)
 
 		ahci_port_portreset(ap, 0);
 	}
-
-err:
-	/* Restore preserved port state */
-	ahci_pwrite(ap, AHCI_PREG_CMD, cmd);
-	splx(s);
 
 	return (rc);
 }
