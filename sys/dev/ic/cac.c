@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.48 2011/07/17 22:46:48 matthew Exp $	*/
+/*	$OpenBSD: cac.c,v 1.49 2011/10/27 00:18:23 krw Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -793,22 +793,24 @@ cac_l0_completed(sc)
 	struct cac_softc *sc;
 {
 	struct cac_ccb *ccb;
-	paddr_t off;
+	paddr_t off, orig_off;
 
 	if (!(off = cac_inl(sc, CAC_REG_DONE_FIFO)))
 		return NULL;
 #ifdef CAC_DEBUG
 	printf("compl-%x ", off);
 #endif
-	if (off & 3 && ccb->ccb_req.error == 0)
-		ccb->ccb_req.error = CAC_RET_CMD_INVALID;
-
-	off = (off & ~3) - sc->sc_ccbs_paddr;
-	ccb = (struct cac_ccb *)(sc->sc_ccbs + off);
+	orig_off = off;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0,
 	    sc->sc_dmamap->dm_mapsize,
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+
+	off = (off & ~3) - sc->sc_ccbs_paddr;
+	ccb = (struct cac_ccb *)(sc->sc_ccbs + off);
+
+	if (orig_off & 3 && ccb->ccb_req.error == 0)
+		ccb->ccb_req.error = CAC_RET_CMD_INVALID;
 
 	return (ccb);
 }
