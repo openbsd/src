@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.53 2011/06/06 17:10:23 ariane Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.54 2011/10/27 07:56:28 robert Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -89,7 +89,6 @@ struct shmid_ds *shm_find_segment_by_shmid(int);
  */
 
 #define	SHMSEG_REMOVED  	0x0200		/* can't overlap ACCESSPERMS */
-#define	SHMSEG_RMLINGER		0x0400
 
 int shm_last_free, shm_nused, shm_committed;
 
@@ -140,8 +139,6 @@ shm_find_segment_by_shmid(int shmid)
 	    (shmseg = shmsegs[segnum]) == NULL ||
 	    shmseg->shm_perm.seq != IPCID_TO_SEQ(shmid))
 		return (NULL);
-	if ((shmseg->shm_perm.mode & (SHMSEG_REMOVED|SHMSEG_RMLINGER)) == SHMSEG_REMOVED)
-		return (NULL);
 	return (shmseg);
 }
 
@@ -165,7 +162,7 @@ shm_delete_mapping(struct vmspace *vm, struct shmmap_state *shmmap_s)
 	struct shmid_ds *shmseg;
 	int segnum;
 	size_t size;
-	
+
 	segnum = IPCID_TO_IX(shmmap_s->shmid);
 	if (segnum < 0 || segnum >= shminfo.shmmni ||
 	    (shmseg = shmsegs[segnum]) == NULL)
@@ -442,7 +439,7 @@ shmget_allocate_segment(struct proc *p,
 
 	shmseg->shm_perm.cuid = shmseg->shm_perm.uid = cred->cr_uid;
 	shmseg->shm_perm.cgid = shmseg->shm_perm.gid = cred->cr_gid;
-	shmseg->shm_perm.mode = (mode & (ACCESSPERMS|SHMSEG_RMLINGER));
+	shmseg->shm_perm.mode = (mode & ACCESSPERMS);
 	shmseg->shm_perm.seq = shmseqs[segnum] = (shmseqs[segnum] + 1) & 0x7fff;
 	shmseg->shm_perm.key = key;
 	shmseg->shm_segsz = SCARG(uap, size);
@@ -467,8 +464,6 @@ sys_shmget(struct proc *p, void *v, register_t *retval)
 	int segnum, mode, error;
 
 	mode = SCARG(uap, shmflg) & ACCESSPERMS;
-	if (SCARG(uap, shmflg) & _SHM_RMLINGER)
-		mode |= SHMSEG_RMLINGER;
 
 	if (SCARG(uap, key) != IPC_PRIVATE) {
 	again:

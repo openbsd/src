@@ -1,4 +1,4 @@
-/*	$OpenBSD: shm.h,v 1.23 2011/01/03 23:08:07 guenther Exp $	*/
+/*	$OpenBSD: shm.h,v 1.24 2011/10/27 07:56:28 robert Exp $	*/
 /*	$NetBSD: shm.h,v 1.20 1996/04/09 20:55:35 cgd Exp $	*/
 
 /*
@@ -77,9 +77,6 @@
  */
 #define	SHM_RDONLY	010000	/* Attach read-only (else read-write) */
 #define	SHM_RND		020000	/* Round attach address to SHMLBA */
-#ifdef _KERNEL
-#define	_SHM_RMLINGER	040000	/* Attach even if segment removed */
-#endif
 
 /*
  * Shared memory specific control commands for shmctl().

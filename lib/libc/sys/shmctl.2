@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shmctl.2,v 1.13 2007/05/31 19:19:33 jmc Exp $
+.\"	$OpenBSD: shmctl.2,v 1.14 2011/10/27 07:56:28 robert Exp $
 .\"	$NetBSD: shmctl.2,v 1.3 1997/03/27 08:20:39 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"/
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 27 2011 $
 .Dt SHMCTL 2
 .Os
 .Sh NAME
@@ -123,9 +123,10 @@ or
 in the data structure associated with the shared memory segment.
 .Pp
 .It Dv IPC_RMID
-Remove the shared memory segment specified by
+Mark the shared memory segment specified by
 .Fa shmid
-and destroy the data associated with it.
+for removal when it is no longer in use by any process.
+When it is removed, all data associated with it will be destroyed too.
 Only the superuser or a process with an effective UID equal to the
 .Va shm_perm.cuid
 or
@@ -192,3 +193,9 @@ specifies an invalid address.
 .Sh SEE ALSO
 .Xr shmat 2 ,
 .Xr shmget 2
+.Sh STANDARDS
+Segments which are marked for removal (but not yet removed
+since they are still in use) can be attached to by new callers
+using
+.Xr shmat 2 .
+This is permitted as an extension beyond the standards.
