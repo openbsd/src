@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.39 2011/10/23 10:44:20 chl Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.40 2011/10/27 04:23:19 guenther Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -335,7 +335,8 @@ ssl_ctx_create(void)
 
 	SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_OFF);
 	SSL_CTX_set_timeout(ctx, SMTPD_SESSION_TIMEOUT);
-	SSL_CTX_set_options(ctx, SSL_OP_ALL);
+	SSL_CTX_set_options(ctx,
+	    SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_TICKET);
 	SSL_CTX_set_options(ctx,
 	    SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
 
