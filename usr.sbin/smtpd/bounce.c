@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.34 2011/10/23 09:30:06 gilles Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.35 2011/10/27 14:32:57 chl Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -26,6 +26,7 @@
 #include <err.h>
 #include <event.h>
 #include <imsg.h>
+#include <inttypes.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -148,7 +149,7 @@ bounce_event(int fd, short event, void *p)
 
 out:
 	if (*ep == '2') {
-		log_debug("#### %s: queue_envelope_delete: %016llx",
+		log_debug("#### %s: queue_envelope_delete: %016" PRIx64,
 		    __func__, cc->m.id);
 		queue_envelope_delete(Q_QUEUE, &cc->m);
 	}

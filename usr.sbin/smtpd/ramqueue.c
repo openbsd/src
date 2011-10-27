@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramqueue.c,v 1.23 2011/10/23 17:12:41 gilles Exp $	*/
+/*	$OpenBSD: ramqueue.c,v 1.24 2011/10/27 14:32:57 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -29,6 +29,7 @@
 #include <event.h>
 #include <fcntl.h>
 #include <imsg.h>
+#include <inttypes.h>
 #include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -233,7 +234,7 @@ ramqueue_expire(struct envelope *envelope, time_t curtm)
 		    envelope->expire / 60 / 60 / 24);
 		bounce_record_message(envelope, &bounce);
 		ramqueue_insert(&env->sc_rqueue, &bounce, time(NULL));
-		log_debug("#### %s: queue_envelope_delete: %016llx",
+		log_debug("#### %s: queue_envelope_delete: %016" PRIx64,
 		    __func__, envelope->id);
 		queue_envelope_delete(Q_QUEUE, envelope);
 		return 1;

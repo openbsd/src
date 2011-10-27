@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.52 2011/10/23 09:30:07 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.53 2011/10/27 14:32:57 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -31,6 +31,7 @@
 #include <event.h>
 #include <fcntl.h>
 #include <imsg.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -292,7 +293,7 @@ display_envelope(struct envelope *e, int flags)
 	    status, sizeof(status));
 
 	if (e->status)
-		errx(1, "%016llx: unexpected status 0x%04x", e->id,
+		errx(1, "%016" PRIx64 ": unexpected status 0x%04x", e->id,
 		    e->status);
 
 	getflag(&e->flags, DF_BOUNCE, "BOUNCE",
@@ -305,7 +306,7 @@ display_envelope(struct envelope *e, int flags)
 	    status, sizeof(status));
 
 	if (e->flags)
-		errx(1, "%016llx: unexpected flags 0x%04x", e->id,
+		errx(1, "%016" PRIx64 ": unexpected flags 0x%04x", e->id,
 		    e->flags);
 	
 	if (status[0])
@@ -327,13 +328,13 @@ display_envelope(struct envelope *e, int flags)
 		printf("UNKNOWN");
 	}
 	
-	printf("|%016llx|%s|%s@%s|%s@%s|%lld|%lld|%u",
+	printf("|%016" PRIx64 "|%s|%s@%s|%s@%s|%" PRId64 "|%" PRId64 "|%u",
 	    e->id,
 	    status,
 	    e->sender.user, e->sender.domain,
 	    e->dest.user, e->dest.domain,
-	    (long long int) e->lasttry,
-	    (long long int) e->expire,
+	    (int64_t) e->lasttry,
+	    (int64_t) e->expire,
 	    e->retry);
 	
 	if (e->errorline[0] != '\0')

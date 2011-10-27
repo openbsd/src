@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.15 2011/10/23 13:03:05 gilles Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.16 2011/10/27 14:32:57 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -28,6 +28,7 @@
 #include <event.h>
 #include <fcntl.h>
 #include <imsg.h>
+#include <inttypes.h>
 #include <libgen.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -108,7 +109,7 @@ again:
 		goto again;
 	evpid = ep->id | rnd;
 
-	if (! bsnprintf(evpname, sizeof(evpname), "%s/%08x%s/%016llx",
+	if (! bsnprintf(evpname, sizeof(evpname), "%s/%08x%s/%016" PRIx64,
 		fsqueue_getpath(qkind),
 		evpid_to_msgid(evpid),
 		PATH_ENVELOPES, evpid))
@@ -168,7 +169,7 @@ fsqueue_envelope_load(enum queue_kind qkind, struct envelope *ep)
 	FILE *fp;
 	int  ret;
 
-	if (! bsnprintf(pathname, sizeof(pathname), "%s/%03x/%08x%s/%016llx",
+	if (! bsnprintf(pathname, sizeof(pathname), "%s/%03x/%08x%s/%016" PRIx64,
 		fsqueue_getpath(qkind),
 		evpid_to_msgid(ep->id) & 0xfff,
 		evpid_to_msgid(ep->id),
@@ -202,7 +203,7 @@ fsqueue_envelope_update(enum queue_kind qkind, struct envelope *ep)
 	if (! bsnprintf(temp, sizeof(temp), "%s/envelope.tmp", PATH_QUEUE))
 		fatalx("fsqueue_envelope_update");
 
-	if (! bsnprintf(dest, sizeof(dest), "%s/%03x/%08x%s/%016llx",
+	if (! bsnprintf(dest, sizeof(dest), "%s/%03x/%08x%s/%016" PRIx64,
 		fsqueue_getpath(qkind),
 		evpid_to_msgid(ep->id) & 0xfff,
 		evpid_to_msgid(ep->id),
@@ -247,7 +248,7 @@ fsqueue_envelope_delete(enum queue_kind qkind, struct envelope *ep)
 {
 	char pathname[MAXPATHLEN];
 
-	if (! bsnprintf(pathname, sizeof(pathname), "%s/%03x/%08x%s/%016llx",
+	if (! bsnprintf(pathname, sizeof(pathname), "%s/%03x/%08x%s/%016" PRIx64,
 		fsqueue_getpath(qkind),
 		evpid_to_msgid(ep->id) & 0xfff,
 		evpid_to_msgid(ep->id),

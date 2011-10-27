@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.121 2011/10/26 20:47:31 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.122 2011/10/27 14:32:57 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -31,6 +31,7 @@
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
+#include <inttypes.h>
 #include <libgen.h>
 #include <pwd.h>
 #include <signal.h>
@@ -88,7 +89,7 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 		 * gets reinserted in ramqueue
 		 */
 		if (e->status & DS_TEMPFAILURE) {
-			log_debug("TEMPFAIL: %016llx", e->id);
+			log_debug("TEMPFAIL: %016" PRIx64, e->id);
 			e->status &= ~DS_TEMPFAILURE;
 			queue_envelope_update(Q_QUEUE, e);
 			ramqueue_insert(&env->sc_rqueue, e, time(NULL));
@@ -101,10 +102,10 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 		 */
 		if (e->status & DS_PERMFAILURE) {
 			struct envelope bounce;
-			log_debug("PERMFAIL: %016llx", e->id);
+			log_debug("PERMFAIL: %016" PRIx64, e->id);
 			if (e->type != D_BOUNCE &&
 			    e->sender.user[0] != '\0') {
-				log_debug("PERMFAIL #2: %016llx", e->id);
+				log_debug("PERMFAIL #2: %016" PRIx64, e->id);
 				bounce_record_message(e, &bounce);
 				ramqueue_insert(&env->sc_rqueue, &bounce, time(NULL));
 				runner_reset_events();
@@ -114,7 +115,7 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 		/* successful delivery or permanent failure,
 		 * remove envelope from queue.
 		 */
-		log_debug("#### %s: queue_envelope_delete: %016llx",
+		log_debug("#### %s: queue_envelope_delete: %016" PRIx64,
 		    __func__, e->id);
 		queue_envelope_delete(Q_QUEUE, e);
 		return;
@@ -408,7 +409,7 @@ runner_process_envelope(struct ramqueue_envelope *rq_evp, time_t curtm)
 		bounce_record_message(&envelope, &bounce);
 		ramqueue_insert(&env->sc_rqueue, &bounce, time(NULL));
 		runner_setup_events();
-		log_debug("#### %s: queue_envelope_delete: %016llx",
+		log_debug("#### %s: queue_envelope_delete: %016" PRIx64,
 		    __func__, envelope.id);
 		queue_envelope_delete(Q_QUEUE, &envelope);
 		return 0;
@@ -531,7 +532,8 @@ runner_force_message_to_ramqueue(struct ramqueue *rqueue, u_int32_t msgid)
 			continue;
 
 		if ((evpid = filename_to_evpid(dp->d_name)) == 0) {
-			log_warnx("runner_force_message_to_ramqueue: invalid evpid: %016llx", evpid);
+			log_warnx("runner_force_message_to_ramqueue: "
+				  "invalid evpid: %016" PRIx64, evpid);
 			continue;
 		}
 
@@ -727,7 +729,7 @@ runner_remove_envelope(struct ramqueue *rq, struct ramqueue_envelope *rq_evp)
 	struct envelope evp;
 
 	if (queue_envelope_load(Q_QUEUE, rq_evp->evpid, &evp)) {
-		log_debug("#### %s: queue_envelope_delete: %016llx",
+		log_debug("#### %s: queue_envelope_delete: %016" PRIx64,
 		    __func__, evp.id);
 		queue_envelope_delete(Q_QUEUE, &evp);
 	}

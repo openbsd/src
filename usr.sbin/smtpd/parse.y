@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.81 2011/10/23 15:36:53 eric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.82 2011/10/27 14:32:57 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -40,6 +40,7 @@
 #include <event.h>
 #include <ifaddrs.h>
 #include <imsg.h>
+#include <inttypes.h>
 #include <netdb.h>
 #include <paths.h>
 #include <pwd.h>
@@ -190,7 +191,7 @@ quantifier      : /* empty */                   { $$ = 1; }
 
 interval	: NUMBER quantifier		{
 			if ($1 < 0) {
-				yyerror("invalid interval: %lld", $1);
+				yyerror("invalid interval: %" PRId64, $1);
 				YYERROR;
 			}
 			$$.tv_usec = 0;
@@ -200,7 +201,7 @@ interval	: NUMBER quantifier		{
 
 size		: NUMBER		{
 			if ($1 < 0) {
-				yyerror("invalid size: %lld", $1);
+				yyerror("invalid size: %" PRId64, $1);
 				YYERROR;
 			}
 			$$ = $1;
@@ -232,7 +233,7 @@ port		: PORT STRING			{
 		}
 		| PORT NUMBER			{
 			if ($2 <= 0 || $2 >= (int)USHRT_MAX) {
-				yyerror("invalid port: %lld", $2);
+				yyerror("invalid port: %" PRId64, $2);
 				YYERROR;
 			}
 			$$ = htons($2);

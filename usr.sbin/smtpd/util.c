@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.48 2011/10/23 09:30:07 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.49 2011/10/27 14:32:57 chl Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -34,6 +34,7 @@
 #include <event.h>
 #include <fcntl.h>
 #include <imsg.h>
+#include <inttypes.h>
 #include <libgen.h>
 #include <netdb.h>
 #include <pwd.h>
@@ -566,14 +567,14 @@ evpid_generate(u_int32_t msgid)
 	u_int64_t ret;
 
 	ret = msgid;
-	log_debug("evpid_generate: %016llx", ret);
+	log_debug("evpid_generate: %016" PRIx64, ret);
 	ret <<= 32;
-	log_debug("evpid_generate: %016llx", ret);
+	log_debug("evpid_generate: %016" PRIx64, ret);
 	do {
 		ret |= arc4random();
 	} while ((ret & 0xffffffff) == 0);
 
-	log_debug("evpid_generate: %016llx", ret);
+	log_debug("evpid_generate: %016" PRIx64, ret);
 
 	return ret;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.61 2011/10/23 09:30:07 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.62 2011/10/27 14:32:57 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -26,6 +26,7 @@
 
 #include <event.h>
 #include <imsg.h>
+#include <inttypes.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -220,9 +221,9 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 			/* log status */
 			if (error && asprintf(&error, "Error (%s)", error) < 0)
 				fatal("mda: asprintf");
-			log_info("%016llx: to=<%s@%s>, delay=%lld, stat=%s",
+			log_info("%016" PRIx64 ": to=<%s@%s>, delay=%" PRId64 ", stat=%s",
 			    s->msg.id, maddr->user, maddr->domain,
-			    (long long int) (time(NULL) - s->msg.creation),
+			    (int64_t) (time(NULL) - s->msg.creation),
 			    error ? error : "Sent");
 			free(error);
 
