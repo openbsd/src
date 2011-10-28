@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.560 2011/10/20 16:35:52 mpf Exp $
+$OpenBSD: usbdevs,v 1.561 2011/10/28 01:45:36 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1578,6 +1578,7 @@ product FTDI SERIAL_2232C	0x6010	2232C Serial
 product FTDI FT4232H		0x6011	FT4232H
 product FTDI PS2KBDMS		0x8371	PS/2 Keyboard/Mouse
 product FTDI SERIAL_8U100AX	0x8372	Serial
+product FTDI MJS_SIRIUS_PC_2	0x9379	MJS Sirius To PC Interface
 product FTDI OPENRD		0x9e90	OpenRD JTAGKey
 product FTDI CANDAPTER		0x9f80	CANdapter
 product FTDI NXTCAM		0xabb8	Mindstorms NXTCam
@@ -1599,7 +1600,7 @@ product FTDI ASK_RDR4X7_5	0xc994	ASK RDR 4X7
 product FTDI ASK_RDR4X7_6	0xc995	ASK RDR 4X7
 product FTDI ASK_RDR4X7_7	0xc996	ASK RDR 4X7
 product FTDI ASK_RDR4X7_8	0xc997	ASK RDR 4X7
-product FTDI MJS_SIRIUS_PC	0xca81	MJS Sirius To PC Interface
+product FTDI MJS_SIRIUS_PC_1	0xca81	MJS Sirius To PC Interface
 product FTDI CHAMELEON		0xcaa0	µChameleon
 product FTDI OPENPORT_13M	0xcc48	OpenPort 1.3 Mitsubishi
 product FTDI OPENPORT_13S	0xcc49	OpenPort 1.3 Subaru
