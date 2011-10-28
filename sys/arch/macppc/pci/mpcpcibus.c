@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.42 2011/01/08 18:10:23 deraadt Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.43 2011/10/28 15:17:02 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -891,7 +891,7 @@ mpc_intr_map(void *lcv, pcitag_t bustag, int buspin, int  line,
                 printf("mpc_intr_map: bad interrupt pin %d\n", buspin);
                 error = 1;
         }
-	if (line == 0xff)
+	if (line == 0xff || line == 0)
 		error = 1;
 
 	if (!error)
