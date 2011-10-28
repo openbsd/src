@@ -49,6 +49,7 @@
 ./usr/include/arm/stdarg.h
 ./usr/include/arm/swi.h
 ./usr/include/arm/sysarch.h
+./usr/include/arm/tcb.h
 ./usr/include/arm/trap.h
 ./usr/include/arm/undefined.h
 ./usr/include/arm/vmparam.h
@@ -94,6 +95,7 @@
 ./usr/include/armish/spinlock.h
 ./usr/include/armish/stdarg.h
 ./usr/include/armish/sysarch.h
+./usr/include/armish/tcb.h
 ./usr/include/armish/trap.h
 ./usr/include/armish/vmparam.h
 ./usr/include/g++/arm-unknown-openbsd5.0

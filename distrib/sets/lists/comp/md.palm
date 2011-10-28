@@ -49,6 +49,7 @@
 ./usr/include/arm/stdarg.h
 ./usr/include/arm/swi.h
 ./usr/include/arm/sysarch.h
+./usr/include/arm/tcb.h
 ./usr/include/arm/trap.h
 ./usr/include/arm/undefined.h
 ./usr/include/arm/vmparam.h
@@ -641,6 +642,7 @@
 ./usr/include/palm/spinlock.h
 ./usr/include/palm/stdarg.h
 ./usr/include/palm/sysarch.h
+./usr/include/palm/tcb.h
 ./usr/include/palm/trap.h
 ./usr/include/palm/vmparam.h
 ./usr/include/unwind.h

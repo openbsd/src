@@ -1666,6 +1666,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/signal.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/spinlock.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/stdarg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/tcb.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/trap.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/varargs.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/vmparam.ph

@@ -2200,6 +2200,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/signal.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/spinlock.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/stdarg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/tcb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/trap.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/varargs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ppc-asm.ph
@@ -2329,6 +2330,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/signal.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/spinlock.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/stdarg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/tcb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/trap.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/varargs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/vmparam.ph

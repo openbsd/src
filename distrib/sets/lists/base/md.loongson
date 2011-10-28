@@ -1896,6 +1896,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/spinlock.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/stdarg.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/sysarch.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/tcb.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/trap.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/varargs.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/vmparam.ph
@@ -1948,6 +1949,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/spinlock.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/stdarg.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/sysarch.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/tcb.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/trap.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/varargs.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/vmparam.ph

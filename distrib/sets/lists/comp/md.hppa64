@@ -198,6 +198,7 @@
 ./usr/include/hppa64/som.h
 ./usr/include/hppa64/spinlock.h
 ./usr/include/hppa64/stdarg.h
+./usr/include/hppa64/tcb.h
 ./usr/include/hppa64/trap.h
 ./usr/include/hppa64/varargs.h
 ./usr/include/hppa64/vmparam.h

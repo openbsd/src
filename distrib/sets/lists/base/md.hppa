@@ -1872,6 +1872,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/som.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/spinlock.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/stdarg.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/tcb.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/trap.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/varargs.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/vmparam.ph

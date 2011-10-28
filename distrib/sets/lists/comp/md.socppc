@@ -585,6 +585,7 @@
 ./usr/include/powerpc/signal.h
 ./usr/include/powerpc/spinlock.h
 ./usr/include/powerpc/stdarg.h
+./usr/include/powerpc/tcb.h
 ./usr/include/powerpc/trap.h
 ./usr/include/powerpc/varargs.h
 ./usr/include/ppc-asm.h
@@ -632,6 +633,7 @@
 ./usr/include/socppc/signal.h
 ./usr/include/socppc/spinlock.h
 ./usr/include/socppc/stdarg.h
+./usr/include/socppc/tcb.h
 ./usr/include/socppc/trap.h
 ./usr/include/socppc/varargs.h
 ./usr/include/socppc/vmparam.h

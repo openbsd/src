@@ -1803,6 +1803,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/signal.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/spinlock.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/stdarg.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/landisk/tcb.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/trap.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/varargs.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/vmparam.ph
@@ -2232,6 +2233,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/signal.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/spinlock.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/stdarg.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/sh/tcb.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/tmureg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/trap.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/ubcreg.ph
