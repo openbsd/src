@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.77 2011/01/28 14:20:37 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.78 2011/10/28 12:49:43 krw Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1228,6 +1228,7 @@ trunk_rr_attach(struct trunk_softc *tr)
 	tr->tr_input = trunk_rr_input;
 	tr->tr_init = NULL;
 	tr->tr_stop = NULL;
+	tr->tr_linkstate = NULL;
 	tr->tr_port_create = NULL;
 	tr->tr_port_destroy = trunk_rr_port_destroy;
 	tr->tr_capabilities = IFCAP_TRUNK_FULLDUPLEX;
@@ -1386,6 +1387,8 @@ trunk_lb_attach(struct trunk_softc *tr)
 	tr->tr_capabilities = IFCAP_TRUNK_FULLDUPLEX;
 	tr->tr_req = NULL;
 	tr->tr_portreq = NULL;
+	tr->tr_init = NULL;
+	tr->tr_stop = NULL;
 
 	lb->lb_key = arc4random();
 	tr->tr_psc = (caddr_t)lb;
