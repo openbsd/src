@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.67 2011/10/24 13:01:07 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.68 2011/10/28 15:18:51 drahn Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -459,9 +459,11 @@ openpic_do_pending_int_dis(int pcpl, int s)
 {
 	struct cpu_info *ci = curcpu();
 
+	(void)ppc_intr_disable();
 	if (ci->ci_iactive & CI_IACTIVE_PROCESSING_SOFT) {
 		/* soft interrupts are being processed, just set ipl/return */
 		openpic_setipl(pcpl);
+		ppc_intr_enable(s);
 		return;
 	}
 
@@ -471,22 +473,35 @@ openpic_do_pending_int_dis(int pcpl, int s)
 		if ((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTCLOCK)) &&
 		    (pcpl < IPL_SOFTCLOCK)) {
  			ci->ci_ipending &= ~SI_TO_IRQBIT(SI_SOFTCLOCK);
+			ppc_intr_enable(1);
+			KERNEL_LOCK();
 			softintr_dispatch(SI_SOFTCLOCK);
+			KERNEL_UNLOCK();
+			(void)ppc_intr_disable();
  		}
 		if ((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTNET)) &&
 		    (pcpl < IPL_SOFTNET)) {
 			ci->ci_ipending &= ~SI_TO_IRQBIT(SI_SOFTNET);
+			ppc_intr_enable(1);
+			KERNEL_LOCK();
 			softintr_dispatch(SI_SOFTNET);
+			KERNEL_UNLOCK();
+			(void)ppc_intr_disable();
 		}
 		if ((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTTTY)) &&
 		    (pcpl < IPL_SOFTTTY)) {
 			ci->ci_ipending &= ~SI_TO_IRQBIT(SI_SOFTTTY);
+			ppc_intr_enable(1);
+			KERNEL_LOCK();
 			softintr_dispatch(SI_SOFTTTY);
+			KERNEL_UNLOCK();
+			(void)ppc_intr_disable();
 		}
 	} while (ci->ci_ipending & ppc_smask[pcpl]);
 	openpic_setipl(pcpl);	/* Don't use splx... we are here already! */
 
 	atomic_clearbits_int(&ci->ci_iactive, CI_IACTIVE_PROCESSING_SOFT);
+	ppc_intr_enable(s);
 }
 
 void
@@ -567,6 +582,13 @@ openpic_ext_intr()
 			    openpic_irqloop[ci->ci_cpuid],
 			    openpic_irqnest[ci->ci_cpuid]);
 		}
+		if (openpic_irqloop[ci->ci_cpuid] > 20) {
+			printf("irqloop %d irqnest %d: returning\n",
+			    openpic_irqloop[ci->ci_cpuid],
+			    openpic_irqnest[ci->ci_cpuid]);
+			openpic_irqnest[ci->ci_cpuid]--;
+			return;
+		}
 #ifdef MULTIPROCESSOR
 		if (irq == IPI_VECTOR_NOP) {
 			ipi_nop[ci->ci_cpuid].ec_count++;
@@ -621,36 +643,14 @@ openpic_ext_intr()
 		irq = openpic_read_irq(ci->ci_cpuid);
 	}
 
-	if (openpic_irqnest[ci->ci_cpuid] == 1) {
-		openpic_irqloop[ci->ci_cpuid] = 0;
-		/* raise IPL back to max until do_pending will lower it back */
-		openpic_setipl(maxipl);
-		/*
-		 * we must not process pending soft interrupts when nested, can
-		 * cause excessive recursion.
-		 * 
-		 * The loop here is because an interrupt could case a pending
-		 * soft interrupt between the finishing of the
-		 * openpic_do_pending_int, but before ppc_intr_disable
-		 */
-		do {
-			openpic_irqloop[ci->ci_cpuid]++;
-			if (openpic_irqloop[ci->ci_cpuid] > 5) {
-				printf("ext_intr: do_pending loop %d\n",
-				    openpic_irqloop[ci->ci_cpuid]);
-			}
-			if (ci->ci_iactive & CI_IACTIVE_PROCESSING_SOFT) {
-				openpic_setipl(pcpl);
-				/*
-				 * some may be pending but someone else is
-				 * processing them
-				 */
-				break;
-			} else {
-				openpic_do_pending_int_dis(pcpl, 1);
-			}
-		} while (ci->ci_ipending & ppc_smask[pcpl]);
-	}
+	/*
+	 * sending 0 in to openpic_do_pending_int_dis will leave
+	 * external interrupts disabled, but since we are about
+	 * to return from interrupt leaving them disabled until then
+	 * prevents additional recursion.
+	 */
+	openpic_do_pending_int_dis(pcpl, 0);
+
 	openpic_irqnest[ci->ci_cpuid]--;
 }
 
