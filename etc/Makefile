@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.310 2011/10/06 20:49:25 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.311 2011/10/29 14:29:33 ajacoutot Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -37,7 +37,7 @@ BIN1=	changelist csh.cshrc csh.login csh.logout daily dhcpd.conf \
 	rbootd.conf rc rc.conf rc.local rc.securelevel rc.shutdown \
 	remote rpc services shells syslog.conf weekly \
 	etc.${MACHINE}/disktab dhclient.conf mailer.conf ntpd.conf \
-	moduli pf.os sensorsd.conf ifstated.conf
+	moduli pf.os sensorsd.conf ifstated.conf mixerctl.conf
 
 .if ${MACHINE} != "aviion" && ${MACHINE} != "mvme68k" && \
     ${MACHINE} != "mvme88k"
