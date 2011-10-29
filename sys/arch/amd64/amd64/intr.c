@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.30 2011/10/21 20:48:11 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.31 2011/10/29 19:17:30 kettenis Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -171,25 +171,6 @@ intr_calculatemasks(struct cpu_info *ci)
 	for (level = 0; level < NIPL; level++)
 		ci->ci_iunmask[level] = ~ci->ci_imask[level];
 }
-
-#if NIOAPIC > 0
-int
-intr_find_mpmapping(int bus, int pin, int *handle)
-{
-	struct mp_intr_map *mip;
-
-	if (bus == -1 || bus >= mp_nbusses)
-		return ENOENT;
-
-	for (mip = mp_busses[bus].mb_intrs; mip != NULL; mip = mip->next) {
-		if (mip->bus_pin == pin) {
-			*handle = mip->ioapic_ih;
-			return 0;
-		}
-	}
-	return ENOENT;
-}
-#endif
 
 int
 intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,

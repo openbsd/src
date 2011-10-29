@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.52 2011/10/13 09:44:40 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.53 2011/10/29 19:17:30 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -402,8 +402,8 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	int pin = pa->pa_rawintrpin;
 	int line = pa->pa_intrline;
 #if NIOAPIC > 0
+	struct mp_intr_map *mip;
 	int bus, dev, func;
-	int mppin;
 #endif
 
 	if (pin == 0) {
@@ -422,12 +422,23 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 #if NIOAPIC > 0
 	pci_decompose_tag(pa->pa_pc, pa->pa_tag, &bus, &dev, &func);
+
 	if (mp_busses != NULL) {
-		mppin = (dev << 2)|(pin - 1);
-		if (intr_find_mpmapping(bus, mppin, &ihp->line) == 0) {
-			ihp->line |= line;
-			return 0;
+		int mpspec_pin = (dev << 2) | (pin - 1);
+
+		if (bus < mp_nbusses) {
+			for (mip = mp_busses[bus].mb_intrs;
+			     mip != NULL; mip = mip->next) {
+				if (&mp_busses[bus] == mp_isa_bus ||
+				    &mp_busses[bus] == mp_eisa_bus)
+					continue;
+				if (mip->bus_pin == mpspec_pin) {
+					ihp->line = mip->ioapic_ih | line;
+					return 0;
+				}
+			}
 		}
+
 		if (pa->pa_bridgetag) {
 			int swizpin = PPB_INTERRUPT_SWIZZLE(pin, dev);
 			if (pa->pa_bridgeih[swizpin - 1].line != -1) {
@@ -471,21 +482,32 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 #if NIOAPIC > 0
 	if (mp_busses != NULL) {
-		if (mp_isa_bus != NULL &&
-		    intr_find_mpmapping(mp_isa_bus->mb_idx, line, &ihp->line) == 0) {
-			ihp->line |= line;
-			return 0;
+		if (mip == NULL && mp_isa_bus) {
+			for (mip = mp_isa_bus->mb_intrs; mip != NULL;
+			    mip = mip->next) {
+				if (mip->bus_pin == line) {
+					ihp->line = mip->ioapic_ih | line;
+					return 0;
+				}
+			}
 		}
 #if NEISA > 0
-		if (mp_eisa_bus != NULL &&
-		    intr_find_mpmapping(mp_eisa_bus->mb_idx, line, &ihp->line) == 0) {
-			ihp->line |= line;
-			return 0;
+		if (mip == NULL && mp_eisa_bus) {
+			for (mip = mp_eisa_bus->mb_intrs;  mip != NULL;
+			    mip = mip->next) {
+				if (mip->bus_pin == line) {
+					ihp->line = mip->ioapic_ih | line;
+					return 0;
+				}
+			}
 		}
 #endif
-		printf("pci_intr_map: bus %d dev %d func %d pin %d; line %d\n",
-		    bus, dev, func, pin, line);
-		printf("pci_intr_map: no MP mapping found\n");
+		if (mip == NULL) {
+			printf("pci_intr_map: "
+			    "bus %d dev %d func %d pin %d; line %d\n",
+			    bus, dev, func, pin, line);
+			printf("pci_intr_map: no MP mapping found\n");
+		}
 	}
 #endif
 
