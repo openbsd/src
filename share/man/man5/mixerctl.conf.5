@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mixerctl.conf.5,v 1.4 2008/12/02 13:32:30 jmc Exp $
+.\"	$OpenBSD: mixerctl.conf.5,v 1.5 2011/10/29 19:53:43 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 2 2008 $
+.Dd $Mdocdate: October 29 2011 $
 .Dt MIXERCTL.CONF 5
 .Os
 .Sh NAME
@@ -29,10 +29,10 @@ at system startup.
 The exact set of variables available are
 largely dependent on the audio device driver,
 and vary from device to device.
-The format of these variables is
-described more fully in the
-.Xr mixerctl 1
-manual page.
+The file is made up of variable assignments
+.Pq Ar name Ns = Ns Ar value
+with comments designated by a hash mark
+.Pq Sq # .
 .Pp
 Some audio devices have _sense variables
 which can help identify connectors.
