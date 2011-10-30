@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.169 2011/10/20 08:57:26 mikeb Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.170 2011/10/30 23:04:38 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -319,8 +319,7 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_type = IFT_PFSYNC;
 	IFQ_SET_MAXLEN(&ifp->if_snd, ifqmaxlen);
 	ifp->if_hdrlen = sizeof(struct pfsync_header);
-	ifp->if_mtu = 1500; /* XXX */
-	ifp->if_hardmtu = MCLBYTES; /* XXX */
+	ifp->if_mtu = ETHERMTU;
 	timeout_set(&sc->sc_tmo, pfsync_timeout, sc);
 	timeout_set(&sc->sc_bulk_tmo, pfsync_bulk_update, sc);
 	timeout_set(&sc->sc_bulkfail_tmo, pfsync_bulk_fail, sc);
@@ -1291,11 +1290,11 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		splx(s);
 		break;
 	case SIOCSIFMTU:
-		s = splnet();
-		if (ifr->ifr_mtu <= PFSYNC_MINPKT)
+		if (!sc->sc_sync_if ||
+		    ifr->ifr_mtu <= PFSYNC_MINPKT ||
+		    ifr->ifr_mtu > sc->sc_sync_if->if_mtu)
 			return (EINVAL);
-		if (ifr->ifr_mtu > MCLBYTES) /* XXX could be bigger */
-			ifr->ifr_mtu = MCLBYTES;
+		s = splnet();
 		if (ifr->ifr_mtu < ifp->if_mtu)
 			pfsync_sendout();
 		ifp->if_mtu = ifr->ifr_mtu;
