@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.192 2011/10/24 17:48:31 camield Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.193 2011/10/30 20:38:55 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1732,6 +1732,8 @@ carp_setrun(struct carp_vhost_entry *vhe, sa_family_t af)
 		tv.tv_sec = 3 * sc->sc_advbase;
 		if (sc->sc_advbase == 0 && vhe->advskew == 0)
 			tv.tv_usec = 3 * 1000000 / 256;
+		else if (sc->sc_advbase == 0)
+			tv.tv_usec = 3 * vhe->advskew * 1000000 / 256;
 		else
 			tv.tv_usec = vhe->advskew * 1000000 / 256;
 		if (vhe->vhe_leader)
