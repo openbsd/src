@@ -72,6 +72,7 @@
 ./etc/mailer.conf
 ./etc/man.conf
 ./etc/master.passwd
+./etc/mixerctl.conf
 ./etc/moduli
 ./etc/monthly
 ./etc/motd

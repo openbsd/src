@@ -49,6 +49,7 @@
 ./usr/include/arm/stdarg.h
 ./usr/include/arm/swi.h
 ./usr/include/arm/sysarch.h
+./usr/include/arm/tcb.h
 ./usr/include/arm/trap.h
 ./usr/include/arm/undefined.h
 ./usr/include/arm/vmparam.h
@@ -640,6 +641,7 @@
 ./usr/include/zaurus/spinlock.h
 ./usr/include/zaurus/stdarg.h
 ./usr/include/zaurus/sysarch.h
+./usr/include/zaurus/tcb.h
 ./usr/include/zaurus/trap.h
 ./usr/include/zaurus/vmparam.h
 ./usr/include/zaurus/zaurus_var.h

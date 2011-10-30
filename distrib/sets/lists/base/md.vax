@@ -1722,6 +1722,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/signal.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/spinlock.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/stdarg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/vax/tcb.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/trap.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/uvax.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/varargs.ph

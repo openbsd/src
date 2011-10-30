@@ -163,6 +163,7 @@
 ./usr/include/vax/signal.h
 ./usr/include/vax/spinlock.h
 ./usr/include/vax/stdarg.h
+./usr/include/vax/tcb.h
 ./usr/include/vax/trap.h
 ./usr/include/vax/uvax.h
 ./usr/include/vax/varargs.h
