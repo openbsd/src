@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.49 2011/09/22 22:21:13 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.50 2011/10/30 20:57:06 schwarze Exp $
 #	$NetBSD: Makefile,v 1.35 1996/04/03 21:20:52 chuck Exp $
 
 .include <bsd.own.mk>
@@ -36,12 +36,6 @@ maninstall:
 		gcc/protoize.1 ${DESTDIR}${MANDIR}1/protoize.1
 	@rm -f ${DESTDIR}${MANDIR}1/unprotoize.1
 	ln ${DESTDIR}${MANDIR}1/protoize.1 ${DESTDIR}${MANDIR}1/unprotoize.1
-.elif ${ELF_TOOLCHAIN:L} == "yes"
-maninstall:
-.for cmd in addr2line objcopy readelf
-	${INSTALL} ${INSTALL_COPY} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
-		binutils/binutils/doc/${cmd}.1 ${DESTDIR}${MANDIR}1/${cmd}.1
-.endfor
 .endif
 
 .include <bsd.subdir.mk>

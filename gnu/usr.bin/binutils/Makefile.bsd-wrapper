@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.75 2011/07/06 04:10:32 schwarze Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.76 2011/10/30 20:57:06 schwarze Exp $
 
 NEW_BINUTILS=alpha amd64 arm hppa hppa64 i386 mips64 powerpc sh sparc sparc64
 
@@ -20,7 +20,9 @@ PREFIX=/usr
 MANDIR=${PREFIX}/share/man/man
 .endif
 
-MAN=		binutils/doc/objdump.1 c++filt.1
+MAN=		binutils/doc/addr2line.1 binutils/doc/objcopy.1 \
+		binutils/doc/objdump.1 binutils/doc/readelf.1 \
+		c++filt.1
 
 CONF_SUBDIRS+=	gdb
 SUBDIRS+=	gdb
@@ -31,10 +33,8 @@ MAN+=		gdb/gdb.1
 SUBDIRS+=	binutils ld gas
 CONF_SUBDIRS+=	binutils ld gas
 INST_SUBDIRS+=	binutils ld gas
-MAN+=		binutils/doc/addr2line.1 binutils/doc/ar.1 \
-		binutils/doc/objcopy.1 binutils/doc/ranlib.1 \
-		binutils/doc/readelf.1 binutils/doc/strings.1 \
-		binutils/doc/strip.1 \
+MAN+=		binutils/doc/ar.1 binutils/doc/ranlib.1 \
+		binutils/doc/strings.1 binutils/doc/strip.1 \
 		gas/doc/as.1 ld/ld.1
 .  else
 CONF_SUBDIRS=${SUBDIRS}
