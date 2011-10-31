@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.52 2011/06/26 23:00:28 deraadt Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.53 2011/10/31 21:44:54 mikeb Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -82,6 +82,10 @@ struct ppb_softc {
 	pcireg_t sc_bcr;
 	pcireg_t sc_int;
 	pcireg_t sc_slcsr;
+	pcireg_t sc_msi_mc;
+	pcireg_t sc_msi_ma;
+	pcireg_t sc_msi_mau32;
+	pcireg_t sc_msi_md;
 	int sc_pmcsr_state;
 };
 
@@ -352,7 +356,7 @@ ppbactivate(struct device *self, int act)
 	pci_chipset_tag_t pc = sc->sc_pc;
 	pcitag_t tag = sc->sc_tag;
 	pcireg_t blr, reg;
-	int rv = 0;
+	int off, rv = 0;
 
 	switch (act) {
 	case DVACT_QUIESCE:
@@ -370,6 +374,21 @@ ppbactivate(struct device *self, int act)
 		if (sc->sc_cap_off)
 			sc->sc_slcsr = pci_conf_read(pc, tag,
 			    sc->sc_cap_off + PCI_PCIE_SLCSR);
+
+		if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg)) {
+			sc->sc_msi_ma = pci_conf_read(pc, tag,
+			    off + PCI_MSI_MA);
+			if (reg & PCI_MSI_MC_C64) {
+				sc->sc_msi_mau32 = pci_conf_read(pc, tag,
+				    off + PCI_MSI_MAU32);
+				sc->sc_msi_md = pci_conf_read(pc, tag,
+				    off + PCI_MSI_MD64);
+			} else {
+				sc->sc_msi_md = pci_conf_read(pc, tag,
+				    off + PCI_MSI_MD32);
+			}
+			sc->sc_msi_mc = reg;
+		}
 
 		if (pci_dopm) {	
 			/* Place the bridge into D3. */
@@ -417,6 +436,22 @@ ppbactivate(struct device *self, int act)
 		pci_conf_write(pc, tag, PPB_REG_PREFLIM_HI32,
 		    sc->sc_pmemlimit >> 32);
 #endif
+
+		if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg)) {
+			pci_conf_write(pc, tag, off + PCI_MSI_MA,
+			    sc->sc_msi_ma);
+			if (reg & PCI_MSI_MC_C64) {
+				pci_conf_write(pc, tag, off + PCI_MSI_MAU32,
+				    sc->sc_msi_mau32);
+				pci_conf_write(pc, tag, off + PCI_MSI_MD64,
+				    sc->sc_msi_md);
+			} else {
+				pci_conf_write(pc, tag, off + PCI_MSI_MD32,
+				    sc->sc_msi_md);
+			}
+			pci_conf_write(pc, tag, off + PCI_MSI_MC,
+			    sc->sc_msi_mc);
+		}
 
 		/*
 		 * Restore command register last to avoid exposing
