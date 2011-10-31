@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.170 2011/10/30 23:04:38 mikeb Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.171 2011/10/31 22:02:52 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -347,6 +347,7 @@ pfsync_clone_destroy(struct ifnet *ifp)
 	struct pfsync_deferral *pd;
 	int s;
 
+	timeout_del(&sc->sc_bulkfail_tmo);
 	timeout_del(&sc->sc_bulk_tmo);
 	timeout_del(&sc->sc_tmo);
 #if NCARP > 0
