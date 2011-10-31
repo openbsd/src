@@ -1,5 +1,5 @@
-# $OpenBSD: asia,v 1.59 2011/09/26 13:48:01 millert Exp $
-# @(#)asia	8.68
+# $OpenBSD: asia,v 1.60 2011/10/31 12:33:22 millert Exp $
+# @(#)asia	8.69
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -2226,6 +2226,16 @@ Zone	Asia/Karachi	4:28:12 -	LMT	1907
 # </a>
 # The rules for Egypt are stolen from the `africa' file.
 
+# From Steffen Thorsen (2011-09-30):
+# West Bank did end Daylight Saving Time this morning/midnight (2011-09-30 
+# 00:00).
+# So West Bank and Gaza now have the same time again.
+#
+# Many sources, including:
+# <a href="http://www.maannews.net/eng/ViewDetails.aspx?ID=424808">
+# http://www.maannews.net/eng/ViewDetails.aspx?ID=424808
+# </a>
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule EgyptAsia	1957	only	-	May	10	0:00	1:00	S
 Rule EgyptAsia	1957	1958	-	Oct	 1	0:00	0	-
@@ -2270,7 +2280,7 @@ Zone	Asia/Hebron	2:20:23	-	LMT	1900 Oct
 			2:00 Palestine	EE%sT	2011 Apr  1 12:01
 			2:00	1:00	EEST	2011 Aug  1
 			2:00	-	EET	2011 Aug 30
-			2:00	1:00	EEST	2011 Oct  3 3:00
+			2:00	1:00	EEST	2011 Sep 30 3:00
 			2:00	-	EET
 
 # Paracel Is

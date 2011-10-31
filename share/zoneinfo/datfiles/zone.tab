@@ -1,6 +1,6 @@
-# $OpenBSD: zone.tab,v 1.41 2011/09/26 13:48:01 millert Exp $
+# $OpenBSD: zone.tab,v 1.42 2011/10/31 12:33:22 millert Exp $
 # <pre>
-# @(#)zone.tab	8.49
+# @(#)zone.tab	8.52
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 #

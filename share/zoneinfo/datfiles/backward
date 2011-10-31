@@ -1,6 +1,6 @@
-# $OpenBSD: backward,v 1.23 2010/08/04 18:08:13 millert Exp $
+# $OpenBSD: backward,v 1.24 2011/10/31 12:33:22 millert Exp $
 # <pre>
-# @(#)backward	8.9
+# @(#)backward	8.11
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
