@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.60 2011/07/09 00:45:40 henning Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.61 2011/11/01 00:00:01 mikeb Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ int	kread(u_long addr, void *buf, int size);
 char	*plural(u_int64_t);
 char	*plurales(u_int64_t);
 
-void	protopr(u_long, char *, int, u_long);
+void	protopr(u_long, char *, int, u_int, u_long);
 void	tcp_stats(char *);
 void	udp_stats(char *);
 void	ip_stats(char *);

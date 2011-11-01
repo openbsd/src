@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.118 2011/07/05 05:14:41 bluhm Exp $	*/
+/*	$OpenBSD: inet.c,v 1.119 2011/11/01 00:00:01 mikeb Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ void	tcpcb_dump(u_long);
  * -a (all) flag is specified.
  */
 void
-protopr(u_long off, char *name, int af, u_long pcbaddr)
+protopr(u_long off, char *name, int af, u_int tableid, u_long pcbaddr)
 {
 	struct inpcbtable table;
 	struct inpcb *head, *next, *prev;
@@ -168,6 +168,9 @@ protopr(u_long off, char *name, int af, u_long pcbaddr)
 			}
 			continue;
 		}
+
+		if (inpcb.inp_rtableid != tableid)
+			continue;
 
 		kread((u_long)inpcb.inp_socket, &sockb, sizeof (sockb));
 		if (istcp) {

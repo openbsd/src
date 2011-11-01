@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.89 2011/07/09 00:45:40 henning Exp $	*/
+/*	$OpenBSD: main.c,v 1.90 2011/11/01 00:00:01 mikeb Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -98,7 +98,7 @@ struct nlist nl[] = {
 
 struct protox {
 	u_char	pr_index;		/* index into nlist of cb head */
-	void	(*pr_cblocks)(u_long, char *, int, u_long);
+	void	(*pr_cblocks)(u_long, char *, int, u_int, u_long);
 					/* control blocks printing routine */
 	void	(*pr_stats)(char *);	/* statistics printing routine */
 	char	*pr_name;		/* well-known name */
@@ -136,7 +136,7 @@ struct protox *protoprotox[] = {
 	protox, ip6protox, NULL
 };
 
-static void printproto(struct protox *, char *, int, u_long);
+static void printproto(struct protox *, char *, int, u_int, u_long);
 static void usage(void);
 static struct protox *name2protox(char *);
 static struct protox *knownname(char *);
@@ -357,7 +357,7 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 	if (pflag) {
-		printproto(tp, tp->pr_name, af, pcbaddr);
+		printproto(tp, tp->pr_name, af, tableid, pcbaddr);
 		exit(0);
 	}
 	/*
@@ -409,17 +409,18 @@ main(int argc, char *argv[])
 					break;
 			if (tp->pr_name == 0)
 				continue;
-			printproto(tp, p->p_name, AF_INET, pcbaddr);
+			printproto(tp, p->p_name, AF_INET, tableid, pcbaddr);
 		}
 		endprotoent();
 	}
 	if (af == PF_PFLOW || af == AF_UNSPEC) {
 		tp = name2protox("pflow");
-		printproto(tp, tp->pr_name, af, pcbaddr);
+		printproto(tp, tp->pr_name, af, tableid, pcbaddr);
 	}
 	if (af == AF_INET6 || af == AF_UNSPEC)
 		for (tp = ip6protox; tp->pr_name; tp++)
-			printproto(tp, tp->pr_name, AF_INET6, pcbaddr);
+			printproto(tp, tp->pr_name, AF_INET6, tableid,
+			    pcbaddr);
 	if ((af == AF_UNIX || af == AF_UNSPEC) && !sflag)
 		unixpr(nl[N_UNIXSW].n_value, pcbaddr);
 	exit(0);
@@ -431,7 +432,8 @@ main(int argc, char *argv[])
  * is not in the namelist, ignore this one.
  */
 static void
-printproto(struct protox *tp, char *name, int af, u_long pcbaddr)
+printproto(struct protox *tp, char *name, int af, u_int tableid,
+    u_long pcbaddr)
 {
 	if (sflag) {
 		if (tp->pr_stats != NULL)
@@ -441,7 +443,8 @@ printproto(struct protox *tp, char *name, int af, u_long pcbaddr)
 		if (tp->pr_cblocks != NULL &&
 		    i < sizeof(nl) / sizeof(nl[0]) &&
 		    (nl[i].n_value || af != AF_UNSPEC))
-			(*tp->pr_cblocks)(nl[i].n_value, name, af, pcbaddr);
+			(*tp->pr_cblocks)(nl[i].n_value, name, af, tableid,
+			    pcbaddr);
 	}
 }
 
