@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.65 2011/09/28 18:36:01 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.66 2011/11/01 21:20:55 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -728,14 +728,7 @@ pmap_remove_flags(pmap, sva, eva, flags)
 {
 	vaddr_t nssva;
 	pt_entry_t *pte;
-#ifdef M68K_MMU_HP
-	boolean_t firstpage, needcflush;
-#endif
 
-#ifdef M68K_MMU_HP
-	firstpage = TRUE;
-	needcflush = FALSE;
-#endif
 	while (sva < eva) {
 		nssva = m68k_trunc_seg(sva) + NBSEG;
 		if (nssva == 0 || nssva > eva)
@@ -761,27 +754,6 @@ pmap_remove_flags(pmap, sva, eva, flags)
 				if ((flags & PRM_SKIPWIRED) &&
 				    pmap_pte_w(pte))
 					goto skip;
-#ifdef M68K_MMU_HP
-				if (pmap_aliasmask) {
-					/*
-					 * Purge kernel side of VAC to ensure
-					 * we get the correct state of any
-					 * hardware maintained bits.
-					 */
-					if (firstpage) {
-						DCIS();
-					}
-					/*
-					 * Remember if we may need to
-					 * flush the VAC due to a non-CI
-					 * mapping.
-					 */
-					if (!needcflush && !pmap_pte_ci(pte))
-						needcflush = TRUE;
-
-					firstpage = FALSE;
-				}
-#endif
 				pmap_remove_mapping(pmap, sva, pte, flags);
 skip:
 			}
@@ -789,32 +761,6 @@ skip:
 			sva += PAGE_SIZE;
 		}
 	}
-#ifdef M68K_MMU_HP
-	if (pmap_aliasmask) {
-		/*
-		 * Didn't do anything, no need for cache flushes
-		 */
-		if (firstpage)
-			return;
-		/*
-		 * In a couple of cases, we don't need to worry about flushing
-		 * the VAC:
-		 * 	1. if this is a kernel mapping,
-		 *	   we have already done it
-		 *	2. if it is a user mapping not for the current process,
-		 *	   it won't be there
-		 */
-		if (!active_user_pmap(pmap))
-			needcflush = FALSE;
-		if (needcflush) {
-			if (pmap == pmap_kernel()) {
-				DCIS();
-			} else {
-				DCIU();
-			}
-		}
-	}
-#endif
 }
 
 /*
@@ -873,9 +819,6 @@ pmap_protect(pmap, sva, eva, prot)
 	pt_entry_t *pte;
 	boolean_t needtflush;
 	int isro;
-#ifdef M68K_MMU_HP
-	boolean_t firstpage;
-#endif
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_PROTECT,
 	    ("pmap_protect(%p, %lx, %lx, %x)\n",
@@ -888,9 +831,6 @@ pmap_protect(pmap, sva, eva, prot)
 
 	isro = pte_prot(prot);
 	needtflush = active_pmap(pmap);
-#ifdef M68K_MMU_HP
-	firstpage = TRUE;
-#endif
 	while (sva < eva) {
 		nssva = m68k_trunc_seg(sva) + NBSEG;
 		if (nssva == 0 || nssva > eva)
@@ -910,18 +850,6 @@ pmap_protect(pmap, sva, eva, prot)
 		pte = pmap_pte(pmap, sva);
 		while (sva < nssva) {
 			if (pmap_pte_v(pte) && pmap_pte_prot_chg(pte, isro)) {
-#ifdef M68K_MMU_HP
-				/*
-				 * Purge kernel side of VAC to ensure we
-				 * get the correct state of any hardware
-				 * maintained bits.
-				 *
-				 * XXX do we need to clear the VAC in
-				 * general to reflect the new protection?
-				 */
-				if (firstpage && pmap_aliasmask)
-					DCIS();
-#endif
 #if defined(M68040) || defined(M68060)
 				/*
 				 * Clear caches if making RO (see section
@@ -937,9 +865,6 @@ pmap_protect(pmap, sva, eva, prot)
 				pmap_pte_set_prot(pte, isro);
 				if (needtflush)
 					TBIS(sva);
-#ifdef M68K_MMU_HP
-				firstpage = FALSE;
-#endif
 			}
 			pte++;
 			sva += PAGE_SIZE;
@@ -1001,9 +926,6 @@ pmap_enter_cache(pmap, va, pa, prot, flags, template)
 	int npte, error;
 	paddr_t opa;
 	boolean_t cacheable = TRUE;
-#ifdef M68K_MMU_HP
-	boolean_t checkpv = TRUE;
-#endif
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_ENTER,
@@ -1068,9 +990,6 @@ pmap_enter_cache(pmap, va, pa, prot, flags, template)
 		/*
 		 * Retain cache inhibition status
 		 */
-#ifdef M68K_MMU_HP
-		checkpv = FALSE;
-#endif
 		if (pmap_pte_ci(pte))
 			cacheable = FALSE;
 		goto validate;
@@ -1147,49 +1066,6 @@ pmap_enter_cache(pmap, va, pa, prot, flags, template)
 			npv->pv_ptpmap = NULL;
 			npv->pv_flags = 0;
 			pv->pv_next = npv;
-#ifdef M68K_MMU_HP
-			/*
-			 * Since there is another logical mapping for the
-			 * same page we may need to cache-inhibit the
-			 * descriptors on those CPUs with external VACs.
-			 * We don't need to CI if:
-			 *
-			 * - No two mappings belong to the same user pmaps.
-			 *   Since the cache is flushed on context switches
-			 *   there is no problem between user processes.
-			 *
-			 * - Mappings within a single pmap are a certain
-			 *   magic distance apart.  VAs at these appropriate
-			 *   boundaries map to the same cache entries or
-			 *   otherwise don't conflict.
-			 *
-			 * To keep it simple, we only check for these special
-			 * cases if there are only two mappings, otherwise we
-			 * punt and always CI.
-			 *
-			 * Note that there are no aliasing problems with the
-			 * on-chip data-cache when the WA bit is set.
-			 */
-			if (pmap_aliasmask) {
-				if (pv->pv_flags & PV_CI) {
-					PMAP_DPRINTF(PDB_CACHE,
-					    ("enter: pa %lx already CI'ed\n",
-					    pa));
-					checkpv = cacheable = FALSE;
-				} else if (npv->pv_next ||
-					   ((pmap == pv->pv_pmap ||
-					     pmap == pmap_kernel() ||
-					     pv->pv_pmap == pmap_kernel()) &&
-					    ((pv->pv_va & pmap_aliasmask) !=
-					     (va & pmap_aliasmask)))) {
-					PMAP_DPRINTF(PDB_CACHE,
-					    ("enter: pa %lx CI'ing all\n",
-					    pa));
-					cacheable = FALSE;
-					pv->pv_flags |= PV_CI;
-				}
-			}
-#endif
 		}
 
 		/*
@@ -1211,12 +1087,8 @@ pmap_enter_cache(pmap, va, pa, prot, flags, template)
 	 * Assumption: if it is not part of our managed memory
 	 * then it must be device memory which may be volatile.
 	 */
-	else {
-#ifdef M68K_MMU_HP
-		checkpv =
-#endif
+	else
 		cacheable = FALSE;
-	}
 
 	/*
 	 * Increment counters
@@ -1226,14 +1098,6 @@ pmap_enter_cache(pmap, va, pa, prot, flags, template)
 		pmap->pm_stats.wired_count++;
 
 validate:
-#ifdef M68K_MMU_HP
-	/*
-	 * Purge kernel side of VAC to ensure we get correct state
-	 * of HW bits so we don't clobber them.
-	 */
-	if (pmap_aliasmask)
-		DCIS();
-#endif
 	/*
 	 * Build the new PTE.
 	 */
@@ -1246,17 +1110,10 @@ validate:
 	if (mmutype <= MMU_68040 && pmap != pmap_kernel() &&
 	    (curproc->p_md.md_flags & MDP_UNCACHE_WX) &&
 	    (prot & VM_PROT_EXECUTE) && (prot & VM_PROT_WRITE))
-#ifdef M68K_MMU_HP
-		checkpv =
-#endif
 		cacheable = FALSE;
 #endif
 
-#ifdef M68K_MMU_HP
-	if (!checkpv && !cacheable)
-#else
 	if (!cacheable)
-#endif
 		npte |= PG_CI;
 	else
 		npte |= template;
@@ -1277,24 +1134,6 @@ validate:
 	*pte = npte;
 	if (!wired && active_pmap(pmap))
 		TBIS(va);
-#ifdef M68K_MMU_HP
-	/*
-	 * The following is executed if we are entering a second
-	 * (or greater) mapping for a physical page and the mappings
-	 * may create an aliasing problem.  In this case we must
-	 * cache inhibit the descriptors involved and flush any
-	 * external VAC.
-	 */
-	if (checkpv && !cacheable) {
-		pmap_changebit(pg, PG_CI, ~0);
-		DCIA();
-#ifdef PMAP_DEBUG
-		if ((pmapdebug & (PDB_CACHE|PDB_PVDUMP)) ==
-		    (PDB_CACHE|PDB_PVDUMP))
-			pmap_pvdump(pa);
-#endif
-	}
-#endif
 #ifdef PMAP_DEBUG
 	if ((pmapdebug & PDB_WIRING) && pmap != pmap_kernel())
 		pmap_check_wiring("enter", trunc_page((vaddr_t)pte));
@@ -1385,19 +1224,12 @@ pmap_kremove(va, len)
 	struct pmap *pmap = pmap_kernel();
 	vaddr_t sva, eva, nssva;
 	pt_entry_t *pte;
-#ifdef M68K_MMU_HP
-	boolean_t firstpage, needcflush;
-#endif
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
 	    ("pmap_kremove(%lx, %lx)\n", va, len));
 
 	sva = va;
 	eva = va + len;
-#ifdef M68K_MMU_HP
-	firstpage = TRUE;
-	needcflush = FALSE;
-#endif
 	while (sva < eva) {
 		nssva = m68k_trunc_seg(sva) + NBSEG;
 		if (nssva == 0 || nssva > eva)
@@ -1436,28 +1268,6 @@ pmap_kremove(va, len)
 				}
 				splx(s);
 #endif
-#ifdef M68K_MMU_HP
-				if (pmap_aliasmask) {
-
-					/*
-					 * Purge kernel side of VAC to ensure
-					 * we get the correct state of any
-					 * hardware maintained bits.
-					 */
-
-					if (firstpage) {
-						DCIS();
-					}
-
-					/*
-					 * Remember if we may need to
-					 * flush the VAC.
-					 */
-
-					needcflush = TRUE;
-					firstpage = FALSE;
-				}
-#endif
 				/*
 				 * Update statistics
 				 */
@@ -1476,36 +1286,6 @@ pmap_kremove(va, len)
 			sva += PAGE_SIZE;
 		}
 	}
-
-#ifdef M68K_MMU_HP
-	if (pmap_aliasmask) {
-		/*
-		 * Didn't do anything, no need for cache flushes
-		 */
-
-		if (firstpage)
-			return;
-
-		/*
-		 * In a couple of cases, we don't need to worry about flushing
-		 * the VAC:
-		 *      1. if this is a kernel mapping,
-		 *         we have already done it
-		 *      2. if it is a user mapping not for the current process,
-		 *         it won't be there
-		 */
-
-		if (!active_user_pmap(pmap))
-			needcflush = FALSE;
-		if (needcflush) {
-			if (pmap == pmap_kernel()) {
-				DCIS();
-			} else {
-				DCIU();
-			}
-		}
-	}
-#endif
 }
 
 /*
@@ -1777,15 +1557,6 @@ pmap_zero_page(struct vm_page *pg)
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_zero_page(%lx)\n", phys));
 
 	npte = phys | PG_V;
-#ifdef M68K_MMU_HP
-	if (pmap_aliasmask) {
-		/*
-		 * Cache-inhibit the mapping on VAC machines, as we would
-		 * be wasting the cache load.
-		 */
-		npte |= PG_CI;
-	}
-#endif
 
 #if defined(M68040) || defined(M68060)
 	if (mmutype <= MMU_68040) {
@@ -1836,16 +1607,6 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 
 	npte1 = src | PG_RO | PG_V;
 	npte2 = dst | PG_V;
-#ifdef M68K_MMU_HP
-	if (pmap_aliasmask) {
-		/*
-		 * Cache-inhibit the mapping on VAC machines, as we would
-		 * be wasting the cache load.
-		 */
-		npte1 |= PG_CI;
-		npte2 |= PG_CI;
-	}
-#endif
 
 #if defined(M68040) || defined(M68060)
 	if (mmutype <= MMU_68040) {
@@ -1953,31 +1714,6 @@ pmap_is_modified(pg)
 	return(pmap_testbit(pg, PG_M));
 }
 
-#ifdef M68K_MMU_HP
-/*
- * pmap_prefer:			[ INTERFACE ]
- *
- *	Find the first virtual address >= *vap that does not
- *	cause a virtually-tagged cache alias problem.
- */
-vaddr_t
-pmap_prefer(vaddr_t foff, vaddr_t va)
-{
-	vsize_t d;
-
-#ifdef M68K_MMU_MOTOROLA
-	if (pmap_aliasmask)
-#endif
-	{
-		d = foff - va;
-		d &= pmap_aliasmask;
-		va += d;
-	}
-
-	return va;
-}
-#endif /* M68K_MMU_HP */
-
 /*
  * Miscellaneous support routines follow
  */
@@ -2027,27 +1763,6 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		if (*pte == PG_NV)
 			return;
 	}
-#ifdef M68K_MMU_HP
-	if (pmap_aliasmask && (flags & PRM_CFLUSH)) {
-
-		/*
-		 * Purge kernel side of VAC to ensure we get the correct
-		 * state of any hardware maintained bits.
-		 */
-
-		DCIS();
-
-		/*
-		 * If this is a non-CI user mapping for the current process,
-		 * flush the VAC.  Note that the kernel side was flushed
-		 * above so we don't worry about non-CI kernel mappings.
-		 */
-
-		if (active_user_pmap(pmap) && !pmap_pte_ci(pte)) {
-			DCIU();
-		}
-	}
-#endif
 	pa = pmap_pte_pa(pte);
 #ifdef PMAP_DEBUG
 	opte = *pte;
@@ -2174,25 +1889,6 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		prev->pv_next = cur->pv_next;
 		pmap_free_pv(cur);
 	}
-#ifdef M68K_MMU_HP
-
-	/*
-	 * If only one mapping left we no longer need to cache inhibit
-	 */
-
-	if (pmap_aliasmask &&
-	    pv->pv_pmap && pv->pv_next == NULL && (pv->pv_flags & PV_CI)) {
-		PMAP_DPRINTF(PDB_CACHE,
-		    ("remove: clearing CI for pa %lx\n", pa));
-		pv->pv_flags &= ~PV_CI;
-		pmap_changebit(pg, 0, ~PG_CI);
-#ifdef PMAP_DEBUG
-		if ((pmapdebug & (PDB_CACHE|PDB_PVDUMP)) ==
-		    (PDB_CACHE|PDB_PVDUMP))
-			pmap_pvdump(pa);
-#endif
-	}
-#endif
 
 	/*
 	 * If this was a PT page we must also remove the
@@ -2312,13 +2008,6 @@ pmap_testbit(pg, bit)
 		splx(s);
 		return(TRUE);
 	}
-#ifdef M68K_MMU_HP
-	/*
-	 * Flush VAC to get correct state of any hardware maintained bits.
-	 */
-	if (pmap_aliasmask && (bit & (PG_U|PG_M)))
-		DCIS();
-#endif
 	/*
 	 * Not found.  Check current mappings, returning immediately if
 	 * found.  Cache a hit to speed future lookups.
@@ -2355,7 +2044,7 @@ pmap_changebit(pg, set, mask)
 #if defined(M68040) || defined(M68060)
 	paddr_t pa;
 #endif
-#if defined(M68K_MMU_HP) || defined(M68040) || defined(M68060)
+#if defined(M68040) || defined(M68060)
 	boolean_t firstpage = TRUE;
 #endif
 
@@ -2386,16 +2075,6 @@ pmap_changebit(pg, set, mask)
 #endif
 			va = pv->pv_va;
 			pte = pmap_pte(pv->pv_pmap, va);
-#ifdef M68K_MMU_HP
-			/*
-			 * Flush VAC to ensure we get correct state of HW bits
-			 * so we don't clobber them.
-			 */
-			if (firstpage && pmap_aliasmask) {
-				firstpage = FALSE;
-				DCIS();
-			}
-#endif
 			npte = (*pte | set) & mask;
 			if (*pte != npte) {
 #if defined(M68040) || defined(M68060)

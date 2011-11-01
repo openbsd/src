@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.34 2011/03/23 16:54:36 pirofti Exp $ */
+/*	$OpenBSD: cpu.h,v 1.35 2011/11/01 21:20:55 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -71,7 +71,6 @@
 /*
  * Get common m68k CPU definiti÷ns.
  */
-#define M68K_MMU_MOTOROLA
 #include <m68k/cpu.h>
 
 #ifdef _KERNEL

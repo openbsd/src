@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.134 2011/09/20 09:49:38 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.135 2011/11/01 21:20:55 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -403,9 +403,6 @@ identifycpu()
 		break;
 	case MMU_68851:
 		strlcat(cpu_model, ", MC68851 MMU", sizeof cpu_model);
-		break;
-	case MMU_HP:
-		strlcat(cpu_model, ", HP MMU", sizeof cpu_model);
 		break;
 	default:
 		printf("%s\nunknown MMU type %d\n", cpu_model, mmutype);

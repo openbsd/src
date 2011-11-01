@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hp300,v 1.76 2011/07/07 22:28:18 guenther Exp $
+#	$OpenBSD: Makefile.hp300,v 1.77 2011/11/01 21:20:52 miod Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -47,26 +47,21 @@ DB_STRUCTINFO=	db_structinfo.h
 DB_STRUCTINFO=
 .endif
 
-.if (${IDENT:M-DHP320} != "" || ${IDENT:M-DHP350} != "")
-_OPTIONS+=	-DM68020 -DM68K_MMU_HP
-CPPFLAGS+=	-DCACHE_HAVE_VAC
-.endif
 .if (${IDENT:M-DHP330} != "")
-_OPTIONS+=	-DM68020 -DM68K_MMU_MOTOROLA
+_OPTIONS+=	-DM68020
 .endif
 .if (${IDENT:M-DHP340} != "" || ${IDENT:M-DHP360} != "" || \
      ${IDENT:M-DHP362} != "")
-_OPTIONS+=	-DM68030 -DM68K_MMU_MOTOROLA
+_OPTIONS+=	-DM68030
 .endif
 .if (${IDENT:M-DHP345} != "" || ${IDENT:M-DHP370} != "" || \
      ${IDENT:M-DHP375} != "" || ${IDENT:M-DHP400} != "")
-_OPTIONS+=	-DM68030 -DM68K_MMU_MOTOROLA
+_OPTIONS+=	-DM68030
 CPPFLAGS+=	-DCACHE_HAVE_PAC
 .endif
 .if (${IDENT:M-DHP380} != "" || ${IDENT:M-DHP382} != "" || \
      ${IDENT:M-DHP385} != "" || ${IDENT:M-DHP425} != "" || \
      ${IDENT:M-DHP433} != "")
-_OPTIONS+=	-DM68K_MMU_MOTOROLA
 CPPFLAGS+=	-DM68040 -DFPSP
 .endif
 .if ${_OPTIONS:M-DM68020} != ""
@@ -74,12 +69,6 @@ CPPFLAGS+=	-DM68020
 .endif
 .if ${_OPTIONS:M-DM68030} != ""
 CPPFLAGS+=	-DM68030
-.endif
-.if ${_OPTIONS:M-DM68K_MMU_HP} != ""
-CPPFLAGS+=	-DM68K_MMU_HP
-.endif
-.if ${_OPTIONS:M-DM68K_MMU_MOTOROLA} != ""
-CPPFLAGS+=	-DM68K_MMU_MOTOROLA
 .endif
 
 .include "${_archdir}/fpsp/Makefile.inc"

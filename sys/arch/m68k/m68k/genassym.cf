@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.13 2007/10/10 15:53:52 art Exp $
+#	$OpenBSD: genassym.cf,v 1.14 2011/11/01 21:20:55 miod Exp $
 
 #
 # Copyright (c) 1995 Theo de Raadt
@@ -114,7 +114,6 @@ export	EFAULT
 export	ENAMETOOLONG
 
 # MMU types
-export	MMU_HP
 export	MMU_68851
 export	MMU_68030
 export	MMU_68040

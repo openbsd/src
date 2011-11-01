@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.66 2011/08/18 19:54:18 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.67 2011/11/01 21:20:55 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -306,31 +306,11 @@ Lis68020:
 	movl	#1,a1@(MMUCMD)		| a 68020, write HP MMU location
 	movl	a1@(MMUCMD),d0		| read it back
 	btst	#0,d0			| non-zero?
-	jne	Lishpmmu		| yes, we have HP MMU
+	jne	Lunsupp			| yes, we have HP MMU
 	RELOC(mmutype, a0)
 	movl	#MMU_68851,a0@		| no, we have PMMU
 	RELOC(machineid, a0)
 	movl	#HP_330,a0@		| and 330 CPU
-	jra	Lstart1
-Lishpmmu:
-	RELOC(ectype, a0)		| 320 or 350
-	movl	#EC_VIRT,a0@		| both have a virtual address cache
-	movl	#0x80,a1@(MMUCMD)	| set magic cookie
-	movl	a1@(MMUCMD),d0		| read it back
-	btst	#7,d0			| cookie still on?
-	jeq	Lis320			| no, just a 320
-	RELOC(machineid, a0)
-	movl	#HP_350,a0@		| yes, a 350
-	movl	#0,a1@(MMUCMD)		| clear out MMU again
-	RELOC(pmap_aliasmask, a0)
-	movl	#0x7fff, a0@		| 32KB
-	jra	Lstart1
-Lis320:
-	RELOC(machineid, a0)
-	movl	#HP_320,a0@
-	movl	#0,a1@(MMUCMD)		| clear out MMU again
-	RELOC(pmap_aliasmask, a0)
-	movl	#0x3fff, a0@		| 16KB
 	jra	Lstart1
 
 	/*
@@ -463,6 +443,7 @@ eiodone:
 	jra	Lstart2
 1:
 #endif
+Lunsupp:
 	/* Config botch; no hope. */
 	DOREBOOT
 
@@ -532,8 +513,6 @@ Lmmu_enable:
 	movl	a0@,d1			| read value (a KVA)
 	addl	a5,d1			| convert to PA
 	RELOC(mmutype, a0)
-	tstl	a0@			| HP MMU?
-	jeq	Lhpmmu2			| yes, skip
 	cmpl	#MMU_68040,a0@		| 68040?
 	jne	Lmotommu1		| no, skip
 	.long	0x4e7b1807		| movc d1,srp
@@ -544,11 +523,7 @@ Lmotommu1:
 	movl	d1,a0@(4)		| + segtable address
 	pmove	a0@,srp			| load the supervisor root pointer
 	movl	#0x80000002,a0@		| reinit upper half for CRP loads
-	jra	Lstploaddone		| done
-Lhpmmu2:
-	moveq	#PGSHIFT,d2
-	lsrl	d2,d1			| convert to page frame
-	movl	d1,INTIOBASE+MMUBASE+MMUSSTP | load in sysseg table register
+
 Lstploaddone:
 	lea	MAXADDR,a2		| PA of last RAM page
 	ASRELOC(Lhighcode, a1)		| addr of high code
@@ -574,8 +549,6 @@ Lhighcode:
 	movc	d0,vbr
 
 	RELOC(mmutype, a0)
-	tstl	a0@			| HP MMU?
-	jeq	Lhpmmu3			| yes, skip
 	cmpl	#MMU_68040,a0@		| 68040?
 	jne	Lmotommu2		| no, skip
 	movw	#0,INTIOBASE+MMUBASE+MMUCMD+2
@@ -620,10 +593,6 @@ Lmotommu2b:
 	movl	#0x82c0aa00,a2@		| value to load TC with
 	pmove	a2@,tc			| load it
 	jmp	Lenab1
-Lhpmmu3:
-	movl	#0,INTIOBASE+MMUBASE+MMUCMD	| clear external cache
-	movl	#MMU_ENAB,INTIOBASE+MMUBASE+MMUCMD | turn on MMU
-	jmp	Lenab1				| jmp to mapped code
 Lehighcode:
 
 	/*
@@ -836,11 +805,6 @@ Lbe10:
 	andw	#0x0FFF,d0		| clear out frame format
 	cmpw	#12,d0			| address error vector?
 	jeq	Lisaerr			| yes, go to it
-#if defined(M68K_MMU_MOTOROLA)
-#if defined(M68K_MMU_HP)
-	tstl	_C_LABEL(mmutype)	| HP MMU?
-	jeq	Lbehpmmu		| yes, different MMU fault handler
-#endif
 	movl	d1,a0			| fault address
 	movl	sp@,d0			| function code from ssw
 	btst	#8,d0			| data fault?
@@ -858,11 +822,9 @@ Lbe10a:
 	jeq	Lmightnotbemerr		| no -> wp check
 	btst	#7,d1			| is it MMU table berr?
 	jne	Lisberr1		| yes, needs not be fast.
-#endif /* M68K_MMU_MOTOROLA */
 Lismerr:
 	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
-#if defined(M68K_MMU_MOTOROLA)
 Lmightnotbemerr:
 	btst	#3,d1			| write protect bit set?
 	jeq	Lisberr1		| no: must be bus error
@@ -871,17 +833,6 @@ Lmightnotbemerr:
 	cmpw	#0x40,d0		| was it read cycle?
 	jne	Lismerr			| no, was not WPE, must be MMU fault
 	jra	Lisberr1		| real bus err needs not be fast.
-#endif /* M68K_MMU_MOTOROLA */
-#if defined(M68K_MMU_HP)
-Lbehpmmu:
-	MMUADDR(a0)
-	movl	a0@(MMUSTAT),d0		| read MMU status
-	btst	#3,d0			| MMU fault?
-	jeq	Lisberr1		| no, just a non-MMU bus error
-	andl	#~MMU_FAULT,a0@(MMUSTAT)| yes, clear fault bits
-	movw	d0,sp@			| pass MMU stat in upper half of code
-	jra	Lismerr			| and handle it
-#endif
 Lisaerr:
 	movl	#T_ADDRERR,sp@-		| mark address error
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
@@ -1492,22 +1443,11 @@ ASENTRY_NOPROFILE(TBIA)
 	rts
 Lmotommu3:
 #endif
-#if defined(M68K_MMU_MOTOROLA)
-	tstl	_C_LABEL(mmutype)	| HP MMU?
-	jeq	Lhpmmu6			| yes, skip
 	pflusha				| flush entire TLB
 	jpl	Lmc68851a		| 68851 implies no d-cache
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
 Lmc68851a:
-	rts
-Lhpmmu6:
-#endif
-#if defined(M68K_MMU_HP)
-	MMUADDR(a0)
-	movl	a0@(MMUTBINVAL),sp@-	| do not ask me, this
-	addql	#4,sp			|   is how HP-UX does it
-#endif
 	rts
 
 /*
@@ -1529,9 +1469,6 @@ ENTRY(TBIS)
 	rts
 Lmotommu4:
 #endif
-#if defined(M68K_MMU_MOTOROLA)
-	tstl	_C_LABEL(mmutype)	| HP MMU?
-	jeq	Lhpmmu5			| yes, skip
 	movl	sp@(4),a0		| get addr to flush
 	jpl	Lmc68851b		| is 68851?
 	pflush	#0,#0,a0@		| flush address from both sides
@@ -1540,23 +1477,6 @@ Lmotommu4:
 	rts
 Lmc68851b:
 	pflushs	#0,#0,a0@		| flush address from both sides
-	rts
-Lhpmmu5:
-#endif
-#if defined(M68K_MMU_HP)
-	movl	sp@(4),d0		| VA to invalidate
-	bclr	#0,d0			| ensure even
-	movl	d0,a0
-	movw	sr,d1			| go critical
-	movw	#PSL_HIGHIPL,sr		|   while in purge space
-	moveq	#FC_PURGE,d0		| change address space
-	movc	d0,dfc			|   for destination
-	moveq	#0,d0			| zero to invalidate?
-	movsl	d0,a0@			| hit it
-	moveq	#FC_USERD,d0		| back to old
-	movc	d0,dfc			|   address space
-	movw	d1,sr			| restore IPL
-#endif
 	rts
 
 /*
@@ -1590,14 +1510,6 @@ ENTRY(DCIA)
 	rts
 Lmotommu8:
 #endif
-#if defined(M68K_MMU_HP)
-	tstl	_C_LABEL(ectype)	| got external VAC?
-	jle	Lnocache2		| no, all done
-	MMUADDR(a0)
-	andl	#~MMU_CEN,a0@(MMUCMD)	| disable cache in MMU control reg
-	orl	#MMU_CEN,a0@(MMUCMD)	| reenable cache in MMU control reg
-Lnocache2:
-#endif
 	rts
 
 ENTRY(DCIS)
@@ -1608,14 +1520,6 @@ ENTRY(DCIS)
 	rts
 Lmotommu9:
 #endif
-#if defined(M68K_MMU_HP)
-	tstl	_C_LABEL(ectype)	| got external VAC?
-	jle	Lnocache3		| no, all done
-	MMUADDR(a0)
-	movl	a0@(MMUSSTP),d0		| read the supervisor STP
-	movl	d0,a0@(MMUSSTP)		| write it back
-Lnocache3:
-#endif
 	rts
 
 ENTRY(DCIU)
@@ -1625,14 +1529,6 @@ ENTRY(DCIU)
 	.word	0xf478			| cpusha dc
 	rts
 LmotommuA:
-#endif
-#if defined(M68K_MMU_HP)
-	tstl	_C_LABEL(ectype)	| got external VAC?
-	jle	Lnocache4		| no, all done
-	MMUADDR(a0)
-	movl	a0@(MMUUSTP),d0		| read the user STP
-	movl	d0,a0@(MMUUSTP)		| write it back
-Lnocache4:
 #endif
 	rts
 
@@ -1720,9 +1616,6 @@ ENTRY_NOPROFILE(getdfc)
  * Load a new user segment table pointer.
  */
 ENTRY(loadustp)
-#if defined(M68K_MMU_MOTOROLA)
-	tstl	_C_LABEL(mmutype)	| HP MMU?
-	jeq	Lhpmmu9			| yes, skip
 	movl	sp@(4),d0		| new USTP
 	moveq	#PGSHIFT,d1
 	lsll	d1,d0			| convert to addr
@@ -1740,21 +1633,6 @@ LmotommuC:
 	pmove	a0@,crp			| load root pointer
 	movl	#CACHE_CLR,d0
 	movc	d0,cacr			| invalidate cache(s)
-	rts
-Lhpmmu9:
-#endif
-#if defined(M68K_MMU_HP)
-	movl	#CACHE_CLR,d0
-	movc	d0,cacr			| invalidate cache(s)
-	MMUADDR(a0)
-	movl	a0@(MMUTBINVAL),d1	| invalid TLB
-	tstl	_C_LABEL(ectype)	| have external VAC?
-	jle	1f
-	andl	#~MMU_CEN,a0@(MMUCMD)	| toggle cache enable
-	orl	#MMU_CEN,a0@(MMUCMD)	| to clear data cache
-1:
-	movl	sp@(4),a0@(MMUUSTP)	| load a new USTP
-#endif
 	rts
 
 /*
@@ -1912,20 +1790,9 @@ Lbootcode:
 	DOREBOOT
 LmotommuF:
 #endif
-#if defined(M68K_MMU_MOTOROLA)
-	tstl	_C_LABEL(mmutype)	| HP MMU?
-	jeq	LhpmmuB			| yes, skip
 	movl	#0,a0@			| value for pmove to TC (turn off MMU)
 	pmove	a0@,tc			| disable MMU
 	DOREBOOT
-LhpmmuB:
-#endif
-#if defined(M68K_MMU_HP)
-	MMUADDR(a0)
-	movl	#0xFFFF0000,a0@(MMUCMD)	| totally disable MMU
-	movl	d2,MAXADDR+NBPG-4	| restore old high page contents
-	DOREBOOT
-#endif
 Lebootcode:
 
 /*
@@ -1933,13 +1800,13 @@ Lebootcode:
  */
 	.data
 GLOBAL(machineid)
-	.long	HP_320		| default to 320
+	.long	-1		| default to unknown
 
 GLOBAL(mmuid)
 	.long	0		| default to nothing
 
 GLOBAL(mmutype)
-	.long	MMU_HP		| default to HP MMU
+	.long	0		| default to unknown
 
 GLOBAL(cputype)
 	.long	CPU_68020	| default to 68020 CPU
@@ -1949,9 +1816,6 @@ GLOBAL(ectype)
 
 GLOBAL(fputype)
 	.long	FPU_68882	| default to 68882 FPU
-
-GLOBAL(pmap_aliasmask)
-	.long	0
 
 ASLOCAL(protorp)
 	.long	0,0		| prototype root pointer

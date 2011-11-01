@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_memrw.c,v 1.10 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.11 2011/11/01 21:20:55 miod Exp $	*/
 /*	$NetBSD: db_memrw.c,v 1.5 1997/06/10 18:48:47 veego Exp $	*/
 
 /*-
@@ -134,17 +134,6 @@ db_write_text(addr, size, data)
 		if (limit > size)
 			limit = size;
 		size -= limit;
-
-#ifdef M68K_MMU_HP
-		/*
-		 * Flush the supervisor side of the VAC to
-		 * prevent a cache hit on the old, read-only PTE.
-		 * XXX Is this really necessary, or am I just
-		 * paranoid?
-		 */
-		if (ectype == EC_VIRT)
-			DCIS();
-#endif
 
 		/*
 		 * Make the page writable.  Note the mapping is
