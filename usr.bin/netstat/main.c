@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.91 2011/11/01 10:14:06 mikeb Exp $	*/
+/*	$OpenBSD: main.c,v 1.92 2011/11/01 17:30:04 mikeb Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -380,7 +380,7 @@ main(int argc, char *argv[])
 			    nl[N_AF2RTAFIDX].n_value, nl[N_RTBLIDMAX].n_value,
 			    tableid);
 		else
-			p_rttables(af, tableid, Tflag);
+			p_rttables(af, tableid);
 		exit(0);
 	}
 	if (gflag) {

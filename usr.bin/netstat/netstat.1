@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.66 2011/09/03 22:59:07 jmc Exp $
+.\"	$OpenBSD: netstat.1,v 1.67 2011/11/01 17:30:04 mikeb Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)netstat.1	8.8 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: September 3 2011 $
+.Dd $Mdocdate: November 1 2011 $
 .Dt NETSTAT 1
 .Os
 .Sh NAME
@@ -272,8 +272,8 @@ option, also print routing labels.
 Show per-protocol statistics.
 If this option is repeated, counters with a value of zero are suppressed.
 .It Fl T Ar tableid
-Select an alternate routing table to modify or query.
-Table 0 is the default table.
+Select an alternate routing table to query.
+The default is to use the current routing table.
 .It Fl t
 With the
 .Fl i

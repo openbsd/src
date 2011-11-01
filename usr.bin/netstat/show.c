@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.34 2010/10/11 12:33:36 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.35 2011/11/01 17:30:04 mikeb Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -116,7 +116,7 @@ void	 index_pfk(struct sadb_msg *, void **);
  * Print routing tables.
  */
 void
-p_rttables(int af, u_int tableid, int hastable)
+p_rttables(int af, u_int tableid)
 {
 	struct rt_msghdr *rtm;
 	struct sadb_msg *msg;
@@ -131,11 +131,8 @@ p_rttables(int af, u_int tableid, int hastable)
 	mib[3] = af;
 	mib[4] = NET_RT_DUMP;
 	mib[5] = 0;
-	if (hastable) {
-		mib[6] = tableid;
-		mcnt = 7;
-	} else
-		mcnt = 6;
+	mib[6] = tableid;
+	mcnt = 7;
 
 	if (sysctl(mib, mcnt, NULL, &needed, NULL, 0) < 0)
 		err(1, "route-sysctl-estimate");
