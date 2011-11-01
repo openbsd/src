@@ -246,7 +246,10 @@ CODE:
 	       This prevents allocating too much in the rogue case of a large
 	       input consisting initially of long sequence uft8-byte unicode
 	       chars followed by single utf8-byte chars. */
-	    STRLEN remaining = (e - s)/usize;
+	    /* +1 
+               fixes  Unicode.xs!decode_xs n-byte heap-overflow
+              */
+	    STRLEN remaining = (e - s)/usize + 1; /* +1 to avoid the leak */
 	    STRLEN max_alloc = remaining + (8*1024*1024);
 	    STRLEN est_alloc = remaining * UTF8_MAXLEN;
 	    STRLEN newlen = SvLEN(result) + /* min(max_alloc, est_alloc) */
