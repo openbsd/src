@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.90 2011/11/01 00:00:01 mikeb Exp $	*/
+/*	$OpenBSD: main.c,v 1.91 2011/11/01 10:14:06 mikeb Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -158,11 +158,12 @@ main(int argc, char *argv[])
 	char buf[_POSIX2_LINE_MAX];
 	gid_t gid;
 	u_long pcbaddr = 0;
-	u_int tableid = 0;
+	u_int tableid;
 	int Tflag = 0;
 	int repeatcount = 0;
 
 	af = AF_UNSPEC;
+	tableid = getrtable();
 
 	while ((ch = getopt(argc, argv,
 	    "AaBbc:dFf:gI:ilM:mN:np:P:qrsT:tuvW:w:")) != -1)
