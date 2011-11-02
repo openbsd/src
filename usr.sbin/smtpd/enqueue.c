@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.47 2011/08/29 21:43:08 chl Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.48 2011/11/02 12:01:20 eric Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -36,7 +36,6 @@
 #include <unistd.h>
 
 #include "smtpd.h"
-#include "client.h"
 
 extern struct imsgbuf	*ibuf;
 
@@ -49,7 +48,7 @@ static void parse_addr_terminal(int);
 static char *qualify_addr(char *);
 static void rcpt_add(char *);
 static int open_connection(void);
-static void enqueue_event(int, short, void *);
+static void get_responses(FILE *, int);
 
 enum headerfields {
 	HDR_NONE,
@@ -91,14 +90,9 @@ struct {
 	char	 *fromname;
 	char	**rcpts;
 	int	  rcpt_cnt;
-	char	 *data;
-	size_t	  len;
 	int	  saw_date;
 	int	  saw_msgid;
 	int	  saw_from;
-
-	struct smtp_client	*pcb;
-	struct event		 ev;
 } msg;
 
 struct {
@@ -123,9 +117,10 @@ int
 enqueue(int argc, char *argv[])
 {
 	int			 i, ch, tflag = 0, noheader;
-	char			*fake_from = NULL;
+	char			*fake_from = NULL, *buf;
 	struct passwd		*pw;
-	FILE			*fp;
+	FILE			*fp, *fout;
+	size_t			 len;
 
 	bzero(&msg, sizeof(msg));
 	time(&timestamp);
@@ -192,89 +187,123 @@ enqueue(int argc, char *argv[])
 		err(1, "tmpfile");
 	noheader = parse_message(stdin, fake_from == NULL, tflag, fp);
 
-	if ((msg.fd = open_connection()) == -1)
-		errx(1, "server too busy");
+	if (msg.rcpt_cnt == 0)
+		errx(1, "no recipients");
 
 	/* init session */
 	rewind(fp);
-	msg.pcb = client_init(msg.fd, fp, "localhost", verbose);
 
-	/* set envelope from */
-	client_sender(msg.pcb, "%s", msg.from);
+	if ((msg.fd = open_connection()) == -1)
+		errx(1, "server too busy");
 
-	/* add recipients */
-	if (msg.rcpt_cnt == 0)
-		errx(1, "no recipients");
-	for (i = 0; i < msg.rcpt_cnt; i++)
-		client_rcpt(msg.pcb, "%s", msg.rcpts[i]);
+	fout = fdopen(msg.fd, "a+");
+	if (fout == NULL)
+		err(1, "fdopen");
+
+	/* 
+	 * We need to call get_responses after every command because we don't
+	 * support PIPELINING on the server-side yet.
+	 */
+
+	/* banner */
+	get_responses(fout, 1);
+
+	fprintf(fout, "EHLO localhost\n");
+	get_responses(fout, 1);
+
+	fprintf(fout, "MAIL FROM: <%s>\n", msg.from);
+	get_responses(fout, 1);
+
+	for (i = 0; i < msg.rcpt_cnt; i++) {
+		fprintf(fout, "RCPT TO: <%s>\n", msg.rcpts[i]);
+		get_responses(fout, 1);
+	}
+
+	fprintf(fout, "DATA\n");
+	get_responses(fout, 1);
 
 	/* add From */
 	if (!msg.saw_from)
-		client_printf(msg.pcb, "From: %s%s<%s>\n",
+		fprintf(fout, "From: %s%s<%s>\n",
 		    msg.fromname ? msg.fromname : "",
 		    msg.fromname ? " " : "", 
 		    msg.from);
 
 	/* add Date */
 	if (!msg.saw_date)
-		client_printf(msg.pcb, "Date: %s\n", time_to_text(timestamp));
+		fprintf(fout, "Date: %s\n", time_to_text(timestamp));
 
 	/* add Message-Id */
 	if (!msg.saw_msgid)
-		client_printf(msg.pcb, "Message-Id: <%llu.enqueue@%s>\n",
+		fprintf(fout, "Message-Id: <%llu.enqueue@%s>\n",
 		    generate_uid(), host);
 
 	/* add separating newline */
 	if (noheader)
-		client_printf(msg.pcb, "\n");
+		fprintf(fout, "\n");
 
-	alarm(0);
-	event_init();
-	session_socket_blockmode(msg.fd, BM_NONBLOCK);
-	event_set(&msg.ev, msg.fd, EV_READ|EV_WRITE, enqueue_event, NULL);
-	event_add(&msg.ev, &msg.pcb->timeout);
+	for (;;) {
+		buf = fgetln(fp, &len);
+		if (buf == NULL && ferror(fp))
+			err(1, "fgetln");
+		if (buf == NULL && feof(fp))
+			break;
+		/* newlines have been normalized on first parsing */
+		if (buf[len-1] != '\n')
+			errx(1, "expect EOL");
 
-	if (event_dispatch() < 0)
-		err(1, "event_dispatch");
+		if (len == 2 && buf[0] == '.')
+			fputc('.', fout);
+		fprintf(fout, "%.*s", (int)len, buf);
+	}
+	fprintf(fout, ".\n");
+	get_responses(fout, 1);	
 
-	client_close(msg.pcb);
+	fprintf(fout, "QUIT\n");
+	get_responses(fout, 1);	
+
 	fclose(fp);
+	fclose(fout);
+
 	exit(0);
 }
 
 static void
-enqueue_event(int fd, short event, void *p)
+get_responses(FILE *fin, int n)
 {
-	if (event & EV_TIMEOUT)
-		errx(1, "timeout");
+	char	*buf;
+	size_t	 len;
+	int	 e;
 
-	switch (client_talk(msg.pcb, event & EV_WRITE)) {
-	case CLIENT_WANT_WRITE:
-		goto rw;
-	case CLIENT_STOP_WRITE:
-		goto ro;
-	case CLIENT_RCPT_FAIL:
-		errx(1, "%s", msg.pcb->reply);
-	case CLIENT_DONE:
-		break;
-	default:
-		errx(1, "enqueue_event: unexpected code");
+	fflush(fin);
+	if ((e = ferror(fin)))
+		errx(1, "ferror: %i", e);
+
+	while(n) {
+		buf = fgetln(fin, &len);
+		if (buf == NULL && ferror(fin))
+			err(1, "fgetln");
+		if (buf == NULL && feof(fin))
+			break;
+		if (buf == NULL || len < 1)
+			err(1, "fgetln weird");
+
+		/* account for \r\n linebreaks */
+		if (len >= 2 && buf[len - 2] == '\r' && buf[len - 1] == '\n')
+			buf[--len - 1] = '\n';
+
+		if (len < 4)
+			errx(1, "bad response");
+
+		if (verbose)
+			printf(">>> %.*s", (int)len, buf);
+
+		if (buf[3] == '-')
+			continue;
+		if (buf[0] != '2' && buf[0] != '3')
+			errx(1, "command failed: %.*s", (int)len, buf);
+		n--;
 	}
-
-	if (msg.pcb->status[0] != '2')
-		errx(1, "%s", msg.pcb->status);
-
-	event_loopexit(NULL);
-	return;
-
-ro:
-	event_set(&msg.ev, msg.fd, EV_READ, enqueue_event, NULL);
-	event_add(&msg.ev, &msg.pcb->timeout);
-	return;
-
-rw:
-	event_set(&msg.ev, msg.fd, EV_READ|EV_WRITE, enqueue_event, NULL);
-	event_add(&msg.ev, &msg.pcb->timeout);
 }
 
 static void
