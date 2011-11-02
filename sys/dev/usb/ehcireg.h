@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcireg.h,v 1.16 2008/11/29 08:52:03 mglocker Exp $ */
+/*	$OpenBSD: ehcireg.h,v 1.17 2011/11/02 19:19:47 eric Exp $ */
 /*	$NetBSD: ehcireg.h,v 1.17 2004/06/23 06:45:56 mycroft Exp $	*/
 
 /*
@@ -241,11 +241,13 @@ typedef struct {
 #define EHCI_SITD_SET_HUBA(x)	((x) << 16)
 #define EHCI_SITD_GET_PORT(x)	(((x) >> 23) & 0x7f) /* hub port */
 #define EHCI_SITD_SET_PORT(x)	((x) << 23)
+#define EHCI_SITD_GET_DIR(x)	(((x) >> 31) & 0x1) /* direction */
+#define EHCI_SITD_SET_DIR(x)	((x) << 31)
 	u_int32_t	sitd_sched;
-#define EHCI_QH_GET_SMASK(x)	(((x) >>  0) & 0xff) /* intr sched mask */
-#define EHCI_QH_SET_SMASK(x)	((x) <<  0)
-#define EHCI_QH_GET_CMASK(x)	(((x) >>  8) & 0xff) /* split completion mask */
-#define EHCI_QH_SET_CMASK(x)	((x) <<  8)
+#define EHCI_SITD_GET_SMASK(x)	(((x) >>  0) & 0xff) /* intr sched mask */
+#define EHCI_SITD_SET_SMASK(x)	((x) <<  0)
+#define EHCI_SITD_GET_CMASK(x)	(((x) >>  8) & 0xff) /* split completion mask */
+#define EHCI_SITD_SET_CMASK(x)	((x) <<  8)
 	u_int32_t	sitd_trans;
 #define EHCI_SITD_GET_STATUS(x)	(((x) >>  0) & 0xff) /* status */
 #define  EHCI_SITD_ACTIVE	0x80
@@ -256,7 +258,7 @@ typedef struct {
 #define  EHCI_SITD_MISSEDMICRO	0x04
 #define  EHCI_SITD_SPLITXSTATE	0x02
 #define EHCI_SITD_GET_CPROG(x)	(((x) >>  8) & 0xff) /* c-mask progress */
-#define EHCI_SITD_SET_CPROG(x)	(((x) >>  8) & 0xff)
+#define EHCI_SITD_SET_CPROG(x)	((x) <<  8)
 #define EHCI_SITD_GET_BYTES(x)	(((x) >> 16) &  0x7ff) /* bytes to transfer */
 #define EHCI_SITD_SET_BYTES(x)	((x) << 16)
 #define EHCI_SITD_GET_PG(x)	(((x) >> 30) & 0x1) /* buffer page */
@@ -266,7 +268,8 @@ typedef struct {
 /* page (buffer) 0 */
 #define EHCI_SITD_GET_OFFSET(x)	(((x) >>  0) & 0xfff) /* current offset */
 /* page (buffer) 1 */
-#define EHCI_SITD_GET_TCOUNT(x)	(((x) >>  0) & 0x3) /* transaction count */
+#define EHCI_SITD_GET_TCOUNT(x)	(((x) >>  0) & 0x7) /* transaction count */
+#define EHCI_SITD_SET_TCOUNT(x)	((x) << 0)
 #define EHCI_SITD_GET_TP(x)	(((x) >>  3) & 0x3) /* transaction position */
 #define EHCI_SITD_SET_TP(x)	((x) <<  3)
 #define  EHCI_SITD_TP_ALL	0x0
