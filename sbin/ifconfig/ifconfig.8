@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.220 2011/10/25 11:39:07 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.221 2011/11/02 02:03:47 haesbaert Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: October 25 2011 $
+.Dd $Mdocdate: November 2 2011 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -156,6 +156,8 @@ Disable the use of ARP.
 Specify the address to use to represent broadcasts to the
 network.
 The default broadcast address is the address with a host part of all 1's.
+.It Cm hwfeatures
+Display the interface hardware features.
 .It Cm create
 Create the specified network pseudo-device.
 At least the following devices can be created on demand:

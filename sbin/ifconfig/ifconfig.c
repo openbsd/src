@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.250 2011/09/19 20:29:10 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.251 2011/11/02 02:03:47 haesbaert Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -105,6 +105,11 @@
 #include "brconfig.h"
 #include "pbkdf2.h"
 
+#define HWFEATURESBITS							\
+	"\024\1CSUM_IPv4\2CSUM_TCPv4\3CSUM_UDPv4\4IPSEC"		\
+	"\5VLAN_MTU\6VLAN_HWTAGGING\7IPCOMP\10CSUM_TCPv6"		\
+	"\11CSUM_UDPv6\12TCPv4_Rx\13UDPv4_Rx\20WOL"
+
 struct	ifreq		ifr, ridreq;
 struct	in_aliasreq	in_addreq;
 #ifdef INET6
@@ -131,6 +136,7 @@ int	Lflag = 1;
 #endif /* INET6 */
 
 int	showmediaflag;
+int	showcapsflag;
 int	shownet80211chans;
 int	shownet80211nodes;
 
@@ -248,6 +254,7 @@ void	setifipdst(const char *, int);
 void	setifdesc(const char *, int);
 void	unsetifdesc(const char *, int);
 int	printgroup(char *, int);
+void	printifhwfeatures(const char *, int);
 #else
 void	setignore(const char *, int);
 #endif
@@ -334,6 +341,7 @@ const struct	cmd {
 	{ "-autoconfprivacy",	-IFXF_INET6_PRIVACY,	0,	setifxflags },
 #endif /*INET6*/
 #ifndef SMALL
+	{ "hwfeatures", NEXTARG0,	0,		printifhwfeatures },
 	{ "group",	NEXTARG,	0,		setifgroup },
 	{ "-group",	NEXTARG,	0,		unsetifgroup },
 	{ "trailers",	-1,		0,		notrailers },
@@ -2780,6 +2788,10 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 	if (mtu)
 		printf(" mtu %lu", mtu);
 	putchar('\n');
+#ifndef SMALL
+	if (showcapsflag)
+		printifhwfeatures(NULL, 1);
+#endif
 	if (sdl != NULL && sdl->sdl_alen &&
 	    (sdl->sdl_type == IFT_ETHER || sdl->sdl_type == IFT_CARP))
 		(void)printf("\tlladdr %s\n", ether_ntoa(
@@ -4696,6 +4708,25 @@ getifgroups(void)
 		printf("\n");
 
 	free(ifgr.ifgr_groups);
+}
+
+void
+printifhwfeatures(const char *unused, int show)
+{
+	struct if_data ifrdat;
+	
+	if (!show) {
+		if (showcapsflag)
+			usage(1);
+		showcapsflag = 1;
+		return;
+	}
+	bzero(&ifrdat, sizeof(ifrdat));
+	ifr.ifr_data = (caddr_t)&ifrdat;
+	if (ioctl(s, SIOCGIFDATA, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGIFDATA");
+	printb("\thwfeatures", (u_int)ifrdat.ifi_capabilities, HWFEATURESBITS);
+	putchar('\n');
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.129 2011/10/07 17:10:08 henning Exp $	*/
+/*	$OpenBSD: if.h,v 1.130 2011/11/02 02:03:47 haesbaert Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -142,6 +142,7 @@ struct	if_data {
 	u_int64_t	ifi_omcasts;		/* packets sent via multicast */
 	u_int64_t	ifi_iqdrops;		/* dropped on input, this interface */
 	u_int64_t	ifi_noproto;		/* destined for unsupported protocol */
+	u_int32_t	ifi_capabilities;	/* interface capabilities */
 	struct	timeval ifi_lastchange;	/* last operational state change */
 
 	struct mclpool	ifi_mclpool[MCLPOOLS];
@@ -264,7 +265,6 @@ struct ifnet {				/* and the entries */
 	int	if_xflags;		/* extra softnet flags */
 	struct	if_data if_data;	/* stats and other data about if */
 	u_int32_t if_hardmtu;		/* maximum MTU device supports */
-	int	if_capabilities;	/* interface capabilities */
 	u_int	if_rdomain;		/* routing instance */
 	char	if_description[IFDESCRSIZE]; /* interface description */
 	u_short	if_rtlabelid;		/* next route label */
@@ -311,6 +311,7 @@ struct ifnet {				/* and the entries */
 #define	if_iqdrops	if_data.ifi_iqdrops
 #define	if_noproto	if_data.ifi_noproto
 #define	if_lastchange	if_data.ifi_lastchange
+#define	if_capabilities	if_data.ifi_capabilities
 
 #define	IFF_UP		0x1		/* interface is up */
 #define	IFF_BROADCAST	0x2		/* broadcast address valid */
@@ -360,8 +361,6 @@ struct ifnet {				/* and the entries */
 #define	IFCAP_IPCOMP		0x00000040	/* can do IPcomp */
 #define	IFCAP_CSUM_TCPv6	0x00000080	/* can do IPv6/TCP checksums */
 #define	IFCAP_CSUM_UDPv6	0x00000100	/* can do IPv6/UDP checksums */
-#define	IFCAP_CSUM_TCPv4_Rx	0x00000200	/* can do IPv4/TCP (Rx only) */
-#define	IFCAP_CSUM_UDPv4_Rx	0x00000400	/* can do IPv4/UDP (Rx only) */
 #define	IFCAP_WOL		0x00008000	/* can do wake on lan */
 
 /*
