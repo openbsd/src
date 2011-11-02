@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.222 2011/11/02 08:13:39 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.223 2011/11/02 20:01:59 haesbaert Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -246,7 +246,33 @@ interface group.
 Remove the interface from the given
 .Dq group .
 .It Cm hwfeatures
-Display the interface hardware features.
+Display the interface hardware features:
+.Pp
+.Bl -tag -width 14n -offset indent -compact
+.It Sy CSUM_IPv4
+The device supports IPv4 checksum offload.
+.It Sy CSUM_TCPv4
+As above, for TCP in IPv4 datagrams.
+.It Sy CSUM_UDPv4
+As above, for UDP.
+.It Sy IPSEC
+The device supports
+.Xr ipsec 4 .
+.It Sy VLAN_MTU
+MTU can be configured on a per-vlan basis.
+.It Sy VLAN_HWTAGGING
+On transmit, the device can prepend the
+.Xr vlan
+tag.
+.It Sy IPCOMP
+The device supports IP compression.
+.It Sy CSUM_TCPv6
+As CSUM_TCPv4, but supports IPv6 datagrams.
+.It Sy CSUM_UDPv6
+As above, for UDP.
+.It Sy WOL
+The device supports Wake on LAN (WoL).
+.El
 .It Fl inet6
 Disable
 .Xr inet6 4
