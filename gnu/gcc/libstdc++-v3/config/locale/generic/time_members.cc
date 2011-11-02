@@ -128,16 +128,12 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     {
       char* __old = strdup(setlocale(LC_ALL, NULL));
       setlocale(LC_ALL, _M_name_timepunct);
-#if !defined(__OpenBSD__)
       const size_t __len = wcsftime(__s, __maxlen, __format, __tm);
-#endif
       setlocale(LC_ALL, __old);
       free(__old);
-#if !defined(__OpenBSD__)
       // Make sure __s is null terminated.
       if (__len == 0)
 	__s[0] = L'\0';      
-#endif
     }
 
   template<> 

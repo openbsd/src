@@ -45,7 +45,7 @@ namespace std
 {
 _GLIBCXX_BEGIN_NAMESPACE(tr1)
 
-#if defined(_GLIBCXX_HAVE_ISWBLANK) && !defined(__OpenBSD__)
+#if _GLIBCXX_HAVE_ISWBLANK
   using std::iswblank;
 #endif  
 
