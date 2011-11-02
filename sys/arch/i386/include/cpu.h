@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.120 2011/05/23 09:54:20 claudio Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.121 2011/11/02 23:53:44 jsg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -311,7 +311,9 @@ extern char cpu_brandstr[];
 extern int cpuid_level;
 extern int cpu_miscinfo;
 extern int cpu_feature;
+extern int ecpu_feature;
 extern int cpu_ecxfeature;
+extern int ecpu_ecxfeature;
 extern int cpu_cache_eax;
 extern int cpu_cache_ebx;
 extern int cpu_cache_ecx;

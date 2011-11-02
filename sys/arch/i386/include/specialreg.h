@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.39 2010/04/29 17:00:48 oga Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.40 2011/11/02 23:53:44 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -122,15 +122,6 @@
 #define CPUID_B30	0x40000000	/* reserved */
 #define CPUID_SBF	0x80000000	/* signal break on FERR */
 
-/*
- * Note: The 3DNOW flag does not really belong in this feature set since it is
- * returned by the cpuid instruction when called with 0x80000001 in eax rather
- * than 0x00000001, but cyrix3_cpu_setup() moves it to a reserved bit of the
- * feature set for simplicity
- */
-#define CPUID_3DNOW	0x40000000	/* has 3DNow! instructions (AMD) */
-#define CPUID_LONG	0x20000000	/* long mode (AMD64, ext cpuid) */
-
 #define CPUIDECX_SSE3	0x00000001	/* has SSE3 instructions */
 #define CPUIDECX_PCLMUL	0x00000002	/* Carryless Multiplication */
 #define CPUIDECX_MWAIT	0x00000008	/* Monitor/Mwait */
@@ -155,6 +146,26 @@
 #define CPUIDECX_XSAVE	0x04000000	/* XSAVE/XSTOR States */
 #define CPUIDECX_OSXSAVE	0x08000000	/* OSXSAVE */
 #define CPUIDECX_AVX	0x10000000	/* Advanced Vector Extensions */
+
+/*
+ * AMD/VIA processor specific flags.
+ */
+
+#define CPUID_MPC	0x00080000	/* Multiprocessing Capable */
+#define CPUID_NXE	0x00100000	/* No-Execute Extension */
+#define CPUID_MMXX	0x00400000	/* AMD MMX Extensions */
+#define CPUID_FFXSR	0x02000000	/* fast FP/MMX save/restore */
+#define CPUID_LONG	0x20000000	/* long mode */
+#define CPUID_3DNOW2	0x40000000	/* 3DNow! Instruction Extension */
+#define CPUID_3DNOW	0x80000000	/* 3DNow! Instructions */
+
+#define CPUIDECX_LAHF	0x00000001	/* LAHF and SAHF instructions */
+#define CPUIDECX_SVM	0x00000004	/* Secure Virtual Machine */
+#define CPUIDECX_ABM	0x00000020	/* LZCNT instruction */
+#define CPUIDECX_SSE4A	0x00000040	/* SSE4-A instruction set */
+#define CPUIDECX_XOP	0x00000800	/* extended operating support */
+#define CPUIDECX_WDT	0x00002000	/* watchdog timer */
+#define CPUIDECX_FMA4	0x00010000	/* 4-operand FMA instructions */
 
 /*
  * Model-specific registers for the i386 family

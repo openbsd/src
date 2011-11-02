@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.505 2011/07/05 04:48:01 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.506 2011/11/02 23:53:44 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -983,8 +983,17 @@ const struct cpu_cpuid_feature i386_cpuid_features[] = {
 	{ CPUID_SS,	"SS" },
 	{ CPUID_HTT,	"HTT" },
 	{ CPUID_TM,	"TM" },
-	{ CPUID_SBF,	"SBF" },
-	{ CPUID_3DNOW,	"3DNOW" },
+	{ CPUID_SBF,	"SBF" }
+};
+
+const struct cpu_cpuid_feature i386_ecpuid_features[] = {
+	{ CPUID_MPC,	"MPC" },
+	{ CPUID_NXE,	"NXE" },
+	{ CPUID_MMXX,	"MMXX" },
+	{ CPUID_FFXSR,	"FFXSR" },
+	{ CPUID_LONG,	"LONG" },
+	{ CPUID_3DNOW2,	"3DNOW2" },
+	{ CPUID_3DNOW,	"3DNOW" }
 };
 
 const struct cpu_cpuid_feature i386_cpuid_ecxfeatures[] = {
@@ -1012,6 +1021,16 @@ const struct cpu_cpuid_feature i386_cpuid_ecxfeatures[] = {
 	{ CPUIDECX_XSAVE,	"XSAVE" },
 	{ CPUIDECX_OSXSAVE,	"OSXSAVE" },
 	{ CPUIDECX_AVX,		"AVX" },
+};
+
+const struct cpu_cpuid_feature i386_ecpuid_ecxfeatures[] = {
+	{ CPUIDECX_LAHF,	"LAHF" },
+	{ CPUIDECX_SVM,		"SVM" },
+	{ CPUIDECX_ABM,		"ABM" },
+	{ CPUIDECX_SSE4A,	"SSE4A" },
+	{ CPUIDECX_XOP,		"XOP" },
+	{ CPUIDECX_WDT,		"WDT" },
+	{ CPUIDECX_FMA4,	"FMA4" }
 };
 
 void
@@ -1829,6 +1848,14 @@ identifycpu(struct cpu_info *ci)
 					numbits++;
 				}
 			}
+			for (i = 0; i < nitems(i386_ecpuid_features); i++) {
+				if (ecpu_feature &
+				    i386_ecpuid_features[i].feature_bit) {
+					printf("%s%s", (numbits == 0 ? "" : ","),
+					    i386_ecpuid_features[i].feature_name);
+					numbits++;
+				}
+			}
 			max = sizeof(i386_cpuid_ecxfeatures)
 				/ sizeof(i386_cpuid_ecxfeatures[0]);
 			for (i = 0; i < max; i++) {
@@ -1836,6 +1863,14 @@ identifycpu(struct cpu_info *ci)
 				    i386_cpuid_ecxfeatures[i].feature_bit) {
 					printf("%s%s", (numbits == 0 ? "" : ","),
 					    i386_cpuid_ecxfeatures[i].feature_name);
+					numbits++;
+				}
+			}
+			for (i = 0; i < nitems(i386_ecpuid_ecxfeatures); i++) {
+				if (ecpu_ecxfeature &
+				    i386_ecpuid_ecxfeatures[i].feature_bit) {
+					printf("%s%s", (numbits == 0 ? "" : ","),
+					    i386_ecpuid_ecxfeatures[i].feature_name);
 					numbits++;
 				}
 			}
