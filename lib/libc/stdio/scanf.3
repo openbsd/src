@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scanf.3,v 1.18 2011/07/03 17:57:47 martynas Exp $
+.\"	$OpenBSD: scanf.3,v 1.19 2011/11/02 22:29:07 schwarze Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 3 2011 $
+.Dd $Mdocdate: November 2 2011 $
 .Dt SCANF 3
 .Os
 .Sh NAME
@@ -43,14 +43,14 @@
 .Nm vfscanf
 .Nd input format conversion
 .Sh SYNOPSIS
-.Fd #include <stdio.h>
+.In stdio.h
 .Ft int
 .Fn scanf "const char *format" ...
 .Ft int
 .Fn fscanf "FILE *stream" "const char *format" ...
 .Ft int
 .Fn sscanf "const char *str" "const char *format" ...
-.Fd #include <stdarg.h>
+.In stdarg.h
 .Ft int
 .Fn vscanf "const char *format" "va_list ap"
 .Ft int
@@ -133,74 +133,74 @@ Indicates that the conversion will be one of
 or
 .Cm n
 and the next pointer is a pointer to a
-.Li char
+.Vt char
 (rather than
-.Li int ) .
+.Vt int ) .
 .It Cm h
 Indicates that the conversion will be one of
 .Cm dioux
 or
 .Cm n
 and the next pointer is a pointer to a
-.Li short int
+.Vt "short int"
 (rather than
-.Li int ) .
+.Vt int ) .
 .It Cm l No (ell)
 Indicates either that the conversion will be one of
 .Cm dioux
 or
 .Cm n
 and the next pointer is a pointer to a
-.Li long int
+.Vt "long int"
 (rather than
-.Li int ) ,
+.Vt int ) ,
 or that the conversion will be one of
 .Cm efg
 and the next pointer is a pointer to
-.Li double
+.Vt double
 (rather than
-.Li float ) .
-.It Cm \&ll No (ell ell)
+.Vt float ) .
+.It Cm ll No (ell ell)
 Indicates that the conversion will be one of
 .Cm dioux
 or
 .Cm n
 and the next pointer is a pointer to a
-.Li long long int
+.Vt "long long int"
 (rather than
-.Li int ) .
+.Vt int ) .
 .It Cm L
-Indicates that the conversion will be
+Indicates that the conversion will be one of
 .Cm efg
 and the next pointer is a pointer to
-.Li long double .
+.Vt "long double" .
 .It Cm j
 Indicates that the conversion will be one of
 .Cm dioux
 or
 .Cm n
 and the next pointer is a pointer to an
-.Li intmax_t
+.Vt intmax_t
 (rather than
-.Li int ) .
+.Vt int ) .
 .It Cm t
 Indicates that the conversion will be one of
 .Cm dioux
 or
 .Cm n
 and the next pointer is a pointer to a
-.Li ptrdiff_t
+.Vt ptrdiff_t
 (rather than
-.Li int ) .
+.Vt int ) .
 .It Cm z
 Indicates that the conversion will be one of
 .Cm dioux
 or
 .Cm n
 and the next pointer is a pointer to a
-.Li size_t
+.Vt size_t
 (rather than
-.Li int ) .
+.Vt int ) .
 .It Cm q
 (deprecated)
 Indicates that the conversion will be one of
@@ -208,7 +208,7 @@ Indicates that the conversion will be one of
 or
 .Cm n
 and the next pointer is a pointer to a
-.Li "long long int"
+.Vt "long long int"
 (rather than
 .Vt int ) .
 .El
@@ -229,9 +229,10 @@ this whitespace is not counted against the field width.
 The following conversions are available:
 .Bl -tag -width XXXX
 .It Cm %
-Matches a literal `%'.
+Matches a literal
+.Ql % .
 That is,
-.Ql %\&%
+.Dq Li %%
 in the format string matches a single input
 .Ql %
 character.
@@ -239,7 +240,7 @@ No conversion is done, and assignment does not occur.
 .It Cm d
 Matches an optionally signed decimal integer;
 the next pointer must be a pointer to
-.Li int .
+.Vt int .
 .It Cm D
 Equivalent to
 .Cm ld ;
@@ -247,7 +248,7 @@ this exists only for backwards compatibility.
 .It Cm i
 Matches an optionally signed integer;
 the next pointer must be a pointer to
-.Li int .
+.Vt int .
 The integer is read in base 16 if it begins
 with
 .Ql 0x
@@ -260,7 +261,7 @@ Only characters that correspond to the base are used.
 .It Cm o
 Matches an octal integer;
 the next pointer must be a pointer to
-.Li unsigned int .
+.Vt "unsigned int" .
 .It Cm O
 Equivalent to
 .Cm lo ;
@@ -268,21 +269,18 @@ this exists for backwards compatibility.
 .It Cm u
 Matches an optionally signed decimal integer;
 the next pointer must be a pointer to
-.Li unsigned int .
-.It Cm x
+.Vt "unsigned int" .
+.It Cm xX
 Matches an optionally signed hexadecimal integer;
 the next pointer must be a pointer to
-.Li unsigned int .
-.It Cm X
-Equivalent to
-.Cm x .
+.Vt "unsigned int" .
 .It Cm eE
 Equivalent to
 .Cm f .
 .It Cm fF
 Matches an optionally signed floating-point number;
 the next pointer must be a pointer to
-.Li float .
+.Vt float .
 .It Cm gG
 Equivalent to
 .Cm f .
@@ -292,38 +290,30 @@ Equivalent to
 .It Cm s
 Matches a sequence of non-whitespace characters;
 the next pointer must be a pointer to
-.Li char ,
+.Vt char ,
 and the provided array must be large enough to accept and store
-all the sequence and the terminating
-.Tn NUL
-character.
+the whole sequence and the terminating NUL character.
 The input string stops at whitespace
 or at the maximum field width, whichever occurs first.
 If specified, the maximum field length refers to the sequence
 being scanned rather than the storage space, hence the provided
-array must be 1 larger for the terminating
-.Tn NUL
-character.
+array must be 1 larger for the terminating NUL character.
 .It Cm c
 Matches a sequence of characters consuming the number of bytes
 specified by the field width (defaults to 1 if unspecified);
 the next pointer must be a pointer to
-.Li char ,
+.Vt char ,
 and there must be enough room for all the characters
-(no terminating
-.Tn NUL
-is added).
+(no terminating NUL is added).
 The usual skip of leading whitespace is suppressed.
 To skip whitespace first, use an explicit space in the format.
 .It Cm \&[
 Matches a nonempty sequence of characters from the specified set
 of accepted characters;
 the next pointer must be a pointer to
-.Li char ,
+.Vt char ,
 and there must be enough room for all the characters in the string,
-plus a terminating
-.Tn NUL
-character.
+plus a terminating NUL character.
 The usual skip of leading whitespace is suppressed.
 .Pp
 The string is to be made up of characters in
@@ -345,7 +335,7 @@ make it the first character after the open bracket
 or the circumflex;
 any other position will end the set.
 The hyphen character
-.Cm -
+.Cm \-
 is also special;
 when placed between two other characters,
 it adds all intervening characters to the set.
@@ -367,13 +357,13 @@ Matches a pointer value (as printed by
 in
 .Xr printf 3 ) ;
 the next pointer must be a pointer to
-.Li void .
+.Vt void .
 .It Cm n
 Nothing is expected;
 instead, the number of characters consumed thus far from the input
 is stored through the next pointer,
 which must be a pointer to
-.Li int .
+.Vt int .
 This is
 .Em not
 a conversion, although it can be suppressed with the
@@ -428,8 +418,6 @@ and
 first appeared in
 .Bx 4.3 Reno .
 .Sh BUGS
-All of the backwards compatibility formats will be removed in the future.
-.Pp
 Numerical strings are truncated to 512 characters; for example,
 .Cm %f
 and

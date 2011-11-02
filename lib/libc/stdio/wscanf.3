@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wscanf.3,v 1.1 2011/10/16 13:20:51 stsp Exp $
+.\"	$OpenBSD: wscanf.3,v 1.2 2011/11/02 22:29:07 schwarze Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 .\"     @(#)scanf.3	8.2 (Berkeley) 12/11/93
 .\" FreeBSD: src/lib/libc/stdio/scanf.3,v 1.24 2003/06/28 09:03:25 das Exp
 .\"
-.Dd $Mdocdate: October 16 2011 $
+.Dd $Mdocdate: November 2 2011 $
 .Dt WSCANF 3
 .Os
 .Sh NAME
@@ -159,9 +159,7 @@ and the next pointer is a pointer to a
 (rather than
 .Vt int ) ,
 that the conversion will be one of
-.Cm a , e , f ,
-or
-.Cm g
+.Cm aefg
 and the next pointer is a pointer to
 .Vt double
 (rather than
@@ -185,9 +183,7 @@ and the next pointer is a pointer to a
 .Vt int ) .
 .It Cm L
 Indicates that the conversion will be one of
-.Cm a , e , f ,
-or
-.Cm g
+.Cm aefg
 and the next pointer is a pointer to
 .Vt "long double" .
 .It Cm j
@@ -278,7 +274,7 @@ the next pointer must be a pointer to
 Matches an optionally signed decimal integer;
 the next pointer must be a pointer to
 .Vt "unsigned int" .
-.It Cm x , X
+.It Cm xX
 Matches an optionally signed hexadecimal integer;
 the next pointer must be a pointer to
 .Vt "unsigned int" .
@@ -297,7 +293,7 @@ Matches a sequence of non-whitespace wide characters;
 the next pointer must be a pointer to
 .Vt char ,
 and the provided array must be large enough to accept and store
-the multibyte representation of all the sequence and the
+the multibyte representation of the whole sequence and the
 terminating NUL character.
 The input string stops at whitespace
 or at the maximum field width, whichever occurs first.
