@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.333 2011/09/17 12:23:19 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.334 2011/11/02 23:04:20 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -7428,6 +7428,7 @@ serverworks_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		sc->sc_wdcdev.UDMA_cap = 4;
 		break;
 	case PCI_PRODUCT_RCC_CSB6_RAID_IDE:
+	case PCI_PRODUCT_RCC_HT_1000_IDE:
 		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
 	}
