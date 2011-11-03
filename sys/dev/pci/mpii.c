@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.49 2011/09/12 12:33:26 mikeb Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.50 2011/11/03 20:08:49 mikeb Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -1747,7 +1747,7 @@ u_int32_t  mpii_debug = 0
  */
 #define MPII_MAX_SGL			(32)
 
-#define MPII_MAX_REQUEST_CREDIT		(40)
+#define MPII_MAX_REQUEST_CREDIT		(128)
 
 struct mpii_dmamem {
 	bus_dmamap_t		mdm_map;
@@ -2926,9 +2926,8 @@ mpii_iocfacts(struct mpii_softc *sc)
 	/* must be multiple of 16 */
 	sc->sc_reply_free_qdepth = sc->sc_num_reply_frames +
 	    (16 - (sc->sc_num_reply_frames % 16));
-
-	sc->sc_reply_post_qdepth = sc->sc_request_depth +
-	    sc->sc_num_reply_frames + 1;
+	sc->sc_reply_post_qdepth = ((sc->sc_request_depth +
+	    sc->sc_num_reply_frames + 1 + 15) / 16) * 16;
 
 	if (sc->sc_reply_post_qdepth >
 	    ifp.max_reply_descriptor_post_queue_depth)
