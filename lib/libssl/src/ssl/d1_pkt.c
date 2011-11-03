@@ -296,9 +296,6 @@ dtls1_process_buffered_records(SSL *s)
     item = pqueue_peek(s->d1->unprocessed_rcds.q);
     if (item)
         {
-        DTLS1_RECORD_DATA *rdata;
-        rdata = (DTLS1_RECORD_DATA *)item->data;
-        
         /* Check if epoch is current. */
         if (s->d1->unprocessed_rcds.epoch != s->d1->r_epoch)
             return(1);  /* Nothing to do. */
@@ -412,11 +409,12 @@ dtls1_process_record(SSL *s)
 	enc_err = s->method->ssl3_enc->enc(s,0);
 	if (enc_err <= 0)
 		{
-		if (enc_err == 0)
-			/* SSLerr() and ssl3_send_alert() have been called */
-			goto err;
-
-		/* otherwise enc_err == -1 */
+		/* decryption failed, silently discard message */
+		if (enc_err < 0)
+			{
+			rr->length = 0;
+			s->packet_length = 0;
+			}
 		goto err;
 		}
 
@@ -528,14 +526,12 @@ int dtls1_get_record(SSL *s)
 	int ssl_major,ssl_minor;
 	int i,n;
 	SSL3_RECORD *rr;
-	SSL_SESSION *sess;
 	unsigned char *p = NULL;
 	unsigned short version;
 	DTLS1_BITMAP *bitmap;
 	unsigned int is_next_epoch;
 
 	rr= &(s->s3->rrec);
-	sess=s->session;
 
 	/* The epoch may have changed.  If so, process all the
 	 * pending records.  This is a non-blocking operation. */
@@ -662,10 +658,12 @@ again:
 
 	/* If this record is from the next epoch (either HM or ALERT),
 	 * and a handshake is currently in progress, buffer it since it
-	 * cannot be processed at this time. */
+	 * cannot be processed at this time. However, do not buffer
+	 * anything while listening.
+	 */
 	if (is_next_epoch)
 		{
-		if (SSL_in_init(s) || s->in_handshake)
+		if ((SSL_in_init(s) || s->in_handshake) && !s->d1->listen)
 			{
 			dtls1_buffer_record(s, &(s->d1->unprocessed_rcds), rr->seq_num);
 			}

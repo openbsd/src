@@ -703,6 +703,7 @@ static int check_cert(X509_STORE_CTX *ctx)
 	x = sk_X509_value(ctx->chain, cnum);
 	ctx->current_cert = x;
 	ctx->current_issuer = NULL;
+	ctx->current_crl_score = 0;
 	ctx->current_reasons = 0;
 	while (ctx->current_reasons != CRLDP_ALL_REASONS)
 		{
@@ -2015,6 +2016,9 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	ctx->error_depth=0;
 	ctx->current_cert=NULL;
 	ctx->current_issuer=NULL;
+	ctx->current_crl=NULL;
+	ctx->current_crl_score=0;
+	ctx->current_reasons=0;
 	ctx->tree = NULL;
 	ctx->parent = NULL;
 
@@ -2034,7 +2038,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	if (store)
 		ret = X509_VERIFY_PARAM_inherit(ctx->param, store->param);
 	else
-		ctx->param->flags |= X509_VP_FLAG_DEFAULT|X509_VP_FLAG_ONCE;
+		ctx->param->inh_flags |= X509_VP_FLAG_DEFAULT|X509_VP_FLAG_ONCE;
 
 	if (store)
 		{

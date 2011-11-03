@@ -257,6 +257,8 @@ $ssl.=" ssl/tls1.h";
 
 my $crypto ="crypto/crypto.h";
 $crypto.=" crypto/o_dir.h";
+$crypto.=" crypto/o_str.h";
+$crypto.=" crypto/o_time.h";
 $crypto.=" crypto/des/des.h crypto/des/des_old.h" ; # unless $no_des;
 $crypto.=" crypto/idea/idea.h" ; # unless $no_idea;
 $crypto.=" crypto/rc4/rc4.h" ; # unless $no_rc4;
@@ -316,6 +318,7 @@ $crypto.=" crypto/krb5/krb5_asn.h";
 $crypto.=" crypto/pqueue/pqueue.h";
 $crypto.=" crypto/cms/cms.h";
 $crypto.=" crypto/jpake/jpake.h";
+$crypto.=" crypto/modes/modes.h";
 
 my $symhacks="crypto/symhacks.h";
 

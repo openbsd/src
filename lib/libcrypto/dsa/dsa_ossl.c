@@ -148,15 +148,6 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 
 	s=BN_new();
 	if (s == NULL) goto err;
-
-	/* reject a excessive digest length (currently at most
-	 * dsa-with-SHA256 is supported) */
-	if (dlen > SHA256_DIGEST_LENGTH)
-		{
-		reason=DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE;
-		goto err;
-		}
-
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
 
@@ -185,7 +176,7 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	if (!BN_mod_mul(&xr,dsa->priv_key,r,dsa->q,ctx)) goto err;/* s = xr */
 	if (!BN_add(s, &xr, &m)) goto err;		/* s = m + xr */
 	if (BN_cmp(s,dsa->q) > 0)
-		BN_sub(s,s,dsa->q);
+		if (!BN_sub(s,s,dsa->q)) goto err;
 	if (!BN_mod_mul(s,s,kinv,dsa->q,ctx)) goto err;
 
 	ret=DSA_SIG_new();
@@ -325,15 +316,6 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 		DSAerr(DSA_F_DSA_DO_VERIFY,DSA_R_MODULUS_TOO_LARGE);
 		return -1;
 		}
-
-	/* reject a excessive digest length (currently at most
-	 * dsa-with-SHA256 is supported) */
-	if (dgst_len > SHA256_DIGEST_LENGTH)
-		{
-		DSAerr(DSA_F_DSA_DO_VERIFY,DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
-		return -1;
-		}
-
 	BN_init(&u1);
 	BN_init(&u2);
 	BN_init(&t1);

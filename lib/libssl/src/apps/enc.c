@@ -101,9 +101,6 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE *e = NULL;
-#endif
 	static const char magic[]="Salted__";
 	char mbuf[sizeof magic-1];
 	char *strbuf=NULL;
@@ -328,7 +325,7 @@ bad:
 		}
 
 #ifndef OPENSSL_NO_ENGINE
-        e = setup_engine(bio_err, engine, 0);
+        setup_engine(bio_err, engine, 0);
 #endif
 
 	if (md && (dgst=EVP_get_digestbyname(md)) == NULL)
@@ -396,8 +393,10 @@ bad:
 
 	if (inf == NULL)
 	        {
+#ifndef OPENSSL_NO_SETVBUF_IONBF
 		if (bufsize != NULL)
 			setvbuf(stdin, (char *)NULL, _IONBF, 0);
+#endif /* ndef OPENSSL_NO_SETVBUF_IONBF */
 		BIO_set_fp(in,stdin,BIO_NOCLOSE);
 	        }
 	else
@@ -450,8 +449,10 @@ bad:
 	if (outf == NULL)
 		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
+#ifndef OPENSSL_NO_SETVBUF_IONBF
 		if (bufsize != NULL)
 			setvbuf(stdout, (char *)NULL, _IONBF, 0);
+#endif /* ndef OPENSSL_NO_SETVBUF_IONBF */
 #ifdef OPENSSL_SYS_VMS
 		{
 		BIO *tmpbio = BIO_new(BIO_f_linebuffer());

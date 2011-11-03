@@ -144,7 +144,9 @@ int RAND_load_file(const char *file, long bytes)
 	   * I/O because we will waste system entropy. 
 	   */
 	  bytes = (bytes == -1) ? 2048 : bytes; /* ok, is 2048 enough? */
+#ifndef OPENSSL_NO_SETVBUF_IONBF
 	  setvbuf(in, NULL, _IONBF, 0); /* don't do buffered reads */
+#endif /* ndef OPENSSL_NO_SETVBUF_IONBF */
 	}
 #endif
 	for (;;)
@@ -269,7 +271,6 @@ err:
 const char *RAND_file_name(char *buf, size_t size)
 	{
 	char *s=NULL;
-	int ok = 0;
 #ifdef __OpenBSD__
 	struct stat sb;
 #endif
@@ -298,7 +299,6 @@ const char *RAND_file_name(char *buf, size_t size)
 			BUF_strlcat(buf,"/",size);
 #endif
 			BUF_strlcat(buf,RFILE,size);
-			ok = 1;
 			}
 		else
 		  	buf[0] = '\0'; /* no file name */
@@ -312,7 +312,7 @@ const char *RAND_file_name(char *buf, size_t size)
 	 * to something hopefully decent if that isn't available. 
 	 */
 
-	if (!ok)
+	if (!buf[0])
 		if (BUF_strlcpy(buf,"/dev/arandom",size) >= size) {
 			return(NULL);
 		}	

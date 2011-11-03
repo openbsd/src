@@ -76,10 +76,16 @@
  * CertGetCertificateContextProperty. CERT_KEY_PROV_INFO_PROP_ID is
  * one of possible values you can pass to function in question. By
  * checking if it's defined we can see if wincrypt.h and accompanying
- * crypt32.lib are in shape. Yes, it's rather "weak" test and if
- * compilation fails, then re-configure with -DOPENSSL_NO_CAPIENG.
+ * crypt32.lib are in shape. The native MingW32 headers up to and
+ * including __W32API_VERSION 3.14 lack of struct DSSPUBKEY and the
+ * defines CERT_STORE_PROV_SYSTEM_A and CERT_STORE_READONLY_FLAG,
+ * so we check for these too and avoid compiling.
+ * Yes, it's rather "weak" test and if compilation fails,
+ * then re-configure with -DOPENSSL_NO_CAPIENG.
  */
-#ifdef CERT_KEY_PROV_INFO_PROP_ID
+#if defined(CERT_KEY_PROV_INFO_PROP_ID) && \
+    defined(CERT_STORE_PROV_SYSTEM_A) && \
+    defined(CERT_STORE_READONLY_FLAG)
 # define __COMPILE_CAPIENG
 #endif /* CERT_KEY_PROV_INFO_PROP_ID */
 #endif /* OPENSSL_NO_CAPIENG */
@@ -1807,6 +1813,8 @@ static int cert_select_dialog(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 #else /* !__COMPILE_CAPIENG */
 #include <openssl/engine.h>
 #ifndef OPENSSL_NO_DYNAMIC_ENGINE
+OPENSSL_EXPORT
+int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns);
 OPENSSL_EXPORT
 int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) { return 0; }
 IMPLEMENT_DYNAMIC_CHECK_FN()
