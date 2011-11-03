@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.61 2010/07/19 19:46:44 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.62 2011/11/03 20:55:22 schwarze Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -219,10 +219,7 @@ void
 Make_Update(GNode *cgn)	/* the child node */
 {
 	GNode	*pgn;	/* the parent node */
-	char	*cname; /* the child's name */
 	LstNode	ln;	/* Element in parents list */
-
-	cname = Var(TARGET_INDEX, cgn);
 
 	/*
 	 * If the child was actually made, see what its modification time is
