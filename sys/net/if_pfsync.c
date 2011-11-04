@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.171 2011/10/31 22:02:52 mikeb Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.172 2011/11/04 22:11:11 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -568,9 +568,21 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 		sks->port[0] = sp->key[PF_SK_STACK].port[0];
 		sks->port[1] = sp->key[PF_SK_STACK].port[1];
 		sks->rdomain = ntohs(sp->key[PF_SK_STACK].rdomain);
-		sks->proto = sp->proto;
 		if (!(sks->af = sp->key[PF_SK_STACK].af))
 			sks->af = sp->af;
+		if (sks->af != skw->af) {
+			switch (sp->proto) {
+			case IPPROTO_ICMP:
+				sks->proto = IPPROTO_ICMPV6;
+				break;
+			case IPPROTO_ICMPV6:
+				sks->proto = IPPROTO_ICMP;
+				break;
+			default:
+				sks->proto = sp->proto;
+			}
+		} else
+			sks->proto = sp->proto;
 	}
 	st->rtableid[PF_SK_WIRE] = ntohl(sp->rtableid[PF_SK_WIRE]);
 	st->rtableid[PF_SK_STACK] = ntohl(sp->rtableid[PF_SK_STACK]);
