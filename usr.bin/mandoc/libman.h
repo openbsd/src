@@ -1,4 +1,4 @@
-/*	$Id: libman.h,v 1.30 2011/09/18 10:25:28 schwarze Exp $ */
+/*	$Id: libman.h,v 1.31 2011/11/05 16:02:18 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -54,6 +54,7 @@ struct	man_macro {
 #define	MAN_FSCOPED	 (1 << 2)	/* See blk_imp(). */
 #define	MAN_NSCOPED	 (1 << 3)	/* See in_line_eoln(). */
 #define	MAN_NOCLOSE	 (1 << 4)	/* See blk_exp(). */
+#define	MAN_BSCOPE	 (1 << 5)	/* Break BLINE scope. */
 };
 
 extern	const struct man_macro *const man_macros;
