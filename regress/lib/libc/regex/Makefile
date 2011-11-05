@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.7 2011/11/05 15:01:37 otto Exp $
+#	$OpenBSD: Makefile,v 1.8 2011/11/05 15:07:12 otto Exp $
 #	$NetBSD: Makefile,v 1.2 1995/02/16 19:38:45 cgd Exp $
 
 PROG=	re
 SRCS=	main.c split.c debug.c regcomp.c regerror.c regexec.c regfree.c
 .PATH: ${.CURDIR}/../../../../lib/libc/regex
+CLEANFILES += t_exhaust
 
 CFLAGS+= -I${.CURDIR}/../../../../lib/libc/regex -DREDEBUG -DPOSIX_MISTAKE
 
