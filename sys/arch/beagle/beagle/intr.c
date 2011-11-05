@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.2 2011/11/05 18:28:32 drahn Exp $ */
+/* $OpenBSD: intr.c,v 1.3 2011/11/05 19:02:25 drahn Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -371,6 +371,9 @@ inittodr(time_t base)
 			printf("WARNING: preposterous clock chip time\n");
 			resettodr();
 		}
+		ts.tv_sec = rtctime.tv_sec;
+		ts.tv_nsec = rtctime.tv_usec * 1000;
+		tc_setclock(&ts);
 		goto bad;
 	} else {
 		ts.tv_sec = rtctime.tv_sec;
