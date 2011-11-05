@@ -1,4 +1,4 @@
-/* $OpenBSD: gptimer.c,v 1.7 2011/10/24 22:49:07 drahn Exp $ */
+/* $OpenBSD: gptimer.c,v 1.8 2011/11/05 17:11:46 drahn Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -34,7 +34,6 @@
 #include <machine/bus.h>
 #include <arch/beagle/beagle/ahb.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
 #include <arm/cpufunc.h>
 
@@ -110,7 +109,7 @@ static struct evcount stat_count;
 int gptimer_match(struct device *parent, void *v, void *aux);
 void gptimer_attach(struct device *parent, struct device *self, void *args);
 int gptimer_intr(void *frame);
-void gptimer_delay(int reg);
+void gptimer_wait(int reg);
 
 bus_space_tag_t gptimer_iot;
 bus_space_handle_t gptimer_ioh0,  gptimer_ioh1; 
@@ -174,12 +173,12 @@ gptimer_attach(struct device *parent, struct device *self, void *args)
 		/* start timer because it is used in delay */
 		gptimer_ioh1 = ioh;
 		bus_space_write_4(gptimer_iot, gptimer_ioh1, GP_TCRR, 0);
-		gptimer_delay(GP_TWPS_ALL);
+		gptimer_wait(GP_TWPS_ALL);
 		bus_space_write_4(gptimer_iot, gptimer_ioh1, GP_TLDR, 0);
-		gptimer_delay(GP_TWPS_ALL);
+		gptimer_wait(GP_TWPS_ALL);
 		bus_space_write_4(gptimer_iot, gptimer_ioh1, GP_TCLR,
 		    GP_TCLR_AR | GP_TCLR_ST);
-		gptimer_delay(GP_TWPS_ALL);
+		gptimer_wait(GP_TWPS_ALL);
 
 		gptimer_timecounter.tc_frequency = TIMER_FREQUENCY;
 		tc_init(&gptimer_timecounter);
@@ -274,10 +273,10 @@ gptimer_intr(void *frame)
                 nextstatevent = now;
         }
 
-	gptimer_delay(GP_TWPS_ALL);
+	gptimer_wait(GP_TWPS_ALL);
 	bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TISR,
 		bus_space_read_4(gptimer_iot, gptimer_ioh0, GP_TISR));
-	gptimer_delay(GP_TWPS_ALL);
+	gptimer_wait(GP_TWPS_ALL);
         bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TCRR, -duration);
  
 	return 1;
@@ -318,23 +317,23 @@ cpu_initclocks()
 	nexttickevent = nextstatevent = bus_space_read_4(gptimer_iot,
 	    gptimer_ioh1, GP_TCRR) + ticks_per_intr;
 
-	gptimer_delay(GP_TWPS_ALL);
+	gptimer_wait(GP_TWPS_ALL);
 	bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TIER, GP_TIER_OVF_EN);
-	gptimer_delay(GP_TWPS_ALL);
+	gptimer_wait(GP_TWPS_ALL);
 	bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TWER, GP_TWER_OVF_EN);
-	gptimer_delay(GP_TWPS_ALL);
+	gptimer_wait(GP_TWPS_ALL);
 	bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TCLR,
 	    GP_TCLR_AR | GP_TCLR_ST);
-	gptimer_delay(GP_TWPS_ALL);
+	gptimer_wait(GP_TWPS_ALL);
 	bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TISR,
 		bus_space_read_4(gptimer_iot, gptimer_ioh0, GP_TISR));
-	gptimer_delay(GP_TWPS_ALL);
+	gptimer_wait(GP_TWPS_ALL);
 	bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TCRR, -ticks_per_intr);
-	gptimer_delay(GP_TWPS_ALL);
+	gptimer_wait(GP_TWPS_ALL);
 }
 
 void
-gptimer_delay(int reg)
+gptimer_wait(int reg)
 {
 	while (bus_space_read_4(gptimer_iot, gptimer_ioh0, GP_TWPS) & reg)
 		;
