@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.1 2011/10/24 22:49:07 drahn Exp $ */
+/* $OpenBSD: intr.c,v 1.2 2011/11/05 18:28:32 drahn Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -18,7 +18,9 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/param.h>
+#include <sys/timetc.h>
 
+#include <dev/clock_subr.h>
 #include <arm/cpufunc.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -286,3 +288,130 @@ arm_splassert_check(int wantipl, const char *func)
         }
 }
 #endif
+
+void arm_dflt_delay(u_int usecs);
+
+struct {
+	void (*delay)(u_int);
+	void	(*initclocks)(void);
+} arm_clock_func = {
+	arm_dflt_delay,
+	NULL
+};
+
+void
+arm_clock_register(void (*initclock)(void), void (*delay)(u_int))
+{
+	arm_clock_func.initclocks = initclock;
+	arm_clock_func.delay = delay;
+}
+
+
+void
+delay(u_int usec)
+{
+	arm_clock_func.delay(usec);
+}
+
+void
+cpu_initclocks(void)
+{
+	if (arm_clock_func.initclocks == NULL)
+		panic("initclocks function not initialized yet");
+
+	arm_clock_func.initclocks();
+}
+
+void
+arm_dflt_delay(u_int usecs)
+{
+	int j;
+	/* BAH - there is no good way to make this close */
+	/* but this isn't supposed to be used after the real clock attaches */
+	for (; usecs > 0; usecs--)
+		for (j = 100; j > 0; j--)
+			;
+
+}
+
+todr_chip_handle_t todr_handle;
+
+/*
+ * inittodr:
+ *
+ *      Initialize time from the time-of-day register.
+ */
+#define MINYEAR         2003    /* minimum plausible year */
+void
+inittodr(time_t base)
+{
+	time_t deltat;
+	struct timeval rtctime;
+	struct timespec ts;
+	int badbase;
+
+	if (base < (MINYEAR - 1970) * SECYR) {
+		printf("WARNING: preposterous time in file system\n");
+		/* read the system clock anyway */
+		base = (MINYEAR - 1970) * SECYR;
+		badbase = 1;
+	} else
+		badbase = 0;
+
+	if (todr_handle == NULL ||
+	    todr_gettime(todr_handle, &rtctime) != 0 ||
+	    rtctime.tv_sec == 0) {
+		/*
+		 * Believe the time in the file system for lack of
+		 * anything better, resetting the TODR.
+		 */
+		rtctime.tv_sec = base;
+		rtctime.tv_usec = 0;
+		if (todr_handle != NULL && !badbase) {
+			printf("WARNING: preposterous clock chip time\n");
+			resettodr();
+		}
+		goto bad;
+	} else {
+		ts.tv_sec = rtctime.tv_sec;
+		ts.tv_nsec = rtctime.tv_usec * 1000;
+		tc_setclock(&ts);
+	}
+
+	if (!badbase) {
+		/*
+		 * See if we gained/lost two or more days; if
+		 * so, assume something is amiss.
+		 */
+		deltat = rtctime.tv_sec - base;
+		if (deltat < 0)
+			deltat = -deltat;
+		if (deltat < 2 * SECDAY)
+			return;         /* all is well */
+		printf("WARNING: clock %s %ld days\n",
+		    rtctime.tv_sec < base ? "lost" : "gained",
+		    (long)deltat / SECDAY);
+	}
+ bad:
+	printf("WARNING: CHECK AND RESET THE DATE!\n");
+}
+
+/*
+ * resettodr:
+ *
+ *      Reset the time-of-day register with the current time.
+ */
+void
+resettodr(void)
+{
+	struct timeval rtctime;
+
+	if (rtctime.tv_sec == 0)
+		return;
+			
+	microtime(&rtctime);
+
+	if (todr_handle != NULL &&
+	   todr_settime(todr_handle, &rtctime) != 0)
+		printf("resettodr: failed to set time\n");
+}

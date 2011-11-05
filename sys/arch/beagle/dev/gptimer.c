@@ -1,4 +1,4 @@
-/* $OpenBSD: gptimer.c,v 1.8 2011/11/05 17:11:46 drahn Exp $ */
+/* $OpenBSD: gptimer.c,v 1.9 2011/11/05 18:28:32 drahn Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -110,6 +110,8 @@ int gptimer_match(struct device *parent, void *v, void *aux);
 void gptimer_attach(struct device *parent, struct device *self, void *args);
 int gptimer_intr(void *frame);
 void gptimer_wait(int reg);
+void gptimer_cpu_initclocks(void);
+void gptimer_delay(u_int);
 
 bus_space_tag_t gptimer_iot;
 bus_space_handle_t gptimer_ioh0,  gptimer_ioh1; 
@@ -185,6 +187,9 @@ gptimer_attach(struct device *parent, struct device *self, void *args)
 	}
 	else 
 		panic("attaching too many gptimers at %x", aa->aa_addr);
+
+	
+	arm_clock_register(gptimer_cpu_initclocks, gptimer_delay);
 }
 
 /* 
@@ -289,7 +294,7 @@ gptimer_intr(void *frame)
  */
 
 void
-cpu_initclocks()
+gptimer_cpu_initclocks()
 {
 //	u_int32_t now;
 	stathz = 128;
@@ -379,7 +384,7 @@ microtime(struct timeval *tvp)
 #endif
 
 void
-delay(u_int usecs)
+gptimer_delay(u_int usecs)
 {
 	u_int32_t clock, oclock, delta, delaycnt;
 	volatile int j;
@@ -442,88 +447,6 @@ setstatclockrate(int newhz)
 	 */
 }
 
-todr_chip_handle_t todr_handle;
-
-/*
- * inittodr:
- *
- *      Initialize time from the time-of-day register.
- */
-#define MINYEAR         2003    /* minimum plausible year */
-void
-inittodr(time_t base)
-{
-	time_t deltat;
-	struct timeval rtctime;
-	struct timespec ts;
-	int badbase;
-
-	if (base < (MINYEAR - 1970) * SECYR) {
-		printf("WARNING: preposterous time in file system\n");
-		/* read the system clock anyway */
-		base = (MINYEAR - 1970) * SECYR;
-		badbase = 1;
-	} else
-		badbase = 0;
-
-	if (todr_handle == NULL ||
-	    todr_gettime(todr_handle, &rtctime) != 0 ||
-	    rtctime.tv_sec == 0) {
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the TODR.
-		 */
-		rtctime.tv_sec = base;
-		rtctime.tv_usec = 0;
-		if (todr_handle != NULL && !badbase) {
-			printf("WARNING: preposterous clock chip time\n");
-			resettodr();
-		}
-		goto bad;
-	} else {
-		ts.tv_sec = rtctime.tv_sec;
-		ts.tv_nsec = rtctime.tv_usec * 1000;
-		tc_setclock(&ts);
-	}
-
-	if (!badbase) {
-		/*
-		 * See if we gained/lost two or more days; if
-		 * so, assume something is amiss.
-		 */
-		deltat = rtctime.tv_sec - base;
-		if (deltat < 0)
-			deltat = -deltat;
-		if (deltat < 2 * SECDAY)
-			return;         /* all is well */
-		printf("WARNING: clock %s %ld days\n",
-		    rtctime.tv_sec < base ? "lost" : "gained",
-		    (long)deltat / SECDAY);
-	}
- bad:
-	printf("WARNING: CHECK AND RESET THE DATE!\n");
-}
-
-
-/*
- * resettodr:
- *
- *      Reset the time-of-day register with the current time.
- */
-void
-resettodr(void)
-{
-	struct timeval rtctime;
-
-	if (rtctime.tv_sec == 0)
-		return;
-			
-	microtime(&rtctime);
-
-	if (todr_handle != NULL &&
-	   todr_settime(todr_handle, &rtctime) != 0)
-		printf("resettodr: failed to set time\n");
-}
 
 u_int
 gptimer_get_timecount(struct timecounter *tc)
