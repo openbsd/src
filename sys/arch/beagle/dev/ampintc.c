@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.1 2011/11/05 11:48:26 drahn Exp $ */
+/* $OpenBSD: ampintc.c,v 1.2 2011/11/05 15:13:51 drahn Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -66,7 +66,7 @@
 #define ICD_ABRn(i)		(0x300 + (IRQ_TO_REG32(i) * 4))
 #define ICD_IPRn(i)		(0x400 + (i))
 #define ICD_IPTRn(i)		(0x800 + (IRQ_TO_REG4(i) * 4))
-#define ICD_ICRn(i)		(0xC00 + (IRQ_TO_REG16(i) / 4))
+#define ICD_ICRn(i)		(0xC00 + (IRQ_TO_REG16(i) * 4))
 /*
  * what about (ppi|spi)_status
  */
@@ -121,7 +121,6 @@
 
 #define AMPAMPINTC_SIZE			0x1000
 
-#define NIRQ			256
 
 struct ampintc_softc {
 	struct device		 sc_dev;
@@ -182,20 +181,16 @@ int ampintc_attached = 0;
 int
 ampintc_match(struct device *parent, void *v, void *aux)
 {
-	printf("ampintc_match board %d\n", board_id);
 	switch (board_id) {
 	case BOARD_ID_OMAP3_BEAGLE:
 		return 0; /* not ported yet ??? - different */
 	case BOARD_ID_OMAP4_PANDA:
-		printf("Yea?\n");
 		break; /* continue trying */
 	default:
 		return 0; /* unknown */
 	}
-		printf("Yea1\n");
 	if (ampintc_attached != 0)
 		return 0;
-	printf("Yea2\n");
 
 	/* XXX */
 	return (1);
@@ -224,6 +219,7 @@ ampintc_attach(struct device *parent, struct device *self, void *args)
 	if (bus_space_map(iot, ICP_ADDR, ICP_SIZE, 0, &p_ioh))
 		panic("ampintc_attach: bus_space_map failed!");
 
+	sc->sc_iot = iot;
 	sc->sc_d_ioh = d_ioh;
 	sc->sc_p_ioh = p_ioh;
 
@@ -231,13 +227,7 @@ ampintc_attach(struct device *parent, struct device *self, void *args)
 	nintr += 32; /* ICD_ICTR + 1, irq 0-31 is SGI, 32+ is PPI */
 	sc->sc_nintr = nintr;
 	printf(" nirq %d\n", nintr);
-	if (nintr > NIRQ) {
-		panic("ampintc needs NIRQ bumped to at least %d", nintr);
-		/*
-		 * or should this code just dynamically allocate 
-		 * ampintc_handler[]
-		 */
-	}
+
 	printf("periph_id 0 %x\n",
 	    bus_space_read_1(iot, d_ioh, ICD_PERIPH_ID_0));
 	printf("periph_id 1 %x\n",
@@ -274,12 +264,13 @@ ampintc_attach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_ampintc_handler = malloc(
 	    (sizeof (*sc->sc_ampintc_handler) * nintr),
-	    M_DEVBUF, M_ZERO);
+	    M_DEVBUF, M_ZERO|M_NOWAIT);
 	for (i = 0; i < nintr; i++) {
 
 		TAILQ_INIT(&sc->sc_ampintc_handler[i].iq_list);
 	}
 
+	ampintc_setipl(IPL_HIGH);  /* XXX ??? */
 	ampintc_calc_mask();
 
 	ampintc_attached = 1;
@@ -289,7 +280,6 @@ ampintc_attach(struct device *parent, struct device *self, void *args)
 	    ampintc_setipl, ampintc_intr_establish, ampintc_intr_disestablish,
 	    ampintc_intr_string, ampintc_irq_handler);
 
-	ampintc_setipl(IPL_HIGH);  /* XXX ??? */
 	enable_interrupts(I32_bit);
 }
 
@@ -306,7 +296,7 @@ ampintc_set_priority(int irq, int pri)
 	 * also low values are higher priority thus IPL_HIGH - pri
 	 */
 	prival = (IPL_HIGH - pri) << ICMIPMR_SH;
-	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, ICD_IPRn(irq), prival);
+	bus_space_write_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPRn(irq), prival);
 }
 
 void
@@ -353,7 +343,7 @@ ampintc_calc_mask(void)
 	struct intrhand		*ih;
 	int			 irq;
 
-	for (irq = 0; irq < NIRQ; irq++) {
+	for (irq = 0; irq < sc->sc_nintr; irq++) {
 		int max = IPL_NONE;
 		int min = IPL_HIGH;
 		TAILQ_FOREACH(ih, &sc->sc_ampintc_handler[irq].iq_list,
@@ -389,6 +379,7 @@ ampintc_calc_mask(void)
 			ampintc_intr_disable(irq);
 		}
 	}
+	printf("cpl %d", ci->ci_cpl);
 	ampintc_setipl(ci->ci_cpl);
 }
 
@@ -396,10 +387,10 @@ void
 ampintc_splx(int new)
 {
 	struct cpu_info *ci = curcpu();
-	ampintc_setipl(new);
 
         if (ci->ci_ipending & arm_smask[ci->ci_cpl])
 		arm_do_pending_intr(ci->ci_cpl);
+	ampintc_setipl(new);
 }
 
 int
@@ -494,7 +485,8 @@ ampintc_intr_establish(int irqno, int level, int (*func)(void *),
 	struct intrhand		*ih;
 	int			 psw;
 
-	if (irqno < 0 || irqno >= NIRQ)
+	printf("ampintc intr_establish %s %d %d", name, irqno, level);
+	if (irqno < 0 || irqno >= sc->sc_nintr)
 		panic("ampintc_intr_establish: bogus irqnumber %d: %s",
 		     irqno, name);
 
