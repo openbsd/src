@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.178 2011/07/25 19:51:24 miod Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.179 2011/11/05 15:47:37 guenther Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2876,7 +2876,8 @@ sys_pread(struct proc *p, void *v, register_t *retval)
 		return (EBADF);
 
 	vp = (struct vnode *)fp->f_data;
-	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO ||
+	    (vp->v_flag & VISTTY)) {
 		return (ESPIPE);
 	}
 
@@ -2916,7 +2917,8 @@ sys_preadv(struct proc *p, void *v, register_t *retval)
 		return (EBADF);
 
 	vp = (struct vnode *)fp->f_data;
-	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO ||
+	    (vp->v_flag & VISTTY)) {
 		return (ESPIPE);
 	}
 
@@ -2955,7 +2957,8 @@ sys_pwrite(struct proc *p, void *v, register_t *retval)
 		return (EBADF);
 
 	vp = (struct vnode *)fp->f_data;
-	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO ||
+	    (vp->v_flag & VISTTY)) {
 		return (ESPIPE);
 	}
 
@@ -2995,7 +2998,8 @@ sys_pwritev(struct proc *p, void *v, register_t *retval)
 		return (EBADF);
 
 	vp = (struct vnode *)fp->f_data;
-	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO ||
+	    (vp->v_flag & VISTTY)) {
 		return (ESPIPE);
 	}
 
