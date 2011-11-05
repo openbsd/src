@@ -1,4 +1,4 @@
-#	$OpenBSD: files.beagle,v 1.9 2011/10/24 22:49:07 drahn Exp $
+#	$OpenBSD: files.beagle,v 1.10 2011/11/05 12:30:58 drahn Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -33,6 +33,16 @@ file	arch/beagle/beagle/uboot_tags.c
 
 # note that the order of the devices in _this_ file
 # affects the order that the devices will configure.
+
+# cortex based peripherals
+device ampintc
+attach ampintc at ahb
+file	arch/beagle/dev/ampintc.c		ampintc
+
+device amptimer
+attach amptimer at ahb
+file	arch/beagle/dev/amptimer.c		amptimer
+
 
 include "dev/sdmmc/files.sdmmc"
 
@@ -83,7 +93,6 @@ file	arch/beagle/dev/omkbd.c			omkbd
 device omdisplay: wsemuldisplaydev, rasops16
 attach omdisplay at ahb
 file arch/beagle/dev/omdisplay.c		omdisplay
-
 
 #
 # Machine-independent SCSI drivers

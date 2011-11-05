@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.9 2011/10/21 22:55:01 drahn Exp $
+# $OpenBSD: GENERIC,v 1.10 2011/11/05 12:30:58 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -58,10 +58,11 @@ ahb0		at mainbus?
 
 prcm0		at ahb? addr 0x48004000	# power/clock controller
 intc0		at ahb? addr 0x48200000	# interrupt controller
+ampintc0	at ahb? 
 gptimer0	at ahb? addr 0x49032000	intr 38 # timer GPTIMER2
 gptimer1	at ahb? addr 0x48318000	intr 37 # timer GPTIMER1
 
-#sm0		at ahb?	addr 0x0C000300 intr 188 #ethernet
+amptimer0	at ahb? addr 0x48240600
 
 omgpio0		at ahb? addr 0x48310000 intr 29
 omgpio1		at ahb? addr 0x49050000 intr 30
@@ -86,8 +87,6 @@ ehci0          at ahb? addr 0x48064800 size 0x400 intr 77      # ehci (shim)
 usb*           at ehci?
 
 
-#mcspi0		at ahb? addr 0x48098000 intr 65
-#mcspi1		at ahb? addr 0x4809A000 intr 66
 
 #usbotg0	at ahb? addr 0x4c000000 size 0x70 intr 3
 #usb*		at ohci?
