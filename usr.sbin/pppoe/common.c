@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.12 2004/05/06 20:29:04 deraadt Exp $	*/
+/*	$OpenBSD: common.c,v 1.13 2011/11/05 09:20:36 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -28,10 +28,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/uio.h>
-#include <sys/time.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/stat.h>
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
@@ -41,10 +38,8 @@
 #include <net/bpf.h>
 #include <errno.h>
 #include <string.h>
-#include <err.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <sysexits.h>
 #include <stdlib.h>
 #include <md5.h>
 

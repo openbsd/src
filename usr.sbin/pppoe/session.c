@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.4 2011/10/15 02:05:07 yasuoka Exp $	*/
+/*	$OpenBSD: session.c,v 1.5 2011/11/05 09:20:36 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -25,24 +25,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
 #include <sys/types.h>
-#include <sys/uio.h>
-#include <sys/time.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <net/bpf.h>
-#include <errno.h>
 #include <string.h>
-#include <err.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <sysexits.h>
 #include <stdlib.h>
 
 #include "pppoe.h"

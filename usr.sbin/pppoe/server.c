@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.14 2011/10/11 23:41:51 yasuoka Exp $	*/
+/*	$OpenBSD: server.c,v 1.15 2011/11/05 09:20:36 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -25,12 +25,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
 #include <sys/types.h>
 #include <sys/uio.h>
-#include <sys/time.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
 #include <sys/param.h>
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -38,11 +35,9 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <net/bpf.h>
-#include <net/ppp_defs.h>
 #include <errno.h>
 #include <string.h>
 #include <err.h>
-#include <fcntl.h>
 #include <unistd.h>
 #include <sysexits.h>
 #include <stdlib.h>
