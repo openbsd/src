@@ -1,4 +1,4 @@
-/* $OpenBSD: amptimer.c,v 1.2 2011/11/06 01:34:53 drahn Exp $ */
+/* $OpenBSD: amptimer.c,v 1.3 2011/11/06 11:09:21 miod Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -36,7 +36,7 @@
 #define 	GTIMER_CTRL_IRQ		(1 << 2)
 #define 	GTIMER_CTRL_COMP	(1 << 1)
 #define 	GTIMER_CTRL_TIMER	(1 << 0)
-#define GTIMER_STATUS		0x10c
+#define GTIMER_STATUS		0x20c
 #define 	GTIMER_STATUS_EVENT		(1 << 0)
 #define GTIMER_CMP_LOW		0x210
 #define GTIMER_CMP_HIGH		0x214
@@ -128,7 +128,7 @@ amptimer_attach(struct device *parent, struct device *self, void *args)
                 panic("amptimer_attach: bus_space_map failed!");
 
 	sc->sc_ticks_per_second = TIMER_FREQUENCY;
-	printf("tick rate %d KHz\n", sc->sc_ticks_per_second /1024);
+	printf(": tick rate %d KHz\n", sc->sc_ticks_per_second /1024);
 
 	sc->sc_ioh = ioh;
 
@@ -146,7 +146,7 @@ amptimer_attach(struct device *parent, struct device *self, void *args)
 	bus_space_write_4(sc->sc_iot, ioh, GTIMER_STATUS, 1);
 
 	/*
-	 * comparitor registers and interrupts not enabled until
+	 * comparator registers and interrupts not enabled until
 	 * timer configures
 	 */
 
