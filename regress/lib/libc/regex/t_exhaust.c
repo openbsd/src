@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_exhaust.c,v 1.1 2011/11/05 15:01:37 otto Exp $	*/
+/*	$OpenBSD: t_exhaust.c,v 1.2 2011/11/06 15:47:07 otto Exp $	*/
 /*	$NetBSD: t_exhaust.c,v 1.2 2011/10/21 00:41:34 christos Exp $	*/
 
 /*-
@@ -164,7 +164,7 @@ static char *(*patterns[])(size_t) = {
 main()
 {
 	regex_t re;
-	int e;
+	int e, ret = 0;
 	size_t i;
 
 	for (i = 0; i < sizeof(patterns) / sizeof(patterns[0]); i++) {
@@ -172,13 +172,15 @@ main()
 		e = regcomp(&re, d, i == 6 ? REG_BASIC : REG_EXTENDED);
 		free(d);
 		if (e) {
-			if (e != REG_ESPACE)
+			if (e != REG_ESPACE) {
 				printf("regcomp returned %d for pattern %zu", e, i);
+				ret = 1;
+			}
 			continue;
 		}
 		(void)regexec(&re, "aaaaaaaa", 0, NULL, 0);
 		regfree(&re);
 	}
-	return 0;
+	return ret;
 }
 
