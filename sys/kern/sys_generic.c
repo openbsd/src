@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.72 2010/12/19 19:54:46 kettenis Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.73 2011/11/06 12:10:04 guenther Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -176,7 +176,8 @@ dofilereadv(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 		/*
 		 * Reads return ssize_t because -1 is returned on error.
 		 * Therefore we must restrict the length to SSIZE_MAX to
-		 * avoid garbage return values.
+		 * avoid garbage return values.  Note that the addition is
+		 * guaranteed to not wrap because SSIZE_MAX * 2 < SIZE_MAX.
 		 */
 		if (iov->iov_len > SSIZE_MAX || auio.uio_resid > SSIZE_MAX) {
 			error = EINVAL;
@@ -329,7 +330,8 @@ dofilewritev(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 		/*
 		 * Writes return ssize_t because -1 is returned on error.
 		 * Therefore we must restrict the length to SSIZE_MAX to
-		 * avoid garbage return values.
+		 * avoid garbage return values.  Note that the addition is
+		 * guaranteed to not wrap because SSIZE_MAX * 2 < SIZE_MAX.
 		 */
 		if (iov->iov_len > SSIZE_MAX || auio.uio_resid > SSIZE_MAX) {
 			error = EINVAL;
