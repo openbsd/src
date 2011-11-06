@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.33 2011/09/21 10:12:58 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.34 2011/11/06 23:21:04 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1174,34 +1174,37 @@ pmap_free_l2_bucket(pmap_t pm, struct l2_bucket *l2b, u_int count)
 int
 pmap_l2ptp_ctor(void *arg, void *v, int flags)
 {
-#ifndef PMAP_INCLUDE_PTE_SYNC
 	struct l2_bucket *l2b;
 	pt_entry_t *ptep, pte;
 	vaddr_t va = (vaddr_t)v & ~PGOFSET;
 
-	/*
-	 * The mappings for these page tables were initially made using
-	 * pmap_kenter_pa() by the pool subsystem. Therefore, the cache-
-	 * mode will not be right for page table mappings. To avoid
-	 * polluting the pmap_kenter_pa() code with a special case for
-	 * page tables, we simply fix up the cache-mode here if it's not
-	 * correct.
-	 */
-	l2b = pmap_get_l2_bucket(pmap_kernel(), va);
-	KDASSERT(l2b != NULL);
-	ptep = &l2b->l2b_kva[l2pte_index(va)];
-	pte = *ptep;
+	if (PMAP_NEEDS_PTE_SYNC) {
 
-	if ((pte & L2_S_CACHE_MASK) != pte_l2_s_cache_mode_pt) {
 		/*
-		 * Page tables must have the cache-mode set to Write-Thru.
+		 * The mappings for these page tables were initially made using
+		 * pmap_kenter_pa() by the pool subsystem. Therefore, the cache-
+		 * mode will not be right for page table mappings. To avoid
+		 * polluting the pmap_kenter_pa() code with a special case for
+		 * page tables, we simply fix up the cache-mode here if it's not
+		 * correct.
 		 */
-		*ptep = (pte & ~L2_S_CACHE_MASK) | pte_l2_s_cache_mode_pt;
-		PTE_SYNC(ptep);
-		cpu_tlb_flushD_SE(va);
-		cpu_cpwait();
+		l2b = pmap_get_l2_bucket(pmap_kernel(), va);
+		KDASSERT(l2b != NULL);
+		ptep = &l2b->l2b_kva[l2pte_index(va)];
+		pte = *ptep;
+
+		if ((pte & L2_S_CACHE_MASK) != pte_l2_s_cache_mode_pt) {
+			/*
+			 * Page tables must have the cache-mode set to
+			 * Write-Thru.
+			 */
+			*ptep = (pte & ~L2_S_CACHE_MASK) |
+			    pte_l2_s_cache_mode_pt;
+			PTE_SYNC(ptep);
+			cpu_tlb_flushD_SE(va);
+			cpu_cpwait();
+		}
 	}
-#endif
 
 	memset(v, 0, L2_TABLE_SIZE_REAL);
 	PTE_SYNC_RANGE(v, L2_TABLE_SIZE_REAL / sizeof(pt_entry_t));
@@ -4755,6 +4758,7 @@ pmap_pte_init_arm11(void)
 void
 pmap_pte_init_armv7(void)
 {
+	uint32_t cachereg;
 
 	/*
 	 * XXX 
@@ -4780,6 +4784,16 @@ pmap_pte_init_armv7(void)
 	pte_l2_s_proto = L2_S_PROTO_v7;
 
 	pmap_copy_page_func = pmap_copy_page_v7;
+
+	/* probe L1 dcache */
+	__asm __volatile("mcr p15, 2, %0, c0, c0, 0" :: "r" (0) );
+	/* read the arm v7 cache control register, is writhru is supported? */
+	__asm __volatile("mrc p15, 1, %0, c0, c0, 0"
+		: "=r" (cachereg) :);
+
+	if ((cachereg & 0x80000000) == 0)
+		pmap_needs_pte_sync = 1;
+	pmap_needs_pte_sync = 1;
 }
 #endif /* CPU_ARMv7 */
 
