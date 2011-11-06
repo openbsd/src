@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.c,v 1.13 2004/10/21 20:57:08 millert Exp $	*/
+/*	$OpenBSD: sched.c,v 1.14 2011/11/06 01:43:50 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sched.c	8.1 (Berkeley) 6/6/93
- *	$Id: sched.c,v 1.13 2004/10/21 20:57:08 millert Exp $
+ *	$Id: sched.c,v 1.14 2011/11/06 01:43:50 guenther Exp $
  */
 
 /*
@@ -54,7 +54,7 @@ struct pjob {
 	pid_t pid;			/* Process ID of job */
 	cb_fun cb_fun;			/* Callback function */
 	void *cb_closure;		/* Closure for callback */
-	union wait w;			/* Status filled in by sigchld */
+	int w;				/* Status filled in by sigchld */
 	void *wchan;			/* Wait channel */
 };
 
@@ -193,24 +193,24 @@ wakeup_task(int rc, int term, void *cl)
 void
 sigchld(int sig)
 {
-	union wait w;
+	int w;
 	int save_errno = errno;
 	pid_t pid;
 
 #ifdef SYS5_SIGNALS
 	if ((pid = wait(&w)) > 0) {
 #else
-	while ((pid = wait3((int *) &w, WNOHANG, (struct rusage *) 0)) > 0) {
+	while ((pid = waitpid((pid_t)-1, &w, WNOHANG)) > 0) {
 #endif /* SYS5_SIGNALS */
 		pjob *p, *p2;
 
 		if (WIFSIGNALED(w))
 			plog(XLOG_ERROR, "Process %ld exited with signal %ld",
-				(long)pid, w.w_termsig);
+				(long)pid, WTERMSIG(w));
 #ifdef DEBUG
 		else
 			dlog("Process %ld exited with status %ld",
-				(long)pid, w.w_retcode);
+				(long)pid, WEXITSTATUS(w));
 #endif /* DEBUG */
 
 		for (p = FIRST(pjob, &proc_wait_list);
@@ -263,8 +263,9 @@ do_task_notify(void)
 		 * Do callback if it exists
 		 */
 		if (p->cb_fun)
-			(*p->cb_fun)(p->w.w_retcode,
-				p->w.w_termsig, p->cb_closure);
+			(*p->cb_fun)(WIFEXITED(p->w) ? WEXITSTATUS(p->w) : 0,
+				WIFSIGNALED(p->w) ? WTERMSIG(p->w) : 0,
+				p->cb_closure);
 
 		free((void *)p);
 	}

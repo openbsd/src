@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_1.c,v 1.9 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: pl_1.c,v 1.10 2011/11/06 01:43:50 guenther Exp $	*/
 /*	$NetBSD: pl_1.c,v 1.3 1995/04/22 10:37:07 cgd Exp $	*/
 
 /*
@@ -124,13 +124,13 @@ void
 child(n)
 	int n __attribute__((unused));
 {
-	union wait status;
+	int status;
 	int pid;
 	int save_errno = errno;
 	
 	(void) signal(SIGCHLD, SIG_DFL);
 	do {
-		pid = wait3((int *)&status, WNOHANG, (struct rusage *)0);
+		pid = waitpid((pid_t)-1, &status, WNOHANG);
 		if (pid < 0 || (pid > 0 && !WIFSTOPPED(status)))
 			hasdriver = 0;
 	} while (pid > 0);

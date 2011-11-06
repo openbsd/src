@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.21 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: proc.c,v 1.22 2011/11/06 01:43:50 guenther Exp $	*/
 /*	$NetBSD: proc.c,v 1.9 1995/04/29 23:21:33 mycroft Exp $	*/
 
 /*-
@@ -75,13 +75,13 @@ pchild(int notused)
     int pid;
     extern int insource;
     int save_errno = errno;
-    union wait w;
+    int w;
     int     jobflags;
     struct rusage ru;
 
 loop:
     errno = 0;			/* reset, just in case */
-    pid = wait3(&w.w_status,
+    pid = wait3(&w,
        (setintr && (intty || insource) ? WNOHANG | WUNTRACED : WNOHANG), &ru);
 
     if (pid <= 0) {
@@ -103,7 +103,7 @@ found:
     pp->p_flags &= ~(PRUNNING | PSTOPPED | PREPORTED);
     if (WIFSTOPPED(w)) {
 	pp->p_flags |= PSTOPPED;
-	pp->p_reason = w.w_stopsig;
+	pp->p_reason = WSTOPSIG(w);
     }
     else {
 	if (pp->p_flags & (PTIME | PPTIME) || adrof(STRtime))
@@ -111,16 +111,16 @@ found:
 
 	pp->p_rusage = ru;
 	if (WIFSIGNALED(w)) {
-	    if (w.w_termsig == SIGINT)
+	    if (WTERMSIG(w) == SIGINT)
 		pp->p_flags |= PINTERRUPTED;
 	    else
 		pp->p_flags |= PSIGNALED;
-	    if (w.w_coredump)
+	    if (WCOREDUMP(w))
 		pp->p_flags |= PDUMPED;
-	    pp->p_reason = w.w_termsig;
+	    pp->p_reason = WTERMSIG(w);
 	}
 	else {
-	    pp->p_reason = w.w_retcode;
+	    pp->p_reason = WEXITSTATUS(w);
 	    if (pp->p_reason != 0)
 		pp->p_flags |= PAEXITED;
 	    else
