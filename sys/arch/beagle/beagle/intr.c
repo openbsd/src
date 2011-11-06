@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.3 2011/11/05 19:02:25 drahn Exp $ */
+/* $OpenBSD: intr.c,v 1.4 2011/11/06 01:34:53 drahn Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -294,16 +294,20 @@ void arm_dflt_delay(u_int usecs);
 struct {
 	void (*delay)(u_int);
 	void	(*initclocks)(void);
+	void    (*setstatclockrate)(int);
 } arm_clock_func = {
 	arm_dflt_delay,
+	NULL,
 	NULL
 };
 
 void
-arm_clock_register(void (*initclock)(void), void (*delay)(u_int))
+arm_clock_register(void (*initclock)(void), void (*delay)(u_int),
+    void (*statclock)(int))
 {
 	arm_clock_func.initclocks = initclock;
 	arm_clock_func.delay = delay;
+	arm_clock_func.setstatclockrate = statclock;
 }
 
 
@@ -417,4 +421,13 @@ resettodr(void)
 	if (todr_handle != NULL &&
 	   todr_settime(todr_handle, &rtctime) != 0)
 		printf("resettodr: failed to set time\n");
+}
+
+void
+setstatclockrate(int new)
+{
+	if (arm_clock_func.setstatclockrate == NULL) {
+		panic("arm_clock_func.setstatclockrate  not intialized");
+	}
+	arm_clock_func.setstatclockrate(new);
 }

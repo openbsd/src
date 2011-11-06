@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.13 2011/11/05 12:30:58 drahn Exp $
+# $OpenBSD: RAMDISK,v 1.14 2011/11/06 01:34:53 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -30,8 +30,6 @@ options	INET6		# IPv6 (needs INET)
 options	DDB		# kernel debugger
 options	FIFO		# FIFOs; RECOMMENDED
 #options	NFSCLIENT	# NFS 
-
-options		ARM11_AVIC_INTR
 
 makeoptions	KERNEL_BASE_PHYS="0x80300000"
 makeoptions	KERNEL_BASE_VIRT="0xc0300000"
@@ -67,7 +65,7 @@ ampintc0	at ahb?
 gptimer0	at ahb? addr 0x49032000	intr 38 # timer GPTIMER2
 gptimer1	at ahb? addr 0x48318000	intr 37 # timer GPTIMER1
 
-amptimer0	at ahb? addr 0x48240600
+amptimer0      at ahb? addr 0x48240000
 
 omgpio0		at ahb? addr 0x48310000 intr 29
 omgpio1		at ahb? addr 0x49050000 intr 30
@@ -164,6 +162,7 @@ uk*		at scsibus?
 
 
 # onboard uarts
+com0	at ahb?	addr	0x48020000	size 0x400 intr 74 # UART3
 com0	at ahb?	addr	0x49020000	size 0x400 intr 74 # UART3
 
 #com1	at ahb?	addr	0xXXXXXX00	size 0x400 intr 73

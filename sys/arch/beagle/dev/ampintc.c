@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.2 2011/11/05 15:13:51 drahn Exp $ */
+/* $OpenBSD: ampintc.c,v 1.3 2011/11/06 01:34:53 drahn Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -65,7 +65,7 @@
 #define ICD_ICPRn(i)		(0x280 + (IRQ_TO_REG32(i) * 4))
 #define ICD_ABRn(i)		(0x300 + (IRQ_TO_REG32(i) * 4))
 #define ICD_IPRn(i)		(0x400 + (i))
-#define ICD_IPTRn(i)		(0x800 + (IRQ_TO_REG4(i) * 4))
+#define ICD_IPTRn(i)		(0x800 + (i))
 #define ICD_ICRn(i)		(0xC00 + (IRQ_TO_REG16(i) * 4))
 /*
  * what about (ppi|spi)_status
@@ -122,6 +122,9 @@
 #define AMPAMPINTC_SIZE			0x1000
 
 
+#define IRQ_ENABLE	1
+#define IRQ_DISABLE	0
+
 struct ampintc_softc {
 	struct device		 sc_dev;
 	struct intrq 		*sc_ampintc_handler;
@@ -167,6 +170,7 @@ void		 ampintc_eoi(uint32_t);
 void		 ampintc_set_priority(int, int);
 void		 ampintc_intr_enable(int);
 void		 ampintc_intr_disable(int);
+void		 ampintc_route(int, int , int);
 
 struct cfattach	ampintc_ca = {
 	sizeof (struct ampintc_softc), ampintc_match, ampintc_attach
@@ -243,17 +247,16 @@ ampintc_attach(struct device *parent, struct device *self, void *args)
 	for (i = 0; i < nintr/32; i++) {
 		bus_space_write_4(iot, d_ioh, ICD_ICERn(i*32), ~0);
 		bus_space_write_4(iot, d_ioh, ICD_ICPRn(i*32), ~0);
+		bus_space_write_1(iot, d_ioh, ICD_IPTRn(i), 0);
 	}
 	for (i = 0; i < nintr/4; i++) {
-
 		/* lowest priority ?? */
 		bus_space_write_4(iot, d_ioh, ICD_IPRn(i*32), 0xffffffff);
 		/* target no cpus */
-		bus_space_write_4(iot, d_ioh, ICD_IPTRn(i*32), 0);
 	}
-	for (i = 2; i < nintr/15; i++) {
+	for (i = 2; i < nintr/16; i++) {
 		/* irq 32 - N */
-		bus_space_write_4(iot, d_ioh, ICD_ICRn(i*32), 0);
+		bus_space_write_4(iot, d_ioh, ICD_ICRn(i*4), 0);
 	}
 
 	/* software reset of the part? */
@@ -321,6 +324,9 @@ ampintc_intr_enable(int irq)
 {
         struct ampintc_softc	*sc = ampintc;
 
+	printf("enable irq %d register %x bitmask %08x\n",
+		irq, ICD_ISERn(irq), 1 << IRQ_TO_REG32BIT(irq));
+
 	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, ICD_ISERn(irq),
 	    1 << IRQ_TO_REG32BIT(irq));
 }
@@ -375,11 +381,14 @@ ampintc_calc_mask(void)
 		if (min != IPL_NONE) {
 			ampintc_set_priority(irq, min);
 			ampintc_intr_enable(irq);
+			ampintc_route(irq, IRQ_ENABLE, 0);
 		} else {
 			ampintc_intr_disable(irq);
+			ampintc_route(irq, IRQ_DISABLE, 0);
+
 		}
 	}
-	printf("cpl %d", ci->ci_cpl);
+	printf("cpl %d\n", ci->ci_cpl);
 	ampintc_setipl(ci->ci_cpl);
 }
 
@@ -438,11 +447,24 @@ ampintc_iack(void)
 void
 ampintc_eoi(uint32_t eoi)
 {
-#if 0
-	uint32_t intid;
 	struct ampintc_softc	*sc = ampintc;
-	intid = bus_space_write_4(sc->sc_cpu, ICPEOIR, eoi);
-#endif
+	bus_space_write_4(sc->sc_iot, sc->sc_p_ioh, ICPEOIR, eoi);
+}
+
+void
+ampintc_route(int irq, int enable, int cpu)
+{
+	uint8_t  val;
+	struct ampintc_softc	*sc = ampintc;
+	if (enable == IRQ_ENABLE) {
+		val = bus_space_read_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPTRn(irq));
+		val |= (1 << cpu);
+		bus_space_write_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPTRn(irq), val);
+	} else  {
+		val = bus_space_read_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPTRn(irq));
+		val &= ~(1 << cpu);
+		bus_space_write_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPTRn(irq), val);
+	}
 }
 
 void
@@ -454,10 +476,25 @@ ampintc_irq_handler(void *frame)
 	uint32_t		 iack_val;
 	int			 irq, pri, s;
 
-#ifdef DEBUG_INTC
-	printf("irq %d fired\n", irq);
-#endif
 	iack_val = ampintc_iack();
+//#define DEBUG_INTC
+#ifdef DEBUG_INTC
+	if (iack_val != 27)
+	printf("irq  %d fired\n", iack_val);
+	else {
+		static int cnt = 0;
+		if ((cnt++ % 100) == 0) {
+			printf("irq  %d fired * _100\n", iack_val);
+			Debugger();
+		}
+
+	}
+#endif
+
+	if (iack_val == 1023) {
+		printf("spur\n");
+		return;
+	}
 	irq = iack_val & ((1 << sc->sc_nintr) - 1);
 
 	pri = sc->sc_ampintc_handler[irq].iq_irq;
@@ -485,7 +522,7 @@ ampintc_intr_establish(int irqno, int level, int (*func)(void *),
 	struct intrhand		*ih;
 	int			 psw;
 
-	printf("ampintc intr_establish %s %d %d", name, irqno, level);
+	printf("ampintc intr_establish %s %d %d\n", name, irqno, level);
 	if (irqno < 0 || irqno >= sc->sc_nintr)
 		panic("ampintc_intr_establish: bogus irqnumber %d: %s",
 		     irqno, name);

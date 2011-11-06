@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.10 2011/11/05 12:30:58 drahn Exp $
+# $OpenBSD: GENERIC,v 1.11 2011/11/06 01:34:53 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -23,8 +23,6 @@ include "../../../conf/GENERIC"
 options	TIMEZONE=0	# time zone to adjust RTC time by
 options	DST=0		# daylight saving time used by RTC
 #options	NFSCLIENT	# NFS 
-
-options		ARM11_AVIC_INTR
 
 makeoptions	KERNEL_BASE_PHYS="0x80300000"
 makeoptions	KERNEL_BASE_VIRT="0xc0300000"
@@ -62,7 +60,7 @@ ampintc0	at ahb?
 gptimer0	at ahb? addr 0x49032000	intr 38 # timer GPTIMER2
 gptimer1	at ahb? addr 0x48318000	intr 37 # timer GPTIMER1
 
-amptimer0	at ahb? addr 0x48240600
+amptimer0	at ahb? addr 0x48240000
 
 omgpio0		at ahb? addr 0x48310000 intr 29
 omgpio1		at ahb? addr 0x49050000 intr 30

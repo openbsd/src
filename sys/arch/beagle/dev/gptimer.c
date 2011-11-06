@@ -1,4 +1,4 @@
-/* $OpenBSD: gptimer.c,v 1.9 2011/11/05 18:28:32 drahn Exp $ */
+/* $OpenBSD: gptimer.c,v 1.10 2011/11/06 01:34:53 drahn Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -112,6 +112,7 @@ int gptimer_intr(void *frame);
 void gptimer_wait(int reg);
 void gptimer_cpu_initclocks(void);
 void gptimer_delay(u_int);
+void gptimer_setstatclockrate(int newhz);
 
 bus_space_tag_t gptimer_iot;
 bus_space_handle_t gptimer_ioh0,  gptimer_ioh1; 
@@ -189,7 +190,8 @@ gptimer_attach(struct device *parent, struct device *self, void *args)
 		panic("attaching too many gptimers at %x", aa->aa_addr);
 
 	
-	arm_clock_register(gptimer_cpu_initclocks, gptimer_delay);
+	arm_clock_register(gptimer_cpu_initclocks, gptimer_delay,
+	    gptimer_setstatclockrate);
 }
 
 /* 
@@ -423,7 +425,7 @@ gptimer_delay(u_int usecs)
 }
 
 void
-setstatclockrate(int newhz)
+gptimer_setstatclockrate(int newhz)
 {
 	int minint, statint;
 	int s;
