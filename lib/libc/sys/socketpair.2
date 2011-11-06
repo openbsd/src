@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socketpair.2,v 1.13 2007/05/31 19:19:34 jmc Exp $
+.\"	$OpenBSD: socketpair.2,v 1.14 2011/11/06 12:07:42 deraadt Exp $
 .\"	$NetBSD: socketpair.2,v 1.5 1995/02/27 12:38:00 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)socketpair.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: November 6 2011 $
 .Dt SOCKETPAIR 2
 .Os
 .Sh NAME
@@ -99,7 +99,7 @@ domain.
 Many operating systems only accept a
 .Ar protocol
 of
-.Ev PF_UNSPEC ,
+.Dv PF_UNSPEC ,
 so that should be used instead of
-.Ev PF_LOCAL
+.Dv PF_LOCAL
 for maximal portability.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getlogin.2,v 1.18 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: getlogin.2,v 1.19 2011/11/06 12:07:42 deraadt Exp $
 .\"	$NetBSD: getlogin.2,v 1.4 1995/02/27 12:33:03 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)getlogin.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: November 6 2011 $
 .Dt GETLOGIN 2
 .Os
 .Sh NAME
@@ -73,7 +73,7 @@ length parameter,
 that specifies the size of the buffer.
 The buffer should be large enough to store the login name and a trailing NUL
 (typically
-.Ev LOGIN_NAME_MAX
+.Dv LOGIN_NAME_MAX
 bytes).
 .Pp
 .Fn setlogin
