@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_fork.c,v 1.3 2009/11/27 19:42:24 guenther Exp $ */
+/*	$OpenBSD: rthread_fork.c,v 1.4 2011/11/06 11:48:59 guenther Exp $ */
 
 /*
  * Copyright (c) 2008 Kurt Miller <kurt@openbsd.org>
@@ -29,10 +29,6 @@
  *
  * $FreeBSD: /repoman/r/ncvs/src/lib/libc_r/uthread/uthread_atfork.c,v 1.1 2004/12/10 03:36:45 grog Exp $
  */
-
-#include <sys/param.h>
-
-#include <machine/spinlock.h>
 
 #include <errno.h>
 #include <pthread.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sig.c,v 1.8 2009/11/27 19:43:55 guenther Exp $ */
+/*	$OpenBSD: rthread_sig.c,v 1.9 2011/11/06 11:48:59 guenther Exp $ */
 /*
  * Copyright (c) 2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -19,17 +19,7 @@
  * signals
  */
 
-#include <sys/param.h>
-#include <sys/mman.h>
-#include <sys/wait.h>
-
-#include <machine/spinlock.h>
-
-#include <stdlib.h>
-#include <unistd.h>
 #include <signal.h>
-#include <stdio.h>
-#include <string.h>
 #include <errno.h>
 
 #include <pthread.h>

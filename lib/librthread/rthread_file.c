@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_file.c,v 1.2 2009/11/27 19:45:54 guenther Exp $	*/
+/*	$OpenBSD: rthread_file.c,v 1.3 2011/11/06 11:48:59 guenther Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -40,10 +40,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/queue.h>
 #include <pthread.h>
-#include <machine/spinlock.h>
 #include "rthread.h"
 
 /*

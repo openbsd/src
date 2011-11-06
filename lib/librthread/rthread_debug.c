@@ -1,21 +1,12 @@
-/* $OpenBSD: rthread_debug.c,v 1.1 2005/12/31 21:40:43 marc Exp $ */
+/* $OpenBSD: rthread_debug.c,v 1.2 2011/11/06 11:48:59 guenther Exp $ */
 /* $snafu: rthread_debug.c,v 1.2 2004/12/09 18:41:44 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
-
-#define _POSIX_THREADS
-
-#include <sys/param.h>
-#include <sys/mman.h>
-#include <sys/wait.h>
-
-#include <machine/spinlock.h>
 
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "rthread.h"

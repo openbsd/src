@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.26 2011/10/17 06:39:20 guenther Exp $ */
+/*	$OpenBSD: rthread.h,v 1.27 2011/11/06 11:48:59 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -27,6 +27,7 @@
 
 #include <sys/queue.h>
 #include <semaphore.h>
+#include <machine/spinlock.h>
 #include <machine/tcb.h>		/* for TLS_VARIANT */
 
 #ifdef __LP64__

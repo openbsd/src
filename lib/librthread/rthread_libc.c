@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_libc.c,v 1.7 2008/06/13 21:18:43 otto Exp $ */
+/* $OpenBSD: rthread_libc.c,v 1.8 2011/11/06 11:48:59 guenther Exp $ */
 /* $snafu: libc_tag.c,v 1.4 2004/11/30 07:00:06 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
@@ -6,8 +6,6 @@
 #define _POSIX_THREADS
 
 #include <sys/time.h>
-
-#include <machine/spinlock.h>
 
 #include <pthread.h>
 #include <stdlib.h>
