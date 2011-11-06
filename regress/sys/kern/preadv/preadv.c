@@ -1,15 +1,16 @@
-/*	$OpenBSD: preadv.c,v 1.3 2011/11/05 15:43:04 guenther Exp $	*/
+/*	$OpenBSD: preadv.c,v 1.4 2011/11/06 15:00:34 guenther Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain.
  */
 #include <sys/types.h>
 #include <sys/uio.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 int
 main(int argc, char *argv[])
@@ -55,6 +56,24 @@ main(int argc, char *argv[])
 
 	if (c != magic[1])
 		errx(1, "read2 %c != %c", c, magic[1]);
+
+	if ((ret = preadv(fd, iv, 2, -1)) != -1)
+		errx(1, "preadv with negative offset succeeded,\
+				returning %d", ret);
+	if (errno != EINVAL)
+		err(1, "pread with negative offset");
+
+	if ((ret = preadv(fd, iv, 2, LLONG_MAX)) != -1)
+		errx(1, "preadv with wrapping offset succeeded,\
+				returning %d", ret);
+	if (errno != EINVAL)
+		err(1, "pread with wrapping offset");
+
+	if (read(fd, &c, 1) != 1)
+		err(1, "read3");
+
+	if (c != magic[2])
+		errx(1, "read3 %c != %c", c, magic[2]);
 
 	close(fd);
 
