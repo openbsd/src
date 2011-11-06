@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2011/10/17 06:39:20 guenther Exp $
+#	$OpenBSD: Makefile,v 1.17 2011/11/06 12:15:51 guenther Exp $
 
 LIB=rthread
 WANTLINT=
@@ -12,7 +12,7 @@ CFLAGS+=-I${LIBCSRCDIR}/arch/${MACHINE_CPU} -I${LIBCSRCDIR}/include
 .PATH: ${.CURDIR}/arch/${MACHINE_CPU}
 SRCS= rthread.c rthread_attr.c rthread_sched.c rthread_sync.c rthread_tls.c \
 	rthread_sig.c rthread_np.c rthread_debug.c rthread_stack.c \
-	rthread_libc.c rthread_fork.c rthread_file.c
+	rthread_libc.c rthread_fork.c rthread_file.c sched_prio.c
 
 OBJS+= _atomic_lock.o rfork_thread.o cerror.o
 

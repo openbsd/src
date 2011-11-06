@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.27 2011/11/06 11:48:59 guenther Exp $ */
+/*	$OpenBSD: rthread.h,v 1.28 2011/11/06 12:15:51 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -94,6 +94,9 @@ struct pthread_attr {
 	int sched_inherit;
 	int create_suspended;
 };
+
+#define	PTHREAD_MIN_PRIORITY	0
+#define	PTHREAD_MAX_PRIORITY	31
 
 struct rthread_key {
 	int used;
