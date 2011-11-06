@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.16 2011/10/27 14:32:57 chl Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.17 2011/11/06 16:57:27 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -195,10 +195,6 @@ fsqueue_envelope_update(enum queue_kind qkind, struct envelope *ep)
 	char temp[MAXPATHLEN];
 	char dest[MAXPATHLEN];
 	FILE *fp;
-	u_int64_t batch_id;
-
-	batch_id = ep->batch_id;
-	ep->batch_id = 0;
 
 	if (! bsnprintf(temp, sizeof(temp), "%s/envelope.tmp", PATH_QUEUE))
 		fatalx("fsqueue_envelope_update");
@@ -230,7 +226,6 @@ fsqueue_envelope_update(enum queue_kind qkind, struct envelope *ep)
 		fatal("fsqueue_envelope_update: rename");
 	}
 
-	ep->batch_id = batch_id;
 	return 1;
 
 tempfail:
@@ -239,7 +234,6 @@ tempfail:
 	if (fp)
 		fclose(fp);
 
-	ep->batch_id = batch_id;
 	return 0;
 }
 
