@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.41 2010/09/07 19:58:09 marco Exp $ */
+/* $OpenBSD: gnum4.c,v 1.42 2011/11/06 12:25:43 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -497,7 +497,7 @@ doregexp(const char *argv[], int argc)
 			pbstr(argv[4]);
 	}
 	error = regcomp(&re, mimic_gnu ? twiddle(argv[3]) : argv[3],
-	    REG_EXTENDED);
+	    REG_EXTENDED|REG_NEWLINE);
 	if (error != 0)
 		exit_regerror(error, &re);
 
