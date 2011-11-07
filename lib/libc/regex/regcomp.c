@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.20 2010/11/21 00:02:30 tedu Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.21 2011/11/07 09:58:27 otto Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -99,7 +99,7 @@ static sopno dupl(struct parse *, sopno, sopno);
 static void doemit(struct parse *, sop, size_t);
 static void doinsert(struct parse *, sop, size_t, sopno);
 static void dofwd(struct parse *, sopno, sop);
-static void enlarge(struct parse *, sopno);
+static int enlarge(struct parse *, sopno);
 static void stripsnug(struct parse *, struct re_guts *);
 static void findmust(struct parse *, struct re_guts *);
 static sopno pluscount(struct parse *, struct re_guts *);
@@ -1270,8 +1270,8 @@ dupl(struct parse *p,
 	assert(finish >= start);
 	if (len == 0)
 		return(ret);
-	enlarge(p, p->ssize + len);	/* this many unexpected additions */
-	assert(p->ssize >= p->slen + len);
+	if (!enlarge(p, p->ssize + len)) /* this many unexpected additions */
+		return(ret);
 	(void) memcpy((char *)(p->strip + p->slen),
 		(char *)(p->strip + start), (size_t)len*sizeof(sop));
 	p->slen += len;
@@ -1297,8 +1297,8 @@ doemit(struct parse *p, sop op, size_t opnd)
 
 	/* deal with undersized strip */
 	if (p->slen >= p->ssize)
-		enlarge(p, (p->ssize+1) / 2 * 3);	/* +50% */
-	assert(p->slen < p->ssize);
+		if (!enlarge(p, (p->ssize+1) / 2 * 3))	/* +50% */
+			return;
 
 	/* finally, it's all reduced to the easy case */
 	p->strip[p->slen++] = SOP(op, opnd);
@@ -1356,21 +1356,22 @@ dofwd(struct parse *p, sopno pos, sop value)
 /*
  - enlarge - enlarge the strip
  */
-static void
+static int
 enlarge(struct parse *p, sopno size)
 {
 	sop *sp;
 
 	if (p->ssize >= size)
-		return;
+		return 1;
 
 	sp = (sop *)realloc(p->strip, size*sizeof(sop));
 	if (sp == NULL) {
 		SETERROR(REG_ESPACE);
-		return;
+		return 0;
 	}
 	p->strip = sp;
 	p->ssize = size;
+	return 1;
 }
 
 /*
