@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_examine.c,v 1.17 2009/11/21 20:40:04 miod Exp $	*/
+/*	$OpenBSD: db_examine.c,v 1.18 2011/11/07 20:29:56 miod Exp $	*/
 /*	$NetBSD: db_examine.c,v 1.11 1996/03/30 22:30:07 christos Exp $	*/
 
 /*
@@ -76,12 +76,19 @@ db_examine(db_addr_t addr, char *fmt, int count)
 	int		size;
 	int		width;
 	char *		fp;
+	db_addr_t	incr;
+	int		dis;
 	char		tmpfmt[28];
 
 	while (--count >= 0) {
 		fp = fmt;
+
+		/* defaults */
 		size = 4;
 		width = 12;
+		incr = 0;
+		dis = 0;
+
 		while ((c = *fp++) != 0) {
 			if (db_print_position() == 0) {
 				/* Always print the address. */
@@ -89,6 +96,7 @@ db_examine(db_addr_t addr, char *fmt, int count)
 				db_printf(":\t");
 				db_prev = addr;
 			}
+			incr = size;
 			switch (c) {
 			case 'b':	/* byte */
 				size = 1;
@@ -110,73 +118,81 @@ db_examine(db_addr_t addr, char *fmt, int count)
 #endif
 			case 'a':	/* address */
 				db_printf("= 0x%lx\n", (long)addr);
+				incr = 0;
 				break;
 			case 'r':	/* signed, current radix */
 				value = db_get_value(addr, size, TRUE);
-				addr += size;
 				db_format(tmpfmt, sizeof tmpfmt,
 				    (long)value, DB_FORMAT_R, 0, width);
 				db_printf("%-*s", width, tmpfmt);
 				break;
 			case 'x':	/* unsigned hex */
 				value = db_get_value(addr, size, FALSE);
-				addr += size;
 				db_printf("%-*lx", width, (long)value);
 				break;
 			case 'z':	/* signed hex */
 				value = db_get_value(addr, size, TRUE);
-				addr += size;
 				db_format(tmpfmt, sizeof tmpfmt,
 				    (long)value, DB_FORMAT_Z, 0, width);
 				db_printf("%-*s", width, tmpfmt);
 				break;
 			case 'd':	/* signed decimal */
 				value = db_get_value(addr, size, TRUE);
-				addr += size;
 				db_printf("%-*ld", width, (long)value);
 				break;
 			case 'u':	/* unsigned decimal */
 				value = db_get_value(addr, size, FALSE);
-				addr += size;
 				db_printf("%-*lu", width, (long)value);
 				break;
 			case 'o':	/* unsigned octal */
 				value = db_get_value(addr, size, FALSE);
-				addr += size;
 				db_printf("%-*lo", width, value);
 				break;
 			case 'c':	/* character */
 				value = db_get_value(addr, 1, FALSE);
-				addr += 1;
+				incr = 1;
 				if (value >= ' ' && value <= '~')
-					db_printf("%c", value);
+					db_printf("%c", (int)value);
 				else
-					db_printf("\\%03o", value);
+					db_printf("\\%03o", (int)value);
 				break;
 			case 's':	/* null-terminated string */
+				incr = 0;
 				for (;;) {
-					value = db_get_value(addr, 1, FALSE);
-					addr += 1;
+					value = db_get_value(addr + incr, 1,
+					    FALSE);
+					incr++;
 					if (value == 0)
 						break;
 					if (value >= ' ' && value <= '~')
-						db_printf("%c", value);
+						db_printf("%c", (int)value);
 					else
-						db_printf("\\%03o", value);
+						db_printf("\\%03o", (int)value);
 				}
 				break;
 			case 'i':	/* instruction */
-				addr = db_disasm(addr, FALSE);
-				break;
 			case 'I':	/* instruction, alternate form */
-				addr = db_disasm(addr, TRUE);
+				dis = c;
 				break;
 			default:
+				incr = 0;
 				break;
 			}
-			if (db_print_position() != 0)
-				db_end_line(width);
 		}
+		/* if we had a disassembly modifier, do it last */
+		switch (dis) {
+		case 'i':	/* instruction */
+			addr = db_disasm(addr, FALSE);
+			break;
+		case 'I':	/* instruction, alternate form */
+			addr = db_disasm(addr, TRUE);
+			break;
+		default:
+			addr += incr;
+			break;
+		}
+		if (db_print_position() != 0)
+			db_printf("\n");
 	}
 	db_next = addr;
 }
@@ -205,27 +221,27 @@ db_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		    DB_FORMAT_R, 0, sizeof(db_expr_t) * 2 * 6 / 5));
 		break;
 	case 'x':
-		db_printf("%*lx", sizeof(db_expr_t) * 2, addr);
+		db_printf("%*lx", (uint)sizeof(db_expr_t) * 2, addr);
 		break;
 	case 'z':
 		db_printf("%s", db_format(tmpfmt, sizeof tmpfmt, addr,
 		    DB_FORMAT_Z, 0, sizeof(db_expr_t) * 2));
 		break;
 	case 'd':
-		db_printf("%*ld", sizeof(db_expr_t) * 2 * 6 / 5, addr);
+		db_printf("%*ld", (uint)sizeof(db_expr_t) * 2 * 6 / 5, addr);
 		break;
 	case 'u':
-		db_printf("%*lu", sizeof(db_expr_t) * 2 * 6 / 5, addr);
+		db_printf("%*lu", (uint)sizeof(db_expr_t) * 2 * 6 / 5, addr);
 		break;
 	case 'o':
-		db_printf("%*lo", sizeof(db_expr_t) * 2 * 4 / 3, addr);
+		db_printf("%*lo", (uint)sizeof(db_expr_t) * 2 * 4 / 3, addr);
 		break;
 	case 'c':
 		value = addr & 0xFF;
 		if (value >= ' ' && value <= '~')
-			db_printf("%c", value);
+			db_printf("%c", (int)value);
 		else
-			db_printf("\\%03o", value);
+			db_printf("\\%03o", (int)value);
 		break;
 	}
 	db_printf("\n");
