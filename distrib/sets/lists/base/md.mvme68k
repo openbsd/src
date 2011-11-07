@@ -1768,6 +1768,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/spinlock.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/stdarg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/sysctl.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/tcb.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/trap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/varargs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/vmparam.ph
@@ -1831,6 +1832,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/signal.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/spinlock.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/stdarg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/tcb.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/trap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/varargs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/vmparam.ph

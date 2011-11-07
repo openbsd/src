@@ -1715,6 +1715,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/signal.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/spinlock.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/stdarg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/tcb.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/trap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/varargs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/vmparam.ph
@@ -1811,6 +1812,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/spinlock.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/stdarg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/sysctl.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/tcb.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/trap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/varargs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/vmparam.ph

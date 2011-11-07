@@ -148,6 +148,7 @@
 ./usr/include/hp300/signal.h
 ./usr/include/hp300/spinlock.h
 ./usr/include/hp300/stdarg.h
+./usr/include/hp300/tcb.h
 ./usr/include/hp300/trap.h
 ./usr/include/hp300/varargs.h
 ./usr/include/hp300/vmparam.h
@@ -187,6 +188,7 @@
 ./usr/include/m68k/spinlock.h
 ./usr/include/m68k/stdarg.h
 ./usr/include/m68k/sysctl.h
+./usr/include/m68k/tcb.h
 ./usr/include/m68k/trap.h
 ./usr/include/m68k/varargs.h
 ./usr/include/m68k/vmparam.h

@@ -709,6 +709,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/signal.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/spinlock.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/stdarg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/tcb.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/trap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/va-m88k.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/varargs.ph
@@ -1817,6 +1818,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/signal.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/spinlock.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/stdarg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/tcb.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/trap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/va-m88k.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/varargs.ph

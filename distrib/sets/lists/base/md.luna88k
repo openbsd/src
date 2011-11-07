@@ -1629,6 +1629,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/signal.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/spinlock.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/stdarg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/tcb.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/trap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/va-m88k.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/varargs.ph
@@ -1672,6 +1673,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/signal.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/spinlock.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/stdarg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/tcb.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/trap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/va-m88k.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/varargs.ph

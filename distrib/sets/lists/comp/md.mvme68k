@@ -146,6 +146,7 @@
 ./usr/include/m68k/spinlock.h
 ./usr/include/m68k/stdarg.h
 ./usr/include/m68k/sysctl.h
+./usr/include/m68k/tcb.h
 ./usr/include/m68k/trap.h
 ./usr/include/m68k/varargs.h
 ./usr/include/m68k/vmparam.h
@@ -189,6 +190,7 @@
 ./usr/include/mvme68k/signal.h
 ./usr/include/mvme68k/spinlock.h
 ./usr/include/mvme68k/stdarg.h
+./usr/include/mvme68k/tcb.h
 ./usr/include/mvme68k/trap.h
 ./usr/include/mvme68k/varargs.h
 ./usr/include/mvme68k/vmparam.h

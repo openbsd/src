@@ -50,6 +50,7 @@
 ./usr/include/aviion/signal.h
 ./usr/include/aviion/spinlock.h
 ./usr/include/aviion/stdarg.h
+./usr/include/aviion/tcb.h
 ./usr/include/aviion/trap.h
 ./usr/include/aviion/va-m88k.h
 ./usr/include/aviion/varargs.h
@@ -205,6 +206,7 @@
 ./usr/include/m88k/signal.h
 ./usr/include/m88k/spinlock.h
 ./usr/include/m88k/stdarg.h
+./usr/include/m88k/tcb.h
 ./usr/include/m88k/trap.h
 ./usr/include/m88k/va-m88k.h
 ./usr/include/m88k/varargs.h

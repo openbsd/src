@@ -146,6 +146,7 @@
 ./usr/include/m68k/spinlock.h
 ./usr/include/m68k/stdarg.h
 ./usr/include/m68k/sysctl.h
+./usr/include/m68k/tcb.h
 ./usr/include/m68k/trap.h
 ./usr/include/m68k/varargs.h
 ./usr/include/m68k/vmparam.h
@@ -188,6 +189,7 @@
 ./usr/include/mac68k/signal.h
 ./usr/include/mac68k/spinlock.h
 ./usr/include/mac68k/stdarg.h
+./usr/include/mac68k/tcb.h
 ./usr/include/mac68k/trap.h
 ./usr/include/mac68k/varargs.h
 ./usr/include/mac68k/viareg.h

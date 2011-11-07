@@ -151,6 +151,7 @@
 ./usr/include/m88k/signal.h
 ./usr/include/m88k/spinlock.h
 ./usr/include/m88k/stdarg.h
+./usr/include/m88k/tcb.h
 ./usr/include/m88k/trap.h
 ./usr/include/m88k/va-m88k.h
 ./usr/include/m88k/varargs.h
@@ -209,6 +210,7 @@
 ./usr/include/mvme88k/signal.h
 ./usr/include/mvme88k/spinlock.h
 ./usr/include/mvme88k/stdarg.h
+./usr/include/mvme88k/tcb.h
 ./usr/include/mvme88k/trap.h
 ./usr/include/mvme88k/va-m88k.h
 ./usr/include/mvme88k/varargs.h
