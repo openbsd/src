@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.30 2011/08/03 16:11:31 guenther Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.31 2011/11/07 15:41:33 guenther Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.28 1996/05/03 19:42:29 christos Exp $	*/
 
 /*-
@@ -392,14 +392,12 @@ i386_set_ioperm(struct proc *p, void *args, register_t *retval)
 	return copyin(ua.iomap, pcb->pcb_iomap, sizeof(pcb->pcb_iomap));
 }
 
-int
-i386_get_threadbase(struct proc *p, void *args, int which)
+uint32_t
+i386_get_threadbase(struct proc *p, int which)
 {
 	struct segment_descriptor *sdp =
 	    &p->p_addr->u_pcb.pcb_threadsegs[which];
-	uint32_t base = sdp->sd_hibase << 24 | sdp->sd_lobase;
-
-	return copyout(&base, args, sizeof(base));
+	return sdp->sd_hibase << 24 | sdp->sd_lobase;
 }
 
 int
@@ -418,7 +416,11 @@ i386_set_threadbase(struct proc *p, uint32_t base, int which)
 	 */
 	sdp = &p->p_addr->u_pcb.pcb_threadsegs[which];
 	setsegment(sdp, (void *)base, 0xfffff, SDT_MEMRWA, SEL_UPL, 1, 1);
-	curcpu()->ci_gdt[which == TSEG_FS ? GUFS_SEL : GUGS_SEL].sd = *sdp;
+
+	if (p == curproc) {
+		curcpu()->ci_gdt[which == TSEG_FS ? GUFS_SEL : GUGS_SEL].sd
+		    = *sdp;
+	}
 	return 0;
 }
 
@@ -461,8 +463,12 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 #endif
 
 	case I386_GET_FSBASE:
-		error = i386_get_threadbase(p, SCARG(uap, parms), TSEG_FS);
+	      {
+		uint32_t base = i386_get_threadbase(p, TSEG_FS);
+
+		error = copyout(&base, SCARG(uap, parms), sizeof(base));
 		break;
+	      }
 
 	case I386_SET_FSBASE:
 	      {
@@ -475,8 +481,12 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 	      }
 
 	case I386_GET_GSBASE:
-		error = i386_get_threadbase(p, SCARG(uap, parms), TSEG_GS);
+	      {
+		uint32_t base = i386_get_threadbase(p, TSEG_GS);
+
+		error = copyout(&base, SCARG(uap, parms), sizeof(base));
 		break;
+	      }
 
 	case I386_SET_GSBASE:
 	      {

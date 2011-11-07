@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.41 2011/08/03 16:11:31 guenther Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.42 2011/11/07 15:41:33 guenther Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -653,7 +653,7 @@ linux_sys_set_thread_area(struct proc *p, void *v, register_t *retval)
 	} else if (ldesc.entry_number != GUGS_SEL)
 		return EINVAL;
 
-	return i386_set_threadbase(p, SCARG(uap, desc)->base_addr, TSEG_GS);
+	return i386_set_threadbase(p, ldesc.base_addr, TSEG_GS);
 }
 
 int
@@ -663,7 +663,6 @@ linux_sys_get_thread_area(struct proc *p, void *v, register_t *retval)
 	struct l_segment_descriptor info;
 	int error;
 	int idx;
-	void *base;
 
 	error = copyin(SCARG(uap, desc), &info, sizeof(info));
 	if (error)
@@ -673,11 +672,7 @@ linux_sys_get_thread_area(struct proc *p, void *v, register_t *retval)
 	if (idx != GUGS_SEL)
 		return (EINVAL);
 
-	error = i386_get_threadbase(p, &base, TSEG_GS);
-	if (error)
-		return error;
-
-	info.base_addr = (int)base;
+	info.base_addr = i386_get_threadbase(p, TSEG_GS);
 	info.limit = atop(VM_MAXUSER_ADDRESS) - 1;
 	info.seg_32bit = 1;
 	info.contents = 0;
@@ -686,9 +681,5 @@ linux_sys_get_thread_area(struct proc *p, void *v, register_t *retval)
 	info.seg_not_present = 0;
 	info.useable = 1;
 
-	error = copyout(&info, SCARG(uap, desc), sizeof(SCARG(uap, desc)));
-	if (error)
-	   	return error;
-
-	return 0;
+	return (copyout(&info, SCARG(uap, desc), sizeof(SCARG(uap, desc))));
 }
