@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chmod.2,v 1.18 2011/10/24 19:31:56 schwarze Exp $
+.\"	$OpenBSD: chmod.2,v 1.19 2011/11/07 11:24:30 schwarze Exp $
 .\"	$NetBSD: chmod.2,v 1.7 1995/02/27 12:32:06 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)chmod.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: October 24 2011 $
+.Dd $Mdocdate: November 7 2011 $
 .Dt CHMOD 2
 .Os
 .Sh NAME
@@ -246,6 +246,13 @@ functions are expected to conform to
 .St -p1003.1-2008 .
 .Sh HISTORY
 The
+.Fn chmod
+system call first appeared in
+.At v1 ;
 .Fn fchmod
-function call appeared in
-.Bx 4.2 .
+in
+.Bx 4.2 ;
+and
+.Fn fchmodat
+has been available since
+.Ox 5.0 .
