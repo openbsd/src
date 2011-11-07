@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.122 2011/10/27 14:32:57 chl Exp $	*/
+/*	$OpenBSD: runner.c,v 1.123 2011/11/07 11:14:10 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -126,10 +126,6 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 
 	case IMSG_BATCH_DONE:
 		stat_decrement(STATS_MTA_SESSION);
-		return;
-
-	case IMSG_PARENT_ENQUEUE_OFFLINE:
-		/*		runner_process_offline();*/
 		return;
 
 	case IMSG_SMTP_ENQUEUE:
@@ -306,7 +302,6 @@ runner_timeout(int fd, short event, void *p)
 	struct ramqueue_envelope *rq_evp;
 	struct timeval		 tv;
 	static int		 rq_done = 0;
-	static int		 rq_off_done = 0;
 	time_t			 nsched;
 	time_t			 curtm;
 
@@ -316,15 +311,6 @@ runner_timeout(int fd, short event, void *p)
 	rq_evp = ramqueue_first_envelope(rqueue);
 	if (rq_evp)
 		nsched = rq_evp->sched;
-
-
-	/* fetch one offline message at a time to prevent a huge
-	 * offline queue from hogging the deliveries of incoming
-	 * messages.
-	 */
-	if (! rq_off_done)
-		rq_off_done = ramqueue_load_offline(rqueue);
-
 
 	/* load as many envelopes as possible from disk-queue to
 	 * ram-queue until a schedulable envelope is found.
@@ -346,13 +332,13 @@ runner_timeout(int fd, short event, void *p)
 	}
 
 	if (rq_evp == NULL ||
-	    (rq_done && rq_off_done && ramqueue_is_empty(rqueue))) {
+	    (rq_done && ramqueue_is_empty(rqueue))) {
 		log_debug("runner: nothing to schedule, wake me up. zZzZzZ");
 		return;
 	}
 
 	/* disk-queues not fully loaded, no time for sleeping */
-	if (!rq_done || !rq_off_done)
+	if (!rq_done)
 		nsched = 0;
 	else {
 		nsched = nsched - curtm;

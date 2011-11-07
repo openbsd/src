@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramqueue.c,v 1.24 2011/10/27 14:32:57 chl Exp $	*/
+/*	$OpenBSD: ramqueue.c,v 1.25 2011/11/07 11:14:10 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -45,7 +45,6 @@ void ramqueue_insert(struct ramqueue *, struct envelope *, time_t);
 int ramqueue_host_cmp(struct ramqueue_host *, struct ramqueue_host *);
 void ramqueue_put_host(struct ramqueue *, struct ramqueue_host *);
 void ramqueue_put_batch(struct ramqueue *, struct ramqueue_batch *);
-int ramqueue_load_offline(struct ramqueue *);
 
 static int ramqueue_expire(struct envelope *, time_t);
 static time_t ramqueue_next_schedule(struct envelope *, time_t);
@@ -108,28 +107,6 @@ struct ramqueue_envelope *
 ramqueue_batch_first_envelope(struct ramqueue_batch *rq_batch)
 {
 	return TAILQ_FIRST(&rq_batch->envelope_queue);
-}
-
-int
-ramqueue_load_offline(struct ramqueue *rqueue)
-{
-	char		 path[MAXPATHLEN];
-	static struct qwalk    *q = NULL;
-
-	log_debug("ramqueue: offline queue loading in progress");
-	if (q == NULL)
-		q = qwalk_new(PATH_OFFLINE);
-	while (qwalk(q, path)) {
-		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-		    IMSG_PARENT_ENQUEUE_OFFLINE, PROC_PARENT, 0, -1, path,
-		    strlen(path) + 1);
-		log_debug("ramqueue: offline queue loading interrupted");
-		return 0;
-	}
-	qwalk_close(q);
-	q = NULL;
-	log_debug("ramqueue: offline queue loading over");
-	return 1;
 }
 
 int

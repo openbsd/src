@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.134 2011/10/26 20:47:31 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.135 2011/11/07 11:14:10 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -28,6 +28,7 @@
 #include <sys/uio.h>
 #include <sys/mman.h>
 
+#include <dirent.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -54,7 +55,6 @@ static void parent_send_config_client_certs(void);
 static void parent_send_config_ruleset(int);
 static void parent_sig_handler(int, short, void *);
 static void forkmda(struct imsgev *, u_int32_t, struct deliver *);
-static int parent_enqueue_offline(char *);
 static int parent_forward_open(char *);
 static int path_starts_with(char *, char *);
 static void fork_peers(void);
@@ -62,24 +62,29 @@ static struct child *child_lookup(pid_t);
 static struct child *child_add(pid_t, int, int);
 static void child_del(pid_t);
 
-static int	queueing_add(char *);
-static void	queueing_done(void);
+static void	offline_scan(int, short, void *);
+static int	offline_add(char *);
+static void	offline_done(void);
+static int	offline_enqueue(char *);
 
-struct queueing {
-	TAILQ_ENTRY(queueing)	 entry;
+struct offline {
+	TAILQ_ENTRY(offline)	 entry;
 	char			*path;
 };
 
-#define QUEUEING_MAX 5
-static size_t			queueing_running = 0;
-TAILQ_HEAD(, queueing)		queueing_q;
+#define OFFLINE_READMAX		20
+#define OFFLINE_QUEUEMAX	5
+static size_t			offline_running = 0;
+TAILQ_HEAD(, offline)		offline_q;
+
+static struct event		offline_ev;
+static struct timeval		offline_timeout;
+
 
 extern char	**environ;
 void		(*imsg_callback)(struct imsgev *, struct imsg *);
 
 struct smtpd	*env = NULL;
-
-int __b64_pton(char const *, unsigned char *, size_t);
 
 static void
 parent_imsg(struct imsgev *iev, struct imsg *imsg)
@@ -122,17 +127,6 @@ parent_imsg(struct imsgev *iev, struct imsg *imsg)
 				fwreq->status = 1;
 			imsg_compose_event(iev, IMSG_PARENT_FORWARD_OPEN, 0, 0,
 			    fd, fwreq, sizeof *fwreq);
-			return;
-		}
-	}
-
-	if (iev->proc == PROC_QUEUE) {
-		switch (imsg->hdr.type) {
-		case IMSG_PARENT_ENQUEUE_OFFLINE:
-			if (! queueing_add(imsg->data))
-				imsg_compose_event(iev,
-				    IMSG_PARENT_ENQUEUE_OFFLINE, 0, 0, -1,
-				    NULL, 0);
 			return;
 		}
 	}
@@ -383,14 +377,9 @@ parent_sig_handler(int sig, short event, void *p)
 
 			case CHILD_ENQUEUE_OFFLINE:
 				if (fail)
-					log_warnx("couldn't enqueue offline "
+					log_warnx("smtpd: couldn't enqueue offline "
 					    "message; smtpctl %s", cause);
-				else
-					log_debug("offline message enqueued");
-				imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-				    IMSG_PARENT_ENQUEUE_OFFLINE, 0, 0, -1,
-				    NULL, 0);
-				queueing_done();
+				offline_done();
 				break;
 
 			default:
@@ -440,7 +429,7 @@ main(int argc, char *argv[])
 
 	log_init(1);
 
-	TAILQ_INIT(&queueing_q);
+	TAILQ_INIT(&offline_q);
 
 	while ((c = getopt(argc, argv, "dD:nf:T:v")) != -1) {
 		switch (c) {
@@ -548,6 +537,12 @@ main(int argc, char *argv[])
 	evtimer_set(&env->sc_ev, parent_send_config, NULL);
 	bzero(&tv, sizeof(tv));
 	evtimer_add(&env->sc_ev, &tv);
+
+	/* defer offline scanning for a second */
+	evtimer_set(&offline_ev, offline_scan, NULL);
+	offline_timeout.tv_sec = 1;
+	offline_timeout.tv_usec = 0;
+	evtimer_add(&offline_ev, &offline_timeout);
 
 	if (event_dispatch() < 0)
 		fatal("event_dispatch");
@@ -880,51 +875,84 @@ forkmda(struct imsgev *iev, u_int32_t id,
 #undef error
 #undef error2
 
-static int
-parent_enqueue_offline(char *runner_path)
+static void
+offline_scan(int fd, short ev, void *arg)
 {
-	char		 path[MAXPATHLEN];
+	DIR		*dir = arg;
+	struct dirent	*d;
+	int		 n = 0;
+
+	if (dir == NULL) {
+		log_debug("smtpd: scanning offline queue...");
+		if ((dir = opendir(PATH_SPOOL PATH_OFFLINE)) == NULL)
+			errx(1, "smtpd: opendir");
+	}
+
+	while((d = readdir(dir)) != NULL) {
+		if (d->d_type != DT_REG)
+			continue;
+
+		offline_add(d->d_name);
+
+		if ((n++) == OFFLINE_READMAX) {
+			evtimer_set(&offline_ev, offline_scan, dir);
+			offline_timeout.tv_sec = 0;
+			offline_timeout.tv_usec = 100000;
+			evtimer_add(&offline_ev, &offline_timeout);
+			return;
+		}
+	}
+
+	log_debug("smtpd: offline scanning done");
+	closedir(dir);
+}
+
+static int
+offline_enqueue(char *name)
+{
+	char			path[MAXPATHLEN];
 	struct user_backend *ub;
 	struct user	 u;
 	struct stat	 sb;
 	pid_t		 pid;
 
-	log_debug("parent_enqueue_offline: path %s", runner_path);
-
-	if (! bsnprintf(path, sizeof(path), "%s%s", PATH_SPOOL, runner_path))
-		fatalx("parent_enqueue_offline: filename too long");
+	strlcpy(path, PATH_SPOOL PATH_OFFLINE "/", sizeof path);
+	if (strlcat(path, name, sizeof path) >= sizeof path)
+		fatalx("smtpd: path name too long");
 
 	if (! path_starts_with(path, PATH_SPOOL PATH_OFFLINE))
-		fatalx("parent_enqueue_offline: path outside offline dir");
+		fatalx("smtpd: path outside offline dir");
+
+	log_debug("smtpd: enqueueing offline message %s", path);
 
 	if (lstat(path, &sb) == -1) {
 		if (errno == ENOENT) {
-			log_warn("parent_enqueue_offline: %s", path);
+			log_warn("smtpd: lstat: %s", path);
 			return (0);
 		}
-		fatal("parent_enqueue_offline: lstat");
+		fatal("lstat");
 	}
 
 	if (chflags(path, 0) == -1) {
 		if (errno == ENOENT) {
-			log_warn("parent_enqueue_offline: %s", path);
+			log_warn("smtpd: chflags: %s", path);
 			return (0);
 		}
-		fatal("parent_enqueue_offline: chflags");
+		fatal("chflags");
 	}
 
 	ub = user_backend_lookup(USER_GETPWNAM);
 	bzero(&u, sizeof (u));
 	errno = 0;
 	if (! ub->getbyuid(&u, sb.st_uid)) {
-		log_warn("parent_enqueue_offline: getpwuid for uid %d failed",
+		log_warn("smtpd: getpwuid for uid %d failed",
 		    sb.st_uid);
 		unlink(path);
 		return (0);
 	}
 
 	if (! S_ISREG(sb.st_mode)) {
-		log_warnx("file %s (uid %d) not regular, removing", path, sb.st_uid);
+		log_warnx("smtpd: file %s (uid %d) not regular, removing", path, sb.st_uid);
 		if (S_ISDIR(sb.st_mode))
 			rmdir(path);
 		else
@@ -933,7 +961,7 @@ parent_enqueue_offline(char *runner_path)
 	}
 
 	if ((pid = fork()) == -1)
-		fatal("parent_enqueue_offline: fork");
+		fatal("offline_enqueue: fork");
 
 	if (pid == 0) {
 		char	*envp[2], *p, *tmp;
@@ -988,43 +1016,43 @@ parent_enqueue_offline(char *runner_path)
 		_exit(1);
 	}
 
-	queueing_running++;
+	offline_running++;
 	child_add(pid, CHILD_ENQUEUE_OFFLINE, -1);
 
 	return (1);
 }
 
 static int
-queueing_add(char *path)
+offline_add(char *path)
 {
-	struct queueing	*q;
+	struct offline	*q;
 
-	if (queueing_running < QUEUEING_MAX)
+	if (offline_running < OFFLINE_QUEUEMAX)
 		/* skip queue */
-		return parent_enqueue_offline(path);
+		return offline_enqueue(path);
 
 	q = malloc(sizeof(*q) + strlen(path) + 1);
 	if (q == NULL)
 		return (-1);
 	q->path = (char *)q + sizeof(*q);
 	memmove(q->path, path, strlen(path) + 1);
-	TAILQ_INSERT_TAIL(&queueing_q, q, entry);
+	TAILQ_INSERT_TAIL(&offline_q, q, entry);
 
 	return (1);
 }
 
 static void
-queueing_done(void)
+offline_done(void)
 {
-	struct queueing	*q;
+	struct offline	*q;
 
-	queueing_running--;
+	offline_running--;
 
-	while(queueing_running < QUEUEING_MAX) {
-		if ((q = TAILQ_FIRST(&queueing_q)) == NULL)
+	while(offline_running < OFFLINE_QUEUEMAX) {
+		if ((q = TAILQ_FIRST(&offline_q)) == NULL)
 			break; /* all done */
-		TAILQ_REMOVE(&queueing_q, q, entry);
-		parent_enqueue_offline(q->path);
+		TAILQ_REMOVE(&offline_q, q, entry);
+		offline_enqueue(q->path);
 		free(q);
 	}
 }
@@ -1211,7 +1239,6 @@ imsg_to_str(int type)
 	CASE(IMSG_BATCH_CLOSE);
 	CASE(IMSG_BATCH_DONE);
 
-	CASE(IMSG_PARENT_ENQUEUE_OFFLINE);
 	CASE(IMSG_PARENT_FORWARD_OPEN);
 	CASE(IMSG_PARENT_FORK_MDA);
 
