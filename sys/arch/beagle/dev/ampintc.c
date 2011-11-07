@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.3 2011/11/06 01:34:53 drahn Exp $ */
+/* $OpenBSD: ampintc.c,v 1.4 2011/11/07 20:25:27 miod Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -247,12 +247,12 @@ ampintc_attach(struct device *parent, struct device *self, void *args)
 	for (i = 0; i < nintr/32; i++) {
 		bus_space_write_4(iot, d_ioh, ICD_ICERn(i*32), ~0);
 		bus_space_write_4(iot, d_ioh, ICD_ICPRn(i*32), ~0);
-		bus_space_write_1(iot, d_ioh, ICD_IPTRn(i), 0);
 	}
-	for (i = 0; i < nintr/4; i++) {
+	for (i = 0; i < nintr; i++) {
 		/* lowest priority ?? */
-		bus_space_write_4(iot, d_ioh, ICD_IPRn(i*32), 0xffffffff);
+		bus_space_write_1(iot, d_ioh, ICD_IPRn(i), 0xff);
 		/* target no cpus */
+		bus_space_write_1(iot, d_ioh, ICD_IPTRn(i), 0);
 	}
 	for (i = 2; i < nintr/16; i++) {
 		/* irq 32 - N */
@@ -267,9 +267,8 @@ ampintc_attach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_ampintc_handler = malloc(
 	    (sizeof (*sc->sc_ampintc_handler) * nintr),
-	    M_DEVBUF, M_ZERO|M_NOWAIT);
+	    M_DEVBUF, M_ZERO | M_NOWAIT);
 	for (i = 0; i < nintr; i++) {
-
 		TAILQ_INIT(&sc->sc_ampintc_handler[i].iq_list);
 	}
 
@@ -312,8 +311,8 @@ ampintc_setipl(int new)
 	/* disable here is only to keep hardware in sync with ci->ci_cpl */
 	psw = disable_interrupts(I32_bit);
 	ci->ci_cpl = new;
-	/* low values are higher priority thus IPL_HIGH - pri */
 
+	/* low values are higher priority thus IPL_HIGH - pri */
 	bus_space_write_4(sc->sc_iot, sc->sc_p_ioh, ICPIPMR,
 	    (IPL_HIGH - new) << ICMIPMR_SH);
 	restore_interrupts(psw);
@@ -324,8 +323,10 @@ ampintc_intr_enable(int irq)
 {
         struct ampintc_softc	*sc = ampintc;
 
+#ifdef DEBUG
 	printf("enable irq %d register %x bitmask %08x\n",
-		irq, ICD_ISERn(irq), 1 << IRQ_TO_REG32BIT(irq));
+	    irq, ICD_ISERn(irq), 1 << IRQ_TO_REG32BIT(irq));
+#endif
 
 	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, ICD_ISERn(irq),
 	    1 << IRQ_TO_REG32BIT(irq));
@@ -388,7 +389,6 @@ ampintc_calc_mask(void)
 
 		}
 	}
-	printf("cpl %d\n", ci->ci_cpl);
 	ampintc_setipl(ci->ci_cpl);
 }
 
@@ -439,6 +439,7 @@ ampintc_iack(void)
 {
 	uint32_t intid;
 	struct ampintc_softc	*sc = ampintc;
+
 	intid = bus_space_read_4(sc->sc_iot, sc->sc_p_ioh, ICPIAR);
 
 	return (intid);
@@ -448,6 +449,7 @@ void
 ampintc_eoi(uint32_t eoi)
 {
 	struct ampintc_softc	*sc = ampintc;
+
 	bus_space_write_4(sc->sc_iot, sc->sc_p_ioh, ICPEOIR, eoi);
 }
 
@@ -456,15 +458,13 @@ ampintc_route(int irq, int enable, int cpu)
 {
 	uint8_t  val;
 	struct ampintc_softc	*sc = ampintc;
-	if (enable == IRQ_ENABLE) {
-		val = bus_space_read_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPTRn(irq));
+
+	val = bus_space_read_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPTRn(irq));
+	if (enable == IRQ_ENABLE)
 		val |= (1 << cpu);
-		bus_space_write_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPTRn(irq), val);
-	} else  {
-		val = bus_space_read_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPTRn(irq));
+	else
 		val &= ~(1 << cpu);
-		bus_space_write_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPTRn(irq), val);
-	}
+	bus_space_write_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPTRn(irq), val);
 }
 
 void
@@ -522,7 +522,6 @@ ampintc_intr_establish(int irqno, int level, int (*func)(void *),
 	struct intrhand		*ih;
 	int			 psw;
 
-	printf("ampintc intr_establish %s %d %d\n", name, irqno, level);
 	if (irqno < 0 || irqno >= sc->sc_nintr)
 		panic("ampintc_intr_establish: bogus irqnumber %d: %s",
 		     irqno, name);
@@ -574,37 +573,9 @@ ampintc_intr_disestablish(void *cookie)
 const char *
 ampintc_intr_string(void *cookie)
 {
-	return "huh?";
+	struct intrhand *ih = (struct intrhand *)cookie;
+	static char irqstr[1 + sizeof("ampintc irq ") + 4];
+
+	snprintf(irqstr, sizeof irqstr, "ampintc irq %d", ih->ih_irq);
+	return irqstr;
 }
-
-
-#if 0
-int ampintc_tst(void *a);
-
-int
-ampintc_tst(void *a)
-{
-	printf("inct_tst called\n");
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, AMPINTC_ISR_CLEAR0, 2);
-	return 1;
-}
-
-void ampintc_test(void);
-void ampintc_test(void)
-{
-	void * ih;
-	printf("about to register handler\n");
-	ih = ampintc_intr_establish(1, IPL_BIO, ampintc_tst, NULL, "intctst");
-
-	printf("about to set bit\n");
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, AMPINTC_ISR_SET0, 2);
-
-	printf("about to clear bit\n");
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, AMPINTC_ISR_CLEAR0, 2);
-
-	printf("about to remove handler\n");
-	ampintc_intr_disestablish(ih);
-
-	printf("done\n");
-}
-#endif
