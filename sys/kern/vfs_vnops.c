@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.68 2011/07/09 01:28:48 matthew Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.69 2011/11/07 17:50:17 guenther Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -295,12 +295,15 @@ vn_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
 	struct vnode *vp = (struct vnode *)fp->f_data;
 	int error = 0;
-	size_t count;
+	size_t count = uio->uio_resid;
 	struct proc *p = uio->uio_procp;
+
+	/* no wrap around of offsets except on character devices */
+	if (vp->v_type != VCHR && count > SSIZE_MAX - *poff)
+		return (EINVAL);
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	uio->uio_offset = *poff;
-	count = uio->uio_resid;
 	if (vp->v_type != VDIR)
 		error = VOP_READ(vp, uio,
 		    (fp->f_flag & FNONBLOCK) ? IO_NDELAY : 0, cred);
@@ -320,7 +323,9 @@ vn_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 	int error, ioflag = IO_UNIT;
 	size_t count;
 
-	if (vp->v_type == VREG && (fp->f_flag & O_APPEND))
+	/* note: pwrite/pwritev are unaffected by O_APPEND */
+	if (vp->v_type == VREG && (fp->f_flag & O_APPEND) &&
+	    poff == &fp->f_offset)
 		ioflag |= IO_APPEND;
 	if (fp->f_flag & FNONBLOCK)
 		ioflag |= IO_NDELAY;
