@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2009/10/27 23:59:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2011/11/08 10:37:09 guenther Exp $
 #	$NetBSD: Makefile,v 1.6 1996/10/18 05:27:38 thorpej Exp $
 
 CFLAGS+=	-DELFSIZE=64
@@ -50,7 +50,7 @@ crtendS.o: crtendS.c
 	@rm -f ${.TARGET}.o
 
 realinstall:
-	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
+	${INSTALL} ${INSTALL_COPY} -S -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
 	    ${DESTDIR}/usr/lib
 
 afterdepend:: .depend

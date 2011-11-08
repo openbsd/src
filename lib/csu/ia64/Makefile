@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2011/07/04 05:42:10 pirofti Exp $
+#	$OpenBSD: Makefile,v 1.2 2011/11/08 10:37:09 guenther Exp $
 
 CFLAGS+=	-fno-omit-frame-pointer
 OBJS=		crt0.o gcrt0.o
@@ -49,7 +49,7 @@ crtendS.o: crtendS.c
 	@rm -f ${.TARGET}.o
 
 realinstall:
-	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
+	${INSTALL} ${INSTALL_COPY} -S -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
 	    ${DESTDIR}/usr/lib
 
 afterdepend: .depend

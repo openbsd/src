@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2009/10/27 23:59:58 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.21 2011/11/08 10:37:09 guenther Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/1/93
 
 OBJS=		crt0.o gcrt0.o
@@ -49,7 +49,7 @@ crtendS.o: crtendS.c
 	@rm -f ${.TARGET}.o
 
 realinstall:
-	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
+	${INSTALL} ${INSTALL_COPY} -S -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
 	    ${DESTDIR}/usr/lib
 
 afterdepend:: .depend

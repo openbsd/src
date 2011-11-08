@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2009/10/27 23:59:58 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.15 2011/11/08 10:37:09 guenther Exp $
 #	from: @(#)Makefile	5.5 (Berkeley) 5/21/91
 
 CFLAGS+=	-fno-omit-frame-pointer
@@ -50,7 +50,7 @@ crtendS.o: crtendS.c
 	@rm -f ${.TARGET}.o
 
 realinstall:
-	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
+	${INSTALL} ${INSTALL_COPY} -S -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
 	    ${DESTDIR}/usr/lib
 
 afterdepend: .depend
