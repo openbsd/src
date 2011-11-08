@@ -49,6 +49,8 @@
 
 #include <machine/tcb.h>
 
+#include <stddef.h>
+
 struct pthread;
 
 void	*__get_tcb(void);
