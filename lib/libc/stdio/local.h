@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.h,v 1.19 2011/10/16 13:20:51 stsp Exp $	*/
+/*	$OpenBSD: local.h,v 1.20 2011/11/08 18:30:42 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -59,6 +59,7 @@ int	__sflags(const char *, int *);
 wint_t __fgetwc_unlock(FILE *);
 wint_t	__ungetwc(wint_t, FILE *);
 int	__vfprintf(FILE *, const char *, __va_list);
+int	__svfscanf(FILE * __restrict, const char * __restrict, __va_list);
 int	__vfwprintf(FILE * __restrict, const wchar_t * __restrict, __va_list);
 int	__vfwscanf(FILE * __restrict, const wchar_t * __restrict, __va_list);
 

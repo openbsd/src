@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfscanf.c,v 1.27 2011/07/03 17:57:47 martynas Exp $ */
+/*	$OpenBSD: vfscanf.c,v 1.28 2011/11/08 18:30:42 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -90,15 +90,11 @@
 
 static u_char *__sccl(char *, u_char *);
 
-#if !defined(VFSCANF)
-#define VFSCANF	vfscanf
-#endif
-
 /*
- * vfscanf
+ * Internal, unlocked version of vfscanf
  */
 int
-VFSCANF(FILE *fp, const char *fmt0, __va_list ap)
+__svfscanf(FILE *fp, const char *fmt0, __va_list ap)
 {
 	u_char *fmt = (u_char *)fmt0;
 	int c;		/* character from format, or conversion */
@@ -117,7 +113,6 @@ VFSCANF(FILE *fp, const char *fmt0, __va_list ap)
 	static short basefix[17] =
 		{ 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
 
-	FLOCKFILE(fp);
 	_SET_ORIENTATION(fp, -1);
 
 	nassigned = 0;
@@ -125,10 +120,8 @@ VFSCANF(FILE *fp, const char *fmt0, __va_list ap)
 	base = 0;		/* XXX just to keep gcc happy */
 	for (;;) {
 		c = *fmt++;
-		if (c == 0) {
-			FUNLOCKFILE(fp);
+		if (c == 0)
 			return (nassigned);
-		}
 		if (isspace(c)) {
 			while ((fp->_r > 0 || __srefill(fp) == 0) &&
 			    isspace(*fp->_p))
@@ -294,7 +287,6 @@ literal:
 		 * Disgusting backwards compatibility hacks.	XXX
 		 */
 		case '\0':	/* compat */
-			FUNLOCKFILE(fp);
 			return (EOF);
 
 		default:	/* compat */
@@ -697,7 +689,6 @@ input_failure:
 	if (nassigned == 0)
 		nassigned = -1;
 match_failure:
-	FUNLOCKFILE(fp);
 	return (nassigned);
 }
 
@@ -795,4 +786,15 @@ doswitch:
 		}
 	}
 	/* NOTREACHED */
+}
+
+int
+vfscanf(FILE *fp, const char *fmt0, __va_list ap)
+{
+	int r;
+
+	FLOCKFILE(fp);
+	r = __svfscanf(fp, fmt0, ap);
+	FUNLOCKFILE(fp);
+	return (r);
 }
