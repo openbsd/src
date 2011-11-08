@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.47 2011/09/17 16:03:28 jmc Exp $
+.\"	$OpenBSD: traceroute.8,v 1.48 2011/11/08 12:16:54 sthen Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)traceroute.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: September 17 2011 $
+.Dd $Mdocdate: November 8 2011 $
 .Dt TRACEROUTE 8
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@
 .Sh SYNOPSIS
 .Nm traceroute
 .Bk -words
-.Op Fl cDdIlnrSvx
+.Op Fl AcDdIlnrSvx
 .Op Fl f Ar first_ttl
 .Op Fl g Ar gateway_addr
 .Op Fl m Ar max_ttl
@@ -75,6 +75,8 @@ name.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl A
+Lookup the AS number for each hop address.
 .It Fl c
 Do not increment the destination port number in successive UDP packets.
 Rather, all UDP packets will have the same destination port, as set via the

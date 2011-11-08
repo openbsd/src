@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.78 2011/09/17 14:10:05 haesbaert Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.79 2011/11/08 12:16:54 sthen Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -219,6 +219,7 @@
 #include <netinet/udp.h>
 
 #include <arpa/inet.h>
+#include <arpa/nameser.h>
 
 #include <netmpls/mpls.h>
 
@@ -260,6 +261,7 @@ int packet_ok(u_char *, int, struct sockaddr_in *, int, int);
 void print_exthdr(u_char *, int);
 void print(u_char *, int, struct sockaddr_in *);
 char *inetname(struct in_addr);
+void print_asn(struct in_addr);
 u_short in_cksum(u_short *, int);
 int map_tos(char *, int *);
 void usage(void);
@@ -288,6 +290,7 @@ int nflag;			/* print addresses numerically */
 int dump;
 int xflag;			/* show ICMP extension header */
 int tflag;			/* tos flag was set */
+int Aflag;			/* lookup ASN */
 
 int
 main(int argc, char *argv[])
@@ -322,11 +325,14 @@ main(int argc, char *argv[])
 	(void) sysctl(mib, sizeof(mib)/sizeof(mib[0]), &max_ttl, &size,
 	    NULL, 0);
 
-	while ((ch = getopt(argc, argv, "cDdf:g:Ilm:nP:p:q:rSs:t:V:vw:x"))
+	while ((ch = getopt(argc, argv, "AcDdf:g:Ilm:nP:p:q:rSs:t:V:vw:x"))
 			!= -1)
 		switch (ch) {
 		case 'S':
 			sump = 1;
+			break;
+		case 'A':
+			Aflag++;
 			break;
 		case 'f':
 			errno = 0;
@@ -1113,6 +1119,8 @@ print(u_char *buf, int cc, struct sockaddr_in *from)
 	else
 		printf(" %s (%s)", inetname(from->sin_addr),
 		    inet_ntoa(from->sin_addr));
+	if (Aflag)
+		print_asn(from->sin_addr);
 
 	if (verbose)
 		printf(" %d bytes to %s", cc, inet_ntoa(ip->ip_dst));
@@ -1183,6 +1191,35 @@ inetname(struct in_addr in)
 	return (inet_ntoa(in));
 }
 
+void
+print_asn(struct in_addr in)
+{
+	const u_char *uaddr = (const u_char *)&in.s_addr;
+	int n, i, counter;
+	struct rrsetinfo *answers = NULL;
+	char qbuf[MAXDNAME+1];
+
+	(void) snprintf(qbuf, sizeof qbuf, "%u.%u.%u.%u.origin.asn.cymru.com",
+	    (uaddr[3] & 0xff), (uaddr[2] & 0xff),
+	    (uaddr[1] & 0xff), (uaddr[0] & 0xff));
+	if (n = getrrsetbyname(qbuf, C_IN, T_TXT, 0, &answers))
+		return;
+	for (counter = 0; counter < answers->rri_nrdatas; counter++) {
+		char *p, *as = answers->rri_rdatas[counter].rdi_data;
+		as++; /* skip first byte, it contains length */
+		if (p = strchr(as,'|')) {
+			printf(counter ? ", " : " [");
+			p[-1] = 0;
+			printf("AS%s", as);
+		}
+	}
+	if (counter)
+		printf("]");
+
+	freerrset(answers);
+	return;
+}
+
 int
 map_tos(char *s, int *val)
 {
@@ -1237,7 +1274,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-cDdIlnrSvx] [-f first_ttl] [-g gateway_addr] [-m max_ttl]\n"
+	    "usage: %s [-AcDdIlnrSvx] [-f first_ttl] [-g gateway_addr] [-m max_ttl]\n"
 	    "\t[-P proto] [-p port] [-q nqueries] [-s src_addr] [-t toskeyword]\n"
 	    "\t[-V rtable] [-w waittime] host [packetsize]\n", __progname);
 	exit(1);
