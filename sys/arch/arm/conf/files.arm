@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.18 2011/09/22 17:45:59 miod Exp $
+#	$OpenBSD: files.arm,v 1.19 2011/11/08 12:55:59 deraadt Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # generic networking files
@@ -65,7 +65,6 @@ file	arch/arm/arm/cpufunc_asm_xscale.S	cpu_xscale_80200 |
 							cpu_xscale_pxa2x0
 file	arch/arm/arm/cpufunc_asm_ixp12x0.S	cpu_ixp12x0
 file	arch/arm/arm/process_machdep.c
-file	arch/arm/arm/procfs_machdep.c		procfs
 file	arch/arm/arm/sig_machdep.c
 file	arch/arm/arm/sigcode.S
 file	arch/arm/arm/syscall.c
