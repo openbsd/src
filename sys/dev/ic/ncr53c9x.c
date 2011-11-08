@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.51 2011/08/29 17:25:28 miod Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.52 2011/11/08 18:18:41 krw Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -801,6 +801,21 @@ ncr53c9x_scsi_cmd(xs)
 	NCR_TRACE(("[ncr53c9x_scsi_cmd] "));
 	NCR_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
 	    sc_link->target));
+
+	/*
+	 * Commands larger than 12 bytes seem to confuse the chip
+	 * (at least on FAS366 flavours).
+	 */
+	if (xs->cmdlen > 12) {
+		memset(&xs->sense, 0, sizeof(xs->sense));
+		/* sense data borrowed from gdt(4) */
+		xs->sense.error_code = SSD_ERRCODE_VALID | SSD_ERRCODE_CURRENT;
+		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
+		xs->sense.add_sense_code = 0x20; /* illcmd */
+		xs->error = XS_SENSE;
+		scsi_done(xs);
+		return;
+	}
 
 	flags = xs->flags;
 	ti = &sc->sc_tinfo[sc_link->target];
