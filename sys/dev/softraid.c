@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.251 2011/09/19 21:47:37 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.252 2011/11/08 18:02:37 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2470,7 +2470,7 @@ sr_ioctl_setstate(struct sr_softc *sc, struct bioc_setstate *bs)
 		}
 
 		/* XXX: check current state first */
-		sd->sd_set_chunk_state(sd, c, BIOC_SSOFFLINE);
+		sd->sd_set_chunk_state(sd, c, BIOC_SDOFFLINE);
 
 		if (sr_meta_save(sd, SR_META_DIRTY)) {
 			printf("%s: could not save metadata to %s\n",
