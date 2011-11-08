@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.102 2011/07/04 22:53:53 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.103 2011/11/08 12:53:58 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -25,8 +25,6 @@ option		SUN4M		# sun4m - SS10, SS20, Classic, etc.
 #option		KGDB		# support for kernel gdb
 #option		KGDBDEV=0xc01	# kgdb device number (dev_t)
 #option		KGDBRATE=38400	# baud rate
-
-#option		PROCFS		# /proc for SVR4
 
 option		WSEMUL_SUN	# provide sun terminal emulation; required
 option		WSEMUL_NO_VT100	# do not provide vt100 terminal emulation

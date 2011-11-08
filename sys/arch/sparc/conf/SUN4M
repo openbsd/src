@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.80 2011/07/04 22:53:53 tedu Exp $
+#	$OpenBSD: SUN4M,v 1.81 2011/11/08 12:53:58 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -16,8 +16,6 @@ option		SUN4M		# sun4m - SS10, SS20, Classic, etc.
 #option		KGDBRATE=38400	# baud rate
 
 # Options for SPARCstation hardware
-option		PROCFS		# /proc
-
 option		WSEMUL_SUN	# provide sun terminal emulation; required
 option		WSEMUL_NO_VT100	# do not provide vt100 terminal emulation
 option		WSDISPLAY_COMPAT_RAWKBD # provide raw scancodes; needed for X11
