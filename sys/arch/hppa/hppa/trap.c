@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.118 2011/07/11 15:40:47 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.119 2011/11/08 14:02:30 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -283,7 +283,7 @@ trap(int type, struct trapframe *frame)
 #endif
 		/* pass to user debugger */
 		KERNEL_LOCK();
-		trapsignal(p, SIGTRAP, type &~ T_USER, code, sv);
+		trapsignal(p, SIGTRAP, type & ~T_USER, code, sv);
 		KERNEL_UNLOCK();
 		}
 		break;
@@ -294,7 +294,7 @@ trap(int type, struct trapframe *frame)
 
 		/* pass to user debugger */
 		KERNEL_LOCK();
-		trapsignal(p, SIGTRAP, type &~ T_USER, TRAP_TRACE, sv);
+		trapsignal(p, SIGTRAP, type & ~T_USER, TRAP_TRACE, sv);
 		KERNEL_UNLOCK();
 		break;
 #endif
@@ -336,7 +336,7 @@ trap(int type, struct trapframe *frame)
 
 		sv.sival_int = va;
 		KERNEL_LOCK();
-		trapsignal(p, SIGFPE, type &~ T_USER, flt, sv);
+		trapsignal(p, SIGFPE, type & ~T_USER, flt, sv);
 		KERNEL_UNLOCK();
 		}
 		break;
@@ -348,36 +348,55 @@ trap(int type, struct trapframe *frame)
 	case T_EMULATION | T_USER:
 		sv.sival_int = va;
 		KERNEL_LOCK();
-		trapsignal(p, SIGILL, type &~ T_USER, ILL_COPROC, sv);
+		trapsignal(p, SIGILL, type & ~T_USER, ILL_COPROC, sv);
 		KERNEL_UNLOCK();
 		break;
 
 	case T_OVERFLOW | T_USER:
 		sv.sival_int = va;
 		KERNEL_LOCK();
-		trapsignal(p, SIGFPE, type &~ T_USER, FPE_INTOVF, sv);
+		trapsignal(p, SIGFPE, type & ~T_USER, FPE_INTOVF, sv);
 		KERNEL_UNLOCK();
 		break;
 
 	case T_CONDITION | T_USER:
 		sv.sival_int = va;
 		KERNEL_LOCK();
-		trapsignal(p, SIGFPE, type &~ T_USER, FPE_INTDIV, sv);
+		trapsignal(p, SIGFPE, type & ~T_USER, FPE_INTDIV, sv);
 		KERNEL_UNLOCK();
 		break;
 
 	case T_PRIV_OP | T_USER:
 		sv.sival_int = va;
 		KERNEL_LOCK();
-		trapsignal(p, SIGILL, type &~ T_USER, ILL_PRVOPC, sv);
+		trapsignal(p, SIGILL, type & ~T_USER, ILL_PRVOPC, sv);
 		KERNEL_UNLOCK();
 		break;
 
 	case T_PRIV_REG | T_USER:
-		sv.sival_int = va;
-		KERNEL_LOCK();
-		trapsignal(p, SIGILL, type &~ T_USER, ILL_PRVREG, sv);
-		KERNEL_UNLOCK();
+		/*
+		 * On PCXS processors, attempting to read control registers
+		 * cr26 and cr27 from userland causes a ``privileged register''
+		 * trap.  Later processors do not restrict read accesses to
+		 * these registers.
+		 */
+		if (cpu_type == hpcxs &&
+		    (opcode & (0xfc1fffe0 | (0x1e << 21))) ==
+		     (0x000008a0 | (0x1a << 21))) { /* mfctl %cr{26,27}, %r# */
+			register_t cr;
+
+			if (((opcode >> 21) & 0x1f) == 27)
+				mfctl(CR_TR3, cr);	/* cr27 */
+			else
+				mfctl(CR_TR2, cr);	/* cr26 */
+			frame_regmap(frame, opcode & 0x1f) = cr;
+			frame->tf_ipsw |= PSL_N;
+		} else {
+			sv.sival_int = va;
+			KERNEL_LOCK();
+			trapsignal(p, SIGILL, type & ~T_USER, ILL_PRVREG, sv);
+			KERNEL_UNLOCK();
+		}
 		break;
 
 		/* these should never got here */
@@ -569,7 +588,7 @@ datalign_user:
 		if (type & T_USER) {
 			sv.sival_int = va;
 			KERNEL_LOCK();
-			trapsignal(p, SIGILL, type &~ T_USER, ILL_ILLOPC, sv);
+			trapsignal(p, SIGILL, type & ~T_USER, ILL_ILLOPC, sv);
 			KERNEL_UNLOCK();
 			break;
 		}
