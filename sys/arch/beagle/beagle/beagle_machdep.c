@@ -1,4 +1,4 @@
-/*	$OpenBSD: beagle_machdep.c,v 1.11 2011/11/08 22:41:41 krw Exp $ */
+/*	$OpenBSD: beagle_machdep.c,v 1.12 2011/11/08 23:01:11 krw Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -240,8 +240,6 @@ int   safepri = 0;
 
 void	omdog_reset(void);
 void	beagle_powerdown(void);
-
-#define	BOOT_STRING_MAGIC 0x4f425344
 
 char	bootargs[MAX_BOOT_STRING];
 void	process_kernel_args(char *);
@@ -906,14 +904,10 @@ process_kernel_args(char *args)
 {
 	char *cp = args;
 
-	if (cp == NULL || *(int *)cp != BOOT_STRING_MAGIC) {
+	if (cp == NULL) {
 		boothowto = RB_AUTOBOOT;
 		return;
 	}
-
-	/* Eat the cookie */
-	*(int *)cp = 0;
-	cp += sizeof(int);
 
 	boothowto = 0;
 
