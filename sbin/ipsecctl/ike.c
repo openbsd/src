@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.69 2010/10/15 12:11:10 mikeb Exp $	*/
+/*	$OpenBSD: ike.c,v 1.70 2011/11/08 13:26:06 henning Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -45,14 +45,12 @@ static int	ike_delete_config(struct ipsec_rule *, FILE *);
 static void	ike_setup_ids(struct ipsec_rule *);
 
 int		ike_print_config(struct ipsec_rule *, int);
-int		ike_ipsec_establish(int, struct ipsec_rule *);
+int		ike_ipsec_establish(int, struct ipsec_rule *, const char *);
 
 #define	SET	"C set "
 #define	ADD	"C add "
 #define	DELETE	"C rms "
 #define	RMV	"C rmv "
-
-#define ISAKMPD_FIFO	"/var/run/isakmpd.fifo"
 
 #define CONF_DFLT_DYNAMIC_DPD_CHECK_INTERVAL	5
 #define CONF_DFLT_DYNAMIC_CHECK_INTERVAL	30
@@ -707,20 +705,20 @@ ike_print_config(struct ipsec_rule *r, int opts)
 }
 
 int
-ike_ipsec_establish(int action, struct ipsec_rule *r)
+ike_ipsec_establish(int action, struct ipsec_rule *r, const char *fifo)
 {
 	struct stat	 sb;
 	FILE		*fdp;
 	int		 fd, ret = 0;
 
-	if ((fd = open(ISAKMPD_FIFO, O_WRONLY)) == -1)
-		err(1, "ike_ipsec_establish: open(%s)", ISAKMPD_FIFO);
+	if ((fd = open(fifo, O_WRONLY)) == -1)
+		err(1, "ike_ipsec_establish: open(%s)", fifo);
 	if (fstat(fd, &sb) == -1)
-		err(1, "ike_ipsec_establish: fstat(%s)", ISAKMPD_FIFO);
+		err(1, "ike_ipsec_establish: fstat(%s)", fifo);
 	if (!S_ISFIFO(sb.st_mode))
-		errx(1, "ike_ipsec_establish: %s not a fifo", ISAKMPD_FIFO);
+		errx(1, "ike_ipsec_establish: %s not a fifo", fifo);
 	if ((fdp = fdopen(fd, "w")) == NULL)
-		err(1, "ike_ipsec_establish: fdopen(%s)", ISAKMPD_FIFO);
+		err(1, "ike_ipsec_establish: fdopen(%s)", fifo);
 
 	switch (action) {
 	case ACTION_ADD:

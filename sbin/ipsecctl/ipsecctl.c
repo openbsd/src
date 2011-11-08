@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.73 2009/01/27 15:32:08 bluhm Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.74 2011/11/08 13:26:06 henning Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -63,6 +63,7 @@ static int	 unmask(struct ipsec_addr *, sa_family_t);
 int		 sacompare(const void *, const void *);
 
 const char	*showopt;
+char		*isakmpd_fifo = "/var/run/isakmpd.fifo";
 
 int		 first_title = 1;
 
@@ -162,7 +163,8 @@ ipsecctl_commit(int action, struct ipsecctl *ipsec)
 
 	TAILQ_FOREACH(rp, &ipsec->rule_queue, rule_entry) {
 		if (rp->type & RULE_IKE) {
-			if (ike_ipsec_establish(action, rp) == -1) {
+			if (ike_ipsec_establish(action, rp, isakmpd_fifo) ==
+			    -1) {
 				warnx("failed to %s ike rule %d",
 				    action == ACTION_DELETE ? "delete" : "add",
 				    rp->nr);
@@ -614,7 +616,7 @@ usage(void)
 	extern char	*__progname;
 
 	fprintf(stderr, "usage: %s [-dFkmnv] [-D macro=value] [-f file]"
-	    " [-s modifier]\n", __progname);
+	    " [-s modifier] [-i fifo]\n", __progname);
 	exit(1);
 }
 
@@ -639,7 +641,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "D:df:Fkmnvs:")) != -1) {
+	while ((ch = getopt(argc, argv, "D:df:Fi:kmnvs:")) != -1) {
 		switch (ch) {
 		case 'D':
 			if (cmdline_symset(optarg) < 0)
@@ -657,6 +659,10 @@ main(int argc, char *argv[])
 
 		case 'F':
 			opts |= IPSECCTL_OPT_FLUSH;
+			break;
+
+		case 'i':
+			isakmpd_fifo = optarg;
 			break;
 
 		case 'k':
