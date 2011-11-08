@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.19 2011/11/08 12:55:59 deraadt Exp $
+#	$OpenBSD: files.arm,v 1.20 2011/11/08 16:51:47 deraadt Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # generic networking files
@@ -35,7 +35,6 @@ file	arch/arm/arm/bus_space_notimpl.S
 file	arch/arm/arm/arm_machdep.c
 file	arch/arm/arm/ast.c
 file	arch/arm/arm/bcopyinout.S
-file	arch/arm/arm/compat_13_machdep.c	compat_13
 file	arch/arm/arm/copystr.S
 file	arch/arm/arm/cpufunc.c
 file	arch/arm/arm/cpufunc_asm.S
