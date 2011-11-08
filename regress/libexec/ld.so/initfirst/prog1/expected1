@@ -1,0 +1,5 @@
+init if1
+init if2
+init normal
+main
+func normal
