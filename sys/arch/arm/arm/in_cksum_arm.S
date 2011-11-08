@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum_arm.S,v 1.2 2005/05/10 21:32:20 brad Exp $	*/
+/*	$OpenBSD: in_cksum_arm.S,v 1.3 2011/11/08 17:06:51 deraadt Exp $	*/
 /*	$NetBSD: in_cksum_arm.S,v 1.3 2003/11/26 10:31:53 rearnsha Exp $ */
 
 /*
@@ -133,19 +133,11 @@ ENTRY(in4_cksum)
 	ldr	r4, [r6, #(IP_SRC - 1)]	/* BE:r4 = x012  LE:r4 = 210x */
 	ldr	r5, [r6, #(IP_SRC + 3)]	/* BE:r5 = 3456  LE:r5 = 6543 */
 	ldrb	r7, [r6, #(IP_SRC + 7)]	/* r7 = ...7 */
-#ifdef __ARMEB__
-	mov	r4, r4, lsl #8		/* r4 = 012. */
-	orr	r4, r4, r5, lsr #24	/* r4 = 0123 */
-	orr	r5, r7, r5, lsl #8	/* r5 = 4567 */
-	b	.Lin4_cksum_add_ips
-	nop
-#else
 	mov	r4, r4, lsr #8		/* r4 = .210 */
 	orr	r4, r4, r5, lsl #24	/* r4 = 3210 */
 	mov	r5, r5, lsr #8		/* r5 = .654 */
 	orr	r5, r5, r7, lsl #24	/* r5 = 7654 */
 	b	.Lin4_cksum_add_ips
-#endif
 
 	/* 0x02: Data 16-bit aligned */
 #ifdef __XSCALE__
@@ -172,25 +164,14 @@ ENTRY(in4_cksum)
 	ldrb	r4, [r6, #(IP_SRC)]	/* r4 = ...0 */
 	ldr	r5, [r6, #(IP_SRC + 1)]	/* BE:r5 = 1234  LE:r5 = 4321 */
 	ldr	r7, [r6, #(IP_SRC + 5)]	/* BE:r7 = 567x  LE:r7 = x765 */
-#ifdef __ARMEB__
-	mov	r4, r4, lsl #24		/* r4 = 0... */
-	orr	r4, r4, r5, lsr #8	/* r4 = 0123 */
-	mov	r5, r5, lsl #24		/* r5 = 4... */
-	orr	r5, r5, r7, lsr #8	/* r5 = 4567 */
-#else
 	orr	r4, r4, r5, lsl #8	/* r4 = 3210 */
 	mov	r5, r5, lsr #24		/* r4 = ...4 */
 	orr	r5, r5, r7, lsl #8	/* r5 = 7654 */
-#endif
 	/* FALLTHROUGH */
 
 .Lin4_cksum_add_ips:
 	adds	r5, r5, r4
-#ifndef __ARMEB__
 	adcs	r8, r5, r8, lsl #8
-#else
-	adcs	r8, r5, r8
-#endif
 	adc	r8, r8, #0x00
 	mov	r1, #0x00
 	b	.Lin4_cksum_skip_entry
@@ -257,17 +238,10 @@ ASENTRY_NP(L_cksumdata)
 	ldrgtb	r6, [r0], #0x01		/* Fetch 3rd byte */
 	movle	r6, #0x00
 	/* Combine the three bytes depending on endianness and alignment */
-#ifdef __ARMEB__
-	orreq	r2, r5, r4, lsl #8
-	orreq	r2, r2, r6, lsl #24
-	orrne	r2, r4, r5, lsl #8
-	orrne	r2, r2, r6, lsl #16
-#else
 	orreq	r2, r4, r5, lsl #8
 	orreq	r2, r2, r6, lsl #16
 	orrne	r2, r5, r4, lsl #8
 	orrne	r2, r2, r6, lsl #24
-#endif
 	subs	r1, r1, r7		/* Update length */
 	moveq	pc, lr			/* All done? */
 
@@ -449,17 +423,10 @@ ASENTRY_NP(L_cksumdata)
 	movle	r5, #0x00
 	/* Combine the three bytes depending on endianness and alignment */
 	tst	r0, #0x01
-#ifdef __ARMEB__
-	orreq	r3, r4, r3, lsl #8
-	orreq	r3, r3, r5, lsl #24
-	orrne	r3, r3, r4, lsl #8
-	orrne	r3, r3, r5, lsl #16
-#else
 	orreq	r3, r3, r4, lsl #8
 	orreq	r3, r3, r5, lsl #16
 	orrne	r3, r4, r3, lsl #8
 	orrne	r3, r3, r5, lsl #24
-#endif
 	adds	r2, r2, r3
 	adc	r2, r2, #0x00
 	mov	pc, lr

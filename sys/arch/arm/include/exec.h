@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.1 2006/10/02 17:45:30 miod Exp $	*/
+/*	$OpenBSD: exec.h,v 1.2 2011/11/08 17:06:51 deraadt Exp $	*/
 /*	$NetBSD: exec.h,v 1.6 1994/10/27 04:16:05 cgd Exp $	*/
 
 /*
@@ -38,11 +38,7 @@
 #define ARCH_ELFSIZE		32
 
 #define ELF_TARG_CLASS		ELFCLASS32
-#ifdef __ARMEB__
-#define ELF_TARG_DATA		ELFDATA2MSB
-#else
 #define ELF_TARG_DATA		ELFDATA2LSB
-#endif
 #define ELF_TARG_MACH		EM_ARM 
 
 #define _NLIST_DO_ELF

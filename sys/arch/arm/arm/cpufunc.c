@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.15 2011/11/06 13:47:57 miod Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.16 2011/11/08 17:06:51 deraadt Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -1185,10 +1185,6 @@ arm8_setup()
 		 | CPU_CONTROL_BPRD_ENABLE | CPU_CONTROL_ROM_ENABLE
 		 | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE;
 
-#ifdef __ARMEB__
-	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
-#endif
-
 	/* Get clock configuration */
 	clocktest = arm8_clock_config(0, 0) & 0x0f;
 
@@ -1223,10 +1219,6 @@ arm9_setup()
 		 | CPU_CONTROL_LABT_ENABLE | CPU_CONTROL_VECRELOC
 		 | CPU_CONTROL_ROUNDROBIN;
 
-#ifdef __ARMEB__
-	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
-#endif
-
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
 
@@ -1256,10 +1248,6 @@ arm10_setup()
 	    | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
 	    | CPU_CONTROL_BPRD_ENABLE
 	    | CPU_CONTROL_ROUNDROBIN | CPU_CONTROL_CPCLK;
-
-#ifdef __ARMEB__
-	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
-#endif
 
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
@@ -1296,10 +1284,6 @@ arm11_setup()
 	    | CPU_CONTROL_ROM_ENABLE | CPU_CONTROL_BPRD_ENABLE
 	    | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
 	    | CPU_CONTROL_ROUNDROBIN | CPU_CONTROL_CPCLK;
-
-#ifdef __ARMEB__
-	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
-#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -1372,10 +1356,6 @@ sa11x0_setup()
 		 | CPU_CONTROL_LABT_ENABLE | CPU_CONTROL_BPRD_ENABLE
 		 | CPU_CONTROL_CPCLK | CPU_CONTROL_VECRELOC;
 
-#ifdef __ARMEB__
-	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
-#endif
-
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
 
@@ -1402,10 +1382,6 @@ ixp12x0_setup()
 		 | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_SYST_ENABLE
 		 | CPU_CONTROL_ROM_ENABLE | CPU_CONTROL_IC_ENABLE
 		 | CPU_CONTROL_VECRELOC;
-
-#ifdef __ARMEB__
-	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
-#endif
 
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
@@ -1446,10 +1422,6 @@ xscale_setup()
 		 | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
 		 | CPU_CONTROL_LABT_ENABLE | CPU_CONTROL_BPRD_ENABLE
 		 | CPU_CONTROL_CPCLK | CPU_CONTROL_VECRELOC;
-
-#ifdef __ARMEB__
-	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
-#endif
 
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
