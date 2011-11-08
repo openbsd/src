@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.2 2011/10/19 06:48:56 guenther Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.3 2011/11/08 22:46:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
@@ -59,16 +59,16 @@ __sparc64_get_tcb(void)
 
 /* Get the value of a specific member in the TCB */
 static inline void *
-__sparc64_get_tcb(int offset)
+__sparc64_read_tcb(int offset)
 {
 	void	*val;
 	__asm__ ("ldx [%%g7 + %1], %0" : "=r" (val) : "r" (offset));
 	return val;
 }
 #define TCB_GET_MEMBER(member)	\
-	__sparc64_get_tcb(offsetof(struct thread_control_block, member))
+	__sparc64_read_tcb(offsetof(struct thread_control_block, member))
 
-#define TCB_SET(tcb)	(__asm __volatile("mov %0, %%g7" : : "r" (tcb)))
+#define TCB_SET(tcb)	__asm __volatile("mov %0, %%g7" : : "r" (tcb))
 
 #endif /* 0 */
 
