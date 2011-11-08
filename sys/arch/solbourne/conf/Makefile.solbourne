@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.solbourne,v 1.36 2011/07/07 22:28:18 guenther Exp $
+#	$OpenBSD: Makefile.solbourne,v 1.37 2011/11/08 18:41:34 matthieu Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -10,7 +10,6 @@
 
 .include <bsd.own.mk>
 
-MKDEP?=	mkdep
 SIZE?=	size
 STRIP?=	strip
 

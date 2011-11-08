@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.76 2011/07/07 22:28:18 guenther Exp $
+#	$OpenBSD: Makefile.alpha,v 1.77 2011/11/08 18:41:34 matthieu Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -10,7 +10,6 @@
 
 .include <bsd.own.mk>
 
-MKDEP?=	mkdep
 SIZE?=	size
 STRIP?=	strip
 
