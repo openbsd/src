@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.33 2011/06/29 20:52:09 matthew Exp $
+#	$OpenBSD: RAMDISK,v 1.34 2011/11/08 19:22:13 deraadt Exp $
 
 machine		mvme88k m88k
 
@@ -31,7 +31,7 @@ option		INET
 option		INET6
 option		BOOT_CONFIG
 
-config		bsd		root rd0 swap on rd0b
+config		bsd		root rd0a swap on rd0b
 
 mainbus0 at root
 

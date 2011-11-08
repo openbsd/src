@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.86 2011/09/20 22:11:42 miod Exp $
+#	$OpenBSD: GENERIC,v 1.87 2011/11/08 19:22:13 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -33,7 +33,6 @@ option	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls; needed for X11
 option USBVERBOSE
 
 config		bsd	swap generic
-#config		bsd	root on wd0a
 
 # The main bus device
 mainbus0	at root

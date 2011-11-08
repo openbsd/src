@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.10 2011/06/29 20:52:09 matthew Exp $
+#	$OpenBSD: RAMDISK,v 1.11 2011/11/08 19:22:13 deraadt Exp $
 
 machine		luna88k m88k
 
@@ -17,7 +17,7 @@ option		ERRATA__XXX_USR
 
 maxusers	32
 
-config		bsd		root rd0 swap on rd0b
+config		bsd		root rd0a swap on rd0b
 
 option		SCSITERSE
 option		SMALL_KERNEL

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.15 2011/06/29 20:52:09 matthew Exp $
+#	$OpenBSD: RAMDISK,v 1.16 2011/11/08 19:22:13 deraadt Exp $
 
 machine		mvme68k m68k
 
@@ -35,7 +35,7 @@ option		INET		# IP + ICMP + TCP + UDP
 option		INET6
 option		BOOT_CONFIG	# boot-time kernel config
 
-config		bsd		root rd0 swap on rd0b
+config		bsd		root rd0a swap on rd0b
 
 mainbus0 at root
 
