@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.20 2011/11/08 16:51:47 deraadt Exp $
+#	$OpenBSD: files.arm,v 1.21 2011/11/08 17:07:42 deraadt Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # generic networking files
@@ -69,7 +69,6 @@ file	arch/arm/arm/sigcode.S
 file	arch/arm/arm/syscall.c
 file	arch/arm/arm/undefined.c
 file	arch/arm/arm/vectors.S
-file	arch/arm/arm/vm_machdep_arm.c
 
 # files common to arm implementations
 file	arch/arm/arm/arm32_machdep.c
