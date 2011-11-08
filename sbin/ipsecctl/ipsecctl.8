@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsecctl.8,v 1.26 2011/11/08 13:26:06 henning Exp $
+.\"	$OpenBSD: ipsecctl.8,v 1.27 2011/11/08 13:28:42 henning Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
 .\"
@@ -69,9 +69,11 @@ option flushes the SPD and the SAD.
 Load the rules contained in
 .Ar file .
 .It Fl i Ar fifo
-The
+If given, the
 .Fl i
-option specifies the FIFO used to talk to
+option specifies an alternate FIFO instead of
+.Pa /var/run/isakmpd.fifo ,
+used to talk to
 .Xr isakmpd 8 .
 .It Fl k
 Show secret keying material when printing the active SAD entries.
