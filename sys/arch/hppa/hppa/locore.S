@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.187 2011/10/12 18:30:09 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.188 2011/11/08 15:39:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -773,8 +773,10 @@ $syscall_return
 #endif
 	ldw	TF_CR0(sr3, t3), t1
 	mtctl	t1, rctr
-	ldw	TF_CR30(sr3, t3), t1
-	mtctl	t1, cr30
+	ldw	TF_CR27(sr3, t3), t1
+	ldw	TF_CR30(sr3, t3), t2
+	mtctl	t1, cr27
+	mtctl	t2, cr30
 
 	/*
 	 * clear the system mask, this puts us back into physical mode.
@@ -1790,8 +1792,10 @@ $trapnowvirt
 	mfctl	cr28, t2
 	stw	t2, TF_CR28(t3)
 #endif
-	mfctl	cr30, t1
-	stw	t1, TF_CR30(t3)
+	mfctl	cr27, t1
+	mfctl	cr30, t2
+	stw	t1, TF_CR27(t3)
+	stw	t2, TF_CR30(t3)
 
 	/*
 	 * load the global pointer for the kernel

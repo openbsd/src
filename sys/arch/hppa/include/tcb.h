@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.1 2011/10/27 04:01:17 guenther Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.2 2011/11/08 15:39:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
@@ -21,12 +21,25 @@
 
 #ifdef _KERNEL
 
-#error "not yet"
+#define TCB_GET(p)		\
+	((void *)(p)->p_md.md_regs->tf_cr27)
+#define TCB_SET(p, addr)	\
+	((p)->p_md.md_regs->tf_cr27 = (unsigned)(addr))
 
 #else /* _KERNEL */
 
 /* ELF TLS ABI calls for small TCB, with static TLS data after it */
 #define TLS_VARIANT	1
+
+/* Get a pointer to the TCB itself */
+static inline void *
+__hppa_get_tcb(void)
+{
+	void *val;
+	__asm__ ("mfctl %%cr27, %0" : "=r" (val));
+	return val;
+}
+#define TCB_GET()		__hppa_get_tcb()
 
 #endif /* _KERNEL */
 

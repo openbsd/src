@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.43 2011/06/06 14:23:26 jsing Exp $
+#	$OpenBSD: genassym.cf,v 1.44 2011/11/08 15:39:50 kettenis Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -126,6 +126,7 @@ member	TF_CR21		tf_ior
 member	TF_CR22		tf_ipsw
 member	TF_CR23		tf_eirr
 member	TF_CR25		tf_vtop
+member	tf_cr27
 member	tf_cr28
 member	tf_cr30
 
