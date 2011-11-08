@@ -1,4 +1,4 @@
-/*	$OpenBSD: beagle_machdep.c,v 1.10 2011/10/24 22:49:07 drahn Exp $ */
+/*	$OpenBSD: beagle_machdep.c,v 1.11 2011/11/08 22:41:41 krw Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -503,7 +503,7 @@ initarm(void *arg0, void *arg1, void *arg2)
 	 * Examine the boot args string for options we need to know about
 	 * now.
 	 */
-	process_kernel_args("");
+	process_kernel_args(bootconfig.bootstring);
 #ifdef RAMDISK_HOOKS
         boothowto |= RB_DFLTROOT;
 #endif /* RAMDISK_HOOKS */

@@ -1,1 +1,4 @@
-fatload mmc 0 0x82800000 bsd.umg; bootm 0x82800000
+setenv loadaddr 0x82800000 ;
+setenv bootargs DSBOsd0i:/bsd.umg ;
+fatload mmc 0 ${loadaddr} bsd.umg ;
+bootm ${loadaddr}

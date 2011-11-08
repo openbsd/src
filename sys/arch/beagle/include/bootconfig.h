@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootconfig.h,v 1.3 2011/09/20 22:02:13 miod Exp $	*/
+/*	$OpenBSD: bootconfig.h,v 1.4 2011/11/08 22:41:41 krw Exp $	*/
 /*	$NetBSD: bootconfig.h,v 1.2 2001/06/21 22:08:28 chris Exp $	*/
 
 /*
@@ -51,14 +51,15 @@ typedef struct _PhysMem {
 } PhysMem;
 
 #define	DRAM_BLOCKS	2
+#define	MAX_BOOT_STRING 255
 
 typedef struct _BootConfig {
 	PhysMem dram[DRAM_BLOCKS];
 	u_int dramblocks;
+	char bootstring[MAX_BOOT_STRING];
 } BootConfig;
 
 extern BootConfig bootconfig;
-#define MAX_BOOT_STRING 255
 
 #endif	/* _KERNEL || _STANDALONE */
 #if defined(_KERNEL) 

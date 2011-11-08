@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.11 2011/11/06 01:34:53 drahn Exp $
+# $OpenBSD: GENERIC,v 1.12 2011/11/08 22:41:41 krw Exp $
 #
 # GENERIC machine description file
 #
@@ -47,7 +47,7 @@ makeoptions	CPUFLAGS="-mcpu=armv5"	# dont have gcc v7 support yet.
 option WSDISPLAY_DEFAULTSCREENS=1
 #option WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 
-config		bsd	root on sd0a swap on sd0b
+config		bsd	swap generic
 
 # The main bus device
 mainbus0	at root
