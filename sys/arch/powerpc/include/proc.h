@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.5 2008/04/27 15:59:49 drahn Exp $	*/
+/*	$OpenBSD: proc.h,v 1.6 2011/11/09 15:35:01 kettenis Exp $	*/
 /*	$NetBSD: proc.h,v 1.1 1996/09/30 16:34:31 ws Exp $	*/
 
 /*-
@@ -41,5 +41,7 @@
 struct mdproc {
 	__volatile int md_astpending;
 };
+
+#define __HAVE_MD_TCB
 
 #endif	/* _POWERPC_PROC_H_ */
