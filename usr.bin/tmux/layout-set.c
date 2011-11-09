@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-set.c,v 1.9 2011/03/07 23:55:16 nicm Exp $ */
+/* $OpenBSD: layout-set.c,v 1.10 2011/11/09 12:02:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -260,8 +260,8 @@ layout_set_main_h(struct window *w)
 	 * If an other pane height was specified, honour it so long as it
 	 * doesn't shrink the main height to less than the main-pane-height
 	 */
-	if (otherheight > 1 && w->sx - otherheight > mainheight)
-		mainheight = w->sx - otherheight;
+	if (otherheight > 1 && w->sy - otherheight > mainheight)
+		mainheight = w->sy - otherheight;
 	if (mainheight < PANE_MINIMUM + 1)
 		mainheight = PANE_MINIMUM + 1;
 
