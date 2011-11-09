@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.127 2011/09/20 10:07:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.128 2011/11/09 20:57:38 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -160,14 +160,13 @@ sigactsinit(struct proc *p)
 }
 
 /*
- * Make p2 share p1's sigacts.
+ * Share a sigacts structure.
  */
-void
-sigactsshare(struct proc *p1, struct proc *p2)
+struct sigacts *
+sigactsshare(struct proc *p)
 {
-
-	p2->p_sigacts = p1->p_sigacts;
-	p1->p_sigacts->ps_refcnt++;
+	p->p_sigacts->ps_refcnt++;
+	return p->p_sigacts;
 }
 
 /*

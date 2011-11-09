@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_kthread.c,v 1.30 2008/06/26 05:42:20 ray Exp $	*/
+/*	$OpenBSD: kern_kthread.c,v 1.31 2011/11/09 20:57:38 guenther Exp $	*/
 /*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
 
 /*-
@@ -59,7 +59,7 @@ int
 kthread_create(void (*func)(void *), void *arg,
     struct proc **newpp, const char *fmt, ...)
 {
-	struct proc *p2;
+	struct proc *p;
 	int error;
 	va_list ap;
 
@@ -69,23 +69,23 @@ kthread_create(void (*func)(void *), void *arg,
 	 * parent to wait for.
 	 */
 	error = fork1(&proc0, 0, FORK_SHAREVM|FORK_SHAREFILES|FORK_NOZOMBIE|
-	    FORK_SIGHAND, NULL, 0, func, arg, NULL, &p2);
+	    FORK_SIGHAND, NULL, 0, func, arg, NULL, &p);
 	if (error)
 		return (error);
 
 	/*
 	 * Mark it as a system process.
 	 */
-	atomic_setbits_int(&p2->p_flag, P_SYSTEM);
+	atomic_setbits_int(&p->p_flag, P_SYSTEM);
 
 	/* Name it as specified. */
 	va_start(ap, fmt);
-	vsnprintf(p2->p_comm, sizeof p2->p_comm, fmt, ap);
+	vsnprintf(p->p_comm, sizeof p->p_comm, fmt, ap);
 	va_end(ap);
 
 	/* All done! */
 	if (newpp != NULL)
-		*newpp = p2;
+		*newpp = p;
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.130 2011/11/05 23:02:37 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.131 2011/11/09 20:57:38 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ void fork_return(void *);
 void tfork_child_return(void *);
 int pidtaken(pid_t);
 
-void process_new(struct proc *, struct proc *);
+void process_new(struct proc *, struct process *);
 
 void
 fork_return(void *arg)
@@ -190,16 +190,15 @@ tfork_child_return(void *arg)
  * Allocate and initialize a new process.
  */
 void
-process_new(struct proc *newproc, struct proc *parentproc)
+process_new(struct proc *p, struct process *parent)
 {
-	struct process *pr, *parent;
+	struct process *pr;
 
 	pr = pool_get(&process_pool, PR_WAITOK);
-	pr->ps_mainproc = newproc;
-	parent = parentproc->p_p;
+	pr->ps_mainproc = p;
 
 	TAILQ_INIT(&pr->ps_threads);
-	TAILQ_INSERT_TAIL(&pr->ps_threads, newproc, p_thr_link);
+	TAILQ_INSERT_TAIL(&pr->ps_threads, p, p_thr_link);
 	pr->ps_pptr = parent;
 	LIST_INIT(&pr->ps_children);
 	pr->ps_refcnt = 1;
@@ -225,18 +224,20 @@ process_new(struct proc *newproc, struct proc *parentproc)
 	    parent->ps_flags & PS_CONTROLT)
 		atomic_setbits_int(&pr->ps_flags, PS_CONTROLT);
 
-	newproc->p_p = pr;
+	p->p_p = pr;
 }
 
 /* print the 'table full' message once per 10 seconds */
 struct timeval fork_tfmrate = { 10, 0 };
 
 int
-fork1(struct proc *p1, int exitsig, int flags, void *stack, pid_t *tidptr,
+fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
     void (*func)(void *), void *arg, register_t *retval,
     struct proc **rnewprocp)
 {
-	struct proc *p2;
+	struct process *curpr = curp->p_p;
+	struct process *pr;
+	struct proc *p;
 	uid_t uid;
 	struct vmspace *vm;
 	int count;
@@ -264,7 +265,7 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, pid_t *tidptr,
 	 * the last 5 processes to root. The variable nprocs is the current
 	 * number of processes, maxproc is the limit.
 	 */
-	uid = p1->p_cred->p_ruid;
+	uid = curp->p_cred->p_ruid;
 	if ((nprocs >= maxproc - 5 && uid != 0) || nprocs >= maxproc) {
 		static struct timeval lasttfm;
 
@@ -279,7 +280,7 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, pid_t *tidptr,
 	 * a nonprivileged user to exceed their current limit.
 	 */
 	count = chgproccnt(uid, 1);
-	if (uid != 0 && count > p1->p_rlimit[RLIMIT_NPROC].rlim_cur) {
+	if (uid != 0 && count > curp->p_rlimit[RLIMIT_NPROC].rlim_cur) {
 		(void)chgproccnt(uid, -1);
 		nprocs--;
 		return (EAGAIN);
@@ -300,19 +301,20 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, pid_t *tidptr,
 	 */
 
 	/* Allocate new proc. */
-	p2 = pool_get(&proc_pool, PR_WAITOK);
+	p = pool_get(&proc_pool, PR_WAITOK);
 
-	p2->p_stat = SIDL;			/* protect against others */
-	p2->p_exitsig = exitsig;
-	p2->p_flag = 0;
+	p->p_stat = SIDL;			/* protect against others */
+	p->p_exitsig = exitsig;
+	p->p_flag = 0;
 
 	if (flags & FORK_THREAD) {
-		atomic_setbits_int(&p2->p_flag, P_THREAD);
-		p2->p_p = p1->p_p;
-		TAILQ_INSERT_TAIL(&p2->p_p->ps_threads, p2, p_thr_link);
-		p2->p_p->ps_refcnt++;
+		atomic_setbits_int(&p->p_flag, P_THREAD);
+		p->p_p = pr = curpr;
+		TAILQ_INSERT_TAIL(&pr->ps_threads, p, p_thr_link);
+		pr->ps_refcnt++;
 	} else {
-		process_new(p2, p1);
+		process_new(p, curpr);
+		pr = p->p_p;
 	}
 
 	/*
@@ -320,55 +322,55 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, pid_t *tidptr,
 	 * Start by zeroing the section of proc that is zero-initialized,
 	 * then copy the section that is copied directly from the parent.
 	 */
-	bzero(&p2->p_startzero,
-	    (unsigned) ((caddr_t)&p2->p_endzero - (caddr_t)&p2->p_startzero));
-	bcopy(&p1->p_startcopy, &p2->p_startcopy,
-	    (unsigned) ((caddr_t)&p2->p_endcopy - (caddr_t)&p2->p_startcopy));
+	bzero(&p->p_startzero,
+	    (unsigned) ((caddr_t)&p->p_endzero - (caddr_t)&p->p_startzero));
+	bcopy(&curp->p_startcopy, &p->p_startcopy,
+	    (unsigned) ((caddr_t)&p->p_endcopy - (caddr_t)&p->p_startcopy));
 
 	/*
 	 * Initialize the timeouts.
 	 */
-	timeout_set(&p2->p_sleep_to, endtsleep, p2);
-	timeout_set(&p2->p_realit_to, realitexpire, p2);
+	timeout_set(&p->p_sleep_to, endtsleep, p);
+	timeout_set(&p->p_realit_to, realitexpire, p);
 
 	/*
 	 * Duplicate sub-structures as needed.
 	 * Increase reference counts on shared objects.
 	 * The p_stats and p_sigacts substructs are set in vm_fork.
 	 */
-	if (p1->p_flag & P_PROFIL)
-		startprofclock(p2);
+	if (curp->p_flag & P_PROFIL)
+		startprofclock(p);
 	if (flags & FORK_PTRACE)
-		atomic_setbits_int(&p2->p_flag, p1->p_flag & P_TRACED);
+		atomic_setbits_int(&p->p_flag, curp->p_flag & P_TRACED);
 
 	/* bump references to the text vnode (for procfs) */
-	p2->p_textvp = p1->p_textvp;
-	if (p2->p_textvp)
-		vref(p2->p_textvp);
+	p->p_textvp = curp->p_textvp;
+	if (p->p_textvp)
+		vref(p->p_textvp);
 
 	if (flags & FORK_CLEANFILES)
-		p2->p_fd = fdinit(p1);
+		p->p_fd = fdinit(curp);
 	else if (flags & FORK_SHAREFILES)
-		p2->p_fd = fdshare(p1);
+		p->p_fd = fdshare(curp);
 	else
-		p2->p_fd = fdcopy(p1);
+		p->p_fd = fdcopy(curp);
 
 	if (flags & FORK_PPWAIT) {
-		atomic_setbits_int(&p2->p_p->ps_flags, PS_PPWAIT);
-		atomic_setbits_int(&p1->p_p->ps_flags, PS_ISPWAIT);
+		atomic_setbits_int(&pr->ps_flags, PS_PPWAIT);
+		atomic_setbits_int(&curpr->ps_flags, PS_ISPWAIT);
 	}
 	if (flags & FORK_NOZOMBIE)
-		atomic_setbits_int(&p2->p_flag, P_NOZOMBIE);
+		atomic_setbits_int(&p->p_flag, P_NOZOMBIE);
 
 #ifdef KTRACE
 	/*
 	 * Copy traceflag and tracefile if enabled.
 	 * If not inherited, these were zeroed above.
 	 */
-	if (p1->p_traceflag & KTRFAC_INHERIT) {
-		p2->p_traceflag = p1->p_traceflag;
-		if ((p2->p_tracep = p1->p_tracep) != NULL)
-			vref(p2->p_tracep);
+	if (curp->p_traceflag & KTRFAC_INHERIT) {
+		p->p_traceflag = curp->p_traceflag;
+		if ((p->p_tracep = curp->p_tracep) != NULL)
+			vref(p->p_tracep);
 	}
 #endif
 
@@ -377,35 +379,35 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, pid_t *tidptr,
 	 * XXX should move p_estcpu into the region of struct proc which gets
 	 * copied.
 	 */
-	scheduler_fork_hook(p1, p2);
+	scheduler_fork_hook(curp, p);
 
 	/*
 	 * Create signal actions for the child process.
 	 */
 	if (flags & FORK_SIGHAND)
-		sigactsshare(p1, p2);
+		p->p_sigacts = sigactsshare(curp);
 	else
-		p2->p_sigacts = sigactsinit(p1);
+		p->p_sigacts = sigactsinit(curp);
 
 	/*
 	 * If emulation has process fork hook, call it now.
 	 */
-	if (p2->p_emul->e_proc_fork)
-		(*p2->p_emul->e_proc_fork)(p2, p1);
+	if (p->p_emul->e_proc_fork)
+		(*p->p_emul->e_proc_fork)(p, curp);
 
-	p2->p_addr = (struct user *)uaddr;
+	p->p_addr = (struct user *)uaddr;
 
 	/*
 	 * Finish creating the child process.  It will return through a
 	 * different path later.
 	 */
-	uvm_fork(p1, p2, ((flags & FORK_SHAREVM) ? TRUE : FALSE), stack,
-	    0, func ? func : child_return, arg ? arg : p2);
+	uvm_fork(curp, p, ((flags & FORK_SHAREVM) ? TRUE : FALSE), stack,
+	    0, func ? func : child_return, arg ? arg : p);
 
-	timeout_set(&p2->p_stats->p_virt_to, virttimer_trampoline, p2);
-	timeout_set(&p2->p_stats->p_prof_to, proftimer_trampoline, p2);
+	timeout_set(&p->p_stats->p_virt_to, virttimer_trampoline, p);
+	timeout_set(&p->p_stats->p_prof_to, proftimer_trampoline, p);
 
-	vm = p2->p_vmspace;
+	vm = p->p_vmspace;
 
 	if (flags & FORK_FORK) {
 		forkstat.cntfork++;
@@ -425,10 +427,10 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, pid_t *tidptr,
 		forkstat.sizkthread += vm->vm_dsize + vm->vm_ssize;
 	}
 
-	if (p2->p_flag & P_TRACED && flags & FORK_FORK)
+	if (p->p_flag & P_TRACED && flags & FORK_FORK)
 		newptstat = malloc(sizeof(*newptstat), M_SUBPROC, M_WAITOK);
 #if NSYSTRACE > 0
-	if (ISSET(p1->p_flag, P_SYSTRACE))
+	if (ISSET(curp->p_flag, P_SYSTRACE))
 		newstrp = systrace_getproc();
 #endif
 
@@ -436,55 +438,55 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, pid_t *tidptr,
 	do {
 		lastpid = 1 + (randompid ? arc4random() : lastpid) % PID_MAX;
 	} while (pidtaken(lastpid));
-	p2->p_pid = lastpid;
+	p->p_pid = lastpid;
 
-	LIST_INSERT_HEAD(&allproc, p2, p_list);
-	LIST_INSERT_HEAD(PIDHASH(p2->p_pid), p2, p_hash);
+	LIST_INSERT_HEAD(&allproc, p, p_list);
+	LIST_INSERT_HEAD(PIDHASH(p->p_pid), p, p_hash);
 	if ((flags & FORK_THREAD) == 0) {
-		LIST_INSERT_AFTER(p1->p_p, p2->p_p, ps_pglist);
-		LIST_INSERT_HEAD(&p1->p_p->ps_children, p2->p_p, ps_sibling);
+		LIST_INSERT_AFTER(curpr, pr, ps_pglist);
+		LIST_INSERT_HEAD(&curpr->ps_children, pr, ps_sibling);
 	}
 
-	if (p2->p_flag & P_TRACED) {
-		p2->p_oppid = p1->p_pid;
+	if (p->p_flag & P_TRACED) {
+		p->p_oppid = curp->p_pid;
 		if ((flags & FORK_THREAD) == 0 &&
-		    p2->p_p->ps_pptr != p1->p_p->ps_pptr)
-			proc_reparent(p2->p_p, p1->p_p->ps_pptr);
+		    pr->ps_pptr != curpr->ps_pptr)
+			proc_reparent(pr, curpr->ps_pptr);
 
 		/*
 		 * Set ptrace status.
 		 */
 		if (flags & FORK_FORK) {
-			p2->p_ptstat = newptstat;
+			p->p_ptstat = newptstat;
 			newptstat = NULL;
-			p1->p_ptstat->pe_report_event = PTRACE_FORK;
-			p2->p_ptstat->pe_report_event = PTRACE_FORK;
-			p1->p_ptstat->pe_other_pid = p2->p_pid;
-			p2->p_ptstat->pe_other_pid = p1->p_pid;
+			curp->p_ptstat->pe_report_event = PTRACE_FORK;
+			p->p_ptstat->pe_report_event = PTRACE_FORK;
+			curp->p_ptstat->pe_other_pid = p->p_pid;
+			p->p_ptstat->pe_other_pid = curp->p_pid;
 		}
 	}
 
 #if NSYSTRACE > 0
 	if (newstrp)
-		systrace_fork(p1, p2, newstrp);
+		systrace_fork(curp, p, newstrp);
 #endif
 
 	if (tidptr != NULL) {
-		pid_t	pid = p2->p_pid + THREAD_PID_OFFSET;
+		pid_t	pid = p->p_pid + THREAD_PID_OFFSET;
 
 		if (copyout(&pid, tidptr, sizeof(pid)))
-			psignal(p1, SIGSEGV);
+			psignal(curp, SIGSEGV);
 	}
 
 	/*
 	 * Make child runnable, set start time, and add to run queue.
 	 */
 	SCHED_LOCK(s);
- 	getmicrotime(&p2->p_stats->p_start);
-	p2->p_acflag = AFORK;
-	p2->p_stat = SRUN;
-	p2->p_cpu = sched_choosecpu_fork(p1, flags);
-	setrunqueue(p2);
+ 	getmicrotime(&p->p_stats->p_start);
+	p->p_acflag = AFORK;
+	p->p_stat = SRUN;
+	p->p_cpu = sched_choosecpu_fork(curp, flags);
+	setrunqueue(p);
 	SCHED_UNLOCK(s);
 
 	if (newptstat)
@@ -494,7 +496,7 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, pid_t *tidptr,
 	 * Notify any interested parties about the new process.
 	 */
 	if ((flags & FORK_THREAD) == 0)
-		KNOTE(&p1->p_p->ps_klist, NOTE_FORK | p2->p_pid);
+		KNOTE(&curpr->ps_klist, NOTE_FORK | p->p_pid);
 
 	/*
 	 * Update stats now that we know the fork was successful.
@@ -509,7 +511,7 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, pid_t *tidptr,
 	 * Pass a pointer to the new process to the caller.
 	 */
 	if (rnewprocp != NULL)
-		*rnewprocp = p2;
+		*rnewprocp = p;
 
 	/*
 	 * Preserve synchronization semantics of vfork.  If waiting for
@@ -519,21 +521,21 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, pid_t *tidptr,
 	 * XXX Need to stop other rthreads in the parent
 	 */
 	if (flags & FORK_PPWAIT)
-		while (p1->p_p->ps_flags & PS_ISPWAIT)
-			tsleep(p1->p_p, PWAIT, "ppwait", 0);
+		while (curpr->ps_flags & PS_ISPWAIT)
+			tsleep(curpr, PWAIT, "ppwait", 0);
 
 	/*
 	 * If we're tracing the child, alert the parent too.
 	 */
-	if ((flags & FORK_PTRACE) && (p1->p_flag & P_TRACED))
-		psignal(p1, SIGTRAP);
+	if ((flags & FORK_PTRACE) && (curp->p_flag & P_TRACED))
+		psignal(curp, SIGTRAP);
 
 	/*
 	 * Return child pid to parent process,
 	 * marking us as parent via retval[1].
 	 */
 	if (retval != NULL) {
-		retval[0] = p2->p_pid +
+		retval[0] = p->p_pid +
 		    (flags & FORK_THREAD ? THREAD_PID_OFFSET : 0);
 		retval[1] = 0;
 	}
