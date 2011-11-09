@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.44 2011/11/06 11:48:58 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.45 2011/11/09 10:28:01 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -88,21 +88,6 @@ __errno(void)
 	return (TCB_ERRNOPTR());
 }
 
-
-static pthread_t
-_rthread_findself(void)
-{
-	pthread_t me;
-	pid_t tid = getthrid();
-
-	LIST_FOREACH(me, &_thread_list, threads) 
-		if (me->tid == tid)
-			break;
-
-	return (me);
-}
-
-
 static void
 _rthread_start(void *v)
 {
@@ -190,17 +175,11 @@ _rthread_clearflag(pthread_t thread, int flag)
 pthread_t
 pthread_self(void)
 {
-	pthread_t thread;
-
 	if (!_threads_ready)
 		if (_rthread_init())
 			return (NULL);
 
-	_spinlock(&_thread_lock);
-	thread = _rthread_findself();
-	_spinunlock(&_thread_lock);
-
-	return (thread);
+	return (TCB_THREAD());
 }
 
 static void
