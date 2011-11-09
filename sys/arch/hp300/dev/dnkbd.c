@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnkbd.c,v 1.17 2009/07/23 21:05:56 blambert Exp $	*/
+/*	$OpenBSD: dnkbd.c,v 1.18 2011/11/09 14:22:37 shadchin Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -150,11 +150,6 @@ struct dnkbd_softc {
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int		sc_rawkbd;
-	int		sc_nrep;
-	char		sc_rep[2];	/* at most, one key */
-	struct timeout	sc_rawrepeat_ch;
-#define	REP_DELAY1	400
-#define	REP_DELAYN	100
 #endif
 };
 
@@ -224,7 +219,6 @@ int	dnkbd_intr(void *);
 int	dnkbd_pollin(struct apciregs *, u_int);
 int	dnkbd_pollout(struct apciregs *, int);
 int	dnkbd_probe(struct dnkbd_softc *);
-void	dnkbd_rawrepeat(void *);
 int	dnkbd_send(struct apciregs *, const u_int8_t *, size_t);
 int	dnsubmatch_kbd(struct device *, void *, void *);
 int	dnsubmatch_mouse(struct device *, void *, void *);
@@ -252,9 +246,6 @@ dnkbd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_regs = (struct apciregs *)IIOV(FRODO_BASE + fa->fa_offset);
 
 	timeout_set(&sc->sc_bellstop_tmo, dnkbd_bellstop, sc);
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-	timeout_set(&sc->sc_rawrepeat_ch, dnkbd_rawrepeat, sc);
-#endif
 
 	/* reset the port */
 	apciinit(sc->sc_regs, 1200, CFCR_8BITS | CFCR_PEVEN | CFCR_PENAB);
@@ -667,20 +658,11 @@ dnevent_kbd_internal(struct dnkbd_softc *sc, int dat)
 			cbuf[j] = c & 0x7f;
 			if (type == WSCONS_EVENT_KEY_UP)
 				cbuf[j] |= 0x80;
-			else {
-				/* remember pressed key for autorepeat */
-				bcopy(cbuf, sc->sc_rep, sizeof(sc->sc_rep));
-			}
 			j++;
-		}
 
-		if (j != 0) {
 			s = spltty();
 			wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
 			splx(s);
-			timeout_del(&sc->sc_rawrepeat_ch);
-			sc->sc_nrep = j;
-			timeout_add_msec(&sc->sc_rawrepeat_ch, REP_DELAY1);
 		}
 	} else
 #endif
@@ -690,21 +672,6 @@ dnevent_kbd_internal(struct dnkbd_softc *sc, int dat)
 		splx(s);
 	}
 }
-
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-void
-dnkbd_rawrepeat(void *v)
-{
-	struct dnkbd_softc *sc = v;
-	int s;
-
-	s = spltty();
-	wskbd_rawinput(sc->sc_wskbddev, sc->sc_rep, sc->sc_nrep);
-	splx(s);
-
-	timeout_add_msec(&sc->sc_rawrepeat_ch, REP_DELAYN);
-}
-#endif
 
 #if NWSMOUSE > 0
 void
@@ -950,7 +917,6 @@ dnkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	case WSKBDIO_SETMODE:
 		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
-		timeout_del(&sc->sc_rawrepeat_ch);
 		return (0);
 #endif
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbdvar.h,v 1.15 2009/01/12 21:11:58 miod Exp $	*/
+/*	$OpenBSD: sunkbdvar.h,v 1.16 2011/11/09 14:22:38 shadchin Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -52,11 +52,6 @@ struct sunkbd_softc {
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int		sc_rawkbd;
-	int		sc_nrep;
-	char		sc_rep[SUNKBD_MAX_INPUT_SIZE * 2];
-	struct timeout	sc_rawrepeat_tmo;
-#define	REP_DELAY1	400
-#define	REP_DELAYN	100
 #endif
 };
 

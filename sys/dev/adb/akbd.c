@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.10 2011/06/15 21:32:05 miod Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.11 2011/11/09 14:22:37 shadchin Exp $	*/
 /*	$NetBSD: akbd.c,v 1.17 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -88,7 +88,6 @@ void	akbd_adbcomplete(caddr_t, caddr_t, int);
 void	akbd_capslockwrapper(struct akbd_softc *, int);
 void	akbd_input(struct akbd_softc *, int);
 void	akbd_processevent(struct akbd_softc *, adb_event_t *);
-void	akbd_rawrepeat(void *v);
 #ifdef notyet
 u_char	getleds(int);
 int	setleds(struct akbd_softc *, u_char);
@@ -235,10 +234,6 @@ akbdattach(struct device *parent, struct device *self, void *aux)
 #ifdef ADB_DEBUG
 	if (adb_debug)
 		printf("akbd: returned %d from set_adb_info\n", error);
-#endif
-
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-	timeout_set(&sc->sc_rawrepeat_ch, akbd_rawrepeat, sc);
 #endif
 
 	if (akbd_is_console() && wskbd_eligible)
@@ -420,7 +415,6 @@ akbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	case WSKBDIO_SETMODE:
 		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
-		timeout_del(&sc->sc_rawrepeat_ch);
 		return (0);
 #endif
 
@@ -437,20 +431,6 @@ akbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (-1);
 	}
 }
-
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-void
-akbd_rawrepeat(void *v)
-{
-	struct akbd_softc *sc = v;
-	int s;
-
-	s = spltty();
-	wskbd_rawinput(sc->sc_wskbddev, sc->sc_rep, sc->sc_nrep);
-	splx(s);
-	timeout_add_msec(&sc->sc_rawrepeat_ch, REP_DELAYN);
-}
-#endif
 
 /*
  * The ``caps lock'' key is special: since on earlier keyboards, the physical
@@ -547,11 +527,10 @@ akbd_input(struct akbd_softc *sc, int key)
 		adb_polledkey = key;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	} else if (sc->sc_rawkbd) {
-		char cbuf[MAXKEYS *2];
+		char cbuf[2];
 		int c, j, s;
-		int npress;
 
-		j = npress = 0;
+		j = 0;
 
 		c = keyboard[val];
 		if (c == 0) {
@@ -560,22 +539,12 @@ akbd_input(struct akbd_softc *sc, int key)
 		if (c & 0x80)
 			cbuf[j++] = 0xe0;
 		cbuf[j] = c & 0x7f;
-		if (type == WSCONS_EVENT_KEY_UP) {
+		if (type == WSCONS_EVENT_KEY_UP)
 			cbuf[j] |= 0x80;
-		} else {
-			/* this only records last key pressed */
-			if (c & 0x80)
-				sc->sc_rep[npress++] = 0xe0;
-			sc->sc_rep[npress++] = c & 0x7f;
-		}
 		j++;
 		s = spltty();
 		wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
 		splx(s);
-		timeout_del(&sc->sc_rawrepeat_ch);
-		sc->sc_nrep = npress;
-		if (npress != 0)
-			timeout_add_msec(&sc->sc_rawrepeat_ch, REP_DELAY1);
 #endif
 	} else {
 		wskbd_input(sc->sc_wskbddev, type, val);

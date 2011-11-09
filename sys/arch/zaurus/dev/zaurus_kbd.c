@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.32 2011/06/24 19:47:49 naddy Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.33 2011/11/09 14:22:37 shadchin Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -104,10 +104,7 @@ struct zkbd_softc {
 	int sc_rawkbd;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	const char *sc_xt_keymap;
-	struct timeout sc_rawrepeat_ch;
 #define MAXKEYS 20
-	char sc_rep[MAXKEYS];
-	int sc_nrep;
 #endif
 };
 
@@ -137,7 +134,6 @@ struct cfdriver zkbd_cd = {
 int zkbd_enable(void *, int);
 void zkbd_set_leds(void *, int);
 int zkbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
-void zkbd_rawrepeat(void *v);
 
 struct wskbd_accessops zkbd_accessops = {
 	zkbd_enable,
@@ -248,25 +244,7 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
 
 	timeout_set(&(sc->sc_roll_to), zkbd_poll, sc);
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-	timeout_set(&sc->sc_rawrepeat_ch, zkbd_rawrepeat, sc);
-#endif
-
 }
-
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-void
-zkbd_rawrepeat(void *v)
-{
-	struct zkbd_softc *sc = v;
-	int s;
-		
-	s = spltty();
-	wskbd_rawinput(sc->sc_wskbddev, sc->sc_rep, sc->sc_nrep);
-	splx(s);
-	timeout_add(&sc->sc_rawrepeat_ch, hz * REP_DELAYN / 1000);
-}
-#endif
 
 /* XXX only deal with keys that can be pressed when display is open? */
 /* XXX are some not in the array? */
@@ -287,8 +265,8 @@ zkbd_poll(void *v)
 	int stuck;
 	int keystate;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-	int npress = 0, ncbuf = 0, c;
-	char cbuf[MAXKEYS *2];
+	int ncbuf = 0, c;
+	char cbuf[MAXKEYS * 2];
 #endif
 
 	s = spltty();
@@ -379,15 +357,8 @@ zkbd_poll(void *v)
 					cbuf[ncbuf++] = 0xe0;
 				}
 				cbuf[ncbuf] = c & 0x7f;
-
-				if (keystate) {
-					if (c & 0x80) {
-						sc->sc_rep[npress++] = 0xe0;
-					}
-					sc->sc_rep[npress++] = c & 0x7f;
-				} else {
+				if (!keystate)
 					cbuf[ncbuf] |= 0x80;
-				}
 				ncbuf++;
 				sc->sc_okeystate[i] = keystate;
 			}
@@ -411,14 +382,8 @@ zkbd_poll(void *v)
 	}
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-	if (sc->sc_polling == 0 && sc->sc_rawkbd) {
+	if (sc->sc_polling == 0 && sc->sc_rawkbd)
 		wskbd_rawinput(sc->sc_wskbddev, cbuf, ncbuf);
-		sc->sc_nrep = npress;
-		if (npress != 0)
-			timeout_add(&sc->sc_rawrepeat_ch, hz * REP_DELAY1/1000);
-		else 
-			timeout_del(&sc->sc_rawrepeat_ch);
-	}
 #endif
 	if (keysdown)
 		timeout_add(&(sc->sc_roll_to), hz * REP_DELAYN / 1000 / 2);
@@ -534,7 +499,6 @@ zkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	case WSKBDIO_SETMODE:
 		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
-		timeout_del(&sc->sc_rawrepeat_ch);
 		return (0);
 #endif
  

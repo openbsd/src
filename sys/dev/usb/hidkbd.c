@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbd.c,v 1.4 2010/10/23 16:14:06 jakemsr Exp $	*/
+/*	$OpenBSD: hidkbd.c,v 1.5 2011/11/09 14:22:38 shadchin Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -152,10 +152,6 @@ void	*hidkbd_bell_fn_arg;
 void	hidkbd_decode(struct hidkbd *, struct hidkbd_data *);
 void	hidkbd_delayed_decode(void *addr);
 
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-void	hidkbd_rawrepeat(void *);
-#endif
-
 extern const struct wscons_keydesc ukbd_keydesctab[];
 
 struct wskbd_mapdata ukbd_keymapdata = {
@@ -193,9 +189,6 @@ hidkbd_attach(struct device *self, struct hidkbd *kbd, int console,
 		hidkbd_is_console = 0;
 	}
 
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-	timeout_set(&kbd->sc_rawrepeat_ch, hidkbd_rawrepeat, kbd);
-#endif
 	timeout_set(&kbd->sc_delay, hidkbd_delayed_decode, kbd);
 
 	return 0;
@@ -222,11 +215,6 @@ hidkbd_detach(struct hidkbd *kbd, int flags)
 	int rv = 0;
 
 	DPRINTF(("hidkbd_detach: sc=%p flags=%d\n", kbd->sc_device, flags));
-
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-	if (timeout_initialized(&kbd->sc_rawrepeat_ch))
-		timeout_del(&kbd->sc_rawrepeat_ch);
-#endif
 
 	if (kbd->sc_console_keyboard) {
 #if 0
@@ -416,9 +404,8 @@ hidkbd_decode(struct hidkbd *kbd, struct hidkbd_data *ud)
 	if (kbd->sc_rawkbd) {
 		u_char cbuf[MAXKEYS * 2];
 		int c;
-		int npress;
 
-		for (npress = i = j = 0; i < nkeys; i++) {
+		for (i = j = 0; i < nkeys; i++) {
 			key = ibuf[i];
 			c = hidkbd_trtab[key & CODEMASK];
 			if (c == NN)
@@ -428,12 +415,6 @@ hidkbd_decode(struct hidkbd *kbd, struct hidkbd_data *ud)
 			cbuf[j] = c & 0x7f;
 			if (key & RELEASE)
 				cbuf[j] |= 0x80;
-			else {
-				/* remember pressed keys for autorepeat */
-				if (c & 0x80)
-					kbd->sc_rep[npress++] = 0xe0;
-				kbd->sc_rep[npress++] = c & 0x7f;
-			}
 			DPRINTFN(1,("hidkbd_decode: raw = %s0x%02x\n",
 				    c & 0x80 ? "0xe0 " : "",
 				    cbuf[j]));
@@ -441,11 +422,6 @@ hidkbd_decode(struct hidkbd *kbd, struct hidkbd_data *ud)
 		}
 		s = spltty();
 		wskbd_rawinput(kbd->sc_wskbddev, cbuf, j);
-		if (npress != 0) {
-			kbd->sc_nrep = npress;
-			timeout_add_msec(&kbd->sc_rawrepeat_ch, REP_DELAY1);
-		} else
-			timeout_del(&kbd->sc_rawrepeat_ch);
 
 		/*
 		 * Pass audio keys to wskbd_input anyway.
@@ -530,26 +506,11 @@ hidkbd_ioctl(struct hidkbd *kbd, u_long cmd, caddr_t data, int flag,
 	case WSKBDIO_SETMODE:
 		DPRINTF(("hidkbd_ioctl: set raw = %d\n", *(int *)data));
 		kbd->sc_rawkbd = *(int *)data == WSKBD_RAW;
-		timeout_del(&kbd->sc_rawrepeat_ch);
 		return (0);
 #endif
 	}
 	return (-1);
 }
-
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-void
-hidkbd_rawrepeat(void *v)
-{
-	struct hidkbd *kbd = v;
-	int s;
-
-	s = spltty();
-	wskbd_rawinput(kbd->sc_wskbddev, kbd->sc_rep, kbd->sc_nrep);
-	splx(s);
-	timeout_add_msec(&kbd->sc_rawrepeat_ch, REP_DELAYN);
-}
-#endif
 
 void
 hidkbd_cngetc(struct hidkbd *kbd, u_int *type, int *data)

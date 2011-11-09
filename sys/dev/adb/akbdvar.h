@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbdvar.h,v 1.2 2006/03/23 21:54:26 miod Exp $	*/
+/*	$OpenBSD: akbdvar.h,v 1.3 2011/11/09 14:22:37 shadchin Exp $	*/
 /*	$NetBSD: akbdvar.h,v 1.4 1999/02/17 14:56:56 tsubai Exp $	*/
 
 /*
@@ -51,13 +51,7 @@ struct akbd_softc {
 	struct device	*sc_wskbddev;
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-#define MAXKEYS 20
-#define REP_DELAY1 400
-#define REP_DELAYN 100
 	int sc_rawkbd;
-	int sc_nrep;
-	char sc_rep[MAXKEYS];
-	struct timeout sc_rawrepeat_ch;
 #endif /* defined(WSDISPLAY_COMPAT_RAWKBD) */
 };
 

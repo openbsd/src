@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbd.c,v 1.25 2009/01/12 21:11:58 miod Exp $	*/
+/*	$OpenBSD: sunkbd.c,v 1.26 2011/11/09 14:22:37 shadchin Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -61,7 +61,6 @@ void	sunkbd_decode5(u_int8_t, u_int *, int *);
 int	sunkbd_enable(void *, int);
 int	sunkbd_getleds(struct sunkbd_softc *);
 int	sunkbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
-void	sunkbd_rawrepeat(void *);
 void	sunkbd_setleds(void *, int);
 
 struct wskbd_accessops sunkbd_accessops = {
@@ -73,10 +72,6 @@ struct wskbd_accessops sunkbd_accessops = {
 void
 sunkbd_attach(struct sunkbd_softc *sc, struct wskbddev_attach_args *waa)
 {
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-	timeout_set(&sc->sc_rawrepeat_tmo, sunkbd_rawrepeat, sc);
-#endif
-
 	if (ISTYPE5(sc->sc_layout))
 		sc->sc_decode = sunkbd_decode5;
 	else
@@ -189,11 +184,8 @@ sunkbd_input(struct sunkbd_softc *sc, u_int8_t *buf, u_int buflen)
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (sc->sc_rawkbd) {
 		u_char rbuf[SUNKBD_MAX_INPUT_SIZE * 2];
-		int c, rlen, npress;
+		int c, rlen = 0;
 
-		timeout_del(&sc->sc_rawrepeat_tmo);
-
-		npress = rlen = 0;
 		while (buflen-- != 0) {
 			(*sc->sc_decode)(*buf++, &type, &value);
 			c = sunkbd_rawmap[value];
@@ -205,21 +197,12 @@ sunkbd_input(struct sunkbd_softc *sc, u_int8_t *buf, u_int buflen)
 			rbuf[rlen] = c & 0x7f;
 			if (type == WSCONS_EVENT_KEY_UP)
 				rbuf[rlen] |= 0x80;
-			else {
-				/* remember down keys for autorepeat */
-				if (c & 0x80)
-					sc->sc_rep[npress++] = 0xe0;
-				sc->sc_rep[npress++] = c & 0x7f;
-			}
 			rlen++;
 		}
 
 		s = spltty();
 		wskbd_rawinput(sc->sc_wskbddev, rbuf, rlen);
 		splx(s);
-		sc->sc_nrep = npress;
-		if (npress != 0)
-			timeout_add_msec(&sc->sc_rawrepeat_tmo, REP_DELAY1);
 	} else
 #endif
 	{
@@ -259,7 +242,6 @@ sunkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	case WSKBDIO_SETMODE:
 		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
-		timeout_del(&sc->sc_rawrepeat_tmo);
 		return (0);
 #endif
 	}
@@ -308,20 +290,6 @@ sunkbd_raw(struct sunkbd_softc *sc, u_int8_t c)
 		break;
 	}
 }
-
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-void
-sunkbd_rawrepeat(void *v)
-{
-	struct sunkbd_softc *sc = v;
-	int s;
-
-	s = spltty();
-	wskbd_rawinput(sc->sc_wskbddev, sc->sc_rep, sc->sc_nrep);
-	splx(s);
-	timeout_add_msec(&sc->sc_rawrepeat_tmo, REP_DELAYN);
-}
-#endif
 
 int
 sunkbd_setclick(struct sunkbd_softc *sc, int click)
