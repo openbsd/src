@@ -1,4 +1,4 @@
-/* $OpenBSD: cpufunc_asm_armv7.S,v 1.2 2010/07/01 22:40:10 drahn Exp $ */
+/* $OpenBSD: cpufunc_asm_armv7.S,v 1.3 2011/11/09 12:29:00 miod Exp $ */
 /*
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
  *
@@ -22,7 +22,7 @@ ENTRY(armv7_cpu_sleep)
 #if 0
 	wfi
 #else
-	.long	0xe340f003;
+	.long	0xe320f003;
 #endif
 	mov	pc, lr
 
