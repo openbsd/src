@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.65 2011/07/18 17:29:49 matthew Exp $ */
+/*	$OpenBSD: unistd.h,v 1.66 2011/11/09 15:34:18 fgsch Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -85,8 +85,7 @@ int	 execvp(const char *, char * const *);
 pid_t	 fork(void);
 long	 fpathconf(int, int);
 char	*getcwd(char *, size_t)
-		__attribute__((__bounded__(__string__,1,2)))
-		__attribute__((__bounded__(__minbytes__,1,1024)));
+		__attribute__((__bounded__(__string__,1,2)));
 gid_t	 getegid(void);
 uid_t	 geteuid(void);
 gid_t	 getgid(void);
@@ -139,8 +138,7 @@ extern	 char *suboptarg;		/* getsubopt(3) external variable */
 int	 fsync(int);
 int	 ftruncate(int, off_t);
 int	 getlogin_r(char *, size_t)
-		__attribute__((__bounded__(__string__,1,2)))
-		__attribute__((__bounded__(__minbytes__,1,32)));
+		__attribute__((__bounded__(__string__,1,2)));
 #endif
 
 #if __XPG_VISIBLE || __BSD_VISIBLE
