@@ -1,4 +1,4 @@
-/* $OpenBSD: amptimer.c,v 1.3 2011/11/06 11:09:21 miod Exp $ */
+/* $OpenBSD: amptimer.c,v 1.4 2011/11/09 00:15:06 drahn Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -78,6 +78,15 @@ int		amptimer_intr(void *);
 void		amptimer_cpu_initclocks(void);
 void		amptimer_delay(u_int);
 void		amptimer_setstatclockrate(int stathz);
+
+/* hack - XXXX
+ * gptimer connects directly to ampintc, not thru the generic
+ * inteface because it uses an 'internal' interupt
+ * not a peripheral interrupt.
+ */
+void	*ampintc_intr_establish(int, int, int (*)(void *), void *, char *);
+
+
 
 struct cfattach amptimer_ca = {
 	sizeof (struct amptimer_softc), amptimer_match, amptimer_attach
@@ -263,7 +272,7 @@ amptimer_cpu_initclocks()
 
 	/* establish interrupts */
 	/* XXX - irq */
-	arm_intr_establish(27, IPL_CLOCK, amptimer_intr,
+	ampintc_intr_establish(27, IPL_CLOCK, amptimer_intr,
 	    NULL, "tick");
 
 	/* setup timer 0 (hardware timer 2) */

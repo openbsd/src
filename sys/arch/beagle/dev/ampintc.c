@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.4 2011/11/07 20:25:27 miod Exp $ */
+/* $OpenBSD: ampintc.c,v 1.5 2011/11/09 00:15:06 drahn Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -162,6 +162,8 @@ void		 ampintc_setipl(int);
 void		 ampintc_calc_mask(void);
 void		*ampintc_intr_establish(int, int, int (*)(void *), void *,
 		    char *);
+void		*ampintc_intr_establish_ext(int, int, int (*)(void *), void *,
+		    char *);
 void		 ampintc_intr_disestablish(void *);
 void		 ampintc_irq_handler(void *);
 const char	*ampintc_intr_string(void *);
@@ -279,8 +281,8 @@ ampintc_attach(struct device *parent, struct device *self, void *args)
 
 	/* insert self as interrupt handler */
 	arm_set_intr_handler(ampintc_splraise, ampintc_spllower, ampintc_splx,
-	    ampintc_setipl, ampintc_intr_establish, ampintc_intr_disestablish,
-	    ampintc_intr_string, ampintc_irq_handler);
+	    ampintc_setipl, ampintc_intr_establish_ext,
+	    ampintc_intr_disestablish, ampintc_intr_string, ampintc_irq_handler);
 
 	enable_interrupts(I32_bit);
 }
@@ -512,6 +514,13 @@ ampintc_irq_handler(void *frame)
 	ampintc_eoi(iack_val);
 
 	ampintc_splx(s);
+}
+
+void *
+ampintc_intr_establish_ext(int irqno, int level, int (*func)(void *),
+    void *arg, char *name)
+{
+	return ampintc_intr_establish(irqno+32, level, func, arg, name);
 }
 
 void *
