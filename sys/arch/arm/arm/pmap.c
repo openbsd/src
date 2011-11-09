@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.34 2011/11/06 23:21:04 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.35 2011/11/09 10:15:49 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -2385,17 +2385,19 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 			    	if (pmap_cachevivt == 0 &&
 				    curproc->p_vmspace->vm_map.pmap != pm) {
 					pmap_idcache_wbinv_all(pm);
-				} else
+				}
 				if (pm->pm_cstate.cs_all != 0) {
 					vaddr_t clva = cleanlist[cnt].va & ~1;
 					if (cleanlist[cnt].va & 1) {
-						pmap_idcache_wbinv_range(pm,
-						    clva, PAGE_SIZE);
+						if (pmap_cachevivt)
+							pmap_idcache_wbinv_range(pm,
+							    clva, PAGE_SIZE);
 						pmap_tlb_flushID_SE(pm, clva);
 					} else {
-						pmap_dcache_wb_range(pm,
-						    clva, PAGE_SIZE, TRUE,
-						    FALSE);
+						if (pmap_cachevivt)
+							pmap_dcache_wb_range(pm,
+							    clva, PAGE_SIZE,
+							    TRUE, FALSE);
 						pmap_tlb_flushD_SE(pm, clva);
 					}
 				}
