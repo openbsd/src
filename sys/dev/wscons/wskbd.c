@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.69 2011/06/24 19:47:49 naddy Exp $ */
+/* $OpenBSD: wskbd.c,v 1.70 2011/11/09 14:27:52 shadchin Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -824,6 +824,21 @@ wskbdclose(dev_t dev, int flags, int mode, struct proc *p)
 	sc->sc_translating = 1;
 	(void)wskbd_enable(sc, 0);
 	wsevent_fini(evar);
+
+#if NWSMUX > 0
+	if (sc->sc_base.me_parent == NULL) {
+		int mux, error;
+
+		DPRINTF(("wskbdclose: attach\n"));
+		mux = sc->sc_base.me_dv.dv_cfdata->wskbddevcf_mux;
+		if (mux >= 0) {
+			error = wsmux_attach_sc(wsmux_getmux(mux), &sc->sc_base);
+			if (error)
+				printf("%s: can't attach mux (error=%d)\n",
+				    sc->sc_base.me_dv.dv_xname, error);
+		}
+	}
+#endif
 
 	return (0);
 }
