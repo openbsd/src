@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.172 2011/11/04 22:11:11 mikeb Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.173 2011/11/09 12:36:03 camield Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -592,11 +592,16 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 	st->creation = time_second - ntohl(sp->creation);
 	st->expire = time_second;
 	if (sp->expire) {
-		/* XXX No adaptive scaling. */
-		st->expire -= r->timeout[sp->timeout] - ntohl(sp->expire);
+		u_int32_t timeout;
+
+		timeout = r->timeout[sp->timeout];
+		if (!timeout)
+			timeout = pf_default_rule.timeout[sp->timeout];
+
+		/* sp->expire may have been adaptively scaled by export. */
+		st->expire -= timeout - ntohl(sp->expire);
 	}
 
-	st->expire = ntohl(sp->expire) + time_second;
 	st->direction = sp->direction;
 	st->log = sp->log;
 	st->timeout = sp->timeout;
@@ -960,7 +965,7 @@ pfsync_in_upd(caddr_t buf, int len, int count, int flags)
 		if (sync < 2) {
 			pfsync_alloc_scrub_memory(&sp->dst, &st->dst);
 			pf_state_peer_ntoh(&sp->dst, &st->dst);
-			st->expire = ntohl(sp->expire) + time_second;
+			st->expire = time_second;
 			st->timeout = sp->timeout;
 		}
 		st->pfsync_time = time_uptime;
@@ -1034,7 +1039,7 @@ pfsync_in_upd_c(caddr_t buf, int len, int count, int flags)
 		if (sync < 2) {
 			pfsync_alloc_scrub_memory(&up->dst, &st->dst);
 			pf_state_peer_ntoh(&up->dst, &st->dst);
-			st->expire = ntohl(up->expire) + time_second;
+			st->expire = time_second;
 			st->timeout = up->timeout;
 		}
 		st->pfsync_time = time_uptime;
@@ -1449,12 +1454,6 @@ pfsync_out_upd_c(struct pf_state *st, void *buf)
 	pf_state_peer_hton(&st->src, &up->src);
 	pf_state_peer_hton(&st->dst, &up->dst);
 	up->creatorid = st->creatorid;
-
-	up->expire = pf_state_expires(st);
-	if (up->expire <= time_second)
-		up->expire = htonl(0);
-	else
-		up->expire = htonl(up->expire - time_second);
 	up->timeout = st->timeout;
 }
 
