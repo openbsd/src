@@ -1,4 +1,4 @@
-/* $OpenBSD: amptimer.c,v 1.4 2011/11/09 00:15:06 drahn Exp $ */
+/* $OpenBSD: amptimer.c,v 1.5 2011/11/10 16:15:24 drahn Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -66,9 +66,10 @@ struct amptimer_softc {
 	u_int32_t		sc_statvar;
 	u_int32_t		sc_statmin;
 
+#ifdef AMPTIMER_DEBUG
 	struct evcount		sc_clk_count;
 	struct evcount		sc_stat_count;
-
+#endif
 };
 
 int		amptimer_match(struct device *, void *, void *);
@@ -154,6 +155,11 @@ amptimer_attach(struct device *parent, struct device *self, void *args)
 	/* clear event */
 	bus_space_write_4(sc->sc_iot, ioh, GTIMER_STATUS, 1);
 
+#ifdef AMPTIMER_DEBUG
+	evcount_attach(&sc->sc_clk_count, "clock", NULL);
+	evcount_attach(&sc->sc_stat_count, "stat", NULL);
+#endif
+
 	/*
 	 * comparator registers and interrupts not enabled until
 	 * timer configures
@@ -210,7 +216,9 @@ amptimer_intr(void *frame)
 			sc->sc_ticks_err_sum -= hz;
 		}
 
+#ifdef AMPTIMER_DEBUG
 		sc->sc_clk_count.ec_count++;
+#endif
 		rc = 1;
 		hardclock(frame);
 	}
@@ -221,12 +229,14 @@ amptimer_intr(void *frame)
 		sc->sc_nextstatevent += sc->sc_statmin + r;
 
 		/* XXX - correct nextstatevent? */
+#ifdef AMPTIMER_DEBUG
 		sc->sc_stat_count.ec_count++;
+#endif
 		rc = 1;
 		statclock(frame);
 	}
 
-	if ((sc->sc_nexttickevent - now) < (sc->sc_nextstatevent - now))
+	if (sc->sc_nexttickevent < sc->sc_nextstatevent)
 		nextevent = sc->sc_nexttickevent;
 	else
 		nextevent = sc->sc_nextstatevent;
@@ -242,7 +252,7 @@ again:
 	reg |= GTIMER_CTRL_COMP;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GTIMER_CTRL, reg);
 		
-	now = amptimer_readcnt64(sc) + sc->sc_ticks_per_intr;
+	now = amptimer_readcnt64(sc);
 	if (now >= nextevent) {
 		nextevent = now + skip;
 		skip += 1;
@@ -259,8 +269,8 @@ amptimer_cpu_initclocks()
 	uint64_t		 next;
 	uint32_t		 reg;
 
-	stathz = 128;
-	profhz = 1024;
+	stathz = hz;
+	profhz = hz * 10;
 
 	sc->sc_ticks_per_second = TIMER_FREQUENCY;
 
