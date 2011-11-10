@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.6 2011/11/09 00:17:15 drahn Exp $ */
+/* $OpenBSD: ampintc.c,v 1.7 2011/11/10 00:19:36 matthieu Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -189,6 +189,7 @@ ampintc_match(struct device *parent, void *v, void *aux)
 {
 	switch (board_id) {
 	case BOARD_ID_OMAP3_BEAGLE:
+	case BOARD_ID_OMAP3_OVERO:
 		return 0; /* not ported yet ??? - different */
 	case BOARD_ID_OMAP4_PANDA:
 		break; /* continue trying */

@@ -1,4 +1,4 @@
-/* $OpenBSD: omdog.c,v 1.2 2011/10/21 22:55:01 drahn Exp $ */
+/* $OpenBSD: omdog.c,v 1.3 2011/11/10 00:19:36 matthieu Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -75,6 +75,7 @@ omdog_match(struct device *parent, void *v, void *aux)
 {
 	switch (board_id) {
 	case BOARD_ID_OMAP3_BEAGLE:
+	case BOARD_ID_OMAP3_OVERO:
 		break; /* continue trying */
 	case BOARD_ID_OMAP4_PANDA:
 		return 0; /* not ported yet */

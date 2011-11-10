@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.10 2011/10/24 22:49:07 drahn Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.11 2011/11/10 00:19:36 matthieu Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -355,6 +355,7 @@ ommmc_match(struct device *parent, void *v, void *aux)
 	/* XXX */
 	switch (board_id) {
 	case BOARD_ID_OMAP3_BEAGLE:
+	case BOARD_ID_OMAP3_OVERO:
 		if (aa->aa_addr == MMCHS1_ADDR && aa->aa_intr == 83)
 			return 1;
 		else if (aa->aa_addr == MMCHS2_ADDR && aa->aa_intr == 86)

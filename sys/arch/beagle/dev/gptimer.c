@@ -1,4 +1,4 @@
-/* $OpenBSD: gptimer.c,v 1.10 2011/11/06 01:34:53 drahn Exp $ */
+/* $OpenBSD: gptimer.c,v 1.11 2011/11/10 00:19:36 matthieu Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -145,6 +145,7 @@ gptimer_match(struct device *parent, void *v, void *aux)
 {
 	switch (board_id) {
 	case BOARD_ID_OMAP3_BEAGLE:
+	case BOARD_ID_OMAP3_OVERO:
 		break; /* continue trying */
 	case BOARD_ID_OMAP4_PANDA:
 		return 0; /* not ported yet ??? - different */
