@@ -27,7 +27,15 @@
 #define GPIO6_IRQ	34
 
 #define UARTx_SIZE	0x400
+#define UART1_ADDR	0x4806A000
+#define UART2_ADDR	0x4806C000
 #define UART3_ADDR	0x48020000
+#define UART4_ADDR	0x4806E000
+
+#define UART1_IRQ	72
+#define UART2_IRQ	73
+#define UART3_IRQ	74
+#define UART4_IRQ	70
 
 #define HSMMCx_SIZE	0x300
 #define HSMMC1_ADDR	0x4809c000
@@ -102,7 +110,8 @@ struct omap_dev omap4_devs[] = {
 
 	{ .name = "com",
 	  .unit = 2,
-	  .mem = { { UART3_ADDR, UARTx_SIZE } }
+	  .mem = { { UART3_ADDR, UARTx_SIZE } },
+	  .irq = { UART3_IRQ }
 	},
 
 	/*

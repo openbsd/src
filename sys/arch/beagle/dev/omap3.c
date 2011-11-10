@@ -6,14 +6,14 @@
 #define PRCM_ADDR	0x48004000
 #define PRCM_SIZE	0x2000
 
-#define	INTC_ADDR	0x48200000
-#define	INTC_SIZE	0x200
+#define INTC_ADDR	0x48200000
+#define INTC_SIZE	0x200
 
-#define	GPTIMERx_SIZE	0x100
-#define	GPTIMER1_ADDR	0x48318000
-#define	GPTIMER1_IRQ	37
-#define	GPTIMER2_ADDR	0x49032000
-#define	GPTIMER2_IRQ	38
+#define GPTIMERx_SIZE	0x100
+#define GPTIMER1_ADDR	0x48318000
+#define GPTIMER1_IRQ	37
+#define GPTIMER2_ADDR	0x49032000
+#define GPTIMER2_IRQ	38
 
 #define WD_ADDR		0x48314000
 #define WD_SIZE		0x80
@@ -34,14 +34,20 @@
 #define GPIO6_IRQ	34
 
 #define UARTx_SIZE	0x400
+#define UART1_ADDR	0x4806A000
+#define UART2_ADDR	0x4806C000
 #define UART3_ADDR	0x49020000
+
+#define UART1_IRQ	72
+#define UART2_IRQ	73
+#define UART3_IRQ	74
 
 #define HSMMCx_SIZE	0x200
 #define HSMMC1_ADDR	0x4809c000
 #define HSMMC1_IRQ	83
 
-#define	USBTLL_ADDR	0x48062000
-#define	USBTLL_SIZE	0x1000
+#define USBTLL_ADDR	0x48062000
+#define USBTLL_SIZE	0x1000
 
 struct omap_dev omap3_devs[] = {
 
@@ -134,7 +140,8 @@ struct omap_dev omap3_devs[] = {
 
 	{ .name = "com",
 	  .unit = 2,
-	  .mem = { { UART3_ADDR, UARTx_SIZE } }
+	  .mem = { { UART3_ADDR, UARTx_SIZE } },
+	  .irq = { UART3_IRQ }
 	},
 
 	/*
