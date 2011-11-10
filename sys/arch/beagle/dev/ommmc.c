@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.11 2011/11/10 00:19:36 matthieu Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.12 2011/11/10 00:34:20 drahn Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -37,8 +37,13 @@
 #define MMCHS2_ADDR 0x480B4000
 #define MMCHS3_ADDR 0x480AD000
 
+/*
+ * NOTE: on OMAP4430 these registers skew by 0x100
+ * this is handled by mapping at base address + 0x100
+ * then all but the REVISION register is 'correctly' mapped.
+ */
 /* registers */
-#define MMCHS_REVISION	0x000
+/* MMCHS_REVISION	0x000 - is no longer useful */
 #define MMCHS_SYSCONFIG	0x010
 #define MMCHS_SYSSTATUS	0x014
 #define MMCHS_CSRE	0x024
@@ -170,7 +175,6 @@
 #define  MMCHS_CAPA_MBL_MASK	(3 << MMCHS_CAPA_MBL_SHIFT)
 #define MMCHS_CUR_CAPA	0x148
 #define MMCHS_SIZE	0x200
-
 
 #define SDHC_COMMAND_TIMEOUT	hz
 #define SDHC_BUFFER_TIMEOUT	hz
@@ -351,20 +355,13 @@ struct cfattach ommmc_ca = {
 int
 ommmc_match(struct device *parent, void *v, void *aux)
 {
-        struct ahb_attach_args *aa = aux;
 	/* XXX */
 	switch (board_id) {
 	case BOARD_ID_OMAP3_BEAGLE:
 	case BOARD_ID_OMAP3_OVERO:
-		if (aa->aa_addr == MMCHS1_ADDR && aa->aa_intr == 83)
-			return 1;
-		else if (aa->aa_addr == MMCHS2_ADDR && aa->aa_intr == 86)
-			return 1;
-		else if (aa->aa_addr == MMCHS3_ADDR && aa->aa_intr == 94)
-			return 1;
-		break; 
+		return 1;
 	case BOARD_ID_OMAP4_PANDA:
-		return 0; /* not ported yet ??? - different */
+		return 1; 
 	default:
 		return 0; /* unknown */
 	}
@@ -374,21 +371,25 @@ ommmc_match(struct device *parent, void *v, void *aux)
 void
 ommmc_attach(struct device *parent, struct device *self, void *args)
 {
-	struct sdmmcbus_attach_args saa;
-        struct ahb_attach_args *aa = args;
-	struct ommmc_softc *sc = (struct ommmc_softc *) self;
-	uint32_t rev;
-	int error = 1;
+	struct ahb_attach_args		*aa = args;
+	struct ommmc_softc		*sc = (struct ommmc_softc *) self;
+	struct sdmmcbus_attach_args	 saa;
+	int				 baseaddr;
+	int				 error = 1;
 
 	/* XXX - ICLKEN, FCLKEN? */
 
+	baseaddr = aa->aa_addr;
+	if (board_id == BOARD_ID_OMAP4_PANDA) {
+		/* omap4430 has mmc registers offset +0x100, but not revision */
+		baseaddr += 0x100;
+	}
+
 	sc->sc_iot = aa->aa_iot;
-	if (bus_space_map(sc->sc_iot, aa->aa_addr, MMCHS_SIZE, 0, &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, baseaddr, MMCHS_SIZE, 0, &sc->sc_ioh))
 		panic("omgpio_attach: bus_space_map failed!");
 
-	rev = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MMCHS_REVISION);
-
-	printf(" rev %d.%d\n", rev >> 4 & 0xf, rev & 0xf);
+	printf("\n");
 
 	sc->sc_irq = aa->aa_intr;
 	if (aa->aa_addr == MMCHS1_ADDR)
