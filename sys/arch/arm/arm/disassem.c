@@ -1,4 +1,4 @@
-/*	$OpenBSD: disassem.c,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
+/*	$OpenBSD: disassem.c,v 1.2 2011/11/10 17:46:18 miod Exp $	*/
 /*	$NetBSD: disassem.c,v 1.14 2003/03/27 16:58:36 mycroft Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_interface.h>
+#include <ddb/db_output.h>
 #include <arch/arm/arm/disassem.h>
 
 /*
@@ -127,6 +128,8 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0d700000, 0x04300000, "ldrt",	"daW" },
     { 0x0d700000, 0x04600000, "strbt",	"daW" },
     { 0x0d700000, 0x04700000, "ldrbt",	"daW" },
+    { 0xfffffff0, 0xf57ff040, "dsb",    "" },
+    { 0xfffffff0, 0xf57ff060, "isb",    "" },
     { 0x0c500000, 0x04000000, "str",	"daW" },
     { 0x0c500000, 0x04100000, "ldr",	"daW" },
     { 0x0c500000, 0x04400000, "strb",	"daW" },
@@ -146,6 +149,12 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0ff00ff0, 0x01000090, "swp",	"dmo" },
     { 0x0ff00ff0, 0x01400090, "swpb",	"dmo" },
     { 0x0fbf0fff, 0x010f0000, "mrs",	"dp" },	/* Before data processing */
+    { 0x0fff00ff, 0x03200000, "nop",	"" },
+    { 0x0fff00ff, 0x03200001, "yield",	"" },
+    { 0x0fff00ff, 0x03200002, "wfe",	"" },
+    { 0x0fff00ff, 0x03200003, "wfi",	"" },
+    { 0x0fff00ff, 0x03200004, "sev",	"" },
+    { 0x0fff00f0, 0x032000f0, "dbg",	"" },
     { 0x0fb0fff0, 0x0120f000, "msr",	"pFm" },/* Before data processing */
     { 0x0fb0f000, 0x0320f000, "msr",	"pF2" },/* Before data processing */
     { 0x0ffffff0, 0x012fff10, "bx",	"m" },
@@ -665,11 +674,11 @@ disassemble_readword(db_expr_t address)
 static void
 disassemble_printaddr(db_expr_t address)
 {
-	printf("0x%08x", address);
+	db_printf("0x%08x", address);
 }
 
 static const disasm_interface_t disassemble_di = {
-	disassemble_readword, disassemble_printaddr, printf
+	disassemble_readword, disassemble_printaddr, db_printf
 };
 
 void
