@@ -19,6 +19,13 @@
 #define GPIO5_ADDR	0x4805b000
 #define GPIO6_ADDR	0x4805d000
 
+#define GPIO1_IRQ	29
+#define GPIO2_IRQ	30
+#define GPIO3_IRQ	31
+#define GPIO4_IRQ	32
+#define GPIO5_IRQ	33
+#define GPIO6_IRQ	34
+
 #define UARTx_SIZE	0x400
 #define UART3_ADDR	0x48020000
 
@@ -56,31 +63,37 @@ struct omap_dev omap4_devs[] = {
 	{ .name = "omgpio",
 	  .unit = 0,
 	  .mem = { { GPIO1_ADDR, GPIOx_SIZE } },
+	  .irq = { GPIO1_IRQ }
 	},
 
 	{ .name = "omgpio",
 	  .unit = 1,
 	  .mem = { { GPIO2_ADDR, GPIOx_SIZE } },
+	  .irq = { GPIO2_IRQ }
 	},
 
 	{ .name = "omgpio",
 	  .unit = 2,
 	  .mem = { { GPIO3_ADDR, GPIOx_SIZE } },
+	  .irq = { GPIO3_IRQ }
 	},
 
 	{ .name = "omgpio",
 	  .unit = 3,
 	  .mem = { { GPIO4_ADDR, GPIOx_SIZE } },
+	  .irq = { GPIO4_IRQ }
 	},
 
 	{ .name = "omgpio",
 	  .unit = 4,
 	  .mem = { { GPIO5_ADDR, GPIOx_SIZE } },
+	  .irq = { GPIO5_IRQ }
 	},
 
 	{ .name = "omgpio",
 	  .unit = 5,
 	  .mem = { { GPIO6_ADDR, GPIOx_SIZE } },
+	  .irq = { GPIO6_IRQ }
 	},
 
 	/*
