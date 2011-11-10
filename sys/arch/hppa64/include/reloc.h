@@ -1,7 +1,7 @@
-/*	$OpenBSD: reloc.h,v 1.1 2005/04/01 10:40:48 mickey Exp $	*/
+/*	$OpenBSD: reloc.h,v 1.2 2011/11/10 23:15:11 deraadt Exp $	*/
 
 /*
- * Copyright (c) 2005 Michael Shalayeff
+ * Copyright (c) 1999,2005 Michael Shalayeff
  * All rights reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any

@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.8 2011/09/08 03:40:32 guenther Exp $	*/
+/*	$OpenBSD: _types.h,v 1.9 2011/11/10 23:15:11 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,7 +36,7 @@
 #define _MACHINE__TYPES_H_
 
 #if defined(_KERNEL)
-typedef struct label_t {
+typedef struct label_t {		/* XXX longs?? */
 	int	lbl_rp;
 	int	lbl_sp;
 	int	lbl_s[17];
@@ -116,7 +116,7 @@ typedef	__int64_t		__intmax_t;
 typedef	__uint64_t		__uintmax_t;
 
 /* Register size */
-typedef long			__register_t;
+typedef __int64_t		__register_t;
 
 /* VM system types */
 typedef unsigned long		__vaddr_t;

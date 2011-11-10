@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.8 2005/11/24 20:46:45 deraadt Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.9 2011/11/10 23:15:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -37,7 +37,7 @@
 #elif defined(__GNUC__) && defined(__STDC__)
 #define	__weak_alias(alias,sym)					\
 	__asm__(".export " __STRING(alias) ", entry\n\t.weak "	\
-	__STRING(alias) "\n\t" __STRING(alias) " = " __STRING(sym))
+	    __STRING(alias) "\n\t" __STRING(alias) " = " __STRING(sym))
 #define	__warn_references(sym,msg)				\
 	__asm__(".section .gnu.warning." __STRING(sym)		\
 	    "\n\t.ascii \"" msg "\"\n\t.text")
