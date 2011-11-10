@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.64 2011/10/23 09:30:07 gilles Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.65 2011/11/10 17:37:08 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -354,7 +354,7 @@ mfa_fork_filter(struct filter *filter)
 
 	if (pid == 0) {
 		/* filter */
-		dup2(sockpair[0], 0);
+		dup2(sockpair[0], STDIN_FILENO);
 		
 		if (closefrom(STDERR_FILENO + 1) < 0)
 			exit(1);
