@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.16 2008/11/05 06:32:47 matthieu Exp $	*/
+/*	$OpenBSD: mem.c,v 1.17 2011/11/10 17:30:32 krw Exp $	*/
 /*	$NetBSD: mem.c,v 1.1 1996/09/30 16:34:50 ws Exp $ */
 
 /*
@@ -124,7 +124,7 @@ mem_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_len > 0) {
 		sc->sc_buf = malloc(sc->sc_len, M_DEVBUF, M_NOWAIT);
 		if (sc->sc_buf == NULL) {
-			printf("%s: can't allocate memory\n");
+			printf(": can't allocate memory\n");
 			return;
 		}
 	}
@@ -178,7 +178,7 @@ mem_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	if (op != I2C_OP_READ_WITH_STOP || cmdlen != 1)
 		return (EINVAL);
 
-	off = addr * SPD_SIZE + *(uint8_t *)cmdbuf;
+	off = addr * SPD_SIZE + *(const uint8_t *)cmdbuf;
 	if (off + len > sc->sc_len)
 		return (EIO);
 
