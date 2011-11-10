@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.15 2011/09/08 03:40:32 guenther Exp $	*/
+/*	$OpenBSD: param.h,v 1.16 2011/11/10 23:14:13 deraadt Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -82,9 +82,5 @@
 
 #define	btodb(x)	((x) >> DEV_BSHIFT)
 #define	dbtob(x)	((x) << DEV_BSHIFT)
-
-#ifndef _LOCORE
-#define	COM_FREQ	7372800
-#endif
 
 #define	__SWAP_BROKEN
