@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.66 2011/07/17 22:46:48 matthew Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.67 2011/11/10 12:05:11 krw Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -439,7 +439,7 @@ cissminphys(struct buf *bp, struct scsi_link *sl)
 		bp->b_bcount = CISS_MAXFER;
 #endif
 	minphys(bp);
-}               
+}
 
 /*
  * submit a command and optionally wait for completition.
@@ -616,7 +616,7 @@ ciss_done(struct ciss_ccb *ccb)
 {
 	struct ciss_softc *sc = ccb->ccb_sc;
 	struct scsi_xfer *xs = ccb->ccb_xs;
-        struct ciss_cmd *cmd = &ccb->ccb_cmd;
+	struct ciss_cmd *cmd = &ccb->ccb_cmd;
 	ciss_lock_t lock;
 	int error = 0;
 
@@ -1086,7 +1086,7 @@ ciss_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 			}
 			bd->bd_size = (u_int64_t)letoh32(pdid->nblocks) *
 			    letoh16(pdid->blksz);
-			bd->bd_channel = pdid->bus;  
+			bd->bd_channel = pdid->bus;
 			bd->bd_target = pdid->target;
 			bd->bd_lun = 0;
 			strlcpy(bd->bd_vendor, pdid->model,
