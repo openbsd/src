@@ -1,4 +1,4 @@
-/* $OpenBSD: omusbtll.c,v 1.3 2011/11/10 00:19:36 matthieu Exp $ */
+/* $OpenBSD: omusbtll.c,v 1.4 2011/11/10 19:37:01 uwe Exp $ */
 /*
  * Copyright (c) 2010 Dale Rahn <drahn@openbsd.org>
  *
@@ -23,10 +23,8 @@
 #include <sys/evcount.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <arch/beagle/beagle/ahb.h>
-#include <arch/beagle/dev/prcmvar.h>
-#include "omgpio.h"
-
+#include <beagle/dev/omapvar.h>
+#include <beagle/dev/prcmvar.h>
 
 /* registers */
 #define USBTLL_REVISION			0x0000
@@ -86,54 +84,34 @@ ULPI_USB_INT_STATUS_(i)		(0x0813 + (0x100 * (i)))
 ULPI_USB_INT_LATCH_(i)		(0x0814 + (0x100 * (i)))
 */
 
-
-#define	USBTLL_SIZE		0x1000
-
 struct omusbtll_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 };
 
-int omusbtll_match(struct device *parent, void *v, void *aux);
 void omusbtll_attach(struct device *parent, struct device *self, void *args);
 void omusbtll_init(uint32_t channel_mask);
 
 struct cfattach	omusbtll_ca = {
-	sizeof (struct omusbtll_softc), omusbtll_match, omusbtll_attach
+	sizeof (struct omusbtll_softc), NULL, omusbtll_attach
 };
 
 struct cfdriver omusbtll_cd = {
 	NULL, "omusbtll", DV_DULL
 };
 
-int
-omusbtll_match(struct device *parent, void *v, void *aux)
-{
-	switch (board_id) {
-	case BOARD_ID_OMAP3_BEAGLE:
-	case BOARD_ID_OMAP3_OVERO:
-		break; /* continue trying */
-	case BOARD_ID_OMAP4_PANDA:
-		return 0; /* not ported yet ??? - different */
-	default:
-		return 0; /* unknown */
-	}
-	return (1);
-}
-
 struct omusbtll_softc *omusbtll_sc;
 void
 omusbtll_attach(struct device *parent, struct device *self, void *args)
 {
-        struct ahb_attach_args *aa = args;
 	struct omusbtll_softc *sc = (struct omusbtll_softc *) self;
+	struct omap_attach_args *oa = args;
 	u_int32_t rev;
 
-	sc->sc_iot = aa->aa_iot;
-	printf("addr %x\n", aa->aa_addr);
-	if (bus_space_map(sc->sc_iot, aa->aa_addr, USBTLL_SIZE, 0,
-	    &sc->sc_ioh)) {
+	sc->sc_iot = oa->oa_iot;
+	if (bus_space_map(sc->sc_iot, oa->oa_dev->mem[0].addr,
+	    oa->oa_dev->mem[0].size, 0, &sc->sc_ioh)) {
 		printf("omgpio_attach: bus_space_map failed!\n");
 		return;
 	}

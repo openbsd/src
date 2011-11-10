@@ -1,4 +1,4 @@
-#	$OpenBSD: files.beagle,v 1.10 2011/11/05 12:30:58 drahn Exp $
+#	$OpenBSD: files.beagle,v 1.11 2011/11/10 19:37:01 uwe Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -15,14 +15,9 @@ file	arch/arm/arm/conf.c
 
 file	arch/beagle/beagle/beagle_machdep.c
 
-# ARM11
-define  ahb {[addr=-1], [size=0], [intr=-1]}
-device ahb
-attach ahb at mainbus
-file	arch/beagle/beagle/ahb.c	ahb
-file	arch/arm/armv7/armv7_space.c	ahb
-file	arch/arm/armv7/armv7_a4x_space.c	ahb	# XXX
-file	arch/arm/armv7/armv7_a4x_io.S		ahb	# XXX
+file	arch/arm/armv7/armv7_space.c
+file	arch/arm/armv7/armv7_a4x_space.c
+file	arch/arm/armv7/armv7_a4x_io.S
 file	arch/arm/armv7/armv7_mutex.c
 
 #interrupt API layer
@@ -34,64 +29,71 @@ file	arch/beagle/beagle/uboot_tags.c
 # note that the order of the devices in _this_ file
 # affects the order that the devices will configure.
 
+# XXX arch/arm/omap
+define soc {}
+device omap: soc
+attach omap at mainbus
+file	arch/beagle/dev/omap.c			omap
+file	arch/beagle/dev/omap3.c			omap
+file	arch/beagle/dev/omap4.c			omap
+
 # cortex based peripherals
 device ampintc
-attach ampintc at ahb
+attach ampintc at soc
 file	arch/beagle/dev/ampintc.c		ampintc
 
 device amptimer
-attach amptimer at ahb
+attach amptimer at soc
 file	arch/beagle/dev/amptimer.c		amptimer
-
 
 include "dev/sdmmc/files.sdmmc"
 
+device ommmc: sdmmcbus
+attach ommmc at soc
+file	arch/beagle/dev/ommmc.c			ommmc
+
 device prcm
-attach prcm at ahb
+attach prcm at soc
 file	arch/beagle/dev/prcm.c			prcm
 
 device omgpio
-attach omgpio at ahb
-file	arch/beagle/dev/omgpio.c		omgpio needs-count
+attach omgpio at soc
+file	arch/beagle/dev/omgpio.c		omgpio
 
 device intc
-attach intc at ahb
+attach intc at soc
 file	arch/beagle/dev/intc.c			intc
 
 device gptimer
-attach gptimer at ahb
+attach gptimer at soc
 file	arch/beagle/dev/gptimer.c		gptimer
 
 device omdog
-attach omdog at ahb
+attach omdog at soc
 file	arch/beagle/dev/omdog.c			omdog
 
-device ommmc: sdmmcbus
-attach ommmc at ahb
-file	arch/beagle/dev/ommmc.c			ommmc
-
-attach ohci at ahb with omohci
+attach ohci at soc with omohci
 file	arch/beagle/dev/omohci.c		omohci
 
-attach ehci at ahb with omehci
+attach ehci at soc with omehci
 file	arch/beagle/dev/omehci.c		omehci
 
 # NS16550 compatible serial ports
-attach	com at ahb with com_ahb
-file	arch/beagle/dev/omap_com.c		com_ahb
+attach	com at soc with com_omap
+file	arch/beagle/dev/omap_com.c		com_omap
 
 device omusbtll
-attach omusbtll at ahb
+attach omusbtll at soc
 file arch/beagle/dev/omusbtll.c			omusbtll
 
 
 device omkbd: wskbddev
-attach omkbd at ahb
+attach omkbd at soc
 file	arch/beagle/dev/omkbd.c			omkbd
 
 # LCD frame buffer
 device omdisplay: wsemuldisplaydev, rasops16
-attach omdisplay at ahb
+attach omdisplay at soc
 file arch/beagle/dev/omdisplay.c		omdisplay
 
 #
@@ -106,12 +108,12 @@ file	arch/arm/arm/softintr.c
 
 # MCSPI - spi 
 device mcspi 
-attach mcspi at ahb
+attach mcspi at soc
 file	arch/beagle/dev/mcspi.c			mcspi
 
 # pseudo-Audio Device Driver
 device oaudio: audio
-attach oaudio at ahb				# configure after Atlas Driver
+attach oaudio at soc				# configure after Atlas Driver
 file arch/beagle/dev/beagle_audio.c			oaudio
 
 #

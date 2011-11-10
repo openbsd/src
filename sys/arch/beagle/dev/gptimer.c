@@ -1,4 +1,4 @@
-/* $OpenBSD: gptimer.c,v 1.11 2011/11/10 00:19:36 matthieu Exp $ */
+/* $OpenBSD: gptimer.c,v 1.12 2011/11/10 19:37:01 uwe Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -30,9 +30,9 @@
 #include <sys/device.h>
 #include <sys/timetc.h>
 #include <dev/clock_subr.h>
-#include <beagle/dev/prcmvar.h>
 #include <machine/bus.h>
-#include <arch/beagle/beagle/ahb.h>
+#include <beagle/dev/omapvar.h>
+#include <beagle/dev/prcmvar.h>
 
 #include <machine/intr.h>
 #include <arm/cpufunc.h>
@@ -94,8 +94,6 @@
 #define		GP_TSICR_POSTED		0x00000002
 #define		GP_TSICR_SFT		0x00000001
 #define	GP_TCAR2	0x044
-#define	GP_SIZE	0x100
-
 
 #define TIMER_FREQUENCY			32768	/* 32kHz is used, selectable */
 
@@ -106,7 +104,6 @@ static struct evcount stat_count;
 
 //static int clk_irq = GPT1_IRQ; /* XXX 37 */
 
-int gptimer_match(struct device *parent, void *v, void *aux);
 void gptimer_attach(struct device *parent, struct device *self, void *args);
 int gptimer_intr(void *frame);
 void gptimer_wait(int reg);
@@ -133,37 +130,23 @@ u_int32_t	ticks_err_sum;
 u_int32_t	statvar, statmin;
 
 struct cfattach	gptimer_ca = {
-	sizeof (struct device), gptimer_match, gptimer_attach
+	sizeof (struct device), NULL, gptimer_attach
 };
 
 struct cfdriver gptimer_cd = {
 	NULL, "gptimer", DV_DULL
 };
 
-int
-gptimer_match(struct device *parent, void *v, void *aux)
-{
-	switch (board_id) {
-	case BOARD_ID_OMAP3_BEAGLE:
-	case BOARD_ID_OMAP3_OVERO:
-		break; /* continue trying */
-	case BOARD_ID_OMAP4_PANDA:
-		return 0; /* not ported yet ??? - different */
-	default:
-		return 0; /* unknown */
-	}
-	return (1);
-}
-
 void
 gptimer_attach(struct device *parent, struct device *self, void *args)
 {
-        struct ahb_attach_args *aa = args;
-	bus_space_handle_t ioh; 
+	struct omap_attach_args *oa = args;
+	bus_space_handle_t ioh;
 	u_int32_t rev;
 
-	gptimer_iot = aa->aa_iot;
-	if (bus_space_map(gptimer_iot, aa->aa_addr, GP_SIZE, 0, &ioh))
+	gptimer_iot = oa->oa_iot;
+	if (bus_space_map(gptimer_iot, oa->oa_dev->mem[0].addr,
+	    oa->oa_dev->mem[0].size, 0, &ioh))
 		panic("gptimer_attach: bus_space_map failed!");
 
 	rev = bus_space_read_4(gptimer_iot, ioh, GP_TIDR);
@@ -171,7 +154,7 @@ gptimer_attach(struct device *parent, struct device *self, void *args)
 	printf(" rev %d.%d\n", rev >> 4 & 0xf, rev & 0xf);
 	if (self->dv_unit == 0) {
 		gptimer_ioh0 = ioh;
-		gptimer_irq = aa->aa_intr;
+		gptimer_irq = oa->oa_dev->irq[0];
 		bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TCLR, 0);
 	} else if (self->dv_unit == 1) {
 		/* start timer because it is used in delay */
@@ -187,10 +170,10 @@ gptimer_attach(struct device *parent, struct device *self, void *args)
 		gptimer_timecounter.tc_frequency = TIMER_FREQUENCY;
 		tc_init(&gptimer_timecounter);
 	}
-	else 
-		panic("attaching too many gptimers at %x", aa->aa_addr);
+	else
+		panic("attaching too many gptimers at 0x%x",
+		    oa->oa_dev->mem[0].addr);
 
-	
 	arm_clock_register(gptimer_cpu_initclocks, gptimer_delay,
 	    gptimer_setstatclockrate);
 }

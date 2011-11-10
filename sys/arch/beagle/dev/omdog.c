@@ -1,4 +1,4 @@
-/* $OpenBSD: omdog.c,v 1.3 2011/11/10 00:19:36 matthieu Exp $ */
+/* $OpenBSD: omdog.c,v 1.4 2011/11/10 19:37:01 uwe Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -25,8 +25,8 @@
 #include <sys/timeout.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
-#include <arch/beagle/beagle/ahb.h>
-#include <arch/beagle/dev/omgpiovar.h>
+#include <beagle/dev/omapvar.h>
+#include <beagle/dev/omgpiovar.h>
 
 /* registers */
 #define WIDR		0x00
@@ -41,7 +41,6 @@
 #define WWPS		0x34
 #define		WWPS_PEND_ALL	0x1f
 #define WSPR		0x48
-#define WD_SIZE		0x80
 
 
 struct omdog_softc {
@@ -57,43 +56,27 @@ struct omdog_softc *omdog_sc;
  * to disable the watchdog, write 0xXXXXaaaa then 0xXXXX5555 to WSPR
  */
 
-
-int omdog_match(struct device *parent, void *v, void *aux);
 void omdog_attach(struct device *parent, struct device *self, void *args);
 void omdog_wpending(int flags);
 
 struct cfattach	omdog_ca = {
-	sizeof (struct omdog_softc), omdog_match, omdog_attach
+	sizeof (struct omdog_softc), NULL, omdog_attach
 };
 
 struct cfdriver omdog_cd = {
 	NULL, "omdog", DV_DULL
 };
 
-int
-omdog_match(struct device *parent, void *v, void *aux)
-{
-	switch (board_id) {
-	case BOARD_ID_OMAP3_BEAGLE:
-	case BOARD_ID_OMAP3_OVERO:
-		break; /* continue trying */
-	case BOARD_ID_OMAP4_PANDA:
-		return 0; /* not ported yet */
-	default:
-		return 0; /* unknown */
-	}
-	return (1);
-}
-
 void
 omdog_attach(struct device *parent, struct device *self, void *args)
 {
-        struct ahb_attach_args *aa = args;
+	struct omap_attach_args *oa = args;
 	struct omdog_softc *sc = (struct omdog_softc *) self;
 	u_int32_t rev;
 
-	sc->sc_iot = aa->aa_iot;
-	if (bus_space_map(sc->sc_iot, aa->aa_addr, WD_SIZE, 0, &sc->sc_ioh))
+	sc->sc_iot = oa->oa_iot;
+	if (bus_space_map(sc->sc_iot, oa->oa_dev->mem[0].addr,
+	    oa->oa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("gptimer_attach: bus_space_map failed!");
 
 	rev = bus_space_read_4(sc->sc_iot, sc->sc_ioh, WIDR);

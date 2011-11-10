@@ -1,4 +1,4 @@
-/* $OpenBSD: intc.c,v 1.9 2011/11/10 00:19:36 matthieu Exp $ */
+/* $OpenBSD: intc.c,v 1.10 2011/11/10 19:37:01 uwe Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -22,7 +22,7 @@
 #include <sys/device.h>
 #include <sys/evcount.h>
 #include <machine/bus.h>
-#include <arch/beagle/beagle/ahb.h>
+#include <beagle/dev/omapvar.h>
 #include "intc.h"
 
 /* registers */
@@ -89,8 +89,6 @@
 #define		INTC_STD_PRI	32
 #define		INTC_MAX_PRI	0
 
-#define	INTC_SIZE		0x200
-
 #define NIRQ	INTC_NUM_IRQ
 
 struct intrhand {
@@ -119,7 +117,6 @@ u_int32_t intc_imask[3][NIPL];
 bus_space_tag_t		intc_iot;
 bus_space_handle_t	intc_ioh;
 
-int	intc_match(struct device *, void *, void *);
 void	intc_attach(struct device *, struct device *, void *);
 int	intc_spllower(int new);
 int	intc_splraise(int new);
@@ -127,7 +124,7 @@ void	intc_setipl(int new);
 void	intc_calc_mask(void);
 
 struct cfattach	intc_ca = {
-	sizeof (struct device), intc_match, intc_attach
+	sizeof (struct device), NULL, intc_attach
 };
 
 struct cfdriver intc_cd = {
@@ -136,34 +133,16 @@ struct cfdriver intc_cd = {
 
 int intc_attached = 0;
 
-int
-intc_match(struct device *parent, void *v, void *aux)
-{
-	switch (board_id) {
-	case BOARD_ID_OMAP3_BEAGLE:
-	case BOARD_ID_OMAP3_OVERO:
-		break; /* continue trying */
-	case BOARD_ID_OMAP4_PANDA:
-		return 0; /* not ported yet ??? - different */
-	default:
-		return 0; /* unknown */
-	}
-	if (intc_attached != 0)
-		return 0;
-
-	/* XXX */
-	return (1);
-}
-
 void
 intc_attach(struct device *parent, struct device *self, void *args)
 {
-        struct ahb_attach_args *aa = args;
+	struct omap_attach_args *oa = args;
 	int i;
 	u_int32_t rev;
 
-	intc_iot = aa->aa_iot;
-	if (bus_space_map(intc_iot, aa->aa_addr, INTC_SIZE, 0, &intc_ioh))
+	intc_iot = oa->oa_iot;
+	if (bus_space_map(intc_iot, oa->oa_dev->mem[0].addr,
+	    oa->oa_dev->mem[0].size, 0, &intc_ioh))
 		panic("intc_attach: bus_space_map failed!");
 
 	rev = bus_space_read_4(intc_iot, intc_ioh, INTC_REVISION);

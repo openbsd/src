@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.14 2011/11/06 01:34:53 drahn Exp $
+# $OpenBSD: RAMDISK,v 1.15 2011/11/10 19:37:01 uwe Exp $
 #
 # GENERIC machine description file
 #
@@ -57,46 +57,38 @@ config		bsd	root on rd0a swap on rd0b
 # The main bus device
 mainbus0	at root
 cpu0		at mainbus?
-ahb0		at mainbus?
 
-prcm0		at ahb? addr 0x48004000	# power/clock controller
-intc0		at ahb? addr 0x48200000	# interrupt controller
-ampintc0	at ahb? 
-gptimer0	at ahb? addr 0x49032000	intr 38 # timer GPTIMER2
-gptimer1	at ahb? addr 0x48318000	intr 37 # timer GPTIMER1
+# OMAP3xxx/OMAP4xxx SoC
+omap0		at mainbus?
 
-amptimer0      at ahb? addr 0x48240000
+# Cortex-A9 (OMAP4)
+ampintc*	at soc? 
+amptimer*	at soc?
 
-omgpio0		at ahb? addr 0x48310000 intr 29
-omgpio1		at ahb? addr 0x49050000 intr 30
-omgpio2		at ahb? addr 0x49052000 intr 31
-omgpio3		at ahb? addr 0x49054000 intr 32
-omgpio4		at ahb? addr 0x49056000 intr 33
-omgpio5		at ahb? addr 0x49058000 intr 34
+# OMAP3 only
+intc*		at soc?			# interrupt controller
 
-omdog0		at ahb? addr 0x48314000 		# watchdog timer
+# OMAP on-chip devices
+prcm*		at soc?			# power/clock controller
+omdog*		at soc?			# watchdog timer
+omgpio*		at soc?			# user-visible GPIO pins?
+gptimer*	at soc?			# general purpose timers
+ommmc*		at soc?			# SD/MMC card controller
+omusbtll*	at soc?
 
-ommmc0		at ahb? addr 0x4809c000 intr 83
-#ommmc1		at ahb? addr 0x480b4000 intr 86
-#ommmc2		at ahb? addr 0x480ad000 intr 94
-
-#omkbd0		at ahb? addr 0x48022000 		
+#omkbd0		at soc?
 #wskbd*		at omkbd? mux 1
 
-omusbtll0	at ahb? addr 0x48062000
+ehci0		at soc?			# EHCI (shim)
+usb*		at ehci?
 
-#ohci0		at ahb? addr 0x4805E000 size 0x400 intr 78	# ohci (shim)
-#ehci0          at ahb? addr 0x48064800 size 0x400 intr 77      # ehci (shim)
-#usb*           at ehci?
+#mcspi0		at soc? addr 0x48098000 intr 65
+#mcspi1		at soc? addr 0x4809A000 intr 66
 
-
-#mcspi0		at ahb? addr 0x48098000 intr 65
-#mcspi1		at ahb? addr 0x4809A000 intr 66
-
-#atlas0		at ahb? intr 85	# really a spi device, not ahb
+#atlas0		at soc? intr 85	# really a spi device, not soc
 #wskbd*		at atlas? mux 1 
 
-#usbotg0	at ahb? addr 0x4c000000 size 0x70 intr 3
+#usbotg0	at soc?
 #usb*		at ohci?
 
 # ## USB bus support
@@ -162,14 +154,10 @@ uk*		at scsibus?
 
 
 # onboard uarts
-com0	at ahb?	addr	0x48020000	size 0x400 intr 74 # UART3
-com0	at ahb?	addr	0x49020000	size 0x400 intr 74 # UART3
-
-#com1	at ahb?	addr	0xXXXXXX00	size 0x400 intr 73
-#com2	at ahb?	addr	0xXXXXXX00	size 0x400 intr 74
+com*		at soc?
 
 # LCD
-#omdisplay0	at ahb? addr 0x48050000 intr 25 # LCD DISPLAY
+#omdisplay0	at soc?
 #wsdisplay*	at omdisplay? console ?
 
 sdmmc*	at ommmc?		# SD/MMC bus

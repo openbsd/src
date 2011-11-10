@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.7 2011/11/10 00:19:36 matthieu Exp $ */
+/* $OpenBSD: ampintc.c,v 1.8 2011/11/10 19:37:01 uwe Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -28,7 +28,7 @@
 #include <sys/evcount.h>
 #include <arm/cpufunc.h>
 #include <machine/bus.h>
-#include <arch/beagle/beagle/ahb.h>
+#include <beagle/dev/omapvar.h>
 
 /* registers */
 #define	ICD_DCR			0x000
@@ -153,7 +153,6 @@ struct intrq {
 };
 
 
-int		 ampintc_match(struct device *, void *, void *);
 void		 ampintc_attach(struct device *, struct device *, void *);
 int		 ampintc_spllower(int);
 void		 ampintc_splx(int);
@@ -175,40 +174,18 @@ void		 ampintc_intr_disable(int);
 void		 ampintc_route(int, int , int);
 
 struct cfattach	ampintc_ca = {
-	sizeof (struct ampintc_softc), ampintc_match, ampintc_attach
+	sizeof (struct ampintc_softc), NULL, ampintc_attach
 };
 
 struct cfdriver ampintc_cd = {
 	NULL, "ampintc", DV_DULL
 };
 
-int ampintc_attached = 0;
-
-int
-ampintc_match(struct device *parent, void *v, void *aux)
-{
-	switch (board_id) {
-	case BOARD_ID_OMAP3_BEAGLE:
-	case BOARD_ID_OMAP3_OVERO:
-		return 0; /* not ported yet ??? - different */
-	case BOARD_ID_OMAP4_PANDA:
-		break; /* continue trying */
-	default:
-		return 0; /* unknown */
-	}
-	if (ampintc_attached != 0)
-		return 0;
-
-	/* XXX */
-	return (1);
-}
-
-
 void
 ampintc_attach(struct device *parent, struct device *self, void *args)
 {
-        struct ahb_attach_args *aa = args;
 	struct ampintc_softc *sc = (struct ampintc_softc *)self;
+	struct omap_attach_args *oa = args;
 	int i, nintr;
 	bus_space_tag_t		iot;
 	bus_space_handle_t	d_ioh, p_ioh;
@@ -217,14 +194,21 @@ ampintc_attach(struct device *parent, struct device *self, void *args)
 
 	arm_init_smask();
 
-#define ICD_ADDR 0x48241000
-#define ICP_ADDR 0x48240100
-	iot = aa->aa_iot;
-	if (bus_space_map(iot, ICD_ADDR, ICD_SIZE, 0, &d_ioh))
-		panic("ampintc_attach: bus_space_map failed!");
+	iot = oa->oa_iot;
 
-	if (bus_space_map(iot, ICP_ADDR, ICP_SIZE, 0, &p_ioh))
-		panic("ampintc_attach: bus_space_map failed!");
+	printf("ICP addr 0x%x-0x%x\n", oa->oa_dev->mem[0].addr,
+	    oa->oa_dev->mem[0].addr + oa->oa_dev->mem[0].size);
+
+	printf("ICD addr 0x%x-0x%x\n", oa->oa_dev->mem[1].addr,
+	    oa->oa_dev->mem[1].addr + oa->oa_dev->mem[1].size);
+
+	if (bus_space_map(iot, oa->oa_dev->mem[0].addr,
+	    oa->oa_dev->mem[0].size, 0, &p_ioh))
+		panic("ampintc_attach: ICP bus_space_map failed!");
+
+	if (bus_space_map(iot, oa->oa_dev->mem[1].addr,
+	    oa->oa_dev->mem[1].size, 0, &d_ioh))
+		panic("ampintc_attach: ICD bus_space_map failed!");
 
 	sc->sc_iot = iot;
 	sc->sc_d_ioh = d_ioh;
@@ -277,8 +261,6 @@ ampintc_attach(struct device *parent, struct device *self, void *args)
 
 	ampintc_setipl(IPL_HIGH);  /* XXX ??? */
 	ampintc_calc_mask();
-
-	ampintc_attached = 1;
 
 	/* insert self as interrupt handler */
 	arm_set_intr_handler(ampintc_splraise, ampintc_spllower, ampintc_splx,

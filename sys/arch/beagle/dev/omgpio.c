@@ -1,4 +1,4 @@
-/* $OpenBSD: omgpio.c,v 1.7 2011/11/10 00:19:36 matthieu Exp $ */
+/* $OpenBSD: omgpio.c,v 1.8 2011/11/10 19:37:01 uwe Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -27,9 +27,8 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <arch/beagle/beagle/ahb.h>
-#include <arch/beagle/dev/omgpiovar.h>
-#include "omgpio.h"
+#include <beagle/dev/omapvar.h>
+#include <beagle/dev/omgpiovar.h>
 
 
 /* registers */
@@ -121,19 +120,20 @@ omgpio_match(struct device *parent, void *v, void *aux)
 void
 omgpio_attach(struct device *parent, struct device *self, void *args)
 {
-        struct ahb_attach_args *aa = args;
+	struct omap_attach_args *oa = args;
 	struct omgpio_softc *sc = (struct omgpio_softc *) self;
 	u_int32_t rev;
 
-	sc->sc_iot = aa->aa_iot;
-	if (bus_space_map(sc->sc_iot, aa->aa_addr, GPIO_SIZE, 0, &sc->sc_ioh))
+	sc->sc_iot = oa->oa_iot;
+	if (bus_space_map(sc->sc_iot, oa->oa_dev->mem[0].addr,
+	    oa->oa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("omgpio_attach: bus_space_map failed!");
 
 	rev = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO_REVISION);
 
 	printf(" rev %d.%d\n", rev >> 4 & 0xf, rev & 0xf);
 
-	sc->sc_irq = aa->aa_intr;
+	sc->sc_irq = oa->oa_dev->irq[0];
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO_CLEARIRQENABLE1, ~0);
 
@@ -318,7 +318,7 @@ omgpio_intr_establish(unsigned int gpio, int level, int spl,
 	 * which is 96 + gpio pin?
 	 */
 
-	if (GPIO_PIN_TO_INST(gpio) > NOMGPIO)
+	if (GPIO_PIN_TO_INST(gpio) > omgpio_cd.cd_ndevs)
 		panic("omgpio_intr_establish: bogus irqnumber %d: %s",
 		     gpio, name);
 

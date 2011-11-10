@@ -1,4 +1,4 @@
-/* $OpenBSD: amptimer.c,v 1.5 2011/11/10 16:15:24 drahn Exp $ */
+/* $OpenBSD: amptimer.c,v 1.6 2011/11/10 19:37:01 uwe Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -27,7 +27,7 @@
 #include <arm/cpufunc.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <arch/beagle/beagle/ahb.h>
+#include <beagle/dev/omapvar.h>
 
 #define GTIMER_CNT_LOW		0x200
 #define GTIMER_CNT_HIGH		0x204
@@ -41,8 +41,6 @@
 #define GTIMER_CMP_LOW		0x210
 #define GTIMER_CMP_HIGH		0x214
 #define GTIMER_AUTOINC		0x218
-
-#define GTIMER_SIZE		0x300
 
 /* XXX - PERIPHCLK */
 #define TIMER_FREQUENCY                 512 * 1024 * 1024 /* XXX - PERIPHCLK? */
@@ -72,7 +70,6 @@ struct amptimer_softc {
 #endif
 };
 
-int		amptimer_match(struct device *, void *, void *);
 void		amptimer_attach(struct device *, struct device *, void *);
 uint64_t	amptimer_readcnt64(struct amptimer_softc *sc);
 int		amptimer_intr(void *);
@@ -90,24 +87,12 @@ void	*ampintc_intr_establish(int, int, int (*)(void *), void *, char *);
 
 
 struct cfattach amptimer_ca = {
-	sizeof (struct amptimer_softc), amptimer_match, amptimer_attach
+	sizeof (struct amptimer_softc), NULL, amptimer_attach
 };
 
 struct cfdriver amptimer_cd = {
 	NULL, "amptimer", DV_DULL
 };
-
-int
-amptimer_match(struct device *parent, void *v, void *aux)
-{
-	switch (board_id) {
-	case BOARD_ID_OMAP4_PANDA:
-		break; /* continue trying */
-	default:
-		return 0; /* unknown */
-	}
-	return (1);
-}
 
 uint64_t
 amptimer_readcnt64(struct amptimer_softc *sc)
@@ -130,12 +115,14 @@ void
 amptimer_attach(struct device *parent, struct device *self, void *args)
 {
 	struct amptimer_softc *sc = (struct amptimer_softc *)self;
-	struct ahb_attach_args *aa = args;
-        bus_space_handle_t ioh;
+	struct omap_attach_args *oa = args;
+	bus_space_handle_t ioh;
 
-	sc->sc_iot = aa->aa_iot;
-        if (bus_space_map(sc->sc_iot, aa->aa_addr, GTIMER_SIZE, 0, &ioh))
-                panic("amptimer_attach: bus_space_map failed!");
+	sc->sc_iot = oa->oa_iot;
+
+	if (bus_space_map(sc->sc_iot, oa->oa_dev->mem[0].addr,
+	    oa->oa_dev->mem[0].size, 0, &ioh))
+		panic("amptimer_attach: bus_space_map failed!");
 
 	sc->sc_ticks_per_second = TIMER_FREQUENCY;
 	printf(": tick rate %d KHz\n", sc->sc_ticks_per_second /1024);

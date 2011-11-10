@@ -1,4 +1,4 @@
-/* $OpenBSD: ahb.h,v 1.3 2011/11/10 00:19:36 matthieu Exp $ */
+/* $OpenBSD: omapvar.h,v 1.1 2011/11/10 19:37:01 uwe Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@drahn.com>
  *
@@ -15,14 +15,35 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-struct ahb_attach_args {
-	int	aa_addr;
-	int	aa_size;
-	int	aa_intr;
-	bus_space_tag_t	aa_iot;
-	bus_dma_tag_t aa_dmat;
-	char	*aa_name;
+/* Physical memory range for on-chip devices. */
+struct omap_mem {
+	u_int32_t addr;			/* physical start address */
+	u_int32_t size;			/* size of range in bytes */
 };
+
+#define OMAP_DEV_NMEM 4		       /* number of memory ranges */
+#define OMAP_DEV_NIRQ 4		       /* number of IRQs per device */
+
+/* Descriptor for all on-chip devices. */
+struct omap_dev {
+	char *name;			/* driver name or made up name */
+	int unit;			/* driver instance number or -1 */
+	struct omap_mem mem[OMAP_DEV_NMEM]; /* memory ranges */
+	int irq[OMAP_DEV_NIRQ];		    /* IRQ number(s) */
+};
+
+/* Passed as third arg to attach functions. */
+struct omap_attach_args {
+	struct omap_dev *oa_dev;
+	bus_space_tag_t	oa_iot;
+	bus_dma_tag_t oa_dmat;
+};
+
+void omap_set_devs(struct omap_dev *);
+struct omap_dev *omap_find_dev(const char *, int);
+
+void omap3_init(void);
+void omap4_init(void);
 
 /* XXX */
 void *avic_intr_establish(int irqno, int level, int (*func)(void *),

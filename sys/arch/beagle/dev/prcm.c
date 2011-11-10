@@ -1,4 +1,4 @@
-/* $OpenBSD: prcm.c,v 1.8 2011/11/10 00:19:36 matthieu Exp $ */
+/* $OpenBSD: prcm.c,v 1.9 2011/11/10 19:37:01 uwe Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -29,7 +29,7 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <arm/cpufunc.h>
-#include <beagle/beagle/ahb.h>
+#include <beagle/dev/omapvar.h>
 #include <beagle/dev/prcmvar.h>
 
 #define CM_FCLKEN_IVA2		0x0000
@@ -154,59 +154,38 @@ uint32_t prcm_fmask_mask[PRCM_REG_MAX];
 uint32_t prcm_imask_addr[PRCM_REG_MAX];
 uint32_t prcm_fmask_addr[PRCM_REG_MAX];
 
-#define PRCM_SIZE	0x2000
-
 #define SYS_CLK		13 /* SYS_CLK speed in MHz */
 
 bus_space_tag_t		prcm_iot;
 bus_space_handle_t	prcm_ioh;
-int prcm_attached;
 
 int     prcm_match(struct device *, void *, void *);
 void    prcm_attach(struct device *, struct device *, void *);
 int	prcm_setup_dpll5(void);
 
 struct cfattach	prcm_ca = {
-	sizeof (struct device), prcm_match, prcm_attach
+	sizeof (struct device), NULL, prcm_attach
 };
 
 struct cfdriver prcm_cd = {
 	NULL, "prcm", DV_DULL
 };
 
-int
-prcm_match(struct device *parent, void *v, void *aux)
-{
-	/* only attach once */
-	switch (board_id) {
-	case BOARD_ID_OMAP3_BEAGLE:
-	case BOARD_ID_OMAP3_OVERO:
-		break; /* continue trying */
-	case BOARD_ID_OMAP4_PANDA:
-		return 0; /* not ported yet */
-	default:
-		return 0; /* unknown */
-	}
-	if (prcm_attached != 0)
-		return (0);
-	return (1);
-}
-
 void
 prcm_attach(struct device *parent, struct device *self, void *args)
 {
-        struct ahb_attach_args *aa = args;
-	prcm_iot = aa->aa_iot;
+	struct omap_attach_args *oa = args;
 	u_int32_t reg;
 
-	if (bus_space_map(prcm_iot, aa->aa_addr, PRCM_SIZE, 0, &prcm_ioh))
+	prcm_iot = oa->oa_iot;
+
+	if (bus_space_map(prcm_iot, oa->oa_dev->mem[0].addr,
+	    oa->oa_dev->mem[0].size, 0, &prcm_ioh))
 		panic("prcm_attach: bus_space_map failed!");
 
 	reg = bus_space_read_4(prcm_iot, prcm_ioh, PRCM_REVISION);
 	printf(" rev %d.%d\n", reg >> 4 & 0xf, reg & 0xf);
 	
-	prcm_attached = 1;
-
 	/* Setup the 120MHZ DPLL5 clock, to be used by USB. */
 	prcm_setup_dpll5();
 

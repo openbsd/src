@@ -1,4 +1,4 @@
-/*	$OpenBSD: omehci.c,v 1.9 2011/11/10 00:19:36 matthieu Exp $ */
+/*	$OpenBSD: omehci.c,v 1.10 2011/11/10 19:37:01 uwe Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -31,7 +31,7 @@
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
 
-#include <arch/beagle/beagle/ahb.h>
+#include <beagle/dev/omapvar.h>
 #include <beagle/dev/prcmvar.h>
 
 #include <dev/usb/ehcireg.h>
@@ -39,7 +39,6 @@
 
 #define EHCI_HCPCAPBASE 0x48064800
 
-int	omehci_match(struct device *, void *, void *);
 void	omehci_attach(struct device *, struct device *, void *);
 int	omehci_detach(struct device *, int);
 int	omehci_activate(struct device *, int);
@@ -53,50 +52,28 @@ void	omehci_enable(struct omehci_softc *);
 void	omehci_disable(struct omehci_softc *);
 
 struct cfattach omehci_ca = {
-        sizeof (struct omehci_softc), omehci_match, omehci_attach,
+	sizeof (struct omehci_softc), NULL, omehci_attach,
 	omehci_detach, omehci_activate
 };
-
-int
-omehci_match(struct device *parent, void *match, void *aux)
-{
-	struct ahb_attach_args	*aa = aux;
-
-	switch (board_id) {
-	case BOARD_ID_OMAP3_BEAGLE:
-	case BOARD_ID_OMAP3_OVERO:
-		break; /* continue trying */
-	case BOARD_ID_OMAP4_PANDA:
-		return 0; /* not ported yet ??? - different */
-	default:
-		return 0; /* unknown */
-	}
-	if (aa->aa_addr != EHCI_HCPCAPBASE)
-		return 0;
-
-	return (1);
-}
 
 void
 omehci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct omehci_softc	*sc = (struct omehci_softc *)self;
-        struct ahb_attach_args	*aa = aux;
+	struct omap_attach_args	*oa = aux;
 	usbd_status		r;
 	char *devname = sc->sc.sc_bus.bdev.dv_xname;
 
-
-	sc->sc.iot = aa->aa_iot;
-	sc->sc.sc_bus.dmatag = aa->aa_dmat;
-	sc->sc.sc_size = 0;
+	sc->sc.iot = oa->oa_iot;
+	sc->sc.sc_bus.dmatag = oa->oa_dmat;
+	sc->sc.sc_size = oa->oa_dev->mem[0].size;
 
 	/* Map I/O space */
-	if (bus_space_map(sc->sc.iot, aa->aa_addr, aa->aa_size, 0,
-	    &sc->sc.ioh)) {
+	if (bus_space_map(sc->sc.iot, oa->oa_dev->mem[0].addr,
+	    sc->sc.sc_size, 0, &sc->sc.ioh)) {
 		printf(": cannot map mem space\n");
 		return;
 	}
-	sc->sc.sc_size = aa->aa_size;
 
 	/* XXX copied from ohci_pci.c. needed? */
 	bus_space_barrier(sc->sc.iot, sc->sc.ioh, 0, sc->sc.sc_size,
@@ -112,7 +89,7 @@ omehci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
 	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
 
-	sc->sc_ih = arm_intr_establish(aa->aa_intr, IPL_USB,
+	sc->sc_ih = arm_intr_establish(oa->oa_dev->irq[0], IPL_USB,
 	    ehci_intr, &sc->sc, devname);
 	if (sc->sc_ih == NULL) {
 		printf(": unable to establish interrupt\n");
