@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.38 2011/05/30 22:25:21 oga Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.39 2011/11/10 22:48:13 deraadt Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -59,7 +59,7 @@
 #define	MAXSSIZ		(128*1024*1024UL)	/* max stack size */
 #endif
 
-#define STACKGAP_RANDOM	256*1024
+#define	STACKGAP_RANDOM	256*1024
 
 #ifndef USRIOSIZE
 #define	USRIOSIZE	((2*HPPA_PGALIAS)/PAGE_SIZE)	/* 8mb */
@@ -112,4 +112,3 @@ struct vm_page_md {
 #endif
 
 #endif	/* _MACHINE_VMPARAM_H_ */
-

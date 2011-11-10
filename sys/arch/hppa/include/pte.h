@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.11 2002/09/05 18:41:19 mickey Exp $	*/
+/*	$OpenBSD: pte.h,v 1.12 2011/11/10 22:48:13 deraadt Exp $	*/
 
 /* 
  * Copyright (c) 1990,1993,1994 The University of Utah and
@@ -26,8 +26,6 @@
 
 #ifndef	_MACHINE_PTE_H_
 #define	_MACHINE_PTE_H_
-
-typedef	u_int32_t	pt_entry_t;
 
 #define	PTE_PROT_SHIFT	19
 #define	PTE_PROT(tlb)	((tlb) >> PTE_PROT_SHIFT)
@@ -63,5 +61,9 @@ typedef	u_int32_t	pt_entry_t;
 
 /* protection for break page */
 #define TLB_BREAK_PROT	0x02c00000
+
+#ifndef	_LOCORE
+typedef	u_int32_t	pt_entry_t;
+#endif
 
 #endif	/* _MACHINE_PTE_H_ */

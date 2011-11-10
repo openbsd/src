@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.14 2010/07/01 05:33:32 jsing Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.15 2011/11/10 22:48:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -26,7 +26,6 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #ifndef _MACHINE_PCB_H_
 #define _MACHINE_PCB_H_
 
@@ -36,9 +35,9 @@
 struct pcb {
 	struct hppa_fpstate *pcb_fpstate;	/* not in the trapframe */
 
-	u_int		pcb_ksp;	/* kernel sp for ctxsw */
-	u_int		pcb_onfault;	/* SW copy fault handler */
-	pa_space_t	pcb_space;	/* copy pmap_space, for asm's sake */
+	u_int32_t	pcb_ksp;		/* kernel sp for ctxsw */
+	u_int32_t	pcb_onfault;		/* SW copy fault handler */
+	pa_space_t	pcb_space;		/* copy pmap_space, for asm's sake */
 };
 
 struct md_coredump {
