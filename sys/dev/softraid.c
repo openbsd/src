@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.255 2011/11/11 17:23:39 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.256 2011/11/11 17:26:24 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2757,9 +2757,6 @@ sr_hotspare_rebuild(struct sr_discipline *sd)
 			busy = 0;
 
 			s = splbio();
-			if (wu->swu_cb_active == 1)
-				panic("%s: sr_hotspare_rebuild",
-				    DEVNAME(sd->sd_sc));
 			TAILQ_FOREACH(wu, &sd->sd_wu_pendq, swu_link) {
 				TAILQ_FOREACH(ccb, &wu->swu_ccb, ccb_link) {
 					if (ccb->ccb_target == chunk_no)
