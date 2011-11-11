@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.48 2011/09/23 08:09:20 guenther Exp $
+# $OpenBSD: Makefile.cross,v 1.49 2011/11/11 12:26:54 drahn Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -87,8 +87,8 @@ CROSSBINUTILS=	${CROSSDIR}/.binutils_done
 CROSSGCC=	${CROSSDIR}/.gcc_done
 #NO_CROSS=	isakmpd keynote ssh
 
-GCC2_ARCH=m68k m88k sparc vax
-GCC4_ARCH=amd64 hppa hppa64 i386 ia64 mips64* powerpc sparc64
+.include <bsd.own.mk>
+
 BINUTILS217_ARCH=hppa64 ia64
 OLD_BINUTILS_ARCH=m68k m88k vax
 
@@ -149,7 +149,9 @@ cross-env:
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET}
 
 ${CROSSDIRS}:
-.if ${TARGET_IS_LP64} != ${MACHINE_IS_LP64}
+.if ${TARGET_ARCH} == "arm" &&  ${MACHINE_IS_LP64} == "yes"
+	# this config is allowed
+.elif ${TARGET_IS_LP64} != ${MACHINE_IS_LP64}
 	@echo "host and target have different size longs"
 	@echo "cross compiler generates bad code; aborting"; exit 1
 .endif
