@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.254 2011/11/11 12:32:11 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.255 2011/11/11 17:23:39 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2848,10 +2848,10 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 		    BIOC_SDOFFLINE) {
 			found = c;
 			new = &sd->sd_vol.sv_chunks[c]->src_meta;
+			csize = new->scmi.scm_coerced_size;
 			if (c > 0)
 				break; /* roll at least once over the for */
 		} else {
-			csize = sd->sd_vol.sv_chunks[c]->src_meta.scmi.scm_size;
 			old = &sd->sd_vol.sv_chunks[c]->src_meta;
 			if (found != -1)
 				break;
