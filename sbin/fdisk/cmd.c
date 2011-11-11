@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.45 2010/07/02 02:54:09 halex Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.46 2011/11/11 18:21:06 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -224,9 +224,9 @@ Xedit(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 			    d, m, pp->bs , DO_CONVERSIONS |
 			    ((pp->id == FS_BSDFFS || pp->id == FS_SWAP) ?
 			    DO_ROUNDING : 0));
-			if (pp->ns == UINT_MAX)
+			if (pp->ns == UINT_MAX || pp->ns == 0)
 				printf("Invalid size.\n");
-		} while (pp->ns == UINT_MAX);
+		} while (pp->ns == UINT_MAX || pp->ns == 0);
 
 		/* Fix up CHS values */
 		PRT_fix_CHS(disk, pp);
@@ -342,6 +342,9 @@ Xwrite(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 		return (CMD_CONT);
 	}
 	close(fd);
+
+	/* Refresh in memory copy to reflect what was just written. */
+	MBR_parse(disk, mbr_buf, mbr->offset, mbr->reloffset, mbr);
 
 	return (CMD_CLEAN);
 }
