@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.253 2011/11/11 12:28:37 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.254 2011/11/11 12:32:11 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3253,8 +3253,6 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		if (sr_sensors_create(sd))
 			printf("%s: unable to create sensor for %s\n",
 			    DEVNAME(sc), dev->dv_xname);
-		else
-			sd->sd_vol.sv_sensor_valid = 1;
 #endif /* SMALL_KERNEL */
 	} else {
 		/* we are not an os disk */

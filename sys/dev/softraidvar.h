@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.109 2011/09/19 21:39:31 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.110 2011/11/11 12:32:11 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -469,7 +469,6 @@ struct sr_volume {
 	/* sensors */
 	struct ksensor		sv_sensor;
 	int			sv_sensor_attached;
-	int			sv_sensor_valid;
 };
 
 struct sr_discipline {
