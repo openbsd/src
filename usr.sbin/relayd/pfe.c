@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.70 2011/05/20 09:43:53 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.71 2011/11/12 19:36:17 camield Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -111,7 +111,7 @@ pfe_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 		IMSG_SIZE_CHECK(imsg, &st);
 		memcpy(&st, imsg->data, sizeof(st));
 		if ((host = host_find(env, st.id)) == NULL)
-			fatalx("pfe_dispatch_imsg: invalid host id");
+			fatalx("pfe_dispatch_hce: invalid host id");
 		host->he = st.he;
 		if (host->flags & F_DISABLE)
 			break;
@@ -124,7 +124,7 @@ pfe_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if (host->check_cnt != st.check_cnt) {
 			log_debug("%s: host %d => %d", __func__,
 			    host->conf.id, host->up);
-			fatalx("pfe_dispatch_imsg: desynchronized");
+			fatalx("pfe_dispatch_hce: desynchronized");
 		}
 
 		if (host->up == st.up)
@@ -136,7 +136,7 @@ pfe_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 
 		if ((table = table_find(env, host->conf.tableid))
 		    == NULL)
-			fatalx("pfe_dispatch_imsg: invalid table id");
+			fatalx("pfe_dispatch_hce: invalid table id");
 
 		log_debug("%s: state %d for host %u %s", __func__,
 		    st.up, host->conf.id, host->conf.name);
