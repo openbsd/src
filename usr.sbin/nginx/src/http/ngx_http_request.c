@@ -673,6 +673,24 @@ ngx_http_ssl_servername(ngx_ssl_conn_t *ssl_conn, int *ad, void *arg)
 
     SSL_set_SSL_CTX(ssl_conn, sscf->ssl.ctx);
 
+    /*
+     * SSL_set_SSL_CTX() only changes certs as of 1.0.0d
+     * adjust other things we care about
+     */
+
+    SSL_set_verify(ssl_conn, SSL_CTX_get_verify_mode(sscf->ssl.ctx),
+                   SSL_CTX_get_verify_callback(sscf->ssl.ctx));
+
+    SSL_set_verify_depth(ssl_conn, SSL_CTX_get_verify_depth(sscf->ssl.ctx));
+
+#ifdef SSL_CTRL_CLEAR_OPTIONS
+    /* only in 0.9.8m+ */
+    SSL_clear_options(ssl_conn, SSL_get_options(ssl_conn) &
+                                ~SSL_CTX_get_options(sscf->ssl.ctx));
+#endif
+
+    SSL_set_options(ssl_conn, SSL_CTX_get_options(sscf->ssl.ctx));
+
     return SSL_TLSEXT_ERR_OK;
 }
 
@@ -2230,17 +2248,17 @@ ngx_http_writer(ngx_http_request_t *r)
             return;
         }
 
-    } else {
-        if (wev->delayed || r->aio) {
-            ngx_log_debug0(NGX_LOG_DEBUG_HTTP, wev->log, 0,
-                           "http writer delayed");
+    }
 
-            if (ngx_handle_write_event(wev, clcf->send_lowat) != NGX_OK) {
-                ngx_http_close_request(r, 0);
-            }
+    if (wev->delayed || r->aio) {
+        ngx_log_debug0(NGX_LOG_DEBUG_HTTP, wev->log, 0,
+                       "http writer delayed");
 
-            return;
+        if (ngx_handle_write_event(wev, clcf->send_lowat) != NGX_OK) {
+            ngx_http_close_request(r, 0);
         }
+
+        return;
     }
 
     rc = ngx_http_output_filter(r, NULL);
@@ -2256,7 +2274,7 @@ ngx_http_writer(ngx_http_request_t *r)
 
     if (r->buffered || r->postponed || (r == r->main && c->buffered)) {
 
-        if (!wev->ready && !wev->delayed) {
+        if (!wev->delayed) {
             ngx_add_timer(wev, clcf->send_timeout);
         }
 

@@ -381,7 +381,7 @@ ngx_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args)
 
                     /*
                      * (int64_t) cast is required for msvc6:
-                     * it can not convert uint64_t to double
+                     * it cannot convert uint64_t to double
                      */
                     ui64 = (uint64_t) ((f - (int64_t) ui64) * scale + 0.5);
 
@@ -1211,19 +1211,19 @@ ngx_utf8_decode(u_char **p, size_t n)
 
     u = **p;
 
-    if (u > 0xf0) {
+    if (u >= 0xf0) {
 
         u &= 0x07;
         valid = 0xffff;
         len = 3;
 
-    } else if (u > 0xe0) {
+    } else if (u >= 0xe0) {
 
         u &= 0x0f;
         valid = 0x7ff;
         len = 2;
 
-    } else if (u > 0xc0) {
+    } else if (u >= 0xc2) {
 
         u &= 0x1f;
         valid = 0x7f;
@@ -1380,6 +1380,26 @@ ngx_escape_uri(u_char *dst, u_char *src, size_t size, ngx_uint_t type)
         0xffffffff  /* 1111 1111 1111 1111  1111 1111 1111 1111 */
     };
 
+                    /* not ALPHA, DIGIT, "-", ".", "_", "~" */
+
+    static uint32_t   uri_component[] = {
+        0xffffffff, /* 1111 1111 1111 1111  1111 1111 1111 1111 */
+
+                    /* ?>=< ;:98 7654 3210  /.-, +*)( '&%$ #"!  */
+        0xfc009fff, /* 1111 1100 0000 0000  1001 1111 1111 1111 */
+
+                    /* _^]\ [ZYX WVUT SRQP  ONML KJIH GFED CBA@ */
+        0x78000001, /* 0111 1000 0000 0000  0000 0000 0000 0001 */
+
+                    /*  ~}| {zyx wvut srqp  onml kjih gfed cba` */
+        0xb8000001, /* 1011 1000 0000 0000  0000 0000 0000 0001 */
+
+        0xffffffff, /* 1111 1111 1111 1111  1111 1111 1111 1111 */
+        0xffffffff, /* 1111 1111 1111 1111  1111 1111 1111 1111 */
+        0xffffffff, /* 1111 1111 1111 1111  1111 1111 1111 1111 */
+        0xffffffff  /* 1111 1111 1111 1111  1111 1111 1111 1111 */
+    };
+
                     /* " ", "#", """, "%", "'", %00-%1F, %7F-%FF */
 
     static uint32_t   html[] = {
@@ -1443,7 +1463,7 @@ ngx_escape_uri(u_char *dst, u_char *src, size_t size, ngx_uint_t type)
                     /* mail_auth is the same as memcached */
 
     static uint32_t  *map[] =
-        { uri, args, html, refresh, memcached, memcached };
+        { uri, args, uri_component, html, refresh, memcached, memcached };
 
 
     escape = map[type];

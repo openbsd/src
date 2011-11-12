@@ -1226,7 +1226,7 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
 #endif
 
     /*
-     * we can not compare whole sockaddr struct's as kernel
+     * we cannot compare whole sockaddr struct's as kernel
      * may fill some fields in inherited sockaddr struct's
      */
 
@@ -1281,7 +1281,7 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
 
             if (addr[i].opt.set) {
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                        "a duplicate listen options for %s", addr[i].opt.addr);
+                        "duplicate listen options for %s", addr[i].opt.addr);
                 return NGX_ERROR;
             }
 
@@ -1747,10 +1747,12 @@ ngx_http_add_listening(ngx_conf_t *cf, ngx_http_conf_addr_t *addr)
 
 #if (NGX_WIN32)
     {
-    ngx_iocp_conf_t  *iocpcf;
+    ngx_iocp_conf_t  *iocpcf = NULL;
 
-    iocpcf = ngx_event_get_conf(cf->cycle->conf_ctx, ngx_iocp_module);
-    if (iocpcf->acceptex_read) {
+    if (ngx_get_conf(cf->cycle->conf_ctx, ngx_events_module)) {
+        iocpcf = ngx_event_get_conf(cf->cycle->conf_ctx, ngx_iocp_module);
+    }
+    if (iocpcf && iocpcf->acceptex_read) {
         ls->post_accept_buffer_size = cscf->client_header_buffer_size;
     }
     }

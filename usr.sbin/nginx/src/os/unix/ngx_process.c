@@ -339,8 +339,10 @@ ngx_signal_handler(int signo)
             break;
 
         case ngx_signal_value(NGX_NOACCEPT_SIGNAL):
-            ngx_noaccept = 1;
-            action = ", stop accepting connections";
+            if (ngx_daemonized) {
+                ngx_noaccept = 1;
+                action = ", stop accepting connections";
+            }
             break;
 
         case ngx_signal_value(NGX_RECONFIGURE_SIGNAL):
@@ -392,6 +394,9 @@ ngx_signal_handler(int signo)
         switch (signo) {
 
         case ngx_signal_value(NGX_NOACCEPT_SIGNAL):
+            if (!ngx_daemonized) {
+                break;
+            }
             ngx_debug_quit = 1;
         case ngx_signal_value(NGX_SHUTDOWN_SIGNAL):
             ngx_quit = 1;
@@ -536,7 +541,7 @@ ngx_process_get_status(void)
         if (WEXITSTATUS(status) == 2 && ngx_processes[i].respawn) {
             ngx_log_error(NGX_LOG_ALERT, ngx_cycle->log, 0,
                           "%s %P exited with fatal code %d "
-                          "and can not be respawn",
+                          "and cannot be respawned",
                           process, pid, WEXITSTATUS(status));
             ngx_processes[i].respawn = 0;
         }
