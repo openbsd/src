@@ -1506,6 +1506,7 @@ for (;;)
     case OP_CBRA:
     case OP_BRA:
     case OP_ONCE:
+    case OP_ONCE_NC:
     case OP_COND:
     d = find_fixedlength(cc + ((op == OP_CBRA)? 2:0), utf8, atend, cd);
     if (d < 0) return d;
@@ -1761,7 +1762,7 @@ for (;;)
       break;
 
       case OP_THEN_ARG:
-      code += code[1+LINK_SIZE];
+      code += code[1];
       break;
       }
 
@@ -1880,7 +1881,7 @@ for (;;)
       break;
 
       case OP_THEN_ARG:
-      code += code[1+LINK_SIZE];
+      code += code[1];
       break;
       }
 
@@ -2045,7 +2046,8 @@ for (code = first_significant_code(code + _pcre_OP_lengths[*code], TRUE);
 
   if (c == OP_BRA  || c == OP_BRAPOS ||
       c == OP_CBRA || c == OP_CBRAPOS ||
-      c == OP_ONCE || c == OP_COND)
+      c == OP_ONCE || c == OP_ONCE_NC ||
+      c == OP_COND)
     {
     BOOL empty_branch;
     if (GET(code, 1) == 0) return TRUE;    /* Hit unclosed bracket */
@@ -2217,7 +2219,7 @@ for (code = first_significant_code(code + _pcre_OP_lengths[*code], TRUE);
     break;
 
     case OP_THEN_ARG:
-    code += code[1+LINK_SIZE];
+    code += code[1];
     break;
 
     /* None of the remaining opcodes are required to match a character. */
@@ -2295,8 +2297,13 @@ I think.
 A user pointed out that PCRE was rejecting [:a[:digit:]] whereas Perl was not.
 It seems that the appearance of a nested POSIX class supersedes an apparent
 external class. For example, [:a[:digit:]b:] matches "a", "b", ":", or
-a digit. Also, unescaped square brackets may also appear as part of class
-names. For example, [:a[:abc]b:] gives unknown class "[:abc]b:]"in Perl.
+a digit.
+
+In Perl, unescaped square brackets may also appear as part of class names. For
+example, [:a[:abc]b:] gives unknown POSIX class "[:abc]b:]". However, for
+[:a[:abc]b][b:] it gives unknown POSIX class "[:abc]b][b:]", which does not
+seem right at all. PCRE does not allow closing square brackets in POSIX class
+names.
 
 Arguments:
   ptr      pointer to the initial [
@@ -2314,6 +2321,7 @@ for (++ptr; *ptr != 0; ptr++)
   {
   if (*ptr == CHAR_BACKSLASH && ptr[1] == CHAR_RIGHT_SQUARE_BRACKET)
     ptr++;
+  else if (*ptr == CHAR_RIGHT_SQUARE_BRACKET) return FALSE;
   else
     {
     if (*ptr == terminator && ptr[1] == CHAR_RIGHT_SQUARE_BRACKET)
@@ -3086,7 +3094,6 @@ uschar *class_utf8data_base;
 uschar utf8_char[6];
 #else
 BOOL utf8 = FALSE;
-uschar *utf8_char = NULL;
 #endif
 
 #ifdef PCRE_DEBUG
@@ -3137,6 +3144,7 @@ for (;; ptr++)
   int subfirstbyte;
   int terminator;
   int mclength;
+  int tempbracount;
   uschar mcbuffer[8];
 
   /* Get next byte in the pattern */
@@ -4025,7 +4033,7 @@ for (;; ptr++)
         if ((options & PCRE_CASELESS) != 0)
           {
           unsigned int othercase;
-          if ((othercase = UCD_OTHERCASE(c)) != (unsigned int)c)
+	  if ((othercase = UCD_OTHERCASE(c)) != (unsigned int)c)
             {
             *class_utf8data++ = XCL_SINGLE;
             class_utf8data += _pcre_ord2utf8(othercase, class_utf8data);
@@ -4835,8 +4843,10 @@ for (;; ptr++)
         uschar *ketcode = code - 1 - LINK_SIZE;
         uschar *bracode = ketcode - GET(ketcode, 1);
 
-        if (*bracode == OP_ONCE && possessive_quantifier) *bracode = OP_BRA;
-        if (*bracode == OP_ONCE)
+        if ((*bracode == OP_ONCE || *bracode == OP_ONCE_NC) &&
+            possessive_quantifier) *bracode = OP_BRA;
+
+        if (*bracode == OP_ONCE || *bracode == OP_ONCE_NC)
           *ketcode = OP_KETRMAX + repeat_type;
         else
           {
@@ -5040,6 +5050,9 @@ for (;; ptr++)
               PUT2INC(code, 0, oc->number);
               }
             *code++ = (cd->assert_depth > 0)? OP_ASSERT_ACCEPT : OP_ACCEPT;
+
+            /* Do not set firstbyte after *ACCEPT */
+            if (firstbyte == REQ_UNSET) firstbyte = REQ_NONE;
             }
 
           /* Handle other cases with/without an argument */
@@ -5052,11 +5065,7 @@ for (;; ptr++)
               goto FAILED;
               }
             *code = verbs[i].op;
-            if (*code++ == OP_THEN)
-              {
-              PUT(code, 0, code - bcptr->current_branch - 1);
-              code += LINK_SIZE;
-              }
+            if (*code++ == OP_THEN) cd->external_flags |= PCRE_HASTHEN;
             }
 
           else
@@ -5067,11 +5076,7 @@ for (;; ptr++)
               goto FAILED;
               }
             *code = verbs[i].op_arg;
-            if (*code++ == OP_THEN_ARG)
-              {
-              PUT(code, 0, code - bcptr->current_branch - 1);
-              code += LINK_SIZE;
-              }
+            if (*code++ == OP_THEN_ARG) cd->external_flags |= PCRE_HASTHEN;
             *code++ = arglen;
             memcpy(code, arg, arglen);
             code += arglen;
@@ -5906,6 +5911,7 @@ for (;; ptr++)
     *code = bravalue;
     tempcode = code;
     tempreqvary = cd->req_varyopt;        /* Save value before bracket */
+    tempbracount = cd->bracount;          /* Save value before bracket */
     length_prevgroup = 0;                 /* Initialize for pre-compile phase */
 
     if (!compile_regex(
@@ -5928,15 +5934,20 @@ for (;; ptr++)
          ))
       goto FAILED;
 
+    /* If this was an atomic group and there are no capturing groups within it,
+    generate OP_ONCE_NC instead of OP_ONCE. */
+
+    if (bravalue == OP_ONCE && cd->bracount <= tempbracount)
+      *code = OP_ONCE_NC;
+
     if (bravalue >= OP_ASSERT && bravalue <= OP_ASSERTBACK_NOT)
       cd->assert_depth -= 1;
 
     /* At the end of compiling, code is still pointing to the start of the
-    group, while tempcode has been updated to point past the end of the group
-    and any option resetting that may follow it. The pattern pointer (ptr)
-    is on the bracket. */
+    group, while tempcode has been updated to point past the end of the group.
+    The pattern pointer (ptr) is on the bracket.
 
-    /* If this is a conditional bracket, check that there are no more than
+    If this is a conditional bracket, check that there are no more than
     two branches in the group, or just one if it's a DEFINE group. We do this
     in the real compile phase, not in the pre-pass, where the whole group may
     not be available. */
@@ -6335,7 +6346,7 @@ for (;; ptr++)
       else firstbyte = reqbyte = REQ_NONE;
       }
 
-    /* firstbyte was previously set; we can set reqbyte only the length is
+    /* firstbyte was previously set; we can set reqbyte only if the length is
     1 or the matching is caseful. */
 
     else
@@ -6727,7 +6738,8 @@ do {
 
    /* Other brackets */
 
-   else if (op == OP_ASSERT || op == OP_ONCE || op == OP_COND)
+   else if (op == OP_ASSERT || op == OP_ONCE || op == OP_ONCE_NC ||
+            op == OP_COND)
      {
      if (!is_anchored(scode, bracket_map, backref_map)) return FALSE;
      }
@@ -6831,7 +6843,7 @@ do {
 
    /* Other brackets */
 
-   else if (op == OP_ASSERT || op == OP_ONCE)
+   else if (op == OP_ASSERT || op == OP_ONCE || op == OP_ONCE_NC)
      {
      if (!is_startline(scode, bracket_map, backref_map)) return FALSE;
      }
@@ -6901,6 +6913,7 @@ do {
      case OP_SCBRAPOS:
      case OP_ASSERT:
      case OP_ONCE:
+     case OP_ONCE_NC:
      case OP_COND:
      if ((d = find_firstassertedchar(scode, op == OP_ASSERT)) < 0)
        return -1;
@@ -7282,7 +7295,7 @@ re->top_bracket = cd->bracount;
 re->top_backref = cd->top_backref;
 re->flags = cd->external_flags;
 
-if (cd->had_accept) reqbyte = -1;   /* Must disable after (*ACCEPT) */
+if (cd->had_accept) reqbyte = REQ_NONE;   /* Must disable after (*ACCEPT) */
 
 /* If not reached end of pattern on success, there's an excess bracket. */
 

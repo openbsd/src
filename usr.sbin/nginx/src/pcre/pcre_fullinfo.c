@@ -6,7 +6,7 @@
 and semantics are as close as possible to those of the Perl 5 language.
 
                        Written by Philip Hazel
-           Copyright (c) 1997-2009 University of Cambridge
+           Copyright (c) 1997-2011 University of Cambridge
 
 -----------------------------------------------------------------------------
 Redistribution and use in source and binary forms, with or without
@@ -127,6 +127,12 @@ switch (what)
   *((int *)where) =
     (study != NULL && (study->flags & PCRE_STUDY_MINLEN) != 0)?
       (int)study->minlength : -1;
+  break;
+
+  case PCRE_INFO_JIT:
+  *((int *)where) = extra_data != NULL &&
+                    (extra_data->flags & PCRE_EXTRA_EXECUTABLE_JIT) != 0 &&
+                    extra_data->executable_jit != NULL;
   break;
 
   case PCRE_INFO_LASTLITERAL:

@@ -87,6 +87,19 @@ const uschar _pcre_utf8_table4[] = {
   2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
   3,3,3,3,3,3,3,3,4,4,4,4,5,5,5,5 };
 
+#ifdef SUPPORT_JIT
+/* Full table of the number of extra bytes when the
+character code is greater or equal than 0xc0.
+See _pcre_utf8_table4 above. */
+
+const uschar _pcre_utf8_char_sizes[] = {
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+  3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,
+};
+#endif
+
 /* Table to translate from particular type value to the general value. */
 
 const int _pcre_ucp_gentype[] = {
@@ -99,6 +112,21 @@ const int _pcre_ucp_gentype[] = {
   ucp_S, ucp_S, ucp_S, ucp_S,         /* Sc, Sk, Sm, So */
   ucp_Z, ucp_Z, ucp_Z                 /* Zl, Zp, Zs */
 };
+
+#ifdef SUPPORT_JIT
+/* This table reverses _pcre_ucp_gentype. We can save the cost
+of a memory load. */
+
+const int _pcre_ucp_typerange[] = {
+  ucp_Cc, ucp_Cs,
+  ucp_Ll, ucp_Lu,
+  ucp_Mc, ucp_Mn,
+  ucp_Nd, ucp_No,
+  ucp_Pc, ucp_Ps,
+  ucp_Sc, ucp_So,
+  ucp_Zl, ucp_Zs,
+};
+#endif
 
 /* The pcre_utt[] table below translates Unicode property names into type and
 code values. It is searched by binary chop, so must be in collating sequence of

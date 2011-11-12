@@ -42,9 +42,9 @@ POSSIBILITY OF SUCH DAMAGE.
 /* The current PCRE version information. */
 
 #define PCRE_MAJOR          8
-#define PCRE_MINOR          13
+#define PCRE_MINOR          20
 #define PCRE_PRERELEASE     
-#define PCRE_DATE           2011-08-16
+#define PCRE_DATE           2011-10-21
 
 /* When an application links to a PCRE DLL in Windows, the symbols that are
 imported have to be identified as such. When building PCRE, the appropriate
@@ -164,6 +164,7 @@ compile-time only bits for runtime options, or vice versa. */
 #define PCRE_ERROR_BADOFFSET      (-24)
 #define PCRE_ERROR_SHORTUTF8      (-25)
 #define PCRE_ERROR_RECURSELOOP    (-26)
+#define PCRE_ERROR_JIT_STACKLIMIT (-27)
 
 /* Specific error codes for UTF-8 validity checks */
 
@@ -209,6 +210,7 @@ compile-time only bits for runtime options, or vice versa. */
 #define PCRE_INFO_JCHANGED          13
 #define PCRE_INFO_HASCRORLF         14
 #define PCRE_INFO_MINLENGTH         15
+#define PCRE_INFO_JIT               16
 
 /* Request types for pcre_config(). Do not re-arrange, in order to remain
 compatible. */
@@ -222,6 +224,12 @@ compatible. */
 #define PCRE_CONFIG_UNICODE_PROPERTIES      6
 #define PCRE_CONFIG_MATCH_LIMIT_RECURSION   7
 #define PCRE_CONFIG_BSR                     8
+#define PCRE_CONFIG_JIT                     9
+
+/* Request types for pcre_study(). Do not re-arrange, in order to remain
+compatible. */
+
+#define PCRE_STUDY_JIT_COMPILE            0x0001
 
 /* Bit flags for the pcre_extra structure. Do not re-arrange or redefine
 these bits, just add new ones on the end, in order to remain compatible. */
@@ -232,11 +240,15 @@ these bits, just add new ones on the end, in order to remain compatible. */
 #define PCRE_EXTRA_TABLES                 0x0008
 #define PCRE_EXTRA_MATCH_LIMIT_RECURSION  0x0010
 #define PCRE_EXTRA_MARK                   0x0020
+#define PCRE_EXTRA_EXECUTABLE_JIT         0x0040
 
 /* Types */
 
 struct real_pcre;                 /* declaration; the definition is private  */
 typedef struct real_pcre pcre;
+
+struct real_pcre_jit_stack;       /* declaration; the definition is private  */
+typedef struct real_pcre_jit_stack pcre_jit_stack;
 
 /* When PCRE is compiled as a C++ library, the subject pointer type can be
 replaced with a custom type. For conventional use, the public interface is a
@@ -258,6 +270,7 @@ typedef struct pcre_extra {
   const unsigned char *tables;    /* Pointer to character tables */
   unsigned long int match_limit_recursion; /* Max recursive calls to match() */
   unsigned char **mark;           /* For passing back a mark pointer */
+  void *executable_jit;           /* Contains a pointer to a compiled jit code */
 } pcre_extra;
 
 /* The structure for passing out data via the pcre_callout_function. We use a
@@ -305,6 +318,10 @@ PCRE_EXP_DECL void  pcre_stack_free(void *);
 PCRE_EXP_DECL int   pcre_callout(pcre_callout_block *);
 #endif  /* VPCOMPAT */
 
+/* User defined callback which provides a stack just before the match starts. */
+
+typedef pcre_jit_stack *(*pcre_jit_callback)(void *);
+
 /* Exported PCRE functions */
 
 PCRE_EXP_DECL pcre *pcre_compile(const char *, int, const char **, int *,
@@ -337,7 +354,14 @@ PCRE_EXP_DECL int  pcre_info(const pcre *, int *, int *);
 PCRE_EXP_DECL const unsigned char *pcre_maketables(void);
 PCRE_EXP_DECL int  pcre_refcount(pcre *, int);
 PCRE_EXP_DECL pcre_extra *pcre_study(const pcre *, int, const char **);
+PCRE_EXP_DECL void pcre_free_study(pcre_extra *);
 PCRE_EXP_DECL const char *pcre_version(void);
+
+/* JIT compiler related functions. */
+
+PCRE_EXP_DECL pcre_jit_stack *pcre_jit_stack_alloc(int, int);
+PCRE_EXP_DECL void pcre_jit_stack_free(pcre_jit_stack *);
+PCRE_EXP_DECL void pcre_assign_jit_stack(pcre_extra *, pcre_jit_callback, void *);
 
 #ifdef __cplusplus
 }  /* extern "C" */

@@ -81,7 +81,7 @@ them both to 0; an emulation function will be used. */
 #define HAVE_STRERROR 1
 
 /* Define to 1 if you have the <string> header file. */
-/* #undef HAVE_STRING */
+#define HAVE_STRING 1
 
 /* Define to 1 if you have the <strings.h> header file. */
 #define HAVE_STRINGS_H 1
@@ -96,7 +96,7 @@ them both to 0; an emulation function will be used. */
 /* #undef HAVE_STRTOLL */
 
 /* Define to 1 if you have `strtoq'. */
-/* #undef HAVE_STRTOQ */
+#define HAVE_STRTOQ 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
@@ -190,7 +190,7 @@ them both to 0; an emulation function will be used. */
 #define PACKAGE_NAME "PCRE"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "PCRE 8.13"
+#define PACKAGE_STRING "PCRE 8.20"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "pcre"
@@ -199,7 +199,16 @@ them both to 0; an emulation function will be used. */
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "8.13"
+#define PACKAGE_VERSION "8.20"
+
+/* The value of PCREGREP_BUFSIZE determines the size of buffer used by
+   pcregrep to hold parts of the file it is searching. On systems that support
+   it, "configure" can be used to override the default, which is 8192. This is
+   also the minimum value. The actual amount of memory used by pcregrep is
+   three times this number, because it allows for the buffering of "before"
+   and "after" lines. */
+#define PCREGREP_BUFSIZE 20480
+
 
 /* If you are compiling for a system other than a Unix-like system or
    Win32, and it needs some magic to be inserted before the definition
@@ -228,6 +237,9 @@ them both to 0; an emulation function will be used. */
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
+/* Define to enable support for Just-In-Time compiling. */
+/* #undef SUPPORT_JIT */
+
 /* Define to allow pcregrep to be linked with libbz2, so that it is able to
    handle .bz2 files. */
 /* #undef SUPPORT_LIBBZ2 */
@@ -239,7 +251,10 @@ them both to 0; an emulation function will be used. */
    handle .gz files. */
 /* #undef SUPPORT_LIBZ */
 
-/* Define to enable support for Unicode properties */
+/* Define to enable JIT support in pcregrep. */
+/* #undef SUPPORT_PCREGREP_JIT */
+
+/* Define to enable support for Unicode properties. */
 #define SUPPORT_UCP /**/
 
 /* Define to enable support for the UTF-8 Unicode encoding. This will work
@@ -249,7 +264,7 @@ them both to 0; an emulation function will be used. */
 #define SUPPORT_UTF8 /**/
 
 /* Version number of package */
-#define VERSION "8.13"
+#define VERSION "8.20"
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */
