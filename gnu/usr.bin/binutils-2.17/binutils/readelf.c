@@ -8861,8 +8861,10 @@ get_file_header (FILE *file)
   if (is_32bit_elf)
     {
       Elf32_External_Ehdr ehdr32;
+      /* Temporary var to prevent the GCC -Wbounded checker from firing. */
+      void *tmp = &ehdr32.e_type[0];
 
-      if (fread (ehdr32.e_type, sizeof (ehdr32) - EI_NIDENT, 1, file) != 1)
+      if (fread (tmp, sizeof (ehdr32) - EI_NIDENT, 1, file) != 1)
 	return 0;
 
       elf_header.e_type      = BYTE_GET (ehdr32.e_type);
@@ -8882,6 +8884,8 @@ get_file_header (FILE *file)
   else
     {
       Elf64_External_Ehdr ehdr64;
+      /* Temporary var to prevent the GCC -Wbounded checker from firing. */
+      void *tmp = &ehdr64.e_type[0];
 
       /* If we have been compiled with sizeof (bfd_vma) == 4, then
 	 we will not be able to cope with the 64bit data found in
@@ -8894,7 +8898,7 @@ get_file_header (FILE *file)
 	  return 0;
 	}
 
-      if (fread (ehdr64.e_type, sizeof (ehdr64) - EI_NIDENT, 1, file) != 1)
+      if (fread (tmp, sizeof (ehdr64) - EI_NIDENT, 1, file) != 1)
 	return 0;
 
       elf_header.e_type      = BYTE_GET (ehdr64.e_type);
