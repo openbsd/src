@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.49 2011/11/11 12:26:54 drahn Exp $
+# $OpenBSD: Makefile.cross,v 1.50 2011/11/12 18:32:35 jasper Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -89,7 +89,6 @@ CROSSGCC=	${CROSSDIR}/.gcc_done
 
 .include <bsd.own.mk>
 
-BINUTILS217_ARCH=hppa64 ia64
 OLD_BINUTILS_ARCH=m68k m88k vax
 
 .for _arch in ${TARGET_ARCH}
