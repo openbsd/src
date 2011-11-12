@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sppp.h,v 1.15 2009/02/16 20:03:36 canacar Exp $	*/
+/*	$OpenBSD: if_sppp.h,v 1.16 2011/11/12 12:32:59 claudio Exp $	*/
 /*	$NetBSD: if_sppp.h,v 1.2.2.1 1999/04/04 06:57:39 explorer Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ struct sipcp {
 	u_int	flags;
 #define IPCP_HISADDR_SEEN 1	/* have seen his address already */
 #define IPCP_MYADDR_DYN   2	/* my address is dynamically assigned */
-#define IPCP_MYADDR_SEEN  4	/* have seen his address already */
+#define IPCP_MYADDR_SEEN  4	/* have seen my address already */
 #define IPCP_HISADDR_DYN  8	/* his address is dynamically assigned */
 #define IPV6CP_MYIFID_DYN	2
 #define IPV6CP_MYIFID_SEEN	4
