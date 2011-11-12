@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.28 2010/11/19 08:00:56 ajacoutot Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.29 2011/11/12 15:39:52 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -390,6 +390,8 @@ got_one(struct protocol *l)
 		struct dhcp_packet packet;
 	} u;
 	struct interface_info *ip = l->local;
+
+	bzero(&u, sizeof(u));
 
 	if ((result = receive_packet(ip, u.packbuf, sizeof u,
 	    &from, &hfrom)) == -1) {
