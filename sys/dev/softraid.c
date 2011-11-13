@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.256 2011/11/11 17:26:24 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.257 2011/11/13 13:57:43 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2810,13 +2810,14 @@ int
 sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 {
 	struct sr_softc		*sc = sd->sd_sc;
-	int			rv = EINVAL, part;
-	int			c, found, open = 0;
-	char			devname[32];
+	struct sr_chunk		*chunk = NULL;
+	struct sr_meta_chunk	*meta;
+	struct disklabel	label;
 	struct vnode		*vn;
 	daddr64_t		size, csize;
-	struct disklabel	label;
-	struct sr_meta_chunk	*old, *new;
+	char			devname[32];
+	int			rv = EINVAL, open = 0;
+	int			cid, i, part, status;
 
 	/*
 	 * Attempt to initiate a rebuild onto the specified device.
@@ -2839,34 +2840,36 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 		goto done;
 	}
 
-	/* find offline chunk */
-	for (c = 0, found = -1; c < sd->sd_meta->ssdi.ssd_chunk_no; c++)
-		if (sd->sd_vol.sv_chunks[c]->src_meta.scm_status ==
+	/* Find first offline chunk. */
+	for (cid = 0; cid < sd->sd_meta->ssdi.ssd_chunk_no; cid++) {
+		if (sd->sd_vol.sv_chunks[cid]->src_meta.scm_status ==
 		    BIOC_SDOFFLINE) {
-			found = c;
-			new = &sd->sd_vol.sv_chunks[c]->src_meta;
-			csize = new->scmi.scm_coerced_size;
-			if (c > 0)
-				break; /* roll at least once over the for */
-		} else {
-			old = &sd->sd_vol.sv_chunks[c]->src_meta;
-			if (found != -1)
-				break;
+			chunk = sd->sd_vol.sv_chunks[cid];
+			break;
 		}
-	if (found == -1) {
+	}
+	if (chunk == NULL) {
 		printf("%s: no offline chunks available for rebuild\n",
 		    DEVNAME(sc));
 		goto done;
 	}
 
-	/* populate meta entry */
+	/* Get coerced size from another online chunk. */
+	for (i = 0; i < sd->sd_meta->ssdi.ssd_chunk_no; i++) {
+		if (sd->sd_vol.sv_chunks[i]->src_meta.scm_status ==
+		    BIOC_SDONLINE) {
+			meta = &sd->sd_vol.sv_chunks[i]->src_meta;
+			csize = meta->scmi.scm_coerced_size;
+			break;
+		}
+	}
+
 	sr_meta_getdevname(sc, dev, devname, sizeof(devname));
 	if (bdevvp(dev, &vn)) {
 		printf("%s:, sr_rebuild_init: can't allocate vnode\n",
 		    DEVNAME(sc));
 		goto done;
 	}
-
 	if (VOP_OPEN(vn, FREAD | FWRITE, NOCRED, curproc)) {
 		DNPRINTF(SR_D_META,"%s: sr_ioctl_setstate can't "
 		    "open %s\n", DEVNAME(sc), devname);
@@ -2875,7 +2878,7 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 	}
 	open = 1; /* close dev on error */
 
-	/* get partition */
+	/* Get disklabel and check partition. */
 	part = DISKPART(dev);
 	if (VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)&label, FREAD,
 	    NOCRED, curproc)) {
@@ -2890,7 +2893,7 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 		goto done;
 	}
 
-	/* is partition large enough? */
+	/* Is the partition large enough? */
 	size = DL_GETPSIZE(&label.d_partitions[part]) - SR_DATA_OFFSET;
 	if (size < csize) {
 		printf("%s: partition too small, at least %llu B required\n",
@@ -2900,10 +2903,10 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 		printf("%s: partition too large, wasting %llu B\n",
 		    DEVNAME(sc), (size - csize) << DEV_BSHIFT);
 
-	/* make sure we are not stomping on some other partition */
-	c = sr_chunk_in_use(sc, dev);
-	if (c != BIOC_SDINVALID && c != BIOC_SDOFFLINE &&
-	    !(hotspare && c == BIOC_SDHOTSPARE)) {
+	/* Ensure that this chunk is not already in use. */
+	status = sr_chunk_in_use(sc, dev);
+	if (status != BIOC_SDINVALID && status != BIOC_SDOFFLINE &&
+	    !(hotspare && status == BIOC_SDHOTSPARE)) {
 		printf("%s: %s is already in use\n", DEVNAME(sc), devname);
 		goto done;
 	}
@@ -2911,21 +2914,27 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 	/* Reset rebuild counter since we rebuilding onto a new chunk. */
 	sd->sd_meta->ssd_rebuild = 0;
 
-	/* recreate metadata */
 	open = 0; /* leave dev open from here on out */
-	sd->sd_vol.sv_chunks[found]->src_dev_mm = dev;
-	sd->sd_vol.sv_chunks[found]->src_vn = vn;
-	new->scmi.scm_volid = old->scmi.scm_volid;
-	new->scmi.scm_chunk_id = found;
-	strlcpy(new->scmi.scm_devname, devname,
-	    sizeof new->scmi.scm_devname);
-	new->scmi.scm_size = size;
-	new->scmi.scm_coerced_size = old->scmi.scm_coerced_size;
-	bcopy(&old->scmi.scm_uuid, &new->scmi.scm_uuid,
-	    sizeof new->scmi.scm_uuid);
-	sr_checksum(sc, new, &new->scm_checksum,
+
+	/* Fix up chunk. */
+	chunk->src_dev_mm = dev;
+	chunk->src_vn = vn;
+
+	/* Reconstruct metadata. */
+	meta = &chunk->src_meta;
+	meta->scmi.scm_volid = sd->sd_meta->ssdi.ssd_volid;
+	meta->scmi.scm_chunk_id = cid;
+	strlcpy(meta->scmi.scm_devname, devname,
+	    sizeof(meta->scmi.scm_devname));
+	meta->scmi.scm_size = size;
+	meta->scmi.scm_coerced_size = csize;
+	bcopy(&sd->sd_meta->ssdi.ssd_uuid, &meta->scmi.scm_uuid,
+	    sizeof(meta->scmi.scm_uuid));
+	sr_checksum(sc, meta, &meta->scm_checksum,
 	    sizeof(struct sr_meta_chunk_invariant));
-	sd->sd_set_chunk_state(sd, found, BIOC_SDREBUILD);
+
+	sd->sd_set_chunk_state(sd, cid, BIOC_SDREBUILD);
+
 	if (sr_meta_save(sd, SR_META_DIRTY)) {
 		printf("%s: could not save metadata to %s\n",
 		    DEVNAME(sc), devname);
