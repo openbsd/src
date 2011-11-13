@@ -1,4 +1,4 @@
-.\"	$Id: apropos.1,v 1.2 2011/10/09 17:59:56 schwarze Exp $
+.\"	$Id: apropos.1,v 1.3 2011/11/13 09:58:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 9 2011 $
+.Dd $Mdocdate: November 13 2011 $
 .Dt APROPOS 1
 .Os
 .Sh NAME
@@ -22,45 +22,26 @@
 .Nd search the manual page database
 .Sh SYNOPSIS
 .Nm
-.Op Fl eIr
-.Op Fl a Ar arch
-.Op Fl c Ar cat
-.Op Fl s Ar sort
+.Op Fl I
+.Op Fl S Ar arch
+.Op Fl s Ar section
 .Op Fl t Ar types
-.Ar key
+.Ar pattern
 .Sh DESCRIPTION
 The
 .Nm
 utility queries the manual page database.
 Its arguments are as follows:
 .Bl -tag -width Ds
-.It Fl a Ar arch
+.It Fl S Ar arch
 Search only for a particular architecture.
-.It Fl c Ar cat
-Search only for a category (manual section).
+.It Fl s Ar cat
+Search only for a manual section.
 See
 .Xr man 1
-for a listing of categories.
-.It Fl e
-Search only for exact matches (subject to
-.Fl I ) .
+for a listing of manual sections.
 .It Fl I
-Case-insensitive matching.
-.It Fl r
-Consider
-.Ar key
-to be a POSIX regular expression (subject to
-.Fl I ) .
-See
-.Xr re_format 7
-for a description of regular expressions.
-.It Fl s Ar sort
-Sorting type.
-Accepts
-.Ar cat
-to sort by category and then by title or
-.Ar title
-to sort by title (which is the default).
+Case-insensitive pattern matching.
 .It Fl t Ar types
 Consider only types of keyword match, where
 .Ar types
@@ -100,20 +81,20 @@ The search key.
 .Pp
 By default,
 .Nm
-searches for substring matches of
-.Ar key
+searches for pattern matches of
+.Ar pattern
 in manual names and descriptions
-and displays results by manual title.
+and displays results sorted by manual title.
 Output is formatted as
 .Pp
-.D1 title(cat) \- description
+.D1 title(sec) \- description
 .Pp
 Where
 .Qq title
 is the manual's title (note multiple manual names may exist for one
 title),
-.Qq cat
-is the category, and
+.Qq sec
+is the manual section, and
 .Qq description
 is the manual's short description.
 If an architecture is specified for the manual, it is displayed as
@@ -122,11 +103,11 @@ If an architecture is specified for the manual, it is displayed as
 .Pp
 Resulting manuals may be accessed as
 .Pp
-.Dl $ man -s cat title
+.Dl $ man \-s sec title
 .Pp
 If an architecture is specified in the output, use
 .Pp
-.Dl $ man -s cat -S arch title
+.Dl $ man \-s sec \-S arch title
 .\" .Sh IMPLEMENTATION NOTES
 .\" Not used in OpenBSD.
 .\" .Sh RETURN VALUES
@@ -141,13 +122,13 @@ Search for
 .Qq optind
 as a variable name in the library category:
 .Pp
-.Dl $ apropos -tvar -c 3 optind
+.Dl $ apropos \-tvar \-s 3 optind
 .Pp
 Search for all manuals referencing the term
 .Qq POSIX
 in any letter case:
 .Pp
-.Dl $ apropos -tall -I posix
+.Dl $ apropos \-tall \-I posix
 .\" .Sh DIAGNOSTICS
 .\" For sections 1, 4, 6, 7, & 8 only.
 .\" .Sh ERRORS
