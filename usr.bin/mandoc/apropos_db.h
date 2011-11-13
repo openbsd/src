@@ -1,4 +1,4 @@
-/*	$Id: apropos_db.h,v 1.1 2011/11/13 10:28:38 schwarze Exp $ */
+/*	$Id: apropos_db.h,v 1.2 2011/11/13 10:40:52 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -16,20 +16,6 @@
  */
 #ifndef APROPOS_H
 #define APROPOS_H
-
-#define TYPE_NAME	  0x01
-#define TYPE_FUNCTION	  0x02
-#define TYPE_UTILITY	  0x04
-#define TYPE_INCLUDES	  0x08
-#define TYPE_VARIABLE	  0x10
-#define TYPE_STANDARD	  0x20
-#define TYPE_AUTHOR	  0x40
-#define TYPE_CONFIG	  0x80
-#define TYPE_DESC	  0x100
-#define TYPE_XREF	  0x200
-#define TYPE_PATH	  0x400
-#define TYPE_ENV	  0x800
-#define TYPE_ERR	  0x1000
 
 struct	rec {
 	char		*file; /* file in file-system */

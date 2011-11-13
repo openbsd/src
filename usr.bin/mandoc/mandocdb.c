@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.4 2011/11/13 00:53:07 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.5 2011/11/13 10:40:52 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -29,27 +29,10 @@
 #include "man.h"
 #include "mdoc.h"
 #include "mandoc.h"
+#include "mandocdb.h"
 
-#define	MANDOC_DB	 "mandoc.db"
-#define	MANDOC_IDX	 "mandoc.index"
 #define	MANDOC_BUFSZ	  BUFSIZ
 #define	MANDOC_SLOP	  1024
-
-/* Bit-fields.  See mandocdb.8. */
-
-#define TYPE_NAME	  0x01
-#define TYPE_FUNCTION	  0x02
-#define TYPE_UTILITY	  0x04
-#define TYPE_INCLUDES	  0x08
-#define TYPE_VARIABLE	  0x10
-#define TYPE_STANDARD	  0x20
-#define TYPE_AUTHOR	  0x40
-#define TYPE_CONFIG	  0x80
-#define TYPE_DESC	  0x100
-#define TYPE_XREF	  0x200
-#define TYPE_PATH	  0x400
-#define TYPE_ENV	  0x800
-#define TYPE_ERR	  0x1000
 
 /* Tiny list for files.  No need to bring in QUEUE. */
 
@@ -719,7 +702,7 @@ pmdoc_An(MDOC_ARGS)
 		return;
 
 	buf_appendmdoc(buf, n->child, 0);
-	hash_put(hash, buf, TYPE_AUTHOR);
+	hash_put(hash, buf, TYPE_An);
 }
 
 static void
@@ -780,7 +763,7 @@ pmdoc_Fd(MDOC_ARGS)
 	buf_appendb(buf, start, (size_t)(end - start + 1));
 	buf_appendb(buf, "", 1);
 
-	hash_put(hash, buf, TYPE_INCLUDES);
+	hash_put(hash, buf, TYPE_In);
 }
 
 /* ARGSUSED */
@@ -792,7 +775,7 @@ pmdoc_Cd(MDOC_ARGS)
 		return;
 
 	buf_appendmdoc(buf, n->child, 0);
-	hash_put(hash, buf, TYPE_CONFIG);
+	hash_put(hash, buf, TYPE_Cd);
 }
 
 /* ARGSUSED */
@@ -806,7 +789,7 @@ pmdoc_In(MDOC_ARGS)
 		return;
 
 	buf_append(buf, n->child->string);
-	hash_put(hash, buf, TYPE_INCLUDES);
+	hash_put(hash, buf, TYPE_In);
 }
 
 /* ARGSUSED */
@@ -832,7 +815,7 @@ pmdoc_Fn(MDOC_ARGS)
 		cp++;
 
 	buf_append(buf, cp);
-	hash_put(hash, buf, TYPE_FUNCTION);
+	hash_put(hash, buf, TYPE_Fn);
 }
 
 /* ARGSUSED */
@@ -846,7 +829,7 @@ pmdoc_St(MDOC_ARGS)
 		return;
 
 	buf_append(buf, n->child->string);
-	hash_put(hash, buf, TYPE_STANDARD);
+	hash_put(hash, buf, TYPE_St);
 }
 
 /* ARGSUSED */
@@ -865,7 +848,7 @@ pmdoc_Xr(MDOC_ARGS)
 	} else
 		buf_appendb(buf, ".", 2);
 
-	hash_put(hash, buf, TYPE_XREF);
+	hash_put(hash, buf, TYPE_Xr);
 }
 
 /* ARGSUSED */
@@ -902,7 +885,7 @@ pmdoc_Vt(MDOC_ARGS)
 
 	buf_appendb(buf, start, sz);
 	buf_appendb(buf, "", 1);
-	hash_put(hash, buf, TYPE_VARIABLE);
+	hash_put(hash, buf, TYPE_Va);
 }
 
 /* ARGSUSED */
@@ -916,7 +899,7 @@ pmdoc_Fo(MDOC_ARGS)
 		return;
 
 	buf_append(buf, n->child->string);
-	hash_put(hash, buf, TYPE_FUNCTION);
+	hash_put(hash, buf, TYPE_Fn);
 }
 
 
@@ -931,7 +914,7 @@ pmdoc_Nd(MDOC_ARGS)
 	buf_appendmdoc(dbuf, n->child, 1);
 	buf_appendmdoc(buf, n->child, 0);
 
-	hash_put(hash, buf, TYPE_DESC);
+	hash_put(hash, buf, TYPE_Nd);
 }
 
 /* ARGSUSED */
@@ -943,7 +926,7 @@ pmdoc_Er(MDOC_ARGS)
 		return;
 	
 	buf_appendmdoc(buf, n->child, 0);
-	hash_put(hash, buf, TYPE_ERR);
+	hash_put(hash, buf, TYPE_Er);
 }
 
 /* ARGSUSED */
@@ -955,7 +938,7 @@ pmdoc_Ev(MDOC_ARGS)
 		return;
 	
 	buf_appendmdoc(buf, n->child, 0);
-	hash_put(hash, buf, TYPE_ENV);
+	hash_put(hash, buf, TYPE_Ev);
 }
 
 /* ARGSUSED */
@@ -967,7 +950,7 @@ pmdoc_Pa(MDOC_ARGS)
 		return;
 	
 	buf_appendmdoc(buf, n->child, 0);
-	hash_put(hash, buf, TYPE_PATH);
+	hash_put(hash, buf, TYPE_Pa);
 }
 
 /* ARGSUSED */
@@ -977,7 +960,7 @@ pmdoc_Nm(MDOC_ARGS)
 	
 	if (SEC_NAME == n->sec) {
 		buf_appendmdoc(buf, n->child, 0);
-		hash_put(hash, buf, TYPE_NAME);
+		hash_put(hash, buf, TYPE_Nm);
 		return;
 	} else if (SEC_SYNOPSIS != n->sec || MDOC_HEAD != n->type)
 		return;
@@ -986,7 +969,7 @@ pmdoc_Nm(MDOC_ARGS)
 		buf_append(buf, m->name);
 
 	buf_appendmdoc(buf, n->child, 0);
-	hash_put(hash, buf, TYPE_UTILITY);
+	hash_put(hash, buf, TYPE_Nm);
 }
 
 static void
@@ -1116,7 +1099,7 @@ pman_node(MAN_ARGS)
 				buf_appendb(buf, start, sz);
 				buf_appendb(buf, "", 1);
 
-				hash_put(hash, buf, TYPE_NAME);
+				hash_put(hash, buf, TYPE_Nm);
 
 				if (' ' == start[(int)sz]) {
 					start += (int)sz + 1;
@@ -1155,7 +1138,7 @@ pman_node(MAN_ARGS)
 			buf_appendb(dbuf, start, sz);
 			buf_appendb(buf, start, sz);
 
-			hash_put(hash, buf, TYPE_DESC);
+			hash_put(hash, buf, TYPE_Nd);
 		}
 	}
 

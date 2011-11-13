@@ -1,4 +1,4 @@
-/*	$Id: apropos_db.c,v 1.1 2011/11/13 10:28:38 schwarze Exp $ */
+/*	$Id: apropos_db.c,v 1.2 2011/11/13 10:40:52 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -27,6 +27,7 @@
 # include <db.h>
 #endif
 
+#include "mandocdb.h"
 #include "apropos_db.h"
 #include "mandoc.h"
 
@@ -50,20 +51,21 @@ struct	type {
 };
 
 static	const struct type types[] = {
-	{ TYPE_NAME, "name" },
-	{ TYPE_FUNCTION, "func" },
-	{ TYPE_UTILITY, "utility" },
-	{ TYPE_INCLUDES, "incl" },
-	{ TYPE_VARIABLE, "var" },
-	{ TYPE_STANDARD, "stand" },
-	{ TYPE_AUTHOR, "auth" },
-	{ TYPE_CONFIG, "conf" },
-	{ TYPE_DESC, "desc" },
-	{ TYPE_XREF, "xref" },
-	{ TYPE_PATH, "path" },
-	{ TYPE_ENV, "env" },
-	{ TYPE_ERR, "err" },
-	{ INT_MAX, "all" },
+	{ TYPE_An, "An" },
+	{ TYPE_Cd, "Cd" },
+	{ TYPE_Er, "Er" },
+	{ TYPE_Ev, "Ev" },
+	{ TYPE_Fn, "Fn" },
+	{ TYPE_Fn, "Fo" },
+	{ TYPE_In, "In" },
+	{ TYPE_Nd, "Nd" },
+	{ TYPE_Nm, "Nm" },
+	{ TYPE_Pa, "Pa" },
+	{ TYPE_St, "St" },
+	{ TYPE_Va, "Va" },
+	{ TYPE_Va, "Vt" },
+	{ TYPE_Xr, "Xr" },
+	{ INT_MAX, "any" },
 	{ 0, NULL }
 };
 
@@ -89,7 +91,7 @@ btree_open(void)
 	memset(&info, 0, sizeof(BTREEINFO));
 	info.flags = R_DUP;
 
-	db = dbopen("mandoc.db", O_RDONLY, 0, DB_BTREE, &info);
+	db = dbopen(MANDOC_DB, O_RDONLY, 0, DB_BTREE, &info);
 	if (NULL != db) 
 		return(db);
 
@@ -274,7 +276,7 @@ index_open(void)
 {
 	DB		*db;
 
-	db = dbopen("mandoc.index", O_RDONLY, 0, DB_RECNO, NULL);
+	db = dbopen(MANDOC_IDX, O_RDONLY, 0, DB_RECNO, NULL);
 	if (NULL != db)
 		return(db);
 
