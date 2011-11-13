@@ -369,7 +369,7 @@ _ACPI_TRMP_LABEL(hibernate_resume_vector_3)
 	/* Switch to hibernate resume pagetable */
 NENTRY(hibernate_activate_resume_pt_machdep)
 	/* Enable large pages */
-	movl	%eax, %cr4
+	movl	%cr4, %eax
 	orl	$(CR4_PSE), %eax
 	movl	%eax, %cr4
 
@@ -394,8 +394,8 @@ NENTRY(hibernate_switch_stack_machdep)
 
 NENTRY(hibernate_flush)
 	wbinvd
-	movl	$hibernate_inflate_page, %eax
-	invlpg  (%eax)
+	invlpg  HIBERNATE_INFLATE_PAGE
+	invlpg  HIBERNATE_COPY_PAGE
 	ret
 #endif /* HIBERNATE */
 

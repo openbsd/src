@@ -52,8 +52,6 @@ void    hibernate_enter_resume_4k_pde(vaddr_t);
 void    hibernate_enter_resume_4m_pde(vaddr_t, paddr_t);
 int	hibernate_read_chunks(union hibernate_info *, paddr_t, paddr_t, size_t);
 
-extern	vaddr_t hibernate_inflate_page;
-
 extern	void hibernate_resume_machdep(void);
 extern	void hibernate_flush(void);
 extern	caddr_t start, end;
@@ -189,8 +187,6 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 	pmap_kenter_pa(HIBERNATE_PD_PAGE, HIBERNATE_PD_PAGE, VM_PROT_ALL);
 	pmap_kenter_pa(HIBERNATE_STACK_PAGE, HIBERNATE_STACK_PAGE, VM_PROT_ALL);
 	pmap_activate(curproc);
-
-	hibernate_inflate_page = HIBERNATE_INFLATE_PAGE;
 
 	bzero((caddr_t)HIBERNATE_PT_PAGE, PAGE_SIZE);
 	bzero((caddr_t)HIBERNATE_PD_PAGE, PAGE_SIZE);

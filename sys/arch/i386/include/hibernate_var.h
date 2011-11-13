@@ -20,10 +20,13 @@
 #define PAGE_MASK_4M (NBPD - 1)
 #define PMAP_PA_MASK_4M ~((paddr_t)PAGE_MASK_4M)
 
+#define PIGLET_PAGE_MASK ~((paddr_t)PAGE_MASK_4M)
+
 #define HIBERNATE_PD_PAGE	(PAGE_SIZE * 5)
 #define HIBERNATE_PT_PAGE	(PAGE_SIZE * 6)
 #define HIBERNATE_STACK_PAGE	(PAGE_SIZE * 7)
 #define HIBERNATE_INFLATE_PAGE	(PAGE_SIZE * 8)
+#define HIBERNATE_COPY_PAGE	(PAGE_SIZE * 9)
 
 /* Use 4MB hibernation chunks */
 #define HIBERNATE_CHUNK_SIZE		0x400000
