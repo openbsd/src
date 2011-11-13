@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Subst.pm,v 1.14 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: Subst.pm,v 1.15 2011/11/13 15:41:57 nigel Exp $
 #
 # Copyright (c) 2008 Marc Espie <espie@openbsd.org>
 #
@@ -64,20 +64,24 @@ sub do
 	my $self = shift;
 	my $_ = shift;
 	return $_ unless m/\$/o;	# optimization
-	while (my ($k, $v) = each %{$self->hash}) {
+	while ( my $k = (m/\$\{([A-Za-z_][^\}]*)\}/o)[0] ) {
+		my $v = $self->{$k};
+		unless ( defined $v ) { $v = "\$\\\{$k\}"; }
 		s/\$\{\Q$k\E\}/$v/g;
 	}
-	s/\$\\/\$/go;
+	s/\$\\\{([A-Za-z_])/\$\{$1/go;
 	return $_;
 }
 
 sub copy_fh2
 {
 	my ($self, $src, $dest) = @_;
-	my $_;
-	while (<$src>) {
-		print $dest $self->do($_);
+	my $_ = do { local $/; <$src> };
+	while (my ($k, $v) = each %{$self}) {
+		s/\$\{\Q$k\E\}/$v/g;
 	}
+	s/\$\\\{([A-Za-z_])/\$\{$1/go;
+	print $dest $_;
 }
 
 sub copy_fh
