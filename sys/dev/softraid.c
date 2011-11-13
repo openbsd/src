@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.257 2011/11/13 13:57:43 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.258 2011/11/13 14:07:17 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2917,6 +2917,7 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 	open = 0; /* leave dev open from here on out */
 
 	/* Fix up chunk. */
+	bcopy(label.d_uid, chunk->src_duid, sizeof(chunk->src_duid));
 	chunk->src_dev_mm = dev;
 	chunk->src_vn = vn;
 
@@ -3434,6 +3435,7 @@ sr_ioctl_installboot(struct sr_softc *sc, struct bioc_installboot *bb)
 	sbm = (struct sr_meta_boot *)omi->omi_som;
 
 	bcopy(duid, sbm->sbm_root_duid, sizeof(sbm->sbm_root_duid));
+	bzero(&sbm->sbm_boot_duid, sizeof(sbm->sbm_boot_duid));
 	sbm->sbm_bootblk_size = bbs;
 	sbm->sbm_bootldr_size = bls;
 
