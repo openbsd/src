@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.77 2011/11/13 13:05:23 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.78 2011/11/13 15:29:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -954,6 +954,8 @@ print_man_nodelist(DECL_ARGS)
 static void
 print_man_foot(struct termp *p, const void *arg)
 {
+	char		title[BUFSIZ];
+	size_t		datelen;
 	const struct man_meta *meta;
 
 	meta = (const struct man_meta *)arg;
@@ -963,27 +965,32 @@ print_man_foot(struct termp *p, const void *arg)
 	term_vspace(p);
 	term_vspace(p);
 	term_vspace(p);
+	snprintf(title, BUFSIZ, "%s(%s)", meta->title, meta->msec);
+	datelen = term_strlen(p, meta->date);
 
 	p->flags |= TERMP_NOSPACE | TERMP_NOBREAK;
-	p->rmargin = p->maxrmargin - term_strlen(p, meta->date);
 	p->offset = 0;
-
-	/* term_strlen() can return zero. */
-	if (p->rmargin == p->maxrmargin)
-		p->rmargin--;
+	p->rmargin = (p->maxrmargin - datelen + term_len(p, 1)) / 2;
 
 	if (meta->source)
 		term_word(p, meta->source);
-	if (meta->source)
-		term_word(p, "");
 	term_flushln(p);
 
 	p->flags |= TERMP_NOSPACE;
 	p->offset = p->rmargin;
-	p->rmargin = p->maxrmargin;
-	p->flags &= ~TERMP_NOBREAK;
+	p->rmargin = p->maxrmargin - term_strlen(p, title);
+	if (p->offset + datelen >= p->rmargin)
+		p->rmargin = p->offset + datelen;
 
 	term_word(p, meta->date);
+	term_flushln(p);
+
+	p->flags &= ~TERMP_NOBREAK;
+	p->flags |= TERMP_NOSPACE;
+	p->offset = p->rmargin;
+	p->rmargin = p->maxrmargin;
+
+	term_word(p, title);
 	term_flushln(p);
 }
 
