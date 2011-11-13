@@ -1,6 +1,7 @@
-/*	$Id: apropos_db.c,v 1.2 2011/11/13 10:40:52 schwarze Exp $ */
+/*	$Id: apropos_db.c,v 1.3 2011/11/13 11:07:10 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -31,15 +32,8 @@
 #include "apropos_db.h"
 #include "mandoc.h"
 
-enum	match {
-	MATCH_REGEX,
-	MATCH_REGEXCASE,
-	MATCH_STR,
-	MATCH_STRCASE
-};
-
 struct	expr {
-	enum match	 match;
+	int		 regex;
 	int	 	 mask;
 	char		*v;
 	regex_t	 	 re;
@@ -71,7 +65,7 @@ static	const struct type types[] = {
 
 static	DB	*btree_open(void);
 static	int	 btree_read(const DBT *, const struct mchars *, char **);
-static	int	 exprexec(const struct expr *, char *);
+static	int	 exprexec(const struct expr *, char *, int);
 static	DB	*index_open(void);
 static	int	 index_read(const DBT *, const DBT *, 
 			const struct mchars *, struct rec *);
@@ -368,7 +362,7 @@ apropos_search(const struct opts *opts, const struct expr *expr,
 		if ( ! btree_read(&key, mc, &buf))
 			break;
 
-		if ( ! exprexec(expr, buf))
+		if ( ! exprexec(expr, buf, *(int *)val.data))
 			continue;
 
 		memcpy(&rec, val.data + 4, sizeof(recno_t));
@@ -460,55 +454,55 @@ out:
 }
 
 struct expr *
-exprcomp(int cs, char *argv[], int argc)
+exprcomp(int argc, char *argv[])
 {
 	struct expr	*p;
 	struct expr	 e;
-	int		 i, pos, ch;
+	char		*key;
+	int		 i, icase;
 
-	pos = 0;
-
-	if (pos > argc)
+	if (0 >= argc)
 		return(NULL);
 
-	for (i = 0; 0 != types[i].mask; i++)
-		if (0 == strcmp(types[i].name, argv[pos]))
-			break;
+	/*
+	 * Choose regex or substring match.
+	 */
 
-	if (0 == (e.mask = types[i].mask))
-		return(NULL);
-
-	if (++pos > argc--)
-		return(NULL);
-
-	if ('-' != *argv[pos]) 
-		e.match = cs ? MATCH_STRCASE : MATCH_STR;
-	else if (0 == strcmp("-eq", argv[pos]))
-		e.match = cs ? MATCH_STRCASE : MATCH_STR;
-	else if (0 == strcmp("-ieq", argv[pos]))
-		e.match = MATCH_STRCASE;
-	else if (0 == strcmp("-re", argv[pos]))
-		e.match = cs ? MATCH_REGEXCASE : MATCH_REGEX;
-	else if (0 == strcmp("-ire", argv[pos]))
-		e.match = MATCH_REGEXCASE;
-	else
-		return(NULL);
-
-	if ('-' == *argv[pos])
-		pos++;
-
-	if (pos > argc--)
-		return(NULL);
-
-	e.v = mandoc_strdup(argv[pos]);
-
-	if (MATCH_REGEX == e.match || MATCH_REGEXCASE == e.match) {
-		ch = REG_EXTENDED | REG_NOSUB;
-		if (MATCH_REGEXCASE == e.match)
-			ch |= REG_ICASE;
-		if (regcomp(&e.re, e.v, ch))
-			return(NULL);
+	if (NULL == (e.v = strpbrk(*argv, "=~"))) {
+		e.regex = 0;
+		e.v = *argv;
+	} else {
+		e.regex = '~' == *e.v;
+		*e.v++ = '\0';
 	}
+
+	/*
+	 * Determine the record types to search for.
+	 */
+
+	icase = 0;
+	e.mask = 0;
+	if (*argv < e.v) {
+		while (NULL != (key = strsep(argv, ","))) {
+			if ('i' == key[0] && '\0' == key[1]) {
+				icase = REG_ICASE;
+				continue;
+			}
+			i = 0;
+			while (types[i].mask &&
+			    strcmp(types[i].name, key))
+				i++;
+			e.mask |= types[i].mask;
+		}
+	}
+	if (0 == e.mask)
+		e.mask = TYPE_Nm | TYPE_Nd;
+
+	if (e.regex &&
+	    regcomp(&e.re, e.v, REG_EXTENDED | REG_NOSUB | icase))
+		return(NULL);
+
+	e.v = mandoc_strdup(e.v);
 
 	p = mandoc_calloc(1, sizeof(struct expr));
 	memcpy(p, &e, sizeof(struct expr));
@@ -522,7 +516,7 @@ exprfree(struct expr *p)
 	if (NULL == p)
 		return;
 
-	if (MATCH_REGEX == p->match)
+	if (p->regex)
 		regfree(&p->re);
 
 	free(p->v);
@@ -530,14 +524,14 @@ exprfree(struct expr *p)
 }
 
 static int
-exprexec(const struct expr *p, char *cp)
+exprexec(const struct expr *p, char *cp, int mask)
 {
 
-	if (MATCH_STR == p->match)
-		return(0 == strcmp(p->v, cp));
-	else if (MATCH_STRCASE == p->match)
-		return(0 == strcasecmp(p->v, cp));
+	if ( ! (mask & p->mask))
+		return(0);
 
-	assert(MATCH_REGEX == p->match);
-	return(0 == regexec(&p->re, cp, 0, NULL, 0));
+	if (p->regex)
+		return(0 == regexec(&p->re, cp, 0, NULL, 0));
+	else
+		return(NULL != strcasestr(cp, p->v));
 }
