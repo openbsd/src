@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.19 2011/11/13 18:38:10 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.20 2011/11/13 22:36:27 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -44,6 +44,7 @@ vaddr_t	hibernate_chunktable_area;
 /* Hibernate info as read from disk during resume */
 union hibernate_info disk_hiber_info;
 paddr_t global_pig_start;
+vaddr_t global_piglet_va;
 
 /*
  * Hib alloc enforced alignment.
@@ -1703,6 +1704,8 @@ hibernate_suspend(void)
 	if (get_hibernate_info(&hib_info, 1))
 		return (1);
 
+	global_piglet_va = hib_info.piglet_va;
+
 	/* XXX - Won't need to zero everything with RLE */
 	uvm_pmr_zero_everything();
 
@@ -1715,6 +1718,23 @@ hibernate_suspend(void)
 	if (hibernate_write_signature(&hib_info))
 		return (1);
 
-	delay(100000);
+	delay(500000);
 	return (0);
+}
+
+/*
+ * Free items allocated during hibernate
+ */
+void
+hibernate_free(void)
+{
+	uvm_pmr_free_piglet(global_piglet_va, 3*HIBERNATE_CHUNK_SIZE);
+
+	pmap_kremove(hibernate_copy_page, PAGE_SIZE);
+	pmap_kremove(hibernate_temp_page, PAGE_SIZE);
+	pmap_update(pmap_kernel());
+
+	km_free((void *)hibernate_fchunk_area, 3*PAGE_SIZE, &kv_any, &kp_none);
+	km_free((void *)hibernate_copy_page, PAGE_SIZE, &kv_any, &kp_none);
+	km_free((void *)hibernate_temp_page, PAGE_SIZE, &kv_any, &kp_none);
 }
