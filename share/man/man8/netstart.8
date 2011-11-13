@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstart.8,v 1.18 2011/08/22 12:52:54 jmc Exp $
+.\"	$OpenBSD: netstart.8,v 1.19 2011/11/13 12:43:49 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\"
 .\"     @(#)rc.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: August 22 2011 $
+.Dd $Mdocdate: November 13 2011 $
 .Dt NETSTART 8
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@ script can also be used to start newly created bridges or interfaces,
 or reset existing interfaces to their default state.
 The behaviour of this script is (or can be) controlled to some
 extent by variables defined in
-.Pa /etc/rc.conf ,
+.Xr rc.conf 8 ,
 which specifies which daemons and services are to be run.
 .Pp
 During the system boot,
@@ -103,7 +103,7 @@ and/or
 .Xr sysctl 8
 variables should be set to 1.
 Routing to the 224.0.0.0/4 net is set up using values from
-.Pa /etc/rc.conf
+.Xr rc.conf 8
 according to these rules:
 .Bl -bullet
 .It
