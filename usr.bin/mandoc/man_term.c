@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.78 2011/11/13 15:29:44 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.79 2011/11/13 15:46:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -963,9 +963,15 @@ print_man_foot(struct termp *p, const void *arg)
 	term_fontrepl(p, TERMFONT_NONE);
 
 	term_vspace(p);
-	term_vspace(p);
-	term_vspace(p);
-	snprintf(title, BUFSIZ, "%s(%s)", meta->title, meta->msec);
+	if ( ! p->mdocstyle) {
+		term_vspace(p);
+		term_vspace(p);
+		snprintf(title, BUFSIZ, "%s(%s)", meta->title, meta->msec);
+	} else if (meta->source) {
+		strlcpy(title, meta->source, BUFSIZ);
+	} else {
+		title[0] = '\0';
+	}
 	datelen = term_strlen(p, meta->date);
 
 	p->flags |= TERMP_NOSPACE | TERMP_NOBREAK;
@@ -1059,6 +1065,8 @@ print_man_head(struct termp *p, const void *arg)
 	 */
 
 	term_vspace(p);
-	term_vspace(p);
-	term_vspace(p);
+	if ( ! p->mdocstyle) {
+		term_vspace(p);
+		term_vspace(p);
+	}
 }
