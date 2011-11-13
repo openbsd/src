@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.20 2011/11/13 22:36:27 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.21 2011/11/13 23:13:29 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -794,7 +794,7 @@ hibernate_write_signature(union hibernate_info *hiber_info)
 
 	/* Write hibernate info to disk */
 	if (hiber_info->io_func(hiber_info->device, hiber_info->sig_offset,
-	    (vaddr_t)hiber_info, hiber_info->secsize, 1, io_page))
+	    (vaddr_t)hiber_info, hiber_info->secsize, HIB_W, io_page))
 		result = 1;
 
 	free(io_page, M_DEVBUF);
@@ -836,7 +836,7 @@ hibernate_write_chunktable(union hibernate_info *hiber_info)
 		if (hiber_info->io_func(hiber_info->device,
 		    chunkbase + (i/hiber_info->secsize),
 		    (vaddr_t)(hibernate_chunk_table_start + i),
-		    MAXPHYS, 1, io_page)) {
+		    MAXPHYS, HIB_W, io_page)) {
 			free(io_page, M_DEVBUF);
 			return (1);
 		}
@@ -870,7 +870,7 @@ hibernate_clear_signature(void)
 	/* Write (zeroed) hibernate info to disk */
 	/* XXX - use regular kernel write routine for this */
 	if (hiber_info.io_func(hiber_info.device, hiber_info.sig_offset,
-	    (vaddr_t)&blank_hiber_info, hiber_info.secsize, 1, io_page))
+	    (vaddr_t)&blank_hiber_info, hiber_info.secsize, HIB_W, io_page))
 		panic("error hibernate write 6\n");
 
 	free(io_page, M_DEVBUF);
@@ -1027,7 +1027,7 @@ hibernate_resume(void)
 
 	/* XXX use regular kernel read routine here */
 	if (hiber_info.io_func(hiber_info.device, hiber_info.sig_offset,
-	    (vaddr_t)&disk_hiber_info, hiber_info.secsize, 0, io_page))
+	    (vaddr_t)&disk_hiber_info, hiber_info.secsize, HIB_R, io_page))
 		panic("error in hibernate read\n");
 
 	free(io_page, M_DEVBUF);
@@ -1316,7 +1316,7 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 
 				if (hiber_info->io_func(hiber_info->device,
 				    blkctr, (vaddr_t)hibernate_io_page,
-				    PAGE_SIZE, 1, (void *)hibernate_alloc_page))
+				    PAGE_SIZE, HIB_W, (void *)hibernate_alloc_page))
 					return (1);
 
 				blkctr += nblocks;
@@ -1356,7 +1356,7 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 		/* Write final block(s) for this chunk */
 		if (hiber_info->io_func(hiber_info->device, blkctr,
 		    (vaddr_t)hibernate_io_page, nblocks*hiber_info->secsize,
-		    1, (void *)hibernate_alloc_page))
+		    HIB_W, (void *)hibernate_alloc_page))
 			return (1);
 
 		blkctr += nblocks;
