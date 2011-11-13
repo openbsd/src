@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.50 2011/10/09 21:37:04 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.51 2011/11/13 13:05:23 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 9 2011 $
+.Dd $Mdocdate: November 13 2011 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -234,6 +234,15 @@ The following
 .Fl O
 arguments are accepted:
 .Bl -tag -width Ds
+.It Cm indent Ns = Ns Ar indent
+The left margin for normal text is set to
+.Ar indent
+blank characters instead of the default of five for
+.Xr mdoc 7
+and seven for
+.Xr man 7 .
+Increasing this is not recommended; it may result in degraded formatting,
+for example overful lines or ugly line breaks.
 .It Cm width Ns = Ns Ar width
 The output width is set to
 .Ar width ,

@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.76 2011/09/21 09:57:11 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.77 2011/11/13 13:05:23 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -29,8 +29,6 @@
 #include "term.h"
 #include "main.h"
 
-#define	INDENT		  7 /* fixed-width char full-indent */
-#define	HALFINDENT	  3 /* fixed-width char half-indent */
 #define	MAXMARGINS	  64 /* maximum number of indented scopes */
 
 /* FIXME: have PD set the default vspace width. */
@@ -137,6 +135,9 @@ terminal_man(void *arg, const struct man *man)
 
 	p = (struct termp *)arg;
 
+	if (0 == p->defindent)
+		p->defindent = 7;
+
 	p->overstep = 0;
 	p->maxrmargin = p->defrmargin;
 	p->tabwidth = term_len(p, 5);
@@ -152,8 +153,8 @@ terminal_man(void *arg, const struct man *man)
 
 	memset(&mt, 0, sizeof(struct mtermp));
 
-	mt.lmargin[mt.lmargincur] = term_len(p, INDENT);
-	mt.offset = term_len(p, INDENT);
+	mt.lmargin[mt.lmargincur] = term_len(p, p->defindent);
+	mt.offset = term_len(p, p->defindent);
 
 	if (n->child)
 		print_man_nodelist(p, &mt, n->child, m);
@@ -507,7 +508,7 @@ pre_PP(DECL_ARGS)
 
 	switch (n->type) {
 	case (MAN_BLOCK):
-		mt->lmargin[mt->lmargincur] = term_len(p, INDENT);
+		mt->lmargin[mt->lmargincur] = term_len(p, p->defindent);
 		print_bvspace(p, n);
 		break;
 	default:
@@ -702,8 +703,8 @@ pre_SS(DECL_ARGS)
 	switch (n->type) {
 	case (MAN_BLOCK):
 		mt->fl &= ~MANT_LITERAL;
-		mt->lmargin[mt->lmargincur] = term_len(p, INDENT);
-		mt->offset = term_len(p, INDENT);
+		mt->lmargin[mt->lmargincur] = term_len(p, p->defindent);
+		mt->offset = term_len(p, p->defindent);
 		/* If following a prior empty `SS', no vspace. */
 		if (n->prev && MAN_SS == n->prev->tok)
 			if (NULL == n->prev->body->child)
@@ -714,7 +715,7 @@ pre_SS(DECL_ARGS)
 		break;
 	case (MAN_HEAD):
 		term_fontrepl(p, TERMFONT_BOLD);
-		p->offset = term_len(p, HALFINDENT);
+		p->offset = term_len(p, p->defindent/2);
 		break;
 	case (MAN_BODY):
 		p->offset = mt->offset;
@@ -753,8 +754,8 @@ pre_SH(DECL_ARGS)
 	switch (n->type) {
 	case (MAN_BLOCK):
 		mt->fl &= ~MANT_LITERAL;
-		mt->lmargin[mt->lmargincur] = term_len(p, INDENT);
-		mt->offset = term_len(p, INDENT);
+		mt->lmargin[mt->lmargincur] = term_len(p, p->defindent);
+		mt->offset = term_len(p, p->defindent);
 		/* If following a prior empty `SH', no vspace. */
 		if (n->prev && MAN_SH == n->prev->tok)
 			if (NULL == n->prev->body->child)
@@ -813,7 +814,7 @@ pre_RS(DECL_ARGS)
 		break;
 	}
 
-	sz = term_len(p, INDENT);
+	sz = term_len(p, p->defindent);
 
 	if (NULL != (n = n->parent->head->child))
 		if ((ival = a2width(p, n->string)) >= 0) 
@@ -847,7 +848,7 @@ post_RS(DECL_ARGS)
 		break;
 	}
 
-	sz = term_len(p, INDENT);
+	sz = term_len(p, p->defindent);
 
 	if (NULL != (n = n->parent->head->child)) 
 		if ((ival = a2width(p, n->string)) >= 0) 

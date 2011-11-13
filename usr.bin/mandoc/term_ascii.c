@@ -1,4 +1,4 @@
-/*	$Id: term_ascii.c,v 1.6 2011/05/29 21:22:18 schwarze Exp $ */
+/*	$Id: term_ascii.c,v 1.7 2011/11/13 13:05:23 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -47,7 +47,7 @@ static	size_t		  locale_width(const struct termp *, int);
 static struct termp *
 ascii_init(enum termenc enc, char *outopts)
 {
-	const char	*toks[2];
+	const char	*toks[3];
 	char		*v;
 	struct termp	*p;
 
@@ -81,12 +81,16 @@ ascii_init(enum termenc enc, char *outopts)
 		}
 	}
 
-	toks[0] = "width";
-	toks[1] = NULL;
+	toks[0] = "indent";
+	toks[1] = "width";
+	toks[2] = NULL;
 
 	while (outopts && *outopts)
 		switch (getsubopt(&outopts, UNCONST(toks), &v)) {
 		case (0):
+			p->defindent = (size_t)atoi(v);
+			break;
+		case (1):
 			p->defrmargin = (size_t)atoi(v);
 			break;
 		default:
