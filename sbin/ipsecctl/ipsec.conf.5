@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.135 2011/09/03 22:59:08 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.136 2011/11/13 09:52:58 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 3 2011 $
+.Dd $Mdocdate: November 13 2011 $
 .Dt IPSEC.CONF 5
 .Os
 .Sh NAME
@@ -263,7 +263,8 @@ argument specifies a fictional source ID,
 the
 .Ar srcnat
 parameter can be used to specify the actual source address.
-This can be used in outgoing NAT/BINAT scenarios as described below.
+This can be used in outgoing NAT/BINAT scenarios as described below in
+.Sx OUTGOING NETWORK ADDRESS TRANSLATION .
 Host addresses are parsed as type
 .Dq IPV4_ADDR ;
 adding the suffix /32 will change the type to
