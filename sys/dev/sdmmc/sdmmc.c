@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.25 2011/11/10 14:24:29 uwe Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.26 2011/11/14 14:13:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -146,7 +146,6 @@ int
 sdmmc_activate(struct device *self, int act)
 {
 	struct sdmmc_softc *sc = (struct sdmmc_softc *)self;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_SUSPEND:
@@ -158,7 +157,7 @@ sdmmc_activate(struct device *self, int act)
 		wakeup(&sc->sc_tskq);
 		break;
 	}
-	return (rv);
+	return (0);
 }
 
 void
