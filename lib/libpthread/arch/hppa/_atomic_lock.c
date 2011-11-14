@@ -1,11 +1,11 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.2 2002/10/11 19:08:41 marc Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.3 2011/11/14 15:16:12 jsing Exp $	*/
 /*
  * Atomic lock for hppa
  */
 #include "spinlock.h"
 
 int
-_atomic_lock(volatile register_t *lock)
+_atomic_lock(volatile _spinlock_lock_t *lock)
 {
 	register register_t old;
 
