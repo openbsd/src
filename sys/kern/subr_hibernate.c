@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.21 2011/11/13 23:13:29 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.22 2011/11/14 00:25:17 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -653,10 +653,30 @@ get_hibernate_info(union hibernate_info *hiber_info, int suspend)
 			printf("Hibernate failed to allocate the piglet\n");
 			return (1);
 		}
+		hiber_info->io_page = (void *)hiber_info->piglet_va;
+	} else {
+		/*
+		 * Resuming kernels use a regular I/O page since we won't
+		 * have access to the suspended kernel's piglet VA at this
+		 * point. No need to free this I/O page as it will vanish
+		 * as part of the resume.
+		 */
+		hiber_info->io_page = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT);
+		if (!hiber_info->io_page)
+			return (1);
 	}
 
+
+	/*
+	 * operation -1 (HIB_INIT) requests initialization of the hibernate
+	 * IO function
+	 */
+	if (hiber_info->io_func(hiber_info->device, 0,
+	    (vaddr_t)NULL, 0, HIB_INIT, hiber_info->io_page) == -1)
+		goto fail;
+
 	if (get_hibernate_info_md(hiber_info))
-		return (1);
+		goto fail;
 
 	/* Calculate memory image location */
 	hiber_info->image_offset = dl.d_partitions[1].p_offset +
@@ -666,6 +686,9 @@ get_hibernate_info(union hibernate_info *hiber_info, int suspend)
 	    chunktable_size;
 
 	return (0);
+fail:
+	uvm_pmr_free_piglet(hiber_info->piglet_va, HIBERNATE_CHUNK_SIZE*3);
+	return (1);
 }
 
 /*
@@ -785,20 +808,10 @@ hibernate_deflate(union hibernate_info *hiber_info, paddr_t src,
 int
 hibernate_write_signature(union hibernate_info *hiber_info)
 {
-	u_int8_t *io_page;
-	int result = 0;
-
-	io_page = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT);
-	if (!io_page)
-		return (1);
-
 	/* Write hibernate info to disk */
-	if (hiber_info->io_func(hiber_info->device, hiber_info->sig_offset,
-	    (vaddr_t)hiber_info, hiber_info->secsize, HIB_W, io_page))
-		result = 1;
-
-	free(io_page, M_DEVBUF);
-	return (result);
+	return (hiber_info->io_func(hiber_info->device, hiber_info->sig_offset,
+	    (vaddr_t)hiber_info, hiber_info->secsize, HIB_W,
+	    hiber_info->io_page));
 }
 
 /*
@@ -812,13 +825,8 @@ hibernate_write_chunktable(union hibernate_info *hiber_info)
 	struct hibernate_disk_chunk *chunks;
 	vaddr_t hibernate_chunk_table_start;
 	size_t hibernate_chunk_table_size;
-	u_int8_t *io_page;
 	daddr_t chunkbase;
 	int i;
-
-	io_page = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT);
-	if (!io_page)
-		return (1);
 
 	hibernate_chunk_table_size = HIBERNATE_CHUNK_TABLE_SIZE;
 
@@ -836,13 +844,10 @@ hibernate_write_chunktable(union hibernate_info *hiber_info)
 		if (hiber_info->io_func(hiber_info->device,
 		    chunkbase + (i/hiber_info->secsize),
 		    (vaddr_t)(hibernate_chunk_table_start + i),
-		    MAXPHYS, HIB_W, io_page)) {
-			free(io_page, M_DEVBUF);
+		    MAXPHYS, HIB_W, hiber_info->io_page))
 			return (1);
-		}
 	}
 
-	free(io_page, M_DEVBUF);
 	return (0);
 }
 
@@ -855,7 +860,6 @@ hibernate_clear_signature(void)
 {
 	union hibernate_info blank_hiber_info;
 	union hibernate_info hiber_info;
-	u_int8_t *io_page;
 
 	/* Zero out a blank hiber_info */
 	bzero(&blank_hiber_info, sizeof(hiber_info));
@@ -863,17 +867,12 @@ hibernate_clear_signature(void)
 	if (get_hibernate_info(&hiber_info, 0))
 		return (1);
 
-	io_page = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT);
-	if (!io_page)
-		return (1);
-
 	/* Write (zeroed) hibernate info to disk */
 	/* XXX - use regular kernel write routine for this */
 	if (hiber_info.io_func(hiber_info.device, hiber_info.sig_offset,
-	    (vaddr_t)&blank_hiber_info, hiber_info.secsize, HIB_W, io_page))
+	    (vaddr_t)&blank_hiber_info, hiber_info.secsize, HIB_W,
+	    hiber_info.io_page))
 		panic("error hibernate write 6\n");
-
-	free(io_page, M_DEVBUF);
 
 	return (0);
 }
@@ -1004,7 +1003,6 @@ void
 hibernate_resume(void)
 {
 	union hibernate_info hiber_info;
-	u_int8_t *io_page;
 	int s;
 
 	/* Scrub temporary vaddr ranges used during resume */
@@ -1018,19 +1016,14 @@ hibernate_resume(void)
 	if (get_hibernate_info(&hiber_info, 0))
 		return;
 
-	io_page = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT);
-	if (!io_page)
-		return;
-
 	/* Read hibernate info from disk */
 	s = splbio();
 
 	/* XXX use regular kernel read routine here */
 	if (hiber_info.io_func(hiber_info.device, hiber_info.sig_offset,
-	    (vaddr_t)&disk_hiber_info, hiber_info.secsize, HIB_R, io_page))
+	    (vaddr_t)&disk_hiber_info, hiber_info.secsize, HIB_R,
+	    hiber_info.io_page))
 		panic("error in hibernate read\n");
-
-	free(io_page, M_DEVBUF);
 
 	/*
 	 * If on-disk and in-memory hibernate signatures match,
@@ -1103,9 +1096,6 @@ fail:
 	if (hibernate_fchunk_area)
 		km_free((void *)hibernate_fchunk_area, 3*PAGE_SIZE, &kv_any,
 		    &kp_none);
-
-	if (io_page)
-		free((void *)io_page, M_DEVBUF);
 
 	if (hibernate_chunktable_area)
 		free((void *)hibernate_chunktable_area, M_DEVBUF);
@@ -1218,7 +1208,6 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 	paddr_t range_base, range_end, inaddr, temp_inaddr;
 	size_t nblocks, out_remaining, used, offset = 0;
 	struct hibernate_disk_chunk *chunks;
-	vaddr_t hibernate_alloc_page = hiber_info->piglet_va;
 	vaddr_t hibernate_io_page = hiber_info->piglet_va + PAGE_SIZE;
 	daddr_t blkctr = hiber_info->image_offset;
 	int i;
@@ -1316,7 +1305,7 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 
 				if (hiber_info->io_func(hiber_info->device,
 				    blkctr, (vaddr_t)hibernate_io_page,
-				    PAGE_SIZE, HIB_W, (void *)hibernate_alloc_page))
+				    PAGE_SIZE, HIB_W, hiber_info->io_page))
 					return (1);
 
 				blkctr += nblocks;
@@ -1356,7 +1345,7 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 		/* Write final block(s) for this chunk */
 		if (hiber_info->io_func(hiber_info->device, blkctr,
 		    (vaddr_t)hibernate_io_page, nblocks*hiber_info->secsize,
-		    HIB_W, (void *)hibernate_alloc_page))
+		    HIB_W, hiber_info->io_page))
 			return (1);
 
 		blkctr += nblocks;

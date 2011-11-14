@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.184 2011/10/27 08:03:50 jmatthew Exp $ */
+/*	$OpenBSD: ahci.c,v 1.185 2011/11/14 00:25:17 mlarkin Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -524,6 +524,13 @@ void			ahci_pci_attach(struct device *, struct device *,
 			    void *);
 int			ahci_pci_detach(struct device *, int);
 int			ahci_pci_activate(struct device *, int);
+
+#ifdef HIBERNATE
+#include <sys/hibernate.h>
+
+int			ahci_hibernate_io(dev_t dev, daddr_t blkno,
+			    vaddr_t addr, size_t size, int wr, void *page);
+#endif
 
 struct cfattach ahci_pci_ca = {
 	sizeof(struct ahci_softc),
@@ -3707,3 +3714,12 @@ ahci_pmp_identify(struct ahci_port *ap, int *ret_nports)
 	*ret_nports = nports;
 	return (0);
 }
+
+#ifdef HIBERNATE
+int
+ahci_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
+    int op, void *page)
+{
+	return (EIO);
+}
+#endif /* HIBERNATE */
