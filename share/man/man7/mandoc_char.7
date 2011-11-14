@@ -1,6 +1,8 @@
-.\"	$OpenBSD: mandoc_char.7,v 1.12 2011/09/18 10:38:57 schwarze Exp $
+.\"	$OpenBSD: mandoc_char.7,v 1.13 2011/11/14 15:10:17 schwarze Exp $
 .\"
-.\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
+.\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,26 +16,168 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2011 $
+.Dd $Mdocdate: November 14 2011 $
 .Dt MANDOC_CHAR 7
 .Os
 .Sh NAME
 .Nm mandoc_char
 .Nd mandoc special characters
 .Sh DESCRIPTION
-This page documents the special characters and predefined strings accepted by
+This page documents the
+.Xr roff 7
+escape sequences accepted by
 .Xr mandoc 1
-to format
+to represent special characters in
 .Xr mdoc 7
 and
 .Xr man 7
 documents.
 .Pp
-Both
-.Xr mdoc 7
-and
-.Xr man 7
-encode special characters with
+The rendering depends on the
+.Xr mandoc 1
+output mode; in ASCII output, most characters are completely
+unintelligible.
+For that reason, using any of the special characters documented here,
+except those discussed in the
+.Sx DESCRIPTION ,
+is strongly discouraged; they are supported merely for backwards
+compatibility with existing documents.
+.Pp
+In particular, in English manual pages, do not use special-character
+escape sequences to represent national language characters in author
+names; instead, provide ASCII transcriptions of the names.
+.Ss Dashes and Hyphens
+In typography there are different types of dashes of various width:
+the hyphen (-),
+the minus sign (\-),
+the en-dash (\(en),
+and the em-dash (\(em).
+.Pp
+Hyphens are used for adjectives;
+to separate the two parts of a compound word;
+or to separate a word across two successive lines of text.
+The hyphen does not need to be escaped:
+.Bd -unfilled -offset indent
+blue-eyed
+lorry-driver
+.Ed
+.Pp
+The mathematical minus sign is used for negative numbers or subtraction.
+It should be written as
+.Sq \e- :
+.Bd -unfilled -offset indent
+a = 3 \e- 1;
+b = \e-2;
+.Ed
+.Pp
+The en-dash is used to separate the two elements of a range,
+or can be used the same way as an em-dash.
+It should be written as
+.Sq \e(en :
+.Bd -unfilled -offset indent
+pp. 95\e(en97.
+Go away \e(en or else!
+.Ed
+.Pp
+The em-dash can be used to show an interruption
+or can be used the same way as colons, semi-colons, or parentheses.
+It should be written as
+.Sq \e(em :
+.Bd -unfilled -offset indent
+Three things \e(em apples, oranges, and bananas.
+This is not that \e(em rather, this is that.
+.Ed
+.Pp
+Note:
+hyphens, minus signs, and en-dashes look identical under normal ASCII output.
+Other formats, such as PostScript, render them correctly,
+with differing widths.
+.Ss Spaces
+To separate words in normal text, for indenting and alignment
+in literal context, and when none of the following special cases apply,
+just use the normal space character
+.Pq Sq \  .
+.Pp
+When filling text, lines may be broken between words, i.e. at space
+characters.
+To prevent a line break between two particular words,
+use the non-breaking space escape sequence
+.Pq Sq \e~
+instead of the normal space character.
+For example, the input string
+.Dq number\e~1
+will be kept together as
+.Dq number\~1
+on the same output line.
+.Pp
+On request and macro lines, the normal space character serves as an
+argument delimiter.
+To include whitespace into arguments, quoting is usually the best choice.  
+In some cases, using either the non-breaking
+.Pq Sq \e~
+or the breaking
+.Pq Sq \e\ \&
+space escape sequence may be preferable.
+To escape macro names and to protect whitespace at the end
+of input lines, the zero-width space
+.Pq Sq \e&
+is often useful.
+For example, in
+.Xr mdoc 7 ,
+a normal space character can be displayed in single quotes in either
+of the following ways:
+.Pp
+.Dl .Sq \(dq \(dq
+.Dl .Sq \e \e&
+.Ss Quotes
+On request and macro lines, the double-quote character
+.Pq Sq \(dq
+is handled specially to allow quoting.
+One way to prevent this special handling is by using the
+.Sq \e(dq
+escape sequence.
+.Pp
+Note that on text lines, literal double-quote characters can be used
+verbatim.
+All other quote-like characters can be used verbatim as well,
+even on request and macro lines.
+.Ss Periods
+The period
+.Pq Sq \&.
+is handled specially at the beginning of an input line,
+where it introduces a
+.Xr roff 7
+request or a macro, and when appearing alone as a macro argument in
+.Xr mdoc 7 .
+In such situations, prepend a zero-width space
+.Pq Sq \e&.
+to make it behave like normal text.
+.Pp
+Do not use the
+.Sq \e.
+escape sequence.
+It does not prevent special handling of the period.
+.Ss Backslashes
+To include a literal backslash
+.Pq Sq \e
+into the output, use the
+.Pq Sq \ee
+escape sequence.
+.Pp
+Note that doubling it
+.Pq Sq \e\e
+is not the right way to output a backslash.
+Because
+.Xr mandoc 1
+does not implement full
+.Xr roff 7
+functionality, it may work with
+.Xr mandoc 1 ,
+but it may have weird effects on complete
+.Xr roff 7
+implementations.
+.Sh SPECIAL CHARACTERS
+Special characters are encoded as
 .Sq \eX
 .Pq for a one-character escape ,
 .Sq \e(XX
@@ -41,37 +185,11 @@ encode special characters with
 and
 .Sq \e[N]
 .Pq N-character .
-One may generalise
-.Sq \e(XX
-as
-.Sq \e[XX]
-and
-.Sq \eX
-as
-.Sq \e[X] .
-Predefined strings are functionally similar to special characters, using
-.Sq \e*X
-.Pq for a one-character escape ,
-.Sq \e*(XX
-.Pq two-character ,
-and
-.Sq \e*[N]
-.Pq N-character .
-One may generalise
-.Sq \e*(XX
-as
-.Sq \e*[XX]
-and
-.Sq \e*X
-as
-.Sq \e*[X] .
-.Pp
-Note that each output mode will have a different rendering of the
-characters.
-It's guaranteed that each input symbol will correspond to a
-(more or less) meaningful output rendering, regardless the mode.
-.Sh SPECIAL CHARACTERS
-These are the preferred input symbols for producing special characters.
+For details, see the
+.Em Special Characters
+subsection of the
+.Xr roff 7
+manual.
 .Pp
 Spacing:
 .Bl -column "Input" "Description" -offset indent -compact
@@ -491,6 +609,20 @@ They are
 for use, as they differ across implementations.
 Manuals using these predefined strings are almost certainly not
 portable.
+.Pp
+Their syntax is similar to special characters, using
+.Sq \e*X
+.Pq for a one-character escape ,
+.Sq \e*(XX
+.Pq two-character ,
+and
+.Sq \e*[N]
+.Pq N-character .
+For details, see the
+.Em Predefined Strings
+subsection of the
+.Xr roff 7
+manual.
 .Bl -column "Input" "Rendered" "Description" -offset indent
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e*(Ba   Ta \*(Ba       Ta vertical bar
@@ -584,7 +716,10 @@ from mandoc either because they are poorly documented or they have no
 known representation.
 .El
 .Sh SEE ALSO
-.Xr mandoc 1
+.Xr mandoc 1 ,
+.Xr man 7 ,
+.Xr mdoc 7 ,
+.Xr roff 7
 .Sh AUTHORS
 The
 .Nm
