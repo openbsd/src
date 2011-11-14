@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.48 2011/11/02 12:01:20 eric Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.49 2011/11/14 16:54:19 eric Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -586,6 +586,9 @@ enqueue_offline(int argc, char *argv[])
 	char	 path[MAXPATHLEN];
 	FILE	*fp;
 	int	 i, fd, ch;
+
+	if (ckdir(PATH_SPOOL PATH_OFFLINE, 01777, 0, 0, 0) == 0)
+		errx(1, "error in offline directory setup");
 
 	if (! bsnprintf(path, sizeof(path), "%s%s/%lld.XXXXXXXXXX", PATH_SPOOL,
 		PATH_OFFLINE, (long long int) time(NULL)))
