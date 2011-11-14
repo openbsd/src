@@ -1,7 +1,7 @@
-/*	$OpenBSD: conf.h,v 1.1 2005/04/01 10:40:48 mickey Exp $	*/
+/*	$OpenBSD: conf.h,v 1.2 2011/11/14 14:29:57 deraadt Exp $	*/
 
 /*
- * Copyright (c) 2005 Michael Shalayeff
+ * Copyright (c) 1998-2005 Michael Shalayeff
  * All rights reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any

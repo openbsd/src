@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.17 2011/11/08 15:39:50 kettenis Exp $	*/
+/*	$OpenBSD: frame.h,v 1.18 2011/11/14 14:29:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -69,71 +69,71 @@
  */
 struct trapframe {
 	/* the `physical' part of the trapframe */
-	unsigned	tf_t1;		/* r22 */
-	unsigned	tf_t2;		/* r21 */
-	unsigned	tf_sp;		/* r30 */
-	unsigned	tf_t3;		/* r20 */
-	unsigned	tf_iisq_head;	/* cr17 */
-	unsigned	tf_iisq_tail;
-	unsigned	tf_iioq_head;	/* cr18 */
-	unsigned	tf_iioq_tail;
-	unsigned	tf_eiem;	/* cr15 */
-	unsigned	tf_ipsw;	/* cr22 */
-	unsigned	tf_sr3;
-	unsigned	tf_pidr1;	/* cr8 */
-	unsigned	tf_isr;		/* cr20 */
-	unsigned	tf_ior;		/* cr21 */
-	unsigned	tf_iir;		/* cr19 */
-	unsigned	tf_flags;
+	unsigned long	tf_t1;		/* r22 */
+	unsigned long	tf_t2;		/* r21 */
+	unsigned long	tf_sp;		/* r30 */
+	unsigned long	tf_t3;		/* r20 */
+	unsigned long	tf_iisq_head;	/* cr17 */
+	unsigned long	tf_iisq_tail;
+	unsigned long	tf_iioq_head;	/* cr18 */
+	unsigned long	tf_iioq_tail;
+	unsigned long	tf_eiem;	/* cr15 */
+	unsigned long	tf_ipsw;	/* cr22 */
+	unsigned long	tf_sr3;
+	unsigned long	tf_pidr1;	/* cr8 */
+	unsigned long	tf_isr;		/* cr20 */
+	unsigned long	tf_ior;		/* cr21 */
+	unsigned long	tf_iir;		/* cr19 */
+	unsigned long	tf_flags;
 
 	/* here starts the `virtual' part */
-	unsigned	tf_sar;		/* cr11 */
-	unsigned	tf_r1;
-	unsigned	tf_rp;          /* r2 */
-	unsigned	tf_r3;          /* frame pointer when -g */
-	unsigned	tf_r4;
-	unsigned	tf_r5;
-	unsigned	tf_r6;
-	unsigned	tf_r7;
-	unsigned	tf_r8;
-	unsigned	tf_r9;
-	unsigned	tf_r10;
-	unsigned	tf_r11;
-	unsigned	tf_r12;
-	unsigned	tf_r13;
-	unsigned	tf_r14;
-	unsigned	tf_r15;
-	unsigned	tf_r16;
-	unsigned	tf_r17;
-	unsigned	tf_r18;
-	unsigned	tf_t4;		/* r19 */
-	unsigned	tf_arg3;	/* r23 */
-	unsigned	tf_arg2;	/* r24 */
-	unsigned	tf_arg1;	/* r25 */
-	unsigned	tf_arg0;	/* r26 */
-	unsigned	tf_dp;		/* r27 */
-	unsigned	tf_ret0;	/* r28 */
-	unsigned	tf_ret1;	/* r29 */
-	unsigned	tf_r31;
-	unsigned	tf_sr0;
-	unsigned	tf_sr1;
-	unsigned	tf_sr2;
-	unsigned	tf_sr4;
-	unsigned	tf_sr5;
-	unsigned	tf_sr6;
-	unsigned	tf_sr7;
-	unsigned	tf_pidr2;	/* cr9 */
-	unsigned	tf_pidr3;	/* cr12 */
-	unsigned	tf_pidr4;	/* cr13 */
-	unsigned	tf_rctr;	/* cr0 */
-	unsigned	tf_ccr;		/* cr10 */
-	unsigned	tf_eirr;	/* cr23 - DDB */
-	unsigned	tf_vtop;	/* cr25 - DDB */
-	unsigned	tf_cr27;
-	unsigned	tf_cr28;	/*      - DDB */
-	unsigned	tf_cr30;	/* uaddr */
+	unsigned long	tf_sar;		/* cr11 */
+	unsigned long	tf_r1;
+	unsigned long	tf_rp;          /* r2 */
+	unsigned long	tf_r3;          /* frame pointer when -g */
+	unsigned long	tf_r4;
+	unsigned long	tf_r5;
+	unsigned long	tf_r6;
+	unsigned long	tf_r7;
+	unsigned long	tf_r8;
+	unsigned long	tf_r9;
+	unsigned long	tf_r10;
+	unsigned long	tf_r11;
+	unsigned long	tf_r12;
+	unsigned long	tf_r13;
+	unsigned long	tf_r14;
+	unsigned long	tf_r15;
+	unsigned long	tf_r16;
+	unsigned long	tf_r17;
+	unsigned long	tf_r18;
+	unsigned long	tf_t4;		/* r19 */
+	unsigned long	tf_arg3;	/* r23 */
+	unsigned long	tf_arg2;	/* r24 */
+	unsigned long	tf_arg1;	/* r25 */
+	unsigned long	tf_arg0;	/* r26 */
+	unsigned long	tf_dp;		/* r27 */
+	unsigned long	tf_ret0;	/* r28 */
+	unsigned long	tf_ret1;	/* r29 */
+	unsigned long	tf_r31;
+	unsigned long	tf_sr0;
+	unsigned long	tf_sr1;
+	unsigned long	tf_sr2;
+	unsigned long	tf_sr4;
+	unsigned long	tf_sr5;
+	unsigned long	tf_sr6;
+	unsigned long	tf_sr7;
+	unsigned long	tf_pidr2;	/* cr9 */
+	unsigned long	tf_pidr3;	/* cr12 */
+	unsigned long	tf_pidr4;	/* cr13 */
+	unsigned long	tf_rctr;	/* cr0 */
+	unsigned long	tf_ccr;		/* cr10 */
+	unsigned long	tf_eirr;	/* cr23 - DDB */
+	unsigned long	tf_vtop;	/* cr25 - DDB */
+	unsigned long	tf_cr27;
+	unsigned long	tf_cr28;	/*      - DDB */
+	unsigned long	tf_cr30;	/* uaddr */
 
-	unsigned	tf_pad[3];	/* pad to 256 bytes */
+	unsigned long	tf_pad[3];	/* pad to 256 bytes */
 };
 #endif /* !_LOCORE */
 

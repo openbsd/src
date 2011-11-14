@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.5 2009/07/30 21:39:54 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.6 2011/11/14 14:29:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -30,17 +30,17 @@ typedef u_long bus_space_handle_t;
 struct hppa64_bus_space_tag {
 	void *hbt_cookie;
 
-	int	(*hbt_map)(void *v, bus_addr_t addr, bus_size_t size,
+	int  (*hbt_map)(void *v, bus_addr_t addr, bus_size_t size,
 		    int flags, bus_space_handle_t *bshp);
-	void	(*hbt_unmap)(void *v, bus_space_handle_t bsh, bus_size_t size);
-	int	(*hbt_subregion)(void *v, bus_space_handle_t bsh,
+	void (*hbt_unmap)(void *v, bus_space_handle_t bsh, bus_size_t size);
+	int  (*hbt_subregion)(void *v, bus_space_handle_t bsh,
 		    bus_size_t offset, bus_size_t size,
 		    bus_space_handle_t *nbshp);
-	int	(*hbt_alloc)(void *v, bus_addr_t rstart, bus_addr_t rend,
+	int  (*hbt_alloc)(void *v, bus_addr_t rstart, bus_addr_t rend,
 		    bus_size_t size, bus_size_t align, bus_size_t boundary,
 		    int flags, bus_addr_t *addrp, bus_space_handle_t *bshp);
-	void	(*hbt_free)(void *, bus_space_handle_t, bus_size_t);
-	void	(*hbt_barrier)(void *v, bus_space_handle_t h,
+	void (*hbt_free)(void *, bus_space_handle_t, bus_size_t);
+	void (*hbt_barrier)(void *v, bus_space_handle_t h,
 		    bus_size_t o, bus_size_t l, int op);
 	void *(*hbt_vaddr)(void *v, bus_space_handle_t h);
 
@@ -166,14 +166,6 @@ typedef struct hppa64_bus_space_tag *bus_space_tag_t;
 #define	bus_space_free(t,h,c) \
 	(((t)->hbt_free)((t)->hbt_cookie,(h),(c)))
 
-#define	BUS_SPACE_BARRIER_READ	0x01
-#define	BUS_SPACE_BARRIER_WRITE	0x02
-
-#define	bus_space_barrier(t,h,o,l,op) \
-	((t)->hbt_barrier((t)->hbt_cookie, (h), (o), (l), (op)))
-#define	bus_space_vaddr(t,h) \
-	((t)->hbt_vaddr((t)->hbt_cookie, (h)))
-
 #define	bus_space_read_1(t,h,o) (((t)->hbt_r1)((t)->hbt_cookie,(h),(o)))
 #define	bus_space_read_2(t,h,o) (((t)->hbt_r2)((t)->hbt_cookie,(h),(o)))
 #define	bus_space_read_4(t,h,o) (((t)->hbt_r4)((t)->hbt_cookie,(h),(o)))
@@ -274,6 +266,15 @@ typedef struct hppa64_bus_space_tag *bus_space_tag_t;
 	(((t)->hbt_cp_4)((t)->hbt_cookie, (h1), (o1), (h2), (o2), (c)))
 #define	bus_space_copy_8(t, h1, o1, h2, o2, c) \
 	(((t)->hbt_cp_8)((t)->hbt_cookie, (h1), (o1), (h2), (o2), (c)))
+
+#define	BUS_SPACE_BARRIER_READ	0x01
+#define	BUS_SPACE_BARRIER_WRITE	0x02
+
+#define	bus_space_barrier(t,h,o,l,op) \
+	((t)->hbt_barrier((t)->hbt_cookie, (h), (o), (l), (op)))
+#define	bus_space_vaddr(t,h) \
+	((t)->hbt_vaddr((t)->hbt_cookie, (h)))
+
 #define	BUS_DMA_WAITOK		0x0000	/* safe to sleep (pseudo-flag) */
 #define	BUS_DMA_NOWAIT		0x0001	/* not safe to sleep */
 #define	BUS_DMA_ALLOCNOW	0x0002	/* perform resource allocation now */

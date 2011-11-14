@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.6 2011/05/30 22:25:21 oga Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.7 2011/11/14 14:29:57 deraadt Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -41,28 +41,28 @@
  * Virtual memory related constants, all in bytes
  */
 #ifndef MAXTSIZ
-#define	MAXTSIZ		(64*1024*1024)		/* max text size */
+#define	MAXTSIZ		(64*1024*1024UL)	/* max text size */
 #endif
 #ifndef DFLDSIZ
 #define	DFLDSIZ		(16*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
-#define	MAXDSIZ		(1*1024*1024*1024)	/* max data size */
+#define	MAXDSIZ		(1*1024*1024*1024UL)	/* max data size */
 #endif
 #ifndef BRKSIZ
 #define	BRKSIZ		MAXDSIZ			/* heap gap size */
 #endif
 #ifndef	DFLSSIZ
-#define	DFLSSIZ		(512*1024)		/* initial stack size limit */
+#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
 #endif
 #ifndef	MAXSSIZ
-#define	MAXSSIZ		(32*1024*1024)		/* max stack size */
+#define	MAXSSIZ		(128*1024*1024UL)	/* max stack size */
 #endif
 
 #define	STACKGAP_RANDOM	256*1024
 
 #ifndef USRIOSIZE
-#define	USRIOSIZE	((2*HPPA_PGALIAS)/PAGE_SIZE)	/* 2mb */
+#define	USRIOSIZE	((2*HPPA_PGALIAS)/PAGE_SIZE)	/* 8mb */
 #endif
 
 /*
@@ -73,11 +73,16 @@
 #define SHMMAXPGS	8192	/* 32mb */
 #endif
 
-#define	VM_MIN_ADDRESS		(0UL)
-#define	VM_MAXUSER_ADDRESS	(0x20000000000UL)
+/* user/kernel map constants */
+#define	VM_MIN_ADDRESS		((vaddr_t)0)
+#define	VM_MAXUSER_ADDRESS	((vaddr_t)0x20000000000UL)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
-#define	VM_MIN_KERNEL_ADDRESS	(0x1000000000UL)
-#define	VM_MAX_KERNEL_ADDRESS	(0x10f0000000UL)
+#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0x1000000000UL)
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0x10f0000000UL)
+
+/* use a small range for PIE to minimize mmap pressure */
+#define	VM_PIE_MIN_ADDR		PAGE_SIZE
+#define	VM_PIE_MAX_ADDR		0x40000UL
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
@@ -92,7 +97,6 @@
 #include <sys/lock.h>
 
 #define __HAVE_VM_PAGE_MD
-
 struct pv_entry;
 struct vm_page_md {
 	struct simplelock pvh_lock;	/* locks every pv on this list */

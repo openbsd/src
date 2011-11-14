@@ -17,29 +17,28 @@
 #ifndef _MACHINE_INTR_H_
 #define _MACHINE_INTR_H_
 
-#define CPU_NINTS       64
+#define	CPU_NINTS	64
+#define	NIPL		12
 
-#define NIPL            12
+#define	IPL_NONE	0
+#define	IPL_SOFTCLOCK	1
+#define	IPL_SOFTNET	2
+#define	IPL_BIO		3
+#define	IPL_NET		4
+#define	IPL_SOFTTTY	5
+#define	IPL_TTY		6
+#define	IPL_VM		7
+#define	IPL_AUDIO	8
+#define	IPL_CLOCK	9
+#define	IPL_STATCLOCK	10
+#define	IPL_SCHED	10
+#define	IPL_HIGH	10
+#define	IPL_IPI		11
 
-#define IPL_NONE        0
-#define IPL_SOFTCLOCK   1
-#define IPL_SOFTNET     2
-#define IPL_BIO         3
-#define IPL_NET         4
-#define IPL_SOFTTTY     5
-#define IPL_TTY         6
-#define IPL_VM          7
-#define IPL_AUDIO       8
-#define IPL_CLOCK       9
-#define IPL_STATCLOCK   10
-#define IPL_SCHED       10
-#define IPL_HIGH        10
-#define IPL_IPI         11
-
-#define	IST_NONE        0
-#define	IST_PULSE       1
-#define	IST_EDGE        2
-#define	IST_LEVEL       3
+#define	IST_NONE	0
+#define	IST_PULSE	1
+#define	IST_EDGE	2
+#define	IST_LEVEL	3
 
 #define SOFTINT_MASK ((1 << (IPL_SOFTCLOCK - 1)) | \
     (1 << (IPL_SOFTNET - 1)) | (1 << (IPL_SOFTTTY - 1)))

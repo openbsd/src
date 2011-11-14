@@ -1,7 +1,7 @@
-/*	$OpenBSD: db_machdep.h,v 1.2 2010/11/27 19:57:23 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.3 2011/11/14 14:29:57 deraadt Exp $	*/
 
 /*
- * Copyright (c) 2005 Michael Shalayeff
+ * Copyright (c) 1998-2005 Michael Shalayeff
  * All rights reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any

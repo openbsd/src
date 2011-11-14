@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.30 2011/11/10 22:48:13 deraadt Exp $	*/
+/*	$OpenBSD: bus.h,v 1.31 2011/11/14 14:29:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -25,7 +25,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 
 #ifndef _MACHINE_BUS_H_
 #define _MACHINE_BUS_H_

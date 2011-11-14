@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.42 2011/05/07 15:27:01 oga Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.43 2011/11/14 14:29:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -120,8 +120,8 @@ pmap_prefer(vaddr_t offs, vaddr_t hint)
 #define	pmap_remove_holes(map)		do { /* nothing */ } while (0)
 
 void pmap_bootstrap(vaddr_t);
-boolean_t pmap_changebit(struct vm_page *, u_int, u_int);
-boolean_t pmap_testbit(struct vm_page *, u_int);
+boolean_t pmap_changebit(struct vm_page *, pt_entry_t, pt_entry_t);
+boolean_t pmap_testbit(struct vm_page *, pt_entry_t);
 void pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva);
 void pmap_page_remove(struct vm_page *pg);
