@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.249 2011/11/14 11:53:10 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.250 2011/11/14 19:23:41 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1162,6 +1162,8 @@ void imsg_event_add(struct imsgev *);
 void imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t, pid_t,
     int, void *, u_int16_t);
 void imsg_dispatch(int, short, void *);
+const char * proc_to_str(int);
+const char * imsg_to_str(int);
 SPLAY_PROTOTYPE(childtree, child, entry, child_cmp);
 
 

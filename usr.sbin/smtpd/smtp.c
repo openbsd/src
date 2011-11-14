@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.93 2011/10/23 09:30:07 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.94 2011/11/14 19:23:41 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 
+#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
@@ -279,7 +280,7 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 		}
 	}
 
-	fatalx("smtp_imsg: unexpected imsg");
+	errx(1, "smtp_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
 }
 
 static void

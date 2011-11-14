@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.65 2011/11/10 17:37:08 chl Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.66 2011/11/14 19:23:41 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 
+#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
@@ -119,7 +120,7 @@ mfa_imsg(struct imsgev *iev, struct imsg *imsg)
 		}
 	}
 
-	fatalx("mfa_imsg: unexpected imsg");
+	errx(1, "mfa_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
 }
 
 static void

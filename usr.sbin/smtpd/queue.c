@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.110 2011/11/07 11:14:10 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.111 2011/11/14 19:23:41 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 
+#include <err.h>
 #include <event.h>
 #include <imsg.h>
 #include <libgen.h>
@@ -203,7 +204,7 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 		}
 	}
 
-	fatalx("queue_imsg: unexpected imsg");
+	errx(1, "queue_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.136 2011/11/14 11:53:10 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.137 2011/11/14 19:23:41 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -161,7 +161,7 @@ parent_imsg(struct imsgev *iev, struct imsg *imsg)
 		}
 	}
 
-	fatalx("parent_imsg: unexpected imsg");
+	errx(1, "parent_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
 }
 
 static void
@@ -1155,9 +1155,6 @@ imsg_dispatch(int fd, short event, void *p)
 
 SPLAY_GENERATE(childtree, child, entry, child_cmp);
 
-const char * proc_to_str(int);
-const char * imsg_to_str(int);
-
 void
 log_imsg(int to, int from, struct imsg *imsg)
 {
@@ -1191,6 +1188,8 @@ proc_to_str(int proc)
 const char *
 imsg_to_str(int type)
 {
+	static char	 buf[32];
+
 	switch(type) {
 	CASE(IMSG_NONE);
 	CASE(IMSG_CTL_OK);
@@ -1260,6 +1259,8 @@ imsg_to_str(int type)
 	CASE(IMSG_DNS_MX);
 	CASE(IMSG_DNS_PTR);
 	default:
-		return "IMSG_???";
+		snprintf(buf, sizeof(buf), "IMSG_??? (%d)", type);
+
+		return buf;
 	}
 }

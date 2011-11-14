@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.118 2011/10/27 14:32:57 chl Exp $	*/
+/*	$OpenBSD: mta.c,v 1.119 2011/11/14 19:23:41 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 
+#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
@@ -240,7 +241,7 @@ mta_imsg(struct imsgev *iev, struct imsg *imsg)
 		}
 	}
 
-	fatalx("mta_imsg: unexpected imsg");
+	errx(1, "mta_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
 }
 
 static void

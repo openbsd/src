@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.130 2011/10/23 15:36:53 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.131 2011/11/14 19:23:41 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -27,6 +27,7 @@
 #include <netinet/in.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
@@ -201,7 +202,7 @@ lka_imsg(struct imsgev *iev, struct imsg *imsg)
 		}
 	}
 
-	fatalx("lka_imsg: unexpected imsg");
+	errx(1, "lka_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
 }
 
 static void

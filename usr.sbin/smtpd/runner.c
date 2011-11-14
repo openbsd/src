@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.123 2011/11/07 11:14:10 eric Exp $	*/
+/*	$OpenBSD: runner.c,v 1.124 2011/11/14 19:23:41 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -175,7 +175,7 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 	}
 	}
 
-	fatalx("runner_imsg: unexpected imsg");
+	errx(1, "runner_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
 }
 
 void

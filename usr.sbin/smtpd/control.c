@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.62 2011/10/26 20:47:31 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.63 2011/11/14 19:23:41 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -25,6 +25,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
+#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
@@ -95,7 +96,8 @@ control_imsg(struct imsgev *iev, struct imsg *imsg)
 		}
 	}
 
-	fatalx("control_imsg: unexpected imsg");
+	errx(1, "control_imsg: unexpected %s imsg",
+	    imsg_to_str(imsg->hdr.type));
 }
 
 void
@@ -515,7 +517,8 @@ control_dispatch_ext(int fd, short event, void *arg)
 		}
 		default:
 			log_debug("control_dispatch_ext: "
-			    "error handling imsg %d", imsg.hdr.type);
+			    "error handling %s imsg",
+			    imsg_to_str(imsg.hdr.type));
 			break;
 		}
 		imsg_free(&imsg);
