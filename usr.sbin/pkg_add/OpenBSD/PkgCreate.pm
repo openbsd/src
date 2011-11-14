@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.51 2011/11/14 10:31:20 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.52 2011/11/14 12:49:06 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -567,14 +567,39 @@ sub solve_all_depends
 {
 	my ($solver, $state) = @_;
 
-
 	while (1) {
 		my @todo = $solver->solve_depends($state);
 		if (@todo == 0) {
 			return;
 		}
+		if ($solver->solve_wantlibs($state, 0)) {
+			return;
+		}
 		$solver->{set}->add_new(@todo);
 	}
+}
+
+sub solve_wantlibs
+{
+	my ($solver, $state, $final) = @_;
+
+	my $okay = 1;
+	my $lib_finder = OpenBSD::lookup::library->new($solver);
+	my $h = $solver->{set}->{new}[0];
+	for my $lib (@{$h->{plist}->{wantlib}}) {
+		$solver->{localbase} = $h->{plist}->localbase;
+		next if $lib_finder->lookup($solver,
+		    $solver->{to_register}->{$h}, $state,
+		    $lib->spec);
+		$okay = 0;
+		OpenBSD::SharedLibs::report_problem($state,
+		    $lib->spec) if $final;
+	}
+	if (!$okay && $final) {
+		$solver->dump($state);
+		$lib_finder->dump($state);
+	}
+	return $okay;
 }
 
 sub really_solve_dependency
@@ -649,13 +674,6 @@ sub ask_tree
 	    \&OpenBSD::PackingList::PrelinkStuffOnly);
 	close($fh);
 	return $plist;
-}
-
-sub errsay_library
-{
-	my ($solver, $state, $h) = @_;
-
-	$state->errsay("Can't create #1 because of libraries", $h->pkgname);
 }
 
 # we don't want old libs
@@ -1060,10 +1078,12 @@ sub check_dependencies
 	my ($self, $plist, $state) = @_;
 
 	my $solver = OpenBSD::Dependencies::CreateSolver->new($plist);
-	$solver->solve_all_depends($state);
+
 	# look for libraries in the "real" tree
 	$state->{destdir} = '/';
-	if (!$solver->solve_wantlibs($state)) {
+
+	$solver->solve_all_depends($state);
+	if (!$solver->solve_wantlibs($state, 1)) {
 		$state->{bad}++;
 	}
 }
