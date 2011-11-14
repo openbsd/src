@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.50 2011/10/21 18:19:34 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.51 2011/11/14 10:31:20 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -608,7 +608,7 @@ sub solve_from_ports
 		$pkgname = $cache->{$dep->{pkgpath}};
 	} else {
 		my $plist = $self->ask_tree($state, $dep, $portsdir,
-		    'print-plist-with-depends', 'wantlib_args=no-wantlib-args');
+		    'print-plist-libs-with-depends', 'wantlib_args=no-wantlib-args');
 		if ($? != 0 || !defined $plist->pkgname) {
 			$state->error("Can't obtain dependency #1 from ports tree",
 			    $dep->{pattern});
@@ -805,7 +805,7 @@ sub read_fragments
 				} else {
 					$_ = $subst->do($_);
 					if ($fast) {
-						next unless m/^\@(?:cwd|lib)\b/o || m/lib.*\.a$/o;
+						next unless m/^\@(?:cwd|lib|depend|wantlib)\b/o || m/lib.*\.a$/o;
 					}
 					&$cont($_);
 				}
