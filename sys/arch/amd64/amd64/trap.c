@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.25 2011/07/11 15:40:47 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.26 2011/11/14 15:06:14 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -72,13 +72,18 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/user.h>
 #include <sys/acct.h>
 #include <sys/kernel.h>
 #include <sys/signal.h>
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
 #include <sys/syscall.h>
-#include <sys/reboot.h>
-#include <sys/pool.h>
+
+#include "systrace.h"
+#include <dev/systrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -100,6 +105,7 @@
 #endif
 
 void trap(struct trapframe *);
+void syscall(struct trapframe *);
 
 const char *trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
@@ -474,3 +480,170 @@ frame_dump(struct trapframe *tf)
 	    (void *)tf->tf_rbp, (void *)tf->tf_rbx, (void *)tf->tf_rax);
 }
 #endif
+
+/*
+ * syscall(frame):
+ *	System call request from POSIX system call gate interface to kernel.
+ */
+void
+syscall(struct trapframe *frame)
+{
+	caddr_t params;
+	const struct sysent *callp;
+	struct proc *p;
+	int error;
+	int nsys;
+	size_t argsize, argoff;
+	register_t code, args[9], rval[2], *argp;
+	int lock;
+
+	uvmexp.syscalls++;
+	p = curproc;
+
+	code = frame->tf_rax;
+	callp = p->p_emul->e_sysent;
+	nsys = p->p_emul->e_nsysent;
+	argp = &args[0];
+	argoff = 0;
+
+	switch (code) {
+	case SYS_syscall:
+	case SYS___syscall:
+		/*
+		 * Code is first argument, followed by actual args.
+		 */
+		code = frame->tf_rdi;
+		argp = &args[1];
+		argoff = 1;
+		break;
+	default:
+		break;
+	}
+
+	if (code < 0 || code >= nsys)
+		callp += p->p_emul->e_nosys;
+	else
+		callp += code;
+
+	argsize = (callp->sy_argsize >> 3) + argoff;
+	if (argsize) {
+		switch (MIN(argsize, 6)) {
+		case 6:
+			args[5] = frame->tf_r9;
+		case 5:
+			args[4] = frame->tf_r8;
+		case 4:
+			args[3] = frame->tf_r10;
+		case 3:
+			args[2] = frame->tf_rdx;
+		case 2:	
+			args[1] = frame->tf_rsi;
+		case 1:
+			args[0] = frame->tf_rdi;
+			break;
+		default:
+			panic("impossible syscall argsize");
+		}
+		if (argsize > 6) {
+			argsize -= 6;
+			params = (caddr_t)frame->tf_rsp + sizeof(register_t);
+			error = copyin(params, (caddr_t)&args[6],
+					argsize << 3);
+			if (error != 0)
+				goto bad;
+		}
+	}
+
+	lock = !(callp->sy_flags & SY_NOLOCK);
+
+#ifdef SYSCALL_DEBUG
+	KERNEL_LOCK();
+	scdebug_call(p, code, argp);
+	KERNEL_UNLOCK();
+#endif
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSCALL)) {
+		KERNEL_LOCK();
+		ktrsyscall(p, code, callp->sy_argsize, argp);
+		KERNEL_UNLOCK();
+	}
+#endif
+	rval[0] = 0;
+	rval[1] = frame->tf_rdx;
+#if NSYSTRACE > 0
+	if (ISSET(p->p_flag, P_SYSTRACE)) {
+		KERNEL_LOCK();
+		error = systrace_redirect(code, p, argp, rval);
+		KERNEL_UNLOCK();
+	} else
+#endif
+	{
+		if (lock)
+			KERNEL_LOCK();
+		error = (*callp->sy_call)(p, argp, rval);
+		if (lock)
+			KERNEL_UNLOCK();
+	}
+	switch (error) {
+	case 0:
+		frame->tf_rax = rval[0];
+		frame->tf_rdx = rval[1];
+		frame->tf_rflags &= ~PSL_C;	/* carry bit */
+		break;
+	case ERESTART:
+		/*
+		 * The offset to adjust the PC by depends on whether we entered
+		 * the kernel through the trap or call gate.  We pushed the
+		 * size of the instruction into tf_err on entry.
+		 */
+		frame->tf_rip -= frame->tf_err;
+		break;
+	case EJUSTRETURN:
+		/* nothing to do */
+		break;
+	default:
+	bad:
+		frame->tf_rax = error;
+		frame->tf_rflags |= PSL_C;	/* carry bit */
+		break;
+	}
+
+#ifdef SYSCALL_DEBUG
+	KERNEL_LOCK();
+	scdebug_ret(p, code, error, rval);
+	KERNEL_UNLOCK();
+#endif
+	userret(p);
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_LOCK();
+		ktrsysret(p, code, error, rval[0]);
+		KERNEL_UNLOCK();
+	}
+#endif
+}
+
+void
+child_return(void *arg)
+{
+	struct proc *p = arg;
+	struct trapframe *tf = p->p_md.md_regs;
+
+	tf->tf_rax = 0;
+	tf->tf_rdx = 1;
+	tf->tf_rflags &= ~PSL_C;
+
+	KERNEL_UNLOCK();
+
+	userret(p);
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_LOCK();
+		ktrsysret(p,
+		    (p->p_flag & P_THREAD) ? SYS_rfork :
+		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
+		    0, 0);
+		KERNEL_UNLOCK();
+	}
+#endif
+}
