@@ -1,7 +1,7 @@
-/* $OpenBSD: internal_types.h,v 1.1 2006/05/29 17:13:19 drahn Exp $ */
+/* $OpenBSD: internal_types.h,v 1.2 2011/11/14 14:30:38 deraadt Exp $ */
 /* Public domain */
 #ifndef _MACHINE_INTERNAL_TYPES_H_
 #define _MACHINE_INTERNAL_TYPES_H_
 
-#include "arm/internal_types.h"
+#include <arm/internal_types.h>
 #endif
