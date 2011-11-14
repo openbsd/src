@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.17 2011/11/06 16:57:27 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.18 2011/11/14 11:53:10 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -484,127 +484,18 @@ fsqueue_init(void)
 {
 	unsigned int	 n;
 	char		*paths[] = { PATH_INCOMING, PATH_ENQUEUE, PATH_QUEUE,
-				     PATH_PURGE, PATH_OFFLINE, PATH_BOUNCE,
-				     PATH_CORRUPT };
-	char		 pathname[MAXPATHLEN];
-	struct stat	 sb;
+				     PATH_PURGE, PATH_BOUNCE, PATH_CORRUPT };
+	char		 path[MAXPATHLEN];
 	int		 ret;
-
-	if (! bsnprintf(pathname, sizeof(pathname), "%s", PATH_SPOOL))
-		fatal("snprintf");
-
-	if (stat(pathname, &sb) == -1) {
-		if (errno != ENOENT) {
-			warn("stat: %s", pathname);
-			return 0;
-		}
-
-		if (mkdir(pathname, 0711) == -1) {
-			warn("mkdir: %s", pathname);
-			return 0;
-		}
-
-		if (chown(pathname, 0, 0) == -1) {
-			warn("chown: %s", pathname);
-			return 0;
-		}
-
-		if (stat(pathname, &sb) == -1)
-			err(1, "stat: %s", pathname);
-	}
-
-	/* check if it's a directory */
-	if (!S_ISDIR(sb.st_mode)) {
-		warnx("%s is not a directory", pathname);
-		return 0;
-	}
-
-	/* check that it is owned by uid/gid */
-	if (sb.st_uid != 0 || sb.st_gid != 0) {
-		warnx("%s must be owned by root:wheel", pathname);
-		return 0;
-	}
-
-	/* check permission */
-	if ((sb.st_mode & (S_IRUSR|S_IWUSR|S_IXUSR)) != (S_IRUSR|S_IWUSR|S_IXUSR) ||
-	    (sb.st_mode & (S_IRGRP|S_IWGRP|S_IXGRP)) != S_IXGRP ||
-	    (sb.st_mode & (S_IROTH|S_IWOTH|S_IXOTH)) != S_IXOTH) {
-		warnx("%s must be rwx--x--x (0711)", pathname);
-		return 0;
-	}
 
 	ret = 1;
 	for (n = 0; n < nitems(paths); n++) {
-		mode_t	mode;
-		uid_t	owner;
-		gid_t	group;
+		strlcpy(path, PATH_SPOOL, sizeof(path));
+		if (strlcat(path, paths[n], sizeof(path)) >= sizeof(path))
+			errx(1, "path too long %s%s", PATH_SPOOL, paths[n]);
 
-		if (!strcmp(paths[n], PATH_OFFLINE)) {
-			mode = 01777;
-			owner = 0;
-			group = 0;
-		} else {
-			mode = 0700;
-			owner = env->sc_pw->pw_uid;
-			group = 0;
-		}
-
-		if (! bsnprintf(pathname, sizeof(pathname), "%s%s", PATH_SPOOL,
-			paths[n]))
-			fatal("snprintf");
-
-		if (stat(pathname, &sb) == -1) {
-			if (errno != ENOENT) {
-				warn("stat: %s", pathname);
-				ret = 0;
-				continue;
-			}
-
-			/* chmod is deffered to avoid umask effect */
-			if (mkdir(pathname, 0) == -1) {
-				ret = 0;
-				warn("mkdir: %s", pathname);
-			}
-
-			if (chown(pathname, owner, group) == -1) {
-				ret = 0;
-				warn("chown: %s", pathname);
-			}
-
-			if (chmod(pathname, mode) == -1) {
-				ret = 0;
-				warn("chmod: %s", pathname);
-			}
-
-			if (stat(pathname, &sb) == -1)
-				err(1, "stat: %s", pathname);
-		}
-
-		/* check if it's a directory */
-		if (!S_ISDIR(sb.st_mode)) {
+		if (ckdir(path, 0700, env->sc_pw->pw_uid, 0, 1) == 0)
 			ret = 0;
-			warnx("%s is not a directory", pathname);
-		}
-
-		/* check that it is owned by owner/group */
-		if (sb.st_uid != owner) {
-			ret = 0;
-			warnx("%s is not owned by uid %d", pathname, owner);
-		}
-		if (sb.st_gid != group) {
-			ret = 0;
-			warnx("%s is not owned by gid %d", pathname, group);
-		}
-
-		/* check permission */
-		if ((sb.st_mode & 07777) != mode) {
-			char mode_str[12];
-
-			ret = 0;
-			strmode(mode, mode_str);
-			mode_str[10] = '\0';
-			warnx("%s must be %s (%o)", pathname, mode_str + 1, mode);
-		}
 	}
 	return ret;
 }

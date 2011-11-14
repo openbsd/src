@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.135 2011/11/07 11:14:10 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.136 2011/11/14 11:53:10 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -488,12 +488,17 @@ main(int argc, char *argv[])
 	if ((env->sc_pw =  getpwnam(SMTPD_USER)) == NULL)
 		errx(1, "unknown user %s", SMTPD_USER);
 
+	if (ckdir(PATH_SPOOL, 0711, 0, 0, 1) == 0)
+		errx(1, "error in spool directory setup");
+	if (ckdir(PATH_SPOOL PATH_OFFLINE, 01777, 0, 0, 1) == 0)
+		errx(1, "error in offline directory setup");
+
 	env->sc_queue = queue_backend_lookup(QT_FS);
 	if (env->sc_queue == NULL)
 		errx(1, "could not find queue backend");
 
 	if (!env->sc_queue->init())
-		errx(1, "invalid directory permissions");
+		errx(1, "could not initialize queue backend");
 
 	log_init(debug);
 	log_verbose(verbose);
