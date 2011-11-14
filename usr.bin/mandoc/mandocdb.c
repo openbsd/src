@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.5 2011/11/13 10:40:52 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.6 2011/11/14 18:52:05 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -38,6 +38,9 @@
 
 struct	of {
 	char		 *fname; /* heap-allocated */
+	char		 *sec;
+	char		 *arch;
+	char		 *title;
 	struct of	 *next; /* NULL for last one */
 	struct of	 *first; /* first in list */
 };
@@ -79,13 +82,15 @@ static	void		  hash_reset(DB **);
 static	void		  index_merge(const struct of *, struct mparse *,
 				struct buf *, struct buf *,
 				DB *, DB *, const char *, 
-				DB *, const char *, int,
+				DB *, const char *, int, int,
 				recno_t, const recno_t *, size_t);
 static	void		  index_prune(const struct of *, DB *, 
 				const char *, DB *, const char *, 
 				int, recno_t *, recno_t **, size_t *);
-static	void		  ofile_argbuild(char *[], int, int, struct of **);
-static	int		  ofile_dirbuild(const char *, int, struct of **);
+static	void		  ofile_argbuild(char *[], int, int, int,
+				struct of **);
+static	int		  ofile_dirbuild(const char *, const char *,
+				const char *, int, int, struct of **);
 static	void		  ofile_free(struct of *);
 static	int		  pman_node(MAN_ARGS);
 static	void		  pmdoc_node(MDOC_ARGS);
@@ -243,6 +248,7 @@ mandocdb(int argc, char *argv[])
 	char		 ibuf[MAXPATHLEN], /* index fname */
 			 fbuf[MAXPATHLEN];  /* btree fname */
 	int		 verb, /* output verbosity */
+			 use_all, /* use all directories and files */
 			 ch, i, flags;
 	DB		*idx, /* index database */
 			*db, /* keyword database */
@@ -266,6 +272,7 @@ mandocdb(int argc, char *argv[])
 		++progname;
 
 	verb = 0;
+	use_all = 0;
 	of = NULL;
 	db = idx = NULL;
 	mp = NULL;
@@ -276,8 +283,11 @@ mandocdb(int argc, char *argv[])
 	op = OP_NEW;
 	dir = NULL;
 
-	while (-1 != (ch = getopt(argc, argv, "d:u:v")))
+	while (-1 != (ch = getopt(argc, argv, "ad:u:v")))
 		switch (ch) {
+		case ('a'):
+			use_all = 1;
+			break;
 		case ('d'):
 			dir = optarg;
 			op = OP_UPDATE;
@@ -344,7 +354,7 @@ mandocdb(int argc, char *argv[])
 			printf("%s: Opened\n", ibuf);
 		}
 
-		ofile_argbuild(argv, argc, verb, &of);
+		ofile_argbuild(argv, argc, use_all, verb, &of);
 		if (NULL == of)
 			goto out;
 
@@ -355,8 +365,8 @@ mandocdb(int argc, char *argv[])
 
 		if (OP_UPDATE == op)
 			index_merge(of, mp, &dbuf, &buf, hash, 
-					db, fbuf, idx, ibuf, verb,
-					maxrec, recs, reccur);
+					db, fbuf, idx, ibuf, use_all,
+					verb, maxrec, recs, reccur);
 
 		goto out;
 	}
@@ -396,7 +406,8 @@ mandocdb(int argc, char *argv[])
 		ofile_free(of);
 		of = NULL;
 
-		if ( ! ofile_dirbuild(argv[i], verb, &of)) 
+		if ( ! ofile_dirbuild(argv[i], NULL, NULL,
+				use_all, verb, &of)) 
 			exit((int)MANDOCLEVEL_SYSERR);
 
 		if (NULL == of)
@@ -405,7 +416,8 @@ mandocdb(int argc, char *argv[])
 		of = of->first;
 
 		index_merge(of, mp, &dbuf, &buf, hash, db, fbuf, 
-				idx, ibuf, verb, maxrec, recs, reccur);
+				idx, ibuf, use_all, verb,
+				maxrec, recs, reccur);
 	}
 
 out:
@@ -430,7 +442,7 @@ void
 index_merge(const struct of *of, struct mparse *mp,
 		struct buf *dbuf, struct buf *buf,
 		DB *hash, DB *db, const char *dbf, 
-		DB *idx, const char *idxf, int verb,
+		DB *idx, const char *idxf, int use_all, int verb,
 		recno_t maxrec, const recno_t *recs, size_t reccur)
 {
 	recno_t		 rec;
@@ -466,15 +478,50 @@ index_merge(const struct of *of, struct mparse *mp,
 		if (NULL == mdoc && NULL == man)
 			continue;
 
+		/*
+		 * Make sure the manual section and architecture
+		 * agree with the directory where the file is located
+		 * or man(1) will not be able to find it.
+		 */
+
 		msec = NULL != mdoc ? 
 			mdoc_meta(mdoc)->msec : man_meta(man)->msec;
-		mtitle = NULL != mdoc ? 
-			mdoc_meta(mdoc)->title : man_meta(man)->title;
 		arch = NULL != mdoc ? 
 			mdoc_meta(mdoc)->arch : NULL;
 
+		if (0 == use_all) {
+			assert(of->sec);
+			assert(msec);
+			if (strcmp(msec, of->sec))
+				continue;
+
+			if (NULL == arch) {
+				if (NULL != of->arch)
+					continue;
+			} else if (NULL == of->arch ||
+					strcmp(arch, of->arch))
+				continue;
+		}
+
 		if (NULL == arch)
 			arch = "";
+
+		/* 
+		 * Case is relevant for man(1), so use the file name
+		 * instead of the (usually) all caps page title,
+		 * if the two agree.
+		 */
+
+		mtitle = NULL != mdoc ? 
+			mdoc_meta(mdoc)->title : man_meta(man)->title;
+
+		assert(of->title);
+		assert(mtitle);
+
+		if (0 == strcasecmp(mtitle, of->title))
+			mtitle = of->title;
+		else if (0 == use_all)
+			continue;
 
 		/* 
 		 * The index record value consists of a nil-terminated
@@ -1150,14 +1197,62 @@ pman_node(MAN_ARGS)
 }
 
 static void
-ofile_argbuild(char *argv[], int argc, int verb, struct of **of)
+ofile_argbuild(char *argv[], int argc, int use_all, int verb,
+		struct of **of)
 {
+	char		 buf[MAXPATHLEN];
+	char		*sec, *arch, *title, *p;
 	int		 i;
 	struct of	*nof;
 
 	for (i = 0; i < argc; i++) {
+
+		/*
+		 * Analyze the path.
+		 */
+
+		if (strlcpy(buf, argv[i], sizeof(buf)) >= sizeof(buf)) {
+			fprintf(stderr, "%s: Path too long\n", argv[i]);
+			continue;
+		}
+		sec = arch = title = NULL;
+		p = strrchr(buf, '\0');
+		while (p-- > buf) {
+			if (NULL == sec && '.' == *p) {
+				sec = p + 1;
+				*p = '\0';
+				continue;
+			}
+			if ('/' != *p)
+				continue;
+			if (NULL == title) {
+				title = p + 1;
+				*p = '\0';
+				continue;
+			}
+			if (strncmp("man", p + 1, 3))
+				arch = p + 1;
+			break;
+		}
+		if (NULL == title)
+			title = buf;
+
+		/*
+		 * Build the file structure.
+		 */
+
 		nof = mandoc_calloc(1, sizeof(struct of));
-		nof->fname = strdup(argv[i]);
+		nof->fname = mandoc_strdup(argv[i]);
+		if (NULL != sec)
+			nof->sec = mandoc_strdup(sec);
+		if (NULL != arch)
+			nof->arch = mandoc_strdup(arch);
+		nof->title = mandoc_strdup(title);
+
+		/*
+		 * Add the structure to the list.
+		 */
+
 		if (verb > 2) 
 			printf("%s: Scheduling\n", argv[i]);
 		if (NULL == *of) {
@@ -1180,12 +1275,14 @@ ofile_argbuild(char *argv[], int argc, int verb, struct of **of)
  * Pass in a pointer to a NULL structure for the first invocation.
  */
 static int
-ofile_dirbuild(const char *dir, int verb, struct of **of)
+ofile_dirbuild(const char *dir, const char* psec, const char *parch,
+		int use_all, int verb, struct of **of)
 {
 	char		 buf[MAXPATHLEN];
 	size_t		 sz;
 	DIR		*d;
-	const char	*fn;
+	const char	*fn, *sec, *arch;
+	char		*suffix;
 	struct of	*nof;
 	struct dirent	*dp;
 
@@ -1196,10 +1293,30 @@ ofile_dirbuild(const char *dir, int verb, struct of **of)
 
 	while (NULL != (dp = readdir(d))) {
 		fn = dp->d_name;
+
+		if ('.' == *fn)
+			continue;
+
 		if (DT_DIR == dp->d_type) {
-			if (0 == strcmp(".", fn))
-				continue;
-			if (0 == strcmp("..", fn))
+			sec = psec;
+			arch = parch;
+
+			/*
+	 		 * Don't bother parsing directories
+			 * that man(1) won't find.
+			 */
+
+			if (NULL == sec) {
+				if(0 == strncmp("man", fn, 3))
+					sec = fn + 3;
+				else if (use_all)
+					sec = fn;
+				else
+					continue;
+			} else if (NULL == arch && (use_all ||
+					NULL == strchr(fn, '.')))
+				arch = fn;
+			else if (0 == use_all)
 				continue;
 
 			buf[0] = '\0';
@@ -1207,22 +1324,35 @@ ofile_dirbuild(const char *dir, int verb, struct of **of)
 			strlcat(buf, "/", MAXPATHLEN);
 			sz = strlcat(buf, fn, MAXPATHLEN);
 
-			if (sz < MAXPATHLEN) {
-				if ( ! ofile_dirbuild(buf, verb, of))
-					return(0);
-				continue;
-			} else if (sz < MAXPATHLEN)
-				continue;
+			if (MAXPATHLEN <= sz) {
+				fprintf(stderr, "%s: Path too long\n", dir);
+				return(0);
+			}
+ 
+			if (verb > 2)
+				printf("%s: Scanning\n", buf);
 
-			fprintf(stderr, "%s: Path too long\n", dir);
-			return(0);
+			if ( ! ofile_dirbuild(buf, sec, arch,
+					use_all, verb, of))
+				return(0);
 		}
-		if (DT_REG != dp->d_type)
+		if (DT_REG != dp->d_type ||
+		    (NULL == psec && !use_all) ||
+		    !strcmp(MANDOC_DB, fn) ||
+		    !strcmp(MANDOC_IDX, fn))
 			continue;
 
-		if (0 == strcmp(MANDOC_DB, fn) ||
-				0 == strcmp(MANDOC_IDX, fn))
-			continue;
+		/*
+		 * Don't bother parsing files that man(1) won't find.
+		 */
+
+		suffix = strrchr(fn, '.');
+		if (0 == use_all) {
+			if (NULL == suffix)
+				continue;
+			if (strcmp(suffix + 1, psec))
+				continue;
+		}
 
 		buf[0] = '\0';
 		strlcat(buf, dir, MAXPATHLEN);
@@ -1235,6 +1365,13 @@ ofile_dirbuild(const char *dir, int verb, struct of **of)
 
 		nof = mandoc_calloc(1, sizeof(struct of));
 		nof->fname = mandoc_strdup(buf);
+		if (NULL != psec)
+			nof->sec = mandoc_strdup(psec);
+		if (NULL != parch)
+			nof->arch = mandoc_strdup(parch);
+		if (NULL != suffix)
+			*suffix = '\0';
+		nof->title = mandoc_strdup(fn);
 
 		if (verb > 2)
 			printf("%s: Scheduling\n", buf);
@@ -1261,6 +1398,9 @@ ofile_free(struct of *of)
 	while (of) {
 		nof = of->next;
 		free(of->fname);
+		free(of->sec);
+		free(of->arch);
+		free(of->title);
 		free(of);
 		of = nof;
 	}
