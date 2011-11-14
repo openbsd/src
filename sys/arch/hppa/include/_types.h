@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.15 2011/11/14 14:29:53 deraadt Exp $	*/
+/*	$OpenBSD: _types.h,v 1.16 2011/11/14 19:43:33 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -135,7 +135,11 @@ typedef	unsigned long		__size_t;
 typedef	long			__ssize_t;
 typedef	int			__time_t;
 typedef int			__timer_t;
+#if defined(__GNUC__) && __GNUC__ >= 3
 typedef	__builtin_va_list	__va_list;
+#else
+typedef	double			__va_list;
+#endif
 
 /* Wide character support types */
 #ifndef __cplusplus
