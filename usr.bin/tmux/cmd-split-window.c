@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.24 2011/08/30 09:18:52 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.25 2011/11/15 23:19:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -140,7 +140,8 @@ cmd_split_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 	environ_free(&env);
 
 	if (args_has(args, 'P')) {
-		paneidx = window_pane_index(wl->window, new_wp);
+		if (window_pane_index(new_wp, &paneidx) != 0)
+			fatalx("index not found");
 		ctx->print(ctx, "%s:%u.%u", s->name, wl->idx, paneidx);
 	}
 	return (0);
