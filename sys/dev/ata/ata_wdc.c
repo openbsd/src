@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.43 2011/11/14 00:25:17 mlarkin Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.44 2011/11/15 17:14:14 deraadt Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ wd_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size, int op, voi
 	xfer->c_intr = wdc_ata_bio_intr;
 	xfer->c_kill_xfer = wdc_ata_bio_kill_xfer;
 	wdc_exec_xfer(chp, xfer);
-	return (ata_bio->flags & ATA_ITSDONE) ? 0 : 1;
+	return (ata_bio->flags & ATA_ITSDONE) ? 0 : EIO;
 }
 #endif /* HIBERNATE */
 
