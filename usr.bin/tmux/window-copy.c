@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.74 2011/10/23 23:38:16 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.75 2011/11/15 23:24:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -548,13 +548,13 @@ window_copy_key(struct window_pane *wp, struct session *sess, int key)
 		break;
 	case MODEKEYCOPY_NEXTWORD:
 		word_separators =
-		    options_get_string(&wp->window->options, "word-separators");
+		    options_get_string(&sess->options, "word-separators");
 		for (; np != 0; np--)
 			window_copy_cursor_next_word(wp, word_separators);
 		break;
 	case MODEKEYCOPY_NEXTWORDEND:
 		word_separators =
-		    options_get_string(&wp->window->options, "word-separators");
+		    options_get_string(&sess->options, "word-separators");
 		for (; np != 0; np--)
 			window_copy_cursor_next_word_end(wp, word_separators);
 		break;
@@ -564,7 +564,7 @@ window_copy_key(struct window_pane *wp, struct session *sess, int key)
 		break;
 	case MODEKEYCOPY_PREVIOUSWORD:
 		word_separators =
-		    options_get_string(&wp->window->options, "word-separators");
+		    options_get_string(&sess->options, "word-separators");
 		for (; np != 0; np--)
 			window_copy_cursor_previous_word(wp, word_separators);
 		break;

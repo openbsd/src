@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.15 2011/11/05 09:06:31 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.16 2011/11/15 23:24:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -421,6 +421,11 @@ const struct options_table_entry session_options_table[] = {
 	  .default_num = 0
 	},
 
+	{ .name = "word-separators",
+	  .type = OPTIONS_TABLE_STRING,
+	  .default_str = " -_@"
+	},
+
 	{ .name = NULL }
 };
 
@@ -613,11 +618,6 @@ const struct options_table_entry window_options_table[] = {
 	{ .name = "window-status-format",
 	  .type = OPTIONS_TABLE_STRING,
 	  .default_str = "#I:#W#F"
-	},
-
-	{ .name = "word-separators",
-	  .type = OPTIONS_TABLE_STRING,
-	  .default_str = " -_@"
 	},
 
 	{ .name = "xterm-keys",
