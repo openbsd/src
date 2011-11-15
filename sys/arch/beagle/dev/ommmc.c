@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.13 2011/11/10 19:37:01 uwe Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.14 2011/11/15 21:46:44 drahn Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -814,7 +814,7 @@ ommmc_wait_state(struct ommmc_softc *sc, uint32_t mask, uint32_t value)
 	for (timeout = 1000; timeout > 0; timeout--) {
 		if (((state = HREAD4(sc, MMCHS_PSTATE)) & mask) == value)
 			return 0;
-		delay(1);
+		delay(10);
 	}
 	DPRINTF(0,("%s: timeout waiting for %x (state=%b)\n", HDEVNAME(sc),
 	    value, state, MMCHS_PSTATE_FMT));
@@ -1092,7 +1092,7 @@ ommmc_soft_reset(struct ommmc_softc *sc, int mask)
 	DPRINTF(1,("%s: software reset reg=%#x\n", HDEVNAME(sc), mask));
 
 	HSET4(sc, MMCHS_SYSCTL, mask);
-	delay(1);
+	delay(10);
 	for (timo = 1000; timo > 0; timo--) {
 		if (!ISSET(HREAD4(sc, MMCHS_SYSCTL), mask))
 			break;
