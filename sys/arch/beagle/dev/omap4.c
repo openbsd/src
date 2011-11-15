@@ -1,4 +1,4 @@
-/* $OpenBSD: omap4.c,v 1.4 2011/11/10 23:43:01 uwe Exp $ */
+/* $OpenBSD: omap4.c,v 1.5 2011/11/15 23:01:11 drahn Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -16,8 +16,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/device.h>
 #include <machine/bus.h>
+#include <arch/arm/armv7/armv7var.h>
 
 #include <beagle/dev/omapvar.h>
 
@@ -28,6 +31,9 @@
 
 #define GTIMER_ADDR	0x48240000
 #define GTIMER_SIZE	0x300
+
+#define WD_ADDR		0x4a314000
+#define WD_SIZE		0x80
 
 #define GPIOx_SIZE	0x1000
 #define GPIO1_ADDR	0x4a310000
@@ -120,6 +126,15 @@ struct omap_dev omap4_devs[] = {
 	  .unit = 5,
 	  .mem = { { GPIO6_ADDR, GPIOx_SIZE } },
 	  .irq = { GPIO6_IRQ }
+	},
+
+	/*
+	 * Watchdog Timer
+	 */
+
+	{ .name = "omdog",
+	  .unit = 0,
+	  .mem = { { WD_ADDR, WD_SIZE } }
 	},
 
 	/*

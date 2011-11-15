@@ -1,4 +1,4 @@
-/* $OpenBSD: omdog.c,v 1.4 2011/11/10 19:37:01 uwe Exp $ */
+/* $OpenBSD: omdog.c,v 1.5 2011/11/15 23:01:11 drahn Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -98,6 +98,9 @@ void omdog_reset(void); 	/* XXX */
 void
 omdog_reset()
 {
+	if (omdog_sc == NULL)
+		return;
+
 	bus_space_write_4(omdog_sc->sc_iot, omdog_sc->sc_ioh, WCRR, 0xffffff80);
 	omdog_wpending(WWPS_PEND_ALL);
 
