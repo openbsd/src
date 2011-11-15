@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.h,v 1.3 2011/09/12 20:47:15 gilles Exp $	*/
+/*	$OpenBSD: filter.h,v 1.4 2011/11/15 23:22:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -30,6 +30,12 @@
 #if !defined(MAX_DOMAINPART_SIZE)
 #define MAX_DOMAINPART_SIZE	 (MAX_LINE_SIZE-MAX_LOCALPART_SIZE)
 #endif
+
+enum filter_status {
+	STATUS_REJECT,
+	STATUS_ACCEPT,
+	STATUS_WAITING
+};
 
 enum filter_type {
 	FILTER_HELO		= 0x01,
@@ -67,7 +73,7 @@ union filter_union {
 struct filter_msg {
 	u_int64_t		id;	 /* set by smtpd(8) */
 	u_int64_t		cl_id;	 /* set by smtpd(8) */
-	int8_t			code;
+	u_int8_t       		code;
 	u_int8_t		version;
 	enum filter_type	type;
 	union filter_union	u;
@@ -77,8 +83,8 @@ struct filter_msg {
 void filter_init(void);
 void filter_loop(void);
 
-void filter_register_helo_callback(int (*)(u_int64_t, struct filter_helo *, void *), void *);
-void filter_register_ehlo_callback(int (*)(u_int64_t, struct filter_helo *, void *), void *);
-void filter_register_mail_callback(int (*)(u_int64_t, struct filter_mail *, void *), void *);
-void filter_register_rcpt_callback(int (*)(u_int64_t, struct filter_rcpt *, void *), void *);
-void filter_register_dataline_callback(int (*)(u_int64_t, struct filter_dataline *, void *), void *);
+void filter_register_helo_callback(enum filter_status (*)(u_int64_t, struct filter_helo *, void *), void *);
+void filter_register_ehlo_callback(enum filter_status (*)(u_int64_t, struct filter_helo *, void *), void *);
+void filter_register_mail_callback(enum filter_status (*)(u_int64_t, struct filter_mail *, void *), void *);
+void filter_register_rcpt_callback(enum filter_status (*)(u_int64_t, struct filter_rcpt *, void *), void *);
+void filter_register_dataline_callback(enum filter_status (*)(u_int64_t, struct filter_dataline *, void *), void *);
