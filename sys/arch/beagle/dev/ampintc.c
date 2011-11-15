@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.8 2011/11/10 19:37:01 uwe Exp $ */
+/* $OpenBSD: ampintc.c,v 1.9 2011/11/15 23:17:01 drahn Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -196,12 +196,6 @@ ampintc_attach(struct device *parent, struct device *self, void *args)
 
 	iot = oa->oa_iot;
 
-	printf("ICP addr 0x%x-0x%x\n", oa->oa_dev->mem[0].addr,
-	    oa->oa_dev->mem[0].addr + oa->oa_dev->mem[0].size);
-
-	printf("ICD addr 0x%x-0x%x\n", oa->oa_dev->mem[1].addr,
-	    oa->oa_dev->mem[1].addr + oa->oa_dev->mem[1].size);
-
 	if (bus_space_map(iot, oa->oa_dev->mem[0].addr,
 	    oa->oa_dev->mem[0].size, 0, &p_ioh))
 		panic("ampintc_attach: ICP bus_space_map failed!");
@@ -219,16 +213,6 @@ ampintc_attach(struct device *parent, struct device *self, void *args)
 	sc->sc_nintr = nintr;
 	printf(" nirq %d\n", nintr);
 
-	printf("periph_id 0 %x\n",
-	    bus_space_read_1(iot, d_ioh, ICD_PERIPH_ID_0));
-	printf("periph_id 1 %x\n",
-	    bus_space_read_1(iot, d_ioh, ICD_PERIPH_ID_1));
-	printf("periph_id 2 %x\n",
-	    bus_space_read_1(iot, d_ioh, ICD_PERIPH_ID_2));
-	printf("periph_id 3 %x\n",
-	    bus_space_read_1(iot, d_ioh, ICD_PERIPH_ID_3));
-	printf("periph_id 4 %x\n",
-	    bus_space_read_1(iot, d_ioh, ICD_PERIPH_ID_4));
 
 	/* Disable all interrupts, clear all pending */
 	for (i = 0; i < nintr/32; i++) {
