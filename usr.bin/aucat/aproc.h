@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.39 2011/05/26 07:18:40 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.40 2011/11/15 20:41:54 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -172,7 +172,6 @@ struct aproc {
 			int snext;		/* to reach the next sample */
 		} conv;
 		struct {
-			struct abuf *owner;	/* current input stream */
 			struct timo timo;	/* timout for throtteling */
 		} thru;
 		struct {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.h,v 1.23 2010/10/21 18:57:42 ratchov Exp $	*/
+/*	$OpenBSD: abuf.h,v 1.24 2011/11/15 20:41:54 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -74,6 +74,9 @@ struct abuf {
 			unsigned xrun;	/* overrun policy, one of XRUN_XXX */
 			int silence;	/* silence to add on next write */
 		} sub;
+		struct {
+			struct abuf *owner;	/* current input stream */
+		} midi;
 	} w;
 };
 

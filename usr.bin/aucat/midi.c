@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.37 2011/10/12 07:20:04 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.38 2011/11/15 20:41:54 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -78,7 +78,7 @@ unsigned common_len[] = { 0, 2, 3, 2, 0, 0, 1, 1 };
  * send the message stored in of ibuf->r.midi.msg to obuf
  */
 void
-thru_flush(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
+thru_flush(struct abuf *ibuf, struct abuf *obuf)
 {
 	unsigned ocount, itodo;
 	unsigned char *odata, *idata;
@@ -87,7 +87,7 @@ thru_flush(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 	idata = ibuf->r.midi.msg;
 #ifdef DEBUG
 	if (debug_level >= 4) {
-		aproc_dbg(p);
+		abuf_dbg(obuf);
 		dbg_puts(": flushing ");
 		dbg_putu(itodo);
 		dbg_puts(" byte message\n");
@@ -97,15 +97,15 @@ thru_flush(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 		if (!ABUF_WOK(obuf)) {
 #ifdef DEBUG
 			if (debug_level >= 3) {
-				aproc_dbg(p);
+				abuf_dbg(obuf);
 				dbg_puts(": overrun, discarding ");
 				dbg_putu(obuf->used);
 				dbg_puts(" bytes\n");
 			}
 #endif
 			abuf_rdiscard(obuf, obuf->used);
-			if (p->u.thru.owner == ibuf)
-				p->u.thru.owner = NULL;
+			if (obuf->w.midi.owner == ibuf)
+				obuf->w.midi.owner = NULL;
 			return;
 		}
 		odata = abuf_wgetblk(obuf, &ocount, 0);
@@ -117,21 +117,21 @@ thru_flush(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 		idata += ocount;
 	}
 	ibuf->r.midi.used = 0;
-	p->u.thru.owner = ibuf;
+	obuf->w.midi.owner = ibuf;
 }
 
 /*
- * send the real-time message (one byte) to obuf, similar to thrui_flush()
+ * send the real-time message (one byte) to obuf, similar to thru_flush()
  */
 void
-thru_rt(struct aproc *p, struct abuf *ibuf, struct abuf *obuf, unsigned c)
+thru_rt(struct abuf *ibuf, struct abuf *obuf, unsigned c)
 {
 	unsigned ocount;
 	unsigned char *odata;
 
 #ifdef DEBUG
 	if (debug_level >= 4) {
-		aproc_dbg(p);
+		abuf_dbg(obuf);
 		dbg_puts(": ");
 		dbg_putx(c);
 		dbg_puts(": flushing realtime message\n");
@@ -142,15 +142,15 @@ thru_rt(struct aproc *p, struct abuf *ibuf, struct abuf *obuf, unsigned c)
 	if (!ABUF_WOK(obuf)) {
 #ifdef DEBUG
 		if (debug_level >= 3) {
-			aproc_dbg(p);
+			abuf_dbg(obuf);
 			dbg_puts(": overrun, discarding ");
 			dbg_putu(obuf->used);
 			dbg_puts(" bytes\n");
 		}
 #endif
 		abuf_rdiscard(obuf, obuf->used);
-		if (p->u.thru.owner == ibuf)
-			p->u.thru.owner = NULL;
+		if (obuf->w.midi.owner == ibuf)
+			obuf->w.midi.owner = NULL;
 	}
 	odata = abuf_wgetblk(obuf, &ocount, 0);
 	odata[0] = c;
@@ -162,7 +162,7 @@ thru_rt(struct aproc *p, struct abuf *ibuf, struct abuf *obuf, unsigned c)
  * use at most ``todo'' bytes (for throttling)
  */
 void
-thru_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf, unsigned todo)
+thru_bcopy(struct abuf *ibuf, struct abuf *obuf, unsigned todo)
 {
 	unsigned char *idata;
 	unsigned c, icount, ioffs;
@@ -191,22 +191,22 @@ thru_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf, unsigned todo)
 			ibuf->r.midi.msg[ibuf->r.midi.used++] = c;
 			ibuf->r.midi.idx++;
 			if (ibuf->r.midi.idx == ibuf->r.midi.len) {
-				thru_flush(p, ibuf, obuf);
+				thru_flush(ibuf, obuf);
 				if (ibuf->r.midi.st >= 0xf0)
 					ibuf->r.midi.st = 0;
 				ibuf->r.midi.idx = 0;
 			}
 			if (ibuf->r.midi.used == MIDI_MSGMAX) {
 				if (ibuf->r.midi.used == ibuf->r.midi.idx ||
-				    p->u.thru.owner == ibuf)
-					thru_flush(p, ibuf, obuf);
+				    obuf->w.midi.owner == ibuf)
+					thru_flush(ibuf, obuf);
 				else
 					ibuf->r.midi.used = 0;
 			}
 		} else if (c < 0xf8) {
 			if (ibuf->r.midi.used == ibuf->r.midi.idx ||
-			    p->u.thru.owner == ibuf) {
-				thru_flush(p, ibuf, obuf);
+			    obuf->w.midi.owner == ibuf) {
+				thru_flush(ibuf, obuf);
 			} else
 				ibuf->r.midi.used = 0;
 			ibuf->r.midi.msg[0] = c;
@@ -215,7 +215,7 @@ thru_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf, unsigned todo)
 			    common_len[c & 7] :
 			    voice_len[(c >> 4) & 7];
 			if (ibuf->r.midi.len == 1) {
-				thru_flush(p, ibuf, obuf);
+				thru_flush(ibuf, obuf);
 				ibuf->r.midi.idx = 0;
 				ibuf->r.midi.st = 0;
 				ibuf->r.midi.len = 0;
@@ -224,7 +224,7 @@ thru_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf, unsigned todo)
 				ibuf->r.midi.idx = 1;
 			}
 		} else {
-			thru_rt(p, ibuf, obuf, c);
+			thru_rt(ibuf, obuf, c);
 		}
 	}
 }
@@ -254,7 +254,7 @@ thru_in(struct aproc *p, struct abuf *ibuf)
 		inext = LIST_NEXT(i, oent);
 		if (ibuf->duplex == i)
 			continue;
-		thru_bcopy(p, ibuf, i, todo);
+		thru_bcopy(ibuf, i, todo);
 		(void)abuf_flush(i);
 	}
 	abuf_rdiscard(ibuf, todo);
@@ -296,6 +296,12 @@ thru_newin(struct aproc *p, struct abuf *ibuf)
 }
 
 void
+thru_newout(struct aproc *p, struct abuf *obuf)
+{
+	obuf->w.midi.owner = NULL;
+}
+
+void
 thru_done(struct aproc *p)
 {
 	timo_del(&p->u.thru.timo);
@@ -308,7 +314,7 @@ struct aproc_ops thru_ops = {
 	thru_eof,
 	thru_hup,
 	thru_newin,
-	NULL, /* newout */
+	thru_newout,
 	NULL, /* ipos */
 	NULL, /* opos */
 	thru_done
@@ -343,7 +349,6 @@ thru_new(char *name)
 	struct aproc *p;
 
 	p = aproc_new(&thru_ops, name);
-	p->u.thru.owner = NULL;
 	timo_set(&p->u.thru.timo, thru_cb, p);
 	timo_add(&p->u.thru.timo, MIDITHRU_TIMO);
 	return p;
