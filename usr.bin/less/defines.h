@@ -119,7 +119,7 @@
 #define	LESSKEYFILE		".less"
 #define	LESSKEYFILE_SYS		SYSDIR "/sysless"
 #define	DEF_LESSKEYINFILE	".lesskey"
-#define LESSHISTFILE		".lesshst"
+#define LESSHISTFILE		"-"
 
 
 /* Settings always true on Unix.  */
