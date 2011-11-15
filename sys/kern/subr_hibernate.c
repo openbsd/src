@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.22 2011/11/14 00:25:17 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.23 2011/11/15 17:13:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -668,11 +668,11 @@ get_hibernate_info(union hibernate_info *hiber_info, int suspend)
 
 
 	/*
-	 * operation -1 (HIB_INIT) requests initialization of the hibernate
-	 * IO function
+	 * Initialize of the hibernate IO function (for drivers which
+	 * need that)
 	 */
 	if (hiber_info->io_func(hiber_info->device, 0,
-	    (vaddr_t)NULL, 0, HIB_INIT, hiber_info->io_page) == -1)
+	    (vaddr_t)NULL, 0, HIB_INIT, hiber_info->io_page))
 		goto fail;
 
 	if (get_hibernate_info_md(hiber_info))
