@@ -1,4 +1,19 @@
 
+Changes with nginx 1.0.10                                        15 Nov 2011
+
+    *) Bugfix: a segmentation fault might occur in a worker process if
+       resolver got a big DNS response.
+       Thanks to Ben Hawkes.
+
+    *) Bugfix: in cache key calculation if internal MD5 implementation was
+       used; the bug had appeared in 1.0.4.
+
+    *) Bugfix: the module ngx_http_mp4_module sent incorrect
+       "Content-Length" response header line if the "start" argument was
+       used.
+       Thanks to Piotr Sikora.
+
+
 Changes with nginx 1.0.9                                         01 Nov 2011
 
     *) Change: now the 0x7F-0x1F characters are escaped as \xXX in an
