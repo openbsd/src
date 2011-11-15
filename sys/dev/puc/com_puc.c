@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_puc.c,v 1.19 2011/10/25 20:02:20 deraadt Exp $	*/
+/*	$OpenBSD: com_puc.c,v 1.20 2011/11/15 22:27:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -106,12 +106,6 @@ com_puc_attach(parent, self, aux)
 		sc->sc_frequency = COM_FREQ * PUC_COM_GET_MUL(pa->type);
 	else
 		sc->sc_frequency = COM_FREQ * (1 << PUC_COM_GET_POW2(pa->type));
-
-	if (pa->hwtype)
-		sc->sc_uarttype = pa->hwtype;
-
-	sc->sc_hwflags = 0;
-	sc->sc_swflags = 0;
 
 	com_attach_subr(sc);
 }

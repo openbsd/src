@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armish,v 1.14 2010/12/06 20:10:17 jasper Exp $
+#	$OpenBSD: files.armish,v 1.15 2011/11/15 22:27:52 deraadt Exp $
 
 maxpartitions   16
 maxusers	2 8 64
@@ -70,7 +70,6 @@ include "dev/mii/files.mii"
 include "dev/pci/files.pci"
 file	arch/armish/dev/pciide_machdep.c	pciide
 
-include "dev/puc/files.puc"
 include "dev/atapiscsi/files.atapiscsi"
 
 

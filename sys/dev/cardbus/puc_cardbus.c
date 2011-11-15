@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc_cardbus.c,v 1.7 2010/03/27 23:36:36 jsg Exp $	*/
+/*	$OpenBSD: puc_cardbus.c,v 1.8 2011/11/15 22:27:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -136,9 +136,9 @@ puc_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	(*cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	paa.puc = sc;
-	paa.hwtype = COM_UART_OX16C950;		/* XXX */
 	paa.intr_string = &puc_cardbus_intr_string;
 	paa.intr_establish = &puc_cardbus_intr_establish;
+
 	puc_common_attach(sc, &paa);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc.c,v 1.19 2011/10/25 20:02:21 deraadt Exp $	*/
+/*	$OpenBSD: puc.c,v 1.20 2011/11/15 22:27:53 deraadt Exp $	*/
 /*	$NetBSD: puc.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -104,14 +104,6 @@ puc_pci_match(struct device *parent, void *match, void *aux)
 	desc = puc_find_description(PCI_VENDOR(pa->pa_id),
 	    PCI_PRODUCT(pa->pa_id), PCI_VENDOR(subsys), PCI_PRODUCT(subsys));
 	if (desc != NULL)
-		return (10);
-
-	/*
-	 * Match class/subclass, so we can tell people to compile kernel
-	 * with options that cause this driver to spew.
-	 */
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_COMMUNICATIONS &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_PCI)
 		return (1);
 
 	return (0);
@@ -151,41 +143,9 @@ puc_pci_attach(struct device *parent, struct device *self, void *aux)
 	subsys = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	sc->sc_desc = puc_find_description(PCI_VENDOR(pa->pa_id),
 	    PCI_PRODUCT(pa->pa_id), PCI_VENDOR(subsys), PCI_PRODUCT(subsys));
-	if (sc->sc_desc == NULL) {
-		/*
-		 * This was a class/subclass match, so tell people to compile
-		 * kernel with options that cause this driver to spew.
-		 */
-#ifdef PUC_PRINT_REGS
-		printf(":\n");
-		pci_conf_print(pa->pa_pc, pa->pa_tag, NULL);
-#else
-		printf(": unknown PCI communications device\n");
-		printf("%s: compile kernel with PUC_PRINT_REGS and larger\n",
-		    sc->sc_dev.dv_xname);
-		printf("%s: message buffer (via 'options MSGBUFSIZE=...'),\n",
-		    sc->sc_dev.dv_xname);
-		printf("%s: and report the result with sendbug(1)\n",
-		    sc->sc_dev.dv_xname);
-#endif
-		return;
-	}
 
 	puc_print_ports(sc->sc_desc);
 
-	/*
-	 * XXX This driver assumes that 'com' ports attached to it
-	 * XXX can not be console.  That isn't unreasonable, because PCI
-	 * XXX devices are supposed to be dynamically mapped, and com
-	 * XXX console ports want fixed addresses.  When/if baseboard
-	 * XXX 'com' ports are identified as PCI/communications/serial
-	 * XXX devices and are known to be mapped at the standard
-	 * XXX addresses, if they can be the system console then we have
-	 * XXX to cope with doing the mapping right.  Then this will get
-	 * XXX really ugly.  Of course, by then we might know the real
-	 * XXX definition of PCI/communications/serial, and attach 'com'
-	 * XXX directly on PCI.
-	 */
 	for (i = 0; i < PUC_NBARS; i++) {
 		pcireg_t type;
 		int bar;
@@ -214,17 +174,8 @@ puc_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	paa.puc = sc;
-	paa.hwtype = 0;	/* autodetect */
 	paa.intr_string = &puc_pci_intr_string;
 	paa.intr_establish = &puc_pci_intr_establish;
-
-	/*
-	 * If this is a serial card with a known specific chip, provide
-	 * the UART type.
-	 */
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_PLX &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_PLX_CRONYX_OMEGA)
-		paa.hwtype = 0x08;	/* XXX COM_UART_ST16C654 */
 
 	puc_common_attach(sc, &paa);
 }
@@ -233,22 +184,6 @@ void
 puc_common_attach(struct puc_softc *sc, struct puc_attach_args *paa)
 {
 	int i, bar;
-
-	/*
-	 * XXX the sub-devices establish the interrupts, for the
-	 * XXX following reasons:
-	 * XXX
-	 * XXX    * we can't really know what IPLs they'd want
-	 * XXX
-	 * XXX    * the MD dispatching code can ("should") dispatch
-	 * XXX      chained interrupts better than we can.
-	 * XXX
-	 * XXX It would be nice if we could indicate to the MD interrupt
-	 * XXX handling code that the interrupt line used by the device
-	 * XXX was a PCI (level triggered) interrupt.
-	 * XXX
-	 * XXX It's not pretty, but hey, what is?
-	 */
 
 	/* Configure each port. */
 	for (i = 0; i < PUC_MAX_PORTS; i++) {

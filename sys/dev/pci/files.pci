@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.280 2011/11/14 00:25:17 mlarkin Exp $
+#	$OpenBSD: files.pci,v 1.281 2011/11/15 22:27:53 deraadt Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -528,12 +528,16 @@ device	msk: ether, ifnet, mii, ifmedia
 attach	msk at mskc
 file	dev/pci/if_msk.c		mskc | msk
 
-# PCI "universal" communication device driver, for PCI com, lpt, etc. ports
-# (see documentation in the driver for what, exactly, should be supported)
+# PCI "universal" communication for PCI com, lpt
 device	puc {[port = -1]}
-attach	puc at pci with puc_pci
 file	dev/pci/puc.c			puc
 file	dev/pci/pucdata.c		puc
+
+attach  com at puc with com_puc
+file    dev/puc/com_puc.c               com_puc
+attach  lpt at puc with lpt_puc
+file    dev/puc/lpt_puc.c               lpt_puc
+attach	puc at pci with puc_pci
 
 # WaveLAN/PrismII card behind a PLX 805x dumb bridge
 # device declaration in sys/conf/files

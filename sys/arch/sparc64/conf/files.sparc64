@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.134 2011/07/06 05:48:57 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.135 2011/11/15 22:27:53 deraadt Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -108,8 +108,6 @@ file	arch/sparc64/dev/gfb.c			gfb
 
 include	"dev/pci/files.pci"
 major	{wd = 12}
-
-include	"dev/puc/files.puc"
 
 device	psycho: pcibus, iommu
 attach	psycho at mainbus

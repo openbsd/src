@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.64 2011/05/25 07:42:15 mpi Exp $
+#	$OpenBSD: files.macppc,v 1.65 2011/11/15 22:27:53 deraadt Exp $
 
 #
 # macppc-specific configuration info
@@ -65,8 +65,6 @@ include "dev/i2o/files.i2o"
 
 include "dev/pci/files.pci"
 file	arch/macppc/pci/pciide_machdep.c		pciide
-
-include "dev/puc/files.puc"
 
 device	mpcpcibr {} : pcibus
 attach	mpcpcibr at mainbus

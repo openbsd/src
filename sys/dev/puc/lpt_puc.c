@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_puc.c,v 1.6 2011/10/25 20:02:20 deraadt Exp $	*/
+/*	$OpenBSD: lpt_puc.c,v 1.7 2011/11/15 22:27:53 deraadt Exp $	*/
 /*	$NetBSD: lpt_puc.c,v 1.1 1998/06/26 18:52:41 cgd Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ void	lpt_puc_attach(struct device *, struct device *, void *);
 int	lpt_puc_detach(struct device *, int);
 
 struct cfattach lpt_puc_ca = {
-	sizeof(struct lpt_softc), lpt_puc_probe, lpt_puc_attach, lpt_puc_detach
+	sizeof(struct lpt_softc), lpt_puc_probe, lpt_puc_attach, lpt_puc_detach,
 };
 
 int
@@ -97,16 +97,11 @@ lpt_puc_attach(parent, self, aux)
 	}
 	printf(" %s", intrstr);
 
-	sc->sc_state = 0;
-
 	lpt_attach_common(sc);
 }
 
 int
 lpt_puc_detach(struct device *self, int flags)
 {
-
-	/* cardbus_intr_disestablish(psc->sc_cc, psc->sc_cf, csc->cc_ih); */
-
 	return (0);
 }
