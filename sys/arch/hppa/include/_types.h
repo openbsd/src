@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.16 2011/11/14 19:43:33 deraadt Exp $	*/
+/*	$OpenBSD: _types.h,v 1.17 2011/11/15 17:12:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,11 +37,7 @@
 
 #if defined(_KERNEL)
 typedef struct label_t {
-	int	lbl_rp;
-	int	lbl_sp;
-	int	lbl_s[17];
-	int	lbl_ss[1];
-	double	lbl_sf[10];	/* hp800:fr12-fr15, hp700:fr12-fr21 */
+	long	val[19];
 } label_t;
 #endif
 
