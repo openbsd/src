@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.52 2011/10/22 10:23:44 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.53 2011/11/15 08:05:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -149,7 +149,7 @@ aucat_rdata(struct aucat *hdl, void *buf, size_t len, int *eof)
 		hdl->rstate = RSTATE_MSG;
 		hdl->rtodo = sizeof(struct amsg);
 	}
-	DPRINTF("aucat_rdata: read: n = %zd\n", n);
+	DPRINTFN(2, "aucat_rdata: read: n = %zd\n", n);
 	return n;
 }
 
@@ -191,7 +191,7 @@ aucat_wdata(struct aucat *hdl, const void *buf, size_t len, unsigned wbpf, int *
 		}
 		return 0;
 	}
-	DPRINTF("aucat_wdata: write: n = %zd\n", n);
+	DPRINTFN(2, "aucat_wdata: write: n = %zd\n", n);
 	hdl->wtodo -= n;
 	if (hdl->wtodo == 0) {
 		hdl->wstate = WSTATE_IDLE;
@@ -282,18 +282,13 @@ bad_gen:
 }
 
 int
-aucat_connect_tcp(struct aucat *hdl, char *host, char *unit)
+aucat_connect_tcp(struct aucat *hdl, char *host, unsigned unit)
 {
 	int s, error, opt;
 	struct addrinfo *ailist, *ai, aihints;
-	unsigned port;
 	char serv[NI_MAXSERV];
 
-	if (sscanf(unit, "%u", &port) != 1) {
-		DPRINTF("%s: bad unit number\n", unit);
-		return 0;
-	}
-	snprintf(serv, sizeof(serv), "%u", port + AUCAT_PORT);
+	snprintf(serv, sizeof(serv), "%u", unit + AUCAT_PORT);
 	memset(&aihints, 0, sizeof(struct addrinfo));
 	aihints.ai_socktype = SOCK_STREAM;
 	aihints.ai_protocol = IPPROTO_TCP;
@@ -334,7 +329,7 @@ aucat_connect_tcp(struct aucat *hdl, char *host, char *unit)
 }
 
 int
-aucat_connect_un(struct aucat *hdl, char *unit)
+aucat_connect_un(struct aucat *hdl, unsigned unit)
 {
 	struct sockaddr_un ca;
 	socklen_t len = sizeof(struct sockaddr_un);
@@ -343,7 +338,7 @@ aucat_connect_un(struct aucat *hdl, char *unit)
 
 	uid = geteuid();
 	snprintf(ca.sun_path, sizeof(ca.sun_path),
-	    "/tmp/aucat-%u/%s%s", uid, AUCAT_PATH, unit);
+	    "/tmp/aucat-%u/%s%u", uid, AUCAT_PATH, unit);
 	ca.sun_family = AF_UNIX;
 	s = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (s < 0)
@@ -354,7 +349,7 @@ aucat_connect_un(struct aucat *hdl, char *unit)
 		DPERROR(ca.sun_path);
 		/* try shared server */
 		snprintf(ca.sun_path, sizeof(ca.sun_path),
-		    "/tmp/aucat/%s%s", AUCAT_PATH, unit);
+		    "/tmp/aucat/%s%u", AUCAT_PATH, unit);
 		while (connect(s, (struct sockaddr *)&ca, len) < 0) {
 			if (errno == EINTR)
 				continue;
@@ -368,43 +363,90 @@ aucat_connect_un(struct aucat *hdl, char *unit)
 	return 1;
 }
 
+static const char *
+parsedev(const char *str, unsigned *rval)
+{
+	const char *p = str;
+	unsigned val;
+
+	for (val = 0; *p >= '0' && *p <= '9'; p++) {
+		val = 10 * val + (*p - '0');
+		if (val >= 16) {
+			DPRINTF("%s: number too large\n", str);
+			return NULL;
+		}
+	}
+	if (p == str) {
+		DPRINTF("%s: number expected\n", str);
+		return NULL;
+	}
+	*rval = val;
+	return p;
+}
+
+static const char *
+parsestr(const char *str, char *rstr, unsigned max)
+{
+	const char *p = str;
+
+	while (*p != '\0' && *p != ',' && *p != '/') {
+		if (--max == 0) {
+			DPRINTF("%s: string too long\n", str);
+			return NULL;
+		}
+		*rstr++ = *p++;
+	}
+	if (str == p) {
+		DPRINTF("%s: string expected\n", str);
+		return NULL;
+	}
+	*rstr = '\0';
+	return p;
+}
+
 int
-aucat_open(struct aucat *hdl, const char *str, unsigned mode)
+aucat_open(struct aucat *hdl, const char *str, unsigned mode, unsigned type)
 {
 	extern char *__progname;
-	int eof, hashost;
-	char unit[4], *sep, *opt;
-	char host[NI_MAXHOST];
+	int eof;
+	char host[NI_MAXHOST], opt[AMSG_OPTMAX];
+	const char *p = str;
+	unsigned unit, devnum;
 
-	if (str == NULL)
-		str = "0";
-	sep = strchr(str, '/');
-	if (sep == NULL) {
-		hashost = 0;
-	} else {
-		if (sep - str >= sizeof(host)) {
-			DPRINTF("aucat_open: %s: host too long\n", str);
+	if (*p == '@') {
+		p = parsestr(++p, host, NI_MAXHOST);
+		if (p == NULL)
 			return 0;
-		}
-		memcpy(host, str, sep - str);
-		host[sep - str] = '\0';
-		hashost = 1;
-		str = sep + 1;
-	}
-	sep = strchr(str, '.');
-	if (sep == NULL) {
-		opt = "default";
-		strlcpy(unit, str, sizeof(unit));
-	} else {
-		opt = sep + 1;
-		if (sep - str >= sizeof(unit)) {
-			DPRINTF("aucat_init: %s: too long\n", str);
+	} else
+		*host = '\0';
+	if (*p == ',') {
+		p = parsedev(++p, &unit);
+		if (p == NULL)
 			return 0;
-		}
-		strlcpy(unit, str, opt - str);
+	} else
+		unit = 0;
+	if (*p != '/' && *p != ':') {
+		DPRINTF("%s: '/' expected\n", str);
+		return 0;
 	}
-	DPRINTF("aucat_init: trying %s -> %s.%s\n", str, unit, opt);
-	if (hashost) {
+	p = parsedev(++p, &devnum);
+	if (p == NULL)
+		return 0;
+	if (*p == '.') {
+		p = parsestr(++p, opt, AMSG_OPTMAX);
+		if (p == NULL)
+			return 0;
+	} else
+		strlcpy(opt, "default", AMSG_OPTMAX);
+	if (*p != '\0') {
+		DPRINTF("%s: junk at end of dev name\n", p);
+		return 0;
+	}
+	if (type)
+		devnum += 16; /* XXX */
+	DPRINTF("aucat_open: host=%s unit=%u devnum=%u opt=%s\n",
+	    host, unit, devnum, opt);
+	if (host[0] != '\0') {
 		if (!aucat_connect_tcp(hdl, host, unit))
 			return 0;
 	} else {
@@ -434,6 +476,7 @@ aucat_open(struct aucat *hdl, const char *str, unsigned mode)
 	hdl->wmsg.cmd = htonl(AMSG_HELLO);
 	hdl->wmsg.u.hello.version = AMSG_VERSION;
 	hdl->wmsg.u.hello.mode = htons(mode);
+	hdl->wmsg.u.hello.devnum = devnum;
 	strlcpy(hdl->wmsg.u.hello.who, __progname,
 	    sizeof(hdl->wmsg.u.hello.who));
 	strlcpy(hdl->wmsg.u.hello.opt, opt,
@@ -502,6 +545,6 @@ aucat_revents(struct aucat *hdl, struct pollfd *pfd)
 {
 	int revents = pfd->revents;
 
-	DPRINTF("aucat_revents: revents: %x\n", revents);
+	DPRINTFN(2, "aucat_revents: revents: %x\n", revents);
 	return revents;
 }

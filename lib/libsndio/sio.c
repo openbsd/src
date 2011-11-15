@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.6 2011/05/09 17:34:14 ratchov Exp $	*/
+/*	$OpenBSD: sio.c,v 1.7 2011/11/15 08:05:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -33,17 +33,6 @@
 
 #define SIO_PAR_MAGIC	0x83b905a4
 
-struct sio_backend {
-	char *prefix;
-	struct sio_hdl *(*open)(const char *, unsigned, int);
-};
-
-static struct sio_backend backends[] = {
-	{ "aucat", sio_aucat_open },
-	{ "sun", sio_sun_open },
-	{ NULL, NULL }
-};
-
 void
 sio_initpar(struct sio_par *par)
 {
@@ -54,10 +43,8 @@ sio_initpar(struct sio_par *par)
 struct sio_hdl *
 sio_open(const char *str, unsigned mode, int nbio)
 {
-	struct sio_backend *b;
 	struct sio_hdl *hdl;
-	char *sep;
-	int len;
+	const char *p;
 
 #ifdef DEBUG
 	sndio_debug_init();
@@ -67,22 +54,17 @@ sio_open(const char *str, unsigned mode, int nbio)
 	if (str == NULL && !issetugid())
 		str = getenv("AUDIODEVICE");
 	if (str == NULL) {
-		for (b = backends; b->prefix != NULL; b++) {
-			hdl = b->open(NULL, mode, nbio);
-			if (hdl != NULL)
-				return hdl;
-		}
-		return NULL;
+		hdl = sio_aucat_open("/0", mode, nbio);
+		if (hdl != NULL)
+			return hdl;
+		return sio_sun_open("/", mode, nbio);
 	}
-	sep = strchr(str, ':');
-	if (sep == NULL) {
-		DPRINTF("sio_open: %s: ':' missing in device name\n", str);
-		return NULL;
-	}
-	len = sep - str;
-	for (b = backends; b->prefix != NULL; b++) {
-		if (strlen(b->prefix) == len && memcmp(b->prefix, str, len) == 0)
-			return b->open(sep + 1, mode, nbio);
+	if ((p = sndio_parsetype(str, "snd")) != NULL ||
+	    (p = sndio_parsetype(str, "aucat")) != NULL)
+		return sio_aucat_open(p, mode, nbio);
+	if ((p = sndio_parsetype(str, "rsnd")) != NULL ||
+	    (p = sndio_parsetype(str, "sun")) != NULL) {
+		return sio_sun_open(p, mode, nbio);
 	}
 	DPRINTF("sio_open: %s: unknown device type\n", str);
 	return NULL;

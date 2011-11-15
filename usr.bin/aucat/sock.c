@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.60 2011/06/03 16:22:34 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.61 2011/11/15 08:05:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1033,9 +1033,19 @@ sock_hello(struct sock *f)
 #endif
 		return 0;
 	}
-	f->opt = opt_byname(p->opt);
+	f->opt = opt_byname(p->opt, AMSG_ISSET(p->devnum) ? p->devnum : 0);
 	if (f->opt == NULL)
 		return 0;
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		sock_dbg(f);
+		dbg_puts(": using ");
+		dev_dbg(f->opt->dev);
+		dbg_puts(".");
+		dbg_puts(f->opt->name);
+		dbg_puts("\n");
+	}
+#endif
 	if (!dev_ref(f->opt->dev))
 		return 0;
 	if ((mode & MODE_REC) && (f->opt->mode & MODE_MON)) {

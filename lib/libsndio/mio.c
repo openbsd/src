@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio.c,v 1.12 2011/10/17 21:09:11 ratchov Exp $	*/
+/*	$OpenBSD: mio.c,v 1.13 2011/11/15 08:05:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -34,12 +34,8 @@
 struct mio_hdl *
 mio_open(const char *str, unsigned mode, int nbio)
 {
-	static char prefix_midithru[] = "midithru";
-	static char prefix_rmidi[] = "rmidi";
-	static char prefix_aucat[] = "aucat";
 	struct mio_hdl *hdl;
-	char *sep;
-	int len;
+	const char *p;
 
 #ifdef DEBUG
 	sndio_debug_init();
@@ -49,26 +45,18 @@ mio_open(const char *str, unsigned mode, int nbio)
 	if (str == NULL && !issetugid())
 		str = getenv("MIDIDEVICE");
 	if (str == NULL) {
-		hdl = mio_aucat_open("0", mode, nbio);
+		hdl = mio_aucat_open("/0", mode, nbio, 1);
 		if (hdl != NULL)
 			return hdl;
-		return mio_rmidi_open("0", mode, nbio);
+		return mio_rmidi_open("/0", mode, nbio);
 	}
-	sep = strchr(str, ':');
-	if (sep == NULL) {
-		DPRINTF("mio_open: %s: ':' missing in device name\n", str);
-		return NULL;
-	}
-	len = sep - str;
-	if (len == (sizeof(prefix_midithru) - 1) &&
-	    memcmp(str, prefix_midithru, len) == 0)
-		return mio_aucat_open(sep + 1, mode, nbio);
-	if (len == (sizeof(prefix_aucat) - 1) &&
-	    memcmp(str, prefix_aucat, len) == 0)
-		return mio_aucat_open(sep + 1, mode, nbio);
-	if (len == (sizeof(prefix_rmidi) - 1) &&
-	    memcmp(str, prefix_rmidi, len) == 0)
-		return mio_rmidi_open(sep + 1, mode, nbio);
+	if ((p = sndio_parsetype(str, "snd")) != NULL ||
+	    (p = sndio_parsetype(str, "aucat")) != NULL)
+		return mio_aucat_open(p, mode, nbio, 0);
+	if ((p = sndio_parsetype(str, "midithru")) != NULL)
+		return mio_aucat_open(p, mode, nbio, 1);
+	if ((p = sndio_parsetype(str, "rmidi")) != NULL)
+		return mio_rmidi_open(p, mode, nbio);
 	DPRINTF("mio_open: %s: unknown device type\n", str);
 	return NULL;
 }

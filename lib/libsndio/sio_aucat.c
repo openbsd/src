@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_aucat.c,v 1.8 2011/10/17 21:09:11 ratchov Exp $	*/
+/*	$OpenBSD: sio_aucat.c,v 1.9 2011/11/15 08:05:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -109,7 +109,7 @@ sio_aucat_runmsg(struct sio_aucat_hdl *hdl)
 		delta = ntohl(hdl->aucat.rmsg.u.ts.delta);
 		hdl->maxwrite += delta * hdl->wbpf;
 		hdl->delta += delta;
-		DPRINTF("aucat: move = %d, delta = %d, maxwrite = %d\n",
+		DPRINTFN(2, "aucat: move = %d, delta = %d, maxwrite = %d\n",
 		    delta, hdl->delta, hdl->maxwrite);
 		if (hdl->delta >= 0) {
 			sio_onmove_cb(&hdl->sio, hdl->delta);
@@ -156,7 +156,7 @@ sio_aucat_open(const char *str, unsigned mode, int nbio)
 	hdl = malloc(sizeof(struct sio_aucat_hdl));
 	if (hdl == NULL)
 		return NULL;
-	if (!aucat_open(&hdl->aucat, str, mode)) {
+	if (!aucat_open(&hdl->aucat, str, mode, 0)) {
 		free(hdl);
 		return NULL;
 	}
@@ -466,7 +466,7 @@ sio_aucat_revents(struct sio_hdl *sh, struct pollfd *pfd)
 	}
 	if (hdl->sio.eof)
 		return POLLHUP;
-	DPRINTF("sio_aucat_revents: %x\n", revents & hdl->events);
+	DPRINTFN(2, "sio_aucat_revents: %x\n", revents & hdl->events);
 	return revents & (hdl->events | POLLHUP);
 }
 

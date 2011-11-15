@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.124 2011/10/18 21:04:26 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.125 2011/11/15 08:05:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -69,6 +69,13 @@
  */
 #ifndef DEFAULT_ROUND
 #define DEFAULT_ROUND	(44100 / 15)
+#endif
+
+/*
+ * default device in server mode
+ */
+#ifndef DEFAULT_DEV
+#define DEFAULT_DEV "rsnd/0"
 #endif
 
 #ifdef DEBUG
@@ -337,7 +344,10 @@ mkdev(char *path, int mode, int bufsz, int round, int hold, int autovol)
 		bufsz = round * 4;
 	} else if (!round)
 		round = bufsz / 4;
-	return dev_new(path, mode, bufsz, round, hold, autovol);
+	d = dev_new(path, mode, bufsz, round, hold, autovol);
+	if (d == NULL)
+		exit(1);
+	return d;
 }
 
 struct opt *
@@ -537,19 +547,24 @@ main(int argc, char **argv)
 		fputs(usagestr, stderr);
 		exit(1);
 	}
-	if (wav_list == NULL) {
-		if (opt_list == NULL) {
-			d = mkdev(NULL, 0, bufsz, round, 1, autovol);
-			mkopt("default", d, &rpar, &ppar,
-			    mode, vol, mmc, join);
-			server = 1;
-		}
-	} else {
-		d = mkdev(NULL, 0, bufsz, round, 1, autovol);
-		if ((d->reqmode & MODE_THRU) && !d->ctl_list) {
+	if (wav_list) {
+		if (server)
+			errx(1, "-io not allowed in server mode");
+		if ((d = dev_list) && d->next)
+			errx(1, "only one device allowed in non-server mode");
+		if ((d->reqmode & MODE_THRU) && d->ctl_list == NULL) {
 			if (!devctl_add(d, "default", MODE_MIDIMASK))
 				errx(1, "%s: can't open port", optarg);
 			d->reqmode |= MODE_MIDIMASK;
+		}
+	} else {
+		if (dev_list == NULL)
+			mkdev(DEFAULT_DEV, 0, bufsz, round, hold, autovol);
+		for (d = dev_list; d != NULL; d = d->next) {
+			if (opt_byname("default", d->num))
+				continue;
+			mkopt("default", d, &rpar, &ppar, mode, vol, mmc, join);
+			server = 1;
 		}
 	}
 	if (server) {

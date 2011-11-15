@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.67 2011/10/12 07:20:04 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.68 2011/11/15 08:05:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -62,27 +62,6 @@
  *		finished draining), then the device
  *		automatically switches to INIT or CLOSED
  */
-/*
- * TODO:
- *
- * priming buffer is not ok, because it will insert silence and
- * break synchronization to other programs.
- *
- * priming buffer in server mode is required, because f->bufsz may
- * be smaller than the server buffer and may cause underrun in the
- * dev_bufsz part of the buffer, in turn causing apps to break. It
- * doesn't hurt because we care only in synchronization between
- * clients.
- *
- * Priming is not required in non-server mode, because streams
- * actually start when they are in the READY state, and their
- * buffer is large enough to never cause underruns of dev_bufsz.
- *
- * Fix sock.c to allocate dev_bufsz, but to use only appbufsz --
- * or whatever -- but to avoid underruns in dev_bufsz. Then remove
- * this ugly hack.
- *
- */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -108,6 +87,21 @@ void dev_clear(struct dev *);
 int  devctl_open(struct dev *, struct devctl *);
 
 struct dev *dev_list = NULL;
+unsigned dev_sndnum = 0, dev_thrnum = 0;
+
+#ifdef DEBUG
+void
+dev_dbg(struct dev *d)
+{
+	if (d->num >= DEV_NMAX) {
+		dbg_puts("thr");
+		dbg_putu(d->num - DEV_NMAX);
+	} else {
+		dbg_puts("snd");
+		dbg_putu(d->num);
+	}
+}
+#endif
 
 /*
  * Create a sndio device
@@ -117,12 +111,24 @@ dev_new(char *path, unsigned mode,
     unsigned bufsz, unsigned round, unsigned hold, unsigned autovol)
 {
 	struct dev *d;
+	unsigned *pnum;
 
 	d = malloc(sizeof(struct dev));
 	if (d == NULL) {
 		perror("malloc");
 		exit(1);
 	}
+	pnum = (mode & MODE_THRU) ? &dev_thrnum : &dev_sndnum;
+	if (*pnum == DEV_NMAX) {
+#ifdef DEBUG
+		if (debug_level >= 1)
+			dbg_puts("too many devices\n");
+#endif
+		return NULL;
+	}
+	d->num = (*pnum)++;
+	if (mode & MODE_THRU)
+		d->num += DEV_NMAX;
 	d->ctl_list = NULL;
 	d->path = path;
 	d->reqmode = mode;
@@ -135,7 +141,7 @@ dev_new(char *path, unsigned mode,
 	d->autostart = 0;
 	d->pstate = DEV_CLOSED;
 	d->next = dev_list;
-	dev_list = d;
+	dev_list = d;      
 	return d;
 }
 
@@ -161,7 +167,7 @@ dev_init(struct dev *d)
 {
 	if ((d->reqmode & (MODE_AUDIOMASK | MODE_MIDIMASK)) == 0) {
 #ifdef DEBUG
-		    dbg_puts(d->path);
+		    dev_dbg(d);
 		    dbg_puts(": has no streams, skipped\n");
 #endif		    		    
 		    return 1;
@@ -177,7 +183,7 @@ dev_init(struct dev *d)
  * Add a MIDI port to the device
  */
 int
-devctl_add(struct dev *d, char *name, unsigned mode)
+devctl_add(struct dev *d, char *path, unsigned mode)
 {
 	struct devctl *c;
 
@@ -186,7 +192,7 @@ devctl_add(struct dev *d, char *name, unsigned mode)
 		perror("malloc");
 		exit(1);
 	}
-	c->path = name;
+	c->path = path;
 	c->mode = mode;
 	c->next = d->ctl_list;
 	d->ctl_list = c;
@@ -283,6 +289,8 @@ dev_open(struct dev *d)
 		if (f == NULL) {
 #ifdef DEBUG
 			if (debug_level >= 1) {
+				dev_dbg(d);
+				dbg_puts(": ");
 				dbg_puts(d->path);
 				dbg_puts(": failed to open audio device\n");
 			}
@@ -296,7 +304,7 @@ dev_open(struct dev *d)
 		if ((d->mode & (MODE_PLAY | MODE_REC)) == 0) {
 #ifdef DEBUG
 			if (debug_level >= 1) {
-				dbg_puts(d->path);
+				dev_dbg(d);
 				dbg_puts(": mode not supported by device\n");
 			}
 #endif
@@ -356,13 +364,13 @@ dev_open(struct dev *d)
 #ifdef DEBUG
 	if (debug_level >= 2) {
 		if (d->mode & MODE_REC) {
-			dbg_puts(d->path);
+			dev_dbg(d);
 			dbg_puts(": recording ");
 			aparams_dbg(&d->ipar);
 			dbg_puts("\n");
 		}
 		if (d->mode & MODE_PLAY) {
-			dbg_puts(d->path);
+			dev_dbg(d);
 			dbg_puts(": playing ");
 			aparams_dbg(&d->opar);
 			dbg_puts("\n");
@@ -471,7 +479,7 @@ dev_open(struct dev *d)
 #ifdef DEBUG
 	if (debug_level >= 2) { 
 		if (d->mode & (MODE_PLAY | MODE_RECMASK)) {
-			dbg_puts(d->path);
+			dev_dbg(d);
 			dbg_puts(": block size is ");
 			dbg_putu(d->round);
 			dbg_puts(" frames, using ");

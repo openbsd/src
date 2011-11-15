@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndio.7,v 1.7 2011/10/18 07:07:25 jmc Exp $
+.\" $OpenBSD: sndio.7,v 1.8 2011/11/15 08:05:22 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 18 2011 $
+.Dd $Mdocdate: November 15 2011 $
 .Dt SNDIO 7
 .Os
 .Sh NAME
@@ -68,73 +68,77 @@ From the user's perspective every audio interface, MIDI port, and
 .Xr aucat 1
 service has a name of the form:
 .Bd -literal -offset center
-type:[hostname/]unit[.option]
+type[@hostname][,unit]/devnum[.option]
 .Ed
 .Pp
 This information is used by audio and MIDI applications to determine
 how to access the audio device or MIDI port.
-.Bl -tag -width "option"
+.Bl -tag -width "hostname"
 .It Pa type
 The type of the audio device or MIDI port.
-Possible values for audio devices are
-.Pa aucat
-and
-.Pa sun ,
-corresponding to
-.Xr aucat 1
-sockets and hardware
+Possible values are:
+.Pp
+.Bl -tag -width "midithru" -offset 3n -compact
+.It Pa rsnd
+Raw
 .Xr audio 4
-devices.
-Possible values for MIDI ports are
-.Pa aucat
-and
-.Pa rmidi
-corresponding to
-.Xr aucat 1
-software MIDI thru boxes or control ports and hardware
+device.
+.It Pa rmidi
+Raw
 .Xr midi 4
-ports respectively.
+port.
+.It Pa snd
+Audio device exposed by
+.Xr aucat 1 .
+.It Pa midithru
+MIDI thru box created with
+.Xr aucat 1 .
+.El
 .It Pa hostname
-The hostname where the remote
+The hostname or address where the remote
 .Xr aucat 1
 server to connect to is running.
 .It Pa unit
+The number of the
+.Xr aucat 1
+server to connect to, corresponding to the integer specified using the
+.Fl U
+option of
+.Xr aucat 1 .
+Useful only if multiple
+.Xr aucat 1
+servers are running on the same system.
+.It Pa devnum
+Device number.
 For hardware audio or MIDI ports, this corresponds to
 the character device minor number.
 For audio devices or MIDI ports created with
 .Xr aucat 1
-it corresponds to the server
-.Em unit
-number, typically 0.
+it corresponds to the number of the corresponding
+.Fl fM
+option on the command line.
 .It Pa option
-Corresponds to the profile string registered using the
+Corresponds to the sub-device string registered using the
 .Fl s
 option of
 .Xr aucat 1 .
-Only meaningful for
-.Pa aucat
-device types.
 .El
 .Pp
 For example:
 .Pp
-.Bl -tag -width "aucat:0.rear" -offset 3n -compact
-.It Pa sun:0
+.Bl -tag -width "snd/0.rear" -offset 3n -compact
+.It Pa rsnd/0
 First hardware audio device.
-.It Pa aucat:0
-Default audio device of the first
-.Xr aucat 1
-audio server.
-.It Pa aucat:0.rear
-First
-.Xr aucat 1
-server;
-device registered with
-.Fl s Fa rear .
-.It Pa rmidi:5
+.It Pa rmidi/5
 Hardware MIDI port number 5.
-.It Pa aucat:0
-First software MIDI thru box or control port created with
+.It Pa snd/0
+First audio device exposed by
+.Xr aucat 1 .
+.It Pa snd/0.rear
+Sub-device registered with
+.Fl s Fa rear .
+.It Pa midithru/0
+First MIDI thru box created with
 .Xr aucat 1 .
 .El
 .Sh AUTHENTICATION

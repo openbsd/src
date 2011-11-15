@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.91 2011/10/24 21:46:21 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.92 2011/11/15 08:05:22 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 24 2011 $
+.Dd $Mdocdate: November 15 2011 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -383,8 +383,8 @@ of both definitions are created.
 The default
 .Xr sndio 7
 device is
-.Pa aucat:0
-.Pq also known as Pa aucat:0.default
+.Pa snd/0
+.Pq also known as Pa snd/0.default
 .Pp
 If
 .Nm
@@ -572,29 +572,29 @@ are recommended:
 .Pp
 For instance, the following command will create two devices:
 the default
-.Va aucat:0
+.Va snd/0
 and a MIDI-controlled
-.Va aucat:0.mmc :
+.Va snd/0.mmc :
 .Bd -literal -offset indent
 $ aucat -l -r 48000 -z 400 -s default -t slave -s mmc
 .Ed
 .Pp
 Streams connected to
-.Va aucat:0
+.Va snd/0
 behave normally, while streams connected to
-.Va aucat:0.mmc
+.Va snd/0.mmc
 wait for the MMC start signal and start synchronously.
 Regardless of which device a stream is connected to,
 its playback volume knob is exposed.
 .Pp
 For instance, the following command will play a file on the
-.Va aucat:0.mmc
+.Va snd/0.mmc
 audio device, and give full control to MIDI software or hardware
 connected to the
-.Va aucat:0.thru
+.Va snd/0.thru
 MIDI port:
 .Bd -literal -offset indent
-$ aucat -f aucat:0.mmc -t slave -q aucat:0.thru -i file.wav
+$ aucat -f snd/0.mmc -t slave -q midithru/0 -i file.wav
 .Ed
 .Pp
 At this stage,
@@ -602,7 +602,7 @@ At this stage,
 will start, stop and relocate automatically following all user
 actions in the MIDI sequencer.
 Note that the sequencer must use
-.Va aucat:0
+.Va snd/0
 as the MTC source, i.e. the audio server, not the audio player.
 .Sh ENVIRONMENT
 .Bl -tag -width "AUCAT_COOKIE" -compact
@@ -639,9 +639,9 @@ Start
 in server mode using default parameters, creating an
 additional sub-device for output to channels 2:3 only (rear speakers
 on most cards), exposing the
-.Pa aucat:0
+.Pa snd/0
 and
-.Pa aucat:0.rear
+.Pa snd/0.rear
 devices:
 .Bd -literal -offset indent
 $ aucat -l -s default -c 2:3 -s rear
@@ -651,9 +651,9 @@ Start
 .Nm
 in server mode, creating the default sub-device with low volume and
 an additional sub-device for high volume output, exposing the
-.Pa aucat:0
+.Pa snd/0
 and
-.Pa aucat:0.max
+.Pa snd/0.max
 devices:
 .Bd -literal -offset indent
 $ aucat -l -v 65 -s default -v 127 -s max

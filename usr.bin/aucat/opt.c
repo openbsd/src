@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.11 2011/10/12 07:20:04 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.12 2011/11/15 08:05:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -28,7 +28,8 @@
 struct opt *opt_list = NULL;
 
 struct opt *
-opt_new(char *name, struct dev *dev, struct aparams *wpar, struct aparams *rpar,
+opt_new(char *name, struct dev *dev,
+    struct aparams *wpar, struct aparams *rpar,
     int maxweight, int mmc, int join, unsigned mode)
 {
 	struct opt *o, **po;
@@ -41,10 +42,8 @@ opt_new(char *name, struct dev *dev, struct aparams *wpar, struct aparams *rpar,
 			exit(1);
 		}
 		c = name[len];
-		if (c < 'a' && c > 'z' &&
-		    c < 'A' && c > 'Z' &&
-		    c < '0' && c > '9' && 
-		    c != '_') {
+		if ((c < 'a' || c > 'z') &&
+		    (c < 'A' || c > 'Z')) {
 			fprintf(stderr, "%s: '%c' not allowed\n", name, c);
 			exit(1);
 		}
@@ -54,7 +53,6 @@ opt_new(char *name, struct dev *dev, struct aparams *wpar, struct aparams *rpar,
 		perror("opt_new: malloc");
 		exit(1);
 	}
-	memcpy(o->name, name, len + 1);
 	if (mode & MODE_RECMASK)
 		o->wpar = (mode & MODE_MON) ? *rpar : *wpar;
 	if (mode & MODE_PLAY)
@@ -64,8 +62,10 @@ opt_new(char *name, struct dev *dev, struct aparams *wpar, struct aparams *rpar,
 	o->join = join;
 	o->mode = mode;
 	o->dev = dev;
+	memcpy(o->name, name, len + 1);
 	for (po = &opt_list; *po != NULL; po = &(*po)->next) {
-		if (strcmp(o->name, (*po)->name) == 0) {
+		if (o->dev->num == (*po)->dev->num &&
+		    strcmp(o->name, (*po)->name) == 0) {
 			fprintf(stderr, "%s: already defined\n", o->name);
 			exit(1);
 		}
@@ -74,9 +74,9 @@ opt_new(char *name, struct dev *dev, struct aparams *wpar, struct aparams *rpar,
 	*po = o;
 #ifdef DEBUG
 	if (debug_level >= 2) {
+		dev_dbg(o->dev);
+		dbg_puts(".");
 		dbg_puts(o->name);
-		dbg_puts("@");
-		dbg_puts(o->dev->path);
 		dbg_puts(":");
 		if (o->mode & MODE_REC) {
 			dbg_puts(" rec=");
@@ -115,27 +115,16 @@ opt_new(char *name, struct dev *dev, struct aparams *wpar, struct aparams *rpar,
 }
 
 struct opt *
-opt_byname(char *name)
+opt_byname(char *name, unsigned num)
 {
 	struct opt *o;
 
 	for (o = opt_list; o != NULL; o = o->next) {
-		if (strcmp(name, o->name) == 0) {
-#ifdef DEBUG
-			if (debug_level >= 3) {
-				dbg_puts(o->name);
-				dbg_puts(": option found\n");
-			}
-#endif
+		if (o->dev->num != num)
+			continue;
+		if (strcmp(name, o->name) == 0)
 			return o;
-		}
 	}
-#ifdef DEBUG
-	if (debug_level >= 3) {
-		dbg_puts(name);
-		dbg_puts(": option not found\n");
-	}
-#endif
 	return NULL;
 }
 

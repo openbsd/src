@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.c,v 1.1 2011/04/16 10:52:22 ratchov Exp $	*/
+/*	$OpenBSD: debug.c,v 1.2 2011/11/15 08:05:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -39,3 +39,17 @@ sndio_debug_init(void)
 	}
 }
 #endif
+
+const char *
+sndio_parsetype(const char *str, char *type)
+{
+	while (*type) {
+		if (*type != *str)
+			return NULL;
+		type++;
+		str++;
+	}
+	if (*str >= 'a' && *str <= 'z')
+		return NULL;
+	return str;
+}

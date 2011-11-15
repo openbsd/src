@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.3 2011/05/03 20:15:23 ratchov Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.4 2011/11/15 08:05:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -343,8 +343,15 @@ sio_sun_open(const char *str, unsigned mode, int nbio)
 	struct sio_par par;
 	char path[PATH_MAX];
 
-	if (str == NULL) 
-		str = "";
+	switch (*str) {
+	case '/':
+	case ':': /* XXX: for backward compat */
+		str++;
+		break;
+	default:
+		DPRINTF("sio_sun_open: %s: '/<devnum>' expected\n", str);
+		return NULL;
+	}
 	hdl = malloc(sizeof(struct sio_sun_hdl));
 	if (hdl == NULL)
 		return NULL;

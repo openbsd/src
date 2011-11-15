@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.30 2011/10/12 07:20:04 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.31 2011/11/15 08:05:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -37,6 +37,8 @@ struct dev {
 	unsigned autovol;			/* auto adjust playvol ? */
 	unsigned autostart;			/* don't wait for MMC start */
 	unsigned refcnt;			/* number of openers */
+#define DEV_NMAX	16			/* max number of devices */
+	unsigned num;				/* serial number */
 #define DEV_CLOSED	0			/* closed */
 #define DEV_INIT	1			/* stopped */
 #define DEV_START	2			/* ready to start */
@@ -62,6 +64,7 @@ struct dev {
 
 extern struct dev *dev_list;
 
+void dev_dbg(struct dev *);
 int  dev_init(struct dev *);
 int  dev_run(struct dev *);
 int  dev_ref(struct dev *);
