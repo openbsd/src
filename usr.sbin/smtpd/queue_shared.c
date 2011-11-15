@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.53 2011/10/27 14:32:57 chl Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.54 2011/11/15 23:06:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -40,23 +40,7 @@
 #include "smtpd.h"
 #include "log.h"
 
-#define	QWALK_AGAIN	0x1
-#define	QWALK_RECURSE	0x2
-#define	QWALK_RETURN	0x3
-
 int	fsqueue_load_envelope_ascii(FILE *, struct envelope *);
-
-struct qwalk {
-	char	  path[MAXPATHLEN];
-	DIR	 *dirs[3];
-	int	(*filefn)(struct qwalk *, char *);
-	int	  bucket;
-	int	  level;
-	int	  strict;
-};
-
-int		walk_simple(struct qwalk *, char *);
-int		walk_queue(struct qwalk *, char *);
 
 void		display_envelope(struct envelope *, int);
 void		getflag(u_int *, int, char *, char *, size_t);
@@ -117,166 +101,24 @@ queue_message_update(struct envelope *e)
 	queue_envelope_delete(Q_QUEUE, e);
 }
 
-struct qwalk *
-qwalk_new(char *path)
-{
-	struct qwalk *q;
-
-	q = calloc(1, sizeof(struct qwalk));
-	if (q == NULL)
-		fatal("qwalk_new: calloc");
-
-	strlcpy(q->path, path, sizeof(q->path));
-
-	q->level = 0;
-	q->strict = 0;
-	q->filefn = walk_simple;
-
-	if (smtpd_process == PROC_QUEUE || smtpd_process == PROC_RUNNER)
-		q->strict = 1;
-
-	if (strcmp(path, PATH_QUEUE) == 0)
-		q->filefn = walk_queue;
-
-	q->dirs[0] = opendir(q->path);
-	if (q->dirs[0] == NULL)
-		fatal("qwalk_new: opendir");
-
-	return (q);
-}
-
-int
-qwalk(struct qwalk *q, char *filepath)
-{
-	struct dirent	*dp;
-
-again:
-	errno = 0;
-	dp = readdir(q->dirs[q->level]);
-	if (errno)
-		fatal("qwalk: readdir");
-	if (dp == NULL) {
-		closedir(q->dirs[q->level]);
-		q->dirs[q->level] = NULL;
-		if (q->level == 0)
-			return (0);
-		q->level--;
-		goto again;
-	}
-
-	if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0)
-		goto again;
-
-	switch (q->filefn(q, dp->d_name)) {
-	case QWALK_AGAIN:
-		goto again;
-	case QWALK_RECURSE:
-		goto recurse;
-	case QWALK_RETURN:
-		if (! bsnprintf(filepath, MAXPATHLEN, "%s/%s", q->path,
-			dp->d_name))
-			fatalx("qwalk: snprintf");
-		return (1);
-	default:
-		fatalx("qwalk: callback failed");
-	}
-
-recurse:
-	q->level++;
-	q->dirs[q->level] = opendir(q->path);
-	if (q->dirs[q->level] == NULL) {
-		if (errno == ENOENT && !q->strict) {
-			q->level--;
-			goto again;
-		}
-		fatal("qwalk: opendir");
-	}
-	goto again;
-}
-
 void
-qwalk_close(struct qwalk *q)
+show_queue(enum queue_kind kind, int flags)
 {
-	int i;
-
-	for (i = 0; i <= q->level; i++)
-		if (q->dirs[i])
-			closedir(q->dirs[i]);
-
-	bzero(q, sizeof(struct qwalk));
-	free(q);
-}
-
-int
-walk_simple(struct qwalk *q, char *fname)
-{
-	return (QWALK_RETURN);
-}
-
-int
-walk_queue(struct qwalk *q, char *fname)
-{
-	char	*ep;
-
-	switch (q->level) {
-	case 0:
-		if (strcmp(fname, "envelope.tmp") == 0)
-			return (QWALK_AGAIN);
-
-		q->bucket = strtoul(fname, &ep, 16);
-		if (fname[0] == '\0' || *ep != '\0') {
-			log_warnx("walk_queue: invalid bucket: %s", fname);
-			return (QWALK_AGAIN);
-		}
-		if (errno == ERANGE || q->bucket >= DIRHASH_BUCKETS) {
-			log_warnx("walk_queue: invalid bucket: %s", fname);
-			return (QWALK_AGAIN);
-		}
-		if (! bsnprintf(q->path, sizeof(q->path), "%s/%03x", PATH_QUEUE,
-			q->bucket & 0xfff))
-			fatalx("walk_queue: snprintf");
-		return (QWALK_RECURSE);
-	case 1:
-		if (! bsnprintf(q->path, sizeof(q->path), "%s/%03x/%s%s",
-			PATH_QUEUE, q->bucket & 0xfff, fname, PATH_ENVELOPES))
-			fatalx("walk_queue: snprintf");
-		return (QWALK_RECURSE);
-	case 2:
-		return (QWALK_RETURN);
-	}
-
-	return (-1);
-}
-
-void
-show_queue(char *queuepath, int flags)
-{
-	char		 path[MAXPATHLEN];
-	struct envelope	 message;
 	struct qwalk	*q;
-	FILE		*fp;
+	struct envelope	 envelope;
+	u_int64_t	 evpid;
 
 	log_init(1);
 
 	if (chroot(PATH_SPOOL) == -1 || chdir(".") == -1)
 		err(1, "%s", PATH_SPOOL);
 
-	q = qwalk_new(queuepath);
+	q = qwalk_new(kind, 0);
 
-	while (qwalk(q, path)) {
-		fp = fopen(path, "r");
-		if (fp == NULL) {
-			if (errno == ENOENT)
-				continue;
-			err(1, "%s", path);
-		}
-
-		errno = 0;
-		if (! fsqueue_load_envelope_ascii(fp, &message))
-			err(1, "%s", path);
-		fclose(fp);
-
-		display_envelope(&message, flags);
+	while (qwalk(q, &evpid)) {
+		if (! queue_envelope_load(kind, evpid, &envelope))
+			continue;
+		display_envelope(&envelope, flags);
 	}
 
 	qwalk_close(q);

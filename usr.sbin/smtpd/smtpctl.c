@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.70 2011/10/26 20:47:31 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.71 2011/11/15 23:06:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -30,6 +30,7 @@
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -81,12 +82,26 @@ main(int argc, char *argv[])
 	else if (strcmp(__progname, "mailq") == 0) {
 		if (geteuid())
 			errx(1, "need root privileges");
-		show_queue(PATH_QUEUE, 0);
+		show_queue(Q_QUEUE, 0);
 		return 0;
 	} else if (strcmp(__progname, "smtpctl") == 0) {
+		struct smtpd smtpd;
+
 		/* check for root privileges */
 		if (geteuid())
 			errx(1, "need root privileges");
+
+		bzero(&smtpd, sizeof (smtpd));
+		env = &smtpd;
+		if ((env->sc_pw = getpwnam(SMTPD_USER)) == NULL)
+			errx(1, "unknown user %s", SMTPD_USER);
+
+		env->sc_queue = queue_backend_lookup(QT_FS);
+		if (env->sc_queue == NULL)
+			errx(1, "could not find queue backend");
+
+		if (!env->sc_queue->init())
+			errx(1, "invalid directory permissions");
 
 		if ((res = parse(argc - 1, argv + 1)) == NULL)
 			exit(1);
@@ -94,7 +109,7 @@ main(int argc, char *argv[])
 		/* handle "disconnected" commands */
 		switch (res->action) {
 		case SHOW_QUEUE:
-			show_queue(PATH_QUEUE, 0);
+			show_queue(Q_QUEUE, 0);
 			break;
 		case SHOW_RUNQUEUE:
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.13 2011/10/23 13:03:04 gilles Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.14 2011/11/15 23:06:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -42,12 +42,19 @@ static int envelope_validate(struct envelope *);
 int	fsqueue_init(void);
 int	fsqueue_message(enum queue_kind, enum queue_op, u_int32_t *);
 int	fsqueue_envelope(enum queue_kind, enum queue_op , struct envelope *);
+void   *fsqueue_qwalk_new(enum queue_kind, u_int32_t);
+int	fsqueue_qwalk(void *, u_int64_t *);
+void	fsqueue_qwalk_close(void *);
+
 
 struct queue_backend queue_backends[] = {
 	{ QT_FS,
 	  fsqueue_init,
 	  fsqueue_message,
-	  fsqueue_envelope }
+	  fsqueue_envelope,
+	  fsqueue_qwalk_new,
+	  fsqueue_qwalk,
+	  fsqueue_qwalk_close }
 };
 
 struct queue_backend *
@@ -110,6 +117,7 @@ queue_message_fd_rw(enum queue_kind qkind, u_int32_t msgid)
 int
 queue_envelope_create(enum queue_kind qkind, struct envelope *ep)
 {
+	ep->id >>= 32;
 	return env->sc_queue->envelope(qkind, QOP_CREATE, ep);
 }
 
@@ -134,6 +142,57 @@ queue_envelope_update(enum queue_kind qkind, struct envelope *ep)
 	return env->sc_queue->envelope(qkind, QOP_UPDATE, ep);
 }
 
+void *
+qwalk_new(enum queue_kind kind, u_int32_t msgid)
+{
+	return env->sc_queue->qwalk_new(kind, msgid);
+}
+
+int
+qwalk(void *hdl, u_int64_t *evpid)
+{
+	return env->sc_queue->qwalk(hdl, evpid);
+}
+
+void
+qwalk_close(void *hdl)
+{
+	return env->sc_queue->qwalk_close(hdl);
+}
+
+u_int32_t
+queue_generate_msgid(void)
+{
+	u_int32_t msgid;
+
+again:
+	msgid = arc4random_uniform(0xffffffff);
+	if (msgid == 0)
+		goto again;
+
+	return msgid;
+}
+
+u_int64_t
+queue_generate_evpid(u_int32_t msgid)
+{
+	u_int32_t rnd;
+	u_int64_t evpid;
+
+again:
+	rnd = arc4random_uniform(0xffffffff);
+	if (rnd == 0)
+		goto again;
+
+	evpid = msgid;
+	evpid <<= 32;
+	evpid |= rnd;
+
+	return evpid;
+}
+
+
+/**/
 static int
 envelope_validate(struct envelope *ep)
 {

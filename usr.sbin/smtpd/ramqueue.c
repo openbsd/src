@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramqueue.c,v 1.25 2011/11/07 11:14:10 eric Exp $	*/
+/*	$OpenBSD: ramqueue.c,v 1.26 2011/11/15 23:06:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -112,26 +112,21 @@ ramqueue_batch_first_envelope(struct ramqueue_batch *rq_batch)
 int
 ramqueue_load(struct ramqueue *rqueue, time_t *nsched)
 {
-	char			path[MAXPATHLEN];
+//	char			path[MAXPATHLEN];
 	time_t			curtm;
 	struct envelope		envelope;
 	static struct qwalk    *q = NULL;
 	struct ramqueue_envelope *rq_evp;
-
-
+//	u_int32_t	msgid;
+	u_int64_t	evpid;
 
 	log_debug("ramqueue: queue loading in progress");
 
 	if (q == NULL)
-		q = qwalk_new(PATH_QUEUE);
-	while (qwalk(q, path)) {
-		u_int64_t evpid;
+		q = qwalk_new(Q_QUEUE, 0);
 
+	while (qwalk(q, &evpid)) {
 		curtm = time(NULL);
-
-		if ((evpid = filename_to_evpid(basename(path))) == 0)
-			continue;
-
 		if (! queue_envelope_load(Q_QUEUE, evpid, &envelope)) {
 			log_debug("failed to load envelope");
 			queue_message_corrupt(Q_QUEUE, evpid_to_msgid(evpid));

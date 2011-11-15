@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.250 2011/11/14 19:23:41 chl Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.251 2011/11/15 23:06:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -64,18 +64,7 @@
 #define	DIRHASH_BUCKETS		 4096
 
 #define PATH_SPOOL		"/var/spool/smtpd"
-
-#define PATH_ENQUEUE		"/enqueue"
-#define PATH_INCOMING		"/incoming"
-#define PATH_QUEUE		"/queue"
-#define PATH_PURGE		"/purge"
-#define PATH_CORRUPT		"/corrupt"
-
-#define PATH_MESSAGE		"/message"
-#define PATH_ENVELOPES		"/envelopes"
-
 #define PATH_OFFLINE		"/offline"
-#define PATH_BOUNCE		"/bounce"
 
 /* number of MX records to lookup */
 #define MAX_MX_COUNT		10
@@ -898,7 +887,6 @@ enum queue_kind {
 	Q_INCOMING,
 	Q_QUEUE,
 	Q_PURGE,
-	Q_OFFLINE,
 	Q_BOUNCE,
 	Q_CORRUPT
 };
@@ -918,9 +906,14 @@ enum queue_op {
 
 struct queue_backend {
 	enum queue_type	type;
+
 	int (*init)(void);
 	int (*message)(enum queue_kind, enum queue_op, u_int32_t *);
 	int (*envelope)(enum queue_kind, enum queue_op, struct envelope *);
+
+	void *(*qwalk_new)(enum queue_kind, u_int32_t);
+	int   (*qwalk)(void *, u_int64_t *);
+	void  (*qwalk_close)(void *);
 };
 
 
@@ -1073,6 +1066,8 @@ void queue_commit_envelopes(struct envelope *);
 
 
 /* queue_backend.c */
+u_int32_t queue_generate_msgid(void);
+u_int64_t queue_generate_evpid(u_int32_t msgid);
 struct queue_backend *queue_backend_lookup(enum queue_type);
 int queue_message_create(enum queue_kind, u_int32_t *);
 int queue_message_delete(enum queue_kind, u_int32_t);
@@ -1085,15 +1080,15 @@ int queue_envelope_create(enum queue_kind, struct envelope *);
 int queue_envelope_delete(enum queue_kind, struct envelope *);
 int queue_envelope_load(enum queue_kind, u_int64_t, struct envelope *);
 int queue_envelope_update(enum queue_kind, struct envelope *);
+void *qwalk_new(enum queue_kind, u_int32_t);
+int   qwalk(void *, u_int64_t *);
+void  qwalk_close(void *);
 
 
 /* queue_shared.c */
 void queue_message_update(struct envelope *);
-struct qwalk	*qwalk_new(char *);
-int qwalk(struct qwalk *, char *);
-void qwalk_close(struct qwalk *);
 int bounce_record_message(struct envelope *, struct envelope *);
-void show_queue(char *, int);
+void show_queue(enum queue_kind, int);
 
 
 /* ramqueue.c */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.18 2011/11/14 11:53:10 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.19 2011/11/15 23:06:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 
+#include <dirent.h>
 #include <err.h>
 #include <errno.h>
 #include <event.h>
@@ -39,6 +40,7 @@
 
 #include "smtpd.h"
 #include "log.h"
+#include "queue_fsqueue.h"
 
 static char		*fsqueue_getpath(enum queue_kind);
 
@@ -57,9 +59,12 @@ static int	fsqueue_message_corrupt(enum queue_kind, u_int32_t);
 int	fsqueue_init(void);
 int	fsqueue_message(enum queue_kind, enum queue_op, u_int32_t *);
 int	fsqueue_envelope(enum queue_kind, enum queue_op , struct envelope *);
-
 int	fsqueue_load_envelope_ascii(FILE *, struct envelope *);
 int	fsqueue_dump_envelope_ascii(FILE *, struct envelope *);
+
+void   *fsqueue_qwalk_new(enum queue_kind, u_int32_t);
+int	fsqueue_qwalk(void *, u_int64_t *);
+void	fsqueue_qwalk_close(void *);
 
 static char *
 fsqueue_getpath(enum queue_kind kind)
@@ -76,9 +81,6 @@ fsqueue_getpath(enum queue_kind kind)
 
         case Q_PURGE:
                 return (PATH_PURGE);
-
-        case Q_OFFLINE:
-                return (PATH_OFFLINE);
 
         case Q_BOUNCE:
                 return (PATH_BOUNCE);
@@ -98,16 +100,12 @@ fsqueue_envelope_create(enum queue_kind qkind, struct envelope *ep)
 	char evpname[MAXPATHLEN];
 	FILE *fp;
 	int fd;
-	u_int32_t rnd;
 	u_int64_t evpid;
 
 	fp = NULL;
 
 again:
-	rnd = (u_int32_t)arc4random();
-	if (rnd == 0)
-		goto again;
-	evpid = ep->id | rnd;
+	evpid = queue_generate_evpid(ep->id);
 
 	if (! bsnprintf(evpname, sizeof(evpname), "%s/%08x%s/%016" PRIx64,
 		fsqueue_getpath(qkind),
@@ -279,7 +277,7 @@ fsqueue_message_create(enum queue_kind qkind, u_int32_t *msgid)
 	msgid_save = *msgid;
 
 again:
-	*msgid = (u_int32_t)arc4random();
+	*msgid = queue_generate_msgid();
 	if (! bsnprintf(rootdir, sizeof(rootdir), "%s/%08x",
 		queuepath, *msgid))
 		fatalx("fsqueue_message_create: snprintf");
@@ -403,20 +401,44 @@ fsqueue_message_delete(enum queue_kind qkind, u_int32_t msgid)
 	char rootdir[MAXPATHLEN];
 	char evpdir[MAXPATHLEN];
 	char msgpath[MAXPATHLEN];
+	DIR *dirp;
+	struct dirent *dp;
 
-	if (! bsnprintf(rootdir, sizeof(rootdir), "%s/%03x/%08x", PATH_QUEUE,
-		msgid & 0xfff, msgid))
-		fatal("queue_delete_message: snprintf");
+	if (qkind == Q_QUEUE) {
+		if (! bsnprintf(rootdir, sizeof(rootdir), "%s/%03x/%08x", PATH_QUEUE,
+			msgid & 0xfff, msgid))
+			fatal("fsqueue_message_delete: snprintf");
+	}
+	else if (qkind == Q_PURGE) {
+		if (! bsnprintf(rootdir, sizeof(rootdir), "%s/%08x", PATH_PURGE,
+			msgid))
+			fatal("fsqueue_message_delete: snprintf");
+	}
 
 	if (! bsnprintf(evpdir, sizeof(evpdir), "%s%s", rootdir,
 		PATH_ENVELOPES))
-		fatal("queue_delete_message: snprintf");
-	
-	if (! bsnprintf(msgpath, sizeof(msgpath), "%s/message", rootdir))
-		fatal("queue_delete_message: snprintf");
+		fatal("fsqueue_message_delete: snprintf");
 
-	if (unlink(msgpath) == -1)
-		fatal("queue_delete_message: unlink");
+	dirp = opendir(evpdir);
+	if (dirp) {
+		char envelope[MAXPATHLEN];
+
+		while ((dp = readdir(dirp)) != NULL) {
+			if (! bsnprintf(envelope, MAXPATHLEN, "%s/%s",
+				evpdir, dp->d_name))
+				fatal("fsqueue_message_delete: truncated evp");
+			unlink(envelope);
+		}
+		closedir(dirp);
+	}
+
+	if (! bsnprintf(msgpath, sizeof(msgpath), "%s/message", rootdir))
+		fatal("fsqueue_message_delete: snprintf");
+
+	if (unlink(msgpath) == -1) {
+		if (errno != ENOENT)
+			fatal("fsqueue_message_delete: unlink");
+	}
 
 	if (rmdir(evpdir) == -1) {
 		/* It is ok to fail rmdir with ENOENT here
@@ -424,16 +446,18 @@ fsqueue_message_delete(enum queue_kind qkind, u_int32_t msgid)
 		 * last envelope, we remove the directory.
 		 */
 		if (errno != ENOENT)
-			fatal("queue_delete_message: rmdir");
+			fatal("fsqueue_message_delete: rmdir");
 	}
 
 	if (rmdir(rootdir) == -1)
-		fatal("#2 queue_delete_message: rmdir");
+		fatal("#2 fsqueue_message_delete: rmdir");
 
-	if (! bsnprintf(rootdir, sizeof(rootdir), "%s/%03x", PATH_QUEUE, msgid & 0xffff))
-		fatal("queue_delete_message: snprintf");
 
-	rmdir(rootdir);
+	if (qkind == Q_QUEUE) {
+		if (! bsnprintf(rootdir, sizeof(rootdir), "%s/%03x", PATH_QUEUE, msgid & 0xffff))
+			fatal("fsqueue_message_delete: snprintf");
+		rmdir(rootdir);
+	}
 
 	return 1;
 }
@@ -497,6 +521,12 @@ fsqueue_init(void)
 		if (ckdir(path, 0700, env->sc_pw->pw_uid, 0, 1) == 0)
 			ret = 0;
 	}
+
+	if (! bsnprintf(path, sizeof path, "%s/envelope.tmp", PATH_QUEUE))
+		errx(1, "path too long %s/envelope.tmp", PATH_QUEUE);
+
+	unlink(path);
+
 	return ret;
 }
 
@@ -553,4 +583,200 @@ fsqueue_envelope(enum queue_kind qkind, enum queue_op qop, struct envelope *m)
         }
 
 	return 0;
+}
+
+#define	QWALK_AGAIN	0x1
+#define	QWALK_RECURSE	0x2
+#define	QWALK_RETURN	0x3
+
+struct qwalk {
+	enum queue_kind kind;
+	char	  path[MAXPATHLEN];
+	DIR	 *dirs[3];
+	int	(*filefn)(struct qwalk *, char *);
+	int	  bucket;
+	int	  level;
+	int	  strict;
+	u_int32_t msgid;
+};
+
+int		walk_simple(struct qwalk *, char *);
+int		walk_queue(struct qwalk *, char *);
+int		walk_queue_nobucket(struct qwalk *, char *);
+
+void *
+fsqueue_qwalk_new(enum queue_kind kind, u_int32_t msgid)
+{
+	struct qwalk *q;
+
+	q = calloc(1, sizeof(struct qwalk));
+	if (q == NULL)
+		fatal("qwalk_new: calloc");
+
+	strlcpy(q->path, fsqueue_getpath(kind),
+	    sizeof(q->path));
+
+	q->kind = kind;
+	q->level = 0;
+	q->strict = 0;
+	q->filefn = walk_simple;
+	q->msgid = msgid;
+
+	if (q->msgid) {
+		/* force level and bucket */
+		q->bucket = q->msgid & 0xfff;
+		q->level = 2;
+		if (! bsnprintf(q->path, sizeof(q->path), "%s/%03x/%08x/%s",
+			PATH_QUEUE, q->bucket, q->msgid, PATH_ENVELOPES))
+			fatalx("walk_queue: snprintf");
+	}
+
+	if (smtpd_process == PROC_QUEUE || smtpd_process == PROC_RUNNER)
+		q->strict = 1;
+
+	if (kind == Q_QUEUE)
+		q->filefn = walk_queue;
+	if (kind == Q_INCOMING || kind == Q_ENQUEUE || kind == Q_PURGE)
+		q->filefn = walk_queue_nobucket;
+
+	q->dirs[q->level] = opendir(q->path);
+	if (q->dirs[q->level] == NULL)
+		fatal("qwalk_new: opendir");
+
+	return (q);
+}
+
+int
+fsqueue_qwalk(void *hdl, u_int64_t *evpid)
+{
+	struct qwalk *q = hdl;
+	struct dirent	*dp;
+
+again:
+	errno = 0;
+	dp = readdir(q->dirs[q->level]);
+	if (errno)
+		fatal("qwalk: readdir");
+	if (dp == NULL) {
+		closedir(q->dirs[q->level]);
+		q->dirs[q->level] = NULL;
+		if (q->level == 0 || q->msgid)
+			return (0);
+		q->level--;
+		goto again;
+	}
+
+	if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0)
+		goto again;
+
+	switch (q->filefn(q, dp->d_name)) {
+	case QWALK_AGAIN:
+		goto again;
+	case QWALK_RECURSE:
+		goto recurse;
+	case QWALK_RETURN: {
+		char *endptr;
+
+		errno = 0;
+		*evpid = (u_int64_t)strtoull(dp->d_name, &endptr, 16);
+		if (q->path[0] == '\0' || *endptr != '\0')
+			goto again;
+		if (errno == ERANGE && *evpid == ULLONG_MAX)
+			goto again;
+		if (q->msgid)
+			if (evpid_to_msgid(*evpid) != q->msgid)
+				return 0;
+
+		return (1);
+	}
+	default:
+		fatalx("qwalk: callback failed");
+	}
+
+recurse:
+	q->level++;
+	q->dirs[q->level] = opendir(q->path);
+	if (q->dirs[q->level] == NULL) {
+		if (errno == ENOENT && !q->strict) {
+			q->level--;
+			goto again;
+		}
+		fatal("qwalk: opendir");
+	}
+	goto again;
+}
+
+void
+fsqueue_qwalk_close(void *hdl)
+{
+	int i;
+	struct qwalk *q = hdl;
+
+	for (i = 0; i <= q->level; i++)
+		if (q->dirs[i])
+			closedir(q->dirs[i]);
+
+	bzero(q, sizeof(struct qwalk));
+	free(q);
+}
+
+
+int
+walk_simple(struct qwalk *q, char *fname)
+{
+	return (QWALK_RETURN);
+}
+
+int
+walk_queue(struct qwalk *q, char *fname)
+{
+	char	*ep;
+
+	switch (q->level) {
+	case 0:
+		if (strcmp(fname, "envelope.tmp") == 0)
+			return (QWALK_AGAIN);
+
+		q->bucket = strtoul(fname, &ep, 16);
+		if (fname[0] == '\0' || *ep != '\0') {
+			log_warnx("walk_queue: invalid bucket: %s", fname);
+			return (QWALK_AGAIN);
+		}
+		if (errno == ERANGE || q->bucket >= DIRHASH_BUCKETS) {
+			log_warnx("walk_queue: invalid bucket: %s", fname);
+			return (QWALK_AGAIN);
+		}
+		if (! bsnprintf(q->path, sizeof(q->path), "%s/%03x",
+			fsqueue_getpath(q->kind), q->bucket & 0xfff))
+			fatalx("walk_queue: snprintf");
+		return (QWALK_RECURSE);
+	case 1:
+		if (! bsnprintf(q->path, sizeof(q->path), "%s/%03x/%s%s",
+			fsqueue_getpath(q->kind), q->bucket & 0xfff, fname,
+			PATH_ENVELOPES))
+			fatalx("walk_queue: snprintf");
+		return (QWALK_RECURSE);
+	case 2:
+		return (QWALK_RETURN);
+	}
+
+	return (-1);
+}
+
+int
+walk_queue_nobucket(struct qwalk *q, char *fname)
+{
+	switch (q->level) {
+	case 0:
+		if (strcmp(fname, "envelope.tmp") == 0)
+			return (QWALK_AGAIN);
+		if (! bsnprintf(q->path, sizeof(q->path), "%s/%s%s",
+			fsqueue_getpath(q->kind), fname, PATH_ENVELOPES))
+			fatalx("walk_queue_nobucket: snprintf");
+		return (QWALK_RECURSE);
+	case 1:
+		return (QWALK_RETURN);
+	}
+
+	return (-1);
 }

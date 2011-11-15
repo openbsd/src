@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.111 2011/11/14 19:23:41 chl Exp $	*/
+/*	$OpenBSD: queue.c,v 1.112 2011/11/15 23:06:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -42,7 +42,7 @@ static void queue_imsg(struct imsgev *, struct imsg *);
 static void queue_pass_to_runner(struct imsgev *, struct imsg *);
 static void queue_shutdown(void);
 static void queue_sig_handler(int, short, void *);
-static void queue_purge(enum queue_kind, char *);
+static void queue_purge(enum queue_kind);
 
 static void
 queue_imsg(struct imsgev *iev, struct imsg *imsg)
@@ -302,8 +302,8 @@ queue(void)
 	config_pipes(peers, nitems(peers));
 	config_peers(peers, nitems(peers));
 
-	queue_purge(Q_INCOMING, PATH_INCOMING);
-	queue_purge(Q_ENQUEUE, PATH_ENQUEUE);
+	queue_purge(Q_INCOMING);
+	queue_purge(Q_ENQUEUE);
 
 	if (event_dispatch() <  0)
 		fatal("event_dispatch");
@@ -313,23 +313,17 @@ queue(void)
 }
 
 static void
-queue_purge(enum queue_kind qkind, char *queuepath)
+queue_purge(enum queue_kind qkind)
 {
-	char		 path[MAXPATHLEN];
 	struct qwalk	*q;
+	u_int32_t	 msgid;
+	u_int64_t	 evpid;
 
-	q = qwalk_new(queuepath);
-
-	while (qwalk(q, path)) {
-		u_int32_t msgid;
-
-		if ((msgid = filename_to_msgid(basename(path))) == 0) {
-			log_warnx("queue_purge: invalid evpid");
-			continue;
-		}
+	q = qwalk_new(qkind, 0);
+	while (qwalk(q, &evpid)) {
+		msgid = evpid_to_msgid(evpid);
 		queue_message_purge(qkind, msgid);
 	}
-
 	qwalk_close(q);
 }
 
