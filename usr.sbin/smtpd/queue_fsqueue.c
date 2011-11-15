@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.19 2011/11/15 23:06:39 gilles Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.20 2011/11/15 23:12:44 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -40,7 +40,6 @@
 
 #include "smtpd.h"
 #include "log.h"
-#include "queue_fsqueue.h"
 
 static char		*fsqueue_getpath(enum queue_kind);
 
@@ -65,6 +64,17 @@ int	fsqueue_dump_envelope_ascii(FILE *, struct envelope *);
 void   *fsqueue_qwalk_new(enum queue_kind, u_int32_t);
 int	fsqueue_qwalk(void *, u_int64_t *);
 void	fsqueue_qwalk_close(void *);
+
+#define PATH_ENQUEUE		"/enqueue"
+#define PATH_INCOMING		"/incoming"
+#define PATH_QUEUE		"/queue"
+#define PATH_PURGE		"/purge"
+#define PATH_CORRUPT		"/corrupt"
+#define PATH_BOUNCE		"/bounce"
+
+#define PATH_MESSAGE		"/message"
+#define PATH_ENVELOPES		"/envelopes"
+
 
 static char *
 fsqueue_getpath(enum queue_kind kind)
