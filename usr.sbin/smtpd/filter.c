@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.3 2011/11/15 23:22:47 gilles Exp $	*/
+/*	$OpenBSD: filter.c,v 1.4 2011/11/16 10:24:41 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -211,7 +211,7 @@ filter_handler(int fd, short event, void *p)
 			errx(1, "unsupported imsg");
 		}
 
-		switch (fm.code) {
+		switch (ret) {
 		case STATUS_ACCEPT:
 		case STATUS_REJECT:
 			fm.code = ret;
