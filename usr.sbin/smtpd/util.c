@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.50 2011/11/14 11:53:10 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.51 2011/11/16 19:38:56 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -578,70 +578,6 @@ log_sockaddr(struct sockaddr *sa)
 		return ("(unknown)");
 	else
 		return (buf);
-}
-
-u_int32_t
-filename_to_msgid(char *filename)
-{
-	u_int32_t ulval;
-	char *ep;
-
-	errno = 0;
-	ulval = strtoul(filename, &ep, 16);
-	if (filename[0] == '\0' || *ep != '\0')
-		return 0;
-	if (errno == ERANGE && ulval == 0xffffffff)
-		return 0;
-
-	return ulval;
-}
-
-u_int64_t
-filename_to_evpid(char *filename)
-{
-	u_int64_t ullval;
-	char *ep;
-
-	errno = 0;
-	ullval = strtoull(filename, &ep, 16);
-	if (filename[0] == '\0' || *ep != '\0')
-		return 0;
-	if (errno == ERANGE && ullval == ULLONG_MAX)
-		return 0;
-
-	return ullval;
-}
-
-u_int32_t
-msgid_generate(void)
-{
-	u_int32_t ret;
-
-	do {
-		ret = arc4random();
-	} while (ret == 0);
-
-	log_debug("msgid_generate: %08x", ret);
-
-	return ret;
-}
-
-u_int64_t
-evpid_generate(u_int32_t msgid)
-{
-	u_int64_t ret;
-
-	ret = msgid;
-	log_debug("evpid_generate: %016" PRIx64, ret);
-	ret <<= 32;
-	log_debug("evpid_generate: %016" PRIx64, ret);
-	do {
-		ret |= arc4random();
-	} while ((ret & 0xffffffff) == 0);
-
-	log_debug("evpid_generate: %016" PRIx64, ret);
-
-	return ret;
 }
 
 u_int32_t

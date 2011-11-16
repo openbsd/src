@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.125 2011/11/15 23:06:39 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.126 2011/11/16 19:38:56 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -57,11 +57,6 @@ static void runner_process_batch(struct ramqueue_envelope *, time_t);
 static void runner_purge_run(void);
 static int runner_check_loop(struct envelope *);
 static int runner_force_message_to_ramqueue(struct ramqueue *, u_int32_t);
-
-
-/*temporary*/
-u_int64_t	filename_to_evpid(char *);
-u_int32_t	filename_to_msgid(char *);
 
 
 void

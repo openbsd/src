@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.252 2011/11/16 11:18:55 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.253 2011/11/16 19:38:56 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1217,11 +1217,7 @@ void sa_set_port(struct sockaddr *, int);
 u_int64_t generate_uid(void);
 void fdlimit(double);
 int availdesc(void);
-u_int32_t msgid_generate(void);
-u_int64_t evpid_generate(u_int32_t);
 u_int32_t evpid_to_msgid(u_int64_t);
 u_int64_t msgid_to_evpid(u_int32_t);
-u_int32_t filename_to_msgid(char *);
-u_int64_t filename_to_evpid(char *);
 void log_imsg(int, int, struct imsg*);
 int ckdir(const char *, mode_t, uid_t, gid_t, int);
