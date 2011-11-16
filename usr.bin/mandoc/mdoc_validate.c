@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.96 2011/10/16 12:18:32 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.97 2011/11/16 19:47:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -1814,6 +1814,7 @@ static int
 post_sh_head(POST_ARGS)
 {
 	char		 buf[BUFSIZ];
+	struct mdoc_node *n;
 	enum mdoc_sec	 sec;
 	int		 c;
 
@@ -1847,6 +1848,10 @@ post_sh_head(POST_ARGS)
 	/* Mark our last section. */
 
 	mdoc->lastsec = sec;
+	mdoc->last->parent->sec = sec;
+	mdoc->last->sec = sec;
+	for (n = mdoc->last->child; n; n = n->next)
+		n->sec = sec;
 
 	/* We don't care about custom sections after this. */
 
