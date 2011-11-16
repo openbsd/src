@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.52 2011/11/14 12:49:06 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.53 2011/11/16 11:41:38 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -632,12 +632,25 @@ sub solve_from_ports
 	if (defined $cache->{$dep->{pkgpath}}) {
 		$pkgname = $cache->{$dep->{pkgpath}};
 	} else {
-		my $plist = $self->ask_tree($state, $dep, $portsdir,
-		    'print-plist-libs-with-depends', 'wantlib_args=no-wantlib-args');
-		if ($? != 0 || !defined $plist->pkgname) {
-			$state->error("Can't obtain dependency #1 from ports tree",
-			    $dep->{pattern});
-			return undef;
+		my ($plist, $diskcache);
+		if ($ENV{_DEPENDS_CACHE}) {
+			$diskcache = $dep->{pkgpath};
+			$diskcache =~ s/\//--/g;
+			$diskcache = $ENV{_DEPENDS_CACHE}."/pkgcreate-".
+			    $diskcache;
+		}
+		if (defined $diskcache && -f $diskcache) {
+			$plist = OpenBSD::PackingList->fromfile($diskcache);
+		} else {
+			$plist = $self->ask_tree($state, $dep, $portsdir,
+			    'print-plist-libs-with-depends', 
+			    'wantlib_args=no-wantlib-args');
+			if ($? != 0 || !defined $plist->pkgname) {
+				$state->error("Can't obtain dependency #1 from ports tree",
+				    $dep->{pattern});
+				return undef;
+			}
+			$plist->tofile($diskcache) if defined $diskcache;
 		}
 		OpenBSD::SharedLibs::add_libs_from_plist($plist, $state);
 		$self->add_dep($plist);
