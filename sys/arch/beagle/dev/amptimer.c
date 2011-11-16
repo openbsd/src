@@ -1,4 +1,4 @@
-/* $OpenBSD: amptimer.c,v 1.6 2011/11/10 19:37:01 uwe Exp $ */
+/* $OpenBSD: amptimer.c,v 1.7 2011/11/16 14:06:32 drahn Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -43,7 +43,7 @@
 #define GTIMER_AUTOINC		0x218
 
 /* XXX - PERIPHCLK */
-#define TIMER_FREQUENCY                 512 * 1024 * 1024 /* XXX - PERIPHCLK? */
+#define TIMER_FREQUENCY                 500 * 1000 * 1000 /* XXX - PERIPHCLK? */
 
 u_int amptimer_get_timecount(struct timecounter *);
 
