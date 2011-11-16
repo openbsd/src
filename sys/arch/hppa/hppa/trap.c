@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.120 2011/11/16 20:50:18 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.121 2011/11/16 20:56:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -62,6 +62,8 @@ int	pcxs_unaligned(u_int opcode, vaddr_t va);
 #ifdef PTRACE
 void	ss_clear_breakpoints(struct proc *p);
 #endif
+
+void	ast(struct proc *);
 
 /* single-step breakpoint */
 #define SSBREAKPOINT	(HPPA_BREAK_KERNEL | (HPPA_BREAK_SS << 13))

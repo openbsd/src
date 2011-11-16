@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.27 2011/11/16 20:50:18 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.28 2011/11/16 20:56:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -56,6 +56,8 @@ static __inline int inst_store(u_int ins) {
 	       (ins & 0xfc0003c0) == 0x0c0001c0 ||	/* ldcw */
 	       (ins & 0xfc0003c0) == 0x0c000140;	/* ldcd */
 }
+
+void	ast(struct proc *);
 
 const char *trap_type[] = {
 	"invalid",
