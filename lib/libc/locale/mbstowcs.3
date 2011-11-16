@@ -1,4 +1,4 @@
-.\" $OpenBSD: mbstowcs.3,v 1.3 2010/09/10 18:38:19 jmc Exp $
+.\" $OpenBSD: mbstowcs.3,v 1.4 2011/11/16 13:06:21 stsp Exp $
 .\" $NetBSD: mbstowcs.3,v 1.6 2003/09/08 17:54:31 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 10 2010 $
+.Dd $Mdocdate: November 16 2011 $
 .Dt MBSTOWCS 3
 .Os
 .\" ----------------------------------------------------------------------
@@ -81,26 +81,29 @@ Undefined (may causes the program to crash).
 returns:
 .Bl -tag -width 012345678901
 .It 0 or positive
-Number of elements stored in the array pointed to by
-.Fa pwcs .
-There are no cases where the value returned is greater than
-.Fa n
-(unless
+The value returned is the number of elements stored in the array pointed to by
+.Fa pwcs ,
+except for a terminating null wide character (if any).
+If
 .Fa pwcs
-is a null pointer) or the value of the
-.Dv MB_CUR_MAX
-macro.
-If the return value is equal to
+is not null and the value returned is equal to
 .Fa n ,
-the string pointed to by
+the wide-character string pointed to by
 .Fa pwcs
-will not be null-terminated.
+is not null terminated.
+If
+.Fa pwcs
+is a null pointer, the value returned is the number of elements to contain
+the whole string converted, except for a terminating null wide character.
 .It (size_t)-1
+The array indirectly pointed to by
 .Fa s
-points to the string containing invalid or incomplete multibyte character.
-The
+contains a byte sequence forming invalid character.
+In this case,
 .Fn mbstowcs
-also sets errno to indicate the error.
+sets
+.Va errno
+to indicate the error.
 .El
 .\" ----------------------------------------------------------------------
 .Sh ERRORS
