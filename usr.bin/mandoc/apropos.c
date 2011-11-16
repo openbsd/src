@@ -1,4 +1,4 @@
-/*	$Id: apropos.c,v 1.4 2011/11/13 11:07:10 schwarze Exp $ */
+/*	$Id: apropos.c,v 1.5 2011/11/16 13:23:27 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -34,6 +34,7 @@ int
 apropos(int argc, char *argv[])
 {
 	int		 ch;
+	size_t		 terms;
 	struct opts	 opts;
 	struct expr	*e;
 	extern int	 optind;
@@ -66,7 +67,7 @@ apropos(int argc, char *argv[])
 	if (0 == argc) 
 		return(EXIT_SUCCESS);
 
-	if (NULL == (e = exprcomp(argc, argv))) {
+	if (NULL == (e = exprcomp(argc, argv, &terms))) {
 		fprintf(stderr, "Bad expression\n");
 		return(EXIT_FAILURE);
 	}
@@ -78,7 +79,7 @@ apropos(int argc, char *argv[])
 	 * The index database is a recno.
 	 */
 
-	apropos_search(&opts, e, NULL, list);
+	apropos_search(&opts, e, terms, NULL, list);
 	exprfree(e);
 	return(EXIT_SUCCESS);
 }

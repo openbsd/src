@@ -1,4 +1,4 @@
-/*	$Id: apropos_db.h,v 1.3 2011/11/13 11:07:10 schwarze Exp $ */
+/*	$Id: apropos_db.h,v 1.4 2011/11/16 13:23:27 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -34,6 +34,7 @@ struct	rec {
 	 */
 	int		 lhs;
 	int		 rhs;
+	int		*matches;
 };
 
 struct	opts {
@@ -46,10 +47,9 @@ __BEGIN_DECLS
 struct	expr;
 
 void	 	 apropos_search(const struct opts *, 
-			const struct expr *, void *, 
+			const struct expr *, size_t, void *, 
 			void (*)(struct rec *, size_t, void *));
-
-struct	expr	*exprcomp(int, char *[]);
+struct	expr	*exprcomp(int, char *[], size_t *);
 void		 exprfree(struct expr *);
 
 __END_DECLS
