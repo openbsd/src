@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.66 2011/05/26 07:26:36 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.67 2011/11/16 08:03:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -279,6 +279,8 @@ aproc_depend(struct aproc *p, struct aproc *dep)
 
 	if (p == dep)
 		return 1;
+	if (p == NULL)
+		return 0;
 	LIST_FOREACH(i, &p->ins, ient) {
 		if (i->wproc && aproc_depend(i->wproc, dep))
 			return 1;
