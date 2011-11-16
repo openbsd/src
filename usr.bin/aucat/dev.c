@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.68 2011/11/15 08:05:22 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.69 2011/11/16 21:22:17 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -520,22 +520,28 @@ dev_close(struct dev *d)
 	switch (d->pstate) {
 	case DEV_START:
 #ifdef DEBUG
-		if (debug_level >= 3) 
-			dbg_puts("draining device\n");
+		if (debug_level >= 3) {
+			dev_dbg(d);
+			dbg_puts(": draining device\n");
+		}
 #endif
 		dev_start(d);
 		break;
 	case DEV_INIT:
 #ifdef DEBUG
-		if (debug_level >= 3) 
-			dbg_puts("flushing device\n");
+		if (debug_level >= 3) {
+			dev_dbg(d);
+			dbg_puts(": flushing device\n");
+		}
 #endif
 		dev_clear(d);
 		break;
 	}
 #ifdef DEBUG
-	if (debug_level >= 2) 
-		dbg_puts("closing device\n");
+	if (debug_level >= 2) {
+		dev_dbg(d);
+		dbg_puts(": closing device\n");
+	}
 #endif
 
 	if (d->mix) {
@@ -740,8 +746,10 @@ dev_stop(struct dev *d)
 	struct file *f;
 
 #ifdef DEBUG
-	if (debug_level >= 2)
-		dbg_puts("device stopped\n");
+	if (debug_level >= 2) {
+		dev_dbg(d);
+		dbg_puts(": device stopped\n");
+	}
 #endif
 	d->pstate = DEV_INIT;
 	if (d->mode & MODE_LOOP)
@@ -765,8 +773,10 @@ int
 dev_ref(struct dev *d)
 {
 #ifdef DEBUG
-	if (debug_level >= 3)
-		dbg_puts("device requested\n");
+	if (debug_level >= 3) {
+		dev_dbg(d);
+		dbg_puts(": device requested\n");
+	}
 #endif
 	if (d->pstate == DEV_CLOSED && !dev_open(d)) {
 		if (d->hold)
@@ -781,8 +791,10 @@ void
 dev_unref(struct dev *d)
 {
 #ifdef DEBUG
-	if (debug_level >= 3)
-		dbg_puts("device released\n");
+	if (debug_level >= 3) {
+		dev_dbg(d);
+		dbg_puts(": device released\n");
+	}
 #endif
 	d->refcnt--;
 	if (d->refcnt == 0 && d->pstate == DEV_INIT && !d->hold)
@@ -811,8 +823,10 @@ dev_run(struct dev *d)
 	    ((d->mode & MODE_REC)  && !APROC_OK(d->sub)) ||
 	    ((d->mode & MODE_MON)  && !APROC_OK(d->submon))) {
 #ifdef DEBUG
-		if (debug_level >= 1)
-			dbg_puts("device disappeared\n");
+		if (debug_level >= 1) {
+			dev_dbg(d);
+			dbg_puts(": device disappeared\n");
+		}
 #endif
 		if (d->hold) {
 			dev_del(d);
@@ -841,8 +855,10 @@ dev_run(struct dev *d)
 		    (!APROC_OK(d->midi) ||
 			d->midi->u.ctl.tstate != CTL_RUN)) {
 #ifdef DEBUG
-			if (debug_level >= 3)
-				dbg_puts("device idle, suspending\n");
+			if (debug_level >= 3) {
+				dev_dbg(d);
+				dbg_puts(": device idle, suspending\n");
+			}
 #endif
 			dev_stop(d);
 			if (d->refcnt == 0 && !d->hold)
@@ -966,7 +982,8 @@ dev_sync(struct dev *d, unsigned mode, struct abuf *ibuf, struct abuf *obuf)
 		delta += d->sub->u.sub.lat;
 #ifdef DEBUG
 	if (debug_level >= 3) {
-		dbg_puts("syncing device");
+		dev_dbg(d);
+		dbg_puts(": syncing device");
 		if (APROC_OK(d->mix)) {
 			dbg_puts(", ");
 			aproc_dbg(d->mix);
@@ -1027,7 +1044,8 @@ dev_attach(struct dev *d, char *name, unsigned mode,
 	if ((!APROC_OK(d->mix)    && (mode & MODE_PLAY)) ||
 	    (!APROC_OK(d->sub)    && (mode & MODE_REC)) ||
 	    (!APROC_OK(d->submon) && (mode & MODE_MON))) {
-	    	dbg_puts("mode beyond device mode, not attaching\n");
+		dev_dbg(d);
+	    	dbg_puts(": mode beyond device mode, not attaching\n");
 		return;
 	}
 #endif
@@ -1202,7 +1220,8 @@ dev_clear(struct dev *d)
 	if (APROC_OK(d->mix)) {
 #ifdef DEBUG
 		if (!LIST_EMPTY(&d->mix->ins)) {
-			dbg_puts("play end not idle, can't clear device\n");
+			dev_dbg(d);
+			dbg_puts(": play end not idle, can't clear device\n");
 			dbg_panic();	
 		}
 #endif
@@ -1216,7 +1235,8 @@ dev_clear(struct dev *d)
 	if (APROC_OK(d->sub)) {
 #ifdef DEBUG
 		if (!LIST_EMPTY(&d->sub->outs)) {
-			dbg_puts("record end not idle, can't clear device\n");
+			dev_dbg(d);
+			dbg_puts(": record end not idle, can't clear device\n");
 			dbg_panic();	
 		}
 #endif
@@ -1230,7 +1250,8 @@ dev_clear(struct dev *d)
 	if (APROC_OK(d->submon)) {
 #ifdef DEBUG
 		if (!LIST_EMPTY(&d->submon->outs)) {
-			dbg_puts("monitoring end not idle, can't clear device\n");
+			dev_dbg(d);
+			dbg_puts(": monitoring end not idle, can't clear device\n");
 			dbg_panic();
 		}
 #endif
