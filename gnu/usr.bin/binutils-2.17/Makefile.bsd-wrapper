@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 2011/07/04 23:58:26 drahn Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 2011/11/16 18:57:54 schwarze Exp $
 
 OLD_TOOLCHAIN=m68k m88k vax
 
@@ -20,7 +20,9 @@ PREFIX=/usr
 MANDIR=${PREFIX}/share/man/cat
 .endif
 
-MAN=		binutils/doc/objdump.1 c++filt.1
+MAN=		binutils/doc/addr2line.1 binutils/doc/objcopy.1 \
+		binutils/doc/objdump.1 binutils/doc/readelf.1 \
+		c++filt.1
 
 #### gdb comes from other binutils !?!?!
 ###CONF_SUBDIRS+=      gdb
@@ -32,10 +34,8 @@ MAN=		binutils/doc/objdump.1 c++filt.1
 SUBDIRS+=	binutils ld gas
 CONF_SUBDIRS+=	binutils ld gas
 INST_SUBDIRS+=	binutils ld gas
-MAN+=		binutils/doc/addr2line.1 binutils/doc/ar.1 \
-		binutils/doc/objcopy.1 binutils/doc/ranlib.1 \
-		binutils/doc/readelf.1 binutils/doc/strings.1 \
-		binutils/doc/strip.1
+MAN+=		binutils/doc/ar.1 binutils/doc/ranlib.1 \
+		binutils/doc/strings.1 binutils/doc/strip.1
 # no as or ld manual ??? 
 #		gas/doc/as.1	ld/ld.1
 .  else
