@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.69 2011/11/16 21:22:17 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.70 2011/11/16 21:26:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -543,7 +543,7 @@ dev_close(struct dev *d)
 		dbg_puts(": closing device\n");
 	}
 #endif
-
+	d->pstate = DEV_CLOSED;
 	if (d->mix) {
 		/*
 		 * Put the mixer in ``autoquit'' state and generate
@@ -649,7 +649,6 @@ dev_close(struct dev *d)
 			aproc_del(d->midi);
 		d->midi = NULL;
 	}
-	d->pstate = DEV_CLOSED;
 }
 
 /*
