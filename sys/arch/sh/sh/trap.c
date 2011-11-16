@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.17 2011/04/03 14:56:28 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.18 2011/11/16 20:50:19 deraadt Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -87,6 +87,7 @@
 #include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/resourcevar.h>
+#include <sys/signalvar.h>
 #include <sys/syscall.h>
 
 #ifdef KTRACE
@@ -105,7 +106,6 @@
 #include <sh/mmu.h>
 #include <sh/pcb.h>
 #include <sh/trap.h>
-#include <sh/userret.h>
 #ifdef SH4
 #include <sh/fpu.h>
 #endif
@@ -485,8 +485,8 @@ ast(struct proc *p, struct trapframe *tf)
 	KDASSERT(p->p_md.md_regs == tf);
 
 	while (p->p_md.md_astpending) {
-		uvmexp.softs++;
 		p->p_md.md_astpending = 0;
+		uvmexp.softs++;
 
 		if (p->p_flag & P_OWEUPC) {
 			ADDUPROF(p);

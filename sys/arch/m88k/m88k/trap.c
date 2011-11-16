@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.78 2011/07/11 15:40:47 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.79 2011/11/16 20:50:18 deraadt Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -118,18 +118,6 @@ const char *pbus_exception_type[] = {
 	"Write Violation",
 };
 #endif
-
-static inline void
-userret(struct proc *p)
-{
-	int sig;
-
-	/* take pending signals */
-	while ((sig = CURSIG(p)) != 0)
-		postsig(sig);
-
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
-}
 
 void
 printtrap(int type, struct trapframe *frame)

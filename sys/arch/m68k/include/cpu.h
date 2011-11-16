@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.24 2011/11/01 21:20:55 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.25 2011/11/16 20:50:18 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.3 1997/02/02 06:56:57 thorpej Exp $	*/
 
 /*
@@ -238,9 +238,6 @@ void	proc_trampoline(void);
 void	savectx(struct pcb *);
 int	suline(caddr_t, caddr_t);
 void	switch_exit(struct proc *);
-
-/* m68k_machdep.c */
-void userret(struct proc *);
 
 /* regdump.c */
 void regdump(struct trapframe *, int);

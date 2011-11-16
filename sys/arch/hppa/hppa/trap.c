@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.119 2011/11/08 14:02:30 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.120 2011/11/16 20:50:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -135,13 +135,9 @@ u_char hppa_regmap[32] = {
 	offsetof(struct trapframe, tf_r31) / 4,
 };
 
-void	userret(struct proc *p);
-
 void
-userret(struct proc *p)
+ast(struct proc *p)
 {
-	int sig;
-
 	if (p->p_md.md_astpending) {
 		p->p_md.md_astpending = 0;
 		uvmexp.softs++;
@@ -154,10 +150,6 @@ userret(struct proc *p)
 			preempt(NULL);
 	}
 
-	while ((sig = CURSIG(p)) != 0)
-		postsig(sig);
-
-	p->p_cpu->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 }
 
 void
@@ -643,8 +635,10 @@ datalign_user:
 	 * and also see a note in locore.S:TLABEL(all)
 	 */
 	if ((type & T_USER) && !(frame->tf_iisq_head == HPPA_SID_KERNEL &&
-	    (frame->tf_iioq_head & ~PAGE_MASK) == SYSCALLGATE))
+	    (frame->tf_iioq_head & ~PAGE_MASK) == SYSCALLGATE)) {
+		ast(p);
 		userret(p);
+	}
 }
 
 void
@@ -662,6 +656,7 @@ child_return(void *arg)
 
 	KERNEL_UNLOCK();
 
+	ast(p);
 	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
@@ -945,6 +940,7 @@ syscall(struct trapframe *frame)
 	scdebug_ret(p, code, oerror, rval);
 	KERNEL_UNLOCK();
 #endif
+	ast(p);
 	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {

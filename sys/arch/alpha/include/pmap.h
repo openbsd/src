@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.25 2010/12/26 15:40:58 miod Exp $ */
+/* $OpenBSD: pmap.h,v 1.26 2011/11/16 20:50:18 deraadt Exp $ */
 /* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
@@ -298,8 +298,8 @@ pmap_l3pte(pmap, v, l2pte)
  *
  * The pmap module may defer syncing the user I-stream until the
  * return to userspace, since the IMB PALcode op can be quite
- * expensive.  Since user instructions won't be executed until
- * the return to userspace, this can be deferred until userret().
+ * expensive.  Since user instructions won't be executed until the
+ * return to userspace, this can be deferred until just before userret().
  */
 #define	PMAP_USERRET(pmap)						\
 do {									\

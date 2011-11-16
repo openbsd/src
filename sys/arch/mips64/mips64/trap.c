@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.76 2011/07/11 15:40:47 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.77 2011/11/16 20:50:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -140,18 +140,6 @@ int	ptrace_read_insn(struct proc *, vaddr_t, uint32_t *);
 int	ptrace_write_insn(struct proc *, vaddr_t, uint32_t);
 int	process_sstep(struct proc *, int);
 #endif
-
-static __inline__ void
-userret(struct proc *p)
-{
-	int sig;
-
-	/* take pending signals */
-	while ((sig = CURSIG(p)) != 0)
-		postsig(sig);
-
-	p->p_cpu->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
-}
 
 /*
  * Handle an AST for the current process.

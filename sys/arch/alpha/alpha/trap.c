@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.58 2011/04/03 14:56:27 guenther Exp $ */
+/* $OpenBSD: trap.c,v 1.59 2011/11/16 20:50:17 deraadt Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -115,8 +115,6 @@
 #endif
 #include <alpha/alpha/db_instruction.h>
 
-void		userret(struct proc *);
-
 #ifndef SMALL_KERNEL
 
 unsigned long	Sfloat_to_reg(unsigned int);
@@ -166,25 +164,6 @@ trap_init()
 	 */
 	alpha_pal_wrmces(alpha_pal_rdmces() & 
 	    ~(ALPHA_MCES_DSC|ALPHA_MCES_DPC));
-}
-
-/*
- * Define the code needed before returning to user mode, for
- * trap and syscall.
- */
-void
-userret(struct proc *p)
-{
-	int sig;
-
-	/* Do any deferred user pmap operations. */
-	PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
-
-	/* take pending signals */
-	while ((sig = CURSIG(p)) != 0)
-		postsig(sig);
-
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 }
 
 #ifdef DEBUG
@@ -514,8 +493,12 @@ do_fault:
 	sv.sival_ptr = v;
 	trapsignal(p, i, ucode, typ, sv);
 out:
-	if (user)
+	if (user) {
+		/* Do any deferred user pmap operations. */
+		PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
+
 		userret(p);
+	}
 	return;
 
 dopanic:
@@ -652,6 +635,9 @@ syscall(code, framep)
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
 #endif
+	/* Do any deferred user pmap operations. */
+	PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
+
 	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
@@ -675,6 +661,9 @@ child_return(arg)
 	framep->tf_regs[FRAME_V0] = 0;
 	framep->tf_regs[FRAME_A4] = 0;
 	framep->tf_regs[FRAME_A3] = 0;
+
+	/* Do any deferred user pmap operations. */
+	PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
 
 	userret(p);
 #ifdef KTRACE
@@ -752,6 +741,9 @@ ast(framep)
 
 	if (curcpu()->ci_want_resched)
 		preempt(NULL);
+
+	/* Do any deferred user pmap operations. */
+	PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
 
 	userret(p);
 }

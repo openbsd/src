@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.88 2011/07/30 20:50:47 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.89 2011/11/16 20:50:19 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -63,7 +63,6 @@
 
 static int fix_unaligned(struct proc *p, struct trapframe *frame);
 int badaddr(char *addr, u_int32_t len);
-static __inline void userret(struct proc *);
 void trap(struct trapframe *frame);
 
 /* These definitions should probably be somewhere else				XXX */
@@ -245,17 +244,6 @@ enable_vec(struct proc *p)
 	ppc_mtmsr(oldmsr);
 }
 #endif /* ALTIVEC */
-
-static __inline void
-userret(struct proc *p)
-{
-	int sig;
-
-	/* take pending signals */
-	while ((sig = CURSIG(p)) != 0)
-		postsig(sig);
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
-}
 
 void
 trap(struct trapframe *frame)

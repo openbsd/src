@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.13 2011/07/04 22:53:53 tedu Exp $	*/
+/*	$OpenBSD: trap.c,v 1.14 2011/11/16 20:50:19 deraadt Exp $	*/
 /*	OpenBSD: trap.c,v 1.42 2004/12/06 20:12:25 miod Exp 	*/
 
 /*
@@ -199,7 +199,6 @@ const char *trap_type[] = {
 
 #define	N_TRAP_TYPES	(sizeof trap_type / sizeof *trap_type)
 
-static __inline void userret(struct proc *);
 void trap(unsigned, int, int, struct trapframe *);
 static __inline void share_fpu(struct proc *, struct trapframe *);
 void mem_access_fault(unsigned, int, u_int, int, int, struct trapframe *);
@@ -209,21 +208,6 @@ void syscall(register_t, struct trapframe *, register_t);
 int ignore_bogus_traps = 0;
 
 int want_ast = 0;
-/*
- * Define the code needed before returning to user mode, for
- * trap, mem_access_fault, and syscall.
- */
-static __inline void
-userret(struct proc *p)
-{
-	int sig;
-
-	/* take pending signals */
-	while ((sig = CURSIG(p)) != 0)
-		postsig(sig);
-
-	p->p_cpu->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
-}
 
 /*
  * If someone stole the FPU while we were away, do not enable it

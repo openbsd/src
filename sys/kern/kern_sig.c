@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.128 2011/11/09 20:57:38 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.129 2011/11/16 20:50:19 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1621,4 +1621,15 @@ filt_signal(struct knote *kn, long hint)
 			kn->kn_data++;
 	}
 	return (kn->kn_data != 0);
+}
+
+void
+userret(struct proc *p)
+{
+	int sig;
+
+	while ((sig = CURSIG(p)) != 0)
+		postsig(sig);
+
+	p->p_cpu->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 }

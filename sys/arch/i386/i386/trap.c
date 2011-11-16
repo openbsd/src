@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.100 2011/07/11 15:40:47 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.101 2011/11/16 20:50:18 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -86,25 +86,8 @@ extern struct emul emul_aout;
 
 #include "npx.h"
 
-static __inline void userret(struct proc *);
 void trap(struct trapframe *);
 void syscall(struct trapframe *);
-
-/*
- * Define the code needed before returning to user mode, for
- * trap and syscall.
- */
-static __inline void
-userret(struct proc *p)
-{
-	int sig;
-
-	/* take pending signals */
-	while ((sig = CURSIG(p)) != 0)
-		postsig(sig);
-
-	p->p_cpu->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
-}
 
 char	*trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */

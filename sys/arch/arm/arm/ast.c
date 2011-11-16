@@ -1,4 +1,4 @@
-/*	$OpenBSD: ast.c,v 1.9 2011/09/20 22:02:10 miod Exp $	*/
+/*	$OpenBSD: ast.c,v 1.10 2011/11/16 20:50:18 deraadt Exp $	*/
 /*	$NetBSD: ast.c,v 1.6 2003/10/31 16:44:34 cl Exp $	*/
 
 /*
@@ -66,19 +66,6 @@ void ast(struct trapframe *);
  
 int want_resched;
 extern int astpending;
-
-void
-userret(struct proc *p)
-{
-	int sig;
-
-	/* Take pending signals. */
-	while ((sig = (CURSIG(p))) != 0)
-		postsig(sig);
-
-	p->p_cpu->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
-}
-
 
 /*
  * Handle asynchronous system traps.

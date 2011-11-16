@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.61 2011/09/22 17:41:00 jasper Exp $ */
+/* $OpenBSD: pmap.c,v 1.62 2011/11/16 20:50:17 deraadt Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -618,11 +618,11 @@ do {									\
 #define	PMAP_SYNC_ISTREAM_USER(pmap)					\
 do {									\
 	alpha_multicast_ipi((pmap)->pm_cpus, ALPHA_IPI_AST);		\
-	/* for curcpu, will happen in userret() */			\
+	/* for curcpu, do it before userret() */			\
 } while (0)
 #else
 #define	PMAP_SYNC_ISTREAM_KERNEL()	alpha_pal_imb()
-#define	PMAP_SYNC_ISTREAM_USER(pmap)	/* will happen in userret() */
+#define	PMAP_SYNC_ISTREAM_USER(pmap)	/* done before userret() */
 #endif /* MULTIPROCESSOR */
 
 #define	PMAP_SYNC_ISTREAM(pmap)						\

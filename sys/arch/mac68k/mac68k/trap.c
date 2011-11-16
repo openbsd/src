@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.60 2011/07/05 04:48:01 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.61 2011/11/16 20:50:18 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.68 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
@@ -145,36 +145,13 @@ static void dumpwb(int, u_short, u_int, u_int);
 #endif
 #endif
 
-/*
- * Trap and syscall both need the following work done before returning
- * to user mode.
- */
-void
-userret(struct proc *p)
-{
-	int sig;
-
-	/* take pending signals */
-	while ((sig = CURSIG(p)) != 0)
-		postsig(sig);
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
-}
-
 #ifdef M68040
 /*
- * Same as above, but also handles writeback completion on 68040.
+ * Handle writeback completion on 68040.
  */
 void
 wb_userret(struct proc *p, struct frame *fp)
 {
-	int sig;
-	union sigval sv;
-
-	/* take pending signals */
-	while ((sig = CURSIG(p)) != 0)
-		postsig(sig);
-	p->p_priority = p->p_usrpri;
-
 	/*
 	 * Deal with user mode writebacks (from trap, or from sigreturn).
 	 * If any writeback fails, go back and attempt signal delivery
@@ -184,16 +161,16 @@ wb_userret(struct proc *p, struct frame *fp)
 	 * the writebacks.  Maybe we should just drop the sucker?
 	 */
 	if (mmutype == MMU_68040 && fp->f_format == FMT7) {
+		int sig;
+		union sigval sv;
+
 		if ((sig = writeback(fp)) != 0) {
 			sv.sival_ptr = (void *)fp->f_fmt7.f_fa;
 			trapsignal(p, sig, T_MMUFLT, SEGV_MAPERR, sv);
 
-			while ((sig = CURSIG(p)) != 0)
-				postsig(sig);
-			p->p_priority = p->p_usrpri;
+			userret(p);
 		}
 	}
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 #endif
 
@@ -580,10 +557,9 @@ copyfault:
 out:
 	if ((type & T_USER) == 0)
 		return;
+	userret(p);
 #ifdef M68040
 	wb_userret(p, &frame);
-#else
-	userret(p);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.26 2011/11/14 15:06:14 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.27 2011/11/16 20:50:18 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -93,7 +93,6 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
-#include <machine/userret.h>
 #ifdef DDB
 #include <machine/db_machdep.h>
 #endif

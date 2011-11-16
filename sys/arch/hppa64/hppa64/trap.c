@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.26 2011/09/20 16:44:28 jsing Exp $	*/
+/*	$OpenBSD: trap.c,v 1.27 2011/11/16 20:50:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -128,43 +128,18 @@ u_char hppa64_regmap[32] = {
 	offsetof(struct trapframe, tf_r31) / 8,
 };
 
-void	userret(struct proc *p, register_t pc, u_quad_t oticks);
-
 void
-userret(struct proc *p, register_t pc, u_quad_t oticks)
+ast(struct proc *p)
 {
-	int sig;
-
-	/* take pending signals */
-	while ((sig = CURSIG(p)) != 0)
-		postsig(sig);
-
-	p->p_priority = p->p_usrpri;
 	if (astpending) {
 		astpending = 0;
+		uvmexp.softs++;
 		if (p->p_flag & P_OWEUPC) {
 			ADDUPROF(p);
 		}
+		if (want_resched) {
+			preempt(NULL);
 	}
-	if (want_resched) {
-		/*
-		 * We're being preempted.
-		 */
-		preempt(NULL);
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-	}
-
-	/*
-	 * If profiling, charge recent system time to the trapped pc.
-	 */
-	if (p->p_flag & P_PROFIL) {
-		extern int psratio;
-
-		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
-	}
-
-	p->p_cpu->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 void
@@ -554,8 +529,10 @@ trap(int type, struct trapframe *frame)
 	 * and also see a note in locore.S:TLABEL(all)
 	 */
 	if ((type & T_USER) &&
-	    (frame->tf_iioq[0] & ~PAGE_MASK) != SYSCALLGATE)
-		userret(p, frame->tf_iioq[0], 0);
+	    (frame->tf_iioq[0] & ~PAGE_MASK) != SYSCALLGATE) {
+		ast(p);
+		userret(p);
+	}
 }
 
 void
@@ -571,7 +548,8 @@ child_return(void *arg)
 	tf->tf_ret1 = 1;	/* ischild */
 	tf->tf_r1 = 0;		/* errno */
 
-	userret(p, tf->tf_iioq[0], 0);
+	ast(p);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p,
@@ -674,7 +652,8 @@ syscall(struct trapframe *frame)
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, oerror, rval);
 #endif
-	userret(p, frame->tf_iioq[1], 0);
+	ast(p);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, oerror, rval[0]);
