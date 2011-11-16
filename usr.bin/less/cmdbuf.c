@@ -1352,7 +1352,9 @@ histfile_name()
 		return (save(name));
 	}
 
-	/* Otherwise, file is in $HOME. */
+	/* Otherwise, file is in $HOME if enabled. */
+	if (strcmp (LESSHISTFILE, "-") == 0)
+		return (NULL);
 	home = lgetenv("HOME");
 	if (home == NULL || *home == '\0')
 	{
