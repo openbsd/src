@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.200 2011/08/23 10:32:27 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.201 2011/11/16 16:38:34 schwarze Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -593,8 +593,8 @@ sub format
 		    chdir($dir) or die "Can't chdir to $dir";
 		    },
 		    OpenBSD::Paths->groff,
-		    qw(-Tascii -mandoc -Wall -mtty-char -P -c), @extra, '--',
-		    $file);
+		    qw(-mandoc -mtty-char -E -Ww -Tascii -P -c),
+		    @extra, '--', $file);
 	} else {
 		die "Can't parse source name $fname";
 	}
