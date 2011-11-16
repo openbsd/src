@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.173 2011/11/09 12:36:03 camield Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.174 2011/11/16 11:59:28 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1290,10 +1290,13 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #endif
 	case SIOCSIFFLAGS:
 		s = splnet();
-		if (ifp->if_flags & IFF_UP) {
+		if ((ifp->if_flags & IFF_RUNNING) == 0 &&
+		    (ifp->if_flags & IFF_UP)) {
 			ifp->if_flags |= IFF_RUNNING;
 			pfsync_request_full_update(sc);
-		} else {
+		}
+		if ((ifp->if_flags & IFF_RUNNING) &&
+		    (ifp->if_flags & IFF_UP) == 0) {
 			ifp->if_flags &= ~IFF_RUNNING;
 
 			/* drop everything */
