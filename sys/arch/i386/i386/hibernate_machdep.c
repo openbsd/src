@@ -52,7 +52,6 @@
 void    hibernate_enter_resume_4k_pte(vaddr_t, paddr_t);
 void    hibernate_enter_resume_4k_pde(vaddr_t);
 void    hibernate_enter_resume_4m_pde(vaddr_t, paddr_t);
-int	hibernate_read_chunks(union hibernate_info *, paddr_t, paddr_t, size_t);
 
 extern	void hibernate_resume_machdep(void);
 extern	void hibernate_flush(void);

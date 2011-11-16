@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.17 2011/11/14 00:25:17 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.18 2011/11/16 23:52:27 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -122,11 +122,12 @@ int	hibernate_write_chunktable(union hibernate_info *);
 int	hibernate_write_chunks(union hibernate_info *);
 int	hibernate_clear_signature(void);
 int	hibernate_compare_signature(union hibernate_info *,
-		union hibernate_info *);
+	    union hibernate_info *);
 void	hibernate_resume(void);
 int	hibernate_suspend(void);
 int	hibernate_read_image(union hibernate_info *);
-int	hibernate_read_chunks(union hibernate_info *, paddr_t, paddr_t, size_t);
+int	hibernate_read_chunks(union hibernate_info *, paddr_t, paddr_t, size_t,
+	    struct hibernate_disk_chunk *);
 void	hibernate_unpack_image(union hibernate_info *);
 void	hibernate_populate_resume_pt(union hibernate_info *, paddr_t, paddr_t);
 void	hibernate_free(void);

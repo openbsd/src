@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.23 2011/11/15 17:13:53 deraadt Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.24 2011/11/16 23:52:27 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -37,9 +37,6 @@ struct hibernate_zlib_state *hibernate_state;
 /* Temporary vaddr ranges used during hibernate */
 vaddr_t hibernate_temp_page;
 vaddr_t hibernate_copy_page;
-vaddr_t hibernate_stack_page;
-vaddr_t hibernate_fchunk_area;
-vaddr_t	hibernate_chunktable_area;
 
 /* Hibernate info as read from disk during resume */
 union hibernate_info disk_hiber_info;
@@ -1005,12 +1002,6 @@ hibernate_resume(void)
 	union hibernate_info hiber_info;
 	int s;
 
-	/* Scrub temporary vaddr ranges used during resume */
-	hibernate_temp_page = (vaddr_t)NULL;
-	hibernate_fchunk_area = (vaddr_t)NULL;
-	hibernate_chunktable_area = (vaddr_t)NULL;
-	hibernate_stack_page = (vaddr_t)NULL;
-
 	/* Get current running machine's hibernate info */
 	bzero(&hiber_info, sizeof(hiber_info));
 	if (get_hibernate_info(&hiber_info, 0))
@@ -1031,33 +1022,6 @@ hibernate_resume(void)
 	 */
 	if (hibernate_compare_signature(&hiber_info, &disk_hiber_info))
 		return;
-
-	/*
-	 * Allocate several regions of vaddrs for use during read.
-	 * These mappings go into the resuming kernel's page table, and are
-	 * used only during image read.
-	 */
-	hibernate_temp_page = (vaddr_t)km_alloc(2*PAGE_SIZE, &kv_any,
-	    &kp_none, &kd_nowait);
-	if (!hibernate_temp_page)
-		goto fail;
-
-	hibernate_fchunk_area = (vaddr_t)km_alloc(3*PAGE_SIZE, &kv_any,
-	    &kp_none, &kd_nowait);
-	if (!hibernate_fchunk_area)
-		goto fail;
-
-	/* Allocate a temporary chunktable area */
-	hibernate_chunktable_area = (vaddr_t)malloc(HIBERNATE_CHUNK_TABLE_SIZE,
-					   M_DEVBUF, M_NOWAIT);
-	if (!hibernate_chunktable_area)
-		goto fail;
-
-	/* Allocate one temporary page of VAs for the resume time stack */
-	hibernate_stack_page = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any,
-	    &kp_none, &kd_nowait);
-	if (!hibernate_stack_page)
-		goto fail;
 
 	/* Read the image from disk into the image (pig) area */
 	if (hibernate_read_image(&disk_hiber_info))
@@ -1088,17 +1052,6 @@ hibernate_resume(void)
 
 fail:
 	printf("Unable to resume hibernated image\n");
-
-	if (hibernate_temp_page)
-		km_free((void *)hibernate_temp_page, 2*PAGE_SIZE, &kv_any,
-		    &kp_none);
-
-	if (hibernate_fchunk_area)
-		km_free((void *)hibernate_fchunk_area, 3*PAGE_SIZE, &kv_any,
-		    &kp_none);
-
-	if (hibernate_chunktable_area)
-		free((void *)hibernate_chunktable_area, M_DEVBUF);
 }
 
 /*
@@ -1115,23 +1068,12 @@ hibernate_unpack_image(union hibernate_info *hiber_info)
 	struct hibernate_disk_chunk *chunks;
 	union hibernate_info local_hiber_info;
 	paddr_t image_cur = global_pig_start;
-	vaddr_t tempva;
 	int *fchunks, i;
 	char *pva = (char *)hiber_info->piglet_va;
 
 	/* Mask off based on arch-specific piglet page size */
 	pva = (char *)((paddr_t)pva & (PIGLET_PAGE_MASK));
 	fchunks = (int *)(pva + (6 * PAGE_SIZE));
-
-	/* Copy temporary chunktable to piglet */
-	tempva = (vaddr_t)km_alloc(HIBERNATE_CHUNK_TABLE_SIZE, &kv_any,
-	    &kp_none, &kd_nowait);
-	for (i = 0; i < HIBERNATE_CHUNK_TABLE_SIZE; i += PAGE_SIZE)
-		pmap_kenter_pa(tempva + i, hiber_info->piglet_pa +
-		    HIBERNATE_CHUNK_SIZE + i, VM_PROT_ALL);
-
-	bcopy((caddr_t)hibernate_chunktable_area, (caddr_t)tempva,
-	    HIBERNATE_CHUNK_TABLE_SIZE);
 
 	chunks = (struct hibernate_disk_chunk *)(pva +  HIBERNATE_CHUNK_SIZE);
 
@@ -1216,8 +1158,9 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 
 	/*
 	 * Allocate VA for the temp and copy page.
+	 * These will becomee part of the suspended kernel and will
+	 * be freed in hibernate_free, upon resume.
 	 */
-
 	hibernate_temp_page = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any,
 	    &kp_none, &kd_nowait);
 	if (!hibernate_temp_page)
@@ -1414,6 +1357,9 @@ hibernate_read_image(union hibernate_info *hiber_info)
 	paddr_t image_start, image_end, pig_start, pig_end;
 	struct hibernate_disk_chunk *chunks;
 	daddr_t blkctr;
+	vaddr_t chunktable = (vaddr_t)NULL;
+	paddr_t piglet_chunktable = hiber_info->piglet_pa +
+	    HIBERNATE_CHUNK_SIZE; 
 	int i;
 
 	/* Calculate total chunk table size in disk blocks */
@@ -1422,14 +1368,24 @@ hibernate_read_image(union hibernate_info *hiber_info)
 	blkctr = hiber_info->sig_offset - chunktable_size -
 			hiber_info->swap_offset;
 
+	chunktable = (vaddr_t)km_alloc(HIBERNATE_CHUNK_TABLE_SIZE, &kv_any,
+	    &kp_none, &kd_nowait);
+
+	if (!chunktable)
+		return (1);
+
+	/* Read the chunktable from disk into the piglet chunktable */
 	for (i = 0; i < HIBERNATE_CHUNK_TABLE_SIZE;
-	    i += MAXPHYS, blkctr += MAXPHYS/hiber_info->secsize)
-		hibernate_read_block(hiber_info, blkctr, MAXPHYS,
-		    hibernate_chunktable_area + i);
+	    i += PAGE_SIZE, blkctr += PAGE_SIZE/hiber_info->secsize) {
+		pmap_kenter_pa(chunktable + i, piglet_chunktable + i, VM_PROT_ALL);
+		hibernate_read_block(hiber_info, blkctr, PAGE_SIZE,
+		    chunktable + i);
+	}
 
 	blkctr = hiber_info->image_offset;
 	compressed_size = 0;
-	chunks = (struct hibernate_disk_chunk *)hibernate_chunktable_area;
+	pmap_kenter_pa(chunktable, piglet_chunktable, VM_PROT_ALL);
+	chunks = (struct hibernate_disk_chunk *)chunktable;
 
 	for (i = 0; i < hiber_info->chunk_ctr; i++)
 		compressed_size += chunks[i].compressed_size;
@@ -1449,7 +1405,8 @@ hibernate_read_image(union hibernate_info *hiber_info)
 
 	image_start = image_end - disk_size;
 
-	hibernate_read_chunks(hiber_info, image_start, image_end, disk_size);
+	hibernate_read_chunks(hiber_info, image_start, image_end, disk_size,
+	    chunks);
 
 	/* Prepare the resume time pmap/page table */
 	hibernate_populate_resume_pt(hiber_info, image_start, image_end);
@@ -1480,7 +1437,8 @@ hibernate_read_image(union hibernate_info *hiber_info)
  */
 int
 hibernate_read_chunks(union hibernate_info *hib_info, paddr_t pig_start,
-    paddr_t pig_end, size_t image_compr_size)
+    paddr_t pig_end, size_t image_compr_size,
+    struct hibernate_disk_chunk *chunks)
 {
 	paddr_t img_index, img_cur, r1s, r1e, r2s, r2e;
 	paddr_t copy_start, copy_end, piglet_cur;
@@ -1490,13 +1448,26 @@ hibernate_read_chunks(union hibernate_info *hib_info, paddr_t pig_start,
 	size_t processed, compressed_size, read_size;
 	int i, j, overlap, found, nchunks;
 	int nochunks = 0, nfchunks = 0, npchunks = 0;
-	struct hibernate_disk_chunk *chunks;
 	int *ochunks, *pchunks, *fchunks;
+	vaddr_t tempva = (vaddr_t)NULL, hibernate_fchunk_area = (vaddr_t)NULL;
 
 	global_pig_start = pig_start;
 
 	/* XXX - dont need this on all archs */
 	pmap_activate(curproc);
+
+	/*
+	 * These mappings go into the resuming kernel's page table, and are
+	 * used only during image read. They dissappear from existence
+	 * when the suspended kernel is unpacked on top of us.
+	 */
+	tempva = (vaddr_t)km_alloc(2*PAGE_SIZE, &kv_any, &kp_none, &kd_nowait);
+	if (!tempva)
+		return (1);
+	hibernate_fchunk_area = (vaddr_t)km_alloc(3*PAGE_SIZE, &kv_any,
+	    &kp_none, &kd_nowait);
+	if (!hibernate_fchunk_area)
+		return (1);
 
 	/* Temporary output chunk ordering */
 	ochunks = (int *)hibernate_fchunk_area;
@@ -1516,7 +1487,6 @@ hibernate_read_chunks(union hibernate_info *hib_info, paddr_t pig_start,
 	    VM_PROT_ALL);
 
 	nchunks = hib_info->chunk_ctr;
-	chunks = (struct hibernate_disk_chunk *)hibernate_chunktable_area;
 
 	/* Initially start all chunks as unplaced */
 	for (i = 0; i < nchunks; i++)
@@ -1639,10 +1609,9 @@ hibernate_read_chunks(union hibernate_info *hib_info, paddr_t pig_start,
 		compressed_size = chunks[fchunks[i]].compressed_size;
 
 		while (processed < compressed_size) {
-			pmap_kenter_pa(hibernate_temp_page, img_cur,
+			pmap_kenter_pa(tempva, img_cur, VM_PROT_ALL);
+			pmap_kenter_pa(tempva + PAGE_SIZE, img_cur+PAGE_SIZE,
 			    VM_PROT_ALL);
-			pmap_kenter_pa(hibernate_temp_page + PAGE_SIZE,
-			    img_cur+PAGE_SIZE, VM_PROT_ALL);
 
 			/* XXX - not needed on all archs */
 			pmap_activate(curproc);
@@ -1652,14 +1621,13 @@ hibernate_read_chunks(union hibernate_info *hib_info, paddr_t pig_start,
 				read_size = compressed_size - processed;
 
 			hibernate_read_block(hib_info, blkctr, read_size,
-			    hibernate_temp_page + (img_cur & PAGE_MASK));
+			    tempva + (img_cur & PAGE_MASK));
 
 			blkctr += (read_size / hib_info->secsize);
 
 			hibernate_flush();
-			pmap_kremove(hibernate_temp_page, PAGE_SIZE);
-			pmap_kremove(hibernate_temp_page + PAGE_SIZE,
-			    PAGE_SIZE);
+			pmap_kremove(tempva, PAGE_SIZE);
+			pmap_kremove(tempva + PAGE_SIZE, PAGE_SIZE);
 			processed += read_size;
 			img_cur += read_size;
 		}
@@ -1723,7 +1691,6 @@ hibernate_free(void)
 	pmap_kremove(hibernate_temp_page, PAGE_SIZE);
 	pmap_update(pmap_kernel());
 
-	km_free((void *)hibernate_fchunk_area, 3*PAGE_SIZE, &kv_any, &kp_none);
 	km_free((void *)hibernate_copy_page, PAGE_SIZE, &kv_any, &kp_none);
 	km_free((void *)hibernate_temp_page, PAGE_SIZE, &kv_any, &kp_none);
 }
