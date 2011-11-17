@@ -1,4 +1,4 @@
-/*	$Id: apropos_db.c,v 1.5 2011/11/17 14:52:32 schwarze Exp $ */
+/*	$Id: apropos_db.c,v 1.6 2011/11/17 15:38:27 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -19,6 +19,7 @@
 #include <fcntl.h>
 #include <regex.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -41,7 +42,7 @@ struct	rectree {
 struct	expr {
 	int		 regex;
 	int		 index;
-	int	 	 mask;
+	uint64_t 	 mask;
 	int		 and;
 	char		*v;
 	regex_t	 	 re;
@@ -49,22 +50,47 @@ struct	expr {
 };
 
 struct	type {
-	int		 mask;
+	uint64_t	 mask;
 	const char	*name;
 };
 
 static	const struct type types[] = {
 	{ TYPE_An, "An" },
+	{ TYPE_Ar, "Ar" },
+	{ TYPE_At, "At" },
+	{ TYPE_Bsx, "Bsx" },
+	{ TYPE_Bx, "Bx" },
 	{ TYPE_Cd, "Cd" },
+	{ TYPE_Cm, "Cm" },
+	{ TYPE_Dv, "Dv" },
+	{ TYPE_Dx, "Dx" },
+	{ TYPE_Em, "Em" },
 	{ TYPE_Er, "Er" },
 	{ TYPE_Ev, "Ev" },
+	{ TYPE_Fa, "Fa" },
+	{ TYPE_Fl, "Fl" },
 	{ TYPE_Fn, "Fn" },
 	{ TYPE_Fn, "Fo" },
+	{ TYPE_Ft, "Ft" },
+	{ TYPE_Fx, "Fx" },
+	{ TYPE_Ic, "Ic" },
 	{ TYPE_In, "In" },
+	{ TYPE_Lb, "Lb" },
+	{ TYPE_Li, "Li" },
+	{ TYPE_Lk, "Lk" },
+	{ TYPE_Ms, "Ms" },
+	{ TYPE_Mt, "Mt" },
 	{ TYPE_Nd, "Nd" },
 	{ TYPE_Nm, "Nm" },
+	{ TYPE_Nx, "Nx" },
+	{ TYPE_Ox, "Ox" },
 	{ TYPE_Pa, "Pa" },
+	{ TYPE_Rs, "Rs" },
+	{ TYPE_Sh, "Sh" },
+	{ TYPE_Ss, "Ss" },
 	{ TYPE_St, "St" },
+	{ TYPE_Sy, "Sy" },
+	{ TYPE_Tn, "Tn" },
 	{ TYPE_Va, "Va" },
 	{ TYPE_Va, "Vt" },
 	{ TYPE_Xr, "Xr" },
@@ -74,9 +100,9 @@ static	const struct type types[] = {
 
 static	DB	*btree_open(void);
 static	int	 btree_read(const DBT *, const struct mchars *, char **);
-static	int	 exprexecpre(const struct expr *, const char *, int);
+static	int	 exprexecpre(const struct expr *, const char *, uint64_t);
 static	void	 exprexecpost(const struct expr *, 
-			const char *, int, int *, size_t);
+			const char *, uint64_t, int *, size_t);
 static	struct expr *exprterm(char *, int, int);
 static	DB	*index_open(void);
 static	int	 index_read(const DBT *, const DBT *, 
@@ -381,7 +407,7 @@ single_search(struct rectree *tree, const struct opts *opts,
 		const struct expr *expr, size_t terms,
 		struct mchars *mc)
 {
-	int		 root, leaf, mask;
+	int		 root, leaf;
 	DBT		 key, val;
 	DB		*btree, *idx;
 	int		 ch;
@@ -389,6 +415,7 @@ single_search(struct rectree *tree, const struct opts *opts,
 	recno_t		 rec;
 	struct rec	*recs;
 	struct rec	 srec;
+	struct db_val	*vbuf;
 
 	root	= -1;
 	leaf	= -1;
@@ -412,21 +439,19 @@ single_search(struct rectree *tree, const struct opts *opts,
 		 * The key must have something in it, and the value must
 		 * have the correct tags/recno mix.
 		 */
-		if (key.size < 2 || 8 != val.size) 
+		if (key.size < 2 || sizeof(struct db_val) != val.size) 
 			break;
 		if ( ! btree_read(&key, mc, &buf))
 			break;
-
-		mask = *(int *)val.data;
 
 		/*
 		 * See if this keyword record matches any of the
 		 * expressions we have stored.
 		 */
-		if ( ! exprexecpre(expr, buf, mask))
+		vbuf = val.data;
+		if ( ! exprexecpre(expr, buf, vbuf->mask))
 			continue;
-
-		memcpy(&rec, val.data + 4, sizeof(recno_t));
+		rec = vbuf->rec;
 
 		/*
 		 * O(log n) scan for prior records.  Since a record
@@ -445,7 +470,7 @@ single_search(struct rectree *tree, const struct opts *opts,
 		if (leaf >= 0 && recs[leaf].rec == rec) {
 			if (0 == recs[leaf].matches[0])
 				exprexecpost
-					(expr, buf, mask, 
+					(expr, buf, vbuf->mask, 
 					 recs[leaf].matches, terms);
 			continue;
 		}
@@ -478,7 +503,7 @@ single_search(struct rectree *tree, const struct opts *opts,
 			mandoc_calloc(terms + 1, sizeof(int));
 
 		exprexecpost
-			(expr, buf, mask, 
+			(expr, buf, vbuf->mask, 
 			 recs[tree->len].matches, terms);
 
 		/* Append to our tree. */
@@ -642,7 +667,7 @@ exprfree(struct expr *p)
  * Return 1 if any expression evaluates to true, else 0.
  */
 static int
-exprexecpre(const struct expr *p, const char *cp, int mask)
+exprexecpre(const struct expr *p, const char *cp, uint64_t mask)
 {
 
 	for ( ; NULL != p; p = p->next) {
@@ -666,7 +691,7 @@ exprexecpre(const struct expr *p, const char *cp, int mask)
  */
 static void
 exprexecpost(const struct expr *e, const char *cp, 
-		int mask, int *matches, size_t matchsz)
+		uint64_t mask, int *matches, size_t matchsz)
 {
 	const struct expr *p;
 	int		   match;

@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.8 2011/11/17 15:02:29 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.9 2011/11/17 15:38:27 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -79,7 +79,7 @@ static	void		  buf_append(struct buf *, const char *);
 static	void		  buf_appendb(struct buf *, 
 				const void *, size_t);
 static	void		  dbt_put(DB *, const char *, DBT *, DBT *);
-static	void		  hash_put(DB *, const struct buf *, int);
+static	void		  hash_put(DB *, const struct buf *, uint64_t);
 static	void		  hash_reset(DB **);
 static	void		  index_merge(const struct of *, struct mparse *,
 				struct buf *, struct buf *,
@@ -473,7 +473,7 @@ index_merge(const struct of *of, struct mparse *mp,
 	const char	*fn, *msec, *mtitle, *arch;
 	size_t		 sv;
 	unsigned	 seq;
-	char		 vbuf[8];
+	struct db_val	 vbuf;
 
 	for (rec = 0; of; of = of->next) {
 		fn = of->fname;
@@ -572,17 +572,15 @@ index_merge(const struct of *of, struct mparse *mp,
 		 * Copy from the in-memory hashtable of pending keywords
 		 * into the database.
 		 */
-		
-		memset(vbuf, 0, sizeof(uint32_t));
-		memcpy(vbuf + 4, &rec, sizeof(uint32_t));
 
+		vbuf.rec = rec;
 		seq = R_FIRST;
 		while (0 == (ch = (*hash->seq)(hash, &key, &val, seq))) {
 			seq = R_NEXT;
 
-			memcpy(vbuf, val.data, sizeof(uint32_t));
-			val.size = sizeof(vbuf);
-			val.data = vbuf;
+			vbuf.mask = *(uint64_t *)val.data;
+			val.size = sizeof(struct db_val);
+			val.data = &vbuf;
 
 			if (verb > 1)
 				printf("%s: Added keyword: %s\n", 
@@ -627,6 +625,7 @@ index_prune(const struct of *ofile, DB *db, const char *dbf,
 {
 	const struct of	*of;
 	const char	*fn;
+	struct db_val	*vbuf;
 	unsigned	 seq, sseq;
 	DBT		 key, val;
 	size_t		 reccur;
@@ -659,8 +658,9 @@ index_prune(const struct of *ofile, DB *db, const char *dbf,
 		sseq = R_FIRST;
 		while (0 == (ch = (*db->seq)(db, &key, &val, sseq))) {
 			sseq = R_NEXT;
-			assert(8 == val.size);
-			if (*maxrec != *(recno_t *)(val.data + 4))
+			assert(sizeof(struct db_val) == val.size);
+			vbuf = val.data;
+			if (*maxrec != vbuf->rec)
 				continue;
 			if (verb)
 				printf("%s: Deleted keyword: %s\n", 
@@ -1041,7 +1041,7 @@ pmdoc_Nm(MDOC_ARGS)
 }
 
 static void
-hash_put(DB *db, const struct buf *buf, int mask)
+hash_put(DB *db, const struct buf *buf, uint64_t mask)
 {
 	DBT		 key, val;
 	int		 rc;
@@ -1056,10 +1056,10 @@ hash_put(DB *db, const struct buf *buf, int mask)
 		perror("hash");
 		exit((int)MANDOCLEVEL_SYSERR);
 	} else if (0 == rc)
-		mask |= *(int *)val.data;
+		mask |= *(uint64_t *)val.data;
 
 	val.data = &mask;
-	val.size = sizeof(int); 
+	val.size = sizeof(uint64_t); 
 
 	if ((rc = (*db->put)(db, &key, &val, 0)) < 0) {
 		perror("hash");
