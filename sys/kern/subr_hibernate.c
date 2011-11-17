@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.24 2011/11/16 23:52:27 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.25 2011/11/17 23:18:13 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -711,11 +711,6 @@ hibernate_zlib_free(void *unused, void *addr)
  * Inflate size bytes from src into dest, skipping any pages in
  * [src..dest] that are special (see hibernate_inflate_skip)
  *
- * For each page of output data, we map HIBERNATE_TEMP_PAGE
- * to the current output page, and tell inflate() to inflate
- * its data there, resulting in the inflated data being placed
- * at the proper paddr.
- *
  * This function executes while using the resume-time stack
  * and pmap, and therefore cannot use ddb/printf/etc. Doing so
  * will likely hang or reset the machine.
@@ -725,6 +720,7 @@ hibernate_inflate(union hibernate_info *hiber_info, paddr_t dest,
     paddr_t src, size_t size)
 {
 	int i;
+	psize_t rle;
 
 	hibernate_state->hib_stream.avail_in = size;
 	hibernate_state->hib_stream.next_in = (char *)src;
@@ -744,6 +740,38 @@ hibernate_inflate(union hibernate_info *hiber_info, paddr_t dest,
 		else
 			hibernate_enter_resume_mapping(
 			    HIBERNATE_INFLATE_PAGE, dest, 0);
+
+		/* Read RLE code */
+		hibernate_state->hib_stream.avail_out = sizeof(psize_t);
+		hibernate_state->hib_stream.next_out = (char *)&rle;
+
+		i = inflate(&hibernate_state->hib_stream, Z_FULL_FLUSH);
+		if (i != Z_OK && i != Z_STREAM_END) {
+			/*
+			 * XXX - this will likely reboot/hang most machines,
+			 *       but there's not much else we can do here.
+			 */
+			panic("inflate rle error");
+		}
+
+		/* Skip while RLE code is != 0 */
+		while (rle != 0) {
+			dest += (rle * PAGE_SIZE);
+			hibernate_state->hib_stream.avail_out =
+			    sizeof(psize_t);
+			hibernate_state->hib_stream.next_out = (char *)&rle;
+		
+			i = inflate(&hibernate_state->hib_stream,
+			    Z_FULL_FLUSH);
+			if (i != Z_OK && i != Z_STREAM_END) {
+				/*
+				 * XXX - this will likely reboot/hang most
+				 *       machines but there's not much else
+				 *       we can do here. 
+				 */
+				panic("inflate rle error 2");
+			}
+		}
 
 		/* Set up the stream for inflate */
 		hibernate_state->hib_stream.avail_out = PAGE_SIZE;
@@ -1153,6 +1181,7 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 	vaddr_t hibernate_io_page = hiber_info->piglet_va + PAGE_SIZE;
 	daddr_t blkctr = hiber_info->image_offset;
 	int i;
+	psize_t rle;
 
 	hiber_info->chunk_ctr = 0;
 
@@ -1237,9 +1266,55 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 				temp_inaddr = (inaddr & PAGE_MASK) +
 				    hibernate_copy_page;
 
+				rle = uvm_page_rle(inaddr);
+				while (rle > 0 && inaddr < range_end) {
+					hibernate_state->hib_stream.avail_in =
+					    sizeof(psize_t);
+					hibernate_state->hib_stream.avail_out =
+					    out_remaining;
+					hibernate_state->hib_stream.next_in =
+					    (char *)&rle;
+					hibernate_state->hib_stream.next_out =
+					    (caddr_t)hibernate_io_page +
+					    (PAGE_SIZE - out_remaining);
+
+					if (deflate(&hibernate_state->hib_stream,
+					    Z_PARTIAL_FLUSH) != Z_OK)
+						return (1);
+
+					out_remaining =
+					    hibernate_state->hib_stream.avail_out;
+					inaddr += (rle * PAGE_SIZE);
+					if (inaddr > range_end)
+						inaddr = range_end;
+					else
+						rle = uvm_page_rle(inaddr);
+				}
+
+				/* Write '0' RLE code */
+				if (inaddr < range_end) {
+					hibernate_state->hib_stream.avail_in =
+					    sizeof(psize_t);
+					hibernate_state->hib_stream.avail_out =
+					    out_remaining;
+					hibernate_state->hib_stream.next_in =
+					    (char *)&rle;
+					hibernate_state->hib_stream.next_out =
+				    	    (caddr_t)hibernate_io_page +
+					    (PAGE_SIZE - out_remaining);
+
+					if (deflate(&hibernate_state->hib_stream,
+					    Z_PARTIAL_FLUSH) != Z_OK)
+						return (1);
+
+					out_remaining =
+					    hibernate_state->hib_stream.avail_out;
+				}
+
 				/* Deflate from temp_inaddr to IO page */
-				inaddr += hibernate_deflate(hiber_info,
-				    temp_inaddr, &out_remaining);
+				if (inaddr != range_end)
+					inaddr += hibernate_deflate(hiber_info,
+					    temp_inaddr, &out_remaining);
 			}
 
 			if (out_remaining == 0) {
@@ -1334,7 +1409,7 @@ hibernate_zlib_reset(union hibernate_info *hiber_info, int deflate)
 
 	if (deflate) {
 		return deflateInit(&hibernate_state->hib_stream,
-		    Z_DEFAULT_COMPRESSION);
+		    Z_BEST_SPEED);
 	} else
 		return inflateInit(&hibernate_state->hib_stream);
 }
