@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.6 2011/11/14 18:52:05 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.7 2011/11/17 14:52:32 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -24,12 +24,14 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <db.h>
 
 #include "man.h"
 #include "mdoc.h"
 #include "mandoc.h"
 #include "mandocdb.h"
+#include "man_conf.h"
 
 #define	MANDOC_BUFSZ	  BUFSIZ
 #define	MANDOC_SLOP	  1024
@@ -242,6 +244,7 @@ static	const char	 *progname;
 int
 mandocdb(int argc, char *argv[])
 {
+	struct man_conf	 dirs;
 	struct mparse	*mp; /* parse sequence */
 	enum op		 op; /* current operation */
 	const char	*dir;
@@ -307,6 +310,7 @@ mandocdb(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	memset(&dirs, 0, sizeof(struct man_conf));
 	memset(&info, 0, sizeof(BTREEINFO));
 	info.flags = R_DUP;
 
@@ -363,12 +367,20 @@ mandocdb(int argc, char *argv[])
 		index_prune(of, db, fbuf, idx, ibuf, verb,
 				&maxrec, &recs, &recsz);
 
-		if (OP_UPDATE == op)
+		if (OP_UPDATE == op) {
+			chdir(dir);
 			index_merge(of, mp, &dbuf, &buf, hash, 
 					db, fbuf, idx, ibuf, use_all,
 					verb, maxrec, recs, reccur);
+		}
 
 		goto out;
+	}
+
+	if (0 == argc) {
+		man_conf_parse(&dirs);
+		argc = dirs.argc;
+		argv = dirs.argv;
 	}
 
 	for (i = 0; i < argc; i++) {
@@ -386,6 +398,11 @@ mandocdb(int argc, char *argv[])
 			fprintf(stderr, "%s: Path too long\n", argv[i]);
 			exit((int)MANDOCLEVEL_BADARG);
 		}
+
+		if (db)
+			(*db->close)(db);
+		if (idx)
+			(*idx->close)(idx);
 
 		db = dbopen(fbuf, flags, 0644, DB_BTREE, &info);
 		idx = dbopen(ibuf, flags, 0644, DB_RECNO, NULL);
@@ -415,6 +432,7 @@ mandocdb(int argc, char *argv[])
 
 		of = of->first;
 
+		chdir(argv[i]);
 		index_merge(of, mp, &dbuf, &buf, hash, db, fbuf, 
 				idx, ibuf, use_all, verb,
 				maxrec, recs, reccur);
@@ -429,6 +447,8 @@ out:
 		(*hash->close)(hash);
 	if (mp)
 		mparse_free(mp);
+	if (dirs.argc)
+		man_conf_free(&dirs);
 
 	ofile_free(of);
 	free(buf.cp);

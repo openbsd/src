@@ -1,4 +1,4 @@
-/*	$Id: apropos.c,v 1.5 2011/11/16 13:23:27 schwarze Exp $ */
+/*	$Id: apropos.c,v 1.6 2011/11/17 14:52:32 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "apropos_db.h"
+#include "man_conf.h"
 #include "mandoc.h"
 
 static	int	 cmp(const void *, const void *);
@@ -33,14 +34,17 @@ static	char	*progname;
 int
 apropos(int argc, char *argv[])
 {
-	int		 ch;
+	struct man_conf	 dirs;
+	int		 ch, use_man_conf;
 	size_t		 terms;
 	struct opts	 opts;
 	struct expr	*e;
 	extern int	 optind;
 	extern char	*optarg;
 
+	memset(&dirs, 0, sizeof(struct man_conf));
 	memset(&opts, 0, sizeof(struct opts));
+	use_man_conf = 1;
 
 	progname = strrchr(argv[0], '/');
 	if (progname == NULL)
@@ -48,8 +52,14 @@ apropos(int argc, char *argv[])
 	else
 		++progname;
 
-	while (-1 != (ch = getopt(argc, argv, "S:s:"))) 
+	while (-1 != (ch = getopt(argc, argv, "M:m:S:s:"))) 
 		switch (ch) {
+		case ('M'):
+			use_man_conf = 0;
+			/* FALLTHROUGH */
+		case ('m'):
+			manpath_parse(&dirs, optarg);
+			break;
 		case ('S'):
 			opts.arch = optarg;
 			break;
@@ -79,7 +89,12 @@ apropos(int argc, char *argv[])
 	 * The index database is a recno.
 	 */
 
-	apropos_search(&opts, e, terms, NULL, list);
+	if (use_man_conf)
+		man_conf_parse(&dirs);
+	apropos_search(dirs.argc, dirs.argv, &opts,
+			e, terms, NULL, list);
+
+	man_conf_free(&dirs);
 	exprfree(e);
 	return(EXIT_SUCCESS);
 }
@@ -113,7 +128,8 @@ usage(void)
 {
 
 	fprintf(stderr, "usage: %s "
-			"[-I] "
+			"[-M path] "
+			"[-m path] "
 			"[-S arch] "
 			"[-s section] "
 			"EXPR\n", 

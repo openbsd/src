@@ -1,4 +1,4 @@
-/*	$Id: apropos_db.c,v 1.4 2011/11/16 13:23:27 schwarze Exp $ */
+/*	$Id: apropos_db.c,v 1.5 2011/11/17 14:52:32 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -21,6 +21,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #ifdef __linux__
 # include <db_185.h>
@@ -31,6 +32,11 @@
 #include "mandocdb.h"
 #include "apropos_db.h"
 #include "mandoc.h"
+
+struct	rectree {
+	struct rec	*node;
+	int		 len;
+};
 
 struct	expr {
 	int		 regex;
@@ -79,6 +85,9 @@ static	void	 norm_string(const char *,
 			const struct mchars *, char **);
 static	size_t	 norm_utf8(unsigned int, char[7]);
 static	void	 recfree(struct rec *);
+static	void	 single_search(struct rectree *, const struct opts *,
+			const struct expr *, size_t terms,
+			struct mchars *);
 
 /*
  * Open the keyword mandoc-db database.
@@ -323,34 +332,72 @@ index_read(const DBT *key, const DBT *val,
  * Call "res" with the results, which may be zero.
  */
 void
-apropos_search(const struct opts *opts, const struct expr *expr,
-		size_t terms, void *arg, 
+apropos_search(int argc, char *argv[], const struct opts *opts,
+		const struct expr *expr, size_t terms, void *arg, 
 		void (*res)(struct rec *, size_t, void *))
 {
-	int		 i, len, root, leaf, mask, mlen;
+	struct rectree	 tree;
+	struct mchars	*mc;
+	struct rec	*recs;
+	int		 i, mlen;
+
+	memset(&tree, 0, sizeof(struct rectree));
+
+	/* XXX: error out with bad regexp? */
+
+	mc = mchars_alloc();
+
+	for (i = 0; i < argc; i++) {
+		if (chdir(argv[i]))
+			continue;
+		single_search(&tree, opts, expr, terms, mc);
+	}
+
+	/*
+	 * Count the matching files
+	 * and feed them to the output handler.
+	 */
+
+	for (mlen = i = 0; i < tree.len; i++)
+		if (tree.node[i].matches[0])
+			mlen++;
+	recs = mandoc_malloc(mlen * sizeof(struct rec));
+	for (mlen = i = 0; i < tree.len; i++)
+		if (tree.node[i].matches[0])
+			memcpy(&recs[mlen++], &tree.node[i], 
+					sizeof(struct rec));
+	(*res)(recs, mlen, arg);
+	free(recs);
+
+	for (i = 0; i < tree.len; i++)
+		recfree(&tree.node[i]);
+
+	if (mc)
+		mchars_free(mc);
+}
+
+static void
+single_search(struct rectree *tree, const struct opts *opts,
+		const struct expr *expr, size_t terms,
+		struct mchars *mc)
+{
+	int		 root, leaf, mask;
 	DBT		 key, val;
 	DB		*btree, *idx;
-	struct mchars	*mc;
 	int		 ch;
 	char		*buf;
 	recno_t		 rec;
-	struct rec	*recs, *rrecs;
+	struct rec	*recs;
 	struct rec	 srec;
 
 	root	= -1;
 	leaf	= -1;
 	btree	= NULL;
 	idx	= NULL;
-	mc	= NULL;
 	buf	= NULL;
-	recs	= NULL;
-	len	= 0;
+	recs	= tree->node;
 
 	memset(&srec, 0, sizeof(struct rec));
-
-	/* XXX: error out with bad regexp? */
-
-	mc = mchars_alloc();
 
 	/* XXX: return fact that we've errored? */
 
@@ -423,60 +470,42 @@ apropos_search(const struct opts *opts, const struct expr *expr,
 		if (opts->arch && strcasecmp(opts->arch, srec.arch))
 			continue;
 
-		recs = mandoc_realloc
-			(recs, (len + 1) * sizeof(struct rec));
+		tree->node = recs = mandoc_realloc
+			(recs, (tree->len + 1) * sizeof(struct rec));
 
-		memcpy(&recs[len], &srec, sizeof(struct rec));
-		recs[len].matches = 
+		memcpy(&recs[tree->len], &srec, sizeof(struct rec));
+		recs[tree->len].matches = 
 			mandoc_calloc(terms + 1, sizeof(int));
 
 		exprexecpost
 			(expr, buf, mask, 
-			 recs[len].matches, terms);
+			 recs[tree->len].matches, terms);
 
 		/* Append to our tree. */
 
 		if (leaf >= 0) {
 			if (rec > recs[leaf].rec)
-				recs[leaf].rhs = len;
+				recs[leaf].rhs = tree->len;
 			else
-				recs[leaf].lhs = len;
+				recs[leaf].lhs = tree->len;
 		} else
-			root = len;
+			root = tree->len;
 		
 		memset(&srec, 0, sizeof(struct rec));
-		len++;
+		tree->len++;
 	}
 
-	if (1 == ch) {
-		for (mlen = i = 0; i < len; i++)
-			if (recs[i].matches[0])
-				mlen++;
-		rrecs = mandoc_malloc(mlen * sizeof(struct rec));
-		for (mlen = i = 0; i < len; i++)
-			if (recs[i].matches[0])
-				memcpy(&rrecs[mlen++], &recs[i], 
-						sizeof(struct rec));
-		(*res)(rrecs, mlen, arg);
-		free(rrecs);
-	}
+	/* XXX handle database errors? */
 
-	/* XXX: else?  corrupt database error? */
 out:
-	for (i = 0; i < len; i++)
-		recfree(&recs[i]);
-
 	recfree(&srec);
 
-	if (mc)
-		mchars_free(mc);
 	if (btree)
 		(*btree->close)(btree);
 	if (idx)
 		(*idx->close)(idx);
 
 	free(buf);
-	free(recs);
 }
 
 static void
