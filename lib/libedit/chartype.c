@@ -1,4 +1,4 @@
-/*	$OpenBSD: chartype.c,v 1.3 2011/07/07 05:40:42 okan Exp $	*/
+/*	$OpenBSD: chartype.c,v 1.4 2011/11/17 20:14:24 nicm Exp $	*/
 /*	$NetBSD: chartype.c,v 1.4 2010/04/15 00:55:57 christos Exp $	*/
 
 /*-
@@ -141,13 +141,13 @@ ct_decode_argv(int argc, const char *argv[], ct_buffer_t *conv)
 	int i;
 	Char *p;
 	Char **wargv;
-	ssize_t bytes;
+	size_t wlen;
 
 	/* Make sure we have enough space in the conversion buffer to store all
 	 * the argv strings. */
 	for (i = 0, bufspace = 0; i < argc; ++i)
 		bufspace += argv[i] ? strlen(argv[i]) + 1 : 0;
-	ct_conv_buff_resize(conv, 0, bufspace);
+	ct_conv_buff_resize(conv, 0, bufspace * sizeof(*p));
 	if (!conv->wsize)
 		return NULL;
 
@@ -159,15 +159,16 @@ ct_decode_argv(int argc, const char *argv[], ct_buffer_t *conv)
 			continue;
 		} else {
 			wargv[i] = p;
-			bytes = mbstowcs(p, argv[i], bufspace);
+			wlen = mbstowcs(p, argv[i], bufspace);
 		}
-		if (bytes == -1) {
+		if (wlen == (size_t)-1 || wlen == bufspace) {
+			/* Encoding error or not enough room for NUL. */
 			el_free(wargv);
 			return NULL;
 		} else
-			bytes++;  /* include '\0' in the count */
-		bufspace -= bytes;
-		p += bytes;
+			wlen++; /* include NUL in the count */
+		bufspace -= wlen;
+		p += wlen;
 	}
 
 	return wargv;
