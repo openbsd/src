@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: exit.3,v 1.11 2007/05/31 19:19:31 jmc Exp $
+.\"	$OpenBSD: exit.3,v 1.12 2011/11/17 14:26:14 schwarze Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: November 17 2011 $
 .Dt EXIT 3
 .Os
 .Sh NAME
@@ -112,3 +112,12 @@ and
 .Fn _Exit
 functions conform to
 .St -ansiC-99 .
+.Sh HISTORY
+An
+.Fn exit
+function first appeared as a system call in
+.At v1 .
+In
+.At v7 ,
+the bare system call was renamed to
+.Xr _exit 2 .

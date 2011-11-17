@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getuid.2,v 1.13 2008/08/04 07:08:23 jmc Exp $
+.\"	$OpenBSD: getuid.2,v 1.14 2011/11/17 14:26:14 schwarze Exp $
 .\"	$NetBSD: getuid.2,v 1.6 1995/02/27 12:33:37 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getuid.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 4 2008 $
+.Dd $Mdocdate: November 17 2011 $
 .Dt GETUID 2
 .Os
 .Sh NAME
@@ -79,3 +79,12 @@ and
 .Fn geteuid
 functions conform to
 .St -p1003.1-88 .
+.Sh HISTORY
+The
+.Fn getuid
+system call first appeared in
+.At v1 ,
+and
+.Fn geteuid
+in
+.At v7 .

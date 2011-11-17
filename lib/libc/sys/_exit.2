@@ -1,4 +1,4 @@
-.\"	$OpenBSD: _exit.2,v 1.16 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: _exit.2,v 1.17 2011/11/17 14:26:14 schwarze Exp $
 .\"	$NetBSD: _exit.2,v 1.6 1995/02/27 12:31:34 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)_exit.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: November 17 2011 $
 .Dt _EXIT 2
 .Os
 .Sh NAME
@@ -102,7 +102,6 @@ can never return.
 .Xr intro 2 ,
 .Xr sigaction 2 ,
 .Xr wait 2 ,
-.Xr _Exit 3 ,
 .Xr exit 3 ,
 .Xr sysexits 3
 .Sh STANDARDS
@@ -110,3 +109,12 @@ The
 .Fn _exit
 function is defined by
 .St -p1003.1-88 .
+.Sh HISTORY
+An
+.Fn exit
+system call first appeared in
+.At v1 ,
+and an
+.Fn _exit
+variant in
+.At v7 .

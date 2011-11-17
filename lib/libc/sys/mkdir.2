@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkdir.2,v 1.10 2011/07/18 23:04:40 matthew Exp $
+.\"	$OpenBSD: mkdir.2,v 1.11 2011/11/17 14:26:14 schwarze Exp $
 .\"	$NetBSD: mkdir.2,v 1.8 1995/02/27 12:34:22 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mkdir.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: July 18 2011 $
+.Dd $Mdocdate: November 17 2011 $
 .Dt MKDIR 2
 .Os
 .Sh NAME
@@ -156,6 +156,10 @@ and
 functions conform to
 .St -p1003.1-2008 .
 .Sh HISTORY
+The
+.Fn mkdir
+system call first appeared in
+.At v1 .
 The
 .Fn mkdirat
 function appeared in

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: utimes.2,v 1.16 2011/07/19 20:58:05 matthew Exp $
+.\"	$OpenBSD: utimes.2,v 1.17 2011/11/17 14:26:14 schwarze Exp $
 .\"	$NetBSD: utimes.2,v 1.9 1996/04/23 10:34:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)utimes.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 19 2011 $
+.Dd $Mdocdate: November 17 2011 $
 .Dt UTIMES 2
 .Os
 .Sh NAME
@@ -246,6 +246,22 @@ and
 functions conform to
 .St -p1003.1-2008 .
 .Sh HISTORY
+The predecessors of
+.Fn utimes
+were
+.Fn smdate
+in
+.At v1 ,
+.Fn mdate
+in
+.At v3 ,
+and
+.Fn utime
+in
+.At v7 ;
+the latter first supported the concept of an access time
+in addition to the modification time.
+.Pp
 The
 .Fn utimes
 function call appeared in
