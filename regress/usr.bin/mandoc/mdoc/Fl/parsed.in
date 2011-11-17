@@ -1,6 +1,6 @@
 .Dd April 7, 2010
 .Dt FL-PARSED 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Fl-parsed
 .Nd is the Fl macro parsed?

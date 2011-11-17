@@ -1,6 +1,6 @@
 .Dd June 24, 2011
 .Dt OP-PUNCT 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Op-punct
 .Nd punctuation handling by the Op macro

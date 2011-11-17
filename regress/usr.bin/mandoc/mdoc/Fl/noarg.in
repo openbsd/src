@@ -1,6 +1,6 @@
 .Dd April 7, 2010
 .Dt FL-NOARG 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Fl-noarg
 .Nd Fl macro without arguments

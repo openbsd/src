@@ -1,6 +1,6 @@
 .Dd June 30, 2010
 .Dt ST-INVALID 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm St-invalid
 .Nd handling of invalid standard argument

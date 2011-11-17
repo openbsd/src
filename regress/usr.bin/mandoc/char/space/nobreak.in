@@ -1,6 +1,6 @@
 .Dd December 23, 2009
 .Dt SPACE-NOBREAK 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm space-nobreak
 .Nd non-breaking, non-collapsing space

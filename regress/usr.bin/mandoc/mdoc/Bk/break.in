@@ -1,6 +1,6 @@
 .Dd June 30, 2010
 .Dt BK-BREAK 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Bk-break
 .Nd handling of word keeps

@@ -1,6 +1,6 @@
 .Dd February 6, 2011
 .Dt NS-POSITION 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Ns-position
 .Nd effect of the position of the no space macro on the line

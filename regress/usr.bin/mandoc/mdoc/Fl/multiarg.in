@@ -1,6 +1,6 @@
 .Dd December 24, 2009
 .Dt FL-MULTIARG 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Fl-multiarg
 .Nd multiple arguments to a Fl macro

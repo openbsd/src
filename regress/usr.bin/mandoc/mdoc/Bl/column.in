@@ -1,6 +1,6 @@
 .Dd December 24, 2009
 .Dt BL-COLUMN 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Bl-column
 .Nd lists with multiple columns

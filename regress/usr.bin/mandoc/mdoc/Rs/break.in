@@ -1,6 +1,6 @@
 .Dd October 28, 2009
 .Dt RS-BREAK 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Rs-break
 .Nd line break before reference start

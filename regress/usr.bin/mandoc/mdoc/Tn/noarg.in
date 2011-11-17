@@ -1,6 +1,6 @@
 .Dd January 19, 2011
 .Dt TN-NOARG 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Tn-noarg
 .Nd trade name macro without argument

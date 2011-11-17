@@ -1,4 +1,4 @@
-.TH TP-MACROTAG 1
+.TH TP-MACROTAG 1 "September 20, 2011" OpenBSD
 .SH NAME
 TP-macrotag \- macro in the head of a tagged paragraph
 .SH DESCRIPTION

@@ -1,4 +1,4 @@
-.TH TP-LITERAL 1
+.TH TP-LITERAL 1 "January 4, 2011" OpenBSD
 .SH NAME
 TP-literal \- indented paragraphs in literal context
 .SH DESCRIPTION

@@ -1,4 +1,4 @@
-.TH N-BASIC 1 "January 29, 2011"
+.TH N-BASIC 1 "January 29, 2011" OpenBSD
 .SH NAME
 N-basic \- basic handling of character number escapes
 .SH DESCRIPTION
@@ -8,15 +8,18 @@ too large: x\N'259'x
 .br
 much too large: x\N'2259'x
 .br
-null: x\N'0'x
-.br
+.\" XXX mandoc ignores non-printable characters, while groff does not
+.\" too small: x\N'1'x
+.\" .br
+.\" null: x\N'0'x
+.\" .br
 non-numerical content: x\N'XX'x
 .br
 mixed content: x\N'65XX'x
 .br
 empty: x\N''x
 .br
-no quoting: x\N65x
+no quoting: x\N665x
 .br
 non-matching quoting characters: x\NX65Yx
 .br

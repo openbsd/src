@@ -1,4 +1,4 @@
-.TH BR-ARGS 1
+.TH BR-ARGS 1 "January 17, 2011" OpenBSD
 .SH NAME
 br-args \- arguments to .br macros
 .SH DESCRIPTION

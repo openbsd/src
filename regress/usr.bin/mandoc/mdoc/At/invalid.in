@@ -1,6 +1,6 @@
 .Dd June 30, 2010
 .Dt AT-INVALID 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm At-invalid
 .Nd handling of an invalid AT&T UNIX argument

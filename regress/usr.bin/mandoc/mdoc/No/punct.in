@@ -1,6 +1,6 @@
 .Dd October 1, 2010
 .Dt NO-PUNCT 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm No-punct
 .Nd punctuation after the normal macro

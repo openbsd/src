@@ -1,6 +1,6 @@
 .Dd July 4, 2010
 .Dt SM-SPACING-OP 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Sm-spacing-Op
 .Nd spacing mode, demonstrated using the .Op macro

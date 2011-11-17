@@ -1,6 +1,6 @@
 .Dd April 23, 2010
 .Dt SPACE-MULTIPLE 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm space-multiple
 .Nd handling of multiple adjacent space characters

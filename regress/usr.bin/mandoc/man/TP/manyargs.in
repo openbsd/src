@@ -1,4 +1,4 @@
-.TH TP-MANYARGS 1
+.TH TP-MANYARGS 1 "January 4, 2011" OpenBSD
 .SH NAME
 TP-manyargs \- too many header args for indented blocks
 .SH DESCRIPTION

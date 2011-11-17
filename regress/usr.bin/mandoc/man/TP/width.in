@@ -1,4 +1,4 @@
-.TH TP-WIDTH 1
+.TH TP-WIDTH 1 "January 4, 2011" OpenBSD
 .SH NAME
 TP-width \- indentation width of indented paragraphs
 .SH DESCRIPTION

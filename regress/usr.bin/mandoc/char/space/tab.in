@@ -1,6 +1,6 @@
 .Dd April 23, 2010
 .Dt SPACE-TAB 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm space-tab
 .Nd handling of literal space characters

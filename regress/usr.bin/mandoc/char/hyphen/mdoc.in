@@ -1,6 +1,6 @@
 .Dd September 18, 2011
 .Dt HYPHEN-MDOC 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm hyphen-mdoc
 .Nd formatting hyphens and breaking lines

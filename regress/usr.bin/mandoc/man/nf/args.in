@@ -1,4 +1,4 @@
-.TH NF-ARGS 1
+.TH NF-ARGS 1 "January 16, 2011" OpenBSD
 .SH NAME
 nf-args \- filling macros with arguments
 .SH DESCRIPTION

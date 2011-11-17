@@ -1,6 +1,6 @@
 .Dd April 7, 2010
 .Dt AR-PUNCT 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Ar-punct
 .Nd punctuation handling by the Ar macro

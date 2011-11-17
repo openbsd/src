@@ -1,4 +1,4 @@
-.TH NA-ARGS 1
+.TH NA-ARGS 1 "January 17, 2011" OpenBSD
 .SH NAME
 na-args \- arguments to .na macros
 .SH DESCRIPTION

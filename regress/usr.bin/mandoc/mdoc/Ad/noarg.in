@@ -1,6 +1,6 @@
 .Dd January 19, 2011
 .Dt AD-NOARG 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Ad-noarg
 .Nd address macro without an argument

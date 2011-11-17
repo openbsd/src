@@ -1,6 +1,6 @@
 .Dd February 17, 2010
 .Dt BLANK-LINE 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm blank-line
 .Nd handling of blank line

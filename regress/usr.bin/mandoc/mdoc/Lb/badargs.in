@@ -1,6 +1,6 @@
 .Dd January 2, 2011
 .Dt LB-BADARGS 3
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Lb-badargs
 .Nd bad arguments to the library macro

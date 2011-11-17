@@ -1,4 +1,4 @@
-.TH SP-BADARGS-MAN 1
+.TH SP-BADARGS-MAN 1 "January 17, 2010" OpenBSD
 .SH NAME
 sp-badargs-man \- bad numbers of arguments to .sp macros in man(7)
 .SH DESCRIPTION

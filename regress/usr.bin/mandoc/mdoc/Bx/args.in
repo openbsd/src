@@ -1,6 +1,6 @@
 .Dd January 30, 2011
 .Dt BX-ARGS 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Bx-args
 .Nd arguments to the BSD macro
@@ -13,6 +13,9 @@ one standard argument:
 .Pp
 one non-standard argument:
 .Bx nett
+.Pp
+one semi-standard argument:
+.Bx 4.1c
 .Pp
 two standard arguments:
 .Bx 4.3 reno

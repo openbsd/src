@@ -1,6 +1,6 @@
 .Dd February 17, 2010
 .Dt MT-SIMPLE 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Mt-simple
 .Nd mailto

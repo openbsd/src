@@ -1,6 +1,6 @@
 .Dd October 19, 2009
 .Dt BD-OFFSET-EMPTY 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Bd-offset-empty
 .Nd no argument specified to Bd offset

@@ -1,4 +1,4 @@
-.TH PS-IGNORE 1
+.TH PS-IGNORE 1 "Febuary 5, 2011" OpenBSD
 .SH NAME
 ps-ignore \- ignoreing point size macros
 .SH DESCRIPTION

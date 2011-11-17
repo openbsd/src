@@ -1,6 +1,6 @@
 .Dd January 2, 2011
 .Dt BL-EMPTY 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Bl-empty
 .Nd empty lists

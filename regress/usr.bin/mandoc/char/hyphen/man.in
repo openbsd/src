@@ -1,4 +1,4 @@
-.TH hyphen-man 1 "September 18, 2011"
+.TH hyphen-man 1 "September 18, 2011" OpenBSD
 .SH NAME
 \fBhyphen-man\fR - formatting hyphens and breaking lines
 .SH DESCRIPTION

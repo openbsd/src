@@ -1,6 +1,6 @@
 .Dd January 2, 2011
 .Dt BD-BLANK 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Bd-blank
 .Nd handling of blank lines in literal displays

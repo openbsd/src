@@ -1,6 +1,6 @@
 .Dd January 15, 2011
 .Dt SPACE-LEADING_MDOC 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm space-leading-mdoc
 .Nd leading spaces on text lines in mdoc documents

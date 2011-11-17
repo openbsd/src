@@ -1,6 +1,6 @@
 .Dd October 28, 2009
 .Dt BL-DIAG 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Bl-diag
 .Nd section 4 diagnostic lists

@@ -1,6 +1,6 @@
 .Dd April 23, 2010
 .Dt XR-ARGS 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Xr-args
 .Nd additional arguments to cross references

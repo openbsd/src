@@ -1,6 +1,6 @@
 .Dd January 20, 2011
 .Dt VT-NOARG 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Vt-noarg
 .Nd variable type macro without arguments

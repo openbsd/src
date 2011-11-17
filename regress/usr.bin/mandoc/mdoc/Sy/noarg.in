@@ -1,6 +1,6 @@
 .Dd January 19, 2011
 .Dt SY-NOARG 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Sy-noarg
 .Nd symbolic macro without arguments

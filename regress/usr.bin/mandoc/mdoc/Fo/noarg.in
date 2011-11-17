@@ -1,6 +1,6 @@
 .Dd January 19, 2011
 .Dt FN-NOARG 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Fn-noarg
 .Nd function name macro without arguments

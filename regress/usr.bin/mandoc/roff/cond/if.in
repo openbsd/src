@@ -1,4 +1,4 @@
-.TH IF 1
+.TH IF 1 "April 25, 2010" OpenBSD
 .SH NAME
 if \- the roff conditional instruction
 .SH DESCRIPTION

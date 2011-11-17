@@ -1,4 +1,4 @@
-.TH SPACE-TAB-MAN 1 "24 May 2010"
+.TH SPACE-TAB-MAN 1 "24 May 2010" OpenBSD
 .SH NAME
 SPACE-TAB-MAN \- handling of literal tab characters
 .SH DESCRIPTION

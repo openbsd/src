@@ -1,6 +1,6 @@
 .Dd April 8, 2010
 .Dt LI-PUNCT 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Li-punct
 .Nd punctuation following a literal macro

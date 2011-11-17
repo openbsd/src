@@ -1,6 +1,6 @@
 .Dd June 30, 2010
 .Dt BK-BADARG 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Bk-badarg
 .Nd bad arguments after Bk

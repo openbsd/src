@@ -1,6 +1,6 @@
 .Dd May 1, 2009
 .Dt RS-THREE_AUTHORS 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Rs-three_authors
 .Nd listing three authors in a reference block

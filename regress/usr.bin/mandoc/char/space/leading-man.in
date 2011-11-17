@@ -1,4 +1,4 @@
-.TH SPACE-LEADING-MAN 1 "January 15, 2011"
+.TH SPACE-LEADING-MAN 1 "January 15, 2011" OpenBSD
 .SH NAME
 pace-leading-man \- leading spaces on text lines in man documents
 .SH DESCRIPTION

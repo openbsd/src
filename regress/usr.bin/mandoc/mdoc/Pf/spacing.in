@@ -1,6 +1,6 @@
 .Dd October 1, 2010
 .Dt PF-SPACING 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Pf-spacing
 .Nd spacing around the prefix macro

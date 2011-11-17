@@ -10,9 +10,12 @@ DDEESSCCRRIIPPTTIIOONN
 
      one non-standard argument: nettBSD
 
+     one semi-standard argument: 4.1cBSD
+
      two standard arguments: 4.3BSD-Reno
 
      more arguments: 4.3BSD-Tahoe and some additional words
 
      end of test document
 
+OpenBSD                        January 30, 2011                        OpenBSD

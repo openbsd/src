@@ -1,6 +1,6 @@
 .Dd April 13, 2010
 .Dt BL-MULTITAG 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Bl-multitag
 .Nd lists with multiple successive tags

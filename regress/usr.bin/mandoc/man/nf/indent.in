@@ -1,4 +1,4 @@
-.TH NF-INDENT 1
+.TH NF-INDENT 1 "January 4, 2011" OpenBSD
 .SH NAME
 nf-indent \- indentation of literal blocks
 .SH DESCRIPTION

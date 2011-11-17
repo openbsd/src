@@ -1,6 +1,6 @@
 .Dd April 12, 2010
 .Dt BL-EXTEND 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Bl-extend
 .Nd extending block headers

@@ -1,6 +1,6 @@
 .Dd October 28, 2009
 .Dt BL-TAG 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Bl-tag
 .Nd tagged lists
