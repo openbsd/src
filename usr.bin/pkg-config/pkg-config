@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.69 2011/07/08 18:57:41 jasper Exp $
+# $OpenBSD: pkg-config,v 1.70 2011/11/17 11:37:16 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -19,6 +19,7 @@
 
 use strict;
 use warnings;
+use Config;
 use Getopt::Long;
 use File::Basename;
 use File::stat;
@@ -103,6 +104,17 @@ GetOptions(	'debug' 		=> \$mode{debug},
 		'variable=s' 		=> \$mode{variable},
 		'define-variable=s' 	=> $variables,
 	);
+
+# Unconditionally switch to static mode on static arches as --static
+# may not have been passed explicitly, but we don't want to re-order
+# and simplify the libs like we do for shared architectures.
+{
+	my @static_archs = qw(m88k vax);
+	my $machine_arch = $Config{'ARCH'};
+	if (grep { $_ eq $machine_arch } @static_archs){
+		$mode{static} = 1;
+	}
+}
 
 # Initial value of printerr depends on the options...
 if (!defined $mode{printerr}) {
@@ -208,7 +220,11 @@ if ($mode{variable}) {
 	}
 }
 
-my $dep_cfg_list = simplify_and_reverse($cfg_full_list);
+my $dep_cfg_list = $cfg_full_list;
+
+if (!$mode{static}){
+	$dep_cfg_list = simplify_and_reverse($cfg_full_list);
+}
 
 if ($mode{cflags} || $mode{libs} || $mode{variable}) {
 	push @vlist, do_cflags($dep_cfg_list) if $mode{cflags};
