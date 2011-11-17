@@ -253,7 +253,6 @@
 ./usr/include/sh/tmureg.h
 ./usr/include/sh/trap.h
 ./usr/include/sh/ubcreg.h
-./usr/include/sh/userret.h
 ./usr/include/sh/varargs.h
 ./usr/include/sh/vmparam.h
 ./usr/include/unwind.h

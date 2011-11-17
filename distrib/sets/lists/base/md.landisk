@@ -2237,7 +2237,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/tmureg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/trap.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/ubcreg.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/sh/userret.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/varargs.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/vmparam.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sha1.ph

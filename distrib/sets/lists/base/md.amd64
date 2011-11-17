@@ -802,7 +802,6 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/tcb.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/trap.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/tss.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/userret.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/vga_post.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/vmparam.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/ar.ph
