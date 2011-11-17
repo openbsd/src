@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.7 2011/11/17 14:52:32 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.8 2011/11/17 15:02:29 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -257,11 +257,11 @@ mandocdb(int argc, char *argv[])
 			*db, /* keyword database */
 			*hash; /* temporary keyword hashtable */
 	BTREEINFO	 info; /* btree configuration */
-	recno_t		 maxrec; /* supremum of all records */
-	recno_t		*recs; /* buffer of empty records */
+	recno_t		 maxrec; /* last record number in the index */
+	recno_t		*recs; /* the numbers of all empty records */
 	size_t		 sz1, sz2,
-			 recsz, /* buffer size of recs */
-			 reccur; /* valid number of recs */
+			 recsz, /* number of allocated slots in recs */
+			 reccur; /* current number of empty records */
 	struct buf	 buf, /* keyword buffer */
 			 dbuf; /* description buffer */
 	struct of	*of; /* list of files for processing */
@@ -348,7 +348,7 @@ mandocdb(int argc, char *argv[])
 		if (NULL == db) {
 			perror(fbuf);
 			exit((int)MANDOCLEVEL_SYSERR);
-		} else if (NULL == db) {
+		} else if (NULL == idx) {
 			perror(ibuf);
 			exit((int)MANDOCLEVEL_SYSERR);
 		}
@@ -410,7 +410,7 @@ mandocdb(int argc, char *argv[])
 		if (NULL == db) {
 			perror(fbuf);
 			exit((int)MANDOCLEVEL_SYSERR);
-		} else if (NULL == db) {
+		} else if (NULL == idx) {
 			perror(ibuf);
 			exit((int)MANDOCLEVEL_SYSERR);
 		}
@@ -499,9 +499,9 @@ index_merge(const struct of *of, struct mparse *mp,
 			continue;
 
 		/*
-		 * Make sure the manual section and architecture
-		 * agree with the directory where the file is located
-		 * or man(1) will not be able to find it.
+		 * By default, skip a file if the manual section
+		 * and architecture given in the file disagree
+		 * with the directory where the file is located.
 		 */
 
 		msec = NULL != mdoc ? 
@@ -527,9 +527,10 @@ index_merge(const struct of *of, struct mparse *mp,
 			arch = "";
 
 		/* 
-		 * Case is relevant for man(1), so use the file name
-		 * instead of the (usually) all caps page title,
-		 * if the two agree.
+		 * By default, skip a file if the title given
+		 * in the file disagrees with the file name.
+		 * If both agree, use the file name as the title,
+		 * because the one in the file usually is all caps.
 		 */
 
 		mtitle = NULL != mdoc ? 
@@ -1228,7 +1229,9 @@ ofile_argbuild(char *argv[], int argc, int use_all, int verb,
 	for (i = 0; i < argc; i++) {
 
 		/*
-		 * Analyze the path.
+		 * Try to infer the manual section, architecture and
+		 * page title from the path, assuming it looks like
+		 *   man*[/<arch>]/<title>.<section>
 		 */
 
 		if (strlcpy(buf, argv[i], sizeof(buf)) >= sizeof(buf)) {
@@ -1322,8 +1325,8 @@ ofile_dirbuild(const char *dir, const char* psec, const char *parch,
 			arch = parch;
 
 			/*
-	 		 * Don't bother parsing directories
-			 * that man(1) won't find.
+			 * By default, only use directories called:
+			 *   man<section>/[<arch>/]
 			 */
 
 			if (NULL == sec) {
@@ -1363,7 +1366,9 @@ ofile_dirbuild(const char *dir, const char* psec, const char *parch,
 			continue;
 
 		/*
-		 * Don't bother parsing files that man(1) won't find.
+		 * By default, skip files where the file name suffix
+		 * does not agree with the section directory
+		 * they are located in.
 		 */
 
 		suffix = strrchr(fn, '.');
@@ -1389,6 +1394,12 @@ ofile_dirbuild(const char *dir, const char* psec, const char *parch,
 			nof->sec = mandoc_strdup(psec);
 		if (NULL != parch)
 			nof->arch = mandoc_strdup(parch);
+
+		/*
+		 * Remember the file name without the extension,
+		 * to be used as the page title in the database.
+		 */
+
 		if (NULL != suffix)
 			*suffix = '\0';
 		nof->title = mandoc_strdup(fn);

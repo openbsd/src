@@ -1,4 +1,4 @@
-.\"	$Id: mandocdb.8,v 1.5 2011/11/14 18:52:05 schwarze Exp $
+.\"	$Id: mandocdb.8,v 1.6 2011/11/17 15:02:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 14 2011 $
+.Dd $Mdocdate: November 17 2011 $
 .Dt MANDOCDB 8
 .Os
 .Sh NAME
@@ -48,9 +48,13 @@ The arguments are as follows:
 .It Fl a
 Use all directories and files found below
 .Ar dir ... .
-By default, directories and files
-.Xr man 1
-cannot find will be silently skipped.
+By default, only files matching
+.Sm off
+.Sy man Ar section Li /
+.Op Ar arch Li /
+.Ar title . section
+.Sm on
+will be used.
 .It Fl d Ar dir
 Merge (remove and re-add)
 .Ar
