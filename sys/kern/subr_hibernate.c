@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.26 2011/11/18 00:28:46 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.27 2011/11/18 00:51:27 jasper Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -760,14 +760,14 @@ hibernate_inflate(union hibernate_info *hiber_info, paddr_t dest,
 			hibernate_state->hib_stream.avail_out =
 			    sizeof(psize_t);
 			hibernate_state->hib_stream.next_out = (char *)&rle;
-		
+
 			i = inflate(&hibernate_state->hib_stream,
 			    Z_FULL_FLUSH);
 			if (i != Z_OK && i != Z_STREAM_END) {
 				/*
 				 * XXX - this will likely reboot/hang most
 				 *       machines but there's not much else
-				 *       we can do here. 
+				 *       we can do here.
 				 */
 				panic("inflate rle error 2");
 			}
@@ -775,7 +775,7 @@ hibernate_inflate(union hibernate_info *hiber_info, paddr_t dest,
 
 		/* Set up the stream for inflate */
 		hibernate_state->hib_stream.avail_out = PAGE_SIZE;
-		hibernate_state->hib_stream.next_out = 
+		hibernate_state->hib_stream.next_out =
 		    (char *)HIBERNATE_INFLATE_PAGE;
 
 		/* Process next block of data */
@@ -814,7 +814,7 @@ hibernate_deflate(union hibernate_info *hiber_info, paddr_t src,
 
 	/* Process next block of data */
 	if (deflate(&hibernate_state->hib_stream, Z_PARTIAL_FLUSH) != Z_OK)
-		panic("hibernate zlib deflate error\n");
+		panic("hibernate zlib deflate error");
 
 	/* Update pointers and return number of bytes consumed */
 	*remaining = hibernate_state->hib_stream.avail_out;
@@ -897,7 +897,7 @@ hibernate_clear_signature(void)
 	if (hiber_info.io_func(hiber_info.device, hiber_info.sig_offset,
 	    (vaddr_t)&blank_hiber_info, hiber_info.secsize, HIB_W,
 	    hiber_info.io_page))
-		panic("error hibernate write 6\n");
+		panic("error hibernate write 6");
 
 	return (0);
 }
@@ -1042,7 +1042,7 @@ hibernate_resume(void)
 	if (hiber_info.io_func(hiber_info.device, hiber_info.sig_offset,
 	    (vaddr_t)&disk_hiber_info, hiber_info.secsize, HIB_R,
 	    hiber_info.io_page))
-		panic("error in hibernate read\n");
+		panic("error in hibernate read");
 
 	/*
 	 * If on-disk and in-memory hibernate signatures match,
@@ -1113,7 +1113,7 @@ hibernate_unpack_image(union hibernate_info *hiber_info)
 	for (i = 0; i < local_hiber_info.chunk_ctr; i++) {
 		/* Reset zlib for inflate */
 		if (hibernate_zlib_reset(&local_hiber_info, 0) != Z_OK)
-			panic("hibernate failed to reset zlib for inflate\n");
+			panic("hibernate failed to reset zlib for inflate");
 
 		/*
 		 * If there is a conflict, copy the chunk to the piglet area
@@ -1323,7 +1323,7 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 					out_remaining =
 					    hibernate_state->hib_stream.avail_out;
 				}
-	
+
 				if (out_remaining == 0) {
 					/* Filled up the page */
 					nblocks = PAGE_SIZE / hiber_info->secsize;
@@ -1460,7 +1460,7 @@ hibernate_read_image(union hibernate_info *hiber_info)
 	daddr_t blkctr;
 	vaddr_t chunktable = (vaddr_t)NULL;
 	paddr_t piglet_chunktable = hiber_info->piglet_pa +
-	    HIBERNATE_CHUNK_SIZE; 
+	    HIBERNATE_CHUNK_SIZE;
 	int i;
 
 	/* Calculate total chunk table size in disk blocks */
