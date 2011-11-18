@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.294 2011/10/21 17:31:23 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.295 2011/11/18 11:12:47 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 21 2011 $
+.Dd $Mdocdate: November 18 2011 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1402,6 +1402,13 @@ retrieved.
 File recorded in the package and displayed during installation.
 Defaults to ${PKGDIR}/MESSAGE if this file exists.
 Leave empty if no message is needed.
+.It Ev MISSING_FILES
+if
+.Ev FETCH_MANUALLY
+is set,
+.Ev MISSING_FILES
+will contain the list of missing distfiles or patchfiles that need to
+be fetched manually.
 .It Ev MTREE_FILE
 .Xr mtree 8
 specification to check when creating a PLIST with the
@@ -1645,6 +1652,12 @@ command, with possible options.
 Comma-separated list of architectures on which this package may install.
 Defaults to ${MACHINE_ARCH},${ARCH}.
 Use * to mean any arch.
+.It Ev PKG_ARGS
+Special arguments to pass to
+.Xr pkg_create 1 ,
+in addition to the default ones.
+For mips64 and pic libraries, see 
+.Qq The generation of package information .
 .It Ev PKG_CREATE
 Path to
 .Xr pkg_create 1
@@ -2901,6 +2914,7 @@ The following variables are subpackage dependent:
 .Ev IGNORE ,
 .Ev ONLY_FOR_ARCHS ,
 .Ev NOT_FOR_ARCHS ,
+.Ev PKG_ARGS ,
 .Ev PREFIX ,
 .Ev CATEGORIES ,
 .Ev MESSAGE ,
@@ -3085,6 +3099,21 @@ or
 .Li "-Dfrag=0"
 to
 .Ev PKG_ARGS
+.Pp
+If libraries are built using
+.Pa bsd.lib.mk ,
+special care should be taken for mips64* architectures,
+which do not ever build
+.Pa *pic.a
+files (all mips code is pic already).
+.Nm
+automatically adds
+.Li "-Dno_mips64=1"
+or
+.Li "-Dno_mips64=0"
+to
+.Ev PKG_ARGS ,
+and the porter only needs to provide the appropriate fragment.
 .Pp
 .Xr pkg_add 1
 now calls
