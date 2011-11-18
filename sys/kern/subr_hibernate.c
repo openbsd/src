@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.25 2011/11/17 23:18:13 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.26 2011/11/18 00:28:46 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1291,6 +1291,19 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 						rle = uvm_page_rle(inaddr);
 				}
 
+				if (out_remaining == 0) {
+					/* Filled up the page */
+					nblocks = PAGE_SIZE / hiber_info->secsize;
+
+					if (hiber_info->io_func(hiber_info->device,
+					    blkctr, (vaddr_t)hibernate_io_page,
+					    PAGE_SIZE, HIB_W, hiber_info->io_page))
+						return (1);
+
+					blkctr += nblocks;
+					out_remaining = PAGE_SIZE;
+				}
+
 				/* Write '0' RLE code */
 				if (inaddr < range_end) {
 					hibernate_state->hib_stream.avail_in =
@@ -1309,6 +1322,19 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 
 					out_remaining =
 					    hibernate_state->hib_stream.avail_out;
+				}
+	
+				if (out_remaining == 0) {
+					/* Filled up the page */
+					nblocks = PAGE_SIZE / hiber_info->secsize;
+
+					if (hiber_info->io_func(hiber_info->device,
+					    blkctr, (vaddr_t)hibernate_io_page,
+					    PAGE_SIZE, HIB_W, hiber_info->io_page))
+						return (1);
+
+					blkctr += nblocks;
+					out_remaining = PAGE_SIZE;
 				}
 
 				/* Deflate from temp_inaddr to IO page */
