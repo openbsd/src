@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.33 2010/11/28 21:00:03 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.34 2011/11/18 19:24:28 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
@@ -111,7 +111,6 @@ diskconf(void)
 void
 parse_prom_bootdev()
 {
-	static char hacked_boot_dev[128];
 	static struct bootdev_data bd;
 	char *cp, *scp, *boot_fields[8];
 	int i, done;
@@ -120,13 +119,13 @@ parse_prom_bootdev()
 	booted_partition = 0;
 	bootdev_data = NULL;
 
-	bcopy(bootinfo.booted_dev, hacked_boot_dev, sizeof hacked_boot_dev);
+	bcopy(bootinfo.booted_dev, boot_dev, sizeof boot_dev);
 #if 0
 	printf("parse_prom_bootdev: boot dev = \"%s\"\n", boot_dev);
 #endif
 
 	i = 0;
-	scp = cp = hacked_boot_dev;
+	scp = cp = boot_dev;
 	for (done = 0; !done; cp++) {
 		if (*cp != ' ' && *cp != '\0')
 			continue;
