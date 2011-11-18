@@ -1,4 +1,4 @@
-/*	$Id: apropos.c,v 1.6 2011/11/17 14:52:32 schwarze Exp $ */
+/*	$Id: apropos.c,v 1.7 2011/11/18 01:10:03 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -26,7 +26,7 @@
 #include "mandoc.h"
 
 static	int	 cmp(const void *, const void *);
-static	void	 list(struct rec *, size_t, void *);
+static	void	 list(struct res *, size_t, void *);
 static	void	 usage(void);
 
 static	char	*progname;
@@ -91,21 +91,23 @@ apropos(int argc, char *argv[])
 
 	if (use_man_conf)
 		man_conf_parse(&dirs);
-	apropos_search(dirs.argc, dirs.argv, &opts,
+	ch = apropos_search(dirs.argc, dirs.argv, &opts,
 			e, terms, NULL, list);
 
 	man_conf_free(&dirs);
 	exprfree(e);
-	return(EXIT_SUCCESS);
+	if (0 == ch)
+		fprintf(stderr, "%s: Database error\n", progname);
+	return(ch ? EXIT_SUCCESS : EXIT_FAILURE);
 }
 
 /* ARGSUSED */
 static void
-list(struct rec *res, size_t sz, void *arg)
+list(struct res *res, size_t sz, void *arg)
 {
 	int		 i;
 
-	qsort(res, sz, sizeof(struct rec), cmp);
+	qsort(res, sz, sizeof(struct res), cmp);
 
 	for (i = 0; i < (int)sz; i++)
 		printf("%s(%s%s%s) - %s\n", res[i].title, 
@@ -119,8 +121,8 @@ static int
 cmp(const void *p1, const void *p2)
 {
 
-	return(strcmp(((const struct rec *)p1)->title,
-				((const struct rec *)p2)->title));
+	return(strcmp(((const struct res *)p1)->title,
+				((const struct res *)p2)->title));
 }
 
 static void
@@ -132,6 +134,6 @@ usage(void)
 			"[-m path] "
 			"[-S arch] "
 			"[-s section] "
-			"EXPR\n", 
+			"expression...\n", 
 			progname);
 }

@@ -1,4 +1,4 @@
-/*	$Id: apropos_db.c,v 1.6 2011/11/17 15:38:27 schwarze Exp $ */
+/*	$Id: apropos_db.c,v 1.7 2011/11/18 01:10:03 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -39,14 +39,30 @@ struct	rectree {
 	int		 len;
 };
 
+struct	rec {
+	struct res	 res; /* resulting record info */
+	/*
+	 * Maintain a binary tree for checking the uniqueness of `rec'
+	 * when adding elements to the results array.
+	 * Since the results array is dynamic, use offset in the array
+	 * instead of a pointer to the structure.
+	 */
+	int		 lhs;
+	int		 rhs;
+	int		 matched; /* expression is true */
+	int		*matches; /* partial truth evaluations */
+};
+
 struct	expr {
-	int		 regex;
-	int		 index;
-	uint64_t 	 mask;
-	int		 and;
-	char		*v;
-	regex_t	 	 re;
-	struct expr	*next;
+	int		 regex; /* is regex? */
+	int		 index; /* index in match array */
+	uint64_t 	 mask; /* type-mask */
+	int		 cs; /* is case-sensitive? */
+	int		 and; /* is rhs of logical AND? */
+	char		*v; /* search value */
+	regex_t	 	 re; /* compiled re, if regex */
+	struct expr	*next; /* next in sequence */
+	struct expr	*subexpr;
 };
 
 struct	type {
@@ -99,11 +115,15 @@ static	const struct type types[] = {
 };
 
 static	DB	*btree_open(void);
-static	int	 btree_read(const DBT *, const struct mchars *, char **);
-static	int	 exprexecpre(const struct expr *, const char *, uint64_t);
-static	void	 exprexecpost(const struct expr *, 
-			const char *, uint64_t, int *, size_t);
-static	struct expr *exprterm(char *, int, int);
+static	int	 btree_read(const DBT *,
+			const struct mchars *, char **);
+static	int	 expreval(const struct expr *, int *);
+static	void	 exprexec(const struct expr *,
+			const char *, uint64_t, struct rec *);
+static	int	 exprmark(const struct expr *,
+			const char *, uint64_t, int *);
+static	struct expr *exprexpr(int, char *[], int *, int *, size_t *);
+static	struct expr *exprterm(char *, int);
 static	DB	*index_open(void);
 static	int	 index_read(const DBT *, const DBT *, 
 			const struct mchars *, struct rec *);
@@ -111,7 +131,7 @@ static	void	 norm_string(const char *,
 			const struct mchars *, char **);
 static	size_t	 norm_utf8(unsigned int, char[7]);
 static	void	 recfree(struct rec *);
-static	void	 single_search(struct rectree *, const struct opts *,
+static	int	 single_search(struct rectree *, const struct opts *,
 			const struct expr *, size_t terms,
 			struct mchars *);
 
@@ -342,13 +362,13 @@ index_read(const DBT *key, const DBT *val,
 	left = val->size;
 	cp = (char *)val->data;
 
-	rec->rec = *(recno_t *)key->data;
+	rec->res.rec = *(recno_t *)key->data;
 
-	INDEX_BREAD(rec->file);
-	INDEX_BREAD(rec->cat);
-	INDEX_BREAD(rec->title);
-	INDEX_BREAD(rec->arch);
-	INDEX_BREAD(rec->desc);
+	INDEX_BREAD(rec->res.file);
+	INDEX_BREAD(rec->res.cat);
+	INDEX_BREAD(rec->res.title);
+	INDEX_BREAD(rec->res.arch);
+	INDEX_BREAD(rec->res.desc);
 	return(1);
 }
 
@@ -356,27 +376,28 @@ index_read(const DBT *key, const DBT *val,
  * Search the mandocdb database for the expression "expr".
  * Filter out by "opts".
  * Call "res" with the results, which may be zero.
+ * Return 0 if there was a database error, else return 1.
  */
-void
+int
 apropos_search(int argc, char *argv[], const struct opts *opts,
 		const struct expr *expr, size_t terms, void *arg, 
-		void (*res)(struct rec *, size_t, void *))
+		void (*res)(struct res *, size_t, void *))
 {
 	struct rectree	 tree;
 	struct mchars	*mc;
-	struct rec	*recs;
-	int		 i, mlen;
+	struct res	*ress;
+	int		 i, mlen, rc;
 
 	memset(&tree, 0, sizeof(struct rectree));
 
-	/* XXX: error out with bad regexp? */
-
 	mc = mchars_alloc();
+	rc = 1;
 
 	for (i = 0; i < argc; i++) {
 		if (chdir(argv[i]))
 			continue;
-		single_search(&tree, opts, expr, terms, mc);
+		if (0 == single_search(&tree, opts, expr, terms, mc))
+			rc = 0;
 	}
 
 	/*
@@ -385,36 +406,37 @@ apropos_search(int argc, char *argv[], const struct opts *opts,
 	 */
 
 	for (mlen = i = 0; i < tree.len; i++)
-		if (tree.node[i].matches[0])
+		if (tree.node[i].matched)
 			mlen++;
-	recs = mandoc_malloc(mlen * sizeof(struct rec));
+	ress = mandoc_malloc(mlen * sizeof(struct res));
 	for (mlen = i = 0; i < tree.len; i++)
-		if (tree.node[i].matches[0])
-			memcpy(&recs[mlen++], &tree.node[i], 
-					sizeof(struct rec));
-	(*res)(recs, mlen, arg);
-	free(recs);
+		if (tree.node[i].matched)
+			memcpy(&ress[mlen++], &tree.node[i].res, 
+					sizeof(struct res));
+	(*res)(ress, mlen, arg);
+	free(ress);
 
 	for (i = 0; i < tree.len; i++)
 		recfree(&tree.node[i]);
 
 	if (mc)
 		mchars_free(mc);
+
+	return(rc);
 }
 
-static void
+static int
 single_search(struct rectree *tree, const struct opts *opts,
 		const struct expr *expr, size_t terms,
 		struct mchars *mc)
 {
-	int		 root, leaf;
+	int		 root, leaf, rc;
 	DBT		 key, val;
 	DB		*btree, *idx;
-	int		 ch;
 	char		*buf;
 	recno_t		 rec;
-	struct rec	*recs;
-	struct rec	 srec;
+	struct rec	*rs;
+	struct rec	 r;
 	struct db_val	*vbuf;
 
 	root	= -1;
@@ -422,9 +444,10 @@ single_search(struct rectree *tree, const struct opts *opts,
 	btree	= NULL;
 	idx	= NULL;
 	buf	= NULL;
-	recs	= tree->node;
+	rs	= tree->node;
+	rc      = 0;
 
-	memset(&srec, 0, sizeof(struct rec));
+	memset(&r, 0, sizeof(struct rec));
 
 	/* XXX: return fact that we've errored? */
 
@@ -433,23 +456,23 @@ single_search(struct rectree *tree, const struct opts *opts,
 	if (NULL == (idx = index_open())) 
 		goto out;
 
-	while (0 == (ch = (*btree->seq)(btree, &key, &val, R_NEXT))) {
+	while (0 == (*btree->seq)(btree, &key, &val, R_NEXT)) {
 		/* 
 		 * Low-water mark for key and value.
 		 * The key must have something in it, and the value must
 		 * have the correct tags/recno mix.
 		 */
 		if (key.size < 2 || sizeof(struct db_val) != val.size) 
-			break;
+			goto out;
 		if ( ! btree_read(&key, mc, &buf))
-			break;
+			goto out;
 
 		/*
 		 * See if this keyword record matches any of the
 		 * expressions we have stored.
 		 */
 		vbuf = val.data;
-		if ( ! exprexecpre(expr, buf, vbuf->mask))
+		if ( ! exprmark(expr, buf, vbuf->mask, NULL))
 			continue;
 		rec = vbuf->rec;
 
@@ -460,70 +483,74 @@ single_search(struct rectree *tree, const struct opts *opts,
 		 */
 
 		for (leaf = root; leaf >= 0; )
-			if (rec > recs[leaf].rec && recs[leaf].rhs >= 0)
-				leaf = recs[leaf].rhs;
-			else if (rec < recs[leaf].rec && recs[leaf].lhs >= 0)
-				leaf = recs[leaf].lhs;
+			if (rec > rs[leaf].res.rec &&
+					rs[leaf].rhs >= 0)
+				leaf = rs[leaf].rhs;
+			else if (rec < rs[leaf].res.rec &&
+					rs[leaf].lhs >= 0)
+				leaf = rs[leaf].lhs;
 			else 
 				break;
 
-		if (leaf >= 0 && recs[leaf].rec == rec) {
-			if (0 == recs[leaf].matches[0])
-				exprexecpost
-					(expr, buf, vbuf->mask, 
-					 recs[leaf].matches, terms);
+		/*
+		 * If we find a record, see if it has already evaluated
+		 * to true.  If it has, great, just keep going.  If not,
+		 * try to evaluate it now and continue anyway.
+		 */
+
+		if (leaf >= 0 && rs[leaf].res.rec == rec) {
+			if (0 == rs[leaf].matched)
+				exprexec(expr, buf, vbuf->mask, &rs[leaf]);
 			continue;
 		}
 
 		/*
-		 * Now we actually extract the manpage's metadata from
-		 * the index database.
+		 * We have a new file to examine.
+		 * Extract the manpage's metadata from the index
+		 * database, then begin partial evaluation.
 		 */
 
 		key.data = &rec;
 		key.size = sizeof(recno_t);
 
 		if (0 != (*idx->get)(idx, &key, &val, 0))
-			break;
+			goto out;
 
-		srec.lhs = srec.rhs = -1;
-		if ( ! index_read(&key, &val, mc, &srec))
-			break;
+		r.lhs = r.rhs = -1;
+		if ( ! index_read(&key, &val, mc, &r))
+			goto out;
 
-		if (opts->cat && strcasecmp(opts->cat, srec.cat))
+		/* XXX: this should be elsewhere, I guess? */
+		if (opts->cat && strcasecmp(opts->cat, r.res.cat))
 			continue;
-		if (opts->arch && strcasecmp(opts->arch, srec.arch))
+		if (opts->arch && strcasecmp(opts->arch, r.res.arch))
 			continue;
 
-		tree->node = recs = mandoc_realloc
-			(recs, (tree->len + 1) * sizeof(struct rec));
+		tree->node = rs = mandoc_realloc
+			(rs, (tree->len + 1) * sizeof(struct rec));
 
-		memcpy(&recs[tree->len], &srec, sizeof(struct rec));
-		recs[tree->len].matches = 
-			mandoc_calloc(terms + 1, sizeof(int));
+		memcpy(&rs[tree->len], &r, sizeof(struct rec));
+		rs[tree->len].matches = mandoc_calloc(terms, sizeof(int));
 
-		exprexecpost
-			(expr, buf, vbuf->mask, 
-			 recs[tree->len].matches, terms);
+		exprexec(expr, buf, vbuf->mask, &rs[tree->len]);
 
 		/* Append to our tree. */
 
 		if (leaf >= 0) {
-			if (rec > recs[leaf].rec)
-				recs[leaf].rhs = tree->len;
+			if (rec > rs[leaf].res.rec)
+				rs[leaf].rhs = tree->len;
 			else
-				recs[leaf].lhs = tree->len;
+				rs[leaf].lhs = tree->len;
 		} else
 			root = tree->len;
 		
-		memset(&srec, 0, sizeof(struct rec));
+		memset(&r, 0, sizeof(struct rec));
 		tree->len++;
 	}
-
-	/* XXX handle database errors? */
+	rc = 1;
 
 out:
-	recfree(&srec);
+	recfree(&r);
 
 	if (btree)
 		(*btree->close)(btree);
@@ -531,52 +558,114 @@ out:
 		(*idx->close)(idx);
 
 	free(buf);
+
+	return(rc);
 }
 
 static void
 recfree(struct rec *rec)
 {
 
-	free(rec->file);
+	free(rec->res.file);
+	free(rec->res.cat);
+	free(rec->res.title);
+	free(rec->res.arch);
+	free(rec->res.desc);
+
 	free(rec->matches);
-	free(rec->cat);
-	free(rec->title);
-	free(rec->arch);
-	free(rec->desc);
 }
 
 struct expr *
 exprcomp(int argc, char *argv[], size_t *tt)
 {
+	int		 pos, lvl;
+	struct expr	*e;
+
+	pos = lvl = 0;
+	*tt = 0;
+
+	e = exprexpr(argc, argv, &pos, &lvl, tt);
+
+	if (0 == lvl && pos >= argc)
+		return(e);
+
+	exprfree(e);
+	return(NULL);
+}
+
+/*
+ * Compile an array of tokens into an expression.
+ * An informal expression grammar is defined in apropos(1).
+ * Return NULL if we fail doing so.  All memory will be cleaned up.
+ * Return the root of the expression sequence if alright.
+ */
+static struct expr *
+exprexpr(int argc, char *argv[], int *pos, int *lvl, size_t *tt)
+{
 	struct expr	*e, *first, *next;
-	int		 pos, log;
+	int		 log;
 
 	first = next = NULL;
-	(*tt) = 0;
 
-	for (pos = 0; pos < argc; pos++) {
+	for ( ; *pos < argc; (*pos)++) {
 		e = next;
+
+		/*
+		 * Close out a subexpression.
+		 */
+
+		if (NULL != e && 0 == strcmp(")", argv[*pos])) {
+			if (--(*lvl) < 0)
+				goto err;
+			break;
+		}
+
+		/*
+		 * Small note: if we're just starting, don't let "-a"
+		 * and "-o" be considered logical operators: they're
+		 * just tokens unless pairwise joining, in which case we
+		 * record their existence (or assume "OR").
+		 */
 		log = 0;
 
-		if (0 == strcmp("-a", argv[pos]))
+		if (NULL != e && 0 == strcmp("-a", argv[*pos]))
 			log = 1;			
-		else if (0 == strcmp("-o", argv[pos]))
+		else if (NULL != e && 0 == strcmp("-o", argv[*pos]))
 			log = 2;
 
-		if (log > 0 && ++pos >= argc)
+		if (log > 0 && ++(*pos) >= argc)
 			goto err;
 
-		if (0 == strcmp("-i", argv[pos])) {
-			if (++pos >= argc)
+		/*
+		 * Now we parse the term part.  This can begin with
+		 * "-i", in which case the expression is case
+		 * insensitive.
+		 */
+
+		if (0 == strcmp("(", argv[*pos])) {
+			++(*pos);
+			++(*lvl);
+			next = mandoc_calloc(1, sizeof(struct expr));
+			next->cs = 1;
+			next->subexpr = exprexpr(argc, argv, pos, lvl, tt);
+			if (NULL == next->subexpr) {
+				free(next);
+				next = NULL;
+			}
+		} else if (0 == strcmp("-i", argv[*pos])) {
+			if (++(*pos) >= argc)
 				goto err;
-			next = exprterm(argv[pos], 1, log == 1);
+			next = exprterm(argv[*pos], 0);
 		} else
-			next = exprterm(argv[pos], 0, log == 1);
+			next = exprterm(argv[*pos], 1);
 
 		if (NULL == next)
 			goto err;
 
+		next->and = log == 1;
 		next->index = (int)(*tt)++;
+
+		/* Append to our chain of expressions. */
 
 		if (NULL == first) {
 			assert(NULL == e);
@@ -593,8 +682,13 @@ err:
 	return(NULL);
 }
 
+/*
+ * Parse a terminal expression with the grammar as defined in
+ * apropos(1).
+ * Return NULL if we fail the parse.
+ */
 static struct expr *
-exprterm(char *buf, int cs, int and)
+exprterm(char *buf, int cs)
 {
 	struct expr	 e;
 	struct expr	*p;
@@ -603,11 +697,9 @@ exprterm(char *buf, int cs, int and)
 
 	memset(&e, 0, sizeof(struct expr));
 
-	e.and = and;
- 
- 	/*
- 	 * Choose regex or substring match.
-	 */
+	e.cs = cs;
+
+	/* Choose regex or substring match. */
 
 	if (NULL == (e.v = strpbrk(buf, "=~"))) {
 		e.regex = 0;
@@ -617,16 +709,14 @@ exprterm(char *buf, int cs, int and)
 		*e.v++ = '\0';
 	}
 
-	/*
-	 * Determine the record types to search for.
-	 */
+	/* Determine the record types to search for. */
 
 	e.mask = 0;
 	if (buf < e.v) {
 		while (NULL != (key = strsep(&buf, ","))) {
 			i = 0;
 			while (types[i].mask &&
-			    strcmp(types[i].name, key))
+					strcmp(types[i].name, key))
 				i++;
 			e.mask |= types[i].mask;
 		}
@@ -635,7 +725,7 @@ exprterm(char *buf, int cs, int and)
 		e.mask = TYPE_Nm | TYPE_Nd;
 
 	if (e.regex) {
-		i = REG_EXTENDED | REG_NOSUB | cs ? REG_ICASE : 0;
+		i = REG_EXTENDED | REG_NOSUB | cs ? 0 : REG_ICASE;
 		if (regcomp(&e.re, e.v, i))
 			return(NULL);
 	}
@@ -653,6 +743,8 @@ exprfree(struct expr *p)
 	struct expr	*pp;
 	
 	while (NULL != p) {
+		if (p->subexpr)
+			exprfree(p->subexpr);
 		if (p->regex)
 			regfree(&p->re);
 		free(p->v);
@@ -662,24 +754,66 @@ exprfree(struct expr *p)
 	}
 }
 
-/*
- * See if this expression evaluates to true for any terms.
- * Return 1 if any expression evaluates to true, else 0.
- */
 static int
-exprexecpre(const struct expr *p, const char *cp, uint64_t mask)
+exprmark(const struct expr *p, const char *cp, uint64_t mask, int *ms)
 {
 
-	for ( ; NULL != p; p = p->next) {
-		if ( ! (mask & p->mask))
-			continue;
-		if (p->regex) {
-			if (0 == regexec(&p->re, cp, 0, NULL, 0))
+	for ( ; p; p = p->next) {
+		if (p->subexpr) {
+			if (exprmark(p->subexpr, cp, mask, ms))
 				return(1);
-		} else if (NULL != strcasestr(cp, p->v))
+			continue;
+		} else if ( ! (mask & p->mask))
+			continue;
+
+		if (p->regex) {
+			if (regexec(&p->re, cp, 0, NULL, 0))
+				continue;
+		} else if (p->cs) {
+			if (NULL == strstr(cp, p->v))
+				continue;
+		} else {
+			if (NULL == strcasestr(cp, p->v))
+				continue;
+		}
+
+		if (NULL == ms)
 			return(1);
+		else
+			ms[p->index] = 1;
 	}
-	return(0);
+}
+
+static int
+expreval(const struct expr *p, int *ms)
+{
+	int		 match;
+
+	/*
+	 * AND has precedence over OR.  Analysis is left-right, though
+	 * it doesn't matter because there are no side-effects.
+	 * Thus, step through pairwise ANDs and accumulate their Boolean
+	 * evaluation.  If we encounter a single true AND collection or
+	 * standalone term, the whole expression is true (by definition
+	 * of OR).
+	 */
+
+	for (match = 0; p && ! match; p = p->next) {
+		/* Evaluate a subexpression, if applicable. */
+		if (p->subexpr && ! ms[p->index])
+			ms[p->index] = expreval(p->subexpr, ms);
+
+		match = ms[p->index];
+		for ( ; p->next && p->next->and; p = p->next) {
+			/* Evaluate a subexpression, if applicable. */
+			if (p->next->subexpr && ! ms[p->next->index])
+				ms[p->next->index] =
+					expreval(p->next->subexpr, ms);
+			match = match && ms[p->next->index];
+		}
+	}
+
+	return(match);
 }
 
 /*
@@ -690,31 +824,10 @@ exprexecpre(const struct expr *p, const char *cp, uint64_t mask)
  * If this evaluates to true, mark the expression as satisfied.
  */
 static void
-exprexecpost(const struct expr *e, const char *cp, 
-		uint64_t mask, int *matches, size_t matchsz)
+exprexec(const struct expr *e, const char *cp, uint64_t mask, struct rec *r)
 {
-	const struct expr *p;
-	int		   match;
 
-	assert(0 == matches[0]);
-
-	for (p = e; p; p = p->next) {
-		if ( ! (mask & p->mask))
-			continue;
-		if (p->regex) {
-			if (regexec(&p->re, cp, 0, NULL, 0))
-				continue;
-		} else if (NULL == strcasestr(cp, p->v))
-			continue;
-
-		matches[p->index + 1] = 1;
-	}
-
-	for (match = 0, p = e; p && ! match; p = p->next) {
-		match = matches[p->index + 1];
-		for ( ; p->next && p->next->and; p = p->next)
-			match = match && matches[p->next->index + 1];
-	}
-
-	matches[0] = match;
+	assert(0 == r->matched);
+	exprmark(e, cp, mask, r->matches);
+	r->matched = expreval(e, r->matches);
 }

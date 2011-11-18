@@ -1,4 +1,4 @@
-/*	$Id: apropos_db.h,v 1.5 2011/11/17 14:52:32 schwarze Exp $ */
+/*	$Id: apropos_db.h,v 1.6 2011/11/18 01:10:03 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -17,24 +17,13 @@
 #ifndef APROPOS_H
 #define APROPOS_H
 
-struct	rec {
+struct	res {
 	char		*file; /* file in file-system */
 	char		*cat; /* category (3p, 3, etc.) */
 	char		*title; /* title (FOO, etc.) */
 	char		*arch; /* arch (or empty string) */
 	char		*desc; /* description (from Nd) */
 	unsigned int	 rec; /* record in index */
-	/*
-	 * By the time the apropos_search() callback is called, these
-	 * are superfluous.
-	 * Maintain a binary tree for checking the uniqueness of `rec'
-	 * when adding elements to the results array.
-	 * Since the results array is dynamic, use offset in the array
-	 * instead of a pointer to the structure.
-	 */
-	int		 lhs;
-	int		 rhs;
-	int		*matches;
 };
 
 struct	opts {
@@ -46,9 +35,9 @@ __BEGIN_DECLS
 
 struct	expr;
 
-void	 	 apropos_search(int, char **, const struct opts *, 
+int	 	 apropos_search(int, char **, const struct opts *, 
 			const struct expr *, size_t, void *, 
-			void (*)(struct rec *, size_t, void *));
+			void (*)(struct res *, size_t, void *));
 struct	expr	*exprcomp(int, char *[], size_t *);
 void		 exprfree(struct expr *);
 
