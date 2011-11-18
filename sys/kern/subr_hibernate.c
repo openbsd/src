@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.27 2011/11/18 00:51:27 jasper Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.28 2011/11/18 01:31:37 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1763,9 +1763,6 @@ hibernate_suspend(void)
 		return (1);
 
 	global_piglet_va = hib_info.piglet_va;
-
-	/* XXX - Won't need to zero everything with RLE */
-	uvm_pmr_zero_everything();
 
 	if (hibernate_write_chunks(&hib_info))
 		return (1);
