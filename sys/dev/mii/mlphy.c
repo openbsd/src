@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlphy.c,v 1.1 2011/03/28 15:21:38 claudio Exp $	*/
+/*	$OpenBSD: mlphy.c,v 1.2 2011/11/19 13:00:14 claudio Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999
@@ -89,6 +89,18 @@
 
 /*
  * Micro Linear 6692 PHY
+ *
+ * The Micro Linear 6692 is a strange beast, and dealing with it using
+ * this code framework is tricky. The 6692 is actually a 100Mbps-only
+ * device, which means that a second PHY is required to support 10Mbps
+ * modes. However, even though the 6692 does not support 10Mbps modes,
+ * it can still advertise them when performing autonegotiation. If a
+ * 10Mbps mode is negotiated, we must program the registers of the
+ * companion PHY accordingly in addition to programming the registers
+ * of the 6692.
+ *
+ * This device also does not have vendor/device ID registers.
+ *
  */
 
 #include <sys/param.h>
