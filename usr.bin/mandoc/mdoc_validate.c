@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.97 2011/11/16 19:47:58 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.98 2011/11/19 13:17:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -1688,6 +1688,14 @@ post_rs(POST_ARGS)
 		mdoc_nmsg(mdoc, nn, MANDOCERR_CHILD);
 		mdoc_node_delete(mdoc, nn);
 	}
+
+	/*
+	 * Nothing to sort if only invalid nodes were found
+	 * inside the `Rs' body.
+	 */
+
+	if (NULL == mdoc->last->child)
+		return(1);
 
 	/*
 	 * The full `Rs' block needs special handling to order the
