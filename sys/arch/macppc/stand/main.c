@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 2008/05/25 16:55:31 miod Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 2011/11/19 16:15:11 mpi Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -81,54 +81,6 @@ prom2boot(char *dev)
 	if (!lp)
 		lp = cp;
 	*lp = 0;
-}
-
-static void
-parseargs(char *str, int *howtop)
-{
-	char *cp;
-
-	/* Allow user to drop back to the PROM. */
-	if (strcmp(str, "exit") == 0)
-		_rtt();
-
-	*howtop = 0;
-	if (str[0] == '\0')
-		return;
-
-	cp = str;
-	while (*cp != 0) {
-		/* check for - */
-		if (*cp == '-')
-			break;	/* start of options found */
-
-		while (*cp != 0 && *cp != ' ')
-			cp++;	/* character in the middle of the name, skip */
-
-		while (*cp == ' ')
-			*cp++ = 0;
-	}
-	if (!*cp)
-		return;
-
-	*cp++ = 0;
-	while (*cp) {
-		switch (*cp++) {
-		case 'a':
-			*howtop |= RB_ASKNAME;
-			break;
-		case 'c':
-			*howtop |= RB_CONFIG;
-			break;
-		case 's':
-			*howtop |= RB_SINGLE;
-			break;
-		case 'd':
-			*howtop |= RB_KDB;
-			debug = 1;
-			break;
-		}
-	}
 }
 
 static void

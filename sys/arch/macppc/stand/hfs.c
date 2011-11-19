@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfs.c,v 1.4 2005/09/26 19:55:47 kettenis Exp $	*/
+/*	$OpenBSD: hfs.c,v 1.5 2011/11/19 16:15:11 mpi Exp $	*/
 /*	$NetBSD: hfs.c,v 1.1 2000/11/14 11:25:35 tsubai Exp $	*/
 
 /*-
@@ -47,18 +47,7 @@ hfs_open(char *path, struct open_file *f)
 	bzero(bootpath, sizeof bootpath);
 	OF_getprop(chosen, "bootpath", bootpath, sizeof bootpath);
 
-#ifdef HAVE_STAND_STRRCHR
 	cp = strrchr(bootpath, ',');
-#else
-	cp = bootpath;
-	cp += strlen(bootpath);
-	for (; *cp != ','; cp--) {
-		if (cp == bootpath) {
-			cp = NULL;
-			break;
-		}
-	}
-#endif
 	if (cp == NULL)
 		return ENXIO;
 
