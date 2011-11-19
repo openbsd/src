@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.193 2011/10/30 20:38:55 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.194 2011/11/19 13:54:53 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -434,7 +434,8 @@ carp_setroute(struct carp_softc *sc, int cmd)
 
 			/* Check for our address on another interface */
 			/* XXX cries for proper API */
-			rnh = rt_gettable(ifa->ifa_addr->sa_family, 0);
+			rnh = rt_gettable(ifa->ifa_addr->sa_family,
+			    sc->sc_if.if_rdomain);
 			rn = rnh->rnh_matchaddr(ifa->ifa_addr, rnh);
 			rt = (struct rtentry *)rn;
 			hr_otherif = (rt && rt->rt_ifp != &sc->sc_if &&
