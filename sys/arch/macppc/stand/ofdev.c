@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.18 2011/04/10 09:58:19 miod Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.19 2011/11/19 16:11:55 mpi Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 1997/04/16 20:29:20 thorpej Exp $	*/
 
 /*
@@ -49,25 +49,39 @@
 
 extern char bootdev[];
 
+char opened_name[256];
+
 /*
  * this function is passed [device specifier]:[kernel]
  * however a device specifier may contain a ':'
  */
-char namebuf[256];
-static char *
-filename(char *str)
+static int
+parsename(char *str, char **file)
 {
 	char *cp;
-	char savec;
+	int aliases;
+	size_t len;
 
 	cp = strrchr(str, ':');
 	if (cp == NULL)
-		return NULL;
+		return 1;
 
-	savec = *cp;
-	*cp = 0;
-	strlcpy(namebuf, cp+1, sizeof namebuf);
-	return namebuf;
+	*cp++ = 0;
+
+	if ((aliases = OF_finddevice("/aliases")) == -1 ||
+	    OF_getprop(aliases, str, opened_name, sizeof opened_name) < 0)
+		strlcpy(opened_name, str, sizeof opened_name);
+
+	len = strlcat(opened_name, ":", sizeof opened_name);
+	if (*cp != '/')
+		strlcat(opened_name, "/", sizeof opened_name);
+
+	if (strlcat(opened_name, cp, sizeof opened_name) >= sizeof opened_name)
+		return 1;
+
+	*file = opened_name + len + 1;
+
+	return 0;
 }
 
 static int
@@ -143,8 +157,6 @@ int nfsys;
 static struct of_dev ofdev = {
 	-1,
 };
-
-char opened_name[256];
 
 static u_long
 get_long(p)
@@ -280,7 +292,6 @@ search_label(devp, off, buf, lp, off0)
 int
 devopen(struct open_file *of, const char *name, char **file)
 {
-	char *cp;
 	char fname[256];
 	char buf[DEV_BSIZE];
 	struct disklabel label;
@@ -294,18 +305,8 @@ devopen(struct open_file *of, const char *name, char **file)
 		return EPERM;
 
 	strlcpy(fname, name, sizeof fname);
-	cp = filename(fname);
-	if (cp == NULL)
+	if (parsename(fname, file))
 		return ENOENT;
-	strlcpy(buf, cp, sizeof buf);
-	strlcpy(opened_name, fname, sizeof opened_name);
-
-	strlcat(opened_name, ":", sizeof opened_name);
-	if (*buf != '/')
-		strlcat(opened_name, "/", sizeof opened_name);
-
-	strlcat(opened_name, buf, sizeof opened_name);
-	*file = opened_name + strlen(fname) + 1;
 
 	if ((handle = OF_finddevice(fname)) == -1)
 		return ENOENT;
