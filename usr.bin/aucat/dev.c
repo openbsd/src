@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.70 2011/11/16 21:26:55 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.71 2011/11/20 22:54:51 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -64,6 +64,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "abuf.h"
@@ -84,6 +85,7 @@ void dev_close(struct dev *);
 void dev_start(struct dev *);
 void dev_stop(struct dev *);
 void dev_clear(struct dev *);
+void dev_onmove(void *, int);
 int  devctl_open(struct dev *, struct devctl *);
 
 struct dev *dev_list = NULL;
@@ -111,7 +113,7 @@ dev_new(char *path, unsigned mode,
     unsigned bufsz, unsigned round, unsigned hold, unsigned autovol)
 {
 	struct dev *d;
-	unsigned *pnum;
+	unsigned *pnum, i;
 
 	d = malloc(sizeof(struct dev));
 	if (d == NULL) {
@@ -140,6 +142,17 @@ dev_new(char *path, unsigned mode,
 	d->autovol = autovol;
 	d->autostart = 0;
 	d->pstate = DEV_CLOSED;
+	d->serial = 0;
+	for (i = 0; i < CTL_NSLOT; i++) {
+		d->slot[i].unit = i;
+		d->slot[i].ops = NULL;
+		d->slot[i].vol = MIDI_MAXCTL;
+		d->slot[i].tstate = CTL_OFF;
+		d->slot[i].serial = d->serial++;
+		d->slot[i].name[0] = '\0';
+	}
+	d->origin = 0;
+	d->tstate = CTL_STOP;
 	d->next = dev_list;
 	dev_list = d;      
 	return d;
@@ -393,16 +406,10 @@ dev_open(struct dev *d)
 	if (d->mode & MODE_PLAY) {
 		d->mix = mix_new("play", d->bufsz, d->round, d->autovol);
 		d->mix->refs++;
-		d->mix->u.mix.ctl = d->midi;
 	}
 	if (d->mode & MODE_REC) {
 		d->sub = sub_new("rec", d->bufsz, d->round);
 		d->sub->refs++;
-		/*
-		 * If not playing, use the record end as clock source
-		 */
-		if (!(d->mode & MODE_PLAY))
-			d->sub->u.sub.ctl = d->midi;
 	}
 	if (d->mode & MODE_LOOP) {
 		/*
@@ -657,6 +664,13 @@ dev_close(struct dev *d)
 void
 dev_drain(struct dev *d)
 {
+	unsigned i;
+	struct ctl_slot *s;
+
+	for (i = 0, s = d->slot; i < CTL_NSLOT; i++, s++) {
+		if (s->ops)
+			s->ops->quit(s->arg);
+	}
 	if (d->pstate != DEV_CLOSED)
 		dev_close(d);
 }
@@ -728,10 +742,10 @@ dev_start(struct dev *d)
 		d->submon->flags |= APROC_DROP;
 	if (APROC_OK(d->play) && d->play->u.io.file) {
 		f = d->play->u.io.file;
-		f->ops->start(f);
+		f->ops->start(f, dev_onmove, d);
 	} else if (APROC_OK(d->rec) && d->rec->u.io.file) {
 		f = d->rec->u.io.file;
-		f->ops->start(f);
+		f->ops->start(f, dev_onmove, d);
 	}
 }
 
@@ -852,7 +866,7 @@ dev_run(struct dev *d)
 		    (!APROC_OK(d->submon) ||
 			d->submon->u.sub.idle > 2 * d->bufsz) &&
 		    (!APROC_OK(d->midi) ||
-			d->midi->u.ctl.tstate != CTL_RUN)) {
+			d->tstate != CTL_RUN)) {
 #ifdef DEBUG
 			if (debug_level >= 3) {
 				dev_dbg(d);
@@ -1009,6 +1023,8 @@ dev_sync(struct dev *d, unsigned mode, struct abuf *ibuf, struct abuf *obuf)
 /*
  * return the current latency (in frames), ie the latency that
  * a stream would have if dev_attach() is called on it.
+ *
+ * XXX: return a "unsigned", since result is always positive, isn't it?
  */
 int
 dev_getpos(struct dev *d)
@@ -1262,4 +1278,454 @@ dev_clear(struct dev *d)
 		sub_clear(d->submon);
 		mon_clear(d->mon);
 	}
+}
+
+#ifdef DEBUG
+void
+dev_slotdbg(struct dev *d, int slot)
+{
+	struct ctl_slot *s;
+
+	if (slot < 0) {
+		dbg_puts("none");
+	} else {
+		s = d->slot + slot;
+		dbg_puts(s->name);
+		dbg_putu(s->unit);
+		dbg_puts("(");
+		dbg_putu(s->vol);
+		dbg_puts(")/");
+		switch (s->tstate) {
+		case CTL_OFF:
+			dbg_puts("off");
+			break;
+		case CTL_RUN:
+			dbg_puts("run");
+			break;
+		case CTL_START:
+			dbg_puts("sta");
+			break;
+		case CTL_STOP:
+			dbg_puts("stp");
+			break;
+		default:
+			dbg_puts("unk");
+			break;
+		}
+	}
+}
+#endif
+
+/*
+ * find the best matching free slot index (ie midi channel).
+ * return -1, if there are no free slots anymore
+ */
+int
+dev_mkslot(struct dev *d, char *who)
+{
+	char *s;
+	struct ctl_slot *slot;
+	char name[CTL_NAMEMAX];
+	unsigned i, unit, umap = 0;
+	unsigned ser, bestser, bestidx;
+
+	/*
+	 * create a ``valid'' control name (lowcase, remove [^a-z], trucate)
+	 */
+	for (i = 0, s = who; ; s++) {
+		if (i == CTL_NAMEMAX - 1 || *s == '\0') {
+			name[i] = '\0';
+			break;
+		} else if (*s >= 'A' && *s <= 'Z') {
+			name[i++] = *s + 'a' - 'A';
+		} else if (*s >= 'a' && *s <= 'z')
+			name[i++] = *s;
+	}
+	if (i == 0)
+		strlcpy(name, "noname", CTL_NAMEMAX);
+
+	/*
+	 * find the instance number of the control name
+	 */
+	for (i = 0, slot = d->slot; i < CTL_NSLOT; i++, slot++) {
+		if (slot->ops == NULL)
+			continue;
+		if (strcmp(slot->name, name) == 0)
+			umap |= (1 << i);
+	} 
+	for (unit = 0; ; unit++) {
+		if (unit == CTL_NSLOT) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				dbg_puts(name);
+				dbg_puts(": too many instances\n");
+			}
+#endif
+			return -1;
+		}
+		if ((umap & (1 << unit)) == 0)
+			break;
+	}
+
+	/*
+	 * find a free controller slot with the same name/unit
+	 */
+	for (i = 0, slot = d->slot; i < CTL_NSLOT; i++, slot++) {
+		if (slot->ops == NULL &&
+		    strcmp(slot->name, name) == 0 &&
+		    slot->unit == unit) {
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				dbg_puts(name);
+				dbg_putu(unit);
+				dbg_puts(": found slot ");
+				dbg_putu(i);
+				dbg_puts("\n");
+			}
+#endif
+			return i;
+		}
+	}
+
+	/*
+	 * couldn't find a matching slot, pick oldest free slot
+	 * and set its name/unit
+	 */
+	bestser = 0;
+	bestidx = CTL_NSLOT;
+	for (i = 0, slot = d->slot; i < CTL_NSLOT; i++, slot++) {
+		if (slot->ops != NULL)
+			continue;
+		ser = d->serial - slot->serial;
+		if (ser > bestser) {
+			bestser = ser;
+			bestidx = i;
+		}
+	}
+	if (bestidx == CTL_NSLOT) {
+#ifdef DEBUG
+		if (debug_level >= 1) {
+			dbg_puts(name);
+			dbg_putu(unit);
+			dbg_puts(": out of mixer slots\n");
+		}
+#endif
+		return -1;
+	}
+	slot = d->slot + bestidx;
+	if (slot->name[0] != '\0')
+		slot->vol = MIDI_MAXCTL;
+	strlcpy(slot->name, name, CTL_NAMEMAX);
+	slot->serial = d->serial++;
+	slot->unit = unit;
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		dbg_puts(name);
+		dbg_putu(unit);
+		dbg_puts(": overwritten slot ");
+		dbg_putu(bestidx);
+		dbg_puts("\n");
+	}
+#endif
+	return bestidx;
+}
+
+/*
+ * allocate a new slot and register the given call-backs
+ */
+int
+dev_slotnew(struct dev *d, char *who, struct ctl_ops *ops, void *arg, int mmc)
+{
+	int slot;
+	struct ctl_slot *s;
+
+	slot = dev_mkslot(d, who);
+	if (slot < 0)
+		return -1;
+
+	s = d->slot + slot;
+	s->ops = ops;
+	s->arg = arg;
+	s->tstate = mmc ? CTL_STOP : CTL_OFF;
+	s->ops->vol(s->arg, s->vol);
+
+	if (APROC_OK(d->midi)) {
+		ctl_slot(d->midi, slot);
+		ctl_vol(d->midi, slot, s->vol);
+	} else {
+#ifdef DEBUG
+		if (debug_level >= 2) {
+			dev_slotdbg(d, slot);
+			dbg_puts(": MIDI control not available\n");
+		}
+#endif
+	}
+	return slot;
+}
+
+/*
+ * release the given slot
+ */
+void
+dev_slotdel(struct dev *d, int slot)
+{
+	struct ctl_slot *s;
+
+	s = d->slot + slot;
+	s->ops = NULL;
+}
+
+/*
+ * notifty the mixer that volume changed, called by whom allocad the slot using
+ * ctl_slotnew(). Note: it doesn't make sens to call this from within the
+ * call-back.
+ *
+ * XXX: set actual volume here and use only this interface. Now, this
+ *	can work because all streams have a slot
+ */
+void
+dev_slotvol(struct dev *d, int slot, unsigned vol)
+{
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		dev_slotdbg(d, slot);
+		dbg_puts(": changing volume to ");
+		dbg_putu(vol);
+		dbg_puts("\n");
+	}
+#endif
+	d->slot[slot].vol = vol;
+	if (APROC_OK(d->midi))
+		ctl_vol(d->midi, slot, vol);
+}
+
+
+/*
+ * check if there are controlled streams
+ */
+int
+dev_idle(struct dev *d)
+{
+	unsigned i;
+	struct ctl_slot *s;
+
+	/*
+	 * XXX: this conditions breaks -aoff for thru boxes
+	 */
+	if (d->mode & MODE_THRU)
+		return 0;
+
+	if (d->pstate != DEV_CLOSED)
+		return 0;
+
+	/*
+	 * XXX: if the device is closed, we're sure there are no
+	 *	slots in use, so the following test is useless
+	 */
+	for (i = 0, s = d->slot; i < CTL_NSLOT; i++, s++) {
+		if (s->ops)
+			return 0;
+	}
+	return 1;
+}
+
+/*
+ * check that all clients controlled by MMC are ready to start,
+ * if so, start them all but the caller
+ */
+int
+dev_try(struct dev *d, int slot)
+{
+	unsigned i;
+	struct ctl_slot *s;
+
+	if (d->tstate != CTL_START) {
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			dev_slotdbg(d, slot);
+			dbg_puts(": server not started, delayd\n");
+		}
+#endif
+		return 0;
+	}
+	for (i = 0, s = d->slot; i < CTL_NSLOT; i++, s++) {
+		if (!s->ops || i == slot)
+			continue;
+		if (s->tstate != CTL_OFF && s->tstate != CTL_START) {
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				dev_slotdbg(d, i);
+				dbg_puts(": not ready, server delayed\n");
+			}
+#endif
+			return 0;
+		}
+	}
+	for (i = 0, s = d->slot; i < CTL_NSLOT; i++, s++) {
+		if (!s->ops || i == slot)
+			continue;
+		if (s->tstate == CTL_START) {
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				dev_slotdbg(d, i);
+				dbg_puts(": started\n");
+			}
+#endif
+			s->tstate = CTL_RUN;
+			s->ops->start(s->arg);
+		}
+	}
+	if (slot >= 0)
+		d->slot[slot].tstate = CTL_RUN;
+	d->tstate = CTL_RUN;
+	if (APROC_OK(d->midi))
+		ctl_full(d->midi, d->origin, d->rate, d->round, dev_getpos(d));
+	dev_wakeup(d);
+	return 1;
+}
+
+/*
+ * notify the MMC layer that the stream is attempting
+ * to start. If other streams are not ready, 0 is returned meaning 
+ * that the stream should wait. If other streams are ready, they
+ * are started, and the caller should start immediately.
+ */
+int
+dev_slotstart(struct dev *d, int slot)
+{
+	struct ctl_slot *s = d->slot + slot;
+
+	if (s->tstate == CTL_OFF || d->tstate == CTL_OFF)
+		return 1;
+
+	/*
+	 * if the server already started (the client missed the
+	 * start rendez-vous) or the server is stopped, then
+	 * tag the client as ``wanting to start''
+	 */
+	s->tstate = CTL_START;
+	return dev_try(d, slot);
+}
+
+/*
+ * notify the MMC layer that the stream no longer is trying to
+ * start (or that it just stopped), meaning that its ``start'' call-back
+ * shouldn't be called anymore
+ */
+void
+dev_slotstop(struct dev *d, int slot)
+{
+	struct ctl_slot *s = d->slot + slot;
+
+	/*
+	 * tag the stream as not trying to start,
+	 * unless MMC is turned off
+	 */
+	if (s->tstate != CTL_OFF)
+		s->tstate = CTL_STOP;
+}
+
+/*
+ * start all slots simultaneously
+ */
+void
+dev_mmcstart(struct dev *d)
+{
+	if (d->tstate == CTL_STOP) {
+		d->tstate = CTL_START;
+		(void)dev_try(d, -1);
+#ifdef DEBUG
+	} else {
+		if (debug_level >= 3) {
+			dev_dbg(d);
+			dbg_puts(": ignoring mmc start\n");
+		}
+#endif
+	}
+}
+
+/*
+ * stop all slots simultaneously
+ */
+void
+dev_mmcstop(struct dev *d)
+{
+	unsigned i;
+	struct ctl_slot *s;
+
+	switch (d->tstate) {
+	case CTL_START:
+		d->tstate = CTL_STOP;
+		return;
+	case CTL_RUN:
+		d->tstate = CTL_STOP;
+		break;
+	default:
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			dev_dbg(d);
+			dbg_puts(": ignored mmc stop\n");
+		}
+#endif
+		return;
+	}
+	for (i = 0, s = d->slot; i < CTL_NSLOT; i++, s++) {
+		if (!s->ops)
+			continue;
+		if (s->tstate == CTL_RUN) {
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				dev_slotdbg(d, i);
+				dbg_puts(": requested to stop\n");
+			}
+#endif
+			s->ops->stop(s->arg);
+		}
+	}
+}
+
+/*
+ * relocate all slots simultaneously
+ */
+void
+dev_loc(struct dev *d, unsigned origin)
+{
+	unsigned i;
+	struct ctl_slot *s;
+
+#ifdef DEBUG
+	if (debug_level >= 2) {
+		dbg_puts("server relocated to ");
+		dbg_putu(origin);
+		dbg_puts("\n");
+	}
+#endif
+	if (d->tstate == CTL_RUN)
+		dev_mmcstop(d);
+	d->origin = origin;
+	for (i = 0, s = d->slot; i < CTL_NSLOT; i++, s++) {
+		if (!s->ops)
+			continue;
+		s->ops->loc(s->arg, d->origin);
+	}
+	if (d->tstate == CTL_RUN)
+		dev_mmcstart(d);
+}
+
+/*
+ * called at every clock tick by the mixer, delta is positive, unless
+ * there's an overrun/underrun
+ */
+void
+dev_onmove(void *arg, int delta)
+{
+	struct dev *d = (struct dev *)arg;
+
+	/*
+	 * don't send ticks before the start signal
+	 */
+	if (d->tstate != CTL_RUN)
+		return;
+	if (APROC_OK(d->midi))
+		ctl_qfr(d->midi, d->rate, delta);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.38 2011/11/15 20:41:54 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.39 2011/11/20 22:54:51 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -354,42 +354,6 @@ thru_new(char *name)
 	return p;
 }
 
-#ifdef DEBUG
-void
-ctl_slotdbg(struct aproc *p, int slot)
-{
-	struct ctl_slot *s;
-
-	if (slot < 0) {
-		dbg_puts("none");
-	} else {
-		s = p->u.ctl.slot + slot;
-		dbg_puts(s->name);
-		dbg_putu(s->unit);
-		dbg_puts("(");
-		dbg_putu(s->vol);
-		dbg_puts(")/");
-		switch (s->tstate) {
-		case CTL_OFF:
-			dbg_puts("off");
-			break;
-		case CTL_RUN:
-			dbg_puts("run");
-			break;
-		case CTL_START:
-			dbg_puts("sta");
-			break;
-		case CTL_STOP:
-			dbg_puts("stp");
-			break;
-		default:
-			dbg_puts("unk");
-			break;
-		}
-	}
-}
-#endif
-
 /*
  * send a message to the given output
  */
@@ -453,76 +417,111 @@ ctl_sendmsg(struct aproc *p, struct abuf *ibuf, unsigned char *msg, unsigned len
  * send a quarter frame MTC message
  */
 void
-ctl_qfr(struct aproc *p)
+ctl_qfr(struct aproc *p, unsigned rate, int delta)
 {
 	unsigned char buf[2];
 	unsigned data;
+	int qfrlen;
 
-	switch (p->u.ctl.qfr) {
-	case 0:
-		data = p->u.ctl.fr & 0xf;
-		break;
-	case 1:
-		data = p->u.ctl.fr >> 4;
-		break;
-	case 2:
-		data = p->u.ctl.sec & 0xf;
-		break;
-	case 3:
-		data = p->u.ctl.sec >> 4;
-		break;
-	case 4:
-		data = p->u.ctl.min & 0xf;
-		break;
-	case 5:
-		data = p->u.ctl.min >> 4;
-		break;
-	case 6:
-		data = p->u.ctl.hr & 0xf;
-		break;
-	case 7:
-		data = (p->u.ctl.hr >> 4) | (p->u.ctl.fps_id << 1);
-		/*
-		 * tick messages are sent 2 frames ahead
-		 */
-		p->u.ctl.fr += 2;
-		if (p->u.ctl.fr < p->u.ctl.fps)
+	p->u.ctl.delta += delta * MTC_SEC;
+
+	/*
+	 * don't send ticks during the count-down
+	 * XXX: test not useful, given while() condition
+	 */
+	if (p->u.ctl.delta < 0)
+		return;
+
+	qfrlen = rate * (MTC_SEC / (4 * p->u.ctl.fps));
+	while (p->u.ctl.delta >= qfrlen) {
+		switch (p->u.ctl.qfr) {
+		case 0:
+			data = p->u.ctl.fr & 0xf;
 			break;
-		p->u.ctl.fr -= p->u.ctl.fps;
-		p->u.ctl.sec++;
-		if (p->u.ctl.sec < 60)
+		case 1:
+			data = p->u.ctl.fr >> 4;
 			break;
-		p->u.ctl.sec = 0;
-		p->u.ctl.min++;
-		if (p->u.ctl.min < 60)
+		case 2:
+			data = p->u.ctl.sec & 0xf;
 			break;
-		p->u.ctl.min = 0;
-		p->u.ctl.hr++;
-		if (p->u.ctl.hr < 24)
+		case 3:
+			data = p->u.ctl.sec >> 4;
 			break;
-		p->u.ctl.hr = 0;
-		break;
-	default:
-		/* NOTREACHED */
-		data = 0;
+		case 4:
+			data = p->u.ctl.min & 0xf;
+			break;
+		case 5:
+			data = p->u.ctl.min >> 4;
+			break;
+		case 6:
+			data = p->u.ctl.hr & 0xf;
+			break;
+		case 7:
+			data = (p->u.ctl.hr >> 4) | (p->u.ctl.fps_id << 1);
+			/*
+			 * tick messages are sent 2 frames ahead
+			 */
+			p->u.ctl.fr += 2;
+			if (p->u.ctl.fr < p->u.ctl.fps)
+				break;
+			p->u.ctl.fr -= p->u.ctl.fps;
+			p->u.ctl.sec++;
+			if (p->u.ctl.sec < 60)
+				break;
+			p->u.ctl.sec = 0;
+			p->u.ctl.min++;
+			if (p->u.ctl.min < 60)
+				break;
+			p->u.ctl.min = 0;
+			p->u.ctl.hr++;
+			if (p->u.ctl.hr < 24)
+				break;
+			p->u.ctl.hr = 0;
+			break;
+		default:
+			/* NOTREACHED */
+			data = 0;
+		}
+		buf[0] = 0xf1;
+		buf[1] = (p->u.ctl.qfr << 4) | data;
+		p->u.ctl.qfr++;
+		p->u.ctl.qfr &= 7;
+		ctl_sendmsg(p, NULL, buf, 2);
+		p->u.ctl.delta -= qfrlen;
 	}
-	buf[0] = 0xf1;
-	buf[1] = (p->u.ctl.qfr << 4) | data;
-	p->u.ctl.qfr++;
-	p->u.ctl.qfr &= 7;
-	ctl_sendmsg(p, NULL, buf, 2);
 }
 
 /*
  * send a full frame MTC message
  */
 void
-ctl_full(struct aproc *p)
+ctl_full(struct aproc *p, unsigned origin, unsigned rate, unsigned round, unsigned pos)
 {
 	unsigned char buf[10];
-	unsigned origin = p->u.ctl.origin;
-	unsigned fps = p->u.ctl.fps;
+	unsigned fps;
 
+	p->u.ctl.delta = MTC_SEC * pos;
+	if (rate % (30 * 4 * round) == 0) {
+		p->u.ctl.fps_id = MTC_FPS_30;
+		p->u.ctl.fps = 30;
+	} else if (rate % (25 * 4 * round) == 0) {
+		p->u.ctl.fps_id = MTC_FPS_25;
+		p->u.ctl.fps = 25;
+	} else {
+		p->u.ctl.fps_id = MTC_FPS_24;
+		p->u.ctl.fps = 24;
+	}
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		aproc_dbg(p);
+		dbg_puts(": mtc full frame at ");
+		dbg_puti(p->u.ctl.delta);
+		dbg_puts(", ");
+		dbg_puti(p->u.ctl.fps);
+		dbg_puts(" fps\n");
+	}
+#endif
+	fps = p->u.ctl.fps;
 	p->u.ctl.hr =  (origin / (3600 * MTC_SEC)) % 24;
 	p->u.ctl.min = (origin / (60 * MTC_SEC))   % 60;
 	p->u.ctl.sec = (origin / MTC_SEC)          % 60;
@@ -548,7 +547,7 @@ ctl_msg_info(struct aproc *p, int slot, char *msg)
 	struct ctl_slot *s;
 	struct sysex *x = (struct sysex *)msg;
 
-	s = p->u.ctl.slot + slot;
+	s = p->u.ctl.dev->slot + slot;
 	memset(x, 0, sizeof(struct sysex));
 	x->start = SYSEX_START;
 	x->type = SYSEX_TYPE_EDU;
@@ -567,7 +566,7 @@ ctl_msg_vol(struct aproc *p, int slot, char *msg)
 {
 	struct ctl_slot *s;
 
-	s = p->u.ctl.slot + slot;	
+	s = p->u.ctl.dev->slot + slot;	
 	msg[0] = MIDI_CTL | slot;
 	msg[1] = MIDI_CTLVOL;
 	msg[2] = s->vol;
@@ -580,7 +579,7 @@ ctl_dump(struct aproc *p, struct abuf *obuf)
 	unsigned char msg[sizeof(struct sysex)];
 	struct ctl_slot *s;
 
-	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
+	for (i = 0, s = p->u.ctl.dev->slot; i < CTL_NSLOT; i++, s++) {
 		ctl_msg_info(p, i, msg);
 		ctl_copymsg(obuf, msg, SYSEX_SIZE(mixinfo));
 		ctl_msg_vol(p, i, msg);
@@ -597,461 +596,26 @@ ctl_dump(struct aproc *p, struct abuf *obuf)
 }
 
 /*
- * find the best matching free slot index (ie midi channel).
- * return -1, if there are no free slots anymore
- */
-int
-ctl_getidx(struct aproc *p, char *who)
-{
-	char *s;
-	struct ctl_slot *slot;
-	char name[CTL_NAMEMAX];
-	unsigned i, unit, umap = 0;
-	unsigned ser, bestser, bestidx;
-
-	/*
-	 * create a ``valid'' control name (lowcase, remove [^a-z], trucate)
-	 */
-	for (i = 0, s = who; ; s++) {
-		if (i == CTL_NAMEMAX - 1 || *s == '\0') {
-			name[i] = '\0';
-			break;
-		} else if (*s >= 'A' && *s <= 'Z') {
-			name[i++] = *s + 'a' - 'A';
-		} else if (*s >= 'a' && *s <= 'z')
-			name[i++] = *s;
-	}
-	if (i == 0)
-		strlcpy(name, "noname", CTL_NAMEMAX);
-
-	/*
-	 * find the instance number of the control name
-	 */
-	for (i = 0, slot = p->u.ctl.slot; i < CTL_NSLOT; i++, slot++) {
-		if (slot->ops == NULL)
-			continue;
-		if (strcmp(slot->name, name) == 0)
-			umap |= (1 << i);
-	} 
-	for (unit = 0; ; unit++) {
-		if (unit == CTL_NSLOT) {
-#ifdef DEBUG
-			if (debug_level >= 1) {
-				dbg_puts(name);
-				dbg_puts(": too many instances\n");
-			}
-#endif
-			return -1;
-		}
-		if ((umap & (1 << unit)) == 0)
-			break;
-	}
-
-	/*
-	 * find a free controller slot with the same name/unit
-	 */
-	for (i = 0, slot = p->u.ctl.slot; i < CTL_NSLOT; i++, slot++) {
-		if (slot->ops == NULL &&
-		    strcmp(slot->name, name) == 0 &&
-		    slot->unit == unit) {
-#ifdef DEBUG
-			if (debug_level >= 3) {
-				dbg_puts(name);
-				dbg_putu(unit);
-				dbg_puts(": found slot ");
-				dbg_putu(i);
-				dbg_puts("\n");
-			}
-#endif
-			return i;
-		}
-	}
-
-	/*
-	 * couldn't find a matching slot, pick oldest free slot
-	 * and set its name/unit
-	 */
-	bestser = 0;
-	bestidx = CTL_NSLOT;
-	for (i = 0, slot = p->u.ctl.slot; i < CTL_NSLOT; i++, slot++) {
-		if (slot->ops != NULL)
-			continue;
-		ser = p->u.ctl.serial - slot->serial;
-		if (ser > bestser) {
-			bestser = ser;
-			bestidx = i;
-		}
-	}
-	if (bestidx == CTL_NSLOT) {
-#ifdef DEBUG
-		if (debug_level >= 1) {
-			dbg_puts(name);
-			dbg_putu(unit);
-			dbg_puts(": out of mixer slots\n");
-		}
-#endif
-		return -1;
-	}
-	slot = p->u.ctl.slot + bestidx;
-	if (slot->name[0] != '\0')
-		slot->vol = MIDI_MAXCTL;
-	strlcpy(slot->name, name, CTL_NAMEMAX);
-	slot->serial = p->u.ctl.serial++;
-	slot->unit = unit;
-#ifdef DEBUG
-	if (debug_level >= 3) {
-		dbg_puts(name);
-		dbg_putu(unit);
-		dbg_puts(": overwritten slot ");
-		dbg_putu(bestidx);
-		dbg_puts("\n");
-	}
-#endif
-	return bestidx;
-}
-
-/*
- * check that all clients controlled by MMC are ready to start,
- * if so, start them all but the caller
- */
-int
-ctl_trystart(struct aproc *p, int caller)
-{
-	unsigned i;
-	struct ctl_slot *s;
-
-	if (p->u.ctl.tstate != CTL_START) {
-#ifdef DEBUG
-		if (debug_level >= 3) {
-			ctl_slotdbg(p, caller);
-			dbg_puts(": server not started, delayd\n");
-		}
-#endif
-		return 0;
-	}
-	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
-		if (!s->ops || i == caller)
-			continue;
-		if (s->tstate != CTL_OFF && s->tstate != CTL_START) {
-#ifdef DEBUG
-			if (debug_level >= 3) {
-				ctl_slotdbg(p, i);
-				dbg_puts(": not ready, server delayed\n");
-			}
-#endif
-			return 0;
-		}
-	}
-	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
-		if (!s->ops || i == caller)
-			continue;
-		if (s->tstate == CTL_START) {
-#ifdef DEBUG
-			if (debug_level >= 3) {
-				ctl_slotdbg(p, i);
-				dbg_puts(": started\n");
-			}
-#endif
-			s->tstate = CTL_RUN;
-			s->ops->start(s->arg);
-		}
-	}
-	if (caller >= 0)
-		p->u.ctl.slot[caller].tstate = CTL_RUN;
-	p->u.ctl.tstate = CTL_RUN;
-	p->u.ctl.delta = MTC_SEC * dev_getpos(p->u.ctl.dev);
-	if (p->u.ctl.dev->rate % (30 * 4 * p->u.ctl.dev->round) == 0) {
-		p->u.ctl.fps_id = MTC_FPS_30;
-		p->u.ctl.fps = 30;
-	} else if (p->u.ctl.dev->rate % (25 * 4 * p->u.ctl.dev->round) == 0) {
-		p->u.ctl.fps_id = MTC_FPS_25;
-		p->u.ctl.fps = 25;
-	} else {
-		p->u.ctl.fps_id = MTC_FPS_24;
-		p->u.ctl.fps = 24;
-	} 
-#ifdef DEBUG
-	if (debug_level >= 3) {
-		ctl_slotdbg(p, caller);
-		dbg_puts(": started server at ");
-		dbg_puti(p->u.ctl.delta);
-		dbg_puts(", ");
-		dbg_puti(p->u.ctl.fps);
-		dbg_puts(" mtc fps\n");
-	}
-#endif
-	dev_wakeup(p->u.ctl.dev);
-	ctl_full(p);
-	return 1;
-}
-
-/*
- * allocate a new slot and register the given call-backs
- */
-int
-ctl_slotnew(struct aproc *p, char *who, struct ctl_ops *ops, void *arg, int mmc)
-{
-	int idx;
-	struct ctl_slot *s;
-	unsigned char msg[sizeof(struct sysex)];
-
-	if (!APROC_OK(p)) {
-#ifdef DEBUG
-		if (debug_level >= 2) {
-			dbg_puts(who);
-			dbg_puts(": MIDI control not available\n");
-		}
-#endif
-		return -1;
-	}
-	idx = ctl_getidx(p, who);
-	if (idx < 0)
-		return -1;
-
-	s = p->u.ctl.slot + idx;
-	s->ops = ops;
-	s->arg = arg;
-	s->tstate = mmc ? CTL_STOP : CTL_OFF;
-	s->ops->vol(s->arg, s->vol);
-	ctl_msg_info(p, idx, msg);
-	ctl_sendmsg(p, NULL, msg, SYSEX_SIZE(mixinfo));
-	ctl_msg_vol(p, idx, msg);
-	ctl_sendmsg(p, NULL, msg, 3);
-	return idx;
-}
-
-/*
- * release the given slot
- */
-void
-ctl_slotdel(struct aproc *p, int index)
-{
-	unsigned i;
-	struct ctl_slot *s;
-
-	if (!APROC_OK(p))
-		return;
-	p->u.ctl.slot[index].ops = NULL;
-	if (!(p->flags & APROC_QUIT))
-		return;
-	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
-		if (s->ops)
-			return;
-	}
-	if (LIST_EMPTY(&p->ins))
-		aproc_del(p);
-}
-
-/*
- * called at every clock tick by the mixer, delta is positive, unless
- * there's an overrun/underrun
- */
-void
-ctl_ontick(struct aproc *p, int delta)
-{
-	int qfrlen;
-
-	/*
-	 * don't send ticks before the start signal
-	 */
-	if (p->u.ctl.tstate != CTL_RUN)
-		return;
-	
-	p->u.ctl.delta += delta * MTC_SEC;
-
-	/*
-	 * don't send ticks during the count-down
-	 */
-	if (p->u.ctl.delta < 0)
-		return;
-
-	qfrlen = p->u.ctl.dev->rate * (MTC_SEC / (4 * p->u.ctl.fps));
-	while (p->u.ctl.delta >= qfrlen) {
-		ctl_qfr(p);
-		p->u.ctl.delta -= qfrlen;
-	}
-}
-
-/*
  * notifty the mixer that volume changed, called by whom allocad the slot using
  * ctl_slotnew(). Note: it doesn't make sens to call this from within the
  * call-back.
  */
 void
-ctl_slotvol(struct aproc *p, int slot, unsigned vol)
+ctl_vol(struct aproc *p, int slot, unsigned vol)
 {
 	unsigned char msg[3];
 
-	if (!APROC_OK(p))
-		return;
-#ifdef DEBUG
-	if (debug_level >= 3) {
-		ctl_slotdbg(p, slot);
-		dbg_puts(": changing volume to ");
-		dbg_putu(vol);
-		dbg_puts("\n");
-	}
-#endif
-	p->u.ctl.slot[slot].vol = vol;
 	ctl_msg_vol(p, slot, msg);
 	ctl_sendmsg(p, NULL, msg, 3);
 }
 
-/*
- * notify the MMC layer that the stream is attempting
- * to start. If other streams are not ready, 0 is returned meaning 
- * that the stream should wait. If other streams are ready, they
- * are started, and the caller should start immediately.
- */
-int
-ctl_slotstart(struct aproc *p, int slot)
-{
-	struct ctl_slot *s = p->u.ctl.slot + slot;
-
-	if (!APROC_OK(p))
-		return 1;
-	if (s->tstate == CTL_OFF || p->u.ctl.tstate == CTL_OFF)
-		return 1;
-
-	/*
-	 * if the server already started (the client missed the
-	 * start rendez-vous) or the server is stopped, then
-	 * tag the client as ``wanting to start''
-	 */
-	s->tstate = CTL_START;
-	return ctl_trystart(p, slot);
-}
-
-/*
- * notify the MMC layer that the stream no longer is trying to
- * start (or that it just stopped), meaning that its ``start'' call-back
- * shouldn't be called anymore
- */
 void
-ctl_slotstop(struct aproc *p, int slot)
+ctl_slot(struct aproc *p, int slot)
 {
-	struct ctl_slot *s = p->u.ctl.slot + slot;
+	unsigned char msg[sizeof(struct sysex)];
 
-	if (!APROC_OK(p))
-		return;
-	/*
-	 * tag the stream as not trying to start,
-	 * unless MMC is turned off
-	 */
-	if (s->tstate != CTL_OFF)
-		s->tstate = CTL_STOP;
-}
-
-/*
- * start all slots simultaneously
- */
-void
-ctl_start(struct aproc *p)
-{
-	if (!APROC_OK(p))
-		return;
-	if (p->u.ctl.tstate == CTL_STOP) {
-		p->u.ctl.tstate = CTL_START;
-		(void)ctl_trystart(p, -1);
-#ifdef DEBUG
-	} else {
-		if (debug_level >= 3) {
-			aproc_dbg(p);
-			dbg_puts(": ignoring mmc start\n");
-		}
-#endif
-	}
-}
-
-/*
- * stop all slots simultaneously
- */
-void
-ctl_stop(struct aproc *p)
-{
-	unsigned i;
-	struct ctl_slot *s;
-
-	if (!APROC_OK(p))
-		return;
-	switch (p->u.ctl.tstate) {
-	case CTL_START:
-		p->u.ctl.tstate = CTL_STOP;
-		return;
-	case CTL_RUN:
-		p->u.ctl.tstate = CTL_STOP;
-		break;
-	default:
-#ifdef DEBUG
-		if (debug_level >= 3) {
-			aproc_dbg(p);
-			dbg_puts(": ignored mmc stop\n");
-		}
-#endif
-		return;
-	}
-	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
-		if (!s->ops)
-			continue;
-		if (s->tstate == CTL_RUN) {
-#ifdef DEBUG
-			if (debug_level >= 3) {
-				ctl_slotdbg(p, i);
-				dbg_puts(": requested to stop\n");
-			}
-#endif
-			s->ops->stop(s->arg);
-		}
-	}
-}
-
-/*
- * relocate all slots simultaneously
- */
-void
-ctl_loc(struct aproc *p, unsigned origin)
-{
-	unsigned i, tstate;
-	struct ctl_slot *s;
-
-	if (!APROC_OK(p))
-		return;
-#ifdef DEBUG
-	if (debug_level >= 2) {
-		dbg_puts("server relocated to ");
-		dbg_putu(origin);
-		dbg_puts("\n");
-	}
-#endif
-	tstate = p->u.ctl.tstate;
-	if (tstate == CTL_RUN)
-		ctl_stop(p);
-	p->u.ctl.origin = origin;
-	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
-		if (!s->ops)
-			continue;
-		s->ops->loc(s->arg, p->u.ctl.origin);
-	}
-	if (tstate == CTL_RUN)
-		ctl_start(p);
-}
-
-/*
- * check if there are controlled streams
- */
-int
-ctl_idle(struct aproc *p)
-{
-	unsigned i;
-	struct ctl_slot *s;
-
-	if (!APROC_OK(p))
-		return 1;
-	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
-		if (s->ops)
-			return 0;
-	}
-	return 1;
+	ctl_msg_info(p, slot, msg);
+	ctl_sendmsg(p, NULL, msg, SYSEX_SIZE(mixinfo));
 }
 
 /*
@@ -1082,7 +646,7 @@ ctl_ev(struct aproc *p, struct abuf *ibuf)
 		chan = ibuf->r.midi.msg[0] & MIDI_CHANMASK;
 		if (chan >= CTL_NSLOT)
 			return;
-		slot = p->u.ctl.slot + chan;
+		slot = p->u.ctl.dev->slot + chan;
 		slot->vol = ibuf->r.midi.msg[2];
 		if (slot->ops == NULL)
 			return;
@@ -1109,7 +673,7 @@ ctl_ev(struct aproc *p, struct abuf *ibuf)
 				dbg_puts(": mmc stop\n");
 			}
 #endif
-			ctl_stop(p);
+			dev_mmcstop(p->u.ctl.dev);
 			break;
 		case SYSEX_MMC_START:
 			if (len != SYSEX_SIZE(start))
@@ -1120,7 +684,7 @@ ctl_ev(struct aproc *p, struct abuf *ibuf)
 				dbg_puts(": mmc start\n");
 			}
 #endif
-			ctl_start(p);
+			dev_mmcstart(p->u.ctl.dev);
 			break;
 		case SYSEX_MMC_LOC:
 			if (len != SYSEX_SIZE(loc) ||
@@ -1138,10 +702,10 @@ ctl_ev(struct aproc *p, struct abuf *ibuf)
 				fps = 30;
 				break;
 			default:
-				p->u.ctl.origin = 0;
+				/* XXX: should dev_mmcstop() here */
 				return;
 			}
-			ctl_loc(p,
+			dev_loc(p->u.ctl.dev,
 			    (x->u.loc.hr & 0x1f) * 3600 * MTC_SEC +
 			     x->u.loc.min * 60 * MTC_SEC +
 			     x->u.loc.sec * MTC_SEC +
@@ -1215,32 +779,14 @@ ctl_out(struct aproc *p, struct abuf *obuf)
 void
 ctl_eof(struct aproc *p, struct abuf *ibuf)
 {
-	unsigned i;
-	struct ctl_slot *s;
-
-	if (!(p->flags & APROC_QUIT))
-		return;
-	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
-		if (s->ops != NULL)
-			s->ops->quit(s->arg);
-	}
-	if (LIST_EMPTY(&p->ins))
+	if ((p->flags & APROC_QUIT) && LIST_EMPTY(&p->ins))
 		aproc_del(p);
 }
 
 void
 ctl_hup(struct aproc *p, struct abuf *obuf)
 {
-	unsigned i;
-	struct ctl_slot *s;
-
-	if (!(p->flags & APROC_QUIT))
-		return;
-	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
-		if (s->ops)
-			return;
-	}
-	if (LIST_EMPTY(&p->ins))
+	if ((p->flags & APROC_QUIT) && LIST_EMPTY(&p->ins))
 		aproc_del(p);
 }
 
@@ -1253,18 +799,6 @@ ctl_newin(struct aproc *p, struct abuf *ibuf)
 	ibuf->r.midi.st = 0;
 }
 
-void
-ctl_done(struct aproc *p)
-{
-	unsigned i;
-	struct ctl_slot *s;
-
-	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
-		if (s->ops != NULL)
-			s->ops->quit(s->arg);
-	}
-}
-
 struct aproc_ops ctl_ops = {
 	"ctl",
 	ctl_in,
@@ -1275,27 +809,15 @@ struct aproc_ops ctl_ops = {
 	NULL, /* newout */
 	NULL, /* ipos */
 	NULL, /* opos */
-	ctl_done
+	NULL,
 };
 
 struct aproc *
 ctl_new(char *name, struct dev *dev)
 {
 	struct aproc *p;
-	struct ctl_slot *s;
-	unsigned i;
 
 	p = aproc_new(&ctl_ops, name);
 	p->u.ctl.dev = dev;
-	p->u.ctl.serial = 0;
-	p->u.ctl.tstate = CTL_STOP;
-	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
-		p->u.ctl.slot[i].unit = i;
-		p->u.ctl.slot[i].ops = NULL;
-		p->u.ctl.slot[i].vol = MIDI_MAXCTL;
-		p->u.ctl.slot[i].tstate = CTL_OFF;
-		p->u.ctl.slot[i].serial = p->u.ctl.serial++;
-		p->u.ctl.slot[i].name[0] = '\0';
-	}
 	return p;
 }

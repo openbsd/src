@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.40 2011/11/15 20:41:54 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.41 2011/11/20 22:54:51 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -138,7 +138,6 @@ struct aproc {
 			int lat;		/* current latency */
 			int maxlat;		/* max latency allowed */
 			unsigned abspos;	/* frames produced */
-			struct aproc *ctl;	/* MIDI control/sync */
 			struct aproc *mon;	/* snoop output */
 			unsigned autovol;	/* adjust volume dynamically */
 		} mix;
@@ -148,7 +147,6 @@ struct aproc {
 			int lat;		/* current latency */
 			int maxlat;		/* max latency allowed */
 			unsigned abspos;	/* frames consumed */
-			struct aproc *ctl;
 		} sub;
 		struct {
 			int delta;		/* time position */
@@ -176,15 +174,6 @@ struct aproc {
 		} thru;
 		struct {
 			struct dev *dev;	/* controlled device */
-#define CTL_NSLOT	8
-#define CTL_NAMEMAX	8
-			unsigned serial;
-#define CTL_OFF		0			/* ignore MMC messages */
-#define CTL_STOP	1			/* stopped, can't start */
-#define CTL_START	2			/* attempting to start */
-#define CTL_RUN		3			/* started */
-			unsigned tstate;
-			unsigned origin;	/* MTC start time */
 			unsigned fps;		/* MTC frames per second */
 #define MTC_FPS_24	0
 #define MTC_FPS_25	1
@@ -196,21 +185,6 @@ struct aproc {
 			unsigned fr;		/* MTC frames */
 			unsigned qfr;		/* MTC quarter frames */
 			int delta;		/* rel. to the last MTC tick */
-			struct ctl_slot {
-				struct ctl_ops {
-					void (*vol)(void *, unsigned);
-					void (*start)(void *);
-					void (*stop)(void *);
-					void (*loc)(void *, unsigned);
-					void (*quit)(void *);
-				} *ops;
-				void *arg;
-				unsigned unit;
-				char name[CTL_NAMEMAX];
-				unsigned serial;
-				unsigned vol;
-				unsigned tstate;
-			} slot[CTL_NSLOT];
 		} ctl;
 	} u;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.125 2011/11/15 08:05:22 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.126 2011/11/20 22:54:51 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -582,7 +582,7 @@ main(int argc, char **argv)
 		if (!dev_init(d))
 			exit(1);
 		if (d->autostart && (d->mode & MODE_AUDIOMASK))
-			ctl_start(d->midi);
+			dev_mmcstart(d);
 	}
 	for (l = listen_list; l != NULL; l = l->next) {
 		if (!listen_init(l))
@@ -608,8 +608,7 @@ main(int argc, char **argv)
 			dnext = d->next;
 			if (!dev_run(d))
 				goto fatal;
-			if ((d->mode & MODE_THRU) ||
-			    (d->pstate != DEV_CLOSED && !ctl_idle(d->midi)))
+			if (!dev_idle(d))
 				active = 1;
 		}
 		if (dev_list == NULL)

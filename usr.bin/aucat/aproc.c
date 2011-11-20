@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.67 2011/11/16 08:03:34 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.68 2011/11/20 22:54:51 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1002,8 +1002,6 @@ mix_opos(struct aproc *p, struct abuf *obuf, int delta)
 		dbg_puts("\n");
 	}
 #endif
-	if (APROC_OK(p->u.mix.ctl))
-		ctl_ontick(p->u.mix.ctl, delta);
 	aproc_opos(p, obuf, delta);
 	if (APROC_OK(p->u.mix.mon))
 		p->u.mix.mon->ops->ipos(p->u.mix.mon, NULL, delta);
@@ -1032,7 +1030,6 @@ mix_new(char *name, int maxlat, unsigned round, unsigned autovol)
 	p->u.mix.lat = 0;
 	p->u.mix.round = round;
 	p->u.mix.maxlat = maxlat;
-	p->u.mix.ctl = NULL;
 	p->u.mix.mon = NULL;
 	p->u.mix.autovol = autovol;
 	return p;
@@ -1425,8 +1422,6 @@ sub_ipos(struct aproc *p, struct abuf *ibuf, int delta)
 		dbg_puts("\n");
 	}
 #endif
-	if (APROC_OK(p->u.sub.ctl))
-		ctl_ontick(p->u.sub.ctl, delta);
 	aproc_ipos(p, ibuf, delta);
 }
 
@@ -1453,7 +1448,6 @@ sub_new(char *name, int maxlat, unsigned round)
 	p->u.sub.lat = 0;
 	p->u.sub.round = round;
 	p->u.sub.maxlat = maxlat;
-	p->u.sub.ctl = NULL;
 	return p;
 }
 

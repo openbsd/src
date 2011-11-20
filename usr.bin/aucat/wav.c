@@ -185,12 +185,11 @@ void
 wav_dbg(struct wav *f)
 {
 	static char *pstates[] = { "cfg", "ini", "sta", "rdy", "run", "mid" };
-	struct aproc *midi = f->dev ? f->dev->midi : NULL;
 
 	dbg_puts("wav(");
-	if (f->slot >= 0 && APROC_OK(midi)) {
-		dbg_puts(midi->u.ctl.slot[f->slot].name);
-		dbg_putu(midi->u.ctl.slot[f->slot].unit);
+	if (f->slot >= 0) {
+		dbg_puts(f->dev->slot[f->slot].name);
+		dbg_putu(f->dev->slot[f->slot].unit);
 	} else
 		dbg_puts(f->pipe.file.name);
 	dbg_puts(")/");
@@ -407,7 +406,7 @@ wav_allocbuf(struct wav *f)
 		dbg_puts(": allocating buffers\n");
 	}
 #endif
-	if (f->pstate == WAV_READY && ctl_slotstart(d->midi, f->slot))
+	if (f->pstate == WAV_READY && dev_slotstart(d, f->slot))
 		(void)wav_attach(f, 0);
 }
 
@@ -431,7 +430,7 @@ wav_freebuf(struct wav *f)
 	}
 #endif
 	if (rbuf || wbuf)
-		ctl_slotstop(f->dev->midi, f->slot);
+		dev_slotstop(f->dev, f->slot);
 	if (rbuf)
 		abuf_eof(rbuf);
 	if (wbuf)
@@ -448,7 +447,7 @@ wav_reset(struct wav *f)
 	switch (f->pstate) {
 	case WAV_START:
 	case WAV_READY:
-		if (ctl_slotstart(f->dev->midi, f->slot))
+		if (dev_slotstart(f->dev, f->slot))
 			(void)wav_attach(f, 1);
 		/* PASSTHROUGH */
 	case WAV_RUN:
@@ -493,7 +492,7 @@ wav_init(struct wav *f)
 		wav_midiattach(f);
 		return 1;
 	}
-	f->slot = ctl_slotnew(f->dev->midi, "wav", &ctl_wavops, f, 1);
+	f->slot = dev_slotnew(f->dev, "wav", &ctl_wavops, f, 1);
 	f->pstate = WAV_INIT;
 	if ((f->mode & f->dev->mode) != f->mode) {
 #ifdef DEBUG
@@ -527,14 +526,14 @@ wav_seekmmc(struct wav *f)
 		 * don't make other stream wait for us
 		 */
 		if (f->slot >= 0)
-			ctl_slotstart(f->dev->midi, f->slot);
+			dev_slotstart(f->dev, f->slot);
 		return 0;
 	}
 	if (!pipe_seek(&f->pipe.file, f->mmcpos)) {
 		wav_exit(f);
 		return 0;
 	}
-	if (f->mode & MODE_RECMASK)
+	if ((f->mode & MODE_RECMASK) && f->mmcpos > f->endpos)
 		f->endpos = f->mmcpos;
 	if (f->hdr == HDR_WAV)
 		f->wbytes = WAV_DATAMAX - f->mmcpos;
@@ -567,7 +566,7 @@ wav_rdata(struct wav *f)
 			f->pstate = WAV_READY;
 		/* PASSTHROUGH */
 	case WAV_READY:
-		if (ctl_slotstart(f->dev->midi, f->slot))
+		if (dev_slotstart(f->dev, f->slot))
 			(void)wav_attach(f, 0);
 		break;
 	case WAV_RUN:
@@ -928,7 +927,7 @@ rwav_done(struct aproc *p)
 	struct wav *f = (struct wav *)p->u.io.file;
 
 	if (f->slot >= 0)
-		ctl_slotdel(f->dev->midi, f->slot);
+		dev_slotdel(f->dev, f->slot);
 	f->slot = -1;
 	rfile_done(p);
 }
@@ -981,7 +980,7 @@ wwav_done(struct aproc *p)
 	struct wav *f = (struct wav *)p->u.io.file;
 
 	if (f->slot >= 0)
-		ctl_slotdel(f->dev->midi, f->slot);
+		dev_slotdel(f->dev, f->slot);
 	f->slot = -1;
 	wfile_done(p);
 }

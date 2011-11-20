@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.11 2011/06/27 07:22:00 ratchov Exp $	*/
+/*	$OpenBSD: file.h,v 1.12 2011/11/20 22:54:51 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -38,7 +38,7 @@ struct fileops {
 	void (*close)(struct file *);
 	unsigned (*read)(struct file *, unsigned char *, unsigned);
 	unsigned (*write)(struct file *, unsigned char *, unsigned);
-	void (*start)(struct file *);
+	void (*start)(struct file *, void (*)(void *, int), void *);
 	void (*stop)(struct file *);
 	int (*nfds)(struct file *);
 	int (*pollfd)(struct file *, struct pollfd *, int);

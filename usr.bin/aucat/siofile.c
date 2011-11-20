@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.8 2011/10/12 07:20:04 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.9 2011/11/20 22:54:51 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -42,6 +42,8 @@ struct siofile {
 	unsigned rtickets, rbpf;
 	unsigned bufsz;
 	int started;
+	void (*onmove)(void *, int);
+	void *arg;
 #ifdef DEBUG
 	long long wtime, utime;
 #endif
@@ -50,7 +52,7 @@ struct siofile {
 void siofile_close(struct file *);
 unsigned siofile_read(struct file *, unsigned char *, unsigned);
 unsigned siofile_write(struct file *, unsigned char *, unsigned);
-void siofile_start(struct file *);
+void siofile_start(struct file *, void (*)(void *, int), void *);
 void siofile_stop(struct file *);
 int siofile_nfds(struct file *);
 int siofile_pollfd(struct file *, struct pollfd *, int);
@@ -189,12 +191,12 @@ siofile_cb(void *addr, int delta)
 		p = f->file.wproc;
 		if (p && p->ops->opos)
 			p->ops->opos(p, NULL, delta);
-	}
-	if (delta != 0) {
 		p = f->file.rproc;
 		if (p && p->ops->ipos)
 			p->ops->ipos(p, NULL, delta);
 	}
+	if (f->onmove)
+		f->onmove(f->arg, delta);
 	f->wtickets += delta * f->wbpf;
 	f->rtickets += delta * f->rbpf;
 }
@@ -305,7 +307,7 @@ siofile_new(struct fileops *ops, char *path, unsigned *rmode,
 }
 
 void
-siofile_start(struct file *file)
+siofile_start(struct file *file, void (*cb)(void *, int), void *arg)
 {
 	struct siofile *f = (struct siofile *)file;
 
@@ -328,6 +330,8 @@ siofile_start(struct file *file)
 		dbg_puts(": started\n");
 	}
 #endif
+	f->onmove = cb;
+	f->arg = arg;
 }
 
 void
@@ -336,6 +340,7 @@ siofile_stop(struct file *file)
 	struct siofile *f = (struct siofile *)file;
 
 	f->started = 0;
+	f->onmove = NULL;
 	if (!sio_eof(f->hdl) && !sio_stop(f->hdl)) {
 #ifdef DEBUG
 		dbg_puts(f->file.name);

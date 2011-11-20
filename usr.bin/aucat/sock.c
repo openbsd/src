@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.61 2011/11/15 08:05:22 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.62 2011/11/20 22:54:51 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -62,12 +62,10 @@ sock_dbg(struct sock *f)
 	};
 	static char *rstates[] = { "rdat", "rmsg", "rret" };
 	static char *wstates[] = { "widl", "wmsg", "wdat" };
-	struct aproc *midi;
 
-	midi = f->dev ? f->dev->midi : NULL;
-	if (f->slot >= 0 && APROC_OK(midi)) {
-		dbg_puts(midi->u.ctl.slot[f->slot].name);
-		dbg_putu(midi->u.ctl.slot[f->slot].unit);
+	if (f->slot >= 0) {
+		dbg_puts(f->dev->slot[f->slot].name);
+		dbg_putu(f->dev->slot[f->slot].unit);
 	} else
 		dbg_puts(f->pipe.file.name);
 	dbg_puts("/");
@@ -121,7 +119,7 @@ rsock_done(struct aproc *p)
 	f->pipe.file.rproc = NULL;
 	if (f->pipe.file.wproc) {
 		if (f->slot >= 0)
-			ctl_slotdel(f->dev->midi, f->slot);
+			dev_slotdel(f->dev, f->slot);
 		aproc_del(f->pipe.file.wproc);
 		file_del(&f->pipe.file);
 	}
@@ -226,7 +224,7 @@ wsock_done(struct aproc *p)
 	f->pipe.file.wproc = NULL;
 	if (f->pipe.file.rproc) {
 		if (f->slot >= 0)
-			ctl_slotdel(f->dev->midi, f->slot);
+			dev_slotdel(f->dev, f->slot);
 		aproc_del(f->pipe.file.rproc);
 		file_del(&f->pipe.file);
 	}
@@ -375,7 +373,7 @@ sock_freebuf(struct sock *f)
 	wbuf = LIST_FIRST(&f->pipe.file.wproc->ins);
 	rbuf = LIST_FIRST(&f->pipe.file.rproc->outs);
 	if (rbuf || wbuf)
-		ctl_slotstop(f->dev->midi, f->slot);
+		dev_slotstop(f->dev, f->slot);
 	if (rbuf)
 		abuf_eof(rbuf);
 	if (wbuf)
@@ -428,7 +426,7 @@ sock_allocbuf(struct sock *f)
 		f->pstate = SOCK_START;
 	} else {
 		f->pstate = SOCK_READY;
-		if (ctl_slotstart(f->dev->midi, f->slot))
+		if (dev_slotstart(f->dev, f->slot))
 			(void)sock_attach(f, 0);
 	}
 }
@@ -586,7 +584,7 @@ sock_reset(struct sock *f)
 	switch (f->pstate) {
 	case SOCK_START:
 	case SOCK_READY:
-		if (ctl_slotstart(f->dev->midi, f->slot)) {
+		if (dev_slotstart(f->dev, f->slot)) {
 			(void)sock_attach(f, 1);
 			f->pstate = SOCK_RUN;
 		}
@@ -926,11 +924,8 @@ sock_setpar(struct sock *f)
 	}
 #ifdef DEBUG
 	if (debug_level >= 2) {
-		if (APROC_OK(f->dev->midi)) {
-			dbg_puts(f->dev->midi->u.ctl.slot[f->slot].name);
-			dbg_putu(f->dev->midi->u.ctl.slot[f->slot].unit);
-		} else
-			dbg_puts(f->pipe.file.name);
+		dbg_puts(f->dev->slot[f->slot].name);
+		dbg_putu(f->dev->slot[f->slot].unit);
 		dbg_puts(": buffer size = ");
 		dbg_putu(f->bufsz);
 		if (f->mode & MODE_PLAY) {
@@ -1082,9 +1077,7 @@ sock_hello(struct sock *f)
 	f->xrun = (f->opt->mmc) ? XRUN_SYNC : XRUN_IGNORE;
 	f->bufsz = f->dev->bufsz;
 	f->round = f->dev->round;
-	f->slot = ctl_slotnew(f->dev->midi, p->who,
-	    &ctl_sockops, f,
-	    f->opt->mmc);
+	f->slot = dev_slotnew(f->dev, p->who, &ctl_sockops, f, f->opt->mmc);
 	if (f->slot < 0)
 		return 0;
 	f->pstate = SOCK_INIT;
@@ -1225,7 +1218,7 @@ sock_execmsg(struct sock *f)
 		 * see how this is fixed in wav.c
 		 */
 		if ((f->pstate == SOCK_START || f->pstate == SOCK_READY) &&
-		    ctl_slotstart(f->dev->midi, f->slot))
+		    dev_slotstart(f->dev, f->slot))
 			(void)sock_attach(f, 1);
 		if (f->wstate != SOCK_WDATA || f->wtodo == 0)
 			sock_freebuf(f);
@@ -1336,7 +1329,7 @@ sock_execmsg(struct sock *f)
 		}
 		sock_setvol(f, ctl);
 		if (f->slot >= 0)
-			ctl_slotvol(f->dev->midi, f->slot, ctl);
+			dev_slotvol(f->dev, f->slot, ctl);
 		f->rtodo = sizeof(struct amsg);
 		f->rstate = SOCK_RMSG;
 		break;
@@ -1585,10 +1578,10 @@ sock_read(struct sock *f)
 		}
 		/*
 		 * XXX: sock_attach() may not start if there's not enough
-		 *	samples queued, if so ctl_slotstart() will trigger
+		 *	samples queued, if so dev_slotstart() will trigger
 		 *	other streams, but this one won't start.
 		 */
-		if (f->pstate == SOCK_READY && ctl_slotstart(f->dev->midi, f->slot))
+		if (f->pstate == SOCK_READY && dev_slotstart(f->dev, f->slot))
 			(void)sock_attach(f, 0);
 		break;
 	case SOCK_RRET:
