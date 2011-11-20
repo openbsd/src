@@ -241,7 +241,7 @@ bsd_uthread_solib_loaded (struct so_list *so)
 
 	  if (bsd_uthread_activate (so->objfile))
 	    {
-	      bsd_uthread_solib_name == so->so_original_name;
+	      bsd_uthread_solib_name = so->so_original_name;
 	      return;
 	    }
 	}
