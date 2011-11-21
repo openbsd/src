@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.20 2011/11/15 23:12:44 gilles Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.21 2011/11/21 18:57:54 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -65,7 +65,6 @@ void   *fsqueue_qwalk_new(enum queue_kind, u_int32_t);
 int	fsqueue_qwalk(void *, u_int64_t *);
 void	fsqueue_qwalk_close(void *);
 
-#define PATH_ENQUEUE		"/enqueue"
 #define PATH_INCOMING		"/incoming"
 #define PATH_QUEUE		"/queue"
 #define PATH_PURGE		"/purge"
@@ -82,9 +81,6 @@ fsqueue_getpath(enum queue_kind kind)
         switch (kind) {
         case Q_INCOMING:
                 return (PATH_INCOMING);
-
-        case Q_ENQUEUE:
-                return (PATH_ENQUEUE);
 
         case Q_QUEUE:
                 return (PATH_QUEUE);
@@ -375,7 +371,7 @@ fsqueue_message_fd_r(enum queue_kind qkind, u_int32_t msgid)
 	int fd;
 	char pathname[MAXPATHLEN];
 
-	if (qkind == Q_ENQUEUE || qkind == Q_INCOMING) {
+	if (qkind == Q_INCOMING) {
 		if (! bsnprintf(pathname, sizeof(pathname), "%s/%08x/message",
 			fsqueue_getpath(qkind), msgid))
 			fatal("fsqueue_message_fd_r: snprintf");
@@ -517,7 +513,7 @@ int
 fsqueue_init(void)
 {
 	unsigned int	 n;
-	char		*paths[] = { PATH_INCOMING, PATH_ENQUEUE, PATH_QUEUE,
+	char		*paths[] = { PATH_INCOMING, PATH_QUEUE,
 				     PATH_PURGE, PATH_BOUNCE, PATH_CORRUPT };
 	char		 path[MAXPATHLEN];
 	int		 ret;
@@ -646,7 +642,7 @@ fsqueue_qwalk_new(enum queue_kind kind, u_int32_t msgid)
 
 	if (kind == Q_QUEUE)
 		q->filefn = walk_queue;
-	if (kind == Q_INCOMING || kind == Q_ENQUEUE || kind == Q_PURGE)
+	if (kind == Q_INCOMING || kind == Q_PURGE)
 		q->filefn = walk_queue_nobucket;
 
 	q->dirs[q->level] = opendir(q->path);
