@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.23 2011/11/20 10:52:14 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.24 2011/11/21 14:38:43 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -509,7 +509,7 @@ sub parse_and_run
 		if (@l != 0) {
 			return $exit_code;
 		} else {
-			return 1;
+			return $exit_code + 2;
 		}
 
 	}
