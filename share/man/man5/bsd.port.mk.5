@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.297 2011/11/21 12:06:12 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.298 2011/11/21 12:32:34 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -546,7 +546,9 @@ one variable value per line.
 Mostly used from recursive makes, or to know the contents of another
 port's variables without guessing wrongly.
 .It Ar show-required-by
-Prints the list of pkgpaths for all ports that will be affected by the
+Prints the list of
+.Xr pkgpath 7
+for all ports that will be affected by the
 current port changing.
 Works by walking the list of dependencies, in reverse.
 .It Ar subupdate
@@ -710,7 +712,9 @@ If autoconf must be run manually,
 .Ev MODGNU_AUTOCONF_DEPENDS
 can be used to specify what packages to depend upon.
 .It Ev BASE_PKGPATH
-Full pkgpath to the current port, taking flavors into account.
+Full
+.Xr pkgpath 7
+to the current port, taking flavors into account.
 Read-only.
 .It Ev BATCH
 User-settings.
@@ -745,7 +749,7 @@ Set based on corresponding INSTALL_* variables.
 .It Ev BUILD_DEPENDS
 List of other ports the current port needs to build correctly.
 Each item has the form
-.Sq [pkgspec:]directory[,-subpackage][,flavor ...][:target] .
+.Sq [pkgspec:]pkgpath[:target] .
 .Sq target
 defaults to
 .Sq install
@@ -772,10 +776,12 @@ or
 target will be processed in a subdirectory of the working directory,
 specifically, in ${WRKDIR}/directory.
 .It Ev BUILD_PKGPATH
-Full pkgpath to the current port, taking flavors and pseudo-flavors
+Full
+.Xr pkgpath 7
+to the current port, taking flavors and pseudo-flavors
 into account.
 Mostly useful to write dependencies for subpackages like this:
-.Li "LIB_DEPENDS-foo=::${BUILD_PKGPATH}"
+.Li "LIB_DEPENDS-foo=${BUILD_PKGPATH}"
 and avoid starting to build a package with some other flavor combination.
 Read-only.
 .It Ev BULK
@@ -1233,7 +1239,11 @@ and
 .Ev REVISION .
 .It Ev FULLPKGPATH
 Path to the current port's directory, relative to ${PORTSDIR},
-including flavors and subpackages.
+including flavors and subpackages
+.Po
+see
+.Xr pkgpath 7
+.Pc .
 .It Ev GCC2_ARCHS , GCC3_ARCHS , GCC4_ARCHS
 Set to the list of architectures using gcc 2.95.3, gcc 3.3.5, or gcc 4.2.1.
 Read-only.
@@ -1753,6 +1763,16 @@ Base directory for the current port installation.
 Usually ${LOCALBASE}, though some ports may elect a location under
 .Pa /var ,
 and some multi-package ports may install under several locations.
+.It Ev PREPARE_CHECK_ONLY
+Build settings.
+Prevent the
+.Ar prepare
+stage from installing anything, let it just check dependencies, and
+handle [:target] dependencies.
+Mostly used by
+.Xr dpb 1 ,
+which already installs everything before running
+.Ar prepare .
 .It Ev PROGRESS_METER
 User-settings.
 Defaults to
