@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.2 2007/03/02 06:11:54 miod Exp $	*/
+/*	$OpenBSD: signal.h,v 1.3 2011/11/21 18:17:28 deraadt Exp $	*/
 /*	$NetBSD: signal.h,v 1.12 2005/12/11 12:18:58 christos Exp $	*/
 
 /*
@@ -36,11 +36,12 @@
 #define	_SH_SIGNAL_H_
 
 #include <sys/cdefs.h>
-#include <sh/reg.h>
 
 typedef int sig_atomic_t;
 
 #if __BSD_VISIBLE || __XPG_VISIBLE >= 420
+#include <sh/reg.h>
+
 /*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following
