@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.44 2011/11/21 12:06:12 espie Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.45 2011/11/21 12:56:31 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -103,13 +103,11 @@ For example,
 will match versions 1.3 and later of the
 .Pa name
 package.
-.It Fl e Ar pkg-path
-Another variant of this option that uses a package path instead.
-A package path is a location within the ports tree, as described
+.It Fl e Ar pkgpath
+Another variant of this option that uses a pkgpath instead.
+A pkgpath is a location within the ports tree, as described
 in
-.Ev FULLPKGPATH
-in
-.Xr bsd.port.mk 5 .
+.Xr pkgpath 7 .
 For example,
 .Ic pkg_info -e x11/kde/base3
 will match any package that was compiled according to
@@ -144,7 +142,9 @@ Only show packages tagged as manual installations.
 It should omit anything
 installed automatically as a dependency.
 .It Fl P
-Show the pkgpath for each package.
+Show the 
+.Xr pkgpath 7
+for each package.
 You can easily build a subdirlist with this.
 .It Fl Q Ar query
 Show all packages in $PKG_PATH which match the given

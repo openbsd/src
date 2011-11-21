@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.79 2011/11/21 12:06:12 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.80 2011/11/21 12:56:31 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -354,10 +354,10 @@ installed, and that package must be deinstalled before this package
 is deinstalled.
 The dependency also contains a
 .Ar pkgpath
-(see
-.Ev FULLPKGPATH
-in
-.Xr bsd.port.mk 5 )
+.Po
+see
+.Xr pkgpath 7
+.Pc
 and a
 .Ar default
 package name, in case there is no listing of available packages.
