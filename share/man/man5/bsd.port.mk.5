@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.298 2011/11/21 12:32:34 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.299 2011/11/21 12:57:17 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1239,11 +1239,9 @@ and
 .Ev REVISION .
 .It Ev FULLPKGPATH
 Path to the current port's directory, relative to ${PORTSDIR},
-including flavors and subpackages
-.Po
-see
-.Xr pkgpath 7
-.Pc .
+including flavors and subpackages.
+See
+.Xr pkgpath 7 .
 .It Ev GCC2_ARCHS , GCC3_ARCHS , GCC4_ARCHS
 Set to the list of architectures using gcc 2.95.3, gcc 3.3.5, or gcc 4.2.1.
 Read-only.
