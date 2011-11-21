@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.15 2011/09/26 23:07:20 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.16 2011/11/21 23:29:03 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 26 2011 $
+.Dd $Mdocdate: November 21 2011 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -971,14 +971,22 @@ using the next-line syntax.
 .%U http://heirloom.sourceforge.net/doctools/troff.pdf
 .Re
 .Sh HISTORY
-The RUNOFF typesetting system was written in PL/1 for the CTSS
-operating system by Jerome ("Jerry") E. Saltzer in 1961.
-It was first used as the main documentation tool by Multics since 1963.
-Robert ("Bob") H. Morris ported it to the GE-635 and called it
+The RUNOFF typesetting system, whose input forms the basis for
 .Nm ,
-Doug McIlroy rewrote it in BCPL in 1969,
-Joseph F. Ossanna rewrote it in PDP-11 assembly in 1973,
-and Brian W. Kernighan rewrote it in C in 1975.
+was written in MAD and FAP for the CTSS operating system by Jerome E.
+Saltzer in 1964.
+Doug McIlroy rewrote it in BCPL in 1969, renaming it
+.Nm .
+Dennis M. Ritchie rewrote McIlroy's
+.Nm 
+in PDP-11 assmebly for
+.At v1 ,
+Joseph F. Ossanna improved roff and renamed it nroff
+for
+.At v2 ,
+then ported nroff to C as troff, which Brian W. Kernighan released with
+.At v7 .
+In 1989, James Clarke re-implemented troff in C++, naming it groff.
 .Sh AUTHORS
 .An -nosplit
 This
