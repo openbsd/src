@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.54 2011/07/11 15:40:47 guenther Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.55 2011/11/21 03:01:20 djm Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ ktrsysret(struct proc *p, register_t code, int error, register_t retval)
 	ktrinitheader(&kth, p, KTR_SYSRET);
 	ktp.ktr_code = code;
 	ktp.ktr_error = error;
-	ktp.ktr_retval = retval;
+	ktp.ktr_retval = error == 0 ? retval : 0;
 
 	kth.ktr_buf = (caddr_t)&ktp;
 	kth.ktr_len = sizeof(struct ktr_sysret);
