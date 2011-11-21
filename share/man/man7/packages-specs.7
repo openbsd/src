@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages-specs.7,v 1.21 2011/11/21 12:00:57 espie Exp $
+.\" $OpenBSD: packages-specs.7,v 1.22 2011/11/21 12:36:34 espie Exp $
 .\"
 .\" Copyright (c) 2001 Marc Espie
 .\"
@@ -187,11 +187,11 @@ or
 .Ev RUN_DEPENDS .
 All those conform to
 .Bd -literal -offset indent
-[pkgspec:]directory,[-multi],[flavor...]
+[pkgspec:]pkgpath
 .Ed
 .Pp
 The
-.Ar directory,[-multi],[flavor...]
+.Xr pkgpath 7
 part of the dependency is always used to obtain the default dependency for
 the given package (the package that will be built and installed if no package
 is found).
