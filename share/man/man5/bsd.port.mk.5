@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.302 2011/11/22 14:55:37 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.303 2011/11/22 16:01:30 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -806,7 +806,7 @@ Mostly useful to write dependencies for subpackages like this:
 and avoid starting to build a package with some other flavor combination.
 See
 .Xr pkgpath 7
-on the subject of 
+on the subject of
 .Sq pkgpath normalisation .
 Read-only.
 .It Ev BULK
@@ -1496,7 +1496,7 @@ Location for the arch-independent packages.
 Defaults to
 .Sq no-arch .
 Normally, packages are generated under ${PACKAGE_REPOSITORY}/${MACHINE_ARCH},
-except for packages where PKG_ARCH=*, those end up under 
+except for packages where PKG_ARCH=*, those end up under
 ${PACKAGE_REPOSITORY}/${NO_ARCH}.
 .It Ev NOT_FOR_ARCHS
 List of architectures on which this port does not build.
