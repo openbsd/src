@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.654 2011/11/08 19:55:52 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.655 2011/11/22 14:02:14 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -505,7 +505,7 @@ makedev() {
 		return 1
 	fi
 
-	(cd /dev && sh MAKEDEV "$_dev") >/dev/null 2>&1
+	[[ -z $(cd /dev && sh MAKEDEV "$_dev" 2>&1) ]]
 }
 
 # Create an entry in the hosts file. If an entry with the
