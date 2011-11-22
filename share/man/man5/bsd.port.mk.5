@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.303 2011/11/22 16:01:30 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.304 2011/11/22 16:21:50 sthen Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2172,6 +2172,12 @@ Location of the systrace filter file which is the basis for a port's
 actual systrace policy file.
 Defaults to
 .Pa ${PORTSDIR}/infrastructure/db/systrace.filter .
+.It Ev SYSTRACE_FILTER_CCACHE
+Location of the supplementary systrace filter file which is used when
+.Ev USE_CCACHE
+is enabled.
+Defaults to
+.Pa ${PORTSDIR}/infrastructure/db/systrace.filter.ccache .
 .It Ev SYSTRACE_SUBST_VARS
 List of variables used in ${SYSTRACE_FILTER} that will be substituted
 by their real value when creating the systrace policy file.
