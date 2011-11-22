@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.301 2011/11/22 14:48:27 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.302 2011/11/22 14:55:37 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1491,6 +1491,13 @@ below.
 Especially read the part about
 .Ev ONLY_FOR_ARCHS
 as some of the packages only exist for some architectures.
+.It NO_ARCH
+Location for the arch-independent packages.
+Defaults to
+.Sq no-arch .
+Normally, packages are generated under ${PACKAGE_REPOSITORY}/${MACHINE_ARCH},
+except for packages where PKG_ARCH=*, those end up under 
+${PACKAGE_REPOSITORY}/${NO_ARCH}.
 .It Ev NOT_FOR_ARCHS
 List of architectures on which this port does not build.
 See also
@@ -1755,6 +1762,9 @@ Defaults to
 .It Ev PKGDIR
 Location for packaging information (packing list, port description, messages).
 Default: pkg.
+.It Ev PKGFILE
+Full path to the created package for the given subpackage.
+Read-only.
 .It Ev PKGNAME
 Name of the created package.
 Default is ${DISTNAME}.
@@ -2999,6 +3009,7 @@ The following variables are subpackage dependent:
 .Ev PKG_ARCH ,
 .Ev PERMIT_PACKAGE_FTP ,
 .Ev PERMIT_PACKAGE_CDROM ,
+.Ev PKGFILE ,
 .Ev PKGNAME ,
 .Ev FULLPKGNAME ,
 .Ev REVISION ,
