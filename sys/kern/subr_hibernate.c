@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.28 2011/11/18 01:31:37 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.29 2011/11/22 07:59:06 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -729,18 +729,6 @@ hibernate_inflate(union hibernate_info *hiber_info, paddr_t dest,
 		/* Flush cache and TLB */
 		hibernate_flush();
 
-		/*
-		 * Is this a special page? If yes, redirect the
-		 * inflate output to a scratch page (eg, discard it)
-		 */
-		if (hibernate_inflate_skip(hiber_info, dest))
-			hibernate_enter_resume_mapping(
-			    HIBERNATE_INFLATE_PAGE,
-			    HIBERNATE_INFLATE_PAGE, 0);
-		else
-			hibernate_enter_resume_mapping(
-			    HIBERNATE_INFLATE_PAGE, dest, 0);
-
 		/* Read RLE code */
 		hibernate_state->hib_stream.avail_out = sizeof(psize_t);
 		hibernate_state->hib_stream.next_out = (char *)&rle;
@@ -753,6 +741,9 @@ hibernate_inflate(union hibernate_info *hiber_info, paddr_t dest,
 			 */
 			panic("inflate rle error");
 		}
+
+		if (i == Z_STREAM_END)
+			goto next_page;
 
 		/* Skip while RLE code is != 0 */
 		while (rle != 0) {
@@ -773,6 +764,23 @@ hibernate_inflate(union hibernate_info *hiber_info, paddr_t dest,
 			}
 		}
 
+		if (i == Z_STREAM_END)
+			goto next_page;
+
+		/*
+		 * Is this a special page? If yes, redirect the
+		 * inflate output to a scratch page (eg, discard it)
+		 */
+		if (hibernate_inflate_skip(hiber_info, dest))
+			hibernate_enter_resume_mapping(
+			    HIBERNATE_INFLATE_PAGE,
+			    HIBERNATE_INFLATE_PAGE, 0);
+		else
+			hibernate_enter_resume_mapping(
+			    HIBERNATE_INFLATE_PAGE, dest, 0);
+
+		hibernate_flush();
+
 		/* Set up the stream for inflate */
 		hibernate_state->hib_stream.avail_out = PAGE_SIZE;
 		hibernate_state->hib_stream.next_out =
@@ -788,6 +796,7 @@ hibernate_inflate(union hibernate_info *hiber_info, paddr_t dest,
 			panic("inflate error");
 		}
 
+next_page:
 		dest += PAGE_SIZE - hibernate_state->hib_stream.avail_out;
 	} while (i != Z_STREAM_END);
 }
@@ -1108,6 +1117,9 @@ hibernate_unpack_image(union hibernate_info *hiber_info)
 	/* Can't use hiber_info that's passed in after here */
 	bcopy(hiber_info, &local_hiber_info, sizeof(union hibernate_info));
 
+	hibernate_state = (struct hibernate_zlib_state *)
+	    (pva + (7 * PAGE_SIZE));
+
 	hibernate_activate_resume_pt_machdep();
 
 	for (i = 0; i < local_hiber_info.chunk_ctr; i++) {
@@ -1250,18 +1262,11 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 		while (inaddr < range_end) {
 			out_remaining = PAGE_SIZE;
 			while (out_remaining > 0 && inaddr < range_end) {
-				pmap_kenter_pa(hibernate_temp_page,
-				    inaddr & PMAP_PA_MASK, VM_PROT_ALL);
-
-				/* XXX - not needed on all archs */
-				pmap_activate(curproc);
-
-				bcopy((caddr_t)hibernate_temp_page,
-				    (caddr_t)hibernate_copy_page, PAGE_SIZE);
 
 				/*
 				 * Adjust for regions that are not evenly
-				 * divisible by PAGE_SIZE
+				 * divisible by PAGE_SIZE or overflowed
+				 * pages from the previous iteration.
 				 */
 				temp_inaddr = (inaddr & PAGE_MASK) +
 				    hibernate_copy_page;
@@ -1338,9 +1343,18 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 				}
 
 				/* Deflate from temp_inaddr to IO page */
-				if (inaddr != range_end)
+				if (inaddr != range_end) {
+					pmap_kenter_pa(hibernate_temp_page,
+					    inaddr & PMAP_PA_MASK, VM_PROT_ALL);
+
+					/* XXX - not needed on all archs */
+					pmap_activate(curproc);
+
+					bcopy((caddr_t)hibernate_temp_page,
+					    (caddr_t)hibernate_copy_page, PAGE_SIZE);
 					inaddr += hibernate_deflate(hiber_info,
 					    temp_inaddr, &out_remaining);
+				}
 			}
 
 			if (out_remaining == 0) {
