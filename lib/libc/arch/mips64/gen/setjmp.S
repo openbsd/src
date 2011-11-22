@@ -1,4 +1,4 @@
-/*      $OpenBSD: setjmp.S,v 1.6 2009/12/11 05:10:15 miod Exp $ */
+/*      $OpenBSD: setjmp.S,v 1.7 2011/11/22 21:13:30 guenther Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -68,7 +68,7 @@ NON_LEAF(setjmp, FRAMESZ, ra)
 	and	v1, v1, 1			# extract onstack flag
 	REG_S	v1, SC_ONSTACK(a0)		# save it in sc_onstack
 	REG_L	ra, RAOFF(sp)
-	blt	v0, zero, botch			# check for sigstack() error
+	blt	v0, zero, botch			# check for sigaltstack() error
 	REG_S	ra, SC_PC(a0)			# sc_pc = return address
 #if defined(__mips64)
 	dli	v0, 0xACEDBADE			# sigcontext magic number

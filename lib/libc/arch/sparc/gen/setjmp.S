@@ -1,4 +1,4 @@
-/* $OpenBSD: setjmp.S,v 1.5 2005/08/07 16:40:15 espie Exp $ */
+/* $OpenBSD: setjmp.S,v 1.6 2011/11/22 21:13:30 guenther Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -58,7 +58,7 @@ ENTRY(setjmp)
 	t	ST_SYSCALL
 	st	%o0, [%o2 + 4]	/* sc.sc_mask = current mask; */
 	mov	SYS_sigaltstack, %g1
-	clr	%o0		/* sigstack(NULL, &foo) */
+	clr	%o0		/* sigaltstack(NULL, &foo) */
 	add	%sp, 0x48, %o1	/* (foo being in arg dump area) */
 	t	ST_SYSCALL
 	ld	[%sp + 0x50], %o0	/* foo.ss_flags */

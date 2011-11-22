@@ -1,4 +1,4 @@
-/* $OpenBSD: setjmp.S,v 1.7 2005/08/07 16:40:15 espie Exp $ */
+/* $OpenBSD: setjmp.S,v 1.8 2011/11/22 21:13:30 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 
 ENTRY(setjmp, R6)
 	movl	4(ap),r6		# construct sigcontext
-	subl2	$12,sp			# space for current struct sigstack
+	subl2	$12,sp			# space for current struct sigaltstack
 	pushl	sp			# get current values
 	pushl	$0			# no new values
 	calls	$4,_C_LABEL(sigaltstack)# pop args plus signal stack value

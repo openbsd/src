@@ -25,9 +25,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: sigvec.3,v 1.29 2011/09/03 23:40:15 jmc Exp $
+.\"	$OpenBSD: sigvec.3,v 1.30 2011/11/22 21:13:30 guenther Exp $
 .\"
-.Dd $Mdocdate: September 3 2011 $
+.Dd $Mdocdate: November 22 2011 $
 .Dt SIGVEC 3
 .Os
 .Sh NAME
@@ -172,7 +172,7 @@ bit is set in
 the system will deliver the signal to the process on a
 .Em "signal stack" ,
 specified with
-.Xr sigstack 2 .
+.Xr sigaltstack 2 .
 .Pp
 If a signal is caught during the system calls listed below,
 the call may be restarted,
@@ -310,7 +310,6 @@ or
 .Xr sigaction 2 ,
 .Xr sigaltstack 2 ,
 .Xr sigprocmask 2 ,
-.Xr sigstack 2 ,
 .Xr sigsuspend 2 ,
 .Xr setjmp 3 ,
 .Xr sigblock 3 ,

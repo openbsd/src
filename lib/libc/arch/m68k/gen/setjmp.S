@@ -1,4 +1,4 @@
-/* $OpenBSD: setjmp.S,v 1.4 2005/08/07 16:40:14 espie Exp $ */
+/* $OpenBSD: setjmp.S,v 1.5 2011/11/22 21:13:30 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -46,7 +46,7 @@
 #include "DEFS.h"
 
 ENTRY(setjmp)
-	subl	#12,sp		/* space for sigstack args/rvals */
+	subl	#12,sp		/* space for sigaltstack args/rvals */
 	clrl	sp@		/* don't change it... */
 	movl	sp,sp@(4)	/* ...but return the current val */
 	jbsr	_sigaltstack	/* note: flags returned in sp@(8) */

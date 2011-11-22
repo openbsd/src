@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.15 2011/07/06 17:39:22 guenther Exp $	*/
+/*	$OpenBSD: signal.h,v 1.16 2011/11/22 21:13:30 guenther Exp $	*/
 /*	$NetBSD: signal.h,v 1.8 1996/02/29 00:04:57 jtc Exp $	*/
 
 /*-
@@ -105,19 +105,20 @@ __only_inline int sigismember(const sigset_t *set, int signo) {
 int	killpg(pid_t, int);
 int	siginterrupt(int, int);
 int	sigpause(int);
-int	sigreturn(struct sigcontext *);
-int	sigstack(const struct sigstack *, struct sigstack *);
 int	sigaltstack(const struct sigaltstack *, struct sigaltstack *);
 #if __BSD_VISIBLE
-void	psignal(unsigned int, const char *);
 int	sigblock(int);
+int	sigreturn(struct sigcontext *);
 int	sigsetmask(int);
 int	sigvec(int, struct sigvec *, struct sigvec *);
 #endif
+#endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
 #if __BSD_VISIBLE ||  __POSIX_VISIBLE >= 199309 || __XPG_VISIBLE >= 500
 int	sigwait(const sigset_t *, int *);
 #endif
-#endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
+#if __BSD_VISIBLE ||  __POSIX_VISIBLE >= 200809
+void	psignal(unsigned int, const char *);
+#endif
 #endif /* __BSD_VISIBLE || __POSIX_VISIBLE || __XPG_VISIBLE */
 __END_DECLS
 

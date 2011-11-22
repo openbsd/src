@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.95 2011/10/16 06:21:52 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.96 2011/11/22 21:13:30 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -234,7 +234,7 @@ MAN+=	accept.2 access.2 acct.2 adjfreq.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	recv.2 rename.2 revoke.2 rfork.2 rmdir.2 select.2 send.2 setgroups.2 \
 	setpgid.2 setregid.2 setreuid.2 setresuid.2 setsid.2 setuid.2 \
 	shutdown.2 sigaction.2 sigaltstack.2 sigpending.2 sigprocmask.2 \
-	sigreturn.2 sigstack.2 sigsuspend.2 socket.2 socketpair.2 stat.2 \
+	sigreturn.2 sigsuspend.2 socket.2 socketpair.2 stat.2 \
 	statfs.2 swapctl.2 symlink.2 sync.2 sysarch.2 syscall.2 truncate.2 \
 	umask.2 unlink.2 utimes.2 vfork.2 wait.2 write.2
 
