@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.131 2011/11/09 20:57:38 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.132 2011/11/22 23:20:19 joshe Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -388,6 +388,8 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 		p->p_sigacts = sigactsshare(curp);
 	else
 		p->p_sigacts = sigactsinit(curp);
+	if (flags & FORK_THREAD)
+		sigstkinit(&p->p_sigstk);
 
 	/*
 	 * If emulation has process fork hook, call it now.

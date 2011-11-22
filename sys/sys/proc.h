@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.145 2011/10/18 01:06:15 dlg Exp $	*/
+/*	$OpenBSD: proc.h,v 1.146 2011/11/22 23:20:19 joshe Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -275,7 +275,6 @@ struct proc {
 					/* NULL. Malloc type M_EMULDATA */
 
 	sigset_t p_sigdivert;		/* Signals to be diverted to thread. */
-	struct	sigaltstack p_sigstk;	/* sp & on stack state variable */
 
 /* End area that is zeroed on creation. */
 #define	p_endzero	p_startcopy
@@ -290,7 +289,8 @@ struct proc {
 	char	p_comm[MAXCOMLEN+1];
 
 	struct	emul *p_emul;		/* Emulation information */
-	vaddr_t	p_sigcode;	/* user pointer to the signal code. */
+	struct	sigaltstack p_sigstk;	/* sp & on stack state variable */
+	vaddr_t	p_sigcode;		/* user pointer to the signal code. */
 
 /* End area that is copied on creation. */
 #define	p_endcopy	p_addr
