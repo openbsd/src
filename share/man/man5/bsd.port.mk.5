@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.300 2011/11/22 14:24:33 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.301 2011/11/22 14:48:27 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1415,6 +1415,24 @@ prepended and with master site selection extension removed.
 Read-only.
 See also
 .Ev CHECKSUMFILES .
+.It Ev MASTER_SITE_BACKUP
+User settings.
+List of sites to try after normal master sites, or before if
+.Ev MASTER_SITE_OVERRIDE
+is set to
+.Sq Yes .
+Normally includes ${MASTER_SITE_OPENBSD} and ${MASTER_SITE_FREEBSD}.
+.It Ev MASTER_SITE_*
+Lists of standard sites to retrieve files from, refer to
+.Pa ${PORTSDIR}/infrastructure/templates/network.conf.template .
+.It Ev MASTER_SITE_OVERRIDE
+User settings.
+Set to
+.Sq Yes
+to retrieve distfiles and patchfiles preferentially from the
+${MASTER_SITE_BACKUP} sites.
+Defaults to
+.Sq No .
 .It Ev MASTER_SITES
 List of primary location from which distribution files and patchfiles are
 retrieved.
@@ -1998,6 +2016,11 @@ if this is the case.
 The ports infrastructure will generate a separate ${WRKBUILD} directory
 in which the port will be configured and built.
 Wipe ${WRKBUILD} to start anew, but skipping the extract/patch stage.
+.It Ev SETENV
+Normally set to
+.Li /usr/bin/env -i
+Prepended to every command invocation that requires a clean environment.
+Do not override.
 .It Ev SHARED_LIBS
 List of shared libraries that the port may build, as a list of the form
 .Sq libname
