@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.29 2011/11/22 07:59:06 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.30 2011/11/23 07:11:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -565,7 +565,7 @@ uvm_pmr_free_piglet(vaddr_t va, vsize_t sz)
  * Physmem RLE compression support.
  *
  * Given a physical page address, it will return the number of pages
- * starting at the address, that are free.
+ * starting at the address, that are free.  Clamps to a max of 255 pages.
  * Returns 0 if the page at addr is not free.
  */
 psize_t
@@ -590,8 +590,9 @@ uvm_page_rle(paddr_t addr)
 	 * therefore pg->fpgsz cannot be used.
 	 */
 	for (pg_end = pg; pg_end <= vmp->lastpg &&
-	    (pg_end->pg_flags & PQ_FREE) == PQ_FREE; pg_end++);
-	return pg_end - pg;
+	    (pg_end->pg_flags & PQ_FREE) == PQ_FREE; pg_end++)
+		;
+	return max(pg_end - pg, 255);
 }
 
 /*
