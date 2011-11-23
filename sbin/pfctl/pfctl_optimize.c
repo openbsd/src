@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.29 2011/07/27 00:26:10 mcbride Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.30 2011/11/23 10:24:37 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -394,7 +394,7 @@ optimize_superblock(struct pfctl *pf, struct superblock *block)
 	TAILQ_FOREACH(por, &block->sb_rules, por_entry) {
 		printf("  ");
 		print_rule(&por->por_rule, por->por_rule.anchor ?
-		    por->por_rule.anchor->name : "", 1);
+		    por->por_rule.anchor->name : "", PF_OPT_DEBUG);
 	}
 #endif /* OPT_DEBUG */
 

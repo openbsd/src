@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.305 2011/11/08 19:17:07 mikeb Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.306 2011/11/23 10:24:37 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -232,7 +232,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-deghnqrvz] ", __progname);
+	fprintf(stderr, "usage: %s [-deghnPqrvz] ", __progname);
 	fprintf(stderr, "[-a anchor] [-D macro=value] [-F modifier]\n");
 	fprintf(stderr, "\t[-f file] [-i interface] [-K host | network]\n");
 	fprintf(stderr, "\t[-k host | network | label | id] ");
@@ -755,7 +755,6 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 {
 	struct pfioc_rule pr;
 	u_int32_t nr, mnr, header = 0;
-	int rule_numbers = opts & (PF_OPT_VERBOSE2 | PF_OPT_DEBUG);
 	int len = strlen(path), ret = 0;
 	char *npath, *p;
 
@@ -884,7 +883,7 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 			if (pr.rule.label[0] && (opts & PF_OPT_SHOWALL))
 				labels = 1;
 			INDENT(depth, !(opts & PF_OPT_VERBOSE));
-			print_rule(&pr.rule, pr.anchor_call, rule_numbers);
+			print_rule(&pr.rule, pr.anchor_call, opts);
 
 			/*
 			 * If this is a 'unnamed' brace notation
@@ -1232,7 +1231,7 @@ pfctl_load_rule(struct pfctl *pf, char *path, struct pf_rule *r, int depth)
 
 	if (pf->opts & PF_OPT_VERBOSE) {
 		INDENT(depth, !(pf->opts & PF_OPT_VERBOSE2));
-		print_rule(r, name, pf->opts & PF_OPT_VERBOSE2);
+		print_rule(r, name, pf->opts);
 	}
 	path[len] = '\0';
 	return (0);
@@ -1948,7 +1947,7 @@ main(int argc, char *argv[])
 		usage();
 
 	while ((ch = getopt(argc, argv,
-	    "a:dD:eqf:F:ghi:k:K:L:no:p:R:rS:s:t:T:vx:z")) != -1) {
+	    "a:dD:eqf:F:ghi:k:K:L:no:Pp:R:rS:s:t:T:vx:z")) != -1) {
 		switch (ch) {
 		case 'a':
 			anchoropt = optarg;
@@ -2025,6 +2024,9 @@ main(int argc, char *argv[])
 				usage();
 			}
 			opts |= PF_OPT_OPTIMIZE;
+			break;
+		case 'P':
+			opts |= PF_OPT_PORTNAMES;
 			break;
 		case 'p':
 			pf_device = optarg;

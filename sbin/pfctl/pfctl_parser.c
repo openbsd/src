@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.282 2011/11/23 10:23:11 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.283 2011/11/23 10:24:37 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -63,7 +63,7 @@
 #include "pfctl.h"
 
 void		 print_op (u_int8_t, const char *, const char *);
-void		 print_port (u_int8_t, u_int16_t, u_int16_t, const char *);
+void		 print_port (u_int8_t, u_int16_t, u_int16_t, const char *, int);
 void		 print_ugid (u_int8_t, unsigned, unsigned, const char *, unsigned);
 void		 print_flags (u_int8_t);
 void		 print_fromto(struct pf_rule_addr *, pf_osfp_t,
@@ -360,12 +360,13 @@ print_op(u_int8_t op, const char *a1, const char *a2)
 }
 
 void
-print_port(u_int8_t op, u_int16_t p1, u_int16_t p2, const char *proto)
+print_port(u_int8_t op, u_int16_t p1, u_int16_t p2, const char *proto, int opts)
 {
 	char		 a1[6], a2[6];
-	struct servent	*s;
+	struct servent	*s = NULL;
 
-	s = getservbyport(p1, proto);
+	if (opts & PF_OPT_PORTNAMES)
+		s = getservbyport(p1, proto);
 	p1 = ntohs(p1);
 	p2 = ntohs(p2);
 	snprintf(a1, sizeof(a1), "%u", p1);
@@ -403,9 +404,10 @@ print_flags(u_int8_t f)
 
 void
 print_fromto(struct pf_rule_addr *src, pf_osfp_t osfp, struct pf_rule_addr *dst,
-    sa_family_t af, u_int8_t proto, int verbose)
+    sa_family_t af, u_int8_t proto, int opts)
 {
 	char buf[PF_OSFP_LEN*3];
+	int verbose = opts & (PF_OPT_VERBOSE2 | PF_OPT_DEBUG);
 	if (src->addr.type == PF_ADDR_ADDRMASK &&
 	    dst->addr.type == PF_ADDR_ADDRMASK &&
 	    PF_AZERO(&src->addr.v.a.addr, AF_INET6) &&
@@ -424,7 +426,7 @@ print_fromto(struct pf_rule_addr *src, pf_osfp_t osfp, struct pf_rule_addr *dst,
 		if (src->port_op)
 			print_port(src->port_op, src->port[0],
 			    src->port[1],
-			    proto == IPPROTO_TCP ? "tcp" : "udp");
+			    proto == IPPROTO_TCP ? "tcp" : "udp", opts);
 		if (osfp != PF_OSFP_ANY)
 			printf(" os \"%s\"", pfctl_lookup_fingerprint(osfp, buf,
 			    sizeof(buf)));
@@ -436,7 +438,7 @@ print_fromto(struct pf_rule_addr *src, pf_osfp_t osfp, struct pf_rule_addr *dst,
 		if (dst->port_op)
 			print_port(dst->port_op, dst->port[0],
 			    dst->port[1],
-			    proto == IPPROTO_TCP ? "tcp" : "udp");
+			    proto == IPPROTO_TCP ? "tcp" : "udp", opts);
 	}
 }
 
@@ -675,7 +677,7 @@ print_src_node(struct pf_src_node *sn, int opts)
 }
 
 void
-print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
+print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 {
 	static const char *actiontypes[] = { "pass", "block", "scrub",
 	    "no scrub", "nat", "no nat", "binat", "no binat", "rdr", "no rdr",
@@ -684,6 +686,7 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 	    "anchor", "nat-anchor", "nat-anchor", "binat-anchor",
 	    "binat-anchor", "rdr-anchor", "rdr-anchor" };
 	int	i, ropts;
+	int	verbose = opts & (PF_OPT_VERBOSE2 | PF_OPT_DEBUG);
 	char	*p;
 
 	if (verbose)
@@ -796,7 +799,7 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 			printf(" proto %u", r->proto);
 	}
 	print_fromto(&r->src, r->os_fingerprint, &r->dst, r->af, r->proto,
-	    verbose);
+	    opts);
 	if (r->rcv_ifname[0])
 		printf(" received-on %s", r->rcv_ifname);
 	if (r->uid.op)
