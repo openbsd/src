@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.71 2011/11/15 23:06:39 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.72 2011/11/23 13:48:03 chl Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -41,6 +41,7 @@
 #include "parser.h"
 
 void usage(void);
+static void setup_env(struct smtpd *);
 static void show_sizes(void);
 static int show_command_output(struct imsg *);
 static int show_stats_output(struct imsg *);
@@ -66,12 +67,30 @@ usage(void)
 	exit(1);
 }
 
+static void
+setup_env(struct smtpd *smtpd)
+{
+	bzero(smtpd, sizeof (*smtpd));
+	env = smtpd;
+
+	if ((env->sc_pw = getpwnam(SMTPD_USER)) == NULL)
+		errx(1, "unknown user %s", SMTPD_USER);
+
+	env->sc_queue = queue_backend_lookup(QT_FS);
+	if (env->sc_queue == NULL)
+		errx(1, "could not find queue backend");
+
+	if (!env->sc_queue->init())
+		errx(1, "invalid directory permissions");
+}
+
 int
 main(int argc, char *argv[])
 {
 	struct sockaddr_un	sun;
 	struct parse_result	*res = NULL;
 	struct imsg		imsg;
+	struct smtpd		smtpd;
 	int			ctl_sock;
 	int			done = 0;
 	int			n, verbose = 0;
@@ -82,26 +101,16 @@ main(int argc, char *argv[])
 	else if (strcmp(__progname, "mailq") == 0) {
 		if (geteuid())
 			errx(1, "need root privileges");
+		setup_env(&smtpd);
 		show_queue(Q_QUEUE, 0);
 		return 0;
 	} else if (strcmp(__progname, "smtpctl") == 0) {
-		struct smtpd smtpd;
 
 		/* check for root privileges */
 		if (geteuid())
 			errx(1, "need root privileges");
 
-		bzero(&smtpd, sizeof (smtpd));
-		env = &smtpd;
-		if ((env->sc_pw = getpwnam(SMTPD_USER)) == NULL)
-			errx(1, "unknown user %s", SMTPD_USER);
-
-		env->sc_queue = queue_backend_lookup(QT_FS);
-		if (env->sc_queue == NULL)
-			errx(1, "could not find queue backend");
-
-		if (!env->sc_queue->init())
-			errx(1, "invalid directory permissions");
+		setup_env(&smtpd);
 
 		if ((res = parse(argc - 1, argv + 1)) == NULL)
 			exit(1);
