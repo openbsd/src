@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.281 2011/10/13 18:30:54 claudio Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.282 2011/11/23 10:23:11 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -683,7 +683,7 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 	static const char *anchortypes[] = { "anchor", "anchor", "anchor",
 	    "anchor", "nat-anchor", "nat-anchor", "binat-anchor",
 	    "binat-anchor", "rdr-anchor", "rdr-anchor" };
-	int	i, opts;
+	int	i, ropts;
 	char	*p;
 
 	if (verbose)
@@ -840,26 +840,26 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 	if (r->tos)
 		printf(" tos 0x%2.2x", r->tos);
 
-	opts = 0;
+	ropts = 0;
 	if (r->max_states || r->max_src_nodes || r->max_src_states)
-		opts = 1;
+		ropts = 1;
 	if (r->rule_flag & PFRULE_NOSYNC)
-		opts = 1;
+		ropts = 1;
 	if (r->rule_flag & PFRULE_SRCTRACK)
-		opts = 1;
+		ropts = 1;
 	if (r->rule_flag & PFRULE_IFBOUND)
-		opts = 1;
+		ropts = 1;
 	if (r->rule_flag & PFRULE_STATESLOPPY)
-		opts = 1;
+		ropts = 1;
 	if (r->rule_flag & PFRULE_PFLOW)
-		opts = 1;
-	for (i = 0; !opts && i < PFTM_MAX; ++i)
+		ropts = 1;
+	for (i = 0; !ropts && i < PFTM_MAX; ++i)
 		if (r->timeout[i])
-			opts = 1;
+			ropts = 1;
 
 	if (!r->keep_state && r->action == PF_PASS && !anchor_call[0])
 		printf(" no state");
-	else if (r->keep_state == PF_STATE_NORMAL && opts)
+	else if (r->keep_state == PF_STATE_NORMAL && ropts)
 		printf(" keep state");
 	else if (r->keep_state == PF_STATE_MODULATE)
 		printf(" modulate state");
@@ -880,56 +880,56 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 		}
 		printf(" probability %s%%", buf);
 	}
-	if (opts) {
+	if (ropts) {
 		printf(" (");
 		if (r->max_states) {
 			printf("max %u", r->max_states);
-			opts = 0;
+			ropts = 0;
 		}
 		if (r->rule_flag & PFRULE_NOSYNC) {
-			if (!opts)
+			if (!ropts)
 				printf(", ");
 			printf("no-sync");
-			opts = 0;
+			ropts = 0;
 		}
 		if (r->rule_flag & PFRULE_SRCTRACK) {
-			if (!opts)
+			if (!ropts)
 				printf(", ");
 			printf("source-track");
 			if (r->rule_flag & PFRULE_RULESRCTRACK)
 				printf(" rule");
 			else
 				printf(" global");
-			opts = 0;
+			ropts = 0;
 		}
 		if (r->max_src_states) {
-			if (!opts)
+			if (!ropts)
 				printf(", ");
 			printf("max-src-states %u", r->max_src_states);
-			opts = 0;
+			ropts = 0;
 		}
 		if (r->max_src_conn) {
-			if (!opts)
+			if (!ropts)
 				printf(", ");
 			printf("max-src-conn %u", r->max_src_conn);
-			opts = 0;
+			ropts = 0;
 		}
 		if (r->max_src_conn_rate.limit) {
-			if (!opts)
+			if (!ropts)
 				printf(", ");
 			printf("max-src-conn-rate %u/%u",
 			    r->max_src_conn_rate.limit,
 			    r->max_src_conn_rate.seconds);
-			opts = 0;
+			ropts = 0;
 		}
 		if (r->max_src_nodes) {
-			if (!opts)
+			if (!ropts)
 				printf(", ");
 			printf("max-src-nodes %u", r->max_src_nodes);
-			opts = 0;
+			ropts = 0;
 		}
 		if (r->overload_tblname[0]) {
-			if (!opts)
+			if (!ropts)
 				printf(", ");
 			printf("overload <%s>", r->overload_tblname);
 			if (r->flush)
@@ -938,30 +938,30 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 				printf(" global");
 		}
 		if (r->rule_flag & PFRULE_IFBOUND) {
-			if (!opts)
+			if (!ropts)
 				printf(", ");
 			printf("if-bound");
-			opts = 0;
+			ropts = 0;
 		}
 		if (r->rule_flag & PFRULE_STATESLOPPY) {
-			if (!opts)
+			if (!ropts)
 				printf(", ");
 			printf("sloppy");
-			opts = 0;
+			ropts = 0;
 		}
 		if (r->rule_flag & PFRULE_PFLOW) {
-			if (!opts)
+			if (!ropts)
 				printf(", ");
 			printf("pflow");
-			opts = 0;
+			ropts = 0;
 		}
 		for (i = 0; i < PFTM_MAX; ++i)
 			if (r->timeout[i]) {
 				int j;
 
-				if (!opts)
+				if (!ropts)
 					printf(", ");
-				opts = 0;
+				ropts = 0;
 				for (j = 0; pf_timeouts[j].name != NULL;
 				    ++j)
 					if (pf_timeouts[j].timeout == i)
@@ -978,40 +978,40 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 
 	if (r->scrub_flags >= PFSTATE_NODF || r->min_ttl || r->max_mss) {
 		printf(" scrub (");
-		opts = 1;
+		ropts = 1;
 		if (r->scrub_flags & PFSTATE_NODF) {
 			printf("no-df");
-			opts = 0;
+			ropts = 0;
 		}
 		if (r->scrub_flags & PFSTATE_RANDOMID) {
-			if (!opts)
+			if (!ropts)
 				printf(" ");
 			printf("random-id");
-			opts = 0;
+			ropts = 0;
 		}
 		if (r->min_ttl) {
-			if (!opts)
+			if (!ropts)
 				printf(" ");
 			printf("min-ttl %d", r->min_ttl);
-			opts = 0;
+			ropts = 0;
 		}
 		if (r->scrub_flags & PFSTATE_SETTOS) {
-			if (!opts)
+			if (!ropts)
 				printf(" ");
 			printf("set-tos 0x%2.2x", r->set_tos);
-			opts = 0;
+			ropts = 0;
 		}
 		if (r->scrub_flags & PFSTATE_SCRUB_TCP) {
-			if (!opts)
+			if (!ropts)
 				printf(" ");
 			printf("reassemble tcp");
-			opts = 0;
+			ropts = 0;
 		}
 		if (r->max_mss) {
-			if (!opts)
+			if (!ropts)
 				printf(" ");
 			printf("max-mss %d", r->max_mss);
-			opts = 0;
+			ropts = 0;
 		}
 		printf(")");
 	}
