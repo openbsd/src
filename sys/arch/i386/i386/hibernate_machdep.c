@@ -116,13 +116,14 @@ get_hibernate_info_md(union hibernate_info *hiber_info)
 	hiber_info->ranges[hiber_info->nranges].end =
 	    hiber_info->ranges[hiber_info->nranges].base + PAGE_SIZE;
 	hiber_info->image_size += PAGE_SIZE;
-	hiber_info->nranges ++;
+	hiber_info->nranges++;
 #endif
 #ifdef MULTIPROCESSOR
 	hiber_info->ranges[hiber_info->nranges].base = MP_TRAMPOLINE;
 	hiber_info->ranges[hiber_info->nranges].end =
 	    hiber_info->ranges[hiber_info->nranges].base + PAGE_SIZE;
 	hiber_info->image_size += PAGE_SIZE;
+	hiber_info->nranges++;
 #endif
 
 	return (0);
