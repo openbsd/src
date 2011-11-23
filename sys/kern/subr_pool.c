@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.110 2011/09/23 10:08:31 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.111 2011/11/23 02:05:17 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1103,8 +1103,12 @@ void
 pool_reclaim_all(void)
 {
 	struct pool	*pp;
+	int		s;
+
+	s = splhigh();
 	TAILQ_FOREACH(pp, &pool_head, pr_poollist)
 		pool_reclaim(pp);
+	splx(s);
 }
 
 #ifdef DDB
