@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.146 2011/11/08 11:42:43 miod Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.147 2011/11/24 18:47:34 guenther Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -3184,10 +3184,10 @@ uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t min, vaddr_t max,
 }
 
 /*
- * uvmspace_share: share a vmspace between two proceses
+ * uvmspace_share: share a vmspace between two processes
  *
  * - XXX: no locking on vmspace
- * - used for vfork, threads(?)
+ * - used for vfork and threads
  */
 
 void
