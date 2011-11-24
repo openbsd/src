@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.24 2011/11/21 14:38:43 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.25 2011/11/24 19:47:11 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -506,12 +506,14 @@ sub parse_and_run
 			$state->say("Pkgspec #1 matched #2", $pattern,
 			    join(' ', @l));
 		}
-		if (@l != 0) {
+		if (@l == 0) {
+			$exit_code += 2;
+		}
+		if (@extra == 0) {
 			return $exit_code;
 		} else {
-			return $exit_code + 2;
+			@ARGV = ();
 		}
-
 	}
 
 	$state->lock;
