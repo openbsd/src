@@ -2109,7 +2109,6 @@
 ./usr/share/man/man2/sigpending.2
 ./usr/share/man/man2/sigprocmask.2
 ./usr/share/man/man2/sigreturn.2
-./usr/share/man/man2/sigstack.2
 ./usr/share/man/man2/sigsuspend.2
 ./usr/share/man/man2/socket.2
 ./usr/share/man/man2/socketpair.2
