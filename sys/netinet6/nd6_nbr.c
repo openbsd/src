@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.59 2011/10/15 10:29:06 nigel Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.60 2011/11/24 17:39:55 sperreault Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -222,7 +222,8 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		tsin6.sin6_family = AF_INET6;
 		tsin6.sin6_addr = taddr6;
 
-		rt = rtalloc1((struct sockaddr *)&tsin6, 0, 0);
+		rt = rtalloc1((struct sockaddr *)&tsin6, 0,
+			      m->m_pkthdr.rdomain);
 		if (rt && (rt->rt_flags & RTF_ANNOUNCE) != 0 &&
 		    rt->rt_gateway->sa_family == AF_LINK) {
 			/*
@@ -382,6 +383,7 @@ nd6_ns_output(struct ifnet *ifp, struct in6_addr *daddr6,
 	if (m == NULL)
 		return;
 	m->m_pkthdr.rcvif = NULL;
+	m->m_pkthdr.rdomain = ifp->if_rdomain;
 
 	if (daddr6 == NULL || IN6_IS_ADDR_MULTICAST(daddr6)) {
 		m->m_flags |= M_MCAST;
@@ -454,7 +456,7 @@ nd6_ns_output(struct ifnet *ifp, struct in6_addr *daddr6,
 
 			bcopy(&dst_sa, &ro.ro_dst, sizeof(dst_sa));
 			src0 = in6_selectsrc(&dst_sa, NULL, NULL, &ro, NULL,
-			    &error);
+			    &error, m->m_pkthdr.rdomain);
 			if (src0 == NULL) {
 				nd6log((LOG_DEBUG,
 				    "nd6_ns_output: source can't be "
@@ -899,6 +901,7 @@ nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6,
 	if (m == NULL)
 		return;
 	m->m_pkthdr.rcvif = NULL;
+	m->m_pkthdr.rdomain = ifp->if_rdomain;
 
 	if (IN6_IS_ADDR_MULTICAST(daddr6)) {
 		m->m_flags |= M_MCAST;
@@ -939,7 +942,8 @@ nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6,
 	 * Select a source whose scope is the same as that of the dest.
 	 */
 	bcopy(&dst_sa, &ro.ro_dst, sizeof(dst_sa));
-	src0 = in6_selectsrc(&dst_sa, NULL, NULL, &ro, NULL, &error);
+	src0 = in6_selectsrc(&dst_sa, NULL, NULL, &ro, NULL, &error,
+	    m->m_pkthdr.rdomain);
 	if (src0 == NULL) {
 		nd6log((LOG_DEBUG, "nd6_na_output: source can't be "
 		    "determined: dst=%s, error=%d\n",

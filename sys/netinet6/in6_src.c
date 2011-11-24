@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.26 2011/08/07 18:49:50 mikeb Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.27 2011/11/24 17:39:55 sperreault Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -87,10 +87,10 @@
 #include <netinet6/nd6.h>
 
 int in6_selectif(struct sockaddr_in6 *, struct ip6_pktopts *,
-    struct ip6_moptions *, struct route_in6 *, struct ifnet **);
+    struct ip6_moptions *, struct route_in6 *, struct ifnet **, u_int);
 int selectroute(struct sockaddr_in6 *, struct ip6_pktopts *,
     struct ip6_moptions *, struct route_in6 *, struct ifnet **,
-    struct rtentry **, int);
+    struct rtentry **, int, u_int);
 
 /*
  * Return an IPv6 address, which is the most appropriate for a given
@@ -101,7 +101,7 @@ int selectroute(struct sockaddr_in6 *, struct ip6_pktopts *,
 struct in6_addr *
 in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
     struct ip6_moptions *mopts, struct route_in6 *ro, struct in6_addr *laddr,
-    int *errorp)
+    int *errorp, u_int rtableid)
 {
 	struct in6_addr *dst;
 	struct in6_ifaddr *ia6 = 0;
@@ -123,7 +123,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 
 		/* get the outgoing interface */
 		if ((*errorp = in6_selectif(dstsock, opts, mopts, ro,
-		    &ifp)) != 0)
+		    &ifp, rtableid)) != 0)
 			return (NULL);
 
 		bzero(&sa6, sizeof(sa6));
@@ -135,7 +135,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 			sa6.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 
 		ia6 = (struct in6_ifaddr *)
-		    ifa_ifwithaddr((struct sockaddr *)&sa6, 0);
+		    ifa_ifwithaddr((struct sockaddr *)&sa6, rtableid);
 		if (ia6 == NULL ||
 		    (ia6->ia6_flags & (IN6_IFF_ANYCAST | IN6_IFF_NOTREADY))) {
 			*errorp = EADDRNOTAVAIL;
@@ -162,7 +162,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	if (pi && pi->ipi6_ifindex) {
 		/* XXX boundary check is assumed to be already done. */
 		ia6 = in6_ifawithscope(ifindex2ifnet[pi->ipi6_ifindex],
-				       dst);
+				       dst, rtableid);
 		if (ia6 == 0) {
 			*errorp = EADDRNOTAVAIL;
 			return (0);
@@ -192,7 +192,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 			return (0);
 		}
 		ia6 = in6_ifawithscope(ifindex2ifnet[dstsock->sin6_scope_id],
-				       dst);
+				       dst, rtableid);
 		if (ia6 == 0) {
 			*errorp = EADDRNOTAVAIL;
 			return (0);
@@ -214,7 +214,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 			ifp = ifindex2ifnet[htons(dstsock->sin6_scope_id)];
 
 		if (ifp) {
-			ia6 = in6_ifawithscope(ifp, dst);
+			ia6 = in6_ifawithscope(ifp, dst, rtableid);
 			if (ia6 == 0) {
 				*errorp = EADDRNOTAVAIL;
 				return (0);
@@ -236,7 +236,8 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 			sin6_next = satosin6(opts->ip6po_nexthop);
 			rt = nd6_lookup(&sin6_next->sin6_addr, 1, NULL);
 			if (rt) {
-				ia6 = in6_ifawithscope(rt->rt_ifp, dst);
+				ia6 = in6_ifawithscope(rt->rt_ifp, dst,
+				    rtableid);
 				if (ia6 == 0)
 					ia6 = ifatoia6(rt->rt_ifa);
 			}
@@ -284,7 +285,8 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		 */
 
 		if (ro->ro_rt) {
-			ia6 = in6_ifawithscope(ro->ro_rt->rt_ifa->ifa_ifp, dst);
+			ia6 = in6_ifawithscope(ro->ro_rt->rt_ifa->ifa_ifp, dst,
+			    rtableid);
 			if (ia6 == 0) /* xxx scope error ?*/
 				ia6 = ifatoia6(ro->ro_rt->rt_ifa);
 		}
@@ -321,7 +323,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 int
 selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
     struct ip6_moptions *mopts, struct route_in6 *ro, struct ifnet **retifp,
-    struct rtentry **retrt, int norouteok)
+    struct rtentry **retrt, int norouteok, u_int rtableid)
 {
 	int error = 0;
 	struct ifnet *ifp = NULL;
@@ -401,7 +403,7 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 				ron->ro_rt = NULL;
 			}
 			*satosin6(&ron->ro_dst) = *sin6_next;
-			ron->ro_tableid = 0;	/* XXX rtableid */
+			ron->ro_tableid = rtableid;
 		}
 		if (ron->ro_rt == NULL) {
 			rtalloc((struct route *)ron); /* multi path case? */
@@ -454,6 +456,7 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 			sa6 = (struct sockaddr_in6 *)&ro->ro_dst;
 			*sa6 = *dstsock;
 			sa6->sin6_scope_id = 0;
+			ro->ro_tableid = rtableid;
 			rtalloc_mpath((struct route *)ro, NULL);
 		}
 
@@ -515,13 +518,14 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 
 int
 in6_selectif(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
-    struct ip6_moptions *mopts, struct route_in6 *ro, struct ifnet **retifp)
+    struct ip6_moptions *mopts, struct route_in6 *ro, struct ifnet **retifp,
+    u_int rtableid)
 {
 	struct rtentry *rt = NULL;
 	int error;
 
 	if ((error = selectroute(dstsock, opts, mopts, ro, retifp,
-	    &rt, 1)) != 0)
+	    &rt, 1, rtableid)) != 0)
 		return (error);
 
 	/*
@@ -560,10 +564,11 @@ in6_selectif(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 int
 in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
     struct ip6_moptions *mopts, struct route_in6 *ro, struct ifnet **retifp,
-    struct rtentry **retrt)
+    struct rtentry **retrt, u_int rtableid)
 {
 
-	return (selectroute(dstsock, opts, mopts, ro, retifp, retrt, 0));
+	return (selectroute(dstsock, opts, mopts, ro, retifp, retrt, 0,
+	    rtableid));
 }
 
 /*

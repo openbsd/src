@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.55 2011/02/24 01:25:17 stsp Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.56 2011/11/24 17:39:55 sperreault Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -459,7 +459,8 @@ defrouter_addreq(struct nd_defrouter *new)
 	info.rti_info[RTAX_NETMASK] = (struct sockaddr *)&mask;
 
 	s = splsoftnet();
-	error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED, &newrt, 0);
+	error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED, &newrt,
+	    new->ifp->if_rdomain);
 	if (newrt) {
 		nd6_rtmsg(RTM_ADD, newrt); /* tell user process */
 		newrt->rt_refcnt--;
@@ -565,7 +566,8 @@ defrouter_delreq(struct nd_defrouter *dr)
 	info.rti_info[RTAX_GATEWAY] = (struct sockaddr *)&gw;
 	info.rti_info[RTAX_NETMASK] = (struct sockaddr *)&mask;
 
-	rtrequest1(RTM_DELETE, &info, RTP_CONNECTED, &oldrt, 0);
+	rtrequest1(RTM_DELETE, &info, RTP_CONNECTED, &oldrt,
+	    dr->ifp->if_rdomain);
 	if (oldrt) {
 		nd6_rtmsg(RTM_DELETE, oldrt);
 		if (oldrt->rt_refcnt <= 0) {
@@ -1623,7 +1625,7 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
 	info.rti_info[RTAX_NETMASK] = (struct sockaddr *)&mask6;
 
-	error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED, &rt, 0);
+	error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED, &rt, ifp->if_rdomain);
 	if (error == 0) {
 		if (rt != NULL) /* this should be non NULL, though */
 			nd6_rtmsg(RTM_ADD, rt);
@@ -1674,7 +1676,8 @@ nd6_prefix_offlink(struct nd_prefix *pr)
 	bzero(&info, sizeof(info));
 	info.rti_info[RTAX_DST] = (struct sockaddr *)&sa6;
 	info.rti_info[RTAX_NETMASK] = (struct sockaddr *)&mask6;
-	error = rtrequest1(RTM_DELETE, &info, RTP_CONNECTED, &rt, 0);
+	error = rtrequest1(RTM_DELETE, &info, RTP_CONNECTED, &rt,
+	    ifp->if_rdomain);
 	if (error == 0) {
 		pr->ndpr_stateflags &= ~NDPRF_ONLINK;
 

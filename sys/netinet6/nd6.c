@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.87 2011/06/17 07:06:47 mk Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.88 2011/11/24 17:39:55 sperreault Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -676,7 +676,7 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp)
 	sin6.sin6_family = AF_INET6;
 	sin6.sin6_addr = *addr6;
 
-	rt = rtalloc1((struct sockaddr *)&sin6, create, 0);
+	rt = rtalloc1((struct sockaddr *)&sin6, create, ifp->if_rdomain);
 	if (rt && (rt->rt_flags & RTF_LLINFO) == 0) {
 		/*
 		 * This is the case for the default route.
@@ -720,7 +720,7 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp)
 			info.rti_info[RTAX_NETMASK] =
 			    (struct sockaddr *)&all1_sa;
 			if ((e = rtrequest1(RTM_ADD, &info, RTP_CONNECTED,
-			    &rt, 0)) != 0) {
+			    &rt, ifp->if_rdomain)) != 0) {
 #if 0
 				log(LOG_ERR,
 				    "nd6_lookup: failed to add route for a "
@@ -928,7 +928,8 @@ nd6_free(struct rtentry *rt, int gc)
 	bzero(&info, sizeof(info));
 	info.rti_info[RTAX_DST] = rt_key(rt);
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-	rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL, 0);
+	rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL,
+	    rt->rt_ifp->if_rdomain);
 
 	return (next);
 }
@@ -1774,7 +1775,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 	if (rt) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
 			if ((rt0 = rt = rtalloc1((struct sockaddr *)dst,
-			    RT_REPORT, 0)) != NULL)
+			    RT_REPORT, m->m_pkthdr.rdomain)) != NULL)
 			{
 				rt->rt_refcnt--;
 				if (rt->rt_ifp != ifp)
@@ -1813,7 +1814,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 				rtfree(rt); rt = rt0;
 			lookup:
 				rt->rt_gwroute = rtalloc1(rt->rt_gateway,
-				    RT_REPORT, 0);
+				    RT_REPORT, m->m_pkthdr.rdomain);
 				if ((rt = rt->rt_gwroute) == 0)
 					senderr(EHOSTUNREACH);
 			}

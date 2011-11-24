@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.116 2011/04/06 19:23:15 sthen Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.117 2011/11/24 17:39:55 sperreault Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -181,7 +181,7 @@ int	ni6_addrs(struct icmp6_nodeinfo *, struct mbuf *, struct ifnet **,
 int	ni6_store_addrs(struct icmp6_nodeinfo *, struct icmp6_nodeinfo *,
 	    struct ifnet *, int);
 int	icmp6_notify_error(struct mbuf *, int, int, int);
-struct rtentry *icmp6_mtudisc_clone(struct sockaddr *);
+struct rtentry *icmp6_mtudisc_clone(struct sockaddr *, u_int);
 void	icmp6_mtudisc_timeout(struct rtentry *, struct rttimer *);
 void	icmp6_redirect_timeout(struct rtentry *, struct rttimer *);
 
@@ -1147,7 +1147,7 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 		    htons(m->m_pkthdr.rcvif->if_index);
 	}
 	/* sin6.sin6_scope_id = XXX: should be set if DST is a scoped addr */
-	rt = icmp6_mtudisc_clone((struct sockaddr *)&sin6);
+	rt = icmp6_mtudisc_clone((struct sockaddr *)&sin6, m->m_pkthdr.rdomain);
 
 	if (rt && (rt->rt_flags & RTF_HOST) &&
 	    !(rt->rt_rmx.rmx_locks & RTV_MTU) &&
@@ -1217,7 +1217,7 @@ ni6_input(struct mbuf *m, int off)
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	bcopy(&ip6->ip6_dst, &sin6.sin6_addr, sizeof(sin6.sin6_addr));
 	/* XXX scopeid */
-	if (ifa_ifwithaddr((struct sockaddr *)&sin6, /* XXX */ 0))
+	if (ifa_ifwithaddr((struct sockaddr *)&sin6, m->m_pkthdr.rdomain))
 		; /* unicast/anycast, fine */
 	else if (IN6_IS_ADDR_MC_LINKLOCAL(&sin6.sin6_addr))
 		; /* link-local multicast, fine */
@@ -2083,7 +2083,8 @@ icmp6_reflect(struct mbuf *m, size_t off)
 		 * source address of the erroneous packet.
 		 */
 		bzero(&ro, sizeof(ro));
-		src = in6_selectsrc(&sa6_src, NULL, NULL, &ro, NULL, &e);
+		src = in6_selectsrc(&sa6_src, NULL, NULL, &ro, NULL, &e,
+		    m->m_pkthdr.rdomain);
 		if (ro.ro_rt) { /* XXX: see comments in icmp6_mtudisc_update */
 			RTFREE(ro.ro_rt); /* XXX: we could use this */
 		}
@@ -2220,7 +2221,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	sin6.sin6_family = AF_INET6;
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	bcopy(&reddst6, &sin6.sin6_addr, sizeof(reddst6));
-	rt = rtalloc1((struct sockaddr *)&sin6, 0, 0);
+	rt = rtalloc1((struct sockaddr *)&sin6, 0, m->m_pkthdr.rdomain);
 	if (rt) {
 		if (rt->rt_gateway == NULL ||
 		    rt->rt_gateway->sa_family != AF_INET6) {
@@ -2747,12 +2748,12 @@ icmp6_ratelimit(const struct in6_addr *dst, const int type, const int code)
 }
 
 struct rtentry *
-icmp6_mtudisc_clone(struct sockaddr *dst)
+icmp6_mtudisc_clone(struct sockaddr *dst, u_int rdomain)
 {
 	struct rtentry *rt;
 	int    error;
 
-	rt = rtalloc1(dst, RT_REPORT, 0);
+	rt = rtalloc1(dst, RT_REPORT, rdomain);
 	if (rt == 0)
 		return NULL;
 
@@ -2765,7 +2766,8 @@ icmp6_mtudisc_clone(struct sockaddr *dst)
 		info.rti_flags = RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC;
 		info.rti_info[RTAX_DST] = dst;
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-		error = rtrequest1(RTM_ADD, &info, rt->rt_priority, &nrt, 0);
+		error = rtrequest1(RTM_ADD, &info, rt->rt_priority, &nrt,
+		    rdomain);
 		if (error) {
 			rtfree(rt);
 			return NULL;

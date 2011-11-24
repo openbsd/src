@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.122 2011/07/04 06:54:49 claudio Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.123 2011/11/24 17:39:55 sperreault Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -563,7 +563,7 @@ reroute:
 	dstsock.sin6_addr = ip6->ip6_dst;
 	dstsock.sin6_len = sizeof(dstsock);
 	if ((error = in6_selectroute(&dstsock, opt, im6o, ro, &ifp,
-	    &rt)) != 0) {
+	    &rt, m->m_pkthdr.rdomain)) != 0) {
 		switch (error) {
 		case EHOSTUNREACH:
 			ip6stat.ip6s_noroute++;

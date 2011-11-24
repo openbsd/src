@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.43 2011/05/13 14:31:17 oga Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.44 2011/11/24 17:39:55 sperreault Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -434,7 +434,8 @@ rip6_output(struct mbuf *m, ...)
 		struct in6_addr *in6a;
 
 		if ((in6a = in6_selectsrc(dstsock, optp, in6p->in6p_moptions,
-		    &in6p->in6p_route, &in6p->in6p_laddr, &error)) == 0) {
+		    &in6p->in6p_route, &in6p->in6p_laddr, &error,
+		    in6p->inp_rtableid)) == 0) {
 			if (error == 0)
 				error = EADDRNOTAVAIL;
 			goto bad;
@@ -486,6 +487,9 @@ rip6_output(struct mbuf *m, ...)
 	flags = 0;
 	if (in6p->in6p_flags & IN6P_MINMTU)
 		flags |= IPV6_MINMTU;
+
+	/* force routing domain */
+	m->m_pkthdr.rdomain = in6p->inp_rtableid;
 
 	error = ip6_output(m, optp, &in6p->in6p_route, flags,
 	    in6p->in6p_moptions, &oifp, in6p);
@@ -677,7 +681,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 */
 		if (!IN6_IS_ADDR_UNSPECIFIED(&addr->sin6_addr) &&
 		    (ia = ifa_ifwithaddr((struct sockaddr *)addr,
-		    /* XXX */ 0)) == 0) {
+		    in6p->inp_rtableid)) == 0) {
 			error = EADDRNOTAVAIL;
 			break;
 		}
@@ -725,7 +729,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		/* Source address selection. XXX: need pcblookup? */
 		in6a = in6_selectsrc(addr, in6p->in6p_outputopts,
 		    in6p->in6p_moptions, &in6p->in6p_route,
-		    &in6p->in6p_laddr, &error);
+		    &in6p->in6p_laddr, &error, in6p->inp_rtableid);
 		if (in6a == NULL) {
 			if (error == 0)
 				error = EADDRNOTAVAIL;

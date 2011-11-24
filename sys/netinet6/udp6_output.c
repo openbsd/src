@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.16 2008/11/23 13:30:59 claudio Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.17 2011/11/24 17:39:55 sperreault Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -188,7 +188,8 @@ udp6_output(struct in6pcb *in6p, struct mbuf *m, struct mbuf *addr6,
 			laddr = in6_selectsrc(sin6, optp,
 					      in6p->in6p_moptions,
 					      &in6p->in6p_route,
-					      &in6p->in6p_laddr, &error);
+					      &in6p->in6p_laddr, &error,
+					      in6p->inp_rtableid);
 		} else
 			laddr = &in6p->in6p_laddr;	/*XXX*/
 		if (laddr == NULL) {
@@ -268,6 +269,10 @@ udp6_output(struct in6pcb *in6p, struct mbuf *m, struct mbuf *addr6,
 			flags |= IPV6_MINMTU;
 
 		udp6stat.udp6s_opackets++;
+
+		/* force routing domain */
+		m->m_pkthdr.rdomain = in6p->inp_rtableid;
+
 		error = ip6_output(m, optp, &in6p->in6p_route,
 			    flags, in6p->in6p_moptions, NULL, in6p);
 		break;
