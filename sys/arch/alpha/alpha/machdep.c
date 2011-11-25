@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.134 2011/07/05 04:48:01 guenther Exp $ */
+/* $OpenBSD: machdep.c,v 1.135 2011/11/25 05:23:40 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1421,6 +1421,7 @@ sendsig(catcher, sig, mask, code, type, val)
 {
 	struct proc *p = curproc;
 	struct sigcontext *scp, ksc;
+	struct fpreg *fpregs = (struct fpreg *)&ksc.sc_fpregs;
 	struct trapframe *frame;
 	struct sigacts *psp = p->p_sigacts;
 	int oonstack, fsize, rndfsize, kscsize;
@@ -1475,7 +1476,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
 		fpusave_proc(p, 1);
 	ksc.sc_ownedfp = p->p_md.md_flags & MDP_FPUSED;
-	memcpy((struct fpreg *)ksc.sc_fpregs, &p->p_addr->u_pcb.pcb_fp,
+	memcpy(/*ksc.sc_*/fpregs, &p->p_addr->u_pcb.pcb_fp,
 	    sizeof(struct fpreg));
 #ifndef NO_IEEE
 	ksc.sc_fp_control = alpha_read_fp_c(p);
@@ -1557,6 +1558,7 @@ sys_sigreturn(p, v, retval)
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext ksc;
+	struct fpreg *fpregs = (struct fpreg *)&ksc.sc_fpregs;
 #ifdef DEBUG
 	struct sigcontext *scp;
 #endif
@@ -1595,7 +1597,7 @@ sys_sigreturn(p, v, retval)
 	/* XXX ksc.sc_ownedfp ? */
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
 		fpusave_proc(p, 0);
-	memcpy(&p->p_addr->u_pcb.pcb_fp, (struct fpreg *)ksc.sc_fpregs,
+	memcpy(&p->p_addr->u_pcb.pcb_fp, /*ksc.sc_*/fpregs,
 	    sizeof(struct fpreg));
 #ifndef NO_IEEE
 	p->p_addr->u_pcb.pcb_fp.fpr_cr = ksc.sc_fpcr;

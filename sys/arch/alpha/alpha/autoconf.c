@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.34 2011/11/18 19:24:28 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.35 2011/11/25 05:23:40 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ parse_prom_bootdev()
 	booted_partition = 0;
 	bootdev_data = NULL;
 
-	bcopy(bootinfo.booted_dev, boot_dev, sizeof boot_dev);
+	bcopy(bootinfo.booted_dev, boot_dev, sizeof bootinfo.booted_dev);
 #if 0
 	printf("parse_prom_bootdev: boot dev = \"%s\"\n", boot_dev);
 #endif
