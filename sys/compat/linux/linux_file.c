@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file.c,v 1.25 2011/07/07 01:19:39 tedu Exp $	*/
+/*	$OpenBSD: linux_file.c,v 1.26 2011/11/25 10:10:05 robert Exp $	*/
 /*	$NetBSD: linux_file.c,v 1.15 1996/05/20 01:59:09 fvdl Exp $	*/
 
 /*
@@ -689,6 +689,21 @@ linux_sys_chmod(p, v, retval)
 	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	return sys_chmod(p, uap, retval);
+}
+
+int
+linux_sys_chown(struct proc *p, void *v, register_t *retval)
+{
+	struct linux_sys_chown_args /* {
+		syscallarg(char *) path;
+		syscallarg(uid_t) uid;
+		syscallarg(gid_t) gid;
+	} */ *uap = v;
+	caddr_t sg = stackgap_init(p->p_emul);
+
+	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	return sys_chown(p, uap, retval);
 }
 
 int

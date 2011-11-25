@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_dummy.c,v 1.17 2011/04/05 15:36:09 pirofti Exp $ */
+/*	$OpenBSD: linux_dummy.c,v 1.18 2011/11/25 10:10:05 robert Exp $ */
 
 /*-
  * Copyright (c) 1994-1995 Søren Schmidt
@@ -8,7 +8,7 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer 
+ *    notice, this list of conditions and the following disclaimer
  *    in this position and unchanged.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
@@ -46,7 +46,7 @@ linux_sys_ ## s(p, v, retval)						\
 	register_t *retval;						\
 {									\
 	return (unsupported_msg(p, #s));				\
-}									
+}
 
 static int
 unsupported_msg(struct proc *p, const char *fname)
@@ -109,7 +109,6 @@ DUMMY(getpmsg);			/* #188 */
 DUMMY(putpmsg);			/* #189 */
 DUMMY(lchown);			/* #198 */
 DUMMY(fchown);			/* #207 */
-DUMMY(chown);			/* #212 */
 DUMMY(setfsgid);		/* #216 */
 DUMMY(pivot_root);		/* #217 */
 DUMMY(mincore);			/* #218 */
@@ -123,7 +122,7 @@ linux_sys_ ## s ## xattr(p, v, retval)						\
 	register_t *retval;						\
 {									\
 	return (ENOATTR);						\
-}									
+}
 DUMMY_XATTR(set);
 DUMMY_XATTR(lset);
 DUMMY_XATTR(fset);
