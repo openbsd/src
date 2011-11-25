@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.308 2011/11/25 13:59:18 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.309 2011/11/25 14:04:23 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2575,6 +2575,10 @@ If explicitly unset (WRKOBJDIR=), the working directory is
 created within the port directory.
 .It Ev X11BASE
 Where X11 has been installed (default: /usr/X11R6).
+.It Ev XAUTHORITY
+Points to a suitable authority file for X11 interactive regression tests.
+Defaults to
+.Pa ${HOME}/.xauthority .
 .It Ev XMKMF
 Invocation of xmkmf for CONFIGURE_STYLE=imake port.
 Defaults to xmkmf -a -DPorts.
