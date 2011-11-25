@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.86 2011/09/23 18:59:38 espie Exp $
+.\" $OpenBSD: ports.7,v 1.87 2011/11/25 11:05:54 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: September 23 2011 $
+.Dd $Mdocdate: November 25 2011 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -330,6 +330,9 @@ belongs to.
 .It Ar unlink-categories
 Remove the symbolic links created by
 .Ar link-categories .
+.It Ar homepage-links
+creates an html list of links for each port
+.Ev HOMEPAGE .
 .El
 .Sh LOCK INFRASTRUCTURE
 The ports tree can be used concurrently for building several ports at the
