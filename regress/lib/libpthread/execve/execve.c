@@ -1,4 +1,4 @@
-/*	$OpenBSD: execve.c,v 1.4 2003/09/18 01:59:58 henning Exp $	*/
+/*	$OpenBSD: execve.c,v 1.5 2011/11/25 00:31:43 guenther Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -46,18 +46,32 @@
 #include "test.h"
 
 extern char **environ;
+char *bad_argv[] = {
+	"/NO SUCH FILE",
+	NULL
+};
 char *new_argv[] = {
-	"/bin/echo",
-	"This line should appear after the execve",
+	"/bin/sh",
+	"-c",
+	"sleep 3; echo 'This line should appear after the execve'",
 	NULL
 };
 
 char * should_succeed = "This line should be displayed\n";
 
+void *
+other(void *arg)
+{
+	sleep(2);
+	printf("%s\n", (char *)arg);
+	return NULL;
+}
+
 int
 main(int argc, char *argv[])
 {
 	int fd;
+	pthread_t t1;
 
 	printf("This is the first message\n");
 	if (isatty(STDOUT_FILENO)) {
@@ -73,10 +87,18 @@ main(int argc, char *argv[])
 
 	CHECKn(printf("This output is necessary to set the stdout fd to NONBLOCKING\n"));
 
+	/* create another thread to make things interesting */
+	CHECKr(pthread_create(&t1, NULL, other, "Should see this too"));
+
 	/* do a dup2 */
 	CHECKe(dup2(fd, STDOUT_FILENO));
 	CHECKe(write(STDOUT_FILENO, should_succeed,
 	    (size_t)strlen(should_succeed)));
+	CHECKn(execve(bad_argv[0], bad_argv, environ));
+	pthread_join(t1, NULL);
+	CHECKr(pthread_create(&t1, NULL, other, "failed!"));
+	sleep(1);
 	CHECKe(execve(new_argv[0], new_argv, environ));
 	DIE(errno, "execve %s", new_argv[0]);
 }
+
