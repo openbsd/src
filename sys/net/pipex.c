@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.22 2011/10/15 03:24:11 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.23 2011/11/25 13:05:06 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1258,6 +1258,7 @@ drop:
 
 	return;
 }
+#endif
 
 Static struct mbuf *
 pipex_common_input(struct pipex_session *session, struct mbuf *m0, int hlen,
@@ -1387,7 +1388,6 @@ pipex_pppoe_lookup_session(struct mbuf *m0)
 
 	return (session);
 }
-#endif
 
 struct mbuf *
 pipex_pppoe_input(struct mbuf *m0, struct pipex_session *session)
@@ -1905,8 +1905,12 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 	    ((pipex_session_is_l2tp_data_sequencing_on(session))
 		    ? sizeof(struct pipex_l2tp_seq_header) : 0) +
 	    sizeof(struct udphdr) +
+#ifdef INET6
 	    ((session->peer.sin6.sin6_family == AF_INET6)
 		    ? sizeof(struct ip6_hdr) : sizeof(struct ip));
+#else
+	    sizeof(struct ip);
+#endif
 
 	datalen = 0;
 	if (m0 != NULL) {
@@ -1922,8 +1926,12 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 		m0->m_pkthdr.len = m0->m_len = hlen;
 	}
 
+#ifdef INET6
 	hlen = (session->peer.sin6.sin6_family == AF_INET6)
 	    ? sizeof(struct ip6_hdr) : sizeof(struct ip);
+#else
+	hlen = sizeof(struct ip);
+#endif
 	plen = datalen + sizeof(struct pipex_l2tp_header) +
 	    ((pipex_session_is_l2tp_data_sequencing_on(session))
 		    ? sizeof(struct pipex_l2tp_seq_header) : 0);
