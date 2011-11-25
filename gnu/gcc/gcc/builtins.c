@@ -3060,10 +3060,19 @@ expand_builtin_memmove (tree arglist, tree type, rtx target,
 	 it is ok to use memcpy as well.  */
       if (integer_onep (len))
 	{
-	  rtx ret = expand_builtin_mempcpy (arglist, type, target, mode,
-					    /*endp=*/0);
-	  if (ret)
-	    return ret;
+#if defined(SUBWORD_ACCESS_P)
+	  if (SUBWORD_ACCESS_P
+	      || (src_align >= BIGGEST_ALIGNMENT
+		  && dest_align >= BIGGEST_ALIGNMENT))
+	    {
+#endif
+	      rtx ret = expand_builtin_mempcpy (arglist, type, target, mode,
+						/*endp=*/0);
+	      if (ret)
+		return ret;
+#if defined(SUBWORD_ACCESS_P)
+	    }
+#endif
 	}
 
       /* Otherwise, call the normal function.  */
