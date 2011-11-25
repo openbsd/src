@@ -1,4 +1,4 @@
-/* $OpenBSD: crunched_main.c,v 1.1 2008/08/22 15:18:55 deraadt Exp $	 */
+/* $OpenBSD: crunched_main.c,v 1.2 2011/11/25 03:40:49 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -35,6 +35,7 @@
  */
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 struct stub {
 	char	*name;
