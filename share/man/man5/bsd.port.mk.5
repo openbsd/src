@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.306 2011/11/25 11:01:25 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.307 2011/11/25 11:12:21 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -661,7 +661,7 @@ Seldom needed, as
 .Ar update
 will often do the right thing.
 .It Ar repackage
-For rebuilding of the packages of a port, by first removing the old packages.
+Rebuild the packages of a port after removing existing packages.
 .It Ar run-depends
 Verify the ports mentioned in
 .Ev RUN_DEPENDS ,
@@ -682,6 +682,12 @@ show the contents of ${name1} ${name2} ...,
 one variable value per line.
 Mostly used from recursive makes, or to know the contents of another
 port's variables without guessing wrongly.
+.It Ar show-fake-size
+Prints the size of ${WRKINST}.
+Used by some options of
+.Xr dpb 1 ,
+suitable for
+.Ev BULK_TARGETS .
 .It Ar show-required-by
 Prints the list of
 .Xr pkgpath 7
@@ -695,6 +701,12 @@ Build a port package.
 Exactly like
 .Ar package ,
 but affects only one single subpackage in multi-packages ports.
+.It Ar show-size
+Prints the size of the work directory.
+Used by some options of
+.Xr dpb 1 ,
+suitable for
+.Ev BULK_TARGETS .
 .It Ar subupdate
 Update an existing installation to a newer package, exactly
 like
