@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.25 2011/11/25 09:25:59 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.26 2011/11/25 23:58:40 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -380,7 +380,7 @@ sub main
 	my ($self, $state) = @_;
 
 	if ($state->{automatic}) {
-		if (@{$state->{setlist}} == 0) {
+		if (!defined $state->{setlist}) {
 			my $inst = $state->repo->installed;
 			for my $l (@{$inst->locations_list}) {
 				$self->add_location($state, $l);
