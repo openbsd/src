@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.307 2011/11/25 11:12:21 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.308 2011/11/25 13:59:18 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -688,6 +688,9 @@ Used by some options of
 .Xr dpb 1 ,
 suitable for
 .Ev BULK_TARGETS .
+.It Ar show-prepare-results
+Prints the list of actual installed packages found out by
+.Ar prepare .
 .It Ar show-required-by
 Prints the list of
 .Xr pkgpath 7
