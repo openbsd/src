@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.146 2011/09/28 17:15:45 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.147 2011/11/25 12:52:10 dlg Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1102,7 +1102,7 @@ pf_normalize_tcp_stateful(struct pf_pdesc *pd, u_short *reason,
 	getmicrouptime(&uptime);
 	if (src->scrub && (src->scrub->pfss_flags & PFSS_PAWS) &&
 	    (uptime.tv_sec - src->scrub->pfss_last.tv_sec > TS_MAX_IDLE ||
-	    time_second - state->creation > TS_MAX_CONN))  {
+	    time_uptime - state->creation > TS_MAX_CONN))  {
 		if (pf_status.debug >= LOG_NOTICE) {
 			log(LOG_NOTICE, "pf: src idled out of PAWS ");
 			pf_print_state(state);

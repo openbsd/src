@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.785 2011/10/21 09:21:44 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.786 2011/11/25 12:52:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -567,7 +567,7 @@ pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
 			pool_put(&pf_src_tree_pl, *sn);
 			return (-1);
 		}
-		(*sn)->creation = time_second;
+		(*sn)->creation = time_uptime;
 		if ((*sn)->rule.ptr != NULL)
 			(*sn)->rule.ptr->src_nodes++;
 		pf_status.scounters[SCNT_SRC_NODE_INSERT]++;
@@ -3641,7 +3641,7 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 		s->timeout = PFTM_OTHER_FIRST_PACKET;
 	}
 
-	s->creation = time_second;
+	s->creation = time_uptime;
 	s->expire = time_second;
 
 	if (pd->proto == IPPROTO_TCP) {

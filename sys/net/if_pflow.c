@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.17 2011/07/09 04:11:15 dhill Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.18 2011/11/25 12:52:10 dlg Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -359,7 +359,7 @@ copy_flow_data(struct pflow_flow *flow1, struct pflow_flow *flow2,
 	flow2->flow_octets = htonl(st->bytes[1]);
 
 	flow1->flow_start = flow2->flow_start =
-	    htonl((st->creation - (time_second - time_uptime)) * 1000);
+	    htonl(st->creation * 1000);
 	flow1->flow_finish = flow2->flow_finish =
 	    htonl((time_uptime - (st->rule.ptr->timeout[st->timeout] ?
 	    st->rule.ptr->timeout[st->timeout] :
