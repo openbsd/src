@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.42 2011/08/23 10:32:27 espie Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.43 2011/11/25 09:30:08 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: August 23 2011 $
+.Dd $Mdocdate: November 25 2011 $
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -65,6 +65,9 @@ Delete unused dependencies (packages that are not needed by anything tagged
 as installed manually).
 Can be used without
 .Ar pkgnames .
+If used with
+.Ar pkgnames ,
+it will only delete non manual installs in the list.
 .It Fl B Ar pkg-destdir
 Set
 .Ar pkg-destdir
