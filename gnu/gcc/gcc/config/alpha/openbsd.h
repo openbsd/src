@@ -83,3 +83,6 @@ Boston, MA 02110-1301, USA.  */
 /* don't want no friggin' stack checks.  */
 #undef STACK_CHECK_BUILTIN
 #define STACK_CHECK_BUILTIN 0
+
+/* don't want bcopy() optimized into memmove() unless correctly aligned */
+#define	SUBWORD_ACCESS_P	(TARGET_BWX)

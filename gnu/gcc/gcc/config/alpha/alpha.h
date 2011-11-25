@@ -373,12 +373,11 @@ extern enum alpha_fp_trap_mode alpha_fptm;
 
 /* Align all constants and variables to at least a word boundary so
    we can pick up pieces of them faster.  */
-/* ??? Only if block-move stuff knows about different source/destination
-   alignment.  */
-#if 0
 #define CONSTANT_ALIGNMENT(EXP, ALIGN) MAX ((ALIGN), BITS_PER_WORD)
 #define DATA_ALIGNMENT(EXP, ALIGN) MAX ((ALIGN), BITS_PER_WORD)
-#endif
+
+/* Make local arrays of chars word-aligned for the same reasons.  */
+#define LOCAL_ALIGNMENT(TYPE, ALIGN) DATA_ALIGNMENT (TYPE, ALIGN)
 
 /* Set this nonzero if move instructions will actually fail to work
    when given unaligned data.
