@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.9 2011/03/23 16:54:33 pirofti Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.10 2011/11/25 05:25:00 miod Exp $	*/
 /* $NetBSD: atomic.h,v 1.7 2001/12/17 23:34:57 thorpej Exp $ */
 
 /*-
@@ -52,7 +52,7 @@ atomic_setbits_ulong(__volatile unsigned long *ulp, unsigned long v)
 
 	__asm __volatile(
 		"# BEGIN atomic_setbits_ulong\n"
-		"1:	ldq_l	%0, %3		\n"
+		"1:	ldq_l	%0, %1		\n"
 		"	or	%0, %2, %0	\n"
 		"	stq_c	%0, %1		\n"
 		"	beq	%0, 2f		\n"
@@ -61,8 +61,8 @@ atomic_setbits_ulong(__volatile unsigned long *ulp, unsigned long v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_setbits_ulong"
-		: "=&r" (t0), "+m" (*ulp)
-		: "r" (v), "1" (*ulp)
+		: "=&r" (t0), "=m" (*ulp)
+		: "r" (v)
 		: "memory");
 }
 
@@ -78,7 +78,7 @@ atomic_clearbits_ulong(__volatile unsigned long *ulp, unsigned long v)
 
 	__asm __volatile(
 		"# BEGIN atomic_clearbits_ulong\n"
-		"1:	ldq_l	%0, %3		\n"
+		"1:	ldq_l	%0, %1		\n"
 		"	and	%0, %2, %0	\n"
 		"	stq_c	%0, %1		\n"
 		"	beq	%0, 2f		\n"
@@ -87,8 +87,8 @@ atomic_clearbits_ulong(__volatile unsigned long *ulp, unsigned long v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_clearbits_ulong"
-		: "=&r" (t0), "+m" (*ulp)
-		: "r" (~v), "1" (*ulp)
+		: "=&r" (t0), "=m" (*ulp)
+		: "r" (~v)
 		: "memory");
 }
 
@@ -104,7 +104,7 @@ atomic_add_ulong(__volatile unsigned long *ulp, unsigned long v)
 
 	__asm __volatile(
 		"# BEGIN atomic_add_ulong\n"
-		"1:	ldq_l	%0, %3		\n"
+		"1:	ldq_l	%0, %1		\n"
 		"	addq	%0, %2, %0	\n"
 		"	stq_c	%0, %1		\n"
 		"	beq	%0, 2f		\n"
@@ -113,8 +113,8 @@ atomic_add_ulong(__volatile unsigned long *ulp, unsigned long v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_add_ulong"
-		: "=&r" (t0), "+m" (*ulp)
-		: "r" (v), "1" (*ulp)
+		: "=&r" (t0), "=m" (*ulp)
+		: "r" (v)
 		: "memory");
 }
 
@@ -130,7 +130,7 @@ atomic_sub_ulong(__volatile unsigned long *ulp, unsigned long v)
 
 	__asm __volatile(
 		"# BEGIN atomic_sub_ulong\n"
-		"1:	ldq_l	%0, %3		\n"
+		"1:	ldq_l	%0, %1		\n"
 		"	subq	%0, %2, %0	\n"
 		"	stq_c	%0, %1		\n"
 		"	beq	%0, 2f		\n"
@@ -139,8 +139,8 @@ atomic_sub_ulong(__volatile unsigned long *ulp, unsigned long v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_sub_ulong"
-		: "=&r" (t0), "+m" (*ulp)
-		: "r" (v), "1" (*ulp)
+		: "=&r" (t0), "=m" (*ulp)
+		: "r" (v)
 		: "memory");
 }
 
@@ -157,7 +157,7 @@ atomic_loadlatch_ulong(__volatile unsigned long *ulp, unsigned long v)
 	__asm __volatile(
 		"# BEGIN atomic_loadlatch_ulong\n"
 		"1:	mov	%3, %0		\n"
-		"	ldq_l	%1, %4		\n"
+		"	ldq_l	%1, %2		\n"
 		"	stq_c	%0, %2		\n"
 		"	beq	%0, 2f		\n"
 		"	mb			\n"
@@ -165,8 +165,8 @@ atomic_loadlatch_ulong(__volatile unsigned long *ulp, unsigned long v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_loadlatch_ulong"
-		: "=&r" (t0), "=r" (v0), "+m" (*ulp)
-		: "r" (v), "2" (*ulp)
+		: "=&r" (t0), "=r" (v0), "=m" (*ulp)
+		: "r" (v)
 		: "memory");
 
 	return (v0);
@@ -184,7 +184,7 @@ atomic_setbits_int(__volatile unsigned int *uip, unsigned int v)
 
 	__asm __volatile(
 		"# BEGIN atomic_setbits_ulong\n"
-		"1:	ldl_l	%0, %3		\n"
+		"1:	ldl_l	%0, %1		\n"
 		"	or	%0, %2, %0	\n"
 		"	stl_c	%0, %1		\n"
 		"	beq	%0, 2f		\n"
@@ -193,8 +193,8 @@ atomic_setbits_int(__volatile unsigned int *uip, unsigned int v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_setbits_int"
-		: "=&r" (t0), "+m" (*uip)
-		: "r" (v), "1" (*uip)
+		: "=&r" (t0), "=m" (*uip)
+		: "r" (v)
 		: "memory");
 }
 
@@ -210,7 +210,7 @@ atomic_clearbits_int(__volatile unsigned int *uip, unsigned int v)
 
 	__asm __volatile(
 		"# BEGIN atomic_clearbits_int\n"
-		"1:	ldl_l	%0, %3		\n"
+		"1:	ldl_l	%0, %1		\n"
 		"	and	%0, %2, %0	\n"
 		"	stl_c	%0, %1		\n"
 		"	beq	%0, 2f		\n"
@@ -219,8 +219,8 @@ atomic_clearbits_int(__volatile unsigned int *uip, unsigned int v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_clearbits_int"
-		: "=&r" (t0), "+m" (*uip)
-		: "r" (~v), "1" (*uip)
+		: "=&r" (t0), "=m" (*uip)
+		: "r" (~v)
 		: "memory");
 }
 
