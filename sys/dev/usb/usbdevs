@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.565 2011/11/19 12:13:52 mikeb Exp $
+$OpenBSD: usbdevs,v 1.566 2011/11/26 06:36:40 ckuethe Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2847,6 +2847,7 @@ product NETGEAR WNDA3100	0x9010	WNDA3100
 product NETGEAR WNDA3200	0x9018	WNDA3200
 product NETGEAR WNA1100		0x9030	WNA1100
 product NETGEAR WNA1000		0x9040	WNA1000
+product NETGEAR WNA1000M	0x9041	WNA1000M
 
 /* Netgear(2) products */
 product NETGEAR2 MA101		0x4100	MA101
