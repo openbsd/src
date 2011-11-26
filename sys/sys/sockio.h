@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.48 2010/07/03 04:44:51 guenther Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.49 2011/11/26 23:38:18 haesbaert Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -161,8 +161,7 @@
 #define	SIOCSIFTIMESLOT	 _IOW('i', 133, struct ifreq)	/* set ifnet timeslot */
 #define	SIOCGIFTIMESLOT	_IOWR('i', 134, struct ifreq)	/* get ifnet timeslot */
 
-#define SIOCSETVLANPRIO	 _IOW('i', 143, struct ifreq)	/* set VLAN priority */
-#define SIOCGETVLANPRIO	_IOWR('i', 144, struct ifreq)	/* get VLAN priority */
+/* 143 and 144 (SIOC[GS]VLANPRIO) were removed, do not reuse it before 5.1 */
 
 #define SIOCSETLABEL	 _IOW('i', 153, struct ifreq)	/* set MPLS label */
 #define SIOCGETLABEL	 _IOW('i', 154, struct ifreq)	/* get MPLS label */

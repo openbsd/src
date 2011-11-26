@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.251 2011/11/02 02:03:47 haesbaert Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.252 2011/11/26 23:38:18 haesbaert Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -188,7 +188,6 @@ void	settimeslot(const char *, int);
 void	timeslot_status(void);
 void	setmpelabel(const char *, int);
 void	setvlantag(const char *, int);
-void	setvlanprio(const char *, int);
 void	setvlandev(const char *, int);
 void	unsetvlandev(const char *, int);
 void	mpe_status(void);
@@ -362,7 +361,6 @@ const struct	cmd {
 	{ "-carppeer",	1,		0,		unsetcarppeer },
 	{ "pass",	NEXTARG,	0,		setcarp_passwd },
 	{ "vhid",	NEXTARG,	0,		setcarp_vhid },
-	{ "vlanprio",	NEXTARG,	0,		setvlanprio },
 	{ "state",	NEXTARG,	0,		setcarp_state },
 	{ "carpdev",	NEXTARG,	0,		setcarpdev },
 	{ "carpnodes",	NEXTARG,	0,		setcarp_nodes },
@@ -466,7 +464,6 @@ const struct	cmd {
 	{ "priority",	NEXTARG,	0,		setignore },
 	{ "rtlabel",	NEXTARG,	0,		setignore },
 	{ "mpls",	IFXF_MPLS,	0,		setignore },
-	{ "vlanprio",	NEXTARG,	0,		setignore },
 	{ "txpower",	NEXTARG,	0,		setignore },
 	{ "nwflag",	NEXTARG,	0,		setignore },
 	{ "rdomain",	NEXTARG,	0,		setignore },
@@ -3238,7 +3235,6 @@ void
 vlan_status(void)
 {
 	struct vlanreq vreq;
-	struct vlanreq preq;
 
 	bzero((char *)&vreq, sizeof(struct vlanreq));
 	ifr.ifr_data = (caddr_t)&vreq;
@@ -3246,15 +3242,9 @@ vlan_status(void)
 	if (ioctl(s, SIOCGETVLAN, (caddr_t)&ifr) == -1)
 		return;
 
-	bzero(&preq, sizeof(struct vlanreq));
-	ifr.ifr_data = (caddr_t)&preq;
-
-	if (ioctl(s, SIOCGETVLANPRIO, (caddr_t)&ifr) == -1)
-		return;
-
 	if (vreq.vlr_tag || (vreq.vlr_parent[0] != '\0'))
-		printf("\tvlan: %d priority: %d parent interface: %s\n",
-		    vreq.vlr_tag, preq.vlr_tag, vreq.vlr_parent[0] == '\0' ?
+		printf("\tvlan: %d parent interface: %s\n",
+		    vreq.vlr_tag, vreq.vlr_parent[0] == '\0' ?
 		    "<none>" : vreq.vlr_parent);
 }
 
@@ -3282,32 +3272,6 @@ setvlantag(const char *val, int d)
 	if (ioctl(s, SIOCSETVLAN, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSETVLAN");
 }
-
-#ifndef SMALL
-/* ARGSUSED */
-void
-setvlanprio(const char *val, int d)
-{
-	u_int16_t prio;
-	struct vlanreq vreq;
-	const char *errmsg = NULL;
-
-	prio = strtonum(val, 0, 7, &errmsg);
-	if (errmsg)
-		errx(1, "vlan priority %s: %s", val, errmsg);
-
-	bzero(&vreq, sizeof(struct vlanreq));
-	ifr.ifr_data = (caddr_t)&vreq;
-
-	if (ioctl(s, SIOCGETVLANPRIO, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGETVLANPRIO");
-
-	vreq.vlr_tag = prio;
-
-	if (ioctl(s, SIOCSETVLANPRIO, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSETVLANPRIO");
-}
-#endif
 
 /* ARGSUSED */
 void
