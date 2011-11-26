@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.28 2011/11/16 20:56:01 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.29 2011/11/26 19:14:17 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -139,7 +139,7 @@ ast(struct proc *p)
 		if (p->p_flag & P_OWEUPC) {
 			ADDUPROF(p);
 		}
-		if (want_resched) {
+		if (want_resched)
 			preempt(NULL);
 	}
 }
