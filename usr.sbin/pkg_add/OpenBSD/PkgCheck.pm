@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.30 2011/07/17 09:56:12 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.31 2011/11/26 17:27:57 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -518,7 +518,7 @@ sub sanity_check
 			    $state->safe($name));
 			$self->may_remove($state, $name);
 		}
-		$plist->mark_available_lib($plist->pkgname);
+		$plist->mark_available_lib($plist->pkgname, $state);
 		$state->{exists}{$plist->pkgname} = 1;
 	});
 }
