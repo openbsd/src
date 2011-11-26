@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigaltstack_fork.c,v 1.1 2011/11/22 23:06:49 joshe Exp $	*/
+/*	$OpenBSD: sigaltstack_fork.c,v 1.2 2011/11/26 04:11:34 guenther Exp $	*/
 
 /*
  * Public domain.  2011, Joshua Elsasser
@@ -22,7 +22,7 @@ check_stack(void *buf, const char *label)
 
 	bzero(&ss, sizeof(ss));
 	if (sigaltstack(NULL, &ss) != 0)
-		err(1, "failed to get sigaltstack in parent");
+		err(1, "failed to get sigaltstack in %s", label);
 	if (ss.ss_sp != buf ||
 	    ss.ss_size != SIGSTKSZ ||
 	    ss.ss_flags != 0)
