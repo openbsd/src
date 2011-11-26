@@ -1,6 +1,7 @@
-/*	$Id: mandocdb.c,v 1.9 2011/11/17 15:38:27 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.10 2011/11/26 16:41:35 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,14 +25,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <db.h>
 
 #include "man.h"
 #include "mdoc.h"
 #include "mandoc.h"
 #include "mandocdb.h"
-#include "man_conf.h"
+#include "manpath.h"
 
 #define	MANDOC_BUFSZ	  BUFSIZ
 #define	MANDOC_SLOP	  1024
@@ -244,8 +244,8 @@ static	const char	 *progname;
 int
 mandocdb(int argc, char *argv[])
 {
-	struct man_conf	 dirs;
 	struct mparse	*mp; /* parse sequence */
+	struct manpaths	 dirs;
 	enum op		 op; /* current operation */
 	const char	*dir;
 	char		 ibuf[MAXPATHLEN], /* index fname */
@@ -273,6 +273,8 @@ mandocdb(int argc, char *argv[])
 		progname = argv[0];
 	else
 		++progname;
+
+	memset(&dirs, 0, sizeof(struct manpaths));
 
 	verb = 0;
 	use_all = 0;
@@ -310,7 +312,6 @@ mandocdb(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	memset(&dirs, 0, sizeof(struct man_conf));
 	memset(&info, 0, sizeof(BTREEINFO));
 	info.flags = R_DUP;
 
@@ -367,35 +368,42 @@ mandocdb(int argc, char *argv[])
 		index_prune(of, db, fbuf, idx, ibuf, verb,
 				&maxrec, &recs, &recsz);
 
-		if (OP_UPDATE == op) {
-			chdir(dir);
-			index_merge(of, mp, &dbuf, &buf, hash, 
+		if (OP_UPDATE == op)
+			index_merge(of, mp, &dbuf, &buf, hash,
 					db, fbuf, idx, ibuf, use_all,
 					verb, maxrec, recs, reccur);
-		}
 
 		goto out;
 	}
 
-	if (0 == argc) {
-		man_conf_parse(&dirs);
-		argc = dirs.argc;
-		argv = dirs.argv;
-	}
+	/*
+	 * Configure the directories we're going to scan.
+	 * If we have command-line arguments, use them.
+	 * If not, we use man(1)'s method (see mandocdb.8).
+	 */
 
-	for (i = 0; i < argc; i++) {
+	if (argc > 0) {
+		dirs.paths = mandoc_malloc(argc * sizeof(char *));
+		dirs.sz = argc;
+		for (i = 0; i < argc; i++)
+			dirs.paths[i] = mandoc_strdup(argv[i]);
+	} else
+		manpath_parse(&dirs, NULL, NULL);
+
+	for (i = 0; i < dirs.sz; i++) {
 		ibuf[0] = fbuf[0] = '\0';
 
-		strlcat(fbuf, argv[i], MAXPATHLEN);
+		strlcat(fbuf, dirs.paths[i], MAXPATHLEN);
 		strlcat(fbuf, "/", MAXPATHLEN);
 		sz1 = strlcat(fbuf, MANDOC_DB, MAXPATHLEN);
 
-		strlcat(ibuf, argv[i], MAXPATHLEN);
+		strlcat(ibuf, dirs.paths[i], MAXPATHLEN);
 		strlcat(ibuf, "/", MAXPATHLEN);
 		sz2 = strlcat(ibuf, MANDOC_IDX, MAXPATHLEN);
 
 		if (sz1 >= MAXPATHLEN || sz2 >= MAXPATHLEN) {
-			fprintf(stderr, "%s: Path too long\n", argv[i]);
+			fprintf(stderr, "%s: Path too long\n",
+					dirs.paths[i]);
 			exit((int)MANDOCLEVEL_BADARG);
 		}
 
@@ -423,8 +431,8 @@ mandocdb(int argc, char *argv[])
 		ofile_free(of);
 		of = NULL;
 
-		if ( ! ofile_dirbuild(argv[i], NULL, NULL,
-				use_all, verb, &of)) 
+		if ( ! ofile_dirbuild(dirs.paths[i], NULL, NULL,
+				use_all, verb, &of))
 			exit((int)MANDOCLEVEL_SYSERR);
 
 		if (NULL == of)
@@ -432,8 +440,7 @@ mandocdb(int argc, char *argv[])
 
 		of = of->first;
 
-		chdir(argv[i]);
-		index_merge(of, mp, &dbuf, &buf, hash, db, fbuf, 
+		index_merge(of, mp, &dbuf, &buf, hash, db, fbuf,
 				idx, ibuf, use_all, verb,
 				maxrec, recs, reccur);
 	}
@@ -447,9 +454,8 @@ out:
 		(*hash->close)(hash);
 	if (mp)
 		mparse_free(mp);
-	if (dirs.argc)
-		man_conf_free(&dirs);
 
+	manpath_free(&dirs);
 	ofile_free(of);
 	free(buf.cp);
 	free(dbuf.cp);
@@ -461,7 +467,7 @@ out:
 void
 index_merge(const struct of *of, struct mparse *mp,
 		struct buf *dbuf, struct buf *buf,
-		DB *hash, DB *db, const char *dbf, 
+		DB *hash, DB *db, const char *dbf,
 		DB *idx, const char *idxf, int use_all, int verb,
 		recno_t maxrec, const recno_t *recs, size_t reccur)
 {

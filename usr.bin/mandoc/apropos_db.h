@@ -1,4 +1,4 @@
-/*	$Id: apropos_db.h,v 1.6 2011/11/18 01:10:03 schwarze Exp $ */
+/*	$Id: apropos_db.h,v 1.7 2011/11/26 16:41:35 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -24,6 +24,11 @@ struct	res {
 	char		*arch; /* arch (or empty string) */
 	char		*desc; /* description (from Nd) */
 	unsigned int	 rec; /* record in index */
+	/*
+	 * The index volume.  This indexes into the array of directories
+	 * searched for manual page databases.
+	 */
+	unsigned int	 volume;
 };
 
 struct	opts {
@@ -35,8 +40,8 @@ __BEGIN_DECLS
 
 struct	expr;
 
-int	 	 apropos_search(int, char **, const struct opts *, 
-			const struct expr *, size_t, void *, 
+int	 	 apropos_search(int, char **, const struct opts *,
+			const struct expr *, size_t, void *,
 			void (*)(struct res *, size_t, void *));
 struct	expr	*exprcomp(int, char *[], size_t *);
 void		 exprfree(struct expr *);

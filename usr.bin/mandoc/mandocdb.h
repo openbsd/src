@@ -1,4 +1,4 @@
-/*      $Id: mandocdb.h,v 1.2 2011/11/17 15:38:27 schwarze Exp $ */
+/*      $Id: mandocdb.h,v 1.3 2011/11/26 16:41:35 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifndef MANDOCDB_H
+#define MANDOCDB_H
 
 struct db_val {
 	uint64_t	mask;
@@ -61,3 +63,5 @@ struct db_val {
 #define	TYPE_Va		0x0000000800000000ULL
 #define	TYPE_Vt		0x0000001000000000ULL
 #define	TYPE_Xr		0x0000002000000000ULL
+
+#endif /*!MANDOCDB_H */

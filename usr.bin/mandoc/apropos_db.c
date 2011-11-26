@@ -1,4 +1,4 @@
-/*	$Id: apropos_db.c,v 1.7 2011/11/18 01:10:03 schwarze Exp $ */
+/*	$Id: apropos_db.c,v 1.8 2011/11/26 16:41:35 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -34,11 +34,6 @@
 #include "apropos_db.h"
 #include "mandoc.h"
 
-struct	rectree {
-	struct rec	*node;
-	int		 len;
-};
-
 struct	rec {
 	struct res	 res; /* resulting record info */
 	/*
@@ -68,6 +63,11 @@ struct	expr {
 struct	type {
 	uint64_t	 mask;
 	const char	*name;
+};
+
+struct	rectree {
+	struct rec	*node; /* record array for dir tree */
+	int		 len; /* length of record array */
 };
 
 static	const struct type types[] = {
@@ -125,7 +125,7 @@ static	int	 exprmark(const struct expr *,
 static	struct expr *exprexpr(int, char *[], int *, int *, size_t *);
 static	struct expr *exprterm(char *, int);
 static	DB	*index_open(void);
-static	int	 index_read(const DBT *, const DBT *, 
+static	int	 index_read(const DBT *, const DBT *, int,
 			const struct mchars *, struct rec *);
 static	void	 norm_string(const char *,
 			const struct mchars *, char **);
@@ -133,7 +133,7 @@ static	size_t	 norm_utf8(unsigned int, char[7]);
 static	void	 recfree(struct rec *);
 static	int	 single_search(struct rectree *, const struct opts *,
 			const struct expr *, size_t terms,
-			struct mchars *);
+			struct mchars *, int);
 
 /*
  * Open the keyword mandoc-db database.
@@ -148,7 +148,7 @@ btree_open(void)
 	info.flags = R_DUP;
 
 	db = dbopen(MANDOC_DB, O_RDONLY, 0, DB_BTREE, &info);
-	if (NULL != db) 
+	if (NULL != db)
 		return(db);
 
 	return(NULL);
@@ -165,6 +165,7 @@ btree_read(const DBT *v, const struct mchars *mc, char **buf)
 	/* Sanity: are we nil-terminated? */
 
 	assert(v->size > 0);
+
 	if ('\0' != ((char *)v->data)[(int)v->size - 1])
 		return(0);
 
@@ -175,7 +176,7 @@ btree_read(const DBT *v, const struct mchars *mc, char **buf)
 /*
  * Take a Unicode codepoint and produce its UTF-8 encoding.
  * This isn't the best way to do this, but it works.
- * The magic numbers are from the UTF-8 packaging.  
+ * The magic numbers are from the UTF-8 packaging.
  * They're not as scary as they seem: read the UTF-8 spec for details.
  */
 static size_t
@@ -240,7 +241,7 @@ norm_string(const char *val, const struct mchars *mc, char **buf)
 	const char	 *seq, *cpp;
 	int		  len, u, pos;
 	enum mandoc_esc	  esc;
-	static const char res[] = { '\\', '\t', 
+	static const char res[] = { '\\', '\t',
 				ASCII_NBRSP, ASCII_HYPH, '\0' };
 
 	/* Pre-allocate by the length of the input */
@@ -286,7 +287,7 @@ norm_string(const char *val, const struct mchars *mc, char **buf)
 		if (ESCAPE_ERROR == esc)
 			break;
 
-		/* 
+		/*
 		 * XXX - this just does UTF-8, but we need to know
 		 * beforehand whether we should do text substitution.
 		 */
@@ -344,7 +345,7 @@ index_open(void)
  * Returns 1 if an entry was unpacked, 0 if the database is insane.
  */
 static int
-index_read(const DBT *key, const DBT *val, 
+index_read(const DBT *key, const DBT *val, int index,
 		const struct mchars *mc, struct rec *rec)
 {
 	size_t		 left;
@@ -363,6 +364,7 @@ index_read(const DBT *key, const DBT *val,
 	cp = (char *)val->data;
 
 	rec->res.rec = *(recno_t *)key->data;
+	rec->res.volume = index;
 
 	INDEX_BREAD(rec->res.file);
 	INDEX_BREAD(rec->res.cat);
@@ -373,14 +375,14 @@ index_read(const DBT *key, const DBT *val,
 }
 
 /*
- * Search the mandocdb database for the expression "expr".
+ * Search mandocdb databases in paths for expression "expr".
  * Filter out by "opts".
  * Call "res" with the results, which may be zero.
  * Return 0 if there was a database error, else return 1.
  */
 int
-apropos_search(int argc, char *argv[], const struct opts *opts,
-		const struct expr *expr, size_t terms, void *arg, 
+apropos_search(int pathsz, char **paths, const struct opts *opts,
+		const struct expr *expr, size_t terms, void *arg,
 		void (*res)(struct res *, size_t, void *))
 {
 	struct rectree	 tree;
@@ -390,47 +392,57 @@ apropos_search(int argc, char *argv[], const struct opts *opts,
 
 	memset(&tree, 0, sizeof(struct rectree));
 
+	rc = 0;
 	mc = mchars_alloc();
-	rc = 1;
 
-	for (i = 0; i < argc; i++) {
-		if (chdir(argv[i]))
+	/*
+	 * Main loop.  Change into the directory containing manpage
+	 * databases.  Run our expession over each database in the set.
+	 */
+
+	for (i = 0; i < pathsz; i++) {
+		if (chdir(paths[i]))
 			continue;
-		if (0 == single_search(&tree, opts, expr, terms, mc))
-			rc = 0;
+		if ( ! single_search(&tree, opts, expr, terms, mc, i))
+			goto out;
 	}
 
 	/*
-	 * Count the matching files
-	 * and feed them to the output handler.
+	 * Count matching files, transfer to a "clean" array, then feed
+	 * them to the output handler.
 	 */
 
 	for (mlen = i = 0; i < tree.len; i++)
 		if (tree.node[i].matched)
 			mlen++;
+
 	ress = mandoc_malloc(mlen * sizeof(struct res));
+
 	for (mlen = i = 0; i < tree.len; i++)
 		if (tree.node[i].matched)
-			memcpy(&ress[mlen++], &tree.node[i].res, 
+			memcpy(&ress[mlen++], &tree.node[i].res,
 					sizeof(struct res));
+
 	(*res)(ress, mlen, arg);
 	free(ress);
 
+	rc = 1;
+out:
 	for (i = 0; i < tree.len; i++)
 		recfree(&tree.node[i]);
 
-	if (mc)
-		mchars_free(mc);
-
+	free(tree.node);
+	mchars_free(mc);
 	return(rc);
 }
 
 static int
 single_search(struct rectree *tree, const struct opts *opts,
 		const struct expr *expr, size_t terms,
-		struct mchars *mc)
+		struct mchars *mc, int vol)
 {
-	int		 root, leaf, rc;
+	int		 root, leaf, ch;
+	uint64_t	 mask;
 	DBT		 key, val;
 	DB		*btree, *idx;
 	char		*buf;
@@ -445,36 +457,33 @@ single_search(struct rectree *tree, const struct opts *opts,
 	idx	= NULL;
 	buf	= NULL;
 	rs	= tree->node;
-	rc      = 0;
 
 	memset(&r, 0, sizeof(struct rec));
 
-	/* XXX: return fact that we've errored? */
+	if (NULL == (btree = btree_open()))
+		return(1);
 
-	if (NULL == (btree = btree_open())) 
-		goto out;
-	if (NULL == (idx = index_open())) 
-		goto out;
+	if (NULL == (idx = index_open())) {
+		(*btree->close)(btree);
+		return(1);
+	}
 
-	while (0 == (*btree->seq)(btree, &key, &val, R_NEXT)) {
-		/* 
-		 * Low-water mark for key and value.
-		 * The key must have something in it, and the value must
-		 * have the correct tags/recno mix.
-		 */
-		if (key.size < 2 || sizeof(struct db_val) != val.size) 
-			goto out;
+	while (0 == (ch = (*btree->seq)(btree, &key, &val, R_NEXT))) {
+		if (key.size < 2 || sizeof(struct db_val) != val.size)
+			break;
 		if ( ! btree_read(&key, mc, &buf))
-			goto out;
+			break;
+
+		vbuf = val.data;
+		rec = vbuf->rec;
+		mask = vbuf->mask;
 
 		/*
 		 * See if this keyword record matches any of the
 		 * expressions we have stored.
 		 */
-		vbuf = val.data;
-		if ( ! exprmark(expr, buf, vbuf->mask, NULL))
+		if ( ! exprmark(expr, buf, mask, NULL))
 			continue;
-		rec = vbuf->rec;
 
 		/*
 		 * O(log n) scan for prior records.  Since a record
@@ -489,7 +498,7 @@ single_search(struct rectree *tree, const struct opts *opts,
 			else if (rec < rs[leaf].res.rec &&
 					rs[leaf].lhs >= 0)
 				leaf = rs[leaf].lhs;
-			else 
+			else
 				break;
 
 		/*
@@ -500,7 +509,7 @@ single_search(struct rectree *tree, const struct opts *opts,
 
 		if (leaf >= 0 && rs[leaf].res.rec == rec) {
 			if (0 == rs[leaf].matched)
-				exprexec(expr, buf, vbuf->mask, &rs[leaf]);
+				exprexec(expr, buf, mask, &rs[leaf]);
 			continue;
 		}
 
@@ -514,13 +523,14 @@ single_search(struct rectree *tree, const struct opts *opts,
 		key.size = sizeof(recno_t);
 
 		if (0 != (*idx->get)(idx, &key, &val, 0))
-			goto out;
+			break;
 
 		r.lhs = r.rhs = -1;
-		if ( ! index_read(&key, &val, mc, &r))
-			goto out;
+		if ( ! index_read(&key, &val, vol, mc, &r))
+			break;
 
 		/* XXX: this should be elsewhere, I guess? */
+
 		if (opts->cat && strcasecmp(opts->cat, r.res.cat))
 			continue;
 		if (opts->arch && strcasecmp(opts->arch, r.res.arch))
@@ -530,9 +540,10 @@ single_search(struct rectree *tree, const struct opts *opts,
 			(rs, (tree->len + 1) * sizeof(struct rec));
 
 		memcpy(&rs[tree->len], &r, sizeof(struct rec));
-		rs[tree->len].matches = mandoc_calloc(terms, sizeof(int));
+		rs[tree->len].matches =
+			mandoc_calloc(terms, sizeof(int));
 
-		exprexec(expr, buf, vbuf->mask, &rs[tree->len]);
+		exprexec(expr, buf, mask, &rs[tree->len]);
 
 		/* Append to our tree. */
 
@@ -543,23 +554,16 @@ single_search(struct rectree *tree, const struct opts *opts,
 				rs[leaf].lhs = tree->len;
 		} else
 			root = tree->len;
-		
+
 		memset(&r, 0, sizeof(struct rec));
 		tree->len++;
 	}
-	rc = 1;
 
-out:
-	recfree(&r);
-
-	if (btree)
-		(*btree->close)(btree);
-	if (idx)
-		(*idx->close)(idx);
+	(*btree->close)(btree);
+	(*idx->close)(idx);
 
 	free(buf);
-
-	return(rc);
+	return(1 == ch);
 }
 
 static void
@@ -629,7 +633,7 @@ exprexpr(int argc, char *argv[], int *pos, int *lvl, size_t *tt)
 		log = 0;
 
 		if (NULL != e && 0 == strcmp("-a", argv[*pos]))
-			log = 1;			
+			log = 1;
 		else if (NULL != e && 0 == strcmp("-o", argv[*pos]))
 			log = 2;
 
@@ -741,7 +745,7 @@ void
 exprfree(struct expr *p)
 {
 	struct expr	*pp;
-	
+
 	while (NULL != p) {
 		if (p->subexpr)
 			exprfree(p->subexpr);
@@ -755,7 +759,8 @@ exprfree(struct expr *p)
 }
 
 static int
-exprmark(const struct expr *p, const char *cp, uint64_t mask, int *ms)
+exprmark(const struct expr *p, const char *cp,
+		uint64_t mask, int *ms)
 {
 
 	for ( ; p; p = p->next) {
@@ -782,6 +787,8 @@ exprmark(const struct expr *p, const char *cp, uint64_t mask, int *ms)
 		else
 			ms[p->index] = 1;
 	}
+
+	return(0);
 }
 
 static int
@@ -824,7 +831,8 @@ expreval(const struct expr *p, int *ms)
  * If this evaluates to true, mark the expression as satisfied.
  */
 static void
-exprexec(const struct expr *e, const char *cp, uint64_t mask, struct rec *r)
+exprexec(const struct expr *e, const char *cp,
+		uint64_t mask, struct rec *r)
 {
 
 	assert(0 == r->matched);

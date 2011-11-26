@@ -1,6 +1,7 @@
-/*	$Id: apropos.c,v 1.7 2011/11/18 01:10:03 schwarze Exp $ */
+/*	$Id: apropos.c,v 1.8 2011/11/26 16:41:35 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,14 +17,13 @@
  */
 #include <assert.h>
 #include <getopt.h>
-#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "apropos_db.h"
-#include "man_conf.h"
 #include "mandoc.h"
+#include "manpath.h"
 
 static	int	 cmp(const void *, const void *);
 static	void	 list(struct res *, size_t, void *);
@@ -34,17 +34,14 @@ static	char	*progname;
 int
 apropos(int argc, char *argv[])
 {
-	struct man_conf	 dirs;
-	int		 ch, use_man_conf;
+	int		 ch, rc;
+	struct manpaths	 paths;
 	size_t		 terms;
 	struct opts	 opts;
 	struct expr	*e;
+	char		*defpaths, *auxpaths;
 	extern int	 optind;
 	extern char	*optarg;
-
-	memset(&dirs, 0, sizeof(struct man_conf));
-	memset(&opts, 0, sizeof(struct opts));
-	use_man_conf = 1;
 
 	progname = strrchr(argv[0], '/');
 	if (progname == NULL)
@@ -52,13 +49,20 @@ apropos(int argc, char *argv[])
 	else
 		++progname;
 
-	while (-1 != (ch = getopt(argc, argv, "M:m:S:s:"))) 
+	memset(&paths, 0, sizeof(struct manpaths));
+	memset(&opts, 0, sizeof(struct opts));
+
+	auxpaths = defpaths = NULL;
+	e = NULL;
+	rc = 0;
+
+	while (-1 != (ch = getopt(argc, argv, "M:m:S:s:")))
 		switch (ch) {
 		case ('M'):
-			use_man_conf = 0;
-			/* FALLTHROUGH */
+			defpaths = optarg;
+			break;
 		case ('m'):
-			manpath_parse(&dirs, optarg);
+			auxpaths = optarg;
 			break;
 		case ('S'):
 			opts.arch = optarg;
@@ -68,37 +72,37 @@ apropos(int argc, char *argv[])
 			break;
 		default:
 			usage();
-			return(EXIT_FAILURE);
+			goto out;
 		}
 
 	argc -= optind;
 	argv += optind;
 
-	if (0 == argc) 
-		return(EXIT_SUCCESS);
-
-	if (NULL == (e = exprcomp(argc, argv, &terms))) {
-		fprintf(stderr, "Bad expression\n");
-		return(EXIT_FAILURE);
+	if (0 == argc) {
+		rc = 1;
+		goto out;
 	}
 
-	/*
-	 * Configure databases.
-	 * The keyword database is a btree that allows for duplicate
-	 * entries.
-	 * The index database is a recno.
-	 */
+	manpath_parse(&paths, defpaths, auxpaths);
 
-	if (use_man_conf)
-		man_conf_parse(&dirs);
-	ch = apropos_search(dirs.argc, dirs.argv, &opts,
-			e, terms, NULL, list);
+	if (NULL == (e = exprcomp(argc, argv, &terms))) {
+		fprintf(stderr, "%s: Bad expression\n", progname);
+		goto out;
+	}
 
-	man_conf_free(&dirs);
+	rc = apropos_search
+		(paths.sz, paths.paths,
+		 &opts, e, terms, NULL, list);
+
+	if (0 == rc)
+		fprintf(stderr, "%s: Error reading "
+				"manual database\n", progname);
+
+out:
+	manpath_free(&paths);
 	exprfree(e);
-	if (0 == ch)
-		fprintf(stderr, "%s: Database error\n", progname);
-	return(ch ? EXIT_SUCCESS : EXIT_FAILURE);
+
+	return(rc ? EXIT_SUCCESS : EXIT_FAILURE);
 }
 
 /* ARGSUSED */
@@ -110,8 +114,8 @@ list(struct res *res, size_t sz, void *arg)
 	qsort(res, sz, sizeof(struct res), cmp);
 
 	for (i = 0; i < (int)sz; i++)
-		printf("%s(%s%s%s) - %s\n", res[i].title, 
-				res[i].cat, 
+		printf("%s(%s%s%s) - %s\n", res[i].title,
+				res[i].cat,
 				*res[i].arch ? "/" : "",
 				*res[i].arch ? res[i].arch : "",
 				res[i].desc);
@@ -134,6 +138,6 @@ usage(void)
 			"[-m path] "
 			"[-S arch] "
 			"[-s section] "
-			"expression...\n", 
+			"expression...\n",
 			progname);
 }

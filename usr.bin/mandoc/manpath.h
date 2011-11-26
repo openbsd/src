@@ -1,6 +1,7 @@
-/*      $Id: man_conf.h,v 1.1 2011/11/17 14:52:32 schwarze Exp $ */
+/*	$Id: manpath.h,v 1.1 2011/11/26 16:41:35 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,13 +15,26 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifndef MANPATH_H
+#define MANPATH_H
 
-struct	man_conf {
-	int	  maxargs;
-	int	  argc;
-	char	**argv;
+/*
+ * Unsorted list of unique, absolute paths to be searched for manual
+ * databases.
+ */
+struct	manpaths {
+	int	  sz;
+	char	**paths;
 };
 
-void	 manpath_parse(struct man_conf *, char *);
-void	 man_conf_parse(struct man_conf *);
-void	 man_conf_free(struct man_conf *);
+__BEGIN_DECLS
+
+void	 manpath_manconf(const char *, struct manpaths *);
+void	 manpath_parse(struct manpaths *, char *, char *);
+void	 manpath_parseconf(struct manpaths *);
+void	 manpath_parseline(struct manpaths *, char *);
+void	 manpath_free(struct manpaths *);
+
+__END_DECLS
+
+#endif /*!MANPATH_H*/
