@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.175 2011/11/25 12:52:10 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.176 2011/11/26 03:28:46 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1768,16 +1768,37 @@ pfsync_undefer(struct pfsync_deferral *pd, int drop)
 	if (drop)
 		m_freem(pd->pd_m);
 	else {
-		switch (pd->pd_st->key[PF_SK_WIRE]->af) {
+		if (pd->pd_st->rule.ptr->rt) {
+			switch (pd->pd_st->key[PF_SK_WIRE]->af) {
 #ifdef INET
-		case AF_INET:
-			ip_output(pd->pd_m, NULL, NULL, 0, NULL, NULL);
-			break;
+			case AF_INET:
+				pf_route(&pd->pd_m, pd->pd_st->rule.ptr,
+				    pd->pd_st->direction, 
+				    pd->pd_st->rt_kif->pfik_ifp, pd->pd_st);
+				break;
 #endif /* INET */
 #ifdef INET6
-                case AF_INET6:
-	                ip6_output(pd->pd_m, NULL, NULL, 0, NULL, NULL, NULL);
-			break;
+			case AF_INET6:
+				pf_route6(&pd->pd_m, pd->pd_st->rule.ptr,
+				    pd->pd_st->direction,
+				    pd->pd_st->rt_kif->pfik_ifp, pd->pd_st);
+				break;
+#endif /* INET6 */
+			}
+		} else {
+			switch (pd->pd_st->key[PF_SK_WIRE]->af) {
+#ifdef INET
+			case AF_INET:
+				ip_output(pd->pd_m, NULL, NULL, 0,
+				    NULL, NULL);
+				break;
+#endif /* INET */
+#ifdef INET6
+	                case AF_INET6:
+		                ip6_output(pd->pd_m, NULL, NULL, 0,
+				    NULL, NULL, NULL);
+				break;
+			}
 #endif /* INET6 */
                 }
 	}

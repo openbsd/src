@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.786 2011/11/25 12:52:10 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.787 2011/11/26 03:28:46 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -208,10 +208,6 @@ int			 pf_test_state_icmp(struct pf_pdesc *,
 			    struct pf_state **, u_short *);
 int			 pf_test_state_other( struct pf_pdesc *,
 			    struct pf_state **);
-void			 pf_route(struct mbuf **, struct pf_rule *, int,
-			    struct ifnet *, struct pf_state *);
-void			 pf_route6(struct mbuf **, struct pf_rule *, int,
-			    struct ifnet *, struct pf_state *);
 u_int8_t		 pf_get_wscale(struct pf_pdesc *);
 u_int16_t		 pf_get_mss(struct pf_pdesc *);
 u_int16_t		 pf_calc_mss(struct pf_addr *, sa_family_t, int,
