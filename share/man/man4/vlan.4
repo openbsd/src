@@ -1,4 +1,4 @@
-.\" $OpenBSD: vlan.4,v 1.33 2010/06/08 13:24:16 jmc Exp $
+.\" $OpenBSD: vlan.4,v 1.34 2011/11/27 19:55:18 haesbaert Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 8 2010 $
+.Dd $Mdocdate: November 27 2011 $
 .Dt VLAN 4
 .Os
 .Sh NAME
@@ -83,9 +83,9 @@ comprising as follows:
 1 bit for the canonical field (always 0);
 and 12 bits for the vlan identifier.
 The priority field may be altered via
-.Xr ifconfig 8 ;
+.Xr pf.conf 5 ;
 see the
-.Cm vlanprio
+.Cm prio
 option for more information.
 Following the vlan header is the actual ether type for the frame and length
 information.
@@ -104,15 +104,11 @@ and
 .Nm svlan
 interfaces support the following unique
 .Xr ioctl 2 Ns s :
-.Bl -tag -width "SIOCSETVLANPRIO" -offset 3n
+.Bl -tag -width "SIOCSETVLAN" -offset 3n
 .It SIOCGETVLAN
 Get the vlan tag and parent for a given vlan interface.
-.It SIOCGETVLANPRIO
-Get the vlan priority for a given vlan interface.
 .It SIOCSETVLAN
 Set the vlan tag and parent for a given vlan interface.
-.It SIOCSETVLANPRIO
-Set the vlan priority for a given vlan interface.
 .El
 .Pp
 .Nm
@@ -168,6 +164,7 @@ and
 .Xr ip 4 ,
 .Xr netintro 4 ,
 .Xr hostname.if 5 ,
+.Xr pf.conf 5 ,
 .Xr ifconfig 8 ,
 .Xr netstart 8
 .Rs

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.223 2011/11/02 20:01:59 haesbaert Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.224 2011/11/27 19:55:18 haesbaert Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: November 2 2011 $
+.Dd $Mdocdate: November 27 2011 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1465,7 +1465,6 @@ the corresponding routing domain is derived from this table.
 .Ar vlan-interface
 .Op Cm vlan Ar vlan-tag
 .Op Oo Fl Oc Ns Cm vlandev Ar parent-interface
-.Op Cm vlanprio Ar vlan-priority
 .Ek
 .nr nS 0
 .Pp
@@ -1504,12 +1503,6 @@ will be assigned 802.1Q tag 5.
 Disassociate from the parent interface.
 This breaks the link between the vlan interface and its parent,
 clears its vlan tag, flags, and link address, and shuts the interface down.
-.It Cm vlanprio Ar vlan-priority
-Set the vlan priority value
-to
-.Ar vlan-priority .
-This value is a 3-bit number which is used to create an 802.1Q
-vlan header for packets sent from the vlan interface.
 .El
 .Sh EXAMPLES
 Assign the
