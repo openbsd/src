@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.12 2011/11/27 23:11:32 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.13 2011/11/27 23:27:16 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -88,18 +88,15 @@ static	void		  dbt_put(DB *, const char *, DBT *, DBT *);
 static	void		  hash_put(DB *, const struct buf *, uint64_t);
 static	void		  hash_reset(DB **);
 static	void		  index_merge(const struct of *, struct mparse *,
-				struct buf *, struct buf *,
-				DB *, DB *, const char *, 
-				DB *, const char *, int, int,
+				struct buf *, struct buf *, DB *,
+				DB *, const char *, DB *, const char *,
 				recno_t, const recno_t *, size_t);
 static	void		  index_prune(const struct of *, DB *, 
 				const char *, DB *, const char *, 
-				int, recno_t *, recno_t **, size_t *);
-static	void		  ofile_argbuild(char *[], int, int, int,
-				struct of **);
+				recno_t *, recno_t **, size_t *);
+static	void		  ofile_argbuild(int, char *[], struct of **);
 static	int		  ofile_dirbuild(const char *, const char *,
-				const char *, int, int, int,
-				struct of **);
+				const char *, int, struct of **);
 static	void		  ofile_free(struct of *);
 static	void		  pformatted(DB *, struct buf *, struct buf *,
 				const struct of *);
@@ -249,6 +246,8 @@ static	const pmdoc_nf	  mdocs[MDOC_MAX] = {
 };
 
 static	const char	 *progname;
+static	int		  use_all;  /* Use all directories and files. */
+static	int		  verb;  /* Output verbosity level. */
 
 int
 mandocdb(int argc, char *argv[])
@@ -259,9 +258,7 @@ mandocdb(int argc, char *argv[])
 	const char	*dir;
 	char		 ibuf[MAXPATHLEN], /* index fname */
 			 fbuf[MAXPATHLEN];  /* btree fname */
-	int		 verb, /* output verbosity */
-			 use_all, /* use all directories and files */
-			 ch, i, flags;
+	int		 ch, i, flags;
 	DB		*idx, /* index database */
 			*db, /* keyword database */
 			*hash; /* temporary keyword hashtable */
@@ -368,19 +365,19 @@ mandocdb(int argc, char *argv[])
 			printf("%s: Opened\n", ibuf);
 		}
 
-		ofile_argbuild(argv, argc, use_all, verb, &of);
+		ofile_argbuild(argc, argv, &of);
 		if (NULL == of)
 			goto out;
 
 		of = of->first;
 
-		index_prune(of, db, fbuf, idx, ibuf, verb,
+		index_prune(of, db, fbuf, idx, ibuf,
 				&maxrec, &recs, &recsz);
 
 		if (OP_UPDATE == op)
 			index_merge(of, mp, &dbuf, &buf, hash,
-					db, fbuf, idx, ibuf, use_all,
-					verb, maxrec, recs, reccur);
+					db, fbuf, idx, ibuf,
+					maxrec, recs, reccur);
 
 		goto out;
 	}
@@ -441,7 +438,7 @@ mandocdb(int argc, char *argv[])
 		of = NULL;
 
 		if ( ! ofile_dirbuild(dirs.paths[i], NULL, NULL,
-				0, use_all, verb, &of)) 
+					0, &of)) 
 			exit((int)MANDOCLEVEL_SYSERR);
 
 		if (NULL == of)
@@ -450,8 +447,7 @@ mandocdb(int argc, char *argv[])
 		of = of->first;
 
 		index_merge(of, mp, &dbuf, &buf, hash, db, fbuf,
-				idx, ibuf, use_all, verb,
-				maxrec, recs, reccur);
+				idx, ibuf, maxrec, recs, reccur);
 	}
 
 out:
@@ -475,9 +471,8 @@ out:
 
 void
 index_merge(const struct of *of, struct mparse *mp,
-		struct buf *dbuf, struct buf *buf,
-		DB *hash, DB *db, const char *dbf,
-		DB *idx, const char *idxf, int use_all, int verb,
+		struct buf *dbuf, struct buf *buf, DB *hash,
+		DB *db, const char *dbf, DB *idx, const char *idxf,
 		recno_t maxrec, const recno_t *recs, size_t reccur)
 {
 	recno_t		 rec;
@@ -653,7 +648,7 @@ index_merge(const struct of *of, struct mparse *mp,
  */
 static void
 index_prune(const struct of *ofile, DB *db, const char *dbf, 
-		DB *idx, const char *idxf, int verb,
+		DB *idx, const char *idxf,
 		recno_t *maxrec, recno_t **recs, size_t *recsz)
 {
 	const struct of	*of;
@@ -1327,8 +1322,7 @@ pformatted(DB *hash, struct buf *buf, struct buf *dbuf,
 }
 
 static void
-ofile_argbuild(char *argv[], int argc, int use_all, int verb,
-		struct of **of)
+ofile_argbuild(int argc, char *argv[], struct of **of)
 {
 	char		 buf[MAXPATHLEN];
 	char		*sec, *arch, *title, *p;
@@ -1420,7 +1414,7 @@ ofile_argbuild(char *argv[], int argc, int use_all, int verb,
  */
 static int
 ofile_dirbuild(const char *dir, const char* psec, const char *parch,
-		int p_src_form, int use_all, int verb, struct of **of)
+		int p_src_form, struct of **of)
 {
 	char		 buf[MAXPATHLEN];
 	struct stat	 sb;
@@ -1486,7 +1480,7 @@ ofile_dirbuild(const char *dir, const char* psec, const char *parch,
 				printf("%s: Scanning\n", buf);
 
 			if ( ! ofile_dirbuild(buf, sec, arch,
-					src_form, use_all, verb, of))
+					src_form, of))
 				return(0);
 		}
 		if (DT_REG != dp->d_type ||
