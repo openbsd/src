@@ -37,12 +37,12 @@
 #include <machine/asm.h>
 #include <machine/frame.h>
 
+
 LEAF_ENTRY(memcpy)
 ALTENTRY(memmove)
-	copy	arg0, t1
-	copy	arg1, arg0
-	copy	t1, arg1
 	copy	arg0, ret0
+	copy	arg1, arg0
+	copy	ret0, arg1
 ALTENTRY(ovbcopy)
 ALTENTRY(bcopy)
 	comb,>,n arg1, arg0, $bcopy.reverse
