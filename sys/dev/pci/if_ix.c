@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.55 2011/11/27 16:10:23 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.56 2011/11/27 16:14:31 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -635,8 +635,7 @@ ixgbe_init(void *arg)
 	struct ifnet	*ifp = &sc->arpcom.ac_if;
 	struct rx_ring	*rxr = sc->rx_rings;
 	uint32_t	 k, txdctl, rxdctl, rxctrl, mhadd, gpie;
-	int		 err;
-	int		 i, s;
+	int		 i, s, err, llimode = 0;
 
 	INIT_DEBUGOUT("ixgbe_init: begin");
 
@@ -695,9 +694,17 @@ ixgbe_init(void *arg)
 	/* Enable Fan Failure Interrupt */
 	gpie |= IXGBE_SDP1_GPIEN;
 
-	/* Add for Thermal detection */
-	if (sc->hw.mac.type == ixgbe_mac_82599EB)
+	if (sc->hw.mac.type == ixgbe_mac_82599EB) {
+		/* Add for Thermal detection */
 		gpie |= IXGBE_SDP2_GPIEN;
+
+		/*
+		 * Set LL interval to max to reduce the number of low latency
+		 * interrupts hitting the card when the ring is getting full.
+		 */
+		gpie |= 0xf << IXGBE_GPIE_LLI_DELAY_SHIFT;
+		llimode = IXGBE_EITR_LLI_MOD;
+	}
 
 	if (sc->msix > 1) {
 		/* Enable Enhanced MSIX mode */
@@ -714,7 +721,7 @@ ixgbe_init(void *arg)
 		mhadd |= sc->max_frame_size << IXGBE_MHADD_MFS_SHIFT;
 		IXGBE_WRITE_REG(&sc->hw, IXGBE_MHADD, mhadd);
 	}
-	
+
 	/* Now enable all the queues */
 
 	for (i = 0; i < sc->num_queues; i++) {
@@ -801,7 +808,8 @@ ixgbe_init(void *arg)
 	}
 
 	/* Set moderation on the Link interrupt */
-	IXGBE_WRITE_REG(&sc->hw, IXGBE_EITR(sc->linkvec), IXGBE_LINK_ITR);
+	IXGBE_WRITE_REG(&sc->hw, IXGBE_EITR(sc->linkvec),
+	    IXGBE_LINK_ITR | llimode);
 
 	/* Config/Enable Link */
 	ixgbe_config_link(sc);
