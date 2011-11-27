@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2011/11/06 12:15:51 guenther Exp $
+#	$OpenBSD: Makefile,v 1.18 2011/11/27 04:12:43 guenther Exp $
 
 LIB=rthread
 WANTLINT=
@@ -8,6 +8,7 @@ LIBCSRCDIR=	${.CURDIR}/../libc
 CFLAGS+=-Wall -g -Werror -Wshadow
 CFLAGS+=-Wstrict-prototypes -Wmissing-prototypes -Wsign-compare
 CFLAGS+=-I${LIBCSRCDIR}/arch/${MACHINE_CPU} -I${LIBCSRCDIR}/include
+LDADD = -Wl,-znodelete,-zinitfirst
 
 .PATH: ${.CURDIR}/arch/${MACHINE_CPU}
 SRCS= rthread.c rthread_attr.c rthread_sched.c rthread_sync.c rthread_tls.c \
