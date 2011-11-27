@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.69 2011/11/07 17:50:17 guenther Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.70 2011/11/27 21:31:08 guenther Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -299,7 +299,7 @@ vn_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 	struct proc *p = uio->uio_procp;
 
 	/* no wrap around of offsets except on character devices */
-	if (vp->v_type != VCHR && count > SSIZE_MAX - *poff)
+	if (vp->v_type != VCHR && count > LLONG_MAX - *poff)
 		return (EINVAL);
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
