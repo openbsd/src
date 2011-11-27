@@ -1,4 +1,4 @@
-define(_rcsid,``$OpenBSD: bcopy.m4,v 1.7 2011/09/19 10:50:10 kettenis Exp $'')dnl
+define(_rcsid,``$OpenBSD: bcopy.m4,v 1.8 2011/11/27 12:31:47 kettenis Exp $'')dnl
 dnl
 dnl
 dnl  This is the source file for bcopy.S, spcopy.S
@@ -66,7 +66,7 @@ LDWSS($2, $3, 19)
 STWSS($4, $5, 20, `%ret1', $7)
 ifelse($7, `u', `dnl
 	STWS(19, $4, $5, `%ret1', $7)', $7, `a', `dnl')
-	addib,>= -16, $6, L($1, `loop16'`$7')
+	addib,*>= -16, $6, L($1, `loop16'`$7')
 ifelse($7, `a', `dnl
 	STWS(19, $4, $5, `%ret1', $7)dnl
 ', $7, `u', `dnl
@@ -74,15 +74,15 @@ ifelse($7, `a', `dnl
 dnl
 dnl copy in words
 dnl
-define(`STWL', `addib,<,n 12, $6, L($1, cleanup)
+define(`STWL', `addib,*<,n 12, $6, L($1, cleanup)
 ifelse($7, `u', `	copy	%ret1, %r22', $7, `a', `dnl')
 L($1, word)
 	ldws,M	F`'4($2, $3), %r22
-	addib,>= -4, $6, L($1, word)
+	addib,*>= -4, $6, L($1, word)
 	stws,M	%r22, F`'4($4, $5)
 
 L($1, cleanup)
-	addib,=,n 4, $6, L($1, done)
+	addib,*=,n 4, $6, L($1, done)
 	ldws	0($2, $3), %r22
 	add	$5, $6, $5
 	b	L($1, done)
@@ -121,42 +121,42 @@ define(`E', `e')dnl
 ')dnl ifelse
 
 ifelse($7,`-', `', `0',`0',
-`	comib,>=,n 15, $6, L($1, byte)
+`	cmpib,*>=,n 15, $6, L($1, byte)
 
 	extrd,u	$3, 63, 2, %r20
 	extrd,u	$5, 63, 2, %r19
 	add	$6, %r19, $6
-	comb,<> %r20, %r19, L($1, unaligned)
+	cmpb,*<> %r20, %r19, L($1, unaligned)
 	depd	%r0, 63, 2, $3
 	hppa_blcopy($1, $2, $3, $4, $5, $6, `a')
 
 	STWL($1, $2, $3, $4, $5, $6, `a')dnl
 
 L($1, unaligned)
-	sub,>=	%r19, %r20, %r21
+	sub,*>=	%r19, %r20, %r21
 	ldwm	F`'4($2, $3), %ret1
-	zdep	%r21, 28, 29, %r22
+	depd,z	%r21, 60, 61, %r22
 	mtsar	%r22
 	hppa_blcopy($1, $2, $3, $4, $5, $6, `u')
 
 dnl	STWL($1, $2, $3, $4, $5, $6, `u')
-	addib,<,n 12, $6, L($1, cleanup_un)
+	addib,*<,n 12, $6, L($1, cleanup_un)
 L($1, word_un)
 	ldws,M	F`'4($2, $3), %r22
 	vshd	%ret1, %r22, %r21
-	addib,<	-4, $6, L($1, cleanup1_un)
+	addib,*< -4, $6, L($1, cleanup1_un)
 	stws,M	%r21, F`'4($4, $5)
 	ldws,M	F`'4($2, $3), %ret1
 	vshd	%r22, %ret1, %r21
-	addib,>= -4, $6, L($1, word_un)
+	addib,*>= -4, $6, L($1, word_un)
 	stws,M	%r21, F`'4($4, $5)
 
 L($1, cleanup_un)
-	addib,<=,n 4, $6, L($1, done)
+	addib,*<=,n 4, $6, L($1, done)
 	mfctl	%sar, %r19
 	add	$5, $6, $5
-	extru	%r19, 28, 2, %r19
-	sub,<=	$6, %r19, %r0
+	extrd,u	%r19, 60, 2, %r19
+	sub,*<=	$6, %r19, %r0
 	ldws,M	F`'4($2, $3), %r22
 	vshd	%ret1, %r22, %r21
 	b	L($1, done)
@@ -168,10 +168,10 @@ L($1, cleanup1_un)
 ')dnl ifelse
 
 L($1, byte)
-	comb,>=,n %r0, $6, L($1, done)
+	cmpb,*>=,n %r0, $6, L($1, done)
 L($1, byte_loop)
 	ldbs,M	F`'1($2, $3), %r22
-	addib,<> -1, $6, L($1, byte_loop)
+	addib,*<> -1, $6, L($1, byte_loop)
 	stbs,M	%r22, F`'1($4, $5)
 L($1, done)
 ')dnl
@@ -185,13 +185,12 @@ ifelse(NAME, `bcopy',
 `
 LEAF_ENTRY(memcpy)
 ALTENTRY(memmove)
-	copy	%arg0, %r22
-	copy	%arg1, %arg0
-	copy	%r22, %arg1
 	copy	%arg0, %ret0
+	copy	%arg1, %arg0
+	copy	%ret0, %arg1
 ALTENTRY(ovbcopy)
 ALTENTRY(bcopy)
-	comb,>,n %arg1, %arg0, L(bcopy, reverse)
+	cmpb,*>,n %arg1, %arg0, L(bcopy, reverse)
 	hppa_copy(bcopy_f, %sr0, %arg0, %sr0, %arg1, %arg2, `+')
 	bv	%r0(%rp)
 	nop
@@ -216,7 +215,7 @@ ifelse(NAME, `spcopy',
  */
 	.import	copy_on_fault, code
 LEAF_ENTRY(spcopy)
-	sub,<>	%r0, arg4, %r0
+	sub,*<>	%r0, arg4, %r0
 	bv	%r0(%rp)
 	nop
 `
