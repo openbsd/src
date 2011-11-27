@@ -1,4 +1,4 @@
-define(_rcsid,``$OpenBSD: bcopy.m4,v 1.8 2011/11/27 12:31:47 kettenis Exp $'')dnl
+define(_rcsid,``$OpenBSD: bcopy.m4,v 1.9 2011/11/27 21:02:10 kettenis Exp $'')dnl
 dnl
 dnl
 dnl  This is the source file for bcopy.S, spcopy.S
@@ -37,21 +37,21 @@ dnl
 dnl
 dnl
 define(`STWS',`ifelse($5, `u',dnl
-`ifelse($1, `22', `vshd	$4, %r`$1', %r31
-	stbys,B,m %r31, F`'4($2, $3)',
-`0', `0', `vshd	%r`'incr($1), %r`$1', %r31
-	stws,M	%r31, F`'4($2, $3)')',dnl
+`ifelse($1, `22', `shrpw	$4, %r`$1', %sar, %r31
+	stby,B,m %r31, F`'4($2, $3)',
+`0', `0', `shrpw	%r`'incr($1), %r`$1', %sar, %r31
+	stw,M	%r31, F`'4($2, $3)')',dnl
 `0', `0',
 `ifelse($1, `22',
-`stbys,B`'ifelse(B, `b', `,m ', `0', `0', `	')`'%r`$1', F`'4($2, $3)',
-`0', `0', `stws,M	%r`$1', F`'4($2, $3)')')')dnl
+`stby,B`'ifelse(B, `b', `,m ', `0', `0', `	')`'%r`$1', F`'4($2, $3)',
+`0', `0', `stw,M	%r`$1', F`'4($2, $3)')')')dnl
 define(`STWSS', `ifelse(`$3', `22', `dnl',
 `0', `0', `STWSS($1, $2, eval($3 + 1), $4, $5)')
 	STWS($3, $1, $2, $4, $5)dnl
 ')dnl
 define(`LDWSS', `ifelse(`$3', `22', `dnl',
 `0', `0', `LDWSS($1, $2, eval($3 + 1))')
-	ldws,M	F`'4($1, $2), %r`'$3`'dnl
+	ldw,M	F`'4($1, $2), %r`'$3`'dnl
 ')dnl
 dnl
 dnl copy data in 4-words blocks
@@ -77,16 +77,16 @@ dnl
 define(`STWL', `addib,*<,n 12, $6, L($1, cleanup)
 ifelse($7, `u', `	copy	%ret1, %r22', $7, `a', `dnl')
 L($1, word)
-	ldws,M	F`'4($2, $3), %r22
+	ldw,M	F`'4($2, $3), %r22
 	addib,*>= -4, $6, L($1, word)
-	stws,M	%r22, F`'4($4, $5)
+	stw,M	%r22, F`'4($4, $5)
 
 L($1, cleanup)
 	addib,*=,n 4, $6, L($1, done)
-	ldws	0($2, $3), %r22
+	ldw	0($2, $3), %r22
 	add	$5, $6, $5
 	b	L($1, done)
-	stbys,E	%r22, 0($4, $5)
+	stby,E	%r22, 0($4, $5)
 ')
 dnl
 dnl
@@ -134,7 +134,7 @@ ifelse($7,`-', `', `0',`0',
 
 L($1, unaligned)
 	sub,*>=	%r19, %r20, %r21
-	ldwm	F`'4($2, $3), %ret1
+	ldw,ma	F`'4($2, $3), %ret1
 	depd,z	%r21, 60, 61, %r22
 	mtsar	%r22
 	hppa_blcopy($1, $2, $3, $4, $5, $6, `u')
@@ -142,14 +142,14 @@ L($1, unaligned)
 dnl	STWL($1, $2, $3, $4, $5, $6, `u')
 	addib,*<,n 12, $6, L($1, cleanup_un)
 L($1, word_un)
-	ldws,M	F`'4($2, $3), %r22
-	vshd	%ret1, %r22, %r21
+	ldw,M	F`'4($2, $3), %r22
+	shrpw	%ret1, %r22, %sar, %r21
 	addib,*< -4, $6, L($1, cleanup1_un)
-	stws,M	%r21, F`'4($4, $5)
-	ldws,M	F`'4($2, $3), %ret1
-	vshd	%r22, %ret1, %r21
+	stw,M	%r21, F`'4($4, $5)
+	ldw,M	F`'4($2, $3), %ret1
+	shrpw	%r22, %ret1, %sar, %r21
 	addib,*>= -4, $6, L($1, word_un)
-	stws,M	%r21, F`'4($4, $5)
+	stw,M	%r21, F`'4($4, $5)
 
 L($1, cleanup_un)
 	addib,*<=,n 4, $6, L($1, done)
@@ -157,10 +157,10 @@ L($1, cleanup_un)
 	add	$5, $6, $5
 	extrd,u	%r19, 60, 2, %r19
 	sub,*<=	$6, %r19, %r0
-	ldws,M	F`'4($2, $3), %r22
-	vshd	%ret1, %r22, %r21
+	ldw,M	F`'4($2, $3), %r22
+	shrpw	%ret1, %r22, %sar, %r21
 	b	L($1, done)
-	stbys,E	%r21, 0($4, $5)
+	stby,E	%r21, 0($4, $5)
 
 L($1, cleanup1_un)
 	b	L($1, cleanup_un)
