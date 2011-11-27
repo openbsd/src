@@ -10,19 +10,19 @@
   [ Skip steps: r=end d=end sa=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@3 pass in proto tcp from any to any port = ssh flags S/SA keep state (source-track global)
+@3 pass in proto tcp from any to any port = 22 flags S/SA keep state (source-track global)
   [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@4 pass in proto tcp from any to any port = smtp flags S/SA keep state (source-track global)
+@4 pass in proto tcp from any to any port = 25 flags S/SA keep state (source-track global)
   [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@5 pass in proto tcp from any to any port = www flags S/SA keep state (source-track rule, max-src-states 3, max-src-nodes 1000)
+@5 pass in proto tcp from any to any port = 80 flags S/SA keep state (source-track rule, max-src-states 3, max-src-nodes 1000)
   [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@6 pass in proto tcp from any to any port = ntp flags S/SA keep state (source-track rule, max-src-nodes 1000)
+@6 pass in proto tcp from any to any port = 123 flags S/SA keep state (source-track rule, max-src-nodes 1000)
   [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

@@ -2,7 +2,7 @@
   [ Skip steps: i=end d=end f=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@1 pass in on lo0 inet proto tcp from any to 1.2.3.4 port = www flags S/SA rdr-to 127.0.0.1 port 8080
+@1 pass in on lo0 inet proto tcp from any to 1.2.3.4 port = 80 flags S/SA rdr-to 127.0.0.1 port 8080
   [ Skip steps: i=end d=end f=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -18,7 +18,7 @@
   [ Skip steps: i=end d=end f=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@5 pass in log on lo0 inet proto tcp from any to 1.2.3.4 port = www flags S/SA rdr-to 127.0.0.1 port 8080
+@5 pass in log on lo0 inet proto tcp from any to 1.2.3.4 port = 80 flags S/SA rdr-to 127.0.0.1 port 8080
   [ Skip steps: i=end d=end f=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -34,7 +34,7 @@
   [ Skip steps: i=end d=end f=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@9 pass in log (all) on lo0 inet proto tcp from any to 1.2.3.4 port = www flags S/SA rdr-to 127.0.0.1 port 8080
+@9 pass in log (all) on lo0 inet proto tcp from any to 1.2.3.4 port = 80 flags S/SA rdr-to 127.0.0.1 port 8080
   [ Skip steps: i=end d=end f=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -50,7 +50,7 @@
   [ Skip steps: i=end d=end f=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@13 match in log on lo0 inet proto tcp from any to 1.2.3.4 port = www rdr-to 127.0.0.1 port 8080
+@13 match in log on lo0 inet proto tcp from any to 1.2.3.4 port = 80 rdr-to 127.0.0.1 port 8080
   [ Skip steps: i=end d=end f=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

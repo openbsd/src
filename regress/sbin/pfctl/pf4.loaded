@@ -34,11 +34,11 @@
   [ Skip steps: i=end r=end d=end da=14 dp=10 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@9 block drop in proto tcp from any port = ssh to any
+@9 block drop in proto tcp from any port = 22 to any
   [ Skip steps: i=end r=end d=end f=14 p=38 sa=14 da=14 sp=11 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@10 block drop in proto tcp from any port = ssh to any port 1024:2048
+@10 block drop in proto tcp from any port = 22 to any port 1024:2048
   [ Skip steps: i=end r=end d=end f=14 p=38 sa=14 da=14 dp=14 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -54,111 +54,111 @@
   [ Skip steps: i=end r=end d=end p=38 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@14 block drop in inet proto tcp from 10.0.0.0/8 port = ssh to 192.168.0.0/16 port = 6667
+@14 block drop in inet proto tcp from 10.0.0.0/8 port = 22 to 192.168.0.0/16 port = 6667
   [ Skip steps: i=end r=end d=end f=end p=38 sa=26 da=20 sp=17 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@15 block drop in inet proto tcp from 10.0.0.0/8 port = ssh to 192.168.0.0/16 port = 6668
+@15 block drop in inet proto tcp from 10.0.0.0/8 port = 22 to 192.168.0.0/16 port = 6668
   [ Skip steps: i=end r=end d=end f=end p=38 sa=26 da=20 sp=17 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@16 block drop in inet proto tcp from 10.0.0.0/8 port = ssh to 192.168.0.0/16 port 6669:65535
+@16 block drop in inet proto tcp from 10.0.0.0/8 port = 22 to 192.168.0.0/16 port 6669:65535
   [ Skip steps: i=end r=end d=end f=end p=38 sa=26 da=20 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@17 block drop in inet proto tcp from 10.0.0.0/8 port = ftp to 192.168.0.0/16 port = 6667
+@17 block drop in inet proto tcp from 10.0.0.0/8 port = 21 to 192.168.0.0/16 port = 6667
   [ Skip steps: i=end r=end d=end f=end p=38 sa=26 da=20 sp=20 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@18 block drop in inet proto tcp from 10.0.0.0/8 port = ftp to 192.168.0.0/16 port = 6668
+@18 block drop in inet proto tcp from 10.0.0.0/8 port = 21 to 192.168.0.0/16 port = 6668
   [ Skip steps: i=end r=end d=end f=end p=38 sa=26 da=20 sp=20 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@19 block drop in inet proto tcp from 10.0.0.0/8 port = ftp to 192.168.0.0/16 port 6669:65535
+@19 block drop in inet proto tcp from 10.0.0.0/8 port = 21 to 192.168.0.0/16 port 6669:65535
   [ Skip steps: i=end r=end d=end f=end p=38 sa=26 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@20 block drop in inet proto tcp from 10.0.0.0/8 port = ssh to 12.34.56.78 port = 6667
+@20 block drop in inet proto tcp from 10.0.0.0/8 port = 22 to 12.34.56.78 port = 6667
   [ Skip steps: i=end r=end d=end f=end p=38 sa=26 da=26 sp=23 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@21 block drop in inet proto tcp from 10.0.0.0/8 port = ssh to 12.34.56.78 port = 6668
+@21 block drop in inet proto tcp from 10.0.0.0/8 port = 22 to 12.34.56.78 port = 6668
   [ Skip steps: i=end r=end d=end f=end p=38 sa=26 da=26 sp=23 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@22 block drop in inet proto tcp from 10.0.0.0/8 port = ssh to 12.34.56.78 port 6669:65535
+@22 block drop in inet proto tcp from 10.0.0.0/8 port = 22 to 12.34.56.78 port 6669:65535
   [ Skip steps: i=end r=end d=end f=end p=38 sa=26 da=26 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@23 block drop in inet proto tcp from 10.0.0.0/8 port = ftp to 12.34.56.78 port = 6667
+@23 block drop in inet proto tcp from 10.0.0.0/8 port = 21 to 12.34.56.78 port = 6667
   [ Skip steps: i=end r=end d=end f=end p=38 sa=26 da=26 sp=26 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@24 block drop in inet proto tcp from 10.0.0.0/8 port = ftp to 12.34.56.78 port = 6668
+@24 block drop in inet proto tcp from 10.0.0.0/8 port = 21 to 12.34.56.78 port = 6668
   [ Skip steps: i=end r=end d=end f=end p=38 sa=26 da=26 sp=26 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@25 block drop in inet proto tcp from 10.0.0.0/8 port = ftp to 12.34.56.78 port 6669:65535
+@25 block drop in inet proto tcp from 10.0.0.0/8 port = 21 to 12.34.56.78 port 6669:65535
   [ Skip steps: i=end r=end d=end f=end p=38 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@26 block drop in inet proto tcp from 172.16.0.0/12 port = ssh to 192.168.0.0/16 port = 6667
+@26 block drop in inet proto tcp from 172.16.0.0/12 port = 22 to 192.168.0.0/16 port = 6667
   [ Skip steps: i=end r=end d=end f=end p=38 sa=38 da=32 sp=29 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@27 block drop in inet proto tcp from 172.16.0.0/12 port = ssh to 192.168.0.0/16 port = 6668
+@27 block drop in inet proto tcp from 172.16.0.0/12 port = 22 to 192.168.0.0/16 port = 6668
   [ Skip steps: i=end r=end d=end f=end p=38 sa=38 da=32 sp=29 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@28 block drop in inet proto tcp from 172.16.0.0/12 port = ssh to 192.168.0.0/16 port 6669:65535
+@28 block drop in inet proto tcp from 172.16.0.0/12 port = 22 to 192.168.0.0/16 port 6669:65535
   [ Skip steps: i=end r=end d=end f=end p=38 sa=38 da=32 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@29 block drop in inet proto tcp from 172.16.0.0/12 port = ftp to 192.168.0.0/16 port = 6667
+@29 block drop in inet proto tcp from 172.16.0.0/12 port = 21 to 192.168.0.0/16 port = 6667
   [ Skip steps: i=end r=end d=end f=end p=38 sa=38 da=32 sp=32 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@30 block drop in inet proto tcp from 172.16.0.0/12 port = ftp to 192.168.0.0/16 port = 6668
+@30 block drop in inet proto tcp from 172.16.0.0/12 port = 21 to 192.168.0.0/16 port = 6668
   [ Skip steps: i=end r=end d=end f=end p=38 sa=38 da=32 sp=32 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@31 block drop in inet proto tcp from 172.16.0.0/12 port = ftp to 192.168.0.0/16 port 6669:65535
+@31 block drop in inet proto tcp from 172.16.0.0/12 port = 21 to 192.168.0.0/16 port 6669:65535
   [ Skip steps: i=end r=end d=end f=end p=38 sa=38 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@32 block drop in inet proto tcp from 172.16.0.0/12 port = ssh to 12.34.56.78 port = 6667
+@32 block drop in inet proto tcp from 172.16.0.0/12 port = 22 to 12.34.56.78 port = 6667
   [ Skip steps: i=end r=end d=end f=end p=38 sa=38 da=38 sp=35 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@33 block drop in inet proto tcp from 172.16.0.0/12 port = ssh to 12.34.56.78 port = 6668
+@33 block drop in inet proto tcp from 172.16.0.0/12 port = 22 to 12.34.56.78 port = 6668
   [ Skip steps: i=end r=end d=end f=end p=38 sa=38 da=38 sp=35 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@34 block drop in inet proto tcp from 172.16.0.0/12 port = ssh to 12.34.56.78 port 6669:65535
+@34 block drop in inet proto tcp from 172.16.0.0/12 port = 22 to 12.34.56.78 port 6669:65535
   [ Skip steps: i=end r=end d=end f=end p=38 sa=38 da=38 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@35 block drop in inet proto tcp from 172.16.0.0/12 port = ftp to 12.34.56.78 port = 6667
+@35 block drop in inet proto tcp from 172.16.0.0/12 port = 21 to 12.34.56.78 port = 6667
   [ Skip steps: i=end r=end d=end f=end p=38 sa=38 da=38 sp=38 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@36 block drop in inet proto tcp from 172.16.0.0/12 port = ftp to 12.34.56.78 port = 6668
+@36 block drop in inet proto tcp from 172.16.0.0/12 port = 21 to 12.34.56.78 port = 6668
   [ Skip steps: i=end r=end d=end f=end p=38 sa=38 da=38 sp=38 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@37 block drop in inet proto tcp from 172.16.0.0/12 port = ftp to 12.34.56.78 port 6669:65535
+@37 block drop in inet proto tcp from 172.16.0.0/12 port = 21 to 12.34.56.78 port 6669:65535
   [ Skip steps: i=end r=end d=end f=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@38 block drop in inet proto udp from 10.0.0.0/8 port = ssh to 192.168.0.0/16 port = 6667
+@38 block drop in inet proto udp from 10.0.0.0/8 port = 22 to 192.168.0.0/16 port = 6667
   [ Skip steps: i=end r=end d=end f=end p=end sa=50 da=44 sp=41 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@39 block drop in inet proto udp from 10.0.0.0/8 port = ssh to 192.168.0.0/16 port = 6668
+@39 block drop in inet proto udp from 10.0.0.0/8 port = 22 to 192.168.0.0/16 port = 6668
   [ Skip steps: i=end r=end d=end f=end p=end sa=50 da=44 sp=41 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@40 block drop in inet proto udp from 10.0.0.0/8 port = ssh to 192.168.0.0/16 port 6669:65535
+@40 block drop in inet proto udp from 10.0.0.0/8 port = 22 to 192.168.0.0/16 port 6669:65535
   [ Skip steps: i=end r=end d=end f=end p=end sa=50 da=44 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -174,15 +174,15 @@
   [ Skip steps: i=end r=end d=end f=end p=end sa=50 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@44 block drop in inet proto udp from 10.0.0.0/8 port = ssh to 12.34.56.78 port = 6667
+@44 block drop in inet proto udp from 10.0.0.0/8 port = 22 to 12.34.56.78 port = 6667
   [ Skip steps: i=end r=end d=end f=end p=end sa=50 da=50 sp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@45 block drop in inet proto udp from 10.0.0.0/8 port = ssh to 12.34.56.78 port = 6668
+@45 block drop in inet proto udp from 10.0.0.0/8 port = 22 to 12.34.56.78 port = 6668
   [ Skip steps: i=end r=end d=end f=end p=end sa=50 da=50 sp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@46 block drop in inet proto udp from 10.0.0.0/8 port = ssh to 12.34.56.78 port 6669:65535
+@46 block drop in inet proto udp from 10.0.0.0/8 port = 22 to 12.34.56.78 port 6669:65535
   [ Skip steps: i=end r=end d=end f=end p=end sa=50 da=50 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -198,15 +198,15 @@
   [ Skip steps: i=end r=end d=end f=end p=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@50 block drop in inet proto udp from 172.16.0.0/12 port = ssh to 192.168.0.0/16 port = 6667
+@50 block drop in inet proto udp from 172.16.0.0/12 port = 22 to 192.168.0.0/16 port = 6667
   [ Skip steps: i=end r=end d=end f=end p=end sa=end da=56 sp=53 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@51 block drop in inet proto udp from 172.16.0.0/12 port = ssh to 192.168.0.0/16 port = 6668
+@51 block drop in inet proto udp from 172.16.0.0/12 port = 22 to 192.168.0.0/16 port = 6668
   [ Skip steps: i=end r=end d=end f=end p=end sa=end da=56 sp=53 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@52 block drop in inet proto udp from 172.16.0.0/12 port = ssh to 192.168.0.0/16 port 6669:65535
+@52 block drop in inet proto udp from 172.16.0.0/12 port = 22 to 192.168.0.0/16 port 6669:65535
   [ Skip steps: i=end r=end d=end f=end p=end sa=end da=56 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -222,15 +222,15 @@
   [ Skip steps: i=end r=end d=end f=end p=end sa=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@56 block drop in inet proto udp from 172.16.0.0/12 port = ssh to 12.34.56.78 port = 6667
+@56 block drop in inet proto udp from 172.16.0.0/12 port = 22 to 12.34.56.78 port = 6667
   [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=59 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@57 block drop in inet proto udp from 172.16.0.0/12 port = ssh to 12.34.56.78 port = 6668
+@57 block drop in inet proto udp from 172.16.0.0/12 port = 22 to 12.34.56.78 port = 6668
   [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=59 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@58 block drop in inet proto udp from 172.16.0.0/12 port = ssh to 12.34.56.78 port 6669:65535
+@58 block drop in inet proto udp from 172.16.0.0/12 port = 22 to 12.34.56.78 port 6669:65535
   [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

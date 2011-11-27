@@ -14,9 +14,9 @@ block drop in log quick from no-route to any
 pass out on tun1000000 inet proto icmp all icmp-type echoreq code 0
 pass in on tun1000000 inet proto icmp all icmp-type echoreq code 0
 pass out on tun1000000 proto udp all
-pass in on tun1000000 proto udp from any to any port = domain
+pass in on tun1000000 proto udp from any to any port = 53
 pass out on tun1000000 proto tcp all flags S/SA
-pass in on tun1000000 proto tcp from any to any port = ssh flags S/SA
-pass in on tun1000000 proto tcp from any to any port = smtp flags S/SA
-pass in on tun1000000 proto tcp from any to any port = domain flags S/SA
-pass in on tun1000000 proto tcp from any to any port = auth flags S/SA
+pass in on tun1000000 proto tcp from any to any port = 22 flags S/SA
+pass in on tun1000000 proto tcp from any to any port = 25 flags S/SA
+pass in on tun1000000 proto tcp from any to any port = 53 flags S/SA
+pass in on tun1000000 proto tcp from any to any port = 113 flags S/SA

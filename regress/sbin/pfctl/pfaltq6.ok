@@ -10,15 +10,15 @@ queue  is on lo0 bandwidth 1Mb
   [ qid=5 ifname=lo0 ifbandwidth=10Mb ]
 queue  empty on lo0 bandwidth 4Mb 
   [ qid=6 ifname=lo0 ifbandwidth=10Mb ]
-@0 pass in on lo0 proto tcp from any to any port = ssh flags S/SA keep state queue(the, minibar)
+@0 pass in on lo0 proto tcp from any to any port = 22 flags S/SA keep state queue(the, minibar)
   [ Skip steps: d=end f=end p=end sa=end sp=end da=end dp=3 ]
   [ queue: qname=the qid=3 pqname=minibar pqid=4 ]
-@1 pass in proto tcp from any to any port = ssh flags S/SA keep state queue(is, empty)
+@1 pass in proto tcp from any to any port = 22 flags S/SA keep state queue(is, empty)
   [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=3 ]
   [ queue: qname=is qid=5 pqname=empty pqid=6 ]
-@2 pass in proto tcp from any to any port = ssh flags S/SA keep state queue the
+@2 pass in proto tcp from any to any port = 22 flags S/SA keep state queue the
   [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end ]
   [ queue: qname=the qid=3 pqname= pqid=3 ]
-@3 pass in proto tcp from any to any port = smtp flags S/SA keep state queue wim
+@3 pass in proto tcp from any to any port = 25 flags S/SA keep state queue wim
   [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
   [ queue: qname=wim qid=2 pqname= pqid=2 ]

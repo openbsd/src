@@ -2,19 +2,19 @@
 [ Skip steps: i=end d=2 f=end sa=end sp=end da=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
-@1 pass in on lo0 inet proto tcp from any to any port = www keep state queue http 
+@1 pass in on lo0 inet proto tcp from any to any port = 80 keep state queue http 
 [ Skip steps: i=end f=end p=5 sa=end sp=end da=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
-@2 pass out on lo0 inet proto tcp from any to any port = ssh keep state queue ssh 
+@2 pass out on lo0 inet proto tcp from any to any port = 22 keep state queue ssh 
 [ Skip steps: i=end f=end p=5 sa=end sp=end da=end dp=4 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
-@3 pass in on lo0 inet proto tcp from any to any port = ssh keep state queue ssh 
+@3 pass in on lo0 inet proto tcp from any to any port = 22 keep state queue ssh 
 [ Skip steps: i=end f=end p=5 sa=end sp=end da=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
-@4 pass out on lo0 inet proto tcp from any to any port = smtp keep state queue mail 
+@4 pass out on lo0 inet proto tcp from any to any port = 25 keep state queue mail 
 [ Skip steps: i=end d=end f=end sa=end sp=end da=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 

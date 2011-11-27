@@ -62,7 +62,7 @@
   [ Skip steps: i=end d=end f=end p=17 sa=end da=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@16 pass in on tun1000000 proto udp from any to any port = domain
+@16 pass in on tun1000000 proto udp from any to any port = 53
   [ Skip steps: i=end d=end f=end sa=end da=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -70,19 +70,19 @@
   [ Skip steps: i=end d=end f=end p=end sa=end da=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@18 pass in on tun1000000 proto tcp from any to any port = ssh flags S/SA
+@18 pass in on tun1000000 proto tcp from any to any port = 22 flags S/SA
   [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@19 pass in on tun1000000 proto tcp from any to any port = smtp flags S/SA
+@19 pass in on tun1000000 proto tcp from any to any port = 25 flags S/SA
   [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@20 pass in on tun1000000 proto tcp from any to any port = domain flags S/SA
+@20 pass in on tun1000000 proto tcp from any to any port = 53 flags S/SA
   [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@21 pass in on tun1000000 proto tcp from any to any port = auth flags S/SA
+@21 pass in on tun1000000 proto tcp from any to any port = 113 flags S/SA
   [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

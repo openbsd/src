@@ -58,7 +58,7 @@
   [ Skip steps: i=end r=16 d=end sa=end da=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@15 pass in on tun1000000 proto udp from any to any port = domain
+@15 pass in on tun1000000 proto udp from any to any port = 53
   [ Skip steps: i=end d=end f=end sa=end da=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -86,19 +86,19 @@
   [ Skip steps: i=end r=end d=end f=end sa=end da=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@22 pass in on tun1000000 proto tcp from any to any port = ssh flags S/SA modulate state
+@22 pass in on tun1000000 proto tcp from any to any port = 22 flags S/SA modulate state
   [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@23 pass in on tun1000000 proto tcp from any to any port = smtp flags S/SA modulate state
+@23 pass in on tun1000000 proto tcp from any to any port = 25 flags S/SA modulate state
   [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@24 pass in on tun1000000 proto tcp from any to any port = domain flags S/SA modulate state
+@24 pass in on tun1000000 proto tcp from any to any port = 53 flags S/SA modulate state
   [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@25 pass in on tun1000000 proto tcp from any to any port = auth flags S/SA modulate state
+@25 pass in on tun1000000 proto tcp from any to any port = 113 flags S/SA modulate state
   [ Skip steps: i=end r=end d=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
