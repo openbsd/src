@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.90 2011/11/26 23:38:18 haesbaert Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.91 2011/11/27 00:46:07 haesbaert Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -33,8 +33,7 @@
 
 /*
  * if_vlan.c - pseudo-device driver for IEEE 802.1Q virtual LANs.
- * Might be extended some day to also handle IEEE 802.1p priority
- * tagging.  This is sort of sneaky in the implementation, since
+ * This is sort of sneaky in the implementation, since
  * we need to pretend to be enough of an Ethernet implementation
  * to make arp work.  The way we do this is by telling everyone
  * that we are an Ethernet, and then catch the packets that
