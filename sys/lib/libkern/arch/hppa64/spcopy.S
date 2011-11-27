@@ -71,63 +71,63 @@ LEAF_ENTRY(spcopy)
 	addi	-16, %ret0, %ret0
 $spcopy.loop16a
 	ldw	 32(%sr1, %arg1), %r0
-	ldws,ma	4(%sr1, %arg1), %r22
-	ldws,ma	4(%sr1, %arg1), %r21
-	ldws,ma	4(%sr1, %arg1), %r20
-	ldws,ma	4(%sr1, %arg1), %r19
-	stbys,b,m %r22, 4(%sr2, %arg3)
-	stws,ma	%r21, 4(%sr2, %arg3)
-	stws,ma	%r20, 4(%sr2, %arg3)
+	ldw,ma	4(%sr1, %arg1), %r22
+	ldw,ma	4(%sr1, %arg1), %r21
+	ldw,ma	4(%sr1, %arg1), %r20
+	ldw,ma	4(%sr1, %arg1), %r19
+	stby,b,m %r22, 4(%sr2, %arg3)
+	stw,ma	%r21, 4(%sr2, %arg3)
+	stw,ma	%r20, 4(%sr2, %arg3)
 	addib,*>= -16, %ret0, $spcopy.loop16a
-	stws,ma	%r19, 4(%sr2, %arg3)
+	stw,ma	%r19, 4(%sr2, %arg3)
 
 	addib,*<,n 12, %ret0, $spcopy.cleanup
 $spcopy.word
-	ldws,ma	4(%sr1, %arg1), %r22
+	ldw,ma	4(%sr1, %arg1), %r22
 	addib,*>= -4, %ret0, $spcopy.word
-	stws,ma	%r22, 4(%sr2, %arg3)
+	stw,ma	%r22, 4(%sr2, %arg3)
 
 $spcopy.cleanup
 	addib,*=,n 4, %ret0, $spcopy.done
-	ldws	0(%sr1, %arg1), %r22
+	ldw	0(%sr1, %arg1), %r22
 	add	%arg3, %ret0, %arg3
 	b	$spcopy.done
-	stbys,e	%r22, 0(%sr2, %arg3)
+	stby,e	%r22, 0(%sr2, %arg3)
 
 $spcopy.unaligned
 	sub,*>=	%r19, %r20, %r21
-	ldwm	4(%sr1, %arg1), %ret1
+	ldw,ma	4(%sr1, %arg1), %ret1
 	depd,z	%r21, 60, 61, %r22
 	mtsar	%r22
 	
 	addi	-16, %ret0, %ret0
 $spcopy.loop16u
 	ldw	 32(%sr1, %arg1), %r0
-	ldws,ma	4(%sr1, %arg1), %r22
-	ldws,ma	4(%sr1, %arg1), %r21
-	ldws,ma	4(%sr1, %arg1), %r20
-	ldws,ma	4(%sr1, %arg1), %r19
-	vshd	%ret1, %r22, %r31
-	stbys,b,m %r31, 4(%sr2, %arg3)
-	vshd	%r22, %r21, %r31
-	stws,ma	%r31, 4(%sr2, %arg3)
-	vshd	%r21, %r20, %r31
-	stws,ma	%r31, 4(%sr2, %arg3)
-	vshd	%r20, %r19, %r31
-	stws,ma	%r31, 4(%sr2, %arg3)
+	ldw,ma	4(%sr1, %arg1), %r22
+	ldw,ma	4(%sr1, %arg1), %r21
+	ldw,ma	4(%sr1, %arg1), %r20
+	ldw,ma	4(%sr1, %arg1), %r19
+	shrpw	%ret1, %r22, %sar, %r31
+	stby,b,m %r31, 4(%sr2, %arg3)
+	shrpw	%r22, %r21, %sar, %r31
+	stw,ma	%r31, 4(%sr2, %arg3)
+	shrpw	%r21, %r20, %sar, %r31
+	stw,ma	%r31, 4(%sr2, %arg3)
+	shrpw	%r20, %r19, %sar, %r31
+	stw,ma	%r31, 4(%sr2, %arg3)
 	addib,*>= -16, %ret0, $spcopy.loop16u
 	copy	%r19, %ret1
 
 	addib,*<,n 12, %ret0, $spcopy.cleanup_un
 $spcopy.word_un
-	ldws,ma	4(%sr1, %arg1), %r22
-	vshd	%ret1, %r22, %r21
+	ldw,ma	4(%sr1, %arg1), %r22
+	shrpw	%ret1, %r22, %sar, %r21
 	addib,*< -4, %ret0, $spcopy.cleanup1_un
-	stws,ma	%r21, 4(%sr2, %arg3)
-	ldws,ma	4(%sr1, %arg1), %ret1
-	vshd	%r22, %ret1, %r21
+	stw,ma	%r21, 4(%sr2, %arg3)
+	ldw,ma	4(%sr1, %arg1), %ret1
+	shrpw	%r22, %ret1, %sar, %r21
 	addib,*>= -4, %ret0, $spcopy.word_un
-	stws,ma	%r21, 4(%sr2, %arg3)
+	stw,ma	%r21, 4(%sr2, %arg3)
 
 $spcopy.cleanup_un
 	addib,*<=,n 4, %ret0, $spcopy.done
@@ -135,10 +135,10 @@ $spcopy.cleanup_un
 	add	%arg3, %ret0, %arg3
 	extrd,u	%r19, 60, 2, %r19
 	sub,*<=	%ret0, %r19, %r0
-	ldws,ma	4(%sr1, %arg1), %r22
-	vshd	%ret1, %r22, %r21
+	ldw,ma	4(%sr1, %arg1), %r22
+	shrpw	%ret1, %r22, %sar, %r21
 	b	$spcopy.done
-	stbys,e	%r21, 0(%sr2, %arg3)
+	stby,e	%r21, 0(%sr2, %arg3)
 
 $spcopy.cleanup1_un
 	b	$spcopy.cleanup_un
