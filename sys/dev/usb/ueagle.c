@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.35 2011/09/18 23:24:12 krw Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.36 2011/11/27 09:20:57 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2003-2006
@@ -28,6 +28,7 @@
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
+#include <sys/kthread.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/device.h>
