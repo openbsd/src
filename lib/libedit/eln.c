@@ -1,4 +1,4 @@
-/*	$OpenBSD: eln.c,v 1.2 2011/07/07 05:40:42 okan Exp $	*/
+/*	$OpenBSD: eln.c,v 1.3 2011/11/27 21:46:44 pascal Exp $	*/
 /*	$NetBSD: eln.c,v 1.9 2010/11/04 13:53:12 christos Exp $	*/
 
 /*-
@@ -205,7 +205,7 @@ el_set(EditLine *el, int op, ...)
 		    ret = -1;
 		    goto out;
 		}
-		// XXX: The two strdup's leak
+		/* XXX: The two strdup's leak */
 		ret = map_addfunc(el, Strdup(wargv[0]), Strdup(wargv[1]),
 		    func);
 		ct_free_argv(wargv);

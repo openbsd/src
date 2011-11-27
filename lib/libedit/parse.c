@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.10 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$OpenBSD: parse.c,v 1.11 2011/11/27 21:46:44 pascal Exp $	*/
 /*	$NetBSD: parse.c,v 1.23 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -271,9 +271,10 @@ protected int
 parse_cmd(EditLine *el, const Char *cmd)
 {
 	el_bindings_t *b;
+	int i;
 
-	for (b = el->el_map.help; b->name != NULL; b++)
-		if (Strcmp(b->name, cmd) == 0)
-			return (b->func);
+	for (b = el->el_map.help, i = 0; i < el->el_map.nfunc; i++)
+		if (Strcmp(b[i].name, cmd) == 0)
+			return (b[i].func);
 	return (-1);
 }
