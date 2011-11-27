@@ -1,4 +1,4 @@
-/*	$Id: apropos_db.h,v 1.7 2011/11/26 16:41:35 schwarze Exp $ */
+/*	$Id: apropos_db.h,v 1.8 2011/11/27 23:11:32 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -18,6 +18,7 @@
 #define APROPOS_H
 
 struct	res {
+	char		*type; /* file type: mdoc, man or cat */
 	char		*file; /* file in file-system */
 	char		*cat; /* category (3p, 3, etc.) */
 	char		*title; /* title (FOO, etc.) */

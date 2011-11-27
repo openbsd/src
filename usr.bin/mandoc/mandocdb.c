@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.11 2011/11/27 22:57:28 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.12 2011/11/27 23:11:32 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -583,6 +583,7 @@ index_merge(const struct of *of, struct mparse *mp,
 		 */
 
 		dbuf->len = 0;
+		buf_append(dbuf, mdoc ? "mdoc" : (man ? "man" : "cat"));
 		buf_appendb(dbuf, fn, strlen(fn) + 1);
 		buf_appendb(dbuf, msec, strlen(msec) + 1);
 		buf_appendb(dbuf, mtitle, strlen(mtitle) + 1);
