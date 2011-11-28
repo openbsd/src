@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.62 2011/05/10 04:50:35 otto Exp $ */
+/*	$OpenBSD: library.c,v 1.63 2011/11/28 20:59:03 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -107,7 +107,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 	for (object = _dl_objects; object != NULL; object = object->next) {
 		if (object->dev == sb.st_dev &&
 		    object->inode == sb.st_ino) {
-			object->obj_flags |= flags & RTLD_GLOBAL;
+			object->obj_flags |= flags & DF_1_GLOBAL;
 			_dl_close(libfile);
 			if (_dl_loading_object == NULL)
 				_dl_loading_object = object;

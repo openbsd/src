@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.34 2011/07/13 20:49:44 drahn Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.35 2011/11/28 20:59:03 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -301,7 +301,7 @@ _dl_find_loaded_shlib(const char *req_name, struct sod req_sod, int flags)
 	}
 
 	if (object) {	/* Already loaded */
-		object->obj_flags |= flags & RTLD_GLOBAL;
+		object->obj_flags |= flags & DF_1_GLOBAL;
 		if (_dl_loading_object == NULL)
 			_dl_loading_object = object;
 		if (object->load_object != _dl_objects &&

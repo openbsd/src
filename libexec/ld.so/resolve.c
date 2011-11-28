@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.56 2011/06/27 16:47:50 sthen Exp $ */
+/*	$OpenBSD: resolve.c,v 1.57 2011/11/28 20:59:03 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -47,6 +47,13 @@ elf_object_t *_dl_loading_object;
 void
 _dl_add_object(elf_object_t *object)
 {
+	/* if a .so is marked nodelete, then add a reference */
+	if (object->obj_flags & DF_1_NODELETE &&
+	    (object->status & STAT_NODELETE) == 0) {
+		DL_DEB(("objname %s is nodelete\n", object->load_name));
+		object->refcount++;
+		object->status |= STAT_NODELETE;
+	}
 
 	/*
 	 * if this is a new object, prev will be NULL
@@ -94,9 +101,12 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 		if (dynp->d_tag == DT_SYMBOLIC)
 			object->dyn.symbolic = 1;
 		if (dynp->d_tag == DT_BIND_NOW)
-			object->obj_flags = RTLD_NOW;
+			object->obj_flags |= DF_1_NOW;
+		if (dynp->d_tag == DT_FLAGS_1)
+			object->obj_flags |= dynp->d_un.d_val;
 		dynp++;
 	}
+	DL_DEB((" flags %s = 0x%x\n", objname, object->obj_flags ));
 
 	/*
 	 *  Now relocate all pointer to dynamic info, but only
@@ -385,7 +395,7 @@ _dl_find_symbol(const char *name, const Elf_Sym **this,
 		 * and and it's children
 		 */
 		TAILQ_FOREACH(n, &_dlopened_child_list, next_sib) {
-			if (((n->data->obj_flags & RTLD_GLOBAL) == 0) &&
+			if (((n->data->obj_flags & DF_1_GLOBAL) == 0) &&
 			    (n->data != req_obj->load_object))
 				continue;
 

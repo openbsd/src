@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.64 2011/06/27 16:47:50 sthen Exp $ */
+/*	$OpenBSD: resolve.h,v 1.65 2011/11/28 20:59:03 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -105,6 +105,8 @@ struct elf_object {
 #define	STAT_FINI_DONE	0x08
 #define	STAT_FINI_READY	0x10
 #define	STAT_UNLOADED	0x20
+#define	STAT_NODELETE	0x40
+#define	STAT_VISITED	0x80
 
 	Elf_Phdr	*phdrp;
 	int		phdrc;
@@ -114,7 +116,7 @@ struct elf_object {
 #define	OBJTYPE_EXE	2
 #define	OBJTYPE_LIB	3
 #define	OBJTYPE_DLO	4
-	int		obj_flags;
+	int		obj_flags;	/* c.f. <sys/exec_elf.h> DF_1_* */
 
 	Elf_Word	*buckets;
 	u_int32_t	nbuckets;
@@ -262,6 +264,7 @@ extern char *_dl_debug;
 #define	DL_NO_OBJECT		9
 #define	DL_CANT_FIND_OBJ	10
 #define	DL_CANT_LOAD_OBJ	11
+#define	DL_INVALID_MODE		12
 
 #define ELF_ROUND(x,malign) (((x) + (malign)-1) & ~((malign)-1))
 #define ELF_TRUNC(x,malign) ((x) & ~((malign)-1))

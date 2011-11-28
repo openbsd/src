@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.125 2011/06/27 16:47:50 sthen Exp $ */
+/*	$OpenBSD: loader.c,v 1.126 2011/11/28 20:59:03 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -59,6 +59,7 @@ void _dl_dtors(void);
 void _dl_boot_bind(const long, long *, Elf_Dyn *);
 void _dl_fixup_user_env(void);
 void _dl_set_sod(const char *, struct sod *);
+void _dl_call_init_recurse(elf_object_t *object, int initfirst);
 
 const char *_dl_progname;
 int  _dl_pagesz;
@@ -94,13 +95,17 @@ _dl_set_sod(const char *path, struct sod *sod)
  */
 
 void
-_dl_run_all_dtors()
+_dl_run_all_dtors(void)
 {
 	elf_object_t *node;
-	int fini_complete;
 	struct dep_node *dnode;
+	int fini_complete;
+	int skip_initfirst;
+	int initfirst_skipped;
 
 	fini_complete = 0;
+	skip_initfirst = 1;
+	initfirst_skipped = 0;
 
 	while (fini_complete == 0) {
 		fini_complete = 1;
@@ -111,7 +116,11 @@ _dl_run_all_dtors()
 			    (OBJECT_REF_CNT(node) == 0) &&
 			    (node->status & STAT_INIT_DONE) &&
 			    ((node->status & STAT_FINI_DONE) == 0)) {
-				node->status |= STAT_FINI_READY;
+				if (skip_initfirst &&
+				    (node->obj_flags & DF_1_INITFIRST))
+					initfirst_skipped = 1;
+				else
+					node->status |= STAT_FINI_READY;
 			    }
 		}
 		for (node = _dl_objects->next;
@@ -120,7 +129,9 @@ _dl_run_all_dtors()
 			if ((node->dyn.fini) &&
 			    (OBJECT_REF_CNT(node) == 0) &&
 			    (node->status & STAT_INIT_DONE) &&
-			    ((node->status & STAT_FINI_DONE) == 0))
+			    ((node->status & STAT_FINI_DONE) == 0) &&
+			    (!skip_initfirst ||
+			    (node->obj_flags & DF_1_INITFIRST) == 0))
 				TAILQ_FOREACH(dnode, &node->child_list,
 				    next_sib)
 					dnode->data->status &= ~STAT_FINI_READY;
@@ -141,6 +152,9 @@ _dl_run_all_dtors()
 				(*node->dyn.fini)();
 			}
 		}
+
+		if (fini_complete && initfirst_skipped)
+                        fini_complete = initfirst_skipped = skip_initfirst = 0;
 	}
 }
 
@@ -265,8 +279,8 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 		DL_DEB(("examining: '%s'\n", dynobj->load_name));
 		libcount = 0;
 
-		/* propagate RTLD_NOW to deplibs (can be set by dynamic tags) */
-		depflags = flags | (dynobj->obj_flags & RTLD_NOW);
+		/* propagate DF_1_NOW to deplibs (can be set by dynamic tags) */
+		depflags = flags | (dynobj->obj_flags & DF_1_NOW);
 
 		for (dynp = dynobj->load_dyn; dynp->d_tag; dynp++) {
 			if (dynp->d_tag == DT_NEEDED) {
@@ -476,7 +490,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 		phdp++;
 	}
 	exe_obj->load_list = load_list;
-	exe_obj->obj_flags |= RTLD_GLOBAL;
+	exe_obj->obj_flags |= DF_1_GLOBAL;
 	exe_obj->load_size = maxva - minva;
 	_dl_set_sod(exe_obj->load_name, &exe_obj->sod);
 
@@ -840,7 +854,7 @@ _dl_rtld(elf_object_t *object)
 	fails += _dl_md_reloc(object, DT_RELA, DT_RELASZ);
 	prebind_symcache(object, SYM_PLT);
 	fails += _dl_md_reloc_got(object, !(_dl_bindnow ||
-	    object->obj_flags & RTLD_NOW));
+	    object->obj_flags & DF_1_NOW));
 
 	if (_dl_symcache != NULL) {
 		if (sz != 0)
@@ -852,18 +866,33 @@ _dl_rtld(elf_object_t *object)
 
 	return (fails);
 }
+
 void
 _dl_call_init(elf_object_t *object)
 {
+	_dl_call_init_recurse(object, 1);
+	_dl_call_init_recurse(object, 0);
+}
+
+void
+_dl_call_init_recurse(elf_object_t *object, int initfirst)
+{
 	struct dep_node *n;
 
+	object->status |= STAT_VISITED;
+
 	TAILQ_FOREACH(n, &object->child_list, next_sib) {
-		if (n->data->status & STAT_INIT_DONE)
+		if (n->data->status & STAT_VISITED)
 			continue;
-		_dl_call_init(n->data);
+		_dl_call_init_recurse(n->data, initfirst);
 	}
 
+	object->status &= ~STAT_VISITED;
+
 	if (object->status & STAT_INIT_DONE)
+		return;
+
+	if (initfirst && (object->obj_flags & DF_1_INITFIRST) == 0)
 		return;
 
 	if (object->dyn.init) {
@@ -872,7 +901,6 @@ _dl_call_init(elf_object_t *object)
 		(*object->dyn.init)();
 	}
 
-	/* What about loops? */
 	object->status |= STAT_INIT_DONE;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.84 2011/06/27 16:47:50 sthen Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.85 2011/11/28 20:59:03 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -52,6 +52,12 @@ dlopen(const char *libname, int flags)
 {
 	elf_object_t *object;
 	int failed = 0;
+	int obj_flags;
+
+	if (flags & ~(RTLD_TRACE|RTLD_LAZY|RTLD_NOW|RTLD_GLOBAL)) {
+		_dl_errno = DL_INVALID_MODE;
+		return NULL;
+	}
 
 	if (libname == NULL)
 		return RTLD_DEFAULT;
@@ -72,7 +78,9 @@ dlopen(const char *libname, int flags)
 
 	_dl_loading_object = NULL;
 
-	object = _dl_load_shlib(libname, _dl_objects, OBJTYPE_DLO, flags);
+	obj_flags = (flags & RTLD_NOW ? DF_1_NOW : 0)
+	    | (flags & RTLD_GLOBAL ? DF_1_GLOBAL : 0);
+	object = _dl_load_shlib(libname, _dl_objects, OBJTYPE_DLO, obj_flags);
 	if (object == 0) {
 		DL_DEB(("dlopen: failed to open %s\n", libname));
 		failed = 1;
@@ -96,7 +104,7 @@ dlopen(const char *libname, int flags)
 
 	DL_DEB(("head [%s]\n", object->load_name ));
 
-	if ((failed = _dl_load_dep_libs(object, flags, 0)) == 1) {
+	if ((failed = _dl_load_dep_libs(object, obj_flags, 0)) == 1) {
 		_dl_real_close(object);
 		object = NULL;
 		_dl_errno = DL_CANT_LOAD_OBJ;
@@ -347,6 +355,9 @@ dlerror(void)
 		break;
 	case DL_CANT_LOAD_OBJ:
 		errmsg = "Cannot load specified object";
+		break;
+	case DL_INVALID_MODE:
+		errmsg = "Invalid mode";
 		break;
 	default:
 		errmsg = "Unknown error";

@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.13 2011/04/06 11:36:25 miod Exp $ */
+/* $OpenBSD: prebind.c,v 1.14 2011/11/28 20:59:03 guenther Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -546,7 +546,9 @@ elf_load_object(void *pexe, const char *name)
 		if (dynp->d_tag == DT_SYMBOLIC)
 			object->dyn.symbolic = 1;
 		if (dynp->d_tag == DT_BIND_NOW)
-			object->obj_flags = RTLD_NOW;
+			object->obj_flags |= DF_1_NOW;
+		if (dynp->d_tag == DT_FLAGS_1)
+			object->obj_flags |= dynp->d_un.d_val;
 		if (dynp->d_tag == DT_NEEDED)
 			needed_cnt++;
 
