@@ -1,4 +1,4 @@
-/*	$Id: apropos_db.c,v 1.9 2011/11/27 23:11:32 schwarze Exp $ */
+/*	$Id: apropos_db.c,v 1.10 2011/11/28 00:16:38 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -580,6 +580,49 @@ recfree(struct rec *rec)
 	free(rec->matches);
 }
 
+/*
+ * Compile a list of straight-up terms.
+ * The arguments are re-written into ~[[:<:]]term[[:>:]], or "term"
+ * surrounded by word boundaries, then pumped through exprterm().
+ * Terms are case-insensitive.
+ * This emulates whatis(1) behaviour.
+ */
+struct expr *
+termcomp(int argc, char *argv[], size_t *tt)
+{
+	char		*buf;
+	int		 pos;
+	struct expr	*e, *next;
+	size_t		 sz;
+
+	buf = NULL;
+	e = NULL;
+	*tt = 0;
+
+	for (pos = argc - 1; pos >= 0; pos--) {
+		sz = strlen(argv[pos]) + 18;
+		buf = mandoc_realloc(buf, sz);
+		strlcpy(buf, "Nm~[[:<:]]", sz);
+		strlcat(buf, argv[pos], sz);
+		strlcat(buf, "[[:>:]]", sz);
+		if (NULL == (next = exprterm(buf, 0))) {
+			free(buf);
+			exprfree(e);
+			return(NULL);
+		}
+		next->next = e;
+		e = next;
+		(*tt)++;
+	}
+
+	free(buf);
+	return(e);
+}
+
+/*
+ * Compile a sequence of logical expressions.
+ * See apropos.1 for a grammar of this sequence.
+ */
 struct expr *
 exprcomp(int argc, char *argv[], size_t *tt)
 {
@@ -730,7 +773,7 @@ exprterm(char *buf, int cs)
 		e.mask = TYPE_Nm | TYPE_Nd;
 
 	if (e.regex) {
-		i = REG_EXTENDED | REG_NOSUB | cs ? 0 : REG_ICASE;
+		i = REG_EXTENDED | REG_NOSUB | (cs ? 0 : REG_ICASE);
 		if (regcomp(&e.re, e.v, i))
 			return(NULL);
 	}

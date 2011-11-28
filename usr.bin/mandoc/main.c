@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.80 2011/10/09 17:59:56 schwarze Exp $ */
+/*	$Id: main.c,v 1.81 2011/11/28 00:16:38 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -86,7 +86,8 @@ main(int argc, char *argv[])
 	else
 		++progname;
 
-	if (0 == strncmp(progname, "apropos", 7))
+	if (0 == strncmp(progname, "apropos", 7) ||
+	    0 == strncmp(progname, "whatis", 6))
 		return(apropos(argc, argv));
 	if (0 == strncmp(progname, "mandocdb", 8))
 		return(mandocdb(argc, argv));
