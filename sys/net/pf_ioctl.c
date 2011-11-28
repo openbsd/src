@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.245 2011/11/25 12:52:10 dlg Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.246 2011/11/28 01:04:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1394,8 +1394,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pfioc_state	*ps = (struct pfioc_state *)addr;
 		struct pfsync_state	*sp = &ps->state;
 
-		if (sp->timeout >= PFTM_MAX &&
-		    sp->timeout != PFTM_UNTIL_PACKET) {
+		if (sp->timeout >= PFTM_MAX) {
 			error = EINVAL;
 			break;
 		}
