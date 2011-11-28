@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.61 2009/06/04 02:23:37 kjell Exp $	*/
+/*	$OpenBSD: main.c,v 1.62 2011/11/28 04:41:39 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -30,6 +30,7 @@ static void	 edinit(PF);
 static __dead void usage(void);
 
 extern char	*__progname;
+extern void     closetags(void);
 
 static __dead void
 usage()
@@ -235,6 +236,7 @@ quit(int f, int n)
 #ifdef SYSCLEANUP
 		SYSCLEANUP;
 #endif	/* SYSCLEANUP */
+		closetags();
 		exit(GOOD);
 	}
 	return (TRUE);

@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.55 2011/09/02 02:37:52 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.56 2011/11/28 04:41:39 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: September 2 2011 $
+.Dd $Mdocdate: November 28 2011 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -73,6 +73,12 @@ the mark at the point of deletion.
 Note: The point and mark are window-specific in
 .Nm ,
 not buffer-specific, as in other emacs flavours.
+.Sh TAGS
+.Nm
+supports tags file created by
+.Xr ctags 1 ,
+allowing user to quickly locate various object definitions.
+Note that emacs uses etags, not ctags.
 .Sh DEFAULT KEY BINDINGS
 Normal editing commands are very similar to GNU Emacs.
 In the following examples, C-x means Control-x, and M-x means Meta-x,
@@ -212,6 +218,10 @@ suspend-emacs
 scroll-other-window
 .It M-SPC
 just-one-space
+.It M-.
+find-tag
+.It M-*
+pop-tag-mark
 .It M-%
 query-replace
 .It M-<
@@ -461,6 +471,8 @@ If the kill fails, or is aborted, revert to the original file.
 .It find-file-other-window
 Opens the specified file in a second buffer.
 Splits the current window if necessary.
+.It find-tag
+Jump to definition of tag at dot.
 .It forward-char
 Move cursor forwards (or backwards, if
 .Va n
@@ -606,6 +618,8 @@ This command makes the previous (up the screen) window the
 current window.
 There are no errors, although the command does not do
 a lot if there is only 1 window.
+.It pop-tag-mark
+Return to position where find-tag was previously invoked.
 .It push-shell
 Suspend
 .Nm
@@ -776,6 +790,8 @@ upper case.
 .It upcase-word
 Move the cursor forward by the specified number of words.
 As it moves, convert any characters to upper case.
+.It visit-tags-table
+Record name of the tags file to be used for subsequent find-tag.
 .It what-cursor-position
 Display a bunch of useful information about the current location of
 dot.
@@ -835,6 +851,7 @@ terminal-specific startup file
 concise tutorial
 .El
 .Sh SEE ALSO
+.Xr ctags 1 ,
 .Xr vi 1
 .Sh CAVEATS
 Since it is written completely in C, there is currently no

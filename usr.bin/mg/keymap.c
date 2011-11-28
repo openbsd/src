@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymap.c,v 1.45 2011/01/18 16:25:40 kjell Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.46 2011/11/28 04:41:39 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -204,8 +204,11 @@ static PF metapct[] = {
 };
 
 static PF metami[] = {
+	poptag,                 /* * */
+	rescan,                 /* + */
+	rescan,                 /* , */
 	negative_argument,	/* - */
-	rescan,			/* . */
+	findtag,		/* . */
 	rescan,			/* / */
 	digit_argument,		/* 0 */
 	digit_argument,		/* 1 */
@@ -298,7 +301,7 @@ struct KEYMAPE (8 + IMAPEXT) metamap = {
 			'%', '%', metapct, NULL
 		},
 		{
-			'-', '>', metami, NULL
+			'*', '>', metami, NULL
 		},
 		{
 			'[', 'f', metasqf, (KEYMAP *) &metasqlmap
