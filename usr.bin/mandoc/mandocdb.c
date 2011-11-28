@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.13 2011/11/27 23:27:16 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.14 2011/11/28 00:57:28 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <db.h>
 
 #include "man.h"
@@ -374,10 +375,12 @@ mandocdb(int argc, char *argv[])
 		index_prune(of, db, fbuf, idx, ibuf,
 				&maxrec, &recs, &recsz);
 
-		if (OP_UPDATE == op)
+		if (OP_UPDATE == op) {
+			chdir(dir);
 			index_merge(of, mp, &dbuf, &buf, hash,
 					db, fbuf, idx, ibuf,
 					maxrec, recs, reccur);
+		}
 
 		goto out;
 	}
@@ -446,6 +449,7 @@ mandocdb(int argc, char *argv[])
 
 		of = of->first;
 
+		chdir(dirs.paths[i]);
 		index_merge(of, mp, &dbuf, &buf, hash, db, fbuf,
 				idx, ibuf, maxrec, recs, reccur);
 	}
