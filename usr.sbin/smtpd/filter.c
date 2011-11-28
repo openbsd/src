@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.4 2011/11/16 10:24:41 chl Exp $	*/
+/*	$OpenBSD: filter.c,v 1.5 2011/11/28 22:13:27 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -215,8 +215,6 @@ filter_handler(int fd, short event, void *p)
 		case STATUS_ACCEPT:
 		case STATUS_REJECT:
 			fm.code = ret;
-			if (ret == STATUS_REJECT)
-				fm.code = -1;
 			imsg_compose(&fi.ibuf, imsg.hdr.type, 0, 0, -1, &fm,
 			    sizeof fm);
 			evflags |= EV_WRITE;
@@ -235,7 +233,7 @@ filter_handler(int fd, short event, void *p)
 
 ignore:
 	imsg_free(&imsg);
-	fm.code = 0;
+	fm.code = STATUS_IGNORE;
 	imsg_compose(&fi.ibuf, imsg.hdr.type, 0, 0, -1, &fm, sizeof fm);
 	evflags |= EV_WRITE;
 	event_set(&fi.ev, 0, evflags, filter_handler, &fi);

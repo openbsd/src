@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.h,v 1.5 2011/11/16 10:24:41 chl Exp $	*/
+/*	$OpenBSD: filter.h,v 1.6 2011/11/28 22:13:27 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -32,6 +32,7 @@
 #endif
 
 enum filter_status {
+	STATUS_IGNORE,
 	STATUS_REJECT,
 	STATUS_ACCEPT,
 	STATUS_WAITING
