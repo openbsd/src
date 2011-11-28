@@ -1,4 +1,4 @@
-.\"	$Id: mandocdb.8,v 1.7 2011/11/26 13:07:15 schwarze Exp $
+.\"	$Id: mandocdb.8,v 1.8 2011/11/28 01:37:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 26 2011 $
+.Dd $Mdocdate: November 28 2011 $
 .Dt MANDOCDB 8
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl av
-.Op Ar dir...
+.Op Ar dir ...
 .Nm
 .Op Fl v
 .Fl d Ar dir
@@ -43,51 +43,53 @@ and
 .Sx Index Database
 for fast retrieval.
 .Pp
-The arguments are as follows:
-.Bl -tag -width Ds
-.It Fl a
-Use all directories and files found below
-.Ar dir ... .
-By default, only files matching
+By default,
+.Nm
+creates databases in each
+.Ar dir
+using the files
 .Sm off
 .Sy man Ar section Li /
 .Op Ar arch Li /
 .Ar title . section
 .Sm on
-will be used.
-.It Fl d Ar dir
-Merge (remove and re-add)
-.Ar
-from the databases in
-.Ar dir .
-.It Fl u Ar dir
-Remove
-.Ar
-from the databases in
-.Ar dir .
-.It Ar dir...
-Recursively add files rooted at each
-.Ar dir
-to the databases in the respective
-.Ar dir .
-Existing databases are truncated.
-.It Fl v
-Verbose operation.
-Use once to display all files added or removed and twice for keywords as
-well.
-.El
-.Pp
-By default,
-.Nm
-creates databases in each
-.Ar dir
-using files rooted in that directory.
+and
+.Sm off
+.Sy cat Ar section Li /
+.Op Ar arch Li /
+.Ar title . Sy 0
+.Sm on
+in that directory;
+existing databases are truncated.
 If
 .Ar dir
 is not provided,
 .Nm
 uses the default paths stipulated by
 .Xr man 1 .
+.Pp
+The arguments are as follows:
+.Bl -tag -width Ds
+.It Fl a
+Use all directories and files found below
+.Ar dir ... .
+.It Fl d Ar dir
+Merge (remove and re-add)
+.Ar
+to the database in
+.Ar dir
+without truncating it.
+.It Fl u Ar dir
+Remove
+.Ar
+from the database in
+.Ar dir
+without truncating it.
+.It Fl v
+Verbose operation.
+Use once to display all files added or removed and twice for keywords as
+well.
+.El
 .Pp
 If fatal parse errors are encountered while parsing, the offending file
 is printed to stderr, omitted from the index, and the parse continues
@@ -101,17 +103,26 @@ database with record values consisting of
 .Pp
 .Bl -enum -compact
 .It
-a nil-terminated filename,
+the string
+.Cm mdoc ,
+.Cm man ,
+or
+.Cm cat
+to indicate the file type,
 .It
-a nil-terminated manual section,
+the filename,
 .It
-a nil-terminated manual title,
+the manual section,
 .It
-a nil-terminated architecture
-.Pq this is not often available
+the manual title,
 .It
-and a nil-terminated description.
+the architecture
+.Pq often empty ,
+.It
+and the description.
 .El
+.Pp
+Each of the above is NUL-terminated.
 .Pp
 Both the manual section and description may be zero-length if the record
 is unassigned.
@@ -121,7 +132,7 @@ The keyword database,
 .Pa mandoc.db ,
 is a
 .Xr btree 3
-database of nil-terminated keywords (record length is non-zero string
+database of NUL-terminated keywords (record length is non-zero string
 length plus one) mapping to a 8-byte binary field consisting of the
 keyword type and source
 .Sx Index Database
