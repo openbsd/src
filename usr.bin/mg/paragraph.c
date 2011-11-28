@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.20 2011/11/28 05:04:17 lum Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.21 2011/11/28 23:37:32 matthew Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -175,8 +175,8 @@ fillpara(int f, int n)
 				wbuf[wordlen++] = c;
 			else {
 				/*
-				 * You loose chars beyond MAXWORD if the word
-				 * is to long. I'm to lazy to fix it now; it
+				 * You lose chars beyond MAXWORD if the word
+				 * is too long. I'm too lazy to fix it now; it
 				 * just silently truncated the word before,
 				 * so I get to feel smug.
 				 */
