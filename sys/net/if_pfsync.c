@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.177 2011/11/27 16:06:30 mikeb Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.178 2011/11/29 10:17:52 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -457,7 +457,7 @@ pfsync_state_export(struct pfsync_state *sp, struct pf_state *st)
 	if (!SLIST_EMPTY(&st->src_nodes))
 		sp->sync_flags |= PFSYNC_FLAG_SRCNODE;
 
-	bcopy(&st->id, &sp->id, sizeof(sp->id));
+	sp->id = st->id;
 	sp->creatorid = st->creatorid;
 	pf_state_peer_hton(&st->src, &sp->src);
 	pf_state_peer_hton(&st->dst, &sp->dst);
@@ -611,7 +611,7 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 	st->min_ttl = sp->min_ttl;
 	st->set_tos = sp->set_tos;
 
-	bcopy(sp->id, &st->id, sizeof(st->id));
+	st->id = sp->id;
 	st->creatorid = sp->creatorid;
 	pf_state_peer_ntoh(&sp->src, &st->src);
 	pf_state_peer_ntoh(&sp->dst, &st->dst);
@@ -859,7 +859,7 @@ pfsync_in_iack(caddr_t buf, int len, int count, int flags)
 	for (i = 0; i < count; i++) {
 		ia = (struct pfsync_ins_ack *)(buf + len * i);
 
-		bcopy(&ia->id, &id_key.id, sizeof(id_key.id));
+		id_key.id = ia->id;
 		id_key.creatorid = ia->creatorid;
 
 		st = pf_find_state_byid(&id_key);
@@ -928,7 +928,7 @@ pfsync_in_upd(caddr_t buf, int len, int count, int flags)
 			continue;
 		}
 
-		bcopy(sp->id, &id_key.id, sizeof(id_key.id));
+		id_key.id = sp->id;
 		id_key.creatorid = sp->creatorid;
 
 		st = pf_find_state_byid(&id_key);
@@ -1005,7 +1005,7 @@ pfsync_in_upd_c(caddr_t buf, int len, int count, int flags)
 			continue;
 		}
 
-		bcopy(&up->id, &id_key.id, sizeof(id_key.id));
+		id_key.id = up->id;
 		id_key.creatorid = up->creatorid;
 
 		st = pf_find_state_byid(&id_key);
@@ -1067,7 +1067,7 @@ pfsync_in_ureq(caddr_t buf, int len, int count, int flags)
 	for (i = 0; i < count; i++) {
 		ur = (struct pfsync_upd_req *)(buf + len * i);
 
-		bcopy(&ur->id, &id_key.id, sizeof(id_key.id));
+		id_key.id = ur->id;
 		id_key.creatorid = ur->creatorid;
 
 		if (id_key.id == 0 && id_key.creatorid == 0)
@@ -1099,7 +1099,7 @@ pfsync_in_del(caddr_t buf, int len, int count, int flags)
 	for (i = 0; i < count; i++) {
 		sp = (struct pfsync_state *)(buf + len * i);
 
-		bcopy(sp->id, &id_key.id, sizeof(id_key.id));
+		id_key.id = sp->id;
 		id_key.creatorid = sp->creatorid;
 
 		st = pf_find_state_byid(&id_key);
@@ -1125,7 +1125,7 @@ pfsync_in_del_c(caddr_t buf, int len, int count, int flags)
 	for (i = 0; i < count; i++) {
 		sp = (struct pfsync_del_c *)(buf + len * i);
 
-		bcopy(&sp->id, &id_key.id, sizeof(id_key.id));
+		id_key.id = sp->id;
 		id_key.creatorid = sp->creatorid;
 
 		st = pf_find_state_byid(&id_key);

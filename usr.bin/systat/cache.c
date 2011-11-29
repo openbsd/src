@@ -1,4 +1,4 @@
-/* $Id: cache.c,v 1.3 2008/12/07 02:56:06 canacar Exp $ */
+/* $Id: cache.c,v 1.4 2011/11/29 10:17:52 dlg Exp $ */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -118,8 +118,8 @@ add_state(struct pfsync_state *st)
 
 	cache_size--;
 
-	ent->id[0] = st->id[0];
-	ent->id[1] = st->id[1];
+	ent->id = st->id;
+	ent->creatorid = st->creatorid;
 	ent->bytes = COUNTER(st->bytes[0]) + COUNTER(st->bytes[1]);
 	ent->peak = 0;
 	ent->rate = 0;
@@ -139,8 +139,8 @@ cache_state(struct pfsync_state *st)
 	if (cache_max == 0)
 		return (NULL);
 
-	ent.id[0] = st->id[0];
-	ent.id[1] = st->id[1];
+	ent.id = st->id;
+	ent.creatorid = st->creatorid;
 	old = RB_FIND(sc_tree, &sctree, &ent);
 
 	if (old == NULL) {
@@ -189,13 +189,13 @@ cache_endupdate(void)
 static __inline int
 sc_cmp(struct sc_ent *a, struct sc_ent *b)
 {
-	if (a->id[0] > b->id[0])
+	if (a->id > b->id)
 		return (1);
-	if (a->id[0] < b->id[0])
+	if (a->id < b->id)
 		return (-1);
-	if (a->id[1] > b->id[1])
+	if (a->creatorid > b->creatorid)
 		return (1);
-	if (a->id[1] < b->id[1])
+	if (a->creatorid < b->creatorid)
 		return (-1);
 	return (0);
 }
