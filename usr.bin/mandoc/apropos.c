@@ -1,4 +1,4 @@
-/*	$Id: apropos.c,v 1.9 2011/11/28 00:16:38 schwarze Exp $ */
+/*	$Id: apropos.c,v 1.10 2011/11/29 22:30:56 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -138,8 +138,8 @@ usage(void)
 {
 
 	fprintf(stderr, "usage: %s "
-			"[-M path] "
-			"[-m path] "
+			"[-M manpath] "
+			"[-m manpath] "
 			"[-S arch] "
 			"[-s section] "
 			"expression...\n",

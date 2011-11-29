@@ -1,4 +1,4 @@
-.\"	$Id: apropos.1,v 1.7 2011/11/29 01:07:30 schwarze Exp $
+.\"	$Id: apropos.1,v 1.8 2011/11/29 22:30:56 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -112,11 +112,11 @@ evaluates a substring, while
 .Li \&~
 evaluates a regular expression.
 .It Fl i Ar term
-Same as
-.Ar term ,
-but
+If
 .Ar term
+is a regular expression, it
 is evaluated case-insensitively.
+Has no effect on substring terms.
 .El
 .Pp
 By default,
@@ -125,7 +125,7 @@ searches for
 .Xr mandocdb 8
 databases in the default paths stipulated by
 .Xr man 1 ,
-parses terms as case-insensitive regular expressions
+parses terms as case-sensitive regular expressions
 .Pq the Li \&~ operator
 over manual names and descriptions
 .Pq the Li \&Nm No and Li \&Nd No macro keys .
@@ -238,25 +238,25 @@ Invalid paths, or paths without manual databases, are ignored.
 Overridden by
 .Fl M .
 .El
-.\" .Sh FILES
 .Sh EXIT STATUS
 .Ex -std
 .Sh EXAMPLES
 Search for
 .Qq mdoc
-within the manual name and description:
+as a substring and regular expression
+within each manual name and description:
 .Pp
 .Dl $ apropos mdoc
+.Dl $ apropos ~^mdoc$
 .Pp
-Two variants of searching for
-.Qq mdoc ,
-.Qq roff ,
-or
+Include matches for
+.Qq roff
+and
 .Qq man
-within manual names and descriptions:
+for the regular expression case:
 .Pp
-.Dl $ apropos mdoc roff man
-.Dl $ apropos mdoc \-o roff \-o man
+.Dl $ apropos ~^mdoc$ roff man
+.Dl $ apropos ~^mdoc$ \-o roff \-o man
 .Pp
 Search for
 .Qq optind
@@ -264,17 +264,11 @@ and
 .Qq optarg
 as variable names in the library category:
 .Pp
-.Dl $ apropos \-s 3 \(dqVa~^optind$\(dq -a \(dqVa~^optarg$\(dq
-.Pp
-Search for all manuals referencing
-.Qq POSIX
-in any letter case:
-.Pp
-.Dl $ apropos \-\- \-i posix
+.Dl $ apropos \-s 3 Va~^optind \-a Va~^optarg$
 .Sh SEE ALSO
 .Xr man 1 ,
-.Xr mandoc 1 ,
-.Xr re_format 7
+.Xr re_format 7 ,
+.Xr mandocdb 8
 .Sh AUTHORS
 The
 .Nm

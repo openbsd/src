@@ -1,4 +1,4 @@
-.\"	$Id: mandocdb.8,v 1.8 2011/11/28 01:37:30 schwarze Exp $
+.\"	$Id: mandocdb.8,v 1.9 2011/11/29 22:30:56 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 28 2011 $
+.Dd $Mdocdate: November 29 2011 $
 .Dt MANDOCDB 8
 .Os
 .Sh NAME
@@ -108,7 +108,13 @@ the string
 .Cm man ,
 or
 .Cm cat
-to indicate the file type,
+to indicate the file type
+.Po
+file in
+.Xr mdoc 7 ,
+.Xr man 7 ,
+and post-formatted, respectively
+.Pc ,
 .It
 the filename,
 .It
@@ -137,47 +143,54 @@ length plus one) mapping to a 8-byte binary field consisting of the
 keyword type and source
 .Sx Index Database
 record number.
-The type, a 32-bit bit-mask in host order, consists of the following
-fields:
+The type, a 64-bit bit-mask in host order, consists of the following
+values mapping into
+.Xr mdoc 7
+macro identifiers:
 .Pp
-.Bl -tag -width Ds -offset indent -compact
-.It Li 0x01
-The name of a manual page as given in the NAME section.
-.It Li 0x02
-A function prototype name as given in the SYNOPSIS section.
-.It Li 0x04
-A utility name as given in the SYNOPSIS section.
-.It Li 0x08
-An include file as given in the SYNOPSIS section.
-.It Li 0x10
-A variable name as given in the SYNOPSIS section.
-.It Li 0x20
-A standard as given in the STANDARDS section.
-.It Li 0x40
-An author as given in the AUTHORS section.
-.It Li 0x80
-A configuration as given in the SYNOPSIS section.
-.It Li 0x100
-Free-form descriptive text as given in the NAME section.
-.It Li 0x200
-Cross-links between manuals.
-Listed as the link name, then a period, then the link section.
-If the link has no section, the period terminates the string.
-.It Li 0x400
-Path reference as given in the FILES section.
-.It Li 0x800
-Environment variable as given in the ENVIRONMENT section.
-.It Li 0x1000
-Error codes as given in the ERRORS section.
+.Bl -column "x0x0000000000000001ULLx" "xLix" -offset indent -compact
+.It Li 0x0000000000000001ULL Ta \&An
+.It Li 0x0000000000000002ULL Ta \&Ar
+.It Li 0x0000000000000004ULL Ta \&At
+.It Li 0x0000000000000008ULL Ta \&Bsx
+.It Li 0x0000000000000010ULL Ta \&Bx
+.It Li 0x0000000000000020ULL Ta \&Cd
+.It Li 0x0000000000000040ULL Ta \&Cm
+.It Li 0x0000000000000080ULL Ta \&Dv
+.It Li 0x0000000000000100ULL Ta \&Dx
+.It Li 0x0000000000000200ULL Ta \&Em
+.It Li 0x0000000000000400ULL Ta \&Er
+.It Li 0x0000000000000800ULL Ta \&Ev
+.It Li 0x0000000000001000ULL Ta \&Fa
+.It Li 0x0000000000002000ULL Ta \&Fl
+.It Li 0x0000000000004000ULL Ta \&Fn
+.It Li 0x0000000000008000ULL Ta \&Ft
+.It Li 0x0000000000010000ULL Ta \&Fx
+.It Li 0x0000000000020000ULL Ta \&Ic
+.It Li 0x0000000000040000ULL Ta \&In
+.It Li 0x0000000000080000ULL Ta \&Lb
+.It Li 0x0000000000100000ULL Ta \&Li
+.It Li 0x0000000000200000ULL Ta \&Lk
+.It Li 0x0000000000400000ULL Ta \&Ms
+.It Li 0x0000000000800000ULL Ta \&Mt
+.It Li 0x0000000001000000ULL Ta \&Nd
+.It Li 0x0000000002000000ULL Ta \&Nm
+.It Li 0x0000000004000000ULL Ta \&Nx
+.It Li 0x0000000008000000ULL Ta \&Ox
+.It Li 0x0000000010000000ULL Ta \&Pa
+.It Li 0x0000000020000000ULL Ta \&Rs
+.It Li 0x0000000040000000ULL Ta \&Sh
+.It Li 0x0000000080000000ULL Ta \&Ss
+.It Li 0x0000000100000000ULL Ta \&St
+.It Li 0x0000000200000000ULL Ta \&Sy
+.It Li 0x0000000400000000ULL Ta \&Tn
+.It Li 0x0000000800000000ULL Ta \&Va
+.It Li 0x0000001000000000ULL Ta \&Vt
+.It Li 0x0000002000000000ULL Ta \&Xr
 .El
 .Pp
 The last four bytes are a host-ordered record number within the
 .Sx Index Database .
-.Pp
-The
-.Nm
-utility is
-.Ud
 .Sh IMPLEMENTATION NOTES
 The time to construct a new database pair grows linearly with the
 number of keywords in the input files.
@@ -219,7 +232,6 @@ The output databases are corrupt and should be removed .
 .El
 .Sh SEE ALSO
 .Xr man 1 ,
-.Xr mandoc 1 ,
 .Xr btree 3 ,
 .Xr recno 3
 .Sh AUTHORS

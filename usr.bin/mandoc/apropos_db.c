@@ -1,4 +1,4 @@
-/*	$Id: apropos_db.c,v 1.10 2011/11/28 00:16:38 schwarze Exp $ */
+/*	$Id: apropos_db.c,v 1.11 2011/11/29 22:30:56 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -52,7 +52,6 @@ struct	expr {
 	int		 regex; /* is regex? */
 	int		 index; /* index in match array */
 	uint64_t 	 mask; /* type-mask */
-	int		 cs; /* is case-sensitive? */
 	int		 and; /* is rhs of logical AND? */
 	char		*v; /* search value */
 	regex_t	 	 re; /* compiled re, if regex */
@@ -694,7 +693,6 @@ exprexpr(int argc, char *argv[], int *pos, int *lvl, size_t *tt)
 			++(*pos);
 			++(*lvl);
 			next = mandoc_calloc(1, sizeof(struct expr));
-			next->cs = 1;
 			next->subexpr = exprexpr(argc, argv, pos, lvl, tt);
 			if (NULL == next->subexpr) {
 				free(next);
@@ -744,8 +742,6 @@ exprterm(char *buf, int cs)
 	int		 i;
 
 	memset(&e, 0, sizeof(struct expr));
-
-	e.cs = cs;
 
 	/* Choose regex or substring match. */
 
@@ -818,13 +814,8 @@ exprmark(const struct expr *p, const char *cp,
 		if (p->regex) {
 			if (regexec(&p->re, cp, 0, NULL, 0))
 				continue;
-		} else if (p->cs) {
-			if (NULL == strstr(cp, p->v))
-				continue;
-		} else {
-			if (NULL == strcasestr(cp, p->v))
-				continue;
-		}
+		} else if (NULL == strcasestr(cp, p->v))
+			continue;
 
 		if (NULL == ms)
 			return(1);

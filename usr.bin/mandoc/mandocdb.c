@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.14 2011/11/28 00:57:28 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.15 2011/11/29 22:30:56 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -375,6 +375,12 @@ mandocdb(int argc, char *argv[])
 		index_prune(of, db, fbuf, idx, ibuf,
 				&maxrec, &recs, &recsz);
 
+		/*
+		 * Go to the root of the respective manual tree
+		 * such that .so links work.  In case of failure,
+		 * just prod on, even though .so links won't work.
+		 */
+
 		if (OP_UPDATE == op) {
 			chdir(dir);
 			index_merge(of, mp, &dbuf, &buf, hash,
@@ -448,6 +454,12 @@ mandocdb(int argc, char *argv[])
 			continue;
 
 		of = of->first;
+
+		/*
+		 * Go to the root of the respective manual tree
+		 * such that .so links work.  In case of failure,
+		 * just prod on, even though .so links won't work.
+		 */
 
 		chdir(dirs.paths[i]);
 		index_merge(of, mp, &dbuf, &buf, hash, db, fbuf,
