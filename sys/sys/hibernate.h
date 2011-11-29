@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.18 2011/11/16 23:52:27 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.19 2011/11/29 05:21:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -105,7 +105,7 @@ void	 uvm_pmr_dirty_everything(void);
 int	 uvm_pmr_alloc_pig(paddr_t*, psize_t);
 int	 uvm_pmr_alloc_piglet(vaddr_t*, paddr_t*, vsize_t, paddr_t);
 void	 uvm_pmr_free_piglet(vaddr_t, vsize_t);
-psize_t	 uvm_page_rle(paddr_t);
+u_char	 uvm_page_rle(paddr_t);
 
 hibio_fn get_hibernate_io_function(void);
 int	get_hibernate_info(union hibernate_info *, int);

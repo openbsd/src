@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.31 2011/11/29 04:59:22 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.32 2011/11/29 05:21:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -568,7 +568,7 @@ uvm_pmr_free_piglet(vaddr_t va, vsize_t sz)
  * starting at the address, that are free.  Clamps to a max of 255 pages.
  * Returns 0 if the page at addr is not free.
  */
-psize_t
+u_char
 uvm_page_rle(paddr_t addr)
 {
 	struct vm_page		*pg, *pg_end;
@@ -723,18 +723,18 @@ hibernate_inflate(union hibernate_info *hiber_info, paddr_t dest,
     paddr_t src, size_t size)
 {
 	int i;
-	psize_t rle;
+	u_char rle;
 
-	hibernate_state->hib_stream.avail_in = size;
 	hibernate_state->hib_stream.next_in = (char *)src;
+	hibernate_state->hib_stream.avail_in = size;
 
 	do {
 		/* Flush cache and TLB */
 		hibernate_flush();
 
 		/* Read RLE code */
-		hibernate_state->hib_stream.avail_out = sizeof(psize_t);
 		hibernate_state->hib_stream.next_out = (char *)&rle;
+		hibernate_state->hib_stream.avail_out = sizeof(rle);
 
 		i = inflate(&hibernate_state->hib_stream, Z_FULL_FLUSH);
 		if (i != Z_OK && i != Z_STREAM_END) {
@@ -751,9 +751,8 @@ hibernate_inflate(union hibernate_info *hiber_info, paddr_t dest,
 		/* Skip while RLE code is != 0 */
 		while (rle != 0) {
 			dest += (rle * PAGE_SIZE);
-			hibernate_state->hib_stream.avail_out =
-			    sizeof(psize_t);
 			hibernate_state->hib_stream.next_out = (char *)&rle;
+			hibernate_state->hib_stream.avail_out = sizeof(rle);
 
 			i = inflate(&hibernate_state->hib_stream,
 			    Z_FULL_FLUSH);
@@ -785,9 +784,9 @@ hibernate_inflate(union hibernate_info *hiber_info, paddr_t dest,
 		hibernate_flush();
 
 		/* Set up the stream for inflate */
-		hibernate_state->hib_stream.avail_out = PAGE_SIZE;
 		hibernate_state->hib_stream.next_out =
 		    (char *)HIBERNATE_INFLATE_PAGE;
+		hibernate_state->hib_stream.avail_out = PAGE_SIZE;
 
 		/* Process next block of data */
 		i = inflate(&hibernate_state->hib_stream, Z_PARTIAL_FLUSH);
@@ -818,11 +817,11 @@ hibernate_deflate(union hibernate_info *hiber_info, paddr_t src,
 	vaddr_t hibernate_io_page = hiber_info->piglet_va + PAGE_SIZE;
 
 	/* Set up the stream for deflate */
-	hibernate_state->hib_stream.avail_in = PAGE_SIZE - (src & PAGE_MASK);
-	hibernate_state->hib_stream.avail_out = *remaining;
 	hibernate_state->hib_stream.next_in = (caddr_t)src;
+	hibernate_state->hib_stream.avail_in = PAGE_SIZE - (src & PAGE_MASK);
 	hibernate_state->hib_stream.next_out = (caddr_t)hibernate_io_page +
 	    (PAGE_SIZE - *remaining);
+	hibernate_state->hib_stream.avail_out = *remaining;
 
 	/* Process next block of data */
 	if (deflate(&hibernate_state->hib_stream, Z_PARTIAL_FLUSH) != Z_OK)
@@ -831,7 +830,7 @@ hibernate_deflate(union hibernate_info *hiber_info, paddr_t src,
 	/* Update pointers and return number of bytes consumed */
 	*remaining = hibernate_state->hib_stream.avail_out;
 	return (PAGE_SIZE - (src & PAGE_MASK)) -
-		hibernate_state->hib_stream.avail_in;
+	    hibernate_state->hib_stream.avail_in;
 }
 
 /*
@@ -1196,7 +1195,6 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 	vaddr_t hibernate_io_page = hiber_info->piglet_va + PAGE_SIZE;
 	daddr_t blkctr = hiber_info->image_offset;
 	int i;
-	psize_t rle;
 
 	hiber_info->chunk_ctr = 0;
 
@@ -1265,6 +1263,7 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 		while (inaddr < range_end) {
 			out_remaining = PAGE_SIZE;
 			while (out_remaining > 0 && inaddr < range_end) {
+				u_char rle;
 
 				/*
 				 * Adjust for regions that are not evenly
@@ -1275,16 +1274,16 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 				    hibernate_copy_page;
 
 				rle = uvm_page_rle(inaddr);
-				while (rle > 0 && inaddr < range_end) {
-					hibernate_state->hib_stream.avail_in =
-					    sizeof(psize_t);
-					hibernate_state->hib_stream.avail_out =
-					    out_remaining;
+				while (rle != 0 && inaddr < range_end) {
 					hibernate_state->hib_stream.next_in =
 					    (char *)&rle;
+					hibernate_state->hib_stream.avail_in =
+					    sizeof(rle);
 					hibernate_state->hib_stream.next_out =
 					    (caddr_t)hibernate_io_page +
 					    (PAGE_SIZE - out_remaining);
+					hibernate_state->hib_stream.avail_out =
+					    out_remaining;
 
 					if (deflate(&hibernate_state->hib_stream,
 					    Z_PARTIAL_FLUSH) != Z_OK)
@@ -1314,15 +1313,15 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 
 				/* Write '0' RLE code */
 				if (inaddr < range_end) {
-					hibernate_state->hib_stream.avail_in =
-					    sizeof(psize_t);
-					hibernate_state->hib_stream.avail_out =
-					    out_remaining;
 					hibernate_state->hib_stream.next_in =
 					    (char *)&rle;
+					hibernate_state->hib_stream.avail_in =
+					    sizeof(rle);
 					hibernate_state->hib_stream.next_out =
 				    	    (caddr_t)hibernate_io_page +
 					    (PAGE_SIZE - out_remaining);
+					hibernate_state->hib_stream.avail_out =
+					    out_remaining;
 
 					if (deflate(&hibernate_state->hib_stream,
 					    Z_PARTIAL_FLUSH) != Z_OK)
@@ -1384,11 +1383,11 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 			out_remaining = PAGE_SIZE;
 
 		/* Finish compress */
-		hibernate_state->hib_stream.avail_in = 0;
-		hibernate_state->hib_stream.avail_out = out_remaining;
 		hibernate_state->hib_stream.next_in = (caddr_t)inaddr;
+		hibernate_state->hib_stream.avail_in = 0;
 		hibernate_state->hib_stream.next_out =
 		    (caddr_t)hibernate_io_page + (PAGE_SIZE - out_remaining);
+		hibernate_state->hib_stream.avail_out = out_remaining;
 
 		if (deflate(&hibernate_state->hib_stream, Z_FINISH) !=
 		    Z_STREAM_END)
