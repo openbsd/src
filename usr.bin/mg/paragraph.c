@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.21 2011/11/28 23:37:32 matthew Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.22 2011/11/29 05:59:54 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -197,7 +197,7 @@ fillpara(int f, int n)
 			    curwp->w_doto == llength(curwp->w_dotp) ||
 			    (c = lgetc(curwp->w_dotp, curwp->w_doto)) == ' '
 			    || c == '\t') && (ISEOSP(wbuf[wordlen - 1]) ||
-			    (wbuf[wordlen - 1] == ')' && 
+			    (wbuf[wordlen - 1] == ')' && wordlen >= 2 &&
 			    ISEOSP(wbuf[wordlen - 2]))) &&
 			    wordlen < MAXWORD - 1)
 				wbuf[wordlen++] = ' ';
