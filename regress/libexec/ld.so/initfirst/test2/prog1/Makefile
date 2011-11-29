@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.1.1.1 2011/11/29 03:38:26 kurt Exp $
+# $OpenBSD: Makefile,v 1.1 2011/11/29 04:36:15 kurt Exp $
 
 .include <bsd.obj.mk>
 
-PROG=prog2
+PROG=prog1
 
-SRCS=prog2.C
+SRCS=prog1.C
 
 AA_DIR=${.CURDIR}/../libaa
 AA_OBJDIR!=    if [ -d $(AA_DIR)/${__objdir} ]; then \
@@ -52,6 +52,6 @@ NOMAN=
 CC=c++
 
 run-regress-${PROG}: ${PROG}
-	[ "`./${PROG}`" = "DBECAacebd" ]
+	[ "`./${PROG}`" = "DBECAPpacebd" ]
 
 .include <bsd.regress.mk>

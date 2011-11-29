@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 2011/11/08 23:51:02 guenther Exp $
+#	$OpenBSD: Makefile,v 1.1 2011/11/29 04:36:15 kurt Exp $
 
-LIB=		if2
+LIB=		if3
 SRCS=		lib.c
 LDADD+=		-Wl,-zinitfirst
 
