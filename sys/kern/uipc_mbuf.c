@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.161 2011/09/18 23:20:38 miod Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.162 2011/11/29 10:39:11 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -149,7 +149,7 @@ mbinit(void)
 		    mclsizes[i] >> 10);
 		pool_init(&mclpools[i], mclsizes[i], 0, 0, 0,
 		    mclnames[i], NULL);
-		pool_set_constraints(&mclpools[i], &kp_dma_contig); 
+		pool_set_constraints(&mclpools[i], &kp_dma_contig);
 		pool_setlowat(&mclpools[i], mcllowat);
 	}
 
@@ -283,7 +283,7 @@ m_clpool(u_int pktlen)
 	int pi;
 
 	for (pi = 0; pi < MCLPOOLS; pi++) {
-                if (pktlen <= mclsizes[pi])
+		if (pktlen <= mclsizes[pi])
 			return (pi);
 	}
 
@@ -923,8 +923,8 @@ m_adj(struct mbuf *mp, int req_len)
  * for a structure of size len).  Returns the resulting
  * mbuf chain on success, frees it and returns null on failure.
  */
-struct mbuf *   
-m_pullup(struct mbuf *n, int len)       
+struct mbuf *
+m_pullup(struct mbuf *n, int len)
 {
 	struct mbuf *m;
 	int count;
@@ -1013,7 +1013,7 @@ m_getptr(struct mbuf *m, int loc, int *off)
 		  			return (NULL);
 				}
 	    		} else {
-	      			m = m->m_next;
+				m = m->m_next;
 			}
 		}
     	}
@@ -1038,30 +1038,30 @@ m_inject(struct mbuf *m0, int len0, int siz, int wait)
 	unsigned len = len0, remain;
 
 	if ((siz >= MHLEN) || (len0 <= 0))
-	        return (NULL);
+		return (NULL);
 	for (m = m0; m && len > m->m_len; m = m->m_next)
 		len -= m->m_len;
 	if (m == NULL)
 		return (NULL);
 	remain = m->m_len - len;
 	if (remain == 0) {
-	        if ((m->m_next) && (M_LEADINGSPACE(m->m_next) >= siz)) {
-		        m->m_next->m_len += siz;
+		if ((m->m_next) && (M_LEADINGSPACE(m->m_next) >= siz)) {
+			m->m_next->m_len += siz;
 			if (m0->m_flags & M_PKTHDR)
 				m0->m_pkthdr.len += siz;
 			m->m_next->m_data -= siz;
 			return m->m_next;
 		}
 	} else {
-	        n2 = m_copym2(m, len, remain, wait);
+		n2 = m_copym2(m, len, remain, wait);
 		if (n2 == NULL)
-		        return (NULL);
+			return (NULL);
 	}
 
 	MGET(n, wait, MT_DATA);
 	if (n == NULL) {
-	        if (n2)
-		        m_freem(n2);
+		if (n2)
+			m_freem(n2);
 		return (NULL);
 	}
 
@@ -1070,13 +1070,13 @@ m_inject(struct mbuf *m0, int len0, int siz, int wait)
 		m0->m_pkthdr.len += siz;
 	m->m_len -= remain; /* Trim */
 	if (n2)	{
-	        for (n3 = n; n3->m_next != NULL; n3 = n3->m_next)
-		        ;
+		for (n3 = n; n3->m_next != NULL; n3 = n3->m_next)
+			;
 		n3->m_next = n2;
 	} else
-	        n3 = n;
+		n3 = n;
 	for (; n3->m_next != NULL; n3 = n3->m_next)
-	        ;
+		;
 	n3->m_next = m->m_next;
 	m->m_next = n;
 	return n;
@@ -1340,7 +1340,7 @@ m_print(void *v, int (*pr)(const char *, ...))
 	(*pr)("m_dat: %p m_pktdat: %p\n", m->m_dat, m->m_pktdat);
 	if (m->m_flags & M_PKTHDR) {
 		(*pr)("m_pkthdr.len: %i\tm_ptkhdr.rcvif: %p\t"
-		    "m_ptkhdr.rdomain: %u\n", m->m_pkthdr.len, 
+		    "m_ptkhdr.rdomain: %u\n", m->m_pkthdr.len,
 		    m->m_pkthdr.rcvif, m->m_pkthdr.rdomain);
 		(*pr)("m_ptkhdr.tags: %p\tm_pkthdr.tagsset: %hx\n",
 		    SLIST_FIRST(&m->m_pkthdr.tags), m->m_pkthdr.tagsset);
