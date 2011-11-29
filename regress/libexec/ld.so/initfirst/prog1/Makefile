@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2011/11/08 23:51:02 guenther Exp $
+# $OpenBSD: Makefile,v 1.2 2011/11/29 04:06:42 guenther Exp $
 
 PROGS=		prog1 prog2 prog3 prog4
 SRCS=		main.c
@@ -12,19 +12,21 @@ LDADD_prog1+=	-lnormal -lif1 -lif2
 LDADD_prog2+=	-lif1 -lnormal -lif2
 LDADD_prog3+=	-lif1 -lif2 -lnormal
 LDADD_prog4+=	-lif1 -lif2 -lif3
+CLEANFILES+=	${PROGS}
 
 REGRESS_TARGETS=do-prog1 do-prog2 do-prog3 do-prog4
 
 do-prog1: prog1
-	./prog1 | grep -v ^fini | cmp -s ${.CURDIR}/expected1 -
+	./prog1 | cmp -s ${.CURDIR}/expected1 -
 do-prog2: prog2
-	./prog2 | grep -v ^fini | cmp -s ${.CURDIR}/expected2 -
+	./prog2 | cmp -s ${.CURDIR}/expected2 -
 do-prog3: prog3
-	./prog3 | grep -v ^fini | cmp -s ${.CURDIR}/expected3 -
+	./prog3 | cmp -s ${.CURDIR}/expected3 -
 do-prog4: prog4
-	./prog4 | grep -v ^fini | cmp -s ${.CURDIR}/expected4 -
+	./prog4 | cmp -s ${.CURDIR}/expected4 -
 
 .include <bsd.regress.mk>
 
 ${PROGS}: ${LIBCRT0} ${OBJS} ${LIBC} ${CRTBEGIN} ${CRTEND} ${DPADD}
 	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD_${.TARGET}}
+

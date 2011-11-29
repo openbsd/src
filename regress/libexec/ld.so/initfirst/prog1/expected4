@@ -3,3 +3,6 @@ init if2
 init if3
 main
 func if1
+fini if1
+fini if2
+fini if3
