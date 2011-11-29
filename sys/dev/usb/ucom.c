@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.54 2011/07/03 19:38:50 deraadt Exp $ */
+/*	$OpenBSD: ucom.c,v 1.55 2011/11/29 17:15:44 deraadt Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -453,25 +453,24 @@ ucomopen(dev_t dev, int flag, int mode, struct proc *p)
 			SET(tp->t_state, TS_CARR_ON);
 		else
 			CLR(tp->t_state, TS_CARR_ON);
-	} else if (ISSET(tp->t_state, TS_XCLUDE) && suser(p, 0) != 0) {
-		error = EBUSY;
-		goto bad;
-	} else
+	} else if (ISSET(tp->t_state, TS_XCLUDE) && suser(p, 0) != 0)
+		return (EBUSY);
+	else
 		s = spltty();
 
 	if (UCOMCUA(dev)) {
 		if (ISSET(tp->t_state, TS_ISOPEN)) {
 			/* Someone is already dialed in */
-			error = EBUSY;
-			goto bad1;
+			splx(s);
+			return (EBUSY);
 		}
 		sc->sc_cua = 1;
 	} else {
 		/* tty (not cua) device, wait for carrier */
 		if (ISSET(flag, O_NONBLOCK)) {
 			if (sc->sc_cua) {
-				error = EBUSY;
-				goto bad1;
+				splx(s);
+				return (EBUSY);
 			}
 		} else {
 			while (sc->sc_cua || (!ISSET(tp->t_cflag, CLOCAL) &&
@@ -487,16 +486,13 @@ ucomopen(dev_t dev, int flag, int mode, struct proc *p)
 				 */
 				if (error && ISSET(tp->t_state, TS_WOPEN)) {
 					CLR(tp->t_state, TS_WOPEN);
-					goto bad1;
+					splx(s);
+					goto bad;
 				}
 			}
 		}
 	}
 	splx(s);
-
-	error = ttyopen(UCOMUNIT(dev), tp, p);
-	if (error)
-		goto bad;
 
 	error = (*LINESW(tp, l_open))(dev, tp, p);
 	if (error)
@@ -522,8 +518,6 @@ fail_0:
 	ucom_unlock(sc);
 	return (error);
 
-bad1:
-	splx(s);
 bad:
 	ucom_lock(sc);
 	ucom_cleanup(sc);
