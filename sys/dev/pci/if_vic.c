@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.76 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.77 2011/11/29 11:53:25 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -807,7 +807,7 @@ vic_intr(void *arg)
 
 	vic_write(sc, VIC_CMD, VIC_CMD_INTR_ACK);
 
-	return (1);
+	return (-1);
 }
 
 void
