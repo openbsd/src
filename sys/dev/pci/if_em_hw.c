@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.67 2011/10/19 07:29:42 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.68 2011/11/29 04:10:59 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -3973,7 +3973,9 @@ em_get_speed_and_duplex(struct em_hw *hw, uint16_t *speed, uint16_t *duplex)
 		if (ret_val)
 			return ret_val;
 	}
-	if ((hw->phy_type == em_phy_igp_3) && (*speed == SPEED_1000)) {
+	if ((hw->mac_type == em_ich8lan) &&
+	    (hw->phy_type == em_phy_igp_3) &&
+	    (*speed == SPEED_1000)) {
 		ret_val = em_kumeran_lock_loss_workaround(hw);
 		if (ret_val)
 			return ret_val;
