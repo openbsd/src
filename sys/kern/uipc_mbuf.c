@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.162 2011/11/29 10:39:11 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.163 2011/11/30 01:16:09 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -934,15 +934,15 @@ m_pullup(struct mbuf *n, int len)
 	 * without shifting current data, pullup into it,
 	 * otherwise allocate a new mbuf to prepend to the chain.
 	 */
-	if ((n->m_flags & M_EXT) == 0 &&
-	    n->m_data + len < &n->m_dat[MLEN] && n->m_next) {
+	if ((n->m_flags & M_EXT) == 0 && n->m_next &&
+	    n->m_data + len < &n->m_dat[MLEN]) {
 		if (n->m_len >= len)
 			return (n);
 		m = n;
 		n = n->m_next;
 		len -= m->m_len;
-	} else if ((n->m_flags & M_EXT) != 0 && len > MHLEN &&
-	    n->m_data + len < &n->m_data[MCLBYTES] && n->m_next) {
+	} else if ((n->m_flags & M_EXT) != 0 && len > MHLEN && n->m_next &&
+	    n->m_data + len < &n->m_ext.ext_buf[n->m_ext.ext_size]) {
 		if (n->m_len >= len)
 			return (n);
 		m = n;
