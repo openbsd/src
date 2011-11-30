@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.34 2011/04/05 11:48:28 blambert Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.35 2011/11/30 10:26:56 dlg Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -91,10 +91,6 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 	/* check invalid arguments. */
 	if (m == NULL)
 		panic("m == NULL in m_pulldown()");
-	if (len > MCLBYTES) {
-		m_freem(m);
-		return (NULL);	/* impossible */
-	}
 
 	if ((n = m_getptr(m, off, &off)) == NULL) {
 		m_freem(m);
@@ -180,9 +176,13 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 	 * now, we need to do the hard way.  don't m_copy as there's no room
 	 * on both ends.
 	 */
+	if (len > MAXMCLBYTES) {
+		m_freem(m);
+		return (NULL);
+	}
 	MGET(o, M_DONTWAIT, m->m_type);
 	if (o && len > MLEN) {
-		MCLGET(o, M_DONTWAIT);
+		MCLGETI(o, M_DONTWAIT, NULL, len);
 		if ((o->m_flags & M_EXT) == 0) {
 			m_free(o);
 			o = NULL;
@@ -217,7 +217,7 @@ m_dup1(struct mbuf *m, int off, int len, int wait)
 	struct mbuf *n;
 	int l;
 
-	if (len > MCLBYTES)
+	if (len > MAXMCLBYTES)
 		return (NULL);
 	if (off == 0 && (m->m_flags & M_PKTHDR) != 0) {
 		MGETHDR(n, wait, m->m_type);
@@ -233,7 +233,7 @@ m_dup1(struct mbuf *m, int off, int len, int wait)
 		l = MLEN;
 	}
 	if (n && len > l) {
-		MCLGET(n, wait);
+		MCLGETI(n, wait, NULL, len);
 		if ((n->m_flags & M_EXT) == 0) {
 			m_free(n);
 			n = NULL;

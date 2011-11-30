@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.92 2011/07/18 07:07:52 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.93 2011/11/30 10:26:56 dlg Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -137,6 +137,8 @@
 					/* 2K cluster can hold Ether frame */
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 #define	MCLOFSET	(MCLBYTES - 1)
+
+#define MAXMCLBYTES	(64 * 1024)	/* largest cluster from the stack */
 
 /*
  * File system parameters and macros.

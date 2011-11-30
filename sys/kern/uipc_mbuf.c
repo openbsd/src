@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.163 2011/11/30 01:16:09 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.164 2011/11/30 10:26:56 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ u_int	mclsizes[] = {
 	9 * 1024,
 	12 * 1024,
 	16 * 1024,
-	64 * 1024
+	MAXMCLBYTES	/* 64k */
 };
 static	char mclnames[MCLPOOLS][8];
 struct	pool mclpools[MCLPOOLS];
@@ -949,13 +949,13 @@ m_pullup(struct mbuf *n, int len)
 		n = n->m_next;
 		len -= m->m_len;
 	} else {
-		if (len > MCLBYTES)
+		if (len > MAXMCLBYTES)
 			goto bad;
 		MGET(m, M_DONTWAIT, n->m_type);
 		if (m == NULL)
 			goto bad;
 		if (len > MHLEN) {
-			MCLGET(m, M_DONTWAIT);
+			MCLGETI(m, M_DONTWAIT, NULL, len);
 			if ((m->m_flags & M_EXT) == 0) {
 				m_free(m);
 				goto bad;

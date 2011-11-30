@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.54 2011/07/29 12:59:28 blambert Exp $
+.\"     $OpenBSD: mbuf.9,v 1.55 2011/11/30 10:26:56 dlg Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 29 2011 $
+.Dd $Mdocdate: November 30 2011 $
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -265,7 +265,7 @@ variable is valid.
 .Pp
 An external cluster is used when the data to hold in the mbuf is
 large.
-The size of an external cluster is MCLBYTES
+The size of an external cluster is between MCLBYTES and MAXMCLBYTES
 .Pq also defined in Aq Pa sys/param.h .
 A cluster should be used when the size of the data reach MINCLSIZE
 (the minimum size to be held by an external cluster).
@@ -467,8 +467,9 @@ Ensure that the data in the mbuf chain starting at
 and ending at
 .Fa off+len
 will be put in a continuous memory region.
+If memory must be allocated, then it will fail if the
 .Fa len
-must be smaller than or equal to MCLBYTES.
+argument is greater than MAXCLBYTES.
 The pointer returned points to an mbuf in the chain and the new offset
 for data in this mbuf is
 .Fa *offp .
@@ -480,9 +481,9 @@ Ensure that the data in the mbuf chain starting at the beginning of
 the chain and ending at
 .Fa len
 will be put in continuous memory region.
-The
+If memory must be allocated, then it will fail if the
 .Fa len
-argument must be smaller than or equal to MCLBYTES.
+argument is greater than MAXCLBYTES.
 If this function fails,
 .Fa n
 is freed.
