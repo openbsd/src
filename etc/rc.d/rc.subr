@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.55 2011/10/15 16:05:15 halex Exp $
+#	$OpenBSD: rc.subr,v 1.56 2011/11/30 08:06:02 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -40,7 +40,7 @@ rc_read_runfile() {
 }
 
 rc_rm_runfile() {
-	[ -f ${_RC_RUNFILE} ] && rm ${_RC_RUNFILE}
+	[ -f ${_RC_RUNFILE} ] && rm -f ${_RC_RUNFILE}
 }
 
 rc_start() {
