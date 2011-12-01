@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-key.c,v 1.40 2011/11/15 23:34:12 nicm Exp $ */
+/* $OpenBSD: mode-key.c,v 1.41 2011/12/01 20:44:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -141,6 +141,8 @@ const struct mode_key_entry mode_key_vi_edit[] = {
 	{ KEYC_LEFT,		0, MODEKEYEDIT_CURSORLEFT },
 	{ KEYC_RIGHT,		0, MODEKEYEDIT_CURSORRIGHT },
 	{ KEYC_UP,		0, MODEKEYEDIT_HISTORYUP },
+	{ KEYC_HOME,		0, MODEKEYEDIT_STARTOFLINE },
+	{ KEYC_END,		0, MODEKEYEDIT_ENDOFLINE },
 
 	{ '$',			1, MODEKEYEDIT_ENDOFLINE },
 	{ '0',			1, MODEKEYEDIT_STARTOFLINE },
@@ -289,6 +291,8 @@ const struct mode_key_entry mode_key_emacs_edit[] = {
 	{ KEYC_LEFT,		0, MODEKEYEDIT_CURSORLEFT },
 	{ KEYC_RIGHT,		0, MODEKEYEDIT_CURSORRIGHT },
 	{ KEYC_UP,		0, MODEKEYEDIT_HISTORYUP },
+	{ KEYC_HOME,		0, MODEKEYEDIT_STARTOFLINE },
+	{ KEYC_END,		0, MODEKEYEDIT_ENDOFLINE },
 
 	{ 0,		       -1, 0 }
 };
