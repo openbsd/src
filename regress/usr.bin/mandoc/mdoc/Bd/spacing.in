@@ -1,0 +1,12 @@
+.Dd November 22, 2011
+.Dt BD-SPACING 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bd-spacing
+.Nd vertical spacing around display blocks
+.Sh DESCRIPTION
+preceding text
+.Bd -ragged -offset indent
+display block
+.Ed
+following text

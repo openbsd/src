@@ -1,0 +1,12 @@
+BD-SPACING(1)              OpenBSD Reference Manual              BD-SPACING(1)
+
+NNAAMMEE
+     BBdd--ssppaacciinngg - vertical spacing around display blocks
+
+DDEESSCCRRIIPPTTIIOONN
+     preceding text
+
+           display block
+     following text
+
+OpenBSD                        November 22, 2011                       OpenBSD
