@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.15 2011/11/29 22:30:56 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.16 2011/12/01 23:22:09 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -626,9 +626,6 @@ index_merge(const struct of *of, struct mparse *mp,
 			val.size = sizeof(struct db_val);
 			val.data = &vbuf;
 
-			if (verb > 1)
-				printf("%s: Added keyword: %s\n", 
-						fn, (char *)key.data);
 			dbt_put(db, dbf, &key, &val);
 		}
 		if (ch < 0) {
@@ -652,6 +649,7 @@ index_merge(const struct of *of, struct mparse *mp,
 
 		if (verb)
 			printf("%s: Added index\n", fn);
+
 		dbt_put(idx, idxf, &key, &val);
 	}
 }
@@ -668,7 +666,7 @@ index_prune(const struct of *ofile, DB *db, const char *dbf,
 		recno_t *maxrec, recno_t **recs, size_t *recsz)
 {
 	const struct of	*of;
-	const char	*fn;
+	const char	*fn, *cp;
 	struct db_val	*vbuf;
 	unsigned	 seq, sseq;
 	DBT		 key, val;
@@ -680,18 +678,32 @@ index_prune(const struct of *ofile, DB *db, const char *dbf,
 	while (0 == (ch = (*idx->seq)(idx, &key, &val, seq))) {
 		seq = R_NEXT;
 		*maxrec = *(recno_t *)key.data;
-		if (0 == val.size) {
-			if (reccur >= *recsz) {
-				*recsz += MANDOC_SLOP;
-				*recs = mandoc_realloc(*recs, 
-					*recsz * sizeof(recno_t));
-			}
-			(*recs)[(int)reccur] = *maxrec;
-			reccur++;
-			continue;
-		}
+		cp = val.data;
 
-		fn = (char *)val.data;
+		/* Deleted records are zero-sized.  Skip them. */
+
+		if (0 == val.size)
+			goto cont;
+
+		/*
+		 * Make sure we're sane.
+		 * Read past our mdoc/man/cat type to the next string,
+		 * then make sure it's bounded by a NUL.
+		 * Failing any of these, we go into our error handler.
+		 */
+
+		if (NULL == (fn = memchr(cp, '\0', val.size)))
+			break;
+		if (++fn - cp >= (int)val.size)
+			break;
+		if (NULL == memchr(fn, '\0', val.size - (fn - cp)))
+			break;
+
+		/* 
+		 * Search for the file in those we care about.
+		 * XXX: build this into a tree.  Too slow.
+		 */
+
 		for (of = ofile; of; of = of->next)
 			if (0 == strcmp(fn, of->fname))
 				break;
@@ -699,22 +711,30 @@ index_prune(const struct of *ofile, DB *db, const char *dbf,
 		if (NULL == of)
 			continue;
 
+		/*
+		 * Search through the keyword database, throwing out all
+		 * references to our file.
+		 */
+
 		sseq = R_FIRST;
 		while (0 == (ch = (*db->seq)(db, &key, &val, sseq))) {
 			sseq = R_NEXT;
-			assert(sizeof(struct db_val) == val.size);
+			if (sizeof(struct db_val) != val.size)
+				break;
+
 			vbuf = val.data;
 			if (*maxrec != vbuf->rec)
 				continue;
-			if (verb)
-				printf("%s: Deleted keyword: %s\n", 
-						fn, (char *)key.data);
-			ch = (*db->del)(db, &key, R_CURSOR);
-			if (ch < 0)
+
+			if ((ch = (*db->del)(db, &key, R_CURSOR)) < 0)
 				break;
 		}
+
 		if (ch < 0) {
 			perror(dbf);
+			exit((int)MANDOCLEVEL_SYSERR);
+		} else if (1 != ch) {
+			fprintf(stderr, "%s: Corrupt database\n", dbf);
 			exit((int)MANDOCLEVEL_SYSERR);
 		}
 
@@ -723,11 +743,10 @@ index_prune(const struct of *ofile, DB *db, const char *dbf,
 
 		val.size = 0;
 		ch = (*idx->put)(idx, &key, &val, R_CURSOR);
-		if (ch < 0) {
-			perror(idxf);
-			exit((int)MANDOCLEVEL_SYSERR);
-		}
 
+		if (ch < 0)
+			break;
+cont:
 		if (reccur >= *recsz) {
 			*recsz += MANDOC_SLOP;
 			*recs = mandoc_realloc
@@ -737,6 +756,15 @@ index_prune(const struct of *ofile, DB *db, const char *dbf,
 		(*recs)[(int)reccur] = *maxrec;
 		reccur++;
 	}
+
+	if (ch < 0) {
+		perror(idxf);
+		exit((int)MANDOCLEVEL_SYSERR);
+	} else if (1 != ch) {
+		fprintf(stderr, "%s: Corrupt index\n", idxf);
+		exit((int)MANDOCLEVEL_SYSERR);
+	}
+
 	(*maxrec)++;
 }
 
