@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.259 2011/10/06 21:16:01 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.260 2011/12/01 16:44:29 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1178,12 +1178,13 @@ getuint(struct disklabel *lp, char *prompt, char *helpstring,
 					buf[--n] = '\0';
 					break;
 				case 'b':
-					mult = -lp->d_secsize;
+					mult = -(int64_t)lp->d_secsize;
 					buf[--n] = '\0';
 					break;
 				case 'k':
 					if (lp->d_secsize > 1024)
-						mult = -lp->d_secsize / 1024LL;
+						mult = -(int64_t)lp->d_secsize /
+						    1024LL;
 					else
 						mult = 1024LL / lp->d_secsize;
 					buf[--n] = '\0';
@@ -1948,7 +1949,7 @@ get_size(struct disklabel *lp, int partno)
 	else if (ui == ULLONG_MAX)
 		fputs("Invalid entry\n", stderr);
 	else if (ui == 0)
-		fputs("The size must be > 0\n", stderr);
+		fputs("The size must be > 0 sectors\n", stderr);
 	else if (ui + DL_GETPOFFSET(pp) > ending_sector)
 		fprintf(stderr, "The size can't be more than "
 		    "%llu sectors, or the partition would\n"
