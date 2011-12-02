@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.32 2011/11/20 22:54:51 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.33 2011/12/02 10:29:01 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -32,7 +32,6 @@ struct dev {
 	struct aparams reqipar, reqopar;	/* parameters */
 	unsigned reqbufsz;			/* buffer size */
 	unsigned reqround;			/* block size */
-	unsigned reqrate;			/* sample rate */
 	unsigned hold;				/* hold the device open ? */
 	unsigned autovol;			/* auto adjust playvol ? */
 	unsigned autostart;			/* don't wait for MMC start */
