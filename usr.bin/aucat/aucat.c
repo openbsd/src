@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.126 2011/11/20 22:54:51 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.127 2011/12/02 10:34:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -531,7 +531,7 @@ main(int argc, char **argv)
 			mkdev("loopback", MODE_LOOP, bufsz, round, 1, autovol);
 			break;
 		case 'M':
-			mkdev("midithru", MODE_THRU, 0, 0, 1, 0);
+			mkdev("midithru", MODE_THRU, 0, 0, hold, 0);
 			break;
 		case 'l':
 			background = 1;
@@ -608,7 +608,7 @@ main(int argc, char **argv)
 			dnext = d->next;
 			if (!dev_run(d))
 				goto fatal;
-			if (!dev_idle(d))
+			if (d->refcnt > 0)
 				active = 1;
 		}
 		if (dev_list == NULL)

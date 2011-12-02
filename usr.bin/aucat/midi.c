@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.39 2011/11/20 22:54:51 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.40 2011/12/02 10:34:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -19,9 +19,6 @@
  *
  * use shadow variables (to save NRPNs, LSB of controller) 
  * in the midi merger
- *
- * make output and input identical when only one
- * input is used (fix running status)
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -75,25 +72,71 @@ unsigned voice_len[] = { 3, 3, 3, 3, 2, 2, 3 };
 unsigned common_len[] = { 0, 2, 3, 2, 0, 0, 1, 1 };
 
 /*
- * send the message stored in of ibuf->r.midi.msg to obuf
+ * call-back invoked periodically to implement throttling; at each invocation
+ * gain more ``tickets'' for processing.  If one of the buffer was blocked by
+ * the throttelling mechanism, then run it
  */
 void
-thru_flush(struct abuf *ibuf, struct abuf *obuf)
+midi_cb(void *addr)
 {
-	unsigned ocount, itodo;
-	unsigned char *odata, *idata;
+	struct aproc *p = (struct aproc *)addr;
+	struct abuf *i, *inext;
+	unsigned tickets;
 
-	itodo = ibuf->r.midi.used;
-	idata = ibuf->r.midi.msg;
-#ifdef DEBUG
-	if (debug_level >= 4) {
-		abuf_dbg(obuf);
-		dbg_puts(": flushing ");
-		dbg_putu(itodo);
-		dbg_puts(" byte message\n");
+	timo_add(&p->u.midi.timo, MIDITHRU_TIMO);
+	
+	for (i = LIST_FIRST(&p->ins); i != NULL; i = inext) {
+		inext = LIST_NEXT(i, ient);
+		tickets = i->tickets;
+		i->tickets = MIDITHRU_XFER;
+		if (tickets == 0)
+			abuf_run(i);
 	}
-#endif
-	while (itodo > 0) {
+}
+
+void
+midi_msg_info(struct aproc *p, int slot, char *msg)
+{
+	struct ctl_slot *s;
+	struct sysex *x = (struct sysex *)msg;
+
+	s = p->u.midi.dev->slot + slot;
+	memset(x, 0, sizeof(struct sysex));
+	x->start = SYSEX_START;
+	x->type = SYSEX_TYPE_EDU;
+	x->id0 = SYSEX_AUCAT;
+	x->id1 = SYSEX_AUCAT_MIXINFO;
+	if (*s->name != '\0') {
+		snprintf(x->u.mixinfo.name,
+		    SYSEX_NAMELEN, "%s%u", s->name, s->unit);
+	}
+	x->u.mixinfo.chan = slot;
+	x->u.mixinfo.end = SYSEX_END;
+}
+
+void
+midi_msg_vol(struct aproc *p, int slot, char *msg)
+{
+	struct ctl_slot *s;
+
+	s = p->u.midi.dev->slot + slot;	
+	msg[0] = MIDI_CTL | slot;
+	msg[1] = MIDI_CTLVOL;
+	msg[2] = s->vol;
+}
+
+/*
+ * send a message to the given output
+ */
+void
+midi_copy(struct abuf *ibuf, struct abuf *obuf, unsigned char *msg, unsigned len)
+{
+	unsigned ocount;
+	unsigned char *odata;
+
+	if (msg[0] == SYSEX_START)
+		obuf->w.midi.owner = ibuf;
+	while (len > 0) {
 		if (!ABUF_WOK(obuf)) {
 #ifdef DEBUG
 			if (debug_level >= 3) {
@@ -109,277 +152,8 @@ thru_flush(struct abuf *ibuf, struct abuf *obuf)
 			return;
 		}
 		odata = abuf_wgetblk(obuf, &ocount, 0);
-		if (ocount > itodo)
-			ocount = itodo;
-		memcpy(odata, idata, ocount);
-		abuf_wcommit(obuf, ocount);
-		itodo -= ocount;
-		idata += ocount;
-	}
-	ibuf->r.midi.used = 0;
-	obuf->w.midi.owner = ibuf;
-}
-
-/*
- * send the real-time message (one byte) to obuf, similar to thru_flush()
- */
-void
-thru_rt(struct abuf *ibuf, struct abuf *obuf, unsigned c)
-{
-	unsigned ocount;
-	unsigned char *odata;
-
-#ifdef DEBUG
-	if (debug_level >= 4) {
-		abuf_dbg(obuf);
-		dbg_puts(": ");
-		dbg_putx(c);
-		dbg_puts(": flushing realtime message\n");
-	}
-#endif
-	if (c == MIDI_ACK)
-		return;
-	if (!ABUF_WOK(obuf)) {
-#ifdef DEBUG
-		if (debug_level >= 3) {
-			abuf_dbg(obuf);
-			dbg_puts(": overrun, discarding ");
-			dbg_putu(obuf->used);
-			dbg_puts(" bytes\n");
-		}
-#endif
-		abuf_rdiscard(obuf, obuf->used);
-		if (obuf->w.midi.owner == ibuf)
-			obuf->w.midi.owner = NULL;
-	}
-	odata = abuf_wgetblk(obuf, &ocount, 0);
-	odata[0] = c;
-	abuf_wcommit(obuf, 1);
-}
-
-/*
- * parse ibuf contents and store each message into obuf,
- * use at most ``todo'' bytes (for throttling)
- */
-void
-thru_bcopy(struct abuf *ibuf, struct abuf *obuf, unsigned todo)
-{
-	unsigned char *idata;
-	unsigned c, icount, ioffs;
-
-	idata = NULL;
-	icount = ioffs = 0;
-	for (;;) {
-		if (icount == 0) {
-			if (todo == 0)
-				break;
-			idata = abuf_rgetblk(ibuf, &icount, ioffs);
-			if (icount > todo)
-				icount = todo;
-			if (icount == 0)
-				break;
-			todo -= icount;
-			ioffs += icount;
-		}
-		c = *idata++;
-		icount--;
-		if (c < 0x80) {
-			if (ibuf->r.midi.idx == 0 && ibuf->r.midi.st) {
-				ibuf->r.midi.msg[ibuf->r.midi.used++] = ibuf->r.midi.st;
-				ibuf->r.midi.idx++;
-			}
-			ibuf->r.midi.msg[ibuf->r.midi.used++] = c;
-			ibuf->r.midi.idx++;
-			if (ibuf->r.midi.idx == ibuf->r.midi.len) {
-				thru_flush(ibuf, obuf);
-				if (ibuf->r.midi.st >= 0xf0)
-					ibuf->r.midi.st = 0;
-				ibuf->r.midi.idx = 0;
-			}
-			if (ibuf->r.midi.used == MIDI_MSGMAX) {
-				if (ibuf->r.midi.used == ibuf->r.midi.idx ||
-				    obuf->w.midi.owner == ibuf)
-					thru_flush(ibuf, obuf);
-				else
-					ibuf->r.midi.used = 0;
-			}
-		} else if (c < 0xf8) {
-			if (ibuf->r.midi.used == ibuf->r.midi.idx ||
-			    obuf->w.midi.owner == ibuf) {
-				thru_flush(ibuf, obuf);
-			} else
-				ibuf->r.midi.used = 0;
-			ibuf->r.midi.msg[0] = c;
-			ibuf->r.midi.used = 1;
-			ibuf->r.midi.len = (c >= 0xf0) ? 
-			    common_len[c & 7] :
-			    voice_len[(c >> 4) & 7];
-			if (ibuf->r.midi.len == 1) {
-				thru_flush(ibuf, obuf);
-				ibuf->r.midi.idx = 0;
-				ibuf->r.midi.st = 0;
-				ibuf->r.midi.len = 0;
-			} else { 
-				ibuf->r.midi.st = c;
-				ibuf->r.midi.idx = 1;
-			}
-		} else {
-			thru_rt(ibuf, obuf, c);
-		}
-	}
-}
-
-int
-thru_in(struct aproc *p, struct abuf *ibuf)
-{
-	struct abuf *i, *inext;
-	unsigned todo;
-
-	if (!ABUF_ROK(ibuf))
-		return 0;
-	if (ibuf->tickets == 0) {
-#ifdef DEBUG
-		if (debug_level >= 4) {
-			abuf_dbg(ibuf);
-			dbg_puts(": out of tickets, blocking\n");
-		}
-#endif
-		return 0;
-	}
-	todo = ibuf->used;
-	if (todo > ibuf->tickets)
-		todo = ibuf->tickets;
-	ibuf->tickets -= todo;
-	for (i = LIST_FIRST(&p->outs); i != NULL; i = inext) {
-		inext = LIST_NEXT(i, oent);
-		if (ibuf->duplex == i)
-			continue;
-		thru_bcopy(ibuf, i, todo);
-		(void)abuf_flush(i);
-	}
-	abuf_rdiscard(ibuf, todo);
-	return 1;
-}
-
-int
-thru_out(struct aproc *p, struct abuf *obuf)
-{
-	return 0;
-}
-
-void
-thru_eof(struct aproc *p, struct abuf *ibuf)
-{
-	if (!(p->flags & APROC_QUIT))
-		return;
-	if (LIST_EMPTY(&p->ins))
-		aproc_del(p);
-}
-
-void
-thru_hup(struct aproc *p, struct abuf *obuf)
-{
-	if (!(p->flags & APROC_QUIT))
-		return;
-	if (LIST_EMPTY(&p->ins))
-		aproc_del(p);
-}
-
-void
-thru_newin(struct aproc *p, struct abuf *ibuf)
-{
-	ibuf->r.midi.used = 0;
-	ibuf->r.midi.len = 0;
-	ibuf->r.midi.idx = 0;
-	ibuf->r.midi.st = 0;
-	ibuf->tickets = MIDITHRU_XFER;
-}
-
-void
-thru_newout(struct aproc *p, struct abuf *obuf)
-{
-	obuf->w.midi.owner = NULL;
-}
-
-void
-thru_done(struct aproc *p)
-{
-	timo_del(&p->u.thru.timo);
-}
-
-struct aproc_ops thru_ops = {
-	"thru",
-	thru_in,
-	thru_out,
-	thru_eof,
-	thru_hup,
-	thru_newin,
-	thru_newout,
-	NULL, /* ipos */
-	NULL, /* opos */
-	thru_done
-};
-
-/*
- * call-back invoked periodically to implement throttling at each invocation
- * gain more ``tickets'' for processing.  If one of the buffer was blocked by
- * the throttelling mechanism, then run it
- */
-void
-thru_cb(void *addr)
-{
-	struct aproc *p = (struct aproc *)addr;
-	struct abuf *i, *inext;
-	unsigned tickets;
-
-	timo_add(&p->u.thru.timo, MIDITHRU_TIMO);
-	
-	for (i = LIST_FIRST(&p->ins); i != NULL; i = inext) {
-		inext = LIST_NEXT(i, ient);
-		tickets = i->tickets;
-		i->tickets = MIDITHRU_XFER;
-		if (tickets == 0)
-			abuf_run(i);
-	}
-}
-
-struct aproc *
-thru_new(char *name)
-{
-	struct aproc *p;
-
-	p = aproc_new(&thru_ops, name);
-	timo_set(&p->u.thru.timo, thru_cb, p);
-	timo_add(&p->u.thru.timo, MIDITHRU_TIMO);
-	return p;
-}
-
-/*
- * send a message to the given output
- */
-void
-ctl_copymsg(struct abuf *obuf, unsigned char *msg, unsigned len)
-{
-	unsigned ocount, itodo;
-	unsigned char *odata, *idata;
-
-	itodo = len;
-	idata = msg;
-	while (itodo > 0) {
-		if (!ABUF_WOK(obuf)) {
-#ifdef DEBUG
-			if (debug_level >= 3) {
-				abuf_dbg(obuf);
-				dbg_puts(": overrun, discarding ");
-				dbg_putu(obuf->used);
-				dbg_puts(" bytes\n");
-			}
-#endif
-			abuf_rdiscard(obuf, obuf->used);
-		}
-		odata = abuf_wgetblk(obuf, &ocount, 0);
-		if (ocount > itodo)
-			ocount = itodo;
+		if (ocount > len)
+			ocount = len;
 #ifdef DEBUG
 		if (debug_level >= 4) {
 			abuf_dbg(obuf);
@@ -388,10 +162,27 @@ ctl_copymsg(struct abuf *obuf, unsigned char *msg, unsigned len)
 			dbg_puts(" bytes\n");
 		}
 #endif
-		memcpy(odata, idata, ocount);
+		memcpy(odata, msg, ocount);
 		abuf_wcommit(obuf, ocount);
-		itodo -= ocount;
-		idata += ocount;
+		len -= ocount;
+		msg += ocount;
+	}
+}
+
+/*
+ * flush all buffers. Since most of the MIDI traffic is broadcasted to
+ * all outputs, the flush is delayed to avoid flushing all outputs for
+ * each message.
+ */
+void
+midi_flush(struct aproc *p)
+{
+	struct abuf *i, *inext;
+
+	for (i = LIST_FIRST(&p->outs); i != NULL; i = inext) {
+		inext = LIST_NEXT(i, oent);
+		if (ABUF_ROK(i))
+			(void)abuf_flush(i);
 	}
 }
 
@@ -400,7 +191,7 @@ ctl_copymsg(struct abuf *obuf, unsigned char *msg, unsigned len)
  * ie. don't sent back the message to the sender
  */
 void
-ctl_sendmsg(struct aproc *p, struct abuf *ibuf, unsigned char *msg, unsigned len)
+midi_send(struct aproc *p, struct abuf *ibuf, unsigned char *msg, unsigned len)
 {
 	struct abuf *i, *inext;
 
@@ -408,8 +199,7 @@ ctl_sendmsg(struct aproc *p, struct abuf *ibuf, unsigned char *msg, unsigned len
 		inext = LIST_NEXT(i, oent);
 		if (i->duplex && i->duplex == ibuf)
 			continue;
-		ctl_copymsg(i, msg, len);
-		(void)abuf_flush(i);
+		midi_copy(ibuf, i, msg, len);
 	}
 }
 
@@ -417,77 +207,69 @@ ctl_sendmsg(struct aproc *p, struct abuf *ibuf, unsigned char *msg, unsigned len
  * send a quarter frame MTC message
  */
 void
-ctl_qfr(struct aproc *p, unsigned rate, int delta)
+midi_send_qfr(struct aproc *p, unsigned rate, int delta)
 {
 	unsigned char buf[2];
 	unsigned data;
 	int qfrlen;
 
-	p->u.ctl.delta += delta * MTC_SEC;
-
-	/*
-	 * don't send ticks during the count-down
-	 * XXX: test not useful, given while() condition
-	 */
-	if (p->u.ctl.delta < 0)
-		return;
-
-	qfrlen = rate * (MTC_SEC / (4 * p->u.ctl.fps));
-	while (p->u.ctl.delta >= qfrlen) {
-		switch (p->u.ctl.qfr) {
+	p->u.midi.delta += delta * MTC_SEC;
+	qfrlen = rate * (MTC_SEC / (4 * p->u.midi.fps));
+	while (p->u.midi.delta >= qfrlen) {
+		switch (p->u.midi.qfr) {
 		case 0:
-			data = p->u.ctl.fr & 0xf;
+			data = p->u.midi.fr & 0xf;
 			break;
 		case 1:
-			data = p->u.ctl.fr >> 4;
+			data = p->u.midi.fr >> 4;
 			break;
 		case 2:
-			data = p->u.ctl.sec & 0xf;
+			data = p->u.midi.sec & 0xf;
 			break;
 		case 3:
-			data = p->u.ctl.sec >> 4;
+			data = p->u.midi.sec >> 4;
 			break;
 		case 4:
-			data = p->u.ctl.min & 0xf;
+			data = p->u.midi.min & 0xf;
 			break;
 		case 5:
-			data = p->u.ctl.min >> 4;
+			data = p->u.midi.min >> 4;
 			break;
 		case 6:
-			data = p->u.ctl.hr & 0xf;
+			data = p->u.midi.hr & 0xf;
 			break;
 		case 7:
-			data = (p->u.ctl.hr >> 4) | (p->u.ctl.fps_id << 1);
+			data = (p->u.midi.hr >> 4) | (p->u.midi.fps_id << 1);
 			/*
 			 * tick messages are sent 2 frames ahead
 			 */
-			p->u.ctl.fr += 2;
-			if (p->u.ctl.fr < p->u.ctl.fps)
+			p->u.midi.fr += 2;
+			if (p->u.midi.fr < p->u.midi.fps)
 				break;
-			p->u.ctl.fr -= p->u.ctl.fps;
-			p->u.ctl.sec++;
-			if (p->u.ctl.sec < 60)
+			p->u.midi.fr -= p->u.midi.fps;
+			p->u.midi.sec++;
+			if (p->u.midi.sec < 60)
 				break;
-			p->u.ctl.sec = 0;
-			p->u.ctl.min++;
-			if (p->u.ctl.min < 60)
+			p->u.midi.sec = 0;
+			p->u.midi.min++;
+			if (p->u.midi.min < 60)
 				break;
-			p->u.ctl.min = 0;
-			p->u.ctl.hr++;
-			if (p->u.ctl.hr < 24)
+			p->u.midi.min = 0;
+			p->u.midi.hr++;
+			if (p->u.midi.hr < 24)
 				break;
-			p->u.ctl.hr = 0;
+			p->u.midi.hr = 0;
 			break;
 		default:
 			/* NOTREACHED */
 			data = 0;
 		}
 		buf[0] = 0xf1;
-		buf[1] = (p->u.ctl.qfr << 4) | data;
-		p->u.ctl.qfr++;
-		p->u.ctl.qfr &= 7;
-		ctl_sendmsg(p, NULL, buf, 2);
-		p->u.ctl.delta -= qfrlen;
+		buf[1] = (p->u.midi.qfr << 4) | data;
+		p->u.midi.qfr++;
+		p->u.midi.qfr &= 7;
+		midi_send(p, NULL, buf, 2);
+		p->u.midi.delta -= qfrlen;
 	}
 }
 
@@ -495,95 +277,64 @@ ctl_qfr(struct aproc *p, unsigned rate, int delta)
  * send a full frame MTC message
  */
 void
-ctl_full(struct aproc *p, unsigned origin, unsigned rate, unsigned round, unsigned pos)
+midi_send_full(struct aproc *p, unsigned origin, unsigned rate, unsigned round, unsigned pos)
 {
 	unsigned char buf[10];
 	unsigned fps;
 
-	p->u.ctl.delta = MTC_SEC * pos;
+	p->u.midi.delta = MTC_SEC * pos;
 	if (rate % (30 * 4 * round) == 0) {
-		p->u.ctl.fps_id = MTC_FPS_30;
-		p->u.ctl.fps = 30;
+		p->u.midi.fps_id = MTC_FPS_30;
+		p->u.midi.fps = 30;
 	} else if (rate % (25 * 4 * round) == 0) {
-		p->u.ctl.fps_id = MTC_FPS_25;
-		p->u.ctl.fps = 25;
+		p->u.midi.fps_id = MTC_FPS_25;
+		p->u.midi.fps = 25;
 	} else {
-		p->u.ctl.fps_id = MTC_FPS_24;
-		p->u.ctl.fps = 24;
+		p->u.midi.fps_id = MTC_FPS_24;
+		p->u.midi.fps = 24;
 	}
 #ifdef DEBUG
 	if (debug_level >= 3) {
 		aproc_dbg(p);
 		dbg_puts(": mtc full frame at ");
-		dbg_puti(p->u.ctl.delta);
+		dbg_puti(p->u.midi.delta);
 		dbg_puts(", ");
-		dbg_puti(p->u.ctl.fps);
+		dbg_puti(p->u.midi.fps);
 		dbg_puts(" fps\n");
 	}
 #endif
-	fps = p->u.ctl.fps;
-	p->u.ctl.hr =  (origin / (3600 * MTC_SEC)) % 24;
-	p->u.ctl.min = (origin / (60 * MTC_SEC))   % 60;
-	p->u.ctl.sec = (origin / MTC_SEC)          % 60;
-	p->u.ctl.fr =  (origin / (MTC_SEC / fps))  % fps;
+	fps = p->u.midi.fps;
+	p->u.midi.hr =  (origin / (3600 * MTC_SEC)) % 24;
+	p->u.midi.min = (origin / (60 * MTC_SEC))   % 60;
+	p->u.midi.sec = (origin / MTC_SEC)          % 60;
+	p->u.midi.fr =  (origin / (MTC_SEC / fps))  % fps;
 
 	buf[0] = 0xf0;
 	buf[1] = 0x7f;
 	buf[2] = 0x7f;
 	buf[3] = 0x01;
 	buf[4] = 0x01;
-	buf[5] = p->u.ctl.hr | (p->u.ctl.fps_id << 5);
-	buf[6] = p->u.ctl.min;
-	buf[7] = p->u.ctl.sec;
-	buf[8] = p->u.ctl.fr;
+	buf[5] = p->u.midi.hr | (p->u.midi.fps_id << 5);
+	buf[6] = p->u.midi.min;
+	buf[7] = p->u.midi.sec;
+	buf[8] = p->u.midi.fr;
 	buf[9] = 0xf7;
-	p->u.ctl.qfr = 0;
-	ctl_sendmsg(p, NULL, buf, 10);
+	p->u.midi.qfr = 0;
+	midi_send(p, NULL, buf, 10);
 }
 
 void
-ctl_msg_info(struct aproc *p, int slot, char *msg)
-{
-	struct ctl_slot *s;
-	struct sysex *x = (struct sysex *)msg;
-
-	s = p->u.ctl.dev->slot + slot;
-	memset(x, 0, sizeof(struct sysex));
-	x->start = SYSEX_START;
-	x->type = SYSEX_TYPE_EDU;
-	x->id0 = SYSEX_AUCAT;
-	x->id1 = SYSEX_AUCAT_MIXINFO;
-	if (*s->name != '\0') {
-		snprintf(x->u.mixinfo.name,
-		    SYSEX_NAMELEN, "%s%u", s->name, s->unit);
-	}
-	x->u.mixinfo.chan = slot;
-	x->u.mixinfo.end = SYSEX_END;
-}
-
-void
-ctl_msg_vol(struct aproc *p, int slot, char *msg)
-{
-	struct ctl_slot *s;
-
-	s = p->u.ctl.dev->slot + slot;	
-	msg[0] = MIDI_CTL | slot;
-	msg[1] = MIDI_CTLVOL;
-	msg[2] = s->vol;
-}
-
-void
-ctl_dump(struct aproc *p, struct abuf *obuf)
+midi_copy_dump(struct aproc *p, struct abuf *obuf)
 {
 	unsigned i;
 	unsigned char msg[sizeof(struct sysex)];
 	struct ctl_slot *s;
 
-	for (i = 0, s = p->u.ctl.dev->slot; i < CTL_NSLOT; i++, s++) {
-		ctl_msg_info(p, i, msg);
-		ctl_copymsg(obuf, msg, SYSEX_SIZE(mixinfo));
-		ctl_msg_vol(p, i, msg);
-		ctl_copymsg(obuf, msg, 3);
+	for (i = 0, s = p->u.midi.dev->slot; i < CTL_NSLOT; i++, s++) {
+		midi_msg_info(p, i, msg);
+		midi_copy(NULL, obuf, msg, SYSEX_SIZE(mixinfo));
+		midi_msg_vol(p, i, msg);
+		midi_copy(NULL, obuf, msg, 3);
 	}
 	msg[0] = SYSEX_START;
 	msg[1] = SYSEX_TYPE_EDU;
@@ -591,8 +342,7 @@ ctl_dump(struct aproc *p, struct abuf *obuf)
 	msg[3] = SYSEX_AUCAT;
 	msg[4] = SYSEX_AUCAT_DUMPEND;
 	msg[5] = SYSEX_END;
-	ctl_copymsg(obuf, msg, 6);
-	abuf_flush(obuf);
+	midi_copy(NULL, obuf, msg, 6);
 }
 
 /*
@@ -601,39 +351,37 @@ ctl_dump(struct aproc *p, struct abuf *obuf)
  * call-back.
  */
 void
-ctl_vol(struct aproc *p, int slot, unsigned vol)
+midi_send_vol(struct aproc *p, int slot, unsigned vol)
 {
 	unsigned char msg[3];
 
-	ctl_msg_vol(p, slot, msg);
-	ctl_sendmsg(p, NULL, msg, 3);
+	midi_msg_vol(p, slot, msg);
+	midi_send(p, NULL, msg, 3);
 }
 
 void
-ctl_slot(struct aproc *p, int slot)
+midi_send_slot(struct aproc *p, int slot)
 {
 	unsigned char msg[sizeof(struct sysex)];
 
-	ctl_msg_info(p, slot, msg);
-	ctl_sendmsg(p, NULL, msg, SYSEX_SIZE(mixinfo));
+	midi_msg_info(p, slot, msg);
+	midi_send(p, NULL, msg, SYSEX_SIZE(mixinfo));
 }
 
 /*
- * handle a MIDI event received from ibuf
+ * handle a MIDI voice event received from ibuf
  */
 void
-ctl_ev(struct aproc *p, struct abuf *ibuf)
+midi_onvoice(struct aproc *p, struct abuf *ibuf)
 {
-	unsigned chan;
 	struct ctl_slot *slot;
-	struct sysex *x;
-	unsigned fps, len;
+	unsigned chan;
 #ifdef DEBUG
 	unsigned i;
 
 	if (debug_level >= 3) {
 		abuf_dbg(ibuf);
-		dbg_puts(": got event:");
+		dbg_puts(": got voice event:");
 		for (i = 0; i < ibuf->r.midi.idx; i++) {
 			dbg_puts(" ");
 			dbg_putx(ibuf->r.midi.msg[i]);
@@ -646,13 +394,35 @@ ctl_ev(struct aproc *p, struct abuf *ibuf)
 		chan = ibuf->r.midi.msg[0] & MIDI_CHANMASK;
 		if (chan >= CTL_NSLOT)
 			return;
-		slot = p->u.ctl.dev->slot + chan;
+		slot = p->u.midi.dev->slot + chan;
 		slot->vol = ibuf->r.midi.msg[2];
 		if (slot->ops == NULL)
 			return;
 		slot->ops->vol(slot->arg, slot->vol);
-		ctl_sendmsg(p, ibuf, ibuf->r.midi.msg, ibuf->r.midi.len);
 	}
+}
+
+/*
+ * handle a MIDI sysex received from ibuf
+ */
+void
+midi_onsysex(struct aproc *p, struct abuf *ibuf)
+{
+	struct sysex *x;
+	unsigned fps, len;
+#ifdef DEBUG
+	unsigned i;
+
+	if (debug_level >= 3) {
+		abuf_dbg(ibuf);
+		dbg_puts(": got sysex:");
+		for (i = 0; i < ibuf->r.midi.idx; i++) {
+			dbg_puts(" ");
+			dbg_putx(ibuf->r.midi.msg[i]);
+		}
+		dbg_puts("\n");
+	}
+#endif
 	x = (struct sysex *)ibuf->r.midi.msg;
 	len = ibuf->r.midi.idx;
 	if (x->start != SYSEX_START)
@@ -673,7 +443,7 @@ ctl_ev(struct aproc *p, struct abuf *ibuf)
 				dbg_puts(": mmc stop\n");
 			}
 #endif
-			dev_mmcstop(p->u.ctl.dev);
+			dev_mmcstop(p->u.midi.dev);
 			break;
 		case SYSEX_MMC_START:
 			if (len != SYSEX_SIZE(start))
@@ -684,7 +454,7 @@ ctl_ev(struct aproc *p, struct abuf *ibuf)
 				dbg_puts(": mmc start\n");
 			}
 #endif
-			dev_mmcstart(p->u.ctl.dev);
+			dev_mmcstart(p->u.midi.dev);
 			break;
 		case SYSEX_MMC_LOC:
 			if (len != SYSEX_SIZE(loc) ||
@@ -705,7 +475,7 @@ ctl_ev(struct aproc *p, struct abuf *ibuf)
 				/* XXX: should dev_mmcstop() here */
 				return;
 			}
-			dev_loc(p->u.ctl.dev,
+			dev_loc(p->u.midi.dev,
 			    (x->u.loc.hr & 0x1f) * 3600 * MTC_SEC +
 			     x->u.loc.min * 60 * MTC_SEC +
 			     x->u.loc.sec * MTC_SEC +
@@ -720,31 +490,49 @@ ctl_ev(struct aproc *p, struct abuf *ibuf)
 		if (len != SYSEX_SIZE(dumpreq))
 			return;
 		if (ibuf->duplex)
-			ctl_dump(p, ibuf->duplex);
+			midi_copy_dump(p, ibuf->duplex);
 		break;
 	}
 }
 
 int
-ctl_in(struct aproc *p, struct abuf *ibuf)
+midi_in(struct aproc *p, struct abuf *ibuf)
 {
-	unsigned char *idata;
-	unsigned c, i, icount;
+	unsigned char c, *idata;
+	unsigned i, icount;
 
 	if (!ABUF_ROK(ibuf))
 		return 0;
+	if (ibuf->tickets == 0) {
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			abuf_dbg(ibuf);
+			dbg_puts(": out of tickets, blocking\n");
+		}
+#endif
+		return 0;
+	}
 	idata = abuf_rgetblk(ibuf, &icount, 0);
+	if (icount > ibuf->tickets)
+		icount = ibuf->tickets;
+	ibuf->tickets -= icount;
 	for (i = 0; i < icount; i++) {
 		c = *idata++;
 		if (c >= 0xf8) {
-			/* clock events not used yet */
-		} else if (c >= 0xf0) {
-			if (ibuf->r.midi.st == 0xf0 && c == 0xf7 &&
-			    ibuf->r.midi.idx < MIDI_MSGMAX) {
+			if (!p->u.midi.dev && c != MIDI_ACK)
+				midi_send(p, ibuf, &c, 1);
+		} else if (c == SYSEX_END) {
+			if (ibuf->r.midi.st == SYSEX_START) {
 				ibuf->r.midi.msg[ibuf->r.midi.idx++] = c;
-				ctl_ev(p, ibuf);
-				continue;
+				if (!p->u.midi.dev) {
+					midi_send(p, ibuf,
+					    ibuf->r.midi.msg, ibuf->r.midi.idx);
+				} else
+					midi_onsysex(p, ibuf);
 			}
+			ibuf->r.midi.st = 0;
+			ibuf->r.midi.idx = 0;
+		} else if (c >= 0xf0) {
 			ibuf->r.midi.msg[0] = c;
 			ibuf->r.midi.len = common_len[c & 7];
 			ibuf->r.midi.st = c;
@@ -755,69 +543,98 @@ ctl_in(struct aproc *p, struct abuf *ibuf)
 			ibuf->r.midi.st = c;
 			ibuf->r.midi.idx = 1;
 		} else if (ibuf->r.midi.st) {
-			if (ibuf->r.midi.idx == MIDI_MSGMAX)
-				continue;		
-			if (ibuf->r.midi.idx == 0)
-				ibuf->r.midi.msg[ibuf->r.midi.idx++] = ibuf->r.midi.st;
+			if (ibuf->r.midi.idx == 0 &&
+			    ibuf->r.midi.st != SYSEX_START) {
+				ibuf->r.midi.msg[ibuf->r.midi.idx++] =
+				    ibuf->r.midi.st;
+			}
 			ibuf->r.midi.msg[ibuf->r.midi.idx++] = c;
 			if (ibuf->r.midi.idx == ibuf->r.midi.len) {
-				ctl_ev(p, ibuf);
+				if (!p->u.midi.dev) {
+					midi_send(p, ibuf,
+					    ibuf->r.midi.msg, ibuf->r.midi.idx);
+				} else
+					midi_onvoice(p, ibuf);
+				if (ibuf->r.midi.st >= 0xf0)
+					ibuf->r.midi.st = 0;
+				ibuf->r.midi.idx = 0;
+			} else if (ibuf->r.midi.idx == MIDI_MSGMAX) {
+				if (!p->u.midi.dev) {
+					midi_send(p, ibuf,
+					    ibuf->r.midi.msg, ibuf->r.midi.idx);
+				}
 				ibuf->r.midi.idx = 0;
 			}
 		}
 	}
+	/*
+	 * XXX: if the sysex is received byte by byte, partial messages
+	 * won't be sent until the end byte is received. On the other
+	 * hand we can't flush it here, since we would loose messages
+	 * we parse
+	 */
 	abuf_rdiscard(ibuf, icount);
+	midi_flush(p);
 	return 1;
 }
 
 int
-ctl_out(struct aproc *p, struct abuf *obuf)
+midi_out(struct aproc *p, struct abuf *obuf)
 {
 	return 0;
 }
 
 void
-ctl_eof(struct aproc *p, struct abuf *ibuf)
+midi_eof(struct aproc *p, struct abuf *ibuf)
 {
 	if ((p->flags & APROC_QUIT) && LIST_EMPTY(&p->ins))
 		aproc_del(p);
 }
 
 void
-ctl_hup(struct aproc *p, struct abuf *obuf)
+midi_hup(struct aproc *p, struct abuf *obuf)
 {
 	if ((p->flags & APROC_QUIT) && LIST_EMPTY(&p->ins))
 		aproc_del(p);
 }
 
 void
-ctl_newin(struct aproc *p, struct abuf *ibuf)
+midi_newin(struct aproc *p, struct abuf *ibuf)
 {
 	ibuf->r.midi.used = 0;
 	ibuf->r.midi.len = 0;
 	ibuf->r.midi.idx = 0;
 	ibuf->r.midi.st = 0;
+	ibuf->tickets = MIDITHRU_XFER;
 }
 
-struct aproc_ops ctl_ops = {
-	"ctl",
-	ctl_in,
-	ctl_out,
-	ctl_eof,
-	ctl_hup,
-	ctl_newin,
+void
+midi_done(struct aproc *p)
+{
+	timo_del(&p->u.midi.timo);
+}
+
+struct aproc_ops midi_ops = {
+	"midi",
+	midi_in,
+	midi_out,
+	midi_eof,
+	midi_hup,
+	midi_newin,
 	NULL, /* newout */
 	NULL, /* ipos */
 	NULL, /* opos */
-	NULL,
+	midi_done,
 };
 
 struct aproc *
-ctl_new(char *name, struct dev *dev)
+midi_new(char *name, struct dev *dev)
 {
 	struct aproc *p;
 
-	p = aproc_new(&ctl_ops, name);
-	p->u.ctl.dev = dev;
+	p = aproc_new(&midi_ops, name);
+	timo_set(&p->u.midi.timo, midi_cb, p);
+	timo_add(&p->u.midi.timo, MIDITHRU_TIMO);
+	p->u.midi.dev = dev;
 	return p;
 }

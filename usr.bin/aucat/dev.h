@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.33 2011/12/02 10:29:01 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.34 2011/12/02 10:34:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -119,6 +119,5 @@ void dev_slotstop(struct dev *, int);
 void dev_mmcstart(struct dev *);
 void dev_mmcstop(struct dev *);
 void dev_loc(struct dev *, unsigned);
-int  dev_idle(struct dev *);
 
 #endif /* !define(DEV_H) */
