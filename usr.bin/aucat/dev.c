@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.71 2011/11/20 22:54:51 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.72 2011/12/02 10:30:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -141,6 +141,7 @@ dev_new(char *path, unsigned mode,
 	d->hold = hold;
 	d->autovol = autovol;
 	d->autostart = 0;
+	d->refcnt = 0;
 	d->pstate = DEV_CLOSED;
 	d->serial = 0;
 	for (i = 0; i < CTL_NSLOT; i++) {
