@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.43 2011/11/25 09:30:08 espie Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.44 2011/12/02 12:00:32 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: November 25 2011 $
+.Dd $Mdocdate: December 2 2011 $
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Nd delete software package distributions
 .Sh SYNOPSIS
 .Nm pkg_delete
-.Op Fl acimnqsvx
+.Op Fl acimnqsvxX
 .Op Fl B Ar pkg-destdir
 .Op Fl D Ar name Ns Op = Ns Ar value
 .Ar pkg-name Op Ar ...
@@ -136,6 +136,8 @@ shows most internal computations apart from individual file/directory
 additions, and
 .Fl vvvvv
 shows everything.
+.It Fl X
+Delete everything, except the list of packages that follow.
 .It Fl x
 Disable progress meter.
 .El

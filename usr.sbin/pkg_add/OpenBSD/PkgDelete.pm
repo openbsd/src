@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.26 2011/11/25 23:58:40 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.27 2011/12/02 12:00:32 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -99,8 +99,8 @@ sub tracker
 sub handle_options
 {
 	my $state = shift;
-	$state->SUPER::handle_options('',
-	    '[-acinqsvx] [-B pkg-destdir] [-D name[=value]] pkg-name [...]');
+	$state->SUPER::handle_options('X',
+	    '[-acinqsvxX] [-B pkg-destdir] [-D name[=value]] pkg-name [...]');
 
 	my $base = $state->opt('B') // $ENV{'PKG_DESTDIR'} // '';
 	if ($base ne '') {
@@ -114,6 +114,7 @@ sub handle_options
 	} else {
 	    $state->{destdirname} = '${PKG_DESTDIR}';
 	}
+	$state->{exclude} = $state->opt('X');
 }
 
 sub stem2location
@@ -211,7 +212,7 @@ sub process_parameters
 	my $inst = $state->repo->installed;
 
 	if (@ARGV == 0) {
-		if (!$state->{automatic}) {
+		if (!$state->{automatic} || $state->{exclude}) {
 			$state->fatal("No packages to delete");
 		}
 	} else {
@@ -379,6 +380,19 @@ sub main
 {
 	my ($self, $state) = @_;
 
+	if ($state->{exclude}) {
+		my $names = {};
+		for my $l (@{$state->{setlist}}) {
+			for my $n ($l->older_names) {
+				$names->{$n} = 1;
+			}
+		}
+		$state->{setlist} = [];
+		my $inst = $state->repo->installed;
+		for my $l (@{$inst->locations_list}) {
+			$self->add_location($state, $l) if !$names->{$l->name};
+		}
+	}
 	if ($state->{automatic}) {
 		if (!defined $state->{setlist}) {
 			my $inst = $state->repo->installed;
