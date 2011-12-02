@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.50 2011/11/05 16:02:18 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.51 2011/12/02 01:45:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -409,9 +409,13 @@ post_TH(CHKARGS)
 		m->meta.source = mandoc_strdup(n->string);
 
 	/* TITLE MSEC DATE SOURCE ->VOL<- */
+	/* If missing, use the default VOL name for MSEC. */
 
 	if (n && (n = n->next))
 		m->meta.vol = mandoc_strdup(n->string);
+	else if ('\0' != m->meta.msec[0] &&
+	    (NULL != (p = mandoc_a2msec(m->meta.msec))))
+		m->meta.vol = mandoc_strdup(p);
 
 	/*
 	 * Remove the `TH' node after we've processed it for our

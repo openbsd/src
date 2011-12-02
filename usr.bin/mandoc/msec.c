@@ -1,4 +1,4 @@
-/*	$Id: msec.c,v 1.6 2011/04/24 16:22:02 schwarze Exp $ */
+/*	$Id: msec.c,v 1.7 2011/12/02 01:45:43 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -17,15 +17,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mdoc.h"
 #include "mandoc.h"
-#include "libmdoc.h"
+#include "libmandoc.h"
 
 #define LINE(x, y) \
 	if (0 == strcmp(p, x)) return(y);
 
 const char *
-mdoc_a2msec(const char *p)
+mandoc_a2msec(const char *p)
 {
 
 #include "msec.in"

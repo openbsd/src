@@ -1,4 +1,4 @@
-/*	$Id: libmandoc.h,v 1.15 2011/09/18 15:54:48 schwarze Exp $ */
+/*	$Id: libmandoc.h,v 1.16 2011/12/02 01:45:43 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -49,6 +49,7 @@ char		*mandoc_normdate(struct mparse *, char *, int, int);
 int		 mandoc_eos(const char *, size_t, int);
 int		 mandoc_getcontrol(const char *, int *);
 int		 mandoc_strntoi(const char *, size_t, int);
+const char	*mandoc_a2msec(const char*);
 
 void	 	 mdoc_free(struct mdoc *);
 struct	mdoc	*mdoc_alloc(struct roff *, struct mparse *);
