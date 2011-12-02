@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.55 2011/11/30 10:26:56 dlg Exp $
+.\"     $OpenBSD: mbuf.9,v 1.56 2011/12/02 10:57:16 dlg Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 30 2011 $
+.Dd $Mdocdate: December 2 2011 $
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -469,7 +469,7 @@ and ending at
 will be put in a continuous memory region.
 If memory must be allocated, then it will fail if the
 .Fa len
-argument is greater than MAXCLBYTES.
+argument is greater than MAXMCLBYTES.
 The pointer returned points to an mbuf in the chain and the new offset
 for data in this mbuf is
 .Fa *offp .
@@ -483,7 +483,7 @@ the chain and ending at
 will be put in continuous memory region.
 If memory must be allocated, then it will fail if the
 .Fa len
-argument is greater than MAXCLBYTES.
+argument is greater than MAXMCLBYTES.
 If this function fails,
 .Fa n
 is freed.
