@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.88 2011/11/24 17:39:55 sperreault Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.89 2011/12/02 03:15:31 haesbaert Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1915,16 +1915,14 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
   sendpkt:
 #ifdef IPSEC
 	/*
-	 * If the packet needs outgoing IPsec crypto processing and the
-	 * interface doesn't support it, drop it.
+	 * If we got here and IPsec crypto processing didn't happen, drop it.
 	 */
 	mtag = m_tag_find(m, PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED, NULL);
 #endif /* IPSEC */
 
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
 #ifdef IPSEC
-		if (mtag != NULL &&
-		    (origifp->if_capabilities & IFCAP_IPSEC) == 0) {
+		if (mtag != NULL) {
 			/* Tell IPsec to do its own crypto. */
 			ipsp_skipcrypto_unmark((struct tdb_ident *)(mtag + 1));
 			error = EACCES;
@@ -1935,8 +1933,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 		    rt));
 	}
 #ifdef IPSEC
-	if (mtag != NULL &&
-	    (ifp->if_capabilities & IFCAP_IPSEC) == 0) {
+	if (mtag != NULL) {
 		/* Tell IPsec to do its own crypto. */
 		ipsp_skipcrypto_unmark((struct tdb_ident *)(mtag + 1));
 		error = EACCES;

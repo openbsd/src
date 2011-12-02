@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.223 2011/07/04 06:54:49 claudio Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.224 2011/12/02 03:15:31 haesbaert Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -684,12 +684,10 @@ sendit:
 	}
 
 	/*
-	 * If deferred crypto processing is needed, check that the
-	 * interface supports it.
+	 * If we got here and IPsec crypto processing didn't happen, drop it.
 	 */
 	if (ipsec_in_use && (mtag = m_tag_find(m,
-	    PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED, NULL)) != NULL &&
-	    (ifp->if_capabilities & IFCAP_IPSEC) == 0) {
+	    PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED, NULL)) != NULL) {
 		/* Notify IPsec to do its own crypto. */
 		ipsp_skipcrypto_unmark((struct tdb_ident *)(mtag + 1));
 		m_freem(m);

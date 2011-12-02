@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.788 2011/11/28 01:04:50 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.789 2011/12/02 03:15:31 haesbaert Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5828,11 +5828,10 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	/* Copied from ip_output. */
 #ifdef IPSEC
 	/*
-	 * If deferred crypto processing is needed, check that the
-	 * interface supports it.
+	 * If we got here and IPsec crypto processing didn't happen, drop it.
 	 */
 	if ((mtag = m_tag_find(m0, PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED, NULL))
-	    != NULL && (ifp->if_capabilities & IFCAP_IPSEC) == 0) {
+	    != NULL) {
 		/* Notify IPsec to do its own crypto. */
 		ipsp_skipcrypto_unmark((struct tdb_ident *)(mtag + 1));
 		goto bad;
