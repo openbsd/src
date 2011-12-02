@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.28 2011/12/02 16:01:17 jmc Exp $
+# $OpenBSD: PkgDelete.pm,v 1.29 2011/12/02 16:39:10 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -212,7 +212,7 @@ sub process_parameters
 	my $inst = $state->repo->installed;
 
 	if (@ARGV == 0) {
-		if (!$state->{automatic} || $state->{exclude}) {
+		if (!($state->{automatic} || $state->{exclude})) {
 			$state->fatal("No packages to delete");
 		}
 	} else {
