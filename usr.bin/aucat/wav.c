@@ -744,7 +744,7 @@ wav_autohdr(char *name, struct dev *dev, unsigned *hdr, unsigned *mode)
 				*hdr = HDR_WAV;
 				*mode &= ~MODE_MIDIMASK;
 			} else if (strcasecmp(ext, "syx") == 0) {
-				*hdr = HDR_WAV;
+				*hdr = HDR_RAW;
 				*mode &= ~MODE_AUDIOMASK;
 			}
 		} else
