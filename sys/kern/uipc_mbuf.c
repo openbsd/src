@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.164 2011/11/30 10:26:56 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.165 2011/12/02 10:55:46 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ u_int	mclsizes[] = {
 	9 * 1024,
 	12 * 1024,
 	16 * 1024,
-	MAXMCLBYTES	/* 64k */
+	64 * 1024
 };
 static	char mclnames[MCLPOOLS][8];
 struct	pool mclpools[MCLPOOLS];
@@ -139,6 +139,11 @@ void
 mbinit(void)
 {
 	int i;
+
+#if DIAGNOSTIC
+	if (mclsizes[nitems(mclsizes) - 1] != MAXMCLBYTES)
+		panic("mbinit: the largest cluster size != MAXMCLBYTES");
+#endif
 
 	pool_init(&mbpool, MSIZE, 0, 0, 0, "mbpl", NULL);
 	pool_set_constraints(&mbpool, &kp_dma_contig);
