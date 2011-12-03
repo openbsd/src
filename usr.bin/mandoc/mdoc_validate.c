@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.99 2011/12/02 01:45:43 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.100 2011/12/03 22:47:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -1856,6 +1856,16 @@ post_sh_head(POST_ARGS)
 	/* Mark our last section. */
 
 	mdoc->lastsec = sec;
+
+	/*
+	 * Set the section attribute for the current HEAD, for its
+	 * parent BLOCK, and for the HEAD children; the latter can
+	 * only be TEXT nodes, so no recursion is needed.
+	 * For other blocks and elements, including .Sh BODY, this is
+	 * done when allocating the node data structures, but for .Sh
+	 * BLOCK and HEAD, the section is still unknown at that time.
+	 */
+
 	mdoc->last->parent->sec = sec;
 	mdoc->last->sec = sec;
 	for (n = mdoc->last->child; n; n = n->next)

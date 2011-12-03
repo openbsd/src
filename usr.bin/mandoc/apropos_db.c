@@ -1,4 +1,4 @@
-/*	$Id: apropos_db.c,v 1.12 2011/12/03 14:53:12 schwarze Exp $ */
+/*	$Id: apropos_db.c,v 1.13 2011/12/03 22:47:27 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -24,12 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#ifdef __linux__
-# include <db_185.h>
-#else
-# include <db.h>
-#endif
+#include <db.h>
 
 #include "mandocdb.h"
 #include "apropos_db.h"
