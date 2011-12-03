@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.307 2011/12/03 12:44:56 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.308 2011/12/03 12:46:16 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1669,7 +1669,7 @@ pfctl_load_logif(struct pfctl *pf, char *ifname)
 	return (0);
 }
 
-int
+void
 pfctl_set_hostid(struct pfctl *pf, u_int32_t hostid)
 {
 	HTONL(hostid);
@@ -1679,8 +1679,6 @@ pfctl_set_hostid(struct pfctl *pf, u_int32_t hostid)
 
 	if (pf->opts & PF_OPT_VERBOSE)
 		printf("set hostid 0x%08x\n", ntohl(hostid));
-
-	return (0);
 }
 
 int
