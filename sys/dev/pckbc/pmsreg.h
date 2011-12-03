@@ -1,4 +1,4 @@
-/* $OpenBSD: pmsreg.h,v 1.5 2011/10/04 06:30:40 mpi Exp $ */
+/* $OpenBSD: pmsreg.h,v 1.6 2011/12/03 19:43:00 mpi Exp $ */
 /* $NetBSD: psmreg.h,v 1.1 1998/03/22 15:41:28 drochner Exp $ */
 
 #ifndef SYS_DEV_PCKBC_PMSREG_H
@@ -134,5 +134,10 @@
 #define ALPS_XMAX_BEZEL				840
 #define ALPS_YMIN_BEZEL				130
 #define ALPS_YMAX_BEZEL				640
+
+#define ALPS_XSEC_BEZEL				768
+#define ALPS_YSEC_BEZEL				512
+
+#define ALPS_Z_MAGIC				127
 
 #endif /* SYS_DEV_PCKBC_PMSREG_H */

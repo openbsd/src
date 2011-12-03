@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.24 2011/10/17 17:12:01 mpi Exp $ */
+/* $OpenBSD: pms.c,v 1.25 2011/12/03 19:43:00 mpi Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -147,15 +147,13 @@ static const struct alps_model {
 } alps_models[] = {
 #if 0
 	/* FIXME some clipads are not working yet */
+	{ 0x5212, 0xff, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
+	{ 0x6222, 0xcf, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
+#endif
 	{ 0x2021, 0xf8, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
 	{ 0x2221, 0xf8, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
 	{ 0x2222, 0xff, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
 	{ 0x3222, 0xf8, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
-	{ 0x5212, 0xff, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
-	{ 0x6222, 0xcf, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
-	{ 0x633b, 0xf8, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
-	{ 0x7301, 0xf8, ALPS_DUALPOINT },
-#endif
 	{ 0x5321, 0xf8, ALPS_GLIDEPOINT },
 	{ 0x5322, 0xf8, ALPS_GLIDEPOINT },
 	{ 0x603b, 0xf8, ALPS_GLIDEPOINT },
@@ -165,6 +163,8 @@ static const struct alps_model {
 	{ 0x6324, 0x8f, ALPS_GLIDEPOINT },
 	{ 0x6325, 0xef, ALPS_GLIDEPOINT },
 	{ 0x6326, 0xf8, ALPS_GLIDEPOINT },
+	{ 0x633b, 0xf8, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
+	{ 0x7301, 0xf8, ALPS_DUALPOINT },
 	{ 0x7321, 0xf8, ALPS_GLIDEPOINT },
 	{ 0x7322, 0xf8, ALPS_GLIDEPOINT },
 	{ 0x7325, 0xcf, ALPS_GLIDEPOINT },
@@ -1075,6 +1075,7 @@ int
 pms_enable_alps(struct pms_softc *sc)
 {
 	struct alps_softc *alps = sc->alps;
+	struct wsmousedev_attach_args a;
 	u_char resp[3];
 
 	if (pms_set_resolution(sc, 0) ||
@@ -1108,6 +1109,13 @@ pms_enable_alps(struct pms_softc *sc)
 		alps->max_y = ALPS_YMAX_BEZEL;
 
 		alps->wsmode = WSMOUSE_COMPAT;
+
+		if (alps->model & ALPS_DUALPOINT) {
+			a.accessops = &synaptics_pt_accessops;
+			a.accesscookie = sc;
+			sc->sc_pt_wsmousedev = config_found((void *)sc, &a,
+			    wsmousedevprint);
+		}
 	}
 
 	if (alps->model == 0)
@@ -1221,6 +1229,23 @@ pms_proc_alps(struct pms_softc *sc)
 	y = sc->packet[4] | ((sc->packet[3] & 0x70) << 3);
 	z = sc->packet[5];
 
+	buttons = ((sc->packet[3] & 1) ? WSMOUSE_BUTTON(1) : 0) |
+	    ((sc->packet[3] & 2) ? WSMOUSE_BUTTON(3) : 0) |
+	    ((sc->packet[3] & 4) ? WSMOUSE_BUTTON(2) : 0);
+
+	if ((sc->sc_dev_enable & PMS_DEV_SECONDARY) && z == ALPS_Z_MAGIC) {
+		dx = (x > ALPS_XSEC_BEZEL / 2) ? (x - ALPS_XSEC_BEZEL) : x;
+		dy = (y > ALPS_YSEC_BEZEL / 2) ? (y - ALPS_YSEC_BEZEL) : y;
+
+		wsmouse_input(sc->sc_pt_wsmousedev, buttons, dx, dy, 0, 0,
+		    WSMOUSE_INPUT_DELTA);
+
+		return;
+	}
+
+	if ((sc->sc_dev_enable & PMS_DEV_PRIMARY) == 0)
+		return;
+
 	/*
 	 * XXX The Y-axis is in the oposit direction compared to
 	 * Synaptics touchpads and PS/2 mouses.
@@ -1229,18 +1254,7 @@ pms_proc_alps(struct pms_softc *sc)
 	 */
 	y = ALPS_YMAX_BEZEL - y + ALPS_YMIN_BEZEL;
 
-	buttons = ((sc->packet[3] & 1) ? WSMOUSE_BUTTON(1) : 0) |
-	    ((sc->packet[3] & 2) ? WSMOUSE_BUTTON(3) : 0) |
-	    ((sc->packet[3] & 4) ? WSMOUSE_BUTTON(2) : 0);
-
 	if (alps->wsmode == WSMOUSE_NATIVE) {
-		if (z == 127) {
-			/* DualPoint touchpads are not absolute. */
-			wsmouse_input(sc->sc_wsmousedev, buttons, x, y, 0, 0,
-			    WSMOUSE_INPUT_DELTA);
-			return;
-		}
-
 		ges = sc->packet[2] & 0x01;
 		fin = sc->packet[2] & 0x02;
 
