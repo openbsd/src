@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.109 2011/12/03 18:33:34 ajacoutot Exp $
+.\"	$OpenBSD: port-modules.5,v 1.110 2011/12/03 18:55:13 espie Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -167,6 +167,7 @@ contents that are defined in
 By default,
 .Ar configure
 will do nothing.
+.Pp
 Some
 .Ev CONFIGURE_STYLE
 values, namely perl, gnu, imake, automake, autoconf, and autoupdate
@@ -174,6 +175,7 @@ will automatically import the correct module.
 User-defined modules must both add to
 .Ev CONFIGURE_STYLE
 and import the correct module to override behavior.
+.Pp
 Contrary to other hooks, module behavior is not invoked in
 addition to
 .Ar do-configure ,
@@ -312,14 +314,9 @@ When modules are processed, only a few
 variables are already defined.
 Modules may depend upon the following variables already having a sane
 value:
-.Ev APM_ARCHS ,
-.Ev ARCH ,
 .Ev DISTDIR ,
 .Ev LOCALBASE ,
-.Ev LP64_ARCHS ,
 .Ev NO_DEPENDS ,
-.Ev NO_SHARED_ARCHS ,
-.Ev NO_SHARED_LIBS ,
 .Ev PKGPATH ,
 .Ev PORTSDIR ,
 .Ev X11BASE .
@@ -337,27 +334,51 @@ The following modules are available.
 .It cpan
 For perl ports coming from CPAN.
 Wrapper around the normal perl module that fetches the file from
-the correct location depending on DISTNAME, and sets a default
-PKGNAME.
-Also affects REGRESS_DEPENDS, CONFIGURE_STYLE, PKG_ARCH, and CATEGORIES.
+the correct location depending on
+.Ev DISTNAME ,
+and sets a default
+.Ev PKGNAME .
+Also affects
+.Ev REGRESS_DEPENDS ,
+.Ev CONFIGURE_STYLE ,
+.Ev PKG_ARCH ,
+and
+.Ev CATEGORIES .
 .Pp
-Some CPAN modules are only indexed by author, set CPAN_AUTHOR=ID
+Some CPAN modules are only indexed by author, set
+.Li CPAN_AUTHOR=ID
 to locate the right directory.
 .Pp
-If no HOMEPAGE is defined, it will default to
-http://search.cpan.org/dist/${DISTNAME:C/-[^-]*$//}/
+If no
+.Ev HOMEPAGE
+is defined, it will default to
+.Pa http://search.cpan.org/dist/${DISTNAME:C/-[^-]*$//}/
 .Pp
-User settings: set CPAN_REPORT to Yes, CPAN_REPORT_DB to a valid directory,
-and CPAN_REPORT_FROM to a valid email address to automate the reporting
+User settings: set
+.Ev CPAN_REPORT
+to Yes,
+.Ev CPAN_REPORT_DB
+to a valid directory,
+and
+.Ev CPAN_REPORT_FROM
+to a valid email address to automate the reporting
 of regress tests to CPAN.
 .Pp
-If MODCPAN_EXAMPLES is set, the following variables will be set.
-MODCPAN_EXAMPLES_DIST will hold the default directory in the distfile with
+If
+.Ev MODCPAN_EXAMPLES
+is set, the following variables will be set.
+.Ev MODCPAN_EXAMPLES_DIST
+will hold the default directory in the distfile with
 example scripts.
-MODCPAN_EXAMPLES_DIR will be set to the standard installation directory for
+.Ev MODCPAN_EXAMPLES_DIR
+will be set to the standard installation directory for
 examples.
-Sets the post-install target if none has been defined to install the examples,
-otherwise MODCPAN_POST_INSTALL should be used as such:
+Sets the
+.Ar post-install
+target if none has been defined to install the examples,
+otherwise
+.Ev MODCPAN_POST_INSTALL
+should be used as such:
 .Bd -literal
 post-install:
 	...
@@ -365,7 +386,11 @@ post-install:
 .Ed
 .It devel/cmake
 .It devel/dconf
-Sets CONFIGURE_ARGS, BUILD_DEPENDS and RUN_DEPENDS.
+Sets
+.Ev CONFIGURE_ARGS ,
+.Ev BUILD_DEPENDS
+and
+.Ev RUN_DEPENDS .
 This module is used by ports installing gsettings schemas under
 .Pa ${PREFIX}/share/glib-2.0/schemas/ .
 It requires the following goo in the PLIST:
@@ -379,55 +404,103 @@ A link from
 to
 .Xr true 1
 will be put at the front of the path.
-Sets CONFIGURE_ARGS, BUILD_DEPENDS and RUN_DEPENDS.
-According to the values of MODGCONF2_LIBDEP, sets LIB_DEPENDS.
-User settings: set MODGCONF2_SCHEMAS_DIR to the directory name under
-${LOCALBASE}/share/schemas/ where schemas files will be installed.
+Sets
+.Ev CONFIGURE_ARGS ,
+.Ev BUILD_DEPENDS
+and
+.Ev RUN_DEPENDS .
+According to the values of
+.Ev MODGCONF2_LIBDEP ,
+sets
+.Ev LIB_DEPENDS .
+User settings: set
+.Ev MODGCONF2_SCHEMAS_DIR
+to the directory name under
+.Pa ${LOCALBASE}/share/schemas/
+where schemas files will be installed.
 .It devel/gettext
 .It devel/pmk
-Sets CONFIGURE_SCRIPT, CONFIGURE_ARGS and MODPMK_configure.
+Sets
+.Ev CONFIGURE_SCRIPT ,
+.Ev CONFIGURE_ARGS
+and
+.Ev MODPMK_configure .
 It appends
 .Pa devel/pmk
-to BUILD_DEPENDS.
+to
+.Ev BUILD_DEPENDS .
 .It devel/scons
 Adds
 .Pa devel/scons
-to BUILD_DEPENDS.
-Sets MODSCONS_BIN and MODSCONS_ENV.
-Also defines an overridable MODSCONS_FLAGS.
-It provides a do-build and do-install target that can be overridden in the
-port Makefile.
+to
+.Ev BUILD_DEPENDS .
+Sets
+.Ev MODSCONS_BIN
+and
+.Ev MODSCONS_ENV .
+Also defines an overridable
+.Ev MODSCONS_FLAGS .
+It provides a
+.Ar do-build
+and
+.Ar do-install
+targets that can be overridden in the port Makefile.
 .It devel/waf
 Adds
 .Pa devel/waf
-to BUILD_DEPENDS,
+to
+.Ev BUILD_DEPENDS ,
 .Pa lang/python
-to MODULES, and provides do-configure, do-build, do-install and
-post-install targets.
-do-build, do-install and post-install can be overridden in the port
-Makefile.
+to
+.Ev MODULES ,
+and provides
+.Ar do-configure ,
+.Ar do-build ,
+.Ar do-install
+and
+.Ar post-install
+targets.
+.Ar do-build ,
+.Ar do-install
+and
+.Ar post-install
+can be overridden in the port Makefile.
 .It fortran
-Sets MODFORTRAN_LIB_DEPENDS, MODFORTRAN_WANTLIB, MODFORTRAN_BUILD_DEPENDS.
-Set MODFORTRAN_COMPILER to `g77' or `gfortran', depending on what the
-port requires.
+Sets
+.Ev MODFORTRAN_LIB_DEPENDS ,
+.Ev MODFORTRAN_WANTLIB ,
+.Ev MODFORTRAN_BUILD_DEPENDS .
+Set
+.Ev MODFORTRAN_COMPILER
+to `g77' or `gfortran', depending on what the port requires.
 The default is `g77'.
-The dependencies are chosen according to COMPILER_VERSION and
-MODFORTRAN_COMPILER.
+The dependencies are chosen according to
+.Ev COMPILER_VERSION
+and
+.Ev MODFORTRAN_COMPILER .
 .It gcc3
-If COMPILER_VERSION is not gcc3 (defined by
+If
+.Ev COMPILER_VERSION
+is not gcc3 (defined by
 .Pa /usr/share/mk/bsd.own.mk ) ,
-and architecture is in MODGCC3_ARCHS, then the gcc 3.3.6
-compilers will be put at the front of the path.
+and architecture is in
+.Ev MODGCC3_ARCHS ,
+then the gcc 3.3.6 compilers will be put at the front of the path.
 By default, only C language support is included by this module.
-If other languages are needed, they must be listed in MODGCC3_LANGS
+If other languages are needed, they must be listed in
+.Ev MODGCC3_LANGS
 (e.g. c++, g77).
 .It gcc4
-If COMPILER_VERSION is not gcc4 (defined by
+If
+.Ev COMPILER_VERSION
+is not gcc4 (defined by
 .Pa /usr/share/mk/bsd.own.mk ) ,
-and architecture is in MODGCC4_ARCHS, then the gcc 4.2 compilers
-will be put at the front of the path.
+and architecture is in
+.Ev MODGCC4_ARCHS ,
+then the gcc 4.2 compilers will be put at the front of the path.
 By default, only C language support is included by this module.
-If other languages are needed, they must be listed in MODGCC4_LANGS
+If other languages are needed, they must be listed in
+.Ev MODGCC4_LANGS
 (e.g. c++, fortran).
 .It gnu
 This module is documented in the main
@@ -438,39 +511,78 @@ This module is documented in the main
 .Xr bsd.port.mk 5
 manpage.
 .It java
-Set MODJAVA_VER=x.y to use exactly the JDK x.y, MODJAVA_VER=x.y+ to
-use any x.y or higher version.
-Set MODJAVA_JRERUN=Yes if the port only needs the JRE at runtime.
-The module sets JAVA_HOME, ONLY_FOR_ARCHS, MODJAVA_RUN_DEPENDS,
-MODJAVA_SHARE_DIR, MODJAVA_JAR_DIR, MODJAVA_EXAMPLE_DIR and MODJAVA_DOC_DIR.
-It appends to BUILD_DEPENDS, RUN_DEPENDS and CATEGORIES.
-If MODJAVA_BUILD=ant then this module provides MODJAVA_BUILD_DIR,
-MODJAVA_BUILD_FILE and MODJAVA_BUILD_TARGET, as well as providing a do-build
+Set
+.Li MODJAVA_VER=x.y
+to use exactly the JDK x.y,
+.Li MODJAVA_VER=x.y+
+to use any x.y or higher version.
+Set
+.Li MODJAVA_JRERUN=Yes
+if the port only needs the JRE at runtime.
+The module sets
+.Ev JAVA_HOME ,
+.Ev ONLY_FOR_ARCHS ,
+.Ev MODJAVA_RUN_DEPENDS ,
+.Ev MODJAVA_SHARE_DIR ,
+.Ev MODJAVA_JAR_DIR ,
+.Ev MODJAVA_EXAMPLE_DIR
+and
+.Ev MODJAVA_DOC_DIR .
+It appends to
+.Ev BUILD_DEPENDS ,
+.Ev RUN_DEPENDS
+and
+.Ev CATEGORIES .
+If
+.Li MODJAVA_BUILD=ant
+then this module provides
+.Ev MODJAVA_BUILD_DIR ,
+.Ev MODJAVA_BUILD_FILE
+and
+.Ev MODJAVA_BUILD_TARGET ,
+as well as a
+.Ar do-build
 target (if not already defined).
-It heeds NO_BUILD.
+It heeds
+.Ev NO_BUILD .
 .It lang/ghc
-Sets ONLY_FOR_ARCHS, MODGHC_VER, BUILD_DEPENDS, and RUN_DEPENDS.
-The build and further actions are based on MODGHC_BUILD.
-It accepts the following values: nort (no runtime dependency on
+Sets
+.Ev ONLY_FOR_ARCHS ,
+.Ev MODGHC_VER ,
+.Ev BUILD_DEPENDS ,
+and
+.Ev RUN_DEPENDS .
+The build and further actions are based on the value of
+.Ev MODGHC_BUILD :
+nort (no runtime dependency on
 .Pa lang/ghc
 and hs- prefix will not be added), cabal (to get the typical Cabal
-targets defined), haddock (to generate API documenation using
+targets defined), haddock (to generate API documentation using
 .Pa devel/haddock ,
 register (to create and include register/unregister scripts), hackage
 (if the distfiles are available on Hackage).
-Also affects CATEGORIES, CONFIGURE_STYLE, and SUBST_VARS.
-do-build, do-install and do-regress targets are provided if the port
-itself didn't set them.
+Also affects
+.Ev CATEGORIES ,
+.Ev CONFIGURE_STYLE
+and
+.Ev SUBST_VARS .
+.Ar do-build ,
+.Ar do-install
+and
+.Ar do-regress
+targets are provided if the port itself didn't set them.
 If register has been set, the PLIST needs to be modified in order to
 add the relevant @exec/@unexec lines.
 This module will run the Setup script and ensure the documentation
 will be built (if haddock has been set), and that the package is
-registered as a library useable by
+registered as a library usable by
 .Pa lang/ghc
 (if register has been set).
 Extra arguments and environment additions for the Setup configure
-command can be specified with MODGHC_SETUP_CONF_ARGS and
-MODGHC_SETUP_CONF_ENV.
+command can be specified with
+.Ev MODGHC_SETUP_CONF_ARGS
+and
+.Ev MODGHC_SETUP_CONF_ENV .
 .It lang/lua
 Sets MODLUA_VERSION, MODLUA_LIBDIR, MODLUA_DATADIR.
 Appends to CATEGORIES.
