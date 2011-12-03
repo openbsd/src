@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.87 2011/11/25 11:05:54 espie Exp $
+.\" $OpenBSD: ports.7,v 1.88 2011/12/03 22:22:04 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: November 25 2011 $
+.Dd $Mdocdate: December 3 2011 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -194,11 +194,11 @@ with the target that failed to
 .Pa ${REPORT_PROBLEM_LOGFILE}
 and proceed.
 .Pp
-The targets that do this are
+Some targets that do this are
 .Ar all , build , checksum , clean ,
 .Ar configure , extract , fake ,
 .Ar fetch , install , distclean ,
-.Ar deinstall , reinstall , package ,
+.Ar deinstall , reinstall , package , prepare ,
 .Ar link-categories , unlink-categories ,
 .Ar describe , show , regress ,
 .Ar lib-depends-check , homepage-links , manpages-check ,
@@ -257,18 +257,9 @@ $ make checksum REFETCH=true
 .Ed
 .Pp
 will try to get a set of distfiles that match the recorded checksum.
-.It Ar depends
+.It Ar prepare
 Install
-.Pq or package if only compilation is necessary
-any dependencies of the current port.
-When called by the
-.Ar extract , install
-or
-.Ar fetch
-targets, this is run in scattered pieces as
-.Ar lib-depends , build-depends
-and
-.Ar run-depends .
+any build dependencies of the current port.
 Defining
 .Ev NO_DEPENDS
 to
