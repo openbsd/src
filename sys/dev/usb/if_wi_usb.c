@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.54 2011/09/18 23:24:12 krw Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.55 2011/12/03 03:34:40 krw Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -1885,6 +1885,7 @@ wi_usb_tx_lock_try(struct wi_usb_softc *sc)
 	DPRINTFN(10,("%s: %s: enter\n", sc->wi_usb_dev.dv_xname, __func__));
 
 	if (sc->wi_lock != 0) {
+		splx(s);
 		return 0; /* failed to aquire lock */
 	}
 
