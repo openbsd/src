@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.320 2011/12/03 23:37:20 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.321 2011/12/03 23:48:56 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2088,7 +2088,7 @@ of ${PKGNAME}${SUBPACKAGE} is not appropriate.
 Path to the current port's directory, relative to ${PORTSDIR}.
 Read-only.
 .It Ev PKGSPEC
-default package spec for using this port as a dependency.
+Default package spec for using this port as a dependency.
 Defaults to
 .Sq stem-* ,
 derived from the
@@ -2181,14 +2181,14 @@ architecture has no shared library support.
 there is mono support on this architecture.
 .El
 .It Ev PSEUDO_FLAVOR
-list of flavors in
+List of flavors in
 .Ev FLAVOR
 that are actually pseudo-flavors.
 Only for introspection purposes.
 Read-only.
 .It Ev PSEUDO_FLAVORS
 Extra list of flavors that do not register in package names, but are still
-used to control build logic, and e.g., working directory names.
+used to control build logic, and work directory names.
 Its only use should be for disabling part of a multi-packages build,
 for instance:
 .Bd -literal
@@ -2315,8 +2315,9 @@ to form a full package-name conforming to
 .Xr packages-specs 7 .
 .It Ev RUN_DEPENDS
 Specification of ports this port needs installed to be functional.
-Same format as BUILD_DEPENDS.
-The corresponding packages will be built at
+Same format as
+.Ev LIB_DEPENDS .
+The corresponding packages will be built right before the
 .Ar install
 stage, and
 .Xr pkg_add 1
@@ -2335,7 +2336,7 @@ in which the port will be configured and built.
 Wipe ${WRKBUILD} to start anew, but skipping the extract/patch stage.
 .It Ev SETENV
 Normally set to
-.Li /usr/bin/env -i
+.Li /usr/bin/env -i .
 Prepended to every command invocation that requires a clean environment.
 Do not override.
 .It Ev SHARED_LIBS
@@ -2363,7 +2364,7 @@ Porters of software using libtool should also set
 and make sure
 .Ev MAKE_FLAGS
 get propagated to the libtool invocations.
-This should be enough, in most cases.
+This should be enough in most cases.
 .It Ev SHARED_ONLY
 Set to
 .Sq Yes
@@ -2378,7 +2379,7 @@ See
 See
 .Xr ports 7 .
 .It Ev SUBPACKAGE
-Set to the sub package suffix when building a package in a multi-package port.
+Set to the subpackage suffix when building a package in a multi-package port.
 Read-only.
 Used to test for dependencies or to adjust the package name.
 .It Ev SUBST_CMD
@@ -2400,9 +2401,12 @@ copying template files over from
 to
 .Pa ${PREFIX} ,
 for instance.
+This uses
+.Xr pkg_subst 1
+with suitable parameters.
 Read-only.
 .Pp
-.Ev SUBST_CMD
+${SUBST_CMD}
 can be used like
 .Xr install 1 :
 .Dl ${SUBST_CMD} Oo Fl g Ar group Oc Oo Fl o Ar owner Oc file...
