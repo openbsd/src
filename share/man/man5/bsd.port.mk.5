@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.319 2011/12/03 23:19:28 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.320 2011/12/03 23:37:20 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -874,6 +874,7 @@ Can be set to empty, to yield a package's default target.
 Set to the list of
 .Xr apm 4
 architectures.
+Read-only.
 Use with
 .Ev ONLY_FOR_ARCHS .
 .It Ev ARCH
@@ -1695,11 +1696,11 @@ ${MASTER_SITE_BACKUP} sites.
 Defaults to
 .Sq \&No .
 .It Ev MASTER_SITES
-List of primary location from which distribution files and patchfiles are
+List of primary locations from which distribution files and patchfiles are
 retrieved.
 See the
 .Ar fetch
-target for more details.
+target for details.
 See
 .Xr ports 7
 for user configuration.
@@ -1717,6 +1718,7 @@ is set,
 .Ev MISSING_FILES
 will contain the list of missing distfiles or patchfiles that need to
 be fetched manually.
+Read-only.
 .It Ev MTREE_FILE
 .Xr mtree 8
 specification to check when creating a PLIST with the
@@ -1745,19 +1747,19 @@ External modules mechanism, documented separately.
 See
 .Xr port-modules 5 .
 .It Ev MULTI_PACKAGES
-Set to a list of package extensions for ports that create multiple packages.
+Set to a list of subpackage extensions for ports that create multiple packages.
 See
 .Qq Flavors and multi-packages
 below.
 Especially read the part about
 .Ev ONLY_FOR_ARCHS
-as some of the packages only exist for some architectures.
+when some of the packages only exist for some architectures.
 .It NO_ARCH
-Location for the arch-independent packages.
+Location for arch-independent packages.
 Defaults to
 .Sq no-arch .
 Normally, packages are generated under ${PACKAGE_REPOSITORY}/${MACHINE_ARCH},
-except for packages where PKG_ARCH=*, those end up under
+except for packages where PKG_ARCH=*, which end up under
 ${PACKAGE_REPOSITORY}/${NO_ARCH}.
 .It Ev NOT_FOR_ARCHS
 List of architectures on which this port does not build.
@@ -1769,7 +1771,9 @@ Do not use instead of
 .Ev SHARED_ONLY
 without very good reasons.
 .It Ev NO_BUILD
-Port does not need any build stage.
+Set to
+.Sq Yes
+if port does not need any build stage.
 .It Ev NO_CCACHE
 Set to
 .Sq Yes
@@ -1778,6 +1782,7 @@ even when
 .Ev USE_CCACHE
 is set.
 .It Ev NO_CHECKSUM
+User settings.
 Set to
 .Sq Yes
 to avoid
@@ -1786,9 +1791,8 @@ to avoid
 and
 .Ar addsum
 actions entirely.
-User settings.
 Beware of the full implications of this mechanism, namely that it disables
-entirely the basic authentication mechanisms of the ports tree.
+the basic authentication mechanisms of the ports tree entirely.
 .It Ev NO_DEPENDS
 User settings.
 Don't verify build of dependencies.
@@ -1804,7 +1808,9 @@ avoid ignoring a port for the usual reasons.
 Use, for instance, for fetching all distribution files, or for fixing a
 broken port.
 See also
-.Ev IGNORE .
+.Ev IGNORE
+and
+.Ev TRY_BROKEN .
 .It Ev NO_REGRESS
 Port does not have any regression targets.
 Only set to
@@ -1816,6 +1822,7 @@ That way, if a subsequent update of a port acquires actual regression tests,
 they will be picked up automatically.
 .It Ev NO_SHARED_ARCHS
 Set to the list of platforms that do not support shared libraries.
+Read-only.
 Use with
 .Ev NOT_FOR_ARCHS .
 .It Ev NO_SHARED_LIBS
@@ -1828,7 +1835,7 @@ or
 .Xr bsd.port.arch.mk 5 ,
 if neither PFRAG.shared nor CONFIGURE_SHARED are enough.
 .It Ev NO_SYSTRACE
-Port does not build with systrace enabled build targets.
+Port does not build with systrace-enabled build targets.
 .It Ev OLD_WRKDIR_NAME
 Base name for
 .Ev WRKDIR
@@ -1910,7 +1917,9 @@ do
 done
 .Ed
 .It Ev PATCHDIR
-Location for patches applied by patch target (default: patches).
+Location for patches applied by patch target.
+Default:
+.Pa patches .
 .It Ev PATCHFILES
 Files to fetch from the master sites like
 .Ev DISTFILES ,
@@ -1923,7 +1932,9 @@ See also
 .It Ev PATCH_ARGS
 Full list of options used while applying port's patches.
 .It Ev PATCH_CHECK_ONLY
-Set to Yes by the
+Set to
+.Sq Yes
+by the
 .Ar checkpatch
 target.
 Don't touch unless the default
@@ -1944,7 +1955,8 @@ Patch option used to strip directory levels while applying distribution
 patches.
 Defaults to -p0 .
 .It Ev PATCH_LIST
-Wildcard pattern of patches to select under ${PATCHDIR} (default: patch-*).
+Wildcard pattern of patches to select under ${PATCHDIR}.
+Defaults to patch-*.
 Note that filenames ending in .orig, or ~ are never applied.
 Note that
 .Ev PATCH_LIST
@@ -1967,13 +1979,14 @@ details about licensing and patents issues the port may have.
 Porters must be very thorough in their checks.
 In case of doubt, ask.
 .It Ev PKG_ADD
+User settings.
 Path to
 .Xr pkg_add 1
 command, with possible options.
 .It Ev PKG_ARCH
 Comma-separated list of architectures on which this package may install.
 Defaults to ${MACHINE_ARCH},${ARCH}.
-Use * to mean any arch.
+Use * for arch-independent packages.
 .It Ev PKG_ARGS
 Special arguments to pass to
 .Xr pkg_create 1 ,
@@ -1981,6 +1994,7 @@ in addition to the default ones.
 For mips64 and pic libraries, see
 .Qq The generation of package information .
 .It Ev PKG_CREATE
+User settings.
 Path to
 .Xr pkg_create 1
 command, with possible options.
@@ -2001,15 +2015,17 @@ the ports tree with
 .Cm @wantlib
 lines that come from the installed system.
 .It Ev PKG_DBDIR
+User settings.
 Path to package installation records.
 Defaults to
 .Pa /var/db/pkg .
-User settings.
 .It Ev PKG_DELETE
+User settings.
 Path to
 .Xr pkg_delete 1
 command, with possible options.
 .It Ev PKG_INFO
+User settings.
 Path to
 .Xr pkg_info 1
 command, with possible options.
