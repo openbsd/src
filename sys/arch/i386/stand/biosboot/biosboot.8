@@ -1,4 +1,4 @@
-.\"	$OpenBSD: biosboot.8,v 1.23 2010/08/10 20:34:16 sobrado Exp $
+.\"	$OpenBSD: biosboot.8,v 1.24 2011/12/03 23:01:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Tom Cosgrove <tom.cosgrove@arches-consulting.com>
 .\" Copyright (c) 1997 Michael Shalayeff
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 10 2010 $
+.Dd $Mdocdate: December 3 2011 $
 .Dt BIOSBOOT 8 i386
 .Os
 .Sh NAME
@@ -49,7 +49,7 @@ with information about the location of
 .Xr boot 8
 on disk.
 Specifically, it writes the filesystem block number of
-.Xr boot 8 's
+.Xr boot 8 Ns 's
 inode,
 the offset within this block of the inode,
 and various filesystem parameters (taken from the superblock)
@@ -124,7 +124,7 @@ may fail with any of the following error messages:
 Too many indirect blocks.
 .Nm
 is capable of reading the direct blocks in
-.Xr boot 8 's
+.Xr boot 8 Ns 's
 inode (the location of which is patched into
 .Nm
 by
@@ -155,14 +155,14 @@ On hard disks (default filesystem block size 16 KB)
 .Xr boot 8
 to be over 64 MB in size!
 (Only direct blocks are required for
-.Xr boot 8 s
+.Xr boot 8 Ns s
 of up to 192 KB.)
 .It Er ERR M
 Bad magic.
 The ELF
 .Dq magic number
 \e7fELF in
-.Xr boot 8 's
+.Xr boot 8 Ns 's
 header was not found.
 This indicates that the first block of
 .Xr boot 8

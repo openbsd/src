@@ -1,4 +1,4 @@
-.\"	$OpenBSD: reboot.2,v 1.14 2008/09/12 05:15:54 jmc Exp $
+.\"	$OpenBSD: reboot.2,v 1.15 2011/12/03 23:01:21 schwarze Exp $
 .\"	$NetBSD: reboot.2,v 1.5 1995/02/27 12:36:02 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)reboot.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: September 12 2008 $
+.Dd $Mdocdate: December 3 2011 $
 .Dt REBOOT 2
 .Os
 .Sh NAME
@@ -92,7 +92,7 @@ even if
 .Dv RB_HALT
 is not specified.
 This is because
-.Xr panic 9 s
+.Xr panic 9 Ns s
 during startup will probably just repeat on the next boot.
 Use of this option implies that the user has requested the action
 specified (for example, using the

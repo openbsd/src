@@ -1,4 +1,4 @@
-.Dd April 23, 2010
+.Dd December 3, 2011
 .Dt XR-ARGS 1
 .Os OpenBSD
 .Sh NAME
@@ -7,13 +7,11 @@
 .Sh DESCRIPTION
 One single
 .Xr echo 1
-is fine.
+is fine, and so is an
+.Xr echo 1 followed by something else.
 .Pp
 But listen for multiple
-.Xr echo 1 s .
-.Pp
-Listen for those
-.Xr echo 1 s really hard .
+.Xr echo 1 Ns s .
 .Pp
 A call, an
 .Xr echo 1 , and

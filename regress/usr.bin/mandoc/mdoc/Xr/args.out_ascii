@@ -4,14 +4,13 @@ NNAAMMEE
      XXrr--aarrggss - additional arguments to cross references
 
 DDEESSCCRRIIPPTTIIOONN
-     One single echo(1) is fine.
+     One single echo(1) is fine, and so is an echo(1) followed by something
+     else.
 
      But listen for multiple echo(1)s.
-
-     Listen for those echo(1)s really hard.
 
      A call, an echo(1), and another echo(1).
 
      Finally, half an echo and no echo at all.
 
-OpenBSD                         April 23, 2010                         OpenBSD
+OpenBSD                        December 3, 2011                        OpenBSD

@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.317 2011/12/03 22:27:57 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.318 2011/12/03 23:01:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -167,8 +167,9 @@ using the cryptographic signature utilities listed in ${PREFERRED_CIPHERS}.
 All the files needed to recreate a port should be in ${CHECKSUMFILES} and
 checksummed.
 Invoking
-.Ar checksum
-with REFETCH=true
+.Ic checksum
+with
+.Ev REFETCH Ns = Ns Cm true
 will try to fetch a version with the correct checksum from the
 .Ox
 main archive site in the case of a checksum mismatch.
@@ -2094,8 +2095,9 @@ User-settings.
 Defaults to
 .Sq Yes .
 Forces commands like
-.Xr ftp 1 ,
-.Xr pkg_create 1 ...
+.Xr ftp 1
+and
+.Xr pkg_create 1
 to use their progress-meter even in the absence of a terminal.
 .It Ev PROPERTIES
 List of properties specific to a given machine architecture.
