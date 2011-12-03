@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.16 2011/12/01 23:22:09 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.17 2011/12/03 14:53:12 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -320,6 +320,7 @@ mandocdb(int argc, char *argv[])
 	argv += optind;
 
 	memset(&info, 0, sizeof(BTREEINFO));
+	info.lorder = 4321;
 	info.flags = R_DUP;
 
 	mp = mparse_alloc(MPARSE_AUTO, MANDOCLEVEL_FATAL, NULL, NULL);
@@ -617,15 +618,13 @@ index_merge(const struct of *of, struct mparse *mp,
 		 * into the database.
 		 */
 
-		vbuf.rec = rec;
+		vbuf.rec = htobe32(rec);
 		seq = R_FIRST;
 		while (0 == (ch = (*hash->seq)(hash, &key, &val, seq))) {
 			seq = R_NEXT;
-
-			vbuf.mask = *(uint64_t *)val.data;
+			vbuf.mask = htobe64(*(uint64_t *)val.data);
 			val.size = sizeof(struct db_val);
 			val.data = &vbuf;
-
 			dbt_put(db, dbf, &key, &val);
 		}
 		if (ch < 0) {
@@ -723,7 +722,7 @@ index_prune(const struct of *ofile, DB *db, const char *dbf,
 				break;
 
 			vbuf = val.data;
-			if (*maxrec != vbuf->rec)
+			if (*maxrec != betoh32(vbuf->rec))
 				continue;
 
 			if ((ch = (*db->del)(db, &key, R_CURSOR)) < 0)

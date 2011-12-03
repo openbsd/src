@@ -1,4 +1,4 @@
-.\"	$Id: mandocdb.8,v 1.10 2011/12/01 23:22:09 schwarze Exp $
+.\"	$Id: mandocdb.8,v 1.11 2011/12/03 14:53:12 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 1 2011 $
+.Dd $Mdocdate: December 3 2011 $
 .Dt MANDOCDB 8
 .Os
 .Sh NAME
@@ -137,11 +137,11 @@ The keyword database,
 is a
 .Xr btree 3
 database of NUL-terminated keywords (record length is non-zero string
-length plus one) mapping to a 8-byte binary field consisting of the
-keyword type and source
+length plus one) mapping to a 12-byte binary field consisting of the
+64-bit keyword type and 32-bit source
 .Sx Index Database
-record number.
-The type, a 64-bit bit-mask in host order, consists of the following
+record number, both in network-byte order.
+The type bit-mask consists of the following
 values mapping into
 .Xr mdoc 7
 macro identifiers:
