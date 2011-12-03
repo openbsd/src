@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.309 2011/11/25 14:04:23 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.310 2011/12/03 18:20:57 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 25 2011 $
+.Dd $Mdocdate: December 3 2011 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -866,7 +866,7 @@ Current machine architecture.
 Read-only.
 .It Ev AUTOCONF
 Location of the autoconf binary if needed.
-Defaults to autoconf (though make autoreconf might be more appropriate).
+Defaults to autoconf (though autoreconf might be more appropriate).
 .It Ev AUTOCONF_DIR
 Where to invoke autoconf if ${CONFIGURE_STYLE} includes autoconf.
 Defaults to ${WRKSRC}.
@@ -875,14 +875,36 @@ Defaults to ${WRKSRC}.
 Starting with
 .Ox 3.3 ,
 several versions of autoconf may coexist peacefully.
+The main autoconf script is a shell wrapper in the 
+.Pa devel/metaauto
+package, and similarly for automake.
 Setting
 .Ev AUTOCONF_VERSION
 along with
 .Ev CONFIGURE_STYLE
 set to autoconf is the correct way to specify which one to use.
+.Ev AUTOCONF_VERSION
+defaults to 2.13.
 If autoconf must be run manually,
 .Ev MODGNU_AUTOCONF_DEPENDS
 can be used to specify what packages to depend upon.
+.It Ev AUTOHEADER
+Location of the autoheader binary.
+Defaults to autoheader.
+.It Ev AUTOMAKE_VERSION
+Several versions of automake may coexist peacefully.
+.Ev AUTOMAKE_VERSION
+must be set before trying to run automake.
+Defaults to 1.4.
+Note that even if
+.Ev CONFIGURE_STYLE
+includes automake,
+automake should still be run manually during the right
+.Ar configure
+stage.
+.It Ev AUTOUPDATE
+Location of the autoupdate binary.
+Defaults to autoupdate.
 .It Ev BASE_PKGPATH
 Full
 .Xr pkgpath 7
@@ -1126,6 +1148,7 @@ Should be appended to CONFIGURE_ARGS, for ports that build dynamic libraries
 and whose configure script supports these options.
 .It Ev CONFIGURE_STYLE
 Set to style of configuration that needs to happen.
+.Pp
 If
 .Sq perl ,
 assume
@@ -1142,6 +1165,7 @@ or
 for
 .Xr Module::Install 3p
 style.
+.Pp
 If
 .Sq gnu ,
 assume
@@ -1167,12 +1191,22 @@ Add
 .Sq automake
 if automake may need to be rerun.
 Otherwise, automake will be explicitly disabled.
+Note that automake is never run automatically.
+In order to use it,
+.Ev CONFIGURE_STYLE
+should include
+.Sq automake
+and there should be a
+.Ar {pre,do}-configure
+target running automake.
+.Pp
 If
 .Sq imake ,
 assume port configures using X11 ports Imakefile framework.
 Add
 .Sq noman
 if port has no man pages the Imakefile should try installing.
+.Pp
 If
 .Sq simple ,
 there is a configure script, but it does not fit the normal GNU configure
