@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.42 2011/09/19 22:37:03 pirofti Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.43 2011/12/03 12:38:30 fgsch Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -82,6 +82,8 @@
 
 static int linux_to_bsd_domain (int);
 static int bsd_to_linux_domain(int);
+
+static int linux_to_bsd_msg_flags(int);
 
 int linux_socket(struct proc *, void *, register_t *);
 int linux_bind(struct proc *, void *, register_t *);
@@ -199,6 +201,29 @@ bsd_to_linux_domain(bdom)
 		return (-1);
 
 	return bsd_to_linux_domain_[bdom];
+}
+
+/*
+ * Convert between Linux and BSD MSG_XXX flags
+ */
+static int
+linux_to_bsd_msg_flags(int lflags)
+{
+	int flags = 0;
+
+	if (lflags & LINUX_MSG_OOB)
+		flags |= MSG_OOB;
+	if (lflags & LINUX_MSG_PEEK)
+		flags |= MSG_PEEK;
+	if (lflags & LINUX_MSG_DONTROUTE)
+		flags |= MSG_DONTROUTE;
+	if (lflags & LINUX_MSG_DONTWAIT)
+		flags |= MSG_DONTWAIT;
+	if (lflags & LINUX_MSG_WAITALL)
+		flags |= MSG_WAITALL;
+	if (lflags & LINUX_MSG_NOSIGNAL)
+		flags |= MSG_NOSIGNAL;
+	return (flags);
 }
 
 int
@@ -568,7 +593,7 @@ linux_send(p, v, retval)
 	SCARG(&bsa, s) = lsa.s;
 	SCARG(&bsa, buf) = lsa.msg;
 	SCARG(&bsa, len) = lsa.len;
-	SCARG(&bsa, flags) = lsa.flags;
+	SCARG(&bsa, flags) = linux_to_bsd_msg_flags(lsa.flags);
 
 	return compat_sys_send(p, &bsa, retval);
 }
@@ -623,7 +648,7 @@ linux_recv(p, v, retval)
 	SCARG(&bra, s) = lra.s;
 	SCARG(&bra, buf) = lra.msg;
 	SCARG(&bra, len) = lra.len;
-	SCARG(&bra, flags) = lra.flags;
+	SCARG(&bra, flags) = linux_to_bsd_msg_flags(lra.flags);
 
 	return compat_sys_recv(p, &bra, retval);
 }
@@ -766,7 +791,7 @@ linux_sendto(p, v, retval)
 	SCARG(&bsa, s) = lsa.s;
 	SCARG(&bsa, buf) = lsa.msg;
 	SCARG(&bsa, len) = lsa.len;
-	SCARG(&bsa, flags) = lsa.flags;
+	SCARG(&bsa, flags) = linux_to_bsd_msg_flags(lsa.flags);
 	tolen = lsa.tolen;
 	if (lsa.to) {
 		struct sockaddr *sa;
@@ -807,7 +832,7 @@ linux_recvfrom(p, v, retval)
 	SCARG(&bra, s) = lra.s;
 	SCARG(&bra, buf) = lra.buf;
 	SCARG(&bra, len) = lra.len;
-	SCARG(&bra, flags) = lra.flags;
+	SCARG(&bra, flags) = linux_to_bsd_msg_flags(lra.flags);
 	SCARG(&bra, from) = (struct sockaddr *) lra.from;
 	SCARG(&bra, fromlenaddr) = lra.fromlen;
 
@@ -1126,7 +1151,7 @@ linux_recvmsg(p, v, retval)
 
 	SCARG(&bla, s) = lla.s;
 	SCARG(&bla, msg) = (struct msghdr *)lla.msg;
-	SCARG(&bla, flags) = lla.flags;
+	SCARG(&bla, flags) = linux_to_bsd_msg_flags(lla.flags);
 
 	error = sys_recvmsg(p, &bla, retval);
 	if (error)
@@ -1186,7 +1211,7 @@ linux_sendmsg(p, v, retval)
 
 	SCARG(&bla, s) = lla.s;
 	SCARG(&bla, msg) = lla.msg;
-	SCARG(&bla, flags) = lla.flags;
+	SCARG(&bla, flags) = linux_to_bsd_msg_flags(lla.flags);
 
 	error = copyin(lla.msg->msg_control, &control, sizeof(caddr_t));
 	if (error)

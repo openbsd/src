@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.h,v 1.8 2011/04/05 22:54:31 pirofti Exp $	*/
+/*	$OpenBSD: linux_socket.h,v 1.9 2011/12/03 12:38:30 fgsch Exp $	*/
 /*	$NetBSD: linux_socket.h,v 1.3 1995/05/28 10:16:34 mycroft Exp $	*/
 
 /*
@@ -102,11 +102,23 @@
 #define	LINUX_IP_DROP_MEMBERSHIP 36
 
 /*
- * Options vor [gs]etsockopt(2), TCP level.
+ * Options for [gs]etsockopt(2), TCP level.
  */
 
 #define	LINUX_TCP_NODELAY	1
 #define	LINUX_TCP_MAXSEG	2
+
+/*
+ * Flags for recv(2) and send(2) family functions.
+ * The first 3 match MSG_XXX.
+ */
+
+#define	LINUX_MSG_OOB		1
+#define	LINUX_MSG_PEEK		2
+#define	LINUX_MSG_DONTROUTE	4
+#define	LINUX_MSG_DONTWAIT	0x40
+#define	LINUX_MSG_WAITALL	0x100
+#define	LINUX_MSG_NOSIGNAL	0x4000
 
 struct linux_sockaddr {
 	unsigned short	sa_family;

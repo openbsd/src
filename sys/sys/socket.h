@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.77 2011/09/08 03:40:32 guenther Exp $	*/
+/*	$OpenBSD: socket.h,v 1.78 2011/12/03 12:38:30 fgsch Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -412,6 +412,7 @@ struct msghdr {
 #define	MSG_DONTWAIT	0x80		/* this message should be nonblocking */
 #define	MSG_BCAST	0x100		/* this message rec'd as broadcast */
 #define	MSG_MCAST	0x200		/* this message rec'd as multicast */
+#define	MSG_NOSIGNAL	0x400		/* do not send SIGPIPE */
 
 /*
  * Header for ancillary data objects in msg_control buffer.
