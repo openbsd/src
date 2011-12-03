@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.306 2011/11/23 10:24:37 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.307 2011/12/03 12:44:56 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1273,6 +1273,7 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 	char			*path = NULL;
 	int			 osize;
 
+	bzero(&pf, sizeof(pf));
 	RB_INIT(&pf_anchors);
 	memset(&pf_main_anchor, 0, sizeof(pf_main_anchor));
 	pf_init_ruleset(&pf_main_anchor.ruleset);
