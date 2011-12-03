@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.32 2011/07/08 18:25:56 ariane Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.33 2011/12/03 20:07:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -1109,6 +1109,7 @@ uvm_pmr_freepages(struct vm_page *pg, psize_t count)
 {
 	struct uvm_pmemrange *pmr;
 	psize_t i, pmr_count;
+	struct vm_page *firstpg = pg;
 
 	for (i = 0; i < count; i++) {
 		KASSERT(atop(VM_PAGE_TO_PHYS(&pg[i])) ==
@@ -1127,21 +1128,20 @@ uvm_pmr_freepages(struct vm_page *pg, psize_t count)
 
 	uvm_lock_fpageq();
 
-	while (count > 0) {
+	for (i = count; i > 0; i -= pmr_count) {
 		pmr = uvm_pmemrange_find(atop(VM_PAGE_TO_PHYS(pg)));
 		KASSERT(pmr != NULL);
 
-		pmr_count = MIN(count, pmr->high - atop(VM_PAGE_TO_PHYS(pg)));
+		pmr_count = MIN(i, pmr->high - atop(VM_PAGE_TO_PHYS(pg)));
 		pg->fpgsz = pmr_count;
 		uvm_pmr_insert(pmr, pg, 0);
 
 		uvmexp.free += pmr_count;
-		count -= pmr_count;
 		pg += pmr_count;
 	}
 	wakeup(&uvmexp.free);
 
-	uvm_wakeup_pla(VM_PAGE_TO_PHYS(pg), ptoa(count));
+	uvm_wakeup_pla(VM_PAGE_TO_PHYS(firstpg), ptoa(count));
 
 	uvm_unlock_fpageq();
 }
