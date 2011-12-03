@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.311 2011/12/03 20:20:28 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.312 2011/12/03 20:24:09 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -54,12 +54,13 @@ Conversion methods are outlined here.
 Most variables and targets are documented, with very few exceptions.
 .Pp
 This documentation covers the current targets, variables and paths used by
-.Nm bsd.port.mk ,
-followed by sections on obsolete constructs that a porter may need
-when converting from other ports systems.
+.Nm bsd.port.mk .
 There is a separate section covering the fake framework, a section
 explaining flavors and multi-packages, and a section covering
 the generation of package information.
+.Pp
+It ends with sections on obsolete constructs that a porter may need
+when converting from other ports systems.
 .Pp
 Binary package details are mostly covered in
 .Xr pkg_create 1
@@ -140,7 +141,8 @@ Verify the ports mentioned in
 .Ev BUILD_DEPENDS ,
 by checking the corresponding packages are actually installed,
 and install the missing ports by recursing through the ports tree.
-Invoked right after creating the working directory.
+Deprecated, see
+.Ar prepare .
 .It Ar check-register
 Introspection target.
 Verifies from the ports tree, without building anything, that the current
@@ -2700,6 +2702,407 @@ List of additional port specific filters, included automatically.
 .It Pa systrace.policy
 List of additional port specific policies, included automatically.
 .El
+.Sh THE FAKE FRAMEWORK
+The
+.Ar fake
+target is used to install the port in a private directory first, ready for
+packaging by the
+.Ar package
+target, so that the real installation will use the package.
+.Pp
+Essentially,
+.Ar fake
+invokes a real
+.Ar install
+process after tweaking a few variables.
+.Pp
+.Ar fake
+first creates a skeleton tree under ${WRKINST}, using the
+.Xr mtree 8
+specification
+.Pa ${PORTSDIR}/infrastructure/db/fake.mtree .
+.Pp
+A
+.Ar pre-fake
+target may be used to complete that skeleton tree.
+For instance, a few ports may need supplementary stuff to be present (as
+it would be installed if the ports' dependencies were present).
+.Pp
+If {pre,do,post}-install overrides are present, they are used with some
+important changes: PREFIX is set to ${WRKINST}${PREFIX}, ${DESTDIRNAME}
+is set to ${WRKINST}, and TRUEPREFIX is set to ${PREFIX}.
+Essentially, old install targets work transparently, except for a need to
+change PREFIX to TRUEPREFIX for symbolic links and similar path lookups.
+Specific traditional post install work can be simply removed, as it will
+be taken care of by the package itself (for instance, ldconfig, or
+texinfo's install-info).
+.Pp
+If no do-install override is present, the port is installed using
+.Bd -literal -offset 2n
+env -i ${MAKE_ENV}
+PREFIX=${WRKINST}${PREFIX} ${DESTDIRNAME}=${WRKINST} TRUEPREFIX=${PREFIX}
+${MAKE_PROGRAM} ${ALL_FAKE_FLAGS} -f ${MAKE_FILE} ${FAKE_TARGET}
+.Ed
+.Pp
+Note that this does set both PREFIX and ${DESTDIRNAME}.
+If a port's Makefile both heeds ${DESTDIRNAME},
+and references PREFIX explicitly,
+FAKE_FLAGS may rectify the problem by setting PREFIX=${PREFIX}
+(which will do the right thing, since ${PREFIX} is a
+.Xr make 1
+construct which will not be seen by the shell).
+.Pp
+${FAKE_FLAGS} is used to set variables on
+.Xr make 1
+command line, which will override the port Makefile contents.
+Thus, a port that mentions DESTDIR= does not need any patch to work with fake.
+.Pp
+Files such as
+.Pa ${PKGDIR}/README*
+or
+.Pa ${PKGDIR}/*.rc
+get copied to
+.Pa ${WRKINST}
+at the end of
+.Ar fake
+(see the FILES section above for details).
+.Sh FLAVORS AND MULTI_PACKAGES
+Starting with
+.Ox 2.7 ,
+each port can generate distinct packages through two orthogonal mechanisms:
+FLAVORS and MULTI_PACKAGES.
+.Pp
+The current MULTI_PACKAGES mechanism was introduced after
+.Ox 4.0 .
+.Pp
+The arch-dependent part was refined after
+.Ox 5.0 .
+.Pp
+If a port can be compiled with several options, these options
+should be turned into FLAVORS.
+The port maintainer will set FLAVORS to be the list of possible options in
+the Makefile.
+When building the port, the package builder will set
+.Li "FLAVOR='option1 option2...'"
+to build a specific flavor of the port.
+The Makefile should test the value of FLAVOR as follows:
+.Bd -literal -offset indent
+FLAVOR?=
+\&.if ${FLAVOR:L:Moption1}
+# what to do if option1
+\&.endif
+\&.if ${FLAVOR:L:Moption2}
+# what to do if option2
+\&.endif
+.Ed
+.Pp
+.Pa bsd.port.mk
+takes care of a few details, such as generating a distinct work directory for
+each flavor, or creating a FULLPKGNAME by adding a dash separated list of
+flavors to the base package name.
+The order in which FLAVOR is specified does not matter: this dash separated
+list will be reordered to match the ordering of FLAVORS.
+.Pp
+It is an error to specify an option in FLAVOR that does not appear in FLAVORS,
+to prevent misspellings.
+.Pp
+In recursive package building, flavors can be specified as a comma
+separated list after the package directory, e.g., SUBDIR+=vim,no_x11.
+.Pp
+Finally, package information will use templates with the canonical package
+extension if they are available: if FLAVOR='option1 option2' and both
+COMMENT and COMMENT-option1-option2 are available, COMMENT-option1-option2 will
+be used.
+.Pp
+If one build of a port can generate several distinct packages, set
+MULTI_PACKAGES accordingly.
+Each extension of a MULTI_PACKAGES name should start with a dash, so that
+they cannot be confused with FLAVORS.
+In dependency checking and recursive builds, a subpackage can be
+specified after a comma, e.g., SUBDIR+=quake,-server.
+MULTI_PACKAGES only affects the actual package building step (and the
+describe step, since a MULTI_PACKAGES port will produce several
+descriptions).
+.Pp
+If MULTI_PACKAGES is set, the packaging stage happens once for every
+subpackage, using subpackage-specific variables.
+For instance, if MULTI_PACKAGES=-main -lib -server,
+.Ev PKG_ARCH-main ,
+.Ev PKG_ARCH-lib
+and
+.Ev PKG_ARCH-server
+will be used for the subpackages respectively called
+.Ev FULLPKGNAME-main ,
+.Ev FULLPKGNAME-lib
+and
+.Ev FULLPKGNAME-server .
+.Pp
+All package information is also derived from
+templates with SUBPACKAGE appended.
+In the preceding example, the packing-list template for FULLPKGNAME-lib
+must be in PLIST-lib.
+.Pp
+The following variables are subpackage dependent:
+.Ev COMMENT ,
+.Ev PKG_ARCH ,
+.Ev PERMIT_PACKAGE_FTP ,
+.Ev PERMIT_PACKAGE_CDROM ,
+.Ev PKGFILE ,
+.Ev PKGNAME ,
+.Ev FULLPKGNAME ,
+.Ev REVISION ,
+.Ev EPOCH ,
+.Ev FULLPKGPATH ,
+.Ev RUN_DEPENDS ,
+.Ev WANTLIB ,
+.Ev LIB_DEPENDS ,
+.Ev IGNORE ,
+.Ev ONLY_FOR_ARCHS ,
+.Ev NOT_FOR_ARCHS ,
+.Ev PKG_ARGS ,
+.Ev PREFIX ,
+.Ev CATEGORIES ,
+.Ev MESSAGE ,
+.Ev UNMESSAGE ,
+.Ev DESCR ,
+.Ev PLIST ,
+.Ev PKGSPEC .
+.Pp
+The usual non-MULTI_PACKAGES variables are simply used as default values
+for all subpackages.
+So, if you set
+.Li "PKG_ARCH=*"
+.Li "PKG_ARCH-main=i386"
+then
+.Ev PKG_ARCH-lib
+and
+.Ev PKG_ARCH-server
+will both be
+.Sq * .
+.Pp
+.Ev WANTLIB
+and
+.Ev LIB_DEPENDS
+are special.
+At the beginning of build,
+all build dependencies will be checked,
+which includes both
+.Ev LIB_DEPENDS ,
+.Ev WANTLIB
+and the subpackage-specific version of these.
+As an exception, any
+.Ev LIB_DEPENDS-sub
+that references the current port will be ignored as a build dependency,
+in order to avoid recursion.
+.Pp
+.Ev FULLPKGPATH
+and
+.Ev FULLPKGNAME
+are special as well.
+You must set
+.Ev PKGNAME-sub
+or
+.Ev FULLPKGNAME-sub
+for each subpackage, and
+.Ev FULLPKGPATH-sub
+is set automatically to the right value.
+In very rare cases, one can override
+.Ev FULLPKGPATH-sub
+(for instance, if one specific subpackage is not affected by option
+settings that affect other subpackages, e.g., for include files packs).
+.Pp
+In terms of implementation, quite a few targets will have a subpackage
+specific subtarget:
+invoking
+.Ar package
+is the same as invoking
+.Ar subpackage
+for all subpackages,
+invoking
+.Ar install-all
+is the same as invoking
+.Ar install
+for all subpackages,
+and invoking
+.Ar update
+is the same as invoking
+subupdate
+for all subpackages.
+.Pp
+.Ev ONLY_FOR_ARCHS
+and
+.Ev NOT_FOR_ARCHS
+interact with
+.Ev MULTI_PACKAGES
+and
+.Ev IGNORE .
+The infrastructure will automatically filter subpackages
+that are not suitable for the current architecture.
+Thus,
+.Ev MULTI_PACKAGES
+should always list all subpackages,
+even things not buildable on the current architecture,
+for indexing purposes.
+.Pp
+Starting with
+.Ox 5.1 ,
+.Xr bsd.port.arch.mk 5
+should be used to simplify the handling of
+.Ev MULTI_PACKAGES
+in arch-dependent setups:
+.Pp
+Make sure
+.Ev MULTI_PACKAGES ,
+.Ev ONLY_FOR_ARCHS* ,
+and
+.Ev PSEUDO_FLAVORS
+are defined correctly, then
+.Bd -literal -offset indent
+\&.include <bsd.port.arch.mk>
+.Ed
+.Pp
+This will compute
+.Ev BUILD_PACKAGES ,
+the list of actual subpackages to build with the current setup,
+by taking arch constraints and pseudo-flavors into account.
+Then test
+.Ev BUILD_PACKAGES
+to set up the right configuration, e.g., to check if
+.Ev SUBPACKAGE
+.Ar -mono
+should be built:
+.Bd -literal -offset indent
+\&.if ${BUILD_PACKAGES:M-mono}
+.Ed
+.Pp
+The
+.Pa lang/gcc/4.2
+or
+.Pa print/poppler
+ports should provide examples of proper use.
+.Pp
+Note that
+.Xr dpb 1
+will break if all subpackages are not properly listed.
+.Sh THE GENERATION OF PACKAGE INFORMATION
+Starting after
+.Ox 4.1
+all package information is processed directly by
+.Xr pkg_create 1
+from templates in ${PKG_DIR}.
+.Pp
+.Bl -bullet -compact
+.It
+If not overridden by the user, determine which set of templates to use,
+depending on the current SUBPACKAGE and FLAVOR information.
+Set ${PLIST${SUBPACKAGE}}, ${DESCR${SUBPACKAGE}}, ${COMMENT${SUBPACKAGE}}, ${MESSAGE${SUBPACKAGE}}, ${UNMESSAGE${SUBPACKAGE}} accordingly.
+.It
+Detect the existence of ${PKGDIR}/{REQ,INSTALL,DEINSTALL}${SUBPACKAGE}.
+These are now deprecated.
+Use @exec and @unexec annotations instead.
+.It
+Generate the actual DESCR, and if needed, MESSAGE, UNMESSAGE,
+from the templates in ${DESCR}, ${MESSAGE}, ${UNMESSAGE}, by
+substituting the variables in ${SUBST_VARS}, and by substituting
+${FLAVORS} with the canonical flavor extension for this port,
+e.g., if FLAVORS=no_map gfx qt2, if FLAVOR=gfx no_map, this is
+.Sq -no_map-gfx .
+.It
+Generate the actual PLIST from the template ${PLIST},
+by inserting shared/no-shared fragments, merging other fragments,
+and applying the same variable substitutions as other package information.
+.El
+.Pp
+Note that ${COMMENT} is currently not substituted, to speed up
+.Ar describe
+generation.
+.Pp
+To avoid substitution, variables can be escaped as follows:
+.Li "$\e{PREFIX}"
+.Pp
+Constructs such as the line
+.Li "%%SHARED%%"
+or
+.Li "!%%SHARED%%"
+in the packing-list template trigger the inclusion of the
+.Pa ${PKGDIR}/PFRAG.shared${SUBPACKAGE}
+or
+.Pa ${PKGDIR}/PFRAG.no-shared${SUBPACKAGE} .
+.Pp
+Similarly, if FLAVORS lists flav1, then the line
+.Li "%%flav1%%"
+(resp.
+.Li "!%%flav1%%" )
+will trigger the inclusion of
+.Pa ${PKGDIR}/PFRAG.flav1${SUBPACKAGE}
+(resp.
+.Pa ${PKGDIR}/PFRAG.no-flav1${SUBPACKAGE} )
+in the packing-list.
+Other fragments can be defined by simply adding
+.Li "-Dfrag=1"
+or
+.Li "-Dfrag=0"
+to
+.Ev PKG_ARGS
+.Pp
+If libraries are built using
+.Pa bsd.lib.mk ,
+special care should be taken for mips64* architectures,
+which do not ever build
+.Pa *pic.a
+files (all mips code is pic already).
+.Nm
+automatically adds
+.Li "-Dno_mips64=1"
+or
+.Li "-Dno_mips64=0"
+to
+.Ev PKG_ARGS ,
+and the porter only needs to provide the appropriate fragment.
+.Pp
+.Xr pkg_add 1
+now calls
+.Xr ldconfig 8
+directly, provided dynamic libraries have been annotated with
+.Li "@lib libthingy.so.5.0" .
+Adding new directories to the dynamic loader cache has been
+deprecated.
+It is often better to let libraries be visible as a link
+under ${LOCALBASE}.
+Having a separate directory is enough to trick
+.Xr ld 1
+into grabbing the right version.
+Libraries used only for
+.Xr dlopen 3
+do not need to be visible.
+Some programs will prefer to use rpath to find their own libraries.
+.Pp
+The special
+.Ar update-plist
+target does a fairly good job of automatically generating PLIST and
+PFRAG.shared fragments.
+.Pp
+If
+.Ev PLIST_DB
+points to a directory, all packing-lists from packages generated by
+.Xr pkg_create 1
+during the
+.Ar package
+stage are saved in that location by a script:
+.Pa ${PORTSDIR}/infrastructure/bin/register-plist .
+This script strips some irrelevant information and normalizes the
+packing-list somehow, and compares it to existing information, looking
+for relevant changes.
+Since a package name must always be changed when the packing-list changes,
+any attempt to replace a packing-list of a given name with a different
+packing-list will be flagged as an error.
+.Pp
+In MULTI_PACKAGES mode, there must be separate COMMENT, DESCR, and PLIST
+templates for each SUBPACKAGE (and optional distinct MESSAGE, UNMESSAGE
+files in a similar way).
+This contrasts with the FLAVORS
+situation, where all these files will automatically default to the
+non-flavor version if there is no flavor-specific file around.
 .Sh OBSOLETE TARGETS
 .Bl -tag -width do-configure
 .It Ar cdrom-packages , ftp-packages
@@ -3127,407 +3530,6 @@ system configuration files are located in
 or in a subdirectory of
 .Pa /etc .
 .El
-.Sh THE FAKE FRAMEWORK
-The
-.Ar fake
-target is used to install the port in a private directory first, ready for
-packaging by the
-.Ar package
-target, so that the real installation will use the package.
-.Pp
-Essentially,
-.Ar fake
-invokes a real
-.Ar install
-process after tweaking a few variables.
-.Pp
-.Ar fake
-first creates a skeleton tree under ${WRKINST}, using the
-.Xr mtree 8
-specification
-.Pa ${PORTSDIR}/infrastructure/db/fake.mtree .
-.Pp
-A
-.Ar pre-fake
-target may be used to complete that skeleton tree.
-For instance, a few ports may need supplementary stuff to be present (as
-it would be installed if the ports' dependencies were present).
-.Pp
-If {pre,do,post}-install overrides are present, they are used with some
-important changes: PREFIX is set to ${WRKINST}${PREFIX}, ${DESTDIRNAME}
-is set to ${WRKINST}, and TRUEPREFIX is set to ${PREFIX}.
-Essentially, old install targets work transparently, except for a need to
-change PREFIX to TRUEPREFIX for symbolic links and similar path lookups.
-Specific traditional post install work can be simply removed, as it will
-be taken care of by the package itself (for instance, ldconfig, or
-texinfo's install-info).
-.Pp
-If no do-install override is present, the port is installed using
-.Bd -literal -offset 2n
-env -i ${MAKE_ENV}
-PREFIX=${WRKINST}${PREFIX} ${DESTDIRNAME}=${WRKINST} TRUEPREFIX=${PREFIX}
-${MAKE_PROGRAM} ${ALL_FAKE_FLAGS} -f ${MAKE_FILE} ${FAKE_TARGET}
-.Ed
-.Pp
-Note that this does set both PREFIX and ${DESTDIRNAME}.
-If a port's Makefile both heeds ${DESTDIRNAME},
-and references PREFIX explicitly,
-FAKE_FLAGS may rectify the problem by setting PREFIX=${PREFIX}
-(which will do the right thing, since ${PREFIX} is a
-.Xr make 1
-construct which will not be seen by the shell).
-.Pp
-${FAKE_FLAGS} is used to set variables on
-.Xr make 1
-command line, which will override the port Makefile contents.
-Thus, a port that mentions DESTDIR= does not need any patch to work with fake.
-.Pp
-Files such as
-.Pa ${PKGDIR}/README*
-or
-.Pa ${PKGDIR}/*.rc
-get copied to
-.Pa ${WRKINST}
-at the end of
-.Ar fake
-(see the FILES section above for details).
-.Sh FLAVORS AND MULTI_PACKAGES
-Starting with
-.Ox 2.7 ,
-each port can generate distinct packages through two orthogonal mechanisms:
-FLAVORS and MULTI_PACKAGES.
-.Pp
-The current MULTI_PACKAGES mechanism was introduced after
-.Ox 4.0 .
-.Pp
-The arch-dependent part was refined after
-.Ox 5.0 .
-.Pp
-If a port can be compiled with several options, these options
-should be turned into FLAVORS.
-The port maintainer will set FLAVORS to be the list of possible options in
-the Makefile.
-When building the port, the package builder will set
-.Li "FLAVOR='option1 option2...'"
-to build a specific flavor of the port.
-The Makefile should test the value of FLAVOR as follows:
-.Bd -literal -offset indent
-FLAVOR?=
-\&.if ${FLAVOR:L:Moption1}
-# what to do if option1
-\&.endif
-\&.if ${FLAVOR:L:Moption2}
-# what to do if option2
-\&.endif
-.Ed
-.Pp
-.Pa bsd.port.mk
-takes care of a few details, such as generating a distinct work directory for
-each flavor, or creating a FULLPKGNAME by adding a dash separated list of
-flavors to the base package name.
-The order in which FLAVOR is specified does not matter: this dash separated
-list will be reordered to match the ordering of FLAVORS.
-.Pp
-It is an error to specify an option in FLAVOR that does not appear in FLAVORS,
-to prevent misspellings.
-.Pp
-In recursive package building, flavors can be specified as a comma
-separated list after the package directory, e.g., SUBDIR+=vim,no_x11.
-.Pp
-Finally, package information will use templates with the canonical package
-extension if they are available: if FLAVOR='option1 option2' and both
-COMMENT and COMMENT-option1-option2 are available, COMMENT-option1-option2 will
-be used.
-.Pp
-If one build of a port can generate several distinct packages, set
-MULTI_PACKAGES accordingly.
-Each extension of a MULTI_PACKAGES name should start with a dash, so that
-they cannot be confused with FLAVORS.
-In dependency checking and recursive builds, a subpackage can be
-specified after a comma, e.g., SUBDIR+=quake,-server.
-MULTI_PACKAGES only affects the actual package building step (and the
-describe step, since a MULTI_PACKAGES port will produce several
-descriptions).
-.Pp
-If MULTI_PACKAGES is set, the packaging stage happens once for every
-subpackage, using subpackage-specific variables.
-For instance, if MULTI_PACKAGES=-main -lib -server,
-.Ev PKG_ARCH-main ,
-.Ev PKG_ARCH-lib
-and
-.Ev PKG_ARCH-server
-will be used for the subpackages respectively called
-.Ev FULLPKGNAME-main ,
-.Ev FULLPKGNAME-lib
-and
-.Ev FULLPKGNAME-server .
-.Pp
-All package information is also derived from
-templates with SUBPACKAGE appended.
-In the preceding example, the packing-list template for FULLPKGNAME-lib
-must be in PLIST-lib.
-.Pp
-The following variables are subpackage dependent:
-.Ev COMMENT ,
-.Ev PKG_ARCH ,
-.Ev PERMIT_PACKAGE_FTP ,
-.Ev PERMIT_PACKAGE_CDROM ,
-.Ev PKGFILE ,
-.Ev PKGNAME ,
-.Ev FULLPKGNAME ,
-.Ev REVISION ,
-.Ev EPOCH ,
-.Ev FULLPKGPATH ,
-.Ev RUN_DEPENDS ,
-.Ev WANTLIB ,
-.Ev LIB_DEPENDS ,
-.Ev IGNORE ,
-.Ev ONLY_FOR_ARCHS ,
-.Ev NOT_FOR_ARCHS ,
-.Ev PKG_ARGS ,
-.Ev PREFIX ,
-.Ev CATEGORIES ,
-.Ev MESSAGE ,
-.Ev UNMESSAGE ,
-.Ev DESCR ,
-.Ev PLIST ,
-.Ev PKGSPEC .
-.Pp
-The usual non-MULTI_PACKAGES variables are simply used as default values
-for all subpackages.
-So, if you set
-.Li "PKG_ARCH=*"
-.Li "PKG_ARCH-main=i386"
-then
-.Ev PKG_ARCH-lib
-and
-.Ev PKG_ARCH-server
-will both be
-.Sq * .
-.Pp
-.Ev WANTLIB
-and
-.Ev LIB_DEPENDS
-are special.
-At the beginning of build,
-all build dependencies will be checked,
-which includes both
-.Ev LIB_DEPENDS ,
-.Ev WANTLIB
-and the subpackage-specific version of these.
-As an exception, any
-.Ev LIB_DEPENDS-sub
-that references the current port will be ignored as a build dependency,
-in order to avoid recursion.
-.Pp
-.Ev FULLPKGPATH
-and
-.Ev FULLPKGNAME
-are special as well.
-You must set
-.Ev PKGNAME-sub
-or
-.Ev FULLPKGNAME-sub
-for each subpackage, and
-.Ev FULLPKGPATH-sub
-is set automatically to the right value.
-In very rare cases, one can override
-.Ev FULLPKGPATH-sub
-(for instance, if one specific subpackage is not affected by option
-settings that affect other subpackages, e.g., for include files packs).
-.Pp
-In terms of implementation, quite a few targets will have a subpackage
-specific subtarget:
-invoking
-.Ar package
-is the same as invoking
-.Ar subpackage
-for all subpackages,
-invoking
-.Ar install-all
-is the same as invoking
-.Ar install
-for all subpackages,
-and invoking
-.Ar update
-is the same as invoking
-subupdate
-for all subpackages.
-.Pp
-.Ev ONLY_FOR_ARCHS
-and
-.Ev NOT_FOR_ARCHS
-interact with
-.Ev MULTI_PACKAGES
-and
-.Ev IGNORE .
-The infrastructure will automatically filter subpackages
-that are not suitable for the current architecture.
-Thus,
-.Ev MULTI_PACKAGES
-should always list all subpackages,
-even things not buildable on the current architecture,
-for indexing purposes.
-.Pp
-Starting with
-.Ox 5.1 ,
-.Xr bsd.port.arch.mk 5
-should be used to simplify the handling of
-.Ev MULTI_PACKAGES
-in arch-dependent setups:
-.Pp
-Make sure
-.Ev MULTI_PACKAGES ,
-.Ev ONLY_FOR_ARCHS* ,
-and
-.Ev PSEUDO_FLAVORS
-are defined correctly, then
-.Bd -literal -offset indent
-\&.include <bsd.port.arch.mk>
-.Ed
-.Pp
-This will compute
-.Ev BUILD_PACKAGES ,
-the list of actual subpackages to build with the current setup,
-by taking arch constraints and pseudo-flavors into account.
-Then test
-.Ev BUILD_PACKAGES
-to set up the right configuration, e.g., to check if
-.Ev SUBPACKAGE
-.Ar -mono
-should be built:
-.Bd -literal -offset indent
-\&.if ${BUILD_PACKAGES:M-mono}
-.Ed
-.Pp
-The
-.Pa lang/gcc/4.2
-or
-.Pa print/poppler
-ports should provide examples of proper use.
-.Pp
-Note that
-.Xr dpb 1
-will break if all subpackages are not properly listed.
-.Sh THE GENERATION OF PACKAGE INFORMATION
-Starting after
-.Ox 4.1
-all package information is processed directly by
-.Xr pkg_create 1
-from templates in ${PKG_DIR}.
-.Pp
-.Bl -bullet -compact
-.It
-If not overridden by the user, determine which set of templates to use,
-depending on the current SUBPACKAGE and FLAVOR information.
-Set ${PLIST${SUBPACKAGE}}, ${DESCR${SUBPACKAGE}}, ${COMMENT${SUBPACKAGE}}, ${MESSAGE${SUBPACKAGE}}, ${UNMESSAGE${SUBPACKAGE}} accordingly.
-.It
-Detect the existence of ${PKGDIR}/{REQ,INSTALL,DEINSTALL}${SUBPACKAGE}.
-These are now deprecated.
-Use @exec and @unexec annotations instead.
-.It
-Generate the actual DESCR, and if needed, MESSAGE, UNMESSAGE,
-from the templates in ${DESCR}, ${MESSAGE}, ${UNMESSAGE}, by
-substituting the variables in ${SUBST_VARS}, and by substituting
-${FLAVORS} with the canonical flavor extension for this port,
-e.g., if FLAVORS=no_map gfx qt2, if FLAVOR=gfx no_map, this is
-.Sq -no_map-gfx .
-.It
-Generate the actual PLIST from the template ${PLIST},
-by inserting shared/no-shared fragments, merging other fragments,
-and applying the same variable substitutions as other package information.
-.El
-.Pp
-Note that ${COMMENT} is currently not substituted, to speed up
-.Ar describe
-generation.
-.Pp
-To avoid substitution, variables can be escaped as follows:
-.Li "$\e{PREFIX}"
-.Pp
-Constructs such as the line
-.Li "%%SHARED%%"
-or
-.Li "!%%SHARED%%"
-in the packing-list template trigger the inclusion of the
-.Pa ${PKGDIR}/PFRAG.shared${SUBPACKAGE}
-or
-.Pa ${PKGDIR}/PFRAG.no-shared${SUBPACKAGE} .
-.Pp
-Similarly, if FLAVORS lists flav1, then the line
-.Li "%%flav1%%"
-(resp.
-.Li "!%%flav1%%" )
-will trigger the inclusion of
-.Pa ${PKGDIR}/PFRAG.flav1${SUBPACKAGE}
-(resp.
-.Pa ${PKGDIR}/PFRAG.no-flav1${SUBPACKAGE} )
-in the packing-list.
-Other fragments can be defined by simply adding
-.Li "-Dfrag=1"
-or
-.Li "-Dfrag=0"
-to
-.Ev PKG_ARGS
-.Pp
-If libraries are built using
-.Pa bsd.lib.mk ,
-special care should be taken for mips64* architectures,
-which do not ever build
-.Pa *pic.a
-files (all mips code is pic already).
-.Nm
-automatically adds
-.Li "-Dno_mips64=1"
-or
-.Li "-Dno_mips64=0"
-to
-.Ev PKG_ARGS ,
-and the porter only needs to provide the appropriate fragment.
-.Pp
-.Xr pkg_add 1
-now calls
-.Xr ldconfig 8
-directly, provided dynamic libraries have been annotated with
-.Li "@lib libthingy.so.5.0" .
-Adding new directories to the dynamic loader cache has been
-deprecated.
-It is often better to let libraries be visible as a link
-under ${LOCALBASE}.
-Having a separate directory is enough to trick
-.Xr ld 1
-into grabbing the right version.
-Libraries used only for
-.Xr dlopen 3
-do not need to be visible.
-Some programs will prefer to use rpath to find their own libraries.
-.Pp
-The special
-.Ar update-plist
-target does a fairly good job of automatically generating PLIST and
-PFRAG.shared fragments.
-.Pp
-If
-.Ev PLIST_DB
-points to a directory, all packing-lists from packages generated by
-.Xr pkg_create 1
-during the
-.Ar package
-stage are saved in that location by a script:
-.Pa ${PORTSDIR}/infrastructure/bin/register-plist .
-This script strips some irrelevant information and normalizes the
-packing-list somehow, and compares it to existing information, looking
-for relevant changes.
-Since a package name must always be changed when the packing-list changes,
-any attempt to replace a packing-list of a given name with a different
-packing-list will be flagged as an error.
-.Pp
-In MULTI_PACKAGES mode, there must be separate COMMENT, DESCR, and PLIST
-templates for each SUBPACKAGE (and optional distinct MESSAGE, UNMESSAGE
-files in a similar way).
-This contrasts with the FLAVORS
-situation, where all these files will automatically default to the
-non-flavor version if there is no flavor-specific file around.
 .Sh SEE ALSO
 .Xr ftp 1 ,
 .Xr pkg_add 1 ,
