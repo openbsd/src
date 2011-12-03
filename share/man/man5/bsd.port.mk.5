@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.314 2011/12/03 20:39:58 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.315 2011/12/03 20:45:01 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -267,27 +267,30 @@ hooks.
 Do a fake port installation, that is, simulate the port installation under
 ${WRKINST}.
 There is no
-.Ev do-fake
+.Ar do-fake
 and
-.Ev post-fake
+.Ar post-fake
 hooks.
 .Ar fake
 actually uses
-.Ev pre-fake ,
-.Ev pre-install ,
-.Ev do-install
+.Ar pre-fake ,
+.Ar pre-install ,
+.Ar do-install
 and
-.Ev post-install .
+.Ar post-install .
 Override
-.Ev pre-install ,
-.Ev do-install ,
+.Ar pre-install ,
+.Ar do-install ,
 or
-.Ev post-install
+.Ar post-install
 to change behavior.
 Do not touch
-.Ev pre-fake
+.Ar pre-fake
 unless you really know what you are doing.
-Described in a separate section below.
+Described in a separate section below
+.Po
+.Qq THE FAKE FRAMEWORK
+.Pc .
 .It Ar fake-wantlib-args
 Check
 .Ev WANTLIB
@@ -323,8 +326,7 @@ to fill with supplementary distribution files which are not needed for
 every configuration.
 Use of
 .Ar {pre,do,post}-fetch
-hooks is strongly discouraged, and will probably be removed in the
-near future, as this makes mirroring of distfiles very complicated.
+hooks is forbidden, as this would make mirroring of distfiles very complicated.
 See
 .Ev CHECKSUMFILES ,
 .Ev CDROM_SITE ,
