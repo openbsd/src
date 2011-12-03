@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.110 2011/12/03 18:55:13 espie Exp $
+.\"	$OpenBSD: port-modules.5,v 1.111 2011/12/03 19:00:34 espie Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -552,15 +552,25 @@ Sets
 .Ev BUILD_DEPENDS ,
 and
 .Ev RUN_DEPENDS .
-The build and further actions are based on the value of
+Build and further actions are based on the list of values in
 .Ev MODGHC_BUILD :
-nort (no runtime dependency on
+.Bl -tag -width register
+.It Ar nort
+no runtime dependency on
 .Pa lang/ghc
-and hs- prefix will not be added), cabal (to get the typical Cabal
-targets defined), haddock (to generate API documentation using
+and hs- prefix will not be added,
+.It Ar cabal
+get the typical Cabal targets defined,
+.It Ar haddock
+generate API documentation using
 .Pa devel/haddock ,
-register (to create and include register/unregister scripts), hackage
-(if the distfiles are available on Hackage).
+.It Ar register
+register
+create and include register/unregister scripts,
+.It Ar hackage
+the distfiles are available on Hackage.
+.El
+.Pp
 Also affects
 .Ev CATEGORIES ,
 .Ev CONFIGURE_STYLE
@@ -571,13 +581,19 @@ and
 and
 .Ar do-regress
 targets are provided if the port itself didn't set them.
-If register has been set, the PLIST needs to be modified in order to
+If
+.Ar register
+has been set, the PLIST needs to be modified in order to
 add the relevant @exec/@unexec lines.
 This module will run the Setup script and ensure the documentation
-will be built (if haddock has been set), and that the package is
+will be built (if
+.Ar haddock
+has been set), and that the package is
 registered as a library usable by
 .Pa lang/ghc
-(if register has been set).
+(if
+.Ar register
+has been set).
 Extra arguments and environment additions for the Setup configure
 command can be specified with
 .Ev MODGHC_SETUP_CONF_ARGS
