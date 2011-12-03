@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.111 2011/12/03 19:00:34 espie Exp $
+.\"	$OpenBSD: port-modules.5,v 1.112 2011/12/03 19:20:49 espie Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -600,49 +600,136 @@ command can be specified with
 and
 .Ev MODGHC_SETUP_CONF_ENV .
 .It lang/lua
-Sets MODLUA_VERSION, MODLUA_LIBDIR, MODLUA_DATADIR.
-Appends to CATEGORIES.
-Also appends to BUILD_DEPENDS, unless NO_BUILD has been set to Yes.
-Also appends to RUN_DEPENDS, unless MODLUA_RUNDEP is set to No.
-Also affects PKG_ARCH when SHARED_ONLY is not set or set to No.
+Sets
+.Ev MODLUA_VERSION ,
+.Ev MODLUA_LIBDIR ,
+.Ev MODLUA_DATADIR .
+Appends to
+.Ev CATEGORIES .
+Also appends to
+.Ev BUILD_DEPENDS ,
+unless
+.Ev NO_BUILD
+has been set to Yes.
+Also appends to
+.Ev RUN_DEPENDS ,
+unless
+.Ev MODLUA_RUNDEP
+is set to No.
+Also affects
+.Ev PKG_ARCH
+when
+.Ev SHARED_ONLY
+is not set or set to No.
 .It lang/mono
-Sets MODMONO_ONLY_FOR_ARCHS, CONFIGURE_ENV, MAKE_FLAGS,
-MODMONO_BUILD_DEPENDS and MODMONO_RUN_DEPENDS.
-If MODMONO_DEPS is set to Yes,
+Sets
+.Ev MODMONO_ONLY_FOR_ARCHS ,
+.Ev CONFIGURE_ENV ,
+.Ev MAKE_FLAGS ,
+.Ev MODMONO_BUILD_DEPENDS
+and
+.Ev MODMONO_RUN_DEPENDS .
+If
+.Ev MODMONO_DEPS
+is set to Yes,
 .Pa lang/mono
-is appended to BUILD_DEPENDS and RUN_DEPENDS.
-If MODMONO_NANT is set to Yes, NANT and NANT_FLAGS are set,
+is appended to
+.Ev BUILD_DEPENDS
+and
+.Ev RUN_DEPENDS .
+If
+.Ev MODMONO_NANT
+is set to Yes,
+.Ev NANT
+and
+.Ev NANT_FLAGS
+are set,
 .Pa devel/nant
-is appended to BUILD_DEPENDS and the do-build and do-install targets are
-provided to use nant for building.
-If these target are already defined, one can use MODMONO_BUILD_TARGET
-and MODMONO_INSTAlL_TARGET instead in the corresponding target.
-DLLMAP_FILES defines in which files the module will substitute hardcoded
-shared library versions using a post-configure target.
+is appended to
+.Ev BUILD_DEPENDS
+and a
+.Ar do-build
+and
+.ar do-install
+targets are provided to use nant for building.
+If these targets are already defined, one can use
+.Ev MODMONO_BUILD_TARGET
+and
+.Ev MODMONO_INSTAlL_TARGET
+instead in the corresponding target.
+.Ev DLLMAP_FILES
+defines in which files the module will substitute hardcoded
+shared library versions using a
+.Ar post-configure
+target.
 .It lang/ocaml
-Sets OCAML_VERSION, MODOCAML_NATIVE.
-Appends to BUILD_DEPENDS and MAKE_ENV.
+Sets
+.Ev OCAML_VERSION ,
+.Ev MODOCAML_NATIVE .
+Appends to
+.Ev BUILD_DEPENDS
+and
+.Ev MAKE_ENV .
 This also selects a %%native%% plist fragment depending on whether
 the architecture supports native compilation or not.
 .It lang/python
-Sets MODPY_VERSION, MODPY_BIN, MODPY_INCDIR, MODPY_LIBDIR, MODPY_SITEPKG,
-MODPY_SETUP, MODPY_WANTLIB, MODPY_LIB_DEPENDS, MODPY_RUN_DEPENDS,
-MODPY_BUILD_DEPENDS, MODPY_BIN_ADJ and MODPY_ADJ_FILES.
-Appends to RUN_DEPENDS unless MODPY_RUNDEP is set to No.
-Appends to BUILD_DEPENDS unless MODPY_BUILDDEP is set to No or NO_BUILD
+Sets
+.Ev MODPY_VERSION ,
+.Ev MODPY_BIN ,
+.Ev MODPY_INCDIR ,
+.Ev MODPY_LIBDIR ,
+.Ev MODPY_SITEPKG ,
+.Ev MODPY_SETUP ,
+.Ev MODPY_WANTLIB ,
+.Ev MODPY_LIB_DEPENDS ,
+.Ev MODPY_RUN_DEPENDS ,
+.Ev MODPY_BUILD_DEPENDS ,
+.Ev MODPY_BIN_ADJ
+and
+.Ev MODPY_ADJ_FILES .
+Appends to
+.Ev RUN_DEPENDS
+unless
+.Ev MODPY_RUNDEP
+is set to No.
+Appends to
+.Ev BUILD_DEPENDS
+unless
+.Ev MODPY_BUILDDEP
+is set to No or
+.Ev NO_BUILD
 is set to Yes.
-MODPY_VERSION is the default version used by all python modules.
-Ports which use the setuptools module should set MODPY_SETUPTOOLS to Yes.
-All ports that generate egg-info files should set MODPY_EGG_VERSION
+.Ev MODPY_VERSION
+is the default version used by all python modules.
+Ports which use the setuptools module should set
+.Ev MODPY_SETUPTOOLS
+to Yes.
+All ports that generate egg-info files should set
+.Ev MODPY_EGG_VERSION
 to the version string used by the port's setup.py setup() function.
 Extra arguments to the build and install commands can be passed via
-MODPY_DISTUTILS_BUILDARGS and MODPY_DISTUTILS_INSTALLARGS.
-MODPY_BIN_ADJ is a command that takes filename arguments and replaces
-the python shebang line with MODPY_BIN.
-MODPY_ADJ_FILES is a list of filenames that will automatically have
-MODPY_BIN_ADJ called on them at the end of pre-configure.
-Also affects CATEGORIES, MAKE_ENV, CONFIGURE_ENV, SHARED_ONLY, and SUBST_VARS.
-May affect the regress target.
+.Ev MODPY_DISTUTILS_BUILDARGS
+and
+.Ev MODPY_DISTUTILS_INSTALLARGS .
+.Ev MODPY_BIN_ADJ
+is a command that takes filename arguments and replaces the python
+shebang line with
+.Ev MODPY_BIN .
+.Ev MODPY_ADJ_FILES
+is a list of filenames that will automatically have
+.Ev MODPY_BIN_ADJ
+called on them at the end of
+.Ar pre-configure .
+Also affects
+.Ev CATEGORIES ,
+.Ev MAKE_ENV ,
+.Ev CONFIGURE_ENV ,
+.Ev SHARED_ONLY ,
+and
+.Ev SUBST_VARS .
+May affect the
+.Ar regress
+target.
 .It lang/ruby
 Sets MODRUBY_REV, RUBY, RAKE, RSPEC, MODRUBY_RUN_DEPENDS, MODRUBY_LIB_DEPENDS,
 MODRUBY_BUILD_DEPENDS, MODRUBY_ICONV_DEPENDS, MODRUBY_LIBDIR, MODRUBY_DOCDIR,
@@ -688,125 +775,306 @@ This is because the ruby 1.9 gem binaries are installed with a 19 suffix.
 make update-plist tends to remove ${GEM_BIN_SUFFIX}, so be careful when
 updating such ports.
 .It lang/tcl
-Sets MODTCL_VERSION, MODTCL_BIN, MODTCL_INCDIR, MODTCL_LIBDIR,
-MODTCL_BUILD_DEPENDS, MODTCL_RUN_DEPENDS, MODTCL_LIB, MODTCL_LIB_DEPENDS,
-and MODTCL_CONFIG.
-MODTCL_VERSION is the default version used by all Tcl ports and
-may be overridden.
-Provides MODTCL_TCLSH_ADJ and MODTCL_WISH_ADJ shell fragments to
-patch the interpreter path in executable scripts.
-Also affects CATEGORIES and SUBST_VARS.
+Sets
+.Ev MODTCL_VERSION ,
+.Ev MODTCL_BIN ,
+.Ev MODTCL_INCDIR ,
+.Ev MODTCL_LIBDIR ,
+.Ev MODTCL_BUILD_DEPENDS ,
+.Ev MODTCL_RUN_DEPENDS ,
+.Ev MODTCL_LIB ,
+.Ev MODTCL_LIB_DEPENDS,
+and
+.Ev MODTCL_CONFIG .
+.Ev MODTCL_VERSION
+is the default version used by all Tcl ports and may be overridden.
+Provides
+.Ev MODTCL_TCLSH_ADJ
+and
+.Ev MODTCL_WISH_ADJ
+shell fragments to patch the interpreter path in executable scripts.
+Also affects
+.Ev CATEGORIES
+and
+.Ev SUBST_VARS .
 .It perl
 This module is documented in the main
 .Xr bsd.port.mk 5
 manpage.
 .It textproc/intltool
-Sets MODINTLTOOL_OVERRIDE.
+Sets
+.Ev MODINTLTOOL_OVERRIDE .
 .Pa textproc/intltool
-is added to BUILD_DEPENDS.
-MODINTLTOOL_OVERRIDE changes the paths of INTLTOOL_EXTRACT, INTLTOOL_MERGE and
-INTLTOOL_UPDATE to use the installed versions of intltool-extract,
+is added to
+.Ev BUILD_DEPENDS .
+.Ev MODINTLTOOL_OVERRIDE
+changes the paths of
+.Ev INTLTOOL_EXTRACT ,
+.Ev INTLTOOL_MERGE
+and
+.Ev INTLTOOL_UPDATE
+to use the installed versions of intltool-extract,
 intltool-merge and intltool-update, instead of the version's packages into the
 distfile of the port using this module.
-Also affects CONFIGURE_ENV, MAKE_ENV and MAKE_FLAGS by appending
-MODINTLTOOL_OVERRIDE to them.
+Also affects
+.Ev CONFIGURE_ENV,
+.Ev MAKE_ENV
+and
+.Ev MAKE_FLAGS
+by appending
+.Ev MODINTLTOOL_OVERRIDE
+to them.
 .It www/drupal6
 .It www/horde
 .It www/mozilla
-Sets PKGNAME, HOMEPAGE, MASTER_SITES, DISTNAME, USE_GMAKE, ONLY_FOR_ARCHS and
-SHARED_ONLY.
-EXTRACT_SUFX defaults to .tar.bz2.
+Sets
+.Ev PKGNAME ,
+.Ev HOMEPAGE ,
+.Ev MASTER_SITES ,
+.Ev DISTNAME ,
+.Ev USE_GMAKE ,
+.Ev ONLY_FOR_ARCHS
+and
+.Ev SHARED_ONLY .
+.Ev EXTRACT_SUFX
+defaults to .tar.bz2.
 .Pp
-Adds common dependencies to LIB_DEPENDS, WANTLIB, RUN_DEPENDS and
-BUILD_DEPENDS.
-Sets common CONFIGURE_ARGS, MAKE_ENV and CONFIGURE_ENV.
-Sets MOB variable as source directory
-and MOZ as target directory within do-install.
+Adds common dependencies to
+.Ev LIB_DEPENDS ,
+.Ev WANTLIB ,
+.Ev RUN_DEPENDS
+and
+.Ev BUILD_DEPENDS .
+Sets common
+.Ev CONFIGURE_ARGS ,
+.Ev MAKE_ENV
+and
+.Ev CONFIGURE_ENV .
+Sets
+.Ev MOB
+variable as source directory
+and
+.Ev MOZ
+as target directory within
+.Ar do-install .
 .Pp
-Port Makefile has to set MOZILLA_PROJECT, MOZILLA_CODENAME, MOZILLA_VERSION,
-MOZILLA_BRANCH, MOZILLA_LIBS and MOZILLA_DATADIRS variables.
-Port can also append values to MOZILLA_SUBST_FILES which contains the list of
-files to run SUBST_CMD on during pre-configure, and MOZILLA_AUTOCONF_DIRS which
-contains the list of dirs where AUTOCONF will be run during pre-configure.
+Individual port Makefile must set
+.Ev MOZILLA_PROJECT ,
+.Ev MOZILLA_CODENAME ,
+.Ev MOZILLA_VERSION ,
+.Ev MOZILLA_BRANCH ,
+.Ev MOZILLA_LIBS
+and
+.Ev MOZILLA_DATADIRS
+variables.
+Port can also append values to
+.Ev MOZILLA_SUBST_FILES
+which contains the list of
+files to run
+.Ev SUBST_CMD
+on during
+.Ar pre-configure ,
+and
+.Ev MOZILLA_AUTOCONF_DIRS
+which
+contains the list of dirs where
+.Ev AUTOCONF
+will be run during
+.Ar pre-configure .
 .It www/pear
 Used for PHP PEAR ports.
-Sets default MASTER_SITES, EXTRACT_SUFX, PKGNAME.
-Sets PREFIX to /var/www.
-Sets NO_REGRESS unless a do-regress target is defined.
-Adds common dependencies to RUN_DEPENDS and BUILD_DEPENDS and sets
-MAKE_FILE and FAKE_FLAGS appropriately.
-Makes PEAR_LIBDIR and PEAR_PHPBIN available for use in the port.
-Sets a default PKGNAME and appends to CATEGORIES.
+Sets default
+.Ev MASTER_SITES ,
+.Ev EXTRACT_SUFX ,
+.Ev PKGNAME .
+Sets
+.Ev PREFIX
+to
+.Pa /var/www .
+Sets
+.Ev NO_REGRESS
+unless a
+.Ar do-regress
+target is defined.
+Adds common dependencies to
+.Ev RUN_DEPENDS
+and
+.Ev BUILD_DEPENDS ,
+sets
+.Ev MAKE_FILE
+and
+.Ev FAKE_FLAGS
+appropriately.
+Makes
+.Ev PEAR_LIBDIR
+and
+.Ev PEAR_PHPBIN
+available for use in the port.
+Sets a default
+.Ev PKGNAME
+and appends to
+.Ev CATEGORIES .
 .It www/plone
-Sets MODPLONE_VERSION and MODZOPE_VERSION.
-MODPLONE_VERSION is the default version used by all Plone ports and may be overridden.
+Sets
+.Ev MODPLONE_VERSION
+and
+.Ev MODZOPE_VERSION .
+.Ev MODPLONE_VERSION
+is the default version used by all Plone ports and may be overridden.
 It appends
 .Pa www/plone
-to RUN_DEPENDS and also sets NO_REGRESS to Yes.
+to
+.Ev RUN_DEPENDS
+and also sets
+.Ev NO_REGRESS
+to Yes.
 .It www/zope
 .It x11/gnome
-If both GNOME_PROJECT and GNOME_VERSION are set, this module defines
-DISTNAME, VERSION, MASTER_SITES, adds x11/gnome to CATEGORIES and
-EXTRACT_SUFX will default to .tar.xz if unset.
-Also unconditionally sets USE_GMAKE.
-If MODGNOME_ICON_CACHE=Yes, a dependency on
+If both
+.Ev GNOME_PROJECT
+and
+.Ev GNOME_VERSION
+are set, this module defines
+.Ev DISTNAME ,
+.Ev VERSION ,
+.Ev MASTER_SITES ,
+adds x11/gnome to
+.Ev CATEGORIES
+and
+.Ev EXTRACT_SUFX
+will default to .tar.xz if unset.
+Also unconditionally sets
+.Ev USE_GMAKE .
+If
+.Li MODGNOME_ICON_CACHE=Yes ,
+a dependency on
 .Pa x11/gtk+2,-guic
-is appended to MODGNOME_RUN_DEPENDS.
-Unless NO_BUILD=Yes, CONFIGURE_SHARED is appended to CONFIGURE_ARGS,
-CPPFLAGS="-I${LOCALBASE}/include" and LDFLAGS="-L${LOCALBASE}/lib" are
-appended to CONFIGURE_ENV,
-USE_LIBTOOL is set to Yes and
+is appended to
+.Ev MODGNOME_RUN_DEPENDS .
+Unless
+.Li NO_BUILD=Yes ,
+.Ev CONFIGURE_SHARED
+is appended to
+.Ev CONFIGURE_ARGS ,
+.Li CPPFLAGS="-I${LOCALBASE}/include"
+and
+.Li LDFLAGS="-L${LOCALBASE}/lib"
+are appended to
+.Ev CONFIGURE_ENV ,
+.Ev USE_LIBTOOL
+is set to Yes and
 .Pa textproc/intltool
-is appended to MODULES.
+is appended to
+.Ev MODULES .
 Certain build/run dependencies and configure arguments can be set by
-appending goi, gtk-doc, vala and/or yelp to MODGNOME_TOOLS.
+appending goi, gtk-doc, vala and/or yelp to
+.Ev MODGNOME_TOOLS .
 They are disabled otherwise.
-If MODGNOME_TOOLS is set to yelp, and
+If
+.Ev MODGNOME_TOOLS
+is set to yelp, and
 .Pa textproc/itstool
 as well as
 .Pa x11/gnome/doc-utils
-are appended to MODGNOME_BUILD_DEPENDS.
+are appended to
+.Ev MODGNOME_BUILD_DEPENDS .
 Also,
 .Pa x11/gnome/yelp
-is appended to MODGNOME_RUN_DEPENDS, and MODGNOME_RUN_DEPENDS_yelp is
+is appended to
+.Ev MODGNOME_RUN_DEPENDS ,
+and
+.Ev MODGNOME_RUN_DEPENDS_yelp
+is
 set for use with multi packaged ports.
 This option is to be used when any files are installed into
 .Pa share/gnome/help/ .
-MODGNOME_BUILD_DEPENDS and MODGNOME_BUILD_DEPENDS are appended to the
-corresponding BUILD_DEPENDS and RUN_DEPENDS.
+.Ev MODGNOME_BUILD_DEPENDS
+and
+.Ev MODGNOME_BUILD_DEPENDS
+are appended to the
+corresponding
+.Ev BUILD_DEPENDS
+and
+.Ev RUN_DEPENDS .
 .Pp
 .It x11/gnustep
 .It x11/kde
 .It x11/qt3
 .It x11/qt4
 .It x11/tk
-Sets MODTK_VERSION, MODTK_BIN, MODTK_INCDIR, MODTK_LIBDIR,
-MODTK_BUILD_DEPENDS, MODTK_RUN_DEPENDS, MODTK_LIB, MODTK_LIB_DEPENDS,
-and MODTK_CONFIG.
-MODTK_VERSION is the default version used by all Tk ports and
+Sets
+.Ev MODTK_VERSION ,
+.Ev MODTK_BIN ,
+.Ev MODTK_INCDIR ,
+.Ev MODTK_LIBDIR ,
+.Ev MODTK_BUILD_DEPENDS ,
+.Ev MODTK_RUN_DEPENDS ,
+.Ev MODTK_LIB ,
+.Ev MODTK_LIB_DEPENDS ,
+and
+.Ev MODTK_CONFIG .
+.Ev MODTK_VERSION
+is the default version used by all Tk ports and
 may be overridden.
-Automatically adds the lang/tcl module, provides a default
-MODTCL_VERSION to match MODTK_VERSION, and affects CATEGORIES
-and SUBST_VARS.
-Note the MODTCL_WISH_ADJ shell fragment in the lang/tcl module.
+Automatically adds the
+.Pa lang/tcl
+module, provides a default
+.Ev MODTCL_VERSION
+to match
+.Ev MODTK_VERSION ,
+and affects
+.Ev CATEGORIES
+and
+.Ev SUBST_VARS .
+Note the
+.Ev MODTCL_WISH_ADJ
+shell fragment in the
+.Pa lang/tcl
+module.
 .It x11/xfce4
-Sets DIST_SUBDIR, EXTRACT_SUFX, CONFIGURE_STYLE,
-CONFIGURE_ENV and USE_GMAKE.
-If MODXFCE_ICON_CACHE is set to yes, it adds
+Sets
+.Ev DIST_SUBDIR ,
+.Ev EXTRACT_SUFX ,
+.Ev CONFIGURE_STYLE ,
+.Ev CONFIGURE_ENV
+and
+.Ev USE_GMAKE .
+If
+.Ev MODXFCE_ICON_CACHE
+is set to yes, it adds
 .Pa x11/gtk+2,-guic
-to RUN_DEPENDS.
-Unless XFCE_NO_SRC is set, USE_LIBTOOL is set to yes and
+to
+.Ev RUN_DEPENDS .
+Unless
+.Ev XFCE_NO_SRC
+is set,
+.Ev USE_LIBTOOL
+is set to yes and
 .Pa devel/gettext
 and
 .Pa textproc/intltool
-are added to MODULES.
-Also affects CATEGORIES.
+are added to
+.Ev MODULES .
+Also affects
+.Ev CATEGORIES .
 .Pp
 Xfce ports can be divided into five categories: core libraries and
 applications, goodies, artwork, thunar plugins, and panel plugins.
-HOMEPAGE, MASTER_SITES and DISTNAME are built using XFCE_VERSION (which
-defaults to XFCE_DESKTOP_VERSION if not set) and either XFCE_PROJECT,
-XFCE_GOODIE, XFCE_ARTWORK, THUNAR_PLUGIN or XFCE_PLUGIN.
+.Ev HOMEPAGE ,
+.Ev MASTER_SITES
+and
+.Ev DISTNAME
+are built using
+.Ev XFCE_VERSION
+(which defaults to
+.Ev XFCE_DESKTOP_VERSION
+if not set) and either
+.Ev XFCE_PROJECT ,
+.Ev XFCE_GOODIE ,
+.Ev XFCE_ARTWORK ,
+.Ev THUNAR_PLUGIN
+or
+.Ev XFCE_PLUGIN .
 One of the latter has to be provided by the port Makefile.
 .El
 .Sh SEE ALSO
