@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.312 2011/12/03 20:24:09 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.313 2011/12/03 20:34:16 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -145,14 +145,14 @@ Deprecated, see
 .Ar prepare .
 .It Ar check-register
 Introspection target.
-Verifies from the ports tree, without building anything, that the current
+Verify from the ports tree, without building anything, that the current
 subpackage will register okay
 .Po
 see
 .Ev PLIST_DB
 .Pc .
 .It Ar check-register-all
-Applies
+Apply
 .Ar check-register
 to all subpackages of the current port.
 .It Ar checkpatch
@@ -248,7 +248,7 @@ and
 .Ev PATCH_CASES
 for details.
 .It Ar dump-vars
-Dumps the values of all relevant variables in a port, prepended with the
+Dump the values of all relevant variables in a port, prepended with the
 port's FULLPKGPATH.
 .It Ar extract
 Extract the distribution files under
@@ -343,7 +343,7 @@ See
 .Ev SUPDISTFILES ,
 .Ev REFETCH .
 .It Ar fetch-makefile
-generates a makefile fragment for fetching the files
+Generate a makefile fragment suitable for fetching the files
 in the current port.
 See
 .Xr mirroring-ports 7 .
@@ -362,11 +362,11 @@ Install all packages in a multi-packages port.
 Verify that the library dependencies a port needs are actually there,
 by checking the library specifications.
 .It Ar lib-depends-args
-Filters
+Filter
 .Ev LIB_DEPENDS
 to keep only entries required by
 .Ev WANTLIB ,
-and outputs a list of dependencies suitable for
+and output a list of dependencies suitable for
 .Xr pkg_create 1 ,
 see
 .Ar print-package-args .
@@ -415,7 +415,9 @@ can do a correct job with the port's manpages.
 Top-level target, see
 .Xr mirroring-ports 7 .
 .It Ar mirror-maker-fetch
-Debug target: generates the mirror-maker makefile fragment and use it
+Debug target: generate the
+.Ar mirror-maker
+makefile fragment and use it
 to fetch files, see
 .Xr mirroring-ports 7 .
 .It Ar no-wantlib-args
@@ -425,9 +427,9 @@ that does not do anything.
 See
 .Ar print-package-args .
 .It Ar package
-Build a port package (or packages in
+Build a port package (or packages in a
 .Ev MULTI_PACKAGES
-cases) from the fake installation.
+case) from the fake installation.
 Involves creating packaging information from templates
 (see
 .Ev COMMENT ,
@@ -518,7 +520,7 @@ stage, and thus is quicker than
 .Ar lib-depends-check ,
 unless you already have all binary packages.
 .It Ar port-wantlib-args
-Resolves
+Resolve
 .Ev WANTLIB
 against the ports tree itself and system libraries, without looking at built
 or installed packages, and writes a list of options suitable for
@@ -527,7 +529,15 @@ See
 .Ar print-package-args .
 .It Ar prepare
 Prepare a port for building, by checking and installing all required
-dependencies.
+dependencies, constructed from
+.Ev LIB_DEPENDS
+and
+.Ev BUILD_DEPENDS .
+In
+.Ev MULTI_PACKAGES
+setups,
+see
+.Qq Flavors and multi-packages .
 .It Ar print-package-args
 Print all dependency-related information that will be passed as parameters
 to
@@ -589,15 +599,15 @@ in the same format used for
 Generate and print a package packing-list from the static information
 present in the port.
 .It Ar print-plist-all
-Iterates over
+Iterate over
 .Ar print-plist
 for all subpackages in a given port.
 .It Ar print-plist-all-with-depends
-Iterates over
+Iterate over
 .Ar print-plist-with-depends
 for all subpackages in a given port.
 .It Ar print-plist-contents
-Generate and print a package contents from the static information
+Generate and print package contents from the static information
 present in the port.
 In contrast with
 .Ar print-plist ,
@@ -671,7 +681,7 @@ by checking the corresponding packages are actually installed,
 and install the missing ports by recursing through the ports tree.
 Invoked right before installing the package.
 .It Ar run-depends-args
-Processes
+Process
 .Ev RUN_DEPENDS
 and outputs a list of dependencies suitable for
 .Xr pkg_create 1 ,
@@ -685,22 +695,22 @@ one variable value per line.
 Mostly used from recursive makes, or to know the contents of another
 port's variables without guessing wrongly.
 .It Ar show-fake-size
-Prints the size of ${WRKINST}.
+Print the size of ${WRKINST}.
 Used by some options of
 .Xr dpb 1 ,
 suitable for
 .Ev BULK_TARGETS .
 .It Ar show-prepare-results
-Prints the list of actual installed packages found out by
+Print the list of actual installed packages found out by
 .Ar prepare .
 .It Ar show-required-by
-Prints the list of
+Print the list of
 .Xr pkgpath 7
 for all ports that will be affected by the
 current port changing.
 Works by walking the list of dependencies, in reverse.
 .It Ar show-run-depends
-Prints all running dependencies for a port, one per-line, without duplicates.
+Print all running dependencies for a port, one per-line, without duplicates.
 .It Ar subpackage
 Build a port package.
 Exactly like
@@ -816,7 +826,7 @@ Similar to
 except that it prefixes each value with the variable name, e.g.
 .Li VAR=value
 .It Ar wantlib-args
-Calls
+Call
 .Ar port-wantlib-args
 and
 .Ar fake-wantlib-args
@@ -2788,10 +2798,10 @@ to build a specific flavor of the port.
 The Makefile should test the value of FLAVOR as follows:
 .Bd -literal -offset indent
 FLAVOR?=
-\&.if ${FLAVOR:L:Moption1}
+\&.if ${FLAVOR:Moption1}
 # what to do if option1
 \&.endif
-\&.if ${FLAVOR:L:Moption2}
+\&.if ${FLAVOR:Moption2}
 # what to do if option2
 \&.endif
 .Ed
@@ -2884,7 +2894,8 @@ will both be
 and
 .Ev LIB_DEPENDS
 are special.
-At the beginning of build,
+At the beginning of build, during
+.Ar prepare ,
 all build dependencies will be checked,
 which includes both
 .Ev LIB_DEPENDS ,
