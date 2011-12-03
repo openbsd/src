@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.316 2011/12/03 20:49:16 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.317 2011/12/03 22:27:57 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -630,7 +630,7 @@ It also handles
 .Ev RUN_DEPENDS ,
 and
 .Ev WANTLIB ,
-so that the packing-list is complete.
+so that the packing-list has complete dependency information.
 .It Ar print-plist-with-depends
 Like
 .Ar print-plist ,
@@ -813,7 +813,7 @@ If the generated lists include files and directories that shouldn't be
 included, comment these like this:
 .Bd -literal
 @comment unwanted-file
-@comment @dirrm unwanted-dir
+@comment unwanted-dir/
 .Ed
 .Pp
 Subsequent calls to
@@ -821,7 +821,7 @@ Subsequent calls to
 will automatically recognize and handle such lines correctly.
 .Pp
 .Ar update-plist
-does not handle flavor situations yet, so beware.
+may not handle flavor and multi-packages situations correctly yet, so beware.
 .It Ar verbose-show
 Similar to
 .Ar show ,
