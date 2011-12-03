@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages.7,v 1.29 2010/10/29 09:16:03 espie Exp $
+.\" $OpenBSD: packages.7,v 1.30 2011/12/03 19:49:21 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 29 2010 $
+.Dd $Mdocdate: December 3 2011 $
 .Dt PACKAGES 7
 .Os
 .Sh NAME
@@ -110,15 +110,17 @@ or
 specific information installs under
 .Pa /usr/local/share/doc/pkg-readmes .
 .Pp
-The current package system has some major limitations.
+The current package system has some deliberate design limitations.
 .Ss "The package system is not aware of shared network installations"
 And thus, it does not handle that situation well.
 For instance, there is no mechanism to mark some files as being shareable
 on several machines, or even on several architectures.
-Bear in mind that the package database is normally stored in /var/db/pkg,
+Bear in mind that the package database is normally stored in
+.Pa /var/db/pkg ,
 which is usually not shared across machines.
 .Pp
-Always installing packages on the same machine, and exporting /usr/local
+Always installing packages on the same machine, and exporting
+.Pa /usr/local
 to other machines should mostly work.
 In such a case, always run
 .Xr pkg_add 1
@@ -141,13 +143,20 @@ package that holds those files, and is not useful as a stand-alone package.
 .Sh PACKAGE VERSIONS
 All packages have an obvious version number in their name,
 and a not so obvious version inside the actual package:
-the run time dependencies used for building.
-Tools like pkg_add -u and out-of-date will look at those dependencies to
+the run-time dependencies used for building.
+Tools like
+.Nm pkg_add Fl u
+and
+.Xr out-of-date 1
+will look at those dependencies to
 decide when to perform an update.
 .Pp
 The full version (package name and dependency names) is known as the
-package signature, and can be queried with pkg_info -S, for packages, or
-make print-package-signature for ports.
+package signature, and can be queried with
+.Nm pkg_info Fl S ,
+for packages, or
+.Nm make Ar print-package-signature
+for ports.
 .Pp
 Additionally, some packages with similar names and different versions may
 exist at the same moment, because they have been built from different places
@@ -157,7 +166,9 @@ different flavors (note that this is different from the usual -current versus
 .Ox
 ports tree).
 .Pp
-Every package includes at least one pkgpath marker to record the ports tree
+Every package includes at least one
+.Xr pkgpath 7
+marker to record the ports tree
 location used to build it, so that users do not have their packages randomly
 switch from a stable to a snapshot package, or from a gtk to a gtk2 flavor.
 .Sh PACKAGE NAMING
@@ -185,7 +196,9 @@ of the tcl/tk packages will coexist peacefully on a single machine.
 .Pp
 Members of the
 .Ox
-project routinely scan built packages for conflicting files.
+project routinely scan built packages for conflicting files,
+using
+.Xr check-conflicts 1 .
 Most packages should contain correct annotations, and not allow themselves
 to be installed on top of a conflicting package.
 .Sh PACKAGE DEPENDENCIES
@@ -218,7 +231,7 @@ usually mentioned at the end of installation, or in the package description.
 Some flavors are also explicitly provided to avoid having to depend on the
 kitchen sink.
 For instance, an
-.Nm emacs-no_x11
+.Nm emacs--no_x11
 package is provided, which does not depend on X11 being installed to be
 functional.
 .Sh SEE ALSO
