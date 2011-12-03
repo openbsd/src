@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.126 2011/09/17 15:33:56 schwarze Exp $
+# $OpenBSD: Add.pm,v 1.127 2011/12/03 16:15:05 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -356,6 +356,7 @@ sub prepare_for_addition
 	# check for collisions with existing stuff
 	if ($state->vstat->exists($fname)) {
 		push(@{$state->{colliding}}, $self);
+		$self->{newly_found} = $pkgname;
 		$state->{problems}++;
 		return;
 	}

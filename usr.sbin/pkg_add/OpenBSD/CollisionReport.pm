@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.41 2011/01/02 14:26:17 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.42 2011/12/03 16:15:05 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -79,6 +79,7 @@ sub collision_report
 		return;
 	}
 	my %todo = map {($_->fullname, $_->{d})} @$list;
+	my %extra = map {($_->fullname, $_->{newly_found})} @$list;
 	my $clueless_bat;
 	my $clueless_bat2;
 	my $found = 0;
@@ -90,7 +91,12 @@ sub collision_report
 		for my $pkg (sort keys %$bypkg) {
 		    for my $item (sort @{$bypkg->{$pkg}}) {
 		    	$found++;
-			$state->errsay("\t#1 (#2)", $item, $pkg);
+			if ($extra{$item}) {
+				$state->errsay("\t#1 (#2 and #3)", $item, 
+				    $pkg, $extra{$item});
+			} else {
+				$state->errsay("\t#1 (#2)", $item, $pkg);
+			}
 		    }
 		    if ($pkg =~ m/^(?:partial\-|borked\.\d+$)/o) {
 			$clueless_bat = $pkg;
