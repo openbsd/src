@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.47 2011/07/13 11:57:10 espie Exp $
+# $OpenBSD: Makefile,v 1.48 2011/12/03 16:16:26 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames \
 	update-check1 \
@@ -8,6 +8,9 @@ REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames \
 	lib-report4 lib-report5 lib-report6 lib-report7 \
 	qttest gstest exotest inter1 manual1
 
+# extra stuff
+#	collision-check1 collision-check2 collision-check4 collision-check6
+#	collision-check7
 
 
 ADD_PKG=perl ${.CURDIR}/my add
@@ -27,7 +30,7 @@ D$i ?= ${.OBJDIR}/dest$i
 DEST$i ?= ${D$i}/usr/local
 .endfor
 
-# current maxes: D31, SRC20, plist18
+# current maxes (used): D32, SRC22, plist20
 pkgnames:
 	perl ${.CURDIR}/check-name
 
@@ -81,11 +84,16 @@ collision-check5: rep1/d-0.tgz rep1/e-0.tgz
 	@-rm -rf ${D21}
 	@ROOT=${D21} ${ADD_PKG} -n rep1/d-0.tgz rep1/e-0.tgz
 
-collision-check5: rep1/d-0.tgz rep1/e-0.tgz
+collision-check6: rep1/d-0.tgz rep1/e-0.tgz
 	@-rm -rf ${D7}
 	@ROOT=${D7} ${ADD_PKG} rep1/d-0.tgz
 	@-rm -rf ${D7}/pkgdb/d-0
 	@ROOT=${D7} ${ADD_PKG} -D removecollisions rep1/d-0.tgz
+
+collision-check7: rep0/cola-0.tgz rep1/cola-1.tgz rep1/colb-0.tgz
+	@-rm -rf ${D32}
+	@ROOT=${D32} PKG_PATH=${.OBJDIR}/rep0 ${ADD_PKG} cola-0
+	@ROOT=${D32} PKG_PATH=${.OBJDIR}/rep1 ${ADD_PKG} -r cola-1
 
 update-check1: rep0/g-0.tgz rep1/g-0.tgz rep0/ga-0.tgz rep1/ga-0.tgz \
 	rep0/gb-0.tgz rep1/gb-0p0.tgz rep0/gc-0.tgz rep1/gc-0.tgz \
@@ -314,6 +322,17 @@ plist18:
 	@echo "@conflict thunar-<1" >>$@
 	@echo '@lib lib/libthunar-vfs.so.$${LIBthunar-vfs_VERSION}' >>$@
 
+plist19:
+	@echo "@owner "`id -un` >>$@
+	@echo "@group "`id -gn` >>$@
+	@echo a >>$@
+
+plist20:
+	@echo "@owner "`id -un` >>$@
+	@echo "@group "`id -gn` >>$@
+	@echo "@conflict cola-<1" >>$@
+	@echo a >>$@
+
 rep0/a-0.tgz:
 	@${CREATE_PKG} -P't/b:b-*:b-0' -f ${.CURDIR}/empty $@
 
@@ -329,18 +348,18 @@ rep0/tcl-8.5.7.tgz:
 	@${CREATE_PKG} -f ${.CURDIR}/empty $@
 
 rep0/md-0.tgz:
-	${CREATE_PKG} -P't/ma:ma-*:ma-0' -P't/mb:mb-*:mb-0' -P't/mc:mc-*:mc-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/ma:ma-*:ma-0' -P't/mb:mb-*:mb-0' -P't/mc:mc-*:mc-0' -f ${.CURDIR}/empty $@
 rep1/md-1.tgz:
-	${CREATE_PKG} -P't/ma:ma-*:ma-1' -P't/mb:mb-*:mb-1' -P't/me:me-*:me-1' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/ma:ma-*:ma-1' -P't/mb:mb-*:mb-1' -P't/me:me-*:me-1' -f ${.CURDIR}/empty $@
 rep0/mb-0.tgz:
-	${CREATE_PKG} -P't/ma:ma-*:ma-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/ma:ma-*:ma-0' -f ${.CURDIR}/empty $@
 rep1/mb-1.tgz:
-	${CREATE_PKG} -P't/ma:ma-*:ma-1' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/ma:ma-*:ma-1' -f ${.CURDIR}/empty $@
 
 rep0/inta-0.tgz:
-	${CREATE_PKG} -P't/intb:intb-*:intb-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/intb:intb-*:intb-0' -f ${.CURDIR}/empty $@
 rep0/intb-0.tgz:
-	${CREATE_PKG} -P't/inta:inta-*:inta-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/inta:inta-*:inta-0' -f ${.CURDIR}/empty $@
  
 rep1/o-1.tgz:
 	@${CREATE_PKG} -DREGRESSION_TESTING -P't/p:p-*:p-0' -W'coincoin.0.0' -f ${.CURDIR}/empty $@
@@ -496,6 +515,21 @@ rep0/h-0.tgz:
 
 rep1/h-1.tgz:
 	@${CREATE_PKG} -P't/j:j->=1:j-1' -f ${.CURDIR}/empty $@
+
+rep0/cola-0.tgz: plist19
+	@mkdir -p ${SRC22}
+	@touch ${SRC22}/a
+	@${CREATE_PKG} -B src22 -f plist19 $@
+
+rep1/cola-1.tgz: plist19
+	@mkdir -p ${SRC22}
+	@touch ${SRC22}/a
+	@${CREATE_PKG} -B src22 -P't/colb:colb-*:colb-0' -f plist19 $@
+
+rep1/colb-0.tgz: plist20
+	@mkdir -p ${SRC22}
+	@touch ${SRC22}/a
+	@${CREATE_PKG} -B src22 -f plist20 $@
 
 depend_q1=-P't/q5:q5-*:q5-0'
 depend_q2=${depend_q1} -P't/q1:q1-*:q1-0'
