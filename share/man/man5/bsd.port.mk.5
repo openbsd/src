@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.318 2011/12/03 23:01:21 schwarze Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.319 2011/12/03 23:19:28 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -167,7 +167,7 @@ using the cryptographic signature utilities listed in ${PREFERRED_CIPHERS}.
 All the files needed to recreate a port should be in ${CHECKSUMFILES} and
 checksummed.
 Invoking
-.Ic checksum
+.Ar checksum
 with
 .Ev REFETCH Ns = Ns Cm true
 will try to fetch a version with the correct checksum from the
@@ -989,14 +989,22 @@ is set relative to ${PORTSDIR},
 see
 .Xr pkgpath 7
 for details.
-Build dependencies are checked at the beginning of the extract stage.
+Build dependencies are checked before the
+.Ar extract
+stage during
+.Ar prepare .
 .Pp
-Build dependencies that are not the default
-.Ar package
+Build dependencies with a
+.Ar patch ,
+.Ar configure
 or
-.Ar install
+.Ar build
 target will be processed in a subdirectory of the working directory,
-specifically, in ${WRKDIR}/directory.
+specifically, in ${WRKDIR}/some/directory,
+with
+.Pa some/directory
+the directory part of the
+.Sq pkgpath .
 .It Ev BUILD_PKGPATH
 Full
 .Xr pkgpath 7
@@ -1051,6 +1059,11 @@ Name of the bzip2 binary.
 .It Ev CATEGORIES
 List of descriptive categories into which this port falls.
 Mandatory.
+One entry must match the current pkgpath:
+.Pa devel/gmake
+must belong to the
+.Sq devel
+category.
 See
 .Ar link-categories ,
 .Ar unlink-categories .
@@ -1075,7 +1088,7 @@ is set to yes.
 For instance, to enable verbose logging, set
 CCACHE_ENV="CCACHE_LOGFILE=/tmp/ccache.log"
 .It Ev CDROM_SITE
-Path to a local database that holds distribution files (usually a CD-ROM
+Path to a local source that holds distribution files (usually a CD-ROM
 or other similar media), used to retrieve distribution files before going
 to the network.
 Defaults to empty, set to
@@ -1098,8 +1111,8 @@ If set to
 .Sq Yes ,
 every package build will verify that shared libraries are correctly
 registered.
-This is essentially the same as running make on
-.Ar lib-depends-check
+This is essentially the same as running
+.Nm make Ar lib-depends-check
 after each package build.
 Defaults to
 .Sq \&No ,
@@ -1109,7 +1122,7 @@ List of all files that need to be retrieved by
 .Ar fetch ,
 with
 .Ev DIST_SUBDIR
-prepended and with master site selection extension removed.
+prepended and with the master site selection extension removed.
 Read-only.
 See also
 .Ev MAKESUMFILES .
@@ -1119,7 +1132,8 @@ Location for this port's checksums, used by
 .Ar checksum ,
 and
 .Ar makesum .
-Defaults to distinfo.
+Defaults to
+.Pa distinfo .
 .It Ev CLEANDEPENDS
 If set to
 .Sq Yes ,
@@ -1259,6 +1273,7 @@ directories and needs to be configured with
 .Sq gnu dest ,
 so that those few directories do not get in the way.
 .It Ev DISTDIR
+User settings.
 Directory where all ports distribution files and patchfiles are stashed.
 Defaults to
 .Pa ${PORTSDIR}/distfiles .
@@ -1388,28 +1403,35 @@ done
 The use of xz archives is discouraged, as it makes things impossible to
 build on vax.
 .It Ev EXTRACT_ONLY
-Set if not all ${DISTFILES} should be extracted at do-extract stage.
-Default value is ${DISTFILES}.
+Set to the list of distfile to actually extract if not all ${DISTFILES}
+should be extracted during the
+.Ar do-extract
+stage.
+Default value is ${DISTFILES}, can even be set to empty.
 .It Ev EXTRACT_SUFX
 Used to set DISTFILES default value to ${DISTNAME}${EXTRACT_SUFX}.
 Default value is .tar.gz.
 .It Ev FAKE_FLAGS
-Extra flags passed to ${MAKE_PROGRAM} on fake invocation.
+Extra flags passed to ${MAKE_PROGRAM} during the
+fake invocation.
 Empty by default.
+Also see
+.Ev ALL_FAKE_FLAGS .
 .It Ev FAKE_TARGET
 Target built by ${MAKE_PROGRAM} on fake invocation.
 Defaults to ${INSTALL_TARGET}.
 .It Ev FAKEOBJDIR
+User settings.
 If non empty, used as a base for the fake area.
 The real fake directory ${WRKINST} is created there.
 Can be set on a per-${PKGPATH} basis.
 For instance, setting FAKEOBJDIR_www/mozilla=/tmp/obj
 will affect only the mozilla port.
 .It Ev FETCH_CMD
+User settings.
 Command used to fetch distribution files for this port.
 Defaults to
 .Xr ftp 1 .
-User settings.
 Can be used to go through excessively paranoid firewalls.
 .It Ev FETCH_MANUALLY
 Some ports' distfiles cannot be fetched automatically for licensing reasons.
@@ -1432,7 +1454,7 @@ the
 .Ar package
 target will download packages missing from the repository from locations in
 ${PKG_PATH} and place them into
-.Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cache/
+.Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cache/ .
 It will only build them if no suitable packages are found.
 .It Ev FETCH_SYMLINK_DISTFILES
 User settings.
@@ -1443,7 +1465,7 @@ to link distribution files off
 instead of copying them.
 .It Ev FILESDIR
 Location of other files related to the current ports.
-(default: files).
+Default: files.
 .It Ev FLAVOR
 The port's current options.
 Set by the user, and tested by the port to activate wanted functionalities.
@@ -1490,7 +1512,7 @@ including flavors and subpackages.
 See
 .Xr pkgpath 7 .
 .It Ev GCC2_ARCHS , GCC3_ARCHS , GCC4_ARCHS
-Set to the list of architectures using gcc 2.95.3, gcc 3.3.5, or gcc 4.2.1.
+List of architectures using gcc 2.95.3, gcc 3.3.5, or gcc 4.2.1.
 Read-only.
 Use with
 .Ev NOT_FOR_ARCHS
@@ -1501,9 +1523,9 @@ to limit ports to architectures where they compile.
 Location of the GNU make binary, if needed.
 Defaults to gmake.
 .It Ev HOMEPAGE
-Set to a link to the homepage of the software, if applicable.
+URL to the homepage of the software, if applicable.
 .It Ev IGNORE
-Usually set to the reasons for which the port is ignored.
+For ignored ports, set to the reasons for which the port is ignored.
 If non-empty, most common targets that do something (e.g.,
 .Ar fetch ,
 .Ar build ,
@@ -1512,6 +1534,7 @@ will be ignored.
 See also
 .Ev BATCH ,
 .Ev BROKEN ,
+.Ev FETCH_MANUALLY ,
 .Ev IGNORE_IS_FATAL ,
 .Ev IGNORE_SILENT ,
 .Ev INTERACTIVE ,
@@ -1546,9 +1569,11 @@ to simplify bulk-package builds.
 Set to
 .Sq Yes
 if port needs human interaction to build.
-Usually implies NO_PACKAGE as well.
-Porters should strive to minimize IS_INTERACTIVE ports, by using
-FLAVORS for multiple choice ports, and by postponing human intervention
+Porters should strive to minimize
+.Ev IS_INTERACTIVE
+ports, by using
+.Ev FLAVORS
+for multiple choice ports, and by postponing human intervention
 to package installation time.
 .It Ev LIB_DEPENDS
 Libraries this port depends upon.
@@ -1583,13 +1608,16 @@ for details.
 .It Ev LIBTOOL
 Location of the libtool binary for ports that set
 .Ev USE_LIBTOOL
-(default: ${LOCALBASE}/bin/libtool).
+Default:
+.Pa ${LOCALBASE}/bin/libtool .
 .It Ev LIBTOOL_FLAGS
 Arguments to pass to libtool.
 If USE_LIBTOOL is set, the environment variable LIBTOOL is set
 to ${LIBTOOL} ${LIBTOOL_FLAGS}.
 .It Ev LOCALBASE
-where other ports have already been installed (default: /usr/local)
+where other ports have already been installed.
+Default:
+.Pa /usr/local .
 .It Ev LOCKDIR
 User settings.
 Defaults to
@@ -1604,7 +1632,7 @@ See also
 .It Ev LOCK_VERBOSE
 User settings.
 Defaults to
-.Sq No .
+.Sq \&No
 Set to
 .Sq Yes
 to show every acquire/release lock operation.
@@ -1665,7 +1693,7 @@ Set to
 to retrieve distfiles and patchfiles preferentially from the
 ${MASTER_SITE_BACKUP} sites.
 Defaults to
-.Sq No .
+.Sq \&No .
 .It Ev MASTER_SITES
 List of primary location from which distribution files and patchfiles are
 retrieved.
