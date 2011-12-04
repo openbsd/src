@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.113 2011/12/03 20:20:28 jmc Exp $
+.\"	$OpenBSD: port-modules.5,v 1.114 2011/12/04 10:07:17 espie Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 3 2011 $
+.Dd $Mdocdate: December 4 2011 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -999,8 +999,62 @@ and
 .Pp
 .It x11/gnustep
 .It x11/kde
-.It x11/qt3
-.It x11/qt4
+.It x11/qt3 and x11/qt4
+Both qt modules share a common
+.Ev MODQT_*
+namespace for simple ports.
+The qt3 module also defines the same variables under
+.Ev MODQT3_*
+and the qt4 module also defines the same variables under
+.Ev MODQT4_* ,
+to allow ports to use both modules, such as
+.Pa print/poppler .
+.Pp
+Those modules define
+.Ev MODQT*_LIBDIR
+as the libraries location,
+.Ev MODQT*_INCDIR
+as the include files location ,
+.Ev MODQT*_QTDIR
+as the global qt directory location ,
+.Ev MODQT*_CONFIGURE_ARGS
+as standard GNU configure-style parameters to locate the include and libraries.
+.Pp
+The location of qt specific tools
+.Nm moc
+and
+.Nm uic
+is available through
+.Ev MODQT*_MOC
+and
+.Ev MODQT*_UIC .
+.Ev MODQT*_OVERRIDE_UIC
+controls whether the default setup will force a value of
+.Ev UIC
+or not.
+The value of
+.Ev MOC
+is always forced to ${MODQT*_MOC}.
+qt4 includes
+.Xr pkg-config 1
+files under a specific location recorded in
+.Ev MODQT_PKG_CONFIG_PATH .
+qt3 requires the use of
+.Ev MODQT3_PLUGINS
+to correctly locate plugins.
+.Pp
+The modules add to
+.Ev CONFIGURE_ENV , MAKE_ENV
+and
+.Ev MAKE_FLAGS .
+They define appropriate
+.Ev MODQT*_LIB_DEPENDS
+and
+.Ev MODQT*_WANTLIB .
+Note that qt4 has split its code over several libraries, so the basic
+.Ev WANTLIB
+only refers to QtCore.
+Other libraries should be added as needed.
 .It x11/tk
 Sets
 .Ev MODTK_VERSION ,
