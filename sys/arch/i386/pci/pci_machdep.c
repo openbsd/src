@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.66 2011/10/23 21:18:14 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.67 2011/12/04 17:38:44 miod Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -298,17 +298,19 @@ pci_attach_hook(struct device *parent, struct device *self,
 		break;
 	}
 
-	/*
-	 * Don't enable MSI on a HyperTransport bus.  In order to
-	 * determine that bus 0 is a HyperTransport bus, we look at
-	 * device 24 function 0, which is the HyperTransport
-	 * host/primary interface integrated on most 64-bit AMD CPUs.
-	 * If that device has a HyperTransport capability, bus 0 must
-	 * be a HyperTransport bus and we disable MSI.
-	 */
-	tag = pci_make_tag(pc, 0, 24, 0);
-	if (pci_get_capability(pc, tag, PCI_CAP_HT, NULL, NULL))
-		pba->pba_flags &= ~PCI_FLAGS_MSI_ENABLED;
+	if (pci_mode != 2) {
+		/*
+		 * Don't enable MSI on a HyperTransport bus.  In order to
+		 * determine that bus 0 is a HyperTransport bus, we look at
+		 * device 24 function 0, which is the HyperTransport
+		 * host/primary interface integrated on most 64-bit AMD CPUs.
+		 * If that device has a HyperTransport capability, bus 0 must
+		 * be a HyperTransport bus and we disable MSI.
+		 */
+		tag = pci_make_tag(pc, 0, 24, 0);
+		if (pci_get_capability(pc, tag, PCI_CAP_HT, NULL, NULL))
+			pba->pba_flags &= ~PCI_FLAGS_MSI_ENABLED;
+	}
 }
 
 int
@@ -318,7 +320,7 @@ pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 	/*
 	 * Bus number is irrelevant.  If Configuration Mechanism 2 is in
 	 * use, can only have devices 0-15 on any bus.  If Configuration
-	 * Mechanism 1 is in use, can have devices 0-32 (i.e. the `normal'
+	 * Mechanism 1 is in use, can have devices 0-31 (i.e. the `normal'
 	 * range).
 	 */
 	if (pci_mode == 2)
