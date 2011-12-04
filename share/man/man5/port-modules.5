@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.114 2011/12/04 10:07:17 espie Exp $
+.\"	$OpenBSD: port-modules.5,v 1.115 2011/12/04 23:28:42 jeremy Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -731,49 +731,168 @@ May affect the
 .Ar regress
 target.
 .It lang/ruby
-Sets MODRUBY_REV, RUBY, RAKE, RSPEC, MODRUBY_RUN_DEPENDS, MODRUBY_LIB_DEPENDS,
-MODRUBY_BUILD_DEPENDS, MODRUBY_ICONV_DEPENDS, MODRUBY_LIBDIR, MODRUBY_DOCDIR,
-MODRUBY_EXAMPLEDIR, MODRUBY_ARCH, MODRUBY_REGRESS, MODRUBY_RUBY_ADJ,
-MODRUBY_ADJ_FILES, GEM_BIN_SUFFIX, MODRUBY_LIBREV, MODRUBY_BINREV,
-MODRUBY_PKGSPEC, MODRUBY_PKG_PREFIX, MODRUBY_RAKE_DEPENDS,
-MODRUBY_RSPEC_DEPENDS, MODRUBY_WANTLIB, MODRUBY_FLAVOR.
-RUBY, RAKE, and RSPEC are the path to the ruby, rake, and rspec binaries.
-MODRUBY_RUBY_ADJ is a command that takes filename arguments and replaces
-the /usr/bin/env ruby shebang lines with RUBY.
-MODRUBY_ADJ_FILES is a list of filename patterns that will automatically
-have MODRUBY_RUBY_ADJ called on them during pre-configure.
-Appends to CATEGORIES and SUBST_VARS.
-Appends to BUILD_DEPENDS unless MODRUBY_BUILDDEP is set to No or NO_BUILD
+Sets
+.Ev MODRUBY_REV ,
+.Ev RUBY ,
+.Ev RAKE ,
+.Ev RSPEC ,
+.Ev MODRUBY_BIN_TESTRB ,
+.Ev MODRUBY_BIN_RSPEC ,
+.Ev MODRUBY_RUN_DEPENDS ,
+.Ev MODRUBY_LIB_DEPENDS ,
+.Ev MODRUBY_BUILD_DEPENDS ,
+.Ev MODRUBY_ICONV_DEPENDS ,
+.Ev MODRUBY_LIBDIR ,
+.Ev MODRUBY_DOCDIR ,
+.Ev MODRUBY_SITEARCHDIR ,
+.Ev MODRUBY_SITEDIR ,
+.Ev MODRUBY_ARCH ,
+.Ev MODRUBY_EXAMPLEDIR ,
+.Ev MODRUBY_RUBY_ADJ ,
+.Ev MODRUBY_ADJ_FILES ,
+.Ev GEM_BIN_SUFFIX ,
+.Ev GEM_MAN_SUFFIX ,
+.Ev MODRUBY_LIBREV ,
+.Ev MODRUBY_BINREV ,
+.Ev MODRUBY_PKGSPEC ,
+.Ev MODRUBY_PKG_PREFIX ,
+.Ev MODRUBY_RAKE_DEPENDS ,
+.Ev MODRUBY_RSPEC_DEPENDS ,
+.Ev MODRUBY_WANTLIB ,
+.Ev MODRUBY_FLAVOR ,
+.Ev MODRUBY_REGRESS ,
+.Ev MODRUBY_REGRESS_TARGET ,
+.Ev MODRUBY_REGRESS_DIR ,
+.Ev MODRUBY_REGRESS_ENV ,
+.Ev MODRUBY_BUILD_TARGET ,
+.Ev MODRUBY_INSTALL_TARGET ,
+.Ev MODRUBY_EXTRACT_TARGET ,
+.Ev GEM ,
+.Ev GEM_BIN ,
+.Ev GEM_LIB ,
+.Ev GEM_BASE_LIB ,
+.Ev GEM_ABS_PATH ,
+.Ev GEM_BASE_BIN ,
+and
+.Ev GEM_FLAGS .
+Appends to
+.Ev CATEGORIES
+and
+.Ev SUBST_VARS .
+Appends to
+.Ev BUILD_DEPENDS
+unless
+.Ev MODRUBY_BUILDDEP
+is set to No or
+.Ev NO_BUILD
 is set to Yes.
-Appends to RUN_DEPENDS unless MODRUBY_RUNDEP is set to No.
-May affect the regress target if MODRUBY_REGRESS is used.
-Supports additional CONFIGURE_STYLEs, and setting specific CONFIGURE_STYLEs
+Appends to
+.Ev RUN_DEPENDS
+unless
+.Ev MODRUBY_RUNDEP
+is set to No.
+.Ev RUBY ,
+.Ev RAKE ,
+and 
+.Ev MODRUBY_BIN_TESTRB 
+are the path to the ruby, rake, and
+testrb binaries for the related ruby implementation.
+.Ev RSPEC
+and
+.Ev MODRUBY_BIN_RSPEC
+are the path to the spec (rspec 1) and
+rspec (rspec 2) binaries for the related ruby implementation.
+.Ev MODRUBY_RUBY_ADJ
+is a command that takes filename arguments and replaces
+the /usr/bin/env ruby shebang lines with
+.Ev RUBY .
+.Ev MODRUBY_ADJ_FILES
+is a list of filename patterns that will automatically have
+.Ev MODRUBY_RUBY_ADJ
+called on them during pre-configure.
+Creates a do-regress target if
+.Ev MODRUBY_REGRESS
+is used and one is not already defined.
+.Ev MODRUBY_REGRESS
+can be set to ruby, rake, rspec, rspec2, or testrb to
+choose the appropriate binary to run the regress tests.
+.Ev MODRUBY_REGRESS_ENV
+can be used to set environment variables for the regress tests.
+.Ev MODRUBY_REGRESS_DIR
+can be used to set the directory in which to execute
+the regress tests, it defaults to
+.Ev WRKSRC .
+.Ev MODRUBY_REGRESS_TARGET
+sets the argument to the regress test program.
+Supports additional 
+.Ev CONFIGURE_STYLE s,
+and setting specific
+.Ev CONFIGURE_STYLE s
 modifies some additional parameters.
-The "ruby gem" CONFIGURE_STYLE should be used for pure ruby gems without
-C extensions.
-This adds PKG_ARCH = * and adds ruby19, rbx, and jruby FLAVORs to the port,
-so the same port can build packages for multiple versions of ruby.
-The "ruby gem ext" CONFIGURE_STYLE should be used for ruby gems with C
-extensions.
-This adds SHARED_ONLY = Yes and adds MODRUBY_LIB_DEPENDS to LIB_DEPENDS and
-c, m, and MODRUBY_WANTLIB to WANTLIB.
-It also adds ruby19 and rbx FLAVORs to the port.
-The "ruby extconf" CONFIGURE_STYLE is similar to the "ruby gem ext"
-CONFIGURE_STYLE, except that it is used when the package is not distributed
-as a ruby gem.
+The "ruby gem"
+.Ev CONFIGURE_STYLE
+should be used for pure ruby gems without C extensions.
+This adds
+.Ev PKG_ARCH
+= * and adds ruby19, rbx, and jruby
+.Ev FLAVOR s
+to the port, so the same port can build packages for multiple versions of ruby.
+The "ruby gem ext"
+.Ev CONFIGURE_STYLE
+should be used for ruby gems with C extensions.
+This adds
+.Ev SHARED_ONLY = Yes
+and adds
+.Ev MODRUBY_LIB_DEPENDS
+to
+.Ev LIB_DEPENDS
+and
+c, m, and
+.Ev MODRUBY_WANTLIB
+to
+.Ev WANTLIB.
+It also adds ruby19, rbx, and jruby
+.Ev FLAVOR s
+to the port.
+The "ruby extconf"
+.Ev CONFIGURE_STYLE
+is similar to the "ruby gem ext"
+.Ev CONFIGURE_STYLE ,
+except that it is used when the package is not distributed as a ruby gem.
 In order for ruby 1.9, rubinius, and jruby packages to be built from the same
 port directory, any gem dependencies specified in the port should use this
 format: category/ruby-foo,${MODRUBY_FLAVOR}.
-Use of a ruby19, rbx, or jruby FLAVOR causes the FULLPKGNAME to use the FLAVOR
+Use of a ruby19, rbx, or jruby
+.Ev FLAVOR
+causes the
+.Ev FULLPKGNAME
+to use the
+.Ev FLAVOR 
 instead of ruby as the package prefix.
-Specifying MODRUBY_FLAVOR is necessary so that if you are building a ruby 1.9
+Specifying
+.Ev MODRUBY_FLAVOR
+is necessary so that if you are building a ruby 1.9
 package for the current port, it depends on the ruby 1.9 package of the
 dependencies.
 For ruby gem ports that can work on both ruby 1.8 and ruby 1.9, any binary
-file entries in the PLIST should be appended with ${GEM_BIN_SUFFIX}.
-This is because the ruby 1.9 gem binaries are installed with a 19 suffix.
-make update-plist tends to remove ${GEM_BIN_SUFFIX}, so be careful when
-updating such ports.
+file entries in the PLIST should be appended with 
+.Ev GEM_BIN_SUFFIX .
+This is because the ruby 1.8 and ruby 1.9 gem binaries are both installed to
+.Ev LOCALBASE /bin,
+and ruby 1.9 installs the binaries with a 19 suffix.
+Any man pages and other files that would be installed to locations not
+specific to a ruby implementation (such as under 
+.Ev LOCALBASE /share),
+should use 
+.Ev GEM_MAN_SUFFIX
+before the extension so the different
+.Ev FLAVOR s
+do not conflict.
+make update-plist currently removes 
+.Ev GEM_BIN_SUFFIX
+and
+.Ev GEM_MAN_SUFFIX ,
+so be careful when updating gem ports with binaries or man pages.
 .It lang/tcl
 Sets
 .Ev MODTCL_VERSION ,
