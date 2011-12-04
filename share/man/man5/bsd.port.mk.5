@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.321 2011/12/03 23:48:56 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.322 2011/12/04 00:10:28 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 3 2011 $
+.Dd $Mdocdate: December 4 2011 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2638,8 +2638,6 @@ Location where all port activity occurs.
 Apart from the actual port, may
 hold all kinds of cookies that checkpoint the port's build.
 Read-only.
-Ports that need to know the WRKDIR of another port must use
-cd that_port_dir && make show=WRKDIR for this.
 Note that WRKDIR may be a symbolic link.
 During ports building,
 .Pa ${WRKDIR}/bin
@@ -2651,8 +2649,10 @@ point to the port's ${WRKDIR}.
 See
 .Ev OLD_WRKDIRNAME .
 .It Ev WRKDIST
-Subdirectory of ${WRKDIR} in which the distribution files normally unpacks.
-Base for all patches (default: ${WRKDIR}/${DISTNAME}).
+Subdirectory of ${WRKDIR} in which the distribution files normally unpack.
+Base for all patches.
+Defaults to
+.Pa ${WRKDIR}/${DISTNAME} .
 Note that WRKDIST may be a symbolic link, if set to ${WRKDIR}.
 .It Ev WRKSRC
 Subdirectory of ${WRKDIR} where the actual source is.
@@ -2663,8 +2663,9 @@ Subdirectory of ${WRKDIR} where port normally installs (see
 .Ar fake
 target).
 .It Ev WRKOBJDIR
-Used as a base for the actual port working directory (default:
-${PORTSDIR}/pobj).
+Used as a base for the actual port working directory.
+Defaults to
+.Pa ${PORTSDIR}/pobj .
 The real working directory ${WRKDIR} is created there.
 Can be set on a per-${PKGPATH} basis.
 For instance, setting WRKOBJDIR_www/mozilla=/tmp/obj
@@ -2672,21 +2673,25 @@ will affect only the mozilla port.
 If explicitly unset (WRKOBJDIR=), the working directory is
 created within the port directory.
 .It Ev X11BASE
-Where X11 has been installed (default: /usr/X11R6).
+Where X11 has been installed.
+Default:
+.Pa /usr/X11R6 .
 .It Ev XAUTHORITY
 Points to a suitable authority file for X11 interactive regression tests.
 Defaults to
 .Pa ${HOME}/.xauthority .
 .It Ev XMKMF
-Invocation of xmkmf for CONFIGURE_STYLE=imake port.
+Invocation of xmkmf for a
+.Li CONFIGURE_STYLE=imake
+port.
 Defaults to xmkmf -a -DPorts.
 The -DPorts is specific to
 .Ox
 and is always appended.
 .It Ev YACC
 Name of yacc program to pass to GNU-configure, defaults to yacc.
-(GNU-configure would always try to use bison otherwise, which leads to
-unreproducible builds.)
+GNU-configure would always try to use bison otherwise, which leads to
+unreproducible builds.
 Set to bison if needed.
 .El
 .Sh FILES
@@ -2696,7 +2701,7 @@ Common Makefile fragment for a set of ports, included automatically.
 .It Pa /cdrom/distfiles
 Default path to a CD-ROM (or other media) full of distribution files.
 .It Pa ${DISTDIR}
-cache of all distribution files.
+Cache of all distribution files.
 .It Pa distinfo
 Checksum file.
 Holds the output of
@@ -2705,9 +2710,9 @@ using ${PREFERRED_CIPHERS},
 for the port's ${DISTFILES} and ${PATCHFILES},
 as well as the sizes of these files.
 .It Pa ${DISTDIR}/${CHECKSUMFILES}
-cache of normal distribution files for a given port.
+Cache of normal distribution files for a given port.
 .It Pa ${DISTDIR}/${MAKESUMFILES}
-cache of all distribution files for a given port.
+Cache of all distribution files for a given port.
 .It Pa ${PKGDIR}/DESCR
 Description for the port.
 Variables such as ${HOMEPAGE} and ${MAINTAINER} will be expanded
@@ -2722,9 +2727,10 @@ at the end of
 Variables from
 .Ev SUBST_VARS
 will be expanded.
-Multi-package ports will use README${SUBPACKAGE}.
+Multi-package ports will use
+.Pa README${SUBPACKAGE} .
 .It Pa ${PKGDIR}/<foo>.rc
-startup script for <foo>.
+Startup script for <foo>.
 Will be installed as
 .Ar ${RCDIR}/<foo>
 at the end of
@@ -2770,7 +2776,7 @@ The
 target is used to install the port in a private directory first, ready for
 packaging by the
 .Ar package
-target, so that the real installation will use the package.
+target, so that the actual installation will use the package.
 .Pp
 Essentially,
 .Ar fake
@@ -2788,9 +2794,11 @@ A
 .Ar pre-fake
 target may be used to complete that skeleton tree.
 For instance, a few ports may need supplementary stuff to be present (as
-it would be installed if the ports' dependencies were present).
+it would be installed if the port's dependencies were present).
 .Pp
-If {pre,do,post}-install overrides are present, they are used with some
+If
+.Ar {pre,do,post}-install
+overrides are present, they are used with some
 important changes: PREFIX is set to ${WRKINST}${PREFIX}, ${DESTDIRNAME}
 is set to ${WRKINST}, and TRUEPREFIX is set to ${PREFIX}.
 Essentially, old install targets work transparently, except for a need to
@@ -2799,7 +2807,9 @@ Specific traditional post install work can be simply removed, as it will
 be taken care of by the package itself (for instance, ldconfig, or
 texinfo's install-info).
 .Pp
-If no do-install override is present, the port is installed using
+If no
+.Ar do-install
+override is present, the port is installed using
 .Bd -literal -offset 2n
 env -i ${MAKE_ENV}
 PREFIX=${WRKINST}${PREFIX} ${DESTDIRNAME}=${WRKINST} TRUEPREFIX=${PREFIX}
@@ -2868,8 +2878,12 @@ list will be reordered to match the ordering of FLAVORS.
 It is an error to specify an option in FLAVOR that does not appear in FLAVORS,
 to prevent misspellings.
 .Pp
-In recursive package building, flavors can be specified as a comma
-separated list after the package directory, e.g., SUBDIR+=vim,no_x11.
+In bulk package building, flavors can be specified as a comma
+separated list after the package directory, e.g., SUBDIR+=vim,no_x11
+.Po
+see
+.Xr pkgpath 7
+.Pc
 .Pp
 Finally, package information will use templates with the canonical package
 extension if they are available: if FLAVOR='option1 option2' and both
@@ -2880,7 +2894,7 @@ If one build of a port can generate several distinct packages, set
 MULTI_PACKAGES accordingly.
 Each extension of a MULTI_PACKAGES name should start with a dash, so that
 they cannot be confused with FLAVORS.
-In dependency checking and recursive builds, a subpackage can be
+In dependency checking and bulk builds, a subpackage can be
 specified after a comma, e.g., SUBDIR+=quake,-server.
 MULTI_PACKAGES only affects the actual package building step (and the
 describe step, since a MULTI_PACKAGES port will produce several
@@ -2946,13 +2960,13 @@ will both be
 and
 .Ev LIB_DEPENDS
 are special.
-At the beginning of build, during
+At the beginning of the build, during
 .Ar prepare ,
 all build dependencies will be checked,
 which includes both
 .Ev LIB_DEPENDS ,
 .Ev WANTLIB
-and the subpackage-specific version of these.
+and the subpackage-specific versions of these.
 As an exception, any
 .Ev LIB_DEPENDS-sub
 that references the current port will be ignored as a build dependency,
@@ -2966,15 +2980,15 @@ You must set
 .Ev PKGNAME-sub
 or
 .Ev FULLPKGNAME-sub
-for each subpackage, and
+for each subpackage, but
 .Ev FULLPKGPATH-sub
 is set automatically to the right value.
-In very rare cases, one can override
-.Ev FULLPKGPATH-sub
+In very rare cases, one may override
+.Ev FULLPKGPATH-sub .
 (for instance, if one specific subpackage is not affected by option
 settings that affect other subpackages, e.g., for include files packs).
 .Pp
-In terms of implementation, quite a few targets will have a subpackage
+In terms of using the port, quite a few targets will have a subpackage
 specific subtarget:
 invoking
 .Ar package
@@ -3058,11 +3072,7 @@ from templates in ${PKG_DIR}.
 .It
 If not overridden by the user, determine which set of templates to use,
 depending on the current SUBPACKAGE and FLAVOR information.
-Set ${PLIST${SUBPACKAGE}}, ${DESCR${SUBPACKAGE}}, ${COMMENT${SUBPACKAGE}}, ${MESSAGE${SUBPACKAGE}}, ${UNMESSAGE${SUBPACKAGE}} accordingly.
-.It
-Detect the existence of ${PKGDIR}/{REQ,INSTALL,DEINSTALL}${SUBPACKAGE}.
-These are now deprecated.
-Use @exec and @unexec annotations instead.
+Set PLIST${SUBPACKAGE}, DESCR${SUBPACKAGE}, COMMENT${SUBPACKAGE}, MESSAGE${SUBPACKAGE}, UNMESSAGE${SUBPACKAGE} accordingly.
 .It
 Generate the actual DESCR, and if needed, MESSAGE, UNMESSAGE,
 from the templates in ${DESCR}, ${MESSAGE}, ${UNMESSAGE}, by
