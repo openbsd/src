@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.81 2011/04/16 07:41:08 sobrado Exp $ */
+/* $OpenBSD: user.c,v 1.82 2011/12/04 08:28:35 ajacoutot Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -101,7 +101,8 @@ enum {
 	F_SHELL		= 0x0200,
 	F_UID		= 0x0400,
 	F_USERNAME	= 0x0800,
-	F_CLASS		= 0x1000
+	F_CLASS		= 0x1000,
+	F_SETSECGROUP	= 0x4000
 };
 
 #define CONFFILE	"/etc/usermgmt.conf"
@@ -1537,12 +1538,19 @@ moduser(char *login_name, char *newlogin, user_t *up)
 			err(EXIT_FAILURE, "can't move `%s' to `%s'",
 			    homedir, pwp->pw_dir);
 		}
-		if (up->u_groupc > 0 &&
-		    !append_group(newlogin, up->u_groupc, up->u_groupv)) {
+		if (up->u_groupc > 0) {
+		    if ((up->u_flags & F_SETSECGROUP) &&
+		        !rm_user_from_groups(newlogin)) {
+		            (void) close(ptmpfd);
+		            pw_abort();
+		            errx(EXIT_FAILURE, "can't reset groups for `%s'", newlogin);
+		    }
+		    if (!append_group(newlogin, up->u_groupc, up->u_groupv)) {
 			(void) close(ptmpfd);
 			pw_abort();
 			errx(EXIT_FAILURE, "can't append `%s' to new groups",
 			    newlogin);
+		    }
 		}
 	}
 	(void) close(ptmpfd);
@@ -1626,7 +1634,9 @@ usermgmt_usage(const char *prog)
 		    "[-G secondary-group[,group,...]]\n"
 		    "               [-g gid | name | =uid] [-L login-class] "
 		    "[-l new-login]\n"
-		    "               [-p password] [-s shell] [-u uid] user\n",
+		    "               [-p password] "
+		    "[-S secondary-group[,group,...]]\n"
+		    "               [-s shell] [-u uid] user\n",
 		    prog);
 	} else if (strcmp(prog, "userdel") == 0) {
 		(void) fprintf(stderr, "usage: %s -D [-p preserve-value]\n",
@@ -1820,7 +1830,7 @@ usermod(int argc, char **argv)
 	free(u.u_primgrp);
 	u.u_primgrp = NULL;
 	have_new_user = 0;
-	while ((c = getopt(argc, argv, "G:c:d:e:f:g:l:mos:u:" MOD_OPT_EXTENSIONS)) != -1) {
+	while ((c = getopt(argc, argv, "G:S:c:d:e:f:g:l:mos:u:" MOD_OPT_EXTENSIONS)) != -1) {
 		switch(c) {
 		case 'G':
 			while ((u.u_groupv[u.u_groupc] = strsep(&optarg, ",")) != NULL &&
@@ -1833,6 +1843,18 @@ usermod(int argc, char **argv)
 			  	warnx("Truncated list of secondary groups to %d entries", NGROUPS_MAX - 2);
 			}
 			u.u_flags |= F_SECGROUP;
+			break;
+		case 'S':
+			while ((u.u_groupv[u.u_groupc] = strsep(&optarg, ",")) != NULL &&
+			    u.u_groupc < NGROUPS_MAX - 2) {
+				if (u.u_groupv[u.u_groupc][0] != 0) {
+					u.u_groupc++;
+				}
+			}
+			if (optarg != NULL) {
+			  	warnx("Truncated list of secondary groups to %d entries", NGROUPS_MAX - 2);
+			}
+			u.u_flags |= F_SETSECGROUP;
 			break;
 		case 'c':
 			memsave(&u.u_comment, optarg, strlen(optarg));
@@ -1907,6 +1929,8 @@ usermod(int argc, char **argv)
 		warnx("option 'm' useless without 'd' or 'l' -- ignored");
 		u.u_flags &= ~F_MKDIR;
 	}
+	if ((u.u_flags & F_SECGROUP) && (u.u_flags & F_SETSECGROUP))
+		errx(EXIT_FAILURE, "options 'G' and 'S' are mutually exclusive");
 	argc -= optind;
 	argv += optind;
 	if (argc != 1) {
