@@ -1,0 +1,20 @@
+.Dd October 20, 2011
+.Dt UX-SPACING 1
+.Os
+.Sh NAME
+.Nm Ux-spacing
+.Nd spacing around the Unix macro
+.Sh DESCRIPTION
+The
+.Ux
+family of operating systems, including
+.Nx ,
+.Ox ,
+.Fx ,
+.Dx
+and
+.Bsx .
+The system is
+.Ud
+The system
+.Bt

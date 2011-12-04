@@ -1,0 +1,14 @@
+.Dd October 21, 2010
+.Dt DQ-EMPTY 1
+.Os
+.Sh NAME
+.Nm Dq-empty
+.Nd empty implicit enclosure macros
+.Sh DESCRIPTION
+An empty
+.Dq
+and a full
+.Dq user@host
+quotation.
+And another
+.Do full Dc one .

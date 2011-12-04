@@ -1,0 +1,10 @@
+.Dd October 21, 2011
+.Dt EV-FONT 1
+.Os
+.Sh NAME
+.Nm Ev-font
+.Nd formatting of environment variables
+.Sh DESCRIPTION
+The
+.Ev PATH
+variable.

@@ -1,0 +1,14 @@
+.Dd August 6, 2010
+.Dt AQ-EMPTY 1
+.Os
+.Sh NAME
+.Nm Aq-empty
+.Nd empty implicit enclosure macros
+.Sh DESCRIPTION
+An empty
+.Aq
+and a full
+.Aq user@host
+return path.
+And another
+.Ao full Ac one .

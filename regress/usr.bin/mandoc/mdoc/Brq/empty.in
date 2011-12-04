@@ -1,0 +1,14 @@
+.Dd October 21, 2010
+.Dt BRQ-EMPTY 1
+.Os
+.Sh NAME
+.Nm Brq-empty
+.Nd empty implicit enclosure macros
+.Sh DESCRIPTION
+An empty
+.Brq
+and a full
+.Brq user@host
+quotation.
+And another
+.Bro full Brc one .

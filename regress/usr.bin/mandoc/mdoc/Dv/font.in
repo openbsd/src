@@ -1,0 +1,10 @@
+.Dd October 21, 2011
+.Dt DV-FONT 1
+.Os
+.Sh NAME
+.Nm Dv-font
+.Nd formatting of defined variables
+.Sh DESCRIPTION
+The
+.Dv BUFSIZ
+macro.

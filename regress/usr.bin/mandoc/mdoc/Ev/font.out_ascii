@@ -1,0 +1,9 @@
+EV-FONT(1)                 OpenBSD Reference Manual                 EV-FONT(1)
+
+NNAAMMEE
+     EEvv--ffoonntt - formatting of environment variables
+
+DDEESSCCRRIIPPTTIIOONN
+     The PATH variable.
+
+OpenBSD 5.0                    October 21, 2011                    OpenBSD 5.0
