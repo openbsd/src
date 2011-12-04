@@ -330,8 +330,7 @@ retry:
 			if (nretry--) {
 				warnx("pcb prev pointer insane");
 				goto retry;
-			}
-			else
+			} else
 				errx(1, "pcb prev pointer insane,"
 				     " all attempts exausted");
 		}
@@ -705,7 +704,8 @@ again:
 	mainstats.nconns++;
 	set_slice_timer(mainstats.nconns > 0);
 	if (ptb->vflag)
-		warnx("Accepted connection from %s, fd = %d\n", tmp, sc->fd);
+		fprintf(stderr, "Accepted connection from %s, fd = %d\n",
+		    tmp, sc->fd);
 }
 
 static void
@@ -810,11 +810,11 @@ again:
 		err(1, "write");
 	}
 	if (TCP_MODE && n == 0) {	
-		warnx("Remote end closed connection");
+		fprintf(stderr, "Remote end closed connection");
 		exit(1);
 	}
 	if (ptb->vflag >= 3)
-		warnx("write: %zd bytes\n", n);
+		fprintf(stderr, "write: %zd bytes\n", n);
 	sc->bytes += n;
 	mainstats.slice_bytes += n;
 	if (UDP_MODE)
