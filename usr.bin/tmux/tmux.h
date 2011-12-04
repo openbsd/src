@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.299 2011/11/15 23:34:12 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.300 2011/12/04 16:18:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -485,6 +485,8 @@ enum mode_key_cmd {
 	MODEKEYCOPY_JUMPAGAIN,
 	MODEKEYCOPY_JUMPREVERSE,
 	MODEKEYCOPY_JUMPBACK,
+	MODEKEYCOPY_JUMPTO,
+	MODEKEYCOPY_JUMPTOBACK,
 	MODEKEYCOPY_LEFT,
 	MODEKEYCOPY_MIDDLELINE,
 	MODEKEYCOPY_NEXTPAGE,
