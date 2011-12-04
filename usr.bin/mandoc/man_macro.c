@@ -1,4 +1,4 @@
-/*	$Id: man_macro.c,v 1.32 2011/11/05 16:02:18 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.33 2011/12/04 00:44:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -116,7 +116,6 @@ man_unscope(struct man *m, const struct man_node *to,
 
 	assert(to);
 
-	assert(MAN_ROOT != m->last->type);
 	m->next = MAN_NEXT_SIBLING;
 
 	/* LINTED */

@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.79 2011/11/13 15:46:04 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.80 2011/12/04 00:44:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -959,6 +959,9 @@ print_man_foot(struct termp *p, const void *arg)
 	const struct man_meta *meta;
 
 	meta = (const struct man_meta *)arg;
+	assert(meta->title);
+	assert(meta->msec);
+	assert(meta->date);
 
 	term_fontrepl(p, TERMFONT_NONE);
 
@@ -1009,6 +1012,8 @@ print_man_head(struct termp *p, const void *arg)
 	const struct man_meta *m;
 
 	m = (const struct man_meta *)arg;
+	assert(m->title);
+	assert(m->msec);
 
 	/*
 	 * Note that old groff would spit out some spaces before the
