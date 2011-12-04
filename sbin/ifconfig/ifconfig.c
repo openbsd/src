@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.252 2011/11/26 23:38:18 haesbaert Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.253 2011/12/04 06:26:10 haesbaert Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -106,9 +106,9 @@
 #include "pbkdf2.h"
 
 #define HWFEATURESBITS							\
-	"\024\1CSUM_IPv4\2CSUM_TCPv4\3CSUM_UDPv4\4IPSEC"		\
-	"\5VLAN_MTU\6VLAN_HWTAGGING\7IPCOMP\10CSUM_TCPv6"		\
-	"\11CSUM_UDPv6\12TCPv4_Rx\13UDPv4_Rx\20WOL"
+	"\024\1CSUM_IPv4\2CSUM_TCPv4\3CSUM_UDPv4"			\
+	"\5VLAN_MTU\6VLAN_HWTAGGING\10CSUM_TCPv6"			\
+	"\11CSUM_UDPv6\20WOL"
 
 struct	ifreq		ifr, ridreq;
 struct	in_aliasreq	in_addreq;
