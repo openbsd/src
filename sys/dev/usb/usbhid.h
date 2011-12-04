@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhid.h,v 1.13 2009/12/09 21:27:19 matthieu Exp $ */
+/*	$OpenBSD: usbhid.h,v 1.14 2011/12/04 15:09:35 mpi Exp $ */
 /*	$NetBSD: usbhid.h,v 1.11 2001/12/28 00:20:24 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbhid.h,v 1.7 1999/11/17 22:33:51 n_hibma Exp $ */
 
@@ -88,11 +88,13 @@ typedef struct usb_hid_descriptor {
 #define HUP_SCALE		0x008c
 #define HUP_CAMERA_CONTROL	0x0090
 #define HUP_ARCADE		0x0091
+#define HUP_APPLE		0x00ff 
 #define HUP_MICROSOFT		0xff00
 
 /* Usages, generic desktop */
 #define HUG_POINTER		0x0001
 #define HUG_MOUSE		0x0002
+#define HUG_FN_KEY		0x0003
 #define HUG_JOYSTICK		0x0004
 #define HUG_GAME_PAD		0x0005
 #define HUG_KEYBOARD		0x0006

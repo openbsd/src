@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.55 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.56 2011/12/04 15:09:35 mpi Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -132,6 +132,8 @@ struct ukbd_softc {
 
 	u_char			sc_dying;
 
+	struct hid_location	sc_apple_fn;
+
 	void			(*sc_munge)(void *, uint8_t *, u_int);
 };
 
@@ -182,6 +184,7 @@ struct ukbd_translation {
 #ifdef __loongson__
 void	ukbd_gdium_munge(void *, uint8_t *, u_int);
 #endif
+void	ukbd_apple_munge(void *, uint8_t *, u_int);
 uint8_t	ukbd_translate(const struct ukbd_translation *, size_t, uint8_t);
 
 int
@@ -226,6 +229,14 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 	qflags = usbd_get_quirks(uha->parent->sc_udev)->uq_flags;
 	if (hidkbd_attach(self, kbd, 1, qflags, repid, desc, dlen) != 0)
 		return;
+
+	if (uha->uaa->vendor == USB_VENDOR_APPLE) {
+		if (hid_locate(desc, dlen, HID_USAGE2(HUP_APPLE, HUG_FN_KEY),
+		    uha->reportid, hid_input, &sc->sc_apple_fn, &qflags)) {
+			if (qflags & HIO_VARIABLE)
+				sc->sc_munge = ukbd_apple_munge;
+		}
+	}
 
 	if (uha->uaa->vendor == USB_VENDOR_TOPRE &&
 	    uha->uaa->product == USB_PRODUCT_TOPRE_HHKB) {
@@ -437,6 +448,56 @@ ukbd_translate(const struct ukbd_translation *table, size_t tsize,
 		if (table->original == keycode)
 			return table->translation;
 	return 0;
+}
+
+void
+ukbd_apple_munge(void *vsc, uint8_t *ibuf, u_int ilen)
+{
+	struct ukbd_softc *sc = vsc;
+	struct hidkbd *kbd = &sc->sc_kbd;
+	uint8_t *pos, *spos, *epos, xlat;
+
+	static const struct ukbd_translation apple_fn_trans[] = {
+		{ 40, 73 },	/* return -> insert */
+		{ 42, 76 },	/* backspace -> delete */
+#ifdef notyet
+		{ 58, 0 },	/* F1 -> screen brightness down */
+		{ 59, 0 },	/* F2 -> screen brightness up */
+		{ 60, 0 },	/* F3 */
+		{ 61, 0 },	/* F4 */
+		{ 62, 0 },	/* F5 -> keyboard backlight down */
+		{ 63, 0 },	/* F6 -> keyboard backlight up */
+		{ 64, 0 },	/* F7 -> audio back */
+		{ 65, 0 },	/* F8 -> audio pause/play */
+		{ 66, 0 },	/* F9 -> audio next */
+#endif
+#ifdef __macppc__
+		{ 60, 127 },	/* F3 -> audio mute */
+		{ 61, 129 },	/* F4 -> audio lower */
+		{ 62, 128 },	/* F5 -> audio raise */
+#else
+		{ 67, 127 },	/* F10 -> audio mute */
+		{ 68, 129 },	/* F11 -> audio lower */
+		{ 69, 128 },	/* F12 -> audio raise */
+#endif
+		{ 79, 77 },	/* right -> end */
+		{ 80, 74 },	/* left -> home */
+		{ 81, 78 },	/* down -> page down */
+		{ 82, 75 }	/* up -> page up */
+	};
+
+	if (!hid_get_data(ibuf, &sc->sc_apple_fn))
+		return;
+
+	spos = ibuf + kbd->sc_keycodeloc.pos / 8;
+	epos = spos + kbd->sc_nkeycode;
+
+	for (pos = spos; pos != epos; pos++) {
+		xlat = ukbd_translate(apple_fn_trans,
+		    nitems(apple_fn_trans), *pos);
+		if (xlat != 0)
+			*pos = xlat;
+	}
 }
 
 #ifdef __loongson__
