@@ -1,4 +1,4 @@
-/*	$Id: term_ascii.c,v 1.8 2011/11/13 13:30:42 schwarze Exp $ */
+/*	$Id: term_ascii.c,v 1.9 2011/12/05 00:28:12 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -95,6 +95,10 @@ ascii_init(enum termenc enc, char *outopts)
 			p->defrmargin = (size_t)atoi(v);
 			break;
 		case (2):
+			/*
+			 * Temporary, undocumented mode
+			 * to imitate mdoc(7) output style.
+			 */
 			p->mdocstyle = 1;
 			p->defindent = 5;
 			break;
