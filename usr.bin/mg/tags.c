@@ -208,7 +208,7 @@ pushtag(char *tok)
 {
 	struct ctag *res;
 	struct tagpos *s;
-	char *bname;
+	char bname[NFILEN];
 	int doto, dotline;
 	
 	if ((res = searchtag(tok)) == NULL)
@@ -216,7 +216,17 @@ pushtag(char *tok)
 		
 	doto = curwp->w_doto;
 	dotline = curwp->w_dotline;
-	bname = curbp->b_bname;
+	/* record absolute filenames. Fixes issues when mg's cwd is not the
+	 * same as buffer's directory.
+	 */
+	if (strlcpy(bname, curbp->b_cwd, sizeof(bname)) >= sizeof(bname)) {
+		    ewprintf("filename too long");
+		    return (FALSE);
+	}
+	if (strlcat(bname, curbp->b_bname, sizeof(bname)) >= sizeof(bname)) {
+		    ewprintf("filename too long");
+		    return (FALSE);
+	}	
 
 	if (loadbuffer(res->fname) == FALSE)
 		return (FALSE);
@@ -227,8 +237,8 @@ pushtag(char *tok)
 			return (FALSE);
 		}
 		if ((s->bname = strdup(bname)) == NULL) {
-			    ewprintf("Out of memory");
-			    return (FALSE);
+			ewprintf("Out of memory");
+			return (FALSE);
 		}
 		s->doto = doto;
 		s->dotline = dotline;
