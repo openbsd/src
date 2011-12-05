@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ruby-module.5,v 1.1 2011/12/05 20:03:25 espie Exp $
+.\"	$OpenBSD: ruby-module.5,v 1.2 2011/12/05 23:29:30 jeremy Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie, Jeremy Evans
 .\"
@@ -81,6 +81,7 @@ Sets
 .Ev GEM_BASE_BIN ,
 and
 .Ev GEM_FLAGS .
+.Pp
 Appends to
 .Ev CATEGORIES
 and
@@ -97,6 +98,7 @@ Appends to
 unless
 .Ev MODRUBY_RUNDEP
 is set to No.
+.Pp
 .Ev RUBY ,
 .Ev RAKE ,
 and
@@ -108,6 +110,7 @@ and
 .Ev MODRUBY_BIN_RSPEC
 are the path to the spec (rspec 1) and
 rspec (rspec 2) binaries for the related ruby implementation.
+.Pp
 .Ev MODRUBY_RUBY_ADJ
 is a command that takes filename arguments and replaces
 the /usr/bin/env ruby shebang lines with
@@ -116,6 +119,7 @@ the /usr/bin/env ruby shebang lines with
 is a list of filename patterns that will automatically have
 .Ev MODRUBY_RUBY_ADJ
 called on them during pre-configure.
+.Pp
 Creates a do-regress target if
 .Ev MODRUBY_REGRESS
 is used and one is not already defined.
@@ -130,11 +134,14 @@ the regress tests, it defaults to
 .Ev WRKSRC .
 .Ev MODRUBY_REGRESS_TARGET
 sets the argument to the regress test program.
+.Pp
 Supports additional
 .Ev CONFIGURE_STYLE Ns s ,
 and setting specific
 .Ev CONFIGURE_STYLE Ns s
-modifies some additional parameters.
+modifies some additional parameters:
+.Bl -bullet
+.It
 The "ruby gem"
 .Ev CONFIGURE_STYLE
 should be used for pure ruby gems without C extensions.
@@ -143,6 +150,7 @@ This adds
 = * and adds ruby19, rbx, and jruby
 .Ev FLAVOR Ns s
 to the port, so the same port can build packages for multiple versions of ruby.
+.It
 The "ruby gem ext"
 .Ev CONFIGURE_STYLE
 should be used for ruby gems with C extensions.
@@ -160,14 +168,20 @@ to
 It also adds ruby19, rbx, and jruby
 .Ev FLAVOR Ns s
 to the port.
+.It
 The "ruby extconf"
 .Ev CONFIGURE_STYLE
 is similar to the "ruby gem ext"
 .Ev CONFIGURE_STYLE ,
 except that it is used when the package is not distributed as a ruby gem.
+.El
+.Pp
 In order for ruby 1.9, rubinius, and jruby packages to be built from the same
 port directory, any gem dependencies specified in the port should use this
-format: category/ruby-foo,${MODRUBY_FLAVOR}.
+format:
+.Pp
+.Dl category/ruby-foo,${MODRUBY_FLAVOR}
+.Pp
 Use of a ruby19, rbx, or jruby
 .Ev FLAVOR
 causes the
@@ -180,6 +194,7 @@ Specifying
 is necessary so that if you are building a ruby 1.9
 package for the current port, it depends on the ruby 1.9 package of the
 dependencies.
+.Pp
 For ruby gem ports that can work on both ruby 1.8 and ruby 1.9, any binary
 file entries in the PLIST should be appended with
 .Ev GEM_BIN_SUFFIX .
