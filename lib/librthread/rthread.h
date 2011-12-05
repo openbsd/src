@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.28 2011/11/06 12:15:51 guenther Exp $ */
+/*	$OpenBSD: rthread.h,v 1.29 2011/12/05 04:02:03 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -136,12 +136,15 @@ struct pthread {
 	struct rthread_storage *local_storage;
 	struct rthread_cleanup_fn *cleanup_fns;
 	int myerrno;
+	int cancel_point;
 };
 #define	THREAD_DONE		0x001
 #define	THREAD_DETACHED		0x002
-#define THREAD_CANCELLED	0x004
+#define THREAD_CANCELED		0x004
 #define THREAD_CANCEL_ENABLE	0x008
 #define THREAD_CANCEL_DEFERRED	0x010
+#define THREAD_CANCEL_COND	0x020
+#define THREAD_DYING            0x040
 
 extern int _threads_ready;
 extern LIST_HEAD(listhead, pthread) _thread_list;
@@ -167,6 +170,9 @@ void	_rthread_dl_lock(int what);
 void	_rthread_bind_lock(int);
 #endif
 
+/* rthread_cancel.c */
+void	_leave_cancel(pthread_t);
+void	_enter_cancel(pthread_t);
 
 void	_thread_dump_info(void);
 
@@ -180,3 +186,4 @@ int thrsleep(const volatile void *, clockid_t, const struct timespec *,
 int thrwakeup(void *, int n);
 int sched_yield(void);
 int thrsigdivert(sigset_t, siginfo_t *, const struct timespec *);
+int _thread_sys_sigaction(int, const struct sigaction *, struct sigaction *);

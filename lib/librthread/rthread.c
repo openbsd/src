@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.45 2011/11/09 10:28:01 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.46 2011/12/05 04:02:03 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -98,11 +98,23 @@ _rthread_start(void *v)
 	pthread_exit(retval);
 }
 
+static void
+sigthr_handler(int sig)
+{
+	pthread_t self = pthread_self();
+
+	if ((self->flags & (THREAD_CANCELED | THREAD_CANCEL_COND)) ==
+	    THREAD_CANCELED && (self->cancel_point ||
+	    (self->flags & THREAD_CANCEL_DEFERRED) == 0))
+		pthread_exit(PTHREAD_CANCELED);
+}
+
 static int
 _rthread_init(void)
 {
 	pthread_t thread = &_initial_thread;
 	extern int __isthreaded;
+	struct sigaction sa;
 
 	thread->tid = getthrid();
 	thread->donesem.lock = _SPINLOCK_UNLOCKED;
@@ -128,6 +140,18 @@ _rthread_init(void)
 	dlctl(NULL, DL_SETTHREADLCK, _rthread_dl_lock);
 	dlctl(NULL, DL_SETBINDLCK, _rthread_bind_lock);
 #endif
+
+	/*
+	 * Set the handler on the signal used for cancelation and
+	 * suspension, and make sure it's unblocked
+	 */
+	memset(&sa, 0, sizeof(sa));
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = sigthr_handler;
+	_thread_sys_sigaction(SIGTHR, &sa, NULL);
+	sigaddset(&sa.sa_mask, SIGTHR);
+	sigprocmask(SIG_UNBLOCK, &sa.sa_mask, NULL);
 
 	return (0);
 }
@@ -209,6 +233,16 @@ pthread_exit(void *retval)
 {
 	struct rthread_cleanup_fn *clfn;
 	pthread_t thread = pthread_self();
+
+	if (thread->flags & THREAD_DYING) {
+		/*
+		 * Called pthread_exit() from destructor or cancelation
+		 * handler: blow up.  XXX write something to stderr?
+		 */
+		_exit(42);
+	}
+
+	_rthread_setflag(thread, THREAD_DYING);
 
 	thread->retval = retval;
 
@@ -379,15 +413,17 @@ int
 pthread_cancel(pthread_t thread)
 {
 
-	_rthread_setflag(thread, THREAD_CANCELLED);
+	_rthread_setflag(thread, THREAD_CANCELED);
+	if (thread->flags & THREAD_CANCEL_ENABLE)
+		kill(thread->tid, SIGTHR);
 	return (0);
 }
 
 void
 pthread_testcancel(void)
 {
-	if ((pthread_self()->flags & (THREAD_CANCELLED|THREAD_CANCEL_ENABLE)) ==
-	    (THREAD_CANCELLED|THREAD_CANCEL_ENABLE))
+	if ((pthread_self()->flags & (THREAD_CANCELED|THREAD_CANCEL_ENABLE)) ==
+	    (THREAD_CANCELED|THREAD_CANCEL_ENABLE))
 		pthread_exit(PTHREAD_CANCELED);
 
 }

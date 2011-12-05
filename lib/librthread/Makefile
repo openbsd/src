@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2011/11/27 04:12:43 guenther Exp $
+#	$OpenBSD: Makefile,v 1.19 2011/12/05 04:02:03 guenther Exp $
 
 LIB=rthread
 WANTLINT=
@@ -13,7 +13,8 @@ LDADD = -Wl,-znodelete,-zinitfirst
 .PATH: ${.CURDIR}/arch/${MACHINE_CPU}
 SRCS= rthread.c rthread_attr.c rthread_sched.c rthread_sync.c rthread_tls.c \
 	rthread_sig.c rthread_np.c rthread_debug.c rthread_stack.c \
-	rthread_libc.c rthread_fork.c rthread_file.c sched_prio.c
+	rthread_libc.c rthread_fork.c rthread_file.c sched_prio.c \
+	rthread_cancel.c
 
 OBJS+= _atomic_lock.o rfork_thread.o cerror.o
 

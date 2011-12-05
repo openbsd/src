@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sig.c,v 1.9 2011/11/06 11:48:59 guenther Exp $ */
+/*	$OpenBSD: rthread_sig.c,v 1.10 2011/12/05 04:02:03 guenther Exp $ */
 /*
  * Copyright (c) 2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -35,12 +35,15 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 int
 sigwait(const sigset_t *set, int *sig)
 {
+	pthread_t self = pthread_self();
 	int ret;
 
+	_enter_cancel(self);
 	ret = thrsigdivert(*set, NULL, NULL);
+	_leave_cancel(self);
 	if (ret == -1)
-		return errno;
+		return (errno);
 	*sig = ret;
-	return 0;
+	return (0);
 }
 
