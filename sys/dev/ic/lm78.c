@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78.c,v 1.22 2011/10/05 15:05:47 deraadt Exp $	*/
+/*	$OpenBSD: lm78.c,v 1.23 2011/12/06 16:06:07 mpf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -25,6 +25,7 @@
 #include <machine/bus.h>
 
 #include <dev/ic/lm78var.h>
+#include <dev/isa/wbsioreg.h>
 
 #if defined(LMDEBUG)
 #define DPRINTF(x)		do { printf x; } while (0)
@@ -65,6 +66,7 @@ void wb_refresh_nvolt(struct lm_softc *, int);
 void wb_w83627ehf_refresh_nvolt(struct lm_softc *, int);
 void wb_refresh_temp(struct lm_softc *, int);
 void wb_refresh_fanrpm(struct lm_softc *, int);
+void wb_nct6776f_refresh_fanrpm(struct lm_softc *, int);
 void wb_w83792d_refresh_fanrpm(struct lm_softc *, int);
 
 void as_refresh_temp(struct lm_softc *, int);
@@ -183,6 +185,33 @@ struct lm_sensor w83627dhg_sensors[] = {
 	{ "", SENSOR_FANRPM, 0, 0x28, wb_refresh_fanrpm },
 	{ "", SENSOR_FANRPM, 0, 0x29, wb_refresh_fanrpm },
 	{ "", SENSOR_FANRPM, 0, 0x2a, wb_refresh_fanrpm },
+
+	{ NULL }
+};
+
+struct lm_sensor nct6776f_sensors[] = {
+	/* Voltage */
+	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE / 2},
+	{ "+12V", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT(56, 10) / 2 },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT(34, 34) / 2 },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(34, 34) / 2 },
+	{ "-12V", SENSOR_VOLTS_DC, 0, 0x24, wb_w83627ehf_refresh_nvolt },
+	{ "", SENSOR_VOLTS_DC, 0, 0x25, lm_refresh_volt, RFACT_NONE / 2 },
+	{ "", SENSOR_VOLTS_DC, 0, 0x26, lm_refresh_volt, RFACT_NONE / 2 },
+	{ "3.3VSB", SENSOR_VOLTS_DC, 5, 0x50, lm_refresh_volt, RFACT(34, 34) / 2 },
+	{ "VBAT", SENSOR_VOLTS_DC, 5, 0x51, lm_refresh_volt, RFACT_NONE / 2 },
+
+	/* Temperature */
+	{ "", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
+	{ "", SENSOR_TEMP, 1, 0x50, wb_refresh_temp },
+	{ "", SENSOR_TEMP, 2, 0x50, wb_refresh_temp },
+
+	/* Fans */
+	{ "", SENSOR_FANRPM, 6, 0x56, wb_nct6776f_refresh_fanrpm },
+	{ "", SENSOR_FANRPM, 6, 0x58, wb_nct6776f_refresh_fanrpm },
+	{ "", SENSOR_FANRPM, 6, 0x5a, wb_nct6776f_refresh_fanrpm },
+	{ "", SENSOR_FANRPM, 6, 0x5c, wb_nct6776f_refresh_fanrpm },
+	{ "", SENSOR_FANRPM, 6, 0x5e, wb_nct6776f_refresh_fanrpm },
 
 	{ NULL }
 };
@@ -498,8 +527,13 @@ wb_match(struct lm_softc *sc)
 		lm_setup_sensors(sc, w83627ehf_sensors);
 		break;
 	case WB_CHIPID_W83627DHG:
-		printf(": W83627DHG\n");
-		lm_setup_sensors(sc, w83627dhg_sensors);
+		if (sc->sioid == WBSIO_ID_NCT6776F) {
+			printf(": NCT6776F\n");
+			lm_setup_sensors(sc, nct6776f_sensors);
+		} else {
+			printf(": W83627DHG\n");
+			lm_setup_sensors(sc, w83627dhg_sensors);
+		}
 		break;
 	case WB_CHIPID_W83637HF:
 		printf(": W83637HF\n");
@@ -799,6 +833,24 @@ wb_refresh_fanrpm(struct lm_softc *sc, int n)
 	} else {
 		sensor->flags &= ~SENSOR_FINVALID;
 		sensor->value = 1350000 / (data << divisor);
+	}
+}
+
+void
+wb_nct6776f_refresh_fanrpm(struct lm_softc *sc, int n)
+{
+	struct ksensor *sensor = &sc->sensors[n];
+	int datah, datal;
+
+	datah = sc->lm_readreg(sc, sc->lm_sensors[n].reg);
+	datal = sc->lm_readreg(sc, sc->lm_sensors[n].reg + 1);
+
+	if (datah == 0xff) {
+		sensor->flags |= SENSOR_FINVALID;
+		sensor->value = 0;
+	} else {
+		sensor->flags &= ~SENSOR_FINVALID;
+		sensor->value = (datah << 8) | datal;
 	}
 }
 

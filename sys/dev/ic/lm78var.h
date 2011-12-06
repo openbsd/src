@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78var.h,v 1.16 2011/10/05 15:05:47 deraadt Exp $	*/
+/*	$OpenBSD: lm78var.h,v 1.17 2011/12/06 16:06:07 mpf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -114,7 +114,7 @@
 #define WB_CHIPID_W83627EHF_A	0x88 /* early version, only for ASUS MBs */
 #define WB_CHIPID_W83627THF	0x90
 #define WB_CHIPID_W83627EHF	0xa1
-#define WB_CHIPID_W83627DHG	0xc1
+#define WB_CHIPID_W83627DHG	0xc1 /* also used in WBSIO_ID_NCT6776F */
 
 /* Config bits */
 #define WB_CONFIG_VMR9		0x01
@@ -151,6 +151,7 @@ struct lm_softc {
 
 	u_int8_t sbusaddr;
 	u_int8_t chipid;
+	u_int8_t sioid;
 	u_int8_t vrm9;
 };
 

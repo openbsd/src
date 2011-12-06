@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78_isa.c,v 1.6 2011/10/05 15:05:48 deraadt Exp $	*/
+/*	$OpenBSD: lm78_isa.c,v 1.7 2011/12/06 16:06:07 mpf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -48,6 +48,7 @@ struct lm_isa_softc {
 };
 
 int  lm_isa_match(struct device *, void *, void *);
+int  lm_wbsio_match(struct device *, void *, void *);
 void lm_isa_attach(struct device *, struct device *, void *);
 u_int8_t lm_isa_readreg(struct lm_softc *, int);
 void lm_isa_writereg(struct lm_softc *, int, int);
@@ -61,9 +62,56 @@ struct cfattach lm_isa_ca = {
 
 struct cfattach lm_wbsio_ca = {
 	sizeof(struct lm_isa_softc),
-	lm_isa_match,
+	lm_wbsio_match,
 	lm_isa_attach
 };
+
+int
+lm_wbsio_match(struct device *parent, void *match, void *aux)
+{
+	bus_space_tag_t iot;
+	bus_addr_t iobase;
+	bus_space_handle_t ioh;
+	struct isa_attach_args *ia = aux;
+	int banksel, vendid;
+
+	iot = ia->ia_iot;
+	iobase = ia->ipa_io[0].base;
+
+	if (bus_space_map(iot, iobase, 8, 0, &ioh)) {
+		DPRINTF(("%s: can't map i/o space\n", __func__));
+		return (0);
+	}
+
+	/* Probe for Winbond chips. */
+	bus_space_write_1(iot, ioh, LMC_ADDR, WB_BANKSEL);
+	banksel = bus_space_read_1(iot, ioh, LMC_DATA);
+	bus_space_write_1(iot, ioh, LMC_ADDR, WB_BANKSEL);
+	bus_space_write_1(iot, ioh, LMC_DATA, WB_BANKSEL_HBAC);
+	bus_space_write_1(iot, ioh, LMC_ADDR, WB_VENDID);
+	vendid = bus_space_read_1(iot, ioh, LMC_DATA) << 8;
+	bus_space_write_1(iot, ioh, LMC_ADDR, WB_BANKSEL);
+	bus_space_write_1(iot, ioh, LMC_DATA, 0);
+	bus_space_write_1(iot, ioh, LMC_ADDR, WB_VENDID);
+	vendid |= bus_space_read_1(iot, ioh, LMC_DATA);
+	bus_space_write_1(iot, ioh, LMC_ADDR, WB_BANKSEL);
+	bus_space_write_1(iot, ioh, LMC_DATA, banksel);
+
+	bus_space_unmap(iot, ioh, 8);
+
+	if (vendid != WB_VENDID_WINBOND)
+		return (0);
+
+	ia->ipa_nio = 1;
+	ia->ipa_io[0].length = 8;
+
+	ia->ipa_nmem = 0;
+	ia->ipa_nirq = 0;
+	ia->ipa_ndrq = 0;
+
+	return (1);
+
+}
 
 int
 lm_isa_match(struct device *parent, void *match, void *aux)
@@ -158,6 +206,11 @@ lm_isa_attach(struct device *parent, struct device *self, void *aux)
 	/* Bus-independant attachment */
 	sc->sc_lmsc.lm_writereg = lm_isa_writereg;
 	sc->sc_lmsc.lm_readreg = lm_isa_readreg;
+
+	/* pass through wbsio(4) devid */
+	if (ia->ia_aux)
+		sc->sc_lmsc.sioid = (u_int8_t)(u_long)ia->ia_aux;
+
 	lm_attach(&sc->sc_lmsc);
 
 	/*
