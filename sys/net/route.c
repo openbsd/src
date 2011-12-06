@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.132 2011/07/22 13:05:29 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.133 2011/12/06 12:48:51 blambert Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -661,7 +661,6 @@ int
 rt_getifa(struct rt_addrinfo *info, u_int rtid)
 {
 	struct ifaddr	*ifa;
-	int		 error = 0;
 
 	/*
 	 * ifp may be specified by sockaddr_dl when protocol address
@@ -695,12 +694,14 @@ rt_getifa(struct rt_addrinfo *info, u_int rtid)
 			info->rti_ifa = ifa_ifwithroute(info->rti_flags,
 			    sa, sa, rtid);
 	}
-	if ((ifa = info->rti_ifa) != NULL) {
-		if (info->rti_ifp == NULL)
-			info->rti_ifp = ifa->ifa_ifp;
-	} else
-		error = ENETUNREACH;
-	return (error);
+
+	if ((ifa = info->rti_ifa) == NULL)
+		return (ENETUNREACH);
+
+	if (info->rti_ifp == NULL)
+		info->rti_ifp = ifa->ifa_ifp;
+
+	return (0);
 }
 
 int
