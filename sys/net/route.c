@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.134 2011/12/06 12:53:26 blambert Exp $	*/
+/*	$OpenBSD: route.c,v 1.135 2011/12/06 12:58:34 blambert Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -991,12 +991,11 @@ bad:
 }
 
 int
-rt_setgate(struct rtentry *rt0, struct sockaddr *dst, struct sockaddr *gate,
+rt_setgate(struct rtentry *rt, struct sockaddr *dst, struct sockaddr *gate,
     u_int tableid)
 {
 	caddr_t	new, old;
 	int	dlen = ROUNDUP(dst->sa_len), glen = ROUNDUP(gate->sa_len);
-	struct rtentry	*rt = rt0;
 
 	if (rt->rt_gateway == NULL || glen > ROUNDUP(rt->rt_gateway->sa_len)) {
 		old = (caddr_t)rt_key(rt);
@@ -1014,9 +1013,7 @@ rt_setgate(struct rtentry *rt0, struct sockaddr *dst, struct sockaddr *gate,
 		Free(old);
 	}
 	if (rt->rt_gwroute != NULL) {
-		rt = rt->rt_gwroute;
-		RTFREE(rt);
-		rt = rt0;
+		RTFREE(rt->rt_gwroute);
 		rt->rt_gwroute = NULL;
 	}
 	if (rt->rt_flags & RTF_GATEWAY) {
