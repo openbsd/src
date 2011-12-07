@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.23 2011/04/03 15:36:02 jasper Exp $	*/
+/*	$OpenBSD: esa.c,v 1.24 2011/12/07 10:31:31 kettenis Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -874,7 +874,7 @@ esa_intr(void *hdl)
 	u_int32_t diff;
 	u_int32_t play_blksize, play_bufsize;
 	u_int32_t rec_blksize, rec_bufsize;
-	int i;
+	int i, claimed = 0;
 
 	status = bus_space_read_1(iot, ioh, ESA_HOST_INT_STATUS);
 	if (status == 0xff)
@@ -901,6 +901,7 @@ esa_intr(void *hdl)
 			break;
 		}
 		bus_space_write_1(iot, ioh, ESA_HW_VOL_COUNTER_MASTER, 0x88);
+		claimed = 1;
 	}
 
 	if (status & ESA_ASSP_INT_PENDING) {
@@ -945,9 +946,10 @@ esa_intr(void *hdl)
 				}
 			}
 		}
+		claimed = 1;
 	}
 
-	return (1);
+	return (claimed);
 }
 
 int
