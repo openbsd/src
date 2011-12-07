@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.18 2011/12/04 14:11:55 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.19 2011/12/07 01:57:18 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -103,147 +103,149 @@ static	void		  pformatted(DB *, struct buf *, struct buf *,
 				const struct of *);
 static	int		  pman_node(MAN_ARGS);
 static	void		  pmdoc_node(MDOC_ARGS);
-static	void		  pmdoc_An(MDOC_ARGS);
-static	void		  pmdoc_Cd(MDOC_ARGS);
-static	void		  pmdoc_Er(MDOC_ARGS);
-static	void		  pmdoc_Ev(MDOC_ARGS);
-static	void		  pmdoc_Fd(MDOC_ARGS);
-static	void		  pmdoc_In(MDOC_ARGS);
-static	void		  pmdoc_Fn(MDOC_ARGS);
-static	void		  pmdoc_Fo(MDOC_ARGS);
-static	void		  pmdoc_Nd(MDOC_ARGS);
-static	void		  pmdoc_Nm(MDOC_ARGS);
-static	void		  pmdoc_Pa(MDOC_ARGS);
-static	void		  pmdoc_St(MDOC_ARGS);
-static	void		  pmdoc_Vt(MDOC_ARGS);
-static	void		  pmdoc_Xr(MDOC_ARGS);
+static	int		  pmdoc_head(MDOC_ARGS);
+static	int		  pmdoc_body(MDOC_ARGS);
+static	int		  pmdoc_Fd(MDOC_ARGS);
+static	int		  pmdoc_In(MDOC_ARGS);
+static	int		  pmdoc_Fn(MDOC_ARGS);
+static	int		  pmdoc_Nd(MDOC_ARGS);
+static	int		  pmdoc_Nm(MDOC_ARGS);
+static	int		  pmdoc_Sh(MDOC_ARGS);
+static	int		  pmdoc_St(MDOC_ARGS);
+static	int		  pmdoc_Xr(MDOC_ARGS);
 static	void		  usage(void);
 
-typedef	void		(*pmdoc_nf)(MDOC_ARGS);
+#define	MDOCF_CHILD	  0x01  /* Automatically index child nodes. */
 
-static	const pmdoc_nf	  mdocs[MDOC_MAX] = {
-	NULL, /* Ap */
-	NULL, /* Dd */
-	NULL, /* Dt */
-	NULL, /* Os */
-	NULL, /* Sh */ 
-	NULL, /* Ss */ 
-	NULL, /* Pp */ 
-	NULL, /* D1 */
-	NULL, /* Dl */
-	NULL, /* Bd */
-	NULL, /* Ed */
-	NULL, /* Bl */ 
-	NULL, /* El */
-	NULL, /* It */
-	NULL, /* Ad */ 
-	pmdoc_An, /* An */ 
-	NULL, /* Ar */
-	pmdoc_Cd, /* Cd */ 
-	NULL, /* Cm */
-	NULL, /* Dv */ 
-	pmdoc_Er, /* Er */ 
-	pmdoc_Ev, /* Ev */ 
-	NULL, /* Ex */ 
-	NULL, /* Fa */ 
-	pmdoc_Fd, /* Fd */
-	NULL, /* Fl */
-	pmdoc_Fn, /* Fn */ 
-	NULL, /* Ft */ 
-	NULL, /* Ic */ 
-	pmdoc_In, /* In */ 
-	NULL, /* Li */
-	pmdoc_Nd, /* Nd */
-	pmdoc_Nm, /* Nm */
-	NULL, /* Op */
-	NULL, /* Ot */
-	pmdoc_Pa, /* Pa */
-	NULL, /* Rv */
-	pmdoc_St, /* St */ 
-	pmdoc_Vt, /* Va */
-	pmdoc_Vt, /* Vt */ 
-	pmdoc_Xr, /* Xr */ 
-	NULL, /* %A */
-	NULL, /* %B */
-	NULL, /* %D */
-	NULL, /* %I */
-	NULL, /* %J */
-	NULL, /* %N */
-	NULL, /* %O */
-	NULL, /* %P */
-	NULL, /* %R */
-	NULL, /* %T */
-	NULL, /* %V */
-	NULL, /* Ac */
-	NULL, /* Ao */
-	NULL, /* Aq */
-	NULL, /* At */ 
-	NULL, /* Bc */
-	NULL, /* Bf */
-	NULL, /* Bo */
-	NULL, /* Bq */
-	NULL, /* Bsx */
-	NULL, /* Bx */
-	NULL, /* Db */
-	NULL, /* Dc */
-	NULL, /* Do */
-	NULL, /* Dq */
-	NULL, /* Ec */
-	NULL, /* Ef */ 
-	NULL, /* Em */ 
-	NULL, /* Eo */
-	NULL, /* Fx */
-	NULL, /* Ms */ 
-	NULL, /* No */
-	NULL, /* Ns */
-	NULL, /* Nx */
-	NULL, /* Ox */
-	NULL, /* Pc */
-	NULL, /* Pf */
-	NULL, /* Po */
-	NULL, /* Pq */
-	NULL, /* Qc */
-	NULL, /* Ql */
-	NULL, /* Qo */
-	NULL, /* Qq */
-	NULL, /* Re */
-	NULL, /* Rs */
-	NULL, /* Sc */
-	NULL, /* So */
-	NULL, /* Sq */
-	NULL, /* Sm */ 
-	NULL, /* Sx */
-	NULL, /* Sy */
-	NULL, /* Tn */
-	NULL, /* Ux */
-	NULL, /* Xc */
-	NULL, /* Xo */
-	pmdoc_Fo, /* Fo */ 
-	NULL, /* Fc */ 
-	NULL, /* Oo */
-	NULL, /* Oc */
-	NULL, /* Bk */
-	NULL, /* Ek */
-	NULL, /* Bt */
-	NULL, /* Hf */
-	NULL, /* Fr */
-	NULL, /* Ud */
-	NULL, /* Lb */
-	NULL, /* Lp */ 
-	NULL, /* Lk */ 
-	NULL, /* Mt */ 
-	NULL, /* Brq */ 
-	NULL, /* Bro */ 
-	NULL, /* Brc */ 
-	NULL, /* %C */
-	NULL, /* Es */
-	NULL, /* En */
-	NULL, /* Dx */
-	NULL, /* %Q */
-	NULL, /* br */
-	NULL, /* sp */
-	NULL, /* %U */
-	NULL, /* Ta */
+struct	mdoc_handler {
+	int		(*fp)(MDOC_ARGS);  /* Optional handler. */
+	uint64_t	  mask;  /* Set unless handler returns 0. */
+	int		  flags;  /* For use by pmdoc_node. */
+};
+
+static	const struct mdoc_handler mdocs[MDOC_MAX] = {
+	{ NULL, 0, 0 },  /* Ap */
+	{ NULL, 0, 0 },  /* Dd */
+	{ NULL, 0, 0 },  /* Dt */
+	{ NULL, 0, 0 },  /* Os */
+	{ pmdoc_Sh, TYPE_Sh, MDOCF_CHILD }, /* Sh */
+	{ pmdoc_head, TYPE_Ss, MDOCF_CHILD }, /* Ss */
+	{ NULL, 0, 0 },  /* Pp */
+	{ NULL, 0, 0 },  /* D1 */
+	{ NULL, 0, 0 },  /* Dl */
+	{ NULL, 0, 0 },  /* Bd */
+	{ NULL, 0, 0 },  /* Ed */
+	{ NULL, 0, 0 },  /* Bl */
+	{ NULL, 0, 0 },  /* El */
+	{ NULL, 0, 0 },  /* It */
+	{ NULL, 0, 0 },  /* Ad */
+	{ NULL, TYPE_An, MDOCF_CHILD },  /* An */
+	{ NULL, TYPE_Ar, MDOCF_CHILD },  /* Ar */
+	{ NULL, TYPE_Cd, MDOCF_CHILD },  /* Cd */
+	{ NULL, TYPE_Cm, MDOCF_CHILD },  /* Cm */
+	{ NULL, TYPE_Dv, MDOCF_CHILD },  /* Dv */
+	{ NULL, TYPE_Er, MDOCF_CHILD },  /* Er */
+	{ NULL, TYPE_Ev, MDOCF_CHILD },  /* Ev */
+	{ NULL, 0, 0 },  /* Ex */
+	{ NULL, TYPE_Fa, MDOCF_CHILD },  /* Fa */
+	{ pmdoc_Fd, TYPE_In, 0 },  /* Fd */
+	{ NULL, TYPE_Fl, MDOCF_CHILD },  /* Fl */
+	{ pmdoc_Fn, 0, 0 },  /* Fn */
+	{ NULL, TYPE_Ft, MDOCF_CHILD },  /* Ft */
+	{ NULL, TYPE_Ic, MDOCF_CHILD },  /* Ic */
+	{ pmdoc_In, TYPE_In, 0 },  /* In */
+	{ NULL, TYPE_Li, MDOCF_CHILD },  /* Li */
+	{ pmdoc_Nd, TYPE_Nd, MDOCF_CHILD },  /* Nd */
+	{ pmdoc_Nm, TYPE_Nm, MDOCF_CHILD },  /* Nm */
+	{ NULL, 0, 0 },  /* Op */
+	{ NULL, 0, 0 },  /* Ot */
+	{ NULL, TYPE_Pa, MDOCF_CHILD },  /* Pa */
+	{ NULL, 0, 0 },  /* Rv */
+	{ pmdoc_St, TYPE_St, 0 },  /* St */
+	{ NULL, TYPE_Va, MDOCF_CHILD },  /* Va */
+	{ pmdoc_body, TYPE_Va, MDOCF_CHILD },  /* Vt */
+	{ pmdoc_Xr, TYPE_Xr, 0 },  /* Xr */
+	{ NULL, 0, 0 },  /* %A */
+	{ NULL, 0, 0 },  /* %B */
+	{ NULL, 0, 0 },  /* %D */
+	{ NULL, 0, 0 },  /* %I */
+	{ NULL, 0, 0 },  /* %J */
+	{ NULL, 0, 0 },  /* %N */
+	{ NULL, 0, 0 },  /* %O */
+	{ NULL, 0, 0 },  /* %P */
+	{ NULL, 0, 0 },  /* %R */
+	{ NULL, 0, 0 },  /* %T */
+	{ NULL, 0, 0 },  /* %V */
+	{ NULL, 0, 0 },  /* Ac */
+	{ NULL, 0, 0 },  /* Ao */
+	{ NULL, 0, 0 },  /* Aq */
+	{ NULL, TYPE_At, MDOCF_CHILD },  /* At */
+	{ NULL, 0, 0 },  /* Bc */
+	{ NULL, 0, 0 },  /* Bf */
+	{ NULL, 0, 0 },  /* Bo */
+	{ NULL, 0, 0 },  /* Bq */
+	{ NULL, TYPE_Bsx, MDOCF_CHILD },  /* Bsx */
+	{ NULL, TYPE_Bx, MDOCF_CHILD },  /* Bx */
+	{ NULL, 0, 0 },  /* Db */
+	{ NULL, 0, 0 },  /* Dc */
+	{ NULL, 0, 0 },  /* Do */
+	{ NULL, 0, 0 },  /* Dq */
+	{ NULL, 0, 0 },  /* Ec */
+	{ NULL, 0, 0 },  /* Ef */
+	{ NULL, TYPE_Em, MDOCF_CHILD },  /* Em */
+	{ NULL, 0, 0 },  /* Eo */
+	{ NULL, TYPE_Fx, MDOCF_CHILD },  /* Fx */
+	{ NULL, TYPE_Ms, MDOCF_CHILD },  /* Ms */
+	{ NULL, 0, 0 },  /* No */
+	{ NULL, 0, 0 },  /* Ns */
+	{ NULL, TYPE_Nx, MDOCF_CHILD },  /* Nx */
+	{ NULL, TYPE_Ox, MDOCF_CHILD },  /* Ox */
+	{ NULL, 0, 0 },  /* Pc */
+	{ NULL, 0, 0 },  /* Pf */
+	{ NULL, 0, 0 },  /* Po */
+	{ NULL, 0, 0 },  /* Pq */
+	{ NULL, 0, 0 },  /* Qc */
+	{ NULL, 0, 0 },  /* Ql */
+	{ NULL, 0, 0 },  /* Qo */
+	{ NULL, 0, 0 },  /* Qq */
+	{ NULL, 0, 0 },  /* Re */
+	{ NULL, 0, 0 },  /* Rs */
+	{ NULL, 0, 0 },  /* Sc */
+	{ NULL, 0, 0 },  /* So */
+	{ NULL, 0, 0 },  /* Sq */
+	{ NULL, 0, 0 },  /* Sm */
+	{ NULL, 0, 0 },  /* Sx */
+	{ NULL, TYPE_Sy, MDOCF_CHILD },  /* Sy */
+	{ NULL, TYPE_Tn, MDOCF_CHILD },  /* Tn */
+	{ NULL, 0, 0 },  /* Ux */
+	{ NULL, 0, 0 },  /* Xc */
+	{ NULL, 0, 0 },  /* Xo */
+	{ pmdoc_head, TYPE_Fn, 0 },  /* Fo */
+	{ NULL, 0, 0 },  /* Fc */
+	{ NULL, 0, 0 },  /* Oo */
+	{ NULL, 0, 0 },  /* Oc */
+	{ NULL, 0, 0 },  /* Bk */
+	{ NULL, 0, 0 },  /* Ek */
+	{ NULL, 0, 0 },  /* Bt */
+	{ NULL, 0, 0 },  /* Hf */
+	{ NULL, 0, 0 },  /* Fr */
+	{ NULL, 0, 0 },  /* Ud */
+	{ NULL, TYPE_Lb, MDOCF_CHILD },  /* Lb */
+	{ NULL, 0, 0 },  /* Lp */
+	{ NULL, TYPE_Lk, MDOCF_CHILD },  /* Lk */
+	{ NULL, TYPE_Mt, MDOCF_CHILD },  /* Mt */
+	{ NULL, 0, 0 },  /* Brq */
+	{ NULL, 0, 0 },  /* Bro */
+	{ NULL, 0, 0 },  /* Brc */
+	{ NULL, 0, 0 },  /* %C */
+	{ NULL, 0, 0 },  /* Es */
+	{ NULL, 0, 0 },  /* En */
+	{ NULL, TYPE_Dx, MDOCF_CHILD },  /* Dx */
+	{ NULL, 0, 0 },  /* %Q */
+	{ NULL, 0, 0 },  /* br */
+	{ NULL, 0, 0 },  /* sp */
+	{ NULL, 0, 0 },  /* %U */
+	{ NULL, 0, 0 },  /* Ta */
 };
 
 static	const char	 *progname;
@@ -832,18 +834,6 @@ buf_appendmdoc(struct buf *buf, const struct mdoc_node *n, int f)
 	}
 }
 
-/* ARGSUSED */
-static void
-pmdoc_An(MDOC_ARGS)
-{
-	
-	if (SEC_AUTHORS != n->sec)
-		return;
-
-	buf_appendmdoc(buf, n->child, 0);
-	hash_put(hash, buf, TYPE_An);
-}
-
 static void
 hash_reset(DB **db)
 {
@@ -860,26 +850,42 @@ hash_reset(DB **db)
 }
 
 /* ARGSUSED */
-static void
+static int
+pmdoc_head(MDOC_ARGS)
+{
+
+	return(MDOC_HEAD == n->type);
+}
+
+/* ARGSUSED */
+static int
+pmdoc_body(MDOC_ARGS)
+{
+
+	return(MDOC_BODY == n->type);
+}
+
+/* ARGSUSED */
+static int
 pmdoc_Fd(MDOC_ARGS)
 {
 	const char	*start, *end;
 	size_t		 sz;
-	
+
 	if (SEC_SYNOPSIS != n->sec)
-		return;
+		return(0);
 	if (NULL == (n = n->child) || MDOC_TEXT != n->type)
-		return;
+		return(0);
 
 	/*
 	 * Only consider those `Fd' macro fields that begin with an
 	 * "inclusion" token (versus, e.g., #define).
 	 */
 	if (strcmp("#include", n->string))
-		return;
+		return(0);
 
 	if (NULL == (n = n->next) || MDOC_TEXT != n->type)
-		return;
+		return(0);
 
 	/*
 	 * Strip away the enclosing angle brackets and make sure we're
@@ -891,7 +897,7 @@ pmdoc_Fd(MDOC_ARGS)
 		start++;
 
 	if (0 == (sz = strlen(start)))
-		return;
+		return(0);
 
 	end = &start[(int)sz - 1];
 	if ('>' == *end || '"' == *end)
@@ -901,83 +907,90 @@ pmdoc_Fd(MDOC_ARGS)
 
 	buf_appendb(buf, start, (size_t)(end - start + 1));
 	buf_appendb(buf, "", 1);
-
-	hash_put(hash, buf, TYPE_In);
+	return(1);
 }
 
 /* ARGSUSED */
-static void
-pmdoc_Cd(MDOC_ARGS)
-{
-	
-	if (SEC_SYNOPSIS != n->sec)
-		return;
-
-	buf_appendmdoc(buf, n->child, 0);
-	hash_put(hash, buf, TYPE_Cd);
-}
-
-/* ARGSUSED */
-static void
+static int
 pmdoc_In(MDOC_ARGS)
 {
-	
-	if (SEC_SYNOPSIS != n->sec)
-		return;
+
 	if (NULL == n->child || MDOC_TEXT != n->child->type)
-		return;
+		return(0);
 
 	buf_append(buf, n->child->string);
-	hash_put(hash, buf, TYPE_In);
+	return(1);
 }
 
 /* ARGSUSED */
-static void
+static int
 pmdoc_Fn(MDOC_ARGS)
 {
+	struct mdoc_node *nn;
 	const char	*cp;
-	
-	if (SEC_SYNOPSIS != n->sec)
-		return;
-	if (NULL == n->child || MDOC_TEXT != n->child->type)
-		return;
 
-	/* .Fn "struct type *arg" "foo" */
+	nn = n->child;
 
-	cp = strrchr(n->child->string, ' ');
+	if (NULL == nn || MDOC_TEXT != nn->type)
+		return(0);
+
+	/* .Fn "struct type *name" "char *arg" */
+
+	cp = strrchr(nn->string, ' ');
 	if (NULL == cp)
-		cp = n->child->string;
+		cp = nn->string;
 
 	/* Strip away pointer symbol. */
 
 	while ('*' == *cp)
 		cp++;
 
+	/* Store the function name. */
+
 	buf_append(buf, cp);
 	hash_put(hash, buf, TYPE_Fn);
+
+	/* Store the function type. */
+
+	if (nn->string < cp) {
+		buf->len = 0;
+		buf_appendb(buf, nn->string, cp - nn->string);
+		buf_appendb(buf, "", 1);
+		hash_put(hash, buf, TYPE_Ft);
+	}
+
+	/* Store the arguments. */
+
+	for (nn = nn->next; nn; nn = nn->next) {
+		if (MDOC_TEXT != nn->type)
+			continue;
+		buf->len = 0;
+		buf_append(buf, nn->string);
+		hash_put(hash, buf, TYPE_Fa);
+	}
+
+	return(0);
 }
 
 /* ARGSUSED */
-static void
+static int
 pmdoc_St(MDOC_ARGS)
 {
-	
-	if (SEC_STANDARDS != n->sec)
-		return;
+
 	if (NULL == n->child || MDOC_TEXT != n->child->type)
-		return;
+		return(0);
 
 	buf_append(buf, n->child->string);
-	hash_put(hash, buf, TYPE_St);
+	return(1);
 }
 
 /* ARGSUSED */
-static void
+static int
 pmdoc_Xr(MDOC_ARGS)
 {
 
 	if (NULL == (n = n->child))
-		return;
+		return(0);
 
 	buf_appendb(buf, n->string, strlen(n->string));
 
@@ -987,128 +1000,43 @@ pmdoc_Xr(MDOC_ARGS)
 	} else
 		buf_appendb(buf, ".", 2);
 
-	hash_put(hash, buf, TYPE_Xr);
+	return(1);
 }
 
 /* ARGSUSED */
-static void
-pmdoc_Vt(MDOC_ARGS)
-{
-	const char	*start;
-	size_t		 sz;
-	
-	if (SEC_SYNOPSIS != n->sec)
-		return;
-	if (MDOC_Vt == n->tok && MDOC_BODY != n->type)
-		return;
-	if (NULL == n->last || MDOC_TEXT != n->last->type)
-		return;
-
-	/*
-	 * Strip away leading pointer symbol '*' and trailing ';'.
-	 */
-
-	start = n->last->string;
-
-	while ('*' == *start)
-		start++;
-
-	if (0 == (sz = strlen(start)))
-		return;
-
-	if (';' == start[(int)sz - 1])
-		sz--;
-
-	if (0 == sz)
-		return;
-
-	buf_appendb(buf, start, sz);
-	buf_appendb(buf, "", 1);
-	hash_put(hash, buf, TYPE_Va);
-}
-
-/* ARGSUSED */
-static void
-pmdoc_Fo(MDOC_ARGS)
-{
-	
-	if (SEC_SYNOPSIS != n->sec || MDOC_HEAD != n->type)
-		return;
-	if (NULL == n->child || MDOC_TEXT != n->child->type)
-		return;
-
-	buf_append(buf, n->child->string);
-	hash_put(hash, buf, TYPE_Fn);
-}
-
-
-/* ARGSUSED */
-static void
+static int
 pmdoc_Nd(MDOC_ARGS)
 {
 
 	if (MDOC_BODY != n->type)
-		return;
+		return(0);
 
 	buf_appendmdoc(dbuf, n->child, 1);
-	buf_appendmdoc(buf, n->child, 0);
-
-	hash_put(hash, buf, TYPE_Nd);
+	return(1);
 }
 
 /* ARGSUSED */
-static void
-pmdoc_Er(MDOC_ARGS)
-{
-
-	if (SEC_ERRORS != n->sec)
-		return;
-	
-	buf_appendmdoc(buf, n->child, 0);
-	hash_put(hash, buf, TYPE_Er);
-}
-
-/* ARGSUSED */
-static void
-pmdoc_Ev(MDOC_ARGS)
-{
-
-	if (SEC_ENVIRONMENT != n->sec)
-		return;
-	
-	buf_appendmdoc(buf, n->child, 0);
-	hash_put(hash, buf, TYPE_Ev);
-}
-
-/* ARGSUSED */
-static void
-pmdoc_Pa(MDOC_ARGS)
-{
-
-	if (SEC_FILES != n->sec)
-		return;
-	
-	buf_appendmdoc(buf, n->child, 0);
-	hash_put(hash, buf, TYPE_Pa);
-}
-
-/* ARGSUSED */
-static void
+static int
 pmdoc_Nm(MDOC_ARGS)
 {
-	
-	if (SEC_NAME == n->sec) {
-		buf_appendmdoc(buf, n->child, 0);
-		hash_put(hash, buf, TYPE_Nm);
-		return;
-	} else if (SEC_SYNOPSIS != n->sec || MDOC_HEAD != n->type)
-		return;
+
+	if (SEC_NAME == n->sec)
+		return(1);
+	else if (SEC_SYNOPSIS != n->sec || MDOC_HEAD != n->type)
+		return(0);
 
 	if (NULL == n->child)
 		buf_append(buf, m->name);
 
-	buf_appendmdoc(buf, n->child, 0);
-	hash_put(hash, buf, TYPE_Nm);
+	return(1);
+}
+
+/* ARGSUSED */
+static int
+pmdoc_Sh(MDOC_ARGS)
+{
+
+	return(SEC_CUSTOM == n->sec && MDOC_HEAD == n->type);
 }
 
 static void
@@ -1174,11 +1102,36 @@ pmdoc_node(MDOC_ARGS)
 	case (MDOC_BLOCK):
 		/* FALLTHROUGH */
 	case (MDOC_ELEM):
-		if (NULL == mdocs[n->tok])
+		buf->len = 0;
+
+		/*
+		 * Both NULL handlers and handlers returning true
+		 * request using the data.  Only skip the element
+		 * when the handler returns false.
+		 */
+
+		if (NULL != mdocs[n->tok].fp &&
+		    0 == (*mdocs[n->tok].fp)(hash, buf, dbuf, n, m))
 			break;
 
-		buf->len = 0;
-		(*mdocs[n->tok])(hash, buf, dbuf, n, m);
+		/*
+		 * For many macros, use the text from all children.
+		 * Set zero flags for macros not needing this.
+		 * In that case, the handler must fill the buffer.
+		 */
+
+		if (MDOCF_CHILD & mdocs[n->tok].flags)
+			buf_appendmdoc(buf, n->child, 0);
+
+		/*
+		 * Cover the most common case:
+		 * Automatically stage one string per element.
+		 * Set a zero mask for macros not needing this.
+		 * Additional staging can be done in the handler.
+		 */
+
+		if (mdocs[n->tok].mask)
+			hash_put(hash, buf, mdocs[n->tok].mask);
 		break;
 	default:
 		break;
