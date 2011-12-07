@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.67 2011/10/14 12:50:44 mpi Exp $ */
+/*	$OpenBSD: ugen.c,v 1.68 2011/12/07 06:23:18 mglocker Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -467,7 +467,6 @@ ugenclose(dev_t dev, int flag, int mode, struct proc *p)
 		if (sce->ibuf != NULL) {
 			free(sce->ibuf, M_USBDEV);
 			sce->ibuf = NULL;
-			clfree(&sce->q);
 		}
 	}
 	sc->sc_is_open[endpt] = 0;
