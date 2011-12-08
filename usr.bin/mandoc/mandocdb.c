@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.19 2011/12/07 01:57:18 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.20 2011/12/08 02:14:00 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -94,7 +94,8 @@ static	void		  index_merge(const struct of *, struct mparse *,
 				recno_t, const recno_t *, size_t);
 static	void		  index_prune(const struct of *, DB *, 
 				const char *, DB *, const char *, 
-				recno_t *, recno_t **, size_t *);
+				recno_t *, recno_t **, size_t *,
+				size_t *);
 static	void		  ofile_argbuild(int, char *[], struct of **);
 static	int		  ofile_dirbuild(const char *, const char *,
 				const char *, int, struct of **);
@@ -376,7 +377,7 @@ mandocdb(int argc, char *argv[])
 		of = of->first;
 
 		index_prune(of, db, fbuf, idx, ibuf,
-				&maxrec, &recs, &recsz);
+				&maxrec, &recs, &recsz, &reccur);
 
 		/*
 		 * Go to the root of the respective manual tree
@@ -663,18 +664,17 @@ index_merge(const struct of *of, struct mparse *mp,
  */
 static void
 index_prune(const struct of *ofile, DB *db, const char *dbf, 
-		DB *idx, const char *idxf,
-		recno_t *maxrec, recno_t **recs, size_t *recsz)
+		DB *idx, const char *idxf, recno_t *maxrec,
+		recno_t **recs, size_t *recsz, size_t *reccur)
 {
 	const struct of	*of;
 	const char	*fn, *cp;
 	struct db_val	*vbuf;
 	unsigned	 seq, sseq;
 	DBT		 key, val;
-	size_t		 reccur;
 	int		 ch;
 
-	reccur = 0;
+	*reccur = 0;
 	seq = R_FIRST;
 	while (0 == (ch = (*idx->seq)(idx, &key, &val, seq))) {
 		seq = R_NEXT;
@@ -748,14 +748,14 @@ index_prune(const struct of *ofile, DB *db, const char *dbf,
 		if (ch < 0)
 			break;
 cont:
-		if (reccur >= *recsz) {
+		if (*reccur >= *recsz) {
 			*recsz += MANDOC_SLOP;
 			*recs = mandoc_realloc
 				(*recs, *recsz * sizeof(recno_t));
 		}
 
-		(*recs)[(int)reccur] = *maxrec;
-		reccur++;
+		(*recs)[(int)*reccur] = *maxrec;
+		(*reccur)++;
 	}
 
 	if (ch < 0) {
