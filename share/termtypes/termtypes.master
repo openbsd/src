@@ -1,6 +1,6 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.45 2011/10/08 10:24:38 nicm Exp $
+# $OpenBSD: termtypes.master,v 1.46 2011/12/08 22:52:06 nicm Exp $
 #
 # This version of terminfo.src is distributed with ncurses and is maintained
 # by Thomas E. Dickey (TD).
@@ -8,8 +8,8 @@
 # Report bugs and new terminal descriptions to
 #	bug-ncurses@gnu.org
 #
-#	$Revision: 1.45 $
-#	$Date: 2011/10/08 10:24:38 $
+#	$Revision: 1.46 $
+#	$Date: 2011/12/08 22:52:06 $
 #
 # The original header is preserved below for reference.  It is noted that there
 # is a "newer" version which differs in some cosmetic details (but actually
@@ -1665,6 +1665,56 @@ qansi-m|QNX ansi with mouse,
 #
 qansi-w|QNX ansi for windows,
 	xvpa, use=qansi-m,
+
+#### OpenBSD consoles
+#
+# From: Alexei Malinin <Alexei.Malinin@mail.ru>; October, 2011.
+#
+# The following terminal descriptions for the  AMD/Intel PC console
+# were prepared  based on information contained in  the OpenBSD-4.9
+# termtypes.master and wscons(4) & vga(4) manuals (2010, November).
+#
+# Added bce based on testing with tack -TD
+# Added several capabilities to pccon+base, reading wsemul_vt100_subr.c -TD
+# Changed kbs to DEL and removed keys that duplicate stty settings -TD
+#
+pccon+keys|OpenBSD PC keyboard keys,
+	kbs=\177, kcub1=\E[D, kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A,
+	kdch1=\E[3~, kend=\E[8~, kent=^M, kf1=\E[11~, kf10=\E[21~,
+	kf11=\E[23~, kf12=\E[24~, kf2=\E[12~, kf3=\E[13~,
+	kf4=\E[14~, kf5=\E[15~, kf6=\E[17~, kf7=\E[18~, kf8=\E[19~,
+	kf9=\E[20~, khome=\E[7~, kich1=\E[2~, knp=\E[6~, kpp=\E[5~,
+	krfr=^R,
+pccon+sgr+acs0|sgr and simple ASCII pseudographics for OpenBSD PC console,
+	acsc=+>\,<-\^.v0#`+a\:f\\h#i#j+k+l+m+n+o~p-q-r-s_t+u+v+w+x|y#z#{*|!}#~o,
+	sgr=\E[0%?%p1%p3%|%t;7%;m, sgr0=\E[m,
+pccon+sgr+acs|sgr and default ASCII pseudographics for OpenBSD PC console,
+	acsc=++\,\,--..00``aaffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
+	enacs=\E)0$<5>, rmacs=\E(B$<5>,
+	sgr=\E[0%?%p1%p3%|%t;7%;m%?%p9%t\E(0%e\E(B%;$<5>,
+	sgr0=\E[m\E(B$<5>, smacs=\E(0$<5>,
+pccon+colors|ANSI colors for OpenBSD PC console,
+	bce,
+	colors#8, pairs#64,
+	op=\E[m, setab=\E[4%p1%dm, setaf=\E[3%p1%dm,
+pccon+base|base capabilities for OpenBSD PC console,
+	am, km, mc5i, msgr, npc, nxon, xenl, xon,
+	cols#80, it#8, lines#24,
+	bel=^G, clear=\E[H\E[J, cr=^M, cub1=^H, cud1=^J, cuf1=\E[C,
+	cup=\E[%i%p1%d;%p2%dH, cuu1=\E[A, dch=\E[%p1%dP,
+	dch1=\E[P, dl1=\E[M, ech=\E[%p1%dX, ed=\E[J, el=\E[K,
+	el1=\E[1K, home=\E[H, ht=^I, hts=\EH, ich=\E[%p1%d@,
+	il1=\E[L, ind=\ED, nel=\EE, rev=\E[7m, ri=\EM, rmam=\E[?7l,
+	rmso=\E[m, rs2=\Ec$<50>, smam=\E[?7h, smso=\E[7m,
+	tbc=\E[3g, u6=\E[%i%d;%dR, u7=\E[6n,
+pccon0-m|OpenBSD PC console without colors & with simple ASCII pseudographics,
+	use=pccon+base, use=pccon+sgr+acs0, use=pccon+keys,
+pccon0|OpenBSD PC console with simple ASCII pseudographics,
+	use=pccon0-m, use=pccon+colors,
+pccon-m|OpenBSD PC console without colors,
+	use=pccon+base, use=pccon+sgr+acs, use=pccon+keys,
+pccon|OpenBSD PC console,
+	use=pccon-m, use=pccon+colors,
 
 #### NetBSD consoles
 #
@@ -22583,5 +22633,8 @@ v3220|LANPAR Vision II model 3220/3221/3222,
 #
 # 2011-09-10
 #	* add xterm+kbs fragment from xterm #272 -TD
+#
+# 2011-11-12
+#	* add pccon entries for OpenBSD console (Alexei Malinin)
 #
 ######## SHANTIH!  SHANTIH!  SHANTIH!
