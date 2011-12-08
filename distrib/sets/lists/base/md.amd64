@@ -1203,6 +1203,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/isa/spkrio.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/isa/vga_isavar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/isa/viasioreg.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/isa/wbsioreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/isa/wdsreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/isa/wssreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/isa/wssvar.ph

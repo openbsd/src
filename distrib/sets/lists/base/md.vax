@@ -420,6 +420,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/spkrio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/vga_isavar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/viasioreg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/wbsioreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/wdsreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/wssreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/wssvar.ph

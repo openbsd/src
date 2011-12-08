@@ -436,6 +436,7 @@
 ./usr/include/dev/isa/spkrio.h
 ./usr/include/dev/isa/vga_isavar.h
 ./usr/include/dev/isa/viasioreg.h
+./usr/include/dev/isa/wbsioreg.h
 ./usr/include/dev/isa/wdsreg.h
 ./usr/include/dev/isa/wssreg.h
 ./usr/include/dev/isa/wssvar.h
