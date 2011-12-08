@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.82 2011/10/27 14:32:57 chl Exp $	*/
+/*	$OpenBSD: parse.y,v 1.83 2011/12/08 17:04:19 todd Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1926,6 +1926,8 @@ interface(const char *s, const char *tag, const char *cert,
 		fatal("getifaddrs");
 
 	for (p = ifap; p != NULL; p = p->ifa_next) {
+		if (p->ifa_addr == NULL)
+			continue;
 		if (strcmp(p->ifa_name, s) != 0 &&
 		    ! is_if_in_group(p->ifa_name, s))
 			continue;
@@ -1988,6 +1990,8 @@ set_localaddrs(void)
 	m = map_findbyname("localhost");
 
 	for (p = ifap; p != NULL; p = p->ifa_next) {
+		if (p->ifa_addr == NULL)
+			continue;
 		switch (p->ifa_addr->sa_family) {
 		case AF_INET:
 			sain = (struct sockaddr_in *)&ss;
