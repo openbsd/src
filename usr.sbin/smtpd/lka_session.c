@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.12 2011/10/25 10:25:51 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.13 2011/12/08 17:00:28 todd Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -77,7 +77,7 @@ lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 	char *user;
 	char *sep;
 	struct user_backend *ub;
-	struct user u;
+	struct mta_user u;
 	char username[MAX_LOCALPART_SIZE];
 
 	/* remote delivery, no need to process further */
@@ -500,7 +500,7 @@ lka_session_expand_format(char *buf, size_t len, struct envelope *ep)
 	char *p, *pbuf;
 	size_t ret, lret = 0;
 	struct user_backend *ub;
-	struct user u;
+	struct mta_user u;
 	char lbuffer[MAX_RULEBUFFER_LEN];
 //	struct delivery *dlv = &ep->delivery;
 	

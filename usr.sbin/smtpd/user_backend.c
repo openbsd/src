@@ -1,4 +1,4 @@
-/*	$OpenBSD: user_backend.c,v 1.1 2011/05/17 18:54:32 gilles Exp $	*/
+/*	$OpenBSD: user_backend.c,v 1.2 2011/12/08 17:00:28 todd Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -35,9 +35,9 @@
 #include "smtpd.h"
 #include "log.h"
 
-int user_getpw_ret(struct user *, struct passwd *); /* helper */
-int user_getpwnam(struct user *, char *);
-int user_getpwuid(struct user *, uid_t);
+int user_getpw_ret(struct mta_user *, struct passwd *); /* helper */
+int user_getpwnam(struct mta_user *, char *);
+int user_getpwuid(struct mta_user *, uid_t);
 struct user_backend *user_backend_lookup(enum user_type);
 
 struct user_backend user_backends[] = {
@@ -62,7 +62,7 @@ user_backend_lookup(enum user_type type)
 
 
 int
-user_getpw_ret(struct user *u, struct passwd *pw)
+user_getpw_ret(struct mta_user *u, struct passwd *pw)
 {
 	if (strlcpy(u->username, pw->pw_name, sizeof (u->username))
 	    >= sizeof (u->username))
@@ -83,7 +83,7 @@ user_getpw_ret(struct user *u, struct passwd *pw)
 }
 
 int
-user_getpwnam(struct user *u, char *username)
+user_getpwnam(struct mta_user *u, char *username)
 {
 	struct passwd *pw;
 
@@ -95,7 +95,7 @@ user_getpwnam(struct user *u, char *username)
 }
 
 int
-user_getpwuid(struct user *u, uid_t uid)
+user_getpwuid(struct mta_user *u, uid_t uid)
 {
 	struct passwd *pw;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.138 2011/11/16 11:18:54 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.139 2011/12/08 17:00:28 todd Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -683,7 +683,7 @@ forkmda(struct imsgev *iev, u_int32_t id,
 {
 	char		 ebuf[128], sfn[32];
 	struct user_backend *ub;
-	struct user u;
+	struct mta_user u;
 	struct child	*child;
 	pid_t		 pid;
 	int		 n, allout, pipefd[2];
@@ -922,7 +922,7 @@ offline_enqueue(char *name)
 {
 	char		 t[MAXPATHLEN], *path;
 	struct user_backend *ub;
-	struct user	 u;
+	struct mta_user	 u;
 	struct stat	 sb;
 	pid_t		 pid;
 	struct child	*child;
@@ -1064,7 +1064,7 @@ static int
 parent_forward_open(char *username)
 {
 	struct user_backend *ub;
-	struct user u;
+	struct mta_user u;
 	char pathname[MAXPATHLEN];
 	int fd;
 
