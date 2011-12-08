@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.111 2011/06/22 16:44:27 tedu Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.112 2011/12/08 20:19:23 markus Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -116,6 +116,7 @@ void vr_rxeof(struct vr_softc *);
 void vr_rxeoc(struct vr_softc *);
 void vr_txeof(struct vr_softc *);
 void vr_tick(void *);
+void vr_rxtick(void *);
 int vr_intr(void *);
 void vr_start(struct ifnet *);
 int vr_ioctl(struct ifnet *, u_long, caddr_t);
@@ -670,6 +671,7 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	} else
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 	timeout_set(&sc->sc_to, vr_tick, sc);
+	timeout_set(&sc->sc_rxto, vr_rxtick, sc);
 
 	/*
 	 * Call MI attach routines.
@@ -787,8 +789,11 @@ vr_fill_rx_ring(struct vr_softc *sc)
 	ld = sc->vr_ldata;
 
 	while (cd->vr_rx_cnt < VR_RX_LIST_CNT) {
-		if (vr_alloc_mbuf(sc, cd->vr_rx_prod))
+		if (vr_alloc_mbuf(sc, cd->vr_rx_prod)) {
+			if (cd->vr_rx_cnt == 0)
+				timeout_add(&sc->sc_rxto, 0);
 			break;
+		}
 		cd->vr_rx_prod = cd->vr_rx_prod->vr_nextdesc;
 		cd->vr_rx_cnt++;
 	}
@@ -1035,6 +1040,21 @@ vr_tick(void *xsc)
 
 	mii_tick(&sc->sc_mii);
 	timeout_add_sec(&sc->sc_to, 1);
+	splx(s);
+}
+
+void
+vr_rxtick(void *xsc)
+{
+	struct vr_softc *sc = xsc;
+	int s;
+
+	s = splnet();
+	if (sc->vr_cdata.vr_rx_cnt == 0) {
+		vr_fill_rx_ring(sc);
+		if (sc->vr_cdata.vr_rx_cnt == 0)
+			timeout_add(&sc->sc_rxto, 1);
+	}
 	splx(s);
 }
 
