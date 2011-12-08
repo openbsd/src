@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strdup.3,v 1.18 2011/07/25 00:38:53 schwarze Exp $
+.\"	$OpenBSD: strdup.3,v 1.19 2011/12/08 08:06:19 lum Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)strdup.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: July 25 2011 $
+.Dd $Mdocdate: December 8 2011 $
 .Dt STRDUP 3
 .Os
 .Sh NAME
@@ -79,7 +79,9 @@ if (p == NULL)
 .Sh ERRORS
 The
 .Fn strdup
-function may fail and set the external variable
+and
+.Fn strndup
+functions may fail and set the external variable
 .Va errno
 for any of the errors specified for the library function
 .Xr malloc 3 .
