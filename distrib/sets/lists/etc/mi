@@ -100,7 +100,6 @@
 ./etc/rc.conf
 ./etc/rc.d/amd
 ./etc/rc.d/apmd
-./etc/rc.d/aucat
 ./etc/rc.d/bgpd
 ./etc/rc.d/bootparamd
 ./etc/rc.d/btd
@@ -150,6 +149,7 @@
 ./etc/rc.d/sendmail
 ./etc/rc.d/sensorsd
 ./etc/rc.d/smtpd
+./etc/rc.d/sndiod
 ./etc/rc.d/snmpd
 ./etc/rc.d/spamd
 ./etc/rc.d/spamlogd
