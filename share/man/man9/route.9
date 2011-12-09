@@ -1,4 +1,4 @@
-.\"     $OpenBSD: route.9,v 1.2 2011/12/09 12:56:59 sthen Exp $
+.\"     $OpenBSD: route.9,v 1.3 2011/12/09 13:02:13 sthen Exp $
 .\"
 .\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
 .\" All rights reserved.
@@ -212,7 +212,7 @@ Route timer queues provide a method of queueing routing-related actions to be
 triggered once per second.
 .Bl -tag -width Ds
 .It Fn rt_timer_queue_create "u_int timeout"
-Create a timer queue with a timout of
+Create a timer queue with a timeout of
 .Fa timeout
 seconds.
 .It Fn rt_timer_add "struct rtentry *rt" \
