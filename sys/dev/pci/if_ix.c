@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.56 2011/11/27 16:14:31 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.57 2011/12/09 11:43:41 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -961,8 +961,8 @@ ixgbe_legacy_irq(void *arg)
 			/* Advance the Rx Queue "Tail Pointer" */
 			IXGBE_WRITE_REG(&sc->hw, IXGBE_RDT(que->rxr->me),
 			    que->rxr->last_desc_filled);
-		} else if (que->rxr->rx_ndescs < 2)
-			timeout_add(&sc->rx_refill, 0);
+		} else
+			timeout_add(&sc->rx_refill, 1);
 	}
 
 	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
@@ -2744,7 +2744,7 @@ ixgbe_rxrefill(void *xsc)
 		/* Advance the Rx Queue "Tail Pointer" */
 		IXGBE_WRITE_REG(&sc->hw, IXGBE_RDT(que->rxr->me),
 		    que->rxr->last_desc_filled);
-	} else if (que->rxr->rx_ndescs < 2)
+	} else
 		timeout_add(&sc->rx_refill, 1);
 	splx(s);
 }
