@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.21 2011/12/09 00:53:10 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.22 2011/12/09 01:47:11 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -1276,52 +1276,72 @@ pformatted(DB *hash, struct buf *buf, struct buf *dbuf,
 	buf_append(buf, of->title);
 	hash_put(hash, buf, TYPE_Nm);
 
-	while (NULL != (line = fgetln(stream, &len)) && '\n' != *line)
-		/* Skip to first blank line. */ ;
+	/* Skip to first blank line. */
 
-	while (NULL != (line = fgetln(stream, &len)) &&
-			('\n' == *line || ' ' == *line))
-		/* Skip to first section header. */ ;
+	while (NULL != (line = fgetln(stream, &len)))
+		if ('\n' == *line)
+			break;
 
 	/*
-	 * If no page content can be found,
-	 * reuse the page title as the page description.
+	 * Assume the first line that is not indented
+	 * is the first section header.  Skip to it.
 	 */
 
-	if (NULL == (line = fgetln(stream, &len))) {
+	while (NULL != (line = fgetln(stream, &len)))
+		if ('\n' != *line && ' ' != *line)
+			break;
+
+	/*
+	 * If no page content can be found, or the input line
+	 * is already the next section header, or there is no
+	 * trailing newline, reuse the page title as the page
+	 * description.
+	 */
+
+	line = fgetln(stream, &len);
+	if (NULL == line || ' ' != *line || '\n' != line[(int)len - 1]) {
 		buf_appendb(dbuf, buf->cp, buf->size);
 		hash_put(hash, buf, TYPE_Nd);
 		fclose(stream);
 		return;
 	}
-	fclose(stream);
+
+	line[(int)--len] = '\0';
 
 	/*
-	 * If there is a dash, skip to the text following it.
+	 * Skip to the first dash.
+	 * Use the remaining line as the description (no more than 70
+	 * bytes).
 	 */
 
-	for (p = line, plen = len; plen; p++, plen--)
-		if ('-' == *p)
-			break;
-	for ( ; plen; p++, plen--)
-		if ('-' != *p && ' ' != *p && 8 != *p)
-			break;
-	if (0 == plen) {
+	if (NULL != (p = strstr(line, "- "))) {
+		for (p += 2; ' ' == *p || '\b' == *p; p++)
+			/* Skip to next word. */ ;
+	} else
 		p = line;
-		plen = len;
+
+	if ((plen = strlen(p)) > 70) {
+		plen = 70;
+		p[plen] = '\0';
 	}
 
-	/*
-	 * Copy the rest of the line, but no more than 70 bytes.
-	 */
+	/* Strip backspace-encoding from line. */
 
-	if (70 < plen)
-		plen = 70;
-	p[plen-1] = '\0';
-	buf_appendb(dbuf, p, plen);
+	while (NULL != (line = memchr(p, '\b', plen))) {
+		len = line - p;
+		if (0 == len) {
+			memmove(line, line + 1, plen--);
+			continue;
+		} 
+		memmove(line - 1, line + 1, plen - len);
+		plen -= 2;
+	}
+
+	buf_appendb(dbuf, p, plen + 1);
 	buf->len = 0;
-	buf_appendb(buf, p, plen);
+	buf_appendb(buf, p, plen + 1);
 	hash_put(hash, buf, TYPE_Nd);
+	fclose(stream);
 }
 
 static void
