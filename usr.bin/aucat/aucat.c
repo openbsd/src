@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.129 2011/12/09 14:36:42 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.130 2011/12/09 22:56:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -84,13 +84,13 @@ volatile sig_atomic_t debug_level = 1;
 #endif
 volatile sig_atomic_t quit_flag = 0;
 
-char aucat_usage[] = "usage: " PROG_AUCAT " [-dlMn] [-b nframes] "
+char aucat_usage[] = "usage: " PROG_AUCAT " [-dn] [-b nframes] "
     "[-C min:max] [-c min:max] [-e enc]\n\t"
     "[-f device] [-h fmt] [-i file] [-j flag] [-m mode] [-o file]\n\t"
     "[-q port] [-r rate] [-t mode] [-v volume] [-w flag] [-x policy]\n\t"
     "[-z nframes]\n";
 
-char sndiod_usage[] = "usage: " PROG_SNDIOD " [-dlM] [-a flag] [-b nframes] "
+char sndiod_usage[] = "usage: " PROG_SNDIOD " [-dM] [-a flag] [-b nframes] "
     "[-C min:max] [-c min:max] [-e enc]\n\t"
     "[-f device] [-j flag] [-L addr] [-m mode] [-q port] [-r rate]\n\t"
     "[-s name] [-t mode] [-U unit] [-v volume] [-w flag] [-x policy]\n\t"
