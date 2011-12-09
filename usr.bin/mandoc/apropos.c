@@ -1,4 +1,4 @@
-/*	$Id: apropos.c,v 1.10 2011/11/29 22:30:56 schwarze Exp $ */
+/*	$Id: apropos.c,v 1.11 2011/12/09 00:44:15 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -129,7 +129,7 @@ static int
 cmp(const void *p1, const void *p2)
 {
 
-	return(strcmp(((const struct res *)p1)->title,
+	return(strcasecmp(((const struct res *)p1)->title,
 				((const struct res *)p2)->title));
 }
 
