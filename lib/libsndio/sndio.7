@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndio.7,v 1.8 2011/11/15 08:05:22 ratchov Exp $
+.\" $OpenBSD: sndio.7,v 1.9 2011/12/09 14:38:09 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 15 2011 $
+.Dd $Mdocdate: December 9 2011 $
 .Dt SNDIO 7
 .Os
 .Sh NAME
@@ -25,7 +25,7 @@ The
 .Nm sndio
 audio and MIDI system provides access to audio and MIDI hardware and
 to services provided by
-.Xr aucat 1 ,
+.Xr sndiod 1 ,
 summarized below.
 .Pp
 Hardware
@@ -38,7 +38,7 @@ audio programs.
 .Pp
 To overcome hardware limitations and to allow multiple applications
 to share the hardware,
-.Xr aucat 1
+.Xr sndiod 1
 can be used.
 It exposes one or more software subdevices backed by the underlying hardware,
 while doing all necessary conversions on the fly.
@@ -57,15 +57,15 @@ Software MIDI thru boxes allow one application to send MIDI data to other
 applications connected to the thru box (for instance a software sequencer
 can send events to multiple software synthesizers).
 There's no hardware involved: thru boxes are created by
-.Xr aucat 1 .
+.Xr sndiod 1 .
 .Pp
 Additionally,
-.Xr aucat 1
+.Xr sndiod 1
 exposes a MIDI port used to control and monitor audio streams
 in real time using MIDI.
 .Sh DEVICE NAMES
 From the user's perspective every audio interface, MIDI port, and
-.Xr aucat 1
+.Xr sndiod 1
 service has a name of the form:
 .Bd -literal -offset center
 type[@hostname][,unit]/devnum[.option]
@@ -89,31 +89,31 @@ Raw
 port.
 .It Pa snd
 Audio device exposed by
-.Xr aucat 1 .
+.Xr sndiod 1 .
 .It Pa midithru
 MIDI thru box created with
-.Xr aucat 1 .
+.Xr sndiod 1 .
 .El
 .It Pa hostname
 The hostname or address where the remote
-.Xr aucat 1
+.Xr sndiod 1
 server to connect to is running.
 .It Pa unit
 The number of the
-.Xr aucat 1
+.Xr sndiod 1
 server to connect to, corresponding to the integer specified using the
 .Fl U
 option of
-.Xr aucat 1 .
+.Xr sndiod 1 .
 Useful only if multiple
-.Xr aucat 1
+.Xr sndiod 1
 servers are running on the same system.
 .It Pa devnum
 Device number.
 For hardware audio or MIDI ports, this corresponds to
 the character device minor number.
 For audio devices or MIDI ports created with
-.Xr aucat 1
+.Xr sndiod 1
 it corresponds to the number of the corresponding
 .Fl fM
 option on the command line.
@@ -121,7 +121,7 @@ option on the command line.
 Corresponds to the sub-device string registered using the
 .Fl s
 option of
-.Xr aucat 1 .
+.Xr sndiod 1 .
 .El
 .Pp
 For example:
@@ -133,17 +133,17 @@ First hardware audio device.
 Hardware MIDI port number 5.
 .It Pa snd/0
 First audio device exposed by
-.Xr aucat 1 .
+.Xr sndiod 1 .
 .It Pa snd/0.rear
 Sub-device registered with
 .Fl s Fa rear .
 .It Pa midithru/0
 First MIDI thru box created with
-.Xr aucat 1 .
+.Xr sndiod 1 .
 .El
 .Sh AUTHENTICATION
 If a shared
-.Xr aucat 1
+.Xr sndiod 1
 server is running, for privacy reasons only one user may have
 connections to it at a given time
 (though the same user could have multiple connections to it).
@@ -162,7 +162,7 @@ can connect to the server using the same cookie.
 .It AUCAT_COOKIE
 Path to file containing the session cookie to be used
 when connecting to
-.Xr aucat 1 .
+.Xr sndiod 1 .
 .It Ev AUDIODEVICE
 Audio device to use if the application provides
 no device chooser.
@@ -181,7 +181,7 @@ Audio devices.
 MIDI ports.
 .El
 .Sh SEE ALSO
-.Xr aucat 1 ,
+.Xr sndiod 1 ,
 .Xr mio_open 3 ,
 .Xr sio_open 3 ,
 .Xr audio 4 ,

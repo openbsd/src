@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.29 2011/10/17 21:09:11 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.30 2011/12/09 14:38:09 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 17 2011 $
+.Dd $Mdocdate: December 9 2011 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -80,11 +80,11 @@ The
 library allows user processes to access
 .Xr audio 4
 hardware and the
-.Xr aucat 1
+.Xr sndiod 1
 audio server in a uniform way.
 It supports full-duplex operation, and when
 used with the
-.Xr aucat 1
+.Xr sndiod 1
 server it supports resampling and format
 conversions on the fly.
 .Ss Opening and closing an audio stream
@@ -97,7 +97,7 @@ argument of most other functions.
 The
 .Fn sio_open
 function first tries to connect to the
-.Xr aucat 1
+.Xr sndiod 1
 audio server.
 If that fails, it then tries to use the
 .Xr audio 4
@@ -273,7 +273,7 @@ must be called before parameters can be changed.
 If
 .Nm libsndio
 is used to connect to the
-.Xr aucat 1
+.Xr sndiod 1
 server, a transparent emulation layer will
 automatically be set up, and in this case any
 parameters are supported.
@@ -737,7 +737,7 @@ may be a value between 0 and 2.
 .Bl -tag -width "/tmp/aucat-<uid>/aucat0" -compact
 .It Pa /tmp/aucat-<uid>/aucat0
 Default path to
-.Xr aucat 1
+.Xr sndiod 1
 socket to connect to.
 .It Pa /dev/audio
 Default
@@ -748,7 +748,7 @@ device to use.
 .\".Bd -literal -offset indent
 .\".Ed
 .Sh SEE ALSO
-.Xr aucat 1 ,
+.Xr sndiod 1 ,
 .Xr audio 4 ,
 .Xr sndio 7 ,
 .Xr audio 9
@@ -765,7 +765,7 @@ the
 function will stop playback immediately.
 .Pp
 The
-.Xr aucat 1
+.Xr sndiod 1
 server doesn't implement flow control (for performance reasons).
 If the application doesn't consume recorded data fast enough then
 .Dq "control messages"
