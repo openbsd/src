@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.323 2011/12/09 10:36:26 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.324 2011/12/09 12:02:06 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -827,7 +827,10 @@ may not handle flavor and multi-packages situations correctly yet, so beware.
 Similar to
 .Ar show ,
 except that it prefixes each value with the variable name, e.g.
-.Li VAR=value
+.Li VAR=value .
+Also note that it does not show undefined variables, contrary to
+.Ar show
+which outputs blank lines for these.
 .It Ar wantlib-args
 Call
 .Ar port-wantlib-args
