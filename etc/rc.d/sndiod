@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# $OpenBSD: sndiod,v 1.1 2011/12/09 14:52:27 ratchov Exp $
+
+daemon="/usr/bin/sndiod"
+
+. /etc/rc.d/rc.subr
+
+rc_cmd $1
