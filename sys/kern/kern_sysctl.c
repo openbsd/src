@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.208 2011/09/18 13:23:38 miod Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.209 2011/12/09 16:14:54 nicm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -117,6 +117,7 @@ extern void nmbclust_update(void);
 
 int sysctl_diskinit(int, struct proc *);
 int sysctl_proc_args(int *, u_int, void *, size_t *, struct proc *);
+int sysctl_proc_cwd(int *, u_int, void *, size_t *, struct proc *);
 int sysctl_intrcnt(int *, u_int, void *, size_t *);
 int sysctl_sensors(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_emul(int *, u_int, void *, size_t *, void *, size_t);
@@ -282,6 +283,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		case KERN_TTY:
 		case KERN_POOL:
 		case KERN_PROC_ARGS:
+		case KERN_PROC_CWD:
 		case KERN_SYSVIPC_INFO:
 		case KERN_SEMINFO:
 		case KERN_SHMINFO:
@@ -366,6 +368,9 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_doproc(name + 1, namelen - 1, oldp, oldlenp));
 	case KERN_PROC_ARGS:
 		return (sysctl_proc_args(name + 1, namelen - 1, oldp, oldlenp,
+		     p));
+	case KERN_PROC_CWD:
+		return (sysctl_proc_cwd(name + 1, namelen - 1, oldp, oldlenp,
 		     p));
 	case KERN_FILE2:
 		return (sysctl_file2(name + 1, namelen - 1, oldp, oldlenp, p));
@@ -1719,6 +1724,67 @@ out:
 	return (error);
 }
 
+int
+sysctl_proc_cwd(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    struct proc *cp)
+{
+	struct proc *findp;
+	pid_t pid;
+	int error;
+	size_t lenused, len;
+	char *path, *bp, *bend;
+
+	if (namelen > 1)
+		return (ENOTDIR);
+	if (namelen < 1)
+		return (EINVAL);
+
+	pid = name[0];
+	if ((findp = pfind(pid)) == NULL)
+		return (ESRCH);
+
+	if (oldp == NULL) {
+		*oldlenp = MAXPATHLEN * 4;
+		return (0);
+	}
+
+	if (P_ZOMBIE(findp) || (findp->p_flag & P_SYSTEM))
+		return (EINVAL);
+
+	/* Only owner or root can get cwd */
+	if (findp->p_ucred->cr_uid != cp->p_ucred->cr_uid &&
+	    (error = suser(cp, 0)) != 0)
+		return (error);
+
+	/* Exiting - don't bother, it will be gone soon anyway */
+	if (findp->p_flag & P_WEXIT)
+		return (ESRCH);
+
+	len = *oldlenp;
+	if (len > MAXPATHLEN * 4)
+		len = MAXPATHLEN * 4;
+	else if (len < 2)
+		return (ERANGE);
+	*oldlenp = 0;
+
+	path = malloc(len, M_TEMP, M_WAITOK);
+
+	bp = &path[len];
+	bend = bp;
+	*(--bp) = '\0';
+
+	/* Same as sys__getcwd */
+	error = vfs_getcwd_common(findp->p_fd->fd_cdir, NULL,
+	    &bp, path, len / 2, GETCWD_CHECK_ACCESS, cp);
+	if (error == 0) {
+		*oldlenp = lenused = bend - bp;
+		error = copyout(bp, oldp, lenused);
+	}
+
+	free(path, M_TEMP);
+
+	return (error);
+}
 #endif
 
 /*

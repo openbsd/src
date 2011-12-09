@@ -1,4 +1,4 @@
-/* $OpenBSD: vfs_getcwd.c,v 1.17 2010/05/19 08:31:23 thib Exp $ */
+/* $OpenBSD: vfs_getcwd.c,v 1.18 2011/12/09 16:14:54 nicm Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*
@@ -259,8 +259,6 @@ vfs_getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 
 	return (error);
 }
-
-#define GETCWD_CHECK_ACCESS 0x0001
 
 /* Common routine shared by sys___getcwd() and vn_isunder() */
 int

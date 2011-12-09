@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.109 2011/04/05 14:34:16 thib Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.110 2011/12/09 16:14:54 nicm Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -623,6 +623,7 @@ void	vprint(char *, struct vnode *);
 void	copy_statfs_info(struct statfs *, const struct mount *);
 
 /* vfs_getcwd.c */
+#define GETCWD_CHECK_ACCESS 0x0001
 int vfs_getcwd_scandir(struct vnode **, struct vnode **, char **, char *,
     struct proc *);
 int vfs_getcwd_common(struct vnode *, struct vnode *, char **, char *, int,
