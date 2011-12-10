@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.22 2011/12/09 01:47:11 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.23 2011/12/10 16:53:38 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -567,14 +567,14 @@ index_merge(const struct of *of, struct mparse *mp,
 		if (0 == use_all) {
 			assert(of->sec);
 			assert(msec);
-			if (strcmp(msec, of->sec))
+			if (strcasecmp(msec, of->sec))
 				continue;
 
 			if (NULL == arch) {
 				if (NULL != of->arch)
 					continue;
 			} else if (NULL == of->arch ||
-					strcmp(arch, of->arch))
+					strcasecmp(arch, of->arch))
 				continue;
 		}
 
@@ -1547,6 +1547,10 @@ ofile_dirbuild(const char *dir, const char* psec, const char *parch,
 			buf[0] = '\0';
 			strlcat(buf, dir, MAXPATHLEN);
 			p = strrchr(buf, '/');
+			if (NULL != parch && NULL != p)
+				for (p--; p > buf; p--)
+					if ('/' == *p)
+						break;
 			if (NULL == p)
 				p = buf;
 			else
