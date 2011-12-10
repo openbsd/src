@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.25 2010/07/19 19:46:44 espie Exp $	*/
+/*	$OpenBSD: util.c,v 1.26 2011/12/10 04:12:36 guenther Exp $	*/
 /*	$NetBSD: util.c,v 1.10 1996/12/31 17:56:04 christos Exp $	*/
 
 /*
@@ -332,10 +332,12 @@ char	*sys_siglist[] = {
 int
 utimes(file, tvp)
     char *file;
-    struct timeval tvp[2];
+    struct timeval *tvp;
 {
     struct utimbuf t;
 
+    if (tvp == NULL)
+	return utime(file, NULL);
     t.actime  = tvp[0].tv_sec;
     t.modtime = tvp[1].tv_sec;
     return utime(file, &t);

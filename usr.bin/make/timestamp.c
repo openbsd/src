@@ -1,4 +1,4 @@
-/*	$OpenBSD: timestamp.c,v 1.6 2010/07/19 19:46:44 espie Exp $ */
+/*	$OpenBSD: timestamp.c,v 1.7 2011/12/10 04:12:36 guenther Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -39,11 +39,7 @@ int
 set_times(const char *f)
 {
 #ifdef USE_TIMESPEC
-    struct timeval tv[2];
-
-    gettimeofday(&tv[0], NULL);
-    tv[1] = tv[0];
-    return utimes(f, tv);
+    return utimes(f, NULL);
 #else
     struct utimbuf times;
 

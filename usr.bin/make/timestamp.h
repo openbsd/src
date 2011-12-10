@@ -1,7 +1,7 @@
 #ifndef TIMESTAMP_H
 #define TIMESTAMP_H
 
-/*	$OpenBSD: timestamp.h,v 1.6 2010/07/19 19:46:44 espie Exp $ */
+/*	$OpenBSD: timestamp.h,v 1.7 2011/12/10 04:12:36 guenther Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -69,12 +69,7 @@ do { \
 	if (is_out_of_date(t)) \
 		(t).tv_nsec++; \
 } while (0)
-#define ts_set_from_now(n) \
-do { \
-	struct timeval tv; \
-	gettimeofday(&tv, NULL); \
-	TIMEVAL_TO_TIMESPEC(&(tv), &n); \
-} while (0)
+#define ts_set_from_now(n)	clock_gettime(CLOCK_REALTIME, &(n))
 #define timestamp2time_t(t)	((t).tv_sec)
 #else
 #define is_out_of_date(t)	((t) == INT_MIN)
