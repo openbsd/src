@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.19 2010/06/26 21:14:10 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.20 2011/12/10 17:15:27 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -62,14 +62,13 @@ void
 skip_to_semi(FILE *cfile)
 {
 	int		 token;
-	char		*val;
 	int		 brace_count = 0;
 
 	do {
-		token = peek_token(&val, cfile);
+		token = peek_token(NULL, cfile);
 		if (token == '}') {
 			if (brace_count) {
-				token = next_token(&val, cfile);
+				token = next_token(NULL, cfile);
 				if (!--brace_count)
 					return;
 			} else
@@ -77,7 +76,7 @@ skip_to_semi(FILE *cfile)
 		} else if (token == '{') {
 			brace_count++;
 		} else if (token == ';' && !brace_count) {
-			token = next_token(&val, cfile);
+			token = next_token(NULL, cfile);
 			return;
 		} else if (token == '\n') {
 			/*
@@ -86,10 +85,10 @@ skip_to_semi(FILE *cfile)
 			 * semicolon because the resolv.conf file is
 			 * line-oriented.
 			 */
-			token = next_token(&val, cfile);
+			token = next_token(NULL, cfile);
 			return;
 		}
-		token = next_token(&val, cfile);
+		token = next_token(NULL, cfile);
 	} while (token != EOF);
 }
 
@@ -97,9 +96,8 @@ int
 parse_semi(FILE *cfile)
 {
 	int token;
-	char *val;
 
-	token = next_token(&val, cfile);
+	token = next_token(NULL, cfile);
 	if (token != ';') {
 		parse_warn("semicolon expected.");
 		skip_to_semi(cfile);
@@ -150,9 +148,8 @@ void
 parse_hardware_param(FILE *cfile, struct hardware *hardware)
 {
 	int token;
-	char *val;
 
-	token = next_token(&val, cfile);
+	token = next_token(NULL, cfile);
 	switch (token) {
 	case TOK_ETHERNET:
 		hardware->htype = HTYPE_ETHER;
@@ -176,7 +173,7 @@ parse_hardware_param(FILE *cfile, struct hardware *hardware)
 	    ':', 16) == 0)
 		return;
 
-	token = next_token(&val, cfile);
+	token = next_token(NULL, cfile);
 	if (token != ';') {
 		parse_warn("expecting semicolon.");
 		skip_to_semi(cfile);

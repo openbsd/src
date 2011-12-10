@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.37 2011/04/04 11:14:52 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.38 2011/12/10 17:15:27 krw Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -53,7 +53,6 @@ int
 read_client_conf(void)
 {
 	FILE *cfile;
-	char *val;
 	int token;
 
 	new_parse(path_dhclient_conf);
@@ -85,12 +84,12 @@ read_client_conf(void)
 
 	if ((cfile = fopen(path_dhclient_conf, "r")) != NULL) {
 		do {
-			token = peek_token(&val, cfile);
+			token = peek_token(NULL, cfile);
 			if (token == EOF)
 				break;
 			parse_client_statement(cfile);
 		} while (1);
-		token = next_token(&val, cfile); /* Clear the peek buffer */
+		token = next_token(NULL, cfile); /* Clear the peek buffer */
 		fclose(cfile);
 	}
 
@@ -106,7 +105,6 @@ void
 read_client_leases(void)
 {
 	FILE	*cfile;
-	char	*val;
 	int	 token;
 
 	new_parse(path_dhclient_db);
@@ -116,7 +114,7 @@ read_client_leases(void)
 	if ((cfile = fopen(path_dhclient_db, "r")) == NULL)
 		return;
 	do {
-		token = next_token(&val, cfile);
+		token = next_token(NULL, cfile);
 		if (token == EOF)
 			break;
 		if (token != TOK_LEASE) {
@@ -156,10 +154,9 @@ read_client_leases(void)
 void
 parse_client_statement(FILE *cfile)
 {
-	char *val;
 	int token, code;
 
-	switch (next_token(&val, cfile)) {
+	switch (next_token(NULL, cfile)) {
 	case TOK_SEND:
 		parse_option_decl(cfile, &config->send_options[0]);
 		return;
@@ -239,7 +236,7 @@ parse_client_statement(FILE *cfile)
 		skip_to_semi(cfile);
 		break;
 	}
-	token = next_token(&val, cfile);
+	token = next_token(NULL, cfile);
 	if (token != ';') {
 		parse_warn("semicolon expected.");
 		skip_to_semi(cfile);
@@ -391,9 +388,8 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 {
 	struct client_lease	*lease, *lp, *pl;
 	int			 token;
-	char			*val;
 
-	token = next_token(&val, cfile);
+	token = next_token(NULL, cfile);
 	if (token != '{') {
 		parse_warn("expecting left brace.");
 		skip_to_semi(cfile);
@@ -407,7 +403,7 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	lease->is_static = is_static;
 
 	do {
-		token = peek_token(&val, cfile);
+		token = peek_token(NULL, cfile);
 		if (token == EOF) {
 			parse_warn("unterminated lease declaration.");
 			return;
@@ -416,7 +412,7 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 			break;
 		parse_client_lease_declaration(cfile, lease);
 	} while (1);
-	token = next_token(&val, cfile);
+	token = next_token(NULL, cfile);
 
 	/* If the lease declaration didn't include an interface
 	 * declaration that we recognized, it's of no use to us.
@@ -718,7 +714,6 @@ parse_reject_statement(FILE *cfile)
 {
 	struct iaddrlist *list;
 	struct iaddr addr;
-	char *val;
 	int token;
 
 	do {
@@ -736,7 +731,7 @@ parse_reject_statement(FILE *cfile)
 		list->next = config->reject_list;
 		config->reject_list = list;
 
-		token = next_token(&val, cfile);
+		token = next_token(NULL, cfile);
 	} while (token == ',');
 
 	if (token != ';') {
