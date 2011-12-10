@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.23 2011/12/10 16:53:38 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.24 2011/12/10 22:01:03 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -516,28 +516,14 @@ index_merge(const struct of *of, struct mparse *mp,
 		fn = of->fname;
 
 		/*
-		 * Reclaim an empty index record, if available.
-		 */
-
-		if (reccur > 0) {
-			--reccur;
-			rec = recs[(int)reccur];
-		} else if (maxrec > 0) {
-			rec = maxrec;
-			maxrec = 0;
-		} else
-			rec++;
-
-		mparse_reset(mp);
-		hash_reset(&hash);
-		mdoc = NULL;
-		man = NULL;
-
-		/*
 		 * Try interpreting the file as mdoc(7) or man(7)
 		 * source code, unless it is already known to be
 		 * formatted.  Fall back to formatted mode.
 		 */
+
+		mparse_reset(mp);
+		mdoc = NULL;
+		man = NULL;
 
 		if ((MANDOC_SRC & of->src_form ||
 		    ! (MANDOC_FORM & of->src_form)) &&
@@ -613,8 +599,12 @@ index_merge(const struct of *of, struct mparse *mp,
 
 		sv = dbuf->len;
 
-		/* Fix the record number in the btree value. */
+		/*
+		 * Collect keyword/mask pairs.
+		 * Each pair will become a new btree node.
+		 */
 
+		hash_reset(&hash);
 		if (mdoc)
 			pmdoc_node(hash, buf, dbuf,
 				mdoc_node(mdoc), mdoc_meta(mdoc));
@@ -624,11 +614,25 @@ index_merge(const struct of *of, struct mparse *mp,
 			pformatted(hash, buf, dbuf, of);
 
 		/*
-		 * Copy from the in-memory hashtable of pending keywords
-		 * into the database.
+		 * Reclaim an empty index record, if available.
+		 * Use its record number for all new btree nodes.
 		 */
 
+		if (reccur > 0) {
+			--reccur;
+			rec = recs[(int)reccur];
+		} else if (maxrec > 0) {
+			rec = maxrec;
+			maxrec = 0;
+		} else
+			rec++;
 		vbuf.rec = htobe32(rec);
+
+		/*
+		 * Copy from the in-memory hashtable of pending
+		 * keyword/mask pairs into the database.
+		 */
+
 		seq = R_FIRST;
 		while (0 == (ch = (*hash->seq)(hash, &key, &val, seq))) {
 			seq = R_NEXT;
