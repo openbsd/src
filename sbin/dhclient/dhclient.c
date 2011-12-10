@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.141 2011/05/11 14:38:36 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.142 2011/12/10 15:55:43 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -657,9 +657,6 @@ dhcpack(struct iaddr client_addr, struct option_data *options)
 void
 bind_lease(void)
 {
-	/* Write out the new lease. */
-	write_client_lease(client->new, 0);
-
 	/* Run the client script with the new parameters. */
 	script_init((client->state == S_REQUESTING ? "BOUND" :
 	    (client->state == S_RENEWING ? "RENEW" :
@@ -674,6 +671,9 @@ bind_lease(void)
 		free_client_lease(client->active);
 	client->active = client->new;
 	client->new = NULL;
+
+	/* Write out new leases file. */
+	rewrite_client_leases();
 
 	/* Set up a timeout to start the renewal process. */
 	add_timeout(client->active->renewal, state_bound);
@@ -1381,10 +1381,15 @@ rewrite_client_leases(void)
 	fflush(leaseFile);
 	rewind(leaseFile);
 
-	for (lp = client->leases; lp; lp = lp->next)
-		write_client_lease(lp, 1);
+	for (lp = client->leases; lp; lp = lp->next) {
+		if (client->active && addr_eq(lp->address, 
+		    client->active->address))
+			continue;
+		write_client_lease(lp);
+	}
+
 	if (client->active)
-		write_client_lease(client->active, 1);
+		write_client_lease(client->active);
 
 	fflush(leaseFile);
 	ftruncate(fileno(leaseFile), ftello(leaseFile));
@@ -1392,18 +1397,10 @@ rewrite_client_leases(void)
 }
 
 void
-write_client_lease(struct client_lease *lease, int rewrite)
+write_client_lease(struct client_lease *lease)
 {
-	static int leases_written;
 	struct tm *t;
 	int i;
-
-	if (!rewrite) {
-		if (leases_written++ > 20) {
-			rewrite_client_leases();
-			leases_written = 0;
-		}
-	}
 
 	/* If the lease came from the config file, we don't need to stash
 	   a copy in the lease database. */
