@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.117 2011/11/28 04:41:39 lum Exp $	*/
+/*	$OpenBSD: def.h,v 1.118 2011/12/10 14:09:48 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -641,8 +641,6 @@ int		 auto_execute(int, int);
 PF		*find_autoexec(const char *);
 int		 add_autoexec(const char *, const char *);
 
-/* mail.c X */
-void		 mail_init(void);
 /* cmode.c X */
 int		 cmode(int, int);
 int		 cc_brace(int, int);
