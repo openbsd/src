@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.13 2006/12/17 17:41:56 stevesk Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.14 2011/12/10 17:36:40 krw Exp $	*/
 
 /* Lexical scanner for dhclient config file... */
 
@@ -74,12 +74,25 @@ static int intern(char *, int);
 void
 new_parse(char *name)
 {
-	tlname = name;
+	/*
+	 * Initialize all parsing state, as we are starting to parse a
+	 * new file, 'name'.
+	 */
+
+	bzero(line1, sizeof(line1));
+	bzero(line2, sizeof(line2));
+	bzero(tokbuf, sizeof(tokbuf));
+
 	lpos = line = 1;
+	tlpos = tline = token = ugflag = 0;
+	tval = NULL;
+
+	lexline = lexchar = 0;
 	cur_line = line1;
 	prev_line = line2;
 	token_line = cur_line;
-	cur_line[0] = prev_line[0] = 0;
+	tlname = name;
+
 	warnings_occurred = 0;
 }
 
