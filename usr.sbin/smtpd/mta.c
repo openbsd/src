@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.119 2011/11/14 19:23:41 chl Exp $	*/
+/*	$OpenBSD: mta.c,v 1.120 2011/12/11 17:02:10 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -65,7 +65,8 @@ mta_imsg(struct imsgev *iev, struct imsg *imsg)
 	struct envelope		*e;
 	struct secret		*secret;
 	struct dns		*dns;
-	struct ssl		*ssl;
+	struct ssl		 key, *ssl;
+	char			*cert;
 
 	log_imsg(PROC_MTA, iev->proc, imsg);
 
@@ -79,27 +80,15 @@ mta_imsg(struct imsgev *iev, struct imsg *imsg)
 				fatal(NULL);
 			s->id = rq_batch->b_id;
 			s->state = MTA_INIT;
-			s->batch = rq_batch;
 
 			/* establish host name */
 			if (rq_batch->relay.hostname[0]) {
 				s->host = strdup(rq_batch->relay.hostname);
 				s->flags |= MTA_FORCE_MX;
 			}
-			else
-				s->host = NULL;
 
 			/* establish port */
 			s->port = ntohs(rq_batch->relay.port); /* XXX */
-
-			/* have cert? */
-			s->cert = strdup(rq_batch->relay.cert);
-			if (s->cert == NULL)
-				fatal(NULL);
-			else if (s->cert[0] == '\0') {
-				free(s->cert);
-				s->cert = NULL;
-			}
 
 			/* use auth? */
 			if ((rq_batch->relay.flags & F_SSL) &&
@@ -115,23 +104,31 @@ mta_imsg(struct imsgev *iev, struct imsg *imsg)
 			case F_SSL:
 				s->flags |= MTA_FORCE_ANYSSL;
 				break;
-
 			case F_SMTPS:
 				s->flags |= MTA_FORCE_SMTPS;
-
-			case F_STARTTLS:
-				/* client_* API by default requires STARTTLS */
 				break;
-
+			case F_STARTTLS:
+				/* STARTTLS is tried by default */
+				break;
 			default:
 				s->flags |= MTA_ALLOW_PLAIN;
+			}
+
+			/* have cert? */
+			cert = rq_batch->relay.cert;
+			if (cert[0] != '\0') {
+				s->flags |= MTA_USE_CERT;
+				strlcpy(key.ssl_name, cert, sizeof(key.ssl_name));
+				s->ssl = SPLAY_FIND(ssltree, env->sc_ssl, &key);
 			}
 
 			TAILQ_INIT(&s->recipients);
 			TAILQ_INIT(&s->relays);
 			SPLAY_INSERT(mtatree, &env->mta_sessions, s);
-			return;
 
+			log_debug("mta: %p: new session for batch %llu", s, s->id);
+
+			return;
 
 		case IMSG_BATCH_APPEND:
 			e = imsg->data;
@@ -148,17 +145,30 @@ mta_imsg(struct imsgev *iev, struct imsg *imsg)
 				if (s->host == NULL)
 					fatal("strdup");
 			}
- 			TAILQ_INSERT_TAIL(&s->recipients, e, entry);
+			log_debug("mta: %p: adding <%s@%s> from envelope %016" PRIx64,
+			    s, e->dest.user, e->dest.domain, e->id);
+			TAILQ_INSERT_TAIL(&s->recipients, e, entry);
 			return;
 
 		case IMSG_BATCH_CLOSE:
 			rq_batch = imsg->data;
-			mta_pickup(mta_lookup(rq_batch->b_id), NULL);
+			s = mta_lookup(rq_batch->b_id);
+			if (s->flags & MTA_USE_CERT && s->ssl == NULL) {
+				mta_status(s, "190 certificate not found");
+				mta_enter_state(s, MTA_DONE, NULL);
+			} else
+				mta_pickup(s, NULL);
 			return;
 
 		case IMSG_QUEUE_MESSAGE_FD:
 			rq_batch = imsg->data;
-			mta_pickup(mta_lookup(rq_batch->b_id), &imsg->fd);
+			if (imsg->fd == -1)
+				fatalx("mta: cannot obtain msgfd");
+			s = mta_lookup(rq_batch->b_id);
+			s->datafp = fdopen(imsg->fd, "r");
+			if (s->datafp == NULL)
+				fatal("mta: fdopen");
+			mta_enter_state(s, MTA_CONNECT, NULL);
 			return;
 		}
 	}
@@ -451,22 +461,10 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 
 		pcb = client_init(s->fd, s->datafp, env->sc_hostname, 1);
 
-		/* lookup SSL certificate */
-		if (s->cert) {
-			struct ssl	 key, *res;
-
-			strlcpy(key.ssl_name, s->cert, sizeof(key.ssl_name));
-			res = SPLAY_FIND(ssltree, env->sc_ssl, &key);
-			if (res == NULL) {
-				client_close(pcb);
-				s->pcb = NULL;
-				mta_status(s, "190 certificate not found");
-				mta_enter_state(s, MTA_DONE, NULL);
-				break;
-			}
+		if (s->ssl) {
 			client_certificate(pcb,
-			    res->ssl_cert, res->ssl_cert_len,
-			    res->ssl_key, res->ssl_key_len);
+			    s->ssl->ssl_cert, s->ssl->ssl_cert_len,
+			    s->ssl->ssl_key, s->ssl->ssl_key_len);
 		}
 
 		/* choose SMTPS vs. STARTTLS */
@@ -525,7 +523,6 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 		free(s->authmap);
 		free(s->secret);
 		free(s->host);
-		free(s->cert);
 		free(s);
 		break;
 
@@ -573,16 +570,6 @@ mta_pickup(struct mta_session *s, void *p)
 			mta_enter_state(s, MTA_DONE, NULL);
 		} else
 			mta_enter_state(s, MTA_DATA, NULL);
-		break;
-
-	case MTA_DATA:
-		/* QUEUE replied to body fd request. */
-		if (*(int *)p == -1)
-			fatalx("mta cannot obtain msgfd");
-		s->datafp = fdopen(*(int *)p, "r");
-		if (s->datafp == NULL)
-			fatal("fdopen");
-		mta_enter_state(s, MTA_CONNECT, NULL);
 		break;
 
 	case MTA_CONNECT:
