@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.130 2011/11/22 23:20:19 joshe Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.131 2011/12/11 19:42:28 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1158,7 +1158,7 @@ proc_stop(struct proc *p, int sw)
 
 	p->p_stat = SSTOP;
 	atomic_clearbits_int(&p->p_flag, P_WAITED);
-	atomic_setbits_int(&p->p_flag, P_STOPPED);
+	atomic_setbits_int(&p->p_flag, P_STOPPED|P_SUSPSIG);
 	if (!timeout_pending(&proc_stop_to)) {
 		timeout_add(&proc_stop_to, 0);
 		/*
@@ -1313,6 +1313,12 @@ sigexit(struct proc *p, int signum)
 	p->p_acflag |= AXSIG;
 	if (sigprop[signum] & SA_CORE) {
 		p->p_sisig = signum;
+
+		/* if there are other threads, pause them */
+		if (TAILQ_FIRST(&p->p_p->ps_threads) != p ||
+		    TAILQ_NEXT(p, p_thr_link) != NULL)
+			single_thread_set(p, SINGLE_SUSPEND, 0);
+
 		if (coredump(p) == 0)
 			signum |= WCOREFLAG;
 	}
@@ -1640,5 +1646,161 @@ userret(struct proc *p)
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
 
+	if (p->p_flag & P_SUSPSINGLE) {
+		KERNEL_LOCK();
+		single_thread_check(p, 0);
+		KERNEL_UNLOCK();
+	}
+
 	p->p_cpu->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
+}
+
+int
+single_thread_check(struct proc *p, int deep)
+{
+	struct process *pr = p->p_p;
+
+	if (pr->ps_single != NULL && pr->ps_single != p) {
+		do {
+			int s;
+
+			/* if we're in deep, we need to unwind to the edge */
+			if (deep) {
+				if (pr->ps_flags & PS_SINGLEUNWIND)
+					return (ERESTART);
+				if (pr->ps_flags & PS_SINGLEEXIT)
+					return (EINTR);
+			}
+
+			if (--pr->ps_singlecount == 0)
+				wakeup(&pr->ps_singlecount);
+			if (pr->ps_flags & PS_SINGLEEXIT)
+				exit1(p, 0, EXIT_THREAD);
+
+			/* not exiting and don't need to unwind, so suspend */
+			SCHED_LOCK(s);
+			p->p_stat = SSTOP;
+			mi_switch();
+			SCHED_UNLOCK(s);
+		} while (pr->ps_single != NULL);
+	}
+
+	return (0);
+}
+
+/*
+ * Stop other threads in the process.  The mode controls how and
+ * where the other threads should stop:
+ *  - SINGLE_SUSPEND: stop wherever they are, will later either be told to exit
+ *    (by setting to SINGLE_EXIT) or be released (via single_thread_clear())
+ *  - SINGLE_UNWIND: just unwind to kernel boundary, will be told to exit
+ *    or released as with SINGLE_SUSPEND
+ *  - SINGLE_EXIT: unwind to kernel boundary and exit
+ */
+int
+single_thread_set(struct proc *p, enum single_thread_mode mode, int deep)
+{
+	struct process *pr = p->p_p;
+	struct proc *q;
+	int error;
+
+	if ((error = single_thread_check(p, deep)))
+		return error;
+
+	switch (mode) {
+	case SINGLE_SUSPEND:
+		break;
+	case SINGLE_UNWIND:
+		atomic_setbits_int(&pr->ps_flags, PS_SINGLEUNWIND);
+		break;
+	case SINGLE_EXIT:
+		atomic_setbits_int(&pr->ps_flags, PS_SINGLEEXIT);
+		atomic_clearbits_int(&pr->ps_flags, PS_SINGLEUNWIND);
+		break;
+#ifdef DIAGNOSTIC
+	default:
+		panic("single_thread_mode = %d", mode);
+#endif
+	}
+	pr->ps_single = p;
+	pr->ps_singlecount = 0;
+	TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
+		int s;
+
+		if (q == p)
+			continue;
+		SCHED_LOCK(s);
+		atomic_setbits_int(&q->p_flag, P_SUSPSINGLE);
+		switch (q->p_stat) {
+		case SIDL:
+		case SRUN:
+			pr->ps_singlecount++;
+			break;
+		case SSLEEP:
+			/* if it's not interruptible, then just have to wait */
+			if (q->p_flag & P_SINTR) {
+				/* merely need to suspend?  just stop it */
+				if (mode == SINGLE_SUSPEND) {
+					q->p_stat = SSTOP;
+					break;
+				}
+				/* need to unwind or exit, so wake it */
+				setrunnable(q);
+			}
+			pr->ps_singlecount++;
+			break;
+		case SSTOP:
+			if (mode == SINGLE_EXIT) {
+				setrunnable(q);
+				pr->ps_singlecount++;
+			}
+			break;
+		case SZOMB:
+		case SDEAD:
+			break;
+		case SONPROC:
+			pr->ps_singlecount++;
+			signotify(q);
+			break;
+		}
+		SCHED_UNLOCK(s);
+	}
+
+	/* wait until they're all suspended */
+	while (pr->ps_singlecount > 0)
+		tsleep(&pr->ps_singlecount, PUSER, "suspend", 0);
+	return 0;
+}
+
+void
+single_thread_clear(struct proc *p)
+{
+	struct process *pr = p->p_p;
+	struct proc *q;
+
+	KASSERT(pr->ps_single == p);
+	
+	pr->ps_single = NULL;
+	atomic_clearbits_int(&pr->ps_flags, PS_SINGLEUNWIND | PS_SINGLEEXIT);
+	TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
+		int s;
+
+		if (q == p || (q->p_flag & P_SUSPSINGLE) == 0)
+			continue;
+		atomic_clearbits_int(&q->p_flag, P_SUSPSINGLE);
+
+		/*
+		 * if the thread was only stopped for single threading
+		 * then clearing that either makes it runnable or puts
+		 * it back into some sleep queue
+		 */
+		SCHED_LOCK(s);
+		if (q->p_stat == SSTOP && (q->p_flag & P_SUSPSIG) == 0) {
+			if (q->p_wchan == 0)
+				setrunnable(q);
+			else
+				q->p_stat = SSLEEP;
+		}
+		SCHED_UNLOCK(s);
+	}
 }

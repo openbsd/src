@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.103 2011/07/25 19:38:53 tedu Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.104 2011/12/11 19:42:28 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -119,7 +119,6 @@ sys_threxit(struct proc *p, void *v, register_t *retval)
 void
 exit1(struct proc *p, int rv, int flags)
 {
-	struct proc *q, *nq;
 	struct process *pr, *qr, *nqr;
 
 	if (p->p_pid == 1)
@@ -128,39 +127,21 @@ exit1(struct proc *p, int rv, int flags)
 	
 	atomic_setbits_int(&p->p_flag, P_WEXIT);
 
-	/* unlink ourselves from the active threads */
 	pr = p->p_p;
-	TAILQ_REMOVE(&pr->ps_threads, p, p_thr_link);
-	if (TAILQ_EMPTY(&pr->ps_threads))
-		wakeup(&pr->ps_threads);
-	/*
-	 * if one thread calls exit, we take down everybody.
-	 * we have to be careful not to get recursively caught.
-	 * this is kinda sick.
-	 */
-	if (flags == EXIT_NORMAL && (p->p_flag & P_THREAD) &&
-	    (pr->ps_mainproc->p_flag & P_WEXIT) == 0) {
-		/*
-		 * we are one of the threads.  we SIGKILL the parent,
-		 * it will wake us up again, then we proceed.
-		 */
-		atomic_setbits_int(&pr->ps_mainproc->p_flag, P_IGNEXITRV);
+
+	/* single-threaded? */
+	if (TAILQ_FIRST(&pr->ps_threads) == p &&
+	    TAILQ_NEXT(p, p_thr_link) == NULL)
+		flags = EXIT_NORMAL;
+	else {
+		/* nope, multi-threaded */
+		if (flags == EXIT_NORMAL)
+			single_thread_set(p, SINGLE_EXIT, 0);
+	}
+
+	if (flags == EXIT_NORMAL) {
 		pr->ps_mainproc->p_xstat = rv;
-		ptsignal(pr->ps_mainproc, SIGKILL, SPROPAGATED);
-		tsleep(pr, PUSER, "thrdying", 0);
-	} else if ((p->p_flag & P_THREAD) == 0) {
-		if (flags == EXIT_NORMAL) {
-			q = TAILQ_FIRST(&pr->ps_threads);
-			for (; q != NULL; q = nq) {
-				nq = TAILQ_NEXT(q, p_thr_link);
-				atomic_setbits_int(&q->p_flag, P_IGNEXITRV);
-				q->p_xstat = rv;
-				ptsignal(q, SIGKILL, SPROPAGATED);
-			}
-		}
-		wakeup(pr);
-		while (!TAILQ_EMPTY(&pr->ps_threads))
-			tsleep(&pr->ps_threads, PUSER, "thrdeath", 0);
+
 		/*
 		 * If parent is waiting for us to exit or exec, PS_PPWAIT
 		 * is set; we wake up the parent early to avoid deadlock.
@@ -172,6 +153,15 @@ exit1(struct proc *p, int rv, int flags)
 			wakeup(pr->ps_pptr);
 		}
 	}
+
+	/* unlink ourselves from the active threads */
+	TAILQ_REMOVE(&pr->ps_threads, p, p_thr_link);
+	if ((p->p_flag & P_THREAD) == 0) {
+		/* main thread gotta wait because it has the pid, et al */
+		while (! TAILQ_EMPTY(&pr->ps_threads))
+			tsleep(&pr->ps_threads, PUSER, "thrdeath", 0);
+	} else if (TAILQ_EMPTY(&pr->ps_threads))
+		wakeup(&pr->ps_threads);
 
 	if (p->p_flag & P_PROFIL)
 		stopprofclock(p);
@@ -287,8 +277,6 @@ exit1(struct proc *p, int rv, int flags)
 	 * Save exit status and final rusage info, adding in child rusage
 	 * info and self times.
 	 */
-	if (!(p->p_flag & P_IGNEXITRV))
-		p->p_xstat = rv;
 	*p->p_ru = p->p_stats->p_ru;
 	calcru(p, &p->p_ru->ru_utime, &p->p_ru->ru_stime, NULL);
 	ruadd(p->p_ru, &p->p_stats->p_cru);
@@ -488,7 +476,8 @@ loop:
 			proc_finish_wait(q, p);
 			return (0);
 		}
-		if (p->p_stat == SSTOP && (p->p_flag & P_WAITED) == 0 &&
+		if (p->p_stat == SSTOP &&
+		    (p->p_flag & (P_WAITED|P_SUSPSINGLE)) == 0 &&
 		    (p->p_flag & P_TRACED || SCARG(uap, options) & WUNTRACED)) {
 			atomic_setbits_int(&p->p_flag, P_WAITED);
 			retval[0] = p->p_pid;
