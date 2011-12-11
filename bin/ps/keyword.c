@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.32 2011/04/10 03:20:58 guenther Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.33 2011/12/11 00:16:49 nicm Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -74,6 +74,7 @@ int	utime(), stime(), ixrss(), idrss(), isrss();
 	{ n1, n2, NULL, 0, fn, PIDLEN, 0, off, INT32, PIDFMT }
 
 #define	USERLEN	8
+#define	CWDLEN	40
 
 /* Bit types must match their respective entries in struct kinfo_proc */
 VAR var[] = {
@@ -89,6 +90,7 @@ VAR var[] = {
 	{"cpu", "CPU", NULL, 0, pvar, 3, 0, POFF(p_estcpu), UINT32, "d"},
 	{"cpuid", "CPUID", NULL, 0, pvar, 8, 0, POFF(p_cpuid), UINT64, "lld"},
 	{"cputime", "", "time"},
+	{"cwd", "CWD", NULL, LJUST, curwd, CWDLEN},
 	{"dsiz", "DSIZ", NULL, 0, dsize, 4},
 	{"emul", "EMUL", NULL, LJUST, emulname, KI_EMULNAMELEN - 1},
 	{"etime", "", "start"},

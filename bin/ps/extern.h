@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.14 2011/04/10 03:20:58 guenther Exp $	*/
+/*	$OpenBSD: extern.h,v 1.15 2011/12/11 00:16:49 nicm Exp $	*/
 /*	$NetBSD: extern.h,v 1.10 1995/05/21 13:38:27 mycroft Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@ struct varent;
 extern fixpt_t ccpu;
 extern int eval, fscale, nlistread, rawcpu, maxslp;
 extern u_int mempages;
-extern int sumrusage, termwidth, totwidth;
+extern int sumrusage, termwidth, totwidth, kvm_sysctl_only;
 extern VAR var[];
 extern VARENT *vhead;
 
@@ -79,6 +79,7 @@ void	 tsize(const struct kinfo_proc *, VARENT *);
 void	 dsize(const struct kinfo_proc *, VARENT *);
 void	 ssize(const struct kinfo_proc *, VARENT *);
 void	 ucomm(const struct kinfo_proc *, VARENT *);
+void	 curwd(const struct kinfo_proc *, VARENT *);
 void	 euname(const struct kinfo_proc *, VARENT *);
 void	 vsize(const struct kinfo_proc *, VARENT *);
 void	 wchan(const struct kinfo_proc *, VARENT *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.50 2011/10/13 01:15:04 guenther Exp $	*/
+/*	$OpenBSD: print.c,v 1.51 2011/12/11 00:16:49 nicm Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -175,6 +175,21 @@ ucomm(const struct kinfo_proc *kp, VARENT *ve)
 
 	v = ve->var;
 	(void)printf("%-*s", v->width, kp->p_comm);
+}
+
+void
+curwd(const struct kinfo_proc *kp, VARENT *ve)
+{
+	VAR *v;
+	int name[] = { CTL_KERN, KERN_PROC_CWD, kp->p_pid };
+	char path[MAXPATHLEN];
+	size_t pathlen = sizeof path;
+
+	if (!kvm_sysctl_only || sysctl(name, 3, path, &pathlen, NULL, 0) != 0)
+		*path = '\0';
+
+	v = ve->var;
+	(void)printf("%-*s", v->width, path);
 }
 
 void
