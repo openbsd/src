@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.17 2011/11/23 02:12:22 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.18 2011/12/11 00:38:08 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 23 2011 $
+.Dd $Mdocdate: December 11 2011 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -870,6 +870,22 @@ only accepts relative paths not containing the strings
 .Qq ../
 and
 .Qq /.. .
+.Pp
+This request requires
+.Xr man 1
+to change to the right directory before calling
+.Xr mandoc 1 ,
+per convention to the root of the manual tree.
+Typical usage looks like:
+.Pp
+.Dl \&.so man3/Xcursor.3
+.Pp
+As the whole concept is rather fragile, the use of
+.Sx \&so
+is discouraged.
+Use
+.Xr ln 1
+instead.
 .Ss \&ta
 Set tab stops.
 This line-scoped request can take an arbitrary number of arguments.
