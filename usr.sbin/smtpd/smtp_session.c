@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.150 2011/10/23 09:30:07 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.151 2011/12/12 17:20:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -71,6 +71,10 @@ static int session_set_mailaddr(struct mailaddr *, char *);
 static void session_imsg(struct session *, enum smtp_proc_type,
     enum imsg_type, u_int32_t, pid_t, int, void *, u_int16_t);
 
+static void session_enter_state(struct session *, int);
+
+const char *session_strstate(int);
+
 struct session_cmd {
 	char	 *name;
 	int		(*func)(struct session *, char *);
@@ -124,7 +128,7 @@ session_rfc3207_stls_handler(struct session *s, char *args)
 		return 1;
 	}
 
-	s->s_state = S_TLS;
+	session_enter_state(s, S_TLS);
 	session_respond(s, "220 Ready to start TLS");
 
 	return 1;
@@ -186,11 +190,11 @@ session_rfc4954_auth_plain(struct session *s, char *arg)
 	switch (s->s_state) {
 	case S_HELO:
 		if (arg == NULL) {
-			s->s_state = S_AUTH_INIT;
+			session_enter_state(s, S_AUTH_INIT);
 			session_respond(s, "334 ");
 			return;
 		}
-		s->s_state = S_AUTH_INIT;
+		session_enter_state(s, S_AUTH_INIT);
 		/* FALLTHROUGH */
 
 	case S_AUTH_INIT:
@@ -217,7 +221,7 @@ session_rfc4954_auth_plain(struct session *s, char *arg)
 		if (strlcpy(a->pass, pass, sizeof(a->pass)) >= sizeof(a->pass))
 			goto abort;
 
-		s->s_state = S_AUTH_FINALIZE;
+		session_enter_state(s, S_AUTH_FINALIZE);
 
 		a->id = s->s_id;
 		session_imsg(s, PROC_PARENT, IMSG_PARENT_AUTHENTICATE, 0, 0, -1,
@@ -232,7 +236,7 @@ session_rfc4954_auth_plain(struct session *s, char *arg)
 
 abort:
 	session_respond(s, "501 Syntax error");
-	s->s_state = S_HELO;
+	session_enter_state(s, S_HELO);
 }
 
 static void
@@ -242,7 +246,7 @@ session_rfc4954_auth_login(struct session *s, char *arg)
 
 	switch (s->s_state) {
 	case S_HELO:
-		s->s_state = S_AUTH_USERNAME;
+		session_enter_state(s, S_AUTH_USERNAME);
 		session_respond(s, "334 VXNlcm5hbWU6");
 		return;
 
@@ -251,7 +255,7 @@ session_rfc4954_auth_login(struct session *s, char *arg)
 		if (__b64_pton(arg, (unsigned char *)a->user, sizeof(a->user) - 1) == -1)
 			goto abort;
 
-		s->s_state = S_AUTH_PASSWORD;
+		session_enter_state(s, S_AUTH_PASSWORD);
 		session_respond(s, "334 UGFzc3dvcmQ6");
 		return;
 
@@ -260,7 +264,7 @@ session_rfc4954_auth_login(struct session *s, char *arg)
 		if (__b64_pton(arg, (unsigned char *)a->pass, sizeof(a->pass) - 1) == -1)
 			goto abort;
 
-		s->s_state = S_AUTH_FINALIZE;
+		session_enter_state(s, S_AUTH_FINALIZE);
 
 		a->id = s->s_id;
 		session_imsg(s, PROC_PARENT, IMSG_PARENT_AUTHENTICATE, 0, 0, -1,
@@ -275,7 +279,7 @@ session_rfc4954_auth_login(struct session *s, char *arg)
 
 abort:
 	session_respond(s, "501 Syntax error");
-	s->s_state = S_HELO;
+	session_enter_state(s, S_HELO);
 }
 
 static int
@@ -293,12 +297,12 @@ session_rfc1652_mail_handler(struct session *s, char *args)
 		*body++ = '\0';
 
 		if (strncasecmp(body, "AUTH=", 5) == 0) {
-			log_debug("AUTH in MAIL FROM command, skipping");
+			log_debug("smtp: AUTH in MAIL FROM command, skipping");
 			continue;		
 		}
 
 		if (strncasecmp(body, "BODY=", 5) == 0) {
-			log_debug("BODY in MAIL FROM command");
+			log_debug("smtp: BODY in MAIL FROM command");
 
 			if (strncasecmp("body=7bit", body, 9) == 0) {
 				s->s_flags &= ~F_8BITMIME;
@@ -330,8 +334,8 @@ session_rfc5321_helo_handler(struct session *s, char *args)
 	}
 
 	s->s_msg.session_id = s->s_id;
-	s->s_state = S_HELO;
 	s->s_flags &= F_SECURE|F_AUTHENTICATED;
+	session_enter_state(s, S_HELO);
 
 	session_imsg(s, PROC_MFA, IMSG_MFA_HELO, 0, 0, -1, &s->s_msg,
 	    sizeof(s->s_msg));
@@ -353,10 +357,10 @@ session_rfc5321_ehlo_handler(struct session *s, char *args)
 	}
 
 	s->s_msg.session_id = s->s_id;
-	s->s_state = S_HELO;
 	s->s_flags &= F_SECURE|F_AUTHENTICATED;
 	s->s_flags |= F_EHLO;
 	s->s_flags |= F_8BITMIME;
+	session_enter_state(s, S_HELO);
 
 	session_imsg(s, PROC_MFA, IMSG_MFA_HELO, 0, 0, -1, &s->s_msg,
 	    sizeof(s->s_msg));
@@ -366,7 +370,7 @@ session_rfc5321_ehlo_handler(struct session *s, char *args)
 static int
 session_rfc5321_rset_handler(struct session *s, char *args)
 {
-	s->s_state = S_HELO;
+	session_enter_state(s, S_HELO);
 	session_respond(s, "250 2.0.0 Reset state");
 
 	return 1;
@@ -400,12 +404,10 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 	}
 
 	s->rcptcount = 0;
-	s->s_state = S_MAIL_MFA;
 	s->s_msg.id = 0;
 	s->s_msg.ss = s->s_ss;
 
-	log_debug("session_rfc5321_mail_handler: sending notification to mfa");
-
+	session_enter_state(s, S_MAIL_MFA);
 	session_imsg(s, PROC_MFA, IMSG_MFA_MAIL, 0, 0, -1, &s->s_msg,
 	    sizeof(s->s_msg));
 	return 1;
@@ -430,7 +432,7 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 		return 1;
 	}
 
-	s->s_state = S_RCPT_MFA;
+	session_enter_state(s, S_RCPT_MFA);
 	session_imsg(s, PROC_MFA, IMSG_MFA_RCPT, 0, 0, -1, &s->s_msg,
 	    sizeof(s->s_msg));
 	return 1;
@@ -441,6 +443,7 @@ session_rfc5321_quit_handler(struct session *s, char *args)
 {
 	s->s_flags |= F_QUIT;
 	session_respond(s, "221 2.0.0 %s Closing connection", env->sc_hostname);
+
 	return 1;
 }
 
@@ -462,7 +465,7 @@ session_rfc5321_data_handler(struct session *s, char *args)
 		return 1;
 	}
 
-	s->s_state = S_DATA_QUEUE;
+	session_enter_state(s, S_DATA_QUEUE);
 
 	session_imsg(s, PROC_QUEUE, IMSG_QUEUE_MESSAGE_FILE, 0, 0, -1,
 	    &s->s_msg, sizeof(s->s_msg));
@@ -504,6 +507,16 @@ session_rfc5321_help_handler(struct session *s, char *args)
 	session_respond(s, "214 End of HELP info");
 
 	return 1;
+}
+
+static void
+session_enter_state(struct session *s, int newstate)
+{
+	log_trace(TRACE_SMTP, "smtp: %p: %s -> %s", s,
+	    session_strstate(s->s_state),
+	    session_strstate(newstate));
+
+	s->s_state = newstate;
 }
 
 static void
@@ -591,16 +604,15 @@ session_pickup(struct session *s, struct submit_status *ss)
 
 	switch (s->s_state) {
 	case S_INIT:
-		s->s_state = S_GREETED;
-		log_debug("session_pickup: greeting client");
 		session_respond(s, SMTPD_BANNER, env->sc_hostname);
+		session_enter_state(s, S_GREETED);
 		break;
 
 	case S_TLS:
 		if (s->s_flags & F_WRITEONLY)
 			fatalx("session_pickup: corrupt session");
 		bufferevent_enable(s->s_bev, EV_READ);
-		s->s_state = S_GREETED;
+		session_enter_state(s, S_GREETED);
 		break;
 
 	case S_AUTH_FINALIZE:
@@ -608,14 +620,14 @@ session_pickup(struct session *s, struct submit_status *ss)
 			session_respond(s, "235 Authentication succeeded");
 		else
 			session_respond(s, "535 Authentication failed");
-		s->s_state = S_HELO;
+		session_enter_state(s, S_HELO);
 		break;
 
 	case S_HELO:
 		if (ss == NULL)
 			fatalx("bad ss at S_HELO");
 		if (ss->code != 250) {
-			s->s_state = S_GREETED;
+			session_enter_state(s, S_GREETED);
 			session_respond(s, "%d Helo rejected", ss->code);
 			return;
 		}
@@ -645,12 +657,12 @@ session_pickup(struct session *s, struct submit_status *ss)
 		if (ss == NULL)
 			fatalx("bad ss at S_MAIL_MFA");
 		if (ss->code != 250) {
-			s->s_state = S_HELO;
+			session_enter_state(s, S_HELO);
 			session_respond(s, "%d Sender rejected", ss->code);
-			return;
+			break;
 		}
 
-		s->s_state = S_MAIL_QUEUE;
+		session_enter_state(s, S_MAIL_QUEUE);
 		s->s_msg.sender = ss->u.maddr;
 
 		session_imsg(s, PROC_QUEUE, IMSG_QUEUE_CREATE_MESSAGE, 0, 0, -1,
@@ -660,7 +672,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 	case S_MAIL_QUEUE:
 		if (ss == NULL)
 			fatalx("bad ss at S_MAIL_QUEUE");
-		s->s_state = S_MAIL;
+		session_enter_state(s, S_MAIL);
 		session_respond(s, "%d 2.1.0 Sender ok", ss->code);
 		break;
 
@@ -671,16 +683,16 @@ session_pickup(struct session *s, struct submit_status *ss)
 		if (ss->code != 250) {
 			/* We do not have a valid recipient, downgrade state */
 			if (s->rcptcount == 0)
-				s->s_state = S_MAIL;
+				session_enter_state(s, S_MAIL);
 			else
-				s->s_state = S_RCPT;
+				session_enter_state(s, S_RCPT);
 			session_respond(s, "%d 5.0.0 Recipient rejected: %s@%s", ss->code,
 			    s->s_msg.rcpt.user,
 			    s->s_msg.rcpt.domain);
-			return;
+			break;
 		}
 
-		s->s_state = S_RCPT;
+		session_enter_state(s, S_RCPT);
 		s->rcptcount++;
 		s->s_msg.dest = ss->u.maddr;
 
@@ -688,7 +700,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_DATA_QUEUE:
-		s->s_state = S_DATACONTENT;
+		session_enter_state(s, S_DATACONTENT);
 		session_respond(s, "354 Enter mail, end with \".\" on a line by"
 		    " itself");
 
@@ -735,7 +747,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 		    s->s_hostname,
 		    ss_to_text(&s->s_ss));
 
-		s->s_state = S_HELO;
+		session_enter_state(s, S_HELO);
 		s->s_msg.id = 0;
 		bzero(&s->s_nresp, sizeof(s->s_nresp));
 		break;
@@ -869,7 +881,7 @@ session_read_data(struct session *s, char *line)
 
 		if (s->s_msg.status & DS_PERMFAILURE) {
 			session_respond(s, "554 5.0.0 Transaction failed");
-			s->s_state = S_HELO;
+			session_enter_state(s, S_HELO);
 		} else if (s->s_msg.status & DS_TEMPFAILURE) {
 			session_respond(s, "421 4.0.0 Temporary failure");
 			s->s_flags |= F_QUIT;
@@ -877,7 +889,7 @@ session_read_data(struct session *s, char *line)
 		} else {
 			session_imsg(s, PROC_QUEUE, IMSG_QUEUE_COMMIT_MESSAGE,
 			    0, 0, -1, &s->s_msg, sizeof(s->s_msg));
-			s->s_state = S_DONE;
+			session_enter_state(s, S_DONE);
 		}
 		goto end;
 	}
@@ -1215,3 +1227,36 @@ session_imsg(struct session *s, enum smtp_proc_type proc, enum imsg_type type,
 }
 
 SPLAY_GENERATE(sessiontree, session, s_nodes, session_cmp);
+
+#define CASE(x) case x : return #x
+
+const char *
+session_strstate(int state)
+{
+	static char	buf[32];
+
+	switch (state) {
+	CASE(S_INVALID);
+	CASE(S_INIT);
+	CASE(S_GREETED);
+	CASE(S_TLS);
+	CASE(S_AUTH_INIT);
+	CASE(S_AUTH_USERNAME);
+	CASE(S_AUTH_PASSWORD);
+	CASE(S_AUTH_FINALIZE);
+	CASE(S_HELO);
+	CASE(S_MAIL_MFA);
+	CASE(S_MAIL_QUEUE);
+	CASE(S_MAIL);
+	CASE(S_RCPT_MFA);
+	CASE(S_RCPT);
+	CASE(S_DATA);
+	CASE(S_DATA_QUEUE);
+	CASE(S_DATACONTENT);
+	CASE(S_DONE);
+	CASE(S_QUIT);
+	default:
+		snprintf(buf, sizeof(buf), "S_??? (%d)", state);
+		return buf;
+	}
+}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.139 2011/12/08 17:00:28 todd Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.140 2011/12/12 17:20:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -454,6 +454,16 @@ main(int argc, char *argv[])
 		case 'T':
 			if (!strcmp(optarg, "imsg"))
 				verbose |= TRACE_IMSG;
+			else if (!strcmp(optarg, "io"))
+				verbose |= TRACE_IO;
+			else if (!strcmp(optarg, "smtp"))
+				verbose |= TRACE_SMTP;
+			else if (!strcmp(optarg, "mta"))
+				verbose |= TRACE_MTA;
+			else if (!strcmp(optarg, "bounce"))
+				verbose |= TRACE_BOUNCE;
+			else if (!strcmp(optarg, "all"))
+				verbose |= ~TRACE_VERBOSE;
 			else
 				log_warnx("unknown trace flag \"%s\"", optarg);
 			break;
