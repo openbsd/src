@@ -1,4 +1,4 @@
-.\"     $OpenBSD: route.9,v 1.3 2011/12/09 13:02:13 sthen Exp $
+.\"     $OpenBSD: route.9,v 1.4 2011/12/12 14:59:38 blambert Exp $
 .\"
 .\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 9 2011 $
+.Dd $Mdocdate: December 12 2011 $
 .Dt ROUTE 9
 .Os
 .Sh NAME
@@ -245,11 +245,11 @@ Route labels are arbitrary data appended to routes and can be acted upon by
 .Xr pf .
 .Bl -tag -width Ds
 .It Fn rtlabel_name2id "char *name"
-Return numerical ID of routing label named
+Return numerical ID of the route label named
 .Fa name ,
 creating the label if it does not already exist.
 .It Fn rtlabel_id2name "u_int16_t id"
-Return the string name of routing label with ID
+Return the string name of the route label with ID
 .Fa id .
 .It Fn rtlabel_id2sa "u_int16_t labelid" "struct sockaddr_rtlabel *sa_rl"
 Populate
@@ -257,7 +257,7 @@ Populate
 with the data from the route label specified by
 .Fa labelid .
 .It Fn rtlabel_unref "u_int16_t id"
-Remove a reference to routing label with ID
+Remove a reference to the route label with ID
 .Fa id ,
 freeing the label if the reference count drops to 0.
 .El
@@ -342,7 +342,7 @@ if memory could not be allocated for the timeout.
 .Fn rtlabel_name2id
 returns
 .Fa 0
-if it was unable to create a routing label.
+if it was unable to create a route label.
 .Sh SEE ALSO
 .Xr route 4 ,
 .Xr route 8
