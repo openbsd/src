@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.106 2011/04/23 03:17:04 lum Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.107 2011/12/12 07:35:29 yasuoka Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -1088,6 +1088,14 @@ initiator_recv_HASH_SA_NONCE(struct message *msg)
 		case IPSEC_ID_IPV6_ADDR_SUBNET:
 			break;
 
+		case IPSEC_ID_FQDN:
+			/*
+			 * FQDN may be used for in NAT-T with transport mode.
+			 * We can handle the message in this case.  In the
+			 * other cases we'll drop the message later.
+			 */
+			break;
+
 		default:
 			message_drop(msg, ISAKMP_NOTIFY_INVALID_ID_INFORMATION,
 			    0, 1, 0);
@@ -1530,6 +1538,14 @@ responder_recv_HASH_SA_NONCE(struct message *msg)
 		case IPSEC_ID_IPV4_ADDR_SUBNET:
 		case IPSEC_ID_IPV6_ADDR:
 		case IPSEC_ID_IPV6_ADDR_SUBNET:
+			break;
+
+		case IPSEC_ID_FQDN:
+			/*
+			 * FQDN may be used for in NAT-T with transport mode.
+			 * We can handle the message in this case.  In the
+			 * other cases we'll drop the message later.
+			 */
 			break;
 
 		default:
