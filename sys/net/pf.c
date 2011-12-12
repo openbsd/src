@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.789 2011/12/02 03:15:31 haesbaert Exp $ */
+/*	$OpenBSD: pf.c,v 1.790 2011/12/12 21:30:27 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3364,7 +3364,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 				/* order is irrelevant */
 				SLIST_INSERT_HEAD(&rules, ri, entry);
 				pf_rule_to_actions(r, &act);
-				if (r->naf)
+				if (r->rule_flag & PFRULE_AFTO)
 					pd->naf = r->naf;
 				if (pf_get_transaddr(r, pd, sns, &nr) == -1) {
 					REASON_SET(&reason, PFRES_MEMORY);
@@ -3399,7 +3399,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 
 	/* apply actions for last matching pass/block rule */
 	pf_rule_to_actions(r, &act);
-	if (r->naf)
+	if (r->rule_flag & PFRULE_AFTO)
 		pd->naf = r->naf;
 	if (pf_get_transaddr(r, pd, sns, &nr) == -1) {
 		REASON_SET(&reason, PFRES_MEMORY);

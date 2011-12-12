@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.283 2011/11/23 10:24:37 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.284 2011/12/12 21:30:27 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1058,7 +1058,7 @@ print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 		printf(" divert-packet port %u", ntohs(r->divert_packet.port));
 
 	if (!anchor_call[0] && r->nat.addr.type != PF_ADDR_NONE &&
-	    r->naf != r->af) {
+	    r->rule_flag & PFRULE_AFTO) {
 		printf(" af-to %s from ", r->naf == AF_INET ? "inet" : "inet6");
 		print_pool(&r->nat, r->nat.proxy_port[0],
 		    r->nat.proxy_port[1], r->naf ? r->naf : r->af,

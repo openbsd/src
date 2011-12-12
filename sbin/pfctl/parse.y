@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.611 2011/12/03 12:46:16 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.612 2011/12/12 21:30:27 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -896,7 +896,6 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 
 			decide_address_family($8.src.host, &r.af);
 			decide_address_family($8.dst.host, &r.af);
-			r.naf = r.af;
 
 			expand_rule(&r, 0, $5, NULL, NULL, NULL, $7, $8.src_os,
 			    $8.src.host, $8.src.port, $8.dst.host, $8.dst.port,
@@ -1726,6 +1725,7 @@ pfrule		: action dir logquick interface af proto fromto
 					    "translation");
 					YYERROR;
 				}
+				r.rule_flag |= PFRULE_AFTO;
 			}
 			r.af = $5;
 
@@ -2012,7 +2012,6 @@ pfrule		: action dir logquick interface af proto fromto
 
 			decide_address_family($7.src.host, &r.af);
 			decide_address_family($7.dst.host, &r.af);
-			r.naf = r.af;
 
 			if ($8.route.rt) {
 				if (!r.direction) {
@@ -4194,7 +4193,7 @@ rule_consistent(struct pf_rule *r, int anchor_call)
 			   "must not be used on match rules");
 			problems++;
 		}
-		if (r->nat.addr.type != PF_ADDR_NONE && r->naf != r->af) {
+		if (r->rule_flag & PFRULE_AFTO) {
 			yyerror("af-to is not supported on match rules");
 			problems++;
 		}
@@ -4697,13 +4696,13 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 	struct pf_rule_addr ra;
 	int	i = 0;
 
-	if (rs && rs->af)
-		r->naf = rs->af;
-
 	if (!rs || !rs->rdr || rs->rdr->host == NULL) {
 		rpool->addr.type = PF_ADDR_NONE;
 		return (0);
 	}
+
+	if (r->rule_flag & PFRULE_AFTO)
+		r->naf = rs->af;
 
 	/* count matching addresses */
 	for (h = rs->rdr->host; h != NULL; h = h->next) {
@@ -4711,7 +4710,8 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 			i++;
 			if (h->af && !r->af)
 				r->af = h->af;
-		}
+		} else if (r->naf && h->af == r->naf)
+			i++;
 	}
 
 	if (i == 0) {		/* no pool address */
@@ -4720,7 +4720,8 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 		return (1);
 	} else if (i == 1) {	/* only one address */
 		for (h = rs->rdr->host; h != NULL; h = h->next)
-			if (!h->af || !r->af || rs->af || r->af == h->af)
+			if (!h->af || !r->af || rs->af || r->af == h->af ||
+			    (r->naf && r->naf == h->af))
 				break;
 		rpool->addr = h->addr;
 		if (!allow_if && h->ifname) {
@@ -4889,7 +4890,7 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 	LOOP_THROUGH(struct node_uid, uid, uids,
 	LOOP_THROUGH(struct node_gid, gid, gids,
 
-		r->af = af;
+		r->af = r->naf = af;
 
 		error += collapse_redirspec(&r->rdr, r, rdr, 0);
 		error += collapse_redirspec(&r->nat, r, nat, 0);

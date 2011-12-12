@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.357 2011/11/29 10:17:52 dlg Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.358 2011/12/12 21:30:27 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -673,6 +673,7 @@ struct pf_rule {
 #define PFRULE_STATESLOPPY	0x00020000	/* sloppy state tracking */
 #define PFRULE_PFLOW		0x00040000
 #define PFRULE_ONCE		0x00100000	/* one shot rule */
+#define PFRULE_AFTO		0x00200000	/* af-to rule */
 
 #define PFSTATE_HIWAT		10000	/* default state table size */
 #define PFSTATE_ADAPT_START	6000	/* default adaptive timeout start */
