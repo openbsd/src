@@ -1,4 +1,4 @@
-/*	$OpenBSD: setsockopt1.c,v 1.1 2009/12/26 01:34:18 fgsch Exp $	*/
+/*	$OpenBSD: setsockopt1.c,v 1.2 2011/12/12 15:53:08 fgsch Exp $	*/
 /*
  * Federico G. Schwindt <fgsch@openbsd.org>, 2009. Public Domain.
  */
@@ -20,7 +20,7 @@ alarm_handler(int sig)
 	_exit(NOTOK);
 }
 
-int
+void
 check_timeout(int s, int sec, struct timeval *to)
 {
 	struct timeval t1, t2;
@@ -35,7 +35,7 @@ check_timeout(int s, int sec, struct timeval *to)
 	ASSERT(errno == EAGAIN);
 	timersub(&t2, &t1, &e);
 	timersub(&e, to, &d);
-	return ((d.tv_sec > 1 || (d.tv_usec / 1000) > 100) ? 1 : 0);
+	ASSERT(d.tv_sec <= 1 && (d.tv_usec / 1000) <= 100);
 }
 
 static void *
@@ -57,15 +57,15 @@ sock_connect(void *arg)
 	to.tv_sec = 2;
 	to.tv_usec = 0.5 * 1e6;
 	CHECKe(setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &to, sizeof(to)));
-	CHECKr(check_timeout(s, 3, &to));
-	CHECKr(check_timeout(s2, 3, &to));
-	CHECKr(check_timeout(s3, 3, &to));
+	check_timeout(s, 3, &to);
+	check_timeout(s2, 3, &to);
+	check_timeout(s3, 3, &to);
 	to.tv_sec = 1;
 	to.tv_usec = 0.5 * 1e6;
 	CHECKe(setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &to, sizeof(to)));
-	CHECKr(check_timeout(s, 2, &to));
-	CHECKr(check_timeout(s2, 2, &to));
-	CHECKr(check_timeout(s3, 2, &to));
+	check_timeout(s, 2, &to);
+	check_timeout(s2, 2, &to);
+	check_timeout(s3, 2, &to);
 	return (NULL);
 }
 

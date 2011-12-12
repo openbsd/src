@@ -1,4 +1,4 @@
-/*	$OpenBSD: setsockopt3.c,v 1.2 2010/01/03 23:02:33 fgsch Exp $	*/
+/*	$OpenBSD: setsockopt3.c,v 1.3 2011/12/12 15:53:08 fgsch Exp $	*/
 /*
  * Federico G. Schwindt <fgsch@openbsd.org>, 2009. Public Domain.
  */
@@ -39,7 +39,7 @@ sock_connect(void *arg)
 	}
 	ASSERTe(wait(&status), == child_pid);
 	ASSERT(WIFEXITED(status));
-	CHECKr(WEXITSTATUS(status));
+	ASSERT(WEXITSTATUS(status) == 0);
 	return (NULL);
 }
 

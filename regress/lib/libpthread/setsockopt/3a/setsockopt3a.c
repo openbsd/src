@@ -1,4 +1,4 @@
-/*	$OpenBSD: setsockopt3a.c,v 1.2 2010/01/03 23:02:34 fgsch Exp $	*/
+/*	$OpenBSD: setsockopt3a.c,v 1.3 2011/12/12 15:53:08 fgsch Exp $	*/
 /*
  * Federico G. Schwindt <fgsch@openbsd.org>, 2009. Public Domain.
  */
@@ -20,7 +20,7 @@ alarm_handler(int sig)
 	_exit(NOTOK);
 }
 
-int
+void
 check_timeout(int s, int sec, struct timeval *to)
 {
 	struct timeval t1, t2;
@@ -35,7 +35,7 @@ check_timeout(int s, int sec, struct timeval *to)
 	ASSERT(errno == EAGAIN);
 	timersub(&t2, &t1, &e);
 	timersub(&e, to, &d);
-	return ((d.tv_sec > 1 || (d.tv_usec / 1000) > 100) ? 1 : 0);
+	ASSERT(d.tv_sec <= 1 && (d.tv_usec / 1000) <= 100);
 }
 
 static void *
@@ -54,11 +54,11 @@ sock_accept(void *arg)
 	CHECKe(connect(s, (struct sockaddr *)&sin, sizeof(sin)));
 	to.tv_sec = 2;
 	to.tv_usec = 0.5 * 1e6;
-	CHECKr(check_timeout(s, 3, &to));
+	check_timeout(s, 3, &to);
 	CHECKe(s2 = dup(s));
 	CHECKe(s3 = fcntl(s, F_DUPFD, s));
-	CHECKr(check_timeout(s2, 3, &to));
-	CHECKr(check_timeout(s3, 3, &to));
+	check_timeout(s2, 3, &to);
+	check_timeout(s3, 3, &to);
 	return (NULL);
 }
 
