@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.258 2011/12/11 19:58:09 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.259 2011/12/12 16:45:16 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -404,8 +404,6 @@ struct envelope {
 
 	u_int64_t			session_id;
 	u_int64_t			batch_id;
-
-//	struct delivery			delivery;
 
 	u_int32_t			version;
 	u_int64_t			id;
