@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.57 2011/12/09 11:43:41 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.58 2011/12/12 20:45:30 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -2549,7 +2549,7 @@ ixgbe_get_buf(struct rx_ring *rxr, int i)
 {
 	struct ix_softc		*sc = rxr->sc;
 	struct ixgbe_rx_buf	*rxbuf;
-	struct mbuf		*mh, *mp;
+	struct mbuf		*mp, *mh = NULL;
 	int			error;
 	union ixgbe_adv_rx_desc	*rxdesc;
 	size_t			 dsize = sizeof(union ixgbe_adv_rx_desc);
@@ -2573,8 +2573,10 @@ ixgbe_get_buf(struct rx_ring *rxr, int i)
 		goto no_split;
 
 	mh = m_gethdr(M_DONTWAIT, MT_DATA);
-	if (mh == NULL)
+	if (mh == NULL) {
+		m_freem(mp);
 		return (ENOBUFS);
+	}
 
 	mh->m_pkthdr.len = mh->m_len = MHLEN;
 	mh->m_len = MHLEN;
@@ -2584,6 +2586,7 @@ ixgbe_get_buf(struct rx_ring *rxr, int i)
 	error = bus_dmamap_load_mbuf(rxr->rxdma.dma_tag, rxbuf->hmap,
 	    mh, BUS_DMA_NOWAIT);
 	if (error) {
+		m_freem(mp);
 		m_freem(mh);
 		return (error);
 	}
@@ -2603,6 +2606,11 @@ no_split:
 	error = bus_dmamap_load_mbuf(rxr->rxdma.dma_tag, rxbuf->pmap,
 	    mp, BUS_DMA_NOWAIT);
 	if (error) {
+		if (mh) {
+			bus_dmamap_unload(rxr->rxdma.dma_tag, rxbuf->hmap);
+			rxbuf->m_head = NULL;
+			m_freem(mh);
+		}
 		m_freem(mp);
 		return (error);
 	}
