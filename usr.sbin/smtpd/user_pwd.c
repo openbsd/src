@@ -1,4 +1,4 @@
-/*	$OpenBSD: user_backend.c,v 1.2 2011/12/08 17:00:28 todd Exp $	*/
+/*	$OpenBSD: user_pwd.c,v 1.1 2011/12/13 22:04:35 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -38,28 +38,11 @@
 int user_getpw_ret(struct mta_user *, struct passwd *); /* helper */
 int user_getpwnam(struct mta_user *, char *);
 int user_getpwuid(struct mta_user *, uid_t);
-struct user_backend *user_backend_lookup(enum user_type);
 
-struct user_backend user_backends[] = {
-	{ USER_GETPWNAM, user_getpwnam, user_getpwuid }
+struct user_backend user_backend_pwd = {
+	user_getpwnam,
+	user_getpwuid,
 };
-
-struct user_backend *
-user_backend_lookup(enum user_type type)
-{
-	u_int8_t i;
-
-	for (i = 0; i < nitems(user_backends); ++i)
-		if (user_backends[i].type == type)
-			break;
-
-	if (i == nitems(user_backends))
-		fatalx("invalid user type");
-
-	return &user_backends[i];
-}
-
-
 
 int
 user_getpw_ret(struct mta_user *u, struct passwd *pw)

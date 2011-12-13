@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.141 2011/12/13 21:44:47 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.142 2011/12/13 22:04:35 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -702,7 +702,7 @@ forkmda(struct imsgev *iev, u_int32_t id,
 	log_debug("forkmda: to %s as %s", deliver->to, deliver->user);
 
 	bzero(&u, sizeof (u));
-	ub = user_backend_lookup(USER_GETPWNAM);
+	ub = user_backend_lookup(USER_PWD);
 	errno = 0;
 	if (! ub->getbyname(&u, deliver->user)) {
 		n = snprintf(ebuf, sizeof ebuf, "getpwnam: %s",
@@ -880,7 +880,7 @@ offline_enqueue(char *name)
 			_exit(1);
 		}
 
-		ub = user_backend_lookup(USER_GETPWNAM);
+		ub = user_backend_lookup(USER_PWD);
 		bzero(&u, sizeof (u));
 		errno = 0;
 		if (! ub->getbyuid(&u, sb.st_uid)) {
@@ -986,7 +986,7 @@ parent_forward_open(char *username)
 	int fd;
 
 	bzero(&u, sizeof (u));
-	ub = user_backend_lookup(USER_GETPWNAM);
+	ub = user_backend_lookup(USER_PWD);
 	if (! ub->getbyname(&u, username))
 		return -1;
 

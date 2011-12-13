@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.15 2011/12/13 21:44:47 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.16 2011/12/13 22:04:35 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -109,7 +109,7 @@ lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 		}
 
 		bzero(&u, sizeof (u));
-		ub = user_backend_lookup(USER_GETPWNAM);
+		ub = user_backend_lookup(USER_PWD);
 		if (! ub->getbyname(&u, username))
 			return 0;
 
@@ -511,7 +511,7 @@ lka_session_expand_format(char *buf, size_t len, struct envelope *ep)
 			if (*(p + 1) == '/' || *(p + 1) == '\0') {
 
 				bzero(&u, sizeof (u));
-				ub = user_backend_lookup(USER_GETPWNAM);
+				ub = user_backend_lookup(USER_PWD);
 				if (! ub->getbyname(&u, ep->agent.mda.as_user))
 					return 0;
 				
@@ -536,7 +536,7 @@ lka_session_expand_format(char *buf, size_t len, struct envelope *ep)
 				*delim = '\0';
 
 				bzero(&u, sizeof (u));
-				ub = user_backend_lookup(USER_GETPWNAM);
+				ub = user_backend_lookup(USER_PWD);
 				if (! ub->getbyname(&u, username))
 					return 0;
 
