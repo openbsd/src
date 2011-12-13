@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.24 2011/05/21 18:43:08 gilles Exp $	*/
+/*	$OpenBSD: map.c,v 1.25 2011/12/13 22:09:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -32,7 +32,25 @@
 #include "log.h"
 
 struct map_backend *map_backend_lookup(enum map_src);
-struct map_parser *map_parser_lookup(enum map_kind);
+
+extern struct map_backend map_backend_db;
+extern struct map_backend map_backend_stdio;
+
+struct map_backend *
+map_backend_lookup(enum map_src source)
+{
+	switch (source) {
+	case S_DB:
+		return &map_backend_db;
+
+	case S_PLAIN:
+		return &map_backend_stdio;
+
+	default:
+		fatalx("invalid map type");
+	}
+	return NULL;
+}
 
 struct map *
 map_findbyname(const char *name)
