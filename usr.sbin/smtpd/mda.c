@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.63 2011/11/14 19:23:41 chl Exp $	*/
+/*	$OpenBSD: mda.c,v 1.64 2011/12/13 21:44:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -81,8 +81,8 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 			ep    = &s->msg;
 			d_mda = &s->msg.agent.mda;
 			switch (d_mda->method) {
-			case A_EXT:
-				deliver.mode = A_EXT;
+			case A_MDA:
+				deliver.mode = A_MDA;
 				strlcpy(deliver.user, d_mda->as_user,
 				    sizeof (deliver.user));
 				strlcpy(deliver.to, d_mda->to.buffer,
@@ -90,7 +90,7 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 				break;
 				
 			case A_MBOX:
-				deliver.mode = A_EXT;
+				deliver.mode = A_MDA;
 				strlcpy(deliver.user, "root",
 				    sizeof (deliver.user));
 				snprintf(deliver.to, sizeof (deliver.to),

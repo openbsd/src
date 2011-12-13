@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue_ascii.c,v 1.6 2011/11/06 16:55:32 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue_ascii.c,v 1.7 2011/12/13 21:44:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -158,8 +158,8 @@ ascii_load_mda_method(struct envelope *ep, char *buf)
 		ep->agent.mda.method = A_MAILDIR;
 	else if (strcasecmp(buf, "filename") == 0)
 		ep->agent.mda.method = A_FILENAME;
-	else if (strcasecmp(buf, "external") == 0)
-		ep->agent.mda.method = A_EXT;
+	else if (strcasecmp(buf, "mda") == 0)
+		ep->agent.mda.method = A_MDA;
 	else
 		return 0;
 	return 1;
@@ -179,8 +179,8 @@ ascii_dump_mda_method(struct envelope *ep, FILE *fp)
 	case A_FILENAME:
 		fprintf(fp, "filename\n");
 		break;
-	case A_EXT:
-		fprintf(fp, "external\n");
+	case A_MDA:
+		fprintf(fp, "mda\n");
 		break;
 	default:
 		return 0;

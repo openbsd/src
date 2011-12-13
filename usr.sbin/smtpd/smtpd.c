@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.140 2011/12/12 17:20:36 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.141 2011/12/13 21:44:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -692,7 +692,8 @@ forkmda(struct imsgev *iev, u_int32_t id,
     struct deliver *deliver)
 {
 	char		 ebuf[128], sfn[32];
-	struct user_backend *ub;
+	struct user_backend	*ub;
+	struct delivery_backend	*db;
 	struct mta_user u;
 	struct child	*child;
 	pid_t		 pid;
@@ -709,6 +710,10 @@ forkmda(struct imsgev *iev, u_int32_t id,
 		imsg_compose_event(iev, IMSG_MDA_DONE, id, 0, -1, ebuf, n + 1);
 		return;
 	}
+
+	db = delivery_backend_lookup(deliver->mode);
+	if (db == NULL)
+		return;
 
 	/* lower privs early to allow fork fail due to ulimit */
 	if (seteuid(u.uid) < 0)
@@ -788,109 +793,11 @@ forkmda(struct imsgev *iev, u_int32_t id,
 	/* avoid hangs by setting 5m timeout */
 	alarm(300);
 
-	if (deliver->mode == A_EXT) {
-		char	*environ_new[2];
-
-		environ_new[0] = "PATH=" _PATH_DEFPATH;
-		environ_new[1] = (char *)NULL;
-		environ = environ_new;
-		execle("/bin/sh", "/bin/sh", "-c", deliver->to, (char *)NULL,
-		    environ_new);
-		error("execle");
-	}
-
-	if (deliver->mode == A_MAILDIR) {
-		char	 tmp[PATH_MAX], new[PATH_MAX];
-		int	 ch, fd;
-		FILE	*fp;
-
-#define error2(m) { n = errno; unlink(tmp); errno = n; error(m); }
-		setproctitle("maildir delivery");
-		if (mkdir(deliver->to, 0700) < 0 && errno != EEXIST)
-			error("cannot mkdir maildir");
-		if (chdir(deliver->to) < 0)
-			error("cannot cd to maildir");
-		if (mkdir("cur", 0700) < 0 && errno != EEXIST)
-			error("mkdir cur failed");
-		if (mkdir("tmp", 0700) < 0 && errno != EEXIST)
-			error("mkdir tmp failed");
-		if (mkdir("new", 0700) < 0 && errno != EEXIST)
-			error("mkdir new failed");
-		snprintf(tmp, sizeof tmp, "tmp/%lld.%d.%s",
-		    (long long int) time(NULL),
-		    getpid(), env->sc_hostname);
-		fd = open(tmp, O_CREAT | O_EXCL | O_WRONLY, 0600);
-		if (fd < 0)
-			error("cannot open tmp file");
-		fp = fdopen(fd, "w");
-		if (fp == NULL)
-			error2("fdopen");
-		while ((ch = getc(stdin)) != EOF)
-			if (putc(ch, fp) == EOF)
-				break;
-		if (ferror(stdin))
-			error2("read error");
-		if (fflush(fp) == EOF || ferror(fp))
-			error2("write error");
-		if (fsync(fd) < 0)
-			error2("fsync");
-		if (fclose(fp) == EOF)
-			error2("fclose");
-		snprintf(new, sizeof new, "new/%s", tmp + 4);
-		if (rename(tmp, new) < 0)
-			error2("cannot rename tmp->new");
-		_exit(0);
-	}
-#undef error2
-
-	if (deliver->mode == A_FILENAME) {
-		struct stat 	 sb;
-		time_t		 now;
-		size_t		 len;
-		int		 fd;
-		FILE		*fp;
-		char		*ln;
-
-#define error2(m) { n = errno; ftruncate(fd, sb.st_size); errno = n; error(m); }
-		setproctitle("file delivery");
-		fd = open(deliver->to, O_CREAT | O_APPEND | O_WRONLY, 0600);
-		if (fd < 0)
-			error("open");
-		if (fstat(fd, &sb) < 0)
-			error("fstat");
-		if (S_ISREG(sb.st_mode) && flock(fd, LOCK_EX) < 0)
-			error("flock");
-		fp = fdopen(fd, "a");
-		if (fp == NULL)
-			error("fdopen");
-		time(&now);
-		fprintf(fp, "From %s@%s %s", SMTPD_USER, env->sc_hostname,
-		    ctime(&now));
-		while ((ln = fgetln(stdin, &len)) != NULL) {
-			if (ln[len - 1] == '\n')
-				len--;
-			if (len >= 5 && memcmp(ln, "From ", 5) == 0)
-				putc('>', fp);
-			fprintf(fp, "%.*s\n", (int)len, ln);
-			if (ferror(fp))
-				break;
-		}
-		if (ferror(stdin))
-			error2("read error");
-		putc('\n', fp);
-		if (fflush(fp) == EOF || ferror(fp))
-			error2("write error");
-		if (fsync(fd) < 0)
-			error2("fsync");
-		if (fclose(fp) == EOF)
-			error2("fclose");
-		_exit(0);
-	}
+	db->open(deliver);
 
 	error("forkmda: unknown mode");
 }
 #undef error
-#undef error2
 
 static void
 offline_scan(int fd, short ev, void *arg)
