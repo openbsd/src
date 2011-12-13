@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.262 2011/12/13 22:04:35 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.263 2011/12/13 23:55:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -477,6 +477,8 @@ enum session_state {
 struct ssl {
 	SPLAY_ENTRY(ssl)	 ssl_nodes;
 	char			 ssl_name[PATH_MAX];
+	char			*ssl_ca;
+	off_t			 ssl_ca_len;
 	char			*ssl_cert;
 	off_t			 ssl_cert_len;
 	char			*ssl_key;

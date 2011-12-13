@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.40 2011/10/27 04:23:19 guenther Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.41 2011/12/13 23:55:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -344,6 +344,7 @@ ssl_ctx_create(void)
 		ssl_error("ssl_ctx_create");
 		fatal("ssl_ctx_create: could not set cipher list");
 	}
+
 	return (ctx);
 }
 
@@ -385,6 +386,15 @@ ssl_load_certfile(const char *name, u_int8_t flags)
 
 	if ((s->ssl_key = ssl_load_file(certfile, &s->ssl_key_len)) == NULL)
 		goto err;
+
+	if (! bsnprintf(certfile, sizeof(certfile),
+		"/etc/mail/certs/%s.ca", name))
+		goto err;
+
+	if ((s->ssl_ca = ssl_load_file(certfile,
+		    &s->ssl_ca_len)) == NULL) {
+		log_info("no CA found in %s", certfile);
+	}
 
 	if (! bsnprintf(certfile, sizeof(certfile),
 		"/etc/mail/certs/%s.dh", name))
@@ -442,6 +452,13 @@ ssl_setup(struct listener *l)
 
 	l->ssl_ctx = ssl_ctx_create();
 
+	if (l->ssl->ssl_ca != NULL) {
+		if (! ssl_ctx_load_verify_memory(l->ssl_ctx,
+			l->ssl->ssl_ca, l->ssl->ssl_ca_len))
+			goto err;
+		SSL_CTX_set_verify(l->ssl_ctx, SSL_VERIFY_PEER, NULL);
+	}
+
 	if (!ssl_ctx_use_certificate_chain(l->ssl_ctx,
 	    l->ssl->ssl_cert, l->ssl->ssl_cert_len))
 		goto err;
@@ -455,8 +472,6 @@ ssl_setup(struct listener *l)
 		(const unsigned char *)l->ssl_cert_name,
 		strlen(l->ssl_cert_name) + 1))
 		goto err;
-
-
 
 	if (l->ssl->ssl_dhparams_len == 0)
 		dh = get_dh1024();

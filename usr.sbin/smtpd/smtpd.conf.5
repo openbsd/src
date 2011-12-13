@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.46 2011/12/13 21:47:09 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.47 2011/12/13 23:55:00 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -126,7 +126,9 @@ is specified,
 a certificate
 .Ao Ar name Ac Ns .crt ,
 a key
-.Ao Ar name Ac Ns .key
+.Ao Ar name Ac Ns .key ,
+a certificate authority
+.Ao Ar name Ac Ns .ca
 and Diffie-Hellman parameters
 .Ao Ar name Ac Ns .dh
 are searched for.
@@ -137,6 +139,7 @@ the default interface name is instead used,
 for example
 .Pa fxp0.crt ,
 .Pa fxp0.key ,
+.Pa fxp0.ca ,
 and
 .Pa fxp0.dh .
 If no DH parameters are provided, smtpd will use

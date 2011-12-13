@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.142 2011/12/13 22:04:35 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.143 2011/12/13 23:55:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -205,7 +205,7 @@ parent_send_config_listeners(void)
 {
 	struct listener		*l;
 	struct ssl		*s;
-	struct iovec		 iov[4];
+	struct iovec		 iov[5];
 	int			 opt;
 
 	log_debug("parent_send_config: configuring smtp");
@@ -224,6 +224,8 @@ parent_send_config_listeners(void)
 		iov[2].iov_len = s->ssl_key_len;
 		iov[3].iov_base = s->ssl_dhparams;
 		iov[3].iov_len = s->ssl_dhparams_len;
+		iov[4].iov_base = s->ssl_ca;
+		iov[4].iov_len = s->ssl_ca_len;
 
 		imsg_composev(&env->sc_ievs[PROC_SMTP]->ibuf,
 		    IMSG_CONF_SSL, 0, 0, -1, iov, nitems(iov));
@@ -250,7 +252,7 @@ static void
 parent_send_config_client_certs(void)
 {
 	struct ssl		*s;
-	struct iovec		 iov[4];
+	struct iovec		 iov[3];
 
 	log_debug("parent_send_config_client_certs: configuring smtp");
 	imsg_compose_event(env->sc_ievs[PROC_MTA], IMSG_CONF_START,
@@ -266,8 +268,6 @@ parent_send_config_client_certs(void)
 		iov[1].iov_len = s->ssl_cert_len;
 		iov[2].iov_base = s->ssl_key;
 		iov[2].iov_len = s->ssl_key_len;
-		iov[3].iov_base = s->ssl_dhparams;
-		iov[3].iov_len = s->ssl_dhparams_len;
 
 		imsg_composev(&env->sc_ievs[PROC_MTA]->ibuf, IMSG_CONF_SSL,
 		    0, 0, -1, iov, nitems(iov));
