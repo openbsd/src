@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.14 2011/11/15 23:06:39 gilles Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.15 2011/12/14 17:55:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -39,37 +39,21 @@
 static int envelope_validate(struct envelope *);
 
 /* fsqueue backend */
-int	fsqueue_init(void);
-int	fsqueue_message(enum queue_kind, enum queue_op, u_int32_t *);
-int	fsqueue_envelope(enum queue_kind, enum queue_op , struct envelope *);
-void   *fsqueue_qwalk_new(enum queue_kind, u_int32_t);
-int	fsqueue_qwalk(void *, u_int64_t *);
-void	fsqueue_qwalk_close(void *);
+extern struct queue_backend	queue_backend_fs;
 
-
-struct queue_backend queue_backends[] = {
-	{ QT_FS,
-	  fsqueue_init,
-	  fsqueue_message,
-	  fsqueue_envelope,
-	  fsqueue_qwalk_new,
-	  fsqueue_qwalk,
-	  fsqueue_qwalk_close }
-};
 
 struct queue_backend *
 queue_backend_lookup(enum queue_type type)
 {
-	u_int8_t i;
+	switch (type) {
+	case QT_FS:
+		return &queue_backend_fs;
 
-	for (i = 0; i < nitems(queue_backends); ++i)
-		if (queue_backends[i].type == type)
-			break;
-
-	if (i == nitems(queue_backends))
+	default:
 		fatalx("invalid queue type");
+	}
 
-	return &queue_backends[i];
+	return (NULL);
 }
 
 int

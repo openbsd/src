@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.21 2011/11/21 18:57:54 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.22 2011/12/14 17:55:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -74,6 +74,15 @@ void	fsqueue_qwalk_close(void *);
 #define PATH_MESSAGE		"/message"
 #define PATH_ENVELOPES		"/envelopes"
 
+
+struct queue_backend	queue_backend_fs = {
+	  fsqueue_init,
+	  fsqueue_message,
+	  fsqueue_envelope,
+	  fsqueue_qwalk_new,
+	  fsqueue_qwalk,
+	  fsqueue_qwalk_close
+};
 
 static char *
 fsqueue_getpath(enum queue_kind kind)
