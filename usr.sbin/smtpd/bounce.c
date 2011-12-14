@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.35 2011/10/27 14:32:57 chl Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.36 2011/12/14 23:08:40 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -45,6 +45,8 @@ struct client_ctx {
 	struct smtp_client	*pcb;
 	FILE			*msgfp;
 };
+
+static void queue_message_update(struct envelope *);
 
 int
 bounce_session(int fd, struct envelope *m)
@@ -177,4 +179,60 @@ ro:
 rw:
 	event_set(&cc->ev, fd, EV_READ|EV_WRITE, bounce_event, cc);
 	event_add(&cc->ev, &cc->pcb->timeout);
+}
+
+int
+bounce_record_message(struct envelope *e, struct envelope *bounce)
+{
+	u_int32_t msgid;
+
+	bzero(bounce, sizeof(*bounce));
+
+	if (e->type == D_BOUNCE) {
+		log_debug("mailer daemons loop detected !");
+		return 0;
+	}
+
+	*bounce = *e;
+	 bounce->type = D_BOUNCE;
+	 bounce->status &= ~DS_PERMFAILURE;
+
+	msgid = evpid_to_msgid(e->id);
+	if (! queue_message_create(Q_BOUNCE, &msgid))
+		return 0;
+
+	bounce->id = msgid_to_evpid(msgid);
+	if (! queue_envelope_create(Q_BOUNCE, bounce))
+		return 0;
+
+	return queue_message_commit(Q_BOUNCE, msgid);
+}
+
+static void
+queue_message_update(struct envelope *e)
+{
+	e->batch_id = 0;
+	e->status &= ~(DS_ACCEPTED|DS_REJECTED);
+	e->retry++;
+
+
+	if (e->status & DS_PERMFAILURE) {
+		if (e->type != D_BOUNCE &&
+		    e->sender.user[0] != '\0') {
+			struct envelope bounce;
+
+			bounce_record_message(e, &bounce);
+		}
+		queue_envelope_delete(Q_QUEUE, e);
+		return;
+	}
+
+	if (e->status & DS_TEMPFAILURE) {
+		e->status &= ~DS_TEMPFAILURE;
+		queue_envelope_update(Q_QUEUE, e);
+		return;
+	}
+
+	/* no error, remove envelope */
+	queue_envelope_delete(Q_QUEUE, e);
 }
