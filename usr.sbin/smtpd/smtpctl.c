@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.72 2011/11/23 13:48:03 chl Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.73 2011/12/14 18:42:27 eric Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -39,12 +39,16 @@
 
 #include "smtpd.h"
 #include "parser.h"
+#include "log.h"
 
 void usage(void);
 static void setup_env(struct smtpd *);
 static void show_sizes(void);
 static int show_command_output(struct imsg *);
 static int show_stats_output(struct imsg *);
+static void show_queue(enum queue_kind, int);
+static void show_envelope(struct envelope *, int);
+static void getflag(u_int *, int, char *, char *, size_t);
 
 int proctype;
 struct imsgbuf	*ibuf;
@@ -471,4 +475,98 @@ show_stats_output(struct imsg *imsg)
 	stat_print(STATS_SMTP_STARTTLS, STAT_MAXACTIVE);
 
 	return (1);
+}
+
+static void
+show_queue(enum queue_kind kind, int flags)
+{
+	struct qwalk	*q;
+	struct envelope	 envelope;
+	u_int64_t	 evpid;
+
+	log_init(1);
+
+	if (chroot(PATH_SPOOL) == -1 || chdir(".") == -1)
+		err(1, "%s", PATH_SPOOL);
+
+	q = qwalk_new(kind, 0);
+
+	while (qwalk(q, &evpid)) {
+		if (! queue_envelope_load(kind, evpid, &envelope))
+			continue;
+		show_envelope(&envelope, flags);
+	}
+
+	qwalk_close(q);
+}
+
+static void
+show_envelope(struct envelope *e, int flags)
+{
+	char	 status[128];
+
+	status[0] = '\0';
+
+	getflag(&e->status, DS_TEMPFAILURE, "TEMPFAIL",
+	    status, sizeof(status));
+
+	if (e->status)
+		errx(1, "%016" PRIx64 ": unexpected status 0x%04x", e->id,
+		    e->status);
+
+	getflag(&e->flags, DF_BOUNCE, "BOUNCE",
+	    status, sizeof(status));
+	getflag(&e->flags, DF_AUTHENTICATED, "AUTH",
+	    status, sizeof(status));
+	getflag(&e->flags, DF_ENQUEUED, "ENQUEUED",
+	    status, sizeof(status));
+	getflag(&e->flags, DF_INTERNAL, "INTERNAL",
+	    status, sizeof(status));
+
+	if (e->flags)
+		errx(1, "%016" PRIx64 ": unexpected flags 0x%04x", e->id,
+		    e->flags);
+	
+	if (status[0])
+		status[strlen(status) - 1] = '\0';
+	else
+		strlcpy(status, "-", sizeof(status));
+
+	switch (e->type) {
+	case D_MDA:
+		printf("MDA");
+		break;
+	case D_MTA:
+		printf("MTA");
+		break;
+	case D_BOUNCE:
+		printf("BOUNCE");
+		break;
+	default:
+		printf("UNKNOWN");
+	}
+	
+	printf("|%016" PRIx64 "|%s|%s@%s|%s@%s|%" PRId64 "|%" PRId64 "|%u",
+	    e->id,
+	    status,
+	    e->sender.user, e->sender.domain,
+	    e->dest.user, e->dest.domain,
+	    (int64_t) e->lasttry,
+	    (int64_t) e->expire,
+	    e->retry);
+	
+	if (e->errorline[0] != '\0')
+		printf("|%s", e->errorline);
+
+	printf("\n");
+}
+
+static void
+getflag(u_int *bitmap, int bit, char *bitstr, char *buf, size_t len)
+{
+	if (*bitmap & bit) {
+		*bitmap &= ~bit;
+		strlcat(buf, bitstr, len);
+		strlcat(buf, ",", len);
+	}
 }

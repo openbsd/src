@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.264 2011/12/14 17:55:55 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.265 2011/12/14 18:42:27 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1099,7 +1099,6 @@ void  qwalk_close(void *);
 /* queue_shared.c */
 void queue_message_update(struct envelope *);
 int bounce_record_message(struct envelope *, struct envelope *);
-void show_queue(enum queue_kind, int);
 
 
 /* ramqueue.c */

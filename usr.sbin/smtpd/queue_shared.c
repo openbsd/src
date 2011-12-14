@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.54 2011/11/15 23:06:39 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.55 2011/12/14 18:42:27 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -39,11 +39,6 @@
 
 #include "smtpd.h"
 #include "log.h"
-
-int	fsqueue_load_envelope_ascii(FILE *, struct envelope *);
-
-void		display_envelope(struct envelope *, int);
-void		getflag(u_int *, int, char *, char *, size_t);
 
 int
 bounce_record_message(struct envelope *e, struct envelope *bounce)
@@ -99,98 +94,4 @@ queue_message_update(struct envelope *e)
 
 	/* no error, remove envelope */
 	queue_envelope_delete(Q_QUEUE, e);
-}
-
-void
-show_queue(enum queue_kind kind, int flags)
-{
-	struct qwalk	*q;
-	struct envelope	 envelope;
-	u_int64_t	 evpid;
-
-	log_init(1);
-
-	if (chroot(PATH_SPOOL) == -1 || chdir(".") == -1)
-		err(1, "%s", PATH_SPOOL);
-
-	q = qwalk_new(kind, 0);
-
-	while (qwalk(q, &evpid)) {
-		if (! queue_envelope_load(kind, evpid, &envelope))
-			continue;
-		display_envelope(&envelope, flags);
-	}
-
-	qwalk_close(q);
-}
-
-void
-display_envelope(struct envelope *e, int flags)
-{
-	char	 status[128];
-
-	status[0] = '\0';
-
-	getflag(&e->status, DS_TEMPFAILURE, "TEMPFAIL",
-	    status, sizeof(status));
-
-	if (e->status)
-		errx(1, "%016" PRIx64 ": unexpected status 0x%04x", e->id,
-		    e->status);
-
-	getflag(&e->flags, DF_BOUNCE, "BOUNCE",
-	    status, sizeof(status));
-	getflag(&e->flags, DF_AUTHENTICATED, "AUTH",
-	    status, sizeof(status));
-	getflag(&e->flags, DF_ENQUEUED, "ENQUEUED",
-	    status, sizeof(status));
-	getflag(&e->flags, DF_INTERNAL, "INTERNAL",
-	    status, sizeof(status));
-
-	if (e->flags)
-		errx(1, "%016" PRIx64 ": unexpected flags 0x%04x", e->id,
-		    e->flags);
-	
-	if (status[0])
-		status[strlen(status) - 1] = '\0';
-	else
-		strlcpy(status, "-", sizeof(status));
-
-	switch (e->type) {
-	case D_MDA:
-		printf("MDA");
-		break;
-	case D_MTA:
-		printf("MTA");
-		break;
-	case D_BOUNCE:
-		printf("BOUNCE");
-		break;
-	default:
-		printf("UNKNOWN");
-	}
-	
-	printf("|%016" PRIx64 "|%s|%s@%s|%s@%s|%" PRId64 "|%" PRId64 "|%u",
-	    e->id,
-	    status,
-	    e->sender.user, e->sender.domain,
-	    e->dest.user, e->dest.domain,
-	    (int64_t) e->lasttry,
-	    (int64_t) e->expire,
-	    e->retry);
-	
-	if (e->errorline[0] != '\0')
-		printf("|%s", e->errorline);
-
-	printf("\n");
-}
-
-void
-getflag(u_int *bitmap, int bit, char *bitstr, char *buf, size_t len)
-{
-	if (*bitmap & bit) {
-		*bitmap &= ~bit;
-		strlcat(buf, bitstr, len);
-		strlcat(buf, ",", len);
-	}
 }
