@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.118 2011/12/08 08:26:55 espie Exp $
+.\"	$OpenBSD: port-modules.5,v 1.119 2011/12/14 18:32:46 robert Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 8 2011 $
+.Dd $Mdocdate: December 14 2011 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -508,6 +508,10 @@ By default, only C language support is included by this module.
 If other languages are needed, they must be listed in
 .Ev MODGCC4_LANGS
 (e.g. c++, fortran).
+The
+.Ev MODGCC4_VERSION
+variable can be used to change the version of gcc.
+By default gcc 4.2 is used.
 .It gnu
 This module is documented in the main
 .Xr bsd.port.mk 5
