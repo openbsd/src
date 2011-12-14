@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.17 2011/07/04 20:35:35 deraadt Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.18 2011/12/14 17:33:46 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -387,14 +387,14 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			    KERN_FILE_RDIR) == -1)
 				return (NULL);
 		}
-		if (proc.p_tracep) {
+		if (process.ps_tracevp) {
 			if (buflen < sizeof(struct kinfo_file2))
 				goto done;
 			kf = (struct kinfo_file2 *)where;
 			where += sizeof(struct kinfo_file2);
 			buflen -= sizeof(struct kinfo_file2);
 			n++;
-			if (fill_file2(kd, kf, NULL, proc.p_tracep, &proc,
+			if (fill_file2(kd, kf, NULL, process.ps_tracevp, &proc,
 			    KERN_FILE_TRACE) == -1)
 				return (NULL);
 		}
