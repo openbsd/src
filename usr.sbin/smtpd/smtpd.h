@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.265 2011/12/14 18:42:27 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.266 2011/12/14 22:28:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -920,13 +920,11 @@ struct queue_backend {
 
 /* auth structures */
 enum auth_type {
-	AUTH_INVALID=0,
 	AUTH_BSD,
-	AUTH_GETPWNAM,
+	AUTH_PWD,
 };
 
 struct auth_backend {
-	enum auth_type	type;
 	int (*authenticate)(char *, char *);
 };
 

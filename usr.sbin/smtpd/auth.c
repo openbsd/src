@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_backend.c,v 1.1 2011/05/17 16:42:06 gilles Exp $	*/
+/*	$OpenBSD: auth.c,v 1.1 2011/12/14 22:28:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -23,62 +23,29 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 
-#include <bsd_auth.h>
 #include <event.h>
 #include <imsg.h>
-#include <libgen.h>
-#include <pwd.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
 #include "smtpd.h"
 #include "log.h"
 
-int auth_bsd(char *, char *);
-int auth_getpwnam(char *, char *);
-struct auth_backend *auth_backend_lookup(enum auth_type);
-
-struct auth_backend auth_backends[] = {
-	{ AUTH_BSD,		auth_bsd	},
-	{ AUTH_GETPWNAM,	auth_getpwnam	}
-};
+extern struct auth_backend	auth_backend_bsd;
+extern struct auth_backend	auth_backend_pwd;
 
 struct auth_backend *
 auth_backend_lookup(enum auth_type type)
 {
-	u_int8_t i;
+	switch (type) {
+	case AUTH_BSD:
+		return &auth_backend_bsd;
 
-	for (i = 0; i < nitems(auth_backends); ++i)
-		if (auth_backends[i].type == type)
-			break;
+	case AUTH_PWD:
+		return &auth_backend_pwd;
 
-	if (i == nitems(auth_backends))
-		fatalx("invalid auth type");
+	default:
+		fatalx("bad auth type");
+	}
 
-	return &auth_backends[i];
-}
-
-
-int
-auth_bsd(char *username, char *password)
-{
-	return auth_userokay(username, NULL, "auth-smtp", password);
-}
-
-
-int
-auth_getpwnam(char *username, char *password)
-{
-	struct passwd *pw;
-
-	pw = getpwnam(username);
-	if (pw == NULL)
-		return 0;
-
-	if (strcmp(pw->pw_passwd, crypt(password, pw->pw_passwd)) == 0)
-		return 1;
-
-	return 0;
+	return (NULL);
 }

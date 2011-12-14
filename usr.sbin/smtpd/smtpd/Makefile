@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.35 2011/12/13 23:00:52 eric Exp $
+#	$OpenBSD: Makefile,v 1.36 2011/12/14 22:28:02 eric Exp $
 
 PROG=		smtpd
-SRCS=		aliases.c auth_backend.c bounce.c client.c		\
-		delivery.c delivery_filename.c				\
+SRCS=		aliases.c auth.c auth_bsd.c auth_pwd.c bounce.c		\
+		client.c delivery.c delivery_filename.c			\
 		delivery_maildir.c delivery_mbox.c delivery_mda.c	\
 		config.c control.c dns.c expand.c forward.c		\
 		lka.c lka_session.c log.c map.c map_db.c map_stdio.c	\
