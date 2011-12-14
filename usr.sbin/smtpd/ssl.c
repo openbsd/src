@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.41 2011/12/13 23:55:00 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.42 2011/12/14 17:51:38 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -60,6 +60,8 @@ int	 ssl_buf_write(SSL *, struct msgbuf *);
 DH	*get_dh1024(void);
 DH	*get_dh_from_memory(char *, size_t);
 void	 ssl_set_ephemeral_key_exchange(SSL_CTX *, DH *);
+
+extern int ssl_ctx_load_verify_memory(SSL_CTX *, char *, off_t);
 
 extern void	bufferevent_read_pressure_cb(struct evbuffer *, size_t,
 		    size_t, void *);
