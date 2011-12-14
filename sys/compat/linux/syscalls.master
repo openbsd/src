@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.65 2011/11/25 10:10:05 robert Exp $
+	$OpenBSD: syscalls.master,v 1.66 2011/12/14 08:33:18 robert Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -286,7 +286,9 @@
 			    u_int16_t egid, u_int16_t sgid); }
 171	STD		{ int linux_sys_getresgid16(u_int16_t *rgid, \
 			    u_int16_t *egid, u_int16_t *sgid); }
-172	STD		{ int linux_sys_prctl(void); }
+172	STD		{ int linux_sys_prctl(int option, unsigned long arg2, \
+			    unsigned long arg3, unsigned long arg4, \
+			    unsigned long arg5); }
 173	STD     	{ int linux_sys_rt_sigreturn( \
 	                    struct linux_rt_sigframe *sfp); }
 174	STD		{ int linux_sys_rt_sigaction(int signum, \

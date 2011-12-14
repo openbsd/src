@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_emuldata.h,v 1.7 2011/09/18 02:23:18 pirofti Exp $	*/
+/*	$OpenBSD: linux_emuldata.h,v 1.8 2011/12/14 08:33:18 robert Exp $	*/
 /*	$NetBSD: linux_emuldata.h,v 1.4 2002/02/15 16:48:02 christos Exp $	*/
 /*-
  * Copyright (c) 1998,2002 The NetBSD Foundation, Inc.
@@ -51,5 +51,6 @@ struct linux_emuldata {
 
 	struct linux_robust_list_head *led_robust_head;
 
+	int pdeath_signal;	/* parent death signal */
 };
 #endif /* !_LINUX_EMULDATA_H_ */

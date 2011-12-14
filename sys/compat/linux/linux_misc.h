@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.h,v 1.5 2011/04/05 22:54:30 pirofti Exp $	*/
+/*	$OpenBSD: linux_misc.h,v 1.6 2011/12/14 08:33:18 robert Exp $	*/
 /*	$NetBSD: linux_misc.h,v 1.3 1999/05/13 00:31:57 thorpej Exp $	*/
 
 /*-
@@ -32,6 +32,19 @@
 
 #ifndef _LINUX_MISC_H_
 #define _LINUX_MISC_H_
+
+/* defined for prctl(2) */
+#define LINUX_PR_SET_PDEATHSIG	1	/* Second arg is signal. */
+#define LINUX_PR_GET_PDEATHSIG	2	/*
+					 * Second arg is a ptr to return the
+					 * signal.
+					 */
+#define LINUX_PR_GET_KEEPCAPS	7	/* Get drop capabilities on setuid */
+#define LINUX_PR_SET_KEEPCAPS	8	/* Set drop capabilities on setuid */
+#define LINUX_PR_SET_NAME	15	/* Set process name. */
+#define LINUX_PR_GET_NAME	16	/* Get process name. */
+
+#define LINUX_MAX_COMM_LEN	16	/* Maximum length of process name. */
 
 /* This looks very unportable to me, but this is how Linux defines it. */
 struct linux_sysinfo {
