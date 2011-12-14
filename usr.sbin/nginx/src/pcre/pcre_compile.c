@@ -88,14 +88,21 @@ so this number is very generous.
 The same workspace is used during the second, actual compile phase for
 remembering forward references to groups so that they can be filled in at the
 end. Each entry in this list occupies LINK_SIZE bytes, so even when LINK_SIZE
-is 4 there is plenty of room. */
+is 4 there is plenty of room for most patterns. However, the memory can get
+filled up by repetitions of forward references, for example patterns like
+/(?1){0,1999}(b)/, and one user did hit the limit. The code has been changed so
+that the workspace is expanded using malloc() in this situation. The value
+below is therefore a minimum, and we put a maximum on it for safety. The
+minimum is now also defined in terms of LINK_SIZE so that the use of malloc()
+kicks in at the same number of forward references in all cases. */
 
-#define COMPILE_WORK_SIZE (4096)
+#define COMPILE_WORK_SIZE (2048*LINK_SIZE)
+#define COMPILE_WORK_SIZE_MAX (100*COMPILE_WORK_SIZE)
 
 /* The overrun tests check for a slightly smaller size so that they detect the
 overrun before it actually does run off the end of the data block. */
 
-#define WORK_SIZE_CHECK (COMPILE_WORK_SIZE - 100)
+#define WORK_SIZE_SAFETY_MARGIN (100)
 
 
 /* Table for handling escaped characters in the range '0'-'z'. Positive returns
@@ -410,6 +417,10 @@ static const char error_texts[] =
   "this version of PCRE is not compiled with PCRE_UCP support\0"
   "\\c must be followed by an ASCII character\0"
   "\\k is not followed by a braced, angle-bracketed, or quoted name\0"
+  /* 70 */
+  "internal error: unknown opcode in find_fixedlength()\0"
+  "\\N is not supported in a class\0"
+  "too many forward references\0"
   ;
 
 /* Table to identify digits and hex digits. This is used when compiling
@@ -578,6 +589,44 @@ return s;
 
 
 /*************************************************
+*           Expand the workspace                 *
+*************************************************/
+
+/* This function is called during the second compiling phase, if the number of
+forward references fills the existing workspace, which is originally a block on
+the stack. A larger block is obtained from malloc() unless the ultimate limit
+has been reached or the increase will be rather small.
+
+Argument: pointer to the compile data block
+Returns:  0 if all went well, else an error number
+*/
+
+static int
+expand_workspace(compile_data *cd)
+{
+uschar *newspace;
+int newsize = cd->workspace_size * 2;
+
+if (newsize > COMPILE_WORK_SIZE_MAX) newsize = COMPILE_WORK_SIZE_MAX;
+if (cd->workspace_size >= COMPILE_WORK_SIZE_MAX ||
+    newsize - cd->workspace_size < WORK_SIZE_SAFETY_MARGIN)
+ return ERR72;
+
+newspace = (pcre_malloc)(newsize);
+if (newspace == NULL) return ERR21;
+
+memcpy(newspace, cd->start_workspace, cd->workspace_size);
+cd->hwm = (uschar *)newspace + (cd->hwm - cd->start_workspace);
+if (cd->workspace_size > COMPILE_WORK_SIZE)
+  (pcre_free)((void *)cd->start_workspace);
+cd->start_workspace = newspace;
+cd->workspace_size = newsize;
+return 0;
+}
+
+
+
+/*************************************************
 *            Check for counted repeat            *
 *************************************************/
 
@@ -676,9 +725,38 @@ else
 
     case CHAR_l:
     case CHAR_L:
-    case CHAR_u:
-    case CHAR_U:
     *errorcodeptr = ERR37;
+    break;
+
+    case CHAR_u:
+    if ((options & PCRE_JAVASCRIPT_COMPAT) != 0)
+      {
+      /* In JavaScript, \u must be followed by four hexadecimal numbers.
+      Otherwise it is a lowercase u letter. */
+      if ((digitab[ptr[1]] & ctype_xdigit) != 0 && (digitab[ptr[2]] & ctype_xdigit) != 0
+           && (digitab[ptr[3]] & ctype_xdigit) != 0 && (digitab[ptr[4]] & ctype_xdigit) != 0)
+        {
+        c = 0;
+        for (i = 0; i < 4; ++i)
+          {
+          register int cc = *(++ptr);
+#ifndef EBCDIC  /* ASCII/UTF-8 coding */
+          if (cc >= CHAR_a) cc -= 32;               /* Convert to upper case */
+          c = (c << 4) + cc - ((cc < CHAR_A)? CHAR_0 : (CHAR_A - 10));
+#else           /* EBCDIC coding */
+          if (cc >= CHAR_a && cc <= CHAR_z) cc += 64;  /* Convert to upper case */
+          c = (c << 4) + cc - ((cc >= CHAR_0)? CHAR_0 : (CHAR_A - 10));
+#endif
+          }
+        }
+      }
+    else
+      *errorcodeptr = ERR37;
+    break;
+
+    case CHAR_U:
+    /* In JavaScript, \U is an uppercase U letter. */
+    if ((options & PCRE_JAVASCRIPT_COMPAT) == 0) *errorcodeptr = ERR37;
     break;
 
     /* In a character class, \g is just a literal "g". Outside a character
@@ -828,6 +906,28 @@ else
     treated as a data character. */
 
     case CHAR_x:
+    if ((options & PCRE_JAVASCRIPT_COMPAT) != 0)
+      {
+      /* In JavaScript, \x must be followed by two hexadecimal numbers.
+      Otherwise it is a lowercase x letter. */
+      if ((digitab[ptr[1]] & ctype_xdigit) != 0 && (digitab[ptr[2]] & ctype_xdigit) != 0)
+        {
+        c = 0;
+        for (i = 0; i < 2; ++i)
+          {
+          register int cc = *(++ptr);
+#ifndef EBCDIC  /* ASCII/UTF-8 coding */
+          if (cc >= CHAR_a) cc -= 32;               /* Convert to upper case */
+          c = (c << 4) + cc - ((cc < CHAR_A)? CHAR_0 : (CHAR_A - 10));
+#else           /* EBCDIC coding */
+          if (cc >= CHAR_a && cc <= CHAR_z) cc += 64;  /* Convert to upper case */
+          c = (c << 4) + cc - ((cc >= CHAR_0)? CHAR_0 : (CHAR_A - 10));
+#endif
+          }
+        }
+      break;
+      }
+
     if (ptr[1] == CHAR_LEFT_CURLY_BRACKET)
       {
       const uschar *pt = ptr + 2;
@@ -1475,8 +1575,9 @@ Arguments:
 
 Returns:   the fixed length,
              or -1 if there is no fixed length,
-             or -2 if \C was encountered
+             or -2 if \C was encountered (in UTF-8 mode only)
              or -3 if an OP_RECURSE item was encountered and atend is FALSE
+             or -4 if an unknown opcode was encountered (internal error)
 */
 
 static int
@@ -1500,8 +1601,7 @@ for (;;)
     /* We only need to continue for OP_CBRA (normal capturing bracket) and
     OP_BRA (normal non-capturing bracket) because the other variants of these
     opcodes are all concerned with unlimited repeated groups, which of course
-    are not of fixed length. They will cause a -1 response from the default
-    case of this switch. */
+    are not of fixed length. */
 
     case OP_CBRA:
     case OP_BRA:
@@ -1515,15 +1615,17 @@ for (;;)
     cc += 1 + LINK_SIZE;
     break;
 
-    /* Reached end of a branch; if it's a ket it is the end of a nested
-    call. If it's ALT it is an alternation in a nested call. If it is
-    END it's the end of the outer call. All can be handled by the same code.
-    Note that we must not include the OP_KETRxxx opcodes here, because they
-    all imply an unlimited repeat. */
+    /* Reached end of a branch; if it's a ket it is the end of a nested call.
+    If it's ALT it is an alternation in a nested call. An ACCEPT is effectively
+    an ALT. If it is END it's the end of the outer call. All can be handled by
+    the same code. Note that we must not include the OP_KETRxxx opcodes here,
+    because they all imply an unlimited repeat. */
 
     case OP_ALT:
     case OP_KET:
     case OP_END:
+    case OP_ACCEPT:
+    case OP_ASSERT_ACCEPT:
     if (length < 0) length = branchlength;
       else if (length != branchlength) return -1;
     if (*cc != OP_ALT) return length;
@@ -1557,23 +1659,36 @@ for (;;)
 
     /* Skip over things that don't match chars */
 
-    case OP_REVERSE:
-    case OP_CREF:
-    case OP_NCREF:
-    case OP_RREF:
-    case OP_NRREF:
-    case OP_DEF:
+    case OP_MARK:
+    case OP_PRUNE_ARG:
+    case OP_SKIP_ARG:
+    case OP_THEN_ARG:
+    cc += cc[1] + _pcre_OP_lengths[*cc];
+    break;
+
     case OP_CALLOUT:
-    case OP_SOD:
-    case OP_SOM:
-    case OP_SET_SOM:
-    case OP_EOD:
-    case OP_EODN:
     case OP_CIRC:
     case OP_CIRCM:
+    case OP_CLOSE:
+    case OP_COMMIT:
+    case OP_CREF:
+    case OP_DEF:
     case OP_DOLL:
     case OP_DOLLM:
+    case OP_EOD:
+    case OP_EODN:
+    case OP_FAIL:
+    case OP_NCREF:
+    case OP_NRREF:
     case OP_NOT_WORD_BOUNDARY:
+    case OP_PRUNE:
+    case OP_REVERSE:
+    case OP_RREF:
+    case OP_SET_SOM:
+    case OP_SKIP:
+    case OP_SOD:
+    case OP_SOM:
+    case OP_THEN:
     case OP_WORD_BOUNDARY:
     cc += _pcre_OP_lengths[*cc];
     break;
@@ -1595,6 +1710,9 @@ for (;;)
     need to skip over a multibyte character in UTF8 mode.  */
 
     case OP_EXACT:
+    case OP_EXACTI:
+    case OP_NOTEXACT:
+    case OP_NOTEXACTI:
     branchlength += GET2(cc,1);
     cc += 4;
 #ifdef SUPPORT_UTF8
@@ -1615,6 +1733,10 @@ for (;;)
     cc += 2;
     /* Fall through */
 
+    case OP_HSPACE:
+    case OP_VSPACE:
+    case OP_NOT_HSPACE:
+    case OP_NOT_VSPACE:
     case OP_NOT_DIGIT:
     case OP_DIGIT:
     case OP_NOT_WHITESPACE:
@@ -1627,7 +1749,8 @@ for (;;)
     cc++;
     break;
 
-    /* The single-byte matcher isn't allowed */
+    /* The single-byte matcher isn't allowed. This only happens in UTF-8 mode;
+    otherwise \C is coded as OP_ALLANY. */
 
     case OP_ANYBYTE:
     return -2;
@@ -1646,6 +1769,8 @@ for (;;)
 
     switch (*cc)
       {
+      case OP_CRPLUS:
+      case OP_CRMINPLUS:
       case OP_CRSTAR:
       case OP_CRMINSTAR:
       case OP_CRQUERY:
@@ -1666,8 +1791,91 @@ for (;;)
 
     /* Anything else is variable length */
 
-    default:
+    case OP_ANYNL:
+    case OP_BRAMINZERO:
+    case OP_BRAPOS:
+    case OP_BRAPOSZERO:
+    case OP_BRAZERO:
+    case OP_CBRAPOS:
+    case OP_EXTUNI:
+    case OP_KETRMAX:
+    case OP_KETRMIN:
+    case OP_KETRPOS:
+    case OP_MINPLUS:
+    case OP_MINPLUSI:
+    case OP_MINQUERY:
+    case OP_MINQUERYI:
+    case OP_MINSTAR:
+    case OP_MINSTARI:
+    case OP_MINUPTO:
+    case OP_MINUPTOI:
+    case OP_NOTMINPLUS:
+    case OP_NOTMINPLUSI:
+    case OP_NOTMINQUERY:
+    case OP_NOTMINQUERYI:
+    case OP_NOTMINSTAR:
+    case OP_NOTMINSTARI:
+    case OP_NOTMINUPTO:
+    case OP_NOTMINUPTOI:
+    case OP_NOTPLUS:
+    case OP_NOTPLUSI:
+    case OP_NOTPOSPLUS:
+    case OP_NOTPOSPLUSI:
+    case OP_NOTPOSQUERY:
+    case OP_NOTPOSQUERYI:
+    case OP_NOTPOSSTAR:
+    case OP_NOTPOSSTARI:
+    case OP_NOTPOSUPTO:
+    case OP_NOTPOSUPTOI:
+    case OP_NOTQUERY:
+    case OP_NOTQUERYI:
+    case OP_NOTSTAR:
+    case OP_NOTSTARI:
+    case OP_NOTUPTO:
+    case OP_NOTUPTOI:
+    case OP_PLUS:
+    case OP_PLUSI:
+    case OP_POSPLUS:
+    case OP_POSPLUSI:
+    case OP_POSQUERY:
+    case OP_POSQUERYI:
+    case OP_POSSTAR:
+    case OP_POSSTARI:
+    case OP_POSUPTO:
+    case OP_POSUPTOI:
+    case OP_QUERY:
+    case OP_QUERYI:
+    case OP_REF:
+    case OP_REFI:
+    case OP_SBRA:
+    case OP_SBRAPOS:
+    case OP_SCBRA:
+    case OP_SCBRAPOS:
+    case OP_SCOND:
+    case OP_SKIPZERO:
+    case OP_STAR:
+    case OP_STARI:
+    case OP_TYPEMINPLUS:
+    case OP_TYPEMINQUERY:
+    case OP_TYPEMINSTAR:
+    case OP_TYPEMINUPTO:
+    case OP_TYPEPLUS:
+    case OP_TYPEPOSPLUS:
+    case OP_TYPEPOSQUERY:
+    case OP_TYPEPOSSTAR:
+    case OP_TYPEPOSUPTO:
+    case OP_TYPEQUERY:
+    case OP_TYPESTAR:
+    case OP_TYPEUPTO:
+    case OP_UPTO:
+    case OP_UPTOI:
     return -1;
+
+    /* Catch unrecognized opcodes so that when new ones are added they
+    are not forgotten, as has happened in the past. */
+
+    default:
+    return -4;
     }
   }
 /* Control never gets here */
@@ -3169,7 +3377,8 @@ for (;; ptr++)
 #ifdef PCRE_DEBUG
     if (code > cd->hwm) cd->hwm = code;                 /* High water info */
 #endif
-    if (code > cd->start_workspace + WORK_SIZE_CHECK)   /* Check for overrun */
+    if (code > cd->start_workspace + cd->workspace_size -
+        WORK_SIZE_SAFETY_MARGIN)                       /* Check for overrun */
       {
       *errorcodeptr = ERR52;
       goto FAILED;
@@ -3192,7 +3401,8 @@ for (;; ptr++)
       }
 
     *lengthptr += (int)(code - last_code);
-    DPRINTF(("length=%d added %d c=%c\n", *lengthptr, code - last_code, c));
+    DPRINTF(("length=%d added %d c=%c\n", *lengthptr, (int)(code - last_code),
+      c));
 
     /* If "previous" is set and it is not at the start of the work space, move
     it back to there, in order to avoid filling up the work space. Otherwise,
@@ -3218,7 +3428,8 @@ for (;; ptr++)
   /* In the real compile phase, just check the workspace used by the forward
   reference list. */
 
-  else if (cd->hwm > cd->start_workspace + WORK_SIZE_CHECK)
+  else if (cd->hwm > cd->start_workspace + cd->workspace_size -
+           WORK_SIZE_SAFETY_MARGIN)
     {
     *errorcodeptr = ERR52;
     goto FAILED;
@@ -3472,7 +3683,7 @@ for (;; ptr++)
 
       if (lengthptr != NULL)
         {
-        *lengthptr += class_utf8data - class_utf8data_base;
+        *lengthptr += (int)(class_utf8data - class_utf8data_base);
         class_utf8data = class_utf8data_base;
         }
 
@@ -3608,6 +3819,11 @@ for (;; ptr++)
         if (*errorcodeptr != 0) goto FAILED;
 
         if (-c == ESC_b) c = CHAR_BS;    /* \b is backspace in a class */
+        else if (-c == ESC_N)            /* \N is not supported in a class */
+          {
+          *errorcodeptr = ERR71;
+          goto FAILED;
+          }
         else if (-c == ESC_Q)            /* Handle start of quoted string */
           {
           if (ptr[1] == CHAR_BACKSLASH && ptr[2] == CHAR_E)
@@ -4033,7 +4249,7 @@ for (;; ptr++)
         if ((options & PCRE_CASELESS) != 0)
           {
           unsigned int othercase;
-	  if ((othercase = UCD_OTHERCASE(c)) != (unsigned int)c)
+          if ((othercase = UCD_OTHERCASE(c)) != (unsigned int)c)
             {
             *class_utf8data++ = XCL_SINGLE;
             class_utf8data += _pcre_ord2utf8(othercase, class_utf8data);
@@ -4166,7 +4382,7 @@ for (;; ptr++)
 
       /* Now fill in the complete length of the item */
 
-      PUT(previous, 1, code - previous);
+      PUT(previous, 1, (int)(code - previous));
       break;   /* End of class handling */
       }
 #endif
@@ -4308,7 +4524,7 @@ for (;; ptr++)
         {
         uschar *lastchar = code - 1;
         while((*lastchar & 0xc0) == 0x80) lastchar--;
-        c = code - lastchar;            /* Length of UTF-8 character */
+        c = (int)(code - lastchar);     /* Length of UTF-8 character */
         memcpy(utf8_char, lastchar, c); /* Save the char */
         c |= 0x80;                      /* Flag c as a length */
         }
@@ -4715,16 +4931,32 @@ for (;; ptr++)
             *lengthptr += delta;
             }
 
-          /* This is compiling for real */
+          /* This is compiling for real. If there is a set first byte for
+          the group, and we have not yet set a "required byte", set it. Make
+          sure there is enough workspace for copying forward references before
+          doing the copy. */
 
           else
             {
             if (groupsetfirstbyte && reqbyte < 0) reqbyte = firstbyte;
+
             for (i = 1; i < repeat_min; i++)
               {
               uschar *hc;
               uschar *this_hwm = cd->hwm;
               memcpy(code, previous, len);
+
+              while (cd->hwm > cd->start_workspace + cd->workspace_size -
+                     WORK_SIZE_SAFETY_MARGIN - (this_hwm - save_hwm))
+                {
+                int save_offset = save_hwm - cd->start_workspace;
+                int this_offset = this_hwm - cd->start_workspace;
+                *errorcodeptr = expand_workspace(cd);
+                if (*errorcodeptr != 0) goto FAILED;
+                save_hwm = (uschar *)cd->start_workspace + save_offset;
+                this_hwm = (uschar *)cd->start_workspace + this_offset;
+                }
+
               for (hc = save_hwm; hc < this_hwm; hc += LINK_SIZE)
                 {
                 PUT(cd->hwm, 0, GET(hc, 0) + len);
@@ -4792,6 +5024,21 @@ for (;; ptr++)
             }
 
           memcpy(code, previous, len);
+
+          /* Ensure there is enough workspace for forward references before
+          copying them. */
+
+          while (cd->hwm > cd->start_workspace + cd->workspace_size -
+                 WORK_SIZE_SAFETY_MARGIN - (this_hwm - save_hwm))
+            {
+            int save_offset = save_hwm - cd->start_workspace;
+            int this_offset = this_hwm - cd->start_workspace;
+            *errorcodeptr = expand_workspace(cd);
+            if (*errorcodeptr != 0) goto FAILED;
+            save_hwm = (uschar *)cd->start_workspace + save_offset;
+            this_hwm = (uschar *)cd->start_workspace + this_offset;
+            }
+
           for (hc = save_hwm; hc < this_hwm; hc += LINK_SIZE)
             {
             PUT(cd->hwm, 0, GET(hc, 0) + len + ((i != 0)? 2+LINK_SIZE : 1));
@@ -4823,41 +5070,47 @@ for (;; ptr++)
       behaviour of (?:xx)++ is the same as (?>xx)++ and this saves having to
       deal with possessive ONCEs specially.
 
-      Otherwise, if the quantifier was possessive, we convert the BRA code to
-      the POS form, and the KET code to KETRPOS. (It turns out to be convenient
-      at runtime to detect this kind of subpattern at both the start and at the
-      end.) The use of special opcodes makes it possible to reduce greatly the
-      stack usage in pcre_exec(). If the group is preceded by OP_BRAZERO,
-      convert this to OP_BRAPOSZERO. Then cancel the possessive flag so that
-      the default action below, of wrapping everything inside atomic brackets,
-      does not happen.
+      Otherwise, when we are doing the actual compile phase, check to see
+      whether this group is one that could match an empty string. If so,
+      convert the initial operator to the S form (e.g. OP_BRA -> OP_SBRA) so
+      that runtime checking can be done. [This check is also applied to ONCE
+      groups at runtime, but in a different way.]
 
-      Then, when we are doing the actual compile phase, check to see whether
-      this group is one that could match an empty string. If so, convert the
-      initial operator to the S form (e.g. OP_BRA -> OP_SBRA) so that runtime
-      checking can be done. [This check is also applied to ONCE groups at
-      runtime, but in a different way.] */
+      Then, if the quantifier was possessive and the bracket is not a
+      conditional, we convert the BRA code to the POS form, and the KET code to
+      KETRPOS. (It turns out to be convenient at runtime to detect this kind of
+      subpattern at both the start and at the end.) The use of special opcodes
+      makes it possible to reduce greatly the stack usage in pcre_exec(). If
+      the group is preceded by OP_BRAZERO, convert this to OP_BRAPOSZERO.
+
+      Then, if the minimum number of matches is 1 or 0, cancel the possessive
+      flag so that the default action below, of wrapping everything inside
+      atomic brackets, does not happen. When the minimum is greater than 1,
+      there will be earlier copies of the group, and so we still have to wrap
+      the whole thing. */
 
       else
         {
         uschar *ketcode = code - 1 - LINK_SIZE;
         uschar *bracode = ketcode - GET(ketcode, 1);
 
+        /* Convert possessive ONCE brackets to non-capturing */
+
         if ((*bracode == OP_ONCE || *bracode == OP_ONCE_NC) &&
             possessive_quantifier) *bracode = OP_BRA;
 
+        /* For non-possessive ONCE brackets, all we need to do is to
+        set the KET. */
+
         if (*bracode == OP_ONCE || *bracode == OP_ONCE_NC)
           *ketcode = OP_KETRMAX + repeat_type;
+
+        /* Handle non-ONCE brackets and possessive ONCEs (which have been
+        converted to non-capturing above). */
+
         else
           {
-          if (possessive_quantifier)
-            {
-            *bracode += 1;                   /* Switch to xxxPOS opcodes */
-            *ketcode = OP_KETRPOS;
-            if (brazeroptr != NULL) *brazeroptr = OP_BRAPOSZERO;
-            possessive_quantifier = FALSE;
-            }
-          else *ketcode = OP_KETRMAX + repeat_type;
+          /* In the compile phase, check for empty string matching. */
 
           if (lengthptr == NULL)
             {
@@ -4873,6 +5126,48 @@ for (;; ptr++)
               }
             while (*scode == OP_ALT);
             }
+
+          /* Handle possessive quantifiers. */
+
+          if (possessive_quantifier)
+            {
+            /* For COND brackets, we wrap the whole thing in a possessively
+            repeated non-capturing bracket, because we have not invented POS
+            versions of the COND opcodes. Because we are moving code along, we
+            must ensure that any pending recursive references are updated. */
+
+            if (*bracode == OP_COND || *bracode == OP_SCOND)
+              {
+              int nlen = (int)(code - bracode);
+              *code = OP_END;
+              adjust_recurse(bracode, 1 + LINK_SIZE, utf8, cd, save_hwm);
+              memmove(bracode + 1+LINK_SIZE, bracode, nlen);
+              code += 1 + LINK_SIZE;
+              nlen += 1 + LINK_SIZE;
+              *bracode = OP_BRAPOS;
+              *code++ = OP_KETRPOS;
+              PUTINC(code, 0, nlen);
+              PUT(bracode, 1, nlen);
+              }
+
+            /* For non-COND brackets, we modify the BRA code and use KETRPOS. */
+
+            else
+              {
+              *bracode += 1;              /* Switch to xxxPOS opcodes */
+              *ketcode = OP_KETRPOS;
+              }
+
+            /* If the minimum is zero, mark it as possessive, then unset the
+            possessive flag when the minimum is 0 or 1. */
+
+            if (brazeroptr != NULL) *brazeroptr = OP_BRAPOSZERO;
+            if (repeat_min < 2) possessive_quantifier = FALSE;
+            }
+
+          /* Non-possessive quantifier */
+
+          else *ketcode = OP_KETRMAX + repeat_type;
           }
         }
       }
@@ -4899,9 +5194,9 @@ for (;; ptr++)
     notation is just syntactic sugar, taken from Sun's Java package, but the
     special opcodes can optimize it.
 
-    Possessively repeated subpatterns have already been handled in the code
-    just above, so possessive_quantifier is always FALSE for them at this
-    stage.
+    Some (but not all) possessively repeated subpatterns have already been
+    completely handled in the code just above. For them, possessive_quantifier
+    is always FALSE at this stage.
 
     Note that the repeated item starts at tempcode, not at previous, which
     might be the first part of a string whose (former) last char we repeated.
@@ -5391,8 +5686,8 @@ for (;; ptr++)
 
         /* ------------------------------------------------------------ */
         case CHAR_C:                 /* Callout - may be followed by digits; */
-        previous_callout = code;  /* Save for later completion */
-        after_manual_callout = 1; /* Skip one item before completing */
+        previous_callout = code;     /* Save for later completion */
+        after_manual_callout = 1;    /* Skip one item before completing */
         *code++ = OP_CALLOUT;
           {
           int n = 0;
@@ -5763,6 +6058,12 @@ for (;; ptr++)
               of the group. Then remember the forward reference. */
 
               called = cd->start_code + recno;
+              if (cd->hwm >= cd->start_workspace + cd->workspace_size -
+                  WORK_SIZE_SAFETY_MARGIN)
+                {
+                *errorcodeptr = expand_workspace(cd);
+                if (*errorcodeptr != 0) goto FAILED;
+                }
               PUTINC(cd->hwm, 0, (int)(code + 1 - cd->start_code));
               }
 
@@ -5783,11 +6084,14 @@ for (;; ptr++)
               }
             }
 
-          /* Insert the recursion/subroutine item. */
+          /* Insert the recursion/subroutine item. It does not have a set first
+          byte (relevant if it is repeated, because it will then be wrapped
+          with ONCE brackets). */
 
           *code = OP_RECURSE;
           PUT(code, 1, (int)(called - cd->start_code));
           code += 1 + LINK_SIZE;
+          groupsetfirstbyte = FALSE;
           }
 
         /* Can't determine a first byte now */
@@ -6269,9 +6573,12 @@ for (;; ptr++)
           }
         else
 #endif
+        /* In non-UTF-8 mode, we turn \C into OP_ALLANY instead of OP_ANYBYTE
+        so that it works in DFA mode and in lookbehinds. */
+
           {
           previous = (-c > ESC_b && -c < ESC_Z)? code : NULL;
-          *code++ = -c;
+          *code++ = (!utf8 && c == -ESC_C)? OP_ALLANY : -c;
           }
         }
       continue;
@@ -6563,7 +6870,8 @@ for (;;)
         }
       else if (fixed_length < 0)
         {
-        *errorcodeptr = (fixed_length == -2)? ERR36 : ERR25;
+        *errorcodeptr = (fixed_length == -2)? ERR36 :
+                        (fixed_length == -4)? ERR70: ERR25;
         *ptrptr = ptr;
         return FALSE;
         }
@@ -7006,7 +7314,8 @@ compile_data *cd = &compile_block;
 computing the amount of memory that is needed. Compiled items are thrown away
 as soon as possible, so that a fairly large buffer should be sufficient for
 this purpose. The same space is used in the second phase for remembering where
-to fill in forward references to subpatterns. */
+to fill in forward references to subpatterns. That may overflow, in which case
+new memory is obtained from malloc(). */
 
 uschar cworkspace[COMPILE_WORK_SIZE];
 
@@ -7196,9 +7505,10 @@ cd->bracount = cd->final_bracount = 0;
 cd->names_found = 0;
 cd->name_entry_size = 0;
 cd->name_table = NULL;
-cd->start_workspace = cworkspace;
 cd->start_code = cworkspace;
 cd->hwm = cworkspace;
+cd->start_workspace = cworkspace;
+cd->workspace_size = COMPILE_WORK_SIZE;
 cd->start_pattern = (const uschar *)pattern;
 cd->end_pattern = (const uschar *)(pattern + strlen(pattern));
 cd->req_varyopt = 0;
@@ -7233,7 +7543,7 @@ externally provided function. Integer overflow should no longer be possible
 because nowadays we limit the maximum value of cd->names_found and
 cd->name_entry_size. */
 
-size = length + sizeof(real_pcre) + cd->names_found * (cd->name_entry_size + 3);
+size = length + sizeof(real_pcre) + cd->names_found * cd->name_entry_size;
 re = (real_pcre *)(pcre_malloc)(size);
 
 if (re == NULL)
@@ -7276,7 +7586,7 @@ cd->names_found = 0;
 cd->name_table = (uschar *)re + re->name_table_offset;
 codestart = cd->name_table + re->name_entry_size * re->name_count;
 cd->start_code = codestart;
-cd->hwm = cworkspace;
+cd->hwm = (uschar *)(cd->start_workspace);
 cd->req_varyopt = 0;
 cd->had_accept = FALSE;
 cd->check_lookbehind = FALSE;
@@ -7310,19 +7620,33 @@ if debugging, leave the test till after things are printed out. */
 if (code - codestart > length) errorcode = ERR23;
 #endif
 
-/* Fill in any forward references that are required. */
+/* Fill in any forward references that are required. There may be repeated
+references; optimize for them, as searching a large regex takes time. */
 
-while (errorcode == 0 && cd->hwm > cworkspace)
+if (cd->hwm > cd->start_workspace)
   {
-  int offset, recno;
-  const uschar *groupptr;
-  cd->hwm -= LINK_SIZE;
-  offset = GET(cd->hwm, 0);
-  recno = GET(codestart, offset);
-  groupptr = _pcre_find_bracket(codestart, utf8, recno);
-  if (groupptr == NULL) errorcode = ERR53;
-    else PUT(((uschar *)codestart), offset, (int)(groupptr - codestart));
+  int prev_recno = -1;
+  const uschar *groupptr = NULL;
+  while (errorcode == 0 && cd->hwm > cd->start_workspace)
+    {
+    int offset, recno;
+    cd->hwm -= LINK_SIZE;
+    offset = GET(cd->hwm, 0);
+    recno = GET(codestart, offset);
+    if (recno != prev_recno)
+      {
+      groupptr = _pcre_find_bracket(codestart, utf8, recno);
+      prev_recno = recno;
+      }
+    if (groupptr == NULL) errorcode = ERR53;
+      else PUT(((uschar *)codestart), offset, (int)(groupptr - codestart));
+    }
   }
+
+/* If the workspace had to be expanded, free the new memory. */
+
+if (cd->workspace_size > COMPILE_WORK_SIZE)
+  (pcre_free)((void *)cd->start_workspace);
 
 /* Give an error if there's back reference to a non-existent capturing
 subpattern. */
@@ -7362,7 +7686,8 @@ if (cd->check_lookbehind)
       DPRINTF(("fixed length = %d\n", fixed_length));
       if (fixed_length < 0)
         {
-        errorcode = (fixed_length == -2)? ERR36 : ERR25;
+        errorcode = (fixed_length == -2)? ERR36 :
+                    (fixed_length == -4)? ERR70 : ERR25;
         break;
         }
       PUT(cc, 1, fixed_length);

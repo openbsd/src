@@ -1252,8 +1252,8 @@ value such as \n. They must have non-zero values, as check_escape() returns
 their negation. Also, they must appear in the same order as in the opcode
 definitions below, up to ESC_z. There's a dummy for OP_ALLANY because it
 corresponds to "." in DOTALL mode rather than an escape sequence. It is also
-used for [^] in JavaScript compatibility mode. In non-DOTALL mode, "." behaves
-like \N.
+used for [^] in JavaScript compatibility mode, and for \C in non-utf8 mode. In
+non-DOTALL mode, "." behaves like \N.
 
 The special values ESC_DU, ESC_du, etc. are used instead of ESC_D, ESC_d, etc.
 when PCRE_UCP is set, when replacement of \d etc by \p sequences is required.
@@ -1665,7 +1665,7 @@ enum { ERR0,  ERR1,  ERR2,  ERR3,  ERR4,  ERR5,  ERR6,  ERR7,  ERR8,  ERR9,
        ERR40, ERR41, ERR42, ERR43, ERR44, ERR45, ERR46, ERR47, ERR48, ERR49,
        ERR50, ERR51, ERR52, ERR53, ERR54, ERR55, ERR56, ERR57, ERR58, ERR59,
        ERR60, ERR61, ERR62, ERR63, ERR64, ERR65, ERR66, ERR67, ERR68, ERR69,
-       ERRCOUNT };
+       ERR70, ERR71, ERR72, ERRCOUNT };
 
 /* The real format of the start of the pcre block; the index of names and the
 code vector run on as long as necessary after the end. We store an explicit
@@ -1741,6 +1741,7 @@ typedef struct compile_data {
   uschar *name_table;           /* The name/number table */
   int  names_found;             /* Number of entries so far */
   int  name_entry_size;         /* Size of each entry */
+  int  workspace_size;          /* Size of workspace */
   int  bracount;                /* Count of capturing parens as we compile */
   int  final_bracount;          /* Saved value after first pass */
   int  top_backref;             /* Maximum back reference */
@@ -1824,6 +1825,7 @@ typedef struct match_data {
   BOOL   hitend;                /* Hit the end of the subject at some point */
   BOOL   bsr_anycrlf;           /* \R is just any CRLF, not full Unicode */
   BOOL   hasthen;               /* Pattern contains (*THEN) */
+  BOOL   ignore_skip_arg;       /* For re-run when SKIP name not found */
   const  uschar *start_code;    /* For use when recursing */
   USPTR  start_subject;         /* Start of the subject string */
   USPTR  end_subject;           /* End of the subject string */
@@ -1839,7 +1841,8 @@ typedef struct match_data {
   int    eptrn;                 /* Next free eptrblock */
   recursion_info *recursive;    /* Linked list of recursion data */
   void  *callout_data;          /* To pass back to callouts */
-  const  uschar *mark;          /* Mark pointer to pass back */
+  const  uschar *mark;          /* Mark pointer to pass back on success */
+  const  uschar *nomatch_mark;  /* Mark pointer to pass back on failure */
   const  uschar *once_target;   /* Where to back up to for atomic groups */
 } match_data;
 
@@ -1950,6 +1953,7 @@ extern void          _pcre_jit_compile(const real_pcre *, pcre_extra *);
 extern int           _pcre_jit_exec(const real_pcre *, void *, PCRE_SPTR,
                         int, int, int, int, int *, int);
 extern void          _pcre_jit_free(void *);
+extern int           _pcre_jit_get_size(void *);
 #endif
 
 /* Unicode character database (UCD) */

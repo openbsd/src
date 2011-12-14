@@ -42,9 +42,9 @@ POSSIBILITY OF SUCH DAMAGE.
 /* The current PCRE version information. */
 
 #define PCRE_MAJOR          8
-#define PCRE_MINOR          20
+#define PCRE_MINOR          21
 #define PCRE_PRERELEASE     
-#define PCRE_DATE           2011-10-21
+#define PCRE_DATE           2011-12-12
 
 /* When an application links to a PCRE DLL in Windows, the symbols that are
 imported have to be identified as such. When building PCRE, the appropriate
@@ -98,20 +98,25 @@ extern "C" {
 /* Options. Some are compile-time only, some are run-time only, and some are
 both, so we keep them all distinct. However, almost all the bits in the options
 word are now used. In the long run, we may have to re-use some of the
-compile-time only bits for runtime options, or vice versa. */
+compile-time only bits for runtime options, or vice versa. In the comments
+below, "compile", "exec", and "DFA exec" mean that the option is permitted to
+be set for those functions; "used in" means that an option may be set only for
+compile, but is subsequently referenced in exec and/or DFA exec. Any of the
+compile-time options may be inspected during studying (and therefore JIT
+compiling). */
 
 #define PCRE_CASELESS           0x00000001  /* Compile */
 #define PCRE_MULTILINE          0x00000002  /* Compile */
 #define PCRE_DOTALL             0x00000004  /* Compile */
 #define PCRE_EXTENDED           0x00000008  /* Compile */
 #define PCRE_ANCHORED           0x00000010  /* Compile, exec, DFA exec */
-#define PCRE_DOLLAR_ENDONLY     0x00000020  /* Compile */
+#define PCRE_DOLLAR_ENDONLY     0x00000020  /* Compile, used in exec, DFA exec */
 #define PCRE_EXTRA              0x00000040  /* Compile */
 #define PCRE_NOTBOL             0x00000080  /* Exec, DFA exec */
 #define PCRE_NOTEOL             0x00000100  /* Exec, DFA exec */
 #define PCRE_UNGREEDY           0x00000200  /* Compile */
 #define PCRE_NOTEMPTY           0x00000400  /* Exec, DFA exec */
-#define PCRE_UTF8               0x00000800  /* Compile */
+#define PCRE_UTF8               0x00000800  /* Compile, used in exec, DFA exec */
 #define PCRE_NO_AUTO_CAPTURE    0x00001000  /* Compile */
 #define PCRE_NO_UTF8_CHECK      0x00002000  /* Compile, exec, DFA exec */
 #define PCRE_AUTO_CALLOUT       0x00004000  /* Compile */
@@ -119,7 +124,7 @@ compile-time only bits for runtime options, or vice versa. */
 #define PCRE_PARTIAL            0x00008000  /* Backwards compatible synonym */
 #define PCRE_DFA_SHORTEST       0x00010000  /* DFA exec */
 #define PCRE_DFA_RESTART        0x00020000  /* DFA exec */
-#define PCRE_FIRSTLINE          0x00040000  /* Compile */
+#define PCRE_FIRSTLINE          0x00040000  /* Compile, used in exec, DFA exec */
 #define PCRE_DUPNAMES           0x00080000  /* Compile */
 #define PCRE_NEWLINE_CR         0x00100000  /* Compile, exec, DFA exec */
 #define PCRE_NEWLINE_LF         0x00200000  /* Compile, exec, DFA exec */
@@ -128,12 +133,12 @@ compile-time only bits for runtime options, or vice versa. */
 #define PCRE_NEWLINE_ANYCRLF    0x00500000  /* Compile, exec, DFA exec */
 #define PCRE_BSR_ANYCRLF        0x00800000  /* Compile, exec, DFA exec */
 #define PCRE_BSR_UNICODE        0x01000000  /* Compile, exec, DFA exec */
-#define PCRE_JAVASCRIPT_COMPAT  0x02000000  /* Compile */
+#define PCRE_JAVASCRIPT_COMPAT  0x02000000  /* Compile, used in exec */
 #define PCRE_NO_START_OPTIMIZE  0x04000000  /* Compile, exec, DFA exec */
 #define PCRE_NO_START_OPTIMISE  0x04000000  /* Synonym */
 #define PCRE_PARTIAL_HARD       0x08000000  /* Exec, DFA exec */
 #define PCRE_NOTEMPTY_ATSTART   0x10000000  /* Exec, DFA exec */
-#define PCRE_UCP                0x20000000  /* Compile */
+#define PCRE_UCP                0x20000000  /* Compile, used in exec, DFA exec */
 
 /* Exec-time and get/set-time error codes */
 
@@ -211,6 +216,7 @@ compile-time only bits for runtime options, or vice versa. */
 #define PCRE_INFO_HASCRORLF         14
 #define PCRE_INFO_MINLENGTH         15
 #define PCRE_INFO_JIT               16
+#define PCRE_INFO_JITSIZE           17
 
 /* Request types for pcre_config(). Do not re-arrange, in order to remain
 compatible. */
