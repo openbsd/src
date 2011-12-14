@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.193 2011/02/09 21:13:31 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.194 2011/12/14 18:01:55 ajacoutot Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -142,6 +142,7 @@ int	form;
 int	stru;			/* avoid C keyword */
 int	mode;
 int	doutmp = 0;		/* update utmp file */
+int	nowtmp = 0;		/* do not update wtmp file */
 int	usedefault = 1;		/* for data transfers */
 int	pdata = -1;		/* for passive mode */
 int	family = AF_UNSPEC;
@@ -249,13 +250,13 @@ curdir(void)
 	return (guest ? path+1 : path);
 }
 
-char *argstr = "AdDhnlMSt:T:u:UvP46";
+char *argstr = "AdDhnlMSt:T:u:PUvW46";
 
 static void
 usage(void)
 {
 	syslog(LOG_ERR,
-	    "usage: ftpd [-46ADdlMnPSU] [-T maxtimeout] [-t timeout] [-u mask]");
+	    "usage: ftpd [-46ADdlMnPSUW] [-T maxtimeout] [-t timeout] [-u mask]");
 	exit(2);
 }
 
@@ -361,6 +362,10 @@ main(int argc, char *argv[])
 			doutmp = 1;
 			break;
 
+		case 'W':
+			nowtmp = 1;
+			break;
+
 		case '4':
 			family = AF_INET;
 			break;
@@ -373,6 +378,11 @@ main(int argc, char *argv[])
 			usage();
 			break;
 		}
+	}
+
+	if (nowtmp && doutmp) {
+		syslog(LOG_ERR, "options 'U' and 'W' are mutually exclusive");
+		exit(1);
 	}
 
 	(void) freopen(_PATH_DEVNULL, "w", stderr);
@@ -880,7 +890,8 @@ end_login(void)
 {
 	sigprocmask (SIG_BLOCK, &allsigs, NULL);
 	if (logged_in) {
-		ftpdlogwtmp(ttyline, "", "");
+		if (!nowtmp)
+			ftpdlogwtmp(ttyline, "", "");
 		if (doutmp)
 			ftpd_logout(utmp.ut_line);
 	}
@@ -986,7 +997,8 @@ pass(char *passwd)
 	}
 
 	/* open wtmp before chroot */
-	ftpdlogwtmp(ttyline, pw->pw_name, remotehost);
+	if (!nowtmp)
+		ftpdlogwtmp(ttyline, pw->pw_name, remotehost);
 
 	/* open utmp before chroot */
 	if (doutmp) {
@@ -2187,7 +2199,8 @@ dologout(int status)
 
 	if (logged_in) {
 		sigprocmask(SIG_BLOCK, &allsigs, NULL);
-		ftpdlogwtmp(ttyline, "", "");
+		if (!nowtmp)
+			ftpdlogwtmp(ttyline, "", "");
 		if (doutmp)
 			ftpd_logout(utmp.ut_line);
 	}

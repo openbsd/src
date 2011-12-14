@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.66 2010/08/30 07:06:54 lum Exp $
+.\"	$OpenBSD: ftpd.8,v 1.67 2011/12/14 18:01:55 ajacoutot Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: August 30 2010 $
+.Dd $Mdocdate: December 14 2011 $
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd Internet File Transfer Protocol server
 .Sh SYNOPSIS
 .Nm ftpd
-.Op Fl 46ADdlMnPSU
+.Op Fl 46ADdlMnPSUW
 .Op Fl T Ar maxtimeout
 .Op Fl t Ar timeout
 .Op Fl u Ar mask
@@ -141,6 +141,10 @@ FTP session is logged to the file
 .Pa /var/run/utmp ,
 making them visible to commands such as
 .Xr who 1 .
+.Fl U
+and
+.Fl W
+are mutually exclusive.
 .It Fl u Ar mask
 Force the umask to
 .Ar mask ,
@@ -148,6 +152,13 @@ instead of the default specified in
 .Pa /etc/login.conf
 (usually 022).
 Also disallows chmod.
+.It Fl W
+Do not save login records to
+.Pa /var/run/wtmp .
+.Fl W
+and
+.Fl U
+are mutually exclusive.
 .El
 .Pp
 The file
