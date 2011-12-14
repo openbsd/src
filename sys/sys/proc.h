@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.147 2011/12/11 19:42:28 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.148 2011/12/14 07:32:16 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -158,6 +158,10 @@ struct process {
 	struct	proc *ps_single;	/* Single threading to this thread. */
 	int	ps_singlecount;		/* Not yet suspended threads. */
 
+	int	ps_traceflag;		/* Kernel trace points. */
+	struct	vnode *ps_tracevp;	/* Trace to vnode. */
+	struct	ucred *ps_tracecred;	/* Creds for writing trace */
+
 /* End area that is zeroed on creation. */
 #define	ps_endzero	ps_startcopy
 
@@ -264,9 +268,6 @@ struct proc {
 	u_quad_t p_sticks;		/* Statclock hits in system mode. */
 	u_quad_t p_iticks;		/* Statclock hits processing intr. */
 
-	int	p_traceflag;		/* Kernel trace points. */
-	struct	vnode *p_tracep;	/* Trace to vnode. */
-
 	void	*p_systrace;		/* Back pointer to systrace */
 
 	int	p_ptmask;		/* Ptrace event mask */
@@ -329,6 +330,7 @@ struct proc {
  * These flags are kept in p_flag, except those with a leading underbar,
  * which are in process's ps_flags
  */
+#define	P_INKTR		0x000001	/* In a ktrace op, don't recurse */
 #define	_P_CONTROLT	0x000002	/* Has a controlling terminal. */
 #define	P_INMEM		0x000004	/* Loaded into memory. UNUSED */
 #define	P_SIGSUSPEND	0x000008	/* Need to restore before-suspend mask*/

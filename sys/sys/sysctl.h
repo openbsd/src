@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.118 2011/12/09 16:14:54 nicm Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.119 2011/12/14 07:32:16 guenther Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -516,8 +516,8 @@ do {									\
 	(kp)->p_sticks = (p)->p_sticks;					\
 	(kp)->p_iticks = (p)->p_iticks;					\
 									\
-	(kp)->p_tracep = PTRTOINT64((p)->p_tracep);			\
-	(kp)->p_traceflag = (p)->p_traceflag;				\
+	(kp)->p_tracep = PTRTOINT64((pr)->ps_tracevp);			\
+	(kp)->p_traceflag = (pr)->ps_traceflag;				\
 									\
 	(kp)->p_siglist = (p)->p_siglist;				\
 	(kp)->p_sigmask = (p)->p_sigmask;				\

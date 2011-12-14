@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.55 2011/11/21 03:01:20 djm Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.56 2011/12/14 07:32:16 guenther Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -52,32 +52,68 @@
 
 #include <uvm/uvm_extern.h>
 
-void ktrinitheader(struct ktr_header *, struct proc *, int);
-int ktrops(struct proc *, struct proc *, int, int, struct vnode *);
-int ktrsetchildren(struct proc *, struct process *, int, int,
-			struct vnode *);
-int ktrwrite(struct proc *, struct ktr_header *);
-int ktrcanset(struct proc *, struct proc *);
+void	ktrinitheader(struct ktr_header *, struct proc *, int);
+int	ktrops(struct proc *, struct process *, int, int, struct vnode *,
+	    struct ucred *);
+int	ktrsetchildren(struct proc *, struct process *, int, int,
+	    struct vnode *, struct ucred *);
+int	ktrwrite(struct proc *, struct ktr_header *);
+int	ktrcanset(struct proc *, struct process *);
 
 /*
- * Change the trace vnode in a correct way (to avoid races).
+ * Clear the trace settings in a correct way (to avoid races).
  */
 void
-ktrsettracevnode(struct proc *p, struct vnode *newvp)
+ktrcleartrace(struct process *pr)
 {
 	struct vnode *vp;
+	struct ucred *cred;
 
-	if (p->p_tracep == newvp)	/* avoid work */
-		return;
+	if (pr->ps_tracevp != NULL) {
+		vp = pr->ps_tracevp;
+		cred = pr->ps_tracecred;
 
-	if (newvp != NULL)
-		vref(newvp);
+		pr->ps_traceflag = 0;
+		pr->ps_tracevp = NULL;
+		pr->ps_tracecred = NULL;
 
-	vp = p->p_tracep;
-	p->p_tracep = newvp;
-
-	if (vp != NULL)
 		vrele(vp);
+		crfree(cred);
+	}
+}
+
+/*
+ * Change the trace setting in a correct way (to avoid races).
+ */
+void
+ktrsettrace(struct process *pr, int facs, struct vnode *newvp,
+    struct ucred *newcred)
+{
+	struct vnode *oldvp;
+	struct ucred *oldcred;
+
+	KASSERT(newvp != NULL);
+	KASSERT(newcred != NULL);
+
+	pr->ps_traceflag |= facs;
+
+	/* nothing to change about where the trace goes? */
+	if (pr->ps_tracevp == newvp && pr->ps_tracecred == newcred)
+		return;	
+
+	vref(newvp);
+	crhold(newcred);
+
+	oldvp = pr->ps_tracevp;
+	oldcred = pr->ps_tracecred;
+
+	pr->ps_tracevp = newvp;
+	pr->ps_tracecred = newcred;
+
+	if (oldvp != NULL) {
+		vrele(oldvp);
+		crfree(oldcred);
+	}
 }
 
 void
@@ -109,7 +145,7 @@ ktrsyscall(struct proc *p, register_t code, size_t argsize, register_t args[])
 			nargs = min(args[1], CTL_MAXNAME);
 		len += nargs * sizeof(int);
 	}
-	p->p_traceflag |= KTRFAC_ACTIVE;
+	atomic_setbits_int(&p->p_flag, P_INKTR);
 	ktrinitheader(&kth, p, KTR_SYSCALL);
 	ktp = malloc(len, M_TEMP, M_WAITOK);
 	ktp->ktr_code = code;
@@ -125,7 +161,7 @@ ktrsyscall(struct proc *p, register_t code, size_t argsize, register_t args[])
 	kth.ktr_len = len;
 	ktrwrite(p, &kth);
 	free(ktp, M_TEMP);
-	p->p_traceflag &= ~KTRFAC_ACTIVE;
+	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
 
 void
@@ -134,7 +170,7 @@ ktrsysret(struct proc *p, register_t code, int error, register_t retval)
 	struct ktr_header kth;
 	struct ktr_sysret ktp;
 
-	p->p_traceflag |= KTRFAC_ACTIVE;
+	atomic_setbits_int(&p->p_flag, P_INKTR);
 	ktrinitheader(&kth, p, KTR_SYSRET);
 	ktp.ktr_code = code;
 	ktp.ktr_error = error;
@@ -144,7 +180,7 @@ ktrsysret(struct proc *p, register_t code, int error, register_t retval)
 	kth.ktr_len = sizeof(struct ktr_sysret);
 
 	ktrwrite(p, &kth);
-	p->p_traceflag &= ~KTRFAC_ACTIVE;
+	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
 
 void
@@ -152,13 +188,13 @@ ktrnamei(struct proc *p, char *path)
 {
 	struct ktr_header kth;
 
-	p->p_traceflag |= KTRFAC_ACTIVE;
+	atomic_setbits_int(&p->p_flag, P_INKTR);
 	ktrinitheader(&kth, p, KTR_NAMEI);
 	kth.ktr_len = strlen(path);
 	kth.ktr_buf = path;
 
 	ktrwrite(p, &kth);
-	p->p_traceflag &= ~KTRFAC_ACTIVE;
+	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
 
 void
@@ -166,13 +202,13 @@ ktremul(struct proc *p, char *emul)
 {
 	struct ktr_header kth;
 
-	p->p_traceflag |= KTRFAC_ACTIVE;
+	atomic_setbits_int(&p->p_flag, P_INKTR);
 	ktrinitheader(&kth, p, KTR_EMUL);
 	kth.ktr_len = strlen(emul);
 	kth.ktr_buf = emul;
 
 	ktrwrite(p, &kth);
-	p->p_traceflag &= ~KTRFAC_ACTIVE;
+	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
 
 void
@@ -188,7 +224,7 @@ ktrgenio(struct proc *p, int fd, enum uio_rw rw, struct iovec *iov, int len,
 	if (error)
 		return;
 
-	p->p_traceflag |= KTRFAC_ACTIVE;
+	atomic_setbits_int(&p->p_flag, P_INKTR);
 
 	buflen = min(PAGE_SIZE, len + sizeof(struct ktr_genio));
 
@@ -231,7 +267,7 @@ ktrgenio(struct proc *p, int fd, enum uio_rw rw, struct iovec *iov, int len,
 	}
 
 	free(ktp, M_TEMP);
-	p->p_traceflag &= ~KTRFAC_ACTIVE;
+	atomic_clearbits_int(&p->p_flag, P_INKTR);
 	
 }
 
@@ -242,7 +278,7 @@ ktrpsig(struct proc *p, int sig, sig_t action, int mask, int code,
 	struct ktr_header kth;
 	struct ktr_psig kp;
 
-	p->p_traceflag |= KTRFAC_ACTIVE;
+	atomic_setbits_int(&p->p_flag, P_INKTR);
 	ktrinitheader(&kth, p, KTR_PSIG);
 	kp.signo = (char)sig;
 	kp.action = action;
@@ -253,7 +289,7 @@ ktrpsig(struct proc *p, int sig, sig_t action, int mask, int code,
 	kth.ktr_len = sizeof(struct ktr_psig);
 
 	ktrwrite(p, &kth);
-	p->p_traceflag &= ~KTRFAC_ACTIVE;
+	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
 
 void
@@ -262,7 +298,7 @@ ktrcsw(struct proc *p, int out, int user)
 	struct ktr_header kth;
 	struct	ktr_csw kc;
 
-	p->p_traceflag |= KTRFAC_ACTIVE;
+	atomic_setbits_int(&p->p_flag, P_INKTR);
 	ktrinitheader(&kth, p, KTR_CSW);
 	kc.out = out;
 	kc.user = user;
@@ -270,7 +306,7 @@ ktrcsw(struct proc *p, int out, int user)
 	kth.ktr_len = sizeof(struct ktr_csw);
 
 	ktrwrite(p, &kth);
-	p->p_traceflag &= ~KTRFAC_ACTIVE;
+	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
 
 void
@@ -280,7 +316,7 @@ ktrstruct(struct proc *p, const char *name, const void *data, size_t datalen)
 	void *buf;
 	size_t buflen;
 
-	p->p_traceflag |= KTRFAC_ACTIVE;
+	atomic_setbits_int(&p->p_flag, P_INKTR);
 	ktrinitheader(&kth, p, KTR_STRUCT);
 	
 	if (data == NULL)
@@ -294,7 +330,7 @@ ktrstruct(struct proc *p, const char *name, const void *data, size_t datalen)
 
 	ktrwrite(p, &kth);
 	free(buf, M_TEMP);
-	p->p_traceflag &= ~KTRFAC_ACTIVE;
+	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
 
 /* Interface and common routines */
@@ -315,6 +351,7 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 	struct vnode *vp = NULL;
 	struct proc *p = NULL;
 	struct process *pr = NULL;
+	struct ucred *cred = NULL;
 	struct pgrp *pg;
 	int facs = SCARG(uap, facs) & ~((unsigned) KTRFAC_ROOT);
 	int ops = KTROP(SCARG(uap, ops));
@@ -323,24 +360,23 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 	int error = 0;
 	struct nameidata nd;
 
-	curp->p_traceflag |= KTRFAC_ACTIVE;
+	atomic_setbits_int(&curp->p_flag, P_INKTR);
 	if (ops != KTROP_CLEAR) {
 		/*
 		 * an operation which requires a file argument.
 		 */
+		cred = curp->p_ucred;
+		crhold(cred);
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, fname),
 		    curp);
-		if ((error = vn_open(&nd, FREAD|FWRITE|O_NOFOLLOW, 0)) != 0) {
-			curp->p_traceflag &= ~KTRFAC_ACTIVE;
-			return (error);
-		}
+		if ((error = vn_open(&nd, FREAD|FWRITE|O_NOFOLLOW, 0)) != 0)
+			goto done;
 		vp = nd.ni_vp;
 
 		VOP_UNLOCK(vp, 0, curp);
 		if (vp->v_type != VREG) {
-			(void) vn_close(vp, FREAD|FWRITE, curp->p_ucred, curp);
-			curp->p_traceflag &= ~KTRFAC_ACTIVE;
-			return (EACCES);
+			error = EACCES;
+			goto done;
 		}
 	}
 	/*
@@ -348,11 +384,10 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 	 */
 	if (ops == KTROP_CLEARFILE) {
 		LIST_FOREACH(p, &allproc, p_list) {
-			if (p->p_tracep == vp) {
-				if (ktrcanset(curp, p)) {
-					p->p_traceflag = 0;
-					ktrsettracevnode(p, NULL);
-				} else
+			if (p->p_p->ps_tracevp == vp) {
+				if (ktrcanset(curp, p->p_p))
+					ktrcleartrace(p->p_p);
+				else
 					error = EPERM;
 			}
 		}
@@ -365,6 +400,8 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 		error = EINVAL;
 		goto done;
 	}
+	if (ops == KTROP_SET && suser(curp, 0) == 0)
+		facs |= KTRFAC_ROOT;
 	/* 
 	 * do it
 	 */
@@ -379,10 +416,10 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 		}
 		LIST_FOREACH(pr, &pg->pg_members, ps_pglist) {
 			if (descend)
-				ret |= ktrsetchildren(curp, pr, ops, facs, vp);
+				ret |= ktrsetchildren(curp, pr, ops, facs, vp,
+				    cred);
 			else 
-				TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link)
-					ret |= ktrops(curp, p, ops, facs, vp);
+				ret |= ktrops(curp, pr, ops, facs, vp, cred);
 		}
 					
 	} else {
@@ -395,63 +432,64 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 			goto done;
 		}
 		if (descend)
-			ret |= ktrsetchildren(curp, pr, ops, facs, vp);
+			ret |= ktrsetchildren(curp, pr, ops, facs, vp, cred);
 		else
-			TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
-				ret |= ktrops(curp, p, ops, facs, vp);
-		}
+			ret |= ktrops(curp, pr, ops, facs, vp, cred);
 	}
 	if (!ret)
 		error = EPERM;
 done:
 	if (vp != NULL)
-		(void) vn_close(vp, FWRITE, curp->p_ucred, curp);
-	curp->p_traceflag &= ~KTRFAC_ACTIVE;
+		(void) vn_close(vp, FREAD|FWRITE, cred, curp);
+	if (cred != NULL)
+		crfree(cred);
+	atomic_clearbits_int(&curp->p_flag, P_INKTR);
 	return (error);
 }
 
 int
-ktrops(struct proc *curp, struct proc *p, int ops, int facs, struct vnode *vp)
+ktrops(struct proc *curp, struct process *pr, int ops, int facs,
+    struct vnode *vp, struct ucred *cred)
 {
+	struct proc *p;
 
-	if (!ktrcanset(curp, p))
+	if (!ktrcanset(curp, pr))
 		return (0);
-	if (ops == KTROP_SET) {
-		ktrsettracevnode(p, vp);
-		p->p_traceflag |= facs;
-		if (suser(curp, 0) == 0)
-			p->p_traceflag |= KTRFAC_ROOT;
-	} else {	
+	if (ops == KTROP_SET)
+		ktrsettrace(pr, facs, vp, cred);
+	else {	
 		/* KTROP_CLEAR */
-		if (((p->p_traceflag &= ~facs) & KTRFAC_MASK) == 0) {
-			/* no more tracing */
-			p->p_traceflag = 0;
-			ktrsettracevnode(p, NULL);
+		pr->ps_traceflag &= ~facs;
+		if ((pr->ps_traceflag & KTRFAC_MASK) == 0) {
+			/* cleared all the facility bits, so stop completely */
+			ktrcleartrace(pr);
 		}
 	}
 
 	/*
 	 * Emit an emulation record, every time there is a ktrace
 	 * change/attach request. 
+	 * XXX an EMUL record for each thread?  Perhaps should have
+	 * XXX a record type to say "this pid is really a thread of this
+	 * XXX other pid" and only generate an EMUL record for the main pid
 	 */
-	if (KTRPOINT(p, KTR_EMUL))
-		ktremul(p, p->p_emul->e_name);
+	TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link)
+		if (KTRPOINT(p, KTR_EMUL))
+			ktremul(p, p->p_emul->e_name);
 
 	return (1);
 }
 
 int
 ktrsetchildren(struct proc *curp, struct process *top, int ops, int facs,
-    struct vnode *vp)
+    struct vnode *vp, struct ucred *cred)
 {
 	struct process *pr;
-	struct proc *p;
 	int ret = 0;
 
 	pr = top;
 	for (;;) {
-		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link)
-			ret |= ktrops(curp, p, ops, facs, vp);
+		ret |= ktrops(curp, pr, ops, facs, vp, cred);
 		/*
 		 * If this process has children, descend to them next,
 		 * otherwise do any siblings, and if done with this level,
@@ -478,7 +516,8 @@ ktrwrite(struct proc *p, struct ktr_header *kth)
 	struct uio auio;
 	struct iovec aiov[2];
 	int error;
-	struct vnode *vp = p->p_tracep;
+	struct vnode *vp = p->p_p->ps_tracevp;
+	struct ucred *cred = p->p_p->ps_tracecred;
 
 	if (vp == NULL)
 		return 0;
@@ -497,8 +536,10 @@ ktrwrite(struct proc *p, struct ktr_header *kth)
 		aiov[1].iov_len = kth->ktr_len;
 		auio.uio_resid += kth->ktr_len;
 	}
+	crhold(cred);
 	vget(vp, LK_EXCLUSIVE | LK_RETRY, p);
-	error = VOP_WRITE(vp, &auio, IO_UNIT|IO_APPEND, p->p_ucred);
+	error = VOP_WRITE(vp, &auio, IO_UNIT|IO_APPEND, cred);
+	crfree(cred);
 	if (!error) {
 		vput(vp);
 		return (0);
@@ -508,12 +549,9 @@ ktrwrite(struct proc *p, struct ktr_header *kth)
 	 */
 	log(LOG_NOTICE, "ktrace write failed, errno %d, tracing stopped\n",
 	    error);
-	LIST_FOREACH(p, &allproc, p_list) {
-		if (p->p_tracep == vp) {
-			p->p_traceflag = 0;
-			ktrsettracevnode(p, NULL);
-		}
-	}
+	LIST_FOREACH(p, &allproc, p_list)
+		if (p->p_p->ps_tracevp == vp)
+			ktrcleartrace(p->p_p);
 
 	vput(vp);
 	return (error);
@@ -529,17 +567,17 @@ ktrwrite(struct proc *p, struct ktr_header *kth)
  * TODO: check groups.  use caller effective gid.
  */
 int
-ktrcanset(struct proc *callp, struct proc *targetp)
+ktrcanset(struct proc *callp, struct process *targetpr)
 {
 	struct pcred *caller = callp->p_cred;
-	struct pcred *target = targetp->p_cred;
+	struct pcred *target = targetpr->ps_cred;
 
 	if ((caller->pc_ucred->cr_uid == target->p_ruid &&
 	    target->p_ruid == target->p_svuid &&
 	    caller->p_rgid == target->p_rgid &&	/* XXX */
 	    target->p_rgid == target->p_svgid &&
-	    (targetp->p_traceflag & KTRFAC_ROOT) == 0 &&
-	    !ISSET(targetp->p_p->ps_flags, PS_SUGID)) ||
+	    (targetpr->ps_traceflag & KTRFAC_ROOT) == 0 &&
+	    !ISSET(targetpr->ps_flags, PS_SUGID)) ||
 	    caller->pc_ucred->cr_uid == 0)
 		return (1);
 

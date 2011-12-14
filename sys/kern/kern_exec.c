@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.121 2011/12/11 19:42:28 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.122 2011/12/14 07:32:16 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -516,10 +516,8 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		 * If process is being ktraced, turn off - unless
 		 * root set it.
 		 */
-		if (p->p_tracep && !(p->p_traceflag & KTRFAC_ROOT)) {
-			p->p_traceflag = 0;
-			ktrsettracevnode(p, NULL);
-		}
+		if (pr->ps_tracevp && !(pr->ps_traceflag & KTRFAC_ROOT))
+			ktrcleartrace(pr);
 #endif
 		p->p_ucred = crcopy(cred);
 		if (attr.va_mode & VSUID)

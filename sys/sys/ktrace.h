@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.h,v 1.11 2011/07/08 19:28:38 otto Exp $	*/
+/*	$OpenBSD: ktrace.h,v 1.12 2011/12/14 07:32:16 guenther Exp $	*/
 /*	$NetBSD: ktrace.h,v 1.12 1996/02/04 02:12:29 christos Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ struct ktr_header {
  * Test for kernel trace point
  */
 #define KTRPOINT(p, type)	\
-	(((p)->p_traceflag & ((1<<(type))|KTRFAC_ACTIVE)) == (1<<(type)))
+	((p)->p_p->ps_traceflag & (1<<(type)) && ((p)->p_flag & P_INKTR) == 0)
 
 /*
  * ktrace record types
@@ -163,7 +163,6 @@ struct stat;
  */
 #define KTRFAC_ROOT	0x80000000	/* root set this trace */
 #define KTRFAC_INHERIT	0x40000000	/* pass trace flags to children */
-#define KTRFAC_ACTIVE	0x20000000	/* ktrace logging in progress, ignore */
 
 #ifndef	_KERNEL
 
@@ -183,7 +182,8 @@ void ktrpsig(struct proc *, int, sig_t, int, int, siginfo_t *);
 void ktrsyscall(struct proc *, register_t, size_t, register_t []);
 void ktrsysret(struct proc *, register_t, int, register_t);
 
-void ktrsettracevnode(struct proc *, struct vnode *);
+void ktrcleartrace(struct process *);
+void ktrsettrace(struct process *, int, struct vnode *, struct ucred *);
 
 void    ktrstruct(struct proc *, const char *, const void *, size_t);
 #define ktrsockaddr(p, s, l) \

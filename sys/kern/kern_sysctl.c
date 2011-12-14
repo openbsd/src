@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.209 2011/12/09 16:14:54 nicm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.210 2011/12/14 07:32:16 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1291,8 +1291,8 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 				FILLIT(NULL, NULL, KERN_FILE_CDIR, fdp->fd_cdir, pp);
 			if (fdp->fd_rdir)
 				FILLIT(NULL, NULL, KERN_FILE_RDIR, fdp->fd_rdir, pp);
-			if (pp->p_tracep)
-				FILLIT(NULL, NULL, KERN_FILE_TRACE, pp->p_tracep, pp);
+			if (pp->p_p->ps_tracevp)
+				FILLIT(NULL, NULL, KERN_FILE_TRACE, pp->p_p->ps_tracevp, pp);
 			for (i = 0; i < fdp->fd_nfiles; i++) {
 				if ((fp = fdp->fd_ofiles[i]) == NULL)
 					continue;
@@ -1317,8 +1317,8 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 				FILLIT(NULL, NULL, KERN_FILE_CDIR, fdp->fd_cdir, pp);
 			if (fdp->fd_rdir)
 				FILLIT(NULL, NULL, KERN_FILE_RDIR, fdp->fd_rdir, pp);
-			if (pp->p_tracep)
-				FILLIT(NULL, NULL, KERN_FILE_TRACE, pp->p_tracep, pp);
+			if (pp->p_p->ps_tracevp)
+				FILLIT(NULL, NULL, KERN_FILE_TRACE, pp->p_p->ps_tracevp, pp);
 			for (i = 0; i < fdp->fd_nfiles; i++) {
 				if ((fp = fdp->fd_ofiles[i]) == NULL)
 					continue;

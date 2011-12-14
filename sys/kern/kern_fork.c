@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.132 2011/11/22 23:20:19 joshe Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.133 2011/12/14 07:32:16 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -367,11 +367,9 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 	 * Copy traceflag and tracefile if enabled.
 	 * If not inherited, these were zeroed above.
 	 */
-	if (curp->p_traceflag & KTRFAC_INHERIT) {
-		p->p_traceflag = curp->p_traceflag;
-		if ((p->p_tracep = curp->p_tracep) != NULL)
-			vref(p->p_tracep);
-	}
+	if ((flags & FORK_THREAD) == 0 && curpr->ps_traceflag & KTRFAC_INHERIT)
+		ktrsettrace(pr, curpr->ps_traceflag, curpr->ps_tracevp,
+		    curpr->ps_tracecred);
 #endif
 
 	/*

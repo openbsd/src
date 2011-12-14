@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.104 2011/12/11 19:42:28 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.105 2011/12/14 07:32:16 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -220,16 +220,14 @@ exit1(struct proc *p, int rv, int flags)
 #ifdef ACCOUNTING
 		(void)acct_process(p);
 #endif
-	}
 
 #ifdef KTRACE
-	/* 
-	 * release trace file
-	 */
-	p->p_traceflag = 0;	/* don't trace the vrele() */
-	if (p->p_tracep)
-		ktrsettracevnode(p, NULL);
+		/* release trace file */
+		if (pr->ps_tracevp)
+			ktrcleartrace(pr);
 #endif
+	}
+
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE))
 		systrace_exit(p);
