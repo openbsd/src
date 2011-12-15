@@ -186,9 +186,9 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
 #if _GLIBCXX_USE_C99_LONG_LONG_CHECK || _GLIBCXX_USE_C99_LONG_LONG_DYNAMIC
   extern "C" long long int (atoll)(const char *);
   extern "C" long long int
-    (strtoll)(const char * restrict, char ** restrict, int);
+    (strtoll)(const char * __restrict, char ** __restrict, int);
   extern "C" unsigned long long int
-    (strtoull)(const char * restrict, char ** restrict, int);
+    (strtoull)(const char * __restrict, char ** __restrict, int);
 #endif
 #if !_GLIBCXX_USE_C99_LONG_LONG_DYNAMIC
   using ::atoll;
