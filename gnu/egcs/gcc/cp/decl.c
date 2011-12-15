@@ -3152,7 +3152,6 @@ int
 duplicate_decls (newdecl, olddecl)
      tree newdecl, olddecl;
 {
-  extern struct obstack permanent_obstack;
   unsigned olddecl_uid = DECL_UID (olddecl);
   int olddecl_friend = 0, types_match = 0;
   int new_defines_function = 0;
@@ -3725,19 +3724,12 @@ duplicate_decls (newdecl, olddecl)
   if (TREE_CODE (newdecl) == FUNCTION_DECL)
     {
       int function_size;
-      struct lang_decl *ol = DECL_LANG_SPECIFIC (olddecl);
-      struct lang_decl *nl = DECL_LANG_SPECIFIC (newdecl);
 
       function_size = sizeof (struct tree_decl);
 
       bcopy ((char *) newdecl + sizeof (struct tree_common),
 	     (char *) olddecl + sizeof (struct tree_common),
 	     function_size - sizeof (struct tree_common));
-
-      /* Can we safely free the storage used by newdecl?  */
-
-#define ROUND(x) ((x + obstack_alignment_mask (&permanent_obstack)) \
-		  & ~ obstack_alignment_mask (&permanent_obstack))
 
       if (DECL_TEMPLATE_INSTANTIATION (newdecl))
 	{
@@ -3771,38 +3763,6 @@ duplicate_decls (newdecl, olddecl)
 	      TREE_VALUE (decls) = olddecl;
 	}
 
-      if (((char *)newdecl + ROUND (function_size) == (char *)nl
-	   && ((char *)newdecl + ROUND (function_size)
-	       + ROUND (sizeof (struct lang_decl))
-	       == obstack_next_free (&permanent_obstack)))
-	  || ((char *)newdecl + ROUND (function_size)
-	      == obstack_next_free (&permanent_obstack)))
-	{
-	  DECL_MAIN_VARIANT (newdecl) = olddecl;
-	  DECL_LANG_SPECIFIC (olddecl) = ol;
-	  bcopy ((char *)nl, (char *)ol, sizeof (struct lang_decl));
-
-	  obstack_free (&permanent_obstack, newdecl);
-	}
-      else if (LANG_DECL_PERMANENT (ol) && ol != nl)
-	{
-	  if (DECL_MAIN_VARIANT (olddecl) == olddecl)
-	    {
-	      /* Save these lang_decls that would otherwise be lost.  */
-	      extern tree free_lang_decl_chain;
-	      tree free_lang_decl = (tree) ol;
-
-	      if (DECL_LANG_SPECIFIC (olddecl) == ol)
-		abort ();
-
-	      TREE_CHAIN (free_lang_decl) = free_lang_decl_chain;
-	      free_lang_decl_chain = free_lang_decl;
-	    }
-	  else
-	    {
-	      /* Storage leak.  */;
-	    }
-	}
     }
   else
     {
