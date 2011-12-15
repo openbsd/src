@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.10 2011/07/13 16:14:43 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.11 2011/12/15 19:51:23 eric Exp $	*/
 /*
  * Copyright (c) 2010,2011 Eric Faurot <eric@openbsd.org>
  *
@@ -1145,7 +1145,7 @@ asr_ensure_buf(struct asr_query *aq, size_t n)
 		return (0);
 	}
 
-	if (aq->aq_bufsize > n)
+	if (aq->aq_bufsize >= n)
 		return (0);
 
 	t = realloc(aq->aq_buf, n);
