@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.49 2011/11/14 16:54:19 eric Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.50 2011/12/15 17:23:54 eric Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -252,7 +252,7 @@ enqueue(int argc, char *argv[])
 		if (buf[len-1] != '\n')
 			errx(1, "expect EOL");
 
-		if (len == 2 && buf[0] == '.')
+		if (buf[0] == '.')
 			fputc('.', fout);
 		fprintf(fout, "%.*s", (int)len, buf);
 	}
