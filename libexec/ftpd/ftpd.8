@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.67 2011/12/14 18:01:55 ajacoutot Exp $
+.\"	$OpenBSD: ftpd.8,v 1.68 2011/12/15 13:55:00 ajacoutot Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: December 14 2011 $
+.Dd $Mdocdate: December 15 2011 $
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -154,7 +154,7 @@ instead of the default specified in
 Also disallows chmod.
 .It Fl W
 Do not save login records to
-.Pa /var/run/wtmp .
+.Pa /var/log/wtmp .
 .Fl W
 and
 .Fl U
@@ -528,6 +528,8 @@ printed after a successful login
 displayed and access refused
 .It Pa /var/log/ftpd
 log file for anonymous downloads
+.It Pa /var/log/wtmp
+login account records
 .It Pa /var/run/ftpd.pid
 process ID if running in daemon mode
 .It Pa /var/run/utmp
