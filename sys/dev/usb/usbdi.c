@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.43 2011/01/16 22:35:29 jakemsr Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.44 2011/12/16 00:04:37 fgsch Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -802,7 +802,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (pipe == NULL) {
-		printf("usbd_transfer_complete: pipe==0, xfer=%p\n", xfer);
+		printf("usb_transfer_complete: pipe==0, xfer=%p\n", xfer);
 		return;
 	}
 #endif
@@ -852,7 +852,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 	xfer->done = 1;
 	if (!xfer->status && xfer->actlen < xfer->length &&
 	    !(xfer->flags & USBD_SHORT_XFER_OK)) {
-		DPRINTFN(-1,("usbd_transfer_complete: short transfer %d<%d\n",
+		DPRINTFN(-1,("usb_transfer_complete: short transfer %d<%d\n",
 		    xfer->actlen, xfer->length));
 		xfer->status = USBD_SHORT_XFER;
 	}
