@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.75 2010/04/24 22:02:14 deraadt Exp $	*/
+/*	$OpenBSD: top.c,v 1.76 2011/12/16 14:50:24 jsing Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -125,7 +125,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-1bCIinqSTu] [-d count] [-g string] [-o field] "
+	    "usage: %s [-1bCHIinqSu] [-d count] [-g string] [-o field] "
 	    "[-p pid] [-s time]\n\t[-U user] [number]\n",
 	    __progname);
 }
@@ -136,7 +136,7 @@ parseargs(int ac, char **av)
 	char *endp;
 	int i;
 
-	while ((i = getopt(ac, av, "1STICbinqus:d:p:U:o:g:")) != -1) {
+	while ((i = getopt(ac, av, "1SHICbinqus:d:p:U:o:g:")) != -1) {
 		switch (i) {
 		case '1':
 			combine_cpus = 1;
@@ -173,7 +173,7 @@ parseargs(int ac, char **av)
 			old_system = !old_system;
 			break;
 
-		case 'T':	/* show threads */
+		case 'H':	/* show threads */
 			ps.threads = Yes;
 			old_threads = Yes;
 			break;
@@ -540,7 +540,7 @@ rundisplay(void)
 	int change, i;
 	struct pollfd pfd[1];
 	uid_t uid;
-	static char command_chars[] = "\f qh?en#sdkriIuSopCTg+P1";
+	static char command_chars[] = "\f qh?en#sdkriIuSopCHg+P1";
 
 	/*
 	 * assume valid command unless told

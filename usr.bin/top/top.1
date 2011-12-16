@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.58 2011/03/25 12:53:09 jmc Exp $
+.\"	$OpenBSD: top.1,v 1.59 2011/12/16 14:50:24 jsing Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 25 2011 $
+.Dd $Mdocdate: December 16 2011 $
 .Dt TOP 1
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@
 .Sh SYNOPSIS
 .Nm top
 .Bk -words
-.Op Fl 1bCIinqSTu
+.Op Fl 1bCHIinqSu
 .Op Fl d Ar count
 .Op Fl g Ar string
 .Op Fl o Ar field
@@ -106,6 +106,10 @@ The default is 1 for dumb terminals.
 Display only processes that contain
 .Ar string
 in their command name.
+.It Fl H
+Show process threads in the display.
+Normally, only the main process is shown.
+This option makes all threads visible.
 .It Fl I
 Do not display idle processes.
 By default,
@@ -169,10 +173,6 @@ Set the delay between screen updates to
 seconds.
 The value may be fractional, to permit delays of less than 1 second.
 The default delay between updates is 5 seconds.
-.It Fl T
-Show process threads in the display.
-Normally, only the main process is shown.
-This option makes all threads visible.
 .It Fl U Ar user
 Show only those processes owned by
 .Ar user .
@@ -303,6 +303,8 @@ Display only processes that contain
 in their command name.
 .Sq g+
 shows all processes.
+.It H
+Toggle the display of process threads.
 .It I \*(Ba i
 Toggle the display of idle processes.
 .It Xo k
@@ -352,8 +354,6 @@ Toggle the display of system processes.
 Set the delay between screen updates to
 .Ar time
 seconds.
-.It T
-Toggle the display of process threads.
 .It u Ar user
 Show only those processes owned by
 .Ar user .
