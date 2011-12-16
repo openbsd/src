@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1625 2011/10/22 19:03:05 camield Exp 
+ *	OpenBSD: pcidevs,v 1.1627 2011/12/16 00:06:39 fgsch Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -13364,7 +13364,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP04 USB",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_ECHI,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_EHCI,
 	    "MCP04 USB",
 	},
 	{
