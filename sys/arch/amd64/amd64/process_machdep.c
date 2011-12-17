@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.10 2011/03/20 21:44:08 guenther Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.11 2011/12/17 14:07:49 kettenis Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.1 2003/04/26 18:39:31 fvdl Exp $	*/
 
 /*-
@@ -135,7 +135,7 @@ process_read_fpregs(struct proc *p, struct fpreg *regs)
 		memset(frame, 0, sizeof(*regs));
 		frame->fx_fcw = __INITIAL_NPXCW__;
 		frame->fx_fsw = 0x0000;
-		frame->fx_ftw = 0xff;
+		frame->fx_ftw = 0x00;
 		frame->fx_mxcsr = __INITIAL_MXCSR__;
 		frame->fx_mxcsr_mask = fpu_mxcsr_mask;
 		p->p_md.md_flags |= MDP_USEDFPU;
