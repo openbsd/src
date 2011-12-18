@@ -1,4 +1,4 @@
-/*	$OpenBSD: delivery_maildir.c,v 1.1 2011/12/13 21:44:47 gilles Exp $	*/
+/*	$OpenBSD: delivery_maildir.c,v 1.2 2011/12/18 22:53:41 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -62,10 +62,8 @@ delivery_maildir_open(struct deliver *deliver)
 #define error2(m)	{ msg = m; goto err2; }
 
 	setproctitle("maildir delivery");
-	if (mkdir(deliver->to, 0700) < 0 && errno != EEXIST) {
-		msg = "cannot mkdir maildir";
-		goto err;
-	}
+	if (mkdir(deliver->to, 0700) < 0 && errno != EEXIST)
+		error("cannot mkdir maildir");
 	if (chdir(deliver->to) < 0)
 		error("cannot cd to maildir");
 	if (mkdir("cur", 0700) < 0 && errno != EEXIST)
