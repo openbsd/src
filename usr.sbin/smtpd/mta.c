@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.120 2011/12/11 17:02:10 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.121 2011/12/18 18:43:30 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -137,8 +137,7 @@ mta_imsg(struct imsgev *iev, struct imsg *imsg)
 			if (e == NULL)
 				fatal(NULL);
 			*e = *(struct envelope *)imsg->data;
-			strlcpy(e->errorline, "000 init",
-			    sizeof(e->errorline));
+			envelope_set_errormsg(e, "000 init");
 
 			if (s->host == NULL) {
 				s->host = strdup(e->dest.domain);
@@ -682,7 +681,7 @@ mta_message_status(struct envelope *e, char *status)
 	/* change status */
 	log_debug("mta: new status for %s@%s: %s", e->dest.user,
 	    e->dest.domain, status);
-	strlcpy(e->errorline, status, sizeof(e->errorline));
+	envelope_set_errormsg(e, "%s", status);
 }
 
 static void
