@@ -915,7 +915,8 @@ client_init(struct addrinfo *aitop, int nconn, struct statctx *udp_sc,
 	freeaddrinfo(aitop);
 
 	if (ptb->vflag && nconn > 1)
-		fprintf(stderr, "%u connections established\n", nconn);
+		fprintf(stderr, "%d connections established\n",
+		    mainstats.nconns);
 }
 
 static int
