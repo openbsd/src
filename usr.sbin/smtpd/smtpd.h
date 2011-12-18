@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.267 2011/12/14 23:08:40 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.268 2011/12/18 22:55:31 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -970,7 +970,7 @@ int aliases_virtual_get(objid_t, struct expandtree *, struct mailaddr *);
 int alias_parse(struct expandnode *, char *);
 
 
-/* auth_backend.c */
+/* auth.c */
 struct auth_backend *auth_backend_lookup(enum auth_type);
 
 
@@ -1001,7 +1001,7 @@ void session_socket_no_linger(int);
 int session_socket_error(int);
 
 
-/* delivery_backend.c */
+/* delivery.c */
 struct delivery_backend *delivery_backend_lookup(enum action_type);
 
 
@@ -1187,7 +1187,7 @@ size_t	stat_increment(int);
 size_t	stat_decrement(int);
 
 
-/* user_backend.c */
+/* user.c */
 struct user_backend *user_backend_lookup(enum user_type);
 
 
