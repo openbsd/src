@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.790 2011/12/12 21:30:27 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.791 2011/12/19 23:32:36 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4555,6 +4555,8 @@ pf_icmp_state_lookup(struct pf_pdesc *pd, struct pf_state_key_cmp *key,
     struct pf_state **state, u_int16_t icmpid, u_int16_t type,
     int icmp_dir, int *iidx, int multi, int inner)
 {
+	int direction;
+
 	key->af = pd->af;
 	key->proto = pd->proto;
 	key->rdomain = pd->rdomain;
@@ -4590,9 +4592,13 @@ pf_icmp_state_lookup(struct pf_pdesc *pd, struct pf_state_key_cmp *key,
 	STATE_LOOKUP(pd->kif, key, pd->dir, *state, pd->m);
 
 	/* Is this ICMP message flowing in right direction? */
-	if ((*state)->rule.ptr->type &&
-	    (((!inner && (*state)->direction == pd->dir) ||
-	    (inner && (*state)->direction != pd->dir)) ?
+	if ((*state)->key[PF_SK_WIRE]->af != (*state)->key[PF_SK_STACK]->af)
+		direction = (pd->af == (*state)->key[PF_SK_WIRE]->af) ?
+		    PF_IN : PF_OUT;
+	else
+		direction = (*state)->direction;
+	if ((((!inner && direction == pd->dir) ||
+	    (inner && direction != pd->dir)) ?
 	    PF_IN : PF_OUT) != icmp_dir) {
 		if (pf_status.debug >= LOG_NOTICE) {
 			log(LOG_NOTICE,
