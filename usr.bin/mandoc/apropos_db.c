@@ -1,4 +1,4 @@
-/*	$Id: apropos_db.c,v 1.14 2011/12/10 22:18:20 schwarze Exp $ */
+/*	$Id: apropos_db.c,v 1.15 2011/12/19 02:26:33 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -105,7 +105,7 @@ static	const struct type types[] = {
 	{ TYPE_Va, "Va" },
 	{ TYPE_Va, "Vt" },
 	{ TYPE_Xr, "Xr" },
-	{ INT_MAX, "any" },
+	{ UINT64_MAX, "any" },
 	{ 0, NULL }
 };
 
@@ -186,7 +186,7 @@ btree_read(const DBT *k, const DBT *v,
 static size_t
 norm_utf8(unsigned int cp, char out[7])
 {
-	size_t		 rc;
+	int		 rc;
 
 	rc = 0;
 
@@ -227,7 +227,7 @@ norm_utf8(unsigned int cp, char out[7])
 		return(0);
 
 	out[rc] = '\0';
-	return(rc);
+	return((size_t)rc);
 }
 
 /*
@@ -354,6 +354,7 @@ index_read(const DBT *key, const DBT *val, int index,
 {
 	size_t		 left;
 	char		*np, *cp;
+	char		 type;
 
 #define	INDEX_BREAD(_dst) \
 	do { \
@@ -364,13 +365,23 @@ index_read(const DBT *key, const DBT *val, int index,
 		cp = np + 1; \
 	} while (/* CONSTCOND */ 0)
 
-	left = val->size;
-	cp = (char *)val->data;
+	if (0 == (left = val->size))
+		return(0);
 
+	cp = val->data;
 	rec->res.rec = *(recno_t *)key->data;
 	rec->res.volume = index;
 
-	INDEX_BREAD(rec->res.type);
+	if ('d' == (type = *cp++))
+		rec->res.type = RESTYPE_MDOC;
+	else if ('a' == type)
+		rec->res.type = RESTYPE_MAN;
+	else if ('c' == type)
+		rec->res.type = RESTYPE_CAT;
+	else
+		return(0);
+
+	left--;
 	INDEX_BREAD(rec->res.file);
 	INDEX_BREAD(rec->res.cat);
 	INDEX_BREAD(rec->res.title);
@@ -570,7 +581,6 @@ static void
 recfree(struct rec *rec)
 {
 
-	free(rec->res.type);
 	free(rec->res.file);
 	free(rec->res.cat);
 	free(rec->res.title);

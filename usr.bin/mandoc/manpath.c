@@ -1,4 +1,4 @@
-/*	$Id: manpath.c,v 1.2 2011/12/12 01:59:13 schwarze Exp $ */
+/*	$Id: manpath.c,v 1.3 2011/12/19 02:26:33 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -16,7 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
+
 #include <assert.h>
 #include <ctype.h>
 #include <limits.h>
@@ -31,6 +32,7 @@
 #define MAN_CONF_KEY	"_whatdb"
 
 static	void	 manpath_add(struct manpaths *, const char *);
+static	void	 manpath_parseline(struct manpaths *, char *);
 
 void
 manpath_parse(struct manpaths *dirs, const char *file,
@@ -43,7 +45,7 @@ manpath_parse(struct manpaths *dirs, const char *file,
 		defp = getenv("MANPATH");
 
 	if (NULL == defp)
-		manpath_parseconf(dirs, file);
+		manpath_manconf(dirs, file ? file : MAN_CONF_FILE);
 	else
 		manpath_parseline(dirs, defp);
 }
@@ -51,7 +53,7 @@ manpath_parse(struct manpaths *dirs, const char *file,
 /*
  * Parse a FULL pathname from a colon-separated list of arrays.
  */
-void
+static void
 manpath_parseline(struct manpaths *dirs, char *path)
 {
 	char	*dir;
@@ -86,13 +88,6 @@ manpath_add(struct manpaths *dirs, const char *dir)
 		 ((size_t)dirs->sz + 1) * sizeof(char *));
 
 	dirs->paths[dirs->sz++] = mandoc_strdup(cp);
-}
-
-void
-manpath_parseconf(struct manpaths *dirs, const char *file)
-{
-
-	manpath_manconf(dirs, file ? file : MAN_CONF_FILE);
 }
 
 void

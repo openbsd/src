@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.25 2011/12/12 01:59:13 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.26 2011/12/19 02:26:33 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -17,7 +17,6 @@
  */
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 
 #include <assert.h>
 #include <dirent.h>
@@ -97,7 +96,7 @@ static	void		  index_prune(const struct of *, DB *,
 				recno_t *, recno_t **, size_t *,
 				size_t *);
 static	void		  ofile_argbuild(int, char *[], struct of **);
-static	int		  ofile_dirbuild(const char *, const char *,
+static	void		  ofile_dirbuild(const char *, const char *,
 				const char *, int, struct of **);
 static	void		  ofile_free(struct of *);
 static	void		  pformatted(DB *, struct buf *, struct buf *,
@@ -372,12 +371,8 @@ mandocdb(int argc, char *argv[])
 			exit((int)MANDOCLEVEL_SYSERR);
 		}
 
-		if (verb > 2) {
-			printf("%s: Opened\n", fbuf);
-			printf("%s: Opened\n", ibuf);
-		}
-
 		ofile_argbuild(argc, argv, &of);
+
 		if (NULL == of)
 			goto out;
 
@@ -387,13 +382,16 @@ mandocdb(int argc, char *argv[])
 				&maxrec, &recs, &recsz, &reccur);
 
 		/*
-		 * Go to the root of the respective manual tree
-		 * such that .so links work.  In case of failure,
-		 * just prod on, even though .so links won't work.
+		 * Go to the root of the respective manual tree.
+		 * This must work or no manuals may be found (they're
+		 * indexed relative to the root).
 		 */
 
 		if (OP_UPDATE == op) {
-			chdir(dir);
+			if (-1 == chdir(dir)) {
+				perror(dir);
+				exit((int)MANDOCLEVEL_SYSERR);
+			}
 			index_merge(of, mp, &dbuf, &buf, hash,
 					db, fbuf, idx, ibuf,
 					maxrec, recs, reccur);
@@ -462,9 +460,12 @@ mandocdb(int argc, char *argv[])
 		ofile_free(of);
 		of = NULL;
 
-		if ( ! ofile_dirbuild(dirs.paths[i], NULL, NULL,
-					0, &of)) 
+		if (-1 == chdir(dirs.paths[i])) {
+			perror(dirs.paths[i]);
 			exit((int)MANDOCLEVEL_SYSERR);
+		} 
+
+	       	ofile_dirbuild(".", NULL, NULL, 0, &of);
 
 		if (NULL == of)
 			continue;
@@ -472,12 +473,16 @@ mandocdb(int argc, char *argv[])
 		of = of->first;
 
 		/*
-		 * Go to the root of the respective manual tree
-		 * such that .so links work.  In case of failure,
-		 * just prod on, even though .so links won't work.
+		 * Go to the root of the respective manual tree.  
+		 * This must work or no manuals may be found (they're
+		 * indexed relative to the root).
 		 */
 
-		chdir(dirs.paths[i]);
+		if (-1 == chdir(dirs.paths[i])) {
+			perror(dirs.paths[i]);
+			exit((int)MANDOCLEVEL_SYSERR);
+		}
+
 		index_merge(of, mp, &dbuf, &buf, hash, db, fbuf,
 				idx, ibuf, maxrec, recs, reccur);
 	}
@@ -516,6 +521,7 @@ index_merge(const struct of *of, struct mparse *mp,
 	size_t		 sv;
 	unsigned	 seq;
 	struct db_val	 vbuf;
+	char		 type;
 
 	for (rec = 0; of; of = of->next) {
 		fn = of->fname;
@@ -596,7 +602,8 @@ index_merge(const struct of *of, struct mparse *mp,
 		 */
 
 		dbuf->len = 0;
-		buf_append(dbuf, mdoc ? "mdoc" : (man ? "man" : "cat"));
+		type = mdoc ? 'd' : (man ? 'a' : 'c');
+		buf_appendb(dbuf, &type, 1);
 		buf_appendb(dbuf, fn, strlen(fn) + 1);
 		buf_appendb(dbuf, msec, strlen(msec) + 1);
 		buf_appendb(dbuf, mtitle, strlen(mtitle) + 1);
@@ -684,7 +691,7 @@ index_prune(const struct of *ofile, DB *db, const char *dbf,
 		recno_t **recs, size_t *recsz, size_t *reccur)
 {
 	const struct of	*of;
-	const char	*fn, *cp;
+	const char	*fn;
 	struct db_val	*vbuf;
 	unsigned	 seq, sseq;
 	DBT		 key, val;
@@ -695,7 +702,6 @@ index_prune(const struct of *ofile, DB *db, const char *dbf,
 	while (0 == (ch = (*idx->seq)(idx, &key, &val, seq))) {
 		seq = R_NEXT;
 		*maxrec = *(recno_t *)key.data;
-		cp = val.data;
 
 		/* Deleted records are zero-sized.  Skip them. */
 
@@ -709,11 +715,8 @@ index_prune(const struct of *ofile, DB *db, const char *dbf,
 		 * Failing any of these, we go into our error handler.
 		 */
 
-		if (NULL == (fn = memchr(cp, '\0', val.size)))
-			break;
-		if (++fn - cp >= (int)val.size)
-			break;
-		if (NULL == memchr(fn, '\0', val.size - (fn - cp)))
+		fn = (char *)val.data + 1;
+		if (NULL == memchr(fn, '\0', val.size - 1))
 			break;
 
 		/* 
@@ -1443,12 +1446,11 @@ ofile_argbuild(int argc, char *argv[], struct of **of)
  * everything else is a manual.
  * Pass in a pointer to a NULL structure for the first invocation.
  */
-static int
+static void
 ofile_dirbuild(const char *dir, const char* psec, const char *parch,
 		int p_src_form, struct of **of)
 {
 	char		 buf[MAXPATHLEN];
-	struct stat	 sb;
 	size_t		 sz;
 	DIR		*d;
 	const char	*fn, *sec, *arch;
@@ -1510,14 +1512,13 @@ ofile_dirbuild(const char *dir, const char* psec, const char *parch,
 			if (verb > 2)
 				printf("%s: Scanning\n", buf);
 
-			if ( ! ofile_dirbuild(buf, sec, arch,
-					src_form, of))
-				return(0);
+			ofile_dirbuild(buf, sec, arch, src_form, of);
 		}
+
 		if (DT_REG != dp->d_type ||
-		    (NULL == psec && !use_all) ||
-		    !strcmp(MANDOC_DB, fn) ||
-		    !strcmp(MANDOC_IDX, fn))
+				(NULL == psec && !use_all) ||
+				! strcmp(MANDOC_DB, fn) ||
+				! strcmp(MANDOC_IDX, fn))
 			continue;
 
 		/*
@@ -1581,13 +1582,15 @@ ofile_dirbuild(const char *dir, const char* psec, const char *parch,
 					    "%s: Path too long\n", buf);
 					continue;
 				}
-				if (0 == stat(buf, &sb))
+				if (0 == access(buf, R_OK))
 					continue;
 			}
 		}
 
+		assert('.' == dir[0]);
+		assert('/' == dir[1]);
 		buf[0] = '\0';
-		strlcat(buf, dir, MAXPATHLEN);
+		strlcat(buf, dir + 2, MAXPATHLEN);
 		strlcat(buf, "/", MAXPATHLEN);
 		sz = strlcat(buf, fn, MAXPATHLEN);
 		if (sz >= MAXPATHLEN) {
@@ -1629,7 +1632,6 @@ ofile_dirbuild(const char *dir, const char* psec, const char *parch,
 	}
 
 	closedir(d);
-	return(1);
 }
 
 static void

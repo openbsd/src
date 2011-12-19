@@ -1,4 +1,4 @@
-/*	$Id: apropos_db.h,v 1.9 2011/11/28 00:16:38 schwarze Exp $ */
+/*	$Id: apropos_db.h,v 1.10 2011/12/19 02:26:33 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -17,8 +17,14 @@
 #ifndef APROPOS_H
 #define APROPOS_H
 
+enum	restype {
+	RESTYPE_MAN, /* man(7) file */
+	RESTYPE_MDOC, /* mdoc(7) file */
+	RESTYPE_CAT /* pre-formatted file */
+};
+
 struct	res {
-	char		*type; /* file type: mdoc, man or cat */
+	enum restype	 type; /* input file type */
 	char		*file; /* file in file-system */
 	char		*cat; /* category (3p, 3, etc.) */
 	char		*title; /* title (FOO, etc.) */
