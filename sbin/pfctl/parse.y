@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.612 2011/12/12 21:30:27 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.613 2011/12/19 23:26:16 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -4890,7 +4890,7 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 	LOOP_THROUGH(struct node_uid, uid, uids,
 	LOOP_THROUGH(struct node_gid, gid, gids,
 
-		r->af = r->naf = af;
+		r->af = af;
 
 		error += collapse_redirspec(&r->rdr, r, rdr, 0);
 		error += collapse_redirspec(&r->nat, r, nat, 0);
