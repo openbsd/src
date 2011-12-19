@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.103 2011/04/26 22:30:38 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.104 2011/12/19 02:43:19 yasuoka Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -555,6 +555,53 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 		}
 	}
 #endif /* INET6 */
+
+	/*
+	 * Fix TCP/UDP checksum of UDP encapsulated transport mode ESP packet.
+	 * (RFC3948 3.1.1)
+	 */
+	if ((af == AF_INET || af == AF_INET6) &&
+	    (tdbp->tdb_flags & TDBF_UDPENCAP) &&
+	    (tdbp->tdb_flags & TDBF_TUNNELING) == 0) {
+		u_int16_t cksum;
+
+		switch (prot) {
+		case IPPROTO_UDP:
+			if (m->m_pkthdr.len < skip + sizeof(struct udphdr)) {
+				m_freem(m);
+				IPSEC_ISTAT(espstat.esps_hdrops,
+				    ahstat.ahs_hdrops,
+				    ipcompstat.ipcomps_hdrops);
+				return EINVAL;
+			}
+			cksum = 0;
+			m_copyback(m, skip + offsetof(struct udphdr, uh_sum),
+			    sizeof(cksum), &cksum, M_NOWAIT);
+			break;
+		case IPPROTO_TCP:
+			if (m->m_pkthdr.len < skip + sizeof(struct tcphdr)) {
+				m_freem(m);
+				IPSEC_ISTAT(espstat.esps_hdrops,
+				    ahstat.ahs_hdrops,
+				    ipcompstat.ipcomps_hdrops);
+				return EINVAL;
+			}
+			cksum = 0;
+			m_copyback(m, skip + offsetof(struct tcphdr, th_sum),
+			    sizeof(cksum), &cksum, M_NOWAIT);
+			if (af == AF_INET)
+				cksum = in4_cksum(m, IPPROTO_TCP, skip,
+				    m->m_pkthdr.len - skip);
+#ifdef INET6
+			else if (af == AF_INET6)
+				cksum = in6_cksum(m, IPPROTO_TCP, skip,
+				    m->m_pkthdr.len - skip);
+#endif
+			m_copyback(m, skip + offsetof(struct tcphdr, th_sum),
+			    sizeof(cksum), &cksum, M_NOWAIT);
+			break;
+		}
+	}
 
 	/*
 	 * Record what we've done to the packet (under what SA it was
