@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.108 2011/04/07 15:30:16 miod Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.109 2011/12/19 22:01:23 mpf Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -318,7 +318,9 @@ fxp_resume(void *arg1, void *arg2)
 {
 	struct fxp_softc *sc = arg1;
 
+	int s = splnet();
 	fxp_init(sc);
+	splx(s);
 }
 
 /*************************************************************
@@ -1165,9 +1167,9 @@ fxp_init(void *xsc)
 	struct fxp_cb_ias *cb_ias;
 	struct fxp_cb_tx *txp;
 	bus_dmamap_t rxmap;
-	int i, prm, save_bf, lrxen, allm, s, bufs;
+	int i, prm, save_bf, lrxen, allm, bufs;
 
-	s = splnet();
+	splassert(IPL_NET);
 
 	/*
 	 * Cancel any pending I/O
@@ -1439,7 +1441,6 @@ fxp_init(void *xsc)
 	CSR_WRITE_2(sc, FXP_CSR_SCB_COMMAND,
 	    CSR_READ_2(sc, FXP_CSR_SCB_COMMAND) |
 	    FXP_SCB_INTRCNTL_REQUEST_SWI);
-	splx(s);
 
 	/*
 	 * Start stats updater.
@@ -1705,6 +1706,8 @@ fxp_mc_setup(struct fxp_softc *sc, int doit)
 	struct ether_multistep step;
 	struct ether_multi *enm;
 	int i, nmcasts = 0;
+
+	splassert(IPL_NET);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
