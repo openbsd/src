@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1627 2011/12/16 00:06:39 fgsch Exp 
+ *	OpenBSD: pcidevs,v 1.1628 2011/12/19 13:52:42 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5319,6 +5319,8 @@
 #define	PCI_PRODUCT_TI_XIO2000A	0x8231		/* XIO2000A PCIE-PCI */
 #define	PCI_PRODUCT_TI_XIO3130U	0x8232		/* XIO3130 PCIE-PCIE upstream */
 #define	PCI_PRODUCT_TI_XIO3130D	0x8233		/* XIO3130 PCIE-PCIE downstream */
+#define	PCI_PRODUCT_TI_XIO2221	0x823e		/* XIO2221 PCIE-PCI */
+#define	PCI_PRODUCT_TI_XIO2221_FW	0x823f		/* XIO2221 FireWire */
 #define	PCI_PRODUCT_TI_XHCI	0x8241		/* xHCI */
 #define	PCI_PRODUCT_TI_ACX100A	0x8400		/* ACX100A */
 #define	PCI_PRODUCT_TI_ACX100B	0x8401		/* ACX100B */
