@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.26 2011/12/19 02:26:33 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.27 2011/12/20 00:41:24 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -518,6 +518,7 @@ index_merge(const struct of *of, struct mparse *mp,
 	struct mdoc	*mdoc;
 	struct man	*man;
 	const char	*fn, *msec, *mtitle, *arch;
+	uint64_t	 mask;
 	size_t		 sv;
 	unsigned	 seq;
 	struct db_val	 vbuf;
@@ -648,7 +649,9 @@ index_merge(const struct of *of, struct mparse *mp,
 		seq = R_FIRST;
 		while (0 == (ch = (*hash->seq)(hash, &key, &val, seq))) {
 			seq = R_NEXT;
-			vbuf.mask = htobe64(*(uint64_t *)val.data);
+			assert(sizeof(uint64_t) == val.size);
+			memcpy(&mask, val.data, val.size);
+			vbuf.mask = htobe64(mask);
 			val.size = sizeof(struct db_val);
 			val.data = &vbuf;
 			dbt_put(db, dbf, &key, &val);
@@ -701,7 +704,8 @@ index_prune(const struct of *ofile, DB *db, const char *dbf,
 	seq = R_FIRST;
 	while (0 == (ch = (*idx->seq)(idx, &key, &val, seq))) {
 		seq = R_NEXT;
-		*maxrec = *(recno_t *)key.data;
+		assert(sizeof(recno_t) == key.size);
+		memcpy(maxrec, key.data, key.size);
 
 		/* Deleted records are zero-sized.  Skip them. */
 
@@ -1061,6 +1065,7 @@ pmdoc_Sh(MDOC_ARGS)
 static void
 hash_put(DB *db, const struct buf *buf, uint64_t mask)
 {
+	uint64_t	 oldmask;
 	DBT		 key, val;
 	int		 rc;
 
@@ -1073,8 +1078,11 @@ hash_put(DB *db, const struct buf *buf, uint64_t mask)
 	if ((rc = (*db->get)(db, &key, &val, 0)) < 0) {
 		perror("hash");
 		exit((int)MANDOCLEVEL_SYSERR);
-	} else if (0 == rc)
-		mask |= *(uint64_t *)val.data;
+	} else if (0 == rc) {
+		assert(sizeof(uint64_t) == val.size);
+		memcpy(&oldmask, val.data, val.size);
+		mask |= oldmask;
+	}
 
 	val.data = &mask;
 	val.size = sizeof(uint64_t); 
