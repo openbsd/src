@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.324 2011/12/09 12:02:06 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.325 2011/12/20 14:37:46 fgsch Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 9 2011 $
+.Dd $Mdocdate: December 20 2011 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2527,7 +2527,7 @@ target.
 User settings.
 Defaults to
 .Pa ${PORTSDIR}/infrastructure/templates .
-.It Ev TRUE_PREFIX
+.It Ev TRUEPREFIX
 Read-only.
 Mostly the same as ${PREFIX}, except it never gets ${DESTDIR} prepended
 during
