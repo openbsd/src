@@ -1,9 +1,8 @@
 #!/bin/sh
 #
-# $OpenBSD: popa3d,v 1.2 2011/09/19 20:42:24 ajacoutot Exp $
+# $OpenBSD: popa3d,v 1.3 2011/12/21 09:26:29 ajacoutot Exp $
 
-daemon="/usr/sbin/popa3d"
-daemon_flags="-D"
+daemon="/usr/sbin/popa3d -D"
 
 . /etc/rc.d/rc.subr
 

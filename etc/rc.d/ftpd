@@ -1,9 +1,8 @@
 #!/bin/sh
 #
-# $OpenBSD: ftpd,v 1.2 2011/09/19 20:42:24 ajacoutot Exp $
+# $OpenBSD: ftpd,v 1.3 2011/12/21 09:26:29 ajacoutot Exp $
 
-daemon="/usr/libexec/ftpd"
-daemon_flags="-D"
+daemon="/usr/libexec/ftpd -D"
 
 . /etc/rc.d/rc.subr
 
