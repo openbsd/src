@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.28 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: intr.h,v 1.29 2011/12/21 22:39:11 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 1997/07/24 05:43:08 scottr Exp $	*/
 
 /*-
@@ -63,6 +63,7 @@ struct isr {
 #define	IPL_NET		3
 #define	IPL_TTY		4
 #define	IPL_VM		5
+#define	IPL_AUDIO	6
 #define	IPL_CLOCK	6
 #define	IPL_STATCLOCK	6
 #define	IPL_SCHED	7
@@ -82,6 +83,7 @@ extern	unsigned short hp300_varpsl[NISR];
 #define	splbio()		_splraise(hp300_varpsl[IPL_BIO])
 #define	splnet()		_splraise(hp300_varpsl[IPL_NET])
 #define	spltty()		_splraise(hp300_varpsl[IPL_TTY])
+#define	splaudio()		_splraise(PSL_S | PSL_IPL6)
 #define	splclock()		_splraise(PSL_S | PSL_IPL6)
 #define	splstatclock()		_splraise(PSL_S | PSL_IPL6)
 #define	splvm()			_splraise(PSL_S | PSL_IPL5)

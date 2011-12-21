@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.24 2010/09/20 06:33:47 matthew Exp $	*/
+/*	$OpenBSD: intr.c,v 1.25 2011/12/21 22:39:10 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.5 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@ u_short	hp300_varpsl[NISR] = {
 	PSL_S | PSL_IPL3,	/* IPL_NET */
 	PSL_S | PSL_IPL3,	/* IPL_TTY */
 	PSL_S | PSL_IPL5,	/* IPL_VM */
-	PSL_S | PSL_IPL6,	/* IPL_CLOCK */
+	PSL_S | PSL_IPL6,	/* IPL_AUDIO, IPL_CLOCK */
 	PSL_S | PSL_IPL7	/* IPL_HIGH */
 };
 
@@ -117,6 +117,10 @@ intr_computeipl()
 			case IPL_TTY:
 				if (ipl > PSLTOIPL(hp300_varpsl[IPL_TTY]))
 					hp300_varpsl[IPL_TTY] = IPLTOPSL(ipl);
+				break;
+
+			case IPL_AUDIO:
+				/* audio is always at level 6 */
 				break;
 
 			default:
@@ -249,9 +253,12 @@ intr_dispatch(evec)
 
 	list = &isr_list[ipl];
 	if (LIST_EMPTY(list)) {
-		printf("intr_dispatch: ipl %d unexpected\n", ipl);
-		if (++unexpected > 10)
-			panic("intr_dispatch: too many unexpected interrupts");
+		if (ipl != IPL_CLOCK) {
+			printf("intr_dispatch: ipl %d unexpected\n", ipl);
+			if (++unexpected > 10)
+				panic("intr_dispatch:"
+				    " too many unexpected interrupts");
+		}
 		return;
 	}
 
@@ -264,12 +271,14 @@ intr_dispatch(evec)
 		handled |= rc;
 	}
 
-	if (handled)
-		straycount = 0;
-	else if (++straycount > 50)
-		panic("intr_dispatch: too many stray interrupts");
-	else
-		printf("intr_dispatch: stray level %d interrupt\n", ipl);
+	if (ipl != IPL_CLOCK) {
+		if (handled)
+			straycount = 0;
+		else if (++straycount > 50)
+			panic("intr_dispatch: too many stray interrupts");
+		else
+			printf("intr_dispatch: stray level %d interrupt\n", ipl);
+	}
 }
 
 #ifdef DIAGNOSTIC

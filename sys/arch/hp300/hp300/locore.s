@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.67 2011/11/01 21:20:55 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.68 2011/12/21 22:39:10 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -67,6 +67,7 @@
 #include <machine/asm.h>
 #include <machine/trap.h>
 
+#include "audio.h"
 #include "ksyms.h"
 #ifdef USELEDS
 #include <hp300/hp300/leds.h>
@@ -1178,6 +1179,12 @@ Lrecheck:
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS | chalk up another interrupt
 	movb	a0@(CLKSR),d0		| see if anything happened
 	jmi	Lclkagain		|  while we were in clockintr/statintr
+#if NAUDIO >0
+	movw	sp@(22),sp@-		| push exception vector info
+	clrw	sp@-
+	jbsr	_C_LABEL(intr_dispatch)	| call dispatch routine
+	addql	#4,sp
+#endif
 	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)		| all done
 
