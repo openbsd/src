@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.89 2011/10/06 20:49:28 deraadt Exp $
+#	$OpenBSD: files.hppa,v 1.90 2011/12/21 23:12:03 miod Exp $
 #
 # hppa-specific configuration info
 
@@ -254,9 +254,8 @@ attach	hil at gsc with hil_gsc
 file	arch/hppa/gsc/hil_gsc.c			hil_gsc
 
 # PSB 2160-N based 8bit mono audio (705, 710, 745i/*, 747i/*)
-device	aone: audio, mulaw, auconv
-attach	aone at gsc
-file	arch/hppa/gsc/aone.c			aone
+attach	arcofi at gsc with arcofi_gsc
+file	arch/hppa/gsc/arcofi_gsc.c		arcofi_gsc
 
 # CS4215/AD1849 based 16bit mono/stereo audio iface (most of others not w/ aone)
 # a.k.a. Audio Type 2 (optional beeper)

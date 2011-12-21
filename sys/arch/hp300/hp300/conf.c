@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.52 2011/10/06 20:49:27 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.53 2011/12/21 23:12:03 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.39 1997/05/12 08:17:53 thorpej Exp $	*/
 
 /*-
@@ -81,6 +81,7 @@ int	nblkdev = nitems(bdevsw);
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
 	0, (dev_type_poll((*))) enodev, (dev_type_mmap((*))) enodev }
 
+#include "audio.h"
 #include "bio.h"
 #define	mmread	mmrw
 #define	mmwrite	mmrw
@@ -161,7 +162,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSKBD,wskbd),	/* 41: keyboards */
 	cdev_mouse_init(NWSMOUSE,wsmouse), /* 42: mice */
 	cdev_mouse_init(NWSMUX,wsmux),	/* 43: ws multiplexor */
-	cdev_notdef(),			/* 44 */
+	cdev_audio_init(NAUDIO,audio),	/* 44: audio */
 	cdev_notdef(),			/* 45 */
 	cdev_notdef(),			/* 46 */
 	cdev_notdef(),			/* 47 */

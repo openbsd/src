@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.54 2011/08/18 20:03:38 miod Exp $
+#	$OpenBSD: GENERIC,v 1.55 2011/12/21 23:12:03 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -132,6 +132,10 @@ ch*		at scsibus?			# SCSI changer devices
 safte*		at scsibus?			# SCSI AF-TE
 ses*		at scsibus?			# SCSI enclosure services
 uk*		at scsibus?			# unknown SCSI devices
+
+# 425e digital audio
+arcofi*		at dio?
+audio*		at arcofi?
 
 # ISA devices
 #isa*		at isabr?

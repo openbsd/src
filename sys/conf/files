@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.529 2011/10/13 18:23:39 claudio Exp $
+#	$OpenBSD: files,v 1.530 2011/12/21 23:12:03 miod Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -453,6 +453,10 @@ file	dev/ic/w83l518d_sdmmc.c		wbsd
 # AMD 7930 audio/ISDN codec
 define	am7930
 file	dev/ic/am7930.c			am7930
+
+# Siemens PSB2160 audio codec, as found in HP systems
+device	arcofi: audio, mulaw
+file	dev/ic/arcofi.c			arcofi
 
 # radio devices, attaches to radio hardware driver
 device	radio
