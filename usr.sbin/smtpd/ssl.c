@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.42 2011/12/14 17:51:38 eric Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.43 2011/12/21 21:10:15 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -454,12 +454,14 @@ ssl_setup(struct listener *l)
 
 	l->ssl_ctx = ssl_ctx_create();
 
+/*
 	if (l->ssl->ssl_ca != NULL) {
 		if (! ssl_ctx_load_verify_memory(l->ssl_ctx,
 			l->ssl->ssl_ca, l->ssl->ssl_ca_len))
 			goto err;
 		SSL_CTX_set_verify(l->ssl_ctx, SSL_VERIFY_PEER, NULL);
 	}
+*/
 
 	if (!ssl_ctx_use_certificate_chain(l->ssl_ctx,
 	    l->ssl->ssl_cert, l->ssl->ssl_cert_len))
