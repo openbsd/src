@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.791 2011/12/19 23:32:36 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.792 2011/12/21 23:00:16 mpf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4278,17 +4278,10 @@ pf_test_state_tcp(struct pf_pdesc *pd, struct pf_state **state, u_short *reason)
 	key.af = pd->af;
 	key.proto = IPPROTO_TCP;
 	key.rdomain = pd->rdomain;
-	if (pd->dir == PF_IN)	{	/* wire side, straight */
-		PF_ACPY(&key.addr[0], pd->src, key.af);
-		PF_ACPY(&key.addr[1], pd->dst, key.af);
-		key.port[0] = th->th_sport;
-		key.port[1] = th->th_dport;
-	} else {			/* stack side, reverse */
-		PF_ACPY(&key.addr[1], pd->src, key.af);
-		PF_ACPY(&key.addr[0], pd->dst, key.af);
-		key.port[1] = th->th_sport;
-		key.port[0] = th->th_dport;
-	}
+	PF_ACPY(&key.addr[pd->sidx], pd->src, key.af);
+	PF_ACPY(&key.addr[pd->didx], pd->dst, key.af);
+	key.port[pd->sidx] = th->th_sport;
+	key.port[pd->didx] = th->th_dport;
 
 	STATE_LOOKUP(pd->kif, &key, pd->dir, *state, pd->m);
 
@@ -4474,17 +4467,10 @@ pf_test_state_udp(struct pf_pdesc *pd, struct pf_state **state)
 	key.af = pd->af;
 	key.proto = IPPROTO_UDP;
 	key.rdomain = pd->rdomain;
-	if (pd->dir == PF_IN)	{	/* wire side, straight */
-		PF_ACPY(&key.addr[0], pd->src, key.af);
-		PF_ACPY(&key.addr[1], pd->dst, key.af);
-		key.port[0] = uh->uh_sport;
-		key.port[1] = uh->uh_dport;
-	} else {			/* stack side, reverse */
-		PF_ACPY(&key.addr[1], pd->src, key.af);
-		PF_ACPY(&key.addr[0], pd->dst, key.af);
-		key.port[1] = uh->uh_sport;
-		key.port[0] = uh->uh_dport;
-	}
+	PF_ACPY(&key.addr[pd->sidx], pd->src, key.af);
+	PF_ACPY(&key.addr[pd->didx], pd->dst, key.af);
+	key.port[pd->sidx] = uh->uh_sport;
+	key.port[pd->didx] = uh->uh_dport;
 
 	STATE_LOOKUP(pd->kif, &key, pd->dir, *state, pd->m);
 
@@ -5446,15 +5432,9 @@ pf_test_state_other(struct pf_pdesc *pd, struct pf_state **state)
 	key.af = pd->af;
 	key.proto = pd->proto;
 	key.rdomain = pd->rdomain;
-	if (pd->dir == PF_IN)	{
-		PF_ACPY(&key.addr[0], pd->src, key.af);
-		PF_ACPY(&key.addr[1], pd->dst, key.af);
-		key.port[0] = key.port[1] = 0;
-	} else {
-		PF_ACPY(&key.addr[1], pd->src, key.af);
-		PF_ACPY(&key.addr[0], pd->dst, key.af);
-		key.port[1] = key.port[0] = 0;
-	}
+	PF_ACPY(&key.addr[pd->sidx], pd->src, key.af);
+	PF_ACPY(&key.addr[pd->didx], pd->dst, key.af);
+	key.port[0] = key.port[1] = 0;
 
 	STATE_LOOKUP(pd->kif, &key, pd->dir, *state, pd->m);
 
