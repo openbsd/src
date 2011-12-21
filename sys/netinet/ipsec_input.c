@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.104 2011/12/19 02:43:19 yasuoka Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.105 2011/12/21 14:53:26 sperreault Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -577,6 +577,14 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 			cksum = 0;
 			m_copyback(m, skip + offsetof(struct udphdr, uh_sum),
 			    sizeof(cksum), &cksum, M_NOWAIT);
+#ifdef INET6
+			if (af == AF_INET6) {
+				cksum = in6_cksum(m, IPPROTO_UDP, skip,
+				    m->m_pkthdr.len - skip);
+				m_copyback(m, skip + offsetof(struct udphdr,
+				    uh_sum), sizeof(cksum), &cksum, M_NOWAIT);
+			}
+#endif
 			break;
 		case IPPROTO_TCP:
 			if (m->m_pkthdr.len < skip + sizeof(struct tcphdr)) {
