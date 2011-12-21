@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.29 2011/12/05 04:02:03 guenther Exp $ */
+/*	$OpenBSD: rthread.h,v 1.30 2011/12/21 00:49:47 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -58,10 +58,13 @@ struct pthread_mutex {
 	int type;
 	pthread_t owner;
 	int count;
+	int prioceiling;
 };
 
 struct pthread_mutex_attr {
-	int type;
+	int ma_type;
+	int ma_protocol;
+	int ma_prioceiling;
 };
 
 struct pthread_cond {

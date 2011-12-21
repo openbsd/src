@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.25 2011/11/06 11:48:59 guenther Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.26 2011/12/21 00:49:47 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -219,7 +219,14 @@ pthread_mutex_init(pthread_mutex_t *mutexp, const pthread_mutexattr_t *attr)
 		return (errno);
 	mutex->sem.lock = _SPINLOCK_UNLOCKED;
 	mutex->sem.value = 1;	/* unlocked */
-	mutex->type = attr ? (*attr)->type : PTHREAD_MUTEX_ERRORCHECK;
+	if (attr == NULL) {
+		mutex->type = PTHREAD_MUTEX_ERRORCHECK;
+		mutex->prioceiling = PTHREAD_PRIO_NONE;
+	} else {
+		mutex->type = (*attr)->ma_type;
+		mutex->prioceiling = (*attr)->ma_protocol ==
+		    PTHREAD_PRIO_PROTECT ? (*attr)->ma_prioceiling : -1;
+	}
 	*mutexp = mutex;
 
 	return (0);
@@ -303,48 +310,6 @@ pthread_mutex_unlock(pthread_mutex_t *mutexp)
 		mutex->owner = NULL;
 		_sem_post((void *)&mutex->sem);
 	}
-
-	return (0);
-}
-
-/*
- * mutexen attributes
- */
-int
-pthread_mutexattr_init(pthread_mutexattr_t *attrp)
-{
-	pthread_mutexattr_t attr;
-
-	attr = calloc(1, sizeof(*attr));
-	if (!attr)
-		return (errno);
-	attr->type = PTHREAD_MUTEX_ERRORCHECK;
-	*attrp = attr;
-
-	return (0);
-}
-
-int
-pthread_mutexattr_destroy(pthread_mutexattr_t *attrp)
-{
-	free(*attrp);
-	*attrp = NULL;
-
-	return (0);
-}
-
-int
-pthread_mutexattr_settype(pthread_mutexattr_t *attrp, int type)
-{
-	(*attrp)->type = type;
-
-	return (0);
-}
-
-int
-pthread_mutexattr_gettype(pthread_mutexattr_t *attrp, int *type)
-{
-	*type = (*attrp)->type;
 
 	return (0);
 }
