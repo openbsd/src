@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.45 2011/10/21 15:45:55 mikeb Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.46 2011/12/21 14:46:24 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -404,7 +404,8 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	if (pd.dport)
 		odport = *pd.dport;
 
-	if ((pfloghdr->rewritten = pf_translate(&pd, &pfloghdr->saddr,
+	if (pd.virtual_proto != PF_VPROTO_FRAGMENT &&
+	    (pfloghdr->rewritten = pf_translate(&pd, &pfloghdr->saddr,
 	    pfloghdr->sport, &pfloghdr->daddr, pfloghdr->dport, 0,
 	    pfloghdr->dir))) {
 		m_copyback(pd.m, pd.off, min(pd.m->m_len - pd.off, pd.hdrlen),
@@ -422,7 +423,7 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	pd.tot_len = min(pd.tot_len, len);
 	pd.tot_len -= pd.m->m_data - pd.m->m_pktdat;
 
-	if (afto)
+	if (afto && pfloghdr->rewritten)
 		pf_translate_af(&pd);
 
 	mlen = min(pd.m->m_pkthdr.len, len);
