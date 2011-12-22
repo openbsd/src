@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.22 2011/12/14 17:55:55 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.23 2011/12/22 18:41:30 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -55,6 +55,8 @@ static int	fsqueue_message_delete(enum queue_kind, u_int32_t);
 static int	fsqueue_message_purge(enum queue_kind, u_int32_t);
 static int	fsqueue_message_corrupt(enum queue_kind, u_int32_t);
 
+static void	fsqueue_envelope_path(enum queue_kind, u_int64_t, char *, size_t);
+
 int	fsqueue_init(void);
 int	fsqueue_message(enum queue_kind, enum queue_op, u_int32_t *);
 int	fsqueue_envelope(enum queue_kind, enum queue_op , struct envelope *);
@@ -109,6 +111,29 @@ fsqueue_getpath(enum queue_kind kind)
 	return NULL;
 }
 
+static void
+fsqueue_envelope_path(enum queue_kind qkind, uint64_t evpid, char *buf, size_t len)
+{
+	int r;
+
+	if (qkind == Q_QUEUE)
+		r = bsnprintf(buf, len, "%s/%03x/%08x%s/%016" PRIx64,
+		    fsqueue_getpath(qkind),
+		    evpid_to_msgid(evpid) & 0xfff,
+		    evpid_to_msgid(evpid),
+		    PATH_ENVELOPES, evpid);
+	else
+		r = bsnprintf(buf, len, "%s/%08x%s/%016" PRIx64,
+		    fsqueue_getpath(qkind),
+		    evpid_to_msgid(evpid),
+		    PATH_ENVELOPES, evpid);
+
+	if (!r)
+		fatalx("fsqueue_envelope_path: snprintf");
+
+	log_debug("envelope path: %s", buf);
+}
+
 static int
 fsqueue_envelope_create(enum queue_kind qkind, struct envelope *ep)
 {
@@ -122,11 +147,7 @@ fsqueue_envelope_create(enum queue_kind qkind, struct envelope *ep)
 again:
 	evpid = queue_generate_evpid(ep->id);
 
-	if (! bsnprintf(evpname, sizeof(evpname), "%s/%08x%s/%016" PRIx64,
-		fsqueue_getpath(qkind),
-		evpid_to_msgid(evpid),
-		PATH_ENVELOPES, evpid))
-		fatalx("fsqueue_envelope_create: snprintf");
+	fsqueue_envelope_path(qkind, evpid, evpname, sizeof(evpname));
 
 	fd = open(evpname, O_WRONLY|O_CREAT|O_EXCL, 0600);
 	if (fd == -1) {
@@ -182,12 +203,7 @@ fsqueue_envelope_load(enum queue_kind qkind, struct envelope *ep)
 	FILE *fp;
 	int  ret;
 
-	if (! bsnprintf(pathname, sizeof(pathname), "%s/%03x/%08x%s/%016" PRIx64,
-		fsqueue_getpath(qkind),
-		evpid_to_msgid(ep->id) & 0xfff,
-		evpid_to_msgid(ep->id),
-		PATH_ENVELOPES, ep->id))
-		fatalx("fsqueue_envelope_load: snprintf");
+	fsqueue_envelope_path(qkind, ep->id, pathname, sizeof(pathname));
 
 	fp = fopen(pathname, "r");
 	if (fp == NULL) {
@@ -212,12 +228,7 @@ fsqueue_envelope_update(enum queue_kind qkind, struct envelope *ep)
 	if (! bsnprintf(temp, sizeof(temp), "%s/envelope.tmp", PATH_QUEUE))
 		fatalx("fsqueue_envelope_update");
 
-	if (! bsnprintf(dest, sizeof(dest), "%s/%03x/%08x%s/%016" PRIx64,
-		fsqueue_getpath(qkind),
-		evpid_to_msgid(ep->id) & 0xfff,
-		evpid_to_msgid(ep->id),
-		PATH_ENVELOPES, ep->id))
-		fatal("fsqueue_envelope_update: snprintf");
+	fsqueue_envelope_path(qkind, ep->id, dest, sizeof(dest));
 
 	fp = fopen(temp, "w");
 	if (fp == NULL) {
@@ -255,13 +266,7 @@ fsqueue_envelope_delete(enum queue_kind qkind, struct envelope *ep)
 {
 	char pathname[MAXPATHLEN];
 
-	if (! bsnprintf(pathname, sizeof(pathname), "%s/%03x/%08x%s/%016" PRIx64,
-		fsqueue_getpath(qkind),
-		evpid_to_msgid(ep->id) & 0xfff,
-		evpid_to_msgid(ep->id),
-		PATH_ENVELOPES,
-		ep->id))
-		fatal("fsqueue_envelope_delete: snprintf");
+	fsqueue_envelope_path(qkind, ep->id, pathname, sizeof(pathname));
 
 	if (unlink(pathname) == -1) {
 		log_debug("######: %s [errno: %d]", pathname, errno);
