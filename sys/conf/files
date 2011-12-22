@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.530 2011/12/21 23:12:03 miod Exp $
+#	$OpenBSD: files,v 1.531 2011/12/22 23:20:48 miod Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -455,7 +455,7 @@ define	am7930
 file	dev/ic/am7930.c			am7930
 
 # Siemens PSB2160 audio codec, as found in HP systems
-device	arcofi: audio, mulaw
+device	arcofi: audio, auconv, mulaw
 file	dev/ic/arcofi.c			arcofi
 
 # radio devices, attaches to radio hardware driver

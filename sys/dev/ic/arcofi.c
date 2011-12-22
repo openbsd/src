@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofi.c,v 1.1 2011/12/21 23:12:03 miod Exp $	*/
+/*	$OpenBSD: arcofi.c,v 1.2 2011/12/22 23:20:48 miod Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -37,10 +37,12 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
+#include <dev/auconv.h>
 #include <dev/mulaw.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
+#include <machine/endian.h>
 #include <machine/intr.h>
 
 #include <dev/ic/arcofivar.h>
@@ -303,7 +305,7 @@ arcofi_drain(void *v)
 	struct arcofi_softc *sc = (struct arcofi_softc *)v;
 	int s;
 
-	s = splaudio();
+	s = splaudio();		/* not invoked at splaudio if from ioctl() */
 	if ((arcofi_read(sc, ARCOFI_FIFO_SR) & FIFO_SR_OUT_EMPTY) == 0) {
 		/* enable output FIFO empty interrupt... */
 		arcofi_write(sc, ARCOFI_FIFO_IR,
@@ -328,32 +330,70 @@ int
 arcofi_query_encoding(void *v, struct audio_encoding *ae)
 {
 	switch (ae->index) {
+	/*
+	 * 8-bit encodings: u-Law and A-Law are native, linear are converted
+	 * to u-Law (alternatively, they could be converted to 16-bit, but
+	 * using u-Law allows us to convert in place).
+	 */
 	case 0:
 		strlcpy(ae->name, AudioEmulaw, sizeof ae->name);
+		ae->precision = 8;
 		ae->encoding = AUDIO_ENCODING_ULAW;
 		ae->flags = 0;
 		break;
 	case 1:
 		strlcpy(ae->name, AudioEalaw, sizeof ae->name);
+		ae->precision = 8;
 		ae->encoding = AUDIO_ENCODING_ALAW;
 		ae->flags = 0;
 		break;
 	case 2:
 		strlcpy(ae->name, AudioEslinear, sizeof ae->name);
+		ae->precision = 8;
 		ae->encoding = AUDIO_ENCODING_SLINEAR;
 		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 3:
 		strlcpy(ae->name, AudioEulinear, sizeof ae->name);
+		ae->precision = 8;
 		ae->encoding = AUDIO_ENCODING_ULINEAR;
 		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
+
+	/*
+	 * 16-bit encodings: slinear big-endian is native, unsigned or
+	 * little-endian are converted.
+	 */
+	case 4:
+		strlcpy(ae->name, AudioEslinear_be, sizeof ae->name);
+		ae->precision = 16;
+		ae->encoding = AUDIO_ENCODING_SLINEAR_BE;
+		ae->flags = 0;
+		break;
+	case 5:
+		strlcpy(ae->name, AudioEslinear_le, sizeof ae->name);
+		ae->precision = 16;
+		ae->encoding = AUDIO_ENCODING_SLINEAR_LE;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 6:
+		strlcpy(ae->name, AudioEulinear_be, sizeof ae->name);
+		ae->precision = 16;
+		ae->encoding = AUDIO_ENCODING_ULINEAR_BE;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 7:
+		strlcpy(ae->name, AudioEulinear_le, sizeof ae->name);
+		ae->precision = 16;
+		ae->encoding = AUDIO_ENCODING_ULINEAR_LE;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+
 	default:
 		return EINVAL;
 	}
 
-	ae->precision = 8;
-	ae->bps = 1;
+	ae->bps = AUDIO_BPS(ae->precision);
 	ae->msb = 1;
 
 	return 0;
@@ -371,40 +411,81 @@ arcofi_set_param(struct arcofi_softc *sc, int set, int use, int mode,
 		return 0;
 
 #ifdef ARCOFI_DEBUG
-	printf("%s: set_param, mode %d encoding %d\n",
-	    sc->sc_dev.dv_xname, mode, ap->encoding);
+	printf("%s: set_param, mode %d encoding %d precision %d\n",
+	    sc->sc_dev.dv_xname, mode, ap->encoding, ap->precision);
 #endif
-	sc->sc_shadow.cr4 |= CR4_ULAW;
-	switch (ap->encoding) {
-	case AUDIO_ENCODING_ULAW:
-		ap->sw_code = NULL;
+	switch (ap->precision) {
+	case 8:
+		switch (ap->encoding) {
+		case AUDIO_ENCODING_ULAW:
+			sc->sc_shadow.cr4 |= CR4_ULAW;
+			ap->sw_code = NULL;
+			break;
+		case AUDIO_ENCODING_ALAW:
+			sc->sc_shadow.cr4 &= ~CR4_ULAW;
+			ap->sw_code = NULL;
+			break;
+		case AUDIO_ENCODING_SLINEAR:
+		case AUDIO_ENCODING_SLINEAR_BE:
+		case AUDIO_ENCODING_SLINEAR_LE:
+			sc->sc_shadow.cr4 |= CR4_ULAW;
+			if (mode == AUMODE_PLAY)
+				ap->sw_code = slinear8_to_mulaw;
+			else
+				ap->sw_code = mulaw_to_slinear8;
+			break;
+		case AUDIO_ENCODING_ULINEAR:
+		case AUDIO_ENCODING_ULINEAR_BE:
+		case AUDIO_ENCODING_ULINEAR_LE:
+			sc->sc_shadow.cr4 |= CR4_ULAW;
+			if (mode == AUMODE_PLAY)
+				ap->sw_code = ulinear8_to_mulaw;
+			else
+				ap->sw_code = mulaw_to_ulinear8;
+			break;
+		default:
+			return EINVAL;
+		}
+		sc->sc_shadow.cr3 = (sc->sc_shadow.cr3 & ~CR3_OPMODE_MASK) |
+		    CR3_OPMODE_NORMAL;
 		break;
-	case AUDIO_ENCODING_ALAW:
-		sc->sc_shadow.cr4 &= ~CR4_ULAW;
-		ap->sw_code = NULL;
-		break;
-	case AUDIO_ENCODING_SLINEAR:
-	case AUDIO_ENCODING_SLINEAR_BE:
-	case AUDIO_ENCODING_SLINEAR_LE:
-		if (mode == AUMODE_PLAY)
-			ap->sw_code = slinear8_to_mulaw;
-		else
-			ap->sw_code = mulaw_to_slinear8;
-		break;
-	case AUDIO_ENCODING_ULINEAR:
-	case AUDIO_ENCODING_ULINEAR_BE:
-	case AUDIO_ENCODING_ULINEAR_LE:
-		if (mode == AUMODE_PLAY)
-			ap->sw_code = ulinear8_to_mulaw;
-		else
-			ap->sw_code = mulaw_to_ulinear8;
+	case 16:
+		switch (ap->encoding) {
+#if BYTE_ORDER == BIG_ENDIAN
+		case AUDIO_ENCODING_SLINEAR:
+#endif
+		case AUDIO_ENCODING_SLINEAR_BE:
+			ap->sw_code = NULL;
+			break;
+#if BYTE_ORDER == LITTLE_ENDIAN
+		case AUDIO_ENCODING_SLINEAR:
+#endif
+		case AUDIO_ENCODING_SLINEAR_LE:
+			ap->sw_code = swap_bytes;
+			break;
+#if BYTE_ORDER == BIG_ENDIAN
+		case AUDIO_ENCODING_ULINEAR:
+#endif
+		case AUDIO_ENCODING_ULINEAR_BE:
+			ap->sw_code = change_sign16_be;
+			break;
+#if BYTE_ORDER == LITTLE_ENDIAN
+		case AUDIO_ENCODING_ULINEAR:
+#endif
+		case AUDIO_ENCODING_ULINEAR_LE:
+			ap->sw_code = swap_bytes_change_sign16_be;
+			break;
+		default:
+			return EINVAL;
+		}
+		sc->sc_shadow.cr3 = (sc->sc_shadow.cr3 & ~CR3_OPMODE_MASK) |
+		    CR3_OPMODE_LINEAR;
 		break;
 	default:
 		return EINVAL;
 	}
 
-	ap->precision = 8;
-	ap->bps = 8;
+	ap->bps = AUDIO_BPS(ap->precision);
 	ap->msb = 1;
 	ap->channels = 1;
 	ap->sample_rate = 8000;
@@ -450,7 +531,7 @@ arcofi_commit_settings(void *v)
 	struct arcofi_softc *sc = (struct arcofi_softc *)v;
 	int s;
 	int rc;
-	uint8_t cmd[2];
+	uint8_t cmd[2], csr, ocsr;
 
 #ifdef ARCOFI_DEBUG
 	printf("%s: commit_settings, gr %04x gx %04x cr3 %02x cr4 %02x\n",
@@ -485,6 +566,14 @@ arcofi_commit_settings(void *v)
 		if ((rc = arcofi_cmd(sc, SOP_6, cmd)) != 0)
 			goto error;
 		sc->sc_active.cr3 = sc->sc_shadow.cr3;
+
+		ocsr = arcofi_read(sc, ARCOFI_CSR);
+		if ((sc->sc_active.cr3 & CR3_OPMODE_MASK) != CR3_OPMODE_NORMAL)
+			csr = ocsr | CSR_WIDTH_16;
+		else
+			csr = ocsr & ~CSR_WIDTH_16;
+		if (csr != ocsr)
+			arcofi_write(sc, ARCOFI_CSR, csr);
 	}
 
 	if (sc->sc_active.cr4 != sc->sc_shadow.cr4) {
@@ -494,10 +583,7 @@ arcofi_commit_settings(void *v)
 		sc->sc_active.cr4 = sc->sc_shadow.cr4;
 	}
 
-	splx(s);
-
-	return 0;
-
+	rc = 0;
 error:
 	splx(s);
 	return rc;
@@ -526,8 +612,7 @@ arcofi_start_input(void *v, void *rbuf, int rsz, void (*cb)(void *),
 	sc->sc_recv.cbarg = cbarg;
 
 	/* enable input FIFO interrupts */
-	arcofi_write(sc, ARCOFI_FIFO_IR,
-	    arcofi_read(sc, ARCOFI_FIFO_IR) |
+	arcofi_write(sc, ARCOFI_FIFO_IR, arcofi_read(sc, ARCOFI_FIFO_IR) |
 	    FIFO_IR_ENABLE(FIFO_IR_IN_HALF_EMPTY));
 
 	return 0;
@@ -556,8 +641,7 @@ arcofi_start_output(void *v, void *wbuf, int wsz, void (*cb)(void *),
 	sc->sc_xmit.cbarg = cbarg;
 
 	/* enable output FIFO interrupts */
-	arcofi_write(sc, ARCOFI_FIFO_IR,
-	    arcofi_read(sc, ARCOFI_FIFO_IR) |
+	arcofi_write(sc, ARCOFI_FIFO_IR, arcofi_read(sc, ARCOFI_FIFO_IR) |
 	    FIFO_IR_ENABLE(FIFO_IR_OUT_HALF_EMPTY));
 
 	return 0;
@@ -571,8 +655,7 @@ arcofi_halt_input(void *v)
 	splassert(IPL_AUDIO);
 
 	/* disable input FIFO interrupts */
-	arcofi_write(sc, ARCOFI_FIFO_IR,
-	    arcofi_read(sc, ARCOFI_FIFO_IR) &
+	arcofi_write(sc, ARCOFI_FIFO_IR, arcofi_read(sc, ARCOFI_FIFO_IR) &
 	    ~FIFO_IR_ENABLE(FIFO_IR_IN_HALF_EMPTY));
 	/* disable data FIFO if becoming idle */
 	sc->sc_mode &= ~AUMODE_RECORD;
@@ -591,8 +674,7 @@ arcofi_halt_output(void *v)
 	splassert(IPL_AUDIO);
 
 	/* disable output FIFO interrupts */
-	arcofi_write(sc, ARCOFI_FIFO_IR,
-	    arcofi_read(sc, ARCOFI_FIFO_IR) &
+	arcofi_write(sc, ARCOFI_FIFO_IR, arcofi_read(sc, ARCOFI_FIFO_IR) &
 	    ~FIFO_IR_ENABLE(FIFO_IR_OUT_HALF_EMPTY));
 	/* disable data FIFO if becoming idle */
 	sc->sc_mode &= ~AUMODE_PLAY;
@@ -614,7 +696,7 @@ arcofi_getdev(void *v, struct audio_device *ad)
 
 /*
  * Convert gain table index to AUDIO_MIN_GAIN..AUDIO_MAX_GAIN scale.
- * 0 -> 0
+ * minus infinity -> 0
  * < 0dB -> up to 127
  * 0dB -> 128
  * > 0dB -> up to 255
@@ -637,7 +719,7 @@ arcofi_gain_to_mi(uint idx)
 }
 
 /*
- * Convert AUDIO_MIN_GAIN..AUDIO_WAX_GAIN scale to gain table index.
+ * Convert AUDIO_MIN_GAIN..AUDIO_MAX_GAIN scale to gain table index.
  */
 uint
 arcofi_mi_to_gain(int lvl)
@@ -775,6 +857,7 @@ arcofi_set_port(void *v, mixer_ctrl_t *mc)
 	}
 
 	switch (mc->dev) {
+	/* volume settings */
 	case ARCOFI_PORT_AUDIO_IN_VOLUME:
 		sc->sc_shadow.gr_idx =
 		    arcofi_mi_to_gain(mc->un.value.level[AUDIO_MIXER_LEVEL_MONO]);
@@ -785,6 +868,7 @@ arcofi_set_port(void *v, mixer_ctrl_t *mc)
 		    arcofi_mi_to_gain(mc->un.value.level[AUDIO_MIXER_LEVEL_MONO]);
 		return 0;
 
+	/* mute settings */
 	case ARCOFI_PORT_AUDIO_IN_MUTE:
 		if (mc->un.ord)
 			portmask &= ~AUDIO_LINE_IN;
@@ -830,6 +914,7 @@ arcofi_get_port(void *v, mixer_ctrl_t *mc)
 		if (mc->un.value.num_channels != 1)
 			return EINVAL;
 		break;
+
 	/* mute settings */
 	case ARCOFI_PORT_AUDIO_IN_MUTE:
 	case ARCOFI_PORT_AUDIO_OUT_MUTE:
@@ -847,6 +932,7 @@ arcofi_get_port(void *v, mixer_ctrl_t *mc)
 	}
 
 	switch (mc->dev) {
+	/* volume settings */
 	case ARCOFI_PORT_AUDIO_IN_VOLUME:
 		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
 		    arcofi_gain_to_mi(sc->sc_shadow.gr_idx);
@@ -856,6 +942,8 @@ arcofi_get_port(void *v, mixer_ctrl_t *mc)
 		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
 		    arcofi_gain_to_mi(sc->sc_shadow.gx_idx);
 		break;
+
+	/* mute settings */
 	case ARCOFI_PORT_AUDIO_IN_MUTE:
 		mc->un.ord = portmask & AUDIO_LINE_IN ? 0 : 1;
 		break;
@@ -885,10 +973,7 @@ arcofi_query_devinfo(void *v, mixer_devinfo_t *md)
 		md->next = ARCOFI_PORT_AUDIO_IN_MUTE;
 		strlcpy(md->label.name, AudioNline,
 		    sizeof md->label.name);
-		md->un.v.num_channels = 1;
-		strlcpy(md->un.v.units.name, AudioNvolume,
-		    sizeof md->un.v.units.name);
-		break;
+		goto mono_volume;
 	case ARCOFI_PORT_AUDIO_OUT_VOLUME:
 		md->type = AUDIO_MIXER_VALUE;
 		md->mixer_class = ARCOFI_CLASS_OUTPUT;
@@ -896,10 +981,7 @@ arcofi_query_devinfo(void *v, mixer_devinfo_t *md)
 		md->next = ARCOFI_PORT_AUDIO_OUT_MUTE;
 		strlcpy(md->label.name, AudioNline,
 		    sizeof md->label.name);
-		md->un.v.num_channels = 1;
-		strlcpy(md->un.v.units.name, AudioNvolume,
-		    sizeof md->un.v.units.name);
-		break;
+		goto mono_volume;
 	case ARCOFI_PORT_AUDIO_SPKR_VOLUME:
 		md->type = AUDIO_MIXER_VALUE;
 		md->mixer_class = ARCOFI_CLASS_OUTPUT;
@@ -907,6 +989,8 @@ arcofi_query_devinfo(void *v, mixer_devinfo_t *md)
 		md->next = ARCOFI_PORT_AUDIO_SPKR_MUTE;
 		strlcpy(md->label.name, AudioNspeaker,
 		    sizeof md->label.name);
+		/* goto mono_volume; */
+mono_volume:
 		md->un.v.num_channels = 1;
 		strlcpy(md->un.v.units.name, AudioNvolume,
 		    sizeof md->un.v.units.name);
@@ -1106,7 +1190,6 @@ arcofi_cmd(struct arcofi_softc *sc, uint8_t cmd, const uint8_t *data)
 	/*
 	 * Compute command length.
 	 */
-
 	if (cmd >= nitems(cmdlen))
 		return EINVAL;
 	len = cmdlen[cmd];
@@ -1123,7 +1206,6 @@ arcofi_cmd(struct arcofi_softc *sc, uint8_t cmd, const uint8_t *data)
 	/*
 	 * Fill the FIFO with the command bytes.
 	 */
-
 	arcofi_write(sc, ARCOFI_FIFO_CTRL, CMDR_PU | CMDR_WRITE | cmd);
 	for (; len != 0; len--)
 		arcofi_write(sc, ARCOFI_FIFO_CTRL, *data++);
@@ -1131,14 +1213,12 @@ arcofi_cmd(struct arcofi_softc *sc, uint8_t cmd, const uint8_t *data)
 	/*
 	 * Enable command processing.
 	 */
-
 	arcofi_write(sc, ARCOFI_CSR,
 	    (csr & ~CSR_DATA_FIFO_ENABLE) | CSR_CTRL_FIFO_ENABLE);
 
 	/*
 	 * Wait for the command FIFO to be empty.
 	 */
-
 	cnt = 100;
 	while ((arcofi_read(sc, ARCOFI_FIFO_SR) & FIFO_SR_CTRL_EMPTY) == 0) {
 		if (cnt-- == 0)
@@ -1160,7 +1240,6 @@ arcofi_attach(struct arcofi_softc *sc, const char *version)
 	/*
 	 * Reset logic.
 	 */
-
 	arcofi_write(sc, ARCOFI_ID, 0);
 	delay(100000);
 	arcofi_write(sc, ARCOFI_CSR, 0);
@@ -1168,7 +1247,6 @@ arcofi_attach(struct arcofi_softc *sc, const char *version)
 	/*
 	 * Initialize the chip to default settings (8 bit, u-Law).
 	 */
-
 	sc->sc_active.cr3 =
 	    arcofi_portmask_to_cr3(AUDIO_SPEAKER) | CR3_OPMODE_NORMAL;
 	sc->sc_active.cr4 = CR4_TM | CR4_ULAW;
@@ -1214,5 +1292,5 @@ arcofi_attach(struct arcofi_softc *sc, const char *version)
 
 error:
 	arcofi_write(sc, ARCOFI_ID, 0);
-	printf("%s: command failed, error %d\n", __func__, rc);
+	printf("%s: %02x command failed, error %d\n", __func__, cmd, rc);
 }
