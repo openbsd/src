@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.146 2011/12/21 23:12:03 miod Exp $
+#	$OpenBSD: GENERIC,v 1.147 2011/12/23 05:38:29 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -234,7 +234,7 @@ ie0	at gsc0 irq 8		# 82C596DX/CA ether
 osiop*	at gsc? irq 9		# NCR 53C710 (Narrow SE)
 #osiop* at eisa?
 oosiop*	at gsc? irq 9		# NCR 53C700 (Narrow SE)
-arcofi*	at gsc? disable irq 18	# Audio Type 1 (PSB2160)
+arcofi*	at gsc? disable irq 13	# Audio Type 1 (PSB2160)
 audio*	at arcofi?
 harmony* at gsc? irq 13		# Audio Type 2 (CS4215/AD1849)
 audio*	at harmony?
