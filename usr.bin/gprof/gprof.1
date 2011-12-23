@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gprof.1,v 1.21 2010/05/25 06:43:56 jmc Exp $
+.\"	$OpenBSD: gprof.1,v 1.22 2011/12/23 17:00:47 jmc Exp $
 .\"	$NetBSD: gprof.1,v 1.6 1995/11/21 22:24:55 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)gprof.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 25 2010 $
+.Dd $Mdocdate: December 23 2011 $
 .Dt GPROF 1
 .Os
 .Sh NAME
@@ -84,11 +84,11 @@ Cycles are discovered, and calls into a cycle are made to share the time
 of the cycle.
 The first listing shows the functions
 sorted according to the time they represent
-including the time of their call graph descendents.
+including the time of their call graph descendants.
 Below each function entry is shown its (direct) call graph children,
 and how their times are propagated to this function.
 A similar display above the function shows how this function's time and the
-time of its descendents is propagated to its (direct) call graph parents.
+time of its descendants is propagated to its (direct) call graph parents.
 .Pp
 Cycles are also shown, with an entry for the cycle as a whole and
 a listing of the members of the cycle and their contributions to the
@@ -100,7 +100,7 @@ similar to that provided by
 This listing gives the total execution times, the call counts,
 the time in milliseconds the call spent in the routine itself, and
 the time in milliseconds the call spent in the routine itself including
-its descendents.
+its descendants.
 .Pp
 Finally, an index of the function names is provided.
 .Pp

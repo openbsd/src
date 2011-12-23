@@ -1,4 +1,4 @@
-.\"	$OpenBSD: restore.8,v 1.33 2007/05/31 19:19:47 jmc Exp $
+.\"	$OpenBSD: restore.8,v 1.34 2011/12/23 17:00:47 jmc Exp $
 .\"	$NetBSD: restore.8,v 1.15 1997/07/01 05:37:53 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)restore.8	8.3 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 23 2011 $
 .Dt RESTORE 8
 .Os
 .Sh NAME
@@ -89,7 +89,7 @@ the default is the current directory.
 .It Ic add Op Ar arg
 The current directory or specified argument is added to the list of
 files to be extracted.
-If a directory is specified, then it and all its descendents are
+If a directory is specified, then it and all its descendants are
 added to the extraction list
 (unless the
 .Fl h
@@ -103,7 +103,7 @@ Change the current working directory to the specified argument.
 .It Ic delete Op Ar arg
 The current directory or specified argument is deleted from the list of
 files to be extracted.
-If a directory is specified, then it and all its descendents are
+If a directory is specified, then it and all its descendants are
 deleted from the extraction list
 (unless the
 .Fl h

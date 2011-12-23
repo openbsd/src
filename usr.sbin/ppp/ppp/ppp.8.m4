@@ -25,9 +25,9 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.44 2010/10/01 07:45:22 sobrado Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.45 2011/12/23 17:00:47 jmc Exp $
 .\"
-.Dd $Mdocdate: October 1 2010 $
+.Dd $Mdocdate: December 23 2011 $
 .Dt PPP 8
 .Os
 .Sh NAME
@@ -5416,7 +5416,7 @@ and
 .Dq default
 can be used for
 .Ar dest
-to sepcify the default route, and
+to specify the default route, and
 .Dq 0.0.0.0
 is understood to be the same as
 .Dq default
