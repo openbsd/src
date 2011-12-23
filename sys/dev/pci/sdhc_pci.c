@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_pci.c,v 1.11 2011/07/31 16:55:01 kettenis Exp $	*/
+/*	$OpenBSD: sdhc_pci.c,v 1.12 2011/12/23 21:58:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -39,6 +39,13 @@
 #define SDHC_PCI_GENERAL_CTL		0x4c
 #define  MMC_SD_DIS			0x02
 
+/* RICOH specific registers */
+#define SDHC_PCI_MODE_KEY		0xf9
+#define SDHC_PCI_MODE			0x150
+#define  SDHC_PCI_MODE_SD20		0x10
+#define SDHC_PCI_BASE_FREQ_KEY		0xfc
+#define SDHC_PCI_BASE_FREQ		0xe1
+
 struct sdhc_pci_softc {
 	struct sdhc_softc sc;
 	void *sc_ih;
@@ -47,6 +54,7 @@ struct sdhc_pci_softc {
 int	sdhc_pci_match(struct device *, void *, void *);
 void	sdhc_pci_attach(struct device *, struct device *, void *);
 void	sdhc_takecontroller(struct pci_attach_args *);
+void	sdhc_pci_conf_write(struct pci_attach_args *, int, uint8_t);
 
 struct cfattach sdhc_pci_ca = {
 	sizeof(struct sdhc_pci_softc), sdhc_pci_match, sdhc_pci_attach,
@@ -63,7 +71,8 @@ sdhc_pci_match(struct device *parent, void *match, void *aux)
 		return 1;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_RICOH &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RICOH_R5U823)
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RICOH_R5U822 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RICOH_R5U823))
 		return 1;
 
 	return 0;
@@ -96,13 +105,22 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ENE_SDCARD)
 		sc->sc.sc_flags |= SDHC_F_NOPWR0;
 
-	/* Some RICOH controllers lack a capability register. */
+	/* Some RICOH controllers need to be bumped into the right mode. */
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_RICOH &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RICOH_R5U823)
-		caps = (0x21 << SDHC_BASE_FREQ_SHIFT) |
-			(0x21 << SDHC_TIMEOUT_FREQ_SHIFT) |
-			SDHC_TIMEOUT_FREQ_UNIT | SDHC_VOLTAGE_SUPP_3_3V |
-			SDHC_DMA_SUPPORT;
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RICOH_R5U823) {
+		/* Enable SD2.0 mode. */
+		sdhc_pci_conf_write(pa, SDHC_PCI_MODE_KEY, 0xfc);
+		sdhc_pci_conf_write(pa, SDHC_PCI_MODE, SDHC_PCI_MODE_SD20);
+		sdhc_pci_conf_write(pa, SDHC_PCI_MODE_KEY, 0x00);
+
+		/*
+		 * Some SD/MMC cards don't work with the default base
+		 * clock frequency of 200MHz.  Lower it to 50Hz.
+		 */
+		sdhc_pci_conf_write(pa, SDHC_PCI_BASE_FREQ_KEY, 0x01);
+		sdhc_pci_conf_write(pa, SDHC_PCI_BASE_FREQ, 50);
+		sdhc_pci_conf_write(pa, SDHC_PCI_BASE_FREQ_KEY, 0x00);
+	}
 
 	if (pci_intr_map(pa, &ih)) {
 		printf(": can't map interrupt\n");
@@ -180,4 +198,15 @@ sdhc_takecontroller(struct pci_attach_args *pa)
 	reg = pci_conf_read(pa->pa_pc, tag, SDHC_PCI_GENERAL_CTL);
 	reg |= MMC_SD_DIS;
 	pci_conf_write(pa->pa_pc, tag, SDHC_PCI_GENERAL_CTL, reg);
+}
+
+void
+sdhc_pci_conf_write(struct pci_attach_args *pa, int reg, uint8_t val)
+{
+	pcireg_t tmp;
+
+	tmp = pci_conf_read(pa->pa_pc, pa->pa_tag, reg & ~0x3);
+	tmp &= ~(0xff << ((reg & 0x3) * 8));
+	tmp |= (val << ((reg & 0x3) * 8));
+	pci_conf_write(pa->pa_pc, pa->pa_tag, reg & ~0x3, tmp);
 }
