@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.17 2011/12/19 19:57:25 eric Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.18 2011/12/23 12:10:06 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -101,7 +101,6 @@ queue_message_fd_rw(enum queue_kind qkind, u_int32_t msgid)
 int
 queue_envelope_create(enum queue_kind qkind, struct envelope *ep)
 {
-	ep->id >>= 32;
 	return env->sc_queue->envelope(qkind, QOP_CREATE, ep);
 }
 
