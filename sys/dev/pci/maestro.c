@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.31 2010/09/07 16:21:45 deraadt Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.32 2011/12/23 21:43:20 kettenis Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -98,16 +98,6 @@
 #define ACPI_PART_MIDI		2
 #define ACPI_PART_GAME_PORT	1
 #define ACPI_PART_WP		0
-
-/* Power management */
-#define	CONF_PM_PTR	0x34	/* BYTE R */
-#define	PM_CID		0	/* BYTE R */
-#define	PPMI_CID	1
-#define	PM_CTRL		4	/* BYTE RW */
-#define	PPMI_D0		0	/* Full power */
-#define	PPMI_D1		1	/* Medium power */
-#define	PPMI_D2		2	/* Low power */
-#define	PPMI_D3		3	/* Turned off */
 
 
 /* -----------------------------
@@ -509,7 +499,6 @@ void	maestro_initcodec(void *);
 
 void	maestro_set_speed(struct maestro_channel *, u_long *);
 void	maestro_init(struct maestro_softc *);
-void	maestro_power(struct maestro_softc *, int);
 
 void 	maestro_channel_start(struct maestro_channel *);
 void 	maestro_channel_stop(struct maestro_channel *);
@@ -667,7 +656,7 @@ maestro_attach(parent, self, aux)
 	printf(": %s", intrstr);
 
 	/* Rangers, power up */
-	maestro_power(sc, PPMI_D0);
+	pci_set_powerstate(pc, sc->pt, PCI_PMCSR_STATE_D0);
 	DELAY(100000);
 
 	/* Map i/o */
@@ -769,7 +758,7 @@ maestro_attach(parent, self, aux)
 
  bad:
 	/* Power down. */
-	maestro_power(sc, PPMI_D3);
+	pci_set_powerstate(pc, sc->pt, PCI_PMCSR_STATE_D3);
 	if (sc->ih)
 		pci_intr_disestablish(pc, sc->ih);
 	printf("%s: disabled\n", sc->dev.dv_xname);
@@ -1525,12 +1514,12 @@ maestro_activate(struct device *self, int act)
 		DELAY(20);
 		bus_space_write_4(sc->iot, sc->ioh, PORT_RINGBUS_CTRL, 0);
 		DELAY(1);
-		maestro_power(sc, PPMI_D3);
+		pci_set_powerstate(sc->pc, sc->pt, PCI_PMCSR_STATE_D3);
 		break;
 	case DVACT_RESUME:
 		/* Power up device on resume. */
 		DPRINTF(("maestro: power resume\n"));
-		maestro_power(sc, PPMI_D0);
+		pci_set_powerstate(sc->pc, sc->pt, PCI_PMCSR_STATE_D0);
 		DELAY(100000);
 		maestro_init(sc);
 		/* Restore codec settings */
@@ -1544,20 +1533,6 @@ maestro_activate(struct device *self, int act)
 		break;
 	}
 	return 0;
-}
-
-void
-maestro_power(sc, status)
-	struct maestro_softc *sc;
-	int status;
-{
-	int data;
-
-	/* Set the power state of the device. */
-	data = pci_conf_read(sc->pc, sc->pt, CONF_PM_PTR);
-	data = pci_conf_read(sc->pc, sc->pt, data);
-	if (data == PPMI_CID)
-		pci_conf_write(sc->pc, sc->pt, data + PM_CTRL, status);
 }
 
 void
