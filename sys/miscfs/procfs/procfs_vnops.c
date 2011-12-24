@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.52 2011/04/05 14:14:07 thib Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.53 2011/12/24 04:34:20 guenther Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -86,10 +86,7 @@ struct proc_target {
 	{ DT_DIR, N(".."),	Proot,		NULL },
 	{ DT_REG, N("file"),	Pfile,		procfs_validfile },
 	{ DT_REG, N("mem"),	Pmem,		NULL },
-	{ DT_REG, N("ctl"),	Pctl,		NULL },
 	{ DT_REG, N("status"),	Pstatus,	NULL },
-	{ DT_REG, N("note"),	Pnote,		NULL },
-	{ DT_REG, N("notepg"),	Pnotepg,	NULL },
 	{ DT_REG, N("cmdline"), Pcmdline,	NULL },
 	{ DT_REG, N("exe"),	Pfile,		procfs_validfile_linux },
 #undef N
@@ -192,7 +189,7 @@ procfs_open(void *v)
 	struct proc *p2;		/* traced */
 	int error;
 
-	if ((p2 = pfind(pfs->pfs_pid)) == 0)
+	if ((p2 = pfind(pfs->pfs_pid)) == 0 || (p2->p_flag & P_THREAD))
 		return (ENOENT);	/* was ESRCH, jsp */
 
 	switch (pfs->pfs_type) {
@@ -420,7 +417,7 @@ procfs_getattr(void *v)
 
 	default:
 		procp = pfind(pfs->pfs_pid);
-		if (procp == 0)
+		if (procp == 0 || (procp->p_flag & P_THREAD))
 			return (ENOENT);
 	}
 
@@ -700,7 +697,7 @@ procfs_lookup(void *v)
 			break;
 
 		p = pfind(pid);
-		if (p == 0)
+		if (p == 0 || (p->p_flag & P_THREAD))
 			break;
 
 		error = procfs_allocvp(dvp->v_mount, vpp, pid, Pproc);
@@ -728,7 +725,7 @@ procfs_lookup(void *v)
 		}
 
 		p = pfind(pfs->pfs_pid);
-		if (p == 0)
+		if (p == 0 || (p->p_flag & P_THREAD))
 			break;
 
 		for (pt = proc_targets, i = 0; i < nproc_targets; pt++, i++) {
@@ -833,7 +830,7 @@ procfs_readdir(void *v)
 		struct proc_target *pt;
 
 		p = pfind(pfs->pfs_pid);
-		if (p == NULL)
+		if (p == NULL || (p->p_flag & P_THREAD))
 			break;
 
 		for (pt = &proc_targets[i];
@@ -875,6 +872,8 @@ procfs_readdir(void *v)
 #ifdef PROCFS_ZOMBIE
 	again:
 #endif
+		while (p && (p->p_flag & P_THREAD))
+			p = LIST_NEXT(p, p_list);
 		for (; p && uio->uio_resid >= UIO_MX; i++, pcnt++) {
 			switch (i) {
 			case 0:		/* `.' */
@@ -925,7 +924,9 @@ procfs_readdir(void *v)
 			default:
 				while (pcnt < i) {
 					pcnt++;
-					p = LIST_NEXT(p, p_list);
+					do {
+						p = LIST_NEXT(p, p_list);
+					} while (p && (p->p_flag & P_THREAD));
 					if (!p)
 						goto done;
 				}
@@ -933,7 +934,9 @@ procfs_readdir(void *v)
 				d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),
 				    "%ld", (long)p->p_pid);
 				d.d_type = DT_REG;
-				p = LIST_NEXT(p, p_list);
+				do {
+					p = LIST_NEXT(p, p_list);
+				} while (p && (p->p_flag & P_THREAD));
 				break;
 			}
 

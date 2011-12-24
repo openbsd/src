@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.531 2011/12/22 23:20:48 miod Exp $
+#	$OpenBSD: files,v 1.532 2011/12/24 04:34:20 guenther Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -778,9 +778,7 @@ file kern/spec_vnops.c
 file miscfs/deadfs/dead_vnops.c
 file miscfs/fifofs/fifo_vnops.c		fifo
 file miscfs/procfs/procfs_cmdline.c	procfs
-file miscfs/procfs/procfs_ctl.c		procfs
 file miscfs/procfs/procfs_linux.c	procfs
-file miscfs/procfs/procfs_note.c	procfs
 file miscfs/procfs/procfs_status.c	procfs
 file miscfs/procfs/procfs_subr.c	procfs
 file miscfs/procfs/procfs_vfsops.c	procfs

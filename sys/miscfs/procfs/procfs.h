@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs.h,v 1.27 2010/12/21 20:14:43 thib Exp $	*/
+/*	$OpenBSD: procfs.h,v 1.28 2011/12/24 04:34:20 guenther Exp $	*/
 /*	$NetBSD: procfs.h,v 1.17 1996/02/12 15:01:41 christos Exp $	*/
 
 /*
@@ -70,9 +70,6 @@ struct pfsnode {
 	u_long		pfs_fileno;	/* unique file id */
 };
 
-#define PROCFS_NOTELEN	64	/* max length of a note (/proc/$pid/note) */
-#define PROCFS_CTLLEN 	8	/* max length of a ctl msg (/proc/$pid/ctl */
-
 /*
  * Kernel stuff follows
  */
@@ -111,24 +108,16 @@ int vfs_getuserstr(struct uio *, char *, int *);
 const vfs_namemap_t *vfs_findname(const vfs_namemap_t *, char *, int);
 
 int procfs_allocvp(struct mount *, struct vnode **, pid_t, pfstype);
-int procfs_doctl(struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio);
-int procfs_dofpregs(struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio);
-int procfs_donote(struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio);
-int procfs_doregs(struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio);
 int procfs_dostatus(struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio);
 int procfs_docmdline(struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio);
 int procfs_domeminfo(struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio);
 int procfs_docpuinfo(struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio);
-int procfs_domap(struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio, int);
 int procfs_freevp(struct vnode *);
 int procfs_getcpuinfstr(char *, int *);
 int procfs_poll(void *);
 
 /* functions to check whether or not files should be displayed */
 int procfs_validfile(struct proc *, struct mount *);
-int procfs_validfpregs(struct proc *, struct mount *);
-int procfs_validregs(struct proc *, struct mount *);
-int procfs_validmap(struct proc *, struct mount *);
 
 int procfs_rw(void *);
 

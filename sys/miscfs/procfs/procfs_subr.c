@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_subr.c,v 1.34 2010/12/21 20:14:43 thib Exp $	*/
+/*	$OpenBSD: procfs_subr.c,v 1.35 2011/12/24 04:34:20 guenther Exp $	*/
 /*	$NetBSD: procfs_subr.c,v 1.15 1996/02/12 15:01:42 christos Exp $	*/
 
 /*
@@ -200,7 +200,7 @@ procfs_rw(void *v)
 	struct proc *p;
 
 	p = pfind(pfs->pfs_pid);
-	if (p == 0)
+	if (p == 0 || (p->p_flag & P_THREAD))
 		return (EINVAL);
 	/* Do not permit games to be played with init(8) */
 	if (p->p_pid == 1 && securelevel > 0 && uio->uio_rw == UIO_WRITE)
@@ -209,13 +209,6 @@ procfs_rw(void *v)
 		return (EINVAL);
 
 	switch (pfs->pfs_type) {
-	case Pnote:
-	case Pnotepg:
-		return (procfs_donote(curp, p, pfs, uio));
-
-	case Pctl:
-		return (procfs_doctl(curp, p, pfs, uio));
-
 	case Pstatus:
 		return (procfs_dostatus(curp, p, pfs, uio));
 
