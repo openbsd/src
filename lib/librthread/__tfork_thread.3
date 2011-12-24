@@ -1,4 +1,4 @@
-.\" $OpenBSD: __tfork_thread.3,v 1.1 2011/10/17 06:39:20 guenther Exp $
+.\" $OpenBSD: __tfork_thread.3,v 1.2 2011/12/24 08:46:48 jmc Exp $
 .\"
 .\" Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 17 2011 $
+.Dd $Mdocdate: December 24 2011 $
 .Dt __TFORK_THREAD 3
 .Os
 .Sh NAME
@@ -53,11 +53,11 @@ returns, the thread will exit.
 The
 .Fa params
 argument provides parameters used by the kernel during thread creation.
-The new thread's thread control block (TCB) address is set to 
+The new thread's thread control block (TCB) address is set to
 .Em tf_tcb .
-If 
+If
 .Em tf_tid
-is not NULL, the new thread's PID is returned to the user at that 
+is not NULL, the new thread's PID is returned to the user at that
 address, with the guarantee that this is done before returning to
 userspace in either the current thread or the new thread.
 Currently,
