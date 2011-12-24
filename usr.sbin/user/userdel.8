@@ -1,4 +1,4 @@
-.\" $OpenBSD: userdel.8,v 1.14 2010/09/03 11:22:36 jmc Exp $
+.\" $OpenBSD: userdel.8,v 1.15 2011/12/24 07:17:04 jmc Exp $
 .\" $NetBSD: userdel.8,v 1.24 2003/02/25 10:36:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: December 24 2011 $
 .Dt USERDEL 8
 .Os
 .Sh NAME
@@ -42,7 +42,8 @@
 .Fl D
 .Op Fl p Ar preserve-value
 .Nm userdel
-.Op Fl prv
+.Op Fl rv
+.Op Fl p Ar preserve-value
 .Ar user
 .Sh DESCRIPTION
 The
@@ -84,7 +85,7 @@ after setting any defaults, and then reading values from
 .Pa /etc/usermgmt.conf ,
 the following command line options are processed:
 .Bl -tag -width Ds
-.It Fl p
+.It Fl p Ar preserve-value
 Preserve the user information in the password file,
 but do not allow the user to login, by switching the
 password to an
