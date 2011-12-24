@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofi.c,v 1.2 2011/12/22 23:20:48 miod Exp $	*/
+/*	$OpenBSD: arcofi.c,v 1.3 2011/12/24 16:53:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -250,30 +250,30 @@ int	arcofi_start_output(void *, void *, int, void (*)(void *), void *);
  * later ARCOFI chips, from the same manufacturer as the PSB 2160!
  *
  * Of course, the PSB 2160 datasheet does not give any set of values.
- * The following table is taken from the PSB 2165 datasheet - it uses
- * the same value for minus infinity, which gives hope the two share
- * the same table, although the dB ranges are different....
+ * The following table is taken from the HP-UX audio driver (audio_shared.o
+ * private_audio_gain_tab).
  */
 
-#define	NEGATIVE_GAINS	12
-#define	POSITIVE_GAINS	24
+#define	NEGATIVE_GAINS	60
+#define	POSITIVE_GAINS	14
 static const uint16_t arcofi_gains[1 + NEGATIVE_GAINS + 1 + POSITIVE_GAINS] = {
 	/* minus infinity */
-	0x8888,
-	/* -6.0 -> -3.5 */
-	0x93c3, 0x93c4, 0x9388, 0x939b, 0x939a, 0xba9b,
-	/* -3.0 -> -0.5 */
-	0x91c4, 0xbb92, 0xbbaa, 0x91cb, 0xa233, 0xa2ac,
+	0x0988,
+
+	0xf8b8, 0xf8b8, 0xf8b8, 0xf8b8, 0x099f, 0x099f, 0x099f, 0x099f,
+	0x09af, 0x09af, 0x09af, 0x09cf, 0x09cf, 0x09cf, 0xf8a9, 0xf83a,
+	0xf83a, 0xf82b, 0xf82d, 0xf8a3, 0xf8b2, 0xf8a1, 0xe8aa, 0xe84b,
+	0xe89e, 0xe8d3, 0xe891, 0xe8b1, 0xd8aa, 0xd8cb, 0xd8a6, 0xd8b3,
+	0xd842, 0xd8b1, 0xc8aa, 0xc8bb, 0xc888, 0xc853, 0xc852, 0xc8b1,
+	0xb8aa, 0xb8ab, 0xb896, 0xb892, 0xb842, 0xb8b1, 0xa8aa, 0xa8bb,
+	0x199f, 0x195b, 0x29c1, 0x2923, 0x29aa, 0x392b, 0xf998, 0xb988,
+	0x1aac, 0x3aa1, 0xbaa1, 0xbb88,
+
 	/* 0 */
-	0xa2aa,
-	/* +0.5 -> +3.0 */
-	0xb2b2, 0xb299, 0x3329, 0x339b, 0x23ca, 0x329c,
-	/* +3.5 -> +6.0 */
-	0x22ba, 0x3198, 0x3194, 0xb09b, 0x1288, 0x12a1,
-	/* +6.5 -> +9.0 */
-	0x03cb, 0x3094, 0x02bc, 0x2094, 0x01ba, 0x102b,
-	/* +9.0 -> +12.0 */
-	0x109c, 0x1023, 0x10a1, 0x00ba, 0x00cb, 0x10d0
+	0x8888,
+
+	0xd388, 0x5288, 0xb1a1, 0x31a1, 0x1192, 0x11d0, 0x30c0, 0x2050,
+	0x1021, 0x1020, 0x1000, 0x0001, 0x0010, 0x0000
 };
 
 int
@@ -779,22 +779,22 @@ arcofi_portmask_to_cr3(int mask)
 	switch (mask) {
 	default:
 	case 0:
-		return CR3_MIC_G_52 | CR3_AFEC_POR;
+		return CR3_MIC_G_17 | CR3_AFEC_POR;
 	case AUDIO_LINE_OUT:
-		return CR3_MIC_G_52 | CR3_AFEC_MUTE;
+		return CR3_MIC_G_17 | CR3_AFEC_MUTE;
 	case AUDIO_SPEAKER:
-		return CR3_MIC_G_52 | CR3_AFEC_LH1;
+		return CR3_MIC_G_17 | CR3_AFEC_LH1;
 	case AUDIO_SPEAKER | AUDIO_LINE_OUT:
 		return CR3_MIC_X_INPUT | CR3_AFEC_LH3;
 	case AUDIO_LINE_IN | AUDIO_LINE_OUT:
-		return CR3_MIC_G_52 | CR3_AFEC_RDY;
+		return CR3_MIC_G_17 | CR3_AFEC_RDY;
 	case AUDIO_LINE_IN | AUDIO_SPEAKER:
-		return CR3_MIC_G_52 | CR3_AFEC_LH2;
+		return CR3_MIC_G_17 | CR3_AFEC_LH2;
 	case AUDIO_LINE_IN:
 		/* since we can't do this, just... */
 		/* FALLTHROUGH */
 	case AUDIO_LINE_IN | AUDIO_SPEAKER | AUDIO_LINE_OUT:
-		return CR3_MIC_G_52 | CR3_AFEC_LH3;
+		return CR3_MIC_G_17 | CR3_AFEC_LH3;
 	}
 }
 
