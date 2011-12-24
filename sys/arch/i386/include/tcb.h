@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.1 2011/11/07 15:46:06 guenther Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.2 2011/12/24 04:21:19 guenther Exp $	*/
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
  *
@@ -21,6 +21,7 @@
 #ifdef _KERNEL
 
 #include <machine/sysarch.h>
+#include <machine/pcb.h>
 
 #define TCB_GET(p)		\
 	i386_get_threadbase(p, TSEG_GS)
