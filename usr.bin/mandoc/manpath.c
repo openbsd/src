@@ -1,4 +1,4 @@
-/*	$Id: manpath.c,v 1.3 2011/12/19 02:26:33 schwarze Exp $ */
+/*	$Id: manpath.c,v 1.4 2011/12/24 21:51:40 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -38,16 +38,54 @@ void
 manpath_parse(struct manpaths *dirs, const char *file,
 		char *defp, char *auxp)
 {
+	char		*insert;
 
+	/* Always prepend -m. */
 	manpath_parseline(dirs, auxp);
 
-	if (NULL == defp)
-		defp = getenv("MANPATH");
-
-	if (NULL == defp)
-		manpath_manconf(dirs, file ? file : MAN_CONF_FILE);
-	else
+	/* If -M is given, it overrides everything else. */
+	if (NULL != defp) {
 		manpath_parseline(dirs, defp);
+		return;
+	}
+
+	/* MANPATH and man.conf(5) cooperate. */
+	defp = getenv("MANPATH");
+	if (NULL == file)
+		file = MAN_CONF_FILE;
+
+	/* No MANPATH; use man.conf(5) only. */
+	if (NULL == defp || '\0' == defp[0]) {
+		manpath_manconf(dirs, file);
+		return;
+	}
+
+	/* Prepend man.conf(5) to MANPATH. */
+	if (':' == defp[0]) {
+		manpath_manconf(dirs, file);
+		manpath_parseline(dirs, defp);
+		return;
+	}
+
+	/* Append man.conf(5) to MANPATH. */
+	if (':' == defp[(int)strlen(defp) - 1]) {
+		manpath_parseline(dirs, defp);
+		manpath_manconf(dirs, file);
+		return;
+	}
+
+	/* Insert man.conf(5) into MANPATH. */
+	insert = strstr(defp, "::");
+	if (NULL != insert) {
+		*insert++ = '\0';
+		manpath_parseline(dirs, defp);
+		manpath_manconf(dirs, file);
+		manpath_parseline(dirs, insert + 1);
+		return;
+	}
+
+	/* MANPATH overrides man.conf(5) completely. */
+	manpath_parseline(dirs, defp);
 }
 
 /*

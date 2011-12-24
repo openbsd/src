@@ -1,4 +1,4 @@
-.\"	$Id: apropos.1,v 1.9 2011/12/12 01:59:13 schwarze Exp $
+.\"	$Id: apropos.1,v 1.10 2011/12/24 21:51:40 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 12 2011 $
+.Dd $Mdocdate: December 24 2011 $
 .Dt APROPOS 1
 .Os
 .Sh NAME
@@ -239,11 +239,22 @@ Text production:
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
 .It Ev MANPATH
-Colon-separated paths overriding the default list of paths searched for
+Colon-separated paths modifying the default list of paths searched for
 manual databases.
 Invalid paths, or paths without manual databases, are ignored.
 Overridden by
 .Fl M .
+If
+.Ev MANPATH
+begins with a
+.Sq \&: ,
+it is appended to the default list;
+else if it ends with
+.Sq \&: ,
+it is prepended to the default list; else if it contains
+.Sq \&:: ,
+the default list is inserted between the colons.
+If none of these conditions are met, it overrides the default list.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/man.conf" -compact
