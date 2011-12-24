@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.5 2007/04/03 10:14:47 art Exp $	*/
+/*	$OpenBSD: proc.h,v 1.6 2011/12/24 04:27:56 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.10 1995/08/06 05:33:23 mycroft Exp $	*/
 
 /*
@@ -44,3 +44,5 @@ struct mdproc {
 
 /* md_flags */
 #define	MDP_USEDFPU	0x0001	/* has used the FPU */
+
+#define	__HAVE_MD_TCB
