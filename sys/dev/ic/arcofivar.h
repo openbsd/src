@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofivar.h,v 1.1 2011/12/21 23:12:03 miod Exp $	*/
+/*	$OpenBSD: arcofivar.h,v 1.2 2011/12/25 00:07:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -33,8 +33,10 @@ struct arcofi_softc {
 	struct {
 		uint8_t	cr3, cr4;
 		uint	gr_idx, gx_idx;
+		int	output_mute;
 	}			sc_active,
 				sc_shadow;
+
 	struct {
 		uint8_t	*buf;
 		uint8_t	*past;

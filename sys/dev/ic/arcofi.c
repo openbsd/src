@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofi.c,v 1.3 2011/12/24 16:53:40 miod Exp $	*/
+/*	$OpenBSD: arcofi.c,v 1.4 2011/12/25 00:07:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -187,10 +187,8 @@ struct cfdriver arcofi_cd = {
 #define	arcofi_write(sc, r, v) \
 	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, (sc)->sc_reg[r], v)
 
-#define	AUDIO_MIDDLE_GAIN	((AUDIO_MAX_GAIN + 1 - AUDIO_MIN_GAIN) / 2)
-
 int	arcofi_cmd(struct arcofi_softc *, uint8_t, const uint8_t *);
-int	arcofi_cr3_to_portmask(uint);
+int	arcofi_cr3_to_portmask(uint, int);
 int	arcofi_gain_to_mi(uint);
 uint	arcofi_mi_to_gain(int);
 uint	arcofi_portmask_to_cr3(int);
@@ -534,10 +532,11 @@ arcofi_commit_settings(void *v)
 	uint8_t cmd[2], csr, ocsr;
 
 #ifdef ARCOFI_DEBUG
-	printf("%s: commit_settings, gr %04x gx %04x cr3 %02x cr4 %02x\n",
+	printf("%s: commit_settings, gr %04x gx %04x cr3 %02x cr4 %02x mute %d\n",
 	    sc->sc_dev.dv_xname,
-	    arcofi_gains[sc->sc_shadow.gr_idx], arcofi_gains[sc->sc_shadow.gx_idx],
-	    sc->sc_shadow.cr3, sc->sc_shadow.cr4);
+	    arcofi_gains[sc->sc_shadow.gr_idx],
+	    arcofi_gains[sc->sc_shadow.gx_idx],
+	    sc->sc_shadow.cr3, sc->sc_shadow.cr4, sc->sc_shadow.output_mute);
 #endif
 
 	if (bcmp(&sc->sc_active, &sc->sc_shadow, sizeof(sc->sc_active)) == 0)
@@ -553,12 +552,19 @@ arcofi_commit_settings(void *v)
 		sc->sc_active.gr_idx = sc->sc_shadow.gr_idx;
 	}
 
-	if (sc->sc_active.gx_idx != sc->sc_shadow.gx_idx) {
-		cmd[0] = arcofi_gains[sc->sc_shadow.gx_idx] >> 8;
-		cmd[1] = arcofi_gains[sc->sc_shadow.gx_idx];
+	if (sc->sc_active.gx_idx != sc->sc_shadow.gx_idx ||
+	    sc->sc_active.output_mute != sc->sc_shadow.output_mute) {
+		if (sc->sc_shadow.output_mute) {
+			cmd[0] = arcofi_gains[0] >> 8;
+			cmd[1] = arcofi_gains[0];
+		} else {
+			cmd[0] = arcofi_gains[sc->sc_shadow.gx_idx] >> 8;
+			cmd[1] = arcofi_gains[sc->sc_shadow.gx_idx];
+		}
 		if ((rc = arcofi_cmd(sc, COP_B, cmd)) != 0)
 			goto error;
 		sc->sc_active.gx_idx = sc->sc_shadow.gx_idx;
+		sc->sc_active.output_mute = sc->sc_shadow.output_mute;
 	}
 
 	if (sc->sc_active.cr3 != sc->sc_shadow.cr3) {
@@ -696,10 +702,6 @@ arcofi_getdev(void *v, struct audio_device *ad)
 
 /*
  * Convert gain table index to AUDIO_MIN_GAIN..AUDIO_MAX_GAIN scale.
- * minus infinity -> 0
- * < 0dB -> up to 127
- * 0dB -> 128
- * > 0dB -> up to 255
  */
 int
 arcofi_gain_to_mi(uint idx)
@@ -709,13 +711,8 @@ arcofi_gain_to_mi(uint idx)
 	if (idx == nitems(arcofi_gains) - 1)
 		return AUDIO_MAX_GAIN;
 
-	if (idx <= NEGATIVE_GAINS + 1)
-		return AUDIO_MIN_GAIN +
-		    (idx * AUDIO_MIDDLE_GAIN) / (NEGATIVE_GAINS + 1);
-
-	return AUDIO_MIDDLE_GAIN +
-	    ((idx - NEGATIVE_GAINS - 1) * AUDIO_MIDDLE_GAIN) /
-	     (POSITIVE_GAINS + 1);
+	return ((idx - 1) * (AUDIO_MAX_GAIN - AUDIO_MIN_GAIN)) /
+	    (nitems(arcofi_gains) - 1) + AUDIO_MIN_GAIN + 1;
 }
 
 /*
@@ -729,12 +726,8 @@ arcofi_mi_to_gain(int lvl)
 	if (lvl >= AUDIO_MAX_GAIN)
 		return nitems(arcofi_gains) - 1;
 
-	if (lvl <= AUDIO_MIDDLE_GAIN)
-		return 1 + ((lvl - AUDIO_MIN_GAIN) * NEGATIVE_GAINS) /
-		    AUDIO_MIDDLE_GAIN;
-
-	return NEGATIVE_GAINS + 1 +
-	    ((lvl - AUDIO_MIDDLE_GAIN) * POSITIVE_GAINS) / AUDIO_MIDDLE_GAIN;
+	return ((lvl - AUDIO_MIN_GAIN - 1) * (nitems(arcofi_gains) - 1)) /
+	    (AUDIO_MAX_GAIN - AUDIO_MIN_GAIN);
 }
 
 /*
@@ -755,7 +748,9 @@ arcofi_mi_to_gain(int lvl)
  * Each of these can be enabled or disabled indepently, except for
  * MIC enabled with H out and LS out disabled, which is not allowed
  * by the chip (and makes no sense for a chip which was intended to
- * be used in phones, not voice recorders).
+ * be used in phones, not voice recorders); we cheat by keeping one
+ * output source enabled, but with the output gain forced to minus
+ * infinity to mute it.
  *
  * The truth table is thus:
  *
@@ -764,7 +759,7 @@ arcofi_mi_to_gain(int lvl)
  *	off	off	on	MUTE
  *	off	on	off	LH1
  *	off	on	on	LH3, X input enabled
- *	on	off	off	not available
+ *	on	off	off	RDY, GX forced to minus infinity
  *	on	off	on	RDY
  *	on	on	off	LH2
  *	on	on	on	LH3
@@ -786,13 +781,13 @@ arcofi_portmask_to_cr3(int mask)
 		return CR3_MIC_G_17 | CR3_AFEC_LH1;
 	case AUDIO_SPEAKER | AUDIO_LINE_OUT:
 		return CR3_MIC_X_INPUT | CR3_AFEC_LH3;
+	case AUDIO_LINE_IN:
+		/* since we can't do this, just... */
+		/* FALLTHROUGH */
 	case AUDIO_LINE_IN | AUDIO_LINE_OUT:
 		return CR3_MIC_G_17 | CR3_AFEC_RDY;
 	case AUDIO_LINE_IN | AUDIO_SPEAKER:
 		return CR3_MIC_G_17 | CR3_AFEC_LH2;
-	case AUDIO_LINE_IN:
-		/* since we can't do this, just... */
-		/* FALLTHROUGH */
 	case AUDIO_LINE_IN | AUDIO_SPEAKER | AUDIO_LINE_OUT:
 		return CR3_MIC_G_17 | CR3_AFEC_LH3;
 	}
@@ -802,14 +797,15 @@ arcofi_portmask_to_cr3(int mask)
  * Convert CR3 to an enabled ports mask.
  */
 int
-arcofi_cr3_to_portmask(uint cr3)
+arcofi_cr3_to_portmask(uint cr3, int output_mute)
 {
 	switch (cr3 & CR3_AFEC_MASK) {
 	default:
 	case CR3_AFEC_POR:
 		return 0;
 	case CR3_AFEC_RDY:
-		return AUDIO_LINE_IN | AUDIO_LINE_OUT;
+		return output_mute ?
+		    AUDIO_LINE_IN : AUDIO_LINE_IN | AUDIO_LINE_OUT;
 	case CR3_AFEC_HFS:
 	case CR3_AFEC_LH1:
 		return AUDIO_SPEAKER;
@@ -846,7 +842,8 @@ arcofi_set_port(void *v, mixer_ctrl_t *mc)
 	case ARCOFI_PORT_AUDIO_SPKR_MUTE:
 		if (mc->type != AUDIO_MIXER_ENUM)
 			return EINVAL;
-		portmask = arcofi_cr3_to_portmask(sc->sc_shadow.cr3);
+		portmask = arcofi_cr3_to_portmask(sc->sc_shadow.cr3,
+		    sc->sc_shadow.output_mute);
 #ifdef ARCOFI_DEBUG
 		printf("%s: set_port cr3 %02x -> mask %02x\n",
 		    sc->sc_dev.dv_xname, sc->sc_shadow.cr3, portmask);
@@ -891,9 +888,11 @@ arcofi_set_port(void *v, mixer_ctrl_t *mc)
 
 	sc->sc_shadow.cr3 = (sc->sc_shadow.cr3 & CR3_OPMODE_MASK) |
 	    arcofi_portmask_to_cr3(portmask);
+	sc->sc_shadow.output_mute = (portmask == AUDIO_LINE_IN);
 #ifdef ARCOFI_DEBUG
-	printf("%s: set_port mask %02x -> cr3 %02x\n",
-	    sc->sc_dev.dv_xname, portmask, sc->sc_shadow.cr3);
+	printf("%s: set_port mask %02x -> cr3 %02x m %d\n",
+	    sc->sc_dev.dv_xname, portmask,
+	    sc->sc_shadow.cr3, sc->sc_shadow.output_mute);
 #endif
 
 	return 0;
@@ -921,7 +920,8 @@ arcofi_get_port(void *v, mixer_ctrl_t *mc)
 	case ARCOFI_PORT_AUDIO_SPKR_MUTE:
 		if (mc->type != AUDIO_MIXER_ENUM)
 			return EINVAL;
-		portmask = arcofi_cr3_to_portmask(sc->sc_shadow.cr3);
+		portmask = arcofi_cr3_to_portmask(sc->sc_shadow.cr3,
+		    sc->sc_shadow.output_mute);
 #ifdef ARCOFI_DEBUG
 		printf("%s: get_port cr3 %02x -> mask %02x\n",
 		    sc->sc_dev.dv_xname, sc->sc_shadow.cr3, portmask);
@@ -1250,8 +1250,8 @@ arcofi_attach(struct arcofi_softc *sc, const char *version)
 	sc->sc_active.cr3 =
 	    arcofi_portmask_to_cr3(AUDIO_SPEAKER) | CR3_OPMODE_NORMAL;
 	sc->sc_active.cr4 = CR4_TM | CR4_ULAW;
-	sc->sc_active.gr_idx = sc->sc_active.gx_idx =
-	    arcofi_mi_to_gain(AUDIO_MIDDLE_GAIN);
+	sc->sc_active.gr_idx = sc->sc_active.gx_idx = 1 + NEGATIVE_GAINS;
+	sc->sc_active.output_mute = 0;
 	bcopy(&sc->sc_active, &sc->sc_shadow, sizeof(sc->sc_active));
 
 	/* clear CRAM */
