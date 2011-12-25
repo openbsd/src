@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.24 2011/04/21 20:28:16 jordan Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.25 2011/12/25 15:28:17 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -95,30 +95,23 @@ void
 sr_raid6_discipline_init(struct sr_discipline *sd)
 {
 
-	/* Initialize GF256 tables */
+	/* Initialize GF256 tables. */
 	gf_init();
 
-	/* fill out discipline members. */
+	/* Fill out discipline members. */
 	sd->sd_type = SR_MD_RAID6;
 	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE;
 	sd->sd_max_wu = SR_RAID6_NOWU;
 
-	/* setup discipline pointers. */
-	sd->sd_create = sr_raid6_create;
-	sd->sd_assemble = sr_raid6_assemble;
+	/* Setup discipline specific function pointers. */
 	sd->sd_alloc_resources = sr_raid6_alloc_resources;
+	sd->sd_assemble = sr_raid6_assemble;
+	sd->sd_create = sr_raid6_create;
 	sd->sd_free_resources = sr_raid6_free_resources;
-	sd->sd_start_discipline = NULL;
-	sd->sd_scsi_inquiry = sr_raid_inquiry;
-	sd->sd_scsi_read_cap = sr_raid_read_cap;
-	sd->sd_scsi_tur = sr_raid_tur;
-	sd->sd_scsi_req_sense = sr_raid_request_sense;
-	sd->sd_scsi_start_stop = sr_raid_start_stop;
-	sd->sd_scsi_sync = sr_raid_sync;
+	sd->sd_openings = sr_raid6_openings;
 	sd->sd_scsi_rw = sr_raid6_rw;
 	sd->sd_set_chunk_state = sr_raid6_set_chunk_state;
 	sd->sd_set_vol_state = sr_raid6_set_vol_state;
-	sd->sd_openings = sr_raid6_openings;
 }
 
 int

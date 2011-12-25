@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.22 2011/04/08 00:12:54 jordan Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.23 2011/12/25 15:28:17 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -72,28 +72,21 @@ void
 sr_raidp_discipline_init(struct sr_discipline *sd, u_int8_t type)
 {
 
-	/* fill out discipline members. */
+	/* Fill out discipline members. */
 	sd->sd_type = type;
 	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE;
 	sd->sd_max_ccb_per_wu = 4; /* only if stripsize <= MAXPHYS */
 	sd->sd_max_wu = SR_RAIDP_NOWU;
 
-	/* setup discipline pointers. */
-	sd->sd_create = sr_raidp_create;
-	sd->sd_assemble = sr_raidp_assemble;
+	/* Setup discipline specific function pointers. */
 	sd->sd_alloc_resources = sr_raidp_alloc_resources;
+	sd->sd_assemble = sr_raidp_assemble;
+	sd->sd_create = sr_raidp_create;
 	sd->sd_free_resources = sr_raidp_free_resources;
-	sd->sd_start_discipline = NULL;
-	sd->sd_scsi_inquiry = sr_raid_inquiry;
-	sd->sd_scsi_read_cap = sr_raid_read_cap;
-	sd->sd_scsi_tur = sr_raid_tur;
-	sd->sd_scsi_req_sense = sr_raid_request_sense;
-	sd->sd_scsi_start_stop = sr_raid_start_stop;
-	sd->sd_scsi_sync = sr_raid_sync;
+	sd->sd_openings = sr_raidp_openings;
 	sd->sd_scsi_rw = sr_raidp_rw;
 	sd->sd_set_chunk_state = sr_raidp_set_chunk_state;
 	sd->sd_set_vol_state = sr_raidp_set_vol_state;
-	sd->sd_openings = sr_raidp_openings;
 }
 
 int

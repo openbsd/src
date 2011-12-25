@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.75 2011/09/20 12:20:44 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.76 2011/12/25 15:28:17 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -120,20 +120,13 @@ sr_crypto_discipline_init(struct sr_discipline *sd)
 	for (i = 0; i < SR_CRYPTO_MAXKEYS; i++)
 		sd->mds.mdd_crypto.scr_sid[i] = (u_int64_t)-1;
 
-	/* Setup discipline pointers. */
-	sd->sd_create = sr_crypto_create;
-	sd->sd_assemble = sr_crypto_assemble;
+	/* Setup discipline specific function pointers. */
 	sd->sd_alloc_resources = sr_crypto_alloc_resources;
+	sd->sd_assemble = sr_crypto_assemble;
+	sd->sd_create = sr_crypto_create;
 	sd->sd_free_resources = sr_crypto_free_resources;
-	sd->sd_start_discipline = NULL;
 	sd->sd_ioctl_handler = sr_crypto_ioctl;
 	sd->sd_meta_opt_handler = sr_crypto_meta_opt_handler;
-	sd->sd_scsi_inquiry = sr_raid_inquiry;
-	sd->sd_scsi_read_cap = sr_raid_read_cap;
-	sd->sd_scsi_tur = sr_raid_tur;
-	sd->sd_scsi_req_sense = sr_raid_request_sense;
-	sd->sd_scsi_start_stop = sr_raid_start_stop;
-	sd->sd_scsi_sync = sr_raid_sync;
 	sd->sd_scsi_rw = sr_crypto_rw;
 	/* XXX reuse raid 1 functions for now FIXME */
 	sd->sd_set_chunk_state = sr_raid1_set_chunk_state;

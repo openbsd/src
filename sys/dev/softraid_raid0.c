@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.23 2011/04/05 19:52:02 krw Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.24 2011/12/25 15:28:17 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -65,18 +65,11 @@ sr_raid0_discipline_init(struct sr_discipline *sd)
 	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE;
 	sd->sd_max_wu = SR_RAID0_NOWU;
 
-	/* Setup discipline pointers. */
-	sd->sd_create = sr_raid0_create;
-	sd->sd_assemble = sr_raid0_assemble;
+	/* Setup discipline specific function pointers. */
 	sd->sd_alloc_resources = sr_raid0_alloc_resources;
+	sd->sd_assemble = sr_raid0_assemble;
+	sd->sd_create = sr_raid0_create;
 	sd->sd_free_resources = sr_raid0_free_resources;
-	sd->sd_start_discipline = NULL;
-	sd->sd_scsi_inquiry = sr_raid_inquiry;
-	sd->sd_scsi_read_cap = sr_raid_read_cap;
-	sd->sd_scsi_tur = sr_raid_tur;
-	sd->sd_scsi_req_sense = sr_raid_request_sense;
-	sd->sd_scsi_start_stop = sr_raid_start_stop;
-	sd->sd_scsi_sync = sr_raid_sync;
 	sd->sd_scsi_rw = sr_raid0_rw;
 	sd->sd_set_chunk_state = sr_raid0_set_chunk_state;
 	sd->sd_set_vol_state = sr_raid0_set_vol_state;

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.258 2011/11/13 14:07:17 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.259 2011/12/25 15:28:17 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3634,6 +3634,25 @@ int
 sr_discipline_init(struct sr_discipline *sd, int level)
 {
 	int			rv = 1;
+
+	/* Initialise discipline function pointers with defaults. */
+	sd->sd_alloc_resources = NULL;
+	sd->sd_assemble = NULL;
+	sd->sd_create = NULL;
+	sd->sd_free_resources = NULL;
+	sd->sd_ioctl_handler = NULL;
+	sd->sd_openings = NULL;
+	sd->sd_meta_opt_handler = NULL;
+	sd->sd_scsi_inquiry = sr_raid_inquiry;
+	sd->sd_scsi_read_cap = sr_raid_read_cap;
+	sd->sd_scsi_tur = sr_raid_tur;
+	sd->sd_scsi_req_sense = sr_raid_request_sense;
+	sd->sd_scsi_start_stop = sr_raid_start_stop;
+	sd->sd_scsi_sync = sr_raid_sync;
+	sd->sd_scsi_rw = NULL;
+	sd->sd_set_chunk_state = NULL;
+	sd->sd_set_vol_state = NULL;
+	sd->sd_start_discipline = NULL;
 
 	switch (level) {
 	case 0:
