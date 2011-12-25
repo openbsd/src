@@ -1,4 +1,4 @@
-.\"	$Id: mandocdb.8,v 1.15 2011/12/25 16:52:55 schwarze Exp $
+.\"	$Id: mandocdb.8,v 1.16 2011/12/25 20:57:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -46,7 +46,13 @@ manuals and indexes them in a
 .Sx Keyword Database
 and
 .Sx Index Database
-for fast retrieval.
+for fast retrieval by
+.Xr apropos 1 ,
+.Xr whatis 1 ,
+and
+.Xr man 1 Ns 's
+.Fl k
+option.
 .Pp
 By default,
 .Nm
@@ -159,10 +165,11 @@ The keyword database,
 is a
 .Xr btree 3
 database of NUL-terminated keywords (record length is non-zero string
-length plus one) mapping to a 12-byte binary field consisting of the
-64-bit keyword type and 32-bit source
+length plus one) mapping to a 16-byte binary field consisting of the
+64-bit keyword type and the 64-bit
 .Sx Index Database
 record number, both in network-byte order.
+.Pp
 The type bit-mask consists of the following
 values mapping into
 .Xr mdoc 7
@@ -208,9 +215,6 @@ macro identifiers:
 .It Li 0x0000001000000000ULL Ta \&Vt
 .It Li 0x0000002000000000ULL Ta \&Xr
 .El
-.Pp
-The last four bytes are a host-ordered record number within the
-.Sx Index Database .
 .Sh IMPLEMENTATION NOTES
 The time to construct a new database pair grows linearly with the
 number of keywords in the input files.
@@ -252,7 +256,7 @@ error accessing input files.
 Such errors cause
 .Nm
 to exit at once, possibly in the middle of parsing or formatting a file.
-The output databases are corrupt and should be removed .
+The output databases are corrupt and should be removed.
 .El
 .Sh DIAGNOSTICS
 If the following errors occur, the
