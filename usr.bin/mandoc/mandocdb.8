@@ -1,4 +1,4 @@
-.\"	$Id: mandocdb.8,v 1.13 2011/12/19 02:26:33 schwarze Exp $
+.\"	$Id: mandocdb.8,v 1.14 2011/12/25 13:05:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 19 2011 $
+.Dd $Mdocdate: December 25 2011 $
 .Dt MANDOCDB 8
 .Os
 .Sh NAME
@@ -22,19 +22,21 @@
 .Nd index UNIX manuals
 .Sh SYNOPSIS
 .Nm
-.Op Fl av
+.Op Fl avW
 .Op Fl C Ar file
 .Nm
-.Op Fl av
+.Op Fl avW
 .Ar dir ...
 .Nm
-.Op Fl v
+.Op Fl vW
 .Fl d Ar dir
 .Op Ar
 .Nm
-.Op Fl v
+.Op Fl vW
 .Fl u Ar dir
 .Op Ar
+.Nm
+.Fl t Ar
 .Sh DESCRIPTION
 The
 .Nm
@@ -88,6 +90,17 @@ Merge (remove and re-add)
 to the database in
 .Ar dir
 without truncating it.
+.It Fl t Ar
+Check the given
+.Ar files
+for potential problems.
+No databases are modified.
+Implies
+.Fl a
+and
+.Fl W .
+All diagnostic messages are printed to the standard output;
+the standard error output is not used.
 .It Fl u Ar dir
 Remove
 .Ar
@@ -96,6 +109,9 @@ from the database in
 without truncating it.
 .It Fl v
 Display all files added or removed to the index.
+.It Fl W
+Print warnings about potential problems with manual pages
+to the standard error output.
 .El
 .Pp
 If fatal parse errors are encountered while parsing, the offending file
