@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.260 2011/12/01 16:44:29 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.261 2011/12/25 20:00:40 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1269,7 +1269,8 @@ getuint(struct disklabel *lp, char *prompt, char *helpstring,
 			if ((cyls * lp->d_secpercyl) - offset > maxval)
 				cyls--;
 			rval = (cyls * lp->d_secpercyl) - offset;
-			printf("Rounding to cylinder: %llu\n", rval);
+			printf("Rounding size to cylinder (%d sectors): %llu\n",
+			    lp->d_secpercyl, rval);
 		}
 	}
 
@@ -2004,8 +2005,9 @@ get_fsize(struct disklabel *lp, int partno)
 int
 get_bsize(struct disklabel *lp, int partno)
 {
-	u_int64_t adj, ui, bsize, frag, fsize;
+	u_int64_t adj, ui, bsize, frag, fsize, orig_offset, orig_size;
 	struct partition *pp = &lp->d_partitions[partno];
+	char *p;
 
 	if (pp->p_fstype != FS_BSDFFS)
 		return (0);
@@ -2047,8 +2049,20 @@ get_bsize(struct disklabel *lp, int partno)
 	}
 	pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(ui / frag, frag);
 
-align:
 #ifndef SUN_CYLCHECK
+	p = getstring("Align partition to block size",
+	    "Round the partition offset and size to multiples of bsize?", "y");
+
+	if (*p == 'n' || *p == 'N')
+		return (0);
+#endif
+
+align:
+
+#ifndef SUN_CYLCHECK
+	orig_size = DL_GETPSIZE(pp);
+	orig_offset = DL_GETPOFFSET(pp);
+
 	bsize = (DISKLABELV1_FFS_FRAG(pp->p_fragblock) *
 	    DISKLABELV1_FFS_FSIZE(pp->p_fragblock)) / lp->d_secsize;
 	if (DL_GETPOFFSET(pp) != starting_sector) {
@@ -2063,6 +2077,13 @@ align:
 	adj = (DL_GETPOFFSET(pp) + DL_GETPSIZE(pp)) % bsize;
 	if (adj > 0)
 		DL_SETPSIZE(pp, DL_GETPSIZE(pp) - adj);
+
+	if (orig_offset != DL_GETPOFFSET(pp))
+		printf("Rounding offset to bsize (%llu sectors): %llu\n",
+		    bsize, DL_GETPOFFSET(pp));
+	if (orig_size != DL_GETPSIZE(pp))
+		printf("Rounding size to bsize (%llu sectors): %llu\n",
+		    bsize, DL_GETPSIZE(pp));
 #endif
 	return(0);
 }
