@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.30 2011/12/25 16:52:55 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.31 2011/12/25 19:57:20 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -1440,7 +1440,8 @@ static void
 ofile_argbuild(int argc, char *argv[], struct of **of)
 {
 	char		 buf[MAXPATHLEN];
-	char		*sec, *arch, *title, *p;
+	const char	*sec, *arch, *title;
+	char		*p;
 	int		 i, src_form;
 	struct of	*nof;
 
@@ -1744,6 +1745,7 @@ ofile_dirbuild(const char *dir, const char* psec, const char *parch,
 
 		if (verb > 1)
 			printf("%s: scheduling\n", buf);
+
 		if (NULL == *of) {
 			*of = nof;
 			(*of)->first = nof;
@@ -1762,7 +1764,10 @@ ofile_free(struct of *of)
 {
 	struct of	*nof;
 
-	while (of) {
+	if (NULL != of)
+		of = of->first;
+
+	while (NULL != of) {
 		nof = of->next;
 		free(of->fname);
 		free(of->sec);
