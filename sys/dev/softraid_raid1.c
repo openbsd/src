@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.27 2011/04/05 19:52:02 krw Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.28 2011/12/25 15:16:21 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -247,6 +247,13 @@ sr_raid1_set_vol_state(struct sr_discipline *sd)
 
 	nd = sd->sd_meta->ssdi.ssd_chunk_no;
 
+#ifdef SR_DEBUG
+	for (i = 0; i < nd; i++)
+		DNPRINTF(SR_D_STATE, "%s: chunk %d status = %u\n",
+		    DEVNAME(sd->sd_sc), i,
+		    sd->sd_vol.sv_chunks[i]->src_meta.scm_status);
+#endif
+
 	for (i = 0; i < SR_MAX_STATES; i++)
 		states[i] = 0;
 
@@ -271,14 +278,8 @@ sr_raid1_set_vol_state(struct sr_discipline *sd)
 	else if (states[BIOC_SDOFFLINE] != 0)
 		new_state = BIOC_SVDEGRADED;
 	else {
-#ifdef SR_DEBUG
 		DNPRINTF(SR_D_STATE, "%s: invalid volume state, old state "
 		    "was %d\n", DEVNAME(sd->sd_sc), old_state);
-		for (i = 0; i < nd; i++)
-			DNPRINTF(SR_D_STATE, "%s: chunk %d status = %d\n",
-			    DEVNAME(sd->sd_sc), i,
-			    sd->sd_vol.sv_chunks[i]->src_meta.scm_status);
-#endif
 		panic("invalid volume state");
 	}
 
