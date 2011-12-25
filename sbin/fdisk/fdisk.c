@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.52 2011/02/21 19:26:12 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.53 2011/12/25 19:13:51 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -162,11 +162,9 @@ main(int argc, char *argv[])
 		memcpy(mbr_buf, builtin_mbr, sizeof(mbr_buf));
 	} else {
 		error = MBR_read(fd, 0, mbr_buf);
+		if (error == -1)
+			err(1, "Unable to read MBR");
 		close(fd);
-		if (error == -1) {
-			printf("Unable to read MBR\n");
-			return (1);
-		}
 	}
 	MBR_parse(&disk, mbr_buf, 0, 0, &mbr);
 
