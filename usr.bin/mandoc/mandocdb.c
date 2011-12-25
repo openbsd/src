@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.28 2011/12/25 13:05:29 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.29 2011/12/25 14:51:33 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -563,7 +563,7 @@ index_merge(const struct of *of, struct mparse *mp,
 	uint64_t	 mask;
 	size_t		 sv;
 	unsigned	 seq;
-	struct db_val	 vbuf;
+	uint64_t	 vbuf[2];
 	char		 type;
 
 	rec = 0;
@@ -702,7 +702,7 @@ index_merge(const struct of *of, struct mparse *mp,
 			recs->last = 0;
 		} else
 			rec++;
-		vbuf.rec = htobe32(rec);
+		vbuf[1] = htobe64(rec);
 
 		/*
 		 * Copy from the in-memory hashtable of pending
@@ -714,8 +714,8 @@ index_merge(const struct of *of, struct mparse *mp,
 			seq = R_NEXT;
 			assert(sizeof(uint64_t) == val.size);
 			memcpy(&mask, val.data, val.size);
-			vbuf.mask = htobe64(mask);
-			val.size = sizeof(struct db_val);
+			vbuf[0] = htobe64(mask);
+			val.size = sizeof(vbuf);
 			val.data = &vbuf;
 			dbt_put(mdb->db, mdb->dbn, &key, &val);
 		}
@@ -756,7 +756,7 @@ index_prune(const struct of *ofile, struct mdb *mdb, struct recs *recs)
 {
 	const struct of	*of;
 	const char	*fn;
-	struct db_val	*vbuf;
+	uint64_t	 vbuf[2];
 	unsigned	 seq, sseq;
 	DBT		 key, val;
 	int		 ch;
@@ -805,11 +805,11 @@ index_prune(const struct of *ofile, struct mdb *mdb, struct recs *recs)
 		while (0 == (ch = (*mdb->db->seq)(mdb->db,
 					&key, &val, sseq))) {
 			sseq = R_NEXT;
-			if (sizeof(struct db_val) != val.size)
+			if (sizeof(vbuf) != val.size)
 				break;
 
-			vbuf = val.data;
-			if (recs->last != betoh32(vbuf->rec))
+			memcpy(vbuf, val.data, val.size);
+			if (recs->last != betoh64(vbuf[1]))
 				continue;
 
 			if ((ch = (*mdb->db->del)(mdb->db,
