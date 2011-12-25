@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.52 2011/11/13 14:38:57 jmc Exp $
+.\"	$OpenBSD: mandoc.1,v 1.53 2011/12/25 20:15:54 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 13 2011 $
+.Dd $Mdocdate: December 25 2011 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -34,6 +34,19 @@ The
 utility formats
 .Ux
 manual pages for display.
+.Pp
+By default,
+.Nm
+reads
+.Xr mdoc 7
+or
+.Xr man 7
+text from stdin, implying
+.Fl m Ns Cm andoc ,
+and produces
+.Fl T Ns Cm ascii
+output.
+.Pp
 The arguments are as follows:
 .Bl -tag -width Ds
 .It Fl m Ns Ar format
@@ -96,18 +109,6 @@ If multiple files are specified,
 .Nm
 will halt with the first failed parse.
 .El
-.Pp
-By default,
-.Nm
-reads
-.Xr mdoc 7
-or
-.Xr man 7
-text from stdin, implying
-.Fl m Ns Cm andoc ,
-and produces
-.Fl T Ns Cm ascii
-output.
 .Ss Input Formats
 The
 .Nm
