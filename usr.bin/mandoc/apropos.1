@@ -1,4 +1,4 @@
-.\"	$Id: apropos.1,v 1.12 2011/12/25 20:15:54 schwarze Exp $
+.\"	$Id: apropos.1,v 1.13 2011/12/26 12:45:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 25 2011 $
+.Dd $Mdocdate: December 26 2011 $
 .Dt APROPOS 1
 .Os
 .Sh NAME
@@ -23,8 +23,8 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl C Ar file
-.Op Fl M Ar manpath
-.Op Fl m Ar manpath
+.Op Fl M Ar path
+.Op Fl m Ar path
 .Op Fl S Ar arch
 .Op Fl s Ar section
 .Ar expression ...
@@ -58,25 +58,31 @@ Specify an alternative configuration
 in
 .Xr man.conf 5
 format.
-.It Fl M Ar manpath
+.It Fl M Ar path
 Use the colon-separated path instead of the default list of paths
 searched for
 .Xr mandocdb 8
 databases.
 Invalid paths, or paths without manual databases, are ignored.
-.It Fl m Ar manpath
+.It Fl m Ar path
 Prepend the colon-separated paths to the list of paths searched
 for
 .Xr mandocdb 8
 databases.
 Invalid paths, or paths without manual databases, are ignored.
 .It Fl S Ar arch
-Search only for a particular architecture.
-.It Fl s Ar cat
-Search only for a manual section.
+Restrict the search to pages for the specified
+.Xr machine 1
+architecture.
+.Ar arch
+is case insensitive.
+By default, pages for all architectures are shown.
+.It Fl s Ar section
+Restrict the search to the specified section of the manual.
+By default, pages from all sections are shown.
 See
 .Xr man 1
-for a listing of manual sections.
+for a listing of sections.
 .El
 .Pp
 An
@@ -239,24 +245,24 @@ Text production:
 .It Li \&Dx Ta Dx No version reference
 .El
 .Sh ENVIRONMENT
-.Bl -tag -width Ds
+.Bl -tag -width MANPATH
 .It Ev MANPATH
-Colon-separated paths modifying the default list of paths searched for
-manual databases.
+The standard search path used by
+.Xr man 1
+may be changed by specifying a path in the
+.Ev MANPATH
+environment variable.
 Invalid paths, or paths without manual databases, are ignored.
 Overridden by
 .Fl M .
 If
 .Ev MANPATH
-begins with a
-.Sq \&: ,
-it is appended to the default list;
-else if it ends with
-.Sq \&: ,
-it is prepended to the default list; else if it contains
-.Sq \&:: ,
-the default list is inserted between the colons.
-If none of these conditions are met, it overrides the default list.
+begins with a colon, it is appended to the default list;
+if it ends with a colon, it is prepended to the default list;
+or if it contains two adjacent colons,
+the standard search path is inserted between the colons.
+If none of these conditions are met, it overrides the
+standard search path.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/man.conf" -compact

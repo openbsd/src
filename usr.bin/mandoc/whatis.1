@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whatis.1,v 1.1 2011/12/26 10:29:57 schwarze Exp $
+.\"	$OpenBSD: whatis.1,v 1.2 2011/12/26 12:45:58 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,6 +40,8 @@
 .Op Fl C Ar file
 .Op Fl M Ar path
 .Op Fl m Ar path
+.Op Fl S Ar arch
+.Op Fl s Ar section
 .Ar command ...
 .Sh DESCRIPTION
 .Nm
@@ -85,20 +87,47 @@ or the directories supplied with the
 option or the
 .Ev MANPATH
 environment variable are searched.
+.It Fl S Ar arch
+Restrict the search to pages for the specified
+.Xr machine 1
+architecture.
+.Ar arch
+is case insensitive.
+By default, pages for all architectures are shown.
+.It Fl s Ar section
+Restrict the search to the specified section of the manual.
+By default, pages from all sections are shown.
+See
+.Xr man 1
+for a listing of sections.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width MANPATH
 .It Ev MANPATH
 The standard search path used by
 .Xr man 1
-may be overridden by specifying a path in the
+may be changed by specifying a path in the
 .Ev MANPATH
 environment variable.
+If
+.Ev MANPATH
+begins with a colon, it is appended to the default list;
+if it ends with a colon, it is prepended to the default list;
+or if it contains two adjacent colons,
+the standard search path is inserted between the colons.
+If none of these conditions are met, it overrides the
+standard search path.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/man.conf" -compact
 .It Pa whatis.db
-name of the whatis database
+name of the
+.Xr mandocdb 8
+keyword database
+.It Pa whatis.index
+name of the
+.Xr mandocdb 8
+filename database
 .It Pa /etc/man.conf
 default
 .Xr man 1
