@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.50 2011/10/12 18:30:07 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.51 2011/12/26 23:07:04 haesbaert Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -169,7 +169,7 @@ _C_LABEL(lapic_isr):
 
 	.globl	_C_LABEL(cpu_id),_C_LABEL(cpu_vendor), _C_LABEL(cpu_brand_id)
 	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature)
-	.globl	_C_LABEL(cpu_ecxfeature)
+	.globl	_C_LABEL(cpu_ecxfeature),_C_LABEL(ecpu_ecxfeature)
 	.globl	_C_LABEL(esym),_C_LABEL(boothowto),_C_LABEL(bootdev)
 	.globl	_C_LABEL(bootinfo), _C_LABEL(bootinfo_size), _C_LABEL(atdevbase)
 	.globl	_C_LABEL(proc0paddr),_C_LABEL(PTDpaddr)
@@ -181,6 +181,7 @@ _C_LABEL(cpu_id):	.long	0	# saved from `cpuid' instruction
 _C_LABEL(cpu_feature):	.long	0	# feature flags from 'cpuid'
 					#   instruction
 _C_LABEL(cpu_ecxfeature):.long	0	# extended feature flags from 'cpuid'
+_C_LABEL(ecpu_ecxfeature):.long	0	# extended ecx feature flags
 _C_LABEL(cpuid_level):	.long	-1	# max. level accepted by 'cpuid'
 					#   instruction
 _C_LABEL(cpu_vendor):	.space	16	# vendor string returned by `cpuid'

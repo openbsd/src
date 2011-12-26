@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.32 2011/05/29 14:50:25 deraadt Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.33 2011/12/26 23:07:04 haesbaert Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -119,6 +119,25 @@ const struct {
 	{ CPUIDECX_XSAVE,	"XSAVE" },
 	{ CPUIDECX_OSXSAVE,	"OSXSAVE" },
 	{ CPUIDECX_AVX,		"AVX" }
+}, cpu_ecpuid_ecxfeatures[] = {
+	{ CPUIDECX_LAHF,	"LAHF" },
+	{ CPUIDECX_CMPLEG,	"CMPLEG" },
+	{ CPUIDECX_SVM,		"SVM" },
+	{ CPUIDECX_EAPICSP,	"EAPICSP"},
+	{ CPUIDECX_AMCR8,	"AMCR8"},
+	{ CPUIDECX_ABM,		"ABM" },
+	{ CPUIDECX_SSE4A,	"SSE4A" },
+	{ CPUIDECX_MASSE,	"MASSE" },
+	{ CPUIDECX_3DNOWP,	"3DNOWP" },
+	{ CPUIDECX_OSVW,	"OSVW" },
+	{ CPUIDECX_IBS,		"IBS" },
+	{ CPUIDECX_XOP,		"XOP" },
+	{ CPUIDECX_SKINIT,	"SKINIT" },
+	{ CPUIDECX_LWP,		"WDT" },
+	{ CPUIDECX_FMA4,	"FMA4" },
+	{ CPUIDECX_NODEID,	"NODEID" },
+	{ CPUIDECX_TBM,		"TBM" },
+	{ CPUIDECX_TOPEXT,	"TOPEXT" },
 };
 
 int
@@ -291,6 +310,8 @@ identifycpu(struct cpu_info *ci)
 	CPUID(1, ci->ci_signature, val, dummy, ci->ci_feature_flags);
 	CPUID(0x80000000, pnfeatset, dummy, dummy, dummy);
 	CPUID(0x80000001, dummy, dummy, dummy, ci->ci_feature_eflags);
+	if (pnfeatset >= 0x80000001)
+		CPUID(0x80000001, dummy, dummy, ecpu_ecxfeature, dummy);
 
 	vendor[3] = 0;
 	CPUID(0, dummy, vendor[0], vendor[2], vendor[1]);	/* yup, 0 2 1 */
@@ -352,6 +373,11 @@ identifycpu(struct cpu_info *ci)
 	for (i = 0; i < max; i++)
 		if (ci->ci_feature_eflags & cpu_ecpuid_features[i].bit)
 			printf(",%s", cpu_ecpuid_features[i].str);
+	max = sizeof(cpu_ecpuid_ecxfeatures) / sizeof(cpu_ecpuid_ecxfeatures[0]);
+	for (i = 0; i < max; i++)
+		if (ecpu_ecxfeature & cpu_ecpuid_ecxfeatures[i].bit)
+			printf(",%s", cpu_ecpuid_ecxfeatures[i].str);
+
 	printf("\n");
 
 	x86_print_cacheinfo(ci);

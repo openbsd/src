@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.19 2010/04/29 17:00:48 oga Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.20 2011/12/26 23:07:04 haesbaert Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -146,6 +146,30 @@
 #define CPUIDECX_XSAVE	0x04000000	/* XSAVE/XSTOR States */
 #define CPUIDECX_OSXSAVE	0x08000000	/* OSXSAVE */
 #define CPUIDECX_AVX	0x10000000	/* Advanced Vector Extensions */
+
+#define CPUIDECX_LAHF		0x00000001 /* LAHF and SAHF instructions */
+#define CPUIDECX_CMPLEG		0x00000002 /* Core MP legacy mode */
+#define CPUIDECX_SVM		0x00000004 /* Secure Virtual Machine */
+#define CPUIDECX_EAPICSP	0x00000008 /* Extended APIC space */
+#define CPUIDECX_AMCR8		0x00000010 /* LOCK MOV CR0 means MOV CR8 */
+#define CPUIDECX_ABM		0x00000020 /* LZCNT instruction */
+#define CPUIDECX_SSE4A		0x00000040 /* SSE4-A instruction set */
+#define CPUIDECX_MASSE		0x00000080 /* Misaligned SSE mode */
+#define CPUIDECX_3DNOWP		0x00000100 /* 3DNowPrefetch */
+#define CPUIDECX_OSVW		0x00000200 /* OS visible workaround */
+#define CPUIDECX_IBS		0x00000400 /* Instruction based sampling */
+#define CPUIDECX_XOP		0x00000800 /* Extended operating support */
+#define CPUIDECX_SKINIT		0x00001000 /* SKINIT and STGI are supported */
+#define CPUIDECX_WDT		0x00002000 /* Watchdog timer */
+/* Reserved			0x00004000 */
+#define CPUIDECX_LWP		0x00008000 /* Lightweight profiling support */
+#define CPUIDECX_FMA4		0x00010000 /* 4-operand FMA instructions */
+/* Reserved			0x00020000 */
+/* Reserved			0x00040000 */
+#define CPUIDECX_NODEID		0x00080000 /* Support for MSRC001C */
+/* Reserved			0x00100000 */
+#define CPUIDECX_TBM		0x00200000 /* Trailing bit manipulation instruction */
+#define CPUIDECX_TOPEXT		0x00400000 /* Topology extensions support */
 
 /*
  * AMD/VIA processor specific flags.
