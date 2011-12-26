@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.76 2011/12/25 15:28:17 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.77 2011/12/26 14:54:52 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -128,9 +128,6 @@ sr_crypto_discipline_init(struct sr_discipline *sd)
 	sd->sd_ioctl_handler = sr_crypto_ioctl;
 	sd->sd_meta_opt_handler = sr_crypto_meta_opt_handler;
 	sd->sd_scsi_rw = sr_crypto_rw;
-	/* XXX reuse raid 1 functions for now FIXME */
-	sd->sd_set_chunk_state = sr_raid1_set_chunk_state;
-	sd->sd_set_vol_state = sr_raid1_set_vol_state;
 }
 
 int

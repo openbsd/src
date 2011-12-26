@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.110 2011/11/11 12:32:11 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.111 2011/12/26 14:54:52 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -658,12 +658,6 @@ void			sr_raid6_discipline_init(struct sr_discipline *);
 void			sr_crypto_discipline_init(struct sr_discipline *);
 void			sr_aoe_discipline_init(struct sr_discipline *);
 void			sr_aoe_server_discipline_init(struct sr_discipline *);
-
-/* raid 1 */
-/* XXX - currently (ab)used by AOE and CRYPTO. */
-void			sr_raid1_set_chunk_state(struct sr_discipline *,
-			    int, int);
-void			sr_raid1_set_vol_state(struct sr_discipline *);
 
 /* Crypto discipline hooks. */
 int			sr_crypto_get_kdf(struct bioc_createraid *,

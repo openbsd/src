@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.259 2011/12/25 15:28:17 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.260 2011/12/26 14:54:52 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -112,6 +112,8 @@ void			sr_chunks_unwind(struct sr_softc *,
 void			sr_discipline_free(struct sr_discipline *);
 void			sr_discipline_shutdown(struct sr_discipline *, int);
 int			sr_discipline_init(struct sr_discipline *, int);
+void			sr_set_chunk_state(struct sr_discipline *, int, int);
+void			sr_set_vol_state(struct sr_discipline *);
 
 /* utility functions */
 void			sr_shutdown(struct sr_softc *);
@@ -3650,8 +3652,8 @@ sr_discipline_init(struct sr_discipline *sd, int level)
 	sd->sd_scsi_start_stop = sr_raid_start_stop;
 	sd->sd_scsi_sync = sr_raid_sync;
 	sd->sd_scsi_rw = NULL;
-	sd->sd_set_chunk_state = NULL;
-	sd->sd_set_vol_state = NULL;
+	sd->sd_set_chunk_state = sr_set_chunk_state;
+	sd->sd_set_vol_state = sr_set_vol_state;
 	sd->sd_start_discipline = NULL;
 
 	switch (level) {
@@ -3894,6 +3896,112 @@ sr_raid_startwu(struct sr_workunit *wu)
 	/* start all individual ios */
 	workq_queue_task(sd->sd_workq, &wu->swu_wqt, 0, sr_startwu_callback,
 	    sd, wu);
+}
+
+void
+sr_set_chunk_state(struct sr_discipline *sd, int c, int new_state)
+{
+	int			old_state, s;
+
+	DNPRINTF(SR_D_STATE, "%s: %s: %s: sr_set_chunk_state %d -> %d\n",
+	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
+	    sd->sd_vol.sv_chunks[c]->src_meta.scmi.scm_devname, c, new_state);
+
+	/* ok to go to splbio since this only happens in error path */
+	s = splbio();
+	old_state = sd->sd_vol.sv_chunks[c]->src_meta.scm_status;
+
+	/* multiple IOs to the same chunk that fail will come through here */
+	if (old_state == new_state)
+		goto done;
+
+	switch (old_state) {
+	case BIOC_SDONLINE:
+		if (new_state == BIOC_SDOFFLINE)
+			break;
+		else
+			goto die;
+		break;
+
+	case BIOC_SDOFFLINE:
+		goto die;
+
+	default:
+die:
+		splx(s); /* XXX */
+		panic("%s: %s: %s: invalid chunk state transition "
+		    "%d -> %d\n", DEVNAME(sd->sd_sc),
+		    sd->sd_meta->ssd_devname,
+		    sd->sd_vol.sv_chunks[c]->src_meta.scmi.scm_devname,
+		    old_state, new_state);
+		/* NOTREACHED */
+	}
+
+	sd->sd_vol.sv_chunks[c]->src_meta.scm_status = new_state;
+	sd->sd_set_vol_state(sd);
+
+	sd->sd_must_flush = 1;
+	workq_add_task(NULL, 0, sr_meta_save_callback, sd, NULL);
+done:
+	splx(s);
+}
+
+void
+sr_set_vol_state(struct sr_discipline *sd)
+{
+	int			states[SR_MAX_STATES];
+	int			new_state, i, s, nd;
+	int			old_state = sd->sd_vol_status;
+
+	DNPRINTF(SR_D_STATE, "%s: %s: sr_set_vol_state\n",
+	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname);
+
+	nd = sd->sd_meta->ssdi.ssd_chunk_no;
+
+	for (i = 0; i < SR_MAX_STATES; i++)
+		states[i] = 0;
+
+	for (i = 0; i < nd; i++) {
+		s = sd->sd_vol.sv_chunks[i]->src_meta.scm_status;
+		if (s >= SR_MAX_STATES)
+			panic("%s: %s: %s: invalid chunk state",
+			    DEVNAME(sd->sd_sc),
+			    sd->sd_meta->ssd_devname,
+			    sd->sd_vol.sv_chunks[i]->src_meta.scmi.scm_devname);
+		states[s]++;
+	}
+
+	if (states[BIOC_SDONLINE] == nd)
+		new_state = BIOC_SVONLINE;
+	else 
+		new_state = BIOC_SVOFFLINE;
+
+	DNPRINTF(SR_D_STATE, "%s: %s: sr_set_vol_state %d -> %d\n",
+	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
+	    old_state, new_state);
+
+	switch (old_state) {
+	case BIOC_SVONLINE:
+		if (new_state == BIOC_SVOFFLINE || new_state == BIOC_SVONLINE)
+			break;
+		else
+			goto die;
+		break;
+
+	case BIOC_SVOFFLINE:
+		/* XXX this might be a little too much */
+		goto die;
+
+	default:
+die:
+		panic("%s: %s: invalid volume state transition "
+		    "%d -> %d\n", DEVNAME(sd->sd_sc),
+		    sd->sd_meta->ssd_devname,
+		    old_state, new_state);
+		/* NOTREACHED */
+	}
+
+	sd->sd_vol_status = new_state;
 }
 
 void

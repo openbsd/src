@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.29 2011/12/25 15:28:17 jsing Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.30 2011/12/26 14:54:52 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -53,6 +53,8 @@ int	sr_raid1_free_resources(struct sr_discipline *);
 int	sr_raid1_rw(struct sr_workunit *);
 void	sr_raid1_intr(struct buf *);
 void	sr_raid1_recreate_wu(struct sr_workunit *);
+void	sr_raid1_set_chunk_state(struct sr_discipline *, int, int);
+void	sr_raid1_set_vol_state(struct sr_discipline *);
 
 /* Discipline initialisation. */
 void

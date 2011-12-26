@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.24 2011/12/25 15:28:17 jsing Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.25 2011/12/26 14:54:52 jsing Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -93,9 +93,6 @@ sr_aoe_discipline_init(struct sr_discipline *sd)
 	sd->sd_create = sr_aoe_create;
 	sd->sd_free_resources = sr_aoe_free_resources;
 	sd->sd_scsi_rw = sr_aoe_rw;
-	/* XXX reuse raid 1 functions for now FIXME */
-	sd->sd_set_chunk_state = sr_raid1_set_chunk_state;
-	sd->sd_set_vol_state = sr_raid1_set_vol_state;
 }
 
 void
@@ -107,12 +104,11 @@ sr_aoe_server_discipline_init(struct sr_discipline *sd)
 	sd->sd_capabilities = 0;
 	sd->sd_max_wu = SR_RAIDAOE_NOWU;
 
-	/* Setup discipline pointers. */
-	sd->sd_create = sr_aoe_server_create;
-	sd->sd_assemble = sr_aoe_server_assemble;
+	/* Setup discipline specific function pointers. */
 	sd->sd_alloc_resources = sr_aoe_server_alloc_resources;
+	sd->sd_assemble = sr_aoe_server_assemble;
+	sd->sd_create = sr_aoe_server_create;
 	sd->sd_free_resources = sr_aoe_server_free_resources;
-	sd->sd_start_discipline = sr_aoe_server_start;
 	sd->sd_scsi_inquiry = NULL;
 	sd->sd_scsi_read_cap = NULL;
 	sd->sd_scsi_tur = NULL;
@@ -122,6 +118,7 @@ sr_aoe_server_discipline_init(struct sr_discipline *sd)
 	sd->sd_scsi_rw = NULL;
 	sd->sd_set_chunk_state = NULL;
 	sd->sd_set_vol_state = NULL;
+	sd->sd_start_discipline = sr_aoe_server_start;
 }
 
 /* AOE initiator */
