@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.31 2011/12/25 19:57:20 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.32 2011/12/26 11:44:31 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -603,8 +603,8 @@ index_merge(const struct of *of, struct mparse *mp,
 
 		/*
 		 * By default, skip a file if the manual section
-		 * and architecture given in the file disagree
-		 * with the directory where the file is located.
+		 * given in the file disagrees with the directory
+		 * where the file is located.
 		 */
 
 		skip = 0;
@@ -619,6 +619,21 @@ index_merge(const struct of *of, struct mparse *mp,
 			skip = 1;
 		}
 
+		/*
+		 * Manual page directories exist for each kernel
+		 * architecture as returned by machine(1).
+		 * However, many manuals only depend on the
+		 * application architecture as returned by arch(1).
+		 * For example, some (2/ARM) manuals are shared
+		 * across the "armish" and "zaurus" kernel
+		 * architectures.
+		 * A few manuals are even shared across completely
+		 * different architectures, for example fdformat(1)
+		 * on amd64, i386, sparc, and sparc64.
+		 * Thus, warn about architecture mismatches,
+		 * but don't skip manuals for this reason.
+		 */
+
 		assert(of->arch);
 		assert(march);
 		if (strcasecmp(march, of->arch)) {
@@ -627,7 +642,7 @@ index_merge(const struct of *of, struct mparse *mp,
 					"architecture \"%s\" manual "
 					"in \"%s\" directory\n",
 					fn, march, of->arch);
-			skip = 1;
+			march = of->arch;
 		}
 
 		/*
