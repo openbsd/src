@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.268 2011/12/18 22:55:31 chl Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.269 2011/12/27 17:13:05 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -886,11 +886,9 @@ enum queue_type {
 };
 
 enum queue_kind {
-	Q_INVALID=0,
 	Q_INCOMING,
 	Q_QUEUE,
 	Q_PURGE,
-	Q_BOUNCE,
 	Q_CORRUPT
 };
 

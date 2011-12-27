@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.24 2011/12/23 12:10:06 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.25 2011/12/27 17:13:05 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -71,7 +71,6 @@ void	fsqueue_qwalk_close(void *);
 #define PATH_QUEUE		"/queue"
 #define PATH_PURGE		"/purge"
 #define PATH_CORRUPT		"/corrupt"
-#define PATH_BOUNCE		"/bounce"
 
 #define PATH_MESSAGE		"/message"
 #define PATH_ENVELOPES		"/envelopes"
@@ -98,9 +97,6 @@ fsqueue_getpath(enum queue_kind kind)
 
         case Q_PURGE:
                 return (PATH_PURGE);
-
-        case Q_BOUNCE:
-                return (PATH_BOUNCE);
 
         case Q_CORRUPT:
                 return (PATH_CORRUPT);
@@ -164,11 +160,6 @@ again:
  
 	ep->creation = time(NULL);
 	ep->id = evpid;
-
-	if (qkind == Q_BOUNCE) {
-		ep->lasttry = 0;
-		ep->retry = 0;
-	}
 
 	if (! fsqueue_dump_envelope_ascii(fp, ep)) {
 		if (errno == ENOSPC)
@@ -289,17 +280,11 @@ fsqueue_message_create(enum queue_kind qkind, u_int32_t *msgid)
 {
 	char rootdir[MAXPATHLEN];
 	char evpdir[MAXPATHLEN];
-	char *queuepath = fsqueue_getpath(qkind);
-	char msgpath[MAXPATHLEN];
-	char lnkpath[MAXPATHLEN];
-	u_int32_t msgid_save;
-
-	msgid_save = *msgid;
 
 again:
 	*msgid = queue_generate_msgid();
 	if (! bsnprintf(rootdir, sizeof(rootdir), "%s/%08x",
-		queuepath, *msgid))
+		fsqueue_getpath(qkind), *msgid))
 		fatalx("fsqueue_message_create: snprintf");
 
 	if (mkdir(rootdir, 0700) == -1) {
@@ -324,21 +309,6 @@ again:
 			return 0;
 		}
 		fatal("fsqueue_message_create: mkdir");
-	}
-
-	if (qkind == Q_BOUNCE) {
-		if (! bsnprintf(msgpath, sizeof(msgpath), "%s/%03x/%08x/message",
-			fsqueue_getpath(Q_QUEUE),
-			msgid_save & 0xfff,
-			msgid_save))
-			return 0;
-
-		if (! bsnprintf(lnkpath, sizeof(lnkpath), "%s/%08x/message",
-			fsqueue_getpath(Q_BOUNCE), *msgid))
-			return 0;
-		
-		if (link(msgpath, lnkpath) == -1)
-			fatal("link");
 	}
 
 	return 1;
@@ -528,7 +498,7 @@ fsqueue_init(void)
 {
 	unsigned int	 n;
 	char		*paths[] = { PATH_INCOMING, PATH_QUEUE,
-				     PATH_PURGE, PATH_BOUNCE, PATH_CORRUPT };
+				     PATH_PURGE, PATH_CORRUPT };
 	char		 path[MAXPATHLEN];
 	int		 ret;
 
