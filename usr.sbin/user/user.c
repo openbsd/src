@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.83 2011/12/24 07:17:04 jmc Exp $ */
+/* $OpenBSD: user.c,v 1.84 2011/12/27 08:29:38 ajacoutot Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -491,17 +491,26 @@ static int
 append_group(char *user, int ngroups, const char **groups)
 {
 	struct group	*grp;
+	struct passwd	*pwp;
 	struct stat	st;
 	FILE		*from;
 	FILE		*to;
 	char		buf[LINE_MAX];
 	char		f[MaxFileNameLen];
 	char		*colon;
+	char		*ugid = NULL;
 	int		fd;
 	int		cc;
 	int		i;
 	int		j;
 
+	if ((pwp = getpwnam(user))) {
+		if ((ugid = group_from_gid(pwp->pw_gid, 1)) == NULL) {
+			warnx("can't get primary group for user `%s'", user);
+			return 0;
+		}
+	}
+		
 	for (i = 0 ; i < ngroups ; i++) {
 		if ((grp = getgrnam(groups[i])) == NULL) {
 			warnx("can't append group `%s' for user `%s'",
@@ -552,6 +561,12 @@ append_group(char *user, int ngroups, const char **groups)
 		}
 		for (i = 0 ; i < ngroups ; i++) {
 			j = (int)(colon - buf);
+			if (ugid) {
+				if (strcmp(ugid, groups[i]) == 0) {
+					/* user's primary group, no need to append */
+					groups[i] = "";
+				}
+			}
 			if (strncmp(groups[i], buf, j) == 0 &&
 			    groups[i][j] == '\0') {
 				while (isspace(buf[cc - 1]))
@@ -1190,7 +1205,7 @@ adduser(char *login_name, user_t *up)
 	}
 	if (strcmp(up->u_primgrp, "=uid") == 0 &&
 	    getgrnam(login_name) == NULL &&
-	    !creategid(login_name, gid, login_name)) {
+	    !creategid(login_name, gid, "")) {
 		(void) close(ptmpfd);
 		pw_abort();
 		errx(EXIT_FAILURE, "can't create gid %d for login name %s",
