@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.47 2011/12/05 06:56:09 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.48 2011/12/27 17:33:21 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -400,7 +400,7 @@ fail1:
 int
 pthread_kill(pthread_t thread, int sig)
 {
-	return (kill(thread->tid, sig));
+	return (kill(thread->tid, sig) == 0 ? 0 : errno);
 }
 
 int
