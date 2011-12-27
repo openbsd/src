@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.151 2011/04/20 18:41:40 nicm Exp $	*/
+/*	$OpenBSD: commit.c,v 1.152 2011/12/27 13:59:01 nicm Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -44,9 +44,10 @@ struct cvs_flisthead	files_added;
 struct cvs_flisthead	files_removed;
 struct cvs_flisthead	files_modified;
 
-int	conflicts_found;
 char	*logmsg = NULL;
 char	*loginfo = NULL;
+
+static int	conflicts_found;
 
 struct cvs_cmd cvs_cmd_commit = {
 	CVS_OP_COMMIT, CVS_USE_WDIR | CVS_LOCK_REPO, "commit",

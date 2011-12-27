@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.167 2010/07/30 21:47:18 ray Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.168 2011/12/27 13:59:01 nicm Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -48,7 +48,6 @@ static char *dateflag = NULL;
 
 static int nflag = 0;
 
-static char lastwd[MAXPATHLEN];
 char *checkout_target_dir = NULL;
 
 time_t cvs_specified_date = -1;
@@ -478,6 +477,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 	char *entry, *tosend;
 	char kbuf[8], sticky[CVS_REV_BUFSZ], rev[CVS_REV_BUFSZ];
 	char timebuf[CVS_TIME_BUFSZ], tbuf[CVS_TIME_BUFSZ];
+	static char lastwd[MAXPATHLEN];
 
 	exists = 0;
 	tosend = NULL;

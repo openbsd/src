@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.45 2008/06/12 16:53:12 joris Exp $	*/
+/*	$OpenBSD: log.c,v 1.46 2011/12/27 13:59:01 nicm Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -31,7 +31,6 @@
 #include "cvs.h"
 
 extern char *__progname;
-static int send_m = 1;
 
 /*
  * cvs_log()
@@ -126,6 +125,7 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 int
 cvs_printf(const char *fmt, ...)
 {
+	static int send_m = 1;
 	int ret;
 	char *nstr, *dp, *sp;
 	va_list vap;

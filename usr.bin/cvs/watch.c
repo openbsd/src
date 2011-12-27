@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.21 2008/06/23 20:51:08 ragge Exp $	*/
+/*	$OpenBSD: watch.c,v 1.22 2011/12/27 13:59:01 nicm Exp $	*/
 /*
  * Copyright (c) 2005-2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -33,9 +33,6 @@
 static void	cvs_watch_local(struct cvs_file *);
 static void	cvs_watchers_local(struct cvs_file *);
 
-static int	watch_req = 0;
-static int	watch_aflags = 0;
-
 struct cvs_cmd cvs_cmd_watch = {
 	CVS_OP_WATCH, CVS_USE_WDIR, "watch",
 	{ { 0 }, { 0 } },
@@ -61,6 +58,8 @@ cvs_watch(int argc, char **argv)
 {
 	int ch, flags;
 	struct cvs_recursion cr;
+	int watch_req = 0;
+	int watch_aflags = 0;
 
 	if (argc < 2)
 		fatal("%s", cvs_cmd_watch.cmd_synopsis);
