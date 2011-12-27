@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.89 2011/12/02 03:15:31 haesbaert Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.90 2011/12/27 17:20:04 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -507,7 +507,7 @@ void
 nd6_timer(void *ignored_arg)
 {
 	int s;
-	struct nd_defrouter *dr;
+	struct nd_defrouter *dr, *ndr;
 	struct nd_prefix *pr;
 	struct in6_ifaddr *ia6, *nia6;
 
@@ -516,17 +516,9 @@ nd6_timer(void *ignored_arg)
 	timeout_add_sec(&nd6_timer_ch, nd6_prune);
 
 	/* expire default router list */
-	dr = TAILQ_FIRST(&nd_defrouter);
-	while (dr) {
-		if (dr->expire && dr->expire < time_second) {
-			struct nd_defrouter *t;
-			t = TAILQ_NEXT(dr, dr_entry);
+	TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, ndr)
+		if (dr->expire && dr->expire < time_second)
 			defrtrlist_del(dr);
-			dr = t;
-		} else {
-			dr = TAILQ_NEXT(dr, dr_entry);
-		}
-	}
 
 	/*
 	 * expire interface addresses.
@@ -593,16 +585,14 @@ nd6_purge(struct ifnet *ifp)
 	 * in the routing table, in order to keep additional side effects as
 	 * small as possible.
 	 */
-	for (dr = TAILQ_FIRST(&nd_defrouter); dr; dr = ndr) {
-		ndr = TAILQ_NEXT(dr, dr_entry);
+	TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, ndr) {
 		if (dr->installed)
 			continue;
 
 		if (dr->ifp == ifp)
 			defrtrlist_del(dr);
 	}
-	for (dr = TAILQ_FIRST(&nd_defrouter); dr; dr = ndr) {
-		ndr = TAILQ_NEXT(dr, dr_entry);
+	TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, ndr) {
 		if (!dr->installed)
 			continue;
 
@@ -808,7 +798,7 @@ nd6_is_addr_neighbor(struct sockaddr_in6 *addr, struct ifnet *ifp)
 	 * XXX: we restrict the condition to hosts, because routers usually do
 	 * not have the "default router list".
 	 */
-	if (!ip6_forwarding && TAILQ_FIRST(&nd_defrouter) == NULL &&
+	if (!ip6_forwarding && TAILQ_EMPTY(&nd_defrouter) &&
 	    nd6_defifindex == ifp->if_index) {
 		return (1);
 	}
@@ -1292,8 +1282,9 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 		 */
 		bzero(drl, sizeof(*drl));
 		s = splsoftnet();
-		dr = TAILQ_FIRST(&nd_defrouter);
-		while (dr && i < DRLSTSIZ) {
+		TAILQ_FOREACH(dr, &nd_defrouter, dr_entry) {
+			if (i >= DRLSTSIZ)
+				break;
 			drl->defrouter[i].rtaddr = dr->rtaddr;
 			if (IN6_IS_ADDR_LINKLOCAL(&drl->defrouter[i].rtaddr)) {
 				/* XXX: need to this hack for KAME stack */
@@ -1309,7 +1300,6 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 			drl->defrouter[i].expire = dr->expire;
 			drl->defrouter[i].if_index = dr->ifp->if_index;
 			i++;
-			dr = TAILQ_NEXT(dr, dr_entry);
 		}
 		splx(s);
 		break;
@@ -1426,14 +1416,12 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 	case SIOCSRTRFLUSH_IN6:
 	{
 		/* flush all the default routers */
-		struct nd_defrouter *dr, *next;
+		struct nd_defrouter *dr, *ndr;
 
 		s = splsoftnet();
 		defrouter_reset();
-		for (dr = TAILQ_FIRST(&nd_defrouter); dr; dr = next) {
-			next = TAILQ_NEXT(dr, dr_entry);
+		TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, ndr)
 			defrtrlist_del(dr);
-		}
 		defrouter_select();
 		splx(s);
 		break;
@@ -2082,9 +2070,7 @@ fill_drlist(void *oldp, size_t *oldlenp, size_t ol)
 	}
 	l = 0;
 
-	for (dr = TAILQ_FIRST(&nd_defrouter); dr;
-	     dr = TAILQ_NEXT(dr, dr_entry)) {
-
+	TAILQ_FOREACH(dr, &nd_defrouter, dr_entry) {
 		if (oldp && d + 1 <= de) {
 			bzero(d, sizeof(*d));
 			d->rtaddr.sin6_family = AF_INET6;

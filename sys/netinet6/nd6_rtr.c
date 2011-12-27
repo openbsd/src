@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.56 2011/11/24 17:39:55 sperreault Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.57 2011/12/27 17:20:04 bluhm Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -476,12 +476,9 @@ defrouter_lookup(struct in6_addr *addr, struct ifnet *ifp)
 {
 	struct nd_defrouter *dr;
 
-	for (dr = TAILQ_FIRST(&nd_defrouter); dr;
-	     dr = TAILQ_NEXT(dr, dr_entry)) {
-		if (dr->ifp == ifp && IN6_ARE_ADDR_EQUAL(addr, &dr->rtaddr)) {
+	TAILQ_FOREACH(dr, &nd_defrouter, dr_entry)
+		if (dr->ifp == ifp && IN6_ARE_ADDR_EQUAL(addr, &dr->rtaddr))
 			return (dr);
-		}
-	}
 
 	return (NULL);		/* search failed */
 }
@@ -591,8 +588,7 @@ defrouter_reset(void)
 {
 	struct nd_defrouter *dr;
 
-	for (dr = TAILQ_FIRST(&nd_defrouter); dr;
-	     dr = TAILQ_NEXT(dr, dr_entry))
+	TAILQ_FOREACH(dr, &nd_defrouter, dr_entry)
 		defrouter_delreq(dr);
 
 	/*
@@ -648,7 +644,7 @@ defrouter_select(void)
 	 * Let's handle easy case (3) first:
 	 * If default router list is empty, there's nothing to be done.
 	 */
-	if (!TAILQ_FIRST(&nd_defrouter)) {
+	if (TAILQ_EMPTY(&nd_defrouter)) {
 		splx(s);
 		return;
 	}
@@ -658,8 +654,7 @@ defrouter_select(void)
 	 * We just pick up the first reachable one (if any), assuming that
 	 * the ordering rule of the list described in defrtrlist_update().
 	 */
-	for (dr = TAILQ_FIRST(&nd_defrouter); dr;
-	     dr = TAILQ_NEXT(dr, dr_entry)) {
+	TAILQ_FOREACH(dr, &nd_defrouter, dr_entry) {
 		if (!selected_dr &&
 		    (rt = nd6_lookup(&dr->rtaddr, 0, dr->ifp)) &&
 		    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) &&
@@ -819,11 +814,9 @@ insert:
 	 */
 
 	/* insert at the end of the group */
-	for (dr = TAILQ_FIRST(&nd_defrouter); dr;
-	     dr = TAILQ_NEXT(dr, dr_entry)) {
+	TAILQ_FOREACH(dr, &nd_defrouter, dr_entry)
 		if (rtpref(n) > rtpref(dr))
 			break;
-	}
 	if (dr)
 		TAILQ_INSERT_BEFORE(dr, n, dr_entry);
 	else
@@ -1400,7 +1393,7 @@ pfxlist_onlink_check(void)
 		if (pr->ndpr_raf_onlink && find_pfxlist_reachable_router(pr))
 			break;
 	}
-	if (pr != NULL || TAILQ_FIRST(&nd_defrouter) != NULL) {
+	if (pr != NULL || !TAILQ_EMPTY(&nd_defrouter)) {
 		/*
 		 * There is at least one prefix that has a reachable router,
 		 * or at least a router which probably does not advertise
