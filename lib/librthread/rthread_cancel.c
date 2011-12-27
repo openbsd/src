@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_cancel.c,v 1.1 2011/12/05 04:02:03 guenther Exp $ */
+/* $OpenBSD: rthread_cancel.c,v 1.2 2011/12/27 17:36:59 guenther Exp $ */
 /* $snafu: libc_tag.c,v 1.4 2004/11/30 07:00:06 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
@@ -453,10 +453,12 @@ int
 sigsuspend(const sigset_t *sigmask)
 {
 	pthread_t self = pthread_self();
+	sigset_t set = *sigmask;
 	int rv;
 
+	sigdelset(&set, SIGTHR);
 	_enter_cancel(self);
-	rv = _thread_sys_sigsuspend(sigmask);
+	rv = _thread_sys_sigsuspend(&set);
 	_leave_cancel(self);
 	return (rv);
 }
