@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.57 2011/12/09 16:28:18 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.58 2011/12/27 14:07:20 stsp Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1221,11 +1221,18 @@ cmd_get_default_path(struct cmd_ctx *ctx)
 	char			*cwd;
 	struct session		*s;
 	struct window_pane	*wp;
+	struct environ_entry	*envent;
 
 	if ((s = cmd_current_session(ctx, 0)) == NULL)
 		return (NULL);
 
 	cwd = options_get_string(&s->options, "default-path");
+	if ((cwd[0] == '~' && cwd[1] == '\0') || !strcmp(cwd, "$HOME")) {
+		envent = environ_find(&global_environ, "HOME");
+		if (envent != NULL && *envent->value != '\0')
+			return envent->value;
+		cwd = "";
+	}
 	if (*cwd == '\0') {
 		if (ctx->cmdclient != NULL && ctx->cmdclient->cwd != NULL)
 			return (ctx->cmdclient->cwd);
