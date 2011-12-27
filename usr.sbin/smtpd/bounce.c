@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.36 2011/12/14 23:08:40 eric Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.37 2011/12/27 14:38:56 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -184,28 +184,17 @@ rw:
 int
 bounce_record_message(struct envelope *e, struct envelope *bounce)
 {
-	u_int32_t msgid;
-
-	bzero(bounce, sizeof(*bounce));
-
 	if (e->type == D_BOUNCE) {
 		log_debug("mailer daemons loop detected !");
 		return 0;
 	}
 
 	*bounce = *e;
-	 bounce->type = D_BOUNCE;
-	 bounce->status &= ~DS_PERMFAILURE;
-
-	msgid = evpid_to_msgid(e->id);
-	if (! queue_message_create(Q_BOUNCE, &msgid))
-		return 0;
-
-	bounce->id = msgid_to_evpid(msgid);
-	if (! queue_envelope_create(Q_BOUNCE, bounce))
-		return 0;
-
-	return queue_message_commit(Q_BOUNCE, msgid);
+	bounce->type = D_BOUNCE;
+	bounce->status &= ~DS_PERMFAILURE;
+	bounce->retry = 0;
+	bounce->lasttry = 0;
+	return (queue_envelope_create(Q_QUEUE, bounce));
 }
 
 static void
@@ -215,6 +204,8 @@ queue_message_update(struct envelope *e)
 	e->status &= ~(DS_ACCEPTED|DS_REJECTED);
 	e->retry++;
 
+	if (e->type != D_BOUNCE)
+		fatalx("*** queue_message_update called for non-bounce msg");
 
 	if (e->status & DS_PERMFAILURE) {
 		if (e->type != D_BOUNCE &&
