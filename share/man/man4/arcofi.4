@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arcofi.4,v 1.3 2011/12/25 00:07:27 miod Exp $
+.\"	$OpenBSD: arcofi.4,v 1.4 2011/12/27 10:28:35 jmc Exp $
 .\"
 .\"
 .\" Copyright (c) 2011 Miodrag Vallat.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 25 2011 $
+.Dd $Mdocdate: December 27 2011 $
 .Dt ARCOFI 4
 .Os
 .Sh NAME
@@ -42,17 +42,20 @@ The
 is limited to a phone-quality mono, 8000 KHz sound.
 .Ss AUDIOCTL SETTINGS
 The following encodings are supported:
-.Bl -tag -width AUDIO_ENCODING_SLINEAR_BE, -compact
-.It Li AUDIO_ENCODING_ULAW,
-.It Li AUDIO_ENCODING_ALAW,
+.Pp
+.Bl -tag -width AUDIO_ENCODING_SLINEAR_BE -offset indent -compact
+.It Li AUDIO_ENCODING_ULAW
+.It Li AUDIO_ENCODING_ALAW
 .It Li AUDIO_ENCODING_SLINEAR_BE
 Natively supported.
+.Pp
 .It Li AUDIO_ENCODING_SLINEAR
 Software converted to
 .Li AUDIO_ENCODING_ULAW
 encoding.
-.It Li AUDIO_ENCODING_SLINEAR_LE,
-.It Li AUDIO_ENCODING_ULINEAR_LE,
+.Pp
+.It Li AUDIO_ENCODING_SLINEAR_LE
+.It Li AUDIO_ENCODING_ULINEAR_LE
 .It Li AUDIO_ENCODING_ULINEAR_BE
 Software converted to
 .Li AUDIO_ENCODING_SLINEAR_BE
@@ -62,7 +65,8 @@ encoding.
 The
 .Nm
 has three audio ports:
-.Bl -tag -compact
+.Pp
+.Bl -tag -width "outputs.lineXXX" -offset indent -compact
 .It Cm inputs.line
 The
 .Sq line in
@@ -74,6 +78,7 @@ jack connector.
 .It Cm outputs.spkr
 The built-in speaker.
 .El
+.Pp
 Each port has a volume control, and can be muted.
 .Pp
 The
