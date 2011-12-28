@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tset.1,v 1.17 2010/01/12 23:22:14 nicm Exp $
+.\"	$OpenBSD: tset.1,v 1.18 2011/12/28 22:27:18 schwarze Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)tset.1	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: January 12 2010 $
+.Dd $Mdocdate: December 28 2011 $
 .Dt TSET 1
 .Os
 .Sh NAME
@@ -461,5 +461,22 @@ older terminal interfaces.
 .Sh HISTORY
 The
 .Nm tset
-command appeared in
-.Bx 3.0 .
+and
+.Nm reset
+utilities first appeared in
+.Bx 1 .
+.Sh AUTHORS
+.An -nosplit
+The original version of
+.Nm tset
+was written by
+.An Eric P. Allman
+in October 1977, and
+.Nm reset
+was originally written by
+.An Kurt Shoens .
+The current version also contains code by
+.An Zeyd M. Ben-Halim ,
+.An Eric S. Raymond ,
+and
+.An Thomas E. Dickey .
