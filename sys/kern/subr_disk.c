@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.133 2011/09/21 21:43:57 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.134 2011/12/28 14:34:13 jsing Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -227,8 +227,8 @@ initdisklabel(struct disklabel *lp)
  * a newer version if needed, etc etc.
  */
 int
-checkdisklabel(void *rlp, struct disklabel *lp,
-	u_int64_t boundstart, u_int64_t boundend)
+checkdisklabel(void *rlp, struct disklabel *lp, u_int64_t boundstart,
+    u_int64_t boundend)
 {
 	struct disklabel *dlp = rlp;
 	struct __partitionv0 *v0pp;
@@ -665,7 +665,8 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_int openmask)
 				if (dk->dk_label && bcmp(dk->dk_label->d_uid,
 				    nlp->d_uid, sizeof(nlp->d_uid)) == 0)
 					break;
-		} while (dk != NULL);
+		} while (dk != NULL &&
+		    bcmp(nlp->d_uid, &uid, sizeof(nlp->d_uid)) == 0);
 	}
 
 	nlp->d_checksum = 0;
