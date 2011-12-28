@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.32 2011/12/26 11:44:31 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.33 2011/12/28 01:17:01 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 
 #include <assert.h>
+#include <ctype.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <getopt.h>
@@ -116,8 +117,8 @@ static	void		  ofile_argbuild(int, char *[], struct of **);
 static	void		  ofile_dirbuild(const char *, const char *,
 				const char *, int, struct of **);
 static	void		  ofile_free(struct of *);
-static	void		  pformatted(DB *, struct buf *, struct buf *,
-				const struct of *);
+static	void		  pformatted(DB *, struct buf *, 
+				struct buf *, const struct of *);
 static	int		  pman_node(MAN_ARGS);
 static	void		  pmdoc_node(MDOC_ARGS);
 static	int		  pmdoc_head(MDOC_ARGS);
@@ -1322,6 +1323,8 @@ pman_node(MAN_ARGS)
 
 			if (0 == strncmp(start, "-", 1))
 				start += 1;
+			else if (0 == strncmp(start, "\\-\\-", 4))
+				start += 4;
 			else if (0 == strncmp(start, "\\-", 2))
 				start += 2;
 			else if (0 == strncmp(start, "\\(en", 4))
@@ -1352,12 +1355,12 @@ pman_node(MAN_ARGS)
  * By necessity, this involves rather crude guesswork.
  */
 static void
-pformatted(DB *hash, struct buf *buf, struct buf *dbuf,
-		 const struct of *of)
+pformatted(DB *hash, struct buf *buf, 
+		struct buf *dbuf, const struct of *of)
 {
 	FILE		*stream;
-	char		*line, *p;
-	size_t		 len, plen;
+	char		*line, *p, *title;
+	size_t		 len, plen, titlesz;
 
 	if (NULL == (stream = fopen(of->fname, "r"))) {
 		if (warnings)
@@ -1390,6 +1393,32 @@ pformatted(DB *hash, struct buf *buf, struct buf *dbuf,
 	while (NULL != (line = fgetln(stream, &len)))
 		if ('\n' != *line && ' ' != *line)
 			break;
+	
+	/*
+	 * Read up until the next section into a buffer.
+	 * Strip the leading and trailing newline from each read line,
+	 * appending a trailing space.
+	 * Ignore empty (whitespace-only) lines.
+	 */
+
+	titlesz = 0;
+	title = NULL;
+
+	while (NULL != (line = fgetln(stream, &len))) {
+		if (' ' != *line || '\n' != line[(int)len - 1])
+			break;
+		while (len > 0 && isspace((unsigned char)*line)) {
+			line++;
+			len--;
+		}
+		if (1 == len)
+			continue;
+		title = mandoc_realloc(title, titlesz + len);
+		memcpy(title + titlesz, line, len);
+		titlesz += len;
+		title[(int)titlesz - 1] = ' ';
+	}
+
 
 	/*
 	 * If no page content can be found, or the input line
@@ -1398,18 +1427,19 @@ pformatted(DB *hash, struct buf *buf, struct buf *dbuf,
 	 * description.
 	 */
 
-	line = fgetln(stream, &len);
-	if (NULL == line || ' ' != *line || '\n' != line[(int)len - 1]) {
+	if (NULL == title || '\0' == *title) {
 		if (warnings)
 			fprintf(stderr, "%s: cannot find NAME section\n",
 					of->fname);
 		buf_appendb(dbuf, buf->cp, buf->size);
 		hash_put(hash, buf, TYPE_Nd);
 		fclose(stream);
+		free(title);
 		return;
 	}
 
-	line[(int)--len] = '\0';
+	title = mandoc_realloc(title, titlesz + 1);
+	title[(int)titlesz] = '\0';
 
 	/*
 	 * Skip to the first dash.
@@ -1417,20 +1447,17 @@ pformatted(DB *hash, struct buf *buf, struct buf *dbuf,
 	 * bytes).
 	 */
 
-	if (NULL != (p = strstr(line, "- "))) {
+	if (NULL != (p = strstr(title, "- "))) {
 		for (p += 2; ' ' == *p || '\b' == *p; p++)
 			/* Skip to next word. */ ;
 	} else {
 		if (warnings)
 			fprintf(stderr, "%s: no dash in title line\n",
 					of->fname);
-		p = line;
+		p = title;
 	}
 
-	if ((plen = strlen(p)) > 70) {
-		plen = 70;
-		p[plen] = '\0';
-	}
+	plen = strlen(p);
 
 	/* Strip backspace-encoding from line. */
 
@@ -1449,6 +1476,7 @@ pformatted(DB *hash, struct buf *buf, struct buf *dbuf,
 	buf_appendb(buf, p, plen + 1);
 	hash_put(hash, buf, TYPE_Nd);
 	fclose(stream);
+	free(title);
 }
 
 static void
